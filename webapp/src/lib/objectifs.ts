@@ -431,7 +431,20 @@ export function ordreTabulation(blocs: readonly BlocObjectif[]): readonly BlocOb
 	})
 }
 
-/** Charge les tableaux du workspace et expose un rechargement réel (docs/SPEC-webapp.md §7). */
+/**
+ * Charge les tableaux du workspace et expose un rechargement réel (docs/SPEC-webapp.md §7).
+ *
+ * LE RECHARGEMENT NE REPASSE PAS PAR L'ÉTAT DE CHARGEMENT LORSQUE LA LISTE EST DÉJÀ LÀ, et c'est un
+ * DÉFAUT TROUVÉ PAR LA PREUVE de la tranche 2c, jamais à la lecture. Chaque écriture de tableau
+ * relit la liste ; en repassant par `enChargement`, l'écran remplaçait la liste entière par son
+ * squelette, DÉMONTANT la commande à laquelle le §5.13 de `docs/DESIGN_SYSTEM.md` exige de rendre le
+ * focus — lequel retombait alors sur le document. La liste clignotait en outre à chaque geste.
+ *
+ * La cause est corrigée plutôt que le symptôme (`CLAUDE.md` §18) : un rechargement n'efface pas ce
+ * qu'il vient relire, et le squelette reste réservé au PREMIER chargement, seul moment où il n'y a
+ * effectivement rien à montrer. Une erreur, elle, remplace bien la liste — c'est l'état que le §5.8
+ * demande, et taire un échec derrière des données périmées serait la valeur trompeuse du §18.
+ */
 export function useTableaux(
 	client: ClientCrm | null,
 	idWorkspace: string | null,
@@ -443,7 +456,7 @@ export function useTableaux(
 	useEffect(() => {
 		if (client === null || idWorkspace === null) return
 		const rang = ++courant.current
-		setEtat(enChargement)
+		setEtat((precedent) => (precedent.statut === 'pret' ? precedent : enChargement))
 		void lireTableaux(client, idWorkspace).then((resultat) => {
 			if (rang === courant.current) setEtat(resultat)
 		})

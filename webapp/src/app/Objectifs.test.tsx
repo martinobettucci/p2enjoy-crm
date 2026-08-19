@@ -1264,3 +1264,257 @@ describe('corpsSuppressionBloc — l’accord par clé, §23 de CLAUDE.md', () =
 		)
 	})
 })
+
+// =================================================================================================
+// TRANCHE 2c — L'ADMINISTRATION DES TABLEAUX
+// =================================================================================================
+//
+// CE QUE CES SCÉNARIOS TIENNENT, ET QUE RIEN D'AUTRE NE TIENDRAIT :
+//
+//   * l'état vide PORTE la commande de création (§5.4) — une sortie anticipée l'en priverait, et
+//     l'utilisateur n'aurait aucun moyen de sortir de cet état ;
+//   * les commandes d'ordre sont DÉSACTIVÉES aux extrémités, jamais masquées (§5.13) ;
+//   * le formulaire vit dans le FLUX du document, jamais dans une modale, et le focus y entre ;
+//   * le refus est lu PRÈS du champ qui l'a causé, et le doublon dit son propre geste.
+
+/** Un client de LISTE : workspaces, tableaux, et le comptage des blocs lisibles. */
+function clientListe(
+	tableaux: readonly unknown[],
+	blocs: readonly unknown[] = [],
+	ecriture?: { reponse: Reponse; journal: Record<string, unknown>[] },
+): ClientCrm {
+	const construire = (table: string) => {
+		const chaine: Record<string, unknown> = {}
+		const reponses: Record<string, Reponse> = {
+			workspaces: ok([{ id: 'w1', name: 'P2Enjoy', slug: 'p2enjoy' }]),
+			goal_boards: ok(tableaux),
+			goal_blocks: ok(blocs),
+		}
+		const lecture = reponses[table] ?? ok([])
+		for (const methode of ['select', 'eq', 'is', 'in', 'order']) {
+			chaine[methode] = () => chaine
+		}
+		// L'ÉCRITURE EST JOURNALISÉE PUIS RÉPONDUE : les scénarios éprouvent ce que l'écran a
+		// ENVOYÉ, et pas seulement ce qu'il affiche ensuite.
+		for (const operation of ['insert', 'update']) {
+			chaine[operation] = (charge: Record<string, unknown>) => {
+				ecriture?.journal.push({ table, operation, ...charge })
+				const apres: Record<string, unknown> = {}
+				for (const methode of ['select', 'eq', 'is', 'in', 'order']) {
+					apres[methode] = () => apres
+				}
+				apres.single = () => Promise.resolve(ecriture?.reponse ?? ok([]))
+				apres.then = (resoudre: (valeur: Reponse) => unknown) =>
+					Promise.resolve(ecriture?.reponse ?? ok([])).then(resoudre)
+				return apres
+			}
+		}
+		chaine.maybeSingle = () => Promise.resolve(lecture)
+		chaine.single = () => Promise.resolve(lecture)
+		chaine.then = (resoudre: (valeur: Reponse) => unknown) => Promise.resolve(lecture).then(resoudre)
+		return chaine
+	}
+	return { from: (table: string) => construire(table) } as unknown as ClientCrm
+}
+
+const TABLEAU_SECOND = { id: 'b2', name: 'Objectifs 2027', description: null, position: 2 }
+const TABLEAU_TIERS = { id: 'b3', name: 'Chantiers internes', description: null, position: 3 }
+
+function rendreListe(client: ClientCrm) {
+	return render(
+		<MemoryRouter>
+			<Objectifs client={client} />
+		</MemoryRouter>,
+	)
+}
+
+describe('administration des tableaux — §3, §5.1, DESIGN_SYSTEM §5.13', () => {
+	it('L’ÉTAT VIDE PORTE L’ACTION D’EN CRÉER UN — §5.4', async () => {
+		// Sans elle, « Aucun tableau d'objectifs » serait un cul-de-sac : rien dans le produit ne
+		// permettrait d'en sortir. C'est l'exigence que la sortie anticipée d'origine violait.
+		rendreListe(clientListe([]))
+		expect(await screen.findByTestId('etat-vide')).toBeTruthy()
+		expect(screen.getByTestId('creer-tableau')).toBeTruthy()
+	})
+
+	it('ouvre le formulaire de création dans le FLUX, et y place le focus', async () => {
+		// §5.13 : aucune modale — le §5 n'en déclare aucune —, et « ouvrir un formulaire déplace le
+		// focus dans son premier champ ». Sans le focus, le geste clavier exige un `Tab` que le
+		// geste souris n'exige pas.
+		rendreListe(clientListe([TABLEAU]))
+		fireEvent.click(await screen.findByTestId('creer-tableau'))
+		const formulaire = screen.getByTestId('formulaire-creation-tableau')
+		expect(formulaire.getAttribute('role')).toBeNull()
+		expect(document.activeElement).toBe(screen.getByTestId('champ-nom-tableau'))
+	})
+
+	it('la commande de création a DEUX VISAGES, un seul rendu à la fois', async () => {
+		rendreListe(clientListe([TABLEAU]))
+		const commande = await screen.findByTestId('creer-tableau')
+		expect(commande.getAttribute('aria-pressed')).toBe('false')
+		fireEvent.click(commande)
+		expect(screen.getByTestId('creer-tableau').getAttribute('aria-pressed')).toBe('true')
+		expect(screen.getByTestId('creer-tableau').textContent).toContain(fr['goals.board.create.cancel'])
+	})
+
+	it('envoie la création avec `position` à null, et rend le focus à la commande', async () => {
+		const journal: Record<string, unknown>[] = []
+		rendreListe(
+			clientListe([TABLEAU], [], {
+				journal,
+				reponse: ok({ id: 'b9', name: 'Trimestre', description: null, position: 2 }),
+			}),
+		)
+		fireEvent.click(await screen.findByTestId('creer-tableau'))
+		fireEvent.change(screen.getByTestId('champ-nom-tableau'), { target: { value: 'Trimestre' } })
+		await act(async () => {
+			fireEvent.submit(screen.getByTestId('formulaire-creation-tableau'))
+		})
+		expect(journal).toHaveLength(1)
+		expect(journal[0]?.table).toBe('goal_boards')
+		expect(journal[0]?.operation).toBe('insert')
+		expect(journal[0]?.position).toBeNull()
+		// Le formulaire fermé, le focus revient à la commande qui l'a ouvert (§5.13) : sans ce
+		// retour, valider au clavier laisse le focus sur un champ qui vient de disparaître.
+		await waitFor(() => expect(screen.queryByTestId('formulaire-creation-tableau')).toBeNull())
+		await waitFor(() => expect(document.activeElement).toBe(screen.getByTestId('creer-tableau')))
+	})
+
+	it('LES COMMANDES D’ORDRE SONT DÉSACTIVÉES AUX EXTRÉMITÉS, JAMAIS MASQUÉES — §5.13', async () => {
+		// Une commande qui disparaît en tête de liste fait sauter le groupe d'actions d'une ligne à
+		// l'autre, et l'œil perd la colonne. Elles sont donc TOUJOURS rendues, et leur nom
+		// accessible NOMME le tableau : « Monter » seul, répété, ne dirait pas lequel.
+		rendreListe(clientListe([TABLEAU, TABLEAU_SECOND, TABLEAU_TIERS]))
+		await screen.findAllByTestId('tableau-objectifs')
+		const monter = screen.getAllByTestId('monter-tableau')
+		const descendre = screen.getAllByTestId('descendre-tableau')
+		expect(monter).toHaveLength(3)
+		expect(descendre).toHaveLength(3)
+		expect((monter[0] as HTMLButtonElement).disabled).toBe(true)
+		expect((monter[1] as HTMLButtonElement).disabled).toBe(false)
+		expect((descendre[2] as HTMLButtonElement).disabled).toBe(true)
+		expect(monter[1]?.getAttribute('aria-label')).toContain(TABLEAU_SECOND.name)
+	})
+
+	it('déplace par le MILIEU de deux voisines — une seule écriture, jamais une permutation', async () => {
+		const journal: Record<string, unknown>[] = []
+		rendreListe(
+			clientListe([TABLEAU, TABLEAU_SECOND, TABLEAU_TIERS], [], {
+				journal,
+				reponse: ok([{ id: 'b3', name: 'Chantiers internes', description: null, position: 1.5 }]),
+			}),
+		)
+		await screen.findAllByTestId('tableau-objectifs')
+		await act(async () => {
+			fireEvent.click(screen.getAllByTestId('monter-tableau')[2] as HTMLElement)
+		})
+		// UNE écriture, et son contenu est la seule position calculée : entre 1 et 2.
+		expect(journal).toHaveLength(1)
+		expect(journal[0]?.operation).toBe('update')
+		expect(journal[0]?.position).toBe(1.5)
+	})
+
+	it('n’envoie QUE le nom et la description au renommage, jamais la position', async () => {
+		const journal: Record<string, unknown>[] = []
+		rendreListe(
+			clientListe([TABLEAU], [], {
+				journal,
+				reponse: ok([{ id: 'b1', name: 'Trimestre en cours', description: null, position: 1 }]),
+			}),
+		)
+		fireEvent.click((await screen.findAllByTestId('renommer-tableau'))[0] as HTMLElement)
+		expect(document.activeElement).toBe(screen.getByTestId('champ-nom-tableau'))
+		// Le champ arrive REMPLI de la valeur courante : un renommage qui repart d'un champ vide
+		// obligerait à ressaisir ce qu'on ne veut pas changer.
+		expect((screen.getByTestId('champ-nom-tableau') as HTMLInputElement).value).toBe(TABLEAU.name)
+		fireEvent.change(screen.getByTestId('champ-nom-tableau'), { target: { value: 'Trimestre en cours' } })
+		await act(async () => {
+			fireEvent.submit(screen.getByTestId('formulaire-renommage-tableau'))
+		})
+		expect(journal).toHaveLength(1)
+		expect(journal[0]).toEqual({
+			table: 'goal_boards',
+			operation: 'update',
+			name: 'Trimestre en cours',
+			description: TABLEAU.description,
+		})
+	})
+
+	it('LA CONFIRMATION D’ARCHIVAGE DIT QUE LE TABLEAU QUITTE LA LISTE, et le focus entre sur l’action', async () => {
+		// Rien ne l'y ramène : le §5.1 ne décrit qu'une liste des tableaux NON archivés. Écrire
+		// « archiver » sans cette conséquence laisserait croire à un rangement réversible d'un clic.
+		rendreListe(clientListe([TABLEAU]))
+		fireEvent.click((await screen.findAllByTestId('archiver-tableau'))[0] as HTMLElement)
+		const confirmation = screen.getByTestId('confirmation-archivage-tableau')
+		expect(confirmation.textContent).toContain(TABLEAU.name)
+		expect(confirmation.textContent).toContain(fr['goals.board.archive.confirm.body'])
+		expect(document.activeElement).toBe(screen.getByTestId('confirmer-archivage-tableau'))
+	})
+
+	it('archive par une ÉCRITURE de `archived_at`, jamais par une suppression', async () => {
+		const journal: Record<string, unknown>[] = []
+		rendreListe(
+			clientListe([TABLEAU], [], {
+				journal,
+				reponse: ok([{ id: 'b1', name: TABLEAU.name, description: null, position: 1 }]),
+			}),
+		)
+		fireEvent.click((await screen.findAllByTestId('archiver-tableau'))[0] as HTMLElement)
+		await act(async () => {
+			fireEvent.click(screen.getByTestId('confirmer-archivage-tableau'))
+		})
+		expect(journal).toHaveLength(1)
+		expect(journal[0]?.operation).toBe('update')
+		expect(typeof journal[0]?.archived_at).toBe('string')
+	})
+
+	it('annuler une confirmation rend le focus à la commande qui l’a ouverte', async () => {
+		// La commande est DÉMONTÉE pendant la confirmation — la ligne rend la confirmation à sa
+		// place —, et `focus()` appelé depuis le gestionnaire porterait sur un bouton qui n'existe
+		// plus. Le remède est un drapeau puis un effet, sans aucune temporisation (CLAUDE.md §18).
+		rendreListe(clientListe([TABLEAU]))
+		fireEvent.click((await screen.findAllByTestId('archiver-tableau'))[0] as HTMLElement)
+		fireEvent.click(screen.getByTestId('annuler-archivage-tableau'))
+		await waitFor(() =>
+			expect(document.activeElement).toBe(screen.getAllByTestId('archiver-tableau')[0]),
+		)
+	})
+
+	it('LE DOUBLON DE NOM DIT SON PROPRE GESTE, et il est lu DANS le formulaire', async () => {
+		// §5.13 : « le refus est lu près du champ qui l'a causé », jamais en tête d'écran. Et le
+		// texte nomme le cas que seule cette table produit : un tableau ARCHIVÉ retient son nom.
+		const journal: Record<string, unknown>[] = []
+		rendreListe(
+			clientListe([TABLEAU], [], {
+				journal,
+				reponse: {
+					data: null,
+					error: { message: 'goal_boards_workspace_name_key', code: '23505' } as { message: string },
+					status: 409,
+				},
+			}),
+		)
+		fireEvent.click(await screen.findByTestId('creer-tableau'))
+		fireEvent.change(screen.getByTestId('champ-nom-tableau'), { target: { value: TABLEAU.name } })
+		await act(async () => {
+			fireEvent.submit(screen.getByTestId('formulaire-creation-tableau'))
+		})
+		const formulaire = screen.getByTestId('formulaire-creation-tableau')
+		expect(formulaire.textContent).toContain(fr['goals.board.refused.duplicate'])
+	})
+
+	it('dit le SILENCE de la clause `using` au lieu d’annoncer un succès', async () => {
+		// `200` et zéro ligne n'est ni un succès ni une erreur. Annoncer « enregistré » serait la
+		// simulation de succès que CLAUDE.md §18 interdit.
+		rendreListe(
+			clientListe([TABLEAU, TABLEAU_SECOND], [], { journal: [], reponse: ok([]) }),
+		)
+		await screen.findAllByTestId('tableau-objectifs')
+		await act(async () => {
+			fireEvent.click(screen.getAllByTestId('monter-tableau')[1] as HTMLElement)
+		})
+		expect(screen.getByTestId('mention-ecriture').textContent).toContain(
+			fr['goals.board.write.noeffect'],
+		)
+	})
+})
