@@ -1213,6 +1213,14 @@ function FicheEditionBloc({
 	const [couleur, setCouleur] = useState(bloc.color)
 	const [messages, setMessages] = useState<Readonly<Partial<Record<ChampFiche, MessageEcriture>>>>({})
 	const [confirmeSuppression, setConfirmeSuppression] = useState(false)
+	// LE RETOUR DU FOCUS EST DIFFÉRÉ D'UN TOUR DE RENDU, et c'est un DÉFAUT TROUVÉ PAR LA PREUVE :
+	// la commande reste montée pendant sa confirmation, mais elle est DÉSACTIVÉE — et un bouton
+	// désactivé refuse le focus. Appelé depuis le gestionnaire d'annulation, `focus()` visait donc
+	// un bouton encore désactivé, et le focus retombait sur le document. C'est le remède du
+	// `docs/DESIGN_SYSTEM.md` §5.25 — un drapeau, puis un effet —, ici pour une cause voisine mais
+	// distincte : là-bas la commande est démontée, ici seulement éteinte. AUCUNE temporisation
+	// (`CLAUDE.md` §18).
+	const [rendreFocusSuppression, setRendreFocusSuppression] = useState(false)
 
 	const champTitre = useRef<HTMLInputElement | null>(null)
 	const commandeSuppression = useRef<HTMLButtonElement | null>(null)
@@ -1223,6 +1231,12 @@ function FicheEditionBloc({
 	useEffect(() => {
 		champTitre.current?.focus()
 	}, [])
+
+	useEffect(() => {
+		if (!rendreFocusSuppression) return
+		setRendreFocusSuppression(false)
+		commandeSuppression.current?.focus()
+	}, [rendreFocusSuppression])
 
 	const ecrire = async (champ: ChampFiche, contenu: ContenuBloc) => {
 		setMessages((precedents) => ({ ...precedents, [champ]: { ton: 'attente', texte: t('goals.write.saving') } }))
@@ -1561,8 +1575,9 @@ function FicheEditionBloc({
 			    haute — la place exacte que le §5.3 donne au retrait d'une affaire, et pour son
 			    motif : supprimer n'est pas ce qu'on vient faire sur une fiche d'édition.
 			    LA COMMANDE RESTE MONTÉE PENDANT SA CONFIRMATION, seulement désactivée — le patron
-			    du §5.27 plutôt que celui du §5.25 : la commande démontée y obligeait à différer le
-			    retour du focus d'un tour de rendu, remède dont ce bloc n'a pas besoin. */}
+			    du §5.27 : la retirer ferait sauter la hauteur du bloc au moment précis où l'on
+			    demande de lire. Le retour du focus reste néanmoins différé d'un tour de rendu, un
+			    bouton désactivé refusant le focus — voir l'état `rendreFocusSuppression`. */}
 			<div className="flex flex-col gap-2 border-t border-border pt-3">
 				<Button
 					ref={commandeSuppression}
@@ -1586,7 +1601,7 @@ function FicheEditionBloc({
 						}}
 						onAnnuler={() => {
 							setConfirmeSuppression(false)
-							commandeSuppression.current?.focus()
+							setRendreFocusSuppression(true)
 						}}
 					/>
 				) : null}
@@ -2187,6 +2202,16 @@ function EquivalentTextuel({
 	// confirmation (§5.13). Une seule référence désignerait la dernière rendue, et annuler sur la
 	// deuxième ligne renverrait le focus sur la troisième.
 	const commandes = useRef<Map<string, HTMLButtonElement | null>>(new Map())
+	// MÊME REMÈDE QUE DANS LA FICHE, et pour la même cause : la commande de la ligne est désactivée
+	// pendant sa confirmation, et un bouton désactivé refuse le focus. Le drapeau porte ici
+	// l'identifiant de la ligne à qui le rendre.
+	const [aRefocaliser, setARefocaliser] = useState<string | null>(null)
+	useEffect(() => {
+		if (aRefocaliser === null) return
+		const cible = commandes.current.get(aRefocaliser)
+		setARefocaliser(null)
+		cible?.focus()
+	}, [aRefocaliser])
 	return (
 		<section data-testid="equivalent-textuel" aria-label={t('goals.diagram.aria')} className="flex flex-col gap-2">
 			<h3 className="text-sm font-medium text-text-2">{t('goals.diagram.title')}</h3>
@@ -2271,7 +2296,7 @@ function EquivalentTextuel({
 									}}
 									onAnnuler={() => {
 										setConfirme(null)
-										commandes.current.get(ligne.id)?.focus()
+										setARefocaliser(ligne.id)
 									}}
 								/>
 							) : null}

@@ -305,7 +305,13 @@ describe('canevas — §5.2 à §5.5', () => {
 // passerait tous les autres cas de ce fichier, et afficherait un déplacement qui n'a pas eu lieu.
 // ---------------------------------------------------------------------------------------------
 
-type Ecriture = { operation: 'insert' | 'update'; charge: Record<string, unknown> }
+type Ecriture = {
+	operation: 'insert' | 'update' | 'delete'
+	// UNE SUPPRESSION N'A PAS DE CHARGE, et la garder facultative le rend visible dans les
+	// assertions : un `delete` qui porterait une charge trahirait une écriture déguisée.
+	charge?: Record<string, unknown>
+	table: string
+}
 
 /**
  * Client de LECTURE et d'ÉCRITURE, aiguillé par table comme celui des scénarios de lecture.
@@ -343,11 +349,15 @@ function clientEcrivant(
 			return {
 				...lecture,
 				insert: (charge: Record<string, unknown>) => {
-					ecritures.push({ operation: 'insert', charge })
+					ecritures.push({ operation: 'insert', charge, table })
 					return ecriture
 				},
 				update: (charge: Record<string, unknown>) => {
-					ecritures.push({ operation: 'update', charge })
+					ecritures.push({ operation: 'update', charge, table })
+					return ecriture
+				},
+				delete: () => {
+					ecritures.push({ operation: 'delete', table })
 					return ecriture
 				},
 			}
@@ -401,8 +411,8 @@ describe('canevas — poser un bloc, §3 et §5.5', () => {
 		const posee = ecritures.find((ecriture) => ecriture.operation === 'insert')
 		expect(posee).toBeTruthy()
 		// LA POSITION VIENT DU GESTE : le repère déplacé d'un pas vers la droite l'a transmise.
-		expect(posee?.charge.pos_x).toBe(32)
-		expect(posee?.charge.board_id).toBe('b1')
+		expect(posee?.charge?.pos_x).toBe(32)
+		expect(posee?.charge?.board_id).toBe('b1')
 	})
 
 	it('Échap annule la pose sans rien écrire', async () => {
@@ -734,11 +744,19 @@ describe('canevas — la fiche d’édition, §3 et §5.5', () => {
 		fireEvent.keyDown((await screen.findAllByTestId('bloc-objectif'))[0] as HTMLElement, { key: 'Enter' })
 		const fiche = await screen.findByTestId('fiche-bloc')
 
-		// La seule commande de la fiche est la fermeture. Un bouton d'enregistrement renverrait
-		// les quatre colonnes à chaque fois et écraserait le champ d'un collègue.
+		// PREUVE RÉVISÉE PAR LA TRANCHE 2b-2c, ET LE MOTIF EST ÉCRIT ICI (`docs/CloudWorker.md`
+		// §3.1) : elle comptait les boutons de la fiche et en exigeait UN SEUL, ce qui tenait tant
+		// que la fermeture était la seule commande. La suppression d'un bloc en pose une seconde
+		// (§3), et la règle que cette preuve défend n'a pas bougé d'un pouce — la fiche n'a AUCUN
+		// bouton d'ENREGISTREMENT, chaque champ écrivant sa propre valeur (§5.7 ter). Elle énumère
+		// donc désormais les commandes attendues, ce qui refuserait toujours un bouton
+		// d'enregistrement ajouté, là où un simple compte l'aurait laissé passer dès qu'un autre
+		// geste disparaîtrait.
 		const boutons = [...fiche.querySelectorAll('button')]
-		expect(boutons).toHaveLength(1)
-		expect(boutons[0]?.getAttribute('data-testid')).toBe('fermer-fiche')
+		expect(boutons.map((bouton) => bouton.getAttribute('data-testid'))).toEqual([
+			'fermer-fiche',
+			'supprimer-bloc',
+		])
 	})
 
 	it('LA JAUGE DU BLOC NE CHANGE PAS DE COULEUR AVEC LA VALEUR, quel que soit le remplissage', async () => {
@@ -984,5 +1002,255 @@ describe('canevas — le sélecteur de destination suit le §5.22', () => {
 		await screen.findByTestId('erreur-channels')
 		expect((screen.getByTestId('champ-lien') as HTMLSelectElement).disabled).toBe(true)
 		expect((screen.getByTestId('retirer-lien') as HTMLButtonElement).disabled).toBe(false)
+	})
+})
+
+// --- TRANCHE 2b-2c : LES SUPPRESSIONS ------------------------------------------------------
+// @verifies CRM-083 (docs/BACKLOG.md) — canevas d'objectifs, tranche 2b-2c : supprimer une
+//           flèche, supprimer un bloc
+// @verifies docs/SPEC-goals.md §3 (« Supprimer une flèche, supprimer un bloc — la suppression
+//           d'un bloc emporte ses flèches (cascade) » ; « un bloc se supprime réellement, il ne
+//           s'archive pas »), §2.3 (`on delete cascade` des deux extrémités), §4.2 (l'écriture
+//           d'une flèche exige le droit sur les DEUX blocs reliés)
+// @verifies docs/DESIGN_SYSTEM.md §6 (une action destructive demande une confirmation NOMMANT
+//           l'objet), §5.27 (une seule confirmation à tout instant ; la commande reste montée et
+//           désactivée, et le focus lui revient sans être différé), §5.29 (canevas)
+
+/** Le tableau à deux blocs reliés par une flèche — ce que la cascade du §2.3 met en jeu. */
+const LECTURES_DEUX_BLOCS_UNE_FLECHE = {
+	goal_boards: ok(TABLEAU),
+	goal_blocks: ok([BLOC_LIBRE, BLOC_LIE]),
+	goal_links: ok([FLECHE_PLEINE]),
+}
+
+/**
+ * Ouvre la fiche du premier bloc — homonyme volontairement évité de l'`ouvrirFiche` de la tranche
+ * 2b-2a, qui rend le SÉLECTEUR de destination : ces scénarios n'ont affaire qu'à la fiche.
+ */
+async function ouvrirFicheDuBloc() {
+	fireEvent.keyDown((await screen.findAllByTestId('bloc-objectif'))[0] as HTMLElement, { key: 'Enter' })
+	return screen.findByTestId('fiche-bloc')
+}
+
+describe('canevas — supprimer un bloc, §3 et §6', () => {
+	it('la commande n’écrit RIEN : elle ouvre une confirmation qui NOMME le bloc', async () => {
+		const { client, ecritures } = clientEcrivant(LECTURES_UN_BLOC, ok([{ id: BLOC_LIBRE.id }]))
+		rendreCanevas(client)
+		await ouvrirFicheDuBloc()
+
+		fireEvent.click(screen.getByTestId('supprimer-bloc'))
+		const confirmation = await screen.findByTestId('confirmation-suppression-bloc')
+		// §6 : la confirmation nomme l'objet. Sans le titre, elle demanderait d'approuver un geste
+		// dont l'écran ne dit pas sur quoi il porte.
+		expect(confirmation.textContent).toContain(BLOC_LIBRE.title)
+		// Et surtout : AUCUNE écriture n'est encore partie.
+		expect(ecritures.filter((ecriture) => ecriture.operation === 'delete')).toHaveLength(0)
+	})
+
+	it('la confirmation ANNONCE les flèches que la cascade emporte, et se tait quand il n’y en a pas', async () => {
+		const { client } = clientEcrivant(LECTURES_DEUX_BLOCS_UNE_FLECHE, ok([{ id: BLOC_LIBRE.id }]))
+		rendreCanevas(client)
+		await ouvrirFicheDuBloc()
+
+		fireEvent.click(screen.getByTestId('supprimer-bloc'))
+		const avecFleche = await screen.findByTestId('confirmation-suppression-bloc')
+		expect(avecFleche.textContent).toContain(
+			fr['goals.block.delete.confirm.body.links'].replace('{compte}', '1'),
+		)
+
+		cleanup()
+		const seul = clientEcrivant(LECTURES_UN_BLOC, ok([{ id: BLOC_LIBRE.id }]))
+		rendreCanevas(seul.client)
+		await ouvrirFicheDuBloc()
+		fireEvent.click(screen.getByTestId('supprimer-bloc'))
+		// « les 0 flèches » se lirait deux fois pour comprendre qu'il n'y en a aucune : la phrase
+		// sans compte est la seule qui ne fasse pas chercher un objet absent.
+		expect((await screen.findByTestId('confirmation-suppression-bloc')).textContent).toContain(
+			fr['goals.block.delete.confirm.body'],
+		)
+	})
+
+	it('confirmer émet UNE suppression sans charge sur `goal_blocks`, et le bloc quitte le canevas', async () => {
+		const { client, ecritures } = clientEcrivant(LECTURES_UN_BLOC, ok([{ id: BLOC_LIBRE.id }]))
+		rendreCanevas(client)
+		await ouvrirFicheDuBloc()
+		fireEvent.click(screen.getByTestId('supprimer-bloc'))
+
+		await act(async () => {
+			fireEvent.click(await screen.findByTestId('confirmer-suppression-bloc'))
+		})
+
+		const suppressions = ecritures.filter((ecriture) => ecriture.operation === 'delete')
+		expect(suppressions).toHaveLength(1)
+		expect(suppressions[0]?.table).toBe('goal_blocks')
+		// AUCUNE charge, et aucune requête sur `goal_links` : la cascade vit en base (§2.3).
+		expect(suppressions[0]?.charge).toBeUndefined()
+		expect(screen.queryAllByTestId('bloc-objectif')).toHaveLength(0)
+		// LA FICHE SE FERME SEULE, son bloc n'étant plus rendu.
+		expect(screen.queryByTestId('fiche-bloc')).toBeNull()
+		expect(screen.getByTestId('mention-ecriture').textContent).toBe(fr['goals.block.deleted'])
+	})
+
+	it('LA FLÈCHE D’UN BLOC SUPPRIMÉ DISPARAÎT, elle ne devient pas un moignon pointillé', async () => {
+		// La distinction porte sur deux causes que rien ne rapproche : le moignon du §5.4 rend une
+		// extrémité que la RLS masque — la ligne existe en base —, tandis que la cascade du §2.3
+		// l'a détruite. La laisser pendre dessinerait un lien que plus rien ne porte.
+		const { client } = clientEcrivant(LECTURES_DEUX_BLOCS_UNE_FLECHE, ok([{ id: BLOC_LIBRE.id }]))
+		rendreCanevas(client)
+		expect(await screen.findAllByTestId('ligne-diagramme')).toHaveLength(1)
+
+		await ouvrirFicheDuBloc()
+		fireEvent.click(screen.getByTestId('supprimer-bloc'))
+		await act(async () => {
+			fireEvent.click(await screen.findByTestId('confirmer-suppression-bloc'))
+		})
+
+		expect(screen.queryAllByTestId('ligne-diagramme')).toHaveLength(0)
+		expect(screen.queryAllByTestId('bloc-objectif')).toHaveLength(1)
+	})
+
+	it('un SILENCE de la clause `using` ne retire RIEN, et le dit', async () => {
+		const { client } = clientEcrivant(LECTURES_UN_BLOC, ok([]))
+		rendreCanevas(client)
+		await ouvrirFicheDuBloc()
+		fireEvent.click(screen.getByTestId('supprimer-bloc'))
+		await act(async () => {
+			fireEvent.click(await screen.findByTestId('confirmer-suppression-bloc'))
+		})
+
+		expect(screen.getByTestId('mention-ecriture').textContent).toBe(fr['goals.delete.noeffect.block'])
+		// Le bloc est TOUJOURS là : le faire disparaître annoncerait une suppression qui n'a pas eu
+		// lieu, et il reparaîtrait au rechargement.
+		expect(screen.queryAllByTestId('bloc-objectif')).toHaveLength(1)
+	})
+
+	it('un REFUS de politique est traduit par le texte de la SUPPRESSION, pas par celui d’une modification', async () => {
+		const { client } = clientEcrivant(LECTURES_UN_BLOC, {
+			data: null,
+			error: { message: 'new row violates row-level security policy' },
+			status: 403,
+		})
+		rendreCanevas(client)
+		await ouvrirFicheDuBloc()
+		fireEvent.click(screen.getByTestId('supprimer-bloc'))
+		await act(async () => {
+			fireEvent.click(await screen.findByTestId('confirmer-suppression-bloc'))
+		})
+
+		const mention = screen.getByTestId('mention-ecriture')
+		expect(mention.textContent).toBe(fr['goals.delete.refused.block'])
+		expect(mention.textContent).not.toBe(fr['goals.write.refused.forbidden'])
+		expect(screen.queryAllByTestId('bloc-objectif')).toHaveLength(1)
+	})
+
+	it('annuler n’écrit rien et REND LE FOCUS à la commande, qui n’a jamais été démontée', async () => {
+		const { client, ecritures } = clientEcrivant(LECTURES_UN_BLOC, ok([{ id: BLOC_LIBRE.id }]))
+		rendreCanevas(client)
+		await ouvrirFicheDuBloc()
+		const commande = screen.getByTestId('supprimer-bloc')
+
+		fireEvent.click(commande)
+		// La commande reste RENDUE, seulement désactivée — le patron du §5.27. Le retour du focus
+		// est pourtant différé d'un tour de rendu, et c'est cette preuve qui l'a montré : un bouton
+		// désactivé refuse le focus, si bien que l'appeler depuis le gestionnaire d'annulation le
+		// laissait sur le document.
+		expect((commande as HTMLButtonElement).disabled).toBe(true)
+		fireEvent.click(await screen.findByTestId('annuler-suppression-bloc'))
+
+		expect(screen.queryByTestId('confirmation-suppression-bloc')).toBeNull()
+		expect(document.activeElement).toBe(commande)
+		expect(ecritures.filter((ecriture) => ecriture.operation === 'delete')).toHaveLength(0)
+	})
+})
+
+describe('canevas — supprimer une flèche, §3 et §4.2', () => {
+	it('la commande de la liste ouvre une confirmation qui NOMME la flèche par ses deux extrémités', async () => {
+		const { client, ecritures } = clientEcrivant(LECTURES_DEUX_BLOCS_UNE_FLECHE, ok([{ id: FLECHE_PLEINE.id }]))
+		rendreCanevas(client)
+		const commande = (await screen.findAllByTestId('supprimer-fleche'))[0] as HTMLElement
+
+		fireEvent.click(commande)
+		const confirmation = await screen.findByTestId('confirmation-suppression-fleche')
+		expect(confirmation.textContent).toContain(BLOC_LIBRE.title)
+		expect(confirmation.textContent).toContain(BLOC_LIE.title)
+		expect(ecritures.filter((ecriture) => ecriture.operation === 'delete')).toHaveLength(0)
+	})
+
+	it('confirmer supprime la flèche sur `goal_links`, et laisse les DEUX blocs en place', async () => {
+		const { client, ecritures } = clientEcrivant(LECTURES_DEUX_BLOCS_UNE_FLECHE, ok([{ id: FLECHE_PLEINE.id }]))
+		rendreCanevas(client)
+		fireEvent.click((await screen.findAllByTestId('supprimer-fleche'))[0] as HTMLElement)
+		await act(async () => {
+			fireEvent.click(await screen.findByTestId('confirmer-suppression-fleche'))
+		})
+
+		const suppressions = ecritures.filter((ecriture) => ecriture.operation === 'delete')
+		expect(suppressions).toHaveLength(1)
+		expect(suppressions[0]?.table).toBe('goal_links')
+		expect(screen.queryAllByTestId('ligne-diagramme')).toHaveLength(0)
+		expect(screen.queryAllByTestId('bloc-objectif')).toHaveLength(2)
+		expect(screen.getByTestId('mention-ecriture').textContent).toBe(fr['goals.link.deleted'])
+	})
+
+	it('un SILENCE de la clause `using` garde la flèche, et le dit avec SON texte', async () => {
+		// §4.2 : la politique porte sur le droit d'écrire les DEUX blocs reliés. Le texte du bloc
+		// ferait chercher le problème du mauvais côté.
+		const { client } = clientEcrivant(LECTURES_DEUX_BLOCS_UNE_FLECHE, ok([]))
+		rendreCanevas(client)
+		fireEvent.click((await screen.findAllByTestId('supprimer-fleche'))[0] as HTMLElement)
+		await act(async () => {
+			fireEvent.click(await screen.findByTestId('confirmer-suppression-fleche'))
+		})
+
+		expect(screen.getByTestId('mention-ecriture').textContent).toBe(fr['goals.delete.noeffect.link'])
+		expect(screen.queryAllByTestId('ligne-diagramme')).toHaveLength(1)
+	})
+
+	it('UNE SEULE CONFIRMATION À TOUT INSTANT : ouvrir celle d’une ligne ferme celle d’une autre', async () => {
+		// La règle du §5.27, et elle ne s'observe qu'entre DEUX lignes.
+		const deuxFleches = {
+			goal_boards: ok(TABLEAU),
+			goal_blocks: ok([BLOC_LIBRE, BLOC_LIE, BLOC_PERDU]),
+			goal_links: ok([
+				FLECHE_PLEINE,
+				{ id: 'f3', source_block_id: 'e2', target_block_id: 'e3', direction: 'both', label: null },
+			]),
+		}
+		const { client } = clientEcrivant(deuxFleches, ok([{ id: 'f3' }]))
+		rendreCanevas(client)
+		const commandes = await screen.findAllByTestId('supprimer-fleche')
+		expect(commandes).toHaveLength(2)
+
+		fireEvent.click(commandes[0] as HTMLElement)
+		expect(await screen.findAllByTestId('confirmation-suppression-fleche')).toHaveLength(1)
+		fireEvent.click(commandes[1] as HTMLElement)
+		const ouvertes = await screen.findAllByTestId('confirmation-suppression-fleche')
+		expect(ouvertes).toHaveLength(1)
+		// C'est bien celle de la SECONDE ligne qui est ouverte, la première étant refermée.
+		expect((commandes[1] as HTMLButtonElement).disabled).toBe(true)
+		expect((commandes[0] as HTMLButtonElement).disabled).toBe(false)
+	})
+
+	it('annuler garde la flèche et rend le focus à la commande de SA ligne', async () => {
+		const { client, ecritures } = clientEcrivant(LECTURES_DEUX_BLOCS_UNE_FLECHE, ok([{ id: FLECHE_PLEINE.id }]))
+		rendreCanevas(client)
+		const commande = (await screen.findAllByTestId('supprimer-fleche'))[0] as HTMLElement
+
+		fireEvent.click(commande)
+		fireEvent.click(await screen.findByTestId('annuler-suppression-fleche'))
+
+		expect(screen.queryByTestId('confirmation-suppression-fleche')).toBeNull()
+		expect(document.activeElement).toBe(commande)
+		expect(screen.queryAllByTestId('ligne-diagramme')).toHaveLength(1)
+		expect(ecritures.filter((ecriture) => ecriture.operation === 'delete')).toHaveLength(0)
+	})
+
+	it('LE NOM ACCESSIBLE DE LA COMMANDE NOMME LA FLÈCHE, jamais « Supprimer » seul', async () => {
+		const { client } = clientEcrivant(LECTURES_DEUX_BLOCS_UNE_FLECHE, ok([{ id: FLECHE_PLEINE.id }]))
+		rendreCanevas(client)
+		const commande = (await screen.findAllByTestId('supprimer-fleche'))[0] as HTMLElement
+		const nom = commande.getAttribute('aria-label') ?? ''
+		expect(nom).toContain(BLOC_LIBRE.title)
+		expect(nom).toContain(BLOC_LIE.title)
 	})
 })

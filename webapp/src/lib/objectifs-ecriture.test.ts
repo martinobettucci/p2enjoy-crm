@@ -1,7 +1,15 @@
-// @verifies CRM-083 (docs/BACKLOG.md) — canevas d'objectifs, tranche 2a : la géométrie
+// @verifies CRM-083 (docs/BACKLOG.md) — canevas d'objectifs, tranche 2a : la géométrie ;
+//           tranche 2b-1 : le contenu ; tranche 2b-2a : le lien vers un channel ;
+//           tranche 2b-2b : les flèches — le tracé et la correction de sa direction ;
+//           tranche 2b-2c : les suppressions — une flèche, un bloc
 // @verifies docs/SPEC-goals.md §3 (poser un bloc — la position vient du GESTE ; déplacer et
-//           redimensionner — persiste `pos_x`, `pos_y`, `width`, `height`), §2.2 (colonnes),
-//           §4.2 (l'écriture est décidée par la base, jamais par l'écran)
+//           redimensionner — persiste `pos_x`, `pos_y`, `width`, `height` ; tracer une flèche avec
+//           le choix de sa direction, modifiable ensuite ; supprimer une flèche, supprimer un bloc
+//           — la suppression d'un bloc emporte ses flèches par CASCADE), §2.2 (colonnes),
+//           §2.3 (trois directions jamais normalisées en deux ; unicité de la paire ;
+//           `on delete cascade` des deux extrémités), §2.4 (`board_id` gardé par un trigger),
+//           §4.2 (l'écriture est décidée par la base, jamais par l'écran ; une flèche exige le
+//           droit d'écrire les DEUX blocs qu'elle relie)
 // @verifies docs/SPEC-permissions-rls.md §7 (un refus filtré par `using` est zéro ligne, pas une
 //           erreur)
 // @verifies docs/DESIGN_SYSTEM.md §5.29 (gestes de géométrie du canevas)
@@ -34,15 +42,21 @@ import {
 	bornerCoordonnee,
 	bornerDimension,
 	bornerRemplissage,
+	changerDirectionFleche,
 	classerRefusBloc,
+	classerRefusFleche,
+	CODE_DOUBLON,
 	ecrireContenuBloc,
 	ecrireGeometrieBloc,
 	grouperChannelsParTrack,
 	lierBlocAChannel,
 	lireChannelsLiables,
 	poserBloc,
+	supprimerBloc,
+	supprimerFleche,
+	tracerFleche,
 } from './objectifs-ecriture'
-import { COLONNES_BLOC } from './objectifs'
+import { COLONNES_BLOC, COLONNES_FLECHE } from './objectifs'
 import type { ClientCrm } from './supabase'
 
 const ID_TABLEAU = '5eed0000-0000-4000-8000-0000000000b1'
@@ -68,7 +82,7 @@ function ligneRendue(surcharge: Record<string, unknown> = {}): Record<string, un
 
 type AppelEcriture = {
 	table?: string
-	operation?: 'insert' | 'update'
+	operation?: 'insert' | 'update' | 'delete'
 	charge?: Record<string, unknown>
 	filtres: string[]
 	colonnes?: string
@@ -108,6 +122,13 @@ function espion(reponse: {
 				update: (charge: Record<string, unknown>) => {
 					appel.operation = 'update'
 					appel.charge = charge
+					return chaine
+				},
+				// UNE SUPPRESSION NE PORTE AUCUNE CHARGE, et l'espion le rend visible : `charge`
+				// reste indéfinie, ce qui permet d'éprouver qu'aucune flèche n'est nommée avant le
+				// bloc — la cascade vit en base (docs/SPEC-goals.md §2.3).
+				delete: () => {
+					appel.operation = 'delete'
 					return chaine
 				},
 			}
@@ -648,6 +669,262 @@ describe('lierBlocAChannel', () => {
 			},
 		} as unknown as ClientCrm
 		const resultat = await lierBlocAChannel(client, ID_BLOC, ID_CHANNEL)
+		expect(resultat.statut).toBe('refus')
+	})
+})
+
+// -------------------------------------------------------------------------------------------------
+// Tranche 2b-2b — les flèches
+// -------------------------------------------------------------------------------------------------
+
+const ID_SOURCE = '5eed0000-0000-4000-8000-0000000000c1'
+const ID_CIBLE = '5eed0000-0000-4000-8000-0000000000c2'
+const ID_FLECHE = '5eed0000-0000-4000-8000-0000000000c3'
+
+/** Une flèche telle que PostgREST la rend. */
+function ligneFleche(surcharge: Record<string, unknown> = {}): Record<string, unknown> {
+	return {
+		id: ID_FLECHE,
+		source_block_id: ID_SOURCE,
+		target_block_id: ID_CIBLE,
+		direction: 'forward',
+		label: null,
+		...surcharge,
+	}
+}
+
+describe('classerRefusFleche', () => {
+	it('donne au doublon SA nature, et non celle d’une saisie invalide', () => {
+		// §2.3 : « changer la direction d'une flèche existante est une modification, pas un
+		// ajout ». Le geste qui suit ce refus n'est donc pas de réessayer, et un texte générique
+		// enverrait retenter indéfiniment le même geste.
+		expect(classerRefusFleche(409, CODE_DOUBLON, 'duplicate key').nature).toBe('doublon')
+	})
+
+	it('classe la boucle et le trigger de tableau en `saisie-invalide`, tous deux en `23514`', () => {
+		expect(classerRefusFleche(400, CODE_SAISIE_INVALIDE, 'goal_links_boucle_check').nature).toBe('saisie-invalide')
+	})
+
+	it('classe le refus de politique en `interdit`, par le CODE avant le statut', () => {
+		expect(classerRefusFleche(200, CODE_INTERDIT, 'row-level security').nature).toBe('interdit')
+	})
+
+	it('retombe sur `indisponible` quand rien ne se reconnaît', () => {
+		expect(classerRefusFleche(500, undefined, 'boom').nature).toBe('indisponible')
+	})
+})
+
+describe('tracerFleche', () => {
+	it('envoie `board_id` avec les deux blocs, la garde restant au trigger de la base', async () => {
+		// §2.4 : la colonne est `not null` et un trigger `security definer` refuse une flèche dont
+		// un bloc n'appartient pas à ce tableau. La déduire ici ferait de l'écran la garde.
+		const { client, appel } = espion({ data: [ligneFleche()], error: null, status: 200 })
+		await tracerFleche(client, {
+			idTableau: ID_TABLEAU,
+			idSource: ID_SOURCE,
+			idCible: ID_CIBLE,
+			direction: 'forward',
+		})
+		expect(appel.table).toBe('goal_links')
+		expect(appel.operation).toBe('insert')
+		expect(appel.charge).toEqual({
+			board_id: ID_TABLEAU,
+			source_block_id: ID_SOURCE,
+			target_block_id: ID_CIBLE,
+			direction: 'forward',
+		})
+		expect(appel.colonnes).toBe(COLONNES_FLECHE)
+	})
+
+	it('envoie `backward` TEL QUEL, sans l’inverser en `forward` aux extrémités échangées', async () => {
+		// §2.3 : normaliser en deux directions ferait « sauter » la flèche au rechargement, dans
+		// l'autre sens que celui où elle a été tracée.
+		const { client, appel } = espion({ data: [ligneFleche({ direction: 'backward' })], error: null, status: 200 })
+		await tracerFleche(client, {
+			idTableau: ID_TABLEAU,
+			idSource: ID_SOURCE,
+			idCible: ID_CIBLE,
+			direction: 'backward',
+		})
+		expect(appel.charge).toEqual({
+			board_id: ID_TABLEAU,
+			source_block_id: ID_SOURCE,
+			target_block_id: ID_CIBLE,
+			direction: 'backward',
+		})
+	})
+
+	it('traduit le doublon plutôt que de l’anticiper', async () => {
+		const { client } = espion({
+			data: null,
+			error: { message: 'duplicate key value', code: CODE_DOUBLON },
+			status: 409,
+		})
+		const resultat = await tracerFleche(client, {
+			idTableau: ID_TABLEAU,
+			idSource: ID_SOURCE,
+			idCible: ID_CIBLE,
+			direction: 'both',
+		})
+		expect(resultat.statut).toBe('refus')
+		if (resultat.statut !== 'refus') return
+		expect(resultat.refus.nature).toBe('doublon')
+	})
+
+	it('rend la flèche du serveur, direction normalisée', async () => {
+		const { client } = espion({ data: [ligneFleche({ direction: 'inconnue' })], error: null, status: 200 })
+		const resultat = await tracerFleche(client, {
+			idTableau: ID_TABLEAU,
+			idSource: ID_SOURCE,
+			idCible: ID_CIBLE,
+			direction: 'forward',
+		})
+		expect(resultat.statut).toBe('tracee')
+		if (resultat.statut !== 'tracee') return
+		expect(resultat.fleche.direction).toBe('forward')
+		expect(resultat.fleche.source_block_id).toBe(ID_SOURCE)
+	})
+
+	it('ne lève pas lorsque le transport échoue', async () => {
+		const client = {
+			from: () => {
+				throw new Error('réseau coupé')
+			},
+		} as unknown as ClientCrm
+		const resultat = await tracerFleche(client, {
+			idTableau: ID_TABLEAU,
+			idSource: ID_SOURCE,
+			idCible: ID_CIBLE,
+			direction: 'forward',
+		})
+		expect(resultat.statut).toBe('refus')
+	})
+})
+
+describe('changerDirectionFleche', () => {
+	it('n’envoie QUE la direction, et filtre sur la flèche', async () => {
+		const { client, appel } = espion({ data: [ligneFleche({ direction: 'both' })], error: null, status: 200 })
+		await changerDirectionFleche(client, ID_FLECHE, 'both')
+		expect(appel.operation).toBe('update')
+		expect(appel.charge).toEqual({ direction: 'both' })
+		expect(appel.filtres).toContain(`eq(id,${ID_FLECHE})`)
+		expect(appel.colonnes).toBe(COLONNES_FLECHE)
+	})
+
+	it('rend « sans-effet » sur zéro ligne — l’appelant n’écrit pas l’un des deux blocs', async () => {
+		// Éprouvé CONTRE son succès : une implémentation qui rendrait « enregistrée » sur une
+		// réponse vide passerait tous les autres cas de ce bloc.
+		const { client } = espion({ data: [], error: null, status: 200 })
+		const resultat = await changerDirectionFleche(client, ID_FLECHE, 'both')
+		expect(resultat.statut).toBe('sans-effet')
+	})
+
+	it('ne lève pas lorsque le transport échoue', async () => {
+		const client = {
+			from: () => {
+				throw new Error('réseau coupé')
+			},
+		} as unknown as ClientCrm
+		const resultat = await changerDirectionFleche(client, ID_FLECHE, 'forward')
+		expect(resultat.statut).toBe('refus')
+	})
+})
+
+// -------------------------------------------------------------------------------------------------
+// Tranche 2b-2c — les suppressions
+// -------------------------------------------------------------------------------------------------
+
+describe('supprimerBloc', () => {
+	it('supprime la ligne du bloc et DEMANDE ce que le serveur a retiré', async () => {
+		// `.select('id')` est ce qui donne son existence à l'issue « sans-effet » : sans lui,
+		// PostgREST ne rend aucun corps et le silence de la clause `using` serait indistinguable
+		// d'une suppression réussie.
+		const { client, appel } = espion({ data: [{ id: ID_BLOC }], error: null, status: 200 })
+		const resultat = await supprimerBloc(client, ID_BLOC)
+		expect(appel.table).toBe('goal_blocks')
+		expect(appel.operation).toBe('delete')
+		expect(appel.filtres).toContain(`eq(id,${ID_BLOC})`)
+		expect(appel.colonnes).toBe('id')
+		expect(resultat.statut).toBe('supprime')
+	})
+
+	it('NE NOMME AUCUNE FLÈCHE : la cascade vit en base', async () => {
+		// §2.3 : `source_block_id` et `target_block_id` sont `on delete cascade`. Retirer les
+		// flèches une à une avant le bloc ferait de l'écran la garde d'une règle du schéma, et
+		// laisserait un état incohérent si la seconde requête échouait.
+		const { client, appel } = espion({ data: [{ id: ID_BLOC }], error: null, status: 200 })
+		await supprimerBloc(client, ID_BLOC)
+		expect(appel.table).toBe('goal_blocks')
+		expect(appel.charge).toBeUndefined()
+	})
+
+	it('rend « sans-effet » sur zéro ligne, et surtout pas « supprimé »', async () => {
+		const { client } = espion({ data: [], error: null, status: 200 })
+		const resultat = await supprimerBloc(client, ID_BLOC)
+		expect(resultat.statut).toBe('sans-effet')
+	})
+
+	it('traduit le refus de politique en `interdit`', async () => {
+		const { client } = espion({
+			data: null,
+			error: { message: 'row-level security', code: CODE_INTERDIT },
+			status: 403,
+		})
+		const resultat = await supprimerBloc(client, ID_BLOC)
+		expect(resultat.statut).toBe('refus')
+		if (resultat.statut !== 'refus') return
+		expect(resultat.refus.nature).toBe('interdit')
+	})
+
+	it('ne lève pas lorsque le transport échoue', async () => {
+		const client = {
+			from: () => {
+				throw new Error('réseau coupé')
+			},
+		} as unknown as ClientCrm
+		const resultat = await supprimerBloc(client, ID_BLOC)
+		expect(resultat.statut).toBe('refus')
+	})
+})
+
+describe('supprimerFleche', () => {
+	it('supprime la ligne de la flèche, et ne touche à aucun bloc', async () => {
+		const { client, appel } = espion({ data: [{ id: ID_FLECHE }], error: null, status: 200 })
+		const resultat = await supprimerFleche(client, ID_FLECHE)
+		expect(appel.table).toBe('goal_links')
+		expect(appel.operation).toBe('delete')
+		expect(appel.filtres).toContain(`eq(id,${ID_FLECHE})`)
+		expect(appel.colonnes).toBe('id')
+		expect(resultat.statut).toBe('supprimee')
+	})
+
+	it('rend « sans-effet » sur zéro ligne — l’appelant n’écrit pas les deux blocs reliés', async () => {
+		const { client } = espion({ data: [], error: null, status: 200 })
+		const resultat = await supprimerFleche(client, ID_FLECHE)
+		expect(resultat.statut).toBe('sans-effet')
+	})
+
+	it('emprunte le dictionnaire des FLÈCHES pour son refus, jamais celui des blocs', async () => {
+		// §4.2 : la politique porte sur le droit d'écrire les DEUX blocs reliés, et un refus
+		// formulé comme celui d'un bloc ferait chercher le problème du mauvais côté.
+		const { client } = espion({
+			data: null,
+			error: { message: 'row-level security', code: CODE_INTERDIT },
+			status: 403,
+		})
+		const resultat = await supprimerFleche(client, ID_FLECHE)
+		expect(resultat.statut).toBe('refus')
+		if (resultat.statut !== 'refus') return
+		expect(resultat.refus.nature).toBe('interdit')
+	})
+
+	it('ne lève pas lorsque le transport échoue', async () => {
+		const client = {
+			from: () => {
+				throw new Error('réseau coupé')
+			},
+		} as unknown as ClientCrm
+		const resultat = await supprimerFleche(client, ID_FLECHE)
 		expect(resultat.statut).toBe('refus')
 	})
 })
