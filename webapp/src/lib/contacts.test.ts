@@ -1,4 +1,5 @@
-// @verifies CRM-060 (docs/BACKLOG.md) — contacts et organisations, tranche 4 sous-tranches 4a et 4b
+// @verifies CRM-060 (docs/BACKLOG.md) — contacts et organisations, tranche 4 sous-tranches 4a, 4b,
+//           4c, 4d et 4e (chaque bloc porte ses propres références plus bas)
 // @verifies docs/SPEC-contacts.md §10.3 (la lecture, ses colonnes, son ordre, l'organisation
 //           embarquée), §10.4 (aucun droit calculé : zéro ligne est une liste vide),
 //           §10.7 (aucune pagination, aucun filtre)
@@ -22,12 +23,16 @@ import {
 	TRI_CONTACTS_FICHE,
 	CODE_CONTACT_INCONNU,
 	CODE_DOUBLON,
+	CODE_SAISIE_INVALIDE,
 	COLONNES_CONTACTS_AFFAIRE,
 	TRI_CONTACTS_AFFAIRE,
+	classerRefusCreation,
 	classerRefusRattachement,
+	creerContact,
 	detacherContact,
 	estFormeUuid,
 	libelleContactAvecOrganisation,
+	normaliserFacultatif,
 	lireContactsDeLAffaire,
 	lireContactsDuCarnet,
 	lireFicheOrganisation,
@@ -700,5 +705,265 @@ describe('libelleContactAvecOrganisation (§13.3)', () => {
 		expect(libelleContactAvecOrganisation({ full_name: 'Sophie Dupont', organisation: null })).toBe(
 			'Sophie Dupont',
 		)
+	})
+})
+
+// ------------------------------------------------------------------------------------------------
+//
+// @verifies CRM-060 (docs/BACKLOG.md) — tranche 4 sous-tranche 4e
+// @verifies docs/SPEC-contacts.md §14.3 (les onze mesures : la charge réellement envoyée, et les
+//           facultatifs blancs rendus `null` — JAMAIS `''`, mesures 8 et 9), §14.4 (le
+//           dictionnaire fermé des cinq refus, code PostgreSQL AVANT code HTTP, mesures 5 et 10)
+//
+// CE QUE CE BLOC ÉPROUVE, ET POURQUOI IL ÉPROUVE LA REQUÊTE ET PAS SEULEMENT SA VALEUR : les
+// mesures 8 et 9 du §14.3 ont DÉCIDÉ du contrat de saisie — `contacts_email_check` et
+// `contacts_phone_check` refusent la chaîne vide en `400` / `23514`. Une implémentation qui
+// enverrait `''` rendrait exactement le même résultat qu'ici tant que le serveur est un espion :
+// seule l'assertion sur la CHARGE la prend en défaut.
+
+/** Espion de création : `insert().select().single()`, la chaîne exacte de `creerContact`. */
+type AppelCreation = { table?: string; charge?: unknown; colonnes?: string; single: boolean }
+
+function espionCreation(reponse: {
+	data: unknown
+	error: { message: string; code?: string } | null
+	status: number
+}): { client: ClientCrm; appel: AppelCreation } {
+	const appel: AppelCreation = { single: false }
+	const chaine: Record<string, unknown> = {
+		select: (colonnes: string) => {
+			appel.colonnes = colonnes
+			return chaine
+		},
+		single: () => {
+			appel.single = true
+			return chaine
+		},
+		then: (resoudre: (valeur: unknown) => unknown) => Promise.resolve(reponse).then(resoudre),
+	}
+	const client = {
+		from: (table: string) => {
+			appel.table = table
+			return {
+				insert: (charge: unknown) => {
+					appel.charge = charge
+					return chaine
+				},
+			}
+		},
+	} as unknown as ClientCrm
+	return { client, appel }
+}
+
+/** La saisie du formulaire, cinq chaînes — le module normalise, pas l'écran (§14.3). */
+const SAISIE_NOM_SEUL = {
+	nom: 'Camille Roy',
+	idOrganisation: '',
+	fonction: '',
+	email: '',
+	telephone: '',
+}
+
+/** La ligne rendue par PostgREST pour une création : la relation y porte le nom de la TABLE. */
+const LIGNE_CREEE = {
+	id: '5eed0000-0000-4000-8000-0000000000e1',
+	full_name: 'Camille Roy',
+	email: null,
+	phone: null,
+	role_title: null,
+	organization_id: null,
+	organizations: null,
+}
+
+describe('classerRefusCreation (§14.4)', () => {
+	it('classe sur le CODE POSTGRESQL d’abord : `23505` et `23503` rendent tous deux `409`', () => {
+		// MESURES 5 ET 10 : le statut HTTP seul les CONFONDRAIT, alors qu'ils appellent des gestes
+		// opposés — corriger l'email, ou relire une liste d'organisations périmée.
+		expect(classerRefusCreation(409, CODE_DOUBLON, 'duplicate key').nature).toBe('doublon')
+		expect(classerRefusCreation(409, CODE_CONTACT_INCONNU, 'fk').nature).toBe('organisation-inconnue')
+		// Le MÊME statut, sans code : rien ne permet de trancher, et l'écran ne devine pas.
+		expect(classerRefusCreation(409, undefined, 'conflit').nature).toBe('indisponible')
+	})
+
+	it('classe les trois contraintes de forme sous une seule nature — mesures 6 à 9', () => {
+		// `contacts_full_name_check`, `contacts_email_check` et `contacts_phone_check` rendent le
+		// MÊME code : l'écran dit « la saisie est invalide », le champ fautif restant visible.
+		for (const detail of ['contacts_full_name_check', 'contacts_email_check', 'contacts_phone_check']) {
+			expect(classerRefusCreation(400, CODE_SAISIE_INVALIDE, detail).nature).toBe('saisie-invalide')
+		}
+	})
+
+	it('classe `403` / `42501` en `interdit` — mesures 4 et 11, la lectrice et le workspace étranger', () => {
+		expect(classerRefusCreation(403, '42501', 'row-level security').nature).toBe('interdit')
+		// `401` rejoint `interdit` : une session expirée n'est pas une panne, et l'écran ne
+		// distingue pas « pas le droit » de « plus le droit » — les deux appellent le même message.
+		expect(classerRefusCreation(401, undefined, 'jwt expired').nature).toBe('interdit')
+	})
+
+	it('rend `indisponible` pour tout le reste, sans jamais inventer une sixième nature', () => {
+		expect(classerRefusCreation(500, undefined, 'boom').nature).toBe('indisponible')
+		expect(classerRefusCreation(undefined, undefined, 'réseau coupé').nature).toBe('indisponible')
+	})
+
+	it('conserve le détail SANS l’afficher : il sert au diagnostic, pas à l’interface', () => {
+		// `docs/DESIGN_SYSTEM.md` §10 : un message de serveur n'est pas un texte d'interface. Le
+		// détail est porté pour le diagnostic ; c'est le dictionnaire fermé qui rend le texte.
+		expect(classerRefusCreation(409, CODE_DOUBLON, 'contacts_workspace_email_key').detail).toBe(
+			'contacts_workspace_email_key',
+		)
+	})
+})
+
+describe('creerContact (§14.3)', () => {
+	it('envoie la charge du §14.3 et demande la LIGNE en retour — table, colonnes, `single`', async () => {
+		const { client, appel } = espionCreation({ data: LIGNE_CREEE, error: null, status: 201 })
+		const resultat = await creerContact(client, {
+			idWorkspace: ID_WORKSPACE,
+			saisie: SAISIE_NOM_SEUL,
+		})
+		expect(resultat.statut).toBe('creee')
+		expect(appel.table).toBe('contacts')
+		// `source` n'est PAS envoyé : la base pose `manual` par défaut (§14.3, mesure 1). En
+		// envoyer un ici figerait dans l'écran une valeur qui appartient au modèle (§2.2).
+		expect(appel.charge).toEqual({
+			workspace_id: ID_WORKSPACE,
+			full_name: 'Camille Roy',
+			organization_id: null,
+			role_title: null,
+			email: null,
+			phone: null,
+		})
+		// Sans ce `select`, PostgREST ne rendrait aucun corps et le carnet devrait RELIRE la liste
+		// entière pour montrer la ligne créée (§14.5 cas e) : une seconde requête pour une donnée
+		// déjà en main.
+		expect(appel.colonnes).toBe(COLONNES_CONTACT_CARNET)
+		expect(appel.single).toBe(true)
+	})
+
+	it('rend `null` sur un facultatif BLANC, jamais `""` — mesures 8 et 9, qui ont DÉCIDÉ du contrat', async () => {
+		// `contacts_email_check` et `contacts_phone_check` refusent la chaîne vide en `400` /
+		// `23514` : envoyer `''` transformerait un champ laissé vide en refus serveur.
+		const { client, appel } = espionCreation({ data: LIGNE_CREEE, error: null, status: 201 })
+		await creerContact(client, {
+			idWorkspace: ID_WORKSPACE,
+			saisie: { nom: '  Camille Roy  ', idOrganisation: '   ', fonction: ' ', email: '', telephone: '\t' },
+		})
+		expect(appel.charge).toEqual({
+			workspace_id: ID_WORKSPACE,
+			// Le nom, lui, est OBLIGATOIRE : il est ébarbé, jamais annulé.
+			full_name: 'Camille Roy',
+			organization_id: null,
+			role_title: null,
+			email: null,
+			phone: null,
+		})
+	})
+
+	it('ébarbe les facultatifs RENSEIGNÉS plutôt que de les rejeter — la saisie humaine porte des blancs', async () => {
+		const { client, appel } = espionCreation({ data: LIGNE_CREEE, error: null, status: 201 })
+		await creerContact(client, {
+			idWorkspace: ID_WORKSPACE,
+			saisie: {
+				nom: 'Camille Roy',
+				idOrganisation: ' 5eed0000-0000-4000-8000-000000000081 ',
+				fonction: ' Acheteuse ',
+				email: ' camille@sogexia.example ',
+				telephone: ' +33 1 02 03 04 05 ',
+			},
+		})
+		expect(appel.charge).toEqual({
+			workspace_id: ID_WORKSPACE,
+			full_name: 'Camille Roy',
+			organization_id: '5eed0000-0000-4000-8000-000000000081',
+			role_title: 'Acheteuse',
+			email: 'camille@sogexia.example',
+			phone: '+33 1 02 03 04 05',
+		})
+	})
+
+	it('renomme la relation embarquée en `organisation` : l’écran ne dépend d’aucun nom de table', async () => {
+		const { client } = espionCreation({
+			data: {
+				...LIGNE_CREEE,
+				organization_id: '5eed0000-0000-4000-8000-000000000081',
+				organizations: {
+					id: '5eed0000-0000-4000-8000-000000000081',
+					name: 'Sogexia',
+					domain: 'sogexia.example',
+				},
+			},
+			error: null,
+			status: 201,
+		})
+		const resultat = await creerContact(client, {
+			idWorkspace: ID_WORKSPACE,
+			saisie: { ...SAISIE_NOM_SEUL, idOrganisation: '5eed0000-0000-4000-8000-000000000081' },
+		})
+		expect(resultat.statut).toBe('creee')
+		if (resultat.statut !== 'creee') return
+		// C'est cette forme qui permet à la ligne créée de rejoindre le tableau SANS relecture
+		// (§14.5 cas e et f) : la cellule d'organisation y trouve son lien.
+		expect(resultat.contact.organisation).toEqual({
+			id: '5eed0000-0000-4000-8000-000000000081',
+			name: 'Sogexia',
+			domain: 'sogexia.example',
+		})
+		expect('organizations' in resultat.contact).toBe(false)
+	})
+
+	it('traduit les cinq refus mesurés, et rend la saisie intacte à l’appelant', async () => {
+		const cas = [
+			{ statut: 403, code: '42501', message: 'row-level security', nature: 'interdit' },
+			{ statut: 409, code: CODE_DOUBLON, message: 'contacts_workspace_email_key', nature: 'doublon' },
+			{
+				statut: 409,
+				code: CODE_CONTACT_INCONNU,
+				message: 'contacts_organization_id_workspace_id_fkey',
+				nature: 'organisation-inconnue',
+			},
+			{ statut: 400, code: CODE_SAISIE_INVALIDE, message: 'contacts_email_check', nature: 'saisie-invalide' },
+			{ statut: 500, code: undefined, message: 'boom', nature: 'indisponible' },
+		] as const
+		for (const attendu of cas) {
+			const { client } = espionCreation({
+				data: null,
+				error: { message: attendu.message, code: attendu.code },
+				status: attendu.statut,
+			})
+			const resultat = await creerContact(client, {
+				idWorkspace: ID_WORKSPACE,
+				saisie: SAISIE_NOM_SEUL,
+			})
+			expect(resultat.statut).toBe('refus')
+			if (resultat.statut !== 'refus') return
+			expect(resultat.refus.nature).toBe(attendu.nature)
+		}
+	})
+
+	it('ne lève JAMAIS : une exception du client devient un refus `indisponible`', async () => {
+		const client = {
+			from: () => {
+				throw new Error('réseau coupé')
+			},
+		} as unknown as ClientCrm
+		const resultat = await creerContact(client, {
+			idWorkspace: ID_WORKSPACE,
+			saisie: SAISIE_NOM_SEUL,
+		})
+		expect(resultat.statut).toBe('refus')
+		if (resultat.statut !== 'refus') return
+		expect(resultat.refus.nature).toBe('indisponible')
+		// Le message de l'exception est CONSERVÉ pour le diagnostic, jamais affiché (§14.4).
+		expect(resultat.refus.detail).toBe('réseau coupé')
+	})
+})
+
+// @verifies docs/SPEC-contacts.md §14.3 (la règle des facultatifs, PARTAGÉE avec `rattacherContact`)
+describe('normaliserFacultatif (§14.3)', () => {
+	it('rend `null` sur une saisie blanche, et la valeur ébarbée sinon', () => {
+		expect(normaliserFacultatif('')).toBeNull()
+		expect(normaliserFacultatif('   ')).toBeNull()
+		expect(normaliserFacultatif('\t\n')).toBeNull()
+		expect(normaliserFacultatif(' Acheteuse ')).toBe('Acheteuse')
 	})
 })
