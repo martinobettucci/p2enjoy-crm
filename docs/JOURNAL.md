@@ -20336,3 +20336,34 @@ assertions**, `e2e:api` **786 passés**, `typecheck`, `types:check` et `build` v
 une flèche à `Espace` avec le choix de sa direction, la modifier, supprimer une flèche et un bloc,
 puis créer et archiver un tableau, et enfin le harnais dédié `scripts/verify-objectifs-canevas.sh`.
 Deux arbitrages restent en attente : **INC-169** et **INC-170**.
+
+**Campagne complète de la session, exécutée une fois.** `test:unit` **57 fichiers / 1902 tests**,
+`test:sql` **47 fichiers / 2351 assertions**, `e2e:api` **786 passés**, `e2e:mail` **42 passés**,
+`pytest` **244**, `typecheck`, `types:check` et `build` verts. `scripts/verify-objectifs.sh`
+**46 contrôles, aucune anomalie**.
+
+`e2e:ui` a rendu **468 passés / 5 échecs**, et **quatre de ces cinq échecs étaient les miens, au
+sens le plus bête : je les avais fabriqués.** J'avais lancé `scripts/verify-webapp.sh` PENDANT que
+la suite d'interface tournait, or ce harnais exécute lui-même `e2e:ui` et la configuration pose
+`reuseExistingServer: false` — les deux se disputaient le port 4173. Rejoués seuls, sans
+concurrence : **89 passés, 1 échec**. La leçon est de méthode et vaut d'être écrite : dans ce dépôt,
+**deux preuves d'interface ne se lancent jamais en parallèle**, sous peine de mesurer la machine
+plutôt que le produit.
+
+Le cinquième échec est **INC-166**, à sa signature exacte — `administration-workflows.spec.ts:1116`,
+`Test timeout of 30000ms exceeded` puis `Target page … has been closed` dans `purgerChamps`. Il est
+préexistant, déjà consigné, établi par une ligne de base de part et d'autre lors de deux sessions
+antérieures, et étranger à ce changement qui ne touche aucun écran d'administration. L'arbitrage
+qu'il attend reste dû.
+
+`scripts/verify-webapp.sh` rend **42 contrôles, 2 anomalies** : la première est l'échec d'`e2e:ui`
+ci-dessus, mesuré sous la concurrence que j'avais créée ; la seconde est **INC-158**, préexistante —
+`node scripts/lib/classes-css.mjs` cite **273** classes et n'en trouve que trois absentes du CSS
+produit, `h-10 py-0.5 text-text-1`, exactement celles du registre. **Les cinq classes que cette
+tranche ajoute sont toutes engendrées**, `disabled:text-text-3` comprise, vérifiée dans la feuille
+produite.
+
+Les quarante-huit autres `scripts/verify-*.sh` n'ont pas été rejoués, la série entière ne tenant pas
+dans une session (`docs/CloudWorker.md` §2.1 ter). Les captures des autres unités, régénérées par la
+campagne, ont été **restaurées** et non committées : ce changement ne touche que l'écran des
+objectifs, et versionner cent trente captures d'écrans qu'il ne modifie pas serait du bruit.
