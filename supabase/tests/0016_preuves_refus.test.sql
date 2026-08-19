@@ -37,7 +37,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(57);
+select plan(58);
 
 -- =============================================================================================
 -- 1. Inventaire des politiques — ce qui rend le harnais capable d'échouer (§7.4)
@@ -151,10 +151,31 @@ select is(pg_temp.politiques('budget_occurrences'),
 	'`budget_occurrences` porte ses QUATRE politiques : lecture par le budget, les trois écritures '
 	'par l''administrateur du workspace');
 
+-- RÉVISÉ PAR `CRM-085`, qui livre les lignes de coût. Même geste que pour `CRM-084` juste
+-- au-dessus : le compte ET l'inventaire nominal, ensemble.
+--
+-- CE QUE CES QUATRE NOMS DISENT DE LA RÈGLE. Le suffixe est ici `_card` et non `_admin`, et c'est
+-- exactement l'autre moitié de l'arbitrage du §3 : le BUDGET est un cadre — administrateur du
+-- workspace —, l'AFFECTATION est un geste quotidien — quiconque écrit l'affaire. La lecture porte
+-- `_card_et_budget`, seul nom de tout l'inventaire à citer DEUX objets : c'est la double condition
+-- du §3.1, et un nom qui n'en citerait qu'un signalerait déjà la fuite.
+select is(pg_temp.politiques('card_costs'),
+	array['card_costs_insertion_ecriture_card', 'card_costs_lecture_card_et_budget',
+	      'card_costs_maj_ecriture_card', 'card_costs_suppression_ecriture_card'],
+	'`card_costs` porte ses QUATRE politiques : lecture par la card ET le budget, les trois '
+	'écritures par qui écrit la card (docs/SPEC-costs.md §3)');
+
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	99,
-	'QUATRE-VINGT-DIX-NEUF politiques dans `public`, et pas une de plus — 91 avant `CRM-084`, plus '
+	103,
+	'CENT TROIS politiques dans `public`, et pas une de plus — 99 avant `CRM-085`, plus les QUATRE '
+	'politiques des lignes de coût : lecture, insertion, MAJ, suppression sur `card_costs` '
+	'(docs/SCHEMA.md §9 bis.7). CETTE TABLE N''A AUCUNE RPC NON PLUS, et ses quatre politiques ne '
+	'portent pas toutes la même condition — c''est ce qui les rend irréductibles les unes aux '
+	'autres : la lecture exige la card ET le budget (§3.1), l''insertion et la suppression '
+	'exigent en outre le budget OUVERT, et la mise à jour ne l''exige PAS, sans quoi il faudrait '
+	'rouvrir une enveloppe pour saisir une facture arrivée après sa clôture (§2.3). Avant elles : '
+	'99 avant `CRM-085`, soit 91 avant `CRM-084`, plus '
 	'les HUIT politiques des enveloppes budgétaires : QUATRE par table — lecture, insertion, MAJ, '
 	'suppression — sur `budgets` et `budget_occurrences` (docs/SCHEMA.md §9 bis.7). COMME LE '
 	'TABLEAU D''OBJECTIFS, CE COUPLE N''A AUCUNE RPC : créer, doter, rendre récurrent ou clôturer '
