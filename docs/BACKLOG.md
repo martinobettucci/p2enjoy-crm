@@ -7121,9 +7121,11 @@ migration `0046`) :
             *(Case restée à `[ ]` par la session qui l'a livrée, alors que le corps de l'unité la
             documente comme livrée et que `docs/JOURNAL.md` décision 451 en rend compte : corrigée
             le 2026-08-18 avec la sous-tranche 4e, sans autre changement — même oubli qu'en 4b.)*
-      - [~] **4e — La création d'un contact** depuis le carnet (`docs/SPEC-contacts.md` §14,
-            `docs/DESIGN_SYSTEM.md` §5.23). **Spécifiée, codée et prouvée en E2E le 2026-08-18** ;
-            ce qui reste dû est nommé ci-dessous.
+      - [x] **4e — La création d'un contact** depuis le carnet (`docs/SPEC-contacts.md` §14,
+            `docs/DESIGN_SYSTEM.md` §5.23). **Spécifiée et codée le 2026-08-18, intégralement
+            prouvée le 2026-08-19** — les preuves qui manquaient à sa livraison (unitaires,
+            API, parcours clavier) sont écrites et vertes, et elles ont trouvé un défaut du
+            produit, corrigé à sa cause. Voir le détail plus bas.
 
 
 **Quatrième tranche, sous-tranche 4a livrée le 2026-08-18 — le carnet de contacts**
@@ -7388,8 +7390,44 @@ pagination ; le type `file` reste en saisie texte ; une référence morte est **
 réparée** — le nettoyage reste l'arbitrage attendu du §6 point 4 ; et le rôle d'un membre n'est pas
 affiché dans le sélecteur `user`.
 
-**Ce qui reste dû sur `CRM-060` après la tranche 4** : la **création** d'un contact, la **fiche**
-d'un contact, et l'arbitrage sur les **références mortes**. `CRM-060` demeure `[~]`.
+**Sous-tranche 4e, achevée le 2026-08-19 — les preuves qui manquaient, et le défaut qu'elles ont
+trouvé** (`docs/SPEC-contacts.md` §14.8, la spécification étant écrite et committée le 2026-08-18
+avant toute ligne de code) :
+
+- [x] `webapp/src/lib/contacts.test.ts` (**18 tests ajoutés**, 47 dans le fichier) : la charge
+      RÉELLEMENT envoyée par `creerContact` — un facultatif blanc rendu `null` et jamais `''`,
+      ce que les mesures 8 et 9 du §14.3 ont décidé —, la ligne demandée en retour, la relation
+      embarquée renommée, et le classement des cinq refus qui lit le **code PostgreSQL avant le
+      statut HTTP**, sans quoi `23505` et `23503` se confondraient sous leur `409` commun.
+- [x] `webapp/src/app/Carnet.test.tsx` (**11 tests ajoutés**, 19 dans le fichier) : les cas a à l
+      du §14.5, sur un client **keyé par table** — le carnet interroge `contacts`, `workspaces` et
+      `organizations`, et un espion répondant la même chose à toutes ne pourrait éprouver ni la
+      condition de lecture du §13.4, ni les cas k et l.
+- [x] **DÉFAUT DU PRODUIT TROUVÉ PAR LA PREUVE DU CAS c, ET CORRIGÉ À SA CAUSE** :
+      `webapp/src/app/Carnet.tsx` rendait le focus par un `focus()` appelé dans le gestionnaire de
+      fermeture, alors que la commande d'ouverture est **démontée** tant que le formulaire est
+      ouvert — la référence était nulle, et « Annuler » au clavier renvoyait en tête de page
+      (`docs/DESIGN_SYSTEM.md` §5.21 et §5.23). Remède : celui que la preuve clavier de `CRM-077`
+      a déjà établi pour `BlocContactsCard` — drapeau posé à la fermeture, focus rendu par l'effet
+      au tour de rendu suivant, **aucune temporisation** (`CLAUDE.md` §18).
+- [x] `e2e/api/contacts.spec.ts` (**12 scénarios ajoutés**, 27 dans le fichier) : les **onze
+      mesures** du §14.3 avec les jetons réels des trois profils, chaque refus **relisant la ligne**
+      pour la constater absente (décision 70), plus une garde qui exige le seed **intact** — trois
+      contacts, aucune sonde survivante.
+- [x] `e2e/ui/carnet-creation.spec.ts` : le **parcours clavier** que le §14.8 exigeait et qui
+      manquait — le geste atteint par le focus, ouvert par la touche, annulé, et le focus constaté
+      **revenu** sur la commande ; puis la création complète au clavier. **4 scénarios verts**,
+      console vierge.
+- [x] **L'assertion « l'état vide n'offre aucune action »** du cas f du §10.6 est **RÉVISÉE** avec
+      son motif dans le fichier, jamais retirée ni contournée (mécanisme de la décision 51) : la
+      sous-tranche 4e livre ce geste, la condition de la règle a cessé d'être vraie, et l'assertion
+      se scinde en deux — sans espace de travail résolu, aucun geste ; avec, le geste est offert.
+- [x] Capture `carnet-creation-clavier-1440.jpg` produite **et observée** (`CLAUDE.md` §16) :
+      l'anneau de focus est bien sur « Nouveau contact » après la création, et la ligne créée a
+      rejoint le tableau. `CHANGELOG.md` mis à jour dans le même changement.
+
+**Ce qui reste dû sur `CRM-060` après la tranche 4** : la **fiche** d'un contact, et l'arbitrage sur
+les **références mortes** (§6, point 4). `CRM-060` demeure `[~]`.
 
 **Troisième tranche livrée, 2026-08-18 — la résolution des champs `contact` et `user`**
 (`docs/SPEC-contacts.md` §9, migration `0047`) :

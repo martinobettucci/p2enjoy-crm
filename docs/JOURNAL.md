@@ -19147,3 +19147,57 @@ tests unitaires de `creerContact`, `classerRefusCreation` et du carnet (cas a à
 étendre `e2e/api/contacts.spec.ts` aux onze mesures du §14.3, puis passer la campagne complète.
 Le code, lui, est livré et poussé. Ce qui reste dû sur `CRM-060` après 4e est la **fiche** d'un
 contact et l'arbitrage sur les **références mortes** (§6, point 4).
+
+## décision 453 — `CRM-060` sous-tranche 4e soldée : les preuves manquantes, et le défaut qu'elles ont trouvé
+
+**L'unité, et le choix.** La décision 452 laissait `4e` en `[~]` avec sa reprise **bornée** et
+nommée : les tests unitaires de `creerContact`, `classerRefusCreation` et du carnet, puis la preuve
+d'API des onze mesures. C'est le §4.2 point 1 de `docs/CloudWorker.md` — la dernière entrée du
+journal désigne une reprise d'unité produit en cours. La spécification `docs/SPEC-contacts.md` §14
+**existait déjà** et couvrait exactement ce qui restait à livrer : je l'ai lue, vérifiée, et je suis
+passé directement au code, comme l'UNIQUE EXCEPTION du §3.2 point 3 le prescrit. Aucun commit
+documentaire d'ouverture n'a donc été créé — en écrire un aurait été la session en échec que le
+§4.2 bis décrit.
+
+**LES PREUVES ONT TROUVÉ UN DÉFAUT DU PRODUIT, ET C'EST LEUR JUSTIFICATION.** Le cas c du §14.5 —
+« le formulaire est refermé, le focus **revient** à la commande qui l'a ouvert » — était **faux**.
+`Carnet.tsx` appelait `commandeOuverture.current?.focus()` depuis le gestionnaire de fermeture, or
+cette commande et le formulaire **s'excluent** : le bouton est démonté tant que le formulaire est
+ouvert, et React avait déjà mis la référence à `null`. Le focus retombait sur le document, si bien
+qu'« Annuler » au clavier renvoyait en tête de page — le défaut exact que `docs/DESIGN_SYSTEM.md`
+§5.21 nomme, et que §5.23 reprend pour cet écran. La sous-tranche 4e avait été déclarée « prouvée en
+E2E » sans que rien n'exerce ce cas.
+
+Le remède n'a rien inventé : le dépôt le portait déjà. `BlocContactsCard` a rencontré le **même**
+défaut, trouvé par la preuve clavier de `CRM-077`, et le résout par un drapeau posé à la fermeture
+et un effet qui rend le focus au tour de rendu suivant, quand la commande est remontée. Aucune
+temporisation, aucun contournement : c'est le cycle de rendu de React qui ordonne les deux gestes,
+pas une horloge (`CLAUDE.md` §18).
+
+**Une assertion RÉVISÉE, pas retirée.** Le cas f du §10.6 exigeait que l'état vide du carnet n'offre
+**aucune** action. La sous-tranche 4e livre ce geste, et le carnet le porte **aussi** dans l'état
+vide — un carnet vide est précisément celui où l'on veut ajouter un contact. L'assertion passait
+encore, mais pour une raison **accidentelle** : l'espion de test ne résolvait aucun espace de
+travail, donc aucun geste ne pouvait s'afficher. Elle affirmait une règle abrogée. Révisée avec son
+motif dans le fichier (mécanisme de la décision 51), elle se scinde en deux et devient plus forte :
+sans espace de travail résolu, aucun geste ; avec, le geste est offert.
+
+**Une supposition de ma preuve d'API a été corrigée sur la MESURE.** Le scénario qui garde le seed
+intact attendait `['Léo Marchand', 'Sophie Dupont', 'Élise Fabre']` : la collation de la base range
+« Élise » **en tête**, ce que `Carnet.test.tsx` fige d'ailleurs depuis la sous-tranche 4a. L'ordre
+attendu vient désormais de la mesure et non d'un souvenir, et le commentaire le dit.
+
+**Campagne de fin de session.** `typecheck` **vert** ; `build` **vert** ; `test:unit` **1614 verts,
+50 fichiers** ; `test:sql` **45 fichiers, 2269 assertions, aucune anomalie** ; `e2e:api` **713
+verts** ; `e2e:ui` **408 verts, AUCUN échec**, la suite entière — et le compteur d'interface de
+`scripts/verify-harness.sh` porté de 407 à **408** dans le même changement, avec son motif écrit.
+Les preuves de l'unité, rejouées isolément :
+`contacts.test.ts` **47 verts**, `Carnet.test.tsx` **19 verts**, `e2e/api/contacts.spec.ts` **27
+verts**, `e2e/ui/carnet-creation.spec.ts` **4 verts, console vierge**. Capture
+`carnet-creation-clavier-1440.jpg` **observée** : l'anneau de focus est bien sur « Nouveau contact »
+après création au clavier, et la ligne créée a rejoint le tableau à sa place de tri.
+
+**Où reprendre.** `4e` est **close**. `CRM-060` reste `[~]`, et ce qui lui manque est nommé au §6 et
+au §13.8 : la **fiche** d'un contact, et l'arbitrage sur les **références mortes** — une valeur qui
+désigne un contact supprimé demeure en base, et aucune surface ne la nettoie. La prochaine exécution
+peut prendre cette fiche, ou la première unité `[ ]` du plan.

@@ -562,7 +562,14 @@ SCENARIOS_API=704
 # avec eux. Valeur REMESURÉE ici par `playwright test --list` après synchronisation avec
 # `origin/main` (« Total: 407 tests in 33 files »), plutôt que laissée fausse — un compteur figé qui
 # rougit ne dit plus rien du produit.
-SCENARIOS_UI=407
+#
+# Porté de 407 à **408** par l'achèvement de `CRM-060` sous-tranche 4e : le §14.8 exigeait le
+# **parcours clavier**, qui manquait, et `e2e/ui/carnet-creation.spec.ts` le porte désormais — il
+# est la preuve, sur la pile réelle, que fermer le formulaire REND le focus à la commande
+# d'ouverture (cas c du §14.5), défaut trouvé et corrigé le 2026-08-19. Le nombre de FICHIERS ne
+# bouge pas. Valeur MESURÉE par `playwright test --list` (« Total: 408 tests in 33 files »), puis
+# par l'exécution de la suite entière, **408 verts, aucun échec**.
+SCENARIOS_UI=408
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

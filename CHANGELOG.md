@@ -85,6 +85,17 @@ d'exécuter le code attendu.
 
 ### Corrigé
 
+- **`CRM-060` tranche 4e — fermer le formulaire du carnet perdait le focus.** Activer « Annuler »
+  au clavier laissait le focus sur le document et renvoyait donc en tête de page, au lieu de le
+  rendre à la commande « Nouveau contact » comme `docs/DESIGN_SYSTEM.md` §5.21 et §5.23 l'exigent.
+  La cause : cette commande est **démontée** tant que le formulaire est ouvert — les deux
+  s'excluent —, si bien que le `focus()` appelé depuis le gestionnaire de fermeture visait une
+  référence déjà nulle. Trouvé par la preuve unitaire du cas c, corrigé à sa cause par le remède
+  que la preuve clavier de `CRM-077` avait déjà établi pour le bloc des contacts d'une affaire :
+  le focus est rendu par un effet, au tour de rendu suivant, quand la commande est remontée —
+  **aucune temporisation**. Le même retour vaut désormais après une création réussie, le
+  formulaire se refermant par le même chemin.
+
 - **`CRM-060` tranche 4b — une règle responsive employait un palier qui n'existe pas.** La liste
   de définitions de la fiche citait `sm:grid-cols-2`, absente du CSS produit : `tokens.css`
   réinitialise tous les paliers (`--breakpoint-*: initial`) et n'en définit que trois — `md`,
