@@ -13,6 +13,46 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Documentation
+
+- **Deux fonctionnalités neuves sont spécifiées avant toute ligne de code** (décisions 431 et 432,
+  demandées par le responsable le 2026-08-19) : le **tableau d'objectifs** et la **gestion des
+  coûts**. Cinq unités neuves, `CRM-082` à `CRM-086`, en **chunk 6**. Aucun code n'est écrit tant
+  que ce commit n'est pas poussé (`CLAUDE.md` §5).
+- **`docs/SPEC-goals.md` — le tableau d'objectifs est une lavagna, pas une projection des données.**
+  Le §1 pose en tête les quatre automatismes **interdits** : calculer le remplissage d'un bloc
+  depuis les cards du channel lié, créer un lien automatiquement, bouger un bloc en réaction à un
+  événement, déduire un chemin critique. Une évolution qui proposerait le calcul automatique est un
+  **changement de nature**, à arbitrer comme tel.
+- **Trois choix de modélisation motivés** : trois directions de flèche et non deux, parce que
+  normaliser `<-` ferait sauter la flèche au rechargement ; `channel_id` en `set null` et non
+  `cascade`, parce qu'un channel mis à la corbeille ne doit pas détruire un objectif ;
+  `goal_links.board_id` redondant, parce qu'il rend impossible un lien entre deux tableaux.
+- **Un bloc lié à un channel fermé est invisible, pas grisé.** Le griser révélerait qu'un objectif
+  existe sur un channel interdit. Conséquence assumée : deux personnes du même workspace peuvent
+  voir deux diagrammes différents du même tableau.
+- **`docs/SPEC-costs.md` — une affaire porte des LIGNES de coût, pas une affectation.** Correction
+  du responsable en cours de rédaction : une card cumule publicité (prévu 100, réel à saisir) et
+  production (prévu 350, réel 375). Une affectation unique aurait été modélisée en colonnes sur
+  `cards` et se serait révélée fausse au premier cas réel — la correction a coûté un paragraphe, elle
+  aurait coûté une migration.
+- **`actual_cost` nul n'est PAS zéro** : un réel inconnu ne compte pas dans les agrégats, et l'écran
+  écrit obligatoirement « n lignes sans coût réel saisi ». Sans cette mention, un réel bas se lit
+  comme une économie alors qu'il n'est qu'une saisie en retard.
+- **Aucune génération automatique d'occurrences.** On crée janvier, puis février, et **pas mars**
+  s'il ne s'est rien passé. `period_start` et `period_end` sont purement descriptives et ne
+  refusent aucune ligne.
+- **Autorisations** : la lavagna s'écrit par tout membre pouvant écrire — poser un **lien** exige en
+  revanche le droit d'**écriture** sur le channel visé ; le budget est un cadre réservé aux
+  administrateurs, la ligne de coût un geste ouvert à qui écrit la card. Lecture : la règle des
+  tracks, droits fins et réouverture transitive compris.
+- **Le cumul du workspace se calcule APRÈS la RLS**, jamais avec la clé de service : un total exact
+  qui divulguerait par soustraction un budget fermé est un défaut d'autorisation, pas d'affichage.
+  `card_costs` porte pour la même raison une **double** condition de lecture — card lisible **et**
+  budget lisible.
+- `docs/SCHEMA.md` §9 bis (six tables et leurs politiques), `docs/DAT.md` §7 bis (aucun service ni
+  dépendance nouvelle), `docs/DESIGN_SYSTEM.md` §5.29 et §5.30, `docs/MASTER_PLAN.md` chunk 6 et
+  `docs/BACKLOG.md` sont écrits dans le même changement.
 ### `CRM-081` — l'inbox énumère des conversations, plus des messages isolés (tranche 2 f)
 
 - **La liste de l'inbox groupe les messages en fils.** Une conversation — un message et les réponses
@@ -50,7 +90,6 @@ d'exécuter le code attendu.
   régénéré, et deux témoins figés sont révisés avec leur motif.
 - Reste dû sur `CRM-081` après la tranche 2 e : le **groupement** des messages en fils dans
   l'inbox — livré depuis par la tranche 2 f ci-dessus.
-
 
 ### Ajouté
 

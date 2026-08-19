@@ -35,6 +35,7 @@ Chunk 2  INFRASTRUCTURE          CRM-001 → CRM-019, puis CRM-022
 Chunk 3  CRM UTILISABLE          CRM-020 → CRM-047
 Chunk 4  MESSAGERIE              CRM-050 → CRM-059
 Chunk 5  EXTENSIONS              CRM-060 → CRM-081
+Chunk 6  OBJECTIFS ET COÛTS      CRM-082 → CRM-086
          PROPOSITIONS            CRM-P01 → CRM-P12  (toutes arbitrées, décision 299)
 ```
 
@@ -56,6 +57,7 @@ fonctionnalité différenciante mais aussi la plus risquée techniquement.
 | 3.d | `CRM-040` → `CRM-047` | Les cards et leurs vues, puis le seed de démonstration complet. |
 | 4 | `CRM-050` → `CRM-059` | Messagerie : infrastructure mail, puis ingestion, puis interface, puis envoi. |
 | 5 | `CRM-060` → `CRM-081` | Extensions, chacune indépendamment livrable. `CRM-075` (administration des tracks et des channels, décision 332) précède `CRM-076` : un workflow s'affecte à un channel, qui vit dans un track. Le snooze, qui portait `CRM-075`, est renuméroté `CRM-081` par la décision 335. |
+| 6 | `CRM-082` → `CRM-086` | Objectifs et coûts, demandés le 2026-08-19 (décisions 431 et 432). Deux chaînes indépendantes : `CRM-082` → `CRM-083` pour la lavagna, `CRM-084` → `CRM-085` → `CRM-086` pour les budgets. |
 
 **Contraintes d'ordre à ne pas enfreindre :**
 
@@ -86,6 +88,8 @@ Les commentaires `@spec` citent au minimum l'unité et le chapitre applicable :
 | Données de développement, seed | `docs/SPEC-seed.md` |
 | Types TypeScript générés | `docs/SPEC-types.md` |
 | Harnais de tests, exécuteurs, projets Playwright | `docs/SPEC-test-harness.md` |
+| Objectifs, blocs, flèches | `docs/SPEC-goals.md` |
+| Budgets, occurrences, lignes de coût | `docs/SPEC-costs.md` |
 | Interface | `docs/DESIGN_SYSTEM.md` |
 | Architecture, services, déploiement | `docs/DAT.md` |
 | Fonctionnalité visible | `docs/manual.md` (chapitre concerné) |

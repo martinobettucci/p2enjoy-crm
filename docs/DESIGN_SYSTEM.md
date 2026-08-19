@@ -1745,7 +1745,55 @@ deux à la fois, un refus n'efface pas la saisie.
 
 - **Aucune couleur, aucun jeton, aucune icône nouvelle.** Ces deux contrôles empruntent entièrement
   au §5.7 et au §5.7 ter.
+### 5.29 Canevas d'objectifs — `CRM-083`
 
+Spécifié avant code, `docs/SPEC-goals.md` §5.
+
+**Bloc.** Carte `--color-surface`, rayon standard, ombre légère, **liseré gauche de 4 px** portant
+la couleur de jeton du bloc. Titre en 15 px `--color-ink`, extrait du corps en 13 px
+`--color-text-2` sur deux lignes maximum. En pied, la jauge de remplissage et, si le bloc est lié,
+la **pilule de channel** au format « Track › Channel », qui réemploie la pilule de track du §5.5 bis.
+
+**Jauge de remplissage.** Barre de 6 px, fond `--color-brand-soft`, remplissage `--color-brand`, la
+valeur en clair à droite. **Elle ne change jamais de couleur avec la valeur** : un remplissage saisi
+à la main n'est ni bon ni mauvais, et le vert ou le rouge y introduiraient un jugement que le
+produit n'a pas à porter. C'est l'écart le plus tentant de ce composant, et il est interdit.
+
+**Flèche.** Trait de 2 px `--color-text-3`, pointe pleine à chaque extrémité concernée par la
+direction. Libellé centré en 12 px sur un fond `--color-surface` qui interrompt le trait. Une flèche
+dont la cible n'est pas rendue — bloc masqué par la RLS — est **pointillée et sans libellé** ;
+l'écran ne nomme jamais ce qu'il cache.
+
+**Focus et clavier.** L'anneau de focus `--color-brand` porte sur le bloc entier. Le canevas est
+entièrement pilotable au clavier (§8 et `docs/SPEC-goals.md` §5.5), et une **liste textuelle
+équivalente** du diagramme — « A → B », « B ↔ C » — accompagne le canevas pour les lecteurs
+d'écran. Un diagramme qui n'existe que visuellement n'est pas accessible.
+
+### 5.30 Histogramme prévisionnel / réel — `CRM-086`
+
+Spécifié avant code, `docs/SPEC-costs.md` §4.2.
+
+**Deux barres adjacentes par budget**, séparées de 4 px, groupes séparés de 24 px.
+
+| Série | Jeton |
+|---|---|
+| Prévisionnel | `--color-brand` |
+| Réel | `--color-success` |
+| Réel **dépassant** le prévisionnel | `--color-danger`, sur la seule barre concernée |
+
+**La couleur ne porte jamais seule l'information** (§1) : chaque barre affiche sa valeur en clair
+au-dessus, la légende nomme les deux séries, et un **tableau équivalent** est rendu sous le
+graphique — c'est lui que lira un lecteur d'écran, et lui qui reste juste si la couleur ne passe pas.
+
+**Axe et échelle.** L'axe des valeurs part de zéro, toujours ; une échelle tronquée exagère
+visuellement un écart et ferait mentir la comparaison qui est l'objet même de cet écran.
+
+**Mention des réels manquants.** Sous le graphique, en 13 px `--color-text-2` : « n lignes sans coût
+réel saisi, pour m € de prévisionnel ». Elle est **obligatoire** dès qu'une ligne n'a pas de réel.
+Sans elle, un réel bas se lit comme une économie alors qu'il n'est qu'une saisie en retard.
+
+**État vide.** Un budget sans ligne rend deux barres nulles **et** la phrase « aucune dépense
+rattachée » : deux barres à zéro sans texte se lisent comme un défaut d'affichage.
 ## 6. Interactions
 
 - Retour visuel en moins de 100 ms sur tout clic ; transitions 150–250 ms `ease-out` ;

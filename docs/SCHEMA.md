@@ -916,6 +916,109 @@ protégées par RLS.
 
 ---
 
+## 9 bis. Objectifs et coûts
+
+Écrit avant tout code, 2026-08-19 — `docs/SPEC-goals.md` et `docs/SPEC-costs.md`, décisions 431 et
+432. Toutes ces tables portent `id uuid`, `created_at` et `updated_at`, conformément aux conventions
+du §2, et sont en refus par défaut (`enable row level security`, aucune politique implicite).
+
+### 9 bis.1 `goal_boards` — tableau d'objectifs
+
+| Colonne | Type | Règle |
+|---|---|---|
+| `workspace_id` | `uuid` | non nul, `on delete cascade` |
+| `name` | `text` | non vide ; unique par workspace sur la forme normalisée |
+| `description` | `text` | |
+| `position` | `numeric` | non nul, attribuée par trigger si omise — convention `tracks` |
+| `archived_at` | `timestamptz` | l'archivage tient lieu de suppression |
+| `created_by` | `uuid` | `profiles`, `on delete set null` |
+
+### 9 bis.2 `goal_blocks` — bloc
+
+| Colonne | Type | Règle |
+|---|---|---|
+| `board_id` | `uuid` | non nul, `on delete cascade` |
+| `title` | `text` | non vide |
+| `body` | `text` | |
+| `fill_percent` | `smallint` | non nul, défaut `0`, `CHECK (0 <= x <= 100)` — **saisi, jamais calculé** |
+| `channel_id` | `uuid` | **nullable**, `on delete set null` — le lien survit à la destination |
+| `pos_x`, `pos_y` | `numeric` | non nuls |
+| `width`, `height` | `numeric` | non nuls, `CHECK (> 0)` |
+| `color` | `text` | `CHECK (in ('brand','success','accent','danger','neutral'))` — nom de jeton, jamais un hexadécimal |
+| `created_by` | `uuid` | `profiles`, `on delete set null` — **trace, jamais un droit** |
+
+### 9 bis.3 `goal_links` — flèche
+
+| Colonne | Type | Règle |
+|---|---|---|
+| `board_id` | `uuid` | non nul, `on delete cascade` — **redondance délibérée**, `SPEC-goals` §2.4 |
+| `source_block_id`, `target_block_id` | `uuid` | non nuls, `on delete cascade` |
+| `direction` | `text` | `CHECK (in ('forward','backward','both'))` — `->`, `<-`, `<->` |
+| `label` | `text` | |
+
+`CHECK (source_block_id <> target_block_id)`. Unique sur `(source_block_id, target_block_id)`.
+Trigger : les deux blocs appartiennent à `board_id`. **Aucun refus de cycle** — un objectif qui en
+nourrit un autre en retour est une intention légitime.
+
+### 9 bis.4 `budgets`
+
+| Colonne | Type | Règle |
+|---|---|---|
+| `track_id` | `uuid` | non nul, `on delete cascade` |
+| `name` | `text` | non vide ; unique par track **parmi les budgets non clôturés** (index partiel `where closed_at is null`) |
+| `currency` | `text` | non nul, défaut `'EUR'`, `CHECK (~ '^[A-Z]{3}$')` — convention `cards.currency` |
+| `planned_amount` | `numeric(14,2)` | facultatif ; **aucune contrainte de signe**, comme `cards.amount` |
+| `is_recurrent` | `boolean` | non nul, défaut faux |
+| `closed_at` | `timestamptz` | nul tant que le budget est ouvert |
+| `position` | `numeric` | non nul, attribuée par trigger si omise |
+
+### 9 bis.5 `budget_occurrences`
+
+| Colonne | Type | Règle |
+|---|---|---|
+| `budget_id` | `uuid` | non nul, `on delete cascade` |
+| `label` | `text` | non vide, unique par budget |
+| `period_start`, `period_end` | `date` | facultatives, **purement descriptives** — elles ne contraignent aucune ligne |
+| `planned_amount` | `numeric(14,2)` | facultatif |
+| `closed_at` | `timestamptz` | se clôture indépendamment de son budget |
+
+Trigger : une occurrence n'existe que sur un budget `is_recurrent`. **Aucune génération
+automatique**, jamais — `SPEC-costs` §2.2.
+
+### 9 bis.6 `card_costs` — lignes de coût d'une affaire
+
+| Colonne | Type | Règle |
+|---|---|---|
+| `card_id` | `uuid` | non nul, `on delete cascade` |
+| `budget_id` | `uuid` | non nul, `on delete restrict` — un budget ne se supprime pas, il se clôture |
+| `occurrence_id` | `uuid` | **nul si le budget n'est pas récurrent, non nul s'il l'est** — trigger |
+| `label` | `text` | non vide |
+| `estimated_cost` | `numeric(14,2)` | **non nul** |
+| `actual_cost` | `numeric(14,2)` | **nullable — nul n'est pas zéro** |
+| `created_by` | `uuid` | `profiles`, `on delete set null` |
+
+**Aucune colonne `currency`** : la devise est celle du budget. La porter ici permettrait
+d'additionner deux devises dans un même total. **Aucune unicité** sur `(card_id, budget_id)` ni sur
+`(card_id, label)` : une affaire porte autant de lignes qu'elle a de natures de dépense — publicité,
+production —, et deux achats de même nature restent deux lignes.
+
+Triggers : refus d'insertion sur un budget ou une occurrence **clôturés** ; l'occurrence appartient
+au budget cité.
+
+### 9 bis.7 Politiques
+
+| Table | Lecture | Écriture |
+|---|---|---|
+| `goal_boards` | membre du workspace | **membre du workspace** — `SPEC-goals` §4.2 |
+| `goal_blocks` | lecture du tableau **et**, si `channel_id` non nul, `app.can_read_channel` | membre ; `app.can_write_channel` **exigé pour poser un lien** |
+| `goal_links` | lecture du tableau | écriture sur les deux blocs reliés |
+| `budgets` | `app.can_read_track(track_id)` | `admin` du workspace |
+| `budget_occurrences` | lecture du budget | `admin` du workspace |
+| `card_costs` | `app.can_read_card(card_id)` **et** lecture du budget | `app.can_write_card(card_id)`, budget lisible et **ouvert** |
+
+**La double condition de lecture de `card_costs` n'est pas redondante** : card et budget peuvent
+relever de deux tracks dont l'appelant ne lit que l'un.
+
 ## 10. Index principaux
 
 | Table | Index |

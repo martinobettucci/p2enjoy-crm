@@ -19779,3 +19779,111 @@ qui change ce que la liste énumère, ce que la sélection désigne et ce que le
 l'arborescence comptent. C'est la tranche que l'exécution suivante peut prendre. Un second écart,
 mineur, attend l'arbitrage : le mode d'affichage n'entre pas dans l'adresse, l'inbox n'ayant aucun
 paramètre d'adresse.
+### Décision 431 — Le tableau d'objectifs est une lavagna, pas une projection des données
+
+**2026-08-19 — spécification demandée par le responsable, écrite avant toute ligne de code.**
+
+**La demande.** « Un management d'objectifs par blocs, un bloc étant lié à un channel d'un track.
+L'utilisateur crée autant d'objectifs qu'il veut, puis des flowdiagrams avec des liens `->`, `<-`,
+`<->`. Cliquer un bloc ouvre le channel. L'idée est d'avoir une organisation visuelle de
+l'avancement. **L'utilisateur remplit à la main comment le bloc est rempli : ne pas calculer, ne pas
+lier automatiquement — c'est une idée de *smart lavagna*, pas une projection des données. »
+
+**Ce que cette dernière phrase interdit, et pourquoi elle est en tête de la spécification.** Un
+développeur qui découvre `goal_blocks.fill_percent` à côté de `channel_id` aura la tentation
+naturelle de « rendre le produit intelligent » en dérivant le remplissage des cards du channel. Ce
+serait détruire la fonctionnalité : l'utilisateur décide de ce qu'« avancé à 60 % » veut dire pour
+SON objectif, et aucune formule ne le sait. Le §1 de `docs/SPEC-goals.md` liste les quatre
+automatismes interdits et pose le corollaire : une évolution qui proposerait le calcul automatique
+est un **changement de nature**, à arbitrer comme tel, jamais une amélioration.
+
+**Trois choix de modélisation qui méritent leur motif.**
+
+1. **Trois directions de flèche, et non deux.** `<-` est le symétrique de `->` ; le normaliser en
+   inversant source et cible ferait « sauter » la flèche au rechargement, dans l'autre sens que
+   celui où l'utilisateur l'a tracée. Un tableau blanc restitue le geste exact.
+2. **`channel_id` est `on delete set null`, pas `cascade`.** Un channel mis à la corbeille ne fait
+   pas disparaître un objectif : le bloc survit, son lien tombe, l'écran dit « lien perdu ».
+   Détruire le raisonnement d'un utilisateur parce qu'une destination a bougé serait une perte de
+   donnée.
+3. **`goal_links.board_id` est redondant avec ses blocs, délibérément.** Il permet à la politique de
+   lecture de se résoudre sans jointure, et surtout il rend **impossible** un lien entre deux
+   tableaux — même raisonnement que la cohérence workflow ↔ channel de `CRM-033`.
+
+**Arbitrages du responsable, rendus avant l'écriture.**
+
+- **Portée :** plusieurs tableaux nommés par workspace. C'est le seul modèle qui porte des
+  « flowdiagrams » au pluriel et qui laisse un bloc viser un channel de n'importe quel track.
+- **Écriture :** ouverte à tout membre pouvant écrire, et non réservée aux administrateurs comme
+  les tracks. « L'utilisateur crée autant d'objectifs qu'il veut » suppose qu'il n'ait pas à
+  demander un administrateur ; la lavagna est un outil de travail, pas une configuration. Un
+  `viewer` n'écrit rien, tableau libre compris — l'invariant du §2.1 des permissions n'est percé
+  par aucune table.
+- **Poser un lien exige l'ÉCRITURE sur le channel**, pas seulement sa lecture : un lien est une
+  affirmation publique que verront tous ceux qui lisent le channel.
+
+**La conséquence de visibilité, assumée et écrite.** Un bloc lié à un channel fermé est
+**invisible**, pas grisé : le griser révélerait qu'un objectif existe sur un channel interdit, et
+son titre en dirait déjà trop. Les flèches qui y menaient sont rendues en pointillés vers le vide,
+sans libellé ni infobulle. Deux personnes du même workspace peuvent donc voir deux diagrammes
+différents du même tableau — c'est la conséquence directe de « même RLS que les tracks », et la
+confidentialité prime sur la complétude du dessin.
+
+**Unités :** `CRM-082` (modèle, RLS, API) puis `CRM-083` (canevas). Aucun code n'est écrit avant que
+cette spécification ne soit committée et poussée (`CLAUDE.md` §5).
+
+### Décision 432 — Une affaire porte des lignes de coût, pas une affectation
+
+**2026-08-19 — spécification demandée par le responsable, écrite avant toute ligne de code.**
+
+**La demande, et la correction qui l'a précisée.** Un track porte des budgets ; on affecte une
+affaire à un budget avec un coût estimé et un coût réel ; l'écran compare les deux sur un
+histogramme à deux barres adjacentes par budget. Un budget se clôture — il cesse d'être montré et
+sélectionnable. Un budget peut être récurrent : on crée **à la main** une occurrence de janvier, puis
+de février, **et on n'en crée pas pour mars s'il ne s'est rien passé**. Puis, en cours de rédaction,
+le responsable a corrigé le point qui change le modèle : « **une card peut avoir plusieurs coûts
+associés** — publicité (prévu 100, réel à saisir plus tard), production (prévu 350, réel 375) ».
+
+**Ce que cette correction change, et pourquoi elle arrive au bon moment.** Une affectation unique
+par affaire aurait été modélisée par des colonnes sur `cards`, et se serait révélée fausse dès le
+premier cas réel. Le modèle porte donc une table de **lignes** — `card_costs` —, chacune avec son
+libellé, son estimé et son réel, chacune rattachée à un budget. C'est exactement ce que la règle
+d'écrire la spécification avant le code sert à attraper : la correction a coûté un paragraphe, elle
+aurait coûté une migration.
+
+**Trois règles de modélisation qui portent tout le sens.**
+
+1. **`estimated_cost` non nul, `actual_cost` nullable.** C'est l'asymétrie du cas d'usage : on engage
+   une dépense en la prévoyant, on la constate plus tard.
+2. **`actual_cost` nul n'est PAS zéro.** Un réel inconnu ne compte pas dans les agrégats, et
+   l'écran écrit « n lignes sans coût réel saisi, pour m € de prévisionnel ». Sans cette mention, un
+   réel bas se lit comme une économie alors qu'il n'est qu'une saisie en retard — c'est la
+   principale façon dont un écran de coûts ment.
+3. **Aucune colonne `currency` sur la ligne** : la devise est celle du budget. La porter ici
+   permettrait d'additionner deux devises dans un même total.
+
+**Aucune génération automatique d'occurrences, et c'est une exigence explicite.** Le produit ne pose
+aucun calendrier et ne propose aucun « générer les douze mois ». Un mois sans occurrence est une
+information — il ne s'est rien passé — que la génération automatique détruirait en fabriquant une
+occurrence vide. `period_start` et `period_end` sont **purement descriptives** : aucune ligne n'est
+refusée parce que sa date sortirait de la période. C'est la même doctrine que celle des objectifs —
+le produit n'a pas d'opinion.
+
+**Arbitrages du responsable.**
+
+- **Écriture :** le budget est un **cadre** — créer, doter, rendre récurrent, ouvrir une occurrence,
+  clôturer : administrateur du workspace, comme un track. La ligne de coût est un **geste
+  quotidien** : quiconque a le droit d'écrire la card. Les confondre bloquerait le travail ou
+  ouvrirait la gestion.
+- **Écrans :** un écran de coûts **par track**, plus un **cumul au niveau du workspace**, un groupe
+  de barres par track.
+- **Un budget récurrent est agrégé** dans la vue du track, **détaillé par occurrence** dans sa fiche.
+
+**Le point de sécurité à ne pas manquer, écrit dans la DoD de `CRM-086` :** le cumul du workspace se
+calcule **après** application de la RLS, jamais avec la clé de service. Un total juste au centime
+près qui divulguerait par soustraction l'existence d'un budget fermé est un défaut d'autorisation,
+pas un défaut d'affichage. La lecture de `card_costs` porte pour la même raison une **double**
+condition — card lisible **et** budget lisible — parce qu'une card et un budget peuvent relever de
+deux tracks dont l'appelant ne lit que l'un.
+
+**Unités :** `CRM-084` (budgets et occurrences), `CRM-085` (lignes de coût), `CRM-086` (écrans).

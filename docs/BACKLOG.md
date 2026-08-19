@@ -7807,6 +7807,104 @@ pas un produit.
 
 ---
 
+## Chunk 6 — Objectifs et coûts
+
+Deux fonctionnalités demandées par le responsable le **2026-08-19**, spécifiées avant tout code
+(`docs/SPEC-goals.md`, `docs/SPEC-costs.md`, `docs/SCHEMA.md` §9 bis, décisions 431 et 432). Elles
+sont indépendantes l'une de l'autre et suivent la Definition of Done commune.
+
+| Unité | Objet | État |
+|---|---|---|
+| CRM-082 | Objectifs : modèle, RLS et API | `[ ]` |
+| CRM-083 | Canevas d'objectifs : blocs, flèches, ouverture du channel | `[ ]` |
+| CRM-084 | Budgets, occurrences et clôture : modèle, RLS et API | `[ ]` |
+| CRM-085 | Lignes de coût d'une affaire : modèle et section de la fiche | `[ ]` |
+| CRM-086 | Écrans de coûts : histogramme du track et cumul du workspace | `[ ]` |
+
+**Contrainte d'ordre :** `CRM-082` précède `CRM-083`, `CRM-084` précède `CRM-085` qui précède
+`CRM-086`. Les deux chaînes sont indépendantes et peuvent s'intercaler.
+
+### CRM-082 — Objectifs : modèle, RLS et API `[ ]`
+
+`goal_boards`, `goal_blocks`, `goal_links` (`docs/SCHEMA.md` §9 bis.1 à §9 bis.3), leurs triggers
+et leurs politiques (§9 bis.7). **Aucun écran.**
+
+**DoD** : migration versionnée et convergente ; pgTAP sur les triggers — lien inter-tableaux refusé,
+`fill_percent` hors bornes refusé, boucle sur soi refusée, cycle **accepté** — et sur les six
+politiques ; scénarios d'API avec les jetons réels des trois profils seedés ; **preuve de refus** du
+`viewer` sur chacune des trois tables, mesurée comme zéro ligne ou `403` selon le geste ; preuve
+qu'un bloc lié à un channel fermé **n'est pas rendu** à qui ne lit pas ce channel ; seed portant un
+tableau, six blocs dont un lié et un fermé à la lectrice, et quatre flèches couvrant les trois
+directions ; harnais dédié `scripts/verify-objectifs.sh` non complaisant, éprouvé par des
+dégradations réelles.
+
+- [ ] **Point de vigilance, à ne pas découvrir en cours de route** : la politique de lecture de
+      `goal_blocks` appelle `app.can_read_channel`, et celle de `goal_links` lit `goal_blocks`. Le
+      §3.5 de `docs/SPEC-permissions-rls.md` interdit qu'une politique relise sa propre table —
+      `goal_links` ne relit pas `goal_links`, donc la règle tient, mais la fonction d'appui doit
+      être `SECURITY DEFINER` comme ses sœurs, sous peine de la récursion mesurée à la décision 27.
+
+### CRM-083 — Canevas d'objectifs `[ ]`
+
+Entrée de navigation « Objectifs », liste des tableaux, canevas pannable et zoomable, blocs
+déplaçables et redimensionnables, flèches à trois directions, jauge de remplissage saisie à la main,
+pilule de channel et **ouverture du channel au clic** (`docs/SPEC-goals.md` §5).
+
+**DoD** : E2E **au clavier ET à la souris** — poser un bloc, le déplacer, le remplir, le lier,
+tracer les trois directions, ouvrir le channel et atterrir sur la bonne adresse ; captures aux
+quatre paliers ; **liste textuelle équivalente du diagramme** vérifiée par un lecteur d'écran
+simulé ; état vide, état « lien perdu » et état lecture seule capturés ; refus du `viewer` mesuré
+**hors interface** ; console navigateur vierge ; harnais dédié.
+
+- [ ] **Le canevas doit être utilisable entièrement au clavier** (`CLAUDE.md` §22,
+      `docs/SPEC-goals.md` §5.5). Un canevas qui n'obéit qu'à la souris n'est pas terminé, et c'est
+      la partie la plus facile à oublier de cette unité.
+
+### CRM-084 — Budgets, occurrences et clôture `[ ]`
+
+`budgets`, `budget_occurrences` (`docs/SCHEMA.md` §9 bis.4 et §9 bis.5), triggers et politiques,
+plus l'écran d'administration des budgets dans le track (`docs/SPEC-costs.md` §4.1).
+
+**DoD** : migration ; pgTAP — occurrence refusée sur un budget non récurrent, unicité du nom
+**limitée aux budgets ouverts**, clôture réversible ou non selon le contrat écrit ; API avec jetons
+réels ; **preuve de refus d'un membre non administrateur** sur la création et sur la clôture,
+mesurée hors interface ; seed portant un budget simple, un budget récurrent à deux occurrences dont
+une clôturée, et un budget clôturé ; E2E de l'écran d'administration, captures ; harnais dédié.
+
+### CRM-085 — Lignes de coût d'une affaire `[ ]`
+
+`card_costs` (`docs/SCHEMA.md` §9 bis.6), ses triggers, sa double politique de lecture, et la
+section « Coûts » de la fiche d'affaire (`docs/SPEC-costs.md` §4.6).
+
+**DoD** : migration ; pgTAP — `occurrence_id` exigée si et seulement si le budget est récurrent,
+insertion refusée sur un budget clôturé **et** sur une occurrence clôturée, occurrence étrangère au
+budget refusée, `actual_cost` nul accepté ; **la double condition de lecture est prouvée par le cas
+qui la motive** : une card lisible rattachée à un budget d'un track fermé rend zéro ligne ; API ;
+E2E de la section, y compris **le second sélecteur d'occurrence qui apparaît et devient obligatoire**
+pour un budget récurrent ; seed portant une affaire à **deux lignes de nature différente**, l'une
+sans réel — le cas « publicité 100 / production 350-375 » du responsable ; captures ; harnais dédié.
+
+### CRM-086 — Écrans de coûts `[ ]`
+
+Histogramme du track, détail par budget avec une paire de barres **par occurrence**, et cumul du
+workspace par track (`docs/SPEC-costs.md` §4.2, §4.3, §4.5).
+
+**DoD** : E2E des trois écrans ; captures aux quatre paliers ; **la mention « n lignes sans coût
+réel saisi » est prouvée présente** quand des réels manquent, et absente sinon — c'est la principale
+façon dont cet écran pourrait mentir ; un budget récurrent est **agrégé** dans la vue du track et
+**détaillé par occurrence** dans sa fiche, les deux vérifiés sur le même jeu de données ; un budget
+clôturé **n'apparaît pas** ; le cumul du workspace est mesuré **après** RLS — une preuve montre que
+le total d'un profil restreint diffère de celui d'un administrateur, et que la différence est
+exactement le budget qu'il ne lit pas ; regroupement par devise si plusieurs sont présentes ;
+accessibilité de l'histogramme — valeurs en clair, légende, équivalent textuel ; harnais dédié.
+
+- [ ] **Ne jamais rendre un total qui inclurait un budget interdit.** Le cumul se calcule sur les
+      lignes que la RLS consent, jamais avec la clé de service : un total juste au centime près qui
+      divulgue par soustraction l'existence d'un budget fermé est un défaut d'autorisation, pas un
+      défaut d'affichage.
+
+---
+
 ## Plan de solde du registre — décision 367, 2026-08-13
 
 Les **61 entrées ouvertes** ont chacune reçu une disposition du responsable, lot par lot. Ce tableau

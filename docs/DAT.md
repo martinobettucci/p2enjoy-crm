@@ -681,6 +681,33 @@ deviendront rouges à la naissance de leur objet. Depuis `CRM-022`, la n° 10 es
 règle : seuls les administrateurs gèrent les memberships et une contrainte différable refuse toute
 suppression ou rétrogradation qui laisserait un workspace existant sans administrateur.
 
+## 7 bis. Objectifs et coûts — composants et flux
+
+Ajouté le 2026-08-19, avant tout code (`docs/SPEC-goals.md`, `docs/SPEC-costs.md`, décisions 431 et
+432).
+
+**Aucun service, aucun conteneur, aucune dépendance nouvelle.** Les deux fonctionnalités sont des
+tables, des politiques et des écrans de la webapp existante. C'est un choix : un canevas et un
+histogramme se rendent sans bibliothèque de diagramme ni de graphique, et en introduire une pour
+cela ferait entrer une dépendance structurante dans le bundle pour deux écrans.
+
+| Composant | Rôle | Dépendances |
+|---|---|---|
+| `goal_boards`, `goal_blocks`, `goal_links` | modèle du tableau d'objectifs | `channels` (lien facultatif), `app.can_read_channel`, `app.can_write_channel` |
+| Canevas d'objectifs (webapp) | pan, zoom, glisser-déposer, tracé des flèches, **clavier complet** | PostgREST, aucune bibliothèque tierce |
+| `budgets`, `budget_occurrences` | enveloppes d'un track et leurs instances manuelles | `tracks`, `app.can_read_track` |
+| `card_costs` | lignes de coût d'une affaire | `cards`, `budgets`, `app.can_read_card`, `app.can_write_card` |
+| Écrans de coûts (webapp) | histogramme du track, détail par occurrence, cumul du workspace | PostgREST ; **agrégation calculée après RLS**, jamais par la clé de service |
+
+**Flux, et le seul point délicat.** L'écran de cumul du workspace lit `card_costs` avec le **jeton
+de l'appelant** et agrège côté client, ou par une vue soumise à la RLS. Il n'existe aucun chemin où
+un total serait calculé avec un privilège supérieur à celui du lecteur : un total exact qui
+divulguerait par soustraction un budget fermé est un défaut d'autorisation.
+
+**Compromis assumé :** agréger côté client suppose de descendre les lignes lisibles. Le volume est
+borné par le nombre d'affaires du workspace, et la pagination reste due le jour où il croîtra —
+consigné ici plutôt que découvert en production.
+
 ## 8. Chiffrement des secrets
 
 Les mots de passe IMAP/SMTP sont chiffrés via **Supabase Vault** : l'application ne stocke
