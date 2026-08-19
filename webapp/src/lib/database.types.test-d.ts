@@ -71,9 +71,32 @@ type Expect<T extends true> = T
 // et `app.can_write_goal_block` vivent dans le schéma `app`, que PostgREST n'expose pas. Le compte
 // de fonctions appelables en RPC reste donc inchangé.
 
+// RÉVISÉ PAR `CRM-084`, qui livre les enveloppes budgétaires : `budgets` et `budget_occurrences`
+// (migration `0050`, `docs/SCHEMA.md` §9 bis.4 et §9 bis.5). Trente-deux tables deviennent
+// TRENTE-QUATRE.
+//
+// Le client y ÉCRIT DIRECTEMENT, comme pour les objectifs et pour la même raison : créer, doter,
+// rendre récurrent ou clôturer un budget sont des mises à jour ordinaires dont la règle tient
+// entièrement dans les politiques — `admin` du workspace pour l'écriture, `app.can_read_track`
+// pour la lecture (`docs/SPEC-costs.md` §3). Aucune RPC n'est nécessaire, et en poser une
+// masquerait la règle au lieu de la porter.
+//
+// `Insert` ET `Update` EXPOSENT POURTANT DES CHEMINS QUE LA BASE REFUSE, et c'est la limite du
+// générateur déjà nommée plus haut, ici sous deux formes : le type autorise une occurrence sur un
+// budget non récurrent, que `app.budget_occurrences_verifier_recurrence` refuse, et il autorise à
+// remettre `is_recurrent` à faux sous des occurrences existantes, que `app.budgets_verifier_
+// recurrence` refuse. Le générateur ne lit ni les triggers ni les politiques ; c'est le code de
+// l'écran qui doit traduire ces refus, et `e2e/api/budgets.spec.ts` qui en fixe les codes.
+//
+// LES DEUX FONCTIONS D'APPUI DE CETTE UNITÉ N'APPARAISSENT PAS non plus dans `_fonctions` :
+// `app.can_read_budget` et `app.can_write_budget` vivent dans le schéma `app`, que PostgREST
+// n'expose pas. Le compte de fonctions appelables en RPC reste inchangé.
+
 type _tables = Expect<
   Equal<
     keyof Database['public']['Tables'],
+    | 'budget_occurrences'
+    | 'budgets'
     | 'card_comments'
     | 'card_contacts'
     | 'card_events'

@@ -215,8 +215,9 @@ test.describe('CRM-084 — budgets : le contrat d’API, hors interface', () => 
 			{ headers: enTetesAuthentifies(jetonBizdev) },
 		)
 		expect(reponse.status()).toBe(200)
-		const [budget] = (await reponse.json()) as { closed_at: string | null }[]
-		expect(budget.closed_at).not.toBeNull()
+		const budgets = (await reponse.json()) as { closed_at: string | null }[]
+		expect(budgets).toHaveLength(1)
+		expect(budgets[0]!.closed_at).not.toBeNull()
 	})
 
 	// -------------------------------------------------------------------------------------------
@@ -265,8 +266,9 @@ test.describe('CRM-084 — budgets : le contrat d’API, hors interface', () => 
 		const relecture = await request.get(`${BUDGETS}?id=eq.${BUDGET_ESSAI}&select=closed_at`, {
 			headers: enTetesAuthentifies(jetonBizdev),
 		})
-		const [budget] = (await relecture.json()) as { closed_at: string | null }[]
-		expect(budget.closed_at).toBeNull()
+		const budgets = (await relecture.json()) as { closed_at: string | null }[]
+		expect(budgets).toHaveLength(1)
+		expect(budgets[0]!.closed_at).toBeNull()
 	})
 
 	test('la suppression d’un budget est filtrée à zéro ligne pour un non-administrateur', async ({
@@ -296,7 +298,9 @@ test.describe('CRM-084 — budgets : le contrat d’API, hors interface', () => 
 			},
 		})
 		expect(creation.status()).toBe(201)
-		const [cree] = (await creation.json()) as { id: string }[]
+		const crees = (await creation.json()) as { id: string }[]
+		expect(crees).toHaveLength(1)
+		const cree = crees[0]!
 
 		const cloture = await request.patch(`${BUDGETS}?id=eq.${cree.id}`, {
 			headers: { ...enTetesAuthentifies(jetonAdmin), Prefer: 'return=representation' },
