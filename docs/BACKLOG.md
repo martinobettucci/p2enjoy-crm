@@ -8219,8 +8219,36 @@ la 2b-1 l'ont été : **2b-2a livre le LIEN**, 2b-2b livrera les **flèches** et
       intactes derrière —, et le scénario E2E de la lectrice relit la ligne du bloc après le geste
       d'interface. Les trois tables sont donc mesurées hors interface en insertion, en modification
       et en suppression.
-- [ ] **Harnais dédié `scripts/verify-objectifs-canevas.sh`**, non complaisant, éprouvé par des
-      dégradations réelles.
+- [x] **Harnais dédié `scripts/verify-objectifs-canevas.sh`**, non complaisant, éprouvé par des
+      dégradations réelles. **44 contrôles, aucune anomalie**, pile debout et seedée. Il rejoue la
+      traçabilité des huit fichiers de l'unité, les captures des quatre paliers et des trois états,
+      les trois suites Vitest (**25**, **84**, **73**), la preuve d'API (**13 passés**) et le
+      parcours d'interface (**33 passés**), puis constate que celui-ci **rend le seed intact** —
+      toujours six blocs. `--rapide` annonce ce qu'il n'exécute pas plutôt que de le taire.
+- [x] **SEPT DÉGRADATIONS RÉELLES, ET CHACUNE PORTE SUR UNE RÈGLE DE `docs/SPEC-goals.md`** : le
+      moignon qui porterait son libellé et l'équivalent textuel qui NOMMERAIT l'extrémité masquée
+      (§5.4, §4.1 — les deux formes sous lesquelles l'écran dirait ce que la RLS cache), le point de
+      bord sorti du bloc (§5.3), l'ordre de tabulation privé de la position verticale (§5.5), le
+      remplissage cessant d'être un entier (§1), la précédence du classement des refus (§2.3) et le
+      déplacement qui réécrirait la taille (§3). Le fichier dégradé est sauvegardé et **rendu par un
+      `trap`** : une exécution interrompue ne laisse pas le dépôt affaibli.
+- [x] **QUATRE RÈGLES QUE NI UNE SUITE NI UNE CAPTURE NE RENDRAIT ROUGES**, et que le harnais est
+      seul à tenir : aucune couleur hexadécimale dans l'écran ni ses modules
+      (`docs/DESIGN_SYSTEM.md` §1), aucune temporisation (§5.5, `CLAUDE.md` §18), aucune couleur de
+      jugement sur la jauge (§5.2 — « elle ne change pas de couleur avec la valeur »), et aucune
+      colonne de comptage sur `goal_boards` (§5.1 — un total stocké mentirait à qui la RLS masque un
+      bloc). Le harnais ne rejoue NI le modèle NI les politiques : ils sont à `CRM-082`, et
+      `scripts/verify-objectifs.sh` les prouve déjà.
+- [x] **UNE PREUVE MANQUANTE, TROUVÉE PAR LA DÉGRADATION ET NON À LA LECTURE** : la précédence du
+      classement des refus de flèche — le code PostgreSQL avant le statut HTTP — n'était pincée que
+      pour `42501`, jamais pour `23505`. Remonter la branche HTTP au-dessus du doublon ne rendait
+      donc AUCUNE preuve rouge, alors que les deux refus appellent des gestes opposés : corriger la
+      flèche déjà tracée, ou renoncer. Le scénario ajouté à `objectifs-ecriture.test.ts` porte son
+      motif écrit dans le fichier.
+- [x] **La preuve d'API cite désormais `CRM-083`** : sa Definition of Done exige le refus du
+      `viewer` mesuré HORS interface, et c'est `e2e/api/objectifs.spec.ts` qui le tient. Sans cette
+      citation, la trace de cette exigence ne menait plus à l'unité de l'écran — et le harnais la
+      refuse.
 - [~] **Le canevas doit être utilisable entièrement au clavier** (`CLAUDE.md` §22,
       `docs/SPEC-goals.md` §5.5). La tabulation, l'étiquetage, le défilement, **la pose, le
       déplacement, le redimensionnement**, et depuis la tranche 2b-1 **l'ouverture de la fiche par

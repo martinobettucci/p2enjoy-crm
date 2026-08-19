@@ -20511,3 +20511,49 @@ tableau et le détruisant par la clé de service — un archivage laisserait son
 l'état lecture seule du `viewer` qui reste **bloqué par l'arbitrage INC-170**. Le désarchivage d'un
 tableau n'est pas livré, et c'est une limite nommée au backlog : aucune surface ne rend un tableau
 archivé. Trois arbitrages restent en attente : **INC-169**, **INC-170** et **INC-172**.
+
+## décision 470 — `CRM-083` : le harnais du canevas, et les deux trous qu'il a trouvés
+
+**L'unité, et le choix.** La décision 469 laisse `CRM-083` en `[~]` et désigne comme reprise le
+**harnais dédié**. Sa spécification est la Definition of Done de l'unité et `docs/SPEC-goals.md` §5,
+déjà écrites : le §3.2 point 3 de `docs/CloudWorker.md` s'applique dans sa forme d'exception — lues
+intégralement, le code commence.
+
+**Ce qui a été livré.** `scripts/verify-objectifs-canevas.sh`, **44 contrôles, aucune anomalie** sur
+la pile debout et seedée. Il rejoue en une commande la traçabilité des huit fichiers de l'unité, les
+captures des quatre paliers et des trois états, les trois suites Vitest, la preuve d'API et le
+parcours d'interface, puis vérifie que celui-ci **rend le seed intact**.
+
+**IL NE REJOUE NI LE MODÈLE NI LES POLITIQUES, et le dit en tête.** Ils appartiennent à `CRM-082`,
+que `scripts/verify-objectifs.sh` prouve déjà — schéma en base, douze politiques, fonctions
+`SECURITY DEFINER`, pgTAP et dégradations de politiques. Les rejouer ici les dupliquerait sans les
+renforcer. Il ne regarde la base que sur les deux points dont l'ÉCRAN dépend : que le seed porte
+encore de quoi se rendre, et qu'aucun total de blocs n'y soit stocké.
+
+**QUATRE RÈGLES QUE NI UNE SUITE NI UNE CAPTURE NE RENDRAIT ROUGES.** Une suite verte et une capture
+correcte coexisteraient parfaitement avec chacune de leurs violations : une couleur hexadécimale
+posée dans l'écran (`docs/DESIGN_SYSTEM.md` §1), une temporisation employée pour obtenir l'écriture
+au relâchement (§5.5, `CLAUDE.md` §18), une couleur de succès ou de danger choisie d'après le
+remplissage (§5.2 — la jauge ne juge pas), une colonne de comptage sur `goal_boards` (§5.1 — un
+total stocké mentirait à qui la RLS masque un bloc). C'est là que ce harnais ajoute, et non dans la
+répétition des suites.
+
+**DEUX TROUS TROUVÉS, AUCUN À LA LECTURE.** (1) La preuve d'API ne citait pas `CRM-083`, alors que
+c'est elle qui tient le refus hors interface que sa DoD exige : la trace de cette exigence ne menait
+plus à l'unité de l'écran. Corrigé, et le contrôle qui l'a vu reste dans le harnais. (2) La
+**dégradation** qui remonte le statut HTTP au-dessus du code PostgreSQL dans `classerRefusFleche`
+n'a d'abord fait rougir AUCUNE preuve : la suite pinçait l'ordre pour `42501`, jamais pour `23505`.
+Or les deux refus appellent des gestes opposés — corriger la flèche déjà tracée, ou renoncer. Le
+scénario manquant est ajouté avec son motif écrit dans le fichier, et la dégradation est vue.
+
+**Ce qui a été vérifié.** Le harnais complet, deux fois : rouge d'abord sur les deux trous ci-dessus,
+puis **44 contrôles, aucune anomalie**. Vitest `objectifs` **25**, `objectifs-ecriture` **84**,
+`Objectifs` **73** ; `e2e/api/objectifs.spec.ts` **13 passés** ; `e2e/ui/objectifs.spec.ts`
+**33 passés**. Les captures régénérées par le parcours d'interface ont été **observées** — le
+canevas et la liste des tableaux — puis **restaurées** et non committées : ce changement ne touche
+aucune ligne d'interface.
+
+**Où reprendre.** `CRM-083` reste `[~]`, et son reste tient désormais en **un seul point** :
+l'état lecture seule du `viewer`, **bloqué par l'arbitrage INC-170**. Le désarchivage d'un tableau
+demeure une limite nommée, hors périmètre du §5.1. Trois arbitrages restent en attente :
+**INC-169**, **INC-170** et **INC-172**.

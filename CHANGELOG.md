@@ -15,6 +15,18 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Le canevas d'objectifs a son harnais de preuves dédié**, `scripts/verify-objectifs-canevas.sh`
+  (`CRM-083`). Il rejoue, en une commande, la traçabilité des fichiers de l'écran, les captures des
+  quatre paliers, les trois suites Vitest, la preuve d'API des refus hors interface et le parcours
+  d'interface complet sur la pile seedée — puis il **dégrade réellement le code sept fois** et exige
+  qu'une preuve rougisse à chaque fois. Il contrôle en outre quatre règles que ni une suite ni une
+  capture ne rendrait rouges : aucune couleur hexadécimale dans l'écran, aucune temporisation,
+  aucune couleur de jugement sur la jauge, et aucun total de blocs stocké en base.
+- **Une preuve manquante, trouvée par ce harnais et ajoutée** : la précédence du classement des
+  refus de flèche — le code PostgreSQL avant le statut HTTP — n'était pincée que pour le refus de
+  politique, jamais pour le doublon. Remonter la branche HTTP au-dessus du doublon ne rendait donc
+  aucune preuve rouge, alors que le geste qui suit ces deux refus est opposé.
+
 - **Les tableaux d'objectifs s'administrent depuis leur liste : créer, renommer, réordonner,
   archiver** (`CRM-083` tranche 2c, `docs/SPEC-goals.md` §2.1, §3 et §5.1). Le formulaire de
   création et celui de renommage vivent dans la page — aucune fenêtre modale —, et le focus y entre
