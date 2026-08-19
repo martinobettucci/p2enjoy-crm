@@ -2727,3 +2727,48 @@ s'en aperçoive, chacune étant testée — quand elle l'est — à travers l'é
 module partagé — `webapp/src/lib/montants.ts` ou l'équivalent —, les trois appelants l'importent, et
 elle reçoit ses propres tests unitaires, y compris celui du repli ; (2) la duplication est assumée
 comme un coût acceptable de l'indépendance des écrans, et l'entrée est close sans changement.
+
+## Consigné le 2026-08-19 — un constat de MÉTHODE, relevé pendant `CRM-086` tranche 3
+
+### INC-177 — `npm run test:sql` et `npm run e2e:ui` partagent UNE base, et les lancer ensemble rend un verdict qui ne dit rien
+
+**Ce qui est mesuré.** Décision 476. `npm run test:sql` a été lancé **pendant** que
+`npm run e2e:ui` tournait, sur la même pile de développement. Verdict rendu :
+
+```
+49 fichiers, 5 en échec.
+  0013_move_card.test.sql                    — 1 assertion en échec sur 82
+  0021_transition_required_fields.test.sql   — 1 assertion en échec sur 88
+  0037_versionnement_workflows.test.sql      — 1 assertion en échec sur 31
+  0040_restauration_version_workflow.test.sql — 2 assertions en échec sur 30
+  0041_comparaison_copie_source.test.sql     — 6 assertions en échec sur 28
+```
+
+**Pourquoi ce verdict n'est PAS une mesure du dépôt.** Les cinq fichiers en échec portent tous sur
+`move_card`, les exigences de transition, le versionnement, la restauration et la comparaison de
+workflows — c'est-à-dire exactement les objets que `e2e/ui/administration-workflows.spec.ts` crée,
+modifie, archive et restaure **au même instant**, sur la **même** base. Les deux harnais n'ont
+aucun cloisonnement : ni base séparée, ni transaction, ni verrou. Le diff de la session, lui, ne
+touche **aucun** `.sql`, aucune migration, aucun script — `git diff <base>..HEAD --stat --
+supabase/ scripts/` rend une sortie vide.
+
+**Ce qui n'est PAS établi.** L'état réel de `npm run test:sql` exécuté SEUL sur cette pile. La
+session n'a pas pu le rejouer isolément avant sa fin, la campagne d'interface occupant la base
+jusqu'au bout (`docs/CloudWorker.md` §2.1 ter : la série entière ne tient pas dans une session).
+Le verdict ci-dessus doit donc être **jeté**, et non lu comme une régression **ni** comme une
+anomalie préexistante.
+
+**Ce qu'il faut en retenir pour lire une campagne.** C'est un piège de méthode, et il est
+silencieux : rien dans le dépôt ne signale que ces deux commandes se disputent une ressource, et
+`docs/CloudWorker.md` §4.3 les énumère sur la même ligne, ce qui invite à les paralléliser pour
+tenir le budget de temps. **Elles doivent être exécutées l'une après l'autre.** Une session qui
+les mène de front lira des échecs qu'elle a elle-même provoqués, et pourra les attribuer à son
+propre code — exactement le défaut que le §2.4 existe pour prévenir, sous une forme que la ligne
+de base par `git stash` ne rattrape pas : le code est identique des deux côtés, c'est l'ÉTAT qui
+diverge.
+
+**Arbitrage attendu.** Deux issues, et le responsable tranche : (1) `docs/CloudWorker.md` §4.3 et
+le `README.md` nomment explicitement que les preuves de base et les preuves d'interface ne se
+lancent jamais en parallèle ; (2) `scripts/run-sql-tests.sh` pose un garde-fou — un verrou
+consultatif PostgreSQL, ou le refus de démarrer si un serveur d'aperçu écoute sur 4173 — qui rend
+le piège impossible plutôt que documenté.

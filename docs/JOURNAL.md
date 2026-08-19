@@ -21081,6 +21081,16 @@ budget » serait indistinguable d'un track qui n'en porte réellement aucun.
 échec**. Les quatre captures ont été **observées**, et c'est en les regardant que le second défaut a
 été trouvé.
 
+**UN PIÈGE DE MÉTHODE, CONSIGNÉ À INC-177, ET IL A COÛTÉ UN VERDICT À CETTE SESSION.**
+`npm run test:sql` a été lancé PENDANT que `npm run e2e:ui` tournait, pour tenir le budget de temps.
+Il a rendu cinq fichiers en échec — `move_card`, exigences de transition, versionnement,
+restauration et comparaison de workflows —, c'est-à-dire exactement les objets que
+`administration-workflows.spec.ts` créait, modifiait et restaurait au même instant sur la MÊME base.
+Les deux harnais n'ont aucun cloisonnement. Ce verdict est jeté, et non lu comme une régression ni
+comme une anomalie préexistante : la ligne de base du §2.4 ne l'aurait pas rattrapé non plus, le
+code étant identique des deux côtés du `git stash` — c'est l'ÉTAT qui diverge, pas le code. **Les
+preuves de base et les preuves d'interface ne se lancent jamais de front.**
+
 **Où reprendre.** `CRM-086` reste `[~]`, et il reste les DEUX autres écrans : le détail d'un budget
 (§4.3, `/tracks/:slugTrack/couts/:idBudget`, une paire de barres par **occurrence** et la liste des
 lignes) puis le cumul du workspace (§4.5, `/couts`, un groupe de barres par track, entrée de barre
