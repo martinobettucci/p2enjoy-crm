@@ -6,6 +6,11 @@
 // @spec CRM-081 (docs/BACKLOG.md) — tranche 2 e : la SURFACE du sommeil de fil,
 //       docs/SPEC-cards.md §16.15.4 (la pastille), §16.15.5 (le filtre est une composition),
 //       §16.15.6 (le geste à deux visages) ; docs/DESIGN_SYSTEM.md §5.3 septies
+// @spec CRM-081 (docs/BACKLOG.md) — tranche 2 f : LE GROUPEMENT en fils,
+//       docs/SPEC-cards.md §16.16.3 (ce que la liste énumère), §16.16.4 (ce que la sélection
+//       désigne et ce que le panneau de lecture ouvre), §16.16.5 (le sommeil transposé au fil),
+//       §16.16.6 (les compteurs de l'arborescence ne changent pas) ;
+//       docs/DESIGN_SYSTEM.md §5.4 bis
 // @spec docs/JOURNAL.md décision 327
 //
 // TROIS PANNEAUX SUR GRAND ÉCRAN, UNE PILE EN DESSOUS DE 1024 PX — et la pile est une vraie pile,
@@ -46,7 +51,6 @@ import {
 import { BasculeSommeil, CLE_PRESET_SOMMEIL, PastilleSommeil } from '../components/ui/Sommeil'
 import { ECHEANCES_USUELLES, echeanceSaisie, echeanceUsuelle } from '../lib/sommeil-card'
 import {
-	composerListe,
 	echeanceFil,
 	endormirFil,
 	reveillerFil,
@@ -54,6 +58,7 @@ import {
 	type IssueSommeilFil,
 	type ModeFils,
 } from '../lib/sommeil-fil'
+import { composerFils, filDuMessage, grouperEnFils } from '../lib/fil-inbox'
 import { objetDeReponse } from '../lib/envoi'
 import { clientCrm } from '../lib/supabase'
 import { FormulaireEnvoi } from './FormulaireEnvoi'
@@ -353,10 +358,16 @@ function PanneauListe({
 }) {
 	// LA COMPOSITION SE FAIT ICI, ET LA MESURE G L'IMPOSE : aucune requête ne peut demander « les
 	// messages dont le fil n'est pas endormi », `app.cle_fil` vivant dans le schéma `app` que
-	// PostgREST n'expose pas (§16.15.5).
+	// PostgREST n'expose pas (§16.15.5). LE GROUPEMENT SUIT LA MÊME CONTRAINTE (§16.16.9) et se
+	// fait donc au même endroit, sur la même page.
+	//
+	// L'ORDRE DES DEUX EST IMPOSÉ : grouper D'ABORD, filtrer ENSUITE. Filtrer des messages puis
+	// grouper le reste ferait apparaître un fil amputé de ses messages endormis — or un fil est
+	// endormi tout entier ou pas du tout (§16.16.5), et son compte deviendrait faux.
+	const tous = etat.statut === 'pret' ? grouperEnFils(etat.donnees.messages) : []
 	const compose =
 		etat.statut === 'pret'
-			? composerListe(etat.donnees.messages, fils, mode, maintenant, idOuvert)
+			? composerFils(tous, fils, mode, maintenant, idOuvert)
 			: { visibles: [], masques: 0 }
 
 	// L'ACTION N'EST PAS RÉPÉTÉE, ET C'EST UN DÉFAUT VU EN CAPTURE (docs/DESIGN_SYSTEM.md §5.3
@@ -423,46 +434,74 @@ function PanneauListe({
 					)
 				) : (
 					<>
-						<ul aria-label={t('inbox.list.aria')}>
-							{compose.visibles.map((message) => (
-								<li key={message.id}>
-									<button
-										type="button"
-										data-testid="inbox-message"
-										aria-current={message.id === idOuvert ? 'true' : undefined}
-										onClick={() => onOuvrir(message)}
-										className={[
-											'w-full text-left px-3 py-2 border-b border-border',
-											'min-h-[var(--size-target)]',
-											'focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand',
-											message.id === idOuvert ? 'bg-brand-soft' : 'hover:bg-hover',
-										].join(' ')}
-									>
-										<span className="block truncate text-sm text-text-2">{message.expediteur}</span>
-										<span className="block truncate font-medium text-ink">{message.objet}</span>
-										<span className="flex items-center gap-2 text-sm text-text-3">
-											<span className="truncate">{dateLisible(message.recuLe)}</span>
-											{/* LA PASTILLE EST CELLE DU BOARD, RÉEMPLOYÉE SANS COPIE
-											    (§5.3 septies) : c'est la même information, elle doit se
-											    reconnaître d'une vue à l'autre. Le prédicat est décidé
-											    ICI, avec l'instant du filtre — la pastille ne le rejuge
-											    jamais (§16.15.4). */}
-											<PastilleSommeil
-												enSommeil={
-													echeanceFil(fils, message.workspaceId, message.cleFil, maintenant) !==
-													null
-												}
-												echeance={echeanceFil(
-													fils,
-													message.workspaceId,
-													message.cleFil,
-													maintenant,
-												)}
-											/>
-										</span>
-									</button>
-								</li>
-							))}
+						{/* LA LISTE ÉNUMÈRE DES FILS (§16.16.3), et son nom accessible le dit : le
+						    laisser annoncer « Messages du dossier » ferait parcourir des messages à
+						    un lecteur d'écran là où l'écran présente des fils. */}
+						<ul aria-label={t('inbox.thread.list.aria')}>
+							{compose.visibles.map((fil) => {
+								// LE PRÉDICAT EST DÉCIDÉ UNE FOIS PAR FIL, avec l'instant du filtre, et
+								// la pastille ne le rejuge jamais (§16.15.4). Le fil étant devenu la
+								// ligne, cette information cesse d'être répétée sur chacun de ses
+								// messages (§5.4 bis).
+								const echeance = echeanceFil(fils, fil.workspaceId, fil.cleFil, maintenant)
+								// LA LIGNE RESTE MARQUÉE TANT QUE LE MESSAGE OUVERT APPARTIENT AU FIL
+								// (§16.16.4), et non seulement quand il en est le dernier : sans cela,
+								// choisir un message plus ancien dans le sélecteur effacerait le repère
+								// de sélection de la liste (§5.4).
+								const choisi = fil.messages.some((message) => message.id === idOuvert)
+								return (
+									<li key={fil.cle}>
+										<button
+											type="button"
+											data-testid="inbox-message"
+											aria-current={choisi ? 'true' : undefined}
+											// OUVRIR UN FIL OUVRE SON MESSAGE LE PLUS RÉCENT (§16.16.4) :
+											// c'est celui dont la ligne vient d'afficher l'objet et la
+											// date, et ouvrir le plus ancien ferait mentir la ligne
+											// qu'on a cliquée.
+											onClick={() => onOuvrir(fil.dernier)}
+											className={[
+												'w-full text-left px-3 py-2 border-b border-border',
+												'min-h-[var(--size-target)]',
+												'focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand',
+												choisi ? 'bg-brand-soft' : 'hover:bg-hover',
+											].join(' ')}
+										>
+											<span className="block truncate text-sm text-text-2">
+												{fil.dernier.expediteur}
+											</span>
+											<span className="flex items-center gap-2 min-w-0">
+												<span className="truncate font-medium text-ink">
+													{fil.dernier.objet}
+												</span>
+												{/* LE BADGE N'APPARAÎT QU'AU-DELÀ DE UN (§5.4 bis) : un
+												    « 1 » dirait ce que son absence dit déjà. Son nom
+												    accessible est une phrase entière, un chiffre nu ne
+												    disant pas ce qu'il compte. `shrink-0` : le compte
+												    ne se laisse pas écraser par un objet long. */}
+												{fil.nombre > 1 ? (
+													<span
+														data-testid="inbox-fil-compte"
+														aria-label={t('inbox.thread.count', {
+															n: String(fil.nombre),
+														})}
+														className="shrink-0 rounded-full bg-hover px-2 text-sm text-text-2 tabular-nums"
+													>
+														{fil.nombre}
+													</span>
+												) : null}
+											</span>
+											<span className="flex items-center gap-2 text-sm text-text-3">
+												<span className="truncate">{dateLisible(fil.dernier.recuLe)}</span>
+												{/* LA PASTILLE EST CELLE DU BOARD, RÉEMPLOYÉE SANS COPIE
+												    (§5.3 septies) : c'est la même information, elle doit se
+												    reconnaître d'une vue à l'autre. */}
+												<PastilleSommeil enSommeil={echeance !== null} echeance={echeance} />
+											</span>
+										</button>
+									</li>
+								)
+							})}
 						</ul>
 						{/* L'ÉCRAN DIT QU'IL TRONQUE : une liste bornée en silence se lit comme une liste
 						    complète, et l'utilisateur croirait avoir tout vu. */}
@@ -879,6 +918,64 @@ function GesteSommeilFil({
 	)
 }
 
+/**
+ * Le sélecteur des messages d'un fil — §16.16.4, docs/DESIGN_SYSTEM.md §5.4 bis.
+ *
+ * IL N'EXISTE QU'AU-DELÀ D'UN MESSAGE, et c'est ce qui rend cette tranche sûre : là où les fils
+ * sont d'un message — tout le courrier reçu avant le correctif du §16.16.2 —, le panneau de lecture
+ * reste **exactement** celui d'avant. Une liste d'un élément n'est pas un choix, et l'afficher
+ * quand même donnerait à croire qu'il manque quelque chose.
+ *
+ * L'ORDRE EST CELUI DE LA LISTE — le plus récent d'abord —, et il n'est pas recalculé : deux ordres
+ * sur un même écran rendraient « la première ligne » ambiguë (§16.16.4).
+ */
+function SelecteurFil({
+	messages,
+	idOuvert,
+	onOuvrir,
+}: {
+	readonly messages: readonly MessageListe[]
+	readonly idOuvert: string
+	readonly onOuvrir: (message: MessageListe) => void
+}) {
+	if (messages.length < 2) return null
+	return (
+		<section
+			data-testid="inbox-fil-selecteur"
+			aria-label={t('inbox.thread.picker.aria')}
+			className="flex flex-col gap-1 rounded-md border border-border p-2"
+		>
+			<h4 className="text-sm font-medium text-text-2">{t('inbox.thread.picker.title')}</h4>
+			<ul>
+				{messages.map((message) => (
+					<li key={message.id}>
+						<button
+							type="button"
+							data-testid="inbox-fil-message"
+							// LE MESSAGE AFFICHÉ S'ANNONCE, il ne se contente pas d'une teinte : une
+							// sélection qui n'existe qu'en couleur n'existe pas pour un lecteur
+							// d'écran (§5.4, §10).
+							aria-current={message.id === idOuvert ? 'true' : undefined}
+							onClick={() => onOuvrir(message)}
+							className={[
+								'w-full text-left px-2 rounded-sm min-h-[var(--size-target)]',
+								'flex items-center gap-2 min-w-0',
+								'focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand',
+								message.id === idOuvert ? 'bg-brand-soft text-brand font-medium' : 'hover:bg-hover',
+							].join(' ')}
+						>
+							<span className="truncate min-w-0">{message.expediteur}</span>
+							<span className="shrink-0 ml-auto text-sm text-text-3">
+								{dateLisible(message.recuLe)}
+							</span>
+						</button>
+					</li>
+				))}
+			</ul>
+		</section>
+	)
+}
+
 function PanneauMessage({
 	etat,
 	onRetour,
@@ -889,6 +986,8 @@ function PanneauMessage({
 	fils,
 	maintenant,
 	onSommeil,
+	messagesDuFil,
+	onOuvrir,
 }: {
 	readonly etat: EtatAsync<MessageComplet | null>
 	readonly onRetour: () => void
@@ -899,6 +998,9 @@ function PanneauMessage({
 	readonly fils: FilsEndormis
 	readonly maintenant: Date
 	readonly onSommeil: (issue: 'endormi' | 'reveille') => void
+	/** Les messages du fil ouvert, dans l'ordre de la liste. Vide tant que rien n'est ouvert. */
+	readonly messagesDuFil: readonly MessageListe[]
+	readonly onOuvrir: (message: MessageListe) => void
 }) {
 	const echeance =
 		etat.statut === 'pret' && etat.donnees !== null
@@ -964,6 +1066,15 @@ function PanneauMessage({
 							/>
 						</div>
 					</header>
+
+					{/* LE SÉLECTEUR VIT SOUS L'EN-TÊTE (§5.4 bis), après le geste et avant le corps :
+					    il choisit ce que le corps montre, et le placer après l'aurait fait lire une
+					    fois le message déjà parcouru. Il ne rend rien sur un fil d'un seul message. */}
+					<SelecteurFil
+						messages={messagesDuFil}
+						idOuvert={etat.donnees.id}
+						onOuvrir={onOuvrir}
+					/>
 
 					{etat.donnees.corpsReduitDepuisHtml ? (
 						<p className="text-sm text-text-3">{t('inbox.message.reduced')}</p>
@@ -1048,6 +1159,19 @@ export function RouteInbox() {
 
 	const filsEndormis = fils.etat.statut === 'pret' ? fils.etat.donnees : new Map<string, string>()
 
+	// LE FIL DU MESSAGE OUVERT EST CALCULÉ SUR LA PAGE COURANTE, et il alimente le SEUL sélecteur
+	// du §16.16.4. Il n'est PAS relu au serveur : la page porte déjà les messages du fil qu'elle a
+	// rapportés, et une seconde lecture ferait diverger ce que la liste montre de ce que le
+	// sélecteur propose — un fil de la page pourrait alors offrir un message que la liste ignore.
+	//
+	// LA CONSÉQUENCE EST ASSUMÉE ET ÉCRITE (§16.16.3) : un fil dont la page ne porte qu'une partie
+	// des messages n'en propose que cette partie. C'est la même borne que celle du compte affiché,
+	// et la mention « la liste est tronquée » la signale déjà.
+	const messagesDuFil = useMemo(() => {
+		if (liste.etat.statut !== 'pret') return []
+		return filDuMessage(grouperEnFils(liste.etat.donnees.messages), idOuvert)?.messages ?? []
+	}, [liste.etat, idOuvert])
+
 	// APRÈS UN GESTE DE SOMMEIL, l'état des fils est relu — c'est LUI qui décide de la pastille et
 	// du filtre —, et la liste ne l'est pas : elle n'a pas changé côté serveur (mesure G), et la
 	// relire ferait clignoter l'écran pour rien.
@@ -1127,6 +1251,8 @@ export function RouteInbox() {
 					fils={filsEndormis}
 					maintenant={maintenant}
 					onSommeil={apresSommeil}
+					messagesDuFil={messagesDuFil}
+					onOuvrir={ouvrirMessage}
 				/>
 			</div>
 			<LiveRegion libelle={t('route.inbox.title')} message={annonce} />

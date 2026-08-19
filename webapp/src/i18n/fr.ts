@@ -85,13 +85,24 @@ export const fr = {
 	'inbox.folders.empty.body': "Les messages classés dans une affaire apparaîtront ici, sous leur track.",
 	'inbox.folders.expand': 'Déplier',
 	'inbox.folders.collapse': 'Replier',
-	'inbox.list.aria': 'Messages du dossier',
 	'inbox.list.title': 'Messages',
 	'inbox.list.empty.title': 'Aucun message dans ce dossier',
 	'inbox.list.empty.body': 'Rien à trier ici pour le moment.',
 	'inbox.list.truncated': 'Seuls les 50 messages les plus récents sont affichés.',
 	'inbox.list.unselected.title': 'Choisissez un dossier',
 	'inbox.list.unselected.body': 'La liste des messages apparaîtra ici.',
+	// Le GROUPEMENT en fils — CRM-081 tranche 2 f, docs/SPEC-cards.md §16.16,
+	// docs/DESIGN_SYSTEM.md §5.4 bis.
+	// LA LISTE ÉNUMÈRE DES FILS, et son nom accessible le dit : « Messages du dossier » décrivait
+	// ce qu'elle énumérait avant le groupement, et le laisser aurait fait annoncer des messages là
+	// où un lecteur d'écran parcourt des fils.
+	'inbox.thread.list.aria': 'Fils du dossier',
+	// UNE PHRASE ENTIÈRE EN NOM ACCESSIBLE, jamais le chiffre nu : un « 2 » lu seul ne dit pas ce
+	// qu'il compte (docs/DESIGN_SYSTEM.md §5.4 bis). Le badge n'apparaît qu'au-delà de un, donc ce
+	// libellé ne se lit jamais au singulier.
+	'inbox.thread.count': '{n} messages dans ce fil',
+	'inbox.thread.picker.title': 'Messages de ce fil',
+	'inbox.thread.picker.aria': 'Choisir un message du fil',
 	// Le sommeil d'un FIL dans l'inbox — CRM-081 tranche 2 e, docs/SPEC-cards.md §16.15,
 	// docs/DESIGN_SYSTEM.md §5.3 septies.
 	// LES MENTIONS NOMMENT LE FIL, ET NON L'AFFAIRE : un même refus se formule d'une seule façon,
