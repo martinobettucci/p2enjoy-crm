@@ -2632,6 +2632,15 @@ subir —, ou bien sa boucle de `Tab` est bornée par un compteur plus serré, c
 insensible à la charge. Aucune des deux ne doit être prise pour verdir une preuve : le scénario
 mesure un contrat réel, et il passe.
 
+**MESURE COMPLÉMENTAIRE, 2026-08-19, décision 474 — l'anomalie NE S'EST PAS REPRODUITE.** La
+campagne complète de la session `CRM-085` tranche 2, exécutée sur la même pile, rend
+`516 passed (15.7m)` **sans aucun échec** — soit les 494 scénarios de la veille plus les 22 de cette
+tranche. Le scénario en cause est donc passé DANS une campagne complète, ce qui **renforce
+l'hypothèse du budget de temps** — la campagne a duré 15,7 min contre 18,1 — et **écarte** celle d'un
+défaut déterministe du parcours. Cela ne le tranche pas : une anomalie sensible à la charge est par
+construction intermittente, et son absence sur une exécution ne prouve rien de plus que sa présence
+sur la précédente. L'entrée reste ouverte, et l'arbitrage ci-dessus reste attendu.
+
 
 ## INC-175 — `scripts/verify-preuves-refus.sh` porte deux compteurs PÉRIMÉS, et sa dérive précède `CRM-085`
 

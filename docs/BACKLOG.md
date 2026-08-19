@@ -7818,7 +7818,7 @@ sont indépendantes l'une de l'autre et suivent la Definition of Done commune.
 | CRM-082 | Objectifs : modèle, RLS et API | `[~]` |
 | CRM-083 | Canevas d'objectifs : blocs, flèches, ouverture du channel | `[~]` |
 | CRM-084 | Budgets, occurrences et clôture : modèle, RLS et API | `[~]` |
-| CRM-085 | Lignes de coût d'une affaire : modèle et section de la fiche | `[~]` |
+| CRM-085 | Lignes de coût d'une affaire : modèle et section de la fiche | `[x]` |
 | CRM-086 | Écrans de coûts : histogramme du track et cumul du workspace | `[ ]` |
 
 **Contrainte d'ordre :** `CRM-082` précède `CRM-083`, `CRM-084` précède `CRM-085` qui précède
@@ -8393,7 +8393,7 @@ budget appartient à un track, et l'écran qui administre le track est celui qui
       `scripts/verify-administration-arborescence.sh` **27 contrôles**, aucune anomalie de part ni
       d'autre — l'écran hôte n'a rien perdu à accueillir le bloc des budgets.
 
-### CRM-085 — Lignes de coût d'une affaire `[~]`
+### CRM-085 — Lignes de coût d'une affaire `[x]`
 
 `card_costs` (`docs/SCHEMA.md` §9 bis.6), ses triggers, sa double politique de lecture, et la
 section « Coûts » de la fiche d'affaire (`docs/SPEC-costs.md` §4.6).
@@ -8436,10 +8436,14 @@ COMPTE désormais les lignes sans coût réel (§4.1), en distinguant quatre ét
 nul, non nul, non mesurable. Le contrôle correspondant de `scripts/verify-budgets.sh` a été
 **révisé** : il exigeait que la confirmation parle du décompte, il exige qu'elle le mesure.
 
-**CE QUI RESTE, ET POURQUOI L'UNITÉ N'EST PAS `[x]`** : la Definition of Done exige un **seed
-portant une affaire à deux lignes de nature différente dont l'une sans réel** — il l'a, « Refonte
-intranet Ville de Lyon » —, et toutes les autres preuves sont vertes. L'unité passe à `[x]` dès
-qu'une exécution constate la campagne complète verte après cette tranche.
+**L'UNITÉ EST CLOSE, ET LA CAMPAGNE COMPLÈTE A ÉTÉ EXÉCUTÉE APRÈS CETTE TRANCHE** (décision 474) :
+`typecheck`, `types:check` et `build` verts ; `test:unit` **59 fichiers / 2043 tests** ; `test:sql`
+**49 fichiers / 2464 assertions** ; `e2e:api` **816 passés** ; `e2e:ui` **516 passés, aucun échec** ;
+`e2e:mail` **42 passés** ; `pytest` **244**. Les deux harnais que ce changement touche sont verts :
+`scripts/verify-card-costs.sh` **51 contrôles** et `scripts/verify-budgets.sh` **44 contrôles**. Les
+quarante-sept autres `scripts/verify-*.sh` n'ont pas été rejoués, la série entière ne tenant pas dans
+une session (`docs/CloudWorker.md` §2.1 ter). Chaque point de la Definition of Done ci-dessus est
+couvert par une preuve réellement exécutée.
 
 **DoD** : migration ; pgTAP — `occurrence_id` exigée si et seulement si le budget est récurrent,
 insertion refusée sur un budget clôturé **et** sur une occurrence clôturée, occurrence étrangère au
