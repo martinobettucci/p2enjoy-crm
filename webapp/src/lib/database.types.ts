@@ -221,6 +221,74 @@ export type Database = {
           },
         ]
       }
+      card_costs: {
+        Row: {
+          actual_cost: number | null
+          budget_id: string
+          card_id: string
+          created_at: string
+          created_by: string | null
+          estimated_cost: number
+          id: string
+          label: string
+          occurrence_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          actual_cost?: number | null
+          budget_id: string
+          card_id: string
+          created_at?: string
+          created_by?: string | null
+          estimated_cost: number
+          id?: string
+          label: string
+          occurrence_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          actual_cost?: number | null
+          budget_id?: string
+          card_id?: string
+          created_at?: string
+          created_by?: string | null
+          estimated_cost?: number
+          id?: string
+          label?: string
+          occurrence_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_costs_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_costs_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_costs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_costs_occurrence_id_fkey"
+            columns: ["occurrence_id"]
+            isOneToOne: false
+            referencedRelation: "budget_occurrences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       card_events: {
         Row: {
           actor_id: string | null

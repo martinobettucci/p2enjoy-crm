@@ -232,10 +232,29 @@ test.describe('CRM-085 — lignes de coût : le contrat d’API, hors interface'
 	test.afterAll(async ({ playwright }) => {
 		const service = await playwright.request.newContext({ baseURL: URL_API })
 		try {
-			await service.delete(`${COUTS}?id=like.d0000000*`, { headers: enTetesService() })
-			await service.delete(`${BUDGETS}?position=gte.${POSITION_ESSAI}`, {
+			// LE FILTRE PORTE SUR `budget_id`, ET C'EST MESURÉ. Un `id=like.d0000000*` ne supprime
+			// RIEN : `id` est de type `uuid`, pour lequel PostgreSQL n'offre aucun opérateur
+			// `LIKE`, et PostgREST rend alors une erreur que ce nettoyage ignorait en silence. Les
+			// budgets d'essai survivaient à leur tour — `ON DELETE RESTRICT` les protège dès qu'une
+			// ligne les cite —, et la suite pgTAP de `CRM-084` échouait au cycle suivant sur une
+			// position maximale de 954 au lieu de 202. Le filtre par budget a un second mérite : il
+			// emporte AUSSI les lignes qu'un scénario interrompu aurait créées sous d'autres
+			// identifiants.
+			const lignes = await service.delete(
+				`${COUTS}?budget_id=in.(${BUDGET_OUVERT},${BUDGET_RECURRENT},${BUDGET_A_CLOTURER},${BUDGET_INVISIBLE})`,
+				{ headers: enTetesService() },
+			)
+			const budgets = await service.delete(`${BUDGETS}?position=gte.${POSITION_ESSAI}`, {
 				headers: enTetesService(),
 			})
+			// LE NETTOYAGE ÉCHOUE BRUYAMMENT. Silencieux, il laisse un décor qui fait rougir la
+			// suite pgTAP d'une AUTRE unité, et le diagnostic ressemble alors à une régression.
+			if (!lignes.ok() || !budgets.ok()) {
+				throw new Error(
+					`décor de card-costs.spec non détruit (lignes ${lignes.status()}, budgets ${budgets.status()}) : ` +
+						`${await lignes.text()} / ${await budgets.text()}`,
+				)
+			}
 		} finally {
 			await service.dispose()
 		}
@@ -376,6 +395,11 @@ test.describe('CRM-085 — lignes de coût : le contrat d’API, hors interface'
 		expect(creation.status()).toBe(201)
 		const creees = (await creation.json()) as LigneDeCout[]
 		expect(creees).toHaveLength(1)
+		// `noUncheckedIndexedAccess` : le compilateur ne sait pas que `toHaveLength(1)` garantit
+		// l'indice 0. La sortie du tableau est donc EXTRAITE une fois, et non affirmée par `!` —
+		// une assertion non nulle masquerait une réponse vide derrière un plantage illisible.
+		const [creee] = creees
+		if (!creee) throw new Error('la création n’a rendu aucune ligne')
 
 		const surLeBudget = await request.patch(`${BUDGETS}?id=eq.${BUDGET_OUVERT}`, {
 			headers: { ...enTetesAuthentifies(jetonBizdev), Prefer: 'return=representation' },
@@ -387,7 +411,7 @@ test.describe('CRM-085 — lignes de coût : le contrat d’API, hors interface'
 		expect(surLeBudget.status()).toBe(200)
 		expect(await surLeBudget.json()).toEqual([])
 
-		await request.delete(`${COUTS}?id=eq.${creees[0].id}`, {
+		await request.delete(`${COUTS}?id=eq.${creee.id}`, {
 			headers: enTetesAuthentifies(jetonBizdev),
 		})
 	})
@@ -445,10 +469,11 @@ test.describe('CRM-085 — lignes de coût : le contrat d’API, hors interface'
 			},
 		})
 		expect(reponse.status()).toBe(201)
-		const creees = (await reponse.json()) as LigneDeCout[]
-		expect(creees[0].occurrence_id).toBe(OCCURRENCE_OUVERTE)
+		const [avecOccurrence] = (await reponse.json()) as LigneDeCout[]
+		if (!avecOccurrence) throw new Error('la création n’a rendu aucune ligne')
+		expect(avecOccurrence.occurrence_id).toBe(OCCURRENCE_OUVERTE)
 
-		await request.delete(`${COUTS}?id=eq.${creees[0].id}`, {
+		await request.delete(`${COUTS}?id=eq.${avecOccurrence.id}`, {
 			headers: enTetesAuthentifies(jetonBizdev),
 		})
 	})
@@ -489,9 +514,9 @@ test.describe('CRM-085 — lignes de coût : le contrat d’API, hors interface'
 			data: { actual_cost: 480 },
 		})
 		expect(reponse.status()).toBe(200)
-		const lignes = (await reponse.json()) as LigneDeCout[]
-		expect(lignes).toHaveLength(1)
-		expect(Number(lignes[0].actual_cost)).toBe(480)
+		const [miseAJour] = (await reponse.json()) as LigneDeCout[]
+		if (!miseAJour) throw new Error('la mise à jour n’a touché aucune ligne')
+		expect(Number(miseAJour.actual_cost)).toBe(480)
 	})
 
 	test('mais le DÉPLACEMENT de cette ligne reste refusé, et c’est le trigger qui le dit', async ({
