@@ -75,6 +75,13 @@ $$;
 -- Fixtures, posées en propriétaire — donc hors RLS. Les identifiants sont STABLES pour que les
 -- messages d'assertion restent lisibles d'une exécution à l'autre.
 -- ---------------------------------------------------------------------------------------------
+-- LE NOM DU TABLEAU D'ESSAI NE DOIT PAS ÊTRE CELUI DU SEED, et cette contrainte a été MESURÉE :
+-- la première rédaction nommait sa fixture « Objectifs du trimestre », nom que le seed a pris
+-- ensuite pour son propre tableau. L'unicité par workspace du §2.1 a fait ce qu'elle doit faire —
+-- `duplicate key value violates unique constraint "goal_boards_workspace_name_key"` —, et la
+-- suite entière est morte à sa première insertion. Ce n'était pas un défaut du produit mais une
+-- collision de fixture, et le nom porte désormais celui du fichier pour qu'elle ne se reproduise
+-- pas.
 -- Les trois channels retenus le sont pour ce qu'ils SÉPARENT, mesuré sur la pile seedée :
 --   * « Prospection »    (…031) — lu ET écrit par Camille et Driss ;
 --   * « Grands comptes » (…032) — INVISIBLE à Farida, et c'est le seul cas qui prouve le §4.1 ;
@@ -84,7 +91,7 @@ $$;
 insert into public.goal_boards (id, workspace_id, name, description, position, created_by)
 values
 	('a0000000-0000-4000-8000-0000000000b1', '5eed0000-0000-4000-8000-000000000001',
-	 'Objectifs du trimestre', 'Tableau d''essai de la suite 0047', 1,
+	 'Tableau d''essai de la suite 0047', 'Fixture locale, distincte du tableau du seed', 1,
 	 '5eed0000-0000-4000-8000-000000000011'),
 	('a0000000-0000-4000-8000-0000000000b2', '5eed0000-0000-4000-8000-000000000001',
 	 'Second tableau', 'Sert au refus du lien inter-tableaux', 2,
@@ -272,7 +279,8 @@ select throws_ok(
 
 select throws_ok(
 	$$insert into public.goal_boards (workspace_id, name, position)
-	  values ('5eed0000-0000-4000-8000-000000000001', '  Objectifs du trimestre  ', 9)$$,
+	  values ('5eed0000-0000-4000-8000-000000000001',
+	          '  Tableau d''essai de la suite 0047  ', 9)$$,
 	'23505',
 	null,
 	'CRM-082 : le même nom entouré de blancs entre en collision — l''unicité porte sur la forme '
