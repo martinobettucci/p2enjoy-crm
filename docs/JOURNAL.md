@@ -19313,3 +19313,74 @@ au §15.8 : l'arbitrage sur les **références mortes** — une valeur `jsonb` q
 supprimé demeure en base, et aucune surface ne la nettoie —, et les **gestes d'écriture** sur un
 contact existant : le modifier, le supprimer, le rattacher depuis sa fiche. La prochaine exécution
 peut prendre l'un de ces gestes, ou la première unité `[ ]` du plan.
+
+## décision 455 — `CRM-060` sous-tranche 4g : un contact se corrige enfin, et un refus SILENCIEUX est dit plutôt que déguisé en succès
+
+**L'unité, et le choix.** La décision 454 laissait `4f` close et `CRM-060` en `[~]`, avec les
+**gestes d'écriture** sur un contact existant en tête de ce qui reste dû (§6, §15.8). C'est le §4.2
+point 2 de `docs/CloudWorker.md` : la première unité `[~]` du plan dont il reste du **comportement**
+à livrer. Un contact créé au carnet était **définitif** — une coquille dans un nom, un email qui
+change d'employeur, une fonction promue n'avaient aucune surface pour se corriger, alors que la
+politique `contacts_maj_bizdev_admin` existe en base depuis la tranche 1 sans qu'aucun écran ne
+l'exerce.
+
+**La SUPPRESSION est écartée par ARBITRAGE, pas par manque de temps.** Elle laisse en place les
+valeurs `jsonb` qui désignaient le contact supprimé : c'est le §6 point 4, explicitement laissé au
+responsable et **non tranché**. La livrer produirait exactement les références mortes que ce point
+nomme. `docs/CloudWorker.md` §4.1 est net — une entrée qui attend un arbitrage ne se tranche jamais
+soi-même —, et l'écart est nommé au §16.8 plutôt que compensé par une commande morte.
+
+**Spécification écrite et committée AVANT toute ligne de code**, `docs/SPEC-contacts.md` §16, fondée
+sur **vingt et une** mesures relevées à la main sur la pile seedée avec les jetons réels des trois
+profils et la clé anonyme, sur un contact sonde détruit ensuite — le seed est rendu **intact**.
+
+**LA MESURE 3 A DÉCIDÉ DU CONTRAT, ET ELLE SÉPARE 4g DE 4e.** À la création, un refus
+d'autorisation est un `403` explicite : la clause `WITH CHECK` rejette la ligne. À la modification,
+la clause **`USING`** rend la ligne **invisible à l'écriture** — PostgREST ne trouve rien à modifier
+et rend **`200` avec un tableau vide, sans aucune erreur**. Un produit qui prendrait ce silence pour
+un succès refermerait le formulaire de la lectrice sur une modification qui n'a jamais eu lieu. La
+mesure 19 le confirme hors sonde, sur Léo Marchand ; la mesure 12 montre qu'un identifiant
+inexistant rend **exactement la même chose**. Les trois sont **indistinguables par construction** —
+c'est la situation du §15.4, trois absences un seul écran —, et un **seul** message les couvre :
+il n'affirme ni le refus ni la disparition, et invite à recharger la fiche.
+
+**Les mesures 16 et 17 ont décidé de la charge envoyée.** L'unicité partielle sur `lower(email)` ne
+s'oppose **pas** à la ligne elle-même, même en changeant la casse : le formulaire envoie donc les
+cinq colonnes **d'un bloc**, sans envoi différentiel. Une comparaison à l'état initial aurait été
+une complication que la mesure montre inutile, et elle aurait ouvert un chemin — « aucun champ n'a
+changé » — qu'aucune règle ne demande.
+
+**Les cinq champs sont EXTRAITS, pas dupliqués.** `ChampsContact` porte désormais la saisie, ses
+libellés, ses identifiants d'accessibilité et les trois états du sélecteur d'organisation, pour les
+deux formulaires. La preuve de l'invariance est que **`Carnet.test.tsx` reste vert sans être
+modifié**. Deux copies auraient divergé au premier champ ajouté.
+
+**Le retour du focus est écrit APRÈS le rendu, et non pendant.** La commande et le formulaire
+s'excluent : la commande est démontée tant que le formulaire est ouvert, et sa référence vaut `null`
+au moment de la fermeture. C'est le défaut exact que la décision 453 a trouvé au carnet ; le remède
+n'a rien inventé — drapeau à la fermeture, effet qui rend le focus au tour suivant, comme
+`BlocContactsCard`. Aucune temporisation. La preuve clavier E2E l'exerce sur la pile réelle.
+
+**Une assertion RÉVISÉE, pas retirée.** Le cas e du §15.9 exigeait qu'**aucun bouton** n'existe sur
+la fiche, pour dire ce que le §15.8 posait : cette surface ne livre aucun geste. 4g livre le geste
+de modification, et la condition tombe. L'assertion est **resserrée** sur ce qu'elle visait
+réellement — l'état vide de la zone des affaires n'offre aucune action — et gagne son pendant : le
+geste de modification, lui, est bien là. Motif écrit dans le fichier (mécanisme de la décision 51).
+Le §5.24 du design system est révisé dans le même mouvement.
+
+**Preuves de l'unité, rejouées isolément** : `contacts.test.ts` **65 verts**, `FicheContact.test.tsx`
+**23 verts**, `e2e/api/contacts.spec.ts -g 4g` **7 verts**, `e2e/ui/contacts.spec.ts -g
+modification` **4 verts, console vierge**. Captures **observées** (`CLAUDE.md` §16) : le formulaire
+prérempli dans le flux avec les deux zones visibles dessous, la fiche après modification dont le
+titre suit le nouveau nom, le message de la lectrice avec sa saisie conservée au-dessus d'une fiche
+qui montre encore la vraie valeur, et le rendu à 390 px sans débordement.
+
+**Le seed est rendu INTACT, et c'est mesuré deux fois** : après les vingt et une mesures manuelles,
+puis après la suite d'interface — qui écrit réellement et **restitue par les gestes de l'écran**,
+jamais par une requête de service. Trois contacts aux valeurs d'origine, deux rattachements.
+
+**Où reprendre.** `4g` est **close**. `CRM-060` reste `[~]`, et ce qui lui manque est nommé au §6 et
+au §16.8 : l'**arbitrage du responsable** sur les références mortes — qui commande la suppression
+d'un contact —, et le **rattachement** depuis la fiche d'un contact. La prochaine exécution peut
+prendre ce rattachement, ou la première unité `[ ]` du plan ; la suppression, elle, attend
+l'arbitrage.

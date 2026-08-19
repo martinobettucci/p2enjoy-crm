@@ -7471,9 +7471,60 @@ relevées sur la pile seedée) :
 **Aucune migration, et le seed n'est PAS modifié** : ses trois contacts couvrent déjà toutes les
 branches sauf l'affaire archivée (§15.7).
 
+**Sous-tranche 4g livrée, 2026-08-19 — la MODIFICATION d'un contact depuis sa fiche**
+(`docs/SPEC-contacts.md` §16, spécification écrite et committée **avant toute ligne de code**,
+fondée sur **vingt et une** mesures relevées sur la pile seedée avec les jetons réels des trois
+profils et la clé anonyme) :
+
+- [x] `webapp/src/lib/contacts.ts` — `modifierContact`, `RefusModificationContact`, et le
+      classement qui décide `sans-effet` **avant** de classer une erreur. **Mesure décisive** : la
+      clause `USING` de `contacts_maj_bizdev_admin` rend la ligne invisible à l'écriture, si bien
+      qu'un refus d'autorisation est un `200` avec zéro ligne et **aucune erreur** — non le `403`
+      explicite que rend la création. `.maybeSingle()` et non `.single()`, qui déguiserait ce
+      résultat attendu en panne `PGRST116`.
+- [x] `webapp/src/app/ChampsContact.tsx` — les cinq champs **extraits** du formulaire de création
+      et partagés par les deux formulaires, à comportement **inchangé**. La preuve de cette
+      invariance est que `Carnet.test.tsx` reste vert **sans être modifié**.
+- [x] `webapp/src/app/FormulaireModificationContact.tsx` — le formulaire prérempli, dans le flux du
+      document, et son dictionnaire **fermé** de six refus.
+- [x] `webapp/src/app/FicheContact.tsx` — la commande, le retour du focus **différé d'un tour de
+      rendu** (la commande étant démontée pendant que le formulaire est ouvert : défaut trouvé au
+      carnet par la décision 453, remède déjà porté par `BlocContactsCard`), et la mise à jour des
+      caractéristiques et du titre **sans relecture**. La zone des affaires n'est pas touchée.
+- [x] `webapp/src/lib/contacts.test.ts` (**4 tests ajoutés**, 65 dans le fichier) : les cinq
+      colonnes envoyées d'un bloc sans `workspace_id`, le filtre sur `id`, la chaîne `maybeSingle`
+      exigée par le contrat, et les six natures de refus.
+- [x] `webapp/src/app/FicheContact.test.tsx` (**11 tests ajoutés**, 23 dans le fichier) : les cas
+      a, b, c, d, e, f, h, j, k, l, m, n, o, q et r du §16.9. **Une assertion du cas e est RÉVISÉE
+      par livraison**, avec son motif écrit dans le fichier (mécanisme de la décision 51) : elle
+      exigeait qu'aucun bouton n'existe sur la page ; la condition est tombée, et elle est
+      resserrée sur l'état vide de la zone des affaires, qui n'offre toujours aucune action.
+- [x] `e2e/api/contacts.spec.ts` (**7 scénarios ajoutés**, 45 dans le fichier) : les mesures du
+      §16.3 avec les jetons réels. Le **silence** opposé à la lectrice est figé sur une sonde ET
+      sur une ligne du seed, et l'identifiant inexistant rend le **même** silence ; chaque refus
+      relit la ligne et la constate inchangée (décision 70).
+- [x] `e2e/ui/contacts.spec.ts` (**4 scénarios ajoutés**, console vierge) : la modification par les
+      gestes de l'écran, le titre qui suit, le retour du focus au **clavier**, le silence dit à la
+      lectrice avec sa saisie conservée, et le rendu à 390 px. **Le seed est restitué par les
+      gestes de l'écran**, jamais par une requête de service.
+- [x] Captures produites **et observées** (`CLAUDE.md` §16) sous `docs/captures/CRM-060/` :
+      `fiche-contact-modification-formulaire-1440.jpg`, `fiche-contact-modification-apres-1440.jpg`,
+      `fiche-contact-modification-sans-effet-1440.jpg`, `fiche-contact-modification-390.jpg`.
+- [x] `docs/DESIGN_SYSTEM.md` §5.25 ajouté et §5.24 révisé ; `docs/manual.md` §3 ter ;
+      `CHANGELOG.md`, dans le même changement.
+
+**Aucune migration, et le seed n'est PAS modifié** : la suite d'interface écrit puis restitue les
+valeurs d'origine, relues intactes après la campagne.
+
+**LA SUPPRESSION D'UN CONTACT N'EST PAS LIVRÉE, ET CE N'EST PAS UN MANQUE DE TEMPS** : elle dépend
+de l'arbitrage **non tranché** du §6 point 4 — supprimer un contact laisse en place les valeurs
+`jsonb` qui le désignaient, et la livrer avant l'arbitrage produirait exactement les références
+mortes que ce point nomme (`docs/CloudWorker.md` §4.1 : une entrée qui attend un arbitrage du
+responsable ne se tranche jamais soi-même).
+
 **Ce qui reste dû sur `CRM-060` après la tranche 4** : l'arbitrage sur les **références mortes**
-(§6, point 4) et les gestes d'écriture nommés au §15.8 — modifier ou supprimer un contact,
-le rattacher depuis sa fiche. `CRM-060` demeure `[~]`.
+(§6, point 4) et, derrière lui, la **suppression** d'un contact ; le **rattachement** depuis la
+fiche d'un contact. `CRM-060` demeure `[~]`.
 
 **Troisième tranche livrée, 2026-08-18 — la résolution des champs `contact` et `user`**
 (`docs/SPEC-contacts.md` §9, migration `0047`) :
