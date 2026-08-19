@@ -3516,3 +3516,215 @@ mesure F établissent le comportement pour les trois profils.
 
 **Ce qui restera dû sur `CRM-081` après la tranche 2 e** : le **groupement** des messages en fils
 (tranche 2 f). L'unité demeure `[~]`.
+
+#### 16.16 Tranche 2 f — LE GROUPEMENT des messages en fils
+
+Le §16.15.8 a écarté le groupement avec son motif, et l'a nommé comme la tranche `2 f` : « grouper
+change ce que la liste énumère, ce que la sélection désigne et ce que les compteurs de
+l'arborescence comptent ». Ce sous-chapitre est le contrat des trois. Il est rédigé **avant sa
+première ligne de code** et fondé sur **douze mesures** relevées le 2026-08-19 sur la pile seedée,
+avec les jetons réels des trois profils et la clé de service.
+
+##### 16.16.1 DOUZE MESURES, ET DEUX D'ENTRE ELLES CHANGENT LE PÉRIMÈTRE DE LA TRANCHE
+
+| # | Mesure, le 2026-08-19 | Ce qu'elle décide |
+|---|---|---|
+| 1 | L'administratrice lit **2** messages, de clés distinctes ; l'arborescence rend `non classés : 1` et `Refonte du site vitrine : 1` | Le seed ne porte **aucun fil de plus d'un message** : il ne peut pas démontrer le groupement en l'état (§16.16.8) |
+| 2 | Le business developer lit **1** message, la lectrice **0** | Le groupement ne change aucun droit : il regroupe ce que la RLS a déjà rapporté |
+| 3 | Un message **reçu** portant `References: <parent>` est ingéré avec `references_ids` = **`[]`** | **DÉFAUT MESURÉ** : la chaîne de références n'est jamais persistée à l'ingestion. Voir §16.16.2 |
+| 4 | `app.cle_fil` rend alors le `Message-ID` **propre** de la réponse — deux fils au lieu d'un | Sans le §16.16.2, un fil ne peut JAMAIS se former à partir de courrier reçu |
+| 5 | `mail_sync.postgrest.enregistrer_message` compose sa charge sans la colonne `references_ids`, que la migration 30 pose `not null default '{}'` | La cause est une **omission de charge**, non un refus de la base |
+| 6 | `PATCH mail_messages` par la clé de service sur `references_ids` : `200`, valeur écrite | La colonne est ouverte à la clé de service — le correctif du §16.16.2 est une charge plus complète, rien d'autre |
+| 7 | `marquer_envoi_reussi` écrit, LUI, `coalesce(parent.references_ids,'{}') || array[parent.rfc822_message_id]` | Une réponse **émise par le produit** rejoint déjà le fil de son parent : le groupement a un cas réel dès aujourd'hui |
+| 8 | Après écriture de `references_ids`, `app.cle_fil` rend la **même** clé pour le parent et la réponse | La coïncidence des deux définitions (§16.15.2) tient sans changement au client |
+| 9 | `snooze_thread` sur cette clé partagée : `200`, une seule ligne pour **les deux** messages | Le sommeil est déjà un geste de FIL : le groupement rend enfin visible ce que la tranche 2 c avait posé |
+| 10 | `GET mail_messages … order=received_at.desc,id.desc` rend la réponse **avant** son parent | L'ordre de la page suffit à ordonner les fils : la première occurrence d'une clé EST son message le plus récent (§16.16.3) |
+| 11 | `inbox_arborescence` compte **des messages**, `count(*)` par card, `security invoker` | Le compteur d'un dossier reste un compte de messages (§16.16.6) |
+| 12 | La suppression du message de mesure ramène la base à ses 2 messages et `mail_thread_snoozes` à zéro ligne | Le seed sort **intact** des mesures |
+
+##### 16.16.2 PRÉALABLE MESURÉ — LA CHAÎNE `References` N'EST JAMAIS PERSISTÉE À L'INGESTION
+
+**La mesure 3 est décisive, et elle décrit un défaut, non une décision.** `mail_messages.references_ids`
+est posée par la migration 30 et documentée « la chaîne `References` du message, dans l'ordre. Sans
+elle, une réponse ne citerait que son parent, et un client de messagerie couperait le fil au
+deuxième aller-retour ». L'analyse MIME la lit déjà — `mime_analyse.analyser` rend
+`references` —, et `classer_message_automatiquement` la reçoit pour sa règle 2. Mais
+`PostgrestClient.enregistrer_message` **ne la met pas dans la charge d'insertion**, et la colonne
+retombe donc sur son `default '{}'` (mesure 5).
+
+**Conséquence exacte, et elle vide la tranche de son sens** : tout message **reçu** est sa propre
+racine (mesure 4), donc un fil ne peut jamais compter plus d'un message entrant. Seule une réponse
+**émise par le produit** rejoint un fil (mesure 7), parce que `marquer_envoi_reussi` compose la
+chaîne en SQL. Grouper une inbox où le courrier reçu ne se groupe pas serait livrer une
+fonctionnalité inerte sur son cas principal.
+
+**C'est donc un PRÉALABLE de cette unité au sens du §4.2 de `docs/CloudWorker.md`**, traité dans la
+même session et par le geste le plus étroit qui le corrige à sa cause : la charge d'insertion porte
+`references_ids`, exactement ce que l'analyse a lu.
+
+```
+"references_ids": list(analyse.references),
+```
+
+**Aucune migration.** La colonne existe, son type est `text[] not null default '{}'`, et la clé de
+service l'écrit (mesure 6). **Aucun changement de règle de classement** : `p_references` est déjà
+transmise séparément et ne bouge pas.
+
+**Ce que le correctif ne fait PAS, et c'est écrit** : il ne réécrit **aucun** message déjà ingéré.
+Les messages reçus avant lui gardent `references_ids` = `[]` et restent leur propre racine. Une
+reprise rétroactive supposerait de relire les en-têtes depuis l'IMAP, ce que rien ne conserve en
+base — l'écart est nommé, non masqué.
+
+##### 16.16.3 `grouperEnFils` — ce que la liste énumère désormais
+
+```
+grouperEnFils(messages: readonly MessageListe[]): readonly FilListe[]
+```
+
+Un `FilListe` porte :
+
+- `cle` — la clé de correspondance `(workspace, clé de fil)` du §16.15.3, jamais la seule chaîne :
+  la mesure 5 du §16.14.1 interdit de confondre deux workspaces portant le même `Message-ID` ;
+- `workspaceId` et `cleFil` — les deux moitiés, que le geste de sommeil réclame telles quelles ;
+- `dernier` — le message le plus récent du fil **dans cette page** ;
+- `messages` — les messages du fil **dans cette page**, dans l'ordre où la page les a rendus ;
+- `nombre` — leur compte.
+
+**L'ORDRE NE SE RECALCULE PAS, ET LA MESURE 10 EXPLIQUE POURQUOI.** La page arrive déjà triée par
+`received_at` décroissant puis `id` décroissant (§16.15.3). La **première occurrence** d'une clé est
+donc son message le plus récent, et l'ordre d'apparition des clés est l'ordre des fils par récence.
+Retrier au client ferait diverger deux définitions du même ordre — le défaut que le §18.3 nomme déjà
+pour l'arborescence. `dernier` est donc le **premier** message rencontré, jamais le résultat d'une
+comparaison de dates.
+
+**`nombre` COMPTE CE QUE LA PAGE PORTE, PAS CE QUE LA BASE CONTIENT**, et l'écran ne prétend pas le
+contraire. La borne de cinquante messages (`MESSAGES_PAR_PAGE`) s'applique **avant** le groupement,
+comme elle s'applique avant le filtre (§16.15.5 point 1) : un fil de soixante messages en montrerait
+cinquante. La mention « la liste est tronquée » reste affichée sur le critère du **serveur** — le
+nombre de lignes rapportées —, jamais sur le nombre de fils affichés.
+
+##### 16.16.4 CE QUE LA SÉLECTION DÉSIGNE, ET CE QUE LE PANNEAU DE LECTURE OUVRE
+
+**La ligne de liste désigne un FIL ; le panneau de lecture montre toujours UN message.** C'est la
+seule répartition qui n'oblige à réécrire ni le corps, ni les pièces jointes, ni le classement, ni
+la réponse — quatre gestes que le §18.3 attache à un message et à lui seul.
+
+- **Ouvrir un fil ouvre son message le plus récent** (`dernier`). C'est celui qui porte l'objet et
+  la date que la ligne vient d'afficher : ouvrir le plus ancien ferait mentir la ligne qu'on a
+  cliquée.
+- **La ligne porte `aria-current` quand le message ouvert APPARTIENT au fil**, et non seulement
+  quand il en est le dernier. Sans cela, choisir un autre message du fil effacerait le repère de
+  sélection de la liste, et le §5.4 refuse déjà qu'une sélection n'existe qu'en couleur.
+- **Un fil de plusieurs messages porte, dans le panneau de lecture, un sélecteur de ses messages**
+  — une liste de boutons, un par message, dans **le même ordre que la liste** : le plus récent
+  d'abord. Deux ordres sur un même écran rendraient « la première ligne » ambiguë.
+- **Un fil d'un seul message ne porte aucun sélecteur** : une liste d'un élément n'est pas un
+  choix, et l'écran d'aujourd'hui reste alors identique à ce qu'il était. **C'est la propriété qui
+  rend cette tranche sûre** — là où les fils sont d'un message, rien ne change.
+- **Changer de message dans le sélecteur ne change pas le fil sélectionné** : la ligne garde son
+  `aria-current`, et la liste ne bouge pas.
+
+##### 16.16.5 LE SOMMEIL, LE FILTRE ET LA PASTILLE — TRANSPOSÉS AU FIL, SANS NOUVELLE RÈGLE
+
+Le sommeil était déjà un geste de **fil** (mesure 9) posé sur une liste de **messages**. Le
+groupement ne change donc aucune règle du §16.15 ; il en change le **porteur** :
+
+- **la pastille se pose sur la ligne du fil**, après la date du dernier message — un seul rendu par
+  fil au lieu d'un par message, ce qui était la même information répétée ;
+- **le filtre masque des FILS**, et `masques` compte des fils. L'état vide du §16.15.5 point 2 garde
+  son libellé — « Tous les messages de ce dossier sont dans des fils en sommeil » —, qui reste vrai
+  et se lit mieux encore ;
+- **le fil du message ouvert n'est jamais masqué**, comme sa ligne ne l'était pas (§16.15.5). La
+  règle se transpose sans changement : le prédicat porte désormais sur `fil.messages`, qui contient
+  le message ouvert ;
+- **le geste reste dans le panneau de lecture** (§16.15.6) et n'apparaît toujours pas dans la ligne.
+  Il agit sur la clé du fil, donc sur tous ses messages — ce qu'il faisait déjà, et que le
+  groupement rend enfin lisible.
+
+##### 16.16.6 LES COMPTEURS DE L'ARBORESCENCE COMPTENT DES MESSAGES, ET C'EST UNE DÉCISION
+
+**Ils ne changent pas.** `inbox_arborescence` rend `count(*)` par card (mesure 11), et ce compte
+reste un compte de **messages**.
+
+**Le motif est écrit plutôt que subi.** Compter des fils exigerait `count(distinct app.cle_fil(...))`,
+donc une migration, et créerait une divergence que rien ne rattraperait : le compteur porterait sur
+le dossier **entier** tandis que la liste ne groupe que les cinquante messages de sa page (§16.16.3).
+Un dossier de soixante messages afficherait alors « 12 fils » au-dessus d'une liste en montrant onze,
+sans qu'aucune mention ne puisse l'expliquer.
+
+**L'écran rend l'arithmétique lisible sans toucher au serveur** : la ligne d'un fil de plusieurs
+messages affiche son compte, et la somme des comptes affichés égale le compteur du dossier tant que
+la page n'est pas tronquée. Un compteur de dossier qui divergerait de sa liste serait un mensonge ;
+un compteur qu'on sait additionner ne l'est pas.
+
+##### 16.16.7 Contrat d'API — aucune ligne nouvelle, une charge d'insertion plus complète
+
+Cette tranche **n'ajoute aucun chemin serveur** et **aucune migration**. Le seul changement côté
+service est la charge d'insertion du §16.16.2, dont la mesure 6 établit qu'elle est recevable.
+
+`POST /rest/v1/mail_messages` (clé de service, `mail-sync`) porte désormais `references_ids`, tableau
+de chaînes, jamais nul, vide par défaut. Les deux RPC de sommeil sont inchangées (§16.14.8).
+
+##### 16.16.8 LE SEED DOIT PORTER UN FIL, ET IL LE PORTERA PAR LE VRAI MÉCANISME
+
+**La mesure 1 est un manque de données, pas un manque de code** : les deux messages du seed sont de
+clés distinctes, donc deux fils d'un message. L'écran groupé serait identique à l'écran d'avant, et
+aucune capture ne montrerait la fonctionnalité — ce que `CLAUDE.md` §8 interdit.
+
+Le seed gagne donc **un troisième message**, et par le mécanisme réel du §2.19 de
+`docs/SPEC-seed.md` — soumission SMTP authentifiée depuis le conteneur `mail-sync`, puis relève :
+aucune ligne forgée en base.
+
+- `Message-ID` fixe : `<seed-inbox-reponse@p2enjoy.test>` — les captures peuvent en dépendre ;
+- `In-Reply-To` et `References` : `<seed-inbox-classe@p2enjoy.test>` ;
+- destinataire : l'adresse de la card `…c1`, donc classé par la règle 1 comme son parent ;
+- objet : « Re: Demande de devis — refonte ».
+
+**Il ne démontre le groupement que si le §16.16.2 est livré** (mesure 3), et le seed le **vérifie** :
+il relit `references_ids` du message reçu et échoue si la chaîne est vide. Un seed qui accepterait
+un fil coupé ne serait plus un contrat.
+
+**Le dossier « Refonte du site vitrine » passe donc à 2 messages en 1 fil**, ce qui est exactement le
+cas que le §16.16.6 rend lisible : compteur `2`, une ligne, un compte `2` sur cette ligne.
+
+##### 16.16.9 CE QUE LA TRANCHE NE LIVRE PAS, ET C'EST NOMMÉ
+
+- **Aucune reprise rétroactive** des messages déjà ingérés (§16.16.2) ;
+- **aucun changement de compteur** dans l'arborescence, motif au §16.16.6 ;
+- **aucun paramètre d'adresse**, ni pour le filtre (§16.15.5 point 3) ni pour le fil ouvert : l'inbox
+  n'en a toujours aucun, et cette tranche ne tranche pas cette question ;
+- **aucun groupement au SERVEUR** : la mesure G du §16.15.1 tient toujours, `app.cle_fil` n'étant pas
+  exposée par PostgREST. Le groupement est une composition, comme le filtre ;
+- **aucun repli du fil dans la liste** : la ligne d'un fil ne se déplie pas pour montrer ses
+  messages. Le sélecteur du panneau de lecture (§16.16.4) tient ce rôle, et deux endroits pour le
+  même choix en feraient diverger un.
+
+##### 16.16.10 Preuves exigées de la tranche
+
+| Niveau | Preuve |
+|---|---|
+| Unitaire (service) | `enregistrer_message` met `references_ids` dans sa charge, et vide quand l'analyse n'a rien lu |
+| Unitaire (client) | `grouperEnFils` : l'ordre d'apparition, `dernier` = première occurrence, le compte, deux workspaces portant la même clé non fusionnés, la liste vide ; le filtre transposé au fil, le compte des fils masqués, le fil du message ouvert jamais masqué |
+| Composant | La ligne de fil et son compte, l'absence de sélecteur sur un fil d'un message, sa présence au-delà, `aria-current` porté par le fil du message ouvert |
+| API | **Aucune nouvelle** : le §16.16.7 dit pourquoi |
+| E2E d'interface | Suite dédiée sans substitution : le fil du seed rendu en **une** ligne portant « 2 », le sélecteur qui ouvre le second message sans perdre la sélection, la pastille posée une fois, le filtre qui retire le fil entier, et les paliers étroits |
+| Visuel | Captures produites **et observées** (`CLAUDE.md` §16), sous `docs/captures/CRM-081/` |
+| Seed | Le troisième message arrive par le vrai mécanisme et porte une chaîne de références non vide, vérifié par le seed lui-même |
+
+##### 16.16.11 Definition of Done de la tranche 2 f
+
+- `mail-sync/src/mail_sync/postgrest.py` : la charge d'insertion porte `references_ids` ;
+- `webapp/src/lib/fil-inbox.ts` : `grouperEnFils` et la composition transposée au fil ;
+- `webapp/src/app/RouteInbox.tsx` : la ligne de fil, son compte, le sélecteur du panneau de lecture ;
+- `supabase/seed/apply-seed.sh` : le troisième message et sa vérification ;
+- `docs/DESIGN_SYSTEM.md` §5.4 bis pour la forme, `docs/manual.md` pour le parcours ;
+- `docs/SPEC-mail-subsystem.md` §19.3 pour la charge d'ingestion, `docs/SPEC-seed.md` §2.19 pour le
+  troisième message ;
+- preuves unitaires, de composant et E2E exécutées et vertes, captures observées ;
+- `CHANGELOG.md`, `docs/PROD_MIGRATIONS.md` — `mail-sync` est à redéployer — et `docs/JOURNAL.md`
+  dans le même changement ;
+- commentaires `@spec` / `@verifies` sur chaque fichier touché.
+
+**Ce qui restera dû sur `CRM-081` après la tranche 2 f** : rien de la DoD de l'unité. Le seul écart
+subsistant est celui du §16.15.5 point 3 — le mode d'affichage n'entre pas dans l'adresse —, qui
+attend un arbitrage du responsable et ne relève pas du sommeil.

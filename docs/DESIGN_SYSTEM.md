@@ -529,6 +529,40 @@ proposée par le classement assisté, toujours présentée **comme une suggestio
 - **Les quatre états du §5.8 sont traités** : chargement, erreur avec reprise, absence de message,
   et absence de sélection — ce dernier étant l'état normal à l'arrivée sur l'écran, pas un vide.
 
+### 5.4 bis Le FIL dans l'inbox — `CRM-081`
+
+Ce que le groupement énumère, désigne et compte est spécifié dans `docs/SPEC-cards.md` §16.16 ; les
+règles ci-dessous ne disent que de quoi il a l'air.
+
+- **La liste énumère des fils, pas des messages.** Une ligne porte le dernier expéditeur, l'objet et
+  la date du **dernier** message du fil — jamais une date de fil, qui n'existe pas. Un fil d'un seul
+  message rend **exactement** la ligne d'avant : le groupement ne se voit que là où il y a quelque
+  chose à grouper.
+
+- **Le compte est un badge neutre, et il n'apparaît qu'au-delà de un.** Il se pose entre l'objet et
+  la date, en `--text-sm` `tabular-nums`, et son nom accessible est une phrase entière — « 2 messages
+  dans ce fil » — parce qu'un chiffre nu ne dit pas ce qu'il compte. Un badge « 1 » serait du bruit :
+  il dirait ce que l'absence de badge dit déjà.
+
+- **La pastille de sommeil se pose une fois par ligne**, après la date, exactement comme au §5.3
+  septies. Le fil étant désormais la ligne, la même information cesse d'être répétée sur chacun de
+  ses messages.
+
+- **Un fil de plusieurs messages porte un sélecteur dans le panneau de lecture**, sous l'en-tête :
+  une liste de boutons, un par message, avec son expéditeur et sa date courte, dans **le même ordre
+  que la liste** — le plus récent d'abord. Le message affiché porte `aria-current` ; deux ordres sur
+  un même écran rendraient « la première ligne » ambiguë.
+
+- **Le sélecteur est absent sur un fil d'un seul message.** Une liste d'un élément n'est pas un
+  choix, et l'afficher quand même donnerait à croire qu'il manque quelque chose.
+
+- **La ligne reste marquée tant que le message ouvert appartient à son fil**, y compris après un
+  changement dans le sélecteur : une sélection qui s'efface quand on navigue à l'intérieur de ce
+  qu'on a choisi désigne alors une ligne que rien ne montre (§5.4).
+
+- **La ligne du fil ne se déplie pas.** Le sélecteur du panneau de lecture tient ce rôle ; deux
+  endroits pour le même choix en feraient diverger un.
+
 ### 5.5 Boutons
 
 | Variante | Style |
