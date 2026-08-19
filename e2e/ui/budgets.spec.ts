@@ -23,7 +23,7 @@
 // comme geste d'utilisateur. Clôturer ne suffirait pas ici : `supabase/tests/0048_budgets.test.sql`
 // compte les budgets du seed, et un résidu clôturé reste une ligne.
 
-import { expect, test, type Page } from './fixtures'
+import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole, expect, test, type Page } from './fixtures'
 import type { Locator } from '@playwright/test'
 import { MOT_DE_PASSE_SEED, URL_API, enTetesService } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
@@ -322,6 +322,13 @@ test.describe('ce que voit un membre non administrateur (docs/SPEC-costs.md §3.
 			)
 			// Le formulaire RESTE ouvert : la saisie n'est pas perdue par un refus.
 			await expect(creation.getByLabel('Nom')).toHaveValue(nom)
+
+			// LE `403` EST LE SUJET DE CE SCÉNARIO, pas une anomalie : Chromium journalise tout
+			// chargement de ressource en échec, et l'écran vient d'en rendre le refus lisible à
+			// l'utilisateur. Il est consommé NOMMÉMENT — statut, nombre et ordre exacts —, jamais
+			// filtré globalement, de sorte qu'un second refus inattendu ferait toujours rougir le
+			// verdict final.
+			autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[403]])
 		} finally {
 			await supprimerParNom(request, nom)
 		}

@@ -1147,8 +1147,11 @@ export const fr = {
 	'admin.budgets.close.confirm': 'Clôturer le budget « {nom} » ?',
 	'admin.budgets.close.body':
 		'Il sortira de cette table, sans être supprimé, et pourra être rouvert. Son nom redevient disponible pour un nouveau budget — s’il est repris, la réouverture sera refusée.',
+	// Le décompte des lignes sans coût réel exigé par le §4.1 se lit dans `card_costs`, table que
+	// l'unité suivante livrera. La phrase le dit à l'utilisateur SANS jargon d'unité — un code de
+	// backlog n'a aucun sens pour lui — et sans laisser un blanc se lire comme un zéro.
 	'admin.budgets.close.pending':
-		'Le décompte des lignes sans coût réel n’est pas encore mesurable : les lignes de coût arrivent avec CRM-085. Les lignes déjà rattachées resteront saisissables après la clôture.',
+		'Les lignes de coût ne sont pas encore rattachables à un budget : rien n’est donc à saisir aujourd’hui, et les lignes rattachées plus tard resteront saisissables après la clôture.',
 	'admin.budgets.close.action': 'Clôturer',
 	// Refus propres aux budgets — ils appellent des gestes différents de ceux de l'arborescence, et
 	// les ranger sous les mêmes phrases dirait « vérifiez le slug » là où aucun slug n'existe.
