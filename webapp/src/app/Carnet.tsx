@@ -110,10 +110,32 @@ export function Carnet({ client = clientCrm }: ProprietesCarnet = {}) {
 		}
 	}, [client, ouvert, tentativeOrganisations])
 
-	// LE FOCUS EST RENDU à la commande qui a ouvert le formulaire (§14.5 cas c).
+	/**
+	 * LE FOCUS EST RENDU à la commande qui a ouvert le formulaire (§14.5 cas c,
+	 * `docs/DESIGN_SYSTEM.md` §5.23 et §5.21), et il l'est APRÈS LE RENDU.
+	 *
+	 * DÉFAUT TROUVÉ PAR LA PREUVE UNITAIRE DU CAS c, le 2026-08-19, et corrigé à sa CAUSE : la
+	 * commande d'ouverture est DÉMONTÉE tant que le formulaire est ouvert — les deux s'excluent —,
+	 * si bien qu'appeler `focus()` depuis le gestionnaire de fermeture visait une référence
+	 * **nulle** et laissait le focus sur le document. Activer « Annuler » au clavier renvoyait donc
+	 * en tête de page, exactement ce que le §5.21 interdit.
+	 *
+	 * C'est le défaut, et le remède, que la preuve clavier de `CRM-077` a déjà établis pour
+	 * `BlocContactsCard` : le drapeau est posé à la fermeture, et l'effet rend le focus au tour
+	 * suivant, quand la commande est remontée. Aucune temporisation n'est employée (`CLAUDE.md`
+	 * §18) — c'est le cycle de rendu de React qui ordonne les deux gestes, pas une horloge.
+	 */
+	const [focusARendre, setFocusARendre] = useState(false)
+
+	useEffect(() => {
+		if (ouvert || !focusARendre) return
+		commandeOuverture.current?.focus()
+		setFocusARendre(false)
+	}, [ouvert, focusARendre])
+
 	const fermer = useCallback(() => {
 		setOuvert(false)
-		commandeOuverture.current?.focus()
+		setFocusARendre(true)
 	}, [])
 
 	// LA LIGNE CRÉÉE REJOINT LE TABLEAU SANS RELIRE LA LISTE (§14.5 cas e) : PostgREST rend la
