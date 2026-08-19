@@ -135,6 +135,40 @@ channels — des lignes de coût le référencent, et les détruire effacerait l
 
 Détail visuel de l'histogramme : `docs/DESIGN_SYSTEM.md` §5.30.
 
+### 4.0 Adresses des trois écrans — complété le 2026-08-19, décision 475
+
+Les §4.2, §4.3 et §4.5 décrivaient le CONTENU des trois écrans sans jamais nommer leur **adresse**.
+Le manque n'est pas cosmétique : sans adresse arrêtée avant le code, chaque tranche en inventerait
+une, et le §4.8 exige qu'un onglet soit atteignable — donc partageable et rechargeable — sur chacun
+des deux écrans à onglets.
+
+| Écran | Adresse | Figure dans `ROUTES` |
+|---|---|---|
+| Coûts du track (§4.2) | `/tracks/:slugTrack/couts` | **non** |
+| Détail d'un budget (§4.3) | `/tracks/:slugTrack/couts/:idBudget` | **non** |
+| Cumul du workspace (§4.5) | `/couts` | **oui** |
+
+**Les deux premières ne figurent pas dans `ROUTES`**, pour le motif exact déjà retenu par
+`CHEMIN_CARD`, `CHEMIN_LISTE` et `CHEMIN_OBJECTIFS_TABLEAU` (`webapp/src/app/routes.tsx`) : leur
+titre est une **donnée** — le nom du track, le nom du budget — et non une clé de traduction, et leur
+contenu dépend d'un paramètre d'adresse. La couverture exacte `ROUTES` ⇄ `ENTREES_TRANSVERSES` reste
+ainsi inchangée.
+
+**Le cumul du workspace est une route de PREMIER NIVEAU**, et non une section de `/reglages` : c'est
+le même raisonnement qui a placé le carnet de contacts et les objectifs hors des réglages — un
+histogramme de coûts n'administre rien, il porte le travail. Il rejoint donc les entrées transverses
+de la barre latérale.
+
+**Le budget est désigné par son IDENTIFIANT**, jamais par son nom : le §2.1 pose que l'unicité du nom
+ne porte que sur les budgets **non clôturés**, si bien que deux budgets « Salon 2025 » — l'un clos,
+l'autre ouvert — peuvent coexister sur un même track. Un slug dérivé du nom ne désignerait alors
+plus rien.
+
+**L'onglet vit dans la CHAÎNE DE REQUÊTE**, `?onglet=saisir`, et non dans le chemin. Le §4.8 pose
+deux onglets sur deux écrans ; les porter dans le chemin dupliquerait chaque adresse. L'absence du
+paramètre vaut « Vue d'ensemble », qui est l'onglet par défaut. C'est la convention déjà employée
+par la vue liste d'un channel pour son tri et son filtre.
+
 ### 4.1 Administration des budgets — dans le track
 
 Sous l'administration de l'arborescence (`docs/DESIGN_SYSTEM.md` §5.13). Table des budgets du
