@@ -566,3 +566,127 @@ test.describe("fiche d'un contact (docs/SPEC-contacts.md §15)", () => {
 		})
 	}
 })
+
+// ================================================================================================
+// @verifies CRM-060 (docs/BACKLOG.md) — tranche 4 sous-tranche 4g : la MODIFICATION d'un contact
+// @verifies docs/SPEC-contacts.md §16.2 (le geste s'ancre sur la fiche, dans le flux),
+//           §16.5 (le retour du focus), §16.6 (aucun droit calculé par l'écran),
+//           §16.7 (la fiche s'actualise sans relire), §16.9 (cas b, c, e, f, m, o)
+// @verifies docs/DESIGN_SYSTEM.md §5.25 (ce formulaire) ; CLAUDE.md §16 (vérification visuelle)
+//
+// CETTE SUITE ÉCRIT DANS LA BASE, et elle RESTITUE le seed par les GESTES DE L'ÉCRAN, jamais par
+// une requête de service : si la restitution empruntait un autre chemin que la modification
+// elle-même, un échec du produit laisserait le seed dérivé sans que rien ne le signale. La
+// restitution est donc, elle aussi, une preuve que le geste fonctionne.
+// ================================================================================================
+
+const FONCTION_SEED_LEO = 'Directeur achats'
+
+test.describe('modification d’un contact (docs/SPEC-contacts.md §16.9)', () => {
+	test('cas b, e, f : la fiche s’édite, la zone 1 et le TITRE suivent, puis le seed est restitué', async ({
+		page,
+	}) => {
+		await connecter(page, ADMIN)
+		await page.goto(`/contacts/${ID_LEO_UI}`)
+		await expect(page.getByRole('heading', { name: 'Léo Marchand' })).toBeVisible()
+
+		// Cas b : le formulaire s'ouvre PRÉREMPLI, dans le flux du document, et la commande
+		// disparaît — les deux s'excluent (§16.5).
+		await page.getByTestId('ouvrir-modification-contact').click()
+		const formulaire = page.getByTestId('formulaire-modification-contact')
+		await expect(formulaire).toBeVisible()
+		await expect(page.getByTestId('champ-nom-contact')).toHaveValue('Léo Marchand')
+		await expect(page.getByTestId('champ-fonction-contact')).toHaveValue(FONCTION_SEED_LEO)
+		await expect(page.getByTestId('ouvrir-modification-contact')).toHaveCount(0)
+		// Les deux zones de lecture restent SOUS le formulaire : on corrige en voyant ce que l'on
+		// corrige (§16.5). Une modale les recouvrirait.
+		await expect(page.getByTestId('tableau-affaires-contact')).toBeVisible()
+		await capturer(page, 'fiche-contact-modification-formulaire-1440', UNITE)
+
+		await page.getByTestId('champ-fonction-contact').fill('Directeur général')
+		await page.getByTestId('envoyer-modification-contact').click()
+
+		// Cas e : la zone 1 rend la NOUVELLE valeur, et le formulaire se referme.
+		await expect(page.getByTestId('formulaire-modification-contact')).toHaveCount(0)
+		await expect(page.getByText('Directeur général')).toBeVisible()
+		// Cas f : le titre de la route est une DONNÉE, et il suit — vérifié sur le nom.
+		await page.getByTestId('ouvrir-modification-contact').click()
+		await page.getByTestId('champ-nom-contact').fill('Léo Marchand-Vasseur')
+		await page.getByTestId('envoyer-modification-contact').click()
+		await expect(page.getByRole('heading', { name: 'Léo Marchand-Vasseur' })).toBeVisible()
+		// La zone 2 est INCHANGÉE : aucune colonne du formulaire n'entre dans un rattachement.
+		await expect(page.getByTestId('ligne-affaire-contact')).toHaveCount(1)
+		await capturer(page, 'fiche-contact-modification-apres-1440', UNITE)
+
+		// LE SEED EST RESTITUÉ PAR LES GESTES DE L'ÉCRAN, et la fiche le confirme.
+		await page.getByTestId('ouvrir-modification-contact').click()
+		await page.getByTestId('champ-nom-contact').fill('Léo Marchand')
+		await page.getByTestId('champ-fonction-contact').fill(FONCTION_SEED_LEO)
+		await page.getByTestId('envoyer-modification-contact').click()
+		await expect(page.getByRole('heading', { name: 'Léo Marchand' })).toBeVisible()
+		await expect(page.getByText(FONCTION_SEED_LEO)).toBeVisible()
+	})
+
+	test('cas c : au CLAVIER, « Annuler » rend le focus à la commande d’ouverture', async ({
+		page,
+	}) => {
+		await connecter(page, ADMIN)
+		await page.goto(`/contacts/${ID_LEO_UI}`)
+		const commande = page.getByTestId('ouvrir-modification-contact')
+		await commande.focus()
+		await page.keyboard.press('Enter')
+
+		// Le focus ENTRE sur le champ du nom : un formulaire qui s'ouvre sans prendre le focus
+		// oblige à le chercher au clavier.
+		await expect(page.getByTestId('champ-nom-contact')).toBeFocused()
+		await page.getByTestId('annuler-modification-contact').focus()
+		await page.keyboard.press('Enter')
+
+		// LE FOCUS REVIENT à la commande REMONTÉE (§16.5), et ne retombe pas sur le document —
+		// c'est le défaut que la décision 453 a trouvé au carnet, éprouvé ici sur la pile réelle.
+		await expect(page.getByTestId('ouvrir-modification-contact')).toBeFocused()
+	})
+
+	test('cas m : la LECTRICE voit le geste, envoie, et reçoit le silence DIT, saisie conservée', async ({
+		page,
+	}) => {
+		await connecter(page, VIEWER)
+		await page.goto(`/contacts/${ID_LEO_UI}`)
+
+		// AUCUNE COMMANDE ÉTEINTE D'AVANCE (§16.6) : la lectrice voit le geste comme tout le monde.
+		const commande = page.getByTestId('ouvrir-modification-contact')
+		await expect(commande).toBeVisible()
+		await expect(commande).toBeEnabled()
+		await commande.click()
+		await page.getByTestId('champ-fonction-contact').fill('Fonction usurpée')
+		await page.getByTestId('envoyer-modification-contact').click()
+
+		// LE SILENCE DU SERVEUR EST DIT : `200` et zéro ligne, que l'écran traduit plutôt que de
+		// refermer le formulaire sur une modification qui n'a jamais eu lieu (§16.3).
+		const refus = page.getByTestId('refus-modification-contact')
+		await expect(refus).toBeVisible()
+		// La saisie est CONSERVÉE, et le formulaire reste ouvert.
+		await expect(page.getByTestId('champ-fonction-contact')).toHaveValue('Fonction usurpée')
+		await expect(page.getByTestId('formulaire-modification-contact')).toBeVisible()
+		await capturer(page, 'fiche-contact-modification-sans-effet-1440', UNITE)
+
+		// LE SEED EST INTACT : rien n'a été écrit, et la fiche rechargée le montre.
+		await page.reload()
+		await expect(page.getByText(FONCTION_SEED_LEO)).toBeVisible()
+	})
+
+	test('390 px : le formulaire de modification reste lisible et la page ne défile pas', async ({
+		page,
+	}) => {
+		await page.setViewportSize({ width: 390, height: 844 })
+		await connecter(page, ADMIN)
+		await page.goto(`/contacts/${ID_LEO_UI}`)
+		await page.getByTestId('ouvrir-modification-contact').click()
+		await expect(page.getByTestId('formulaire-modification-contact')).toBeVisible()
+		const debordePage = await page.evaluate(
+			() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+		)
+		expect(debordePage).toBe(false)
+		await capturer(page, 'fiche-contact-modification-390', UNITE)
+	})
+})
