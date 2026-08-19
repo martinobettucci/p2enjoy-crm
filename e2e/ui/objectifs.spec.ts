@@ -762,3 +762,198 @@ test.describe('canevas d’objectifs — le lien vers un channel, CRM-083 tranch
 		expect(lignes[0]?.channel_id).toBeNull()
 	})
 })
+
+
+// ---------------------------------------------------------------------------------------------
+// TRANCHE 2b-2c — LES SUPPRESSIONS
+// @verifies CRM-083 (docs/BACKLOG.md) — canevas d'objectifs, tranche 2b-2c
+// @verifies docs/SPEC-goals.md §3 (« Supprimer une flèche, supprimer un bloc — la suppression
+//           d'un bloc emporte ses flèches (cascade) » ; « un bloc se supprime réellement, il ne
+//           s'archive pas »), §2.3 (`on delete cascade`), §4.2 (une flèche exige le droit d'écrire
+//           les DEUX blocs qu'elle relie)
+// @verifies docs/DESIGN_SYSTEM.md §6 (confirmation nommant l'objet), §5.29 (canevas)
+//
+// CES SCÉNARIOS DÉTRUISENT, et ils ne détruisent donc RIEN DU SEED : chacun pose d'abord son
+// propre bloc et sa propre flèche par la clé de service, puis les supprime par l'interface. Le
+// seed reste intact quoi qu'il arrive, là où supprimer un bloc du seed ferait dériver les comptes
+// de tous les scénarios de lecture — et une remise en état après une CASCADE devrait recréer des
+// lignes que rien ne garde.
+// ---------------------------------------------------------------------------------------------
+
+const BLOC_JETABLE = 'Bloc jetable de la preuve de suppression'
+
+/** Pose un bloc de preuve sur le tableau du seed, par la clé de service. Rend son identifiant. */
+async function poserBlocJetable(titre: string): Promise<string> {
+	const reponse = await fetch(`${URL_API}/rest/v1/goal_blocks`, {
+		method: 'POST',
+		headers: { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'return=representation' },
+		body: JSON.stringify({
+			board_id: await identifiantDuTableau(),
+			title: titre,
+			pos_x: 40,
+			pos_y: 460,
+			width: 240,
+			height: 120,
+			color: 'neutral',
+		}),
+	})
+	expect(reponse.status).toBe(201)
+	const lignes = (await reponse.json()) as { id: string }[]
+	return lignes[0]?.id ?? ''
+}
+
+/** L'identifiant d'un bloc du tableau, par son titre — clé de service. */
+async function identifiantDuBloc(titre: string): Promise<string | null> {
+	const reponse = await fetch(
+		`${URL_API}/rest/v1/goal_blocks?select=id&board_id=eq.${await identifiantDuTableau()}&title=eq.${encodeURIComponent(titre)}`,
+		{ headers: enTetesService() },
+	)
+	const lignes = (await reponse.json()) as { id: string }[]
+	return lignes[0]?.id ?? null
+}
+
+/** Trace une flèche entre deux blocs par la clé de service, et rend son identifiant. */
+async function tracerFlecheDeService(idSource: string, idCible: string): Promise<string> {
+	const reponse = await fetch(`${URL_API}/rest/v1/goal_links`, {
+		method: 'POST',
+		headers: { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'return=representation' },
+		body: JSON.stringify({
+			board_id: await identifiantDuTableau(),
+			source_block_id: idSource,
+			target_block_id: idCible,
+			direction: 'forward',
+		}),
+	})
+	expect(reponse.status).toBe(201)
+	const lignes = (await reponse.json()) as { id: string }[]
+	return lignes[0]?.id ?? ''
+}
+
+/** Retire tout ce qu'un scénario aurait laissé — appelé même quand il a réussi. */
+async function nettoyerBlocJetable(): Promise<void> {
+	await fetch(
+		`${URL_API}/rest/v1/goal_blocks?board_id=eq.${await identifiantDuTableau()}&title=like.*jetable*`,
+		{ method: 'DELETE', headers: enTetesService() },
+	)
+}
+
+/** Le nombre de flèches portant cet identifiant — zéro prouve la cascade. */
+async function flecheExiste(idFleche: string): Promise<boolean> {
+	const reponse = await fetch(`${URL_API}/rest/v1/goal_links?select=id&id=eq.${idFleche}`, {
+		headers: enTetesService(),
+	})
+	const lignes = (await reponse.json()) as { id: string }[]
+	return lignes.length > 0
+}
+
+test.describe('canevas d’objectifs — les suppressions, CRM-083 tranche 2b-2c', () => {
+	test.afterEach(async () => {
+		await nettoyerBlocJetable()
+	})
+
+	test('SUPPRIMER UN BLOC EMPORTE SES FLÈCHES, et la base le prouve après rechargement', async ({
+		page,
+	}) => {
+		const idJetable = await poserBlocJetable(BLOC_JETABLE)
+		const idLibre = (await identifiantDuBloc(BLOC_LIBRE)) ?? ''
+		const idFleche = await tracerFlecheDeService(idJetable, idLibre)
+
+		await connecter(page, ADMIN)
+		await ouvrirLeTableau(page)
+
+		const bloc = page.getByTestId('bloc-objectif').filter({ hasText: BLOC_JETABLE }).first()
+		await bloc.focus()
+		await page.keyboard.press('Enter')
+		await expect(page.getByTestId('fiche-bloc')).toBeVisible()
+
+		const commande = page.getByTestId('supprimer-bloc')
+		await commande.scrollIntoViewIfNeeded()
+		await commande.click()
+
+		// §6 : LA CONFIRMATION NOMME LE BLOC, et annonce ce que la cascade emporte.
+		const confirmation = page.getByTestId('confirmation-suppression-bloc')
+		await expect(confirmation).toContainText(BLOC_JETABLE)
+		await expect(confirmation).toContainText('la flèche qui le relie')
+		await confirmation.scrollIntoViewIfNeeded()
+		await capturer(page, 'suppression-bloc-confirmation-1440', UNITE)
+
+		await page.getByTestId('confirmer-suppression-bloc').click()
+		await expect(page.getByTestId('mention-ecriture')).toHaveText('Bloc supprimé')
+		// LA FICHE SE FERME SEULE, son bloc n'étant plus rendu.
+		await expect(page.getByTestId('fiche-bloc')).toHaveCount(0)
+		await expect(page.getByTestId('bloc-objectif').filter({ hasText: BLOC_JETABLE })).toHaveCount(0)
+		await capturer(page, 'suppression-bloc-1440', UNITE)
+
+		// LA CASCADE EST MESURÉE EN BASE, jamais déduite de l'écran (§2.3).
+		expect(await flecheExiste(idFleche)).toBe(false)
+		expect(await identifiantDuBloc(BLOC_JETABLE)).toBeNull()
+
+		// Et le rechargement ne le ramène pas : la suppression est réelle, pas un archivage (§3).
+		await page.reload()
+		await expect(page.getByTestId('bloc-objectif').filter({ hasText: BLOC_JETABLE })).toHaveCount(0)
+	})
+
+	test('SUPPRIMER UNE FLÈCHE laisse ses deux blocs en place', async ({ page }) => {
+		const idJetable = await poserBlocJetable(BLOC_JETABLE)
+		const idLibre = (await identifiantDuBloc(BLOC_LIBRE)) ?? ''
+		const idFleche = await tracerFlecheDeService(idJetable, idLibre)
+
+		await connecter(page, ADMIN)
+		await ouvrirLeTableau(page)
+
+		// La ligne de CETTE flèche dans l'équivalent textuel — le seul endroit du diagramme que le
+		// clavier et un lecteur d'écran atteignent (§5.5).
+		const ligne = page.getByTestId('ligne-diagramme').filter({ hasText: BLOC_JETABLE }).first()
+		await expect(ligne).toBeVisible()
+		await ligne.getByTestId('supprimer-fleche').click()
+
+		const confirmation = page.getByTestId('confirmation-suppression-fleche')
+		await expect(confirmation).toContainText(BLOC_JETABLE)
+		await expect(confirmation).toContainText(BLOC_LIBRE)
+		await confirmation.scrollIntoViewIfNeeded()
+		await capturer(page, 'suppression-fleche-confirmation-1440', UNITE)
+
+		await page.getByTestId('confirmer-suppression-fleche').click()
+		await expect(page.getByTestId('mention-ecriture')).toHaveText('Flèche supprimée')
+		await expect(page.getByTestId('ligne-diagramme').filter({ hasText: BLOC_JETABLE })).toHaveCount(0)
+
+		expect(await flecheExiste(idFleche)).toBe(false)
+		// LES DEUX BLOCS SONT INTACTS : une flèche n'emporte rien.
+		expect(await identifiantDuBloc(BLOC_JETABLE)).not.toBeNull()
+		await expect(page.getByTestId('bloc-objectif').filter({ hasText: BLOC_LIBRE })).toHaveCount(1)
+	})
+
+	test('la LECTRICE supprime, et lit « aucun bloc n’a été supprimé » — le silence du `using`', async ({
+		page,
+	}) => {
+		// Aucune commande n'est éteinte d'avance selon le rôle (docs/DESIGN_SYSTEM.md §5.26) :
+		// l'écran envoie, la politique décide, l'écran traduit. Le refus est ensuite MESURÉ HORS
+		// INTERFACE — la ligne est toujours là.
+		const idJetable = await poserBlocJetable(BLOC_JETABLE)
+		expect(idJetable).not.toBe('')
+
+		await connecter(page, LECTRICE)
+		await ouvrirLeTableau(page)
+
+		const bloc = page.getByTestId('bloc-objectif').filter({ hasText: BLOC_JETABLE }).first()
+		await bloc.focus()
+		await page.keyboard.press('Enter')
+		await expect(page.getByTestId('fiche-bloc')).toBeVisible()
+
+		const commande = page.getByTestId('supprimer-bloc')
+		await commande.scrollIntoViewIfNeeded()
+		await commande.click()
+		await page.getByTestId('confirmer-suppression-bloc').click()
+
+		const mention = page.getByTestId('mention-ecriture')
+		await expect(mention).toHaveAttribute('role', 'alert')
+		await expect(mention).not.toHaveText('Bloc supprimé')
+		await mention.scrollIntoViewIfNeeded()
+		await capturer(page, 'suppression-refus-lectrice-1440', UNITE)
+
+		// LE BLOC EST TOUJOURS RENDU, et la BASE le porte toujours : faire disparaître le bloc sur
+		// ce silence annoncerait une suppression qui n'a pas eu lieu.
+		await expect(page.getByTestId('bloc-objectif').filter({ hasText: BLOC_JETABLE })).toHaveCount(1)
+		expect(await identifiantDuBloc(BLOC_JETABLE)).toBe(idJetable)
+	})
+})

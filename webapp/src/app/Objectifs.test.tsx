@@ -15,7 +15,7 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { afterEach, describe, expect, it } from 'vitest'
-import { CanevasObjectifs, Objectifs, libelleCompteBlocs } from './Objectifs'
+import { CanevasObjectifs, Objectifs, corpsSuppressionBloc, libelleCompteBlocs } from './Objectifs'
 import { fr } from '../i18n/fr'
 import type { ClientCrm } from '../lib/supabase'
 
@@ -1054,9 +1054,9 @@ describe('canevas — supprimer un bloc, §3 et §6', () => {
 
 		fireEvent.click(screen.getByTestId('supprimer-bloc'))
 		const avecFleche = await screen.findByTestId('confirmation-suppression-bloc')
-		expect(avecFleche.textContent).toContain(
-			fr['goals.block.delete.confirm.body.links'].replace('{compte}', '1'),
-		)
+		// UNE SEULE FLÈCHE PREND LE SINGULIER : « les 1 flèches » serait faux, et l'accord se fait
+		// par CLÉ, jamais par concaténation (`CLAUDE.md` §23).
+		expect(avecFleche.textContent).toContain(fr['goals.block.delete.confirm.body.link'])
 
 		cleanup()
 		const seul = clientEcrivant(LECTURES_UN_BLOC, ok([{ id: BLOC_LIBRE.id }]))
@@ -1252,5 +1252,15 @@ describe('canevas — supprimer une flèche, §3 et §4.2', () => {
 		const nom = commande.getAttribute('aria-label') ?? ''
 		expect(nom).toContain(BLOC_LIBRE.title)
 		expect(nom).toContain(BLOC_LIE.title)
+	})
+})
+
+describe('corpsSuppressionBloc — l’accord par clé, §23 de CLAUDE.md', () => {
+	it('choisit les TROIS formes selon le compte, sans jamais construire de phrase', () => {
+		expect(corpsSuppressionBloc(0)).toBe(fr['goals.block.delete.confirm.body'])
+		expect(corpsSuppressionBloc(1)).toBe(fr['goals.block.delete.confirm.body.link'])
+		expect(corpsSuppressionBloc(3)).toBe(
+			fr['goals.block.delete.confirm.body.links'].replace('{compte}', '3'),
+		)
 	})
 })

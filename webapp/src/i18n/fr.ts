@@ -562,6 +562,8 @@ export const fr = {
 	'goals.block.delete.confirm.title': 'Supprimer le bloc « {titre} » ?',
 	'goals.block.delete.confirm.body':
 		'Le bloc est supprimé définitivement, et les flèches qui le relient à d’autres blocs partent avec lui. Un bloc ne s’archive pas : il n’y a aucune reprise.',
+	'goals.block.delete.confirm.body.link':
+		'Le bloc est supprimé définitivement, et la flèche qui le relie à un autre bloc part avec lui. Un bloc ne s’archive pas : il n’y a aucune reprise.',
 	'goals.block.delete.confirm.body.links':
 		'Le bloc est supprimé définitivement, et les {compte} flèches qui le relient à d’autres blocs partent avec lui. Un bloc ne s’archive pas : il n’y a aucune reprise.',
 	'goals.block.delete.confirm.action': 'Supprimer définitivement',

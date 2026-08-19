@@ -1611,6 +1611,20 @@ function FicheEditionBloc({
 }
 
 /**
+ * Le corps de la confirmation, ACCORDÉ PAR CLÉ et jamais par concaténation (`CLAUDE.md` §23).
+ *
+ * Trois clés et non une phrase paramétrée : « les 1 flèches » est faux en français, et une langue
+ * qui accorde autrement — le pluriel arabe en compte six — n'aurait aucun moyen de le corriger
+ * depuis un unique gabarit. Les trois clés sont écrites LITTÉRALEMENT, pour la raison déjà nommée
+ * ailleurs dans ce fichier : une clé construite survit à la suppression de son appelant.
+ */
+export function corpsSuppressionBloc(fleches: number): string {
+	if (fleches === 0) return t('goals.block.delete.confirm.body')
+	if (fleches === 1) return t('goals.block.delete.confirm.body.link')
+	return t('goals.block.delete.confirm.body.links', { compte: String(fleches) })
+}
+
+/**
  * La confirmation de suppression d'un bloc — dans le FLUX du document, jamais une modale
  * (`docs/DESIGN_SYSTEM.md` §5.13, §5.21, §5.27, tranché trois fois).
  *
@@ -1644,11 +1658,7 @@ function ConfirmationSuppressionBloc({
 			className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-4"
 		>
 			<p className="font-medium">{t('goals.block.delete.confirm.title', { titre })}</p>
-			<p className="text-sm text-text-2">
-				{fleches === 0
-					? t('goals.block.delete.confirm.body')
-					: t('goals.block.delete.confirm.body.links', { compte: String(fleches) })}
-			</p>
+			<p className="text-sm text-text-2">{corpsSuppressionBloc(fleches)}</p>
 			<div className="flex flex-wrap gap-2">
 				<Button
 					ref={action}
