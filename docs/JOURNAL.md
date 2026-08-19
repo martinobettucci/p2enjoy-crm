@@ -20927,3 +20927,90 @@ de coûts et l'onglet « À saisir » (§4.2, §4.3, §4.5, §4.8) —, qui s'ap
 tranche a posé : la classification des refus, l'index partiel des lignes sans réel, et le décompte
 qui doit rendre le MÊME nombre que le badge de l'onglet. `CRM-083` reste bloqué par **INC-170**. Cinq
 arbitrages attendent : **INC-169**, **INC-170**, **INC-172**, **INC-173** et **INC-174**.
+
+## décision 475 — `CRM-086` tranches 1 et 2 : le socle des écrans de coûts, et l'adresse qui manquait
+
+**L'unité, et le choix.** La décision 474 laisse `CRM-085` livrée et désigne explicitement `CRM-086`
+comme reprise naturelle. Le backlog la porte en `[ ]`, première unité non commencée dans l'ordre du
+plan : elle est donc l'unité de cette session sans discussion (`docs/CloudWorker.md` §4.2, cas 3).
+Une exécution concurrente a clos `CRM-085` en `[x]` pendant cette session — commit `f42f0a6`,
+rebasé sur place —, ce qui confirme le choix plutôt que de le contredire.
+
+**UN POINT DE SPÉCIFICATION MANQUAIT, ET IL A ÉTÉ ÉCRIT ET COMMITTÉ AVANT LA PREMIÈRE LIGNE DE
+CODE.** `docs/SPEC-costs.md` est lue intégralement, ainsi que `docs/DESIGN_SYSTEM.md` §5.30 et
+§5.31. Elle décrit le CONTENU des trois écrans — §4.2, §4.3, §4.5 — sans jamais nommer leur
+**adresse**, et `chemins.ts` n'en porte aucune. Ce n'est pas cosmétique : sans adresse arrêtée,
+chaque tranche en inventerait une, et le §4.8 exige qu'un onglet soit atteignable, donc partageable
+et rechargeable. Le nouveau §4.0 les arrête et motive chacune. Le §3.2 point 3 de
+`docs/CloudWorker.md` est appliqué dans sa forme « complète sur ce point précis, pas en entier » :
+rien d'autre de la spécification n'a été réécrit.
+
+**Trois motifs valent d'être retenus.** (1) Les deux adresses de track ne figurent pas dans `ROUTES`,
+leur titre étant une DONNÉE — le nom du track, le nom du budget — et non une clé de traduction : le
+patron de `CHEMIN_CARD` et de `CHEMIN_OBJECTIFS_TABLEAU`, qui préserve la couverture exacte `ROUTES`
+⇄ `ENTREES_TRANSVERSES`. (2) Le budget est désigné par son IDENTIFIANT et jamais par un slug : le
+§2.1 pose que l'unicité du nom ne porte que sur les budgets NON clôturés, si bien que deux « Salon
+2025 » — l'un clos, l'autre ouvert — coexistent légitimement sur un track, et un slug dérivé du nom
+ne désignerait alors plus rien. (3) L'onglet du §4.8 vit dans la chaîne de requête et non dans le
+chemin, sans quoi chaque adresse serait dupliquée.
+
+**Ce qui a été livré.** `webapp/src/lib/couts-ecrans.ts` — l'agrégat, le prédicat de dépassement, le
+cumul d'agrégats, le groupement par devise, et la lecture des budgets ouverts d'un track avec leurs
+lignes en deux requêtes. `webapp/src/app/HistogrammeCouts.tsx` — les barres, la légende, le tableau
+équivalent, la mention du §4.4, et `formaterMontant` **exporté**. Vingt-deux clés de traduction.
+
+**TROIS POINTS QUE LA LECTURE RAPIDE MANQUE, ET QUI SONT LE CŒUR DE CES DEUX TRANCHES.**
+
+(1) *Aucune somme n'est demandée au serveur, et c'est le §4.5 qui l'impose.* « Le cumul est calculé
+APRÈS application de la RLS, jamais avant. » Les lignes sont donc lues sous l'identité de l'appelant
+puis additionnées côté client : `card_costs` exige `app.can_read_card` ET `app.can_read_budget`
+(§3.1), si bien qu'une ligne fermée à l'appelant n'est pas dans la réponse et n'entre pas dans la
+somme. Le total d'un profil restreint est PLUS PETIT, et c'est la propriété attendue — un total
+juste au centime près qui divulguerait par soustraction l'existence d'un budget fermé serait un
+défaut d'autorisation, pas un défaut d'affichage. Un test porte explicitement cette propriété et
+vérifie qu'aucune option d'agrégation n'accompagne la lecture.
+
+(2) *L'échelle est commune aux deux séries ET prise en valeur ABSOLUE.* Le §5.30 exige que l'axe
+parte de zéro ; rapporter chaque barre au maximum de sa propre série rendrait de plus 100 et 900 de
+hauteur comparable, ce qui détruirait la comparaison que l'écran existe pour porter. La valeur
+absolue, elle, n'est pas une précaution décorative : le §2.1 pose qu'un avoir est un coût négatif
+légitime, et un maximum signé vaudrait zéro sur un graphique entièrement négatif — toutes les barres
+seraient alors pleines. La hauteur rendue reste celle de la valeur absolue, et c'est l'étiquette,
+qui porte le signe, qui dit le sens.
+
+(3) *Le graphique est `aria-hidden`, et le tableau équivalent est sa version accessible.* C'est ce
+que le §5.30 écrit — « c'est lui que lira un lecteur d'écran, et lui qui reste juste si la couleur
+ne passe pas » —, et exposer les deux ferait énoncer deux fois la même série. Le tableau n'est
+masqué par aucun palier : un équivalent textuel absent là où le graphique est le plus dense
+manquerait exactement là où il sert le plus. La mention du §4.4, elle, est ABSENTE et non rendue à
+zéro quand tous les réels sont saisis — un avertissement permanent cesserait d'être lu, et c'est
+quand il apparaît qu'il doit se remarquer.
+
+**Ce qui a été vérifié.** `couts-ecrans.test.ts` **24 tests**, `HistogrammeCouts.test.tsx` **19
+tests**, dont la contre-épreuve d'un réel valant réellement zéro — sans elle, un module traitant `0`
+comme une absence passerait le test de « nul n'est pas zéro » —, la non-additivité de deux devises,
+les deux refus de lecture qui ne doivent pas devenir un histogramme faussement nul, et l'échelle qui
+part de zéro. Campagne exécutée en fin de session : `npm run typecheck` vert, `npm run build` vert,
+`npm run test:unit` **61 fichiers, 2091 tests, aucun échec**, dont `i18n.test.ts` **215 tests** qui
+garde les clés mortes.
+
+**CE QUI N'A PAS ÉTÉ EXÉCUTÉ, ET IL FAUT LE DIRE.** `npm run test:sql`, `e2e:api`, `e2e:ui`,
+`e2e:mail`, `pytest` et les cinquante `scripts/verify-*.sh` n'ont PAS été rejoués. Le changement de
+cette session ne touche ni le schéma, ni une API, ni une surface montée — le composant n'est encore
+appelé par aucune route —, et la campagne entière ne tient pas dans une session (`CloudWorker` §2.1
+ter). Aucune capture n'a donc été produite : il n'y a encore rien à capturer.
+
+**Un défaut étranger consigné.** **INC-176** : `formaterMontant` est dupliqué à l'identique dans
+`Board.tsx` et `ListeCards.tsx`, sans être exporté nulle part. Plutôt que d'en écrire une TROISIÈME
+copie, la fonction est déclarée une fois dans `HistogrammeCouts.tsx` et exportée, pour que les deux
+écrans de coûts restants la réemploient. Les deux copies existantes sont laissées **strictement
+inchangées** (§3.1).
+
+**Où reprendre.** `CRM-086` est `[~]`, et l'essentiel reste : **aucun des trois écrans n'est monté**.
+La reprise est le montage de l'écran du §4.2 sur `/tracks/:slugTrack/couts` — la route, l'entrée
+depuis le track, l'état de lecture seule du §4.7 —, en appelant `lireHistogrammeTrack` et
+`HistogrammeCouts` qui l'attendent. Viennent ensuite le détail d'un budget (§4.3), le cumul du
+workspace (§4.5) et l'onglet « À saisir » (§4.8), puis les preuves E2E, les captures aux quatre
+paliers et le harnais dédié, dont aucun n'existe encore pour cette unité. `CRM-083` reste bloqué par
+**INC-170**. Six arbitrages attendent : **INC-169**, **INC-170**, **INC-172**, **INC-173**,
+**INC-174** et **INC-176**.

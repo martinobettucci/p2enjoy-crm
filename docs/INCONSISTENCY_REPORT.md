@@ -2691,3 +2691,39 @@ en les LISANT dans la suite pgTAP au lieu de les redéclarer ; (2) ils sont SUPP
 comme redondants avec le recensement pgTAP, qui les porte déjà avec son inventaire nominal ; (3) ils
 sont conservés en l'état et le harnais est réputé rouge jusqu'à une reprise transverse des harnais
 (lot I+J du plan de solde).
+
+## INC-176 — `formaterMontant` est DUPLIQUÉ à l'identique dans `Board.tsx` et `ListeCards.tsx`
+
+**Ouvert le 2026-08-19, décision 475. Étranger à l'unité de la session, laissé INCHANGÉ.**
+
+**Ce qui est mesuré.** La même fonction, avec le même corps et le même commentaire de doctrine, est
+déclarée deux fois :
+
+```
+webapp/src/app/Board.tsx:114       function formaterMontant(montant: number, devise: string): string
+webapp/src/app/ListeCards.tsx:98   function formaterMontant(montant: number, devise: string): string
+```
+
+Les deux délèguent à `Intl.NumberFormat('fr-FR', { style: 'currency', … })` et retombent sur le même
+repli lorsque la devise est inconnue du navigateur. Aucune n'est exportée, si bien qu'un troisième
+appelant n'a d'autre choix que d'en écrire une troisième copie.
+
+**Ce que la session a fait, et ce qu'elle n'a pas fait.** `CRM-086` avait besoin de ce formatage
+pour les étiquettes de l'histogramme. Plutôt que de produire une TROISIÈME copie, la fonction est
+déclarée une fois dans `webapp/src/app/HistogrammeCouts.tsx` et **exportée**, de sorte que les deux
+écrans de coûts qui restent à livrer — le détail d'un budget (§4.3) et le cumul du workspace (§4.5)
+— la réemploient au lieu de la recopier. Les copies de `Board.tsx` et de `ListeCards.tsx` sont
+laissées **strictement inchangées** : `docs/CloudWorker.md` §3.1 interdit de corriger au passage un
+défaut étranger à son unité, et remplacer deux fonctions privées par un import toucherait deux
+écrans que `CRM-086` ne concerne pas, en obligeant à rejouer leurs preuves pour un gain purement
+structurel.
+
+**Pourquoi ce n'est pas un défaut anodin.** Le repli sur devise inconnue est une règle de
+comportement, pas un détail : une devise que le navigateur ne connaît pas ne doit pas faire tomber
+l'écran. Trois copies, c'est trois endroits où cette règle peut diverger sans qu'aucune preuve ne
+s'en aperçoive, chacune étant testée — quand elle l'est — à travers l'écran qui la porte.
+
+**Arbitrage attendu.** Deux issues, et le responsable tranche : (1) la fonction descend dans un
+module partagé — `webapp/src/lib/montants.ts` ou l'équivalent —, les trois appelants l'importent, et
+elle reçoit ses propres tests unitaires, y compris celui du repli ; (2) la duplication est assumée
+comme un coût acceptable de l'indépendance des écrans, et l'entrée est close sans changement.

@@ -8453,10 +8453,58 @@ E2E de la section, y compris **le second sélecteur d'occurrence qui apparaît e
 pour un budget récurrent ; seed portant une affaire à **deux lignes de nature différente**, l'une
 sans réel — le cas « publicité 100 / production 350-375 » du responsable ; captures ; harnais dédié.
 
-### CRM-086 — Écrans de coûts `[ ]`
+### CRM-086 — Écrans de coûts `[~]`
 
 Histogramme du track, détail par budget avec une paire de barres **par occurrence**, et cumul du
 workspace par track (`docs/SPEC-costs.md` §4.2, §4.3, §4.5).
+
+**Les adresses des trois écrans sont ARRÊTÉES avant le code** — `docs/SPEC-costs.md` §4.0, écrit à
+la décision 475 parce que les §4.2, §4.3 et §4.5 décrivaient le contenu des écrans sans jamais
+nommer leur adresse : `/tracks/:slugTrack/couts`, `/tracks/:slugTrack/couts/:idBudget` et `/couts`.
+Les deux premières ne figurent pas dans `ROUTES`, leur titre étant une donnée ; le budget est
+désigné par son identifiant parce que le §2.1 laisse deux budgets homonymes coexister dès que l'un
+est clos ; l'onglet du §4.8 vit dans la chaîne de requête, `?onglet=saisir`.
+
+**Tranche 1 — le module d'agrégation — LIVRÉE ET PROUVÉE** (décision 475).
+`webapp/src/lib/couts-ecrans.ts` : l'agrégat prévisionnel / réel, le compte des lignes sans réel et
+leur prévisionnel — la mention du §4.4 —, le prédicat de dépassement, le cumul d'agrégats qui
+préserve le COMPTE de lignes, le groupement par devise appliqué partout où des barres partagent un
+axe, et la lecture des budgets ouverts d'un track avec leurs lignes en **deux** requêtes et non une
+par budget. Preuve verte : `webapp/src/lib/couts-ecrans.test.ts` **24 tests**.
+
+**AUCUNE SOMME N'EST DEMANDÉE AU SERVEUR, et c'est la règle de conception du module.** Le §4.5 exige
+que le cumul soit calculé **après** la RLS : les lignes sont lues sous l'identité de l'appelant puis
+additionnées côté client. Une réponse amputée rend donc un total amputé, ce qui est le comportement
+voulu — un total juste au centime près qui divulguerait par soustraction l'existence d'un budget
+fermé serait un défaut d'autorisation, pas un défaut d'affichage. Un test porte explicitement cette
+propriété, et vérifie qu'aucune option d'agrégation n'accompagne la lecture.
+
+**Tranche 2 — l'histogramme — LIVRÉE ET PROUVÉE** (décision 475).
+`webapp/src/app/HistogrammeCouts.tsx`, composant partagé par les trois écrans : deux barres
+adjacentes par groupe, la barre du réel passant en `--color-danger` quand elle dépasse, la légende
+qui nomme les **trois** séries, le tableau équivalent et la mention obligatoire du §4.4. Preuve
+verte : `webapp/src/app/HistogrammeCouts.test.tsx` **19 tests**. Vingt-deux clés de traduction ; le
+contrôle de clés mortes de `i18n.test.ts` est vert, **215 tests**.
+
+**DEUX POINTS DE L'ÉCHELLE QUE LE §5.30 IMPOSE ET QUE LA LECTURE RAPIDE MANQUE.** (1) *L'axe part de
+zéro et l'échelle est COMMUNE aux deux séries* : rapporter chaque barre au maximum de sa propre
+série rendrait 100 et 900 de hauteur comparable, ce qui détruirait la comparaison que l'écran existe
+pour porter. (2) *Le maximum est pris en valeur ABSOLUE* : le §2.1 pose qu'un avoir est un coût
+négatif légitime, et un maximum signé vaudrait zéro sur un graphique entièrement négatif — toutes
+les barres seraient alors pleines. La hauteur rendue reste celle de la valeur absolue, l'étiquette
+portant le signe.
+
+**LE GRAPHIQUE EST `aria-hidden`, ET LE TABLEAU EST SA VERSION ACCESSIBLE**, comme le §5.30 l'écrit.
+Les exposer tous les deux ferait énoncer deux fois la même série à un lecteur d'écran. Le tableau
+n'est jamais masqué par un palier : un équivalent textuel absent là où le graphique est le plus
+dense manquerait exactement là où il sert le plus.
+
+**CE QUI RESTE, ET C'EST L'ESSENTIEL DE L'UNITÉ** : aucun des trois écrans n'est encore monté. Ni
+route, ni entrée de navigation, ni onglet « À saisir », ni lecture du détail d'un budget, ni cumul
+du workspace. Le module et le composant sont livrés et prouvés en unitaire, mais **aucune preuve
+E2E, aucune preuve d'API, aucune capture et aucun harnais dédié n'existe** pour cette unité, et rien
+de ce qui précède n'est encore atteignable par un utilisateur. La reprise est le montage de l'écran
+du §4.2 sur `/tracks/:slugTrack/couts`.
 
 **DoD** : E2E des trois écrans ; captures aux quatre paliers ; **la mention « n lignes sans coût
 réel saisi » est prouvée présente** quand des réels manquent, et absente sinon — c'est la principale

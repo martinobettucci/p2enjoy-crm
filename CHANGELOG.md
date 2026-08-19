@@ -15,6 +15,25 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Les écrans de coûts ont leur socle** (`CRM-086` tranches 1 et 2, `docs/SPEC-costs.md` §4.0,
+  §4.2, §4.4 et §4.5, `docs/DESIGN_SYSTEM.md` §5.30). L'agrégation que partageront les trois écrans
+  de coûts existe et est prouvée : le prévisionnel, le réel, le **compte des lignes dont le coût
+  réel n'est pas encore saisi** et le montant prévisionnel qu'elles représentent — c'est la mention
+  « n lignes sans coût réel saisi, pour m € de prévisionnel » sans laquelle un réel bas se lirait
+  comme une économie alors qu'il n'est qu'une saisie en retard. Les **devises ne se mélangent
+  jamais** sur un même axe : un track qui porte un budget en euros et un autre en francs rend deux
+  histogrammes, et non un total qui additionnerait les deux. L'**histogramme** lui-même est livré —
+  deux barres adjacentes par budget, la barre du réel passant en rouge lorsqu'elle dépasse le
+  prévisionnel, la légende qui nomme les séries, la valeur de chaque barre en clair, et un
+  **tableau équivalent** rendu sous le graphique, qui est la version que lit un lecteur d'écran et
+  celle qui reste juste si la couleur ne passe pas. L'axe part **toujours de zéro** et l'échelle est
+  commune aux deux séries : une échelle resserrée exagérerait visuellement l'écart que ces écrans
+  existent pour comparer. Enfin, **aucun total n'est demandé au serveur** : les lignes sont lues
+  sous l'identité de celui qui regarde, puis additionnées. Le total d'un profil restreint est donc
+  plus petit que celui d'un administrateur, et c'est voulu — un total juste au centime près qui
+  révélerait par soustraction l'existence d'un budget interdit serait une fuite, pas une précision.
+  **Aucun de ces écrans n'est encore atteignable** : ni route, ni entrée de navigation, ni onglet
+  « À saisir ». L'unité reste ouverte.
 - **Une affaire porte ses lignes de coût** (`CRM-085` tranche 1, `docs/SPEC-costs.md` §2.3 et §3,
   `docs/SCHEMA.md` §9 bis.6). La table `card_costs` existe : une affaire porte **autant de lignes
   qu'elle a de natures de dépense** — « Publicité, estimé 100, réel inconnu » et « Production,
