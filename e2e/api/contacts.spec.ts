@@ -440,3 +440,239 @@ test.describe('CRM-060 — contacts et organisations, tranche 1 : le contrat', (
 		}
 	})
 })
+
+// ------------------------------------------------------------------------------------------------
+//
+// @verifies CRM-060 (docs/BACKLOG.md) — tranche 4 sous-tranche 4e
+// @verifies docs/SPEC-contacts.md §14.3 (LES ONZE MESURES de l'écriture, relevées à la main le
+//           2026-08-18 et figées ici), §14.4 (ce que chaque code appelle comme classement)
+// @verifies docs/SPEC-permissions-rls.md §7 (un refus se prouve avec le JETON RÉEL du profil)
+// @verifies CLAUDE.md §10 (la règle est backend : l'écran ne fait que traduire ce qu'elle rend)
+//
+// POURQUOI CE BLOC EXISTE ALORS QUE LA TRANCHE 1 PROUVE DÉJÀ `contacts_insertion` : la tranche 1
+// prouve QUI peut écrire. Ce bloc fige ce que l'écriture RÉPOND — et c'est ce qui a décidé du
+// contrat de l'écran. Trois réponses en particulier ne se devinent pas :
+//
+//   * `23505` et `23503` rendent TOUS DEUX `409` (mesures 5 et 10) : le statut HTTP seul les
+//     confondrait, alors qu'ils appellent des gestes opposés côté humain ;
+//   * la chaîne VIDE est refusée sur `email` et `phone` (mesures 8 et 9), ce qui interdit à
+//     l'écran d'envoyer `''` pour un facultatif laissé blanc ;
+//   * `source` n'est PAS envoyé et la base pose `manual` (mesure 1).
+//
+// Si une migration future assouplissait l'une de ces contraintes, c'est ICI que le contrat de
+// l'écran deviendrait rouge — et non dans un test unitaire qui simule le serveur.
+
+const ORGANISATION_SEEDEE = '5eed0000-0000-4000-8000-000000000081' // Sogexia
+const EMAIL_DEJA_PORTE = 'leo.marchand@sogexia.example' // Léo Marchand, seedé
+const WORKSPACE_ETRANGER = '00000000-0000-4000-8000-0000000000ff'
+const ORGANISATION_INCONNUE = '00000000-0000-4000-8000-0000000000fe'
+
+test.describe('CRM-060 4e — les onze mesures de la création d’un contact (§14.3)', () => {
+	test('1 — l’administratrice crée avec le NOM SEUL : 201, `source` = `manual`, organisation nulle', async ({
+		request,
+	}) => {
+		const jeton = await jetonDe('admin@p2enjoy.test')
+		const sonde = await creerSonde()
+		try {
+			const reponse = await request.post('/rest/v1/contacts', {
+				headers: { ...enTetesAuthentifies(jeton), Prefer: 'return=representation' },
+				data: { workspace_id: WORKSPACE_SEED, full_name: 'Sonde 4e mesure 1' },
+			})
+			expect(reponse.status()).toBe(201)
+			const [ligne] = (await reponse.json()) as [
+				{ id: string; source: string; organization_id: string | null; email: string | null },
+			]
+			sonde.contactsSupprimes.push(ligne.id)
+			// C'EST CETTE MESURE qui autorise l'écran à ne pas envoyer `source` : la base le pose.
+			expect(ligne.source).toBe('manual')
+			expect(ligne.organization_id).toBeNull()
+			expect(ligne.email).toBeNull()
+		} finally {
+			await nettoyer(request, sonde)
+		}
+	})
+
+	test('2 — nom + organisation du workspace : 201, la ligne porte son organisation', async ({
+		request,
+	}) => {
+		const jeton = await jetonDe('admin@p2enjoy.test')
+		const sonde = await creerSonde()
+		try {
+			const reponse = await request.post('/rest/v1/contacts', {
+				headers: { ...enTetesAuthentifies(jeton), Prefer: 'return=representation' },
+				data: {
+					workspace_id: WORKSPACE_SEED,
+					full_name: 'Sonde 4e mesure 2',
+					organization_id: ORGANISATION_SEEDEE,
+				},
+			})
+			expect(reponse.status()).toBe(201)
+			const [ligne] = (await reponse.json()) as [{ id: string; organization_id: string }]
+			sonde.contactsSupprimes.push(ligne.id)
+			expect(ligne.organization_id).toBe(ORGANISATION_SEEDEE)
+		} finally {
+			await nettoyer(request, sonde)
+		}
+	})
+
+	test('3 — le `business_developer` crée aussi : l’écriture n’est PAS réservée à l’administration', async ({
+		request,
+	}) => {
+		// C'est la mesure qui justifie qu'aucune commande ne soit grisée selon le rôle (§14.6) :
+		// deux profils sur trois écrivent, et l'écran ne saurait pas lequel sans demander.
+		const jeton = await jetonDe('bizdev@p2enjoy.test')
+		const sonde = await creerSonde()
+		try {
+			const reponse = await request.post('/rest/v1/contacts', {
+				headers: { ...enTetesAuthentifies(jeton), Prefer: 'return=representation' },
+				data: {
+					workspace_id: WORKSPACE_SEED,
+					full_name: 'Sonde 4e mesure 3',
+					email: 'sonde-4e-mesure-3@exemple.test',
+				},
+			})
+			expect(reponse.status()).toBe(201)
+			const [ligne] = (await reponse.json()) as [{ id: string; email: string }]
+			sonde.contactsSupprimes.push(ligne.id)
+			expect(ligne.email).toBe('sonde-4e-mesure-3@exemple.test')
+		} finally {
+			await nettoyer(request, sonde)
+		}
+	})
+
+	test('4 — LA LECTRICE est refusée : 403 / 42501, et AUCUNE ligne n’est écrite', async ({
+		request,
+	}) => {
+		const jeton = await jetonDe('viewer@p2enjoy.test')
+		const nom = 'Sonde 4e mesure 4'
+		const reponse = await request.post('/rest/v1/contacts', {
+			headers: { ...enTetesAuthentifies(jeton), Prefer: 'return=representation' },
+			data: { workspace_id: WORKSPACE_SEED, full_name: nom },
+		})
+		expect(reponse.status()).toBe(403)
+		expect(((await reponse.json()) as { code: string }).code).toBe('42501')
+		// DÉCISION 70 : un refus se constate sur la BASE, pas sur le code de réponse. La relecture
+		// emploie la clé de service — la lectrice ne verrait rien de toute façon, et un « zéro
+		// ligne » sous son propre jeton ne distinguerait pas un refus d'écriture d'un refus de
+		// lecture.
+		const relecture = await request.get(
+			`/rest/v1/contacts?full_name=eq.${encodeURIComponent(nom)}`,
+			{ headers: enTetesService() },
+		)
+		expect(await relecture.json()).toEqual([])
+	})
+
+	test('5 — email DÉJÀ PORTÉ, casse différente : 409 / 23505, l’unicité ignore la casse', async ({
+		request,
+	}) => {
+		const jeton = await jetonDe('admin@p2enjoy.test')
+		const nom = 'Sonde 4e mesure 5'
+		const reponse = await request.post('/rest/v1/contacts', {
+			headers: { ...enTetesAuthentifies(jeton), Prefer: 'return=representation' },
+			data: {
+				workspace_id: WORKSPACE_SEED,
+				full_name: nom,
+				email: EMAIL_DEJA_PORTE.toUpperCase(),
+			},
+		})
+		expect(reponse.status()).toBe(409)
+		const erreur = (await reponse.json()) as { code: string; message: string }
+		// LE CODE, PAS LE STATUT : la mesure 10 rend le MÊME 409 pour une cause opposée.
+		expect(erreur.code).toBe('23505')
+		expect(erreur.message).toContain('contacts_workspace_email_key')
+		const relecture = await request.get(
+			`/rest/v1/contacts?full_name=eq.${encodeURIComponent(nom)}`,
+			{ headers: enTetesService() },
+		)
+		expect(await relecture.json()).toEqual([])
+	})
+
+	test('6 à 9 — les quatre contraintes de FORME rendent 400 / 23514', async ({ request }) => {
+		const jeton = await jetonDe('admin@p2enjoy.test')
+		// LES MESURES 8 ET 9 ONT DÉCIDÉ DU CONTRAT DE SAISIE : un facultatif blanc ne peut pas
+		// s'envoyer comme `''`. C'est pourquoi `normaliserFacultatif` rend `null`.
+		const cas = [
+			{ mesure: 6, contrainte: 'contacts_full_name_check', charge: { full_name: '   ' } },
+			{ mesure: 7, contrainte: 'contacts_email_check', charge: { full_name: 'Sonde 4e mesure 7', email: 'pasunemail' } },
+			{ mesure: 8, contrainte: 'contacts_email_check', charge: { full_name: 'Sonde 4e mesure 8', email: '' } },
+			{ mesure: 9, contrainte: 'contacts_phone_check', charge: { full_name: 'Sonde 4e mesure 9', phone: '' } },
+		]
+		for (const attendu of cas) {
+			const reponse = await request.post('/rest/v1/contacts', {
+				headers: { ...enTetesAuthentifies(jeton), Prefer: 'return=representation' },
+				data: { workspace_id: WORKSPACE_SEED, ...attendu.charge },
+			})
+			expect(reponse.status(), `mesure ${attendu.mesure}`).toBe(400)
+			const erreur = (await reponse.json()) as { code: string; message: string }
+			expect(erreur.code, `mesure ${attendu.mesure}`).toBe('23514')
+			expect(erreur.message, `mesure ${attendu.mesure}`).toContain(attendu.contrainte)
+		}
+		// Aucune des quatre n'a laissé de trace : les sondes 7 à 9 portent un nom reconnaissable.
+		const relecture = await request.get('/rest/v1/contacts?full_name=like.Sonde%204e%20mesure*', {
+			headers: enTetesService(),
+		})
+		expect(await relecture.json()).toEqual([])
+	})
+
+	test('10 — organisation INCONNUE : 409 / 23503, le MÊME statut que le doublon', async ({
+		request,
+	}) => {
+		const jeton = await jetonDe('admin@p2enjoy.test')
+		const nom = 'Sonde 4e mesure 10'
+		const reponse = await request.post('/rest/v1/contacts', {
+			headers: { ...enTetesAuthentifies(jeton), Prefer: 'return=representation' },
+			data: {
+				workspace_id: WORKSPACE_SEED,
+				full_name: nom,
+				organization_id: ORGANISATION_INCONNUE,
+			},
+		})
+		// C'EST LA MESURE QUI JUSTIFIE LE CLASSEMENT PAR CODE (§14.4) : même `409` que la mesure 5,
+		// cause opposée — une liste d'organisations périmée, et non un email à corriger.
+		expect(reponse.status()).toBe(409)
+		const erreur = (await reponse.json()) as { code: string; message: string }
+		expect(erreur.code).toBe('23503')
+		expect(erreur.message).toContain('contacts_organization_id')
+		const relecture = await request.get(
+			`/rest/v1/contacts?full_name=eq.${encodeURIComponent(nom)}`,
+			{ headers: enTetesService() },
+		)
+		expect(await relecture.json()).toEqual([])
+	})
+
+	test('11 — `workspace_id` ÉTRANGER : 403 / 42501, c’est le `WITH CHECK` qui refuse', async ({
+		request,
+	}) => {
+		// L'administratrice a bien le droit d'écrire — dans SON workspace. Le refus ne porte donc
+		// pas sur le rôle mais sur la cible, et il rend le même couple que la lectrice : l'écran
+		// n'a aucune raison de les distinguer, les deux disent « pas ici » (§14.4).
+		const jeton = await jetonDe('admin@p2enjoy.test')
+		const nom = 'Sonde 4e mesure 11'
+		const reponse = await request.post('/rest/v1/contacts', {
+			headers: { ...enTetesAuthentifies(jeton), Prefer: 'return=representation' },
+			data: { workspace_id: WORKSPACE_ETRANGER, full_name: nom },
+		})
+		expect(reponse.status()).toBe(403)
+		expect(((await reponse.json()) as { code: string }).code).toBe('42501')
+		const relecture = await request.get(
+			`/rest/v1/contacts?full_name=eq.${encodeURIComponent(nom)}`,
+			{ headers: enTetesService() },
+		)
+		expect(await relecture.json()).toEqual([])
+	})
+
+	test('le SEED est rendu INTACT : ses trois contacts, et aucune sonde survivante', async ({
+		request,
+	}) => {
+		// Ce scénario est la garde du §14.8 : les onze mesures écrivent, et une sonde oubliée
+		// fausserait tous les compteurs du dépôt — ceux du carnet, ceux des harnais, ceux du seed.
+		const relecture = await request.get('/rest/v1/contacts?select=full_name&order=full_name', {
+			headers: enTetesService(),
+		})
+		const noms = ((await relecture.json()) as Array<{ full_name: string }>).map((c) => c.full_name)
+		// L'ORDRE EST CELUI DE LA COLLATION DE LA BASE, mesuré et non supposé : « Élise » précède
+		// « Léo ». C'est le même ordre que `Carnet.test.tsx` fige depuis la sous-tranche 4a, et
+		// c'est bien le serveur qui trie (`order=full_name`), jamais ce fichier.
+		expect(noms).toEqual(['Élise Fabre', 'Léo Marchand', 'Sophie Dupont'])
+	})
+})
