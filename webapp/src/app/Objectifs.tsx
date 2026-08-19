@@ -1,28 +1,37 @@
 // @spec CRM-083 (docs/BACKLOG.md) — canevas d'objectifs, tranche 1 : navigation, liste des
-//       tableaux, canevas rendu, flèches, équivalent textuel et ouverture du channel
+//       tableaux, canevas rendu, flèches, équivalent textuel et ouverture du channel ;
+//       tranche 2a : poser, déplacer et redimensionner un bloc, à la souris et au clavier
 // @spec docs/SPEC-goals.md §5.1 (liste des tableaux), §5.2 (canevas), §5.3 (flèches),
-//       §5.4 (les cinq états), §5.5 (accessibilité), §3 (ouvrir le channel d'un bloc)
+//       §5.4 (les cinq états), §5.5 (accessibilité et gestes clavier), §3 (ouvrir le channel
+//       d'un bloc, poser un bloc, le déplacer, le redimensionner), §4.2 (écriture)
 // @spec docs/SPEC-goals.md §4.1 (le bloc masqué n'est pas rendu, et l'écran ne le nomme jamais)
 // @spec docs/DESIGN_SYSTEM.md §5.29 (bloc, jauge, flèche, focus), §5.8 (états), §8 (clavier),
 //       §5.5 bis (pilule de track réemployée par la pilule de channel)
 //
-// CE QUE CETTE TRANCHE LIVRE, ET CE QU'ELLE NE LIVRE PAS — nommé ici plutôt que découvert à
+// CE QUE CES TRANCHES LIVRENT, ET CE QU'ELLES NE LIVRENT PAS — nommé ici plutôt que découvert à
 // l'usage (`CLAUDE.md` §25) :
 //
-//   * LIVRÉ : l'entrée de navigation, la liste des tableaux avec leur compte de blocs LISIBLES,
-//     le canevas pannable et zoomable, les blocs avec jauge et pilule, les flèches aux trois
-//     directions, les moignons pointillés vers le vide, l'équivalent textuel du diagramme, les
-//     états vide / introuvable / lien perdu, et l'OUVERTURE du channel au clic comme au clavier ;
-//   * NON LIVRÉ, et donc non simulé : poser, déplacer, redimensionner, remplir et lier un bloc.
+//   * TRANCHE 1, LA LECTURE : l'entrée de navigation, la liste des tableaux avec leur compte de
+//     blocs LISIBLES, le canevas pannable et zoomable, les blocs avec jauge et pilule, les flèches
+//     aux trois directions, les moignons pointillés vers le vide, l'équivalent textuel du
+//     diagramme, les états vide / introuvable / lien perdu, et l'OUVERTURE du channel ;
+//   * TRANCHE 2a, LA GÉOMÉTRIE : poser un bloc à la position du geste, le déplacer et le
+//     redimensionner, à la souris ET au clavier, avec persistance des quatre colonnes ;
+//   * NON LIVRÉ, et donc non simulé : saisir le titre, le corps, la couleur et le remplissage,
+//     lier un bloc à un channel, tracer une flèche, supprimer un bloc, administrer les tableaux.
 //     Aucune commande morte n'est posée pour ces gestes — un bouton qui n'écrit rien ment plus
 //     qu'une absence.
 //
-// L'ÉCRAN NE CALCULE AUCUN DROIT : il rend ce que le backend consent. Un bloc lié à un channel
-// fermé n'arrive jamais jusqu'ici, et l'écran ne cherche pas à savoir qu'il a existé.
+// L'ÉCRAN NE CALCULE AUCUN DROIT : il rend ce que le backend consent, et il ENVOIE puis traduit
+// le refus (`CLAUDE.md` §10, `docs/DESIGN_SYSTEM.md` §5.26). Aucune commande n'est éteinte
+// d'avance selon le rôle. Un bloc lié à un channel fermé n'arrive jamais jusqu'ici, et l'écran ne
+// cherche pas à savoir qu'il a existé.
 
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { PointerEvent as EvenementPointeur } from 'react'
 import { Link, useParams } from 'react-router'
-import { ArrowLeft, Minus, Plus, SquareArrowOutUpRight, Unlink } from 'lucide-react'
+import { ArrowLeft, Minus, Plus, SquareArrowOutUpRight, SquarePlus, Unlink, X } from 'lucide-react'
+import { Button } from '../components/ui/Button'
 import { EtatErreur, EtatVide } from '../components/ui/States'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t } from '../i18n'
@@ -38,6 +47,17 @@ import {
 	type BlocObjectif,
 	type FlecheTracee,
 } from '../lib/objectifs'
+import {
+	ecrireGeometrieBloc,
+	poserBloc,
+	PAS_CLAVIER,
+	PAS_CLAVIER_FIN,
+	TAILLE_BLOC_MINIMALE,
+	TAILLE_BLOC_NEUF,
+	bornerCoordonnee,
+	bornerDimension,
+	type RefusBloc,
+} from '../lib/objectifs-ecriture'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { useWorkspaces } from '../lib/workspaces'
 import { CHEMIN_OBJECTIFS, cheminTableauObjectifs } from './chemins'
@@ -159,23 +179,159 @@ export type ProprietesCanevas = {
 	readonly client?: ClientCrm | null
 }
 
-/** Canevas d'un tableau — §5.2. */
+/**
+ * La géométrie d'un bloc — les quatre seules colonnes que la tranche 2a écrit.
+ *
+ * Elle est nommée à part du bloc parce qu'un geste de canevas ne touche jamais autre chose : le
+ * titre, le corps, la couleur, le remplissage et le lien appartiennent à la tranche suivante, et
+ * les mêler ici ferait envoyer des colonnes que le geste n'a pas modifiées.
+ */
+type Geometrie = {
+	readonly x: number
+	readonly y: number
+	readonly largeur: number
+	readonly hauteur: number
+}
+
+const geometrieDe = (bloc: BlocObjectif): Geometrie => ({
+	x: bloc.pos_x,
+	y: bloc.pos_y,
+	largeur: bloc.width,
+	hauteur: bloc.height,
+})
+
+const avecGeometrie = (bloc: BlocObjectif, geometrie: Geometrie): BlocObjectif => ({
+	...bloc,
+	pos_x: geometrie.x,
+	pos_y: geometrie.y,
+	width: geometrie.largeur,
+	height: geometrie.hauteur,
+})
+
+/**
+ * Ce que l'écran dit d'une écriture — trois mentions, jamais deux à la fois
+ * (`docs/DESIGN_SYSTEM.md` §5.7 ter).
+ */
+type MessageEcriture = { readonly ton: 'attente' | 'succes' | 'refus'; readonly texte: string }
+
+/**
+ * Traduit un refus par son DICTIONNAIRE FERMÉ. Un message de serveur n'est pas un texte
+ * d'interface (`docs/DESIGN_SYSTEM.md` §10), et `detail` ne sort jamais du module d'écriture.
+ */
+export function texteRefusBloc(refus: RefusBloc): string {
+	if (refus.nature === 'interdit') return t('goals.write.refused.forbidden')
+	if (refus.nature === 'saisie-invalide') return t('goals.write.refused.invalid')
+	return t('goals.write.refused.unavailable')
+}
+
+/** Les quatre directions du clavier, en pas unitaires (§5.5). */
+const DIRECTIONS_CLAVIER: Readonly<Record<string, readonly [number, number]>> = {
+	ArrowLeft: [-1, 0],
+	ArrowRight: [1, 0],
+	ArrowUp: [0, -1],
+	ArrowDown: [0, 1],
+}
+
+/** Canevas d'un tableau — §5.2, et depuis la tranche 2a les gestes de géométrie du §3. */
 export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {}) {
 	const { idTableau } = useParams<{ idTableau: string }>()
 	const { etat, recharger } = useContenuTableau(client, idTableau ?? null)
 	const [rangZoom, setRangZoom] = useState<number>(ZOOM_PAR_DEFAUT)
 
+	// TROIS ÉTATS LOCAUX, ET ILS NE SE CONFONDENT PAS :
+	//   * `ecrits` porte les lignes que le SERVEUR a rendues après une écriture — elles sont vraies,
+	//     et les prendre évite une relecture pour une donnée déjà en main (§5.28) ;
+	//   * `ajoutes` porte les blocs posés pendant cette session d'écran, pour la même raison ;
+	//   * `ebauche` porte le geste EN COURS, qui n'est pas encore une donnée. Un refus l'efface, et
+	//     le bloc revient à sa position d'origine (`docs/DESIGN_SYSTEM.md` §6).
+	const [ecrits, setEcrits] = useState<ReadonlyMap<string, BlocObjectif>>(() => new Map())
+	const [ajoutes, setAjoutes] = useState<readonly BlocObjectif[]>([])
+	const [ebauche, setEbauche] = useState<{ readonly id: string; readonly geometrie: Geometrie } | null>(null)
+	const [message, setMessage] = useState<MessageEcriture | null>(null)
+	const [pose, setPose] = useState<{ readonly x: number; readonly y: number } | null>(null)
+
 	const contenu = etat.statut === 'pret' ? etat.donnees : null
-	const blocs = useMemo(() => ordreTabulation(contenu?.blocs ?? []), [contenu])
+
+	// Une relecture rapporte l'état du serveur : ce qui était gardé localement devient alors
+	// périmé, et le conserver ferait rendre deux fois la même donnée.
+	useEffect(() => {
+		setEcrits(new Map())
+		setAjoutes([])
+		setEbauche(null)
+	}, [contenu])
+
+	// L'ORDRE DE TABULATION EST CALCULÉ SUR L'ÉTAT DU SERVEUR, JAMAIS SUR L'ÉBAUCHE. Le trier
+	// pendant un déplacement ferait sauter le bloc d'une place à l'autre de l'ordre du clavier
+	// sous les doigts de celui qui le déplace — le défaut que le §5.31 nomme pour une table de
+	// saisie, transposé au canevas.
+	const blocs = useMemo(() => {
+		const lus = (contenu?.blocs ?? []).map((bloc) => ecrits.get(bloc.id) ?? bloc)
+		return ordreTabulation([...lus, ...ajoutes])
+	}, [contenu, ecrits, ajoutes])
+
+	const blocsRendus = useMemo(
+		() => blocs.map((bloc) => (ebauche !== null && ebauche.id === bloc.id ? avecGeometrie(bloc, ebauche.geometrie) : bloc)),
+		[blocs, ebauche],
+	)
+
 	const fleches = useMemo(
-		() => composerDiagramme(contenu?.blocs ?? [], contenu?.fleches ?? []),
-		[contenu],
+		() => composerDiagramme(blocsRendus, contenu?.fleches ?? []),
+		[blocsRendus, contenu],
 	)
 	const lignes = useMemo(
-		() => listeTextuelleDiagramme(contenu?.blocs ?? [], contenu?.fleches ?? []),
-		[contenu],
+		() => listeTextuelleDiagramme(blocsRendus, contenu?.fleches ?? []),
+		[blocsRendus, contenu],
 	)
-	const etendue = useMemo(() => etendueCanevas(contenu?.blocs ?? []), [contenu])
+	const etendue = useMemo(() => etendueCanevas(blocsRendus), [blocsRendus])
+
+	const enregistrerGeometrie = useCallback(
+		async (idBloc: string, geometrie: Geometrie) => {
+			if (client === null) return
+			setMessage({ ton: 'attente', texte: t('goals.write.saving') })
+			const resultat = await ecrireGeometrieBloc(client, idBloc, {
+				x: geometrie.x,
+				y: geometrie.y,
+				largeur: geometrie.largeur,
+				hauteur: geometrie.hauteur,
+			})
+			// L'ébauche tombe dans les TROIS issues : sur un succès la ligne rendue la remplace, sur
+			// un refus comme sur un silence le bloc reprend sa position d'origine. La laisser en
+			// place sur un refus afficherait un déplacement qui n'a pas eu lieu.
+			setEbauche((courante) => (courante !== null && courante.id === idBloc ? null : courante))
+			if (resultat.statut === 'refus') {
+				setMessage({ ton: 'refus', texte: texteRefusBloc(resultat.refus) })
+				return
+			}
+			if (resultat.statut === 'sans-effet') {
+				setMessage({ ton: 'refus', texte: t('goals.write.noeffect') })
+				return
+			}
+			setEcrits((precedents) => new Map(precedents).set(idBloc, resultat.bloc))
+			setMessage({ ton: 'succes', texte: t('goals.write.saved') })
+		},
+		[client],
+	)
+
+	const poserA = useCallback(
+		async (point: { readonly x: number; readonly y: number }) => {
+			if (client === null || idTableau === undefined) return
+			setPose(null)
+			setMessage({ ton: 'attente', texte: t('goals.write.saving') })
+			const resultat = await poserBloc(client, {
+				idTableau,
+				x: point.x,
+				y: point.y,
+				titre: t('goals.place.title.default'),
+			})
+			if (resultat.statut === 'refus') {
+				setMessage({ ton: 'refus', texte: texteRefusBloc(resultat.refus) })
+				return
+			}
+			setAjoutes((precedents) => [...precedents, resultat.bloc])
+			setMessage({ ton: 'succes', texte: t('goals.write.saved') })
+		},
+		[client, idTableau],
+	)
 
 	if (client === null) {
 		return <EtatVide titre={t('goals.noWorkspace.title')} corps={t('goals.noWorkspace.body')} />
@@ -210,6 +366,12 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 	// de laisser une échelle `undefined` produire un canevas invisible.
 	const zoom = ZOOMS[rangZoom] ?? 1
 
+	// LE CANEVAS EST RENDU DÈS QU'UNE POSE EST ARMÉE, MÊME SUR UN TABLEAU VIDE : c'est la surface
+	// sur laquelle le geste se fait, et l'état vide qui la remplacerait n'aurait aucun endroit où
+	// recevoir le clic. L'état vide porte donc le geste qui le comble
+	// (`docs/DESIGN_SYSTEM.md` §5.13).
+	const canevasRendu = blocsRendus.length > 0 || pose !== null
+
 	return (
 		<section aria-label={t('goals.canvas.aria')} className="flex flex-col gap-4">
 			<header className="flex flex-wrap items-center justify-between gap-3">
@@ -221,13 +383,25 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 				</div>
 				<div className="flex items-center gap-2">
 					<RetourListe />
+					<CommandePose armee={pose !== null} onBasculer={() => setPose(pose === null ? { x: PAS_CLAVIER * 3, y: PAS_CLAVIER * 3 } : null)} />
 					<CommandesZoom rang={rangZoom} onChanger={setRangZoom} />
 				</div>
 			</header>
 
-			{blocs.length === 0 ? (
-				<EtatVide titre={t('goals.board.empty.title')} corps={t('goals.board.empty.body')} />
-			) : (
+			{pose === null ? null : (
+				<p data-testid="pose-consigne" className="text-sm text-text-2">
+					{t('goals.place.hint')}
+				</p>
+			)}
+
+			{/* La consigne clavier est CITÉE par chaque bloc en `aria-describedby` : un geste qui
+			    n'existe qu'au clavier doit être annoncé au clavier, faute de quoi il n'existe pour
+			    personne. Elle est visuellement masquée, jamais retirée (§12.3). */}
+			<p id="objectifs-consigne-clavier" className="sr-only">
+				{t('goals.block.keyboard.hint')}
+			</p>
+
+			{canevasRendu ? (
 				/* La zone est PANNABLE au défilement — souris, molette, et touches de direction du
 				   navigateur une fois le conteneur focalisé —, et ZOOMABLE par les deux commandes
 				   ci-dessus. `tabIndex` sur le conteneur est ce qui rend le défilement clavier
@@ -247,17 +421,167 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 							height: `${etendue.hauteur}px`,
 							transform: `scale(${zoom})`,
 						}}
+						/* LA POSITION VIENT DU GESTE (§3) : le point du clic devient le coin haut
+						   gauche du bloc, sans placement automatique, sans recherche de place libre
+						   et sans alignement sur une grille. */
+						onClick={
+							pose === null
+								? undefined
+								: (evenement) => {
+										const cadre = evenement.currentTarget.getBoundingClientRect()
+										void poserA({
+											x: bornerCoordonnee((evenement.clientX - cadre.left) / zoom),
+											y: bornerCoordonnee((evenement.clientY - cadre.top) / zoom),
+										})
+									}
+						}
 					>
 						<TraitsDuDiagramme fleches={fleches} etendue={etendue} />
-						{blocs.map((bloc) => (
-							<BlocCanevas key={bloc.id} bloc={bloc} />
+						{blocsRendus.map((bloc) => (
+							<BlocCanevas
+								key={bloc.id}
+								bloc={bloc}
+								zoom={zoom}
+								onEbauche={(geometrie) => setEbauche({ id: bloc.id, geometrie })}
+								onFin={(geometrie) => void enregistrerGeometrie(bloc.id, geometrie)}
+							/>
 						))}
+						{pose === null ? null : (
+							<RepereDePose
+								position={pose}
+								onDeplacer={setPose}
+								onValider={() => void poserA(pose)}
+								onAnnuler={() => setPose(null)}
+							/>
+						)}
 					</div>
 				</div>
+			) : (
+				<EtatVide
+					titre={t('goals.board.empty.title')}
+					corps={t('goals.board.empty.body')}
+					action={
+						<CommandePose armee={false} onBasculer={() => setPose({ x: PAS_CLAVIER * 3, y: PAS_CLAVIER * 3 })} />
+					}
+				/>
 			)}
+
+			<MentionEcriture message={message} />
 
 			<EquivalentTextuel lignes={lignes} />
 		</section>
+	)
+}
+
+/**
+ * La commande qui arme la pose, et l'annule — DEUX VISAGES, UN SEUL RENDU À LA FOIS, patron du
+ * §5.3 quater. Elle n'est jamais éteinte selon le rôle (`docs/DESIGN_SYSTEM.md` §5.26) : la
+ * lectrice l'ouvre, pose, et lit le refus du backend.
+ */
+function CommandePose({ armee, onBasculer }: { readonly armee: boolean; readonly onBasculer: () => void }) {
+	return (
+		<Button
+			variante={armee ? 'secondaire' : 'primaire'}
+			taille="compacte"
+			data-testid="poser-bloc"
+			aria-pressed={armee}
+			onClick={onBasculer}
+			className="gap-2"
+		>
+			{armee ? <X aria-hidden="true" size={16} strokeWidth={2} /> : <SquarePlus aria-hidden="true" size={16} strokeWidth={2} />}
+			{armee ? t('goals.place.cancel') : t('goals.place.start')}
+		</Button>
+	)
+}
+
+/**
+ * Le repère de pose — la moitié CLAVIER du geste de pose.
+ *
+ * Sans lui, poser un bloc serait un geste de souris, et le §5.5 serait tenu en apparence
+ * seulement. Il porte la position que les flèches déplacent, `Entrée` valide et `Échap` annule ;
+ * son nom accessible ÉCRIT la position, faute de quoi un utilisateur au lecteur d'écran
+ * déplacerait un repère sans savoir où il est.
+ */
+function RepereDePose({
+	position,
+	onDeplacer,
+	onValider,
+	onAnnuler,
+}: {
+	readonly position: { readonly x: number; readonly y: number }
+	readonly onDeplacer: (position: { readonly x: number; readonly y: number }) => void
+	readonly onValider: () => void
+	readonly onAnnuler: () => void
+}) {
+	const repere = useRef<HTMLDivElement | null>(null)
+
+	// Le focus entre dans le repère dès qu'il est armé (`docs/DESIGN_SYSTEM.md` §5.13) : un repère
+	// que les flèches ne pilotent qu'après un `Tab` supplémentaire ne serait pas le geste clavier
+	// que le §5.5 demande.
+	useEffect(() => {
+		repere.current?.focus()
+	}, [])
+
+	return (
+		<div
+			ref={repere}
+			data-testid="repere-pose"
+			tabIndex={0}
+			role="application"
+			aria-label={t('goals.place.marker', { x: String(position.x), y: String(position.y) })}
+			className="absolute rounded-lg border-2 border-brand bg-brand-soft focus-visible:outline-2 focus-visible:outline-brand"
+			style={{
+				left: `${position.x}px`,
+				top: `${position.y}px`,
+				width: `${TAILLE_BLOC_NEUF.largeur}px`,
+				height: `${TAILLE_BLOC_NEUF.hauteur}px`,
+			}}
+			onKeyDown={(evenement) => {
+				if (evenement.key === 'Escape') {
+					evenement.preventDefault()
+					onAnnuler()
+					return
+				}
+				if (evenement.key === 'Enter' || evenement.key === ' ') {
+					evenement.preventDefault()
+					onValider()
+					return
+				}
+				const direction = DIRECTIONS_CLAVIER[evenement.key]
+				if (direction === undefined) return
+				evenement.preventDefault()
+				const pas = evenement.shiftKey ? PAS_CLAVIER_FIN : PAS_CLAVIER
+				onDeplacer({
+					x: bornerCoordonnee(position.x + direction[0] * pas),
+					y: bornerCoordonnee(position.y + direction[1] * pas),
+				})
+			}}
+		/>
+	)
+}
+
+/**
+ * Les trois mentions d'une écriture, jamais deux à la fois (`docs/DESIGN_SYSTEM.md` §5.7 ter).
+ *
+ * Elle vit SOUS le canevas, près de ce qu'elle concerne (§5.13) : un geste de géométrie porte sur
+ * le canevas entier, et non sur une ligne d'un tableau. La région est TOUJOURS rendue, pour qu'un
+ * lecteur d'écran ne découvre pas une région qui apparaît — un refus porte `role="alert"`, une
+ * attente et une confirmation `role="status"`.
+ */
+function MentionEcriture({ message }: { readonly message: MessageEcriture | null }) {
+	const TONS: Readonly<Record<MessageEcriture['ton'], string>> = {
+		attente: 'text-text-3',
+		succes: 'text-success',
+		refus: 'text-danger-on-soft bg-danger-soft rounded-sm px-2 py-1',
+	}
+	return (
+		<p
+			data-testid="mention-ecriture"
+			role={message?.ton === 'refus' ? 'alert' : 'status'}
+			className={['text-sm', message === null ? '' : TONS[message.ton]].join(' ')}
+		>
+			{message?.texte ?? ''}
+		</p>
 	)
 }
 
@@ -395,11 +719,43 @@ function TraitsDuDiagramme({
 	)
 }
 
-/** Un bloc du canevas — §5.2, `docs/DESIGN_SYSTEM.md` §5.29. */
-function BlocCanevas({ bloc }: { readonly bloc: BlocObjectif }) {
+/**
+ * Un bloc du canevas — §5.2, `docs/DESIGN_SYSTEM.md` §5.29, et depuis la tranche 2a les deux
+ * gestes de géométrie du §3.
+ *
+ * TROIS RÈGLES DE GESTE, ÉCRITES ICI PARCE QU'ELLES SE REDÉCOUVRENT MAL :
+ *
+ *   1. l'ancre d'un glissement est prise au `pointerdown` et gardée dans une référence, jamais
+ *      relue à chaque mouvement : une ancre recalculée sur la position courante ferait dériver le
+ *      bloc, chaque mouvement s'ajoutant au précédent ;
+ *   2. les écarts de pointeur sont divisés par le ZOOM avant d'entrer dans le canevas — la surface
+ *      porte un `scale`, si bien qu'un pixel d'écran ne vaut pas une unité de canevas ;
+ *   3. un glissement parti d'un lien ou d'un bouton n'en est pas un. Sans cette garde, ouvrir le
+ *      channel d'un bloc deviendrait impossible à la souris, le premier `pointerdown` armant un
+ *      déplacement qui avale le clic.
+ */
+function BlocCanevas({
+	bloc,
+	zoom,
+	onEbauche,
+	onFin,
+}: {
+	readonly bloc: BlocObjectif
+	readonly zoom: number
+	readonly onEbauche: (geometrie: Geometrie) => void
+	readonly onFin: (geometrie: Geometrie) => void
+}) {
 	const ouvrable = lienOuvrable(bloc)
 	const perdu = lienPerdu(bloc)
 	const destination = bloc.destination
+	const geometrie = geometrieDe(bloc)
+
+	const ancre = useRef<{
+		readonly pointeur: { readonly x: number; readonly y: number }
+		readonly geometrie: Geometrie
+		readonly mode: 'deplacement' | 'taille'
+	} | null>(null)
+	const clavierEnCours = useRef(false)
 
 	const etiquette =
 		ouvrable && destination !== null && destination.track !== null
@@ -411,18 +767,102 @@ function BlocCanevas({ bloc }: { readonly bloc: BlocObjectif }) {
 				})
 			: t('goals.block.aria', { titre: bloc.title, valeur: String(bloc.fill_percent) })
 
+	const depuisAncre = (clientX: number, clientY: number): Geometrie | null => {
+		const origine = ancre.current
+		if (origine === null) return null
+		const dx = (clientX - origine.pointeur.x) / zoom
+		const dy = (clientY - origine.pointeur.y) / zoom
+		if (origine.mode === 'deplacement') {
+			return {
+				...origine.geometrie,
+				x: bornerCoordonnee(origine.geometrie.x + dx),
+				y: bornerCoordonnee(origine.geometrie.y + dy),
+			}
+		}
+		return {
+			...origine.geometrie,
+			largeur: bornerDimension(origine.geometrie.largeur + dx, TAILLE_BLOC_MINIMALE.largeur),
+			hauteur: bornerDimension(origine.geometrie.hauteur + dy, TAILLE_BLOC_MINIMALE.hauteur),
+		}
+	}
+
+	const armer = (mode: 'deplacement' | 'taille') => (evenement: EvenementPointeur<HTMLElement>) => {
+		if (evenement.button !== 0) return
+		if (mode === 'deplacement' && (evenement.target as HTMLElement).closest('a, button') !== null) return
+		evenement.preventDefault()
+		evenement.stopPropagation()
+		evenement.currentTarget.setPointerCapture(evenement.pointerId)
+		ancre.current = {
+			pointeur: { x: evenement.clientX, y: evenement.clientY },
+			geometrie,
+			mode,
+		}
+	}
+
+	const suivre = (evenement: EvenementPointeur<HTMLElement>) => {
+		const suivante = depuisAncre(evenement.clientX, evenement.clientY)
+		if (suivante !== null) onEbauche(suivante)
+	}
+
+	const relacher = (evenement: EvenementPointeur<HTMLElement>) => {
+		const finale = depuisAncre(evenement.clientX, evenement.clientY)
+		if (finale === null) return
+		ancre.current = null
+		if (evenement.currentTarget.hasPointerCapture(evenement.pointerId)) {
+			evenement.currentTarget.releasePointerCapture(evenement.pointerId)
+		}
+		onFin(finale)
+	}
+
 	return (
 		<article
 			data-testid="bloc-objectif"
 			data-bloc={bloc.id}
 			tabIndex={0}
 			aria-label={etiquette}
-			className="absolute flex overflow-hidden rounded-lg border border-border bg-surface shadow-sm focus-visible:outline-2 focus-visible:outline-brand"
+			aria-describedby="objectifs-consigne-clavier"
+			className="absolute flex overflow-hidden rounded-lg border border-border bg-surface shadow-sm touch-none focus-visible:outline-2 focus-visible:outline-brand"
 			style={{
 				left: `${bloc.pos_x}px`,
 				top: `${bloc.pos_y}px`,
 				width: `${bloc.width}px`,
 				height: `${bloc.height}px`,
+			}}
+			onPointerDown={armer('deplacement')}
+			onPointerMove={suivre}
+			onPointerUp={relacher}
+			onPointerCancel={() => {
+				ancre.current = null
+			}}
+			/* LE CLAVIER FAIT EXACTEMENT CE QUE LA SOURIS FAIT (§5.5, `CLAUDE.md` §22) : flèches
+			   pour déplacer, `Maj` pour ajuster au pixel, `Alt` pour redimensionner. L'écriture
+			   part au RELÂCHEMENT de la touche, jamais à chaque répétition : une frappe maintenue
+			   émettrait une requête par pixel. Aucune temporisation n'est employée pour cela. */
+			onKeyDown={(evenement) => {
+				const direction = DIRECTIONS_CLAVIER[evenement.key]
+				if (direction === undefined) return
+				evenement.preventDefault()
+				const pas = evenement.shiftKey ? PAS_CLAVIER_FIN : PAS_CLAVIER
+				clavierEnCours.current = true
+				onEbauche(
+					evenement.altKey
+						? {
+								...geometrie,
+								largeur: bornerDimension(geometrie.largeur + direction[0] * pas, TAILLE_BLOC_MINIMALE.largeur),
+								hauteur: bornerDimension(geometrie.hauteur + direction[1] * pas, TAILLE_BLOC_MINIMALE.hauteur),
+							}
+						: {
+								...geometrie,
+								x: bornerCoordonnee(geometrie.x + direction[0] * pas),
+								y: bornerCoordonnee(geometrie.y + direction[1] * pas),
+							},
+				)
+			}}
+			onKeyUp={(evenement) => {
+				if (DIRECTIONS_CLAVIER[evenement.key] === undefined) return
+				if (!clavierEnCours.current) return
+				clavierEnCours.current = false
+				onFin(geometrie)
 			}}
 		>
 			<span aria-hidden="true" className={['w-1 shrink-0', liseréDe(bloc.color)].join(' ')} />
@@ -458,6 +898,22 @@ function BlocCanevas({ bloc }: { readonly bloc: BlocObjectif }) {
 					) : null}
 				</div>
 			</div>
+			{/* POIGNÉE DE REDIMENSIONNEMENT — une affordance de SOURIS, et rien d'autre.
+			    Elle est `aria-hidden` et hors du parcours de tabulation parce que le clavier
+			    dispose du geste complet (`Alt` et flèches, annoncé par la consigne du canevas) :
+			    un bouton qui ne ferait rien sur `Entrée` serait la commande morte que le §5.10
+			    proscrit. L'écart de taille avec le §8 est nommé au §5.29 du design system. */}
+			<span
+				data-testid="poignee-taille"
+				aria-hidden="true"
+				className="absolute right-0 bottom-0 size-6 cursor-se-resize border-r-2 border-b-2 border-text-3 rounded-br-lg"
+				onPointerDown={armer('taille')}
+				onPointerMove={suivre}
+				onPointerUp={relacher}
+				onPointerCancel={() => {
+					ancre.current = null
+				}}
+			/>
 		</article>
 	)
 }

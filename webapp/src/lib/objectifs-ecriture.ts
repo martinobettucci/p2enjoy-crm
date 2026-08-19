@@ -210,7 +210,15 @@ export async function ecrireGeometrieBloc(
 		readonly hauteur?: number
 	},
 ): Promise<ResultatGeometrie> {
-	const modifications: Record<string, number> = {}
+	// Le type est celui de la table et non un `Record` libre : le contrat de `database.types.ts`
+	// refuse toute colonne qu'il ne connaît pas, et c'est précisément la garde qui a manqué à
+	// INC-165. Les quatre clés restent FACULTATIVES — un déplacement n'envoie pas de taille.
+	const modifications: Partial<{
+		pos_x: number
+		pos_y: number
+		width: number
+		height: number
+	}> = {}
 	if (geometrie.x !== undefined) modifications.pos_x = bornerCoordonnee(geometrie.x)
 	if (geometrie.y !== undefined) modifications.pos_y = bornerCoordonnee(geometrie.y)
 	if (geometrie.largeur !== undefined) {

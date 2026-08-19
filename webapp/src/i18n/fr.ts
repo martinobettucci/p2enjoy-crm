@@ -467,6 +467,26 @@ export const fr = {
 	'goals.zoom.value': '{valeur} %',
 	'goals.back.list': 'Retour aux tableaux',
 
+	// --- Objectifs, tranche 2a : la géométrie — CRM-083, docs/SPEC-goals.md §3 et §5.5 ----
+	// AUCUN de ces textes n'anticipe un droit : les commandes sont offertes à tous, et c'est le
+	// refus du backend qui est traduit (CLAUDE.md §10, docs/DESIGN_SYSTEM.md §5.26).
+	'goals.place.start': 'Poser un bloc',
+	'goals.place.cancel': 'Annuler la pose',
+	'goals.place.hint':
+		'Cliquez sur le canevas pour poser le bloc. Au clavier, déplacez le repère avec les flèches, validez par Entrée, annulez par Échap.',
+	'goals.place.marker': 'Repère de pose, position {x} sur {y}',
+	'goals.place.title.default': 'Nouvel objectif',
+	'goals.block.keyboard.hint':
+		'Flèches pour déplacer le bloc, Maj et flèches pour l’ajuster au pixel, Alt et flèches pour le redimensionner.',
+	'goals.block.resize': 'Redimensionner {titre}',
+	'goals.write.saving': 'Enregistrement…',
+	'goals.write.saved': 'Enregistré',
+	'goals.write.noeffect':
+		'Aucune modification n’a été enregistrée. Rechargez le tableau pour voir son état réel.',
+	'goals.write.refused.forbidden': 'Vous ne pouvez pas modifier ce tableau.',
+	'goals.write.refused.invalid': 'La valeur envoyée a été refusée.',
+	'goals.write.refused.unavailable': 'L’enregistrement n’a pas abouti. Réessayez.',
+
 	'route.today.title': 'Ma journée',
 	'route.today.empty.title': 'Rien pour aujourd’hui',
 	'route.today.empty.body': 'Les prochaines actions et les relances dues apparaîtront ici.',
