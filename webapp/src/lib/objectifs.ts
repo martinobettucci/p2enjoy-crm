@@ -456,7 +456,9 @@ export function useTableaux(
 	useEffect(() => {
 		if (client === null || idWorkspace === null) return
 		const rang = ++courant.current
-		setEtat((precedent) => (precedent.statut === 'pret' ? precedent : enChargement))
+		setEtat((precedent) =>
+			precedent.statut === 'pret' ? precedent : enChargement<readonly TableauListe[]>(),
+		)
 		void lireTableaux(client, idWorkspace).then((resultat) => {
 			if (rang === courant.current) setEtat(resultat)
 		})

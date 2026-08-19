@@ -1501,6 +1501,10 @@ describe('administration des tableaux — §3, §5.1, DESIGN_SYSTEM §5.13', () 
 		})
 		const formulaire = screen.getByTestId('formulaire-creation-tableau')
 		expect(formulaire.textContent).toContain(fr['goals.board.refused.duplicate'])
+		// LA MENTION DU FORMULAIRE PORTE SA PROPRE IDENTITÉ, distincte de celle de la section : deux
+		// régions `status` indiscernables ne se désignent ni par une preuve, ni par un lecteur
+		// d'écran (défaut trouvé par la preuve d'interface de cette tranche).
+		expect(screen.getByTestId('mention-formulaire-tableau').getAttribute('role')).toBe('alert')
 	})
 
 	it('dit le SILENCE de la clause `using` au lieu d’annoncer un succès', async () => {

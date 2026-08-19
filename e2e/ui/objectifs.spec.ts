@@ -1,5 +1,9 @@
 // @verifies CRM-083 (docs/BACKLOG.md) — canevas d'objectifs, tranche 1 : la SURFACE ;
-//           tranche 2a : la GÉOMÉTRIE — poser, déplacer, redimensionner
+//           tranche 2a : la GÉOMÉTRIE — poser, déplacer, redimensionner ;
+//           tranche 2c : les TABLEAUX — créer, renommer, réordonner, archiver
+// @verifies docs/SPEC-goals.md §2.1 (nom unique par workspace, `position` attribuée par trigger,
+//           l'archivage tient lieu de suppression)
+// @verifies docs/DESIGN_SYSTEM.md §5.13 (formulaires dans le flux, focus au premier champ)
 // @verifies docs/SPEC-goals.md §5.1 (entrée de navigation et liste), §5.2 (canevas et pilule),
 //           §5.3 (flèches), §5.4 (états), §5.5 (clavier, équivalent textuel, gestes de
 //           géométrie au clavier), §3 (ouvrir le channel d'un bloc, poser, déplacer,
@@ -15,7 +19,7 @@
 // AUCUNE RÉPONSE N'EST SUBSTITUÉE et aucune fonction interne n'est appelée : ce que la preuve
 // mesure est ce que le backend a consenti.
 
-import { expect, test, type Page } from './fixtures'
+import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole, expect, test, type Page } from './fixtures'
 import { MOT_DE_PASSE_SEED, URL_API, enTetesService } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
 
@@ -955,5 +959,264 @@ test.describe('canevas d’objectifs — les suppressions, CRM-083 tranche 2b-2c
 		// ce silence annoncerait une suppression qui n'a pas eu lieu.
 		await expect(page.getByTestId('bloc-objectif').filter({ hasText: BLOC_JETABLE })).toHaveCount(1)
 		expect(await identifiantDuBloc(BLOC_JETABLE)).toBe(idJetable)
+	})
+})
+
+// =================================================================================================
+// TRANCHE 2c — LES TABLEAUX
+// =================================================================================================
+//
+// CHAQUE SCÉNARIO POSE SON PROPRE TABLEAU ET LE DÉTRUIT, par la clé de service : le seed n'est
+// jamais entamé. C'est la règle que la tranche 2b-2c a déjà suivie pour les blocs, et elle compte
+// double ici — un tableau ARCHIVÉ retient son nom (`goal_boards_workspace_name_key` est TOTAL), si
+// bien qu'un scénario qui laisserait derrière lui un tableau archivé ferait échouer sa propre
+// exécution suivante sur un doublon.
+
+/** Le tableau que ces scénarios créent et détruisent. Jamais un tableau du seed. */
+const TABLEAU_JETABLE = 'Tableau jetable de preuve'
+const TABLEAU_JETABLE_RENOMME = 'Tableau jetable renommé'
+
+/** Crée un tableau par la clé de service — pour les scénarios qui éprouvent un AUTRE geste. */
+async function creerTableauDeService(nom: string, position: number): Promise<string> {
+	const reponse = await fetch(`${URL_API}/rest/v1/goal_boards`, {
+		method: 'POST',
+		headers: { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'return=representation' },
+		body: JSON.stringify({ workspace_id: await identifiantDuWorkspace(), name: nom, position }),
+	})
+	expect(reponse.status).toBe(201)
+	const lignes = (await reponse.json()) as { id: string }[]
+	return lignes[0]?.id ?? ''
+}
+
+/** L'espace de travail du seed, celui que la liste rend — `lireWorkspaces` prend le premier. */
+async function identifiantDuWorkspace(): Promise<string> {
+	const reponse = await fetch(`${URL_API}/rest/v1/workspaces?select=id&order=name`, {
+		headers: enTetesService(),
+	})
+	const lignes = (await reponse.json()) as { id: string }[]
+	return lignes[0]?.id ?? ''
+}
+
+/** La ligne d'un tableau relue EN BASE, archivés compris — l'écran ne la rend plus une fois archivée. */
+async function tableauEnBase(
+	nom: string,
+): Promise<{ id: string; name: string; description: string | null; position: number; archived_at: string | null } | null> {
+	const reponse = await fetch(
+		`${URL_API}/rest/v1/goal_boards?select=id,name,description,position,archived_at&name=eq.${encodeURIComponent(nom)}`,
+		{ headers: enTetesService() },
+	)
+	const lignes = (await reponse.json()) as {
+		id: string
+		name: string
+		description: string | null
+		position: number
+		archived_at: string | null
+	}[]
+	return lignes[0] ?? null
+}
+
+/** Détruit RÉELLEMENT les tableaux jetables — un archivage laisserait leur nom pris. */
+async function nettoyerTableauxJetables(): Promise<void> {
+	for (const nom of [TABLEAU_JETABLE, TABLEAU_JETABLE_RENOMME]) {
+		await fetch(`${URL_API}/rest/v1/goal_boards?name=eq.${encodeURIComponent(nom)}`, {
+			method: 'DELETE',
+			headers: enTetesService(),
+		})
+	}
+}
+
+test.describe('tableaux d’objectifs — CRM-083 tranche 2c', () => {
+	test.beforeEach(async () => {
+		await nettoyerTableauxJetables()
+	})
+	test.afterEach(async () => {
+		await nettoyerTableauxJetables()
+	})
+
+	test('CRÉER un tableau depuis la liste, et la base le porte avec sa position', async ({ page }) => {
+		await connecter(page, ADMIN)
+		await page.getByRole('link', { name: 'Objectifs', exact: true }).first().click()
+		await expect(page.getByTestId('tableau-objectifs').first()).toBeVisible()
+
+		await page.getByTestId('creer-tableau').click()
+		const formulaire = page.getByTestId('formulaire-creation-tableau')
+		await expect(formulaire).toBeVisible()
+		// LE FOCUS EST DÉJÀ DANS LE PREMIER CHAMP (docs/DESIGN_SYSTEM.md §5.13) : la saisie part
+		// donc au clavier sans un `Tab` de plus, et c'est ce que la frappe qui suit démontre.
+		await page.keyboard.type(TABLEAU_JETABLE)
+		await page.keyboard.press('Tab')
+		await page.keyboard.type('Preuve de la tranche 2c.')
+		await capturer(page, 'tableau-creation-1440', UNITE)
+		await page.getByTestId('valider-tableau').click()
+
+		await expect(page.getByTestId('mention-ecriture')).toHaveText('Tableau créé')
+		const ligne = page.getByTestId('tableau-objectifs').filter({ hasText: TABLEAU_JETABLE })
+		await expect(ligne).toHaveCount(1)
+		// Un tableau neuf n'a aucun bloc, et la liste le DIT au lieu de laisser un blanc (§5.1).
+		await expect(ligne.first()).toContainText('Aucun bloc')
+		await capturer(page, 'tableau-liste-1440', UNITE)
+
+		// LA BASE EST RELUE : la position vient du TRIGGER, jamais de l'écran (§2.1).
+		const enBase = await tableauEnBase(TABLEAU_JETABLE)
+		expect(enBase).not.toBeNull()
+		expect(enBase?.description).toBe('Preuve de la tranche 2c.')
+		expect(enBase?.position).toBeGreaterThan(0)
+		expect(enBase?.archived_at).toBeNull()
+	})
+
+	test('REFUSE un second tableau du même nom, et dit le geste à faire', async ({ page }) => {
+		await creerTableauDeService(TABLEAU_JETABLE, 90)
+
+		await connecter(page, ADMIN)
+		await page.getByRole('link', { name: 'Objectifs', exact: true }).first().click()
+		await page.getByTestId('creer-tableau').click()
+		await page.keyboard.type(TABLEAU_JETABLE)
+		await page.getByTestId('valider-tableau').click()
+
+		// Le refus est lu DANS le formulaire, près du champ qui l'a causé (§5.13), et il nomme le
+		// geste à faire — choisir un autre nom — au lieu d'envoyer retenter le même.
+		const formulaire = page.getByTestId('formulaire-creation-tableau')
+		await expect(formulaire).toContainText('porte déjà ce nom')
+		await capturer(page, 'tableau-doublon-1440', UNITE)
+
+		// L'UNIQUE ERREUR DE CONSOLE EST LE REFUS QUE CE SCÉNARIO VIENT DE PROVOQUER ET DE LIRE :
+		// le navigateur journalise lui-même toute réponse HTTP en échec, et `409 Conflict` est
+		// exactement ce que PostgREST rend sur `goal_boards_workspace_name_key`. Elle est CONSOMMÉE
+		// par sa liste exacte, jamais filtrée globalement — un statut, un nombre ou un ordre
+		// différent échouerait ici, et toute anomalie postérieure reste dans le verdict final.
+		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[409]])
+	})
+
+	test('RENOMMER un tableau, mesuré en base après rechargement', async ({ page }) => {
+		await creerTableauDeService(TABLEAU_JETABLE, 91)
+
+		await connecter(page, ADMIN)
+		await page.getByRole('link', { name: 'Objectifs', exact: true }).first().click()
+		const ligne = page
+			.getByTestId('tableau-objectifs')
+			.filter({ hasText: TABLEAU_JETABLE })
+			.first()
+		await expect(ligne).toBeVisible()
+
+		await page.getByRole('button', { name: `Renommer le tableau ${TABLEAU_JETABLE}` }).click()
+		const champ = page.getByTestId('champ-nom-tableau')
+		// Le champ arrive REMPLI : un renommage qui repartirait d'un champ vide obligerait à
+		// ressaisir ce que l'on ne veut pas changer.
+		await expect(champ).toHaveValue(TABLEAU_JETABLE)
+		await champ.fill(TABLEAU_JETABLE_RENOMME)
+		await capturer(page, 'tableau-renommage-1440', UNITE)
+		await page.getByTestId('valider-tableau').click()
+
+		await expect(page.getByTestId('mention-ecriture')).toHaveText('Tableau enregistré')
+		await expect(
+			page.getByTestId('tableau-objectifs').filter({ hasText: TABLEAU_JETABLE_RENOMME }),
+		).toHaveCount(1)
+
+		expect((await tableauEnBase(TABLEAU_JETABLE_RENOMME))?.name).toBe(TABLEAU_JETABLE_RENOMME)
+		// Et le rechargement le confirme : l'écriture est réelle, pas un état d'écran.
+		await page.reload()
+		await expect(
+			page.getByTestId('tableau-objectifs').filter({ hasText: TABLEAU_JETABLE_RENOMME }),
+		).toHaveCount(1)
+	})
+
+	test('RÉORDONNER un tableau écrit UNE position, et la liste suit', async ({ page }) => {
+		// Deux tableaux jetables en QUEUE de liste — positions hautes —, de sorte que le geste ne
+		// touche jamais l'ordre des tableaux du seed.
+		await creerTableauDeService(TABLEAU_JETABLE, 92)
+		await creerTableauDeService(TABLEAU_JETABLE_RENOMME, 93)
+
+		await connecter(page, ADMIN)
+		await page.getByRole('link', { name: 'Objectifs', exact: true }).first().click()
+		await expect(
+			page.getByTestId('tableau-objectifs').filter({ hasText: TABLEAU_JETABLE_RENOMME }),
+		).toHaveCount(1)
+
+		const avant = (await tableauEnBase(TABLEAU_JETABLE_RENOMME))?.position ?? 0
+		expect(avant).toBe(93)
+
+		// LE GESTE EST FAIT AU CLAVIER : la commande est atteinte par le focus, et actionnée par
+		// `Entrée` (CLAUDE.md §22).
+		const monter = page.getByRole('button', { name: `Monter le tableau ${TABLEAU_JETABLE_RENOMME}` })
+		await monter.focus()
+		await page.keyboard.press('Enter')
+		await expect(page.getByTestId('mention-ecriture')).toHaveText('Ordre enregistré')
+
+		// LA POSITION EST RELUE EN BASE, ET LA BORNE BASSE EST CELLE DE LA LIGNE D'AVANT LA
+		// PRÉCÉDENTE, non celle de la précédente — c'est l'arithmétique du milieu, et le mesurer a
+		// corrigé cette preuve : monter la dernière ligne d'une liste `[seed, 92, 93]` la place
+		// entre le SEED et 92, soit très en dessous de 91. Exiger « entre 91 et 92 » aurait décrit
+		// une permutation, geste que ce produit ne fait justement pas.
+		const apres = (await tableauEnBase(TABLEAU_JETABLE_RENOMME))?.position ?? 0
+		expect(apres).toBeLessThan(avant)
+		expect(apres).toBeLessThan(92)
+		// L'autre jetable n'a PAS bougé : une SEULE ligne a été écrite, jamais deux.
+		expect((await tableauEnBase(TABLEAU_JETABLE))?.position).toBe(92)
+		// Et l'ordre RENDU a bien changé : la preuve ne se contente pas de la valeur écrite.
+		const noms = await page.getByTestId('tableau-objectifs').allInnerTexts()
+		const rangRenomme = noms.findIndex((texte) => texte.includes(TABLEAU_JETABLE_RENOMME))
+		const rangJetable = noms.findIndex((texte) => texte.includes(TABLEAU_JETABLE))
+		expect(rangRenomme).toBeLessThan(rangJetable)
+	})
+
+	test('ARCHIVER un tableau le retire de la liste, et la base le porte archivé', async ({ page }) => {
+		await creerTableauDeService(TABLEAU_JETABLE, 94)
+
+		await connecter(page, ADMIN)
+		await page.getByRole('link', { name: 'Objectifs', exact: true }).first().click()
+		await expect(
+			page.getByTestId('tableau-objectifs').filter({ hasText: TABLEAU_JETABLE }),
+		).toHaveCount(1)
+
+		await page.getByRole('button', { name: `Archiver le tableau ${TABLEAU_JETABLE}` }).click()
+		const confirmation = page.getByTestId('confirmation-archivage-tableau')
+		// §6 : LA CONFIRMATION NOMME CE QU'ELLE ARCHIVE, et dit ce que le geste coûte — le tableau
+		// quitte la liste, et son nom reste pris.
+		await expect(confirmation).toContainText(TABLEAU_JETABLE)
+		await expect(confirmation).toContainText('quitte cette liste')
+		await capturer(page, 'tableau-archivage-confirmation-1440', UNITE)
+
+		await page.getByTestId('confirmer-archivage-tableau').click()
+		await expect(page.getByTestId('mention-ecriture')).toHaveText('Tableau archivé')
+		await expect(
+			page.getByTestId('tableau-objectifs').filter({ hasText: TABLEAU_JETABLE }),
+		).toHaveCount(0)
+
+		// L'ARCHIVAGE N'EST PAS UNE SUPPRESSION : la ligne EXISTE toujours, horodatée. Le travail
+		// qu'elle contient est conservé (§2.1).
+		const enBase = await tableauEnBase(TABLEAU_JETABLE)
+		expect(enBase).not.toBeNull()
+		expect(enBase?.archived_at).not.toBeNull()
+
+		// Et le rechargement ne le ramène pas : la liste ne rend que les tableaux vivants (§5.1).
+		await page.reload()
+		await expect(
+			page.getByTestId('tableau-objectifs').filter({ hasText: TABLEAU_JETABLE }),
+		).toHaveCount(0)
+	})
+
+	test('la LECTRICE crée, et lit le refus — mesuré HORS interface derrière', async ({ page }) => {
+		// Aucune commande n'est éteinte d'avance selon le rôle (docs/DESIGN_SYSTEM.md §5.26) :
+		// l'écran envoie, la politique décide, l'écran traduit. `goal_boards_insertion_membre_ecrivant`
+		// exige `admin` ou `business_developer` (§4.2 : « un viewer n'écrit rien »).
+		await connecter(page, LECTRICE)
+		await page.getByRole('link', { name: 'Objectifs', exact: true }).first().click()
+		await expect(page.getByTestId('tableau-objectifs').first()).toBeVisible()
+
+		await page.getByTestId('creer-tableau').click()
+		await page.keyboard.type(TABLEAU_JETABLE)
+		await page.getByTestId('valider-tableau').click()
+
+		const formulaire = page.getByTestId('formulaire-creation-tableau')
+		await expect(formulaire).toContainText('Vous ne pouvez pas administrer les tableaux')
+		await capturer(page, 'tableau-refus-lectrice-1440', UNITE)
+
+		// L'unique erreur de console est le `403` que la politique vient de rendre, et que l'écran
+		// vient de traduire — consommée par sa liste exacte (voir le scénario du doublon).
+		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[403]])
+
+		// LA BASE N'A RIEN REÇU, et c'est la mesure qui compte : l'écran pourrait dire n'importe
+		// quoi, la ligne n'existe pas.
+		expect(await tableauEnBase(TABLEAU_JETABLE)).toBeNull()
 	})
 })

@@ -651,7 +651,7 @@ function FormulaireNomTableau({
 				</Button>
 			</div>
 			{/* Le refus est lu PRÈS DU CHAMP QUI L'A CAUSÉ, jamais en tête d'écran (§5.13). */}
-			<MentionEcriture message={message} />
+			<MentionEcriture message={message} testid="mention-formulaire-tableau" />
 		</form>
 	)
 }
@@ -705,7 +705,7 @@ function ConfirmationArchivageTableau({
 					{t('goals.board.archive.cancel')}
 				</Button>
 			</div>
-			<MentionEcriture message={message} />
+			<MentionEcriture message={message} testid="mention-formulaire-tableau" />
 		</div>
 	)
 }
@@ -1605,7 +1605,22 @@ function RepereDePose({
  * lecteur d'écran ne découvre pas une région qui apparaît — un refus porte `role="alert"`, une
  * attente et une confirmation `role="status"`.
  */
-function MentionEcriture({ message }: { readonly message: MessageEcriture | null }) {
+function MentionEcriture({
+	message,
+	testid = 'mention-ecriture',
+}: {
+	readonly message: MessageEcriture | null
+	/**
+	 * L'identité de la mention, PARAMÉTRABLE depuis la tranche 2c.
+	 *
+	 * DÉFAUT TROUVÉ PAR LA PREUVE : la liste des tableaux rend une mention de section — pour les
+	 * gestes qui n'ouvrent aucun formulaire — ET une mention dans le formulaire ouvert, où le §5.13
+	 * exige que le refus soit lu. Les deux portaient le même identifiant, si bien qu'aucune preuve
+	 * ne pouvait plus désigner l'une des deux, et qu'un lecteur d'écran rencontrait deux régions
+	 * `status` indiscernables. Le défaut n'était pas la preuve, c'était l'écran.
+	 */
+	readonly testid?: string
+}) {
 	const TONS: Readonly<Record<MessageEcriture['ton'], string>> = {
 		attente: 'text-text-3',
 		succes: 'text-success',
@@ -1613,7 +1628,7 @@ function MentionEcriture({ message }: { readonly message: MessageEcriture | null
 	}
 	return (
 		<p
-			data-testid="mention-ecriture"
+			data-testid={testid}
 			role={message?.ton === 'refus' ? 'alert' : 'status'}
 			className={['text-sm', message === null ? '' : TONS[message.ton]].join(' ')}
 		>
