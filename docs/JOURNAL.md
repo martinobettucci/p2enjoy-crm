@@ -19910,3 +19910,48 @@ L'état est corrigé ici, et l'unité reste `[~]` pour les deux seules raisons d
 **Où reprendre.** `CRM-081` n'a plus de comportement à livrer. La session poursuit sur `CRM-082`
 — objectifs : modèle, RLS et API —, première unité `[ ]` du plan dont la spécification est déjà
 écrite et committée (décision 431, `docs/SPEC-goals.md`, `docs/SCHEMA.md` §9 bis).
+
+### Décision 463 — La campagne de fin de session de la tranche 2 f, et ses trois échecs étrangers
+
+**2026-08-19 — la session qui a livré les huit commits de `28df384` à `6d82a02` n'était pas
+interrompue : elle exécutait sa campagne.** La décision 462, écrite par une session **parallèle**
+sur le même dépôt à la même heure, a lu un backlog en retard et en a conclu à une interruption. Le
+suivi qu'elle a corrigé est juste, et cette entrée le complète par ce qu'elle ne pouvait pas savoir :
+le résultat des preuves. C'est la deuxième fois que deux sessions se croisent ainsi (décision 460).
+
+**Ce qui a été mesuré, et ce qui a décidé de la tranche.** Douze mesures sur la pile seedée, avec
+les jetons réels des trois profils et la clé de service, consignées au §16.16.1 de
+`docs/SPEC-cards.md` — spécification écrite et **committée avant la première ligne de code**. Deux
+d'entre elles ont changé le périmètre : la **mesure 3** a montré qu'un message reçu portant
+`References: <parent>` était ingéré avec `references_ids` = `[]`, et la **mesure 5** en a donné la
+cause — `enregistrer_message` composait sa charge d'insertion sans la colonne. Aucun fil ne pouvait
+donc se former à partir de courrier **reçu** ; seule une réponse **émise** par le produit rejoignait
+un fil, `marquer_envoi_reussi` composant la chaîne en SQL. La **mesure 1** a montré que le seed ne
+portait aucun fil de plus d'un message : l'écran groupé aurait été identique à l'écran d'avant.
+
+**Ce qui a été vérifié.** `test:sql` **2306 assertions** sur 46 fichiers, `test:unit` **1774**,
+`pytest` **244**, `typecheck` et `build` verts. `e2e:api` **773 passées**, `e2e:mail` **40**,
+`e2e:ui` **448**. `verify-seed.sh` **55 contrôles, aucune anomalie**. Sept scénarios dédiés à la
+tranche — 14 assertions unitaires, 5 de rendu, 2 sur la charge d'insertion, 6 scénarios d'interface
+— et **dix captures observées**.
+
+**Les trois échecs, et pourquoi aucun n'appartient à la tranche.** `e2e/api/inbox.spec.ts:159`,
+`e2e/mail/ingestion.spec.ts:143` et `e2e/mail/mail-sync.spec.ts:220` tombent tous les trois sur des
+**pièces jointes**, et pour **une seule** cause : le stockage objet refuse la clé d'accès
+(`InvalidAccessKeyId`). Les deux derniers sont des conséquences du premier — une relève dont
+l'écriture de pièce échoue rend `502` avec sa ligne `ERROR`, que la troisième preuve compte comme un
+avertissement. **La ligne de base a été EXÉCUTÉE** (`docs/CloudWorker.md` §2.4) : image `mail-sync`
+reconstruite **sans** la ligne du §16.16.2, le même échec tombe au même endroit avec le même
+message. Consigné en **INC-167**. Le quatrième échec, `administration-workflows.spec.ts:1116`, est
+**INC-166**, déjà au registre ; les deux anomalies de `verify-manual.sh` sont **INC-164**, la dérive
+de compteurs de l'annexe A, également déjà au registre.
+
+**Ce qui n'a PAS été exécuté, et c'est dit** : **quarante-huit** des cinquante `scripts/verify-*.sh`
+— la série entière ne tient pas dans une session (§2.1 ter). Seuls `verify-seed.sh` et
+`verify-manual.sh`, que le changement touche, l'ont été.
+
+**Où reprendre.** `CRM-081` n'a plus de comportement à livrer et reste `[~]` pour les deux raisons
+de preuve écrites à sa DoD par la décision 462 : `scripts/verify-snooze.sh` n'existe pas, et le mode
+d'affichage hors adresse attend un arbitrage. La suite est `CRM-082`, comme la décision 462 le dit.
+Un arbitrage nouveau est en attente : **INC-167**, la clé du stockage objet en développement, et la
+question qu'il ouvre — un stockage indisponible doit-il faire perdre le **message** lui-même ?
