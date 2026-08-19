@@ -9620,27 +9620,50 @@ gestes ; refus mesurés avec les jetons réels ; captures observées.
 - [x] **`docs/manual.md` §4.15 porte le sommeil de fil** : le geste, la pastille, la case, l'état
       vide, le partage entre profils, et le fait que la case n'est pas mémorisée d'une visite à
       l'autre.
-- [ ] **Aucun GROUPEMENT des messages en fils** : l'inbox reste une liste de **messages**, chacun
-      portant l'état de son fil. Grouper change ce que la liste énumère, ce que la sélection désigne
-      et ce que les compteurs de l'arborescence comptent : c'est la tranche **2 f**, écartée avec son
-      motif au §16.15.8. **C'est le seul manque restant de l'unité.**
+- [x] **LE GROUPEMENT est livré — tranche 2 f**, spécifiée `docs/SPEC-cards.md` §16.16 en huit
+      sous-chapitres et committée avant sa première ligne de code, `docs/DESIGN_SYSTEM.md` pour la
+      forme. L'inbox énumère désormais des **fils** et non plus des messages : `grouperEnFils`
+      (`webapp/src/lib/fil-inbox.ts`), la sélection qui désigne un fil, le sélecteur de message du
+      panneau de lecture, et le sommeil transposé au fil sans règle nouvelle.
+- [x] **LA CHAÎNE `References` N'ÉTAIT JAMAIS PERSISTÉE À L'INGESTION, et c'est cette tranche qui
+      l'a mesuré** (§16.16.2) : un message reçu portant `References: <parent>` était ingéré avec
+      `references_ids` = `[]`, si bien qu'`app.cle_fil` rendait son `Message-ID` propre — **aucun
+      fil ne pouvait se former à partir de courrier reçu**. Corrigé dans
+      `mail-sync/src/mail_sync/postgrest.py`, avec ses assertions dans `tests/test_postgrest.py`.
+      Le §19.3 de `docs/SPEC-mail-subsystem.md`, faux depuis `CRM-058`, est corrigé dans le même
+      changement.
+- [x] **Le seed porte enfin un fil de deux messages**, posé par le **vrai** mécanisme d'ingestion
+      (§16.16.8) : sans lui, aucune preuve ne pouvait démontrer le groupement, le seed ne portant
+      auparavant aucun fil de plus d'un message. `docs/SPEC-seed.md` §2.19 passe à trois messages.
+- [x] **Les compteurs de l'arborescence continuent de compter des MESSAGES**, et c'est une décision
+      écrite (§16.16.6), non un oubli : `inbox_arborescence` compte le dossier entier tandis que la
+      liste ne groupe que les cinquante messages de sa page.
+- [x] **Preuves de la tranche 2 f** : `fil-inbox.test.ts`, `RouteInbox.test.tsx` **5 assertions de
+      rendu** — que le module seul ne peut pas voir : un badge « 1 », un sélecteur sur un fil unique,
+      un repère de sélection perdu —, `e2e/ui/groupement-fils.spec.ts`, et **dix captures** sous
+      `docs/captures/CRM-081/` (`groupement-fil-*.jpg`), produites et observées.
 - [ ] **Le mode d'affichage n'entre pas dans l'adresse** : l'inbox ne lit aucun paramètre d'adresse,
       et lui en inventer un pour ce seul contrôle ouvrirait une question — quelle est l'adresse d'un
       dossier ? — que cette tranche ne tranche pas. La case repart donc masquée à chaque ouverture
       de l'écran. Écart nommé, à trancher par le responsable.
 
-*DoD adaptée, écarts explicites — révisée le 2026-08-19 après la tranche 2 e.* La Definition of
-Done demande cinq choses. **Quatre sont tenues** : le geste et son retour sont gardés en base, pour
-l'affaire (tranche 1) comme pour le fil (tranche 2 c) ; une affaire en sommeil sort des vues par
-défaut et un filtre explicite la ramène (tranche 2 b) ; le fil de l'affaire porte la trace des deux
-gestes, et l'écran la nomme (tranche 2 a) ; les refus sont mesurés avec les jetons réels, et les
-captures sont produites et observées. **LA CINQUIÈME EST DÉSORMAIS TENUE POUR L'ESSENTIEL** : la
-**surface** du sommeil de fil est livrée par la tranche 2 e — pastille, geste et filtre —, et
-endormir un fil change enfin quelque chose pour l'utilisateur. **CE QUI RESTE EST LE GROUPEMENT** des
-messages en fils, écarté avec son motif au §16.15.8 : il change ce que la liste énumère, ce que la
-sélection désigne et ce que les compteurs comptent, et le mêler à la tranche 2 e aurait livré deux
-demi-changements plutôt qu'un entier. L'unité reste donc `[~]` pour cette seule raison, et l'écart
-est nommé plutôt que masqué.
+*DoD adaptée, écarts explicites — révisée le 2026-08-19 après la tranche 2 f.* La Definition of
+Done demande cinq choses, et **les cinq sont désormais tenues** : le geste et son retour sont gardés
+en base, pour l'affaire (tranche 1) comme pour le fil (tranche 2 c) ; une affaire en sommeil sort
+des vues par défaut et un filtre explicite la ramène (tranche 2 b) ; le fil de l'affaire porte la
+trace des deux gestes, et l'écran la nomme (tranche 2 a) ; les refus sont mesurés avec les jetons
+réels, et les captures sont produites et observées ; la **surface** du sommeil de fil est livrée par
+la tranche 2 e, et le **groupement** des messages en fils par la tranche 2 f — l'inbox énumère
+désormais des conversations.
+
+**L'unité reste néanmoins `[~]`, et pour DEUX raisons de preuve nommées plutôt que masquées :**
+
+1. **`scripts/verify-snooze.sh` n'existe pas** (premier écart ouvert ci-dessus). Les preuves de la
+   tranche 1 vivent dans la suite pgTAP et la preuve d'API, toutes deux exécutées et vertes ; ce qui
+   manque est le harnais rejouable et sa **dégradation volontaire**, qui établirait qu'elles ne sont
+   pas complaisantes. C'est le dernier travail dû avant `[x]`.
+2. **Le mode d'affichage n'entre toujours pas dans l'adresse**, écart mineur en attente d'arbitrage
+   (dernier point ci-dessus).
 
 ### CRM-080 — Sauvegardes chiffrées et restauration prouvée `[ ]`
 

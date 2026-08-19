@@ -19887,3 +19887,26 @@ condition — card lisible **et** budget lisible — parce qu'une card et un bud
 deux tracks dont l'appelant ne lit que l'un.
 
 **Unités :** `CRM-084` (budgets et occurrences), `CRM-085` (lignes de coût), `CRM-086` (écrans).
+### Décision 462 — La tranche 2 f était livrée et poussée, mais le backlog l'ignorait encore
+
+**2026-08-19 — correction d'état, écrite en ouverture de session avant tout autre geste.**
+
+**Ce qui a été mesuré.** Les huit commits de `28df384` à `6d82a02` livrent **intégralement** la
+tranche 2 f de `CRM-081` : la spécification (`docs/SPEC-cards.md` §16.16, huit sous-chapitres,
+committée avant le code), le correctif d'ingestion de la chaîne `References`
+(`mail-sync/src/mail_sync/postgrest.py` et ses assertions), le module `fil-inbox.ts`, l'inbox qui
+énumère des fils, le seed portant enfin un fil de deux messages, la preuve d'interface avec ses
+**dix captures**, la preuve de composant `RouteInbox.test.tsx`, le manuel, le changelog et le
+contrat de déploiement.
+
+**Ce qui manquait, et le risque que cela faisait courir.** `docs/BACKLOG.md` portait encore
+« **Aucun GROUPEMENT des messages en fils** — c'est le seul manque restant de l'unité », et
+`docs/JOURNAL.md` n'avait aucune entrée pour cette tranche : la session qui l'a livrée a été
+interrompue avant le point 3 du §4.3 de `docs/CloudWorker.md`. Une exécution suivante lisant le
+backlog aurait **refait une tranche déjà livrée** — exactement la boucle que le §4.1 sert à éviter.
+L'état est corrigé ici, et l'unité reste `[~]` pour les deux seules raisons désormais écrites :
+`scripts/verify-snooze.sh` n'existe pas, et le mode d'affichage hors adresse attend un arbitrage.
+
+**Où reprendre.** `CRM-081` n'a plus de comportement à livrer. La session poursuit sur `CRM-082`
+— objectifs : modèle, RLS et API —, première unité `[ ]` du plan dont la spécification est déjà
+écrite et committée (décision 431, `docs/SPEC-goals.md`, `docs/SCHEMA.md` §9 bis).
