@@ -1169,6 +1169,89 @@ export const fr = {
 	'admin.budgets.refus.sans-effet':
 		'Rien n’a été modifié : vous n’avez pas le droit d’écrire sur ce budget, ou il a disparu.',
 
+	// Section « Coûts » de la fiche d'affaire — CRM-085 tranche 2, docs/SPEC-costs.md §4.6.
+	// Elle vit dans la colonne GAUCHE de la fiche (docs/DESIGN_SYSTEM.md §5.3), entre les contacts
+	// et le geste de corbeille : une dépense appartient au dossier de l'affaire, et la colonne
+	// droite raconte sans accueillir de geste.
+	'card.costs.title': 'Coûts',
+	'card.costs.aria': 'Lignes de coût de l’affaire {titre}',
+	'card.costs.empty': 'Aucune dépense rattachée à cette affaire.',
+	'card.costs.error': 'Les lignes de coût de cette affaire n’ont pas pu être chargées.',
+	'card.costs.budgets.error':
+		'Les budgets de ce track n’ont pas pu être chargés : le choix d’un budget n’est pas disponible.',
+	// État « aucun budget » du §4.7, dit du point de vue de la fiche : ce qui manque ici n'est pas
+	// une dépense, c'est l'enveloppe à laquelle la rattacher. Le geste d'en créer une appartient à
+	// l'administration du track, jamais à cette section.
+	'card.costs.nobudget':
+		'Aucun budget ouvert sur le track de cette affaire : une dépense ne peut pas encore y être rattachée.',
+	'card.costs.column.label': 'Nature',
+	'card.costs.column.budget': 'Budget',
+	'card.costs.column.occurrence': 'Occurrence',
+	'card.costs.column.estimated': 'Estimé',
+	'card.costs.column.actual': 'Réel',
+	'card.costs.column.actions': 'Actions',
+	'card.costs.budget.closed': 'clôturé',
+	'card.costs.budget.unknown': 'Budget non lisible',
+	// « Non saisi » et non « 0 » : un réel inconnu n'est PAS un réel nul (§2.3). Le tableau porte un
+	// tiret cadratin pour l'œil et cette phrase pour le lecteur d'écran.
+	'card.costs.actual.unknown': 'Coût réel non saisi',
+	'card.costs.action.new': 'Ajouter une dépense',
+	'card.costs.action.add': 'Ajouter',
+	'card.costs.action.edit': 'Modifier la dépense {nom}',
+	'card.costs.action.delete': 'Supprimer la dépense {nom}',
+	'card.costs.form.create': 'Nouvelle dépense',
+	'card.costs.form.edit': 'Modifier la dépense',
+	'card.costs.form.label': 'Nature de la dépense',
+	'card.costs.form.label.help': 'Par exemple « Publicité » ou « Production ».',
+	'card.costs.form.budget': 'Budget',
+	'card.costs.form.budget.none': 'Choisir un budget',
+	'card.costs.form.budget.option': '{nom} ({devise})',
+	'card.costs.form.occurrence': 'Occurrence',
+	'card.costs.form.occurrence.none': 'Choisir une occurrence',
+	'card.costs.form.occurrence.help':
+		'Ce budget est récurrent : la dépense se rattache à l’une de ses occurrences ouvertes.',
+	'card.costs.form.estimated': 'Coût estimé',
+	'card.costs.form.estimated.help': 'Obligatoire. Un montant négatif est accepté — avoir, remise.',
+	'card.costs.form.actual': 'Coût réel (facultatif)',
+	// La distinction du §2.3 est ÉCRITE, pas supposée comprise : c'est le seul endroit où
+	// l'utilisateur peut apprendre que vide et zéro ne sont pas la même chose.
+	'card.costs.form.actual.help':
+		'Laissez vide tant que le réel n’est pas connu. Saisir 0 signifie « rien dépensé », ce qui n’est pas la même chose.',
+	'card.costs.form.amount.invalid': 'Ce montant n’est pas un nombre.',
+	'card.costs.delete.confirm': 'Supprimer la dépense « {nom} » ?',
+	'card.costs.delete.body':
+		'La ligne est retirée de cette affaire et de son budget. Ce geste ne se défait pas.',
+	'card.costs.delete.action': 'Supprimer',
+	// La commande éteinte dit POURQUOI (§5.13) : c'est une propriété de l'objet, pas un droit de
+	// l'utilisateur — la base refuse ce geste à tout le monde sur un rattachement clos (§2.3).
+	'card.costs.delete.closed':
+		'Cette dépense est rattachée à un budget ou à une occurrence clôturés : elle ne peut plus être supprimée. Son coût réel reste saisissable.',
+	// Totaux — §4.6, et la mention du §4.4 sans laquelle un réel bas se lirait comme une économie.
+	// Les devises ne se mélangent pas (§4.5) : un total par devise présente.
+	'card.costs.total': 'Total {devise} — estimé {estime}, réel {reel}',
+	'card.costs.pending':
+		'{nombre} ligne(s) sans coût réel saisi, pour {estime} {devise} de prévisionnel.',
+	'card.costs.refus.forbidden':
+		'Vous n’avez pas le droit d’écrire sur cette affaire, ou de lire ce budget.',
+	'card.costs.refus.occurrence-exigee':
+		'Ce budget est récurrent : choisissez l’occurrence à laquelle rattacher la dépense.',
+	'card.costs.refus.occurrence-interdite':
+		'Ce budget n’est pas récurrent : une dépense ne s’y rattache à aucune occurrence.',
+	'card.costs.refus.occurrence-etrangere': 'Cette occurrence appartient à un autre budget.',
+	'card.costs.refus.rattachement-clos':
+		'Ce budget ou cette occurrence ont été clôturés : le rattachement ne change plus. Rechargez la fiche pour voir l’état à jour.',
+	'card.costs.refus.forme-refusee': 'Cette valeur a été refusée : vérifiez la nature de la dépense.',
+	'card.costs.refus.reference-absente':
+		'L’affaire, le budget ou l’occurrence n’existent plus. Rechargez la fiche.',
+	'card.costs.refus.network': 'La requête n’a pas abouti. Réessayez.',
+	'card.costs.refus.unknown': 'L’enregistrement a échoué.',
+	'card.costs.refus.sans-effet':
+		'Rien n’a été modifié : vous n’avez pas le droit d’écrire sur cette dépense, son budget est clôturé, ou elle a disparu.',
+
+	'live.card.cost.created': 'Dépense ajoutée',
+	'live.card.cost.updated': 'Dépense modifiée',
+	'live.card.cost.deleted': 'Dépense supprimée',
+
 	'live.admin.budget.created': 'Budget créé',
 	'live.admin.budget.updated': 'Budget modifié',
 	'live.admin.budget.closed': 'Budget clôturé',

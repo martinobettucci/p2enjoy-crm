@@ -2,6 +2,9 @@
 // @spec CRM-040 (docs/BACKLOG.md) — les champs d'en-tête de la fiche, en haut de la colonne gauche
 // @spec docs/SPEC-cards.md §15.2 (où l'en-tête vit, et pourquoi au-dessus du formulaire)
 // @spec CRM-060 (docs/BACKLOG.md) — tranche 4 sous-tranche 4c : le bloc des contacts de l'affaire
+// @spec CRM-085 (docs/BACKLOG.md) — tranche 2 : la section « Coûts » de la fiche d'affaire
+// @spec docs/SPEC-costs.md §4.6 (la section vit dans la fiche, ce qu'elle liste et ce qu'elle
+//       écrit), §4.7 (les états) ; docs/DESIGN_SYSTEM.md §5.3
 // @spec docs/SPEC-contacts.md §12.2 (le bloc vit dans la colonne gauche, entre le formulaire et le
 //       geste de corbeille) ; docs/DESIGN_SYSTEM.md §5.21
 // @spec CRM-043 (docs/BACKLOG.md) — colonne de droite : le panneau de commentaires
@@ -71,6 +74,7 @@ import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { useAuthentification } from './Authentification'
 import { AppShell } from './AppShell'
 import { BlocContactsCard } from './BlocContactsCard'
+import { BlocCoutsCard } from './BlocCoutsCard'
 import { EnTeteCard } from './EnTeteCard'
 import { FormulaireCard } from './FormulaireCard'
 import { FormulaireEnvoi } from './FormulaireEnvoi'
@@ -250,6 +254,20 @@ function ContenuCard({
 				<BlocContactsCard
 					idCard={etat.donnees.card.id}
 					idWorkspace={etat.donnees.card.workspace_id}
+				/>
+				{/* LES COÛTS DE L'AFFAIRE — CRM-085 tranche 2, docs/SPEC-costs.md §4.6. Ils vivent
+				    ENTRE les contacts et le bloc de corbeille, pour la raison qui a déjà placé les
+				    contacts là : la colonne DROITE raconte et n'accueille aucun geste, et le retrait
+				    reste EN BAS. Une dépense appartient au dossier de l'affaire, donc elle se lit avec
+				    lui — et après les contacts, qui disent AVEC QUI l'affaire se traite avant de dire
+				    ce qu'elle coûte.
+				    Le titre nomme la section dans son étiquette accessible ; aucune autre donnée de la
+				    card n'est nécessaire — la section lit son track depuis le CHANNEL de l'affaire et
+				    non depuis l'adresse, que rien ne confronte à la card (INC-065). */}
+				<BlocCoutsCard
+					client={clientCrm}
+					idCard={etat.donnees.card.id}
+					titreCard={etat.donnees.card.title}
 				/>
 				{/* LE GESTE EST EN BAS DE LA COLONNE GAUCHE (docs/DESIGN_SYSTEM.md §5.3) : la colonne
 				    droite RACONTE ce qui est arrivé à l'affaire, et un geste qui agit n'appartient pas
