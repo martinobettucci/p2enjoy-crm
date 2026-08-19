@@ -464,6 +464,43 @@ les règles ci-dessous ne disent que de quoi il a l'air.
   sommeil ne l'est pas, parce qu'il fait **disparaître** sa carte — une disparition qu'il faudrait
   annuler serait bien plus déroutante qu'une attente de quelques centaines de millisecondes.
 
+### 5.3 septies Le sommeil d'un FIL dans l'inbox — `CRM-081`
+
+Ce que le geste envoie, refuse et masque est spécifié dans `docs/SPEC-cards.md` §16.15 ; les règles
+ci-dessous ne disent que de quoi il a l'air.
+
+- **La pastille est celle du §5.3 quinquies, réemployée sans copie.** Icône `Moon`, date courte à
+  l'œil, phrase entière en nom accessible. C'est la même information que sur une carte de board :
+  elle doit se reconnaître d'une vue à l'autre, et une pastille propre à l'inbox divergerait au
+  premier ajustement. Elle se pose après la date dans la ligne de liste, et dans l'en-tête du
+  message ouvert.
+
+- **La bascule est une case à cocher étiquetée**, « Afficher les fils en sommeil », dans l'en-tête
+  du panneau de liste. Elle **reste rendue sur une liste vide** — elle est la cause possible de ce
+  vide —, porte l'icône `Moon` et respecte la cible de 40 px du §8.
+
+- **Le geste vit dans le message ouvert, jamais dans la ligne de liste.** Une liste dont chaque
+  ligne porte un bouton n'est plus une liste, et le §5.4 tient une densité que cette tranche ne
+  défait pas. Deux visages, un seul rendu à la fois : « Mettre le fil en sommeil » (`Moon`) et
+  « Réveiller le fil » (`Sun`), en secondaire compacte.
+
+- **La mise en sommeil ouvre un panneau sous l'en-tête**, jamais une modale : quatre échéances
+  usuelles en boutons discrets, puis un champ d'échéance et son bouton. Le panneau remplace la
+  commande (§5.3 ter) et `Échap` le referme en rendant le focus à la commande. Le réveil, lui,
+  n'ouvre rien et ne demande aucune confirmation — même règle qu'au §5.3 quater.
+
+- **Le refus est écrit sous le champ en `role="alert"` et n'efface pas la saisie**, et il nomme
+  l'objet qu'il vise : « Ce fil n'est plus disponible. » là où l'affaire disait « Cette affaire ».
+  Un même refus se formule d'une seule façon, mais il ne se trompe pas de sujet.
+
+- **Le message ouvert n'est jamais masqué par le filtre.** Endormir le fil de ce qu'on lit fait
+  quitter la ligne de la liste ; le panneau de lecture reste. Vider l'écran sous le geste de
+  l'utilisateur serait le punir de l'avoir fait.
+
+- **Un état vide dû au sommeil porte sa bascule**, selon le patron du §5.8 : « Tous les messages de
+  ce dossier sont dans des fils en sommeil » offre le geste qui l'en sort, et l'action n'est alors
+  pas répétée dans l'en-tête.
+
 ### 5.4 Inbox
 
 Trois panneaux : dossiers (arborescence Track → Channel → Card, plus « Non classés »), liste des

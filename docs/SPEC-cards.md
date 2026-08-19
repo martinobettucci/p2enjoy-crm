@@ -3294,3 +3294,215 @@ Chaque refus **relit la ligne** pour la constater inchangée (décision 70).
 
 **Ce qui restera dû sur `CRM-081` après la tranche 2 c** : la **surface** du sommeil de fil —
 groupement des messages en fils dans l'inbox, pastille, geste et filtre. L'unité demeure `[~]`.
+
+#### 16.15 Tranche 2 e — la SURFACE du sommeil de fil dans l'inbox
+
+Le §16.14.7 nomme quatre manques laissés par la tranche 2 c : aucune pastille, aucun geste, aucun
+filtre, aucun groupement. Ce sous-chapitre est le contrat des **trois premiers** ; le groupement est
+écarté et son motif est écrit au §16.15.8. Il est rédigé avant sa première ligne de code et fondé
+sur **quatorze mesures** relevées le 2026-08-19 sur la pile seedée, avec les jetons réels des trois
+profils.
+
+##### 16.15.1 QUATORZE MESURES, ET TROIS D'ENTRE ELLES DÉCIDENT DE LA FORME DE L'ÉCRAN
+
+| # | Mesure, le 2026-08-19 | Ce qu'elle décide |
+|---|---|---|
+| A | Les deux messages du seed rendent `references_ids` = `[]` — un **tableau vide**, jamais `null` — et leur `rfc822_message_id` porte la clé | La clé se calcule au client sur un tableau **présent mais vide**. C'est le cas courant, pas un cas limite |
+| B | Le business developer lit **un** message, le classé, avec les mêmes colonnes | Les colonnes du fil ne sont pas privilégiées : elles suivent la politique de lecture des messages |
+| C | La lectrice lit **zéro** message | L'écran d'une lectrice n'a aucun fil, donc aucun geste à offrir — et il n'a rien à masquer non plus |
+| D | `GET mail_thread_snoozes` rend `200` et `[]` à l'administratrice sur une table vide | L'écran lit la table **directement**, sans RPC de lecture : le privilège `SELECT` du §16.14.6 est réel |
+| E | `snooze_thread(W, Wc, 2099)` rend `200` et la ligne complète, `snoozed_by` = l'administratrice | Le geste rend la ligne écrite : c'est **elle** qui alimente la pastille, jamais la saisie |
+| F | La même ligne est relue par l'administratrice **et** par le business developer, et **pas** par la lectrice | La politique de lecture de la ligne suit la lisibilité du fil : l'écran n'a aucun droit à appliquer |
+| G | **Le fil endormi, `GET mail_messages` rend TOUJOURS ses 2 messages** | **AUCUN FILTRE SERVEUR N'EXISTE**, et le masquage est un travail de composition — voir le §16.15.5 |
+| H | `wake_thread` rend `true`, et la ligne est relue **absente** | Le réveil retire la pastille parce que la ligne a disparu, non parce que l'écran l'a décidé |
+| I | `snooze_thread` par le business developer sur le fil non classé : `400`, `thread_not_found` | Le refus de discrétion existe et se lit dans `message` |
+| J | `POST mail_thread_snoozes` direct par l'administratrice : `403`, `42501` | L'écran ne peut pas contourner les deux fonctions, même s'il le voulait |
+| K1 | `until` = `null` : `400`, `snooze_date_required` | La saisie vide est **envoyée**, et c'est la base qui refuse (§16.11.3, sans changement) |
+| K2 | `until` passée : `400`, `snooze_date_in_past` | Aucune garde de saisie ne double la base |
+| L | `wake_thread` sur un fil **éveillé** : `200`, `false` | Un réveil sans sommeil n'est pas une erreur du demandeur (§16.14.5) |
+| M | `wake_thread` par la lectrice : `400`, `thread_not_found` | Le réveil oppose le même refus que la mise en sommeil, et pas davantage |
+
+**LA MESURE G COMMANDE TOUTE LA TRANCHE.** `app.cle_fil` vit dans le schéma `app`, que PostgREST
+n'expose pas : aucune requête de l'écran ne peut demander « les messages dont le fil n'est pas
+endormi ». La vue liste des cards filtrait **au serveur** (§16.12.3) parce que `snoozed_until` est
+une colonne de `cards` ; ici il n'y a pas de colonne, par la décision du §16.14.2. Le masquage se
+fait donc **à la composition**, comme le board — et la conséquence est nommée au §16.15.5 plutôt que
+découverte.
+
+**LA MESURE A COMMANDE LA FONCTION DE CLÉ.** `coalesce(p_references_ids[1], p_rfc822_message_id)`
+ne teste que `NULL` : en SQL, un tableau vide indexé rend `NULL`, donc la racine est le
+`Message-ID` propre. Au client, `references[0]` rend `undefined` sur le même tableau. Les deux
+définitions coïncident **à condition que le client ne fasse rien de plus** : toute valeur présente
+est retenue, **y compris une chaîne vide**, parce que `coalesce` la retiendrait aussi. « Améliorer »
+la règle au client — écarter une chaîne blanche, par exemple — la ferait diverger de la garde, et
+l'écran demanderait alors le sommeil d'une clé que le serveur ne connaît pas.
+
+##### 16.15.2 `cleFil` — une définition, deux langages, et aucune tolérance
+
+```
+cleFil(referencesIds: readonly string[] | null, rfc822MessageId: string): string
+```
+
+Miroir **exact** de `app.cle_fil` (§16.14.2) : le premier élément de `referencesIds` s'il est
+présent, sinon `rfc822MessageId`. Un tableau `null` — que le type engendré autorise — vaut un
+tableau vide. Aucune normalisation, aucun `trim`, aucun rejet de la chaîne vide : la divergence
+serait invisible à la lecture et fatale à l'appel.
+
+La duplication est **assumée et nommée**, comme au §16.14.2 : tant qu'aucune colonne ne porte la
+clé, l'écran doit la recalculer. Le jour où la tranche du groupement posera cette colonne, cette
+fonction disparaîtra au profit d'une lecture — et c'est écrit ici pour que ce jour-là on sache
+qu'elle peut disparaître.
+
+##### 16.15.3 CE QUE L'ÉCRAN LIT, ET COMBIEN DE FOIS
+
+**Une seule lecture de `mail_thread_snoozes` par chargement de liste**, non une par message :
+
+```
+select workspace_id, thread_key, snoozed_until  from mail_thread_snoozes
+```
+
+Aucun filtre n'est posé sur `workspace_id` : la politique du §16.14.6 rend déjà les seules lignes
+dont le fil est lisible (mesure F), et ajouter un `eq` ferait croire que l'écran tient la règle
+(même raisonnement qu'au §2.7 du catalogue). La table ne porte **que** des fils endormis ou échus :
+son volume est celui des gestes, non celui des messages.
+
+L'état est réduit en une **table de correspondance** `(workspace_id, thread_key) → échéance`. Le
+couple est la clé, jamais la seule chaîne : la mesure 5 du §16.14.1 a établi que la clé n'est unique
+que dans son workspace, et deux workspaces peuvent porter le même `Message-ID`.
+
+Les colonnes `workspace_id`, `references_ids` et `rfc822_message_id` rejoignent `COLONNES_LISTE`
+(`webapp/src/lib/inbox.ts`). Elles sont **nécessaires** : sans les deux dernières, aucune clé ne se
+calcule ; sans la première, la clé ne se rattache à aucun workspace. Le corps du message n'est
+toujours pas demandé.
+
+##### 16.15.4 LA PASTILLE — la même qu'ailleurs, et pour la même raison
+
+La pastille compacte de `components/ui/Sommeil.tsx` est **réemployée telle quelle** : icône `Moon`,
+date courte à l'œil, phrase entière en nom accessible. C'est la même information que sur une carte
+de board et dans une ligne de tableau, et « elle doit se reconnaître d'une vue à l'autre »
+(`docs/DESIGN_SYSTEM.md` §5.3 quinquies). Une seconde pastille propre à l'inbox serait la même
+chose dite deux fois, et les deux divergeraient au premier ajustement.
+
+Elle est rendue :
+
+- dans la **ligne de la liste**, après la date, quand le fil du message est endormi ;
+- dans l'**en-tête du message ouvert**, au même endroit.
+
+**Le prédicat est celui du §16.2, transposé sans changement** : une ligne existe ET son échéance est
+strictement future. Une échéance **échue** n'est pas un sommeil : la ligne subsiste en base (rien ne
+la supprime), et l'écran ne montre rien — exactement la règle du §5.3 quater pour l'affaire.
+
+**L'instant est calculé UNE FOIS par rendu de liste et passé aux lignes.** Un `new Date()` par ligne
+ferait qu'une échéance franchie pendant le rendu marquerait une ligne et pas sa voisine — le défaut
+que le §16.12.3 a déjà nommé pour le board.
+
+##### 16.15.5 LE FILTRE — à la composition, et il dit ce qu'il masque
+
+**Par défaut, les messages d'un fil endormi sont masqués.** C'est ce que « mettre en sommeil »
+promet, et un fil endormi qui resterait visible ne serait qu'une pastille de plus.
+
+La bascule est celle du §5.3 quinquies — **une case à cocher étiquetée**, pas un bouton à deux
+états —, réemployée depuis `components/ui/Sommeil.tsx` avec son propre libellé : « Afficher les fils
+en sommeil ». Elle vit dans l'en-tête du panneau de liste, et **reste rendue y compris sur une liste
+vide** : elle est la cause possible de ce vide.
+
+**TROIS CONSÉQUENCES DE LA MESURE G, ÉCRITES PLUTÔT QUE DÉCOUVERTES :**
+
+1. **La borne de 50 messages s'applique AVANT le filtre** (`MESSAGES_PAR_PAGE`). Une page peut donc
+   rendre moins de 50 lignes tout en étant tronquée. La mention « la liste est tronquée » existe
+   déjà et reste affichée sur le critère du serveur — le nombre de lignes **rapportées** —, jamais
+   sur le nombre affiché : la corriger d'après l'affichage ferait disparaître un avertissement vrai.
+2. **L'écran connaît le nombre de messages masqués**, puisqu'il les a lus. Un état vide dû au
+   sommeil le dit — « Tous les messages de ce dossier sont dans des fils en sommeil » — et porte la
+   bascule qui l'en sort, selon le patron du §5.8. Aucune requête supplémentaire.
+3. **Le filtre ne survit pas au changement de dossier**, et il n'entre pas dans l'adresse. L'inbox
+   n'a pas de paramètres d'adresse (`webapp/src/app/RouteInbox.tsx` ne lit aucun `searchParams`), et
+   lui en inventer un pour ce seul contrôle ouvrirait une question — quelle est l'adresse d'un
+   dossier ? — que cette tranche n'a pas à trancher. L'écart est nommé, non masqué.
+
+**Le message OUVERT n'est jamais masqué par le filtre.** Endormir le fil du message qu'on lit ne
+fait pas disparaître ce qu'on lit : la ligne quitte la liste, le panneau de lecture reste. Faire
+autrement viderait l'écran sous le geste de l'utilisateur.
+
+##### 16.15.6 LE GESTE — deux visages, dans le panneau de lecture
+
+Le geste vit dans le **message ouvert**, et non dans chaque ligne de la liste : une liste dont
+chaque ligne porte un bouton n'est plus une liste, et le §5.4 tient une densité que cette tranche
+ne défait pas.
+
+- **« Mettre le fil en sommeil »** (icône `Moon`) sur un fil éveillé, **« Réveiller le fil »**
+  (icône `Sun`) sur un fil endormi. Un seul rendu à la fois, même règle qu'au §5.3 quater.
+- **Le réveil n'ouvre aucun panneau et ne demande aucune confirmation** : il n'a pas de paramètre et
+  il est réversible d'un geste.
+- **La mise en sommeil ouvre un panneau** sous l'en-tête du message : les **quatre échéances
+  usuelles** de `ECHEANCES_USUELLES` — comptées depuis l'instant du geste, jamais du rendu —, puis un
+  champ `datetime-local` et son bouton. Le panneau remplace la commande ; `Échap` le referme en
+  rendant le focus à la commande.
+- **Aucune garde de saisie ne double la base** (mesures K1 et K2) : le champ n'a ni `min` ni
+  `required`, une échéance passée est **envoyée**, et le refus s'écrit sous le champ en
+  `role="alert"` sans effacer la saisie.
+- **La commande n'est jamais éteinte d'avance.** La mesure C interdit d'ailleurs de la deviner : une
+  lectrice n'a aucun message, donc aucun message ouvert, donc la question ne se pose pas — mais la
+  règle vaut pour tout profil dont le droit changerait entre deux chargements.
+- **Pendant le vol, les gestes du panneau sont éteints et le bouton appuyé dit « Enregistrement… »**
+  (§5.3 sexies, sans changement).
+- **Le succès referme le panneau, retire la ligne de la liste** — ou l'y ramène au réveil — **et
+  annonce le geste dans la région live** déjà présente sur l'écran.
+
+**Les issues sont le dictionnaire fermé du §16.11.4, moins une, et cette absence est mesurée** :
+`snooze_thread` n'oppose **aucun** `forbidden` (§16.14.4), donc l'issue `refus` n'est pas atteignable
+et n'est pas déclarée. Les mentions de `thread_not_found`, `snooze_date_required` et
+`snooze_date_in_past` sont écrites pour un **fil** et non pour une affaire : « Ce fil n'est plus
+disponible. » remplace « Cette affaire n'est plus disponible. » Un même refus se formule d'une seule
+façon, mais il nomme l'objet qu'il vise.
+
+##### 16.15.7 Contrat d'API — aucune ligne nouvelle
+
+Cette tranche n'ajoute **aucun** chemin serveur. Les deux RPC sont celles du §16.14.4 et du
+§16.14.5, dont le contrat de neuf lignes (§16.14.8) est déjà éprouvé avec les jetons réels par
+`e2e/api/snooze-fils.spec.ts`. Les quatorze mesures ci-dessus l'ont **remesuré** avant d'écrire ce
+chapitre plutôt que de s'y fier de mémoire.
+
+La seule lecture nouvelle est le `GET mail_thread_snoozes` du §16.15.3, dont la mesure D et la
+mesure F établissent le comportement pour les trois profils.
+
+##### 16.15.8 CE QUE LA TRANCHE NE LIVRE PAS, ET C'EST NOMMÉ
+
+- **Aucun groupement des messages en fils.** L'inbox reste une liste de **messages**, et chaque
+  message porte l'état de son fil. Grouper change ce que la liste énumère — un fil n'a ni un
+  expéditeur, ni une date, mais un dernier expéditeur et une dernière date, et un compte —, donc ce
+  que la sélection désigne, ce que le panneau de lecture ouvre, et ce que les compteurs de
+  l'arborescence comptent. C'est une tranche entière, `2 f`, et la mêler à celle-ci livrerait deux
+  demi-changements plutôt qu'un entier. **`CRM-081` reste donc `[~]` après cette tranche**, et la
+  DoD nomme ce seul manque ;
+- **aucun paramètre d'adresse** pour le filtre, motif au §16.15.5 point 3 ;
+- **aucune donnée de démonstration nouvelle.** La mesure G montre le seed suffisant pour éprouver
+  les deux côtés du filtre : endormir le fil classé masque un message sur deux pour
+  l'administratrice, et l'asymétrie des trois profils reste celle de la mesure 6 du §16.14.1. Une
+  preuve qui endort **réveille** ce qu'elle a endormi, et le seed sort intact ;
+- **aucun geste depuis la ligne de liste**, motif au §16.15.6.
+
+##### 16.15.9 Preuves exigées de la tranche
+
+| Niveau | Preuve |
+|---|---|
+| Unitaire | `cleFil` sur les deux cas de la mesure A **et** sur la chaîne vide retenue ; le prédicat avec instant injecté, ses deux côtés et l'instant exact ; la table de correspondance sur le couple, deux workspaces portant la même clé ; le filtre de composition dans les deux modes, le compte des masqués, le message ouvert jamais masqué ; le classement des issues sur les quatre codes mesurés |
+| Composant | Le geste à deux visages, le panneau et ses quatre échéances, le refus écrit sans effacer la saisie, l'extinction pendant le vol, la bascule et l'état vide qui porte son action |
+| API | **Aucune nouvelle** : le §16.15.7 dit pourquoi, et les quatorze mesures l'ont remesuré |
+| E2E d'interface | Suite dédiée sans aucune substitution : la pastille après un geste réel, la ligne qui quitte la liste, la bascule qui la ramène, le réveil vérifié **après rechargement** donc contre la base, le refus d'échéance passée avec son message consommé, et les paliers étroits |
+| Visuel | Captures produites **et observées** (`CLAUDE.md` §16), sous `docs/captures/CRM-081/` |
+| Seed | Intact : la preuve réveille ce qu'elle endort, vérifié par une dernière lecture |
+
+##### 16.15.10 Definition of Done de la tranche 2 e
+
+- `webapp/src/lib/sommeil-fil.ts` : `cleFil`, le prédicat, la table de correspondance, le filtre de
+  composition, les deux appels de RPC et le dictionnaire fermé des issues ;
+- `webapp/src/lib/inbox.ts` : les trois colonnes du §16.15.3 et la lecture des fils endormis ;
+- `webapp/src/app/RouteInbox.tsx` : la pastille, la bascule, l'état vide et le geste ;
+- `docs/DESIGN_SYSTEM.md` §5.3 septies pour la forme, `docs/manual.md` pour le parcours ;
+- preuves unitaires, de composant et E2E exécutées et vertes, captures observées ;
+- `CHANGELOG.md` et `docs/JOURNAL.md` dans le même changement ;
+- commentaires `@spec` / `@verifies` sur chaque fichier touché.
+
+**Ce qui restera dû sur `CRM-081` après la tranche 2 e** : le **groupement** des messages en fils
+(tranche 2 f). L'unité demeure `[~]`.
