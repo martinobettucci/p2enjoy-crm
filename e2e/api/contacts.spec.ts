@@ -1721,3 +1721,422 @@ test.describe('CRM-060 4i — le détachement d’une affaire depuis la fiche (�
 		])
 	})
 })
+
+// ================================================================================================
+// @verifies CRM-060 (docs/BACKLOG.md) — tranche 4 sous-tranche 4j : la MODIFICATION DU RÔLE d'un
+//           rattachement, depuis la fiche d'un contact
+// @verifies docs/SPEC-contacts.md §19.3 (les quatorze mesures d'écriture, et les quatre qui
+//           décident), §19.2 (`role` SEUL dans le corps — mesure 12)
+// @verifies docs/SPEC-permissions-rls.md §7 (un refus SILENCIEUX est zéro ligne, jamais une
+//           erreur ; chaque refus RELIT la ligne pour la constater inchangée — décision 70)
+//
+// CES SCÉNARIOS EXERCENT `card_contacts_maj` POUR LA PREMIÈRE FOIS. La politique existe depuis la
+// migration `0045` et aucun écran ne l'avait atteinte : le §12.8, puis le §17.8, puis le §18.8 l'ont
+// nommé trois fois. Le refus qu'elle oppose est celui de 4i et de 4g, non celui de 4h — une MISE À
+// JOUR est filtrée par la clause `USING`, qui rend la ligne INVISIBLE À L'ÉCRITURE, là où une
+// INSERTION l'est par `WITH CHECK`, qui la REJETTE avec un `403` explicite.
+// ================================================================================================
+
+/** Le `PATCH` que `modifierRoleRattachement` émet, à l'identique — les deux filtres, `role` seul. */
+async function modifierRole(
+	request: APIRequestContext,
+	enTetes: Record<string, string>,
+	cardId: string,
+	contactId: string,
+	corps: Record<string, unknown>,
+) {
+	return request.patch(
+		`/rest/v1/card_contacts?card_id=eq.${cardId}&contact_id=eq.${contactId}`,
+		{ headers: { ...enTetes, Prefer: 'return=representation' }, data: corps },
+	)
+}
+
+/** Pose un rattachement sonde AVEC SON RÔLE — le préremplissage du cas b l'exige (§19.7). */
+async function rattachementSondeAvecRole(
+	request: APIRequestContext,
+	sonde: Sonde,
+	cardId: string,
+	contactId: string,
+	role: string | null,
+): Promise<void> {
+	const reponse = await request.post('/rest/v1/card_contacts', {
+		headers: { ...enTetesService(), Prefer: 'return=representation' },
+		data: { workspace_id: WORKSPACE_SEED, card_id: cardId, contact_id: contactId, role },
+	})
+	expect(reponse.status()).toBe(201)
+	sonde.rattachementsSupprimes.push({ cardId, contactId })
+}
+
+test.describe('CRM-060 4j — la modification du rôle d’un rattachement (§19.3)', () => {
+	test('1 — l’administratrice modifie un rôle existant : 200, la ligne rendue et la valeur changée', async ({
+		request,
+	}) => {
+		const sonde = await creerSonde()
+		try {
+			const contact = await contactSonde(request, sonde, { full_name: 'Sonde 4j admin' })
+			await rattachementSondeAvecRole(request, sonde, CARD_SEEDEE_1, contact.id, 'decideur')
+			const jeton = await jetonDe('admin@p2enjoy.test')
+			const reponse = await modifierRole(
+				request,
+				enTetesAuthentifies(jeton),
+				CARD_SEEDEE_1,
+				contact.id,
+				{ role: 'technique' },
+			)
+			expect(reponse.status()).toBe(200)
+			// LA REPRÉSENTATION EST CE QUI REND L'ISSUE « ZÉRO LIGNE » OBSERVABLE (§19.2) : sans elle,
+			// PostgREST ne renverrait aucun corps et le refus silencieux serait indistinguable d'un
+			// succès.
+			expect((await reponse.json()) as unknown[]).toHaveLength(1)
+			expect(await rattachementsDe(request, CARD_SEEDEE_1, contact.id)).toEqual([
+				{ card_id: CARD_SEEDEE_1, contact_id: contact.id, role: 'technique' },
+			])
+		} finally {
+			await nettoyer(request, sonde)
+		}
+	})
+
+	test('2 — LA MESURE QUI DÉCIDE : la lectrice reçoit 200 et [] SANS erreur, la ligne du seed INCHANGÉE', async ({
+		request,
+	}) => {
+		const jeton = await jetonDe('viewer@p2enjoy.test')
+		// TÉMOIN AVANT LA MESURE (décision 50) : la ligne du seed EXISTE et la lectrice la LIT. Un
+		// « zéro ligne » sur une ligne absente serait vrai quoi que fasse la RLS.
+		expect(await rattachementsDe(request, CARD_SEEDEE_4, CONTACT_SOPHIE)).toEqual([
+			{ card_id: CARD_SEEDEE_4, contact_id: CONTACT_SOPHIE, role: 'prescripteur' },
+		])
+		const reponse = await modifierRole(
+			request,
+			enTetesAuthentifies(jeton),
+			CARD_SEEDEE_4,
+			CONTACT_SOPHIE,
+			{ role: 'sonde-lectrice' },
+		)
+		// NI 403, NI 401, NI LA MOINDRE ERREUR : la clause `USING` de `card_contacts_maj` filtre la
+		// ligne AVANT de modifier. C'est l'écart exact avec le RATTACHEMENT de 4h, qui rend un `403`
+		// explicite sur le même profil.
+		expect(reponse.status()).toBe(200)
+		expect(await reponse.json()).toEqual([])
+		// LA LIGNE EST RELUE ET CONSTATÉE INCHANGÉE, SON RÔLE COMPRIS (décision 70).
+		expect(await rattachementsDe(request, CARD_SEEDEE_4, CONTACT_SOPHIE)).toEqual([
+			{ card_id: CARD_SEEDEE_4, contact_id: CONTACT_SOPHIE, role: 'prescripteur' },
+		])
+	})
+
+	test('3 — un rattachement INEXISTANT rend exactement la même chose : 200 et []', async ({
+		request,
+	}) => {
+		const jeton = await jetonDe('admin@p2enjoy.test')
+		expect(await rattachementsDe(request, CARD_SEEDEE_1, CONTACT_SOPHIE)).toEqual([])
+		const reponse = await modifierRole(
+			request,
+			enTetesAuthentifies(jeton),
+			CARD_SEEDEE_1,
+			CONTACT_SOPHIE,
+			{ role: 'technique' },
+		)
+		// INDISTINGUABLE DE LA MESURE 2, ET C'EST ASSUMÉ (§19.3) : un seul message couvre les deux,
+		// et prétendre les séparer renseignerait un appelant sans droit sur l'état de l'affaire.
+		expect(reponse.status()).toBe(200)
+		expect(await reponse.json()).toEqual([])
+	})
+
+	test('4 — une affaire ARCHIVÉE accepte la modification : la commande est offerte sur TOUTES les lignes', async ({
+		request,
+	}) => {
+		const sonde = await creerSonde()
+		try {
+			const contact = await contactSonde(request, sonde, { full_name: 'Sonde 4j archivée' })
+			await rattachementSondeAvecRole(request, sonde, CARD_ARCHIVEE, contact.id, null)
+			const jeton = await jetonDe('admin@p2enjoy.test')
+			const reponse = await modifierRole(
+				request,
+				enTetesAuthentifies(jeton),
+				CARD_ARCHIVEE,
+				contact.id,
+				{ role: 'technique' },
+			)
+			// `app.can_write_card` dérive du channel et ne lit NI `archived_at` NI `deleted_at` : une
+			// règle d'écran qui éteindrait la commande sur ces lignes serait retirée par la mesure.
+			expect(reponse.status()).toBe(200)
+			expect((await reponse.json()) as unknown[]).toHaveLength(1)
+			expect(await rattachementsDe(request, CARD_ARCHIVEE, contact.id)).toEqual([
+				{ card_id: CARD_ARCHIVEE, contact_id: contact.id, role: 'technique' },
+			])
+		} finally {
+			await nettoyer(request, sonde)
+		}
+	})
+
+	test('5 — le business developer modifie : le geste n’est PAS un geste d’administration', async ({
+		request,
+	}) => {
+		const sonde = await creerSonde()
+		try {
+			const contact = await contactSonde(request, sonde, { full_name: 'Sonde 4j bizdev' })
+			await rattachementSondeAvecRole(request, sonde, CARD_SEEDEE_1, contact.id, 'decideur')
+			const jeton = await jetonDe('bizdev@p2enjoy.test')
+			const reponse = await modifierRole(
+				request,
+				enTetesAuthentifies(jeton),
+				CARD_SEEDEE_1,
+				contact.id,
+				{ role: 'prescripteur' },
+			)
+			// `card_contacts_maj` porte sur `app.can_write_card`, JAMAIS sur un rôle de workspace —
+			// la règle que les mesures 5 de 4c et de 4i ont déjà établie pour les deux autres verbes.
+			expect(reponse.status()).toBe(200)
+			expect((await reponse.json()) as unknown[]).toHaveLength(1)
+		} finally {
+			await nettoyer(request, sonde)
+		}
+	})
+
+	test('6 — l’anonyme est refusé par PRIVILÈGE, pas par zéro ligne, et la ligne reste', async ({
+		request,
+	}) => {
+		const sonde = await creerSonde()
+		try {
+			const contact = await contactSonde(request, sonde, { full_name: 'Sonde 4j anonyme' })
+			await rattachementSondeAvecRole(request, sonde, CARD_SEEDEE_1, contact.id, 'decideur')
+			const reponse = await modifierRole(request, enTetesAnonymes(), CARD_SEEDEE_1, contact.id, {
+				role: 'anon',
+			})
+			// Le rôle `anon` n'a pas le `grant UPDATE` : le refus précède la politique. Inatteignable
+			// depuis l'écran, la route étant derrière l'authentification ; relevé pour que le
+			// dictionnaire du §19.5 soit fermé — `classerRefusRole` le classe `forbidden`.
+			expect(reponse.status()).toBe(401)
+			expect(((await reponse.json()) as { code: string }).code).toBe('42501')
+			expect(await rattachementsDe(request, CARD_SEEDEE_1, contact.id)).toEqual([
+				{ card_id: CARD_SEEDEE_1, contact_id: contact.id, role: 'decideur' },
+			])
+		} finally {
+			await nettoyer(request, sonde)
+		}
+	})
+
+	test('7 — LA LECTRICE RÉUSSIT sur « Assistant IA support — Nordis » : l’écran ne peut PAS calculer ce droit', async ({
+		request,
+	}) => {
+		const sonde = await creerSonde()
+		try {
+			const contact = await contactSonde(request, sonde, { full_name: 'Sonde 4j lectrice Nordis' })
+			await rattachementSondeAvecRole(request, sonde, CARD_NORDIS, contact.id, 'decideur')
+			const jeton = await jetonDe('viewer@p2enjoy.test')
+			const reponse = await modifierRole(
+				request,
+				enTetesAuthentifies(jeton),
+				CARD_NORDIS,
+				contact.id,
+				{ role: 'technique' },
+			)
+			// PENDANT EXACT DE LA MESURE 19 DE 4h ET DE LA MESURE 7 DE 4i. La MÊME lectrice reçoit le
+			// silence sur `CARD_SEEDEE_4` (mesure 2) et RÉUSSIT ici : les droits fins de `CRM-012`
+			// divergent d'une affaire à l'autre POUR UN MÊME PROFIL.
+			expect(reponse.status()).toBe(200)
+			expect((await reponse.json()) as unknown[]).toHaveLength(1)
+			expect(await rattachementsDe(request, CARD_NORDIS, contact.id)).toEqual([
+				{ card_id: CARD_NORDIS, contact_id: contact.id, role: 'technique' },
+			])
+		} finally {
+			await nettoyer(request, sonde)
+		}
+	})
+
+	test('8 et 10 — la chaîne VIDE et la chaîne BLANCHE sont refusées, et la ligne reste INCHANGÉE', async ({
+		request,
+	}) => {
+		const sonde = await creerSonde()
+		try {
+			const contact = await contactSonde(request, sonde, { full_name: 'Sonde 4j saisie' })
+			await rattachementSondeAvecRole(request, sonde, CARD_SEEDEE_1, contact.id, 'decideur')
+			const jeton = await jetonDe('admin@p2enjoy.test')
+			// DEUX MESURES, ET LA SECONDE EST CELLE QUI COMPTE : `card_contacts_role_check` s'écrit
+			// `role is null or btrim(role) <> ''`. Un `trim` seul dans la webapp suffirait pour la
+			// première et pas pour la seconde ; `normaliserFacultatif` couvre les deux, et c'est
+			// pourquoi cette issue n'est jamais atteinte DEPUIS L'ÉCRAN (§19.5).
+			for (const role of ['', '   ']) {
+				const reponse = await modifierRole(
+					request,
+					enTetesAuthentifies(jeton),
+					CARD_SEEDEE_1,
+					contact.id,
+					{ role },
+				)
+				expect(reponse.status()).toBe(400)
+				const corps = (await reponse.json()) as { code: string; message: string }
+				expect(corps.code).toBe('23514')
+				expect(corps.message).toContain('card_contacts_role_check')
+				expect(await rattachementsDe(request, CARD_SEEDEE_1, contact.id)).toEqual([
+					{ card_id: CARD_SEEDEE_1, contact_id: contact.id, role: 'decideur' },
+				])
+			}
+		} finally {
+			await nettoyer(request, sonde)
+		}
+	})
+
+	test('9 — un rôle `null` EFFACE le rôle sans détruire le rattachement', async ({ request }) => {
+		const sonde = await creerSonde()
+		try {
+			const contact = await contactSonde(request, sonde, { full_name: 'Sonde 4j effacement' })
+			await rattachementSondeAvecRole(request, sonde, CARD_SEEDEE_1, contact.id, 'decideur')
+			const jeton = await jetonDe('admin@p2enjoy.test')
+			const reponse = await modifierRole(
+				request,
+				enTetesAuthentifies(jeton),
+				CARD_SEEDEE_1,
+				contact.id,
+				{ role: null },
+			)
+			// C'EST LA MESURE QUI OUVRE UN GESTE QUE 4h NE POUVAIT PAS OFFRIR (§19.3) : au
+			// rattachement, un rôle vide VALAIT `null` faute d'alternative ; ici c'est un geste, et
+			// LA LIGNE DEMEURE — le rattachement n'est pas détruit, seul le rôle part.
+			expect(reponse.status()).toBe(200)
+			expect((await reponse.json()) as unknown[]).toHaveLength(1)
+			expect(await rattachementsDe(request, CARD_SEEDEE_1, contact.id)).toEqual([
+				{ card_id: CARD_SEEDEE_1, contact_id: contact.id, role: null },
+			])
+		} finally {
+			await nettoyer(request, sonde)
+		}
+	})
+
+	test('11 — un identifiant d’affaire MAL FORMÉ rend 400 / 22P02', async ({ request }) => {
+		const jeton = await jetonDe('admin@p2enjoy.test')
+		const reponse = await modifierRole(
+			request,
+			enTetesAuthentifies(jeton),
+			'pas-un-uuid',
+			CONTACT_LEO,
+			{ role: 'technique' },
+		)
+		// Inatteignable depuis l'écran — l'identifiant vient de la DONNÉE déjà lue, jamais d'une
+		// saisie. Relevé pour fermer le classement du §19.5 : `22P02` tombe dans `unknown`, et il
+		// partage son `400` avec `23514`, que `classerRefusRole` éprouve AVANT le statut.
+		expect(reponse.status()).toBe(400)
+		expect(((await reponse.json()) as { code: string }).code).toBe('22P02')
+	})
+
+	test('12 — LA MESURE QUI DÉCIDE DU CORPS : un `card_id` envoyé DÉPLACE le rattachement', async ({
+		request,
+	}) => {
+		const sonde = await creerSonde()
+		try {
+			const contact = await contactSonde(request, sonde, { full_name: 'Sonde 4j déplacement' })
+			await rattachementSondeAvecRole(request, sonde, CARD_SEEDEE_1, contact.id, 'decideur')
+			// La purge doit connaître la destination : le rattachement N'EST PLUS sur `CARD_SEEDEE_1`
+			// après cette mesure, et un nettoyage qui l'y chercherait laisserait une ligne derrière.
+			sonde.rattachementsSupprimes.push({ cardId: CARD_SEEDEE_4, contactId: contact.id })
+			const jeton = await jetonDe('admin@p2enjoy.test')
+			const reponse = await modifierRole(
+				request,
+				enTetesAuthentifies(jeton),
+				CARD_SEEDEE_1,
+				contact.id,
+				{ role: 'technique', card_id: CARD_SEEDEE_4 },
+			)
+			// CE N'EST PAS UNE FAILLE : la clause `USING` filtre sur l'ANCIENNE affaire et `WITH
+			// CHECK` sur la NOUVELLE, si bien que le déplacement suppose le droit d'écrire les DEUX.
+			// C'est une capacité réelle de la base, que l'écran N'EXERCE PAS (§19.8) — et c'est
+			// pourquoi `modifierRoleRattachement` n'envoie QUE `role`. Cette mesure fige le motif :
+			// si un jour une clé se glissait dans le corps, un rattachement se déplacerait en
+			// silence.
+			expect(reponse.status()).toBe(200)
+			expect((await reponse.json()) as unknown[]).toHaveLength(1)
+			expect(await rattachementsDe(request, CARD_SEEDEE_1, contact.id)).toEqual([])
+			expect(await rattachementsDe(request, CARD_SEEDEE_4, contact.id)).toEqual([
+				{ card_id: CARD_SEEDEE_4, contact_id: contact.id, role: 'technique' },
+			])
+		} finally {
+			await nettoyer(request, sonde)
+		}
+	})
+
+	test('13 — réécrire le MÊME rôle est un SUCCÈS, jamais un « sans effet »', async ({ request }) => {
+		const sonde = await creerSonde()
+		try {
+			const contact = await contactSonde(request, sonde, { full_name: 'Sonde 4j idempotence' })
+			await rattachementSondeAvecRole(request, sonde, CARD_SEEDEE_1, contact.id, 'decideur')
+			const jeton = await jetonDe('admin@p2enjoy.test')
+			const reponse = await modifierRole(
+				request,
+				enTetesAuthentifies(jeton),
+				CARD_SEEDEE_1,
+				contact.id,
+				{ role: 'decideur' },
+			)
+			// PostgreSQL réécrit la ligne sans comparer, et PostgREST la rend. L'écran n'a donc AUCUN
+			// cas « aucun champ n'a changé » à traiter, et n'en invente pas un (§19.3, mesure 13).
+			expect(reponse.status()).toBe(200)
+			expect((await reponse.json()) as unknown[]).toHaveLength(1)
+		} finally {
+			await nettoyer(request, sonde)
+		}
+	})
+
+	test('14 — aucune contrainte de LONGUEUR : cinq cents caractères sont acceptés et rendus entiers', async ({
+		request,
+	}) => {
+		const sonde = await creerSonde()
+		try {
+			const contact = await contactSonde(request, sonde, { full_name: 'Sonde 4j longueur' })
+			await rattachementSondeAvecRole(request, sonde, CARD_SEEDEE_1, contact.id, null)
+			const jeton = await jetonDe('admin@p2enjoy.test')
+			const long = 'a'.repeat(500)
+			const reponse = await modifierRole(
+				request,
+				enTetesAuthentifies(jeton),
+				CARD_SEEDEE_1,
+				contact.id,
+				{ role: long },
+			)
+			// Poser un `maxLength` à l'écran serait une règle de produit que personne n'a prise
+			// (`CLAUDE.md` §10). La cellule du tableau borne déjà l'AFFICHAGE à `32ch` avec son
+			// `title`, ce qui est une règle de rendu et non de donnée (§19.6).
+			expect(reponse.status()).toBe(200)
+			expect(await rattachementsDe(request, CARD_SEEDEE_1, contact.id)).toEqual([
+				{ card_id: CARD_SEEDEE_1, contact_id: contact.id, role: long },
+			])
+		} finally {
+			await nettoyer(request, sonde)
+		}
+	})
+
+	test('15 — la lecture EMBARQUÉE de la fiche suit la modification du rôle', async ({ request }) => {
+		const sonde = await creerSonde()
+		try {
+			const contact = await contactSonde(request, sonde, { full_name: 'Sonde 4j fiche' })
+			await rattachementSondeAvecRole(request, sonde, CARD_SEEDEE_1, contact.id, 'avant')
+			const jeton = await jetonDe('admin@p2enjoy.test')
+			const roleLuParLaFiche = async (): Promise<unknown> => {
+				const reponse = await request.get(
+					`/rest/v1/card_contacts?select=role,cards!inner(id,title)&contact_id=eq.${contact.id}`,
+					{ headers: enTetesAuthentifies(jeton) },
+				)
+				return ((await reponse.json()) as Array<{ role: string | null }>)[0]?.role
+			}
+			expect(await roleLuParLaFiche()).toBe('avant')
+			await modifierRole(request, enTetesAuthentifies(jeton), CARD_SEEDEE_1, contact.id, {
+				role: 'apres',
+			})
+			// C'est ce qui autorise la fiche à NE PAS RELIRE (§19.6) : la valeur rendue par le `PATCH`
+			// est celle que la lecture rendrait, et poser la ligne rendue dans l'état local dit donc
+			// la même chose qu'une relecture — pour une requête de moins.
+			expect(await roleLuParLaFiche()).toBe('apres')
+		} finally {
+			await nettoyer(request, sonde)
+		}
+	})
+
+	test('le seed est rendu INTACT après les mesures de modification du rôle', async ({ request }) => {
+		const reponse = await request.get(
+			'/rest/v1/card_contacts?select=card_id,contact_id,role&order=contact_id',
+			{ headers: enTetesService() },
+		)
+		expect(await reponse.json()).toEqual([
+			{ card_id: CARD_ERP, contact_id: CONTACT_LEO, role: 'decideur' },
+			{ card_id: CARD_SEEDEE_4, contact_id: CONTACT_SOPHIE, role: 'prescripteur' },
+		])
+	})
+})
