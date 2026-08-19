@@ -692,3 +692,200 @@ export type OrganisationChoisissable = Pick<
 
 /** Colonnes demandées par le sélecteur. Exportée pour que le test vérifie la requête émise. */
 export const COLONNES_ORGANISATION_CHOIX = 'id, name'
+
+// ----------------------------------------------------------------------------------------------
+// Sous-tranche 4f — LA FICHE D'UN CONTACT (docs/SPEC-contacts.md §15)
+// ----------------------------------------------------------------------------------------------
+//
+// @spec CRM-060 (docs/BACKLOG.md) — tranche 4 sous-tranche 4f : la fiche d'un contact, et
+//       l'HISTORIQUE TRANSVERSE que la Definition of Done de l'unité nomme
+// @spec docs/SPEC-contacts.md §15.3 (la lecture, et les quatre mesures qui l'ont décidée),
+//       §15.4 (les sept mesures d'autorisation, et les droits fins qui traversent l'embarquement),
+//       §15.8 (limites nommées), §15.9 (contrat de comportement)
+// @spec docs/DESIGN_SYSTEM.md §5.24 (la fiche de contact)
+//
+// CE MODULE N'OUVRE AUCUNE POLITIQUE NOUVELLE. Il lit sous la RLS de la migration 0045 et sous les
+// droits fins de `cards` posés par CRM-012 — la lecture d'un contact est ouverte à tout membre, et
+// celle d'une affaire suit `app.can_read_card`.
+
+/** L'organisation d'un contact, telle que sa fiche la nomme et l'adresse (§15.3). */
+export type OrganisationDeLaFiche = Pick<
+	Database['public']['Tables']['organizations']['Row'],
+	'id' | 'name' | 'domain'
+>
+
+/**
+ * Une affaire d'un contact, telle que la fiche la rend : son titre, son état, son adresse et le
+ * rôle que le contact y tient.
+ *
+ * `adresse` est CALCULÉE ici et non lue : `/tracks/:slugTrack/:slugChannel/cards/:idCard` exige les
+ * slugs du track et du channel, que l'embarquement du §15.3 rapporte dans la même requête. C'est ce
+ * que `lireCheminCard` (`inbox.ts`) obtenait en TROIS requêtes en cascade, faute d'avoir levé
+ * l'ambiguïté `PGRST201` que le §15.3 désigne.
+ *
+ * `archivee` est la seule donnée de cycle de vie rendue : une affaire archivée reste une affaire
+ * réelle, et l'historique d'un contact est précisément ce que cette page sert — la taire mentirait
+ * sur le passé. Une affaire à la CORBEILLE, elle, n'arrive jamais jusqu'ici : le serveur l'écarte
+ * (§15.3).
+ */
+export type AffaireDuContact = {
+	readonly idCard: string
+	readonly titre: string
+	readonly role: string | null
+	readonly archivee: boolean
+	readonly adresse: string
+}
+
+/** Un contact tel que sa fiche le rend : ce qui le caractérise, et ses affaires. */
+export type FicheContactLue = Pick<
+	Database['public']['Tables']['contacts']['Row'],
+	'id' | 'full_name' | 'email' | 'phone' | 'role_title' | 'organization_id'
+> & {
+	readonly organisation: OrganisationDeLaFiche | null
+	readonly affaires: readonly AffaireDuContact[]
+}
+
+/**
+ * Colonnes demandées par la fiche. Exportée pour que le test unitaire vérifie la requête émise.
+ *
+ * **L'EMBARQUEMENT `cards → channels` EST AMBIGU, ET IL SE DÉSIGNE AU LIEU DE SE CONTOURNER.**
+ * MESURÉ le 2026-08-19 : la forme naïve `cards(channels(...))` est refusée par `PGRST201` — deux
+ * relations existent, `cards_channel_id_workflow_id_fkey` et `cards_channel_id_workspace_id_fkey`.
+ * La clé retenue est celle du CLOISONNEMENT, `(channel_id, workspace_id)` : c'est elle qui dit à
+ * quel channel une affaire appartient, le workflow n'étant qu'une propriété partagée. La chaîne à
+ * quatre niveaux `contacts → card_contacts → cards → channels → tracks` tient alors en UNE requête.
+ *
+ * **`cards!inner` n'est pas décoratif** : combiné au filtre `deleted_at=is.null` du §15.3, il
+ * RETIRE la ligne de rattachement entière. Sans `!inner`, PostgREST rendrait `cards: null` et
+ * l'écran devrait filtrer une donnée que le serveur sait déjà écarter (mesuré).
+ */
+export const COLONNES_FICHE_CONTACT =
+	'id, full_name, email, phone, role_title, organization_id, ' +
+	'organizations(id, name, domain), ' +
+	'card_contacts(role, cards!inner(id, title, archived_at, ' +
+	'channels!cards_channel_id_workspace_id_fkey(slug, tracks(slug))))'
+
+/**
+ * Filtre qui écarte les affaires de la CORBEILLE, exporté pour que le test vérifie qu'il est posé.
+ *
+ * Une affaire supprimée apparaît sans lui — mesuré sur « Saisie erronée ». La lister offrirait un
+ * lien vers une affaire dont la corbeille est la surface propriétaire (`CRM-077`).
+ */
+export const CHEMIN_FILTRE_CORBEILLE = 'card_contacts.cards.deleted_at'
+
+/**
+ * Tri des rattachements embarqués, demandé au SERVEUR (§15.3).
+ *
+ * La relation `card_contacts → cards` est **to-one**, si bien que `order=cards(title)` est accepté
+ * — l'écart mesuré au §12.3 entre une relation to-one et une relation to-many vaut ici aussi. Le
+ * tri AGIT, vérifié dans les deux sens sur deux rattachements sondes : ascendant rend
+ * `["Audit sécurité applicative", "Contrat cadre 2025"]`, descendant l'inverse.
+ */
+export const TRI_AFFAIRES_FICHE = 'cards(title)'
+export const TABLE_TRI_AFFAIRES_FICHE = 'card_contacts'
+
+/** Forme brute d'un rattachement tel que PostgREST le rend, avant renommage. */
+type RattachementBrut = {
+	readonly role: string | null
+	readonly cards: {
+		readonly id: string
+		readonly title: string
+		readonly archived_at: string | null
+		readonly channels: { readonly slug: string; readonly tracks: { readonly slug: string } | null } | null
+	} | null
+}
+
+/** Forme brute de la fiche : les deux relations embarquées peuvent manquer ou être nulles. */
+type LigneFicheContactBrute = Omit<FicheContactLue, 'organisation' | 'affaires'> & {
+	readonly organizations?: OrganisationDeLaFiche | null
+	readonly card_contacts?: readonly RattachementBrut[] | null
+}
+
+/**
+ * Adresse d'une affaire dans l'application, ou `null` lorsque ses slugs manquent.
+ *
+ * Exportée pour être éprouvée directement. Rendre `null` plutôt qu'une adresse partielle est la
+ * règle de `lireCheminCard` : un lien vers `/tracks/undefined/...` mènerait à un écran que
+ * l'utilisateur croirait cassé, là où une ligne sans lien dit seulement que l'affaire n'est pas
+ * adressable pour cet appelant.
+ */
+export function adresseAffaire(rattachement: RattachementBrut): string | null {
+	const card = rattachement.cards
+	const slugChannel = card?.channels?.slug
+	const slugTrack = card?.channels?.tracks?.slug
+	if (card === null || card === undefined || slugChannel === undefined || slugTrack === undefined) {
+		return null
+	}
+	return `/tracks/${slugTrack}/${slugChannel}/cards/${card.id}`
+}
+
+/**
+ * Le contact désigné par `idContact`, avec son organisation et ses affaires — ou `null` lorsqu'il
+ * n'est pas lisible.
+ *
+ * **`null` recouvre TROIS situations, et c'est délibéré** (§15.4) : le contact n'existe pas,
+ * l'appelant n'a pas le droit de le lire, ou l'identifiant n'a pas la forme d'un uuid. MESURÉ : les
+ * deux premières rendent toutes deux `200` et `[]` — les distinguer renseignerait un appelant sans
+ * droit sur l'EXISTENCE d'un contact (docs/SPEC-permissions-rls.md §7). Un identifiant mal formé
+ * n'émet AUCUNE requête, `estFormeUuid` contrôlant la forme d'abord — le contrôle est celui du
+ * §11.4, PARTAGÉ et non réécrit.
+ *
+ * **L'écran ne calcule aucun droit sur les affaires**, et il n'a pas à le faire : MESURÉ, les
+ * droits fins de `cards` traversent l'embarquement. La lectrice, à qui le track « Conseil IA » est
+ * fermé, reçoit `card_contacts: []` sur la fiche de Léo — la ligne est RETIRÉE, non rendue avec une
+ * affaire nulle — et l'affaire de Sophie sur la sienne (§15.4, cas 6 et 7).
+ *
+ * Ne lève jamais : tout échec est rendu comme un état d'erreur classé sur le code HTTP réellement
+ * reçu, jamais sur le texte du message.
+ */
+export async function lireFicheContact(
+	client: ClientCrm,
+	idContact: string | undefined,
+): Promise<EtatAsync<FicheContactLue | null>> {
+	if (!estFormeUuid(idContact)) return pret(null)
+	try {
+		const reponse = await client
+			.from('contacts')
+			.select(COLONNES_FICHE_CONTACT)
+			.eq('id', idContact)
+			.is(CHEMIN_FILTRE_CORBEILLE, null)
+			.order(TRI_AFFAIRES_FICHE, { referencedTable: TABLE_TRI_AFFAIRES_FICHE })
+		if (reponse.error !== null) {
+			return enErreur(classerErreur(reponse.status, reponse.error.message))
+		}
+		const lignes = (reponse.data ?? []) as unknown as readonly LigneFicheContactBrute[]
+		const premiere = lignes[0]
+		if (premiere === undefined) return pret(null)
+		const affaires: AffaireDuContact[] = []
+		for (const rattachement of premiere.card_contacts ?? []) {
+			const adresse = adresseAffaire(rattachement)
+			const card = rattachement.cards
+			// Une affaire dont les slugs manquent n'est pas listée : elle ne serait ni adressable
+			// ni utile, et la rendre sans lien inventerait une ligne morte. Le cas ne se produit
+			// pas sous la RLS mesurée — `cards!inner` garantit la card — mais le type le porte, et
+			// le nier par un `!` serait une supposition non mesurée.
+			if (card === null || card === undefined || adresse === null) continue
+			affaires.push({
+				idCard: card.id,
+				titre: card.title,
+				role: rattachement.role,
+				archivee: card.archived_at !== null,
+				adresse,
+			})
+		}
+		return pret({
+			id: premiere.id,
+			full_name: premiere.full_name,
+			email: premiere.email,
+			phone: premiere.phone,
+			role_title: premiere.role_title,
+			organization_id: premiere.organization_id,
+			// `organizations` absente et `organizations` nulle valent toutes deux « aucune
+			// organisation » : un contact sans organisation est un état LÉGITIME (§15.9, cas b).
+			organisation: premiere.organizations ?? null,
+			affaires,
+		})
+	} catch (cause) {
+		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
+}
