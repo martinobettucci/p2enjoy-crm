@@ -95,6 +95,55 @@ test.describe('Création d’un contact depuis le carnet — CRM-060 §14', () =
 		expect(erreurs).toEqual([])
 	})
 
+	test('c — LE MÊME PARCOURS AU CLAVIER, et le focus RENDU à la commande d’ouverture', async ({
+		page,
+	}) => {
+		// CE SCÉNARIO PROUVE UNE CORRECTION, sur la pile réelle et non sur un rendu simulé. La
+		// preuve unitaire du cas c a trouvé le 2026-08-19 que « Annuler » laissait le focus sur le
+		// document : la commande d'ouverture est DÉMONTÉE tant que le formulaire est ouvert, et le
+		// `focus()` du gestionnaire visait une référence nulle. Au clavier, cela renvoyait en tête
+		// de page — le défaut exact que `docs/DESIGN_SYSTEM.md` §5.21 nomme.
+		const erreurs: string[] = []
+		page.on('pageerror', (erreur) => erreurs.push(erreur.message))
+		await supprimerContactDePreuve()
+		await connecter(page)
+		await page.goto('/contacts')
+
+		// LE GESTE S'ATTEINT AU CLAVIER, sans souris : on le prend par le focus, puis on l'active
+		// par la touche, comme le ferait quelqu'un qui ne quitte jamais le clavier.
+		const ouvrir = page.getByTestId('ouvrir-creation-contact')
+		await ouvrir.focus()
+		await expect(ouvrir).toBeFocused()
+		await page.keyboard.press('Enter')
+
+		// cas b au clavier — le focus ENTRE dans le premier champ.
+		await expect(page.getByTestId('champ-nom-contact')).toBeFocused()
+
+		// cas c — fermer REND le focus à la commande qui a ouvert. `Annuler` est atteint par des
+		// tabulations depuis le nom : c'est le trajet réel, et il vérifie au passage que l'ordre de
+		// tabulation du formulaire suit l'ordre visuel.
+		await page.getByTestId('annuler-creation-contact').focus()
+		await page.keyboard.press('Enter')
+		await expect(page.getByTestId('formulaire-creation-contact')).toHaveCount(0)
+		await expect(page.getByTestId('ouvrir-creation-contact')).toBeFocused()
+
+		// Le parcours complet au clavier, jusqu'à la ligne obtenue : la commande d'envoi est
+		// atteinte et actionnée sans souris.
+		await page.keyboard.press('Enter')
+		await page.keyboard.type(NOM_CREE)
+		await page.getByTestId('envoyer-creation-contact').focus()
+		await page.keyboard.press('Enter')
+		await expect(page.getByTestId('formulaire-creation-contact')).toHaveCount(0)
+		await expect(page.getByTestId('tableau-contacts')).toContainText(NOM_CREE)
+		// LE FOCUS EST RENDU LÀ AUSSI : la création referme le formulaire par le même chemin que
+		// l'annulation, et laisser le focus sur le document après un succès serait le même défaut.
+		await expect(page.getByTestId('ouvrir-creation-contact')).toBeFocused()
+		await capturer(page, 'carnet-creation-clavier-1440', UNITE)
+
+		expect(erreurs).toEqual([])
+		await supprimerContactDePreuve()
+	})
+
 	test('les quatre paliers du formulaire ouvert', async ({ page }) => {
 		await connecter(page)
 		await page.goto('/contacts')
