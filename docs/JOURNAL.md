@@ -20211,3 +20211,17 @@ couleur, régler le remplissage au curseur ET au champ, lier un bloc à un chann
 tracer une flèche à `Espace`, supprimer une flèche et un bloc, créer et archiver un tableau, puis le
 harnais dédié `scripts/verify-objectifs-canevas.sh`. Deux arbitrages sont en attente : **INC-169** et
 **INC-170**.
+
+**Le contrôle que la décision 464 laissait ouvert est LU, et il est refermé.** `verify-webapp.sh`
+rend **42 contrôles, 1 anomalie**, et cette anomalie est **INC-158** — trois classes citées par
+d'autres composants et non engendrées dans le CSS produit : `h-10`, `py-0.5`, `text-text-1`. Elle
+est préexistante, déjà consignée, et étrangère à cette unité : le contrôle cite **268** classes, et
+toutes celles que les deux tranches du canevas ajoutent sont engendrées.
+
+**Campagne complète de la session, exécutée une fois et intégralement verte** : `test:sql`
+**47 fichiers / 2351 assertions**, `test:unit` **57 fichiers / 1850 tests**, `e2e:api` **786 passés**,
+`e2e:ui` **465 passés, aucun échec**, `e2e:mail` **42 passés**, `pytest` **244**, `typecheck`,
+`types:check` et `build` verts. `verify-objectifs.sh` **46 contrôles, aucune anomalie**. Les trois
+échecs de pièces jointes d'INC-167 ne se sont **pas** reproduits sur cette exécution. Les quarante-
+huit autres `scripts/verify-*.sh` n'ont pas été rejoués, la série entière ne tenant pas dans une
+session.
