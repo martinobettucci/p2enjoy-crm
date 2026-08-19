@@ -403,7 +403,16 @@ ASSERTIONS_ATTENDUES=2269
 # `phone`. 704 + 9 = **713**, valeur COMPTÉE par `playwright test --list`
 # (« Total: 713 tests in 44 files ») et confirmée par `npm run e2e:api`, **713 verts**. Le nombre
 # de FICHIERS ne bouge pas.
-SCENARIOS_API=713
+#
+# --- CRM-060 sous-tranche 4f, livrée le 2026-08-19 -----------------------------------------------
+# `e2e/api/contacts.spec.ts` reçoit **onze** scénarios : les sept mesures d'autorisation du §15.4
+# de `docs/SPEC-contacts.md`, l'ambiguïté `PGRST201` entre `cards` et `channels` FIGÉE comme telle
+# — sans ce scénario, un remaniement futur retirerait la clé nommée en croyant simplifier —, le
+# filtre qui écarte la corbeille vérifié DES DEUX CÔTÉS sur une sonde retirée dans un `finally`, et
+# la garde du seed intact. 713 + 11 = **724**, valeur COMPTÉE par `playwright test --list`
+# (« Total: 724 tests in 44 files ») et confirmée par `npm run e2e:api`, **724 verts**. Le nombre de
+# FICHIERS ne bouge pas.
+SCENARIOS_API=724
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -577,7 +586,15 @@ SCENARIOS_API=713
 # d'ouverture (cas c du §14.5), défaut trouvé et corrigé le 2026-08-19. Le nombre de FICHIERS ne
 # bouge pas. Valeur MESURÉE par `playwright test --list` (« Total: 408 tests in 33 files »), puis
 # par l'exécution de la suite entière, **408 verts, aucun échec**.
-SCENARIOS_UI=408
+#
+# Porté de 408 à **420** par `CRM-060` sous-tranche 4f, la fiche d'un contact : `e2e/ui/contacts.spec.ts`
+# reçoit **douze** scénarios — la fiche atteinte depuis le carnet, le lien vers une affaire SUIVI
+# jusqu'à l'affaire elle-même, l'état vide d'un contact sans affaire, la fiche d'organisation qui y
+# mène à son tour, l'introuvable sous ses deux formes, la LECTRICE dont les droits fins vident la
+# zone des affaires, l'accès sans session, le parcours clavier et les quatre paliers. Le nombre de
+# FICHIERS ne bouge pas. Valeur MESURÉE par `playwright test --list`
+# (« Total: 420 tests in 33 files »), puis par l'exécution de la suite entière.
+SCENARIOS_UI=420
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,
