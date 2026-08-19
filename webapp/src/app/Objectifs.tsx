@@ -2,7 +2,11 @@
 //       tableaux, canevas rendu, flèches, équivalent textuel et ouverture du channel ;
 //       tranche 2a : poser, déplacer et redimensionner un bloc, à la souris et au clavier ;
 //       tranche 2b-1 : la fiche d'édition — titre, corps, couleur, remplissage ;
-//       tranche 2b-2a : le LIEN d'un bloc vers un channel, et son retrait
+//       tranche 2b-2a : le LIEN d'un bloc vers un channel, et son retrait ;
+//       tranche 2b-2b : les FLÈCHES — tracer une flèche entre deux blocs avec le choix de sa
+//       direction, et corriger cette direction ensuite
+// @spec docs/SPEC-goals.md §2.3 (trois directions ; unicité de la paire — corriger une flèche
+//       existante est une modification, pas un ajout)
 // @spec docs/SPEC-goals.md §5.1 (liste des tableaux), §5.2 (canevas), §5.3 (flèches),
 //       §5.4 (les cinq états), §5.5 (accessibilité, gestes clavier, `Entrée` ouvre la fiche
 //       d'édition), §3 (ouvrir le channel d'un bloc, poser un bloc, le déplacer, le
@@ -28,9 +32,12 @@
 //     par un clic sans déplacement à la souris ; chaque champ s'enregistre pour lui-même ;
 //   * TRANCHE 2b-2a, LE LIEN : le channel qu'un bloc vise, choisi dans un sélecteur des channels
 //     LISIBLES groupés par track, et retiré par l'option vide comme par un bouton dédié ;
-//   * NON LIVRÉ, et donc non simulé : tracer une flèche, supprimer une flèche ou un bloc,
-//     administrer les tableaux. Aucune commande morte n'est posée pour ces gestes — un bouton qui
-//     n'écrit rien ment plus qu'une absence.
+//   * TRANCHE 2b-2b, LES FLÈCHES : tracer une flèche entre deux blocs — `Espace` sur le bloc de
+//     départ au clavier, commande puis deux clics à la souris —, avec le choix de sa direction
+//     AVANT le tracé, et la correction de cette direction ensuite depuis la liste des liens ;
+//   * NON LIVRÉ, et donc non simulé : supprimer une flèche ou un bloc, administrer les tableaux.
+//     Aucune commande morte n'est posée pour ces gestes — un bouton qui n'écrit rien ment plus
+//     qu'une absence.
 //
 // L'ÉCRAN NE CALCULE AUCUN DROIT : il rend ce que le backend consent, et il ENVOIE puis traduit
 // le refus (`CLAUDE.md` §10, `docs/DESIGN_SYSTEM.md` §5.26). Aucune commande n'est éteinte
@@ -40,7 +47,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { PointerEvent as EvenementPointeur } from 'react'
 import { Link, useParams } from 'react-router'
-import { ArrowLeft, Minus, Plus, SquareArrowOutUpRight, SquarePlus, Unlink, X } from 'lucide-react'
+import { ArrowLeft, Minus, MoveRight, Plus, SquareArrowOutUpRight, SquarePlus, Unlink, X } from 'lucide-react'
 import { Button } from '../components/ui/Button'
 import { EtatErreur, EtatVide } from '../components/ui/States'
 import { SkeletonListe } from '../components/ui/Skeleton'
@@ -55,17 +62,23 @@ import {
 	useContenuTableau,
 	useTableaux,
 	type BlocObjectif,
+	type DirectionFleche,
+	type FlecheObjectif,
 	type FlecheTracee,
+	type LigneDiagramme,
 } from '../lib/objectifs'
 import {
 	COULEURS_BLOC,
+	DIRECTIONS_FLECHE,
 	REMPLISSAGE_MAXIMAL,
 	REMPLISSAGE_MINIMAL,
+	changerDirectionFleche,
 	ecrireContenuBloc,
 	ecrireGeometrieBloc,
 	grouperChannelsParTrack,
 	lierBlocAChannel,
 	poserBloc,
+	tracerFleche,
 	useChannelsLiables,
 	PAS_CLAVIER,
 	PAS_CLAVIER_FIN,
@@ -77,6 +90,7 @@ import {
 	type ChannelLiable,
 	type ContenuBloc,
 	type RefusBloc,
+	type RefusFleche,
 	type ResultatEcritureBloc,
 } from '../lib/objectifs-ecriture'
 import type { EtatAsync } from '../lib/async'
@@ -275,6 +289,53 @@ export function texteRefusBloc(refus: RefusBloc): string {
 }
 
 /**
+ * Traduit un refus de FLÈCHE, et son dictionnaire est distinct de celui du bloc.
+ *
+ * LES QUATRE NATURES DISENT QUATRE GESTES DIFFÉRENTS, et c'est ce qui interdit de réemployer le
+ * dictionnaire des blocs : un doublon s'apprend et se corrige ailleurs (§2.3, « changer la
+ * direction d'une flèche existante est une modification, pas un ajout »), un refus de droit porte
+ * sur les DEUX blocs reliés (§4.2), et « vous ne pouvez pas modifier ce tableau » ne dirait ni l'un
+ * ni l'autre.
+ */
+export function texteRefusFleche(refus: RefusFleche): string {
+	if (refus.nature === 'doublon') return t('goals.link.refused.duplicate')
+	if (refus.nature === 'interdit') return t('goals.link.refused.forbidden')
+	if (refus.nature === 'saisie-invalide') return t('goals.link.refused.invalid')
+	return t('goals.link.refused.unavailable')
+}
+
+/**
+ * Direction → clé de son nom en clair, ÉCRITE LITTÉRALEMENT, pour la raison déjà nommée en
+ * `NOMS_COULEUR` : une clé construite est une clé que le détecteur de clés mortes ne peut plus
+ * suivre, et qui survit à la suppression du code qui l'employait.
+ */
+const NOMS_DIRECTION = {
+	forward: 'goals.link.direction.forward',
+	backward: 'goals.link.direction.backward',
+	both: 'goals.link.direction.both',
+} as const
+
+/**
+ * Le geste EN COURS de tracé d'une flèche (§5.5).
+ *
+ * `idSource` vaut `null` pendant la première moitié du geste — la commande est armée, le bloc de
+ * départ n'est pas encore désigné. Cette moitié n'existe QUE pour la souris : au clavier, `Espace`
+ * sur un bloc arme et désigne d'un seul coup, puisque le bloc est déjà focalisé. Les deux entrées
+ * convergent ensuite sur le même second geste.
+ */
+type TraceEnCours = { readonly idSource: string | null; readonly direction: DirectionFleche }
+
+/**
+ * Ce qu'un bloc peut recevoir comme geste d'activation, et ce que le canevas en fait DÉPEND de
+ * l'état du tracé — c'est pourquoi le bloc ne décide de rien lui-même.
+ *
+ * `espace` arme un tracé quand rien n'est armé ; `entree` et `clic` ouvrent alors la fiche. Une
+ * fois le tracé armé, LES TROIS gestes veulent dire la même chose — « ce bloc-ci » —, et c'est ce
+ * qui donne à la souris et au clavier exactement le même parcours.
+ */
+type GesteBloc = 'clic' | 'entree' | 'espace'
+
+/**
  * Les deux gestes de géométrie. Ils ne se confondent pas, et c'est ce qui décide des colonnes
  * envoyées : réécrire les quatre à chaque fois écraserait le geste d'un collègue.
  */
@@ -308,6 +369,13 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 	const [ebauche, setEbauche] = useState<{ readonly id: string; readonly geometrie: Geometrie } | null>(null)
 	const [message, setMessage] = useState<MessageEcriture | null>(null)
 	const [pose, setPose] = useState<{ readonly x: number; readonly y: number } | null>(null)
+	// LES FLÈCHES ONT LEURS DEUX ÉTATS LOCAUX, pour la même raison que les blocs : `flechesEcrites`
+	// porte les lignes que le serveur a rendues après une correction de direction, `flechesTracees`
+	// celles créées pendant cette session d'écran. Le tracé EN COURS, lui, n'est pas une donnée —
+	// c'est un geste, et il tombe dès qu'il aboutit ou qu'il est annulé.
+	const [flechesEcrites, setFlechesEcrites] = useState<ReadonlyMap<string, FlecheObjectif>>(() => new Map())
+	const [flechesTracees, setFlechesTracees] = useState<readonly FlecheObjectif[]>([])
+	const [trace, setTrace] = useState<TraceEnCours | null>(null)
 	// LA FICHE EST DÉSIGNÉE PAR UN IDENTIFIANT, jamais par une copie du bloc : le bloc rendu vient
 	// de `blocsRendus` et change à chaque écriture, tandis que la fiche doit rester ouverte SUR LE
 	// MÊME bloc à travers ces changements.
@@ -331,6 +399,12 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 		setEcrits(new Map())
 		setAjoutes([])
 		setEbauche(null)
+		setFlechesEcrites(new Map())
+		setFlechesTracees([])
+		// LE TRACÉ EN COURS TOMBE AVEC LA RELECTURE, et ce n'est pas une commodité : son bloc de
+		// départ peut ne plus être rendu, et une flèche partant d'un bloc disparu serait tracée vers
+		// une origine que l'écran ne montre plus.
+		setTrace(null)
 	}, [contenu])
 
 	// LA FICHE SE FERME SI SON BLOC N'EST PLUS RENDU. Une relecture peut le retirer — la RLS a
@@ -357,13 +431,21 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 		[blocs, ebauche],
 	)
 
+	// Les flèches rendues suivent le patron des blocs : la ligne écrite remplace la ligne lue, et
+	// celles tracées pendant cette session s'ajoutent à la fin — dans l'ordre où elles ont été
+	// tracées, qui est celui que `created_at` leur donnera au prochain chargement.
+	const flechesRendues = useMemo(() => {
+		const lues = (contenu?.fleches ?? []).map((fleche) => flechesEcrites.get(fleche.id) ?? fleche)
+		return [...lues, ...flechesTracees]
+	}, [contenu, flechesEcrites, flechesTracees])
+
 	const fleches = useMemo(
-		() => composerDiagramme(blocsRendus, contenu?.fleches ?? []),
-		[blocsRendus, contenu],
+		() => composerDiagramme(blocsRendus, flechesRendues),
+		[blocsRendus, flechesRendues],
 	)
 	const lignes = useMemo(
-		() => listeTextuelleDiagramme(blocsRendus, contenu?.fleches ?? []),
-		[blocsRendus, contenu],
+		() => listeTextuelleDiagramme(blocsRendus, flechesRendues),
+		[blocsRendus, flechesRendues],
 	)
 	const etendue = useMemo(() => etendueCanevas(blocsRendus), [blocsRendus])
 
@@ -462,6 +544,100 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 		[client, idTableau],
 	)
 
+	/**
+	 * Trace la flèche du bloc de départ vers `idCible`, avec la direction choisie AVANT le geste.
+	 *
+	 * LE TRACÉ TOMBE AVANT LA RÉPONSE, et non après : le geste est fini — deux blocs ont été
+	 * désignés —, et laisser la commande armée pendant la requête ferait qu'un second clic tracerait
+	 * une deuxième flèche depuis le même départ. Le refus, lui, se lit dans la mention d'écriture.
+	 */
+	const tracerVers = useCallback(
+		async (idCible: string) => {
+			if (client === null || idTableau === undefined) return
+			const depart = trace
+			if (depart === null || depart.idSource === null) return
+			setTrace(null)
+			setMessage({ ton: 'attente', texte: t('goals.write.saving') })
+			const resultat = await tracerFleche(client, {
+				idTableau,
+				idSource: depart.idSource,
+				idCible,
+				direction: depart.direction,
+			})
+			if (resultat.statut === 'refus') {
+				setMessage({ ton: 'refus', texte: texteRefusFleche(resultat.refus) })
+				return
+			}
+			setFlechesTracees((precedentes) => [...precedentes, resultat.fleche])
+			setMessage({ ton: 'succes', texte: t('goals.link.traced') })
+		},
+		[client, idTableau, trace],
+	)
+
+	/**
+	 * Corrige la direction d'une flèche déjà tracée (§3).
+	 *
+	 * Les trois issues sont celles des blocs, et la troisième est ici la plus probable des trois :
+	 * la politique de `goal_links` exige le droit d'écrire les DEUX blocs reliés, si bien qu'un
+	 * appelant qui n'écrit pas l'un d'eux reçoit `200` et zéro ligne.
+	 */
+	const corrigerDirection = useCallback(
+		async (idFleche: string, direction: DirectionFleche) => {
+			if (client === null) return
+			setMessage({ ton: 'attente', texte: t('goals.write.saving') })
+			const resultat = await changerDirectionFleche(client, idFleche, direction)
+			if (resultat.statut === 'refus') {
+				setMessage({ ton: 'refus', texte: texteRefusFleche(resultat.refus) })
+				return
+			}
+			if (resultat.statut === 'sans-effet') {
+				setMessage({ ton: 'refus', texte: t('goals.write.noeffect') })
+				return
+			}
+			setFlechesEcrites((precedentes) => new Map(precedentes).set(idFleche, resultat.fleche))
+			setMessage({ ton: 'succes', texte: t('goals.write.saved') })
+		},
+		[client],
+	)
+
+	/**
+	 * CE QU'UN GESTE SUR UN BLOC VEUT DIRE DÉPEND DE L'ÉTAT DU TRACÉ, et c'est le canevas qui en
+	 * décide — le bloc, lui, ne connaît que son propre geste.
+	 *
+	 * Hors tracé, `Espace` arme un tracé depuis ce bloc, tandis que `Entrée` et le clic ouvrent la
+	 * fiche : les deux gestes du §5.5 ne se recouvrent pas. Une fois un tracé armé, LES TROIS gestes
+	 * désignent ce bloc — c'est ce qui donne à la souris et au clavier le même parcours.
+	 *
+	 * REDÉSIGNER LE BLOC DE DÉPART ANNULE LE TRACÉ, et cette règle remplace un refus : le §2.3
+	 * interdit la flèche d'un bloc vers lui-même, mais lui faire traverser le réseau pour en
+	 * recevoir `goal_links_boucle_check` apprendrait à l'utilisateur qu'il vient d'échouer, là où il
+	 * vient simplement de se raviser. La contrainte reste la garde de la base ; elle n'est pas
+	 * dédoublée ici, elle est laissée SANS EMPLOI par le geste.
+	 */
+	const activerBloc = useCallback(
+		(idBloc: string, geste: GesteBloc) => {
+			if (trace === null) {
+				if (geste === 'espace') {
+					setPose(null)
+					setTrace({ idSource: idBloc, direction: 'forward' })
+					return
+				}
+				setEdite(idBloc)
+				return
+			}
+			if (trace.idSource === null) {
+				setTrace({ ...trace, idSource: idBloc })
+				return
+			}
+			if (trace.idSource === idBloc) {
+				setTrace(null)
+				return
+			}
+			void tracerVers(idBloc)
+		},
+		[trace, tracerVers],
+	)
+
 	if (client === null) {
 		return <EtatVide titre={t('goals.noWorkspace.title')} corps={t('goals.noWorkspace.body')} />
 	}
@@ -516,7 +692,27 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 				</div>
 				<div className="flex items-center gap-2">
 					<RetourListe />
-					<CommandePose armee={pose !== null} onBasculer={() => setPose(pose === null ? { x: PAS_CLAVIER * 3, y: PAS_CLAVIER * 3 } : null)} />
+					<CommandePose
+						armee={pose !== null}
+						onBasculer={() => {
+							setTrace(null)
+							setPose(pose === null ? { x: PAS_CLAVIER * 3, y: PAS_CLAVIER * 3 } : null)
+						}}
+					/>
+					{/* LA COMMANDE DE TRACÉ N'EST RENDUE QU'À PARTIR DE DEUX BLOCS, et ce n'est pas une
+					    extinction selon le rôle (`docs/DESIGN_SYSTEM.md` §5.26) : une flèche relie
+					    deux blocs, et il n'y en a pas deux à relier. C'est la même raison qui ne rend
+					    « Retirer le lien » que lorsqu'il y a un lien à retirer — un bouton qui n'a
+					    rien à faire est une commande morte (§5.21). */}
+					{blocsRendus.length < 2 ? null : (
+						<CommandeTrace
+							armee={trace !== null}
+							onBasculer={() => {
+								setPose(null)
+								setTrace(trace === null ? { idSource: null, direction: 'forward' } : null)
+							}}
+						/>
+					)}
 					<CommandesZoom rang={rangZoom} onChanger={setRangZoom} />
 				</div>
 			</header>
@@ -525,6 +721,50 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 				<p data-testid="pose-consigne" className="text-sm text-text-2">
 					{t('goals.place.hint')}
 				</p>
+			)}
+
+			{/* LE BANDEAU DE TRACÉ PORTE LA DIRECTION, et il la porte AVANT le second bloc : le §3
+			    demande « choix de la direction à la création », ce qui n'a de sens que si le choix
+			    précède le geste qui crée. Une flèche tracée puis corrigée serait deux écritures là
+			    où l'utilisateur n'a voulu qu'une flèche. */}
+			{trace === null ? null : (
+				<div
+					data-testid="trace-consigne"
+					className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-brand bg-brand-soft px-3 py-2"
+				>
+					<p id="objectifs-consigne-trace" className="text-sm text-ink max-w-[70ch]">
+						{trace.idSource === null
+							? t('goals.link.hint.start')
+							: `${t('goals.link.armed', { titre: titreDe(blocsRendus, trace.idSource) })} ${t('goals.link.hint')}`}
+					</p>
+					<fieldset data-testid="direction-trace" className="flex flex-wrap items-center gap-2">
+						<legend className="sr-only">{t('goals.link.direction.legend')}</legend>
+						{DIRECTIONS_FLECHE.map((option) => (
+							<label
+								key={option}
+								data-testid={`direction-${option}`}
+								className={[
+									'inline-flex items-center gap-2 min-h-[var(--size-target)] px-3 rounded-sm border bg-surface cursor-pointer',
+									trace.direction === option ? 'border-brand' : 'border-border hover:bg-hover',
+								].join(' ')}
+							>
+								<input
+									type="radio"
+									name="objectifs-direction-trace"
+									value={option}
+									checked={trace.direction === option}
+									className="size-4 accent-brand"
+									onChange={() => setTrace({ ...trace, direction: option })}
+								/>
+								<span className="text-sm">{t(NOMS_DIRECTION[option])}</span>
+							</label>
+						))}
+					</fieldset>
+					<Button variante="secondaire" taille="compacte" data-testid="annuler-trace" onClick={() => setTrace(null)} className="gap-2">
+						<X aria-hidden="true" size={16} strokeWidth={2} />
+						{t('goals.link.cancel')}
+					</Button>
+				</div>
 			)}
 
 			{/* La consigne clavier est CITÉE par chaque bloc en `aria-describedby` : un geste qui
@@ -576,9 +816,12 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 								bloc={bloc}
 								zoom={zoom}
 								edite={bloc.id === edite}
+								traceArmee={trace !== null}
+								departDuTrace={trace?.idSource === bloc.id}
 								onEbauche={(geometrie) => setEbauche({ id: bloc.id, geometrie })}
 								onFin={(geometrie, mode) => void enregistrerGeometrie(bloc.id, geometrie, mode)}
-								onOuvrirFiche={() => setEdite(bloc.id)}
+								onActiver={(geste) => activerBloc(bloc.id, geste)}
+								onAnnulerTrace={() => setTrace(null)}
 							/>
 						))}
 						{pose === null ? null : (
@@ -625,9 +868,20 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 				/>
 			)}
 
-			<EquivalentTextuel lignes={lignes} />
+			<EquivalentTextuel lignes={lignes} onChangerDirection={corrigerDirection} />
 		</section>
 	)
+}
+
+/**
+ * Titre du bloc désigné, ou la chaîne vide s'il n'est plus rendu.
+ *
+ * LE REPLI EST MUET, et il l'est pour la règle du §4.1 : l'écran ne nomme jamais ce qu'il cache. Un
+ * bloc dont le tracé partait et qui n'est plus rendu ne devient pas « bloc masqué » dans le
+ * bandeau ; la phrase perd simplement son titre.
+ */
+function titreDe(blocs: readonly BlocObjectif[], idBloc: string): string {
+	return blocs.find((bloc) => bloc.id === idBloc)?.title ?? ''
 }
 
 /**
@@ -647,6 +901,30 @@ function CommandePose({ armee, onBasculer }: { readonly armee: boolean; readonly
 		>
 			{armee ? <X aria-hidden="true" size={16} strokeWidth={2} /> : <SquarePlus aria-hidden="true" size={16} strokeWidth={2} />}
 			{armee ? t('goals.place.cancel') : t('goals.place.start')}
+		</Button>
+	)
+}
+
+/**
+ * La commande qui arme le tracé d'une flèche, et l'annule — LA MOITIÉ SOURIS du geste du §5.5.
+ *
+ * Au clavier, `Espace` sur un bloc arme ET désigne le départ d'un seul coup, le bloc étant déjà
+ * focalisé. À la souris, aucun bloc ne l'est : il faut donc une commande qui ouvre le geste, puis
+ * deux clics. Sans elle, tracer une flèche serait un geste de clavier, et la parité des deux
+ * entrées (`docs/DESIGN_SYSTEM.md` §8) serait tenue en apparence seulement.
+ */
+function CommandeTrace({ armee, onBasculer }: { readonly armee: boolean; readonly onBasculer: () => void }) {
+	return (
+		<Button
+			variante="secondaire"
+			taille="compacte"
+			data-testid="tracer-fleche"
+			aria-pressed={armee}
+			onClick={onBasculer}
+			className="gap-2"
+		>
+			{armee ? <X aria-hidden="true" size={16} strokeWidth={2} /> : <MoveRight aria-hidden="true" size={16} strokeWidth={2} />}
+			{armee ? t('goals.link.cancel') : t('goals.link.start')}
 		</Button>
 	)
 }
@@ -1335,16 +1613,22 @@ function BlocCanevas({
 	bloc,
 	zoom,
 	edite,
+	traceArmee,
+	departDuTrace,
 	onEbauche,
 	onFin,
-	onOuvrirFiche,
+	onActiver,
+	onAnnulerTrace,
 }: {
 	readonly bloc: BlocObjectif
 	readonly zoom: number
 	readonly edite: boolean
+	readonly traceArmee: boolean
+	readonly departDuTrace: boolean
 	readonly onEbauche: (geometrie: Geometrie) => void
 	readonly onFin: (geometrie: Geometrie, mode: ModeGeste) => void
-	readonly onOuvrirFiche: () => void
+	readonly onActiver: (geste: GesteBloc) => void
+	readonly onAnnulerTrace: () => void
 }) {
 	const ouvrable = lienOuvrable(bloc)
 	const perdu = lienPerdu(bloc)
@@ -1421,7 +1705,7 @@ function BlocCanevas({
 		// une position identique à celle déjà en base. Un `PATCH` qui ne change rien reste un `PATCH`,
 		// et il aurait écrasé, entre-temps, le déplacement d'un collègue.
 		if (origine.mode === 'deplacement' && !aBouge(origine.geometrie, finale)) {
-			onOuvrirFiche()
+			onActiver('clic')
 			return
 		}
 		onFin(finale, origine.mode)
@@ -1433,16 +1717,28 @@ function BlocCanevas({
 			data-bloc={bloc.id}
 			tabIndex={0}
 			aria-label={etiquette}
-			aria-describedby="objectifs-consigne-clavier"
+			/* LA CONSIGNE DU TRACÉ EST CITÉE PAR CHAQUE BLOC TANT QU'IL EST ARMÉ : un utilisateur au
+			   lecteur d'écran qui atteint un bloc pendant un tracé doit entendre ce que sa touche va
+			   faire, faute de quoi le geste n'existe qu'à l'écran. */
+			aria-describedby={
+				traceArmee ? 'objectifs-consigne-clavier objectifs-consigne-trace' : 'objectifs-consigne-clavier'
+			}
 			/* Le bloc dont la fiche est ouverte est DÉSIGNÉ visuellement, faute de quoi une fiche
 			   posée sous un canevas de douze blocs n'aurait aucun lien lisible avec le sien. Le
 			   liseré emploie le jeton `brand`, celui du focus, et il s'ajoute à l'anneau plutôt
 			   qu'il ne le remplace : ce sont deux informations différentes. */
 			data-edite={edite ? 'oui' : undefined}
+			/* LE DÉPART D'UN TRACÉ EST DÉSIGNÉ VISUELLEMENT, et par un jeton DIFFÉRENT de celui de la
+			   fiche : les deux états peuvent coexister — on trace depuis le bloc dont la fiche est
+			   ouverte —, et les distinguer d'un regard est ce qui évite de croire qu'on a armé le
+			   mauvais bloc. La marque ne repose pas sur la seule couleur : le bandeau du tracé NOMME
+			   le bloc de départ (`docs/DESIGN_SYSTEM.md` §1). */
+			data-trace={departDuTrace ? 'depart' : undefined}
 			className={[
 				'absolute flex overflow-hidden rounded-lg border bg-surface shadow-card touch-none',
 				'focus-visible:outline-2 focus-visible:outline-brand',
 				edite ? 'border-brand ring-2 ring-brand-soft' : 'border-border',
+				departDuTrace ? 'ring-2 ring-accent' : '',
 			].join(' ')}
 			style={{
 				left: `${bloc.pos_x}px`,
@@ -1461,13 +1757,26 @@ function BlocCanevas({
 			   part au RELÂCHEMENT de la touche, jamais à chaque répétition : une frappe maintenue
 			   émettrait une requête par pixel. Aucune temporisation n'est employée pour cela. */
 			onKeyDown={(evenement) => {
-				// `Entrée` OUVRE LA FICHE DU BLOC FOCALISÉ (§5.5). La garde sur la cible est celle du
-				// glissement, et pour la même cause : `Entrée` sur la pilule de channel doit ouvrir le
-				// channel, geste de la tranche 1 que la fiche ne doit pas avaler.
-				if (evenement.key === 'Enter') {
-					if ((evenement.target as HTMLElement).closest('a, button') !== null) return
+				// `Échap` ANNULE LE TRACÉ EN COURS depuis n'importe quel bloc — c'est le geste
+				// d'abandon que le §5.5 emploie déjà pour le repère de pose, et il ne fait rien
+				// quand rien n'est armé plutôt que d'avaler la touche.
+				if (evenement.key === 'Escape') {
+					if (!traceArmee) return
 					evenement.preventDefault()
-					onOuvrirFiche()
+					onAnnulerTrace()
+					return
+				}
+				// `Entrée` OUVRE LA FICHE DU BLOC FOCALISÉ et `Espace` ARME UN TRACÉ depuis lui
+				// (§5.5) ; une fois un tracé armé, les deux DÉSIGNENT ce bloc. C'est le canevas qui
+				// en décide — le bloc ne connaît que son geste. La garde sur la cible est celle du
+				// glissement, et pour la même cause : `Entrée` sur la pilule de channel doit ouvrir
+				// le channel, geste de la tranche 1 que ni la fiche ni le tracé ne doivent avaler.
+				if (evenement.key === 'Enter' || evenement.key === ' ') {
+					if ((evenement.target as HTMLElement).closest('a, button') !== null) return
+					// `Espace` fait défiler la région par défaut : sans ce `preventDefault`, armer un
+					// tracé emporterait le canevas d'un écran vers le bas.
+					evenement.preventDefault()
+					onActiver(evenement.key === ' ' ? 'espace' : 'entree')
 					return
 				}
 				const direction = DIRECTIONS_CLAVIER[evenement.key]
@@ -1596,8 +1905,10 @@ function Jauge({ valeur }: { readonly valeur: number }) {
  */
 function EquivalentTextuel({
 	lignes,
+	onChangerDirection,
 }: {
-	readonly lignes: readonly { id: string; source: string; cible: string; symbole: string; libelle: string | null }[]
+	readonly lignes: readonly LigneDiagramme[]
+	readonly onChangerDirection: (idFleche: string, direction: DirectionFleche) => void
 }) {
 	return (
 		<section data-testid="equivalent-textuel" aria-label={t('goals.diagram.aria')} className="flex flex-col gap-2">
@@ -1617,10 +1928,42 @@ function EquivalentTextuel({
 							libelle: ligne.libelle ?? '',
 						}
 						return (
-							<li key={ligne.id} data-testid="ligne-diagramme">
-								{ligne.libelle === null
-									? t('goals.diagram.line', parametres)
-									: t('goals.diagram.line.labelled', parametres)}
+							<li key={ligne.id} data-testid="ligne-diagramme" className="flex flex-wrap items-center gap-2">
+								<span>
+									{ligne.libelle === null
+										? t('goals.diagram.line', parametres)
+										: t('goals.diagram.line.labelled', parametres)}
+								</span>
+								{/* LA DIRECTION SE CORRIGE ICI, ET NON SUR LE DESSIN, et ce n'est pas
+								    un pis-aller : le trait est un `<path>` dans un SVG `aria-hidden`
+								    et sans événements de pointeur, que ni le clavier ni un lecteur
+								    d'écran n'atteindraient. Cette liste, elle, EST déjà l'équivalent
+								    complet du diagramme (§5.5) — c'est donc le seul endroit où
+								    corriger une flèche s'offre aux deux entrées à la fois.
+
+								    LE CONTRÔLE EST OFFERT SUR TOUTE LIGNE, y compris celle dont une
+								    extrémité n'est pas rendue : écrire une flèche exige le droit sur
+								    les DEUX blocs (§4.2), et l'éteindre ici rejouerait à l'écran une
+								    règle qui vit dans la politique (`CLAUDE.md` §10). Le refus est
+								    traduit, jamais devancé — et il ne nomme rien de ce qui manque. */}
+								<label className="sr-only" htmlFor={`direction-fleche-${ligne.id}`}>
+									{t('goals.link.direction.change', parametres)}
+								</label>
+								<select
+									id={`direction-fleche-${ligne.id}`}
+									data-testid="direction-fleche"
+									value={ligne.direction}
+									className="min-h-[var(--size-target)] px-2 rounded-sm border border-border bg-surface text-sm text-ink"
+									onChange={(evenement) =>
+										onChangerDirection(ligne.id, evenement.target.value as DirectionFleche)
+									}
+								>
+									{DIRECTIONS_FLECHE.map((option) => (
+										<option key={option} value={option}>
+											{t(NOMS_DIRECTION[option])}
+										</option>
+									))}
+								</select>
 							</li>
 						)
 					})}

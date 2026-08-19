@@ -3,7 +3,13 @@
 //       tranche 2b-1 : le CONTENU, c'est-à-dire saisir le titre, le corps, la couleur, et régler
 //       le remplissage au curseur comme au champ numérique ;
 //       tranche 2b-2a : LE LIEN, c'est-à-dire désigner le channel qu'un bloc vise, et retirer ce
-//       lien
+//       lien ;
+//       tranche 2b-2b : LES FLÈCHES, c'est-à-dire tracer une flèche entre deux blocs avec le choix
+//       de sa direction, et corriger cette direction ensuite
+// @spec docs/SPEC-goals.md §2.3 (trois directions et non deux ; une flèche d'un bloc vers lui-même
+//       n'a pas de sens ; unicité sur la paire — changer la direction d'une flèche existante est
+//       une MODIFICATION, pas un ajout ; aucun refus de cycle)
+// @spec docs/SPEC-goals.md §2.4 (`board_id` redondant, gardé par un trigger)
 // @spec docs/SPEC-goals.md §3 (poser un bloc — position issue du geste, jamais d'un placement
 //       automatique ; déplacer et redimensionner — persiste `pos_x`, `pos_y`, `width`, `height` ;
 //       saisir le titre, le corps, la couleur ; régler le remplissage — curseur ET champ
@@ -11,7 +17,8 @@
 //       channels LISIBLES par l'appelant, groupés par track ; retirer le lien — remet `channel_id`
 //       à nul)
 // @spec docs/SPEC-goals.md §4.2 (écriture ouverte à tout membre pouvant écrire ; un `viewer`
-//       n'écrit rien ; POSER le lien exige `app.can_write_channel`, le RETIRER non),
+//       n'écrit rien ; POSER le lien exige `app.can_write_channel`, le RETIRER non ; une flèche
+//       s'écrit par « tout membre pouvant écrire les DEUX blocs qu'elle relie »),
 //       §2.2 (colonnes et bornes du bloc ; `channel_id` facultatif)
 // @spec docs/SPEC-permissions-rls.md §7 (un refus de lecture est zéro ligne, pas une erreur)
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone)
@@ -29,9 +36,9 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './async'
-import type { BlocObjectif } from './objectifs'
-import { destinationDepuisEmbarque } from './objectifs'
-import { COLONNES_BLOC } from './objectifs'
+import type { BlocObjectif, DirectionFleche, FlecheObjectif } from './objectifs'
+import { destinationDepuisEmbarque, normaliserDirection } from './objectifs'
+import { COLONNES_BLOC, COLONNES_FLECHE } from './objectifs'
 import type { ClientCrm } from './supabase'
 
 /**
@@ -538,6 +545,176 @@ export async function lierBlocAChannel(
 	idChannel: string | null,
 ): Promise<ResultatEcritureBloc> {
 	return modifierBloc(client, idBloc, { channel_id: idChannel })
+}
+
+// =================================================================================================
+// TRANCHE 2b-2b — LES FLÈCHES
+// =================================================================================================
+//
+// UNE FLÈCHE N'EST PAS UN CHAMP DE BLOC, et son écriture ne partage donc rien avec `modifierBloc` :
+// elle vit dans `goal_links`, sous des politiques qui exigent le droit d'écrire les DEUX blocs
+// qu'elle relie (§4.2), et son refus de doublon n'existe nulle part ailleurs dans cet écran.
+
+/** Les trois directions proposées, dans l'ordre où les contrôles les présentent (§2.3). */
+export const DIRECTIONS_FLECHE = ['forward', 'backward', 'both'] as const
+
+/**
+ * Une seconde flèche entre les mêmes blocs — `goal_links_source_target_key`.
+ *
+ * ELLE MÉRITE SA PROPRE NATURE, et ce n'est pas un raffinement : le §2.3 dit que « changer la
+ * direction d'une flèche existante est une MODIFICATION, pas un ajout ». Le geste à faire après ce
+ * refus n'est donc pas de réessayer, mais d'aller corriger la flèche déjà tracée — et un texte de
+ * refus générique enverrait l'utilisateur retenter indéfiniment le même geste.
+ */
+export const CODE_DOUBLON = '23505'
+
+/**
+ * Les natures de refus d'une écriture de flèche. Le dictionnaire est FERMÉ, comme celui des blocs,
+ * et il compte une nature de plus pour la raison écrite au-dessus.
+ */
+export type RefusFleche = {
+	readonly nature: 'interdit' | 'saisie-invalide' | 'doublon' | 'indisponible'
+	readonly detail: string
+}
+
+/**
+ * Classe un refus de flèche — LE CODE POSTGRESQL D'ABORD, le statut HTTP ensuite, patron de
+ * `classerRefusBloc`.
+ *
+ * `23514` recouvre ici DEUX contraintes que rien ne distingue par leur code : la boucle
+ * (`goal_links_boucle_check`) et le trigger de cohérence de tableau, qui lève `check_violation`
+ * (§2.4). Les deux sont des refus de forme, et l'écran les dit de la même façon — le détail, lui,
+ * reste au diagnostic.
+ */
+export function classerRefusFleche(
+	statutHttp: number | undefined,
+	code: string | undefined,
+	detail: string,
+): RefusFleche {
+	if (code === CODE_DOUBLON) return { nature: 'doublon', detail }
+	if (code === CODE_SAISIE_INVALIDE) return { nature: 'saisie-invalide', detail }
+	if (code === CODE_INTERDIT) return { nature: 'interdit', detail }
+	if (statutHttp === 401 || statutHttp === 403) return { nature: 'interdit', detail }
+	return { nature: 'indisponible', detail }
+}
+
+/** Les deux issues d'un tracé : la flèche créée, ou un refus traduit. */
+export type ResultatTraceFleche =
+	| { readonly statut: 'tracee'; readonly fleche: FlecheObjectif }
+	| { readonly statut: 'refus'; readonly refus: RefusFleche }
+
+/** Les trois issues d'une modification de flèche — la troisième est celle de la clause `using`. */
+export type ResultatEcritureFleche =
+	| { readonly statut: 'enregistree'; readonly fleche: FlecheObjectif }
+	| { readonly statut: 'sans-effet' }
+	| { readonly statut: 'refus'; readonly refus: RefusFleche }
+
+/** Ce qu'un geste de tracé transporte : le tableau, les deux blocs, et la direction choisie. */
+export type TraceFleche = {
+	readonly idTableau: string
+	readonly idSource: string
+	readonly idCible: string
+	readonly direction: DirectionFleche
+}
+
+/** Traduit la ligne rendue par PostgREST en flèche d'écran, direction normalisée comprise. */
+export function flecheDepuisLigne(brut: unknown): FlecheObjectif {
+	const ligne = brut as {
+		id: string
+		source_block_id: string
+		target_block_id: string
+		label: string | null
+		direction: string
+	}
+	return {
+		id: ligne.id,
+		source_block_id: ligne.source_block_id,
+		target_block_id: ligne.target_block_id,
+		label: ligne.label,
+		direction: normaliserDirection(ligne.direction),
+	}
+}
+
+/**
+ * Trace une flèche entre deux blocs.
+ *
+ * `board_id` EST ENVOYÉ alors qu'il se déduit des blocs, et c'est le §2.4 qui le veut : la colonne
+ * existe, elle est `not null`, et un trigger `security definer` refuse une flèche dont un bloc
+ * n'appartient pas à ce tableau. Le déduire ici à la place du serveur ferait de l'écran la garde,
+ * là où la garde doit rester en base (`CLAUDE.md` §10).
+ *
+ * LA DIRECTION PART TELLE QUELLE, sans être normalisée en deux : `backward` n'est PAS réécrit en
+ * `forward` avec les blocs inversés, sans quoi la flèche « sauterait » au rechargement dans l'autre
+ * sens que celui où elle a été tracée (§2.3).
+ *
+ * AUCUN REFUS N'EST ANTICIPÉ (`CLAUDE.md` §10) : ni la boucle, ni le doublon, ni le droit d'écrire
+ * les deux blocs ne sont vérifiés ici. Tous partent, et tous sont TRADUITS.
+ *
+ * Ne lève jamais.
+ */
+export async function tracerFleche(client: ClientCrm, trace: TraceFleche): Promise<ResultatTraceFleche> {
+	try {
+		const reponse = await client
+			.from('goal_links')
+			.insert({
+				board_id: trace.idTableau,
+				source_block_id: trace.idSource,
+				target_block_id: trace.idCible,
+				direction: trace.direction,
+			})
+			.select(COLONNES_FLECHE)
+			.single()
+		if (reponse.error !== null) {
+			return {
+				statut: 'refus',
+				refus: classerRefusFleche(reponse.status, reponse.error.code, reponse.error.message),
+			}
+		}
+		return { statut: 'tracee', fleche: flecheDepuisLigne(reponse.data) }
+	} catch (cause) {
+		return {
+			statut: 'refus',
+			refus: classerRefusFleche(undefined, undefined, cause instanceof Error ? cause.message : String(cause)),
+		}
+	}
+}
+
+/**
+ * Change la direction d'une flèche déjà tracée (§3 : « choix de la direction à la création, et
+ * MODIFIABLE ENSUITE »).
+ *
+ * `.select(...)` accompagne la mise à jour pour la même raison que sur les blocs : sans lui,
+ * PostgREST ne rend aucun corps et le refus silencieux de la clause `using` — ici, l'appelant ne
+ * peut pas écrire l'un des deux blocs — serait indistinguable d'un succès.
+ *
+ * Ne lève jamais.
+ */
+export async function changerDirectionFleche(
+	client: ClientCrm,
+	idFleche: string,
+	direction: DirectionFleche,
+): Promise<ResultatEcritureFleche> {
+	try {
+		const reponse = await client
+			.from('goal_links')
+			.update({ direction })
+			.eq('id', idFleche)
+			.select(COLONNES_FLECHE)
+		if (reponse.error !== null) {
+			return {
+				statut: 'refus',
+				refus: classerRefusFleche(reponse.status, reponse.error.code, reponse.error.message),
+			}
+		}
+		const lignes = reponse.data ?? []
+		if (lignes.length === 0) return { statut: 'sans-effet' }
+		return { statut: 'enregistree', fleche: flecheDepuisLigne(lignes[0]) }
+	} catch (cause) {
+		return {
+			statut: 'refus',
+			refus: classerRefusFleche(undefined, undefined, cause instanceof Error ? cause.message : String(cause)),
+		}
+	}
 }
 
 /**

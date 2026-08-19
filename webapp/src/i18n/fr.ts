@@ -477,7 +477,7 @@ export const fr = {
 	'goals.place.marker': 'Repère de pose, position {x} sur {y}',
 	'goals.place.title.default': 'Nouvel objectif',
 	'goals.block.keyboard.hint':
-		'Flèches pour déplacer le bloc, Maj et flèches pour l’ajuster au pixel, Alt et flèches pour le redimensionner, Entrée pour ouvrir sa fiche.',
+		'Flèches pour déplacer le bloc, Maj et flèches pour l’ajuster au pixel, Alt et flèches pour le redimensionner, Entrée pour ouvrir sa fiche, Espace pour tracer une flèche vers un autre bloc.',
 	'goals.write.saving': 'Enregistrement…',
 	'goals.write.saved': 'Enregistré',
 	'goals.write.noeffect':
@@ -525,6 +525,32 @@ export const fr = {
 	'goals.edit.link.empty': 'Aucun channel à viser.',
 	'goals.edit.link.refused.forbidden':
 		'Vous ne pouvez pas lier ce bloc à ce channel : lier un objectif à un dossier demande d’y écrire.',
+
+	// --- Objectifs, tranche 2b-2b : les flèches — CRM-083, docs/SPEC-goals.md §2.3, §3 et §5.5 ---
+	// LES TROIS DIRECTIONS SONT NOMMÉES EN CLAIR, jamais par le seul symbole : « → » ne se lit pas
+	// à haute voix, et une flèche dont la direction ne serait qu'un caractère laisserait un
+	// utilisateur au lecteur d'écran choisir entre trois options indistinctes. Les clés sont
+	// écrites LITTÉRALEMENT dans le code — une clé construite survit à la suppression de son
+	// appelant, et le détecteur de clés mortes a déjà eu raison sur les cinq couleurs.
+	'goals.link.start': 'Tracer une flèche',
+	'goals.link.cancel': 'Annuler le tracé',
+	'goals.link.armed': 'Flèche en cours depuis « {titre} ».',
+	'goals.link.hint.start':
+		'Choisissez le bloc de départ : cliquez dessus, ou atteignez-le au clavier et appuyez sur Entrée ou Espace.',
+	'goals.link.hint':
+		'Choisissez un second bloc pour tracer la flèche : cliquez dessus, ou atteignez-le au clavier et appuyez sur Entrée ou Espace. Le bloc de départ, Échap, ou le bouton annulent.',
+	'goals.link.direction.legend': 'Direction',
+	'goals.link.direction.forward': 'Du départ vers l’arrivée (→)',
+	'goals.link.direction.backward': 'De l’arrivée vers le départ (←)',
+	'goals.link.direction.both': 'Dans les deux sens (↔)',
+	'goals.link.direction.change': 'Direction de la flèche {source} {symbole} {cible}',
+	'goals.link.traced': 'Flèche tracée',
+	'goals.link.refused.duplicate':
+		'Une flèche relie déjà ces deux blocs. Corrigez sa direction dans la liste des liens plutôt que d’en tracer une seconde.',
+	'goals.link.refused.forbidden':
+		'Vous ne pouvez pas tracer cette flèche : elle demande de pouvoir écrire les deux blocs qu’elle relie.',
+	'goals.link.refused.invalid': 'Cette flèche a été refusée : elle ne relie pas deux blocs de ce tableau.',
+	'goals.link.refused.unavailable': 'Le tracé n’a pas abouti. Réessayez.',
 
 	'route.today.title': 'Ma journée',
 	'route.today.empty.title': 'Rien pour aujourd’hui',

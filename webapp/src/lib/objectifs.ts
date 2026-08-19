@@ -351,6 +351,15 @@ export type LigneDiagramme = {
 	readonly cible: string
 	readonly symbole: '→' | '←' | '↔'
 	readonly libelle: string | null
+	/**
+	 * La direction BRUTE, à côté de son symbole.
+	 *
+	 * Le symbole suffit à LIRE la ligne ; il ne suffit pas à la CORRIGER. Depuis la tranche 2b-2b,
+	 * chaque ligne porte le contrôle qui change la direction de sa flèche, et un contrôle dont la
+	 * valeur courante se déduirait du symbole par une table inverse divergerait le jour où un
+	 * symbole changerait. La donnée voyage donc avec sa forme lisible, jamais à sa place.
+	 */
+	readonly direction: DirectionFleche
 }
 
 const SYMBOLES: Record<DirectionFleche, LigneDiagramme['symbole']> = {
@@ -384,6 +393,7 @@ export function listeTextuelleDiagramme(
 			cible,
 			symbole: SYMBOLES[fleche.direction],
 			libelle: fleche.label,
+			direction: fleche.direction,
 		})
 	}
 	return lignes
