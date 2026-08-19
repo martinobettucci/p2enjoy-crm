@@ -76,11 +76,31 @@ export type ProprietesObjectifs = {
  */
 export function Objectifs({ client = clientCrm }: ProprietesObjectifs = {}) {
 	const { etat: etatWorkspaces } = useWorkspaces(client)
+
 	const idWorkspace =
 		etatWorkspaces.statut === 'pret' ? (etatWorkspaces.donnees[0]?.id ?? null) : null
 	const { etat, recharger } = useTableaux(client, idWorkspace)
 
-	if (etatWorkspaces.statut === 'chargement' || etat.statut === 'chargement') {
+	// PAS DE CLIENT — l'application est montée sans configuration Supabase, cas ordinaire des
+	// preuves de routage. Même patron et même texte que le carnet : sans cette sortie, les deux
+	// lectures ne partent jamais et le squelette ne se résout pas.
+	if (client === null) {
+		return <EtatVide titre={t('goals.noWorkspace.title')} corps={t('goals.noWorkspace.body')} />
+	}
+
+	if (etatWorkspaces.statut === 'chargement') {
+		return <SkeletonListe lignes={3} libelle={t('state.loading.aria')} />
+	}
+
+	// AUCUN ESPACE DE TRAVAIL — un appelant sans session en est le cas ordinaire. Sans cette
+	// sortie, l'écran resterait EN CHARGEMENT indéfiniment : la lecture des tableaux ne part que
+	// lorsqu'un workspace est connu, et un squelette qui ne se résout jamais est une page blanche
+	// déguisée (`docs/SPEC-webapp.md` §7). Même patron et même texte que le carnet.
+	if (etatWorkspaces.statut === 'pret' && idWorkspace === null) {
+		return <EtatVide titre={t('goals.noWorkspace.title')} corps={t('goals.noWorkspace.body')} />
+	}
+
+	if (etat.statut === 'chargement') {
 		return <SkeletonListe lignes={3} libelle={t('state.loading.aria')} />
 	}
 
@@ -156,6 +176,10 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 		[contenu],
 	)
 	const etendue = useMemo(() => etendueCanevas(contenu?.blocs ?? []), [contenu])
+
+	if (client === null) {
+		return <EtatVide titre={t('goals.noWorkspace.title')} corps={t('goals.noWorkspace.body')} />
+	}
 
 	if (etat.statut === 'chargement') {
 		return <SkeletonListe lignes={4} libelle={t('state.loading.aria')} />

@@ -14,6 +14,7 @@ import { ENTREES_TRANSVERSES } from './navigation'
 import {
 	CHEMIN_ADMIN_ARBORESCENCE,
 	CHEMIN_CONTACTS,
+	CHEMIN_OBJECTIFS,
 	CHEMIN_DEMARRAGE,
 	CHEMIN_ETAT_MESSAGERIE,
 	CHEMIN_INBOX,
@@ -65,6 +66,7 @@ describe('table des routes', () => {
 		(route) =>
 			route.chemin !== CHEMIN_INBOX &&
 			route.chemin !== CHEMIN_CONTACTS &&
+			route.chemin !== CHEMIN_OBJECTIFS &&
 			route.chemin !== '/reglages' &&
 			route.chemin !== '/',
 	)
@@ -127,6 +129,23 @@ describe('table des routes', () => {
 		// exactement les entrées transverses (assertion ci-dessus), et l'écran est monté par `App`.
 		expect(ROUTES.map((route) => route.chemin)).not.toContain(CHEMIN_ADMIN_ARBORESCENCE)
 		expect(CHEMIN_ADMIN_ARBORESCENCE.startsWith('/reglages/')).toBe(true)
+	})
+
+	it('la route /objectifs rend son écran, chargé à la demande derrière un repli — CRM-083', async () => {
+		// RÉVISÉE UNE CINQUIÈME FOIS, ET POUR LE MOTIF DÉJÀ ÉCRIT DEUX FOIS AU-DESSUS : `/objectifs`
+		// n'a jamais porté d'état vide inconditionnel — l'entrée est CRÉÉE par `CRM-083` avec son
+		// écran (`docs/SPEC-goals.md` §5.1). Elle rejoint donc d'emblée les routes qui portent un
+		// écran chargé à la demande, et son assertion propre est ici. Montée SANS session, elle
+		// rend l'état vide « aucun tableau d'objectifs », jamais une page blanche.
+		const route = ROUTES.find((candidate) => candidate.chemin === CHEMIN_OBJECTIFS)
+		expect(route).toBeDefined()
+		render(
+			<MemoryRouter>
+				<Suspense fallback={<ChargementRoute />}>{route!.rendu()}</Suspense>
+			</MemoryRouter>,
+		)
+		expect(screen.getByLabelText(fr['state.loading.aria'])).toBeTruthy()
+		expect(await screen.findByTestId('etat-vide')).toBeTruthy()
 	})
 
 	it('la route /contacts rend son écran, chargé à la demande derrière un repli — CRM-060', async () => {

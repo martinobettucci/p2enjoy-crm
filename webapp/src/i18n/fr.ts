@@ -434,6 +434,9 @@ export const fr = {
 	'goals.list.blocks': '{compte} blocs',
 	'goals.list.blocks.one': '1 bloc',
 	'goals.list.blocks.none': 'Aucun bloc',
+	'goals.noWorkspace.title': 'Aucun espace de travail',
+	'goals.noWorkspace.body':
+		'Votre compte n’appartient à aucun espace de travail, ou votre session a expiré. Reconnectez-vous pour retrouver vos tableaux d’objectifs.',
 	'goals.list.empty.title': 'Aucun tableau d’objectifs',
 	'goals.list.empty.body':
 		'Un tableau d’objectifs est une surface libre : on y pose des blocs, on les relie, et on indique à la main où chacun en est.',
