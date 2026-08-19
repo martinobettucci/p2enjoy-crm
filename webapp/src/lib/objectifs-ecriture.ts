@@ -1,13 +1,18 @@
 // @spec CRM-083 (docs/BACKLOG.md) — canevas d'objectifs, tranche 2a : la GÉOMÉTRIE, c'est-à-dire
 //       poser un bloc, le déplacer et le redimensionner, à la souris comme au clavier ;
 //       tranche 2b-1 : le CONTENU, c'est-à-dire saisir le titre, le corps, la couleur, et régler
-//       le remplissage au curseur comme au champ numérique
+//       le remplissage au curseur comme au champ numérique ;
+//       tranche 2b-2a : LE LIEN, c'est-à-dire désigner le channel qu'un bloc vise, et retirer ce
+//       lien
 // @spec docs/SPEC-goals.md §3 (poser un bloc — position issue du geste, jamais d'un placement
 //       automatique ; déplacer et redimensionner — persiste `pos_x`, `pos_y`, `width`, `height` ;
 //       saisir le titre, le corps, la couleur ; régler le remplissage — curseur ET champ
-//       numérique, les deux écrivant la même valeur)
+//       numérique, les deux écrivant la même valeur ; lier le bloc à un channel — sélecteur des
+//       channels LISIBLES par l'appelant, groupés par track ; retirer le lien — remet `channel_id`
+//       à nul)
 // @spec docs/SPEC-goals.md §4.2 (écriture ouverte à tout membre pouvant écrire ; un `viewer`
-//       n'écrit rien), §2.2 (colonnes et bornes du bloc)
+//       n'écrit rien ; POSER le lien exige `app.can_write_channel`, le RETIRER non),
+//       §2.2 (colonnes et bornes du bloc ; `channel_id` facultatif)
 // @spec docs/SPEC-permissions-rls.md §7 (un refus de lecture est zéro ligne, pas une erreur)
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone)
 // @spec docs/DESIGN_SYSTEM.md §5.29 (canevas d'objectifs)
@@ -22,6 +27,7 @@
 // se retrouve ici pour la même cause. Annoncer « Enregistré » sur zéro ligne serait la simulation
 // de succès que `CLAUDE.md` §18 interdit.
 
+import { classerErreur, enErreur, pret, type EtatAsync } from './async'
 import type { BlocObjectif } from './objectifs'
 import { destinationDepuisEmbarque } from './objectifs'
 import { COLONNES_BLOC } from './objectifs'
@@ -339,6 +345,160 @@ export async function ecrireContenuBloc(
 }
 
 /**
+ * Un channel que le sélecteur de destination propose (§3 : « sélecteur des channels LISIBLES par
+ * l'appelant, groupés par track »).
+ *
+ * `track` est FACULTATIF alors que `channels.track_id` est obligatoire : l'imbrication PostgREST
+ * peut rendre `null` lorsque la politique de lecture des tracks ne consent pas la ligne parente. Un
+ * channel dont le track n'est pas rendu ne disparaît pas du sélecteur pour autant — il n'aurait
+ * simplement plus de groupe où se ranger, et c'est `grouperChannelsParTrack` qui décide de son sort.
+ */
+export type ChannelLiable = {
+	readonly id: string
+	readonly nom: string
+	readonly track: { readonly id: string; readonly nom: string } | null
+}
+
+/** Un groupe du sélecteur : un track, et les channels qu'il porte. */
+export type GroupeChannels = {
+	readonly idTrack: string | null
+	readonly nomTrack: string | null
+	readonly channels: readonly ChannelLiable[]
+}
+
+/**
+ * Colonnes du sélecteur, avec le track EMBARQUÉ plutôt que relu.
+ *
+ * Le nom de la clé étrangère est explicite pour la même raison que dans `COLONNES_BLOC` : une
+ * seconde clé de `channels` vers `tracks` rendrait l'imbrication ambiguë, et PostgREST refuserait
+ * alors la requête entière plutôt que d'en choisir une.
+ */
+export const COLONNES_CHANNEL_LIABLE = 'id, name, tracks!channels_track_id_fkey(id, name)'
+
+/**
+ * Lit les channels que l'appelant peut proposer comme destination.
+ *
+ * CE N'EST PAS UN CONTRÔLE D'AUTORISATION (`CLAUDE.md` §10). La liste est celle que la RLS de
+ * `channels` consent à l'appelant — le module ne filtre aucun droit lui-même —, et elle recouvre la
+ * LECTURE, non l'écriture. Or poser un lien exige `app.can_write_channel` (§4.2), condition plus
+ * étroite : le sélecteur propose donc des destinations que la base refusera parfois, et ce refus est
+ * TRADUIT en `interdit` plutôt qu'anticipé. Réduire la liste aux channels écrivables demanderait à
+ * l'écran de rejouer une règle qui vit dans la politique, et la ferait diverger d'elle au premier
+ * changement.
+ *
+ * Les channels archivés et ceux de la corbeille sont écartés — convention de `lireChannels`
+ * (`channels.ts`) —, et pour un motif propre à ce sélecteur : une destination en corbeille rendrait
+ * immédiatement l'état « lien perdu » du §5.4, si bien que le proposer reviendrait à offrir un lien
+ * qui naît cassé.
+ *
+ * Ne lève jamais.
+ */
+export async function lireChannelsLiables(
+	client: ClientCrm,
+	idWorkspace: string,
+): Promise<EtatAsync<readonly ChannelLiable[]>> {
+	try {
+		const reponse = await client
+			.from('channels')
+			.select(COLONNES_CHANNEL_LIABLE)
+			.eq('workspace_id', idWorkspace)
+			.is('archived_at', null)
+			.is('deleted_at', null)
+			.order('position')
+			.order('name')
+		if (reponse.error !== null) {
+			return enErreur(classerErreur(reponse.status, reponse.error.message))
+		}
+		return pret(
+			(reponse.data ?? []).map((brut) => {
+				const ligne = brut as unknown as { id: string; name: string; tracks: unknown }
+				const track = (Array.isArray(ligne.tracks) ? ligne.tracks[0] : ligne.tracks) as
+					| { id: string; name: string }
+					| null
+					| undefined
+				return {
+					id: ligne.id,
+					nom: ligne.name,
+					track: track === null || track === undefined ? null : { id: track.id, nom: track.name },
+				}
+			}),
+		)
+	} catch (cause) {
+		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
+}
+
+/**
+ * Groupe les channels par track, dans l'ordre où le sélecteur les présente (§3).
+ *
+ * L'ORDRE DES CHANNELS EST CELUI QUE LE SERVEUR A RENDU, jamais retrié ici : la requête ordonne
+ * déjà par `position` puis par nom, et rejouer ce tri à l'écran le ferait diverger le jour où la
+ * requête changera. La fonction ne fait que REGROUPER, en conservant l'ordre de première apparition
+ * de chaque track — ce qui rend le sélecteur stable d'un chargement à l'autre.
+ *
+ * Un channel dont le track n'est pas rendu est rangé dans un groupe SANS NOM, en dernier. Il n'est
+ * pas écarté : l'appelant lit ce channel, il a donc le droit de le viser, et le faire disparaître
+ * du sélecteur parce que son parent n'est pas lisible lui retirerait une destination légitime sans
+ * jamais le dire.
+ */
+export function grouperChannelsParTrack(
+	channels: readonly ChannelLiable[],
+): readonly GroupeChannels[] {
+	const groupes = new Map<string, { idTrack: string | null; nomTrack: string | null; channels: ChannelLiable[] }>()
+	const SANS_TRACK = ''
+	for (const channel of channels) {
+		const cle = channel.track === null ? SANS_TRACK : channel.track.id
+		const groupe = groupes.get(cle)
+		if (groupe === undefined) {
+			groupes.set(cle, {
+				idTrack: channel.track?.id ?? null,
+				nomTrack: channel.track?.nom ?? null,
+				channels: [channel],
+			})
+			continue
+		}
+		groupe.channels.push(channel)
+	}
+	// Le groupe sans track passe en DERNIER, quel que soit son rang d'apparition : il n'a pas de nom
+	// à afficher, et l'ouvrir en tête ferait commencer le sélecteur par une liste anonyme.
+	const ordonnes = [...groupes.entries()]
+		.sort(([gauche], [droite]) => {
+			if (gauche === SANS_TRACK) return 1
+			if (droite === SANS_TRACK) return -1
+			return 0
+		})
+		.map(([, groupe]) => groupe)
+	return ordonnes.map((groupe) => ({
+		idTrack: groupe.idTrack,
+		nomTrack: groupe.nomTrack,
+		channels: groupe.channels,
+	}))
+}
+
+/**
+ * Lie un bloc à un channel, ou RETIRE le lien lorsque `idChannel` vaut `null` (§3).
+ *
+ * UNE SEULE FONCTION POUR LES DEUX GESTES, parce que c'est une seule écriture : `channel_id` reçoit
+ * un identifiant ou `null`, sur la même ligne et sous la même politique. Deux fonctions ne
+ * différeraient que par la valeur envoyée.
+ *
+ * ELLE N'ANTICIPE AUCUN DROIT, et c'est ici que cela compte le plus (`CLAUDE.md` §10) : poser le
+ * lien exige `app.can_write_channel(channel_id)` tandis que le retirer n'exige que l'écriture sur
+ * le bloc (§4.2). Cette asymétrie vit dans la clause `with check` de la politique, jamais ici : le
+ * module envoie les deux gestes de la même façon et traduit ce qu'il reçoit. Un `viewer` qui retire
+ * un lien reçoit donc bien un refus, mais c'est la politique qui le refuse, pas l'écran.
+ *
+ * Ne lève jamais.
+ */
+export async function lierBlocAChannel(
+	client: ClientCrm,
+	idBloc: string,
+	idChannel: string | null,
+): Promise<ResultatEcritureBloc> {
+	return modifierBloc(client, idBloc, { channel_id: idChannel })
+}
+
+/**
  * La requête de modification et ses TROIS issues, partagées par la géométrie et le contenu.
  *
  * `.select(...)` accompagne la mise à jour précisément pour que « zéro ligne touchée » existe comme
@@ -363,6 +523,7 @@ async function modifierBloc(
 		body: string | null
 		color: string
 		fill_percent: number
+		channel_id: string | null
 	}>,
 ): Promise<ResultatEcritureBloc> {
 	try {
