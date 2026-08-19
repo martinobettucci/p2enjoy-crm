@@ -19224,3 +19224,92 @@ exécuté, et deux fois.
 au §13.8 : la **fiche** d'un contact, et l'arbitrage sur les **références mortes** — une valeur qui
 désigne un contact supprimé demeure en base, et aucune surface ne la nettoie. La prochaine exécution
 peut prendre cette fiche, ou la première unité `[ ]` du plan.
+
+## décision 454 — `CRM-060` sous-tranche 4f : le contact a enfin une page, et une ambiguïté `PGRST201` désignée plutôt que contournée
+
+**L'unité, et le choix.** La décision 453 laissait `4e` close et `CRM-060` en `[~]`, avec « la
+**fiche** d'un contact » en tête de ce qui reste dû (§6, §13.8). C'est le §4.2 point 2 de
+`docs/CloudWorker.md` : la première unité `[~]` du plan dont il reste du **comportement** à livrer.
+Le contact était le seul objet de la tranche à n'avoir **aucune page** — quatre surfaces le
+nommaient, aucune ne menait à lui.
+
+**Spécification écrite et committée AVANT toute ligne de code**, `docs/SPEC-contacts.md` §15, fondée
+sur seize mesures relevées à la main sur la pile seedée avec les jetons réels des trois profils et
+la clé anonyme, sur des rattachements sondes détruits ensuite — le seed est rendu **intact**, ses
+trois contacts et ses deux rattachements retrouvés. **Quatre mesures ont DÉCIDÉ du contrat plutôt
+que de le confirmer :**
+
+- **l'embarquement `cards → channels` est AMBIGU.** La forme naïve rend `PGRST201` — deux clés
+  étrangères relient ces tables. C'est le défaut qui avait imposé **trois lectures en cascade** à
+  `lireCheminCard` (`inbox.ts`) ; ici il se **désigne** au lieu de se contourner, par
+  `channels!cards_channel_id_workspace_id_fkey`, et la chaîne **quatre niveaux**
+  `contacts → card_contacts → cards → channels → tracks` tient en **une seule requête**. L'adresse
+  d'une affaire s'en déduit sans requête supplémentaire ;
+- **une affaire à la corbeille apparaît sans filtre**, mesuré sur « Saisie erronée ». La forme qui
+  l'écarte est `cards!inner` avec `deleted_at=is.null` : elle **retire la ligne entière** au lieu de
+  rendre `cards: null`, ce qui aurait obligé l'écran à filtrer ce que le serveur sait déjà écarter ;
+- **une affaire archivée reste rendue**, avec sa pilule. La taire mentirait sur le passé, que cette
+  page sert précisément ;
+- **le tri des rattachements par titre AGIT**, vérifié dans les deux sens sur deux sondes — une
+  seule ligne n'aurait prouvé qu'une tolérance.
+
+**LA MESURE DÉCISIVE porte sur les droits, et elle dispense l'écran d'en calculer.** Les droits fins
+de `cards` **traversent l'embarquement** : la lectrice, à qui le track « Conseil IA » est fermé,
+reçoit `card_contacts: []` sur la fiche de Léo — la ligne est **retirée**, non rendue avec une
+affaire nulle — et l'affaire de Sophie sur la sienne. La zone vide d'un lecteur restreint est donc
+l'état vide ordinaire du §5.8, jamais un refus mis en scène. Les deux volets sont éprouvés
+ensemble, en API et à l'écran : sans le second, l'état vide pourrait venir d'un écran cassé.
+
+**Ce que j'ai livré.** Une route `/contacts/:idContact` — **sans collision** avec
+`/contacts/organisations/:idOrganisation`, ce qui n'est pas une chance mais une propriété du chemin :
+deux segments contre trois. La fiche rend ce qui caractérise le contact et **ses affaires**, avec son
+rôle dans chacune et un lien vers chacune. C'est l'**historique transverse** que la Definition of
+Done de `CRM-060` nomme, livré jusqu'ici dans l'autre sens seulement — 4c disait les contacts d'une
+affaire, 4f dit les affaires d'un contact.
+
+**Deux règles ABANDONNÉES par livraison, et quatre preuves révisées.** Le §11.8 et le §5.20 du design
+system posaient que le nom d'un contact est un texte, « il n'existe pas de fiche de contact, et un
+lien y serait mort » — la règle exacte que le §11.6 avait abandonnée pour l'organisation. Cette
+condition tombe. Les quatre assertions qui la figeaient — deux dans `Carnet.test.tsx`, une dans
+`FicheOrganisation.test.tsx`, une dans `e2e/ui/contacts.spec.ts` — sont **RÉVISÉES avec leur motif
+écrit dans le fichier**, jamais retirées (mécanisme de la décision 51), et ce qu'elles exigent devient
+plus fort : le lien doit exister ET mener à la bonne fiche. Le bloc des contacts d'une affaire (§12)
+ne gagne PAS ce lien : sa ligne porte une commande destructrice dont la preuve clavier devrait être
+rejouée, et l'écart est **nommé** au §15.8 plutôt qu'improvisé.
+
+**Le seed n'est PAS modifié, et c'est mesuré.** Ses trois contacts couvrent déjà toutes les branches
+— organisation présente ou absente, affaire présente ou absente, email absent, téléphone absent,
+fonction absente, affaire invisible au lecteur restreint. Une seule ne l'est pas, l'affaire
+**archivée** rattachée à un contact : l'ajouter déplacerait la garde de convergence de
+`apply-seed.sh` et le compteur que lit la règle 3 du classement. Le §11.7 avait déjà tranché ce
+départage — on n'enrichit que ce qui ne casse rien —, et le cas est donc éprouvé par une **preuve
+unitaire**, l'écart étant nommé au §15.8.
+
+**Trois échecs E2E, tous dans mes propres locateurs, aucun dans le produit.** `getByText('Aucune
+affaire')` désignait deux éléments — le titre de l'état vide et son corps, la correspondance par
+sous-chaîne étant insensible à la casse — et `getByRole('heading', { name: 'Migration ERP
+Sogexia' })` en désignait deux aussi, la coquille et l'entête de la card portant le même titre. Le
+second échec **prouvait** d'ailleurs que le lien fonctionne : l'affaire était ouverte. Corrigés par
+des locateurs précis, avec leur motif.
+
+**Campagne de fin de session.** `typecheck` **vert** ; `build` **vert** ; `test:unit` **1645 verts,
+51 fichiers** ; `test:sql` **45 fichiers, 2269 assertions, aucune anomalie** ; `e2e:api` **724
+verts** ; `e2e:ui` **420 verts, AUCUN échec**, la suite entière ; `e2e:mail` **42 verts** ; `pytest`
+**242 verts**. Les compteurs de `scripts/verify-harness.sh` sont portés de 713 à **724** et de 408 à
+**420**, valeurs **MESURÉES** par `playwright test --list` et non déduites (INC-101), révisées dans
+le même changement que les preuves qu'elles comptent. Captures **observées** (`CLAUDE.md` §16) :
+`fiche-contact-1440.jpg` montre les deux zones, l'organisation en lien et l'affaire en lien ;
+`fiche-contact-sans-affaire-1440.jpg` montre l'état vide d'Élise Fabre, caractéristiques conservées ;
+`fiche-contact-introuvable-1440.jpg` montre l'écran unique des trois absences, avec son retour au
+carnet ; les quatre paliers ne débordent pas.
+
+**Une note d'environnement, mesurée.** `pytest` n'est pas installé sur l'hôte et ne l'est pas
+davantage dans le conteneur `mail-sync` : il faut `pip install pytest httpx` avec
+`--cert /root/.ccr/ca-bundle.crt`, les dépendances de `mail-sync/requirements.txt` étant par ailleurs
+nécessaires. Sans cela la preuve ne s'exécute pas du tout, ce qui ne dit rien du produit.
+
+**Où reprendre.** `4f` est **close**. `CRM-060` reste `[~]`, et ce qui lui manque est nommé au §6 et
+au §15.8 : l'arbitrage sur les **références mortes** — une valeur `jsonb` qui désigne un contact
+supprimé demeure en base, et aucune surface ne la nettoie —, et les **gestes d'écriture** sur un
+contact existant : le modifier, le supprimer, le rattacher depuis sa fiche. La prochaine exécution
+peut prendre l'un de ces gestes, ou la première unité `[ ]` du plan.
