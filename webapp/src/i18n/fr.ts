@@ -288,6 +288,38 @@ export const fr = {
 	'contact.detach.refus.network':
 		'Le détachement n’a pas pu être envoyé. Vérifiez votre connexion, puis réessayez.',
 	'contact.detach.refus.unknown': 'Le détachement a échoué. Réessayez dans un instant.',
+	// Sous-tranche 4j — la modification du rôle d'un rattachement (docs/SPEC-contacts.md §19).
+	'contact.role.action': 'Modifier le rôle',
+	// LE FORMULAIRE NOMME L'AFFAIRE (docs/SPEC-contacts.md §19.6) : sur cette page le contact est
+	// le décor et l'affaire varie, et un formulaire ouvert sous une ligne d'un tableau qui défile
+	// ne dirait plus quel rattachement il modifie.
+	'contact.role.title': 'Rôle dans « {titre} »',
+	'contact.role.field': 'Rôle',
+	// VIDER LE CHAMP EFFACE LE RÔLE, et c'est MESURÉ (§19.3, mesure 9) : la base accepte `null`.
+	// Le §6 du design system exige qu'un geste dise ce qu'il fait, et celui-ci retire la seule
+	// donnée du rattachement sans détruire la ligne.
+	'contact.role.help':
+		'Par exemple : décideur, prescripteur, contact technique. Videz le champ pour effacer le rôle : le rattachement à l’affaire est conservé.',
+	'contact.role.submit': 'Enregistrer le rôle',
+	'contact.role.cancel': 'Annuler',
+	'contact.role.pending': 'Enregistrement…',
+	// LA TROISIÈME ISSUE (docs/SPEC-contacts.md §19.3, mesures 2 et 3) : la clause `USING` de
+	// `card_contacts_maj` rend la ligne invisible à l'écriture, et le serveur rend `200` avec zéro
+	// ligne, SANS erreur. Le texte n'affirme ni le refus ni la disparition — les deux causes sont
+	// indistinguables par construction —, et il dit ce qui est vrai des deux.
+	'contact.role.noeffect':
+		'Aucun rôle n’a été modifié. Vous n’avez peut-être pas le droit de modifier cette affaire, ou le rattachement n’existe plus.',
+	'contact.role.refus.forbidden':
+		'La modification a été refusée. Rechargez la fiche pour voir son état réel.',
+	'contact.role.refus.network':
+		'Le rôle n’a pas pu être envoyé. Vérifiez votre connexion, puis réessayez.',
+	// `23514` est ATTEIGNABLE EN BASE et nulle part ailleurs sur cette fiche (§19.5) : la chaîne
+	// vide comme la chaîne blanche violent `card_contacts_role_check`. La fonction ne l'émet jamais
+	// — elle normalise —, mais lui donner le texte fourre-tout d'`unknown` masquerait une cause
+	// connue derrière une erreur générique.
+	'contact.role.refus.invalid':
+		'Ce rôle n’est pas accepté. Saisissez au moins un caractère, ou videz le champ pour effacer le rôle.',
+	'contact.role.refus.unknown': 'La modification du rôle a échoué. Réessayez dans un instant.',
 	'contact.notFound.title': 'Contact introuvable',
 	'contact.notFound.body': 'Ce contact n’existe pas, ou il ne vous est pas accessible.',
 	'contact.notFound.action': 'Revenir au carnet',

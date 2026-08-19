@@ -1100,3 +1100,137 @@ export async function lireAffairesRattachables(
 		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
 	}
 }
+
+// =================================================================================================
+// SOUS-TRANCHE 4j — LA MODIFICATION DU RÔLE D'UN RATTACHEMENT POSÉ
+// =================================================================================================
+//
+// @spec CRM-060 (docs/BACKLOG.md) — tranche 4 sous-tranche 4j : la modification du rôle d'un
+//       rattachement, depuis la fiche d'un contact
+// @spec docs/SPEC-contacts.md §19.2 (une fonction NOUVELLE, et `role` SEUL dans le corps),
+//       §19.3 (les quinze mesures, et les quatre qui décident), §19.5 (dictionnaire FERMÉ des
+//       refus), §19.8 (limites nommées)
+// @spec docs/DESIGN_SYSTEM.md §5.28 (le geste qui l'exerce)
+// @spec docs/SPEC-permissions-rls.md §7 (un refus silencieux est zéro ligne, jamais une erreur)
+//
+// C'EST LE PREMIER `UPDATE` DU PRODUIT SUR `card_contacts`. La politique `card_contacts_maj` existe
+// depuis la migration `0045` et aucun écran ne l'avait exercée — le §12.8, puis le §17.8, puis le
+// §18.8 l'ont nommé trois fois. AUCUNE MIGRATION : ni colonne, ni politique, ni privilège ne bouge.
+
+/**
+ * Les natures de refus d'une modification de rôle : les cinq de `NatureRefusRattachement`, plus
+ * `saisie-invalide`.
+ *
+ * **`saisie-invalide` EST ATTEIGNABLE EN BASE ET NULLE PART AILLEURS SUR CETTE FICHE, ET C'EST
+ * MESURÉ DEUX FOIS** (§19.3, mesures 8 et 10) : la chaîne vide comme la chaîne blanche violent
+ * `card_contacts_role_check` (`role is null or btrim(role) <> ''`) par `400` / `23514`. La fonction
+ * ci-dessous ne l'émet jamais — elle normalise —, mais l'issue existe : la taire reviendrait à
+ * affirmer qu'une réponse de la base est impossible alors que seule la forme de l'appel l'empêche.
+ */
+export type NatureRefusRole = NatureRefusRattachement | 'saisie-invalide'
+
+export type RefusRole = {
+	readonly nature: NatureRefusRole
+	readonly detail: string
+}
+
+/**
+ * Classe un refus de modification de rôle : `classerRefusRattachement`, plus la saisie invalide.
+ *
+ * **L'ORDRE COMPTE, comme au §12.5** : `23514` est éprouvé AVANT le statut, `400` couvrant aussi
+ * bien la contrainte de forme que l'identifiant mal formé de la mesure 11 — un classement qui
+ * commencerait par le statut les confondrait sous `unknown`.
+ */
+export function classerRefusRole(
+	statutHttp: number | undefined,
+	code: string | undefined,
+	detail: string,
+): RefusRole {
+	if (code === CODE_SAISIE_INVALIDE) return { nature: 'saisie-invalide', detail }
+	return classerRefusRattachement(statutHttp, code, detail)
+}
+
+/**
+ * Les TROIS issues d'une modification de rôle (§19.3, mesure 2).
+ *
+ * `sans-effet` n'est NI un succès NI une erreur, et c'est la même cause structurelle qu'au
+ * détachement : la clause `USING` de `card_contacts_maj` rend la ligne **invisible à l'écriture**,
+ * et PostgREST rend `200` avec zéro ligne, SANS erreur, sur une ligne qui EXISTE et qui reste en
+ * base avec son rôle. MESURÉ sur la ligne du seed `c4 → Sophie` avec le jeton de la lectrice.
+ *
+ * `modifiee` porte le rôle **tel que la base l'a enregistré**, et non tel que l'appelant l'a tapé :
+ * c'est la ligne rendue qui fait foi, et c'est elle que la fiche affiche (§19.6).
+ */
+export type ResultatModificationRole =
+	| { readonly statut: 'modifiee'; readonly role: string | null }
+	| { readonly statut: 'sans-effet' }
+	| { readonly statut: 'refus'; readonly refus: RefusRole }
+
+/** Les colonnes que la mise à jour redemande : le rôle seul suffit à la fiche (§19.6). */
+export const COLONNES_ROLE_RATTACHEMENT = 'role'
+
+/**
+ * Modifie le rôle d'un rattachement existant.
+ *
+ * **LE CORPS NE PORTE QUE `role`, ET C'EST LA MESURE 12 QUI L'IMPOSE** (§19.2). Un `PATCH` portant
+ * `card_id` **DÉPLACE** le rattachement : `200`, la ligne rendue sur la nouvelle affaire, et plus
+ * rien sur l'ancienne. Ce n'est pas une faille — la clause `USING` filtre sur l'ancienne affaire et
+ * `WITH CHECK` sur la nouvelle, si bien que le déplacement suppose le droit d'écrire les deux —,
+ * c'est une capacité réelle que cet écran n'exerce pas (§19.8). Envoyer les clés « pour être
+ * complet » ouvrirait un déplacement silencieux au premier champ ajouté à un formulaire.
+ *
+ * **UN RÔLE BLANC VAUT `null`, JAMAIS `''` NI `'   '`**, et c'est mesuré deux fois (mesures 8
+ * et 10). `normaliserFacultatif` porte déjà cette règle pour la création ; elle est partagée ici
+ * plutôt que réécrite. Ce n'est PAS une garde de saisie doublant la base (§5.3 ter) : la base
+ * refuserait ces deux valeurs, et `null` est celle qu'elle accepte pour dire « pas de rôle ».
+ *
+ * **VIDER LE CHAMP EFFACE LE RÔLE, et c'est un GESTE** (mesure 9) : `null` est accepté et la ligne
+ * le rend. Au rattachement, un rôle vide *valait* `null` faute d'alternative ; ici l'utilisateur
+ * retire une donnée sans détruire le rattachement.
+ *
+ * `.maybeSingle()` et non `.single()` : zéro ligne est un RÉSULTAT ATTENDU — le refus silencieux —,
+ * et `.single()` le déguiserait en erreur `PGRST116`, c'est-à-dire en panne. Règle de
+ * `modifierContact` (§16), reprise sans changement.
+ *
+ * L'ÉCRAN N'ANTICIPE AUCUN DROIT : il envoie, puis traduit ce qu'il reçoit (§19.6). MESURÉ, la
+ * lectrice RÉUSSIT ce geste sur une affaire et reçoit le silence sur une autre, toutes deux
+ * lisibles par elle (mesures 2 et 7). Ne lève jamais.
+ */
+export async function modifierRoleRattachement(
+	client: ClientCrm,
+	idCard: string,
+	idContact: string,
+	role: string,
+): Promise<ResultatModificationRole> {
+	try {
+		const reponse = await client
+			.from('card_contacts')
+			.update({ role: normaliserFacultatif(role) })
+			.eq('card_id', idCard)
+			.eq('contact_id', idContact)
+			.select(COLONNES_ROLE_RATTACHEMENT)
+			.maybeSingle()
+		if (reponse.error !== null) {
+			return {
+				statut: 'refus',
+				refus: classerRefusRole(reponse.status, reponse.error.code, reponse.error.message),
+			}
+		}
+		// ZÉRO LIGNE, ET AUCUNE ERREUR (§19.3, mesures 2 et 3). Deux situations aboutissent ici et
+		// sont INDISTINGUABLES par construction : l'appelant n'a pas le droit d'écrire cette affaire,
+		// ou le rattachement a disparu entre l'affichage de la fiche et l'envoi. Prétendre les séparer
+		// renseignerait un appelant sans droit sur l'état de l'affaire
+		// (`docs/SPEC-permissions-rls.md` §7). Un SEUL message les couvre.
+		if (reponse.data === null || reponse.data === undefined) return { statut: 'sans-effet' }
+		return { statut: 'modifiee', role: (reponse.data as { role: string | null }).role }
+	} catch (cause) {
+		return {
+			statut: 'refus',
+			refus: classerRefusRole(
+				undefined,
+				undefined,
+				cause instanceof Error ? cause.message : String(cause),
+			),
+		}
+	}
+}

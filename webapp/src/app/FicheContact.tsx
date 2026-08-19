@@ -28,10 +28,16 @@
 // @spec docs/DESIGN_SYSTEM.md §5.27 (le geste de détachement), §5.24 révisé par livraison (le
 //       tableau des affaires se lit désormais à QUATRE colonnes)
 //
-// L'ÉCRAN LIT, IL MODIFIE DEPUIS 4g, IL RATTACHE DEPUIS 4h ET IL DÉTACHE DEPUIS 4i. Un écart
-// demeure, et il est NOMMÉ plutôt que compensé par une commande morte : la SUPPRESSION d'un
-// contact, dont le motif n'est pas le temps — elle dépend de l'arbitrage NON TRANCHÉ du §6 point 4,
-// les valeurs `jsonb` qui désignent un contact supprimé demeurant en base.
+// @spec docs/SPEC-contacts.md §19.4 (où le geste de MODIFICATION DU RÔLE s'ancre : une seconde
+//       commande dans la même colonne, et UN SEUL BLOC OUVERT dans tout le tableau),
+//       §19.6 (de quoi il a l'air, et la fiche qui prend la ligne rendue SANS relire),
+//       §19.7 (contrat de comportement, cas a à p), §19.8 (limites nommées)
+// @spec docs/DESIGN_SYSTEM.md §5.28 (le geste de modification du rôle)
+//
+// L'ÉCRAN LIT, IL MODIFIE DEPUIS 4g, IL RATTACHE DEPUIS 4h, IL DÉTACHE DEPUIS 4i ET IL CORRIGE LE
+// RÔLE DEPUIS 4j. Un écart demeure, et il est NOMMÉ plutôt que compensé par une commande morte : la
+// SUPPRESSION d'un contact, dont le motif n'est pas le temps — elle dépend de l'arbitrage NON
+// TRANCHÉ du §6 point 4, les valeurs `jsonb` qui désignent un contact supprimé demeurant en base.
 //
 // L'ASYMÉTRIE QUE LE §17.8 ASSUMAIT EST COMBLÉE : le détachement, qui n'existait que depuis la
 // fiche de l'affaire (§12.6), vit désormais aussi ici. Ce que 4h laissait ouvert — la place de la
@@ -81,6 +87,10 @@ import {
 	CommandeDetachementAffaire,
 	ConfirmationDetachementAffaire,
 } from './DetachementAffaireContact'
+import {
+	CommandeRoleRattachement,
+	FormulaireRoleRattachement,
+} from './ModificationRoleRattachement'
 
 /** Cellule ordinaire du tableau des affaires — mêmes règles qu'au carnet (§5.9). */
 const CLASSES_CELLULE = 'h-[var(--size-target)] px-3 truncate max-w-[32ch]'
@@ -346,16 +356,21 @@ export function ContenuFicheContact({
 		setTentative((precedente) => precedente + 1)
 	}, [fermerRattachement])
 
-	// --- SOUS-TRANCHE 4i : LE GESTE DE DÉTACHEMENT (§18.4) --------------------------------------
+	// --- SOUS-TRANCHES 4i ET 4j : LES DEUX GESTES DE LIGNE (§18.4, §19.4) -----------------------
 	// L'état vit ICI et non dans la ligne, pour deux raisons que la spécification mesure :
 	//
-	// - UNE SEULE CONFIRMATION À TOUT INSTANT (cas d du §18.7) : deux questions destructrices
-	//   simultanées ne diraient pas à laquelle on répond. L'identifiant de l'affaire est la clé
-	//   d'exclusivité, et l'ouvrir sur une autre ligne ferme la précédente sans code de plus ;
-	// - LE MESSAGE DU GESTE SURVIT À LA RELECTURE (§18.6) : la relecture démonte et remonte le
+	// - UN SEUL BLOC OUVERT À TOUT INSTANT DANS LE TABLEAU, TOUTES LIGNES ET TOUS GESTES CONFONDUS
+	//   (cas d du §18.7, cas e et f du §19.7). Le §18.4 posait « une seule confirmation à la fois » ;
+	//   le §19.4 étend la règle aux DEUX gestes, parce qu'ils vivent désormais sur la même ligne.
+	//   Deux blocs ouverts feraient deux questions dans le flux dont rien ne dirait laquelle on
+	//   répond, et sur un tableau étroit ils se pousseraient l'un l'autre hors de vue. Le couple
+	//   (geste, affaire) est la clé d'exclusivité, et en ouvrir un ferme l'autre sans code de plus ;
+	// - LE MESSAGE DU DÉTACHEMENT SURVIT À LA RELECTURE (§18.6) : la relecture démonte et remonte le
 	//   tableau, et un message porté par la ligne partirait avec elle — c'est-à-dire exactement dans
-	//   le cas où il compte le plus, l'issue « sans effet » où la ligne RESTE.
-	const [confirmationDetachement, setConfirmationDetachement] = useState<string | null>(null)
+	//   le cas où il compte le plus, l'issue « sans effet » où la ligne RESTE. Le message du geste de
+	//   RÔLE, lui, vit dans son formulaire (§19.6) : ce geste ne relit rien, et sa saisie doit être
+	//   conservée près du champ qui l'a causée.
+	const [blocOuvert, setBlocOuvert] = useState<BlocLigneOuvert>(null)
 	const [messageDetachement, setMessageDetachement] = useState<string | null>(null)
 
 	/**
@@ -369,8 +384,34 @@ export function ContenuFicheContact({
 	 */
 	const surDetachement = useCallback((message: string | null) => {
 		setMessageDetachement(message)
-		setConfirmationDetachement(null)
+		setBlocOuvert(null)
 		setTentative((precedente) => precedente + 1)
+	}, [])
+
+	/**
+	 * LA FICHE PREND LE RÔLE RENDU, ET NE RELIT RIEN (§19.6, règle du §16.7).
+	 *
+	 * **C'EST L'ÉCART MESURÉ AVEC 4h ET 4i, et il est écrit pour qu'on ne recopie pas une relecture
+	 * sans son motif.** Là-bas la relecture existait parce qu'un rattachement AJOUTÉ apporte un état
+	 * d'archivage et une adresse que le formulaire ne connaît pas, et parce qu'une ligne RETIRÉE
+	 * change l'ensemble des lignes. Ici seule une valeur scalaire d'une ligne DÉJÀ AFFICHÉE est
+	 * réécrite, et le `PATCH` la rend : relire serait une seconde requête pour une donnée en main.
+	 *
+	 * Le rôle posé est celui que la BASE a enregistré, jamais celui que l'appelant a tapé — la
+	 * normalisation « blanc vaut `null` » vit dans la fonction, et la ligne rendue en porte le
+	 * résultat (§19.2, mesures 8 à 10).
+	 */
+	const surRoleModifie = useCallback((idCard: string, role: string | null) => {
+		setBlocOuvert(null)
+		setEtat((precedent) => {
+			if (precedent.statut !== 'pret' || precedent.donnees === null) return precedent
+			return pret({
+				...precedent.donnees,
+				affaires: precedent.donnees.affaires.map((affaire) =>
+					affaire.idCard === idCard ? { ...affaire, role } : affaire,
+				),
+			})
+		})
 	}, [])
 
 	/**
@@ -400,11 +441,12 @@ export function ContenuFicheContact({
 			etat={etat}
 			contact={contact}
 			onReprise={reprendre}
-			detachement={{
-				confirmee: confirmationDetachement,
-				message: messageDetachement,
-				onDemander: setConfirmationDetachement,
-				onGeste: surDetachement,
+			gestesLigne={{
+				ouvert: blocOuvert,
+				messageDetachement,
+				onDemander: setBlocOuvert,
+				onDetachement: surDetachement,
+				onRoleModifie: surRoleModifie,
 			}}
 			gesteRattachement={
 				// LE GESTE N'EXISTE QUE S'IL Y A UN CONTACT À RATTACHER (cas n du §17.7) : ni sur
@@ -476,18 +518,27 @@ type ProprietesContenu = {
 	readonly geste?: React.ReactNode
 	/** Le geste de rattachement, ou `null` quand il n'y a rien à rattacher (§17.7 cas n). */
 	readonly gesteRattachement?: React.ReactNode
-	/** L'état du geste de DÉTACHEMENT, tenu par la fiche pour l'exclusivité et le message (§18.4). */
-	readonly detachement?: EtatDetachement
+	/** L'état des DEUX gestes de ligne, tenu par la fiche pour l'exclusivité (§18.4, §19.4). */
+	readonly gestesLigne?: EtatGestesLigne
 }
 
-/** Ce que la fiche transmet au tableau pour que chaque ligne porte son geste (§18.4). */
-type EtatDetachement = {
-	/** L'affaire dont la confirmation est ouverte, ou `null` — la clé d'exclusivité du cas d. */
-	readonly confirmee: string | null
-	/** Le message du geste, sous le tableau, qui SURVIT à la relecture (§18.6). */
-	readonly message: string | null
-	readonly onDemander: (idCard: string | null) => void
-	readonly onGeste: (message: string | null) => void
+/**
+ * Le bloc ouvert dans le tableau, ou `null` — **il n'y en a JAMAIS plus d'un** (§19.4).
+ *
+ * Le couple (geste, affaire) porte l'exclusivité à lui seul : ouvrir un bloc écrase le précédent,
+ * quelle que soit sa ligne et quel que soit son geste. Deux drapeaux séparés auraient laissé
+ * coexister une confirmation de détachement et un formulaire de rôle.
+ */
+type BlocLigneOuvert = { readonly geste: 'detachement' | 'role'; readonly idCard: string } | null
+
+/** Ce que la fiche transmet au tableau pour que chaque ligne porte ses gestes (§18.4, §19.4). */
+type EtatGestesLigne = {
+	readonly ouvert: BlocLigneOuvert
+	/** Le message du DÉTACHEMENT, sous le tableau, qui SURVIT à la relecture (§18.6). */
+	readonly messageDetachement: string | null
+	readonly onDemander: (bloc: BlocLigneOuvert) => void
+	readonly onDetachement: (message: string | null) => void
+	readonly onRoleModifie: (idCard: string, role: string | null) => void
 }
 
 function ContenuFiche({
@@ -497,7 +548,7 @@ function ContenuFiche({
 	onReprise,
 	geste = null,
 	gesteRattachement = null,
-	detachement,
+	gestesLigne,
 }: ProprietesContenu) {
 	if (client === null) {
 		return (
@@ -617,13 +668,15 @@ function ContenuFiche({
 										{t('contact.deals.table.state')}
 									</th>
 									{/*
-									  QUATRIÈME COLONNE — LES COMMANDES (§18.4, §5.27). Son en-tête est
-									  un LIBELLÉ LISIBLE et non une cellule vide : une colonne sans nom
-									  n'est pas annonçable au lecteur d'écran (§8). Le motif des « trois
-									  colonnes et non cinq » du §5.24 est INCHANGÉ — il visait les
-									  colonnes de DONNÉE, le track et le channel restant dans l'adresse.
+									  QUATRIÈME COLONNE — LES COMMANDES (§18.4, §5.27, §5.28). Son
+									  en-tête est un LIBELLÉ LISIBLE et non une cellule vide : une
+									  colonne sans nom n'est pas annonçable au lecteur d'écran (§8). Elle
+									  porte DEUX commandes depuis 4j, et son libellé est déjà au pluriel.
+									  Le motif des « trois colonnes et non cinq » du §5.24 est INCHANGÉ —
+									  il visait les colonnes de DONNÉE, le track et le channel restant
+									  dans l'adresse.
 									*/}
-									{detachement === undefined || client === null ? null : (
+									{gestesLigne === undefined || client === null ? null : (
 										<th scope="col" className={CLASSES_ENTETE}>
 											{t('contact.detach.column')}
 										</th>
@@ -637,7 +690,7 @@ function ContenuFiche({
 										affaire={affaire}
 										client={client}
 										idContact={contact.id}
-										detachement={detachement}
+										gestesLigne={gestesLigne}
 									/>
 								))}
 							</tbody>
@@ -651,13 +704,13 @@ function ContenuFiche({
 				  ligne RESTE, et où un message emporté par le remontage du tableau laisserait
 				  l'utilisateur devant une liste inchangée sans la moindre explication.
 				*/}
-				{detachement?.message == null ? null : (
+				{gestesLigne?.messageDetachement == null ? null : (
 					<p
 						role="alert"
 						data-testid="message-detachement-affaire"
 						className="rounded-sm bg-danger-soft px-3 py-2 text-sm text-danger-on-soft"
 					>
-						{detachement.message}
+						{gestesLigne.messageDetachement}
 					</p>
 				)}
 			</section>
@@ -666,52 +719,85 @@ function ContenuFiche({
 }
 
 /**
- * Une ligne du tableau des affaires, et — quand sa confirmation est ouverte — LA LIGNE QUI LA PORTE.
+ * Une ligne du tableau des affaires, et — quand un de ses blocs est ouvert — LA LIGNE QUI LE PORTE.
  *
- * **La confirmation occupe une ligne à elle, en `colSpan`, immédiatement sous la sienne** (§18.4,
- * §5.27). Les deux autres emplacements sont écartés pour une raison mesurable : dans la cellule de
- * la commande, elle serait TRONQUÉE par `CLASSES_CELLULE` (`max-w-[32ch]`, `truncate`) et la règle
- * du §6 — nommer l'objet — serait tenue dans le balisage et perdue à l'écran ; sous le tableau,
- * rien ne la relierait à SA ligne. Le fragment rend deux `tr` frères, ce qu'un `tbody` accepte.
+ * **Le bloc occupe une ligne à lui, en `colSpan`, immédiatement sous la sienne** (§18.4, §19.4,
+ * §5.27, §5.28). Les deux autres emplacements sont écartés pour une raison mesurable : dans la
+ * cellule de la commande, il serait TRONQUÉ par `CLASSES_CELLULE` (`max-w-[32ch]`, `truncate`) et
+ * la règle du §6 — nommer l'objet — serait tenue dans le balisage et perdue à l'écran ; sous le
+ * tableau, rien ne le relierait à SA ligne. Le fragment rend deux `tr` frères, ce qu'un `tbody`
+ * accepte.
+ *
+ * **UN SEUL BLOC À TOUT INSTANT DANS LE TABLEAU** (§19.4) : la ligne ne décide de rien, elle lit le
+ * couple (geste, affaire) que la fiche tient. Ouvrir le formulaire de rôle d'une ligne ferme donc la
+ * confirmation de détachement d'une autre, et réciproquement, sans code de plus.
  */
 function LigneAffaireContact({
 	affaire,
 	client,
 	idContact,
-	detachement,
+	gestesLigne,
 }: {
 	readonly affaire: FicheContactLue['affaires'][number]
 	readonly client: ClientCrm | null
 	readonly idContact: string
-	readonly detachement: EtatDetachement | undefined
+	readonly gestesLigne: EtatGestesLigne | undefined
 }) {
-	const commande = useRef<HTMLButtonElement>(null)
-	const confirmee = detachement?.confirmee === affaire.idCard
+	const commandeDetachement = useRef<HTMLButtonElement>(null)
+	const commandeRole = useRef<HTMLButtonElement>(null)
+	const ouvert = gestesLigne?.ouvert
+	const confirmee = ouvert?.geste === 'detachement' && ouvert.idCard === affaire.idCard
+	const roleOuvert = ouvert?.geste === 'role' && ouvert.idCard === affaire.idCard
+	// LES DEUX COMMANDES SONT DÉSACTIVÉES TANT QU'UN BLOC DE CETTE LIGNE EST OUVERT (§19.4) : une
+	// commande dont le bloc est déjà là n'a rien à rouvrir, et l'autre ouvrirait un second bloc sur
+	// la ligne que l'on est en train de lire. Ce n'est pas une garde de droit (§19.6).
+	const blocDeCetteLigne = confirmee || roleOuvert
 
 	/**
 	 * LE FOCUS REVIENT À LA COMMANDE DE SA LIGNE À LA FERMETURE, ET CE RETOUR EST DIFFÉRÉ (cas c
-	 * du §18.7).
+	 * du §18.7, cas d du §19.7).
 	 *
 	 * **LE MOTIF DIFFÈRE DE CELUI DE 4g ET DE 4h.** Là-bas la commande est DÉMONTÉE pendant que le
 	 * formulaire est ouvert, et sa référence vaut `null`. Ici elle reste montée — mais elle est
-	 * `disabled` tant que la confirmation est ouverte, et **un élément désactivé ne reçoit pas le
+	 * `disabled` tant qu'un bloc de la ligne est ouvert, et **un élément désactivé ne reçoit pas le
 	 * focus** : `focus()` appelé depuis le gestionnaire d'annulation serait un geste sans effet,
 	 * exactement comme le sélecteur de 4h au montage. Le drapeau est posé à la fermeture, l'effet
 	 * rend le focus au tour suivant, quand le bouton est de nouveau actif. **Aucune temporisation**
 	 * (`CLAUDE.md` §18) : c'est le cycle de rendu de React qui ordonne les deux gestes.
+	 *
+	 * Le drapeau retient **quelle** commande reprend le focus : deux gestes vivent sur cette ligne,
+	 * et rendre le focus à celle du détachement après avoir annulé le formulaire de rôle déplacerait
+	 * l'utilisateur d'un geste à l'autre sans qu'il l'ait demandé.
 	 */
-	const [focusARendre, setFocusARendre] = useState(false)
+	const [focusARendre, setFocusARendre] = useState<'detachement' | 'role' | null>(null)
 
 	useEffect(() => {
-		if (confirmee || !focusARendre) return
-		commande.current?.focus()
-		setFocusARendre(false)
-	}, [confirmee, focusARendre])
+		if (blocDeCetteLigne || focusARendre === null) return
+		const cible = focusARendre === 'role' ? commandeRole : commandeDetachement
+		cible.current?.focus()
+		setFocusARendre(null)
+	}, [blocDeCetteLigne, focusARendre])
 
 	const annuler = useCallback(() => {
-		detachement?.onDemander(null)
-		setFocusARendre(true)
-	}, [detachement])
+		gestesLigne?.onDemander(null)
+		setFocusARendre('detachement')
+	}, [gestesLigne])
+
+	const annulerRole = useCallback(() => {
+		gestesLigne?.onDemander(null)
+		setFocusARendre('role')
+	}, [gestesLigne])
+
+	// Cas h du §19.7 : le formulaire se ferme et la cellule du rôle porte la nouvelle valeur. Le
+	// focus revient à la commande de rôle, comme après une annulation — un geste abouti ne laisse
+	// pas plus le focus sur le document qu'un geste abandonné (§8).
+	const surRoleModifie = useCallback(
+		(role: string | null) => {
+			gestesLigne?.onRoleModifie(affaire.idCard, role)
+			setFocusARendre('role')
+		},
+		[affaire.idCard, gestesLigne],
+	)
 
 	return (
 		<>
@@ -762,40 +848,73 @@ function LigneAffaireContact({
 					)}
 				</td>
 				{/*
-				  LA COMMANDE DE DÉTACHEMENT — §18.4. TOUTES LES LIGNES LA PORTENT, y compris celle
-				  d'une affaire ARCHIVÉE : MESURÉ, la base accepte ce détachement, `app.can_write_card`
-				  dérivant du channel et ne lisant ni `archived_at` ni `deleted_at` (§18.3, mesure 4).
-				  AUCUNE COMMANDE N'EST ÉTEINTE D'AVANCE SELON LE RÔLE (§18.6) : la lectrice RÉUSSIT
-				  ce geste sur une affaire et reçoit le silence sur une autre, toutes deux lisibles
-				  par elle (mesure 7) — l'écran qui calculerait ce droit se tromperait.
+				  LES DEUX COMMANDES DE LA LIGNE — §18.4 et §19.4. TOUTES LES LIGNES LES PORTENT, y
+				  compris celle d'une affaire ARCHIVÉE : MESURÉ, la base accepte le détachement comme
+				  la modification du rôle sur une affaire close, `app.can_write_card` dérivant du
+				  channel et ne lisant ni `archived_at` ni `deleted_at` (§18.3 mesure 4, §19.3
+				  mesure 4). AUCUNE COMMANDE N'EST ÉTEINTE D'AVANCE SELON LE RÔLE (§18.6, §19.6) : la
+				  lectrice RÉUSSIT ces gestes sur une affaire et reçoit le silence sur une autre,
+				  toutes deux lisibles par elle — l'écran qui calculerait ce droit se tromperait.
+
+				  L'ORDRE EST : MODIFIER LE RÔLE, PUIS DÉTACHER (§19.4). Le geste qui CORRIGE précède
+				  le geste qui RETIRE, comme la colonne gauche de la fiche d'affaire place « Modifier »
+				  avant le bloc de corbeille. Un geste destructeur ne se pose jamais en premier sous
+				  le pointeur.
 				*/}
-				{detachement === undefined || client === null ? null : (
+				{gestesLigne === undefined || client === null ? null : (
 					<td className="h-[var(--size-target)] px-3">
-						<CommandeDetachementAffaire
-							commande={commande}
-							idCard={affaire.idCard}
-							confirmationOuverte={confirmee}
-							onDemander={() => detachement.onDemander(affaire.idCard)}
-						/>
+						<div className="flex flex-wrap items-center gap-2">
+							<CommandeRoleRattachement
+								commande={commandeRole}
+								idCard={affaire.idCard}
+								blocOuvert={blocDeCetteLigne}
+								onDemander={() =>
+									gestesLigne.onDemander({ geste: 'role', idCard: affaire.idCard })
+								}
+							/>
+							<CommandeDetachementAffaire
+								commande={commandeDetachement}
+								idCard={affaire.idCard}
+								confirmationOuverte={blocDeCetteLigne}
+								onDemander={() =>
+									gestesLigne.onDemander({ geste: 'detachement', idCard: affaire.idCard })
+								}
+							/>
+						</div>
 					</td>
 				)}
 			</tr>
-			{detachement === undefined || client === null || !confirmee ? null : (
+			{/*
+			  UNE LIGNE À ELLE, SUR TOUTE LA LARGEUR (§18.4, §19.4, §5.27, §5.28) : c'est le seul
+			  emplacement à la fois DANS LE FLUX (§5.13), ADJACENT à la ligne concernée, et ASSEZ
+			  LARGE pour nommer l'affaire — ce que la cellule bornée à `32ch` et tronquée de la
+			  commande ne permettrait pas. Les deux gestes la partagent, et jamais en même temps.
+			*/}
+			{gestesLigne === undefined || client === null || !confirmee ? null : (
 				<tr data-testid="ligne-confirmation-detachement" data-card={affaire.idCard}>
-					{/*
-					  UNE LIGNE À ELLE, SUR TOUTE LA LARGEUR (§18.4, §5.27) : c'est le seul emplacement
-					  à la fois DANS LE FLUX (§5.13), ADJACENT à la ligne concernée, et ASSEZ LARGE
-					  pour nommer l'affaire — ce que la cellule bornée à `32ch` et tronquée de la
-					  commande ne permettrait pas.
-					*/}
 					<td colSpan={4} className="px-3">
 						<ConfirmationDetachementAffaire
 							client={client}
 							idCard={affaire.idCard}
 							idContact={idContact}
 							titre={affaire.titre}
-							onGeste={detachement.onGeste}
+							onGeste={gestesLigne.onDetachement}
 							onAnnuler={annuler}
+						/>
+					</td>
+				</tr>
+			)}
+			{gestesLigne === undefined || client === null || !roleOuvert ? null : (
+				<tr data-testid="ligne-formulaire-role" data-card={affaire.idCard}>
+					<td colSpan={4} className="px-3">
+						<FormulaireRoleRattachement
+							client={client}
+							idCard={affaire.idCard}
+							idContact={idContact}
+							titre={affaire.titre}
+							role={affaire.role}
+							onModifie={surRoleModifie}
+							onFermer={annulerRole}
 						/>
 					</td>
 				</tr>
