@@ -91,6 +91,23 @@ const LISERES: Readonly<Record<string, string>> = {
 
 const liseréDe = (couleur: string) => LISERES[couleur] ?? LISERES.neutral
 
+/**
+ * Couleur de jeton → clé de son nom en clair, ÉCRITE LITTÉRALEMENT.
+ *
+ * La table existe parce qu'une clé construite — `` t(`goals.edit.color.${couleur}`) `` — est une
+ * clé que RIEN ne peut plus suivre : le détecteur de clés mortes de `i18n.test.ts` cherche chaque
+ * clé du dictionnaire dans les sources, et a déclaré mortes les cinq couleurs le jour où elles ont
+ * été appelées ainsi. Il avait raison de le faire : une clé qu'aucune recherche textuelle ne trouve
+ * survit à la suppression du code qui l'employait. Les clés sont donc écrites en toutes lettres.
+ */
+const NOMS_COULEUR = {
+	brand: 'goals.edit.color.brand',
+	success: 'goals.edit.color.success',
+	accent: 'goals.edit.color.accent',
+	danger: 'goals.edit.color.danger',
+	neutral: 'goals.edit.color.neutral',
+} as const
+
 /** Paliers de zoom du canevas. Bornés : un canevas qu'on peut réduire à néant n'est plus une surface. */
 const ZOOMS = [0.5, 0.75, 1, 1.25, 1.5] as const
 const ZOOM_PAR_DEFAUT = 2
@@ -888,7 +905,7 @@ function FicheEditionBloc({
 								}}
 							/>
 							<span aria-hidden="true" className={['size-3 rounded-full', liseréDe(option)].join(' ')} />
-							<span className="text-sm">{t(`goals.edit.color.${option}`)}</span>
+							<span className="text-sm">{t(NOMS_COULEUR[option])}</span>
 						</label>
 					))}
 				</div>
