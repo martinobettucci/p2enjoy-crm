@@ -1,9 +1,12 @@
 // @spec CRM-083 (docs/BACKLOG.md) — canevas d'objectifs, tranche 1 : navigation, liste des
 //       tableaux, canevas rendu, flèches, équivalent textuel et ouverture du channel ;
-//       tranche 2a : poser, déplacer et redimensionner un bloc, à la souris et au clavier
+//       tranche 2a : poser, déplacer et redimensionner un bloc, à la souris et au clavier ;
+//       tranche 2b-1 : la fiche d'édition — titre, corps, couleur, remplissage
 // @spec docs/SPEC-goals.md §5.1 (liste des tableaux), §5.2 (canevas), §5.3 (flèches),
-//       §5.4 (les cinq états), §5.5 (accessibilité et gestes clavier), §3 (ouvrir le channel
-//       d'un bloc, poser un bloc, le déplacer, le redimensionner), §4.2 (écriture)
+//       §5.4 (les cinq états), §5.5 (accessibilité, gestes clavier, `Entrée` ouvre la fiche
+//       d'édition), §3 (ouvrir le channel d'un bloc, poser un bloc, le déplacer, le
+//       redimensionner, saisir titre / corps / couleur, régler le remplissage au curseur ET au
+//       champ numérique), §4.2 (écriture), §1 (aucun remplissage calculé)
 // @spec docs/SPEC-goals.md §4.1 (le bloc masqué n'est pas rendu, et l'écran ne le nomme jamais)
 // @spec docs/DESIGN_SYSTEM.md §5.29 (bloc, jauge, flèche, focus), §5.8 (états), §8 (clavier),
 //       §5.5 bis (pilule de track réemployée par la pilule de channel)
@@ -17,10 +20,12 @@
 //     diagramme, les états vide / introuvable / lien perdu, et l'OUVERTURE du channel ;
 //   * TRANCHE 2a, LA GÉOMÉTRIE : poser un bloc à la position du geste, le déplacer et le
 //     redimensionner, à la souris ET au clavier, avec persistance des quatre colonnes ;
-//   * NON LIVRÉ, et donc non simulé : saisir le titre, le corps, la couleur et le remplissage,
-//     lier un bloc à un channel, tracer une flèche, supprimer un bloc, administrer les tableaux.
-//     Aucune commande morte n'est posée pour ces gestes — un bouton qui n'écrit rien ment plus
-//     qu'une absence.
+//   * TRANCHE 2b-1, LE CONTENU : la fiche d'édition d'un bloc — titre, corps, couleur, et
+//     remplissage réglé au curseur COMME au champ numérique —, ouverte par `Entrée` au clavier et
+//     par un clic sans déplacement à la souris ; chaque champ s'enregistre pour lui-même ;
+//   * NON LIVRÉ, et donc non simulé : lier un bloc à un channel, tracer une flèche, supprimer une
+//     flèche ou un bloc, administrer les tableaux. Aucune commande morte n'est posée pour ces
+//     gestes — un bouton qui n'écrit rien ment plus qu'une absence.
 //
 // L'ÉCRAN NE CALCULE AUCUN DROIT : il rend ce que le backend consent, et il ENVOIE puis traduit
 // le refus (`CLAUDE.md` §10, `docs/DESIGN_SYSTEM.md` §5.26). Aucune commande n'est éteinte
@@ -48,6 +53,10 @@ import {
 	type FlecheTracee,
 } from '../lib/objectifs'
 import {
+	COULEURS_BLOC,
+	REMPLISSAGE_MAXIMAL,
+	REMPLISSAGE_MINIMAL,
+	ecrireContenuBloc,
 	ecrireGeometrieBloc,
 	poserBloc,
 	PAS_CLAVIER,
@@ -56,7 +65,10 @@ import {
 	TAILLE_BLOC_NEUF,
 	bornerCoordonnee,
 	bornerDimension,
+	bornerRemplissage,
+	type ContenuBloc,
 	type RefusBloc,
+	type ResultatEcritureBloc,
 } from '../lib/objectifs-ecriture'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { useWorkspaces } from '../lib/workspaces'
@@ -200,6 +212,17 @@ const geometrieDe = (bloc: BlocObjectif): Geometrie => ({
 	hauteur: bloc.height,
 })
 
+/**
+ * Deux géométries diffèrent-elles ?
+ *
+ * La comparaison est EXACTE et sans tolérance, parce que les deux membres sont déjà des entiers :
+ * `bornerCoordonnee` et `bornerDimension` arrondissent avant que la valeur n'arrive ici. Une
+ * tolérance en pixels rendrait un petit glissement volontaire indistinguable d'un clic, et ferait
+ * ouvrir une fiche à la place d'un déplacement.
+ */
+const aBouge = (avant: Geometrie, apres: Geometrie): boolean =>
+	avant.x !== apres.x || avant.y !== apres.y || avant.largeur !== apres.largeur || avant.hauteur !== apres.hauteur
+
 const avecGeometrie = (bloc: BlocObjectif, geometrie: Geometrie): BlocObjectif => ({
 	...bloc,
 	pos_x: geometrie.x,
@@ -255,6 +278,10 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 	const [ebauche, setEbauche] = useState<{ readonly id: string; readonly geometrie: Geometrie } | null>(null)
 	const [message, setMessage] = useState<MessageEcriture | null>(null)
 	const [pose, setPose] = useState<{ readonly x: number; readonly y: number } | null>(null)
+	// LA FICHE EST DÉSIGNÉE PAR UN IDENTIFIANT, jamais par une copie du bloc : le bloc rendu vient
+	// de `blocsRendus` et change à chaque écriture, tandis que la fiche doit rester ouverte SUR LE
+	// MÊME bloc à travers ces changements.
+	const [edite, setEdite] = useState<string | null>(null)
 
 	const contenu = etat.statut === 'pret' ? etat.donnees : null
 
@@ -265,6 +292,16 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 		setAjoutes([])
 		setEbauche(null)
 	}, [contenu])
+
+	// LA FICHE SE FERME SI SON BLOC N'EST PLUS RENDU. Une relecture peut le retirer — la RLS a
+	// changé, un collègue l'a supprimé —, et une fiche restée ouverte sur un bloc absent
+	// n'écrirait plus que dans le vide, en disant « Enregistré » à chaque tentative.
+	useEffect(() => {
+		if (edite === null) return
+		const present =
+			(contenu?.blocs ?? []).some((bloc) => bloc.id === edite) || ajoutes.some((bloc) => bloc.id === edite)
+		if (!present) setEdite(null)
+	}, [contenu, ajoutes, edite])
 
 	// L'ORDRE DE TABULATION EST CALCULÉ SUR L'ÉTAT DU SERVEUR, JAMAIS SUR L'ÉBAUCHE. Le trier
 	// pendant un déplacement ferait sauter le bloc d'une place à l'autre de l'ordre du clavier
@@ -320,6 +357,26 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 			}
 			setEcrits((precedents) => new Map(precedents).set(idBloc, resultat.bloc))
 			setMessage({ ton: 'succes', texte: t('goals.write.saved') })
+		},
+		[client],
+	)
+
+	/**
+	 * Écrit UN champ de contenu, et rend l'issue à la fiche.
+	 *
+	 * La mention d'état n'est PAS posée ici : elle vit sous le champ concerné
+	 * (`docs/DESIGN_SYSTEM.md` §5.7 ter), et le canevas n'a aucun moyen de savoir lequel. Le canevas
+	 * ne garde donc que ce qui est à lui — la ligne rendue par le serveur, qui remet le bloc à jour
+	 * derrière la fiche.
+	 */
+	const enregistrerContenu = useCallback(
+		async (idBloc: string, contenu: ContenuBloc): Promise<ResultatEcritureBloc> => {
+			if (client === null) return { statut: 'sans-effet' }
+			const resultat = await ecrireContenuBloc(client, idBloc, contenu)
+			if (resultat.statut === 'enregistree') {
+				setEcrits((precedents) => new Map(precedents).set(idBloc, resultat.bloc))
+			}
+			return resultat
 		},
 		[client],
 	)
@@ -383,6 +440,10 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 	// recevoir le clic. L'état vide porte donc le geste qui le comble
 	// (`docs/DESIGN_SYSTEM.md` §5.13).
 	const canevasRendu = blocsRendus.length > 0 || pose !== null
+
+	// Le bloc de la fiche est relu dans la liste RENDUE, et non gardé en état : c'est ainsi que la
+	// fiche affiche la valeur du serveur dès qu'une écriture aboutit, sans la recopier.
+	const blocEdite = blocsRendus.find((bloc) => bloc.id === edite) ?? null
 
 	return (
 		<section aria-label={t('goals.canvas.aria')} className="flex flex-col gap-4">
@@ -454,8 +515,10 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 								key={bloc.id}
 								bloc={bloc}
 								zoom={zoom}
+								edite={bloc.id === edite}
 								onEbauche={(geometrie) => setEbauche({ id: bloc.id, geometrie })}
 								onFin={(geometrie, mode) => void enregistrerGeometrie(bloc.id, geometrie, mode)}
+								onOuvrirFiche={() => setEdite(bloc.id)}
 							/>
 						))}
 						{pose === null ? null : (
@@ -479,6 +542,25 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 			)}
 
 			<MentionEcriture message={message} />
+
+			{/* LA FICHE VIT SOUS LE CANEVAS, jamais en surimpression : le bloc qu'elle édite doit
+			    rester visible pendant la saisie — c'est lui qui montre l'effet de la couleur et du
+			    remplissage —, et une fenêtre posée par-dessus le cacherait une fois sur deux
+			    (`docs/DESIGN_SYSTEM.md` §5.13, l'état se lit près de ce qu'il concerne). */}
+			{blocEdite === null ? null : (
+				<FicheEditionBloc
+					key={blocEdite.id}
+					bloc={blocEdite}
+					onEcrire={(contenu) => enregistrerContenu(blocEdite.id, contenu)}
+					onFermer={() => {
+						setEdite(null)
+						// Le focus REVIENT au bloc, faute de quoi la fermeture le renverrait au début
+						// du document et le clavier perdrait sa place sur le canevas (§5.13).
+						const cible = document.querySelector<HTMLElement>(`[data-bloc="${blocEdite.id}"]`)
+						cible?.focus()
+					}}
+				/>
+			)}
 
 			<EquivalentTextuel lignes={lignes} />
 		</section>
@@ -589,6 +671,302 @@ function MentionEcriture({ message }: { readonly message: MessageEcriture | null
 	return (
 		<p
 			data-testid="mention-ecriture"
+			role={message?.ton === 'refus' ? 'alert' : 'status'}
+			className={['text-sm', message === null ? '' : TONS[message.ton]].join(' ')}
+		>
+			{message?.texte ?? ''}
+		</p>
+	)
+}
+
+/** Les quatre champs de la fiche. Chacun porte SA mention d'état (`docs/DESIGN_SYSTEM.md` §5.7 ter). */
+type ChampFiche = 'titre' | 'corps' | 'couleur' | 'remplissage'
+
+const CLASSES_CONTROLE = [
+	'w-full min-h-[var(--size-target)] px-3 py-2',
+	'rounded-sm border border-border bg-surface text-base text-ink',
+].join(' ')
+
+/**
+ * La fiche d'édition d'un bloc — `docs/SPEC-goals.md` §3 et §5.5, `docs/DESIGN_SYSTEM.md` §5.29.
+ *
+ * ELLE N'A AUCUN BOUTON « ENREGISTRER », et c'est le patron du §5.7 ter : chaque champ écrit sa
+ * propre valeur dès qu'elle est ARRÊTÉE — la sortie du champ ou `Entrée` pour un texte, le
+ * relâchement pour le curseur, le choix pour la couleur. Un bouton unique renverrait les quatre
+ * colonnes à chaque fois et écraserait ce qu'un collègue vient d'écrire dans un autre champ du
+ * même bloc, exactement le défaut que la tranche 2a a corrigé sur la géométrie.
+ *
+ * LE CURSEUR ET LE CHAMP NUMÉRIQUE ÉCRIVENT LA MÊME VALEUR (§3), et ce n'est pas une redite : ils
+ * partagent un seul état et une seule fonction d'écriture. Deux chemins distincts divergeraient au
+ * premier ajustement, et l'un des deux finirait par écrire autre chose que ce qu'il montre.
+ *
+ * AUCUNE COMMANDE N'EST ÉTEINTE D'AVANCE SELON LE RÔLE (`docs/DESIGN_SYSTEM.md` §5.26) : la fiche
+ * s'ouvre pour tous, envoie, et TRADUIT le refus. C'est la même règle que la tranche 2a, et la
+ * contradiction avec le §5.4 de la spécification reste consignée en INC-170.
+ */
+function FicheEditionBloc({
+	bloc,
+	onEcrire,
+	onFermer,
+}: {
+	readonly bloc: BlocObjectif
+	readonly onEcrire: (contenu: ContenuBloc) => Promise<ResultatEcritureBloc>
+	readonly onFermer: () => void
+}) {
+	// LA SAISIE EST LOCALE, ET ELLE SURVIT AU REFUS. Un refus n'efface pas ce qui a été tapé
+	// (§5.7 ter) : la valeur reste à l'écran avec son explication, là où la relire depuis le bloc
+	// la remplacerait en silence par celle du serveur.
+	const [titre, setTitre] = useState(bloc.title)
+	const [corps, setCorps] = useState(bloc.body ?? '')
+	const [remplissage, setRemplissage] = useState(String(bloc.fill_percent))
+	// LA COULEUR EST GARDÉE LOCALEMENT COMME LES TROIS AUTRES CHAMPS, et pour une raison qui lui est
+	// propre : un bouton radio dont l'état coché serait relu du serveur REVIENDRAIT à son ancienne
+	// valeur le temps de la requête, sous les yeux de celui qui vient de cliquer.
+	const [couleur, setCouleur] = useState(bloc.color)
+	const [messages, setMessages] = useState<Readonly<Partial<Record<ChampFiche, MessageEcriture>>>>({})
+
+	const champTitre = useRef<HTMLInputElement | null>(null)
+
+	// LE FOCUS ENTRE DANS LA FICHE À SON OUVERTURE (`docs/DESIGN_SYSTEM.md` §5.13). Sans cela, la
+	// fiche ouverte par `Entrée` obligerait à traverser tout le canevas au clavier pour l'atteindre,
+	// et le geste du §5.5 ne serait tenu qu'en apparence.
+	useEffect(() => {
+		champTitre.current?.focus()
+	}, [])
+
+	const ecrire = async (champ: ChampFiche, contenu: ContenuBloc) => {
+		setMessages((precedents) => ({ ...precedents, [champ]: { ton: 'attente', texte: t('goals.write.saving') } }))
+		const resultat = await onEcrire(contenu)
+		const suite: MessageEcriture =
+			resultat.statut === 'refus'
+				? { ton: 'refus', texte: texteRefusBloc(resultat.refus) }
+				: resultat.statut === 'sans-effet'
+					? { ton: 'refus', texte: t('goals.write.noeffect') }
+					: { ton: 'succes', texte: t('goals.write.saved') }
+		// LA CONFIRMATION REMPLACE L'ENVOI, elle ne s'y ajoute pas (§5.7 ter) : deux mentions
+		// superposées feraient croire à deux écritures.
+		setMessages((precedents) => ({ ...precedents, [champ]: suite }))
+	}
+
+	/**
+	 * Écrit le remplissage — LE SEUL CHEMIN, pour le curseur comme pour le champ.
+	 *
+	 * Une saisie illisible ne part PAS : `bornerRemplissage` rend `null`, et envoyer zéro à sa place
+	 * serait la « valeur par défaut trompeuse » que `CLAUDE.md` §18 interdit. La saisie reste à
+	 * l'écran, telle que tapée.
+	 */
+	const ecrireRemplissage = (brut: string) => {
+		const valeur = bornerRemplissage(brut)
+		if (valeur === null) return
+		setRemplissage(String(valeur))
+		if (valeur === bloc.fill_percent) return
+		void ecrire('remplissage', { remplissage: valeur })
+	}
+
+	return (
+		<section
+			data-testid="fiche-bloc"
+			aria-label={t('goals.edit.aria')}
+			className="flex flex-col gap-4 rounded-lg border border-border bg-surface p-4"
+			/* `Échap` ferme la fiche depuis N'IMPORTE lequel de ses champs, et rend le focus au bloc.
+			   L'écoute est posée sur le conteneur plutôt que sur chaque contrôle : un raccourci qui
+			   ne fonctionnerait que sur le premier champ serait un raccourci qu'on n'apprend pas. */
+			onKeyDown={(evenement) => {
+				if (evenement.key !== 'Escape') return
+				evenement.preventDefault()
+				onFermer()
+			}}
+		>
+			<header className="flex items-start justify-between gap-3">
+				<div className="flex flex-col gap-1">
+					<h3 className="text-sm font-medium text-ink">{t('goals.edit.title', { titre: bloc.title })}</h3>
+					<p id="fiche-bloc-consigne" className="text-sm text-text-3">
+						{t('goals.edit.hint')}
+					</p>
+				</div>
+				<Button variante="secondaire" taille="compacte" data-testid="fermer-fiche" onClick={onFermer} className="gap-2">
+					<X aria-hidden="true" size={16} strokeWidth={2} />
+					{t('goals.edit.close')}
+				</Button>
+			</header>
+
+			<div className="flex flex-col gap-1">
+				<label htmlFor="fiche-bloc-titre" className="text-sm text-text-2">
+					{t('goals.edit.field.title')}
+				</label>
+				<input
+					ref={champTitre}
+					id="fiche-bloc-titre"
+					type="text"
+					data-testid="champ-titre"
+					value={titre}
+					required
+					aria-describedby="fiche-bloc-titre-aide fiche-bloc-titre-etat"
+					className={CLASSES_CONTROLE}
+					onChange={(evenement) => setTitre(evenement.target.value)}
+					/* LA VALEUR EST ARRÊTÉE À LA SORTIE DU CHAMP OU SUR `Entrée`, jamais à la frappe :
+					   écrire à chaque touche émettrait une requête par caractère. Aucune temporisation
+					   n'est employée pour l'éviter (`CLAUDE.md` §18). */
+					onBlur={() => {
+						if (titre.trim() === bloc.title) return
+						void ecrire('titre', { titre })
+					}}
+					onKeyDown={(evenement) => {
+						if (evenement.key !== 'Enter') return
+						evenement.preventDefault()
+						if (titre.trim() === bloc.title) return
+						void ecrire('titre', { titre })
+					}}
+				/>
+				{/* L'ALERTE DE MANQUE ET LA MENTION D'ÉTAT COEXISTENT (§5.7 ter) : elles disent deux
+				    choses différentes — le champ est exigé, et la dernière écriture a échoué —, et
+				    `aria-describedby` les cite toutes les deux. */}
+				<p id="fiche-bloc-titre-aide" className="text-sm text-text-3">
+					{t('goals.edit.field.title.required')}
+				</p>
+				<MentionChamp identifiant="fiche-bloc-titre-etat" champ="titre" message={messages.titre ?? null} />
+			</div>
+
+			<div className="flex flex-col gap-1">
+				<label htmlFor="fiche-bloc-corps" className="text-sm text-text-2">
+					{t('goals.edit.field.body')}
+				</label>
+				<textarea
+					id="fiche-bloc-corps"
+					data-testid="champ-corps"
+					rows={3}
+					value={corps}
+					aria-describedby="fiche-bloc-corps-aide fiche-bloc-corps-etat"
+					className={CLASSES_CONTROLE}
+					onChange={(evenement) => setCorps(evenement.target.value)}
+					onBlur={() => {
+						if (corps.trim() === (bloc.body ?? '')) return
+						void ecrire('corps', { corps })
+					}}
+				/>
+				<p id="fiche-bloc-corps-aide" className="text-sm text-text-3">
+					{t('goals.edit.field.body.hint')}
+				</p>
+				<MentionChamp identifiant="fiche-bloc-corps-etat" champ="corps" message={messages.corps ?? null} />
+			</div>
+
+			{/* LA COULEUR EST UN GROUPE DE BOUTONS RADIO, et non une liste déroulante : cinq choix
+			    visuels se comparent en un regard, et un `select` en cacherait quatre. Chaque option
+			    porte son NOM EN CLAIR — la couleur ne porte jamais seule une information (§1). */}
+			<fieldset className="flex flex-col gap-2" data-testid="champ-couleur">
+				<legend className="text-sm text-text-2">{t('goals.edit.field.color')}</legend>
+				<div className="flex flex-wrap gap-2">
+					{COULEURS_BLOC.map((option) => (
+						<label
+							key={option}
+							data-testid={`couleur-${option}`}
+							className={[
+								'inline-flex items-center gap-2 min-h-[var(--size-target)] px-3 rounded-sm border cursor-pointer',
+								couleur === option ? 'border-brand bg-brand-soft' : 'border-border hover:bg-hover',
+							].join(' ')}
+						>
+							<input
+								type="radio"
+								name="fiche-bloc-couleur"
+								value={option}
+								checked={couleur === option}
+								className="size-4 accent-brand"
+								onChange={() => {
+									if (couleur === option) return
+									setCouleur(option)
+									void ecrire('couleur', { couleur: option })
+								}}
+							/>
+							<span aria-hidden="true" className={['size-3 rounded-full', liseréDe(option)].join(' ')} />
+							<span className="text-sm">{t(`goals.edit.color.${option}`)}</span>
+						</label>
+					))}
+				</div>
+				<MentionChamp identifiant="fiche-bloc-couleur-etat" champ="couleur" message={messages.couleur ?? null} />
+			</fieldset>
+
+			<div className="flex flex-col gap-1">
+				<label htmlFor="fiche-bloc-remplissage-nombre" className="text-sm text-text-2">
+					{t('goals.edit.field.fill')}
+				</label>
+				<div className="flex items-center gap-3">
+					{/* LE CURSEUR ÉCRIT AU RELÂCHEMENT, jamais à chaque pas : un glissement émettrait une
+					    requête par pour cent parcouru. C'est la règle que le §5.5 pose pour les gestes de
+					    géométrie, tenue ici par les mêmes moyens et sans temporisation. */}
+					<input
+						id="fiche-bloc-remplissage-curseur"
+						type="range"
+						data-testid="curseur-remplissage"
+						min={REMPLISSAGE_MINIMAL}
+						max={REMPLISSAGE_MAXIMAL}
+						step={1}
+						value={remplissage}
+						aria-label={t('goals.edit.fill.slider')}
+						aria-describedby="fiche-bloc-remplissage-aide fiche-bloc-remplissage-etat"
+						className="grow accent-brand"
+						onChange={(evenement) => setRemplissage(evenement.target.value)}
+						onPointerUp={(evenement) => ecrireRemplissage(evenement.currentTarget.value)}
+						onKeyUp={(evenement) => ecrireRemplissage(evenement.currentTarget.value)}
+						onBlur={(evenement) => ecrireRemplissage(evenement.currentTarget.value)}
+					/>
+					<input
+						id="fiche-bloc-remplissage-nombre"
+						type="number"
+						data-testid="champ-remplissage"
+						min={REMPLISSAGE_MINIMAL}
+						max={REMPLISSAGE_MAXIMAL}
+						step={1}
+						value={remplissage}
+						aria-label={t('goals.edit.fill.number')}
+						aria-describedby="fiche-bloc-remplissage-aide fiche-bloc-remplissage-etat"
+						className={[CLASSES_CONTROLE, 'w-[10ch] tabular-nums'].join(' ')}
+						onChange={(evenement) => setRemplissage(evenement.target.value)}
+						onBlur={(evenement) => ecrireRemplissage(evenement.target.value)}
+						onKeyDown={(evenement) => {
+							if (evenement.key !== 'Enter') return
+							evenement.preventDefault()
+							ecrireRemplissage(evenement.currentTarget.value)
+						}}
+					/>
+				</div>
+				<p id="fiche-bloc-remplissage-aide" className="text-sm text-text-3">
+					{t('goals.edit.fill.hint')}
+				</p>
+				<MentionChamp
+					identifiant="fiche-bloc-remplissage-etat"
+					champ="remplissage"
+					message={messages.remplissage ?? null}
+				/>
+			</div>
+		</section>
+	)
+}
+
+/**
+ * La mention d'état d'UN champ — §5.7 ter.
+ *
+ * Elle est TOUJOURS rendue, même vide, pour la raison qui vaut déjà pour la mention du canevas :
+ * un lecteur d'écran ne doit pas découvrir une région qui apparaît. Le refus porte `role="alert"`,
+ * l'attente et la confirmation `role="status"`.
+ */
+function MentionChamp({
+	identifiant,
+	champ,
+	message,
+}: {
+	readonly identifiant: string
+	readonly champ: ChampFiche
+	readonly message: MessageEcriture | null
+}) {
+	const TONS: Readonly<Record<MessageEcriture['ton'], string>> = {
+		attente: 'text-text-3',
+		succes: 'text-success',
+		refus: 'text-danger-on-soft bg-danger-soft rounded-sm px-2 py-1',
+	}
+	return (
+		<p
+			id={identifiant}
+			data-testid={`etat-${champ}`}
 			role={message?.ton === 'refus' ? 'alert' : 'status'}
 			className={['text-sm', message === null ? '' : TONS[message.ton]].join(' ')}
 		>
@@ -749,13 +1127,17 @@ function TraitsDuDiagramme({
 function BlocCanevas({
 	bloc,
 	zoom,
+	edite,
 	onEbauche,
 	onFin,
+	onOuvrirFiche,
 }: {
 	readonly bloc: BlocObjectif
 	readonly zoom: number
+	readonly edite: boolean
 	readonly onEbauche: (geometrie: Geometrie) => void
 	readonly onFin: (geometrie: Geometrie, mode: ModeGeste) => void
+	readonly onOuvrirFiche: () => void
 }) {
 	const ouvrable = lienOuvrable(bloc)
 	const perdu = lienPerdu(bloc)
@@ -826,6 +1208,15 @@ function BlocCanevas({
 		if (evenement.currentTarget.hasPointerCapture(evenement.pointerId)) {
 			evenement.currentTarget.releasePointerCapture(evenement.pointerId)
 		}
+		// UN CLIC N'EST PAS UN GLISSEMENT DE ZÉRO PIXEL, et cette distinction porte deux choses à la
+		// fois. Elle donne à `Entrée` son binôme souris — ouvrir la fiche du bloc (§5.5) —, et elle
+		// supprime une écriture inutile : jusqu'ici, poser puis relever le doigt sans bouger envoyait
+		// une position identique à celle déjà en base. Un `PATCH` qui ne change rien reste un `PATCH`,
+		// et il aurait écrasé, entre-temps, le déplacement d'un collègue.
+		if (origine.mode === 'deplacement' && !aBouge(origine.geometrie, finale)) {
+			onOuvrirFiche()
+			return
+		}
 		onFin(finale, origine.mode)
 	}
 
@@ -836,7 +1227,16 @@ function BlocCanevas({
 			tabIndex={0}
 			aria-label={etiquette}
 			aria-describedby="objectifs-consigne-clavier"
-			className="absolute flex overflow-hidden rounded-lg border border-border bg-surface shadow-card touch-none focus-visible:outline-2 focus-visible:outline-brand"
+			/* Le bloc dont la fiche est ouverte est DÉSIGNÉ visuellement, faute de quoi une fiche
+			   posée sous un canevas de douze blocs n'aurait aucun lien lisible avec le sien. Le
+			   liseré emploie le jeton `brand`, celui du focus, et il s'ajoute à l'anneau plutôt
+			   qu'il ne le remplace : ce sont deux informations différentes. */
+			data-edite={edite ? 'oui' : undefined}
+			className={[
+				'absolute flex overflow-hidden rounded-lg border bg-surface shadow-card touch-none',
+				'focus-visible:outline-2 focus-visible:outline-brand',
+				edite ? 'border-brand ring-2 ring-brand-soft' : 'border-border',
+			].join(' ')}
 			style={{
 				left: `${bloc.pos_x}px`,
 				top: `${bloc.pos_y}px`,
@@ -854,6 +1254,15 @@ function BlocCanevas({
 			   part au RELÂCHEMENT de la touche, jamais à chaque répétition : une frappe maintenue
 			   émettrait une requête par pixel. Aucune temporisation n'est employée pour cela. */
 			onKeyDown={(evenement) => {
+				// `Entrée` OUVRE LA FICHE DU BLOC FOCALISÉ (§5.5). La garde sur la cible est celle du
+				// glissement, et pour la même cause : `Entrée` sur la pilule de channel doit ouvrir le
+				// channel, geste de la tranche 1 que la fiche ne doit pas avaler.
+				if (evenement.key === 'Enter') {
+					if ((evenement.target as HTMLElement).closest('a, button') !== null) return
+					evenement.preventDefault()
+					onOuvrirFiche()
+					return
+				}
 				const direction = DIRECTIONS_CLAVIER[evenement.key]
 				if (direction === undefined) return
 				evenement.preventDefault()

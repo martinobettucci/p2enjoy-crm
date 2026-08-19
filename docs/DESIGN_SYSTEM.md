@@ -1823,6 +1823,56 @@ spécifié là-bas ; les règles ci-dessous ne disent que de quoi ils ont l'air.
   `role="status"`. Un geste de géométrie porte sur le canevas entier, et non sur une ligne : c'est
   là qu'il se lit.
 
+**La fiche d'édition d'un bloc — tranche 2b-1, `docs/SPEC-goals.md` §3 et §5.5.** Elle non plus
+n'ajoute aucun bloc à l'écran : elle s'ouvre SOUS le canevas, dans le flux, et le canevas reste
+entier au-dessus d'elle.
+
+- **Elle n'est PAS une fenêtre en surimpression, et ce n'est pas un choix d'implémentation.** Le
+  bloc qu'elle édite doit rester visible pendant la saisie : c'est lui qui montre l'effet de la
+  couleur et du remplissage qu'on est en train de régler. Une fenêtre posée par-dessus le canevas
+  le cacherait une fois sur deux, selon l'endroit où le bloc se trouve — et l'utilisateur réglerait
+  une valeur sans voir ce qu'elle fait.
+
+- **Elle n'a AUCUN bouton d'enregistrement** : chaque champ écrit sa propre valeur dès qu'elle est
+  arrêtée, et les six règles du §5.7 ter s'appliquent sans exception — mention sous le champ, trois
+  mentions jamais deux à la fois, contrôle jamais désactivé pendant l'envoi, refus qui n'efface pas
+  la saisie. Un bouton unique renverrait les quatre colonnes à chaque fois et écraserait ce qu'un
+  collègue vient d'écrire dans un autre champ du même bloc : c'est exactement le défaut que la
+  tranche 2a a corrigé sur la géométrie, et il se reposerait ici sous une autre forme.
+
+- **Quand la valeur est « arrêtée », selon le contrôle.** Un champ de texte : à la sortie du champ,
+  ou sur `Entrée`. Le curseur : au **relâchement**, jamais à chaque pas — un glissement émettrait
+  une requête par pour cent parcouru, comme une touche maintenue en émettrait une par pixel (§5.29,
+  gestes de géométrie). Un groupe de boutons radio : au choix, qui est déjà un geste arrêté.
+
+- **Le curseur et le champ numérique du remplissage sont UN SEUL contrôle à deux entrées.** Ils
+  partagent un état et une fonction d'écriture ; deux chemins distincts divergeraient au premier
+  ajustement, et l'un des deux finirait par écrire autre chose que ce qu'il montre. Le curseur porte
+  `--color-brand` en `accent-color`, le champ numérique la largeur `10ch` et les chiffres tabulaires
+  du §5.9.
+
+- **La couleur est un groupe de boutons radio, jamais une liste déroulante**, et **chaque option
+  porte son nom en clair** à côté de sa pastille. Cinq choix visuels se comparent en un regard, là
+  où un `select` en cacherait quatre ; et le §1 vaut ici comme partout — une pastille seule ferait
+  porter l'information par la couleur.
+
+- **Le bloc dont la fiche est ouverte est désigné** par un liseré `--color-brand` et un anneau
+  `--color-brand-soft`, qui **s'ajoutent** à l'anneau de focus sans le remplacer : ce sont deux
+  informations différentes — « ce bloc a le focus » et « ce bloc est celui que la fiche édite ».
+  Sans cette marque, une fiche posée sous un canevas de douze blocs n'aurait aucun lien lisible avec
+  le sien.
+
+- **Le focus entre dans la fiche à l'ouverture et revient au bloc à la fermeture** (§5.13). Une
+  fiche ouverte par `Entrée` qu'il faudrait ensuite atteindre en traversant tout le canevas ne
+  serait pas le geste clavier que `docs/SPEC-goals.md` §5.5 demande ; et une fermeture qui renverrait
+  le focus au début du document ferait perdre sa place au clavier. `Échap` ferme depuis n'importe
+  lequel des champs.
+
+- **Le clic sur un bloc ouvre sa fiche ; le glissement le déplace.** C'est le binôme souris de la
+  touche `Entrée`, et la distinction se fait sur le **déplacement réel**, sans tolérance en pixels :
+  les deux géométries comparées sont déjà des entiers. Une tolérance rendrait un petit glissement
+  volontaire indistinguable d'un clic et ouvrirait une fiche à la place d'un déplacement.
+
 ### 5.30 Histogramme prévisionnel / réel — `CRM-086`
 
 Spécifié avant code, `docs/SPEC-costs.md` §4.2.

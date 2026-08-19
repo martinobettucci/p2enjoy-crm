@@ -477,7 +477,7 @@ export const fr = {
 	'goals.place.marker': 'Repère de pose, position {x} sur {y}',
 	'goals.place.title.default': 'Nouvel objectif',
 	'goals.block.keyboard.hint':
-		'Flèches pour déplacer le bloc, Maj et flèches pour l’ajuster au pixel, Alt et flèches pour le redimensionner.',
+		'Flèches pour déplacer le bloc, Maj et flèches pour l’ajuster au pixel, Alt et flèches pour le redimensionner, Entrée pour ouvrir sa fiche.',
 	'goals.write.saving': 'Enregistrement…',
 	'goals.write.saved': 'Enregistré',
 	'goals.write.noeffect':
@@ -485,6 +485,30 @@ export const fr = {
 	'goals.write.refused.forbidden': 'Vous ne pouvez pas modifier ce tableau.',
 	'goals.write.refused.invalid': 'La valeur envoyée a été refusée.',
 	'goals.write.refused.unavailable': 'L’enregistrement n’a pas abouti. Réessayez.',
+
+	// --- Objectifs, tranche 2b-1 : le contenu — CRM-083, docs/SPEC-goals.md §3 et §5.5 --------
+	// Chaque champ s'enregistre POUR LUI-MÊME (docs/DESIGN_SYSTEM.md §5.7 ter) : la fiche n'a donc
+	// aucun libellé de bouton « Enregistrer », et il ne faut pas en ajouter un.
+	'goals.edit.title': 'Fiche du bloc « {titre} »',
+	'goals.edit.aria': 'Fiche d’édition du bloc',
+	'goals.edit.close': 'Fermer la fiche',
+	'goals.edit.hint':
+		'Chaque champ s’enregistre dès que sa valeur est arrêtée. Échap ferme la fiche.',
+	'goals.edit.field.title': 'Titre',
+	'goals.edit.field.title.required': 'Le titre est exigé : un bloc sans titre ne se lit pas.',
+	'goals.edit.field.body': 'Corps',
+	'goals.edit.field.body.hint': 'Facultatif. Deux lignes en sont rendues sur le bloc.',
+	'goals.edit.field.color': 'Couleur',
+	'goals.edit.field.fill': 'Remplissage',
+	'goals.edit.fill.slider': 'Remplissage au curseur',
+	'goals.edit.fill.number': 'Remplissage en pourcentage',
+	'goals.edit.fill.hint':
+		'Vous décidez de ce que ce pourcentage signifie : il n’est jamais calculé à partir des affaires du channel lié.',
+	'goals.edit.color.brand': 'Bleu',
+	'goals.edit.color.success': 'Vert',
+	'goals.edit.color.accent': 'Jaune',
+	'goals.edit.color.danger': 'Rouge',
+	'goals.edit.color.neutral': 'Gris',
 
 	'route.today.title': 'Ma journée',
 	'route.today.empty.title': 'Rien pour aujourd’hui',

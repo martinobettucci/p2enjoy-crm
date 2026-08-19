@@ -1,7 +1,11 @@
 // @spec CRM-083 (docs/BACKLOG.md) — canevas d'objectifs, tranche 2a : la GÉOMÉTRIE, c'est-à-dire
-//       poser un bloc, le déplacer et le redimensionner, à la souris comme au clavier
+//       poser un bloc, le déplacer et le redimensionner, à la souris comme au clavier ;
+//       tranche 2b-1 : le CONTENU, c'est-à-dire saisir le titre, le corps, la couleur, et régler
+//       le remplissage au curseur comme au champ numérique
 // @spec docs/SPEC-goals.md §3 (poser un bloc — position issue du geste, jamais d'un placement
-//       automatique ; déplacer et redimensionner — persiste `pos_x`, `pos_y`, `width`, `height`)
+//       automatique ; déplacer et redimensionner — persiste `pos_x`, `pos_y`, `width`, `height` ;
+//       saisir le titre, le corps, la couleur ; régler le remplissage — curseur ET champ
+//       numérique, les deux écrivant la même valeur)
 // @spec docs/SPEC-goals.md §4.2 (écriture ouverte à tout membre pouvant écrire ; un `viewer`
 //       n'écrit rien), §2.2 (colonnes et bornes du bloc)
 // @spec docs/SPEC-permissions-rls.md §7 (un refus de lecture est zéro ligne, pas une erreur)
@@ -74,6 +78,42 @@ export function bornerDimension(valeur: number, minimum: number): number {
 }
 
 /**
+ * Les cinq couleurs de jeton d'un bloc (`docs/SPEC-goals.md` §2.2), dans l'ordre où le sélecteur
+ * les présente.
+ *
+ * ELLE EST LA MÊME LISTE QUE `goal_blocks_color_check` de la migration `0049`, et cette redite est
+ * assumée : l'écran doit bien proposer des choix, et il ne peut pas les lire de la base. Ce n'est
+ * PAS un contrôle d'autorisation dédoublé (`CLAUDE.md` §10) — une couleur hors liste, envoyée par
+ * une autre voie, est refusée par la contrainte et traduite en `saisie-invalide`, jamais filtrée
+ * ici. La liste ne fait que meubler un sélecteur.
+ */
+export const COULEURS_BLOC = ['brand', 'success', 'accent', 'danger', 'neutral'] as const
+
+export type CouleurBloc = (typeof COULEURS_BLOC)[number]
+
+/** Bornes du remplissage — `goal_blocks_fill_percent_check`, `between 0 and 100`. */
+export const REMPLISSAGE_MINIMAL = 0
+export const REMPLISSAGE_MAXIMAL = 100
+
+/**
+ * Ramène un remplissage à un ENTIER borné.
+ *
+ * `fill_percent` est un `smallint` : `60.5` serait refusé par la base, et une décimale suggérerait
+ * un calcul que `docs/SPEC-goals.md` §1 interdit. Le curseur rend déjà des entiers ; le champ
+ * numérique, lui, accepte tout ce qu'on y tape — c'est donc lui que cette fonction protège.
+ *
+ * Une saisie qui n'est PAS un nombre — champ vidé, texte collé — rend `null` plutôt qu'un zéro :
+ * zéro est une valeur, et l'écrire à la place d'une saisie illisible serait la « valeur par défaut
+ * trompeuse » que `CLAUDE.md` §18 interdit.
+ */
+export function bornerRemplissage(valeur: number | string): number | null {
+	const nombre = typeof valeur === 'number' ? valeur : Number(valeur.trim())
+	if (typeof valeur === 'string' && valeur.trim() === '') return null
+	if (!Number.isFinite(nombre)) return null
+	return Math.min(REMPLISSAGE_MAXIMAL, Math.max(REMPLISSAGE_MINIMAL, Math.round(nombre)))
+}
+
+/**
  * Les trois natures de refus d'une écriture de bloc, et rien d'autre : le dictionnaire est FERMÉ.
  *
  * `detail` accompagne chaque nature pour le diagnostic ; il n'est JAMAIS affiché tel quel, un
@@ -112,11 +152,21 @@ export type ResultatCreationBloc =
 	| { readonly statut: 'cree'; readonly bloc: BlocObjectif }
 	| { readonly statut: 'refus'; readonly refus: RefusBloc }
 
-/** Les trois issues d'une modification. La troisième est celle de la clause `using`. */
-export type ResultatGeometrie =
+/**
+ * Les trois issues d'une modification de bloc, QUELLE QUE SOIT la colonne touchée. La troisième
+ * est celle de la clause `using`.
+ *
+ * Le type est commun à la géométrie et au contenu parce que la politique l'est : `goal_blocks`
+ * porte UNE seule politique de modification, et un titre refusé l'est exactement comme une
+ * position refusée. Deux types distincts laisseraient croire à deux contrats.
+ */
+export type ResultatEcritureBloc =
 	| { readonly statut: 'enregistree'; readonly bloc: BlocObjectif }
 	| { readonly statut: 'sans-effet' }
 	| { readonly statut: 'refus'; readonly refus: RefusBloc }
+
+/** Nom d'origine du type ci-dessus, gardé pour les appelants de la tranche 2a. */
+export type ResultatGeometrie = ResultatEcritureBloc
 
 /** Ce qu'un geste de pose transporte : le tableau, la position du geste, et le titre saisi. */
 export type PoseBloc = {
@@ -209,7 +259,7 @@ export async function ecrireGeometrieBloc(
 		readonly largeur?: number
 		readonly hauteur?: number
 	},
-): Promise<ResultatGeometrie> {
+): Promise<ResultatEcritureBloc> {
 	// Le type est celui de la table et non un `Record` libre : le contrat de `database.types.ts`
 	// refuse toute colonne qu'il ne connaît pas, et c'est précisément la garde qui a manqué à
 	// INC-165. Les quatre clés restent FACULTATIVES — un déplacement n'envoie pas de taille.
@@ -228,6 +278,93 @@ export async function ecrireGeometrieBloc(
 		modifications.height = bornerDimension(geometrie.hauteur, TAILLE_BLOC_MINIMALE.hauteur)
 	}
 
+	return modifierBloc(client, idBloc, modifications)
+}
+
+/**
+ * Ce qu'une saisie de contenu transporte. Les quatre clés sont FACULTATIVES et pour la même raison
+ * qu'à la géométrie : chaque champ s'enregistre POUR LUI-MÊME (`docs/DESIGN_SYSTEM.md` §5.7 ter),
+ * et renvoyer les quatre à chaque frappe écraserait ce qu'un collègue vient d'écrire dans un autre
+ * champ du même bloc.
+ */
+export type ContenuBloc = {
+	readonly titre?: string
+	readonly corps?: string | null
+	readonly couleur?: string
+	readonly remplissage?: number
+}
+
+/**
+ * Écrit le contenu d'un bloc — titre, corps, couleur, remplissage.
+ *
+ * ELLE N'EST PAS FUSIONNÉE AVEC `ecrireGeometrieBloc`, et le motif est le geste, non la table :
+ * une saisie de contenu et un glissement de souris n'ont ni la même cadence, ni les mêmes bornes,
+ * ni la même unité de valeur. Ce qu'elles partagent — la requête, ses trois issues — est extrait
+ * dans `modifierBloc` plutôt que dupliqué.
+ *
+ * DEUX NORMALISATIONS SEULEMENT, ET AUCUN REFUS ANTICIPÉ (`CLAUDE.md` §10) :
+ *
+ *   * le titre est débarrassé de ses espaces de bord, comme à la pose — la contrainte
+ *     `goal_blocks_titre_check` refuse le vide, et c'est ELLE qui refuse, traduite en
+ *     `saisie-invalide` ; l'écran n'invente pas ce refus, il le reçoit ;
+ *   * le corps VIDE devient `null` et non `''` : `body` est facultatif (§2.2), et deux
+ *     représentations du néant dans la même colonne rendraient « pas de corps » indistinguable
+ *     de « un corps vide » à la relecture.
+ *
+ * La couleur et le remplissage partent TELS QUELS. Une couleur hors énumération et un remplissage
+ * hors bornes sont refusés par la base, pas ici.
+ *
+ * Ne lève jamais.
+ */
+export async function ecrireContenuBloc(
+	client: ClientCrm,
+	idBloc: string,
+	contenu: ContenuBloc,
+): Promise<ResultatEcritureBloc> {
+	const modifications: Partial<{
+		title: string
+		body: string | null
+		color: string
+		fill_percent: number
+	}> = {}
+	if (contenu.titre !== undefined) modifications.title = contenu.titre.trim()
+	if (contenu.corps !== undefined) {
+		const corps = contenu.corps === null ? '' : contenu.corps.trim()
+		modifications.body = corps === '' ? null : corps
+	}
+	if (contenu.couleur !== undefined) modifications.color = contenu.couleur
+	if (contenu.remplissage !== undefined) modifications.fill_percent = contenu.remplissage
+
+	return modifierBloc(client, idBloc, modifications)
+}
+
+/**
+ * La requête de modification et ses TROIS issues, partagées par la géométrie et le contenu.
+ *
+ * `.select(...)` accompagne la mise à jour précisément pour que « zéro ligne touchée » existe comme
+ * réponse : sans lui, PostgREST ne rend aucun corps et le refus silencieux de la clause `using`
+ * serait indistinguable d'un succès (patron de `detacherContact`).
+ *
+ * Le type des modifications est celui de la table et non un `Record` libre : le contrat de
+ * `database.types.ts` refuse toute colonne qu'il ne connaît pas, et c'est précisément la garde qui
+ * a manqué à INC-165.
+ *
+ * Ne lève jamais.
+ */
+async function modifierBloc(
+	client: ClientCrm,
+	idBloc: string,
+	modifications: Partial<{
+		pos_x: number
+		pos_y: number
+		width: number
+		height: number
+		title: string
+		body: string | null
+		color: string
+		fill_percent: number
+	}>,
+): Promise<ResultatEcritureBloc> {
 	try {
 		const reponse = await client
 			.from('goal_blocks')
