@@ -33,6 +33,13 @@ d'exécuter le code attendu.
   la couleur, ni le remplissage qu'un collègue vient de saisir.
 - **Le remplissage reste saisi à la main, jamais calculé** : le produit n'a aucune opinion sur ce
   que « avancé à 60 % » signifie pour l'objectif de quelqu'un d'autre.
+- **Un bloc d'objectif désigne le channel sur lequel il porte, et ce lien se retire** (`CRM-083`
+  tranche 2b-2a, `docs/SPEC-goals.md` §3). Le champ « Channel visé » de la fiche propose les
+  channels que vous lisez, **groupés par track** ; l'option « Aucun channel » retire le lien au
+  clavier, un bouton « Retirer le lien » le double à la souris. Une fois le lien posé, le bloc porte
+  la pilule « Track › Channel » et le clic y mène.
+- **Lier un objectif à un dossier demande d'y écrire, le délier non.** Un refus le dit dans ses
+  propres termes, plutôt que d'accuser un droit sur le tableau qui n'est pas en cause.
 
 ### Corrigé
 

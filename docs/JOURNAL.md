@@ -20282,3 +20282,57 @@ bloc à un channel — sélecteur des channels lisibles, groupés par track — 
 une flèche à `Espace` avec le choix de sa direction, supprimer une flèche et un bloc, créer et
 archiver un tableau, puis le harnais dédié `scripts/verify-objectifs-canevas.sh`. Deux arbitrages
 restent en attente : **INC-169** et **INC-170**.
+
+## décision 467 — `CRM-083` tranche 2b-2a : le bloc DÉSIGNE son channel, et rien n'anticipe le droit
+
+**L'unité, et le choix.** La décision 466 laisse `CRM-083` en `[~]` et désigne la tranche 2b-2, les
+liens, comme reprise. Sa spécification — `docs/SPEC-goals.md` §3 et §4.2 — était **déjà écrite et
+committée** : le §3.2 point 3 de `docs/CloudWorker.md` s'applique dans sa forme d'exception, elle
+est lue intégralement et le code commence. La tranche 2b-2 est **découpée en deux**, comme les
+précédentes : **2b-2a livre le LIEN**, 2b-2b livrera les **flèches** et les suppressions.
+
+**Ce qui a été livré.** Le champ « Channel visé » de la fiche d'édition : les channels que la RLS
+consent à l'appelant, groupés par track en `optgroup`, l'option vide qui retire le lien au clavier
+et un bouton « Retirer le lien » qui le double à la souris. Le lien posé, le bloc porte la pilule
+« Track › Channel » que la tranche 1 rendait déjà, et le clic y mène.
+
+**LE SÉLECTEUR PROPOSE DES DESTINATIONS QUE LA BASE REFUSERA, ET C'EST VOULU.** Il recouvre la
+**lecture** des channels, alors que poser un lien exige `app.can_write_channel` (§4.2) — condition
+plus étroite. Réduire la liste aux channels écrivables demanderait à l'écran de rejouer une règle
+qui vit dans la politique, et la ferait diverger d'elle au premier changement (`CLAUDE.md` §10). Le
+refus est donc traduit, jamais devancé — et il porte **son propre texte** : « vous ne pouvez pas
+modifier ce tableau » serait faux quand c'est le droit d'écrire dans la destination qui manque.
+
+**UN DÉFAUT TROUVÉ PAR LE TÉMOIN DE CONSOLE, ET IL TUAIT AUSSI LA TRANCHE PRÉCÉDENTE.** La requête
+du sélecteur nommait la clé étrangère `channels_track_id_fkey`, déduite du nom de la colonne. Cette
+contrainte n'existe pas : la clé est **composite** — `channels_track_id_workspace_id_fkey` —, et
+c'est elle qui empêche un channel de désigner le track d'un autre espace de travail. PostgREST
+rendait `PGRST200` sur la requête entière, et **huit** scénarios d'interface en mouraient, dont
+**cinq de la tranche 2b-1** qui étaient verts la veille. Aucun test unitaire ne pouvait l'attraper —
+un espion ne connaît pas le schéma —, et c'est la garde de console vierge du harnais qui l'a fait.
+La leçon vaut d'être écrite : **un nom de contrainte ne se devine pas depuis le nom d'une colonne**,
+il se mesure contre l'API.
+
+**LA LECTURE DU DESIGN SYSTEM AVANT COMMIT A CORRIGÉ LE CONTRÔLE.** Le §5.22 régit déjà tout
+`select` alimenté par une liste distante, et le champ neuf s'en écartait : pendant la lecture de sa
+liste et après son échec, le contrôle doit être **désactivé**, avec son option d'attente et
+`aria-busy` — il n'y a alors rien à choisir, et un sélecteur vide mais actif est une commande morte.
+Le bouton de retrait, lui, reste offert même sur une liste en erreur : retirer ne demande aucune
+liste. Le §5.29 gagne les six règles propres à ce champ dans le même changement.
+
+**L'OBSERVATION DES CAPTURES A TROUVÉ UN DÉFAUT DE PREUVE, ET NON DU PRODUIT.** La première capture
+s'arrêtait **au-dessus** du champ neuf : `capturer` prend la fenêtre, et la fiche vit sous le
+canevas. Une capture qui ne montre pas ce qu'elle prouve ne prouve rien. Le champ est désormais
+amené dans la vue avant la prise.
+
+**Ce qui a été vérifié.** Preuves de la tranche : `objectifs-ecriture.test.ts` **48 assertions**
+(14 pour cette tranche), `Objectifs.test.tsx` **47 scénarios** (11 pour cette tranche),
+`e2e/ui/objectifs.spec.ts` **24 scénarios** dont 3 pour cette tranche, écrivant réellement dans la
+base et remettant le seed en état par la clé de service ; console vierge, **trois captures
+observées**. Campagne : `test:unit` **57 fichiers / 1902 tests**, `test:sql` **47 fichiers / 2351
+assertions**, `e2e:api` **786 passés**, `typecheck`, `types:check` et `build` verts.
+
+**Où reprendre.** `CRM-083` reste `[~]`, et son reste est la **tranche 2b-2b, les flèches** : tracer
+une flèche à `Espace` avec le choix de sa direction, la modifier, supprimer une flèche et un bloc,
+puis créer et archiver un tableau, et enfin le harnais dédié `scripts/verify-objectifs-canevas.sh`.
+Deux arbitrages restent en attente : **INC-169** et **INC-170**.

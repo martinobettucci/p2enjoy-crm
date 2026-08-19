@@ -8052,9 +8052,55 @@ RENSEIGNE, 2b-2 livrera ce qui RELIE — le lien vers un channel et les flèches
       avait raison — une clé qu'aucune recherche textuelle ne trouve survit à la suppression du code
       qui l'employait. Table explicite.
 
-**CE QUI RESTE — TRANCHE 2b-2, LES LIENS.** Aucune commande morte n'est posée pour ces gestes.
-- [ ] **Lier un bloc à un channel** — sélecteur des channels **lisibles**, groupés par track — et
-      **retirer le lien** ; poser le lien exige `app.can_write_channel`, le retirer non (§4.2).
+**TRANCHE 2b-2a LIVRÉE — LE LIEN VERS UN CHANNEL.** La tranche 2b-2 est découpée, comme la 2a et
+la 2b-1 l'ont été : **2b-2a livre le LIEN**, 2b-2b livrera les **flèches** et les suppressions.
+
+- [x] **Lier un bloc à un channel et retirer le lien** (§3) : champ « Channel visé » de la fiche,
+      alimenté par les channels que la RLS consent à l'appelant, **groupés par track** en
+      `optgroup`. L'option vide retire le lien au clavier, un bouton dédié le double à la souris.
+      `webapp/src/lib/objectifs-ecriture.ts` (`lireChannelsLiables`, `grouperChannelsParTrack`,
+      `useChannelsLiables`, `lierBlocAChannel`), `webapp/src/app/Objectifs.tsx`.
+- [x] **AUCUN DROIT N'EST ANTICIPÉ, et c'est ici que cela compte le plus** (`CLAUDE.md` §10) : le
+      sélecteur recouvre la **lecture** des channels, alors que poser un lien exige
+      `app.can_write_channel` (§4.2) — condition plus étroite. Il propose donc des destinations que
+      la base refusera parfois, et ce refus est TRADUIT. Réduire la liste aux channels écrivables
+      demanderait à l'écran de rejouer une règle qui vit dans la politique, et la ferait diverger
+      d'elle au premier changement.
+- [x] **Le refus d'une destination porte SON texte**, et le retrait garde le texte commun : « vous
+      ne pouvez pas modifier ce tableau » serait faux quand c'est le droit d'écrire dans la
+      destination qui manque, et ferait chercher le problème du mauvais côté. Retirer, lui,
+      n'engage aucune destination (§4.2).
+- [x] **LA DESTINATION ACTUELLE RESTE UNE OPTION même absente de la liste des liables** — un
+      channel archivé, ou dont la lecture vient de se fermer. Sans elle, le sélecteur retomberait
+      sur « Aucun channel » et afficherait un **retrait de lien qui n'a pas eu lieu**, que le
+      premier geste sur un autre champ rendrait vrai. Même raison qu'au `docs/DESIGN_SYSTEM.md`
+      §5.22, et éprouvé à l'écran.
+- [x] **Le champ suit le §5.22 du design system**, découvert en le relisant intégralement avant
+      commit : pendant la lecture de sa liste et après son échec, le contrôle est **désactivé**,
+      avec son option d'attente et `aria-busy`. Il n'y a alors rien à choisir. Le bouton de retrait
+      reste offert même sur une liste en erreur — retirer ne demande aucune liste. Le §5.29 gagne
+      les six règles propres à ce champ, dans le même changement.
+- [x] **UN DÉFAUT TROUVÉ PAR LE TÉMOIN DE CONSOLE, et il tuait aussi la tranche précédente** : la
+      requête nommait la clé étrangère `channels_track_id_fkey`, déduite du nom de la colonne. Cette
+      contrainte n'existe pas — la clé est **composite** et s'appelle
+      `channels_track_id_workspace_id_fkey`, ce qui est la garde empêchant un channel de désigner
+      le track d'un autre espace de travail. PostgREST rendait `PGRST200` sur la requête entière et
+      **huit** scénarios d'interface en mouraient, dont cinq de la tranche 2b-1. Un nom de
+      contrainte ne se devine pas depuis le nom d'une colonne : celui-ci est **mesuré** contre
+      l'API.
+- [x] **Preuves de la tranche, toutes exécutées et vertes** :
+      `webapp/src/lib/objectifs-ecriture.test.ts` **48 assertions** (14 pour cette tranche),
+      `webapp/src/app/Objectifs.test.tsx` **47 scénarios** (11 pour cette tranche),
+      `e2e/ui/objectifs.spec.ts` **24 scénarios** dont 3 pour cette tranche, écrivant réellement
+      dans la base avec le jeton de l'administratrice et remettant le seed en état par la clé de
+      service. Console vierge. **Trois captures observées** sous `docs/captures/CRM-083/` :
+      `fiche-lien-selecteur-1440.jpg`, `bloc-lie-1440.jpg`, `lien-refus-lectrice-1440.jpg`.
+- [x] **L'OBSERVATION DES CAPTURES A TROUVÉ UN DÉFAUT DE PREUVE**, et non du produit : la première
+      capture s'arrêtait au-dessus du champ neuf — `capturer` prend la fenêtre, et la fiche vit sous
+      le canevas. Une capture qui ne montre pas ce qu'elle prouve ne prouve rien ; le champ est
+      désormais amené dans la vue avant la prise.
+
+**CE QUI RESTE — TRANCHE 2b-2b, LES FLÈCHES.** Aucune commande morte n'est posée pour ces gestes.
 - [ ] **Tracer une flèche** : `Espace` puis sélection d'un second bloc (§5.5), choix de la direction
       à la création et modifiable ensuite ; supprimer une flèche, supprimer un bloc.
 - [ ] **Créer, renommer, réordonner et archiver un tableau** (§3).
@@ -8065,11 +8111,12 @@ RENSEIGNE, 2b-2 livrera ce qui RELIE — le lien vers un channel et les flèches
       elle envoie et traduit le refus, mesuré — et laisse la règle générale au responsable.
 - [~] **Refus du `viewer` mesuré HORS interface**, exigé par la DoD. `e2e/api/objectifs.spec.ts`
       le mesure déjà pour `CRM-082` — `403` / `42501` en insertion sur les trois tables, `200` et
-      zéro ligne en modification. **La tranche 2b-1 n'ouvre AUCUNE table ni aucune colonne nouvelle
-      à l'écriture** : `title`, `body`, `color` et `fill_percent` vivent dans `goal_blocks`, sous la
-      politique de modification déjà mesurée, si bien que le refus hors interface du contenu est le
-      même que celui de la géométrie. Ce qui reste dû est le refus des gestes de la tranche 2b-2,
-      qui touche `goal_links` et le lien vers un channel.
+      zéro ligne en modification. **Les tranches 2b-1 et 2b-2a n'ouvrent AUCUNE table nouvelle à
+      l'écriture** : `title`, `body`, `color`, `fill_percent` et `channel_id` vivent tous dans
+      `goal_blocks`, sous la politique de modification déjà mesurée. Le refus du LIEN est en outre
+      remesuré hors interface par le scénario E2E de la lectrice, qui relit `channel_id` sur la
+      ligne après le geste et le trouve inchangé. Ce qui reste dû est le refus des gestes de la
+      tranche 2b-2b, qui touche `goal_links`.
 - [ ] **Harnais dédié `scripts/verify-objectifs-canevas.sh`**, non complaisant, éprouvé par des
       dégradations réelles.
 - [~] **Le canevas doit être utilisable entièrement au clavier** (`CLAUDE.md` §22,
