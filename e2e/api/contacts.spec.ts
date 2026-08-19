@@ -676,3 +676,234 @@ test.describe('CRM-060 4e — les onze mesures de la création d’un contact (�
 		expect(noms).toEqual(['Élise Fabre', 'Léo Marchand', 'Sophie Dupont'])
 	})
 })
+
+// ----------------------------------------------------------------------------------------------
+// Sous-tranche 4f — LA LECTURE DE LA FICHE D'UN CONTACT (docs/SPEC-contacts.md §15)
+// ----------------------------------------------------------------------------------------------
+//
+// @verifies CRM-060 (docs/BACKLOG.md) — tranche 4 sous-tranche 4f
+// @verifies docs/SPEC-contacts.md §15.3 (les quatre mesures qui ont décidé de la requête),
+//           §15.4 (les sept mesures d'autorisation, et les droits fins qui traversent
+//           l'embarquement)
+//
+// CES SCÉNARIOS NE MODIFIENT RIEN. La fiche ne livre aucune écriture (§15.8) : ils lisent le seed
+// avec les jetons réels et le laissent tel quel — aucune sonde, donc aucune garde de restauration
+// à poser ici, contrairement aux onze mesures de 4e juste au-dessus.
+
+const ID_LEO = '5eed0000-0000-4000-8000-000000000091'
+const ID_SOPHIE = '5eed0000-0000-4000-8000-000000000092'
+const ID_ELISE = '5eed0000-0000-4000-8000-000000000093'
+const ID_SOGEXIA_SEED = '5eed0000-0000-4000-8000-000000000081'
+const ID_CARD_ERP = '5eed0000-0000-4000-8000-0000000000c2'
+
+/** La sélection EXACTE que `lireFicheContact` émet — figée ici, et non recomposée. */
+const SELECT_FICHE_CONTACT =
+	'id,full_name,email,phone,role_title,organization_id,' +
+	'organizations(id,name,domain),' +
+	'card_contacts(role,cards!inner(id,title,archived_at,' +
+	'channels!cards_channel_id_workspace_id_fkey(slug,tracks(slug))))'
+
+/** L'adresse complète de la fiche, filtre de corbeille et tri compris. */
+function adresseFiche(idContact: string): string {
+	return (
+		`/rest/v1/contacts?id=eq.${idContact}&select=${encodeURIComponent(SELECT_FICHE_CONTACT)}` +
+		'&card_contacts.cards.deleted_at=is.null&card_contacts.order=cards(title)'
+	)
+}
+
+type LigneFiche = {
+	id: string
+	full_name: string
+	organizations: { id: string; name: string } | null
+	card_contacts: Array<{
+		role: string | null
+		cards: { id: string; title: string; archived_at: string | null; channels: { slug: string; tracks: { slug: string } } }
+	}>
+}
+
+test.describe('CRM-060 sous-tranche 4f — la fiche d’un contact (docs/SPEC-contacts.md §15)', () => {
+	test('l’embarquement `cards → channels` est AMBIGU sans clé nommée : PGRST201', async ({
+		request,
+	}) => {
+		// C'EST LA MESURE QUI A DÉCIDÉ DE LA REQUÊTE (§15.3), et elle est figée ici parce qu'elle
+		// ne se devine pas : deux clés étrangères relient `cards` et `channels`, et la forme naïve
+		// que produirait un embarquement écrit « comme d'habitude » est REFUSÉE. Sans ce scénario,
+		// un futur remaniement retirerait la clé nommée en croyant simplifier.
+		const jeton = await jetonDe('admin@p2enjoy.test')
+		const naive = 'card_contacts(role,cards(id,channels(slug)))'
+		const reponse = await request.get(
+			`/rest/v1/contacts?id=eq.${ID_LEO}&select=${encodeURIComponent(naive)}`,
+			{ headers: enTetesAuthentifies(jeton) },
+		)
+		expect(reponse.status()).toBe(300)
+		const erreur = (await reponse.json()) as { code: string }
+		expect(erreur.code).toBe('PGRST201')
+	})
+
+	test('1 — l’administratrice lit la fiche entière en UNE requête, slugs compris', async ({
+		request,
+	}) => {
+		const jeton = await jetonDe('admin@p2enjoy.test')
+		const reponse = await request.get(adresseFiche(ID_LEO), {
+			headers: enTetesAuthentifies(jeton),
+		})
+		expect(reponse.status()).toBe(200)
+		const lignes = (await reponse.json()) as LigneFiche[]
+		expect(lignes).toHaveLength(1)
+		const leo = lignes[0]!
+		expect(leo.full_name).toBe('Léo Marchand')
+		expect(leo.organizations?.name).toBe('Sogexia')
+		expect(leo.organizations?.id).toBe(ID_SOGEXIA_SEED)
+		expect(leo.card_contacts).toHaveLength(1)
+		const rattachement = leo.card_contacts[0]!
+		expect(rattachement.role).toBe('decideur')
+		expect(rattachement.cards.id).toBe(ID_CARD_ERP)
+		expect(rattachement.cards.title).toBe('Migration ERP Sogexia')
+		// LES SLUGS SONT LÀ, et c'est tout l'enjeu de la clé nommée : l'adresse d'une affaire
+		// s'en déduit sans les trois requêtes en cascade de `lireCheminCard`.
+		expect(rattachement.cards.channels.slug).toBe('grands-comptes')
+		expect(rattachement.cards.channels.tracks.slug).toBe('conseil-ia')
+	})
+
+	test('2 — un identifiant inexistant rend 200 et []', async ({ request }) => {
+		const jeton = await jetonDe('admin@p2enjoy.test')
+		const reponse = await request.get(adresseFiche('00000000-0000-4000-8000-000000000000'), {
+			headers: enTetesAuthentifies(jeton),
+		})
+		expect(reponse.status()).toBe(200)
+		expect(await reponse.json()).toEqual([])
+	})
+
+	test('3 — l’ANONYME reçoit 200 et [] : un refus est zéro ligne, jamais une erreur', async ({
+		request,
+	}) => {
+		const reponse = await request.get(adresseFiche(ID_LEO), { headers: enTetesAnonymes() })
+		expect(reponse.status()).toBe(200)
+		expect(await reponse.json()).toEqual([])
+	})
+
+	test('4 — un identifiant MAL FORMÉ rend 400 / 22P02 : la règle du contrôle de forme', async ({
+		request,
+	}) => {
+		// C'est cette mesure qui impose à l'écran de contrôler la forme AVANT d'émettre : un `400`
+		// classé en erreur donnerait une commande de reprise morte, sur une adresse que
+		// l'utilisateur édite lui-même (§15.4).
+		const jeton = await jetonDe('admin@p2enjoy.test')
+		const reponse = await request.get(adresseFiche('pas-un-uuid'), {
+			headers: enTetesAuthentifies(jeton),
+		})
+		expect(reponse.status()).toBe(400)
+		const erreur = (await reponse.json()) as { code: string; message: string }
+		expect(erreur.code).toBe('22P02')
+		expect(erreur.message).toContain('invalid input syntax for type uuid')
+	})
+
+	test('5 — le `business_developer` lit la fiche et son affaire', async ({ request }) => {
+		const jeton = await jetonDe('bizdev@p2enjoy.test')
+		const lignes = (await (
+			await request.get(adresseFiche(ID_LEO), { headers: enTetesAuthentifies(jeton) })
+		).json()) as LigneFiche[]
+		expect(lignes).toHaveLength(1)
+		expect(lignes[0]!.card_contacts).toHaveLength(1)
+	})
+
+	test('6 et 7 — LES DROITS FINS TRAVERSENT L’EMBARQUEMENT : la lectrice ne voit pas l’affaire de Léo, mais voit celle de Sophie', async ({
+		request,
+	}) => {
+		// LA MESURE DÉCISIVE DU §15.4. Le track « Conseil IA » est fermé à la lectrice (CRM-012) :
+		// la ligne de rattachement est RETIRÉE, et non rendue avec une affaire nulle. C'est ce qui
+		// autorise l'écran à ne calculer AUCUN droit — il rend ce que le backend consent.
+		const jeton = await jetonDe('viewer@p2enjoy.test')
+		const chezLeo = (await (
+			await request.get(adresseFiche(ID_LEO), { headers: enTetesAuthentifies(jeton) })
+		).json()) as LigneFiche[]
+		expect(chezLeo).toHaveLength(1)
+		expect(chezLeo[0]!.full_name).toBe('Léo Marchand')
+		expect(chezLeo[0]!.card_contacts).toEqual([])
+
+		const chezSophie = (await (
+			await request.get(adresseFiche(ID_SOPHIE), { headers: enTetesAuthentifies(jeton) })
+		).json()) as LigneFiche[]
+		expect(chezSophie[0]!.card_contacts).toHaveLength(1)
+		expect(chezSophie[0]!.card_contacts[0]!.cards.title).toBe('Refonte intranet Ville de Lyon')
+	})
+
+	test('un contact SANS organisation rend `organizations: null`, jamais une clé absente', async ({
+		request,
+	}) => {
+		const jeton = await jetonDe('admin@p2enjoy.test')
+		const lignes = (await (
+			await request.get(adresseFiche(ID_SOPHIE), { headers: enTetesAuthentifies(jeton) })
+		).json()) as LigneFiche[]
+		expect(lignes[0]!.organizations).toBeNull()
+	})
+
+	test('un contact SANS affaire rend une liste vide — l’état vide du §15.9 cas e', async ({
+		request,
+	}) => {
+		const jeton = await jetonDe('admin@p2enjoy.test')
+		const lignes = (await (
+			await request.get(adresseFiche(ID_ELISE), { headers: enTetesAuthentifies(jeton) })
+		).json()) as LigneFiche[]
+		expect(lignes[0]!.full_name).toBe('Élise Fabre')
+		expect(lignes[0]!.card_contacts).toEqual([])
+	})
+
+	test('une affaire à la CORBEILLE est écartée par le serveur, pas par l’écran', async ({
+		request,
+	}) => {
+		// LA MESURE QUI A DÉCIDÉ DU FILTRE (§15.3). Le scénario pose lui-même le cas — le seed ne
+		// rattache aucun contact à une affaire supprimée — puis le retire, et il vérifie LES DEUX
+		// côtés : sans le filtre l'affaire apparaît, avec lui elle disparaît. Sans la première
+		// moitié, la preuve ne dirait pas que le filtre SERT à quelque chose.
+		const idCardSupprimee = '5eed0000-0000-4000-8000-0000000000c9'
+		const workspace = '5eed0000-0000-4000-8000-000000000001'
+		await request.post('/rest/v1/card_contacts', {
+			headers: { ...enTetesService(), Prefer: 'return=representation' },
+			data: { workspace_id: workspace, card_id: idCardSupprimee, contact_id: ID_ELISE, role: 'sonde-4f' },
+		})
+		try {
+			const sansFiltre = (await (
+				await request.get(
+					`/rest/v1/contacts?id=eq.${ID_ELISE}&select=${encodeURIComponent('card_contacts(role,cards(id,title,deleted_at))')}`,
+					{ headers: enTetesService() },
+				)
+			).json()) as Array<{ card_contacts: Array<{ cards: { deleted_at: string | null } }> }>
+			expect(sansFiltre[0]!.card_contacts).toHaveLength(1)
+			expect(sansFiltre[0]!.card_contacts[0]!.cards.deleted_at).not.toBeNull()
+
+			const avecFiltre = (await (
+				await request.get(adresseFiche(ID_ELISE), { headers: enTetesService() })
+			).json()) as LigneFiche[]
+			expect(avecFiltre[0]!.card_contacts).toEqual([])
+		} finally {
+			// La sonde est retirée quoi qu'il arrive : une sonde oubliée fausserait le carnet, les
+			// harnais et la garde de convergence du seed.
+			await request.delete('/rest/v1/card_contacts?role=eq.sonde-4f', {
+				headers: enTetesService(),
+			})
+		}
+	})
+
+	test('le SEED est rendu INTACT après 4f : trois contacts, deux rattachements', async ({
+		request,
+	}) => {
+		const contacts = (await (
+			await request.get('/rest/v1/contacts?select=full_name&order=full_name', {
+				headers: enTetesService(),
+			})
+		).json()) as Array<{ full_name: string }>
+		expect(contacts.map((c) => c.full_name)).toEqual([
+			'Élise Fabre',
+			'Léo Marchand',
+			'Sophie Dupont',
+		])
+		const rattachements = (await (
+			await request.get('/rest/v1/card_contacts?select=contact_id,role', {
+				headers: enTetesService(),
+			})
+		).json()) as Array<{ role: string | null }>
+		expect(rattachements).toHaveLength(2)
+		expect(rattachements.map((r) => r.role).sort()).toEqual(['decideur', 'prescripteur'])
+	})
+})
