@@ -441,8 +441,17 @@ ASSERTIONS_ATTENDUES=2269
 # la constatation que le seed est rendu intact. Deux mesures partagent un scénario (la chaîne vide
 # et la chaîne blanche, même contrainte), d'où quinze et non seize. 749 + 15 = **764**, valeur
 # COMPTÉE par `playwright test --list` (« Total: 764 tests in 44 files »), jamais déduite (INC-101).
-# Le nombre de FICHIERS ne bouge pas.
-SCENARIOS_API=764
+# Le nombre de FICHIERS ne bougeait pas.
+#
+# `CRM-081` tranche 2 c — le sommeil d'un FIL de messagerie (docs/SPEC-cards.md §16.14) — ajoute un
+# FICHIER, `e2e/api/snooze-fils.spec.ts`, et **dix** scénarios : les neuf lignes du contrat du
+# §16.14.8 avec les jetons réels — dont celle qui prouve la discrétion AVEC LE MÊME PROFIL, le
+# business developer réussissant sur le fil qu'il lit et se voyant opposer `thread_not_found` sur
+# celui qu'il ne lit pas —, plus la mesure que la table REFUSE un `POST` et un `DELETE` directs,
+# celle qui empêche un futur `grant` de rouvrir en silence la porte que les `alter default
+# privileges` de la plateforme avaient laissée ouverte. 764 + 10 = **774**, valeur COMPTÉE par
+# `playwright test --list` (« Total: 774 tests in 45 files »), jamais déduite (INC-101).
+SCENARIOS_API=774
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
