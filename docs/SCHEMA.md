@@ -991,7 +991,7 @@ automatique**, jamais — `SPEC-costs` §2.2.
 |---|---|---|
 | `card_id` | `uuid` | non nul, `on delete cascade` |
 | `budget_id` | `uuid` | non nul, `on delete restrict` — un budget ne se supprime pas, il se clôture |
-| `occurrence_id` | `uuid` | **nul si le budget n'est pas récurrent, non nul s'il l'est** — trigger |
+| `occurrence_id` | `uuid` | **nul si le budget n'est pas récurrent, non nul s'il l'est** — trigger ; `on delete restrict` |
 | `label` | `text` | non vide |
 | `estimated_cost` | `numeric(14,2)` | **non nul** |
 | `actual_cost` | `numeric(14,2)` | **nullable — nul n'est pas zéro** |
@@ -1005,6 +1005,22 @@ production —, et deux achats de même nature restent deux lignes.
 Triggers : refus d'insertion sur un budget ou une occurrence **clôturés** ; l'occurrence appartient
 au budget cité.
 
+**`occurrence_id` est `on delete restrict`, et c'est le seul choix cohérent avec le trigger**
+(`CRM-085`, migration 51). Une occurrence détruite sous ses lignes laisserait `occurrence_id` nul
+sur un budget récurrent, c'est-à-dire l'invariant ci-dessus **faux sans qu'aucune ligne interdite
+n'ait jamais été écrite** — la même brèche que la décision 471 a fermée entre `budgets` et
+`budget_occurrences`.
+
+**Et l'invariant se tient aussi depuis `budgets`.** Rendre récurrent un budget simple qui porte
+déjà des lignes les laisserait sans occurrence sur un budget désormais récurrent : un second
+trigger sur `budgets` le refuse tant que des lignes y sont rattachées (`app.budgets_verifier_
+recurrence_lignes`), pendant exact de `app.budgets_verifier_recurrence` (`CRM-084`), qui garde le
+sens inverse.
+
+**La clôture n'interdit que le RATTACHEMENT, jamais la saisie du réel** (`SPEC-costs` §2.3) : le
+trigger refuse l'insertion et le changement de `budget_id` ou d'`occurrence_id` — des deux côtés,
+celui qu'on quitte comme celui qu'on rejoint —, et ne s'oppose ni à `actual_cost` ni au `label`.
+
 ### 9 bis.7 Politiques
 
 | Table | Lecture | Écriture |
@@ -1014,7 +1030,7 @@ au budget cité.
 | `goal_links` | lecture du tableau | écriture sur les deux blocs reliés |
 | `budgets` | `app.can_read_track(track_id)` | `admin` du workspace |
 | `budget_occurrences` | lecture du budget | `admin` du workspace |
-| `card_costs` | `app.can_read_card(card_id)` **et** lecture du budget | `app.can_write_card(card_id)`, budget lisible et **ouvert** |
+| `card_costs` | `app.can_read_card(card_id)` **et** lecture du budget | `app.can_write_card(card_id)`, budget lisible et **ouvert** — **sauf la mise à jour**, qui n'exige pas le budget ouvert (§2.3 : le réel se saisit après la clôture) |
 
 **La double condition de lecture de `card_costs` n'est pas redondante** : card et budget peuvent
 relever de deux tracks dont l'appelant ne lit que l'un.

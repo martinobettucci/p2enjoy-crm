@@ -15,6 +15,23 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Une affaire porte ses lignes de coût** (`CRM-085` tranche 1, `docs/SPEC-costs.md` §2.3 et §3,
+  `docs/SCHEMA.md` §9 bis.6). La table `card_costs` existe : une affaire porte **autant de lignes
+  qu'elle a de natures de dépense** — « Publicité, estimé 100, réel inconnu » et « Production,
+  estimé 350, réel 375 » sur la même affaire —, chacune rattachée à un budget de son track, avec un
+  **estimé obligatoire** et un **réel facultatif**. Un réel non saisi n'est **pas** un réel nul : la
+  colonne reste nulle, et aucun agrégat ne la compte pour zéro. Une ligne exige une **occurrence si
+  et seulement si** son budget est récurrent, et cette occurrence doit appartenir à ce budget. Un
+  budget ou une occurrence **clôturés** n'acceptent plus aucune ligne neuve et aucun déplacement de
+  ligne — dans les deux sens, celui qu'on quitte comme celui qu'on rejoint —, **mais la saisie du
+  coût réel y reste possible** : on clôt une campagne, puis les factures arrivent. La **lecture
+  exige les deux droits à la fois**, sur l'affaire et sur le budget : une affaire lisible rattachée
+  à un budget d'un track fermé ne rend aucune ligne, faute de quoi le nom et le montant d'une
+  enveloppe interdite fuiraient. L'**écriture** appartient à quiconque travaille l'affaire, quand
+  celle du budget reste réservée à l'administrateur : le budget est un cadre, l'affectation un
+  geste. Un budget qui porte des dépenses devient **indestructible par la base elle-même**. Aucun
+  écran n'est livré par cette tranche.
+
 - **Les budgets d'un track s'administrent à l'écran** (`CRM-084` tranche 2,
   `docs/SPEC-costs.md` §4.1). Sous l'administration de l'arborescence, chaque track déplié porte
   désormais sa **table des budgets** — nom, devise, enveloppe, récurrence, nombre d'occurrences
