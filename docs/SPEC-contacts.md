@@ -2507,3 +2507,275 @@ qui lui est propre ; le §5.26 du design system porte le reste.
 **Ce qui restera dû sur `CRM-060` après 4h** : l'arbitrage sur les **références mortes** (§6,
 point 4) et, derrière lui, la **suppression** d'un contact ; le **détachement** depuis la fiche du
 contact (§17.8). L'unité demeure `[~]`.
+
+## 18. Sous-tranche 4i — Le détachement d'une affaire depuis la fiche d'un contact
+
+Contrat écrit **avant toute ligne de code** (`CLAUDE.md` §5, `docs/CloudWorker.md` §3.2), après
+**onze** mesures relevées à la main le 2026-08-19 sur la pile seedée, avec les jetons réels des
+trois profils et avec la clé anonyme. Les mesures d'écriture ont été faites sur des rattachements
+**sondes** posés puis purgés, plus une mesure sur une **ligne du seed** dont le refus a été relu
+inchangé : le seed est rendu **intact**, ses deux rattachements relus à l'identique
+(`c2 → Léo, decideur` et `c4 → Sophie, prescripteur`).
+
+Le §15.8, puis le §16.8, puis le §17.8 nomment ce manque **trois fois**. La fiche d'un contact
+**liste** ses affaires depuis 4f, **corrige** le contact depuis 4g et le **rattache** depuis 4h,
+mais défaire un rattachement oblige encore à quitter la personne que l'on a sous les yeux, à ouvrir
+l'affaire, et à y retrouver le contact d'où l'on venait. Le §17.8 a assumé cette asymétrie en la
+nommant, et en disant précisément ce qu'il faudrait pour la combler : une confirmation nommant
+l'objet, **la place où la poser dans une ligne de tableau**, et le traitement du « sans effet » que
+la clause `USING` produit à la suppression. C'est l'objet de cette sous-tranche, et rien d'autre.
+
+### 18.1 Ce que la sous-tranche livre, et ce qu'elle ne livre pas
+
+**Elle livre**, sur la route `/contacts/:idContact` :
+
+- une **commande de détachement par ligne** du tableau des affaires ;
+- sa **confirmation dans le flux**, nommant l'affaire dont on va détacher le contact ;
+- le traitement des **trois issues** que la mesure impose — appliquée, sans effet, refusée ;
+- la **relecture** de la fiche après un geste, dans les trois cas.
+
+**Elle ne livre pas** : aucune modification du rôle d'un rattachement posé (le §12.8 le nommait
+déjà, et rien ici ne le change) ; aucune création ni suppression d'affaire ; et toujours **aucune
+suppression de contact**, suspendue à l'arbitrage **non tranché** du §6 point 4. Chaque manque est
+repris au §18.8.
+
+### 18.2 Aucune fonction nouvelle — `detacherContact` est celle de 4c, INCHANGÉE
+
+`webapp/src/lib/contacts.ts` porte déjà `detacherContact(client, idCard, idContact)` et son type
+`ResultatDetachement` à **trois** issues, livrés par 4c pour la fiche de l'affaire. Cette
+sous-tranche les **appelle sans les modifier**, exactement comme 4h a rappelé `rattacherContact` :
+écrire un second `DELETE` sur la même table ferait diverger deux contrats au premier champ ajouté.
+
+**C'est donc une sous-tranche d'écran, et la mesure le confirme** : les onze relevés ci-dessous ne
+demandent aucune colonne, aucune politique, aucune requête nouvelle. **Aucune migration.**
+
+Le `.select('contact_id')` que la fonction accole à la suppression est ce qui rend l'issue « zéro
+ligne touchée » **observable** : sans lui PostgREST ne renvoie aucun corps, et le refus silencieux
+de la politique serait indistinguable d'un succès. Cette sous-tranche en dépend entièrement.
+
+### 18.3 Ce que la suppression rend — ONZE MESURES, le 2026-08-19
+
+`DELETE /rest/v1/card_contacts?card_id=eq.<affaire>&contact_id=eq.<contact>`, avec
+`Prefer: return=representation`.
+
+| # | Acteur / requête | Mesure |
+|---|---|---|
+| 1 | administratrice, rattachement **existant** (sonde sur `…0c1`) | **`200`** et **la ligne retirée** ; relue avec la clé de service : **absente** |
+| 2 | **lectrice**, rattachement **existant** d'une affaire qu'elle **LIT** (`…0c4 → Sophie`, ligne du **seed**) | **`200`** et **`[]`** — **aucune erreur** ; la ligne relue est **INCHANGÉE**, `role` toujours `prescripteur` |
+| 3 | administratrice, rattachement **inexistant** (`…0c1 → Sophie`) | **`200`** et **`[]`** |
+| 4 | administratrice, rattachement sur une affaire **ARCHIVÉE** (`…0c8`) | **`200`** et **la ligne** — la base ne s'y oppose **PAS** |
+| 5 | **business developer**, rattachement existant | **`200`** et **la ligne** — le geste n'est **PAS** un geste d'administration |
+| 6 | **anonyme**, rattachement existant | **`401`**, code **`42501`**, « permission denied for table card_contacts » ; la ligne relue est **INCHANGÉE** |
+| 7 | **lectrice**, sur `…0cb` « Assistant IA support — Nordis » | **`200`** et **la ligne** — elle **RÉUSSIT** |
+| 8 | administratrice, identifiant d'affaire **mal formé** | **`400`**, code **`22P02`** |
+| 9 | fiche de Léo **avant** | **1** affaire — « Migration ERP Sogexia » |
+| 10 | fiche de Léo **pendant** (sonde sur l'archivée `…0c8`) | **2** affaires, dont l'archivée, avec son `archived_at` |
+| 11 | fiche de Léo **après** détachement de la sonde | **1** affaire — la ligne a **disparu**, le seed est rendu intact |
+
+**QUATRE MESURES DÉCIDENT DE CETTE SOUS-TRANCHE. Les autres confirment.**
+
+**1. LA MESURE 2 IMPOSE UNE TROISIÈME ISSUE, ET C'EST L'ÉCART EXACT AVEC 4h.** La lectrice reçoit
+`200` et un tableau **vide**, sans la moindre erreur, sur une ligne qui **existe** et qui reste en
+base. La cause est structurelle et déjà écrite deux fois : une **insertion** est filtrée par la
+clause `WITH CHECK`, qui **rejette** la ligne — d'où le `403` explicite du §17.4 ; une
+**suppression** l'est par la clause `USING`, qui rend la ligne **invisible à l'écriture**, et
+PostgREST n'a alors rien à supprimer. Cette sous-tranche rejoint donc **4g**, non 4h : un message
+« sans effet » y a un objet, et ne pas l'écrire ferait disparaître de l'écran une ligne que la base
+a conservée. **Refermer la confirmation sur ce silence en annonçant un détachement serait le mensonge
+que le §5.25 interdit déjà pour la modification.**
+
+**2. LES MESURES 2 ET 3 SONT INDISTINGUABLES, ET C'EST ASSUMÉ.** Un refus de droit et une ligne
+déjà partie rendent tous deux `200` et `[]`. Prétendre les séparer renseignerait un appelant sans
+droit sur l'état de l'affaire (`docs/SPEC-permissions-rls.md` §7). C'est la situation du §15.4 —
+plusieurs causes, un seul écran —, et un **seul** message les couvre : il dit ce qui est vrai,
+« aucun rattachement n'a été retiré », n'affirme ni le refus ni la disparition, et la fiche est
+**relue** pour montrer l'état réel.
+
+**3. LA MESURE 4 RETIRE UNE RÈGLE D'ÉCRAN AVANT QU'ELLE NE SOIT ÉCRITE.** Le tableau de la zone 2
+liste les affaires **archivées** (§15.3, §5.24), à la différence du sélecteur de 4h qui écarte les
+affaires à la corbeille. Une politique qui refuserait la suppression sur une affaire close aurait
+obligé à éteindre la commande sur ces lignes — ou pire, à la laisser produire un « sans effet »
+indiscernable d'un refus de droit. Elle ne refuse pas : `app.can_write_card` dérive du **channel**
+et ne lit ni `archived_at` ni `deleted_at`. **Toutes les lignes du tableau portent donc la même
+commande, sans exception ni condition.**
+
+**4. LA MESURE 7 INTERDIT À L'ÉCRAN DE CALCULER LE DROIT, et elle est le pendant exact de la
+mesure 19 de 4h.** La lectrice **réussit** le détachement sur `…0cb` et se voit opposer le silence
+sur `…0c4`, deux affaires qu'elle **lit** l'une comme l'autre. Les droits fins de `CRM-012` divergent
+d'une affaire à l'autre **pour un même profil** : aucune propriété du profil ne prédit l'issue, et
+la lecture ne la prédit pas davantage. Une interface qui grisrait la commande « parce que
+l'utilisateur est lecteur » lui retirerait un geste que la base lui accorde.
+
+**Les mesures 6 et 8 ne sont pas atteignables depuis l'écran, et sont relevées pour fermer le
+classement.** La route est derrière l'authentification, et l'identifiant de l'affaire vient de la
+**donnée déjà lue**, jamais d'une saisie. Elles disent néanmoins ce que le dictionnaire du §18.5
+doit couvrir sans jamais mentir : `401` est classé `forbidden` par `classerRefusRattachement`, et
+`22P02` tombe dans `unknown`.
+
+**Deux natures de refus sont STRUCTURELLEMENT INATTEIGNABLES sur cette surface**, et le §18.5 dit ce
+qu'il en fait : `23505` (`deja-rattache`) suppose une insertion, et `23503` (`contact-inconnu`)
+suppose une clé étrangère à éprouver — une suppression n'en éprouve aucune.
+
+### 18.4 Où le geste s'ancre — UNE COLONNE DE PLUS, ET LA CONFIRMATION SUR SA PROPRE LIGNE
+
+**Décision : la commande est une QUATRIÈME COLONNE du tableau des affaires, et la confirmation
+occupe une LIGNE À ELLE, immédiatement sous celle qu'elle concerne, sur toute la largeur.**
+
+C'est la question que le §17.8 a laissée ouverte — « la place où poser cette confirmation dans une
+ligne de tableau » —, et elle a trois réponses possibles, dont deux sont écartées par une raison
+mesurable.
+
+- **Dans la cellule de la commande.** Écartée : la cellule est bornée par `CLASSES_CELLULE`
+  (`max-w-[32ch]`, `truncate`), et une confirmation qui **nomme l'affaire** (§6) y serait tronquée
+  — la règle qui exige de nommer l'objet serait tenue dans le balisage et perdue à l'écran.
+- **Sous le tableau, une seule confirmation pour la ligne choisie.** Écartée : rien ne relierait
+  visuellement la confirmation à sa ligne, sur un tableau qui en porte plusieurs. Le §12.6 n'a pas
+  ce problème — sa liste plate imbrique la confirmation **dans** le `li`.
+- **Une ligne de tableau à elle, en `colSpan`.** Retenue : elle est le seul emplacement qui soit à
+  la fois **dans le flux** (§5.13), **adjacent** à la ligne concernée, et **assez large** pour
+  nommer l'affaire. Le balisage reste un tableau valide, et la ligne de confirmation porte
+  `data-testid` pour que la preuve la rattache à son affaire.
+
+**La commande ne se cache pas pendant sa confirmation**, à la différence du §12.6 où commande et
+confirmation s'excluent dans la même ligne : ici elles vivent sur **deux lignes distinctes**, et
+retirer la commande ferait sauter la hauteur de la ligne du dessus au moment précis où l'on
+demande à l'utilisateur de lire. Elle est **désactivée** tant que sa confirmation est ouverte —
+il n'y a rien à rouvrir —, ce qui n'est pas une garde de droit mais l'état d'une commande sans
+objet, exactement comme la commande d'envoi de 4h l'est sans affaire choisie.
+
+**Une seule confirmation à la fois.** Ouvrir celle d'une autre ligne ferme la précédente : deux
+confirmations simultanées poseraient deux questions destructrices dont rien ne dirait laquelle on
+répond.
+
+**Le focus revient à la commande de SA ligne à la fermeture**, et ce retour n'a **pas** besoin
+d'être différé ici, la commande n'étant jamais démontée — c'est l'écart avec le §16.5 et le §17.6,
+et il est écrit pour qu'on ne recopie pas un remède sans son motif. **Aucune temporisation.**
+
+**Le geste de rattachement (§17.2) ne bouge pas** : il reste sous le titre de la zone, au-dessus du
+tableau. Les deux gestes agissent sur la même zone mais pas sur le même objet — l'un ajoute une
+ligne, l'autre en retire une nommée.
+
+### 18.5 Les refus, traduits par un dictionnaire FERMÉ
+
+Le message du serveur n'atteint **jamais** l'écran (§12.5, §17.4). Le classement est celui de
+`classerRefusRattachement`, **repris sans changement** : code PostgreSQL d'abord, code HTTP ensuite.
+
+| Nature | Atteignable ici ? | Ce que l'écran dit |
+|---|---|---|
+| `forbidden` (`401`/`403`) | **oui**, hors écran (mesure 6) | le détachement a été refusé ; rechargez la fiche |
+| `network` | **oui** | la requête n'a pas abouti |
+| `unknown` | **oui** (mesure 8, et tout le reste) | le détachement a échoué |
+| `deja-rattache` (`23505`) | **non** — suppose une insertion | même texte que `unknown` |
+| `contact-inconnu` (`23503`) | **non** — une suppression n'éprouve aucune clé étrangère | même texte que `unknown` |
+
+**Les deux natures inatteignables reçoivent le texte de `unknown`, et ce n'est pas un repli
+paresseux** : leur donner un texte propre ferait entrer dans le produit une phrase que **rien** ne
+peut afficher, donc qu'aucune preuve ne peut éprouver. Le dictionnaire reste **exhaustif** — le type
+l'impose —, et le motif est écrit dans le fichier.
+
+**L'issue `sans-effet` n'est PAS dans ce tableau, et c'est le point du §18.3.** Elle n'est ni un
+succès ni une erreur : elle a son propre message, et elle **relit** la fiche.
+
+### 18.6 De quoi le geste a l'air
+
+Le rendu **hérite du §12.6 / §5.21** — le même geste dans l'autre sens — et de `docs/DESIGN_SYSTEM.md`
+§5.27, ajouté dans le même changement. Ce qui suit ne dit que ce qui lui est propre.
+
+- **Une commande par ligne**, à l'icône `Unlink` du §5.21 : c'est le même geste, et lui en donner
+  une autre ferait lire deux gestes différents. Taille compacte, comme au §12.6.
+- **La confirmation NOMME L'AFFAIRE** (§6). C'est le §12.6 **retourné** : là-bas le contact variait
+  et l'affaire était le décor, ici le contact est le décor et l'affaire varie. Nommer le contact
+  sur cette page nommerait la personne dont on lit déjà la fiche, ce qui ne lèverait aucune
+  ambiguïté.
+- **Elle dit que le rôle part avec le rattachement**, quand il y en a un : c'est la seule donnée
+  que le geste détruit sans reprise, le rattachement se refaisant en deux clics par le geste de 4h.
+- **Le bouton de confirmation est destructif** (teinte de danger, §5.3), et « Annuler » est
+  secondaire.
+- **Aucune commande n'est éteinte d'avance selon le rôle** (§5.21, §5.23, §5.25, §5.26, sans
+  exception) : la lectrice voit la commande, confirme, et reçoit — selon l'affaire — un détachement
+  **réel** (mesure 7) ou le message « sans effet » (mesure 2). Griser ferait passer une décision de
+  la base pour une décision d'écran (`CLAUDE.md` §10), et la mesure 7 montre que l'écran se
+  tromperait.
+- **Une affaire ARCHIVÉE porte la commande comme les autres** (mesure 4). Rien à l'écran ne
+  distingue sa ligne, hors la pilule que le §15.3 y pose déjà.
+- **Le message du geste se lit SOUS le tableau**, `role="alert"`, jamais en tête d'écran (§5.13,
+  §5.16) — la place que le §12.6 lui donne déjà. Il **survit à la relecture** : c'est la règle du
+  cas o du §12.7, et la relecture est précisément ce qui pourrait l'effacer.
+- **La fiche est RELUE après un geste, dans les TROIS issues** (§5.21). Après un succès parce que la
+  ligne doit partir ; après un « sans effet » parce que l'écran ne sait pas laquelle des deux causes
+  s'applique et ne prétend pas le savoir ; après un refus parce que l'état affiché peut être périmé.
+  Jamais de retrait local : il contredirait l'ordre du serveur le temps d'un rendu.
+- **La zone 1 et le titre de la route ne bougent pas** — règle du §17.6, tenue à l'identique.
+- **L'état vide de la zone des affaires garde le geste de RATTACHEMENT et n'en gagne aucun autre** :
+  un tableau sans ligne n'a aucune commande de détachement à porter, et le §5.24 est révisé sur ce
+  point précis.
+
+### 18.7 Contrat de comportement, cas a à m
+
+| # | Situation | Attendu |
+|---|---|---|
+| a | fiche avec au moins une affaire | **chaque** ligne porte sa commande de détachement, y compris la ligne d'une affaire **archivée** ; aucune confirmation n'est rendue |
+| b | commande activée | une **ligne de confirmation** apparaît sous la ligne concernée, sur toute la largeur, **nommant l'affaire** ; le focus entre dans son bouton de confirmation |
+| c | fermeture par « Annuler » | la ligne de confirmation est démontée, **et le focus revient à la commande de SA ligne** |
+| d | ouverture de la confirmation d'une **autre** ligne | la précédente est fermée ; **une seule** confirmation existe à tout instant |
+| e | confirmation activée pendant que la requête vole | le bouton de confirmation est **désactivé** et porte son libellé d'attente ; aucune seconde requête n'est émise |
+| f | détachement **appliqué** | la confirmation se ferme, la fiche est **relue**, la ligne **disparaît**, et **aucun message** n'est affiché |
+| g | détachement appliqué sur la **dernière** affaire | le tableau cède la place à l'**état vide** de la zone, qui garde le geste de rattachement (§17.6) |
+| h | détachement **sans effet** (lectrice sur une affaire qu'elle ne peut pas écrire, ou ligne déjà partie) | message « aucun rattachement n'a été retiré » **sous le tableau**, `role="alert"` ; la confirmation se ferme ; **la fiche est relue** ; la ligne est **toujours là** si la base l'a gardée |
+| i | détachement **refusé** (`401`, réseau, inattendu) | message du dictionnaire **fermé** ; la confirmation se ferme ; la fiche est **relue** |
+| j | affaire **archivée** détachée | elle part comme les autres (mesure 4) ; sa pilule ne change rien |
+| k | rattachement **puis** détachement dans la même visite | les deux gestes cohabitent ; le message du détachement n'efface pas la zone, et le geste de rattachement offre de nouveau l'affaire détachée après la relecture |
+| l | contact introuvable, erreur de lecture, ou absence d'espace de travail | **aucune commande n'est rendue** — il n'y a pas de tableau (règle du §17.7 cas n) |
+| m | commandes et rôle | **aucune commande n'est éteinte d'avance**, quel que soit le rôle de l'appelant (mesure 7) |
+
+### 18.8 Ce que la sous-tranche ne fait PAS, et pourquoi
+
+- **Aucune modification du rôle d'un rattachement posé.** La politique `card_contacts_maj` existe en
+  base depuis la tranche 1 ; aucun écran ne l'exerce. Détacher puis rattacher reste le chemin, et
+  cette sous-tranche le rend possible **sans quitter la fiche** — ce qui réduit l'écart sans le
+  combler. Il est nommé, comme au §12.8, plutôt que compensé par une commande morte.
+- **Aucune suppression de contact**, toujours suspendue à l'arbitrage **non tranché** du §6
+  point 4 : les valeurs `jsonb` qui désignent un contact supprimé demeurent en base
+  (`docs/CloudWorker.md` §4.1 — une entrée qui attend un arbitrage ne se tranche jamais soi-même).
+- **Le fil unifié n'apprend rien de ce geste** : `card_contacts` n'écrit aucun `card_event`, et la
+  tranche 1 n'en a posé aucun trigger. L'écart est celui du §12.8, inchangé et toujours à arbitrer.
+- **Le seed n'est PAS modifié.** Ses deux rattachements couvrent exactement les branches dont ce
+  geste a besoin : `c2 → Léo` sur une affaire **active** que l'administratrice écrit, et
+  `c4 → Sophie` sur une affaire que la **lectrice lit sans l'écrire** — c'est-à-dire la mesure 2,
+  celle qui décide de l'issue « sans effet ». Y toucher déplacerait la garde de convergence de
+  `apply-seed.sh`, qui compare `card_contacts` à **deux**, et le compteur que lit la règle 3 du
+  classement (`CRM-055`) : le §11.7 a déjà tranché — on n'enrichit que ce qui ne casse rien.
+
+### 18.9 Preuves exigées — sous-tranche 4i
+
+| Niveau | Preuve |
+|---|---|
+| Unitaire | `webapp/src/app/FicheContact.test.tsx` : les cas a à m du §18.7 |
+| API | `e2e/api/contacts.spec.ts` : les mesures 1 à 8 du §18.3 avec les **jetons réels**, chaque refus et chaque « sans effet » **relisant la ligne** pour la constater inchangée (décision 70) |
+| E2E | `e2e/ui/contacts.spec.ts` : le détachement par les **gestes de l'écran**, le parcours **clavier**, le « sans effet » opposé à la lectrice, et le rendu à 390 px ; console **vierge** |
+| Visible | captures sous `docs/captures/CRM-060/`, **observées** (`CLAUDE.md` §16) |
+| i18n | `webapp/src/i18n/i18n.test.ts` (existant) : aucun texte visible en dur, aucune clé morte |
+| Seed | `card_contacts` compte de nouveau ses **deux** lignes après la campagne, **restituées par les gestes de l'écran** |
+
+### 18.10 Definition of Done de la sous-tranche 4i
+
+- `webapp/src/app/FicheContact.tsx` : la quatrième colonne, la commande par ligne, la ligne de
+  confirmation en `colSpan`, l'exclusivité des confirmations, le message sous le tableau et la
+  relecture dans les trois issues ;
+- **aucune modification de `webapp/src/lib/contacts.ts`** : `detacherContact` est celle de 4c ;
+- test unitaire dédié : les cas a à m du §18.7 ;
+- preuve d'API dédiée : les huit mesures d'écriture du §18.3 ;
+- preuve E2E dédiée : les gestes, le clavier, le « sans effet », 390 px, console vierge ;
+- captures produites **et observées** ;
+- clés de traduction ajoutées, aucun texte en dur ;
+- `docs/DESIGN_SYSTEM.md` §5.27 ajouté et §5.24 révisé ; `docs/manual.md` ; `CHANGELOG.md`, dans le
+  même changement ;
+- compteurs de `scripts/verify-harness.sh` **comptés** par `playwright test --list`, jamais déduits
+  (INC-101) ;
+- commentaires `@spec` / `@verifies` sur chaque fichier touché.
+
+**Aucune migration : cette sous-tranche ne crée aucune colonne et n'ouvre aucune politique.**
+
+**Ce qui restera dû sur `CRM-060` après 4i** : l'arbitrage sur les **références mortes** (§6,
+point 4) et, derrière lui, la **suppression** d'un contact ; la **modification du rôle** d'un
+rattachement posé (§18.8). L'unité demeure `[~]`.

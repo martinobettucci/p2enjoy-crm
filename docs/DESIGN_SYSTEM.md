@@ -1966,6 +1966,15 @@ spécifié par `docs/SPEC-contacts.md` §15 ; les règles ci-dessous ne disent q
   > par le §5.21 et par le §5.23. Ce qui reste vrai est plus étroit encore, et c'est le seul énoncé
   > que 4h ne révise pas : **aucun détachement n'est livré depuis cette page** (§17.8), et une
   > ligne du tableau ne porte donc toujours aucune commande.
+  >
+  > > **RÉVISION FINALE, 2026-08-19** (`docs/SPEC-contacts.md` §18.4). Le dernier énoncé **tombe à
+  > > son tour, par livraison** : la sous-tranche 4i pose une **quatrième colonne** au tableau, et
+  > > **chaque ligne porte désormais sa commande de détachement** (§5.27). Le tableau du §5.24 se
+  > > lit donc à **quatre** colonnes — affaire, rôle, état, commandes —, et le motif des « trois
+  > > colonnes et non cinq » est **inchangé** : il visait les colonnes de **donnée**, le track et le
+  > > channel restant dans l'adresse. Ce qui reste vrai, et que 4i ne révise pas : **l'état vide de
+  > > la zone des affaires ne gagne aucune commande de détachement** — un tableau sans ligne n'en a
+  > > aucune à porter —, et il garde le seul geste de rattachement du §5.26.
 
 ### 5.25 Formulaire de modification d'un contact — `CRM-060`
 
@@ -2060,3 +2069,78 @@ propre.
 
 - **Aucune couleur, aucun jeton, aucune icône nouvelle** : le geste emprunte au §5.21 son icône
   `Link2` et au §5.7 ses contrôles.
+
+### 5.27 Détachement d'une affaire depuis la fiche d'un contact — `CRM-060`
+
+Le geste de détachement de la fiche de contact (`docs/SPEC-contacts.md` §18). Il **hérite du
+§5.21** — le même geste dans l'autre sens, sur la fiche de l'affaire — plutôt que d'inventer une
+forme. Ce qui suit ne dit que ce qui lui est propre, et l'essentiel de ce qui lui est propre tient
+à **l'élément qui le porte** : là-bas une liste plate, ici un **tableau** (§5.9).
+
+- **UNE COMMANDE PAR LIGNE, DANS UNE QUATRIÈME COLONNE.** Le tableau du §5.24 en portait trois —
+  affaire, rôle, état ; il en porte quatre. L'en-tête de la colonne des commandes est un
+  **libellé lisible**, jamais une cellule vide : un en-tête vide laisse la colonne sans nom pour
+  qui navigue au lecteur d'écran (§8).
+
+- **LA CONFIRMATION OCCUPE UNE LIGNE À ELLE, SUR TOUTE LA LARGEUR**, immédiatement sous la ligne
+  qu'elle concerne. C'est la règle propre à cette surface, et les deux autres emplacements sont
+  écartés pour une raison mesurable :
+
+  - **dans la cellule de la commande** : les cellules du §5.24 sont bornées (`max-w-[32ch]`,
+    `truncate`), et une confirmation qui **nomme l'affaire** y serait **tronquée**. La règle du §6
+    serait tenue dans le balisage et perdue à l'écran ;
+  - **sous le tableau** : rien ne relierait la confirmation à **sa** ligne, sur un tableau qui en
+    porte plusieurs. Le §5.21 n'a pas ce problème, sa liste plate imbriquant la confirmation dans
+    l'élément de liste.
+
+  La ligne en `colSpan` est le seul emplacement à la fois **dans le flux** (§5.13), **adjacent** à
+  la ligne concernée, et **assez large** pour nommer l'objet.
+
+- **LA COMMANDE NE SE CACHE PAS PENDANT SA CONFIRMATION**, à la différence du §5.21 où les deux
+  s'excluent dans le même élément. Ici elles vivent sur **deux lignes distinctes** : retirer la
+  commande ferait sauter la hauteur de la ligne du dessus au moment précis où l'on demande de lire.
+  Elle est **désactivée** tant que sa confirmation est ouverte — il n'y a rien à rouvrir. Ce n'est
+  pas une garde de droit, c'est une commande sans objet, au même titre que la commande d'envoi du
+  §5.26 sans affaire choisie.
+
+- **UNE SEULE CONFIRMATION À TOUT INSTANT.** Ouvrir celle d'une autre ligne ferme la précédente :
+  deux questions destructrices simultanées ne diraient pas à laquelle on répond.
+
+- **LE FOCUS REVIENT À LA COMMANDE DE SA LIGNE, ET CE RETOUR N'EST PAS DIFFÉRÉ.** C'est l'écart
+  avec le §5.25 et le §5.26, et il est écrit pour qu'on ne recopie pas un remède sans son motif :
+  là-bas la commande est **démontée** pendant que le formulaire est ouvert, et sa référence vaut
+  `null` ; ici elle reste montée, seulement désactivée. **Aucune temporisation** (`CLAUDE.md` §18).
+
+- **LA CONFIRMATION NOMME L'AFFAIRE, ET NON LE CONTACT** (§6). C'est le §5.21 **retourné** : là-bas
+  le contact variait et l'affaire était le décor ; ici le contact est le décor — on lit sa fiche —
+  et l'affaire varie. Elle dit aussi que **le rôle part avec le rattachement** : c'est la seule
+  donnée que le geste détruit sans reprise. Bouton d'action **destructif** (§5.3), « Annuler »
+  secondaire.
+
+- **TOUTES LES LIGNES PORTENT LA MÊME COMMANDE, Y COMPRIS CELLE D'UNE AFFAIRE ARCHIVÉE.** MESURÉ :
+  la base **accepte** ce détachement — `app.can_write_card` dérive du channel et ne lit ni
+  `archived_at` ni `deleted_at`. Rien à l'écran ne distingue ces lignes, hors la pilule que le §5.24
+  y pose déjà.
+
+- **AUCUNE COMMANDE N'EST ÉTEINTE D'AVANCE SELON LE RÔLE** (§5.21, §5.23, §5.25, §5.26, sans
+  exception). MESURÉ, et c'est le pendant de la mesure qui a décidé le §5.26 : **la lectrice
+  RÉUSSIT** ce détachement sur une affaire et reçoit le silence sur une autre, toutes deux
+  lisibles par elle. L'écran qui grisrait « parce que l'utilisateur est lecteur » se **tromperait**.
+
+- **TROIS ISSUES, ET LA TROISIÈME DOIT ÊTRE DITE** — c'est la règle du §5.25, retrouvée ici pour la
+  même cause structurelle. Une **suppression** est filtrée par la clause `USING`, qui rend la ligne
+  invisible à l'écriture : le serveur rend « aucune ligne retirée », **sans erreur**. L'écran le dit
+  — « aucun rattachement n'a été retiré » —, n'affirme **ni** le refus **ni** la disparition, les
+  deux étant indistinguables, et **relit**. Faire disparaître la ligne sur ce silence annoncerait un
+  détachement qui n'a pas eu lieu.
+
+- **LE MESSAGE DU GESTE SE LIT SOUS LE TABLEAU**, `role="alert"`, jamais en tête d'écran (§5.13,
+  §5.16) — la place que le §5.21 lui donne déjà. Il **survit à la relecture**.
+
+- **LA ZONE DES AFFAIRES EST RELUE DANS LES TROIS ISSUES**, jamais amputée localement (§5.21) : un
+  retrait optimiste contredirait l'ordre du serveur le temps d'un rendu, et sur l'issue « sans
+  effet » il **effacerait une ligne que la base a gardée**. La zone des caractéristiques et le titre
+  de la route ne bougent pas (§5.26, règle tenue à l'identique).
+
+- **Aucune couleur, aucun jeton, aucune icône nouvelle** : le geste emprunte au §5.21 son icône
+  `Unlink` et sa teinte de danger.
