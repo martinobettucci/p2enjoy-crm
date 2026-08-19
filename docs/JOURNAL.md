@@ -20742,11 +20742,27 @@ parce que le SQL les pose, pas parce qu'un utilisateur peut les ouvrir. Le compo
 INCHANGÉ et l'entrée attend l'arbitrage : écrire cet écran aurait été écrire une spécification à la
 place du responsable, sur une surface dont ni l'emplacement, ni les états ne sont posés.
 
+**Campagne complète, exécutée une fois en fin de session.** `typecheck`, `types:check` et `build`
+verts ; `test:unit` **58 fichiers / 1997 tests** ; `test:sql` **48 fichiers / 2405 assertions** ;
+`e2e:api` **801 passés** ; `e2e:ui` **493 passés, 1 échec** ; `e2e:mail` **42 passés** ; `pytest`
+**244**. `node scripts/lib/classes-css.mjs` cite **276** classes et n'en trouve que trois absentes du
+CSS produit — `h-10 py-0.5 text-text-1`, exactement celles d'INC-158 : **aucune classe de cette
+tranche n'y figure**. Les quarante-neuf autres `scripts/verify-*.sh` n'ont pas été rejoués, la série
+entière ne tenant pas dans une session (`docs/CloudWorker.md` §2.1 ter).
+
+**L'UNIQUE ÉCHEC EST ÉTRANGER AU DIFF, ET C'EST MESURÉ — INC-174.** `administration-workflows.spec.ts`
+§ « les deux gestes se mènent au clavier seul » a rougi DANS la campagne, et **passe seul** en 29,8 s
+sur la même pile sans reseed. Le diff ne touche que `/reglages/arborescence` et deux modules neufs ;
+aucun d'eux n'est monté sur `/reglages/workflows`. Le compte le confirme : 482 la veille, plus les 12
+scénarios de cette tranche, soit 494 — 493 passés et un échec. La cause exacte n'est PAS établie, et
+elle n'a pas été cherchée : `docs/CloudWorker.md` §4.3 interdit de rester en boucle sur une anomalie
+étrangère à son unité. Elle est consignée, avec son arbitrage attendu.
+
 **Où reprendre.** `CRM-084` reste `[~]`, et son reste tient en **un seul point** : le DÉCOMPTE des
 lignes sans coût réel dans la confirmation de clôture (§4.1), qui se lit dans `card_costs` — table
 que `CRM-085` livrera. La confirmation dit aujourd'hui que rien n'est à saisir, plutôt que de
 laisser un blanc se lire comme un zéro ; interroger une table absente aurait rendu un « n'a pas pu
 être mesuré » PERMANENT, c'est-à-dire un état d'erreur mentant sur sa cause. La reprise naturelle
 est donc **`CRM-085`**, tête de suite du chunk 6, qui soldera ce point dans la foulée. `CRM-083`
-reste bloqué par **INC-170**. Quatre arbitrages attendent désormais : **INC-169**, **INC-170**,
-**INC-172** et **INC-173**.
+reste bloqué par **INC-170**. Cinq arbitrages attendent désormais : **INC-169**, **INC-170**,
+**INC-172**, **INC-173** et **INC-174**.

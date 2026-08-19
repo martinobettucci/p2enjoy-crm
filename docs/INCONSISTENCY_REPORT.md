@@ -195,7 +195,14 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Dix-sept ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+**Dix-huit ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-173 et
+INC-174** — **INC-174** consignée le 2026-08-19 par la même session : le parcours clavier de la
+grille champ × étape de `administration-workflows.spec.ts` échoue DANS une campagne complète et
+passe SEUL en 29,8 s. Étranger au diff — aucun module de la tranche n'est monté sur
+`/reglages/workflows` —, cause exacte NON établie.
+
+Précédemment dix-sept : **INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160 et INC-173** —
 **INC-173** consignée le 2026-08-19 par la session `CRM-084` tranche 2 : `docs/SPEC-costs.md` §4.1
 décrit une colonne qui COMPTE les occurrences ouvertes, le §3.2 nomme les droits d'écriture d'une
@@ -2582,3 +2589,45 @@ sont posés.
 
 Tant que l'arbitrage n'est pas rendu, `CRM-084` porte cette limite dans son backlog et le
 comportement reste inchangé.
+
+## Consigné le 2026-08-19 — un échec de campagne non reproductible, étranger à `CRM-084` tranche 2
+
+### INC-174 — `administration-workflows.spec.ts` § « les deux gestes se mènent au clavier seul » échoue DANS une campagne complète, et passe seul
+
+**Ce qui est mesuré.** Campagne complète du 2026-08-19, session `CRM-084` tranche 2 :
+
+```
+1 failed
+  [ui] › e2e/ui/administration-workflows.spec.ts:1116:2 › la grille champ × étape sur la vraie
+        base (§7 bis.11) › les deux gestes se mènent au clavier seul
+493 passed (18.1m)
+```
+
+**Rejoué SEUL immédiatement après, sur la même pile et sans reseed** : `2 passés` en 50,2 s, dont le
+scénario en cause — 29,8 s à lui seul.
+
+**Pourquoi il n'est PAS imputable au changement de la session.** Le diff de cette tranche touche
+`webapp/src/lib/budgets.ts`, `webapp/src/app/BlocBudgetsTrack.tsx`, les traductions, et ajoute une
+section à `webapp/src/app/AdministrationArborescence.tsx` — l'écran `/reglages/arborescence`. Le
+scénario en échec parcourt `/reglages/workflows`, où aucun de ces modules n'est monté. Aucun chemin
+de code n'est partagé, et le compte total de la suite d'interface est cohérent : 482 la veille,
+plus les 12 scénarios de cette tranche, soit 494 — dont 493 passés et un échec.
+
+**Ce qui n'est PAS établi.** La cause exacte. Le scénario est un parcours clavier long, qui avance
+son focus par `Tab` sur une grille champ × étape ; 29,8 s isolé le place près des bornes d'attente
+de Playwright, et une campagne de dix-huit minutes n'offre pas la même machine qu'une exécution
+seule. C'est une HYPOTHÈSE, pas une mesure : ni le seuil, ni le pas de la boucle en cause n'ont été
+isolés, la session ayant préféré consigner plutôt qu'ouvrir une investigation qui ne lui appartient
+pas. `docs/CloudWorker.md` §4.3 interdit par ailleurs de rester en boucle sur une anomalie étrangère
+à son unité.
+
+**Ce qu'il faut en retenir pour lire une campagne.** C'est le second couplage de ce genre après
+INC-172 : un échec isolé d'un parcours clavier long **dans une campagne complète** ne dit rien tant
+qu'il n'a pas été rejoué **seul**. Le trancher demande de savoir si le scénario dépend d'un budget
+de temps que la campagne lui retire.
+
+**Arbitrage attendu.** Deux issues, et le responsable tranche : ou bien ce scénario reçoit un
+`test.slow()` explicite, avec son motif écrit dans le fichier — ce qui NOMME sa durée au lieu de la
+subir —, ou bien sa boucle de `Tab` est bornée par un compteur plus serré, ce qui la rendrait
+insensible à la charge. Aucune des deux ne doit être prise pour verdir une preuve : le scénario
+mesure un contrat réel, et il passe.

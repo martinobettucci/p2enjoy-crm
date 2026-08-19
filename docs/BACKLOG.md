@@ -8371,8 +8371,16 @@ budget appartient à un track, et l'écran qui administre le track est celui qui
       `e2e:ui` **482 passés**, `e2e:mail` **42 passés**, `pytest` **244**, `typecheck`,
       `types:check` et `build` verts. Les trois harnais que ce changement touche sont verts :
       `verify-migrations` **25 contrôles**, `verify-seed` **55**, `verify-seed-demo` **69**.
-- [ ] **Les quarante-sept autres `scripts/verify-*.sh` n'ont pas été rejoués**, la série entière ne
-      tenant pas dans une session (`docs/CloudWorker.md` §2.1 ter).
+- [x] **La campagne complète a été rejouée après la tranche 2** : `test:unit` **58 fichiers /
+      1997 tests**, `test:sql` **48 fichiers / 2405 assertions**, `e2e:api` **801 passés**,
+      `e2e:ui` **493 passés, 1 échec**, `e2e:mail` **42 passés**, `pytest` **244**, `typecheck`,
+      `types:check` et `build` verts. L'unique échec —
+      `administration-workflows.spec.ts` § « les deux gestes se mènent au clavier seul » — est
+      **étranger au diff** et **passe seul** en 29,8 s : consigné en **INC-174**, cause exacte non
+      établie.
+- [ ] **Les quarante-huit autres `scripts/verify-*.sh` n'ont pas été rejoués**, la série entière ne
+      tenant pas dans une session (`docs/CloudWorker.md` §2.1 ter). `scripts/verify-budgets.sh`, lui,
+      est vert : **43 contrôles, aucune anomalie**.
 
 ### CRM-085 — Lignes de coût d'une affaire `[ ]`
 
