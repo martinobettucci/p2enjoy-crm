@@ -278,14 +278,22 @@ select is(
 
 -- Le maximum est celui du track, jamais celui de la table : deux tracks numérotent leurs budgets
 -- indépendamment, comme deux workspaces numérotent leurs tracks.
+--
+-- LE TRACK RETENU EST « Pipeline 2024 » (…024), ET LE CHOIX A ÉTÉ MESURÉ. La première rédaction
+-- prenait « Formation » (…023), qui ne portait alors aucun budget ; le seed de cette même unité
+-- lui en a ensuite posé un — « Suisse romande », en CHF, sans lequel le regroupement par devise du
+-- §4.5 serait indémontrable —, et l'assertion attendait 1 là où le trigger rendait légitimement 2.
+-- Ce n'était pas un défaut du produit mais une fixture périmée par son propre seed. « Pipeline
+-- 2024 » est le seul track que le seed laisse sans budget ; son état archivé est sans effet ici,
+-- l'archivage ne participant pas au calcul de la position.
 insert into public.budgets (id, track_id, name)
-values ('b0000000-0000-4000-8000-000000000008', '5eed0000-0000-4000-8000-000000000023',
+values ('b0000000-0000-4000-8000-000000000008', '5eed0000-0000-4000-8000-000000000024',
         'Position omise sur un track vierge 0048');
 
 select is(
 	(select position from public.budgets where id = 'b0000000-0000-4000-8000-000000000008'),
 	1::numeric,
-	'CRM-084 : sur un track sans budget, la première position est 1 — le maximum est PAR TRACK');
+	'CRM-084 : sur un track SANS budget, la première position est 1 — le maximum est PAR TRACK');
 
 -- =============================================================================================
 -- 5. La récurrence, tenue des DEUX côtés

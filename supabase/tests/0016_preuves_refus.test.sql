@@ -37,7 +37,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(55);
+select plan(57);
 
 -- =============================================================================================
 -- 1. Inventaire des politiques — ce qui rend le harnais capable d'échouer (§7.4)
@@ -129,10 +129,39 @@ select is(pg_temp.politiques('card_events'),
 	'`card_events` porte son unique politique de lecture et ne reste plus hors de l''inventaire '
 	'nominal');
 
+-- RÉVISÉ PAR `CRM-084`, qui livre les enveloppes budgétaires. L'inventaire NOMINAL est étendu en
+-- même temps que le compte : le compte seul verrait un ajout sans savoir lequel, et le nom seul
+-- ne verrait pas une politique surnuméraire. Les deux ensemble, et seulement ensemble, ferment la
+-- porte.
+--
+-- CE QUE CES HUIT NOMS DISENT DE LA RÈGLE, ET QUI SE LIT ICI SANS OUVRIR LA MIGRATION : les deux
+-- tables portent QUATRE politiques chacune, et le suffixe `_admin` sur trois d'entre elles n'est
+-- pas décoratif — c'est l'arbitrage du §3 de `docs/SPEC-costs.md`, « le budget est un CADRE ;
+-- l'affectation est un GESTE ». La lecture, elle, porte `_track` : elle suit `app.can_read_track`,
+-- droits fins compris, et non le rôle.
+select is(pg_temp.politiques('budgets'),
+	array['budgets_insertion_admin', 'budgets_lecture_track', 'budgets_maj_admin',
+	      'budgets_suppression_admin'],
+	'`budgets` porte ses QUATRE politiques : lecture par le track, les trois écritures par '
+	'l''administrateur du workspace (docs/SPEC-costs.md §3)');
+
+select is(pg_temp.politiques('budget_occurrences'),
+	array['budget_occurrences_insertion_admin', 'budget_occurrences_lecture_budget',
+	      'budget_occurrences_maj_admin', 'budget_occurrences_suppression_admin'],
+	'`budget_occurrences` porte ses QUATRE politiques : lecture par le budget, les trois écritures '
+	'par l''administrateur du workspace');
+
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	91,
-	'QUATRE-VINGT-ONZE politiques dans `public`, et pas une de plus — 79 avant `CRM-082`, plus les '
+	99,
+	'QUATRE-VINGT-DIX-NEUF politiques dans `public`, et pas une de plus — 91 avant `CRM-084`, plus '
+	'les HUIT politiques des enveloppes budgétaires : QUATRE par table — lecture, insertion, MAJ, '
+	'suppression — sur `budgets` et `budget_occurrences` (docs/SCHEMA.md §9 bis.7). COMME LE '
+	'TABLEAU D''OBJECTIFS, CE COUPLE N''A AUCUNE RPC : créer, doter, rendre récurrent ou clôturer '
+	'un budget sont des mises à jour ordinaires dont la règle tient ENTIÈREMENT dans les '
+	'politiques — `app.can_read_track` pour la lecture, `app.is_workspace_admin` pour l''écriture '
+	'(docs/SPEC-costs.md §3). Ce qu''une RPC masquerait, ces huit politiques le portent en clair. '
+	'Avant elles : 91 avant `CRM-084`, soit 79 avant `CRM-082`, plus les '
 	'DOUZE politiques du tableau d''objectifs : QUATRE par table — lecture, insertion, MAJ, '
 	'suppression — sur `goal_boards`, `goal_blocks` et `goal_links` (docs/SCHEMA.md §9 bis.7). '
 	'CE TRIPLET N''A AUCUNE RPC, et c''est ce qui le distingue des trois révisions précédentes : '
