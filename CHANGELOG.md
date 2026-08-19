@@ -13,6 +13,23 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-081` — le sommeil d'un fil de messagerie se voit et se commande (tranche 2 e)
+
+- **L'inbox montre l'état du fil de chaque message et laisse l'endormir.** Sous l'en-tête du message
+  ouvert, « Mettre le fil en sommeil » offre quatre échéances usuelles ou une échéance choisie ;
+  « Réveiller le fil » le ramène sans confirmation. Une pastille — lune et date — marque les messages
+  d'un fil endormi, dans la liste comme dans l'en-tête.
+- **Les messages d'un fil endormi sortent de la liste par défaut**, et la case « Afficher les fils en
+  sommeil » les ramène, marqués. Un dossier dont tous les fils dorment le dit au lieu d'afficher un
+  vide muet, et porte la case qui l'en sort.
+- **Le message ouvert n'est jamais masqué, sa ligne comprise** : rien ne disparaît sous le geste de
+  celui qui vient d'appuyer.
+- **Aucun chemin serveur nouveau** : les deux fonctions `snooze_thread` et `wake_thread` sont celles
+  de la tranche 2 c. Le contrat de types, lui, était resté en arrière d'une tranche — il est
+  régénéré, et deux témoins figés sont révisés avec leur motif.
+- Reste dû sur `CRM-081` : le **groupement** des messages en fils dans l'inbox (tranche 2 f).
+
+
 ### Ajouté
 
 - **`CRM-081` — Snooze, tranche 2 c : le sommeil d'un FIL de messagerie, sa règle, sa garde et sa

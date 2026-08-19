@@ -19720,3 +19720,62 @@ une session (§2.1 ter).
 contact —, et le **fil unifié**, qui n'apprend rien des trois gestes de rattachement (`card_contacts`
 n'écrit aucun `card_event`, et la tranche 1 n'a posé aucun trigger). La prochaine exécution peut
 prendre la première unité `[ ]` du plan ; la suppression et le fil attendent l'arbitrage.
+
+## décision 461 — `CRM-081` tranche 2 e : le sommeil d'un fil se voit enfin, et une preuve corrige la règle qui l'a écrite
+
+**L'unité, et le choix.** La décision 459 laissait `CRM-081` en `[~]` pour **une** raison nommée : la
+**surface** du sommeil de fil, « sans laquelle endormir un fil ne change encore rien pour
+l'utilisateur ». La décision 460, dernière du journal, closait `CRM-060` 4j et renvoyait à la
+première unité `[ ]` du plan — mais le §4.2 point 2 de `docs/CloudWorker.md` prime : `CRM-081` est
+une unité `[~]` dont il reste du **comportement** à livrer, et elle passe donc avant `CRM-080`.
+
+**Spécification écrite et committée AVANT toute ligne de code**, `docs/SPEC-cards.md` §16.15 en dix
+sous-chapitres et `docs/DESIGN_SYSTEM.md` §5.3 septies, fondées sur **quatorze mesures** relevées à
+la main sur la pile seedée avec les jetons réels des trois profils et la clé de service. Le seed
+sort intact des mesures, vérifié par une dernière lecture.
+
+**LA MESURE G COMMANDE TOUTE LA TRANCHE.** Le fil endormi, `GET mail_messages` rend **toujours** ses
+deux messages : `app.cle_fil` vit dans le schéma `app`, que PostgREST n'expose pas, donc aucune
+requête ne peut demander « les messages dont le fil n'est pas endormi ». Le masquage se fait donc à
+la **composition**, comme le board, et non au serveur comme la vue liste des cards — qui dispose,
+elle, d'une colonne. Les trois conséquences sont écrites au §16.15.5 plutôt que découvertes, dont
+celle-ci : la borne de cinquante messages s'applique **avant** le filtre, et la mention « la liste
+est tronquée » reste donc fondée sur ce que le serveur a rapporté, jamais sur ce qui est affiché.
+
+**LA MESURE A INTERDIT TOUTE TOLÉRANCE.** Les messages du seed portent `references_ids` = `[]`, un
+tableau **vide** et non `null`. `cleFil` doit donc retenir toute valeur présente, **chaîne vide
+comprise**, parce que `coalesce` la retiendrait aussi : « améliorer » la règle au client la ferait
+diverger de la garde, et l'écran demanderait le sommeil d'une clé que le serveur ne connaît pas. Une
+assertion unitaire fige cette coïncidence.
+
+**LE CONTRAT DE TYPES ÉTAIT EN RETARD D'UNE TRANCHE, ET C'EST CETTE UNITÉ QUI L'A DÉCOUVERT.** La
+tranche 2 c a livré `mail_thread_snoozes`, `snooze_thread` et `wake_thread` **sans régénérer**
+`database.types.ts` : aucun écran ne pouvait les appeler, et le `typecheck` l'a dit à la première
+tentative. Régénéré ici — préalable de l'unité au sens du §4.2 —, avec deux témoins figés révisés et
+leurs motifs écrits dans le fichier : trente-quatre fonctions deviennent **trente-six**, et la liste
+des tables accueille `mail_thread_snoozes`.
+
+**UNE RÈGLE CORRIGÉE PAR SA PROPRE PREUVE, ET LE DÉFAUT ÉTAIT DANS LE CHAPITRE.** Le §16.15.5
+affirmait à la fois « le message ouvert n'est jamais masqué » et « la ligne quitte la liste » : le
+filtre n'agissant que sur des **lignes**, les deux ne peuvent pas être vraies ensemble. Le scénario
+d'interface l'a rendu visible avant qu'un utilisateur ne le voie. La règle retenue est celle qui ne
+déroute pas — la ligne du message ouvert reste, marquée, et ne part qu'au geste suivant —, et le
+chapitre comme le design system sont corrigés dans le même changement.
+
+**DEUX DÉFAUTS VUS EN CAPTURE, PAS EN TEST.** La bascule était rendue **deux fois** quand l'état vide
+la portait, alors que le §5.3 quinquies interdit de répéter l'action : deux cases identiques à
+quelques centimètres l'une de l'autre, dont on ne pouvait que se demander si elles font la même
+chose. Et la secondaire compacte du geste s'étirait sur toute la largeur du panneau de lecture, ce
+qui lui donnait le poids d'une action principale qu'elle n'a pas. Les deux sont corrigés à leur
+cause, et le premier est figé par une assertion.
+
+**Ce qui a été vérifié.** `sommeil-fil.test.ts` **22 assertions**, `inbox.test.ts` **27**,
+`e2e/ui/sommeil-fil.spec.ts` **6 scénarios** verts, console vierge, **dix captures observées**,
+`typecheck` et `build` verts. La campagne complète de fin de session est consignée ci-dessous.
+
+**Où reprendre.** La tranche 2 e est close. `CRM-081` reste `[~]` pour **une** raison, nommée au
+§16.15.8 et à la DoD révisée : le **groupement** des messages en fils dans l'inbox — tranche 2 f —,
+qui change ce que la liste énumère, ce que la sélection désigne et ce que les compteurs de
+l'arborescence comptent. C'est la tranche que l'exécution suivante peut prendre. Un second écart,
+mineur, attend l'arbitrage : le mode d'affichage n'entre pas dans l'adresse, l'inbox n'ayant aucun
+paramètre d'adresse.

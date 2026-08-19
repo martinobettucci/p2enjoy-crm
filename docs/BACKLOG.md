@@ -9467,15 +9467,82 @@ gestes ; refus mesurés avec les jetons réels ; captures observées.
       6 établit que l'asymétrie des trois profils sur les deux fils du seed suffit à prouver les
       refus, et poser un fil endormi n'aurait d'intérêt que le jour où un écran le montre.
 
-*DoD adaptée, écarts explicites — révisée le 2026-08-19 après la tranche 2 c.* La Definition of
+- [x] **LA SURFACE DU SOMMEIL DE FIL EST LIVRÉE — tranche 2 e**, spécifiée `docs/SPEC-cards.md`
+      §16.15 en dix sous-chapitres et `docs/DESIGN_SYSTEM.md` §5.3 septies, écrits **avant toute
+      ligne de code** et fondés sur **quatorze mesures** relevées le 2026-08-19 sur la pile seedée
+      avec les jetons réels des trois profils. L'inbox montre enfin l'état du fil de chaque message
+      et laisse l'endormir : sans elle, endormir un fil ne changeait rien pour l'utilisateur.
+- [x] **LA MESURE G COMMANDE TOUTE LA TRANCHE** : le fil endormi, `GET mail_messages` rend
+      **toujours** ses deux messages. `app.cle_fil` vit dans le schéma `app`, que PostgREST n'expose
+      pas, donc aucune requête ne peut demander « les messages dont le fil n'est pas endormi ». Le
+      masquage se fait **à la composition**, comme le board — et non au serveur comme la vue liste
+      des cards, qui dispose, elle, d'une colonne. Les trois conséquences sont écrites au §16.15.5
+      plutôt que découvertes, dont la borne de 50 messages qui s'applique **avant** le filtre.
+- [x] **LA MESURE A INTERDIT TOUTE TOLÉRANCE À LA CLÉ DE FIL** : les messages du seed portent
+      `references_ids` = `[]`, un tableau **vide** et non `null`. `cleFil` est le miroir exact de
+      `app.cle_fil` et retient donc **toute valeur présente, chaîne vide comprise**, parce que
+      `coalesce` la retiendrait aussi. Une assertion unitaire fige cette coïncidence : « améliorer »
+      la règle d'un seul côté deviendrait un échec de preuve plutôt qu'un `thread_not_found`
+      incompréhensible en production.
+- [x] **Le module `webapp/src/lib/sommeil-fil.ts`** porte la clé, le prédicat à instant injectable,
+      la table de correspondance indexée sur le **couple** `(workspace, clé)`, le filtre de
+      composition et les deux appels de RPC. **22 assertions unitaires**, dont les deux côtés de
+      l'échéance, l'instant exact — qui n'est pas un sommeil —, deux workspaces portant la même clé,
+      et le compte des masqués.
+- [x] **LE DICTIONNAIRE DES ISSUES EN COMPTE UNE DE MOINS QUE CELUI DE L'AFFAIRE, ET C'EST MESURÉ** :
+      `snooze_thread` n'oppose **aucun** `forbidden` (§16.14.4), donc l'issue `refus` n'est pas
+      déclarée. Un `403` — que rien ne produit — retombe sur `inconnu`, et l'écran ne porte aucune
+      mention qu'il ne pourrait jamais afficher.
+- [x] **LE CONTRAT DE TYPES ÉTAIT EN RETARD D'UNE TRANCHE, ET C'EST CETTE UNITÉ QUI L'A DÉCOUVERT** :
+      la tranche 2 c a livré `mail_thread_snoozes`, `snooze_thread` et `wake_thread` **sans
+      régénérer** `database.types.ts`, si bien qu'aucun écran ne pouvait les appeler. Régénéré ici,
+      avec **deux témoins figés révisés** et leur motif écrit dans le fichier : trente-quatre
+      fonctions deviennent **trente-six**, et la liste des tables accueille `mail_thread_snoozes`.
+- [x] **UNE RÈGLE A ÉTÉ CORRIGÉE PAR SA PROPRE PREUVE** : le §16.15.5 affirmait à la fois « le
+      message ouvert n'est jamais masqué » et « la ligne quitte la liste ». Les deux ne peuvent pas
+      être vraies ensemble, le filtre n'agissant que sur des **lignes**. La règle retenue est la
+      seule qui ne déroute pas — la ligne du message ouvert **reste, marquée**, et ne part qu'au
+      geste suivant ; le chapitre et le design system sont corrigés dans le même changement.
+- [x] **DEUX DÉFAUTS VUS EN CAPTURE ET NON EN TEST**, corrigés à leur cause : la bascule était rendue
+      **deux fois** quand l'état vide la portait, alors que le §5.3 quinquies interdit de répéter
+      l'action — une assertion fige désormais le compte à un ; et la secondaire compacte du geste
+      s'étirait sur toute la largeur du panneau de lecture, ce qui lui donnait le poids d'une action
+      principale qu'elle n'a pas.
+- [x] **Preuve E2E d'interface** : `e2e/ui/sommeil-fil.spec.ts`, **6 scénarios** sans aucune
+      substitution — le geste réel par `snooze_thread`, la pastille en liste et dans le message,
+      l'état vide qui dit **pourquoi** il est vide, la bascule qui ramène la ligne marquée, le réveil
+      vérifié **après rechargement** donc contre la base, l'échéance passée refusée par le serveur
+      avec son `400` **consommé nommément**, les deux fils du seed distingués, et les quatre paliers
+      sans débordement. **Dix captures** sous `docs/captures/CRM-081/`, produites et observées.
+      Console vierge. Le seed sort **intact**, nettoyé inconditionnellement par la clé de service.
+- [x] **Aucune preuve d'API nouvelle n'est due, et c'est écrit plutôt que sous-entendu** : la tranche
+      n'ajoute **aucun** chemin serveur. Le contrat des deux RPC est celui du §16.14.8, déjà éprouvé
+      par `e2e/api/snooze-fils.spec.ts` — et les quatorze mesures du §16.15.1 l'ont **remesuré**
+      avant d'écrire le chapitre plutôt que de s'y fier de mémoire.
+- [x] **`docs/manual.md` §4.15 porte le sommeil de fil** : le geste, la pastille, la case, l'état
+      vide, le partage entre profils, et le fait que la case n'est pas mémorisée d'une visite à
+      l'autre.
+- [ ] **Aucun GROUPEMENT des messages en fils** : l'inbox reste une liste de **messages**, chacun
+      portant l'état de son fil. Grouper change ce que la liste énumère, ce que la sélection désigne
+      et ce que les compteurs de l'arborescence comptent : c'est la tranche **2 f**, écartée avec son
+      motif au §16.15.8. **C'est le seul manque restant de l'unité.**
+- [ ] **Le mode d'affichage n'entre pas dans l'adresse** : l'inbox ne lit aucun paramètre d'adresse,
+      et lui en inventer un pour ce seul contrôle ouvrirait une question — quelle est l'adresse d'un
+      dossier ? — que cette tranche ne tranche pas. La case repart donc masquée à chaque ouverture
+      de l'écran. Écart nommé, à trancher par le responsable.
+
+*DoD adaptée, écarts explicites — révisée le 2026-08-19 après la tranche 2 e.* La Definition of
 Done demande cinq choses. **Quatre sont tenues** : le geste et son retour sont gardés en base, pour
 l'affaire (tranche 1) comme pour le fil (tranche 2 c) ; une affaire en sommeil sort des vues par
 défaut et un filtre explicite la ramène (tranche 2 b) ; le fil de l'affaire porte la trace des deux
 gestes, et l'écran la nomme (tranche 2 a) ; les refus sont mesurés avec les jetons réels, et les
-captures sont produites et observées. **UNE reste due, par la tranche suivante** : la **surface** du
-sommeil de fil — groupement des messages en fils dans l'inbox, pastille, geste et filtre —, sans
-laquelle endormir un fil ne change encore rien pour l'utilisateur. L'unité reste donc `[~]`, et
-l'écart est nommé plutôt que masqué.
+captures sont produites et observées. **LA CINQUIÈME EST DÉSORMAIS TENUE POUR L'ESSENTIEL** : la
+**surface** du sommeil de fil est livrée par la tranche 2 e — pastille, geste et filtre —, et
+endormir un fil change enfin quelque chose pour l'utilisateur. **CE QUI RESTE EST LE GROUPEMENT** des
+messages en fils, écarté avec son motif au §16.15.8 : il change ce que la liste énumère, ce que la
+sélection désigne et ce que les compteurs comptent, et le mêler à la tranche 2 e aurait livré deux
+demi-changements plutôt qu'un entier. L'unité reste donc `[~]` pour cette seule raison, et l'écart
+est nommé plutôt que masqué.
 
 ### CRM-080 — Sauvegardes chiffrées et restauration prouvée `[ ]`
 

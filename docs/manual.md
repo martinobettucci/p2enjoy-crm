@@ -1507,9 +1507,29 @@ Une affaire archivée ou en corbeille est refusée, avec son motif.
 Entrée ouvre. Le dossier retenu et le message ouvert sont annoncés aux lecteurs d'écran, et pas
 seulement signalés par une couleur.
 
+**Mettre un fil en sommeil.** Un **fil** rassemble les messages d'une même conversation. Sous
+l'en-tête du message ouvert, « Mettre le fil en sommeil » ouvre un petit panneau : quatre échéances
+usuelles — demain, dans trois jours, la semaine prochaine, le mois prochain — ou une échéance de
+votre choix. Une fois le fil endormi :
+
+- ses messages **disparaissent de la liste** tant que l'échéance n'est pas passée. Le message que
+  vous êtes en train de lire, lui, reste affiché : rien ne disparaît sous votre doigt ;
+- une **pastille** portant une petite lune et la date rappelle jusqu'à quand il dort, dans la liste
+  comme dans l'en-tête du message ;
+- « **Réveiller le fil** » le ramène immédiatement, sans confirmation ;
+- la case « **Afficher les fils en sommeil** », en haut de la liste, les fait tous réapparaître,
+  reconnaissables à leur pastille. Si un dossier ne contient plus que des fils endormis, la liste
+  vous le dit et vous propose la case au lieu d'un vide muet.
+
+Le sommeil est **partagé** : un fil endormi l'est pour toute personne qui le voit. Il n'a pas besoin
+d'être réveillé à la main — une échéance passée n'est plus un sommeil, et le fil revient tout seul.
+Une échéance déjà passée est refusée, avec son motif écrit sous le champ. Cette case n'est pas
+mémorisée d'une visite à l'autre : elle repart masquée à chaque ouverture de l'écran.
+
 **Ce qui n'est pas encore là.** Il n'existe pas de notion de « lu / non lu », ni de recherche : la
 liste montre les cinquante messages les plus récents d'un dossier, et le dit lorsqu'elle en laisse
-de côté.
+de côté. Les messages ne sont pas encore **groupés** par fil : la liste énumère des messages, et
+chacun porte l'état du fil auquel il appartient.
 
 ### 4.16 Écrire et répondre
 
