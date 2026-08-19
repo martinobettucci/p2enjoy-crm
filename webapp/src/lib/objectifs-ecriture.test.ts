@@ -1,7 +1,11 @@
 // @verifies CRM-083 (docs/BACKLOG.md) — canevas d'objectifs, tranche 2a : la géométrie ;
 //           tranche 2b-1 : le contenu ; tranche 2b-2a : le lien vers un channel ;
 //           tranche 2b-2b : les flèches — le tracé et la correction de sa direction ;
-//           tranche 2b-2c : les suppressions — une flèche, un bloc
+//           tranche 2b-2c : les suppressions — une flèche, un bloc ;
+//           tranche 2c : les tableaux — créer, renommer, réordonner, archiver
+// @verifies docs/SPEC-goals.md §2.1 (le tableau : nom unique par workspace après normalisation,
+//           `position` attribuée par TRIGGER lorsqu'elle est omise, l'archivage tient lieu de
+//           suppression)
 // @verifies docs/SPEC-goals.md §3 (poser un bloc — la position vient du GESTE ; déplacer et
 //           redimensionner — persiste `pos_x`, `pos_y`, `width`, `height` ; tracer une flèche avec
 //           le choix de sa direction, modifiable ensuite ; supprimer une flèche, supprimer un bloc
@@ -55,8 +59,14 @@ import {
 	supprimerBloc,
 	supprimerFleche,
 	tracerFleche,
+	archiverTableau,
+	classerRefusTableau,
+	creerTableau,
+	deplacerTableau,
+	renommerTableau,
 } from './objectifs-ecriture'
-import { COLONNES_BLOC, COLONNES_FLECHE } from './objectifs'
+import { calculerDeplacement, deplacementPossible } from './administration-arborescence'
+import { COLONNES_BLOC, COLONNES_FLECHE, COLONNES_TABLEAU } from './objectifs'
 import type { ClientCrm } from './supabase'
 
 const ID_TABLEAU = '5eed0000-0000-4000-8000-0000000000b1'
@@ -926,5 +936,208 @@ describe('supprimerFleche', () => {
 		} as unknown as ClientCrm
 		const resultat = await supprimerFleche(client, ID_FLECHE)
 		expect(resultat.statut).toBe('refus')
+	})
+})
+
+// =================================================================================================
+// TRANCHE 2c — LES TABLEAUX
+// =================================================================================================
+//
+// TROIS EXIGENCES NE VIVENT QUE DANS LA REQUÊTE ÉMISE, et aucune assertion de valeur ne les
+// attraperait :
+//
+//   * la création envoie `position` à `null` — la LAISSER au trigger, jamais la calculer ici ;
+//   * un renommage n'envoie QUE les champs touchés : renvoyer les deux écraserait ce qu'un
+//     collègue vient d'écrire dans l'autre ;
+//   * l'archivage écrit `archived_at`, et jamais un `delete` — un tableau CONTIENT le travail.
+
+describe('creerTableau', () => {
+	it('laisse le trigger placer le tableau : `position` part à null, jamais calculée', async () => {
+		// §2.1 : « attribuée par trigger si omise ». Un `max + 1` calculé ici recopierait le
+		// trigger en moins fiable, et ajouterait une course entre deux utilisateurs.
+		const { client, appel } = espion({
+			data: [{ id: ID_TABLEAU, name: 'Trimestre', description: null, position: 3 }],
+			error: null,
+			status: 201,
+		})
+		const resultat = await creerTableau(client, {
+			idWorkspace: ID_WORKSPACE,
+			nom: 'Trimestre',
+			description: '',
+		})
+		expect(appel.table).toBe('goal_boards')
+		expect(appel.operation).toBe('insert')
+		expect(appel.charge?.position).toBeNull()
+		expect(appel.charge?.workspace_id).toBe(ID_WORKSPACE)
+		expect(appel.colonnes).toBe(COLONNES_TABLEAU)
+		expect(resultat.statut).toBe('cree')
+	})
+
+	it('retire les espaces de bord du nom, et rend une description vide à `null`', async () => {
+		// Deux représentations du néant dans la même colonne rendraient « pas de description »
+		// indistinguable d'« une description vide » à la relecture.
+		const { client, appel } = espion({
+			data: [{ id: ID_TABLEAU, name: 'Trimestre', description: null, position: 1 }],
+			error: null,
+			status: 201,
+		})
+		await creerTableau(client, { idWorkspace: ID_WORKSPACE, nom: '  Trimestre  ', description: '   ' })
+		expect(appel.charge?.name).toBe('Trimestre')
+		expect(appel.charge?.description).toBeNull()
+	})
+
+	it('envoie un nom VIDE plutôt que de le refuser lui-même', async () => {
+		// `CLAUDE.md` §10 : la règle est `goal_boards_name_check`, jamais l'écran. Une garde ici
+		// ferait diverger l'interface de la contrainte au premier changement de celle-ci.
+		const { client, appel } = espion({
+			data: null,
+			error: { message: 'goal_boards_name_check', code: CODE_SAISIE_INVALIDE },
+			status: 400,
+		})
+		const resultat = await creerTableau(client, { idWorkspace: ID_WORKSPACE, nom: '   ', description: '' })
+		expect(appel.operation).toBe('insert')
+		expect(appel.charge?.name).toBe('')
+		expect(resultat.statut).toBe('refus')
+		if (resultat.statut !== 'refus') return
+		expect(resultat.refus.nature).toBe('saisie-invalide')
+	})
+
+	it('traduit le doublon de nom en `doublon`, et non en refus de droit', async () => {
+		// §2.1 : l'unicité porte sur `(workspace_id, app.btrim_blancs(name))`. Le geste à faire
+		// après ce refus — choisir un autre nom — n'est pas celui qu'appelle un refus de droit.
+		const { client } = espion({
+			data: null,
+			error: { message: 'goal_boards_workspace_name_key', code: CODE_DOUBLON },
+			status: 409,
+		})
+		const resultat = await creerTableau(client, { idWorkspace: ID_WORKSPACE, nom: 'Trimestre', description: '' })
+		expect(resultat.statut).toBe('refus')
+		if (resultat.statut !== 'refus') return
+		expect(resultat.refus.nature).toBe('doublon')
+	})
+
+	it('ne lève pas lorsque le transport échoue', async () => {
+		const client = {
+			from: () => {
+				throw new Error('réseau coupé')
+			},
+		} as unknown as ClientCrm
+		const resultat = await creerTableau(client, { idWorkspace: ID_WORKSPACE, nom: 'Trimestre', description: '' })
+		expect(resultat.statut).toBe('refus')
+	})
+})
+
+describe('renommerTableau', () => {
+	it('n’envoie QUE les champs touchés — un renommage seul ne réécrit pas la description', async () => {
+		const { client, appel } = espion({
+			data: [{ id: ID_TABLEAU, name: 'Semestre', description: 'inchangée', position: 1 }],
+			error: null,
+			status: 200,
+		})
+		const resultat = await renommerTableau(client, ID_TABLEAU, { nom: 'Semestre' })
+		expect(appel.table).toBe('goal_boards')
+		expect(appel.operation).toBe('update')
+		expect(appel.charge).toEqual({ name: 'Semestre' })
+		expect(appel.filtres).toContain(`eq(id,${ID_TABLEAU})`)
+		expect(resultat.statut).toBe('enregistree')
+	})
+
+	it('ramène une description vidée à `null`, comme à la création', async () => {
+		const { client, appel } = espion({
+			data: [{ id: ID_TABLEAU, name: 'Semestre', description: null, position: 1 }],
+			error: null,
+			status: 200,
+		})
+		await renommerTableau(client, ID_TABLEAU, { description: '  ' })
+		expect(appel.charge).toEqual({ description: null })
+	})
+
+	it('rend « sans-effet » sur zéro ligne — la clause `using` a filtré la ligne', async () => {
+		// ÉPROUVÉ CONTRE SON SUCCÈS : une implémentation qui rendrait « enregistrée » sur une
+		// réponse vide passerait tous les autres cas de ce fichier.
+		const { client } = espion({ data: [], error: null, status: 200 })
+		const sansEffet = await renommerTableau(client, ID_TABLEAU, { nom: 'Semestre' })
+		expect(sansEffet.statut).toBe('sans-effet')
+		const { client: autre } = espion({
+			data: [{ id: ID_TABLEAU, name: 'Semestre', description: null, position: 1 }],
+			error: null,
+			status: 200,
+		})
+		expect((await renommerTableau(autre, ID_TABLEAU, { nom: 'Semestre' })).statut).toBe('enregistree')
+	})
+})
+
+describe('deplacerTableau', () => {
+	it('écrit UNE position, et rien d’autre : jamais une permutation de deux lignes', async () => {
+		// §2.1 : `position` est un `numeric` précisément pour que le milieu de deux voisines
+		// suffise. Deux `update` non atomiques laisseraient la liste dans un état voulu par
+		// personne si le second échouait.
+		const { client, appel } = espion({
+			data: [{ id: ID_TABLEAU, name: 'Trimestre', description: null, position: 1.5 }],
+			error: null,
+			status: 200,
+		})
+		const resultat = await deplacerTableau(client, ID_TABLEAU, 1.5)
+		expect(appel.operation).toBe('update')
+		expect(appel.charge).toEqual({ position: 1.5 })
+		expect(resultat.statut).toBe('enregistree')
+	})
+
+	it('réemploie l’arithmétique des tracks plutôt que d’en recopier une seconde', () => {
+		// La preuve porte sur le CONTRAT réellement partagé : le milieu de deux voisines, et le
+		// refus motivé quand ce milieu n'existe pas. Une copie divergerait au premier ajustement.
+		const liste = [
+			{ id: 'a', position: 1 },
+			{ id: 'b', position: 2 },
+			{ id: 'c', position: 3 },
+		]
+		expect(calculerDeplacement(liste, 'c', 'monter')).toEqual({ statut: 'calcule', position: 1.5 })
+		expect(calculerDeplacement(liste, 'a', 'monter').statut).toBe('impossible')
+		expect(deplacementPossible(liste, 'c', 'descendre')).toBe(false)
+	})
+})
+
+describe('archiverTableau', () => {
+	it('écrit `archived_at` — un tableau s’ARCHIVE, il ne se supprime pas', async () => {
+		// §2.1 et §3 : « un bloc ne porte aucune donnée métier […] Le tableau, lui, s'archive : il
+		// contient le travail. » L'opération est donc un `update`, jamais un `delete`, quand bien
+		// même la politique de suppression de la table l'autoriserait.
+		const { client, appel } = espion({
+			data: [{ id: ID_TABLEAU, name: 'Trimestre', description: null, position: 1 }],
+			error: null,
+			status: 200,
+		})
+		const resultat = await archiverTableau(client, ID_TABLEAU, () => '2026-08-19T10:00:00.000Z')
+		expect(appel.table).toBe('goal_boards')
+		expect(appel.operation).toBe('update')
+		expect(appel.charge).toEqual({ archived_at: '2026-08-19T10:00:00.000Z' })
+		expect(resultat.statut).toBe('enregistree')
+	})
+
+	it('rend « sans-effet » sur zéro ligne — la lectrice ne voit pas la ligne à l’écriture', async () => {
+		const { client } = espion({ data: [], error: null, status: 200 })
+		expect((await archiverTableau(client, ID_TABLEAU)).statut).toBe('sans-effet')
+	})
+
+	it('traduit le refus d’une politique en `interdit`', async () => {
+		const { client } = espion({
+			data: null,
+			error: { message: 'row-level security', code: CODE_INTERDIT },
+			status: 403,
+		})
+		const resultat = await archiverTableau(client, ID_TABLEAU)
+		expect(resultat.statut).toBe('refus')
+		if (resultat.statut !== 'refus') return
+		expect(resultat.refus.nature).toBe('interdit')
+	})
+})
+
+describe('classerRefusTableau', () => {
+	it('classe sur le CODE avant le statut, et le doublon avant tout', () => {
+		expect(classerRefusTableau(409, CODE_DOUBLON, 'nom pris').nature).toBe('doublon')
+		expect(classerRefusTableau(400, CODE_SAISIE_INVALIDE, 'nom vide').nature).toBe('saisie-invalide')
+		expect(classerRefusTableau(400, CODE_INTERDIT, 'rls').nature).toBe('interdit')
+		expect(classerRefusTableau(403, undefined, 'forbidden').nature).toBe('interdit')
+		expect(classerRefusTableau(500, undefined, 'boom').nature).toBe('indisponible')
 	})
 })
