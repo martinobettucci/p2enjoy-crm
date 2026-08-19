@@ -2223,7 +2223,8 @@ L'unité demeure `[~]`.
 ## 17. Sous-tranche 4h — Le rattachement d'une affaire depuis la fiche d'un contact
 
 Contrat écrit **avant toute ligne de code** (`CLAUDE.md` §5, `docs/CloudWorker.md` §3.2), après
-**dix-huit** mesures relevées à la main le 2026-08-19 sur la pile seedée, avec les jetons réels des
+**dix-huit** mesures relevées à la main le 2026-08-19 — une **dix-neuvième** s'y est ajoutée,
+trouvée par la preuve d'interface et consignée au §17.4 sur la pile seedée, avec les jetons réels des
 trois profils et avec la clé anonyme. Les mesures d'écriture ont été faites sur des rattachements
 **sondes**, détruits ensuite : le seed est rendu **intact**, ses deux rattachements relus à
 l'identique (`c2 → Léo, decideur` et `c4 → Sophie, prescripteur`).
@@ -2339,6 +2340,20 @@ MESURÉ le 2026-08-19, avec les jetons réels. **Lecture du sélecteur** :
 | 10 | **business developer**, `POST` Élise sur `…0c1` | **`201`** et la ligne — le geste n'est PAS un geste d'administration |
 | 11 | administratrice, rôle **chaîne vide** | **`400`**, code **`23514`**, `card_contacts_role_check` |
 | 12 | administratrice, affaire **inexistante** `…0ff` | **`403`**, code **`42501`** — et **non** `23503` |
+| 19 | **lectrice**, `POST` sur `…0cb` « Assistant IA support — Nordis » | **`201`** — elle RÉUSSIT |
+
+**LA MESURE 19 A ÉTÉ TROUVÉE PAR LA PREUVE D'INTERFACE, ET ELLE CORRIGE UNE GÉNÉRALISATION.** Le
+premier scénario de la lectrice prenait la première affaire venue du sélecteur, en supposant que
+« lectrice » signifiait « refusée partout ». Elle a **réussi**. Les droits fins de `CRM-012`
+divergent d'une affaire à l'autre **pour un même profil** : la lectrice écrit sur `…0cb` et se voit
+refuser `…0c4`, `…0c6` et `…d013`, toutes quatre pourtant **lisibles** par elle.
+
+C'est la démonstration la plus nette de ce que le §17.6 exige : **l'écran ne peut PAS calculer ce
+droit**, et ne doit pas essayer. Aucune propriété du profil ne le prédit, et la lecture ne le
+prédit pas davantage — `lireAffairesRattachables` lit le droit de LECTURE et le dit (§17.3). Une
+interface qui grisrait la commande « parce que l'utilisateur est lecteur » retirerait à la lectrice
+un geste que la base lui accorde. Le scénario d'interface **nomme** désormais l'affaire qu'il
+choisit, faute de quoi il passerait tantôt par le refus, tantôt par le succès.
 
 **LA MESURE 9 SÉPARE 4h DE 4g, ET LA MESURE 12 FERME UNE NATURE DE REFUS.**
 

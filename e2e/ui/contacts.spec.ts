@@ -19,7 +19,13 @@
 // avec son organisation et son email, Sophie Dupont sans organisation ni fonction, Élise Fabre
 // sans email. Le seed est rendu INTACT : cette suite ne fait que lire.
 
-import { expect, test, type Page } from './fixtures'
+import {
+	ERREUR_RESSOURCE_HTTP,
+	autoriserErreursConsole,
+	expect,
+	test,
+	type Page,
+} from './fixtures'
 import { MOT_DE_PASSE_SEED } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
 
@@ -688,5 +694,180 @@ test.describe('modification d’un contact (docs/SPEC-contacts.md §16.9)', () =
 		)
 		expect(debordePage).toBe(false)
 		await capturer(page, 'fiche-contact-modification-390', UNITE)
+	})
+})
+
+// @verifies CRM-060 (docs/BACKLOG.md) — tranche 4 sous-tranche 4h : le RATTACHEMENT d'une affaire
+//           depuis la fiche d'un contact
+// @verifies docs/SPEC-contacts.md §17.2 (le geste vit DANS la zone des affaires), §17.6 (de quoi
+//           il a l'air, et l'écran ne calcule aucun droit), §17.7 (cas b, c, d, f, g, i, m)
+// @verifies docs/DESIGN_SYSTEM.md §5.26 (ce geste), §7 (paliers) ; CLAUDE.md §16 (vérification
+//           visuelle)
+//
+// LE SEED EST RESTITUÉ PAR LES GESTES DE L'ÉCRAN, jamais par une requête de service : le
+// rattachement posé par le parcours est retiré depuis la fiche de l'AFFAIRE, qui porte le geste de
+// détachement (§12.6) — celui que cette page ne livre pas (§17.8). C'est la règle que 4g tient
+// déjà, et elle éprouve du même coup le chemin de retour que le §17.8 invoque pour assumer
+// l'asymétrie.
+
+/** « Refonte du site vitrine », sur le track « Grands comptes » — aucun contact du seed n'y est. */
+const CARD_VITRINE_UI = '5eed0000-0000-4000-8000-0000000000c1'
+const TITRE_VITRINE = 'Refonte du site vitrine'
+/**
+ * « Refonte intranet Ville de Lyon » : la lectrice la LIT et ne peut PAS l'écrire — MESURÉ (§17.4,
+ * mesure 19). L'affaire est nommée et non prise au rang, les droits fins de `CRM-012` divergeant
+ * d'une affaire à l'autre pour un même profil.
+ */
+const CARD_INTRANET_UI = '5eed0000-0000-4000-8000-0000000000c4'
+
+/** Retire le rattachement PAR LES GESTES DE L'ÉCRAN, depuis la fiche de l'affaire (§12.6). */
+async function detacherDepuisLAffaire(page: Page, nomContact: string): Promise<void> {
+	await page.goto(`/tracks/conseil-ia/grands-comptes/cards/${CARD_VITRINE_UI}`)
+	const ligne = page.getByTestId('ligne-contact-card').filter({ hasText: nomContact })
+	await expect(ligne).toBeVisible()
+	await ligne.getByTestId('detacher-contact').click()
+	await page.getByTestId('confirmer-detachement').click()
+	await expect(page.getByTestId('ligne-contact-card').filter({ hasText: nomContact })).toHaveCount(0)
+}
+
+test.describe('rattachement d’une affaire depuis la fiche (docs/SPEC-contacts.md §17.7)', () => {
+	test('cas b, d, f et g : le geste rattache, la zone est RELUE, et le seed est restitué', async ({
+		page,
+	}) => {
+		await connecter(page, ADMIN)
+		await page.goto(`/contacts/${ID_LEO_UI}`)
+		await expect(page.getByRole('heading', { name: 'Léo Marchand' })).toBeVisible()
+
+		// Cas b : la commande vit DANS la zone des affaires, et l'ouvrir la remplace (§17.2).
+		const commande = page.getByTestId('ouvrir-rattachement-affaire')
+		await expect(commande).toBeVisible()
+		await commande.click()
+		const formulaire = page.getByTestId('formulaire-rattachement-affaire')
+		await expect(formulaire).toBeVisible()
+		await expect(page.getByTestId('ouvrir-rattachement-affaire')).toHaveCount(0)
+		// LE TABLEAU RESTE VISIBLE SOUS LE FORMULAIRE : il est précisément ce qui dit à quelles
+		// affaires le contact est DÉJÀ rattaché, et une modale le recouvrirait (§5.26).
+		await expect(page.getByTestId('tableau-affaires-contact')).toBeVisible()
+
+		// Cas d : l'affaire à laquelle Léo est DÉJÀ rattaché n'est pas offerte, et la seule affaire
+		// ARCHIVÉE du seed l'est, avec sa mention.
+		const selecteur = page.getByTestId('champ-affaire')
+		const libelles = await selecteur.locator('option').allTextContents()
+		expect(libelles).not.toContain('Migration ERP Sogexia')
+		expect(libelles).toContain(TITRE_VITRINE)
+		expect(libelles).toContain('Contrat cadre 2025 (archivée)')
+		await capturer(page, 'fiche-contact-rattachement-formulaire-1440', UNITE)
+
+		await selecteur.selectOption(CARD_VITRINE_UI)
+		await page.getByTestId('champ-role-affaire').fill('sponsor')
+		await page.getByTestId('confirmer-rattachement-affaire').click()
+
+		// Cas f : le formulaire se referme, la commande remonte, et la ZONE EST RELUE — la nouvelle
+		// affaire y apparaît avec son rôle et son LIEN, que le sélecteur ne connaissait pas : il ne
+		// lit ni track ni channel (§17.3).
+		await expect(page.getByTestId('formulaire-rattachement-affaire')).toHaveCount(0)
+		const nouvelle = page.getByTestId('ligne-affaire-contact').filter({ hasText: TITRE_VITRINE })
+		await expect(nouvelle).toBeVisible()
+		await expect(nouvelle).toContainText('sponsor')
+		await expect(nouvelle.getByTestId('lien-affaire-contact')).toHaveAttribute(
+			'href',
+			new RegExp(`/cards/${CARD_VITRINE_UI}$`),
+		)
+		await capturer(page, 'fiche-contact-rattachement-apres-1440', UNITE)
+
+		// LE SEED EST RESTITUÉ PAR LES GESTES DE L'ÉCRAN (§12.6), jamais par une requête de service.
+		await detacherDepuisLAffaire(page, 'Léo Marchand')
+		await page.goto(`/contacts/${ID_LEO_UI}`)
+		await expect(
+			page.getByTestId('ligne-affaire-contact').filter({ hasText: TITRE_VITRINE }),
+		).toHaveCount(0)
+	})
+
+	test('cas b et c AU CLAVIER : le focus ENTRE dans le sélecteur, et REVIENT à la commande', async ({
+		page,
+	}) => {
+		await connecter(page, ADMIN)
+		await page.goto(`/contacts/${ID_ELISE_UI}`)
+		await expect(page.getByRole('heading', { name: 'Élise Fabre' })).toBeVisible()
+
+		// Élise n'a AUCUNE affaire : son état vide GARDE le geste — c'est lui qui le comble, et
+		// c'est la révision par livraison du §5.24.
+		await expect(page.getByText('Aucune affaire', { exact: true })).toBeVisible()
+		const commande = page.getByTestId('ouvrir-rattachement-affaire')
+		await expect(commande).toBeVisible()
+
+		await commande.focus()
+		await page.keyboard.press('Enter')
+		// LE FOCUS ENTRE DANS LE SÉLECTEUR dès qu'il est focalisable — il est désactivé tant que la
+		// liste se lit, et un élément désactivé ne le reçoit pas. Le défaut a été trouvé par la
+		// preuve unitaire ; ce scénario le tient sur la pile réelle.
+		await expect(page.getByTestId('champ-affaire')).toBeFocused()
+
+		// Cas c : « Annuler » remonte la commande ET LUI REND LE FOCUS. Le retour est différé d'un
+		// tour de rendu, la commande étant démontée pendant que le formulaire est ouvert.
+		await page.getByRole('button', { name: 'Annuler' }).click()
+		await expect(page.getByTestId('ouvrir-rattachement-affaire')).toBeFocused()
+	})
+
+	test('cas i : la LECTRICE voit le geste, envoie, et reçoit le refus DIT, saisie conservée', async ({
+		page,
+	}) => {
+		await connecter(page, VIEWER)
+		await page.goto(`/contacts/${ID_LEO_UI}`)
+
+		// AUCUNE COMMANDE ÉTEINTE D'AVANCE (§17.6) : la lectrice voit le geste comme tout le monde.
+		const commande = page.getByTestId('ouvrir-rattachement-affaire')
+		await expect(commande).toBeVisible()
+		await expect(commande).toBeEnabled()
+		await commande.click()
+
+		const selecteur = page.getByTestId('champ-affaire')
+		await expect(selecteur).toBeEnabled()
+		// ELLE CHOISIT UNE AFFAIRE QU'ELLE LIT MAIS NE PEUT PAS ÉCRIRE, et l'affaire est NOMMÉE
+		// plutôt que prise au rang : la mesure 19 du §17.4 a montré que la lectrice ÉCRIT sur
+		// « Assistant IA support — Nordis » et se voit refuser les autres — les droits fins de
+		// `CRM-012` divergent d'une affaire à l'autre pour un MÊME profil. Prendre la première
+		// option venue ferait passer ce scénario tantôt par le refus, tantôt par le succès.
+		await expect(selecteur.locator(`option[value="${CARD_INTRANET_UI}"]`)).toHaveCount(1)
+		await selecteur.selectOption(CARD_INTRANET_UI)
+		await page.getByTestId('champ-role-affaire').fill('rôle refusé')
+		await page.getByTestId('confirmer-rattachement-affaire').click()
+
+		// LE REFUS EST EXPLICITE, et il est DIT — un vrai `403`, et non le silence de la
+		// modification (§17.4, mesure 9). Aucune mention « sans effet » n'a d'objet ici.
+		await expect(page.getByTestId('refus-rattachement-affaire')).toBeVisible()
+		// La saisie est CONSERVÉE et le formulaire reste ouvert (§5.7 ter).
+		await expect(page.getByTestId('champ-role-affaire')).toHaveValue('rôle refusé')
+		await expect(page.getByTestId('formulaire-rattachement-affaire')).toBeVisible()
+		await capturer(page, 'fiche-contact-rattachement-refus-1440', UNITE)
+
+		// LE REFUS EST DÉCLARÉ, PAS FILTRÉ. Chromium journalise tout `403` réseau dans la console,
+		// et la garde de `CRM-007` fait de la console un verdict. Le scénario consomme donc la
+		// liste EXACTE des erreurs qu'il vient de provoquer ET d'expliquer à l'utilisateur : un
+		// statut, un nombre ou un ordre différent échouerait ici, et toute anomalie postérieure
+		// reste dans le verdict final. C'est le mécanisme des refus déjà éprouvés par `CRM-057` et
+		// `CRM-076`, employé sans exception nouvelle.
+		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[403]])
+
+		// LE SEED EST INTACT : rien n'a été écrit, et la fiche rechargée le montre. La lectrice ne
+		// voit AUCUNE affaire sur Léo — les droits fins lui ferment « Grands comptes » (§15.4), et
+		// cette zone vide est l'état vide ORDINAIRE, sans mise en scène du refus.
+		await page.reload()
+		await expect(page.getByTestId('ligne-affaire-contact')).toHaveCount(0)
+	})
+
+	test('390 px : le formulaire de rattachement reste lisible et la page ne défile pas', async ({
+		page,
+	}) => {
+		await page.setViewportSize({ width: 390, height: 844 })
+		await connecter(page, ADMIN)
+		await page.goto(`/contacts/${ID_LEO_UI}`)
+		await page.getByTestId('ouvrir-rattachement-affaire').click()
+		await expect(page.getByTestId('formulaire-rattachement-affaire')).toBeVisible()
+		const debordePage = await page.evaluate(
+			() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+		)
+		expect(debordePage).toBe(false)
+		await capturer(page, 'fiche-contact-rattachement-390', UNITE)
 	})
 })
