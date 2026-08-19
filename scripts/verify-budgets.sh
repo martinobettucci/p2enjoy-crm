@@ -209,13 +209,27 @@ else
 	fail "le bouton de clôture ne porte plus « disabled={enCours} » : vérifiez qu'aucune garde ne l'empêche"
 fi
 
-# `docs/SPEC-costs.md` §4.1 : la clôture « n'est pas silencieuse ». Tant que `card_costs` n'existe
-# pas, le DÉCOMPTE n'est pas mesurable — mais la confirmation doit dire quelque chose de ce
-# décompte, sans quoi un blanc s'y lirait comme un zéro.
-if grep -q 'cloture-sans-reel' "$ECRAN" && grep -q "admin.budgets.close.pending" "$ECRAN"; then
-	ok "la confirmation PARLE des lignes sans coût réel — elle n'est pas silencieuse (§4.1)"
+# `docs/SPEC-costs.md` §4.1 : la clôture « n'est pas silencieuse », et elle COMPTE. Ce contrôle a
+# été RÉVISÉ par `CRM-085` tranche 2 : il exigeait seulement que la confirmation parle du décompte,
+# `card_costs` n'existant pas encore. La table existe désormais, le décompte est mesuré, et le
+# contrôle exige donc la MESURE — un texte qui parlerait du décompte sans jamais l'interroger
+# satisferait l'ancienne version tout en mentant à l'utilisateur.
+if grep -q 'cloture-sans-reel' "$ECRAN" && grep -q 'compterLignesSansReel' "$ECRAN"; then
+	ok "la confirmation MESURE les lignes sans coût réel dans card_costs (§4.1)"
 else
-	fail "la confirmation de clôture ne dit plus rien des lignes sans coût réel : un blanc s'y lirait comme un zéro"
+	fail "la confirmation de clôture ne compte plus les lignes sans coût réel : un blanc s'y lirait comme un zéro"
+fi
+
+# Les QUATRE états du décompte. Les fondre en un seul texte ferait dire « aucune ligne n'attend »
+# quand la lecture a échoué — le mensonge tranquille de `CLAUDE.md` §18.
+manquants=''
+for cle in loading none some failed; do
+	grep -q "admin.budgets.close.pending.$cle" "$ECRAN" || manquants="$manquants $cle"
+done
+if [ -z "$manquants" ]; then
+	ok "les quatre états du décompte sont distingués — en cours, zéro, non nul, non mesurable"
+else
+	fail "états du décompte absents de la confirmation :$manquants"
 fi
 
 # Le fragment de message sur lequel `classerRefusBudget` sépare le trigger de récurrence des

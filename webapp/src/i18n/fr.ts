@@ -1147,11 +1147,17 @@ export const fr = {
 	'admin.budgets.close.confirm': 'Clôturer le budget « {nom} » ?',
 	'admin.budgets.close.body':
 		'Il sortira de cette table, sans être supprimé, et pourra être rouvert. Son nom redevient disponible pour un nouveau budget — s’il est repris, la réouverture sera refusée.',
-	// Le décompte des lignes sans coût réel exigé par le §4.1 se lit dans `card_costs`, table que
-	// l'unité suivante livrera. La phrase le dit à l'utilisateur SANS jargon d'unité — un code de
-	// backlog n'a aucun sens pour lui — et sans laisser un blanc se lire comme un zéro.
-	'admin.budgets.close.pending':
-		'Les lignes de coût ne sont pas encore rattachables à un budget : rien n’est donc à saisir aujourd’hui, et les lignes rattachées plus tard resteront saisissables après la clôture.',
+	// Le décompte des lignes sans coût réel exigé par le §4.1, MESURÉ dans `card_costs` depuis
+	// CRM-085 tranche 1. Quatre phrases et non une : le compte en cours, le compte à zéro, le compte
+	// non nul, et l'échec de la mesure. Ranger les deux derniers sous une phrase unique dirait « rien
+	// à saisir » là où la lecture a échoué — un mensonge tranquille (CLAUDE.md §18).
+	'admin.budgets.close.pending.loading': 'Décompte des lignes sans coût réel en cours…',
+	'admin.budgets.close.pending.none':
+		'Aucune ligne de coût de ce budget n’attend son coût réel.',
+	'admin.budgets.close.pending.some':
+		'Ce budget porte {nombre} ligne(s) sans coût réel ; elles resteront saisissables après la clôture.',
+	'admin.budgets.close.pending.failed':
+		'Les lignes sans coût réel n’ont pas pu être comptées. La clôture reste possible.',
 	'admin.budgets.close.action': 'Clôturer',
 	// Refus propres aux budgets — ils appellent des gestes différents de ceux de l'arborescence, et
 	// les ranger sous les mêmes phrases dirait « vérifiez le slug » là où aucun slug n'existe.

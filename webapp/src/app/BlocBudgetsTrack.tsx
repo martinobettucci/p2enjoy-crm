@@ -27,6 +27,7 @@ import { SkeletonListe } from '../components/ui/Skeleton'
 import { t } from '../i18n'
 import type { EtatAsync } from '../lib/async'
 import { enChargement } from '../lib/async'
+import { compterLignesSansReel } from '../lib/card-costs'
 import { calculerDeplacement, type Ordonnable, type Sens } from '../lib/administration-arborescence'
 import {
 	cloturerBudget,
@@ -245,20 +246,29 @@ function FormulaireBudget({
  * gestion —, mais elle n'est pas silencieuse ». Le bouton de confirmation n'est donc jamais éteint
  * par ce qu'elle annonce.
  *
- * CE QUI MANQUE ENCORE, ET C'EST DIT PLUTÔT QUE TU. Le §4.1 demande que la confirmation COMPTE les
- * lignes sans coût réel — « ce budget porte n lignes sans coût réel ». Ce compte se lit dans
- * `card_costs`, table que `CRM-085` livrera : elle n'existe pas encore. Interroger une table absente
- * rendrait un « n'a pas pu être mesuré » PERMANENT, c'est-à-dire un état d'erreur qui mentirait sur
- * sa cause. La confirmation dit donc explicitement que le décompte n'est pas encore mesurable, et
- * `docs/BACKLOG.md` porte ce reste sous `CRM-084`.
+ * LE DÉCOMPTE EST DÉSORMAIS MESURÉ, ET C'ÉTAIT LE RESTE DE `CRM-084`. Le §4.1 demande que la
+ * confirmation COMPTE les lignes sans coût réel — « ce budget porte n lignes sans coût réel ; elles
+ * resteront saisissables après la clôture ». Ce compte se lit dans `card_costs`, table que
+ * `CRM-085` tranche 1 a livrée ; jusque-là la confirmation disait que rien n'était à saisir, faute
+ * de table à interroger. Elle interroge maintenant, et distingue TROIS états : en cours de mesure,
+ * mesuré — zéro compris —, et non mesurable. Le troisième NOMME l'échec de la lecture plutôt que de
+ * le taire sous un « 0 » qui serait un mensonge tranquille (`CLAUDE.md` §18).
+ *
+ * ELLE N'EMPÊCHE TOUJOURS RIEN, ET C'EST LA MOITIÉ DE LA RÈGLE : le bouton n'est éteint ni pendant
+ * la mesure, ni par son résultat. Attendre le compte pour permettre la clôture ferait d'un avis une
+ * autorisation, ce que le §4.1 refuse explicitement.
  */
 function ConfirmationCloture({
+	client,
+	idBudget,
 	question,
 	refus,
 	enCours,
 	onConfirmer,
 	onAnnuler,
 }: {
+	readonly client: ClientCrm
+	readonly idBudget: string
 	readonly question: string
 	readonly refus: string | null
 	readonly enCours: boolean
@@ -269,6 +279,22 @@ function ConfirmationCloture({
 	useEffect(() => {
 		premier.current?.focus()
 	}, [])
+
+	// Le décompte du §4.1, lu à l'OUVERTURE de la confirmation et pour ce budget seul. Il n'est pas
+	// chargé avec la table : une table de dix budgets émettrait dix requêtes pour une phrase que
+	// personne ne lit tant qu'il n'a pas demandé à clôturer.
+	const [sansReel, setSansReel] = useState<EtatAsync<number>>(enChargement)
+	useEffect(() => {
+		let vivant = true
+		void (async () => {
+			const compte = await compterLignesSansReel(client, idBudget)
+			if (vivant) setSansReel(compte)
+		})()
+		return () => {
+			vivant = false
+		}
+	}, [client, idBudget])
+
 	return (
 		<div
 			data-testid="confirmation-cloture-budget"
@@ -277,7 +303,13 @@ function ConfirmationCloture({
 			<p className="font-medium">{question}</p>
 			<p className="text-sm text-text-2">{t('admin.budgets.close.body')}</p>
 			<p data-testid="cloture-sans-reel" className="text-sm text-text-2">
-				{t('admin.budgets.close.pending')}
+				{sansReel.statut === 'chargement'
+					? t('admin.budgets.close.pending.loading')
+					: sansReel.statut === 'erreur'
+						? t('admin.budgets.close.pending.failed')
+						: sansReel.donnees === 0
+							? t('admin.budgets.close.pending.none')
+							: t('admin.budgets.close.pending.some', { nombre: String(sansReel.donnees) })}
 			</p>
 			{refus === null ? null : <AlerteRefus message={refus} />}
 			<div className="flex gap-2">
@@ -686,6 +718,8 @@ export function BlocBudgetsTrack({ client, idTrack, nomTrack, onAnnonce }: Propr
 						.map((budget) => (
 							<ConfirmationCloture
 								key={budget.id}
+								client={client}
+								idBudget={budget.id}
 								question={t('admin.budgets.close.confirm', { nom: budget.name })}
 								refus={refus}
 								enCours={enCours}
