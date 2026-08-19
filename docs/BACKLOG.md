@@ -7954,6 +7954,22 @@ d'une session.
       l'observation qui a révélé la jauge invisible, corrigée dans le même changement.
 - [x] La preuve de la table des routes est **révisée** avec son motif écrit dans le fichier :
       `/objectifs` porte un écran chargé à la demande, et non un état vide inconditionnel.
+- [x] **LA CAMPAGNE COMPLÈTE A ÉTÉ EXÉCUTÉE, et son unique anomalie imputable est corrigée** :
+      `test:sql` **47 fichiers / 2351 assertions**, `test:unit` **56 fichiers / 1817 tests**,
+      `e2e:api` **786 passés**, `e2e:ui` **458 passés / 1 échec**, `e2e:mail` **42 passés**,
+      `pytest` **244**, `typecheck`, `types:check` et `build` verts. L'échec de `e2e:ui` était
+      `coquille.spec.ts:182` — le parcours clavier énumérait cinq entrées de navigation, il y en a
+      six —, témoin **révisé** avec son motif et rejoué vert. `scripts/verify-objectifs.sh`
+      **46 contrôles, aucune anomalie**. `test:unit` et `typecheck` ont été **rejoués après le
+      rebase** sur `CRM-085`, poussée en parallèle.
+- [ ] **CE QUI RESTE DE LA TRANCHE 1, ET C'EST DE FORME** : les cinquante `scripts/verify-*.sh` du
+      dépôt n'ont pas tous été rejoués — la série entière ne tient pas dans une session
+      (`docs/CloudWorker.md` §2.1 ter). `scripts/verify-webapp.sh`, celui que cette tranche touche,
+      rend **42 contrôles, 1 anomalie** — la session précédente en rapportait **deux**, toutes deux
+      préexistantes et consignées (INC-158, INC-166) ; une de moins n'est donc pas une régression.
+      **La nature exacte de l'anomalie restante n'a PAS été lue**, la sortie du premier passage
+      ayant été tronquée et le second n'ayant pas rendu son verdict avant la fin de la session.
+      C'est le contrôle à reprendre en premier.
 
 **CE QUI RESTE — TRANCHE 2, L'ÉCRITURE.** Aucune commande morte n'est posée pour ces gestes.
 

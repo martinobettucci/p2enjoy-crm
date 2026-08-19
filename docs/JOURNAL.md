@@ -20149,6 +20149,13 @@ APRÈS l'installation de Node 24.
 décision 463 : cette tranche modifie la barre latérale de **tous** les écrans, et une trace
 versionnée montrant une barre qui n'existe plus serait fausse.
 
+**Un contrôle laissé ouvert, et il est nommé.** `scripts/verify-webapp.sh`, le harnais que cette
+tranche touche, rend **42 contrôles, 1 anomalie**. La décision 461 en rapportait **deux**, toutes
+deux préexistantes et consignées — les trois classes non engendrées d'INC-158 et le `purgerChamps`
+d'INC-166 : une anomalie de moins n'est donc pas une régression. Mais **sa nature n'a pas été lue**,
+la sortie du premier passage ayant été tronquée par un `tail` et le second n'ayant pas rendu son
+verdict avant la fin de la session. C'est le premier contrôle à reprendre.
+
 **Où reprendre.** `CRM-083` est `[~]`, et son reste est énuméré geste par geste au backlog : c'est
 la **tranche 2, l'écriture** — poser, déplacer au clavier et à la souris, redimensionner, remplir,
 lier, tracer une flèche à la touche `Espace`, créer et archiver un tableau, l'état lecture seule du
