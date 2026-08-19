@@ -435,14 +435,26 @@ test.describe("fiche d'un contact (docs/SPEC-contacts.md §15)", () => {
 			'/contacts/organisations/5eed0000-0000-4000-8000-000000000081',
 		)
 
-		// TROIS colonnes, et non davantage : le track et le channel sont dans l'adresse de
-		// l'affaire, et les répéter en colonnes remplirait la ligne (§15.5).
+		// ASSERTION RÉVISÉE PAR LIVRAISON, le 2026-08-19 (mécanisme de la décision 51).
+		//
+		// Elle exigeait TROIS colonnes exactement, pour dire ce que le §15.5 posait : le track et le
+		// channel d'une affaire sont dans son ADRESSE, et les répéter en colonnes remplirait la
+		// ligne d'une information que le clic donne déjà. La sous-tranche 4i ajoute une QUATRIÈME
+		// colonne — « Commandes », qui porte le geste de détachement (§18.4, §5.27) —, et la
+		// condition de la règle a donc cessé d'être vraie telle qu'elle était écrite.
+		//
+		// Ce que la règle visait RÉELLEMENT reste vrai, et l'assertion est resserrée dessus : les
+		// colonnes de DONNÉE restent trois. La quatrième ne porte aucune donnée de l'affaire, elle
+		// porte une commande — et son en-tête est un LIBELLÉ LISIBLE et non une cellule vide, ce
+		// que l'assertion vérifie du même coup (§8). L'assertion n'est pas retirée : elle nomme
+		// désormais les quatre en-têtes, ce qui interdit toujours d'ajouter une colonne de donnée.
 		const affaires = page.getByTestId('tableau-affaires-contact')
 		await expect(affaires).toBeVisible()
 		await expect(affaires.getByRole('columnheader')).toHaveText([
 			'Affaire',
 			'Rôle dans l’affaire',
 			'État',
+			'Commandes',
 		])
 		await expect(page.getByTestId('ligne-affaire-contact')).toHaveCount(1)
 		await expect(page.getByTestId('ligne-affaire-contact')).toContainText('Migration ERP Sogexia')
