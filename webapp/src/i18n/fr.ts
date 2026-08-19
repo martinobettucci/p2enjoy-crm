@@ -1100,6 +1100,77 @@ export const fr = {
 	'admin.refus.sans-effet':
 		"Rien n'a été modifié : vous n'avez plus le droit d'écrire sur cet objet, ou il a disparu.",
 
+	// Administration des budgets d'un track — CRM-084 tranche 2, docs/SPEC-costs.md §4.1.
+	// Le bloc vit SOUS l'administration de l'arborescence, dans la ligne du track dépliée : le §4.1
+	// s'intitule « Administration des budgets — dans le track », et un budget appartient à un track.
+	'admin.budgets.title': 'Budgets',
+	'admin.budgets.aria': 'Budgets du track {track}',
+	'admin.budgets.showClosed': 'Afficher les budgets clôturés',
+	'admin.budgets.empty': 'Aucun budget.',
+	'admin.budgets.error': 'Les budgets de ce track n’ont pas pu être chargés.',
+	'admin.budgets.column.name': 'Nom',
+	'admin.budgets.column.currency': 'Devise',
+	'admin.budgets.column.planned': 'Enveloppe',
+	'admin.budgets.column.recurrent': 'Récurrent',
+	'admin.budgets.column.occurrences': 'Occurrences ouvertes',
+	'admin.budgets.column.state': 'État',
+	'admin.budgets.column.actions': 'Actions',
+	// « Oui » et « non » sont des MOTS, pas une pastille de couleur : le §1 du design system interdit
+	// que la couleur porte seule l'information, et une case cochée non modifiable se lirait comme un
+	// contrôle éteint.
+	'admin.budgets.recurrent.yes': 'Oui',
+	'admin.budgets.recurrent.no': 'Non',
+	// La colonne des occurrences ne s'applique pas à un budget simple : la cellule reste VIDE
+	// (§5.9 — la cellule vide est réservée à une donnée qui n'existe pas pour cette ligne), là où un
+	// budget récurrent sans occurrence ouverte affiche « 0 ».
+	'admin.budgets.occurrences.loading': '…',
+	'admin.budgets.occurrences.failed': 'non mesuré',
+	'admin.budgets.state.open': 'Ouvert',
+	'admin.budgets.state.closed': 'Clôturé',
+	'admin.budgets.action.new': 'Nouveau budget',
+	'admin.budgets.action.rename': 'Modifier le budget {nom}',
+	'admin.budgets.action.close': 'Clôturer le budget {nom}',
+	'admin.budgets.action.reopen': 'Rouvrir le budget {nom}',
+	'admin.budgets.form.create': 'Nouveau budget',
+	'admin.budgets.form.edit': 'Modifier le budget',
+	'admin.budgets.form.name': 'Nom',
+	'admin.budgets.form.currency': 'Devise',
+	'admin.budgets.form.currency.help': 'Trois lettres majuscules — EUR, CHF, USD.',
+	'admin.budgets.form.currency.invalid': 'La devise s’écrit en trois lettres majuscules.',
+	'admin.budgets.form.planned': 'Enveloppe (facultative)',
+	'admin.budgets.form.planned.help':
+		'Laissez vide si l’enveloppe n’est pas décidée. Un montant négatif est accepté.',
+	'admin.budgets.form.planned.invalid': 'Ce montant n’est pas un nombre.',
+	'admin.budgets.form.recurrent': 'Budget récurrent (porte des occurrences)',
+	// Clôture — §4.1. La clôture n'est PAS empêchée, c'est une décision de gestion ; elle n'est pas
+	// silencieuse pour autant.
+	'admin.budgets.close.confirm': 'Clôturer le budget « {nom} » ?',
+	'admin.budgets.close.body':
+		'Il sortira de cette table, sans être supprimé, et pourra être rouvert. Son nom redevient disponible pour un nouveau budget — s’il est repris, la réouverture sera refusée.',
+	'admin.budgets.close.pending':
+		'Le décompte des lignes sans coût réel n’est pas encore mesurable : les lignes de coût arrivent avec CRM-085. Les lignes déjà rattachées resteront saisissables après la clôture.',
+	'admin.budgets.close.action': 'Clôturer',
+	// Refus propres aux budgets — ils appellent des gestes différents de ceux de l'arborescence, et
+	// les ranger sous les mêmes phrases dirait « vérifiez le slug » là où aucun slug n'existe.
+	'admin.budgets.refus.forbidden':
+		'Seul un administrateur de cet espace de travail peut gérer les budgets.',
+	'admin.budgets.refus.nom-pris':
+		'Un budget ouvert de ce track porte déjà ce nom. Un budget clôturé peut l’avoir repris.',
+	'admin.budgets.refus.forme-refusee':
+		'Cette valeur a été refusée : vérifiez le nom et la devise.',
+	'admin.budgets.refus.recurrence-occupee':
+		'Ce budget porte des occurrences : supprimez-les avant de le rendre non récurrent.',
+	'admin.budgets.refus.reference-absente': 'Ce track n’existe plus.',
+	'admin.budgets.refus.network': 'La requête n’a pas abouti. Réessayez.',
+	'admin.budgets.refus.unknown': 'L’enregistrement a échoué.',
+	'admin.budgets.refus.sans-effet':
+		'Rien n’a été modifié : vous n’avez pas le droit d’écrire sur ce budget, ou il a disparu.',
+
+	'live.admin.budget.created': 'Budget créé',
+	'live.admin.budget.updated': 'Budget modifié',
+	'live.admin.budget.closed': 'Budget clôturé',
+	'live.admin.budget.reopened': 'Budget rouvert',
+
 	'live.admin.aria': "Annonces de l'administration",
 	'live.admin.created': 'Créé',
 	'live.admin.updated': 'Modifié',

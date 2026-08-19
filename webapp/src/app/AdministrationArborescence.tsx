@@ -1,4 +1,7 @@
 // @spec CRM-075 (docs/BACKLOG.md) — écran d'administration des tracks et des channels
+// @spec CRM-084 (docs/BACKLOG.md) — budgets, tranche 2 : la table des budgets d'un track vit sous sa
+//       ligne dépliée, `docs/SPEC-costs.md` §4.1 (« Administration des budgets — dans le track.
+//       Sous l'administration de l'arborescence »). Le bloc lui-même est `BlocBudgetsTrack.tsx`.
 // @spec CRM-077 (docs/BACKLOG.md) — corbeille et restauration, septième tranche : le GESTE de mise
 //       à la corbeille d'un track et d'un channel, et sa confirmation portant l'énumération
 // @spec docs/SPEC-corbeille.md §4 bis.1 (où le geste vit), §4 bis.3 (ce que la confirmation dit et
@@ -69,6 +72,7 @@ import {
 	compterEnfantsInaccessibles,
 	type CibleEnumeration,
 } from '../lib/corbeille'
+import { BlocBudgetsTrack } from './BlocBudgetsTrack'
 import { classesPilule, iconeTrack, NOMS_ICONES } from './presentation-tracks'
 import { texteLigneEnumeration, type EtatEnumeration } from './presentation-corbeille'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
@@ -1211,6 +1215,17 @@ export function AdministrationArborescence({ client = clientCrm }: ProprietesAdm
 									</div>
 								) : null}
 
+								{/*
+								 * LE BLOC DES BUDGETS EST RENDU PAR LE PARENT, ET NON PAR
+								 * `ListeChannels`, parce que celle-ci REND TÔT sur ses états de
+								 * chargement et d'erreur : y placer les budgets les aurait fait
+								 * disparaître à chaque fois que les channels d'un track ne se
+								 * chargent pas, alors que les deux lectures sont indépendantes.
+								 *
+								 * Il vient APRÈS les channels : un channel est la structure du
+								 * travail quotidien, un budget son cadre de gestion
+								 * (`docs/SPEC-costs.md` §3), et l'écran garde l'ordre de fréquence.
+								 */}
 								{deplie ? (
 									<ListeChannels
 										track={track}
@@ -1308,6 +1323,17 @@ export function AdministrationArborescence({ client = clientCrm }: ProprietesAdm
 											)
 										}
 									/>
+								) : null}
+
+								{deplie ? (
+									<div className="pl-12 pr-3 pb-3">
+										<BlocBudgetsTrack
+											client={client}
+											idTrack={track.id}
+											nomTrack={track.name}
+											onAnnonce={setAnnonce}
+										/>
+									</div>
 								) : null}
 							</li>
 						)
