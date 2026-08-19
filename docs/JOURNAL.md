@@ -19197,6 +19197,29 @@ verts**, `e2e/ui/carnet-creation.spec.ts` **4 verts, console vierge**. Capture
 `carnet-creation-clavier-1440.jpg` **observée** : l'anneau de focus est bien sur « Nouveau contact »
 après création au clavier, et la ligne créée a rejoint le tableau à sa place de tri.
 
+**LE HARNAIS A TROUVÉ DEUX COMPTEURS QUE JE N'AVAIS PAS RÉVISÉS.** `scripts/verify-harness.sh` a
+rendu **3 anomalies** au premier passage : le compteur d'API était figé à 704 alors que mes neuf
+scénarios le portent à **713**, et le compteur d'interface à 407 alors que mon parcours clavier le
+porte à **408** — les deux entraînant l'échec de l'étape d'exécution correspondante. Tous deux
+**remesurés** par `playwright test --list` et non déduits d'une exécution (INC-101), révisés avec
+leur motif écrit dans le fichier. Second passage : **31 contrôles, 1 anomalie**.
+
+`pytest mail-sync/tests` : **242 verts** (l'environnement `.venv` du `README.md` §7 a dû être créé,
+l'hôte ne portant aucun `pytest`).
+
+**L'anomalie qui reste est ÉTRANGÈRE à cette unité, et elle est consignée.** `npm run e2e:mail` rend
+**41 verts, 1 échec** : le scénario `S3` exige que chaque ligne de la console de `mail-sync` porte
+`DEBUG` ou `INFO`, or la veille émet `veille_compte_echoue` en `WARNING` dès qu'un compte entrant
+seedé ne répond pas — ce qui est le cas normal d'une pile de développement. Aucune ligne de Python
+ni de messagerie n'a été touchée par cette session, et `pytest` est vert : c'est l'attente du
+scénario qui ne prévoit pas ce cas. **INC-161** ouverte avec sa mesure, comportement **inchangé** —
+assouplir l'assertion pour verdir serait le contournement que `docs/CloudWorker.md` §3.1 interdit,
+et les deux lectures possibles appartiennent à l'unité qui porte la messagerie.
+
+**Preuves NON exécutées, et nommées comme telles** : les quarante-neuf autres `scripts/verify-*.sh`
+— la série entière ne tient pas dans une session (§2.1 *ter*) —, `verify-harness.sh` étant le seul
+exécuté, et deux fois.
+
 **Où reprendre.** `4e` est **close**. `CRM-060` reste `[~]`, et ce qui lui manque est nommé au §6 et
 au §13.8 : la **fiche** d'un contact, et l'arbitrage sur les **références mortes** — une valeur qui
 désigne un contact supprimé demeure en base, et aucune surface ne la nettoie. La prochaine exécution

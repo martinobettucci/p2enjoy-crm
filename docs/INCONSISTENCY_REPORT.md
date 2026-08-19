@@ -273,6 +273,44 @@ session**, et le comportement est laissé **inchangé**. Aucun des trois ne dema
 sont des faits à porter par leur unité, pas des choix à trancher. *La troisième, **INC-125**, a été
 consignée le 2026-08-16 par la session qui a clos `CRM-079`.*
 
+### INC-161 — `e2e:mail` rougit sur un `WARNING` que la veille de `mail-sync` émet en fonctionnement NORMAL
+
+**Nature :** le scénario `S3` de `e2e/mail/mail-sync.spec.ts` (ligne 231) exige que **chaque** ligne
+de la console de `mail-sync` porte un niveau `DEBUG` ou `INFO`. Or la boucle de veille émet
+`veille_compte_echoue` en `WARNING` dès qu'un compte n'a pas pu être relevé
+(`mail-sync/src/mail_sync/veille.py` ligne 180), et c'est le cas sur une pile de développement
+fraîchement seedée — le seed déclare des comptes entrants dont aucun serveur distant ne répond.
+
+**Mesure, 2026-08-19, sur la pile seedée de cette session :**
+
+```
+npm run e2e:mail  => 41 passed, 1 failed
+  S3 › chaque ligne est un JSON borné, sans secret ni avertissement
+  Expected value: "WARNING" — Received array: ["DEBUG", "INFO"]
+
+docker compose logs mail-sync | grep -c WARNING  => 1
+{"timestamp":"2026-08-19T00:52:42.244Z","level":"WARNING","service":"mail-sync",
+ "event":"veille_compte_echoue"}
+```
+
+**Étrangère à l'unité de la session**, qui n'a touché aucune ligne de Python ni de messagerie :
+`CRM-060` sous-tranche 4e ne porte que le carnet de contacts et ses preuves. `pytest mail-sync/tests`
+est d'ailleurs **vert, 242 tests**, ce qui confirme que le service se comporte comme son code le
+dit — c'est l'attente du scénario qui ne prévoit pas ce cas.
+
+**Ce qui est en jeu, et pourquoi ce n'est pas tranché ici.** Deux lectures se défendent, et elles
+appartiennent à l'unité qui porte la messagerie, pas à celle-ci :
+
+1. un `WARNING` sur un compte injoignable est le comportement **voulu** d'une veille — le silencier
+   serait masquer une erreur (`CLAUDE.md` §18) —, et c'est alors le scénario `S3` qui doit tolérer
+   `WARNING` en distinguant « avertissement métier attendu » de « avertissement de panne » ;
+2. ou bien la veille ne devrait pas avertir pour un compte de démonstration que le seed sait
+   injoignable, et c'est le **seed** ou le niveau de journalisation qui doit changer.
+
+**Comportement laissé inchangé**, conformément à la doctrine du §1 : ni le scénario ni le service
+n'ont été modifiés. Le contourner en assouplissant l'assertion serait précisément le « contournement
+destiné uniquement à rendre une preuve verte » que `docs/CloudWorker.md` §3.1 interdit.
+
 ### INC-160 — `verify-champs-formulaire.sh` laisse en base un `move_card` d'AVANT les migrations qui lui ont fait écrire son commentaire
 
 **Nature :** exactement le mécanisme d'INC-129, sur un autre harnais. Pour se restaurer après ses
