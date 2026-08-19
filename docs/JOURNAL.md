@@ -19656,3 +19656,67 @@ preuve d'interface n'est due : la tranche ne livre **aucune** surface.
 messages en fils dans l'inbox, pastille, geste et filtre —, sans laquelle endormir un fil ne change
 encore rien pour l'utilisateur. C'est la tranche que l'exécution suivante peut prendre. `CRM-060`
 et `CRM-077` restent suspendues à l'arbitrage du responsable.
+
+## décision 460 — `CRM-060` 4j livrée : le rôle se corrige, et deux défauts trouvés par l'exécution
+
+> **Numérotation.** Cette entrée et la décision 459 ont été écrites par **deux sessions
+> parallèles** du worker, sur le même dépôt et à la même heure. Celle-ci arrive après au rebase,
+> et prend donc 460. Elle est l'entrée que la décision 459 signalait manquante — « l'entrée de
+> journal qui la clôt manque, la session qui l'a livrée s'étant arrêtée après ses captures » : la
+> session n'était pas arrêtée, elle exécutait sa campagne de fin.
+
+**Ce qui a été mesuré.** Quinze relevés à la main sur la pile seedée, avec les jetons réels des trois
+profils et la clé anonyme, consignés au §19.3 de `docs/SPEC-contacts.md` (spécification écrite et
+**committée avant toute ligne de code**, décision 458). Quatre décident : la **mesure 2** range 4j
+du côté de 4g et 4i — la lectrice reçoit `200` et `[]` sans erreur sur une ligne qui garde son rôle,
+la clause `USING` la rendant invisible à l'écriture ; la **mesure 12** montre qu'un `PATCH` portant
+`card_id` **déplace** le rattachement, d'où une fonction qui n'envoie que `role` ; la **mesure 9**
+ouvre l'effacement du rôle ; les **mesures 8 et 10** imposent la normalisation, la chaîne blanche
+étant refusée comme la chaîne vide.
+
+**Ce qui a été modifié.** `modifierRoleRattachement` et `classerRefusRole` dans
+`webapp/src/lib/contacts.ts` — **premier `UPDATE` du produit sur `card_contacts`**, la politique
+`card_contacts_maj` n'ayant jamais été exercée par un écran ;
+`webapp/src/app/ModificationRoleRattachement.tsx` ; la quatrième colonne de `FicheContact.tsx`, qui
+porte désormais **deux** commandes et **un seul bloc ouvert à tout instant, tous gestes confondus**.
+**Aucune migration, seed inchangé.**
+
+**Deux défauts trouvés par l'exécution, corrigés à leur cause.** À 390 px, la colonne des commandes
+se **repliait** et la ligne du tableau gagnait de la hauteur : l'écart que le §5.21 assume pour sa
+liste plate ne se transporte pas à un tableau, dont la réponse au manque de place est de **défiler**.
+`white-space: nowrap` est posé sur la **cellule**, la propriété étant héritée — sans lui « Modifier
+le rôle » se coupait en deux lignes dans son propre bouton. Consigné au §5.28. Et un **défaut de
+preuve** : le scénario d'interface éprouvait l'exclusivité inter-gestes sur la seule ligne du seed,
+où les deux commandes sont `disabled` par contrat — elle ne s'observe **qu'entre deux lignes**. Le
+produit avait raison, le scénario décrivait un geste impossible.
+
+**Ce qui a été vérifié.** `test:sql` **2269 assertions**, `e2e:api` **764**, `e2e:ui` **437**
+(console vierge), `e2e:mail` **42**, `test:unit` **1728**, `pytest` **242**, `typecheck` et `build`
+verts. Cinq captures **observées** (`CLAUDE.md` §16), et les captures de 4i **renouvelées** — la
+seconde commande change leur apparence.
+
+**Ce qui a échoué, et pourquoi ce n'est pas le produit.** Un premier `verify-webapp.sh` a rendu
+`http://127.0.0.1:4173 is already used` : deux séries de harnais avaient été lancées **en
+parallèle**, la collision exacte que `docs/CloudWorker.md` §2.1 ter décrit. Puis un
+`pkill -f "[v]erify-"` a **tué son propre appelant**, la même ligne de commande portant un
+`verify-|vite` **non protégé** dans un `pgrep` voisin — le mécanisme du §2.1 ter, sur un autre motif.
+Les harnais ont été relancés **en série**.
+
+**La campagne de fin de session, et ce qu'elle a rendu.** Les huit preuves globales sont **vertes**.
+Sept `verify-*.sh` ont été exécutés, ceux que le changement touche : `verify-types`, `verify-seed`
+(55 contrôles) et `verify-migrations` (25) **sans anomalie** ; `verify-webapp` **42 contrôles,
+1 anomalie** — les trois classes non engendrées d'**INC-158**, citées par `Sommeil.tsx`,
+`EnTeteCard.tsx` et `AdministrationWorkflows.tsx`, qu'aucun commit de cette session ne touche ;
+`verify-scripts` **1 anomalie** — la reconstruction d'image **sans CA**, cas que
+`docs/CloudWorker.md` §2.4 nomme explicitement comme un effet du proxy ; `verify-manual`
+**2 anomalies** — une dérive de compteur de l'annexe A, **consignée en INC-164**, troisième porteur
+de la famille d'INC-162 et d'INC-163. `verify-harness` a été **tué par son propre budget** de
+900 secondes à son étape 6 : ce n'est pas un verdict, et il reste à exécuter. **Les quarante-quatre
+autres `verify-*.sh` n'ont pas été exécutés**, faute de temps — la série entière ne tient pas dans
+une session (§2.1 ter).
+
+**Où reprendre.** `4j` est close. `CRM-060` reste `[~]`, et ce qui lui manque est nommé au §6 et au
+§19.8 : l'**arbitrage du responsable** sur les références mortes — qui commande la suppression d'un
+contact —, et le **fil unifié**, qui n'apprend rien des trois gestes de rattachement (`card_contacts`
+n'écrit aucun `card_event`, et la tranche 1 n'a posé aucun trigger). La prochaine exécution peut
+prendre la première unité `[ ]` du plan ; la suppression et le fil attendent l'arbitrage.

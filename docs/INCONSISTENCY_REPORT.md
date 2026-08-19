@@ -2164,3 +2164,40 @@ réponses sont défendables — porter les compteurs au nouvel état du seed, ou
 ce que la preuve prouve, et ce choix appartient à l'unité qui possède ces suites. Le trancher au
 passage serait corriger un défaut étranger à l'unité autorisée (`CLAUDE.md` §5,
 `docs/CloudWorker.md` §3.1).
+
+### INC-164 — l'annexe A du manuel fige deux comptes d'un seed qui a grandi depuis qu'elle a été écrite
+
+**Nature :** troisième porteur de la famille d'INC-162 et d'INC-163, sur une **troisième** surface.
+`docs/manual.md` annexe A énumère des comptes du jeu de démonstration ; deux d'entre eux ont été
+figés avant l'enrichissement du seed, et n'ont pas été révisés dans le même changement.
+`scripts/verify-manual.sh` compare l'annexe à la base et rougit donc sur une **dérive de compteur**,
+non sur un défaut du produit — aucun contrôle de *comportement* n'échoue, et les quinze autres
+comptes de l'annexe sont **justes**.
+
+**Mesure, 2026-08-19, sur la pile seedée de cette session :**
+
+```
+scripts/verify-manual.sh
+  ECHEC annexe A : Questions du formulaire actives — le manuel dit « 12 », la base dit « 16 »
+  ECHEC annexe A : Réponses de formulaire        — le manuel dit « 21 », la base dit « 23 »
+  OK    annexe A : Questions du formulaire retirées = 2
+  OK    annexe A : Affaires = 41    Affaires actives = 39    Commentaires = 5
+  => 123 contrôles, 2 anomalie(s)
+```
+
+**Les deux comptes portent sur `form_fields` et `form_field_values`**, que `CRM-046` puis la
+sous-tranche 4d de `CRM-060` ont enrichis — `docs/SPEC-seed.md` §9.11 annonce d'ailleurs
+« VINGT-SEPT actives » pour `maintenance`, et `apply-seed.sh` rend « 23 sur 11 cards » pour les
+valeurs. L'annexe est restée sur l'état antérieur.
+
+**Étranger à la sous-tranche `CRM-060` 4j, et c'est vérifié plutôt que supposé :** cette
+sous-tranche **ne touche ni `form_fields`, ni `form_field_values`, ni le seed, ni aucun fichier de
+`supabase/`** — elle exerce `card_contacts_maj`, dont les sondes sont des rattachements détruits
+ensuite, le seed étant relu intact par un scénario dédié. Elle modifie `docs/manual.md` aux
+chapitres **3 ter** et **4.7 ter**, jamais l'annexe A. Le comportement est laissé **inchangé**.
+
+**Ce qui reste à trancher, et pourquoi cette session ne le tranche pas :** deux réponses sont
+défendables, comme pour INC-162 et INC-163 — porter l'annexe au nouvel état du seed, ou faire
+dériver ces deux lignes de la base au lieu de les figer, ce qui change ce que le manuel *est*. Ce
+choix appartient à l'unité qui possède l'annexe et le seed. Le trancher au passage serait corriger
+un défaut étranger à l'unité autorisée (`CLAUDE.md` §5, `docs/CloudWorker.md` §3.1).
