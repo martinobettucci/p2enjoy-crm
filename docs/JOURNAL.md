@@ -20658,3 +20658,95 @@ des budgets dans le track** (`docs/SPEC-costs.md` §4.1) — table des budgets, 
 « afficher les budgets clôturés », avertissement qui compte les lignes sans réel avant une clôture
 —, puis son E2E d'interface, ses captures et `scripts/verify-budgets.sh`. `CRM-083` reste bloqué
 par **INC-170**. Trois arbitrages restent en attente : **INC-169**, **INC-170** et **INC-172**.
+
+## décision 472 — `CRM-084` tranche 2 : les budgets s'administrent, et le manque que la lecture a trouvé
+
+**L'unité, et le choix.** La décision 471 laisse `CRM-084` en `[~]` et désigne comme reprise sa
+tranche 2 : l'écran d'administration des budgets dans le track (`docs/SPEC-costs.md` §4.1). C'est
+donc l'unité de cette session, sans discussion — le journal la nomme, et le §4.2 de
+`docs/CloudWorker.md` fait passer une reprise d'unité PRODUIT avant tout le reste.
+
+**Aucune spécification n'a été réécrite.** `docs/SPEC-costs.md` est lue INTÉGRALEMENT, ainsi que le
+§5.13 de `docs/DESIGN_SYSTEM.md` qui régit la surface hôte. Le §4.1 couvre ce qui restait à livrer :
+le §3.2 point 3 de `docs/CloudWorker.md` s'applique dans sa forme d'exception, et le code commence.
+
+**OÙ L'ÉCRAN VIT, ET POURQUOI PAS AILLEURS.** Le §4.1 s'intitule « Administration des budgets —
+**dans le track** », et sa première phrase est « Sous l'administration de l'arborescence ». La table
+est donc rendue dans la ligne DÉPLIÉE d'un track de `/reglages/arborescence`, sous ses channels —
+aucune route neuve, aucune entrée de menu, aucune couverture `ROUTES` ⇄ `ENTREES_TRANSVERSES` à
+étendre. Le bloc est rendu par le PARENT et non par `ListeChannels`, qui rend tôt sur ses états de
+chargement et d'erreur : y placer les budgets les aurait fait disparaître chaque fois que les
+channels d'un track ne se chargent pas, alors que les deux lectures sont indépendantes.
+
+**C'EST LE §5.9 QUI S'APPLIQUE, PAS LE §5.13, et la distinction n'est pas cosmétique.** Le §5.13
+réserve la liste `ul`/`li` au cas où les niveaux ne portent PAS les mêmes colonnes — un track a une
+couleur, un channel un workflow. Ici toutes les lignes sont des budgets et portent exactement les
+mêmes attributs. Le patron est donc un vrai `table`, avec `th scope="row"` sur le nom, comme le
+tableau des comptes de `CRM-059`. Tout ce que le §5.13 pose pour l'arborescence vaut par ailleurs
+sans être répété : boutons discrets toujours visibles, commandes désactivées jamais masquées,
+formulaires et confirmations dans le flux du document, focus entrant dans le premier champ, alerte
+de refus dans le bloc concerné.
+
+**Ce qui a été livré.** `webapp/src/lib/budgets.ts` — lecture filtrée côté serveur, compte des
+occurrences ouvertes en UNE requête, validation de forme recopiée des `CHECK`, classement des refus,
+cinq écritures. `webapp/src/app/BlocBudgetsTrack.tsx` — la table, l'interrupteur, le formulaire, la
+confirmation de clôture, les commandes de réordonnancement. Soixante-douze clés de traduction.
+
+**TROIS POINTS QUE LA LECTURE RAPIDE MANQUE, ET QUI SONT LE CŒUR DE LA TRANCHE.**
+
+(1) *La colonne compte les occurrences OUVERTES, pas les budgets ouverts.* « Une occurrence se
+clôture indépendamment de son budget » (§2.2) : le filtre porte donc sur `budget_occurrences`, et le
+seed le rend démontrable — « Publicité 2026 » est OUVERT et porte DEUX occurrences dont UNE
+clôturée. Avec deux occurrences ouvertes, un filtre absent serait passé inaperçu. La cellule reste
+**vide** pour un budget simple, qui n'en porte aucune par construction : un « 0 » y dirait qu'il
+pourrait en avoir.
+
+(2) *« Enveloppe vide » et « enveloppe à zéro » sont deux choses.* `lireEnveloppe` rend un type
+somme à trois membres — `absente`, `lue`, `invalide` — plutôt qu'un `number | null` obtenu par
+coercition. Confondre les deux premiers enverrait `0` pour un champ vide, c'est-à-dire « enveloppe
+nulle DÉCIDÉE » là où l'utilisateur n'a rien décidé : la valeur par défaut trompeuse de `CLAUDE.md`
+§18. `Number` est employé et non `parseFloat`, qui rend 12 sur `12abc` en ignorant la queue.
+
+(3) *Le refus du trigger de récurrence est séparé des `CHECK` de forme, qui partagent le `23514`.*
+Les deux appellent des gestes opposés — vider les occurrences, ou corriger un champ. Rien d'autre
+que le message ne les sépare : PostgREST n'expose pas le nom de la contrainte hors du message. Le
+module inspecte donc un fragment stable, même compromis assumé et pour la même raison que
+`NOM_CONTRAINTE_WORKFLOW` — et `scripts/verify-budgets.sh` vérifie que ce fragment se trouve encore
+dans `0050`, de sorte qu'une dérive entre les deux fichiers est MESURÉE et non subie à l'usage.
+
+**Ce qui a été vérifié.** `webapp/src/lib/budgets.test.ts` **29 tests**, `e2e/ui/budgets.spec.ts`
+**12 scénarios** — dont le parcours entièrement au clavier, focus atteint par `Tab` et jamais par
+`focus()`. Le harnais dédié `scripts/verify-budgets.sh` rend **43 contrôles, aucune anomalie** : il
+rejoue la traçabilité des deux tranches, les captures, le modèle réellement en base — index partiel,
+huit politiques, aucun trigger de génération d'occurrences —, pgTAP **52 assertions**, l'API
+**14 scénarios**, l'interface, puis vérifie que celle-ci rend le seed intact ; enfin il **dégrade
+réellement le module trois fois** et exige qu'une preuve rougisse à chaque fois, la restauration
+étant constatée. Les six captures ont été **observées** — la table sous le track déplié, le
+formulaire et la confirmation de clôture, aux quatre paliers.
+
+**UNE PREUVE ROUGE, IMPUTABLE, ET CE QU'ELLE A APPRIS.** Le scénario du membre non administrateur
+échouait sur la garde de console des `fixtures` : Chromium journalise tout chargement de ressource
+en échec, et le `403` que ce scénario PROVOQUE en était un. Ce n'était ni une régression ni un
+défaut du produit — l'écran rendait bien le refus. Le mécanisme existait déjà,
+`autoriserErreursConsole`, qui consomme une liste EXACTE d'erreurs : statut, nombre et ordre. Il est
+employé plutôt qu'un filtre global, de sorte qu'un second refus inattendu ferait toujours rougir le
+verdict final.
+
+**UN MANQUE DE SPÉCIFICATION TROUVÉ EN LISANT, PAS EN CODANT — INC-173.** Le §4.1 décrit une colonne
+qui COMPTE les occurrences ouvertes ; le §3.2 nomme les droits d'écriture d'une occurrence ; et
+**aucun chapitre ne décrit l'écran qui porterait ces gestes**. Or le §4.6 exigera d'en CHOISIR une
+pour rattacher une ligne de coût à un budget récurrent, et le §4.7 pose qu'un budget récurrent sans
+occurrence n'est pas proposé. Autrement dit, un budget récurrent créé à l'écran aujourd'hui est un
+budget auquel `CRM-085` ne pourra jamais rien rattacher — les deux occurrences du seed existent
+parce que le SQL les pose, pas parce qu'un utilisateur peut les ouvrir. Le comportement est laissé
+INCHANGÉ et l'entrée attend l'arbitrage : écrire cet écran aurait été écrire une spécification à la
+place du responsable, sur une surface dont ni l'emplacement, ni les états ne sont posés.
+
+**Où reprendre.** `CRM-084` reste `[~]`, et son reste tient en **un seul point** : le DÉCOMPTE des
+lignes sans coût réel dans la confirmation de clôture (§4.1), qui se lit dans `card_costs` — table
+que `CRM-085` livrera. La confirmation dit aujourd'hui que rien n'est à saisir, plutôt que de
+laisser un blanc se lire comme un zéro ; interroger une table absente aurait rendu un « n'a pas pu
+être mesuré » PERMANENT, c'est-à-dire un état d'erreur mentant sur sa cause. La reprise naturelle
+est donc **`CRM-085`**, tête de suite du chunk 6, qui soldera ce point dans la foulée. `CRM-083`
+reste bloqué par **INC-170**. Quatre arbitrages attendent désormais : **INC-169**, **INC-170**,
+**INC-172** et **INC-173**.

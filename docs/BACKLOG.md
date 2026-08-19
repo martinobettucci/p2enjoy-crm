@@ -7817,7 +7817,7 @@ sont indépendantes l'une de l'autre et suivent la Definition of Done commune.
 |---|---|---|
 | CRM-082 | Objectifs : modèle, RLS et API | `[~]` |
 | CRM-083 | Canevas d'objectifs : blocs, flèches, ouverture du channel | `[~]` |
-| CRM-084 | Budgets, occurrences et clôture : modèle, RLS et API | `[ ]` |
+| CRM-084 | Budgets, occurrences et clôture : modèle, RLS et API | `[~]` |
 | CRM-085 | Lignes de coût d'une affaire : modèle et section de la fiche | `[ ]` |
 | CRM-086 | Écrans de coûts : histogramme du track et cumul du workspace | `[ ]` |
 
@@ -8315,12 +8315,57 @@ GARDE — tables, triggers, politiques, seed —, la suivante livrera l'écran d
       deviennent trente-quatre — avec la limite du générateur nommée : `Insert` et `Update`
       exposent des chemins que les triggers refusent.
 
-- [ ] **CE QUI RESTE, ET C'EST LA TRANCHE 2 : aucun écran.** L'administration des budgets dans le
-      track (`docs/SPEC-costs.md` §4.1) n'est pas livrée — ni la table des budgets, ni
-      l'interrupteur « afficher les budgets clôturés », ni l'avertissement qui compte les lignes
-      sans réel avant une clôture. Sans elle, l'unité n'a **aucune capture** et son E2E d'interface
-      n'a pas de sujet.
-- [ ] **Harnais dédié `scripts/verify-budgets.sh`** : dû avant le passage à `[x]`.
+**TRANCHE 2 LIVRÉE — L'ÉCRAN.** L'administration des budgets vit **dans la ligne dépliée du track**
+de `/reglages/arborescence`, ce que le §4.1 écrit mot pour mot : « Administration des budgets — dans
+le track. Sous l'administration de l'arborescence ». Aucune route neuve, aucune entrée de menu : un
+budget appartient à un track, et l'écran qui administre le track est celui qui l'administre.
+
+- [x] **La table des budgets et ses six colonnes** : `webapp/src/app/BlocBudgetsTrack.tsx`, nourri
+      par `webapp/src/lib/budgets.ts`. **C'est le §5.9 qui s'applique, pas le §5.13** — toutes les
+      lignes sont des budgets et portent les mêmes attributs, là où un track et un channel n'en
+      partagent aucun. Le §4.1 écrit d'ailleurs « Table des budgets du track ».
+- [x] **L'interrupteur « afficher les budgets clôturés », et le FILTRE RESTE CÔTÉ SERVEUR** : lire
+      toutes les lignes pour en masquer la moitié dans le navigateur ferait transiter ce que l'écran
+      ne montre pas. Un budget clôturé garde sa commande de réouverture et perd celle de clôture —
+      deux icônes distinctes, jamais la même retournée.
+- [x] **LA COLONNE DES OCCURRENCES COMPTE LES OCCURRENCES OUVERTES, PAS LES BUDGETS OUVERTS**, et
+      c'est le seed qui rend la distinction démontrable : « Publicité 2026 » est OUVERT et porte
+      DEUX occurrences dont UNE clôturée. Avec deux occurrences ouvertes, un filtre absent serait
+      passé inaperçu. La cellule reste **vide** pour un budget simple (§5.9 : la cellule vide est
+      réservée à une donnée qui n'existe pas pour cette ligne) — un « 0 » y dirait qu'il pourrait en
+      porter.
+- [x] **« Enveloppe vide » et « enveloppe à zéro » sont DEUX choses**, et `lireEnveloppe` les tient
+      séparées par un type somme à trois membres. Confondre les deux enverrait `0` pour un champ
+      vide, c'est-à-dire « enveloppe nulle décidée » là où l'utilisateur n'a rien décidé : la valeur
+      par défaut trompeuse de `CLAUDE.md` §18.
+- [x] **Le refus du trigger de récurrence est SÉPARÉ des `CHECK` de forme**, qui partagent pourtant
+      le `23514`. Les deux appellent des gestes opposés — vider les occurrences, ou corriger un
+      champ. La séparation passe par un fragment stable du message levé par la migration, même
+      compromis assumé que `NOM_CONTRAINTE_WORKFLOW` ; `scripts/verify-budgets.sh` vérifie que le
+      fragment se trouve encore dans `0050`, de sorte qu'une dérive est mesurée et non subie.
+- [x] **Preuves de la tranche, toutes exécutées et vertes** : `webapp/src/lib/budgets.test.ts`
+      **29 tests**, `e2e/ui/budgets.spec.ts` **12 scénarios** — dont le parcours entièrement au
+      clavier et le refus d'un membre non administrateur, consommé nommément par
+      `autoriserErreursConsole` plutôt que filtré globalement.
+- [x] **Six captures livrées sous `docs/captures/CRM-084/`** et OBSERVÉES : les quatre paliers, le
+      formulaire de création et la confirmation de clôture.
+- [x] **Harnais dédié `scripts/verify-budgets.sh`** : **43 contrôles, aucune anomalie**, dont trois
+      dégradations réelles du module qui doivent chacune faire rougir une preuve, et la restauration
+      constatée.
+
+- [ ] **CE QUI RESTE, ET C'EST UN SEUL POINT : le DÉCOMPTE de la confirmation de clôture.** Le §4.1
+      exige « ce budget porte n lignes sans coût réel ». Ce compte se lit dans `card_costs`, table
+      que **`CRM-085`** livrera : elle n'existe pas encore. Interroger une table absente rendrait un
+      « n'a pas pu être mesuré » PERMANENT, c'est-à-dire un état d'erreur qui mentirait sur sa
+      cause. La confirmation dit donc explicitement que rien n'est à saisir aujourd'hui, plutôt que
+      de laisser un blanc se lire comme un zéro. **L'unité reste `[~]` pour ce seul motif** ; le
+      point se solde dans la même session que `CRM-085` ou juste après.
+- [ ] **AUCUNE SURFACE NE GÈRE LES OCCURRENCES, et ce n'est pas un oubli de cette tranche** : le
+      §4.1 décrit une COLONNE qui les compte, et aucun chapitre de `docs/SPEC-costs.md` ne spécifie
+      d'écran pour en ouvrir, libeller, doter ou clôturer une — alors que le §3.2 en nomme les
+      droits et que `CRM-085` exigera d'en choisir une. Le manque est consigné au registre
+      (**INC-173**) et attend l'arbitrage du responsable : le trancher ici reviendrait à inventer
+      une spécification.
 - [x] **La campagne complète a été exécutée, et elle est verte** : `test:unit` **57 fichiers /
       1964 tests**, `test:sql` **48 fichiers / 2405 assertions**, `e2e:api` **801 passés**,
       `e2e:ui` **482 passés**, `e2e:mail` **42 passés**, `pytest` **244**, `typecheck`,

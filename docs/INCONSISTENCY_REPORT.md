@@ -195,7 +195,15 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Seize ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+**Dix-sept ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160 et INC-173** —
+**INC-173** consignée le 2026-08-19 par la session `CRM-084` tranche 2 : `docs/SPEC-costs.md` §4.1
+décrit une colonne qui COMPTE les occurrences ouvertes, le §3.2 nomme les droits d'écriture d'une
+occurrence, et **aucun chapitre ne décrit l'écran qui porterait ces gestes**. Or le §4.6 exigera
+d'en CHOISIR une pour rattacher une ligne de coût à un budget récurrent (`CRM-085`). Manque de
+SPÉCIFICATION, laissé intact et non tranché sur place.
+
+Précédemment seize : **INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159 et INC-160** — **INC-160**
 consignée le 2026-08-18 par la session `CRM-060` sous-tranche 4d : `verify-champs-formulaire.sh`
 **dégrade `public.move_card`** en rejouant la migration `0009` pour se restaurer, et laisse en base
@@ -2535,3 +2543,42 @@ tranché, l'ordre des suites fait partie du résultat.
 entre la suite d'interface et celle de messagerie. La première rend la suite indépendante de son
 ordre ; la seconde garde les suites telles quelles et déplace la contrainte dans le protocole de
 campagne.
+
+## Consigné le 2026-08-19 — un manque de spécification relevé par `CRM-084` tranche 2
+
+### INC-173 — aucune surface ne gère les occurrences d'un budget récurrent, et `CRM-085` en aura besoin
+
+**Ce qui est mesuré, et non déduit.** `docs/SPEC-costs.md` §4.1 décrit la table des budgets d'un
+track avec une colonne « nombre d'occurrences ouvertes » — une LECTURE. Le §3.2 nomme par ailleurs
+les droits d'écriture des occurrences : « ouvrir, libeller, doter, clôturer une occurrence :
+administrateur du workspace ». Entre les deux, **aucun chapitre de la spécification ne décrit
+l'écran qui porterait ces quatre gestes**. La relecture porte sur le document entier ; la tranche 2
+de `CRM-084` a livré la colonne du §4.1 et rien de plus, faute de spécification à suivre.
+
+**Pourquoi cela ne peut pas rester sans réponse.** Le §4.6 pose que la fiche d'une affaire montre
+« un **second sélecteur d'occurrence** qui apparaît et devient obligatoire » pour un budget
+récurrent, et qu'il « ne propose que les occurrences **ouvertes** ». Le §4.7 ajoute que, pour un
+budget récurrent sans occurrence, le sélecteur **ne propose pas ce budget**. Autrement dit :
+`CRM-085` exigera de CHOISIR une occurrence, alors qu'aucun geste du produit n'en CRÉE. Les deux
+occurrences seedées de « Publicité 2026 » existent parce que le seed les pose en SQL, pas parce
+qu'un utilisateur peut les ouvrir. Un budget récurrent créé à l'écran aujourd'hui est donc un
+budget auquel aucune ligne de coût ne pourra jamais être rattachée.
+
+**Ce qui n'a pas été fait, et pourquoi.** Rien. `CLAUDE.md` §1 interdit d'inventer un périmètre
+fonctionnel, et `docs/CloudWorker.md` §4.1 interdit de trancher soi-même une entrée qui attend un
+arbitrage. Écrire un écran d'occurrences aurait été écrire une spécification à la place du
+responsable — sur une surface dont ni l'emplacement (dans la table des budgets ? dans une fiche de
+budget ? dans l'écran de détail du §4.3 ?), ni les états, ni le comportement du réordonnancement ne
+sont posés.
+
+**Arbitrage attendu.** Trois issues au moins, et le responsable tranche :
+
+1. l'administration des occurrences est une **sous-surface de la table des budgets** — dépliage
+   d'une ligne récurrente, sur le patron des channels d'un track ;
+2. elle appartient à l'**écran de détail d'un budget** du §4.3, que `CRM-086` livrera — auquel cas
+   `CRM-085` dépend de `CRM-086`, ce qui inverse l'ordre du plan ;
+3. les occurrences restent **hors interface** pour l'instant, et `CRM-085` ne propose que les
+   budgets non récurrents — auquel cas le §4.6 doit être amendé, et la limite écrite.
+
+Tant que l'arbitrage n'est pas rendu, `CRM-084` porte cette limite dans son backlog et le
+comportement reste inchangé.

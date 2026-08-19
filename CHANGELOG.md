@@ -15,6 +15,38 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Les budgets d'un track s'administrent à l'écran** (`CRM-084` tranche 2,
+  `docs/SPEC-costs.md` §4.1). Sous l'administration de l'arborescence, chaque track déplié porte
+  désormais sa **table des budgets** — nom, devise, enveloppe, récurrence, nombre d'occurrences
+  ouvertes, état — et les gestes de gestion : créer, renommer, doter, rendre récurrent, réordonner,
+  clôturer, rouvrir. Le formulaire et la confirmation vivent dans le flux de la page, jamais dans
+  une fenêtre modale, et le focus entre dans le premier champ.
+- **Les budgets clôturés sortent du chemin sans quitter l'historique** : ils sont masqués par
+  défaut, et un interrupteur « afficher les budgets clôturés » les rend, avec leur état écrit en
+  toutes lettres. Un budget clôturé garde sa commande de **réouverture**, et perd celle de clôture.
+- **La colonne « occurrences ouvertes » compte les occurrences, pas les budgets** : une occurrence
+  se clôture indépendamment de son budget, et le jeu de démonstration le montre — « Publicité
+  2026 » est ouvert, porte deux occurrences, et n'en affiche qu'**une** ouverte. La colonne reste
+  **vide** pour un budget simple, qui n'en porte aucune par construction : un « 0 » y laisserait
+  croire qu'il pourrait en avoir.
+- **L'enveloppe reste facultative, et vide n'est pas zéro** : laisser le champ vide signifie
+  « l'enveloppe n'est pas décidée », et la cellule reste vide ; saisir `0` signifie « zéro
+  décidé ». Un montant négatif est accepté — un avoir ou un remboursement en sont.
+- **La clôture avertit sans empêcher** : la confirmation dit ce qu'elle fait des lignes de coût et
+  que le nom du budget redevient disponible, et son bouton n'est jamais éteint — c'est une
+  décision de gestion. Le **décompte** des lignes sans coût réel exigé par le §4.1 arrivera avec
+  `CRM-085`, faute de table à compter aujourd'hui ; la confirmation le dit plutôt que de laisser
+  un blanc se lire comme un zéro.
+- **Un membre non administrateur voit les mêmes commandes, et son écriture est refusée à l'écran**
+  avec son motif : aucune commande n'est masquée sur la foi d'un rôle lu au chargement, ce qui
+  cacherait un geste permis le jour où ce rôle a changé.
+- **Les budgets ont leur harnais de preuves dédié**, `scripts/verify-budgets.sh` (`CRM-084`),
+  **43 contrôles**. Il rejoue en une commande la traçabilité des deux tranches, les captures des
+  quatre paliers, le modèle réellement en base — index d'unicité **partiel**, huit politiques,
+  aucun trigger de génération d'occurrences —, la suite pgTAP, la preuve d'API et le parcours
+  d'interface, puis vérifie que celui-ci **rend le seed intact**. Il **dégrade réellement le code
+  trois fois** et exige qu'une preuve rougisse à chaque fois.
+
 - **Les budgets d'un track existent en base : créer, doter, rendre récurrent, clôturer**
   (`CRM-084` tranche 1, `docs/SPEC-costs.md` §2 et §3, migration `0050`). Un track porte des
   enveloppes ; une enveloppe récurrente porte des occurrences — « Janvier 2026 », « Février 2026 »
