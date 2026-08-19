@@ -438,7 +438,7 @@ function BlocCanevas({ bloc }: { readonly bloc: BlocObjectif }) {
 							to={`/tracks/${destination.track.slug}/${destination.slug}`}
 							data-testid="pilule-channel"
 							title={t('goals.block.open')}
-							className="inline-flex items-center gap-1 self-start max-w-full px-2 py-0.5 rounded-full bg-brand-soft text-brand text-xs truncate hover:bg-brand-soft-strong"
+							className="inline-flex items-center gap-1 self-start max-w-full px-2 py-1 rounded-full bg-brand-soft text-brand text-xs truncate hover:bg-brand-soft-strong"
 						>
 							<SquareArrowOutUpRight aria-hidden="true" size={12} strokeWidth={2} />
 							<span className="truncate">
@@ -450,7 +450,7 @@ function BlocCanevas({ bloc }: { readonly bloc: BlocObjectif }) {
 						<span
 							data-testid="lien-perdu"
 							title={t('goals.block.link.lost.hint')}
-							className="inline-flex items-center gap-1 self-start px-2 py-0.5 rounded-full bg-bg text-text-3 text-xs"
+							className="inline-flex items-center gap-1 self-start px-2 py-1 rounded-full bg-bg text-text-3 text-xs"
 						>
 							<Unlink aria-hidden="true" size={12} strokeWidth={2} />
 							{t('goals.block.link.lost')}
@@ -477,7 +477,7 @@ function BlocCanevas({ bloc }: { readonly bloc: BlocObjectif }) {
 function Jauge({ valeur }: { readonly valeur: number }) {
 	return (
 		<div className="flex items-center gap-2">
-			<span aria-hidden="true" className="grow h-1.5 rounded-full bg-brand-soft overflow-hidden">
+			<span aria-hidden="true" className="grow h-[6px] rounded-full bg-brand-soft overflow-hidden">
 				<span
 					data-testid="jauge-remplissage"
 					className="block h-full bg-brand"
