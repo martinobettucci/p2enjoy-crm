@@ -92,6 +92,21 @@ type Expect<T extends true> = T
 // `app.can_read_budget` et `app.can_write_budget` vivent dans le schéma `app`, que PostgREST
 // n'expose pas. Le compte de fonctions appelables en RPC reste inchangé.
 
+// `card_costs`, LIVRÉE PAR `CRM-085`, ENTRE ICI POUR LA MÊME RAISON ET AVEC LA MÊME LIMITE. Le
+// générateur voit `actual_cost: number | null` — nul n'est PAS zéro (`docs/SPEC-costs.md` §2.3), et
+// c'est la seule des trois règles de cette table qu'un type puisse porter. Les deux autres lui
+// échappent entièrement :
+//
+//   * `occurrence_id` est exigée SI ET SEULEMENT SI le budget est récurrent. Aucun type ne relie
+//     deux tables par la valeur d'une colonne de l'une ; `Insert` l'expose donc comme facultative
+//     dans les deux cas, et c'est `app.card_costs_verifier_rattachement` qui tranche ;
+//   * `Update` autorise à réécrire `budget_id` et `occurrence_id`, que le même trigger refuse dès
+//     qu'un côté est clôturé — alors qu'il laisse passer `actual_cost` et `label`. C'est la
+//     frontière du §2.3, et elle est INVISIBLE au générateur.
+//
+// `app.budget_est_ouvert` n'apparaît pas davantage dans `_fonctions` : elle vit dans le schéma
+// `app`. Le compte de fonctions appelables en RPC reste inchangé.
+
 type _tables = Expect<
   Equal<
     keyof Database['public']['Tables'],
@@ -100,6 +115,7 @@ type _tables = Expect<
     | 'card_comments'
     | 'card_contacts'
     | 'card_events'
+    | 'card_costs'
     | 'card_field_values'
     | 'cards'
     | 'channel_members'

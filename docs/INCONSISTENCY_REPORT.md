@@ -2631,3 +2631,54 @@ de temps que la campagne lui retire.
 subir —, ou bien sa boucle de `Tab` est bornée par un compteur plus serré, ce qui la rendrait
 insensible à la charge. Aucune des deux ne doit être prise pour verdir une preuve : le scénario
 mesure un contrat réel, et il passe.
+
+
+## INC-175 — `scripts/verify-preuves-refus.sh` porte deux compteurs PÉRIMÉS, et sa dérive précède `CRM-085`
+
+**Ouvert le 2026-08-19, décision 473. Étranger à l'unité de la session, laissé INCHANGÉ.**
+
+**Ce qui est mesuré.** Le harnais rend `27 contrôles, 3 anomalie(s)`, dont deux sont des compteurs
+en dur qui ne suivent plus l'état du dépôt :
+
+```
+ECHEC  plan attendu 55, obtenu « 58 »
+ECHEC  66 politiques attendues, 103 relevées
+```
+
+`ASSERTIONS_ATTENDUES=55` (ligne 73) et le littéral `66` (lignes 244 à 247) sont comparés au plan de
+`supabase/tests/0016_preuves_refus.test.sql` et au recensement de `pg_policies`.
+
+**LA DÉRIVE EST ANTÉRIEURE À CETTE SESSION, ET C'EST ÉTABLI PAR LA LIGNE DE BASE, non supposé.** À
+`HEAD~8` — l'état laissé par la décision 472, avant tout commit de `CRM-085` — la suite portait déjà
+`select plan(57)` et recensait déjà **99** politiques :
+
+```
+git show HEAD~8:supabase/tests/0016_preuves_refus.test.sql
+  40:  select plan(57);
+  156: 99,
+```
+
+Le harnais était donc DÉJÀ rouge sur ces deux contrôles avant `CRM-085`, qui n'a fait que porter 57
+à 58 et 99 à 103. Les écarts de 55 à 57 et de 66 à 99 appartiennent aux unités qui ont livré des
+politiques sans étendre ce harnais — au moins `CRM-054`, `CRM-060`, `CRM-078`, `CRM-081`, `CRM-082`
+et `CRM-084`, dont chacune a révisé le recensement pgTAP sans révisier son harnais.
+
+**Ce qui n'est PAS en cause.** La suite pgTAP elle-même est verte et son recensement est à jour :
+`CRM-084` l'avait révisé de 91 à 99, `CRM-085` de 99 à 103, chaque fois avec l'inventaire NOMINAL
+étendu en même temps que le compte. La règle qu'ils gardent — « une politique ajoutée sans que la
+suite soit étendue fait échouer ce compte » — fonctionne. C'est son MIROIR dans le harnais qui a
+cessé d'être entretenu.
+
+**Pourquoi le comportement est laissé inchangé.** Porter `55` à `58` et `66` à `103` verdirait le
+harnais en un geste, et c'est précisément ce qui rend ce geste suspect : il effacerait la preuve que
+ce harnais est resté sans surveillance sur au moins six unités, et il arbitrerait à la place du
+responsable que ces deux compteurs doivent SUIVRE le recensement pgTAP plutôt que d'être supprimés
+comme redondants avec lui. `docs/CloudWorker.md` §3.1 interdit de corriger au passage un défaut
+étranger à son unité.
+
+**Arbitrage attendu.** Trois issues, et le responsable tranche : (1) les deux compteurs sont
+RECALÉS et une garde est posée pour qu'une prochaine unité ne puisse plus les oublier — par exemple
+en les LISANT dans la suite pgTAP au lieu de les redéclarer ; (2) ils sont SUPPRIMÉS du harnais
+comme redondants avec le recensement pgTAP, qui les porte déjà avec son inventaire nominal ; (3) ils
+sont conservés en l'état et le harnais est réputé rouge jusqu'à une reprise transverse des harnais
+(lot I+J du plan de solde).
