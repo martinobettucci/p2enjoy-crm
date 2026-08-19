@@ -1,3 +1,4 @@
+// @verifies CRM-086 (docs/BACKLOG.md) — la barre d'onglets porte une entrée transverse de track
 // @verifies CRM-012 (docs/BACKLOG.md) — droits fins par track et channel, vus à l'écran
 // @verifies docs/SPEC-permissions-rls.md §3.3 à §3.5 (« le plus spécifique gagne »), §4.1, §4.2
 // @verifies docs/SPEC-tracks.md §7 (ce que la barre latérale lit) ; docs/SPEC-channels.md §5
@@ -98,15 +99,28 @@ test('…et son ouverture n’expose que l’onglet consenti, à la souris', asy
 	// n'existait pas.
 	await tracksDeLaBarre(page).filter({ hasText: RESTREINT }).click()
 
-	const onglets = page.getByTestId('barre-onglets').getByRole('link')
+	// ASSERTION RÉVISÉE PAR `CRM-086`, NON AFFAIBLIE (mécanisme de la décision 51). Elle comptait
+	// TOUS les liens de la barre d'onglets, et `1` valait alors « un seul channel ». La barre porte
+	// depuis les **entrées transverses du track** — « Coûts » (`docs/DESIGN_SYSTEM.md` §4 et §12.1)
+	// —, qui ne sont pas des channels : le compte global ne mesure donc plus ce que ce scénario
+	// protège. Il porte désormais sur les onglets de CHANNEL, et la deuxième assertion nomme
+	// explicitement ce que la barre a le droit de porter en plus — ce que « rien de plus » voulait
+	// dire, écrit au lieu d'être déduit d'un nombre.
+	const onglets = page.getByTestId('onglet-channel')
 	await expect(onglets).toHaveCount(1)
 	await expect(onglets.first()).toHaveText(CONSENTI)
+
+	// « Et rien de plus » : la barre entière ne porte que cet onglet et l'entrée transverse du
+	// track. Un troisième lien serait une régression, et cette assertion la verrait.
+	const tousLesLiens = page.getByTestId('barre-onglets').getByRole('link')
+	await expect(tousLesLiens).toHaveCount(2)
+	await expect(page.getByTestId('onglet-couts-track')).toHaveCount(1)
 
 	// Les deux autres channels du track restent fermés : l'élargissement de la politique de
 	// `tracks` ne déteint pas sur celle des `channels` (§3.3 bis, deuxième tiret). Un track
 	// réapparu avec un seul onglet est une information exacte, pas une anomalie d'affichage.
 	for (const ferme of FERMES_DU_TRACK) {
-		await expect(onglets.filter({ hasText: ferme })).toHaveCount(0)
+		await expect(tousLesLiens.filter({ hasText: ferme })).toHaveCount(0)
 	}
 
 	await capturer(page, 'droits-fins-lectrice-track-rouvert-1440', 'CRM-012')
@@ -141,9 +155,15 @@ test('l’adresse directe du track rend la même chose que le clic, et rien de p
 
 	await expect(page.getByText('Track introuvable')).toHaveCount(0)
 
-	const onglets = page.getByTestId('barre-onglets').getByRole('link')
+	// Même révision qu'au scénario précédent, et pour son motif exact : la barre porte depuis
+	// `CRM-086` une entrée transverse qui n'est pas un channel. Le compte des CHANNELS est ce que
+	// « rien de plus » protège ; le compte total est vérifié à part, pour que la révision ne
+	// desserre rien.
+	const onglets = page.getByTestId('onglet-channel')
 	await expect(onglets).toHaveCount(1)
 	await expect(onglets.first()).toHaveText(CONSENTI)
+	await expect(page.getByTestId('barre-onglets').getByRole('link')).toHaveCount(2)
+	await expect(page.getByTestId('onglet-couts-track')).toHaveCount(1)
 
 	// L'adresse d'un channel FERMÉ du même track, elle, reste refusée : atteindre le track ne
 	// contourne pas la politique des channels.

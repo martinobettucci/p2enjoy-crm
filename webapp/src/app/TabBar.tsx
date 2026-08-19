@@ -111,7 +111,16 @@ function Contenu({ etat, slugTrack }: ProprietesTabBar) {
 
 	return (
 		<>
-			<nav aria-label={t('tabs.aria')} className="min-w-0">
+			{/* `shrink-0` ET NON `min-w-0`, ET C'EST UN DÉFAUT TROUVÉ EN REGARDANT UNE CAPTURE
+			    (`CLAUDE.md` §16, décision 476). Tant que la barre ne portait que ce groupe, le
+			    laisser rétrécir était sans conséquence : il était seul, et le conteneur défilait.
+			    Avec l'entrée transverse à côté, `min-w-0` autorisait le groupe des channels à se
+			    comprimer sous la largeur de ses onglets, dont le dernier venait alors se SUPERPOSER
+			    à « Coûts » — mesuré à 390 px, où « Appels d'offres » et « Coûts » se dessinaient l'un
+			    sur l'autre. La réponse d'une barre au manque de place est de DÉFILER dans son
+			    conteneur (`docs/DESIGN_SYSTEM.md` §7 et §12.6), ce que celui-ci fait déjà, et jamais
+			    d'écraser son contenu. */}
+			<nav aria-label={t('tabs.aria')} className="shrink-0">
 			<ul className="flex items-center gap-1">
 				{channels.map((channel) => (
 					<li key={channel.id}>
