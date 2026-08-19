@@ -35,10 +35,15 @@ const groupe = (
 	reel: number,
 	sansReel = 0,
 	estimeSansReel = 0,
+	// UN GROUPE DE FIXTURE PORTE UNE LIGNE PAR DÉFAUT, et ce n'est pas arbitraire : le §4.7
+	// distingue « aucune dépense rattachée » de « des dépenses qui s'annulent », et cette
+	// distinction se lit désormais sur le COMPTE (décision 476). Un défaut à zéro ferait rendre la
+	// phrase de l'état vide à tous les scénarios de ce fichier, dont aucun n'est vide.
+	lignes = 1,
 ): GroupeHistogramme => ({
 	cle,
 	libelle,
-	agregat: { estime, reel, sansReel, estimeSansReel },
+	agregat: { estime, reel, sansReel, estimeSansReel, lignes },
 })
 
 // ---------------------------------------------------------------------------------------------
@@ -161,8 +166,46 @@ describe('HistogrammeCouts — ce que le lecteur d\'écran perçoit', () => {
 	})
 
 	it('rend la phrase de l\'état vide, et pas seulement des barres nulles (§4.7)', () => {
-		rendre([], { estime: 0, reel: 0, sansReel: 0, estimeSansReel: 0 })
+		rendre([], { estime: 0, reel: 0, sansReel: 0, estimeSansReel: 0, lignes: 0 })
 		expect(screen.getByText('Aucune dépense rattachée.')).toBeTruthy()
+	})
+
+	// -----------------------------------------------------------------------------------------
+	// PREUVE RÉVISÉE ET ÉTENDUE À LA DÉCISION 476. La condition de l'état vide portait sur
+	// `groupes.length === 0` : un histogramme SANS BUDGET. Un budget réellement vide gardait donc
+	// ses deux barres nulles et se taisait — défaut MESURÉ par la preuve d'interface de la
+	// tranche 3 sur « Suisse romande », que le seed pose sans aucune ligne. La condition porte
+	// désormais sur le COMPTE DE LIGNES, et les deux cas ci-dessous sont ce qui l'oblige à ne pas
+	// se déduire des montants.
+	// -----------------------------------------------------------------------------------------
+
+	it('rend la phrase sur un budget PRÉSENT mais SANS ligne — le cas exact du §4.7', () => {
+		rendre([groupe('b1', 'Suisse romande', 0, 0, 0, 0, 0)], {
+			estime: 0,
+			reel: 0,
+			sansReel: 0,
+			estimeSansReel: 0,
+			lignes: 0,
+		})
+		expect(screen.getByText('Aucune dépense rattachée.')).toBeTruthy()
+		// Les barres et le tableau restent rendus À CÔTÉ de la phrase : le §4.7 demande « deux
+		// barres nulles ET la phrase », pas la phrase à la place du budget.
+		expect(screen.getByRole('row', { name: /Suisse romande/ })).toBeTruthy()
+	})
+
+	it('NE rend PAS la phrase quand des lignes existent et que leurs montants s’annulent', () => {
+		// La contre-épreuve, et elle est indispensable : le §2.1 pose qu'un avoir est un coût
+		// négatif légitime. Une condition écrite sur `estime === 0 && reel === 0` écrirait ici
+		// « aucune dépense rattachée » sur un budget qui en porte deux — la valeur par défaut
+		// trompeuse que `CLAUDE.md` §18 interdit.
+		rendre([groupe('b1', 'Avoirs', 0, 0, 0, 0, 2)], {
+			estime: 0,
+			reel: 0,
+			sansReel: 0,
+			estimeSansReel: 0,
+			lignes: 2,
+		})
+		expect(screen.queryByText('Aucune dépense rattachée.')).toBeNull()
 	})
 
 	it('rend le compte des lignes en attente PAR GROUPE, et non seulement au total', () => {

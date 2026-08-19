@@ -113,9 +113,24 @@ export function HistogrammeCouts({
 		<section className="flex flex-col gap-4" aria-label={t('costs.chart.region', { devise })}>
 			<Legende />
 
-			{groupes.length === 0 ? (
+			{total.lignes === 0 ? (
+				// L'ÉTAT VIDE DU §4.7, ET IL NE SE DÉDUIT PAS DES MONTANTS. « Un budget sans ligne
+				// rend deux barres nulles ET la phrase "aucune dépense rattachée" » : deux barres à
+				// zéro sans texte se lisent comme un défaut d'affichage (§5.30). La condition portait
+				// d'abord sur `groupes.length === 0`, ce qui ne rendait la phrase que sur un
+				// histogramme SANS BUDGET — un état qui, sur l'écran du §4.2, est déjà traité par
+				// l'écran lui-même. Un budget réellement vide gardait donc ses deux barres nulles et
+				// se taisait, défaut MESURÉ par la preuve d'interface sur « Suisse romande ».
+				//
+				// Elle porte sur le COMPTE DE LIGNES et jamais sur les montants : le §2.1 admet
+				// l'avoir, donc des montants qui s'annulent, et une ligne de 0 saisie exprès est
+				// légitime (§4.8, « zéro est une valeur, pas un vide »). Les barres restent rendues
+				// à côté de la phrase quand un budget existe — elles sont ce que le §4.7 demande de
+				// montrer, et les retirer ferait disparaître le budget lui-même.
 				<p className="text-sm text-text-2">{t('costs.chart.empty')}</p>
-			) : (
+			) : null}
+
+			{groupes.length === 0 ? null : (
 				// `contain: paint` ferme la propagation de la largeur intrinsèque jusqu'à la racine —
 				// c'est le défaut MESURÉ à la décision 474 sur la table des coûts d'une affaire, où la
 				// page gagnait 274 px de défilement horizontal fantôme malgré l'`overflow-x: hidden`
@@ -180,7 +195,14 @@ function Barre({
 }) {
 	return (
 		<span className="flex flex-col items-center justify-end h-full gap-1">
-			<span className="text-[13px] font-mono tabular-nums text-text-2 whitespace-nowrap">
+			{/* `px-1` N'EST PAS UN ORNEMENT, et c'est un défaut TROUVÉ EN REGARDANT UNE CAPTURE
+			    (`CLAUDE.md` §16, décision 476). Le §5.30 sépare les deux barres d'un groupe de 4 px ;
+			    or leurs étiquettes sont plus larges que les barres — « 1 000 € » pour 32 px de barre
+			    —, si bien qu'elles se rejoignaient à 4 px et se lisaient « 1 000 €880 € », un seul
+			    nombre. C'est le défaut « Discussion1 » du §5.11 sous une autre forme : deux valeurs
+			    distinctes que rien ne sépare à l'œil. Le rembourrage porte sur l'ÉTIQUETTE et non sur
+			    le groupe : les barres gardent les 4 px que le §5.30 leur donne. */}
+			<span className="text-[13px] font-mono tabular-nums text-text-2 whitespace-nowrap px-1">
 				{formaterMontant(valeur, devise)}
 			</span>
 			<span

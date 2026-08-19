@@ -48,9 +48,28 @@ export type AgregatCouts = {
 	readonly reel: number
 	readonly sansReel: number
 	readonly estimeSansReel: number
+	/**
+	 * LE NOMBRE DE LIGNES AGRÉGÉES, ET IL N'EST PAS DÉCORATIF NON PLUS. Le §4.7 exige qu'un budget
+	 * SANS ligne rende « deux barres nulles ET "aucune dépense rattachée" » ; or un agrégat qui ne
+	 * porterait que des montants ne distingue pas « aucune dépense » de « des dépenses qui
+	 * s'annulent ». Le §2.1 rend ce second cas parfaitement légitime — un avoir est un coût négatif
+	 * —, et une ligne de 0 saisie exprès en est un troisième.
+	 *
+	 * Déduire l'état vide de `estime === 0 && reel === 0` serait donc la valeur par défaut
+	 * trompeuse que `CLAUDE.md` §18 interdit : l'écran écrirait « aucune dépense rattachée » sur un
+	 * budget qui en porte deux. Le compte est ajouté à la décision 476, après qu'une preuve
+	 * d'interface a montré la phrase manquante sur un budget réellement vide du seed.
+	 */
+	readonly lignes: number
 }
 
-export const AGREGAT_NUL: AgregatCouts = { estime: 0, reel: 0, sansReel: 0, estimeSansReel: 0 }
+export const AGREGAT_NUL: AgregatCouts = {
+	estime: 0,
+	reel: 0,
+	sansReel: 0,
+	estimeSansReel: 0,
+	lignes: 0,
+}
 
 /** La barre du réel dépasse-t-elle celle du prévisionnel — `docs/DESIGN_SYSTEM.md` §5.30. */
 export const depasse = (agregat: AgregatCouts): boolean => agregat.reel > agregat.estime
@@ -85,7 +104,9 @@ export function agreger(lignes: Iterable<LigneAgregeable>): AgregatCouts {
 	let reel = 0
 	let sansReel = 0
 	let estimeSansReel = 0
+	let compte = 0
 	for (const ligne of lignes) {
+		compte += 1
 		estime += ligne.estimated_cost
 		// Extrait dans une variable narrowie plutôt que testé par un booléen intermédiaire :
 		// TypeScript ne propage pas une garde à travers un booléen, et l'assertion qu'il faudrait
@@ -98,7 +119,7 @@ export function agreger(lignes: Iterable<LigneAgregeable>): AgregatCouts {
 			reel += constate
 		}
 	}
-	return { estime, reel, sansReel, estimeSansReel }
+	return { estime, reel, sansReel, estimeSansReel, lignes: compte }
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -255,6 +276,7 @@ export function cumuler(agregats: Iterable<AgregatCouts>): AgregatCouts {
 			reel: total.reel + agregat.reel,
 			sansReel: total.sansReel + agregat.sansReel,
 			estimeSansReel: total.estimeSansReel + agregat.estimeSansReel,
+			lignes: total.lignes + agregat.lignes,
 		}
 	}
 	return total

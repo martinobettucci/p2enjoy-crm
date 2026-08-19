@@ -109,6 +109,7 @@ describe('agreger — §2.3 et §4.4', () => {
 			reel: 465,
 			sansReel: 0,
 			estimeSansReel: 0,
+			lignes: 2,
 		})
 	})
 
@@ -120,6 +121,7 @@ describe('agreger — §2.3 et §4.4', () => {
 			reel: 0,
 			sansReel: 1,
 			estimeSansReel: 100,
+			lignes: 1,
 		})
 	})
 
@@ -132,6 +134,9 @@ describe('agreger — §2.3 et §4.4', () => {
 			reel: 0,
 			sansReel: 0,
 			estimeSansReel: 0,
+			// LA LIGNE EST COMPTÉE, et c'est ce qui distingue ce cas du budget vide du §4.7 : elle
+			// existe, elle vaut zéro, et l'écran ne doit pas écrire « aucune dépense rattachée ».
+			lignes: 1,
 		})
 	})
 
@@ -143,6 +148,7 @@ describe('agreger — §2.3 et §4.4', () => {
 			reel: 375,
 			sansReel: 1,
 			estimeSansReel: 100,
+			lignes: 2,
 		})
 	})
 
@@ -152,6 +158,10 @@ describe('agreger — §2.3 et §4.4', () => {
 			reel: 90,
 			sansReel: 0,
 			estimeSansReel: 0,
+			// DEUX lignes dont les montants NE S'ANNULENT PAS ici, mais qui le pourraient : c'est
+			// exactement pourquoi l'état vide du §4.7 se lit sur le compte et jamais sur les
+			// montants (décision 476).
+			lignes: 2,
 		})
 	})
 
@@ -162,21 +172,27 @@ describe('agreger — §2.3 et §4.4', () => {
 
 describe('depasse — docs/DESIGN_SYSTEM.md §5.30', () => {
 	it('est vrai quand le réel dépasse strictement le prévisionnel', () => {
-		expect(depasse({ estime: 350, reel: 375, sansReel: 0, estimeSansReel: 0 })).toBe(true)
+		expect(depasse({ estime: 350, reel: 375, sansReel: 0, estimeSansReel: 0, lignes: 1 })).toBe(true)
 	})
 
 	it("est faux à l'égalité — dépenser exactement son enveloppe n'est pas un dépassement", () => {
-		expect(depasse({ estime: 350, reel: 350, sansReel: 0, estimeSansReel: 0 })).toBe(false)
+		expect(depasse({ estime: 350, reel: 350, sansReel: 0, estimeSansReel: 0, lignes: 1 })).toBe(
+			false,
+		)
 	})
 
 	it("est faux quand des réels manquent et que le peu de réel connu reste sous l'estimé", () => {
 		// Le piège du §4.4 : ne PAS lire une saisie en retard comme une économie. `depasse` reste
 		// faux, et c'est la mention — pas la couleur — qui porte l'information.
-		expect(depasse({ estime: 450, reel: 375, sansReel: 1, estimeSansReel: 100 })).toBe(false)
+		expect(depasse({ estime: 450, reel: 375, sansReel: 1, estimeSansReel: 100, lignes: 2 })).toBe(
+			false,
+		)
 	})
 
 	it('reste juste sur des agrégats négatifs', () => {
-		expect(depasse({ estime: -100, reel: -50, sansReel: 0, estimeSansReel: 0 })).toBe(true)
+		expect(depasse({ estime: -100, reel: -50, sansReel: 0, estimeSansReel: 0, lignes: 2 })).toBe(
+			true,
+		)
 	})
 })
 
@@ -186,10 +202,10 @@ describe('cumuler — §4.5', () => {
 		// puisque le §4.8 exige que le badge de l'onglet porte le même nombre que la mention du §4.4.
 		expect(
 			cumuler([
-				{ estime: 450, reel: 375, sansReel: 1, estimeSansReel: 100 },
-				{ estime: 200, reel: 0, sansReel: 2, estimeSansReel: 200 },
+				{ estime: 450, reel: 375, sansReel: 1, estimeSansReel: 100, lignes: 2 },
+				{ estime: 200, reel: 0, sansReel: 2, estimeSansReel: 200, lignes: 2 },
 			]),
-		).toEqual({ estime: 650, reel: 375, sansReel: 3, estimeSansReel: 300 })
+		).toEqual({ estime: 650, reel: 375, sansReel: 3, estimeSansReel: 300, lignes: 4 })
 	})
 
 	it('rend l\'agrégat nul sur une suite vide', () => {
@@ -215,6 +231,7 @@ describe('grouperParDevise — §4.5 et §4.7', () => {
 			reel: 950,
 			sansReel: 0,
 			estimeSansReel: 0,
+			lignes: 1,
 		})
 	})
 
@@ -256,6 +273,7 @@ describe('grouperParDevise — §4.5 et §4.7', () => {
 			reel: 50,
 			sansReel: 2,
 			estimeSansReel: 300,
+			lignes: 3,
 		})
 	})
 })
@@ -315,14 +333,15 @@ describe('lireHistogrammeTrack — la requête réellement émise', () => {
 		if (etat.statut !== 'pret') return
 		expect(etat.donnees).toHaveLength(1)
 		expect(etat.donnees[0]?.barres.map((b) => b.agregat)).toEqual([
-			{ estime: 100, reel: 0, sansReel: 1, estimeSansReel: 100 },
-			{ estime: 350, reel: 375, sansReel: 0, estimeSansReel: 0 },
+			{ estime: 100, reel: 0, sansReel: 1, estimeSansReel: 100, lignes: 1 },
+			{ estime: 350, reel: 375, sansReel: 0, estimeSansReel: 0, lignes: 1 },
 		])
 		expect(etat.donnees[0]?.total).toEqual({
 			estime: 450,
 			reel: 375,
 			sansReel: 1,
 			estimeSansReel: 100,
+			lignes: 2,
 		})
 	})
 
@@ -349,6 +368,7 @@ describe('lireHistogrammeTrack — la requête réellement émise', () => {
 			reel: 90,
 			sansReel: 0,
 			estimeSansReel: 0,
+			lignes: 1,
 		})
 		// Aucune option d'agrégation n'accompagne la lecture : les colonnes demandées sont des
 		// colonnes, pas une somme.

@@ -2048,6 +2048,23 @@ Sans elle, un réel bas se lit comme une économie alors qu'il n'est qu'une sais
 
 **État vide.** Un budget sans ligne rend deux barres nulles **et** la phrase « aucune dépense
 rattachée » : deux barres à zéro sans texte se lisent comme un défaut d'affichage.
+
+**L'état vide se lit sur le COMPTE DE LIGNES, jamais sur les montants — ajouté le 2026-08-19,
+décision 476.** Un agrégat qui ne porterait que des montants ne distingue pas « aucune dépense » de
+« des dépenses qui s'annulent » : le §2.1 de `docs/SPEC-costs.md` admet l'avoir, donc le coût
+négatif, et une ligne de 0 saisie exprès est légitime (§4.8). Écrire « aucune dépense rattachée »
+sur un budget qui en porte deux serait la valeur par défaut trompeuse que `CLAUDE.md` §18 interdit.
+*Défaut mesuré : la condition portait d'abord sur l'absence de tout budget, et un budget réellement
+vide gardait ses deux barres nulles en se taisant.*
+
+**L'ÉTIQUETTE D'UNE BARRE PORTE SON PROPRE REMBOURRAGE HORIZONTAL — 4 px —, ET C'EST UN DÉFAUT
+TROUVÉ EN REGARDANT UNE CAPTURE** (`CLAUDE.md` §16, 2026-08-19). Les deux barres d'un groupe sont
+séparées de 4 px, mais leurs étiquettes sont plus larges qu'elles — « 1 000 € » pour 32 px de barre
+— et se rejoignaient donc à l'œil : « 1 000 €880 € » se lisait comme un seul nombre. C'est le défaut
+« Discussion1 » du §5.11 sous une autre forme, et le remède est le même — l'espace vit dans
+l'élément, il ne se devine pas. Le rembourrage porte sur l'**étiquette**, jamais sur le groupe : les
+barres gardent les 4 px que ce paragraphe leur donne. La règle vaut pour **toute** valeur en clair
+posée au-dessus d'une forme plus étroite qu'elle.
 ### 5.31 Table de saisie en série des coûts réels — `CRM-086`
 
 Spécifiée avant code, `docs/SPEC-costs.md` §4.8.
