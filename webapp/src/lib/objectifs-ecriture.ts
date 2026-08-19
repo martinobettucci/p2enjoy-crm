@@ -39,9 +39,10 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './async'
-import type { BlocObjectif, DirectionFleche, FlecheObjectif } from './objectifs'
+import type { Database } from './database.types'
+import type { BlocObjectif, DirectionFleche, FlecheObjectif, TableauObjectifs } from './objectifs'
 import { destinationDepuisEmbarque, normaliserDirection } from './objectifs'
-import { COLONNES_BLOC, COLONNES_FLECHE } from './objectifs'
+import { COLONNES_BLOC, COLONNES_FLECHE, COLONNES_TABLEAU } from './objectifs'
 import type { ClientCrm } from './supabase'
 
 /**
@@ -806,6 +807,237 @@ export async function supprimerFleche(client: ClientCrm, idFleche: string): Prom
 		return {
 			statut: 'refus',
 			refus: classerRefusFleche(undefined, undefined, cause instanceof Error ? cause.message : String(cause)),
+		}
+	}
+}
+
+// =================================================================================================
+// TRANCHE 2c — LES TABLEAUX
+// =================================================================================================
+//
+// UN TABLEAU S'ARCHIVE, IL NE SE SUPPRIME PAS (§2.1 et §3, dernier paragraphe) — c'est l'inverse
+// exact du bloc, et le motif est écrit dans la spécification : « un bloc ne porte aucune donnée
+// métier […] Le tableau, lui, s'archive : il contient le travail. » Aucune fonction de suppression
+// n'est donc écrite ici, alors même que la politique `goal_boards_suppression_membre_ecrivant`
+// l'autoriserait : ce que la base permet et ce que le produit offre sont deux choses distinctes.
+//
+// SON UNICITÉ DE NOM PORTE AUSSI SUR LES TABLEAUX ARCHIVÉS, et c'est mesuré dans la migration
+// `0049` plutôt que supposé : l'index `goal_boards_workspace_name_key` est TOTAL, sans clause
+// `where archived_at is null`. Un nom libéré par l'archivage reste donc pris, et le refus de
+// doublon doit le dire — l'écart entre cet index et celui des budgets est déjà consigné au registre.
+
+/**
+ * Les natures de refus d'une écriture de tableau. Le dictionnaire est FERMÉ, comme ceux des blocs
+ * et des flèches, et il compte `doublon` pour la même raison que les flèches : le geste à faire
+ * après ce refus — choisir un autre nom — n'est pas celui qu'appelle un refus de droit.
+ */
+export type RefusTableau = {
+	readonly nature: 'interdit' | 'saisie-invalide' | 'doublon' | 'indisponible'
+	readonly detail: string
+}
+
+/**
+ * Classe un refus de tableau — LE CODE POSTGRESQL D'ABORD, le statut HTTP ensuite, patron de
+ * `classerRefusBloc` et de `classerRefusFleche`.
+ *
+ * `23505` ne peut venir que de `goal_boards_workspace_name_key`, seul index unique de la table
+ * hors clé primaire ; `23514` ne peut venir que de `goal_boards_name_check`, seule contrainte de
+ * valeur. Les deux sont donc traduits sans inspecter le message, que `CLAUDE.md` §18 et le patron
+ * de `classerErreur` interdisent de lire pour décider.
+ */
+export function classerRefusTableau(
+	statutHttp: number | undefined,
+	code: string | undefined,
+	detail: string,
+): RefusTableau {
+	if (code === CODE_DOUBLON) return { nature: 'doublon', detail }
+	if (code === CODE_SAISIE_INVALIDE) return { nature: 'saisie-invalide', detail }
+	if (code === CODE_INTERDIT) return { nature: 'interdit', detail }
+	if (statutHttp === 401 || statutHttp === 403) return { nature: 'interdit', detail }
+	return { nature: 'indisponible', detail }
+}
+
+/** Les deux issues d'une création : le tableau créé, ou un refus traduit. */
+export type ResultatCreationTableau =
+	| { readonly statut: 'cree'; readonly tableau: TableauObjectifs }
+	| { readonly statut: 'refus'; readonly refus: RefusTableau }
+
+/** Les trois issues d'une écriture de tableau — la troisième est celle de la clause `using`. */
+export type ResultatEcritureTableau =
+	| { readonly statut: 'enregistree'; readonly tableau: TableauObjectifs }
+	| { readonly statut: 'sans-effet' }
+	| { readonly statut: 'refus'; readonly refus: RefusTableau }
+
+/** Ce qu'un geste de création transporte : l'espace de travail, le nom saisi, et la description. */
+export type CreationTableau = {
+	readonly idWorkspace: string
+	readonly nom: string
+	readonly description: string
+}
+
+/**
+ * Crée un tableau d'objectifs (§3, §4.2 : « tout membre du workspace »).
+ *
+ * `position` EST ENVOYÉE À `null`, comme pour un track et pour le même motif mesuré : le trigger
+ * `goal_boards_attribuer_position` reçoit `new.position` à `NULL` que le client l'ait omise ou
+ * écrite explicitement — il ne peut pas distinguer les deux cas —, et place alors le tableau en fin
+ * de liste. L'assertion de type est nécessaire parce que le générateur de `database.types.ts` NE
+ * VOIT PAS LES TRIGGERS : il lit une colonne `not null` sans défaut de colonne et la déclare
+ * obligatoire. L'alternative serait de calculer `max + 1` dans le navigateur, c'est-à-dire de
+ * recopier le trigger en moins fiable et en y ajoutant une course entre deux utilisateurs.
+ *
+ * Le nom est débarrassé de ses espaces de bord, comme le titre d'un bloc : la contrainte
+ * `goal_boards_name_check` refuse le vide, et c'est ELLE qui refuse — l'écran n'invente pas ce
+ * refus, il le reçoit (`CLAUDE.md` §10). La description vide devient `null` et non `''`, pour que
+ * « pas de description » ne soit pas indistinguable d'« une description vide » à la relecture.
+ *
+ * Ne lève jamais.
+ */
+export async function creerTableau(
+	client: ClientCrm,
+	creation: CreationTableau,
+): Promise<ResultatCreationTableau> {
+	try {
+		const description = creation.description.trim()
+		const reponse = await client
+			.from('goal_boards')
+			.insert({
+				workspace_id: creation.idWorkspace,
+				name: creation.nom.trim(),
+				description: description === '' ? null : description,
+				position: null,
+			} as unknown as Database['public']['Tables']['goal_boards']['Insert'])
+			.select(COLONNES_TABLEAU)
+			.single()
+		if (reponse.error !== null) {
+			return {
+				statut: 'refus',
+				refus: classerRefusTableau(reponse.status, reponse.error.code, reponse.error.message),
+			}
+		}
+		return { statut: 'cree', tableau: reponse.data }
+	} catch (cause) {
+		return {
+			statut: 'refus',
+			refus: classerRefusTableau(undefined, undefined, cause instanceof Error ? cause.message : String(cause)),
+		}
+	}
+}
+
+/**
+ * Ce qu'un renommage transporte. Les deux clés sont FACULTATIVES, pour la raison qui vaut déjà au
+ * contenu d'un bloc : renvoyer les deux à chaque geste écraserait ce qu'un collègue vient d'écrire
+ * dans l'autre champ du même tableau.
+ */
+export type ModificationTableau = {
+	readonly nom?: string
+	readonly description?: string | null
+}
+
+/**
+ * Renomme un tableau, et modifie sa description (§3).
+ *
+ * Ne lève jamais.
+ */
+export async function renommerTableau(
+	client: ClientCrm,
+	idTableau: string,
+	modification: ModificationTableau,
+): Promise<ResultatEcritureTableau> {
+	const modifications: Partial<{ name: string; description: string | null }> = {}
+	if (modification.nom !== undefined) modifications.name = modification.nom.trim()
+	if (modification.description !== undefined) {
+		const description = modification.description === null ? '' : modification.description.trim()
+		modifications.description = description === '' ? null : description
+	}
+	return modifierTableau(client, idTableau, modifications)
+}
+
+/**
+ * Écrit la position calculée par `calculerDeplacement` (§2.1 : `position` ordonne la liste).
+ *
+ * UNE SEULE ÉCRITURE, JAMAIS UNE PERMUTATION, et l'arithmétique est celle que
+ * `administration-arborescence.ts` porte déjà pour les tracks et les channels : le milieu de deux
+ * voisines n'écrit qu'une ligne, là où une permutation coûterait deux `update` non atomiques dont
+ * le second peut échouer, laissant la liste dans un état que personne n'a voulu. C'est l'usage pour
+ * lequel `position` est un `numeric` et non un entier, ici comme là-bas.
+ *
+ * Le calcul n'est PAS recopié : `calculerDeplacement` est réemployée telle quelle. La dupliquer
+ * pour deux tables qui portent la même colonne la ferait diverger au premier ajustement.
+ *
+ * Ne lève jamais.
+ */
+export async function deplacerTableau(
+	client: ClientCrm,
+	idTableau: string,
+	position: number,
+): Promise<ResultatEcritureTableau> {
+	return modifierTableau(client, idTableau, { position })
+}
+
+/**
+ * Archive un tableau — l'archivage TIENT LIEU de suppression (§2.1).
+ *
+ * L'horodatage est celui du CLIENT, faute d'un défaut de colonne ou d'une RPC qui le prendrait du
+ * serveur. C'est une approximation, et elle est nommée, exactement comme pour `archiverTrack` :
+ * `archived_at` sert à masquer, jamais à ordonner ni à mesurer une durée — aucune règle du produit
+ * ne dépend de sa valeur exacte, seule sa nullité compte.
+ *
+ * LE DÉSARCHIVAGE N'EST PAS OFFERT, ET C'EST UNE LIMITE NOMMÉE plutôt qu'un oubli : le §5.1 ne
+ * décrit qu'une liste des tableaux NON archivés, et le §3 ne nomme que « archiver ». Ajouter ici un
+ * paramètre qui rendrait la colonne à `null` poserait une capacité qu'aucun écran n'atteint — du
+ * code mort dès sa première ligne. La confirmation de l'écran dit donc en toutes lettres que le
+ * tableau quitte la liste.
+ *
+ * Ne lève jamais.
+ */
+export async function archiverTableau(
+	client: ClientCrm,
+	idTableau: string,
+	maintenant: () => string = () => new Date().toISOString(),
+): Promise<ResultatEcritureTableau> {
+	return modifierTableau(client, idTableau, { archived_at: maintenant() })
+}
+
+/**
+ * La requête de modification d'un tableau et ses TROIS issues, partagées par le renommage, le
+ * déplacement et l'archivage.
+ *
+ * `.select(...)` accompagne la mise à jour pour la raison qui la fait accompagner celle d'un bloc :
+ * sans lui, PostgREST ne rend aucun corps et le refus silencieux de la clause `using` — ici, un
+ * `viewer` — serait indistinguable d'un succès.
+ *
+ * Ne lève jamais.
+ */
+async function modifierTableau(
+	client: ClientCrm,
+	idTableau: string,
+	modifications: Partial<{
+		name: string
+		description: string | null
+		position: number
+		archived_at: string | null
+	}>,
+): Promise<ResultatEcritureTableau> {
+	try {
+		const reponse = await client
+			.from('goal_boards')
+			.update(modifications)
+			.eq('id', idTableau)
+			.select(COLONNES_TABLEAU)
+		if (reponse.error !== null) {
+			return {
+				statut: 'refus',
+				refus: classerRefusTableau(reponse.status, reponse.error.code, reponse.error.message),
+			}
+		}
+		const lignes = reponse.data ?? []
+		if (lignes.length === 0) return { statut: 'sans-effet' }
+		return { statut: 'enregistree', tableau: lignes[0] as TableauObjectifs }
+	} catch (cause) {
+		return {
+			statut: 'refus',
+			refus: classerRefusTableau(undefined, undefined, cause instanceof Error ? cause.message : String(cause)),
 		}
 	}
 }
