@@ -2773,6 +2773,27 @@ lancent jamais en parallèle ; (2) `scripts/run-sql-tests.sh` pose un garde-fou 
 consultatif PostgreSQL, ou le refus de démarrer si un serveur d'aperçu écoute sur 4173 — qui rend
 le piège impossible plutôt que documenté.
 
+**SECONDE FORME DU MÊME PIÈGE, MESURÉE DANS LA MÊME SESSION, ET CELLE-CI EST PIRE.**
+`npm run build` a été lancé pendant que la campagne d'interface tournait, pour vérifier une classe
+CSS. Or `e2e/playwright.config.ts` **reconstruit `webapp/dist` au démarrage, avec les variables
+`VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY`**, puis le sert par `vite preview` — son en-tête le
+dit : « une preuve obtenue sur un `dist` périmé ne prouverait rien ». Un `npm run build` nu écrase
+ce répertoire **sans** ces variables. À partir de cet instant, la campagne a servi une application
+qui n'avait plus d'adresse d'API, et tous ses scénarios suivants ont rendu :
+
+```
+Configuration incomplète
+L'application n'a pas reçu l'adresse de l'API ou sa clé publique.
+```
+
+Quatre échecs de `channels.spec.ts` ont été lus ainsi avant que la cause ne soit isolée. La
+campagne a été **arrêtée et rejouée depuis le début**, sans rien toucher pendant son exécution.
+
+**La règle est donc plus large que la première formulation.** Pendant qu'une campagne d'interface
+tourne, on ne touche ni à la base, ni à `webapp/dist`, ni au port 4173. Une session qui vérifie
+quoi que ce soit « pendant que ça tourne » n'accélère rien : elle invalide la campagne entière et
+la fait recommencer.
+
 ## Consigné le 2026-08-19 — un constat de rendu, étranger à `CRM-086`
 
 ### INC-178 — trois classes citées par des composants n'existent pas dans le CSS produit, et leur effet est perdu en silence

@@ -21091,6 +21091,14 @@ comme une anomalie préexistante : la ligne de base du §2.4 ne l'aurait pas rat
 code étant identique des deux côtés du `git stash` — c'est l'ÉTAT qui diverge, pas le code. **Les
 preuves de base et les preuves d'interface ne se lancent jamais de front.**
 
+Le même piège a mordu une seconde fois, et sous une forme pire : `npm run build`, lancé pendant la
+campagne pour vérifier une classe CSS, a écrasé le `webapp/dist` que `vite preview` servait — le
+harnais le reconstruit au démarrage AVEC les variables d'API, un build nu les perd. La campagne a
+dès lors servi une application sans adresse d'API, et quatre scénarios de `channels.spec.ts` ont
+rendu « Configuration incomplète ». Elle a été **arrêtée et rejouée depuis le début**. La règle
+tient en une phrase : pendant qu'une campagne d'interface tourne, on ne touche ni à la base, ni à
+`webapp/dist`, ni au port 4173.
+
 **Où reprendre.** `CRM-086` reste `[~]`, et il reste les DEUX autres écrans : le détail d'un budget
 (§4.3, `/tracks/:slugTrack/couts/:idBudget`, une paire de barres par **occurrence** et la liste des
 lignes) puis le cumul du workspace (§4.5, `/couts`, un groupe de barres par track, entrée de barre
