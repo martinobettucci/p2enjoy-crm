@@ -1969,3 +1969,253 @@ par `CRM-012`, tous deux déjà prouvés.
 
 **Ce qui restera dû sur `CRM-060` après 4f** : l'arbitrage sur les **références mortes** (§6,
 point 4), et les gestes d'écriture nommés au §15.8. L'unité demeure `[~]`.
+
+---
+
+## 16. Sous-tranche 4g — La modification d'un contact depuis sa fiche
+
+Contrat écrit **avant toute ligne de code** (`CLAUDE.md` §5, `docs/CloudWorker.md` §3.2), après
+**vingt et une** mesures relevées à la main le 2026-08-19 sur la pile seedée, avec les jetons réels
+des trois profils et avec la clé anonyme. Les écritures de mesure ont porté sur un **contact sonde**
+détruit ensuite, sauf les mesures 19 et 21 qui devaient porter sur une ligne du seed et qui sont des
+refus : le seed est rendu **intact**, ses trois contacts relus à l'identique après la campagne.
+
+Le §15.8 nommait ce manque en toutes lettres : « **aucun geste d'écriture** : ni modification, ni
+suppression, ni rattachement depuis cette page. Les privilèges existent en base depuis la tranche 1 ;
+l'écart est nommé, non compensé par une commande morte. » La politique `contacts_maj_bizdev_admin`
+est posée par la migration `0045` et prouvée par la tranche 1 ; **aucun écran ne l'exerce**. Un
+contact créé au carnet (§14) est aujourd'hui définitif : une coquille dans un nom, un email qui
+change d'employeur, une fonction promue n'ont aucune surface pour se corriger.
+
+### 16.1 Ce que la sous-tranche livre, et ce qu'elle ne livre pas
+
+**Elle livre**, sur la fiche du §15 :
+
+- un geste **« Modifier »** qui ouvre un formulaire **dans le flux du document**, au-dessus des deux
+  zones, sur le patron du §5.21 et du §5.23 — jamais une modale ;
+- les **cinq champs** du §14.1, **préremplis** avec les valeurs courantes du contact : nom
+  (obligatoire), organisation, fonction, email, téléphone ;
+- la **traduction fermée des six refus** mesurés au §16.3, la fiche rendant les nouvelles valeurs
+  **sans relecture** ;
+- le **titre de la route** qui suit le nouveau nom, le nom étant une donnée (§15.2).
+
+**Elle ne livre pas**, et chaque manque est nommé au §16.8 : aucune **suppression** d'un contact,
+aucun rattachement depuis cette page, aucune création d'organisation, et aucune détection d'écriture
+concurrente.
+
+**La suppression est délibérément hors de cette sous-tranche, et le motif n'est pas le temps.**
+Supprimer un contact laisse en place les valeurs `jsonb` qui le désignaient — c'est l'arbitrage du
+**§6, point 4**, explicitement laissé au responsable et **non tranché**. Livrer la suppression
+avant cet arbitrage produirait exactement les références mortes que le §6 nomme. La modification,
+elle, n'en produit aucune : la clé du contact ne change pas.
+
+### 16.2 Où le geste s'ancre — sur la fiche, jamais au carnet
+
+**Décision : la fiche, et elle seule.** Le carnet est une liste ; la fiche est la surface de
+l'objet, celle qui rend déjà les cinq valeurs que le formulaire modifie. Poser le geste au carnet
+obligerait à choisir entre une édition en ligne — qui casse le tableau du §5.9 — et une navigation
+vers la fiche, c'est-à-dire ce geste-ci.
+
+Le formulaire s'ancre **entre le titre de la route et la zone 1**, replié par défaut, pour le motif
+exact du §14.2 : la fiche est d'abord une surface de lecture, et **ce qu'elle affiche est
+précisément ce que l'on vient corriger** — une modale le recouvrirait.
+
+**Les cinq champs sont ceux du §14.1, et ils ne sont pas réécrits.** La saisie, ses libellés, ses
+identifiants d'accessibilité et les trois états du sélecteur d'organisation (§13.5 cas h et i) sont
+**partagés** avec le formulaire de création par un composant de champs commun, plutôt que dupliqués :
+deux copies d'une même saisie divergeraient au premier champ ajouté.
+
+### 16.3 Ce que l'écriture envoie, et les six refus — MESURÉS
+
+L'écriture est un `PATCH /rest/v1/contacts?id=eq.<id>` avec `Prefer: return=representation`, la ligne
+modifiée revenant avec son organisation embarquée — la fiche s'actualise donc **sans relecture**.
+`workspace_id` n'est **jamais** envoyé : il n'est pas modifiable depuis cet écran, et l'envoyer
+n'ouvrirait qu'un refus (mesure 13).
+
+| # | Envoi | Réponse mesurée le 2026-08-19 |
+|---|---|---|
+| 1 | administratrice, renomme | `200`, ligne rendue, `organizations` embarqué |
+| 2 | `business_developer`, change la fonction | `200` — l'écriture n'est pas réservée à l'administration |
+| 3 | **lectrice**, renomme | **`200` et `[]`** — aucune erreur, aucune ligne modifiée |
+| 4 | administratrice, email **déjà porté** par un autre, casse différente | `409` / `23505`, `contacts_workspace_email_key` |
+| 5 | administratrice, nom **entièrement blanc** | `400` / `23514`, `contacts_full_name_check` |
+| 6 | administratrice, email malformé | `400` / `23514`, `contacts_email_check` |
+| 7 | administratrice, email **chaîne vide** | `400` / `23514`, `contacts_email_check` |
+| 8 | administratrice, téléphone **chaîne vide** | `400` / `23514`, `contacts_phone_check` |
+| 9 | administratrice, organisation **inconnue** | `409` / `23503`, `contacts_organization_id_workspace_id_fkey` |
+| 10 | administratrice, organisation retenue | `200`, `organizations` embarqué **peuplé** |
+| 11 | administratrice, organisation à `null` | `200`, `organizations` embarqué **`null`** |
+| 12 | administratrice, identifiant **inexistant** | **`200` et `[]`** |
+| 13 | administratrice, `workspace_id` **étranger** | `403` / `42501` — c'est le `WITH CHECK` |
+| 14 | **anonyme** | `401` / `42501`, « permission denied for table contacts » |
+| 15 | après une écriture acceptée | `updated_at` **a bougé**, `created_at` non — le trigger agit |
+| 16 | administratrice, la ligne **reprend son propre email** | `200` — l'unicité ne se heurte **pas** à elle-même |
+| 17 | administratrice, son propre email en **autre casse** | `200` — l'index insensible à la casse ne s'oppose pas non plus |
+| 18 | administratrice, les **cinq colonnes d'un bloc**, trois à `null` | `200`, ligne rendue |
+| 19 | **lectrice** sur **Léo Marchand**, ligne du seed | **`200` et `[]`**, ligne relue **INCHANGÉE** |
+| 20 | administratrice, **sans** `Prefer: return=representation` | `204`, aucun corps |
+| 21 | administratrice, identifiant **mal formé** | `400` / `22P02`, `invalid input syntax for type uuid` |
+
+**LA MESURE 3 DÉCIDE DU CONTRAT, ET ELLE SÉPARE CETTE SOUS-TRANCHE DE LA 4e.** À la création, un
+refus d'autorisation est un **`403` explicite** (§14.3, mesure 4) : la clause `WITH CHECK` d'une
+politique `INSERT` rejette la ligne. À la modification, la clause **`USING`** de
+`contacts_maj_bizdev_admin` rend la ligne **invisible à l'écriture** : PostgREST ne trouve rien à
+modifier, et rend `200` avec un tableau **vide**. Un refus d'autorisation est donc **silencieux**.
+C'est le piège que `e2e/api/contacts.spec.ts` nomme dès son entête depuis la tranche 1, et il
+gouverne ici le contrat d'écran : **une écriture sans effet doit être dite**, faute de quoi la
+lectrice verrait son formulaire se refermer sur une modification qui n'a jamais eu lieu.
+
+**LES MESURES 3, 12 ET 19 SONT INDISTINGUABLES, ET UN SEUL MESSAGE LES COUVRE.** Un appelant sans
+droit, un contact disparu entre l'ouverture de la fiche et l'envoi, une ligne devenue invisible :
+les trois rendent `200` et `[]`, par construction et non par accident. C'est exactement la situation
+du §15.4 — trois absences, un seul écran —, et la réponse est la même : **un seul message**, qui
+n'affirme ni le refus ni la disparition, et qui invite à relire la fiche. Prétendre les séparer
+exigerait une lecture supplémentaire qui, elle-même, ne dirait rien de plus : la relecture d'un
+contact refusé rend zéro ligne, comme celle d'un contact supprimé.
+
+**LES MESURES 16 ET 17 DÉCIDENT DE LA CHARGE ENVOYÉE.** L'unicité partielle sur `lower(email)` ne
+s'oppose **pas** à la ligne elle-même, même en changeant la casse. Le formulaire envoie donc les
+**cinq colonnes d'un bloc** (mesure 18), sans comparer la saisie à l'état initial pour n'envoyer que
+les différences. Un envoi différentiel serait une complication dont la mesure montre qu'elle
+n'achète rien, et il introduirait un chemin — « aucun champ n'a changé » — qu'aucune règle ne
+demande.
+
+**La mesure 21 ne concerne pas cet écran, et c'est une propriété du §15.4** : la fiche refuse un
+identifiant mal formé **sans émettre aucune requête**, donc aucune modification ne peut partir avec
+un tel identifiant. La mesure est consignée pour ce qu'elle établit — la borne existe côté serveur
+aussi — et non parce que l'écran l'atteindrait.
+
+### 16.4 Les refus, traduits par un dictionnaire FERMÉ
+
+Six clés, et aucune interpolation d'un message serveur dans l'interface (`docs/DESIGN_SYSTEM.md`
+§10). Le classement lit **le code PostgreSQL d'abord**, pour le motif du §14.3 — `23505` et `23503`
+rendent tous deux `409` :
+
+| Classement | Cause mesurée | Clé |
+|---|---|---|
+| `sans-effet` | `200` et **zéro ligne** (mesures 3, 12, 19) | `contact.modification.refus.sansEffet` |
+| `doublon` | `409` / `23505` | `contact.modification.refus.doublon` |
+| `organisation-inconnue` | `409` / `23503` | `contact.modification.refus.organisation` |
+| `saisie-invalide` | `400` / `23514` | `contact.modification.refus.saisie` |
+| `interdit` | `401` / `403` | `contact.modification.refus.interdit` |
+| `indisponible` | tout le reste | `contact.modification.refus.indisponible` |
+
+**`sans-effet` est la nature que la création n'a pas**, et les cinq autres sont celles du §14.4 :
+`classerRefusCreation` est donc **partagée** — elle classe une erreur, ce que ces cinq natures sont
+—, et `sans-effet` est décidée **avant** elle, sur l'absence de ligne rendue, qui n'est pas une
+erreur.
+
+**Un refus n'efface jamais la saisie** (§14.4) : la personne corrige et renvoie. Le formulaire reste
+ouvert, et le message vit **sous** lui.
+
+### 16.5 De quoi le geste a l'air
+
+Le bouton « Modifier » se pose **à côté du titre de la route**, dans le flux de la fiche, avant la
+zone 1. Le formulaire ouvert **remplace** ce bouton — les deux s'excluent, comme au carnet (§14.5
+cas c) —, et les deux zones de lecture restent rendues **sous** lui : on corrige en voyant ce que
+l'on corrige.
+
+**Le focus entre** sur le champ du nom à l'ouverture, et **revient** à la commande d'ouverture à la
+fermeture. Ce retour n'est pas immédiat et ne peut pas l'être : la commande est **démontée** tant
+que le formulaire est ouvert, et sa référence vaut `null` au moment où le gestionnaire de fermeture
+s'exécute. C'est le défaut exact que la décision 453 a trouvé au carnet et que `BlocContactsCard`
+résout déjà — un drapeau posé à la fermeture, un effet qui rend le focus **au tour de rendu suivant**,
+quand la commande est remontée. Aucune temporisation : c'est le cycle de rendu de React qui ordonne
+les deux gestes, pas une horloge (`CLAUDE.md` §18).
+
+### 16.6 Autorisations — l'écran n'en calcule aucune
+
+Rien de nouveau, et c'est le point : la lectrice **voit** le geste, ouvre le formulaire, envoie, et
+reçoit le message `sans-effet` **traduit**. Une commande grisée selon le rôle ferait passer une
+décision de la base pour une décision d'écran (`CLAUDE.md` §10, `docs/DESIGN_SYSTEM.md` §5.21).
+
+**La différence avec 4e est réelle et assumée** : à la création, la lectrice reçoit un refus qui
+**dit** qu'il en est un ; ici elle reçoit un message qui dit que **rien n'a changé**, sans affirmer
+pourquoi. C'est ce que le serveur permet de dire, et rien de plus (§16.3).
+
+### 16.7 Ce que la fiche fait de la ligne rendue
+
+La ligne revient avec son organisation embarquée (mesures 10 et 11). La fiche **remplace ses
+caractéristiques** par celles-là, **sans relire** : une relecture serait une seconde requête pour une
+donnée déjà en main, et c'est la règle que le carnet tient depuis le §14.5 cas e.
+
+**La zone 2 — les affaires — n'est PAS touchée**, et ne doit pas l'être : aucune colonne modifiable
+par ce formulaire n'entre dans un rattachement. La reconstruire relancerait la lecture à quatre
+niveaux du §15.3 pour un résultat identique.
+
+**Le titre de la route suit le nouveau nom** : il est une donnée (§15.2), et un titre resté sur
+l'ancien nom après une correction de coquille serait précisément le défaut que l'on vient corriger.
+
+### 16.8 Limites nommées — sous-tranche 4g
+
+- **aucune suppression d'un contact** : le privilège existe (§3), aucun écran ne l'exerce, et le
+  motif est l'arbitrage **non tranché** du §6 point 4 — supprimer laisse des références mortes dans
+  les valeurs `jsonb` que la tranche 3 a résolues à l'écriture ;
+- **aucun rattachement depuis la fiche**, pour le motif du §15.8 ;
+- **aucune création d'organisation** : le sélecteur n'offre que celles qui existent (§14.7) ;
+- **aucune détection d'écriture concurrente** : ni `ETag`, ni `If-Match`. Deux personnes qui
+  modifient le même contact voient la dernière écriture l'emporter, sans avertissement. Le produit
+  ne porte aucun verrou optimiste nulle part, et en introduire un pour ce seul écran serait une
+  règle locale sans le reste du produit ;
+- **le carnet ne porte pas ce geste** (§16.2), et sa ligne ne gagne aucune commande ;
+- **`source` n'est pas modifiable** : elle appartient au modèle (§2.2), et un contact rapproché
+  automatiquement ne doit pas devenir « manuel » parce qu'on a corrigé son téléphone.
+
+### 16.9 Contrat de comportement — sous-tranche 4g
+
+| # | Situation | Attendu |
+|---|---|---|
+| a | fiche chargée, geste replié | une seule commande « Modifier », les deux zones inchangées |
+| b | le geste est déclenché | le formulaire s'ouvre **prérempli des valeurs courantes**, le **focus entre** sur le champ du nom, la commande disparaît |
+| c | le formulaire est refermé | le focus **revient** à la commande d'ouverture, remontée (§16.5) |
+| d | nom vidé ou blanc | l'envoi est **refusé côté écran**, aucun appel réseau, le champ est signalé |
+| e | envoi accepté | la zone 1 rend les **nouvelles** valeurs sans relecture, le formulaire se referme |
+| f | le nom a changé | le **titre de la route** rend le nouveau nom (§16.7) |
+| g | organisation changée | la valeur d'organisation devient un **lien** vers la nouvelle fiche |
+| h | organisation détachée | la valeur d'organisation devient **vide et sans lien** (§15.9 cas b) |
+| i | seule la fonction change, email inchangé | accepté — l'unicité ne se heurte pas à elle-même (mesures 16, 17) |
+| j | email déjà porté par un autre | message `doublon`, formulaire ouvert, **saisie conservée** |
+| k | organisation inconnue (liste périmée) | message `organisation`, saisie conservée |
+| l | email malformé, ou téléphone vidé en `''` | message `saisie`, saisie conservée |
+| m | **lectrice** | message `sansEffet`, saisie conservée, **aucune commande éteinte d'avance** |
+| n | contact disparu entre l'ouverture et l'envoi | message `sansEffet`, **le même** qu'au cas m (§16.3) |
+| o | pendant l'envoi | la commande d'envoi est `aria-busy` et l'envoi ne part **qu'une fois** |
+| p | liste d'organisations en erreur, ou vide | les cas h et i du §13.5, comme au §14.5 cas k et l |
+| q | après une modification acceptée | la **zone 2** est inchangée, sans nouvelle lecture (§16.7) |
+| r | contact introuvable, en erreur, ou aucun client | **aucune commande « Modifier »** — il n'y a rien à modifier |
+
+### 16.10 Preuves exigées — sous-tranche 4g
+
+| Niveau | Preuve |
+|---|---|
+| Unitaire | `webapp/src/lib/contacts.test.ts` (étendu) : la charge réellement envoyée par `modifierContact` — les cinq colonnes d'un bloc, facultatifs blancs rendus `null` —, la ligne rendue avec son organisation, et le classement des **six** refus du §16.4 dont `sans-effet` sur zéro ligne |
+| Unitaire | `webapp/src/app/FicheContact.test.tsx` (étendu) : les cas a à r du §16.9 |
+| Unitaire | `webapp/src/app/Carnet.test.tsx` (existant, NON modifié) : la preuve que l'extraction des champs partagés (§16.2) n'a rien changé au formulaire de création |
+| API | `e2e/api/contacts.spec.ts` (étendu) : les mesures du §16.3 avec les jetons réels des trois profils, chaque refus **relisant la ligne** pour la constater inchangée (décision 70), et le silence des mesures 3, 12 et 19 **figé comme tel** |
+| E2E | `e2e/ui/contacts.spec.ts` (étendu) : la modification par les gestes de l'écran puis **la restauration des valeurs du seed** par les mêmes gestes, le parcours au **clavier**, et la lectrice recevant `sansEffet` avec sa saisie conservée ; console **vierge** |
+| Visible | captures sous `docs/captures/CRM-060/`, préfixées `fiche-contact-modification-`, **observées** (`CLAUDE.md` §16) : le formulaire ouvert et prérempli, la fiche après modification, le message `sansEffet` de la lectrice, et le rendu à 390 px |
+| i18n | `webapp/src/i18n/i18n.test.ts` (existant) : aucun texte visible en dur, aucune clé morte |
+| Seed | rendu **INTACT** : trois contacts aux valeurs d'origine, deux rattachements |
+
+### 16.11 Definition of Done — sous-tranche 4g
+
+- `webapp/src/lib/contacts.ts` : `modifierContact`, `RefusModificationContact`, et le classement
+  qui décide `sans-effet` **avant** de classer une erreur ;
+- `webapp/src/app/ChampsContact.tsx` : les cinq champs partagés extraits du formulaire de création,
+  à comportement **inchangé** ;
+- `webapp/src/app/FormulaireModificationContact.tsx` : le formulaire prérempli et ses six refus ;
+- `webapp/src/app/FicheContact.tsx` : la commande, le formulaire dans le flux, le retour du focus,
+  et la mise à jour des caractéristiques et du titre sans relecture ;
+- clés de traduction ajoutées, aucun texte en dur ;
+- preuves du §16.10 exécutées et vertes, captures produites **et observées** ;
+- `docs/DESIGN_SYSTEM.md` §5.25 ajouté et §5.24 révisé ; `docs/manual.md` ; `CHANGELOG.md`, dans le
+  même changement ;
+- commentaires `@spec` / `@verifies` sur chaque fichier touché.
+
+**Aucune migration : cette sous-tranche ne crée aucune colonne et n'ouvre aucune politique.** Elle
+n'exerce que `contacts_maj_bizdev_admin`, posée par la migration `0045` et déjà prouvée par la
+tranche 1.
+
+**Ce qui restera dû sur `CRM-060` après 4g** : l'arbitrage sur les **références mortes** (§6,
+point 4) et, derrière lui, la **suppression** d'un contact ; le rattachement depuis la fiche.
+L'unité demeure `[~]`.
