@@ -2779,3 +2779,340 @@ Le rendu **hérite du §12.6 / §5.21** — le même geste dans l'autre sens —
 **Ce qui restera dû sur `CRM-060` après 4i** : l'arbitrage sur les **références mortes** (§6,
 point 4) et, derrière lui, la **suppression** d'un contact ; la **modification du rôle** d'un
 rattachement posé (§18.8). L'unité demeure `[~]`.
+
+## 19. Sous-tranche 4j — La modification du rôle d'un rattachement, depuis la fiche d'un contact
+
+Contrat écrit **avant toute ligne de code** (`CLAUDE.md` §5, `docs/CloudWorker.md` §3.2), après
+**quinze** mesures relevées à la main le 2026-08-19 sur la pile seedée, avec les jetons réels des
+trois profils et avec la clé anonyme. Les mesures d'écriture ont été faites sur des rattachements
+**sondes** posés puis purgés, plus une mesure sur une **ligne du seed** dont le refus a été relu
+inchangé : le seed est rendu **intact**, ses deux rattachements relus à l'identique
+(`c2 → Léo, decideur` et `c4 → Sophie, prescripteur`).
+
+Le §12.8, puis le §17.8, puis le §18.8 nomment ce manque **trois fois**, et dans les mêmes termes :
+« la politique `card_contacts_maj` existe en base depuis la tranche 1 ; aucun écran ne l'exerce ».
+La fiche d'un contact **liste** ses affaires depuis 4f, **corrige** le contact depuis 4g, le
+**rattache** depuis 4h et le **détache** depuis 4i — mais corriger un rôle mal saisi oblige encore à
+détacher puis à rattacher, c'est-à-dire à détruire la ligne pour la refaire. C'est l'objet de cette
+sous-tranche, et rien d'autre.
+
+### 19.1 Ce que la sous-tranche livre, et ce qu'elle ne livre pas
+
+**Elle livre**, sur la route `/contacts/:idContact` :
+
+- une **commande de modification du rôle par ligne** du tableau des affaires ;
+- son **formulaire dans le flux**, sur une ligne à lui, **prérempli** du rôle courant ;
+- le traitement des **trois issues** que la mesure impose — appliquée, sans effet, refusée ;
+- l'**effacement** d'un rôle, que la mesure 9 montre accepté par la base.
+
+**Elle ne livre pas** : aucun déplacement d'un rattachement d'une affaire à une autre — la mesure 12
+montre que la base l'accepterait, et le §19.8 dit pourquoi l'écran ne l'offre pas ; aucune création
+ni suppression d'affaire ; et toujours **aucune suppression de contact**, suspendue à l'arbitrage
+**non tranché** du §6 point 4. Chaque manque est repris au §19.8.
+
+### 19.2 Une fonction NOUVELLE, et c'est le premier `UPDATE` du produit sur `card_contacts`
+
+`webapp/src/lib/contacts.ts` porte `rattacherContact` (le `POST`) et `detacherContact` (le
+`DELETE`), que 4h et 4i ont rappelées **inchangées**. Il n'existe **aucun** `UPDATE` sur cette
+table : `card_contacts_maj` n'a jamais été exercée par un écran. Cette sous-tranche ajoute donc
+`modifierRoleRattachement`, et c'est la seule fonction qu'elle écrit. **Aucune migration** — la
+politique, la contrainte et les privilèges existent depuis la migration `0045`.
+
+**LA MESURE 12 DÉCIDE DE CE QUE LA FONCTION ENVOIE, ET ELLE ENVOIE `role` SEUL.** MESURÉ : un
+`PATCH` portant `card_id` dans son corps **DÉPLACE** le rattachement — `200`, la ligne rendue sur la
+nouvelle affaire, et **plus rien** sur l'ancienne. Ce n'est pas une faille : la clause `USING` filtre
+sur l'ancienne affaire et la clause `WITH CHECK` sur la nouvelle, si bien que le déplacement n'est
+possible qu'entre deux affaires que l'appelant écrit **toutes les deux**. C'est une capacité réelle
+de la base, que **cet écran n'exerce pas** (§19.8) : la fonction envoie `role`, et rien d'autre.
+Envoyer les clés « pour être complet » ouvrirait un déplacement silencieux au premier champ ajouté à
+un formulaire.
+
+`.select(...)` accompagne la mise à jour pour la raison exacte du §18.2 : sans lui, PostgREST ne
+rend aucun corps, et le refus silencieux de la clause `USING` serait indistinguable d'un succès.
+`.maybeSingle()` et non `.single()` : zéro ligne est ici un **résultat attendu**, et `.single()` le
+déguiserait en erreur `PGRST116`, c'est-à-dire en panne — la règle que `modifierContact` tient déjà
+au §16.
+
+### 19.3 Ce que la mise à jour rend — QUINZE MESURES, le 2026-08-19
+
+`PATCH /rest/v1/card_contacts?card_id=eq.<affaire>&contact_id=eq.<contact>`, corps `{"role": …}`,
+avec `Prefer: return=representation`.
+
+| # | Acteur / requête | Mesure |
+|---|---|---|
+| 1 | administratrice, rattachement **existant** (sonde sur `…0c1`), `decideur` → `technique` | **`200`** et **la ligne**, `role` valant `technique` ; relue avec la clé de service : **modifiée** |
+| 2 | **lectrice**, ligne **existante** d'une affaire qu'elle **LIT** (`…0c4 → Sophie`, ligne du **seed**) | **`200`** et **`[]`** — **aucune erreur** ; la ligne relue est **INCHANGÉE**, `role` toujours `prescripteur` |
+| 3 | administratrice, rattachement **inexistant** (`…0c1 → Sophie`) | **`200`** et **`[]`** |
+| 4 | administratrice, sur une affaire **ARCHIVÉE** (`…0c8`) | **`200`** et **la ligne** — la base ne s'y oppose **PAS** |
+| 5 | **business developer**, rattachement existant | **`200`** et **la ligne** — le geste n'est **PAS** un geste d'administration |
+| 6 | **anonyme**, rattachement existant | **`401`**, code **`42501`**, « permission denied for table card_contacts », l'indice nommant `GRANT UPDATE … TO anon` ; la ligne relue est **INCHANGÉE** |
+| 7 | **lectrice**, sur `…0cb` « Assistant IA support — Nordis » | **`200`** et **la ligne** — elle **RÉUSSIT** |
+| 8 | administratrice, rôle **chaîne vide** `""` | **`400`**, code **`23514`**, `card_contacts_role_check` ; la ligne relue est **INCHANGÉE** |
+| 9 | administratrice, rôle **`null`** | **`200`** et la ligne, `role` valant **`null`** — **le rôle S'EFFACE** |
+| 10 | administratrice, rôle **`"   "`** (espaces seuls) | **`400`**, code **`23514`** — `btrim(role) <> ''` |
+| 11 | administratrice, identifiant d'affaire **mal formé** | **`400`**, code **`22P02`** |
+| 12 | administratrice, corps portant `card_id` d'une **autre** affaire | **`200`** et la ligne **DÉPLACÉE** : plus rien sur `…0c1`, la ligne sur `…0c4` |
+| 13 | administratrice, **même rôle** réécrit à l'identique | **`200`** et **la ligne** — ce n'est **PAS** un « sans effet » |
+| 14 | administratrice, rôle de **500 caractères** | **`200`** et la ligne, **entière** — aucune contrainte de longueur |
+| 15 | lecture embarquée de la fiche (§15.3) **avant** puis **après** | le `role` rendu par la fiche **suit** la modification |
+
+**QUATRE MESURES DÉCIDENT DE CETTE SOUS-TRANCHE. Les autres confirment.**
+
+**1. LA MESURE 2 RANGE 4j DU CÔTÉ DE 4g ET DE 4i, NON DE 4h.** La lectrice reçoit `200` et un
+tableau **vide**, sans la moindre erreur, sur une ligne qui **existe** et qui reste en base avec son
+rôle. La cause est structurelle et désormais écrite trois fois : une **insertion** est filtrée par
+la clause `WITH CHECK`, qui **rejette** la ligne — d'où le `403` explicite du §17.4 ; une **mise à
+jour** l'est par la clause `USING`, qui rend la ligne **invisible à l'écriture**, et PostgREST n'a
+alors rien à modifier. Un message « sans effet » a donc un objet ici, et **refermer le formulaire
+sur ce silence annoncerait une modification qui n'a pas eu lieu** — le mensonge que le §5.25 interdit
+déjà pour la modification d'un contact.
+
+**2. LA MESURE 9 OUVRE UN GESTE QUE 4h NE POUVAIT PAS OFFRIR : LE RÔLE S'EFFACE.** Un rôle `null`
+est accepté, et la ligne le rend. Au rattachement, un rôle vide **valait** `null` faute d'alternative
+— c'était le choix de la valeur qui exprime « pas de rôle » (§12.5). Ici, c'est un **geste** : un
+rôle saisi par erreur se retire sans détruire le rattachement. Le formulaire vidé **efface** donc le
+rôle, et il le dit en toutes lettres plutôt que de laisser deviner ce qu'un champ vide va produire.
+
+**3. LES MESURES 8 ET 10 IMPOSENT LA MÊME NORMALISATION QU'AU RATTACHEMENT, ET ELLES LA MESURENT
+DEUX FOIS.** La chaîne vide **et** la chaîne blanche sont refusées par `card_contacts_role_check`
+(`role is null or btrim(role) <> ''`), toutes deux en `400` / `23514`. Ce n'est **pas** une garde de
+saisie doublant la base au sens du §5.3 ter : la base refuserait ces deux valeurs, et la fonction ne
+les envoie jamais — elle envoie `null`, qui est la valeur que la base accepte pour dire « pas de
+rôle ». C'est exactement la règle du §12.5, transposée d'une insertion à une mise à jour, et la
+mesure 10 est la preuve qu'un `trim` seul ne suffirait pas.
+
+**4. LA MESURE 7 INTERDIT À L'ÉCRAN DE CALCULER LE DROIT, et elle est le pendant exact de la
+mesure 19 de 4h et de la mesure 7 de 4i.** La lectrice **réussit** la modification sur `…0cb` et se
+voit opposer le silence sur `…0c4`, deux affaires qu'elle **lit** l'une comme l'autre. Les droits
+fins de `CRM-012` divergent d'une affaire à l'autre **pour un même profil** : aucune propriété du
+profil ne prédit l'issue. Une interface qui grisrait la commande « parce que l'utilisateur est
+lecteur » lui retirerait un geste que la base lui accorde.
+
+**LA MESURE 13 FERME UN CHEMIN QUE L'ÉCRAN AURAIT PU INVENTER.** Réécrire le **même** rôle rend
+`200` et la ligne, jamais zéro ligne : PostgreSQL réécrit la ligne sans comparer. Un utilisateur qui
+ouvre le formulaire et l'envoie sans rien changer reçoit donc un **succès**, et l'écran n'a aucun cas
+« aucun champ n'a changé » à traiter — c'est le raisonnement que le §16.3 a déjà tenu pour la
+modification d'un contact, confirmé ici par la mesure.
+
+**LA MESURE 14 INTERDIT UNE GARDE DE LONGUEUR.** Cinq cents caractères sont acceptés et rendus
+entiers. Poser un `maxLength` à l'écran serait une règle de produit que personne n'a prise
+(`CLAUDE.md` §10), et la cellule du tableau borne déjà l'**affichage** à `32ch` avec son `title`
+(§5.9) — ce qui est une règle de rendu, pas une règle de donnée.
+
+**Les mesures 6 et 11 ne sont pas atteignables depuis l'écran, et sont relevées pour fermer le
+classement.** La route est derrière l'authentification, et l'identifiant de l'affaire vient de la
+**donnée déjà lue**, jamais d'une saisie. Elles disent néanmoins ce que le dictionnaire du §19.5
+doit couvrir sans jamais mentir : `401` est classé `forbidden` par `classerRefusRattachement`, et
+`22P02` tombe dans `unknown`.
+
+**Deux natures de refus sont STRUCTURELLEMENT INATTEIGNABLES sur cette surface**, et le §19.5 dit ce
+qu'il en fait : `23505` (`deja-rattache`) suppose une insertion sur une clé déjà prise — la mise à
+jour ne touche pas la clé —, et `23503` (`contact-inconnu`) suppose une clé étrangère à éprouver,
+qu'une écriture du seul `role` n'éprouve pas.
+
+**Une nature de refus est en revanche ATTEIGNABLE ICI ET NULLE PART AILLEURS SUR CETTE FICHE** :
+`23514`, la saisie invalide de la mesure 8. Elle ne peut pas survenir, la fonction normalisant la
+saisie ; elle est néanmoins **traduite**, parce que le §19.2 interdit d'affirmer qu'une issue est
+impossible quand seule la fonction — et non la base — l'empêche.
+
+### 19.4 Où le geste s'ancre — UNE SECONDE COMMANDE DANS LA QUATRIÈME COLONNE
+
+**Décision : la commande de modification du rôle rejoint celle de détachement dans la quatrième
+colonne du tableau, et son formulaire occupe une LIGNE À ELLE, immédiatement sous celle qu'il
+concerne, sur toute la largeur.**
+
+C'est l'emplacement que le §18.4 a tranché, **repris sans changement et pour les motifs qu'il
+écrit** — la cellule bornée à `32ch` et tronquée ne peut pas porter un formulaire, et sous le
+tableau rien ne relierait ce formulaire à **sa** ligne. La seule chose que cette sous-tranche ajoute
+est la **cohabitation** de deux gestes sur la même ligne, et elle appelle une règle propre :
+
+**UN SEUL BLOC OUVERT À TOUT INSTANT DANS LE TABLEAU, TOUTES LIGNES ET TOUS GESTES CONFONDUS.** Le
+§18.4 posait « une seule confirmation à la fois » ; la règle s'étend aux deux gestes. Ouvrir le
+formulaire de rôle d'une ligne ferme la confirmation de détachement d'une autre, et réciproquement.
+Deux blocs ouverts feraient deux questions dans le flux, dont rien ne dirait laquelle on répond, et
+sur un tableau étroit ils se pousseraient l'un l'autre hors de vue.
+
+**Les DEUX commandes d'une ligne sont désactivées tant qu'un bloc de CETTE ligne est ouvert.** Le
+motif du §18.4 vaut pour les deux : elles ne sont jamais démontées — leur retrait ferait sauter la
+hauteur de la ligne au moment où l'on demande de lire —, et une commande dont le bloc est déjà
+ouvert n'a rien à rouvrir. Ce n'est pas une garde de droit. Les commandes des **autres** lignes
+restent actives : les activer ferme le bloc courant et ouvre le leur, ce que la règle d'exclusivité
+ci-dessus décrit déjà.
+
+**L'ordre des deux commandes est : modifier le rôle, puis détacher.** Le geste qui **corrige**
+précède le geste qui **retire**, comme la colonne gauche de la fiche d'affaire place « Modifier »
+avant le bloc de corbeille (§5.3, §5.3 ter). Un geste destructeur ne se pose jamais en premier sous
+le pointeur.
+
+**Le geste de rattachement (§17.2) ne bouge pas**, et le §18.4 l'avait déjà écrit : il reste sous le
+titre de la zone, au-dessus du tableau. Trois gestes agissent désormais sur cette zone, et chacun
+est posé près de ce qu'il change — l'un ajoute une ligne, l'un en corrige une nommée, l'un en retire
+une nommée.
+
+### 19.5 Les refus, traduits par un dictionnaire FERMÉ
+
+Le message du serveur n'atteint **jamais** l'écran (§12.5, §17.4, §18.5). Le classement est celui de
+`classerRefusRattachement`, **repris sans changement** : code PostgreSQL d'abord, code HTTP ensuite.
+Une nature s'y ajoute, `saisie-invalide`, que la mesure 8 rend atteignable sur cette surface.
+
+| Nature | Atteignable ici ? | Ce que l'écran dit |
+|---|---|---|
+| `forbidden` (`401`/`403`) | **oui**, hors écran (mesure 6) | la modification a été refusée ; rechargez la fiche |
+| `network` | **oui** | la requête n'a pas abouti |
+| `unknown` | **oui** (mesure 11, et tout le reste) | la modification a échoué |
+| `saisie-invalide` (`23514`) | **oui en base** (mesures 8 et 10), **non depuis l'écran** — la fonction normalise | le rôle saisi n'est pas accepté |
+| `deja-rattache` (`23505`) | **non** — suppose une insertion, et la clé n'est pas touchée | même texte que `unknown` |
+| `contact-inconnu` (`23503`) | **non** — une écriture du seul `role` n'éprouve aucune clé étrangère | même texte que `unknown` |
+
+**`saisie-invalide` reçoit un texte PROPRE là où les deux autres inatteignables partagent celui
+d'`unknown`, et l'écart est motivé.** Les deux dernières sont impossibles **par construction** — la
+forme de la requête les exclut, quoi que fasse l'appelant. `saisie-invalide`, elle, n'est empêchée
+que par la **normalisation de la fonction** : c'est une issue que la base produit réellement (deux
+fois mesurée), et lui donner le texte d'« une erreur est survenue » masquerait une cause connue
+derrière un fourre-tout, ce que `CLAUDE.md` §18 interdit. Le dictionnaire reste **exhaustif** — le
+type l'impose —, et le motif est écrit dans le fichier.
+
+**L'issue `sans-effet` n'est PAS dans ce tableau, et c'est le point du §19.3.** Elle n'est ni un
+succès ni une erreur : elle a son propre message, et le formulaire **reste ouvert**.
+
+### 19.6 De quoi le geste a l'air
+
+Le rendu **hérite du §5.27** — le geste voisin, dans la même colonne et sur la même forme de ligne —
+et du §5.25, dont il reprend le traitement du refus silencieux. `docs/DESIGN_SYSTEM.md` §5.28 est
+ajouté dans le même changement. Ce qui suit ne dit que ce qui lui est propre.
+
+- **Une commande par ligne, à l'icône `PencilLine`** — celle de la famille « Champs » du fil (§5.11)
+  et de la commande « Modifier » de l'en-tête d'affaire (§5.3 ter) : c'est le même genre de geste,
+  et lui en donner une autre ferait lire un geste différent. Taille compacte, comme sa voisine.
+- **Le champ est PRÉREMPLI du rôle courant** (§5.25) : c'est précisément ce que l'on vient corriger.
+  Un rattachement **sans** rôle donne un champ **vide**, jamais le texte « null ».
+- **Le formulaire NOMME L'AFFAIRE**, comme la confirmation du §18.6 et pour le motif retourné du
+  §12.6 : sur cette page le contact est le décor, l'affaire varie. Sans ce nom, un formulaire ouvert
+  sous une ligne d'un tableau qui défile ne dirait plus quel rattachement il modifie.
+- **Le texte d'aide dit que VIDER LE CHAMP EFFACE LE RÔLE** (mesure 9). C'est un geste destructeur
+  discret — la seule donnée du rattachement disparaît — et le §6 exige qu'un geste dise ce qu'il
+  fait. Ce n'est pas une confirmation : la ligne reste, le rattachement reste, et le rôle se
+  réécrit d'un second geste identique.
+- **Le bouton d'envoi est PRIMAIRE, jamais destructif.** Corriger un rôle n'efface rien qui ne se
+  refasse par le même formulaire, et la teinte de danger est réservée à ce qui détruit (§1, §6) —
+  c'est l'écart avec la confirmation voisine du §5.27, et il est écrit pour qu'on ne recopie pas une
+  teinte sans son motif.
+- **Aucune confirmation.** Le §6 la réserve aux gestes destructifs ; celui-ci se défait en le
+  rejouant. En demander une banaliserait celle qui protège le détachement, sur la même ligne.
+- **Le bouton d'envoi n'est JAMAIS désactivé par l'état du champ.** Un champ vide est un envoi
+  **légitime** — c'est l'effacement de la mesure 9 —, à la différence du sélecteur de 4h qui n'a
+  rien à envoyer sans affaire choisie. Il l'est pendant le vol, et porte alors son libellé d'attente.
+- **Aucune commande n'est éteinte d'avance selon le rôle** (§5.21, §5.23, §5.25, §5.26, §5.27, sans
+  exception) : la lectrice voit la commande, envoie, et reçoit — selon l'affaire — une modification
+  **réelle** (mesure 7) ou le message « sans effet » (mesure 2).
+- **Une affaire ARCHIVÉE porte la commande comme les autres** (mesure 4). Rien à l'écran ne
+  distingue sa ligne, hors la pilule que le §15.3 y pose déjà.
+- **Aucune garde de longueur** (mesure 14) : ni `maxLength`, ni compteur de caractères.
+- **UN REFUS ET UN « SANS EFFET » LAISSENT LE FORMULAIRE OUVERT, ET LA SAISIE EST CONSERVÉE**
+  (§5.7 ter, §5.25). C'est l'écart avec le §18.6, où la confirmation se ferme dans les trois issues :
+  là-bas il n'y a **rien à conserver**, une confirmation ne portant aucune saisie. Ici le rôle tapé
+  est un travail de l'utilisateur, et le perdre pour une erreur qui n'est pas la sienne serait la
+  valeur par défaut trompeuse que `CLAUDE.md` §18 interdit. Le message se lit **dans** le formulaire,
+  près du champ qui l'a causé (§5.13).
+- **LA FICHE PREND LA LIGNE RENDUE, ET NE RELIT RIEN** (§16.7). C'est le second écart avec le
+  §18.6, et il est mesuré : le `PATCH` rend la ligne modifiée, et cette sous-tranche ne change **ni
+  l'ensemble des lignes, ni aucune donnée que l'écriture ignore**. La relecture de 4h et de 4i
+  existait parce qu'un rattachement ajouté apporte un archivage et une adresse que le formulaire ne
+  connaît pas, et parce qu'une ligne retirée change l'ensemble ; ici seule une valeur scalaire d'une
+  ligne déjà affichée est réécrite. Relire serait une seconde requête pour une donnée en main.
+- **Sur un succès, le formulaire se ferme et AUCUN message n'est affiché.** La cellule du rôle
+  **porte** le nouveau rôle : c'est la confirmation, et en écrire une seconde dirait deux fois la
+  même chose (§5.7 ter, « la confirmation remplace l'envoi »).
+- **Le focus entre dans le champ à l'ouverture, et revient à la commande de SA ligne à la
+  fermeture**, sans être différé — la commande n'est jamais démontée, seulement désactivée. C'est
+  la règle du §5.27, tenue à l'identique et pour son motif exact. **Aucune temporisation.**
+- **La zone 1 et le titre de la route ne bougent pas** — règle du §17.6 et du §18.6, tenue à
+  l'identique : aucun champ de ce formulaire n'entre dans les caractéristiques du contact.
+- **L'état vide de la zone des affaires ne gagne aucune commande** : un tableau sans ligne n'a aucun
+  rôle à modifier. Le §5.24 est révisé sur ce point précis, comme il l'a été pour 4i.
+
+### 19.7 Contrat de comportement, cas a à p
+
+| # | Situation | Attendu |
+|---|---|---|
+| a | fiche avec au moins une affaire | **chaque** ligne porte ses **deux** commandes — modifier le rôle, puis détacher —, y compris la ligne d'une affaire **archivée** ; aucun bloc n'est rendu |
+| b | commande de rôle activée | une **ligne de formulaire** apparaît sous la ligne concernée, sur toute la largeur, **nommant l'affaire** ; le champ est **prérempli** du rôle courant et le focus y entre |
+| c | ligne **sans** rôle | le champ est **vide**, jamais « null » |
+| d | fermeture par « Annuler » | la ligne de formulaire est démontée, **et le focus revient à la commande de rôle de SA ligne** |
+| e | ouverture du formulaire de rôle d'une **autre** ligne | le précédent est fermé ; **un seul** bloc existe à tout instant |
+| f | ouverture de la **confirmation de détachement** pendant qu'un formulaire de rôle est ouvert | le formulaire de rôle est fermé ; la règle d'exclusivité vaut **entre les deux gestes** (§19.4) |
+| g | envoi pendant que la requête vole | le bouton d'envoi est **désactivé** et porte son libellé d'attente ; aucune seconde requête n'est émise |
+| h | modification **appliquée** | le formulaire se ferme, **la cellule du rôle porte la nouvelle valeur**, **aucune relecture** n'est émise et **aucun message** n'est affiché |
+| i | champ **vidé** puis envoyé | le rôle est envoyé `null` (mesure 9), la cellule du rôle devient **vide**, et le rattachement **demeure** |
+| j | rôle réduit à des **espaces** | il est envoyé `null`, jamais `"   "` que la base refuserait (mesure 10) |
+| k | **même** rôle réenvoyé | c'est un **succès** (mesure 13), jamais un « sans effet » |
+| l | modification **sans effet** (lectrice sur une affaire qu'elle ne peut pas écrire, ou ligne disparue) | message « aucun rôle n'a été modifié » **dans le formulaire**, `role="alert"` ; le formulaire **reste ouvert**, la saisie est **conservée**, la cellule du rôle est **inchangée** |
+| m | modification **refusée** (`401`, réseau, saisie invalide, inattendu) | message du dictionnaire **fermé** ; le formulaire **reste ouvert** et la saisie est **conservée** |
+| n | affaire **archivée** | son rôle se modifie comme les autres (mesure 4) ; sa pilule ne change rien |
+| o | modification **puis** détachement de la même ligne | les deux gestes cohabitent ; le détachement retire la ligne et son message vit **sous** le tableau, à sa place du §18.6 |
+| p | contact introuvable, erreur de lecture, ou absence d'espace de travail | **aucune commande n'est rendue** — il n'y a pas de tableau (règle du §17.7 cas n et du §18.7 cas l) |
+
+### 19.8 Ce que la sous-tranche ne fait PAS, et pourquoi
+
+- **Aucun DÉPLACEMENT d'un rattachement d'une affaire à une autre**, alors que **la base l'accepte**
+  (mesure 12). Ce n'est pas une garde de droit — les deux clauses de `card_contacts_maj` encadrent
+  déjà le geste des deux côtés —, c'est le refus d'offrir une commande dont personne n'a spécifié le
+  produit : déplacer un rattachement est indistinguable, pour l'utilisateur, d'un détachement suivi
+  d'un rattachement, que 4i et 4h livrent **déjà** sur cette page, nommément et en deux gestes
+  lisibles. La capacité est **nommée** ici plutôt qu'exercée à la faveur d'un champ ajouté.
+- **Aucune suppression de contact**, toujours suspendue à l'arbitrage **non tranché** du §6
+  point 4 : les valeurs `jsonb` qui désignent un contact supprimé demeurent en base
+  (`docs/CloudWorker.md` §4.1 — une entrée qui attend un arbitrage ne se tranche jamais soi-même).
+- **Le fil unifié n'apprend rien de ce geste** : `card_contacts` n'écrit aucun `card_event`, et la
+  tranche 1 n'en a posé aucun trigger. L'écart est celui du §12.8 et du §18.8, inchangé et toujours
+  à arbitrer.
+- **Le rôle n'est ni énuméré, ni suggéré, ni complété.** `docs/SCHEMA.md` §6 l'illustre par
+  `decideur`, `prescripteur`, `technique`, « … », et la contrainte porte sur la **forme**, jamais sur
+  une liste (§2.3). Offrir les valeurs déjà employées dans le workspace serait une lecture nouvelle
+  au service d'une commodité que personne n'a demandée.
+- **Le seed n'est PAS modifié.** Ses deux rattachements couvrent exactement les branches dont ce
+  geste a besoin : `c2 → Léo, decideur` sur une affaire **active** que l'administratrice écrit, et
+  `c4 → Sophie, prescripteur` sur une affaire que la **lectrice lit sans l'écrire** — c'est-à-dire
+  la mesure 2, celle qui décide de l'issue « sans effet ». Les deux portent en outre un rôle **non
+  nul**, ce que le préremplissage du cas b exige. Y toucher déplacerait la garde de convergence de
+  `apply-seed.sh`, qui compare `card_contacts` à **deux**, et le compteur que lit la règle 3 du
+  classement (`CRM-055`) : le §11.7 a déjà tranché — on n'enrichit que ce qui ne casse rien.
+
+### 19.9 Preuves exigées — sous-tranche 4j
+
+| Niveau | Preuve |
+|---|---|
+| Unitaire | `webapp/src/lib/contacts.test.ts` : la requête émise — `role` **seul** —, la normalisation des mesures 8 à 10, et les trois issues. `webapp/src/app/FicheContact.test.tsx` : les cas a à p du §19.7 |
+| API | `e2e/api/contacts.spec.ts` : les mesures 1 à 14 du §19.3 avec les **jetons réels**, chaque refus et chaque « sans effet » **relisant la ligne** pour la constater inchangée (décision 70) |
+| E2E | `e2e/ui/contacts.spec.ts` : la modification par les **gestes de l'écran**, le parcours **clavier**, l'effacement du rôle, le « sans effet » opposé à la lectrice, et le rendu à 390 px ; console **vierge** |
+| Visible | captures sous `docs/captures/CRM-060/`, **observées** (`CLAUDE.md` §16) |
+| i18n | `webapp/src/i18n/i18n.test.ts` (existant) : aucun texte visible en dur, aucune clé morte |
+| Seed | `card_contacts` compte ses **deux** lignes après la campagne, **avec leurs rôles d'origine**, restitués par les gestes de l'écran |
+
+### 19.10 Definition of Done de la sous-tranche 4j
+
+- `webapp/src/lib/contacts.ts` : `modifierRoleRattachement`, son type de résultat à **trois** issues,
+  et la nature `saisie-invalide` ajoutée au classement — **`role` seul dans le corps** (mesure 12) ;
+- `webapp/src/app/ModificationRoleRattachement.tsx` : la commande par ligne, le formulaire prérempli
+  nommant l'affaire, et le dictionnaire **fermé** de refus ;
+- `webapp/src/app/FicheContact.tsx` : la seconde commande de la quatrième colonne, la ligne de
+  formulaire en `colSpan`, **l'exclusivité entre les deux gestes**, et la mise à jour locale de la
+  cellule du rôle sans relecture ;
+- test unitaire dédié : la fonction, puis les cas a à p du §19.7 ;
+- preuve d'API dédiée : les quatorze mesures d'écriture du §19.3 ;
+- preuve E2E dédiée : les gestes, le clavier, l'effacement, le « sans effet », 390 px, console
+  vierge ;
+- captures produites **et observées** ;
+- clés de traduction ajoutées, aucun texte en dur ;
+- `docs/DESIGN_SYSTEM.md` §5.28 ajouté et §5.24 **révisé par livraison** ; `docs/manual.md` ;
+  `CHANGELOG.md`, dans le même changement ;
+- compteurs de `scripts/verify-harness.sh` **comptés** par `playwright test --list`, jamais déduits
+  (INC-101) ;
+- commentaires `@spec` / `@verifies` sur chaque fichier touché.
+
+**Aucune migration : cette sous-tranche n'ouvre aucune politique et ne crée aucune colonne. Elle
+exerce `card_contacts_maj`, posée par la migration `0045` et jamais atteinte par un écran jusqu'ici.**
+
+**Ce qui restera dû sur `CRM-060` après 4j** : l'arbitrage sur les **références mortes** (§6,
+point 4) et, derrière lui, la **suppression** d'un contact ; le **fil unifié**, qui n'apprend rien
+des trois gestes de rattachement (§12.8). L'unité demeure `[~]`.

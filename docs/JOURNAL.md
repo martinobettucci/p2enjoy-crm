@@ -19528,3 +19528,41 @@ d'un contact —, et la **modification du rôle** d'un rattachement déjà posé
 `card_contacts_maj` autorise en base depuis la tranche 1 sans qu'aucun écran ne l'exerce. La
 prochaine exécution peut prendre cette modification de rôle, ou la première unité `[ ]` du plan ;
 la suppression, elle, attend l'arbitrage.
+
+## décision 458 — `CRM-060` sous-tranche 4j : le rôle d'un rattachement se corrige enfin, et une mesure interdit à la fonction d'envoyer les clés
+
+**L'unité, et le choix.** La décision 457 laissait `4i` close et `CRM-060` en `[~]`, avec deux
+manques nommés : l'arbitrage **non tranché** sur les références mortes — qui commande la suppression
+— et la **modification du rôle** d'un rattachement posé, que le §18.8 désignait comme « la politique
+`card_contacts_maj` existe en base depuis la tranche 1 et aucun écran ne l'exerce ». C'est le §4.2
+point 1 de `docs/CloudWorker.md` : la dernière entrée du journal désigne la reprise, et elle écarte
+la suppression. Le §12.8, puis le §17.8, puis le §18.8 nommaient ce manque **trois fois**.
+
+**Spécification écrite et committée AVANT toute ligne de code**, `docs/SPEC-contacts.md` §19, fondée
+sur **quinze** mesures relevées à la main sur la pile seedée avec les jetons réels des trois profils
+et la clé anonyme, sur des rattachements sondes détruits ensuite plus une mesure sur une **ligne du
+seed** dont le refus a été relu inchangé — le seed est rendu **intact**, ses deux rattachements
+relus à l'identique.
+
+**LA MESURE 2 RANGE 4j DU CÔTÉ DE 4g ET DE 4i.** La lectrice reçoit `200` et un tableau **vide**,
+sans la moindre erreur, sur la ligne `c4 → Sophie` qui existe et reste en base avec son rôle : une
+mise à jour est filtrée par la clause `USING`, qui rend la ligne invisible à l'écriture. Le message
+« sans effet » a donc un objet, et refermer le formulaire sur ce silence annoncerait une
+modification qui n'a pas eu lieu.
+
+**LA MESURE 12 DÉCIDE DE CE QUE LA FONCTION ENVOIE.** Un `PATCH` portant `card_id` dans son corps
+**DÉPLACE** le rattachement — `200`, la ligne rendue sur la nouvelle affaire et plus rien sur
+l'ancienne. Ce n'est pas une faille, les deux clauses de la politique encadrant le geste des deux
+côtés ; c'est une capacité réelle que l'écran n'exerce pas. La fonction envoie `role`, et rien
+d'autre : envoyer les clés « pour être complet » ouvrirait un déplacement silencieux au premier
+champ ajouté.
+
+**LA MESURE 9 OUVRE UN GESTE QUE 4h NE POUVAIT PAS OFFRIR** : un rôle `null` est accepté, donc le
+rôle **s'efface** sans détruire le rattachement. Les mesures 8 et 10 imposent la normalisation —
+chaîne vide **et** chaîne blanche sont refusées par `card_contacts_role_check` —, et la mesure 13
+ferme un chemin que l'écran aurait pu inventer : réécrire le même rôle est un **succès**, jamais un
+« sans effet ».
+
+**Où reprendre.** La spécification est écrite et committée ; le code, ses preuves et sa
+documentation suivent dans cette même session. Si elle est interrompue, l'exécution suivante reprend
+au §19.10, qui énumère la Definition of Done de la sous-tranche.
