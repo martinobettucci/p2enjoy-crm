@@ -623,3 +623,135 @@ test.describe('canevas d’objectifs — CRM-083', () => {
 		await expect(bloc).toBeFocused()
 	})
 })
+
+// ---------------------------------------------------------------------------------------------
+// TRANCHE 2b-2a — LE LIEN VERS UN CHANNEL
+//
+// @verifies CRM-083 (docs/BACKLOG.md) — canevas d'objectifs, tranche 2b-2a
+// @verifies docs/SPEC-goals.md §3 (sélecteur des channels LISIBLES groupés par track ; retirer
+//           le lien remet `channel_id` à nul), §4.2 (poser le lien exige `app.can_write_channel`,
+//           le retirer non), §5.2 (pilule « Track › Channel »)
+//
+// CES SCÉNARIOS ÉCRIVENT RÉELLEMENT, avec le jeton de l'administratrice, et REMETTENT le seed en
+// état par la clé de service. Sans cette remise, les comptes des scénarios de lecture dériveraient
+// d'une exécution à l'autre.
+// ---------------------------------------------------------------------------------------------
+
+/** Remet `channel_id` du bloc nommé à la valeur du seed, hors interface. */
+async function remettreLien(titre: string, idChannel: string | null): Promise<void> {
+	const reponse = await fetch(
+		`${URL_API}/rest/v1/goal_blocks?board_id=eq.${await identifiantDuTableau()}&title=eq.${encodeURIComponent(titre)}`,
+		{
+			method: 'PATCH',
+			headers: { ...enTetesService(), 'Content-Type': 'application/json' },
+			body: JSON.stringify({ channel_id: idChannel }),
+		},
+	)
+	expect(reponse.status).toBe(204)
+}
+
+/** L'identifiant d'un channel du seed, lu par la clé de service. */
+async function identifiantDuChannel(nom: string): Promise<string> {
+	const reponse = await fetch(
+		`${URL_API}/rest/v1/channels?select=id&name=eq.${encodeURIComponent(nom)}`,
+		{ headers: enTetesService() },
+	)
+	const lignes = (await reponse.json()) as { id: string }[]
+	return lignes[0]?.id ?? ''
+}
+
+test.describe('canevas d’objectifs — le lien vers un channel, CRM-083 tranche 2b-2a', () => {
+	test('le sélecteur GROUPE les channels par track, et le lien posé se relit après rechargement', async ({
+		page,
+	}) => {
+		await connecter(page, ADMIN)
+		await ouvrirLeTableau(page)
+
+		const bloc = page.getByTestId('bloc-objectif').filter({ hasText: BLOC_LIBRE }).first()
+		await bloc.focus()
+		await page.keyboard.press('Enter')
+		await expect(page.getByTestId('fiche-bloc')).toBeVisible()
+
+		const selecteur = page.getByTestId('champ-lien')
+		await expect(selecteur).toBeVisible()
+		// LE REGROUPEMENT PAR TRACK EST MESURÉ SUR LE DOM RENDU (§3) : les `optgroup` portent le nom
+		// des tracks du seed, et le bloc libre part bien SANS destination.
+		await expect(selecteur.locator('optgroup')).not.toHaveCount(0)
+		await expect(selecteur.locator('optgroup', { hasText: 'Refonte de site' })).toHaveAttribute(
+			'label',
+			'Studio web',
+		)
+		await expect(selecteur).toHaveValue('')
+		await capturer(page, 'fiche-lien-selecteur-1440', UNITE)
+
+		await selecteur.selectOption({ label: 'Refonte de site' })
+		await expect(page.getByTestId('etat-lien')).toHaveText('Enregistré')
+
+		// LE LIEN EST RELU DU SERVEUR, pas de l'état d'écran : la pilule « Track › Channel » du §5.2
+		// paraît sur le bloc après un rechargement complet.
+		await page.reload()
+		const recharge = page.getByTestId('bloc-objectif').filter({ hasText: BLOC_LIBRE }).first()
+		await expect(recharge).toContainText('Studio web')
+		await expect(recharge).toContainText('Refonte de site')
+		await capturer(page, 'bloc-lie-1440', UNITE)
+
+		await remettreLien(BLOC_LIBRE, null)
+	})
+
+	test('RETIRER le lien fait disparaître la pilule, et le bouton avec elle', async ({ page }) => {
+		await connecter(page, ADMIN)
+		await ouvrirLeTableau(page)
+
+		const bloc = page.getByTestId('bloc-objectif').filter({ hasText: BLOC_LIE }).first()
+		await expect(bloc).toContainText('Refonte de site')
+		await bloc.focus()
+		await page.keyboard.press('Enter')
+		await expect(page.getByTestId('fiche-bloc')).toBeVisible()
+
+		// La destination du seed est bien celle que le sélecteur montre AVANT le geste.
+		await expect(page.getByTestId('champ-lien')).not.toHaveValue('')
+		await page.getByTestId('retirer-lien').click()
+		await expect(page.getByTestId('etat-lien')).toHaveText('Enregistré')
+		// LE BOUTON PART AVEC LE LIEN : il n'aurait plus rien à défaire, et une commande morte ment
+		// plus qu'une absence.
+		await expect(page.getByTestId('retirer-lien')).toHaveCount(0)
+		await expect(page.getByTestId('champ-lien')).toHaveValue('')
+
+		await page.reload()
+		const recharge = page.getByTestId('bloc-objectif').filter({ hasText: BLOC_LIE }).first()
+		await expect(recharge).not.toContainText('Refonte de site')
+
+		await remettreLien(BLOC_LIE, await identifiantDuChannel('Refonte de site'))
+	})
+
+	test('la LECTRICE envoie le lien et lit le refus SOUS le champ — §4.2', async ({ page }) => {
+		// Aucune commande n'est éteinte d'avance selon le rôle (docs/DESIGN_SYSTEM.md §5.26) :
+		// l'écran envoie, la politique décide, l'écran traduit. La contradiction avec le §5.4 de la
+		// spécification reste consignée en INC-170.
+		await connecter(page, LECTRICE)
+		await ouvrirLeTableau(page)
+
+		const bloc = page.getByTestId('bloc-objectif').filter({ hasText: BLOC_LIBRE }).first()
+		await bloc.focus()
+		await page.keyboard.press('Enter')
+		await expect(page.getByTestId('fiche-bloc')).toBeVisible()
+
+		const selecteur = page.getByTestId('champ-lien')
+		await expect(selecteur).toBeVisible()
+		await selecteur.selectOption({ label: 'Refonte de site' })
+
+		const mention = page.getByTestId('etat-lien')
+		await expect(mention).toBeVisible()
+		await expect(mention).not.toHaveText('Enregistré')
+		await capturer(page, 'lien-refus-lectrice-1440', UNITE)
+
+		// LE REFUS EST MESURÉ HORS INTERFACE, sur la même ligne et avec le jeton de la lectrice :
+		// l'écran n'est pas la preuve du droit, la politique l'est.
+		const apres = await fetch(
+			`${URL_API}/rest/v1/goal_blocks?select=channel_id&board_id=eq.${await identifiantDuTableau()}&title=eq.${encodeURIComponent(BLOC_LIBRE)}`,
+			{ headers: enTetesService() },
+		)
+		const lignes = (await apres.json()) as { channel_id: string | null }[]
+		expect(lignes[0]?.channel_id).toBeNull()
+	})
+})

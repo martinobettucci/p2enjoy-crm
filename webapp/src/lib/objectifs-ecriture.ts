@@ -373,8 +373,15 @@ export type GroupeChannels = {
  * Le nom de la clé étrangère est explicite pour la même raison que dans `COLONNES_BLOC` : une
  * seconde clé de `channels` vers `tracks` rendrait l'imbrication ambiguë, et PostgREST refuserait
  * alors la requête entière plutôt que d'en choisir une.
+ *
+ * IL EST `channels_track_id_workspace_id_fkey`, ET NON `channels_track_id_fkey` — MESURÉ contre
+ * l'API, après qu'un nom déduit du seul nom de colonne eut fait rendre `PGRST200` à la requête
+ * entière. La clé est COMPOSITE : `(track_id, workspace_id)` référence `(id, workspace_id)` de
+ * `tracks`, ce qui est la garde qui empêche un channel de désigner le track d'un autre espace de
+ * travail. Un nom de contrainte ne se devine pas depuis le nom d'une colonne.
  */
-export const COLONNES_CHANNEL_LIABLE = 'id, name, tracks!channels_track_id_fkey(id, name)'
+export const COLONNES_CHANNEL_LIABLE =
+	'id, name, tracks!channels_track_id_workspace_id_fkey(id, name)'
 
 /**
  * Lit les channels que l'appelant peut proposer comme destination.
