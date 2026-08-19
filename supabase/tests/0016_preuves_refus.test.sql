@@ -131,8 +131,12 @@ select is(pg_temp.politiques('card_events'),
 
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	78,
-	'SOIXANTE-DIX-HUIT politiques dans `public`, et pas une de plus — 66 avant `CRM-060`, plus '
+	79,
+	'SOIXANTE-DIX-NEUF politiques dans `public`, et pas une de plus — 78 avant `CRM-081` '
+	'tranche 2 c, plus l''UNIQUE politique de LECTURE de `mail_thread_snoozes` : le sommeil d''un '
+	'fil se lit par qui lit le fil, et ne s''écrit par PERSONNE — les deux RPC `security definer` '
+	'du §16.14.4 et du §16.14.5 sont le seul chemin, et la fermeture est tenue par le PRIVILÈGE, '
+	'non par une politique (docs/SPEC-cards.md §16.14.6). Avant elle : 66 avant `CRM-060`, plus '
 	'les DOUZE politiques livrées par `CRM-060` tranche 1 : quatre par table (lecture, insertion, '
 	'MAJ, suppression) sur `organizations`, `contacts` et `card_contacts` '
 	'(docs/SPEC-contacts.md §3). Avant elle : 65 avant `CRM-078`, plus '
