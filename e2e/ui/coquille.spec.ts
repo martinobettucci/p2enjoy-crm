@@ -194,7 +194,7 @@ test.describe('navigation au clavier (docs/DESIGN_SYSTEM.md §8)', () => {
 		await page.keyboard.press('Enter')
 		expect(new URL(page.url()).hash).toBe('#contenu-principal')
 
-		// 3. Depuis le début, la tabulation atteint la bascule de repli puis les CINQ
+		// 3. Depuis le début, la tabulation atteint la bascule de repli puis les SIX
 		//    entrées de navigation, dans l'ordre visuel.
 		//
 		// RÉVISÉE le 2026-08-18 par `CRM-060`, ET LA RÈGLE A CHANGÉ PAR LIVRAISON, non par
@@ -211,7 +211,7 @@ test.describe('navigation au clavier (docs/DESIGN_SYSTEM.md §8)', () => {
 		await page.keyboard.press('Tab')
 		await expect(page.getByTestId('bascule-repli')).toBeFocused()
 
-		for (const libelle of ['Board', 'Inbox', 'Contacts', 'Ma journée', 'Réglages']) {
+		for (const libelle of ['Board', 'Inbox', 'Contacts', 'Objectifs', 'Ma journée', 'Réglages']) {
 			await page.keyboard.press('Tab')
 			await expect(
 				page.getByRole('navigation', { name: 'Navigation principale' }).getByTitle(libelle),
