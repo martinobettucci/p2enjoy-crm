@@ -358,6 +358,14 @@ function PanneauListe({
 		etat.statut === 'pret'
 			? composerListe(etat.donnees.messages, fils, mode, maintenant, idOuvert)
 			: { visibles: [], masques: 0 }
+
+	// L'ACTION N'EST PAS RÉPÉTÉE, ET C'EST UN DÉFAUT VU EN CAPTURE (docs/DESIGN_SYSTEM.md §5.3
+	// quinquies, §5.8) : quand l'état vide porte la bascule, l'en-tête ne la porte plus. Les deux
+	// ensemble donnaient DEUX cases à cocher identiques dans le même panneau, à quelques
+	// centimètres l'une de l'autre — l'utilisateur ne pouvait que se demander si elles font la même
+	// chose.
+	const videParSommeil =
+		etat.statut === 'pret' && selection !== null && compose.visibles.length === 0 && compose.masques > 0
 	return (
 		<Panneau
 			id="liste"
@@ -368,12 +376,15 @@ function PanneauListe({
 				<div className="flex items-center gap-2">
 					{/* ELLE RESTE RENDUE Y COMPRIS SUR UNE LISTE VIDE (§5.3 septies) : elle est la
 					    cause possible de ce vide, et la masquer priverait l'utilisateur du seul
-					    geste qui l'en sort. */}
-					<BasculeSommeil
-						mode={mode === 'visibles' ? 'visibles' : 'masquees'}
-						onMode={(suivant) => onMode(suivant)}
-						libelle={t('inbox.sleep.filter')}
-					/>
+					    geste qui l'en sort. SAUF quand l'état vide la porte déjà — voir
+					    `videParSommeil`. */}
+					{videParSommeil ? null : (
+						<BasculeSommeil
+							mode={mode === 'visibles' ? 'visibles' : 'masquees'}
+							onMode={(suivant) => onMode(suivant)}
+							libelle={t('inbox.sleep.filter')}
+						/>
+					)}
 					<Button variante="discret" taille="compacte" className="lg:hidden" onClick={onRetour}>
 						{t('inbox.back.folders')}
 					</Button>
@@ -756,7 +767,11 @@ function GesteSommeilFil({
 	// paramètre, et il est réversible d'un geste — une confirmation serait un obstacle.
 	if (echeance !== null) {
 		return (
-			<div className="flex flex-col gap-1">
+			// `items-start` : une SECONDAIRE COMPACTE ne s'étire pas (§5.5, §5.3 septies). Dans une
+			// colonne flex, un bouton prend toute la largeur disponible — au palier 1440 px il
+			// traversait le panneau de lecture entier, ce qui lui donnait le poids d'une action
+			// principale qu'il n'a pas. Défaut vu en capture, pas en test.
+			<div ref={conteneurCommande} className="flex flex-col items-start gap-1">
 				<Button
 					variante="secondaire"
 					taille="compacte"
@@ -778,7 +793,7 @@ function GesteSommeilFil({
 
 	if (!ouvert) {
 		return (
-			<div ref={conteneurCommande} className="flex flex-col gap-1">
+			<div ref={conteneurCommande} className="flex flex-col items-start gap-1">
 				<Button
 					variante="secondaire"
 					taille="compacte"

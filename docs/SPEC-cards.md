@@ -3420,9 +3420,19 @@ vide** : elle est la cause possible de ce vide.
    lui en inventer un pour ce seul contrôle ouvrirait une question — quelle est l'adresse d'un
    dossier ? — que cette tranche n'a pas à trancher. L'écart est nommé, non masqué.
 
-**Le message OUVERT n'est jamais masqué par le filtre.** Endormir le fil du message qu'on lit ne
-fait pas disparaître ce qu'on lit : la ligne quitte la liste, le panneau de lecture reste. Faire
-autrement viderait l'écran sous le geste de l'utilisateur.
+**Le message OUVERT n'est jamais masqué par le filtre — SA LIGNE COMPRISE.**
+
+> **CETTE RÈGLE A ÉTÉ CORRIGÉE PAR SA PROPRE PREUVE, LE 2026-08-19, ET LA CONTRADICTION ÉTAIT DANS
+> CE CHAPITRE.** La première rédaction disait « la ligne quitte la liste, le panneau de lecture
+> reste » tout en posant que le message ouvert n'est jamais masqué : les deux phrases ne peuvent pas
+> être vraies ensemble, le filtre n'agissant que sur des **lignes**. Le scénario d'interface a rendu
+> l'écart visible avant qu'il n'atteigne un utilisateur.
+
+La règle retenue est la seule qui ne déroute pas : **tant qu'un message est ouvert, sa ligne reste
+affichée et porte la pastille**, quel que soit le mode. Elle quitte la liste au geste suivant — un
+autre message, un autre dossier —, jamais sous le doigt de celui qui vient d'appuyer. Faire
+disparaître à la fois la ligne et le repère de sélection laisserait un panneau de lecture ouvert sur
+un message que la liste ne montre plus, ce que le §5.4 refuse déjà pour `aria-current`.
 
 ##### 16.15.6 LE GESTE — deux visages, dans le panneau de lecture
 

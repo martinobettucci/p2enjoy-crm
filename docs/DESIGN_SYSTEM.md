@@ -493,9 +493,10 @@ ci-dessous ne disent que de quoi il a l'air.
   l'objet qu'il vise : « Ce fil n'est plus disponible. » là où l'affaire disait « Cette affaire ».
   Un même refus se formule d'une seule façon, mais il ne se trompe pas de sujet.
 
-- **Le message ouvert n'est jamais masqué par le filtre.** Endormir le fil de ce qu'on lit fait
-  quitter la ligne de la liste ; le panneau de lecture reste. Vider l'écran sous le geste de
-  l'utilisateur serait le punir de l'avoir fait.
+- **Le message ouvert n'est jamais masqué par le filtre, sa LIGNE comprise.** Endormir le fil de ce
+  qu'on lit ne fait rien disparaître : la ligne reste, marquée de sa pastille, et ne quitte la liste
+  qu'au geste suivant. Vider l'écran sous le doigt de celui qui vient d'appuyer serait le punir de
+  l'avoir fait, et laisserait la sélection désigner une ligne absente.
 
 - **Un état vide dû au sommeil porte sa bascule**, selon le patron du §5.8 : « Tous les messages de
   ce dossier sont dans des fils en sommeil » offre le geste qui l'en sort, et l'action n'est alors
