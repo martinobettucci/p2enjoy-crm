@@ -131,8 +131,16 @@ select is(pg_temp.politiques('card_events'),
 
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	79,
-	'SOIXANTE-DIX-NEUF politiques dans `public`, et pas une de plus — 78 avant `CRM-081` '
+	91,
+	'QUATRE-VINGT-ONZE politiques dans `public`, et pas une de plus — 79 avant `CRM-082`, plus les '
+	'DOUZE politiques du tableau d''objectifs : QUATRE par table — lecture, insertion, MAJ, '
+	'suppression — sur `goal_boards`, `goal_blocks` et `goal_links` (docs/SCHEMA.md §9 bis.7). '
+	'CE TRIPLET N''A AUCUNE RPC, et c''est ce qui le distingue des trois révisions précédentes : '
+	'poser un bloc, le déplacer, régler son remplissage et tracer une flèche sont des gestes de '
+	'composition libre dont la règle tient ENTIÈREMENT dans les politiques, y compris l''asymétrie '
+	'du `using` et du `with check` qui laisse RETIRER un lien de channel sans laisser le REPOSER '
+	'(docs/SPEC-goals.md §4.2). Quatre politiques par table sont donc le minimum, non un excès. '
+	'Avant elles : 78 avant `CRM-081` '
 	'tranche 2 c, plus l''UNIQUE politique de LECTURE de `mail_thread_snoozes` : le sommeil d''un '
 	'fil se lit par qui lit le fil, et ne s''écrit par PERSONNE — les deux RPC `security definer` '
 	'du §16.14.4 et du §16.14.5 sont le seul chemin, et la fermeture est tenue par le PRIVILÈGE, '
