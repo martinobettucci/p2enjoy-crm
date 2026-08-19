@@ -412,7 +412,17 @@ ASSERTIONS_ATTENDUES=2269
 # la garde du seed intact. 713 + 11 = **724**, valeur COMPTÉE par `playwright test --list`
 # (« Total: 724 tests in 44 files ») et confirmée par `npm run e2e:api`, **724 verts**. Le nombre de
 # FICHIERS ne bouge pas.
-SCENARIOS_API=724
+#
+# --- CRM-060 sous-tranche 4g, livrée le 2026-08-19 -----------------------------------------------
+# `e2e/api/contacts.spec.ts` reçoit **sept** scénarios de MODIFICATION (§16.3) : les deux rôles qui
+# écrivent, le SILENCE opposé à la lectrice — `200` et zéro ligne, sans erreur — figé sur une sonde
+# ET sur une ligne du seed, l'identifiant inexistant qui rend le MÊME silence, les six refus de
+# forme et d'unicité classés par le code PostgreSQL, la ligne qui réécrit son propre email sans se
+# heurter à l'unicité, l'organisation retenue puis détachée avec le trigger `updated_at`, et les
+# deux refus EXPLICITES du `WITH CHECK` et de l'anonyme. Sans le scénario du silence, un remaniement
+# futur prendrait « aucune ligne modifiée » pour un succès. 724 + 7 = **731**, valeur COMPTÉE par
+# `playwright test --list` (« Total: 731 tests in 44 files »). Le nombre de FICHIERS ne bouge pas.
+SCENARIOS_API=731
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -594,7 +604,14 @@ SCENARIOS_API=724
 # zone des affaires, l'accès sans session, le parcours clavier et les quatre paliers. Le nombre de
 # FICHIERS ne bouge pas. Valeur MESURÉE par `playwright test --list`
 # (« Total: 420 tests in 33 files »), puis par l'exécution de la suite entière.
-SCENARIOS_UI=420
+#
+# Porté de 420 à **424** par `CRM-060` sous-tranche 4g, la modification d'un contact :
+# `e2e/ui/contacts.spec.ts` reçoit **quatre** scénarios — le formulaire prérempli dans le flux avec
+# la zone 1 et le TITRE de la route qui suivent, puis le seed restitué PAR LES GESTES DE L'ÉCRAN ;
+# le retour du focus à la commande d'ouverture au CLAVIER ; le silence du serveur DIT à la lectrice
+# avec sa saisie conservée ; et le rendu à 390 px sans débordement. Le nombre de FICHIERS ne bouge
+# pas. Valeur MESURÉE par `playwright test --list` (« Total: 424 tests in 33 files »).
+SCENARIOS_UI=424
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,
