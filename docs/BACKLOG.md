@@ -7816,7 +7816,7 @@ sont indépendantes l'une de l'autre et suivent la Definition of Done commune.
 | Unité | Objet | État |
 |---|---|---|
 | CRM-082 | Objectifs : modèle, RLS et API | `[~]` |
-| CRM-083 | Canevas d'objectifs : blocs, flèches, ouverture du channel | `[ ]` |
+| CRM-083 | Canevas d'objectifs : blocs, flèches, ouverture du channel | `[~]` |
 | CRM-084 | Budgets, occurrences et clôture : modèle, RLS et API | `[ ]` |
 | CRM-085 | Lignes de coût d'une affaire : modèle et section de la fiche | `[ ]` |
 | CRM-086 | Écrans de coûts : histogramme du track et cumul du workspace | `[ ]` |
@@ -7908,7 +7908,7 @@ dégradations réelles.
       comportement suit ici la spécification à la lettre, et l'écart est consigné plutôt que
       tranché seul.
 
-### CRM-083 — Canevas d'objectifs `[ ]`
+### CRM-083 — Canevas d'objectifs `[~]`
 
 Entrée de navigation « Objectifs », liste des tableaux, canevas pannable et zoomable, blocs
 déplaçables et redimensionnables, flèches à trois directions, jauge de remplissage saisie à la main,
@@ -7920,9 +7920,67 @@ quatre paliers ; **liste textuelle équivalente du diagramme** vérifiée par un
 simulé ; état vide, état « lien perdu » et état lecture seule capturés ; refus du `viewer` mesuré
 **hors interface** ; console navigateur vierge ; harnais dédié.
 
+**TRANCHE 1 LIVRÉE — LA LECTURE.** L'unité est découpée : cette tranche livre tout ce qui se REGARDE,
+la suivante livrera tout ce qui s'ÉCRIT. Le découpage est écrit ici plutôt que laissé à la mémoire
+d'une session.
+
+- [x] **Entrée de navigation « Objectifs », liste des tableaux et canevas livrés** :
+      `webapp/src/app/Objectifs.tsx`, `webapp/src/lib/objectifs.ts`, adresses `/objectifs` et
+      `/objectifs/:idTableau` (`webapp/src/app/chemins.ts`). Le compte de blocs de la liste est
+      celui que le BACKEND consent à l'appelant, jamais un total stocké.
+- [x] **LE BLOC MASQUÉ PAR LA RLS N'EST NOMMÉ NULLE PART, et c'est mesuré à l'écran** avec les
+      jetons réels de deux profils du seed : l'administratrice voit six blocs et quatre flèches,
+      la lectrice cinq blocs — le bloc lié à « Grands comptes » n'est pas rendu, et le corps de la
+      page ne contient pas son titre, ni dans le dessin, ni dans l'équivalent textuel, ni dans une
+      infobulle. La flèche qui en partait reste, **en pointillés et sans libellé** (§5.4).
+- [x] **Flèches tracées entre les BORDS des blocs**, pointe à chaque extrémité concernée par la
+      direction, libellé posé au milieu sur un fond qui interrompt le trait (§5.3). Les trois
+      directions du seed sont rendues, et la géométrie est éprouvée analytiquement.
+- [x] **Liste textuelle équivalente du diagramme** (§5.5), toujours rendue — y compris vide —, avec
+      les trois symboles `→`, `←`, `↔`. Une extrémité non rendue y est dite « extrémité hors de
+      portée », formulation qui ne nomme pas ce qui manque.
+- [x] **Ouverture du channel au clic ET au clavier** (§3) : la pilule « Track › Channel » est un
+      lien, et la preuve atterrit sur `/tracks/studio-web/refonte`.
+- [x] **Blocs atteignables au clavier**, dans l'ordre de leur position — `pos_y` puis `pos_x`, puis
+      l'identifiant pour départager deux blocs superposés —, chacun portant un `aria-label` complet
+      qui NOMME sa destination. Le canevas lui-même est focalisable, ce qui rend son défilement
+      possible sans souris.
+- [x] **États livrés** : aucun tableau, tableau vide, tableau introuvable, aucun espace de travail,
+      erreur avec reprise réelle, et **« lien perdu »** pour une destination partie à la corbeille.
+- [x] **Preuves de la tranche, toutes exécutées et vertes** : `webapp/src/lib/objectifs.test.ts`
+      **25 assertions**, `webapp/src/app/Objectifs.test.tsx` **12 scénarios**,
+      `e2e/ui/objectifs.spec.ts` **10 scénarios** sur la pile seedée, console navigateur vierge.
+      **Six captures** sous `docs/captures/CRM-083/`, produites et **observées** — c'est
+      l'observation qui a révélé la jauge invisible, corrigée dans le même changement.
+- [x] La preuve de la table des routes est **révisée** avec son motif écrit dans le fichier :
+      `/objectifs` porte un écran chargé à la demande, et non un état vide inconditionnel.
+
+**CE QUI RESTE — TRANCHE 2, L'ÉCRITURE.** Aucune commande morte n'est posée pour ces gestes.
+
+- [ ] **Poser un bloc sur le canevas**, position issue du geste et jamais d'un placement
+      automatique (§3).
+- [ ] **Déplacer et redimensionner un bloc**, à la souris ET au clavier — flèches pour déplacer le
+      bloc focalisé (§5.5) —, avec persistance de `pos_x`, `pos_y`, `width`, `height`.
+- [ ] **Saisir titre, corps, couleur**, et **régler le remplissage** par curseur **et** champ
+      numérique, les deux écrivant la même valeur (§3). `Entrée` ouvre la fiche d'édition (§5.5).
+- [ ] **Lier un bloc à un channel** — sélecteur des channels **lisibles**, groupés par track — et
+      **retirer le lien** ; poser le lien exige `app.can_write_channel`, le retirer non (§4.2).
+- [ ] **Tracer une flèche** : `Espace` puis sélection d'un second bloc (§5.5), choix de la direction
+      à la création et modifiable ensuite ; supprimer une flèche, supprimer un bloc.
+- [ ] **Créer, renommer, réordonner et archiver un tableau** (§3).
+- [ ] **État LECTURE SEULE du `viewer`** : tous les gestes d'écriture indisponibles ET lisibles,
+      l'écran disant pourquoi (§5.4). Il n'a pas d'objet tant qu'aucun geste d'écriture n'existe.
+- [ ] **Refus du `viewer` mesuré HORS interface**, exigé par la DoD.
+- [ ] **Harnais dédié `scripts/verify-objectifs-canevas.sh`**, non complaisant, éprouvé par des
+      dégradations réelles.
 - [ ] **Le canevas doit être utilisable entièrement au clavier** (`CLAUDE.md` §22,
-      `docs/SPEC-goals.md` §5.5). Un canevas qui n'obéit qu'à la souris n'est pas terminé, et c'est
-      la partie la plus facile à oublier de cette unité.
+      `docs/SPEC-goals.md` §5.5). La tabulation, l'étiquetage et le défilement sont livrés ; le
+      DÉPLACEMENT au clavier et le tracé d'une flèche au clavier restent dus avec la tranche 2.
+      C'est la partie la plus facile à oublier de cette unité.
+- [ ] **Écart nommé, consigné en INC-169 plutôt que tranché** : le §5.4 demande « lien perdu » pour
+      un channel **supprimé** (`channel_id` devenu nul), état qui ne se distingue en rien d'un bloc
+      jamais lié. L'écran lève la mention pour le seul état détectable — une destination partie à
+      la corbeille.
 
 ### CRM-084 — Budgets, occurrences et clôture `[ ]`
 

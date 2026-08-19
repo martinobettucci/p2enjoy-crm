@@ -15,6 +15,21 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-083` — le canevas d'objectifs, tranche 1 : on VOIT enfin ses tableaux.** Une entrée
+  « Objectifs » dans la navigation, la liste des tableaux avec le nombre de blocs que l'appelant
+  peut lire, et le canevas lui-même : blocs à liseré de couleur, jauge de remplissage, pilule
+  « Track › Channel » qui **ouvre le channel au clic**, flèches aux trois directions et libellés
+  posés dessus. Le canevas se déplace et se zoome, ses blocs sont atteignables au clavier, et une
+  **liste textuelle équivalente** du diagramme accompagne le dessin pour les lecteurs d'écran — un
+  diagramme qui n'existe que visuellement n'est pas accessible.
+- **Ce que la règle de visibilité donne à voir, et à ne pas voir.** Un bloc lié à un channel fermé
+  n'est pas rendu, et **rien de la page ne le nomme** : ni le dessin, ni la liste textuelle, ni une
+  infobulle. La flèche qui y menait reste, en **pointillés vers le vide** et sans libellé. Mesuré à
+  l'écran avec les jetons réels de deux profils du seed : l'administratrice voit six blocs, la
+  lectrice cinq.
+- **Ce que cette tranche ne fait pas encore**, nommé plutôt que suggéré par des commandes mortes :
+  poser, déplacer, redimensionner, remplir et lier un bloc restent à livrer.
+
 - **`CRM-082` — le tableau d'objectifs existe en base : modèle, RLS et API.** Trois tables
   (`goal_boards`, `goal_blocks`, `goal_links`), leurs gardes et leurs douze politiques
   (`supabase/migrations/0049_objectifs.sql`). **Aucun écran** : le canevas est `CRM-083`. Un

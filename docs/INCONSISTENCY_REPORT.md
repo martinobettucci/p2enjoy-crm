@@ -2377,3 +2377,34 @@ dans le même changement. Le coût est faible **aujourd'hui**, aucun écran ne c
 tableau ; il croîtra dès que `CRM-083` sera livrée.
 
 **Statut :** ouvert, en attente d'arbitrage. Le comportement reste celui de la spécification.
+
+### INC-169 — un lien d'objectif détruit pour de bon ne se distingue pas d'un bloc jamais lié
+
+**Nature :** point de spécification **impossible à tenir tel qu'il est écrit**, relevé en livrant la
+tranche 1 de `CRM-083` et laissé **inchangé** conformément au `CLAUDE.md` §5.
+
+**Ce que la spécification demande.** `docs/SPEC-goals.md` §5.4 :
+
+| État | Rendu |
+|---|---|
+| Bloc lié à un channel **supprimé** (`channel_id` devenu nul) | le bloc est rendu sans pilule, et une mention « lien perdu » invite à en reposer un |
+
+**Ce qui rend cet état indétectable.** Le §2.2 pose `on delete set null` sur `goal_blocks.channel_id`.
+Une destruction réelle de la ligne `channels` remet donc la colonne à `null`, et **le bloc devient
+alors, octet pour octet, un bloc qui n'a jamais été lié** : aucune colonne, aucun horodatage, aucune
+trace ne les sépare. L'écran ne peut pas lever la mention sans la lever aussi pour les trois blocs
+libres du seed, ce qui serait un mensonge.
+
+**Ce que la tranche 1 fait à la place, et c'est mesuré.** `app.can_read_channel` (migration `0010`)
+**ne regarde pas `deleted_at`** : un channel parti à la corbeille reste lisible, son bloc reste donc
+rendu, et sa destination n'est plus atteignable par la navigation. C'est cet état-là — le seul qui
+soit **détectable** — que l'écran rend « lien perdu », le §2.2 nommant d'ailleurs exactement ce
+scénario (« un channel mis à la corbeille ne fait pas disparaître un objectif »). La destruction
+définitive, elle, reste invisible.
+
+**Ce qu'il faudrait pour tenir la lettre du §5.4**, et pourquoi ce n'est pas fait ici : conserver la
+trace du lien rompu — une colonne `channel_lost_at`, ou un `channel_id` conservé sans clé étrangère
+—, ce qui est un changement de **modèle** et relève de `CRM-082`, close, et non de l'écran.
+
+**Statut :** ouvert, en attente d'arbitrage. Le comportement livré est celui décrit ci-dessus, écrit
+dans `webapp/src/lib/objectifs.ts` et éprouvé par `objectifs.test.ts`.

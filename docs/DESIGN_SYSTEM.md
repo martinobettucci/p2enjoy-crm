@@ -1769,6 +1769,17 @@ entièrement pilotable au clavier (§8 et `docs/SPEC-goals.md` §5.5), et une **
 équivalente** du diagramme — « A → B », « B ↔ C » — accompagne le canevas pour les lecteurs
 d'écran. Un diagramme qui n'existe que visuellement n'est pas accessible.
 
+**Commandes de zoom.** Deux boutons à la taille de cible, encadrant la valeur en clair
+(`100 %`). Au dernier palier, le bouton est **indisponible et lisible** (§8) plutôt qu'inopérant :
+un bouton qui ne fait rien sans le dire est un défaut, pas une borne.
+
+**LES ESPACES DE NOMS DE TAILWIND SONT REMIS À ZÉRO (§11), ET CE COMPOSANT L'A APPRIS EN
+S'AFFICHANT.** La jauge de 6 px avait d'abord été écrite `h-1.5`, la pilule `py-0.5` : **ni l'une
+ni l'autre de ces classes n'existe** — l'échelle ne porte que `0, 1, 2, 3, 4, 6, 8, 12` —, si bien
+que la barre était **invisible** sur la capture alors que la valeur en clair s'affichait
+correctement. C'est la faute exacte que consigne INC-158. Une mesure hors de l'échelle s'écrit en
+valeur arbitraire assumée (`h-[6px]`), jamais en fraction de l'échelle.
+
 ### 5.30 Histogramme prévisionnel / réel — `CRM-086`
 
 Spécifié avant code, `docs/SPEC-costs.md` §4.2.
