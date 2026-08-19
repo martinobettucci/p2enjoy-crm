@@ -282,6 +282,46 @@ test.describe('CRM-082 — objectifs : le contrat d’API, hors interface', () =
 		expect(lignes[0]?.name).toBe('Objectifs du trimestre')
 	})
 
+	test('la lectrice ne SUPPRIME ni un BLOC ni une FLÈCHE, et les deux lignes restent', async ({
+		request,
+	}) => {
+		// La DoD exige le refus mesuré HORS interface, table par table. Le geste de suppression de
+		// la tranche 2b-2c touche `goal_blocks` ET `goal_links`, et le refus y prend la forme du
+		// `USING` : `200` et zéro ligne, jamais une erreur. Les fixtures d'essai sont posées par la
+		// clé de service, la lectrice ne pouvant rien créer.
+		const fleche = 'c0000000-0000-4000-8000-0000000000a9'
+		await request.post(LINKS, {
+			headers: { ...enTetesService(), Prefer: 'return=representation' },
+			data: {
+				id: fleche,
+				board_id: TABLEAU_ESSAI,
+				source_block_id: BLOC_A,
+				target_block_id: BLOC_B,
+				direction: 'forward',
+			},
+		})
+
+		for (const geste of [
+			{ table: 'goal_links', url: `${LINKS}?id=eq.${fleche}` },
+			{ table: 'goal_blocks', url: `${BLOCKS}?id=eq.${BLOC_A}` },
+		]) {
+			const suppression = await request.delete(geste.url, {
+				headers: { ...enTetesAuthentifies(jetonViewer), Prefer: 'return=representation' },
+			})
+			expect(suppression.status(), `suppression de la lectrice dans ${geste.table}`).toBe(200)
+			expect(await suppression.json(), `lignes retirées dans ${geste.table}`).toEqual([])
+		}
+
+		// ET LES DEUX LIGNES SONT TOUJOURS LÀ : sans cette relecture, les assertions ci-dessus
+		// seraient vertes sur des lignes réellement détruites dont la représentation serait vide.
+		for (const url of [`${LINKS}?id=eq.${fleche}&select=id`, `${BLOCKS}?id=eq.${BLOC_A}&select=id`]) {
+			const relecture = await request.get(url, { headers: enTetesService() })
+			expect((await relecture.json()) as unknown[]).toHaveLength(1)
+		}
+
+		await request.delete(`${LINKS}?id=eq.${fleche}`, { headers: enTetesService() })
+	})
+
 	// -------------------------------------------------------------------------------------------
 	// 3. L'écriture, et le lien qui engage la destination
 	// -------------------------------------------------------------------------------------------

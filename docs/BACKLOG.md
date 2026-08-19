@@ -8160,17 +8160,18 @@ la 2b-1 l'ont été : **2b-2a livre le LIEN**, 2b-2b livrera les **flèches** et
       est le seul du dépôt à demander une extinction par rôle, là où `docs/DESIGN_SYSTEM.md` pose
       neuf fois qu'aucune commande n'est éteinte d'avance. La tranche 2a suit le design system —
       elle envoie et traduit le refus, mesuré — et laisse la règle générale au responsable.
-- [~] **Refus du `viewer` mesuré HORS interface**, exigé par la DoD. `e2e/api/objectifs.spec.ts`
+- [x] **Refus du `viewer` mesuré HORS interface**, exigé par la DoD. `e2e/api/objectifs.spec.ts`
       le mesure déjà pour `CRM-082` — `403` / `42501` en insertion sur les trois tables, `200` et
       zéro ligne en modification. **Les tranches 2b-1 et 2b-2a n'ouvrent AUCUNE table nouvelle à
       l'écriture** : `title`, `body`, `color`, `fill_percent` et `channel_id` vivent tous dans
       `goal_blocks`, sous la politique de modification déjà mesurée. Le refus du LIEN est en outre
       remesuré hors interface par le scénario E2E de la lectrice, qui relit `channel_id` sur la
-      ligne après le geste et le trouve inchangé. **La tranche 2b-2c remesure le refus de la
-      SUPPRESSION hors interface** : le scénario de la lectrice relit la ligne du bloc après le
-      geste et la trouve intacte. Ce qui reste dû est le refus **en écriture sur `goal_links`** pour
-      les gestes de flèche — tracé, direction, suppression —, que `e2e/api/objectifs.spec.ts`
-      mesure déjà en insertion mais pas encore en suppression.
+      ligne après le geste et le trouve inchangé. **La tranche 2b-2c ferme ce point** :
+      `e2e/api/objectifs.spec.ts` mesure désormais, avec le jeton de la lectrice, la SUPPRESSION
+      d'un bloc ET d'une flèche — `200` et zéro ligne dans les deux cas, les deux lignes relues
+      intactes derrière —, et le scénario E2E de la lectrice relit la ligne du bloc après le geste
+      d'interface. Les trois tables sont donc mesurées hors interface en insertion, en modification
+      et en suppression.
 - [ ] **Harnais dédié `scripts/verify-objectifs-canevas.sh`**, non complaisant, éprouvé par des
       dégradations réelles.
 - [~] **Le canevas doit être utilisable entièrement au clavier** (`CLAUDE.md` §22,
