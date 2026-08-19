@@ -19457,3 +19457,74 @@ d'un contact —, et le **détachement** depuis la fiche du contact, sous-tranch
 (confirmation nommant l'objet, place dans une ligne de tableau, traitement du « sans effet » que
 `USING` produit à la suppression). La prochaine exécution peut prendre ce détachement, ou la
 première unité `[ ]` du plan ; la suppression, elle, attend l'arbitrage.
+
+## décision 457 — `CRM-060` sous-tranche 4i : une affaire se détache enfin depuis le contact, et un refus qui ne dit rien est dit quand même
+
+**L'unité, et le choix.** La décision 456 laissait `4h` close et `CRM-060` en `[~]`, avec deux
+manques nommés : l'arbitrage **non tranché** sur les références mortes — qui commande la suppression
+— et le **détachement** depuis la fiche du contact, que le §17.8 désignait explicitement comme
+« une sous-tranche à part entière ». C'est le §4.2 point 1 de `docs/CloudWorker.md` : la dernière
+entrée du journal désigne la reprise, et elle écarte la suppression. Le §15.8, puis le §16.8, puis
+le §17.8 nommaient ce manque **trois fois**.
+
+**Spécification écrite et committée AVANT toute ligne de code**, `docs/SPEC-contacts.md` §18, fondée
+sur **onze** mesures relevées à la main sur la pile seedée avec les jetons réels des trois profils
+et la clé anonyme, sur des rattachements sondes détruits ensuite plus une mesure sur une **ligne du
+seed** dont le refus a été relu inchangé — le seed est rendu **intact**.
+
+**LA MESURE 2 A DÉCIDÉ DU CONTRAT, ET ELLE RANGE 4i DU CÔTÉ DE 4g, NON DE 4h.** La lectrice reçoit
+`200` et un tableau **vide**, sans la moindre erreur, sur la ligne `c4 → Sophie` qui **existe** et
+qui reste en base avec son rôle. Une suppression est filtrée par la clause **`USING`**, qui rend la
+ligne **invisible à l'écriture** ; une insertion l'est par `WITH CHECK`, qui la **rejette** et rend
+le `403` explicite de 4h. Le détachement a donc **trois** issues, et la troisième doit être **dite**
+— faire disparaître la ligne sur ce silence annoncerait un détachement qui n'a pas eu lieu. La
+mesure 3 montre qu'un rattachement inexistant rend **exactement la même chose** : les deux causes
+sont indistinguables, un **seul** message les couvre, et **la ligne reste affichée**.
+
+**LA MESURE 4 A RETIRÉ UNE RÈGLE D'ÉCRAN AVANT QU'ELLE NE SOIT ÉCRITE.** Le tableau de la fiche
+**liste** les affaires archivées, à la différence du sélecteur de 4h qui écarte celles de la
+corbeille. Une politique qui aurait refusé la suppression sur une affaire close aurait obligé à
+éteindre la commande sur ces lignes, ou pire, à la laisser produire un « sans effet » indiscernable
+d'un refus de droit. Elle ne refuse pas : `app.can_write_card` dérive du **channel** et ne lit ni
+`archived_at` ni `deleted_at`. Toutes les lignes portent la même commande, sans condition.
+
+**LA MESURE 7 EST LE PENDANT EXACT DE LA MESURE 19 DE 4h.** La lectrice **réussit** le détachement
+sur « Assistant IA support — Nordis » et se voit opposer le silence sur « Refonte intranet Ville de
+Lyon », deux affaires qu'elle **lit** l'une comme l'autre. Aucune propriété du profil ne prédit
+l'issue : l'écran ne peut pas calculer ce droit, et ne doit pas essayer.
+
+**LA PLACE DE LA CONFIRMATION EST CE QUE 4h AVAIT LAISSÉ OUVERT, et elle se tranche par élimination
+mesurable.** Dans la cellule de la commande, bornée à `32ch` et tronquée, la question nommant
+l'affaire serait **coupée** — la règle du §6 tenue dans le balisage et perdue à l'écran. Sous le
+tableau, rien ne la relierait à **sa** ligne. Une ligne de tableau à elle, en `colSpan`, est le seul
+emplacement à la fois dans le flux, adjacent, et assez large. **Aucune fonction nouvelle** :
+`detacherContact` est celle de 4c, appelée inchangée ; **aucune migration**.
+
+**UN DÉFAUT TROUVÉ PAR LA VÉRIFICATION VISUELLE, corrigé à sa cause.** À 390 px, le tableau à quatre
+colonnes défile horizontalement, et activer la commande y pousse le défilement pour amener le bouton
+dans le champ : la confirmation, qui appartient au même conteneur, se retrouvait **amputée sur sa
+gauche** — la question nommant l'affaire, précisément ce qu'il faut lire avant un geste destructeur,
+sortait de l'écran. Le bloc est désormais **épinglé au bord visible** du conteneur et borné à la
+largeur de la fenêtre ; sur un écran large la borne ne s'applique pas et le rendu est **inchangé**.
+Ce n'est pas un contournement du débordement — le tableau défile toujours —, c'est la reconnaissance
+que ce bloc porte de la **prose**. Consigné au §5.27, et la règle vaut pour toute confirmation posée
+dans une ligne de tableau défilant.
+
+**Preuves de l'unité** : `FicheContact.test.tsx` **49 verts** (13 ajoutés), `e2e/api -g 4i`
+**9 verts**, `e2e/ui -g "détachement d'une affaire"` **4 verts, console vierge** ; `typecheck`,
+`build` et `i18n.test.ts` verts. Compteurs du harnais portés à **749** et **432**, valeurs
+**comptées** par `playwright test --list`. Captures **observées** (`CLAUDE.md` §16) : la
+confirmation dans le flux sous sa ligne avec le tableau entier visible, la fiche après détachement,
+le message « sans effet » sous un tableau dont la ligne est **restée**, et le rendu à 390 px.
+
+**Le seed est rendu INTACT, et il l'est PAR LE GESTE QUE CETTE SOUS-TRANCHE LIVRE** : le parcours
+rattache depuis la fiche du contact, puis détache **depuis la même page**. C'est le chemin que 4h
+devait emprunter par la fiche de l'affaire, faute de l'avoir ici ; l'asymétrie que le §17.8 assumait
+est refermée par la preuve elle-même.
+
+**Où reprendre.** `4i` est **close**. `CRM-060` reste `[~]`, et ce qui lui manque est nommé au §6 et
+au §18.8 : l'**arbitrage du responsable** sur les références mortes — qui commande la suppression
+d'un contact —, et la **modification du rôle** d'un rattachement déjà posé, que la politique
+`card_contacts_maj` autorise en base depuis la tranche 1 sans qu'aucun écran ne l'exerce. La
+prochaine exécution peut prendre cette modification de rôle, ou la première unité `[ ]` du plan ;
+la suppression, elle, attend l'arbitrage.

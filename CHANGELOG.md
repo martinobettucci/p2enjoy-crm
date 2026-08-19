@@ -15,6 +15,27 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-060` — Contacts et organisations, tranche 4i : le détachement d'une affaire depuis la
+  fiche d'un contact** (`docs/SPEC-contacts.md` §18, `docs/DESIGN_SYSTEM.md` §5.27). La fiche
+  **listait** les affaires d'un contact depuis 4f, le **corrigeait** depuis 4g et le **rattachait**
+  depuis 4h, mais défaire un rattachement obligeait encore à quitter la personne que l'on a sous
+  les yeux, à ouvrir l'affaire, et à y retrouver le contact d'où l'on venait. Chaque ligne du
+  tableau **Affaires** porte désormais un bouton **« Détacher »**, dans une dernière colonne
+  « Commandes », **y compris la ligne d'une affaire archivée** — la base accepte ce détachement, et
+  corriger l'historique d'une affaire close est un geste ordinaire. La **confirmation** occupe une
+  ligne à elle, juste sous celle qu'elle concerne, **nomme l'affaire** et rappelle que le rôle du
+  contact part avec le rattachement ; une seule confirmation reste ouverte à la fois.
+  **UN DÉTACHEMENT PEUT N'AVOIR AUCUN EFFET, ET LE PRODUIT LE DIT PLUTÔT QUE DE FAIRE DISPARAÎTRE
+  LA LIGNE.** Mesuré : un compte sans droit d'écriture sur l'affaire reçoit `200` et zéro ligne,
+  **sans la moindre erreur**, sur un rattachement qui existe et qui reste en base — la clause
+  `USING` de la politique rend la ligne invisible à l'écriture. Un rattachement déjà retiré par
+  quelqu'un d'autre rend **exactement la même chose** : un seul message couvre les deux causes, il
+  n'affirme ni le refus ni la disparition, et **la ligne reste affichée**. Le tableau est **relu**
+  dans les trois issues, jamais amputé localement. **Aucune commande n'est grisée selon le rôle** :
+  mesuré, un compte en lecture seule **réussit** ce détachement sur une affaire et se voit opposer
+  le silence sur une autre, les droits se réglant affaire par affaire. **Aucune migration**, et la
+  fonction de suppression est celle livrée par 4c, inchangée. `docs/manual.md` chapitre 3 *ter*.
+
 - **`CRM-060` — Contacts et organisations, tranche 4h : le rattachement d'une affaire depuis la
   fiche d'un contact** (`docs/SPEC-contacts.md` §17, `docs/DESIGN_SYSTEM.md` §5.26). La fiche d'un
   contact **listait** ses affaires depuis 4f et **corrigeait** le contact depuis 4g, mais elle ne

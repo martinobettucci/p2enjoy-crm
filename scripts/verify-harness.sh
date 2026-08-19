@@ -428,7 +428,13 @@ ASSERTIONS_ATTENDUES=2269
 # acceptée et l'affaire en corbeille acceptée elle aussi — et la constatation que le seed est rendu
 # intact. 731 + 9 = **740**, valeur COMPTÉE par `playwright test --list` (« Total: 740 tests in
 # 44 files »), jamais déduite (INC-101). Le nombre de FICHIERS ne bouge pas.
-SCENARIOS_API=740
+# **RÉVISION DU 2026-08-19 — `CRM-060` sous-tranche 4i.** Le détachement d'une affaire depuis la
+# fiche d'un contact ajoute **neuf** scénarios d'API : les huit mesures d'écriture du §18.3 — dont
+# celle qui IMPOSE une troisième issue, la lectrice recevant `200` et zéro ligne SANS erreur sur un
+# rattachement qui existe et qui reste en base — et la constatation que le seed est rendu intact.
+# 740 + 9 = **749**, valeur COMPTÉE par `playwright test --list` (« Total: 749 tests in 44 files »),
+# jamais déduite (INC-101). Le nombre de FICHIERS ne bouge pas.
+SCENARIOS_API=749
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -621,7 +627,11 @@ SCENARIOS_API=740
 # rattachement par les gestes de l'écran, le parcours clavier, le refus opposé à la lectrice et le
 # rendu à 390 px. 424 + 4 = **428**, valeur COMPTÉE par `playwright test --list` (« Total: 428 tests
 # in 33 files »).
-SCENARIOS_UI=428
+# **RÉVISION DU 2026-08-19 — `CRM-060` sous-tranche 4i.** Quatre scénarios d'interface ajoutés : le
+# détachement par les gestes de l'écran avec l'exclusivité des confirmations, le parcours clavier,
+# le SILENCE opposé à la lectrice — où la ligne RESTE —, et le rendu à 390 px. 428 + 4 = **432**,
+# valeur COMPTÉE par `playwright test --list` (« Total: 432 tests in 33 files »).
+SCENARIOS_UI=432
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

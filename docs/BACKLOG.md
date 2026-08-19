@@ -7592,9 +7592,75 @@ sa confirmation nommant l'objet, la place où la poser dans une ligne de tableau
 « sans effet » que la clause `USING` produit à la suppression — c'est une sous-tranche à part
 entière, non l'appoint de celle-ci (§17.8).
 
+**Sous-tranche 4i livrée, 2026-08-19 — le DÉTACHEMENT d'une affaire depuis la fiche d'un contact**
+(`docs/SPEC-contacts.md` §18, spécification écrite et committée **avant toute ligne de code**,
+fondée sur **onze** mesures relevées sur la pile seedée avec les jetons réels des trois profils et
+la clé anonyme) :
+
+- [x] **Aucune modification de `webapp/src/lib/contacts.ts`** : `detacherContact` et son type
+      `ResultatDetachement` à **trois** issues sont ceux de 4c, appelés **inchangés**. Écrire un
+      second `DELETE` sur la même table ferait diverger deux contrats au premier champ ajouté.
+      **Aucune migration**, et c'est une sous-tranche d'écran que la mesure confirme comme telle.
+- [x] `webapp/src/app/DetachementAffaireContact.tsx` — la commande par ligne, la confirmation qui
+      **nomme l'affaire** (le §12.6 retourné : le contact est ici le décor, l'affaire la variable),
+      et le dictionnaire **fermé** de refus. **Deux natures y sont structurellement inatteignables**
+      et partagent le texte de `unknown` : `23505` suppose une insertion, `23503` une clé étrangère
+      à éprouver — leur donner un texte propre ferait entrer une phrase que rien ne peut afficher.
+- [x] `webapp/src/app/FicheContact.tsx` — la **quatrième colonne** et son en-tête lisible, la ligne
+      de confirmation en `colSpan`, l'exclusivité des confirmations, le message **sous** le tableau
+      qui **survit à la relecture**, et la relecture dans les **trois** issues.
+- [x] **LA MESURE 2 A DÉCIDÉ DU CONTRAT.** La lectrice reçoit `200` et un tableau **vide**, **sans
+      la moindre erreur**, sur la ligne du seed `c4 → Sophie` qui **existe** et qui reste en base
+      avec son rôle. La clause `USING` rend la ligne invisible à l'écriture. Cette sous-tranche
+      rejoint donc **4g** et non 4h : un message « sans effet » y a un objet, et la mesure 3 montre
+      qu'un rattachement inexistant rend **exactement la même chose** — un seul message couvre les
+      deux causes indistinguables, et **la ligne reste affichée**.
+- [x] **LA MESURE 4 A RETIRÉ UNE RÈGLE D'ÉCRAN AVANT QU'ELLE NE SOIT ÉCRITE** : la base accepte le
+      détachement sur une affaire **archivée**, que le tableau liste. Toutes les lignes portent donc
+      la même commande, sans condition. **LA MESURE 7 INTERDIT À L'ÉCRAN DE CALCULER LE DROIT**,
+      pendant exact de la mesure 19 de 4h : la lectrice **RÉUSSIT** sur « Assistant IA support —
+      Nordis » et reçoit le silence sur « Refonte intranet Ville de Lyon », deux affaires qu'elle
+      **lit** l'une comme l'autre.
+- [x] `webapp/src/app/FicheContact.test.tsx` (**13 tests ajoutés**, 49 dans le fichier) : les cas a
+      à m du §18.7. L'espion retient les **filtres** posés et non un compteur — un code qui
+      n'poserait que `card_id` détacherait le contact de **toutes** ses affaires sans qu'un compteur
+      le voie. Le cas f **attend explicitement la relecture**, et c'est la preuve même du contrat :
+      `findAllBy` rendrait la main sur l'ancien rendu, qui satisfait déjà le sélecteur.
+- [x] `e2e/api/contacts.spec.ts` (**9 scénarios ajoutés**, **749** dans la suite) : les huit mesures
+      d'écriture du §18.3 avec les jetons réels, chaque refus **relisant la ligne** pour la
+      constater inchangée (décision 70). La mesure 2 pose son **témoin** avant de mesurer le refus.
+- [x] `e2e/ui/contacts.spec.ts` (**4 scénarios ajoutés**, **432** dans la suite, console vierge) :
+      le geste et l'exclusivité des confirmations, le parcours **clavier**, le **silence** opposé à
+      la lectrice où la ligne **RESTE**, et le rendu à 390 px. **LE SEED EST RESTITUÉ PAR LE GESTE
+      QUE CETTE SOUS-TRANCHE LIVRE**, sans quitter la fiche — le chemin que 4h devait emprunter par
+      la fiche de l'affaire.
+- [x] **UN DÉFAUT TROUVÉ PAR LA VÉRIFICATION VISUELLE, corrigé à sa CAUSE** (`CLAUDE.md` §16). À
+      390 px, le tableau à quatre colonnes défile, et activer la commande y pousse le défilement :
+      la confirmation, prise dans le même conteneur, était **amputée sur sa gauche** — la question
+      nommant l'affaire sortait de l'écran. Le bloc est désormais **épinglé au bord visible** du
+      conteneur et borné à la largeur de la fenêtre ; sur écran large la borne ne s'applique pas et
+      le rendu est **inchangé**. Consigné au §5.27.
+- [x] Captures produites **et observées** (`CLAUDE.md` §16) sous `docs/captures/CRM-060/` :
+      `fiche-contact-detachement-confirmation-1440.jpg`, `-apres-1440.jpg`, `-sans-effet-1440.jpg`,
+      `-390.jpg`.
+- [x] `docs/DESIGN_SYSTEM.md` §5.27 ajouté et §5.24 **révisé par livraison** (le tableau se lit
+      désormais à **quatre** colonnes) ; `docs/manual.md` chapitre 3 *ter* ; `CHANGELOG.md` ;
+      compteurs de `scripts/verify-harness.sh` portés à **749** et **432**, valeurs **COMPTÉES** par
+      `playwright test --list` et non déduites (INC-101).
+
+**Aucune migration, et le seed n'est PAS modifié** : ses deux rattachements couvrent exactement les
+branches nécessaires — une affaire **active** que l'administratrice écrit, et une affaire que la
+**lectrice lit sans l'écrire**, c'est-à-dire la mesure qui décide de l'issue « sans effet ».
+
+**LA MODIFICATION DU RÔLE d'un rattachement posé n'est toujours pas livrée** : la politique
+`card_contacts_maj` existe en base depuis la tranche 1 et aucun écran ne l'exerce. Détacher puis
+rattacher reste le chemin, et cette sous-tranche le rend possible **sans quitter la fiche** — ce qui
+réduit l'écart sans le combler. Il est nommé (§18.8) plutôt que compensé par une commande morte.
+
 **Ce qui reste dû sur `CRM-060` après la tranche 4** : l'arbitrage sur les **références mortes**
-(§6, point 4) et, derrière lui, la **suppression** d'un contact ; le **détachement** depuis la fiche
-d'un contact (§17.8). `CRM-060` demeure `[~]`.
+(§6, point 4) et, derrière lui, la **suppression** d'un contact ; la **modification du rôle** d'un
+rattachement posé (§18.8). Le détachement depuis la fiche d'un contact, que le §17.8 nommait, est
+**livré par 4i**. `CRM-060` demeure `[~]`.
 
 **Troisième tranche livrée, 2026-08-18 — la résolution des champs `contact` et `user`**
 (`docs/SPEC-contacts.md` §9, migration `0047`) :

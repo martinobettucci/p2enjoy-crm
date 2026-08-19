@@ -26,7 +26,7 @@
 | 1 bis | Le guide de démarrage : par où commencer | `CRM-079` | **Livré et vérifié** — voir le chapitre 1 *bis*. Cinq étapes mesurées à chaque affichage, chacune renvoyant vers l'écran qui la réalise. L'état est **mesuré**, jamais mémorisé : supprimer le dernier track décoche l'étape. Le guide se masque pour la session — rien n'est écrit durablement sur l'appareil — et reste toujours consultable depuis « Réglages ▸ Guide de démarrage ». Il **lit et renvoie** : il ne crée ni track, ni channel, ni affaire |
 | 2 | Comprendre l'organisation : espace, tracks, channels, cards | `CRM-020`, `CRM-021` | À livrer |
 | 3 | Naviguer : barre latérale, onglets, recherche | `CRM-007`, `CRM-065` | **Partiellement livré** — voir ci-dessous ; la recherche relève de `CRM-065` |
-| 3 ter | Le carnet de contacts | `CRM-060` | **Livré en LECTURE** — voir la section 3 *ter*. L'entrée « Contacts » de la barre latérale ouvre le carnet de l'espace : nom, organisation, fonction, email et téléphone, une ligne par personne. Tout membre le lit, y compris un compte en lecture seule. Le nom d'organisation ouvre sa **fiche** (sous-tranche 4b) : domaine, site web et contacts rattachés. Une affaire **rattache et détache** ses contacts depuis sa fiche (sous-tranche 4c, chapitre 4.7 *ter*). Un contact **se crée** depuis le carnet (sous-tranche 4e) : le bouton « Nouveau contact » ouvre un formulaire au-dessus du tableau. Il **se modifie** depuis sa fiche (sous-tranche 4g) : le bouton « Modifier » ouvre le même formulaire, prérempli. Il **se rattache à une affaire** depuis sa fiche (sous-tranche 4h) : le bouton « Rattacher à une affaire » vit dans le bloc des affaires. Ce qui manque est dit : aucune suppression d'un contact, aucun détachement depuis la fiche du contact, aucune création d'organisation, aucune recherche |
+| 3 ter | Le carnet de contacts | `CRM-060` | **Livré en LECTURE** — voir la section 3 *ter*. L'entrée « Contacts » de la barre latérale ouvre le carnet de l'espace : nom, organisation, fonction, email et téléphone, une ligne par personne. Tout membre le lit, y compris un compte en lecture seule. Le nom d'organisation ouvre sa **fiche** (sous-tranche 4b) : domaine, site web et contacts rattachés. Une affaire **rattache et détache** ses contacts depuis sa fiche (sous-tranche 4c, chapitre 4.7 *ter*). Un contact **se crée** depuis le carnet (sous-tranche 4e) : le bouton « Nouveau contact » ouvre un formulaire au-dessus du tableau. Il **se modifie** depuis sa fiche (sous-tranche 4g) : le bouton « Modifier » ouvre le même formulaire, prérempli. Il **se rattache à une affaire** depuis sa fiche (sous-tranche 4h) : le bouton « Rattacher à une affaire » vit dans le bloc des affaires, et il **s'en détache** depuis la même page (sous-tranche 4i), chaque ligne du tableau portant sa commande. Ce qui manque est dit : aucune suppression d'un contact, aucune modification du rôle d'un rattachement posé, aucune création d'organisation, aucune recherche |
 
 ### Suivi quotidien
 
@@ -376,8 +376,32 @@ apparaît avec son rôle, son état et son lien.
 mesuré. Le bouton n'est donc jamais grisé d'avance — le produit ne devine pas ce que le serveur
 décidera, il envoie et vous rapporte la réponse.
 
-**Détacher se fait depuis l'affaire**, pas depuis ici (chapitre 4.7 *ter*) — un clic sur le titre de
-l'affaire dans le tableau vous y mène.
+#### Détacher une personne d'une affaire
+
+*Livré par la sous-tranche 4i.* Ce geste se faisait auparavant **depuis l'affaire** seulement ; il
+existe désormais **des deux côtés**, et celui de l'affaire n'a pas changé (chapitre 4.7 *ter*).
+
+Chaque ligne du tableau **Affaires** porte un bouton **« Détacher »**, dans une dernière colonne
+« Commandes ». Toutes les lignes le portent, **y compris celle d'une affaire archivée** : détacher
+une personne d'une affaire close est un geste ordinaire de correction d'historique.
+
+Le bouton ouvre une **confirmation**, sur une ligne à elle, juste sous celle qu'elle concerne. Elle
+**nomme l'affaire** et rappelle ce qui part avec le rattachement : **le rôle de la personne dans
+cette affaire**. Vous pourrez la rattacher de nouveau, mais le rôle devra être ressaisi. Une seule
+confirmation reste ouverte à la fois : en ouvrir une autre referme la précédente.
+
+Une fois confirmé, **le tableau se relit** et la ligne disparaît. Si c'était la dernière affaire, le
+bloc revient à son état vide, qui garde le bouton « Rattacher à une affaire ».
+
+**Un détachement peut n'avoir aucun effet, et le produit vous le dit.** Sous le tableau apparaît
+alors : *« Aucun rattachement n'a été retiré. Vous n'avez peut-être pas le droit de modifier cette
+affaire, ou le rattachement avait déjà été supprimé. »* Le message **ne tranche pas** entre les deux
+causes, parce que le serveur répond exactement la même chose dans les deux cas — et **la ligne
+reste affichée**, parce qu'elle est toujours là. C'est délibéré : faire disparaître la ligne vous
+aurait annoncé un détachement qui n'a pas eu lieu.
+
+Comme pour le rattachement, **le bouton n'est jamais grisé d'avance**. Les droits se règlent affaire
+par affaire : le même compte peut détacher sur l'une et se voir opposer ce message sur l'autre.
 
 **La suppression n'est pas un oubli.** Un contact peut être désigné par des champs de formulaire
 d'affaires déjà remplis ; le supprimer laisserait ces valeurs pointer vers quelqu'un qui n'existe
