@@ -7965,11 +7965,11 @@ d'une session.
 - [ ] **CE QUI RESTE DE LA TRANCHE 1, ET C'EST DE FORME** : les cinquante `scripts/verify-*.sh` du
       dépôt n'ont pas tous été rejoués — la série entière ne tient pas dans une session
       (`docs/CloudWorker.md` §2.1 ter). `scripts/verify-webapp.sh`, celui que cette tranche touche,
-      rend **42 contrôles, 1 anomalie** — la session précédente en rapportait **deux**, toutes deux
-      préexistantes et consignées (INC-158, INC-166) ; une de moins n'est donc pas une régression.
-      **La nature exacte de l'anomalie restante n'a PAS été lue**, la sortie du premier passage
-      ayant été tronquée et le second n'ayant pas rendu son verdict avant la fin de la session.
-      C'est le contrôle à reprendre en premier.
+      rend **42 contrôles, 1 anomalie**, LUE : les classes citées mais non engendrées, qui étaient
+      `h-10 py-0.5 text-text-1` (INC-158) et auxquelles cette tranche avait ajouté **`shadow-sm`**.
+      Corrigé à la CAUSE — le bloc emploie désormais `shadow-card`, jeton réellement déclaré —, et
+      la preuve d'interface de l'unité a été rejouée verte après correction. Les trois classes
+      restantes sont celles d'INC-158, préexistantes et étrangères à cette tranche.
 
 **CE QUI RESTE — TRANCHE 2, L'ÉCRITURE.** Aucune commande morte n'est posée pour ces gestes.
 

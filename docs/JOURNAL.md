@@ -20149,12 +20149,15 @@ APRÈS l'installation de Node 24.
 décision 463 : cette tranche modifie la barre latérale de **tous** les écrans, et une trace
 versionnée montrant une barre qui n'existe plus serait fausse.
 
-**Un contrôle laissé ouvert, et il est nommé.** `scripts/verify-webapp.sh`, le harnais que cette
-tranche touche, rend **42 contrôles, 1 anomalie**. La décision 461 en rapportait **deux**, toutes
-deux préexistantes et consignées — les trois classes non engendrées d'INC-158 et le `purgerChamps`
-d'INC-166 : une anomalie de moins n'est donc pas une régression. Mais **sa nature n'a pas été lue**,
-la sortie du premier passage ayant été tronquée par un `tail` et le second n'ayant pas rendu son
-verdict avant la fin de la session. C'est le premier contrôle à reprendre.
+**LE HARNAIS WEBAPP A ATTRAPÉ LA MÊME FAUTE UNE SECONDE FOIS, ET C'ÉTAIT LA MIENNE.**
+`scripts/verify-webapp.sh` rend **42 contrôles, 1 anomalie** : les classes citées mais non
+engendrées sont `h-10 py-0.5 text-text-1` — les trois d'INC-158 — **et `shadow-sm`**, que cette
+tranche venait d'ajouter. `--shadow-*` est remis à zéro comme le reste (`docs/DESIGN_SYSTEM.md`
+§11) et seuls `shadow-card` et `shadow-card-hover` existent. C'est exactement la faute de la jauge,
+sur un autre espace de noms, et découverte cette fois par le harnais plutôt que par l'œil. Corrigé
+à la cause — `shadow-card` —, preuve d'interface rejouée **verte**. La leçon vaut d'être écrite une
+fois pour toutes : dans ce dépôt, **aucune classe utilitaire ne va de soi**, et une classe qui
+« devrait » exister dans Tailwind n'existe ici que si un jeton la déclare.
 
 **Où reprendre.** `CRM-083` est `[~]`, et son reste est énuméré geste par geste au backlog : c'est
 la **tranche 2, l'écriture** — poser, déplacer au clavier et à la souris, redimensionner, remplir,

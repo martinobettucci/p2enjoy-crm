@@ -821,7 +821,7 @@ function BlocCanevas({
 			tabIndex={0}
 			aria-label={etiquette}
 			aria-describedby="objectifs-consigne-clavier"
-			className="absolute flex overflow-hidden rounded-lg border border-border bg-surface shadow-sm touch-none focus-visible:outline-2 focus-visible:outline-brand"
+			className="absolute flex overflow-hidden rounded-lg border border-border bg-surface shadow-card touch-none focus-visible:outline-2 focus-visible:outline-brand"
 			style={{
 				left: `${bloc.pos_x}px`,
 				top: `${bloc.pos_y}px`,
