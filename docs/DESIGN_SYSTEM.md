@@ -1879,6 +1879,37 @@ entier au-dessus d'elle.
   les deux géométries comparées sont déjà des entiers. Une tolérance rendrait un petit glissement
   volontaire indistinguable d'un clic et ouvrirait une fiche à la place d'un déplacement.
 
+**Le champ « Channel visé » de la fiche**, livré par la tranche 2b-2a. C'est un `select` alimenté
+par une liste distante : **le §5.22 s'applique intégralement**, et n'est pas répété ici. Ce qui lui
+est propre :
+
+- **Les options sont groupées par track dans des `optgroup`**, comme `docs/SPEC-goals.md` §3 le
+  demande. C'est le seul moyen natif de grouper des options sans réécrire un sélecteur au clavier,
+  et l'intitulé du groupe est une **donnée** — le nom du track —, jamais une traduction (§10).
+
+- **L'ordre est celui que le serveur rend**, jamais retrié à l'écran. La requête ordonne déjà par
+  `position` puis par nom ; rejouer ce tri ici le ferait diverger le jour où la requête changera.
+
+- **Un channel dont le track n'est pas rendu est listé hors de tout groupe, en dernier.** Il n'est
+  pas écarté : l'appelant le lit, il a donc le droit de le viser, et le faire disparaître parce que
+  son parent n'est pas lisible lui retirerait une destination légitime sans jamais le dire. Aucun
+  intitulé de groupe n'est inventé pour lui.
+
+- **La destination actuelle reste une option même absente de la liste** — même raison qu'au §5.22 :
+  un channel archivé, ou dont la lecture vient de se fermer, n'est pas liable ; sans son option, le
+  sélecteur retomberait sur « Aucun channel » et afficherait un **retrait de lien qui n'a pas eu
+  lieu**, que le premier geste sur un autre champ rendrait vrai.
+
+- **Le retrait a deux entrées, et le bouton n'existe que s'il y a un lien.** L'option vide retire au
+  clavier ; un bouton « Retirer le lien » double le geste à la souris. Rendu en permanence, il
+  n'aurait rien à défaire la moitié du temps — la commande morte que le §5.21 refuse. Il reste
+  offert quand la LISTE est en erreur : retirer ne demande aucune liste.
+
+- **Le refus de la destination porte son propre texte.** « Vous ne pouvez pas modifier ce tableau »
+  serait faux lorsque c'est le droit d'écrire dans le channel visé qui manque
+  (`docs/SPEC-goals.md` §4.2), et ferait chercher le problème du mauvais côté. Le **retrait**, lui,
+  garde le texte commun : il n'engage aucune destination.
+
 ### 5.30 Histogramme prévisionnel / réel — `CRM-086`
 
 Spécifié avant code, `docs/SPEC-costs.md` §4.2.

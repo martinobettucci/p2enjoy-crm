@@ -949,3 +949,40 @@ describe('canevas — lier un bloc à un channel, §3 et §4.2', () => {
 		)
 	})
 })
+
+describe('canevas — le sélecteur de destination suit le §5.22', () => {
+	it('est DÉSACTIVÉ pendant la lecture de sa liste, et porte son option d’attente', async () => {
+		// Unique dérogation bornée à la règle du §5.7 ter : il n'y a alors rien à choisir, et un
+		// `select` vide mais actif serait une commande morte. Le workspace n'est jamais rendu ici,
+		// si bien que la lecture ne se résout pas — c'est l'état que ce scénario mesure.
+		const { client } = clientEcrivant({ ...LECTURES_UN_BLOC, workspaces: ok([]) }, ok([BLOC_LIBRE]))
+		rendreCanevas(client)
+		const selecteur = await ouvrirFiche()
+
+		expect(selecteur.disabled).toBe(true)
+		expect(selecteur.getAttribute('aria-busy')).toBe('true')
+		expect([...selecteur.querySelectorAll('option')].map((option) => option.textContent)).toContain(
+			fr['goals.edit.link.loading'],
+		)
+	})
+
+	it('reste DÉSACTIVÉ après l’échec de sa liste, mais le RETRAIT reste offert', async () => {
+		// Retirer un lien ne demande aucune liste : éteindre ce bouton avec le sélecteur priverait
+		// d'un geste que rien n'empêche.
+		const { client } = clientEcrivant(
+			{
+				...LECTURES_AVEC_CHANNELS,
+				goal_blocks: ok([BLOC_LIE]),
+				channels: { data: null, error: { message: 'coupure' }, status: 500 },
+			},
+			ok([BLOC_LIE]),
+		)
+		rendreCanevas(client)
+		fireEvent.keyDown((await screen.findAllByTestId('bloc-objectif'))[0] as HTMLElement, { key: 'Enter' })
+		await screen.findByTestId('fiche-bloc')
+
+		await screen.findByTestId('erreur-channels')
+		expect((screen.getByTestId('champ-lien') as HTMLSelectElement).disabled).toBe(true)
+		expect((screen.getByTestId('retirer-lien') as HTMLButtonElement).disabled).toBe(false)
+	})
+})

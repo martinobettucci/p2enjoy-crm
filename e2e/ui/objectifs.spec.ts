@@ -682,6 +682,11 @@ test.describe('canevas d’objectifs — le lien vers un channel, CRM-083 tranch
 			'Studio web',
 		)
 		await expect(selecteur).toHaveValue('')
+		// LE CHAMP EST AMENÉ DANS LA VUE AVANT LA CAPTURE : `capturer` prend la fenêtre et non la
+		// page entière, et la fiche vit SOUS le canevas. Sans ce défilement, la capture s'arrête
+		// au-dessus du sélecteur et ne montre pas ce qu'elle est censée prouver — c'est ce que
+		// l'observation de la première capture a révélé (`CLAUDE.md` §16).
+		await selecteur.scrollIntoViewIfNeeded()
 		await capturer(page, 'fiche-lien-selecteur-1440', UNITE)
 
 		await selecteur.selectOption({ label: 'Refonte de site' })
@@ -693,6 +698,7 @@ test.describe('canevas d’objectifs — le lien vers un channel, CRM-083 tranch
 		const recharge = page.getByTestId('bloc-objectif').filter({ hasText: BLOC_LIBRE }).first()
 		await expect(recharge).toContainText('Studio web')
 		await expect(recharge).toContainText('Refonte de site')
+		await recharge.scrollIntoViewIfNeeded()
 		await capturer(page, 'bloc-lie-1440', UNITE)
 
 		await remettreLien(BLOC_LIBRE, null)
@@ -743,6 +749,7 @@ test.describe('canevas d’objectifs — le lien vers un channel, CRM-083 tranch
 		const mention = page.getByTestId('etat-lien')
 		await expect(mention).toBeVisible()
 		await expect(mention).not.toHaveText('Enregistré')
+		await mention.scrollIntoViewIfNeeded()
 		await capturer(page, 'lien-refus-lectrice-1440', UNITE)
 
 		// LE REFUS EST MESURÉ HORS INTERFACE, sur la même ligne et avec le jeton de la lectrice :

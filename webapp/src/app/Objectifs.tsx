@@ -1058,12 +1058,19 @@ function FicheEditionBloc({
 					{t('goals.edit.field.link')}
 				</label>
 				<div className="flex flex-wrap items-center gap-2">
+					{/* PENDANT LA LECTURE DE SA LISTE ET APRÈS SON ÉCHEC, LE CONTRÔLE EST DÉSACTIVÉ —
+					    §5.22, unique dérogation bornée à la règle du §5.7 ter. Ce n'est PAS une
+					    extinction selon le rôle (§5.26) : il n'y a alors rien à choisir, et un
+					    `select` vide mais actif serait la commande morte que le §5.21 refuse. Le
+					    bouton de retrait, lui, reste offert : retirer ne demande aucune liste. */}
 					<select
 						id="fiche-bloc-lien"
 						data-testid="champ-lien"
 						value={bloc.channel_id ?? ''}
+						disabled={etatChannels.statut !== 'pret'}
+						aria-busy={etatChannels.statut === 'chargement'}
 						aria-describedby="fiche-bloc-lien-aide fiche-bloc-lien-etat"
-						className={[CLASSES_CONTROLE, 'grow min-w-[24ch]'].join(' ')}
+						className={[CLASSES_CONTROLE, 'grow min-w-[24ch] disabled:text-text-3'].join(' ')}
 						onChange={(evenement) => {
 							const valeur = evenement.target.value
 							void ecrireLien(valeur === '' ? null : valeur)
@@ -1073,6 +1080,11 @@ function FicheEditionBloc({
 						    clavier : un sélecteur dont on ne pourrait pas sortir enfermerait le bloc
 						    dans sa première destination. */}
 						<option value="">{t('goals.edit.link.none')}</option>
+						{etatChannels.statut === 'chargement' ? (
+							<option value="chargement" disabled>
+								{t('goals.edit.link.loading')}
+							</option>
+						) : null}
 						{groupes.map((groupe) => {
 							const options = groupe.channels.map((channel) => (
 								<option key={channel.id} value={channel.id}>
