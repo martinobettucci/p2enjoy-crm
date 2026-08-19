@@ -510,6 +510,22 @@ export const fr = {
 	'goals.edit.color.danger': 'Rouge',
 	'goals.edit.color.neutral': 'Gris',
 
+	// --- Objectifs, tranche 2b-2a : le lien vers un channel — CRM-083, docs/SPEC-goals.md §3 ----
+	// LE TEXTE N'ANNONCE AUCUN DROIT. Poser un lien exige « app.can_write_channel » et le retirer
+	// non (§4.2) : le sélecteur propose donc des destinations que la base refusera parfois, et
+	// « goals.edit.link.refused » traduit ce refus SANS prétendre l'avoir prévu.
+	'goals.edit.field.link': 'Channel visé',
+	'goals.edit.link.none': 'Aucun channel',
+	'goals.edit.link.hint':
+		'Facultatif. Le bloc désigne le dossier sur lequel porte cet objectif ; le remplissage reste saisi à la main.',
+	'goals.edit.link.remove': 'Retirer le lien',
+	'goals.edit.link.loading': 'Chargement des channels…',
+	'goals.edit.link.error':
+		'La liste des channels n’a pas pu être chargée. Le lien existant, lui, reste inchangé.',
+	'goals.edit.link.empty': 'Aucun channel à viser.',
+	'goals.edit.link.refused.forbidden':
+		'Vous ne pouvez pas lier ce bloc à ce channel : lier un objectif à un dossier demande d’y écrire.',
+
 	'route.today.title': 'Ma journée',
 	'route.today.empty.title': 'Rien pour aujourd’hui',
 	'route.today.empty.body': 'Les prochaines actions et les relances dues apparaîtront ici.',

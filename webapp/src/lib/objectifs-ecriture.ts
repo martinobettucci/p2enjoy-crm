@@ -476,6 +476,40 @@ export function grouperChannelsParTrack(
 }
 
 /**
+ * Charge les channels liables, MAIS SEULEMENT quand `actif` le demande.
+ *
+ * Le drapeau n'est pas une optimisation prématurée (`CLAUDE.md` §21) : sans lui, l'ouverture d'un
+ * tableau émettrait une requête sur TOUS les channels du workspace alors que la plupart des visites
+ * ne font que regarder le canevas. La liste ne sert qu'au sélecteur de la fiche d'édition, et elle
+ * part donc à la première ouverture d'une fiche.
+ *
+ * Elle n'est chargée QU'UNE FOIS par visite d'écran, et non à chaque fiche : le champ est le même
+ * d'un bloc à l'autre, et relire la liste à chaque ouverture émettrait la même requête indéfiniment.
+ * `recharger` existe pour la reprise après erreur, seul cas où relire a un sens.
+ */
+export function useChannelsLiables(
+	client: ClientCrm | null,
+	idWorkspace: string | null,
+	actif: boolean,
+): { readonly etat: EtatAsync<readonly ChannelLiable[]>; readonly recharger: () => void } {
+	const [etat, setEtat] = useState<EtatAsync<readonly ChannelLiable[]>>(enChargement)
+	const [tentative, setTentative] = useState(0)
+	const courant = useRef(0)
+
+	useEffect(() => {
+		if (!actif || client === null || idWorkspace === null) return
+		const rang = ++courant.current
+		setEtat(enChargement)
+		void lireChannelsLiables(client, idWorkspace).then((resultat) => {
+			if (rang === courant.current) setEtat(resultat)
+		})
+	}, [client, idWorkspace, actif, tentative])
+
+	const recharger = useCallback(() => setTentative((precedente) => precedente + 1), [])
+	return { etat, recharger }
+}
+
+/**
  * Lie un bloc à un channel, ou RETIRE le lien lorsque `idChannel` vaut `null` (§3).
  *
  * UNE SEULE FONCTION POUR LES DEUX GESTES, parce que c'est une seule écriture : `channel_id` reçoit

@@ -1,12 +1,15 @@
 // @spec CRM-083 (docs/BACKLOG.md) — canevas d'objectifs, tranche 1 : navigation, liste des
 //       tableaux, canevas rendu, flèches, équivalent textuel et ouverture du channel ;
 //       tranche 2a : poser, déplacer et redimensionner un bloc, à la souris et au clavier ;
-//       tranche 2b-1 : la fiche d'édition — titre, corps, couleur, remplissage
+//       tranche 2b-1 : la fiche d'édition — titre, corps, couleur, remplissage ;
+//       tranche 2b-2a : le LIEN d'un bloc vers un channel, et son retrait
 // @spec docs/SPEC-goals.md §5.1 (liste des tableaux), §5.2 (canevas), §5.3 (flèches),
 //       §5.4 (les cinq états), §5.5 (accessibilité, gestes clavier, `Entrée` ouvre la fiche
 //       d'édition), §3 (ouvrir le channel d'un bloc, poser un bloc, le déplacer, le
 //       redimensionner, saisir titre / corps / couleur, régler le remplissage au curseur ET au
-//       champ numérique), §4.2 (écriture), §1 (aucun remplissage calculé)
+//       champ numérique, lier le bloc à un channel — sélecteur des channels lisibles groupés par
+//       track — et retirer le lien), §4.2 (écriture ; POSER le lien exige `app.can_write_channel`,
+//       le RETIRER non), §1 (aucun remplissage calculé)
 // @spec docs/SPEC-goals.md §4.1 (le bloc masqué n'est pas rendu, et l'écran ne le nomme jamais)
 // @spec docs/DESIGN_SYSTEM.md §5.29 (bloc, jauge, flèche, focus), §5.8 (états), §8 (clavier),
 //       §5.5 bis (pilule de track réemployée par la pilule de channel)
@@ -23,16 +26,18 @@
 //   * TRANCHE 2b-1, LE CONTENU : la fiche d'édition d'un bloc — titre, corps, couleur, et
 //     remplissage réglé au curseur COMME au champ numérique —, ouverte par `Entrée` au clavier et
 //     par un clic sans déplacement à la souris ; chaque champ s'enregistre pour lui-même ;
-//   * NON LIVRÉ, et donc non simulé : lier un bloc à un channel, tracer une flèche, supprimer une
-//     flèche ou un bloc, administrer les tableaux. Aucune commande morte n'est posée pour ces
-//     gestes — un bouton qui n'écrit rien ment plus qu'une absence.
+//   * TRANCHE 2b-2a, LE LIEN : le channel qu'un bloc vise, choisi dans un sélecteur des channels
+//     LISIBLES groupés par track, et retiré par l'option vide comme par un bouton dédié ;
+//   * NON LIVRÉ, et donc non simulé : tracer une flèche, supprimer une flèche ou un bloc,
+//     administrer les tableaux. Aucune commande morte n'est posée pour ces gestes — un bouton qui
+//     n'écrit rien ment plus qu'une absence.
 //
 // L'ÉCRAN NE CALCULE AUCUN DROIT : il rend ce que le backend consent, et il ENVOIE puis traduit
 // le refus (`CLAUDE.md` §10, `docs/DESIGN_SYSTEM.md` §5.26). Aucune commande n'est éteinte
 // d'avance selon le rôle. Un bloc lié à un channel fermé n'arrive jamais jusqu'ici, et l'écran ne
 // cherche pas à savoir qu'il a existé.
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { PointerEvent as EvenementPointeur } from 'react'
 import { Link, useParams } from 'react-router'
 import { ArrowLeft, Minus, Plus, SquareArrowOutUpRight, SquarePlus, Unlink, X } from 'lucide-react'
@@ -58,7 +63,10 @@ import {
 	REMPLISSAGE_MINIMAL,
 	ecrireContenuBloc,
 	ecrireGeometrieBloc,
+	grouperChannelsParTrack,
+	lierBlocAChannel,
 	poserBloc,
+	useChannelsLiables,
 	PAS_CLAVIER,
 	PAS_CLAVIER_FIN,
 	TAILLE_BLOC_MINIMALE,
@@ -66,10 +74,12 @@ import {
 	bornerCoordonnee,
 	bornerDimension,
 	bornerRemplissage,
+	type ChannelLiable,
 	type ContenuBloc,
 	type RefusBloc,
 	type ResultatEcritureBloc,
 } from '../lib/objectifs-ecriture'
+import type { EtatAsync } from '../lib/async'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { useWorkspaces } from '../lib/workspaces'
 import { CHEMIN_OBJECTIFS, cheminTableauObjectifs } from './chemins'
@@ -283,6 +293,9 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 	const { idTableau } = useParams<{ idTableau: string }>()
 	const { etat, recharger } = useContenuTableau(client, idTableau ?? null)
 	const [rangZoom, setRangZoom] = useState<number>(ZOOM_PAR_DEFAUT)
+	// Le workspace courant est le premier rendu, patron de la liste des tableaux ci-dessus. Il ne
+	// sert QU'au sélecteur de destination : le tableau, lui, est atteint par son identifiant.
+	const { etat: etatWorkspaces } = useWorkspaces(client)
 
 	// TROIS ÉTATS LOCAUX, ET ILS NE SE CONFONDENT PAS :
 	//   * `ecrits` porte les lignes que le SERVEUR a rendues après une écriture — elles sont vraies,
@@ -301,6 +314,16 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 	const [edite, setEdite] = useState<string | null>(null)
 
 	const contenu = etat.statut === 'pret' ? etat.donnees : null
+
+	// LA LISTE DES CHANNELS NE PART QU'À LA PREMIÈRE FICHE OUVERTE. Elle ne sert qu'au sélecteur de
+	// destination, et la charger à l'ouverture du tableau ferait payer une requête sur tous les
+	// channels du workspace à toutes les visites qui ne font que regarder le canevas.
+	const idWorkspace = etatWorkspaces.statut === 'pret' ? (etatWorkspaces.donnees[0]?.id ?? null) : null
+	const { etat: etatChannels, recharger: rechargerChannels } = useChannelsLiables(
+		client,
+		idWorkspace,
+		edite !== null,
+	)
 
 	// Une relecture rapporte l'état du serveur : ce qui était gardé localement devient alors
 	// périmé, et le conserver ferait rendre deux fois la même donnée.
@@ -390,6 +413,26 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 		async (idBloc: string, contenu: ContenuBloc): Promise<ResultatEcritureBloc> => {
 			if (client === null) return { statut: 'sans-effet' }
 			const resultat = await ecrireContenuBloc(client, idBloc, contenu)
+			if (resultat.statut === 'enregistree') {
+				setEcrits((precedents) => new Map(precedents).set(idBloc, resultat.bloc))
+			}
+			return resultat
+		},
+		[client],
+	)
+
+	/**
+	 * Écrit le LIEN d'un bloc — la destination choisie, ou `null` pour la retirer.
+	 *
+	 * Elle est distincte d'`enregistrerContenu` alors qu'elle touche la même ligne, et c'est le
+	 * §4.2 qui l'impose : `channel_id` est la seule colonne dont l'écriture met en jeu un droit sur
+	 * une AUTRE table que `goal_blocks`. La confondre avec les quatre champs de contenu ferait
+	 * traduire son refus par le texte des autres, qui ne dirait pas ce qui manque.
+	 */
+	const enregistrerLien = useCallback(
+		async (idBloc: string, idChannel: string | null): Promise<ResultatEcritureBloc> => {
+			if (client === null) return { statut: 'sans-effet' }
+			const resultat = await lierBlocAChannel(client, idBloc, idChannel)
 			if (resultat.statut === 'enregistree') {
 				setEcrits((precedents) => new Map(precedents).set(idBloc, resultat.bloc))
 			}
@@ -568,7 +611,10 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 				<FicheEditionBloc
 					key={blocEdite.id}
 					bloc={blocEdite}
+					etatChannels={etatChannels}
+					onRechargerChannels={rechargerChannels}
 					onEcrire={(contenu) => enregistrerContenu(blocEdite.id, contenu)}
+					onLier={(idChannel) => enregistrerLien(blocEdite.id, idChannel)}
 					onFermer={() => {
 						setEdite(null)
 						// Le focus REVIENT au bloc, faute de quoi la fermeture le renverrait au début
@@ -696,8 +742,8 @@ function MentionEcriture({ message }: { readonly message: MessageEcriture | null
 	)
 }
 
-/** Les quatre champs de la fiche. Chacun porte SA mention d'état (`docs/DESIGN_SYSTEM.md` §5.7 ter). */
-type ChampFiche = 'titre' | 'corps' | 'couleur' | 'remplissage'
+/** Les cinq champs de la fiche. Chacun porte SA mention d'état (`docs/DESIGN_SYSTEM.md` §5.7 ter). */
+type ChampFiche = 'titre' | 'corps' | 'couleur' | 'remplissage' | 'lien'
 
 /**
  * Le contrôle NE PORTE PAS SA LARGEUR, et ce n'est pas une omission — c'est un défaut trouvé en
@@ -733,11 +779,17 @@ const CLASSES_CONTROLE = [
  */
 function FicheEditionBloc({
 	bloc,
+	etatChannels,
+	onRechargerChannels,
 	onEcrire,
+	onLier,
 	onFermer,
 }: {
 	readonly bloc: BlocObjectif
+	readonly etatChannels: EtatAsync<readonly ChannelLiable[]>
+	readonly onRechargerChannels: () => void
 	readonly onEcrire: (contenu: ContenuBloc) => Promise<ResultatEcritureBloc>
+	readonly onLier: (idChannel: string | null) => Promise<ResultatEcritureBloc>
 	readonly onFermer: () => void
 }) {
 	// LA SAISIE EST LOCALE, ET ELLE SURVIT AU REFUS. Un refus n'efface pas ce qui a été tapé
@@ -789,6 +841,37 @@ function FicheEditionBloc({
 		if (valeur === bloc.fill_percent) return
 		void ecrire('remplissage', { remplissage: valeur })
 	}
+
+	/**
+	 * Écrit le lien — LE SEUL CHEMIN, pour le sélecteur comme pour le bouton de retrait.
+	 *
+	 * Le refus `interdit` porte ici SON PROPRE texte : « vous ne pouvez pas modifier ce tableau »
+	 * serait faux quand c'est le droit d'écrire dans la DESTINATION qui manque (§4.2), et ferait
+	 * chercher le problème du mauvais côté. Les deux autres natures gardent le dictionnaire commun.
+	 */
+	const ecrireLien = async (idChannel: string | null) => {
+		if (idChannel === bloc.channel_id) return
+		setMessages((precedents) => ({ ...precedents, lien: { ton: 'attente', texte: t('goals.write.saving') } }))
+		const resultat = await onLier(idChannel)
+		const suite: MessageEcriture =
+			resultat.statut === 'refus'
+				? {
+						ton: 'refus',
+						texte:
+							resultat.refus.nature === 'interdit' && idChannel !== null
+								? t('goals.edit.link.refused.forbidden')
+								: texteRefusBloc(resultat.refus),
+					}
+				: resultat.statut === 'sans-effet'
+					? { ton: 'refus', texte: t('goals.write.noeffect') }
+					: { ton: 'succes', texte: t('goals.write.saved') }
+		setMessages((precedents) => ({ ...precedents, lien: suite }))
+	}
+
+	// LES GROUPES SONT COMPOSÉS À CHAQUE RENDU DE LA LISTE REÇUE, jamais gardés en état : les garder
+	// obligerait à les resynchroniser après chaque rechargement, et une liste périmée proposerait des
+	// destinations disparues.
+	const groupes = etatChannels.statut === 'pret' ? grouperChannelsParTrack(etatChannels.donnees) : []
 
 	return (
 		<section
@@ -964,6 +1047,91 @@ function FicheEditionBloc({
 					champ="remplissage"
 					message={messages.remplissage ?? null}
 				/>
+			</div>
+
+			{/* LE LIEN EST UNE LISTE DÉROULANTE, là où la couleur est un groupe de radios : les
+			    channels d'un workspace se comptent en dizaines et ne se comparent pas d'un regard.
+			    Les `optgroup` portent le regroupement par track que le §3 demande — c'est le seul
+			    moyen natif de grouper des options sans réécrire un sélecteur au clavier. */}
+			<div className="flex flex-col gap-1">
+				<label htmlFor="fiche-bloc-lien" className="text-sm text-text-2">
+					{t('goals.edit.field.link')}
+				</label>
+				<div className="flex flex-wrap items-center gap-2">
+					<select
+						id="fiche-bloc-lien"
+						data-testid="champ-lien"
+						value={bloc.channel_id ?? ''}
+						aria-describedby="fiche-bloc-lien-aide fiche-bloc-lien-etat"
+						className={[CLASSES_CONTROLE, 'grow min-w-[24ch]'].join(' ')}
+						onChange={(evenement) => {
+							const valeur = evenement.target.value
+							void ecrireLien(valeur === '' ? null : valeur)
+						}}
+					>
+						{/* L'OPTION VIDE EST TOUJOURS PRÉSENTE, et c'est elle qui retire le lien au
+						    clavier : un sélecteur dont on ne pourrait pas sortir enfermerait le bloc
+						    dans sa première destination. */}
+						<option value="">{t('goals.edit.link.none')}</option>
+						{groupes.map((groupe) => {
+							const options = groupe.channels.map((channel) => (
+								<option key={channel.id} value={channel.id}>
+									{channel.nom}
+								</option>
+							))
+							// Un channel dont le track n'est pas rendu n'a PAS de groupe nommé : il est
+							// listé tel quel plutôt qu'affublé d'un intitulé inventé.
+							return groupe.nomTrack === null ? (
+								<Fragment key="sans-track">{options}</Fragment>
+							) : (
+								<optgroup key={groupe.idTrack ?? ''} label={groupe.nomTrack}>
+									{options}
+								</optgroup>
+							)
+						})}
+						{/* LA DESTINATION ACTUELLE EST TOUJOURS UNE OPTION, même absente de la liste :
+						    un channel archivé, ou dont la lecture vient de se fermer, ne figure pas
+						    parmi les liables, et sans cette option le sélecteur retomberait sur
+						    « Aucun channel » — affichant un retrait de lien qui n'a pas eu lieu. */}
+						{bloc.channel_id !== null &&
+						!groupes.some((groupe) => groupe.channels.some((channel) => channel.id === bloc.channel_id)) ? (
+							<option value={bloc.channel_id}>{bloc.destination?.nom ?? t('goals.edit.link.none')}</option>
+						) : null}
+					</select>
+					{/* LE BOUTON DE RETRAIT DOUBLE L'OPTION VIDE À LA SOURIS, et n'est rendu que
+					    lorsqu'il y a un lien à retirer : un bouton toujours présent qui n'aurait rien
+					    à défaire serait une commande morte. */}
+					{bloc.channel_id === null ? null : (
+						<Button
+							variante="secondaire"
+							taille="compacte"
+							data-testid="retirer-lien"
+							onClick={() => void ecrireLien(null)}
+							className="gap-2"
+						>
+							<Unlink aria-hidden="true" size={16} strokeWidth={2} />
+							{t('goals.edit.link.remove')}
+						</Button>
+					)}
+				</div>
+				<p id="fiche-bloc-lien-aide" className="text-sm text-text-3">
+					{etatChannels.statut === 'chargement'
+						? t('goals.edit.link.loading')
+						: etatChannels.statut === 'pret' && etatChannels.donnees.length === 0
+							? t('goals.edit.link.empty')
+							: t('goals.edit.link.hint')}
+				</p>
+				{/* LA LISTE PEUT ÉCHOUER SANS QUE LE LIEN EXISTANT NE BOUGE : le sélecteur garde alors
+				    sa destination actuelle, et la reprise relit la liste — jamais le bloc. */}
+				{etatChannels.statut === 'erreur' ? (
+					<p data-testid="erreur-channels" role="alert" className="flex flex-wrap items-center gap-2 text-sm text-danger-on-soft bg-danger-soft rounded-sm px-2 py-1">
+						{t('goals.edit.link.error')}
+						<Button variante="secondaire" taille="compacte" data-testid="recharger-channels" onClick={onRechargerChannels}>
+							{t('goals.error.retry')}
+						</Button>
+					</p>
+				) : null}
+				<MentionChamp identifiant="fiche-bloc-lien-etat" champ="lien" message={messages.lien ?? null} />
 			</div>
 		</section>
 	)
