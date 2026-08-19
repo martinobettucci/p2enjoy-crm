@@ -1487,3 +1487,237 @@ test.describe('CRM-060 4h — le rattachement d’une affaire depuis la fiche (�
 		])
 	})
 })
+
+// ================================================================================================
+// @verifies CRM-060 (docs/BACKLOG.md) — tranche 4 sous-tranche 4i : le DÉTACHEMENT d'une affaire
+//           depuis la fiche d'un contact
+// @verifies docs/SPEC-contacts.md §18.3 (les huit mesures d'écriture, et les quatre qui décident),
+//           §18.2 (aucune fonction nouvelle : le DELETE est celui de 4c)
+// @verifies docs/SPEC-permissions-rls.md §7 (un refus SILENCIEUX est zéro ligne, jamais une
+//           erreur ; chaque refus RELIT la ligne pour la constater inchangée — décision 70)
+//
+// CES SCÉNARIOS FIGENT L'ÉCART AVEC 4h, ET IL EST STRUCTUREL. Une INSERTION est filtrée par la
+// clause `WITH CHECK`, qui REJETTE la ligne : le refus est un `403` explicite. Une SUPPRESSION
+// l'est par la clause `USING`, qui rend la ligne INVISIBLE À L'ÉCRITURE : PostgREST rend `200`
+// avec un tableau VIDE, SANS erreur, sur une ligne qui EXISTE et qui reste en base. Cette
+// sous-tranche rejoint donc 4g, non 4h — un message « sans effet » y a un objet, et ne pas
+// l'écrire ferait disparaître de l'écran une ligne que la base a conservée.
+// ================================================================================================
+
+/** « Assistant IA support — Nordis » : l'affaire que la LECTRICE écrit — mesure 19 de 4h, §18.3. */
+const CARD_NORDIS = '5eed0000-0000-4000-8000-0000000000cb'
+/** « Refonte intranet Ville de Lyon », où Sophie Dupont est rattachée par le SEED. */
+const CONTACT_SOPHIE = '5eed0000-0000-4000-8000-000000000092'
+
+/** Pose un rattachement sonde avec la clé de SERVICE — pour PRÉPARER, jamais pour prouver. */
+async function rattachementSonde(
+	request: APIRequestContext,
+	sonde: Sonde,
+	cardId: string,
+	contactId: string,
+): Promise<void> {
+	const reponse = await request.post('/rest/v1/card_contacts', {
+		headers: { ...enTetesService(), Prefer: 'return=representation' },
+		data: { workspace_id: WORKSPACE_SEED, card_id: cardId, contact_id: contactId, role: null },
+	})
+	expect(reponse.status()).toBe(201)
+	sonde.rattachementsSupprimes.push({ cardId, contactId })
+}
+
+/** Le `DELETE` que `detacherContact` émet, à l'identique — les deux filtres et la représentation. */
+async function detacher(
+	request: APIRequestContext,
+	enTetes: Record<string, string>,
+	cardId: string,
+	contactId: string,
+) {
+	return request.delete(
+		`/rest/v1/card_contacts?card_id=eq.${cardId}&contact_id=eq.${contactId}`,
+		{ headers: { ...enTetes, Prefer: 'return=representation' } },
+	)
+}
+
+test.describe('CRM-060 4i — le détachement d’une affaire depuis la fiche (§18.3)', () => {
+	test('1 — l’administratrice détache un rattachement existant : 200, la ligne rendue et partie', async ({
+		request,
+	}) => {
+		const sonde = await creerSonde()
+		try {
+			const contact = await contactSonde(request, sonde, { full_name: 'Sonde 4i admin' })
+			await rattachementSonde(request, sonde, CARD_SEEDEE_1, contact.id)
+			const jeton = await jetonDe('admin@p2enjoy.test')
+			const reponse = await detacher(
+				request,
+				enTetesAuthentifies(jeton),
+				CARD_SEEDEE_1,
+				contact.id,
+			)
+			expect(reponse.status()).toBe(200)
+			// LA REPRÉSENTATION EST CE QUI REND L'ISSUE « ZÉRO LIGNE » OBSERVABLE (§18.2) : sans elle,
+			// PostgREST ne renverrait aucun corps et le refus silencieux de la politique serait
+			// indistinguable d'un succès.
+			expect((await reponse.json()) as unknown[]).toHaveLength(1)
+			expect(await rattachementsDe(request, CARD_SEEDEE_1, contact.id)).toEqual([])
+		} finally {
+			await nettoyer(request, sonde)
+		}
+	})
+
+	test('2 — LA MESURE QUI DÉCIDE : la lectrice reçoit 200 et [] SANS erreur, la ligne du seed INCHANGÉE', async ({
+		request,
+	}) => {
+		const jeton = await jetonDe('viewer@p2enjoy.test')
+		// La lectrice LIT « Refonte intranet Ville de Lyon », où Sophie est rattachée par le seed :
+		// la ligne EXISTE et lui est visible en lecture. C'est le témoin qui donne sa valeur au
+		// refus — un « zéro ligne » sur une ligne absente serait vrai quoi que fasse la RLS
+		// (décision 50).
+		expect(await rattachementsDe(request, CARD_SEEDEE_4, CONTACT_SOPHIE)).toHaveLength(1)
+
+		const reponse = await detacher(
+			request,
+			enTetesAuthentifies(jeton),
+			CARD_SEEDEE_4,
+			CONTACT_SOPHIE,
+		)
+		// NI 403, NI 401, NI LA MOINDRE ERREUR : la clause `USING` de `card_contacts_suppression`
+		// filtre la ligne AVANT de supprimer, et PostgREST n'a rien à retirer. C'est l'écart exact
+		// avec le RATTACHEMENT de 4h, qui rend un `403` explicite sur le même profil.
+		expect(reponse.status()).toBe(200)
+		expect(await reponse.json()).toEqual([])
+		// LA LIGNE EST RELUE ET CONSTATÉE INCHANGÉE (décision 70), son rôle compris.
+		expect(await rattachementsDe(request, CARD_SEEDEE_4, CONTACT_SOPHIE)).toEqual([
+			{ card_id: CARD_SEEDEE_4, contact_id: CONTACT_SOPHIE, role: 'prescripteur' },
+		])
+	})
+
+	test('3 — un rattachement INEXISTANT rend exactement la même chose : 200 et []', async ({
+		request,
+	}) => {
+		const jeton = await jetonDe('admin@p2enjoy.test')
+		// Témoin : la ligne n'existe pas.
+		expect(await rattachementsDe(request, CARD_SEEDEE_1, CONTACT_SOPHIE)).toEqual([])
+		const reponse = await detacher(
+			request,
+			enTetesAuthentifies(jeton),
+			CARD_SEEDEE_1,
+			CONTACT_SOPHIE,
+		)
+		// INDISTINGUABLE DE LA MESURE 2, ET C'EST ASSUMÉ (§18.3) : prétendre séparer un refus de
+		// droit d'une ligne déjà partie renseignerait un appelant sans droit sur l'état de
+		// l'affaire (`docs/SPEC-permissions-rls.md` §7). Un SEUL message couvre les deux.
+		expect(reponse.status()).toBe(200)
+		expect(await reponse.json()).toEqual([])
+	})
+
+	test('4 — une affaire ARCHIVÉE accepte le détachement : la commande est offerte sur TOUTES les lignes', async ({
+		request,
+	}) => {
+		const sonde = await creerSonde()
+		try {
+			const contact = await contactSonde(request, sonde, { full_name: 'Sonde 4i archivée' })
+			await rattachementSonde(request, sonde, CARD_ARCHIVEE, contact.id)
+			const jeton = await jetonDe('admin@p2enjoy.test')
+			const reponse = await detacher(request, enTetesAuthentifies(jeton), CARD_ARCHIVEE, contact.id)
+			// C'EST LA MESURE QUI RETIRE UNE RÈGLE D'ÉCRAN AVANT QU'ELLE NE SOIT ÉCRITE (§18.3) : le
+			// tableau de la fiche LISTE les affaires archivées, et une politique qui refuserait leur
+			// détachement aurait obligé à éteindre la commande sur ces lignes. `app.can_write_card`
+			// dérive du channel et ne lit NI `archived_at` NI `deleted_at`.
+			expect(reponse.status()).toBe(200)
+			expect((await reponse.json()) as unknown[]).toHaveLength(1)
+			expect(await rattachementsDe(request, CARD_ARCHIVEE, contact.id)).toEqual([])
+		} finally {
+			await nettoyer(request, sonde)
+		}
+	})
+
+	test('5 — le business developer détache : le geste n’est PAS un geste d’administration', async ({
+		request,
+	}) => {
+		const sonde = await creerSonde()
+		try {
+			const contact = await contactSonde(request, sonde, { full_name: 'Sonde 4i bizdev' })
+			await rattachementSonde(request, sonde, CARD_SEEDEE_1, contact.id)
+			const jeton = await jetonDe('bizdev@p2enjoy.test')
+			const reponse = await detacher(
+				request,
+				enTetesAuthentifies(jeton),
+				CARD_SEEDEE_1,
+				contact.id,
+			)
+			// `card_contacts_suppression` porte sur `app.can_write_card`, JAMAIS sur un rôle de
+			// workspace — la règle que la mesure 5 de 4c avait déjà établie pour l'insertion.
+			expect(reponse.status()).toBe(200)
+			expect((await reponse.json()) as unknown[]).toHaveLength(1)
+		} finally {
+			await nettoyer(request, sonde)
+		}
+	})
+
+	test('6 — l’anonyme est refusé par PRIVILÈGE, pas par zéro ligne, et la ligne reste', async ({
+		request,
+	}) => {
+		const sonde = await creerSonde()
+		try {
+			const contact = await contactSonde(request, sonde, { full_name: 'Sonde 4i anonyme' })
+			await rattachementSonde(request, sonde, CARD_SEEDEE_1, contact.id)
+			const reponse = await detacher(request, enTetesAnonymes(), CARD_SEEDEE_1, contact.id)
+			// ÉCART NOTABLE AVEC LA LECTURE, ET IL EST RELEVÉ POUR FERMER LE CLASSEMENT : la LECTURE
+			// anonyme rend `200` et `[]` (mesure 17 de 4h), là où la SUPPRESSION rend un refus de
+			// privilège — le rôle `anon` n'a pas le `grant DELETE`. Cette issue n'est pas atteignable
+			// depuis l'écran, la route étant derrière l'authentification ; elle dit ce que le
+			// dictionnaire fermé doit couvrir, et `classerRefusRattachement` la classe `forbidden`.
+			expect(reponse.status()).toBe(401)
+			expect(((await reponse.json()) as { code: string }).code).toBe('42501')
+			expect(await rattachementsDe(request, CARD_SEEDEE_1, contact.id)).toHaveLength(1)
+		} finally {
+			await nettoyer(request, sonde)
+		}
+	})
+
+	test('7 — LA LECTRICE RÉUSSIT sur « Assistant IA support — Nordis » : l’écran ne peut PAS calculer ce droit', async ({
+		request,
+	}) => {
+		const sonde = await creerSonde()
+		try {
+			const contact = await contactSonde(request, sonde, { full_name: 'Sonde 4i lectrice Nordis' })
+			await rattachementSonde(request, sonde, CARD_NORDIS, contact.id)
+			const jeton = await jetonDe('viewer@p2enjoy.test')
+			const reponse = await detacher(request, enTetesAuthentifies(jeton), CARD_NORDIS, contact.id)
+			// PENDANT EXACT DE LA MESURE 19 DE 4h. La MÊME lectrice reçoit le silence sur
+			// `CARD_SEEDEE_4` (mesure 2) et RÉUSSIT ici : les droits fins de `CRM-012` divergent
+			// d'une affaire à l'autre POUR UN MÊME PROFIL. Aucune propriété du profil ne prédit
+			// l'issue, et une interface qui grisrait la commande « parce que lecteur » retirerait à
+			// la lectrice un geste que la base lui accorde (§18.6).
+			expect(reponse.status()).toBe(200)
+			expect((await reponse.json()) as unknown[]).toHaveLength(1)
+			expect(await rattachementsDe(request, CARD_NORDIS, contact.id)).toEqual([])
+		} finally {
+			await nettoyer(request, sonde)
+		}
+	})
+
+	test('8 — un identifiant d’affaire MAL FORMÉ rend 400 / 22P02', async ({ request }) => {
+		const jeton = await jetonDe('admin@p2enjoy.test')
+		const reponse = await detacher(
+			request,
+			enTetesAuthentifies(jeton),
+			'pas-un-uuid',
+			CONTACT_LEO,
+		)
+		// Inatteignable depuis l'écran — l'identifiant vient de la DONNÉE déjà lue, jamais d'une
+		// saisie. Relevé pour que le classement du §18.5 soit fermé : `22P02` tombe dans `unknown`.
+		expect(reponse.status()).toBe(400)
+		expect(((await reponse.json()) as { code: string }).code).toBe('22P02')
+	})
+
+	test('le seed est rendu INTACT après les mesures de détachement', async ({ request }) => {
+		const reponse = await request.get(
+			'/rest/v1/card_contacts?select=card_id,contact_id,role&order=contact_id',
+			{ headers: enTetesService() },
+		)
+		expect(await reponse.json()).toEqual([
+			{ card_id: CARD_ERP, contact_id: CONTACT_LEO, role: 'decideur' },
+			{ card_id: CARD_SEEDEE_4, contact_id: CONTACT_SOPHIE, role: 'prescripteur' },
+		])
+	})
+})
