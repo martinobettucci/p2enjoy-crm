@@ -15,6 +15,28 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Les budgets d'un track existent en base : créer, doter, rendre récurrent, clôturer**
+  (`CRM-084` tranche 1, `docs/SPEC-costs.md` §2 et §3, migration `0050`). Un track porte des
+  enveloppes ; une enveloppe récurrente porte des occurrences — « Janvier 2026 », « Février 2026 »
+  — que l'on crée **une par une**. Le produit n'engendre aucun calendrier et ne fabrique pas
+  « Mars » : un mois sans occurrence est une information, et la générer la détruirait.
+- **Un budget ne se supprime pas, il se clôture — et sa clôture est réversible.** Le nom d'un
+  budget clos est **libéré** : clôturer « Salon 2025 » puis en ouvrir un nouveau l'année suivante
+  est un geste normal. Le revers est écrit et mesuré : rouvrir l'ancien devient impossible si son
+  nom a été repris entre-temps.
+- **La ligne de partage entre le cadre et le geste est posée** (`docs/SPEC-costs.md` §3) : seul un
+  **administrateur du workspace** crée, dote ou clôture un budget, quand la lecture suit
+  simplement le droit sur le track — droits fins compris. Un membre qui écrit les affaires d'un
+  track n'y crée donc aucune enveloppe, et une personne qui ne lit pas un track n'apprend ni le
+  nom ni le montant de ses budgets.
+- **La récurrence est tenue des deux côtés** : on ne pose pas d'occurrence sur un budget simple,
+  et on ne retire pas la récurrence d'un budget qui en porte déjà. Clôturer un budget ne clôt pas
+  ses occurrences, et clôturer la dernière occurrence ne clôt pas le budget.
+- **Le jeu de démonstration porte quatre budgets** : un simple sur un track fermé à la lectrice,
+  un récurrent à deux occurrences dont une clôturée, un budget clôturé, et un en `CHF` pour que le
+  regroupement par devise des écrans à venir ait de quoi se démontrer. Les deux clôtures sont
+  posées par le **vrai geste**, un `PATCH`, jamais par une colonne écrite à la création.
+
 - **Le canevas d'objectifs a son harnais de preuves dédié**, `scripts/verify-objectifs-canevas.sh`
   (`CRM-083`). Il rejoue, en une commande, la traçabilité des fichiers de l'écran, les captures des
   quatre paliers, les trois suites Vitest, la preuve d'API des refus hors interface et le parcours

@@ -1489,3 +1489,79 @@ laissent `organizations = 2`, `contacts = 3`, `card_contacts = 2`, `leo_cards = 
 | 5 | Second rejeu du seed | Aucune erreur, mêmes comptes |
 | 6 | Un contact sans email et un contact avec email cohabitent dans le même workspace | Conforme, unicité partielle |
 | 7 | Une organisation sans domaine et une avec cohabitent dans le même workspace | Conforme, unicité partielle |
+
+## 12. Budgets et occurrences — `CRM-084` tranche 1
+
+Section 8 quaterdecies du script. Les quatre budgets et les deux occurrences sont un **contrat
+opposable** : `CRM-086` construira ses histogrammes dessus, et les déplacer déplacerait ses
+captures.
+
+### 12.1 Ce que le seed pose
+
+| Identifiant | Track | Nom | Devise | Enveloppe | Récurrent | Clôturé |
+|---|---|---|---|---|---|---|
+| `…0000c1` | Conseil & IA | Prospection sortante | `EUR` | 12 000,00 | non | non |
+| `…0000c2` | Studio web | Publicité 2026 | `EUR` | 24 000,00 | **oui** | non |
+| `…0000c3` | Studio web | Salon du web 2025 | `EUR` | 8 000,00 | non | **oui** |
+| `…0000c4` | Formation | Suisse romande | **`CHF`** | 15 000,00 | non | non |
+
+| Identifiant | Budget | Libellé | Période | Enveloppe | Clôturée |
+|---|---|---|---|---|---|
+| `…0000d1` | Publicité 2026 | Janvier 2026 | 2026-01-01 → 2026-01-31 | 2 000,00 | **oui** |
+| `…0000d2` | Publicité 2026 | Février 2026 | 2026-02-01 → 2026-02-28 | 2 500,00 | non |
+
+**Chaque ligne existe pour une raison, et aucune n'est décorative.**
+
+- **`Prospection sortante` vit sur un track fermé à la lectrice.** MESURÉ sur la pile :
+  `app.can_read_track` rend faux à Farida pour « Conseil & IA », son droit fin `none` n'étant pas
+  rouvert au niveau du TRACK par son `channel_members` sur « Prospection ». Sans ce budget, la
+  règle de lecture du §3.1 de `docs/SPEC-costs.md` ne serait démontrable sur aucun écran : les
+  trois profils verraient la même liste, et le cumul du §4.5 n'aurait jamais l'occasion de
+  différer selon le lecteur.
+- **`Publicité 2026` porte DEUX occurrences, dont une close.** C'est le seul jeu qui permette à
+  `CRM-086` de rendre ses deux vues sur la MÊME donnée : agrégé dans la vue du track (§4.2),
+  détaillé par occurrence dans sa fiche (§4.3). Avec une seule occurrence, les deux vues seraient
+  indistinguables.
+- **`Salon du web 2025` est clôturé**, donc absent de l'histogramme du track (§4.2) et masqué par
+  défaut dans l'administration (§4.1). Sans lui, l'état « clôturé » serait documenté sans être
+  démontrable, ce que `CLAUDE.md` §8 refuse.
+- **`Suisse romande` est en `CHF`.** Le §4.5 impose un histogramme **par devise présente** ; un
+  jeu entièrement en euros rendrait cette règle indémontrable et laisserait la contrainte
+  `^[A-Z]{3}$` de la migration purement décorative.
+
+**Il n'y a PAS de « Mars 2026 », et c'est le contrat.** `docs/SPEC-costs.md` §2.2 interdit toute
+génération automatique d'occurrences. Un mois sans occurrence est une information — il ne s'est
+rien passé —, et un seed qui poserait douze mois vides la détruirait tout en donnant à croire que
+le produit les engendre.
+
+### 12.2 Les deux clôtures sont des GESTES
+
+`Salon du web 2025` et `Janvier 2026` naissent **ouverts**, puis sont clôturés par un vrai `PATCH`,
+exactement ce que l'administration des budgets enverra (§4.1). `CLAUDE.md` §8 interdit de fabriquer
+la trace d'un processus au lieu de l'exécuter : une clôture posée à l'insertion ne prouverait pas
+que la clôture fonctionne.
+
+### 12.3 Convergence
+
+Les insertions passent par un `POST` avec `Prefer: resolution=merge-duplicates` sur la clé
+primaire, et les deux clôtures par un `PATCH` idempotent. Le seed est **rejouable sans
+dédoublonnage** ; deux passages successifs laissent `budgets = 4` et `budget_occurrences = 2`,
+mesuré. Un budget doté à la main pendant une session de développement est **rétabli au contrat**,
+pas dupliqué.
+
+### 12.4 Preuves exigées
+
+Les deux premières sont exécutées **par le script lui-même**, avec des jetons obtenus par la vraie
+route de connexion : un contrôle qui s'appuierait sur la clé de service ne prouverait rien, celle-ci
+traversant la RLS.
+
+| # | Scénario | Attendu |
+|---|---|---|
+| 1 | `GET /rest/v1/budgets` avec le jeton réel de la lectrice | **3** budgets sur 4 — « Prospection sortante » est absent |
+| 2 | `POST /rest/v1/budgets` avec le jeton réel du business developer | **403** — il écrit les affaires du track, pas ses enveloppes |
+| 3 | `select count(*) from public.budgets` | `4` |
+| 4 | `select count(*) from public.budget_occurrences` | `2` |
+| 5 | `select count(*) from public.budgets where closed_at is not null` | `1` |
+| 6 | `select count(*) from public.budget_occurrences where closed_at is not null` | `1` |
+| 7 | `select count(distinct currency) from public.budgets` | `2` — `EUR` et `CHF` |
+| 8 | Second rejeu du seed | Aucune erreur, mêmes comptes, clôtures conservées |

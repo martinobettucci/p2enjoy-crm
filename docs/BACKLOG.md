@@ -8264,7 +8264,7 @@ la 2b-1 l'ont été : **2b-2a livre le LIEN**, 2b-2b livrera les **flèches** et
       jamais lié. L'écran lève la mention pour le seul état détectable — une destination partie à
       la corbeille.
 
-### CRM-084 — Budgets, occurrences et clôture `[ ]`
+### CRM-084 — Budgets, occurrences et clôture `[~]`
 
 `budgets`, `budget_occurrences` (`docs/SCHEMA.md` §9 bis.4 et §9 bis.5), triggers et politiques,
 plus l'écran d'administration des budgets dans le track (`docs/SPEC-costs.md` §4.1).
@@ -8274,6 +8274,57 @@ plus l'écran d'administration des budgets dans le track (`docs/SPEC-costs.md` �
 réels ; **preuve de refus d'un membre non administrateur** sur la création et sur la clôture,
 mesurée hors interface ; seed portant un budget simple, un budget récurrent à deux occurrences dont
 une clôturée, et un budget clôturé ; E2E de l'écran d'administration, captures ; harnais dédié.
+
+**TRANCHE 1 LIVRÉE — LE MODÈLE.** L'unité est découpée : cette tranche livre tout ce qui se
+GARDE — tables, triggers, politiques, seed —, la suivante livrera l'écran d'administration du
+§4.1. Le découpage est écrit ici plutôt que laissé à la mémoire d'une session.
+
+- [x] **Les deux tables, leurs contraintes et leurs index** : `supabase/migrations/0050_budgets.sql`.
+      L'unicité du nom est un index **PARTIEL** `where closed_at is null` — c'est l'écart exact
+      avec `goal_boards`, dont l'unicité porte sur tous les tableaux, et il est écrit dans les deux
+      fichiers plutôt que découvert en les comparant.
+- [x] **LA CLÔTURE EST RÉVERSIBLE, ET SA SEULE LIMITE EST NOMMÉE** — c'est la réponse à
+      « clôture réversible ou non selon le contrat écrit » que la DoD réclamait. Remettre
+      `closed_at` à nul est une simple mise à jour qu'aucune garde n'interdit ; elle échoue si le
+      nom du budget a été **repris** entre-temps, conséquence directe et assumée du fait que la
+      clôture libère le nom. Les deux cas sont mesurés en pgTAP.
+- [x] **LA RÉCURRENCE EST TENUE DES DEUX CÔTÉS, et c'est un trou que la lecture rapide manque.**
+      `docs/SCHEMA.md` §9 bis.5 décrit un invariant, pas un trigger : une garde posée seulement sur
+      `budget_occurrences` laisserait passer « créer un budget récurrent, lui poser des
+      occurrences, puis retirer sa récurrence ». L'invariant serait faux SANS qu'aucune ligne
+      interdite n'ait été insérée, et `CRM-085` s'appuierait dessus pour décider si `occurrence_id`
+      est exigée. Deux triggers, un par table, chacun éprouvé séparément.
+- [x] **Les deux fonctions d'appui `SECURITY DEFINER`** `app.can_read_budget` et
+      `app.can_write_budget`, et la ligne de partage du §3 : lecture par `app.can_read_track`
+      — droits fins compris —, écriture par `app.is_workspace_admin`. Le droit fin ne remonte PAS
+      à l'écriture, et c'est délibéré : un `track_members.access = 'write'` ouvre le travail sur le
+      track, pas sa gestion budgétaire.
+- [x] **Preuves de la tranche, toutes exécutées et vertes** : `supabase/tests/0048_budgets.test.sql`
+      **52 assertions**, `e2e/api/budgets.spec.ts` **14 scénarios**. Les deux se recouvrent
+      délibérément sur les politiques et divergent sur ce qu'elles seules peuvent voir : la suite
+      pgTAP mesure la forme des fonctions et les codes SQL, la preuve d'API mesure les **deux
+      formes du refus au niveau HTTP** — `403 / 42501` quand un `WITH CHECK` lève, `200 []` quand
+      un `USING` filtre. Cette distinction n'existe pas dans la base, et la DoD l'exige sur la
+      création ET sur la clôture.
+- [x] **Le seed porte les quatre budgets exigés** (`docs/SPEC-seed.md` §12), et **vérifie lui-même
+      deux règles avec des jetons réels** : la lectrice voit 3 budgets sur 4, le business developer
+      reçoit 403 en tentant d'en créer un. Les deux clôtures sont posées par un vrai `PATCH`, jamais
+      par une colonne écrite à la création.
+- [x] **Le contrat de types du client est à jour** : `webapp/src/lib/database.types.ts` régénéré
+      depuis le schéma, et `database.types.test-d.ts` porte les deux nouvelles tables — trente-deux
+      deviennent trente-quatre — avec la limite du générateur nommée : `Insert` et `Update`
+      exposent des chemins que les triggers refusent.
+
+- [ ] **CE QUI RESTE, ET C'EST LA TRANCHE 2 : aucun écran.** L'administration des budgets dans le
+      track (`docs/SPEC-costs.md` §4.1) n'est pas livrée — ni la table des budgets, ni
+      l'interrupteur « afficher les budgets clôturés », ni l'avertissement qui compte les lignes
+      sans réel avant une clôture. Sans elle, l'unité n'a **aucune capture** et son E2E d'interface
+      n'a pas de sujet.
+- [ ] **Harnais dédié `scripts/verify-budgets.sh`** : dû avant le passage à `[x]`.
+- [ ] **Campagne complète non intégralement rejouée sur ce changement** : les cinquante
+      `scripts/verify-*.sh` du dépôt ne tiennent pas dans une session
+      (`docs/CloudWorker.md` §2.1 ter). Les preuves réellement exécutées sont nommées dans
+      l'entrée de journal de la session.
 
 ### CRM-085 — Lignes de coût d'une affaire `[ ]`
 
