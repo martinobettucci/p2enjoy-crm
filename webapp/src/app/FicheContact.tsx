@@ -10,10 +10,17 @@
 // @spec docs/SPEC-permissions-rls.md §7 (un refus de lecture est zéro ligne, jamais une erreur)
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone)
 //
-// UN ÉCRAN QUI LIT, ET RIEN D'AUTRE, comme la fiche d'organisation dont il reprend le patron. La
-// sous-tranche 4f ne livre aucune modification, aucune suppression et aucun rattachement : les
-// privilèges existent en base depuis la tranche 1, aucun écran ne les exerce encore. L'écart est
-// NOMMÉ au §15.8, non compensé par une commande morte.
+// @spec docs/SPEC-contacts.md §16.2 (où le geste de MODIFICATION s'ancre), §16.5 (de quoi il a
+//       l'air, et le retour du focus), §16.6 (l'écran ne calcule aucun droit),
+//       §16.7 (ce que la fiche fait de la ligne rendue), §16.8 (limites nommées),
+//       §16.9 (contrat de comportement, cas a à r)
+// @spec docs/DESIGN_SYSTEM.md §5.25 (le formulaire de modification dans le flux de la fiche)
+//
+// L'ÉCRAN LIT, ET DEPUIS LA SOUS-TRANCHE 4g IL MODIFIE — cela, et rien de plus. La SUPPRESSION
+// reste absente, et son motif n'est pas le temps : elle dépend de l'arbitrage NON TRANCHÉ du §6
+// point 4, les valeurs `jsonb` qui désignent un contact supprimé demeurant en base. Le
+// rattachement depuis cette page reste absent lui aussi (§15.8). Les deux écarts sont NOMMÉS au
+// §16.8, non compensés par des commandes mortes.
 //
 // TROIS ABSENCES, UN SEUL ÉCRAN, DÉLIBÉRÉMENT (§15.4). Un contact inexistant, un contact refusé à
 // l'appelant et un identifiant qui n'est pas un uuid rendent tous les trois « contact
@@ -28,16 +35,26 @@
 // refus mis en scène.
 
 import { Archive } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { EtatErreur, EtatVide } from '../components/ui/States'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t, type CleTraduction } from '../i18n'
 import { enChargement, enErreur, pret, type EtatAsync } from '../lib/async'
-import { lireFicheContact, type FicheContactLue } from '../lib/contacts'
+import {
+	lireFicheContact,
+	lireOrganisationsDuWorkspace,
+	type ContactDuCarnet,
+	type FicheContactLue,
+	type OrganisationChoisissable,
+} from '../lib/contacts'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { AppShell } from './AppShell'
 import { CHEMIN_CONTACTS, cheminOrganisation } from './chemins'
+import {
+	FormulaireModificationContact,
+	saisieDepuisContact,
+} from './FormulaireModificationContact'
 
 /** Cellule ordinaire du tableau des affaires — mêmes règles qu'au carnet (§5.9). */
 const CLASSES_CELLULE = 'h-[var(--size-target)] px-3 truncate max-w-[32ch]'
@@ -159,7 +176,137 @@ export function ContenuFicheContact({
 
 	const contact = etat.statut === 'pret' ? etat.donnees : null
 
-	return <ContenuFiche client={client} etat={etat} contact={contact} onReprise={reprendre} />
+	// --- SOUS-TRANCHE 4g : LE GESTE DE MODIFICATION (§16.2) -------------------------------------
+	// Le formulaire est REPLIÉ PAR DÉFAUT : la fiche est d'abord une surface de lecture, et ce
+	// qu'elle affiche est précisément ce que l'on vient corriger.
+	const [ouvert, setOuvert] = useState(false)
+	const [organisations, setOrganisations] =
+		useState<EtatAsync<readonly OrganisationChoisissable[]>>(enChargement)
+	const [tentativeOrganisations, setTentativeOrganisations] = useState(0)
+	const commandeOuverture = useRef<HTMLButtonElement | null>(null)
+
+	// LA LISTE DES ORGANISATIONS N'EST LUE QUE SI LE FORMULAIRE EST OUVERT — même motif qu'au
+	// carnet (§13.4) : charger une liste pour un geste que la plupart des visites ne font pas
+	// serait une requête gratuite.
+	useEffect(() => {
+		if (client === null || !ouvert) return
+		let vivant = true
+		setOrganisations(enChargement())
+		void lireOrganisationsDuWorkspace(client).then((lues) => {
+			if (vivant) setOrganisations(lues)
+		})
+		return () => {
+			vivant = false
+		}
+	}, [client, ouvert, tentativeOrganisations])
+
+	/**
+	 * LE FOCUS EST RENDU à la commande d'ouverture APRÈS LE RENDU (§16.5, §16.9 cas c).
+	 *
+	 * La commande et le formulaire s'EXCLUENT : la commande est démontée tant que le formulaire est
+	 * ouvert, et sa référence vaut `null` au moment où le gestionnaire de fermeture s'exécute.
+	 * Appeler `focus()` depuis ce gestionnaire laisserait le focus sur le document — le défaut que
+	 * la décision 453 a trouvé au carnet, et que `BlocContactsCard` résout déjà. Le drapeau est posé
+	 * à la fermeture, l'effet rend le focus au tour suivant, quand la commande est remontée. Aucune
+	 * temporisation (`CLAUDE.md` §18) : c'est le cycle de rendu de React qui ordonne les deux gestes.
+	 */
+	const [focusARendre, setFocusARendre] = useState(false)
+
+	useEffect(() => {
+		if (ouvert || !focusARendre) return
+		commandeOuverture.current?.focus()
+		setFocusARendre(false)
+	}, [ouvert, focusARendre])
+
+	const fermer = useCallback(() => {
+		setOuvert(false)
+		setFocusARendre(true)
+	}, [])
+
+	/**
+	 * LA FICHE PREND LA LIGNE RENDUE, ET NE RELIT RIEN (§16.7).
+	 *
+	 * PostgREST rend la ligne modifiée avec son organisation embarquée : relire serait une seconde
+	 * requête pour une donnée déjà en main. La ZONE 2 — les affaires — n'est pas touchée, et ne doit
+	 * pas l'être : aucune colonne de ce formulaire n'entre dans un rattachement, et la reconstruire
+	 * relancerait la lecture à quatre niveaux du §15.3 pour un résultat identique.
+	 *
+	 * LE TITRE DE LA ROUTE SUIT LE NOUVEAU NOM (§16.9 cas f) : il est une donnée (§15.2), et un
+	 * titre resté sur l'ancien nom après une correction de coquille serait le défaut même que l'on
+	 * vient de corriger.
+	 */
+	const surModifie = useCallback(
+		(modifie: ContactDuCarnet) => {
+			setEtat((precedent) => {
+				if (precedent.statut !== 'pret' || precedent.donnees === null) return precedent
+				return pret({
+					...precedent.donnees,
+					full_name: modifie.full_name,
+					email: modifie.email,
+					phone: modifie.phone,
+					role_title: modifie.role_title,
+					organization_id: modifie.organisation?.id ?? null,
+					// `ContactDuCarnet` ne rapporte pas `domain` : la fiche n'en affiche aucun, mais
+					// son type le porte. Il est repris de l'état courant quand l'organisation n'a pas
+					// changé, et laissé `null` sinon — l'inventer serait une supposition non mesurée.
+					organisation:
+						modifie.organisation === null
+							? null
+							: {
+									...modifie.organisation,
+									domain:
+										precedent.donnees.organisation?.id === modifie.organisation.id
+											? precedent.donnees.organisation.domain
+											: null,
+								},
+				})
+			})
+			onNomConnu?.(modifie.full_name)
+			fermer()
+		},
+		[fermer, onNomConnu],
+	)
+
+	return (
+		<ContenuFiche
+			client={client}
+			etat={etat}
+			contact={contact}
+			onReprise={reprendre}
+			geste={
+				// LE GESTE N'EXISTE QUE S'IL Y A QUELQUE CHOSE À MODIFIER (§16.9 cas r) : ni sur
+				// l'introuvable, ni sur l'erreur, ni sans client. `ContenuFiche` rend ces trois états
+				// avant d'atteindre le geste, mais le construire ici sans contact serait impossible —
+				// le formulaire a besoin de ses valeurs courantes.
+				client === null || contact === null ? null : ouvert ? (
+					<FormulaireModificationContact
+						client={client}
+						idContact={contact.id}
+						valeurs={saisieDepuisContact(contact)}
+						organisations={organisations}
+						onRelireOrganisations={() =>
+							setTentativeOrganisations((precedente) => precedente + 1)
+						}
+						onModifie={surModifie}
+						onFermer={fermer}
+					/>
+				) : (
+					// AUCUNE COMMANDE ÉTEINTE D'AVANCE SELON LE RÔLE (§16.6) : la lectrice voit le
+					// geste, envoie, et reçoit `sans-effet` traduit. Griser ferait passer une décision
+					// de la base pour une décision d'écran (`CLAUDE.md` §10).
+					<button
+						type="button"
+						ref={commandeOuverture}
+						data-testid="ouvrir-modification-contact"
+						className="self-start min-h-[var(--size-target)] rounded-md bg-brand px-4 text-surface"
+						onClick={() => setOuvert(true)}
+					>
+						{t('contact.modification.open')}
+					</button>
+				)
+			}
+		/>
+	)
 }
 
 type ProprietesContenu = {
@@ -167,9 +314,11 @@ type ProprietesContenu = {
 	readonly etat: EtatAsync<FicheContactLue | null>
 	readonly contact: FicheContactLue | null
 	readonly onReprise: () => void
+	/** Le geste de modification, ou `null` quand il n'y a rien à modifier (§16.9 cas r). */
+	readonly geste?: React.ReactNode
 }
 
-function ContenuFiche({ client, etat, contact, onReprise }: ProprietesContenu) {
+function ContenuFiche({ client, etat, contact, onReprise, geste = null }: ProprietesContenu) {
 	if (client === null) {
 		return (
 			<EtatVide titre={t('contact.noWorkspace.title')} corps={t('contact.noWorkspace.body')} />
@@ -209,6 +358,12 @@ function ContenuFiche({ client, etat, contact, onReprise }: ProprietesContenu) {
 
 	return (
 		<section aria-label={t('contact.aria')} className="flex flex-col gap-6">
+			{/*
+			  LE GESTE DE MODIFICATION — §16.2. Il vit AVANT les deux zones, dans le FLUX du
+			  document : une modale recouvrirait précisément ce que l'on vient corriger. Le
+			  formulaire ouvert REMPLACE la commande — les deux s'excluent (§16.5).
+			*/}
+			{geste}
 			{/*
 			  ZONE 1 — CE QUI CARACTÉRISE LE CONTACT. Une liste de DÉFINITIONS et non un tableau :
 			  ce sont des couples libellé/valeur qui ne se comparent pas entre eux (§15.5, §5.24).

@@ -889,3 +889,102 @@ export async function lireFicheContact(
 		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
 	}
 }
+
+// ---------------------------------------------------------------------------------------------
+// @spec CRM-060 (docs/BACKLOG.md) — tranche 4 sous-tranche 4g : la MODIFICATION d'un contact
+//       depuis sa fiche
+// @spec docs/SPEC-contacts.md §16.3 (les vingt et une mesures d'écriture), §16.4 (dictionnaire
+//       FERMÉ des six refus), §16.7 (ce que la fiche fait de la ligne rendue),
+//       §16.8 (limites nommées), §16.9 (contrat de comportement)
+// @spec docs/DESIGN_SYSTEM.md §5.25 (le formulaire de modification dans le flux de la fiche)
+//
+// AUCUNE POLITIQUE NOUVELLE : cette section n'exerce que `contacts_maj_bizdev_admin`, posée par la
+// migration 0045 et prouvée par la tranche 1.
+//
+// LE REFUS D'AUTORISATION EST SILENCIEUX ICI, ET C'EST CE QUI SÉPARE 4g DE 4e. La politique
+// d'INSERTION rejette par un `403` explicite (§14.3, mesure 4) ; la politique de MISE À JOUR porte
+// une clause `USING` qui rend la ligne INVISIBLE à l'écriture, si bien que PostgREST ne trouve rien
+// à modifier et rend `200` avec un tableau VIDE (§16.3, mesures 3 et 19). Une écriture sans effet
+// DOIT donc être dite : sans cela, la lectrice verrait son formulaire se refermer sur une
+// modification qui n'a jamais eu lieu.
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * Les six natures de refus d'une modification : les cinq de la création, plus `sans-effet`.
+ *
+ * `sans-effet` n'est PAS une erreur, et c'est pourquoi elle ne peut pas venir de
+ * `classerRefusCreation` : elle se décide sur l'ABSENCE de ligne rendue, avant tout classement.
+ */
+export type RefusModificationContact = {
+	readonly nature: RefusCreationContact['nature'] | 'sans-effet'
+	readonly detail: string
+}
+
+/** Les deux issues d'une modification : la ligne modifiée, ou un refus traduit (§16.3). */
+export type ResultatModificationContact =
+	| { readonly statut: 'modifiee'; readonly contact: ContactDuCarnet }
+	| { readonly statut: 'refus'; readonly refus: RefusModificationContact }
+
+/**
+ * Modifie un contact existant du workspace courant.
+ *
+ * **LES CINQ COLONNES PARTENT D'UN BLOC, et ce n'est pas une facilité : c'est MESURÉ** (§16.3,
+ * mesures 16 à 18). L'unicité partielle sur `lower(email)` ne s'oppose PAS à la ligne elle-même,
+ * même en changeant la casse — une ligne qui reprend son propre email reçoit `200`. Un envoi
+ * différentiel serait donc une complication dont la mesure montre qu'elle n'achète rien, et il
+ * ouvrirait un chemin — « aucun champ n'a changé » — qu'aucune règle ne demande.
+ *
+ * `workspace_id` n'est JAMAIS envoyé : il n'est pas modifiable depuis cet écran, et l'envoyer
+ * n'ouvrirait qu'un refus (mesure 13). `source` non plus : elle appartient au modèle (§16.8).
+ *
+ * `.maybeSingle()` et non `.single()` : zéro ligne est ici un RÉSULTAT ATTENDU — le refus
+ * silencieux —, et `.single()` le déguiserait en erreur `PGRST116`, c'est-à-dire en panne.
+ *
+ * L'ÉCRAN N'ANTICIPE AUCUN DROIT : il envoie, puis traduit ce qu'il reçoit (§16.6).
+ * Ne lève jamais.
+ */
+export async function modifierContact(
+	client: ClientCrm,
+	modification: { readonly idContact: string; readonly saisie: SaisieContact },
+): Promise<ResultatModificationContact> {
+	const { saisie } = modification
+	try {
+		const reponse = await client
+			.from('contacts')
+			.update({
+				full_name: saisie.nom.trim(),
+				organization_id: normaliserFacultatif(saisie.idOrganisation),
+				role_title: normaliserFacultatif(saisie.fonction),
+				email: normaliserFacultatif(saisie.email),
+				phone: normaliserFacultatif(saisie.telephone),
+			})
+			.eq('id', modification.idContact)
+			.select(COLONNES_CONTACT_CARNET)
+			.maybeSingle()
+		if (reponse.error !== null) {
+			return {
+				statut: 'refus',
+				refus: classerRefusCreation(reponse.status, reponse.error.code, reponse.error.message),
+			}
+		}
+		// ZÉRO LIGNE, ET AUCUNE ERREUR (§16.3, mesures 3, 12 et 19). Trois situations aboutissent
+		// ici et sont INDISTINGUABLES par construction : l'appelant n'a pas le droit d'écrire, le
+		// contact a disparu entre l'ouverture de la fiche et l'envoi, ou la ligne est devenue
+		// invisible. Une relecture ne les séparerait pas davantage — celle d'un contact refusé rend
+		// zéro ligne, comme celle d'un contact supprimé. Un seul message les couvre (§16.4).
+		if (reponse.data === null || reponse.data === undefined) {
+			return { statut: 'refus', refus: { nature: 'sans-effet', detail: 'aucune ligne modifiée' } }
+		}
+		const { organizations, ...contact } = reponse.data as unknown as LigneBrute
+		return { statut: 'modifiee', contact: { ...contact, organisation: organizations } }
+	} catch (cause) {
+		return {
+			statut: 'refus',
+			refus: classerRefusCreation(
+				undefined,
+				undefined,
+				cause instanceof Error ? cause.message : String(cause),
+			),
+		}
+	}
+}

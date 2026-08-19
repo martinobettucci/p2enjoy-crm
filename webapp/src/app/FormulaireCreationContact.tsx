@@ -13,11 +13,17 @@
 //
 // UN REFUS N'EFFACE JAMAIS LA SAISIE (§14.4) : la personne corrige et renvoie. Le message vit
 // SOUS le formulaire, près de ce qui l'a causé.
+//
+// LES CINQ CHAMPS VIVENT DÉSORMAIS DANS `ChampsContact` (§16.2), PARTAGÉS avec le formulaire de
+// modification de la sous-tranche 4g. Le comportement de ce formulaire est INCHANGÉ, et la preuve
+// en est que `Carnet.test.tsx` reste vert sans être modifié. Ce qui reste ici est ce que la
+// création seule décide : ce qu'elle envoie, et les cinq refus qu'elle traduit.
 
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { t } from '../i18n'
 import type { CleTraduction } from '../i18n/fr'
 import { enChargement, type EtatAsync } from '../lib/async'
+import { ChampsContact } from './ChampsContact'
 import {
 	creerContact,
 	type ContactDuCarnet,
@@ -50,9 +56,6 @@ const CLES_REFUS: Record<RefusCreationContact['nature'], CleTraduction> = {
 	indisponible: 'contacts.creation.refus.indisponible',
 }
 
-const CLASSES_CHAMP =
-	'h-[var(--size-target)] w-full rounded-md border border-border bg-surface px-3 text-text-1'
-
 export type ProprietesFormulaireCreationContact = {
 	readonly client: ClientCrm
 	readonly idWorkspace: string
@@ -82,12 +85,6 @@ export function FormulaireCreationContact({
 	const [nomManquant, setNomManquant] = useState(false)
 	const [envoiEnCours, setEnvoiEnCours] = useState(false)
 	const champNom = useRef<HTMLInputElement | null>(null)
-	const idNom = useId()
-	const idOrganisation = useId()
-	const idFonction = useId()
-	const idEmail = useId()
-	const idTelephone = useId()
-	const idErreurNom = useId()
 
 	useEffect(() => {
 		champNom.current?.focus()
@@ -125,9 +122,6 @@ export function FormulaireCreationContact({
 		onCree(resultat.contact)
 	}
 
-	const listeIndisponible = organisations.statut !== 'pret'
-	const listeVide = organisations.statut === 'pret' && organisations.donnees.length === 0
-
 	return (
 		<form
 			data-testid="formulaire-creation-contact"
@@ -137,120 +131,14 @@ export function FormulaireCreationContact({
 				void envoyer(evenement)
 			}}
 		>
-			<div className="flex flex-col gap-1">
-				<label htmlFor={idNom} className="text-sm text-text-2">
-					{t('contacts.creation.name')}
-				</label>
-				<input
-					id={idNom}
-					ref={champNom}
-					data-testid="champ-nom-contact"
-					className={CLASSES_CHAMP}
-					value={saisie.nom}
-					required
-					aria-invalid={nomManquant}
-					aria-describedby={nomManquant ? idErreurNom : undefined}
-					onChange={(evenement) => modifier('nom', evenement.target.value)}
-				/>
-				{nomManquant ? (
-					<p id={idErreurNom} role="alert" className="text-sm text-danger">
-						{t('contacts.creation.nameRequired')}
-					</p>
-				) : null}
-			</div>
-
-			<div className="flex flex-col gap-1">
-				<label htmlFor={idOrganisation} className="text-sm text-text-2">
-					{t('contacts.creation.organization')}
-				</label>
-				{/*
-				  LES CAS k ET l DU §14.5 sont ceux du sélecteur de la sous-tranche 4d (§13.5 cas h
-				  et i), et ils sont repris sans les réécrire : une liste illisible DÉSACTIVE le
-				  contrôle et offre une action de reprise — il n'y a rien à choisir, et un `select`
-				  vide mais actif serait une commande morte ; une liste vide n'offre que l'option
-				  vide et le dit, SANS action, aucune surface ne créant d'organisation (§14.7).
-				*/}
-				<select
-					id={idOrganisation}
-					data-testid="champ-organisation-contact"
-					className={CLASSES_CHAMP}
-					value={saisie.idOrganisation}
-					disabled={listeIndisponible}
-					aria-busy={organisations.statut === 'chargement'}
-					onChange={(evenement) => modifier('idOrganisation', evenement.target.value)}
-				>
-					{organisations.statut === 'chargement' ? (
-						<option value="">{t('contacts.creation.organization.loading')}</option>
-					) : (
-						<>
-							<option value="">{t('contacts.creation.organization.none')}</option>
-							{organisations.statut === 'pret'
-								? organisations.donnees.map((organisation) => (
-										<option key={organisation.id} value={organisation.id}>
-											{organisation.name}
-										</option>
-									))
-								: null}
-						</>
-					)}
-				</select>
-				{organisations.statut === 'erreur' ? (
-					<p className="flex items-center gap-2 text-sm text-danger">
-						{t('contacts.creation.organization.error')}
-						<button
-							type="button"
-							data-testid="relire-organisations"
-							className="min-h-[var(--size-target)] text-brand hover:underline"
-							onClick={onRelireOrganisations}
-						>
-							{t('contacts.creation.organization.retry')}
-						</button>
-					</p>
-				) : null}
-				{listeVide ? (
-					<p className="text-sm text-text-2">{t('contacts.creation.organization.empty')}</p>
-				) : null}
-			</div>
-
-			<div className="flex flex-col gap-1">
-				<label htmlFor={idFonction} className="text-sm text-text-2">
-					{t('contacts.creation.role')}
-				</label>
-				<input
-					id={idFonction}
-					data-testid="champ-fonction-contact"
-					className={CLASSES_CHAMP}
-					value={saisie.fonction}
-					onChange={(evenement) => modifier('fonction', evenement.target.value)}
-				/>
-			</div>
-
-			<div className="flex flex-col gap-1">
-				<label htmlFor={idEmail} className="text-sm text-text-2">
-					{t('contacts.creation.email')}
-				</label>
-				<input
-					id={idEmail}
-					type="email"
-					data-testid="champ-email-contact"
-					className={CLASSES_CHAMP}
-					value={saisie.email}
-					onChange={(evenement) => modifier('email', evenement.target.value)}
-				/>
-			</div>
-
-			<div className="flex flex-col gap-1">
-				<label htmlFor={idTelephone} className="text-sm text-text-2">
-					{t('contacts.creation.phone')}
-				</label>
-				<input
-					id={idTelephone}
-					data-testid="champ-telephone-contact"
-					className={CLASSES_CHAMP}
-					value={saisie.telephone}
-					onChange={(evenement) => modifier('telephone', evenement.target.value)}
-				/>
-			</div>
+			<ChampsContact
+				saisie={saisie}
+				onModifier={modifier}
+				nomManquant={nomManquant}
+				champNom={champNom}
+				organisations={organisations}
+				onRelireOrganisations={onRelireOrganisations}
+			/>
 
 			<div className="flex flex-wrap items-center gap-2">
 				<button

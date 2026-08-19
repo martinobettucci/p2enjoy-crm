@@ -249,6 +249,31 @@ export const fr = {
 	'contact.noWorkspace.body':
 		'Connectez-vous à un espace de travail pour consulter ses contacts.',
 
+	// --- Modification d'un contact — CRM-060 tranche 4g, docs/SPEC-contacts.md §16 -------
+	// Les LIBELLÉS DES CHAMPS ne sont pas redéclarés : ce sont ceux du formulaire de création
+	// (`contacts.creation.*`), partagés par `ChampsContact` (§16.2). Seuls le titre, les deux
+	// commandes et les six refus appartiennent à ce formulaire-ci.
+	//
+	// `sansEffet` EST LA CLÉ QUI SÉPARE 4g DE 4e (§16.3, mesures 3, 12 et 19) : un refus
+	// d'autorisation, un contact disparu et une ligne devenue invisible rendent tous les trois
+	// `200` et zéro ligne, indistinguables par construction. Le message n'affirme donc NI le
+	// refus NI la disparition — il dit ce qui est certain, que rien n'a changé, et il invite à
+	// relire la fiche.
+	'contact.modification.open': 'Modifier',
+	'contact.modification.title': 'Modifier le contact',
+	'contact.modification.submit': 'Enregistrer',
+	'contact.modification.cancel': 'Annuler',
+	'contact.modification.refus.sansEffet':
+		'Rien n’a été modifié. Vous n’avez peut-être pas le droit de modifier ce contact, ou il n’existe plus. Rechargez la fiche pour voir son état actuel.',
+	'contact.modification.refus.doublon': 'Un autre contact porte déjà cette adresse email.',
+	'contact.modification.refus.organisation':
+		'Cette organisation n’existe plus. Rechargez la liste, puis choisissez-en une autre.',
+	'contact.modification.refus.saisie': 'Une des valeurs saisies n’a pas la forme attendue.',
+	'contact.modification.refus.interdit':
+		'Vous n’avez pas le droit de modifier ce contact.',
+	'contact.modification.refus.indisponible':
+		'Le contact n’a pas pu être modifié. Réessayez.',
+
 	// --- Contacts d'une affaire — CRM-060 tranche 4c, docs/SPEC-contacts.md §12 ----------
 	// Les refus forment un DICTIONNAIRE FERMÉ (§12.5) : le message du serveur n'atteint jamais
 	// l'écran. Le rôle d'un rattachement, lui, n'est PAS traduit — c'est une valeur métier libre
