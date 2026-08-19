@@ -5,6 +5,7 @@
 // @spec CRM-059 (docs/BACKLOG.md) — route de l'écran d'état de la messagerie
 // @spec CRM-077 (docs/BACKLOG.md) — route de la corbeille (docs/SPEC-corbeille.md §4.1)
 // @spec CRM-060 (docs/BACKLOG.md) — route de la fiche d'organisation (docs/SPEC-contacts.md §11.2)
+// @spec CRM-086 (docs/BACKLOG.md) — route de l'écran de coûts d'un track (docs/SPEC-costs.md §4.0)
 // @spec docs/SPEC-webapp.md §5.2 (routes), §6.2 (session), §12.3 (chargement différé)
 // @spec docs/SPEC-auth.md §9.1 ; docs/JOURNAL.md décision 248
 //
@@ -26,6 +27,7 @@ import {
 	CHEMIN_ADMIN_WORKFLOWS,
 	CHEMIN_CARD,
 	CHEMIN_CORBEILLE,
+	CHEMIN_COUTS_TRACK,
 	CHEMIN_DEMARRAGE,
 	CHEMIN_ETAT_MESSAGERIE,
 	CHEMIN_LISTE,
@@ -83,6 +85,15 @@ const Corbeille = lazy(async () => ({ default: (await import('./Corbeille')).Cor
  * paquet principal contient de toute façon.
  */
 const RouteCard = lazy(async () => ({ default: (await import('./RouteCard')).RouteCard }))
+/**
+ * L'écran de coûts d'un track — `CRM-086`, `docs/SPEC-costs.md` §4.2. Chargé à la demande pour le
+ * motif exact des surfaces d'administration et du canevas d'objectifs : il emporte l'histogramme,
+ * que les sessions qui n'ouvrent jamais les coûts n'ont pas à télécharger (`CLAUDE.md` §21).
+ *
+ * Il porte sa PROPRE coquille, comme `RouteTrack` et `RouteCard` : son titre est le nom du track,
+ * donc une donnée, et sa barre d'onglets dépend du chargement des channels.
+ */
+const CoutsTrack = lazy(async () => ({ default: (await import('./CoutsTrack')).CoutsTrack }))
 /**
  * La fiche d'organisation de `CRM-060` tranche 4b, chargée à la demande comme le carnet dont elle
  * prolonge la lecture — même motif : un écran que la plupart des sessions n'ouvrent pas n'a pas à
@@ -146,6 +157,12 @@ function RoutesApplication() {
 				{CHEMINS_TRACK.map((chemin) => (
 					<Route key={chemin} path={chemin} element={<RouteTrack />} />
 				))}
+				{/* L'écran de coûts d'un track — `CRM-086`, docs/SPEC-costs.md §4.0 et §4.2. Hors de
+				    `ROUTES` : son titre est le nom du track — une donnée —, et son contenu dépend
+				    d'un paramètre d'adresse. Il ne dispute rien à `/tracks/:slugTrack/:slugChannel`,
+				    react-router classant ses routes par spécificité : un segment littéral l'emporte
+				    sur un segment dynamique de même rang, quel que soit l'ordre de déclaration. */}
+				<Route path={CHEMIN_COUTS_TRACK} element={<CoutsTrack />} />
 				{/* La vue liste d'un channel — `CRM-042`. Même coquille et même résolution de track
 				    que le board, dont elle n'est qu'une seconde lecture : ce qui change est la zone
 				    principale, pas la route de track (docs/SPEC-cards.md §12.2). */}

@@ -2038,6 +2038,26 @@ export const fr = {
 	// deux contrats différents pour une même phrase, et les confondre casserait l'un des deux.
 	'costs.chart.pending.notice':
 		'{lignes} ligne(s) sans coût réel saisi, pour {montant} de prévisionnel.',
+
+	// -------------------------------------------------------------------------------------------
+	// Écran de coûts d'un track — `CRM-086` tranche 3, docs/SPEC-costs.md §4.0, §4.2 et §4.7.
+	// Ces clés-ci nomment bien « le track », contrairement à celles de l'histogramme ci-dessus :
+	// elles appartiennent à UN écran et non au composant partagé par les trois.
+	// -------------------------------------------------------------------------------------------
+	'route.costs.track.title': 'Coûts du track',
+	// Entrée de la barre d'onglets. Le libellé est court parce qu'il vit à côté des noms de
+	// channels, qui sont des données de longueur libre.
+	'tabs.track.costs': 'Coûts',
+	'tabs.track.aria': 'Vues du track',
+	// L'en-tête de la première colonne du tableau équivalent (§5.30) : sur cet écran, une paire de
+	// barres désigne un budget.
+	'costs.track.column': 'Budget',
+	// L'état « aucun budget sur le track » du §4.7. Il n'offre aucune action : la création vit dans
+	// l'administration de l'arborescence (§4.1), et y renvoyer conditionnellement au rôle ferait
+	// calculer un droit à l'interface.
+	'costs.track.empty.title': 'Aucun budget sur ce track',
+	'costs.track.empty.body':
+		'Les budgets ouverts d’un track apparaissent ici, comparés à leurs coûts réels. Un administrateur peut en créer depuis l’administration de l’arborescence.',
 } as const
 
 export type CleTraduction = keyof typeof fr

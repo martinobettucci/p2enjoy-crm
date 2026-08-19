@@ -4,6 +4,7 @@
 // @spec CRM-059 (docs/BACKLOG.md) — route de l'écran d'état de la messagerie
 // @spec CRM-077 (docs/BACKLOG.md) — adresse de la corbeille (docs/SPEC-corbeille.md §4.1)
 // @spec CRM-060 (docs/BACKLOG.md) — route du carnet de contacts (docs/SPEC-contacts.md §10.2)
+// @spec CRM-086 (docs/BACKLOG.md) — adresse de l'écran de coûts d'un track (docs/SPEC-costs.md §4.0)
 // @spec docs/SPEC-webapp.md §5.2 (routes) ; docs/DESIGN_SYSTEM.md §5.8 (états)
 // @spec docs/SPEC-administration-arborescence.md §3.1 (deux adresses, et non une)
 // @spec docs/SPEC-mail-subsystem.md §20.11.1 (adresse dédiée, hors de ROUTES)
@@ -34,6 +35,8 @@ import {
 	CHEMIN_ADMIN_WORKFLOWS,
 	CHEMIN_CONTACTS,
 	CHEMIN_CORBEILLE,
+	CHEMIN_COUTS_TRACK,
+	cheminCoutsTrack,
 	CHEMIN_DEMARRAGE,
 	CHEMIN_ETAT_MESSAGERIE,
 	CHEMIN_INBOX,
@@ -52,6 +55,8 @@ export {
 	CHEMIN_ADMIN_WORKFLOWS,
 	CHEMIN_CONTACTS,
 	CHEMIN_CORBEILLE,
+	CHEMIN_COUTS_TRACK,
+	cheminCoutsTrack,
 	CHEMIN_DEMARRAGE,
 	CHEMIN_ETAT_MESSAGERIE,
 	CHEMIN_INBOX,

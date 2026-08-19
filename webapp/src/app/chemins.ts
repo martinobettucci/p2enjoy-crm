@@ -1,4 +1,5 @@
 // @spec CRM-079 (docs/BACKLOG.md) — adresses des surfaces atteintes hors de `ROUTES`
+// @spec CRM-086 (docs/BACKLOG.md) — adresse de l'écran de coûts d'un track (docs/SPEC-costs.md §4.0)
 // @spec docs/SPEC-onboarding.md §4.1 (une adresse propre), §4.3 (entrée dans l'index des réglages)
 // @spec docs/SPEC-webapp.md §5.2 (routes) ; docs/SPEC-administration-arborescence.md §3.1 ;
 //       docs/SPEC-mail-subsystem.md §20.11.1 ; docs/SPEC-corbeille.md §4.1 ;
@@ -108,3 +109,25 @@ export const cheminTableauObjectifs = (idTableau: string) => `/objectifs/${idTab
 
 /** Guide de démarrage — `CRM-079`, `docs/SPEC-onboarding.md` §4.1. */
 export const CHEMIN_DEMARRAGE = '/demarrage' as const
+
+/**
+ * Écran de coûts d'un track — `CRM-086`, `docs/SPEC-costs.md` §4.0 et §4.2.
+ *
+ * L'adresse est ARRÊTÉE par le §4.0, écrit avant le code : les §4.2, §4.3 et §4.5 décrivaient le
+ * contenu des trois écrans sans jamais nommer leur adresse.
+ *
+ * Elle ne figure PAS dans `ROUTES`, exactement comme `CHEMIN_CARD`, `CHEMIN_LISTE` et
+ * `CHEMIN_OBJECTIFS_TABLEAU` : son titre est le nom du track, donc une **donnée**, et son contenu
+ * dépend d'un paramètre d'adresse. La couverture exacte `ROUTES` ⇄ `ENTREES_TRANSVERSES` reste
+ * ainsi inchangée.
+ *
+ * **AUCUNE COLLISION AVEC `/tracks/:slugTrack/:slugChannel`, ET CE N'EST PAS UNE CHANCE.** React
+ * Router classe ses routes par spécificité et non par ordre de déclaration : un segment littéral
+ * l'emporte toujours sur un segment dynamique de même rang. Un channel dont le slug vaudrait
+ * `couts` serait donc masqué par cet écran — c'est le prix du segment littéral, et il est le même
+ * que celui déjà payé par `/tracks/:slugTrack/:slugChannel/liste` depuis `CRM-042`.
+ */
+export const CHEMIN_COUTS_TRACK = '/tracks/:slugTrack/couts' as const
+
+/** Adresse concrète de l'écran de coûts d'un track donné. */
+export const cheminCoutsTrack = (slugTrack: string) => `/tracks/${slugTrack}/couts`
