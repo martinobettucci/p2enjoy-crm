@@ -7471,6 +7471,22 @@ relevées sur la pile seedée) :
 **Aucune migration, et le seed n'est PAS modifié** : ses trois contacts couvrent déjà toutes les
 branches sauf l'affaire archivée (§15.7).
 
+**Campagne de fin de session, 2026-08-19** : `typecheck` **vert** ; `build` **vert** ; `test:unit`
+**1645 verts, 51 fichiers** ; `test:sql` **45 fichiers, 2269 assertions, aucune anomalie** ;
+`e2e:api` **724 verts** ; `e2e:ui` **420 verts, aucun échec**, la suite entière ; `e2e:mail`
+**42 verts** ; `pytest` **242 verts**. Harnais exécutés : `verify-harness.sh` **31 contrôles,
+aucune anomalie** — les deux compteurs révisés dans le même changement y passent —,
+`verify-seed.sh` **55**, `verify-seed-demo.sh` **69** et `verify-mail-classement.sh` **25**, tous
+sans anomalie. `verify-cards.sh` rend **46 contrôles, 1 en échec** : un compteur de seed dépassé,
+**étranger à cette sous-tranche**, consigné **INC-162** avec sa mesure et son comportement laissé
+inchangé — les sept suites globales du harnais y sont vertes. **Les quarante-cinq autres
+`scripts/verify-*.sh` n'ont PAS été exécutés**, faute de temps (`docs/CloudWorker.md` §2.1 ter).
+
+**Une observation d'exploitation, mesurée** : deux harnais lancés EN PARALLÈLE se perturbent, l'un
+dégradant la base pendant que l'autre mesure. `verify-seed-demo.sh` a rendu « 2 anomalies » pendant
+que `verify-harness.sh` tournait, puis **69 contrôles, aucune anomalie** seul. Un verdict rendu par
+un harnais concurrent d'un autre ne dit rien du produit.
+
 **Sous-tranche 4g livrée, 2026-08-19 — la MODIFICATION d'un contact depuis sa fiche**
 (`docs/SPEC-contacts.md` §16, spécification écrite et committée **avant toute ligne de code**,
 fondée sur **vingt et une** mesures relevées sur la pile seedée avec les jetons réels des trois
