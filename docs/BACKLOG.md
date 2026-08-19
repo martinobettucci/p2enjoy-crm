@@ -8010,10 +8010,49 @@ gestes qui **placent**, la suivante livrera ceux qui **renseignent** et ceux qui
       bloc posé par la clé de service hors interface. Sans cela, les comptes des scénarios de
       lecture dériveraient d'une exécution à l'autre.
 
-**CE QUI RESTE — TRANCHE 2b, LE CONTENU ET LES LIENS.** Aucune commande morte n'est posée pour ces
-gestes.
-- [ ] **Saisir titre, corps, couleur**, et **régler le remplissage** par curseur **et** champ
-      numérique, les deux écrivant la même valeur (§3). `Entrée` ouvre la fiche d'édition (§5.5).
+**TRANCHE 2b-1 LIVRÉE — LE CONTENU.** La tranche 2b est elle-même découpée : 2b-1 livre ce qui se
+RENSEIGNE, 2b-2 livrera ce qui RELIE — le lien vers un channel et les flèches.
+
+- [x] **Saisir titre, corps, couleur**, et **régler le remplissage** par curseur **et** champ
+      numérique, les deux écrivant la même valeur (§3). La fiche d'édition s'ouvre par `Entrée` au
+      clavier (§5.5) et par un **clic sans déplacement** à la souris — son binôme.
+      `webapp/src/lib/objectifs-ecriture.ts` (`ecrireContenuBloc`, `bornerRemplissage`,
+      `COULEURS_BLOC`), `webapp/src/app/Objectifs.tsx` (`FicheEditionBloc`).
+- [x] **LA FICHE N'A AUCUN BOUTON D'ENREGISTREMENT**, et ce n'est pas une commodité : chaque champ
+      écrit sa propre valeur dès qu'elle est arrêtée (`docs/DESIGN_SYSTEM.md` §5.7 ter). Un bouton
+      unique renverrait les quatre colonnes à chaque fois et écraserait ce qu'un collègue vient
+      d'écrire dans un autre champ du même bloc — le défaut exact que la tranche 2a a corrigé sur la
+      géométrie, reposé sous une autre forme. Un scénario d'écran le tient en comptant les boutons
+      de la fiche.
+- [x] **Le curseur et le champ numérique sont UN SEUL contrôle à deux entrées** : un état, une
+      fonction d'écriture. Deux chemins distincts divergeraient au premier ajustement, et l'un des
+      deux finirait par écrire autre chose que ce qu'il montre. Éprouvé à l'écran ET sur la pile.
+- [x] **Une saisie illisible n'écrit RIEN, jamais zéro** : `bornerRemplissage` rend `null` sur un
+      champ vidé ou sur du texte. Zéro est une valeur — « finalement rien fait » —, et l'écrire à sa
+      place serait la valeur par défaut trompeuse que `CLAUDE.md` §18 interdit.
+- [x] **Aucun refus n'est anticipé** (`CLAUDE.md` §10) : un titre vide part, et c'est
+      `goal_blocks_titre_check` qui le refuse ; une couleur hors énumération part, et c'est
+      `goal_blocks_color_check` qui la refuse. Les deux sont traduits en `saisie-invalide`.
+- [x] **UN CLIC N'EST PLUS UN GLISSEMENT DE ZÉRO PIXEL**, et cette distinction a supprimé une
+      écriture inutile de la tranche 2a : poser puis relever le doigt sur un bloc sans le bouger
+      envoyait jusqu'ici une position identique à celle déjà en base — un `PATCH` qui ne change rien
+      reste un `PATCH`, et il aurait écrasé entre-temps le déplacement d'un collègue.
+- [x] **Preuves de la tranche, toutes exécutées et vertes** :
+      `webapp/src/lib/objectifs-ecriture.test.ts` **34 assertions** (13 pour cette tranche),
+      `webapp/src/app/Objectifs.test.tsx` **36 scénarios** (14 pour cette tranche),
+      `e2e/ui/objectifs.spec.ts` **21 scénarios** dont 5 pour cette tranche, trois écrivant
+      réellement dans la base avec le jeton de l'administratrice et remettant le seed en état par la
+      clé de service. Console vierge. **Trois captures observées** sous `docs/captures/CRM-083/` :
+      `fiche-edition-1440.jpg`, `remplissage-saisi-1440.jpg`, `fiche-refus-lectrice-1440.jpg`.
+- [x] **DEUX DÉFAUTS TROUVÉS PAR LA VÉRIFICATION, ET AUCUN PAR UNE PREUVE VERTE.** (1) L'observation
+      de la capture a montré le champ numérique du remplissage large de toute la fiche : `w-full` et
+      `w-[10ch]` se disputaient sans arbitre, **l'ordre des classes dans l'attribut ne décidant de
+      rien**. La largeur est désormais posée par chaque champ. (2) Le détecteur de clés mortes du
+      dictionnaire a déclaré mortes les cinq clés de couleur, appelées par une clé construite : il
+      avait raison — une clé qu'aucune recherche textuelle ne trouve survit à la suppression du code
+      qui l'employait. Table explicite.
+
+**CE QUI RESTE — TRANCHE 2b-2, LES LIENS.** Aucune commande morte n'est posée pour ces gestes.
 - [ ] **Lier un bloc à un channel** — sélecteur des channels **lisibles**, groupés par track — et
       **retirer le lien** ; poser le lien exige `app.can_write_channel`, le retirer non (§4.2).
 - [ ] **Tracer une flèche** : `Espace` puis sélection d'un second bloc (§5.5), choix de la direction
@@ -8026,14 +8065,19 @@ gestes.
       elle envoie et traduit le refus, mesuré — et laisse la règle générale au responsable.
 - [~] **Refus du `viewer` mesuré HORS interface**, exigé par la DoD. `e2e/api/objectifs.spec.ts`
       le mesure déjà pour `CRM-082` — `403` / `42501` en insertion sur les trois tables, `200` et
-      zéro ligne en modification. Ce qui reste dû est le refus des gestes de la tranche 2b.
+      zéro ligne en modification. **La tranche 2b-1 n'ouvre AUCUNE table ni aucune colonne nouvelle
+      à l'écriture** : `title`, `body`, `color` et `fill_percent` vivent dans `goal_blocks`, sous la
+      politique de modification déjà mesurée, si bien que le refus hors interface du contenu est le
+      même que celui de la géométrie. Ce qui reste dû est le refus des gestes de la tranche 2b-2,
+      qui touche `goal_links` et le lien vers un channel.
 - [ ] **Harnais dédié `scripts/verify-objectifs-canevas.sh`**, non complaisant, éprouvé par des
       dégradations réelles.
 - [~] **Le canevas doit être utilisable entièrement au clavier** (`CLAUDE.md` §22,
       `docs/SPEC-goals.md` §5.5). La tabulation, l'étiquetage, le défilement, **la pose, le
-      déplacement et le redimensionnement** sont livrés au clavier et prouvés ; le tracé d'une
-      flèche au clavier reste dû avec la tranche 2b. C'est la partie la plus facile à oublier de
-      cette unité.
+      déplacement, le redimensionnement**, et depuis la tranche 2b-1 **l'ouverture de la fiche par
+      `Entrée`, sa saisie complète et sa fermeture par `Échap` avec retour du focus au bloc** sont
+      livrés au clavier et prouvés ; le tracé d'une flèche au clavier reste dû avec la tranche 2b-2.
+      C'est la partie la plus facile à oublier de cette unité.
 - [ ] **Écart nommé, consigné en INC-169 plutôt que tranché** : le §5.4 demande « lien perdu » pour
       un channel **supprimé** (`channel_id` devenu nul), état qui ne se distingue en rien d'un bloc
       jamais lié. L'écran lève la mention pour le seul état détectable — une destination partie à

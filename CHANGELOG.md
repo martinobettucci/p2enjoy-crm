@@ -23,6 +23,16 @@ d'exécuter le code attendu.
   position et la taille sont **persistées**, et la mesure est faite après rechargement.
 - **La position d'un bloc vient toujours du geste**, jamais d'un placement automatique : le produit
   ne cherche aucune place libre, ne décale rien et n'aligne rien sur une grille.
+- **Un bloc d'objectif se renseigne : titre, corps, couleur et remplissage** (`CRM-083`
+  tranche 2b-1, `docs/SPEC-goals.md` §3 et §5.5). Sa fiche s'ouvre par `Entrée` au clavier ou d'un
+  clic à la souris, sous le canevas, qui reste visible pendant la saisie. Le remplissage se règle
+  **au curseur comme au champ numérique**, les deux portant la même valeur. `Échap` ferme la fiche
+  et rend le focus au bloc.
+- **La fiche n'a aucun bouton d'enregistrement** : chaque champ écrit sa propre valeur dès qu'elle
+  est arrêtée, et n'envoie que sa propre colonne. Modifier un titre ne réécrit donc ni le corps, ni
+  la couleur, ni le remplissage qu'un collègue vient de saisir.
+- **Le remplissage reste saisi à la main, jamais calculé** : le produit n'a aucune opinion sur ce
+  que « avancé à 60 % » signifie pour l'objectif de quelqu'un d'autre.
 
 ### Corrigé
 
@@ -31,6 +41,12 @@ d'exécuter le code attendu.
   collègue avec la valeur qu'il avait chargée. Défaut trouvé par la preuve, avant toute livraison.
 - **La marque de la poignée de redimensionnement**, qui se lisait comme une languette accrochée au
   coin de chaque bloc. Défaut trouvé en **regardant une capture**, pas en lisant un test.
+- **Un clic sur un bloc n'écrit plus sa position.** Poser puis relever le doigt sans bouger envoyait
+  une écriture identique à ce que la base portait déjà — et cette écriture aurait écrasé, entre
+  temps, le déplacement d'un collègue. Un clic ouvre désormais la fiche du bloc ; seul un
+  déplacement réel écrit.
+- **La largeur du champ numérique du remplissage**, qui occupait toute la fiche : deux classes de
+  largeur s'y disputaient sans arbitre. Défaut trouvé en **regardant une capture**.
 
 ### Documentation
 

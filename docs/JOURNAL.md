@@ -20225,3 +20225,60 @@ toutes celles que les deux tranches du canevas ajoutent sont engendrées.
 échecs de pièces jointes d'INC-167 ne se sont **pas** reproduits sur cette exécution. Les quarante-
 huit autres `scripts/verify-*.sh` n'ont pas été rejoués, la série entière ne tenant pas dans une
 session.
+
+## décision 466 — `CRM-083` tranche 2b-1 : le bloc se RENSEIGNE, et chaque champ n'envoie que le sien
+
+**L'unité, et le choix.** La décision 465 laisse `CRM-083` en `[~]` et désigne la tranche 2b comme
+reprise. Sa spécification — `docs/SPEC-goals.md` §3 et §5.5 — était **déjà écrite et committée** :
+le §3.2 point 3 de `docs/CloudWorker.md` s'applique dans sa forme d'exception, elle est lue
+intégralement et le code commence. La tranche 2b est **découpée en deux**, comme la 2a l'a été :
+**2b-1 livre ce qui se RENSEIGNE**, 2b-2 livrera ce qui RELIE — le lien vers un channel et les
+flèches.
+
+**Ce qui a été livré.** La fiche d'édition d'un bloc : titre, corps, couleur parmi les cinq jetons
+du §2.2, et remplissage réglé **au curseur comme au champ numérique**. Elle s'ouvre par `Entrée` au
+clavier et par un clic à la souris, se ferme par `Échap` en rendant le focus au bloc, et vit **sous**
+le canevas plutôt qu'en surimpression — le bloc qu'elle édite doit rester visible, c'est lui qui
+montre l'effet de la couleur et du remplissage qu'on règle.
+
+**LA FICHE N'A AUCUN BOUTON D'ENREGISTREMENT, et ce n'est pas une commodité.** Chaque champ écrit sa
+propre valeur dès qu'elle est arrêtée (`docs/DESIGN_SYSTEM.md` §5.7 ter), et n'envoie **que sa
+propre colonne**. Un bouton unique renverrait les quatre à chaque fois et écraserait ce qu'un
+collègue vient d'écrire dans un autre champ du même bloc : c'est exactement le défaut que la
+tranche 2a a corrigé sur la géométrie, et il se reposait ici sous une autre forme. Un scénario
+d'écran le tient en **comptant les boutons de la fiche**.
+
+**LE CURSEUR ET LE CHAMP NUMÉRIQUE SONT UN SEUL CONTRÔLE À DEUX ENTRÉES.** Le §3 demande que « les
+deux écrivent la même valeur » ; la seule façon de le tenir dans le temps est qu'ils partagent un
+état et une fonction d'écriture. Deux chemins distincts divergeraient au premier ajustement, et
+l'un des deux finirait par écrire autre chose que ce qu'il montre.
+
+**UN CLIC N'EST PLUS UN GLISSEMENT DE ZÉRO PIXEL, et cette distinction a supprimé une écriture
+inutile de la tranche 2a.** Il fallait un binôme souris à la touche `Entrée` ; en le posant, on a
+découvert que poser puis relever le doigt sur un bloc sans le bouger envoyait jusqu'ici une
+position **identique à celle déjà en base**. Un `PATCH` qui ne change rien reste un `PATCH`, et il
+aurait écrasé, entre-temps, le déplacement d'un collègue. La comparaison est **exacte et sans
+tolérance en pixels** : les deux géométries comparées sont déjà des entiers, et une tolérance
+rendrait un petit glissement volontaire indistinguable d'un clic.
+
+**LES DEUX DÉFAUTS DE CETTE TRANCHE ONT ÉTÉ TROUVÉS PAR LA VÉRIFICATION, AUCUN PAR UNE PREUVE
+VERTE.** (1) Les vingt et un scénarios d'interface étaient verts et la capture montrait le champ
+numérique du remplissage **large de toute la fiche** : `w-full` et `w-[10ch]` s'y disputaient sans
+arbitre, **l'ordre des classes dans l'attribut ne décidant de rien** — c'est celui des règles dans
+la feuille qui tranche. La largeur est désormais posée par chaque champ, une seule fois, et le motif
+est écrit au §5.29. (2) Le détecteur de clés mortes de `i18n.test.ts` a déclaré mortes les cinq clés
+de couleur, appelées par une clé construite ; **il avait raison** — une clé qu'aucune recherche
+textuelle ne trouve survit à la suppression du code qui l'employait. Table explicite.
+
+**Ce qui a été vérifié.** Preuves de la tranche : `objectifs-ecriture.test.ts` **34 assertions**
+(13 pour cette tranche), `Objectifs.test.tsx` **36 scénarios** (14 pour cette tranche),
+`e2e/ui/objectifs.spec.ts` **21 scénarios** dont 5 pour cette tranche, trois écrivant réellement
+dans la base et remettant le seed en état par la clé de service ; console vierge, **trois captures
+observées**. Campagne : `test:unit` **57 fichiers / 1877 tests**, `test:sql` **47 fichiers / 2351
+assertions**, `typecheck`, `types:check` et `build` verts.
+
+**Où reprendre.** `CRM-083` reste `[~]`, et son reste est la **tranche 2b-2, les liens** : lier un
+bloc à un channel — sélecteur des channels lisibles, groupés par track — et retirer le lien, tracer
+une flèche à `Espace` avec le choix de sa direction, supprimer une flèche et un bloc, créer et
+archiver un tableau, puis le harnais dédié `scripts/verify-objectifs-canevas.sh`. Deux arbitrages
+restent en attente : **INC-169** et **INC-170**.
