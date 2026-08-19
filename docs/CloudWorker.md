@@ -601,6 +601,48 @@ Les 18 services doivent être "healthy" avant de lancer les preuves qui nécessi
 **La pile debout, tu vas directement au §4 pour choisir ton unité, puis au §3.2 pour travailler.**
 Tu ne lances aucune preuve maintenant — voir le §2.3 juste en dessous, qui dit pourquoi.
 
+### 2.2 bis. `docker compose` NE S'APPELLE JAMAIS NU DANS CE DÉPÔT — MESURÉ, ET COÛTEUX
+
+La pile de développement est composée de **DEUX** fichiers, dans cet ordre — `scripts/lib/env.sh`,
+`DEV_COMPOSE` :
+
+```
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml <commande>
+```
+
+Le second porte les surcharges sans lesquelles les services ne se parlent plus. Un appel NU —
+`docker compose up <service>`, `docker compose restart <service>` — ne voit que
+`docker-compose.yml`, et **recrée silencieusement les conteneurs qu'il touche avec la
+configuration de base**, surcharges perdues.
+
+MESURÉ le 2026-08-19, décision 471. `docker compose up migrations-runner`, lancé nu pour appliquer
+une migration sans reconstruire la pile, a recréé `storage` et `db`. `storage` a perdu
+`AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}`, que seul le fichier `dev` pose : MinIO a dès lors REFUSÉ
+ses identifiants (`InvalidAccessKeyId`), et **quatre preuves sans aucun rapport avec le changement
+de la session** sont devenues rouges — `inbox.spec.ts` en `e2e:api`, trois scénarios en `e2e:mail`.
+Une session pressée y aurait lu une régression et aurait cherché sa cause dans son propre code.
+
+Le diagnostic tient en une commande, et il est SANS AMBIGUÏTÉ :
+
+```
+docker inspect <conteneur> --format '{{index .Config.Labels "com.docker.compose.project.config_files"}}'
+```
+
+Les vingt conteneurs doivent citer **les deux** fichiers. Celui qui n'en cite qu'un a été recréé nu.
+
+**Le remède est `./runDev.sh`**, qui recompose correctement, suivi du seed. Et si un conteneur a
+JOURNALISÉ des erreurs pendant la fenêtre cassée, un simple redémarrage ne suffit pas : `docker
+logs` conserve son tampon, et une preuve qui lit le journal — `mail-sync.spec.ts` §S3 — reste rouge
+sur des lignes que plus rien ne produit. Il faut le **recréer** :
+
+```
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml up -d --force-recreate mail-sync
+```
+
+**Pour réappliquer les migrations seules**, c'est la même règle : la commande complète ci-dessus
+avec `up migrations-runner`. Le `migrations-runner` ne tient aucun registre et rejoue tout le
+répertoire ; il est donc rejouable à volonté, mais jamais nu.
+
 ### 2.3. LA PILE EST DEBOUT — TU NE LANCES AUCUNE PREUVE MAINTENANT
 
 **RÈGLE DU RESPONSABLE, 2026-08-15, NON NÉGOCIABLE.** La pile montée et seedée, tu passes

@@ -20579,3 +20579,79 @@ aucune ligne d'interface.
 l'état lecture seule du `viewer`, **bloqué par l'arbitrage INC-170**. Le désarchivage d'un tableau
 demeure une limite nommée, hors périmètre du §5.1. Trois arbitrages restent en attente :
 **INC-169**, **INC-170** et **INC-172**.
+
+## décision 471 — `CRM-084` : les budgets existent en base, et le piège de `docker compose` nu
+
+**L'unité, et le choix.** La décision 470 laisse `CRM-083` en `[~]` avec un reste unique — l'état
+lecture seule du `viewer` —, **bloqué par l'arbitrage INC-170**, qui porte sur une règle générale du
+produit et ne se tranche pas soi-même. La reprise désignée par le journal étant close par ce
+blocage, l'unité de cette session est la suivante du chunk 6 : `CRM-084`, tête de la seconde chaîne
+— budgets et coûts — et jusqu'ici `[ ]`.
+
+**Aucune spécification n'a été réécrite.** `docs/SPEC-costs.md` §2 et §3 et `docs/SCHEMA.md`
+§9 bis.4 et §9 bis.5 couvrent intégralement le modèle : lues intégralement, le code a commencé
+(`docs/CloudWorker.md` §3.2, et §4.2 bis qui interdit de se donner un commit documentaire à bon
+compte).
+
+**Ce qui a été livré.** La migration `0050`, les deux tables `budgets` et `budget_occurrences`,
+leurs contraintes, l'index d'unicité **partiel** du nom, trois triggers, deux fonctions d'appui
+`SECURITY DEFINER` et huit politiques. Le seed porte quatre budgets et deux occurrences. La tranche
+2 — l'écran d'administration du §4.1 — n'est pas livrée, et le backlog le nomme.
+
+**UN INVARIANT SE TENAIT D'UN SEUL CÔTÉ, ET C'EST LE TROU QUE LA SPÉCIFICATION NE DIT PAS.**
+`docs/SCHEMA.md` §9 bis.5 écrit « une occurrence n'existe que sur un budget `is_recurrent` ». Cette
+phrase décrit un INVARIANT, pas un trigger : une garde posée seulement sur `budget_occurrences`
+laisse ouvert « créer un budget récurrent, lui poser des occurrences, puis retirer sa récurrence ».
+L'invariant serait alors faux **sans qu'aucune ligne interdite n'ait jamais été insérée**, et
+`CRM-085` s'appuiera dessus pour décider si `occurrence_id` est exigée. Deux triggers, un par table.
+
+**LA DoD DEMANDAIT « CLÔTURE RÉVERSIBLE OU NON SELON LE CONTRAT ÉCRIT », ET LE CONTRAT EST
+DÉSORMAIS ÉCRIT ET MESURÉ.** Elle est réversible — remettre `closed_at` à nul est une mise à jour
+qu'aucune garde n'interdit — mais l'index partiel en pose la seule limite : la clôture LIBÈRE le
+nom (§2.1, « clôturer Salon 2025 puis en ouvrir un nouveau »), donc le nom a pu être repris, donc
+la réouverture échoue en `23505` dans ce cas et réussit dans l'autre. Les deux cas sont en pgTAP.
+
+**Ce qui a été vérifié.** `supabase/tests/0048_budgets.test.sql` **52 assertions**,
+`e2e/api/budgets.spec.ts` **14 scénarios**. Les deux se recouvrent sur les politiques et divergent
+sur ce qu'elles seules voient : la suite pgTAP mesure la forme des fonctions et les codes SQL, la
+preuve d'API mesure les **deux formes du refus au niveau HTTP** — `403 / 42501` quand un
+`WITH CHECK` lève, `200 []` quand un `USING` filtre —, distinction que la DoD exige sur la création
+ET sur la clôture et qui n'existe pas dans la base.
+
+**Campagne complète de la session, exécutée une fois puis rejouée après correction.** `test:unit`
+**57 fichiers / 1964 tests**, `test:sql` **48 fichiers / 2405 assertions**, `e2e:api` **801 passés**,
+`e2e:mail` **42 passés**, `pytest` **244**, `typecheck`, `types:check` et `build` verts.
+`e2e:ui` : voir le compte rendu de session. Les cinquante `scripts/verify-*.sh` n'ont pas tous été
+rejoués, la série entière ne tenant pas dans une session (`docs/CloudWorker.md` §2.1 ter).
+
+**DEUX PREUVES ROUGES, TOUTES DEUX IMPUTABLES, TOUTES DEUX CORRIGÉES À LA CAUSE.** (1) Le
+recensement de `0016_preuves_refus.test.sql` rendait 99 pour 91 attendues : c'est le contrôle qui
+existe pour ça, et il est **révisé** — compte porté à 99 avec son motif, et **inventaire nominal
+étendu aux huit politiques neuves**, le compte seul voyant un ajout sans savoir lequel. (2) Une
+assertion de position de ma propre suite attendait 1 et mesurait 2 : elle prenait « Formation »
+pour un track vierge, et le seed de cette même unité venait d'y poser « Suisse romande » — la
+fixture était périmée par son propre seed, pas le produit en défaut.
+
+**LE PIÈGE DE `docker compose` NU, ET IL A COÛTÉ QUATRE PREUVES ROUGES.** Pour appliquer la
+migration sans reconstruire la pile, `docker compose up migrations-runner` a été lancé **sans
+`--env-file` ni `-f`**. Compose n'a alors vu que `docker-compose.yml`, et a **recréé `storage` et
+`db` en perdant les surcharges de `docker-compose.dev.yml`** — dont
+`storage.AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}`. MESURÉ : les identifiants de `storage` sont
+**refusés par MinIO** (`InvalidAccessKeyId`), et l'étiquette
+`com.docker.compose.project.config_files` de ces deux conteneurs ne citait plus que le fichier de
+base quand les dix-huit autres citaient les deux. Conséquence : `inbox.spec.ts` rouge en `e2e:api`
+et trois scénarios rouges en `e2e:mail`, **aucun n'ayant le moindre rapport avec les budgets**.
+
+Ce n'était donc ni une régression, ni une anomalie préexistante, ni un défaut du dépôt : une
+mauvaise commande. `./runDev.sh` relancé — les vingt conteneurs citent de nouveau les deux fichiers
+—, seed réappliqué, et les preuves rejouées **vertes**. `mail-sync` a dû être **recréé** en plus :
+ses deux lignes de niveau `ERROR`, écrites pendant la fenêtre cassée, survivaient dans son journal
+et faisaient rougir `mail-sync.spec.ts` alors que plus aucune n'était produite. La règle est
+consignée au §2.2 bis de `docs/CloudWorker.md` pour que la prochaine session n'y retombe pas :
+**dans ce dépôt, `docker compose` s'appelle avec ses deux fichiers, jamais nu.**
+
+**Où reprendre.** `CRM-084` est `[~]`, et son reste est **la tranche 2 : l'écran d'administration
+des budgets dans le track** (`docs/SPEC-costs.md` §4.1) — table des budgets, interrupteur
+« afficher les budgets clôturés », avertissement qui compte les lignes sans réel avant une clôture
+—, puis son E2E d'interface, ses captures et `scripts/verify-budgets.sh`. `CRM-083` reste bloqué
+par **INC-170**. Trois arbitrages restent en attente : **INC-169**, **INC-170** et **INC-172**.
