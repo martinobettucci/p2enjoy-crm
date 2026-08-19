@@ -2444,3 +2444,32 @@ design system ? La question n'est pas tranchée ici : elle porte sur une règle 
 et l'unité `CRM-083` garde en conséquence son point « état LECTURE SEULE du `viewer` » à `[ ]`.
 
 **Statut :** ouvert, en attente d'arbitrage du responsable.
+### INC-171 — `goals.block.resize` est une clé morte, et `i18n.test.ts` est rouge
+
+**Nature :** défaut **préexistant à cette session**, relevé en rejouant les preuves après un rebase
+et laissé **inchangé** conformément au `CLAUDE.md` §5 — il appartient à un changement livré par une
+autre session, encore possiblement en cours.
+
+**Ce qui est mesuré.** Sur `main`, `npm run test:unit` rend **1 échec sur 1818** :
+
+```
+FAIL  src/i18n/i18n.test.ts > dictionnaire > ne contient aucune clé morte
+expected [ 'goals.block.resize' ] to deeply equal []
+```
+
+`webapp/src/i18n/fr.ts:481` déclare `'goals.block.resize': 'Redimensionner {titre}'`, qu'aucun
+composant n'emploie.
+
+**LA LIGNE DE BASE A ÉTÉ EXÉCUTÉE** (`docs/CloudWorker.md` §2.4), sur **cette preuve seule** : le
+même échec tombe à l'identique sur `c1cd427` — « Objectifs : poser, déplacer et redimensionner un
+bloc au canevas (CRM-083 tranche 2a) » —, commit d'une session **parallèle** livré pendant
+celle-ci. Il ne vient donc pas du changement de cette session, qui ne touche pas à cette clé.
+
+**Pourquoi il n'est pas corrigé ici.** La clé décrit un geste — redimensionner un bloc — que la
+session voisine est en train de livrer ; la retirer prendrait le risque de défaire un travail encore
+en cours. Deux issues sont possibles et l'une ou l'autre suffira : la session voisine emploie la clé
+dans son écran, ou elle la retire.
+
+**Statut :** ouvert. À vérifier au début de la session suivante — si la clé est toujours morte et
+qu'aucune session ne travaille sur `CRM-083`, la corriger devient trivial et n'appartient plus à
+personne d'autre.
