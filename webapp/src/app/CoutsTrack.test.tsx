@@ -304,10 +304,10 @@ describe('enGroupes', () => {
 			barres: [
 				{
 					budget: budget('b-1', 'Publicité'),
-					agregat: { estime: 100, reel: 90, sansReel: 0, estimeSansReel: 0 },
+					agregat: { estime: 100, reel: 90, sansReel: 0, estimeSansReel: 0, lignes: 1 },
 				},
 			],
-			total: { estime: 100, reel: 90, sansReel: 0, estimeSansReel: 0 },
+			total: { estime: 100, reel: 90, sansReel: 0, estimeSansReel: 0, lignes: 1 },
 		}
 		expect(enGroupes(histogramme)).toEqual([
 			{ cle: 'b-1', libelle: 'Publicité', agregat: histogramme.total },

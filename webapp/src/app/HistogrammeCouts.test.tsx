@@ -25,6 +25,7 @@ import {
 	hauteurPourcent,
 	type GroupeHistogramme,
 } from './HistogrammeCouts'
+import type { AgregatCouts } from '../lib/couts-ecrans'
 
 afterEach(cleanup)
 
@@ -103,9 +104,19 @@ describe('formaterMontant', () => {
 })
 
 describe('HistogrammeCouts — ce que le lecteur d\'écran perçoit', () => {
-	const TOTAL_MIXTE = { estime: 450, reel: 375, sansReel: 1, estimeSansReel: 100 }
+	// Le total par défaut porte DEUX lignes, comme les groupes de la fixture ci-dessus : c'est le
+	// compte, et non les montants, qui décide de l'état vide du §4.7 (décision 476). Il est typé
+	// `AgregatCouts` et non déduit, faute de quoi un total passé à `rendre` avec un compte explicite
+	// ne compilerait pas contre le type inféré du défaut.
+	const TOTAL_MIXTE: AgregatCouts = {
+		estime: 450,
+		reel: 375,
+		sansReel: 1,
+		estimeSansReel: 100,
+		lignes: 2,
+	}
 
-	function rendre(groupes: readonly GroupeHistogramme[], total = TOTAL_MIXTE) {
+	function rendre(groupes: readonly GroupeHistogramme[], total: AgregatCouts = TOTAL_MIXTE) {
 		render(
 			<HistogrammeCouts
 				devise="EUR"
@@ -161,6 +172,7 @@ describe('HistogrammeCouts — ce que le lecteur d\'écran perçoit', () => {
 			reel: 375,
 			sansReel: 0,
 			estimeSansReel: 0,
+			lignes: 1,
 		})
 		expect(screen.queryByText(/sans coût réel saisi/)).toBeNull()
 	})
@@ -228,7 +240,7 @@ describe('HistogrammeCouts — ce que le lecteur d\'écran perçoit', () => {
 			<HistogrammeCouts
 				devise="EUR"
 				groupes={[{ ...groupe('o1', 'Janvier 2026', 100, 90), precision: '01/01 – 31/01' }]}
-				total={{ estime: 100, reel: 90, sansReel: 0, estimeSansReel: 0 }}
+				total={{ estime: 100, reel: 90, sansReel: 0, estimeSansReel: 0, lignes: 1 }}
 				legendeColonne="Occurrence"
 			/>,
 		)
@@ -240,7 +252,7 @@ describe('HistogrammeCouts — ce que le lecteur d\'écran perçoit', () => {
 			<HistogrammeCouts
 				devise="EUR"
 				groupes={[groupe('b1', 'Publicité', 100, 90)]}
-				total={{ estime: 100, reel: 90, sansReel: 0, estimeSansReel: 0 }}
+				total={{ estime: 100, reel: 90, sansReel: 0, estimeSansReel: 0, lignes: 1 }}
 				legendeColonne="Budget"
 			/>,
 		)
