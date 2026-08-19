@@ -739,7 +739,7 @@ export type AffaireDuContact = {
 /** Un contact tel que sa fiche le rend : ce qui le caractérise, et ses affaires. */
 export type FicheContactLue = Pick<
 	Database['public']['Tables']['contacts']['Row'],
-	'id' | 'full_name' | 'email' | 'phone' | 'role_title' | 'organization_id'
+	'id' | 'full_name' | 'email' | 'phone' | 'role_title' | 'organization_id' | 'workspace_id'
 > & {
 	readonly organisation: OrganisationDeLaFiche | null
 	readonly affaires: readonly AffaireDuContact[]
@@ -758,9 +758,16 @@ export type FicheContactLue = Pick<
  * **`cards!inner` n'est pas décoratif** : combiné au filtre `deleted_at=is.null` du §15.3, il
  * RETIRE la ligne de rattachement entière. Sans `!inner`, PostgREST rendrait `cards: null` et
  * l'écran devrait filtrer une donnée que le serveur sait déjà écarter (mesuré).
+ *
+ * **`workspace_id` A ÉTÉ AJOUTÉ PAR LA SOUS-TRANCHE 4h** (§17.5), et c'est une colonne de plus
+ * dans une requête DÉJÀ ÉMISE, contre une requête entière si on la relisait. La clé composite de
+ * `card_contacts` l'exige au rattachement, et le §12.5 a posé qu'elle est TRANSMISE et non devinée :
+ * là-bas la source était la card déjà chargée, ici c'est le contact. MESURÉ (§17.4, mesures 13 et
+ * 14) : la colonne est lisible par l'administratrice COMME par la lectrice — l'ajouter ne referme
+ * la fiche pour personne.
  */
 export const COLONNES_FICHE_CONTACT =
-	'id, full_name, email, phone, role_title, organization_id, ' +
+	'id, full_name, email, phone, role_title, organization_id, workspace_id, ' +
 	'organizations(id, name, domain), ' +
 	'card_contacts(role, cards!inner(id, title, archived_at, ' +
 	'channels!cards_channel_id_workspace_id_fkey(slug, tracks(slug))))'
@@ -880,6 +887,9 @@ export async function lireFicheContact(
 			phone: premiere.phone,
 			role_title: premiere.role_title,
 			organization_id: premiere.organization_id,
+			// Porté depuis la sous-tranche 4h (§17.5) : la clé composite de `card_contacts` l'exige
+			// au rattachement, et le §12.5 a posé qu'elle est TRANSMISE et non devinée.
+			workspace_id: premiere.workspace_id,
 			// `organizations` absente et `organizations` nulle valent toutes deux « aucune
 			// organisation » : un contact sans organisation est un état LÉGITIME (§15.9, cas b).
 			organisation: premiere.organizations ?? null,
@@ -986,5 +996,107 @@ export async function modifierContact(
 				cause instanceof Error ? cause.message : String(cause),
 			),
 		}
+	}
+}
+
+// =================================================================================================
+// SOUS-TRANCHE 4h — LES AFFAIRES RATTACHABLES À UN CONTACT
+// =================================================================================================
+//
+// @spec CRM-060 (docs/BACKLOG.md) — tranche 4 sous-tranche 4h : le rattachement d'une affaire
+//       depuis la fiche d'un contact
+// @spec docs/SPEC-contacts.md §17.3 (ce que le sélecteur lit, et les trois mesures qui l'ont
+//       décidé), §17.4 (les huit mesures d'autorisation), §17.5 (ce que le formulaire envoie),
+//       §17.8 (limites nommées)
+// @spec docs/DESIGN_SYSTEM.md §5.26 (le geste de rattachement de la fiche de contact)
+//
+// CE BLOC N'OUVRE AUCUNE POLITIQUE NOUVELLE et n'ajoute AUCUNE fonction d'écriture : le geste
+// appelle `rattacherContact` (§12), inchangée. Écrire un second `POST` sur la même table ferait
+// diverger deux contrats au premier champ ajouté (§17.5).
+
+/** Une affaire telle que le sélecteur du rattachement l'offre (§17.3). */
+export type AffaireRattachable = {
+	readonly id: string
+	readonly titre: string
+	/** Une affaire ARCHIVÉE est offerte, et son option le DIT (§17.3, mesure 6). */
+	readonly archivee: boolean
+}
+
+/**
+ * Colonnes demandées par le sélecteur. Exportée pour que le test unitaire vérifie la requête émise.
+ *
+ * **NI LE TRACK NI LE CHANNEL NE SONT DEMANDÉS, et ce n'est pas un oubli.** Le §15.3 les lit parce
+ * que la fiche doit construire l'ADRESSE de chaque affaire ; un sélecteur n'a aucune adresse à
+ * construire, il envoie un identifiant. Les demander imposerait la levée d'ambiguïté `PGRST201` du
+ * §15.3 pour une donnée que rien n'afficherait — et le §10.3 a déjà posé qu'une requête ne rapporte
+ * que ce qui est affiché.
+ */
+export const COLONNES_AFFAIRE_RATTACHABLE = 'id, title, archived_at'
+
+/**
+ * Filtre qui écarte les affaires de la CORBEILLE, exporté pour que le test vérifie qu'il est posé.
+ *
+ * **LA BASE N'Y EST POUR RIEN, ET C'EST MESURÉ** (§17.3, mesure 7) : elle ACCEPTE le rattachement
+ * d'un contact à une affaire supprimée — `201`, et la ligne. C'est la FICHE qui ne l'affichera
+ * jamais, le §15.3 ayant mesuré que le serveur écarte les affaires en corbeille de sa lecture. Un
+ * rattachement posé sur l'une d'elles serait donc invisible immédiatement après avoir été créé :
+ * l'utilisateur agirait, la liste ne bougerait pas, et rien ne dirait pourquoi. C'est le refus
+ * d'une commande dont le résultat est indiscernable d'une panne.
+ */
+export const FILTRE_CORBEILLE_AFFAIRE = 'deleted_at'
+
+/** Tri demandé au SERVEUR. Le tri AGIT, vérifié dans les deux sens (§17.3, mesure 18). */
+export const TRI_AFFAIRES_RATTACHABLES = 'title'
+
+/**
+ * Borne du sélecteur, reprise SANS CHANGEMENT de `CARDS_CLASSABLES_MAX` (`inbox.ts`) et pour son
+ * motif exact : une liste déroulante de plusieurs milliers d'entrées n'est plus un choix, c'est un
+ * labyrinthe. Le workspace seedé en compte quarante (mesure 15). Au-delà, c'est une recherche
+ * qu'il faudra livrer, pas une liste plus longue (§17.8, `CLAUDE.md` §21).
+ */
+export const AFFAIRES_RATTACHABLES_MAX = 200
+
+/** Forme brute d'une affaire telle que PostgREST la rend, avant renommage. */
+type LigneAffaireRattachableBrute = {
+	readonly id: string
+	readonly title: string
+	readonly archived_at: string | null
+}
+
+/**
+ * Les affaires auxquelles un contact peut être rattaché, dans l'ordre de leur titre.
+ *
+ * **ELLE LIT LE DROIT DE LECTURE, ET LE DIT** — la règle que `lireCardsClassables` (`inbox.ts`) a
+ * déjà écrite : la RLS de `cards` gouverne la lecture, et rien dans PostgREST ne permet de demander
+ * « celles où je peux écrire » sans une fonction dédiée. Une affaire offerte peut donc être refusée
+ * par `card_contacts_insertion`, et ce refus est présenté TEL QUEL (§17.4, mesure 9). Filtrer ici
+ * sur une supposition serait pire : l'écran cacherait des affaires légitimes sans jamais l'avouer.
+ *
+ * Ne lève jamais : tout échec est rendu comme un état d'erreur classé sur le code HTTP réellement
+ * reçu, jamais sur le texte du message.
+ */
+export async function lireAffairesRattachables(
+	client: ClientCrm,
+): Promise<EtatAsync<readonly AffaireRattachable[]>> {
+	try {
+		const reponse = await client
+			.from('cards')
+			.select(COLONNES_AFFAIRE_RATTACHABLE)
+			.is(FILTRE_CORBEILLE_AFFAIRE, null)
+			.order(TRI_AFFAIRES_RATTACHABLES)
+			.limit(AFFAIRES_RATTACHABLES_MAX)
+		if (reponse.error !== null) {
+			return enErreur(classerErreur(reponse.status, reponse.error.message))
+		}
+		const lignes = (reponse.data ?? []) as unknown as readonly LigneAffaireRattachableBrute[]
+		return pret(
+			lignes.map((ligne) => ({
+				id: ligne.id,
+				titre: ligne.title,
+				archivee: ligne.archived_at !== null,
+			})),
+		)
+	} catch (cause) {
+		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
 	}
 }

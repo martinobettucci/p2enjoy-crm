@@ -238,6 +238,34 @@ export const fr = {
 	'contact.deals.empty.title': 'Aucune affaire',
 	'contact.deals.empty.body':
 		'Ce contact n’est rattaché à aucune affaire qui vous soit accessible.',
+	// Sous-tranche 4h — le rattachement d'une affaire depuis la fiche (docs/SPEC-contacts.md §17).
+	'contact.attach.action': 'Rattacher à une affaire',
+	'contact.attach.deal': 'Affaire',
+	'contact.attach.dealPlaceholder': 'Choisir une affaire',
+	// La mention d'archivage est un TEXTE dans le libellé de l'option : une `option` native
+	// n'admet ni icône ni pilule, et le §1 du design system interdit qu'une couleur porte seule
+	// une information (docs/SPEC-contacts.md §17.3, docs/DESIGN_SYSTEM.md §5.26).
+	'contact.attach.dealArchived': '{titre} (archivée)',
+	'contact.attach.role': 'Rôle dans l’affaire (facultatif)',
+	'contact.attach.roleHelp':
+		'Par exemple : décideur, prescripteur, contact technique. Laissez vide si vous ne savez pas.',
+	'contact.attach.submit': 'Rattacher',
+	'contact.attach.cancel': 'Annuler',
+	'contact.attach.pending': 'Rattachement…',
+	'contact.attach.loading': 'Chargement…',
+	'contact.attach.noneAvailable':
+		'Aucune affaire accessible à rattacher : soit cet espace de travail n’en contient aucune que vous puissiez lire, soit ce contact est déjà rattaché à toutes.',
+	'contact.attach.list.error': 'La liste des affaires n’a pas pu être chargée.',
+	'contact.attach.list.retry': 'Réessayer',
+	'contact.attach.refus.alreadyAttached':
+		'Ce contact est déjà rattaché à cette affaire. Choisissez-en une autre.',
+	// Un même texte pour le droit manquant ET pour l'affaire disparue : les deux rendent 403 et
+	// sont indistinguables par construction (docs/SPEC-contacts.md §17.4, mesures 9 et 12).
+	'contact.attach.refus.forbidden':
+		'Le rattachement a été refusé. Vous n’avez peut-être pas le droit de modifier cette affaire, ou elle n’est plus accessible. Rechargez la liste pour voir son état réel.',
+	'contact.attach.refus.network':
+		'Le rattachement n’a pas pu être envoyé. Vérifiez votre connexion, puis réessayez.',
+	'contact.attach.refus.unknown': 'Le rattachement a échoué. Réessayez dans un instant.',
 	'contact.notFound.title': 'Contact introuvable',
 	'contact.notFound.body': 'Ce contact n’existe pas, ou il ne vous est pas accessible.',
 	'contact.notFound.action': 'Revenir au carnet',

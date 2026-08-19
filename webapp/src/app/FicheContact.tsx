@@ -16,11 +16,22 @@
 //       §16.9 (contrat de comportement, cas a à r)
 // @spec docs/DESIGN_SYSTEM.md §5.25 (le formulaire de modification dans le flux de la fiche)
 //
-// L'ÉCRAN LIT, ET DEPUIS LA SOUS-TRANCHE 4g IL MODIFIE — cela, et rien de plus. La SUPPRESSION
-// reste absente, et son motif n'est pas le temps : elle dépend de l'arbitrage NON TRANCHÉ du §6
-// point 4, les valeurs `jsonb` qui désignent un contact supprimé demeurant en base. Le
-// rattachement depuis cette page reste absent lui aussi (§15.8). Les deux écarts sont NOMMÉS au
-// §16.8, non compensés par des commandes mortes.
+// @spec docs/SPEC-contacts.md §17.2 (où le geste de RATTACHEMENT s'ancre : DANS la zone des
+//       affaires, et non à côté de « Modifier »), §17.3 (la liste n'est lue que si le geste est
+//       ouvert), §17.6 (l'exclusion des affaires déjà rattachées, et la relecture après succès),
+//       §17.7 (contrat de comportement, cas a à n), §17.8 (limites nommées)
+// @spec docs/DESIGN_SYSTEM.md §5.26 (le geste de rattachement de la fiche de contact)
+//
+// L'ÉCRAN LIT, IL MODIFIE DEPUIS 4g, ET IL RATTACHE DEPUIS 4h — cela, et rien de plus. Deux écarts
+// demeurent, et ils sont NOMMÉS plutôt que compensés par des commandes mortes :
+//
+// - la SUPPRESSION d'un contact, dont le motif n'est pas le temps : elle dépend de l'arbitrage NON
+//   TRANCHÉ du §6 point 4, les valeurs `jsonb` qui désignent un contact supprimé demeurant en base ;
+// - le DÉTACHEMENT depuis cette page (§17.8). Le geste existe, livré depuis la fiche de l'affaire
+//   (§12.6), que le tableau de la zone 2 atteint EN UN CLIC — chaque titre est un lien. Le livrer
+//   ici demanderait sa confirmation nommant l'objet, la place où la poser dans une ligne de tableau,
+//   et le traitement du « sans effet » que la clause USING produit à la suppression : c'est une
+//   sous-tranche à part entière. L'asymétrie est ASSUMÉE.
 //
 // TROIS ABSENCES, UN SEUL ÉCRAN, DÉLIBÉRÉMENT (§15.4). Un contact inexistant, un contact refusé à
 // l'appelant et un identifiant qui n'est pas un uuid rendent tous les trois « contact
@@ -42,8 +53,10 @@ import { SkeletonListe } from '../components/ui/Skeleton'
 import { t, type CleTraduction } from '../i18n'
 import { enChargement, enErreur, pret, type EtatAsync } from '../lib/async'
 import {
+	lireAffairesRattachables,
 	lireFicheContact,
 	lireOrganisationsDuWorkspace,
+	type AffaireRattachable,
 	type ContactDuCarnet,
 	type FicheContactLue,
 	type OrganisationChoisissable,
@@ -55,6 +68,10 @@ import {
 	FormulaireModificationContact,
 	saisieDepuisContact,
 } from './FormulaireModificationContact'
+import {
+	CommandeRattachementAffaire,
+	FormulaireRattachementAffaire,
+} from './FormulaireRattachementAffaire'
 
 /** Cellule ordinaire du tableau des affaires — mêmes règles qu'au carnet (§5.9). */
 const CLASSES_CELLULE = 'h-[var(--size-target)] px-3 truncate max-w-[32ch]'
@@ -267,12 +284,111 @@ export function ContenuFicheContact({
 		[fermer, onNomConnu],
 	)
 
+	// --- SOUS-TRANCHE 4h : LE GESTE DE RATTACHEMENT (§17.2) -------------------------------------
+	// Il vit DANS la zone des affaires, et non ici à côté de la modification : un geste se pose près
+	// de ce qu'il change. « Modifier » touche les caractéristiques et le titre de la route, celui-ci
+	// ne touche que la zone 2 (§17.2, §5.26).
+	const [rattachementOuvert, setRattachementOuvert] = useState(false)
+	const [affaires, setAffaires] = useState<EtatAsync<readonly AffaireRattachable[]>>(enChargement)
+	const [tentativeAffaires, setTentativeAffaires] = useState(0)
+	const commandeRattachement = useRef<HTMLButtonElement | null>(null)
+
+	// LA LISTE DES AFFAIRES N'EST LUE QUE SI LE GESTE EST OUVERT (§17.3, cas a du §17.7) : charger
+	// quarante affaires pour un geste que la plupart des visites ne font pas serait une requête
+	// gratuite. C'est la règle du §13.4, déjà tenue par le sélecteur d'organisations ci-dessus.
+	useEffect(() => {
+		if (client === null || !rattachementOuvert) return
+		let vivant = true
+		setAffaires(enChargement())
+		void lireAffairesRattachables(client).then((lues) => {
+			if (vivant) setAffaires(lues)
+		})
+		return () => {
+			vivant = false
+		}
+	}, [client, rattachementOuvert, tentativeAffaires])
+
+	// LE FOCUS EST RENDU à la commande APRÈS LE RENDU, pour le motif exact du geste de modification
+	// ci-dessus (§17.6, cas c du §17.7) : la commande est démontée tant que le formulaire est
+	// ouvert. Aucune temporisation.
+	const [focusRattachementARendre, setFocusRattachementARendre] = useState(false)
+
+	useEffect(() => {
+		if (rattachementOuvert || !focusRattachementARendre) return
+		commandeRattachement.current?.focus()
+		setFocusRattachementARendre(false)
+	}, [rattachementOuvert, focusRattachementARendre])
+
+	const fermerRattachement = useCallback(() => {
+		setRattachementOuvert(false)
+		setFocusRattachementARendre(true)
+	}, [])
+
+	/**
+	 * LA FICHE EST RELUE APRÈS UN RATTACHEMENT, JAMAIS COMPLÉTÉE LOCALEMENT (§17.6, §5.21).
+	 *
+	 * Une insertion optimiste contredirait l'ordre du serveur le temps d'un rendu, et masquerait un
+	 * rattachement posé entre-temps par un collègue. La relecture est celle du §15.3 — la lecture
+	 * entière de la fiche —, ce qui rapporte du même coup l'état d'ARCHIVAGE et l'ADRESSE de
+	 * l'affaire ajoutée, que le sélecteur ne connaissait pas : il ne lit ni track ni channel (§17.3).
+	 */
+	const surRattachee = useCallback(() => {
+		fermerRattachement()
+		setTentative((precedente) => precedente + 1)
+	}, [fermerRattachement])
+
+	/**
+	 * LE SÉLECTEUR N'OFFRE QUE LES AFFAIRES NON ENCORE RATTACHÉES à ce contact (§17.6, cas d).
+	 *
+	 * Ce n'est pas une garde de droit — c'est le refus d'une commande vouée au `409` (§17.4,
+	 * mesure 8), la règle du §5.21. Le refus `deja-rattache` reste néanmoins traduit : deux
+	 * utilisateurs peuvent agir à la même seconde, et l'écran ne prétend pas connaître l'état du
+	 * serveur.
+	 *
+	 * L'exclusion se calcule sur les affaires que la FICHE affiche, qui sont déjà privées de celles
+	 * de la corbeille par le serveur (§15.3) — et le sélecteur ne les offre pas non plus (§17.3).
+	 * Les deux ensembles s'accordent donc sans qu'aucun des deux n'ait à connaître l'autre.
+	 */
+	const affairesOffertes: EtatAsync<readonly AffaireRattachable[]> =
+		affaires.statut === 'pret' && contact !== null
+			? pret(
+					affaires.donnees.filter(
+						(affaire) => !contact.affaires.some((liee) => liee.idCard === affaire.id),
+					),
+				)
+			: affaires
+
 	return (
 		<ContenuFiche
 			client={client}
 			etat={etat}
 			contact={contact}
 			onReprise={reprendre}
+			gesteRattachement={
+				// LE GESTE N'EXISTE QUE S'IL Y A UN CONTACT À RATTACHER (cas n du §17.7) : ni sur
+				// l'introuvable, ni sur l'erreur, ni sans client. `ContenuFiche` rend ces trois états
+				// avant d'atteindre la zone des affaires, mais le construire ici sans contact serait
+				// impossible — le rattachement a besoin de son identifiant et de son workspace.
+				client === null || contact === null ? null : rattachementOuvert ? (
+					<FormulaireRattachementAffaire
+						client={client}
+						idWorkspace={contact.workspace_id}
+						idContact={contact.id}
+						affaires={affairesOffertes}
+						onRelireAffaires={() => setTentativeAffaires((precedente) => precedente + 1)}
+						onRattachee={surRattachee}
+						onFermer={fermerRattachement}
+					/>
+				) : (
+					// AUCUNE COMMANDE ÉTEINTE D'AVANCE SELON LE RÔLE (§17.6) : la lectrice voit le
+					// geste, envoie, et reçoit un refus EXPLICITE — un vrai `403`, et non le silence
+					// de la modification (§17.4, mesure 9).
+					<CommandeRattachementAffaire
+						commande={commandeRattachement}
+						onOuvrir={() => setRattachementOuvert(true)}
+					/>
+				)
+			}
 			geste={
 				// LE GESTE N'EXISTE QUE S'IL Y A QUELQUE CHOSE À MODIFIER (§16.9 cas r) : ni sur
 				// l'introuvable, ni sur l'erreur, ni sans client. `ContenuFiche` rend ces trois états
@@ -316,9 +432,18 @@ type ProprietesContenu = {
 	readonly onReprise: () => void
 	/** Le geste de modification, ou `null` quand il n'y a rien à modifier (§16.9 cas r). */
 	readonly geste?: React.ReactNode
+	/** Le geste de rattachement, ou `null` quand il n'y a rien à rattacher (§17.7 cas n). */
+	readonly gesteRattachement?: React.ReactNode
 }
 
-function ContenuFiche({ client, etat, contact, onReprise, geste = null }: ProprietesContenu) {
+function ContenuFiche({
+	client,
+	etat,
+	contact,
+	onReprise,
+	geste = null,
+	gesteRattachement = null,
+}: ProprietesContenu) {
 	if (client === null) {
 		return (
 			<EtatVide titre={t('contact.noWorkspace.title')} corps={t('contact.noWorkspace.body')} />
@@ -405,10 +530,21 @@ function ContenuFiche({ client, etat, contact, onReprise, geste = null }: Propri
 			{/* ZONE 2 — LES AFFAIRES. Lignes homogènes, donc le tableau du §5.9. */}
 			<section className="flex flex-col gap-3">
 				<h2 className="text-h3">{t('contact.deals.title')}</h2>
+				{/*
+				  LE GESTE DE RATTACHEMENT — §17.2. Il vit DANS cette zone, sous son titre et
+				  AU-DESSUS du tableau, jamais en tête de fiche à côté de « Modifier » : un geste se
+				  pose près de ce qu'il change. Le tableau reste visible sous le formulaire — il est
+				  précisément ce qui dit à quelles affaires le contact est DÉJÀ rattaché, et une
+				  modale recouvrirait la réponse à la question que l'on se pose en l'ouvrant (§5.26).
+				*/}
+				{gesteRattachement}
 				{contact.affaires.length === 0 ? (
-					// Cas e et o du §15.9 : l'état vide n'offre AUCUNE action — cette surface ne
-					// livre aucun geste de rattachement, et un bouton y serait un chemin vers nulle
-					// part. C'est aussi l'écran d'un lecteur restreint, sans mise en scène du refus.
+					// Cas e et o du §15.9, RÉVISÉS PAR LIVRAISON (§17.6, §5.24) : l'état vide GARDE
+					// désormais son geste — c'est lui qui le comble, la règle du §5.13 pour l'état
+					// vide d'une surface qui agit. Le geste est rendu juste au-dessus, et l'état vide
+					// lui-même n'en porte donc aucun : le répéter offrirait deux fois la même action
+					// (§5.8, « comme lui, l'action n'est alors pas répétée »). C'est aussi l'écran
+					// d'un lecteur restreint, sans mise en scène du refus.
 					<EtatVide titre={t('contact.deals.empty.title')} corps={t('contact.deals.empty.body')} />
 				) : (
 					<div className="overflow-x-auto indique-debordement-x">
