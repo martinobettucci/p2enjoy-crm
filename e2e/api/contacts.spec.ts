@@ -1204,3 +1204,286 @@ test.describe('CRM-060 4g — la modification d’un contact (§16.3)', () => {
 		}
 	})
 })
+
+// ================================================================================================
+// @verifies CRM-060 (docs/BACKLOG.md) — tranche 4 sous-tranche 4h : le RATTACHEMENT d'une affaire
+//           depuis la fiche d'un contact
+// @verifies docs/SPEC-contacts.md §17.3 (ce que le sélecteur lit, et les trois mesures qui l'ont
+//           décidé), §17.4 (les huit mesures d'autorisation), §17.5 (la charge envoyée)
+// @verifies docs/SPEC-permissions-rls.md §7 (un refus de lecture est zéro ligne ; chaque refus
+//           d'écriture RELIT la ligne pour la constater inchangée — décision 70)
+//
+// CES SCÉNARIOS FIGENT L'ÉCART AVEC 4g. Une INSERTION est filtrée par la clause `WITH CHECK`, qui
+// REJETTE la ligne : le refus est un `403` EXPLICITE. Une mise à jour l'est par `USING`, qui rend
+// la ligne invisible et produit `200` avec zéro ligne SANS erreur. Écrire ici un « sans effet »
+// décrirait une issue que la base ne produit pas, et ces mesures le prouvent.
+// ================================================================================================
+
+/** « Contrat cadre 2025 » : la seule affaire ARCHIVÉE du seed, sur le track « Grands comptes ». */
+const CARD_ARCHIVEE = '5eed0000-0000-4000-8000-0000000000c8'
+/** « Saisie erronée » : la seule affaire du seed EN CORBEILLE. */
+const CARD_CORBEILLE = '5eed0000-0000-4000-8000-0000000000c9'
+/** « Migration ERP Sogexia », où Léo Marchand est DÉJÀ rattaché par le seed. */
+const CARD_ERP = '5eed0000-0000-4000-8000-0000000000c2'
+const CONTACT_LEO = '5eed0000-0000-4000-8000-000000000091'
+
+/** Compte les rattachements d'une affaire, avec la clé de service — pour CONSTATER, jamais refuser. */
+async function rattachementsDe(
+	request: APIRequestContext,
+	cardId: string,
+	contactId: string,
+): Promise<unknown[]> {
+	const reponse = await request.get(
+		`/rest/v1/card_contacts?card_id=eq.${cardId}&contact_id=eq.${contactId}&select=card_id,contact_id,role`,
+		{ headers: enTetesService() },
+	)
+	return (await reponse.json()) as unknown[]
+}
+
+test.describe('CRM-060 4h — le rattachement d’une affaire depuis la fiche (§17.4)', () => {
+	test('15, 16 et 17 — ce que le sélecteur LIT : 40 pour l’admin, 35 pour la lectrice, 0 pour l’anonyme', async ({
+		request,
+	}) => {
+		const chemin = '/rest/v1/cards?select=id,title,archived_at&deleted_at=is.null&order=title&limit=200'
+
+		const jetonAdmin = await jetonDe('admin@p2enjoy.test')
+		const admin = await request.get(chemin, { headers: enTetesAuthentifies(jetonAdmin) })
+		expect(admin.status()).toBe(200)
+		const vuesAdmin = (await admin.json()) as Array<{ id: string; title: string; archived_at: string | null }>
+		// LA CORBEILLE EST ÉCARTÉE PAR LE FILTRE, et c'est ce que le sélecteur exige : la fiche ne
+		// liste jamais une affaire supprimée (§15.3), et un rattachement posé sur l'une d'elles
+		// serait invisible dès sa création (§17.3).
+		expect(vuesAdmin.map((card) => card.id)).not.toContain(CARD_CORBEILLE)
+		// UNE AFFAIRE ARCHIVÉE EST BIEN RENDUE : la base accepte son rattachement (mesure 6), et
+		// l'exclure poserait une règle de produit que personne n'a prise.
+		expect(vuesAdmin.filter((card) => card.archived_at !== null).map((card) => card.title)).toEqual([
+			'Contrat cadre 2025',
+		])
+
+		// LES DROITS FINS DE `cards` TRAVERSENT CETTE LECTURE, sans que l'écran calcule rien : la
+		// lectrice, à qui « Grands comptes » est fermé, en voit STRICTEMENT MOINS — et aucune
+		// archivée, la seule vivant sur ce track.
+		const jetonLectrice = await jetonDe('viewer@p2enjoy.test')
+		const lectrice = await request.get(chemin, { headers: enTetesAuthentifies(jetonLectrice) })
+		expect(lectrice.status()).toBe(200)
+		const vuesLectrice = (await lectrice.json()) as Array<{ id: string; archived_at: string | null }>
+		expect(vuesLectrice.length).toBeLessThan(vuesAdmin.length)
+		expect(vuesLectrice.filter((card) => card.archived_at !== null)).toEqual([])
+
+		// Mesure 17 : l'anonyme reçoit `200` et `[]` — zéro ligne, JAMAIS une erreur de privilège.
+		const anonyme = await request.get(chemin, { headers: enTetesAnonymes() })
+		expect(anonyme.status()).toBe(200)
+		expect(await anonyme.json()).toEqual([])
+	})
+
+	test('6 — une affaire ARCHIVÉE accepte le rattachement : 201, et rien ne s’y oppose', async ({
+		request,
+	}) => {
+		const sonde = await creerSonde()
+		try {
+			const contact = await contactSonde(request, sonde, { full_name: 'Sonde 4h archivée' })
+			const jeton = await jetonDe('admin@p2enjoy.test')
+			const reponse = await request.post('/rest/v1/card_contacts', {
+				headers: { ...enTetesAuthentifies(jeton), Prefer: 'return=representation' },
+				data: {
+					workspace_id: WORKSPACE_SEED,
+					card_id: CARD_ARCHIVEE,
+					contact_id: contact.id,
+					role: 'sponsor',
+				},
+			})
+			sonde.rattachementsSupprimes.push({ cardId: CARD_ARCHIVEE, contactId: contact.id })
+			// C'EST LA MESURE QUI DÉCIDE QUE LE SÉLECTEUR LES OFFRE (§17.3). L'écart avec
+			// `lireCardsClassables` est réel : `classify_message` refuse une affaire archivée par
+			// `card_not_available`, ici RIEN ne la refuse.
+			expect(reponse.status()).toBe(201)
+			expect(await rattachementsDe(request, CARD_ARCHIVEE, contact.id)).toHaveLength(1)
+		} finally {
+			await nettoyer(request, sonde)
+		}
+	})
+
+	test('7 — une affaire EN CORBEILLE l’accepte AUSSI : c’est l’écran qui l’écarte, pas la base', async ({
+		request,
+	}) => {
+		const sonde = await creerSonde()
+		try {
+			const contact = await contactSonde(request, sonde, { full_name: 'Sonde 4h corbeille' })
+			const jeton = await jetonDe('admin@p2enjoy.test')
+			const reponse = await request.post('/rest/v1/card_contacts', {
+				headers: { ...enTetesAuthentifies(jeton), Prefer: 'return=representation' },
+				data: {
+					workspace_id: WORKSPACE_SEED,
+					card_id: CARD_CORBEILLE,
+					contact_id: contact.id,
+					role: null,
+				},
+			})
+			sonde.rattachementsSupprimes.push({ cardId: CARD_CORBEILLE, contactId: contact.id })
+			// LA MESURE QUI FONDE LE FILTRE DU §17.3, et il faut qu'elle reste vraie : le jour où la
+			// base refuserait ce rattachement, le filtre de l'écran cesserait d'être une décision de
+			// produit pour devenir une redondance, et ce scénario le dirait.
+			expect(reponse.status()).toBe(201)
+
+			// ET VOICI POURQUOI L'ÉCRAN L'ÉCARTE : la fiche du contact ne le montre JAMAIS, le
+			// serveur écartant les affaires en corbeille de sa lecture (§15.3). Le rattachement
+			// existe en base et reste invisible — l'utilisateur aurait agi sans rien voir changer.
+			const fiche = await request.get(
+				`/rest/v1/contacts?id=eq.${contact.id}` +
+					'&select=id,card_contacts(role,cards!inner(id,title))' +
+					'&card_contacts.cards.deleted_at=is.null',
+				{ headers: enTetesAuthentifies(jeton) },
+			)
+			const [lue] = (await fiche.json()) as [{ card_contacts: unknown[] }]
+			expect(lue.card_contacts).toEqual([])
+		} finally {
+			await nettoyer(request, sonde)
+		}
+	})
+
+	test('8 — un doublon rend 409 / 23505, et la ligne d’origine est INCHANGÉE', async ({ request }) => {
+		const jeton = await jetonDe('admin@p2enjoy.test')
+		// Léo est rattaché à « Migration ERP Sogexia » par le seed, avec le rôle `decideur`.
+		const reponse = await request.post('/rest/v1/card_contacts', {
+			headers: { ...enTetesAuthentifies(jeton), Prefer: 'return=representation' },
+			data: {
+				workspace_id: WORKSPACE_SEED,
+				card_id: CARD_ERP,
+				contact_id: CONTACT_LEO,
+				role: 'tentative de doublon',
+			},
+		})
+		expect(reponse.status()).toBe(409)
+		expect(((await reponse.json()) as { code: string }).code).toBe('23505')
+		// LE REFUS RELIT LA LIGNE ET LA CONSTATE INCHANGÉE (décision 70) : le rôle du seed n'a pas
+		// été écrasé par la tentative.
+		expect(await rattachementsDe(request, CARD_ERP, CONTACT_LEO)).toEqual([
+			{ card_id: CARD_ERP, contact_id: CONTACT_LEO, role: 'decideur' },
+		])
+	})
+
+	test('9 — LA LECTRICE REÇOIT UN 403 EXPLICITE, et non le silence de la modification', async ({
+		request,
+	}) => {
+		const sonde = await creerSonde()
+		try {
+			const contact = await contactSonde(request, sonde, { full_name: 'Sonde 4h lectrice' })
+			const jeton = await jetonDe('viewer@p2enjoy.test')
+			const reponse = await request.post('/rest/v1/card_contacts', {
+				headers: { ...enTetesAuthentifies(jeton), Prefer: 'return=representation' },
+				data: {
+					workspace_id: WORKSPACE_SEED,
+					card_id: CARD_SEEDEE_4,
+					contact_id: contact.id,
+					role: null,
+				},
+			})
+			// C'EST L'ÉCART QUI SÉPARE 4h DE 4g, ET IL EST STRUCTUREL. `card_contacts_insertion`
+			// filtre par `WITH CHECK`, qui REJETTE la ligne — statut et code sont explicites. La
+			// modification d'un contact filtre par `USING`, qui rend `200` et zéro ligne SANS
+			// erreur (§16.3, mesure 3). L'écran n'a donc aucun « sans effet » à dire ici.
+			expect(reponse.status()).toBe(403)
+			expect(((await reponse.json()) as { code: string }).code).toBe('42501')
+			// Le refus RELIT : aucune ligne n'a été créée (décision 70).
+			expect(await rattachementsDe(request, CARD_SEEDEE_4, contact.id)).toEqual([])
+		} finally {
+			await nettoyer(request, sonde)
+		}
+	})
+
+	test('10 — le business developer RÉUSSIT : le geste n’est pas un geste d’administration', async ({
+		request,
+	}) => {
+		const sonde = await creerSonde()
+		try {
+			const contact = await contactSonde(request, sonde, { full_name: 'Sonde 4h bizdev' })
+			const jeton = await jetonDe('bizdev@p2enjoy.test')
+			const reponse = await request.post('/rest/v1/card_contacts', {
+				headers: { ...enTetesAuthentifies(jeton), Prefer: 'return=representation' },
+				data: {
+					workspace_id: WORKSPACE_SEED,
+					card_id: CARD_SEEDEE_1,
+					contact_id: contact.id,
+					role: 'contact technique',
+				},
+			})
+			sonde.rattachementsSupprimes.push({ cardId: CARD_SEEDEE_1, contactId: contact.id })
+			// La politique porte sur le DROIT D'ÉCRITURE DE L'AFFAIRE, jamais sur un rôle de
+			// workspace : c'est pourquoi aucune commande de l'écran n'est éteinte selon le rôle.
+			expect(reponse.status()).toBe(201)
+		} finally {
+			await nettoyer(request, sonde)
+		}
+	})
+
+	test('11 — un rôle CHAÎNE VIDE est refusé par la base : 400 / 23514', async ({ request }) => {
+		const sonde = await creerSonde()
+		try {
+			const contact = await contactSonde(request, sonde, { full_name: 'Sonde 4h rôle vide' })
+			const jeton = await jetonDe('admin@p2enjoy.test')
+			const reponse = await request.post('/rest/v1/card_contacts', {
+				headers: { ...enTetesAuthentifies(jeton), Prefer: 'return=representation' },
+				data: {
+					workspace_id: WORKSPACE_SEED,
+					card_id: CARD_SEEDEE_1,
+					contact_id: contact.id,
+					role: '',
+				},
+			})
+			// C'EST CE QUI EXIGE QUE `rattacherContact` TRADUISE UN RÔLE VIDE EN `null` (§17.5).
+			// Ce n'est PAS une garde de saisie doublant la base : c'est le choix de la valeur qui
+			// exprime « pas de rôle ».
+			expect(reponse.status()).toBe(400)
+			expect(((await reponse.json()) as { code: string }).code).toBe('23514')
+			expect(await rattachementsDe(request, CARD_SEEDEE_1, contact.id)).toEqual([])
+		} finally {
+			await nettoyer(request, sonde)
+		}
+	})
+
+	test('12 — une affaire INEXISTANTE rend le MÊME 403 qu’un droit manquant, jamais 23503', async ({
+		request,
+	}) => {
+		const sonde = await creerSonde()
+		try {
+			const contact = await contactSonde(request, sonde, { full_name: 'Sonde 4h affaire absente' })
+			const jeton = await jetonDe('admin@p2enjoy.test')
+			const reponse = await request.post('/rest/v1/card_contacts', {
+				headers: { ...enTetesAuthentifies(jeton), Prefer: 'return=representation' },
+				data: {
+					workspace_id: WORKSPACE_SEED,
+					card_id: '5eed0000-0000-4000-8000-0000000000ff',
+					contact_id: contact.id,
+					role: null,
+				},
+			})
+			// CETTE MESURE FERME UNE NATURE DE REFUS. `app.can_write_card` rend faux pour une
+			// affaire qui n'existe pas, si bien que `WITH CHECK` rejette la ligne AVANT que la clé
+			// étrangère ne soit éprouvée : le code `23503` — que le §12.5 distingue parce que le
+			// CONTACT y était la variable — est INATTEIGNABLE depuis cette surface, où c'est
+			// l'AFFAIRE qui varie. Les deux causes sont indistinguables, et un seul message les
+			// couvre (§17.4).
+			expect(reponse.status()).toBe(403)
+			expect(((await reponse.json()) as { code: string }).code).toBe('42501')
+		} finally {
+			await nettoyer(request, sonde)
+		}
+	})
+
+	test('le seed est rendu INTACT : deux rattachements, leurs valeurs d’origine', async ({
+		request,
+	}) => {
+		const reponse = await request.get(
+			'/rest/v1/card_contacts?select=card_id,contact_id,role&order=contact_id',
+			{ headers: enTetesService() },
+		)
+		expect(await reponse.json()).toEqual([
+			{ card_id: CARD_ERP, contact_id: CONTACT_LEO, role: 'decideur' },
+			{
+				card_id: CARD_SEEDEE_4,
+				contact_id: '5eed0000-0000-4000-8000-000000000092',
+				role: 'prescripteur',
+			},
+		])
+	})
+})
