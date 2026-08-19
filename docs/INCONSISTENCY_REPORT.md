@@ -2287,6 +2287,23 @@ défendables — purger en **une** requête `in.(…)` au lieu d'une boucle de s
 ou porter le budget de ce scénario au-delà de trente secondes —, et la première change un fichier de
 preuve qui n'appartient pas à cette unité (`CLAUDE.md` §13). Le comportement est laissé **inchangé**.
 
+**REMESURÉ le 2026-08-19 par `CRM-083` tranche 2b-1, et la mesure APPREND quelque chose de neuf :
+ce scénario est à la LIMITE de son budget, il ne le dépasse pas franchement.** Quatre exécutions,
+deux de chaque côté du `git checkout` de la ligne de base :
+
+```
+arbre courant   =>  34,6 s  puis  35,2 s   (échec)
+ligne de base   =>  29,3 s  puis  34,8 s  puis  36,0 s   (un succès, deux échecs)
+```
+
+Le premier passage de la ligne de base, à **29,3 s**, avait laissé croire un instant à une
+régression : il est en réalité le seul des cinq à être passé sous les trente secondes. L'anomalie
+est donc bien présente des deux côtés, et l'écart entre un verdict vert et un verdict rouge tient
+ici à **moins d'une seconde de charge de la machine** — ce qui explique qu'une session le voie et
+que la suivante ne le voie pas. C'est un argument de plus en faveur de la première des deux
+réponses ci-dessus : porter le budget déplacerait la limite sans supprimer la boucle qui l'atteint.
+Le comportement reste **inchangé**, et l'arbitrage reste dû.
+
 ## Consigné le 2026-08-19 — un constat d'environnement, étranger à `CRM-081` tranche 2 f
 
 ### INC-167 — le stockage objet refuse la clé d'accès, et trois preuves de pièces jointes en meurent
