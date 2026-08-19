@@ -20,6 +20,107 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      budget_occurrences: {
+        Row: {
+          budget_id: string
+          closed_at: string | null
+          created_at: string
+          id: string
+          label: string
+          period_end: string | null
+          period_start: string | null
+          planned_amount: number | null
+          updated_at: string
+        }
+        Insert: {
+          budget_id: string
+          closed_at?: string | null
+          created_at?: string
+          id?: string
+          label: string
+          period_end?: string | null
+          period_start?: string | null
+          planned_amount?: number | null
+          updated_at?: string
+        }
+        Update: {
+          budget_id?: string
+          closed_at?: string | null
+          created_at?: string
+          id?: string
+          label?: string
+          period_end?: string | null
+          period_start?: string | null
+          planned_amount?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_occurrences_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budgets: {
+        Row: {
+          closed_at: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          id: string
+          is_recurrent: boolean
+          name: string
+          planned_amount: number | null
+          position: number
+          track_id: string
+          updated_at: string
+        }
+        Insert: {
+          closed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          id?: string
+          is_recurrent?: boolean
+          name: string
+          planned_amount?: number | null
+          position: number
+          track_id: string
+          updated_at?: string
+        }
+        Update: {
+          closed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          id?: string
+          is_recurrent?: boolean
+          name?: string
+          planned_amount?: number | null
+          position?: number
+          track_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budgets_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budgets_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       card_comments: {
         Row: {
           author_id: string | null
