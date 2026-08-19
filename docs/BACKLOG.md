@@ -7818,7 +7818,7 @@ sont indépendantes l'une de l'autre et suivent la Definition of Done commune.
 | CRM-082 | Objectifs : modèle, RLS et API | `[~]` |
 | CRM-083 | Canevas d'objectifs : blocs, flèches, ouverture du channel | `[~]` |
 | CRM-084 | Budgets, occurrences et clôture : modèle, RLS et API | `[~]` |
-| CRM-085 | Lignes de coût d'une affaire : modèle et section de la fiche | `[ ]` |
+| CRM-085 | Lignes de coût d'une affaire : modèle et section de la fiche | `[~]` |
 | CRM-086 | Écrans de coûts : histogramme du track et cumul du workspace | `[ ]` |
 
 **Contrainte d'ordre :** `CRM-082` précède `CRM-083`, `CRM-084` précède `CRM-085` qui précède
@@ -8384,10 +8384,34 @@ budget appartient à un track, et l'écran qui administre le track est celui qui
       `scripts/verify-administration-arborescence.sh` **27 contrôles**, aucune anomalie de part ni
       d'autre — l'écran hôte n'a rien perdu à accueillir le bloc des budgets.
 
-### CRM-085 — Lignes de coût d'une affaire `[ ]`
+### CRM-085 — Lignes de coût d'une affaire `[~]`
 
 `card_costs` (`docs/SCHEMA.md` §9 bis.6), ses triggers, sa double politique de lecture, et la
 section « Coûts » de la fiche d'affaire (`docs/SPEC-costs.md` §4.6).
+
+**Tranche 1 — le modèle — LIVRÉE ET PROUVÉE** (décision 473). Migration `0051_card_costs.sql` : la
+table, ses trois index dont le partiel des lignes sans réel, le trigger de rattachement — récurrence
+dans les deux sens, appartenance de l'occurrence au budget, clôtures opposées à l'insertion **et**
+au déplacement, des deux côtés —, le trigger posé sur `budgets` qui refuse de rendre récurrent un
+budget portant déjà des lignes, `app.budget_est_ouvert` et quatre politiques. Seed : **quatre
+lignes**, dont deux sans réel et une qui porte le cas de la double condition de lecture. Preuves
+vertes : `supabase/tests/0049_card_costs.test.sql` **58 assertions**, `e2e/api/card-costs.spec.ts`
+**15 scénarios**.
+
+**MESURÉ, ET CE N'EST PAS DANS LA SPÉCIFICATION** : le trigger `BEFORE INSERT` s'exécute **avant**
+le `WITH CHECK` de la politique, si bien qu'une insertion sur un budget clôturé rend `400 / 23514`
+— le message du trigger — et jamais `403 / 42501`. La suppression, qu'aucun trigger ne garde, rend
+en revanche `200 []`. Les trois formes du refus sont éprouvées, et `CRM-086` devra les classer.
+
+**Tranche 2 — RESTE À LIVRER** : la section « Coûts » de la fiche d'affaire (`docs/SPEC-costs.md`
+§4.6) — liste des lignes, ajout, modification, suppression, sélecteur de budget limité aux budgets
+**ouverts et lisibles du track de la card**, second sélecteur d'occurrence qui apparaît et devient
+obligatoire sur un budget récurrent, total estimé et réel avec la mention du §4.4. Puis son E2E
+d'interface, ses captures aux quatre paliers et `scripts/verify-card-costs.sh`.
+
+**Et le point laissé ouvert par `CRM-084`** : le DÉCOMPTE des lignes sans coût réel dans la
+confirmation de clôture d'un budget (§4.1) se lit désormais dans `card_costs`, qui existe. Il se
+solde dans la tranche 2 ou juste après.
 
 **DoD** : migration ; pgTAP — `occurrence_id` exigée si et seulement si le budget est récurrent,
 insertion refusée sur un budget clôturé **et** sur une occurrence clôturée, occurrence étrangère au
