@@ -8321,10 +8321,13 @@ GARDE — tables, triggers, politiques, seed —, la suivante livrera l'écran d
       sans réel avant une clôture. Sans elle, l'unité n'a **aucune capture** et son E2E d'interface
       n'a pas de sujet.
 - [ ] **Harnais dédié `scripts/verify-budgets.sh`** : dû avant le passage à `[x]`.
-- [ ] **Campagne complète non intégralement rejouée sur ce changement** : les cinquante
-      `scripts/verify-*.sh` du dépôt ne tiennent pas dans une session
-      (`docs/CloudWorker.md` §2.1 ter). Les preuves réellement exécutées sont nommées dans
-      l'entrée de journal de la session.
+- [x] **La campagne complète a été exécutée, et elle est verte** : `test:unit` **57 fichiers /
+      1964 tests**, `test:sql` **48 fichiers / 2405 assertions**, `e2e:api` **801 passés**,
+      `e2e:ui` **482 passés**, `e2e:mail` **42 passés**, `pytest` **244**, `typecheck`,
+      `types:check` et `build` verts. Les trois harnais que ce changement touche sont verts :
+      `verify-migrations` **25 contrôles**, `verify-seed` **55**, `verify-seed-demo` **69**.
+- [ ] **Les quarante-sept autres `scripts/verify-*.sh` n'ont pas été rejoués**, la série entière ne
+      tenant pas dans une session (`docs/CloudWorker.md` §2.1 ter).
 
 ### CRM-085 — Lignes de coût d'une affaire `[ ]`
 

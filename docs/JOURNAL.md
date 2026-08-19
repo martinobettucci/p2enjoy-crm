@@ -20620,9 +20620,12 @@ ET sur la clôture et qui n'existe pas dans la base.
 
 **Campagne complète de la session, exécutée une fois puis rejouée après correction.** `test:unit`
 **57 fichiers / 1964 tests**, `test:sql` **48 fichiers / 2405 assertions**, `e2e:api` **801 passés**,
-`e2e:mail` **42 passés**, `pytest` **244**, `typecheck`, `types:check` et `build` verts.
-`e2e:ui` : voir le compte rendu de session. Les cinquante `scripts/verify-*.sh` n'ont pas tous été
-rejoués, la série entière ne tenant pas dans une session (`docs/CloudWorker.md` §2.1 ter).
+`e2e:ui` **482 passés, aucun échec**, `e2e:mail` **42 passés**, `pytest` **244**, `typecheck`,
+`types:check` et `build` verts. Les trois `scripts/verify-*.sh` que ce changement touche sont verts
+— `verify-migrations` **25 contrôles**, `verify-seed` **55**, `verify-seed-demo` **69** —, les
+quarante-sept autres n'ont pas été rejoués, la série entière ne tenant pas dans une session
+(`docs/CloudWorker.md` §2.1 ter). Les captures d'autres unités régénérées par la campagne ont été
+**restaurées** : ce changement ne touche aucune ligne d'interface.
 
 **DEUX PREUVES ROUGES, TOUTES DEUX IMPUTABLES, TOUTES DEUX CORRIGÉES À LA CAUSE.** (1) Le
 recensement de `0016_preuves_refus.test.sql` rendait 99 pour 91 attendues : c'est le contrôle qui
