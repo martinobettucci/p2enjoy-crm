@@ -2889,6 +2889,90 @@ for ligne in "${OCCURRENCES_SEED[@]}"; do
 	printf '  %-24s %s → %s\n' "  ↳ ${libelle:0:22}" "$debut" "$fin"
 done
 
+# --- 8 quindecies. Lignes de coût de démonstration — docs/SPEC-costs.md §2.3, CRM-085 -----------
+# @spec CRM-085 (docs/BACKLOG.md) — lignes de coût d'une affaire : modèle
+# @spec docs/SPEC-costs.md §1 (le cas qui a motivé la demande), §2.3 (card_costs), §3.1 (double
+#       condition de lecture), §4.4 (le réel inconnu), §4.6 (section de la fiche), §4.8 (à saisir)
+# @spec docs/SCHEMA.md §9 bis.6
+#
+# ELLES SONT POSÉES *AVANT* LES CLÔTURES DE LA SECTION PRÉCÉDENTE, ET CE N'EST PAS UN DÉTAIL
+# D'ORDONNANCEMENT. Le trigger `app.card_costs_verifier_rattachement` refuse toute ligne neuve sur
+# un budget ou une occurrence clôturés, y compris à la clé de service — une garde qui ne vivrait
+# que dans la politique serait franchissable par elle. Poser la ligne PUIS clôturer est donc le
+# seul chemin, et c'est aussi le vrai geste du §2.3 : « on clôt une campagne PUIS les factures
+# arrivent ». Le seed raconte cette histoire dans son ordre réel plutôt que de la fabriquer.
+#
+# CE QUE CE JEU DOIT DÉMONTRER, ET POURQUOI CHAQUE LIGNE EXISTE.
+#
+#   * LE CAS DU RESPONSABLE, MOT POUR MOT (§1). « Refonte intranet Ville de Lyon » porte DEUX
+#     lignes de nature différente : « Publicité — estimé 100, réel INCONNU » et « Production —
+#     estimé 350, réel 375 ». Une affectation unique par affaire ne rendrait pas ce cas, et c'est
+#     la raison d'être du modèle. La première ligne est aussi le seul jeu qui rende démontrable la
+#     mention du §4.4 — « n lignes sans coût réel saisi » — et le badge de l'onglet du §4.8.
+#
+#   * UNE LIGNE SUR UN BUDGET RÉCURRENT, DANS CHACUNE DE SES DEUX OCCURRENCES. « Publicité » vit
+#     dans « Février 2026 », « Portail adhérents — MGEN Loire » dans « Janvier 2026 ». Sans deux
+#     occurrences PEUPLÉES, la vue agrégée du §4.2 et la vue détaillée du §4.3 rendraient le même
+#     dessin et la règle ne serait pas éprouvée.
+#
+#   * UNE LIGNE QUI SURVIT À LA CLÔTURE DE SON BUDGET, et une autre à celle de son occurrence.
+#     « Production » est rattachée à « Salon du web 2025 » et « Portail adhérents » à
+#     « Janvier 2026 », toutes deux clôturées juste après. Elles prouvent que clôturer n'efface pas
+#     l'histoire (§2.3), et elles peuplent l'onglet « À saisir » du §4.8, qui liste précisément les
+#     lignes des budgets clos.
+#
+#   * LA LIGNE QUI MOTIVE LA DOUBLE CONDITION DE LECTURE (§3.1), ET ELLE SEULE LA REND
+#     DÉMONTRABLE. « Formation Data & IA — promo 2026 » vit sur « Formation », que Farida LIT ;
+#     elle est rattachée à « Prospection sortante », qui vit sur « Conseil & IA », que Farida ne
+#     lit PAS. Farida voit donc l'affaire et ne voit AUCUNE de ses lignes. Sans ce cas, la double
+#     condition serait indistinguable d'une condition simple sur la card, et une régression qui
+#     supprimerait `app.can_read_budget` de la politique passerait inaperçue.
+#
+#     Le rattachement croisé — une card d'un track, un budget d'un autre — n'est PAS un défaut du
+#     jeu de données : le §3.1 le nomme explicitement comme le cas que la règle existe pour
+#     traiter. La base l'autorise ; c'est le sélecteur du §4.6 qui ne propose que les budgets du
+#     track de la card, et cette restriction est d'interface.
+#
+# `resolution=merge-duplicates` sur la clé primaire : l'écriture est CONVERGENTE. Une ligne dont le
+# réel a été saisi à la main pendant une session de développement est rétablie au contrat.
+
+# id | card | budget | occurrence | libellé | estimé | réel
+COUTS_SEED=(
+	"5eed0000-0000-4000-8000-0000000000e1|5eed0000-0000-4000-8000-0000000000c4|5eed0000-0000-4000-8000-0000000000c2|5eed0000-0000-4000-8000-0000000000d2|Publicité|100.00|"
+	"5eed0000-0000-4000-8000-0000000000e2|5eed0000-0000-4000-8000-0000000000c4|5eed0000-0000-4000-8000-0000000000c3||Production|350.00|375.00"
+	"5eed0000-0000-4000-8000-0000000000e3|5eed0000-0000-4000-8000-0000000000cc|5eed0000-0000-4000-8000-0000000000c2|5eed0000-0000-4000-8000-0000000000d1|Achat d'espace|900.00|880.00"
+	"5eed0000-0000-4000-8000-0000000000e4|5eed0000-0000-4000-8000-0000000000c7|5eed0000-0000-4000-8000-0000000000c1||Prospection terrain|800.00|"
+)
+
+echo
+say "8 quindecies. Lignes de coût de démonstration"
+
+for ligne in "${COUTS_SEED[@]}"; do
+	IFS='|' read -r id card budget occurrence libelle estime reel <<< "$ligne"
+
+	# `null` EXPLICITE ET NON CHAÎNE VIDE pour le réel inconnu : `actual_cost` nul n'est pas zéro
+	# (§2.3), et une coercition qui écrirait `0` détruirait la seule distinction que cette
+	# spécification défend. Même traitement pour `occurrence_id`, exigée si et seulement si le
+	# budget est récurrent.
+	charge=$(jq -nc --arg id "$id" --arg card "$card" --arg budget "$budget" \
+	                --arg occurrence "$occurrence" --arg l "$libelle" \
+	                --argjson estime "$estime" \
+	                --argjson reel "${reel:-null}" \
+	                --arg auteur '5eed0000-0000-4000-8000-000000000011' \
+	     '{id: $id, card_id: $card, budget_id: $budget,
+	       occurrence_id: (if $occurrence == "" then null else $occurrence end),
+	       label: $l, estimated_cost: $estime, actual_cost: $reel, created_by: $auteur}')
+
+	code=$(api POST /rest/v1/card_costs \
+		-H 'Prefer: return=representation,resolution=merge-duplicates' \
+		-d "$charge")
+	attendu "$code" "création de la ligne de coût « $libelle »" 200 201
+
+	printf '  %-22s estimé %8s   réel %s\n' "${libelle:0:22}" "$estime" "${reel:-— non saisi}"
+done
+
+info "Lignes de coût : ${#COUTS_SEED[@]} dont 2 sans réel, 2 sur un budget récurrent — docs/SPEC-costs.md §2.3"
+
 # LES DEUX CLÔTURES, PAR LE VRAI GESTE. Un `PATCH` qui pose `closed_at`, exactement ce que
 # l'administration des budgets enverra (§4.1). Convergent : rejouer le seed sur une base déjà
 # clôturée réécrit la même valeur sans erreur.
@@ -2950,6 +3034,73 @@ refus=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API/rest/v1/budgets" \
         d'être créé par un non-administrateur."
 
 info "Vérifié avec les jetons réels : la lectrice voit 3 budgets sur 4, le bizdev en crée 0 (403)"
+
+# LA DOUBLE CONDITION DE LECTURE DE `card_costs`, VÉRIFIÉE PAR LE CAS QUI LA MOTIVE (§3.1).
+# C'est le contrôle central de `CRM-085`, et il ne se déduit d'aucun modèle : Farida LIT l'affaire
+# « Formation Data & IA — promo 2026 » — c'est vérifié ici même, sans quoi zéro ligne ne prouverait
+# rien —, et ne voit AUCUNE de ses lignes de coût, la seule qu'elle porte étant rattachée à un
+# budget d'un track qui lui est fermé. Une politique qui n'exigerait que `app.can_read_card`
+# rendrait ici UNE ligne, et divulguerait le nom et le montant d'une enveloppe interdite.
+CARD_LISIBLE_BUDGET_FERME='5eed0000-0000-4000-8000-0000000000c7'
+
+affaire_vue=$(curl -s "$API/rest/v1/cards?select=id&id=eq.$CARD_LISIBLE_BUDGET_FERME" \
+	-H "apikey: $ANON_KEY" -H "Authorization: Bearer $JETON_VIEWER" | jq -r 'length')
+[ "${affaire_vue:-0}" -eq 1 ] || die "la lectrice doit LIRE l'affaire « Formation Data & IA — promo
+        2026 », sans quoi l'absence de ses lignes de coût ne prouverait rien de la double condition
+        du §3.1 : elle ne prouverait que le droit manquant sur la card."
+
+lignes_vues=$(curl -s "$API/rest/v1/card_costs?select=id&card_id=eq.$CARD_LISIBLE_BUDGET_FERME" \
+	-H "apikey: $ANON_KEY" -H "Authorization: Bearer $JETON_VIEWER" | jq -r 'length')
+[ "${lignes_vues:-0}" -eq 0 ] || die "la lectrice lit cette affaire mais NE DOIT VOIR AUCUNE de ses
+        lignes de coût : la seule qu'elle porte est rattachée à « Prospection sortante », budget du
+        track « Conseil & IA » qui lui est fermé (docs/SPEC-costs.md §3.1). L'API lui en rend
+        « ${lignes_vues:-0} », donc la double condition de lecture n'est plus tenue et le nom d'une
+        enveloppe interdite fuit."
+
+# ET LA MÊME LIGNE EST BIEN LÀ POUR QUI LIT LES DEUX. Sans cette contre-épreuve, une table
+# `card_costs` VIDE satisferait le contrôle ci-dessus et le seed se féliciterait de rien.
+lignes_totales=$(curl -s "$API/rest/v1/card_costs?select=id" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
+[ "${lignes_totales:-0}" -eq "${#COUTS_SEED[@]}" ] || die "la base doit porter ${#COUTS_SEED[@]}
+        lignes de coût, elle en porte « ${lignes_totales:-0} »."
+
+# LE REFUS D'INSERTION SUR UN BUDGET CLÔTURÉ, AVEC UN JETON RÉEL, ET C'EST LE *TRIGGER* QUI PARLE.
+# MESURÉ le 2026-08-19 : PostgreSQL exécute les triggers `BEFORE INSERT` **avant** d'appliquer le
+# `WITH CHECK` de la politique, si bien que l'appelant reçoit `400 / 23514` — le message du trigger,
+# qui NOMME la clôture — et non le `403 / 42501` d'un refus de politique. La politique porte la même
+# règle et reste utile ; elle n'est simplement pas celle que le client entend sur ce chemin.
+#
+# La distinction n'est pas cosmétique : `CRM-086` devra classer ce refus pour en tirer un message,
+# et un module qui guetterait un `403` ici ne le reconnaîtrait jamais.
+refus_clos=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API/rest/v1/card_costs" \
+	-H "apikey: $ANON_KEY" -H "Authorization: Bearer $JETON_BIZDEV" \
+	-H 'Content-Type: application/json' \
+	-d "$(jq -nc --arg card '5eed0000-0000-4000-8000-0000000000c4' \
+	             --arg budget "$BUDGET_CLOTURE" \
+	      '{card_id: $card, budget_id: $budget, label: "Refusée", estimated_cost: 10}')")
+[ "$refus_clos" = '400' ] || die "une ligne de coût sur le budget CLÔTURÉ « Salon du web 2025 »
+        doit être refusée avec le code 400 rendu par le trigger (docs/SPEC-costs.md §2.3 et §3.2),
+        mais l'API a rendu « $refus_clos ». Si c'est un 201, un budget clos accepte de nouveau des
+        dépenses et la comparaison prévisionnel/réel de tout budget arrêté devient réécrivable ; si
+        c'est un 403, c'est la politique qui a parlé et le trigger a cessé de garder les écrivains
+        qui traversent la RLS."
+
+# ET LE RÉEL RESTE SAISISSABLE SUR CE MÊME BUDGET CLOS — c'est la frontière EXACTE du §2.3, et les
+# deux résultats doivent différer. Le business developer écrit l'affaire ; il saisit donc la
+# facture qui arrive après la clôture, sans rouvrir l'enveloppe.
+maj_clos=$(curl -s -o /dev/null -w '%{http_code}' -X PATCH \
+	"$API/rest/v1/card_costs?id=eq.5eed0000-0000-4000-8000-0000000000e2" \
+	-H "apikey: $ANON_KEY" -H "Authorization: Bearer $JETON_BIZDEV" \
+	-H 'Content-Type: application/json' -H 'Prefer: return=representation' \
+	-d "$(jq -nc '{actual_cost: 375.00}')")
+[ "$maj_clos" = '200' ] || die "le coût RÉEL d'une ligne rattachée à un budget clôturé doit rester
+        saisissable (docs/SPEC-costs.md §2.3, « on clôt une campagne puis les factures arrivent »),
+        mais l'API a rendu « $maj_clos ». Si le refus est symétrique de celui de l'insertion, la
+        frontière du §2.3 n'est plus tenue et il faudrait rouvrir un budget pour saisir une
+        facture."
+
+info "Vérifié avec les jetons réels : 0 ligne pour la lectrice sur une affaire qu'elle LIT,
+      400/23514 à l'insertion sur un budget clos, 200 à la saisie du réel sur ce même budget"
 
 info "Budgets : ${#BUDGETS_SEED[@]} dont 1 récurrent à ${#OCCURRENCES_SEED[@]} occurrences, 1 clôturé,
       1 fermé à la lectrice et 1 en CHF — docs/SPEC-costs.md §2 et §4.7"

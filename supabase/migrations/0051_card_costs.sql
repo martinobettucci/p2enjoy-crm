@@ -446,11 +446,18 @@ create policy card_costs_lecture_card_et_budget
 -- reviendrait à réserver toute affectation aux administrateurs, c'est-à-dire à bloquer le travail
 -- quotidien que cet arbitrage protège.
 --
--- LA CLÔTURE EST OPPOSÉE ICI *ET* PAR LE TRIGGER DU §2, et les deux couches ne font pas double
--- emploi : la politique parle la première et rend `403` à l'appelant HTTP, le trigger tient la
--- même règle pour tout écrivain qui traverse la RLS — `service_role`, une fonction `definer`, une
--- migration. Une garde qui ne vivrait que dans la politique serait franchissable par la clé de
--- service, dont le seed et les fonctions Edge se servent.
+-- LA CLÔTURE EST OPPOSÉE ICI *ET* PAR LE TRIGGER DU §2, et c'est LE TRIGGER QUE LE CLIENT ENTEND.
+-- MESURÉ le 2026-08-19 : PostgreSQL exécute les triggers `BEFORE INSERT` **avant** d'appliquer le
+-- `WITH CHECK` de la politique. Un `POST` sur un budget clôturé rend donc `400 / 23514` — le
+-- message du trigger, qui NOMME la clôture —, jamais le `403 / 42501` d'un refus de politique.
+--
+-- Les deux couches ne font pas double emploi pour autant, et la condition reste écrite ici pour
+-- deux raisons : `docs/SCHEMA.md` §9 bis.7 pose la règle AU NIVEAU DE LA POLITIQUE, et le trigger
+-- ne garde que l'insertion et le déplacement — c'est cette politique, et elle seule, qui oppose la
+-- clôture à la SUPPRESSION (§5.4). Inversement, le trigger tient la règle pour tout écrivain qui
+-- traverse la RLS — `service_role`, une fonction `definer`, une migration —, ce dont une garde
+-- vivant uniquement dans la politique serait incapable : le seed s'en sert justement, et c'est
+-- pourquoi il pose ses lignes AVANT de clôturer.
 
 drop policy if exists card_costs_insertion_ecriture_card on public.card_costs;
 create policy card_costs_insertion_ecriture_card
