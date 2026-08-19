@@ -871,3 +871,163 @@ test.describe('rattachement d’une affaire depuis la fiche (docs/SPEC-contacts.
 		await capturer(page, 'fiche-contact-rattachement-390', UNITE)
 	})
 })
+
+// =================================================================================================
+// @verifies CRM-060 (docs/BACKLOG.md) — tranche 4 sous-tranche 4i : le DÉTACHEMENT d'une affaire
+//           depuis la fiche d'un contact
+// @verifies docs/SPEC-contacts.md §18.4 (la quatrième colonne, la confirmation sur une ligne à
+//           elle, l'exclusivité), §18.6 (de quoi le geste a l'air, la relecture dans les trois
+//           issues), §18.7 (cas a, b, c, d, f, h, j, m)
+// @verifies docs/DESIGN_SYSTEM.md §5.27 (ce geste), §7 (paliers) ; CLAUDE.md §16 (vérification
+//           visuelle)
+//
+// LE SEED EST RESTITUÉ PAR LE GESTE QUE CETTE SOUS-TRANCHE LIVRE, et c'est ce qui l'éprouve le
+// mieux : 4h a dû aller chercher le détachement sur la fiche de l'AFFAIRE, faute de l'avoir ici.
+// Le parcours rattache depuis la fiche du contact, puis détache DEPUIS LA MÊME PAGE — l'asymétrie
+// que le §17.8 assumait est comblée, et la preuve la referme sans jamais toucher la base.
+
+/** Sophie Dupont, rattachée par le seed à « Refonte intranet Ville de Lyon » que la lectrice LIT. */
+const ID_SOPHIE_UI = '5eed0000-0000-4000-8000-000000000092'
+const TITRE_INTRANET = 'Refonte intranet Ville de Lyon'
+
+test.describe('détachement d’une affaire depuis la fiche (docs/SPEC-contacts.md §18.7)', () => {
+	test('cas a, b, d et f : chaque ligne porte sa commande, une seule confirmation, la zone est RELUE', async ({
+		page,
+	}) => {
+		await connecter(page, ADMIN)
+		await page.goto(`/contacts/${ID_LEO_UI}`)
+		await expect(page.getByRole('heading', { name: 'Léo Marchand' })).toBeVisible()
+
+		// On pose d'abord un second rattachement PAR LES GESTES DE L'ÉCRAN (4h), pour disposer de
+		// DEUX lignes : le cas d — l'exclusivité des confirmations — n'a aucun sens sur une seule.
+		await page.getByTestId('ouvrir-rattachement-affaire').click()
+		await page.getByTestId('champ-affaire').selectOption(CARD_VITRINE_UI)
+		await page.getByTestId('confirmer-rattachement-affaire').click()
+		await expect(page.getByTestId('ligne-affaire-contact')).toHaveCount(2)
+
+		// Cas a : LA QUATRIÈME COLONNE porte un en-tête lisible, et CHAQUE ligne sa commande.
+		await expect(page.getByRole('columnheader', { name: 'Commandes' })).toBeVisible()
+		await expect(page.getByTestId('detacher-affaire-contact')).toHaveCount(2)
+		await expect(page.getByTestId('ligne-confirmation-detachement')).toHaveCount(0)
+
+		// Cas b : la confirmation apparaît sur UNE LIGNE À ELLE, sous la sienne, et NOMME l'affaire.
+		const commandeERP = page.getByTestId('detacher-affaire-contact').first()
+		await commandeERP.click()
+		const confirmation = page.getByTestId('confirmation-detachement-affaire')
+		await expect(confirmation).toBeVisible()
+		await expect(confirmation).toContainText('Migration ERP Sogexia')
+		// LE TABLEAU RESTE ENTIER SOUS LA CONFIRMATION : elle vit DANS le flux, jamais en modale.
+		await expect(page.getByTestId('ligne-affaire-contact')).toHaveCount(2)
+		await capturer(page, 'fiche-contact-detachement-confirmation-1440', UNITE)
+
+		// Cas d : ouvrir la confirmation d'une AUTRE ligne ferme la précédente. Deux questions
+		// destructrices simultanées ne diraient pas à laquelle on répond (§18.4).
+		const ligneVitrine = page
+			.getByTestId('ligne-affaire-contact')
+			.filter({ hasText: TITRE_VITRINE })
+		await ligneVitrine.getByTestId('detacher-affaire-contact').click()
+		await expect(page.getByTestId('ligne-confirmation-detachement')).toHaveCount(1)
+		await expect(page.getByTestId('confirmation-detachement-affaire')).toContainText(TITRE_VITRINE)
+
+		// Cas f : le détachement est appliqué, la confirmation se ferme, LA ZONE EST RELUE, la
+		// ligne part, et AUCUN message n'est affiché — un succès ne se commente pas.
+		await page.getByTestId('confirmer-detachement-affaire').click()
+		await expect(page.getByTestId('ligne-affaire-contact')).toHaveCount(1)
+		await expect(page.getByTestId('confirmation-detachement-affaire')).toHaveCount(0)
+		await expect(page.getByTestId('message-detachement-affaire')).toHaveCount(0)
+		await capturer(page, 'fiche-contact-detachement-apres-1440', UNITE)
+
+		// LE SEED EST RENDU INTACT PAR LE GESTE MÊME DE CETTE SOUS-TRANCHE, sans quitter la fiche :
+		// c'est le chemin que le §17.8 devait emprunter par la fiche de l'affaire, désormais inutile.
+		await page.reload()
+		await expect(
+			page.getByTestId('ligne-affaire-contact').filter({ hasText: TITRE_VITRINE }),
+		).toHaveCount(0)
+		await expect(page.getByTestId('ligne-affaire-contact')).toHaveCount(1)
+	})
+
+	test('cas b et c AU CLAVIER : le focus ENTRE dans la confirmation, et REVIENT à la commande de SA ligne', async ({
+		page,
+	}) => {
+		await connecter(page, ADMIN)
+		await page.goto(`/contacts/${ID_LEO_UI}`)
+		const commande = page.getByTestId('detacher-affaire-contact').first()
+		await expect(commande).toBeVisible()
+
+		await commande.focus()
+		await page.keyboard.press('Enter')
+		// Le focus ENTRE dans le bouton de confirmation : il peut le faire au montage, la
+		// confirmation ne lisant rien et son bouton n'étant jamais désactivé au premier rendu.
+		await expect(page.getByTestId('confirmer-detachement-affaire')).toBeFocused()
+
+		// La commande de SA ligne est DÉSACTIVÉE tant que la confirmation est ouverte — commande
+		// sans objet, et non garde de droit (§18.4).
+		await expect(commande).toBeDisabled()
+
+		// Cas c : « Annuler » démonte la confirmation ET REND LE FOCUS à la commande de sa ligne.
+		// Le retour est DIFFÉRÉ d'un tour de rendu : la commande est `disabled` au moment de la
+		// fermeture, et un élément désactivé ne reçoit pas le focus.
+		await page.getByTestId('annuler-detachement-affaire').click()
+		await expect(page.getByTestId('confirmation-detachement-affaire')).toHaveCount(0)
+		await expect(commande).toBeFocused()
+	})
+
+	test('cas h et m : la LECTRICE voit la commande, confirme, et le SILENCE est dit — la ligne RESTE', async ({
+		page,
+	}) => {
+		await connecter(page, VIEWER)
+		await page.goto(`/contacts/${ID_SOPHIE_UI}`)
+		await expect(page.getByRole('heading', { name: 'Sophie Dupont' })).toBeVisible()
+
+		// Cas m : AUCUNE COMMANDE ÉTEINTE D'AVANCE (§18.6). MESURÉ : la lectrice RÉUSSIT ce geste
+		// sur « Assistant IA support — Nordis » et reçoit le silence ici — les droits fins de
+		// `CRM-012` divergent d'une affaire à l'autre pour un MÊME profil, et l'écran qui grisrait
+		// « parce que lecteur » se tromperait. L'affaire est donc NOMMÉE, jamais prise au rang.
+		const ligne = page.getByTestId('ligne-affaire-contact').filter({ hasText: TITRE_INTRANET })
+		await expect(ligne).toBeVisible()
+		const commande = ligne.getByTestId('detacher-affaire-contact')
+		await expect(commande).toBeEnabled()
+		await commande.click()
+		await page.getByTestId('confirmer-detachement-affaire').click()
+
+		// Cas h : LE SILENCE EST DIT. La clause `USING` a filtré la ligne avant la suppression, et
+		// le serveur a rendu `200` avec zéro ligne SANS erreur. Le message n'affirme ni le refus ni
+		// la disparition — les deux causes sont indistinguables (§18.3).
+		const message = page.getByTestId('message-detachement-affaire')
+		await expect(message).toBeVisible()
+		await expect(message).toHaveAttribute('role', 'alert')
+		await expect(page.getByTestId('confirmation-detachement-affaire')).toHaveCount(0)
+		// ET LA LIGNE RESTE, parce que la base l'a gardée. C'est tout le point de l'issue : un
+		// retrait optimiste aurait effacé ici une ligne bien vivante, et annoncé un détachement qui
+		// n'a pas eu lieu.
+		await expect(page.getByTestId('ligne-affaire-contact').filter({ hasText: TITRE_INTRANET })).toBeVisible()
+		await capturer(page, 'fiche-contact-detachement-sans-effet-1440', UNITE)
+
+		// AUCUNE ERREUR N'EST DÉCLARÉE À LA GARDE DE CONSOLE, et c'est l'écart avec le refus de 4h :
+		// un `200` n'est pas une erreur réseau, et Chromium n'en journalise aucune. La console reste
+		// VIERGE sur un refus que l'utilisateur voit pourtant écrit.
+
+		// LE SEED EST INTACT : rien n'a été retiré, et la fiche rechargée le montre.
+		await page.reload()
+		await expect(page.getByTestId('ligne-affaire-contact').filter({ hasText: TITRE_INTRANET })).toBeVisible()
+	})
+
+	test('390 px : la confirmation de détachement reste lisible et la page ne défile pas', async ({
+		page,
+	}) => {
+		await page.setViewportSize({ width: 390, height: 844 })
+		await connecter(page, ADMIN)
+		await page.goto(`/contacts/${ID_LEO_UI}`)
+		await page.getByTestId('detacher-affaire-contact').first().click()
+		await expect(page.getByTestId('confirmation-detachement-affaire')).toBeVisible()
+		// Le TABLEAU déborde horizontalement dans son conteneur `.indique-debordement-x` (§12.6),
+		// ce qui est son contrat ; la PAGE, elle, ne défile pas.
+		const debordePage = await page.evaluate(
+			() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+		)
+		expect(debordePage).toBe(false)
+		await capturer(page, 'fiche-contact-detachement-390', UNITE)
+		// On referme sans détacher : ce scénario mesure une mise en page, il n'écrit rien.
+		await page.getByTestId('annuler-detachement-affaire').click()
+	})
+})

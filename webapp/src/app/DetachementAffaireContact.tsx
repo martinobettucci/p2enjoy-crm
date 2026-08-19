@@ -153,10 +153,26 @@ export function ConfirmationDetachementAffaire({
 	}, [client, idCard, idContact, onGeste])
 
 	return (
+		// LA CONFIRMATION RESTE LISIBLE QUAND LE TABLEAU DÉFILE, ET C'EST UN DÉFAUT TROUVÉ PAR LA
+		// VÉRIFICATION VISUELLE (`CLAUDE.md` §16), à 390 px.
+		//
+		// Le tableau des affaires vit dans un conteneur `.indique-debordement-x` (§12.6) : sous
+		// 390 px, ses quatre colonnes le font défiler horizontalement, et cliquer « Détacher » y
+		// pousse le défilement vers la droite pour amener la commande dans le champ. La ligne de
+		// confirmation, qui appartient au même conteneur, se retrouvait alors AMPUTÉE SUR SA
+		// GAUCHE : la question nommant l'affaire — précisément ce que le §6 exige de lire avant un
+		// geste destructeur — sortait de l'écran.
+		//
+		// `sticky left-0` épingle le bloc au bord visible du conteneur plutôt qu'à celui du tableau,
+		// et la borne de largeur le maintient dans la fenêtre. Sur un écran large, la largeur de la
+		// cellule est inférieure à cette borne, qui ne s'applique donc pas : le rendu du §5.27 est
+		// INCHANGÉ là où il était déjà correct. Ce n'est pas un contournement du débordement — le
+		// tableau défile toujours —, c'est la reconnaissance que ce bloc porte de la PROSE et non
+		// une donnée tabulaire.
 		<div
 			data-testid="confirmation-detachement-affaire"
 			data-card={idCard}
-			className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-4 my-2"
+			className="sticky left-0 max-w-[calc(100vw-2rem)] flex flex-col gap-2 rounded-lg border border-border bg-surface p-4 my-2"
 		>
 			<p className="font-medium">{t('contact.detach.confirm.title', { titre })}</p>
 			<p className="text-sm text-text-2">{t('contact.detach.confirm.body')}</p>

@@ -2144,3 +2144,18 @@ forme. Ce qui suit ne dit que ce qui lui est propre, et l'essentiel de ce qui lu
 
 - **Aucune couleur, aucun jeton, aucune icône nouvelle** : le geste emprunte au §5.21 son icône
   `Unlink` et sa teinte de danger.
+
+- **LA CONFIRMATION RESTE LISIBLE QUAND LE TABLEAU DÉFILE, ET C'EST UN DÉFAUT TROUVÉ PAR LA
+  VÉRIFICATION VISUELLE** (`CLAUDE.md` §16), à 390 px, le 2026-08-19. Le tableau du §5.24 vit dans
+  un conteneur `.indique-debordement-x` (§12.6) ; à quatre colonnes, il défile sous 390 px, et
+  activer la commande y pousse le défilement vers la droite pour amener le bouton dans le champ. La
+  ligne de confirmation, qui appartient au même conteneur, se retrouvait **amputée sur sa gauche** :
+  la question nommant l'affaire — précisément ce que le §6 exige de lire **avant** un geste
+  destructeur — sortait de l'écran.
+
+  Le bloc de confirmation est donc **épinglé au bord visible du conteneur** (`sticky` à gauche) et
+  **borné à la largeur de la fenêtre**. Sur un écran large, la largeur de la cellule est inférieure
+  à cette borne, qui ne s'applique pas : le rendu ci-dessus est **inchangé** là où il était déjà
+  correct. Ce n'est pas un contournement du débordement — le tableau défile toujours, et c'est son
+  contrat —, c'est la reconnaissance que ce bloc porte de la **prose** et non une donnée tabulaire.
+  La règle vaut pour **toute** confirmation posée dans une ligne de tableau défilant.
