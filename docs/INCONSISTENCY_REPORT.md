@@ -2286,3 +2286,55 @@ lui, s'est déroulé — c'est la remise en état qui n'a pas tenu dans le budge
 défendables — purger en **une** requête `in.(…)` au lieu d'une boucle de suppressions séquentielles,
 ou porter le budget de ce scénario au-delà de trente secondes —, et la première change un fichier de
 preuve qui n'appartient pas à cette unité (`CLAUDE.md` §13). Le comportement est laissé **inchangé**.
+
+## Consigné le 2026-08-19 — un constat d'environnement, étranger à `CRM-081` tranche 2 f
+
+### INC-167 — le stockage objet refuse la clé d'accès, et trois preuves de pièces jointes en meurent
+
+**Statut : ouvert.** Constaté pendant la campagne de fin de session de `CRM-081` tranche 2 f.
+**Préexistant et étranger à l'unité, ligne de base EXÉCUTÉE.**
+
+**Ce qui est mesuré.** Trois preuves rougissent, et toutes trois sur des **pièces jointes** :
+
+```
+e2e/api/inbox.spec.ts:159   « clean se télécharge, infected, pending et skipped non »
+  => {"statusCode":"403","error":"The Access Key Id you provided does not exist in our
+      records.","message":"InvalidAccessKeyId"}
+     expect([200, 201]).toContain(400)   — le dépôt de la pièce de preuve REND 400
+
+e2e/mail/ingestion.spec.ts:143  « le message est ingéré, sa pièce infectée détectée »
+  => premiere['messages_new'] === undefined ; la relève rend 502
+     journal mail-sync : {"event":"inbound_poll_write_failed"}
+
+e2e/mail/mail-sync.spec.ts:220  « chaque ligne est un JSON borné, sans secret ni avertissement »
+  => conséquence des lignes ERROR que le précédent vient d'écrire
+```
+
+**La cause est UNE, et elle est hors du produit** : le service de stockage refuse la clé d'accès
+qu'on lui présente (`InvalidAccessKeyId`). Une preuve qui ne peut pas **déposer** une pièce ne peut
+ni la télécharger, ni la faire analyser ; et une relève dont l'écriture de pièce échoue rend `502`
+avec sa ligne `ERROR`, que la troisième preuve compte comme un avertissement. Les deux dernières
+sont donc des **conséquences** de la première, non trois défauts distincts.
+
+**La ligne de base, EXÉCUTÉE et non supposée** (`docs/CloudWorker.md` §2.4) :
+
+```
+# mail-sync reconstruit SANS la ligne du §16.16.2, puis :
+npx playwright test --config e2e/playwright.config.ts --project=mail ingestion
+  => 1 failed, 2 passed   (le MÊME échec, au MÊME endroit, au MÊME message)
+# puis la ligne restaurée, image reconstruite, service sain
+```
+
+L'anomalie est donc présente **des deux côtés** : elle est préexistante et ne s'explique pas par la
+tranche. Le diff de la session ne touche d'ailleurs ni le stockage, ni les pièces jointes, ni
+l'antivirus — il est confiné au groupement de l'inbox, à la charge d'insertion d'un message, au seed
+et à la documentation. Les deux scénarios d'ingestion qui ne portent **pas** de pièce jointe
+passent, dont celui du classement automatique, qui emprunte pourtant le chemin d'écriture modifié.
+
+**Ce qui reste à trancher, et pourquoi cette session ne le tranche pas :** la clé d'accès du
+stockage est une donnée d'**environnement**, posée hors du dépôt. Deux réponses sont défendables —
+régénérer les identifiants du service de stockage dans l'environnement de développement, ou faire
+que la relève distingue un échec d'écriture de PIÈCE d'un échec d'écriture de MESSAGE, de sorte
+qu'un stockage indisponible ne fasse plus perdre le message lui-même. La seconde est un changement
+de comportement du sous-système de messagerie, étranger à `CRM-081` (`CLAUDE.md` §13). Le
+comportement est laissé **inchangé**, et l'arbitrage revient au responsable.
