@@ -478,7 +478,6 @@ export const fr = {
 	'goals.place.title.default': 'Nouvel objectif',
 	'goals.block.keyboard.hint':
 		'Flèches pour déplacer le bloc, Maj et flèches pour l’ajuster au pixel, Alt et flèches pour le redimensionner.',
-	'goals.block.resize': 'Redimensionner {titre}',
 	'goals.write.saving': 'Enregistrement…',
 	'goals.write.saved': 'Enregistré',
 	'goals.write.noeffect':

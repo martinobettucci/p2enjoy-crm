@@ -224,6 +224,12 @@ export function texteRefusBloc(refus: RefusBloc): string {
 	return t('goals.write.refused.unavailable')
 }
 
+/**
+ * Les deux gestes de géométrie. Ils ne se confondent pas, et c'est ce qui décide des colonnes
+ * envoyées : réécrire les quatre à chaque fois écraserait le geste d'un collègue.
+ */
+type ModeGeste = 'deplacement' | 'taille'
+
 /** Les quatre directions du clavier, en pas unitaires (§5.5). */
 const DIRECTIONS_CLAVIER: Readonly<Record<string, readonly [number, number]>> = {
 	ArrowLeft: [-1, 0],
@@ -284,16 +290,22 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 	)
 	const etendue = useMemo(() => etendueCanevas(blocsRendus), [blocsRendus])
 
+	// LE GESTE DÉCIDE DES COLONNES ENVOYÉES, ET C'EST UN DÉFAUT TROUVÉ PAR LA PREUVE : écrite
+	// d'abord avec les quatre colonnes à chaque fois, cette fonction faisait qu'un simple
+	// déplacement RÉÉCRIVAIT la taille — donc écrasait le redimensionnement qu'un collègue venait
+	// de faire, avec la valeur que l'écran avait chargée. Un déplacement n'envoie que la position,
+	// un redimensionnement que la taille.
 	const enregistrerGeometrie = useCallback(
-		async (idBloc: string, geometrie: Geometrie) => {
+		async (idBloc: string, geometrie: Geometrie, mode: ModeGeste) => {
 			if (client === null) return
 			setMessage({ ton: 'attente', texte: t('goals.write.saving') })
-			const resultat = await ecrireGeometrieBloc(client, idBloc, {
-				x: geometrie.x,
-				y: geometrie.y,
-				largeur: geometrie.largeur,
-				hauteur: geometrie.hauteur,
-			})
+			const resultat = await ecrireGeometrieBloc(
+				client,
+				idBloc,
+				mode === 'deplacement'
+					? { x: geometrie.x, y: geometrie.y }
+					: { largeur: geometrie.largeur, hauteur: geometrie.hauteur },
+			)
 			// L'ébauche tombe dans les TROIS issues : sur un succès la ligne rendue la remplace, sur
 			// un refus comme sur un silence le bloc reprend sa position d'origine. La laisser en
 			// place sur un refus afficherait un déplacement qui n'a pas eu lieu.
@@ -443,7 +455,7 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 								bloc={bloc}
 								zoom={zoom}
 								onEbauche={(geometrie) => setEbauche({ id: bloc.id, geometrie })}
-								onFin={(geometrie) => void enregistrerGeometrie(bloc.id, geometrie)}
+								onFin={(geometrie, mode) => void enregistrerGeometrie(bloc.id, geometrie, mode)}
 							/>
 						))}
 						{pose === null ? null : (
@@ -743,7 +755,7 @@ function BlocCanevas({
 	readonly bloc: BlocObjectif
 	readonly zoom: number
 	readonly onEbauche: (geometrie: Geometrie) => void
-	readonly onFin: (geometrie: Geometrie) => void
+	readonly onFin: (geometrie: Geometrie, mode: ModeGeste) => void
 }) {
 	const ouvrable = lienOuvrable(bloc)
 	const perdu = lienPerdu(bloc)
@@ -753,9 +765,11 @@ function BlocCanevas({
 	const ancre = useRef<{
 		readonly pointeur: { readonly x: number; readonly y: number }
 		readonly geometrie: Geometrie
-		readonly mode: 'deplacement' | 'taille'
+		readonly mode: ModeGeste
 	} | null>(null)
-	const clavierEnCours = useRef(false)
+	// Le MODE du geste clavier en cours, et non un simple drapeau : c'est lui qui dit, au
+	// relâchement de la touche, quelles colonnes partent.
+	const clavierEnCours = useRef<ModeGeste | null>(null)
 
 	const etiquette =
 		ouvrable && destination !== null && destination.track !== null
@@ -786,7 +800,7 @@ function BlocCanevas({
 		}
 	}
 
-	const armer = (mode: 'deplacement' | 'taille') => (evenement: EvenementPointeur<HTMLElement>) => {
+	const armer = (mode: ModeGeste) => (evenement: EvenementPointeur<HTMLElement>) => {
 		if (evenement.button !== 0) return
 		if (mode === 'deplacement' && (evenement.target as HTMLElement).closest('a, button') !== null) return
 		evenement.preventDefault()
@@ -805,13 +819,14 @@ function BlocCanevas({
 	}
 
 	const relacher = (evenement: EvenementPointeur<HTMLElement>) => {
+		const origine = ancre.current
 		const finale = depuisAncre(evenement.clientX, evenement.clientY)
-		if (finale === null) return
+		if (origine === null || finale === null) return
 		ancre.current = null
 		if (evenement.currentTarget.hasPointerCapture(evenement.pointerId)) {
 			evenement.currentTarget.releasePointerCapture(evenement.pointerId)
 		}
-		onFin(finale)
+		onFin(finale, origine.mode)
 	}
 
 	return (
@@ -843,7 +858,7 @@ function BlocCanevas({
 				if (direction === undefined) return
 				evenement.preventDefault()
 				const pas = evenement.shiftKey ? PAS_CLAVIER_FIN : PAS_CLAVIER
-				clavierEnCours.current = true
+				clavierEnCours.current = evenement.altKey ? 'taille' : 'deplacement'
 				onEbauche(
 					evenement.altKey
 						? {
@@ -860,9 +875,10 @@ function BlocCanevas({
 			}}
 			onKeyUp={(evenement) => {
 				if (DIRECTIONS_CLAVIER[evenement.key] === undefined) return
-				if (!clavierEnCours.current) return
-				clavierEnCours.current = false
-				onFin(geometrie)
+				const mode = clavierEnCours.current
+				if (mode === null) return
+				clavierEnCours.current = null
+				onFin(geometrie, mode)
 			}}
 		>
 			<span aria-hidden="true" className={['w-1 shrink-0', liseréDe(bloc.color)].join(' ')} />
