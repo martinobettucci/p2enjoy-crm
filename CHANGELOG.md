@@ -15,6 +15,36 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-060` — Contacts et organisations, tranche 4j : la modification du rôle d'un rattachement,
+  depuis la fiche d'un contact** (`docs/SPEC-contacts.md` §19, `docs/DESIGN_SYSTEM.md` §5.28).
+  Corriger un rôle mal saisi obligeait jusqu'ici à **détacher puis rattacher** — à défaire le lien
+  pour le refaire. Chaque ligne du tableau **Affaires** porte désormais un bouton **« Modifier le
+  rôle »**, placé **avant** « Détacher » : le geste qui corrige vient avant celui qui retire. Il
+  ouvre un formulaire sur une ligne à lui, qui **nomme l'affaire** et dont le champ est
+  **prérempli** du rôle actuel. **Vider le champ EFFACE le rôle sans défaire le rattachement**, et
+  le texte d'aide le dit. Toutes les lignes portent la commande, **y compris celle d'une affaire
+  archivée**. C'est le **premier `UPDATE` du produit sur `card_contacts`** : la politique
+  `card_contacts_maj` existait depuis la tranche 1 et aucun écran ne l'avait exercée — le §12.8,
+  puis le §17.8, puis le §18.8 le nommaient trois fois.
+  **UNE MODIFICATION PEUT N'AVOIR AUCUN EFFET, ET LE PRODUIT LE DIT SANS REFERMER LE FORMULAIRE.**
+  Mesuré : un compte sans droit d'écriture sur l'affaire reçoit `200` et zéro ligne, **sans la
+  moindre erreur**, sur une ligne qui existe et qui garde son rôle — la clause `USING` la rend
+  invisible à l'écriture. Le formulaire **reste ouvert**, la saisie est **conservée**, la cellule
+  garde son ancienne valeur, et le message ne tranche pas entre le refus et la disparition, que le
+  serveur ne distingue pas. **Aucune commande n'est éteinte d'avance selon le rôle** : mesuré, la
+  lectrice **réussit** ce geste sur une affaire et reçoit le silence sur une autre, toutes deux
+  lisibles par elle.
+  **UNE MESURE A DÉCIDÉ DE CE QUE LA REQUÊTE ENVOIE** : un `PATCH` portant `card_id` **déplace** le
+  rattachement d'une affaire à l'autre — capacité réelle de la base, encadrée des deux côtés par la
+  politique, que l'écran **n'exerce pas**. La fonction envoie `role`, et rien d'autre. **Aucune
+  migration.** Preuves : `contacts.test.ts` (8 scénarios ajoutés), `FicheContact.test.tsx` (18),
+  `e2e/api` (15 mesures avec les jetons réels), `e2e/ui` (5 scénarios, console vierge), captures
+  observées sous `docs/captures/CRM-060/`.
+- **Un défaut de mise en page trouvé par la vérification visuelle à 390 px, corrigé à sa cause**
+  (`docs/DESIGN_SYSTEM.md` §5.28) : à deux commandes, la colonne « Commandes » se repliait et la
+  **ligne du tableau gagnait de la hauteur**, contre la règle du §5.9. La colonne ne se replie plus
+  — un tableau répond au manque de place en **défilant**, ce qui est déjà son contrat.
+
 - **`CRM-060` — Contacts et organisations, tranche 4i : le détachement d'une affaire depuis la
   fiche d'un contact** (`docs/SPEC-contacts.md` §18, `docs/DESIGN_SYSTEM.md` §5.27). La fiche
   **listait** les affaires d'un contact depuis 4f, le **corrigeait** depuis 4g et le **rattachait**

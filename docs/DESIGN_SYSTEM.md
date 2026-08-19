@@ -1975,6 +1975,16 @@ spécifié par `docs/SPEC-contacts.md` §15 ; les règles ci-dessous ne disent q
   > > channel restant dans l'adresse. Ce qui reste vrai, et que 4i ne révise pas : **l'état vide de
   > > la zone des affaires ne gagne aucune commande de détachement** — un tableau sans ligne n'en a
   > > aucune à porter —, et il garde le seul geste de rattachement du §5.26.
+  > >
+  > > > **RÉVISION DU 2026-08-19 — sous-tranche 4j** (`docs/SPEC-contacts.md` §19.4). La quatrième
+  > > > colonne porte désormais **DEUX** commandes par ligne — « Modifier le rôle », puis
+  > > > « Détacher » (§5.28) —, et son en-tête, déjà au pluriel, ne change pas. Le **nombre de
+  > > > colonnes ne bouge pas** : le tableau se lit toujours à quatre, et le motif des « trois
+  > > > colonnes et non cinq » reste inchangé, puisqu'il visait les colonnes de **donnée**. La
+  > > > **cellule du rôle devient modifiable en place**, ce qu'elle n'était pas. Ce qui reste vrai,
+  > > > et que 4j ne révise pas : **l'état vide de la zone des affaires ne gagne aucune commande** —
+  > > > un tableau sans ligne n'a aucun rôle à modifier —, et il garde le seul geste de rattachement
+  > > > du §5.26.
 
 ### 5.25 Formulaire de modification d'un contact — `CRM-060`
 
@@ -2159,3 +2169,104 @@ forme. Ce qui suit ne dit que ce qui lui est propre, et l'essentiel de ce qui lu
   correct. Ce n'est pas un contournement du débordement — le tableau défile toujours, et c'est son
   contrat —, c'est la reconnaissance que ce bloc porte de la **prose** et non une donnée tabulaire.
   La règle vaut pour **toute** confirmation posée dans une ligne de tableau défilant.
+
+### 5.28 Modification du rôle d'un rattachement, depuis la fiche d'un contact — `CRM-060`
+
+Le geste de correction du rôle sur la fiche de contact (`docs/SPEC-contacts.md` §19). Il **hérite du
+§5.27** — le geste voisin, dans la même colonne et sur la même forme de ligne — et du **§5.25**, dont
+il reprend le traitement du refus silencieux. Ce qui suit ne dit que ce qui lui est propre.
+
+- **UNE SECONDE COMMANDE DANS LA QUATRIÈME COLONNE, ET L'ORDRE COMPTE : « Modifier le rôle », puis
+  « Détacher ».** Le geste qui **corrige** précède le geste qui **retire**, comme la colonne gauche
+  de la fiche d'affaire place « Modifier » avant le bloc de corbeille (§5.3, §5.3 ter). Un geste
+  destructeur ne se pose jamais en premier sous le pointeur. Icône `PencilLine` — celle de la famille
+  « Champs » du fil (§5.11) et de la commande « Modifier » de l'en-tête d'affaire —, taille compacte
+  comme sa voisine.
+
+- **LA COLONNE DES COMMANDES NE SE REPLIE PAS, ET C'EST UN DÉFAUT TROUVÉ PAR LA VÉRIFICATION
+  VISUELLE** (`CLAUDE.md` §16), à 390 px, le 2026-08-19. Écrites d'abord en `flex-wrap`, les deux
+  commandes passaient l'une sous l'autre et la **ligne gagnait de la hauteur** — l'écart que le §5.21
+  assume pour sa **liste plate**, et qui ne se transporte pas ici : le §5.9 pose qu'une ligne de
+  tableau vaut `--size-target`, et la réponse d'un tableau au manque de place est de **défiler dans
+  son conteneur** (§7, §12.6), ce que celui-ci fait déjà. `white-space: nowrap` est posé sur la
+  **cellule** et non sur chaque bouton, la propriété étant héritée : sans lui, « Modifier le rôle »
+  se coupait en deux lignes **à l'intérieur de son propre bouton**, et la ligne grandissait quand
+  même. La règle vaut pour **toute** colonne de commandes d'un tableau.
+
+- **LE FORMULAIRE OCCUPE UNE LIGNE À LUI, comme la confirmation du §5.27**, et pour ses motifs
+  exacts — la cellule bornée à `32ch` et tronquée ne peut pas le porter, et sous le tableau rien ne
+  le relierait à **sa** ligne. Il est **épinglé au bord visible du conteneur** et borné à la largeur
+  de la fenêtre, la règle que le §5.27 a posée pour tout bloc placé dans une ligne de tableau
+  défilant.
+
+- **UN SEUL BLOC OUVERT À TOUT INSTANT DANS LE TABLEAU, TOUTES LIGNES ET TOUS GESTES CONFONDUS.** Le
+  §5.27 posait « une seule confirmation à la fois » ; la règle s'étend aux **deux** gestes, qui
+  vivent désormais sur la même ligne. Ouvrir le formulaire de rôle d'une ligne ferme la confirmation
+  de détachement d'une autre, et réciproquement : deux blocs ouverts feraient deux questions dans le
+  flux dont rien ne dirait laquelle on répond, et sur un tableau étroit ils se pousseraient l'un
+  l'autre hors de vue.
+
+  **Les DEUX commandes d'une ligne sont désactivées tant qu'un bloc de CETTE ligne est ouvert** —
+  celles des autres lignes restent actives. Ce n'est pas une garde de droit, c'est une commande sans
+  objet, au même titre qu'au §5.27. **Conséquence pratique pour les preuves** : l'exclusivité entre
+  les deux gestes ne s'observe **qu'entre deux lignes**, jamais sur une seule — c'est un défaut de
+  preuve trouvé en l'exécutant, et non un défaut du produit.
+
+- **LE CHAMP EST PRÉREMPLI du rôle courant** (§5.25) : c'est précisément ce que l'on vient corriger.
+  Un rattachement **sans** rôle donne un champ **vide**, jamais le texte « null » — la règle du §5.9
+  appliquée à la saisie.
+
+- **LE FORMULAIRE NOMME L'AFFAIRE**, comme la confirmation du §5.27 (§6) : sur cette page le contact
+  est le décor et l'affaire varie. Sans ce nom, un formulaire ouvert sous une ligne d'un tableau qui
+  défile ne dirait plus quel rattachement il modifie.
+
+- **VIDER LE CHAMP EFFACE LE RÔLE, ET LE TEXTE D'AIDE LE DIT.** MESURÉ : la base accepte `null`. Le
+  §6 exige qu'un geste dise ce qu'il fait, et celui-ci retire la seule donnée du rattachement.
+  Ce n'est pas une confirmation : la ligne reste, le rattachement reste, et le rôle se réécrit d'un
+  second geste identique.
+
+- **LE BOUTON D'ENVOI EST PRIMAIRE, JAMAIS DESTRUCTIF**, et c'est l'écart avec la confirmation
+  voisine du §5.27 — écrit pour qu'on ne recopie pas une teinte sans son motif. Corriger un rôle
+  n'efface rien qui ne se refasse par le même formulaire, et la teinte de danger est réservée à ce
+  qui détruit (§1, §6). **Aucune confirmation** non plus, pour la même raison, et en demander une
+  banaliserait celle qui protège le détachement sur la même ligne.
+
+- **Il n'est JAMAIS désactivé par l'état du champ** : un champ vide est un envoi **légitime** — c'est
+  l'effacement ci-dessus —, à la différence de la commande d'envoi du §5.26, qui n'a rien à envoyer
+  sans affaire choisie. Il l'est pendant le vol, et porte alors son libellé d'attente.
+
+- **Aucune garde de LONGUEUR** — ni `maxLength`, ni compteur de caractères. MESURÉ : la base accepte
+  cinq cents caractères et les rend entiers ; en poser une serait une règle de produit que personne
+  n'a prise (`CLAUDE.md` §10). La cellule du tableau borne déjà l'**affichage** à `32ch` avec son
+  `title` (§5.9), ce qui est une règle de rendu et non de donnée.
+
+- **AUCUNE COMMANDE N'EST ÉTEINTE D'AVANCE SELON LE RÔLE** (§5.21, §5.23, §5.25, §5.26, §5.27, sans
+  exception). MESURÉ : **la lectrice RÉUSSIT** cette modification sur une affaire et reçoit le
+  silence sur une autre, toutes deux lisibles par elle. Une affaire **archivée** porte la commande
+  comme les autres, la base l'acceptant.
+
+- **TROIS ISSUES, ET LA TROISIÈME DOIT ÊTRE DITE** — la règle du §5.25 et du §5.27, retrouvée pour la
+  même cause structurelle : une **mise à jour** est filtrée par la clause `USING`, qui rend la ligne
+  invisible à l'écriture, et le serveur rend « aucun rôle modifié », **sans erreur**.
+
+- **UN REFUS ET UN « SANS EFFET » LAISSENT LE FORMULAIRE OUVERT, ET LA SAISIE EST CONSERVÉE**
+  (§5.7 ter, §5.25). **C'est l'écart avec le §5.27**, où la confirmation se ferme dans les trois
+  issues : là-bas il n'y a **rien à conserver**, une confirmation ne portant aucune saisie. Le
+  message se lit **dans** le formulaire, `role="alert"`, près du champ qui l'a causé (§5.13) — et
+  non sous le tableau, où vit celui du détachement, qui doit survivre à une relecture.
+
+- **LA FICHE PREND LA LIGNE RENDUE ET NE RELIT RIEN** (§5.25, règle du §16.7). **Second écart avec le
+  §5.27**, et il est mesuré : la relecture de 4h et de 4i existait parce qu'un rattachement **ajouté**
+  apporte un archivage et une adresse que le formulaire ignore, et parce qu'une ligne **retirée**
+  change l'ensemble. Ici seule une valeur scalaire d'une ligne déjà affichée est réécrite, et le
+  serveur la rend : relire serait une seconde requête pour une donnée en main. **Sur un succès, aucun
+  message n'est écrit** — la cellule du rôle porte la nouvelle valeur, et elle **est** la
+  confirmation (§5.7 ter).
+
+- **Le focus entre dans le champ à l'ouverture, et revient à la commande de RÔLE de sa ligne à la
+  fermeture**, sans être différé — la commande n'est jamais démontée, seulement désactivée (§5.27).
+  **À celle du rôle, jamais à celle du détachement** : deux gestes vivent sur cette ligne, et rendre
+  le focus à l'autre déplacerait l'utilisateur d'un geste à l'autre sans qu'il l'ait demandé.
+
+- **Aucune couleur, aucun jeton nouveau** : le geste emprunte au §5.7 ses contrôles, au §5.5 ses
+  variantes, et au §5.11 son icône.

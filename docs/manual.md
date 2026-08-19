@@ -26,7 +26,7 @@
 | 1 bis | Le guide de démarrage : par où commencer | `CRM-079` | **Livré et vérifié** — voir le chapitre 1 *bis*. Cinq étapes mesurées à chaque affichage, chacune renvoyant vers l'écran qui la réalise. L'état est **mesuré**, jamais mémorisé : supprimer le dernier track décoche l'étape. Le guide se masque pour la session — rien n'est écrit durablement sur l'appareil — et reste toujours consultable depuis « Réglages ▸ Guide de démarrage ». Il **lit et renvoie** : il ne crée ni track, ni channel, ni affaire |
 | 2 | Comprendre l'organisation : espace, tracks, channels, cards | `CRM-020`, `CRM-021` | À livrer |
 | 3 | Naviguer : barre latérale, onglets, recherche | `CRM-007`, `CRM-065` | **Partiellement livré** — voir ci-dessous ; la recherche relève de `CRM-065` |
-| 3 ter | Le carnet de contacts | `CRM-060` | **Livré en LECTURE** — voir la section 3 *ter*. L'entrée « Contacts » de la barre latérale ouvre le carnet de l'espace : nom, organisation, fonction, email et téléphone, une ligne par personne. Tout membre le lit, y compris un compte en lecture seule. Le nom d'organisation ouvre sa **fiche** (sous-tranche 4b) : domaine, site web et contacts rattachés. Une affaire **rattache et détache** ses contacts depuis sa fiche (sous-tranche 4c, chapitre 4.7 *ter*). Un contact **se crée** depuis le carnet (sous-tranche 4e) : le bouton « Nouveau contact » ouvre un formulaire au-dessus du tableau. Il **se modifie** depuis sa fiche (sous-tranche 4g) : le bouton « Modifier » ouvre le même formulaire, prérempli. Il **se rattache à une affaire** depuis sa fiche (sous-tranche 4h) : le bouton « Rattacher à une affaire » vit dans le bloc des affaires, et il **s'en détache** depuis la même page (sous-tranche 4i), chaque ligne du tableau portant sa commande. Ce qui manque est dit : aucune suppression d'un contact, aucune modification du rôle d'un rattachement posé, aucune création d'organisation, aucune recherche |
+| 3 ter | Le carnet de contacts | `CRM-060` | **Livré en LECTURE** — voir la section 3 *ter*. L'entrée « Contacts » de la barre latérale ouvre le carnet de l'espace : nom, organisation, fonction, email et téléphone, une ligne par personne. Tout membre le lit, y compris un compte en lecture seule. Le nom d'organisation ouvre sa **fiche** (sous-tranche 4b) : domaine, site web et contacts rattachés. Une affaire **rattache et détache** ses contacts depuis sa fiche (sous-tranche 4c, chapitre 4.7 *ter*). Un contact **se crée** depuis le carnet (sous-tranche 4e) : le bouton « Nouveau contact » ouvre un formulaire au-dessus du tableau. Il **se modifie** depuis sa fiche (sous-tranche 4g) : le bouton « Modifier » ouvre le même formulaire, prérempli. Il **se rattache à une affaire** depuis sa fiche (sous-tranche 4h) : le bouton « Rattacher à une affaire » vit dans le bloc des affaires, et il **s'en détache** depuis la même page (sous-tranche 4i), chaque ligne du tableau portant sa commande. Le **rôle** d'un rattachement **se corrige** depuis la même page (sous-tranche 4j) : un bouton « Modifier le rôle » par ligne, et vider le champ efface le rôle sans défaire le lien. Ce qui manque est dit : aucune suppression d'un contact, aucune création d'organisation, aucune recherche |
 
 ### Suivi quotidien
 
@@ -402,6 +402,39 @@ aurait annoncé un détachement qui n'a pas eu lieu.
 
 Comme pour le rattachement, **le bouton n'est jamais grisé d'avance**. Les droits se règlent affaire
 par affaire : le même compte peut détacher sur l'une et se voir opposer ce message sur l'autre.
+
+#### Corriger le rôle d'une personne dans une affaire
+
+*Livré par la sous-tranche 4j.* Jusqu'ici, corriger un rôle mal saisi obligeait à **détacher puis
+rattacher** — c'est-à-dire à défaire le lien pour le refaire. Ce n'est plus nécessaire.
+
+Chaque ligne du tableau **Affaires** porte un second bouton, **« Modifier le rôle »**, placé
+**avant** « Détacher » dans la colonne « Commandes » : le geste qui corrige vient avant celui qui
+retire. Toutes les lignes le portent, **y compris celle d'une affaire archivée**.
+
+Le bouton ouvre un formulaire sur une ligne à lui, juste sous celle qu'il concerne. Il **nomme
+l'affaire**, et son champ est **prérempli** du rôle actuel — c'est exactement ce que vous venez
+corriger. Un rattachement sans rôle donne un champ **vide**.
+
+**Un seul bloc reste ouvert à la fois dans le tableau**, quel que soit le geste : ouvrir ce
+formulaire referme une confirmation de détachement en cours, et inversement. Deux questions
+ouvertes en même temps ne diraient pas à laquelle vous répondez.
+
+**Vider le champ efface le rôle**, et le rattachement à l'affaire est **conservé** : c'est la façon
+de retirer un rôle saisi par erreur sans défaire le lien. Le texte sous le champ le rappelle.
+
+Une fois enregistré, le formulaire se referme et **la cellule « Rôle dans l'affaire » porte la
+nouvelle valeur**. Aucun message de succès n'est affiché : la cellule est la confirmation.
+
+**Une modification peut n'avoir aucun effet, et le produit vous le dit.** Le formulaire affiche
+alors : *« Aucun rôle n'a été modifié. Vous n'avez peut-être pas le droit de modifier cette affaire,
+ou le rattachement n'existe plus. »* Comme pour le détachement, le message **ne tranche pas** entre
+les deux causes — le serveur répond la même chose dans les deux cas. **Le formulaire reste ouvert,
+votre saisie est conservée**, et la cellule garde son ancienne valeur : rien n'a changé, et l'écran
+ne prétend pas le contraire.
+
+Le rôle est un **texte libre** : aucune liste imposée, aucune longueur maximale. Les exemples du
+texte d'aide — décideur, prescripteur, contact technique — ne sont que des exemples.
 
 **La suppression n'est pas un oubli.** Un contact peut être désigné par des champs de formulaire
 d'affaires déjà remplis ; le supprimer laisserait ces valeurs pointer vers quelqu'un qui n'existe
@@ -887,10 +920,14 @@ Un détachement refusé, lui, affiche **« Aucun rattachement n'a été retiré.
 exacte du serveur, qui ne distingue pas un refus d'une ligne déjà retirée par quelqu'un d'autre — et
 le produit préfère le dire ainsi plutôt qu'annoncer un retrait qui n'a pas eu lieu.
 
-**Ce qui n'est pas encore livré.** Le rôle d'un rattachement ne se **modifie** pas : détachez puis
-rattachez. Une affaire ne se rattache pas depuis le carnet ni depuis la fiche d'organisation — le
-geste part toujours de l'affaire. Et un rattachement n'apparaît **pas** dans l'historique de
-l'affaire (chapitre 4.10).
+**Corriger un rôle depuis cette page n'est pas livré, mais le geste existe ailleurs.** Ici, il faut
+détacher puis rattacher. Depuis la **fiche du contact**, en revanche, le rôle se corrige d'un seul
+geste — bouton « Modifier le rôle » sur chaque ligne (chapitre 3 *ter*, sous-tranche 4j) —, et la
+fiche de l'affaire est atteignable en un clic depuis là.
+
+**Ce qui n'est pas encore livré.** Une affaire ne se rattache pas depuis le carnet ni depuis la
+fiche d'organisation — le geste part toujours de l'affaire ou de la fiche du contact. Et un
+rattachement n'apparaît **pas** dans l'historique de l'affaire (chapitre 4.10).
 
 ### 4.7 bis Mettre une affaire à la corbeille
 

@@ -7657,10 +7657,76 @@ branches nécessaires — une affaire **active** que l'administratrice écrit, e
 rattacher reste le chemin, et cette sous-tranche le rend possible **sans quitter la fiche** — ce qui
 réduit l'écart sans le combler. Il est nommé (§18.8) plutôt que compensé par une commande morte.
 
+**Sous-tranche 4j livrée, 2026-08-19 — la MODIFICATION DU RÔLE d'un rattachement, depuis la fiche
+d'un contact** (`docs/SPEC-contacts.md` §19, spécification écrite et committée **avant toute ligne
+de code**, fondée sur **quinze** mesures relevées sur la pile seedée avec les jetons réels des trois
+profils et la clé anonyme) :
+
+- [x] `webapp/src/lib/contacts.ts` — `modifierRoleRattachement`, son type à **trois** issues, et la
+      nature `saisie-invalide` ajoutée au classement. **C'est le PREMIER `UPDATE` du produit sur
+      `card_contacts`** : `card_contacts_maj` existait depuis la tranche 1 et aucun écran ne
+      l'exerçait. **Aucune migration.**
+- [x] **LA MESURE 12 A DÉCIDÉ DU CORPS DE LA REQUÊTE.** Un `PATCH` portant `card_id` **DÉPLACE** le
+      rattachement — `200`, la ligne rendue sur la nouvelle affaire et plus rien sur l'ancienne. Ce
+      n'est pas une faille (les deux clauses de la politique encadrent le geste des deux côtés),
+      c'est une capacité réelle que l'écran **n'exerce pas** : la fonction envoie `role`, et rien
+      d'autre. La preuve d'API la **fige**, et la preuve unitaire compare la charge **entière**.
+- [x] `webapp/src/app/ModificationRoleRattachement.tsx` — la commande par ligne (icône `PencilLine`,
+      **avant** « Détacher »), le formulaire prérempli qui **nomme l'affaire**, et le dictionnaire
+      **fermé** de refus. **`saisie-invalide` y reçoit un texte PROPRE** là où `23505` et `23503`
+      partagent celui d'`unknown` : ces deux-là sont impossibles **par construction**, tandis que
+      `23514` est une issue que la base produit réellement (mesures 8 et 10) et que seule la
+      normalisation de la fonction empêche d'atteindre.
+- [x] `webapp/src/app/FicheContact.tsx` — la seconde commande de la quatrième colonne, la ligne de
+      formulaire en `colSpan`, **l'exclusivité d'UN SEUL BLOC dans tout le tableau, tous gestes
+      confondus**, et la mise à jour locale de la cellule du rôle **sans relecture**.
+- [x] **LA MESURE 2 RANGE 4j DU CÔTÉ DE 4g ET DE 4i.** La lectrice reçoit `200` et un tableau
+      **vide**, **sans la moindre erreur**, sur la ligne du seed `c4 → Sophie` qui existe et garde
+      son rôle : la clause `USING` rend la ligne invisible à l'écriture. Le formulaire **reste
+      ouvert**, la saisie est **conservée** — l'écart avec 4i, dont la confirmation ne porte aucune
+      saisie à perdre. **LA MESURE 9 OUVRE UN GESTE QUE 4h NE POUVAIT PAS OFFRIR** : `null` est
+      accepté, donc le rôle **s'efface** sans détruire le rattachement. **LA MESURE 13** ferme un
+      chemin que l'écran aurait pu inventer : réécrire le même rôle est un **succès**.
+- [x] `webapp/src/lib/contacts.test.ts` (**8 scénarios ajoutés**, 80 dans le fichier) et
+      `webapp/src/app/FicheContact.test.tsx` (**18 ajoutés**, 67 dans le fichier) : les cas a à p du
+      §19.7. L'espion d'écriture gagne `update` et un `maybeSingle` à la sémantique **réelle** de
+      PostgREST — sans lui, la branche « sans effet » ne serait jamais atteinte par la preuve.
+- [x] `e2e/api/contacts.spec.ts` (**15 scénarios ajoutés**, **764** dans la suite) : les quatorze
+      mesures d'écriture du §19.3 avec les jetons réels, chaque refus et chaque « sans effet »
+      **relisant la ligne** pour la constater inchangée (décision 70). La mesure 2 pose son
+      **témoin** avant de mesurer le silence.
+- [x] `e2e/ui/contacts.spec.ts` (**5 scénarios ajoutés**, **437** dans la suite, console vierge) :
+      le geste, l'**effacement** du rôle, le parcours **clavier**, l'exclusivité **entre les deux
+      gestes**, le silence opposé à la lectrice et le rendu à 390 px. **LE SEED EST RESTITUÉ PAR LE
+      GESTE QUE CETTE SOUS-TRANCHE LIVRE** — le rôle est réécrit, puis remis par le même formulaire.
+- [x] **UN DÉFAUT TROUVÉ PAR LA VÉRIFICATION VISUELLE, corrigé à sa CAUSE** (`CLAUDE.md` §16). À
+      390 px, la colonne des commandes se **repliait** à deux boutons et la ligne gagnait de la
+      hauteur — l'écart que le §5.21 assume pour sa **liste plate**, et qui ne se transporte pas à un
+      **tableau** : le §5.9 pose une hauteur de ligne, et la réponse d'un tableau au manque de place
+      est de **défiler**, ce que celui-ci fait déjà. `white-space: nowrap` est posé sur la
+      **cellule**, la propriété étant héritée : sans lui, « Modifier le rôle » se coupait en deux
+      lignes **dans son propre bouton**. Consigné au §5.28.
+- [x] **UN DÉFAUT DE PREUVE trouvé en l'exécutant, et le produit avait raison** : le scénario
+      d'interface éprouvait l'exclusivité inter-gestes sur la **seule** ligne du seed, où les deux
+      commandes sont `disabled` par contrat (§19.4) — le clic ne pouvait pas aboutir. L'exclusivité
+      ne s'observe **qu'entre deux lignes** ; le scénario en pose donc une seconde par les gestes de
+      4h, puis la retire par ceux de 4i. Consigné au §5.28.
+- [x] Captures produites **et observées** (`CLAUDE.md` §16) sous `docs/captures/CRM-060/` :
+      `fiche-contact-role-formulaire-1440.jpg`, `-apres-1440.jpg`, `-efface-1440.jpg`,
+      `-sans-effet-1440.jpg`, `-390.jpg`.
+- [x] `docs/DESIGN_SYSTEM.md` §5.28 ajouté et §5.24 **révisé par livraison** (la quatrième colonne
+      porte deux commandes ; le nombre de colonnes ne bouge pas) ; `docs/manual.md` chapitre 3 *ter*
+      et 4.7 *ter* ; `CHANGELOG.md` ; compteurs de `scripts/verify-harness.sh` portés à **764** et
+      **437**, valeurs **COMPTÉES** par `playwright test --list` et non déduites (INC-101).
+
+**Aucune migration, et le seed n'est PAS modifié** : ses deux rattachements portent tous deux un
+rôle **non nul**, ce que le préremplissage du cas b exige, et l'un d'eux est sur une affaire que la
+**lectrice lit sans l'écrire** — la mesure qui décide de l'issue « sans effet ».
+
 **Ce qui reste dû sur `CRM-060` après la tranche 4** : l'arbitrage sur les **références mortes**
-(§6, point 4) et, derrière lui, la **suppression** d'un contact ; la **modification du rôle** d'un
-rattachement posé (§18.8). Le détachement depuis la fiche d'un contact, que le §17.8 nommait, est
-**livré par 4i**. `CRM-060` demeure `[~]`.
+(§6, point 4) et, derrière lui, la **suppression** d'un contact ; le **fil unifié**, qui n'apprend
+rien des trois gestes de rattachement (§12.8). La modification du rôle, que le §18.8 nommait, est
+**livrée par 4j**. `CRM-060` demeure `[~]`.
 
 **Troisième tranche livrée, 2026-08-18 — la résolution des champs `contact` et `user`**
 (`docs/SPEC-contacts.md` §9, migration `0047`) :
