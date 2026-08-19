@@ -526,6 +526,19 @@ export PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium
 
 `npm run e2e:ui` reçoit ce chemin ; les harnais ne le posent pas eux-mêmes.
 
+**`npm run e2e:mail` EN A BESOIN AUTANT, et c'est MESURÉ le 2026-08-19.** Sans cette variable,
+quatre scénarios Roundcube (`roundcube.spec.ts`, `roundcube-dossiers.spec.ts`) meurent à
+`browserType.launch` sur `chromium_headless_shell-1234`, binaire que l'hôte ne porte pas — avant
+la moindre assertion. Ce n'est ni un verdict rouge, ni une preuve. Exportée, la suite rend
+**42 passés, aucun échec**.
+
+**LE CHECKOUT DE DÉPART N'A AUCUN `node_modules`, mesuré le même jour.** `npm run typecheck`
+échoue alors sur `Cannot find type definition file for 'vite/client'`, qui ne dit rien du code.
+`npm ci --cafile=/root/.ccr/ca-bundle.crt` est donc un préalable à toute preuve Node, et il vient
+APRÈS l'installation de Node 24 (§2.1 bis). De même, `pytest` n'est pas installé : `python3 -m pip
+install --cert /root/.ccr/ca-bundle.crt -r mail-sync/requirements-dev.txt` le pose, et la suite
+rend alors **244 passés**.
+
 **2. Libère le port 4173.** La configuration pose `reuseExistingServer: false`. Un `vite preview`
 laissé par une exécution précédente — une série interrompue en laisse un — fait échouer l'étape
 entière sur `http://127.0.0.1:4173 is already used`, ce qui ne dit rien du produit non plus :

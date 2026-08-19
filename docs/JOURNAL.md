@@ -20091,3 +20091,67 @@ même grandeur dans le même écran sont deux occasions de mentir ; la preuve le
 
 **Porteur :** `CRM-086`, dont la Definition of Done est étendue plutôt que scindée — c'est un onglet
 du même écran, pas un écran de plus.
+
+## décision 464 — `CRM-083` tranche 1 : le canevas d'objectifs se REGARDE, et ce qu'il cache ne se lit nulle part
+
+**L'unité, et le choix.** La décision 463 désigne `CRM-083` comme suite, et le backlog la donne
+`[ ]` en tête du plan. Sa spécification — `docs/SPEC-goals.md` §5 et `docs/DESIGN_SYSTEM.md` §5.29
+— était **déjà écrite et committée** par la décision 431 : le §3.2 point 3 de `docs/CloudWorker.md`
+s'applique alors dans sa forme d'exception, la spécification est lue intégralement et le code
+commence. L'unité est **découpée en deux tranches**, et le découpage est écrit au backlog plutôt
+que laissé à la mémoire d'une session : la tranche 1 livre tout ce qui se REGARDE, la tranche 2
+livrera tout ce qui s'ÉCRIT.
+
+**Ce qui a été livré.** Entrée « Objectifs » dans la navigation transverse, liste des tableaux avec
+le nombre de blocs **que le backend consent à l'appelant**, et canevas : blocs à liseré de jeton,
+jauge, pilule « Track › Channel » qui **ouvre le channel**, flèches aux trois directions tracées
+entre les **bords**, moignons pointillés vers le vide, équivalent textuel du diagramme, zoom borné,
+et les six états de l'écran. `webapp/src/lib/objectifs.ts` ne dérive **aucun** avancement (§1) : il
+lit et compose une géométrie.
+
+**LA MESURE QUI A LE PLUS SERVI, ET ELLE A ÉTÉ FAITE AVANT D'ÉCRIRE L'ÉCRAN.** Avec le vrai jeton
+de la lectrice sur la pile seedée, la requête embarquée
+`goal_blocks?select=…,channels!goal_blocks_channel_id_fkey(…,tracks(…))` rend **cinq blocs sur
+six**, l'imbrication sous forme d'**objet** et non de tableau, et le bloc lié à « Grands comptes »
+absent. C'est cette mesure qui a permis d'écrire la pilule et le bloc masqué en une seule requête,
+sans supposer la forme de l'embed.
+
+**UN POINT DU §5.4 EST IMPOSSIBLE À TENIR TEL QU'IL EST ÉCRIT — INC-169.** La spécification demande
+« lien perdu » pour un channel **supprimé** (`channel_id` devenu nul). Or `on delete set null` rend
+alors le bloc identique, octet pour octet, à un bloc jamais lié : rien ne les distingue. L'écran
+lève donc la mention pour le seul état **détectable** — une destination partie à la corbeille, que
+`app.can_read_channel` continue de rendre lisible faute de regarder `deleted_at`. Consigné, pas
+tranché.
+
+**LA VÉRIFICATION VISUELLE A TROUVÉ CE QU'AUCUNE PREUVE VERTE N'AURAIT TROUVÉ.** Les dix scénarios
+d'interface étaient verts et la capture montrait une jauge **invisible** : `h-1.5` et `py-0.5`
+n'existent pas, les espaces de noms de Tailwind étant remis à zéro (`docs/DESIGN_SYSTEM.md` §11,
+échelle `0 1 2 3 4 6 8 12`) — la faute exacte d'INC-158. Corrigé en valeur arbitraire assumée
+(`h-[6px]`), et le motif est écrit au §5.29 pour que le composant suivant ne le redécouvre pas.
+
+**Ce qui a été vérifié.** Preuves de la tranche : `objectifs.test.ts` **25 assertions**,
+`Objectifs.test.tsx` **12 scénarios**, `e2e/ui/objectifs.spec.ts` **10 scénarios** avec les jetons
+réels de deux profils, console vierge, **six captures observées**. Campagne complète :
+`test:sql` **47 fichiers / 2351 assertions**, `test:unit` **56 fichiers / 1817 tests**,
+`e2e:api` **786 passés**, `e2e:ui` **458 passés / 1 échec**, `e2e:mail` **42 passés**,
+`pytest` **244**, `typecheck`, `types:check` et `build` verts. L'unique échec de `e2e:ui` était
+`coquille.spec.ts:182`, **imputable à cette tranche** : le parcours clavier énumérait cinq entrées
+de navigation, il y en a six. Témoin **révisé** avec son motif, rejoué vert.
+
+**DEUX FAITS D'ENVIRONNEMENT, MESURÉS.** (1) `npm run e2e:mail` a besoin de
+`PLAYWRIGHT_CHROMIUM_PATH` **autant que** `e2e:ui` : sans lui, quatre scénarios Roundcube meurent à
+`browserType.launch` sur un binaire absent — ce n'est ni un verdict rouge ni une preuve. Exporté,
+la suite rend **42 passés, aucun échec**, y compris les trois pièces jointes d'INC-167, vertes ici.
+(2) Le checkout de départ n'a **aucun** `node_modules` : `npm ci` est un préalable, et il vient
+APRÈS l'installation de Node 24.
+
+**Les 299 captures des autres unités sont COMMITTÉES, et non restaurées** comme l'avait fait la
+décision 463 : cette tranche modifie la barre latérale de **tous** les écrans, et une trace
+versionnée montrant une barre qui n'existe plus serait fausse.
+
+**Où reprendre.** `CRM-083` est `[~]`, et son reste est énuméré geste par geste au backlog : c'est
+la **tranche 2, l'écriture** — poser, déplacer au clavier et à la souris, redimensionner, remplir,
+lier, tracer une flèche à la touche `Espace`, créer et archiver un tableau, l'état lecture seule du
+`viewer`, le refus mesuré hors interface, et le harnais dédié. Un arbitrage est en attente :
+**INC-169**. La chaîne des coûts avance en parallèle sur une autre session — `CRM-085` a été poussée
+pendant celle-ci, et le rebase s'est fait sans conflit.
