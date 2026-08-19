@@ -21014,3 +21014,78 @@ workspace (§4.5) et l'onglet « À saisir » (§4.8), puis les preuves E2E, les
 paliers et le harnais dédié, dont aucun n'existe encore pour cette unité. `CRM-083` reste bloqué par
 **INC-170**. Six arbitrages attendent : **INC-169**, **INC-170**, **INC-172**, **INC-173**,
 **INC-174** et **INC-176**.
+
+## décision 476 — `CRM-086` tranche 3 : l'écran de coûts du track, monté, et les deux défauts que ses preuves ont trouvés
+
+**L'unité, et le choix.** La décision 475 laisse `CRM-086` en `[~]` et désigne explicitement la
+reprise : « le montage de l'écran du §4.2 sur `/tracks/:slugTrack/couts` ». C'est le cas 1 du §4.2
+de `docs/CloudWorker.md`, et l'unité de cette session sans discussion. La spécification existe et
+couvre ce qui restait à coder — le §4.0 arrête l'adresse, le §4.2 le contenu, le §4.7 les états —,
+donc l'exception du §3.2 point 3 s'applique : **aucune spécification n'a été réécrite**, le code a
+commencé après lecture. `docs/DESIGN_SYSTEM.md` a en revanche été lu intégralement avant de toucher
+à l'interface, comme `CLAUDE.md` §4 l'exige.
+
+**Ce qui a été livré.** `webapp/src/app/CoutsTrack.tsx` — la résolution du track par son slug via
+`useContenuTrack`, qui est de toute façon nécessaire à la barre d'onglets de la coquille et évite
+donc une seconde lecture ; l'appel à `lireHistogrammeTrack` ; un `HistogrammeCouts` par devise ; et
+les cinq issues de la zone. `CHEMIN_COUTS_TRACK` dans `chemins.ts`, hors de `ROUTES` comme les
+autres adresses dont le titre est une donnée. La route dans `App.tsx`, chargée à la demande.
+L'entrée « Coûts » dans `TabBar.tsx`. Huit clés de traduction.
+
+**TROIS POINTS QUI NE SE DEVINENT PAS.**
+
+(1) *L'entrée « Coûts » n'est pas un onglet de channel, et la barre le dit par sa structure.* Elle
+vit dans sa **propre** `nav` étiquetée « Vues du track », après un filet : mêlée aux channels, elle
+se lirait comme un channel de plus sur une barre où tout le reste en est un. Elle est en outre
+rendue **même quand le track n'a aucun channel** — les budgets d'un track existent indépendamment
+de ses channels, et l'état vide de la barre, qui reste vrai, ne dit alors plus tout ce qu'elle
+propose. C'est une règle nouvelle du design system, écrite au §4 et au §12.1.
+
+(2) *L'état « aucun budget » du §4.7 n'offre AUCUNE action, et c'est un écart assumé.* La
+spécification écrit « l'action d'en créer un pour un administrateur ; pour un autre membre, la
+phrase seule » ; or la création vit dans l'administration de l'arborescence (§4.1), derrière une
+adresse qu'un membre sans droit n'atteindrait pas. Conditionner un lien au rôle ferait calculer un
+droit à l'interface, ce que `CLAUDE.md` §10 interdit dans les deux sens. La phrase seule est rendue
+à tout le monde, et elle nomme où le geste se trouve.
+
+(3) *Aucune collision avec `/tracks/:slugTrack/:slugChannel`.* React Router classe ses routes par
+spécificité et non par ordre de déclaration : un segment littéral l'emporte sur un segment
+dynamique de même rang. C'est le prix déjà payé par `/liste` depuis `CRM-042` — un channel dont le
+slug vaudrait `couts` serait masqué —, et il est nommé dans `chemins.ts`.
+
+**DEUX DÉFAUTS TROUVÉS PAR LES PREUVES, ET LE PREMIER EST LE PLUS INSTRUCTIF.** Le scénario S4
+attendait la phrase « aucune dépense rattachée » sur « Suisse romande », budget que le seed pose
+sans aucune ligne. Elle était **absente** : la condition de l'état vide portait sur
+`groupes.length === 0`, c'est-à-dire sur un histogramme **sans budget** — un état que l'écran du
+§4.2 traite déjà lui-même. Un budget réellement vide gardait donc ses deux barres nulles et se
+taisait. La cause est dans le MODÈLE et non dans le rendu : un agrégat qui ne porte que des montants
+ne distingue pas « aucune dépense » de « des dépenses qui s'annulent », et le §2.1 rend le second
+cas parfaitement légitime — un avoir est un coût négatif. `AgregatCouts` porte donc désormais un
+**compte de lignes**, et la contre-épreuve est écrite : deux lignes dont les montants s'annulent ne
+rendent PAS la phrase. Le second défaut se voit sur la capture : « 1 000 € » et « 880 € » se
+rejoignaient et se lisaient comme un seul nombre — le défaut « Discussion1 » du §5.11 sous une autre
+forme. L'étiquette porte son rembourrage, les barres gardent leurs 4 px.
+
+**Une mesure a corrigé une preuve, et la preuve en sort plus forte.** Le scénario de la lectrice
+attendait « Track introuvable » sur « Conseil & IA », dont le seed lui ferme l'accès. C'est faux :
+le track reste **listé** et son nom titre la route, tandis que ses **budgets** lui sont fermés, la
+politique du §3.1 exigeant `app.can_read_track`. L'écran rend « Aucun budget sur ce track » sans
+annoncer aucun manque, ce qui est exactement la propriété du §4.5 — et `S5 bis` la contre-éprouve
+avec l'administrateur, qui voit le budget sur le même écran. Sans cette contre-épreuve, « aucun
+budget » serait indistinguable d'un track qui n'en porte réellement aucun.
+
+**Ce qui a été vérifié.** `CoutsTrack.test.tsx` **13 tests**, `TabBar.test.tsx` **15 tests**,
+`couts-ecrans.test.ts` et `HistogrammeCouts.test.tsx` révisés et étendus, `e2e/ui/couts-track.spec.ts`
+**7 scénarios verts** dont le parcours entièrement au clavier et les quatre paliers. Campagne :
+`npm run typecheck` vert, `npm run build` vert, `npm run test:unit` **62 fichiers, 2114 tests, aucun
+échec**. Les quatre captures ont été **observées**, et c'est en les regardant que le second défaut a
+été trouvé.
+
+**Où reprendre.** `CRM-086` reste `[~]`, et il reste les DEUX autres écrans : le détail d'un budget
+(§4.3, `/tracks/:slugTrack/couts/:idBudget`, une paire de barres par **occurrence** et la liste des
+lignes) puis le cumul du workspace (§4.5, `/couts`, un groupe de barres par track, entrée de barre
+latérale). L'onglet « À saisir » du §4.8 n'existe sur aucun écran, et **aucun harnais dédié
+`scripts/verify-couts-ecrans.sh` n'existe**. La reprise naturelle est l'écran du §4.3, dont
+l'adresse est déjà arrêtée par le §4.0 mais pas encore déclarée dans `chemins.ts`. `CRM-083` reste
+bloqué par **INC-170**. Six arbitrages attendent : **INC-169**, **INC-170**, **INC-172**,
+**INC-173**, **INC-174** et **INC-176**.

@@ -7819,7 +7819,7 @@ sont indépendantes l'une de l'autre et suivent la Definition of Done commune.
 | CRM-083 | Canevas d'objectifs : blocs, flèches, ouverture du channel | `[~]` |
 | CRM-084 | Budgets, occurrences et clôture : modèle, RLS et API | `[~]` |
 | CRM-085 | Lignes de coût d'une affaire : modèle et section de la fiche | `[x]` |
-| CRM-086 | Écrans de coûts : histogramme du track et cumul du workspace | `[ ]` |
+| CRM-086 | Écrans de coûts : histogramme du track et cumul du workspace | `[~]` |
 
 **Contrainte d'ordre :** `CRM-082` précède `CRM-083`, `CRM-084` précède `CRM-085` qui précède
 `CRM-086`. Les deux chaînes sont indépendantes et peuvent s'intercaler.
@@ -8499,12 +8499,29 @@ Les exposer tous les deux ferait énoncer deux fois la même série à un lecteu
 n'est jamais masqué par un palier : un équivalent textuel absent là où le graphique est le plus
 dense manquerait exactement là où il sert le plus.
 
-**CE QUI RESTE, ET C'EST L'ESSENTIEL DE L'UNITÉ** : aucun des trois écrans n'est encore monté. Ni
-route, ni entrée de navigation, ni onglet « À saisir », ni lecture du détail d'un budget, ni cumul
-du workspace. Le module et le composant sont livrés et prouvés en unitaire, mais **aucune preuve
-E2E, aucune preuve d'API, aucune capture et aucun harnais dédié n'existe** pour cette unité, et rien
-de ce qui précède n'est encore atteignable par un utilisateur. La reprise est le montage de l'écran
-du §4.2 sur `/tracks/:slugTrack/couts`.
+**Tranche 3 — l'écran du §4.2, MONTÉ ET PROUVÉ** (décision 476). `webapp/src/app/CoutsTrack.tsx` à
+l'adresse `/tracks/:slugTrack/couts`, hors de `ROUTES` ; l'entrée « Coûts » de la barre d'onglets,
+séparée des channels par un filet et rendue même sur un track sans channel ; les cinq issues de la
+zone — chargement, refus, erreur avec reprise, track introuvable, aucun budget. Preuves vertes :
+`CoutsTrack.test.tsx` **13 tests**, `TabBar.test.tsx` **15 tests**, `e2e/ui/couts-track.spec.ts`
+**7 scénarios**, quatre captures OBSERVÉES sous `docs/captures/CRM-086/couts-track-*.jpg`.
+
+**DEUX DÉFAUTS TROUVÉS PAR CES PREUVES, ET CORRIGÉS À LEUR CAUSE.** (1) Un budget SANS ligne gardait
+ses deux barres nulles et **se taisait** : la condition de l'état vide du §4.7 portait sur l'absence
+de tout budget. Elle porte désormais sur un **compte de lignes**, ajouté à `AgregatCouts` — le
+déduire des montants écrirait « aucune dépense rattachée » sur un budget dont les coûts s'annulent,
+ce que le §2.1 rend légitime ; contre-épreuve écrite. (2) Les deux étiquettes d'un groupe se
+rejoignaient à l'œil et se lisaient « 1 000 €880 € », défaut vu sur une capture ; l'étiquette porte
+désormais son propre rembourrage. `docs/DESIGN_SYSTEM.md` §5.30 porte les deux règles, et §4/§12.1
+la règle nouvelle de la barre d'onglets.
+
+**CE QUI RESTE** : les DEUX autres écrans ne sont pas montés — le détail d'un budget (§4.3,
+`/tracks/:slugTrack/couts/:idBudget`, une paire de barres par occurrence et la liste des lignes) et
+le cumul du workspace (§4.5, `/couts`, un groupe de barres par track, entrée de barre latérale). Ni
+l'un ni l'autre n'a d'adresse déclarée dans `chemins.ts` à ce jour — seul `CHEMIN_COUTS_TRACK` y
+est. L'onglet « À saisir » du §4.8 n'existe sur aucun écran. **Aucun harnais dédié
+`scripts/verify-couts-ecrans.sh` n'existe encore**, et aucune preuve pgTAP ni d'API n'est propre à
+cette unité. La reprise est l'écran du §4.3.
 
 **DoD** : E2E des trois écrans ; captures aux quatre paliers ; **la mention « n lignes sans coût
 réel saisi » est prouvée présente** quand des réels manquent, et absente sinon — c'est la principale

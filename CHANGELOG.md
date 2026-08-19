@@ -15,6 +15,26 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **L'écran de coûts d'un track est atteignable** (`CRM-086` tranche 3, `docs/SPEC-costs.md` §4.0,
+  §4.2, §4.4 et §4.7, `docs/DESIGN_SYSTEM.md` §4, §5.30 et §12.1). Une entrée **« Coûts »** apparaît
+  dans la barre d'onglets d'un track, à côté de ses channels et séparée d'eux : elle mène à un écran
+  qui compare, budget par budget, ce qui était prévu à ce qui a réellement été dépensé. Un **budget
+  récurrent y apparaît agrégé**, toutes ses occurrences confondues, en une seule paire de barres ;
+  un **budget clôturé n'y figure pas**. Sous le graphique, la phrase « n lignes sans coût réel
+  saisi, pour m € de prévisionnel » apparaît dès qu'un réel manque, et **disparaît** quand tout est
+  saisi — un avertissement permanent cesserait d'être lu. Un track qui porte des budgets dans
+  plusieurs devises rend un histogramme par devise, jamais un total qui les additionnerait. L'entrée
+  est offerte **même sur un track sans channel** : les budgets d'un track existent indépendamment de
+  ses channels. Ce que vous voyez est ce que vos droits vous consentent : un budget que vous n'avez
+  pas le droit de lire n'entre pas dans le total, et l'écran ne signale aucun manque — le signaler
+  reviendrait à divulguer ce qu'il cache.
+  **Deux corrections viennent avec cet écran** : un budget qui ne porte encore aucune dépense écrit
+  désormais « aucune dépense rattachée » sous ses deux barres nulles, là où il se taisait ; et les
+  valeurs affichées au-dessus de deux barres voisines ne se rejoignent plus, « 1 000 €880 € » se
+  lisant comme un seul nombre.
+  **Les deux autres écrans de coûts restent à venir** — le détail d'un budget occurrence par
+  occurrence, et le cumul de l'espace de travail —, ainsi que l'onglet « À saisir ». L'unité reste
+  ouverte.
 - **Les écrans de coûts ont leur socle** (`CRM-086` tranches 1 et 2, `docs/SPEC-costs.md` §4.0,
   §4.2, §4.4 et §4.5, `docs/DESIGN_SYSTEM.md` §5.30). L'agrégation que partageront les trois écrans
   de coûts existe et est prouvée : le prévisionnel, le réel, le **compte des lignes dont le coût
