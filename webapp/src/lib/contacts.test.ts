@@ -6,6 +6,9 @@
 // @verifies docs/SPEC-contacts.md §11.3 (la lecture de la fiche : colonnes, filtre sur `id`, tri
 //           des contacts embarqués par `referencedTable`), §11.4 (trois absences rendent le même
 //           `null`, et un identifiant mal formé n'émet AUCUNE requête), §11.9 cas a et d
+// @verifies docs/SPEC-contacts.md §15.3 (la lecture de la fiche de contact : la désambiguïsation
+//           de `channels`, le filtre qui écarte la corbeille, le tri des rattachements),
+//           §15.4 (trois absences rendent le même `null`), §15.9 cas a, b, e, f, g
 // @verifies docs/SPEC-webapp.md §6.4 (contrat asynchrone : l'erreur est classée sur le code HTTP)
 //
 // Comme `mail-etat.test.ts`, ce fichier éprouve la requête RÉELLEMENT émise et pas seulement la
@@ -17,7 +20,12 @@
 import { describe, expect, it } from 'vitest'
 import {
 	COLONNES_CONTACT_CARNET,
+	CHEMIN_FILTRE_CORBEILLE,
+	COLONNES_FICHE_CONTACT,
 	COLONNES_FICHE_ORGANISATION,
+	TABLE_TRI_AFFAIRES_FICHE,
+	TRI_AFFAIRES_FICHE,
+	adresseAffaire,
 	TABLE_TRI_CONTACTS_FICHE,
 	TRI_CARNET,
 	TRI_CONTACTS_FICHE,
@@ -35,6 +43,7 @@ import {
 	normaliserFacultatif,
 	lireContactsDeLAffaire,
 	lireContactsDuCarnet,
+	lireFicheContact,
 	lireFicheOrganisation,
 	rattacherContact,
 } from './contacts'
@@ -965,5 +974,253 @@ describe('normaliserFacultatif (§14.3)', () => {
 		expect(normaliserFacultatif('   ')).toBeNull()
 		expect(normaliserFacultatif('\t\n')).toBeNull()
 		expect(normaliserFacultatif(' Acheteuse ')).toBe('Acheteuse')
+	})
+})
+
+// ----------------------------------------------------------------------------------------------
+// Sous-tranche 4f — LA FICHE D'UN CONTACT (docs/SPEC-contacts.md §15)
+// ----------------------------------------------------------------------------------------------
+
+const ID_LEO = '5eed0000-0000-4000-8000-000000000091'
+const ID_CARD_ERP = '5eed0000-0000-4000-8000-0000000000c2'
+
+/**
+ * Espion de la fiche de contact : il enregistre en plus le filtre `is`, que la fiche pose pour
+ * écarter la corbeille (§15.3). Un espion qui l'ignorerait laisserait passer un code qui aurait
+ * oublié ce filtre, et la preuve ne dirait rien de la règle qu'elle prétend tenir.
+ */
+function espionFicheContact(reponse: Reponse): {
+	client: ClientCrm
+	appel: { table?: string; colonnes?: string; eq: string[]; is: string[]; tris: unknown[] }
+} {
+	const appel: { table?: string; colonnes?: string; eq: string[]; is: string[]; tris: unknown[] } = {
+		eq: [],
+		is: [],
+		tris: [],
+	}
+	const chaine: Record<string, unknown> = {
+		eq: (colonne: string, valeur: string) => {
+			appel.eq.push(`${colonne}=${valeur}`)
+			return chaine
+		},
+		is: (colonne: string, valeur: unknown) => {
+			appel.is.push(`${colonne}=${String(valeur)}`)
+			return chaine
+		},
+		order: (colonne: string, options?: unknown) => {
+			appel.tris.push([colonne, options])
+			return chaine
+		},
+		then: (resoudre: (valeur: Reponse) => unknown) => Promise.resolve(reponse).then(resoudre),
+	}
+	const client = {
+		from: (table: string) => {
+			appel.table = table
+			return {
+				select: (colonnes: string) => {
+					appel.colonnes = colonnes
+					return chaine
+				},
+			}
+		},
+	} as unknown as ClientCrm
+	return { client, appel }
+}
+
+/** Léo Marchand, tel que la pile réelle le rend — mesure 1 du §15.3. */
+const LEO_FICHE = {
+	id: ID_LEO,
+	full_name: 'Léo Marchand',
+	email: 'leo.marchand@sogexia.example',
+	phone: null,
+	role_title: 'Directeur achats',
+	organization_id: '5eed0000-0000-4000-8000-000000000081',
+	organizations: {
+		id: '5eed0000-0000-4000-8000-000000000081',
+		name: 'Sogexia',
+		domain: 'sogexia.example',
+	},
+	card_contacts: [
+		{
+			role: 'decideur',
+			cards: {
+				id: ID_CARD_ERP,
+				title: 'Migration ERP Sogexia',
+				archived_at: null,
+				channels: { slug: 'grands-comptes', tracks: { slug: 'conseil-ia' } },
+			},
+		},
+	],
+}
+
+describe('lireFicheContact (§15.3)', () => {
+	it('interroge `contacts`, filtre sur `id`, ÉCARTE la corbeille et trie les rattachements', async () => {
+		const { client, appel } = espionFicheContact({ data: [LEO_FICHE], error: null, status: 200 })
+		await lireFicheContact(client, ID_LEO)
+		expect(appel.table).toBe('contacts')
+		expect(appel.colonnes).toBe(COLONNES_FICHE_CONTACT)
+		expect(appel.eq).toEqual([`id=${ID_LEO}`])
+		// LE FILTRE QUI ÉCARTE LA CORBEILLE. Sans lui, une affaire supprimée apparaît — mesuré sur
+		// « Saisie erronée » — et la fiche offrirait un lien vers une affaire dont la corbeille est
+		// la surface propriétaire (CRM-077).
+		expect(appel.is).toEqual([`${CHEMIN_FILTRE_CORBEILLE}=null`])
+		expect(appel.tris).toEqual([[TRI_AFFAIRES_FICHE, { referencedTable: TABLE_TRI_AFFAIRES_FICHE }]])
+	})
+
+	it("DÉSIGNE la relation ambiguë `cards → channels` au lieu de la contourner — §15.3", () => {
+		// MESURÉ : la forme naïve `cards(channels(...))` est refusée par `PGRST201`, deux clés
+		// étrangères existant entre `cards` et `channels`. La clé retenue est celle du
+		// CLOISONNEMENT, et cette assertion la fige : l'écrire au hasard rendrait la requête
+		// rouge sur la pile, mais seule cette preuve dit POURQUOI cette clé-là.
+		expect(COLONNES_FICHE_CONTACT).toContain('channels!cards_channel_id_workspace_id_fkey')
+		expect(COLONNES_FICHE_CONTACT).not.toContain('cards_channel_id_workflow_id_fkey')
+		// `!inner` n'est pas décoratif : sans lui, le filtre rendrait `cards: null` au lieu de
+		// retirer la ligne (mesuré).
+		expect(COLONNES_FICHE_CONTACT).toContain('cards!inner')
+		// `archived_at` est la SEULE colonne de cycle de vie demandée : une affaire archivée reste
+		// rendue, son état étant dit (§15.3).
+		expect(COLONNES_FICHE_CONTACT).toContain('archived_at')
+		// `source` et `created_at` ne sont pas demandés, pour le motif du §10.3.
+		expect(COLONNES_FICHE_CONTACT).not.toContain('source')
+		expect(COLONNES_FICHE_CONTACT).not.toContain('created_at')
+	})
+
+	it('rend le contact, son organisation et ses affaires, adresses comprises — cas a', async () => {
+		const { client } = espionFicheContact({ data: [LEO_FICHE], error: null, status: 200 })
+		const lu = await lireFicheContact(client, ID_LEO)
+		expect(lu.statut).toBe('pret')
+		if (lu.statut !== 'pret' || lu.donnees === null) throw new Error('fiche attendue')
+		expect(lu.donnees.full_name).toBe('Léo Marchand')
+		expect(lu.donnees.organisation?.name).toBe('Sogexia')
+		expect(lu.donnees.affaires).toHaveLength(1)
+		expect(lu.donnees.affaires[0]).toEqual({
+			idCard: ID_CARD_ERP,
+			titre: 'Migration ERP Sogexia',
+			role: 'decideur',
+			archivee: false,
+			adresse: `/tracks/conseil-ia/grands-comptes/cards/${ID_CARD_ERP}`,
+		})
+	})
+
+	it("rend `organisation` nulle quand le contact n'en a aucune — cas b", async () => {
+		const sansOrganisation = { ...LEO_FICHE, organization_id: null, organizations: null }
+		const { client } = espionFicheContact({ data: [sansOrganisation], error: null, status: 200 })
+		const lu = await lireFicheContact(client, ID_LEO)
+		if (lu.statut !== 'pret' || lu.donnees === null) throw new Error('fiche attendue')
+		expect(lu.donnees.organisation).toBeNull()
+	})
+
+	it('rend une liste vide quand aucun rattachement ne revient — cas e et o', async () => {
+		// C'est aussi la réponse MESURÉE pour la lectrice sur Léo : les droits fins de `cards`
+		// traversent l'embarquement et RETIRENT la ligne. L'écran ne calcule donc aucun droit.
+		const sansAffaire = { ...LEO_FICHE, card_contacts: [] }
+		const { client } = espionFicheContact({ data: [sansAffaire], error: null, status: 200 })
+		const lu = await lireFicheContact(client, ID_LEO)
+		if (lu.statut !== 'pret' || lu.donnees === null) throw new Error('fiche attendue')
+		expect(lu.donnees.affaires).toEqual([])
+	})
+
+	it('rend une liste vide quand la relation est absente ou nulle — jamais une anomalie', async () => {
+		for (const brute of [{ ...LEO_FICHE, card_contacts: null }, { ...LEO_FICHE, card_contacts: undefined }]) {
+			const { client } = espionFicheContact({ data: [brute], error: null, status: 200 })
+			const lu = await lireFicheContact(client, ID_LEO)
+			if (lu.statut !== 'pret' || lu.donnees === null) throw new Error('fiche attendue')
+			expect(lu.donnees.affaires).toEqual([])
+		}
+	})
+
+	it('marque une affaire ARCHIVÉE, et ne marque pas une affaire active — cas f', async () => {
+		const archivee = {
+			...LEO_FICHE,
+			card_contacts: [
+				{
+					role: null,
+					cards: {
+						id: '5eed0000-0000-4000-8000-0000000000c8',
+						title: 'Contrat cadre 2025',
+						archived_at: '2026-03-31T16:00:00+00:00',
+						channels: { slug: 'grands-comptes', tracks: { slug: 'conseil-ia' } },
+					},
+				},
+			],
+		}
+		const { client } = espionFicheContact({ data: [archivee], error: null, status: 200 })
+		const lu = await lireFicheContact(client, ID_LEO)
+		if (lu.statut !== 'pret' || lu.donnees === null) throw new Error('fiche attendue')
+		expect(lu.donnees.affaires[0]?.archivee).toBe(true)
+		expect(lu.donnees.affaires[0]?.role).toBeNull()
+	})
+
+	it("écarte un rattachement dont les slugs manquent, plutôt que de rendre une ligne morte", async () => {
+		const sansSlug = {
+			...LEO_FICHE,
+			card_contacts: [
+				{ role: 'x', cards: { id: 'c', title: 'T', archived_at: null, channels: null } },
+			],
+		}
+		const { client } = espionFicheContact({ data: [sansSlug], error: null, status: 200 })
+		const lu = await lireFicheContact(client, ID_LEO)
+		if (lu.statut !== 'pret' || lu.donnees === null) throw new Error('fiche attendue')
+		expect(lu.donnees.affaires).toEqual([])
+	})
+
+	it("n'émet AUCUNE requête quand l'identifiant n'a pas la forme d'un uuid — §15.4", async () => {
+		const { client, appel } = espionFicheContact({ data: [LEO_FICHE], error: null, status: 200 })
+		const lu = await lireFicheContact(client, 'pas-un-uuid')
+		expect(appel.table).toBeUndefined()
+		expect(lu.statut).toBe('pret')
+		if (lu.statut !== 'pret') throw new Error('état prêt attendu')
+		expect(lu.donnees).toBeNull()
+	})
+
+	it('rend `null` sur une réponse vide — inexistant et refusé sont INDISTINGUABLES', async () => {
+		const { client } = espionFicheContact({ data: [], error: null, status: 200 })
+		const lu = await lireFicheContact(client, ID_LEO)
+		if (lu.statut !== 'pret') throw new Error('état prêt attendu')
+		expect(lu.donnees).toBeNull()
+	})
+
+	it("classe l'erreur sur le code HTTP réellement reçu, et ne lève jamais", async () => {
+		const { client } = espionFicheContact({ data: null, error: { message: 'panne' }, status: 500 })
+		const lu = await lireFicheContact(client, ID_LEO)
+		expect(lu.statut).toBe('erreur')
+	})
+
+	it("ne lève pas non plus quand le client jette — le contrat asynchrone tient", async () => {
+		const client = {
+			from: () => {
+				throw new Error('réseau coupé')
+			},
+		} as unknown as ClientCrm
+		const lu = await lireFicheContact(client, ID_LEO)
+		expect(lu.statut).toBe('erreur')
+	})
+})
+
+describe('adresseAffaire (§15.3)', () => {
+	it("construit l'adresse depuis les slugs EMBARQUÉS, sans requête supplémentaire", () => {
+		expect(
+			adresseAffaire({
+				role: null,
+				cards: {
+					id: ID_CARD_ERP,
+					title: 'Migration ERP Sogexia',
+					archived_at: null,
+					channels: { slug: 'grands-comptes', tracks: { slug: 'conseil-ia' } },
+				},
+			}),
+		).toBe(`/tracks/conseil-ia/grands-comptes/cards/${ID_CARD_ERP}`)
+	})
+
+	it('rend `null` plutôt qu’une adresse partielle quand un slug manque', () => {
+		// Un lien vers `/tracks/undefined/...` mènerait à un écran que l'utilisateur croirait
+		// cassé : c'est la règle de `lireCheminCard`, tenue ici à l'identique.
+		expect(adresseAffaire({ role: null, cards: null })).toBeNull()
+		expect(
+			adresseAffaire({
+				role: null,
+				cards: { id: 'c', title: 'T', archived_at: null, channels: { slug: 'x', tracks: null } },
+			}),
+		).toBeNull()
 	})
 })

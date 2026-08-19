@@ -222,15 +222,27 @@ describe("Fiche d'organisation", () => {
 		expect(await screen.findByTestId('tableau-contacts-organisation')).toBeTruthy()
 	})
 
-	it('ne fait du nom d’un contact NI un lien, NI un mailto — limite nommée du §11.8', async () => {
+	it('fait du nom d’un contact un LIEN vers sa fiche, mais jamais un mailto — §15.6', async () => {
 		rendreA(ID_SOGEXIA, clientQuiRend({ data: [SOGEXIA], error: null, status: 200 }),
 		)
 		const ligne = (await screen.findAllByTestId('ligne-contact-organisation'))[0]
 		expect(ligne).toBeDefined()
 		if (ligne === undefined) return
-		// Il n'existe pas de fiche de contact : un lien y serait mort. C'est la règle que le §11.6
-		// vient d'abandonner pour l'organisation, tenue ici pour la raison exacte qui la fondait là.
-		expect(ligne.querySelectorAll('a')).toHaveLength(0)
+		// ASSERTION RÉVISÉE le 2026-08-19 — sous-tranche 4f, docs/SPEC-contacts.md §15.6.
+		//
+		// Elle exigeait `toHaveLength(0)` : il n'existait pas de fiche de contact, et un lien y
+		// aurait été mort (§11.8) — la règle exacte que le §11.6 avait abandonnée pour
+		// l'organisation, tenue ici pour la raison qui la fondait là. La sous-tranche 4f LIVRE
+		// cette destination, et la condition tombe. La preuve est donc RÉVISÉE avec son motif,
+		// jamais retirée ni contournée (mécanisme de la décision 51), et ce qu'elle exige devient
+		// plus fort : le lien doit exister ET mener à la bonne fiche.
+		const liens = ligne.querySelectorAll('a')
+		expect(liens).toHaveLength(1)
+		expect(liens[0]?.getAttribute('href')).toBe(
+			'/contacts/5eed0000-0000-4000-8000-000000000091',
+		)
+		expect(liens[0]?.textContent).toBe('Léo Marchand')
+		// Écrire à un contact depuis cette page n'est spécifié nulle part : inchangé.
 		expect(ligne.innerHTML).not.toContain('mailto:')
 		expect(ligne.innerHTML).not.toContain('tel:')
 	})

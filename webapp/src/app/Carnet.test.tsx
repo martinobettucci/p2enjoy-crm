@@ -142,18 +142,41 @@ describe('Carnet de contacts', () => {
 		// donc RÉVISÉE avec son motif — jamais retirée, jamais contournée (mécanisme de la
 		// décision 51). Ce qu'elle exige reste vérifiable, et devient plus fort : le lien doit
 		// exister ET mener à la bonne fiche.
+		//
+		// ASSERTION RÉVISÉE UNE SECONDE FOIS le 2026-08-19 — sous-tranche 4f,
+		// docs/SPEC-contacts.md §15.6, et pour la RAISON EXACTE qui l'avait révisée la première :
+		// le nom du CONTACT devait rester un texte tant que sa fiche n'existait pas (§11.8). La
+		// sous-tranche 4f livre cette destination, et la ligne porte donc DEUX liens. Le compte
+		// passe de 1 à 2, et chaque lien est vérifié par sa destination plutôt que par son rang —
+		// un compte seul ne dirait pas lequel des deux a été livré.
 		const liens = ligneLeo.querySelectorAll('a')
-		expect(liens).toHaveLength(1)
-		expect(liens[0]?.getAttribute('href')).toBe(
+		expect(liens).toHaveLength(2)
+		const destinations = [...liens].map((lien) => lien.getAttribute('href'))
+		expect(destinations).toEqual([
+			`/contacts/${LEO.id}`,
 			`/contacts/organisations/${LEO.organization_id}`,
-		)
+		])
 		// Le nom EST le libellé du lien : aucun `aria-label` générique ne le remplace, sans quoi
 		// tous les liens du tableau seraient indistinguables pour un lecteur d'écran (§8).
-		expect(liens[0]?.textContent).toBe('Sogexia')
+		expect(liens[0]?.textContent).toBe('Léo Marchand')
+		expect(liens[1]?.textContent).toBe('Sogexia')
 		// Aucun `mailto:` ni `tel:` n'est posé pour autant : écrire à un contact depuis le carnet
 		// n'est spécifié nulle part (§10.5, inchangé).
 		expect(ligneLeo.innerHTML).not.toContain('mailto:')
 		expect(ligneLeo.innerHTML).not.toContain('tel:')
+	})
+
+	it('le nom du contact mène à SA fiche, et une cellule sans organisation reste sans lien — §15.6', async () => {
+		rendreCarnet(clientQuiRend({ data: SEED, error: null, status: 200 }))
+		const lignes = await screen.findAllByTestId('ligne-contact')
+		const ligneSophie = lignes.find((ligne) => ligne.getAttribute('data-contact') === SOPHIE.id)!
+		// Sophie n'a AUCUNE organisation : sa ligne ne porte donc qu'un seul lien, le sien. C'est
+		// ce qui distingue les deux règles — le nom d'un contact est toujours présent
+		// (`contacts_full_name_check` refuse un nom blanc), celui d'une organisation ne l'est pas.
+		const liens = ligneSophie.querySelectorAll('a')
+		expect(liens).toHaveLength(1)
+		expect(liens[0]?.getAttribute('href')).toBe(`/contacts/${SOPHIE.id}`)
+		expect(liens[0]?.textContent).toBe('Sophie Dupont')
 	})
 
 	it('rend des squelettes pendant la lecture, jamais un écran blanc — cas d du §10.6', () => {
@@ -388,11 +411,22 @@ describe('Carnet — la création d’un contact (§14)', () => {
 		const ligneCamille = screen
 			.getAllByTestId('ligne-contact')
 			.find((candidate) => candidate.getAttribute('data-contact') === CAMILLE.id)!
-		const lien = ligneCamille.querySelector('a')
+		// ASSERTION RÉVISÉE le 2026-08-19 — sous-tranche 4f, docs/SPEC-contacts.md §15.6. Elle
+		// lisait le PREMIER lien de la ligne, qui était alors celui de l'organisation. La ligne
+		// porte désormais aussi le lien du contact, en tête : le lien de l'organisation se désigne
+		// donc par son `data-testid` plutôt que par son rang, ce qui la rend indifférente à l'ordre
+		// des colonnes. Ce qu'elle vérifie — la ligne créée porte la bonne organisation — est
+		// inchangé.
+		const lien = ligneCamille.querySelector('[data-testid="lien-organisation"]')
 		expect(lien?.getAttribute('href')).toBe(
 			'/contacts/organisations/5eed0000-0000-4000-8000-000000000081',
 		)
 		expect(lien?.textContent).toBe('Sogexia')
+		// Le contact créé porte AUSSI sa propre destination : la fiche vaut pour une ligne qui
+		// vient d'être insérée comme pour une ligne lue.
+		expect(
+			ligneCamille.querySelector('[data-testid="lien-contact"]')?.getAttribute('href'),
+		).toBe(`/contacts/${CAMILLE.id}`)
 	})
 
 	it('traduit les trois refus et CONSERVE la saisie — cas g, h et i', async () => {
