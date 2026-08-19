@@ -307,6 +307,19 @@ class PostgrestClient:
             "subject": analyse.subject,
             "body_text": analyse.body_text,
             "body_html": analyse.body_html,
+            # LA CHAÎNE `References` EST PERSISTÉE ICI, ET SON ABSENCE ÉTAIT UN DÉFAUT MESURÉ
+            # (docs/SPEC-cards.md §16.16.2, mesures 3 à 5). L'analyse MIME la lisait déjà et
+            # `classer_message_automatiquement` la recevait pour sa règle 2, mais cette charge ne
+            # la portait pas : la colonne retombait sur son `default '{}'`, `app.cle_fil` rendait
+            # alors le `Message-ID` PROPRE de chaque réponse, et aucun fil ne pouvait jamais se
+            # former à partir de courrier REÇU. Une réponse émise par le produit se rattachait,
+            # elle, parce que `marquer_envoi_reussi` compose la chaîne en SQL — d'où un
+            # groupement qui n'aurait marché que dans un sens.
+            #
+            # UNE LISTE, JAMAIS LE TUPLE : `json.dumps` refuse un tuple de la même façon qu'il
+            # refuse un ensemble, et `analyse.references` est déjà une liste — la copie protège
+            # simplement la charge d'une mutation ultérieure de l'analyse.
+            "references_ids": list(analyse.references),
             "sent_at": None if analyse.sent_at is None else analyse.sent_at.isoformat(),
         }
         # `on_conflict` N'EST PAS FACULTATIF, ET C'EST MESURÉ : sans lui, `resolution=
