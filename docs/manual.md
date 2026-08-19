@@ -26,7 +26,7 @@
 | 1 bis | Le guide de démarrage : par où commencer | `CRM-079` | **Livré et vérifié** — voir le chapitre 1 *bis*. Cinq étapes mesurées à chaque affichage, chacune renvoyant vers l'écran qui la réalise. L'état est **mesuré**, jamais mémorisé : supprimer le dernier track décoche l'étape. Le guide se masque pour la session — rien n'est écrit durablement sur l'appareil — et reste toujours consultable depuis « Réglages ▸ Guide de démarrage ». Il **lit et renvoie** : il ne crée ni track, ni channel, ni affaire |
 | 2 | Comprendre l'organisation : espace, tracks, channels, cards | `CRM-020`, `CRM-021` | À livrer |
 | 3 | Naviguer : barre latérale, onglets, recherche | `CRM-007`, `CRM-065` | **Partiellement livré** — voir ci-dessous ; la recherche relève de `CRM-065` |
-| 3 ter | Le carnet de contacts | `CRM-060` | **Livré en LECTURE** — voir la section 3 *ter*. L'entrée « Contacts » de la barre latérale ouvre le carnet de l'espace : nom, organisation, fonction, email et téléphone, une ligne par personne. Tout membre le lit, y compris un compte en lecture seule. Le nom d'organisation ouvre sa **fiche** (sous-tranche 4b) : domaine, site web et contacts rattachés. Une affaire **rattache et détache** ses contacts depuis sa fiche (sous-tranche 4c, chapitre 4.7 *ter*). Un contact **se crée** depuis le carnet (sous-tranche 4e) : le bouton « Nouveau contact » ouvre un formulaire au-dessus du tableau. Il **se modifie** depuis sa fiche (sous-tranche 4g) : le bouton « Modifier » ouvre le même formulaire, prérempli. Ce qui manque est dit : aucune suppression d'un contact, aucune création d'organisation, aucune recherche |
+| 3 ter | Le carnet de contacts | `CRM-060` | **Livré en LECTURE** — voir la section 3 *ter*. L'entrée « Contacts » de la barre latérale ouvre le carnet de l'espace : nom, organisation, fonction, email et téléphone, une ligne par personne. Tout membre le lit, y compris un compte en lecture seule. Le nom d'organisation ouvre sa **fiche** (sous-tranche 4b) : domaine, site web et contacts rattachés. Une affaire **rattache et détache** ses contacts depuis sa fiche (sous-tranche 4c, chapitre 4.7 *ter*). Un contact **se crée** depuis le carnet (sous-tranche 4e) : le bouton « Nouveau contact » ouvre un formulaire au-dessus du tableau. Il **se modifie** depuis sa fiche (sous-tranche 4g) : le bouton « Modifier » ouvre le même formulaire, prérempli. Il **se rattache à une affaire** depuis sa fiche (sous-tranche 4h) : le bouton « Rattacher à une affaire » vit dans le bloc des affaires. Ce qui manque est dit : aucune suppression d'un contact, aucun détachement depuis la fiche du contact, aucune création d'organisation, aucune recherche |
 
 ### Suivi quotidien
 
@@ -216,7 +216,7 @@ accessibles les surfaces déjà livrées ; elle ne fabrique pas les éditeurs en
 
 ### 3 ter. Le carnet de contacts
 
-*Livré par `CRM-060`, sous-tranches 4a, 4b, 4e, 4f et 4g. Décrit l'application réellement exécutée ;
+*Livré par `CRM-060`, sous-tranches 4a, 4b, 4e, 4f, 4g et 4h. Décrit l'application réellement exécutée ;
 captures dans `docs/captures/CRM-060/`.*
 
 L'entrée **Contacts** de la barre latérale ouvre le **carnet** de votre espace de travail : les
@@ -288,8 +288,9 @@ organisation — ouvre sa **fiche**. Elle porte son **nom en titre**, puis deux 
 - **ses affaires** — un tableau à trois colonnes : l'affaire, le **rôle** que la personne y tient
   (par exemple « decideur »), et son **état**. Le titre de chaque affaire est un lien qui l'ouvre.
 
-C'est la seule page qui répond à la question « sur quoi travaillons-nous avec cette personne ? ».
-Le rattachement lui-même, en revanche, se règle toujours depuis l'affaire (chapitre 4.7 ter).
+C'est la seule page qui répond à la question « sur quoi travaillons-nous avec cette personne ? »,
+et depuis la sous-tranche 4h c'est aussi d'ici que l'on **ajoute** une affaire à cette liste
+(« Rattacher une personne à une affaire », plus bas).
 
 **Le rôle dans l'affaire n'est pas la fonction.** La fonction qualifie la personne dans son
 organisation ; le rôle dit ce qu'elle est **dans cette affaire-là**. Les deux portent le même mot
@@ -336,10 +337,47 @@ avez ouvert sa fiche et celui où vous avez enregistré. Le message ne tranche d
 invite à **recharger la fiche** : son état actuel répondra à la question. Le formulaire reste
 ouvert et votre saisie est intacte, pour que vous ne perdiez rien.
 
-**Ce que la fiche ne fait pas encore.** Elle ne permet ni de **supprimer** un contact, ni de le
-rattacher à une affaire depuis cette page — le rattachement se règle depuis l'affaire (chapitre
-4.7 *ter*). Elle ne montre pas non plus les emails échangés avec la personne : la messagerie d'une
-affaire reste dans l'affaire.
+**Ce que la fiche ne fait pas encore.** Elle ne permet pas de **supprimer** un contact, et elle ne
+montre pas les emails échangés avec la personne : la messagerie d'une affaire reste dans l'affaire.
+
+#### Rattacher une personne à une affaire
+
+*Livré par la sous-tranche 4h.*
+
+Le bouton **« Rattacher à une affaire »** se trouve dans le bloc **Affaires**, juste sous son titre.
+Il ouvre un formulaire **dans la page** — le tableau reste visible en dessous, et c'est voulu :
+c'est lui qui vous dit à quelles affaires la personne est **déjà** rattachée.
+
+Deux champs :
+
+- **Affaire** — la liste des affaires de l'espace de travail que vous avez le droit de lire,
+  rangées par titre. Les affaires auxquelles cette personne est **déjà** rattachée n'y figurent
+  pas : les proposer serait proposer un geste qui échouerait ;
+- **Rôle dans l'affaire** — facultatif, et libre : « décideur », « prescripteur », « contact
+  technique »… Laissé vide, il reste vide.
+
+**Une affaire archivée peut être rattachée**, et la liste le dit : son titre est suivi de
+**« (archivée) »**. Rattacher quelqu'un à une affaire close est un geste ordinaire de mise à jour
+d'un historique. Une affaire **mise à la corbeille**, en revanche, n'est pas proposée : elle
+n'apparaîtrait pas dans le tableau, et vous auriez agi sans rien voir changer.
+
+Une fois enregistré, le formulaire se referme et **le tableau se relit** : la nouvelle affaire
+apparaît avec son rôle, son état et son lien.
+
+**Si le rattachement est refusé**, le message le dit en clair et **votre saisie est conservée** :
+
+- *« Ce contact est déjà rattaché à cette affaire »* — quelqu'un d'autre a agi entre-temps ;
+- *« Le rattachement a été refusé »* — vous n'avez pas le droit d'écrire sur cette affaire, ou elle
+  n'est plus accessible. Le message ne tranche pas entre les deux, parce que le serveur répond la
+  même chose dans les deux cas, et il vous invite à recharger la liste.
+
+**Pouvoir lire une affaire ne veut pas dire pouvoir y rattacher quelqu'un.** Les droits se règlent
+**affaire par affaire** : le même compte peut réussir sur l'une et être refusé sur l'autre, et c'est
+mesuré. Le bouton n'est donc jamais grisé d'avance — le produit ne devine pas ce que le serveur
+décidera, il envoie et vous rapporte la réponse.
+
+**Détacher se fait depuis l'affaire**, pas depuis ici (chapitre 4.7 *ter*) — un clic sur le titre de
+l'affaire dans le tableau vous y mène.
 
 **La suppression n'est pas un oubli.** Un contact peut être désigné par des champs de formulaire
 d'affaires déjà remplis ; le supprimer laisserait ces valeurs pointer vers quelqu'un qui n'existe

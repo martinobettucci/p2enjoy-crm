@@ -422,7 +422,13 @@ ASSERTIONS_ATTENDUES=2269
 # deux refus EXPLICITES du `WITH CHECK` et de l'anonyme. Sans le scénario du silence, un remaniement
 # futur prendrait « aucune ligne modifiée » pour un succès. 724 + 7 = **731**, valeur COMPTÉE par
 # `playwright test --list` (« Total: 731 tests in 44 files »). Le nombre de FICHIERS ne bouge pas.
-SCENARIOS_API=731
+# **RÉVISION DU 2026-08-19 — `CRM-060` sous-tranche 4h.** Le rattachement d'une affaire depuis la
+# fiche d'un contact ajoute **neuf** scénarios d'API : les huit mesures d'autorisation du §17.4 —
+# dont les deux qui FONDENT une décision d'écran plutôt que de la confirmer, l'affaire archivée
+# acceptée et l'affaire en corbeille acceptée elle aussi — et la constatation que le seed est rendu
+# intact. 731 + 9 = **740**, valeur COMPTÉE par `playwright test --list` (« Total: 740 tests in
+# 44 files »), jamais déduite (INC-101). Le nombre de FICHIERS ne bouge pas.
+SCENARIOS_API=740
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -611,7 +617,11 @@ SCENARIOS_API=731
 # le retour du focus à la commande d'ouverture au CLAVIER ; le silence du serveur DIT à la lectrice
 # avec sa saisie conservée ; et le rendu à 390 px sans débordement. Le nombre de FICHIERS ne bouge
 # pas. Valeur MESURÉE par `playwright test --list` (« Total: 424 tests in 33 files »).
-SCENARIOS_UI=424
+# **RÉVISION DU 2026-08-19 — `CRM-060` sous-tranche 4h.** Quatre scénarios d'interface ajoutés : le
+# rattachement par les gestes de l'écran, le parcours clavier, le refus opposé à la lectrice et le
+# rendu à 390 px. 424 + 4 = **428**, valeur COMPTÉE par `playwright test --list` (« Total: 428 tests
+# in 33 files »).
+SCENARIOS_UI=428
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

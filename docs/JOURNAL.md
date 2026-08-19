@@ -19384,3 +19384,76 @@ au §16.8 : l'**arbitrage du responsable** sur les références mortes — qui c
 d'un contact —, et le **rattachement** depuis la fiche d'un contact. La prochaine exécution peut
 prendre ce rattachement, ou la première unité `[ ]` du plan ; la suppression, elle, attend
 l'arbitrage.
+
+## décision 456 — `CRM-060` sous-tranche 4h : une affaire se rattache depuis le contact, et une mesure interdit à l'écran de deviner un droit
+
+**L'unité, et le choix.** La décision 455 laissait `4g` close et `CRM-060` en `[~]`, avec deux
+manques nommés : l'arbitrage **non tranché** sur les références mortes — qui commande la
+suppression — et le **rattachement** depuis la fiche du contact. C'est le §4.2 point 1 de
+`docs/CloudWorker.md` : la dernière entrée du journal désigne la reprise, et elle écarte la
+suppression. La fiche listait les affaires d'un contact et corrigeait le contact, mais rattacher
+obligeait à quitter la personne que l'on a sous les yeux, retrouver l'affaire, puis y rechercher le
+contact d'où l'on venait.
+
+**Spécification écrite et committée AVANT toute ligne de code**, `docs/SPEC-contacts.md` §17, fondée
+sur **dix-huit** mesures relevées à la main sur la pile seedée avec les jetons réels des trois
+profils et la clé anonyme, sur des rattachements sondes détruits ensuite — le seed est rendu
+**intact**, ses deux rattachements relus à l'identique.
+
+**DEUX MESURES ONT DÉCIDÉ DU SÉLECTEUR, ET ELLES VONT EN SENS CONTRAIRE.** Une affaire **archivée**
+accepte le rattachement (`201`) : le sélecteur l'offre, et son option porte la mention
+« (archivée) » — l'exclure poserait une règle de produit que personne n'a prise, alors que le §15.3
+a déjà tranché dans l'autre sens pour la lecture. Une affaire **en corbeille** l'accepte **elle
+aussi**, et pourtant l'écran l'écarte : la fiche ne liste jamais une affaire supprimée, si bien que
+le rattachement serait **invisible immédiatement après sa création**. C'est un cas rare où la
+décision d'écran ne double aucune garde de base — elle refuse une commande dont le résultat serait
+indiscernable d'une panne.
+
+**LA MESURE 9 SÉPARE 4h DE 4g.** La lectrice reçoit un `403` **explicite**, là où la modification
+d'un contact rend `200` et zéro ligne sans aucune erreur. La cause est structurelle : une insertion
+est filtrée par `WITH CHECK`, qui **rejette** la ligne ; une mise à jour l'est par `USING`, qui la
+rend **invisible à l'écriture**. Aucun message « sans effet » n'a donc d'objet sur cette surface, et
+en écrire un décrirait une issue que la base ne produit pas. La mesure 12 ferme en outre une nature
+de refus : une affaire **inexistante** rend le **même** `403`, `app.can_write_card` étant faux avant
+que la clé étrangère ne soit éprouvée — le code `23503` est **inatteignable** ici, et un seul message
+couvre les deux causes indistinguables.
+
+**LA MESURE 19 A ÉTÉ TROUVÉE PAR LA PREUVE, ET ELLE CORRIGE UNE GÉNÉRALISATION QUE J'AVAIS FAITE.**
+Le premier scénario d'interface de la lectrice prenait la première affaire venue du sélecteur, en
+supposant que « lectrice » voulait dire « refusée partout ». **Elle a réussi** — le rattachement
+s'est réellement inscrit, et il a fallu le retirer. Les droits fins de `CRM-012` divergent d'une
+affaire à l'autre **pour un même profil** : elle écrit sur « Assistant IA support — Nordis » et se
+voit refuser trois autres affaires qu'elle **lit** pourtant. C'est la démonstration la plus nette de
+ce que le §17.6 exige — l'écran ne peut pas calculer ce droit et ne doit pas essayer —, et le
+scénario **nomme** désormais l'affaire qu'il choisit, faute de quoi il passerait tantôt par le refus,
+tantôt par le succès. Consignée au §17.4.
+
+**UN DÉFAUT DE FOCUS TROUVÉ PAR LA PREUVE UNITAIRE, corrigé à sa cause.** Le focus n'entrait pas
+dans le sélecteur à l'ouverture : il est `disabled` tant que la liste se lit, et **un élément
+désactivé ne reçoit pas le focus**. Un effet à dépendances vides visait donc un contrôle qui le
+refusait, et le formulaire ouvert au clavier laissait le focus sur le document — le défaut du §5.13
+déplacé de la fermeture vers l'ouverture. L'effet suit désormais l'état de la liste, et un drapeau
+interdit qu'une relecture reprenne le focus pendant la saisie. **Aucune temporisation.**
+
+**Le refus `403` est DÉCLARÉ à la garde de console, jamais filtré.** Chromium journalise tout `403`
+réseau, et `CRM-007` fait de la console un verdict. Le scénario consomme la liste **exacte** des
+erreurs qu'il vient de provoquer et d'expliquer, par `autoriserErreursConsole` — le mécanisme déjà
+employé par `CRM-057` et `CRM-076`, sans exception nouvelle.
+
+**Preuves de l'unité** : `contacts.test.ts` **72 verts**, `FicheContact.test.tsx` **36 verts**,
+`e2e/api -g 4h` **9 verts**, `e2e/ui -g rattachement` **4 verts, console vierge** ; `typecheck` et
+`build` verts. Compteurs du harnais portés à **740** et **428**, valeurs **comptées** par
+`playwright test --list`. Captures **observées** (`CLAUDE.md` §16) : le formulaire dans le flux avec
+le tableau visible dessous, la fiche après rattachement avec la nouvelle ligne et son lien, le refus
+de la lectrice avec sa saisie conservée, et le rendu à 390 px sans débordement.
+
+**Le seed est rendu INTACT, et c'est mesuré** : la suite d'interface écrit réellement puis restitue
+**par les gestes de l'écran** — depuis la fiche de l'affaire, qui porte le détachement —, ce qui
+éprouve du même coup le chemin de retour que le §17.8 invoque pour assumer l'asymétrie.
+
+**Où reprendre.** `4h` est **close**. `CRM-060` reste `[~]`, et ce qui lui manque est nommé au §6 et
+au §17.8 : l'**arbitrage du responsable** sur les références mortes — qui commande la suppression
+d'un contact —, et le **détachement** depuis la fiche du contact, sous-tranche à part entière
+(confirmation nommant l'objet, place dans une ligne de tableau, traitement du « sans effet » que
+`USING` produit à la suppression). La prochaine exécution peut prendre ce détachement, ou la
+première unité `[ ]` du plan ; la suppression, elle, attend l'arbitrage.

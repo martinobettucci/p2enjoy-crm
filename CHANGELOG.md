@@ -15,6 +15,27 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-060` — Contacts et organisations, tranche 4h : le rattachement d'une affaire depuis la
+  fiche d'un contact** (`docs/SPEC-contacts.md` §17, `docs/DESIGN_SYSTEM.md` §5.26). La fiche d'un
+  contact **listait** ses affaires depuis 4f et **corrigeait** le contact depuis 4g, mais elle ne
+  savait pas le rattacher à une affaire de plus : le geste n'existait que dans l'autre sens, depuis
+  la fiche de l'affaire, ce qui obligeait à quitter le contact que l'on a sous les yeux, à retrouver
+  l'affaire, puis à y chercher le contact d'où l'on venait. Le bloc **Affaires** porte désormais un
+  bouton **« Rattacher à une affaire »** qui ouvre, dans le flux du document, un sélecteur d'affaire
+  et un champ de rôle facultatif ; le tableau reste visible dessous, puisqu'il est précisément ce
+  qui dit à quelles affaires la personne est **déjà** rattachée. Après un succès, la zone est
+  **relue** : la nouvelle affaire y apparaît avec son rôle, son état et son lien.
+  **Une affaire archivée est proposée, et l'option le dit** — la base accepte ce rattachement, et
+  rattacher quelqu'un à une affaire close est un geste ordinaire de mise à jour d'un historique.
+  **Une affaire en corbeille ne l'est pas**, bien que la base l'accepte elle aussi : la fiche ne la
+  listerait jamais, et le rattachement serait invisible dès sa création.
+  **Aucune commande n'est éteinte d'avance selon le rôle**, et une mesure le justifie plus fortement
+  que jamais : les droits fins se règlent **affaire par affaire**, si bien qu'un même compte réussit
+  sur l'une et se voit refuser l'autre. Le refus est ici **explicite**, contrairement au silence de
+  la modification. Ce qui reste dû est nommé : aucun **détachement** depuis cette page — il vit sur
+  la fiche de l'affaire, qu'un clic atteint —, et toujours aucune **suppression** de contact, qui
+  attend l'arbitrage du responsable.
+
 - **`CRM-060` — Contacts et organisations, tranche 4g : la modification d'un contact depuis sa
   fiche** (`docs/SPEC-contacts.md` §16, `docs/DESIGN_SYSTEM.md` §5.25). Un contact créé au carnet
   était jusqu'ici **définitif** : une coquille dans un nom, un email qui change d'employeur, une

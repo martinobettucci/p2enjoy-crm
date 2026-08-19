@@ -7538,9 +7538,63 @@ de l'arbitrage **non tranché** du §6 point 4 — supprimer un contact laisse e
 mortes que ce point nomme (`docs/CloudWorker.md` §4.1 : une entrée qui attend un arbitrage du
 responsable ne se tranche jamais soi-même).
 
+**Sous-tranche 4h livrée, 2026-08-19 — le RATTACHEMENT d'une affaire depuis la fiche d'un contact**
+(`docs/SPEC-contacts.md` §17, spécification écrite et committée **avant toute ligne de code**,
+fondée sur **dix-huit** mesures relevées sur la pile seedée avec les jetons réels des trois profils
+et la clé anonyme, plus une **dix-neuvième** trouvée par la preuve d'interface) :
+
+- [x] `webapp/src/lib/contacts.ts` — `lireAffairesRattachables`, ses colonnes, sa borne, son tri et
+      son filtre de corbeille ; `workspace_id` ajouté à `COLONNES_FICHE_CONTACT` et à
+      `FicheContactLue`. **Aucune fonction d'écriture nouvelle** : le geste appelle
+      `rattacherContact`, livrée par 4c et **inchangée** — un second `POST` sur la même table ferait
+      diverger deux contrats au premier champ ajouté.
+- [x] `webapp/src/app/FormulaireRattachementAffaire.tsx` — le geste, ses trois vides, son sélecteur
+      et son dictionnaire **fermé** de refus. **Mesure décisive** : une affaire ARCHIVÉE accepte le
+      rattachement (`201`), et une affaire EN CORBEILLE l'accepte **aussi** — c'est donc l'écran qui
+      l'écarte, et non la base, la fiche ne listant jamais une affaire supprimée (§15.3) : le
+      rattachement serait invisible dès sa création.
+- [x] `webapp/src/app/FicheContact.tsx` — le geste posé **DANS** la zone des affaires et non à côté
+      de « Modifier », le retour du focus différé, l'exclusion des affaires déjà rattachées, et la
+      relecture après succès.
+- [x] `webapp/src/lib/contacts.test.ts` (**7 tests ajoutés**, 72 dans le fichier) et
+      `webapp/src/app/FicheContact.test.tsx` (**13 ajoutés**, 36 dans le fichier) : les cas a à n du
+      §17.7. **UN DÉFAUT TROUVÉ PAR LA PREUVE, corrigé à sa CAUSE** : le focus n'entrait pas dans le
+      sélecteur, désactivé tant que la liste se lit — un élément désactivé ne reçoit pas le focus.
+      L'effet suit désormais l'état de la liste, avec un drapeau qui interdit un second vol de
+      focus. Aucune temporisation.
+- [x] `e2e/api/contacts.spec.ts` (**9 scénarios ajoutés**, 740 dans la suite) : les mesures du §17.4
+      avec les jetons réels, chaque refus **relisant la ligne** pour la constater inchangée
+      (décision 70), et la constatation que le seed est rendu intact.
+- [x] `e2e/ui/contacts.spec.ts` (**4 scénarios ajoutés**, 428 dans la suite, console vierge) : le
+      rattachement par les **gestes de l'écran**, le parcours **clavier**, le refus opposé à la
+      lectrice et le rendu à 390 px. **Le seed est restitué PAR LES GESTES DE L'ÉCRAN**, depuis la
+      fiche de l'affaire — ce qui éprouve du même coup le chemin de retour que le §17.8 invoque.
+      Le `403` est **DÉCLARÉ** à la garde de console (`autoriserErreursConsole`), jamais filtré.
+- [x] **MESURE 19, trouvée PAR la preuve d'interface** : la lectrice **RÉUSSIT** le rattachement sur
+      « Assistant IA support — Nordis » et se voit refuser trois autres affaires qu'elle **lit**
+      pourtant. Les droits fins de `CRM-012` divergent **d'une affaire à l'autre pour un même
+      profil** : c'est la démonstration la plus nette de ce que le §17.6 exige — l'écran ne peut PAS
+      calculer ce droit et ne doit pas essayer. Consignée au §17.4.
+- [x] Captures produites **et observées** (`CLAUDE.md` §16) sous `docs/captures/CRM-060/` :
+      `fiche-contact-rattachement-formulaire-1440.jpg`, `-apres-1440.jpg`, `-refus-1440.jpg`,
+      `-390.jpg`.
+- [x] `docs/DESIGN_SYSTEM.md` §5.26 ajouté et §5.24 **révisé par livraison** ; `docs/manual.md`
+      §3 ter ; `CHANGELOG.md` ; compteurs de `scripts/verify-harness.sh` portés à **740** et
+      **428**, valeurs **COMPTÉES** par `playwright test --list` et non déduites (INC-101).
+
+**Aucune migration, et le seed n'est PAS modifié** : ses trois contacts et ses deux rattachements
+couvrent déjà les branches nécessaires — un contact sans affaire, un contact avec affaire, une
+affaire archivée lisible et une affaire en corbeille.
+
+**LE DÉTACHEMENT DEPUIS CETTE PAGE N'EST PAS LIVRÉ, ET L'ASYMÉTRIE EST ASSUMÉE** : le geste existe
+sur la fiche de l'affaire (§12.6), que le tableau atteint **en un clic**. Le livrer ici demanderait
+sa confirmation nommant l'objet, la place où la poser dans une ligne de tableau, et le traitement du
+« sans effet » que la clause `USING` produit à la suppression — c'est une sous-tranche à part
+entière, non l'appoint de celle-ci (§17.8).
+
 **Ce qui reste dû sur `CRM-060` après la tranche 4** : l'arbitrage sur les **références mortes**
-(§6, point 4) et, derrière lui, la **suppression** d'un contact ; le **rattachement** depuis la
-fiche d'un contact. `CRM-060` demeure `[~]`.
+(§6, point 4) et, derrière lui, la **suppression** d'un contact ; le **détachement** depuis la fiche
+d'un contact (§17.8). `CRM-060` demeure `[~]`.
 
 **Troisième tranche livrée, 2026-08-18 — la résolution des champs `contact` et `user`**
 (`docs/SPEC-contacts.md` §9, migration `0047`) :
