@@ -20851,3 +20851,79 @@ obligatoire sur un budget récurrent, totaux avec la mention du §4.4 —, puis 
 captures et `scripts/verify-card-costs.sh`. Le décompte laissé ouvert par `CRM-084` (§4.1) se solde
 dans la même foulée, `card_costs` existant désormais. `CRM-083` reste bloqué par **INC-170**. Cinq
 arbitrages attendent : **INC-169**, **INC-170**, **INC-172**, **INC-173** et **INC-174**.
+
+## décision 474 — `CRM-085` tranche 2 : la fiche d'affaire dit ce qu'elle coûte
+
+**L'unité, et le choix.** La décision 473 laisse `CRM-085` en `[~]` avec un reste nommé — la section
+« Coûts » de la fiche d'affaire (`docs/SPEC-costs.md` §4.6) — et désigne explicitement cette tranche
+comme reprise. C'est donc l'unité de cette session, sans discussion (`docs/CloudWorker.md` §4.2).
+
+**Aucune spécification n'a été réécrite.** `docs/SPEC-costs.md` est lue INTÉGRALEMENT ; son §4.6
+couvre ce qui restait à livrer, ligne à ligne. Le §3.2 point 3 de `docs/CloudWorker.md` s'applique
+dans sa forme d'exception, comme aux décisions 471 à 473, et le code a commencé aussitôt.
+
+**Ce qui a été livré.** `webapp/src/lib/card-costs.ts` — lecture des lignes avec leur budget et leur
+occurrence embarqués, lecture du track de l'affaire, budgets rattachables, totaux, classement des
+refus, trois écritures, et le décompte que `CRM-084` attendait. `webapp/src/app/BlocCoutsCard.tsx` —
+la table, le formulaire, la confirmation de suppression, les totaux —, monté dans `RouteCard.tsx`
+entre les contacts et le geste de corbeille. Soixante-trois clés de traduction.
+
+**QUATRE POINTS QUE LA LECTURE RAPIDE MANQUE, ET QUI SONT LE CŒUR DE LA TRANCHE.**
+
+(1) *Le track du sélecteur est lu de la CARD, jamais de l'adresse.* `RouteCard` porte un `slugTrack`,
+mais rien ne confronte le couple `(slugTrack, slugChannel)` de l'URL à la card qu'il désigne —
+**INC-065**, ouvert. Alimenter le sélecteur depuis l'adresse proposerait les budgets d'un track
+quelconque sur une URL forgée, et la ligne écrite serait ACCEPTÉE : le §3.1 autorise le rattachement
+croisé, et le seed le pose. Le track vient donc du channel de la card. MESURÉ au passage : `cards`
+porte DEUX clés composites vers `channels`, un embed nu rend `PGRST201`, et la relation doit être
+nommée par sa clé.
+
+(2) *Un budget récurrent SANS occurrence ouverte n'est pas proposé* (§4.7). Il n'est pas
+rattachable — le trigger exige une occurrence et toutes les siennes sont closes —, et le proposer
+offrirait un choix dont la seule issue est un refus.
+
+(3) *Les totaux sont groupés PAR DEVISE, et le §4.6 ne le demandait pas.* Il demande « estimé et réel
+de l'affaire ». Mais le §2.3 pose qu'une ligne prend la devise de son budget, et le §4.5 tranche déjà
+le cas général : « les devises ne se mélangent pas ». Une affaire dont deux lignes vivent sur des
+budgets de tracks différents peut porter EUR et CHF — le seed pose un budget en CHF —, et un total
+unique y additionnerait des francs à des euros. Avec une seule devise, l'utilisateur ne voit rien de
+cette mécanique.
+
+(4) *La MODIFICATION d'une ligne d'un budget clôturé reste ouverte, sa SUPPRESSION non.* C'est la
+frontière exacte du §2.3, et elle a une conséquence d'interface que rien n'annonce : le sélecteur ne
+propose que les budgets ouverts, donc sans ajouter le budget CLOS de la ligne en cours d'édition, le
+formulaire retomberait sur « aucun budget » et refuserait de partir — la facture arrivée après la
+clôture deviendrait insaisissable, c'est-à-dire exactement le cas que le §2.3 protège.
+
+**Ce qui a été vérifié.** `webapp/src/lib/card-costs.test.ts` **42 tests**,
+`e2e/ui/card-costs.spec.ts` **22 scénarios** — dont le parcours entièrement au clavier, focus atteint
+par `Tab` et jamais par `focus()`. Le harnais dédié `scripts/verify-card-costs.sh` rend **51
+contrôles, aucune anomalie** : traçabilité, captures, règles portées par le code, modèle réellement
+en base — aucune colonne de devise, `actual_cost` nullable et sans défaut, index partiel, double
+condition dans la politique de lecture, les deux triggers —, seed dont le cas CROISÉ, pgTAP **58
+assertions**, API **15 scénarios**, interface **22**, retour du seed CONSTATÉ, puis trois
+dégradations réelles du module dont chacune doit rougir. Les six captures ont été **observées**.
+
+**DEUX DÉFAUTS DE RENDU TROUVÉS PAR LES PREUVES, ET LE PREMIER EST INSTRUCTIF.** À 390 px, la largeur
+minimale intrinsèque de la table **traverse** l'`overflow-x: auto` de son conteneur et remonte
+jusqu'à la racine : `document.documentElement.scrollWidth` rend 664 pour 390 de viewport. Ce n'est
+PAS un artefact de mesure, et c'est ce qu'il fallait établir avant de toucher à l'assertion :
+`window.scrollTo` déplace réellement la page de **274 px** malgré l'`overflow-x: hidden` de `html`.
+`contain: paint` sur le conteneur ferme la propagation. Le second défaut se voit sur la capture :
+`min-w-max` — le patron des autres tables du produit — sortait la commande de suppression du cadre
+**dès le palier le plus large**, la section vivant dans une colonne plafonnée à `72ch`. La classe est
+retirée, avec le motif de l'écart écrit dans le fichier.
+
+**LE RESTE DE `CRM-084` EST SOLDÉ.** La confirmation de clôture d'un budget COMPTE désormais les
+lignes sans coût réel (§4.1), en distinguant quatre états — en cours, nul, non nul, non mesurable.
+Le contrôle correspondant de `scripts/verify-budgets.sh` a été RÉVISÉ plutôt que laissé tel quel : il
+exigeait que la confirmation PARLE du décompte, il exige désormais qu'elle le MESURE. `CRM-084` reste
+`[~]`, mais plus pour une preuve manquante : il ne lui reste qu'un point de spécification ouvert, la
+surface de gestion des occurrences, consignée à **INC-173** et en attente d'arbitrage.
+
+**Où reprendre.** `CRM-085` est livrée et prouvée ; elle passe à `[x]` dès qu'une exécution constate
+la campagne complète verte après cette tranche. La reprise naturelle est **`CRM-086`** — les écrans
+de coûts et l'onglet « À saisir » (§4.2, §4.3, §4.5, §4.8) —, qui s'appuie sur tout ce que cette
+tranche a posé : la classification des refus, l'index partiel des lignes sans réel, et le décompte
+qui doit rendre le MÊME nombre que le badge de l'onglet. `CRM-083` reste bloqué par **INC-170**. Cinq
+arbitrages attendent : **INC-169**, **INC-170**, **INC-172**, **INC-173** et **INC-174**.

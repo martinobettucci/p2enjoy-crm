@@ -32,6 +32,36 @@ d'exécuter le code attendu.
   geste. Un budget qui porte des dépenses devient **indestructible par la base elle-même**. Aucun
   écran n'est livré par cette tranche.
 
+- **Une affaire dit ce qu'elle coûte** (`CRM-085` tranche 2, `docs/SPEC-costs.md` §4.6). La fiche
+  d'une affaire porte désormais une section **« Coûts »** : la liste de ses lignes — nature, budget
+  et devise, occurrence, estimé, réel —, l'**ajout**, la **modification** et la **suppression**. Le
+  sélecteur de budget ne propose que les budgets **ouverts du track de l'affaire** ; si le budget
+  choisi est **récurrent**, un **second sélecteur d'occurrence apparaît et devient obligatoire**, et
+  ne propose que les occurrences ouvertes. Un budget récurrent qui n'a **aucune occurrence ouverte**
+  n'est pas proposé du tout : le rattachement y serait refusé.
+- **Un coût réel non saisi ne s'écrit jamais « 0 »** : la cellule porte un tiret, et « coût réel non
+  saisi » pour qui lit à la voix. Sous la table, le total distingue l'estimé du réel et **compte ce
+  qui manque** — « 1 ligne(s) sans coût réel saisi, pour 100.00 EUR de prévisionnel » —, sans quoi
+  un réel bas se lirait comme une économie alors qu'il n'est qu'une saisie en retard. Les **devises
+  ne se mélangent pas** : un total par devise présente, et rien de cette mécanique n'est visible
+  quand il n'y en a qu'une.
+- **Une dépense rattachée à un budget clôturé garde son coût réel saisissable**, et le formulaire
+  s'ouvre encore sur elle : on clôt une campagne, puis les factures arrivent. Seule sa
+  **suppression** est éteinte, avec son motif écrit et jamais masquée — la base la refuse à tout le
+  monde, ce n'est pas une question de droits. Le budget clôturé porte une pilule « clôturé » dans
+  la table.
+- **Une affaire lisible dont le budget ne l'est pas ne rend aucune ligne**, et la section le montre
+  comme un état vide plutôt que par un total à zéro : un total calculé sur zéro ligne affirmerait
+  que l'affaire n'a rien coûté.
+- **La clôture d'un budget compte désormais les lignes sans coût réel** (`CRM-084`, §4.1), ce qui
+  restait dû : la confirmation dit combien de lignes attendent leur réel et rappelle qu'elles
+  resteront saisissables. Elle distingue le décompte en cours, le décompte nul et la mesure
+  impossible — dire « rien à saisir » quand la lecture a échoué serait un mensonge tranquille.
+- **Les lignes de coût ont leur harnais de preuves dédié**, `scripts/verify-card-costs.sh`
+  (`CRM-085`), qui rejoue le modèle en base, les captures, les preuves unitaires, pgTAP, l'API et
+  l'interface, puis **dégrade réellement le module trois fois** en exigeant qu'une preuve rougisse à
+  chaque fois.
+
 - **Les budgets d'un track s'administrent à l'écran** (`CRM-084` tranche 2,
   `docs/SPEC-costs.md` §4.1). Sous l'administration de l'arborescence, chaque track déplié porte
   désormais sa **table des budgets** — nom, devise, enveloppe, récurrence, nombre d'occurrences
@@ -51,9 +81,8 @@ d'exécuter le code attendu.
   décidé ». Un montant négatif est accepté — un avoir ou un remboursement en sont.
 - **La clôture avertit sans empêcher** : la confirmation dit ce qu'elle fait des lignes de coût et
   que le nom du budget redevient disponible, et son bouton n'est jamais éteint — c'est une
-  décision de gestion. Le **décompte** des lignes sans coût réel exigé par le §4.1 arrivera avec
-  `CRM-085`, faute de table à compter aujourd'hui ; la confirmation le dit plutôt que de laisser
-  un blanc se lire comme un zéro.
+  décision de gestion. Le **décompte** des lignes sans coût réel exigé par le §4.1 est livré depuis
+  `CRM-085` tranche 2, `card_costs` existant désormais.
 - **Un membre non administrateur voit les mêmes commandes, et son écriture est refusée à l'écran**
   avec son motif : aucune commande n'est masquée sur la foi d'un rôle lu au chargement, ce qui
   cacherait un geste permis le jour où ce rôle a changé.

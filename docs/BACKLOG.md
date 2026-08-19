@@ -8353,13 +8353,22 @@ budget appartient à un track, et l'écran qui administre le track est celui qui
       dégradations réelles du module qui doivent chacune faire rougir une preuve, et la restauration
       constatée.
 
-- [ ] **CE QUI RESTE, ET C'EST UN SEUL POINT : le DÉCOMPTE de la confirmation de clôture.** Le §4.1
-      exige « ce budget porte n lignes sans coût réel ». Ce compte se lit dans `card_costs`, table
-      que **`CRM-085`** livrera : elle n'existe pas encore. Interroger une table absente rendrait un
-      « n'a pas pu être mesuré » PERMANENT, c'est-à-dire un état d'erreur qui mentirait sur sa
-      cause. La confirmation dit donc explicitement que rien n'est à saisir aujourd'hui, plutôt que
-      de laisser un blanc se lire comme un zéro. **L'unité reste `[~]` pour ce seul motif** ; le
-      point se solde dans la même session que `CRM-085` ou juste après.
+- [x] **LE DÉCOMPTE DE LA CONFIRMATION DE CLÔTURE EST LIVRÉ** (décision 474). Le §4.1 exige « ce
+      budget porte n lignes sans coût réel ; elles resteront saisissables après la clôture ». Le
+      compte se lit dans `card_costs`, table que `CRM-085` tranche 1 a livrée, et
+      `compterLignesSansReel` l'interroge en `head: true` — la réponse ne porte aucune ligne, seul
+      leur nombre. QUATRE états sont distingués et non un seul : décompte en cours, décompte nul,
+      décompte non nul, et **mesure impossible** — dire « rien à saisir » quand la lecture a échoué
+      serait le mensonge tranquille de `CLAUDE.md` §18. Le bouton n'est éteint ni pendant la mesure
+      ni par son résultat : la clôture reste une décision de gestion. Le contrôle correspondant de
+      `scripts/verify-budgets.sh` a été **révisé** — il exigeait que la confirmation PARLE du
+      décompte, il exige désormais qu'elle le MESURE, et que les quatre états existent.
+- [ ] **CE QUI RETIENT ENCORE `CRM-084` EN `[~]`, ET CE N'EST PLUS UNE PREUVE MANQUANTE.** Le
+      décompte ci-dessus étant livré, il ne reste sous cette unité qu'un point de SPÉCIFICATION
+      ouvert — la surface de gestion des occurrences, ci-dessous, consignée à **INC-173** et en
+      attente d'arbitrage. Le trancher reviendrait à écrire une spécification à la place du
+      responsable ; passer l'unité à `[x]` en le laissant ouvert reviendrait à déclarer close une
+      unité dont une exigence n'a pas de réponse. L'unité attend donc l'arbitrage, et non du travail.
 - [ ] **AUCUNE SURFACE NE GÈRE LES OCCURRENCES, et ce n'est pas un oubli de cette tranche** : le
       §4.1 décrit une COLONNE qui les compte, et aucun chapitre de `docs/SPEC-costs.md` ne spécifie
       d'écran pour en ouvrir, libeller, doter ou clôturer une — alors que le §3.2 en nomme les
@@ -8403,15 +8412,34 @@ le `WITH CHECK` de la politique, si bien qu'une insertion sur un budget clôtur�
 — le message du trigger — et jamais `403 / 42501`. La suppression, qu'aucun trigger ne garde, rend
 en revanche `200 []`. Les trois formes du refus sont éprouvées, et `CRM-086` devra les classer.
 
-**Tranche 2 — RESTE À LIVRER** : la section « Coûts » de la fiche d'affaire (`docs/SPEC-costs.md`
-§4.6) — liste des lignes, ajout, modification, suppression, sélecteur de budget limité aux budgets
-**ouverts et lisibles du track de la card**, second sélecteur d'occurrence qui apparaît et devient
-obligatoire sur un budget récurrent, total estimé et réel avec la mention du §4.4. Puis son E2E
-d'interface, ses captures aux quatre paliers et `scripts/verify-card-costs.sh`.
+**Tranche 2 — LIVRÉE ET PROUVÉE** (décision 474). `webapp/src/lib/card-costs.ts` : lecture des
+lignes avec leur budget et leur occurrence embarqués, lecture du track depuis le **channel** de
+l'affaire et jamais depuis l'adresse (INC-065), budgets rattachables filtrés par track, par clôture
+et par **absence d'occurrence ouverte** (§4.7), totaux groupés **par devise** avec la mention du
+§4.4, classement des refus du trigger `0051`, trois écritures.
+`webapp/src/app/BlocCoutsCard.tsx` : la table, le formulaire avec son **second sélecteur
+d'occurrence conditionnel et obligatoire**, la confirmation de suppression, les totaux — monté dans
+`RouteCard.tsx` entre les contacts et le geste de corbeille. Preuves vertes :
+`webapp/src/lib/card-costs.test.ts` **42 tests**, `e2e/ui/card-costs.spec.ts` **22 scénarios**,
+`scripts/verify-card-costs.sh` **51 contrôles, aucune anomalie**, six captures observées sous
+`docs/captures/CRM-085/`.
 
-**Et le point laissé ouvert par `CRM-084`** : le DÉCOMPTE des lignes sans coût réel dans la
-confirmation de clôture d'un budget (§4.1) se lit désormais dans `card_costs`, qui existe. Il se
-solde dans la tranche 2 ou juste après.
+**DEUX DÉFAUTS DE RENDU TROUVÉS PAR CES PREUVES, corrigés à la cause.** (1) À 390 px, la largeur
+minimale intrinsèque de la table **traversait** l'`overflow-x` de son conteneur et remontait
+jusqu'à la racine : le document gagnait **274 px** de défilement horizontal fantôme, réellement
+atteignable par `window.scrollTo` malgré l'`overflow-x: hidden` de `html`. `contain: paint` sur le
+conteneur ferme la propagation. (2) `min-w-max` sortait la commande de suppression du cadre **dès le
+palier le plus large**, la section vivant dans une colonne plafonnée à `72ch`.
+
+**Et le point laissé ouvert par `CRM-084` est SOLDÉ** : la confirmation de clôture d'un budget
+COMPTE désormais les lignes sans coût réel (§4.1), en distinguant quatre états — décompte en cours,
+nul, non nul, non mesurable. Le contrôle correspondant de `scripts/verify-budgets.sh` a été
+**révisé** : il exigeait que la confirmation parle du décompte, il exige qu'elle le mesure.
+
+**CE QUI RESTE, ET POURQUOI L'UNITÉ N'EST PAS `[x]`** : la Definition of Done exige un **seed
+portant une affaire à deux lignes de nature différente dont l'une sans réel** — il l'a, « Refonte
+intranet Ville de Lyon » —, et toutes les autres preuves sont vertes. L'unité passe à `[x]` dès
+qu'une exécution constate la campagne complète verte après cette tranche.
 
 **DoD** : migration ; pgTAP — `occurrence_id` exigée si et seulement si le budget est récurrent,
 insertion refusée sur un budget clôturé **et** sur une occurrence clôturée, occurrence étrangère au
