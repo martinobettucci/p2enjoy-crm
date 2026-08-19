@@ -2444,6 +2444,7 @@ design system ? La question n'est pas tranchée ici : elle porte sur une règle 
 et l'unité `CRM-083` garde en conséquence son point « état LECTURE SEULE du `viewer` » à `[ ]`.
 
 **Statut :** ouvert, en attente d'arbitrage du responsable.
+
 ### INC-171 — `goals.block.resize` est une clé morte, et `i18n.test.ts` est rouge
 
 **Nature :** défaut **préexistant à cette session**, relevé en rejouant les preuves après un rebase
