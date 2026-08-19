@@ -2201,3 +2201,44 @@ défendables, comme pour INC-162 et INC-163 — porter l'annexe au nouvel état 
 dériver ces deux lignes de la base au lieu de les figer, ce qui change ce que le manuel *est*. Ce
 choix appartient à l'unité qui possède l'annexe et le seed. Le trancher au passage serait corriger
 un défaut étranger à l'unité autorisée (`CLAUDE.md` §5, `docs/CloudWorker.md` §3.1).
+
+### INC-165 — la tranche 2 c de `CRM-081` a livré trois objets de base SANS régénérer le contrat de types
+
+**Nature :** défaut de **procédure**, découvert par la tranche 2 e et corrigé par elle parce qu'il
+la **bloquait** (`docs/CloudWorker.md` §4.2, second cas : « elle bloque concrètement l'unité produit
+choisie »). Il est consigné ici non pour être retraité, mais parce que la DoD commune du
+`docs/MASTER_PLAN.md` §4 exige les types à jour et que la tranche 2 c a pourtant été portée close
+sans eux — c'est la règle qui n'a pas été appliquée, pas le produit qui est faux.
+
+**Mesure, 2026-08-19, avant correction :**
+
+```
+npm run typecheck
+  webapp/src/lib/sommeil-fil.ts: error TS2345:
+    Argument of type '"mail_thread_snoozes"' is not assignable to parameter of type '"workflow_derivations"'
+  webapp/src/lib/sommeil-fil.ts: error TS2345:
+    Argument of type '"snooze_thread"' is not assignable to parameter of type '… | "wake_card"'
+  webapp/src/lib/sommeil-fil.ts: error TS2345:
+    Argument of type '"wake_thread"' is not assignable to parameter of type '… | "wake_card"'
+
+npm run types:generate  =>  63 lignes ajoutées à webapp/src/lib/database.types.ts
+```
+
+**Ce que cela signifie, exactement :** `supabase/migrations/0048_snooze_fils.sql` a livré la table
+`public.mail_thread_snoozes` et les deux RPC `snooze_thread` / `wake_thread`, tous trois **absents**
+de `database.types.ts`. Aucun écran ne pouvait donc les appeler : la tranche 2 c a livré une règle
+que le client ne savait pas nommer. Ce n'est pas un défaut de comportement — la base était juste, et
+`e2e/api/snooze-fils.spec.ts` le prouvait en HTTP, hors du typage.
+
+**Corrigé dans la tranche 2 e**, avec les deux témoins figés révisés et leurs motifs écrits dans
+`database.types.test-d.ts` : trente-quatre fonctions deviennent **trente-six**, et la liste des
+tables accueille `mail_thread_snoozes`.
+
+**Ce qui reste à trancher, et pourquoi cette session ne le tranche pas :** la question n'est pas
+celle de ce changement-ci, mais celle du **contrôle** qui aurait dû l'attraper. `npm run types:check`
+existe et `scripts/verify-types.sh` rend **30 contrôles sans anomalie** — mais ni l'un ni l'autre
+n'est exécuté dans un enchaînement qui **échouerait** au moment où une migration livre un objet non
+régénéré : la campagne de fin de session les exécute lorsqu'elle en a le temps, et la tranche 2 c ne
+les a pas exécutés. Deux réponses sont défendables — porter `types:check` dans la Definition of Done
+mécaniquement vérifiée de toute unité livrant une migration, ou l'ajouter à un contrôle de
+pré-commit —, et le choix appartient au responsable.
