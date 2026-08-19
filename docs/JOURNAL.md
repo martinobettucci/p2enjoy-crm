@@ -19979,3 +19979,63 @@ non engendrées d'**INC-158** (`h-10`, `py-0.5`, `text-text-1`), et le `purgerCh
 code d'avant la session, il échoue à l'identique. Consigné en **INC-166**. **Les quarante-sept
 autres `scripts/verify-*.sh` n'ont pas été exécutés**, faute de temps — la série entière ne tient
 pas dans une session (§2.1 ter).
+
+## décision 463 — `CRM-082` : le tableau d'objectifs existe en base, et trois écarts du seed portent ses preuves
+
+**L'unité, et le choix.** La décision 462 a rendu au suivi l'état réel de `CRM-081`, dont la
+tranche 2 f était livrée sans être écrite nulle part. `CRM-081` n'ayant plus de comportement à
+livrer, la session a pris `CRM-082` — première unité `[ ]` du plan, et **dont la spécification était
+déjà écrite et committée** par la décision 431. Le §3.2 point 3 de `docs/CloudWorker.md` s'applique
+alors dans sa forme d'exception : la spécification n'est pas réécrite, elle est lue et le code
+commence.
+
+**LES TROIS ÉCARTS DU SEED SONT CE QUI REND LES PREUVES POSSIBLES, et ils ont été MESURÉS avant
+d'être utilisés** — c'est le geste qui a le plus servi cette session. Sur la pile seedée, avec les
+jetons réels : Camille lit et écrit les huit channels ; Driss les lit tous les huit mais **n'écrit
+pas « Maintenance »** ; Farida ne lit **ni « Grands comptes » ni « Appels d'offres »**, six sur
+huit. Ces écarts ne sont pas décoratifs. Le **bloc invisible** du §4.1 ne se prouve qu'avec le
+premier ; l'**asymétrie du `using` et du `with check`** qu'avec le second, seul channel du seed qui
+sépare la lecture de l'écriture. Sans eux, la suite aurait mesuré des refus imaginaires.
+
+**LES DEUX REFUS DE CETTE UNITÉ NE SE MESURENT PAS DE LA MÊME FAÇON, et la suite pgTAP l'a appris
+en s'exécutant.** Sa première rédaction attendait la repose d'un lien retiré comme un filtrage à
+zéro ligne. C'est faux : un refus opposé par le `using` **filtre** sans erreur (décision 106),
+tandis qu'un refus opposé par le `with check` **lève `42501`** — la ligne existe, elle est atteinte,
+et c'est la valeur proposée qui est rejetée. Le motif est désormais écrit dans le fichier, et la
+preuve d'API attend les deux formes nommément.
+
+**Le témoin figé du compte de politiques a fait son travail, et il l'a fait pendant la campagne.**
+`0016_preuves_refus.test.sql` comptait soixante-dix-neuf politiques ; les douze du tableau
+d'objectifs le portent à **quatre-vingt-onze**. Révisé avec son motif (décision 51), lequel
+distingue ce triplet des trois révisions précédentes : celles-ci ajoutaient UNE politique de lecture
+à une table dont l'écriture passait par une RPC ; ici il n'y a **aucune RPC**, la règle tenant
+entièrement dans les politiques. Le contrat de types a été régénéré **dans le même changement** que
+la migration — la faute exacte qu'INC-165 reproche à la tranche 2 c de `CRM-081`.
+
+**Un écart de spécification consigné plutôt que tranché — INC-168.** L'unicité du nom d'un tableau
+porte sur **tous** les tableaux, archivés compris : un nom libéré par l'archivage reste pris. La
+spécification-sœur des budgets, écrite le même jour, tranche l'exact contraire — index partiel sur
+les budgets non clôturés. L'un des deux est probablement un oubli de rédaction ; le comportement
+suit ici la spécification à la lettre, et l'arbitrage revient au responsable.
+
+**Ce qui a été vérifié.** `0047_objectifs.test.sql` **45 assertions**, `objectifs.spec.ts`
+**12 scénarios**, `verify-objectifs.sh` **46 contrôles dont six dégradations qui mordent toutes**.
+Campagne complète : `test:sql` **47 fichiers verts** après révision du témoin, `test:unit`
+**1774**, `e2e:api` **785 passés**, `e2e:ui` **449 passés et AUCUN échec**, `e2e:mail`
+**40 passés**, `pytest` **244**, `typecheck`, `types:check` et `build` verts.
+
+**Les trois échecs de la campagne sont les trois d'INC-167**, et pas un de plus : `inbox.spec.ts`
+:159, `ingestion.spec.ts`:143 et `mail-sync.spec.ts`:220 — cause unique et hors du produit, le
+stockage objet refusant sa clé d'accès, ligne de base déjà exécutée par la session précédente. La
+campagne a par ailleurs **régénéré trente-neuf captures d'autres unités** ; elles ont été
+**restaurées** plutôt que committées, cette unité ne touchant à aucune interface : les verser dans
+un commit `CRM-082` aurait laissé croire que l'écran avait changé.
+
+**Où reprendre.** `CRM-082` est `[~]` pour une seule raison, et elle est de forme : les cinquante
+`scripts/verify-*.sh` n'ont pas tous été rejoués, la série ne tenant pas dans une session (§2.1
+ter). Celui de l'unité est vert.
+L'unité suivante du plan est `CRM-083`, le **canevas** : entrée de navigation, blocs déplaçables,
+flèches à trois directions, et une exigence qu'il ne faut pas découvrir à la fin — le canevas doit
+être **entièrement utilisable au clavier** (`docs/SPEC-goals.md` §5.5). Le seed lui donne déjà de
+quoi rendre ses états, y compris le bloc absent et la flèche vers le vide. La chaîne des coûts,
+`CRM-084` à `CRM-086`, est indépendante et peut s'intercaler.

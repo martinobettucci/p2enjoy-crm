@@ -7883,11 +7883,23 @@ dégradations réelles.
       vingt-neuf à **trente-deux** tables, `npm run types:check` et `npm run typecheck` verts.
 - [x] `docs/PROD_MIGRATIONS.md` (migration 49 et ses vérifications obligatoires) et `CHANGELOG.md`
       mis à jour dans le même changement.
-- [ ] **CE QUI RESTE, ET C'EST LA SEULE RAISON DU `[~]` : la campagne complète du dépôt n'a pas
-      été rejouée en entier.** Les preuves de l'unité sont vertes, ainsi que `typecheck` et
-      `types:check`. Restent à exécuter, pour constater qu'aucune régression n'a été introduite
-      ailleurs : `npm run test:sql` global, `npm run e2e:api` global, `npm run test:unit`,
-      `npm run build`, `pytest`, `npm run e2e:ui`, `npm run e2e:mail`.
+- [x] **LA CAMPAGNE COMPLÈTE A ÉTÉ EXÉCUTÉE, et elle ne rend AUCUNE anomalie imputable à cette
+      unité** : `test:sql` **47 fichiers verts** — après révision du témoin figé du compte de
+      politiques, porté de 79 à **91** —, `test:unit` **1774**, `e2e:api` **785 passés**,
+      `e2e:ui` **449 passés, aucun échec**, `e2e:mail` **40 passés**, `pytest` **244**,
+      `typecheck`, `types:check` et `build` verts.
+- [x] **Les TROIS échecs de la campagne sont les TROIS que consigne INC-167**, préexistants et
+      étrangers à l'unité, avec leur ligne de base déjà exécutée par la session précédente :
+      `e2e/api/inbox.spec.ts:159`, `e2e/mail/ingestion.spec.ts:143` et
+      `e2e/mail/mail-sync.spec.ts:220`. Cause unique et hors du produit — le stockage objet refuse
+      la clé d'accès (`InvalidAccessKeyId`), si bien qu'aucune pièce jointe ne peut être déposée.
+      Aucun autre échec n'est apparu.
+- [ ] **CE QUI RESTE, ET C'EST LA SEULE RAISON DU `[~]` : les cinquante `scripts/verify-*.sh` du
+      dépôt n'ont pas tous été rejoués.** Celui de l'unité, `scripts/verify-objectifs.sh`, est vert
+      — 46 contrôles, aucune anomalie. La série entière ne tient pas dans une session
+      (`docs/CloudWorker.md` §2.1 ter), et rien ne laisse penser qu'un autre harnais soit touché :
+      cette unité n'ajoute que des objets neufs et ne modifie aucune table existante. Le contrôle
+      reste néanmoins dû avant `[x]`.
 - [ ] **Écart nommé, à trancher par le responsable : l'unicité du nom d'un tableau porte sur TOUS
       les tableaux, archivés compris.** La spécification (§2.1) et `docs/SCHEMA.md` §9 bis.1
       écrivent « unique par workspace sur la forme normalisée », sans la restreindre aux tableaux
