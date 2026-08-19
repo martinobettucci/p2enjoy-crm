@@ -2499,3 +2499,39 @@ libellé à traduire. La clé était donc morte pour de bon. MESURÉ après retr
 Cette entrée est conservée plutôt qu'effacée : elle documente un croisement réel entre deux sessions
 travaillant la même unité, et le fait que la ligne de base a été correctement établie de part et
 d'autre.
+
+### INC-172 — `dossiers.spec.ts` échoue APRÈS une campagne d'interface complète, et passe seule
+
+**Nature :** constat **étranger à l'unité** de la session (`CRM-083` tranche 2b-2c), consigné sans
+correction (`CLAUDE.md` §5, `docs/CloudWorker.md` §3.1). Aucune ligne du changement ne touche la
+messagerie, les dossiers IMAP ni les tracks.
+
+**Ce qui est mesuré, le 2026-08-19.** Enchaînés dans cet ordre, `npm run e2e:ui` (**476 passés**),
+puis `scripts/verify-objectifs.sh` (**46 contrôles, aucune anomalie**), puis `npm run e2e:mail` :
+
+```
+1 failed
+  [mail] › e2e/mail/dossiers.spec.ts:276:2 › renommer un TRACK renomme son dossier et emporte ses enfants
+41 passed (1.4m)
+```
+
+**Rejoué SEUL immédiatement après, sur la même pile et sans reseed** : `2 passés` en 8,4 s, dont le
+scénario en cause.
+
+**L'hypothèse, et ce qui la soutient.** La campagne d'interface exécute les scénarios
+d'administration de l'arborescence, qui **renomment des tracks**. Le renommage d'un track renomme
+son dossier IMAP — c'est précisément le contrat que ce scénario de messagerie vérifie —, si bien que
+l'état laissé par la campagne d'interface peut ne plus être celui que le scénario attend. Ce n'est
+pas établi : ni la cause exacte, ni l'ordre précis des scénarios responsables n'ont été isolés, la
+session ayant préféré consigner plutôt que d'ouvrir une investigation qui ne lui appartient pas.
+
+**Ce qu'il faut en retenir pour lire une campagne.** Un échec de `dossiers.spec.ts` **dans une
+campagne complète** ne dit rien tant qu'il n'a pas été rejoué **seul**. La suite de messagerie
+suppose un état de dossiers que la suite d'interface modifie ; tant que ce couplage n'est pas
+tranché, l'ordre des suites fait partie du résultat.
+
+**Arbitrage attendu.** Deux issues, et le responsable tranche : ou bien la suite de messagerie
+**reseede** ce qu'elle exige avant de mesurer, ou bien la campagne complète **applique le seed**
+entre la suite d'interface et celle de messagerie. La première rend la suite indépendante de son
+ordre ; la seconde garde les suites telles quelles et déplace la contrainte dans le protocole de
+campagne.

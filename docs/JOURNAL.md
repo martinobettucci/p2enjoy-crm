@@ -20431,3 +20431,25 @@ observées** : `suppression-bloc-confirmation-1440.jpg`, `suppression-bloc-1440.
 archiver un tableau** (§3), le harnais dédié `scripts/verify-objectifs-canevas.sh`, et l'état
 lecture seule du `viewer` qui reste **bloqué par l'arbitrage INC-170**. Deux arbitrages restent en
 attente : **INC-169** et **INC-170**.
+
+**Campagne complète de la session, exécutée une fois.** `test:unit` **57 fichiers / 1937 tests**,
+`test:sql` **47 fichiers / 2351 assertions**, `e2e:api` **786 passés** puis **13 passés** sur le
+fichier des objectifs après l'ajout du refus de suppression, `e2e:ui` **476 passés, aucun échec**,
+`pytest` **244**, `typecheck`, `types:check` et `build` verts.
+`scripts/verify-objectifs.sh` rend **46 contrôles, aucune anomalie**. Le contrôle des classes rend
+**276 classes citées** et les **trois** absentes d'INC-158, préexistantes : les classes ajoutées par
+cette tranche sont toutes engendrées.
+
+`e2e:mail` rend **41 passés, 1 échec** — `dossiers.spec.ts:276`, le renommage d'un track qui renomme
+son dossier IMAP. **Rejoué SEUL, il passe** (2 passés en 8 s), et rien dans ce changement ne touche
+la messagerie. Le couplage d'ordre entre la campagne d'interface, qui renomme des tracks, et cette
+suite est consigné en **INC-172**, avec l'arbitrage qu'il appelle.
+
+L'échec `INC-166` d'`administration-workflows.spec.ts`, présent aux deux dernières campagnes, **n'a
+pas reparu** : `e2e:ui` est entièrement vert cette fois. L'entrée reste ouverte — un scénario à la
+limite de son budget ne se ferme pas sur une exécution réussie.
+
+Les quarante-neuf autres `scripts/verify-*.sh` n'ont pas été rejoués, la série entière ne tenant pas
+dans une session (`docs/CloudWorker.md` §2.1 ter). Les captures des autres unités, régénérées par la
+campagne, ont été **restaurées** et non committées : ce changement ne touche que l'écran des
+objectifs.
