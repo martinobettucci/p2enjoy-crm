@@ -98,11 +98,18 @@ test.describe('le parcours que le manuel décrit, sans aucune substitution (docs
 		// LES REFUS SONT CEUX QUE LE SCÉNARIO VIENT DE PROVOQUER, et ils sont consommés
 		// explicitement : PostgREST rend `401` à la clé anonyme, et le navigateur l'écrit dans sa
 		// console. Rien n'est filtré globalement (docs/JOURNAL.md décision 248).
-		// UN SEUL REFUS, ET C'EST MESURÉ : seule l'arborescence est demandée tant qu'aucun dossier
-		// n'est choisi. La liste et le message ne partent pas à la pêche d'un contenu que personne
-		// n'a demandé — un écran qui interroge le serveur trois fois pour un refus le dirait trois
-		// fois dans la console.
-		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[401]])
+		// DEUX REFUS, ET LE COMPTE EST RÉVISÉ PLUTÔT QUE CONTOURNÉ (mécanisme de la décision 51).
+		// Il en attendait UN, et le motif écrit était juste : seule l'arborescence était demandée
+		// tant qu'aucun dossier n'est choisi. `CRM-081` tranche 2 e ajoute une SECONDE lecture au
+		// chargement de l'écran — `mail_thread_snoozes`, l'état des fils endormis
+		// (docs/SPEC-cards.md §16.15.3) —, qui est refusée à la clé anonyme exactement comme la
+		// première.
+		//
+		// LA PROPRIÉTÉ ÉPROUVÉE NE CHANGE PAS, et c'est ce qui autorise la révision : l'écran ne
+		// demande QUE ce dont il a besoin pour ce qu'il affiche. La liste et le message ne partent
+		// toujours pas à la pêche d'un contenu que personne n'a demandé — le compte suit le nombre
+		// de lectures que l'écran assume, et il reste FIGÉ pour qu'une troisième se voie.
+		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[401], ERREUR_RESSOURCE_HTTP[401]])
 	})
 
 	for (const [chemin, libelle, capture] of [

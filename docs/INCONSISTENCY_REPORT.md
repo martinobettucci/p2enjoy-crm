@@ -2242,3 +2242,47 @@ régénéré : la campagne de fin de session les exécute lorsqu'elle en a le te
 les a pas exécutés. Deux réponses sont défendables — porter `types:check` dans la Definition of Done
 mécaniquement vérifiée de toute unité livrant une migration, ou l'ajouter à un contrôle de
 pré-commit —, et le choix appartient au responsable.
+
+### INC-166 — `administration-workflows.spec.ts` expire dans sa purge de champs, et c'est PRÉEXISTANT
+
+**Nature :** anomalie de **harnais**, étrangère à `CRM-081` tranche 2 e, et établie comme telle par
+une **ligne de base** au sens du §2.4 de `docs/CloudWorker.md` plutôt que supposée.
+
+**Mesure, 2026-08-19, campagne de fin de session :**
+
+```
+npm run e2e:ui  =>  440 passed, 3 failed
+  administration-workflows.spec.ts:1116 « les deux gestes se mènent au clavier seul »
+    Test timeout of 30000ms exceeded.
+    Error: apiRequestContext.get: Target page, context or browser has been closed
+      at purgerChamps (e2e/ui/administration-workflows.spec.ts:681)
+```
+
+Les deux autres échecs étaient **imputables à la tranche** — le compte de refus `401` de l'inbox,
+révisé dans `manuel.spec.ts` et `coquille.spec.ts` avec son motif — et sont corrigés. Celui-ci ne
+l'est pas.
+
+**La ligne de base, EXÉCUTÉE et non supposée :**
+
+```
+git checkout a6bed51 -- webapp/ e2e/      # le code d'AVANT la session
+npx playwright test … -g "les deux gestes se mènent au clavier seul"
+  => 1 failed, 1 passed   (le MÊME échec, au MÊME endroit)
+git checkout HEAD -- webapp/ e2e/
+```
+
+L'anomalie est donc présente **des deux côtés** : elle est préexistante et ne s'explique pas par la
+tranche. Le diff de la session ne touche d'ailleurs ni `form_fields`, ni `card_field_values`, ni
+aucun écran d'administration — il est confiné à l'inbox, au module de sommeil de fil, au contrat de
+types et à la documentation.
+
+**Ce que la mesure dit du défaut :** l'échec tombe dans `purgerChamps`, une fonction de **nettoyage**
+qui lit puis supprime les champs de preuve un par un. Le scénario expire à trente secondes pendant
+cette purge, et le message `Target page … has been closed` est la **conséquence** de l'expiration,
+non sa cause : le contexte est fermé par Playwright quand le test rend la main. Le geste éprouvé,
+lui, s'est déroulé — c'est la remise en état qui n'a pas tenu dans le budget.
+
+**Ce qui reste à trancher, et pourquoi cette session ne le tranche pas :** deux réponses sont
+défendables — purger en **une** requête `in.(…)` au lieu d'une boucle de suppressions séquentielles,
+ou porter le budget de ce scénario au-delà de trente secondes —, et la première change un fichier de
+preuve qui n'appartient pas à cette unité (`CLAUDE.md` §13). Le comportement est laissé **inchangé**.

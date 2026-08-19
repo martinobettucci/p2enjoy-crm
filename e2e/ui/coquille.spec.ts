@@ -71,9 +71,14 @@ test.describe('coquille', () => {
 		await expect(page.getByTestId('etat-vide')).toHaveCount(0)
 		await capturer(page, 'route-reglages-1440')
 
-		// LE REFUS DE L'INBOX EST CONSOMMÉ EXPLICITEMENT : PostgREST rend `401` à la clé anonyme,
+		// LES REFUS DE L'INBOX SONT CONSOMMÉS EXPLICITEMENT : PostgREST rend `401` à la clé anonyme,
 		// et le navigateur l'écrit dans sa console. Rien n'est filtré globalement (décision 248).
-		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[401]])
+		//
+		// LE COMPTE PASSE DE UN À DEUX, RÉVISÉ ET NON CONTOURNÉ : `CRM-081` tranche 2 e ajoute au
+		// chargement de l'inbox la lecture de `mail_thread_snoozes` — l'état des fils endormis
+		// (docs/SPEC-cards.md §16.15.3) —, refusée à la clé anonyme comme l'arborescence. Le compte
+		// reste FIGÉ, de sorte qu'une lecture de plus se voie ici avant d'atteindre un utilisateur.
+		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[401], ERREUR_RESSOURCE_HTTP[401]])
 
 		await page.goto('/adresse-inexistante')
 		await expect(page.getByRole('heading', { level: 1 })).toHaveText('Page introuvable')
