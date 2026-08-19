@@ -13,6 +13,25 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Ajouté
+
+- **Le canevas d'objectifs s'écrit : on y pose des blocs, on les déplace, on les redimensionne**
+  (`CRM-083` tranche 2a, `docs/SPEC-goals.md` §3 et §5.5). La commande « Poser un bloc » arme la
+  pose ; un clic sur le canevas dépose le bloc **au point du clic**, et au clavier un **repère**
+  déplaçable aux flèches se valide par `Entrée`. Un bloc se déplace au glissement ou aux flèches,
+  se redimensionne à sa poignée d'angle ou par `Alt` + flèches, `Maj` donnant le pas fin. La
+  position et la taille sont **persistées**, et la mesure est faite après rechargement.
+- **La position d'un bloc vient toujours du geste**, jamais d'un placement automatique : le produit
+  ne cherche aucune place libre, ne décale rien et n'aligne rien sur une grille.
+
+### Corrigé
+
+- **Un déplacement n'écrit plus la taille d'un bloc, ni un redimensionnement sa position.** Écrit
+  d'abord avec les quatre colonnes à chaque geste, l'écran écrasait le redimensionnement d'un
+  collègue avec la valeur qu'il avait chargée. Défaut trouvé par la preuve, avant toute livraison.
+- **La marque de la poignée de redimensionnement**, qui se lisait comme une languette accrochée au
+  coin de chaque bloc. Défaut trouvé en **regardant une capture**, pas en lisant un test.
+
 ### Documentation
 
 - **Un onglet « À saisir » complète les écrans de coûts** (décision 433, demandée le 2026-08-19).

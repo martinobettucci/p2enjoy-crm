@@ -7971,12 +7971,47 @@ d'une session.
       la preuve d'interface de l'unité a été rejouée verte après correction. Les trois classes
       restantes sont celles d'INC-158, préexistantes et étrangères à cette tranche.
 
-**CE QUI RESTE — TRANCHE 2, L'ÉCRITURE.** Aucune commande morte n'est posée pour ces gestes.
+**TRANCHE 2a LIVRÉE — LA GÉOMÉTRIE.** L'écriture est elle-même découpée : cette tranche livre les
+gestes qui **placent**, la suivante livrera ceux qui **renseignent** et ceux qui **relient**.
 
-- [ ] **Poser un bloc sur le canevas**, position issue du geste et jamais d'un placement
-      automatique (§3).
-- [ ] **Déplacer et redimensionner un bloc**, à la souris ET au clavier — flèches pour déplacer le
-      bloc focalisé (§5.5) —, avec persistance de `pos_x`, `pos_y`, `width`, `height`.
+- [x] **Poser un bloc sur le canevas**, position issue du geste et jamais d'un placement
+      automatique (§3) : commande à deux visages, clic sur la surface à la souris, et **repère de
+      pose** déplaçable aux flèches puis validé par `Entrée` au clavier. Le repère existe parce que
+      la position vient du GESTE : sans lui, poser au clavier n'aurait aucune position à
+      transmettre, et le seul recours serait le placement automatique que le §3 interdit.
+      `webapp/src/lib/objectifs-ecriture.ts`, `webapp/src/app/Objectifs.tsx`.
+- [x] **Déplacer et redimensionner un bloc**, à la souris ET au clavier — flèches pour déplacer,
+      `Maj` pour le pas fin, `Alt` pour redimensionner (§5.5, complété dans le même changement) —,
+      avec persistance de `pos_x`, `pos_y`, `width`, `height`. **Mesuré sur la pile après
+      rechargement**, dans les deux entrées.
+- [x] **LE GESTE DÉCIDE DES COLONNES ENVOYÉES, ET C'EST UN DÉFAUT TROUVÉ PAR LA PREUVE.** Écrit
+      d'abord avec les quatre colonnes à chaque écriture, l'écran faisait qu'un simple déplacement
+      **réécrivait la taille** — donc écrasait le redimensionnement d'un collègue avec la valeur
+      qu'il avait chargée. Un déplacement n'envoie que la position, un redimensionnement que la
+      taille ; deux scénarios d'écran et un scénario E2E le tiennent.
+- [x] **LES TROIS ISSUES SONT TRAITÉES, et la troisième est structurelle** : la clause `using`
+      d'une politique rend une ligne invisible à l'écriture, si bien que le serveur répond `200`
+      avec **zéro ligne** — ni un succès, ni une erreur. Le bloc **revient** alors à sa position et
+      l'écran le dit. MESURÉ à l'écran avec le jeton réel de la lectrice
+      (`docs/captures/CRM-083/refus-lectrice-1440.jpg`).
+- [x] **Aucune commande n'est éteinte d'avance selon le rôle** (`docs/DESIGN_SYSTEM.md` §5.26) :
+      l'écran envoie et traduit le refus. Ce choix **contredit** le §5.4 de la spécification, qui
+      demande une extinction pour le `viewer` ; la contradiction est consignée en **INC-170** et
+      laissée à l'arbitrage plutôt que tranchée seule.
+- [x] **Preuves de la tranche, toutes exécutées et vertes** :
+      `webapp/src/lib/objectifs-ecriture.test.ts` **21 assertions**,
+      `webapp/src/app/Objectifs.test.tsx` **22 scénarios** (dont 10 pour cette tranche),
+      `e2e/ui/objectifs.spec.ts` **16 scénarios** dont 6 d'écriture réelle sur la pile seedée,
+      console vierge. **Quatre captures observées** sous `docs/captures/CRM-083/` :
+      `pose-repere-1440.jpg`, `bloc-pose-souris-1440.jpg`, `bloc-deplace-souris-1440.jpg`,
+      `refus-lectrice-1440.jpg`. L'observation a corrigé la marque de la poignée, qui se lisait
+      comme une languette accrochée au coin de chaque bloc.
+- [x] **Les preuves d'écriture REMETTENT le seed en état** — aller-retour au clavier, retrait du
+      bloc posé par la clé de service hors interface. Sans cela, les comptes des scénarios de
+      lecture dériveraient d'une exécution à l'autre.
+
+**CE QUI RESTE — TRANCHE 2b, LE CONTENU ET LES LIENS.** Aucune commande morte n'est posée pour ces
+gestes.
 - [ ] **Saisir titre, corps, couleur**, et **régler le remplissage** par curseur **et** champ
       numérique, les deux écrivant la même valeur (§3). `Entrée` ouvre la fiche d'édition (§5.5).
 - [ ] **Lier un bloc à un channel** — sélecteur des channels **lisibles**, groupés par track — et
@@ -7985,14 +8020,20 @@ d'une session.
       à la création et modifiable ensuite ; supprimer une flèche, supprimer un bloc.
 - [ ] **Créer, renommer, réordonner et archiver un tableau** (§3).
 - [ ] **État LECTURE SEULE du `viewer`** : tous les gestes d'écriture indisponibles ET lisibles,
-      l'écran disant pourquoi (§5.4). Il n'a pas d'objet tant qu'aucun geste d'écriture n'existe.
-- [ ] **Refus du `viewer` mesuré HORS interface**, exigé par la DoD.
+      l'écran disant pourquoi (§5.4). **BLOQUÉ PAR UN ARBITRAGE, ET C'EST INC-170** : cet énoncé
+      est le seul du dépôt à demander une extinction par rôle, là où `docs/DESIGN_SYSTEM.md` pose
+      neuf fois qu'aucune commande n'est éteinte d'avance. La tranche 2a suit le design system —
+      elle envoie et traduit le refus, mesuré — et laisse la règle générale au responsable.
+- [~] **Refus du `viewer` mesuré HORS interface**, exigé par la DoD. `e2e/api/objectifs.spec.ts`
+      le mesure déjà pour `CRM-082` — `403` / `42501` en insertion sur les trois tables, `200` et
+      zéro ligne en modification. Ce qui reste dû est le refus des gestes de la tranche 2b.
 - [ ] **Harnais dédié `scripts/verify-objectifs-canevas.sh`**, non complaisant, éprouvé par des
       dégradations réelles.
-- [ ] **Le canevas doit être utilisable entièrement au clavier** (`CLAUDE.md` §22,
-      `docs/SPEC-goals.md` §5.5). La tabulation, l'étiquetage et le défilement sont livrés ; le
-      DÉPLACEMENT au clavier et le tracé d'une flèche au clavier restent dus avec la tranche 2.
-      C'est la partie la plus facile à oublier de cette unité.
+- [~] **Le canevas doit être utilisable entièrement au clavier** (`CLAUDE.md` §22,
+      `docs/SPEC-goals.md` §5.5). La tabulation, l'étiquetage, le défilement, **la pose, le
+      déplacement et le redimensionnement** sont livrés au clavier et prouvés ; le tracé d'une
+      flèche au clavier reste dû avec la tranche 2b. C'est la partie la plus facile à oublier de
+      cette unité.
 - [ ] **Écart nommé, consigné en INC-169 plutôt que tranché** : le §5.4 demande « lien perdu » pour
       un channel **supprimé** (`channel_id` devenu nul), état qui ne se distingue en rien d'un bloc
       jamais lié. L'écran lève la mention pour le seul état détectable — une destination partie à

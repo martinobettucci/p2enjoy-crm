@@ -20165,3 +20165,49 @@ lier, tracer une flèche à la touche `Espace`, créer et archiver un tableau, l
 `viewer`, le refus mesuré hors interface, et le harnais dédié. Un arbitrage est en attente :
 **INC-169**. La chaîne des coûts avance en parallèle sur une autre session — `CRM-085` a été poussée
 pendant celle-ci, et le rebase s'est fait sans conflit.
+
+## décision 465 — `CRM-083` tranche 2a : le canevas s'ÉCRIT, et le geste décide des colonnes
+
+**L'unité, et le choix.** La décision 464 laisse `CRM-083` en `[~]` et désigne sa tranche 2,
+l'écriture, comme reprise. La spécification — `docs/SPEC-goals.md` §3 et §5.5 — était **déjà écrite
+et committée** : le §3.2 point 3 de `docs/CloudWorker.md` s'applique dans sa forme d'exception, elle
+est lue intégralement et le code commence. La tranche 2 est **découpée en deux** plutôt que menée
+d'un bloc : **2a livre la GÉOMÉTRIE** — ce qui place —, 2b livrera le contenu et les liens.
+
+**Ce qui a été livré.** Commande « Poser un bloc » à deux visages ; pose **au point du clic** à la
+souris et par un **repère déplaçable aux flèches** au clavier ; déplacement au glissement et aux
+flèches ; redimensionnement à la poignée d'angle et par `Alt` + flèches ; `Maj` pour le pas fin ;
+persistance de `pos_x`, `pos_y`, `width`, `height`. `webapp/src/lib/objectifs-ecriture.ts` traduit
+les trois issues et n'anticipe **aucun** droit.
+
+**LE DÉFAUT QUE LA PREUVE A TROUVÉ, ET IL AURAIT DÉTRUIT DU TRAVAIL.** L'écran envoyait les
+**quatre** colonnes à chaque geste. Un simple déplacement réécrivait donc la taille du bloc — avec
+la valeur chargée à l'ouverture de l'écran —, écrasant en silence le redimensionnement qu'un
+collègue venait de faire. Le scénario d'écran « Alt et flèche n'envoient aucune position » l'a
+attrapé avant toute livraison ; la correction porte sur la **cause** — le geste transporte désormais
+son mode —, et un scénario E2E le remesure après rechargement.
+
+**LE REPÈRE DE POSE N'EST PAS UNE COMMODITÉ D'ACCESSIBILITÉ.** Le §3 interdit tout placement
+automatique : la position vient du geste. Au clavier, il n'existe alors **aucune** position à
+transmettre — sauf à en inventer une, ce que le §3 refuse. Le repère est donc la seule forme clavier
+que cette règle admette, et c'est écrit au §5.5 plutôt que laissé à la mémoire d'une session.
+
+**UNE CONTRADICTION ENTRE DEUX DOCUMENTS, CONSIGNÉE ET NON TRANCHÉE — INC-170.** Le §5.4 de la
+spécification demande que les gestes d'écriture soient « indisponibles et lisibles » pour un
+`viewer` ; `docs/DESIGN_SYSTEM.md` pose **neuf fois** qu'aucune commande n'est éteinte d'avance
+selon le rôle, avec sa mesure — au §5.27, une lectrice **réussit** un geste que son rôle laisserait
+croire interdit. La tranche suit le design system : elle envoie, et traduit. MESURÉ avec le jeton
+réel de la lectrice : ni `403`, ni succès, mais `200` et **zéro ligne** — le silence de la clause
+`using`. L'écran le dit et replace le bloc. Le point « état lecture seule » reste `[ ]`.
+
+**Ce qui a été vérifié.** Preuves de la tranche : `objectifs-ecriture.test.ts` **21 assertions**,
+`Objectifs.test.tsx` **22 scénarios**, `e2e/ui/objectifs.spec.ts` **16 scénarios** dont six écrivent
+réellement dans la base et la remettent en état, console vierge, `typecheck` vert. **Quatre captures
+observées** — l'observation a corrigé la marque de la poignée, qui se lisait comme une languette
+accrochée au coin de chaque bloc.
+
+**Où reprendre.** `CRM-083` reste `[~]`, et son reste est la **tranche 2b** : saisir titre, corps et
+couleur, régler le remplissage au curseur ET au champ, lier un bloc à un channel et retirer le lien,
+tracer une flèche à `Espace`, supprimer une flèche et un bloc, créer et archiver un tableau, puis le
+harnais dédié `scripts/verify-objectifs-canevas.sh`. Deux arbitrages sont en attente : **INC-169** et
+**INC-170**.
