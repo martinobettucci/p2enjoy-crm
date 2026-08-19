@@ -811,6 +811,35 @@ File d'envoi persistante. **Livrée par `CRM-058`** (migration 30). Aucune écri
 | `mail_sequences`, `mail_sequence_steps` | Cadences de relance (J+3, J+8, J+15) |
 | `card_sequence_enrollments` | Inscription d'une card à une cadence, arrêtée dès qu'une réponse arrive |
 
+### `mail_thread_snoozes` — le sommeil d'un FIL (`CRM-081`, migration 48)
+
+Spécification : `docs/SPEC-cards.md` §16.14.
+
+| Colonne | Type | Contraintes |
+|---|---|---|
+| `workspace_id` | `uuid` | FK `workspaces` `ON DELETE CASCADE` — avec `thread_key`, la **clé primaire** |
+| `thread_key` | `text` | non nul, `CHECK (btrim(thread_key) <> '')` — la racine RFC 5322 du fil |
+| `snoozed_until` | `timestamptz` | **non nulle** : une ligne sans échéance n'a pas de sens que son absence ne dise mieux |
+| `snoozed_by` | `uuid` | FK `profiles` `ON DELETE SET NULL` — écrit par la fonction, jamais offert au client |
+| `created_at`, `updated_at` | `timestamptz` | `updated_at` par `app.set_updated_at()` |
+
+**Un fil est en sommeil si sa ligne existe ET que `snoozed_until` est strictement postérieure à
+`now()`** — le prédicat de `cards.snoozed_until`, transposé sans changement, et la sortie reste
+**implicite** : aucun réveil n'est planifié. **Le réveil SUPPRIME la ligne** ; l'absence est la
+représentation de « éveillé ».
+
+**Il n'y a AUCUNE colonne de fil sur `mail_messages`**, et c'est un choix motivé (§16.14.2) : la
+clé est rendue par `app.cle_fil(references_ids, rfc822_message_id)` — `immutable` —, et un index
+d'expression `mail_messages_cle_fil_idx` sur `(workspace_id, app.cle_fil(…))` sert la garde. Une
+colonne générée déplacerait la liste des colonnes de la table, que plusieurs preuves figent, sans
+servir aucune règle de la tranche.
+
+**Fermée en écriture PAR LE PRIVILÈGE** : `revoke all … from anon, authenticated`, puis `select`
+seul à `authenticated`. Les deux RPC `security definer` `public.snooze_thread(uuid, text,
+timestamptz)` et `public.wake_thread(uuid, text)` sont le seul chemin. L'unique politique,
+`mail_thread_snoozes_lecture`, porte `app.fil_lisible(workspace_id, thread_key)` — **le même
+prédicat que les deux gardes**, pour que la ligne visible et le fil visible ne divergent jamais.
+
 ---
 
 ## 8. Transverse

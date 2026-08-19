@@ -9402,12 +9402,80 @@ gestes ; refus mesurés avec les jetons réels ; captures observées.
       **en retard de bien plus que cette tranche** depuis deux exécutions — dérive antérieure et
       étrangère, que corriger sous cette unité reviendrait à solder une autre (`CLAUDE.md` §13).
 
-*DoD adaptée, écarts explicites — révisée le 2026-08-16 après la tranche 2 a.* La Definition of
-Done demande cinq choses. **Trois sont tenues** : le geste et son retour sont gardés en base ; le
-fil porte la trace des deux gestes, et l'écran la nomme ; les refus sont mesurés avec les jetons
-réels, et les captures sont produites et observées. **Deux restent dues, toutes deux par la
-tranche 2 b** : une affaire en sommeil ne sort d'aucune vue par défaut, et aucun filtre explicite
-ne la ramène. L'unité reste donc `[~]`, et l'écart est nommé plutôt que masqué.
+- [x] **LE SOMMEIL D'UN FIL DE MESSAGERIE EST LIVRÉ EN BASE — tranche 2 c**, spécifié
+      `docs/SPEC-cards.md` §16.14 en dix sous-chapitres, écrit **avant toute ligne de code** et
+      fondé sur **six mesures** relevées le 2026-08-19 sur la pile seedée
+      (`supabase/migrations/0048_snooze_fils.sql`). C'est la moitié de l'énoncé de l'unité — « les
+      fils **et** les cards » — que le §16.10 nommait due depuis la tranche 1.
+- [x] **LA MESURE 1 CONFIRME LE MANQUE PLUTÔT QUE DE LE SUPPOSER** : `public.threads` n'existe pas,
+      et `information_schema.columns` ne rend **aucune** colonne dont le nom porte `thread` dans
+      tout le schéma `public`. Une assertion pgTAP **fige ce zéro** : elle se retournera le jour où
+      la tranche d'écran posera une colonne, et elle le dira.
+- [x] **UN FIL EST SA RACINE, ET AUCUNE COLONNE N'EST AJOUTÉE À `mail_messages`** :
+      `app.cle_fil(references_ids, rfc822_message_id)` — `immutable` — rend le premier
+      `References`, racine RFC 5322, ou le `Message-ID` propre quand la chaîne est vide, **cas
+      courant mesuré sur le seed**. Un **index d'expression** sert la garde ; une colonne générée
+      aurait déplacé la liste des colonnes de la table, que plusieurs preuves du dépôt figent, sans
+      servir aucune règle de la tranche. Le compromis est écrit au §16.14.2, avec la conséquence :
+      l'écran devra recalculer la clé, d'où une **fonction** et non une expression recopiée.
+- [x] **L'ÉTAT EST UNE LIGNE, ET SON ABSENCE EST « ÉVEILLÉ »** : `public.mail_thread_snoozes`, clé
+      primaire `(workspace_id, thread_key)` — la clé n'est unique que dans son workspace, mesure 5.
+      Le réveil **supprime** la ligne plutôt que de la vider : une ligne réveillée ne porterait
+      qu'une échéance nulle interdite par sa propre contrainte, ou une échéance passée que le
+      prédicat écarte déjà.
+- [x] **LA MESURE 3 A RETIRÉ UNE SECTION DU PATRON AVANT QU'ELLE NE SOIT ÉCRITE.** Le §16.7 fermait
+      `cards.snoozed_until`, et ce `revoke` était la condition des quatre refus de la tranche 1. Ici
+      `authenticated` détient sur `mail_messages` le privilège `SELECT` **et lui seul** : il n'y a
+      rien à reprendre, et la symétrie aurait été trompeuse. La migration ne porte donc **aucune**
+      section « la colonne se ferme ».
+- [x] **TROIS REFUS, ET PAS QUATRE, ET C'EST LA MÊME MESURE QUI L'INTERDIT** : `thread_not_found`,
+      `snooze_date_required`, `snooze_date_in_past`. Le §16.3 oppose en plus un `forbidden` parce
+      que `app.can_write_channel` existe ; **aucun droit d'écriture n'est défini sur un fil**. En
+      inventer un aurait tranché une question de produit que personne n'a posée. La règle retenue
+      est celle que les données portent déjà : **qui lit le fil peut l'endormir**.
+- [x] **UNE TABLE NEUVE N'EST PAS FERMÉE, ET LA PREUVE L'A DÉMENTIE AVANT LE COMMIT.** La première
+      rédaction du §16.14.6 affirmait qu'une table neuve n'accorde de privilège à personne. MESURÉ
+      par la suite pgTAP : les `alter default privileges` de la plateforme accordent `all
+      privileges` à `anon` **et** `authenticated` sur toute table créée dans `public` — la table
+      était ouverte en `INSERT`, `UPDATE` et `DELETE` **à un appelant anonyme**. Refermée par
+      `revoke all … from anon, authenticated` puis des `grant` nominatifs, convention de la
+      migration 45 ; la spécification est **corrigée dans le même changement**, contradiction
+      écrite dans le chapitre lui-même.
+- [x] **Suite pgTAP dédiée** (`supabase/tests/0046_snooze_fils.test.sql`) : **37 assertions, aucune
+      anomalie**. La discrétion y est prouvée **avec le MÊME profil dans les deux cas** — le
+      business developer endort le fil classé qu'il lit et se voit opposer `thread_not_found` sur
+      celui qu'il ne lit pas : la distinction tient donc à la **lisibilité du fil**, non au rôle.
+      Chaque refus est éprouvé **contre son succès correspondant**, sans quoi l'assertion serait
+      verte sur une fonction qui refuse tout. `npm run test:sql` passe de 45 fichiers / 2269
+      assertions à **46 fichiers / 2306 assertions, aucune anomalie**.
+- [x] **UN COMPTE FIGÉ RÉVISÉ, NI SUPPRIMÉ NI CONTOURNÉ** (mécanisme de la décision 51), motif
+      écrit dans le fichier : `0016_preuves_refus.test.sql` figeait **78** politiques dans `public`,
+      compte que l'unique politique de lecture de `mail_thread_snoozes` porte à **79**. La révision
+      **renforce** — elle nomme ce que la politique ouvre et rappelle que la fermeture en écriture
+      est tenue par le **privilège**, non par une politique.
+- [x] **Preuve d'API dédiée** (`e2e/api/snooze-fils.spec.ts`, **10 scénarios**) : les neuf lignes du
+      contrat du §16.14.8 avec les **jetons réels** des trois profils, chaque refus **relisant la
+      ligne** pour la constater absente (décision 70). Un dixième scénario mesure que la table
+      **refuse** un `POST` et un `DELETE` directs de l'administratrice — c'est ce qui empêche un
+      futur `grant` de rouvrir la porte en silence. **LE SEED SORT INTACT**, vérifié par une
+      dernière lecture plutôt que supposé : le fichier réveille tout ce qu'il endort.
+- [~] **Aucune surface, et c'est nommé** (§16.14.7) : ni groupement des messages en fils dans
+      l'inbox, ni pastille, ni geste, ni filtre. Un fil endormi reste visible partout où il l'était.
+      **Aucune trace dans un journal** non plus : `card_events` est le fil d'une **affaire**, et un
+      fil de messagerie peut porter des messages classés sur des affaires différentes, ou sur
+      aucune. La seule trace est la ligne, et le réveil l'efface. **Aucun seed nouveau** : la mesure
+      6 établit que l'asymétrie des trois profils sur les deux fils du seed suffit à prouver les
+      refus, et poser un fil endormi n'aurait d'intérêt que le jour où un écran le montre.
+
+*DoD adaptée, écarts explicites — révisée le 2026-08-19 après la tranche 2 c.* La Definition of
+Done demande cinq choses. **Quatre sont tenues** : le geste et son retour sont gardés en base, pour
+l'affaire (tranche 1) comme pour le fil (tranche 2 c) ; une affaire en sommeil sort des vues par
+défaut et un filtre explicite la ramène (tranche 2 b) ; le fil de l'affaire porte la trace des deux
+gestes, et l'écran la nomme (tranche 2 a) ; les refus sont mesurés avec les jetons réels, et les
+captures sont produites et observées. **UNE reste due, par la tranche suivante** : la **surface** du
+sommeil de fil — groupement des messages en fils dans l'inbox, pastille, geste et filtre —, sans
+laquelle endormir un fil ne change encore rien pour l'utilisateur. L'unité reste donc `[~]`, et
+l'écart est nommé plutôt que masqué.
 
 ### CRM-080 — Sauvegardes chiffrées et restauration prouvée `[ ]`
 

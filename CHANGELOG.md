@@ -15,6 +15,35 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **`CRM-081` — Snooze, tranche 2 c : le sommeil d'un FIL de messagerie, sa règle, sa garde et sa
+  trace** (`docs/SPEC-cards.md` §16.14, migration `0048_snooze_fils.sql`). L'énoncé de l'unité
+  nomme « les fils **et** les cards » ; les cards l'avaient depuis la migration 44, les fils
+  n'avaient **rien** — MESURÉ, aucune colonne dont le nom porte `thread` n'existait dans tout le
+  schéma `public`, et `public.threads` non plus. Un fil peut désormais être endormi jusqu'à une
+  échéance et réveillé, par `public.snooze_thread` et `public.wake_thread`.
+  **UN FIL EST IDENTIFIÉ PAR SA RACINE, ET AUCUNE COLONNE N'EST AJOUTÉE À `mail_messages`** :
+  `app.cle_fil(references_ids, rfc822_message_id)` rend le premier `References` — la racine
+  RFC 5322 — ou le `Message-ID` propre quand la chaîne est vide, cas courant mesuré sur le seed.
+  Un index d'expression sert la garde ; une colonne générée aurait déplacé la liste des colonnes de
+  la table, que plusieurs preuves figent, sans servir aucune règle de la tranche.
+  **L'ÉTAT EST UNE LIGNE, ET SON ABSENCE EST « ÉVEILLÉ »** : `public.mail_thread_snoozes` porte
+  l'échéance et son auteur ; le réveil **supprime** la ligne plutôt que de la vider, une ligne
+  réveillée n'étant qu'une coquille que toute lecture devrait ensuite exclure.
+  **TROIS REFUS, ET PAS QUATRE** — `thread_not_found`, `snooze_date_required`,
+  `snooze_date_in_past`. Le sommeil d'une affaire oppose en plus un `forbidden`, parce que
+  `app.can_write_channel` existe. Sur un fil, **aucun droit d'écriture n'est défini nulle part** :
+  MESURÉ, le client détient `SELECT` et rien d'autre sur `mail_messages`. En inventer un aurait
+  tranché une question de produit que personne n'a posée ; la règle retenue est celle que les
+  données portent déjà — **qui lit le fil peut l'endormir**.
+  **UNE TABLE NEUVE N'EST PAS FERMÉE, ET LA PREUVE L'A DÉMENTIE AVANT LE COMMIT.** La première
+  rédaction de la spécification affirmait le contraire. MESURÉ : les `alter default privileges` de
+  la plateforme accordent `all privileges` à `anon` et `authenticated` sur toute table créée dans
+  `public` — à sa naissance, la table était ouverte en écriture **à un appelant anonyme**. Refermée
+  par `revoke all` puis des `grant` nominatifs, et l'assertion qui l'a trouvée reste en place.
+  **Aucune surface** : ni pastille, ni geste, ni filtre de l'inbox. `CRM-081` demeure `[~]`, et
+  l'écart est nommé (§16.14.7). Aucun seed nouveau : l'asymétrie des trois profils sur les deux
+  fils du seed suffit à prouver les refus.
+
 - **`CRM-060` — Contacts et organisations, tranche 4j : la modification du rôle d'un rattachement,
   depuis la fiche d'un contact** (`docs/SPEC-contacts.md` §19, `docs/DESIGN_SYSTEM.md` §5.28).
   Corriger un rôle mal saisi obligeait jusqu'ici à **détacher puis rattacher** — à défaire le lien

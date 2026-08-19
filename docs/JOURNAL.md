@@ -19599,3 +19599,60 @@ ferme un chemin que l'écran aurait pu inventer : réécrire le même rôle est 
 **Où reprendre.** La spécification est écrite et committée ; le code, ses preuves et sa
 documentation suivent dans cette même session. Si elle est interrompue, l'exécution suivante reprend
 au §19.10, qui énumère la Definition of Done de la sous-tranche.
+
+## décision 459 — `CRM-081` tranche 2 c : un fil de messagerie s'endort enfin, et une mesure retire un refus du patron
+
+**L'unité, et le choix.** La dernière entrée du journal (décision 458) désignait la reprise de
+`CRM-060` 4j ; le backlog montre cette sous-tranche **livrée et close** — l'entrée de journal qui
+la clôt manque, la session qui l'a livrée s'étant arrêtée après ses captures. `CRM-060` n'a plus
+que des manques **suspendus à l'arbitrage** du responsable (§6 point 4, et le fil unifié du §12.8),
+et `CRM-077` de même (rétention, effacement définitif, visibilité). Le §4.2 point 2 de
+`docs/CloudWorker.md` désigne donc la première unité `[~]` dont il reste du **comportement** :
+`CRM-081`, dont l'énoncé nomme « les fils **et** les cards » et dont les fils n'avaient rien.
+
+**Spécification écrite et committée AVANT toute ligne de code**, `docs/SPEC-cards.md` §16.14, en
+dix sous-chapitres, fondée sur **six mesures** relevées sur la pile seedée avec les jetons réels
+des trois profils.
+
+**LA MESURE 3 A RETIRÉ UNE SECTION DU PATRON AVANT QU'ELLE NE SOIT ÉCRITE.** La tranche 1 fermait
+`cards.snoozed_until`, ouverte en écriture par la migration 14, et ce `revoke` était la condition
+pour que ses quatre refus gardent quoi que ce soit. Ici `authenticated` détient sur `mail_messages`
+le privilège `SELECT` **et lui seul** : il n'y a rien à reprendre. La même mesure retire un
+**refus** : `snooze_thread` en oppose **trois** là où `snooze_card` en oppose quatre, aucun droit
+d'écriture n'étant défini sur un fil. En inventer un aurait tranché une question de produit que
+personne n'a posée ; la règle retenue est celle que les données portent — **qui lit le fil peut
+l'endormir**.
+
+**LA MESURE 6 FOURNIT L'ASYMÉTRIE SANS QU'AUCUNE DONNÉE NOUVELLE SOIT DUE** : la politique de
+lecture rend deux messages à l'administratrice, un au business developer — le seul classé — et
+aucun à la lectrice. Le **même** profil réussit donc sur un fil et se voit opposer
+`thread_not_found` sur l'autre : c'est la seule forme qui prouve que la discrétion tient à la
+lisibilité du fil et non au rôle. Le seed n'est **pas** touché.
+
+**UN FIL EST SA RACINE, ET AUCUNE COLONNE N'EST AJOUTÉE À `mail_messages`.** `app.cle_fil` rend le
+premier `References` ou le `Message-ID` propre ; un index d'expression sert la garde. Une colonne
+générée aurait déplacé la liste des colonnes de la table, que plusieurs preuves figent, sans servir
+aucune règle de la tranche. Le compromis et sa conséquence — l'écran devra recalculer la clé, d'où
+une fonction et non une expression recopiée — sont écrits au §16.14.2.
+
+**UNE TABLE NEUVE N'EST PAS FERMÉE, ET C'EST LA PREUVE QUI L'A DIT, PAS MOI.** La première
+rédaction du §16.14.6 affirmait qu'une table neuve n'accorde de privilège à personne, et la suite
+pgTAP l'a démentie **avant le commit** : les `alter default privileges` de la plateforme accordent
+`all privileges` à `anon` et `authenticated` sur toute table créée dans `public`, si bien que
+`mail_thread_snoozes` naissait ouverte en écriture **à un appelant anonyme**. Refermée par
+`revoke all` puis des `grant` nominatifs ; la spécification est corrigée dans le même changement,
+contradiction écrite dans le chapitre. Un second défaut de la même famille — `on conflict
+(workspace_id, thread_key)` rendant `42702`, le paramètre dont le nom **est** le contrat d'API
+masquant la colonne — est corrigé par `on conflict on constraint`, motif écrit dans la migration.
+
+**Preuves de l'unité, exécutées et vertes** : `supabase/tests/0046_snooze_fils.test.sql`
+**37 assertions**, `npm run test:sql` complet **46 fichiers / 2306 assertions, aucune anomalie**
+(une révision : le compte de politiques de `0016_preuves_refus`, porté de 78 à 79, motif écrit dans
+le fichier), `e2e/api/snooze-fils.spec.ts` **10 scénarios verts** avec les jetons réels. Aucune
+preuve d'interface n'est due : la tranche ne livre **aucune** surface.
+
+**Où reprendre.** La tranche 2 c est close. `CRM-081` reste `[~]` pour **une** raison, nommée au
+§16.14.7 et à la DoD révisée du backlog : la **surface** du sommeil de fil — groupement des
+messages en fils dans l'inbox, pastille, geste et filtre —, sans laquelle endormir un fil ne change
+encore rien pour l'utilisateur. C'est la tranche que l'exécution suivante peut prendre. `CRM-060`
+et `CRM-077` restent suspendues à l'arbitrage du responsable.
