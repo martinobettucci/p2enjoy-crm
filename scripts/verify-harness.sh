@@ -395,7 +395,15 @@ ASSERTIONS_ATTENDUES=2269
 # `e2e/api/valeurs-champs.spec.ts` : la résolution de `contact` et de `user`, acceptations et refus.
 # 696 + 2 + 6 = **704**, valeur COMPTÉE par `npm run e2e:api -- --list` (704 tests dans 44 fichiers)
 # et non déduite d'une exécution — déduire reviendrait à supprimer le contrôle (INC-101).
-SCENARIOS_API=704
+# --- CRM-060 sous-tranche 4e, achevée le 2026-08-19 ----------------------------------------------
+# `e2e/api/contacts.spec.ts` reçoit **neuf** scénarios : les onze mesures d'écriture du §14.3 de
+# `docs/SPEC-contacts.md` — les quatre contraintes de forme tenant en un seul scénario — et la
+# garde qui exige le seed rendu INTACT après elles. Ce sont ces réponses qui ont décidé du contrat
+# de l'écran : le `409` commun à `23505` et `23503`, et le refus de la chaîne vide sur `email` et
+# `phone`. 704 + 9 = **713**, valeur COMPTÉE par `playwright test --list`
+# (« Total: 713 tests in 44 files ») et confirmée par `npm run e2e:api`, **713 verts**. Le nombre
+# de FICHIERS ne bouge pas.
+SCENARIOS_API=713
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
