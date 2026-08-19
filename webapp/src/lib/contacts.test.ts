@@ -1,5 +1,8 @@
 // @verifies CRM-060 (docs/BACKLOG.md) — contacts et organisations, tranche 4 sous-tranches 4a, 4b,
-//           4c, 4d et 4e (chaque bloc porte ses propres références plus bas)
+//           4c, 4d, 4e, 4f et 4g (chaque bloc porte ses propres références plus bas)
+// @verifies docs/SPEC-contacts.md §16.3 (ce que `modifierContact` envoie : les cinq colonnes d'un
+//           bloc, `workspace_id` jamais, les facultatifs blancs rendus `null`),
+//           §16.4 (dictionnaire FERMÉ des six refus, dont `sans-effet` sur zéro ligne)
 // @verifies docs/SPEC-contacts.md §10.3 (la lecture, ses colonnes, son ordre, l'organisation
 //           embarquée), §10.4 (aucun droit calculé : zéro ligne est une liste vide),
 //           §10.7 (aucune pagination, aucun filtre)
@@ -37,6 +40,7 @@ import {
 	classerRefusCreation,
 	classerRefusRattachement,
 	creerContact,
+	modifierContact,
 	detacherContact,
 	estFormeUuid,
 	libelleContactAvecOrganisation,
@@ -1222,5 +1226,156 @@ describe('adresseAffaire (§15.3)', () => {
 				cards: { id: 'c', title: 'T', archived_at: null, channels: { slug: 'x', tracks: null } },
 			}),
 		).toBeNull()
+	})
+})
+
+// ================================================================================================
+// SOUS-TRANCHE 4g — `modifierContact` (docs/SPEC-contacts.md §16.3 et §16.4)
+// ================================================================================================
+
+/**
+ * Espion de modification : `update().eq().select().maybeSingle()`, la chaîne EXACTE du module.
+ *
+ * `maybeSingle` et non `single` : c'est une exigence du §16.3, non un détail d'écriture. Zéro
+ * ligne est ici un RÉSULTAT ATTENDU — le refus silencieux —, et `single()` le déguiserait en
+ * erreur `PGRST116`, c'est-à-dire en panne. Un espion qui accepterait `single()` laisserait passer
+ * un code qui confond un refus avec une avarie.
+ */
+type AppelModification = {
+	table?: string
+	charge?: unknown
+	colonnes?: string
+	filtre?: { colonne: string; valeur: unknown }
+	maybeSingle: boolean
+}
+
+function espionModification(reponse: {
+	data: unknown
+	error: { message: string; code?: string } | null
+	status: number
+}): { client: ClientCrm; appel: AppelModification } {
+	const appel: AppelModification = { maybeSingle: false }
+	const chaine: Record<string, unknown> = {
+		eq: (colonne: string, valeur: unknown) => {
+			appel.filtre = { colonne, valeur }
+			return chaine
+		},
+		select: (colonnes: string) => {
+			appel.colonnes = colonnes
+			return chaine
+		},
+		maybeSingle: () => {
+			appel.maybeSingle = true
+			return Promise.resolve(reponse)
+		},
+	}
+	const client = {
+		from: (table: string) => {
+			appel.table = table
+			return {
+				update: (charge: unknown) => {
+					appel.charge = charge
+					return chaine
+				},
+			}
+		},
+	} as unknown as ClientCrm
+	return { client, appel }
+}
+
+const SAISIE_COMPLETE = {
+	nom: '  Léo Marchand-Vasseur  ',
+	idOrganisation: '5eed0000-0000-4000-8000-000000000081',
+	fonction: 'Directeur général',
+	email: 'leo@sogexia.example',
+	telephone: '  ',
+}
+
+describe('modifierContact (§16.3)', () => {
+	it('envoie les CINQ colonnes d’un bloc, sans `workspace_id` ni `source`', async () => {
+		const { client, appel } = espionModification({
+			data: {
+				id: 'c1',
+				full_name: 'Léo Marchand-Vasseur',
+				email: 'leo@sogexia.example',
+				phone: null,
+				role_title: 'Directeur général',
+				organization_id: '5eed0000-0000-4000-8000-000000000081',
+				organizations: { id: '5eed0000-0000-4000-8000-000000000081', name: 'Sogexia' },
+			},
+			error: null,
+			status: 200,
+		})
+		const resultat = await modifierContact(client, { idContact: 'c1', saisie: SAISIE_COMPLETE })
+
+		expect(appel.table).toBe('contacts')
+		// LES CINQ COLONNES, ET ELLES SEULES (§16.3, mesures 16 à 18). `workspace_id` n'est jamais
+		// envoyé — il n'ouvrirait qu'un refus (mesure 13) —, et `source` appartient au modèle.
+		expect(appel.charge).toEqual({
+			full_name: 'Léo Marchand-Vasseur',
+			organization_id: '5eed0000-0000-4000-8000-000000000081',
+			role_title: 'Directeur général',
+			email: 'leo@sogexia.example',
+			// UN FACULTATIF BLANC VAUT `null`, JAMAIS `''` : les contraintes de forme refusent la
+			// chaîne vide (§16.3, mesures 7 et 8).
+			phone: null,
+		})
+		expect(appel.filtre).toEqual({ colonne: 'id', valeur: 'c1' })
+		expect(appel.maybeSingle).toBe(true)
+		expect(resultat.statut).toBe('modifiee')
+		if (resultat.statut !== 'modifiee') throw new Error('modification attendue')
+		// L'organisation embarquée revient avec la ligne : la fiche s'actualise SANS relire (§16.7).
+		expect(resultat.contact.organisation).toEqual({
+			id: '5eed0000-0000-4000-8000-000000000081',
+			name: 'Sogexia',
+		})
+	})
+
+	it('ZÉRO LIGNE et AUCUNE erreur rendent `sans-effet` (§16.3, mesures 3, 12 et 19)', async () => {
+		const { client } = espionModification({ data: null, error: null, status: 200 })
+		const resultat = await modifierContact(client, { idContact: 'c1', saisie: SAISIE_COMPLETE })
+		expect(resultat.statut).toBe('refus')
+		if (resultat.statut !== 'refus') throw new Error('refus attendu')
+		// C'est CE QUI SÉPARE 4g DE 4e : la clause `USING` de la politique de mise à jour rend la
+		// ligne invisible à l'écriture, et PostgREST rend `200` avec un tableau VIDE. Sans cette
+		// branche, un refus d'autorisation passerait pour une modification réussie.
+		expect(resultat.refus.nature).toBe('sans-effet')
+	})
+
+	it('classe les cinq refus d’ERREUR par le code PostgreSQL d’abord (§16.4)', async () => {
+		const cas = [
+			{ code: '23505', status: 409, nature: 'doublon' },
+			{ code: '23503', status: 409, nature: 'organisation-inconnue' },
+			{ code: '23514', status: 400, nature: 'saisie-invalide' },
+			{ code: undefined, status: 403, nature: 'interdit' },
+			{ code: undefined, status: 401, nature: 'interdit' },
+			{ code: undefined, status: 500, nature: 'indisponible' },
+		] as const
+		for (const attendu of cas) {
+			const { client } = espionModification({
+				data: null,
+				error: { message: 'refus', ...(attendu.code === undefined ? {} : { code: attendu.code }) },
+				status: attendu.status,
+			})
+			const resultat = await modifierContact(client, { idContact: 'c1', saisie: SAISIE_COMPLETE })
+			if (resultat.statut !== 'refus') throw new Error('refus attendu')
+			// `23505` et `23503` rendent TOUS DEUX `409` (mesures 4 et 9) : classer par le statut
+			// les confondrait, alors qu'ils appellent des gestes opposés.
+			expect(resultat.refus.nature).toBe(attendu.nature)
+		}
+	})
+
+	it('ne lève jamais : une exception du client devient `indisponible`', async () => {
+		const client = {
+			from: () => ({
+				update: () => {
+					throw new Error('réseau coupé')
+				},
+			}),
+		} as unknown as ClientCrm
+		const resultat = await modifierContact(client, { idContact: 'c1', saisie: SAISIE_COMPLETE })
+		if (resultat.statut !== 'refus') throw new Error('refus attendu')
+		expect(resultat.refus.nature).toBe('indisponible')
+		expect(resultat.refus.detail).toContain('réseau coupé')
 	})
 })

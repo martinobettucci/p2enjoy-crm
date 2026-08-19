@@ -1,4 +1,9 @@
-// @verifies CRM-060 (docs/BACKLOG.md) — contacts et organisations, tranche 4 sous-tranche 4f
+// @verifies CRM-060 (docs/BACKLOG.md) — contacts et organisations, tranche 4, sous-tranches 4f
+//           (la fiche) et 4g (la MODIFICATION depuis la fiche)
+// @verifies docs/SPEC-contacts.md §16.3 (ce que l'écriture envoie, et le silence des mesures 3,
+//           12 et 19), §16.4 (dictionnaire fermé des six refus), §16.5 (le retour du focus),
+//           §16.7 (ce que la fiche fait de la ligne rendue), §16.9 (contrat, cas a à r)
+// @verifies docs/DESIGN_SYSTEM.md §5.25 (le formulaire de modification dans le flux)
 // @verifies docs/SPEC-contacts.md §15.5 (de quoi l'écran a l'air : deux zones, l'organisation en
 //           lien, l'affaire en lien, la pilule d'archive), §15.8 (limites nommées),
 //           §15.9 (contrat de comportement, cas a à l)
@@ -174,8 +179,21 @@ describe('fiche de contact (docs/SPEC-contacts.md §15.9)', () => {
 		expect(screen.queryByTestId('tableau-affaires-contact')).toBeNull()
 		// Les caractéristiques restent rendues : l'absence d'affaire n'efface pas le contact.
 		expect(screen.getByTestId('caracteristiques-contact')).toBeTruthy()
-		// Aucune action : cette surface ne livre aucun geste de rattachement (§15.8).
-		expect(screen.queryByRole('button')).toBeNull()
+		// ASSERTION RÉVISÉE PAR LIVRAISON, le 2026-08-19 (mécanisme de la décision 51).
+		//
+		// Elle exigeait « aucun bouton sur la page » pour dire ce que le §15.8 posait : cette
+		// surface ne livre AUCUN geste. La sous-tranche 4g livre le geste de MODIFICATION (§16.2),
+		// et la condition de la règle a donc cessé d'être vraie. Ce qu'il fallait réellement
+		// prouver est plus étroit et reste vrai : l'ÉTAT VIDE DE LA ZONE DES AFFAIRES n'offre
+		// aucune action — aucun rattachement n'est livré depuis cette page (§16.8), et un bouton
+		// y serait un chemin vers nulle part.
+		//
+		// L'assertion n'est pas retirée : elle est resserrée sur la zone qu'elle décrit, et elle
+		// gagne son pendant — le geste de modification, lui, est bien là.
+		const zoneVide = screen.getByText(fr['contact.deals.empty.title']).closest('div')
+		expect(zoneVide?.querySelector('button')).toBeNull()
+		expect(zoneVide?.querySelector('a')).toBeNull()
+		expect(screen.getByTestId('ouvrir-modification-contact')).toBeTruthy()
 	})
 
 	it("cas f : une affaire ARCHIVÉE porte sa pilule, et son titre reste un lien", async () => {
@@ -251,5 +269,296 @@ describe('fiche de contact (docs/SPEC-contacts.md §15.9)', () => {
 	it("cas l : sans client, l'état vide dédié est rendu et aucune lecture n'est tentée", () => {
 		monter(null, ID_LEO)
 		expect(screen.getByText(fr['contact.noWorkspace.title'])).toBeTruthy()
+	})
+})
+
+// ================================================================================================
+// SOUS-TRANCHE 4g — LA MODIFICATION D'UN CONTACT DEPUIS SA FICHE (docs/SPEC-contacts.md §16.9)
+// ================================================================================================
+
+/**
+ * Client espion qui LIT puis ÉCRIT : `from().select()…` pour la fiche,
+ * `from().update().eq().select().maybeSingle()` pour la modification, et `from().select()` pour la
+ * liste des organisations.
+ *
+ * `maybeSingle` figure dans la chaîne parce que le module l'emploie DÉLIBÉRÉMENT (§16.3) : zéro
+ * ligne est un résultat attendu, et `single()` le déguiserait en erreur `PGRST116`. Un espion qui
+ * ne l'exposerait pas laisserait passer un code revenu à `single()`.
+ *
+ * `ecritures` est consommée dans l'ordre ; la charge réellement envoyée est retenue dans
+ * `envois`, pour que la preuve porte sur ce qui part et non seulement sur ce qui revient.
+ */
+function clientQuiEcrit(options: {
+	lecture: Reponse
+	organisations?: Reponse
+	ecritures: Array<{ data: unknown; error: { message: string; code?: string } | null; status: number }>
+}) {
+	const envois: unknown[] = []
+	let rangEcriture = 0
+	const lectureChaine = {
+		eq: () => lectureChaine,
+		is: () => lectureChaine,
+		order: () => lectureChaine,
+		then: (resoudre: (valeur: Reponse) => unknown) =>
+			Promise.resolve(options.lecture).then(resoudre),
+	}
+	const organisationsChaine = {
+		eq: () => organisationsChaine,
+		is: () => organisationsChaine,
+		order: () => organisationsChaine,
+		then: (resoudre: (valeur: Reponse) => unknown) =>
+			Promise.resolve(options.organisations ?? { data: [], error: null, status: 200 }).then(
+				resoudre,
+			),
+	}
+	return {
+		envois,
+		client: {
+			from: (table: string) => ({
+				select: () => (table === 'organizations' ? organisationsChaine : lectureChaine),
+				update: (charge: unknown) => {
+					envois.push(charge)
+					const reponse = options.ecritures[Math.min(rangEcriture, options.ecritures.length - 1)]
+					rangEcriture += 1
+					const chaine = {
+						eq: () => chaine,
+						select: () => chaine,
+						maybeSingle: () => Promise.resolve(reponse),
+					}
+					return chaine
+				},
+			}),
+		} as unknown as ClientCrm,
+	}
+}
+
+/** Léo modifié tel que PostgREST le rend — colonnes du carnet, organisation embarquée. */
+const LEO_MODIFIE = {
+	id: ID_LEO,
+	full_name: 'Léo Marchand-Vasseur',
+	email: 'leo.marchand@sogexia.example',
+	phone: null,
+	role_title: 'Directeur général',
+	organization_id: ID_SOGEXIA,
+	organizations: { id: ID_SOGEXIA, name: 'Sogexia' },
+}
+
+const ACCEPTE = { data: LEO_MODIFIE, error: null, status: 200 }
+/** Le SILENCE des mesures 3, 12 et 19 : `200`, aucune ligne, AUCUNE erreur (§16.3). */
+const SANS_EFFET = { data: null, error: null, status: 200 }
+
+async function ouvrirLeFormulaire() {
+	await userEvent.click(await screen.findByTestId('ouvrir-modification-contact'))
+	return screen.getByTestId('formulaire-modification-contact')
+}
+
+describe('modification d’un contact depuis sa fiche (docs/SPEC-contacts.md §16.9)', () => {
+	it('cas a : la fiche porte UNE commande, et le formulaire est replié', async () => {
+		const { client } = clientQuiEcrit({ lecture: OK(LEO), ecritures: [ACCEPTE] })
+		monter(client, ID_LEO)
+		expect(await screen.findByTestId('ouvrir-modification-contact')).toBeTruthy()
+		expect(screen.queryByTestId('formulaire-modification-contact')).toBeNull()
+		// Les deux zones sont inchangées : le geste ne pousse rien hors de l'écran.
+		expect(screen.getByTestId('caracteristiques-contact')).toBeTruthy()
+		expect(screen.getByTestId('tableau-affaires-contact')).toBeTruthy()
+	})
+
+	it('cas b : le formulaire s’ouvre PRÉREMPLI, le focus entre, la commande disparaît', async () => {
+		const { client } = clientQuiEcrit({ lecture: OK(LEO), ecritures: [ACCEPTE] })
+		monter(client, ID_LEO)
+		await ouvrirLeFormulaire()
+		const nom = screen.getByTestId('champ-nom-contact') as HTMLInputElement
+		expect(nom.value).toBe('Léo Marchand')
+		expect((screen.getByTestId('champ-fonction-contact') as HTMLInputElement).value).toBe(
+			'Directeur achats',
+		)
+		expect((screen.getByTestId('champ-email-contact') as HTMLInputElement).value).toBe(
+			'leo.marchand@sogexia.example',
+		)
+		// Le téléphone de Léo est `null` en base : le champ est VIDE, jamais la chaîne « null ».
+		expect((screen.getByTestId('champ-telephone-contact') as HTMLInputElement).value).toBe('')
+		expect(document.activeElement).toBe(nom)
+		// La commande et le formulaire s'EXCLUENT (§16.5).
+		expect(screen.queryByTestId('ouvrir-modification-contact')).toBeNull()
+	})
+
+	it('cas c : à la fermeture, le focus REVIENT à la commande d’ouverture', async () => {
+		const { client } = clientQuiEcrit({ lecture: OK(LEO), ecritures: [ACCEPTE] })
+		monter(client, ID_LEO)
+		await ouvrirLeFormulaire()
+		await userEvent.click(screen.getByTestId('annuler-modification-contact'))
+		// La commande est REMONTÉE, et c'est elle qui porte le focus — non le document. C'est le
+		// défaut trouvé au carnet par la décision 453, éprouvé ici avant qu'il ne se reproduise.
+		const commande = await screen.findByTestId('ouvrir-modification-contact')
+		expect(document.activeElement).toBe(commande)
+	})
+
+	it('cas d : un nom vidé est refusé PAR L’ÉCRAN, sans aucun appel réseau', async () => {
+		const { client, envois } = clientQuiEcrit({ lecture: OK(LEO), ecritures: [ACCEPTE] })
+		monter(client, ID_LEO)
+		await ouvrirLeFormulaire()
+		await userEvent.clear(screen.getByTestId('champ-nom-contact'))
+		await userEvent.type(screen.getByTestId('champ-nom-contact'), '   ')
+		await userEvent.click(screen.getByTestId('envoyer-modification-contact'))
+		expect(envois).toHaveLength(0)
+		expect(screen.getByTestId('champ-nom-contact').getAttribute('aria-invalid')).toBe('true')
+		expect(screen.getByTestId('formulaire-modification-contact')).toBeTruthy()
+	})
+
+	it('cas e, f, q : l’envoi accepté met à jour la zone 1 et le NOM, sans relire, zone 2 intacte', async () => {
+		const { client, envois } = clientQuiEcrit({ lecture: OK(LEO), ecritures: [ACCEPTE] })
+		let nomVu: string | null | undefined
+		render(
+			<MemoryRouter>
+				<ContenuFicheContact
+					client={client}
+					idContact={ID_LEO}
+					onNomConnu={(nom) => {
+						nomVu = nom
+					}}
+				/>
+			</MemoryRouter>,
+		)
+		await ouvrirLeFormulaire()
+		await userEvent.clear(screen.getByTestId('champ-nom-contact'))
+		await userEvent.type(screen.getByTestId('champ-nom-contact'), 'Léo Marchand-Vasseur')
+		await userEvent.clear(screen.getByTestId('champ-fonction-contact'))
+		await userEvent.type(screen.getByTestId('champ-fonction-contact'), 'Directeur général')
+		await userEvent.click(screen.getByTestId('envoyer-modification-contact'))
+
+		// LES CINQ COLONNES PARTENT D'UN BLOC (§16.3, mesures 16 à 18), `workspace_id` jamais.
+		expect(envois).toHaveLength(1)
+		expect(envois[0]).toEqual({
+			full_name: 'Léo Marchand-Vasseur',
+			organization_id: ID_SOGEXIA,
+			role_title: 'Directeur général',
+			email: 'leo.marchand@sogexia.example',
+			phone: null,
+		})
+		// Cas e : la zone 1 rend la NOUVELLE valeur, et le formulaire se referme.
+		expect(await screen.findByText('Directeur général')).toBeTruthy()
+		expect(screen.queryByTestId('formulaire-modification-contact')).toBeNull()
+		// Cas f : le titre de la route suit le nouveau nom — il est une donnée (§16.7).
+		expect(nomVu).toBe('Léo Marchand-Vasseur')
+		// Cas q : la zone 2 est INCHANGÉE, et aucune seconde lecture n'a eu lieu.
+		expect(screen.getByText('Migration ERP Sogexia')).toBeTruthy()
+		expect(screen.getAllByTestId('ligne-affaire-contact')).toHaveLength(1)
+	})
+
+	it('cas h : une organisation détachée rend la valeur VIDE et SANS lien', async () => {
+		const detache = {
+			data: { ...LEO_MODIFIE, organization_id: null, organizations: null },
+			error: null,
+			status: 200,
+		}
+		const { client, envois } = clientQuiEcrit({ lecture: OK(LEO), ecritures: [detache] })
+		monter(client, ID_LEO)
+		await ouvrirLeFormulaire()
+		await userEvent.selectOptions(screen.getByTestId('champ-organisation-contact'), '')
+		await userEvent.click(screen.getByTestId('envoyer-modification-contact'))
+		// Un facultatif blanc part à `null`, JAMAIS à `''` (§16.3, mesures 7 et 8).
+		expect((envois[0] as { organization_id: unknown }).organization_id).toBeNull()
+		await screen.findByTestId('ouvrir-modification-contact')
+		expect(screen.queryByTestId('lien-organisation-contact')).toBeNull()
+	})
+
+	it('cas m et n : le SILENCE du serveur est DIT, et la saisie est conservée', async () => {
+		const { client } = clientQuiEcrit({ lecture: OK(LEO), ecritures: [SANS_EFFET] })
+		monter(client, ID_LEO)
+		await ouvrirLeFormulaire()
+		await userEvent.clear(screen.getByTestId('champ-nom-contact'))
+		await userEvent.type(screen.getByTestId('champ-nom-contact'), 'Écrit par la lectrice')
+		await userEvent.click(screen.getByTestId('envoyer-modification-contact'))
+
+		// `200` ET ZÉRO LIGNE, SANS ERREUR : c'est la mesure 3 (lectrice) et la mesure 12 (contact
+		// disparu), indistinguables par construction — un seul message les couvre (§16.4). Sans
+		// cette branche, le formulaire se refermerait sur une modification qui n'a jamais eu lieu.
+		const refus = await screen.findByTestId('refus-modification-contact')
+		expect(refus.textContent).toBe(fr['contact.modification.refus.sansEffet'])
+		// La saisie est CONSERVÉE : elle est ce que la personne perdrait sans l'avoir enregistré.
+		expect((screen.getByTestId('champ-nom-contact') as HTMLInputElement).value).toBe(
+			'Écrit par la lectrice',
+		)
+		expect(screen.getByTestId('formulaire-modification-contact')).toBeTruthy()
+	})
+
+	it('cas j, k, l : les trois refus d’erreur sont traduits par le dictionnaire FERMÉ', async () => {
+		const cas = [
+			{ code: '23505', statut: 409, cle: 'contact.modification.refus.doublon' },
+			{ code: '23503', statut: 409, cle: 'contact.modification.refus.organisation' },
+			{ code: '23514', statut: 400, cle: 'contact.modification.refus.saisie' },
+		] as const
+		for (const attendu of cas) {
+			const { client } = clientQuiEcrit({
+				lecture: OK(LEO),
+				ecritures: [
+					{ data: null, error: { message: 'refus', code: attendu.code }, status: attendu.statut },
+				],
+			})
+			monter(client, ID_LEO)
+			await ouvrirLeFormulaire()
+			await userEvent.click(screen.getByTestId('envoyer-modification-contact'))
+			const refus = await screen.findByTestId('refus-modification-contact')
+			expect(refus.textContent).toBe(fr[attendu.cle])
+			cleanup()
+		}
+	})
+
+	it('cas o : pendant l’envoi, la commande est aria-busy et l’envoi ne part QU’UNE fois', async () => {
+		let debloquer: (() => void) | null = null
+		const enAttente = new Promise<void>((resoudre) => {
+			debloquer = resoudre
+		})
+		const envois: unknown[] = []
+		const lectureChaine = {
+			eq: () => lectureChaine,
+			is: () => lectureChaine,
+			order: () => lectureChaine,
+			then: (resoudre: (valeur: Reponse) => unknown) => Promise.resolve(OK(LEO)).then(resoudre),
+		}
+		const client = {
+			from: () => ({
+				select: () => lectureChaine,
+				update: (charge: unknown) => {
+					envois.push(charge)
+					const chaine = {
+						eq: () => chaine,
+						select: () => chaine,
+						maybeSingle: () => enAttente.then(() => ACCEPTE),
+					}
+					return chaine
+				},
+			}),
+		} as unknown as ClientCrm
+		monter(client, ID_LEO)
+		await ouvrirLeFormulaire()
+		const envoyer = screen.getByTestId('envoyer-modification-contact')
+		await userEvent.click(envoyer)
+		expect(envoyer.getAttribute('aria-busy')).toBe('true')
+		// Un second déclenchement pendant l'aller-retour écrirait deux fois la même chose.
+		await userEvent.click(envoyer)
+		expect(envois).toHaveLength(1)
+		debloquer?.()
+	})
+
+	it('cas r : ni sur l’introuvable, ni sur l’erreur, ni sans client, aucune commande', async () => {
+		const { client } = clientQuiEcrit({ lecture: VIDE, ecritures: [ACCEPTE] })
+		monter(client, ID_LEO)
+		expect(await screen.findByText(fr['contact.notFound.title'])).toBeTruthy()
+		expect(screen.queryByTestId('ouvrir-modification-contact')).toBeNull()
+		cleanup()
+
+		const enErreur = clientQuiEcrit({
+			lecture: { data: null, error: { message: 'panne' }, status: 500 },
+			ecritures: [ACCEPTE],
+		})
+		monter(enErreur.client, ID_LEO)
+		expect(await screen.findByText(fr['contact.error.title'])).toBeTruthy()
+		expect(screen.queryByTestId('ouvrir-modification-contact')).toBeNull()
+		cleanup()
+
+		monter(null, ID_LEO)
+		expect(screen.getByText(fr['contact.noWorkspace.title'])).toBeTruthy()
+		expect(screen.queryByTestId('ouvrir-modification-contact')).toBeNull()
 	})
 })
