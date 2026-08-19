@@ -13,6 +13,31 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Documentation
+
+- **Un onglet « À saisir » complète les écrans de coûts** (décision 433, demandée le 2026-08-19).
+  Le §4.4 exigeait déjà que l'écran annonce « n lignes sans coût réel saisi » : il **comptait** le
+  manque sans offrir le geste. L'onglet liste toutes les lignes en attente, du plus ancien au plus
+  récent, avec **saisie en place**.
+- **La clôture d'un budget ne gèle pas ses lignes.** Point d'ambiguïté tranché : on clôt une
+  campagne **puis** les factures arrivent. Le trigger refuse l'insertion et le changement de
+  rattachement, **jamais la mise à jour d'`actual_cost`** — frontière écrite au §2.3 et prouvée par
+  contre-épreuve, sans quoi le trigger le plus simple viderait l'onglet de son usage.
+- **Clôturer un budget portant des réels non saisis avertit et compte**, sans empêcher : la clôture
+  reste une décision de gestion, elle cesse d'être silencieuse.
+- **Trois règles de saisie** font la différence entre un tableau et un outil : `Entrée` enregistre
+  **et porte le focus sur la ligne suivante** ; une ligne enregistrée **ne quitte pas la table à
+  chaud**, sans quoi les lignes suivantes remontent sous les doigts et la valeur suivante part dans
+  la mauvaise ligne ; **`0` est une valeur** — « finalement rien dépensé » — quand un champ vide
+  laisse la ligne en attente.
+- **Rien n'est masqué** : les lignes des budgets clôturés sont listées avec une pilule qui le dit,
+  et celles que l'appelant ne peut pas écrire sont **désactivées avec leur motif**, jamais retirées.
+- **Garde-fou de cohérence** : le badge de l'onglet porte le même nombre que la mention de la vue
+  d'ensemble, et la preuve les compare — deux compteurs de la même grandeur sont deux occasions de
+  mentir.
+- `docs/SPEC-costs.md` §2.3, §4.1, §4.8 ; `docs/DESIGN_SYSTEM.md` §5.31 ; Definition of Done de
+  `CRM-086` étendue plutôt que scindée — c'est un onglet du même écran, pas un écran de plus.
+
 ### Ajouté
 
 - **`CRM-083` — le canevas d'objectifs, tranche 1 : on VOIT enfin ses tableaux.** Une entrée

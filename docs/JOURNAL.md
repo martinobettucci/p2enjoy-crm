@@ -20039,3 +20039,55 @@ flèches à trois directions, et une exigence qu'il ne faut pas découvrir à la
 être **entièrement utilisable au clavier** (`docs/SPEC-goals.md` §5.5). Le seed lui donne déjà de
 quoi rendre ses états, y compris le bloc absent et la flèche vers le vide. La chaîne des coûts,
 `CRM-084` à `CRM-086`, est indépendante et peut s'intercaler.
+
+### Décision 433 — Compter les réels manquants ne suffit pas : il faut pouvoir les saisir
+
+**2026-08-19 — demande du responsable, écrite avant tout code, en complément de la décision 432.**
+
+**La demande.** « Il faut prévoir un onglet dans le *costs management* qui liste tous les coûts en
+attente de saisie du réel, pour faciliter la saisie de ces valeurs. »
+
+**Ce qu'elle répare dans la spécification de ce matin.** Le §4.4 de `docs/SPEC-costs.md` exigeait
+déjà que l'écran annonce « n lignes sans coût réel saisi ». Il **comptait** le manque sans offrir le
+geste : savoir que douze réels manquent oblige alors à ouvrir douze affaires l'une après l'autre.
+Un écran qui nomme un défaut sans donner le moyen de le corriger transforme une information utile en
+reproche. L'onglet « À saisir » est la surface de **saisie en série** qui manquait.
+
+**Un point d'ambiguïté est tranché au passage, et il fallait qu'il le soit.** La clôture d'un budget
+« le fait cesser d'être montré et sélectionnable ». Restait à savoir si elle **gèle** aussi les
+lignes déjà rattachées. Elle ne les gèle pas : on clôt une campagne **puis** les factures arrivent.
+Interdire la saisie du réel sur un budget clos obligerait à le rouvrir, ou à renoncer à la donnée
+qui rend la comparaison honnête. Le trigger refuse donc l'**insertion** et le **changement de
+rattachement**, jamais la mise à jour d'`actual_cost`. La frontière est écrite au §2.3 et prouvée par
+une contre-épreuve dans la Definition of Done : sans elle, un développeur écrira le trigger le plus
+simple — refuser toute écriture — et videra l'onglet de son usage.
+
+**Corollaire à l'écran :** clôturer un budget qui porte des réels non saisis **avertit et compte**,
+sans empêcher. La clôture reste une décision de gestion ; elle cesse d'être silencieuse. Clôturer
+sans le savoir fige une comparaison prévisionnel/réel fausse, que plus personne ne rouvrira.
+
+**Trois règles de saisie qui font la différence entre un tableau et un outil.**
+
+1. **`Entrée` enregistre et porte le focus sur le champ de la ligne suivante.** C'est cela,
+   « faciliter la saisie ». Sans cette règle, l'onglet ne vaut pas mieux que la fiche d'affaire.
+2. **Une ligne enregistrée ne quitte pas la table à chaud.** Elle reste en place, marquée, jusqu'au
+   prochain chargement. La retirer ferait remonter les lignes suivantes **sous les doigts** de celui
+   qui saisit, et lui ferait écrire une valeur dans la mauvaise ligne — le défaut classique de ce
+   genre d'écran.
+3. **Zéro est une valeur, pas un vide.** `0` signifie « finalement rien dépensé » et retire la ligne
+   de l'attente ; un champ laissé vide l'y laisse. Le §2.3 posait déjà que nul n'est pas zéro ; cet
+   onglet est l'endroit où la distinction se joue au clavier, elle est donc **écrite sous le
+   tableau** plutôt que supposée comprise.
+
+**Ce qui n'est pas masqué, et le motif est constant dans ces deux spécifications.** Les lignes des
+budgets **clôturés** sont listées — c'est après la clôture que les factures arrivent — avec une
+pilule qui le dit. Les lignes que l'appelant peut lire sans pouvoir les écrire sont rendues
+**désactivées avec leur motif**, jamais retirées : une table qui cache silencieusement des lignes se
+lit comme complète alors qu'elle ne l'est pas.
+
+**Un garde-fou de cohérence, écrit dans la Definition of Done :** le badge de l'onglet porte le même
+nombre que la mention « n lignes sans coût réel saisi » de la vue d'ensemble. Deux compteurs de la
+même grandeur dans le même écran sont deux occasions de mentir ; la preuve les compare.
+
+**Porteur :** `CRM-086`, dont la Definition of Done est étendue plutôt que scindée — c'est un onglet
+du même écran, pas un écran de plus.

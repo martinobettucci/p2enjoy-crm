@@ -8020,6 +8020,24 @@ le total d'un profil restreint diffère de celui d'un administrateur, et que la 
 exactement le budget qu'il ne lit pas ; regroupement par devise si plusieurs sont présentes ;
 accessibilité de l'histogramme — valeurs en clair, légende, équivalent textuel ; harnais dédié.
 
+**Onglet « À saisir » — `docs/SPEC-costs.md` §4.8, décision 433.** Les deux écrans sont à onglets ;
+le second liste toutes les lignes sans `actual_cost` que l'appelant peut lire, **budgets clôturés
+compris**, du plus ancien au plus récent, avec saisie en place.
+
+- [ ] **Preuves propres à l'onglet**, en plus de celles ci-dessus : le badge de l'onglet porte le
+      **même nombre** que la mention « n lignes sans coût réel saisi » de la vue d'ensemble — s'ils
+      divergent, l'un des deux ment ; `Entrée` enregistre **et porte le focus sur le champ de la
+      ligne suivante**, mesuré au clavier seul ; une ligne enregistrée **reste en place** et ne
+      quitte pas la table à chaud ; saisir `0` retire la ligne de l'attente, laisser vide l'y
+      laisse ; une ligne d'un budget **clôturé** est présente et **saisissable** ; une ligne lisible
+      mais non écrivable est rendue **désactivée avec son motif**, jamais masquée ; l'état « tous
+      les coûts réels sont saisis » est capturé.
+- [ ] **La mise à jour d'`actual_cost` sur un budget clos est prouvée en pgTAP**, avec sa
+      contre-épreuve : le changement de `budget_id` ou d'`occurrence_id` sur ce même budget clos
+      reste **refusé**. C'est la frontière exacte posée par le §2.3, et elle ne se devine pas.
+- [ ] **La clôture d'un budget portant des réels non saisis avertit et compte** (§4.1) : prouvé à
+      l'écran, et prouvé qu'elle n'est pas **empêchée** — c'est une décision de gestion.
+
 - [ ] **Ne jamais rendre un total qui inclurait un budget interdit.** Le cumul se calcule sur les
       lignes que la RLS consent, jamais avec la clé de service : un total juste au centime près qui
       divulgue par soustraction l'existence d'un budget fermé est un défaut d'autorisation, pas un

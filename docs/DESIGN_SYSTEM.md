@@ -1805,6 +1805,39 @@ Sans elle, un réel bas se lit comme une économie alors qu'il n'est qu'une sais
 
 **État vide.** Un budget sans ligne rend deux barres nulles **et** la phrase « aucune dépense
 rattachée » : deux barres à zéro sans texte se lisent comme un défaut d'affichage.
+### 5.31 Table de saisie en série des coûts réels — `CRM-086`
+
+Spécifiée avant code, `docs/SPEC-costs.md` §4.8.
+
+**Onglets.** Les écrans de coûts portent deux onglets — « Vue d'ensemble » et « À saisir » —, dans
+le style d'onglets déjà employé par la fiche d'affaire. L'onglet « À saisir » porte un **badge**
+neutre avec le nombre de lignes en attente ; le badge disparaît à zéro plutôt que d'afficher `0`.
+
+**Table.** Réemploie le tableau de données du §5.9 — en-tête collant, lignes de 44 px, alignement à
+droite des montants. La colonne « Réel » porte un **champ de saisie** aligné à droite, largeur fixe,
+qui s'enregistre pour lui-même selon le §5.7 ter : les trois mentions — « Enregistrement… »,
+« Enregistré », le refus — vivent **sous le champ, dans la ligne**, jamais en tête d'écran.
+
+**Clavier, et c'est la raison d'être de cet écran.** `Entrée` valide et porte le focus sur le champ
+« Réel » de la **ligne suivante**. `Échap` annule la saisie en cours et laisse la ligne intacte. La
+tabulation ne quitte pas la colonne de saisie tant qu'il reste des lignes : un écran de saisie en
+série qui oblige à traverser six colonnes par ligne n'est pas un écran de saisie en série.
+
+**Une ligne enregistrée reste en place**, sur un fond `--color-success-soft` qui s'estompe, jusqu'au
+prochain chargement de l'onglet. **Elle ne quitte jamais la table à chaud** : les lignes suivantes
+remonteraient sous le curseur et la valeur suivante serait écrite au mauvais endroit.
+
+**Ancienneté.** Première colonne, en 13 px `--color-text-2`, formulée en durée — « 12 jours ». Au
+delà d'un seuil, elle passe en `--color-danger-on-soft` sur `--color-danger-soft`, comme la pastille
+d'ancienneté d'une card (§5.1) : c'est le même signal, il doit avoir la même forme.
+
+**Pilule « clôturé »** sur les lignes dont le budget ou l'occurrence est clos — badge neutre du
+§5.6, jamais `--color-danger` : un budget clos n'est pas une erreur, et sa ligne reste saisissable.
+
+**Lecture seule.** Une ligne que l'appelant ne peut pas écrire rend son champ **désactivé et
+lisible**, avec le motif sous le champ — §8. Elle n'est jamais masquée : une table qui cache des
+lignes se lit comme complète alors qu'elle ne l'est pas.
+
 ## 6. Interactions
 
 - Retour visuel en moins de 100 ms sur tout clic ; transitions 150–250 ms `ease-out` ;

@@ -88,6 +88,12 @@ nommer, pas au schéma de les refuser.
 **Un budget clôturé n'accepte aucune ligne neuve**, et une occurrence clôturée non plus — trigger.
 Les lignes **déjà rattachées** restent, intactes et lisibles : clôturer n'efface pas l'histoire.
 
+**Et leur `actual_cost` reste modifiable après la clôture.** C'est le point que la clôture rendait
+ambigu, et il est tranché ici : on clôt une campagne **puis** les factures arrivent. Interdire la
+saisie du réel sur un budget clos obligerait soit à le rouvrir, soit à renoncer à la seule donnée
+qui rend la comparaison honnête. Le trigger refuse donc l'**insertion** et le changement de
+rattachement — `budget_id`, `occurrence_id` —, jamais la mise à jour d'`actual_cost` ni du `label`.
+
 **La devise d'une ligne est celle de son budget**, jamais celle de la card. Une ligne ne porte donc
 pas de colonne `currency` : la porter permettrait d'additionner des devises différentes dans un
 même total, ce qu'aucun écran ne saurait rendre honnêtement.
@@ -136,6 +142,11 @@ track : nom, devise, enveloppe, récurrent ou non, nombre d'occurrences ouvertes
 
 Les budgets **clôturés sont masqués par défaut**, derrière un interrupteur « afficher les budgets
 clôturés » — ils ne disparaissent pas de l'historique, ils sortent du chemin.
+
+**Clôturer un budget qui porte des réels non saisis avertit et compte** : « ce budget porte n lignes
+sans coût réel ; elles resteront saisissables après la clôture ». La clôture n'est pas empêchée —
+c'est une décision de gestion —, mais elle n'est pas silencieuse : clôturer sans le savoir fige une
+comparaison prévisionnel/réel fausse, et personne ne le verrait ensuite.
 
 ### 4.2 Écran de coûts du track
 
@@ -199,6 +210,65 @@ Total de la section : estimé et réel de l'affaire, avec la mention du §4.4 si
 | Aucun réel saisi | barre du réel nulle, mention du §4.4 obligatoire |
 | Lecture seule | les gestes d'écriture sont indisponibles et lisibles, et l'écran dit pourquoi |
 
+### 4.8 Onglet « À saisir » — les coûts en attente de leur réel
+
+Demandé par le responsable le 2026-08-19 (`docs/JOURNAL.md`, décision 433). Les écrans de coûts sont
+donc **à onglets** : « Vue d'ensemble » — l'histogramme des §4.2 et §4.5 — et « **À saisir** ».
+
+**Ce que l'onglet résout.** Le §4.4 dit qu'une ligne sans `actual_cost` ne compte pas et que l'écran
+doit l'annoncer. Il manquait le geste : savoir *combien* de réels manquent sans pouvoir les saisir
+oblige à ouvrir une affaire après l'autre. Cet onglet est la surface de **saisie en série**.
+
+**Ce qu'il liste.** Toutes les lignes `card_costs` dont `actual_cost` est **nul**, que l'appelant a
+le droit de **lire**, dans la portée de l'écran — les budgets du track, ou tous les tracks lisibles
+au niveau du workspace. **Y compris celles des budgets et occurrences clôturés** : c'est précisément
+après la clôture que les factures arrivent, et les exclure viderait l'onglet de son usage. Une ligne
+de budget clos porte une pilule « clôturé » pour que personne ne s'étonne de la voir.
+
+**Tableau, une ligne par coût**, du plus ancien au plus récent — celui qui attend depuis le plus
+longtemps est celui qu'on oublie :
+
+| Colonne | Contenu |
+|---|---|
+| Ancienneté | depuis quand la ligne attend son réel |
+| Budget | nom, devise, pilule « clôturé » le cas échéant |
+| Occurrence | libellé, si le budget est récurrent |
+| Affaire | titre, lien vers la fiche |
+| Nature | le `label` de la ligne — « Publicité », « Production » |
+| Estimé | `estimated_cost` |
+| **Réel** | **champ de saisie**, vide |
+
+**La saisie s'enregistre pour elle-même**, sans bouton d'enregistrement global, selon le mode déjà
+posé au §5.7 ter du design system. `Entrée` valide et **place le curseur sur le champ de la ligne
+suivante** : c'est cela, « faciliter la saisie », et sans cette règle l'onglet ne vaut pas mieux que
+la fiche d'affaire.
+
+**Une ligne enregistrée ne disparaît pas immédiatement.** Elle reste affichée, marquée
+« enregistré », jusqu'au prochain chargement de l'onglet. La retirer à la volée ferait remonter les
+lignes suivantes **sous les doigts** de celui qui saisit, et lui ferait écrire une valeur dans la
+mauvaise ligne — c'est le défaut classique de ce genre d'écran, et il est interdit ici.
+
+**Zéro est une valeur, pas un vide.** Saisir `0` signifie « finalement rien dépensé » et retire la
+ligne de l'attente ; laisser le champ vide la laisse en attente. Le §2.3 pose que nul n'est pas
+zéro, et cet onglet est l'endroit où la distinction se fait au clavier : elle est donc écrite sous le
+tableau, pas supposée comprise.
+
+**Ce que l'appelant ne peut pas écrire.** Une ligne lisible mais non écrivable — `app.can_write_card`
+faux — est rendue **en lecture seule**, avec le motif, jamais masquée. Un tableau qui cacherait
+silencieusement des lignes se lirait comme complet alors qu'il ne l'est pas ; c'est la même règle
+qu'au §4.4 sur les réels manquants, appliquée aux droits.
+
+**Compteur.** L'onglet porte un badge : le nombre de lignes en attente dans la portée de l'écran. Il
+est le même nombre que celui de la mention du §4.4 — s'ils divergeaient, l'un des deux mentirait.
+
+**États.**
+
+| État | Rendu |
+|---|---|
+| Aucune ligne en attente | « Tous les coûts réels sont saisis. » — c'est une bonne nouvelle, pas un état vide en défaut |
+| Aucune ligne **écrivable**, mais des lignes lisibles | le tableau est rendu, entièrement en lecture seule, et le dit en tête |
+| `viewer` | l'onglet est visible, le tableau est en lecture seule, et l'écran dit pourquoi |
+
 ## 5. Ce qui n'est pas au périmètre
 
 - aucune conversion de devise, aucun taux de change ;
@@ -206,4 +276,5 @@ Total de la section : estimé et réel de l'affaire, avec la mention du §4.4 si
 - aucune alerte de dépassement, aucun envoi d'email ;
 - aucune répartition automatique d'un coût entre plusieurs affaires ;
 - aucun rapprochement avec une facture, aucune pièce jointe sur une ligne ;
+- aucun import de réels depuis un fichier, ni rapprochement automatique avec une facture — l'onglet §4.8 est une saisie manuelle assistée, pas une reprise de données ;
 - aucun export comptable — `CRM-071` porte l'import/export, et cette spécification ne le préempte pas.
