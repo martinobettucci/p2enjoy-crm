@@ -19529,6 +19529,39 @@ d'un contact —, et la **modification du rôle** d'un rattachement déjà posé
 prochaine exécution peut prendre cette modification de rôle, ou la première unité `[ ]` du plan ;
 la suppression, elle, attend l'arbitrage.
 
+**COMPLÉMENT À LA DÉCISION 457 — la campagne de fin de session, et le défaut qu'elle SEULE a trouvé.**
+Le conteneur de la session a redémarré pendant la première campagne, emportant la pile ; elle a été
+remontée, reseedée, et la campagne rejouée. `scripts/verify-harness.sh` a alors rendu **31 contrôles,
+3 anomalies**, dont **une imputable à 4i** : une assertion de **4f** figeait le tableau des affaires
+à **trois** en-têtes exactement, pour dire ce que le §15.5 posait — le track et le channel sont dans
+l'adresse, et les répéter en colonnes remplirait la ligne. La quatrième colonne de 4i rendait cette
+condition fausse. **Les scénarios ciblés de 4i ne pouvaient PAS la voir** : ils ne couvraient que les
+scénarios de la sous-tranche, et le défaut vivait dans ceux de 4f — c'est précisément ce que la
+campagne de fin de session existe pour attraper. L'assertion est **révisée, ni retirée ni contournée**
+(mécanisme de la décision 51) : elle nomme désormais les quatre en-têtes, ce qui interdit toujours
+d'ajouter une colonne de **donnée** et vérifie du même coup que l'en-tête des commandes est un
+libellé lisible. `npm run e2e:ui` complet rend ensuite **437 verts, aucun échec**.
+
+**Les deux autres anomalies sont ÉTRANGÈRES, et déjà consignées.** `e2e:mail` rougit sur le `WARNING`
+que la veille de `mail-sync` émet en fonctionnement normal — **INC-161**, ouverte. `npm run test:sql`
+rendait « 45 fichiers, 1 en échec » **dans le harnais** et **45 fichiers, 2269 assertions, aucune
+anomalie** exécuté seul, avant comme après : le rouge vient de la première campagne **tuée en vol par
+le redémarrage du conteneur**, qui a laissé une suite dégradée derrière elle avant que la section 10
+du harnais ne restaure tout. Ce n'est pas un verdict sur le produit. La famille des compteurs de seed
+reste par ailleurs ouverte en **INC-163**. Vérifié plutôt que supposé : `git log --name-only` sur les
+commits de la session ne rend **aucun** fichier de `supabase/`.
+
+**Ce qui n'a PAS été exécuté**, et c'est dit plutôt que tu, faute de temps après le redémarrage
+(`docs/CloudWorker.md` §2.1 ter et §4.3) : `pytest`, et les **quarante-neuf autres**
+`scripts/verify-*.sh`. Exécutés et verts : `test:unit` (1700), `typecheck`, `build`, `test:sql` (45
+fichiers, 2269 assertions), `e2e:api` complet (**749**, via le harnais), `e2e:ui` complet (**437**),
+`verify-harness.sh` (31 contrôles, 3 anomalies dont la seule imputable est corrigée).
+
+**Les captures régénérées par la campagne ont été RESTAURÉES, et ce n'est pas de la négligence** :
+une suite complète réécrit les captures de **toutes** les unités, et les committer sans les avoir
+observées violerait `CLAUDE.md` §16. Seules les quatre captures de 4i ont été observées, et ce sont
+elles qui restent versionnées.
+
 ## décision 458 — `CRM-060` sous-tranche 4j : le rôle d'un rattachement se corrige enfin, et une mesure interdit à la fonction d'envoyer les clés
 
 **L'unité, et le choix.** La décision 457 laissait `4i` close et `CRM-060` en `[~]`, avec deux
