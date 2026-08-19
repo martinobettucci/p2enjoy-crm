@@ -20367,3 +20367,13 @@ Les quarante-huit autres `scripts/verify-*.sh` n'ont pas été rejoués, la sér
 dans une session (`docs/CloudWorker.md` §2.1 ter). Les captures des autres unités, régénérées par la
 campagne, ont été **restaurées** et non committées : ce changement ne touche que l'écran des
 objectifs, et versionner cent trente captures d'écrans qu'il ne modifie pas serait du bruit.
+
+**Rebase sur une session parallèle, et preuves rejouées.** `origin/main` avait avancé pendant la
+campagne : la **tranche 2b-2b, les flèches**, a été poussée par une autre session (`3f507da`), sur
+les **mêmes quatre fichiers** que cette tranche. Le rebase s'est fait **sans conflit**, et leur
+travail n'a rien perdu — leur commit ne touche que du code, leur documentation restant à venir de
+leur côté ; le backlog n'a donc pas été écrasé. Preuves rejouées APRÈS synchronisation
+(`CLAUDE.md` §13) : `typecheck` vert, `objectifs-ecriture.test.ts` + `Objectifs.test.tsx` +
+`i18n.test.ts` **297 tests verts**, `e2e/ui/objectifs.spec.ts` **24 scénarios verts**, console
+vierge. Le point « où reprendre » ci-dessus est donc déjà dépassé sur ce point : les flèches sont
+livrées par cette session voisine.
