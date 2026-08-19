@@ -273,6 +273,41 @@ session**, et le comportement est laissé **inchangé**. Aucun des trois ne dema
 sont des faits à porter par leur unité, pas des choix à trancher. *La troisième, **INC-125**, a été
 consignée le 2026-08-16 par la session qui a clos `CRM-079`.*
 
+### INC-162 — `verify-cards.sh` attend « 14/1/1/14 » là où le seed en produit « 15/1/1/15 » depuis `CRM-060` tranche 4d
+
+**Nature :** la section 8 de `scripts/verify-cards.sh` — « le seed est conforme et convergent » —
+compare l'état du seed à un compteur figé. Le seed a été enrichi depuis, et le compteur ne l'a pas
+été dans le même changement. Le contrôle rougit donc sur une **dérive de compteur**, pas sur un
+défaut du produit : les quarante-cinq autres contrôles du harnais sont verts, **y compris ses
+suites globales** — `test:sql`, `test:unit`, `typecheck`, `types:check`, `build`, `e2e:api` et
+`e2e:ui` — et ses trois dégradations de non-complaisance mordent toutes.
+
+**Mesure, 2026-08-19, sur la pile seedée de cette session, harnais exécuté SEUL :**
+
+```
+scripts/verify-cards.sh
+  8. Le seed est conforme et convergent — §9
+     ECHEC  état du seed : « 15/1/1/15 », attendu « 14/1/1/14 »
+  10. Suites, tests unitaires et build : les sept contrôles OK
+  46 contrôles, 1 en échec.
+```
+
+**Étrangère à l'unité de la session.** `CRM-060` sous-tranche 4f **ne modifie pas le seed**, et
+c'est vérifié plutôt que supposé : aucun de ses commits ne touche `supabase/seed/`, et
+`git log -- supabase/seed/apply-seed.sh` désigne `7452bc1` — `CRM-060` tranche **4d** — comme
+dernier changement, antérieur à cette session. Le comportement est laissé **inchangé**.
+
+**Ce qui reste à trancher, et pourquoi cette session ne le tranche pas :** deux réponses sont
+possibles — porter le compteur à « 15/1/1/15 » comme les compteurs de `verify-harness.sh` l'ont été,
+ou constater que l'enrichissement de 4d a ajouté une ligne qu'il ne devait pas. Choisir demande de
+relire ce que 4d a voulu, ce qui appartient à l'unité qui a enrichi le seed, pas à celle qui passe.
+
+**Une observation d'exploitation, mesurée le même jour, et qui n'est PAS une entrée du registre mais
+une précaution de méthode :** deux harnais lancés **en parallèle** se perturbent, l'un dégradant la
+base pendant que l'autre mesure. `verify-seed-demo.sh` a rendu « 2 anomalies » pendant que
+`verify-harness.sh` tournait, puis **69 contrôles, aucune anomalie** exécuté seul. Un verdict rendu
+dans ces conditions ne dit rien du produit.
+
 ### INC-161 — `e2e:mail` rougit sur un `WARNING` que la veille de `mail-sync` émet en fonctionnement NORMAL
 
 **Nature :** le scénario `S3` de `e2e/mail/mail-sync.spec.ts` (ligne 231) exige que **chaque** ligne
