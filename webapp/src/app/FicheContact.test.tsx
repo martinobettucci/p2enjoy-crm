@@ -1124,7 +1124,11 @@ describe('détachement d’une affaire depuis la fiche (docs/SPEC-contacts.md §
 	})
 
 	it('cas e — la confirmation est DÉSACTIVÉE en vol, et n’émet jamais deux requêtes', async () => {
-		let debloquer: ((valeur: Reponse) => void) | null = null
+		// L'assertion d'affectation définie est nécessaire, et le motif est un vrai écart entre le
+		// compilateur et l'exécution : `tsc` ne sait pas que l'exécuteur d'une `Promise` est appelé
+		// SYNCHRONEMENT, si bien qu'il tient la variable pour encore `null` après cette ligne et
+		// réduit son type à `never` à l'appel. La déclarer affectée dit ce que l'exécution garantit.
+		let debloquer!: (valeur: Reponse) => void
 		const enVol = new Promise<Reponse>((resoudre) => {
 			debloquer = resoudre
 		})
@@ -1159,7 +1163,7 @@ describe('détachement d’une affaire depuis la fiche (docs/SPEC-contacts.md §
 		expect(bouton.textContent).toContain(fr['contact.detach.pending'])
 		await userEvent.click(bouton)
 		expect(suppressions).toHaveLength(1)
-		debloquer?.({ data: [{ contact_id: ID_LEO }], error: null, status: 200 })
+		debloquer({ data: [{ contact_id: ID_LEO }], error: null, status: 200 })
 	})
 
 	it('cas l — sans contact, sans client ou en erreur, AUCUNE commande n’est rendue', async () => {
