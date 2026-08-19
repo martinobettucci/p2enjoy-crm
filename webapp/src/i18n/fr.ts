@@ -92,6 +92,25 @@ export const fr = {
 	'inbox.list.truncated': 'Seuls les 50 messages les plus récents sont affichés.',
 	'inbox.list.unselected.title': 'Choisissez un dossier',
 	'inbox.list.unselected.body': 'La liste des messages apparaîtra ici.',
+	// Le sommeil d'un FIL dans l'inbox — CRM-081 tranche 2 e, docs/SPEC-cards.md §16.15,
+	// docs/DESIGN_SYSTEM.md §5.3 septies.
+	// LES MENTIONS NOMMENT LE FIL, ET NON L'AFFAIRE : un même refus se formule d'une seule façon,
+	// mais il ne se trompe pas de sujet (§16.15.6).
+	'inbox.sleep.filter': 'Afficher les fils en sommeil',
+	'inbox.sleep.empty.title': 'Tous les messages de ce dossier sont dans des fils en sommeil',
+	'inbox.sleep.empty.body':
+		'Cochez « Afficher les fils en sommeil » pour les retrouver, ou choisissez un autre dossier.',
+	'inbox.sleep.open': 'Mettre le fil en sommeil',
+	'inbox.sleep.wake': 'Réveiller le fil',
+	'inbox.sleep.announce.slept': 'Fil mis en sommeil.',
+	'inbox.sleep.announce.woken': 'Fil réveillé.',
+	// L'issue `refus` n'existe PAS ici, et c'est mesuré : `snooze_thread` n'oppose aucun
+	// `forbidden`, aucun droit d'écriture n'étant défini sur un fil (§16.14.4).
+	'inbox.sleep.refus.notfound': 'Ce fil n’est plus disponible.',
+	'inbox.sleep.refus.required': 'Une échéance est nécessaire.',
+	'inbox.sleep.refus.past': 'L’échéance doit être future.',
+	'inbox.sleep.refus.network': 'La demande n’a pas abouti : réessayez.',
+	'inbox.sleep.refus.unknown': 'La demande a échoué.',
 	'inbox.message.title': 'Message',
 	'inbox.message.unselected.title': 'Aucun message ouvert',
 	'inbox.message.unselected.body': 'Choisissez un message dans la liste pour le lire.',

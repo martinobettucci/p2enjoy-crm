@@ -116,13 +116,20 @@ export function PastilleSommeil({
  *
  * La cible fait au moins 40 px (§8) : c'est le `label` entier qui la porte, pas la seule case, de
  * sorte que le texte soit cliquable.
+ *
+ * LE LIBELLÉ EST UN PARAMÈTRE DEPUIS LA TRANCHE 2 e (docs/SPEC-cards.md §16.15.5), et sa valeur par
+ * défaut reste celle des affaires : l'inbox masque des **fils**, non des affaires, et « Afficher les
+ * affaires en sommeil » y désignerait un objet que cet écran ne montre pas. La forme, elle, est la
+ * même — case à cocher étiquetée, icône `Moon`, cible de 40 px —, et c'est ce qui doit être partagé.
  */
 export function BasculeSommeil({
 	mode,
 	onMode,
+	libelle,
 }: {
 	readonly mode: ModeSommeil
 	readonly onMode: (mode: ModeSommeil) => void
+	readonly libelle?: string
 }) {
 	const id = useId()
 
@@ -144,7 +151,7 @@ export function BasculeSommeil({
 				className="size-4 accent-brand"
 			/>
 			<Moon aria-hidden="true" size={16} strokeWidth={2} className="shrink-0" />
-			{t('sommeil.afficher')}
+			{libelle ?? t('sommeil.afficher')}
 		</label>
 	)
 }
