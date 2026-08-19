@@ -3070,3 +3070,212 @@ seule raison pour laquelle ces trois annonces existent.
 | API | Aucune preuve d'API nouvelle n'est due : le contrat des deux RPC est celui du §16.8, déjà éprouvé par `e2e/api/snooze.spec.ts` (9 scénarios) avec les jetons réels. Cette tranche n'ajoute **aucun** chemin serveur, et le prétendre serait une preuve inventée |
 | E2E d'interface | Depuis le board de `grands-comptes` : le menu de `Socle analytique — Vertuo`, **étape terminale sans transition**, s'ouvre et porte le geste ; l'affaire endormie depuis la carte **quitte le board**, le compteur de sa colonne décroît, et elle est retrouvée par la bascule **avec sa pastille** ; le réveil depuis le mode `visibles` la ramène en mode masqué ; l'affaire est réveillée en fin de scénario pour que le seed sorte intact |
 | Visuel | Captures du menu ouvert sur une affaire éveillée et sur une affaire endormie, du refus rendu à une lectrice, et du board après disparition de la carte, observées conformément à `CLAUDE.md` §16 |
+
+#### 16.14 Tranche 2 c — le sommeil d'un FIL de messagerie : la règle, sa garde et sa trace
+
+Le §16.10 énumère six choses dues par la tranche 2. Cinq sont livrées — le geste et sa pastille
+(2 a), le filtre des vues (2 b), le geste depuis la carte du board (2 d). La sixième est celle-ci,
+et c'est la seule que l'énoncé de `CRM-081` nomme dans son titre — « snooze des **fils** et des
+cards » — sans qu'aucune ligne du produit ne la porte.
+
+Ce sous-chapitre est le contrat de la **tranche 2 c**, écrit avant sa première ligne de code et
+fondé sur six mesures relevées le 2026-08-19 sur la pile seedée. Comme la tranche 1 pour l'affaire,
+elle livre **la règle, sa garde et sa trace, et aucune surface**.
+
+##### 16.14.1 SIX MESURES, ET DEUX D'ENTRE ELLES ÉCARTENT UNE MOITIÉ DU PATRON DE LA TRANCHE 1
+
+| # | Mesure, le 2026-08-19 | Ce qu'elle décide |
+|---|---|---|
+| 1 | `public.threads` **n'existe pas**, et `information_schema.columns` ne rend **aucune** colonne dont le nom porte `thread` dans tout le schéma `public` | Le manque du §16.10 est confirmé plutôt que supposé. Il n'y a rien à fermer, rien à réutiliser |
+| 2 | Les deux messages du seed portent `references_ids` **vide** ; leur `rfc822_message_id` vaut `<seed-inbox-classe@p2enjoy.test>` et `<seed-inbox-non-classe@p2enjoy.test>` | Un fil d'un seul message est le cas **normal**, non un cas dégradé. La clé doit le couvrir sans détour |
+| 3 | `authenticated` détient sur `public.mail_messages` le privilège **`SELECT` et lui seul**, sur les vingt-deux colonnes | **Il n'y a AUCUNE colonne à fermer**, à la différence du §16.7 : le client ne peut déjà rien écrire. La garde ne répare rien, elle ouvre un chemin qui n'existait pas |
+| 4 | La politique `mail_messages_lecture` porte pour tout `USING` `((card_id is not null and app.can_read_card(card_id)) or app.boite_du_message_lisible(id))`, expression que `app.peut_voir_message(uuid)` rend déjà telle quelle | La lisibilité d'un fil se dérive de celle de ses messages. Aucun prédicat nouveau n'est inventé |
+| 5 | `mail_messages_dedoublonnage` est `unique (workspace_id, rfc822_message_id)` | La clé d'un fil n'est unique **qu'à l'intérieur d'un workspace**. Toute clé primaire l'y porte |
+| 6 | Avec les jetons réels des trois profils, la politique rend **2** messages à l'administratrice, **1** au business developer — le seul classé — et **0** à la lectrice | L'asymétrie qui prouve les refus **existe déjà dans le seed**. Aucune donnée nouvelle n'est due pour l'éprouver |
+
+**LA MESURE 3 RETIRE LA MOITIÉ DU PATRON DE LA TRANCHE 1 AVANT QU'ELLE NE SOIT ÉCRITE.** Le §16.7
+fermait `cards.snoozed_until`, ouverte en écriture par la migration 14, et ce `revoke` était la
+condition pour que les quatre refus du §16.3 gardent quoi que ce soit. Ici il n'y a rien à
+reprendre : le client n'a jamais rien pu écrire sur `mail_messages`. La symétrie serait donc
+trompeuse, et le contrat ci-dessous ne porte **aucune** section « la colonne se ferme ».
+
+##### 16.14.2 CE QU'EST UN FIL, ET POURQUOI CE N'EST PAS UNE TABLE
+
+Un **fil** est l'ensemble des messages d'un workspace qui partagent la même **racine RFC 5322**.
+Cette racine est :
+
+```
+app.cle_fil(references_ids, rfc822_message_id) = coalesce(references_ids[1], rfc822_message_id)
+```
+
+Le premier élément de `References` est, par la RFC, le message qui a ouvert la chaîne ; un message
+qui n'en cite aucun **est** cette racine. La mesure 2 rend les deux cas dans le seed, et le second
+est le cas courant.
+
+**Aucune table `threads`, et aucune colonne ajoutée à `mail_messages`.** Deux réponses ont été
+pesées :
+
+- une **colonne générée** `thread_key` sur `mail_messages` : elle rendrait la clé indexable et
+  lisible du client, mais elle déplace la liste des colonnes de la table, que plusieurs preuves du
+  dépôt figent — privilèges énumérés colonne par colonne, comptes de colonnes, types engendrés. Le
+  coût est réel et il ne sert **aucune** règle de cette tranche ;
+- un **index d'expression** sur `(workspace_id, app.cle_fil(...))` : il donne la même performance à
+  la garde, ne déplace aucune forme, et laisse la colonne à la tranche qui en aura besoin — celle
+  qui groupera les messages à l'écran.
+
+Le second est retenu. La conséquence est **nommée** plutôt que découverte : tant que la colonne
+n'existe pas, l'écran devra recalculer la clé, et l'expression devra alors être la **même** des
+deux côtés. C'est pourquoi elle est une **fonction** — `app.cle_fil`, `immutable` — et non une
+expression recopiée : une définition, un seul endroit où elle change.
+
+##### 16.14.3 L'ÉTAT DE SOMMEIL EST UNE LIGNE, ET SON ABSENCE EST « ÉVEILLÉ »
+
+`public.mail_thread_snoozes` :
+
+| Colonne | Type | Règle |
+|---|---|---|
+| `workspace_id` | `uuid not null` | `references public.workspaces on delete cascade`. Avec `thread_key`, la **clé primaire** — mesure 5 |
+| `thread_key` | `text not null` | La racine du §16.14.2. Contrainte `check (btrim(thread_key) <> '')` : une clé blanche désignerait tous les fils sans racine à la fois |
+| `snoozed_until` | `timestamptz not null` | L'échéance. **Non nulle par contrainte de colonne** : une ligne sans échéance n'a pas de sens que l'absence de ligne ne dise mieux |
+| `snoozed_by` | `uuid` | `references public.profiles on delete set null`. Écrit **par la fonction**, jamais offert au client |
+| `created_at`, `updated_at` | `timestamptz not null default now()` | `updated_at` par `app.set_updated_at()`, trigger déjà en place ailleurs |
+
+**Un fil est en sommeil si sa ligne existe ET que `snoozed_until` est strictement postérieure à
+`now()`** — le prédicat du §16.2, transposé sans changement. La sortie reste **implicite** : aucune
+tâche planifiée n'est écrite, ici pas davantage qu'au §16.2.
+
+**Le réveil SUPPRIME la ligne, il ne la vide pas.** Une ligne réveillée ne porterait plus qu'une
+échéance nulle interdite par sa propre contrainte, ou une échéance passée que le prédicat écarte
+déjà : dans les deux cas une coquille que toute lecture devrait ensuite exclure par une seconde
+condition. L'absence de ligne est la représentation honnête de « éveillé ». La conséquence est
+assumée et nommée au §16.14.7 : **le réveil efface la trace du sommeil**, et rien ne la recueille
+ailleurs, faute d'un journal de fil.
+
+##### 16.14.4 `public.snooze_thread` — TROIS refus, et pas quatre
+
+```
+public.snooze_thread(workspace uuid, thread_key text, until timestamptz)
+  returns public.mail_thread_snoozes
+```
+
+`security definer`, `search_path` vidé, relations pleinement qualifiées — mêmes raisons qu'au
+§16.3 : la table n'accorde aucune écriture au client, et les politiques ne s'appliquent pas à son
+propriétaire, donc la fonction vérifie **elle-même** ce qu'elle a le droit de faire.
+
+Les gardes, dans l'ordre où elles s'opposent :
+
+| # | Refus | SQLSTATE | HTTP | Quand |
+|---|---|---|---|---|
+| 1 | `thread_not_found` | `P0001` | `400` | **Aucun message** de ce couple `(workspace, clé)` n'est lisible de l'appelant |
+| 2 | `snooze_date_required` | `P0001` | `400` | `until` est `NULL` |
+| 3 | `snooze_date_in_past` | `P0001` | `400` | `until <= now()` |
+
+**IL N'Y A PAS DE QUATRIÈME REFUS, ET C'EST LA MESURE 3 QUI L'INTERDIT.** Le §16.3 oppose
+`forbidden` à qui lit une affaire sans pouvoir l'écrire, parce que `app.can_write_channel` existe et
+que le produit a défini ce droit. Sur un fil de messagerie, **aucun droit d'écriture n'est défini
+nulle part** : le client détient `SELECT` et rien d'autre. Inventer ici une seconde autorisation —
+« qui peut endormir un fil qu'il lit » — serait trancher une question de produit que personne n'a
+posée. La règle retenue est donc celle que les données portent déjà : **qui lit le fil peut
+l'endormir**, et c'est écrit plutôt que sous-entendu.
+
+**`thread_not_found` couvre les deux causes**, l'inexistence et l'invisibilité, exactement comme
+`card_not_found` au §16.3 : distinguer les deux confirmerait l'existence d'un fil à qui n'a pas le
+droit de la connaître (`docs/SPEC-permissions-rls.md` §4.3). La mesure 6 rend cette confusion
+**observable** : la lectrice ne lit aucun message, donc les deux fils du seed lui sont
+indistinctement introuvables ; le business developer lit le fil classé et **pas** l'autre.
+
+**Un fil DÉJÀ en sommeil est accepté** : la nouvelle échéance remplace l'ancienne — `insert … on
+conflict (workspace_id, thread_key) do update` —, et `snoozed_by` devient celui qui a reporté. Le
+report est un geste, non une erreur, même règle qu'au §16.3.
+
+##### 16.14.5 `public.wake_thread` — idempotente, et elle le dit
+
+```
+public.wake_thread(workspace uuid, thread_key text) returns boolean
+```
+
+Une seule garde, `thread_not_found`, sur le **même** prédicat de lisibilité : réveiller un fil
+qu'on ne lit pas n'est pas plus permis que l'endormir, et le refus ne dit pas davantage.
+
+La garde passée, la ligne est supprimée **si elle existe**. La fonction rend `true` quand une ligne
+a réellement été retirée, `false` sinon. Un réveil sans sommeil **n'est pas une erreur du
+demandeur** (§16.4) : rendre `false` dit ce qui s'est passé sans le lui reprocher, et un appelant
+qui n'en a que faire peut l'ignorer.
+
+##### 16.14.6 QUI LIT LA LIGNE — la table est fermée en écriture par défaut, et c'est le cas facile
+
+`public.mail_thread_snoozes` naît sans aucun privilège : une table neuve n'en accorde à personne.
+Sont donc accordés, nominativement :
+
+- à `authenticated` : **`SELECT` seul**, sur toutes les colonnes. L'écran devra lire l'état pour le
+  montrer ; il n'écrira jamais directement ;
+- à `service_role` : `all privileges`, comme partout ailleurs, pour le seed et l'exploitation ;
+- **aucun `INSERT`, `UPDATE` ni `DELETE` à `authenticated`.** Les deux fonctions du §16.14.4 et du
+  §16.14.5 sont le seul chemin, et l'être **par le privilège** vaut mieux que l'être par une
+  politique qu'on pourrait élargir sans y penser.
+
+La RLS est active, et sa politique de lecture est `app.fil_lisible(workspace_id, thread_key)` — le
+même prédicat que les deux gardes, pour que la ligne visible et le fil visible ne puissent jamais
+diverger.
+
+##### 16.14.7 CE QUE LA TRANCHE NE LIVRE PAS, ET C'EST NOMMÉ
+
+- **Aucune surface** : ni pastille, ni geste, ni filtre de l'inbox. Un fil endormi reste
+  aujourd'hui visible partout où il l'était. La Definition of Done de `CRM-081` n'est donc pas
+  tenue par cette tranche, et l'unité reste `[~]` ;
+- **aucun groupement des messages en fils à l'écran** : l'inbox liste des messages, pas des fils
+  (`webapp/src/lib/inbox.ts`), et ce regroupement est un travail d'écran qui appartient à la
+  tranche suivante ;
+- **aucune trace dans un journal**. `card_events` est le fil d'une **affaire** ; un fil de
+  messagerie n'a pas d'équivalent, et en écrire un dans `card_events` attribuerait à une affaire un
+  geste qui ne la vise pas — d'autant qu'un fil peut porter des messages classés sur des affaires
+  différentes, ou sur aucune. La seule trace est la ligne elle-même, son `snoozed_by` et son
+  `updated_at` ; le réveil l'efface (§16.14.3). **L'écart est nommé, non comblé** : le jour où un
+  journal de fil existera, il recueillera les deux gestes ;
+- **aucun réveil planifié**, pour le motif exact du §16.2 ;
+- **aucune donnée de démonstration nouvelle.** La mesure 6 établit que le seed porte déjà
+  l'asymétrie qui prouve les refus. Poser un fil endormi n'aurait d'intérêt que le jour où un écran
+  le montre — même raisonnement qu'au §16.1 pour l'affaire, et le seed reste **intact**.
+
+##### 16.14.8 Contrat d'API — les neuf lignes, avec les jetons réels
+
+Clés du seed : `Wc` = `<seed-inbox-classe@p2enjoy.test>` (fil **classé**, lu par
+l'administratrice et le business developer), `Wn` = `<seed-inbox-non-classe@p2enjoy.test>` (fil
+**non classé**, lu de la seule administratrice), `W` = le workspace du seed.
+
+| # | Appel | Profil | Attendu |
+|---|---|---|---|
+| 1 | `snooze_thread(W, Wc, now()+7j)` | administratrice | `200`, la ligne, `snoozed_by` = son identifiant |
+| 2 | `snooze_thread(W, Wc, now()+14j)` | administratrice | `200`, l'échéance **remplacée**, toujours une seule ligne |
+| 3 | `snooze_thread(W, Wn, now()+7j)` | business developer | `400`, `thread_not_found` — il ne lit pas ce fil |
+| 4 | `snooze_thread(W, Wc, now()+7j)` | lectrice | `400`, `thread_not_found` — elle n'en lit aucun |
+| 5 | `snooze_thread(W, Wc, null)` | administratrice | `400`, `snooze_date_required` |
+| 6 | `snooze_thread(W, Wc, now()-1j)` | administratrice | `400`, `snooze_date_in_past` |
+| 7 | `snooze_thread(W, '<inconnu@p2enjoy.test>', now()+7j)` | administratrice | `400`, `thread_not_found` |
+| 8 | `wake_thread(W, Wc)` | administratrice | `200`, `true`, la ligne **relue absente** |
+| 9 | `wake_thread(W, Wc)` | administratrice | `200`, `false` — idempotente, aucun refus |
+
+Chaque refus **relit la ligne** pour la constater inchangée (décision 70).
+
+##### 16.14.9 Preuves exigées de la tranche
+
+| Niveau | Preuve |
+|---|---|
+| pgTAP | Suite dédiée : la forme de la table, de ses contraintes et de sa clé primaire ; les privilèges **accordés et refusés** à `authenticated`, colonne par colonne pour l'écriture ; la RLS active et sa politique ; la forme des trois fonctions, leur `security definer` et leur propriétaire ; `app.cle_fil` sur les deux cas de la mesure 2 ; les trois refus de `snooze_thread`, le report, et l'idempotence de `wake_thread` |
+| API | Les neuf lignes du §16.14.8 rejouées avec les jetons réels des profils seedés |
+| E2E d'interface | **Aucune** : la tranche ne livre aucune surface. Elle est due par la tranche suivante, avec ses captures |
+| Visuel | **Aucune vérification visuelle**, pour la même raison |
+| Seed | Le seed sort **intact** : les preuves réveillent le fil qu'elles endorment |
+
+##### 16.14.10 Definition of Done de la tranche 2 c
+
+- `supabase/migrations/0048_snooze_fils.sql` : `app.cle_fil`, l'index d'expression,
+  `public.mail_thread_snoozes` et sa RLS, `app.fil_lisible`, `public.snooze_thread`,
+  `public.wake_thread`, et les privilèges nominatifs du §16.14.6 ;
+- suite pgTAP dédiée, exécutée et verte ;
+- preuve d'API dédiée, les neuf lignes avec les jetons réels ;
+- `docs/SCHEMA.md`, `docs/PROD_MIGRATIONS.md` et `CHANGELOG.md` dans le même changement ;
+- commentaires `@spec` sur chaque fichier touché.
+
+**Ce qui restera dû sur `CRM-081` après la tranche 2 c** : la **surface** du sommeil de fil —
+groupement des messages en fils dans l'inbox, pastille, geste et filtre. L'unité demeure `[~]`.
