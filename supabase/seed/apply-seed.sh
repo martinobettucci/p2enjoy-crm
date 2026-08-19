@@ -2620,6 +2620,174 @@ traces=$(curl -s "$API/rest/v1/card_events?type=eq.snoozed&select=id" 	-H "apike
 info "Sommeil : 2 affaires — une endormie, une dont l'échéance est échue — docs/SPEC-cards.md §16.11.6"
 
 
+# --- 8 terdecies. Tableau d'objectifs de démonstration — docs/SPEC-goals.md §5, CRM-082 ---------
+# @spec CRM-082 (docs/BACKLOG.md) — objectifs : modèle, RLS et API
+# @spec docs/SPEC-goals.md §2 (objets), §4.1 (le bloc invisible), §5.4 (états de l'écran)
+# @spec docs/SCHEMA.md §9 bis.1 à §9 bis.3
+#
+# Un tableau, SIX blocs et QUATRE flèches, posés par la véritable API REST avec la clé de service,
+# comme les tracks (décision 32) : le seed ne parle jamais SQL à la place du produit.
+#
+# CE QUE CE JEU DOIT DÉMONTRER, ET POURQUOI CHAQUE LIGNE EXISTE.
+#
+#   * UN BLOC LIÉ À UN CHANNEL FERMÉ À LA LECTRICE. « Gagner un grand compte » vise
+#     « Grands comptes », que Farida ne lit pas — MESURÉ : elle lit six channels sur huit, ni
+#     « Grands comptes » ni « Appels d'offres ». Sans ce bloc, la règle du §4.1 ne serait
+#     démontrable sur AUCUN écran : les deux profils verraient le même dessin, et le canevas de
+#     `CRM-083` n'aurait jamais l'occasion de rendre son bloc absent.
+#
+#   * UNE FLÈCHE PARTANT DE CE BLOC. Elle est lisible par tout le monde — la lecture d'un lien ne
+#     dépend que du tableau (§9 bis.7) —, si bien que Farida voit une flèche dont l'origine
+#     n'existe pas pour elle. C'est l'état « pointillés vers le vide » du §5.4, et il ne se
+#     démontre qu'avec cette paire.
+#
+#   * LES TROIS DIRECTIONS, sur quatre flèches. Une seule direction manquante et le rendu des
+#     pointes ne serait éprouvé qu'à moitié.
+#
+#   * DES REMPLISSAGES DISTINCTS, dont les DEUX BORNES : 0 et 100. Une jauge n'est fausse qu'aux
+#     bords, et un jeu où tous les blocs seraient à 50 ne montrerait ni la jauge vide, ni la
+#     jauge pleine.
+#
+# `resolution=merge-duplicates` sur la clé primaire : l'écriture est CONVERGENTE. Un bloc déplacé
+# à la main pendant une session de développement est rétabli au contrat, pas dupliqué.
+#
+# AUCUN REMPLISSAGE N'EST CALCULÉ ICI, et ce n'est pas un oubli : `docs/SPEC-goals.md` §1 interdit
+# de dériver `fill_percent` des cards du channel lié. Les valeurs ci-dessous sont SAISIES, comme
+# celles d'un utilisateur.
+
+GOAL_BOARD_ID='5eed0000-0000-4000-8000-0000000000e1'
+
+# id | titre | remplissage | channel | x | y | couleur
+GOAL_BLOCS=(
+	"5eed0000-0000-4000-8000-0000000000e1|Doubler le pipeline commercial|25|-|40|40|brand"
+	"5eed0000-0000-4000-8000-0000000000e2|Livrer la refonte du site vitrine|60|5eed0000-0000-4000-8000-000000000034|360|40|success"
+	"5eed0000-0000-4000-8000-0000000000e3|Gagner un grand compte|40|5eed0000-0000-4000-8000-000000000032|680|40|accent"
+	"5eed0000-0000-4000-8000-0000000000e4|Industrialiser la maintenance|0|5eed0000-0000-4000-8000-000000000035|360|240|neutral"
+	"5eed0000-0000-4000-8000-0000000000e5|Former cinquante personnes|80|-|40|240|success"
+	"5eed0000-0000-4000-8000-0000000000e6|Solder les dossiers 2023|100|-|680|240|neutral"
+)
+
+# id | source | cible | direction | libellé
+GOAL_FLECHES=(
+	"5eed0000-0000-4000-8000-0000000000f1|5eed0000-0000-4000-8000-0000000000e1|5eed0000-0000-4000-8000-0000000000e2|forward|nourrit"
+	"5eed0000-0000-4000-8000-0000000000f2|5eed0000-0000-4000-8000-0000000000e2|5eed0000-0000-4000-8000-0000000000e5|backward|dépend de"
+	"5eed0000-0000-4000-8000-0000000000f3|5eed0000-0000-4000-8000-0000000000e1|5eed0000-0000-4000-8000-0000000000e6|both|-"
+	"5eed0000-0000-4000-8000-0000000000f4|5eed0000-0000-4000-8000-0000000000e3|5eed0000-0000-4000-8000-0000000000e4|forward|-"
+)
+
+echo
+say "8 terdecies. Tableau d'objectifs de démonstration"
+
+charge=$(jq -nc --arg id "$GOAL_BOARD_ID" --arg ws "$WS_ID" \
+                --arg auteur '5eed0000-0000-4000-8000-000000000011' \
+     '{id: $id, workspace_id: $ws, name: "Objectifs du trimestre",
+       description: "Tableau blanc des objectifs de l’équipe. Les remplissages sont saisis à la main.",
+       position: 1, archived_at: null, created_by: $auteur}')
+code=$(api POST /rest/v1/goal_boards \
+	-H 'Prefer: return=representation,resolution=merge-duplicates' \
+	-d "$charge")
+attendu "$code" "création du tableau d'objectifs" 200 201
+
+for ligne in "${GOAL_BLOCS[@]}"; do
+	IFS='|' read -r id titre remplissage channel x y couleur <<< "$ligne"
+
+	if [ "$channel" = '-' ]; then
+		charge=$(jq -nc --arg id "$id" --arg board "$GOAL_BOARD_ID" --arg titre "$titre" \
+		                --argjson f "$remplissage" --argjson x "$x" --argjson y "$y" \
+		                --arg couleur "$couleur" \
+		                --arg auteur '5eed0000-0000-4000-8000-000000000011' \
+		     '{id: $id, board_id: $board, title: $titre, fill_percent: $f, channel_id: null,
+		       pos_x: $x, pos_y: $y, width: 260, height: 140, color: $couleur,
+		       created_by: $auteur}')
+	else
+		charge=$(jq -nc --arg id "$id" --arg board "$GOAL_BOARD_ID" --arg titre "$titre" \
+		                --argjson f "$remplissage" --argjson x "$x" --argjson y "$y" \
+		                --arg couleur "$couleur" --arg ch "$channel" \
+		                --arg auteur '5eed0000-0000-4000-8000-000000000011' \
+		     '{id: $id, board_id: $board, title: $titre, fill_percent: $f, channel_id: $ch,
+		       pos_x: $x, pos_y: $y, width: 260, height: 140, color: $couleur,
+		       created_by: $auteur}')
+	fi
+
+	code=$(api POST /rest/v1/goal_blocks \
+		-H 'Prefer: return=representation,resolution=merge-duplicates' \
+		-d "$charge")
+	attendu "$code" "création du bloc « $titre »" 200 201
+
+	if [ "$channel" = '-' ]; then lien='sans lien'; else lien="lié"; fi
+	printf '  %-34s %3d%%  %-10s %s\n' "${titre:0:34}" "$remplissage" "$couleur" "$lien"
+done
+
+for ligne in "${GOAL_FLECHES[@]}"; do
+	IFS='|' read -r id source cible direction libelle <<< "$ligne"
+
+	if [ "$libelle" = '-' ]; then
+		charge=$(jq -nc --arg id "$id" --arg board "$GOAL_BOARD_ID" --arg s "$source" \
+		                --arg c "$cible" --arg d "$direction" \
+		     '{id: $id, board_id: $board, source_block_id: $s, target_block_id: $c,
+		       direction: $d, label: null}')
+	else
+		charge=$(jq -nc --arg id "$id" --arg board "$GOAL_BOARD_ID" --arg s "$source" \
+		                --arg c "$cible" --arg d "$direction" --arg l "$libelle" \
+		     '{id: $id, board_id: $board, source_block_id: $s, target_block_id: $c,
+		       direction: $d, label: $l}')
+	fi
+
+	code=$(api POST /rest/v1/goal_links \
+		-H 'Prefer: return=representation,resolution=merge-duplicates' \
+		-d "$charge")
+	attendu "$code" "création de la flèche $direction" 200 201
+done
+
+# LES TROIS DIRECTIONS SONT VÉRIFIÉES, ET NON SUPPOSÉES. Sans ce contrôle, une flèche recopiée
+# avec la mauvaise direction rendrait un seed vert et un canevas qui ne montre jamais sa pointe
+# double — et `CRM-083` n'aurait rien à capturer pour deux de ses trois cas.
+directions=$(curl -s "$API/rest/v1/goal_links?board_id=eq.$GOAL_BOARD_ID&select=direction" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+	| jq -r '[.[].direction] | unique | length')
+[ "${directions:-0}" -eq 3 ] || die "le tableau d'objectifs doit porter les TROIS directions de
+        flèche (forward, backward, both — docs/SPEC-goals.md §2.3), mais n'en compte que
+        « ${directions:-0} ». Le canevas de CRM-083 ne pourrait alors éprouver son rendu des
+        pointes qu'à moitié."
+
+# LE BLOC INVISIBLE EST VÉRIFIÉ AVEC LE VRAI JETON DE LA LECTRICE, jamais déduit du seul modèle.
+# C'est le contrôle qui distingue « la donnée est posée » de « la règle s'applique » : un bloc
+# lié à un channel fermé qui resterait visible à Farida serait une FUITE, et le seed la
+# révélerait ici plutôt qu'en production.
+#
+# LE JETON EST OBTENU PAR LA VRAIE ROUTE DE CONNEXION, comme celui de l'administratrice à la
+# section 7 : un contrôle qui s'appuierait sur la clé de service ne prouverait rien, la clé de
+# service traversant la RLS.
+JETON_VIEWER=$(curl -s -X POST "$API/auth/v1/token?grant_type=password" \
+	-H "apikey: $ANON_KEY" -H 'Content-Type: application/json' \
+	-d "$(jq -nc --arg m 'viewer@p2enjoy.test' --arg p "$SEED_PASSWORD" \
+	      '{email: $m, password: $p}')" \
+	| jq -r '.access_token // empty')
+[ -n "$JETON_VIEWER" ] || die "connexion de la lectrice seedée impossible : la visibilité des blocs
+        d'objectifs ne peut pas être vérifiée avec un jeton réel (docs/SPEC-goals.md §4.1)."
+
+vus=$(curl -s "$API/rest/v1/goal_blocks?board_id=eq.$GOAL_BOARD_ID&select=id" \
+	-H "apikey: $ANON_KEY" -H "Authorization: Bearer $JETON_VIEWER" | jq -r 'length')
+[ "${vus:-0}" -eq 5 ] || die "la lectrice doit voir CINQ des six blocs du tableau d'objectifs —
+        « Gagner un grand compte » vise « Grands comptes », qu'elle ne lit pas (docs/SPEC-goals.md
+        §4.1) —, mais elle en voit « ${vus:-0} ». Soit la règle de visibilité ne s'applique pas,
+        soit le seed ne la démontre plus."
+
+# ET SA FLÈCHE, ELLE, RESTE LISIBLE. La lecture d'un lien ne dépend que du tableau (§9 bis.7) :
+# les QUATRE flèches sont rendues à la lectrice, dont celle qui part du bloc qu'elle ne voit pas.
+# C'est l'état « pointillés vers le vide » du §5.4, et c'est ici qu'il devient démontrable.
+fleches_vues=$(curl -s "$API/rest/v1/goal_links?board_id=eq.$GOAL_BOARD_ID&select=id" \
+	-H "apikey: $ANON_KEY" -H "Authorization: Bearer $JETON_VIEWER" | jq -r 'length')
+[ "${fleches_vues:-0}" -eq 4 ] || die "la lectrice doit voir les QUATRE flèches du tableau, la
+        lecture d'un lien ne dépendant que du tableau (docs/SCHEMA.md §9 bis.7), mais elle en voit
+        « ${fleches_vues:-0} ». L'état « pointillés vers le vide » du §5.4 cesse alors d'être
+        démontrable."
+
+info "Vérifié avec le jeton réel de la lectrice : 5 blocs sur 6, et les 4 flèches"
+
+info "Objectifs : 1 tableau, 6 blocs dont 3 liés et 1 fermé à la lectrice, 4 flèches couvrant les
+      trois directions — docs/SPEC-goals.md §5"
+
 # --- 9. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
 # Rappel volontaire, affiché à chaque exécution, et **mis à jour par `CRM-020`** : peupler la base
 # ne la rend pas lisible pour autant. L'état réel est désormais mixte, et le dire faux dans un sens
