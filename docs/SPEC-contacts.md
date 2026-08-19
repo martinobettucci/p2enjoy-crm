@@ -1678,3 +1678,294 @@ pour une décision d'écran (`CLAUDE.md` §10, `docs/DESIGN_SYSTEM.md` §5.21).
 **Aucune migration : cette sous-tranche n'ouvre aucune politique et ne crée aucune colonne.** Elle
 n'exerce que la politique d'insertion posée par la migration `0045` et déjà prouvée par la
 tranche 1.
+
+---
+
+## 15. Sous-tranche 4f — La fiche d'un contact
+
+Contrat écrit **avant toute ligne de code** (`CLAUDE.md` §5, `docs/CloudWorker.md` §3.2), après
+**seize** mesures relevées à la main le 2026-08-19 sur la pile seedée, avec les jetons réels des
+trois profils et avec la clé anonyme. Les mesures qui exigeaient plusieurs rattachements ont été
+faites sur des **rattachements sondes**, détruits ensuite : le seed est rendu **intact**, ses trois
+contacts et ses deux rattachements retrouvés à l'identique.
+
+Le §11.8 nommait ce manque en toutes lettres : « **le contact de la fiche ne mène nulle part.** Il
+n'existe pas de fiche de contact, et 4b n'en crée pas : un lien serait mort ». Quatre surfaces
+nomment un contact — le carnet, la fiche d'organisation, le bloc d'une affaire et le sélecteur du
+formulaire — et **aucune** ne mène à lui. Un contact est pourtant l'objet métier de première classe
+que le §1 de ce document annonce : il est le seul de la tranche à n'avoir aucune page.
+
+### 15.1 Ce que la sous-tranche livre, et ce qu'elle ne livre pas
+
+**Elle livre** une route de détail qui, pour un contact donné :
+
+- rend **ce qui le caractérise** — sa fonction, son email, son téléphone, et son **organisation**,
+  qui est un lien vers la fiche du §11 ;
+- rend **ses affaires** — les cards auxquelles il est rattaché, avec son **rôle dans chacune** et un
+  lien vers chaque affaire. C'est l'**historique transverse** que la Definition of Done de `CRM-060`
+  nomme, et que la tranche 4 n'avait livré que dans l'autre sens : 4c dit les contacts d'une
+  affaire, 4f dit les affaires d'un contact ;
+- devient la **destination** que le nom du contact n'avait sur aucune des quatre surfaces.
+
+**Elle ne livre pas**, et chaque manque est nommé au §15.8 : aucune modification ni suppression d'un
+contact, aucun rattachement depuis cette page, aucun fil d'activité, aucune pagination.
+
+### 15.2 Où la fiche s'ancre — `/contacts/:idContact`
+
+**Décision : une route de détail SOUS le carnet**, pour le motif exact du §11.2 — le carnet est la
+surface d'entrée qui la peuple.
+
+**Aucune collision avec `/contacts/organisations/:idOrganisation`, et ce n'est pas une chance mais
+une propriété du chemin** : la fiche d'organisation porte **trois** segments, celle du contact
+**deux**. Un patron à deux segments ne peut pas apparier une adresse qui en a trois, quel que soit
+le classement des routes. Le contact garde donc l'adresse la plus courte, qui est celle de l'objet
+de première classe, et l'organisation reste sous son préfixe.
+
+Conséquences, identiques à celles du §11.2 et tenues dans le même changement :
+
+- **la fiche ne figure PAS dans `ROUTES`** — son titre est le **nom du contact**, donc une donnée et
+  non une clé de traduction. La couverture exacte `ROUTES` ⇄ `ENTREES_TRANSVERSES` que
+  `routes.test.tsx` exige reste **inchangée** ;
+- **elle porte sa propre coquille `AppShell`**, `titreRoute` alimenté par le nom lu, avec une clé de
+  repli pour le chargement et l'introuvable — le patron de `RouteCard` et de `FicheOrganisation` ;
+- **le contact est désigné par son identifiant** : `contacts` ne porte aucun slug, et l'email ne
+  peut pas en tenir lieu — il est **nul** pour Élise Fabre (§10.3).
+
+### 15.3 Ce que la fiche lit — mesuré sur la pile réelle
+
+MESURÉ le 2026-08-19 avec le jeton réel de l'administratrice, la requête **unique** que l'écran
+émettra :
+
+```
+GET /rest/v1/contacts
+    ?id=eq.<idContact>
+    &select=id,full_name,email,phone,role_title,organization_id,
+            organizations(id,name,domain),
+            card_contacts(role,cards!inner(id,title,archived_at,
+                          channels!cards_channel_id_workspace_id_fkey(slug,tracks(slug))))
+    &card_contacts.cards.deleted_at=is.null
+    &card_contacts.order=cards(title)
+```
+
+rend, pour Léo Marchand (`…091`) :
+
+```
+[{"id":"5eed…091","full_name":"Léo Marchand","email":"leo.marchand@sogexia.example",
+  "phone":null,"role_title":"Directeur achats","organization_id":"5eed…081",
+  "organizations":{"id":"5eed…081","name":"Sogexia","domain":"sogexia.example"},
+  "card_contacts":[{"role":"decideur",
+    "cards":{"id":"5eed…0c2","title":"Migration ERP Sogexia","archived_at":null,
+             "channels":{"slug":"grands-comptes","tracks":{"slug":"conseil-ia"}}}}]}]
+```
+
+**Quatre mesures ont DÉCIDÉ de cette requête plutôt que de la confirmer.**
+
+- **L'embarquement `cards → channels` est AMBIGU, et il faut le nommer.** MESURÉ : la forme naïve
+  `card_contacts(cards(channels(...)))` est refusée par **`PGRST201`** — deux relations existent
+  entre `cards` et `channels`, `cards_channel_id_workflow_id_fkey` et
+  `cards_channel_id_workspace_id_fkey`. C'est le défaut que le §10.3 avait rencontré ailleurs et
+  contourné par deux lectures ; ici il se **désigne** au lieu de se contourner, par
+  `channels!cards_channel_id_workspace_id_fkey`, et la chaîne **quatre niveaux**
+  `contacts → card_contacts → cards → channels → tracks` tient alors en **une seule requête**,
+  mesurée `200`. La clé retenue est celle du **cloisonnement** — `(channel_id, workspace_id)` —, et
+  non celle du workflow : c'est la relation qui dit à quel channel une affaire appartient, le
+  workflow n'étant qu'une propriété partagée.
+- **L'adresse d'une affaire exige les slugs de son track et de son channel**, ce que
+  `lireCheminCard` (`inbox.ts`) obtenait en **trois** requêtes en cascade faute d'avoir levé
+  l'ambiguïté. La fiche n'en émet **aucune de plus** : l'embarquement désigné les rapporte toutes.
+- **UNE AFFAIRE À LA CORBEILLE NE FIGURE PAS SUR LA FICHE, ET C'EST MESURÉ.** Sans filtre, une card
+  dont `deleted_at` n'est pas nul **apparaît** dans l'embarquement — mesuré sur « Saisie erronée ».
+  La lister offrirait un lien vers une affaire dont la **corbeille** est la surface propriétaire
+  (`CRM-077`). La forme qui l'écarte est `cards!inner(...)` avec
+  `card_contacts.cards.deleted_at=is.null` : mesurée, elle **retire la ligne entière** au lieu de
+  rendre `cards: null`, ce qu'un embarquement non-`inner` aurait fait et qui aurait obligé l'écran à
+  filtrer une donnée que le serveur sait déjà écarter.
+- **Une affaire ARCHIVÉE reste rendue, et son archivage est DIT.** Une affaire archivée est une
+  affaire réelle et lisible, et l'historique d'un contact est précisément ce que cette page sert :
+  la taire mentirait sur le passé. `archived_at` est donc demandé — la seule colonne de cycle de vie
+  que l'écran affiche — et rendu comme une **pilule**, jamais comme une absence.
+
+**Le tri agit, et il est vérifié dans les deux sens.** La relation `card_contacts → cards` est
+**to-one**, si bien que `card_contacts.order=cards(title)` est accepté — l'écart mesuré au §12.3
+entre une relation to-one et une relation to-many vaut ici aussi. Une seule ligne ne prouverait
+qu'une tolérance : mesuré sur **deux** rattachements sondes, l'ordre ascendant rend
+`["Audit sécurité applicative","Contrat cadre 2025"]` et le descendant l'inverse. Le tri par le
+**titre** est celui d'un lecteur qui cherche une affaire par son nom ; l'écran ne retrie pas.
+
+**`role_title` ET `role` sont demandés tous les deux, et ils ne se confondent pas ici.** Le §12.3
+refusait de les afficher ensemble sur une **ligne** d'affaire, où deux « rôles » se seraient
+contredits. Sur cette page ils vivent dans **deux zones distinctes** : `role_title` caractérise le
+contact en tête de page, `role` qualifie chaque rattachement dans sa ligne. La distinction est
+portée par la structure, pas par une glose.
+
+**`source` et `created_at` ne sont pas demandés**, pour le motif du §10.3 : une requête ne rapporte
+que ce qui est affiché.
+
+### 15.4 Autorisations — l'écran n'en calcule aucune, et les droits fins TRAVERSENT l'embarquement
+
+MESURÉ le 2026-08-19, avec les jetons réels :
+
+| # | Acteur / adresse | Mesure |
+|---|---|---|
+| 1 | administratrice, `id` d'un contact du workspace | `200`, **1 ligne**, organisation et affaires embarquées |
+| 2 | administratrice, `id` bien formé mais **inexistant** | `200` et **`[]`** |
+| 3 | **anonyme**, `id` d'un contact réel | `200` et **`[]`** |
+| 4 | administratrice, `id` **qui n'est pas un uuid** | **`400`**, `22P02`, `invalid input syntax for type uuid` |
+| 5 | `business_developer`, Léo Marchand | `200`, 1 ligne, l'affaire « Migration ERP Sogexia » rendue |
+| 6 | **lectrice**, Léo Marchand | `200`, 1 ligne, **`card_contacts: []`** |
+| 7 | **lectrice**, Sophie Dupont | `200`, 1 ligne, l'affaire « Refonte intranet Ville de Lyon » rendue |
+
+Les cas 1 à 4 reproduisent exactement le §11.4, et la **même** décision en découle : les cas 2, 3 et
+4 rendent le **même** écran « contact introuvable », et un identifiant mal formé **n'émet aucune
+requête** — un `400` classé en erreur donnerait une commande de reprise morte sur une adresse que
+l'utilisateur édite lui-même.
+
+**Les cas 6 et 7 sont ceux que la mesure a rendus décisifs, et ils confirment une propriété plutôt
+qu'ils n'en créent une.** La lectrice n'a pas accès au track « Conseil IA » (`CRM-012`) : sur la
+fiche de Léo, dont l'unique affaire vit dans « Grands comptes », `card_contacts` rend **`[]`** — la
+ligne de rattachement est **retirée**, et non rendue avec une affaire nulle. Sur la fiche de Sophie,
+dont l'affaire vit dans un track qui lui est ouvert, l'affaire **est** rendue. Les droits fins de
+`cards` traversent donc l'embarquement, et **l'écran ne calcule aucun droit** : il rend ce que le
+backend consent (`docs/DAT.md` §3.1, `docs/SPEC-permissions-rls.md` §7). La zone « affaires » vide
+d'un lecteur restreint est l'état vide ordinaire du §5.8, jamais un refus mis en scène.
+
+Cette sous-tranche ne livre **aucune écriture**, donc **aucun refus d'écriture** n'est à traduire.
+
+### 15.5 De quoi l'écran a l'air
+
+Le détail visuel est écrit dans `docs/DESIGN_SYSTEM.md` §5.24, ajouté dans le même changement. Trois
+décisions découlent de la **donnée** et sont rappelées ici :
+
+1. **Deux zones, et le patron du §11.5 tenu à l'identique.** Ce qui caractérise le contact est une
+   **liste de définitions** ; ses affaires sont des lignes homogènes et reprennent le **tableau du
+   §5.9**. Le tableau porte **trois** colonnes — affaire, rôle dans l'affaire, état — et non
+   davantage : le track et le channel d'une affaire sont dans son adresse, et les répéter en
+   colonnes remplirait la ligne d'une information que le clic donne déjà.
+2. **`email` et `phone` sont des données techniques** (§2) : monospace, valeur absente laissée
+   **vide**, jamais un tiret. **`role_title` n'en est pas une** — c'est un intitulé de fonction, du
+   texte ordinaire.
+3. **Le titre d'une affaire est un LIEN vers elle**, construit sur les slugs rapportés par
+   l'embarquement (§15.3). Une affaire **archivée** porte en outre une **pilule** « Archivée »
+   (§5.6) : elle reste atteignable, son état est dit.
+
+**L'organisation du contact est un lien vers sa fiche** (§11), et une valeur absente reste **vide et
+sans lien** — la règle que le carnet tient déjà depuis le §11.6.
+
+### 15.6 Quatre surfaces gagnent leur destination — une règle du §11 RÉVISÉE par livraison
+
+Le §11.8 et le §5.20 du design system posaient que le nom d'un contact est un **texte, jamais un
+lien**, avec leur condition écrite : « il n'existe pas de fiche de contact, et un lien y serait
+mort ». **Cette condition tombe ici**, exactement comme le §11.6 l'avait fait tomber pour
+l'organisation. La règle change donc par **livraison**, jamais par contournement.
+
+Deux surfaces gagnent le lien dans ce changement, et **deux ne le gagnent pas** :
+
+- **le carnet** (§10) : le nom du contact mène à sa fiche. C'est la colonne de tête d'un tableau
+  dont chaque ligne EST un contact ;
+- **la fiche d'organisation** (§11) : le nom de chaque contact mène à sa fiche, ce que le §11.8
+  nommait comme le manque à combler ;
+- **le bloc des contacts d'une affaire** (§12) ne le gagne PAS dans cette sous-tranche, et c'est
+  nommé au §15.8 : ce bloc porte des **gestes d'écriture** — détacher un contact —, et poser un lien
+  dans une ligne qui porte déjà une commande destructrice demande de rejouer sa preuve clavier
+  complète. L'écart est nommé plutôt qu'improvisé ;
+- **le sélecteur du formulaire** (§13) ne le gagne pas non plus : une option de liste déroulante ne
+  peut pas porter de lien, et c'est une propriété du contrôle, pas un choix.
+
+Les preuves qui **figeaient l'absence de lien** — `webapp/src/app/FicheOrganisation.test.tsx`,
+`webapp/src/app/Carnet.test.tsx` et `e2e/ui/contacts.spec.ts` — sont **RÉVISÉES avec leur motif
+écrit dans le fichier**, jamais retirées ni contournées : c'est le mécanisme de la décision 51, et
+ce qu'elles exigent devient « le nom du contact mène à sa fiche », qui reste vérifiable.
+
+### 15.7 Le seed — pourquoi il n'est PAS modifié, et c'est MESURÉ
+
+`CLAUDE.md` §8 exige que le seed démontre chaque fonctionnalité livrée et couvre les branches
+alternatives. **Les trois contacts du seed les couvrent déjà toutes**, ce qui a été vérifié et non
+supposé :
+
+| Branche de la fiche | Contact du seed qui la démontre |
+|---|---|
+| organisation présente, et une affaire | **Léo Marchand** — Sogexia, « Migration ERP Sogexia » |
+| organisation **absente**, et une affaire | **Sophie Dupont** — aucune organisation, « Refonte intranet Ville de Lyon » |
+| **aucune affaire** — état vide de la zone | **Élise Fabre** — Studio Meunier, zéro rattachement |
+| email absent / téléphone absent | **Élise Fabre** (email nul) et **Léo Marchand** (téléphone nul) |
+| fonction absente | **Sophie Dupont** (`role_title` nul) |
+| affaire **invisible** au lecteur restreint | **Léo Marchand** lu par la lectrice — `card_contacts: []` |
+
+**Une seule branche n'est pas seedée : l'affaire ARCHIVÉE rattachée à un contact.** Elle n'est pas
+ajoutée, et le motif est mesuré : le seul rattachement supplémentaire possible déplacerait la garde
+de convergence de `apply-seed.sh` — deux rattachements exactement — et la règle 3 du classement
+(§8) lit « Léo rattaché à exactement une card active ». Un enrichissement qui déplace un compteur
+figé par une preuve existante n'est pas gratuit, et le §11.7 a déjà tranché ce départage : on
+n'enrichit que ce qui ne casse rien. La pilule « Archivée » est donc éprouvée par une **preuve
+unitaire** sur une réponse construite, et l'écart est **nommé** au §15.8 plutôt que masqué.
+
+### 15.8 Limites nommées — sous-tranche 4f
+
+- **aucun geste d'écriture** : ni modification, ni suppression, ni rattachement depuis cette page.
+  Les privilèges existent en base depuis la tranche 1 ; l'écart est nommé, non compensé par une
+  commande morte ;
+- **le bloc des contacts d'une affaire (§12) ne mène toujours pas à la fiche**, pour le motif
+  du §15.6 — sa ligne porte une commande destructrice dont la preuve clavier devrait être rejouée ;
+- **aucune pagination des affaires**, pour le motif exact du §10.3 : aucun volume n'est mesuré ;
+- **aucun fil d'activité du contact.** Les emails et les événements d'une affaire vivent dans le fil
+  unifié de cette affaire (§5.11) ; les agréger par contact est une lecture que rien ne spécifie ;
+- **une affaire archivée n'est démontrée que par une preuve unitaire**, le seed ne portant aucun
+  rattachement vers une affaire archivée (§15.7) ;
+- **une affaire à la corbeille est invisible**, et sa disparition n'est pas expliquée à l'écran :
+  aucun texte ne dit « une affaire supprimée n'est pas listée ». La corbeille est la surface qui en
+  répond (`CRM-077`).
+
+### 15.9 Contrat de comportement — sous-tranche 4f
+
+| # | Situation | Attendu |
+|---|---|---|
+| a | contact lisible, avec organisation et affaires | le nom en titre, ses caractéristiques, et une ligne par affaire dans l'ordre du titre |
+| b | contact **sans organisation** (Sophie Dupont) | la valeur « organisation » est **vide et sans lien**, aucune erreur |
+| c | contact **avec** organisation (Léo Marchand) | l'organisation est un **lien** vers sa fiche (§11) |
+| d | données absentes (email, téléphone, fonction) | cellules **vides**, jamais un tiret |
+| e | contact **sans affaire** (Élise Fabre) | la zone des affaires rend l'état **vide**, sans action ; les caractéristiques restent rendues |
+| f | affaire **archivée** | la ligne porte la pilule « Archivée », et son titre reste un **lien** |
+| g | affaire à la **corbeille** | la ligne **n'est pas rendue** — le serveur l'a écartée (§15.3) |
+| h | identifiant inexistant, ou appelant sans droit | « contact introuvable », avec un retour vers le carnet — **le même écran dans les deux cas** |
+| i | identifiant mal formé (non-uuid) | « contact introuvable », **aucune requête émise** (§15.4) |
+| j | lecture en vol | squelettes, jamais un spinner plein écran |
+| k | lecture en échec | état d'erreur avec action de reprise, qui relance réellement la lecture |
+| l | aucun client (aucun espace de travail) | état vide dédié, aucune requête |
+| m | depuis le carnet | le nom du contact est un **lien** qui ouvre sa fiche |
+| n | depuis la fiche d'organisation | le nom de chaque contact est un **lien** qui ouvre sa fiche |
+| o | lecteur restreint (lectrice sur Léo) | la zone des affaires rend l'état **vide** — l'écran ne calcule aucun droit (§15.4) |
+
+### 15.10 Preuves exigées — sous-tranche 4f
+
+| Niveau | Preuve |
+|---|---|
+| Unitaire | `webapp/src/lib/contacts.test.ts` (étendu) : la requête émise — table, colonnes, **désambiguïsation** de `channels`, filtre `deleted_at`, tri des rattachements ; le contact rendu `null` sur réponse vide ; le refus de forme du cas i **sans appel réseau** ; l'adresse d'affaire construite depuis les slugs embarqués ; les trois issues du contrat asynchrone |
+| Unitaire | `webapp/src/app/FicheContact.test.tsx` : les cas a à l du §15.9 |
+| Unitaire | `webapp/src/app/Carnet.test.tsx` (RÉVISÉ, §15.6) : le nom du contact est désormais un lien vers sa fiche |
+| Unitaire | `webapp/src/app/FicheOrganisation.test.tsx` (RÉVISÉ, §15.6) : le nom de chaque contact est désormais un lien vers sa fiche |
+| E2E | `e2e/ui/contacts.spec.ts` (étendu et RÉVISÉ) : depuis le carnet, le clic sur « Léo Marchand » ouvre sa fiche ; l'affaire y est un lien qui ouvre réellement l'affaire ; Élise rend l'état vide ; une adresse mal formée rend « introuvable » ; l'accès au **clavier** ; la **lectrice** sur Léo rend la zone des affaires vide (cas o) |
+| E2E | `e2e/api/contacts.spec.ts` (étendu) : les mesures du §15.3 et du §15.4 avec les jetons réels des trois profils, dont l'ambiguïté `PGRST201` **figée comme telle** et l'exclusion de la corbeille |
+| Visible | captures sous `docs/captures/CRM-060/`, **observées** conformément à `CLAUDE.md` §16 : la fiche peuplée, la fiche sans affaire, l'introuvable, et le rendu à 390 px |
+| i18n | `webapp/src/i18n/i18n.test.ts` (existant) : aucun texte visible en dur |
+| Seed | le seed rejoué **converge**, et il n'est PAS modifié (§15.7) |
+
+### 15.11 Definition of Done — sous-tranche 4f
+
+- `webapp/src/lib/contacts.ts` : la lecture du §15.3, son type, et la construction de l'adresse
+  d'une affaire ;
+- `webapp/src/app/FicheContact.tsx` : les deux zones et les cinq états ;
+- `CHEMIN_CONTACT` et `cheminContact` dans `chemins.ts`, montés par `App` **hors de `ROUTES`** ;
+- `webapp/src/app/Carnet.tsx` et `webapp/src/app/FicheOrganisation.tsx` : le nom du contact devient
+  un lien (§15.6) ;
+- preuves du §15.10 exécutées et vertes, captures produites **et observées** ;
+- clés de traduction ajoutées, aucun texte en dur ;
+- `docs/DESIGN_SYSTEM.md` §5.24 ajouté et §5.20 révisé ; `docs/SPEC-webapp.md` §5.2 ;
+  `docs/manual.md` ; `CHANGELOG.md`, dans le même changement ;
+- commentaires `@spec` / `@verifies` sur chaque fichier touché.
+
+**Aucune migration : cette sous-tranche ne crée aucune colonne et n'ouvre aucune politique.** Elle
+ne fait que lire sous la RLS posée par la migration `0045` et sous les droits fins de `cards` posés
+par `CRM-012`, tous deux déjà prouvés.
+
+**Ce qui restera dû sur `CRM-060` après 4f** : l'arbitrage sur les **références mortes** (§6,
+point 4), et les gestes d'écriture nommés au §15.8. L'unité demeure `[~]`.
