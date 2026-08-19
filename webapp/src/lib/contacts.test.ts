@@ -47,6 +47,9 @@ import {
 	creerContact,
 	modifierContact,
 	detacherContact,
+	modifierRoleRattachement,
+	classerRefusRole,
+	COLONNES_ROLE_RATTACHEMENT,
 	estFormeUuid,
 	libelleContactAvecOrganisation,
 	normaliserFacultatif,
@@ -407,7 +410,7 @@ describe('lireFicheOrganisation', () => {
 /** Espion d'écriture : il enregistre la table, la charge envoyée et les filtres posés. */
 type AppelEcriture = {
 	table?: string
-	operation?: 'insert' | 'delete'
+	operation?: 'insert' | 'update' | 'delete'
 	charge?: unknown
 	filtres: string[]
 	colonnes?: string
@@ -429,6 +432,15 @@ function espionEcriture(reponse: {
 			return chaine
 		},
 		then: (resoudre: (valeur: unknown) => unknown) => Promise.resolve(reponse).then(resoudre),
+		// `maybeSingle` reproduit la sémantique RÉELLE de PostgREST, et c'est ce qui donne sa valeur
+		// à la preuve du « sans effet » : zéro ligne rendue devient `data: null` SANS erreur, là où
+		// `single()` produirait `PGRST116`. Un espion qui rendrait un tableau vide ne montrerait
+		// jamais la branche que `modifierRoleRattachement` doit traiter (§19.2).
+		maybeSingle: () =>
+			Promise.resolve({
+				...reponse,
+				data: reponse.data === null ? null : (reponse.data[0] ?? null),
+			}),
 	}
 	const client = {
 		from: (table: string) => {
@@ -436,6 +448,11 @@ function espionEcriture(reponse: {
 			return {
 				insert: (charge: unknown) => {
 					appel.operation = 'insert'
+					appel.charge = charge
+					return chaine
+				},
+				update: (charge: unknown) => {
+					appel.operation = 'update'
 					appel.charge = charge
 					return chaine
 				},
@@ -1472,5 +1489,143 @@ describe('la fiche porte `workspace_id` depuis 4h (§17.5)', () => {
 		// est TRANSMISE et non devinée. C'est une colonne de plus dans une requête déjà émise,
 		// contre une requête entière si on la relisait.
 		expect(lue.donnees.workspace_id).toBe('5eed0000-0000-4000-8000-000000000001')
+	})
+})
+
+// @verifies CRM-060 (docs/BACKLOG.md) — tranche 4 sous-tranche 4j : la MODIFICATION DU RÔLE d'un
+//           rattachement, depuis la fiche d'un contact
+// @verifies docs/SPEC-contacts.md §19.2 (`role` SEUL dans le corps — mesure 12 —, la normalisation
+//           des mesures 8 à 10, et `maybeSingle` qui rend le « sans effet » observable),
+//           §19.3 (les quinze mesures, et les quatre qui décident), §19.5 (dictionnaire FERMÉ des
+//           refus, dont `saisie-invalide` classé AVANT le statut)
+// @verifies docs/DESIGN_SYSTEM.md §5.28 (le geste qui l'exerce)
+describe('modifierRoleRattachement (§19.2, §19.3)', () => {
+	const ID_CONTACT = '5eed0000-0000-4000-8000-000000000091'
+
+	it('n’envoie QUE `role`, filtre sur le couple, et redemande la colonne — mesure 12 du §19.3', async () => {
+		const { client, appel } = espionEcriture({
+			data: [{ role: 'technique' }],
+			error: null,
+			status: 200,
+		})
+		const resultat = await modifierRoleRattachement(client, ID_CARD, ID_CONTACT, 'technique')
+		expect(resultat).toEqual({ statut: 'modifiee', role: 'technique' })
+		expect(appel.table).toBe('card_contacts')
+		expect(appel.operation).toBe('update')
+		// LA MESURE 12 EST LA RAISON D'ÊTRE DE CETTE ASSERTION, et un compteur ne l'attraperait pas :
+		// un `PATCH` portant `card_id` DÉPLACE le rattachement — `200`, la ligne rendue sur la
+		// nouvelle affaire et plus rien sur l'ancienne. `toEqual` sur la charge ENTIÈRE est ce qui
+		// interdit qu'une clé s'y ajoute un jour sans que la preuve le voie.
+		expect(appel.charge).toEqual({ role: 'technique' })
+		expect(appel.filtres).toEqual([`eq(card_id,${ID_CARD})`, `eq(contact_id,${ID_CONTACT})`])
+		// Sans ce `select`, PostgREST ne rend aucun corps et « zéro ligne touchée » n'existerait pas
+		// comme réponse : le refus silencieux serait indistinguable d'un succès (§19.2).
+		expect(appel.colonnes).toBe(COLONNES_ROLE_RATTACHEMENT)
+	})
+
+	it('envoie `null` pour un rôle vide ou BLANC, jamais `""` ni `"   "` — mesures 8 et 10', async () => {
+		// DEUX MESURES, ET LA SECONDE EST CELLE QUI COMPTE : `role: ""` comme `role: "   "` violent
+		// `card_contacts_role_check` (`role is null or btrim(role) <> ''`) par `400` / `23514`. Un
+		// `trim` seul suffirait pour la première et pas pour la seconde ; `normaliserFacultatif` les
+		// couvre toutes deux.
+		for (const saisie of ['', '   ', '\t\n ']) {
+			const { client, appel } = espionEcriture({ data: [{ role: null }], error: null, status: 200 })
+			const resultat = await modifierRoleRattachement(client, ID_CARD, ID_CONTACT, saisie)
+			expect(appel.charge).toEqual({ role: null })
+			// VIDER LE CHAMP EFFACE LE RÔLE, et c'est un GESTE (mesure 9) : la ligne rendue porte
+			// `null`, et c'est ELLE que la fiche affiche.
+			expect(resultat).toEqual({ statut: 'modifiee', role: null })
+		}
+	})
+
+	it('renvoie le rôle TEL QUE LA BASE L’A ENREGISTRÉ, jamais la saisie de l’appelant', async () => {
+		// La ligne rendue fait foi (§19.2) : une fiche qui afficherait la saisie prétendrait connaître
+		// l'état du serveur. Ici la base rend une valeur DIFFÉRENTE de l'envoi — cas artificiel, mais
+		// c'est précisément ce qu'une assertion sur la saisie ne verrait jamais.
+		const { client } = espionEcriture({ data: [{ role: 'decideur' }], error: null, status: 200 })
+		const resultat = await modifierRoleRattachement(client, ID_CARD, ID_CONTACT, '  technique  ')
+		expect(resultat).toEqual({ statut: 'modifiee', role: 'decideur' })
+	})
+
+	it('rend « sans effet » sur zéro ligne — ni un succès, ni une erreur (mesures 2 et 3)', async () => {
+		// MESURÉ : la lectrice qui modifie le rôle d'un rattachement EXISTANT qu'elle LIT reçoit
+		// `200` et `[]`, la ligne relue INCHANGÉE avec son rôle — indistinguable d'un rattachement
+		// déjà disparu. La clause `USING` de `card_contacts_maj` filtre AVANT de modifier.
+		const { client } = espionEcriture({ data: [], error: null, status: 200 })
+		const resultat = await modifierRoleRattachement(client, ID_CARD, ID_CONTACT, 'technique')
+		expect(resultat).toEqual({ statut: 'sans-effet' })
+	})
+
+	it('classe `23514` en `saisie-invalide` AVANT de regarder le statut — §19.5', async () => {
+		// L'ORDRE COMPTE, et c'est le motif que le §12.5 a déjà écrit pour `classerRefusRattachement` :
+		// `400` couvre aussi bien la contrainte de forme (mesures 8 et 10) que l'identifiant mal formé
+		// (mesure 11). Un classement qui commencerait par le statut les confondrait sous `unknown`.
+		const { client } = espionEcriture({
+			data: null,
+			error: { message: 'violates check constraint', code: CODE_SAISIE_INVALIDE },
+			status: 400,
+		})
+		const resultat = await modifierRoleRattachement(client, ID_CARD, ID_CONTACT, 'technique')
+		expect(resultat.statut).toBe('refus')
+		if (resultat.statut !== 'refus') return
+		expect(resultat.refus.nature).toBe('saisie-invalide')
+	})
+
+	it('classe `22P02` en `unknown` et `401` en `forbidden` — mesures 11 et 6', async () => {
+		const malForme = espionEcriture({
+			data: null,
+			error: { message: 'invalid input syntax for type uuid', code: '22P02' },
+			status: 400,
+		})
+		const refusForme = await modifierRoleRattachement(
+			malForme.client,
+			'pas-un-uuid',
+			ID_CONTACT,
+			'technique',
+		)
+		expect(refusForme.statut).toBe('refus')
+		if (refusForme.statut !== 'refus') return
+		expect(refusForme.refus.nature).toBe('unknown')
+
+		const anonyme = espionEcriture({
+			data: null,
+			error: { message: 'permission denied for table card_contacts', code: '42501' },
+			status: 401,
+		})
+		const refusAnonyme = await modifierRoleRattachement(
+			anonyme.client,
+			ID_CARD,
+			ID_CONTACT,
+			'technique',
+		)
+		expect(refusAnonyme.statut).toBe('refus')
+		if (refusAnonyme.statut !== 'refus') return
+		expect(refusAnonyme.refus.nature).toBe('forbidden')
+	})
+
+	it('ne lève jamais : une exception du client devient un refus réseau', async () => {
+		const client = {
+			from: () => {
+				throw new Error('réseau coupé')
+			},
+		} as unknown as ClientCrm
+		const resultat = await modifierRoleRattachement(client, ID_CARD, ID_CONTACT, 'technique')
+		expect(resultat.statut).toBe('refus')
+		if (resultat.statut !== 'refus') return
+		expect(resultat.refus.nature).toBe('network')
+	})
+})
+
+describe('classerRefusRole (§19.5)', () => {
+	it('ajoute `saisie-invalide` au classement de `classerRefusRattachement`, sans rien changer d’autre', () => {
+		expect(classerRefusRole(400, CODE_SAISIE_INVALIDE, 'x').nature).toBe('saisie-invalide')
+		// Les cinq natures héritées gardent leur classement à l'identique : ce classement est celui
+		// de `classerRefusRattachement`, et le dupliquer ferait diverger deux contrats.
+		expect(classerRefusRole(409, CODE_DOUBLON, 'x').nature).toBe('deja-rattache')
+		expect(classerRefusRole(409, CODE_CONTACT_INCONNU, 'x').nature).toBe('contact-inconnu')
+		expect(classerRefusRole(403, undefined, 'x').nature).toBe('forbidden')
+		expect(classerRefusRole(401, undefined, 'x').nature).toBe('forbidden')
+		expect(classerRefusRole(undefined, undefined, 'x').nature).toBe('network')
+		expect(classerRefusRole(500, undefined, 'x').nature).toBe('unknown')
 	})
 })

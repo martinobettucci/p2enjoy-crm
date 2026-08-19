@@ -1199,3 +1199,429 @@ describe('détachement d’une affaire depuis la fiche (docs/SPEC-contacts.md §
 		}
 	})
 })
+
+// =================================================================================================
+// SOUS-TRANCHE 4j — LA MODIFICATION DU RÔLE D'UN RATTACHEMENT, DEPUIS LA FICHE
+// =================================================================================================
+//
+// @verifies CRM-060 (docs/BACKLOG.md) — tranche 4 sous-tranche 4j
+// @verifies docs/SPEC-contacts.md §19.3 (les quinze mesures, et les quatre qui décident),
+//           §19.4 (la seconde commande de la quatrième colonne, et UN SEUL BLOC ouvert dans tout
+//           le tableau, tous gestes confondus), §19.5 (dictionnaire FERMÉ), §19.6 (de quoi le
+//           geste a l'air, et la fiche qui prend la ligne rendue SANS relire),
+//           §19.7 (contrat de comportement, cas a à p)
+// @verifies docs/DESIGN_SYSTEM.md §5.28 (ce geste), §5.25 (le refus silencieux dit, la saisie
+//           conservée), §5.24 révisé (le tableau à quatre colonnes, deux commandes par ligne)
+
+/**
+ * Client qui LIT la fiche et MET À JOUR le rôle d'un rattachement.
+ *
+ * `update` est distingué de `insert` et de `delete` : cette sous-tranche est le PREMIER `UPDATE` du
+ * produit sur `card_contacts`, là où 4h y insère et 4i y supprime. Un espion qui les confondrait
+ * laisserait passer un code qui écrirait par le mauvais verbe.
+ *
+ * **`ecritures` porte la CHARGE et les FILTRES réellement posés**, et non un compteur : la mesure 12
+ * du §19.3 montre qu'un `PATCH` portant `card_id` DÉPLACE le rattachement, et seule une assertion
+ * sur la charge entière interdit qu'une clé s'y glisse.
+ */
+function clientQuiModifieLeRole(options: {
+	lectures: Reponse[]
+	ecriture?: { data: unknown | null; error: { message: string; code?: string } | null; status: number }
+}) {
+	const ecritures: Array<{ charge: unknown; filtres: Record<string, unknown>; colonnes?: string }> = []
+	let rangLecture = 0
+	const lireChaine = () => {
+		const chaine: Record<string, unknown> = {
+			then: (resoudre: (valeur: Reponse) => unknown) => {
+				const reponse = options.lectures[Math.min(rangLecture, options.lectures.length - 1)]
+				rangLecture += 1
+				return Promise.resolve(reponse ?? VIDE).then(resoudre)
+			},
+		}
+		for (const nom of ['eq', 'is', 'order', 'limit']) chaine[nom] = () => chaine
+		return chaine
+	}
+	return {
+		ecritures,
+		client: {
+			from: (table: string) => ({
+				select: () => lireChaine(),
+				update: (charge: unknown) => {
+					const filtres: Record<string, unknown> = { table }
+					const trace = { charge, filtres, colonnes: undefined as string | undefined }
+					const chaine: Record<string, unknown> = {
+						eq: (colonne: string, valeur: unknown) => {
+							filtres[colonne] = valeur
+							return chaine
+						},
+						select: (colonnes: string) => {
+							trace.colonnes = colonnes
+							return chaine
+						},
+						maybeSingle: () => {
+							ecritures.push(trace)
+							return Promise.resolve(
+								options.ecriture ?? { data: { role: 'technique' }, error: null, status: 200 },
+							)
+						},
+					}
+					return chaine
+				},
+			}),
+		} as unknown as ClientCrm,
+	}
+}
+
+async function ouvrirLeFormulaireDeRole(idCard: string) {
+	const commandes = await screen.findAllByTestId('modifier-role-affaire')
+	const commande = commandes.find((bouton) => bouton.getAttribute('data-card') === idCard)
+	if (commande === undefined) throw new Error(`aucune commande de rôle pour ${idCard}`)
+	await userEvent.click(commande)
+	return commande
+}
+
+describe('modification du rôle d’un rattachement (docs/SPEC-contacts.md §19.7)', () => {
+	it('cas a — CHAQUE ligne porte ses DEUX commandes, l’archivée comprise, et aucun bloc n’est ouvert', async () => {
+		const { client } = clientQuiModifieLeRole({ lectures: [OK(LEO_DEUX_AFFAIRES)] })
+		monter(client, ID_LEO)
+		const commandes = await screen.findAllByTestId('modifier-role-affaire')
+		expect(commandes).toHaveLength(2)
+		// TOUTES LES LIGNES PORTENT LA MÊME COMMANDE (§19.3, mesure 4) : la base accepte la
+		// modification du rôle sur une affaire ARCHIVÉE, `app.can_write_card` dérivant du channel et
+		// ne lisant ni `archived_at` ni `deleted_at`.
+		expect(commandes.map((bouton) => bouton.getAttribute('data-card')).sort()).toEqual(
+			[ID_CARD_ERP, CONTRAT_ARCHIVE.id].sort(),
+		)
+		expect(screen.getAllByTestId('detacher-affaire-contact')).toHaveLength(2)
+		expect(screen.queryByTestId('formulaire-role-affaire')).toBeNull()
+	})
+
+	it('cas a bis — l’ordre est : MODIFIER LE RÔLE, puis DÉTACHER — le geste qui corrige avant celui qui retire', async () => {
+		const { client } = clientQuiModifieLeRole({ lectures: [OK(LEO)] })
+		monter(client, ID_LEO)
+		const role = (await screen.findAllByTestId('modifier-role-affaire'))[0] as HTMLElement
+		const detacher = screen.getAllByTestId('detacher-affaire-contact')[0] as HTMLElement
+		// `compareDocumentPosition` lit l'ordre du DOM, donc l'ordre de TABULATION et l'ordre de
+		// lecture — ce que le §19.4 exige, et qu'une assertion de présence ne verrait pas. Un geste
+		// destructeur ne se pose jamais en premier sous le pointeur (§5.3, §5.3 ter).
+		expect(role.compareDocumentPosition(detacher) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+	})
+
+	it('cas b — le formulaire NOMME l’affaire, sur une ligne à elle, PRÉREMPLI, et le focus y entre', async () => {
+		const { client } = clientQuiModifieLeRole({ lectures: [OK(LEO_DEUX_AFFAIRES)] })
+		monter(client, ID_LEO)
+		await ouvrirLeFormulaireDeRole(ID_CARD_ERP)
+		const formulaire = screen.getByTestId('formulaire-role-affaire')
+		// IL NOMME L'AFFAIRE, ET NON LE CONTACT (§19.6) : sur cette page le contact est le décor —
+		// on lit sa fiche — et l'affaire varie. Sans ce nom, un formulaire ouvert sous une ligne d'un
+		// tableau qui défile ne dirait plus quel rattachement il modifie.
+		expect(formulaire.textContent).toContain('Migration ERP Sogexia')
+		expect(formulaire.textContent).not.toContain('Léo Marchand')
+		const ligne = screen.getByTestId('ligne-formulaire-role')
+		expect(ligne.tagName).toBe('TR')
+		expect(ligne.getAttribute('data-card')).toBe(ID_CARD_ERP)
+		expect(ligne.querySelector('td')?.getAttribute('colspan')).toBe('4')
+		// LE CHAMP EST PRÉREMPLI DU RÔLE COURANT (§5.25) : c'est précisément ce que l'on vient
+		// corriger, et le focus y entre pour que la correction commence sans souris.
+		const champ = screen.getByTestId('champ-role-rattachement') as HTMLInputElement
+		expect(champ.value).toBe('decideur')
+		expect(document.activeElement).toBe(champ)
+	})
+
+	it('cas c — un rattachement SANS rôle donne un champ VIDE, jamais « null »', async () => {
+		const { client } = clientQuiModifieLeRole({ lectures: [OK(LEO_DEUX_AFFAIRES)] })
+		monter(client, ID_LEO)
+		// La seconde affaire de Léo porte `role: null` — c'est la règle du §5.9 appliquée à la
+		// saisie : une colonne nulle donne un champ vide, jamais le texte « null ».
+		await ouvrirLeFormulaireDeRole(CONTRAT_ARCHIVE.id)
+		expect((screen.getByTestId('champ-role-rattachement') as HTMLInputElement).value).toBe('')
+	})
+
+	it('cas d — « Annuler » démonte le formulaire ET rend le focus à la commande de RÔLE de sa ligne', async () => {
+		const { client } = clientQuiModifieLeRole({ lectures: [OK(LEO_DEUX_AFFAIRES)] })
+		monter(client, ID_LEO)
+		const commande = await ouvrirLeFormulaireDeRole(CONTRAT_ARCHIVE.id)
+		await userEvent.click(screen.getByTestId('annuler-role-affaire'))
+		expect(screen.queryByTestId('formulaire-role-affaire')).toBeNull()
+		// LE FOCUS REVIENT À LA COMMANDE DE RÔLE, PAS À CELLE DU DÉTACHEMENT (§19.6) : deux gestes
+		// vivent sur cette ligne, et rendre le focus à l'autre déplacerait l'utilisateur d'un geste
+		// à l'autre sans qu'il l'ait demandé.
+		expect(document.activeElement).toBe(commande)
+	})
+
+	it('cas e — ouvrir le formulaire d’une AUTRE ligne ferme le précédent', async () => {
+		const { client } = clientQuiModifieLeRole({ lectures: [OK(LEO_DEUX_AFFAIRES)] })
+		monter(client, ID_LEO)
+		await ouvrirLeFormulaireDeRole(ID_CARD_ERP)
+		expect(screen.getAllByTestId('ligne-formulaire-role')).toHaveLength(1)
+		await ouvrirLeFormulaireDeRole(CONTRAT_ARCHIVE.id)
+		const lignes = screen.getAllByTestId('ligne-formulaire-role')
+		expect(lignes).toHaveLength(1)
+		expect(lignes[0]?.getAttribute('data-card')).toBe(CONTRAT_ARCHIVE.id)
+	})
+
+	it('cas f — L’EXCLUSIVITÉ VAUT ENTRE LES DEUX GESTES, dans les deux sens', async () => {
+		const { client } = clientQuiModifieLeRole({ lectures: [OK(LEO_DEUX_AFFAIRES)] })
+		monter(client, ID_LEO)
+		// C'est la règle propre à 4j (§19.4) : le §18.4 posait « une seule confirmation à la fois »,
+		// et elle s'étend aux DEUX gestes parce qu'ils vivent désormais sur la même ligne. Deux blocs
+		// ouverts feraient deux questions dans le flux dont rien ne dirait laquelle on répond.
+		await ouvrirLeFormulaireDeRole(ID_CARD_ERP)
+		await ouvrirLaConfirmation(CONTRAT_ARCHIVE.id)
+		expect(screen.queryByTestId('formulaire-role-affaire')).toBeNull()
+		expect(screen.getAllByTestId('confirmation-detachement-affaire')).toHaveLength(1)
+
+		await ouvrirLeFormulaireDeRole(ID_CARD_ERP)
+		expect(screen.queryByTestId('confirmation-detachement-affaire')).toBeNull()
+		expect(screen.getAllByTestId('formulaire-role-affaire')).toHaveLength(1)
+	})
+
+	it('cas f bis — LES DEUX commandes de la ligne ouverte sont désactivées, celles des autres restent actives', async () => {
+		const { client } = clientQuiModifieLeRole({ lectures: [OK(LEO_DEUX_AFFAIRES)] })
+		monter(client, ID_LEO)
+		await ouvrirLeFormulaireDeRole(ID_CARD_ERP)
+		const surCetteLigne = (testId: string, idCard: string) =>
+			screen.getAllByTestId(testId).find((b) => b.getAttribute('data-card') === idCard) as
+				| HTMLButtonElement
+				| undefined
+		// Une commande dont le bloc est déjà là n'a rien à rouvrir, et l'autre ouvrirait un second
+		// bloc sur la ligne que l'on est en train de lire (§19.4). Ce n'est pas une garde de droit.
+		expect(surCetteLigne('modifier-role-affaire', ID_CARD_ERP)?.disabled).toBe(true)
+		expect(surCetteLigne('detacher-affaire-contact', ID_CARD_ERP)?.disabled).toBe(true)
+		expect(surCetteLigne('modifier-role-affaire', CONTRAT_ARCHIVE.id)?.disabled).toBe(false)
+		expect(surCetteLigne('detacher-affaire-contact', CONTRAT_ARCHIVE.id)?.disabled).toBe(false)
+	})
+
+	it('cas g — pendant le vol, le bouton est désactivé et porte son libellé ; aucune seconde requête', async () => {
+		let debloquer: (valeur: unknown) => void = () => {}
+		const enVol = new Promise((resoudre) => {
+			debloquer = resoudre
+		})
+		const ecritures: number[] = []
+		const client = {
+			from: () => ({
+				select: () => {
+					const chaine: Record<string, unknown> = {
+						then: (resoudre: (valeur: Reponse) => unknown) =>
+							Promise.resolve(OK(LEO)).then(resoudre),
+					}
+					for (const nom of ['eq', 'is', 'order', 'limit']) chaine[nom] = () => chaine
+					return chaine
+				},
+				update: () => {
+					const chaine: Record<string, unknown> = {
+						eq: () => chaine,
+						select: () => chaine,
+						maybeSingle: () => {
+							ecritures.push(1)
+							return enVol
+						},
+					}
+					return chaine
+				},
+			}),
+		} as unknown as ClientCrm
+		monter(client, ID_LEO)
+		await ouvrirLeFormulaireDeRole(ID_CARD_ERP)
+		const bouton = screen.getByTestId('confirmer-role-affaire') as HTMLButtonElement
+		await userEvent.click(bouton)
+		expect(bouton.disabled).toBe(true)
+		expect(bouton.textContent).toContain(fr['contact.role.pending'])
+		await userEvent.click(bouton)
+		expect(ecritures).toHaveLength(1)
+		debloquer({ data: { role: 'technique' }, error: null, status: 200 })
+	})
+
+	it('cas h — la modification appliquée n’envoie QUE `role`, ferme, écrit la cellule, et NE RELIT PAS', async () => {
+		const { client, ecritures } = clientQuiModifieLeRole({
+			lectures: [OK(LEO)],
+			ecriture: { data: { role: 'prescripteur' }, error: null, status: 200 },
+		})
+		monter(client, ID_LEO)
+		await ouvrirLeFormulaireDeRole(ID_CARD_ERP)
+		const champ = screen.getByTestId('champ-role-rattachement')
+		await userEvent.clear(champ)
+		await userEvent.type(champ, 'prescripteur')
+		await userEvent.click(screen.getByTestId('confirmer-role-affaire'))
+		expect(ecritures).toHaveLength(1)
+		// LA MESURE 12 : un `PATCH` portant `card_id` DÉPLACERAIT le rattachement. `toEqual` sur la
+		// charge entière est ce qui interdit qu'une clé s'y ajoute sans que la preuve le voie.
+		expect(ecritures[0]?.charge).toEqual({ role: 'prescripteur' })
+		expect(ecritures[0]?.filtres).toMatchObject({
+			table: 'card_contacts',
+			card_id: ID_CARD_ERP,
+			contact_id: ID_LEO,
+		})
+		await waitFor(() => expect(screen.queryByTestId('formulaire-role-affaire')).toBeNull())
+		// LA FICHE PREND LA LIGNE RENDUE ET NE RELIT RIEN (§19.6). L'espion ne porte qu'UNE lecture,
+		// et sa dernière réponse est rejouée : une relecture ne casserait donc pas la preuve. C'est
+		// la CELLULE qui la porte — elle affiche le rôle rendu par la BASE, `prescripteur`, et non
+		// la saisie. Aucun message n'est écrit : la cellule EST la confirmation (§5.7 ter).
+		const ligne = screen
+			.getAllByTestId('ligne-affaire-contact')
+			.find((tr) => tr.getAttribute('data-card') === ID_CARD_ERP)
+		expect(ligne?.textContent).toContain('prescripteur')
+		expect(screen.queryByTestId('message-role-affaire')).toBeNull()
+		expect(screen.queryByTestId('message-detachement-affaire')).toBeNull()
+	})
+
+	it('cas i — le champ VIDÉ envoie `null`, la cellule du rôle se vide, et la LIGNE demeure', async () => {
+		const { client, ecritures } = clientQuiModifieLeRole({
+			lectures: [OK(LEO)],
+			ecriture: { data: { role: null }, error: null, status: 200 },
+		})
+		monter(client, ID_LEO)
+		await ouvrirLeFormulaireDeRole(ID_CARD_ERP)
+		await userEvent.clear(screen.getByTestId('champ-role-rattachement'))
+		await userEvent.click(screen.getByTestId('confirmer-role-affaire'))
+		// MESURE 9 : la base accepte `null`, et le rôle S'EFFACE sans détruire le rattachement.
+		expect(ecritures[0]?.charge).toEqual({ role: null })
+		await waitFor(() => expect(screen.queryByTestId('formulaire-role-affaire')).toBeNull())
+		const lignes = screen.getAllByTestId('ligne-affaire-contact')
+		expect(lignes).toHaveLength(1)
+		expect(lignes[0]?.textContent).not.toContain('decideur')
+	})
+
+	it('cas j — un rôle réduit à des ESPACES est envoyé `null`, jamais « "   " »', async () => {
+		const { client, ecritures } = clientQuiModifieLeRole({
+			lectures: [OK(LEO)],
+			ecriture: { data: { role: null }, error: null, status: 200 },
+		})
+		monter(client, ID_LEO)
+		await ouvrirLeFormulaireDeRole(ID_CARD_ERP)
+		const champ = screen.getByTestId('champ-role-rattachement')
+		await userEvent.clear(champ)
+		await userEvent.type(champ, '   ')
+		await userEvent.click(screen.getByTestId('confirmer-role-affaire'))
+		// MESURE 10 : `btrim(role) <> ''` refuse la chaîne blanche par `400` / `23514`. Un `trim`
+		// seul suffirait pour la chaîne vide et pas pour celle-ci.
+		expect(ecritures[0]?.charge).toEqual({ role: null })
+	})
+
+	it('cas k — réenvoyer le MÊME rôle est un SUCCÈS, jamais un « sans effet »', async () => {
+		// MESURE 13 : PostgreSQL réécrit la ligne sans comparer, et PostgREST la rend. L'écran n'a
+		// donc aucun cas « aucun champ n'a changé » à traiter, et n'en invente pas un.
+		const { client } = clientQuiModifieLeRole({
+			lectures: [OK(LEO)],
+			ecriture: { data: { role: 'decideur' }, error: null, status: 200 },
+		})
+		monter(client, ID_LEO)
+		await ouvrirLeFormulaireDeRole(ID_CARD_ERP)
+		await userEvent.click(screen.getByTestId('confirmer-role-affaire'))
+		await waitFor(() => expect(screen.queryByTestId('formulaire-role-affaire')).toBeNull())
+		expect(screen.queryByTestId('message-role-affaire')).toBeNull()
+	})
+
+	it('cas l — « sans effet » : le formulaire RESTE ouvert, la saisie est CONSERVÉE, la cellule INCHANGÉE', async () => {
+		const { client } = clientQuiModifieLeRole({
+			lectures: [OK(LEO)],
+			// MESURE 2 : la clause `USING` rend la ligne invisible à l'écriture, et PostgREST rend
+			// `200` et zéro ligne SANS erreur, sur une ligne qui EXISTE et qui garde son rôle.
+			ecriture: { data: null, error: null, status: 200 },
+		})
+		monter(client, ID_LEO)
+		await ouvrirLeFormulaireDeRole(ID_CARD_ERP)
+		const champ = screen.getByTestId('champ-role-rattachement')
+		await userEvent.clear(champ)
+		await userEvent.type(champ, 'technique')
+		await userEvent.click(screen.getByTestId('confirmer-role-affaire'))
+		const message = await screen.findByTestId('message-role-affaire')
+		expect(message.textContent).toBe(fr['contact.role.noeffect'])
+		expect(message.getAttribute('role')).toBe('alert')
+		// LE FORMULAIRE RESTE OUVERT ET LA SAISIE EST CONSERVÉE (§5.7 ter, §19.6) : c'est l'écart
+		// avec le §18.6, où la confirmation se ferme dans les trois issues — là-bas il n'y a RIEN à
+		// conserver. Refermer sur ce silence annoncerait une modification qui n'a pas eu lieu.
+		expect(screen.getByTestId('formulaire-role-affaire')).toBeTruthy()
+		expect((screen.getByTestId('champ-role-rattachement') as HTMLInputElement).value).toBe(
+			'technique',
+		)
+		// LA CELLULE EST INCHANGÉE : la base a gardé la ligne avec son rôle, et l'écran ne prétend
+		// pas le contraire.
+		const ligne = screen.getAllByTestId('ligne-affaire-contact')[0]
+		expect(ligne?.textContent).toContain('decideur')
+	})
+
+	it('cas m — chaque refus a son texte, du dictionnaire FERMÉ, et la saisie survit', async () => {
+		const cas = [
+			{ statut: 401, code: '42501', cle: 'contact.role.refus.forbidden' },
+			{ statut: 400, code: '23514', cle: 'contact.role.refus.invalid' },
+			{ statut: 500, code: 'XX000', cle: 'contact.role.refus.unknown' },
+			// `23505` et `23503` sont STRUCTURELLEMENT INATTEIGNABLES ici (§19.5) : le premier
+			// suppose une insertion sur une clé déjà prise, le second une clé étrangère à éprouver.
+			// Ils partagent le texte d'`unknown`, et cette preuve fige ce partage.
+			{ statut: 409, code: '23505', cle: 'contact.role.refus.unknown' },
+			{ statut: 409, code: '23503', cle: 'contact.role.refus.unknown' },
+		] as const
+		for (const scenario of cas) {
+			const { client } = clientQuiModifieLeRole({
+				lectures: [OK(LEO)],
+				ecriture: {
+					data: null,
+					error: { message: 'brut, jamais affiché', code: scenario.code },
+					status: scenario.statut,
+				},
+			})
+			monter(client, ID_LEO)
+			await ouvrirLeFormulaireDeRole(ID_CARD_ERP)
+			const champ = screen.getByTestId('champ-role-rattachement')
+			await userEvent.clear(champ)
+			await userEvent.type(champ, 'saisie à conserver')
+			await userEvent.click(screen.getByTestId('confirmer-role-affaire'))
+			const message = await screen.findByTestId('message-role-affaire')
+			expect(message.textContent).toBe(fr[scenario.cle])
+			// LE MESSAGE DU SERVEUR N'ATTEINT JAMAIS L'ÉCRAN (§19.5).
+			expect(message.textContent).not.toContain('brut, jamais affiché')
+			expect((screen.getByTestId('champ-role-rattachement') as HTMLInputElement).value).toBe(
+				'saisie à conserver',
+			)
+			cleanup()
+		}
+	})
+
+	it('cas o — le message du DÉTACHEMENT vit sous le tableau, celui du RÔLE dans son formulaire', async () => {
+		// Les deux gestes cohabitent, et leurs messages ne se disputent pas la même place : celui du
+		// détachement SURVIT à la relecture (§18.6) et vit donc dans la section ; celui du rôle vit
+		// près du champ qui l'a causé, parce que ce geste ne relit rien et conserve sa saisie.
+		const { client } = clientQuiModifieLeRole({
+			lectures: [OK(LEO)],
+			ecriture: { data: null, error: null, status: 200 },
+		})
+		monter(client, ID_LEO)
+		await ouvrirLeFormulaireDeRole(ID_CARD_ERP)
+		await userEvent.click(screen.getByTestId('confirmer-role-affaire'))
+		const message = await screen.findByTestId('message-role-affaire')
+		expect(message.closest('[data-testid="formulaire-role-affaire"]')).toBeTruthy()
+		expect(screen.queryByTestId('message-detachement-affaire')).toBeNull()
+	})
+
+	it('cas p — sans contact, sans client ou en erreur, AUCUNE commande de rôle n’est rendue', async () => {
+		const { client: introuvable } = clientQuiModifieLeRole({ lectures: [VIDE] })
+		monter(introuvable, ID_LEO)
+		expect(await screen.findByText(fr['contact.notFound.title'])).toBeTruthy()
+		expect(screen.queryByTestId('modifier-role-affaire')).toBeNull()
+		cleanup()
+
+		monter(null, ID_LEO)
+		expect(screen.getByText(fr['contact.noWorkspace.title'])).toBeTruthy()
+		expect(screen.queryByTestId('modifier-role-affaire')).toBeNull()
+		cleanup()
+
+		const { client: casse } = clientQuiModifieLeRole({
+			lectures: [{ data: null, error: { message: 'boom' }, status: 500 }],
+		})
+		monter(casse, ID_LEO)
+		expect(await screen.findByText(fr['contact.error.title'])).toBeTruthy()
+		expect(screen.queryByTestId('modifier-role-affaire')).toBeNull()
+	})
+
+	it('cas n — la commande est rendue ACTIVE quel que soit le rôle : l’écran ne calcule aucun droit', async () => {
+		// MESURÉ (§19.3, mesure 7) : la LECTRICE RÉUSSIT cette modification sur une affaire et reçoit
+		// le silence sur une autre, toutes deux lisibles par elle. Aucune propriété du profil ne
+		// prédit l'issue, et l'écran qui grisrait « parce que lecteur » se tromperait.
+		const { client } = clientQuiModifieLeRole({ lectures: [OK(LEO_DEUX_AFFAIRES)] })
+		monter(client, ID_LEO)
+		for (const commande of await screen.findAllByTestId('modifier-role-affaire')) {
+			expect((commande as HTMLButtonElement).disabled).toBe(false)
+		}
+	})
+})
