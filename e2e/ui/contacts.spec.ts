@@ -1031,3 +1031,232 @@ test.describe('détachement d’une affaire depuis la fiche (docs/SPEC-contacts.
 		await page.getByTestId('annuler-detachement-affaire').click()
 	})
 })
+
+// =================================================================================================
+// SOUS-TRANCHE 4j — LA MODIFICATION DU RÔLE D'UN RATTACHEMENT, DEPUIS LA FICHE
+// =================================================================================================
+//
+// @verifies CRM-060 (docs/BACKLOG.md) — tranche 4 sous-tranche 4j
+// @verifies docs/SPEC-contacts.md §19.4 (la seconde commande, et UN SEUL BLOC ouvert dans tout le
+//           tableau, tous gestes confondus), §19.6 (de quoi le geste a l'air, la fiche qui prend
+//           la ligne rendue SANS relire), §19.7 (contrat de comportement, cas a à p)
+// @verifies docs/DESIGN_SYSTEM.md §5.28 (ce geste), §5.24 révisé (deux commandes par ligne)
+//
+// LE SEED EST RESTITUÉ PAR LE GESTE MÊME QUE CETTE SOUS-TRANCHE LIVRE, et c'est ce qui l'éprouve le
+// mieux : le rôle du seed est réécrit, puis REMIS par le même formulaire. Aucune requête de service
+// n'intervient — le chemin de retour est le chemin d'aller, et l'éprouver deux fois vaut mieux que
+// de le supposer réversible.
+
+test.describe('modification du rôle d’un rattachement (docs/SPEC-contacts.md §19.7)', () => {
+	test('cas a, b, h et k : les deux commandes, le préremplissage, la cellule réécrite SANS relecture', async ({
+		page,
+	}) => {
+		await connecter(page, ADMIN)
+		await page.goto(`/contacts/${ID_LEO_UI}`)
+		await expect(page.getByRole('heading', { name: 'Léo Marchand' })).toBeVisible()
+
+		// Cas a : CHAQUE ligne porte ses DEUX commandes, dans l'ordre « modifier » puis « détacher ».
+		const ligne = page.getByTestId('ligne-affaire-contact').first()
+		await expect(ligne.getByTestId('modifier-role-affaire')).toBeVisible()
+		await expect(ligne.getByTestId('detacher-affaire-contact')).toBeVisible()
+		await expect(page.getByTestId('formulaire-role-affaire')).toHaveCount(0)
+
+		// Cas b : le formulaire apparaît sur UNE LIGNE À ELLE, NOMME l'affaire, et le champ est
+		// PRÉREMPLI du rôle courant — c'est précisément ce que l'on vient corriger (§5.25).
+		await ligne.getByTestId('modifier-role-affaire').click()
+		const formulaire = page.getByTestId('formulaire-role-affaire')
+		await expect(formulaire).toBeVisible()
+		await expect(formulaire).toContainText('Migration ERP Sogexia')
+		const champ = page.getByTestId('champ-role-rattachement')
+		await expect(champ).toHaveValue('decideur')
+		// LE TABLEAU RESTE ENTIER SOUS LE FORMULAIRE : il vit DANS le flux, jamais en modale.
+		await expect(page.getByTestId('ligne-affaire-contact')).toHaveCount(1)
+		await capturer(page, 'fiche-contact-role-formulaire-1440', UNITE)
+
+		// Cas h : la modification appliquée referme le formulaire et ÉCRIT LA CELLULE. La fiche ne
+		// relit pas — la ligne rendue par le `PATCH` porte la valeur, et c'est elle qui s'affiche.
+		await champ.fill('prescripteur')
+		await page.getByTestId('confirmer-role-affaire').click()
+		await expect(page.getByTestId('formulaire-role-affaire')).toHaveCount(0)
+		await expect(page.getByTestId('ligne-affaire-contact').first()).toContainText('prescripteur')
+		// AUCUN MESSAGE : la cellule EST la confirmation, et en écrire une seconde dirait deux fois
+		// la même chose (§5.7 ter).
+		await expect(page.getByTestId('message-role-affaire')).toHaveCount(0)
+		await capturer(page, 'fiche-contact-role-apres-1440', UNITE)
+
+		// LA VALEUR EST BIEN EN BASE, et non seulement à l'écran : le rechargement la relit.
+		await page.reload()
+		await expect(page.getByTestId('ligne-affaire-contact').first()).toContainText('prescripteur')
+
+		// Cas k : réécrire le MÊME rôle est un SUCCÈS, jamais un « sans effet » — PostgreSQL réécrit
+		// la ligne sans comparer (§19.3, mesure 13).
+		await page.getByTestId('modifier-role-affaire').first().click()
+		await page.getByTestId('confirmer-role-affaire').click()
+		await expect(page.getByTestId('formulaire-role-affaire')).toHaveCount(0)
+		await expect(page.getByTestId('message-role-affaire')).toHaveCount(0)
+
+		// LE SEED EST RESTITUÉ PAR LE GESTE LUI-MÊME, sans requête de service.
+		await page.getByTestId('modifier-role-affaire').first().click()
+		await page.getByTestId('champ-role-rattachement').fill('decideur')
+		await page.getByTestId('confirmer-role-affaire').click()
+		await expect(page.getByTestId('ligne-affaire-contact').first()).toContainText('decideur')
+		await page.reload()
+		await expect(page.getByTestId('ligne-affaire-contact').first()).toContainText('decideur')
+	})
+
+	test('cas i : VIDER le champ EFFACE le rôle, et la ligne DEMEURE', async ({ page }) => {
+		await connecter(page, ADMIN)
+		await page.goto(`/contacts/${ID_LEO_UI}`)
+		const ligne = page.getByTestId('ligne-affaire-contact').first()
+		await expect(ligne).toContainText('decideur')
+
+		await ligne.getByTestId('modifier-role-affaire').click()
+		// MESURE 9 : la base accepte `null`, et le rôle S'EFFACE sans détruire le rattachement. Le
+		// texte d'aide du formulaire l'annonce, plutôt que de laisser deviner ce qu'un champ vide
+		// produit (§19.6).
+		await page.getByTestId('champ-role-rattachement').fill('')
+		await page.getByTestId('confirmer-role-affaire').click()
+		await expect(page.getByTestId('formulaire-role-affaire')).toHaveCount(0)
+		// LA LIGNE RESTE, et sa cellule de rôle est VIDE — ni tiret, ni « non renseigné » (§5.9).
+		await expect(page.getByTestId('ligne-affaire-contact')).toHaveCount(1)
+		await expect(page.getByTestId('ligne-affaire-contact').first()).not.toContainText('decideur')
+		await capturer(page, 'fiche-contact-role-efface-1440', UNITE)
+
+		// LE SEED EST RESTITUÉ PAR LE MÊME GESTE.
+		await page.getByTestId('modifier-role-affaire').first().click()
+		await page.getByTestId('champ-role-rattachement').fill('decideur')
+		await page.getByTestId('confirmer-role-affaire').click()
+		await expect(page.getByTestId('ligne-affaire-contact').first()).toContainText('decideur')
+	})
+
+	test('cas b, d et f AU CLAVIER : le focus entre, revient, et l’exclusivité vaut entre les DEUX gestes', async ({
+		page,
+	}) => {
+		await connecter(page, ADMIN)
+		await page.goto(`/contacts/${ID_LEO_UI}`)
+		const commande = page.getByTestId('modifier-role-affaire').first()
+		await expect(commande).toBeVisible()
+
+		await commande.focus()
+		await page.keyboard.press('Enter')
+		// Le focus ENTRE dans le champ : il peut le faire au montage, le formulaire ne lisant rien
+		// et son champ n'étant jamais désactivé (§19.6).
+		await expect(page.getByTestId('champ-role-rattachement')).toBeFocused()
+
+		// LES DEUX commandes de la ligne sont désactivées tant qu'un bloc de cette ligne est ouvert
+		// — commandes sans objet, et non gardes de droit (§19.4).
+		await expect(commande).toBeDisabled()
+		await expect(
+			page.getByTestId('ligne-affaire-contact').first().getByTestId('detacher-affaire-contact'),
+		).toBeDisabled()
+
+		// Cas d : « Annuler » démonte le formulaire ET REND LE FOCUS à la commande de RÔLE de sa
+		// ligne — pas à celle du détachement, qui déplacerait l'utilisateur d'un geste à l'autre.
+		await page.getByTestId('annuler-role-affaire').click()
+		await expect(page.getByTestId('formulaire-role-affaire')).toHaveCount(0)
+		await expect(commande).toBeFocused()
+
+		// Cas f : L'EXCLUSIVITÉ VAUT ENTRE LES DEUX GESTES, dans les deux sens (§19.4).
+		//
+		// ELLE NE S'OBSERVE QU'ENTRE DEUX LIGNES, ET C'EST UN DÉFAUT DE PREUVE TROUVÉ EN L'EXÉCUTANT.
+		// Écrit d'abord sur la SEULE ligne du seed, ce scénario cliquait « Détacher » pendant que le
+		// formulaire de rôle était ouvert — or les DEUX commandes de cette ligne sont alors
+		// `disabled` (§19.4), et le clic ne pouvait pas aboutir. Le produit tient sa règle ; c'est le
+		// scénario qui décrivait un geste impossible. Il faut donc une SECONDE ligne, posée par les
+		// gestes de l'écran (4h), puis retirée par ceux de 4i.
+		await page.getByTestId('ouvrir-rattachement-affaire').click()
+		await page.getByTestId('champ-affaire').selectOption(CARD_VITRINE_UI)
+		await page.getByTestId('confirmer-rattachement-affaire').click()
+		await expect(page.getByTestId('ligne-affaire-contact')).toHaveCount(2)
+
+		const ligneERP = page.getByTestId('ligne-affaire-contact').first()
+		const ligneVitrine = page
+			.getByTestId('ligne-affaire-contact')
+			.filter({ hasText: TITRE_VITRINE })
+
+		await ligneERP.getByTestId('modifier-role-affaire').click()
+		await expect(page.getByTestId('formulaire-role-affaire')).toBeVisible()
+		// Une confirmation de DÉTACHEMENT ouverte sur une AUTRE ligne ferme le formulaire de rôle.
+		await ligneVitrine.getByTestId('detacher-affaire-contact').click()
+		await expect(page.getByTestId('formulaire-role-affaire')).toHaveCount(0)
+		await expect(page.getByTestId('confirmation-detachement-affaire')).toBeVisible()
+		// Et réciproquement : un formulaire de rôle ferme la confirmation de détachement.
+		await ligneERP.getByTestId('modifier-role-affaire').click()
+		await expect(page.getByTestId('confirmation-detachement-affaire')).toHaveCount(0)
+		await expect(page.getByTestId('formulaire-role-affaire')).toBeVisible()
+		await page.getByTestId('annuler-role-affaire').click()
+
+		// LE SEED EST RESTITUÉ PAR LES GESTES DE L'ÉCRAN : la ligne posée par 4h est retirée par 4i,
+		// sans jamais quitter la fiche ni toucher la base.
+		await ligneVitrine.getByTestId('detacher-affaire-contact').click()
+		await page.getByTestId('confirmer-detachement-affaire').click()
+		await expect(page.getByTestId('ligne-affaire-contact')).toHaveCount(1)
+	})
+
+	test('cas l et n : la LECTRICE voit la commande, envoie, et le SILENCE est dit — la saisie RESTE', async ({
+		page,
+	}) => {
+		await connecter(page, VIEWER)
+		await page.goto(`/contacts/${ID_SOPHIE_UI}`)
+		await expect(page.getByRole('heading', { name: 'Sophie Dupont' })).toBeVisible()
+
+		// Cas n : AUCUNE COMMANDE ÉTEINTE D'AVANCE (§19.6). MESURÉ : la lectrice RÉUSSIT ce geste sur
+		// « Assistant IA support — Nordis » et reçoit le silence ici. L'affaire est donc NOMMÉE,
+		// jamais prise au rang : selon celle qu'on choisit, le scénario passerait par le succès ou
+		// par le silence.
+		const ligne = page.getByTestId('ligne-affaire-contact').filter({ hasText: TITRE_INTRANET })
+		await expect(ligne).toBeVisible()
+		await expect(ligne).toContainText('prescripteur')
+		const commande = ligne.getByTestId('modifier-role-affaire')
+		await expect(commande).toBeEnabled()
+		await commande.click()
+		await page.getByTestId('champ-role-rattachement').fill('technique')
+		await page.getByTestId('confirmer-role-affaire').click()
+
+		// Cas l : LE SILENCE EST DIT. La clause `USING` a filtré la ligne avant la mise à jour, et le
+		// serveur a rendu `200` avec zéro ligne SANS erreur. Le message n'affirme ni le refus ni la
+		// disparition — les deux causes sont indistinguables (§19.3).
+		const message = page.getByTestId('message-role-affaire')
+		await expect(message).toBeVisible()
+		await expect(message).toHaveAttribute('role', 'alert')
+		// LE FORMULAIRE RESTE OUVERT ET LA SAISIE EST CONSERVÉE (§5.7 ter) : c'est l'écart avec la
+		// confirmation voisine de 4i, qui se ferme dans les trois issues — elle ne porte aucune
+		// saisie à perdre.
+		await expect(page.getByTestId('formulaire-role-affaire')).toBeVisible()
+		await expect(page.getByTestId('champ-role-rattachement')).toHaveValue('technique')
+		// ET LA CELLULE EST INCHANGÉE, parce que la base a gardé la ligne avec son rôle.
+		await expect(ligne).toContainText('prescripteur')
+		await capturer(page, 'fiche-contact-role-sans-effet-1440', UNITE)
+
+		// AUCUNE ERREUR N'EST DÉCLARÉE À LA GARDE DE CONSOLE : un `200` n'est pas une erreur réseau,
+		// et Chromium n'en journalise aucune. La console reste VIERGE sur un refus que l'utilisateur
+		// voit pourtant écrit — c'est la situation de 4i, à l'identique.
+
+		// LE SEED EST INTACT : rien n'a été modifié, et la fiche rechargée le montre.
+		await page.reload()
+		await expect(
+			page.getByTestId('ligne-affaire-contact').filter({ hasText: TITRE_INTRANET }),
+		).toContainText('prescripteur')
+	})
+
+	test('390 px : le formulaire de rôle reste lisible et la page ne défile pas', async ({ page }) => {
+		await page.setViewportSize({ width: 390, height: 844 })
+		await connecter(page, ADMIN)
+		await page.goto(`/contacts/${ID_LEO_UI}`)
+		await page.getByTestId('modifier-role-affaire').first().click()
+		await expect(page.getByTestId('formulaire-role-affaire')).toBeVisible()
+		// Le bloc est ÉPINGLÉ au bord visible du conteneur et borné à la largeur de la fenêtre
+		// (§5.27, §5.28) : sans cela, activer la commande pousse le défilement du tableau vers la
+		// droite et le formulaire se retrouve amputé sur sa gauche — le défaut que la vérification
+		// visuelle de 4i a trouvé, et dont la règle vaut pour TOUT bloc posé dans une ligne de
+		// tableau défilant.
+		await expect(page.getByTestId('champ-role-rattachement')).toBeVisible()
+		const debordePage = await page.evaluate(
+			() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+		)
+		expect(debordePage).toBe(false)
+		await capturer(page, 'fiche-contact-role-390', UNITE)
+		// On referme sans écrire : ce scénario mesure une mise en page.
+		await page.getByTestId('annuler-role-affaire').click()
+	})
+})

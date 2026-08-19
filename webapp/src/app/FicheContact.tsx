@@ -863,7 +863,24 @@ function LigneAffaireContact({
 				*/}
 				{gestesLigne === undefined || client === null ? null : (
 					<td className="h-[var(--size-target)] px-3">
-						<div className="flex flex-wrap items-center gap-2">
+						{/*
+						  LES DEUX COMMANDES NE SE REPLIENT PAS, ET C'EST UN DÉFAUT TROUVÉ PAR LA
+						  VÉRIFICATION VISUELLE (`CLAUDE.md` §16), à 390 px. Écrites d'abord en
+						  `flex-wrap`, elles passaient l'une sous l'autre et la LIGNE GAGNAIT DE LA
+						  HAUTEUR — l'écart que le §5.21 assume pour sa LISTE PLATE, et qui ne se
+						  transporte pas ici : le §5.9 pose qu'une ligne de tableau vaut
+						  `--size-target`, et la réponse d'un tableau au manque de place est de
+						  DÉFILER dans son conteneur (§7, §12.6), ce que celui-ci fait déjà. Sans
+						  repli, la ligne garde sa hauteur, les cibles gardent leurs 40 px, et le
+						  défilement — qui est le contrat de ce tableau — porte le reste.
+
+						  `whitespace-nowrap` est posé sur la CELLULE et non sur chaque bouton, la
+						  propriété étant héritée : sans lui, « Modifier le rôle » se coupait EN DEUX
+						  LIGNES à l'intérieur de son propre bouton, et la ligne grandissait quand
+						  même. Une règle de cellule dit ce qu'elle vise — cette colonne ne se replie
+						  pas — là où deux classes de bouton l'auraient répétée.
+						*/}
+						<div className="flex items-center gap-2 whitespace-nowrap">
 							<CommandeRoleRattachement
 								commande={commandeRole}
 								idCard={affaire.idCard}
