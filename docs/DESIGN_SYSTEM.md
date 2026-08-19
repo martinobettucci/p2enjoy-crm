@@ -155,6 +155,13 @@ valeur n'existe. Écrire `p-5` ne produit rien.
 - **Onglets** : les channels du track courant, en **liens** de navigation et non en `tablist`
   (§12.1). Débordement horizontal défilable, jamais tronqué sans indication — l'indication est
   portée par `.indique-debordement-x` (§12.6).
+  *La barre porte en outre, depuis le 2026-08-19 (`CRM-086`, `docs/SPEC-costs.md` §4.0), les
+  **entrées transverses du track** — celles qui portent sur le track entier et non sur l'un de ses
+  channels. Une seule aujourd'hui, « Coûts ». Elles vivent après les channels, dans leur propre
+  `nav` étiquetée, séparées par un filet `--color-border` : mêlées aux onglets, elles se liraient
+  comme un channel de plus sur une barre où tout le reste en est un. Elles sont rendues **même
+  lorsque le track n'a aucun channel** — les budgets d'un track existent indépendamment de ses
+  channels, et l'état vide de la barre, qui reste vrai, ne dit alors plus tout ce qu'elle propose.*
 - **Board** : une colonne par étape, dans l'ordre `workflow_steps.position`. En-tête de colonne
   avec libellé, compteur, et montant cumulé lorsque le montant est utilisé.
 
@@ -2183,6 +2190,20 @@ l'information reposerait sur la seule couleur (§1). Les deux états portent une
 épaisseur, pour que le texte ne se décale pas au changement d'onglet.
 
 Lorsqu'un track n'a aucun channel, la barre affiche son état vide, comme avant.
+
+**RÉVISION DU 2026-08-19 — `CRM-086`.** La barre ne porte plus que des channels. L'entrée « Coûts »
+du §4.0 de `docs/SPEC-costs.md` désigne un écran du **track entier** ; elle emprunte le même patron
+— lien, `aria-current="page"`, bordure basse de même épaisseur dans les deux états — parce que c'est
+le même geste de navigation, et elle est **séparée** par un filet et par une seconde `nav` étiquetée
+parce que ce n'est pas le même objet. Deux conséquences que la révision assume :
+
+- **l'état vide de la barre ne suffit plus à décrire un track sans channel.** Il reste rendu, il
+  reste vrai, et l'entrée transverse est rendue à côté de lui ;
+- **la barre porte désormais deux points de repère de navigation**, chacun avec son propre nom
+  accessible — « Onglets » et « Vues du track ». Un `nav` sans nom, ou deux `nav` de même nom,
+  seraient indiscernables au lecteur d'écran (§8).
+
+L'icône `ChartColumn` **accompagne** le libellé et ne le remplace pas (§9).
 
 ### 12.2 Ordre de sacrifice dans l'en-tête sous 768 px — `CRM-007`
 

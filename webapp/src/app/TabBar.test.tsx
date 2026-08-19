@@ -1,4 +1,5 @@
 // @verifies CRM-021 (docs/BACKLOG.md) — barre d'onglets : rendu réel des channels
+// @verifies CRM-086 (docs/BACKLOG.md) — l'entrée « Coûts » du track, docs/SPEC-costs.md §4.0
 // @verifies docs/SPEC-channels.md §5 (ce que la barre lit), §5.3 (patron ARIA), §4 (archivage)
 // @verifies docs/DESIGN_SYSTEM.md §4 (onglets), §5.8 (états), §8 (clavier, cibles), §12.1 (écart)
 // @verifies docs/SPEC-webapp.md §7 (états systématiques), §10 (aucun texte en dur)
@@ -113,5 +114,59 @@ describe('barre d’onglets — onglets réels', () => {
 		// (docs/DESIGN_SYSTEM.md §10).
 		expect(screen.getByTitle('Grands comptes')).toBeTruthy()
 		expect(screen.getByRole('navigation', { name: fr['tabs.aria'] })).toBeTruthy()
+	})
+
+	// ---------------------------------------------------------------------------------------------
+	// L'entrée transverse du track — `CRM-086`, docs/SPEC-costs.md §4.0 et §4.2.
+	// ---------------------------------------------------------------------------------------------
+
+	it('porte l’entrée « Coûts » du track, hors du groupe des channels', () => {
+		monter(pret(CHANNELS))
+		const couts = screen.getByTestId('onglet-couts-track')
+		expect(couts.getAttribute('href')).toBe('/tracks/conseil-ia/couts')
+		// Elle vit dans sa PROPRE `nav` : mêlée aux channels, elle se lirait comme un channel de
+		// plus, sur une barre où tout le reste en est un.
+		const groupeChannels = screen.getByRole('navigation', { name: fr['tabs.aria'] })
+		expect(groupeChannels.contains(couts)).toBe(false)
+		expect(screen.getByRole('navigation', { name: fr['tabs.track.aria'] }).contains(couts)).toBe(
+			true,
+		)
+	})
+
+	it('porte l’entrée « Coûts » MÊME sur un track sans aucun channel', () => {
+		// Les budgets d'un track existent indépendamment de ses channels : l'état vide de la barre
+		// reste vrai, mais il ne dit plus tout ce que la barre a à proposer.
+		monter(pret([]))
+		expect(screen.getByTestId('onglets-vides')).toBeTruthy()
+		expect(screen.getByTestId('onglet-couts-track').getAttribute('href')).toBe(
+			'/tracks/conseil-ia/couts',
+		)
+	})
+
+	it('ne propose AUCUNE entrée de track hors d’une route de track', () => {
+		// Rendue SANS passer par `monter`, dont le paramètre par défaut réintroduirait un slug : une
+		// route transverse — Inbox, Réglages — n'en fournit aucun, et c'est cette absence qui décide.
+		render(
+			<MemoryRouter initialEntries={['/inbox']}>
+				<TabBar />
+			</MemoryRouter>,
+		)
+		expect(screen.queryByTestId('onglet-couts-track')).toBeNull()
+		expect(screen.getByTestId('onglets-vides')).toBeTruthy()
+	})
+
+	it('signale l’entrée « Coûts » courante par `aria-current`, comme un onglet de channel', () => {
+		monter(pret(CHANNELS), { adresse: '/tracks/conseil-ia/couts' })
+		expect(screen.getByTestId('onglet-couts-track').getAttribute('aria-current')).toBe('page')
+		for (const onglet of screen.getAllByTestId('onglet-channel')) {
+			expect(onglet.getAttribute('aria-current')).toBeNull()
+		}
+	})
+
+	it('accompagne son icône d’un libellé écrit, jamais l’inverse (§9)', () => {
+		monter(pret(CHANNELS))
+		const couts = screen.getByTestId('onglet-couts-track')
+		expect(couts.textContent).toBe(fr['tabs.track.costs'])
+		expect(couts.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true')
 	})
 })
