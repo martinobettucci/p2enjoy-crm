@@ -20770,3 +20770,84 @@ laisser un blanc se lire comme un zéro ; interroger une table absente aurait re
 est donc **`CRM-085`**, tête de suite du chunk 6, qui soldera ce point dans la foulée. `CRM-083`
 reste bloqué par **INC-170**. Cinq arbitrages attendent désormais : **INC-169**, **INC-170**,
 **INC-172**, **INC-173** et **INC-174**.
+
+## décision 473 — `CRM-085` tranche 1 : les lignes de coût existent, et qui parle en premier
+
+**L'unité, et le choix.** La décision 472 laisse `CRM-084` en `[~]` avec un reste unique — le
+décompte des lignes sans réel dans la confirmation de clôture — qui se lit dans `card_costs`, table
+que `CRM-085` devait livrer, et désigne explicitement `CRM-085` comme reprise. C'est donc l'unité de
+cette session, sans discussion (`docs/CloudWorker.md` §4.2).
+
+**Aucune spécification n'a été réécrite.** `docs/SPEC-costs.md` est lue INTÉGRALEMENT et
+`docs/SCHEMA.md` §9 bis.6 et §9 bis.7 couvrent le modèle ligne à ligne. Le §3.2 point 3 de
+`docs/CloudWorker.md` s'applique dans sa forme d'exception, comme aux décisions 471 et 472, et le
+code a commencé. Les deux seuls écrits documentaires de la session sont des CONSTATS de mesure, pas
+des spécifications : ils sont détaillés plus bas.
+
+**Ce qui a été livré.** La migration `0051`, la table `card_costs`, ses trois index — dont le
+partiel `where actual_cost is null` qui servira l'onglet du §4.8 —, deux fonctions de trigger, la
+fonction d'appui `app.budget_est_ouvert` et quatre politiques. Le seed porte QUATRE lignes. La
+tranche 2 — la section « Coûts » de la fiche d'affaire (§4.6) — n'est pas livrée, et le backlog la
+nomme.
+
+**LE TRIGGER SE TIENT DES DEUX CÔTÉS DE LA RÉCURRENCE, ET C'EST LE PENDANT EXACT DE LA DÉCISION
+471.** Celle-ci avait fermé la brèche « créer un budget récurrent, lui poser des occurrences, puis
+retirer sa récurrence ». La MÊME brèche existe dans l'autre sens, et c'est `card_costs` qui l'ouvre :
+rendre RÉCURRENT un budget simple qui porte déjà des lignes les laisse avec `occurrence_id` nul sur
+un budget désormais récurrent — l'invariant faux pour des lignes que le trigger de la table ne
+reverra jamais. Le trigger de `CRM-084` ne pouvait pas la fermer, `card_costs` n'existant pas.
+`0051` pose donc un SECOND trigger sur `budgets`, distinct, qui cohabite avec le premier.
+
+**LA FRONTIÈRE DE LA CLÔTURE EST LE POINT QUE LA LECTURE RAPIDE MANQUE.** Le §2.3 pose que le réel
+reste saisissable après la clôture — « on clôt une campagne PUIS les factures arrivent » — mais que
+le RATTACHEMENT ne change plus. Le trigger refuse donc l'insertion et le changement de `budget_id`
+ou d'`occurrence_id`, **des deux côtés** : celui qu'on rejoint comme celui qu'on quitte. Déplacer
+une ligne HORS d'un budget clos diminuerait un total déjà arrêté, ce qui est le symétrique exact du
+cas interdit. La politique de mise à jour, elle, n'exige PAS le budget ouvert : l'exiger obligerait
+à rouvrir une enveloppe pour saisir une facture, et viderait de son sens l'onglet du §4.8.
+
+**QUI PARLE EN PREMIER — MESURÉ, ET LA DOCUMENTATION DISAIT L'INVERSE AVANT LA MESURE.** Écrit
+d'abord que « la politique parle la première et rend 403 », le seed a rendu **400** au premier essai.
+PostgreSQL exécute les triggers `BEFORE INSERT` **avant** d'appliquer le `WITH CHECK` : sur un budget
+clôturé, le client reçoit `400 / 23514` — le message du trigger, qui NOMME la clôture — et jamais
+`403 / 42501`, bien que les deux couches portent la même condition. La suppression, qu'aucun trigger
+ne garde, rend en revanche `200 []`. Les trois formes du refus sont éprouvées séparément, et la
+migration, le seed et `docs/PROD_MIGRATIONS.md` ont été CORRIGÉS contre la mesure plutôt que la
+mesure contre eux. `CRM-085` tranche 2 et `CRM-086` devront classer ces réponses : un module qui
+guetterait un `403` ici ne le reconnaîtrait jamais.
+
+**UNE ACTION RÉFÉRENTIELLE QUE LA SPÉCIFICATION NE NOMMAIT PAS.** `docs/SCHEMA.md` §9 bis.6 posait
+`on delete restrict` sur `budget_id` et se taisait sur `occurrence_id`. Le silence n'était pas
+neutre : une occurrence détruite sous ses lignes laisserait `occurrence_id` nul sur un budget
+récurrent, c'est-à-dire l'invariant faux sans qu'aucune ligne interdite n'ait été écrite — la brèche
+de la décision 471, une troisième fois. `restrict` est donc posé, et le §9 bis.6 est complété dans le
+même geste. Ce n'est pas une décision de produit prise à la place du responsable : c'est le seul
+choix cohérent avec un invariant qu'il a déjà arbitré.
+
+**Ce qui a été vérifié.** `supabase/tests/0049_card_costs.test.sql` **58 assertions**,
+`e2e/api/card-costs.spec.ts` **15 scénarios**. Les deux se recouvrent et divergent sur ce qu'elles
+seules voient : la suite pgTAP mesure les actions référentielles dans le catalogue ET par le refus
+qu'elles produisent, la preuve d'API mesure les TROIS formes du refus au niveau HTTP, distinction qui
+n'existe pas dans la base. Le seed vérifie en outre, avec les VRAIS jetons, que la lectrice lit
+l'affaire « Formation Data & IA » et AUCUNE de ses lignes — c'est la double condition du §3.1 par le
+cas qui la motive, et sans la première moitié « zéro ligne » ne prouverait rien.
+
+**TROIS PREUVES ROUGES, TOUTES IMPUTABLES, TOUTES CORRIGÉES À LA CAUSE.** (1) Le recensement de
+`0016_preuves_refus.test.sql` rendait 103 pour 99 : c'est le contrôle qui existe pour ça, et il est
+**révisé** — compte porté à 103 avec son motif, et inventaire nominal étendu aux quatre politiques
+neuves. (2) `npm run types:check` : `webapp/src/lib/database.types.ts` ignorait `card_costs` ;
+régénéré, le diff ne porte QUE cette table. (3) **Le nettoyage de `card-costs.spec.ts` ne nettoyait
+rien, et il a fait rougir une suite d'une AUTRE unité.** `id=like.d0000000*` ne supprime aucune ligne
+— `id` est de type `uuid`, pour lequel PostgreSQL n'offre aucun opérateur `LIKE` —, et PostgREST
+rendait une erreur que le `afterAll` ignorait en silence ; les budgets d'essai survivaient à leur
+tour, `ON DELETE RESTRICT` les protégeant, et `0048_budgets.test.sql` échouait au cycle suivant sur
+une position maximale de 954 au lieu de 202. Le filtre porte désormais sur `budget_id`, et le
+nettoyage **échoue bruyamment**.
+
+**Où reprendre.** `CRM-085` est `[~]`, et son reste est **la tranche 2 : la section « Coûts » de la
+fiche d'affaire** (`docs/SPEC-costs.md` §4.6) — liste, ajout, modification, suppression, sélecteur de
+budget limité aux budgets ouverts et lisibles du track de la card, second sélecteur d'occurrence
+obligatoire sur un budget récurrent, totaux avec la mention du §4.4 —, puis son E2E d'interface, ses
+captures et `scripts/verify-card-costs.sh`. Le décompte laissé ouvert par `CRM-084` (§4.1) se solde
+dans la même foulée, `card_costs` existant désormais. `CRM-083` reste bloqué par **INC-170**. Cinq
+arbitrages attendent : **INC-169**, **INC-170**, **INC-172**, **INC-173** et **INC-174**.
