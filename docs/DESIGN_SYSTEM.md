@@ -1910,6 +1910,61 @@ est propre :
   (`docs/SPEC-goals.md` §4.2), et ferait chercher le problème du mauvais côté. Le **retrait**, lui,
   garde le texte commun : il n'engage aucune destination.
 
+**Les suppressions — tranche 2b-2c, `docs/SPEC-goals.md` §3.** Elles n'ajoutent aucun bloc à
+l'écran non plus : la commande d'un bloc s'ajoute au pied de sa fiche, celle d'une flèche à sa ligne
+de la liste des liens. Ce que les gestes envoient et refusent est spécifié là-bas ; les règles
+ci-dessous ne disent que de quoi ils ont l'air. Tout ce que le §5.27 pose vaut ici sans être
+répété : une seule confirmation à tout instant, la commande qui reste montée et désactivée, la
+confirmation dans le flux du document — **aucune modale**.
+
+- **La commande de suppression d'un bloc est EN BAS de sa fiche, dans un bloc séparé par une
+  bordure haute `--color-border`** — la place exacte que le §5.3 donne au retrait d'une affaire, et
+  pour son motif : un retrait n'est pas ce qu'on vient faire sur une fiche d'édition. Elle est
+  **secondaire compacte** avec l'icône `Trash2` ; c'est le **bouton de la confirmation** qui est
+  destructif plein (§5.5), la teinte de danger annonçant le geste qu'on commet et non celui qu'on
+  envisage.
+
+- **La commande d'une flèche vit dans la LISTE DES LIENS, jamais sur le dessin**, à côté du
+  sélecteur de direction et pour son motif exact (tranche 2b-2b) : le trait est un `<path>` dans un
+  SVG `aria-hidden` sans événements de pointeur, que ni le clavier ni un lecteur d'écran
+  n'atteindraient. Son **nom accessible nomme la flèche** — « Supprimer » seul, répété sur chaque
+  ligne, ne dirait pas laquelle.
+
+- **LA CONFIRMATION DU BLOC ANNONCE CE QUE LA CASCADE EMPORTE**, et c'est la règle propre à cette
+  surface. Supprimer un bloc supprime ses flèches (`docs/SPEC-goals.md` §2.3) : une confirmation qui
+  le tairait ferait découvrir après coup la disparition de liens que personne n'a demandé de
+  retirer. **L'accord se fait par CLÉ** — aucune flèche, une flèche, plusieurs avec leur compte —,
+  jamais par un gabarit paramétré : « les 1 flèches » est faux (§10). Le compte est celui des
+  flèches **rendues**, jamais un total de la base : une flèche dont l'autre extrémité est masquée
+  pend déjà dans le vide (§5.29, flèche), et la confirmation ne peut annoncer que ce que celui qui
+  la lit verra disparaître.
+
+- **La confirmation d'une flèche ne parle d'AUCUNE cascade** — une flèche n'emporte rien —, et elle
+  nomme ses deux extrémités avec son symbole. Deux textes distincts pour deux pertes distinctes,
+  comme le §5.27 l'exige d'une confirmation qui nomme son objet.
+
+- **LE RETOUR DU FOCUS EST DIFFÉRÉ D'UN TOUR DE RENDU, ET LE MOTIF DIFFÈRE DE CELUI DU §5.25.**
+  La commande reste **montée** pendant sa confirmation — le §5.27 — mais elle est **désactivée**,
+  et un bouton désactivé **refuse le focus** : appelé depuis le gestionnaire d'annulation,
+  `focus()` laissait le focus sur le document. Le remède est celui du §5.25 — un drapeau, puis un
+  effet —, pour une cause voisine mais distincte : là-bas la commande est démontée, ici seulement
+  éteinte. **Aucune temporisation** (`CLAUDE.md` §18). Défaut trouvé **par la preuve**, jamais à la
+  lecture.
+
+- **LA FLÈCHE D'UN BLOC SUPPRIMÉ DISPARAÎT, elle ne devient pas le moignon pointillé du §5.4.** Les
+  deux causes n'ont rien de commun : le moignon rend une extrémité que la RLS **masque** — la ligne
+  existe en base —, tandis que la cascade l'a **détruite**. La laisser pendre dessinerait un lien
+  que plus rien ne porte.
+
+- **Aucune commande n'est éteinte d'avance selon le rôle** (§5.3, §5.13, §5.16, §5.21, §5.27, sans
+  exception), et **le silence de la clause `using` est dit en toutes lettres** : MESURÉ, la lectrice
+  qui confirme reçoit `200` et zéro ligne. L'écran écrit « aucun bloc n'a été supprimé », **garde le
+  bloc à l'écran** et invite à recharger. Le faire disparaître annoncerait une suppression qui n'a
+  pas eu lieu, et il reparaîtrait au rechargement.
+
+- **Aucune couleur, aucun jeton nouveau** : le geste emprunte au §5.5 ses variantes et au §5.3 son
+  icône `Trash2`.
+
 ### 5.30 Histogramme prévisionnel / réel — `CRM-086`
 
 Spécifié avant code, `docs/SPEC-costs.md` §4.2.
