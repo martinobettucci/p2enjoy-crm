@@ -2471,6 +2471,14 @@ session voisine est en train de livrer ; la retirer prendrait le risque de défa
 en cours. Deux issues sont possibles et l'une ou l'autre suffira : la session voisine emploie la clé
 dans son écran, ou elle la retire.
 
-**Statut :** ouvert. À vérifier au début de la session suivante — si la clé est toujours morte et
-qu'aucune session ne travaille sur `CRM-083`, la corriger devient trivial et n'appartient plus à
-personne d'autre.
+**Statut : FERMÉ le 2026-08-19, par la session qui l'avait laissée.** C'est la deuxième des deux
+issues que l'entrée ci-dessus prévoyait : la clé a été **retirée**, et non employée. Le geste de
+redimensionnement existe bien, mais sa poignée est une affordance de SOURIS — `aria-hidden`, hors
+du parcours de tabulation, le clavier disposant du geste complet par `Alt` + flèches
+(`docs/DESIGN_SYSTEM.md` §5.29) —, si bien qu'elle ne porte aucun nom accessible et n'a pas de
+libellé à traduire. La clé était donc morte pour de bon. MESURÉ après retrait : `i18n.test.ts` rend
+**202 tests verts**, et la campagne complète de la session **1850 tests unitaires** sans échec.
+
+Cette entrée est conservée plutôt qu'effacée : elle documente un croisement réel entre deux sessions
+travaillant la même unité, et le fait que la ligne de base a été correctement établie de part et
+d'autre.
