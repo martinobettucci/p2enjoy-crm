@@ -8153,8 +8153,55 @@ la 2b-1 l'ont été : **2b-2a livre le LIEN**, 2b-2b livrera les **flèches** et
       `suppression-bloc-1440.jpg`, `suppression-fleche-confirmation-1440.jpg`,
       `suppression-refus-lectrice-1440.jpg`.
 
-**CE QUI RESTE — LES TABLEAUX, ET LE HARNAIS.** Aucune commande morte n'est posée pour ces gestes.
-- [ ] **Créer, renommer, réordonner et archiver un tableau** (§3).
+**TRANCHE 2c LIVRÉE — LES TABLEAUX.**
+
+- [x] **Créer, renommer, réordonner et archiver un tableau** (§3), depuis la liste du §5.1 devenue
+      administrable. `webapp/src/lib/objectifs-ecriture.ts` (`creerTableau`, `renommerTableau`,
+      `deplacerTableau`, `archiverTableau`, `classerRefusTableau`), `webapp/src/app/Objectifs.tsx`
+      (`ListeTableaux`). Le patron est celui de `docs/DESIGN_SYSTEM.md` §5.13, appliqué sans
+      exception : formulaires dans le FLUX du document, commandes d'ordre désactivées aux extrémités
+      et jamais masquées, focus entrant dans le premier champ et rendu à la commande qui a ouvert.
+- [x] **L'ÉTAT VIDE PORTE ENFIN L'ACTION D'EN CRÉER UN**, que le §5.4 demandait et que la sortie
+      anticipée de la tranche 1 lui refusait : « Aucun tableau d'objectifs » était un cul-de-sac
+      dont rien dans le produit ne faisait sortir.
+- [x] **L'ARITHMÉTIQUE D'ORDRE EST RÉEMPLOYÉE, JAMAIS RECOPIÉE** : `calculerDeplacement` et
+      `deplacementPossible` d'`administration-arborescence.ts` portent déjà, pour les tracks et les
+      channels, le calcul dont `goal_boards.position` a besoin — le MILIEU de deux voisines, une
+      seule écriture et jamais une permutation. Une copie aurait divergé au premier ajustement.
+      Mesuré en base : monter la dernière ligne d'une liste `[seed, 92, 93]` écrit `46,5`, et la
+      ligne voisine ne bouge pas.
+- [x] **LA CONFIRMATION D'ARCHIVAGE DIT CE QUE LE GESTE COÛTE** : le tableau quitte la liste — le
+      §5.1 ne décrit qu'une liste des tableaux NON archivés — et son nom RESTE PRIS, l'index unique
+      `goal_boards_workspace_name_key` étant TOTAL. Le refus de doublon porte la même précision, et
+      il porte sa propre nature : le geste à faire est de choisir un autre nom, jamais de retenter.
+- [x] **DEUX DÉFAUTS TROUVÉS PAR LES PREUVES, AUCUN À LA LECTURE.** (1) Le rechargement qui suit
+      chaque écriture repassait par l'état de chargement alors que la liste était déjà là : l'écran
+      remplaçait celle-ci par son squelette, DÉMONTANT la commande à laquelle rendre le focus, qui
+      retombait sur le document. Corrigé à la cause dans `useTableaux` — le squelette reste réservé
+      au premier chargement, une erreur remplace bien la liste. (2) La mention d'écriture du
+      formulaire portait le même identifiant que celle de la section : deux régions `status` qu'un
+      lecteur d'écran ne distinguait pas.
+- [x] **UNE PREUVE FAUSSE, CORRIGÉE AVEC SON MOTIF ÉCRIT DANS LE FICHIER** : le scénario de
+      réordonnancement exigeait une position « entre 91 et 92 », ce qui décrit une PERMUTATION —
+      geste que ce produit ne fait justement pas. Il mesure désormais le milieu réel et l'ordre
+      RENDU.
+- [x] **Preuves de la tranche, toutes exécutées et vertes** :
+      `webapp/src/lib/objectifs-ecriture.test.ts` **83 assertions** (14 pour cette tranche),
+      `webapp/src/app/Objectifs.test.tsx` **73 scénarios** (12 pour cette tranche),
+      `e2e/ui/objectifs.spec.ts` **33 scénarios** dont 6 pour cette tranche. Chacun pose son propre
+      tableau et le DÉTRUIT par la clé de service — un archivage laisserait son nom pris et ferait
+      échouer l'exécution suivante —, et chaque écriture est relue EN BASE derrière l'interface.
+      Console vierge, les deux refus consommant par leur liste EXACTE le `409` et le `403` que le
+      navigateur journalise lui-même. **Six captures observées** sous `docs/captures/CRM-083/` :
+      `tableau-creation-1440.jpg`, `tableau-liste-1440.jpg`, `tableau-doublon-1440.jpg`,
+      `tableau-renommage-1440.jpg`, `tableau-archivage-confirmation-1440.jpg`,
+      `tableau-refus-lectrice-1440.jpg`.
+- [ ] **DÉSARCHIVER un tableau n'est PAS livré, et c'est une limite nommée** : le §5.1 ne décrit
+      qu'une liste des tableaux non archivés, et aucun écran ne rend un tableau archivé. Poser la
+      commande supposerait d'abord une surface où le retrouver, qu'aucune unité ne spécifie. La
+      confirmation dit donc en toutes lettres ce que l'archivage coûte.
+
+**CE QUI RESTE — LE HARNAIS.**
 - [ ] **État LECTURE SEULE du `viewer`** : tous les gestes d'écriture indisponibles ET lisibles,
       l'écran disant pourquoi (§5.4). **BLOQUÉ PAR UN ARBITRAGE, ET C'EST INC-170** : cet énoncé
       est le seul du dépôt à demander une extinction par rôle, là où `docs/DESIGN_SYSTEM.md` pose

@@ -15,6 +15,18 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Les tableaux d'objectifs s'administrent depuis leur liste : créer, renommer, réordonner,
+  archiver** (`CRM-083` tranche 2c, `docs/SPEC-goals.md` §2.1, §3 et §5.1). Le formulaire de
+  création et celui de renommage vivent dans la page — aucune fenêtre modale —, et le focus y entre
+  puis revient à la commande qui les a ouverts. Les commandes d'ordre restent **visibles et
+  désactivées** aux extrémités de la liste. La confirmation d'archivage dit ce que le geste coûte :
+  le tableau **quitte la liste**, aucun écran ne le rend plus, et **son nom reste pris**.
+- **L'état « Aucun tableau d'objectifs » porte enfin l'action d'en créer un** : il était jusqu'ici
+  un cul-de-sac dont rien dans le produit ne faisait sortir.
+- **La liste ne clignote plus à chaque écriture** : un rechargement conserve la liste qu'il relit,
+  et le squelette de chargement est réservé au premier affichage. Le focus qui devait revenir à une
+  commande ne se perdait plus sur le document.
+
 - **Le canevas d'objectifs s'écrit : on y pose des blocs, on les déplace, on les redimensionne**
   (`CRM-083` tranche 2a, `docs/SPEC-goals.md` §3 et §5.5). La commande « Poser un bloc » arme la
   pose ; un clic sur le canevas dépose le bloc **au point du clic**, et au clavier un **repère**

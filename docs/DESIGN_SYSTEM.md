@@ -1965,6 +1965,57 @@ confirmation dans le flux du document — **aucune modale**.
 - **Aucune couleur, aucun jeton nouveau** : le geste emprunte au §5.5 ses variantes et au §5.3 son
   icône `Trash2`.
 
+**L'administration des tableaux — tranche 2c, `docs/SPEC-goals.md` §2.1, §3 et §5.1.** La LISTE du
+§5.1 devient administrable : créer, renommer, réordonner, archiver. Elle n'invente aucun patron,
+elle applique celui du **§5.13** — la première surface d'administration du produit — et les règles
+ci-dessous ne disent que ce qui lui est propre.
+
+- **La liste est celle du §5.13, sans exception** : lignes `ul` / `li` à la hauteur de cible,
+  séparateur `--color-border`, barre de boutons discrets compacts **toujours visibles**, commandes
+  d'ordre **désactivées aux extrémités et jamais masquées**, formulaires et confirmation **dans le
+  flux du document** — aucune modale —, focus entrant dans le premier champ et rendu à la commande
+  qui a ouvert. Icônes `ArrowUp`, `ArrowDown`, `Pencil`, `Archive` (§9), et `SquarePlus` pour la
+  création, déjà employée par la pose d'un bloc.
+
+- **LE NOM ACCESSIBLE DE CHAQUE COMMANDE NOMME SON TABLEAU** — « Monter le tableau X » —, là où le
+  `title` visuel reste court. Quatre commandes répétées sur chaque ligne rendraient, sous « Monter »
+  seul, une liste de commandes indiscernables à un lecteur d'écran. Même règle qu'au §5.29 pour la
+  suppression d'une flèche.
+
+- **LE LIEN VERS LE TABLEAU ET SES COMMANDES SONT DISTINCTS.** La ligne n'est pas entièrement
+  cliquable (§5.13) : elle porte déjà quatre commandes, et un clic ambigu ouvrirait un tableau
+  quand on voulait l'archiver.
+
+- **L'ÉTAT VIDE PORTE LA COMMANDE DE CRÉATION**, comme l'état vide d'un tableau porte la commande de
+  pose (§5.29 ci-dessus). Sans elle, « Aucun tableau d'objectifs » serait un cul-de-sac dont rien
+  dans le produit ne ferait sortir.
+
+- **LA CONFIRMATION D'ARCHIVAGE DIT CE QUE LE GESTE COÛTE, ET C'EST LA RÈGLE PROPRE À CETTE
+  SURFACE.** Deux conséquences ne se devinent pas et sont donc écrites : le tableau **quitte la
+  liste** et aucun écran ne le rend plus — le §5.1 ne décrit qu'une liste des tableaux non archivés,
+  et **le désarchivage n'est pas livré** ; et **son nom reste pris**, l'index unique de
+  `goal_boards` ne l'excluant pas. Un « Archiver » nu se lirait comme un rangement réversible d'un
+  clic. Le refus de doublon porte la même précision, faute de quoi on chercherait, dans une liste où
+  il ne paraît plus, le tableau qui bloque.
+
+- **LE REFUS EST LU DANS LE FORMULAIRE QUI L'A CAUSÉ** (§5.13), et **la mention d'écriture du
+  formulaire porte une identité DISTINCTE de celle de la section**. Défaut trouvé **par la preuve** :
+  les deux partageaient un identifiant, si bien qu'aucune preuve ne pouvait désigner l'une des deux
+  et qu'un lecteur d'écran rencontrait deux régions `status` indiscernables. La mention de section
+  est en outre **tue pendant qu'un formulaire est ouvert** : la même phrase lue à deux endroits
+  ferait chercher deux causes.
+
+- **UN RECHARGEMENT N'EFFACE PAS LA LISTE QU'IL RELIT.** Défaut trouvé par la preuve, corrigé à sa
+  cause : chaque écriture relit la liste, et en repassant par l'état de chargement l'écran
+  remplaçait celle-ci par son squelette — **démontant la commande** à laquelle le §5.13 exige de
+  rendre le focus, qui retombait alors sur le document, et faisant clignoter la liste à chaque
+  geste. Le squelette du §5.8 reste réservé au **premier** chargement, seul moment où il n'y a
+  effectivement rien à montrer ; une **erreur**, elle, remplace bien la liste.
+
+- **Le réordonnancement écrit UNE position, jamais une permutation** — le milieu de deux voisines,
+  arithmétique du §5.13 réemployée telle quelle. Quand ce milieu n'existe pas, l'écran le **nomme**
+  au lieu d'écrire une valeur qui ne changerait rien.
+
 ### 5.30 Histogramme prévisionnel / réel — `CRM-086`
 
 Spécifié avant code, `docs/SPEC-costs.md` §4.2.

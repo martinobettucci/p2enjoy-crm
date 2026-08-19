@@ -20453,3 +20453,61 @@ Les quarante-neuf autres `scripts/verify-*.sh` n'ont pas été rejoués, la sér
 dans une session (`docs/CloudWorker.md` §2.1 ter). Les captures des autres unités, régénérées par la
 campagne, ont été **restaurées** et non committées : ce changement ne touche que l'écran des
 objectifs.
+
+## décision 469 — `CRM-083` tranche 2c : les TABLEAUX s'administrent, et deux défauts trouvés par la preuve
+
+**L'unité, et le choix.** La décision 468 laisse `CRM-083` en `[~]` et désigne comme reprise
+« créer, renommer, réordonner et archiver un tableau ». Sa spécification — `docs/SPEC-goals.md`
+§2.1, §3 et §5.1 — était **déjà écrite** : le §3.2 point 3 de `docs/CloudWorker.md` s'applique dans
+sa forme d'exception, elle est lue intégralement et le code commence.
+
+**Ce qui a été livré.** La liste des tableaux devient administrable. Une commande de création à deux
+visages ouvre un formulaire — nom, description — dans le flux du document ; chaque ligne porte
+quatre boutons discrets : monter, descendre, renommer, archiver. Le renommage et la confirmation
+d'archivage prennent la place de la ligne. Côté module, `creerTableau`, `renommerTableau`,
+`deplacerTableau` et `archiverTableau`, avec leur dictionnaire de refus fermé.
+
+**RIEN DU PATRON N'A ÉTÉ RÉINVENTÉ.** `docs/DESIGN_SYSTEM.md` §5.13 régit déjà une liste
+administrable — c'est l'administration de l'arborescence —, et cette surface l'applique sans
+exception. L'arithmétique d'ordre elle-même est **réemployée** : `calculerDeplacement` porte, pour
+les tracks et les channels, le calcul dont `goal_boards.position` a besoin. La recopier pour une
+troisième table l'aurait fait diverger au premier ajustement ; l'extraire dans un module d'ordre
+partagé toucherait trois écrans d'administration, hors du périmètre de cette unité.
+
+**L'ÉTAT VIDE PORTAIT UN CUL-DE-SAC, ET LA TRANCHE 1 L'AVAIT INTRODUIT.** « Aucun tableau
+d'objectifs » sortait de la fonction avant la liste, si bien que le §5.4 — « et l'action d'en créer
+un » — n'était tenu par rien : le produit n'offrait aucun moyen de sortir de cet état. La liste rend
+donc désormais son propre état vide.
+
+**DEUX DÉFAUTS TROUVÉS PAR LES PREUVES, AUCUN À LA LECTURE.** (1) Le rechargement qui suit chaque
+écriture repassait par `enChargement` alors que la liste était déjà là. L'écran la remplaçait par
+son squelette, **démontant la commande** à laquelle le §5.13 exige de rendre le focus — lequel
+retombait sur le document — et la faisait clignoter à chaque geste. Corrigé à la cause dans
+`useTableaux` : le squelette reste réservé au premier chargement, une erreur remplace bien la liste.
+(2) La mention d'écriture du formulaire et celle de la section portaient le **même identifiant** :
+aucune preuve ne pouvait plus désigner l'une des deux, et un lecteur d'écran rencontrait deux
+régions `status` indiscernables. Le défaut n'était pas la preuve, c'était l'écran.
+
+**UNE PREUVE ÉTAIT FAUSSE, ET SA CORRECTION EST ÉCRITE DANS LE FICHIER.** Le scénario de
+réordonnancement exigeait une position « entre 91 et 92 ». C'est la description d'une
+**permutation**, geste que ce produit ne fait justement pas : monter la dernière ligne d'une liste
+`[seed, 92, 93]` écrit le milieu de `seed` et `92`, mesuré à **46,5**. La preuve mesure désormais le
+milieu réel, l'immobilité de la ligne voisine, et l'ordre **rendu**.
+
+**LE REFUS QUE LE NAVIGATEUR JOURNALISE N'EST PAS UNE ANOMALIE, mais il se CONSOMME.** Les deux
+scénarios de refus — doublon `409`, lectrice `403` — provoquent une entrée de console que le
+navigateur écrit lui-même sur toute réponse HTTP en échec. `autoriserErreursConsole` les consomme
+par leur **liste exacte** : rien n'est filtré globalement, et un statut, un nombre ou un ordre
+différent échouerait.
+
+**Ce qui a été vérifié.** Preuves de la tranche : `objectifs-ecriture.test.ts` **83 assertions**
+(14 pour cette tranche), `Objectifs.test.tsx` **73 scénarios** (12 pour cette tranche),
+`e2e/ui/objectifs.spec.ts` **33 scénarios** dont 6 pour cette tranche, chacun posant son propre
+tableau et le détruisant par la clé de service — un archivage laisserait son nom pris et ferait
+échouer l'exécution suivante. Console vierge, **six captures observées**.
+
+**Où reprendre.** `CRM-083` reste `[~]`. Son reste est désormais le **harnais dédié**
+`scripts/verify-objectifs-canevas.sh`, non complaisant et éprouvé par des dégradations réelles, et
+l'état lecture seule du `viewer` qui reste **bloqué par l'arbitrage INC-170**. Le désarchivage d'un
+tableau n'est pas livré, et c'est une limite nommée au backlog : aucune surface ne rend un tableau
+archivé. Trois arbitrages restent en attente : **INC-169**, **INC-170** et **INC-172**.
