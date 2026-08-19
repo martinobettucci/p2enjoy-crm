@@ -2010,6 +2010,34 @@ export const fr = {
 	'live.workflows.version.compared': 'Comparaison rendue',
 	'live.workflows.version.planned': 'Plan rendu',
 	'live.workflows.version.restored': 'Version restaurée',
+
+	// -------------------------------------------------------------------------------------------
+	// Histogramme prévisionnel / réel — `CRM-086`, docs/SPEC-costs.md §4.2 et §4.4,
+	// docs/DESIGN_SYSTEM.md §5.30. Ces clés sont partagées par les TROIS écrans de coûts : elles ne
+	// nomment donc jamais « le track » ni « le budget », que seul l'appelant connaît — c'est
+	// `legendeColonne` qui porte cette nuance, en propriété du composant.
+	// -------------------------------------------------------------------------------------------
+	'costs.chart.region': 'Histogramme des coûts en {devise}',
+	// La légende NOMME les trois séries : le §5.30 pose que la couleur ne porte jamais seule
+	// l'information, et « dépassement » est bien une série au même titre que les deux autres —
+	// c'est la même barre du réel, dans un état que le seul rouge ne dirait pas à qui ne le voit pas.
+	'costs.chart.legend.planned': 'Prévisionnel',
+	'costs.chart.legend.actual': 'Réel',
+	'costs.chart.legend.over': 'Réel dépassant le prévisionnel',
+	// État vide du §4.7 : « deux barres nulles sans texte se lisent comme un défaut d'affichage ».
+	'costs.chart.empty': 'Aucune dépense rattachée.',
+	'costs.chart.table.caption':
+		'Équivalent textuel de l’histogramme des coûts en {devise} : prévisionnel, réel et lignes en attente de leur coût réel.',
+	'costs.chart.table.pending': 'Sans réel',
+	'costs.chart.table.total': 'Total',
+	// Le dépassement est dit en TEXTE dans le tableau, et pas seulement par la couleur de la barre.
+	'costs.chart.table.over': 'dépassement',
+	// La mention OBLIGATOIRE du §4.4, dans la formulation exacte de la spécification. Elle reprend
+	// celle de la fiche d'affaire (`card.costs.pending`) sans la partager : la fiche compose son
+	// montant et sa devise séparément, l'histogramme reçoit un montant déjà formaté par `Intl` —
+	// deux contrats différents pour une même phrase, et les confondre casserait l'un des deux.
+	'costs.chart.pending.notice':
+		'{lignes} ligne(s) sans coût réel saisi, pour {montant} de prévisionnel.',
 } as const
 
 export type CleTraduction = keyof typeof fr
