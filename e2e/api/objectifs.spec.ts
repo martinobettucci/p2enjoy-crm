@@ -279,7 +279,7 @@ test.describe('CRM-082 — objectifs : le contrat d’API, hors interface', () =
 		})
 		const lignes = (await relecture.json()) as { name: string }[]
 		expect(lignes).toHaveLength(1)
-		expect(lignes[0].name).toBe('Objectifs du trimestre')
+		expect(lignes[0]?.name).toBe('Objectifs du trimestre')
 	})
 
 	// -------------------------------------------------------------------------------------------

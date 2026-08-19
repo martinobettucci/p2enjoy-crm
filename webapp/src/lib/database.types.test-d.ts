@@ -53,6 +53,23 @@ type Expect<T extends true> = T
 // §16.14.6) — un `POST` direct rend `42501`, mesuré au point J du §16.15.1. Le type généré expose
 // pourtant `Insert` et `Update`, exactement la limite déjà nommée ci-dessus pour
 // `workflow_versions`.
+//
+// RÉVISÉ PAR `CRM-082`, qui livre le tableau d'objectifs : `goal_boards`, `goal_blocks` et
+// `goal_links` (migration `0049`, `docs/SCHEMA.md` §9 bis.1 à §9 bis.3). Vingt-neuf tables
+// deviennent TRENTE-DEUX.
+//
+// Contrairement aux deux révisions précédentes, le client ÉCRIT DIRECTEMENT dans ces trois
+// tables : le tableau d'objectifs n'a AUCUNE RPC, et c'est un choix de la spécification, pas un
+// oubli. Poser un bloc, le déplacer, régler son remplissage et tracer une flèche sont des gestes
+// de composition libre dont la règle tient entièrement dans les politiques — y compris
+// l'asymétrie du `using` et du `with check` qui laisse RETIRER un lien sans laisser le REPOSER
+// (`docs/SPEC-goals.md` §4.2). `Insert` et `Update` sont donc ici des portes réelles, et non la
+// limite du générateur nommée ci-dessus.
+//
+// LES QUATRE FONCTIONS D'APPUI DE CETTE UNITÉ N'APPARAISSENT PAS dans `_fonctions` plus bas, et
+// c'est attendu : `app.can_read_goal_board`, `app.can_write_goal_board`, `app.can_read_goal_block`
+// et `app.can_write_goal_block` vivent dans le schéma `app`, que PostgREST n'expose pas. Le compte
+// de fonctions appelables en RPC reste donc inchangé.
 
 type _tables = Expect<
   Equal<
@@ -67,6 +84,9 @@ type _tables = Expect<
     | 'contacts'
     | 'form_field_rules'
     | 'form_fields'
+    | 'goal_blocks'
+    | 'goal_boards'
+    | 'goal_links'
     | 'mail_attachments'
     | 'mail_folder_map'
     | 'mail_inbound_accounts'

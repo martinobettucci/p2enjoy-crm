@@ -689,6 +689,185 @@ export type Database = {
           },
         ]
       }
+      goal_blocks: {
+        Row: {
+          board_id: string
+          body: string | null
+          channel_id: string | null
+          color: string
+          created_at: string
+          created_by: string | null
+          fill_percent: number
+          height: number
+          id: string
+          pos_x: number
+          pos_y: number
+          title: string
+          updated_at: string
+          width: number
+        }
+        Insert: {
+          board_id: string
+          body?: string | null
+          channel_id?: string | null
+          color?: string
+          created_at?: string
+          created_by?: string | null
+          fill_percent?: number
+          height: number
+          id?: string
+          pos_x: number
+          pos_y: number
+          title: string
+          updated_at?: string
+          width: number
+        }
+        Update: {
+          board_id?: string
+          body?: string | null
+          channel_id?: string | null
+          color?: string
+          created_at?: string
+          created_by?: string | null
+          fill_percent?: number
+          height?: number
+          id?: string
+          pos_x?: number
+          pos_y?: number
+          title?: string
+          updated_at?: string
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goal_blocks_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "goal_boards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "goal_blocks_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "goal_blocks_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      goal_boards: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+          position: number
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          position: number
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          position?: number
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goal_boards_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "goal_boards_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      goal_links: {
+        Row: {
+          board_id: string
+          created_at: string
+          direction: string
+          id: string
+          label: string | null
+          source_block_id: string
+          target_block_id: string
+          updated_at: string
+        }
+        Insert: {
+          board_id: string
+          created_at?: string
+          direction?: string
+          id?: string
+          label?: string | null
+          source_block_id: string
+          target_block_id: string
+          updated_at?: string
+        }
+        Update: {
+          board_id?: string
+          created_at?: string
+          direction?: string
+          id?: string
+          label?: string | null
+          source_block_id?: string
+          target_block_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goal_links_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "goal_boards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "goal_links_source_block_id_fkey"
+            columns: ["source_block_id"]
+            isOneToOne: false
+            referencedRelation: "goal_blocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "goal_links_target_block_id_fkey"
+            columns: ["target_block_id"]
+            isOneToOne: false
+            referencedRelation: "goal_blocks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mail_attachments: {
         Row: {
           av_checked_at: string | null
