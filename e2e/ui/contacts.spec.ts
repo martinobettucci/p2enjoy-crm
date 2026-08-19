@@ -4,7 +4,10 @@
 //           §10.5 (données techniques), §10.6 (cas a, b, c, g), §10.7 (aucun geste)
 // @verifies docs/SPEC-contacts.md §11.2 (la fiche est atteinte DEPUIS le carnet), §11.5 (le site
 //           en lien externe, le domaine en texte), §11.6 (le nom d'organisation est un LIEN),
-//           §11.8 (le contact ne mène nulle part), §11.9 (cas a à f, i)
+//           §11.9 (cas a à f, i)
+// @verifies docs/SPEC-contacts.md §15.2 (la fiche de contact est atteinte DEPUIS le carnet),
+//           §15.5 (l'organisation et l'affaire en liens), §15.6 (deux surfaces gagnent leur
+//           destination), §15.9 (cas a, b, c, e, h, i, m, n, o)
 // @verifies docs/DESIGN_SYSTEM.md §5.19 (le carnet), §5.20 (la fiche), §5.9 (tableau),
 //           §7 (paliers) ; CLAUDE.md §16 (vérification visuelle)
 //
@@ -70,8 +73,20 @@ test.describe('carnet de contacts (docs/SPEC-contacts.md §10)', () => {
 		// LIVRE cette destination : la règle change par livraison, et la preuve est RÉVISÉE avec son
 		// motif — jamais retirée, jamais contournée. Ce qu'elle exige devient plus fort : le lien
 		// doit exister ET mener à la fiche.
-		await expect(ligneLeo.locator('a')).toHaveCount(1)
-		await expect(ligneLeo.locator('a')).toHaveAttribute('href', /\/contacts\/organisations\//)
+		//
+		// ASSERTION RÉVISÉE UNE SECONDE FOIS le 2026-08-19 — sous-tranche 4f, §15.6, et pour la
+		// raison exacte qui l'avait révisée la première : le nom du CONTACT devait rester un texte
+		// tant que sa fiche n'existait pas (§11.8). 4f livre cette destination, et la ligne porte
+		// donc DEUX liens. Chacun est vérifié par sa destination et non par son rang.
+		await expect(ligneLeo.locator('a')).toHaveCount(2)
+		await expect(ligneLeo.getByTestId('lien-contact')).toHaveAttribute(
+			'href',
+			/^\/contacts\/[0-9a-f-]{36}$/,
+		)
+		await expect(ligneLeo.getByTestId('lien-organisation')).toHaveAttribute(
+			'href',
+			/\/contacts\/organisations\//,
+		)
 		// Aucun `mailto:` ni `tel:` pour autant : écrire à un contact depuis le carnet n'est
 		// spécifié nulle part (§10.5, inchangé).
 		await expect(ligneLeo.locator('a[href^="mailto:"]')).toHaveCount(0)
@@ -239,9 +254,15 @@ test.describe("fiche d'organisation (docs/SPEC-contacts.md §11)", () => {
 		// Un SEUL lien dans le bloc : le domaine n'en est pas un (§11.5).
 		await expect(caracteristiques.locator('a')).toHaveCount(1)
 
-		// §11.8 : le nom d'un contact ne mène nulle part — il n'existe pas de fiche de contact, et
-		// un lien y serait mort.
-		await expect(page.getByTestId('ligne-contact-organisation').locator('a')).toHaveCount(0)
+		// ASSERTION RÉVISÉE le 2026-08-19 — sous-tranche 4f, §15.6. Elle exigeait `toHaveCount(0)` :
+		// il n'existait pas de fiche de contact, et un lien y aurait été mort (§11.8). La
+		// sous-tranche 4f livre cette destination ; la preuve est révisée avec son motif, jamais
+		// retirée, et ce qu'elle exige devient plus fort — le lien doit mener à la bonne fiche.
+		await expect(page.getByTestId('ligne-contact-organisation').locator('a')).toHaveCount(1)
+		await expect(page.getByTestId('lien-contact-organisation')).toHaveAttribute(
+			'href',
+			'/contacts/5eed0000-0000-4000-8000-000000000091',
+		)
 
 		await capturer(page, 'fiche-organisation-1440', UNITE)
 	})
@@ -365,6 +386,183 @@ test.describe("fiche d'organisation (docs/SPEC-contacts.md §11)", () => {
 			expect(debordePage, 'la page ne doit jamais défiler horizontalement').toBe(false)
 
 			await capturer(page, `fiche-organisation-${palier.nom}`, UNITE)
+		})
+	}
+})
+
+// ----------------------------------------------------------------------------------------------
+// Sous-tranche 4f — LA FICHE D'UN CONTACT (docs/SPEC-contacts.md §15)
+// ----------------------------------------------------------------------------------------------
+
+const ID_LEO_UI = '5eed0000-0000-4000-8000-000000000091'
+const ID_ELISE_UI = '5eed0000-0000-4000-8000-000000000093'
+
+test.describe("fiche d'un contact (docs/SPEC-contacts.md §15)", () => {
+	test('le carnet mène à la fiche, qui rend le contact, son organisation et SES AFFAIRES', async ({
+		page,
+	}) => {
+		await connecter(page, ADMIN)
+		await page.goto('/contacts')
+		await expect(page.getByTestId('tableau-contacts')).toBeVisible()
+
+		// Cas m du §15.9 : le geste est un CLIC sur le nom du contact, pas un `goto`.
+		await page
+			.getByTestId('ligne-contact')
+			.filter({ hasText: 'Léo Marchand' })
+			.getByTestId('lien-contact')
+			.click()
+		await expect(page).toHaveURL(new RegExp(`/contacts/${ID_LEO_UI}$`))
+
+		// Cas a : le NOM DU CONTACT est le titre de la route — une donnée portée par la coquille
+		// (§15.2). C'est la seule preuve qui l'éprouve : les preuves unitaires montent le contenu
+		// sans coquille.
+		await expect(page.getByRole('heading', { name: 'Léo Marchand' })).toBeVisible()
+
+		const caracteristiques = page.getByTestId('caracteristiques-contact')
+		await expect(caracteristiques).toContainText('Directeur achats')
+		await expect(caracteristiques).toContainText('leo.marchand@sogexia.example')
+
+		// Cas c : l'organisation est un LIEN vers sa fiche, et le seul lien de ce bloc.
+		await expect(caracteristiques.locator('a')).toHaveCount(1)
+		await expect(page.getByTestId('lien-organisation-contact')).toHaveAttribute(
+			'href',
+			'/contacts/organisations/5eed0000-0000-4000-8000-000000000081',
+		)
+
+		// TROIS colonnes, et non davantage : le track et le channel sont dans l'adresse de
+		// l'affaire, et les répéter en colonnes remplirait la ligne (§15.5).
+		const affaires = page.getByTestId('tableau-affaires-contact')
+		await expect(affaires).toBeVisible()
+		await expect(affaires.getByRole('columnheader')).toHaveText([
+			'Affaire',
+			'Rôle dans l’affaire',
+			'État',
+		])
+		await expect(page.getByTestId('ligne-affaire-contact')).toHaveCount(1)
+		await expect(page.getByTestId('ligne-affaire-contact')).toContainText('Migration ERP Sogexia')
+		// Le rôle DU RATTACHEMENT, distinct de la fonction rendue en zone 1 (§15.3).
+		await expect(page.getByTestId('ligne-affaire-contact')).toContainText('decideur')
+		// L'affaire du seed est active : aucune pilule d'archive.
+		await expect(page.getByTestId('pilule-affaire-archivee')).toHaveCount(0)
+
+		await capturer(page, 'fiche-contact-1440', UNITE)
+	})
+
+	test('le titre d’une affaire MÈNE RÉELLEMENT à cette affaire — §15.5', async ({ page }) => {
+		// Le lien n'est pas vérifié par son seul `href` : il est SUIVI, et l'affaire s'ouvre. C'est
+		// la différence entre une adresse bien formée et une destination qui existe — l'adresse est
+		// construite à partir de slugs embarqués, et une erreur de clé étrangère la rendrait
+		// plausible mais fausse (§15.3).
+		await connecter(page, ADMIN)
+		await page.goto(`/contacts/${ID_LEO_UI}`)
+		await page.getByTestId('lien-affaire-contact').click()
+		await expect(page).toHaveURL(/\/tracks\/conseil-ia\/grands-comptes\/cards\/[0-9a-f-]{36}$/)
+		// Le titre est porté DEUX fois — par la coquille et par l'entête de la card. On désigne
+		// celui de la card : c'est lui qui prouve que l'affaire elle-même est ouverte, et non
+		// seulement que la route a changé de titre.
+		await expect(
+			page.getByTestId('entete-card').getByRole('heading', { name: 'Migration ERP Sogexia' }),
+		).toBeVisible()
+	})
+
+	test('un contact SANS affaire rend l’état vide, sans action — cas e du §15.9', async ({
+		page,
+	}) => {
+		await connecter(page, ADMIN)
+		await page.goto(`/contacts/${ID_ELISE_UI}`)
+		await expect(page.getByRole('heading', { name: 'Élise Fabre' })).toBeVisible()
+		await expect(page.getByTestId('tableau-affaires-contact')).toHaveCount(0)
+		// Le titre de l'état vide, et non un `getByText` : « aucune affaire » figure aussi dans son
+		// corps, et la correspondance par sous-chaîne en désignerait deux.
+		await expect(page.getByRole('heading', { name: 'Aucune affaire' })).toBeVisible()
+		// Les caractéristiques restent rendues : l'absence d'affaire n'efface pas le contact.
+		await expect(page.getByTestId('caracteristiques-contact')).toContainText("Cheffe d'atelier")
+		await capturer(page, 'fiche-contact-sans-affaire-1440', UNITE)
+	})
+
+	test('la fiche d’organisation mène elle aussi à la fiche du contact — cas n du §15.6', async ({
+		page,
+	}) => {
+		await connecter(page, ADMIN)
+		await page.goto('/contacts/organisations/5eed0000-0000-4000-8000-000000000081')
+		await page.getByTestId('lien-contact-organisation').click()
+		await expect(page).toHaveURL(new RegExp(`/contacts/${ID_LEO_UI}$`))
+		await expect(page.getByRole('heading', { name: 'Léo Marchand' })).toBeVisible()
+	})
+
+	test('un identifiant inconnu et un identifiant MAL FORMÉ rendent le même écran — cas h et i', async ({
+		page,
+	}) => {
+		await connecter(page, ADMIN)
+		await page.goto('/contacts/00000000-0000-4000-8000-000000000000')
+		await expect(page.getByText('Contact introuvable')).toBeVisible()
+		await expect(page.getByRole('link', { name: 'Revenir au carnet' })).toBeVisible()
+		await capturer(page, 'fiche-contact-introuvable-1440', UNITE)
+
+		// L'identifiant mal formé n'émet AUCUNE requête (§15.4) : l'écran est pourtant le même,
+		// délibérément — trois absences, un seul écran.
+		await page.goto('/contacts/pas-un-uuid')
+		await expect(page.getByText('Contact introuvable')).toBeVisible()
+	})
+
+	test('LA LECTRICE voit le contact mais AUCUNE affaire fermée à son track — cas o du §15.9', async ({
+		page,
+	}) => {
+		// LA MESURE DÉCISIVE DU §15.4, éprouvée à l'écran. Le track « Conseil IA » est fermé à la
+		// lectrice : la zone des affaires rend l'état vide ordinaire, sans mise en scène du refus.
+		// L'écran ne calcule aucun droit — c'est le backend qui a retiré la ligne.
+		await connecter(page, VIEWER)
+		await page.goto(`/contacts/${ID_LEO_UI}`)
+		await expect(page.getByRole('heading', { name: 'Léo Marchand' })).toBeVisible()
+		await expect(page.getByTestId('caracteristiques-contact')).toContainText('Directeur achats')
+		await expect(page.getByTestId('tableau-affaires-contact')).toHaveCount(0)
+		await expect(page.getByRole('heading', { name: 'Aucune affaire' })).toBeVisible()
+
+		// Sur Sophie, dont l'affaire vit dans un track qui lui est ouvert, l'affaire EST rendue :
+		// sans ce second volet, l'état vide ci-dessus pourrait venir d'un écran cassé.
+		await page.goto('/contacts/5eed0000-0000-4000-8000-000000000092')
+		await expect(page.getByTestId('ligne-affaire-contact')).toHaveCount(1)
+		await expect(page.getByTestId('ligne-affaire-contact')).toContainText(
+			'Refonte intranet Ville de Lyon',
+		)
+	})
+
+	test('sans session, la fiche rend « introuvable » — un refus est zéro ligne, jamais une erreur', async ({
+		page,
+	}) => {
+		await page.goto(`/contacts/${ID_LEO_UI}`)
+		await expect(page.getByText('Contact introuvable')).toBeVisible()
+	})
+
+	test('la fiche est atteignable au CLAVIER seul depuis le carnet', async ({ page }) => {
+		await connecter(page, ADMIN)
+		await page.goto('/contacts')
+		const lien = page
+			.getByTestId('ligne-contact')
+			.filter({ hasText: 'Léo Marchand' })
+			.getByTestId('lien-contact')
+		await lien.focus()
+		await expect(lien).toBeFocused()
+		await page.keyboard.press('Enter')
+		await expect(page.getByRole('heading', { name: 'Léo Marchand' })).toBeVisible()
+		await expect(page.getByTestId('tableau-affaires-contact')).toBeVisible()
+	})
+
+	for (const palier of PALIERS) {
+		test(`${palier.nom} : la fiche de contact reste lisible et la page ne défile pas horizontalement`, async ({
+			page,
+		}) => {
+			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
+			await connecter(page, ADMIN)
+			await page.goto(`/contacts/${ID_LEO_UI}`)
+			await expect(page.getByTestId('tableau-affaires-contact')).toBeVisible()
+
+			// §7 : c'est le CONTENEUR du tableau qui défile, jamais la page (§12.6).
+			const debordePage = await page.evaluate(
+				() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+			)
+			expect(debordePage).toBe(false)
+			await capturer(page, `fiche-contact-${palier.largeur}`, UNITE)
 		})
 	}
 })
