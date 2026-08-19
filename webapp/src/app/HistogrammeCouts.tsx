@@ -213,20 +213,29 @@ function Barre({
 	)
 }
 
-/** La légende nomme les deux séries — §5.30, la couleur ne suffit jamais. */
+/**
+ * La légende nomme les deux séries — §5.30, la couleur ne suffit jamais.
+ *
+ * LES PASTILLES SONT `rounded-full`, ET C'EST UNE CORRECTION MESURÉE (décision 476). Elles étaient
+ * écrites avec une classe de rayon `xs` qui **n'existe pas** : le §11 remet à zéro l'espace de noms
+ * des rayons, qui ne porte que `sm`, `md`, `lg` et `full`, et une classe dont le jeton n'est pas
+ * déclaré n'est pas engendrée du tout — en silence. Les pastilles étaient donc rendues carrées, et
+ * c'est le contrôle `scripts/lib/classes-css.mjs` qui l'a dit, jamais l'œil. Le §5.6 nomme d'ailleurs
+ * la forme attendue : « précédés d'un **point** ou d'une icône ».
+ */
 function Legende() {
 	return (
 		<ul className="flex flex-wrap items-center gap-4 text-sm text-text-2">
 			<li className="flex items-center gap-2">
-				<span className="inline-block size-3 rounded-xs bg-brand" aria-hidden="true" />
+				<span className="inline-block size-3 rounded-full bg-brand" aria-hidden="true" />
 				{t('costs.chart.legend.planned')}
 			</li>
 			<li className="flex items-center gap-2">
-				<span className="inline-block size-3 rounded-xs bg-success" aria-hidden="true" />
+				<span className="inline-block size-3 rounded-full bg-success" aria-hidden="true" />
 				{t('costs.chart.legend.actual')}
 			</li>
 			<li className="flex items-center gap-2">
-				<span className="inline-block size-3 rounded-xs bg-danger" aria-hidden="true" />
+				<span className="inline-block size-3 rounded-full bg-danger" aria-hidden="true" />
 				{t('costs.chart.legend.over')}
 			</li>
 		</ul>

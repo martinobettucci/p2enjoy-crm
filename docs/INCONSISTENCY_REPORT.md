@@ -2772,3 +2772,55 @@ le `README.md` nomment explicitement que les preuves de base et les preuves d'in
 lancent jamais en parallèle ; (2) `scripts/run-sql-tests.sh` pose un garde-fou — un verrou
 consultatif PostgreSQL, ou le refus de démarrer si un serveur d'aperçu écoute sur 4173 — qui rend
 le piège impossible plutôt que documenté.
+
+## Consigné le 2026-08-19 — un constat de rendu, étranger à `CRM-086`
+
+### INC-178 — trois classes citées par des composants n'existent pas dans le CSS produit, et leur effet est perdu en silence
+
+*Relevé pendant `CRM-086` tranche 3, décision 476. Étranger à cette unité : aucun des cinq fichiers
+en cause n'est touché par le changement de la session.*
+
+**Ce qui est mesuré.** `node scripts/lib/classes-css.mjs webapp/src webapp/dist`, après
+`npm run build` :
+
+```
+classes citées : 285
+classes absentes du CSS produit : h-10 py-0.5 text-text-1
+```
+
+Elles sont citées ici :
+
+| Classe | Fichier | Ce qui est perdu |
+|---|---|---|
+| `py-0.5` | `webapp/src/components/ui/Sommeil.tsx` (`CRM-081`), `webapp/src/app/BlocCoutsCard.tsx` (`CRM-085`) | le rembourrage vertical de la pastille et de la pilule — **aucun**, au lieu de 2 px |
+| `h-10` | `webapp/src/app/EnTeteCard.tsx` (`CRM-040`) | la hauteur du champ de devise — elle retombe sur son contenu, sous la cible de 40 px du §8 |
+| `text-text-1` | `webapp/src/app/ChampsContact.tsx` (`CRM-060`), `webapp/src/app/AdministrationWorkflows.tsx` (`CRM-076`) | la couleur du texte — le jeton s'appelle `--color-ink`, et `text-1` n'existe pas |
+
+**Pourquoi c'est un défaut et pas une coquille.** `docs/DESIGN_SYSTEM.md` §11 le nomme exactement :
+« une classe dont le jeton n'est pas déclaré n'est **pas engendrée du tout**, et en silence ».
+L'échelle d'espacement est **close** — `0, 1, 2, 3, 4, 6, 8, 12` —, donc `0.5` n'existe pas ; la
+hauteur `h-10` supposerait un `--spacing-10` que le thème ne déclare pas ; et la palette de texte ne
+porte que `--color-text-2` et `--color-text-3`, le texte fort étant `--color-ink`. C'est la faute
+qu'INC-158 a déjà consignée pour la jauge du canevas d'objectifs, et le §5.29 y répond : « une
+mesure hors de l'échelle s'écrit en valeur arbitraire assumée (`h-[6px]`), jamais en fraction de
+l'échelle ».
+
+**Le cas de `h-10` est le plus sérieux.** Un champ de saisie dont la hauteur retombe sur son contenu
+descend sous la cible interactive de 40 px que le §8 pose sans exception, et aucune preuve du dépôt
+ne mesure la hauteur rendue de ce champ.
+
+**Ce qui n'est PAS établi.** L'effet visible de chacune sur une capture. La session a mesuré
+l'absence dans le CSS produit, pas le rendu ; les trois sont donc des défauts **certains dans le
+code** et **non observés à l'écran**, faute d'appartenir à son unité (`docs/CloudWorker.md` §3.1 :
+laisser le comportement inchangé plutôt que corriger au passage).
+
+**Une quatrième était du ressort de la session, et elle est corrigée.** `rounded-xs`, cité trois fois
+par la légende de `webapp/src/app/HistogrammeCouts.tsx` (`CRM-086`), rendait les pastilles de légende
+**carrées**. Elles sont désormais `rounded-full`, la forme que le §5.6 nomme — « précédés d'un point
+ou d'une icône ».
+
+**Arbitrage attendu.** Deux issues, et le responsable tranche : (1) chacune est corrigée dans l'unité
+qui la porte, avec la capture qui montre l'avant et l'après ; (2) le contrôle
+`scripts/lib/classes-css.mjs` est ajouté à un harnais que **toute** session exécute — il ne vit
+aujourd'hui que dans quatre `verify-*.sh` sur cinquante, ce qui explique que ces trois classes aient
+survécu à plusieurs livraisons.
