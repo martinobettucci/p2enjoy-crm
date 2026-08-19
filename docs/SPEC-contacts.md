@@ -2219,3 +2219,276 @@ tranche 1.
 **Ce qui restera dû sur `CRM-060` après 4g** : l'arbitrage sur les **références mortes** (§6,
 point 4) et, derrière lui, la **suppression** d'un contact ; le rattachement depuis la fiche.
 L'unité demeure `[~]`.
+
+## 17. Sous-tranche 4h — Le rattachement d'une affaire depuis la fiche d'un contact
+
+Contrat écrit **avant toute ligne de code** (`CLAUDE.md` §5, `docs/CloudWorker.md` §3.2), après
+**dix-huit** mesures relevées à la main le 2026-08-19 sur la pile seedée, avec les jetons réels des
+trois profils et avec la clé anonyme. Les mesures d'écriture ont été faites sur des rattachements
+**sondes**, détruits ensuite : le seed est rendu **intact**, ses deux rattachements relus à
+l'identique (`c2 → Léo, decideur` et `c4 → Sophie, prescripteur`).
+
+Le §15.8 puis le §16.8 nomment ce manque deux fois en toutes lettres : « aucun rattachement depuis
+cette page ». La fiche d'un contact **liste** ses affaires depuis 4f et **corrige** le contact
+depuis 4g, mais elle ne sait toujours pas le rattacher à une affaire de plus. Le geste n'existe que
+dans l'autre sens — depuis la fiche de l'affaire (§12) —, ce qui oblige à quitter le contact que
+l'on a sous les yeux, à retrouver l'affaire, puis à y chercher le contact d'où l'on venait.
+
+### 17.1 Ce que la sous-tranche livre, et ce qu'elle ne livre pas
+
+**Elle livre**, sur la route `/contacts/:idContact` :
+
+- le **geste de rattachement** de ce contact à une affaire du workspace, avec un rôle facultatif ;
+- la **relecture** de la zone des affaires après le geste, l'affaire rattachée y apparaissant avec
+  son rôle, son état et son lien.
+
+**Elle ne livre pas**, et chaque manque est nommé au §17.8 : aucun **détachement** depuis cette
+page, aucune modification du rôle d'un rattachement déjà posé, aucune création d'affaire, et
+toujours aucune suppression de contact — celle-ci restant suspendue à l'arbitrage **non tranché**
+du §6 point 4.
+
+### 17.2 Où le geste s'ancre — DANS la zone des affaires, et non avant les deux zones
+
+**Décision : le geste vit DANS la zone 2 — la section des affaires —, sous son titre, et non en
+tête de fiche à côté de la commande de modification.**
+
+Le motif est celui que le §12.2 a déjà écrit pour l'autre sens, retourné : un geste se pose près de
+ce qu'il change. La commande de modification du §16.2 vit **avant** les deux zones parce qu'elle
+touche les **caractéristiques**, c'est-à-dire la zone 1 et le titre de la route. Celle-ci ne touche
+que la zone 2, et la poser à côté de l'autre ferait lire deux commandes voisines dont rien ne dirait
+qu'elles agissent sur des objets différents.
+
+**Aucune route nouvelle, aucune entrée de navigation** : le §15.2 et le §16.2 l'ont écrit chacun
+une fois, et la raison est plus forte encore ici — ce geste n'a pas d'adresse propre, il vit dans
+celle du contact. La couverture exacte `ROUTES` ⇄ `ENTREES_TRANSVERSES` de `routes.test.tsx` reste
+**inchangée**.
+
+### 17.3 Ce que le sélecteur lit — mesuré sur la pile réelle
+
+MESURÉ le 2026-08-19 avec le jeton réel de l'administratrice, la requête **unique** que le geste
+ajoute :
+
+```
+GET /rest/v1/cards
+    ?select=id,title,archived_at
+    &deleted_at=is.null
+    &order=title
+    &limit=<borne>
+```
+
+rend **40 affaires** (mesure 15), dont **une archivée**, « Contrat cadre 2025 ».
+
+**Trois mesures ont DÉCIDÉ de cette requête plutôt que de la confirmer.**
+
+- **UNE AFFAIRE À LA CORBEILLE EST ÉCARTÉE PAR L'ÉCRAN, ET C'EST UNE DÉCISION DE PRODUIT, PAS UNE
+  GARDE DE LA BASE.** MESURÉ (mesure 7) : la base **ACCEPTE** le rattachement d'un contact à une
+  affaire supprimée — `201`, et la ligne. Rien ne le refuse. Mais le §15.3 a mesuré que la fiche
+  **n'affiche jamais** une affaire à la corbeille : le serveur l'écarte de la lecture. Un
+  rattachement posé sur une telle affaire serait donc **invisible immédiatement après avoir été
+  créé** — l'utilisateur agirait, la liste ne bougerait pas, et rien ne dirait pourquoi. Le
+  sélecteur ne les offre pas. C'est le refus d'une commande dont le résultat serait indiscernable
+  d'une panne, au même titre que le sélecteur du §12.6 refuse une commande vouée au `409`.
+
+- **UNE AFFAIRE ARCHIVÉE EST OFFERTE, ET SON ARCHIVAGE EST DIT DANS L'OPTION.** MESURÉ (mesure 6) :
+  le rattachement à une affaire archivée rend **`201`**. C'est l'écart avec `lireCardsClassables`
+  (`inbox.ts`), qui les exclut parce que `classify_message` les refuse par `card_not_available` —
+  ici rien ne les refuse. Les exclure serait poser à l'écran une règle de produit que personne n'a
+  prise, alors que le §15.3 a déjà tranché dans l'autre sens pour la **lecture** : « une affaire
+  archivée est une affaire réelle, et l'historique d'un contact est précisément ce que cette page
+  sert ». Rattacher un contact à une affaire close est un geste ordinaire de mise à jour d'un
+  historique. L'option porte donc la mention de l'archivage, pour que le choix soit éclairé.
+
+- **LE TRI SE DEMANDE AU SERVEUR, ET IL AGIT.** `order=title` est vérifié dans les **deux** sens
+  (mesure 18) : descendant rend `["Veille de vulnérabilités — Atelier Meunier", "TMA annuelle —
+  Fédération sportive du Rhône", "Tableau de bord de supervision livré — Nordis"]`, l'exact inverse
+  de la tête ascendante. Le tri **agit**, il n'est pas seulement toléré.
+
+**Ni le track ni le channel ne sont demandés, et ce n'est pas un oubli.** Le §15.3 les lit parce que
+la fiche doit construire l'**adresse** de chaque affaire ; un sélecteur n'a aucune adresse à
+construire, il envoie un identifiant. Les demander imposerait la levée d'ambiguïté `PGRST201` du
+§15.3 pour une donnée que rien n'afficherait — et le §10.3 a déjà posé qu'une requête ne rapporte
+que ce qui est affiché.
+
+**La lecture n'est émise QUE si le geste est ouvert**, comme la liste des organisations du §16
+(règle du §13.4) : charger quarante affaires pour un geste que la plupart des visites ne font pas
+serait une requête gratuite.
+
+**La borne du sélecteur est celle du §13.4 de `inbox.ts`, reprise sans changement** : une liste
+déroulante de plusieurs milliers d'entrées n'est plus un choix. Le workspace seedé en compte
+quarante ; au-delà, c'est une recherche qu'il faudra livrer, pas une liste plus longue. L'écart est
+nommé au §17.8.
+
+### 17.4 Autorisations — huit mesures, et un refus qui NE ressemble PAS à celui de 4g
+
+MESURÉ le 2026-08-19, avec les jetons réels. **Lecture du sélecteur** :
+
+| # | Acteur / requête | Mesure |
+|---|---|---|
+| 15 | administratrice, affaires hors corbeille | `200`, **40 lignes**, dont une archivée |
+| 16 | **lectrice**, la même requête | `200`, **35 lignes**, et **aucune archivée** — les droits fins de `cards` retirent le track « Grands comptes », qui portait la seule affaire archivée |
+| 17 | **anonyme**, la même requête | `200` et **`[]`** — zéro ligne, jamais une erreur de privilège |
+
+**Écriture — le rattachement** :
+
+| # | Acteur / requête | Mesure |
+|---|---|---|
+| 6 | administratrice, `POST` Élise sur l'affaire **archivée** `…0c8` | **`201`** et la ligne |
+| 7 | administratrice, `POST` Élise sur l'affaire **en corbeille** `…0c9` | **`201`** et la ligne — la base ne s'y oppose PAS |
+| 8 | administratrice, `POST` Léo sur `…0c2`, où il est **déjà** rattaché | **`409`**, code **`23505`**, `card_contacts_pkey` |
+| 9 | **lectrice**, `POST` Élise sur `…0c4` | **`403`**, code **`42501`**, « new row violates row-level security policy » |
+| 10 | **business developer**, `POST` Élise sur `…0c1` | **`201`** et la ligne — le geste n'est PAS un geste d'administration |
+| 11 | administratrice, rôle **chaîne vide** | **`400`**, code **`23514`**, `card_contacts_role_check` |
+| 12 | administratrice, affaire **inexistante** `…0ff` | **`403`**, code **`42501`** — et **non** `23503` |
+
+**LA MESURE 9 SÉPARE 4h DE 4g, ET LA MESURE 12 FERME UNE NATURE DE REFUS.**
+
+- **Le refus opposé à la lectrice est EXPLICITE, et il est dit comme tel.** C'est un `403` et un
+  code, là où la **modification** d'un contact (§16.3, mesure 3) rend `200` et un tableau vide sans
+  aucune erreur. La cause est structurelle et déjà écrite au §16 : une insertion est filtrée par la
+  clause **`WITH CHECK`**, qui **rejette la ligne**, tandis qu'une mise à jour l'est par la clause
+  **`USING`**, qui rend la ligne **invisible à l'écriture**. Cette sous-tranche rejoint donc 4c et
+  4e, non 4g : **aucun message « sans effet » n'a d'objet ici**, et en écrire un serait décrire une
+  issue que la base ne produit pas.
+
+- **UNE AFFAIRE INEXISTANTE REND EXACTEMENT LE MÊME REFUS QU'UN DROIT MANQUANT** (mesure 12), et
+  c'est structurel : `app.can_write_card` rend faux pour une affaire qui n'existe pas, si bien que
+  la clause `WITH CHECK` rejette la ligne **avant** que la clé étrangère ne soit seulement
+  éprouvée. Le code `23503` — `CODE_CONTACT_INCONNU`, que le §12.5 distingue parce que le contact
+  y était la variable — est donc **inatteignable depuis cette surface**, où c'est l'affaire qui
+  varie. Les deux causes sont **indistinguables par construction**, c'est la situation du §15.4,
+  et un **seul** message les couvre : il n'affirme ni le refus ni la disparition, et invite à
+  relire la liste. Inventer deux messages que la mesure ne sait pas séparer serait affirmer à
+  l'utilisateur une cause que l'on ignore.
+
+**Aucune politique nouvelle n'est ouverte.** Le geste n'exerce que `card_contacts_insertion`, posée
+par la migration `0045` et déjà éprouvée par la tranche 1 puis par 4c. **Aucune migration.**
+
+### 17.5 Ce que le formulaire envoie, et pourquoi il ne recalcule rien
+
+Il appelle `rattacherContact` (§12), **inchangée** : la fonction envoie déjà les quatre colonnes
+d'un bloc et traduit `role` vide en `null`, ce que la mesure 11 exige — la contrainte
+`card_contacts_role_check` refuse la chaîne vide par `400` / `23514`. Écrire une seconde fonction
+pour le même `POST` sur la même table ferait diverger deux contrats au premier champ ajouté ; c'est
+l'argument que le §16 a retenu pour extraire `ChampsContact`, appliqué ici à l'écriture.
+
+**`workspace_id` est LU AVEC LE CONTACT, pas deviné et pas relu.** MESURÉ (mesures 13 et 14) : la
+colonne est lisible sur `contacts` par l'administratrice **comme par la lectrice**. Elle est donc
+**ajoutée à `COLONNES_FICHE_CONTACT`** — une colonne de plus dans une requête déjà émise, contre une
+requête entière si on la relisait. C'est la règle du §12.5 — « `workspace_id` est TRANSMIS et non
+deviné » —, tenue avec la source que cette surface a sous la main : là-bas c'était la card déjà
+chargée, ici c'est le contact.
+
+### 17.6 De quoi le geste a l'air, et l'écran ne calcule aucun droit
+
+Le rendu **hérite du §12.6** — le formulaire de rattachement de l'autre sens — plutôt que d'inventer
+une forme, et de `docs/DESIGN_SYSTEM.md` §5.21 dont il reprend les règles. Ce qui suit ne dit que ce
+qui lui est propre ; le §5.26 du design system porte le reste.
+
+- **Une commande, puis son formulaire DANS LE FLUX** du document, sous le titre de la zone et
+  au-dessus du tableau des affaires — jamais une modale (§5.13). Le tableau est précisément ce qui
+  dit à quelles affaires le contact est **déjà** rattaché : le recouvrir cacherait la réponse à la
+  question que l'on se pose en ouvrant le geste.
+- **Replié par défaut**, et **la commande et le formulaire s'excluent** — règle du §16.5.
+- **Le focus ENTRE dans le sélecteur à l'ouverture, et REVIENT à la commande à la fermeture**, ce
+  retour étant **différé d'un tour de rendu** : la commande est démontée tant que le formulaire est
+  ouvert, et l'appeler depuis le gestionnaire de fermeture viserait une référence nulle. C'est le
+  défaut mesuré au carnet par la décision 453, et le remède que `BlocContactsCard` puis
+  `FicheContact` portent déjà. **Aucune temporisation** (`CLAUDE.md` §18).
+- **Le sélecteur n'offre que les affaires NON ENCORE rattachées** à ce contact. Ce n'est pas une
+  garde de droit — c'est le refus d'une commande vouée au `409` (mesure 8), la règle du §5.21. Le
+  refus `deja-rattache` reste néanmoins **traduit** : deux utilisateurs peuvent agir à la même
+  seconde, et l'écran ne prétend pas connaître l'état du serveur.
+- **Une option d'affaire archivée porte la mention de son archivage**, pour que le choix soit
+  éclairé (§17.3). La mention est un **texte dans le libellé de l'option**, jamais une teinte : une
+  `option` native ne porte ni icône ni pilule, et le §1 interdit qu'une couleur porte seule une
+  information.
+- **AUCUNE COMMANDE N'EST ÉTEINTE D'AVANCE SELON LE RÔLE** (§5.21, §5.23, §5.25, sans exception) :
+  la lectrice voit le geste, envoie, et reçoit le refus **traduit** (mesure 9). Griser ferait passer
+  une décision de la base pour une décision d'écran (`CLAUDE.md` §10). La commande d'envoi l'est en
+  revanche tant qu'**aucune affaire n'est choisie**, ce qui est autre chose : il n'y a alors rien à
+  envoyer.
+- **Un refus n'efface pas la saisie** (§5.7 ter) : l'affaire choisie et le rôle tapé restent à
+  l'écran avec leur explication, et le formulaire **reste ouvert**.
+- **Trois vides distincts, et aucun ne se confond avec un autre** (§5.21, repris) : « aucune affaire
+  rattachée », qui **garde son geste** — c'est lui qui la comble ; « toutes les affaires lisibles
+  sont déjà rattachées », qui n'affiche **aucun sélecteur vide** ; et « aucune affaire lisible dans
+  cet espace de travail », qui n'offre **aucune action** — aucune surface de cette page ne crée
+  d'affaire.
+- **La zone des affaires est RELUE après un rattachement réussi, jamais complétée localement**
+  (§5.21). L'insertion optimiste contredirait l'ordre du serveur le temps d'un rendu, et masquerait
+  un rattachement posé entre-temps par un collègue. La relecture est celle du §15.3 — la lecture
+  entière de la fiche —, ce qui rapporte du même coup l'état d'archivage et l'adresse de l'affaire
+  ajoutée, que le sélecteur ne connaissait pas.
+- **La zone 1 et le titre de la route ne bougent pas** : aucun champ de ce formulaire n'entre dans
+  les caractéristiques du contact. C'est la règle du §16.7, retournée.
+
+### 17.7 Contrat de comportement, cas a à n
+
+| # | Situation | Attendu |
+|---|---|---|
+| a | fiche chargée, geste replié | la commande est rendue sous le titre de la zone des affaires ; aucun sélecteur n'est monté, et **aucune requête d'affaires n'est émise** |
+| b | ouverture du geste | le formulaire remplace la commande, la liste des affaires est lue, le focus entre dans le sélecteur |
+| c | fermeture par « Annuler » | le formulaire est démonté, la commande remonte, **et le focus lui revient** |
+| d | sélecteur ouvert | il n'offre **aucune** affaire déjà rattachée à ce contact, **aucune** affaire à la corbeille, et il offre les archivées **avec leur mention** |
+| e | envoi sans affaire choisie | la commande d'envoi est **désactivée** ; aucune requête n'est émise |
+| f | rattachement accepté | le formulaire se referme, le focus revient à la commande, **la fiche est relue**, et l'affaire apparaît dans le tableau avec son rôle et son lien |
+| g | rattachement accepté d'une affaire **archivée** | la ligne apparaît **avec sa pilule « Archivée »** (§15.3) |
+| h | rôle laissé vide | il est envoyé `null`, jamais `""` (mesure 11), et la cellule du rôle reste **vide** |
+| i | **lectrice** qui envoie | `403` (mesure 9) traduit en refus d'autorisation ; le formulaire **reste ouvert**, la saisie est **conservée**, la fiche n'est pas relue |
+| j | affaire rattachée entre-temps par un tiers | `409` / `23505` (mesure 8) traduit en « déjà rattachée » ; la saisie est conservée |
+| k | affaire devenue illisible entre-temps | `403` (mesure 12) traduit par le **même** message que le cas i — les deux causes sont indistinguables (§17.4) |
+| l | liste des affaires illisible | le sélecteur est **désactivé** et porte son **action de reprise**, qui relit réellement (§5.22) |
+| m | aucune affaire lisible | mention en toutes lettres, **sans action** |
+| n | contact introuvable, erreur de lecture, ou absence d'espace de travail | **aucun geste n'est rendu** — il n'y a pas d'objet à rattacher (règle du §16.9 cas r) |
+
+### 17.8 Ce que la sous-tranche ne fait PAS, et pourquoi
+
+- **Aucun DÉTACHEMENT depuis cette page.** Le geste existe, et il est livré depuis la fiche de
+  l'affaire (§12.6) — que le tableau de la zone 2 atteint **en un clic**, chaque titre étant un
+  lien. Le livrer ici demanderait sa confirmation nommant l'objet (§6), la place où poser cette
+  confirmation dans une ligne de tableau, et le traitement du « sans effet » que la clause `USING`
+  produit à la suppression (§12.4, conséquence 1) : c'est une sous-tranche à part entière, non
+  l'appoint de celle-ci. L'asymétrie est **assumée et nommée** plutôt que comblée à la hâte.
+- **Aucune modification du rôle d'un rattachement déjà posé** — le §12.8 le nommait déjà, et rien
+  ici ne le change.
+- **Aucune recherche dans le sélecteur**, dont la liste est **bornée** (§17.3). Le §5.19 tient déjà
+  ce raisonnement pour la pagination du carnet : poser une recherche sur une lecture dont personne
+  n'a mesuré le volume réel serait de l'optimisation sans mesure (`CLAUDE.md` §21). La condition de
+  reprise est un workspace dont les affaires dépassent la borne.
+- **Aucune suppression de contact**, toujours suspendue à l'arbitrage **non tranché** du §6
+  point 4 : les valeurs `jsonb` qui désignent un contact supprimé demeurent en base
+  (`docs/CloudWorker.md` §4.1 — une entrée qui attend un arbitrage ne se tranche jamais soi-même).
+- **Le seed n'est PAS modifié.** Ses trois contacts et ses deux rattachements couvrent déjà les
+  branches dont ce geste a besoin : un contact **sans** aucune affaire (Élise Fabre, l'état vide
+  qui garde son geste), un contact **avec** une affaire (Léo Marchand, l'exclusion du sélecteur),
+  une affaire **archivée** lisible (« Contrat cadre 2025 ») et une affaire **en corbeille**
+  (« Saisie erronée »), qui sont exactement les deux cas que le §17.3 tranche. Y toucher
+  déplacerait la garde de convergence de `apply-seed.sh` et le compteur que lit la règle 3 du
+  classement, ce que le §11.7 a déjà tranché — on n'enrichit que ce qui ne casse rien.
+
+### 17.9 Definition of Done de la sous-tranche 4h
+
+- `webapp/src/lib/contacts.ts` : `lireAffairesRattachables`, ses colonnes exportées et son filtre de
+  corbeille ; `workspace_id` ajouté à `COLONNES_FICHE_CONTACT` et à `FicheContactLue` ;
+- `webapp/src/app/FormulaireRattachementAffaire.tsx` : le geste, son sélecteur, ses états et son
+  dictionnaire **fermé** de refus ;
+- `webapp/src/app/FicheContact.tsx` : le geste posé dans la zone des affaires, le retour du focus
+  différé, et la relecture après succès ;
+- test unitaire dédié : la requête émise, le filtre de corbeille, l'exclusion des affaires déjà
+  rattachées, la conservation des archivées, et les natures de refus ;
+- preuve d'API dédiée : les mesures du §17.4 avec les **jetons réels**, chaque refus **relisant la
+  ligne** pour la constater inchangée (décision 70) ;
+- preuve E2E dédiée : le rattachement par les **gestes de l'écran**, le parcours **clavier**, le
+  refus opposé à la lectrice, et le rendu à 390 px — **le seed restitué par les gestes de l'écran**,
+  jamais par une requête de service ;
+- captures produites **et observées** (`CLAUDE.md` §16) sous `docs/captures/CRM-060/` ;
+- clés de traduction ajoutées, aucun texte en dur ;
+- `docs/DESIGN_SYSTEM.md` §5.26 ajouté et §5.24 révisé ; `docs/manual.md` ; `CHANGELOG.md`, dans le
+  même changement ;
+- commentaires `@spec` / `@verifies` sur chaque fichier touché.
+
+**Aucune migration : cette sous-tranche ne crée aucune colonne et n'ouvre aucune politique.**
+
+**Ce qui restera dû sur `CRM-060` après 4h** : l'arbitrage sur les **références mortes** (§6,
+point 4) et, derrière lui, la **suppression** d'un contact ; le **détachement** depuis la fiche du
+contact (§17.8). L'unité demeure `[~]`.

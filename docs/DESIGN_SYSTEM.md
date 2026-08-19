@@ -1959,6 +1959,14 @@ spécifié par `docs/SPEC-contacts.md` §15 ; les règles ci-dessous ne disent q
   et qui est ce que la règle visait, est plus étroit : **l'état vide de la zone des affaires
   n'offre toujours aucune action**, aucun rattachement n'étant livré depuis cette page.
 
+  > **RÉVISION SUIVANTE, 2026-08-19** (`docs/SPEC-contacts.md` §17.6). La condition que la phrase
+  > ci-dessus avait resserrée **tombe à son tour, par livraison** : la sous-tranche 4h pose le geste
+  > de **rattachement** dans la zone des affaires (§5.26), et **son état vide garde donc ce geste**
+  > — c'est lui qui le comble, la règle du §5.13 pour l'état vide d'une surface qui agit, déjà tenue
+  > par le §5.21 et par le §5.23. Ce qui reste vrai est plus étroit encore, et c'est le seul énoncé
+  > que 4h ne révise pas : **aucun détachement n'est livré depuis cette page** (§17.8), et une
+  > ligne du tableau ne porte donc toujours aucune commande.
+
 ### 5.25 Formulaire de modification d'un contact — `CRM-060`
 
 Le geste d'édition de la fiche de contact (`docs/SPEC-contacts.md` §16). Il **hérite du §5.23** —
@@ -1992,3 +2000,63 @@ motif. Ce qui suit ne dit que ce qui lui est propre.
 - **Aucune commande de suppression**, et l'absence est **assumée** : le cycle de vie d'un contact
   dépend d'un arbitrage ouvert (`docs/SPEC-contacts.md` §6, point 4). Une commande morte serait
   pire que l'absence.
+
+### 5.26 Rattachement d'une affaire depuis la fiche d'un contact — `CRM-060`
+
+Le geste de rattachement de la fiche de contact (`docs/SPEC-contacts.md` §17). Il **hérite du
+§5.21** — le bloc des contacts d'une affaire, qui livre le même geste dans l'autre sens — plutôt que
+d'inventer une forme : mêmes règles, mêmes vides, même motif. Ce qui suit ne dit que ce qui lui est
+propre.
+
+- **Il vit DANS la zone des affaires, sous son titre et au-dessus du tableau**, et non en tête de
+  fiche à côté de la commande de modification (§5.25). Un geste se pose près de ce qu'il change :
+  « Modifier » touche les caractéristiques et le titre de la route, celui-ci ne touche que la zone
+  des affaires. Deux commandes voisines agissant sur des objets différents ne diraient pas laquelle
+  fait quoi.
+
+- **Dans le FLUX du document, jamais une modale** (§5.13, §5.21, §5.23, §5.25). Le motif propre à
+  cette surface : **le tableau des affaires est ce qui dit à quelles affaires le contact est déjà
+  rattaché**, et une modale recouvrirait la réponse à la question que l'on se pose en ouvrant le
+  geste.
+
+- **Replié par défaut**, la commande et le formulaire s'**excluent**, et le **retour du focus est
+  différé d'un tour de rendu** — les trois règles du §5.25, tenues sans changement et pour le motif
+  exact qu'il écrit : la commande est démontée pendant que le formulaire est ouvert. **Aucune
+  temporisation.**
+
+- **Le sélecteur n'offre que les affaires non encore rattachées à ce contact** — refus d'une
+  commande vouée au `409`, la règle du §5.21 et non une garde de droit. Le refus reste **traduit** :
+  deux utilisateurs peuvent agir à la même seconde.
+
+- **UNE AFFAIRE ARCHIVÉE EST OFFERTE, ET SON OPTION LE DIT EN TOUTES LETTRES.** MESURÉ : la base
+  **accepte** ce rattachement (§17.3). Le §5.24 a déjà tranché dans le même sens pour la lecture —
+  « une affaire archivée est une affaire réelle, et l'historique d'un contact est ce que cette page
+  sert ». La mention est un **texte dans le libellé de l'option**, jamais une teinte ni une icône :
+  une `option` native n'en porte pas, et le §1 interdit qu'une couleur porte seule une information.
+  C'est le seul endroit du produit où l'état d'archivage se dit par un mot au lieu de la pilule du
+  §5.6, et l'écart tient à l'élément, pas au style.
+
+- **UNE AFFAIRE À LA CORBEILLE N'EST PAS OFFERTE, ET LA BASE N'Y EST POUR RIEN.** MESURÉ : elle
+  **accepte** ce rattachement aussi. Mais la fiche ne liste jamais une affaire à la corbeille
+  (§5.24) : le rattachement serait **invisible immédiatement après sa création**, l'utilisateur
+  agirait et la liste ne bougerait pas. Une commande dont le résultat est indiscernable d'une panne
+  est une commande morte (§5.10).
+
+- **Aucune commande n'est éteinte d'avance selon le rôle** (§5.21, §5.23, §5.25) : la lectrice voit
+  le geste, envoie, et reçoit un refus **explicite** — ici un vrai `403`, et non le silence de la
+  modification (§5.25). **Aucune mention « sans effet » n'a donc d'objet sur cette surface**, et en
+  écrire une décrirait une issue que la base ne produit pas.
+
+- **Un refus n'efface pas la saisie** et le formulaire **reste ouvert** (§5.7 ter).
+
+- **La zone des affaires est relue après un succès, jamais complétée localement** (§5.21) : la
+  relecture rapporte l'état d'archivage et l'adresse de l'affaire ajoutée, que le sélecteur ne
+  connaissait pas. **La zone des caractéristiques et le titre de la route ne bougent pas** — c'est
+  la règle du §5.25 retournée, aucun champ de ce formulaire n'entrant dans les caractéristiques.
+
+- **Les trois vides du §5.21, transposés** : « aucune affaire rattachée » **garde son geste**,
+  « toutes les affaires lisibles sont déjà rattachées » n'affiche **aucun sélecteur vide**, et
+  « aucune affaire lisible » n'offre **aucune action**.
+
+- **Aucune couleur, aucun jeton, aucune icône nouvelle** : le geste emprunte au §5.21 son icône
+  `Link2` et au §5.7 ses contrôles.
