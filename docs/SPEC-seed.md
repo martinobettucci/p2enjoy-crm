@@ -767,17 +767,18 @@ Posées par le véritable chemin d'écriture, comme au §2.17, avec la même con
 à jour sans dupliquer et ne réécrit pas le secret lorsqu'aucun mot de passe n'est transmis. Leur
 `status` reste `pending` : aucune connexion n'est ouverte par le seed.
 
-### 2.19 Deux messages réellement reçus — ajoutés par `CRM-057`
+### 2.19 Trois messages réellement reçus — ajoutés par `CRM-057`, complétés par `CRM-081`
 
 L'inbox globale ne se démontre pas sur un écran vide, et CLAUDE.md §8 interdit d'y suppléer par une
 trace fabriquée : « un e-mail de démonstration doit être envoyé par le véritable mécanisme d'envoi
-local ». Le seed **soumet donc réellement deux messages** en SMTP authentifié sur le Stalwart de
+local ». Le seed **soumet donc réellement trois messages** en SMTP authentifié sur le Stalwart de
 `CRM-050`, puis **déclenche une relève réelle** du service `mail-sync`.
 
 | Objet | Destinataire | État obtenu | Ce qu'il démontre |
 |---|---|---|---|
 | Demande de devis — refonte | l'adresse de la card « Refonte du site vitrine » | **classé**, règle 1 | La double visibilité : dans la card **et** dans l'inbox |
 | Candidature spontanée | `systeme@crm.p2enjoy.test` seul | **non classé** | Le panneau « Non classés », et le classement à la main |
+| Re: Demande de devis — refonte | la même adresse de card, **en réponse au premier** | **classé**, règle 1 | Le GROUPEMENT en fils : deux messages, une seule ligne (`CRM-081` tranche 2 f) |
 
 **L'expéditeur est une boîte locale, et la mesure l'impose.** Soumettre depuis un domaine tiers —
 `solene.ferrand@client.test` — est refusé net par Stalwart :
@@ -787,9 +788,23 @@ pile. Le correspondant de démonstration est donc **Driss** (`bizdev@p2enjoy.tes
 a révélé que l'identité sortante du §2.18, qui expédie depuis `contact@p2enjoy.test`, est
 **inapplicable telle quelle** sur ce serveur : INC-087.
 
-**Leurs `Message-ID` sont fixes** — `<seed-inbox-classe@p2enjoy.test>` et
-`<seed-inbox-non-classe@p2enjoy.test>`. Le dédoublonnage du §4.2 fait le reste : rejouer le seed
-n'ajoute rien, et les captures peuvent dépendre de ces deux objets.
+**Leurs `Message-ID` sont fixes** — `<seed-inbox-classe@p2enjoy.test>`,
+`<seed-inbox-non-classe@p2enjoy.test>` et `<seed-inbox-reponse@p2enjoy.test>`. Le dédoublonnage du
+§4.2 fait le reste : rejouer le seed n'ajoute rien, et les captures peuvent dépendre de ces trois
+objets.
+
+**LE TROISIÈME PORTE `In-Reply-To` ET `References`, ET LES DEUX SONT NÉCESSAIRES** — `CRM-081`
+tranche 2 f, `docs/SPEC-cards.md` §16.16.8. C'est `References` que `app.cle_fil` lit ; un message
+qui ne porterait qu'`In-Reply-To` resterait sa propre racine, donc un fil de plus au lieu d'un fil
+de deux. Avant cette tranche, les deux messages du seed portaient des clés **distinctes** : l'inbox
+groupée aurait été identique à l'inbox d'avant, et aucune capture n'aurait montré la fonctionnalité.
+
+**Le seed VÉRIFIE le fil plutôt que de le supposer.** Il relit `references_ids` du message reçu et
+compte, par `app.cle_fil` elle-même, les clés distinctes de la card « Refonte du site vitrine » —
+qui doit en porter **une seule**. Les deux contrôles échouent avec leur cause nommée si le service
+`mail-sync` n'est pas à jour du correctif d'ingestion du §16.16.2. Un seed qui accepterait un fil
+coupé ne serait plus un contrat : il annoncerait une démonstration que l'écran ne pourrait pas
+faire.
 
 **Rien n'est forcé en base** : ni le classement, écrit par `classer_message_automatiquement` au
 cours de la relève, ni les occurrences, ni le statut des comptes, qui reste `pending` (§2.17). Le

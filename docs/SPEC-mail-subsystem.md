@@ -1409,6 +1409,19 @@ veille permanente est une seule et même unité, `CRM-059`.
 recevoir `In-Reply-To` et `References` en paramètres : elle lit ce que le message porte, non ce que
 la base a retenu.
 
+> **CETTE PHRASE A ÉTÉ FAUSSE DE `CRM-058` AU 2026-08-19, ET C'EST MESURÉ.** À l'envoi, oui :
+> `marquer_envoi_reussi` compose la chaîne en SQL. À l'ingestion, **non** :
+> `PostgrestClient.enregistrer_message` composait sa charge d'insertion sans la colonne, qui
+> retombait donc sur son `default '{}'`. Tout message **reçu** était par conséquent sa propre
+> racine au sens de `app.cle_fil`, et aucun fil ne pouvait se former à partir de courrier entrant —
+> défaut invisible à toute assertion portant sur la ligne écrite, l'insertion réussissant
+> parfaitement. Corrigé par `CRM-081` tranche 2 f (`docs/SPEC-cards.md` §16.16.2), qui met la
+> colonne dans la charge et fige la coïncidence par deux tests portant sur la charge elle-même.
+>
+> **Aucune reprise rétroactive** n'accompagne ce correctif : les messages ingérés avant lui gardent
+> `references_ids` = `[]`. Relire leurs en-têtes supposerait de les redemander à l'IMAP, ce que rien
+> ne conserve en base. L'écart est nommé, non masqué.
+
 ### 19.4 La file, et qui peut y écrire
 
 `queue_outbound_email(p_card_id, p_identity_id, p_to, p_cc, p_subject, p_body_text,

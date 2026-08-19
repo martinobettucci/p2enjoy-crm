@@ -1487,6 +1487,22 @@ affaire : il est visible par le **propriétaire de la boîte** où il est arriv�
 **administrateurs** de l'espace de travail. Si votre panneau « Non classés » affiche zéro, ce n'est
 pas une panne : c'est qu'aucune boîte dont vous répondez n'a reçu de courrier en attente.
 
+**La liste énumère des fils, pas des messages.** Une conversation — un premier message et les
+réponses qui le citent — tient sur **une seule ligne**. Cette ligne porte l'expéditeur, l'objet et
+la date de son **dernier** message, et, dès qu'elle en rassemble plusieurs, un petit **compte** à
+côté de l'objet. Une conversation d'un seul message ressemble exactement à ce qu'elle était avant :
+ni compte, ni rien d'autre à faire.
+
+Le nombre affiché à côté d'un dossier, lui, continue de compter des **messages** : un dossier
+annonçant « 2 » au-dessus d'une liste d'une seule ligne portant « 2 » dit la même chose deux fois,
+et non deux choses différentes.
+
+**Parcourir une conversation.** Ouvrir une ligne affiche son message le **plus récent**. Quand la
+conversation en compte plusieurs, un encadré « Messages de ce fil » apparaît sous l'en-tête, avec
+un bouton par message — le plus récent d'abord. Choisissez-en un autre et le panneau de lecture
+change, **sans que la ligne perde sa sélection** : vous naviguez à l'intérieur de ce que vous avez
+choisi, pas ailleurs.
+
 **Lire un message.** L'expéditeur, les destinataires et la date d'arrivée sont affichés en tête,
 puis le corps du message. **Le corps est toujours affiché en texte**, jamais avec la mise en forme
 de l'expéditeur : un courrier venu de l'extérieur ne doit pas pouvoir exécuter quoi que ce soit
@@ -1512,10 +1528,11 @@ l'en-tête du message ouvert, « Mettre le fil en sommeil » ouvre un petit pann
 usuelles — demain, dans trois jours, la semaine prochaine, le mois prochain — ou une échéance de
 votre choix. Une fois le fil endormi :
 
-- ses messages **disparaissent de la liste** tant que l'échéance n'est pas passée. Le message que
-  vous êtes en train de lire, lui, reste affiché : rien ne disparaît sous votre doigt ;
-- une **pastille** portant une petite lune et la date rappelle jusqu'à quand il dort, dans la liste
-  comme dans l'en-tête du message ;
+- la conversation **entière disparaît de la liste** tant que l'échéance n'est pas passée — tous
+  ses messages, pas seulement celui que la ligne montrait. Le message que vous êtes en train de
+  lire, lui, reste affiché : rien ne disparaît sous votre doigt ;
+- une **pastille** portant une petite lune et la date rappelle jusqu'à quand il dort, **une fois**
+  sur la ligne de la conversation, et dans l'en-tête du message ;
 - « **Réveiller le fil** » le ramène immédiatement, sans confirmation ;
 - la case « **Afficher les fils en sommeil** », en haut de la liste, les fait tous réapparaître,
   reconnaissables à leur pastille. Si un dossier ne contient plus que des fils endormis, la liste
@@ -1528,8 +1545,11 @@ mémorisée d'une visite à l'autre : elle repart masquée à chaque ouverture d
 
 **Ce qui n'est pas encore là.** Il n'existe pas de notion de « lu / non lu », ni de recherche : la
 liste montre les cinquante messages les plus récents d'un dossier, et le dit lorsqu'elle en laisse
-de côté. Les messages ne sont pas encore **groupés** par fil : la liste énumère des messages, et
-chacun porte l'état du fil auquel il appartient.
+de côté. **Ce sont bien cinquante messages, pas cinquante conversations** : une conversation dont
+une partie seulement tient dans ces cinquante n'en affiche que cette partie, et son compte porte
+sur ce qui est affiché. Enfin, les messages reçus **avant l'été 2026** n'ont pas conservé de quoi
+retrouver leur conversation : chacun reste sur sa propre ligne, et rien ne les regroupera
+rétroactivement.
 
 ### 4.16 Écrire et répondre
 

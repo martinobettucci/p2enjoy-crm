@@ -508,6 +508,27 @@ attendue à ce stade : `select count(*) from pg_policies where schemaname = 'pub
 | `caddy` | À chaque changement de `caddy/Caddyfile` |
 | `auth` | À chaque changement d'une variable `GOTRUE_*`, dont `PASSWORD_MIN_LENGTH` livrée par `CRM-011` |
 
+**Opération en attente du prochain déploiement de production — redéployer `mail-sync` pour que le
+courrier reçu se groupe en fils (`CRM-081` tranche 2 f).** Le service persiste désormais la chaîne
+`References` d'un message entrant dans `mail_messages.references_ids`, ce qu'il omettait depuis
+`CRM-058` : la colonne retombait sur son `default '{}'`, et tout message reçu était sa propre racine
+au sens de `app.cle_fil` — aucun fil ne pouvait donc se former à partir de courrier entrant.
+
+- **Aucune migration, aucune variable d'environnement nouvelle** : la colonne existe depuis la
+  migration 30, et l'écriture emprunte le chemin déjà autorisé à la clé de service.
+- **Commande** : `docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+  mail-sync`.
+- **Aucune reprise rétroactive n'est prévue, et c'est une décision** (`docs/SPEC-cards.md`
+  §16.16.2) : les messages ingérés avant ce déploiement gardent `references_ids` = `[]` et restent
+  chacun sur leur propre ligne dans l'inbox. Les relire supposerait de redemander leurs en-têtes à
+  l'IMAP, que rien ne conserve en base.
+- **Vérification après déploiement** : faire arriver un message portant un en-tête `References`,
+  puis contrôler que sa ligne le porte —
+  `select references_ids from public.mail_messages order by received_at desc limit 1;` — et que
+  l'inbox rend une seule ligne portant son compte pour la conversation.
+- **Retour arrière** : redéployer l'image précédente. Les lignes déjà écrites avec leur chaîne la
+  conservent ; elles ne gênent rien, la colonne existant depuis la migration 30.
+
 **Opération en attente du prochain déploiement de production — activer les fonctions edge.** Tirer
 `public.ecr.aws/supabase/edge-runtime:v1.74.2`, déployer le répertoire
 `supabase/functions/` en lecture seule au chemin attendu par Compose, puis recréer `functions` et

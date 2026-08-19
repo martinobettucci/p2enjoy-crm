@@ -13,6 +13,27 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-081` — l'inbox énumère des conversations, plus des messages isolés (tranche 2 f)
+
+- **La liste de l'inbox groupe les messages en fils.** Une conversation — un message et les réponses
+  qui le citent — tient sur une seule ligne, qui porte l'expéditeur, l'objet et la date de son
+  dernier message, et un compte dès qu'elle en rassemble plusieurs. Une conversation d'un seul
+  message rend exactement la ligne d'avant : ni badge, ni changement.
+- **Le panneau de lecture sait parcourir une conversation.** Ouvrir une ligne affiche son message le
+  plus récent ; un encadré « Messages de ce fil » donne accès aux autres, et changer de message n'y
+  fait pas perdre à la ligne son repère de sélection.
+- **Le sommeil masque désormais la conversation entière**, et sa pastille ne se répète plus sur
+  chacun de ses messages. Aucune règle du sommeil ne change : seul son porteur devient le fil.
+- **CORRECTION D'UN DÉFAUT QUI RENDAIT LE GROUPEMENT IMPOSSIBLE SUR LE COURRIER REÇU.** La chaîne
+  `References` d'un message entrant n'était jamais persistée : le service composait sa charge
+  d'insertion sans la colonne, qui retombait sur son défaut vide, et tout message reçu devenait sa
+  propre racine. **Le service `mail-sync` est donc à redéployer.** Aucune reprise rétroactive : les
+  messages ingérés avant ce correctif restent chacun sur leur ligne.
+- **Le jeu de démonstration porte enfin une conversation de deux messages**, arrivée par le vrai
+  mécanisme d'envoi et de relève, et le seed vérifie lui-même que son fil n'est pas coupé.
+- **Aucune migration, aucun chemin serveur nouveau.** Les compteurs de dossiers continuent de
+  compter des messages, et le motif de ce choix est écrit plutôt que subi.
+
 ### `CRM-081` — le sommeil d'un fil de messagerie se voit et se commande (tranche 2 e)
 
 - **L'inbox montre l'état du fil de chaque message et laisse l'endormir.** Sous l'en-tête du message
@@ -27,7 +48,8 @@ d'exécuter le code attendu.
 - **Aucun chemin serveur nouveau** : les deux fonctions `snooze_thread` et `wake_thread` sont celles
   de la tranche 2 c. Le contrat de types, lui, était resté en arrière d'une tranche — il est
   régénéré, et deux témoins figés sont révisés avec leur motif.
-- Reste dû sur `CRM-081` : le **groupement** des messages en fils dans l'inbox (tranche 2 f).
+- Reste dû sur `CRM-081` après la tranche 2 e : le **groupement** des messages en fils dans
+  l'inbox — livré depuis par la tranche 2 f ci-dessus.
 
 
 ### Ajouté
