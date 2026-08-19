@@ -1780,6 +1780,49 @@ que la barre était **invisible** sur la capture alors que la valeur en clair s'
 correctement. C'est la faute exacte que consigne INC-158. Une mesure hors de l'échelle s'écrit en
 valeur arbitraire assumée (`h-[6px]`), jamais en fraction de l'échelle.
 
+**Les gestes de géométrie — tranche 2a, `docs/SPEC-goals.md` §3 et §5.5.** Ils n'ajoutent aucun bloc
+à l'écran : ils s'insèrent dans le canevas déjà décrit ci-dessus. Ce qu'ils envoient et refusent est
+spécifié là-bas ; les règles ci-dessous ne disent que de quoi ils ont l'air.
+
+- **La commande de pose a DEUX VISAGES, un seul rendu à la fois** — « Poser un bloc » en primaire
+  compacte, « Annuler la pose » en secondaire compacte, avec `aria-pressed` —, patron du §5.3
+  quater. Elle vit dans l'en-tête du canevas, à côté des commandes de zoom, parce qu'elle porte sur
+  le canevas entier et non sur un bloc.
+
+- **Le repère de pose est un rectangle à la taille d'un bloc neuf**, liseré 2 px `--color-brand` sur
+  `--color-brand-soft`, et **son nom accessible écrit sa position**. Sans ce nom, un utilisateur au
+  lecteur d'écran déplacerait un repère sans savoir où il est ; la position n'est portée par rien
+  d'autre, le repère n'ayant aucun contenu. Le focus **entre** dans le repère dès qu'il paraît
+  (§5.13) : un repère que les flèches ne pilotent qu'après un `Tab` supplémentaire n'est pas le
+  geste clavier que le §5.5 de la spécification demande.
+
+- **L'état vide du tableau porte la commande de pose**, et le canevas est rendu dès qu'une pose est
+  armée — la règle du §5.13 pour l'état vide d'une surface qui agit. Un état vide qui remplacerait
+  la surface n'aurait aucun endroit où recevoir le clic.
+
+- **La consigne clavier est visuellement masquée, jamais retirée** (§12.3), et **citée par chaque
+  bloc** en `aria-describedby`. Un geste qui n'existe qu'au clavier doit être annoncé au clavier,
+  sans quoi il n'existe pour personne.
+
+- **La poignée de redimensionnement est une affordance de SOURIS**, `aria-hidden` et hors du
+  parcours de tabulation : le clavier dispose du geste complet (`Alt` + flèches), et un bouton qui
+  ne ferait rien sur `Entrée` serait la commande morte que le §5.10 proscrit.
+
+  **ÉCART ASSUMÉ AU §8, ET IL EST BORNÉ.** Elle mesure **24 px** et non les 40 px de la cible
+  minimale. Le motif est la géométrie du composant : un bloc peut descendre à 120 × 72 px, et une
+  poignée de 40 px y couvrirait son pied — donc sa jauge et sa pilule de channel. L'écart ne prive
+  d'aucun geste, puisque le chemin clavier est **complet et équivalent** ; c'est la condition à
+  laquelle il est pris, et il tombe si ce chemin disparaît.
+
+- **Un déplacement refusé replace le bloc à sa position d'origine** — la règle du §6 pour le
+  glisser-déposer d'une card, tenue sans changement. Le geste est **optimiste** à l'écran ; la
+  réponse du serveur, succès, refus ou silence, l'efface toujours.
+
+- **Les trois mentions du §5.7 ter vivent SOUS le canevas**, jamais en tête d'écran, et la région
+  est **toujours rendue** — un refus porte `role="alert"`, une attente et une confirmation
+  `role="status"`. Un geste de géométrie porte sur le canevas entier, et non sur une ligne : c'est
+  là qu'il se lit.
+
 ### 5.30 Histogramme prévisionnel / réel — `CRM-086`
 
 Spécifié avant code, `docs/SPEC-costs.md` §4.2.

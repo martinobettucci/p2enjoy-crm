@@ -202,6 +202,28 @@ les blocs dans l'ordre de leur position, flèches pour déplacer le bloc focalis
 ouvrir sa fiche d'édition, `Espace` puis sélection d'un second bloc pour tracer une flèche. Un
 canevas utilisable uniquement à la souris n'est pas terminé (`CLAUDE.md` §22).
 
+**Complété le 2026-08-19, en livrant la tranche 2a**, sur les deux points que l'alinéa ci-dessus
+laissait sans binôme clavier. Rien d'autre n'est révisé.
+
+| Geste | Souris | Clavier |
+|---|---|---|
+| **Poser** un bloc | clic sur le canevas, une fois la pose armée ; le point du clic devient le coin haut gauche | la pose armée dépose un **repère** que les flèches déplacent ; `Entrée` pose, `Échap` annule |
+| **Déplacer** le bloc focalisé | glissement du bloc | flèches ; `Maj` + flèches pour le pas fin |
+| **Redimensionner** le bloc focalisé | glissement de la poignée d'angle | `Alt` + flèches ; `Maj` s'y combine pour le pas fin |
+
+**Le repère de pose existe parce que la position vient du GESTE** (§3). Sans lui, poser au clavier
+n'aurait aucune position à transmettre, et le seul recours serait un placement automatique — que le
+§3 interdit. Ce n'est donc pas une commodité d'accessibilité ajoutée après coup : c'est la seule
+forme clavier que cette règle admet.
+
+**Deux pas et non un.** Le pas ordinaire sert à composer, le pas fin à ajuster. Sans le second, le
+clavier n'atteindrait pas les positions que la souris atteint, et la parité des deux entrées serait
+tenue en apparence seulement.
+
+**L'écriture part au RELÂCHEMENT de la touche**, jamais à chaque répétition d'une frappe maintenue :
+une touche tenue enfoncée émettrait une requête par pixel parcouru. Aucune temporisation n'est
+employée pour l'obtenir (`CLAUDE.md` §18).
+
 Chaque bloc porte un `aria-label` complet — titre, remplissage, channel lié —, et une **liste
 textuelle équivalente** du diagramme est rendue pour les lecteurs d'écran : « A → B », « B ↔ C ».
 Un diagramme qui n'existe que visuellement n'est pas accessible.

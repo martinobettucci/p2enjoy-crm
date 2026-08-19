@@ -2408,3 +2408,39 @@ trace du lien rompu — une colonne `channel_lost_at`, ou un `channel_id` conser
 
 **Statut :** ouvert, en attente d'arbitrage. Le comportement livré est celui décrit ci-dessus, écrit
 dans `webapp/src/lib/objectifs.ts` et éprouvé par `objectifs.test.ts`.
+
+## Consigné le 2026-08-19 — une contradiction entre deux documents, relevée par `CRM-083` tranche 2a
+
+### INC-170 — l'état « lecture seule » d'un canevas d'objectifs contredit la règle « aucune commande éteinte d'avance »
+
+**Nature :** contradiction entre deux documents du dépôt, relevée en livrant les premiers gestes
+d'écriture du canevas et laissée **non tranchée** conformément au `CLAUDE.md` §5.
+
+**Ce que la spécification de l'unité demande.** `docs/SPEC-goals.md` §5.4 :
+
+| État | Rendu |
+|---|---|
+| Lecture seule (`viewer`) | tous les gestes d'écriture sont **indisponibles et lisibles**, et l'écran dit pourquoi |
+
+Rendre un geste « indisponible » suppose que l'écran **sache d'avance** que l'appelant est un
+`viewer`, donc qu'il lise son rôle et en déduise un droit.
+
+**Ce que le design system pose, six fois et avec son motif.** `docs/DESIGN_SYSTEM.md` §5.3, §5.13,
+§5.16, §5.21, §5.23, §5.25, §5.26, §5.27 et §5.28 écrivent tous la même règle : « aucune commande
+n'est éteinte d'avance selon le rôle ». Le motif est constant et il est mesuré à chaque fois : la
+règle réelle vit dans les politiques, un rôle ne la résume pas — le §5.27 rapporte même une lectrice
+qui **réussit** un geste que son rôle laisserait croire interdit —, et une commande grisée fait
+passer une décision de la base pour une décision d'écran (`CLAUDE.md` §10).
+
+**Ce que la tranche 2a fait, et pourquoi.** Elle suit le design system : les commandes de pose et
+les gestes de géométrie sont **offerts à tous**, l'écran envoie, et il **traduit** le refus du
+backend — `403` / `42501` pour une insertion, « aucune ligne » pour une mise à jour filtrée par la
+clause `using`. Aucune règle nouvelle n'est donc posée dans l'interface, et le comportement reste
+celui que les politiques `goal_blocks_*` décident.
+
+**Ce qui reste à arbitrer :** faut-il réviser le §5.4 de `docs/SPEC-goals.md` — qui est le seul
+document du dépôt à demander une extinction par rôle —, ou bien poser au canevas un écart nommé au
+design system ? La question n'est pas tranchée ici : elle porte sur une règle générale du produit,
+et l'unité `CRM-083` garde en conséquence son point « état LECTURE SEULE du `viewer` » à `[ ]`.
+
+**Statut :** ouvert, en attente d'arbitrage du responsable.
