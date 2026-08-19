@@ -6,9 +6,15 @@
 //       tranche 2b-2b : les FLÈCHES — tracer une flèche entre deux blocs avec le choix de sa
 //       direction, et corriger cette direction ensuite ;
 //       tranche 2b-2c : les SUPPRESSIONS — supprimer une flèche depuis la liste des liens,
-//       supprimer un bloc depuis sa fiche, chacune derrière sa confirmation
+//       supprimer un bloc depuis sa fiche, chacune derrière sa confirmation ;
+//       tranche 2c : les TABLEAUX — créer, renommer, réordonner et archiver un tableau depuis sa
+//       liste
 // @spec docs/SPEC-goals.md §2.3 (trois directions ; unicité de la paire — corriger une flèche
 //       existante est une modification, pas un ajout ; `on delete cascade` des deux extrémités)
+// @spec docs/SPEC-goals.md §2.1 (le tableau : nom unique par workspace après normalisation,
+//       `position` attribuée par trigger, l'archivage tient lieu de suppression)
+// @spec docs/DESIGN_SYSTEM.md §5.13 (liste administrable : formulaires dans le flux, commandes
+//       d'ordre désactivées aux extrémités, retour du focus à la commande qui a ouvert)
 // @spec docs/SPEC-goals.md §5.1 (liste des tableaux), §5.2 (canevas), §5.3 (flèches),
 //       §5.4 (les cinq états), §5.5 (accessibilité, gestes clavier, `Entrée` ouvre la fiche
 //       d'édition), §3 (ouvrir le channel d'un bloc, poser un bloc, le déplacer, le
@@ -40,9 +46,14 @@
 //   * TRANCHE 2b-2c, LES SUPPRESSIONS : supprimer une flèche depuis la liste des liens, et
 //     supprimer un bloc depuis sa fiche — chacune derrière une confirmation qui NOMME ce qu'elle
 //     détruit, et celle du bloc nommant aussi les flèches que la cascade emporte ;
-//   * NON LIVRÉ, et donc non simulé : administrer les tableaux — créer, renommer, réordonner,
-//     archiver. Aucune commande morte n'est posée pour ces gestes — un bouton qui n'écrit rien
-//     ment plus qu'une absence.
+//   * TRANCHE 2c, LES TABLEAUX : créer un tableau, le renommer, le réordonner et l'archiver, depuis
+//     la liste du §5.1 — formulaires dans le FLUX du document, commandes d'ordre désactivées aux
+//     extrémités et jamais masquées, confirmation d'archivage qui dit que le tableau quitte la
+//     liste ;
+//   * NON LIVRÉ, et donc non simulé : DÉSARCHIVER un tableau. Le §5.1 ne décrit qu'une liste des
+//     tableaux non archivés, et aucun écran ne rend un tableau archivé : poser la commande
+//     supposerait d'abord une surface où le retrouver, qu'aucune unité ne spécifie. La confirmation
+//     d'archivage dit donc en toutes lettres ce que le geste coûte.
 //
 // L'ÉCRAN NE CALCULE AUCUN DROIT : il rend ce que le backend consent, et il ENVOIE puis traduit
 // le refus (`CLAUDE.md` §10, `docs/DESIGN_SYSTEM.md` §5.26). Aucune commande n'est éteinte
@@ -53,9 +64,13 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import type { PointerEvent as EvenementPointeur } from 'react'
 import { Link, useParams } from 'react-router'
 import {
+	Archive,
+	ArrowDown,
 	ArrowLeft,
+	ArrowUp,
 	Minus,
 	MoveRight,
+	Pencil,
 	Plus,
 	SquareArrowOutUpRight,
 	SquarePlus,
@@ -81,15 +96,33 @@ import {
 	type FlecheObjectif,
 	type FlecheTracee,
 	type LigneDiagramme,
+	type TableauListe,
 } from '../lib/objectifs'
+// L'ARITHMÉTIQUE D'ORDRE EST RÉEMPLOYÉE, JAMAIS RECOPIÉE. `calculerDeplacement` et
+// `deplacementPossible` portent déjà, pour les tracks et les channels, le calcul exact dont
+// `goal_boards.position` a besoin : un `numeric` réordonné par le MILIEU de deux voisines, une
+// seule écriture et jamais une permutation. Les dupliquer pour une troisième table les ferait
+// diverger au premier ajustement. Le module n'est importé QUE pour ce calcul — aucune règle
+// d'administration ne traverse cette frontière —, et l'extraire un jour dans un module d'ordre
+// partagé toucherait trois écrans d'administration, hors du périmètre de cette unité.
+import {
+	calculerDeplacement,
+	deplacementPossible,
+	type Ordonnable,
+	type Sens,
+} from '../lib/administration-arborescence'
 import {
 	COULEURS_BLOC,
 	DIRECTIONS_FLECHE,
 	REMPLISSAGE_MAXIMAL,
 	REMPLISSAGE_MINIMAL,
+	archiverTableau,
 	changerDirectionFleche,
+	creerTableau,
+	deplacerTableau,
 	ecrireContenuBloc,
 	ecrireGeometrieBloc,
+	renommerTableau,
 	grouperChannelsParTrack,
 	lierBlocAChannel,
 	poserBloc,
@@ -108,7 +141,10 @@ import {
 	type ContenuBloc,
 	type RefusBloc,
 	type RefusFleche,
+	type RefusTableau,
+	type ResultatCreationTableau,
 	type ResultatEcritureBloc,
+	type ResultatEcritureTableau,
 } from '../lib/objectifs-ecriture'
 import type { EtatAsync } from '../lib/async'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
@@ -205,33 +241,472 @@ export function Objectifs({ client = clientCrm }: ProprietesObjectifs = {}) {
 		)
 	}
 
-	if (etat.donnees.length === 0) {
-		return <EtatVide titre={t('goals.list.empty.title')} corps={t('goals.list.empty.body')} />
-	}
+	// L'ÉTAT VIDE EST RENDU PAR LA LISTE ELLE-MÊME, et non par une sortie anticipée : le §5.4 veut
+	// que « Aucun tableau d'objectifs » porte L'ACTION D'EN CRÉER UN, et une sortie ici priverait cet
+	// état de la seule commande qui en fait sortir. Même règle qu'au §5.29 pour l'état vide d'un
+	// tableau, qui porte la commande de pose.
+	return (
+		<ListeTableaux
+			client={client}
+			idWorkspace={idWorkspace as string}
+			tableaux={etat.donnees}
+			recharger={recharger}
+		/>
+	)
+}
+
+/**
+ * La liste des tableaux et son administration — §5.1, §3 (« créer un tableau, le renommer, le
+ * réordonner, l'archiver »).
+ *
+ * ELLE EST UN COMPOSANT DISTINCT parce que ses états d'écriture sont des HOOKS, et que `Objectifs`
+ * rend cinq sorties anticipées avant d'atteindre la liste — chargement, absence de client, absence
+ * d'espace de travail, erreur. Déclarer ces états là-haut les ferait vivre pendant des rendus où
+ * aucun tableau n'existe, et les règles des hooks interdisent de les déclarer après une sortie.
+ *
+ * AUCUNE COMMANDE N'EST ÉTEINTE D'AVANCE SELON LE RÔLE (`docs/DESIGN_SYSTEM.md` §5.26, neuf fois
+ * posé) : les quatre gestes sont offerts à tous, l'écran envoie, et il traduit le refus. Les seules
+ * commandes désactivées sont celles du réordonnancement aux extrémités de la liste (§5.13), qui ne
+ * disent rien d'un droit et tout d'une arithmétique.
+ */
+function ListeTableaux({
+	client,
+	idWorkspace,
+	tableaux,
+	recharger,
+}: {
+	readonly client: ClientCrm
+	readonly idWorkspace: string
+	readonly tableaux: readonly TableauListe[]
+	readonly recharger: () => void
+}) {
+	const [formulaire, setFormulaire] = useState<FormulaireTableau>(null)
+	const [message, setMessage] = useState<MessageEcriture | null>(null)
+	// Le retour du focus emprunte le remède du §5.25 — un drapeau, puis un effet — pour la cause du
+	// §5.29 : la commande qui a ouvert un formulaire est DÉMONTÉE pendant qu'il vit (la ligne rend le
+	// formulaire à sa place), et `focus()` appelé depuis le gestionnaire de fermeture porterait sur un
+	// bouton qui n'existe plus. Aucune temporisation (`CLAUDE.md` §18).
+	const [focusARendre, setFocusARendre] = useState<string | null>(null)
+
+	const fermer = useCallback((idFocus: string | null) => {
+		setFormulaire(null)
+		setFocusARendre(idFocus)
+	}, [])
+
+	useEffect(() => {
+		if (focusARendre === null) return
+		const commande = document.querySelector<HTMLElement>(`[data-focus="${focusARendre}"]`)
+		commande?.focus()
+		setFocusARendre(null)
+	}, [focusARendre])
+
+	/** Traduit une issue d'écriture en mention, et recharge la liste quand elle a mordu. */
+	const traiter = useCallback(
+		(resultat: ResultatEcritureTableau | ResultatCreationTableau, succes: string) => {
+			if (resultat.statut === 'refus') {
+				setMessage({ ton: 'refus', texte: texteRefusTableau(resultat.refus) })
+				return false
+			}
+			if (resultat.statut === 'sans-effet') {
+				setMessage({ ton: 'refus', texte: t('goals.board.write.noeffect') })
+				return false
+			}
+			setMessage({ ton: 'succes', texte: succes })
+			recharger()
+			return true
+		},
+		[recharger],
+	)
+
+	const creer = useCallback(
+		async (nom: string, description: string) => {
+			setMessage({ ton: 'attente', texte: t('goals.write.saving') })
+			const resultat = await creerTableau(client, { idWorkspace, nom, description })
+			if (traiter(resultat, t('goals.board.created'))) fermer('creer')
+		},
+		[client, idWorkspace, traiter, fermer],
+	)
+
+	const renommer = useCallback(
+		async (id: string, nom: string, description: string) => {
+			setMessage({ ton: 'attente', texte: t('goals.write.saving') })
+			const resultat = await renommerTableau(client, id, { nom, description })
+			if (traiter(resultat, t('goals.board.renamed'))) fermer(`renommer-${id}`)
+		},
+		[client, traiter, fermer],
+	)
+
+	const deplacer = useCallback(
+		async (id: string, sens: Sens) => {
+			// L'ARITHMÉTIQUE EST CELLE DES TRACKS, réemployée et jamais recopiée : `calculerDeplacement`
+			// lit la liste TELLE QUE L'ÉCRAN L'AFFICHE — déjà triée par le serveur — et rend le milieu
+			// de deux voisines. Un `impossible` n'est pas une erreur, c'est le refus motivé du §6.2 de
+			// `docs/SPEC-administration-arborescence.md`, et l'écran le nomme au lieu d'écrire une
+			// valeur qui ne changerait rien (`CLAUDE.md` §18).
+			const deplacement = calculerDeplacement(tableaux.map(ordonnableDe), id, sens)
+			if (deplacement.statut === 'impossible') {
+				setMessage({ ton: 'refus', texte: t('goals.board.move.impossible') })
+				return
+			}
+			setMessage({ ton: 'attente', texte: t('goals.write.saving') })
+			const resultat = await deplacerTableau(client, id, deplacement.position)
+			traiter(resultat, t('goals.board.moved'))
+		},
+		[client, tableaux, traiter],
+	)
+
+	const archiver = useCallback(
+		async (id: string) => {
+			setMessage({ ton: 'attente', texte: t('goals.write.saving') })
+			const resultat = await archiverTableau(client, id)
+			if (traiter(resultat, t('goals.board.archived'))) fermer(`archiver-${id}`)
+		},
+		[client, traiter, fermer],
+	)
+
+	const ordonnables = tableaux.map(ordonnableDe)
 
 	return (
 		<section aria-label={t('goals.aria')} className="flex flex-col gap-4">
-			<ul className="flex flex-col rounded-lg border border-border bg-surface">
-				{etat.donnees.map((tableau) => (
-					<li key={tableau.id}>
-						<Link
-							to={cheminTableauObjectifs(tableau.id)}
-							data-testid="tableau-objectifs"
-							className="flex flex-col gap-1 px-4 py-3 min-h-[var(--size-target)] hover:bg-hover rounded-lg"
-						>
-							<span className="font-medium">{tableau.name}</span>
-							{tableau.description === null ? null : (
-								<span className="text-sm text-text-2">{tableau.description}</span>
+			<div className="flex flex-wrap items-center justify-between gap-2">
+				<h2 className="font-medium">{t('goals.list.title')}</h2>
+				{/* La commande a DEUX VISAGES, un seul rendu à la fois — patron du §5.29 pour la pose,
+				    et du §5.3 quater dont il descend. */}
+				<Button
+					variante={formulaire?.mode === 'creation' ? 'secondaire' : 'primaire'}
+					taille="compacte"
+					data-testid="creer-tableau"
+					data-focus="creer"
+					aria-pressed={formulaire?.mode === 'creation'}
+					onClick={() =>
+						formulaire?.mode === 'creation' ? fermer('creer') : setFormulaire({ mode: 'creation' })
+					}
+				>
+					<SquarePlus aria-hidden="true" size={16} strokeWidth={2} />
+					{formulaire?.mode === 'creation' ? t('goals.board.create.cancel') : t('goals.board.create')}
+				</Button>
+			</div>
+
+			{/* Le formulaire vit DANS LE FLUX du document, sous l'en-tête, jamais dans une modale
+			    (§5.13, tranché trois fois). */}
+			{formulaire?.mode === 'creation' ? (
+				<FormulaireNomTableau
+					testid="formulaire-creation-tableau"
+					titre={t('goals.board.create.title')}
+					nomInitial=""
+					descriptionInitiale=""
+					libelleValider={t('goals.board.create.submit')}
+					message={message}
+					onValider={creer}
+					onAnnuler={() => fermer('creer')}
+				/>
+			) : null}
+
+			{tableaux.length === 0 ? (
+				<EtatVide titre={t('goals.list.empty.title')} corps={t('goals.list.empty.body')} />
+			) : (
+				<ul className="flex flex-col rounded-lg border border-border bg-surface">
+					{tableaux.map((tableau) => (
+						<li key={tableau.id} className="border-b border-border last:border-b-0">
+							{formulaire?.mode === 'renommage' && formulaire.id === tableau.id ? (
+								<FormulaireNomTableau
+									testid="formulaire-renommage-tableau"
+									titre={t('goals.board.rename.title', { nom: tableau.name })}
+									nomInitial={tableau.name}
+									descriptionInitiale={tableau.description ?? ''}
+									libelleValider={t('goals.board.rename.submit')}
+									message={message}
+									onValider={(nom, description) => renommer(tableau.id, nom, description)}
+									onAnnuler={() => fermer(`renommer-${tableau.id}`)}
+								/>
+							) : formulaire?.mode === 'archivage' && formulaire.id === tableau.id ? (
+								<ConfirmationArchivageTableau
+									nom={tableau.name}
+									message={message}
+									onConfirmer={() => archiver(tableau.id)}
+									onAnnuler={() => fermer(`archiver-${tableau.id}`)}
+								/>
+							) : (
+								<LigneTableau
+									tableau={tableau}
+									ordonnables={ordonnables}
+									onRenommer={() => setFormulaire({ mode: 'renommage', id: tableau.id })}
+									onArchiver={() => setFormulaire({ mode: 'archivage', id: tableau.id })}
+									onDeplacer={(sens) => deplacer(tableau.id, sens)}
+								/>
 							)}
-							{/* Le compte est celui des blocs LISIBLES par l'appelant (§5.1) : deux
-							    personnes du même workspace n'y lisent pas le même nombre, et c'est
-							    la conséquence assumée du §4.1. */}
-							<span className="text-sm text-text-3">{libelleCompteBlocs(tableau.blocsLisibles)}</span>
-						</Link>
-					</li>
-				))}
-			</ul>
+						</li>
+					))}
+				</ul>
+			)}
+
+			{/* La mention d'écriture de la LISTE est celle des gestes qui n'ouvrent aucun formulaire —
+			    le réordonnancement. Les formulaires portent la leur, près du champ qui l'a causée
+			    (§5.13), et c'est pourquoi elle est tue lorsque l'un d'eux est ouvert : la même phrase
+			    lue à deux endroits ferait chercher deux causes. */}
+			<MentionEcriture message={formulaire === null ? message : null} />
 		</section>
+	)
+}
+
+/** Les trois formulaires que la liste ouvre, un seul à la fois — jamais deux surfaces ouvertes. */
+type FormulaireTableau =
+	| null
+	| { readonly mode: 'creation' }
+	| { readonly mode: 'renommage'; readonly id: string }
+	| { readonly mode: 'archivage'; readonly id: string }
+
+/** Ce que `calculerDeplacement` demande d'un tableau : sa position, et rien d'autre. */
+const ordonnableDe = (tableau: TableauListe): Ordonnable => ({
+	id: tableau.id,
+	position: tableau.position,
+})
+
+/**
+ * Traduit un refus d'écriture de TABLEAU, dictionnaire fermé et distinct de ceux des blocs et des
+ * flèches.
+ *
+ * `doublon` y dit un geste que les autres ne disent pas — choisir un autre nom —, et il porte une
+ * précision que seule cette table impose : l'index unique de `goal_boards` est TOTAL, si bien qu'un
+ * tableau ARCHIVÉ retient encore son nom. Taire ce point ferait chercher indéfiniment, dans une
+ * liste où il ne paraît plus, le tableau qui bloque.
+ */
+export function texteRefusTableau(refus: RefusTableau): string {
+	if (refus.nature === 'doublon') return t('goals.board.refused.duplicate')
+	if (refus.nature === 'interdit') return t('goals.board.refused.forbidden')
+	if (refus.nature === 'saisie-invalide') return t('goals.board.refused.invalid')
+	return t('goals.write.refused.unavailable')
+}
+
+/**
+ * Une ligne de la liste : le lien vers le tableau, et sa barre de commandes.
+ *
+ * LE LIEN ET LES COMMANDES SONT DISTINCTS, et c'est la règle du §5.13 : une ligne entièrement
+ * cliquable rendrait ambiguë la cible d'un clic qui porte déjà quatre commandes. Le lien garde la
+ * hauteur de cible, les commandes sont des boutons discrets compacts TOUJOURS VISIBLES — jamais au
+ * survol seul, puisqu'elles sont l'objet même de cette surface.
+ */
+function LigneTableau({
+	tableau,
+	ordonnables,
+	onRenommer,
+	onArchiver,
+	onDeplacer,
+}: {
+	readonly tableau: TableauListe
+	readonly ordonnables: readonly Ordonnable[]
+	readonly onRenommer: () => void
+	readonly onArchiver: () => void
+	readonly onDeplacer: (sens: Sens) => void
+}) {
+	const peutMonter = deplacementPossible(ordonnables, tableau.id, 'monter')
+	const peutDescendre = deplacementPossible(ordonnables, tableau.id, 'descendre')
+	return (
+		<div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
+			<Link
+				to={cheminTableauObjectifs(tableau.id)}
+				data-testid="tableau-objectifs"
+				className="flex flex-1 flex-col gap-1 min-h-[var(--size-target)] justify-center rounded-sm hover:underline"
+			>
+				<span className="font-medium">{tableau.name}</span>
+				{tableau.description === null ? null : (
+					<span className="text-sm text-text-2">{tableau.description}</span>
+				)}
+				{/* Le compte est celui des blocs LISIBLES par l'appelant (§5.1) : deux
+				    personnes du même workspace n'y lisent pas le même nombre, et c'est
+				    la conséquence assumée du §4.1. */}
+				<span className="text-sm text-text-3">{libelleCompteBlocs(tableau.blocsLisibles)}</span>
+			</Link>
+			<div className="flex flex-wrap items-center gap-1">
+				{/* LES COMMANDES D'ORDRE SONT DÉSACTIVÉES AUX EXTRÉMITÉS, JAMAIS MASQUÉES (§5.13, §8) :
+				    une commande qui disparaît en tête de liste fait sauter le groupe d'une ligne à
+				    l'autre, et l'œil perd la colonne. Leur nom accessible NOMME le tableau — « Monter »
+				    seul, répété sur chaque ligne, ne dirait pas lequel. */}
+				<Button
+					variante="discret"
+					taille="compacte"
+					data-testid="monter-tableau"
+					disabled={!peutMonter}
+					aria-label={t('goals.board.move.up.aria', { nom: tableau.name })}
+					title={t('goals.board.move.up')}
+					onClick={() => onDeplacer('monter')}
+				>
+					<ArrowUp aria-hidden="true" size={16} strokeWidth={2} />
+				</Button>
+				<Button
+					variante="discret"
+					taille="compacte"
+					data-testid="descendre-tableau"
+					disabled={!peutDescendre}
+					aria-label={t('goals.board.move.down.aria', { nom: tableau.name })}
+					title={t('goals.board.move.down')}
+					onClick={() => onDeplacer('descendre')}
+				>
+					<ArrowDown aria-hidden="true" size={16} strokeWidth={2} />
+				</Button>
+				<Button
+					variante="discret"
+					taille="compacte"
+					data-testid="renommer-tableau"
+					data-focus={`renommer-${tableau.id}`}
+					aria-label={t('goals.board.rename.aria', { nom: tableau.name })}
+					title={t('goals.board.rename')}
+					onClick={onRenommer}
+				>
+					<Pencil aria-hidden="true" size={16} strokeWidth={2} />
+				</Button>
+				<Button
+					variante="discret"
+					taille="compacte"
+					data-testid="archiver-tableau"
+					data-focus={`archiver-${tableau.id}`}
+					aria-label={t('goals.board.archive.aria', { nom: tableau.name })}
+					title={t('goals.board.archive')}
+					onClick={onArchiver}
+				>
+					<Archive aria-hidden="true" size={16} strokeWidth={2} />
+				</Button>
+			</div>
+		</div>
+	)
+}
+
+/**
+ * Le formulaire de création ET celui de renommage — un seul composant, parce que c'est un seul
+ * formulaire : deux champs, une validation, une annulation. Les deux gestes ne diffèrent que par
+ * leurs textes et par les valeurs initiales, et deux composants divergeraient au premier ajustement.
+ *
+ * LE FOCUS ENTRE DANS LE PREMIER CHAMP à l'ouverture (§5.13) : un formulaire qui paraît sans prendre
+ * le focus demande un `Tab` que le geste souris n'exige pas, et la parité des deux entrées serait
+ * tenue en apparence seulement.
+ *
+ * AUCUNE VALIDATION N'EST ANTICIPÉE ICI (`CLAUDE.md` §10). Le nom vide est envoyé, et c'est
+ * `goal_boards_name_check` qui le refuse, traduit en `saisie-invalide` : l'écran ne double pas la
+ * contrainte, il la reçoit. Le champ porte `required` — l'aide de saisie du navigateur, qui ne
+ * remplace aucune règle et ne décide de rien côté serveur.
+ */
+function FormulaireNomTableau({
+	testid,
+	titre,
+	nomInitial,
+	descriptionInitiale,
+	libelleValider,
+	message,
+	onValider,
+	onAnnuler,
+}: {
+	readonly testid: string
+	readonly titre: string
+	readonly nomInitial: string
+	readonly descriptionInitiale: string
+	readonly libelleValider: string
+	readonly message: MessageEcriture | null
+	readonly onValider: (nom: string, description: string) => void
+	readonly onAnnuler: () => void
+}) {
+	const [nom, setNom] = useState(nomInitial)
+	const [description, setDescription] = useState(descriptionInitiale)
+	const premierChamp = useRef<HTMLInputElement | null>(null)
+	useEffect(() => {
+		premierChamp.current?.focus()
+	}, [])
+
+	return (
+		<form
+			data-testid={testid}
+			className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-4"
+			onSubmit={(evenement) => {
+				evenement.preventDefault()
+				onValider(nom, description)
+			}}
+		>
+			<p className="font-medium">{titre}</p>
+			<label className="flex flex-col gap-1 text-sm">
+				{t('goals.board.field.name')}
+				<input
+					ref={premierChamp}
+					data-testid="champ-nom-tableau"
+					className="min-h-[var(--size-target)] rounded-sm border border-border bg-surface px-3"
+					value={nom}
+					required
+					onChange={(evenement) => setNom(evenement.target.value)}
+				/>
+			</label>
+			<label className="flex flex-col gap-1 text-sm">
+				{t('goals.board.field.description')}
+				<input
+					data-testid="champ-description-tableau"
+					className="min-h-[var(--size-target)] rounded-sm border border-border bg-surface px-3"
+					value={description}
+					onChange={(evenement) => setDescription(evenement.target.value)}
+				/>
+			</label>
+			<span className="text-sm text-text-3">{t('goals.board.field.description.hint')}</span>
+			<div className="flex flex-wrap gap-2">
+				<Button type="submit" variante="primaire" taille="compacte" data-testid="valider-tableau">
+					{libelleValider}
+				</Button>
+				<Button variante="secondaire" taille="compacte" data-testid="annuler-tableau" onClick={onAnnuler}>
+					{t('goals.board.form.cancel')}
+				</Button>
+			</div>
+			{/* Le refus est lu PRÈS DU CHAMP QUI L'A CAUSÉ, jamais en tête d'écran (§5.13). */}
+			<MentionEcriture message={message} />
+		</form>
+	)
+}
+
+/**
+ * La confirmation d'archivage — dans le flux du document, jamais une modale (§5.13).
+ *
+ * ELLE DIT QUE LE TABLEAU QUITTE LA LISTE, et elle le dit parce que rien ne l'y ramène : le §5.1 ne
+ * décrit qu'une liste des tableaux NON archivés, et aucun écran de ce produit ne rend un tableau
+ * archivé. Écrire « archiver » sans cette conséquence laisserait croire à un rangement réversible
+ * d'un clic. Elle ne promet pas non plus une destruction : le travail reste en base, et un tableau
+ * archivé RETIENT SON NOM — l'index unique ne l'exclut pas.
+ *
+ * LE FOCUS ENTRE SUR LE BOUTON D'ACTION, patron de `ConfirmationSuppressionBloc` de cet écran.
+ */
+function ConfirmationArchivageTableau({
+	nom,
+	message,
+	onConfirmer,
+	onAnnuler,
+}: {
+	readonly nom: string
+	readonly message: MessageEcriture | null
+	readonly onConfirmer: () => void
+	readonly onAnnuler: () => void
+}) {
+	const action = useRef<HTMLButtonElement | null>(null)
+	useEffect(() => {
+		action.current?.focus()
+	}, [])
+	return (
+		<div data-testid="confirmation-archivage-tableau" className="flex flex-col gap-2 p-4">
+			<p className="font-medium">{t('goals.board.archive.confirm.title', { nom })}</p>
+			<p className="text-sm text-text-2">{t('goals.board.archive.confirm.body')}</p>
+			<div className="flex flex-wrap gap-2">
+				<Button
+					ref={action}
+					variante="destructif"
+					taille="compacte"
+					data-testid="confirmer-archivage-tableau"
+					onClick={onConfirmer}
+				>
+					{t('goals.board.archive.confirm.action')}
+				</Button>
+				<Button
+					variante="secondaire"
+					taille="compacte"
+					data-testid="annuler-archivage-tableau"
+					onClick={onAnnuler}
+				>
+					{t('goals.board.archive.cancel')}
+				</Button>
+			</div>
+			<MentionEcriture message={message} />
+		</div>
 	)
 }
 

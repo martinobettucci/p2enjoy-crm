@@ -584,6 +584,50 @@ export const fr = {
 		'Vous ne pouvez pas supprimer cette flèche : elle demande de pouvoir écrire les deux blocs qu’elle relie.',
 	'goals.delete.refused.unavailable': 'La suppression n’a pas abouti. Réessayez.',
 
+	// --- Objectifs, tranche 2c : les tableaux — CRM-083, docs/SPEC-goals.md §2.1, §3 et §5.1 ----
+	// L'ARCHIVAGE DIT SA CONSÉQUENCE, et il la dit parce que rien ne la défait : le §5.1 ne décrit
+	// qu'une liste des tableaux NON archivés, et aucun écran ne rend un tableau archivé. Le refus de
+	// doublon, lui, nomme un cas que seule cette table produit — l'index unique est TOTAL, si bien
+	// qu'un tableau archivé retient encore son nom. Taire ce point ferait chercher, dans une liste où
+	// il ne paraît plus, le tableau qui bloque.
+	'goals.list.title': 'Tableaux d’objectifs',
+	'goals.board.create': 'Créer un tableau',
+	'goals.board.create.cancel': 'Annuler la création',
+	'goals.board.create.title': 'Nouveau tableau d’objectifs',
+	'goals.board.create.submit': 'Créer le tableau',
+	'goals.board.field.name': 'Nom',
+	'goals.board.field.description': 'Description',
+	'goals.board.field.description.hint':
+		'Facultative. Elle est lue sous le nom du tableau, dans cette liste.',
+	'goals.board.form.cancel': 'Annuler',
+	'goals.board.created': 'Tableau créé',
+	'goals.board.rename': 'Renommer',
+	'goals.board.rename.aria': 'Renommer le tableau {nom}',
+	'goals.board.rename.title': 'Renommer « {nom} »',
+	'goals.board.rename.submit': 'Enregistrer',
+	'goals.board.renamed': 'Tableau enregistré',
+	'goals.board.move.up': 'Monter',
+	'goals.board.move.up.aria': 'Monter le tableau {nom}',
+	'goals.board.move.down': 'Descendre',
+	'goals.board.move.down.aria': 'Descendre le tableau {nom}',
+	'goals.board.moved': 'Ordre enregistré',
+	'goals.board.move.impossible':
+		'L’ordre n’a pas pu être changé : les positions de ces tableaux ne se distinguent plus.',
+	'goals.board.archive': 'Archiver',
+	'goals.board.archive.aria': 'Archiver le tableau {nom}',
+	'goals.board.archive.confirm.title': 'Archiver « {nom} » ?',
+	'goals.board.archive.confirm.body':
+		'Le tableau et son travail sont conservés, mais il quitte cette liste et aucun écran ne le rend plus. Son nom, lui, reste pris : un tableau archivé le retient.',
+	'goals.board.archive.confirm.action': 'Archiver le tableau',
+	'goals.board.archive.cancel': 'Annuler',
+	'goals.board.archived': 'Tableau archivé',
+	'goals.board.write.noeffect':
+		'Rien n’a été enregistré. Le tableau a peut-être été archivé entre-temps, ou vous ne pouvez pas l’écrire. Rechargez la liste.',
+	'goals.board.refused.duplicate':
+		'Un tableau de cet espace de travail porte déjà ce nom. Un tableau archivé retient le sien : choisissez-en un autre.',
+	'goals.board.refused.forbidden': 'Vous ne pouvez pas administrer les tableaux de cet espace de travail.',
+	'goals.board.refused.invalid': 'Le nom est exigé : un tableau sans nom ne se retrouve pas.',
+
 	'route.today.title': 'Ma journée',
 	'route.today.empty.title': 'Rien pour aujourd’hui',
 	'route.today.empty.body': 'Les prochaines actions et les relances dues apparaîtront ici.',
