@@ -2788,6 +2788,172 @@ info "Vérifié avec le jeton réel de la lectrice : 5 blocs sur 6, et les 4 fl�
 info "Objectifs : 1 tableau, 6 blocs dont 3 liés et 1 fermé à la lectrice, 4 flèches couvrant les
       trois directions — docs/SPEC-goals.md §5"
 
+# --- 8 quaterdecies. Budgets de démonstration — docs/SPEC-costs.md §2, CRM-084 ------------------
+# @spec CRM-084 (docs/BACKLOG.md) — budgets, occurrences et clôture
+# @spec docs/SPEC-costs.md §2.1 (budgets), §2.2 (occurrences), §3.1 (lecture par le track),
+#       §4.1 (administration), §4.5 (regroupement par devise), §4.7 (états)
+# @spec docs/SCHEMA.md §9 bis.4, §9 bis.5
+#
+# QUATRE budgets et DEUX occurrences, posés par la véritable API REST avec la clé de service,
+# comme les tracks (décision 32) : le seed ne parle jamais SQL à la place du produit.
+#
+# CE QUE CE JEU DOIT DÉMONTRER, ET POURQUOI CHAQUE LIGNE EXISTE.
+#
+#   * UN BUDGET SUR UN TRACK FERMÉ À LA LECTRICE. « Prospection sortante » vit sur
+#     « Conseil & IA », que Farida ne lit pas — MESURÉ sur la pile : `app.can_read_track` lui rend
+#     faux pour ce track, son droit fin `none` n'étant pas rouvert au niveau du TRACK par son
+#     `channel_members` sur « Prospection ». Sans ce budget, la règle du §3.1 ne serait
+#     démontrable sur AUCUN écran : les trois profils verraient la même liste, et l'écran de
+#     `CRM-086` n'aurait jamais l'occasion de rendre un cumul qui diffère selon le lecteur.
+#
+#   * UN BUDGET RÉCURRENT À DEUX OCCURRENCES, DONT UNE CLÔTURÉE. C'est le seul jeu qui permette à
+#     `CRM-086` de rendre ses deux vues sur la MÊME donnée : agrégé dans la vue du track (§4.2),
+#     détaillé par occurrence dans sa fiche (§4.3). Avec une seule occurrence, les deux vues
+#     seraient indistinguables et la règle ne serait pas éprouvée.
+#
+#   * UN BUDGET CLÔTURÉ, qui n'apparaît pas dans l'histogramme du track (§4.2) et se cache
+#     derrière l'interrupteur de l'administration (§4.1). Sans lui, l'état « clôturé » serait
+#     documenté sans être démontrable, ce que `CLAUDE.md` §8 refuse.
+#
+#   * UNE SECONDE DEVISE. Le §4.5 pose que « les devises ne se mélangent pas » et impose un
+#     histogramme PAR devise présente. Un jeu entièrement en euros rendrait cette règle
+#     indémontrable, et la contrainte `^[A-Z]{3}$` de la migration resterait décorative. « Suisse
+#     romande » est donc en `CHF`.
+#
+# LES DEUX CLÔTURES SONT DES GESTES, PAS DES COLONNES POSÉES À LA CRÉATION. Le budget « Salon du
+# web 2025 » et l'occurrence « Janvier 2026 » naissent OUVERTS, puis sont clôturés par un vrai
+# `PATCH`, comme un administrateur le ferait. `CLAUDE.md` §8 interdit de fabriquer la trace d'un
+# processus au lieu de l'exécuter, et une clôture posée à l'insertion ne prouverait pas que la
+# clôture fonctionne.
+#
+# AUCUNE OCCURRENCE N'EST ENGENDRÉE, et ce n'est pas un oubli : `docs/SPEC-costs.md` §2.2 interdit
+# toute génération automatique. Il y a « Janvier » et « Février », il n'y a PAS « Mars » — il ne
+# s'est rien passé en mars, et c'est une information.
+#
+# `resolution=merge-duplicates` sur la clé primaire : l'écriture est CONVERGENTE. Un budget doté à
+# la main pendant une session de développement est rétabli au contrat, pas dupliqué.
+
+# id | track | nom | devise | enveloppe | récurrent | position
+BUDGETS_SEED=(
+	"5eed0000-0000-4000-8000-0000000000c1|5eed0000-0000-4000-8000-000000000021|Prospection sortante|EUR|12000.00|false|1"
+	"5eed0000-0000-4000-8000-0000000000c2|5eed0000-0000-4000-8000-000000000022|Publicité 2026|EUR|24000.00|true|1"
+	"5eed0000-0000-4000-8000-0000000000c3|5eed0000-0000-4000-8000-000000000022|Salon du web 2025|EUR|8000.00|false|2"
+	"5eed0000-0000-4000-8000-0000000000c4|5eed0000-0000-4000-8000-000000000023|Suisse romande|CHF|15000.00|false|1"
+)
+
+# id | budget | libellé | début | fin | enveloppe
+OCCURRENCES_SEED=(
+	"5eed0000-0000-4000-8000-0000000000d1|5eed0000-0000-4000-8000-0000000000c2|Janvier 2026|2026-01-01|2026-01-31|2000.00"
+	"5eed0000-0000-4000-8000-0000000000d2|5eed0000-0000-4000-8000-0000000000c2|Février 2026|2026-02-01|2026-02-28|2500.00"
+)
+
+BUDGET_CLOTURE='5eed0000-0000-4000-8000-0000000000c3'
+OCCURRENCE_CLOTUREE='5eed0000-0000-4000-8000-0000000000d1'
+
+echo
+say "8 quaterdecies. Budgets de démonstration"
+
+for ligne in "${BUDGETS_SEED[@]}"; do
+	IFS='|' read -r id track nom devise enveloppe recurrent position <<< "$ligne"
+
+	charge=$(jq -nc --arg id "$id" --arg track "$track" --arg nom "$nom" --arg devise "$devise" \
+	                --argjson enveloppe "$enveloppe" --argjson recurrent "$recurrent" \
+	                --argjson position "$position" \
+	                --arg auteur '5eed0000-0000-4000-8000-000000000011' \
+	     '{id: $id, track_id: $track, name: $nom, currency: $devise,
+	       planned_amount: $enveloppe, is_recurrent: $recurrent, closed_at: null,
+	       position: $position, created_by: $auteur}')
+
+	code=$(api POST /rest/v1/budgets \
+		-H 'Prefer: return=representation,resolution=merge-duplicates' \
+		-d "$charge")
+	attendu "$code" "création du budget « $nom »" 200 201
+
+	if [ "$recurrent" = 'true' ]; then nature='récurrent'; else nature='simple'; fi
+	printf '  %-24s %-4s %10s  %s\n' "${nom:0:24}" "$devise" "$enveloppe" "$nature"
+done
+
+for ligne in "${OCCURRENCES_SEED[@]}"; do
+	IFS='|' read -r id budget libelle debut fin enveloppe <<< "$ligne"
+
+	charge=$(jq -nc --arg id "$id" --arg budget "$budget" --arg l "$libelle" \
+	                --arg debut "$debut" --arg fin "$fin" --argjson enveloppe "$enveloppe" \
+	     '{id: $id, budget_id: $budget, label: $l, period_start: $debut, period_end: $fin,
+	       planned_amount: $enveloppe, closed_at: null}')
+
+	code=$(api POST /rest/v1/budget_occurrences \
+		-H 'Prefer: return=representation,resolution=merge-duplicates' \
+		-d "$charge")
+	attendu "$code" "création de l'occurrence « $libelle »" 200 201
+
+	printf '  %-24s %s → %s\n' "  ↳ ${libelle:0:22}" "$debut" "$fin"
+done
+
+# LES DEUX CLÔTURES, PAR LE VRAI GESTE. Un `PATCH` qui pose `closed_at`, exactement ce que
+# l'administration des budgets enverra (§4.1). Convergent : rejouer le seed sur une base déjà
+# clôturée réécrit la même valeur sans erreur.
+code=$(api PATCH "/rest/v1/budgets?id=eq.$BUDGET_CLOTURE" \
+	-H 'Prefer: return=representation' \
+	-d "$(jq -nc '{closed_at: "2026-06-30T17:00:00Z"}')")
+attendu "$code" "clôture du budget « Salon du web 2025 »" 200
+
+code=$(api PATCH "/rest/v1/budget_occurrences?id=eq.$OCCURRENCE_CLOTUREE" \
+	-H 'Prefer: return=representation' \
+	-d "$(jq -nc '{closed_at: "2026-02-05T17:00:00Z"}')")
+attendu "$code" "clôture de l'occurrence « Janvier 2026 »" 200
+
+info "Clôtures posées par un vrai PATCH : 1 budget et 1 occurrence sur 2"
+
+# LA VISIBILITÉ EST VÉRIFIÉE AVEC LE VRAI JETON DE LA LECTRICE, jamais déduite du seul modèle.
+# C'est le contrôle qui distingue « la donnée est posée » de « la règle s'applique » : un budget
+# d'un track fermé qui resterait visible à Farida serait une FUITE — le nom d'une enveloppe et son
+# montant —, et le seed la révélerait ici plutôt qu'en production.
+#
+# LE JETON EST OBTENU PAR LA VRAIE ROUTE DE CONNEXION, comme celui de l'administratrice à la
+# section 7 : un contrôle qui s'appuierait sur la clé de service ne prouverait rien, la clé de
+# service traversant la RLS.
+JETON_VIEWER=$(curl -s -X POST "$API/auth/v1/token?grant_type=password" \
+	-H "apikey: $ANON_KEY" -H 'Content-Type: application/json' \
+	-d "$(jq -nc --arg m 'viewer@p2enjoy.test' --arg p "$SEED_PASSWORD" \
+	      '{email: $m, password: $p}')" \
+	| jq -r '.access_token // empty')
+[ -n "$JETON_VIEWER" ] || die "connexion de la lectrice seedée impossible : la visibilité des
+        budgets ne peut pas être vérifiée avec un jeton réel (docs/SPEC-costs.md §3.1)."
+
+vus=$(curl -s "$API/rest/v1/budgets?select=id" \
+	-H "apikey: $ANON_KEY" -H "Authorization: Bearer $JETON_VIEWER" | jq -r 'length')
+[ "${vus:-0}" -eq 3 ] || die "la lectrice doit voir TROIS des quatre budgets — « Prospection
+        sortante » vit sur « Conseil & IA », qu'elle ne lit pas (docs/SPEC-costs.md §3.1) —, mais
+        elle en voit « ${vus:-0} ». Soit la règle de lecture ne s'applique pas, soit le seed ne la
+        démontre plus."
+
+# ET L'ÉCRITURE EST REFUSÉE AU BUSINESS DEVELOPER, qui pourtant ÉCRIT les affaires de ce track.
+# C'est la ligne de partage du §3 — « le budget est un cadre, l'affectation est un geste » —, et
+# c'est la seule règle du sous-système qu'un jeu de données ne peut pas montrer : elle ne se voit
+# qu'en essayant. Le refus attendu est un 403 rendu par la politique, pas une absence de ligne.
+JETON_BIZDEV=$(curl -s -X POST "$API/auth/v1/token?grant_type=password" \
+	-H "apikey: $ANON_KEY" -H 'Content-Type: application/json' \
+	-d "$(jq -nc --arg m 'bizdev@p2enjoy.test' --arg p "$SEED_PASSWORD" \
+	      '{email: $m, password: $p}')" \
+	| jq -r '.access_token // empty')
+[ -n "$JETON_BIZDEV" ] || die "connexion du business developer seedé impossible : le refus
+        d'écriture d'un budget ne peut pas être vérifié avec un jeton réel."
+
+refus=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API/rest/v1/budgets" \
+	-H "apikey: $ANON_KEY" -H "Authorization: Bearer $JETON_BIZDEV" \
+	-H 'Content-Type: application/json' \
+	-d "$(jq -nc --arg track '5eed0000-0000-4000-8000-000000000022' \
+	      '{track_id: $track, name: "Budget refusé au bizdev", position: 99}')")
+[ "$refus" = '403' ] || die "le business developer doit se voir REFUSER la création d'un budget
+        avec le code 403 (docs/SPEC-costs.md §3.2), mais l'API a rendu « $refus ». Si c'est un
+        201, la ligne de partage entre le cadre et le geste n'est plus tenue et un budget vient
+        d'être créé par un non-administrateur."
+
+info "Vérifié avec les jetons réels : la lectrice voit 3 budgets sur 4, le bizdev en crée 0 (403)"
+
+info "Budgets : ${#BUDGETS_SEED[@]} dont 1 récurrent à ${#OCCURRENCES_SEED[@]} occurrences, 1 clôturé,
+      1 fermé à la lectrice et 1 en CHF — docs/SPEC-costs.md §2 et §4.7"
+
 # --- 9. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
 # Rappel volontaire, affiché à chaque exécution, et **mis à jour par `CRM-020`** : peupler la base
 # ne la rend pas lisible pour autant. L'état réel est désormais mixte, et le dire faux dans un sens
