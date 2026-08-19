@@ -20747,8 +20747,12 @@ verts ; `test:unit` **58 fichiers / 1997 tests** ; `test:sql` **48 fichiers / 24
 `e2e:api` **801 passés** ; `e2e:ui` **493 passés, 1 échec** ; `e2e:mail` **42 passés** ; `pytest`
 **244**. `node scripts/lib/classes-css.mjs` cite **276** classes et n'en trouve que trois absentes du
 CSS produit — `h-10 py-0.5 text-text-1`, exactement celles d'INC-158 : **aucune classe de cette
-tranche n'y figure**. Les quarante-neuf autres `scripts/verify-*.sh` n'ont pas été rejoués, la série
-entière ne tenant pas dans une session (`docs/CloudWorker.md` §2.1 ter).
+tranche n'y figure**. Les deux harnais que ce changement touche sont verts —
+`scripts/verify-budgets.sh` **43 contrôles** et `scripts/verify-administration-arborescence.sh`
+**27 contrôles**, l'écran hôte n'ayant rien perdu à accueillir le bloc. Les quarante-sept autres
+`scripts/verify-*.sh` n'ont pas été rejoués, la série entière ne tenant pas dans une session
+(`docs/CloudWorker.md` §2.1 ter). Les **162 captures d'autres unités** régénérées par la campagne ont
+été **rendues** : ce changement ne touche aucune de leurs lignes.
 
 **L'UNIQUE ÉCHEC EST ÉTRANGER AU DIFF, ET C'EST MESURÉ — INC-174.** `administration-workflows.spec.ts`
 § « les deux gestes se mènent au clavier seul » a rougi DANS la campagne, et **passe seul** en 29,8 s

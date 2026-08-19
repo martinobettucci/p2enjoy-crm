@@ -8378,9 +8378,11 @@ budget appartient à un track, et l'écran qui administre le track est celui qui
       `administration-workflows.spec.ts` § « les deux gestes se mènent au clavier seul » — est
       **étranger au diff** et **passe seul** en 29,8 s : consigné en **INC-174**, cause exacte non
       établie.
-- [ ] **Les quarante-huit autres `scripts/verify-*.sh` n'ont pas été rejoués**, la série entière ne
-      tenant pas dans une session (`docs/CloudWorker.md` §2.1 ter). `scripts/verify-budgets.sh`, lui,
-      est vert : **43 contrôles, aucune anomalie**.
+- [ ] **Les quarante-sept autres `scripts/verify-*.sh` n'ont pas été rejoués**, la série entière ne
+      tenant pas dans une session (`docs/CloudWorker.md` §2.1 ter). Les deux que ce changement touche
+      sont verts : `scripts/verify-budgets.sh` **43 contrôles** et
+      `scripts/verify-administration-arborescence.sh` **27 contrôles**, aucune anomalie de part ni
+      d'autre — l'écran hôte n'a rien perdu à accueillir le bloc des budgets.
 
 ### CRM-085 — Lignes de coût d'une affaire `[ ]`
 
