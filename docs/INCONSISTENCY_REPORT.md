@@ -2752,11 +2752,16 @@ aucun cloisonnement : ni base séparée, ni transaction, ni verrou. Le diff de l
 touche **aucun** `.sql`, aucune migration, aucun script — `git diff <base>..HEAD --stat --
 supabase/ scripts/` rend une sortie vide.
 
-**Ce qui n'est PAS établi.** L'état réel de `npm run test:sql` exécuté SEUL sur cette pile. La
-session n'a pas pu le rejouer isolément avant sa fin, la campagne d'interface occupant la base
-jusqu'au bout (`docs/CloudWorker.md` §2.1 ter : la série entière ne tient pas dans une session).
-Le verdict ci-dessus doit donc être **jeté**, et non lu comme une régression **ni** comme une
-anomalie préexistante.
+**LA CONTRE-ÉPREUVE A ÉTÉ FAITE, ET ELLE TRANCHE.** `npm run test:sql` rejoué **seul**, la
+campagne terminée, sur la même pile et sans reseed :
+
+```
+49 fichiers, 2464 assertions, aucune anomalie.
+```
+
+Les cinq échecs ci-dessus étaient donc **entièrement** provoqués par l'exécution concurrente. Aucun
+n'est une régression, aucun n'est une anomalie préexistante : le premier verdict ne mesurait rien
+d'autre que la collision.
 
 **Ce qu'il faut en retenir pour lire une campagne.** C'est un piège de méthode, et il est
 silencieux : rien dans le dépôt ne signale que ces deux commandes se disputent une ressource, et
