@@ -50,6 +50,53 @@ const CLASSES_ENTETE = 'bg-bg text-sm text-text-2 font-medium h-[var(--size-targ
 const CLASSES_CELLULE = 'h-[var(--size-target)] px-3'
 const CLASSES_CHAMP = 'min-h-[var(--size-target)] rounded-sm border border-border bg-surface px-3'
 
+/**
+ * Les classes de la section — et `min-w-0` N'EST PAS DÉCORATIF, C'EST MESURÉ À 390 px.
+ *
+ * La section est un enfant flex de la colonne gauche de la fiche, et un enfant flex a
+ * `min-width: auto` : sans cette classe, la section s'élargit pour contenir sa table, le conteneur
+ * `overflow-x-auto` ne peut donc plus rétrécir, et c'est la PAGE ENTIÈRE qui défile horizontalement
+ * — exactement ce que le §12.6 interdit. La colonne hôte porte déjà `min-w-0`, mais un parent ne le
+ * transmet pas à ses enfants.
+ */
+const CLASSES_SECTION = 'flex flex-col gap-3 border-t border-border pt-4 min-w-0'
+
+/**
+ * Le conteneur de défilement de la table — et `[contain:paint]` N'EST PAS DÉCORATIF, C'EST MESURÉ.
+ *
+ * À 390 px, la largeur minimale intrinsèque de la table (541 px) dépasse celle de son conteneur
+ * (326 px, imposée par la colonne de la fiche). MESURÉ dans Chromium : cette largeur **traverse**
+ * l'`overflow-x: auto` du conteneur et remonte jusqu'à la racine —
+ * `document.documentElement.scrollWidth` rend alors 664 pour 390 de viewport, et `window.scrollTo`
+ * déplace réellement la page de **274 px** malgré l'`overflow-x: hidden` de `html`. Ce n'est donc
+ * pas un artefact de mesure : c'est un défilement horizontal fantôme, celui que le §12.6 interdit,
+ * et sur mobile la pression du doigt le rend atteignable.
+ *
+ * `contain: paint` dit ce que l'`overflow` promettait déjà — rien de ce qui est ici ne peint hors de
+ * cette boîte —, et la propagation cesse. Les ombres de défilement de `indique-debordement-x` sont
+ * des fonds du conteneur lui-même : elles ne sont pas affectées.
+ *
+ * La table des budgets de `CRM-084` n'a pas ce défaut pour une raison précise, et non par chance :
+ * son conteneur n'est pas contraint — il fait la largeur de la table — et c'est `<main>` qui écrête.
+ * Le cas n'apparaît que lorsqu'un conteneur PLUS ÉTROIT que la table doit la faire défiler.
+ */
+const CLASSES_CONTENEUR_TABLE = 'overflow-x-auto indique-debordement-x [contain:paint]'
+
+/**
+ * La table — SANS `min-w-max`, et c'est un ÉCART ASSUMÉ avec la table des budgets de `CRM-084`.
+ *
+ * Celle-ci vit dans une page pleine largeur ; la section des coûts vit dans la colonne gauche de la
+ * fiche, plafonnée à `72ch` (docs/DESIGN_SYSTEM.md §5.3). OBSERVÉ sur la capture à 1440 : avec
+ * `min-w-max`, la largeur intrinsèque de six colonnes dépasse celle de la colonne, et la commande de
+ * suppression sort du cadre **dès le palier le plus large** — l'utilisateur doit faire défiler pour
+ * atteindre un bouton, sur un écran qui n'a aucun problème de place.
+ *
+ * Sans cette classe, la table occupe la largeur disponible et n'en réclame pas davantage : elle
+ * tient entière aux trois paliers larges, et ne défile qu'à 390 px, où le défilement est légitime et
+ * signalé par les ombres du conteneur.
+ */
+const CLASSES_TABLE = 'w-full border-collapse'
+
 /** Traduit un refus de ligne de coût en un texte destiné à l'utilisateur. */
 export function texteRefusCout(refus: RefusCout): string {
 	switch (refus.nature) {
@@ -537,7 +584,7 @@ export function BlocCoutsCard({
 		<section
 			data-testid="bloc-couts-card"
 			aria-labelledby="couts-card-titre"
-			className="flex flex-col gap-3 border-t border-border pt-4"
+			className={CLASSES_SECTION}
 		>
 			<h2 id="couts-card-titre" className="text-h3 font-medium">
 				{t('card.costs.title')}
@@ -574,8 +621,8 @@ export function BlocCoutsCard({
 			{lignes.statut === 'pret' && lignes.donnees.length > 0 ? (
 				// Même correctif de débordement que les autres tables du produit (§12.6) : conteneur
 				// dédié plutôt que de s'en remettre à l'`overflow-x-auto` non indiqué de `<main>`.
-				<div className="overflow-x-auto indique-debordement-x">
-					<table data-testid="tableau-couts" className="w-full border-collapse min-w-max">
+				<div className={CLASSES_CONTENEUR_TABLE}>
+					<table data-testid="tableau-couts" className={CLASSES_TABLE}>
 						<caption className="sr-only">{t('card.costs.aria', { titre: titreCard })}</caption>
 						<thead>
 							<tr className="border-b border-border">

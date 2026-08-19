@@ -114,6 +114,13 @@ export async function lireCoutsCard(
  *
  * `maybeSingle` et non `single` : une card refusée par la RLS rend zéro ligne, ce qui n'est pas une
  * erreur mais une absence — et `single` en ferait un `PGRST116` classé « inconnu ».
+ *
+ * LA RELATION EST NOMMÉE PAR SA CLÉ ÉTRANGÈRE, ET C'EST OBLIGATOIRE — MESURÉ. `cards` porte DEUX
+ * clés composites vers `channels` : `cards_channel_id_workflow_id_fkey` et
+ * `cards_channel_id_workspace_id_fkey`. Un `channels(track_id)` nu est donc AMBIGU, et PostgREST
+ * refuse la requête entière avec `PGRST201` plutôt que d'en choisir une. La clé retenue est celle
+ * qui passe par le workspace : c'est la colonne dénormalisée dont dépend la RLS, et la seule des
+ * deux dont la présence est structurellement garantie sur toute card.
  */
 export async function lireTrackDeLaCard(
 	client: ClientCrm,
@@ -122,7 +129,7 @@ export async function lireTrackDeLaCard(
 	try {
 		const reponse = await client
 			.from('cards')
-			.select('id, channels(track_id)')
+			.select('id, channels!cards_channel_id_workspace_id_fkey(track_id)')
 			.eq('id', idCard)
 			.maybeSingle()
 		if (reponse.error !== null) {

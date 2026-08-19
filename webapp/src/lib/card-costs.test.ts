@@ -264,7 +264,9 @@ describe('lireTrackDeLaCard', () => {
 		// est ici un tableau vide — ce qui n'est pas un objet portant `channels`, donc `null`.
 		const etat = await lireTrackDeLaCard(client, 'card-1')
 		expect(appels[0]?.table).toBe('cards')
-		expect(appels[0]?.colonnes).toContain('channels(track_id)')
+		// La relation est NOMMÉE par sa clé étrangère : `cards` en porte deux vers `channels`, et un
+		// `channels(…)` nu rend `PGRST201`. Ce contrôle empêche la régression de revenir en silence.
+		expect(appels[0]?.colonnes).toContain('channels!cards_channel_id_workspace_id_fkey(track_id)')
 		expect(appels[0]?.filtres).toEqual([['eq:id', 'card-1']])
 		expect(etat).toMatchObject({ statut: 'pret' })
 	})
