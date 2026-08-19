@@ -21,7 +21,7 @@
 // supplémentaire possible déplacerait une garde de convergence et le compteur que lit la règle 3
 // du classement. La preuve unitaire est donc le lieu où le cas f du §15.9 se vérifie.
 
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it } from 'vitest'
@@ -863,5 +863,335 @@ describe('rattachement d’une affaire depuis la fiche (docs/SPEC-contacts.md §
 		const section = commande.closest('section')
 		expect(section?.textContent).toContain(fr['contact.deals.title'])
 		expect(section?.textContent).not.toContain(fr['contact.modification.open'])
+	})
+})
+
+// =================================================================================================
+// SOUS-TRANCHE 4i — LE DÉTACHEMENT D'UNE AFFAIRE DEPUIS LA FICHE
+// =================================================================================================
+//
+// @verifies CRM-060 (docs/BACKLOG.md) — tranche 4 sous-tranche 4i
+// @verifies docs/SPEC-contacts.md §18.3 (les onze mesures, et les quatre qui décident),
+//           §18.4 (la quatrième colonne, la confirmation sur une ligne à elle, l'exclusivité),
+//           §18.5 (dictionnaire FERMÉ), §18.6 (de quoi le geste a l'air, la relecture dans les
+//           TROIS issues), §18.7 (contrat de comportement, cas a à m)
+// @verifies docs/DESIGN_SYSTEM.md §5.27 (ce geste), §5.24 révisé (le tableau à QUATRE colonnes)
+
+/**
+ * Client qui LIT la fiche et SUPPRIME un rattachement.
+ *
+ * `delete` est distingué de `insert` et de `update` : cette sous-tranche supprime dans
+ * `card_contacts`, là où 4h y insère et où 4g met à jour `contacts`. Un espion qui les confondrait
+ * laisserait passer un code qui écrirait par le mauvais verbe.
+ *
+ * **`suppressions` porte les FILTRES réellement posés**, et non un simple compteur : le contrat du
+ * §18.2 exige les deux — `card_id` ET `contact_id`. Un code qui n'en poserait qu'un détacherait
+ * le contact de TOUTES ses affaires, et un compteur ne le verrait pas.
+ */
+function clientQuiDetache(options: {
+	lectures: Reponse[]
+	suppression?: Reponse
+}) {
+	const suppressions: Array<Record<string, unknown>> = []
+	let rangLecture = 0
+	const lireChaine = () => {
+		const chaine: Record<string, unknown> = {
+			then: (resoudre: (valeur: Reponse) => unknown) => {
+				const reponse = options.lectures[Math.min(rangLecture, options.lectures.length - 1)]
+				rangLecture += 1
+				// La dernière réponse est REJOUÉE : la relecture des trois issues (§18.6) en demande
+				// une de plus que la liste n'en porte.
+				return Promise.resolve(reponse ?? VIDE).then(resoudre)
+			},
+		}
+		for (const nom of ['eq', 'is', 'order', 'limit']) chaine[nom] = () => chaine
+		return chaine
+	}
+	return {
+		suppressions,
+		client: {
+			from: (table: string) => ({
+				select: () => lireChaine(),
+				delete: () => {
+					const filtres: Record<string, unknown> = { table }
+					const chaine: Record<string, unknown> = {
+						eq: (colonne: string, valeur: unknown) => {
+							filtres[colonne] = valeur
+							return chaine
+						},
+						select: () => {
+							suppressions.push(filtres)
+							return Promise.resolve(
+								options.suppression ?? { data: [{ contact_id: 'x' }], error: null, status: 200 },
+							)
+						},
+					}
+					return chaine
+				},
+			}),
+		} as unknown as ClientCrm,
+	}
+}
+
+/** Léo avec DEUX affaires, dont une ARCHIVÉE : le seed n'en porte qu'une (§15.7), et les cas d */
+/** et j du §18.7 en demandent deux. */
+const LEO_DEUX_AFFAIRES = {
+	...LEO,
+	card_contacts: [
+		...LEO.card_contacts,
+		{
+			role: null,
+			cards: {
+				id: CONTRAT_ARCHIVE.id,
+				title: CONTRAT_ARCHIVE.title,
+				archived_at: CONTRAT_ARCHIVE.archived_at,
+				channels: { slug: 'grands-comptes', tracks: { slug: 'conseil-ia' } },
+			},
+		},
+	],
+}
+
+const SILENCE: Reponse = { data: [], error: null, status: 200 }
+
+async function ouvrirLaConfirmation(idCard: string) {
+	const commandes = await screen.findAllByTestId('detacher-affaire-contact')
+	const commande = commandes.find((bouton) => bouton.getAttribute('data-card') === idCard)
+	if (commande === undefined) throw new Error(`aucune commande de détachement pour ${idCard}`)
+	await userEvent.click(commande)
+	return commande
+}
+
+describe('détachement d’une affaire depuis la fiche (docs/SPEC-contacts.md §18.7)', () => {
+	it('cas a — CHAQUE ligne porte sa commande, l’archivée comprise, et aucune confirmation n’est ouverte', async () => {
+		const { client } = clientQuiDetache({ lectures: [OK(LEO_DEUX_AFFAIRES)] })
+		monter(client, ID_LEO)
+		const commandes = await screen.findAllByTestId('detacher-affaire-contact')
+		expect(commandes).toHaveLength(2)
+		// TOUTES LES LIGNES PORTENT LA MÊME COMMANDE (§18.3, mesure 4) : la base accepte le
+		// détachement sur une affaire archivée, `app.can_write_card` dérivant du channel et ne
+		// lisant ni `archived_at` ni `deleted_at`. Rien à l'écran ne distingue cette ligne.
+		expect(commandes.map((bouton) => bouton.getAttribute('data-card')).sort()).toEqual(
+			[ID_CARD_ERP, CONTRAT_ARCHIVE.id].sort(),
+		)
+		expect(screen.queryByTestId('confirmation-detachement-affaire')).toBeNull()
+		// La QUATRIÈME COLONNE porte un en-tête LISIBLE, jamais une cellule vide (§5.27, §8).
+		expect(screen.getByText(fr['contact.detach.column'])).toBeTruthy()
+	})
+
+	it('cas b — la confirmation NOMME l’affaire, sur une ligne à elle, et le focus y entre', async () => {
+		const { client } = clientQuiDetache({ lectures: [OK(LEO_DEUX_AFFAIRES)] })
+		monter(client, ID_LEO)
+		await ouvrirLaConfirmation(ID_CARD_ERP)
+		const confirmation = screen.getByTestId('confirmation-detachement-affaire')
+		// ELLE NOMME L'AFFAIRE, ET NON LE CONTACT (§18.6) : c'est le §12.6 retourné, le contact
+		// étant ici le décor — on lit sa fiche — et l'affaire la variable.
+		expect(confirmation.textContent).toContain('Migration ERP Sogexia')
+		expect(confirmation.textContent).not.toContain('Léo Marchand')
+		// UNE LIGNE DE TABLEAU À ELLE, SUR TOUTE LA LARGEUR (§18.4) : dans la cellule de la
+		// commande, bornée à 32ch et tronquée, le titre de l'affaire serait coupé.
+		const ligne = screen.getByTestId('ligne-confirmation-detachement')
+		expect(ligne.tagName).toBe('TR')
+		expect(ligne.getAttribute('data-card')).toBe(ID_CARD_ERP)
+		expect(ligne.querySelector('td')?.getAttribute('colspan')).toBe('4')
+		expect(document.activeElement).toBe(screen.getByTestId('confirmer-detachement-affaire'))
+	})
+
+	it('cas c — « Annuler » démonte la confirmation ET rend le focus à la commande de SA ligne', async () => {
+		const { client } = clientQuiDetache({ lectures: [OK(LEO_DEUX_AFFAIRES)] })
+		monter(client, ID_LEO)
+		const commande = await ouvrirLaConfirmation(CONTRAT_ARCHIVE.id)
+		await userEvent.click(screen.getByTestId('annuler-detachement-affaire'))
+		expect(screen.queryByTestId('confirmation-detachement-affaire')).toBeNull()
+		// LE RETOUR EST DIFFÉRÉ, et le motif diffère de 4g et 4h : la commande n'est pas démontée,
+		// elle est `disabled` — et un élément désactivé ne reçoit pas le focus.
+		expect(document.activeElement).toBe(commande)
+	})
+
+	it('cas d — ouvrir la confirmation d’une AUTRE ligne ferme la précédente : une seule à tout instant', async () => {
+		const { client } = clientQuiDetache({ lectures: [OK(LEO_DEUX_AFFAIRES)] })
+		monter(client, ID_LEO)
+		await ouvrirLaConfirmation(ID_CARD_ERP)
+		expect(screen.getAllByTestId('ligne-confirmation-detachement')).toHaveLength(1)
+		await ouvrirLaConfirmation(CONTRAT_ARCHIVE.id)
+		const lignes = screen.getAllByTestId('ligne-confirmation-detachement')
+		expect(lignes).toHaveLength(1)
+		expect(lignes[0]?.getAttribute('data-card')).toBe(CONTRAT_ARCHIVE.id)
+	})
+
+	it('cas a bis — la commande de la ligne confirmée est DÉSACTIVÉE, les autres restent actives', async () => {
+		const { client } = clientQuiDetache({ lectures: [OK(LEO_DEUX_AFFAIRES)] })
+		monter(client, ID_LEO)
+		await ouvrirLaConfirmation(ID_CARD_ERP)
+		const commandes = screen.getAllByTestId('detacher-affaire-contact')
+		const surERP = commandes.find((b) => b.getAttribute('data-card') === ID_CARD_ERP)
+		const surArchive = commandes.find((b) => b.getAttribute('data-card') === CONTRAT_ARCHIVE.id)
+		// Ce n'est PAS une garde de droit (§18.6) : c'est une commande sans objet, il n'y a rien à
+		// rouvrir. Les autres lignes ne sont pas concernées.
+		expect((surERP as HTMLButtonElement).disabled).toBe(true)
+		expect((surArchive as HTMLButtonElement).disabled).toBe(false)
+	})
+
+	it('cas f — le détachement appliqué pose les DEUX filtres, referme, relit, et n’affiche AUCUN message', async () => {
+		const { client, suppressions } = clientQuiDetache({
+			lectures: [OK(LEO_DEUX_AFFAIRES), OK(LEO)],
+		})
+		monter(client, ID_LEO)
+		await ouvrirLaConfirmation(CONTRAT_ARCHIVE.id)
+		await userEvent.click(screen.getByTestId('confirmer-detachement-affaire'))
+		// LES DEUX FILTRES (§18.2) : sans `contact_id`, la requête détacherait TOUS les contacts de
+		// l'affaire ; sans `card_id`, elle détacherait le contact de toutes ses affaires.
+		expect(suppressions).toHaveLength(1)
+		expect(suppressions[0]).toMatchObject({
+			table: 'card_contacts',
+			card_id: CONTRAT_ARCHIVE.id,
+			contact_id: ID_LEO,
+		})
+		expect(screen.queryByTestId('confirmation-detachement-affaire')).toBeNull()
+		// LA FICHE EST RELUE, JAMAIS AMPUTÉE LOCALEMENT (§18.6) : la seconde lecture ne rend plus
+		// que l'affaire active, et c'est elle — non un retrait optimiste — qui vide la ligne.
+		//
+		// L'ATTENTE EST EXPLICITE, ET C'EST LA PREUVE MÊME DU CONTRAT : `findAllBy` rendrait la
+		// main sur les DEUX lignes encore affichées, l'ancien rendu satisfaisant déjà le sélecteur.
+		// C'est exactement ce qu'un retrait optimiste aurait fait disparaître sans relecture ;
+		// attendre la relecture est donc ce qui distingue les deux comportements.
+		await waitFor(() => expect(screen.getAllByTestId('ligne-affaire-contact')).toHaveLength(1))
+		expect(screen.queryByTestId('pilule-affaire-archivee')).toBeNull()
+		expect(screen.queryByTestId('message-detachement-affaire')).toBeNull()
+	})
+
+	it('cas g — détacher la DERNIÈRE affaire laisse l’état vide, qui garde le geste de rattachement', async () => {
+		const { client } = clientQuiDetache({ lectures: [OK(LEO), OK({ ...LEO, card_contacts: [] })] })
+		monter(client, ID_LEO)
+		await ouvrirLaConfirmation(ID_CARD_ERP)
+		await userEvent.click(screen.getByTestId('confirmer-detachement-affaire'))
+		expect(await screen.findByText(fr['contact.deals.empty.title'])).toBeTruthy()
+		expect(screen.queryByTestId('tableau-affaires-contact')).toBeNull()
+		// L'état vide GARDE le geste de rattachement (§17.6) et n'en gagne aucun de détachement :
+		// un tableau sans ligne n'en a aucune à porter (§5.24, révision finale).
+		expect(screen.getByTestId('ouvrir-rattachement-affaire')).toBeTruthy()
+		expect(screen.queryByTestId('detacher-affaire-contact')).toBeNull()
+	})
+
+	it('cas h — le SILENCE est dit, la fiche est RELUE, et la ligne reste puisque la base l’a gardée', async () => {
+		const { client } = clientQuiDetache({
+			lectures: [OK(LEO)],
+			suppression: SILENCE,
+		})
+		monter(client, ID_LEO)
+		await ouvrirLaConfirmation(ID_CARD_ERP)
+		await userEvent.click(screen.getByTestId('confirmer-detachement-affaire'))
+		// L'ISSUE « SANS EFFET » N'EST NI UN SUCCÈS NI UNE ERREUR (§18.3, mesures 2 et 3). La clause
+		// `USING` a filtré la ligne avant la suppression : elle EXISTE toujours. Le message dit ce
+		// qui est vrai des deux causes indistinguables, sans affirmer ni le refus ni la disparition.
+		const message = await screen.findByTestId('message-detachement-affaire')
+		expect(message.textContent).toBe(fr['contact.detach.noeffect'])
+		expect(message.getAttribute('role')).toBe('alert')
+		expect(screen.queryByTestId('confirmation-detachement-affaire')).toBeNull()
+		// LA LIGNE RESTE — c'est tout le point : un retrait optimiste effacerait ici une ligne que
+		// la base a gardée, et annoncerait un détachement qui n'a pas eu lieu.
+		expect(screen.getAllByTestId('ligne-affaire-contact')).toHaveLength(1)
+	})
+
+	it('cas i — un refus est traduit par le dictionnaire FERMÉ, jamais par le message du serveur', async () => {
+		const { client } = clientQuiDetache({
+			lectures: [OK(LEO)],
+			suppression: {
+				data: null,
+				error: { message: 'permission denied for table card_contacts' },
+				status: 401,
+			},
+		})
+		monter(client, ID_LEO)
+		await ouvrirLaConfirmation(ID_CARD_ERP)
+		await userEvent.click(screen.getByTestId('confirmer-detachement-affaire'))
+		const message = await screen.findByTestId('message-detachement-affaire')
+		expect(message.textContent).toBe(fr['contact.detach.refus.forbidden'])
+		// LE TEXTE DU SERVEUR N'ATTEINT JAMAIS L'ÉCRAN (§18.5) : le rendre tel quel exposerait le
+		// détail de la pile (`CLAUDE.md` §20).
+		expect(message.textContent).not.toContain('permission denied')
+	})
+
+	it('cas i bis — une panne réseau a son propre texte, distinct du refus', async () => {
+		const { client } = clientQuiDetache({
+			lectures: [OK(LEO)],
+			suppression: { data: null, error: { message: 'Failed to fetch' }, status: 0 },
+		})
+		monter(client, ID_LEO)
+		await ouvrirLaConfirmation(ID_CARD_ERP)
+		await userEvent.click(screen.getByTestId('confirmer-detachement-affaire'))
+		const message = await screen.findByTestId('message-detachement-affaire')
+		expect(message.textContent).toBe(fr['contact.detach.refus.network'])
+	})
+
+	it('cas e — la confirmation est DÉSACTIVÉE en vol, et n’émet jamais deux requêtes', async () => {
+		let debloquer: ((valeur: Reponse) => void) | null = null
+		const enVol = new Promise<Reponse>((resoudre) => {
+			debloquer = resoudre
+		})
+		const suppressions: unknown[] = []
+		const lireChaine = () => {
+			const chaine: Record<string, unknown> = {
+				then: (resoudre: (valeur: Reponse) => unknown) => Promise.resolve(OK(LEO)).then(resoudre),
+			}
+			for (const nom of ['eq', 'is', 'order', 'limit']) chaine[nom] = () => chaine
+			return chaine
+		}
+		const client = {
+			from: () => ({
+				select: () => lireChaine(),
+				delete: () => {
+					const chaine: Record<string, unknown> = {
+						eq: () => chaine,
+						select: () => {
+							suppressions.push(1)
+							return enVol
+						},
+					}
+					return chaine
+				},
+			}),
+		} as unknown as ClientCrm
+		monter(client, ID_LEO)
+		await ouvrirLaConfirmation(ID_CARD_ERP)
+		const bouton = screen.getByTestId('confirmer-detachement-affaire') as HTMLButtonElement
+		await userEvent.click(bouton)
+		expect(bouton.disabled).toBe(true)
+		expect(bouton.textContent).toContain(fr['contact.detach.pending'])
+		await userEvent.click(bouton)
+		expect(suppressions).toHaveLength(1)
+		debloquer?.({ data: [{ contact_id: ID_LEO }], error: null, status: 200 })
+	})
+
+	it('cas l — sans contact, sans client ou en erreur, AUCUNE commande n’est rendue', async () => {
+		const { client: introuvable } = clientQuiDetache({ lectures: [VIDE] })
+		monter(introuvable, ID_LEO)
+		expect(await screen.findByText(fr['contact.notFound.title'])).toBeTruthy()
+		expect(screen.queryByTestId('detacher-affaire-contact')).toBeNull()
+		cleanup()
+
+		monter(null, ID_LEO)
+		expect(screen.getByText(fr['contact.noWorkspace.title'])).toBeTruthy()
+		expect(screen.queryByTestId('detacher-affaire-contact')).toBeNull()
+		cleanup()
+
+		const { client: casse } = clientQuiDetache({
+			lectures: [{ data: null, error: { message: 'boom' }, status: 500 }],
+		})
+		monter(casse, ID_LEO)
+		expect(await screen.findByText(fr['contact.error.title'])).toBeTruthy()
+		expect(screen.queryByTestId('detacher-affaire-contact')).toBeNull()
+	})
+
+	it('cas m — la commande est rendue ACTIVE quel que soit le rôle : l’écran ne calcule aucun droit', async () => {
+		// MESURÉ (§18.3, mesure 7) : la LECTRICE RÉUSSIT ce détachement sur une affaire et reçoit
+		// le silence sur une autre, toutes deux lisibles par elle. Les droits fins de `CRM-012`
+		// divergent d'une affaire à l'autre POUR UN MÊME PROFIL — aucune propriété du profil ne
+		// prédit l'issue, et l'écran qui grisrait « parce que lecteur » se tromperait.
+		const { client } = clientQuiDetache({ lectures: [OK(LEO_DEUX_AFFAIRES)] })
+		monter(client, ID_LEO)
+		const commandes = await screen.findAllByTestId('detacher-affaire-contact')
+		for (const commande of commandes) {
+			expect((commande as HTMLButtonElement).disabled).toBe(false)
+		}
 	})
 })
