@@ -39,11 +39,34 @@ d'exécuter le code attendu.
   applique sur une pile en marche : une table neuve répond `404` jusqu'au redémarrage suivant.
   `CRM-087` fait émettre la notification par le runner, une fois, après un passage réussi.
 
-  Rien de ce qui précède n'est livré : l'unité est `[ ]`, et la voie manuelle fichier par fichier
-  reste la seule disponible (`docs/PROD_MIGRATIONS.md` §3.3), avec le rechargement du cache qu'elle
-  impose désormais explicitement.
+  Rien de ce qui précédait n'était livré ; ce chunk livre la mécanique — voir « Ajouté » ci-dessous.
+  La voie manuelle fichier par fichier reste disponible (`docs/PROD_MIGRATIONS.md` §3.3), utile pour
+  appliquer une migration isolée hors fenêtre.
 
 ### Ajouté
+
+- **`./runProd.sh --migrate`** (`CRM-087`, `docs/JOURNAL.md` décision 489) — ouvre la fenêtre de
+  maintenance décrite au §3.1 de `docs/PROD_MIGRATIONS.md`. Le script surcharge `APPLY_MIGRATIONS`
+  **pour la seule invocation** par l'environnement passé à Compose, sans jamais réécrire `.env` (la
+  garde `APPLY_MIGRATIONS=false` du lancement ordinaire est conservée telle quelle) ; il exige la
+  confirmation que l'instantané de VM est pris — « oui » demandé au terminal, ou
+  `--instantane-verifie` hors terminal ; il force la recréation du `migrations-runner`, conteneur à
+  usage unique déjà sorti que Compose ne relancerait pas autrement. La confirmation est éprouvée
+  AVANT `require_docker` : `scripts/verify-scripts.sh` peut prouver la garde sans démon Docker.
+
+- **`supabase/docker/migrations-runner/apply-migrations.sh` recharge le cache de PostgREST** — après
+  toutes les migrations, une seule fois, `notify pgrst, 'reload schema';`. MESURÉ : 18 des 52
+  migrations émettaient déjà cette notification, les 34 autres non ; en développement l'écart est
+  invisible (`rest` attend la fin du runner), en production sur pile en marche il faisait qu'une
+  table créée par l'une des 34 répondait `404` jusqu'au redémarrage suivant. Le poser dans le
+  runner ferme le défaut pour toutes les migrations à venir. La notification n'est jamais
+  transactionnelle : son échec n'invalide pas le passage.
+
+- **`scripts/verify-scripts.sh` éprouve les gardes de `--migrate` et le rechargement du cache**
+  (six contrôles nouveaux) : refus hors TTY sans confirmation d'instantané, refus sur profil dev,
+  refus sur `APPLY_MIGRATIONS=true`, `.env` inchangé, émission unique du `notify pgrst` en fin de
+  passage réussi, et échec en cours de répertoire qui rend un code non nul, n'émet aucun notify et
+  n'annonce aucun succès.
 
 - **La série entière des `scripts/verify-*.sh` REJOUÉE en une session, en mode `--rapide`** —
   soixante harnais, trente-six verts et vingt-quatre rouges, tous triés et consignés dans

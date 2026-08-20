@@ -156,7 +156,7 @@ la question d'une façade `npm` par-dessus `runDev.sh` et consorts reste ouverte
 | `./runDev.sh --bootstrap` | Amorce `.env` et s'arrête, sans rien démarrer | **disponible** |
 | `./runDev.sh --stop` | Arrêt propre de la pile de développement, volumes conservés | **disponible** |
 | `./runProd.sh` | Démarre l'assemblage de production (sans outillage de développement, TLS via Caddy) | **disponible** |
-| `./runProd.sh --migrate` | Ouvre la **fenêtre de migration** : applique `supabase/migrations/` par le `migrations-runner`, puis recharge le cache de schéma de PostgREST. Exige la confirmation que l'instantané de VM est pris ; ne réécrit jamais `.env` | **non livré** — `CRM-087`, `docs/JOURNAL.md` décision 489 |
+| `./runProd.sh --migrate` | Ouvre la **fenêtre de migration** : applique `supabase/migrations/` par le `migrations-runner`, puis recharge le cache de schéma de PostgREST. Exige la confirmation que l'instantané de VM est pris — « oui » demandé au terminal, ou `--instantane-verifie` hors terminal — et ne réécrit jamais `.env` | **disponible** — `CRM-087`, `docs/JOURNAL.md` décision 489 |
 | `./runProd.sh --stop` | Arrêt propre de l'assemblage de production | **disponible** |
 | `./resetMe.sh` | Détruit la base et les volumes locaux, redémarre à froid, rejoue migrations et seed | **disponible** |
 | `scripts/verify-stack.sh` | Rejoue les preuves de la pile : santé des services, passerelle, Studio, absence d'outillage en production, chaîne de stockage | **disponible** |
@@ -595,7 +595,7 @@ preuves.
 | Chiffrement | `PG_META_CRYPTO_KEY`, `REALTIME_DB_ENC_KEY` | Obligatoires. Longueurs imposées : 32 et 16 caractères. Les secrets de messagerie ne sont pas ici : ils vivent dans le Vault de la base, chiffrés par sa clé racine (décision 366, INC-098) |
 | Authentification | `DISABLE_SIGNUP`, `PASSWORD_MIN_LENGTH`, `JWT_EXPIRY` | Obligatoires. `DISABLE_SIGNUP` vaut **toujours** `true` (`docs/SPEC-auth.md` §2) |
 | SMTP transactionnel | `SMTP_HOST`, `SMTP_PORT`, `SMTP_ADMIN_EMAIL` | Obligatoires |
-| Pile | `STACK_RLIMIT_NOFILE`, `APPLY_MIGRATIONS` | Facultatives, avec défauts. `APPLY_MIGRATIONS=false` est imposé en production **et doit y rester** : c'est ce qui empêche une migration non décidée. Les migrations de production s'appliquent dans une fenêtre de maintenance ouverte par `./runProd.sh --migrate`, dont le retour arrière est la restauration de l'instantané de VM (décision 489, `CRM-087`, non livré) |
+| Pile | `STACK_RLIMIT_NOFILE`, `APPLY_MIGRATIONS` | Facultatives, avec défauts. `APPLY_MIGRATIONS=false` est imposé en production **et doit y rester** : c'est ce qui empêche une migration non décidée. Les migrations de production s'appliquent dans une fenêtre de maintenance ouverte par `./runProd.sh --migrate`, qui surcharge la variable pour sa seule invocation sans réécrire `.env`, et dont le retour arrière est la restauration de l'instantané de VM (décision 489, `CRM-087`) |
 | Production | `APP_DOMAIN`, `CADDY_ACME_EMAIL` | Obligatoires en production uniquement |
 | Sauvegardes | `BACKUP_AGE_RECIPIENTS_FILE`, `BACKUP_OUTPUT_DIR`, `BACKUP_RETENTION_DAYS`, `RESTORE_AGE_IDENTITY_FILE` | Lues par `scripts/backup.sh` et `scripts/restore-drill.sh` **depuis `CRM-080`**, jamais par un service. `RESTORE_AGE_IDENTITY_FILE` désigne la **clé privée** et n'a rien à faire sur l'hôte qui sauvegarde : l'y poser annulerait la propriété que le chiffrement par destinataires publics apporte. Toutes quatre à exemple **vide** : la pile de développement ne sauvegarde rien, et une valeur d'exemple non vide ferait exiger par les gardes un fichier de clés que `./runDev.sh` n'a aucune raison de réclamer. `BACKUP_AGE_RECIPIENTS_FILE` ne porte que des clés **publiques** ; la clé privée vit hors de l'hôte qui sauvegarde, et le script ne la lit jamais |
 | Exploitation des sauvegardes | `BACKUP_MAX_AGE_HOURS`, `BACKUP_MIN_RECIPIENTS`, `BACKUP_OFFSITE_DIR`, `BACKUP_DRILL_STAMP_FILE`, `BACKUP_DRILL_MAX_AGE_DAYS` | Lues par `scripts/backup-supervision.sh` **depuis `CRM-080` tranche 3**, jamais par un service. Toutes facultatives, à exemple **vide** : les trois entières prennent leur défaut — 26 heures, 1 destinataire, 30 jours —, et les deux qui désignent un chemin rendent leur contrôle **non applicable** plutôt que vert, la supervision ne verdissant jamais un contrôle qu'elle n'a pas fait. `BACKUP_MAX_AGE_HOURS` vaut 26 et non 24 : une sauvegarde quotidienne décalée par une charge de l'hôte dépasserait `24` sans qu'il se soit rien passé, et une alerte qui se déclenche seule apprend à être ignorée |
@@ -728,14 +728,15 @@ Documentation de référence :
 
 ## 11. Limites connues
 
-- **La production n'applique pas encore ses migrations toute seule.** L'arbitrage est pris — le
-  `migrations-runner` migrera la production dans une **fenêtre de maintenance** ouverte par
-  `./runProd.sh --migrate`, avec l'instantané de VM pour retour arrière (`docs/JOURNAL.md`
-  décision 489) — mais le geste est porté par `CRM-087` et **n'est pas livré**. D'ici là, la seule
-  voie est l'application manuelle fichier par fichier de `docs/PROD_MIGRATIONS.md` §3.3, qui impose
-  en outre d'émettre `notify pgrst, 'reload schema'` : **18 migrations sur 52** seulement le font
-  d'elles-mêmes, et une table créée par l'une des 34 autres resterait invisible de l'API jusqu'au
-  redémarrage suivant.
+- **La production applique ses migrations par un geste de maintenance, jamais par accident.**
+  `./runProd.sh --migrate` (livré par `CRM-087`, `docs/JOURNAL.md` décision 489) ouvre la fenêtre
+  décrite au §3.1 de `docs/PROD_MIGRATIONS.md` : le geste surcharge `APPLY_MIGRATIONS` pour la
+  seule invocation, exige la confirmation que l'instantané de VM est pris (« oui » demandé au
+  terminal, `--instantane-verifie` hors terminal), force la recréation du `migrations-runner`, et
+  le runner émet `notify pgrst, 'reload schema'` une seule fois en fin de passage réussi. Le
+  retour arrière est la **restauration de l'instantané de VM**, qui détruit tout ce qui a été
+  écrit depuis. La fenêtre est donc à ouvrir avec l'accès utilisateur fermé, et la restauration
+  éprouvée reste à couvrir par `CRM-080`.
 - **L'administration métier est partielle.** L'arborescence — créer, renommer, réordonner,
   archiver et désarchiver un track ou un channel — a son écran depuis `CRM-075`. Restent sans
   surface : l'**éditeur de workflows** (`CRM-076`), la définition des **formulaires**, la

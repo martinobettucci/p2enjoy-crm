@@ -10,14 +10,17 @@ décrite ici ne s'exécute sans instruction humaine explicite.
 
 **Arbitrage du responsable du 2026-08-20 — `docs/JOURNAL.md`, décision 489.** L'application manuelle
 fichier par fichier ne passe pas à l'échelle : le dépôt porte 52 migrations, et une livraison
-ordinaire en ajoute. La production les appliquera donc **par le `migrations-runner`**, sur un geste
+ordinaire en ajoute. La production les applique donc **par le `migrations-runner`**, sur un geste
 explicite — `./runProd.sh --migrate` — et le retour arrière est la **restauration de l'instantané de
 la machine virtuelle**, que la production prend avant la fenêtre. Le §3 décrit cette procédure et le
 §6 sa reprise.
 
-**Ce geste n'est pas encore livré.** Il est porté par l'unité `CRM-087`, à ce jour `[ ]`. Tant
-qu'elle ne l'est pas, la seule voie disponible est l'application manuelle décrite au §3.3, avec le
-rechargement du cache de PostgREST qu'elle impose.
+**Ce geste est livré par `CRM-087`.** `./runProd.sh --migrate` surcharge `APPLY_MIGRATIONS` pour la
+seule invocation (sans jamais écrire dans `.env`), force la recréation du `migrations-runner`, exige
+la confirmation que l'instantané de VM est pris — « oui » demandé au terminal, ou
+`--instantane-verifie` hors terminal —, et le runner émet `notify pgrst, 'reload schema'` une seule
+fois en fin de passage réussi. La voie manuelle du §3.3 reste utile pour appliquer une migration
+isolée hors fenêtre.
 
 ---
 
@@ -121,7 +124,7 @@ Aucune clé de production n'est utilisée pour les tests. Aucun environnement lo
 Ces migrations existent dans le dépôt et **n'ont jamais été appliquées en production**, celle-ci
 n'étant pas provisionnée.
 
-### 3.1 Procédure nominale — la fenêtre de maintenance (`CRM-087`, non encore livrée)
+### 3.1 Procédure nominale — la fenêtre de maintenance (`CRM-087`, livrée)
 
 Le `migrations-runner` rejoue **l'intégralité** de `supabase/migrations/*.sql` en ordre
 lexicographique, une transaction par fichier, en s'arrêtant à la première erreur, et **ne tient
@@ -513,8 +516,10 @@ répertoire. Le mode d'échec exact a déjà été mesuré une fois, sur la cont
 
 ### 3.3 Voie manuelle — fichier par fichier
 
-**Voie de repli, et voie unique tant que `CRM-087` n'est pas livrée.** Elle sert aussi à appliquer
-une migration isolée hors fenêtre, quand le rejeu intégral n'est pas souhaitable.
+**Voie de repli**, désormais que `CRM-087` est livrée : la procédure nominale du §3.1 ouvre la
+fenêtre par `./runProd.sh --migrate`. Cette voie manuelle sert à appliquer une migration isolée
+hors fenêtre, quand le rejeu intégral n'est pas souhaitable, ou à diagnostiquer une migration
+donnée en dehors du chemin outillé.
 
 ```bash
 # Depuis l'hôte de production, la pile démarrée et GoTrue sain.
@@ -537,8 +542,10 @@ docker exec -i p2enjoy-db psql -U postgres -d "$POSTGRES_DB" \
     -c "notify pgrst, 'reload schema';"
 ```
 
-`CRM-087` supprime cette étape en faisant émettre la notification par le runner lui-même, après un
-passage réussi, pour toutes les migrations et non pour dix-huit d'entre elles.
+`CRM-087` supprime cette étape sur la voie nominale : `apply-migrations.sh` émet la notification
+une seule fois en fin de passage réussi, pour toutes les migrations et pour tous les chemins. La
+commande ci-dessus reste utile lorsque l'exploitant applique une migration à la main hors du
+runner (voie de repli).
 
 Après application, contrôler que les cinq tables portent bien RLS :
 

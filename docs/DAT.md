@@ -245,15 +245,20 @@ contente de renvoyer vers `docs/PROD_MIGRATIONS.md` et se termine avec le code `
 explicite `./runProd.sh --migrate`, qui surcharge la variable pour cette seule invocation et ne
 réécrit jamais le fichier d'environnement. L'invariant reste donc qu'un lancement ordinaire, un
 redémarrage d'hôte ou le redéploiement d'un service **ne migrent rien**. Le geste est porté par
-l'unité `CRM-087` et **n'est pas encore livré** ; jusque-là, la voie manuelle du §3.3 du contrat
-de déploiement est la seule.
+l'unité `CRM-087`, désormais **livrée** : le script exige la confirmation que l'instantané de VM
+est pris (« oui » demandé au terminal, `--instantane-verifie` hors terminal) et force la
+recréation du `migrations-runner` — conteneur à usage unique, `restart: "no"`, que Compose ne
+relancerait pas autrement. La voie manuelle du §3.3 du contrat de déploiement reste disponible
+pour appliquer une migration isolée hors fenêtre.
 
 **Le rechargement du cache de schéma de PostgREST appartient au runner, et non aux migrations.**
 MESURÉ le 2026-08-20 : 18 des 52 migrations se terminent par `notify pgrst, 'reload schema'`, les 34
 autres non. L'écart est invisible en développement — `rest` attend la fin du runner — et visible en
 production dès qu'on applique sur une pile en marche, une table neuve répondant `404` jusqu'au
-redémarrage suivant. `CRM-087` fait émettre la notification **une fois, par le runner, après un
-passage réussi** : la propriété cesse alors de dépendre de ce que chaque migration a pensé à écrire.
+redémarrage suivant. `apply-migrations.sh` émet la notification **une fois, par le runner, après un
+passage réussi** — la propriété cesse alors de dépendre de ce que chaque migration a pensé à écrire.
+`scripts/verify-scripts.sh` éprouve ce comportement, et prouve qu'un échec en cours de répertoire
+n'émet aucune notification et n'annonce aucun succès.
 
 **Toute migration du dépôt est idempotente.** Le conteneur ne tient aucun registre des migrations
 déjà appliquées : il rejoue l'intégralité du répertoire à chaque démarrage de la pile. Une
@@ -771,8 +776,11 @@ Elles s'appliquent dans une **fenêtre de maintenance** ouverte par un geste exp
 contrôles de données préalables, **instantané de la machine virtuelle**, `./runProd.sh --migrate`,
 vérifications du §5, réouverture. Le retour arrière de la fenêtre est la restauration de cet
 instantané, avec la perte assumée de ce qui a été écrit pendant (`docs/JOURNAL.md`, décision 489 ;
-`docs/PROD_MIGRATIONS.md` §3.1 et §6). Le geste `--migrate` est porté par `CRM-087` et n'est pas
-encore livré ; la voie manuelle fichier par fichier reste décrite au §3.3 du contrat.
+`docs/PROD_MIGRATIONS.md` §3.1 et §6). `--migrate` est livré par `CRM-087` : le script surcharge
+`APPLY_MIGRATIONS` pour la seule invocation, force la recréation du `migrations-runner` et exige la
+confirmation d'instantané (« oui » demandé au terminal, `--instantane-verifie` hors terminal). La
+voie manuelle fichier par fichier reste décrite au §3.3 du contrat, pour appliquer une migration
+isolée hors fenêtre.
 
 ## 10. Reprise et continuité
 
@@ -928,7 +936,7 @@ désigne `P2ENJOY_ENV_FILE`.
 |---|---|---|
 | `runDev.sh` | Amorce `.env` au premier lancement — chaque secret tiré au hasard, `ANON_KEY` et `SERVICE_ROLE_KEY` dérivées du `JWT_SECRET` produit — puis démarre l'assemblage de développement | Environnement complet ; profil `dev` ; `CRM_INBOUND_DOMAIN=crm.p2enjoy.test`, comme le seed |
 | `runProd.sh` | Démarre l'assemblage de production | Environnement complet ; profil `prod` ; `APPLY_MIGRATIONS=false` ; **aucun amorçage**, aucun secret inventé |
-| `runProd.sh --migrate` | Ouvre la fenêtre de migration : applique le répertoire de migrations par le `migrations-runner`, puis recharge le cache de schéma de PostgREST. **Non livré — `CRM-087`** | Les gardes de `runProd.sh`, plus la **confirmation que l'instantané de VM est pris** ; la surcharge de `APPLY_MIGRATIONS` vaut pour la seule invocation et n'écrit jamais dans `.env` |
+| `runProd.sh --migrate` | Ouvre la fenêtre de migration : force la recréation du `migrations-runner` qui applique le répertoire et émet `notify pgrst, 'reload schema'` une seule fois en fin de passage réussi. **Livré — `CRM-087`** | Les gardes de `runProd.sh`, plus la **confirmation que l'instantané de VM est pris** (« oui » demandé au terminal, `--instantane-verifie` hors terminal) ; la surcharge de `APPLY_MIGRATIONS` vaut pour la seule invocation et n'écrit jamais dans `.env` |
 | `resetMe.sh` | Détruit la base et les volumes locaux, redémarre à froid, rejoue migrations et seed | Environnement complet ; profil `dev` ; confirmation explicite (`--yes` hors terminal interactif) |
 | `supabase/seed/apply-seed.sh` | Applique le seed socle par les API réelles ; convergent, ne détruit rien | Environnement complet ; profil `dev` ; pile démarrée |
 | `scripts/generate-types.sh` | Régénère `webapp/src/lib/database.types.ts` depuis la base migrée, ou le compare sans écrire (`--check`) | Environnement complet ; profil `dev` ; conteneur `meta` en marche |
