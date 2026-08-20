@@ -331,7 +331,25 @@ fi
 
 REFERENCE=$(docker ps --filter "name=^/p2enjoy-db$" --filter "status=running" --format '{{.Names}}')
 
-interroger() { docker exec "$1" psql -U supabase_admin -d "$BASE" -At -c "$2" 2>&1 ; }
+# UNE REQUÊTE QUI ÉCHOUE EST UNE RÉPONSE, PAS UN ACCIDENT — corrigé après que le harnais l'eut
+# trouvé. `interroger` rendait le code de `psql`, et `VALEUR=$(interroger …)` propage ce code : sous
+# `set -euo pipefail`, l'exercice MOURAIT au premier `select` en erreur. C'est précisément ce qui
+# arrive au cas q du §12, où `vault.decrypted_secrets` rend « invalid ciphertext » — l'exercice
+# s'arrêtait donc sans jamais dire que I1 avait échoué, et rendait un code non nul muet là où il
+# devait rendre un diagnostic.
+#
+# La fonction rend désormais TOUJOURS 0, et le texte de l'erreur devient la valeur de l'invariant.
+# Rien n'est masqué : I1 cherche « ERROR » dans ce texte, et les invariants comparés le voient
+# différer de la référence. Un `|| true` posé sur l'appel aurait, lui, avalé aussi les vraies
+# erreurs de l'exercice.
+interroger() {
+	local sortie
+	set +e
+	sortie=$(docker exec "$1" psql -U supabase_admin -d "$BASE" -At -c "$2" 2>&1)
+	set -e
+	printf '%s' "$sortie"
+	return 0
+}
 
 # I1 — LE CŒUR. Le déchiffrement effectif d'un secret de Vault est le SEUL invariant qui voie une
 # clé racine perdue : mesuré, une restauration faite avec une clé tirée au hasard rend `rc=0`, zéro
