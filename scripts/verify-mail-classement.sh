@@ -20,8 +20,11 @@
 # ---------------------------------------------------------------------------------------------
 # Ce que ce harnais NE prouve PAS, et le dit.
 # ---------------------------------------------------------------------------------------------
-# LA SUGGESTION DE LA RÈGLE 3 N'A PAS D'ÉCRAN : l'inbox qui la montrerait est due par `CRM-057`.
-# Le harnais prouve la RÈGLE en base ; la preuve visible attend l'écran.
+# ~~LA SUGGESTION DE LA RÈGLE 3 N'A PAS D'ÉCRAN.~~ **RÉVISÉ le 2026-08-20 par LIVRAISON** —
+# `CRM-060` sous-tranche 2 bis, docs/SPEC-contacts.md §8.8. L'inbox MONTRE désormais la suggestion,
+# et le seed en fait arriver une pour de bon. Ce harnais vérifie donc en plus, plus bas, que la
+# surface et sa donnée de démonstration existent ; le PARCOURS, lui, reste l'objet de
+# `e2e/ui/suggestion-classement.spec.ts`, qu'un harnais ne remplace pas.
 #
 # AUCUN DÉCLASSEMENT : rien dans le §4.4 ne le décrit.
 #
@@ -164,6 +167,85 @@ if [ "$R3_TEMOIN" = "AUCUNE" ]; then
 	ok "témoin : un expéditeur inconnu ne suggère rien — la règle ne suggère pas à tort"
 else
 	fail "témoin ROUGE : un inconnu a reçu une suggestion « $R3_TEMOIN »"
+fi
+
+titre "2 bis. La suggestion a une SURFACE, et une donnée de démonstration — CRM-060 sous-tranche 2 bis"
+
+# @verifies CRM-060 (docs/BACKLOG.md) — sous-tranche 2 bis, docs/SPEC-contacts.md §8.8.3, §8.8.5,
+#           §8.8.8 ; docs/DESIGN_SYSTEM.md §5.4 ter ; docs/SPEC-seed.md §2.19
+#
+# UNE RÈGLE LIVRÉE QUE RIEN NE MONTRE EST UNE RÈGLE INVISIBLE, et c'est l'état dans lequel la
+# règle 3 a vécu du 2026-08-18 au 2026-08-20 : prouvée en base, absente de tout écran, et sans
+# aucune donnée de démonstration pour la déclencher. Les contrôles ci-dessous mordent sur les DEUX
+# manques, parce qu'ils se tiennent — une surface sans donnée n'a aucune capture, une donnée sans
+# surface n'a aucun lecteur.
+
+ECRAN_INBOX=webapp/src/app/RouteInbox.tsx
+LIB_INBOX=webapp/src/lib/inbox.ts
+SPEC_SUGGESTION=e2e/ui/suggestion-classement.spec.ts
+
+# 1. LA COLONNE EST DEMANDÉE PAR LA LECTURE D'UN MESSAGE, et par elle seule : la demander pour la
+#    LISTE rapporterait cinquante colonnes pour n'en afficher aucune (§8.8.3).
+if grep -q 'suggested_card_id' "$LIB_INBOX"; then
+	ok "$LIB_INBOX demande la colonne de suggestion"
+else
+	fail "$LIB_INBOX ne demande pas suggested_card_id : l'écran ne pourrait rien rendre"
+fi
+if grep -q "^export const COLONNES_LISTE" "$LIB_INBOX" \
+	&& ! sed -n '/^export const COLONNES_LISTE/,/^$/p' "$LIB_INBOX" | grep -q 'suggested_card_id'; then
+	ok "la colonne n'entre PAS dans les colonnes de liste (§8.8.3)"
+else
+	fail "suggested_card_id est demandée pour la LISTE : cinquante colonnes rapportées pour rien"
+fi
+
+# 2. L'ÉCRAN REND LE BLOC, ET IL LE REND AVEC SA RÈGLE. Un bloc qui nommerait l'affaire sans dire
+#    d'où elle sort laisserait un indice sans origine, que personne ne peut confirmer (§8.8.5).
+for marqueur in 'inbox-suggestion' 'inbox.suggestion.rule' 'inbox.suggestion.accept'; do
+	if grep -q "$marqueur" "$ECRAN_INBOX" webapp/src/i18n/fr.ts; then
+		ok "l'écran porte « $marqueur »"
+	else
+		fail "l'écran ne porte pas « $marqueur » : le bloc du §5.4 ter serait incomplet"
+	fi
+done
+
+# 3. LE PARCOURS EXISTE, et il est rangé sous l'unité qui le livre.
+if [ -f "$SPEC_SUGGESTION" ] && head -3 "$SPEC_SUGGESTION" | grep -q '@verifies CRM-060'; then
+	ok "$SPEC_SUGGESTION est livré et cite son unité"
+else
+	fail "$SPEC_SUGGESTION est absent ou ne cite pas CRM-060"
+fi
+
+# 4. LA DONNÉE DE DÉMONSTRATION EXISTE POUR DE BON, et elle n'est pas forgée : le seed la fait
+#    ARRIVER par une soumission authentifiée puis une relève réelle (docs/SPEC-seed.md §2.19).
+#    Le contrôle porte sur l'ÉTAT, pas sur le script : un seed qui écrirait la ligne à la main
+#    passerait un contrôle de texte et échouerait ici, `suggested_card_id` n'étant écrite que par
+#    `classer_message_automatiquement`.
+suggestion_seed=$(psql_db -c "select coalesce(suggested_card_id::text, 'aucune')
+	from public.mail_messages
+	where rfc822_message_id = '<seed-inbox-suggere@sogexia.example>'" | tr -d '[:space:]')
+if [ "$suggestion_seed" = "5eed0000-0000-4000-8000-0000000000c2" ]; then
+	ok "le message du correspondant porte sa suggestion vers …00c2"
+else
+	fail "le message du correspondant suggère « $suggestion_seed » : le bloc n'aurait rien à rendre"
+fi
+
+classement_seed=$(psql_db -c "select coalesce(classification, 'absent')
+	from public.mail_messages
+	where rfc822_message_id = '<seed-inbox-suggere@sogexia.example>'" | tr -d '[:space:]')
+if [ "$classement_seed" = unclassified ]; then
+	ok "il reste NON CLASSÉ : la règle 3 suggère, elle ne classe pas"
+else
+	fail "il est « $classement_seed » au lieu de « unclassified » : la règle 3 aurait classé"
+fi
+
+# 5. LA BOÎTE DU CORRESPONDANT N'EST PAS UN COMPTE ENTRANT DU PRODUIT (§11.4). Le CRM ne relève
+#    jamais dedans ; l'y inscrire en ferait une boîte du workspace, ce qu'elle n'est pas.
+comptes_correspondant=$(psql_db -c "select count(*) from public.mail_inbound_accounts
+	where imap_username like '%@sogexia.example'" | tr -d '[:space:]')
+if [ "$comptes_correspondant" = 0 ]; then
+	ok "la boîte du correspondant n'est pas un compte entrant du produit"
+else
+	fail "le correspondant est déclaré comme compte entrant : le CRM relèverait dans une boîte étrangère"
 fi
 
 titre "3. Le classement ne s'invente pas"
