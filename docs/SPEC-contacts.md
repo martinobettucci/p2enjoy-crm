@@ -661,6 +661,16 @@ Mesuré sur le seed du 2026-08-20, ou vérifiable sur lui.
   `docs/SPEC-seed.md`), et en inventer un déplacerait des compteurs figés par quatre harnais.
 - **Le quatrième message ajoute une ligne aux compteurs de courrier**, et tous les contrôles qui
   comptent trois messages sont **révisés dans le même changement**, jamais contournés.
+- **LE PARCOURS D'INTERFACE LAISSE UN ÉVÉNEMENT DE TIMELINE DERRIÈRE LUI, ET C'EST NOMMÉ.** Le
+  scénario qui accepte la suggestion remet le message non classé par la clé de service — le seul
+  chemin qui le puisse —, mais le `mail_received` écrit par `classify_message` **demeure** :
+  MESURÉ le 2026-08-20, un `DELETE` sur `card_events` rend **403** même à `service_role`, garantie
+  que `CRM-044` a posée délibérément. L'affaire suggérée garde donc un événement de plus par
+  exécution. La dérive est bornée et tolérée par construction — les compteurs d'événements de
+  `scripts/verify-seed-demo.sh` sont des **minorants**, seul le compte des `created` étant exact —,
+  et elle est écrite ici plutôt que masquée par une affirmation de restauration qui serait fausse.
+  Le même défaut existe dans `e2e/ui/inbox.spec.ts`, qui l'**affirme** pourtant : consigné en
+  **INC-185**, non corrigé au passage (`CLAUDE.md` §3.1).
 
 #### 8.8.11 Preuves exigées — sous-tranche 2 bis
 

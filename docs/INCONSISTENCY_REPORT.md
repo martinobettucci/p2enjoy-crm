@@ -190,12 +190,21 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-120 | La garde des élévations de privilège n'admettait qu'une migration, le dépôt en compte deux — **INC-094 rouverte** | 2026-08-15 | `CRM-002` — garde par propriété mécanique | 363, 428 |
 | INC-121 | Trois compteurs figés de `verify-preuves-refus.sh` périmés de plusieurs unités | 2026-08-15 | `CRM-014` et `CRM-013` (preuves dues), `CRM-008` (calcul des compteurs) | 413, 429 |
 | INC-122 | Deux assertions de `CRM-078` s'appuyaient sur un identifiant que le seed n'épingle pas | 2026-08-15 | `CRM-078`, première tranche | 430 |
+| INC-185 | `e2e/ui/inbox.spec.ts` affirme retirer un `card_event` que personne ne peut retirer (403 mesuré) | 2026-08-20 | *ouverte* — arbitrage attendu | 481 |
 
 ---
 
 ## Ouverts
 
-**Vingt ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+**Vingt et une ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-173, INC-174,
+INC-182, INC-183 et INC-185** — **INC-185** consignée le 2026-08-20 par la session `CRM-060`
+sous-tranche 2 bis : `e2e/ui/inbox.spec.ts` annonce dans son `finally` retirer l'événement de
+timeline qu'il a produit, alors qu'aucun appelant ne le peut — un `DELETE` sur `card_events` rend
+**403** à la clé de service elle-même, garantie posée par `CRM-044`. Rien ne devient rouge, les
+compteurs d'événements étant des minorants ; c'est l'affirmation qui est fausse.
+
+Précédemment vingt : **INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-173, INC-174,
 INC-182 et INC-183** — **INC-182** et **INC-183** consignées le 2026-08-20 par la session `CRM-086`
 tranche 6, en lisant `docs/SPEC-costs.md` §4.8 AVANT de le coder. Ce sont deux manques de
@@ -3202,3 +3211,54 @@ le texte, exactement le chemin qu'`i18n.test.ts` a dû prendre pour la même rai
 2. la **convention est écrite** : aucune comparaison de chaîne dans un `className`, l'état étant
    calculé avant le JSX. C'est ce que la tranche 6b a appliqué de fait ; l'écrire au design system
    §11 la rendrait opposable au lieu de la laisser se redécouvrir.
+
+---
+
+## Consigné le 2026-08-20 — une restauration ANNONCÉE mais impossible, étrangère à `CRM-060`
+
+### INC-185 — `e2e/ui/inbox.spec.ts` affirme retirer un `card_event` que personne ne peut retirer
+
+**Ce que le fichier écrit**, dans le `finally` de son scénario de classement :
+
+```
+// LE SEED EST RENDU INTACT : le message redevient non classé, et l'événement de timeline
+// qu'il a produit est retiré. `card_events` n'accorde d'écriture à personne d'autre.
+```
+
+**Ce que le code fait** : un seul `PATCH` sur `mail_messages`, qui remet `card_id`,
+`classification`, `classified_by` et `classified_at`. **Aucun appel ne touche `card_events`.**
+
+**MESURÉ le 2026-08-20**, avec la clé de service, sur la pile réelle :
+
+```
+DELETE /rest/v1/card_events?card_id=eq.5eed…00c2&type=eq.mail_received   → 403
+```
+
+`card_events` n'accorde d'écriture à **personne**, pas même à `service_role` : c'est exactement la
+garantie que `CRM-044` a posée, et elle est tenue. La phrase du commentaire décrit donc une
+opération qui **ne peut pas exister**, et le scénario laisse en réalité un `mail_received` de plus
+sur l'affaire `…00c1` à chaque exécution.
+
+**Ce que cela coûte, et ce que cela ne coûte pas.** Rien ne devient rouge : les compteurs
+d'événements de `scripts/verify-seed-demo.sh` sont des **minorants**
+(`verifier_minorant 'événements seedés, tous types' 41`), et seul le compte des `created` est exact
+— une dérive par le haut y est donc invisible par construction. Ce qui est faux, c'est
+l'**affirmation** : un lecteur qui cherche pourquoi le seed dérive lit une restauration qui n'a
+jamais eu lieu, et cherchera ailleurs.
+
+**Pourquoi ce n'est pas corrigé au passage.** `CLAUDE.md` §3.1 : le défaut est étranger à l'unité de
+la session, et il n'a pas de correction locale — retirer l'événement demanderait une porte
+d'écriture sur `card_events` que `CRM-044` refuse délibérément à tout le monde.
+
+**Ce que la session a fait de son côté** : le scénario qu'elle livre,
+`e2e/ui/suggestion-classement.spec.ts`, **ne reprend pas l'affirmation**. Il écrit la mesure et
+nomme la dérive, et `docs/SPEC-contacts.md` §8.8.10 la porte comme une limite.
+
+**Arbitrage attendu.** Deux issues :
+
+1. **corriger le commentaire** des deux scénarios et assumer la dérive comme une propriété des
+   preuves d'interface qui écrivent — c'est le moins cher, et c'est ce que la session a fait pour
+   son propre fichier ;
+2. **donner au seed un moyen de reposer la timeline** — une fonction de service, réservée à
+   l'environnement de test, qui remettrait une affaire dans son état d'événements. C'est une porte
+   d'écriture sur une table qui n'en a aucune, donc un arbitrage de sécurité et non une commodité.
