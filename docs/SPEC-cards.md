@@ -3786,7 +3786,7 @@ dirait qu'une preuve n'a pas rendu le seed intact.
 
 | # | Preuve | Fichiers | Attendu MESURÉ, figé |
 |---|---|---|---|
-| 1 | Traçabilité | les 5 fichiers de code et les 10 fichiers de preuve de l'unité | chacun porte `@spec` ou `@verifies CRM-081` dans son en-tête |
+| 1 | Traçabilité | les 7 fichiers de code et les 13 fichiers de preuve de l'unité | chacun porte `@spec` ou `@verifies CRM-081` dans son en-tête |
 | 2 | Captures (`CLAUDE.md` §16) | `docs/captures/CRM-081/` | **47 fichiers**, dont les quatre paliers du filtre au board et à la vue liste, le menu de la carte, la fiche endormie et le refus d'échéance passée |
 | 3 | pgTAP | `0042_snooze_cards.test.sql`, `0046_snooze_fils.test.sql` | **2 fichiers, 67 assertions** — 30 et 37 |
 | 4 | Vitest | `sommeil-card.test.ts`, `sommeil-fil.test.ts`, `fil-inbox.test.ts` | **3 fichiers, 67 tests** — 31, 22 et 14 |
