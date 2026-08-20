@@ -196,14 +196,19 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Vingt-trois ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+**Vingt-deux ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-173, INC-174,
-INC-182, INC-183, INC-185, INC-186 et INC-187** — **INC-187** est la plus urgente des trois
-dernières : `npm run e2e:ui` rend **546 passés, 3 échecs**, et les trois tiennent au **quatrième
-message du seed** ajouté le 2026-08-20 par `CRM-060` sous-tranche 2 bis, dont la spécification
-promettait pourtant de réviser « tous les contrôles qui comptent trois messages ». Trois scénarios
-de `CRM-081` ont été manqués. Ce n'est pas un défaut du produit — les attentes sont périmées —,
-mais **aucune campagne complète ne peut être verte tant qu'elles ne sont pas révisées**.
+INC-182, INC-183, INC-185 et INC-186** — **INC-187 est RÉSOLUE le 2026-08-20** par la session
+`CRM-080` tranche 2, qui l'a traitée en préalable : ses trois attentes périmées ont été révisées
+dans les fichiers eux-mêmes, et `e2e/ui/sommeil-fil.spec.ts` avec `e2e/ui/groupement-fils.spec.ts`
+rendent **12 passés, aucun échec**. Voir l'entrée pour ce qui a été changé et pourquoi.
+
+Précédemment vingt-trois : **INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-173, INC-174,
+INC-182, INC-183, INC-185, INC-186 et INC-187** — **INC-187** était la plus urgente : `npm run
+e2e:ui` rendait **546 passés, 3 échecs**, et les trois tenaient au **quatrième message du seed**
+ajouté le 2026-08-20 par `CRM-060` sous-tranche 2 bis, dont la spécification promettait pourtant de
+réviser « tous les contrôles qui comptent trois messages ».
 
 Précédemment vingt-deux : **INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-173, INC-174,
@@ -3371,8 +3376,40 @@ base n'a été nécessaire pour établir que la régression lui est étrangère.
 
 **Ce qu'il faut faire, et c'est court.** Réviser les trois attentes en expliquant le motif **dans
 les fichiers eux-mêmes** (`docs/CloudWorker.md` §3.1 : une preuve qui rougit parce que la donnée a
-changé se RÉVISE, elle ne se contourne pas), puis rejouer les deux fichiers. La session qui reprend
-`CRM-081` — dont le dernier reste est `scripts/verify-snooze.sh` — est la mieux placée.
+changé se RÉVISE, elle ne se contourne pas), puis rejouer les deux fichiers.
 
-**Tant que ce n'est pas fait, aucune campagne complète du dépôt ne peut être verte**, et chaque
-session suivante paiera vingt minutes de `e2e:ui` pour redécouvrir ces trois lignes.
+**RÉSOLUE le 2026-08-20 par le commit `c72142e`**, « CRM-081 : trois preuves d'inbox révisées, le
+dossier « Non classés » porte deux fils ». La session `CRM-080` tranche 2 avait entrepris la même
+révision en préalable — le défaut bloquait concrètement sa campagne de fin de session, ce dont le
+§4.2 de `docs/CloudWorker.md` fait un préalable traité dans la même session —, et l'a découvert
+déjà livré au moment de pousser : son propre correctif a donc été **abandonné au profit de celui
+déjà poussé**, et elle n'a gardé que la présente clôture, que `c72142e` n'avait pas écrite. Les
+trois attentes sont **révisées, jamais contournées**, chacune portant dans le fichier le motif de sa
+révision :
+
+- `groupement-fils.spec.ts` — « un fil d'UN SEUL message ne porte NI badge NI sélecteur » attend
+  désormais **deux** lignes dans « Non classés » et exige qu'**aucune** ne porte de badge : les deux
+  fils du dossier sont d'un seul message, et c'est exactement la propriété éprouvée. Le fil ouvert
+  est désigné **par son objet** et non par son rang, de sorte qu'un cinquième message de seed ne
+  fera plus rougir cette ligne pour rien ;
+- `sommeil-fil.spec.ts`, « la bascule ramène le fil endormi » — le scénario endort maintenant **les
+  deux** fils du dossier par le vrai geste de l'écran, puisque c'est un dossier ENTIÈREMENT en
+  sommeil qui rend l'état vide qui ne ment pas (§16.15.5 point 2). La capture
+  `docs/captures/CRM-081/sommeil-fil-vide.jpg` le montre. Le compte des pastilles ramenées passe à
+  **deux** — `toBeVisible` sur deux éléments échouerait en mode strict et dirait « la pastille
+  manque » là où il y en a deux ;
+- `sommeil-fil.spec.ts`, « le réveil est vérifié APRÈS RECHARGEMENT » — le helper prend la bascule
+  **dans le panneau** au lieu de son état vide. Les deux sont le même composant et s'excluent
+  (`videParSommeil`, `RouteInbox.tsx`), si bien que le sélecteur désigne celle des deux qui est
+  rendue et que la preuve reste vraie dans les deux situations.
+
+**Mesure après révision, faite sur le code de `c72142e` et non sur le correctif abandonné** :
+`npm run e2e:ui -- e2e/ui/sommeil-fil.spec.ts e2e/ui/groupement-fils.spec.ts` rend **12 passés,
+aucun échec** en 31,0 s. Les captures des deux suites ont été observées (`CLAUDE.md` §16) : le
+dossier « Non classés » y porte bien ses deux messages, et
+`docs/captures/CRM-081/sommeil-fil-vide.jpg` montre l'état vide obtenu en endormant les deux fils.
+Les fichiers de capture réécrits par ce rejeu ont été **restaurés**, `c72142e` ayant déjà committé
+les siens.
+
+**Ce qui reste à observer, et ce n'est pas cette entrée** : la campagne complète de fin de session
+dira si `npm run e2e:ui` est désormais entièrement verte. Ces trois lignes-ci le sont.
