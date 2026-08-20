@@ -354,8 +354,40 @@ PORT_RAPPORT=9323
 # deux qui figeaient l'acceptation d'un uuid mort par `user` et `contact`, l'assertion
 # `has_table('contacts')` retournée une SECONDE fois, et les deux de la tranche 2 déjà comptées.
 # 43 + 1 + 1 = **45** ; 2229 + 21 + 19 = **2269**. MESURÉ par `npm run test:sql` le 2026-08-18.
-FICHIERS_SQL_ATTENDUS=45
-ASSERTIONS_ATTENDUES=2269
+
+# =================================================================================================
+# RÉVISION DU 2026-08-20 — `CRM-060` sous-tranche 2 bis, ET UNE DÉRIVE ANTÉRIEURE QUI EST NOMMÉE
+# =================================================================================================
+#
+# TROIS COMPTEURS SUR CINQ ÉTAIENT DÉJÀ FAUX AVANT CETTE SESSION, et il faut le dire plutôt que
+# de laisser la révision les absorber en silence. MESURÉ le 2026-08-20, `playwright test --list` et
+# `npm run test:sql` :
+#
+#   | Compteur              | Figé | Mesuré | Dont cette session |
+#   |-----------------------|------|--------|--------------------|
+#   | FICHIERS_SQL_ATTENDUS |   45 |     50 |                  0 |
+#   | ASSERTIONS_ATTENDUES  | 2269 |   2480 |                  0 |
+#   | SCENARIOS_API         |  774 |    818 |                 +2 |
+#   | SCENARIOS_UI          |  437 |    549 |                 +4 |
+#   | SCENARIOS_MAIL        |   42 |     42 |                  0 |
+#
+# LA DÉRIVE N'EST PAS DE CETTE SESSION, et la preuve est écrite ailleurs : `docs/JOURNAL.md`
+# décision 480, rédigée la veille, rapporte « `test:sql` 50 fichiers / 2480 assertions », « `e2e:api`
+# 816 passés » et « `e2e:ui` 544 passés ». Retranchés les 2 scénarios d'API et les 4 d'interface que
+# la sous-tranche 2 bis ajoute, les valeurs d'avant elle sont donc 816 et 545 — c'est-à-dire déjà
+# très loin de 774 et 437. Les unités `CRM-082` à `CRM-086`, qui ont livré les objectifs et les
+# coûts, ont ajouté leurs preuves sans réviser ces cinq lignes.
+#
+# CE QUE CELA A COÛTÉ : `scripts/verify-harness.sh` rendait **cinq anomalies** à chaque exécution,
+# toutes de comptage, sur un dépôt dont les suites étaient vertes. Un harnais qui rougit toujours
+# cesse d'être lu, et c'est exactement ce que le mécanisme des compteurs figés existe pour éviter.
+#
+# CE QUE LA RÉVISION FAIT, ET CE QU'ELLE NE FAIT PAS : elle remet les cinq valeurs à ce que la pile
+# mesure aujourd'hui, elle NOMME la part qui revient à cette session, et elle ne supprime aucun
+# contrôle. Les compteurs redeviennent ce qu'ils doivent être — un piège qui se déclenche à la
+# prochaine preuve ajoutée sans révision.
+FICHIERS_SQL_ATTENDUS=50
+ASSERTIONS_ATTENDUES=2480
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -451,7 +483,11 @@ ASSERTIONS_ATTENDUES=2269
 # celle qui empêche un futur `grant` de rouvrir en silence la porte que les `alter default
 # privileges` de la plateforme avaient laissée ouverte. 764 + 10 = **774**, valeur COMPTÉE par
 # `playwright test --list` (« Total: 774 tests in 45 files »), jamais déduite (INC-101).
-SCENARIOS_API=774
+# **RÉVISION DU 2026-08-20 — voir le bloc « dérive antérieure » plus haut.** 818, valeur COMPTÉE
+# par `playwright test --list` (« Total: 818 tests »), dont **+2** pour la sous-tranche 2 bis de
+# `CRM-060` : la lecture de la suggestion du seed sous le jeton de l'administratrice, et le refus
+# opposé au `business_developer` comme à la `viewer`.
+SCENARIOS_API=818
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -653,7 +689,11 @@ SCENARIOS_API=774
 # l'EFFACEMENT du rôle sur une ligne qui demeure, le parcours clavier avec l'exclusivité ENTRE LES
 # DEUX GESTES, le SILENCE opposé à la lectrice — où la saisie RESTE —, et le rendu à 390 px.
 # 432 + 5 = **437**, valeur COMPTÉE par `playwright test --list` (« Total: 437 tests in 33 files »).
-SCENARIOS_UI=437
+# **RÉVISION DU 2026-08-20 — voir le bloc « dérive antérieure » plus haut.** 549, valeur COMPTÉE
+# par `playwright test --list` (« Total: 549 tests »), dont **+4** pour la sous-tranche 2 bis de
+# `CRM-060` : le bloc de suggestion et son lien, le TÉMOIN d'un message sans suggestion,
+# l'acceptation au clavier relue par l'API, et les quatre paliers avec la mesure du débordement.
+SCENARIOS_UI=549
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,
