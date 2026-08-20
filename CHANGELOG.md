@@ -15,6 +15,38 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Le harnais de preuves de la mise en sommeil** (`CRM-081`, `docs/SPEC-cards.md` §16 bis,
+  `scripts/verify-snooze.sh`). Six tranches ont livré le sommeil des affaires puis des fils de
+  messagerie, et leurs preuves vivaient dispersées entre treize fichiers : aucune commande ne
+  disait, en un verdict, si l'unité tenait encore. C'est ce que ce harnais ajoute — et rien
+  d'autre : il n'écrit aucune preuve nouvelle, il rejoue celles qui existent et refuse de rendre
+  vert quand l'une d'elles a cessé de mesurer quelque chose.
+
+  Il constate d'abord en base ce que les tranches ont posé : les quatre gestes avec leur signature
+  entière, la fermeture en écriture directe de `cards.snoozed_until`, le vocabulaire du fil à
+  quatorze valeurs, le trigger qui écrit la trace, et la table du sommeil de fil avec ses
+  privilèges — lisible par le client, jamais écrivable. Le plus précieux de ces constats est la
+  colonne fermée : rouverte, l'écran pourrait écrire une échéance sans passer par la garde, et les
+  quatre refus deviendraient contournables **sans qu'aucune preuve d'API ne rougisse**, puisque
+  celles-ci interrogent les fonctions et non la colonne.
+
+  Il vérifie ensuite que le seed démontre les **deux** états — une affaire endormie, une affaire
+  dont le sommeil est échu. L'une des deux disparaîtrait que la moitié des scénarios mesurerait un
+  état absent : le filtre rendrait le même écran dans ses deux modes, et il rendrait vert.
+
+  **Sa non-complaisance est éprouvée, pas affirmée** : cinq règles sont réellement retirées, une à
+  la fois, et la suite qui tient chacune doit rougir — l'instant retiré du prédicat de sommeil, le
+  filtre d'exclusion réduit à une forme qui écarterait toutes les affaires jamais endormies, le
+  défaut de la bascule inversé, la racine des références ignorée, et le refus d'échéance passée
+  retombé en « inconnu ». Les fichiers sont ensuite comparés octet à octet à leur instantané
+  d'avant dégradation.
+
+  **Le premier rejeu a trouvé un défaut du harnais lui-même, corrigé à sa cause.** Deux
+  dégradations sont restées non vues : celles du filtre. Leur preuve n'était pas absente — elle
+  vivait dans la suite de la vue liste, là où ces règles sont consommées. Chaque dégradation nomme
+  désormais la suite qui doit la voir, ce qui dit **laquelle** des preuves tient **laquelle** des
+  règles ; élargir le jeu rejoué aurait rendu vert au même prix, en perdant cette information.
+
 - **L'exploitation des sauvegardes : supervision, runbook et rotation** (`CRM-080` tranche 3,
   `docs/SPEC-backups.md` §16 à §21, `docs/RUNBOOK-sauvegardes.md`, `docs/DAT.md` §10). Le dépôt
   savait produire une sauvegarde chiffrée, puis la restaurer et le prouver. Il sait maintenant

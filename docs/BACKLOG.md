@@ -3260,13 +3260,17 @@ clés manquantes.
       pas de surface. Les règles sont livrées et prouvées **en base et par l'API**, ce que
       `CLAUDE.md` §10 exige de toute façon. **Cette preuve est bloquée par un arbitrage, pas par un
       défaut de l'unité** — onzième unité consécutive à buter sur INC-021.
-- [ ] **Le commentaire fourni n'est conservé nulle part — INC-048.** La vérification n° 5 l'exige,
-      la fonction le contrôle, et rien ne l'écrit : `card_comments` est livrée par `CRM-043`. Un
-      utilisateur qui motive une affaire perdue verra sa transition acceptée et son motif
-      disparaître. Conséquence de l'ordre du plan, nommée plutôt que tue.
-- [ ] **Aucun `card_event` de type `moved`** : `card_events` est due par `CRM-044`. La trace du
-      déplacement n'existe pas, et **aucune cadence de relance n'est arrêtée** — aucune table n'en
-      porte, aucune unité du backlog n'en prévoit.
+- [x] **~~Le commentaire fourni n'est conservé nulle part — INC-048.~~ CONSERVÉ**, et cette ligne
+      était **PÉRIMÉE** — constaté par mesure le 2026-08-20 : INC-048 est **close** depuis la
+      reprise de `CRM-034` par la migration 35 (`0035_commentaires_lot_g.sql`), qui écrit le motif
+      dans `card_comments`. Un utilisateur qui motive une affaire perdue voit désormais son motif
+      conservé.
+- [x] **~~Aucun `card_event` de type `moved`.~~ LIVRÉ par `CRM-044`**, et cette ligne était
+      **PÉRIMÉE** — constaté par mesure le 2026-08-20 : `supabase/migrations/0016_timeline.sql`
+      écrit `moved` par un trigger de table, et la migration 17 le conditionne à `channel_id`
+      inchangé pour qu'il n'entre pas en concurrence avec `channel_changed`. **Reste vrai** :
+      aucune cadence de relance n'est arrêtée — aucune table n'en porte, aucune unité du backlog
+      n'en prévoit.
 
 *DoD adaptée, écarts explicites.* La Definition of Done demandait « pgTAP pour chacune des six ;
 preuves de refus n° 1 et 5 ; message d'erreur listant les clés manquantes ». **Les preuves de refus
@@ -3392,9 +3396,15 @@ l'absence qui était nommée ici a été comblée par l'unité que le plan dési
       `docs/SPEC-permissions-rls.md` §4, `docs/SPEC-seed.md` §2.10, `docs/DAT.md`,
       `docs/PROD_MIGRATIONS.md` §3 (migration 9), `docs/manual.md` chapitre 23 et §3.2, `README.md`,
       `CHANGELOG.md` mis à jour dans le même changement.
-- [ ] **Aucun écran, aucune capture, aucun test E2E d'interface.** La grille champ × étape que la
-      Definition of Done nomme suppose un écran d'administration authentifié, et la webapp reste un
-      appelant **anonyme** faute d'écran de connexion. *~~INC-021, en attente d'arbitrage.~~ RÉVISÉ le 2026-08-18 : INC-021 est CLOSE depuis le
+- [x] **~~Aucun écran, aucune capture, aucun test E2E d'interface.~~ LA GRILLE CHAMP × ÉTAPE EST
+      LIVRÉE par `CRM-076`**, et cette ligne était **PÉRIMÉE** — constaté par mesure le 2026-08-20 :
+      `webapp/src/app/AdministrationWorkflows.tsx` porte la quatrième tranche de l'éditeur
+      administrateur, `docs/SPEC-workflow-engine.md` §7 bis.11, avec ses captures sous
+      `docs/captures/CRM-076/`. Le texte d'origine est conservé ci-dessous parce qu'il décrit
+      l'état AU MOMENT DE LA LIVRAISON de `CRM-035`, et parce que la révision de 2026-08-18 en
+      constatait déjà la moitié : la grille champ × étape que la Definition of Done nomme supposait
+      un écran d'administration authentifié, et la webapp restait un appelant **anonyme** faute
+      d'écran de connexion. *~~INC-021, en attente d'arbitrage.~~ RÉVISÉ le 2026-08-18 : INC-021 est CLOSE depuis le
       2026-08-07, fermée par `CRM-009`, et la webapp n'est plus un appelant anonyme — elle porte
       son écran de connexion, employé par les suites d'interface. **Le motif invoqué ici est donc
       caduc** : cette preuve n'est plus bloquée par un arbitrage, elle est simplement DUE. Elle
@@ -6754,7 +6764,11 @@ quota et refus testés.
       quatrième exigeait que l'énumération soit étendue dans la même migration que son écriture.
 - [ ] **Aucun backoff, aucune reprise** : un échec est `failed` et le dit. `CRM-059`.
 - [ ] **Aucune pièce jointe à l'envoi**, aucune signature, aucune copie cachée — absences figées.
-- [ ] **Harnais dédié `scripts/verify-mail-envoi.sh`** : dû avant le passage à `[x]`.
+- [x] **~~Harnais dédié `scripts/verify-mail-envoi.sh` : dû avant le passage à `[x]`.~~ LIVRÉ**,
+      et cette ligne était **PÉRIMÉE** — constaté par mesure le 2026-08-20 : le fichier existe,
+      porte ses `@verifies CRM-058` et rejoue les cinq preuves de l'unité avec quatre dégradations.
+      Ce qui retient encore `CRM-058` en `[~]` est donc uniquement les deux absences figées
+      ci-dessus, portées par `CRM-059` et par des choix nommés.
 
 *DoD adaptée, écarts explicites.* La Definition of Done demandait « E2E `mail` d'aller-retour
 complet ; en-têtes de threading vérifiés sur le message reçu ; quota et refus testés ». **Les trois
@@ -9621,10 +9635,10 @@ n'est perdu silencieusement ; restauration atomique, audit, droits backend, E2E 
       comptes que l'affaire `…0cf` déplace. La ligne de base de la session les mesurait en échec sur
       l'arbre distant, avant toute modification.
 
-- [ ] **Reste dû** : un **harnais dédié** `scripts/verify-corbeille.sh`, qui rassemblerait les
-      preuves aujourd'hui dispersées entre `webapp/src/lib/corbeille.test.ts`,
-      `webapp/src/app/Corbeille.test.tsx`, `e2e/api/corbeille.spec.ts` et
-      `e2e/ui/corbeille.spec.ts`.
+- [x] **~~Reste dû : un harnais dédié `scripts/verify-corbeille.sh`.~~ LIVRÉ** par la neuvième
+      tranche, avec son contrat au §5 bis de `docs/SPEC-corbeille.md`. Cette ligne était
+      **PÉRIMÉE** — constaté par mesure le 2026-08-20 : le fichier existe et rassemble les preuves
+      qu'elle décrivait comme dispersées.
 - [x] **La ligne « Visuel » du §5 demandait aussi une capture de la confirmation portant
       l'énumération.** Elle n'appartenait pas à cette tranche : le §4.7 place le geste hors de
       l'écran de corbeille — « on n'y retire rien, on y rend ». **Produite par la septième tranche**,
@@ -10246,10 +10260,26 @@ gestes ; refus mesurés avec les jetons réels ; captures observées.
 - [x] `docs/SPEC-cards.md` §16, `docs/SCHEMA.md` §5 et §9, `docs/PROD_MIGRATIONS.md` §3
       (migration 44 et ses vérifications obligatoires), `CHANGELOG.md`, `docs/JOURNAL.md` mis à
       jour dans le même changement.
-- [ ] **Aucun harnais rejouable `scripts/verify-snooze.sh`** : dû avant le passage à `[x]`. Les
-      preuves de la tranche vivent dans la suite pgTAP et la preuve d'API, toutes deux exécutées et
-      vertes ; ce qui manque est la **dégradation volontaire** qui établirait qu'elles ne sont pas
-      complaisantes.
+- [x] **~~Aucun harnais rejouable `scripts/verify-snooze.sh`.~~ LIVRÉ ET PROUVÉ le 2026-08-20**,
+      contrat écrit et committé avant sa première ligne de code (`docs/SPEC-cards.md` §16 bis).
+      **68 contrôles, aucune anomalie**, deux exécutions de suite. Il constate en base les quatre
+      gestes avec leur signature entière, la **fermeture** en écriture directe de
+      `cards.snoozed_until`, le vocabulaire du fil à quatorze valeurs, le trigger de trace et la
+      table du sommeil de fil — lisible par le client, jamais écrivable ; il vérifie que le seed
+      démontre les **deux** états, une affaire endormie et une échue ; il rejoue les treize preuves
+      de l'unité en figeant leurs quatre couples de compteurs — pgTAP 2/67, Vitest 3/67, API 3/30,
+      UI 5/37 — et les 47 captures.
+      **La dégradation volontaire qui manquait est livrée, et il y en a cinq**, chacune sur une
+      règle dont la disparition serait silencieuse en production. **La non-complaisance du harnais
+      lui-même est éprouvée** : un compteur volontairement faux le fait rendre `1 en échec`, deux
+      fois, et il est rétabli aussitôt.
+      **LE PREMIER REJEU A TROUVÉ UN DÉFAUT DU HARNAIS, CORRIGÉ À SA CAUSE.** Deux dégradations sont
+      restées **NON VUES** — celles de `filtre-sommeil.ts`. Leur preuve n'était pas absente : ce
+      module n'importe rien, délibérément, pour rester atteignable depuis `e2e/`, et ses deux règles
+      sont éprouvées là où elles sont **consommées**, dans `liste-cards.test.ts` — MESURÉ, **2 en
+      échec** sous la première, **5** sous la seconde. Chaque dégradation nomme désormais la suite
+      qui doit la voir : élargir le jeu rejoué aurait rendu vert au même prix, en perdant
+      l'information qui compte — laquelle des preuves tient laquelle des règles.
 - [x] **L'écran du sommeil est livré — tranche 2 a**, spécifiée `docs/SPEC-cards.md` §16.11 et
       committée avant sa première ligne de code, `docs/DESIGN_SYSTEM.md` §5.3 quater pour la forme.
       La tranche 2 est découpée en trois : la fiche et son geste (2 a, livrée), le filtre du board
@@ -10562,14 +10592,26 @@ réels, et les captures sont produites et observées ; la **surface** du sommeil
 la tranche 2 e, et le **groupement** des messages en fils par la tranche 2 f — l'inbox énumère
 désormais des conversations.
 
-**L'unité reste néanmoins `[~]`, et pour DEUX raisons de preuve nommées plutôt que masquées :**
+**L'unité reste néanmoins `[~]`, et les raisons sont nommées plutôt que masquées. Révisé le
+2026-08-20 : la première est SOLDÉE, les suivantes ne sont plus du travail dû mais des arbitrages
+et une dette de forme.**
 
-1. **`scripts/verify-snooze.sh` n'existe pas** (premier écart ouvert ci-dessus). Les preuves de la
-   tranche 1 vivent dans la suite pgTAP et la preuve d'API, toutes deux exécutées et vertes ; ce qui
-   manque est le harnais rejouable et sa **dégradation volontaire**, qui établirait qu'elles ne sont
-   pas complaisantes. C'est le dernier travail dû avant `[x]`.
+1. ~~**`scripts/verify-snooze.sh` n'existe pas.**~~ **SOLDÉE le 2026-08-20** : le harnais est livré,
+   contrat écrit avant son code, **68 contrôles, aucune anomalie**, deux exécutions, cinq
+   dégradations vues et restauration constatée octet à octet (premier écart ci-dessus). C'était
+   « le dernier travail dû avant `[x]` », et il est fait.
 2. **Le mode d'affichage n'entre toujours pas dans l'adresse**, écart mineur en attente d'arbitrage
-   (dernier point ci-dessus).
+   (dernier point ci-dessus). Il ne relève pas de la Definition of Done de l'unité
+   (`docs/SPEC-cards.md` §16.16.11) : **aucune session ne peut le lever seule.**
+3. **Le §16.12.6 n'est éprouvé en E2E que par sa variante filtrée** (écart ci-dessus). Il attend le
+   même genre de décision : soit le seed pose un channel n'ayant **que** des affaires endormies,
+   soit l'écart reste nommé.
+4. **Les compteurs de `scripts/verify-harness.sh` ne sont pas révisés ici** (écart ci-dessus), et
+   INC-140 tient toujours sur `scripts/verify-colonnes-protegees.sh` — anomalies **étrangères** à
+   cette unité, consignées au registre.
+
+**Ce qu'il reste donc à faire pour clore `CRM-081` : un arbitrage du responsable sur les points 2
+et 3.** Le produit, lui, est livré et prouvé de bout en bout.
 
 ### CRM-080 — Sauvegardes chiffrées et restauration prouvée `[~]`
 
