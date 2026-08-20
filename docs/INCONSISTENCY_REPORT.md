@@ -196,9 +196,16 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Vingt-deux ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+**Vingt-trois ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-173, INC-174,
-INC-182, INC-183, INC-185 et INC-186** — **INC-187 est RÉSOLUE le 2026-08-20** par la session
+INC-182, INC-183, INC-185, INC-186 et INC-188** — **INC-188** consignée le 2026-08-20 par la session
+`CRM-080` tranche 2 : un scénario d'interface de `CRM-076` dépasse le budget de **30 s** du dépôt et
+**passe à 90 s**. Ce n'est ni un défaut du produit ni une régression — ligne de base établie par
+mesure, `webapp/`, `supabase/` et le fichier de preuve étant **identiques octet pour octet** au
+point de départ de la session. Relever le budget verdirait la preuve sans rien corriger, et
+l'entrée dit pourquoi c'est interdit.
+
+**INC-187 est RÉSOLUE le 2026-08-20** par la session
 `CRM-080` tranche 2, qui l'a traitée en préalable : ses trois attentes périmées ont été révisées
 dans les fichiers eux-mêmes, et `e2e/ui/sommeil-fil.spec.ts` avec `e2e/ui/groupement-fils.spec.ts`
 rendent **12 passés, aucun échec**. Voir l'entrée pour ce qui a été changé et pourquoi.
@@ -3413,3 +3420,74 @@ les siens.
 
 **Ce qui reste à observer, et ce n'est pas cette entrée** : la campagne complète de fin de session
 dira si `npm run e2e:ui` est désormais entièrement verte. Ces trois lignes-ci le sont.
+
+---
+
+## Consigné le 2026-08-20 — un scénario d'interface au bord du budget de 30 s, étranger à `CRM-080`
+
+### INC-188 — « les deux gestes se mènent au clavier seul » dépasse le budget de 30 s, et PASSE à 90 s
+
+**Ce qui est mesuré, le 2026-08-20, campagne complète de la session `CRM-080` tranche 2.**
+`npm run e2e:ui` rend **548 passés, 1 échec** :
+
+```
+e2e/ui/administration-workflows.spec.ts:1116
+  la grille champ × étape sur la vraie base (§7 bis.11)
+  › les deux gestes se mènent au clavier seul
+
+Test timeout of 30000ms exceeded.
+Error: apiRequestContext.get: Target page, context or browser has been closed
+  at purgerChamps (e2e/ui/administration-workflows.spec.ts:681:32)
+```
+
+L'erreur affichée est une **cascade** : le `finally` du scénario rappelle `purgerChamps` sur un
+contexte que le dépassement de délai vient de fermer. La cause réelle est le dépassement lui-même,
+et l'instantané de page joint montre l'application **encore sur la mise en page générale**, donc
+arrêtée avant d'avoir ouvert la grille.
+
+**IL EST REPRODUCTIBLE, ET CE N'EST PAS UNE INTERFÉRENCE DE CAMPAGNE.** Rejoué avec son seul
+fichier : `69 passés, 1 échec`. Rejoué **seul**, par `-g` : `1 passé, 1 échec`. INC-181 est donc
+écartée, et la charge de la campagne aussi.
+
+**MAIS IL PASSE AVEC UN BUDGET DE 90 s, ET C'EST LA MESURE QUI TRANCHE :**
+
+```
+npm run e2e:ui -- … -g "les deux gestes se mènent au clavier seul" --timeout=90000
+  => 2 passés, 57,7 s
+```
+
+**Ce n'est donc PAS un défaut du produit, et pas davantage une régression.** Le parcours fonctionne
+de bout en bout ; il ne tient simplement plus dans les 30 s que la configuration accorde à un
+scénario sur cet hôte. Le geste éprouvé — une case de la grille menée au clavier, la confirmation
+qui reçoit le focus, la règle constatée EN BASE par `expect.poll` — s'exécute correctement.
+
+**LA LIGNE DE BASE EST ÉTABLIE PAR MESURE, non par supposition** (`docs/CloudWorker.md` §2.4). Le
+`git stash` n'était pas applicable, le travail de la session étant déjà committé ; la comparaison a
+donc porté sur les fichiers eux-mêmes :
+
+```
+git diff --name-only 5c1b61b..HEAD -- webapp/ supabase/ e2e/api/ e2e/ui/administration-workflows.spec.ts
+  => AUCUNE différence
+```
+
+`webapp/`, `supabase/` et ce fichier de preuve sont **identiques octet pour octet** au point de
+départ de la session. Les seuls fichiers de `e2e/` modifiés depuis sont `sommeil-fil.spec.ts` et
+`groupement-fils.spec.ts`, que ce scénario ne lit pas. Aucun changement de cette session — ni le
+sien, ni celui de la session concurrente — ne peut avoir modifié son comportement.
+
+**Ce qui reste à comprendre, et qui n'a pas été tranché ici.** La campagne de la décision 482, la
+veille, rendait `546 passés, 3 échecs` sans celui-ci : le scénario tenait alors dans son budget.
+Ce qui a ralenti depuis n'est pas établi — il peut s'agir de l'hôte, de la taille du jeu de
+données, ou d'un chemin de rendu devenu plus coûteux. **La mesure qui manque** est le temps
+d'exécution de ce scénario sur plusieurs exécutions, et le point exact où il le dépense :
+`ouvrirEditeur` ou `ouvrirGrille`, l'instantané ne permettant pas de les départager.
+
+**CE QU'IL NE FAUT PAS FAIRE, et c'est le point le plus important de cette entrée.** Porter le
+budget de ce scénario à 90 s **verdirait la preuve sans rien corriger** : c'est exactement la
+temporisation arbitraire que `CLAUDE.md` §18 et `docs/CloudWorker.md` §3.1 interdisent. Si le
+parcours est devenu plus lent, c'est le parcours qu'il faut mesurer et corriger ; si la lenteur est
+celle de l'hôte, elle doit être nommée comme telle. Le budget ne se relève qu'après cette mesure,
+et en le disant.
+
+**Non corrigé par la session `CRM-080` tranche 2** : le scénario relève de `CRM-076` quatrième
+tranche, et le corriger sous une autre unité reviendrait à en solder une seconde (`CLAUDE.md` §13).
