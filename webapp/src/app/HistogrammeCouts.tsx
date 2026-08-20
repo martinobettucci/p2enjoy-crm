@@ -298,7 +298,15 @@ function TableauEquivalent({
 				<tbody>
 					{groupes.map((groupe) => (
 						<tr key={groupe.cle} className="border-b border-border">
-							<th scope="row" className="py-2 pr-4 font-normal text-ink">
+							{/* `text-left` N'EST PAS UN ORNEMENT, ET C'EST UN DÉFAUT TROUVÉ EN REGARDANT UNE
+							    CAPTURE (`CLAUDE.md` §16, tranche 4). Un `th` est CENTRÉ par défaut : la classe
+							    `text-left` du `thead` ne porte que sur ses propres cellules, et le pied la
+							    posait déjà explicitement sur « Total ». Les libellés du corps se retrouvaient
+							    donc centrés sous un en-tête aligné à gauche et au-dessus d'un total aligné à
+							    gauche — le §5.9 pose « texte à gauche », sans exception pour un en-tête de
+							    ligne. Le défaut existait depuis la tranche 2 et ne s'est vu qu'avec la
+							    précision du §4.3 sous le libellé. */}
+							<th scope="row" className="py-2 pr-4 font-normal text-left text-ink">
 								{groupe.lien === undefined ? (
 									groupe.libelle
 								) : (

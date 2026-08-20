@@ -245,7 +245,7 @@ function EnTeteBudget({
 	const clos = budget.closed_at !== null
 	return (
 		<section className="flex flex-col gap-3" aria-label={t('costs.budget.identity.aria')}>
-			<dl className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-sm">
+			<dl className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-sm max-w-[560px]">
 				<div className="flex gap-2">
 					<dt className="text-text-2">{t('costs.budget.currency')}</dt>
 					<dd className="font-mono tabular-nums text-ink">{budget.currency}</dd>
@@ -477,7 +477,7 @@ function LigneCoutBudget({
 
 	return (
 		<tr className="border-b border-border hover:bg-hover h-[var(--size-target)]">
-			<th scope="row" className="py-2 pr-4 font-normal text-ink max-w-[28ch] truncate">
+			<th scope="row" className="py-2 pr-4 font-normal text-left text-ink max-w-[28ch] truncate">
 				{titre === null ? (
 					<span className="text-text-2">{t('costs.budget.lines.card.unknown')}</span>
 				) : adresse === null ? (
