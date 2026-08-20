@@ -296,10 +296,15 @@ if [ "$RAPIDE" = false ]; then
 	if E2E_PROJETS=api npx playwright test --config e2e/playwright.config.ts --project=api \
 		"$SPEC_API" >"$TRAVAIL/api.log" 2>&1; then
 		passes=$(grep -oE '[0-9]+ passed' "$TRAVAIL/api.log" | tail -1 | grep -oE '[0-9]+')
-		if [ "${passes:-0}" -eq 5 ]; then
-			ok "preuve d'API dédiée — 5 scénarios, dont le refus au viewer et la suggestion règle 3"
+		# **7 DEPUIS LE 2026-08-20** — `CRM-060` sous-tranche 2 bis, docs/SPEC-contacts.md §8.8.3
+		# et §8.8.7. Deux scénarios ajoutés, et ils disent ce que les cinq précédents ne disaient
+		# pas : ceux-là appellent la chaîne avec la CLÉ DE SERVICE, qui ne prouve rien de ce qu'un
+		# membre voit. Les deux nouveaux lisent la suggestion du seed sous les JETONS RÉELS —
+		# l'administratrice la voit, le `business_developer` et la `viewer` reçoivent zéro ligne.
+		if [ "${passes:-0}" -eq 7 ]; then
+			ok "preuve d'API dédiée — 7 scénarios, dont le refus au viewer et la suggestion règle 3"
 		else
-			fail "preuve d'API verte mais ${passes:-0} scénarios au lieu de 5"
+			fail "preuve d'API verte mais ${passes:-0} scénarios au lieu de 7"
 		fi
 	else
 		fail_journal "la preuve d'API ÉCHOUE" "$TRAVAIL/api.log"
