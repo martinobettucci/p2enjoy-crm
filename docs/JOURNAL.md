@@ -21587,6 +21587,8 @@ Treize arbitrages attendent : **INC-169**, **INC-170**, **INC-172**, **INC-173**
 
 ## décision 481 — `CRM-060` sous-tranche 2 bis : la suggestion de classement enfin VISIBLE
 
+*Complétée en fin de session par la décision 483, qui rend compte de la LIVRAISON et de la campagne.*
+
 **L'unité, et le choix.** La décision 480 laisse `CRM-086` en `[~]` sans qu'aucun point de sa
 Definition of Done soit à la portée d'une session — le seul reste est l'arbitrage d'INC-182 — et
 renvoie explicitement au §4.2 de `docs/CloudWorker.md` : première unité `[~]` du backlog, dans
@@ -21733,3 +21735,64 @@ toute restauration, comparaison des invariants dont le **déchiffrement effectif
 Vault** — seule preuve que la clé racine a suivi —, puis destruction du **seul** environnement
 jetable. Sa garde la plus importante devra être **structurelle** et non conditionnelle. Son contrat
 ligne à ligne s'écrit avant son code, comme celui-ci.
+
+
+## décision 483 — `CRM-060` sous-tranche 2 bis LIVRÉE : ce que la campagne a mesuré
+
+**Ce qui est livré**, et c'est du comportement, pas de la documentation. Le panneau de lecture de
+l'inbox porte un bloc « Suggestion de classement » sur un message non classé qui en porte une :
+l'affaire nommée et **cliquable**, la règle écrite en toutes lettres, et un bouton primaire qui la
+range d'un geste. La commande manuelle reste offerte à côté et passe en secondaire — deux primaires
+dans le même pied ne diraient plus lequel est le chemin principal. `webapp/src/app/RouteInbox.tsx`
+(`PiedNonClasse`, `BlocSuggestion`), `webapp/src/lib/inbox.ts` (une colonne de plus, et une seule),
+trois clés de traduction.
+
+**Et une donnée de démonstration qui n'existait pas.** Le seed provisionne désormais la boîte d'un
+CORRESPONDANT — `leo.marchand@sogexia.example`, sur un troisième domaine — et lui fait **réellement
+expédier** un quatrième message vers la boîte système. Il y arrive non classé et suggéré. Le §2.19
+de `docs/SPEC-seed.md` concluait « aucun correspondant extérieur n'existe sur cette pile » ; la
+réponse n'était pas de faire mentir le `From`, c'était d'en **faire exister un**. Le seed VÉRIFIE
+la suggestion — `unclassified`, `suggested_card_id = …00c2` — et échoue avec sa cause sinon.
+
+**LA CAMPAGNE COMPLÈTE, ET ELLE A TROUVÉ TROIS PREUVES ROUGES QUI ÉTAIENT LES MIENNES.**
+`typecheck` vert, `build` vert, `test:unit` **67 fichiers / 2272 tests**, `test:sql` **50 fichiers /
+2480 assertions**, `e2e:api` **818 passés**, `e2e:mail` **42 passés**, `pytest` **244 passés**.
+`e2e:ui` a rendu **546 passés, 3 en échec** — et les trois sont imputables à cette session, non
+préexistantes : `groupement-fils.spec.ts` et `sommeil-fil.spec.ts` supposaient que « Non classés »
+ne portait qu'UN fil, ce que le quatrième message défait. **Les trois preuves ont été RÉVISÉES, pas
+contournées** : celle du groupement vise désormais la LIGNE qu'elle nomme au lieu du compte du
+dossier — ce qu'elle aurait dû faire dès l'origine, le compte n'ayant jamais été son sujet ; celles
+du sommeil endorment les DEUX fils pour atteindre l'état vide qu'elles décrivent, et cherchent la
+bascule dans l'en-tête du panneau, où le §5.3 septies la met quand la liste n'est pas vide. Motifs
+écrits dans les fichiers. Rejouées : **12 passés**.
+
+**CINQ COMPTEURS DE `verify-harness.sh` ÉTAIENT FAUX, ET QUATRE L'ÉTAIENT AVANT CETTE SESSION.**
+MESURÉ : `FICHIERS_SQL_ATTENDUS` 45 contre 50, `ASSERTIONS_ATTENDUES` 2269 contre 2480,
+`SCENARIOS_API` 774 contre 818, `SCENARIOS_UI` 437 contre 549. La décision 480, écrite la veille,
+rapporte déjà 50/2480, 816 et 544 : retranchées les 2 preuves d'API et les 4 d'interface de cette
+sous-tranche, la dérive antérieure vaut 42 scénarios d'API et 108 d'interface. Les unités `CRM-082`
+à `CRM-086` ont ajouté leurs preuves sans réviser ces lignes, et le harnais rendait **cinq
+anomalies** à chaque exécution sur un dépôt vert. Les cinq valeurs sont remises au mesuré, la part
+de cette session est nommée dans le fichier, et aucun contrôle n'est retiré.
+
+**UNE ANOMALIE ÉTRANGÈRE CONSIGNÉE, JAMAIS CORRIGÉE AU PASSAGE — INC-185.**
+`e2e/ui/inbox.spec.ts` affirme, dans son `finally`, retirer l'événement de timeline que son
+classement a produit. **Aucun appelant ne le peut** : un `DELETE` sur `card_events` rend **403** à
+la clé de service elle-même — la garantie que `CRM-044` a posée. Le scénario laisse donc un
+`mail_received` de plus à chaque exécution, et rien ne rougit, les compteurs d'événements de
+`verify-seed-demo.sh` étant des minorants. C'est l'affirmation qui est fausse. Le scénario que
+cette session livre ne la reprend pas : il écrit la mesure et nomme la dérive (§8.8.10).
+
+**Ce qui n'a pas été exécuté, et il faut le dire.** Les `scripts/verify-*.sh` autres que
+`verify-mail-classement.sh`, `verify-mail-infra.sh` et `verify-harness.sh` : **aucun**. La série
+entière ne tient pas dans une session (`docs/CloudWorker.md` §2.1 ter).
+
+**Où reprendre.** `CRM-060` tranche 2 est **close**. La prochaine session choisit son unité au
+§4.2 : première unité `[~]` du backlog, dans l'ordre du plan, dont il reste du COMPORTEMENT à
+livrer. **Trois lignes du backlog sont PÉRIMÉES et ont été vérifiées comme telles pendant le choix
+d'unité de cette session** — elles feront perdre du temps à qui les relira sans mesurer :
+`CRM-034` annonce qu'aucun `card_event` `moved` n'existe (le trigger de la migration 16 l'écrit) et
+que le commentaire de `move_card` n'est conservé nulle part (INC-048 est close depuis la migration
+35) ; `CRM-035` annonce que la grille champ × étape n'a aucun écran (`CRM-076` quatrième tranche l'a
+livrée). Les corriger est un geste de documentation, et cette session ne l'a pas pris pour ne pas
+substituer de la prose à du produit (§4.2 bis).
