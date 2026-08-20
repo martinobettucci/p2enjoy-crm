@@ -316,6 +316,13 @@ function LigneSaisie({
 	const envoyee = useRef<string | null>(null)
 
 	const saisissable = estSaisissable(ligne)
+	// LES DEUX ÉTATS SONT CALCULÉS HORS DU `className`, et ce n'est pas un goût de style : le
+	// contrôle de classes de `scripts/lib/classes-css.mjs` lit TOUTE chaîne littérale d'une
+	// expression `className`, si bien qu'une comparaison écrite là — `etat.statut === 'enregistre'`
+	// — y serait prise pour une classe utilitaire absente du CSS produit. Le contrôle n'est pas
+	// contourné, il est laissé exact : il n'a plus rien à confondre.
+	const enregistre = etat.statut === 'enregistre'
+	const invalide = etat.statut === 'invalide'
 	const devise = ligne.budgets?.currency ?? ''
 	const anciennete = ancienneteEnJours(ligne, maintenant)
 	const adresse = adresseAffaireLigne(ligne)
@@ -370,7 +377,7 @@ function LigneSaisie({
 				// « reste affichée, marquée enregistré, jusqu'au prochain chargement de l'onglet » : une
 				// marque qui s'effacerait d'elle-même laisserait la table indistinguable de son état
 				// d'avant, et un minuteur serait la temporisation arbitraire que `CLAUDE.md` §18 proscrit.
-				etat.statut === 'enregistre' ? 'bg-success-soft' : 'hover:bg-hover',
+				enregistre ? 'bg-success-soft' : 'hover:bg-hover',
 			].join(' ')}
 		>
 			{/* L'ancienneté est en 13 px `--color-text-2`, SANS variante de danger : le seuil que le
@@ -454,7 +461,7 @@ function LigneSaisie({
 					className={[
 						'w-[12ch] min-h-[var(--size-target)] rounded-sm border px-2',
 						'text-right font-mono tabular-nums',
-						etat.statut === 'invalide' ? 'border-danger' : 'border-border',
+						invalide ? 'border-danger' : 'border-border',
 						'bg-surface text-ink disabled:bg-hover disabled:text-text-2',
 					].join(' ')}
 				/>
