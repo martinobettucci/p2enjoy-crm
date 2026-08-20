@@ -3001,24 +3001,27 @@ modale**, focus entrant dans le premier champ et rendu à la commande qui l'a ou
   que le produit n'a pas à porter — le §13.6 de la spécification établit que `none` est le seul mode
   que la pile locale sait prouver, et qu'il n'est pas une faute en soi.
 
-- **L'ÉTAT DE LA BOÎTE EST UNE PILULE À QUATRE VALEURS, chacune avec son mot et son icône** (§5.6) :
-  « En attente » (`--color-hover` / `--color-text-2`, `Clock`), « Connectée » (`--color-success-soft`
-  / `--color-success-on-soft`, `CircleCheck`), « En erreur » (`--color-danger-soft` /
-  `--color-danger-on-soft`, `TriangleAlert`), « Désactivée » (neutres, `CircleSlash`). Une cinquième
-  valeur que la base rendrait serait un défaut de la contrainte `mail_inbound_accounts_statut`, pas
-  un texte à deviner : la pilule est alors **absente**, jamais remplie du code brut — la règle du
-  §5.14 pour un code d'incident inconnu.
+- **L'ÉTAT DE LA BOÎTE EST UNE PILULE À QUATRE VALEURS, chacune avec son mot** : « En attente »
+  (ton neutre), « Connectée » (ton `success`), « En erreur » (ton `danger`), « Désactivée » (ton
+  neutre). C'est le composant `Badge` du §5.6, employé tel quel — **avec son point de tête, et non
+  une icône propre** : ce point est structurel dans ce composant, qui ne permet pas de le retirer,
+  et lui adjoindre une icône ferait porter deux marques à une même information. Un composant métier
+  compose les composants du design system, il ne les redéfinit pas (§11). Une cinquième valeur que
+  la base rendrait serait un défaut de la contrainte `mail_inbound_accounts_statut`, pas un texte à
+  deviner : la pilule est alors **absente**, jamais remplie du code brut — la règle du §5.14 pour un
+  code d'incident inconnu.
 
 - **LE MOT DE PASSE N'A NI VALEUR AFFICHÉE, NI POINT DE SUBSTITUTION.** Aucune ligne « ●●●●●● », qui
   affirmerait connaître une longueur que l'écran n'a pas : le champ est **vide**, et son texte d'aide
   du §5.7 dit ce qu'un champ vide fait — il conserve le mot de passe enregistré. C'est la règle du
   §5.9 sur la cellule vide, appliquée à une saisie : on ne rend jamais une donnée qu'on n'a pas.
 
-- **LE SÉLECTEUR DE BOÎTE VISÉE PORTE SES DEUX OPTIONS QUEL QUE SOIT LE RÔLE**, et l'écran ne
-  calcule aucun droit (§5.3, §5.13, §5.16, §5.21, §5.27, sans exception). MESURÉ : une lectrice
-  configure **sa** boîte et se voit refuser la boîte système ; masquer l'option poserait à l'écran
-  une règle que la base pose déjà, et la masquer pour tout le monde priverait l'administratrice du
-  seul chemin vers cette boîte.
+- **LE SÉLECTEUR DE BOÎTE VISÉE ÉNUMÈRE CE QUE L'APPELANT VOIT, plus ce qu'il peut créer**, et
+  l'écran ne calcule aucun droit (§5.3, §5.13, §5.16, §5.21, §5.27, sans exception). Une boîte
+  existante y porte son `label`, qui est une **donnée** (§10) ; une boîte à créer porte une clé,
+  faute de donnée à afficher. MESURÉ : une lectrice configure **sa** boîte et se voit refuser la
+  boîte système ; masquer l'option poserait à l'écran une règle que la base pose déjà, et la masquer
+  pour tout le monde priverait l'administratrice du seul chemin vers cette boîte.
 
 - **AUCUNE OPTION VIDE EN TÊTE DE CE SÉLECTEUR**, et c'est l'écart assumé avec le §5.22. Là-bas
   l'option vide est le moyen de **vider** un champ ; ici il n'existe aucune boîte « aucune » — le

@@ -30,6 +30,7 @@ import {
 	CHEMIN_COUTS_BUDGET,
 	CHEMIN_COUTS_TRACK,
 	CHEMIN_DEMARRAGE,
+	CHEMIN_ADMIN_COMPTES_MAIL,
 	CHEMIN_ETAT_MESSAGERIE,
 	CHEMIN_LISTE,
 	CHEMIN_CONTACT,
@@ -41,6 +42,7 @@ import {
 	CLE_TITRE_ADMIN_WORKFLOWS,
 	CLE_TITRE_CORBEILLE,
 	CLE_TITRE_DEMARRAGE,
+	CLE_TITRE_COMPTES_MAIL,
 	CLE_TITRE_ETAT_MESSAGERIE,
 	CLE_TITRE_INTROUVABLE,
 	CLE_TITRE_OBJECTIFS,
@@ -76,6 +78,16 @@ const AdministrationCatalogue = lazy(async () => ({
 /** L'écran d'état de la messagerie de `CRM-059`, chargé à la demande pour la même raison. */
 const EtatMessagerie = lazy(async () => ({
 	default: (await import('./EtatMessagerie')).EtatMessagerie,
+}))
+/**
+ * La configuration des comptes entrants de `CRM-088`, chargée à la demande pour la même raison.
+ *
+ * Module SÉPARÉ de `EtatMessagerie`, alors que les deux écrans lisent la même table : l'un lit,
+ * l'autre écrit, et les fondre ferait télécharger le formulaire à qui n'ouvre que la supervision
+ * (`CLAUDE.md` §21).
+ */
+const ReglagesComptesMail = lazy(async () => ({
+	default: (await import('./ReglagesComptesMail')).ReglagesComptesMail,
 }))
 /** La corbeille de `CRM-077`, chargée à la demande pour la même raison que les trois autres. */
 const Corbeille = lazy(async () => ({ default: (await import('./Corbeille')).Corbeille }))
@@ -238,6 +250,18 @@ function RoutesApplication() {
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_ADMIN_CATALOGUE}>
 							<AdministrationCatalogue />
+						</AppShell>
+					}
+				/>
+				{/* La configuration des comptes entrants — `CRM-088`. Même position que les autres
+				    surfaces de réglages : hors de la barre latérale, atteinte depuis l'index des
+				    réglages, et déclarée AVANT l'état de la messagerie comme dans cet index
+				    (docs/SPEC-mail-subsystem.md §21.2). */}
+				<Route
+					path={CHEMIN_ADMIN_COMPTES_MAIL}
+					element={
+						<AppShell cleTitreRoute={CLE_TITRE_COMPTES_MAIL}>
+							<ReglagesComptesMail />
 						</AppShell>
 					}
 				/>

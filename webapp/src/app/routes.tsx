@@ -32,6 +32,7 @@ export type DescriptionRoute = {
 import {
 	CHEMIN_ADMIN_ARBORESCENCE,
 	CHEMIN_ADMIN_CATALOGUE,
+	CHEMIN_ADMIN_COMPTES_MAIL,
 	CHEMIN_ADMIN_WORKFLOWS,
 	CHEMIN_CONTACTS,
 	CHEMIN_CORBEILLE,
@@ -55,6 +56,7 @@ import {
 export {
 	CHEMIN_ADMIN_ARBORESCENCE,
 	CHEMIN_ADMIN_CATALOGUE,
+	CHEMIN_ADMIN_COMPTES_MAIL,
 	CHEMIN_ADMIN_WORKFLOWS,
 	CHEMIN_CONTACTS,
 	CHEMIN_CORBEILLE,
@@ -134,6 +136,12 @@ export const CLE_TITRE_ADMIN_CATALOGUE: CleTraduction = 'admin.catalog.title'
 
 /** Titre de l'état de la messagerie — `CRM-059`, même patron (docs/SPEC-mail-subsystem.md §20.11.1). */
 export const CLE_TITRE_ETAT_MESSAGERIE: CleTraduction = 'admin.mail.title'
+
+/**
+ * Titre de la configuration des comptes entrants — `CRM-088`, même patron
+ * (docs/SPEC-mail-subsystem.md §21.2).
+ */
+export const CLE_TITRE_COMPTES_MAIL: CleTraduction = 'admin.mailAccounts.title'
 
 /**
  * Titre de la corbeille — `CRM-077`, même patron que les trois autres (docs/SPEC-corbeille.md §4.1).
@@ -271,6 +279,20 @@ export function IndexReglages() {
 					>
 						<span className="font-medium">{t('admin.settings.index.catalog')}</span>
 						<span className="text-sm text-text-2">{t('admin.settings.index.catalog.body')}</span>
+					</Link>
+				</li>
+				{/* La configuration vient AVANT l'état — `CRM-088`,
+				    docs/SPEC-mail-subsystem.md §21.2 : on configure une boîte avant d'en
+				    superviser la relève. */}
+				<li>
+					<Link
+						to={CHEMIN_ADMIN_COMPTES_MAIL}
+						className="flex flex-col gap-1 px-4 py-3 min-h-[var(--size-target)] hover:bg-hover rounded-lg"
+					>
+						<span className="font-medium">{t('admin.settings.index.mailAccounts')}</span>
+						<span className="text-sm text-text-2">
+							{t('admin.settings.index.mailAccounts.body')}
+						</span>
 					</Link>
 				</li>
 				<li>

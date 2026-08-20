@@ -1700,6 +1700,78 @@ export const fr = {
 	'admin.mail.incident.timeout': 'Délai dépassé',
 	'admin.mail.incident.protocol_error': 'Erreur de protocole',
 
+	// --- Configuration des comptes entrants — CRM-088, docs/SPEC-mail-subsystem.md §21 --------
+	'admin.settings.index.mailAccounts': 'Comptes de messagerie entrante',
+	'admin.settings.index.mailAccounts.body':
+		"Serveur, port, sécurité, identifiant et mot de passe de chaque boîte relevée par le produit.",
+
+	'admin.mailAccounts.title': 'Comptes de messagerie entrante',
+	'admin.mailAccounts.aria': 'Configuration des comptes de messagerie entrante',
+	'admin.mailAccounts.live.aria': 'Enregistrement des comptes de messagerie',
+	'admin.mailAccounts.noWorkspace.title': 'Aucun espace de travail accessible',
+	'admin.mailAccounts.noWorkspace.body':
+		"Sans espace de travail, il n'y a aucune boîte à configurer.",
+	'admin.mailAccounts.empty.title': 'Aucune boîte configurée',
+	'admin.mailAccounts.empty.body':
+		"Aucun compte de messagerie entrante n'est visible avec ce compte. Configurez-en un pour que le produit relève votre courrier.",
+	'admin.mailAccounts.error.title': 'Les comptes de messagerie n’ont pas pu être chargés',
+	'admin.mailAccounts.error.body': "La requête n'a pas abouti. Réessayer relance le chargement.",
+	'admin.mailAccounts.error.retry': 'Réessayer',
+
+	'admin.mailAccounts.open': 'Configurer une boîte',
+	'admin.mailAccounts.configure': 'Configurer',
+	'admin.mailAccounts.configure.aria': 'Configurer la boîte {boite}',
+	'admin.mailAccounts.form.title': 'Configuration de la boîte',
+	'admin.mailAccounts.save': 'Enregistrer',
+	'admin.mailAccounts.saving': 'Enregistrement…',
+	'admin.mailAccounts.saved': 'Boîte enregistrée.',
+	'admin.mailAccounts.cancel': 'Annuler',
+
+	'admin.mailAccounts.target.system': 'Boîte système de l’espace de travail',
+	'admin.mailAccounts.target.mine': 'Ma boîte personnelle',
+
+	'admin.mailAccounts.field.target': 'Boîte visée',
+	'admin.mailAccounts.field.label': 'Libellé',
+	'admin.mailAccounts.field.host': 'Serveur IMAP',
+	'admin.mailAccounts.field.port': 'Port',
+	'admin.mailAccounts.field.security': 'Sécurité',
+	'admin.mailAccounts.field.username': 'Identifiant',
+	'admin.mailAccounts.field.password': 'Mot de passe',
+	'admin.mailAccounts.field.password.help':
+		"Laissé vide, le mot de passe enregistré est conservé. Il n'est jamais affiché.",
+
+	// Les quatre valeurs de `mail_inbound_accounts_statut` (migration 0022) — jamais le code brut
+	// (docs/SPEC-mail-subsystem.md §21.3, docs/DESIGN_SYSTEM.md §5.34).
+	'admin.mailAccounts.status.pending': 'En attente',
+	'admin.mailAccounts.status.ok': 'Connectée',
+	'admin.mailAccounts.status.error': 'En erreur',
+	'admin.mailAccounts.status.disabled': 'Désactivée',
+
+	// Les trois modes de `mail_inbound_accounts_securite`, en toutes lettres (§1, §5.34).
+	'admin.mailAccounts.security.ssl': 'SSL',
+	'admin.mailAccounts.security.starttls': 'STARTTLS',
+	'admin.mailAccounts.security.none': 'Aucune',
+
+	// Dictionnaire fermé des refus — docs/SPEC-mail-subsystem.md §21.7. Aucun corps d'erreur du
+	// serveur n'est affiché : il divulguerait `secret_id` (INC-193).
+	'admin.mailAccounts.refusal.forbidden':
+		"Vous ne pouvez pas configurer cette boîte : seule une administratrice ou un administrateur de l'espace de travail configure la boîte système et celle d'un collègue.",
+	'admin.mailAccounts.refusal.session': 'Votre session a expiré. Reconnectez-vous, puis réessayez.',
+	'admin.mailAccounts.refusal.passwordRequired':
+		'Un mot de passe est exigé pour créer une boîte : sans lui, aucune connexion ne serait possible.',
+	'admin.mailAccounts.refusal.label': 'Le libellé est obligatoire, et ne dépasse pas 200 caractères.',
+	'admin.mailAccounts.refusal.host': 'Le serveur est obligatoire, et ne dépasse pas 253 caractères.',
+	'admin.mailAccounts.refusal.port': 'Le port doit être un nombre entier compris entre 1 et 65535.',
+	'admin.mailAccounts.refusal.security': "Le mode de sécurité n'est pas reconnu.",
+	'admin.mailAccounts.refusal.username':
+		"L'identifiant est obligatoire, et ne dépasse pas 320 caractères.",
+	'admin.mailAccounts.refusal.owner':
+		"Le propriétaire de cette boîte n'est pas membre de l'espace de travail.",
+	'admin.mailAccounts.refusal.network':
+		"L'enregistrement n'a pas abouti : le serveur n'a pas répondu.",
+	'admin.mailAccounts.refusal.unknown':
+		"L'enregistrement a été refusé, et la cause n'est pas reconnue par le produit.",
+
 	// --- Corbeille — CRM-077, docs/SPEC-corbeille.md §4 ---------------------------------------
 	'admin.settings.index.trash': 'Corbeille',
 	'admin.settings.index.trash.body':

@@ -76,6 +76,15 @@ export const CHEMIN_ADMIN_WORKFLOWS = '/reglages/workflows' as const
 /** Administration du catalogue de nœuds — `CRM-030`, `docs/SPEC-workflow-engine.md` §2 bis.2. */
 export const CHEMIN_ADMIN_CATALOGUE = '/reglages/catalogue' as const
 
+/**
+ * Configuration des comptes entrants — `CRM-088`, `docs/SPEC-mail-subsystem.md` §21.2.
+ *
+ * Une SIXIÈME section de réglages, distincte de `CHEMIN_ETAT_MESSAGERIE` : l'une configure, l'autre
+ * supervise. Les fondre en une seule adresse ferait porter à un écran de lecture des gestes
+ * d'écriture, et le §5.14 du design system a explicitement borné cet écran-là à la lecture.
+ */
+export const CHEMIN_ADMIN_COMPTES_MAIL = '/reglages/comptes-mail' as const
+
 /** État de la messagerie — `CRM-059`. */
 export const CHEMIN_ETAT_MESSAGERIE = '/reglages/messagerie' as const
 

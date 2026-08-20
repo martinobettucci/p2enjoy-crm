@@ -1965,7 +1965,7 @@ flux du document**, sous la liste, et il est **replié par défaut** (`docs/DESI
 
 | Champ | Contrôle | Contrainte de la base | Valeur envoyée |
 |---|---|---|---|
-| Boîte visée | `select` fermé à deux options — « Ma boîte personnelle », « Boîte système de l'espace de travail » | aucune : c'est le paramètre `p_owner_id` | l'identifiant de l'appelant, ou `null` |
+| Boîte visée | `select` **construit depuis ce que l'appelant voit** — voir juste sous ce tableau | aucune : c'est le paramètre `p_owner_id` | l'identifiant du propriétaire, ou rien pour la boîte système |
 | Libellé | texte | `mail_inbound_accounts_label_borne` — 1 à 200 caractères après `btrim` | `p_label` |
 | Serveur IMAP | texte | `mail_inbound_accounts_host_borne` — 1 à 253 | `p_imap_host` |
 | Port | nombre | `mail_inbound_accounts_port_borne` — 1 à 65535 | `p_imap_port` |
@@ -1978,7 +1978,17 @@ system, tenue sans exception : ni `required`, ni `min`, ni `max`, ni `pattern`. 
 un port hors bornes sont **envoyés**, et c'est la base qui tranche (`CLAUDE.md` §10). Le port est un
 `input type="number"` parce que c'est un nombre, non pour borner la saisie.
 
-**Le sélecteur de boîte visée n'est jamais restreint selon le rôle**, et l'écran ne calcule aucun
+**Le sélecteur énumère les boîtes VISIBLES, plus celles que l'appelant peut créer.** Une boîte
+visible y est nommée par son `label`, qui est une **donnée** et non une traduction
+(`docs/DESIGN_SYSTEM.md` §10) ; une boîte qui n'existe pas encore est nommée par une clé, faute de
+donnée à afficher — « Ma boîte personnelle », « Boîte système de l'espace de travail ». Une
+administratrice y retrouve donc les trois comptes du seed et peut corriger celui d'un collègue, ce
+que la fonction accepte (§13.3) ; un membre ordinaire n'y voit que la sienne, plus la boîte système,
+qu'il peut viser et se voir refuser. **Aucune option vide en tête** : le couple
+`(workspace_id, owner_id)` est la clé de l'objet, et n'en viser aucun n'aurait pas de sens — c'est
+l'écart assumé avec le §5.22 du design system.
+
+**Le sélecteur n'est jamais restreint selon le rôle**, et l'écran ne calcule aucun
 droit : un membre ordinaire voit l'option « Boîte système », l'envoie, et lit le refus **traduit**.
 C'est la règle que le design system tient au §5.3, §5.13, §5.16, §5.21 et §5.27 sans exception —
 une commande grisée ferait passer une décision de la base pour une décision d'écran.
@@ -2020,6 +2030,9 @@ développement, avec les jetons réels des comptes du seed, par la véritable ro
 | `p_imap_security = 'bogus'` | `400`, `23514`, contrainte `mail_inbound_accounts_securite` |
 | `p_label = '   '` | `400`, `23514`, contrainte `mail_inbound_accounts_label_borne` |
 | Compte neuf sans `p_password` | `400`, `23514`, message `password_required` |
+| `p_imap_port` nul | `400`, `23502`, `null value in column "imap_port" … violates not-null constraint` |
+| `p_imap_port` non entier | `400`, `22P02`, `invalid input syntax for type integer` |
+| Appel sans session (clé anonyme seule) | `401`, `42501`, `permission denied for function upsert_mail_inbound_account` — le `GRANT EXECUTE` de `0022` ne va pas à `anon` |
 | Mise à jour sans `p_password` | `200` ; `secret_id` inchangé, `watch_folders`, `folder_style` et `backfill_months` inchangés |
 
 **UN DÉFAUT DE DIVULGATION TROUVÉ EN MESURANT, ET IL EST ÉTRANGER À CETTE UNITÉ.** Le corps d'un
@@ -2045,7 +2058,7 @@ Les deux règles ont la même cause — un texte venu d'ailleurs est une entrée
 | `password_required` | Un mot de passe est exigé pour créer une boîte |
 | `mail_inbound_accounts_label_borne` | Le libellé est obligatoire, 200 caractères au plus |
 | `mail_inbound_accounts_host_borne` | Le serveur est obligatoire, 253 caractères au plus |
-| `mail_inbound_accounts_port_borne` | Le port doit être compris entre 1 et 65535 |
+| `mail_inbound_accounts_port_borne` (`23514`), la colonne `imap_port` absente (`23502`) ou une saisie non entière (`22P02`) | Le port doit être un nombre entier compris entre 1 et 65535 — **trois refus, une seule phrase** : ils visent le même champ à corriger, et les distinguer ferait trois messages pour une seule saisie |
 | `mail_inbound_accounts_securite` | Le mode de sécurité n'est pas reconnu |
 | `mail_inbound_accounts_username_borne` | L'identifiant est obligatoire, 320 caractères au plus |
 | `owner_not_member` | Le propriétaire n'est pas membre de cet espace de travail |
