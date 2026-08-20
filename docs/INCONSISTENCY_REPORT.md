@@ -195,7 +195,19 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Dix-huit ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+**Vingt ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-173, INC-174,
+INC-182 et INC-183** — **INC-182** et **INC-183** consignées le 2026-08-20 par la session `CRM-086`
+tranche 6, en lisant `docs/SPEC-costs.md` §4.8 AVANT de le coder. Ce sont deux manques de
+SPÉCIFICATION portant sur l'onglet même que la tranche livre, et non deux constats étrangers :
+**INC-182**, le badge de l'onglet « À saisir » ne peut pas porter le même nombre que la mention du
+§4.4, la clôture et la devise séparant structurellement les deux populations — mesuré 2 contre 1 sur
+le seed ; **INC-183**, le seuil d'ancienneté que `docs/DESIGN_SYSTEM.md` §5.31 suppose n'existe nulle
+part pour une ligne de coût, celui d'une card étant une donnée de son étape de workflow. Aucun des
+deux n'est tranché sur place ; le comportement livré est nommé aux §4.8.1 et §4.8.2 de la
+spécification.
+
+Précédemment dix-huit : **INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-173 et
 INC-174** — **INC-174** consignée le 2026-08-19 par la même session : le parcours clavier de la
 grille champ × étape de `administration-workflows.spec.ts` échoue DANS une campagne complète et
@@ -2978,3 +2990,88 @@ dans son propre changement.
 **Arbitrage attendu.** Le responsable tranche si les scénarios d'ingestion doivent attendre un
 événement observable — un cycle de relève acquitté — plutôt qu'une fenêtre de temps, ou si
 `e2e:mail` doit être exécutée avant `e2e:ui` dans la campagne, ou les deux.
+
+## Consignés le 2026-08-20 — deux manques de SPÉCIFICATION relevés par `CRM-086` tranche 6
+
+Relevés en lisant `docs/SPEC-costs.md` §4.8 **avant** de le coder, comme le §3.2 point 3 de
+`docs/CloudWorker.md` le demande. Ils ne sont **pas** étrangers à l'unité : ils portent sur l'onglet
+même que la tranche livre. Ils sont consignés ici plutôt que tranchés sur place parce que trancher
+poserait une règle de produit que personne n'a prise — `CLAUDE.md` §5, dernier alinéa de la
+traçabilité. Le comportement livré est celui que la spécification complétée (§4.8.1, §4.8.2) nomme,
+et il est nommé pour être révisé sans surprise dès l'arbitrage rendu.
+
+### INC-182 — le badge de l'onglet « À saisir » ne PEUT PAS porter le même nombre que la mention du §4.4
+
+`docs/SPEC-costs.md` §4.8 écrit : « L'onglet porte un badge : le nombre de lignes en attente dans la
+portée de l'écran. Il est le même nombre que celui de la mention du §4.4 — s'ils divergeaient, l'un
+des deux mentirait. » La Definition of Done de `CRM-086` reprend l'exigence mot pour mot.
+
+**Les deux nombres ne comptent pas la même population, et c'est structurel — deux causes
+indépendantes.**
+
+1. **La clôture.** Le §4.8 liste explicitement les lignes des budgets et occurrences **clôturés** —
+   « c'est précisément après la clôture que les factures arrivent, et les exclure viderait l'onglet
+   de son usage ». Le §4.2, lui, pose qu'« un budget clôturé n'y figure pas » dans l'histogramme, et
+   la mention du §4.4 est rendue **sous cet histogramme**. Une ligne sans réel sur un budget clos est
+   donc comptée par le badge et pas par la mention.
+
+2. **La devise.** La mention du §4.4 est rendue par histogramme, donc **par devise** (§4.5, « un
+   histogramme par devise présente »). Un badge d'onglet est un nombre **unique**. Sur un écran à
+   deux devises, il n'existe aucune mention unique à laquelle le badge pourrait être égal.
+
+**MESURÉ sur le seed, le 2026-08-20**, écran de coûts du track « Studio web », après que cette
+tranche a posé la ligne « Impression plaquettes » sans réel sur le budget clôturé « Salon du web
+2025 » — la ligne que la Definition of Done exige d'être « présente et **saisissable** » :
+
+| Nombre | Valeur | Population |
+|---|---|---|
+| Mention du §4.4 sous l'histogramme | **1** | budgets OUVERTS du track — « Publicité » seule |
+| Badge de l'onglet « À saisir » | **2** | + « Impression plaquettes », budget clos |
+
+La divergence n'est donc pas hypothétique : elle naît du jeu de données que la Definition of Done
+demande elle-même de poser.
+
+**Ce que la tranche fait, et pourquoi.** Le badge compte les lignes que le tableau de l'onglet
+**liste** (§4.8.2). Un badge qui annoncerait un autre nombre que celui des lignes rendues juste en
+dessous mentirait sur l'écran même où il est posé — précisément le défaut que la phrase du §4.8
+cherchait à prévenir. **Rien n'est corrigé dans la spécification hors le §4.8.2, qui nomme l'écart.**
+
+**Arbitrage attendu.** Trois issues, et le responsable tranche :
+
+1. la phrase du §4.8 et la Definition of Done sont **révisées** : le badge compte la portée de
+   l'onglet, la mention compte la portée de son histogramme, et les deux nombres n'ont jamais eu à
+   être égaux ;
+2. l'onglet **cesse** de lister les budgets clos — ce qui contredirait sa raison d'être telle que le
+   §4.8 l'écrit, et rendrait la Definition of Done inapplicable ;
+3. la **mention du §4.4** gagne un second nombre, « dont n sur un budget clôturé », de sorte que la
+   somme des deux égale le badge. C'est l'issue qui conserve les deux textes, au prix d'une phrase
+   plus longue sous chaque histogramme.
+
+### INC-183 — le SEUIL d'ancienneté d'une ligne de coût n'existe pas, et `docs/DESIGN_SYSTEM.md` §5.31 le suppose
+
+`docs/DESIGN_SYSTEM.md` §5.31 écrit, de la colonne « Ancienneté » de la table de saisie : « Au delà
+d'un seuil, elle passe en `--color-danger-on-soft` sur `--color-danger-soft`, comme la pastille
+d'ancienneté d'une card (§5.1) : c'est le même signal, il doit avoir la même forme. »
+
+**Le seuil d'une card est une DONNÉE, et une ligne de coût n'a pas d'endroit où la porter.** Celui
+d'une card vit sur son étape de workflow — `workflow_steps.stale_after_days`, avec le repli
+`workflow_nodes_catalog.default_stale_after_days` (`docs/SPEC-workflow-engine.md` §2.5) —, et
+`resoudreEtape` de `webapp/src/lib/board.ts` le résout dans cet ordre. Une ligne de `card_costs` n'a
+ni étape, ni nœud, ni colonne de seuil : `docs/SCHEMA.md` §9 bis.6 n'en déclare aucune, et
+`docs/SPEC-costs.md` §2.3 n'en nomme aucune.
+
+**Rien n'est inventé.** Écrire « trente jours » dans le composant serait la valeur métier codée en
+dur que `CLAUDE.md` §3 proscrit, et la poser en colonne de `budgets` serait une évolution de schéma
+qu'aucune unité n'a demandée. La colonne « Ancienneté » est donc livrée **en 13 px
+`--color-text-2`, sans variante de danger** — c'est-à-dire la première phrase du §5.31, tenue, et sa
+seconde, non livrée et nommée.
+
+**Arbitrage attendu.** Trois issues :
+
+1. le seuil est une **constante de produit** documentée — par exemple soixante jours —, posée une
+   seule fois dans un module de configuration et citée par le §5.31 ;
+2. le seuil est une **donnée du budget** — une colonne `stale_after_days` sur `budgets`, avec son
+   repli au niveau du workspace —, ce qui demande une migration et une surface d'administration ;
+3. la seconde phrase du §5.31 est **retirée** : l'ancienneté est écrite en durée et ne porte aucun
+   signal chromatique, la colonne étant déjà triée du plus ancien au plus récent — l'ordre porte
+   alors l'information que la teinte devait porter.

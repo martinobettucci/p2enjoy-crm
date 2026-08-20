@@ -1035,6 +1035,35 @@ celui qu'on quitte comme celui qu'on rejoint —, et ne s'oppose ni à `actual_c
 **La double condition de lecture de `card_costs` n'est pas redondante** : card et budget peuvent
 relever de deux tracks dont l'appelant ne lit que l'un.
 
+### 9 bis.8 `public.reel_saisissable(card_costs)` — colonne calculée, migration 52
+
+Ajoutée le 2026-08-20 par `CRM-086` tranche 6 (`docs/SPEC-costs.md` §4.8.1).
+
+| | |
+|---|---|
+| Signature | `public.reel_saisissable(ligne public.card_costs) returns boolean` |
+| Corps | `select app.can_write_card(ligne.card_id)` |
+| Volatilité | `stable`, **`security invoker`** — jamais `definer` |
+| Privilèges | `execute` à `anon`, `authenticated`, `service_role` |
+
+**Ce n'est pas une table, c'est une colonne CALCULÉE au sens de PostgREST** : une fonction dont
+l'unique argument est le type composite de la table est exposée comme une colonne de plus, et se
+demande dans le même `select` — donc **sans aucun aller-retour supplémentaire**.
+
+**Elle existe pour que l'INTERFACE n'ait pas à rejouer une règle d'autorisation.** L'onglet
+« À saisir » du §4.8 doit rendre une ligne lisible mais non écrivable **en lecture seule avec son
+motif**, ce qui exige de connaître le droit **avant** de rendre le champ — le seul endroit du produit
+où c'est le cas, tous les autres écrans envoyant et traduisant le refus. Déduire ce droit d'un rôle
+de workspace serait faux, les droits fins de `docs/SPEC-permissions-rls.md` §3.7 ouvrant l'écriture
+par channel, et le calculer dans l'écran serait la règle d'autorisation d'interface que
+`CLAUDE.md` §10 interdit.
+
+**Elle n'ouvre rien.** `app.can_write_card` est déjà exécutable par `anon` et `authenticated`
+(migration 13), et elle ne rend qu'un booléen sur une ligne que la RLS a **déjà** consentie : une
+ligne que l'appelant ne lit pas n'est pas rendue, et sa colonne calculée ne l'est donc pas non plus.
+`security invoker` est **obligatoire** — en `definer`, elle répondrait pour le propriétaire de la
+fonction et rendrait `true` à tout le monde.
+
 ## 10. Index principaux
 
 | Table | Index |

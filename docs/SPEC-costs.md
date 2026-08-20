@@ -303,6 +303,103 @@ est le même nombre que celui de la mention du §4.4 — s'ils divergeaient, l'u
 | Aucune ligne **écrivable**, mais des lignes lisibles | le tableau est rendu, entièrement en lecture seule, et le dit en tête |
 | `viewer` | l'onglet est visible, le tableau est en lecture seule, et l'écran dit pourquoi |
 
+### 4.8.1 Contrat de lecture de l'onglet — complété le 2026-08-20, décision 479
+
+Le §4.8 ci-dessus décrit le COMPORTEMENT de l'onglet sans nommer ce qui le rend possible. Trois
+points y manquaient, chacun **indispensable avant la première ligne de code** ; ils sont complétés
+ici, et **uniquement** ici — le reste du §4.8 n'est pas réécrit (`docs/CloudWorker.md` §3.2, point 3).
+Tout ce qui suit est **mesuré sur la pile de développement** le 2026-08-20, jamais supposé.
+
+**1. LE DROIT D'ÉCRITURE D'UNE LIGNE EST RENDU PAR LA BASE, JAMAIS CALCULÉ PAR L'INTERFACE.** Le
+§4.8 exige qu'« une ligne lisible mais non écrivable — `app.can_write_card` faux — soit rendue en
+lecture seule, avec le motif, jamais masquée ». L'interface ne peut donc pas se contenter d'envoyer
+et de traduire le refus, comme le fait le reste du produit
+(`docs/DESIGN_SYSTEM.md` §5.13, §5.16, §5.21) : elle doit connaître le droit **avant** de rendre le
+champ. Et elle ne doit pas le déduire d'un rôle — `CLAUDE.md` §10 l'interdit dans les deux sens, et
+un rôle serait faux : les droits fins de `SPEC-permissions-rls.md` §3.7 ouvrent l'écriture par
+channel.
+
+La lecture porte donc une **colonne calculée** exposée par PostgREST :
+
+```
+public.reel_saisissable(ligne public.card_costs) returns boolean
+  => app.can_write_card(ligne.card_id)
+```
+
+`stable`, **jamais `security definer`** : elle doit s'évaluer sous l'identité de l'appelant. Elle
+n'ouvre aucune donnée — `app.can_write_card` est déjà exécutable par `anon` et `authenticated`
+(migration 13) — et elle n'ajoute **aucun aller-retour** : PostgREST la rend comme une colonne de
+plus dans la même requête. Le droit reste ainsi une règle de la base que l'écran **lit**, et non une
+règle que l'écran **rejoue**.
+
+MESURÉ, sur le seed, `actual_cost=is.null` :
+
+| Appelant | Lignes rendues | `reel_saisissable` |
+|---|---|---|
+| `admin@p2enjoy.test` | 2 — « Publicité », « Prospection terrain » | `true` sur les deux |
+| `bizdev@p2enjoy.test` | 2 — les mêmes | `true` sur les deux |
+| `viewer@p2enjoy.test` | **1** — « Publicité » seule | **`false`** |
+
+La lectrice ne voit qu'une des deux lignes : « Prospection terrain » est rattachée à « Prospection
+sortante », budget d'un track qu'elle ne lit pas, et la **double condition du §3.1** l'écarte. C'est
+le cas qui rend l'état « aucune ligne écrivable, mais des lignes lisibles » du §4.8 réellement
+observable.
+
+**2. L'ANCIENNETÉ SE MESURE SUR `created_at`, ET SON SEUIL N'EST PAS ARBITRÉ.** La colonne
+« Ancienneté » compte depuis la **création de la ligne** — c'est-à-dire depuis que la dépense a été
+engagée sans son réel —, jamais depuis `updated_at`, qui bougerait à chaque correction du libellé et
+ferait rajeunir une ligne qu'on vient de renommer.
+
+Le §5.31 de `docs/DESIGN_SYSTEM.md` ajoute qu'« au-delà d'un seuil, elle passe en
+`--color-danger-on-soft` […] comme la pastille d'ancienneté d'une card (§5.1) ». **Ce seuil n'existe
+pas pour une ligne de coût** : celui d'une card est une donnée du workflow — `stale_after_days` de
+l'étape, avec le repli `default_stale_after_days` du catalogue —, et une ligne de coût n'a ni étape
+ni nœud. En inventer un — trente jours, soixante — poserait une règle de gestion que personne n'a
+prise (`CLAUDE.md` §3, « éviter les valeurs métier codées en dur »). La colonne est donc rendue en
+13 px `--color-text-2` **sans variante de danger**, l'écart est consigné à **INC-183**, et il tombera
+par arbitrage, jamais par supposition.
+
+**3. CE QUE LA SAISIE ENVOIE, ET LA FRONTIÈRE EXACTE DU §2.3.** L'écriture est un `PATCH` sur
+`card_costs`, portant **`actual_cost` et rien d'autre**. Le §2.3 pose que « le trigger refuse
+l'insertion et le changement de rattachement — `budget_id`, `occurrence_id` —, jamais la mise à jour
+d'`actual_cost` ni du `label` », et c'est **mesuré des deux côtés** sur la ligne « Production »,
+rattachée au budget **clôturé** « Salon du web 2025 » :
+
+| Envoi | Réponse mesurée |
+|---|---|
+| `{ "actual_cost": 376.00 }` | `200`, **une ligne** rendue |
+| `{ "budget_id": …, "occurrence_id": … }` | `23514` — « cette ligne est rattachée à un budget clôturé : son rattachement ne change plus » |
+
+C'est pourquoi cet onglet n'emploie **pas** `modifierLigneCout` de `card-costs.ts`, qui renvoie les
+cinq attributs : sur un budget clos, cet envoi traverse aujourd'hui — le trigger ne s'oppose qu'au
+**changement** —, mais il fait dépendre la saisie d'un rattachement que l'onglet n'a aucune raison
+de connaître, et une évolution du trigger le casserait sans que rien ne l'annonce. La saisie envoie
+la seule colonne qu'elle modifie.
+
+**Trois issues, comme partout ailleurs** (`docs/DESIGN_SYSTEM.md` §5.25, §5.27) : appliqué, refusé,
+et **sans effet** — `200` et zéro ligne, ce que rend la clause `USING` de la politique de mise à jour
+lorsque le droit d'écriture est retombé depuis le chargement. La troisième est **dite**, jamais
+présentée comme un succès.
+
+### 4.8.2 La portée du badge, et ce qu'elle ne peut pas être — décision 479
+
+Le §4.8 écrit que le badge « est le même nombre que celui de la mention du §4.4 ». **Cette égalité
+est fausse dès que le produit exerce ses propres règles**, et la contradiction est consignée à
+**INC-182** plutôt que tranchée ici. Deux causes, toutes deux structurelles :
+
+- la mention du §4.4 est rendue **sous un histogramme**, donc **par devise** (§4.5), tandis qu'un
+  badge d'onglet est un nombre **unique** ;
+- l'onglet liste les lignes des budgets **clôturés** (§4.8), que l'histogramme du §4.2 **exclut**
+  explicitement. Une ligne sans réel sur un budget clos est donc comptée par l'un et pas par l'autre
+  — et c'est exactement le cas que la Definition of Done de `CRM-086` demande de rendre
+  **saisissable**.
+
+**Le comportement retenu, en attendant l'arbitrage : le badge compte les lignes que le tableau de
+l'onglet LISTE**, dans la portée de l'écran. Un badge qui annoncerait un autre nombre que celui des
+lignes rendues juste en dessous mentirait sur l'écran même où il est posé, ce qui est le défaut que
+le §4.8 cherchait à prévenir. La phrase du §4.8 garde sa raison — deux nombres qui parlent de la même
+chose ne doivent pas diverger — mais elle désigne deux nombres qui ne parlent pas de la même chose.
+
 ## 5. Ce qui n'est pas au périmètre
 
 - aucune conversion de devise, aucun taux de change ;

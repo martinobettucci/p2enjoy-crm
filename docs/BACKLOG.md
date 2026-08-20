@@ -8608,6 +8608,37 @@ accessibilité de l'histogramme — valeurs en clair, légende, équivalent text
 le second liste toutes les lignes sans `actual_cost` que l'appelant peut lire, **budgets clôturés
 compris**, du plus ancien au plus récent, avec saisie en place.
 
+**LE DÉCOUPAGE DE LA TRANCHE 6, POSÉ AVANT LE CODE — décision 479.** L'onglet ne tient pas dans une
+session : il demande une colonne calculée en base, un module de lecture et d'écriture, une suite
+pgTAP, une table de saisie au clavier, deux écrans à onglets et un harnais dédié. Il est donc coupé
+en **deux sous-tranches**, chacune livrable et prouvable seule, et le découpage est écrit ici plutôt
+que laissé à la mémoire d'une session (`CLAUDE.md` §5).
+
+- **Tranche 6a — le socle de données.** La migration 52 et sa colonne calculée
+  `public.reel_saisissable(card_costs)` (`docs/SCHEMA.md` §9 bis.8) ; le module
+  `webapp/src/lib/couts-a-saisir.ts` — lecture des lignes en attente dans les deux portées, écriture
+  du seul `actual_cost`, classement des trois issues ; la suite pgTAP `0050_couts_a_saisir.test.sql`,
+  qui porte la preuve que la Definition d'en bas exige explicitement ; le seed, qui gagne la ligne
+  sans réel sur un budget **clôturé** dont le jeu actuel est dépourvu.
+- **Tranche 6b — la surface.** La barre d'onglets `?onglet=saisir` sur les deux écrans, la table de
+  saisie en série du §5.31, le geste clavier, les captures et le harnais
+  `scripts/verify-couts-ecrans.sh`.
+
+**DEUX MANQUES DE SPÉCIFICATION ONT ÉTÉ RELEVÉS AVANT LE CODE, ET NE SONT PAS TRANCHÉS.**
+**INC-182** : le badge ne peut pas porter le même nombre que la mention du §4.4 — la clôture et la
+devise séparent structurellement les deux populations, mesuré 2 contre 1 sur le seed dès que la ligne
+exigée ci-dessous est posée. **INC-183** : le seuil d'ancienneté que `docs/DESIGN_SYSTEM.md` §5.31
+suppose n'existe nulle part pour une ligne de coût. Le comportement livré est nommé aux §4.8.1 et
+§4.8.2 de la spécification ; **la Definition of Done ci-dessous est donc inatteignable sur son
+premier point tant que l'arbitrage d'INC-182 n'est pas rendu**, et ce n'est pas un défaut de
+livraison.
+
+**Tranche 6a — EN COURS** (décision 479). Ce commit ne porte que la spécification complétée, le
+schéma, le contrat de déploiement et le registre : **aucune ligne de code n'est encore écrite**, et
+c'est la règle du §3.2 point 3 de `docs/CloudWorker.md` — la spécification est committée d'abord,
+précisément pour qu'une session interrompue ne perde pas la décision. Cette entrée est réécrite avec
+ce qui est réellement livré et prouvé dès que le code l'est.
+
 - [ ] **Preuves propres à l'onglet**, en plus de celles ci-dessus : le badge de l'onglet porte le
       **même nombre** que la mention « n lignes sans coût réel saisi » de la vue d'ensemble — s'ils
       divergent, l'un des deux ment ; `Entrée` enregistre **et porte le focus sur le champ de la
