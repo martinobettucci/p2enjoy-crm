@@ -83,6 +83,7 @@ MAIL_MAX_ATTACHMENT_MB   consommée à partir de CRM-054 (README.md §9)
 BACKUP_AGE_RECIPIENTS_FILE  lue par scripts/backup.sh depuis CRM-080, jamais par un service
 BACKUP_OUTPUT_DIR           lue par scripts/backup.sh depuis CRM-080, jamais par un service
 BACKUP_RETENTION_DAYS       lue par scripts/backup.sh depuis CRM-080, jamais par un service
+RESTORE_AGE_IDENTITY_FILE   lue par scripts/restore-drill.sh depuis CRM-080 tranche 2, jamais par un service ; elle désigne une clé PRIVÉE et n'a rien à faire sur l'hôte qui sauvegarde
 "
 
 # --- 1. Le gabarit est le contrat exact de l'assemblage ----------------------------------------
