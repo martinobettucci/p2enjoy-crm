@@ -21902,3 +21902,113 @@ avec conservation des clés privées anciennes, rythme des exercices de restaura
 §14 de la spécification lui lègue en outre une décision à trancher : **les rôles ne sont pas dans
 l'archive**, `pg_dump` ne portant aucun objet global, et emporter `pg_dumpall --globals-only`
 changerait le format de la tranche 1. Son contrat s'écrit avant son code, comme celui-ci.
+
+## décision 485 — `CRM-080` tranche 3 : l'exploitation, et la mesure qui a sauvé la supervision d'être complaisante
+
+**L'unité, et le choix.** La décision 484 désignait explicitement où reprendre : `CRM-080` est `[~]`,
+tranches 1 et 2 livrées, **tranche 3 le travail suivant**. Le §4.1 point 1 de `docs/CloudWorker.md`
+s'applique tel quel. Sa spécification n'existait pas — le §9 la **cadrait** seulement —, donc §3.2
+point 3 : contrat écrit et **committé avant la première ligne de code**, `docs/SPEC-backups.md`
+§16 à §21.
+
+**SIX MESURES AVANT LA PREMIÈRE LIGNE, ET DEUX COMMANDENT TOUTE LA CONCEPTION.** M16 : l'en-tête
+`age` est en **clair** — `head -1` rend `age-encryption.org/v1` —, si bien que la supervision peut
+lire la forme d'une archive **sans détenir aucune clé privée**, donc sans annuler la propriété du
+§3.4 qui veut que l'hôte de sauvegarde ne puisse relire aucune de ses archives. M17 : le **nombre**
+de destinataires y est comptable — une strophe `-> X25519` par destinataire, mesuré à 1 puis à 2 —
+et les destinataires n'y sont **pas** identifiables : compter est possible, identifier ne l'est pas,
+ce qui est exactement ce dont la rotation a besoin.
+
+**M18 EST LA MESURE DÉCISIVE, ET ELLE A CHANGÉ LA CONCEPTION.** Une copie hors site faite par `cp`
+reçoit une date de modification **fraîche** — mesuré, 10 s d'écart avec la source. Une supervision
+qui jugerait la fraîcheur sur `mtime` déclarerait donc « à jour » une copie vieille d'un mois qu'on
+vient de recopier : c'est-à-dire **manquerait exactement le sinistre qu'elle existe pour détecter**.
+La fraîcheur se calcule donc sur l'horodatage porté par le **NOM**, que rien ne réécrit, et le
+contrôle S8 compare des noms. M19 complète le cadre par une limite : l'intégrité, elle, n'est **pas**
+observable sans clé privée, le manifeste étant à l'intérieur du chiffré. **La supervision ne prouve
+donc JAMAIS la restaurabilité**, et elle ne le prétend pas — c'est l'exercice de la tranche 2, sur
+un poste distinct, qui la prouve, et le contrôle S9 surveille seulement qu'il a lieu.
+
+**LE CODE.** `scripts/backup-supervision.sh` : neuf contrôles — présence, fraîcheur, forme,
+destinataires, effondrement de taille, résidu d'écriture, dérive de rétention, copie hors site, âge
+du dernier exercice —, **trois** codes de retour distincts (`0` vert, `1` alerte, `2` configuration
+inutilisable, les confondre ferait chercher un incident là où il y a une faute de frappe), l'option
+`--cron` qui **se tait quand tout est vert**, et huit refus. S5 est **relatif** et jamais absolu :
+un seuil en octets serait faux le jour où la base grossit, et personne ne le réviserait.
+
+**LE RUNBOOK.** `docs/RUNBOOK-sauvegardes.md`, exigé par `CLAUDE.md` §12 : planification quotidienne
+et supervision horaire sous `systemd` **et** sous `cron`, chacune sous `flock` ; copie hors site et
+ses deux règles ; rotation des destinataires `age` qui **ajoute avant de retirer** et impose un
+exercice entre les deux ; conservation des clés privées anciennes, **mesurée** — une identité non
+destinataire rend `no identity matched any of the recipients` ; rythme mensuel des exercices ; une
+entrée par alerte S1 à S9 ; restauration d'une production en dix étapes **humaines**, volontairement
+non automatisée.
+
+**LA DÉCISION LÉGUÉE PAR LE §14 EST TRANCHÉE** (§19.7, runbook §7) : les objets globaux n'entrent
+**pas** dans l'archive — c'est une configuration, non une donnée ; les emporter changerait le format
+de la tranche 1, donc le dictionnaire de refus de la tranche 2 et les deux harnais livrés ; et la
+restauration reproduit déjà le chemin d'amorçage, ce que la tranche 2 prouve. **En contrepartie**,
+la sauvegarde du `.env` de production, du fichier de destinataires et des clés privées `age` devient
+une obligation d'exploitation à part entière : une archive parfaite et un `.env` perdu ne restaurent
+rien.
+
+**LE HARNAIS, ET SA NON-COMPLAISANCE ÉPROUVÉE.** `scripts/verify-exploitation.sh` rend **59
+contrôles, aucune anomalie**, deux exécutions. Il exerce le vrai observateur sur une archive
+**réellement produite** par le vrai `scripts/backup.sh` — une archive fabriquée à la main ne
+porterait ni le bon en-tête ni le bon nombre de strophes. **La non-complaisance est ÉPROUVÉE plutôt
+qu'affirmée** : S8 récrit pour juger sur `mtime`, il rend « cas I : S8 s'est laissé abuser par une
+date de modification fraîche », **1 en échec** ; l'observateur a été rétabli et relu aussitôt.
+Chaque contrôle est en outre éprouvé dans les **deux** sens — S4 et S8 ont leur cas « bis » —, un
+contrôle qui alerterait toujours passant sinon inaperçu.
+
+**LA CAMPAGNE COMPLÈTE A ÉTÉ EXÉCUTÉE, ET ELLE A TROUVÉ TROIS ROUGES DONT UN SEUL ÉTAIT UN DÉFAUT.**
+`typecheck` vert, `build` vert, `test:sql` **50 fichiers / 2480 assertions**, `e2e:api` **818
+passés**, `e2e:ui` **549 passés, aucun échec** — INC-188 ne s'est pas reproduite —, `pytest` **244
+passés**, `scripts/verify-sauvegardes.sh` **42 contrôles**, `scripts/verify-exploitation.sh` **59
+contrôles** deux fois, `scripts/verify-scripts.sh` **103 contrôles, 1 anomalie préexistante**
+(INC-186, identique aux sessions précédentes).
+
+**LE SEUL VRAI DÉFAUT ÉTAIT DANS LE HARNAIS DE LA TRANCHE 2, ET IL A ÉTÉ CORRIGÉ À SA CAUSE.**
+`scripts/verify-restauration.sh` exigeait littéralement « **1** objet(s) restauré(s) » — nombre
+valide seulement sur le dépôt objet **vide** du seed (M6), où le témoin est le seul objet. Or toute
+suite E2E qui ingère une pièce jointe en dépose de vrais : MESURÉ, après `e2e:api` et `e2e:mail`, le
+dépôt en porte **quatre** — des `xl.meta` sous `mail-attachments/` —, et l'exercice rendait
+fidèlement « 5 objet(s) restauré(s), aucun manquant ». **Un dépôt sain, une restauration sans faute,
+et pourtant un rouge.** Le nombre est désormais **COMPTÉ** juste après le dépôt du témoin, par le
+même chemin que l'exercice emploie (M5, MinIO ne portant ni `tar` ni `find`). Le contrôle est
+strictement **plus fort** qu'avant. Éprouvé : réglé pour attendre un objet de plus, il rend 1 en
+échec ; rétabli, **36 contrôles, aucune anomalie**.
+
+**DEUX ROUGES ÉTAIENT ÉTRANGERS, ET LEUR LIGNE DE BASE EST ÉTABLIE PAR MESURE** — le `git stash` du
+§2.4 n'était pas applicable, le travail étant déjà committé, si bien que la comparaison a porté sur
+les fichiers : `git diff --name-only 96f9e9e..HEAD -- webapp/ supabase/ e2e/` rend **aucune
+différence**. **INC-189, consignée** : « Alt et flèche REDIMENSIONNENT » d'`Objectifs.test.tsx`
+échoue en campagne — largeur restée à sa valeur de départ, donc un appui dont l'effet n'a pas été
+écrit — et **passe seul deux fois, comme à la seconde campagne complète** (2272 passés). Relève de
+`CRM-081`. **INC-172 complétée** : `dossiers.spec.ts` ligne 276 a échoué **alors que `e2e:ui`
+n'avait pas encore tourné**, ce qui **défait l'hypothèse** de l'entrée — l'état laissé par la suite
+d'interface n'est pas la cause. L'assertion qui tombe est `filed = 0` : une relève qui n'a pas vu le
+message, donc une attente insuffisante entre l'envoi et le classement. Rejoué seul : 2 passés ; la
+campagne de messagerie entière rejouée : **42 passés**.
+
+**UNE ANOMALIE D'ENVIRONNEMENT, ET ELLE EST DITE.** La première exécution de
+`scripts/verify-restauration.sh` s'est arrêtée sur « le conteneur d'usurpation du cas w n'a pas pu
+être créé ». Cause établie : l'image `alpine:3` n'était **pas** dans le cache d'un checkout neuf, et
+le `docker run` du harnais masque sa sortie. L'image tirée, le cas w passe. Ce n'est ni un défaut du
+produit ni une régression, mais le harnais gagnerait à nommer ce prérequis plutôt qu'à mourir dessus.
+
+**Ce qui n'a pas été exécuté, et il faut le dire.** Les `scripts/verify-*.sh` autres que
+`verify-exploitation.sh`, `verify-sauvegardes.sh`, `verify-restauration.sh` et `verify-scripts.sh` :
+**aucun**. La série entière ne tient pas dans une session (`docs/CloudWorker.md` §2.1 ter). Aucune
+capture d'interface n'a été produite : cette tranche ne touche **aucune** surface — ni composant, ni
+route, ni style —, et `CLAUDE.md` §16 n'a donc pas d'objet ici ; les 549 scénarios d'interface verts
+en attestent par ailleurs.
+
+**Où reprendre.** `CRM-080` reste `[~]`, mais **uniquement sur un reste de forme** : ses trois
+tranches sont livrées et prouvées, et il ne manque que le rejeu des `verify-*.sh` que les sessions
+n'ont pas eu le temps d'exécuter. La prochaine session choisit son unité au §4.2 : première unité
+`[~]` du backlog, dans l'ordre du plan, dont il reste du **comportement** à livrer. **Trois lignes du
+backlog restent PÉRIMÉES**, signalées par la décision 483 et non corrigées depuis, car les corriger
+est un geste de documentation que deux sessions ont refusé de substituer au produit : `CRM-034`
+annonce qu'aucun `card_event` `moved` n'existe et que le commentaire de `move_card` n'est conservé
+nulle part ; `CRM-035` annonce que la grille champ × étape n'a aucun écran.

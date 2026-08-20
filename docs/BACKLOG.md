@@ -10790,5 +10790,27 @@ suivante :
             variables du gabarit est porté à **98**, chiffre **compté**.
       - [x] `README.md` §5 et §9, `docs/DAT.md` §10, `CHANGELOG.md` mis à jour dans le même
             changement.
-      - [~] **La campagne complète du dépôt** — voir la note de session ci-dessous : ce qui a été
-            exécuté et ce qui ne l'a pas été y est nommé.
+      - [x] **La campagne complète A ÉTÉ exécutée** : `typecheck` vert, `build` vert, `test:unit`
+            **67 fichiers / 2272 tests** (2e exécution ; la 1re rendait 1 échec **intermittent**,
+            consigné en **INC-189** et étranger — aucun fichier de `webapp/`, `supabase/` ni `e2e/`
+            n'a été touché par la session), `test:sql` **50 fichiers / 2480 assertions**, `e2e:api`
+            **818 passés**, `e2e:ui` **549 passés, aucun échec** — INC-188 ne s'est pas reproduite —,
+            `e2e:mail` **42 passés** (2e exécution ; la 1re rendait l'échec **déjà connu** de
+            `dossiers.spec.ts`, dont **INC-172 a été complétée** : il s'est produit alors que
+            `e2e:ui` n'avait pas encore tourné, ce qui défait l'hypothèse de l'entrée), `pytest`
+            **244 passés**, `scripts/verify-exploitation.sh` **59 contrôles** deux fois,
+            `scripts/verify-sauvegardes.sh` **42 contrôles**, `scripts/verify-restauration.sh`
+            **36 contrôles**, `scripts/verify-scripts.sh` **103 contrôles, 1 anomalie préexistante**
+            (INC-186).
+      - [x] **UN VRAI DÉFAUT TROUVÉ PAR LA CAMPAGNE, CORRIGÉ À SA CAUSE — dans le harnais de la
+            tranche 2.** `scripts/verify-restauration.sh` exigeait littéralement « 1 objet(s)
+            restauré(s) », nombre valide seulement sur le dépôt objet **vide** du seed (M6). MESURÉ :
+            après `e2e:api` et `e2e:mail`, le dépôt en porte **quatre** vrais, et l'exercice rendait
+            fidèlement « 5 objet(s) restauré(s), aucun manquant » — **un dépôt sain, une restauration
+            sans faute, et pourtant un rouge**. Le nombre est désormais **COMPTÉ** par le même chemin
+            que l'exercice emploie ; le contrôle est strictement **plus fort**, et sa
+            non-complaisance est éprouvée par dégradation.
+      - [ ] **Les quarante-six autres `scripts/verify-*.sh` n'ont pas été rejoués**, la série entière
+            ne tenant pas dans une session (`docs/CloudWorker.md` §2.1 ter). C'est le dernier reste
+            de forme de la tranche 3 — et, avec les restes homologues des tranches 1 et 2, la seule
+            chose qui retienne encore `CRM-080` à `[~]`.
