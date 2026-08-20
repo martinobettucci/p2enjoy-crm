@@ -8633,11 +8633,48 @@ suppose n'existe nulle part pour une ligne de coût. Le comportement livré est 
 premier point tant que l'arbitrage d'INC-182 n'est pas rendu**, et ce n'est pas un défaut de
 livraison.
 
-**Tranche 6a — EN COURS** (décision 479). Ce commit ne porte que la spécification complétée, le
-schéma, le contrat de déploiement et le registre : **aucune ligne de code n'est encore écrite**, et
-c'est la règle du §3.2 point 3 de `docs/CloudWorker.md` — la spécification est committée d'abord,
-précisément pour qu'une session interrompue ne perde pas la décision. Cette entrée est réécrite avec
-ce qui est réellement livré et prouvé dès que le code l'est.
+**Tranche 6a — LIVRÉE ET PROUVÉE** (décision 479).
+`supabase/migrations/0052_couts_a_saisir.sql` : la colonne calculée
+`public.reel_saisissable(public.card_costs)`, `stable` et **`security invoker`**, dont le corps est
+`app.can_write_card(ligne.card_id)` — exposée par PostgREST comme une colonne de plus, donc sans
+aucun aller-retour supplémentaire. `webapp/src/lib/couts-a-saisir.ts` : `lireLignesASaisir` dans les
+deux portées du §4.8 — un track, ou tous les tracks lisibles —, en une seule requête et **sans aucun
+filtre de clôture** ; `estSaisissable`, dont le repli est le REFUS ; `estClos` ; `ancienneteEnJours`
+mesurée sur `created_at` ; `compterEnAttente` ; `classerRefusSaisie` ; et `enregistrerReel`, qui
+n'envoie qu'`actual_cost`. Le seed gagne « Impression plaquettes », ligne **sans réel sur le budget
+clôturé** « Salon du web 2025 », posée avant la clôture par le vrai geste.
+
+Preuves vertes : `couts-a-saisir.test.ts` **33 tests**, `supabase/tests/0050_couts_a_saisir.test.sql`
+**16 assertions**, et les contrôles du seed avec les **jetons réels** — trois lignes en attente pour
+le business developer dont une sur un budget clos, `reel_saisissable` vrai pour lui et faux pour la
+lectrice.
+
+**LA MESURE QUE CETTE TRANCHE APPORTE À LA DoD, et qu'aucune preuve d'interface ne pouvait poser** :
+le signal du droit d'écriture et la politique qui l'applique sont **deux mécanismes distincts**, et
+rien ne les oblige structurellement à concorder. La suite pgTAP les **confronte dans les deux sens** :
+là où `reel_saisissable` dit faux, l'écriture touche **zéro** ligne ; là où il dit vrai, elle en
+touche **une**. Une divergence rendrait l'onglet menteur — champ offert sur une ligne refusée, ou
+champ éteint sur une ligne écrivable — sans qu'aucun scénario d'interface ne l'attrape.
+
+**LA PREUVE pgTAP QUE LA DoD RÉCLAME CI-DESSOUS EXISTE DÉJÀ, et elle n'est pas dupliquée ici.** « La
+mise à jour d'`actual_cost` sur un budget clos, avec sa contre-épreuve » est portée par
+`supabase/tests/0049_card_costs.test.sql`, livrée par `CRM-085`, dans les deux sens et aux **deux
+niveaux** — trigger et politique. La rejouer dans la suite 0050 ferait deux sources pour une même
+règle, qui divergeraient au premier ajustement.
+
+**DEUX RÈGLES DE CETTE TRANCHE, ET AUCUNE NE SE DEVINE.** (1) *La lecture ne pose AUCUN filtre de
+clôture*, là où `lireHistogrammeTrack` et `lireCumulWorkspace` en posent un : le §4.8 liste les
+budgets clos, « c'est précisément après la clôture que les factures arrivent ». Une preuve unitaire
+porte donc sur cette **absence**, faute de quoi un `closed_at is null` ajouté par mimétisme viderait
+l'onglet de sa raison d'être en silence. (2) *Le repli du droit se fait vers le REFUS* :
+`reel_saisissable` est une colonne de la RÉPONSE, qu'un cache de schéma PostgREST périmé rend
+**absente** et non nulle ; un `!== false` l'aurait alors rendue saisissable, et l'onglet aurait offert
+des champs dont chaque envoi serait refusé.
+
+**Tranche 6b — RESTE À FAIRE.** La barre d'onglets `?onglet=saisir` sur les deux écrans, la table de
+saisie en série du §5.31, le geste clavier — `Entrée` qui valide et porte le focus sur la ligne
+suivante —, les clés de traduction, les captures aux quatre paliers et le harnais
+`scripts/verify-couts-ecrans.sh`, qu'aucune tranche n'a encore écrit.
 
 - [ ] **Preuves propres à l'onglet**, en plus de celles ci-dessus : le badge de l'onglet porte le
       **même nombre** que la mention « n lignes sans coût réel saisi » de la vue d'ensemble — s'ils

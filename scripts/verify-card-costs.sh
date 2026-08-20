@@ -345,15 +345,37 @@ if docker exec "$DB_CONTAINER" true >/dev/null 2>&1; then
 		fail "aucun trigger de budgets ne regarde card_costs : la brèche de la décision 471 se rouvre"
 	fi
 
-	# Le seed doit porter les quatre lignes exigées par la DoD, dont DEUX sans réel : sans elles,
+	# Le seed doit porter les lignes exigées par la DoD, dont plusieurs sans réel : sans elles,
 	# la mention du §4.4 ne serait pas démontrable et la preuve d'interface resterait verte sur
 	# une table qui ne dit rien.
+	#
+	# RÉVISÉ LE 2026-08-20 PAR `CRM-086` TRANCHE 6a, ET LA RÈGLE A CHANGÉ PAR LIVRAISON. Ce contrôle
+	# attendait QUATRE lignes dont DEUX sans réel. Le seed en porte désormais CINQ dont TROIS :
+	# « Impression plaquettes » a été ajoutée, sans réel, sur le budget CLÔTURÉ « Salon du web
+	# 2025 », parce que la Definition of Done de `CRM-086` exige qu'« une ligne d'un budget clôturé
+	# soit présente et saisissable » dans l'onglet « À saisir » (docs/SPEC-costs.md §4.8) — et que
+	# les deux lignes qui survivaient à une clôture avaient DÉJÀ leur réel, donc ne paraissaient
+	# dans aucun onglet qui ne liste que les réels manquants. Le contrôle est mis à jour, jamais
+	# contourné ni supprimé (CLAUDE.md §18).
 	lignes=$(psql_db -c "select count(*) from public.card_costs")
 	sans_reel=$(psql_db -c "select count(*) from public.card_costs where actual_cost is null")
-	if [ "$lignes" = '4' ] && [ "$sans_reel" = '2' ]; then
-		ok "le seed porte QUATRE lignes dont DEUX sans réel — la mention du §4.4 est démontrable"
+	if [ "$lignes" = '5' ] && [ "$sans_reel" = '3' ]; then
+		ok "le seed porte CINQ lignes dont TROIS sans réel — la mention du §4.4 et l'onglet du §4.8 sont démontrables"
 	else
-		fail "le seed porte « $lignes » ligne(s) dont « $sans_reel » sans réel, 4 et 2 attendues — appliquez supabase/seed/apply-seed.sh"
+		fail "le seed porte « $lignes » ligne(s) dont « $sans_reel » sans réel, 5 et 3 attendues — appliquez supabase/seed/apply-seed.sh"
+	fi
+
+	# ET L'UNE DES TROIS VIT SUR UN BUDGET CLÔTURÉ, ce qui est le seul jeu qui peuple réellement
+	# l'onglet « À saisir » avec une ligne close (§4.8). Le compte ci-dessus resterait vert si les
+	# trois lignes sans réel vivaient toutes sur des budgets ouverts, et la Definition of Done ne
+	# porterait alors sur rien.
+	sans_reel_clos=$(psql_db -c "select count(*) from public.card_costs cc
+		join public.budgets b on b.id = cc.budget_id
+		where cc.actual_cost is null and b.closed_at is not null")
+	if [ "$sans_reel_clos" -ge 1 ]; then
+		ok "au moins une ligne sans réel vit sur un budget CLÔTURÉ — l'onglet du §4.8 est démontrable"
+	else
+		fail "aucune ligne sans réel sur un budget clôturé : « une ligne d'un budget clôturé est présente et saisissable » ne se prouve plus (docs/SPEC-costs.md §4.8)"
 	fi
 
 	# LE CAS DU RESPONSABLE, MOT POUR MOT (§1) : une affaire à DEUX lignes de nature différente,

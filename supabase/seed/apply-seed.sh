@@ -2933,9 +2933,17 @@ done
 #     l'onglet en compte DEUX. Le registre attend l'arbitrage ; le jeu de données rend l'écart
 #     observable au lieu de le laisser théorique.
 #
-#     Elle est posée sur la MÊME affaire que « Production » — « Refonte intranet Ville de Lyon » —,
-#     et donc AVANT la clôture du budget, comme toutes les autres : le trigger refuserait une ligne
-#     neuve sur un budget clos, y compris à la clé de service.
+#     ELLE EST POSÉE SUR « Portail adhérents — MGEN Loire » (…0cc), ET **PAS** SUR « Refonte
+#     intranet Ville de Lyon », ET C'EST UNE CORRECTION FAITE À SA CAUSE. Écrite d'abord sur …0c4,
+#     elle a fait rougir SIX scénarios de `e2e/ui/card-costs.spec.ts` — et ces scénarios avaient
+#     raison : la première puce de ce commentaire promet que cette affaire porte « le cas du
+#     responsable, MOT POUR MOT (§1) », c'est-à-dire DEUX lignes et deux seulement. Une troisième y
+#     aurait cassé le contrat que ce seed s'est donné, et réviser six preuves pour l'accommoder
+#     aurait été corriger le symptôme. …0cc porte déjà « Achat d'espace » sur le budget récurrent,
+#     et aucune preuve n'y compte de lignes.
+#
+#     Elle est posée AVANT la clôture du budget, comme toutes les autres : le trigger refuserait une
+#     ligne neuve sur un budget clos, y compris à la clé de service.
 #
 #   * LA LIGNE QUI MOTIVE LA DOUBLE CONDITION DE LECTURE (§3.1), ET ELLE SEULE LA REND
 #     DÉMONTRABLE. « Formation Data & IA — promo 2026 » vit sur « Formation », que Farida LIT ;
@@ -2958,7 +2966,7 @@ COUTS_SEED=(
 	"5eed0000-0000-4000-8000-0000000000e2|5eed0000-0000-4000-8000-0000000000c4|5eed0000-0000-4000-8000-0000000000c3||Production|350.00|375.00"
 	"5eed0000-0000-4000-8000-0000000000e3|5eed0000-0000-4000-8000-0000000000cc|5eed0000-0000-4000-8000-0000000000c2|5eed0000-0000-4000-8000-0000000000d1|Achat d'espace|900.00|880.00"
 	"5eed0000-0000-4000-8000-0000000000e4|5eed0000-0000-4000-8000-0000000000c7|5eed0000-0000-4000-8000-0000000000c1||Prospection terrain|800.00|"
-	"5eed0000-0000-4000-8000-0000000000e5|5eed0000-0000-4000-8000-0000000000c4|5eed0000-0000-4000-8000-0000000000c3||Impression plaquettes|1200.00|"
+	"5eed0000-0000-4000-8000-0000000000e5|5eed0000-0000-4000-8000-0000000000cc|5eed0000-0000-4000-8000-0000000000c3||Impression plaquettes|1200.00|"
 )
 
 echo

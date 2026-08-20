@@ -21338,3 +21338,77 @@ Definition of Done est détaillée au backlog. Il reste ensuite le **harnais dé
 `scripts/verify-couts-ecrans.sh`, qu'aucune tranche n'a écrit. `CRM-083` reste bloqué par
 **INC-170**. Dix arbitrages attendent : **INC-169**, **INC-170**, **INC-172**, **INC-173**,
 **INC-174**, **INC-176**, **INC-177**, **INC-178**, **INC-180** et **INC-181**.
+
+
+## décision 479 — `CRM-086` tranche 6a : le socle de données de l'onglet « À saisir »
+
+**L'unité, et le choix.** La décision 478 laisse `CRM-086` en `[~]` et désigne la reprise :
+« il reste l'**onglet "À saisir"** du §4.8, qui n'existe sur aucun des trois [écrans] ». C'est le
+cas 1 du §4.2 de `docs/CloudWorker.md`, et l'unité de cette session sans discussion.
+`docs/DESIGN_SYSTEM.md` a été lu **intégralement** avant de toucher à quoi que ce soit
+(`CLAUDE.md` §4).
+
+**L'EXCEPTION DU §3.2 POINT 3 NE S'APPLIQUE QU'À MOITIÉ, ET C'EST CE QUI A DÉCIDÉ LA SESSION.** La
+spécification du §4.8 existe et décrit le COMPORTEMENT de l'onglet en détail. Mais en la lisant
+avant de coder — ce que le §3.2 demande précisément —, **trois points indispensables manquaient**,
+et un quatrième était faux. Le §3.2 prévoit ce cas en toutes lettres : « si en la lisant tu
+constates qu'elle est incomplète ou fausse sur le reste à livrer, alors et alors seulement tu la
+complètes — sur ce point précis, pas en entier ». C'est ce qui a été fait, en **quatre paragraphes
+neufs** (§4.8.1 et §4.8.2), tous **mesurés sur la pile** avant d'être écrits, et committés **avant la
+première ligne de code**.
+
+**LE POINT QUI COMMANDAIT TOUT : COMMENT L'ÉCRAN CONNAÎT LE DROIT D'ÉCRITURE.** Le §4.8 exige qu'une
+ligne lisible mais non écrivable soit rendue « en lecture seule, avec le motif, jamais masquée ».
+C'est le **seul endroit du produit** où l'interface doit connaître un droit d'écriture AVANT de
+rendre son contrôle : partout ailleurs, le design system pose l'inverse — « aucune commande n'est
+éteinte d'avance selon le rôle » (§5.13, §5.16, §5.21, §5.27) —, on envoie et on traduit le refus.
+Et le déduire d'un rôle de workspace serait **faux**, les droits fins ouvrant l'écriture par channel.
+
+La réponse retenue est une **colonne calculée** au sens de PostgREST : une fonction dont l'unique
+argument est le type composite de la table est exposée comme une colonne de plus, et se demande dans
+le même `select`. Le droit reste donc une règle de la base que l'écran **lit**, jamais une règle
+qu'il **rejoue** (`CLAUDE.md` §10), et la lecture ne paie aucun aller-retour supplémentaire.
+
+**`SECURITY INVOKER` EST LA CONDITION DE VALIDITÉ, ET LE DÉFAUT QU'ELLE ÉVITE NE SE VOIT PAS.** En
+`SECURITY DEFINER`, la fonction répondrait pour son propriétaire — `postgres`, qui traverse toute la
+RLS — et rendrait « vrai » à **tout appelant**, `viewer` compris : l'onglet offrirait alors des
+champs dont chaque envoi serait refusé, et le §4.8 se lirait à l'envers. Le défaut ne se voit ni à la
+lecture du SQL — `security invoker` étant le défaut, il ne s'écrit pas — ni à l'usage sous un compte
+qui écrit de toute façon. Il est donc **mesuré** en pgTAP (`prosecdef` faux), au seed avec des jetons
+réels, et nommé à `docs/PROD_MIGRATIONS.md` §3 comme la vérification d'après-application.
+
+**DEUX MANQUES DE SPÉCIFICATION CONSIGNÉS SANS ÊTRE TRANCHÉS.** **INC-182** : le §4.8 affirme que le
+badge de l'onglet « est le même nombre que celui de la mention du §4.4 » ; cette égalité est
+structurellement fausse, pour deux causes indépendantes — l'onglet liste les budgets **clôturés** que
+l'histogramme exclut, et la mention est rendue **par devise** là où un badge est un nombre unique.
+Mesuré 2 contre 1 sur le seed dès que la ligne exigée par la Definition of Done est posée. Le badge
+compte donc **ce que le tableau liste** (§4.8.2) : un badge qui annoncerait autre chose mentirait sur
+l'écran même où il est posé. **INC-183** : le seuil d'ancienneté que `docs/DESIGN_SYSTEM.md` §5.31
+suppose n'existe nulle part pour une ligne de coût — celui d'une card est une donnée de son étape de
+workflow —, et l'inventer serait la valeur métier codée en dur que `CLAUDE.md` §3 proscrit. La
+colonne sera rendue sans variante de danger.
+
+**LE SEED PORTAIT UN CONTRAT QU'IL NE TENAIT PAS.** Son commentaire annonçait que les deux lignes
+survivant à leur clôture « peuplent l'onglet "À saisir" du §4.8, qui liste précisément les lignes des
+budgets clos » — or leur réel est **déjà saisi**, et elles ne paraissent donc dans aucun onglet qui
+ne liste que les réels manquants. La Definition of Done exige qu'« une ligne d'un budget clôturé soit
+présente et **saisissable** » ; sans données, cette preuve ne pouvait porter sur rien. « Impression
+plaquettes » est donc posée, sans réel, sur « Salon du web 2025 », **avant** sa clôture et par le
+vrai geste.
+
+**Ce qui a été vérifié.** `couts-a-saisir.test.ts` **33 tests**, dont les deux plus importants
+portent sur des **absences** : la lecture ne pose aucun filtre de clôture, et le repli du droit se
+fait vers le REFUS quand la colonne calculée est absente de la réponse.
+`supabase/tests/0050_couts_a_saisir.test.sql` **16 assertions**, dont la confrontation du signal et
+de la politique **dans les deux sens**. Le seed vérifie avec les **jetons réels** que le business
+developer obtient trois lignes en attente dont une close et `true` sur chacune, et que la lectrice
+obtient `false` sur celle qu'elle lit.
+
+**Où reprendre.** La **tranche 6b** : la barre d'onglets `?onglet=saisir` sur les deux écrans, la
+table de saisie en série du §5.31, le geste clavier — `Entrée` valide et porte le focus sur la ligne
+suivante —, les clés de traduction, les captures aux quatre paliers, et le harnais
+`scripts/verify-couts-ecrans.sh`, qu'aucune tranche n'a encore écrit. Le socle est en place : la
+lecture, l'écriture, le droit et le compteur existent et sont prouvés. `CRM-083` reste bloqué par
+**INC-170**. Douze arbitrages attendent : **INC-169**, **INC-170**, **INC-172**, **INC-173**,
+**INC-174**, **INC-176**, **INC-177**, **INC-178**, **INC-180**, **INC-181**, **INC-182** et
+**INC-183**.
