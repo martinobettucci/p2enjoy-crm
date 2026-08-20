@@ -21299,8 +21299,9 @@ sans souris ». Celui-là est **imputable au changement**, et c'est exactement c
 existe pour attraper : elle énumérait SIX entrées de navigation dans l'ordre visuel, et la septième
 — « Coûts » — s'insère entre « Objectifs » et « Ma journée ». La règle a changé par LIVRAISON, la
 preuve est donc **révisée avec son ordre réel** et non contournée (`CLAUDE.md` §18) — le précédent
-est écrit dans le fichier lui-même, `CRM-060` l'ayant déjà fait pour « Contacts ». Rejouée :
-**13 passés**.
+est écrit dans le fichier lui-même, `CRM-060` l'ayant déjà fait pour « Contacts ». Rejouée seule :
+**13 passés** ; puis la suite **entière** rejouée une dernière fois pour constater qu'aucune
+correction n'en avait cassé une autre : **539 passés, aucun échec** en 17,2 min.
 
 `e2e:mail` a rendu **40 passés, 2 échecs** — `ingestion.spec.ts` et `backfill.spec.ts` —, lancée
 immédiatement derrière les 17,3 minutes d'`e2e:ui`. Rejouée **seule** onze minutes plus tard, sur le

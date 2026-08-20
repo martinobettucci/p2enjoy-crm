@@ -8556,7 +8556,10 @@ track parce que c'est le même objet à une autre portée ; `lireCumulWorkspace`
 leurs lignes en **trois** requêtes, cumulés côté client APRÈS la RLS. Preuves vertes :
 `couts-ecrans.test.ts` **57 tests** (15 neufs), `CoutsWorkspace.test.tsx` **17 tests**,
 `routes.test.tsx` **13 scénarios** après révision, `e2e/ui/couts-workspace.spec.ts` **7 scénarios**,
-quatre captures OBSERVÉES sous `docs/captures/CRM-086/couts-workspace-*.jpg`.
+quatre captures OBSERVÉES sous `docs/captures/CRM-086/couts-workspace-*.jpg`. Campagne complète
+verte : `typecheck`, `test:unit` **2200 tests**, `build`, `test:sql` **2464 assertions**, `e2e:api`
+**816**, `e2e:ui` **539**, `e2e:mail` **42**, `pytest` **244**. `coquille.spec.ts` a été **révisée**
+— l'entrée « Coûts » est la septième de la barre latérale, et sa preuve clavier en énumérait six.
 
 **LA MESURE QUE CETTE TRANCHE APPORTE À LA DoD, et qu'aucune preuve unitaire ne pouvait poser** :
 « le cumul du workspace est mesuré **après** RLS — une preuve montre que le total d'un profil
