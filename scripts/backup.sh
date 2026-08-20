@@ -99,18 +99,19 @@ esac
 [ "$RETENTION" -ge 1 ] \
 	|| die "BACKUP_RETENTION_DAYS doit être un entier supérieur ou égal à 1 (reçu « $RETENTION »)."
 
-# R7, R8 — le répertoire de sortie. Le chemin est CANONISÉ avant comparaison : `/tmp/../<dépôt>`
-# désigne le dépôt aussi sûrement que son chemin direct.
+# R7, R8 — le répertoire de sortie. Le chemin est CANONISÉ **avant** d'être créé : `realpath -m`
+# résout `..` et les liens sans exiger que la cible existe. L'ordre compte — canoniser après un
+# `mkdir` créerait dans le dépôt le répertoire qu'on s'apprête à refuser.
 SORTIE="${OUTPUT_DIR_ARG:-${BACKUP_OUTPUT_DIR:-/var/backups/p2enjoy}}"
-mkdir -p "$SORTIE" 2>/dev/null \
-	|| die "le répertoire de sortie « $SORTIE » n'est pas inscriptible."
-SORTIE=$(cd "$SORTIE" && pwd -P)
-RACINE_CANONIQUE=$(cd "$REPO_ROOT" && pwd -P)
+SORTIE=$(realpath -m "$SORTIE")
+RACINE_CANONIQUE=$(realpath -m "$REPO_ROOT")
 case "$SORTIE/" in
 	"$RACINE_CANONIQUE"/*)
 		die "le répertoire de sortie « $SORTIE » est dans le dépôt Git : une sauvegarde chiffrée n'a rien à y faire."
 		;;
 esac
+mkdir -p "$SORTIE" 2>/dev/null \
+	|| die "le répertoire de sortie « $SORTIE » n'est pas inscriptible."
 [ -w "$SORTIE" ] || die "le répertoire de sortie « $SORTIE » n'est pas inscriptible."
 
 # R5, R6 — Docker et le conteneur de base. La sauvegarde lit la base PAR le conteneur (M1) : la
