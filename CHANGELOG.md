@@ -68,6 +68,17 @@ d'exécuter le code attendu.
   passage réussi, et échec en cours de répertoire qui rend un code non nul, n'émet aucun notify et
   n'annonce aucun succès.
 
+- **La garde de confirmation d'instantané est désormais éprouvée AU terminal, avec un vrai PTY**
+  (`CRM-087`, `docs/JOURNAL.md` décision 491, `scripts/lib/spawn-pty.py`). Le harnais couvrait la
+  branche « hors terminal interactif » — refus quand `[ -t 0 ]` est faux — et laissait la branche
+  « au terminal » couverte par simple lecture de code, ce qui laissait `CRM-087` en `[~]` sur ce
+  point. Deux contrôles nouveaux comblent l'écart : (i) la saisie « non » entraîne le refus, nomme
+  la garde et n'atteint jamais Docker ; (ii) la saisie « oui » laisse la garde libérer le geste, et
+  `require_docker` échoue immédiatement sur un `DOCKER_HOST` volontairement bidon — ce message ne
+  peut apparaître qu'APRÈS la confirmation, il prouve donc son acceptation sans qu'aucun conteneur
+  ne soit créé. Le petit utilitaire `scripts/lib/spawn-pty.py` n'a aucune dépendance externe et ne
+  sert qu'au harnais.
+
 - **La série entière des `scripts/verify-*.sh` REJOUÉE en une session, en mode `--rapide`** —
   soixante harnais, trente-six verts et vingt-quatre rouges, tous triés et consignés dans
   `docs/INCONSISTENCY_REPORT.md`. **INC-190, INC-191 et INC-192** posent le constat : la série

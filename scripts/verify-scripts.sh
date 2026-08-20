@@ -2,6 +2,8 @@
 # @verifies CRM-002 (docs/BACKLOG.md) — Definition of Done des scripts de lancement et du gabarit
 # @verifies CRM-015 (docs/BACKLOG.md) — secret BuildKit npm_ca facultatif et sans fuite
 # @verifies CRM-017 (docs/BACKLOG.md) — rôle propriétaire explicite des migrations d'extension
+# @verifies CRM-087 (docs/BACKLOG.md) — garde et progression de « ./runProd.sh --migrate » au
+#           terminal, éprouvées par un vrai PTY (scripts/lib/spawn-pty.py)
 # @verifies docs/JOURNAL.md décision 15 (liste exhaustive des variables), décision 16 (gardes),
 #           décision 251 (`MAIL_TEAM_DOMAIN` déclaré avant son consommateur CRM-051)
 # @verifies docs/JOURNAL.md décisions 98 et 99 (gardes d'hôte : identifiants Docker, ports pris),
@@ -679,6 +681,65 @@ else
 	else
 		fail "runProd.sh --migrate a refusé un profil dev sans nommer la garde"
 	fi
+fi
+
+# --- Refus et acceptation au TERMINAL (garde (c) éprouvée avec un vrai PTY) --------------------
+# @verifies CRM-087 (docs/BACKLOG.md), docs/JOURNAL.md décisions 489 et 490
+#
+# Les blocs précédents éprouvent la garde HORS TTY : « instantané exigée hors terminal
+# interactif ». La garde a un second bras — AU TERMINAL — que la simple redirection `</dev/null`
+# ne peut pas prouver, parce que `[ -t 0 ]` renvoie alors faux et le code emprunte l'autre
+# branche. Il faut un vrai pseudo-terminal.
+#
+# `scripts/lib/spawn-pty.py` fournit ce PTY avec la bibliothèque standard de Python (aucune
+# dépendance externe). Deux cas :
+#
+#   1. saisie « non » — la garde doit REFUSER et nommer l'instantané ;
+#   2. saisie « oui » — la garde doit ACCEPTER, puis rendre la main aux étapes suivantes ; on
+#      pointe alors `DOCKER_HOST` sur une socket inexistante pour que `require_docker` échoue
+#      immédiatement avec « le démon Docker ne répond pas ». Ce message ne peut apparaître qu'APRÈS
+#      la confirmation, et il prouve donc son acceptation sans jamais lancer de conteneur.
+#
+# Si `python3` est absent (poste minimal, image de CI dépouillée), les deux contrôles sont IGNORÉS
+# — jamais annoncés verts par omission (CLAUDE.md §25).
+
+MIGRATE_TTY_PROMPT="Un instantané complet de la VM a-t-il été pris"
+SPAWN_PTY="$REPO_ROOT/scripts/lib/spawn-pty.py"
+
+if command -v python3 >/dev/null 2>&1 && [ -x "$SPAWN_PTY" ]; then
+	# 1. Refus au terminal : réponse « non ». On ne veut PAS que la garde acquiesce.
+	set +e
+	P2ENJOY_ENV_FILE="$AS_PROD" \
+		"$SPAWN_PTY" 15 "$WORK/migrate-tty-non.log" "$MIGRATE_TTY_PROMPT" "non" \
+		./runProd.sh --migrate
+	code_tty_non=$?
+	set -e
+	if [ "$code_tty_non" -ne 0 ] \
+		&& grep -q "confirmation d'instantané refusée" "$WORK/migrate-tty-non.log" \
+		&& ! grep -q "démon Docker" "$WORK/migrate-tty-non.log"; then
+		ok "runProd.sh --migrate refuse une saisie autre que « oui » au terminal"
+	else
+		fail "runProd.sh --migrate n'a pas refusé la saisie « non » au terminal (code=$code_tty_non)"
+	fi
+
+	# 2. Acceptation au terminal : réponse « oui ». La garde laisse passer et on tombe au démon
+	#    Docker, rendu inatteignable par un DOCKER_HOST bidon — aucun conteneur n'est créé.
+	set +e
+	P2ENJOY_ENV_FILE="$AS_PROD" DOCKER_HOST="unix://$WORK/no-such-docker.sock" \
+		"$SPAWN_PTY" 15 "$WORK/migrate-tty-oui.log" "$MIGRATE_TTY_PROMPT" "oui" \
+		./runProd.sh --migrate
+	code_tty_oui=$?
+	set -e
+	if [ "$code_tty_oui" -ne 0 ] \
+		&& ! grep -q "confirmation d'instantané" "$WORK/migrate-tty-oui.log" \
+		&& grep -q "démon Docker" "$WORK/migrate-tty-oui.log"; then
+		ok "runProd.sh --migrate accepte « oui » au terminal et progresse vers require_docker"
+	else
+		fail "runProd.sh --migrate n'a pas laissé passer « oui » au terminal (code=$code_tty_oui)"
+	fi
+else
+	skip "simulation TTY de la confirmation d'instantané : python3 ou scripts/lib/spawn-pty.py absent"
+	skip "acceptation TTY de la confirmation d'instantané : python3 ou scripts/lib/spawn-pty.py absent"
 fi
 
 if P2ENJOY_ENV_FILE="$AS_PROD" ./resetMe.sh --yes >"$WORK/reset-prod.log" 2>&1; then

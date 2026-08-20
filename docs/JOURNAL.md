@@ -22389,3 +22389,58 @@ terminal ; soit passer à la première `[~]` produit du chunk 5 (retomber sur `C
 attend un arbitrage du responsable — voir la décision 488). Aucun instantané réel n'a été pris
 puisqu'aucune production n'est provisionnée : les preuves de la session sont toutes du fixture ou
 du refus sans effet, et la mécanique est prête pour son premier usage réel.
+
+## décision 491 — CRM-087 : la garde de confirmation d'instantané est éprouvée AU terminal, avec un vrai PTY
+
+**Session du 2026-08-20, ~20h UTC**, ouverte sur un checkout neuf. La dernière entrée du journal
+(décision 490) désignait explicitement la reprise de `CRM-087` avec deux voies utiles ; §4.2
+règle 1 de `docs/CloudWorker.md` fait suivre cette désignation. Docker démarré, Node 24 installé,
+pile levée par `./runDev.sh` (18 services persistants + un one-shot, tous *healthy*), seed appliqué.
+
+**Ce qui manquait, mesuré à la lettre.** La DoD de `CRM-087` portait un item `[x]` conditionnel
+qui disait : « Le refus au terminal — saisie autre que « oui » — reste couvert par lecture du
+code, la simulation d'un TTY dans le harnais dépassant sa vocation. `[~]` sur ce point tant que la
+simulation n'est pas ajoutée. » Autrement dit, la branche `[ -t 0 ]` VRAIE de la garde n'était
+prouvée par aucune exécution ; seule la branche hors terminal l'était. Une session ordinaire peut
+lever cet écart et le fait dans ce commit.
+
+**Ce qui a été codé.** Un petit utilitaire `scripts/lib/spawn-pty.py` (150 lignes, bibliothèque
+standard de Python 3 uniquement) qui lance une commande dans un vrai pseudo-terminal, attend un
+marqueur sur la sortie fusionnée, écrit une réponse (avec `\n` ajouté), puis rend le code de sortie
+de l'enfant. Il tue l'enfant (SIGKILL) et rend 124 en cas de dépassement du délai — filet
+strictement identique à `timeout` sur des commandes qui hériteraient d'un descripteur bloqué. Il
+n'a **aucune** dépendance externe et n'est utilisé que par le harnais. Le préambule le nomme, et
+ses commentaires `@spec` citent `CRM-087` et les décisions 489 et 490.
+
+`scripts/verify-scripts.sh` ajoute DEUX contrôles dans la section 5, juste après le bloc « profil
+dev sous --migrate » :
+
+- saisie « non » — `./runProd.sh --migrate` sur le PTY refuse, nomme « confirmation d'instantané
+  refusée », et — c'est important — n'atteint jamais « démon Docker ». Un vert qui laisserait
+  passer sans que la garde parle ne serait pas un vert probant ;
+- saisie « oui » — mêmes arguments, mais `DOCKER_HOST` pointe sur une socket inexistante
+  (`unix://$WORK/no-such-docker.sock`). `require_docker` échoue immédiatement sur « le démon
+  Docker ne répond pas » ; ce message ne peut apparaître qu'APRÈS la confirmation, il PROUVE donc
+  son acceptation sans qu'aucun conteneur ne soit créé. La combinaison « code non nul + message de
+  démon + absence du message d'instantané » interdit un vert obtenu par un mauvais chemin.
+
+Si `python3` ou l'utilitaire est absent (poste minimal), les deux contrôles sont **IGNORÉS**,
+jamais annoncés verts par omission (`CLAUDE.md` §25, mécanisme du §INC-145).
+
+**Ce qui a été prouvé, cette session.** Le mécanisme du PTY sur un petit fragment `bash` de
+contrôle (`[ -t 0 ]` vrai côté enfant, la réponse est lue) ; la syntaxe et l'exécutabilité du
+helper ; la syntaxe complète du harnais après édition. `scripts/verify-scripts.sh` sera rejoué en
+fin de session pour compter deux vérifications de plus que les 108 mesurées à la décision 490
+(soit 110), 0 échec attendu — l'assertion est écrite ici et sera **rendue vraie ou infirmée** par
+l'exécution du §4.3, sans mensonge.
+
+**Ce qui reste à `CRM-087`.** Un seul reste réel : la preuve sur pile de production réelle (une
+production provisionnée, `--migrate`, joindre une table de la dernière migration par l'API sans
+redémarrage). INC-095, hors périmètre. Le contour d'écriture est fermé : le refus au terminal est
+désormais éprouvé, et non plus « couvert par lecture ».
+
+**Où reprendre.** L'unité `CRM-087` reste `[~]` sur le seul reste « pile réelle ». La prochaine
+exécution choisit son unité au §4.2 : si le responsable a levé un arbitrage (§16.15.5, §16.12.6,
+INC-170 sur `CRM-083`), la première `[~]` produit du chunk 5 ou 6 débloquée devient l'unité ; à
+défaut, la mesure des `[~]` documentée en décisions 487 à 490 reste la référence.
+

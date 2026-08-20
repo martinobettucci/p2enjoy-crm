@@ -10918,9 +10918,12 @@ runbook décrivent la fenêtre de maintenance et sa reprise par instantané.
       fichier de profil `dev` ; `--migrate` sans confirmation d'instantané hors terminal ; `.env`
       portant `APPLY_MIGRATIONS=true` refusé au lancement ordinaire comme sous `--migrate` ; `.env`
       inchangé après un `--migrate` refusé ; migration échouant en cours de répertoire, qui laisse
-      un code non nul, n'émet aucun `notify` et n'annonce aucun succès. Le refus au terminal —
-      saisie autre que « oui » — reste couvert par lecture du code, la simulation d'un TTY dans le
-      harnais dépassant sa vocation. `[~]` sur ce point tant que la simulation n'est pas ajoutée.
+      un code non nul, n'émet aucun `notify` et n'annonce aucun succès. **Le refus au terminal**
+      — saisie autre que « oui » — est désormais éprouvé par un VRAI PTY (`scripts/lib/spawn-pty.py`,
+      décision 491) : deux nouveaux contrôles vérifient (i) que « non » entraîne le refus en
+      nommant la garde et sans jamais atteindre Docker, (ii) que « oui » laisse la garde libérer le
+      geste vers `require_docker`, dont l'échec sur un `DOCKER_HOST` bidon prouve que la
+      confirmation a bien été acceptée sans qu'aucun conteneur ne soit créé.
 - [ ] **Preuve sur pile réelle** : un assemblage de production jetable, monté sur un `.env` de
       profil `prod` à secrets jetables, base vierge, `--migrate`, puis constat que les 52 fichiers
       sont appliqués et qu'une table de la dernière migration est **joignable par l'API** sans
