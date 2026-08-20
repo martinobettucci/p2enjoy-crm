@@ -237,7 +237,8 @@ Conforme à `docs/DESIGN_SYSTEM.md` §4 :
 | `/tracks/:slugTrack/couts` | **Coûts d'un track** — `CRM-086` tranche 3, `docs/SPEC-costs.md` §4.0 et §4.2. Une paire de barres par budget ouvert. Hors de `ROUTES` : son titre est le nom du track, donc une donnée. Aucune collision avec `/tracks/:slugTrack/:slugChannel` — react-router classe ses routes par spécificité, et un segment littéral l'emporte sur un segment dynamique de même rang |
 | `/tracks/:slugTrack/couts/:idBudget` | **Détail d'un budget** — `CRM-086` tranche 4, `docs/SPEC-costs.md` §4.0 et §4.3. Une paire de barres par occurrence, et la liste des lignes de coût. Hors de `ROUTES` : son titre est le nom du budget. Le budget est désigné par son identifiant, l'unicité du nom ne portant que sur les budgets non clôturés (§2.1) |
 | `/ma-journee` | État vide de la journée |
-| `/reglages` | Réglages — état vide, et rappel des sources de configuration |
+| `/reglages` | Réglages — index des sections, et rappel des sources de configuration |
+| `/reglages/comptes-mail` | **Configuration des comptes entrants IMAP** — `CRM-088`, `docs/SPEC-mail-subsystem.md` §21.2. Une SIXIÈME section de réglages, hors de `ROUTES` comme les cinq autres : elle est atteinte depuis l'index, jamais depuis la barre latérale. Distincte de `/reglages/messagerie`, qui **lit** là où celle-ci **écrit** |
 | `/tracks/:slugTrack[/:slugChannel]` | Route d'un track et de ses onglets — `CRM-021`. Avec un channel ouvert, elle rend son **board kanban** — `CRM-041`, `docs/SPEC-workflow-engine.md` §7 |
 | `/tracks/:slugTrack/:slugChannel/cards/:idCard` | Détail d'une card : son **formulaire conditionnel** — `CRM-037`. La card est désignée par son identifiant, `docs/SPEC-cards.md` ne lui donnant aucun slug |
 | toute autre | Route inconnue, avec retour explicite vers `/` |

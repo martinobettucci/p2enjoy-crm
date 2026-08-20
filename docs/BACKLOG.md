@@ -10945,7 +10945,7 @@ démarrage, et un registre ferait diverger le chemin de production du seul chemi
 (décisions 20 et 489). Aucun retour arrière automatique n'est écrit : la reprise est la restauration
 de l'instantané de VM, avec la perte assumée de tout ce qui a été écrit depuis.
 
-### CRM-088 — Réglages : configuration des comptes entrants IMAP `[ ]`
+### CRM-088 — Réglages : configuration des comptes entrants IMAP `[~]`
 *Créée le 2026-08-20 — `docs/JOURNAL.md` décision 492. Motif : le §2.3 de
 `docs/SPEC-mail-subsystem.md` décrit depuis `CRM-000` des « formulaires de configuration » qui
 « proposent remplacer le mot de passe », et le §13.1 les a différés vers « une unité de réglages
@@ -10960,33 +10960,45 @@ un champ de mot de passe laissé vide conserve le secret enregistré ; les refus
 traduits par un dictionnaire fermé et **aucun corps d'erreur du serveur n'est affiché** ; les trois
 lectures du §13.4 sont exercées par les trois profils du seed ; captures produites **et observées**.
 
-- [ ] **Spécification écrite et committée AVANT la première ligne de code** —
+- [x] **Spécification écrite et committée AVANT la première ligne de code** —
       `docs/SPEC-mail-subsystem.md` §21, douze sous-chapitres opposables, rédigés **après mesure**
       sur la pile réelle (§21.6) ; `docs/DESIGN_SYSTEM.md` §5.34 pour la forme.
-- [ ] **Écran `/reglages/comptes-mail`**, hors de `ROUTES`, chargé à la demande, atteint depuis
+- [x] **Écran `/reglages/comptes-mail`**, hors de `ROUTES`, chargé à la demande, atteint depuis
       l'index des réglages **avant** « État de la messagerie » — on configure une boîte avant d'en
-      superviser la relève (§21.2).
-- [ ] **Liste des comptes visibles** : une `ul` de lignes (§5.34), connexion en donnée technique,
+      superviser la relève (§21.2). L'ordre de l'index est **vérifié par une assertion**, non
+      seulement écrit.
+- [x] **Liste des comptes visibles** : une `ul` de lignes (§5.34), connexion en donnée technique,
       mode de sécurité en toutes lettres, pilule d'état à quatre valeurs. Aucune politique nouvelle :
       la RLS de `0022` décide seule de ce que chacun voit (§21.3).
-- [ ] **Formulaire de création et de modification**, dans le flux, replié par défaut, préremplí des
-      valeurs courantes, mot de passe toujours vide (§21.4, §21.5).
-- [ ] **Le mot de passe laissé vide est OMIS de l'appel**, jamais envoyé vide : mesuré, un appel
+- [x] **Formulaire de création et de modification**, dans le flux, replié par défaut, préremplí des
+      valeurs courantes, mot de passe toujours vide (§21.4, §21.5). Le sélecteur énumère les boîtes
+      **visibles**, plus celles que l'appelant peut créer.
+- [x] **Le mot de passe laissé vide est OMIS de l'appel**, jamais envoyé vide : mesuré, un appel
       sans `p_password` conserve `secret_id` et les trois paramètres d'ingestion (§21.5, §21.6).
-- [ ] **Dictionnaire fermé des refus** (§21.7), avec son **repli nommé** : un refus inconnu se dit
+- [x] **Dictionnaire fermé des refus** (§21.7), avec son **repli nommé** : un refus inconnu se dit
       sans recopier le corps du serveur — qui divulgue `secret_id`, mesuré, `INC-193`.
-- [ ] **Aucune commande éteinte d'avance selon le rôle** : le sélecteur de boîte visée porte ses
+- [x] **Aucune commande éteinte d'avance selon le rôle** : le sélecteur de boîte visée porte ses
       deux options pour tout le monde, et la lectrice lit le refus traduit (§21.4).
-- [ ] **Test unitaire dédié** du module de lecture et d'écriture, et du composant.
-- [ ] **Test d'API dédié** : une lectrice configure sa propre boîte, et se voit refuser la boîte
-      système — avec son jeton réel, hors interface.
-- [ ] **Test E2E d'interface dédié** : parcours complet d'un administrateur, et un refus réel obtenu
-      par un port hors bornes.
-- [ ] **Vérification visuelle** : captures aux paliers du §7 de `docs/DESIGN_SYSTEM.md`, produites
-      **et observées** (`CLAUDE.md` §16).
-- [ ] **Documentation dans le même changement** : `docs/manual.md`, `docs/SPEC-webapp.md` §5.2,
+- [x] **Test unitaire dédié** du module de lecture et d'écriture, et du composant :
+      `webapp/src/lib/mail-comptes.test.ts` (**31 assertions**) et
+      `webapp/src/app/ReglagesComptesMail.test.tsx` (**17 scénarios**), tous verts.
+- [x] **Test d'API dédié** : trois scénarios ajoutés à `e2e/api/comptes-entrants.spec.ts`, la
+      suite rendant **14 verts** sur la pile réelle. La lectrice crée sa boîte (`200`), se voit
+      refuser la boîte système (`403 forbidden`) avec sa contre-épreuve, et `INC-193` est **figée**
+      par une assertion qui rougira le jour où la divulgation sera fermée.
+- [x] **Test E2E d'interface dédié** : `e2e/ui/reglages-comptes-mail.spec.ts`, **8 scénarios
+      verts, console vierge**. Parcours depuis l'index des réglages, modification du libellé de la
+      boîte système suivie de la **preuve que le secret déchiffre toujours**, refus réel sur un port
+      hors bornes, état vide d'une lectrice avec son geste, et les quatre paliers.
+- [x] **Vérification visuelle** : six captures sous `docs/captures/CRM-088/`, produites **et
+      observées**. **DEUX DÉFAUTS Y ONT ÉTÉ TROUVÉS ET CORRIGÉS** : la ligne d'une boîte personnelle
+      se repliait dès 1440 px, la liste étant bornée à `72ch` — portée à `104ch` ; et le texte
+      d'aide du mot de passe promettait une conservation **inexistante** sur une création — deux
+      textes désormais, sans garde de saisie. Une limite observée est écrite plutôt que corrigée :
+      la pilule neutre perd sa forme sur la ligne survolée, le mot restant porteur.
+- [x] **Documentation dans le même changement** : `docs/manual.md`, `docs/SPEC-webapp.md` §5.2,
       `CHANGELOG.md` sous `[Non publié]`.
-- [ ] **Écarts nommés, jamais suggérés** (§21.1) : aucun test de connexion depuis l'écran — la route
+- [x] **Écarts nommés, jamais suggérés** (§21.1) : aucun test de connexion depuis l'écran — la route
       interne exige le jeton d'API du service, qu'un navigateur ne peut pas porter —, aucune
       suppression, aucun paramètre d'ingestion éditable, aucune identité sortante.
 
@@ -10995,3 +11007,10 @@ et **aucune** migration : tout le contrat backend existe depuis `CRM-052`, et ce
 exactement la surface qui manquait pour l'exercer. Elle ne corrige pas `INC-193` — la divulgation de
 `secret_id` par le corps d'un refus de contrainte est étrangère à cet écran, qui se borne à ne
 jamais l'afficher.
+
+*Pourquoi l'unité reste `[~]` et non `[x]`.* Un seul reste, et il est nommé : **la campagne
+complète des `scripts/verify-*.sh` n'a pas été rejouée en entier** dans la session de livraison, et
+aucun harnais `scripts/verify-mail-comptes.sh` propre à cette surface n'est écrit — les autres
+unités d'interface en portent un. Tout le reste de la Definition of Done est vert et mesuré. La
+prochaine exécution peut clore l'unité en écrivant ce harnais, non complaisant et avec son témoin,
+puis en le rejouant.

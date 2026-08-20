@@ -13,7 +13,50 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Ajouté
+
+- **Un écran pour déclarer les boîtes de réception : « Réglages ▸ Comptes de messagerie
+  entrante »** (`CRM-088`, `docs/SPEC-mail-subsystem.md` §21, `docs/DESIGN_SYSTEM.md` §5.34,
+  `docs/manual.md` chapitre 4.12). Le §2.3 du sous-système de messagerie décrivait ces formulaires
+  depuis `CRM-000`, et le §13.1 les avait différés vers « une unité de réglages restant à créer »
+  qu'aucune ligne du backlog ne portait : `CRM-052` et `CRM-053` traînaient depuis l'écart « aucun
+  écran ». La moitié **entrante** est livrée.
+
+  L'écran liste les boîtes visibles par l'appelant — la RLS posée par `CRM-052` décide seule de ce
+  que chacun voit — et porte un formulaire qui **crée** ou **corrige** une boîte par le seul chemin
+  d'écriture existant, `upsert_mail_inbound_account`. Aucune migration, aucune politique, aucune
+  fonction nouvelle : tout le contrat backend existait, c'est la surface qui manquait.
+
+  **Le mot de passe n'est jamais affiché, et un champ laissé vide CONSERVE le secret enregistré** —
+  le paramètre est alors omis de l'appel, jamais envoyé vide. Sur une boîte qui n'existe pas encore
+  il est obligatoire, et le texte d'aide le dit au lieu de promettre une conservation inexistante.
+
+  **Aucune commande n'est éteinte d'avance selon le rôle** : une lectrice voit l'option « boîte
+  système », l'envoie, et lit le refus traduit — mesuré, elle configure en revanche **sa propre
+  boîte**, la fonction n'exigeant l'administration que pour la boîte système ou celle d'autrui.
+
+  **Aucun corps d'erreur du serveur n'atteint l'écran** : les refus sont traduits par un
+  dictionnaire fermé de onze issues, avec un repli nommé pour ce qui n'est pas reconnu. Le motif est
+  mesuré, et il est sérieux — voir `INC-193` ci-dessous.
+
+  **Écarts nommés plutôt que suggérés** : aucun bouton « Tester la connexion » depuis l'écran — la
+  route interne du service exige un jeton qu'un navigateur ne peut pas porter —, aucune suppression
+  de boîte, aucun paramètre d'ingestion éditable, et aucune identité sortante SMTP (`CRM-053` garde
+  son écart).
+
 ### Décidé
+
+- **Une colonne révoquée ressort par le corps d'un refus de contrainte** (`INC-193`,
+  `docs/INCONSISTENCY_REPORT.md`, `docs/JOURNAL.md` décision 492). MESURÉ en écrivant `CRM-088` : le
+  champ `details` d'un refus `23514` rendu par PostgREST contient la **ligne fautive entière**,
+  `secret_id` compris — la seule colonne que `CRM-052` révoque à `authenticated`, et dont la preuve
+  de refus n° 6 dit qu'« aucun chemin PostgREST ne peut l'exposer ». La référence relevée dans le
+  `details` est exactement celle que la clé de service lit.
+
+  **Le comportement est laissé inchangé** et l'arbitrage est demandé au responsable, la sécurité des
+  données ne se tranchant pas seule (`CLAUDE.md` §26). Ce qui est acquis dès maintenant : l'écran de
+  `CRM-088` n'affiche **jamais** ce corps d'erreur, ce qui borne la divulgation à qui appelle l'API
+  directement — ce n'est pas une correction, et le dire autrement serait mentir.
 
 - **La production migrera par le `migrations-runner`, sur geste explicite, et le retour arrière est
   l'instantané de la VM** (`docs/JOURNAL.md` décision 489, unité `CRM-087`, `docs/PROD_MIGRATIONS.md`

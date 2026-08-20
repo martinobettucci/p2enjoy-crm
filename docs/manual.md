@@ -45,7 +45,7 @@
 
 | Chapitre | Contenu | Unité | État |
 |---|---|---|---|
-| 10 | Connecter sa boîte de réception (IMAP) | `CRM-052` | À livrer |
+| 10 | Connecter sa boîte de réception (IMAP) | `CRM-052`, `CRM-088` | **Livré avec son écran, vérifié visuellement** — voir le chapitre 4.12. « Réglages ▸ Comptes de messagerie entrante » déclare la boîte système de l'espace de travail et la boîte personnelle de chacun : serveur, port, sécurité, identifiant et mot de passe. Le mot de passe n'est **jamais** affiché, et un champ laissé vide conserve celui qui est enregistré. Ce qui manque : **aucun bouton « Tester la connexion »** depuis l'écran, et **aucune suppression** de boîte |
 | 11 | Configurer son adresse d'expédition (SMTP) | `CRM-053` | À livrer |
 | 12 | L'adresse email d'une card : à quoi elle sert | `CRM-040`, `CRM-013`, `CRM-054` | **Partiellement livré** : l'adresse est **générée** à la création de chaque affaire, non devinable, et depuis `CRM-013` **non modifiable** — le refus est appliqué par le serveur et tient hors de l'écran (chapitre 4.2). Ce à quoi elle sert — recevoir les messages et les rattacher à l'affaire — relève de `CRM-054` |
 | 13 | L'inbox : dossiers, messages non classés, classement, **suggestion** | `CRM-055`, `CRM-057`, `CRM-060` | À livrer |
@@ -1379,11 +1379,32 @@ opération d'exploitation et non un parcours produit.
 
 ### 4.12 Les boîtes de réception déclarées
 
-**Ce que le produit sait faire, et ce qu'il n'offre pas encore.** Un espace de travail peut
-déclarer une **boîte système** — celle qui reçoit tout ce qui est adressé aux affaires — et chaque
-personne peut déclarer **la sienne**. Une boîte porte un serveur, un port, un mode de sécurité, un
-identifiant et un mot de passe. **Aucun écran ne permet encore de les déclarer** : c'est
-l'exploitant qui les configure, et le chapitre décrit ce que le produit garantit lorsqu'il le fait.
+**Ce que le produit sait faire.** Un espace de travail peut déclarer une **boîte système** — celle
+qui reçoit tout ce qui est adressé aux affaires — et chaque personne peut déclarer **la sienne**.
+Une boîte porte un serveur, un port, un mode de sécurité, un identifiant et un mot de passe.
+
+**Où se fait la déclaration : « Réglages ▸ Comptes de messagerie entrante »** (`CRM-088`). L'écran
+liste les boîtes que vous voyez, avec leur connexion et leur état, et porte un formulaire pour les
+déclarer ou les corriger. Il vient **avant** « État de la messagerie » dans la liste des réglages :
+on configure une boîte avant d'en superviser la relève.
+
+- **Choisissez d'abord la boîte visée.** La liste propose les boîtes que vous voyez, plus celle que
+  vous pouvez créer — la vôtre si vous n'en avez pas encore, et la boîte système de l'espace de
+  travail. Choisir une boîte déjà déclarée remplit le formulaire de ses valeurs.
+- **La boîte système et celle d'un collègue sont réservées à une administratrice ou un
+  administrateur.** L'option reste proposée à tout le monde, et le produit vous répond en toutes
+  lettres si vous n'en avez pas le droit : un bouton grisé ne dirait pas pourquoi.
+- **Le mot de passe est toujours vide à l'ouverture, et il n'est jamais affiché.** Le laisser vide
+  **conserve** celui qui est enregistré ; le remplir le **remplace**. Sur une boîte qui n'existe
+  pas encore, il est obligatoire — sans lui, aucune connexion ne serait possible.
+- **Changer la connexion remet l'état à « En attente »** et efface le dernier incident : un
+  « Connectée » obtenu avec l'ancien serveur ne dirait plus rien du nouveau.
+- **Ce que l'écran n'offre pas**, et c'est écrit plutôt que suggéré : aucun bouton *Tester la
+  connexion* — l'essai est fait par le service de messagerie, et son résultat s'affiche dans l'état
+  de la boîte ; aucune **suppression** de boîte ; aucun réglage des dossiers relevés ni de la
+  profondeur d'historique, que l'écran ne touche jamais.
+
+Le reste du chapitre décrit ce que le produit garantit une fois la boîte déclarée.
 
 **Le mot de passe n'est jamais relisible, par personne.** Il n'est pas enregistré dans la même
 table que le reste : il part dans un coffre chiffré, et la table ne conserve qu'une **référence**.
