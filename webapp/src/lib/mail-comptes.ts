@@ -197,9 +197,16 @@ export function classerEnregistrement(
 	if (message.includes('mail_inbound_accounts_port_borne')) return 'port-invalide'
 	if (message.includes('mail_inbound_accounts_securite')) return 'securite-invalide'
 	if (message.includes('mail_inbound_accounts_username_borne')) return 'identifiant-invalide'
-	// Le port absent (`23502`) et le port non entier (`22P02`) sont deux refus de la MÊME saisie,
-	// mesurés §21.6. Les distinguer à l'écran ferait deux phrases pour un seul champ à corriger.
+	// Le port absent (`23502`, message nommant la colonne) et le port non entier (`22P02`, message
+	// ne nommant que le TYPE) sont deux refus de la MÊME saisie, mesurés §21.6. Les distinguer à
+	// l'écran ferait deux phrases pour un seul champ à corriger.
+	//
+	// LE SECOND EST ATTRIBUÉ AU PORT PARCE QU'IL NE PEUT DÉSIGNER QUE LUI : des paramètres que ce
+	// module envoie, `p_imap_port` est le seul entier — les trois autres arguments entiers de la
+	// fonction (`p_backfill_months`) ne sont jamais transmis (§21.1). L'attribution est donc une
+	// propriété de l'appel, pas une devinette sur la prose du serveur.
 	if (message.includes('imap_port')) return 'port-invalide'
+	if (message.includes('invalid input syntax for type integer')) return 'port-invalide'
 	// Un appelant sans session reçoit `permission denied for function …` sous `401` — mesuré : le
 	// `GRANT EXECUTE` de `0022` ne va pas à `anon`.
 	if (statutHttp === 401) return 'session-expiree'
