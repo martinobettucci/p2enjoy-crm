@@ -1,5 +1,10 @@
 // @verifies CRM-084 (docs/BACKLOG.md) — budgets, occurrences et clôture, TRANCHE 2 : parcours
 //           d'interface de l'administration des budgets d'un track
+// @verifies CRM-086 (docs/BACKLOG.md) — un point de SA Definition of Done vit ici, et nulle part
+//           ailleurs : « la clôture d'un budget portant des réels non saisis avertit et COMPTE
+//           (§4.1) ; prouvé à l'écran, et prouvé qu'elle n'est pas empêchée ». Le geste appartient à
+//           l'administration des budgets, donc sa preuve aussi — la loger dans les écrans de coûts
+//           ferait éprouver un geste depuis un écran qui ne le porte pas.
 // @verifies docs/SPEC-costs.md §2.1 (nom, devise, enveloppe facultative), §2.2 (une occurrence se
 //           clôture indépendamment de son budget), §3.2 (seul un administrateur écrit), §4.1
 //           (la table, l'interrupteur des clôturés, la clôture qui avertit), §4.7 (les états)
@@ -238,6 +243,96 @@ test.describe("les gestes d'administration (docs/SPEC-costs.md §3.2, §4.1)", (
 		} finally {
 			await supprimerParNom(request, nom)
 			await supprimerParNom(request, nomModifie)
+		}
+	})
+
+	test('la clôture d’un budget portant des réels non saisis les COMPTE, et n’est pas empêchée', async ({
+		page,
+		request,
+	}) => {
+		// LA PREUVE QUE LA Definition of Done DE `CRM-086` RÉCLAME, et que le scénario précédent ne
+		// pouvait pas porter : il clôture un budget qu'il vient de créer, donc SANS aucune ligne de
+		// coût, et lit la phrase « aucune ligne […] n'attend son coût réel ». Le §4.1 exige l'autre
+		// cas — celui où des réels manquent —, qui est le seul où l'avertissement a un objet.
+		//
+		// LE BUDGET ET SA LIGNE SONT CRÉÉS POUR CE SCÉNARIO, jamais empruntés au seed : clôturer
+		// « Publicité 2026 » le ferait sortir des écrans de coûts, et une exécution tuée avant son
+		// `finally` laisserait quatre preuves d'autres fichiers rouges sans que leur cause soit
+		// lisible.
+		const nom = 'E2E Budget Clôture Comptée'
+		const LIGNE = 'E2E Cout Cloture'
+		/** « Portail adhérents — MGEN Loire » : une affaire du seed, dont aucune preuve ne compte les lignes. */
+		const CARD = '5eed0000-0000-4000-8000-0000000000cc'
+		const CHEMIN_COUTS = `${URL_API}/rest/v1/card_costs`
+
+		const purger = async () => {
+			await request.delete(`${CHEMIN_COUTS}?label=eq.${encodeURIComponent(LIGNE)}`, {
+				headers: enTetesService(),
+			})
+			await supprimerParNom(request, nom)
+		}
+		await purger()
+
+		try {
+			await connecter(page)
+			const bloc = await ouvrirBudgetsDuTrack(page)
+
+			// --- Le budget, par le VRAI geste du produit ------------------------------------------
+			await bloc.getByRole('button', { name: 'Nouveau budget' }).click()
+			const creation = bloc.getByTestId('formulaire-budget')
+			await creation.getByLabel('Nom').fill(nom)
+			await creation.getByRole('button', { name: 'Créer' }).click()
+			await expect(creation).toBeHidden()
+			await expect(bloc.getByRole('rowheader', { name: nom })).toBeVisible()
+
+			// --- La ligne sans coût réel, par la clé de service -------------------------------------
+			// Elle n'est PAS posée par l'interface : la fiche d'affaire est la surface de `CRM-085`, et
+			// la traverser ici ferait dépendre cette preuve d'un écran qu'elle n'éprouve pas.
+			const budgets = await request.get(
+				`${CHEMIN_BUDGETS}?name=eq.${encodeURIComponent(nom)}&select=id`,
+				{ headers: enTetesService() },
+			)
+			expect(budgets.status(), 'le budget créé doit être lisible par la clé de service').toBe(200)
+			const idBudget = ((await budgets.json()) as readonly { id: string }[])[0]?.id
+			expect(idBudget, 'le budget créé doit porter un identifiant').toBeTruthy()
+
+			const pose = await request.post(CHEMIN_COUTS, {
+				headers: { ...enTetesService(), 'Content-Type': 'application/json' },
+				data: { card_id: CARD, budget_id: idBudget, label: LIGNE, estimated_cost: 42 },
+			})
+			expect(pose.status(), 'la ligne sans coût réel doit être posée').toBeLessThan(300)
+
+			// --- La clôture AVERTIT ET COMPTE -------------------------------------------------------
+			await page.reload()
+			const bloc2 = await ouvrirBudgetsDuTrack(page)
+			await bloc2.getByRole('button', { name: `Clôturer le budget ${nom}` }).click()
+			const confirmation = bloc2.getByTestId('confirmation-cloture-budget')
+			// LE NOMBRE EST ÉCRIT, et c'est tout l'objet de cette preuve : « ce budget porte n lignes
+			// sans coût réel ; elles resteront saisissables après la clôture ». Un blanc, ou la phrase
+			// du cas nul, se lirait comme « rien à saisir » sur un budget qui en porte.
+			await expect(confirmation.getByTestId('cloture-sans-reel')).toContainText('1 ligne(s)');
+			await expect(confirmation.getByTestId('cloture-sans-reel')).toContainText(
+				'resteront saisissables après la clôture',
+			)
+			// ELLE N'EST PAS EMPÊCHÉE — c'est une décision de gestion, pas une garde (§4.1).
+			const bouton = confirmation.getByRole('button', { name: 'Clôturer' })
+			await expect(bouton).toBeEnabled()
+			await bouton.click()
+			await expect(confirmation).toBeHidden()
+			await expect(bloc2.getByRole('rowheader', { name: nom })).toHaveCount(0)
+
+			// --- ET LA LIGNE RESTE SAISISSABLE APRÈS LA CLÔTURE -------------------------------------
+			// La phrase de l'avertissement n'est pas une promesse en l'air : elle est mesurée sur
+			// l'onglet « À saisir » du §4.8, qui liste les lignes des budgets CLOS et rend leur champ
+			// actif. Sans cette dernière assertion, l'écran pourrait promettre ce que le produit ne
+			// tient pas.
+			await page.goto('/tracks/studio-web/couts?onglet=saisir')
+			const ligne = page.getByTestId('couts-a-saisir-ligne').filter({ hasText: LIGNE })
+			await expect(ligne).toHaveCount(1)
+			await expect(ligne.getByTestId('couts-a-saisir-clos')).toBeVisible()
+			await expect(ligne.getByTestId('couts-a-saisir-champ')).toBeEnabled()
+		} finally {
+			await purger()
 		}
 	})
 

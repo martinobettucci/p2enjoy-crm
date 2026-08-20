@@ -21463,3 +21463,99 @@ lecture, l'écriture, le droit et le compteur existent et sont prouvés. `CRM-08
 **INC-170**. Douze arbitrages attendent : **INC-169**, **INC-170**, **INC-172**, **INC-173**,
 **INC-174**, **INC-176**, **INC-177**, **INC-178**, **INC-180**, **INC-181**, **INC-182** et
 **INC-183**.
+
+
+## décision 480 — `CRM-086` tranche 6b : la surface de l'onglet « À saisir », et le harnais de l'unité
+
+**L'unité, et le choix.** La décision 479 laisse `CRM-086` en `[~]` et désigne la reprise : « la
+tranche 6b : la barre d'onglets `?onglet=saisir` sur les deux écrans, la table de saisie en série du
+§5.31, le geste clavier, les clés de traduction, les captures aux quatre paliers, et le harnais
+`scripts/verify-couts-ecrans.sh` ». C'est le cas 1 du §4.2 de `docs/CloudWorker.md`, et l'unité de
+cette session sans discussion. `docs/DESIGN_SYSTEM.md` a été lu **intégralement** avant de toucher à
+quoi que ce soit (`CLAUDE.md` §4).
+
+**L'EXCEPTION DU §3.2 POINT 3 S'APPLIQUE ENTIÈREMENT, ET C'EST LA DIFFÉRENCE AVEC LA SESSION
+PRÉCÉDENTE.** La spécification du §4.8 existe, la décision 479 l'a complétée des trois points qui
+lui manquaient (§4.8.1 et §4.8.2), et le §5.31 du design system décrit la table. Rien n'était
+incomplet ni faux sur le reste à livrer : aucune ligne de spécification n'a donc été réécrite, et la
+session est allée **directement au code**. Le commit documentaire d'ouverture qu'une session en
+échec se serait donné n'existe pas.
+
+**CE QUI EST LIVRÉ.** `webapp/src/app/OngletsCouts.tsx` — la barre d'onglets des deux écrans — et
+`webapp/src/app/CoutsASaisir.tsx` — la zone à onglets et la table de saisie en série. Les vues
+d'ensemble des deux écrans descendent chacune dans leur propre composant, pour que **la barre
+d'onglets soit rendue quel que soit l'état de leur lecture** : un histogramme en erreur, ou un track
+sans budget ouvert, retirerait sinon l'accès à un onglet dont les lignes existent — et l'onglet
+liste précisément les budgets **clôturés** que l'histogramme exclut.
+
+**LA RÈGLE DE CETTE TRANCHE QUI NE SE DEVINE PAS : `aria-current` EST POSÉ À LA MAIN.** Les deux
+onglets partagent le même CHEMIN et ne diffèrent que par leur chaîne de requête (§4.0), que
+`NavLink` ne compare pas : il poserait l'attribut sur les **deux** entrées. C'est le seul endroit du
+produit où deux liens de navigation ne se distinguent pas par leur chemin, et c'est la conséquence
+directe de la décision 475, qui a rangé l'onglet dans la chaîne de requête pour ne pas dupliquer
+chaque adresse.
+
+**DEUX RÈGLES DU §5.31 ONT ÉTÉ RÉVISÉES PAR LA LIVRAISON, avec leur motif écrit dans le document.**
+(1) *Le fond de succès ne s'estompe pas.* Le §5.31 écrivait « un fond `--color-success-soft` qui
+s'estompe » ; le §4.8, lui, écrit que la ligne « reste marquée **jusqu'au prochain chargement de
+l'onglet** ». Les deux ne peuvent pas être vrais ensemble, et un minuteur qui effacerait la marque
+serait la temporisation arbitraire que `CLAUDE.md` §18 proscrit : le fond s'installe et **demeure**.
+(2) *La tabulation traverse une cible par ligne, et non aucune.* Le §5.31 demandait qu'elle « ne
+quitte pas la colonne de saisie » ; la colonne « Affaire » porte un lien, seule autre cible de la
+ligne, et l'ôter du parcours de tabulation le rendrait inatteignable au clavier — ce que le §8
+interdit sans exception. Ce que la règle visait est tenu : c'est `Entrée` qui porte la série, d'un
+champ « Réel » au suivant.
+
+**UN DÉFAUT TROUVÉ EN REGARDANT UNE CAPTURE**, et il a été écrit au design system plutôt que corrigé
+à tort : une ligne **gagne de la hauteur** quand sa mention paraît. Le §5.31 pose des lignes de
+44 px et pose aussi que les mentions du §5.7 ter vivent « sous le champ, dans la ligne » ; « Vous ne
+pouvez pas modifier cette affaire. » se rend sur deux lignes, et l'écart est celui que le §5.21
+assume déjà pour sa liste plate. Les 44 px restent la hauteur d'une ligne **au repos**.
+
+**LE HARNAIS DE L'UNITÉ EXISTE ENFIN** — `scripts/verify-couts-ecrans.sh`, que la Definition of Done
+réclamait depuis la tranche 1 et qu'aucune n'avait écrit : **76 contrôles, aucune anomalie**. Il
+porte les quatre surfaces, les seize captures des quatre paliers plus les trois états nommés par la
+DoD, les règles que le code porte et qu'aucune suite ne rendrait rouges, la colonne calculée en base
+avec son mode d'évaluation, le seed dans l'état attendu, sept suites Vitest, la suite pgTAP, les
+quatre parcours d'interface, et **trois dégradations** qui doivent rendre une preuve rouge. Un de
+ses contrôles a été corrigé à sa première exécution : cherchant le mot `updated_at`, il rendait
+rouge le **commentaire** qui explique pourquoi cette colonne n'est pas employée.
+
+**Ce qui a été vérifié pour l'unité.** `CoutsASaisir.test.tsx` **22 tests**, `couts-a-saisir.test.ts`
+**33**, `CoutsTrack.test.tsx` **16** et `CoutsWorkspace.test.tsx` **17** après révision,
+`e2e/ui/couts-a-saisir.spec.ts` **5 scénarios**, **sept captures OBSERVÉES**. Les deux preuves
+d'écran ont été révisées par LIVRAISON, et non contournées : leur client factice sert la lecture de
+l'onglet à part — l'effet d'un enfant s'exécute avant celui de son parent, et la lecture du badge
+consommait le premier rang de leur séquence —, et l'absence d'action de l'état vide est désormais
+éprouvée **dans le bloc de l'état vide**, l'écran portant maintenant deux liens de navigation.
+
+**LA PREUVE D'ÉCRAN QUI MANQUAIT À LA DoD, ET QUI EST LIVRÉE AVEC.** Le point « la clôture d'un
+budget portant des réels non saisis avertit et **compte** » n'était prouvé nulle part : le scénario
+de `CRM-084` clôture un budget qu'il vient de créer, donc SANS ligne, et lit la phrase du cas nul ;
+`scripts/verify-budgets.sh` ne vérifiait que la présence des quatre clés dans le code. Un contrôle
+de clés dit qu'un texte existe, jamais qu'un écran le rend. Le scénario ajouté crée son budget et sa
+ligne, lit le compte « 1 ligne(s) », constate que la clôture **n'est pas empêchée**, et vérifie
+enfin sur l'onglet du §4.8 que la ligne reste **saisissable** après la clôture — sans quoi
+l'avertissement promettrait ce que le produit ne tient pas.
+
+**Où reprendre.** `CRM-086` reste `[~]`, et **aucun point de sa Definition of Done n'est plus à la
+portée d'une session** : le seul reste est l'**arbitrage d'INC-182**, qui décide ce que le badge doit
+annoncer et sans lequel le premier point est inatteignable. Le comportement livré est celui du
+§4.8.2 — le badge compte ce que le tableau LISTE —, et il tombera par arbitrage, jamais par
+livraison. La prochaine session choisit donc son unité au §4.2 : première unité `[~]` du backlog
+dans l'ordre du plan dont il reste du COMPORTEMENT à livrer, sinon la première `[ ]`. `CRM-083`
+reste bloqué par **INC-170**.
+
+**UNE ANOMALIE ÉTRANGÈRE CONSIGNÉE, JAMAIS CORRIGÉE AU PASSAGE — INC-184.** Le contrôle des classes
+engendrées (`scripts/lib/classes-css.mjs`) lit **toute** chaîne littérale d'une expression
+`className`, comparaisons comprises : `etat.statut === 'enregistre' ? …` lui fait annoncer
+« classes absentes du CSS produit : enregistre invalide ». Il ne devient pas complaisant — il ajoute
+des noms, il n'en retire aucun —, mais il rougit sur du code correct. La tranche 6b a sorti les deux
+comparaisons du `className`, avec son motif écrit dans le composant ; le contrôle rend de nouveau
+ses trois seules anomalies préexistantes. Corriger l'outil demanderait de lire l'arbre syntaxique,
+comme `i18n.test.ts` a dû le faire pour la même raison, et il sert quatre harnais : c'est un
+arbitrage, pas une correction de passage.
+
+Treize arbitrages attendent : **INC-169**, **INC-170**, **INC-172**, **INC-173**, **INC-174**,
+**INC-176**, **INC-177**, **INC-178**, **INC-180**, **INC-181**, **INC-182**, **INC-183** et
+**INC-184**.

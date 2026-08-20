@@ -3159,3 +3159,46 @@ seconde, non livrée et nommée.
 3. la seconde phrase du §5.31 est **retirée** : l'ancienneté est écrite en durée et ne porte aucun
    signal chromatique, la colonne étant déjà triée du plus ancien au plus récent — l'ordre porte
    alors l'information que la teinte devait porter.
+
+## Consigné le 2026-08-20 — un contrôle du harnais qui prend une COMPARAISON pour une classe
+
+### INC-184 — `scripts/lib/classes-css.mjs` lit toute chaîne littérale d'un `className`, comparaisons comprises
+
+**Ce qui est mesuré, et comment.** La table de saisie du §5.31 rend le fond d'une ligne selon son
+état. Écrit de la façon la plus directe :
+
+```
+className={['border-b border-border', etat.statut === 'enregistre' ? 'bg-success-soft' : 'hover:bg-hover'].join(' ')}
+```
+
+le contrôle des classes engendrées rend alors :
+
+```
+classes citées : 307
+classes absentes du CSS produit : enregistre h-10 invalide py-0.5 text-text-1
+```
+
+`enregistre` et `invalide` ne sont pas des classes : ce sont les **valeurs comparées** d'un état.
+Le contrôle extrait « toutes les chaînes littérales situées dans une expression `className` », ce
+que son propre en-tête annonce, et une comparaison écrite là y entre comme le reste.
+
+**Ce que cela coûte, et ce que cela ne coûte pas.** Le contrôle ne devient pas complaisant : il
+ajoute des noms, il n'en retire aucun, et une classe réellement absente resterait signalée. Il
+devient en revanche **rouge sur du code correct**, ce qui pousse à la seule issue disponible —
+sortir la comparaison du `className` —, et c'est ce que la tranche 6b a fait, en écrivant le motif
+dans le composant. Deux constantes calculées avant le JSX, et le contrôle rend de nouveau ses trois
+seules anomalies préexistantes (INC-158 : `h-10`, `py-0.5`, `text-text-1`).
+
+**Pourquoi ce n'est pas corrigé au passage.** `CLAUDE.md` §3.1 : le défaut est étranger à l'unité de
+la session, et il touche un outil dont dépendent quatre harnais (`verify-webapp.sh`,
+`verify-liste.sh`, `verify-board.sh`, `verify-formulaire.sh`). Le corriger demanderait de distinguer
+une chaîne **rendue** d'une chaîne **comparée** — c'est-à-dire de lire l'arbre syntaxique plutôt que
+le texte, exactement le chemin qu'`i18n.test.ts` a dû prendre pour la même raison (INC-070).
+
+**Arbitrage attendu.** Deux issues :
+
+1. le contrôle lit l'**arbre syntaxique** et ne retient que les chaînes réellement concaténées dans
+   la valeur de l'attribut — le chemin d'`i18n.test.ts`, mais un outil de plus à entretenir ;
+2. la **convention est écrite** : aucune comparaison de chaîne dans un `className`, l'état étant
+   calculé avant le JSX. C'est ce que la tranche 6b a appliqué de fait ; l'écrire au design system
+   §11 la rendrait opposable au lieu de la laisser se redécouvrir.
