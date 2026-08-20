@@ -48,7 +48,7 @@
 | 10 | Connecter sa boîte de réception (IMAP) | `CRM-052` | À livrer |
 | 11 | Configurer son adresse d'expédition (SMTP) | `CRM-053` | À livrer |
 | 12 | L'adresse email d'une card : à quoi elle sert | `CRM-040`, `CRM-013`, `CRM-054` | **Partiellement livré** : l'adresse est **générée** à la création de chaque affaire, non devinable, et depuis `CRM-013` **non modifiable** — le refus est appliqué par le serveur et tient hors de l'écran (chapitre 4.2). Ce à quoi elle sert — recevoir les messages et les rattacher à l'affaire — relève de `CRM-054` |
-| 13 | L'inbox : dossiers, messages non classés, classement | `CRM-055`, `CRM-057` | À livrer |
+| 13 | L'inbox : dossiers, messages non classés, classement, **suggestion** | `CRM-055`, `CRM-057`, `CRM-060` | À livrer |
 | 14 | Répondre depuis une card ou depuis l'inbox | `CRM-058` | À livrer |
 | 15 | Modèles d'emails, signature et séquences de relance | `CRM-063` | À livrer |
 | 16 | Que faire quand un compte mail est en erreur | `CRM-059` | **Livré avec son écran, vérifié visuellement** — voir le chapitre 6. « Réglages ▸ État de la messagerie » montre la dernière relève réussie et le dernier incident de chaque boîte visible, ainsi que la file sortante en attente et en échec définitif. Ce qui manque : aucune alerte n'est envoyée, l'écran reste le seul endroit où le constater |
@@ -1518,6 +1518,28 @@ l'affaire dans la liste, puis validez : le message rejoint l'affaire, son histor
 trace, et vous le retrouvez ensuite **des deux côtés** — dans l'affaire et sous son dossier dans
 l'inbox. Ranger exige le droit d'**écrire** sur l'affaire choisie, et celui de **voir** le message.
 Une affaire archivée ou en corbeille est refusée, avec son motif.
+
+**La suggestion de classement.** Quand l'expéditeur d'un message non classé est un **contact** de
+votre carnet et qu'il n'est rattaché qu'à **une seule** affaire en cours, le produit vous le dit :
+un encadré « **Suggestion de classement** » apparaît au-dessus du bouton « Classer dans une
+affaire ». Il nomme l'affaire, la rend cliquable pour que vous puissiez aller la vérifier, écrit la
+raison de la suggestion — « l'expéditeur est un contact rattaché à cette affaire » —, et propose
+« **Classer dans cette affaire** », qui range le message d'un seul geste.
+
+C'est une **suggestion, pas une décision** :
+
+- elle ne range **rien** toute seule. Tant que vous n'avez pas appuyé, le message reste non classé ;
+- « Classer dans une affaire » reste offert à côté, et propose **toutes** les affaires : une
+  suggestion peut désigner la mauvaise, et vous gardez le dernier mot ;
+- elle ne vous donne **aucun droit de plus**. Si vous n'avez pas le droit d'écrire sur l'affaire
+  proposée, le geste est refusé, exactement comme un rangement à la main ;
+- elle n'apparaît que si vous **pouvez voir** l'affaire suggérée. Sinon, l'encadré n'est pas
+  affiché du tout : le produit ne nomme jamais une affaire qui ne vous est pas ouverte ;
+- elle est calculée **à l'arrivée du message** et n'est plus recalculée ensuite. Rattacher le
+  contact à une seconde affaire ne la fait pas disparaître.
+
+La plupart des messages n'en portent aucune, et c'est normal : la règle demande un expéditeur connu
+**et** une seule affaire en cours.
 
 **Tout se fait au clavier.** La tabulation parcourt les dossiers, la liste puis le message ;
 Entrée ouvre. Le dossier retenu et le message ouvert sont annoncés aux lecteurs d'écran, et pas

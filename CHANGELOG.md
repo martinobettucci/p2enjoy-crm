@@ -15,6 +15,34 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **L'inbox montre enfin la suggestion de classement, et la range d'un seul geste** (`CRM-060`
+  sous-tranche 2 bis, `docs/SPEC-contacts.md` §8.8, `docs/DESIGN_SYSTEM.md` §5.4 ter,
+  `docs/manual.md` §4.15). Depuis le 2026-08-18, le produit **calcule** une suggestion à l'arrivée
+  d'un courrier : quand l'expéditeur est un contact du carnet rattaché à **une seule** affaire en
+  cours, cette affaire est retenue comme indice. Cette suggestion vivait en base sans qu'aucun
+  écran ne la montre.
+
+  Le panneau de lecture d'un message **non classé** porte désormais un encadré « **Suggestion de
+  classement** » : il nomme l'affaire, la rend **cliquable** pour aller la vérifier, écrit la raison
+  en toutes lettres — « l'expéditeur est un contact rattaché à cette affaire » — et propose
+  « **Classer dans cette affaire** ».
+
+  **C'est une suggestion, pas une décision.** Elle ne range rien toute seule ; « Classer dans une
+  affaire » reste offert à côté avec la liste complète, parce qu'une suggestion peut désigner la
+  mauvaise affaire ; elle n'accorde **aucun droit** — sans le droit d'écrire sur l'affaire proposée,
+  le geste est refusé comme un rangement à la main ; et elle **n'apparaît pas du tout** lorsque
+  l'affaire suggérée n'est pas lisible par celui qui regarde, le produit ne nommant jamais ce qu'il
+  cache. Aucune date, aucun score : la règle ne produit ni l'une ni l'autre.
+
+- **Un correspondant de démonstration, et un quatrième courrier qui arrive pour de bon**
+  (`CRM-060` sous-tranche 2 bis, `docs/SPEC-mail-subsystem.md` §11.4, `docs/SPEC-seed.md` §2.19).
+  L'environnement de développement provisionne une **boîte extérieure** — celle d'un contact du
+  carnet, sur son propre domaine —, et le jeu de démonstration lui fait **réellement expédier** un
+  message vers la boîte de l'espace de travail. Il y arrive non classé **et suggéré**, ce qui rend
+  l'encadré ci-dessus démontrable sur des données réelles plutôt que sur un écran vide. Rien n'est
+  forgé en base : la soumission est authentifiée et la relève est réelle. Cette boîte n'appartient
+  pas au produit — le CRM n'y relève jamais.
+
 - **L'onglet « À saisir » : les coûts réels se saisissent à la suite, sans ouvrir les affaires une
   par une** (`CRM-086` tranche 6b, `docs/SPEC-costs.md` §4.0 et §4.8, `docs/DESIGN_SYSTEM.md` §5.31,
   `docs/manual.md` §5 octies). Les deux écrans de coûts — celui d'un track et celui de l'espace de
