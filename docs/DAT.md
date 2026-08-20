@@ -698,6 +698,7 @@ cela ferait entrer une dépendance structurante dans le bundle pour deux écrans
 | `budgets`, `budget_occurrences` | enveloppes d'un track et leurs instances manuelles | `tracks`, `app.can_read_track` |
 | `card_costs` | lignes de coût d'une affaire | `cards`, `budgets`, `app.can_read_card`, `app.can_write_card` |
 | Écrans de coûts (webapp) | histogramme du track, détail par occurrence, cumul du workspace | PostgREST ; **agrégation calculée après RLS**, jamais par la clé de service |
+| Onglet « À saisir » (webapp) | saisie en série des coûts réels, sur les deux écrans à onglets (`docs/SPEC-costs.md` §4.8) | PostgREST ; **une seule lecture**, dont le droit d'écriture de chaque ligne est une COLONNE CALCULÉE de la base (`public.reel_saisissable`, migration 52), jamais un rôle relu par l'écran |
 
 **Flux, et le seul point délicat.** L'écran de cumul du workspace lit `card_costs` avec le **jeton
 de l'appelant** et agrège côté client, ou par une vue soumise à la RLS. Il n'existe aucun chemin où
