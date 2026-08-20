@@ -4233,11 +4233,20 @@ CRUD, adresse email générée, responsable, montant, archivage, corbeille.
             ISO décalant toute échéance de l'écart de fuseau. Comportement inchangé, arbitrage
             attendu.
       - [x] `docs/manual.md` §4.7 réécrit, `CHANGELOG.md` mis à jour dans le même changement.
-- [ ] **La protection de colonne de `current_step_id` et d'`email_local_part` n'est pas livrée.**
-      C'est mot pour mot la Definition of Done de `CRM-013`, unité `[ ]` distincte, désormais
-      **partiellement débloquée** — deux de ses six cibles existent. Le trigger **génère** l'adresse ;
-      il ne la protège pas en mise à jour. L'écart est **figé par deux assertions** de la suite
-      pgTAP, qui deviendront rouges à `CRM-013`.
+- [x] **~~La protection de colonne de `current_step_id` et d'`email_local_part` n'est pas livrée.~~
+      LIVRÉE, et cette ligne était PÉRIMÉE — constaté par mesure le 2026-08-20, session
+      d'observation.** `current_step_id` est fermée depuis `CRM-034` (INC-049, migration `0012`), et
+      `email_local_part` depuis `CRM-013` (migration `0014_colonnes_protegees.sql`). MESURÉ sur la
+      pile debout et seedée : `has_column_privilege('authenticated','public.cards','current_step_id','UPDATE')`
+      rend `f`, `has_column_privilege('authenticated','public.cards','email_local_part','UPDATE')`
+      rend `f`. Les **deux assertions figées** qui annonçaient la livraison sont désormais des
+      `throws_ok` rendant `42501 permission denied for table cards`
+      (`supabase/tests/0012_cards.test.sql` §6, retournées par `CRM-013` et `CRM-034` selon
+      décision 51). Une supplémentaire vit dans `supabase/tests/0013_move_card.test.sql` lignes 144
+      à 158. Elle relevait donc de la **Definition of Done de `CRM-013`**, désormais partiellement
+      close (deux de ses six cibles closes ; il lui reste `audit_log` et `api_tokens.token_hash`,
+      dus par `CRM-072` et `CRM-073`). L'écart signalé par cette ligne n'existe plus. Ligne
+      corrigée sans autre changement, dans l'esprit de décision 486.
 - [ ] **Aucune card sur un workflow dérivé dans le seed** — INC-046 (voir ci-dessus). La divergence
       de `CRM-032` reste donc démontrée par ses étapes et ses transitions, jamais par une card qui
       les emprunterait.
@@ -4249,11 +4258,13 @@ boucle qui garantisse. **Les deux dernières le sont depuis le 2026-08-16** : qu
 d'interface sur session réelle — sept en lecture, sept en écriture — et onze captures observées,
 portés par les champs d'en-tête de la fiche (`docs/SPEC-cards.md` §15 et §15 bis).
 
-**L'unité reste `[~]`, et pour deux écarts qui ne lui appartiennent pas.** Le premier est la
-protection de colonne de `current_step_id` et d'`email_local_part`, qui est mot pour mot la
-Definition of Done de `CRM-013` — unité `[ ]` distincte ; deux assertions de la preuve d'API la
-figent désormais côté écriture d'en-tête. Le second est l'absence de card sur un workflow dérivé
-dans le seed (INC-046). **Tout ce que `CRM-040` devait livrer en propre est livré et prouvé.**
+**L'unité reste `[~]`, et pour UN écart qui ne lui appartient pas.** L'absence de card sur un
+workflow dérivé dans le seed (INC-046), qui relève du seed de démonstration (`CRM-046`) et non
+d'une garde de cette unité. *(Le premier écart historique — protection de colonne de
+`current_step_id` et d'`email_local_part` — est LIVRÉ par `CRM-013` et `CRM-034` ; mesuré le
+2026-08-20, la ligne le disait encore « pas livrée » et a été corrigée dans le même changement,
+dans l'esprit de décision 486.)* **Tout ce que `CRM-040` devait livrer en propre est livré et
+prouvé.**
 
 *Limites nommées, non masquées.*
 

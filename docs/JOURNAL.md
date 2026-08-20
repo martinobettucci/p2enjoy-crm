@@ -22099,3 +22099,73 @@ La session suivante choisit donc son unité au §4.2. **Avertissement mesuré, �
 le backlog porte encore des lignes ouvertes qui décrivent des livrables existants, et le parcours de
 cette session en a corrigé cinq sans prétendre les avoir toutes trouvées. Avant de conclure qu'un
 livrable manque, **mesurer** — un `ls`, un `grep`, une requête — plutôt que de croire la ligne.
+
+## décision 487 — parcours du backlog, aucune unité de construction ouverte, une ligne périmée corrigée par mesure
+
+**La session s'est ouverte sur une pile debout et seedée** (§2.2 de `docs/CloudWorker.md`) :
+`./runDev.sh` rend `0`, les dix-sept services persistants et un one-shot sont **healthy**, et le
+seed s'applique sans anomalie. `verify-stack.sh` rend **54 vérifications, aucune anomalie**, chaîne
+de stockage comprise. `verify-scripts.sh` rend **103 vérifications, 1 anomalie** — la seule rouge
+est celle qu'INC-186 nomme, la reconstruction *sans CA* de `webapp` échouant sur
+`SELF_SIGNED_CERT_IN_CHAIN` sur cet hôte à proxy TLS. Elle est **préexistante et étrangère** à
+toute unité produit ; les deux autres contrôles de reconstruction (« avec CA » et « l'image exclut
+contexte sensible ») rendent verts, et c'est exactement l'état que décision 442 avait mesuré.
+Le socle Node est rétabli (`nvm install 24`, `node v24.19.0`, `npm ci` : **141 paquets**) et les
+preuves qu'il porte rendent `typecheck` **vert** (quatre projets `tsc`), `build` **vert**
+(212 ms, `webapp/dist/assets/index-juUUD627.js` **228,47 kB**), `test:unit` **67 fichiers /
+2272 tests, aucun échec**, `test:sql` **50 fichiers / 2480 assertions, aucune anomalie**. La pile
+courante est saine.
+
+**Aucune unité de construction n'était ouverte à cette place du plan** (§4.2 de
+`docs/CloudWorker.md`), et cette session ne l'a **pas inventée** (`CLAUDE.md` §1). Le parcours des
+unités `[~]` a mesuré, une à une, ce que chacune retient hors du `[x]` :
+
+- `CRM-001` — un seul contrôle rouge, la reconstruction *sans CA*, **environnemental** (proxy TLS
+  interposé sur cet hôte, `NPM_CA_FILE` renseigné), MESURÉ le jour même, cause exacte connue depuis
+  la décision 442. Non liftable ici, INC-186 le porte.
+- `CRM-013`, `CRM-014` — leurs restes attendent `audit_log` (`CRM-072`) et `api_tokens.token_hash`
+  (`CRM-073`), unités non encore ouvertes au backlog.
+- `CRM-034` — sa DoD est intégralement close ; « aucun écran » est un non-écart nommé (la garde n'a
+  pas de surface) et non un livrable dû.
+- `CRM-035`, `CRM-036`, `CRM-037` — les « captures de chaque étape » exigeraient un seed à sept
+  cards que `CRM-035` ne pose pas et qu'aucune unité ne demande ; les autres écarts sont clos par
+  livraisons ultérieures (grille champ × étape par `CRM-076`, contact/user par `CRM-060`
+  tranche 3), écrits déjà retournés au backlog.
+- `CRM-040` — deux `[ ]` figuraient encore. **Le premier est PÉRIMÉ**, corrigé dans le même
+  changement, cf. ci-dessous. Le second — aucune card sur workflow dérivé dans le seed, INC-046 —
+  relève du seed (`CRM-046`), pas d'une garde de cette unité.
+- `CRM-052` à `CRM-058` — « aucun écran » explicitement différé par
+  `docs/SPEC-mail-subsystem.md` §13.1 vers « une unité de réglages restant à créer », dont aucune
+  ligne du backlog n'existe.
+- `CRM-060` — deux arbitrages du responsable (§16.15.5, §16.12.6), écrits, dus au responsable.
+- `CRM-077`, `CRM-081`, `CRM-082`, `CRM-083`, `CRM-084`, `CRM-086` — restes de forme (rejeux
+  `verify-*.sh` que le budget d'une session ne tient pas) ou arbitrages consignés (INC-170 sur
+  `CRM-083` viewer, INC-173 sur `CRM-084` occurrences, etc.).
+
+**Une ligne PÉRIMÉE corrigée par MESURE**, dans l'esprit de décision 486. `CRM-040` portait encore
+`- [ ] La protection de colonne de current_step_id et d'email_local_part n'est pas livrée`, alors
+que le pgTAP `0012_cards.test.sql` §6 et `0013_move_card.test.sql` lignes 144 à 158 vérifient
+depuis `CRM-013` et `CRM-034` **le refus** de ces deux `UPDATE` — assertions **retournées** par le
+mécanisme de décision 51 —, et la mesure directe rend `has_column_privilege` `f` pour les deux
+colonnes. La ligne était donc **fausse en l'état** ; corrigée en `[x]`, avec sa mesure et ses
+références aux tests qui la portent. Le paragraphe de synthèse de `CRM-040` est corrigé du même
+geste : il ne reste plus qu'**un** écart hérité, INC-046.
+
+**Ce que cette session n'a pas fait, et ce qu'elle dit :** elle n'a **poussé aucun code de
+produit**, et son unique commit est documentaire (`CLAUDE.md` §5, `docs/CloudWorker.md` §4.2 bis).
+Le motif est **mesuré et consigné** : chaque `[~]` restante l'est pour un blocage réel — arbitrage
+du responsable, dépendance vers une unité non encore ouverte au backlog, ou contrainte
+d'environnement (INC-186). C'est le cas de « blocage réel consigné » du §4.2 bis, non celui d'une
+session en échec par oubli. **Elle ne DÉSACTIVE PAS la routine** : ce n'est pas la condition 2 de
+`docs/CloudWorker.md` §4.5.1 au sens strict — des arbitrages restent en attente auprès du
+responsable, et une nouvelle unité (`CRM-072` ou `CRM-073`) peut être ouverte par lui à tout moment.
+En cas de doute, on n'arrête pas.
+
+**Où reprendre.** Le responsable a **deux gestes qui débloqueraient de la construction**, dans
+l'ordre où ils la débloqueraient le plus : **1)** trancher l'un des deux arbitrages laissés par
+`CRM-081` (§16.15.5 sur le mode d'affichage de l'inbox, §16.12.6 sur un channel du seed n'ayant que
+des affaires endormies) ou celui de `CRM-083` (INC-170 sur l'extinction par rôle du viewer) ;
+**2)** ouvrir au backlog une unité qui porte l'écran de configuration des comptes entrants et des
+identités sortantes, que `docs/SPEC-mail-subsystem.md` §13.1 réserve à une future unité de
+réglages. La session suivante, si aucun arbitrage n'est rendu, choisira son unité au §4.2 en
+mesurant à nouveau : les lignes périmées du backlog ont diminué mais toutes ne sont pas trouvées.
