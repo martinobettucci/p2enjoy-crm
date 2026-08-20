@@ -21529,7 +21529,7 @@ l'onglet à part — l'effet d'un enfant s'exécute avant celui de son parent, e
 consommait le premier rang de leur séquence —, et l'absence d'action de l'état vide est désormais
 éprouvée **dans le bloc de l'état vide**, l'écran portant maintenant deux liens de navigation.
 
-**LA PREUVE D'ÉCRAN QUI MANQUAIT À LA DoD, ET QUI EST LIVRÉE AVEC.** Le point « la clôture d'un
+**LA PREUVE D'ÉCRAN QUI MANQUAIT À LA DoD, ET QUI EST LIVRÉE AVEC — `budgets.spec.ts`, 13 passés.** Le point « la clôture d'un
 budget portant des réels non saisis avertit et **compte** » n'était prouvé nulle part : le scénario
 de `CRM-084` clôture un budget qu'il vient de créer, donc SANS ligne, et lit la phrase du cas nul ;
 `scripts/verify-budgets.sh` ne vérifiait que la présence des quatre clés dans le code. Un contrôle
@@ -21537,6 +21537,31 @@ de clés dit qu'un texte existe, jamais qu'un écran le rend. Le scénario ajout
 ligne, lit le compte « 1 ligne(s) », constate que la clôture **n'est pas empêchée**, et vérifie
 enfin sur l'onglet du §4.8 que la ligne reste **saisissable** après la clôture — sans quoi
 l'avertissement promettrait ce que le produit ne tient pas.
+
+**LA CAMPAGNE COMPLÈTE, ET ELLE EST ENTIÈREMENT VERTE.** `typecheck` vert, `build` vert,
+`test:unit` **66 fichiers / 2262 tests**, `test:sql` **50 fichiers / 2480 assertions**, `e2e:api`
+**816 passés**, `e2e:ui` **544 passés** — les 539 de la décision 478, plus les cinq de l'onglet —,
+`e2e:mail` **42 passés**, `types:check` vert — la tranche n'ajoute aucune migration, donc aucun type
+—, `pytest` **244 passés**. **Aucune boucle de correction n'a eu lieu : rien n'était rouge.** Le
+scénario de clôture ajouté après le lancement de la campagne a été rejoué SEUL derrière elle —
+`budgets.spec.ts`, **13 passés** —, et le seed a été constaté intact après coup : cinq lignes de
+coût dont trois sans réel, quatre budgets, aucun résidu.
+
+**CE QUI N'A PAS ÉTÉ EXÉCUTÉ, ET IL FAUT LE DIRE.** Les `scripts/verify-*.sh` autres que celui de
+l'unité : **aucun**. La série entière ne tient pas dans une session (`docs/CloudWorker.md`
+§2.1 ter) ; celui que la session livre — `scripts/verify-couts-ecrans.sh` — a été exécuté **deux
+fois en entier**, et `scripts/verify-card-costs.sh`, qui aurait vu un résidu de la preuve
+d'écriture, ne l'a pas été : la vérification équivalente a été faite par requête directe sur la
+base, et elle est rapportée ci-dessus.
+
+**UNE OBSERVATION DE CAPTURE, NI DÉFAUT NI RÈGLE, LAISSÉE AU CHOIX DE LA SUITE.** À 900 px et en
+dessous, la colonne « Réel » — celle de la saisie — sort du cadre, et la table défile dans son
+conteneur. C'est exactement ce que le §7 demande d'un tableau, et l'indication de débordement du
+§12.6 est rendue ; mais sur un écran dont la raison d'être EST la saisie, la cible du geste est
+alors la première chose qui disparaît. Le §5.15 a déjà pris le remède pour sa grille — « la première
+colonne reste collée à gauche pour que la ligne garde son nom » —, et une colonne collée à DROITE
+serait sa symétrie. Ce n'est écrit nulle part, donc rien n'a été inventé : l'observation est
+consignée ici pour que l'arbitrage soit possible.
 
 **Où reprendre.** `CRM-086` reste `[~]`, et **aucun point de sa Definition of Done n'est plus à la
 portée d'une session** : le seul reste est l'**arbitrage d'INC-182**, qui décide ce que le badge doit

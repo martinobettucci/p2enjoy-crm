@@ -8593,13 +8593,13 @@ et §4 porte la nouvelle entrée de barre latérale.
 **CE QUI RESTE — révisé le 2026-08-20, décision 480.** Les TROIS écrans du §4.2, du §4.3 et du §4.5
 sont montés et prouvés, **l'onglet « À saisir » du §4.8 est livré sur les deux écrans à onglets**,
 et **le harnais dédié `scripts/verify-couts-ecrans.sh` existe** — 76 contrôles, aucune anomalie.
-Il reste **deux** choses, et deux seulement :
+La preuve d'écran de la clôture qui avertit et **compte** (§4.1) est livrée avec, dans
+`e2e/ui/budgets.spec.ts`.
 
-1. **la preuve d'écran de la clôture qui avertit et compte** (§4.1) — le comportement est livré,
-   c'est la preuve qui manque, et c'est le seul reste qu'une session peut lever ;
-2. **l'arbitrage d'INC-182**, qui décide ce que le badge doit annoncer. Tant qu'il n'est pas rendu,
-   le premier point de la Definition of Done ci-dessous est **inatteignable**, et ce n'est pas un
-   défaut de livraison. `CRM-086` reste donc `[~]`.
+Il ne reste **qu'une** chose, et **aucune session ne peut la lever** : **l'arbitrage d'INC-182**,
+qui décide ce que le badge doit annoncer. Tant qu'il n'est pas rendu, le premier point de la
+Definition of Done ci-dessous est **inatteignable**, et ce n'est pas un défaut de livraison.
+`CRM-086` reste donc `[~]`.
 
 **DoD** : E2E des trois écrans ; captures aux quatre paliers ; **la mention « n lignes sans coût
 réel saisi » est prouvée présente** quand des réels manquent, et absente sinon — c'est la principale
@@ -8713,21 +8713,25 @@ seul endroit du produit où deux liens de navigation ne se distinguent pas par l
       **La preuve vit dans `supabase/tests/0049_card_costs.test.sql`** (`CRM-085`), dans les deux
       sens et aux deux niveaux — trigger et politique. La rejouer dans la suite 0050 ferait deux
       sources pour une même règle, qui divergeraient au premier ajustement.
-- [~] **La clôture d'un budget portant des réels non saisis avertit et compte** (§4.1) : prouvé à
+- [x] **La clôture d'un budget portant des réels non saisis avertit et compte** (§4.1) : prouvé à
       l'écran, et prouvé qu'elle n'est pas **empêchée** — c'est une décision de gestion.
-      **LE COMPORTEMENT EST LIVRÉ, LA PREUVE D'ÉCRAN MANQUE, et c'est le seul reste de `CRM-086`
-      qu'une session peut lever** (constaté le 2026-08-20, décision 480).
+      **PROUVÉ LE 2026-08-20 (décision 480)** par le scénario « la clôture d'un budget portant des
+      réels non saisis les COMPTE, et n'est pas empêchée » de `e2e/ui/budgets.spec.ts` : il crée son
+      budget par le vrai geste, y pose une ligne sans coût réel par la clé de service, lit
+      « 1 ligne(s) […] resteront saisissables après la clôture » dans la confirmation, constate que
+      le bouton reste ACTIF, clôture, puis vérifie **sur l'onglet du §4.8** que la ligne est bien
+      présente, marquée « clôturé » et **saisissable** — sans quoi l'avertissement promettrait ce
+      que le produit ne tient pas. Il purge ce qu'il a déposé, en entrée comme en sortie.
+      **CE QUI MANQUAIT, ET QUI EST NOMMÉ POUR MÉMOIRE** (constaté le 2026-08-20).
       `webapp/src/app/BlocBudgetsTrack.tsx` rend bien les quatre états du compte —
       `admin.budgets.close.pending.loading`, `.failed`, `.none`, `.some` — et
       `scripts/verify-budgets.sh` vérifie que les quatre clés y sont CITÉES ; mais aucun scénario de
       `e2e/ui/budgets.spec.ts` n'ouvre la confirmation de clôture pour lire le compte, ni ne mesure
       que la clôture aboutit malgré des réels manquants. Un contrôle de clés dit qu'un texte existe
       dans le code, jamais qu'un écran le rend.
-      **Ce que la preuve doit poser** : la confirmation de clôture d'un budget portant au moins une
-      ligne sans réel écrit leur nombre ; le geste ABOUTIT quand même ; et la ligne reste
-      saisissable après la clôture — ce dernier point étant déjà tenu par l'onglet du §4.8, dont la
-      preuve exerce précisément une ligne d'un budget clos. Elle écrit, donc elle restaure : la
-      règle de la décision 362, tenue par `e2e/ui/couts-a-saisir.spec.ts`.
+      Le scénario voisin clôture un budget qu'il vient de créer, donc SANS ligne de coût, et lit la
+      phrase du cas NUL — l'autre cas, le seul où l'avertissement a un objet, n'était exercé nulle
+      part.
 
 - [x] **Ne jamais rendre un total qui inclurait un budget interdit.** Le cumul se calcule sur les
       lignes que la RLS consent, jamais avec la clé de service : un total juste au centime près qui
