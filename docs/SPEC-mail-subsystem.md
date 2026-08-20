@@ -1127,9 +1127,15 @@ classé (`classification = 'unclassified'`, `card_id` nul, aucun `card_event`). 
 n'invente rien, deux ou plus se taisent, une card archivée ne compte pas, la casse de l'email est
 ignorée, le workspace borne l'appariement (`docs/SPEC-contacts.md` §8.2, §8.5).
 
-**Reste non livré** : l'écran qui MONTRE la suggestion (l'inbox globale, `CRM-057`). La règle vit en
-base et se prouve en base (pgTAP `0044`, API `classement.spec.ts`, harnais
-`verify-mail-classement.sh`) ; la preuve visible attend l'écran.
+**~~Reste non livré : l'écran qui MONTRE la suggestion.~~ LIVRÉ le 2026-08-20 par `CRM-060`
+sous-tranche 2 bis** (`docs/SPEC-contacts.md` §8.8, `docs/DESIGN_SYSTEM.md` §5.4 ter). Le motif de
+l'attente — « l'inbox globale, `CRM-057` » — était **caduc depuis le 2026-08-11** : l'inbox était
+livrée, et la règle vivait en base sans qu'aucun écran ne la montre. Le panneau de lecture d'un
+message non classé porte désormais l'encadré qui nomme l'affaire suggérée, écrit la règle et
+propose de la ranger d'un geste ; le seed fait **réellement arriver** un message qui la déclenche
+(`docs/SPEC-seed.md` §2.19), sans quoi la surface n'aurait ni capture ni parcours. La règle reste
+prouvée en base (pgTAP `0044`, API `classement.spec.ts`, harnais `verify-mail-classement.sh`), et
+la preuve visible existe enfin : `e2e/ui/suggestion-classement.spec.ts`, quatre paliers compris.
 
 ### 16.2 La chaîne, et pourquoi elle s'arrête à la première règle satisfaite
 

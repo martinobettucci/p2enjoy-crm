@@ -7097,10 +7097,13 @@ migration `0046`) :
 **La tranche 4 reste due** ; l'unité demeure `[~]` tant qu'elle n'est pas livrée, et la
 **preuve visible** de la suggestion attend l'écran de l'inbox (`CRM-057`) :
 
-- [~] Tranche 2 — Règle 3 du classement **livrée et prouvée en base** (pgTAP, API, harnais). Reste
-      `[~]` au seul titre de la **preuve visible** : aucun écran ne montre encore la suggestion,
-      l'inbox étant due par `CRM-057`.
-      - [~] **2 bis — La SURFACE de la suggestion**, spécifiée le 2026-08-20
+- [x] Tranche 2 — Règle 3 du classement **livrée et prouvée en base** (pgTAP, API, harnais).
+      ~~Reste `[~]` au seul titre de la **preuve visible** : aucun écran ne montre encore la
+      suggestion, l'inbox étant due par `CRM-057`.~~ **La preuve visible est ACQUISE le 2026-08-20**
+      par la sous-tranche 2 bis ci-dessous : l'inbox montre la suggestion, le seed en fait arriver
+      une pour de bon, et `e2e/ui/suggestion-classement.spec.ts` en fait le parcours complet aux
+      quatre paliers, captures observées.
+      - [x] **2 bis — La SURFACE de la suggestion**, spécifiée le 2026-08-20
             (`docs/SPEC-contacts.md` §8.8, `docs/DESIGN_SYSTEM.md` §5.4 ter). **Le motif de
             l'attente est CADUC** : l'inbox est livrée depuis le 2026-08-11, et le §5.4 du design
             system porte la règle depuis `CRM-000` — « la suggestion proposée par le classement
@@ -7112,6 +7115,57 @@ migration `0046`) :
             depuis une boîte de correspondant (`docs/SPEC-mail-subsystem.md` §11.4,
             `docs/SPEC-seed.md` §2.19), qui déclenche la règle 3 pour de bon. Definition of Done au
             §8.8.12.
+
+            **LIVRÉE ET PROUVÉE le 2026-08-20**, Definition of Done tenue point par point :
+
+            - **le bloc** — `webapp/src/app/RouteInbox.tsx`, `PiedNonClasse` et `BlocSuggestion` :
+              l'affaire nommée et adressable, la règle écrite en toutes lettres, le geste primaire,
+              et la commande manuelle qui passe en secondaire à côté de lui (§5.4 ter) ;
+            - **une seule colonne demandée** — `suggested_card_id` dans `COLONNES_MESSAGE`, jamais
+              dans `COLONNES_LISTE`. `suggested_at` n'est PAS demandée : aucune surface ne la rend,
+              et le §8.8.3 a été **resserré par la livraison** plutôt que suivi à la lettre ;
+            - **aucun contrat backend nouveau** : accepter appelle `classify_message` par la même
+              fonction que le formulaire manuel, avec les quatre refus du dictionnaire fermé
+              existant, sans en ajouter un cinquième ;
+            - **le provisionnement** — `stalwart/provision.sh` pose le domaine du correspondant et
+              sa boîte, et les **relit** : `Quatre boîtes provisionnées et relues`. La variable
+              `MAIL_DEV_CORRESPONDENT_ADDRESS` est documentée dans `.env.example`, complétée
+              automatiquement sur un `.env` amorcé plus tôt (`scripts/lib/env.sh`), et réclamée par
+              `scripts/verify-mail-infra.sh` ;
+            - **le seed** — quatrième message **réellement soumis** par la boîte du correspondant
+              puis **réellement relevé**, avec sa garde : le seed VÉRIFIE que la ligne est
+              `unclassified` et suggérée vers `…00c2`, et échoue avec sa cause sinon. Rejoué deux
+              fois : convergent, quatre messages, aucun doublon ;
+            - **Vitest** — `webapp/src/app/InboxSuggestion.test.tsx`, **9 tests**, dont les quatre
+              états, l'ordre du pied, la hiérarchie des deux actions, le geste, le refus, et
+              l'absence de requête quand il n'y a rien à résoudre. **Non complaisants** : la
+              dégradation du cas d — rendre le bloc sur une affaire illisible — le fait rougir ;
+            - **API** — `e2e/api/classement.spec.ts`, **7 scénarios verts**, dont deux ajoutés sous
+              les **jetons réels** : l'administratrice lit la suggestion du seed, le
+              `business_developer` et la `viewer` reçoivent `200` et zéro ligne ;
+            - **E2E d'interface** — `e2e/ui/suggestion-classement.spec.ts`, **4 scénarios verts** :
+              le bloc et son lien, le **témoin** d'un message sans suggestion, l'acceptation **au
+              clavier** relue par l'API, et les quatre paliers avec la mesure du débordement
+              horizontal ;
+            - **captures observées** (`CLAUDE.md` §16) — `docs/captures/CRM-060/` :
+              `inbox-suggestion-1440`, `inbox-sans-suggestion-1440`,
+              `inbox-suggestion-acceptee-1440`, et les quatre paliers `inbox-suggestion-{xl-1440,
+              lg-1152, md-900, sm-390}` ;
+            - **harnais** — `scripts/verify-mail-classement.sh` révisé, famille « 2 bis » de neuf
+              contrôles portant la surface ET la donnée de démonstration ;
+              `scripts/verify-mail-infra.sh` révisé pour la quatrième boîte, le troisième domaine et
+              le fait que le correspondant n'est **pas** un compte entrant du produit ;
+            - **documentation** — `docs/SPEC-contacts.md` §8.8, `docs/DESIGN_SYSTEM.md` §5.4 ter,
+              `docs/SPEC-mail-subsystem.md` §11.4 et §16.1 (révisé par livraison),
+              `docs/SPEC-seed.md` §2.19, `docs/manual.md` §4.15, `CHANGELOG.md`.
+
+            **Limite nommée, non masquée** : le parcours qui accepte la suggestion laisse un
+            `mail_received` de plus sur l'affaire `…00c2` à chaque exécution. `card_events` est
+            append-only et refuse un `DELETE` **même à la clé de service** (403 mesuré) — c'est la
+            garantie de `CRM-044`. La dérive est bornée, les compteurs d'événements de
+            `verify-seed-demo.sh` étant des minorants. Le même défaut existe dans
+            `e2e/ui/inbox.spec.ts`, qui **affirme** pourtant retirer l'événement : consigné en
+            **INC-185**, non corrigé au passage.
 - [x] Tranche 3 — Résolution des champs `contact` **et** `user` dans la validation des valeurs,
       **livrée et prouvée le 2026-08-18** (`docs/SPEC-contacts.md` §9, migration `0047`). Voir le
       détail ci-dessous.
