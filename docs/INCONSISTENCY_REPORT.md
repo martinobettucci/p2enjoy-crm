@@ -191,14 +191,20 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-121 | Trois compteurs figés de `verify-preuves-refus.sh` périmés de plusieurs unités | 2026-08-15 | `CRM-014` et `CRM-013` (preuves dues), `CRM-008` (calcul des compteurs) | 413, 429 |
 | INC-122 | Deux assertions de `CRM-078` s'appuyaient sur un identifiant que le seed n'épingle pas | 2026-08-15 | `CRM-078`, première tranche | 430 |
 | INC-185 | `e2e/ui/inbox.spec.ts` affirme retirer un `card_event` que personne ne peut retirer (403 mesuré) | 2026-08-20 | *ouverte* — arbitrage attendu | 481 |
+| INC-189 | « Alt et flèche REDIMENSIONNENT » d'`Objectifs.test.tsx` échoue par INTERMITTENCE en campagne, et passe seul | 2026-08-20 | *ouverte* — relève de `CRM-081` | 485 |
 
 ---
 
 ## Ouverts
 
-**Vingt-trois ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+**Vingt-quatre ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-173, INC-174,
-INC-182, INC-183, INC-185, INC-186 et INC-188** — **INC-188** consignée le 2026-08-20 par la session
+INC-182, INC-183, INC-185, INC-186, INC-188 et INC-189** — **INC-189** consignée le 2026-08-20 par la
+session `CRM-080` tranche 3 : « Alt et flèche REDIMENSIONNENT » d'`Objectifs.test.tsx` échoue par
+**intermittence** en campagne — une largeur restée à sa valeur de départ, donc un appui dont l'effet
+n'a pas été écrit — et **passe seul, deux fois, comme à la seconde campagne complète**. Étrangère à
+la session, dont la ligne de base est établie par mesure : aucun fichier de `webapp/`, `supabase/`
+ni `e2e/` n'a été touché. Relève de `CRM-081`. **INC-188** consignée le 2026-08-20 par la session
 `CRM-080` tranche 2 : un scénario d'interface de `CRM-076` dépasse le budget de **30 s** du dépôt et
 **passe à 90 s**. Ce n'est ni un défaut du produit ni une régression — ligne de base établie par
 mesure, `webapp/`, `supabase/` et le fichier de preuve étant **identiques octet pour octet** au
@@ -3491,3 +3497,48 @@ et en le disant.
 
 **Non corrigé par la session `CRM-080` tranche 2** : le scénario relève de `CRM-076` quatrième
 tranche, et le corriger sous une autre unité reviendrait à en solder une seconde (`CLAUDE.md` §13).
+
+---
+
+### INC-189 — « Alt et flèche REDIMENSIONNENT » échoue par INTERMITTENCE en campagne, et passe seul
+
+**Consignée le 2026-08-20** par la session `CRM-080` tranche 3 (décision 485). **Étrangère à cette
+session, et la ligne de base l'établit par mesure** : `git diff --name-only 96f9e9e..HEAD -- webapp/
+supabase/ e2e/` rend **aucune différence** — la session n'a touché que `scripts/`, `docs/`,
+`README.md`, `CHANGELOG.md` et `.env.example`. Aucun de ses changements ne peut avoir modifié le
+comportement d'un composant d'interface.
+
+**Ce qui est mesuré, et c'est sans ambiguïté :**
+
+```
+npm run test:unit  (1re exécution)  => 67 fichiers, 1 en échec, 2271 passés / 2272
+    × Alt et flèche REDIMENSIONNENT, et n'envoient aucune position
+      expected { width: 260, height: 140 } to deeply equal { width: 268, height: 140 }
+
+npx vitest run src/app/Objectifs.test.tsx -t "Alt et flèche"  => 1 passé
+npx vitest run src/app/Objectifs.test.tsx  (fichier entier)   => 73 passés, DEUX FOIS
+npm run test:unit  (2e exécution)   => 67 fichiers, 2272 passés, AUCUN échec
+```
+
+**Ce que l'écart dit.** La largeur attendue est `BLOC_LIBRE.width + 8`, soit un incrément de 8 px
+par appui. Reçue : `260`, c'est-à-dire **la largeur de départ**. Ce n'est donc pas un incrément
+faux, c'est un appui dont l'effet n'a **pas été écrit du tout** au moment de l'assertion. La forme
+de la défaillance — juste sous charge, jamais isolée — désigne une écriture différée : une
+temporisation, une trame d'animation ou un `debounce` que l'assertion n'attend pas, et que la
+contention de 67 fichiers en parallèle laisse dépasser.
+
+**Ce qui n'est pas établi.** Le point exact où l'écriture est différée n'a pas été isolé : la
+mesure qui manque est l'instrumentation du chemin entre l'appui clavier et l'écriture de la charge,
+sur une exécution où l'échec se produit. Le reproduire à volonté demanderait de recréer la
+contention, ce que cette session n'a pas fait — son unité est ailleurs.
+
+**CE QU'IL NE FAUT PAS FAIRE.** Rejouer la suite jusqu'à ce qu'elle verdisse, ajouter une
+temporisation dans le test, ou l'assouplir pour accepter `260` : les trois masqueraient un défaut
+réel du composant sans le corriger (`CLAUDE.md` §18, `docs/CloudWorker.md` §3.1). Un test qui
+échoue une fois sur deux dit quelque chose du produit ; ici, il dit qu'un geste de redimensionnement
+au clavier peut ne pas être enregistré si la machine est chargée — ce que verrait un utilisateur sur
+un poste lent.
+
+**Non corrigé par la session `CRM-080` tranche 3** : le scénario et le composant relèvent de
+`CRM-081`, et le corriger sous une autre unité reviendrait à en solder une seconde
+(`CLAUDE.md` §13, `docs/CloudWorker.md` §3.1).
