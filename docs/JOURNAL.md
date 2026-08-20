@@ -21074,12 +21074,40 @@ annoncer aucun manque, ce qui est exactement la propriété du §4.5 — et `S5 
 avec l'administrateur, qui voit le budget sur le même écran. Sans cette contre-épreuve, « aucun
 budget » serait indistinguable d'un track qui n'en porte réellement aucun.
 
+**UN TROISIÈME DÉFAUT, TROUVÉ SUR LES CAPTURES RÉGÉNÉRÉES PAR LA CAMPAGNE.** À 390 px, l'entrée
+« Coûts » se dessinait **par-dessus** le dernier onglet de channel : le groupe des channels portait
+`min-w-0`, ce qui était sans conséquence tant qu'il était seul dans la barre — le conteneur défilait
+—, et qui l'autorisait, avec un voisin, à se comprimer sous la largeur de ses propres onglets. Il
+porte `shrink-0`, et la barre défile comme le §7 et le §12.6 le demandent. Ce défaut n'était visible
+sur aucune capture de `CRM-086` : c'est en régénérant celles de `CRM-021` que la campagne l'a rendu.
+
+**DEUX PREUVES ÉTRANGÈRES RÉVISÉES, NON AFFAIBLIES.** `droits-fins.spec.ts` comptait TOUS les liens
+de la barre d'onglets, et `1` valait alors « un seul channel ». La barre porte désormais une entrée
+qui n'est pas un channel : le compte global ne mesure plus ce que ces scénarios protègent. Ils
+comptent les onglets de CHANNEL, et une seconde assertion **nomme** ce que la barre a le droit de
+porter en plus — ce que « rien de plus » voulait dire, écrit au lieu d'être déduit d'un nombre.
+
 **Ce qui a été vérifié.** `CoutsTrack.test.tsx` **13 tests**, `TabBar.test.tsx` **15 tests**,
 `couts-ecrans.test.ts` et `HistogrammeCouts.test.tsx` révisés et étendus, `e2e/ui/couts-track.spec.ts`
-**7 scénarios verts** dont le parcours entièrement au clavier et les quatre paliers. Campagne :
-`npm run typecheck` vert, `npm run build` vert, `npm run test:unit` **62 fichiers, 2114 tests, aucun
-échec**. Les quatre captures ont été **observées**, et c'est en les regardant que le second défaut a
-été trouvé.
+**7 scénarios verts** dont le parcours entièrement au clavier et les quatre paliers.
+
+**Campagne complète, exécutée en fin de session** : `npm run typecheck` vert, `npm run build` vert,
+`npm run test:unit` **62 fichiers, 2114 tests**, `npm run test:sql` **49 fichiers, 2464 assertions,
+aucune anomalie**, `npm run e2e:api` **816 passés**, `npm run e2e:mail` **42 passés**, `pytest`
+**244 passés**, `npm run e2e:ui` **520 passés, 3 en échec** — les trois rejoués **verts** après
+correction, deux par la révision de `droits-fins.spec.ts` et le troisième, `coherence-workflow.spec.ts`,
+par la disparition d'un résidu `E2E Course` laissé par la campagne tuée. `scripts/verify-webapp.sh`
+rend **42 contrôles, 1 anomalie**, préexistante et consignée à **INC-178** : la ligne de base montre
+QUATRE classes mortes au commit de départ contre trois aujourd'hui, le changement de la session
+l'ayant réduite et non causée.
+
+**CE QUI N'A PAS ÉTÉ EXÉCUTÉ, ET IL FAUT LE DIRE.** Cinquante-quatre des cinquante-cinq
+`scripts/verify-*.sh` — seul `verify-webapp.sh` a été joué, choisi parce qu'il porte le contrôle des
+classes CSS et les scénarios de la coquille que ce changement touche. La série entière ne tient pas
+dans une session (`docs/CloudWorker.md` §2.1 ter), et **aucun harnais dédié n'existe pour `CRM-086`**.
+
+Les quatre captures de l'unité ont été **observées**, et c'est en les regardant que le deuxième
+défaut a été trouvé ; celles de `CRM-021`, régénérées, ont donné le troisième.
 
 **UN PIÈGE DE MÉTHODE, CONSIGNÉ À INC-177, ET IL A COÛTÉ UN VERDICT À CETTE SESSION.**
 `npm run test:sql` a été lancé PENDANT que `npm run e2e:ui` tournait, pour tenir le budget de temps.

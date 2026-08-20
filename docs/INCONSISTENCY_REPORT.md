@@ -2840,6 +2840,21 @@ l'absence dans le CSS produit, pas le rendu ; les trois sont donc des défauts *
 code** et **non observés à l'écran**, faute d'appartenir à son unité (`docs/CloudWorker.md` §3.1 :
 laisser le comportement inchangé plutôt que corriger au passage).
 
+**LE HARNAIS LE DIT AUSSI, ET LA LIGNE DE BASE EST ÉTABLIE.** `scripts/verify-webapp.sh` rend
+`42 contrôles, 1 anomalie(s)`, et cette anomalie unique est ce contrôle-ci :
+
+```
+4. Classes utilitaires engendrées (garde des espaces de noms remis à zéro)
+   ECHEC  des classes citées ne sont pas engendrées
+          classes citées : 285
+          classes absentes du CSS produit : h-10 py-0.5 text-text-1
+```
+
+Elle est **préexistante**, et la ligne de base n'a pas demandé de `git stash` : au commit de départ
+de la session, `git show <base>:webapp/src/app/HistogrammeCouts.tsx` porte **trois** occurrences de
+la quatrième classe morte. Le harnais rendait donc déjà cette anomalie **avec quatre** classes ; il
+en rend trois. Le changement de la session l'a réduite, jamais causée.
+
 **Une quatrième était du ressort de la session, et elle est corrigée.** `rounded-xs`, cité trois fois
 par la légende de `webapp/src/app/HistogrammeCouts.tsx` (`CRM-086`), rendait les pastilles de légende
 **carrées**. Elles sont désormais `rounded-full`, la forme que le §5.6 nomme — « précédés d'un point
