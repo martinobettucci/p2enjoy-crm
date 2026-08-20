@@ -426,3 +426,337 @@ la copie hors site ; l'alerte sur échec **et** sur absence de sauvegarde récen
 qui ne tourne plus est silencieuse par nature ; la rotation des destinataires `age` et la
 conservation des clés privées anciennes ; le rythme des exercices de restauration ; et l'exigence de
 `CLAUDE.md` §12, qui veut que toute opération manuelle de production vive dans un document dédié.
+
+---
+
+# Tranche 2 — La restauration prouvée
+
+Contrat écrit **avant toute ligne de code** de cette tranche (`CLAUDE.md` §5,
+`docs/CloudWorker.md` §3.2 point 3), après **huit mesures** prises le **2026-08-20** sur la pile
+réelle démarrée et seedée, et sur une archive **réellement produite** par `scripts/backup.sh` —
+`p2enjoy-sauvegarde-20260820T062911Z.tar.age`, 983 464 octets, trois membres. Les paragraphes
+intitulés « MESURÉ » rapportent une sortie obtenue sur cet hôte, jamais un souvenir.
+
+Le §9 ci-dessus **cadrait** cette tranche. Les mesures qui suivent en corrigent deux points sur
+lesquels le cadrage se trompait, et le disent ouvertement : la restauration ne se fait pas sous
+`postgres`, et l'isolement ne repose pas sur des « ports distincts ».
+
+---
+
+## 10. Mesures du 2026-08-20 — ce que restaurer exige réellement
+
+**M9. La clé racine doit être en place AVANT le premier démarrage du serveur, sinon elle est
+perdue pour toujours.** `/usr/lib/postgresql/bin/pgsodium_getkey.sh`, que
+`postgresql.conf` désigne par `pgsodium.getkey_script` et `vault.getkey_script`, dit :
+
+```
+KEY_FILE=/etc/postgresql-custom/pgsodium_root.key
+if [[ ! -f "${KEY_FILE}" ]]; then
+    head -c 32 /dev/urandom | od -A n -t x1 | tr -d ' \n' > "${KEY_FILE}"
+fi
+cat $KEY_FILE
+```
+
+Un cluster démarré sans ce fichier **s'en fabrique un au hasard**, et le déposer ensuite ne répare
+rien : les secrets restaurés resteront chiffrés par une clé que le serveur n'a plus. La clé de
+l'archive est donc **montée dans le conteneur jetable au moment de sa création**, jamais copiée
+après coup. C'est la contrainte qui commande tout l'ordre de cette tranche.
+
+**M10. La restauration se fait sous `supabase_admin`, et le cadrage du §9 avait tort.** Le nombre
+d'erreurs de `pg_restore` sur la MÊME archive et le MÊME conteneur, en ne changeant que l'identité
+et l'amorçage :
+
+```
+pg_restore -U postgres         (conteneur nu)                       => 762 erreurs, rc=1
+pg_restore -U supabase_admin   (conteneur nu)                       =>  14 erreurs, rc=1
+pg_restore -U supabase_admin   (+ scripts d'init du dépôt montés)   =>  12 erreurs, rc=1
+pg_restore -U supabase_admin   (+ rôle supabase_realtime_admin créé) =>   0 erreur,  rc=0
+```
+
+`postgres` **n'est pas superutilisateur** dans cette pile — `select rolsuper` rend `f` pour lui et
+`t` pour `supabase_admin`, sur le conteneur courant comme sur un conteneur neuf — et `vault.secrets`
+appartient à `supabase_admin`. Restaurer sous `postgres` rend donc, entre autres :
+
+```
+pg_restore: error: could not execute query: ERROR:  permission denied for table secrets
+Command was: COPY vault.secrets (id, name, description, secret, key_id, nonce, ...) FROM stdin;
+```
+
+**Les secrets ne sont pas restaurés du tout, et rien ne s'arrête** : `vault.secrets` rend `0` là où
+la pile en porte `5`. Une restauration sous `postgres` produirait une base d'apparence complète et
+**silencieusement privée de tous ses secrets de messagerie**.
+
+**M11. `pg_dump` ne porte AUCUN objet global : les rôles ne sont pas dans l'archive.** C'est une
+propriété de `pg_dump`, non un défaut de la tranche 1 — seul `pg_dumpall --globals-only` les
+emporte. Deux rôles de la pile manquent donc à un cluster neuf issu de la même image :
+
+```
+image seule            : … supabase_admin, supabase_auth_admin, supabase_storage_admin …
+pile courante, en plus : supabase_functions_admin, supabase_realtime_admin
+```
+
+`supabase_functions_admin` est créé par `supabase/docker/volumes/db/webhooks.sql`, que le dépôt
+monte dans `/docker-entrypoint-initdb.d/init-scripts/` ; `supabase_realtime_admin` est créé par le
+service Realtime lui-même au démarrage, et par aucun fichier du dépôt. Ses attributs mesurés sur la
+pile sont `NOLOGIN NOINHERIT`, sans aucun autre droit. L'environnement jetable reproduit donc
+l'amorçage réel de la pile — les mêmes scripts d'initialisation, montés aux mêmes chemins — et crée
+ce seul rôle que ces scripts ne créent pas. La conséquence pour l'exploitation est nommée au §14.
+
+**M12. LA MESURE DÉCISIVE — sans la vraie clé racine, TOUT est vert sauf le déchiffrement.** Le même
+`base.dump` restauré dans un conteneur jetable amorcé avec une clé racine **tirée au hasard** :
+
+```
+pg_restore                          => rc=0, 0 erreur
+tables publiques                    => 36     (identique)
+politiques RLS de « public »        => 103    (identique)
+tables à RLS active                 => 36     (identique)
+auth.users / cards / mail_messages  => 3 / 41 / 4  (identiques)
+vault.secrets                       => 5      (identique)
+select … from vault.decrypted_secrets
+  => ERROR: pgsodium_crypto_aead_det_decrypt_by_id: invalid ciphertext
+```
+
+**Aucun autre invariant ne voit la différence.** Un exercice qui se contenterait de compter des
+lignes rendrait un verdict vert sur une archive dont les secrets sont irrécupérables — exactement la
+confiance sans la valeur que le refus R11 de la tranche 1 cherchait à empêcher. Le **déchiffrement
+effectif d'un secret de Vault** n'est donc pas un invariant parmi d'autres : c'est le seul qui
+éprouve la clé racine, et l'exercice échoue s'il manque.
+
+**M13. Les secrets se comparent par EMPREINTE, jamais en clair.** Le déchiffrement est demandé au
+serveur sous la forme `encode(digest(decrypted_secret,'sha256'),'hex')`. Mesuré sur les cinq
+secrets du seed, l'empreinte est identique sur la pile courante et sur la pile restaurée, et
+**aucun mot de passe ne traverse la sortie de l'exercice ni ses journaux** (`CLAUDE.md` §20).
+
+**M14. L'environnement jetable ne publie AUCUN port, ce qui est plus fort que « des ports
+distincts ».** Tout passe par `docker exec` et par le socket local du conteneur, comme la
+sauvegarde (M1). Rien n'est donc exposé, rien ne peut entrer en collision avec la pile courante, et
+la question du choix des ports ne se pose pas. Le conteneur ne rejoint par ailleurs aucun réseau de
+la pile : il reste sur le pont par défaut, sans aucun lien vers `p2enjoy-db`.
+
+**M15. Les objets se restaurent par `docker cp - <conteneur>:/data`, miroir exact de l'export.**
+L'image MinIO ne portant ni `tar` ni `find` (M5), c'est de nouveau le **démon** Docker qui extrait
+le flux. MESURÉ : un `objets.tar` portant `p2enjoy-crm/temoin.txt` est ressorti lisible dans
+`/data/p2enjoy-crm/temoin.txt` du conteneur jetable, contenu intact.
+
+**M16. Les invariants du seed, relevés sur la pile courante**, et qui servent de référence :
+
+```
+tables publiques=36  politiques_rls=103  tables_rls_actives=36
+auth.users=3  cards=41  mail_messages=4  vault.secrets=5
+```
+
+Ces nombres ne sont **pas** codés en dur dans l'exercice : il les LIT sur la pile de référence
+quand elle est disponible, et se contente de comparer. Un exercice qui porterait les nombres du
+seed deviendrait faux au premier seed modifié, et rougirait pour une raison étrangère à la
+sauvegarde.
+
+---
+
+## 11. Ce que `scripts/restore-drill.sh` fait
+
+### 11.1 Un environnement jetable, et un seul
+
+L'exercice crée **exactement un** conteneur PostgreSQL, et — si l'archive porte des objets — **au
+plus un** conteneur MinIO. Tous deux portent :
+
+- un **nom dédié**, dérivé de l'horodatage de l'exercice :
+  `p2enjoy-restauration-AAAAMMJJTHHMMSSZ` et `p2enjoy-restauration-objets-AAAAMMJJTHHMMSSZ` ;
+- une **étiquette dédiée** : `com.p2enjoy.restauration=AAAAMMJJTHHMMSSZ`.
+
+Aucun autre objet Docker n'est créé : ni réseau, ni volume nommé, ni pile Compose. L'exercice
+n'appelle **jamais** `docker compose`, sous aucune forme — ni pour monter, ni pour détruire.
+
+### 11.2 La garde de destruction, qui est STRUCTURELLE
+
+C'est la garde la plus importante de la tranche, et le §9 exigeait qu'elle ne soit pas
+conditionnelle. Elle ne l'est pas :
+
+- l'exercice ne détruit **que** les conteneurs dont il a lui-même retenu le nom, dans deux variables
+  posées au moment de leur création. Il ne construit **aucun** motif, n'énumère **aucune** liste et
+  n'interroge **aucun** filtre pour décider quoi détruire ;
+- ces noms sont préfixés `p2enjoy-restauration-` et portent l'horodatage de l'exercice ; **aucun
+  conteneur de la pile ne peut porter un tel nom**, les noms de la pile étant fixés par
+  `docker-compose.yml` (`container_name: p2enjoy-db`, `p2enjoy-minio`, …) ;
+- si l'un de ces noms est **déjà pris** au moment de la création, l'exercice **refuse de démarrer**
+  (R24) plutôt que de réutiliser ou d'écraser un conteneur qu'il n'a pas créé ;
+- la destruction passe par un `trap … EXIT INT TERM` : elle a lieu quelle que soit l'issue, y
+  compris sur interruption, et **jamais** sur autre chose que ces deux noms.
+
+`--conserver` laisse l'environnement jetable debout pour inspection. L'exercice imprime alors les
+deux commandes exactes de destruction manuelle, et son code de sortie n'en est pas changé.
+
+### 11.3 Le déroulé, dans l'ordre que les mesures imposent
+
+1. **prérequis** (§11.6) — `age`, l'identité de déchiffrement, Docker, l'archive ; aucune création
+   avant que tous soient satisfaits ;
+2. **déchiffrement** de l'archive dans un répertoire d'assemblage `mktemp -d` en mode `700`, détruit
+   par le `trap` ;
+3. **lecture du manifeste**, et refus d'un `format_version` inconnu (R22) — **avant** toute autre
+   lecture, puisque c'est lui qui dit comment lire le reste ;
+4. **VÉRIFICATION DE TOUTES LES EMPREINTES**, membre par membre, taille **et** SHA-256 recalculés
+   sur le fichier extrait. Un seul écart arrête l'exercice (R23). **Rien n'est restauré avant que
+   toutes soient vérifiées** : restaurer d'abord et vérifier ensuite reviendrait à écrire un
+   contenu qu'on sait peut-être corrompu ;
+5. **création du conteneur jetable**, la clé racine de l'archive montée à
+   `/etc/postgresql-custom/pgsodium_root.key` **dès la création** (M9), les quatre scripts
+   d'initialisation du dépôt montés aux chemins de `docker-compose.yml` (M11), **aucun port
+   publié** (M14) ;
+6. **attente de disponibilité** : boucle sur `pg_isready`, plafonnée, puis création du rôle
+   `supabase_realtime_admin` que les scripts du dépôt ne créent pas (M11) ;
+7. **restauration** de `base.dump` par `pg_restore -U supabase_admin --clean --if-exists
+   --no-owner` (M10). L'exercice **exige zéro erreur** : le compte des lignes `pg_restore: error`
+   doit être nul (R25) ;
+8. **restauration des objets** dans le MinIO jetable par `docker cp -` (M15), si et seulement si le
+   manifeste porte `depot_objet=minio-local` ;
+9. **comparaison des invariants** (§11.4) ;
+10. **destruction** de l'environnement jetable, et de lui seul (§11.2) ;
+11. **rapport** : chaque invariant, sa valeur des deux côtés, et le verdict.
+
+### 11.4 Les invariants comparés, et ce que chacun éprouve
+
+| # | Invariant | Ce qu'il éprouve | Comment |
+|---|---|---|---|
+| I1 | **Déchiffrement d'un secret de Vault** | **que la clé racine a suivi** — le seul invariant qui le voie (M12) | empreinte SHA-256 de chaque `decrypted_secret`, comparée ligne à ligne (M13) |
+| I2 | Nombre de secrets de `vault.secrets` | que les secrets ont été restaurés, et pas seulement leur table | `count(*)` |
+| I3 | Comptes de lignes des tables du seed | que les données sont là | `auth.users`, `public.cards`, `public.mail_messages` |
+| I4 | Nombre de tables de `public` | que le schéma est complet | `pg_tables` |
+| I5 | Politiques RLS de `public` | que les règles d'autorisation ont suivi — une base restaurée sans elles serait **ouverte** | `count(*)` sur `pg_policies` |
+| I6 | Tables à RLS **active** | qu'aucune table n'a perdu son `row level security` | `pg_class.relrowsecurity` |
+| I7 | Objet du dépôt restauré | que le chemin des objets fonctionne | présence, dans le MinIO jetable, de chaque entrée de `objets.tar` |
+
+**I1 est le cœur, et son échec est un échec de l'exercice**, jamais un avertissement. I5 et I6
+viennent juste après : `CLAUDE.md` §10 fait des politiques une règle de backend, et une restauration
+qui les perdrait rendrait toutes les données lisibles par n'importe quel porteur de jeton.
+
+**La comparaison a deux modes, et l'exercice dit lequel il emploie :**
+
+- **pile de référence disponible** — le conteneur `p2enjoy-db` tourne : chaque invariant est lu des
+  DEUX côtés et comparé. C'est le mode probant, et le seul que le harnais emploie ;
+- **pile de référence absente** — cas d'une restauration sur un hôte de secours : les invariants
+  sont lus sur la seule pile restaurée, et l'exercice vérifie ce qui se vérifie sans référence —
+  I1 (le déchiffrement **réussit**), et le fait que I2 à I6 soient **non nuls**. Le rapport dit
+  explicitement que la comparaison n'a pas eu lieu, plutôt que de laisser croire à une égalité.
+
+### 11.5 Les variables d'environnement de la tranche 2
+
+| Variable | Rôle | Format | Requise | Défaut |
+|---|---|---|---|---|
+| `RESTORE_AGE_IDENTITY_FILE` | fichier de la **clé privée** `age` qui déchiffre l'archive | chemin absolu | **oui** | aucun |
+| `BACKUP_OUTPUT_DIR` | répertoire où chercher la dernière archive quand aucune n'est nommée | chemin absolu | non | `/var/backups/p2enjoy` (partagé avec la tranche 1) |
+
+`scripts/restore-drill.sh [ARCHIVE]` prend en argument le chemin d'une archive ; sans argument, il
+prend **la plus récente** de `BACKUP_OUTPUT_DIR` selon le tri lexicographique du nom, que le §3.1
+rend chronologique. `--conserver` et `--help` complètent l'interface.
+
+**C'est ici, et seulement ici, qu'une clé PRIVÉE est lue.** La tranche 1 n'en lit jamais (§3.4) :
+l'hôte qui sauvegarde ne peut relire aucune de ses archives. L'exercice de restauration est donc
+une opération d'un poste **distinct**, celui qui détient l'identité — et le §14 le dit à
+l'exploitation.
+
+### 11.6 Les refus — dictionnaire FERMÉ
+
+| # | Condition | Message |
+|---|---|---|
+| R20 | `age` introuvable | « `age` est introuvable : la restauration chiffrée l'exige (voir README §4). » |
+| R21 | `RESTORE_AGE_IDENTITY_FILE` vide, illisible ou vide de contenu | « `RESTORE_AGE_IDENTITY_FILE` doit désigner le fichier de la clé privée `age` qui déchiffre l'archive. » |
+| R22 | `format_version` absent ou différent de `1` | « le manifeste annonce le format « … », que cet exercice ne sait pas lire. » |
+| R23 | une empreinte ou une taille de membre ne correspond pas | « le membre « … » ne correspond pas au manifeste : l'archive est corrompue, rien n'a été restauré. » |
+| R24 | un nom de conteneur jetable est déjà pris | « le conteneur « … » existe déjà : l'exercice refuse de réutiliser un environnement qu'il n'a pas créé. » |
+| R25 | `pg_restore` rend au moins une erreur | « `pg_restore` a rendu … erreur(s) : la restauration n'est pas fidèle. » |
+| R26 | archive introuvable, ou aucune archive dans le répertoire | « aucune archive à restaurer : … » |
+| R27 | Docker indisponible | message de `require_docker` (`scripts/lib/env.sh`), réemployé tel quel |
+| R28 | déchiffrement `age` en échec | « le déchiffrement a échoué : l'identité fournie n'ouvre pas cette archive. » |
+| R29 | le conteneur jetable ne devient pas disponible dans le délai | « la base jetable n'a pas démarré en … s : l'exercice s'arrête et détruit son environnement. » |
+| R30 | un invariant diffère de la référence | « invariant « … » : la pile restaurée rend …, la référence rend …. » |
+
+Chaque refus s'arrête avec le code `1`, nomme sa cause, et **laisse la pile courante intacte**. Le
+`trap` détruit l'environnement jetable dans tous les cas.
+
+### 11.7 Ce que l'exercice n'écrit JAMAIS
+
+- **rien dans la pile courante** : ni dans sa base, ni dans son dépôt objet, ni dans ses volumes.
+  L'exercice ne fait sur elle que des **lectures** — `select` pour les invariants de référence,
+  `docker ps` pour savoir si elle tourne. C'est `CLAUDE.md` §9, rendu exécutable ;
+- **aucun secret en clair** : ni dans sa sortie, ni dans un fichier, ni dans un journal (M13,
+  `CLAUDE.md` §20). Ni la clé racine, ni la clé privée `age`, ni un mot de passe déchiffré ;
+- **aucun fichier hors** de son répertoire d'assemblage temporaire ;
+- **aucune archive** : l'exercice lit, il ne produit pas de sauvegarde.
+
+---
+
+## 12. Contrat de comportement — tranche 2, cas o à z
+
+| Cas | Situation | Attendu |
+|---|---|---|
+| o | Archive valide, pile de référence debout | Code `0`, les sept invariants comparés et égaux, environnement jetable détruit |
+| p | Archive valide, identité correcte | `pg_restore` rend **0 erreur** ; `vault.decrypted_secrets` rend les cinq empreintes de la référence |
+| q | **Clé racine remplacée par une autre dans l'archive** | I1 **échoue** — `invalid ciphertext` —, l'exercice rend `1`, et les autres invariants restent égaux : c'est la dégradation qui prouve que I1 sert (M12) |
+| r | Empreinte d'un membre altérée dans le manifeste | R23, code `1`, **aucun conteneur jetable créé** |
+| s | `format_version=2` dans le manifeste | R22, code `1`, aucun conteneur jetable créé |
+| t | Identité `age` qui n'ouvre pas l'archive | R28, code `1`, aucun conteneur jetable créé |
+| u | `RESTORE_AGE_IDENTITY_FILE` non renseignée | R21, code `1` |
+| v | Archive inexistante, ou répertoire sans archive | R26, code `1` |
+| w | Un conteneur porte déjà le nom jetable | R24, code `1`, et le conteneur existant **n'est ni touché ni détruit** |
+| x | Exercice interrompu en cours de restauration | Le `trap` détruit l'environnement jetable ; la pile courante est intacte |
+| y | Archive sans `objets.tar` (`depot_objet=externe`) | Aucun MinIO jetable créé, I7 **annoncé non applicable**, les six autres comparés |
+| z | Après un exercice réussi ou échoué | `docker ps` ne porte **aucun** conteneur `p2enjoy-restauration-*`, et les 17 services de la pile sont intacts |
+
+**Le cas q est celui qui rend cette tranche non complaisante**, et le cas w celui qui rend sa garde
+de destruction éprouvée plutôt que promise.
+
+---
+
+## 13. Preuves exigées — tranche 2
+
+| Niveau | Preuve |
+|---|---|
+| Harnais | `scripts/verify-restauration.sh` : exécute le **vrai** exercice sur une **vraie** archive produite par le **vrai** `scripts/backup.sh`, et couvre les cas o à z |
+| Témoin | Le dépôt objet du seed étant **vide** (M6), le harnais y dépose un **objet témoin** avant de sauvegarder, et vérifie qu'il ressort du MinIO jetable. Il le retire ensuite, et constate son absence préalable |
+| Non-complaisance | Les refus R21 à R26 sont éprouvés par **dégradation volontaire** de l'archive ou de l'environnement, et chacun exigé deux fois — code non nul **et** aucun conteneur jetable survivant |
+| Dégradation centrale | Le cas **q** : une archive dont la clé racine est remplacée par une autre doit faire **échouer** I1. Sans cette épreuve, rien ne distingue un exercice qui vérifie le déchiffrement d'un exercice qui l'affirme |
+| Isolement | Après chaque cas, le harnais vérifie que les conteneurs de la pile sont **toujours les mêmes**, par leur identifiant, et qu'aucun `p2enjoy-restauration-*` ne subsiste |
+| Traçabilité | `scripts/verify-scripts.sh` : en-tête `@spec`, aide `--help`, `set -euo pipefail`, variables documentées |
+| Documentation | `README.md`, `docs/DAT.md` §10, `.env.example`, `CHANGELOG.md`, `docs/BACKLOG.md` |
+
+Comme pour la tranche 1 (§6), il n'y a ni test Vitest ni scénario Playwright : l'unité d'exécution
+est un script shell, et le dépôt éprouve ses scripts par des harnais. L'écart est nommé, non
+compensé par un test de substitution.
+
+---
+
+## 14. Limites nommées — tranche 2
+
+- **Les rôles ne sont pas dans l'archive** (M11). `pg_dump` ne porte aucun objet global. Une
+  restauration sur un hôte de secours doit donc recréer les rôles par le chemin d'amorçage de la
+  pile — les scripts de `supabase/docker/volumes/db/` —, ce que l'exercice reproduit. Emporter
+  `pg_dumpall --globals-only` dans l'archive changerait le format de la tranche 1 : c'est une
+  décision d'architecture, à prendre explicitement, et elle appartient au runbook de la tranche 3.
+  **Les mots de passe des rôles ne sont donc pas sauvegardés** ; ils viennent de
+  `POSTGRES_PASSWORD`, c'est-à-dire de la configuration, non des données.
+- **L'exercice restaure une base, pas une pile.** Il ne monte ni GoTrue, ni PostgREST, ni Kong :
+  vérifier qu'une application se connecte à la base restaurée est un exercice différent, plus
+  coûteux, et il n'est pas rendu ici. Ce que cet exercice prouve, il le prouve à la source — dans
+  la base et dans le dépôt objet.
+- **Aucune restauration en production.** L'exercice crée son propre environnement jetable et ne sait
+  pas viser une pile existante. Restaurer une production est une opération humaine, décrite par le
+  runbook de la tranche 3 (`CLAUDE.md` §9 et §12).
+- **Aucune restauration à un instant quelconque (PITR)**, pour le motif du §8 : `wal-g` n'est activé
+  par aucun service.
+- **Le témoin objet est déposé par le HARNAIS, jamais par l'exercice.** L'exercice ne touche pas la
+  pile courante (§11.7) ; c'est le harnais qui arrange une donnée probante, et qui la retire.
+
+---
+
+## 15. Definition of Done — tranche 2
+
+- `scripts/restore-drill.sh` livré, exécutable, avec son aide et ses commentaires `@spec` ;
+- l'environnement jetable du §11.1, sa garde de destruction structurelle du §11.2, et le déroulé du
+  §11.3 ;
+- les sept invariants du §11.4, dont **I1, le déchiffrement effectif d'un secret de Vault** ;
+- les onze refus du §11.6, chacun **éprouvé** ;
+- les deux variables du §11.5 documentées dans `.env.example` ;
+- `scripts/verify-restauration.sh` couvrant les cas o à z, exécuté et **vert**, dont le **cas q**
+  par dégradation volontaire de la clé racine ;
+- `README.md`, `docs/DAT.md` §10 et `CHANGELOG.md` mis à jour dans le même changement ;
+- `docs/BACKLOG.md` au véritable état — `CRM-080` reste `[~]` tant que la tranche 3 n'est pas
+  livrée.

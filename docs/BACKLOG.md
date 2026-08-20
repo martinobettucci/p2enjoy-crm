@@ -10665,7 +10665,30 @@ suivante :
       - [ ] **Les quarante-huit autres `scripts/verify-*.sh` n'ont pas été rejoués**, la série
             entière ne tenant pas dans une session (`docs/CloudWorker.md` §2.1 ter). C'est le
             dernier reste de forme de la tranche 1.
-- [ ] **Tranche 2 — la restauration prouvée.** Non commencée. Tant qu'elle n'est pas livrée,
-      l'unité ne peut pas passer à `[x]` : sa Definition of Done exige qu'« une preuve restaure
-      réellement un snapshot ».
+- [~] **Tranche 2 — la restauration prouvée. SPÉCIFIÉE le 2026-08-20**, `docs/SPEC-backups.md`
+      §10 à §15, écrite avant toute ligne de code (`CLAUDE.md` §5) et fondée sur **huit mesures**
+      prises sur une archive **réellement produite** par `scripts/backup.sh` et restaurée dans un
+      conteneur jetable. Deux de ces mesures corrigent le cadrage du §9, qui se trompait :
+      - **M12, la mesure décisive** : restauré avec une clé racine **tirée au hasard**,
+        `pg_restore` rend `rc=0, 0 erreur`, et **tous** les autres invariants sont identiques —
+        36 tables, 103 politiques RLS, 3 utilisateurs, 41 cards, 4 messages, 5 secrets. Seul
+        `vault.decrypted_secrets` rend `invalid ciphertext`. **Le déchiffrement d'un secret de
+        Vault est donc le seul invariant qui voie une clé racine perdue** : un exercice qui
+        compterait des lignes rendrait vert sur une archive irrécupérable.
+      - **M10** : la restauration se fait sous `supabase_admin`, non sous `postgres`, qui n'est
+        pas superutilisateur ici. Mesuré sur la même archive : `762` erreurs sous `postgres`,
+        `14` sous `supabase_admin`, `12` avec les scripts d'init du dépôt montés, **`0`** avec le
+        rôle `supabase_realtime_admin` créé. Sous `postgres`, `COPY vault.secrets` rend
+        `permission denied` et **les cinq secrets ne sont pas restaurés du tout**, sans que rien
+        ne s'arrête.
+      - **M9** : la clé racine doit être montée **avant le premier démarrage** du cluster —
+        `pgsodium_getkey.sh` en fabrique une au hasard si le fichier manque, et la déposer ensuite
+        ne répare rien. C'est ce qui commande l'ordre du déroulé.
+      - **M14** : l'environnement jetable ne publie **aucun port** et ne rejoint aucun réseau de la
+        pile, ce qui est plus fort que les « ports distincts » du cadrage. **M11** : `pg_dump` ne
+        porte aucun objet global, donc aucun rôle ; la limite est nommée au §14.
+      - [ ] `scripts/restore-drill.sh` — reste dû.
+      - [ ] `scripts/verify-restauration.sh`, cas o à z, dont le **cas q** (dégradation volontaire
+            de la clé racine) — reste dû.
+      - [ ] `.env.example`, `README.md`, `docs/DAT.md` §10, `CHANGELOG.md` — restent dus.
 - [ ] **Tranche 3 — l'exploitation.** Non commencée.
