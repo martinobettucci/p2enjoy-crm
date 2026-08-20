@@ -765,10 +765,19 @@ dans `docs/PROD_MIGRATIONS.md` et exécutées sur instruction humaine explicite.
   sa compromission ne livre pas l'historique. L'archive porte un manifeste texte donnant le SHA-256
   de chaque membre, et elle n'est renommée qu'une fois entièrement écrite — un lecteur du répertoire
   de sortie ne peut jamais prendre une écriture en cours pour une sauvegarde valide.
-  La **procédure de restauration reste à éprouver** : c'est la tranche 2 de la même unité, et tant
-  qu'elle n'est pas livrée, aucune sauvegarde de ce dépôt n'a été restaurée pour de bon.
+  **La restauration est ÉPROUVÉE depuis `CRM-080` tranche 2** — `scripts/restore-drill.sh`,
+  spécifié par `docs/SPEC-backups.md` §11. L'exercice refuse un format de manifeste inconnu,
+  vérifie **toutes** les empreintes **avant** de restaurer quoi que ce soit, monte un environnement
+  **jetable** — sans aucun port publié, sur aucun réseau de la pile —, y restaure la base et la clé
+  racine, compare sept invariants avec la pile de référence, puis détruit son environnement et lui
+  seul. Sa garde de destruction est **structurelle** : le `trap` ne connaît que les deux noms que
+  l'exercice a lui-même retenus, et un nom déjà pris fait refuser l'exercice avant toute création.
   **Aucune restauration à un instant quelconque (PITR)** : `wal-g` est configuré dans l'image mais
   activé par aucun service de la pile ; l'activer serait une décision d'architecture.
+  **Les rôles ne sont pas dans l'archive** : `pg_dump` ne porte aucun objet global. Une restauration
+  recrée donc les rôles par le chemin d'amorçage de la pile — les scripts de
+  `supabase/docker/volumes/db/` —, ce que l'exercice reproduit ; leurs mots de passe viennent de
+  `POSTGRES_PASSWORD`, c'est-à-dire de la configuration.
 - **Clé racine de Vault — obligatoire, et distincte de la base.** Le fichier
   `/etc/postgresql-custom/pgsodium_root.key`, porté par le volume `db-config`, ne se trouve
   **pas** dans `PGDATA` : il doit être sauvegardé séparément, et avec les mêmes précautions qu'un
@@ -777,9 +786,16 @@ dans `docs/PROD_MIGRATIONS.md` et exécutées sur instruction humaine explicite.
   l'omettrait rendrait **tous** les comptes de messagerie irrécupérables — il faudrait ressaisir
   chaque mot de passe. **`scripts/backup.sh` ne se contente plus de le recommander : il REFUSE de
   produire une archive dont cette clé serait absente** (`docs/SPEC-backups.md` §3.2, refus R11), un
-  avertissement n'ayant jamais empêché personne de sauvegarder la seule base. La procédure de
-  restauration elle-même n'est pas encore éprouvée (`docs/JOURNAL.md`, décision 24 ; `CRM-080`
-  tranche 2).
+  avertissement n'ayant jamais empêché personne de sauvegarder la seule base.
+  **ET LA RESTAURATION LE PROUVE DÉSORMAIS PLUTÔT QUE DE L'AFFIRMER.** Le déchiffrement effectif
+  d'un secret de Vault est l'invariant central de `scripts/restore-drill.sh`, parce qu'il est le
+  **seul** qui voie une clé racine perdue : mesuré le 2026-08-20, une base restaurée avec une clé
+  tirée au hasard rend `pg_restore` sans aucune erreur, et **tous** les autres invariants
+  identiques — 36 tables, 103 politiques RLS, 3 utilisateurs, 41 cards, 4 messages, 5 secrets. Un
+  exercice qui compterait des lignes rendrait donc vert sur une archive irrécupérable
+  (`docs/SPEC-backups.md` §10, mesure M12). La clé racine doit en outre être en place **avant le
+  premier démarrage** du cluster restauré : `pgsodium_getkey.sh` en fabrique une au hasard si le
+  fichier manque, et la déposer ensuite ne répare rien.
 - **Stockage objet** : quand il est **local** — MinIO —, son bucket entre dans l'archive de
   `scripts/backup.sh`, exporté par `docker cp`, l'image MinIO ne portant ni `tar` ni `find`. Quand
   il est **externe** — fournisseur S3, cas de production —, ses objets relèvent du fournisseur : le

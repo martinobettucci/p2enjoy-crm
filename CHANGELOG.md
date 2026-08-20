@@ -15,6 +15,38 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **La restauration prouvée des sauvegardes** (`CRM-080` tranche 2, `docs/SPEC-backups.md` §10 à
+  §15, `docs/DAT.md` §10). `scripts/restore-drill.sh` prend une archive chiffrée et la **restaure
+  pour de bon**, dans un environnement **jetable** qu'il monte lui-même et détruit ensuite. Une
+  sauvegarde jamais restaurée n'est pas une sauvegarde ; le dépôt peut désormais le vérifier au
+  lieu de l'espérer.
+
+  L'exercice refuse un format d'archive qu'il ne connaît pas, vérifie **toutes** les empreintes du
+  manifeste **avant** de restaurer quoi que ce soit, puis compare sept invariants avec la pile de
+  référence : le nombre de tables, les politiques d'autorisation et leur activation, les comptes
+  d'utilisateurs, d'affaires et de messages, le dépôt objet, et surtout le **déchiffrement effectif
+  d'un mot de passe de messagerie**.
+
+  **Ce dernier point est le cœur, et il a été mesuré plutôt que supposé.** Restaurée avec une clé
+  de chiffrement étrangère, la base rend tous les autres contrôles **identiques** — mêmes tables,
+  mêmes politiques, mêmes comptes. Seul le déchiffrement voit la différence. Un exercice qui se
+  contenterait de compter des lignes rendrait donc vert sur une sauvegarde dont les mots de passe
+  sont irrécupérables.
+
+  **L'environnement jetable ne peut pas toucher la pile en fonctionnement.** Il ne publie aucun
+  port, ne rejoint aucun réseau de la pile, et la destruction ne connaît que les deux noms que
+  l'exercice a lui-même créés — jamais un motif, jamais une liste. Un nom déjà pris fait refuser
+  l'exercice avant toute création, et le harnais vérifie que le conteneur étranger **survit**.
+
+  `scripts/verify-restauration.sh` rejoue tout cela sur la vraie pile — **35 contrôles, aucune
+  anomalie**, deux exécutions —, dont la dégradation volontaire de la clé de chiffrement, six refus
+  éprouvés, et un objet témoin déposé avant la sauvegarde pour que le chemin des objets soit prouvé
+  et non déduit d'un dossier vide.
+
+  Nouvelle variable `RESTORE_AGE_IDENTITY_FILE`, documentée dans `.env.example`. Elle désigne la
+  **clé privée** et vit sur un poste **distinct** de l'hôte qui sauvegarde : celui-ci ne détient
+  que des clés publiques et ne peut relire aucune de ses propres archives.
+
 - **Les sauvegardes chiffrées de la pile** (`CRM-080` tranche 1, `docs/SPEC-backups.md`,
   `docs/DAT.md` §10). `scripts/backup.sh` produit **une** archive chiffrée par exécution :
   `p2enjoy-sauvegarde-<horodatage UTC>.tar.age`. Elle porte le dump complet de la base, la **clé

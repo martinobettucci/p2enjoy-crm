@@ -10665,7 +10665,7 @@ suivante :
       - [ ] **Les quarante-huit autres `scripts/verify-*.sh` n'ont pas été rejoués**, la série
             entière ne tenant pas dans une session (`docs/CloudWorker.md` §2.1 ter). C'est le
             dernier reste de forme de la tranche 1.
-- [~] **Tranche 2 — la restauration prouvée. SPÉCIFIÉE le 2026-08-20**, `docs/SPEC-backups.md`
+- [~] **Tranche 2 — la restauration prouvée. LIVRÉE ET PROUVÉE le 2026-08-20**, spécifiée d'abord, `docs/SPEC-backups.md`
       §10 à §15, écrite avant toute ligne de code (`CLAUDE.md` §5) et fondée sur **huit mesures**
       prises sur une archive **réellement produite** par `scripts/backup.sh` et restaurée dans un
       conteneur jetable. Deux de ces mesures corrigent le cadrage du §9, qui se trompait :
@@ -10687,8 +10687,40 @@ suivante :
       - **M14** : l'environnement jetable ne publie **aucun port** et ne rejoint aucun réseau de la
         pile, ce qui est plus fort que les « ports distincts » du cadrage. **M11** : `pg_dump` ne
         porte aucun objet global, donc aucun rôle ; la limite est nommée au §14.
-      - [ ] `scripts/restore-drill.sh` — reste dû.
-      - [ ] `scripts/verify-restauration.sh`, cas o à z, dont le **cas q** (dégradation volontaire
-            de la clé racine) — reste dû.
-      - [ ] `.env.example`, `README.md`, `docs/DAT.md` §10, `CHANGELOG.md` — restent dus.
+      - [x] `scripts/restore-drill.sh` **LIVRÉ le 2026-08-20**. Il refuse un `format_version`
+            inconnu, vérifie **toutes** les empreintes du manifeste **avant** de restaurer quoi que
+            ce soit, monte un conteneur jetable dont la clé racine est en place **dès la création**
+            (M9), restaure sous `supabase_admin` en exigeant **zéro** erreur (M10), compare les
+            sept invariants, restaure les objets par `docker cp -` (M15), puis détruit son
+            environnement — et lui seul.
+      - [x] **La garde de destruction est STRUCTURELLE**, comme le §9 l'exigeait. Le `trap` ne
+            connaît que les deux noms retenus à la création : il ne construit aucun motif,
+            n'énumère aucune liste, n'interroge aucun filtre. Un nom déjà pris fait **refuser**
+            l'exercice (R24) avant toute création. Le harnais lit le code livré pour l'exiger, et
+            refuse tout appel à `docker compose`, qui pourrait atteindre la pile.
+      - [x] `scripts/verify-restauration.sh` : **35 contrôles, aucune anomalie**, deux exécutions
+            de suite. Il exerce le VRAI script sur une archive produite par le VRAI
+            `scripts/backup.sh`, dépose un **objet témoin** avant de sauvegarder — le dépôt du seed
+            étant vide, un dossier vide restauré ne prouverait rien —, et vérifie après chaque cas
+            que les conteneurs de la pile sont les mêmes **par leur identifiant**.
+      - [x] **Non complaisant, et c'est le cas q qui l'établit.** La clé racine de l'archive est
+            remplacée par une autre de même taille, le manifeste mis en accord pour que ce soit le
+            **déchiffrement** qui trébuche et non l'intégrité : l'exercice doit échouer, et l'échec
+            doit être attribué à I1. Le harnais exige en outre que les autres invariants soient
+            **restés conformes**, ce qui prouve que la dégradation était invisible autrement.
+      - [x] **DEUX DÉFAUTS TROUVÉS PAR LE HARNAIS, corrigés à leur cause.** `interroger` rendait le
+            code de `psql`, et `VALEUR=$(interroger …)` le propage : sous `set -euo pipefail`,
+            l'exercice **mourait** au premier `select` en erreur — exactement le cas q — et rendait
+            un code non nul **muet** au lieu d'un diagnostic. Et le cas w **devinait la seconde** à
+            laquelle l'exercice calculerait son nom : vert à une exécution, rouge à la suivante.
+            La réponse n'a été ni une temporisation ni un rejeu, mais un nom **déterministe** —
+            l'option `--suffixe`, dont le préfixe reste imposé et le contenu restreint, si bien que
+            la garde n'est pas affaiblie.
+      - [x] `.env.example` : `RESTORE_AGE_IDENTITY_FILE` documentée, à exemple **vide** et le motif
+            écrit. Le compte des variables du gabarit est porté à **93**, chiffre **compté**.
+      - [x] `README.md` §3, §5 et §9, `docs/DAT.md` §10, `CHANGELOG.md` mis à jour dans le même
+            changement. Le DAT ne dit plus « la procédure de restauration reste à éprouver ».
+      - [ ] **La campagne complète du dépôt reste à exécuter** pour cette tranche, ainsi que les
+            `scripts/verify-*.sh` que le changement ne touche pas — la série entière ne tient pas
+            dans une session (`docs/CloudWorker.md` §2.1 ter).
 - [ ] **Tranche 3 — l'exploitation.** Non commencée.
