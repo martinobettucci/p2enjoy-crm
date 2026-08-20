@@ -2145,7 +2145,8 @@ qui les distingue mal. Il porte les mêmes chiffres, plus une colonne **« Sans 
 lignes dont le coût réel n'a pas encore été saisi, budget par budget.
 
 **Un budget récurrent apparaît ici en UNE seule paire de barres**, toutes ses occurrences confondues.
-Le détail occurrence par occurrence appartient à l'écran du budget, qui n'est pas encore livré.
+Le détail occurrence par occurrence appartient à l'écran du budget, désormais livré : **le nom d'un
+budget est un lien** vers sa fiche (§5 sexies).
 
 **Un budget clôturé n'apparaît pas sur cet écran.** Il n'a pas disparu : ses lignes existent
 toujours, et leur coût réel reste saisissable — clôturer une campagne n'empêche pas les factures
@@ -2195,11 +2196,75 @@ que celui d'un collègue, et c'est le comportement voulu.
 
 ### 5 quinquies.5 Ce qui n'est pas encore là
 
-- L'**écran d'un budget**, qui le détaillera **occurrence par occurrence** avec la liste de ses
-  lignes de coût.
 - Le **cumul de l'espace de travail**, un graphique par track.
 - L'onglet **« À saisir »**, qui listera toutes les lignes en attente de leur coût réel et permettra
   de les saisir à la suite, sans ouvrir les affaires une par une.
+
+## 5 sexies. Le détail d'un budget : occurrence par occurrence, ligne par ligne
+
+*Livré par `CRM-086` tranche 4. Captures dans `docs/captures/CRM-086/couts-budget-*.jpg`.*
+
+**Où.** Depuis l'écran de coûts d'un track (§5 quinquies), **cliquez sur le nom d'un budget** dans
+le tableau sous le graphique. L'adresse est partageable et rechargeable ; elle désigne le budget par
+son identifiant, et non par son nom — deux budgets peuvent porter le même nom dès que l'un est clos.
+
+**Ce que l'écran montre, de haut en bas :**
+
+1. **La devise du budget et son enveloppe**, quand une enveloppe a été décidée. Si aucune ne l'a été,
+   la ligne n'apparaît pas du tout : le produit ne confond jamais « rien n'a été décidé » et
+   « l'enveloppe vaut zéro ».
+2. **Un graphique à deux barres par occurrence** — le prévisionnel et le réel —, dans l'ordre des
+   périodes. C'est ce que l'écran du track agrège en une seule paire. Un budget **non récurrent**
+   n'en rend qu'une, nommée « Sans occurrence ».
+3. **La liste de ses lignes de coût** : l'affaire, la nature de la dépense, le coût estimé, le coût
+   réel et l'auteur de la saisie. Le titre de l'affaire est un lien vers sa fiche.
+
+**Une occurrence qui n'a rien coûté garde ses deux barres, à zéro.** Qu'il ne se soit rien passé en
+février est une information ; la faire disparaître ferait lire le budget comme s'il n'avait jamais
+porté ce mois-là.
+
+**Sous le libellé d'une occurrence, sa période.** Le libellé est libre — rien n'oblige
+« Janvier 2026 » à couvrir janvier —, et la période dit ce que le libellé ne garantit pas. Elle est
+purement descriptive : elle ne refuse aucune ligne de coût.
+
+### 5 sexies.1 Filtrer par occurrence
+
+Dès que le budget porte des occurrences, un sélecteur **« Filtrer par occurrence »** apparaît
+au-dessus de la liste. Il ne retient que **la liste** : le graphique reste celui du budget entier,
+sans quoi vous perdriez la comparaison entre occurrences, qui est ce que cet écran sert à voir.
+
+L'option **« Toutes les occurrences »** lève le filtre. Un budget non récurrent, ou un budget
+récurrent qui ne porte encore aucune occurrence, n'affiche aucun sélecteur : il n'y aurait rien à
+filtrer.
+
+### 5 sexies.2 La colonne « Réel » laissée vide
+
+Une ligne dont le coût réel n'a pas encore été saisi laisse sa cellule **vide** — pas un tiret, pas
+« non renseigné », et surtout pas `0 €`. Le produit ne confond jamais « pas encore su » et « rien
+dépensé » : un zéro affiché ferait passer une saisie en retard pour une économie. Le compte de ces
+lignes est donné une seule fois, par la phrase sous le graphique.
+
+### 5 sexies.3 Les états que vous pouvez rencontrer
+
+| Ce que vous voyez | Ce que cela veut dire |
+|---|---|
+| « Budget clôturé — ses lignes restent lisibles et leur coût réel saisissable. » | Le budget a été clos. Il ne figure plus sur l'écran du track, mais son histoire reste entière et les factures qui arrivent après coup restent saisissables |
+| « Aucune occurrence ouverte. » | Le budget est récurrent mais n'en porte aucune. Tant que c'est le cas, aucune dépense ne peut lui être rattachée |
+| Deux barres à zéro et « Aucune dépense rattachée. » | Le budget existe, aucune affaire n'y a encore rattaché de ligne |
+| « Aucune dépense sur cette occurrence. » | Le filtre est posé sur une occurrence qui ne porte aucune ligne — ce n'est pas la même chose qu'un budget vide |
+| « Budget introuvable » | Ce budget n'existe pas, **ou** il ne vous est pas accessible, **ou** l'adresse est mal formée. Les trois se ressemblent **volontairement** : distinguer les cas vous apprendrait l'existence d'un budget que vous n'avez pas le droit de voir |
+| « Auteur inconnu » dans la colonne « Auteur » | Le compte qui a saisi la ligne a été supprimé depuis. La ligne, elle, est intacte |
+
+**Le bouton « Revenir aux coûts du track »** de l'écran « Budget introuvable » vous ramène là d'où
+vous venez, et là où les autres budgets sont listés.
+
+### 5 sexies.4 Ce que cet écran ne fait pas
+
+- **On n'y saisit rien.** Les lignes de coût se créent et se modifient depuis la fiche de l'affaire,
+  section « Coûts » ; les budgets et leurs occurrences s'administrent depuis
+  « Réglages ▸ Arborescence ».
+- **Aucun tri, aucune période, aucun export.** La liste rend les lignes de la plus ancienne à la
+  plus récente.
 
 ## 6. Consulter l'état de la messagerie
 

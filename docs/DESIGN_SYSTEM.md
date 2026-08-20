@@ -2065,6 +2065,24 @@ séparées de 4 px, mais leurs étiquettes sont plus larges qu'elles — « 1 00
 l'élément, il ne se devine pas. Le rembourrage porte sur l'**étiquette**, jamais sur le groupe : les
 barres gardent les 4 px que ce paragraphe leur donne. La règle vaut pour **toute** valeur en clair
 posée au-dessus d'une forme plus étroite qu'elle.
+**L'EN-TÊTE DE LIGNE DU TABLEAU ÉQUIVALENT EST ALIGNÉ À GAUCHE, ET C'EST UN DÉFAUT TROUVÉ EN
+REGARDANT UNE CAPTURE** (`CLAUDE.md` §16, 2026-08-20). Un `th` est **centré par défaut**, et la
+classe d'alignement posée sur la ligne d'en-tête ne porte que sur les cellules de celle-ci : les
+libellés du corps se rendaient donc centrés, entre un en-tête aligné à gauche et un pied « Total »
+qui, lui, posait son alignement explicitement. Le §5.9 pose « texte à gauche » sans exception pour
+un en-tête de ligne. Le défaut datait de la première livraison du composant et ne s'est vu qu'avec
+la **précision** rendue sous le libellé — deux lignes centrées se remarquent là où un mot seul
+passait. La règle vaut pour **tout** `th scope="row"` du produit : l'alignement s'écrit sur la
+cellule, il ne s'hérite pas de l'en-tête.
+
+**LE LIBELLÉ D'UN GROUPE PEUT ÊTRE UN LIEN, ET CE LIEN VIT DANS LE TABLEAU — jamais sur la barre**
+(ajouté le 2026-08-20 par la tranche 4). Le graphique est `aria-hidden` : une cible interactive
+posée dessus serait perdue au clavier comme au lecteur d'écran, ce que le §8 interdit sans
+exception. Le tableau étant la version accessible du graphique, c'est lui qui porte le geste. Le
+**nom accessible du lien est distinct du libellé visible** — « Voir le détail du budget X » et non
+« X » : cinq liens ne portant que leur libellé ne diraient pas ce que chacun ouvre, la règle du
+§5.29 pour les commandes répétées d'une liste.
+
 ### 5.31 Table de saisie en série des coûts réels — `CRM-086`
 
 Spécifiée avant code, `docs/SPEC-costs.md` §4.8.
@@ -2097,6 +2115,83 @@ d'ancienneté d'une card (§5.1) : c'est le même signal, il doit avoir la même
 **Lecture seule.** Une ligne que l'appelant ne peut pas écrire rend son champ **désactivé et
 lisible**, avec le motif sous le champ — §8. Elle n'est jamais masquée : une table qui cache des
 lignes se lit comme complète alors qu'elle ne l'est pas.
+
+### 5.32 Écran de détail d'un budget — `CRM-086`
+
+Spécifié avant code, `docs/SPEC-costs.md` §4.3. Livré le 2026-08-20. L'écran réemploie
+l'histogramme du §5.30 et le tableau de données du §5.9 ; les règles ci-dessous ne disent que ce
+qui lui est propre.
+
+- **Trois blocs dans cet ordre : l'identité du budget, l'histogramme, la liste de ses lignes.** On
+  lit ce qu'est l'enveloppe avant de lire comment elle se dépense, et le détail ligne à ligne après
+  la vue d'ensemble — le même ordre que la fiche d'affaire, dont l'en-tête précède le dossier
+  (§5.3 bis).
+
+- **L'identité est une liste de définitions (`dl`), pas un tableau** (§5.20) : devise et enveloppe
+  sont des couples terme / valeur qui ne se comparent pas entre eux. Elles sont des **données
+  techniques** (§2), en monospace à chiffres tabulaires. Deux colonnes à partir de `md`, empilées
+  en dessous — `md` et jamais `sm`, qui est un variant inconnu que Tailwind supprime en silence
+  (§11, §5.20).
+
+- **UNE ENVELOPPE NON RENSEIGNÉE NE REND AUCUNE LIGNE**, elle ne rend pas une ligne vide. Le §2.1
+  la déclare facultative, et un blanc se lirait comme une enveloppe nulle : c'est la distinction
+  entre « ne se prononce pas » et « vaut zéro » que le §5.18 tient déjà pour un attribut de nœud.
+
+- **La pilule « clôturé » emploie les jetons NEUTRES**, `--color-hover` / `--color-text-2`, jamais
+  `--color-danger` — la règle du §5.31 : un budget clos n'est pas une erreur, et ses lignes restent
+  lisibles et leur coût réel saisissable. Elle **nomme la conséquence** plutôt que l'état seul, sans
+  quoi « clôturé » se lirait comme une fermeture de la lecture.
+
+- **UNE PAIRE DE BARRES PAR OCCURRENCE, ET UNE OCCURRENCE MUETTE GARDE LA SIENNE, À ZÉRO.** Le §4.3
+  demande « une paire par occurrence », pas « par occurrence dépensée » : qu'il ne se soit rien
+  passé sur une période est une information, et la faire disparaître ferait lire le budget comme
+  s'il n'avait jamais porté ce mois-là. Un budget non récurrent rend une paire unique, nommée
+  « Sans occurrence ».
+
+- **La période se rend en PRÉCISION sous le libellé de l'occurrence**, dans le champ que le §5.30
+  déclare, et **composée par une clé de traduction** : les deux bornes sont facultatives et
+  indépendantes (§2.2), donc trois formes existent, et « du … au … » ne se construit pas en collant
+  deux dates (§10). Elle dit ce que le libellé ne garantit pas — rien n'oblige « Janvier 2026 » à
+  couvrir janvier.
+
+- **Le filtre par occurrence est un `select` du §5.7, avec une option vide en tête** qui est le
+  moyen de le LEVER (§5.22). Il **n'existe que s'il y a quelque chose à filtrer** — la règle du
+  §5.11 pour la barre de filtres du fil : un budget non récurrent, ou un budget récurrent sans
+  occurrence, n'en rend aucun.
+
+- **LE FILTRE RETIENT LA LISTE, JAMAIS LE GRAPHIQUE.** Masquer une paire de barres ferait perdre la
+  comparaison entre occurrences, qui est l'objet même de cet écran ; la liste, elle, est ce que le
+  §4.3 déclare filtrable.
+
+- **Deux vides distincts, et aucun ne se confond avec l'autre** (§5.11) : « aucune dépense
+  rattachée à ce budget » et « aucune dépense sur cette occurrence ». Les fondre ferait passer un
+  filtre trop restrictif pour un budget sans histoire.
+
+- **La liste porte CINQ colonnes, celles que la spécification énumère** — affaire, nature,
+  prévisionnel, réel, auteur. Aucune colonne « occurrence » : c'est le filtre qui porte cette
+  dimension, et l'histogramme juste au-dessus la donne déjà.
+
+- **UN COÛT RÉEL NON SAISI LAISSE SA CELLULE VIDE** (§5.9) : ni tiret, ni « non renseigné », ni
+  zéro. Le §2.3 pose que « nul n'est pas zéro », et un `0 €` transformerait un retard de saisie en
+  dépense nulle — la principale façon dont cet écran mentirait. Le compte de ces lignes est porté
+  par la mention du §4.4 sous l'histogramme, jamais par la cellule.
+
+- **« Auteur inconnu » est un TEXTE, pas une cellule vide** — la règle du §5.16 : `created_by` est
+  `on delete set null`, et un profil supprimé laisse un fait à nommer.
+
+- **Le titre de l'affaire est un lien quand elle est adressable, et un texte sinon.** Une affaire
+  dont les slugs manquent reste **listée** — la masquer retrancherait un montant du tableau —, mais
+  sans lien : un lien vers une adresse incomplète mènerait à un écran que l'utilisateur croirait
+  cassé (§5.10). Une **affaire archivée garde son lien** et porte sa pilule (§5.24).
+
+- **Les cinq états du §5.8 sont traités**, et le troisième est le plus important : **budget
+  introuvable** est le **même** écran pour un identifiant inconnu, pour un appelant sans droit et
+  pour une adresse mal formée (`docs/SPEC-permissions-rls.md` §7). Son action de retour mène aux
+  **coûts du track**, jamais à la racine : c'est de là qu'on vient, et c'est là que les autres
+  budgets se trouvent.
+
+- **Aucune couleur, aucun jeton, aucune icône nouvelle** : l'écran emprunte au §5.30 son
+  histogramme, au §5.9 son tableau, au §5.6 sa pilule et au §5.5 son lien de retour.
 
 ## 6. Interactions
 
