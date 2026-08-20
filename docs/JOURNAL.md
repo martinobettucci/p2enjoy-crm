@@ -21584,3 +21584,62 @@ arbitrage, pas une correction de passage.
 Treize arbitrages attendent : **INC-169**, **INC-170**, **INC-172**, **INC-173**, **INC-174**,
 **INC-176**, **INC-177**, **INC-178**, **INC-180**, **INC-181**, **INC-182**, **INC-183** et
 **INC-184**.
+
+## décision 481 — `CRM-060` sous-tranche 2 bis : la suggestion de classement enfin VISIBLE
+
+**L'unité, et le choix.** La décision 480 laisse `CRM-086` en `[~]` sans qu'aucun point de sa
+Definition of Done soit à la portée d'une session — le seul reste est l'arbitrage d'INC-182 — et
+renvoie explicitement au §4.2 de `docs/CloudWorker.md` : première unité `[~]` du backlog, dans
+l'ordre du plan, dont il reste du **comportement** à livrer. Les unités antérieures ont été
+relues une par une, et leurs restes ne sont pas du comportement : `CRM-001` est une preuve de
+démarrage à froid ; `CRM-013` est **bloquée** par deux tables que `CRM-072` et `CRM-073` n'ont pas
+créées ; `CRM-014` ne demande que des preuves ; `CRM-034` porte deux lignes **périmées** — INC-048
+est close depuis la migration 35, et l'événement `moved` est écrit par le trigger de la migration
+16 ; `CRM-035` en porte une autre — la grille champ × étape a été livrée par `CRM-076` quatrième
+tranche ; `CRM-052` et `CRM-053` attendent un écran de réglages **qu'aucune unité ne porte**, et
+en créer une serait du périmètre en plus. **`CRM-060` tranche 2 est la première dont le reste est
+du comportement, et son motif d'attente est caduc.**
+
+**LE MOTIF D'ATTENTE EST TOMBÉ IL Y A NEUF JOURS, ET PERSONNE NE L'AVAIT RELEVÉ.** Le §8.6 de
+`docs/SPEC-contacts.md` range la preuve visible de la règle 3 dans une case explicitement vide :
+« elle attend l'écran de l'inbox (`CRM-057`), non livré ». L'inbox est livrée depuis le
+2026-08-11. Mieux : `docs/DESIGN_SYSTEM.md` §5.4 porte la règle depuis `CRM-000` — « un message non
+classé affiche l'action *Classer dans une card* **et, le cas échéant, la suggestion proposée par le
+classement assisté, toujours présentée comme une suggestion à confirmer** ». Rien de tout cela
+n'était rendu.
+
+**DEUX MANQUES QUI SE TIENNENT, ET C'EST MESURÉ.** `webapp/src/app/RouteInbox.tsx` ne cite jamais
+`suggested_card_id` ; `COLONNES_MESSAGE` ne la demande pas ; et les trois messages du seed n'en
+portent aucune — `select … from mail_messages` rend trois lignes à `suggested_card_id` nul. La
+règle 3 est donc **livrée, prouvée en base et invisible**. Une surface sans donnée n'aurait aucune
+capture, une donnée sans surface n'aurait aucun lecteur : la sous-tranche lève les deux ensemble.
+
+**L'OBSTACLE DU SEED ÉTAIT NOMMÉ DEPUIS `CRM-057`, ET IL N'ÉTAIT PAS UNE FATALITÉ.** Le §2.19 de
+`docs/SPEC-seed.md` écrivait « aucun correspondant extérieur n'existe sur cette pile », après avoir
+mesuré qu'un principal Stalwart n'expédie que depuis ses propres adresses
+(`501 5.5.4 You are not allowed to send from this address.`). La règle 3 exige pourtant un
+expéditeur reconnu comme **contact** — `leo.marchand@sogexia.example` (§5) —, qu'aucune boîte ne
+portait. La réponse n'est pas de faire mentir le `From` : c'est d'en **faire exister un**. MESURÉ
+le 2026-08-20 sur la pile réelle, dans cet ordre : création du domaine `sogexia.example`
+(`{"data":6}`), création du principal `leo.marchand@sogexia.example` (`{"data":7}`), soumission
+authentifiée depuis cette adresse — **acceptée** —, relève réelle (`messages_new: 1`), puis en
+base `classification = unclassified`, `card_id` nul,
+`suggested_card_id = 5eed0000-0000-4000-8000-0000000000c2`. La règle 3 s'est déclenchée sans que
+rien ne soit forcé, et elle a désigné « Migration ERP Sogexia », seule affaire active de Léo.
+
+**Les trois profils ont été mesurés aussi**, avec leurs jetons réels : l'administratrice lit le
+message non classé et sa suggestion ; le `business_developer` et la `viewer` reçoivent `200` et
+**zéro ligne**, la boîte système n'étant lisible que des administrateurs (§18.1). L'écran ne
+calcule aucun de ces droits.
+
+**Ce que ce commit contient, et il ne contient rien d'autre.** La spécification complète, écrite
+AVANT la première ligne de code (`CLAUDE.md` §5, `docs/CloudWorker.md` §3.2 point 3) :
+`docs/SPEC-contacts.md` §8.8 — douze paragraphes numérotés, dont le contrat de comportement en dix
+cas et la Definition of Done —, `docs/DESIGN_SYSTEM.md` §5.4 ter, `docs/SPEC-mail-subsystem.md`
+§11.4 pour le domaine et la boîte du correspondant, `docs/SPEC-seed.md` §2.19 pour le quatrième
+message, et l'unité au backlog. Le code suit.
+
+**Où reprendre si cette session s'interrompt ici.** L'implémentation, dans cet ordre : les deux
+colonnes dans `COLONNES_MESSAGE` et la projection ; le bloc dans `RouteInbox.tsx` avec ses quatre
+états ; les clés de traduction ; puis le provisionnement Stalwart et le quatrième message du seed ;
+puis les preuves du §8.8.11.

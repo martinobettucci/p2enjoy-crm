@@ -573,6 +573,68 @@ règles ci-dessous ne disent que de quoi il a l'air.
 - **La ligne du fil ne se déplie pas.** Le sélecteur du panneau de lecture tient ce rôle ; deux
   endroits pour le même choix en feraient diverger un.
 
+### 5.4 ter La SUGGESTION de classement dans l'inbox — `CRM-060`
+
+Le §5.4 pose la règle depuis `CRM-000` : « un message non classé affiche l'action *Classer dans une
+card* **et, le cas échéant, la suggestion proposée par le classement assisté, toujours présentée
+comme une suggestion à confirmer** ». Elle n'était rendue par rien. Ce que le bloc lit, envoie et
+refuse est spécifié par `docs/SPEC-contacts.md` §8.8 ; les règles ci-dessous ne disent que de quoi
+il a l'air.
+
+- **Il vit dans le pied du panneau de lecture, AU-DESSUS de la commande manuelle**, dans le visage
+  « non classé » de ce pied. L'ordre porte un sens : la suggestion est le chemin court, la commande
+  manuelle est celui qui marche toujours. Un indice placé après la commande se lirait une fois la
+  liste déroulée, c'est-à-dire trop tard.
+
+- **C'est une carte discrète, pas une alerte.** Surface `--color-surface`, `--radius-sm`, bordure
+  `--color-border`, rembourrage 12 px — la carte du §5.10, réemployée. Aucune teinte de danger,
+  aucune teinte d'accent : une suggestion n'est ni une erreur, ni un avertissement, et lui donner
+  une couleur d'état lui ferait porter une urgence qu'elle n'a pas.
+
+- **L'affaire est NOMMÉE et son titre est un LIEN vers sa fiche** — la pilule
+  `--color-brand-soft` / `--color-brand` du message classé (§5.4), réemployée sans copie : c'est la
+  même donnée, elle doit se reconnaître d'un visage à l'autre du même pied. Un indice qui ne
+  nommerait pas sa cible ne serait pas un indice ; un nom sans lien obligerait à chercher l'affaire
+  ailleurs pour la vérifier, or vérifier est ce que « à confirmer » demande.
+
+- **La règle est écrite en toutes lettres, en 13 px `--color-text-2`** — « L'expéditeur est un
+  contact rattaché à cette affaire. » Le §1 vaut ici comme partout : ni une icône, ni une teinte ne
+  diraient d'où sort ce nom d'affaire, et un indice dont on ignore l'origine ne se confirme pas, il
+  se subit. L'icône `Sparkles` — celle de la famille « Cycle de vie » du fil (§5.11) pour un fait
+  que le produit a établi lui-même — **accompagne** le titre du bloc et ne le remplace pas (§9).
+
+- **LE GESTE D'ACCEPTATION EST PRIMAIRE, ET LA COMMANDE MANUELLE PASSE ALORS EN SECONDAIRE.** Deux
+  boutons primaires dans le même pied ne diraient plus lequel est le chemin principal (§5.5), et
+  c'est le chemin court qui l'est quand un indice existe. La commande manuelle **reste rendue,
+  reste atteignable, et retrouve sa variante primaire** dès qu'aucune suggestion n'est présentée :
+  sa nature ne change pas, seule sa place dans la hiérarchie d'un pied qui porte deux actions.
+
+- **Aucune date, aucun score, aucune confiance.** `suggested_at` daterait l'indice et non l'affaire,
+  et ferait chercher un rafraîchissement qui n'existe pas ; la règle 3 ne produit aucune probabilité,
+  elle exige « exactement une » affaire active. Afficher une nuance que la donnée ne porte pas est
+  la valeur par défaut trompeuse que `CLAUDE.md` §18 interdit.
+
+- **Le refus se lit DANS le bloc, en `role="alert"`, et le bloc reste rendu** (§5.13, §5.16) :
+  disparaître sur un refus retirerait le seul endroit où lire la cause. Les quatre refus sont ceux
+  du classement manuel, **mot pour mot** — un même refus ne se formule pas de deux façons selon le
+  bouton qui l'a demandé (§5.3 sexies).
+
+- **La commande n'est jamais éteinte d'avance, quel que soit le rôle** (§5.3, §5.13, §5.16, §5.21,
+  sans exception) : l'écran ne calcule aucun droit, il appuie et traduit le refus.
+
+- **Une suggestion dont l'affaire n'est pas lisible ne rend RIEN** — ni bloc, ni mention, ni
+  identifiant. C'est la règle du §5.29 pour un bloc masqué et du §5.33 pour un budget masqué :
+  l'écran ne nomme jamais ce qu'il cache. Écrire « une affaire vous est suggérée » divulguerait son
+  existence par la bande.
+
+- **Aucune suggestion dans la LISTE ni dans l'arborescence.** Le §5.4 bis tient une densité que ce
+  bloc ne défait pas — une ligne porte un expéditeur, un objet et une date —, et le §5.3 septies a
+  déjà tranché dans le même sens pour le geste de sommeil : ce qui aide à **décider** vit dans le
+  message ouvert.
+
+- **Aucune couleur, aucun jeton, aucune icône nouvelle** : le bloc emprunte au §5.10 sa carte, au
+  §5.4 sa pilule, au §5.11 son icône et au §5.5 ses variantes.
+
 ### 5.5 Boutons
 
 | Variante | Style |

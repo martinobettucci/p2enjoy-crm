@@ -387,6 +387,298 @@ Et deux cas où la règle 3 **n'est pas atteinte**, la chaîne s'étant arrêté
 La tranche 2 livrée, l'unité `CRM-060` **demeure `[~]`** : les tranches 3 (résolution du champ
 `contact`) et 4 (écrans) restent dues, et la preuve visible de la suggestion attend l'inbox.
 
+### 8.8 Sous-tranche 2 bis — La SURFACE de la suggestion, dans l'inbox
+
+Contrat écrit **avant toute ligne de code** (`CLAUDE.md` §5, `docs/CloudWorker.md` §3.2), après
+mesure sur la pile réelle démarrée et seedée le 2026-08-20. Chaque paragraphe intitulé « MESURÉ »
+rapporte une sortie obtenue sur cet hôte, jamais un souvenir.
+
+**Le motif de cette sous-tranche est écrit depuis le premier jour de la tranche 2.** Le §8.6
+range la preuve visible de la suggestion dans une case restée vide — « elle attend l'écran de
+l'inbox (`CRM-057`), non livré » —, et `docs/SPEC-mail-subsystem.md` §16.1 répète l'écart : « Reste
+non livré : l'écran qui MONTRE la suggestion ». **L'inbox est livrée depuis le 2026-08-11.** La
+condition est donc tombée, et elle tombe par **livraison**, jamais par contournement.
+`docs/DESIGN_SYSTEM.md` §5.4 porte d'ailleurs la règle depuis `CRM-000` : « un message non classé
+affiche l'action *Classer dans une card* **et, le cas échéant, la suggestion proposée par le
+classement assisté, toujours présentée comme une suggestion à confirmer** ». Rien de tout cela
+n'était rendu.
+
+**MESURÉ, l'état du produit avant cette sous-tranche.** `webapp/src/app/RouteInbox.tsx` ne cite
+jamais `suggested_card_id` ; `COLONNES_LISTE` et `COLONNES_MESSAGE` de `webapp/src/lib/inbox.ts` ne
+la demandent pas ; et les trois messages du seed n'en portent aucune :
+
+```
+select from_address, classification, suggested_card_id from public.mail_messages;
+ bizdev@p2enjoy.test | auto         | (nul)
+ bizdev@p2enjoy.test | unclassified | (nul)
+ bizdev@p2enjoy.test | auto         | (nul)
+```
+
+La règle 3 est donc **livrée, prouvée en base, et invisible** : aucun écran ne la montre, et aucune
+donnée de démonstration ne la déclenche. Les deux manques se tiennent, et cette sous-tranche les
+lève **ensemble** — une surface sans donnée n'aurait aucune capture, et une donnée sans surface
+n'aurait aucun lecteur.
+
+#### 8.8.1 Ce que la sous-tranche livre, et ce qu'elle ne livre pas
+
+**Livré :**
+
+- le **bloc de suggestion** dans le panneau de lecture de l'inbox, sur un message non classé qui en
+  porte une : l'affaire nommée, la règle écrite en toutes lettres, et **un geste qui l'accepte** ;
+- les deux colonnes `suggested_card_id` et `suggested_at` **demandées** par la lecture d'un message ;
+- la **boîte du correspondant de démonstration** — un principal Stalwart sur un troisième domaine,
+  posé par le provisionnement existant (`docs/SPEC-mail-subsystem.md` §11.4) ;
+- le **quatrième message du seed**, réellement soumis depuis cette boîte et réellement relevé, qui
+  arrive non classé **et suggéré** (`docs/SPEC-seed.md` §2.19).
+
+**Non livré, et nommé plutôt que suggéré :**
+
+- **aucun refus de suggestion.** Rien dans le §8 ne décrit un geste qui écarterait un indice, et
+  l'inventer obligerait à décider ce que devient la colonne — effacée, ou marquée refusée, ce qui
+  serait une donnée nouvelle. La suggestion s'accepte ou s'ignore ;
+- **aucun recalcul.** `suggested_at` est un instantané de la relève (§8.3), et cette surface ne le
+  rafraîchit pas plus qu'elle ne le montre (§8.8.5) ;
+- **aucune suggestion dans la LISTE ni dans l'arborescence.** Le §5.4 bis de
+  `docs/DESIGN_SYSTEM.md` tient une densité que cette sous-tranche ne défait pas : une ligne de
+  liste porte un expéditeur, un objet et une date. L'indice se lit là où l'on décide, c'est-à-dire
+  dans le message ouvert — le même raisonnement que le geste de sommeil (§5.3 septies) ;
+- **aucun changement de règle backend.** `classify_message` est celle de `CRM-055`, révisée par
+  `CRM-057` (§18.2) et **inchangée ici** : accepter une suggestion est un classement manuel comme
+  un autre, avec ses deux droits et ses refus.
+
+#### 8.8.2 Où le bloc s'ancre — dans le pied du panneau de lecture, AU-DESSUS de la commande manuelle
+
+Le pied du panneau de lecture porte déjà deux visages exclusifs (`CRM-057`, `CRM-058`) : sur un
+message **classé**, la pilule de l'affaire et le formulaire de réponse ; sur un message **non
+classé**, la phrase « Ce message n'est rattaché à aucune affaire » et la commande « Classer dans une
+card ». Le bloc de suggestion s'insère dans le **second** visage, entre la phrase et la commande.
+
+**Au-dessus de la commande manuelle, et l'ordre porte un sens** : la suggestion est le chemin court,
+la commande manuelle est le chemin qui marche toujours. Placer l'indice après la commande le ferait
+lire une fois la liste déroulée, c'est-à-dire trop tard.
+
+**Il ne remplace jamais la commande manuelle.** Une suggestion peut désigner la mauvaise affaire —
+un contact rattaché à une seule affaire *active* n'en est pas moins le contact de plusieurs
+dossiers dans le temps —, et un écran qui n'offrirait que l'indice enfermerait l'utilisateur dans
+un choix qu'il n'a pas fait.
+
+#### 8.8.3 Ce que l'écran lit — mesuré sur la pile réelle
+
+Deux lectures, et **aucune nouvelle forme de requête** : les deux existent déjà et sont reprises
+telles quelles.
+
+1. **Les deux colonnes rejoignent `COLONNES_MESSAGE`**, la liste des colonnes du panneau de
+   lecture. Elles ne rejoignent **pas** `COLONNES_LISTE` : la liste ne montre aucune suggestion
+   (§8.8.1), et rapporter deux colonnes par message pour n'en afficher aucune contredirait le motif
+   écrit en tête de cette constante.
+
+   MESURÉ avec le jeton réel de Camille Aubert (`admin`), sur le message de mesure du 2026-08-20 :
+
+   ```
+   GET /rest/v1/mail_messages?select=id,classification,card_id,suggested_card_id,suggested_at
+   → 200, [{ "classification": "unclassified", "card_id": null,
+             "suggested_card_id": "5eed0000-0000-4000-8000-0000000000c2",
+             "suggested_at": "2026-08-20T04:20:01.927001+00:00" }]
+   ```
+
+   Les mêmes appels avec les jetons de Driss Lemoine (`business_developer`) et de Farida Nowak
+   (`viewer`) rendent `200` et **zéro ligne** : un message non classé de la boîte système n'est
+   lisible que des administrateurs (`docs/SPEC-mail-subsystem.md` §18.1). L'écran ne calcule rien de
+   cela — il lit ce que la RLS consent.
+
+2. **L'affaire suggérée est résolue par `lireCheminCard`**, la fonction que la pilule du message
+   classé emploie déjà (`CRM-057`). Elle rend le **titre** et l'**adresse** de l'affaire, ou `null`
+   lorsque l'affaire n'est pas lisible. MESURÉ, avec le jeton de Camille :
+
+   ```
+   GET /rest/v1/cards?select=id,title,channel_id&id=eq.5eed…00c2
+   → 200, [{ "title": "Migration ERP Sogexia", "channel_id": "5eed…0032" }]
+   ```
+
+**Aucune requête n'est faite quand il n'y a rien à résoudre** : un message classé, ou un message non
+classé sans suggestion, ne déclenche aucune lecture supplémentaire. C'est la règle du §13.4 —
+« jamais sur une fiche qui n'en a pas besoin » — tenue sans changement.
+
+#### 8.8.4 Les quatre états du bloc, et aucun ne se confond avec un autre
+
+| # | Situation | Ce que l'écran rend |
+|---|---|---|
+| a | Message **classé** | Rien. Le bloc appartient au visage « non classé » du pied (§8.8.2) |
+| b | Message non classé, **sans** suggestion | Rien. C'est le cas ordinaire, et un bloc « aucune suggestion » serait du bruit à chaque message |
+| c | Message non classé, suggestion **lisible** | Le bloc entier : l'affaire nommée et adressable, la règle écrite, le geste |
+| d | Message non classé, suggestion **illisible** | Rien |
+
+**Le cas d est le seul qui demande un motif, et il est de confidentialité.** Lorsque l'affaire
+suggérée n'est pas lisible par l'appelant, `lireCheminCard` rend `null` : l'écran **ne rend rien**,
+et n'écrit surtout pas « une affaire vous est suggérée mais vous ne pouvez pas la voir ». Cette
+phrase divulguerait l'existence d'une affaire que la RLS ferme — exactement ce que le §5.29 de
+`docs/DESIGN_SYSTEM.md` interdit au canevas d'objectifs pour un bloc masqué, et ce que
+`docs/SPEC-costs.md` §4.5 tient pour un budget masqué. Le chemin manuel reste offert, et il est le
+même pour tout le monde.
+
+**Le cas b n'est pas un état vide au sens du §5.8**, et c'est pourquoi il ne porte aucune mention :
+la règle 3 ne se déclenche que sur un expéditeur connu rattaché à exactement une affaire active
+(§8.1). L'absence d'indice est la situation NORMALE d'une boîte de tri, pas un manque.
+
+#### 8.8.5 Ce que le bloc écrit, mot pour mot, et ce qu'il tait
+
+- **L'affaire est NOMMÉE et ADRESSABLE.** Son titre est un lien vers sa fiche, comme la pilule du
+  message classé (`docs/DESIGN_SYSTEM.md` §5.4). Un indice qui ne nommerait pas sa cible ne serait
+  pas un indice, et un nom sans lien obligerait à chercher l'affaire ailleurs pour la vérifier —
+  or vérifier est précisément ce que « suggestion à confirmer » demande.
+
+- **La règle est écrite en toutes lettres** : « L'expéditeur est un contact rattaché à cette
+  affaire. » C'est l'énoncé de la règle 3 (§8.1), et non une mesure refaite à l'écran : la colonne
+  n'est écrite que par `classer_message_automatiquement`, et elle ne peut pas signifier autre chose.
+  Sans cette phrase, l'utilisateur lirait un nom d'affaire sans savoir d'où il sort — et un indice
+  dont on ignore l'origine ne se confirme pas, il se subit.
+
+- **`suggested_at` n'est PAS affichée.** Elle daterait l'**indice**, pas l'affaire, et un indice
+  daté ferait chercher un mécanisme de rafraîchissement qui n'existe pas : la suggestion est un
+  instantané de la relève et n'est jamais recalculée (§8.3). La question à laquelle l'utilisateur
+  répond est « est-ce la bonne affaire ? », et c'est le **nom** qui y répond.
+
+- **Aucun compte, aucun score, aucune probabilité.** La règle 3 n'en produit aucun : elle exige
+  « exactement une » affaire active, donc l'indice est certain ou absent (§8.2). Afficher une
+  confiance inventerait une nuance que la base ne porte pas.
+
+#### 8.8.6 Le geste, et ses refus — aucun contrat nouveau
+
+Accepter la suggestion appelle **`classify_message(p_message_id, p_card_id)`** avec l'affaire
+suggérée, par la fonction `classerMessage` déjà employée par le formulaire manuel. Il n'y a donc
+**aucun nouveau contrat d'API**, et c'est délibéré : un second chemin d'écriture divergerait du
+premier au premier ajustement, et la garde des deux droits du §18.2 doit rester **une**.
+
+Conséquences, toutes déjà écrites ailleurs et rappelées ici parce qu'elles gouvernent la surface :
+
+- **la suggestion n'accorde aucun droit** (§8.1). Elle peut désigner une affaire que l'appelant
+  n'a pas le droit d'écrire ; le geste échoue alors comme tout classement manuel non autorisé ;
+- **les quatre refus sont ceux du dictionnaire FERMÉ existant** — `forbidden`,
+  `card_indisponible`, `network`, `unknown` (`webapp/src/lib/inbox.ts`) —, et leurs quatre clés de
+  traduction sont réemployées **sans en ajouter une cinquième**. Un même refus ne se formule pas de
+  deux façons selon le bouton qui l'a demandé (`docs/DESIGN_SYSTEM.md` §5.3 sexies) ;
+- **le refus s'écrit dans le bloc**, en `role="alert"`, près du geste qui l'a causé, et **le bloc
+  reste rendu** : disparaître sur un refus retirerait le seul endroit où lire la cause ;
+- **le succès relit exactement ce que le classement a changé** — les compteurs de l'arborescence,
+  la liste des non classés d'où le message sort, et le message lui-même, qui porte désormais une
+  affaire. C'est `apresClassement` de `CRM-057`, réemployée telle quelle : deux chemins de
+  relecture divergeraient ;
+- **la commande n'est jamais éteinte d'avance**, quel que soit le rôle (`docs/DESIGN_SYSTEM.md`
+  §5.3, §5.13, §5.16, §5.21, sans exception). L'écran ne calcule aucun droit : il appuie et traduit
+  le refus.
+
+#### 8.8.7 Autorisations — l'écran n'en calcule aucune, et trois mesures le disent
+
+| Profil | Voit le message non classé de la boîte système | Voit l'affaire suggérée | Conséquence à l'écran |
+|---|---|---|---|
+| Camille Aubert, `admin` | **oui** (administratrice du workspace, §18.1) | oui | Cas c : le bloc entier |
+| Driss Lemoine, `business_developer` | **non** — `200`, zéro ligne | — | Le message n'est pas ouvrable : aucun bloc |
+| Farida Nowak, `viewer` | **non** — `200`, zéro ligne | non (track fermé par un droit fin) | Aucun bloc |
+
+Les trois lignes sont **MESURÉES** le 2026-08-20 avec les jetons réels obtenus par
+`/auth/v1/token?grant_type=password`. Aucune n'est une décision d'écran : ce sont les politiques de
+`mail_message_occurrences` et de `cards` qui les produisent, et la surface ne fait que rendre ce
+qu'elle reçoit (`CLAUDE.md` §10).
+
+#### 8.8.8 Le seed — un correspondant qui existe pour de bon
+
+Sans donnée, cette surface n'a **aucune capture** et **aucun parcours** : le cas c ne se
+produirait jamais. Le seed doit donc faire arriver un message qui déclenche la règle 3, et
+`CLAUDE.md` §8 interdit de le forger — « un e-mail de démonstration doit être envoyé par le
+véritable mécanisme d'envoi local ».
+
+**L'obstacle est mesuré depuis `CRM-057`, et il est nommé au §2.19 de `docs/SPEC-seed.md`** : un
+principal Stalwart n'expédie que depuis ses propres adresses, et le serveur refuse tout autre `From`
+en `501 5.5.4 You are not allowed to send from this address.` Le seed s'était donc rabattu sur
+Driss comme correspondant, ce qui suffisait aux règles 1, 2 et 4 — mais **pas** à la règle 3, qui
+exige un expéditeur reconnu comme **contact** : l'adresse de Léo Marchand est
+`leo.marchand@sogexia.example` (§5), et aucune boîte ne la portait.
+
+**LE REMÈDE EST DE DONNER UNE BOÎTE AU CORRESPONDANT, ET IL EST MESURÉ, non supposé.** Le
+2026-08-20, sur la pile réelle :
+
+```
+POST /api/principal {"type":"domain","name":"sogexia.example"}        → {"data":6}
+POST /api/principal {"type":"individual",
+                     "name":"leo.marchand@sogexia.example", …}        → {"data":7}
+SMTP 587, login leo.marchand@sogexia.example, From: la même adresse    → acceptée
+relève réelle du service mail-sync                                     → messages_new: 1
+select … from mail_messages where rfc822_message_id = '<mesure-…>'
+  → classification = unclassified, card_id = nul,
+    suggested_card_id = 5eed0000-0000-4000-8000-0000000000c2,
+    suggested_at = 2026-08-20 04:20:01.927001+00
+```
+
+La règle 3 s'est déclenchée **sans que rien ne soit forcé en base**, et elle a désigné l'affaire
+« Migration ERP Sogexia » — exactement la seule affaire active de Léo (§5, garde du seed).
+
+**Ce n'est pas un contournement de la mesure de `CRM-057`, c'est sa conséquence.** Le §2.19 écrit
+« aucun correspondant extérieur n'existe sur cette pile » ; la réponse n'est pas de faire mentir le
+`From`, c'est d'en **faire exister un**. Un serveur de développement qui héberge le domaine du
+client simule ce que la production verra arriver de l'extérieur, et le message reste soumis par le
+véritable chemin authentifié.
+
+`sogexia.example` est sous le TLD `.example`, réservé par la RFC 2606 au même titre que `.test` :
+il n'est pas routable, et la précaution du §11.4 de `docs/SPEC-mail-subsystem.md` est tenue.
+
+#### 8.8.9 Contrat de comportement — cas a à j
+
+Mesuré sur le seed du 2026-08-20, ou vérifiable sur lui.
+
+| Cas | Situation | Attendu |
+|---|---|---|
+| a | Message classé ouvert | Aucun bloc de suggestion ; la pilule de l'affaire et le formulaire de réponse, inchangés |
+| b | Message non classé **sans** suggestion — « Candidature spontanée » | Aucun bloc ; la phrase et la commande « Classer dans une card », inchangées |
+| c | Message non classé **avec** suggestion lisible — le message de Léo Marchand | Le bloc : titre « Migration ERP Sogexia » en lien, la phrase de la règle, le geste |
+| d | Suggestion dont l'affaire n'est pas lisible | Aucun bloc, aucune mention, aucun identifiant (§8.8.4) |
+| e | Le geste est accepté | `classification` passe à `manual`, `card_id` vaut l'affaire suggérée, un `card_event` `mail_received` est écrit |
+| f | Après le succès | Le message quitte « Non classés », les compteurs de l'arborescence baissent, le panneau montre la pilule de l'affaire |
+| g | Le geste est refusé faute de droit d'écriture | La mention `inbox.classify.refus.forbidden`, le bloc **reste** rendu, rien n'a changé en base |
+| h | Deux appuis consécutifs | Idempotent (§16.3) : aucun second événement, et le second appui n'a plus d'objet, le message étant classé |
+| i | La commande manuelle reste offerte à côté du bloc | Oui, et elle propose **toutes** les affaires classables, y compris celle de la suggestion |
+| j | `suggested_at` | N'apparaît nulle part à l'écran (§8.8.5) |
+
+#### 8.8.10 Limites nommées — sous-tranche 2 bis
+
+- **La suggestion ne se refuse pas** (§8.8.1). Un indice ignoré reste écrit sur la ligne, et il
+  réapparaîtra au prochain affichage du même message. Le classer — dans l'affaire suggérée ou dans
+  une autre — est le seul moyen de le faire disparaître, puisque la colonne ne vit que sur un
+  message non classé (§8.3).
+- **La suggestion n'est jamais recalculée.** Rattacher le contact à une seconde affaire après la
+  relève ne rend pas l'indice faux à l'écran ; il reste ce qu'il était à la réception. C'est la
+  règle du §8.3, et cette surface ne la change pas.
+- **Un seul message du seed porte une suggestion.** Le cas d — suggestion illisible — n'est donc
+  pas démontré par le seed, et il est éprouvé par un test unitaire plutôt que par une capture. Le
+  construire dans le seed demanderait un contact rattaché à une affaire d'un track fermé à
+  l'administratrice, or les droits fins du seed ne ferment aucun track à Camille (§2.11 de
+  `docs/SPEC-seed.md`), et en inventer un déplacerait des compteurs figés par quatre harnais.
+- **Le quatrième message ajoute une ligne aux compteurs de courrier**, et tous les contrôles qui
+  comptent trois messages sont **révisés dans le même changement**, jamais contournés.
+
+#### 8.8.11 Preuves exigées — sous-tranche 2 bis
+
+| Niveau | Preuve |
+|---|---|
+| Vitest | `RouteInbox.test.tsx` étendu : les quatre états du §8.8.4, le geste accepté, le refus qui laisse le bloc rendu, l'absence de requête quand il n'y a rien à résoudre. `inbox.test.ts` : les deux colonnes demandées, et la projection de la suggestion |
+| API | `e2e/api/classement.spec.ts` ou `inbox.spec.ts` : avec les jetons réels, l'administratrice lit `suggested_card_id` sur le message du seed, et **classe** dans l'affaire suggérée ; le `business_developer` et la `viewer` reçoivent zéro ligne |
+| E2E `ui` | `e2e/ui/inbox.spec.ts` : le parcours complet **au clavier et à la souris** — ouvrir le message suggéré, lire l'affaire nommée, accepter d'un geste, constater que le message porte l'affaire et a quitté « Non classés » |
+| Captures | Les **quatre paliers** — 390, 768, 1152, 1440 px — du panneau de lecture portant le bloc, produites **et observées** (`CLAUDE.md` §16) |
+| Seed | Le quatrième message **réellement soumis et relevé**, et le seed **vérifie** la suggestion plutôt que de la supposer — comme il vérifie déjà le fil (§2.19) |
+| Harnais | `scripts/verify-mail-classement.sh` et `scripts/verify-mail-inbox.sh` révisés, non contournés : la surface et la donnée de démonstration entrent dans leur périmètre |
+
+#### 8.8.12 Definition of Done — sous-tranche 2 bis
+
+- le bloc rendu selon le §8.8.2 et le §8.8.5, avec ses quatre états ;
+- les deux colonnes demandées par `COLONNES_MESSAGE`, et non par `COLONNES_LISTE` ;
+- le geste appelant `classify_message` **sans nouveau contrat**, avec les quatre refus existants ;
+- la boîte du correspondant posée par `stalwart/provision.sh` et relue par lui ;
+- le quatrième message du seed, soumis et relevé pour de bon, avec sa garde de suggestion ;
+- les preuves du §8.8.11 exécutées et vertes ;
+- `docs/DESIGN_SYSTEM.md` §5.4 ter, `docs/SPEC-mail-subsystem.md` §11.4 et §16.1,
+  `docs/SPEC-seed.md` §2.19, `docs/manual.md`, `README.md`, `CHANGELOG.md` mis à jour dans le même
+  changement ;
+- commentaires `@spec` / `@verifies` sur chaque fichier touché.
+
 ---
 
 ## 9. Tranche 3 — La résolution des champs `contact` et `user` du formulaire

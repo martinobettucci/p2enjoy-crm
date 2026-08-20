@@ -7100,6 +7100,18 @@ migration `0046`) :
 - [~] Tranche 2 — Règle 3 du classement **livrée et prouvée en base** (pgTAP, API, harnais). Reste
       `[~]` au seul titre de la **preuve visible** : aucun écran ne montre encore la suggestion,
       l'inbox étant due par `CRM-057`.
+      - [~] **2 bis — La SURFACE de la suggestion**, spécifiée le 2026-08-20
+            (`docs/SPEC-contacts.md` §8.8, `docs/DESIGN_SYSTEM.md` §5.4 ter). **Le motif de
+            l'attente est CADUC** : l'inbox est livrée depuis le 2026-08-11, et le §5.4 du design
+            system porte la règle depuis `CRM-000` — « la suggestion proposée par le classement
+            assisté, toujours présentée comme une suggestion à confirmer ». MESURÉ le 2026-08-20 :
+            `RouteInbox.tsx` ne cite jamais `suggested_card_id`, `COLONNES_MESSAGE` ne la demande
+            pas, et **aucun message du seed n'en porte** — la règle 3 est livrée, prouvée et
+            invisible. La sous-tranche lève les deux manques ensemble : le bloc de suggestion dans
+            le pied du panneau de lecture, et un **quatrième message de seed** réellement soumis
+            depuis une boîte de correspondant (`docs/SPEC-mail-subsystem.md` §11.4,
+            `docs/SPEC-seed.md` §2.19), qui déclenche la règle 3 pour de bon. Definition of Done au
+            §8.8.12.
 - [x] Tranche 3 — Résolution des champs `contact` **et** `user` dans la validation des valeurs,
       **livrée et prouvée le 2026-08-18** (`docs/SPEC-contacts.md` §9, migration `0047`). Voir le
       détail ci-dessous.

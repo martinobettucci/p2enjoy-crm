@@ -385,6 +385,38 @@ deux boîtes personnelles » :
 correspond pas. Lui créer une boîte inutilisée donnerait à croire que le produit lui destine une
 messagerie, ce qu'aucune spécification ne dit.
 
+**UN TROISIÈME DOMAINE ET UNE QUATRIÈME BOÎTE, AJOUTÉS LE 2026-08-20 PAR `CRM-060`
+sous-tranche 2 bis** (`docs/SPEC-contacts.md` §8.8.8). Ils ne servent **pas** le produit : ils
+servent le **correspondant**, c'est-à-dire l'extérieur que cette pile n'avait pas.
+
+| Domaine | Rôle |
+|---|---|
+| `sogexia.example` | Domaine du **correspondant de démonstration**, hors du produit |
+
+| Adresse | Nature | À quoi elle sert |
+|---|---|---|
+| `leo.marchand@sogexia.example` | Boîte d'un **correspondant extérieur** | Soumettre le courrier de démonstration qui déclenche la **règle 3** du §4.4 |
+
+Le motif est mesuré, et il est écrit au §2.19 de `docs/SPEC-seed.md` depuis `CRM-057` : **un
+principal n'expédie que depuis ses propres adresses**, et le serveur refuse tout autre `From` en
+`501 5.5.4 You are not allowed to send from this address.` Le seed s'était donc rabattu sur une
+boîte du produit — `bizdev@p2enjoy.test` — comme correspondant, ce qui suffisait aux règles 1, 2
+et 4. La **règle 3** exige davantage : que l'expéditeur soit reconnu comme **contact** du workspace,
+à son adresse. Celle de Léo Marchand est `leo.marchand@sogexia.example`
+(`docs/SPEC-contacts.md` §5), et aucune boîte ne la portait.
+
+**La réponse n'est pas de faire mentir le `From`, c'est d'en faire exister un.** Un serveur de
+développement qui héberge aussi le domaine du client simule ce que la production verra arriver de
+l'extérieur, et le message reste soumis par le **véritable chemin authentifié** (`CLAUDE.md` §8).
+
+`.example` est réservé par la RFC 2606 au même titre que `.test` : il n'est pas routable, et la
+précaution en tête de ce paragraphe est tenue. La boîte porte le même mot de passe commun et le
+même `roles: ["user"]` que les trois autres, pour la raison mesurée ci-dessous.
+
+**Cette boîte n'est PAS un compte entrant du produit** : aucune ligne de `mail_inbound_accounts` ne
+la désigne, et le produit ne relève jamais dedans. Elle n'existe que pour **émettre**. L'y inscrire
+en ferait une boîte du workspace, ce que le correspondant n'est pas.
+
 **Mesuré — la boîte système est un véritable catch-all.** L'adresse `@crm.p2enjoy.test`, inscrite
 sans partie locale dans la liste `emails` du principal, capte tout le domaine. Un message soumis à
 `c-abcd1234@crm.p2enjoy.test` — une adresse de card qui n'a jamais été déclarée — est accepté puis

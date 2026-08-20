@@ -767,11 +767,11 @@ Posées par le véritable chemin d'écriture, comme au §2.17, avec la même con
 à jour sans dupliquer et ne réécrit pas le secret lorsqu'aucun mot de passe n'est transmis. Leur
 `status` reste `pending` : aucune connexion n'est ouverte par le seed.
 
-### 2.19 Trois messages réellement reçus — ajoutés par `CRM-057`, complétés par `CRM-081`
+### 2.19 Quatre messages réellement reçus — ajoutés par `CRM-057`, complétés par `CRM-081` puis par `CRM-060`
 
 L'inbox globale ne se démontre pas sur un écran vide, et CLAUDE.md §8 interdit d'y suppléer par une
 trace fabriquée : « un e-mail de démonstration doit être envoyé par le véritable mécanisme d'envoi
-local ». Le seed **soumet donc réellement trois messages** en SMTP authentifié sur le Stalwart de
+local ». Le seed **soumet donc réellement quatre messages** en SMTP authentifié sur le Stalwart de
 `CRM-050`, puis **déclenche une relève réelle** du service `mail-sync`.
 
 | Objet | Destinataire | État obtenu | Ce qu'il démontre |
@@ -779,19 +779,36 @@ local ». Le seed **soumet donc réellement trois messages** en SMTP authentifi�
 | Demande de devis — refonte | l'adresse de la card « Refonte du site vitrine » | **classé**, règle 1 | La double visibilité : dans la card **et** dans l'inbox |
 | Candidature spontanée | `systeme@crm.p2enjoy.test` seul | **non classé** | Le panneau « Non classés », et le classement à la main |
 | Re: Demande de devis — refonte | la même adresse de card, **en réponse au premier** | **classé**, règle 1 | Le GROUPEMENT en fils : deux messages, une seule ligne (`CRM-081` tranche 2 f) |
+| Point d'avancement — migration ERP | `systeme@crm.p2enjoy.test` seul, **expédié par Léo Marchand** | **non classé ET suggéré**, règle 3 | La SUGGESTION de classement à l'écran (`CRM-060` sous-tranche 2 bis, `docs/SPEC-contacts.md` §8.8) |
 
-**L'expéditeur est une boîte locale, et la mesure l'impose.** Soumettre depuis un domaine tiers —
-`solene.ferrand@client.test` — est refusé net par Stalwart :
+**Les trois premiers partent d'une boîte du PRODUIT, et la mesure l'imposait.** Soumettre depuis un
+domaine que le serveur n'héberge pas — `solene.ferrand@client.test` — est refusé net par Stalwart :
 `501 5.5.4 You are not allowed to send from this address.` Un principal n'expédie que depuis ses
-propres adresses, et `.test` n'est pas routable : aucun correspondant extérieur n'existe sur cette
-pile. Le correspondant de démonstration est donc **Driss** (`bizdev@p2enjoy.test`). La même mesure
-a révélé que l'identité sortante du §2.18, qui expédie depuis `contact@p2enjoy.test`, est
-**inapplicable telle quelle** sur ce serveur : INC-087.
+propres adresses. Le correspondant de ces trois messages est donc **Driss**
+(`bizdev@p2enjoy.test`). La même mesure a révélé que l'identité sortante du §2.18, qui expédie
+depuis `contact@p2enjoy.test`, est **inapplicable telle quelle** sur ce serveur : INC-087.
+
+**LE QUATRIÈME PART D'UN VRAI CORRESPONDANT, ET C'EST LA RÈGLE 3 QUI L'EXIGE** — `CRM-060`
+sous-tranche 2 bis. La règle 3 ne se déclenche que si l'expéditeur est reconnu comme **contact** du
+workspace, à son adresse ; celle de Léo Marchand est `leo.marchand@sogexia.example`
+(`docs/SPEC-contacts.md` §5), et aucune boîte ne la portait. La conclusion « aucun correspondant
+extérieur n'existe sur cette pile » n'était donc pas une fatalité : **il en manquait un**, et
+`docs/SPEC-mail-subsystem.md` §11.4 le provisionne désormais — un troisième domaine
+`sogexia.example`, sous le TLD `.example` réservé par la RFC 2606, et une boîte pour lui. Le
+message reste soumis par le **véritable chemin authentifié** : rien n'est forgé, et le `From` ne
+ment pas.
+
+**MESURÉ le 2026-08-20**, après soumission et relève réelles : `classification = unclassified`,
+`card_id` nul, `suggested_card_id = 5eed0000-0000-4000-8000-0000000000c2` — l'affaire « Migration
+ERP Sogexia », seule affaire active de Léo, exactement ce que la garde du §11 promet. Le seed
+**vérifie** cette suggestion plutôt que de la supposer, comme il vérifie déjà le fil : sans elle,
+le bloc du §5.4 ter de `docs/DESIGN_SYSTEM.md` n'aurait jamais de quoi se rendre, et aucune capture
+ne montrerait la fonctionnalité.
 
 **Leurs `Message-ID` sont fixes** — `<seed-inbox-classe@p2enjoy.test>`,
-`<seed-inbox-non-classe@p2enjoy.test>` et `<seed-inbox-reponse@p2enjoy.test>`. Le dédoublonnage du
-§4.2 fait le reste : rejouer le seed n'ajoute rien, et les captures peuvent dépendre de ces trois
-objets.
+`<seed-inbox-non-classe@p2enjoy.test>`, `<seed-inbox-reponse@p2enjoy.test>` et
+`<seed-inbox-suggere@sogexia.example>`. Le dédoublonnage du §4.2 fait le reste : rejouer le seed
+n'ajoute rien, et les captures peuvent dépendre de ces quatre objets.
 
 **LE TROISIÈME PORTE `In-Reply-To` ET `References`, ET LES DEUX SONT NÉCESSAIRES** — `CRM-081`
 tranche 2 f, `docs/SPEC-cards.md` §16.16.8. C'est `References` que `app.cle_fil` lit ; un message
