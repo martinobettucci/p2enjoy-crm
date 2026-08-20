@@ -10571,9 +10571,44 @@ désormais des conversations.
 2. **Le mode d'affichage n'entre toujours pas dans l'adresse**, écart mineur en attente d'arbitrage
    (dernier point ci-dessus).
 
-### CRM-080 — Sauvegardes chiffrées et restauration prouvée `[ ]`
+### CRM-080 — Sauvegardes chiffrées et restauration prouvée `[~]`
 
 Sauvegarde planifiée de la base et des objets, chiffrement avec secret hors dépôt, rétention,
 contrôle d'intégrité et restauration régulière dans un environnement isolé. **DoD** : une preuve
 restaure réellement un snapshot, compare les invariants et détruit seulement l'environnement
 jetable ; runbook production, alertes et rotation documentés.
+
+**Spécifiée le 2026-08-20** — `docs/SPEC-backups.md`, écrite avant toute ligne de code
+(`CLAUDE.md` §5, `docs/CloudWorker.md` §3.2 point 3) et fondée sur **huit mesures** prises sur la
+pile réelle démarrée et seedée le même jour, dont trois commandent tout le découpage :
+
+- **M3 — la clé racine de Vault est hors de `PGDATA`.** `/etc/postgresql-custom/pgsodium_root.key`
+  (64 octets) vit dans le volume `db-config`, quand `PGDATA` est le montage
+  `./supabase/docker/volumes/db/data`. Une sauvegarde qui n'emporterait que le dump laisserait tous
+  les secrets de messagerie chiffrés et **indéchiffrables**. `docs/DAT.md` §10 le disait déjà ; la
+  tranche 1 le rend **exécutable** en refusant de produire une archive sans cette clé.
+- **M5 — le conteneur MinIO ne porte ni `tar` ni `find`.** `docker exec … tar` rend
+  `command not found` (rc=127). L'export des objets passe donc par `docker cp <conteneur>:<chemin> -`,
+  dont le flux `tar` est produit par le **démon** Docker et n'exige rien de l'image. Chemin retenu
+  par mesure, non par préférence.
+- **M8 — `wal-g` est configuré dans l'image mais activé par aucun service.** La restauration à un
+  instant quelconque (PITR) est donc **hors périmètre** et nommée au §8 de la spécification, plutôt
+  que découverte plus tard.
+
+**Découpage en trois tranches, motivé** (§1 de la spécification) — l'énoncé recouvre trois objets
+dont deux ne peuvent pas être écrits avant le premier ; chacune est committée et prouvée avant la
+suivante :
+
+1. **La sauvegarde chiffrée** — `scripts/backup.sh`, ses variables, son manifeste d'intégrité, sa
+   rétention, son harnais. Objet de la livraison en cours.
+2. **La restauration prouvée** — `scripts/restore-drill.sh` : pile jetable à nom de projet distinct,
+   vérification des empreintes **avant** toute restauration, comparaison des invariants dont le
+   **déchiffrement effectif d'un secret de Vault**, destruction du seul environnement jetable.
+3. **L'exploitation** — runbook de production, planification, copie hors site, alertes, rotation
+   des destinataires `age`.
+
+- [ ] **Tranche 1 — la sauvegarde chiffrée.** Definition of Done au §7 de la spécification.
+- [ ] **Tranche 2 — la restauration prouvée.** Non commencée. Tant qu'elle n'est pas livrée,
+      l'unité ne peut pas passer à `[x]` : sa Definition of Done exige qu'« une preuve restaure
+      réellement un snapshot ».
+- [ ] **Tranche 3 — l'exploitation.** Non commencée.
