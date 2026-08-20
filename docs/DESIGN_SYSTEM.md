@@ -144,7 +144,10 @@ valeur n'existe. Écrire `p-5` ne produit rien.
 ```
 
 - **Barre latérale** : tracks en pilules, plus les entrées transverses (Inbox, **Contacts**,
-  Ma journée, Réglages). Repliable ;
+  Objectifs, **Coûts**, Ma journée, Réglages). Repliable ;
+  *« Coûts » a été ajouté le 2026-08-20 par `CRM-086` (`docs/SPEC-costs.md` §4.0 et §4.5) — voir
+  §5.33. Une route de PREMIER NIVEAU pour le motif exact du carnet ci-dessous : un histogramme de
+  coûts n'administre rien, il porte le travail.*
   *« Contacts » a été ajouté le 2026-08-18 par `CRM-060` (`docs/SPEC-contacts.md` §10.2). Le
   carnet est une route de PREMIER NIVEAU et non une section de `/reglages` : un contact est le
   matériau quotidien d'un commercial, au même titre qu'une affaire — ce que la base a déjà tranché
@@ -2192,6 +2195,67 @@ qui lui est propre.
 
 - **Aucune couleur, aucun jeton, aucune icône nouvelle** : l'écran emprunte au §5.30 son
   histogramme, au §5.9 son tableau, au §5.6 sa pilule et au §5.5 son lien de retour.
+
+### 5.33 Cumul des coûts du workspace — `CRM-086`
+
+Spécifié avant code, `docs/SPEC-costs.md` §4.5. Livré le 2026-08-20. L'écran réemploie
+l'histogramme du §5.30 ; les règles ci-dessous ne disent que ce qui lui est propre.
+
+- **Une entrée transverse de la barre latérale (§4), et non une section de `/reglages`.** C'est le
+  raisonnement qui a déjà placé le carnet (§5.19) et les objectifs hors des réglages : un
+  histogramme de coûts n'administre rien, il porte le travail. Son icône est **`ChartColumn`, la
+  même que l'entrée « Coûts » de la barre d'onglets d'un track** (§12.1) : le §9 interdit que deux
+  objets **distincts** partagent une icône, et ces deux entrées désignent le **même** objet à deux
+  portées différentes. Leur en donner deux ferait chercher deux choses là où il n'y en a qu'une.
+
+- **Il ne porte pas de coquille propre**, à la différence des deux autres écrans de coûts (§5.32) :
+  son titre est une clé de traduction et son contenu ne dépend d'aucun paramètre d'adresse. C'est
+  exactement le critère qui range son adresse dans `ROUTES` là où les deux autres suivent le patron
+  de `CHEMIN_CARD`.
+
+- **UN GROUPE DE BARRES PAR TRACK, cumulant ses budgets ouverts** — jamais par budget, qui est la
+  lecture du §5.30 à l'échelle d'un track. Un track dont deux budgets vivent dans la même devise
+  rend **une** paire de barres, et la comparaison porte alors sur les tracks entre eux.
+
+- **UN TRACK SANS BUDGET OUVERT NE REND AUCUNE BARRE, et ce n'est pas un état vide.** Une paire de
+  barres vit dans l'histogramme d'une devise ; un track sans budget n'en porte aucune, et l'y placer
+  demanderait d'inventer sa monnaie. L'état vide du §5.8 est réservé au cas où **aucun** track n'en
+  porte.
+
+- **CHAQUE HISTOGRAMME PORTE SON TITRE DE DEVISE — `h2` — DÈS QU'IL Y EN A PLUSIEURS, ET C'EST UN
+  DÉFAUT TROUVÉ EN REGARDANT UNE CAPTURE** (`CLAUDE.md` §16, 2026-08-20). Cet écran est la
+  **première** surface du produit où deux histogrammes s'empilent réellement : un track n'a en
+  pratique qu'une devise, si bien que le §5.30 n'avait jamais rendu le cas. Les deux blocs se
+  suivaient avec la **même** légende et les **mêmes** en-têtes de colonne, et rien à l'œil ne disait
+  que le second comptait des francs — la devise ne se lisait que dans les montants, c'est-à-dire là
+  où on ne la cherche pas. Le nom accessible de la région le disait déjà (§5.30), mais **un nom de
+  région n'est pas rendu à l'écran**. Le titre est en revanche **absent** quand une seule devise est
+  présente : le §4.5 pose que « s'il n'y en a qu'une — le cas attendu —, l'utilisateur ne voit rien
+  de cette mécanique », et un titre permanent serait du bruit à chaque ouverture.
+
+- **LA PORTÉE DU CUMUL EST ÉCRITE SOUS LES HISTOGRAMMES**, en 13 px `--color-text-2`, à la place et
+  dans la graduation de la mention du §4.4, qui est de la même nature. Elle n'est **pas** un
+  avertissement à franchir avant de lire : c'est une note de lecture des nombres qu'on vient de
+  lire. Sa nécessité vient du §4.5 — le total est calculé **après** la RLS, donc deux profils lisent
+  deux nombres différents sur les mêmes données —, et sans elle l'écart se lirait comme une erreur
+  de calcul. Elle n'est **pas rendue sur l'état vide**, où il n'y a aucun nombre à qualifier.
+
+- **L'écran ne nomme JAMAIS ce qu'il ne montre pas.** Aucune phrase ne dit « un budget vous est
+  masqué », et l'état vide ne distingue pas « aucun track lisible » de « aucun budget ouvert » : les
+  deux divulgueraient par la bande ce que la RLS ferme (`docs/SPEC-permissions-rls.md` §7). C'est la
+  règle que le canevas d'objectifs tient déjà pour un bloc masqué (§5.29).
+
+- **Le libellé d'un track est un LIEN vers ses coûts** (§4.0), posé dans le tableau équivalent et
+  jamais sur la barre `aria-hidden` — la règle du §5.30, tenue à l'identique. Sans lui, cet écran
+  serait une impasse : on y lirait qu'un track dépense sans aucun moyen d'aller voir quels budgets.
+  Le nom accessible est distinct du libellé visible — « Voir les coûts du track X ».
+
+- **L'état vide n'offre AUCUNE action**, comme celui de l'écran du track : la création d'un budget
+  vit dans l'administration de l'arborescence (`docs/SPEC-costs.md` §4.1), et y renvoyer
+  conditionnellement au rôle ferait calculer un droit à l'interface (`CLAUDE.md` §10).
+
+- **Aucune couleur, aucun jeton, aucune icône nouvelle** : l'écran emprunte au §5.30 son
+  histogramme, au §12.1 son icône et au §5.8 ses états.
 
 ## 6. Interactions
 

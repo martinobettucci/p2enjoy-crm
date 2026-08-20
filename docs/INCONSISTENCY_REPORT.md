@@ -2907,3 +2907,33 @@ finit par être lue comme du bruit, et c'est ainsi qu'un vrai défaut passe.
 **Arbitrage attendu.** Le responsable tranche si ce scénario est repris dans son unité (`CRM-043`)
 avec une attente explicite sur l'acquittement du serveur, ou s'il est laissé tel quel jusqu'à ce
 qu'il devienne reproductible.
+
+### INC-180 — la barre d'onglets écrit « Aucun channel » sur toutes les routes transverses
+
+*Relevé pendant `CRM-086` tranche 5, décision 478. Étranger à cette unité : le défaut est celui de
+la coquille commune (`CRM-007`, `CRM-021`) et existe depuis longtemps sur `/contacts`, `/objectifs`,
+`/inbox`, `/ma-journee` et `/reglages`. La livraison de `/couts` l'expose une sixième fois, elle ne
+le cause pas.*
+
+**Ce qui est mesuré.** `AppShell` rend `TabBar` inconditionnellement, et `TabBar` rend son état vide
+lorsque `slugTrack` est indéfini — c'est-à-dire sur **toute** route de premier niveau. La bande grise
+« Aucun channel » occupe donc une ligne entière sous l'en-tête d'écrans qui n'ont aucun rapport avec
+les channels. La capture `docs/captures/CRM-060/carnet-contacts-1440.jpg`, produite bien avant cette
+session, porte exactement la même bande : le défaut est antérieur.
+
+**Pourquoi c'en est un.** Un état vide dit ce qui **manque** (`docs/DESIGN_SYSTEM.md` §5.8). Ici rien
+ne manque : le carnet de contacts et le cumul des coûts du workspace n'ont pas de channel à montrer,
+et ne sont pas censés en avoir. La phrase énonce donc une absence qui n'est pas une absence, ce qui
+est le symétrique du défaut que le §5.15 nomme pour un bouton grisé — on répond à une question que
+personne ne pose. Elle coûte en outre une ligne d'écran sur six routes.
+
+**Ce que ce n'est PAS.** Un défaut d'accessibilité : la bande porte son libellé et sa précision en
+`sr-only`, et rien n'est masqué. Ni une régression : le comportement est inchangé depuis `CRM-021`.
+
+**Rien n'est corrigé, et c'est délibéré** : le §3.1 de `docs/CloudWorker.md` interdit de corriger au
+passage un défaut étranger à l'unité, et celui-ci touche la coquille de six routes livrées par
+quatre unités différentes.
+
+**Arbitrage attendu.** Le responsable tranche si `TabBar` doit ne **rien** rendre hors d'une route de
+track — ce qui retirerait la bande des six écrans et ferait remonter leur contenu d'une ligne —, ou
+si l'état vide reste rendu partout pour que la coquille garde la même hauteur d'un écran à l'autre.

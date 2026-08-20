@@ -8547,11 +8547,50 @@ gauche, contre le §5.9. Le défaut ne s'est vu qu'avec la période rendue sous 
 `docs/DESIGN_SYSTEM.md` §5.30 porte la règle pour tout `th scope="row"`, et le §5.32 décrit l'écran
 livré.
 
-**CE QUI RESTE** : UN écran n'est pas monté — le cumul du workspace (§4.5, `/couts`, un groupe de
-barres par track, entrée de barre latérale). Son adresse n'est pas déclarée dans `chemins.ts`, et
-c'est la seule des trois qui doive figurer **dans `ROUTES`** (§4.0). L'onglet « À saisir » du §4.8
-n'existe sur aucun écran. **Aucun harnais dédié `scripts/verify-couts-ecrans.sh` n'existe encore**,
-et aucune preuve pgTAP ni d'API n'est propre à cette unité. La reprise est l'écran du §4.5.
+**Tranche 5 — l'écran du §4.5, MONTÉ ET PROUVÉ** (décision 478). `webapp/src/app/CoutsWorkspace.tsx`
+à l'adresse `/couts`, **seule des trois adresses de coûts à figurer dans `ROUTES`** — son titre est
+une clé de traduction et son contenu ne dépend d'aucun paramètre (§4.0) ; l'entrée transverse
+« Coûts » de la barre latérale, icône `ChartColumn`, la même que celle de la barre d'onglets d'un
+track parce que c'est le même objet à une autre portée ; `lireCumulWorkspace` et
+`grouperTracksParDevise` dans `couts-ecrans.ts` — les tracks lisibles, leurs budgets ouverts et
+leurs lignes en **trois** requêtes, cumulés côté client APRÈS la RLS. Preuves vertes :
+`couts-ecrans.test.ts` **57 tests** (15 neufs), `CoutsWorkspace.test.tsx` **17 tests**,
+`routes.test.tsx` **13 scénarios** après révision, `e2e/ui/couts-workspace.spec.ts` **7 scénarios**,
+quatre captures OBSERVÉES sous `docs/captures/CRM-086/couts-workspace-*.jpg`.
+
+**LA MESURE QUE CETTE TRANCHE APPORTE À LA DoD, et qu'aucune preuve unitaire ne pouvait poser** :
+« le cumul du workspace est mesuré **après** RLS — une preuve montre que le total d'un profil
+restreint diffère de celui d'un administrateur, et que la différence est exactement le budget qu'il
+ne lit pas ». `S4` et `S5` de `couts-workspace.spec.ts` sont ce couple : la lectrice totalise
+**1000 EUR**, l'administrateur **1800 EUR** sur le même écran et les mêmes données, et l'écart vaut
+**exactement les 800** de « Prospection sortante », dont le track lui est fermé. Son compte de
+lignes sans réel suit la même règle — une pour elle, deux pour lui.
+
+**TROIS RÈGLES DE CETTE TRANCHE, ET AUCUNE NE SE DEVINE.** (1) **Un track sans budget ouvert ne rend
+aucune barre**, et ce n'est pas un état vide : une paire de barres vit dans l'histogramme d'une
+devise, et un track sans budget n'a aucune monnaie où être placé. L'état vide est réservé au cas où
+AUCUN track n'en porte, et il recouvre délibérément « aucun track lisible » — les distinguer
+renseignerait un appelant sans droit sur l'existence de tracks qu'il ne lit pas. (2) **Un track
+archivé ou en corbeille ne figure pas dans ce cumul**, règle d'écran et non d'autorisation : les
+filtres sont ceux de `lireTracks`, et un budget encore ouvert sur un track archivé se lit sur
+l'écran de coûts de son track, dont l'adresse continue de répondre. (3) **La portée du cumul est
+écrite à l'écran**, sous les histogrammes : le total est calculé après la RLS, donc deux profils
+lisent deux nombres différents sur les mêmes données, et sans cette phrase l'écart se lirait comme
+une erreur de calcul.
+
+**UN DÉFAUT TROUVÉ EN REGARDANT UNE CAPTURE.** Cet écran est la **première** surface du produit où
+deux histogrammes s'empilent réellement — un track n'a en pratique qu'une devise —, et les deux
+blocs se suivaient avec la même légende et les mêmes en-têtes de colonne : rien à l'œil ne disait
+que le second comptait des francs. Le nom accessible de la région le disait déjà, mais un nom de
+région n'est pas rendu à l'écran. Chaque histogramme porte désormais son **titre visible**, rendu
+uniquement quand plusieurs devises sont présentes — le §4.5 pose que « s'il n'y en a qu'une,
+l'utilisateur ne voit rien de cette mécanique ». `docs/DESIGN_SYSTEM.md` §5.33 décrit l'écran livré,
+et §4 porte la nouvelle entrée de barre latérale.
+
+**CE QUI RESTE** : les TROIS écrans du §4.2, du §4.3 et du §4.5 sont montés et prouvés. L'onglet
+« À saisir » du §4.8 n'existe sur aucun d'eux, et c'est la reprise. **Aucun harnais dédié
+`scripts/verify-couts-ecrans.sh` n'existe encore**, et aucune preuve pgTAP ni d'API n'est propre à
+cette unité — la Definition of Done réclame explicitement le harnais.
 
 **DoD** : E2E des trois écrans ; captures aux quatre paliers ; **la mention « n lignes sans coût
 réel saisi » est prouvée présente** quand des réels manquent, et absente sinon — c'est la principale

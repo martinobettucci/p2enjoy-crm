@@ -15,6 +15,22 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Les coûts de tout l'espace de travail se lisent d'un écran** (`CRM-086` tranche 5,
+  `docs/SPEC-costs.md` §4.0, §4.4, §4.5 et §4.7, `docs/DESIGN_SYSTEM.md` §4 et §5.33). Une entrée
+  **« Coûts »** rejoint la barre latérale, aux côtés d'Inbox, Contacts et Objectifs. Elle mène à un
+  écran qui compare, **track par track**, ce qui était prévu à ce qui a réellement été dépensé : un
+  groupe de barres par track, cumulant tous ses budgets ouverts. Le nom d'un track y est un **lien**
+  vers ses propres coûts, budget par budget. Les **devises ne se mélangent jamais** : un histogramme
+  par devise présente, chacun avec son titre — et rien de cette mécanique n'apparaît lorsqu'une
+  seule devise est en jeu. La phrase « n lignes sans coût réel saisi, pour m € de prévisionnel »
+  accompagne chaque cumul, comme sur les deux autres écrans de coûts.
+  **Ce que cet écran montre dépend de ce que vous avez le droit de lire**, et il le dit : un budget
+  d'un track qui vous est fermé n'entre dans aucun total, et deux collègues aux droits différents y
+  lisent donc deux nombres différents sur les mêmes données. C'est voulu — un total juste au centime
+  près qui laisserait deviner par soustraction l'existence d'un budget fermé serait une fuite, pas
+  une commodité. Un track archivé ou mis à la corbeille n'y figure pas ; ses budgets restent
+  lisibles depuis son propre écran de coûts.
+  **Reste à venir** : l'onglet « À saisir ». L'unité reste ouverte.
 - **Le détail d'un budget est atteignable, occurrence par occurrence** (`CRM-086` tranche 4,
   `docs/SPEC-costs.md` §4.0, §4.3, §4.4 et §4.7, `docs/DESIGN_SYSTEM.md` §5.9 et §5.30). Depuis
   l'écran de coûts d'un track, le nom d'un budget est désormais un **lien** vers sa fiche. Celle-ci
