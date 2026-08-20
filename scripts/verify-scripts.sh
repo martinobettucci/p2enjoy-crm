@@ -80,6 +80,9 @@ CRM_INBOUND_DOMAIN       lue par les gardes de développement depuis CRM-050 (d�
 MAIL_TEAM_DOMAIN         réservée au routage des boîtes personnelles de CRM-051 (décision 251)
 MAIL_SYNC_POLL_INTERVAL  consommée à partir de CRM-054 (README.md §9)
 MAIL_MAX_ATTACHMENT_MB   consommée à partir de CRM-054 (README.md §9)
+BACKUP_AGE_RECIPIENTS_FILE  lue par scripts/backup.sh depuis CRM-080, jamais par un service
+BACKUP_OUTPUT_DIR           lue par scripts/backup.sh depuis CRM-080, jamais par un service
+BACKUP_RETENTION_DAYS       lue par scripts/backup.sh depuis CRM-080, jamais par un service
 "
 
 # --- 1. Le gabarit est le contrat exact de l'assemblage ----------------------------------------

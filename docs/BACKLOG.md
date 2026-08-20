@@ -10607,7 +10607,58 @@ suivante :
 3. **L'exploitation** — runbook de production, planification, copie hors site, alertes, rotation
    des destinataires `age`.
 
-- [ ] **Tranche 1 — la sauvegarde chiffrée.** Definition of Done au §7 de la spécification.
+- [~] **Tranche 1 — la sauvegarde chiffrée. LIVRÉE ET PROUVÉE le 2026-08-20**, Definition of
+      Done du §7 tenue point par point, sauf la campagne complète du dépôt (dernier point
+      ci-dessous) :
+      - [x] `scripts/backup.sh` : une archive et une seule par exécution, portant le dump `custom`
+            de la base, la clé racine de Vault et le dépôt objet lorsqu'il est local. **La clé
+            racine est OBLIGATOIRE** — refus R11 — parce qu'une archive sans elle donnerait la
+            confiance d'une sauvegarde sans en avoir la valeur : `docs/DAT.md` §10 le
+            recommandait depuis toujours, la tranche le rend exécutable.
+      - [x] **Chiffrement par destinataires PUBLICS**, jamais par phrase de passe : l'hôte qui
+            sauvegarde ne peut relire aucune de ses propres archives, et sa compromission ne livre
+            pas l'historique. `scripts/backup.sh` ne lit jamais de clé privée.
+      - [x] **Manifeste d'intégrité** : `format_version`, profil, version de PostgreSQL, nature du
+            dépôt objet, et une ligne par membre avec sa taille et son **SHA-256**. Aucun secret
+            n'y figure — c'est la partie de l'archive qui circule dans un ticket (`CLAUDE.md` §20).
+      - [x] **Atomicité** : l'archive est écrite sous `.<nom>.partiel`, nom qui ne correspond ni au
+            motif de la rétention ni à celui qu'énumérera la tranche 2, puis renommée. Un `trap`
+            ne laisse survivre ni assemblage ni fichier partiel.
+      - [x] **Rétention** : appliquée seulement après une écriture réussie, restreinte au motif
+            `p2enjoy-sauvegarde-*.tar.age`, refusant la valeur `0` qui effacerait l'archive
+            fraîche, et **énumérant** chaque suppression — une rétention silencieuse est
+            indistinguable d'une corruption.
+      - [x] `scripts/verify-sauvegardes.sh` : **42 contrôles, aucune anomalie**, deux exécutions.
+            Il exerce le VRAI script sur la VRAIE pile — archive produite, déchiffrée par une paire
+            de clés `age` jetable, dump lu par `pg_restore` (1727 entrées), clé racine comparée
+            **octet à octet** à celle du conteneur, empreintes du manifeste **RECALCULÉES** sur les
+            membres extraits. Un **objet témoin** est déposé dans le dépôt objet avant la
+            sauvegarde, le dépôt du seed étant vide : un dossier vide ne prouverait pas que le
+            chemin d'export fonctionne. Il est retiré ensuite, et son absence préalable constatée.
+      - [x] **Non complaisant** : les huit refus sont éprouvés par une **dégradation volontaire**,
+            et chacun exigé deux fois — code non nul **et** répertoire de sortie inchangé. Le
+            contrôle central — la clé racine identique octet à octet — est lui-même éprouvé par sa
+            dégradation : une clé altérée d'un octet doit faire échouer la comparaison.
+      - [x] **DEUX DÉFAUTS TROUVÉS PAR LE HARNAIS, corrigés à leur cause** — c'est ce qui établit
+            qu'il n'est pas complaisant. `backup.sh` créait le répertoire de sortie **avant** de
+            vérifier qu'il est hors du dépôt : il déposait donc dans l'arbre de travail le
+            répertoire qu'il s'apprêtait à refuser. La canonisation passe désormais par
+            `realpath -m`, qui résout `..` sans exiger que la cible existe, et précède le `mkdir`.
+            Le harnais, lui, mourait sur son propre `pipefail` quand `find` visait un répertoire
+            absent — situation normale de tous les refus.
+      - [x] `.env.example` : les trois variables documentées, **à exemple vide** et le motif écrit.
+            Une valeur d'exemple non vide ferait exiger par `env_validate` un fichier de clés que
+            `./runDev.sh` n'a aucune raison de réclamer. `scripts/verify-scripts.sh` les réclamait
+            dans sa liste `ALLOWED_ORPHANS` — le harnais **a rougi**, et la justification a été
+            ajoutée plutôt que la liste contournée.
+      - [x] `README.md` §3, §5 et §9, `docs/DAT.md` §10, `CHANGELOG.md` mis à jour dans le même
+            changement. Le compte des variables du gabarit est porté à **92**, chiffre **compté** et
+            non déduit : le README en annonçait 90 pour 89 réelles.
+      - [ ] **La campagne complète du dépôt n'a pas été rejouée sous cette tranche.** Elle ne touche
+            ni le code applicatif, ni la base, ni une surface : `scripts/verify-scripts.sh` a été
+            rejoué (**103 contrôles, 1 anomalie préexistante**, ligne de base établie par
+            `git stash`, consignée en **INC-186**), et `scripts/verify-sauvegardes.sh` deux fois.
+            Les autres harnais et les suites Node restent à rejouer avant le passage à `[x]`.
 - [ ] **Tranche 2 — la restauration prouvée.** Non commencée. Tant qu'elle n'est pas livrée,
       l'unité ne peut pas passer à `[x]` : sa Definition of Done exige qu'« une preuve restaure
       réellement un snapshot ».

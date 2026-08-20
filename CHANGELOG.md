@@ -15,6 +15,33 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Les sauvegardes chiffrées de la pile** (`CRM-080` tranche 1, `docs/SPEC-backups.md`,
+  `docs/DAT.md` §10). `scripts/backup.sh` produit **une** archive chiffrée par exécution :
+  `p2enjoy-sauvegarde-<horodatage UTC>.tar.age`. Elle porte le dump complet de la base, la **clé
+  racine du coffre à secrets** et, quand le dépôt objet est local, son contenu.
+
+  **La clé racine est obligatoire, et son absence fait échouer la sauvegarde.** Elle vit hors du
+  répertoire de données de PostgreSQL : une sauvegarde qui n'emporterait que la base laisserait
+  tous les mots de passe de messagerie chiffrés et **illisibles**, et il faudrait les ressaisir un
+  par un. Le produit refuse donc de fabriquer une archive qui donnerait la confiance d'une
+  sauvegarde sans en avoir la valeur.
+
+  **Le chiffrement n'emploie que des clés publiques.** La machine qui sauvegarde ne peut relire
+  aucune de ses propres archives : la clé privée vit ailleurs. Une machine de sauvegarde
+  compromise ne livre donc pas l'historique.
+
+  L'archive porte un **manifeste** lisible donnant l'empreinte de chacune de ses parties, elle
+  n'apparaît sous son nom définitif qu'une fois **entièrement écrite** — jamais une écriture en
+  cours ne peut être prise pour une sauvegarde valide —, et la **rétention** n'efface que les
+  archives du produit, en **énumérant** chaque suppression. Trois réglages la gouvernent
+  (`BACKUP_AGE_RECIPIENTS_FILE`, `BACKUP_OUTPUT_DIR`, `BACKUP_RETENTION_DAYS`), documentés dans
+  `.env.example`.
+
+  **Ce qui n'est PAS encore livré, et il faut le dire** : rien n'a encore été **restauré**. La
+  restauration dans un environnement jetable, la comparaison des invariants et le runbook de
+  production sont les tranches 2 et 3 de la même unité. Une sauvegarde jamais restaurée n'est pas
+  une sauvegarde.
+
 - **L'inbox montre enfin la suggestion de classement, et la range d'un seul geste** (`CRM-060`
   sous-tranche 2 bis, `docs/SPEC-contacts.md` §8.8, `docs/DESIGN_SYSTEM.md` §5.4 ter,
   `docs/manual.md` §4.15). Depuis le 2026-08-18, le produit **calcule** une suggestion à l'arrivée

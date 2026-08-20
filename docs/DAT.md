@@ -758,17 +758,33 @@ dans `docs/PROD_MIGRATIONS.md` et exécutées sur instruction humaine explicite.
 
 ## 10. Reprise et continuité
 
-- **Base** : sauvegarde `pg_dump` planifiée, chiffrée, avec procédure de restauration à tester
-  (unité de backlog dédiée).
+- **Base** : sauvegarde `pg_dump` chiffrée, **livrée depuis `CRM-080` tranche 1** —
+  `scripts/backup.sh`, spécifié par `docs/SPEC-backups.md`. Une exécution dépose exactement une
+  archive `p2enjoy-sauvegarde-<horodatage UTC>.tar.age`, chiffrée par `age` avec des clés
+  **publiques** seulement : l'hôte qui sauvegarde ne peut relire aucune de ses propres archives, et
+  sa compromission ne livre pas l'historique. L'archive porte un manifeste texte donnant le SHA-256
+  de chaque membre, et elle n'est renommée qu'une fois entièrement écrite — un lecteur du répertoire
+  de sortie ne peut jamais prendre une écriture en cours pour une sauvegarde valide.
+  La **procédure de restauration reste à éprouver** : c'est la tranche 2 de la même unité, et tant
+  qu'elle n'est pas livrée, aucune sauvegarde de ce dépôt n'a été restaurée pour de bon.
+  **Aucune restauration à un instant quelconque (PITR)** : `wal-g` est configuré dans l'image mais
+  activé par aucun service de la pile ; l'activer serait une décision d'architecture.
 - **Clé racine de Vault — obligatoire, et distincte de la base.** Le fichier
   `/etc/postgresql-custom/pgsodium_root.key`, porté par le volume `db-config`, ne se trouve
   **pas** dans `PGDATA` : il doit être sauvegardé séparément, et avec les mêmes précautions qu'un
   secret. Mesuré par `scripts/verify-vault.sh` : PGDATA restauré sans cette clé, le chiffré est
   toujours en base et le déchiffrement échoue (`invalid ciphertext`). Une restauration qui
   l'omettrait rendrait **tous** les comptes de messagerie irrécupérables — il faudrait ressaisir
-  chaque mot de passe. La procédure de restauration elle-même n'est pas encore éprouvée
-  (`docs/JOURNAL.md`, décision 24).
-- **Stockage objet** : réplication ou sauvegarde du bucket des pièces jointes.
+  chaque mot de passe. **`scripts/backup.sh` ne se contente plus de le recommander : il REFUSE de
+  produire une archive dont cette clé serait absente** (`docs/SPEC-backups.md` §3.2, refus R11), un
+  avertissement n'ayant jamais empêché personne de sauvegarder la seule base. La procédure de
+  restauration elle-même n'est pas encore éprouvée (`docs/JOURNAL.md`, décision 24 ; `CRM-080`
+  tranche 2).
+- **Stockage objet** : quand il est **local** — MinIO —, son bucket entre dans l'archive de
+  `scripts/backup.sh`, exporté par `docker cp`, l'image MinIO ne portant ni `tar` ni `find`. Quand
+  il est **externe** — fournisseur S3, cas de production —, ses objets relèvent du fournisseur : le
+  manifeste l'écrit (`depot_objet=externe`) pour qu'aucune restauration ne croie disposer de ce
+  qu'elle n'a pas.
 - **Messagerie** : la file `mail_outbox` est persistante ; un redémarrage reprend les envois en
   attente. L'état de synchronisation IMAP (dernier UID vu par dossier) est persisté, ce qui
   évite de retraiter l'historique après un incident.

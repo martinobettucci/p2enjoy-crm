@@ -196,7 +196,16 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Vingt et une ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+**Vingt-deux ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-173, INC-174,
+INC-182, INC-183, INC-185 et INC-186** — **INC-186** consignée le 2026-08-20 par la session
+`CRM-080` tranche 1 : `scripts/verify-scripts.sh` rend « la reconstruction sans CA n'emprunte pas
+sa branche inactive », anomalie mesurée **des deux côtés d'un `git stash`** et donc préexistante.
+Cause exacte non établie : ce poste est derrière un proxy TLS et renseigne `NPM_CA_FILE`, si bien
+que le contrôle peut ne rien dire du produit. Non corrigée au passage — elle relève de `CRM-002`
+ou de `CRM-015`.
+
+Précédemment vingt et une : **INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-173, INC-174,
 INC-182, INC-183 et INC-185** — **INC-185** consignée le 2026-08-20 par la session `CRM-060`
 sous-tranche 2 bis : `e2e/ui/inbox.spec.ts` annonce dans son `finally` retirer l'événement de
@@ -3262,3 +3271,38 @@ nomme la dérive, et `docs/SPEC-contacts.md` §8.8.10 la porte comme une limite.
 2. **donner au seed un moyen de reposer la timeline** — une fonction de service, réservée à
    l'environnement de test, qui remettrait une affaire dans son état d'événements. C'est une porte
    d'écriture sur une table qui n'en a aucune, donc un arbitrage de sécurité et non une commodité.
+
+## Consigné le 2026-08-20 — un constat de harnais, étranger à `CRM-080`
+
+### INC-186 — `scripts/verify-scripts.sh` : « la reconstruction sans CA n'emprunte pas sa branche inactive »
+
+**Ce qui est mesuré, et des DEUX côtés d'un `git stash`.** La session de `CRM-080` tranche 1 a
+rejoué `scripts/verify-scripts.sh` après avoir ajouté trois variables au gabarit. Le harnais rend
+**103 vérifications, 2 anomalies** : la première était la sienne — les trois variables orphelines
+n'étaient pas justifiées dans `ALLOWED_ORPHANS` —, et elle a été corrigée à sa cause dans le même
+changement. La seconde subsiste :
+
+```
+ECHEC  la reconstruction sans CA n'emprunte pas sa branche inactive
+```
+
+**Ligne de base établie conformément à `docs/CloudWorker.md` §2.4**, sur cette preuve seule :
+
+```
+git stash -u ; scripts/verify-scripts.sh  => 103 vérifications, 1 anomalie(s)
+git stash pop ; scripts/verify-scripts.sh => 103 vérifications, 1 anomalie(s)
+```
+
+L'anomalie est **présente des deux côtés** : elle est **préexistante et étrangère** au changement
+de `CRM-080`. Elle n'a donc pas été corrigée au passage (`CLAUDE.md` §3.1).
+
+**Ce qu'on en sait, et ce qu'on n'en sait pas.** Le contrôle éprouve la branche que `runDev.sh`
+emprunte lorsqu'aucun paquet CA n'est configuré — cas nominal d'un poste sans proxy TLS. Le présent
+environnement d'exécution **est** derrière un proxy TLS interposé (`docs/CloudWorker.md` §2.1), et
+`NPM_CA_FILE` y est renseignée. La cause exacte n'est pas établie : elle peut tenir à
+l'environnement, auquel cas le contrôle ne dit rien du produit, ou à la garde elle-même. La
+distinguer demande un poste sans proxy, dont cette session ne dispose pas.
+
+**Aucune correction n'est proposée**, et c'est délibéré : corriger une garde de `runDev.sh` sous
+l'unité des sauvegardes reviendrait à solder une autre unité (`CLAUDE.md` §13). Le constat est
+consigné pour que la session qui touchera `CRM-002` ou `CRM-015` le trouve.

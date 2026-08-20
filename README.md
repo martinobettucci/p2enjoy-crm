@@ -91,6 +91,9 @@ backend autorise (voir [`docs/SPEC-permissions-rls.md`](docs/SPEC-permissions-rl
 - Aucun service cloud n'est requis en développement : la pile est autonome.
 - `jq` **ou** `python3`, uniquement sur un poste dont la configuration Docker délègue ses
   identifiants à un binaire Windows — cas courant sous WSL. Voir §11.
+- `age` (1.x) et `realpath`, **uniquement sur l'hôte qui exécute `scripts/backup.sh`**. La
+  pile de développement n'en a pas besoin ; le script REFUSE de s'exécuter sans `age`, plutôt
+  que de se rabattre sur un autre chiffrement (`docs/SPEC-backups.md` §3.4).
 
 Sur un poste géré par NVM, activer la version du dépôt dans chaque nouveau shell avant une
 commande `npm` :
@@ -153,6 +156,8 @@ la question d'une façade `npm` par-dessus `runDev.sh` et consorts reste ouverte
 | `./runProd.sh --stop` | Arrêt propre de l'assemblage de production | **disponible** |
 | `./resetMe.sh` | Détruit la base et les volumes locaux, redémarre à froid, rejoue migrations et seed | **disponible** |
 | `scripts/verify-stack.sh` | Rejoue les preuves de la pile : santé des services, passerelle, Studio, absence d'outillage en production, chaîne de stockage | **disponible** |
+| `scripts/backup.sh` | Produit une **sauvegarde chiffrée** de la base, de la clé racine de Vault et du dépôt objet local, dans un répertoire hors du dépôt | **disponible** |
+| `scripts/verify-sauvegardes.sh` | Rejoue les preuves de la sauvegarde : archive produite, déchiffrée, dump lu par `pg_restore`, clé racine comparée octet à octet, empreintes recalculées, huit refus dégradés volontairement | **disponible** |
 | `scripts/verify-functions.sh` | Rejoue les preuves des fonctions edge : runtime, isolation, route Kong, API réelle et journaux différés | **disponible** |
 | `scripts/verify-mail-sync.sh` | Rejoue les preuves du service `mail-sync` : durcissement, API interne, absence de port publié, reprise après arrêt, journaux | **disponible** |
 | `scripts/verify-mail-inbound.sh` | Rejoue les preuves des comptes entrants IMAP : secret dans Vault, `secret_id` illisible, cloisonnement des boîtes, test de connexion réel contre Stalwart, sept dégradations non complaisantes | **disponible** |
@@ -563,7 +568,7 @@ fichiers statiques.
 
 ## 9. Variables d'environnement
 
-Les **90** variables sont documentées une à une dans `.env.example` : rôle, format attendu,
+Les **92** variables sont documentées une à une dans `.env.example` : rôle, format attendu,
 caractère obligatoire, valeur d'exemple non sensible. Ce gabarit est le contrat de référence, et
 `scripts/verify-scripts.sh` vérifie qu'il couvre exactement les variables interpolées par les
 trois fichiers Compose — une variable ajoutée à un service sans être documentée fait échouer les
@@ -584,6 +589,7 @@ preuves.
 | SMTP transactionnel | `SMTP_HOST`, `SMTP_PORT`, `SMTP_ADMIN_EMAIL` | Obligatoires |
 | Pile | `STACK_RLIMIT_NOFILE`, `APPLY_MIGRATIONS` | Facultatives, avec défauts. `APPLY_MIGRATIONS=false` est imposé en production |
 | Production | `APP_DOMAIN`, `CADDY_ACME_EMAIL` | Obligatoires en production uniquement |
+| Sauvegardes | `BACKUP_AGE_RECIPIENTS_FILE`, `BACKUP_OUTPUT_DIR`, `BACKUP_RETENTION_DAYS` | Lues par `scripts/backup.sh` **depuis `CRM-080`**, jamais par un service. Toutes trois à exemple **vide** : la pile de développement ne sauvegarde rien, et une valeur d'exemple non vide ferait exiger par les gardes un fichier de clés que `./runDev.sh` n'a aucune raison de réclamer. `BACKUP_AGE_RECIPIENTS_FILE` ne porte que des clés **publiques** ; la clé privée vit hors de l'hôte qui sauvegarde, et le script ne la lit jamais |
 
 Les identifiants IMAP/SMTP **des utilisateurs** ne sont jamais des variables d'environnement :
 ils sont saisis dans l'application et chiffrés en base (Supabase Vault).

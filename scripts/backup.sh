@@ -80,9 +80,23 @@ trap nettoyer EXIT INT TERM
 command -v age >/dev/null 2>&1 \
 	|| die "« age » est introuvable : la sauvegarde chiffrée l'exige (voir README §4)."
 
+# Configuration : l'environnement du shell prévaut, `.env` sert de repli. Une tâche planifiée n'a
+# donc rien à exporter — elle appelle le script, qui lit la configuration là où le dépôt la
+# centralise (CLAUDE.md §3). L'environnement garde le dernier mot pour qu'un opérateur puisse
+# viser un autre répertoire le temps d'une exécution sans toucher au fichier.
+reglage() {
+	local nom=$1 depuis_env
+	depuis_env=$(eval "printf '%s' \"\${$nom:-}\"")
+	if [ -n "$depuis_env" ]; then
+		printf '%s' "$depuis_env"
+	elif [ -f "$ENV_FILE" ] && env_has "$ENV_FILE" "$nom"; then
+		env_get "$ENV_FILE" "$nom"
+	fi
+}
+
 # R2 à R4 — le fichier de destinataires. Il ne porte que des clés PUBLIQUES ; son absence ou son
 # vide sont des erreurs, jamais un motif de produire une archive en clair.
-DESTINATAIRES="${BACKUP_AGE_RECIPIENTS_FILE:-}"
+DESTINATAIRES=$(reglage BACKUP_AGE_RECIPIENTS_FILE)
 [ -n "$DESTINATAIRES" ] \
 	|| die "BACKUP_AGE_RECIPIENTS_FILE n'est pas renseignée : elle doit désigner le fichier des clés publiques de chiffrement."
 [ -r "$DESTINATAIRES" ] && [ -s "$DESTINATAIRES" ] \
@@ -92,7 +106,8 @@ grep -Eq '^[[:space:]]*(age1[0-9a-z]+|ssh-(rsa|ed25519)[[:space:]])' "$DESTINATA
 
 # R9 — la rétention est validée avant toute écriture : une valeur fautive découverte à la fin
 # aurait déjà consommé le temps d'un dump complet.
-RETENTION="${BACKUP_RETENTION_DAYS:-30}"
+RETENTION=$(reglage BACKUP_RETENTION_DAYS)
+RETENTION=${RETENTION:-30}
 case "$RETENTION" in
 	''|*[!0-9]*) die "BACKUP_RETENTION_DAYS doit être un entier supérieur ou égal à 1 (reçu « $RETENTION »)." ;;
 esac
@@ -102,7 +117,9 @@ esac
 # R7, R8 — le répertoire de sortie. Le chemin est CANONISÉ **avant** d'être créé : `realpath -m`
 # résout `..` et les liens sans exiger que la cible existe. L'ordre compte — canoniser après un
 # `mkdir` créerait dans le dépôt le répertoire qu'on s'apprête à refuser.
-SORTIE="${OUTPUT_DIR_ARG:-${BACKUP_OUTPUT_DIR:-/var/backups/p2enjoy}}"
+SORTIE=$OUTPUT_DIR_ARG
+[ -n "$SORTIE" ] || SORTIE=$(reglage BACKUP_OUTPUT_DIR)
+SORTIE=${SORTIE:-/var/backups/p2enjoy}
 SORTIE=$(realpath -m "$SORTIE")
 RACINE_CANONIQUE=$(realpath -m "$REPO_ROOT")
 case "$SORTIE/" in
