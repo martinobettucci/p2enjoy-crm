@@ -6,7 +6,9 @@
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone)
 // @spec CRM-081 (docs/BACKLOG.md) — tranche 2 e : les trois colonnes du fil et la lecture des fils
 //       endormis, docs/SPEC-cards.md §16.15.3
-// @spec docs/JOURNAL.md décision 327
+// @spec CRM-060 (docs/BACKLOG.md) — sous-tranche 2 bis : la SURFACE de la suggestion,
+//       docs/SPEC-contacts.md §8.8.3 (ce que l'écran lit), §8.8.4 (les quatre états)
+// @spec docs/JOURNAL.md décision 327, décision 481
 //
 // Ce module ne rend rien : il **lit, réduit et classe**. La séparation est ce qui rend la
 // réduction du HTML, la construction de l'arbre et la classification des refus vérifiables
@@ -44,8 +46,18 @@ const CONFIGURATION_ABSENTE = { nature: 'unknown', detail: 'configuration_absent
 export const COLONNES_LISTE =
 	'id, workspace_id, card_id, classification, subject, from_address, from_name, received_at, references_ids, rfc822_message_id'
 
-/** Colonnes du panneau de lecture. Le corps y est demandé, puisqu'il y est montré. */
-export const COLONNES_MESSAGE = `${COLONNES_LISTE}, to_addresses, cc_addresses, body_text, body_html, sent_at`
+/**
+ * Colonnes du panneau de lecture. Le corps y est demandé, puisqu'il y est montré.
+ *
+ * `suggested_card_id` REJOINT CETTE LISTE ET NON `COLONNES_LISTE` (docs/SPEC-contacts.md §8.8.3) :
+ * la liste ne montre aucune suggestion — le §5.4 bis du design system y tient une densité que la
+ * sous-tranche 2 bis ne défait pas —, et rapporter la colonne pour cinquante messages afin de n'en
+ * afficher aucun contredirait le motif écrit en tête de `COLONNES_LISTE`.
+ *
+ * `suggested_at` N'EST PAS DEMANDÉE, et c'est une règle, pas un oubli : l'écran ne l'affiche nulle
+ * part (§8.8.5), et demander une colonne qu'aucune surface ne rend laisserait croire qu'elle sert.
+ */
+export const COLONNES_MESSAGE = `${COLONNES_LISTE}, to_addresses, cc_addresses, body_text, body_html, sent_at, suggested_card_id`
 
 type LigneMessage = Database['public']['Tables']['mail_messages']['Row']
 
@@ -80,6 +92,13 @@ export type MessageComplet = MessageListe & {
 	/** Vrai lorsque le corps affiché a été RÉDUIT depuis du HTML (§18.4) : l'écran le dit. */
 	readonly corpsReduitDepuisHtml: boolean
 	readonly pieces: readonly PieceJointe[]
+	/**
+	 * L'affaire SUGGÉRÉE par la règle 3 du classement (docs/SPEC-contacts.md §8.1, §8.8).
+	 *
+	 * C'est un INDICE, jamais un fait : la colonne ne vit que sur un message non classé, et elle
+	 * n'accorde aucun droit. Nulle lorsque la règle 3 ne s'est pas déclenchée — le cas ordinaire.
+	 */
+	readonly suggestionCardId: string | null
 }
 
 /** Objet de repli, jamais une chaîne vide : une ligne sans intitulé serait un trou dans la liste. */
@@ -348,6 +367,7 @@ export async function lireMessage(client: ClientCrm | null, id: string): Promise
 			copies: ligne.cc_addresses,
 			corps,
 			corpsReduitDepuisHtml: reduitDepuisHtml,
+			suggestionCardId: ligne.suggested_card_id,
 			pieces: pieces.data.map((piece) => ({
 				id: piece.id,
 				nom: piece.filename,

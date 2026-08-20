@@ -6,6 +6,10 @@
 // @spec CRM-081 (docs/BACKLOG.md) — tranche 2 e : la SURFACE du sommeil de fil,
 //       docs/SPEC-cards.md §16.15.4 (la pastille), §16.15.5 (le filtre est une composition),
 //       §16.15.6 (le geste à deux visages) ; docs/DESIGN_SYSTEM.md §5.3 septies
+// @spec CRM-060 (docs/BACKLOG.md) — sous-tranche 2 bis : la SURFACE de la suggestion,
+//       docs/SPEC-contacts.md §8.8.2 (où le bloc s'ancre), §8.8.4 (les quatre états),
+//       §8.8.5 (ce que le bloc écrit et ce qu'il tait), §8.8.6 (le geste et ses refus) ;
+//       docs/DESIGN_SYSTEM.md §5.4 ter
 // @spec CRM-081 (docs/BACKLOG.md) — tranche 2 f : LE GROUPEMENT en fils,
 //       docs/SPEC-cards.md §16.16.3 (ce que la liste énumère), §16.16.4 (ce que la sélection
 //       désigne et ce que le panneau de lecture ouvre), §16.16.5 (le sommeil transposé au fil),
@@ -21,7 +25,7 @@
 // passer (§18.1) ; l'écran ne filtre rien et ne devine rien.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronDown, ChevronRight, Inbox, Moon, Paperclip, Download, Sun } from 'lucide-react'
+import { ChevronDown, ChevronRight, Inbox, Moon, Paperclip, Download, Sparkles, Sun } from 'lucide-react'
 import { Link } from 'react-router'
 import { Button } from '../components/ui/Button'
 import { LiveRegion } from '../components/ui/LiveRegion'
@@ -585,9 +589,19 @@ const LIBELLE_REFUS: Readonly<Record<NatureRefusClassement, CleTraduction>> = {
 function FormulaireClassement({
 	message,
 	onClasse,
+	variante,
 }: {
 	readonly message: MessageComplet
 	readonly onClasse: () => void
+	/**
+	 * La variante de la commande d'OUVERTURE, et d'elle seule (docs/DESIGN_SYSTEM.md §5.4 ter).
+	 *
+	 * Elle passe en `secondaire` tant qu'une suggestion est rendue à côté : deux boutons primaires
+	 * dans le même pied ne diraient plus lequel est le chemin principal, et c'est le chemin court
+	 * qui l'est quand un indice existe. La nature du geste ne change pas, seulement sa place dans
+	 * une hiérarchie qui compte alors deux actions.
+	 */
+	readonly variante: 'primaire' | 'secondaire'
 }) {
 	const [ouvert, setOuvert] = useState(false)
 	const [cards, setCards] = useState<readonly CardClassable[]>([])
@@ -632,7 +646,7 @@ function FormulaireClassement({
 
 	if (!ouvert) {
 		return (
-			<Button variante="primaire" onClick={() => setOuvert(true)} data-testid="inbox-classer">
+			<Button variante={variante} onClick={() => setOuvert(true)} data-testid="inbox-classer">
 				{t('inbox.classify.open')}
 			</Button>
 		)
@@ -714,6 +728,169 @@ function PiluleCard({ idCard }: { readonly idCard: string }) {
 				{cible.titre}
 			</Link>
 		</p>
+	)
+}
+
+// =================================================================================================
+// La SUGGESTION de classement — CRM-060 sous-tranche 2 bis, docs/SPEC-contacts.md §8.8
+// =================================================================================================
+
+/**
+ * Le bloc de suggestion, et le geste qui l'accepte.
+ *
+ * IL N'INTRODUIT AUCUN CONTRAT NOUVEAU : accepter une suggestion appelle `classify_message` avec
+ * l'affaire suggérée, par la même fonction que le formulaire manuel (§8.8.6). Un second chemin
+ * d'écriture divergerait du premier au premier ajustement, et la garde des deux droits du §18.2
+ * doit rester UNE.
+ *
+ * LA SUGGESTION N'ACCORDE AUCUN DROIT (§8.1) : elle peut désigner une affaire que l'appelant n'a
+ * pas le droit d'écrire, et le geste échoue alors comme tout classement manuel non autorisé. La
+ * commande n'est donc jamais éteinte d'avance (docs/DESIGN_SYSTEM.md §5.4 ter) : l'écran appuie et
+ * traduit le refus.
+ */
+function BlocSuggestion({
+	idMessage,
+	idCard,
+	titre,
+	adresse,
+	onClasse,
+}: {
+	readonly idMessage: string
+	readonly idCard: string
+	readonly titre: string
+	readonly adresse: string
+	readonly onClasse: () => void
+}) {
+	const [enVol, setEnVol] = useState(false)
+	const [refus, setRefus] = useState<string | null>(null)
+
+	const accepter = useCallback(async () => {
+		setEnVol(true)
+		const echec = await classerMessage(clientCrm, idMessage, idCard)
+		setEnVol(false)
+		if (echec !== null) {
+			// LE BLOC RESTE RENDU SUR UN REFUS (§8.8.6) : disparaître retirerait le seul endroit où
+			// lire la cause. Les quatre refus sont ceux du classement manuel, mot pour mot — un même
+			// refus ne se formule pas de deux façons selon le bouton qui l'a demandé.
+			setRefus(t(LIBELLE_REFUS[echec.nature]))
+			return
+		}
+		setRefus(null)
+		onClasse()
+	}, [idCard, idMessage, onClasse])
+
+	return (
+		<section
+			data-testid="inbox-suggestion"
+			aria-labelledby="inbox-suggestion-titre"
+			// UNE CARTE DISCRÈTE, PAS UNE ALERTE (docs/DESIGN_SYSTEM.md §5.4 ter) : une suggestion
+			// n'est ni une erreur ni un avertissement, et une teinte d'état lui ferait porter une
+			// urgence qu'elle n'a pas.
+			className="flex flex-col gap-2 rounded-sm border border-border bg-surface p-3"
+		>
+			<h4
+				id="inbox-suggestion-titre"
+				className="flex items-center gap-2 text-sm font-medium text-text-2"
+			>
+				<Sparkles aria-hidden="true" size={16} />
+				{t('inbox.suggestion.title')}
+			</h4>
+			{/* L'AFFAIRE EST NOMMÉE **ET** ADRESSABLE (§8.8.5) : un indice qui ne nommerait pas sa
+			    cible ne serait pas un indice, et un nom sans lien obligerait à chercher l'affaire
+			    ailleurs pour la vérifier — or vérifier est ce que « à confirmer » demande. */}
+			<p>
+				<Link
+					to={adresse}
+					data-testid="inbox-suggestion-card"
+					className="inline-flex items-center min-h-[var(--size-target)] rounded-sm bg-brand-soft px-2 text-brand focus-visible:outline-2 focus-visible:outline-brand"
+				>
+					{titre}
+				</Link>
+			</p>
+			{/* LA RÈGLE EST ÉCRITE EN TOUTES LETTRES, et ce n'est pas une mesure refaite à l'écran :
+			    la colonne n'est écrite que par `classer_message_automatiquement`, et elle ne peut pas
+			    signifier autre chose (§8.8.5). AUCUNE DATE, aucun score : `suggested_at` daterait
+			    l'indice et non l'affaire, et la règle 3 ne produit aucune probabilité. */}
+			<p className="text-sm text-text-2">{t('inbox.suggestion.rule')}</p>
+			{refus !== null ? (
+				<p role="alert" data-testid="inbox-suggestion-refus" className="text-sm text-danger">
+					{refus}
+				</p>
+			) : null}
+			{/* `items-start` : dans une colonne flex, un bouton prend toute la largeur disponible et
+			    traverserait le panneau de lecture entier (§5.3 septies, défaut mesuré). */}
+			<div className="flex items-start">
+				<Button
+					variante="primaire"
+					disabled={enVol}
+					onClick={() => void accepter()}
+					data-testid="inbox-suggestion-accepter"
+				>
+					{enVol ? t('inbox.classify.working') : t('inbox.suggestion.accept')}
+				</Button>
+			</div>
+		</section>
+	)
+}
+
+/**
+ * Le pied d'un message NON CLASSÉ : la phrase, la suggestion s'il y en a une, la commande manuelle.
+ *
+ * L'ORDRE PORTE UN SENS (§8.8.2) : la suggestion est le chemin court, la commande manuelle celui
+ * qui marche toujours. Placer l'indice après la commande le ferait lire une fois la liste déroulée,
+ * c'est-à-dire trop tard. Et la commande manuelle n'est JAMAIS remplacée : une suggestion peut
+ * désigner la mauvaise affaire, et un écran qui n'offrirait que l'indice enfermerait l'utilisateur
+ * dans un choix qu'il n'a pas fait.
+ */
+function PiedNonClasse({
+	message,
+	onClasse,
+}: {
+	readonly message: MessageComplet
+	readonly onClasse: () => void
+}) {
+	const idSuggere = message.suggestionCardId
+	const [cible, setCible] = useState<{ titre: string; adresse: string } | null>(null)
+
+	// AUCUNE REQUÊTE QUAND IL N'Y A RIEN À RÉSOUDRE (§8.8.3) : un message sans suggestion ne
+	// déclenche aucune lecture supplémentaire. La cible est remise à zéro à chaque changement de
+	// message, sans quoi le bloc d'un message porterait l'affaire du précédent le temps d'un rendu.
+	useEffect(() => {
+		setCible(null)
+		if (idSuggere === null) return
+		let vivant = true
+		void (async () => {
+			const lue = await lireCheminCard(clientCrm, idSuggere)
+			if (vivant) setCible(lue)
+		})()
+		return () => {
+			vivant = false
+		}
+	}, [idSuggere])
+
+	// UNE SUGGESTION DONT L'AFFAIRE N'EST PAS LISIBLE NE REND RIEN (§8.8.4, cas d) : `lireCheminCard`
+	// rend `null`, et l'écran n'écrit surtout pas « une affaire vous est suggérée mais vous ne pouvez
+	// pas la voir » — cette phrase divulguerait l'existence d'une affaire que la RLS ferme.
+	const suggestion = idSuggere !== null && cible !== null ? { id: idSuggere, ...cible } : null
+
+	return (
+		<div className="flex flex-col gap-2">
+			<p className="text-sm text-text-2">{t('inbox.message.unclassified')}</p>
+			{suggestion !== null ? (
+				<BlocSuggestion
+					idMessage={message.id}
+					idCard={suggestion.id}
+					titre={suggestion.titre}
+					adresse={suggestion.adresse}
+					onClasse={onClasse}
+				/>
+			) : null}
+			<FormulaireClassement
+				message={message}
+				onClasse={onClasse}
+				variante={suggestion !== null ? 'secondaire' : 'primaire'}
+			/>
+		</div>
 	)
 }
 
@@ -1118,10 +1295,7 @@ function PanneauMessage({
 								/>
 							</div>
 						) : (
-							<div className="flex flex-col gap-2">
-								<p className="text-sm text-text-2">{t('inbox.message.unclassified')}</p>
-								<FormulaireClassement message={etat.donnees} onClasse={onClasse} />
-							</div>
+							<PiedNonClasse message={etat.donnees} onClasse={onClasse} />
 						)}
 					</footer>
 				</article>

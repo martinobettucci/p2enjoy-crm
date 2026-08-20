@@ -155,6 +155,14 @@ export const fr = {
 	'inbox.classify.refus.card_indisponible': 'Cette affaire est archivée ou en corbeille : elle ne reçoit pas de courrier.',
 	'inbox.classify.refus.network': "Le classement n'a pas pu être envoyé. Vérifiez votre connexion, puis réessayez.",
 	'inbox.classify.refus.unknown': "Le classement n'a pas abouti.",
+	// --- La SUGGESTION de classement — CRM-060 sous-tranche 2 bis --------------------------
+	// docs/SPEC-contacts.md §8.8.5, docs/DESIGN_SYSTEM.md §5.4 ter.
+	// LA RÈGLE EST ÉCRITE EN TOUTES LETTRES : la colonne `suggested_card_id` n'est écrite que par
+	// la règle 3, et sans cette phrase l'utilisateur lirait un nom d'affaire sans savoir d'où il
+	// sort — un indice dont on ignore l'origine ne se confirme pas, il se subit.
+	'inbox.suggestion.title': 'Suggestion de classement',
+	'inbox.suggestion.rule': 'L’expéditeur est un contact rattaché à cette affaire.',
+	'inbox.suggestion.accept': 'Classer dans cette affaire',
 	// --- Composition et réponse — CRM-058, docs/SPEC-mail-subsystem.md §19.6 --------------
 	'envoi.open': 'Écrire un message',
 	'envoi.reply': 'Répondre',
