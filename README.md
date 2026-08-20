@@ -313,7 +313,7 @@ la vérification visuelle possible.
 
 ### Boîtes de développement
 
-Trois boîtes sont provisionnées au démarrage, par la **véritable API de gestion** de Stalwart, et
+Quatre boîtes sont provisionnées au démarrage, par la **véritable API de gestion** de Stalwart, et
 non par une écriture directe dans son magasin. Le provisionnement est convergent : le rejouer ne
 duplique rien, rétablit une valeur modifiée à la main, et **ne détruit aucun message**.
 
@@ -322,11 +322,19 @@ duplique rien, rétablit une valeur modifiée à la main, et **ne détruit aucun
 | `systeme@crm.p2enjoy.test` | Boîte **système** du workspace, catch-all de `@crm.p2enjoy.test` | — |
 | `admin@p2enjoy.test` | Boîte personnelle | Camille Aubert, `admin` |
 | `bizdev@p2enjoy.test` | Boîte personnelle | Driss Lemoine, `business_developer` |
+| `leo.marchand@sogexia.example` | Boîte d'un **correspondant extérieur**, hors du produit | Léo Marchand, contact du carnet |
 
 Mot de passe commun : **`SeedDev2026Local`**, le même que celui des comptes seedés. Il ne protège
-rien, et c'est délibéré : les domaines sont sous `.test`, TLD réservé par la RFC 2606 donc non
-routable, et les ports ne sont publiés que sur la boucle locale. Farida Nowak (`viewer`) n'a pas de
-boîte : un `viewer` lit, il ne correspond pas.
+rien, et c'est délibéré : les domaines sont sous `.test` et `.example`, TLD réservés par la
+RFC 2606 donc non routables, et les ports ne sont publiés que sur la boucle locale. Farida Nowak
+(`viewer`) n'a pas de boîte : un `viewer` lit, il ne correspond pas.
+
+**La quatrième boîte n'appartient pas au produit**, et son adresse est portée par la variable
+`MAIL_DEV_CORRESPONDENT_ADDRESS`. Elle existe pour **émettre** : le jeu de démonstration lui fait
+expédier un courrier vers la boîte système, et comme son adresse est celle d'un **contact** du
+carnet, ce courrier arrive non classé **et suggéré** — c'est ce qui rend la suggestion de classement
+démontrable à l'écran. Le CRM ne relève **jamais** dedans : aucune ligne de `mail_inbound_accounts`
+ne la désigne, et `scripts/verify-mail-infra.sh` devient rouge si l'une venait à le faire.
 
 Le **catch-all** est ce qui rend la boîte système utile : un message adressé à
 `c-xxxxxxxx@crm.p2enjoy.test` — une adresse de card qui n'a jamais été déclarée — y est remis. Ce
@@ -570,7 +578,7 @@ preuves.
 | Stockage | `GLOBAL_S3_BUCKET`, `GLOBAL_S3_ENDPOINT`, `AWS_ACCESS_KEY_ID` | Obligatoires. En développement, l'overlay vise MinIO |
 | Build de développement | `NPM_CA_FILE`, `PIP_CA_FILE` | Facultatives. Chemin absolu d'un paquet PEM local, pour `npm ci` dans l'image Vite et pour `pip install` dans l'image `mail-sync` derrière un proxy TLS ; vides ou absentes, aucun effet. Deux variables distinctes : les deux chaînes ne consomment pas le certificat de la même façon (décision 356) |
 | Messagerie | `CRM_INBOUND_DOMAIN`, `MAIL_SYNC_INTERNAL_TOKEN`, `MAIL_SYNC_LOG_LEVEL`, `MAIL_SYNC_POLL_INTERVAL`, `MAIL_MAX_ATTACHMENT_MB` | `CRM_INBOUND_DOMAIN` est consommée **depuis `CRM-050`** — Stalwart lui attache la boîte système, et sa valeur doit égaler `workspaces.inbound_domain`. Les deux variables `MAIL_SYNC_INTERNAL_TOKEN` et `MAIL_SYNC_LOG_LEVEL` le sont **depuis `CRM-051`** : le service refuse de démarrer sous 32 caractères de jeton. **`MAIL_SYNC_POLL_INTERVAL` est consommée depuis `CRM-059`** : elle règle l'intervalle de la boucle de veille, en secondes. `0` **désactive** la veille — la relève reste alors déclenchable par l'API interne — et toute autre valeur doit tenir entre **5 secondes et 1 heure**, bornes appliquées au démarrage et non corrigées en silence. `MAIL_MAX_ATTACHMENT_MB` l'est depuis `CRM-054` |
-| Messagerie de développement | `STALWART_IMAP_PORT`, `STALWART_SMTP_PORT`, `STALWART_SUBMISSION_PORT`, `STALWART_ADMIN_PORT`, `STALWART_ADMIN_USER`, `STALWART_ADMIN_PASSWORD`, `STALWART_MAILBOX_PASSWORD`, `MAIL_DEV_PERSONAL_DOMAIN`, `ROUNDCUBE_PORT`, `CLAMAV_PORT` | Obligatoires **en développement uniquement** : aucun de ces services n'existe en production. `STALWART_ADMIN_PASSWORD` est tiré au hasard à l'amorçage |
+| Messagerie de développement | `STALWART_IMAP_PORT`, `STALWART_SMTP_PORT`, `STALWART_SUBMISSION_PORT`, `STALWART_ADMIN_PORT`, `STALWART_ADMIN_USER`, `STALWART_ADMIN_PASSWORD`, `STALWART_MAILBOX_PASSWORD`, `MAIL_DEV_PERSONAL_DOMAIN`, `MAIL_DEV_CORRESPONDENT_ADDRESS`, `ROUNDCUBE_PORT`, `CLAMAV_PORT` | Obligatoires **en développement uniquement** : aucun de ces services n'existe en production. `STALWART_ADMIN_PASSWORD` est tiré au hasard à l'amorçage |
 | Chiffrement | `PG_META_CRYPTO_KEY`, `REALTIME_DB_ENC_KEY` | Obligatoires. Longueurs imposées : 32 et 16 caractères. Les secrets de messagerie ne sont pas ici : ils vivent dans le Vault de la base, chiffrés par sa clé racine (décision 366, INC-098) |
 | Authentification | `DISABLE_SIGNUP`, `PASSWORD_MIN_LENGTH`, `JWT_EXPIRY` | Obligatoires. `DISABLE_SIGNUP` vaut **toujours** `true` (`docs/SPEC-auth.md` §2) |
 | SMTP transactionnel | `SMTP_HOST`, `SMTP_PORT`, `SMTP_ADMIN_EMAIL` | Obligatoires |
