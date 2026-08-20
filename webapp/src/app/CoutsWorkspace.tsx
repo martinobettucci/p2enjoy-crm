@@ -1,8 +1,11 @@
 // @spec CRM-086 (docs/BACKLOG.md) — écrans de coûts, TRANCHE 5 : le MONTAGE de l'écran du §4.5,
 //       le cumul du workspace, dernier des trois écrans de l'unité
-// @spec docs/SPEC-costs.md §4.0 (adresse `/couts`, seule des trois à figurer dans `ROUTES`),
-//       §4.5 (un groupe de barres par track, cumul calculé APRÈS la RLS, regroupement par devise),
-//       §4.4 (la mention des réels inconnus), §4.7 (les états)
+// @spec CRM-086 (docs/BACKLOG.md) — TRANCHE 6b : l'écran devient à ONGLETS (§4.8), sa vue
+//       d'ensemble descendant dans `VueEnsembleWorkspace`
+// @spec docs/SPEC-costs.md §4.0 (adresse `/couts`, seule des trois à figurer dans `ROUTES` ;
+//       onglet en chaîne de requête), §4.5 (un groupe de barres par track, cumul calculé APRÈS la
+//       RLS, regroupement par devise), §4.4 (la mention des réels inconnus), §4.7 (les états),
+//       §4.8 (l'onglet « À saisir » et son badge)
 // @spec docs/DESIGN_SYSTEM.md §5.33 (cet écran), §5.30 (l'histogramme), §5.8 (états systématiques),
 //       §4 (barre latérale et entrées transverses), §7 (responsive), §8 (accessibilité),
 //       §10 (aucun texte en dur)
@@ -34,6 +37,7 @@ import { lireCumulWorkspace, type HistogrammeDeviseTracks } from '../lib/couts-e
 import { clientCrm } from '../lib/supabase'
 import type { ClientCrm } from '../lib/supabase'
 import { cheminCoutsTrack } from './chemins'
+import { ZoneCoutsAOnglets } from './CoutsASaisir'
 import { HistogrammeCouts, type GroupeHistogramme } from './HistogrammeCouts'
 
 export function CoutsWorkspace() {
@@ -80,6 +84,34 @@ export function ContenuCoutsWorkspace({ client }: { readonly client: ClientCrm |
 		)
 	}
 
+	return (
+		<ZoneCoutsAOnglets
+			client={client}
+			portee={{ genre: 'workspace' }}
+			ensemble={
+				<VueEnsembleWorkspace
+					etat={etat}
+					onReprise={() => setTentative((precedente) => precedente + 1)}
+				/>
+			}
+		/>
+	)
+}
+
+/**
+ * La vue d'ensemble du §4.5 — les histogrammes, la portée du cumul et leurs états.
+ *
+ * SÉPARÉE DE LA ZONE À ONGLETS depuis la tranche 6b, pour le motif exact de `VueEnsembleTrack` : la
+ * barre d'onglets est rendue quel que soit l'état de cette lecture-ci, sans quoi une erreur de
+ * cumul retirerait l'accès à l'onglet « À saisir », dont la lecture est indépendante.
+ */
+function VueEnsembleWorkspace({
+	etat,
+	onReprise,
+}: {
+	readonly etat: EtatAsync<readonly HistogrammeDeviseTracks[]>
+	readonly onReprise: () => void
+}) {
 	if (etat.statut === 'chargement') {
 		return (
 			<div className="py-2">
@@ -97,7 +129,7 @@ export function ContenuCoutsWorkspace({ client }: { readonly client: ClientCrm |
 				titre={t('state.error.title')}
 				corps={t(etat.erreur.nature === 'network' ? 'state.error.network' : 'state.error.unknown')}
 				libelleReprise={t('state.error.retry')}
-				onReprise={() => setTentative((precedente) => precedente + 1)}
+				onReprise={onReprise}
 			/>
 		)
 	}

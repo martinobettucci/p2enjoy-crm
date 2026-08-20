@@ -2119,6 +2119,42 @@ d'ancienneté d'une card (§5.1) : c'est le même signal, il doit avoir la même
 lisible**, avec le motif sous le champ — §8. Elle n'est jamais masquée : une table qui cache des
 lignes se lit comme complète alors qu'elle ne l'est pas.
 
+**Ce que la LIVRAISON de la tranche 6b a ajouté à ce paragraphe, le 2026-08-20.** Cinq règles, dont
+quatre corrigent ce que la rédaction d'avant-code supposait.
+
+- **La barre d'onglets est rendue QUEL QUE SOIT l'état de la vue d'ensemble.** Les deux lectures
+  sont indépendantes : un histogramme en erreur, ou un track sans aucun budget ouvert, retirerait
+  sinon l'accès à un onglet dont les lignes existent — et l'onglet « À saisir » liste précisément
+  les budgets **clôturés** que l'histogramme exclut. C'est la règle du §5.3 quinquies pour la barre
+  de filtres, transposée à une navigation : un contrôle qui est la cause possible d'un vide reste
+  rendu.
+
+- **`aria-current` est posé À LA MAIN, et non par `NavLink`.** Les deux entrées partagent le même
+  chemin et ne diffèrent que par leur chaîne de requête (`?onglet=saisir`, `docs/SPEC-costs.md`
+  §4.0), que `NavLink` ne compare pas : il poserait l'attribut sur les **deux** entrées. C'est le
+  seul endroit du produit où deux liens de navigation ne se distinguent pas par leur chemin, et
+  c'est la conséquence directe du §4.0. Tout le reste du patron du §12.1 est tenu sans écart.
+
+- **Le badge est ABSENT tant que le compte n'est pas connu**, et pas seulement à zéro. Le §5.31
+  écrivait « le badge disparaît à zéro plutôt que d'afficher `0` » ; il manquait l'état
+  intermédiaire — pendant la lecture, un badge « 0 » affirmerait que tout est saisi alors que rien
+  n'a été lu, ce qui est la valeur par défaut trompeuse que `CLAUDE.md` §18 interdit.
+
+- **LE FOND DE SUCCÈS NE S'ÉTEINT PAS SUR UN MINUTEUR.** Ce paragraphe écrivait « un fond
+  `--color-success-soft` qui s'estompe » ; le §4.8 de la spécification, lui, écrit que la ligne
+  « reste affichée, marquée *enregistré*, **jusqu'au prochain chargement de l'onglet** ». Les deux
+  ne peuvent pas être vrais ensemble : une marque qui s'efface d'elle-même rend la table
+  indistinguable de son état d'avant, et le minuteur qui l'effacerait serait la temporisation
+  arbitraire que `CLAUDE.md` §18 proscrit. Le fond **s'installe** avec la transition de couleur du
+  §3 et **demeure**, comme la mention « Enregistré » qui l'accompagne.
+
+- **La tabulation traverse UNE cible par ligne, et non aucune.** Ce paragraphe écrivait que « la
+  tabulation ne quitte pas la colonne de saisie tant qu'il reste des lignes » ; la colonne
+  « Affaire » porte un **lien**, seule autre cible de la ligne, et l'ôter du parcours de tabulation
+  le rendrait inatteignable au clavier — ce que le §8 interdit sans exception. Ce que la règle
+  visait est tenu : on ne traverse pas six colonnes par ligne, et c'est `Entrée` qui porte la
+  série, en menant d'un champ « Réel » au suivant sans passer par rien d'autre.
+
 ### 5.32 Écran de détail d'un budget — `CRM-086`
 
 Spécifié avant code, `docs/SPEC-costs.md` §4.3. Livré le 2026-08-20. L'écran réemploie

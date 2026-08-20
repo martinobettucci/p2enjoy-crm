@@ -2147,6 +2147,71 @@ export const fr = {
 	// sur les mêmes données. Sans cette phrase, l'écart se lirait comme une erreur de calcul.
 	'costs.workspace.scope':
 		'Ce cumul ne porte que sur les budgets ouverts des tracks que vous pouvez lire. Un track archivé ou mis à la corbeille n’y figure pas ; ses budgets restent lisibles depuis son propre écran de coûts.',
+
+	// -------------------------------------------------------------------------------------------
+	// Onglet « À saisir » — `CRM-086` tranche 6b, docs/SPEC-costs.md §4.8, §4.8.1 et §4.8.2,
+	// docs/DESIGN_SYSTEM.md §5.31. Ces clés sont partagées par les DEUX écrans à onglets — celui du
+	// track et celui du workspace : elles ne nomment donc ni l'un ni l'autre, la portée étant celle
+	// de l'écran d'où l'onglet est ouvert.
+	// -------------------------------------------------------------------------------------------
+	'costs.tabs.aria': 'Vues des coûts',
+	'costs.tabs.overview': 'Vue d’ensemble',
+	'costs.tabs.pending': 'À saisir',
+	// Le badge porte un CHIFFRE, et son nom accessible une phrase entière : un nombre nu ne dit pas
+	// ce qu'il compte (docs/DESIGN_SYSTEM.md §5.4 bis). Il compte les lignes que le tableau LISTE,
+	// budgets clôturés compris — l'écart avec la mention du §4.4 est consigné à INC-182 (§4.8.2).
+	'costs.tabs.pending.count': '{n} ligne(s) en attente de leur coût réel',
+	'costs.pending.caption':
+		'Lignes de coût en attente de leur coût réel, de la plus ancienne à la plus récente : ancienneté, budget, occurrence, affaire, nature, coût estimé et saisie du coût réel.',
+	'costs.pending.column.age': 'Ancienneté',
+	'costs.pending.column.budget': 'Budget',
+	'costs.pending.column.occurrence': 'Occurrence',
+	'costs.pending.column.card': 'Affaire',
+	'costs.pending.column.label': 'Nature',
+	'costs.pending.column.actual': 'Réel',
+	// L'ancienneté est « formulée en durée » (§5.31), et se compose par une CLÉ : « 12 jours » ne se
+	// construit pas en collant un nombre à un mot (§10). Aucune variante de danger — le seuil que le
+	// §5.31 suppose n'existe pour aucune ligne de coût, écart consigné à INC-183 (§4.8.1).
+	'costs.pending.age.days': '{n} jour(s)',
+	// La pilule du §5.31 : jetons NEUTRES, jamais `--color-danger`. Un budget clos n'est pas une
+	// erreur, et sa ligne reste saisissable — c'est même la raison d'être de cet onglet.
+	'costs.pending.closed': 'clôturé',
+	'costs.pending.closed.aria':
+		'Budget ou occurrence clôturé — cette ligne reste saisissable après la clôture.',
+	'costs.pending.card.unknown': 'Affaire non lisible',
+	// « C'est une bonne nouvelle, pas un état vide en défaut » (§4.8).
+	'costs.pending.empty.title': 'Tous les coûts réels sont saisis',
+	'costs.pending.empty.body':
+		'Aucune ligne de coût n’attend son coût réel dans cette portée. Les lignes créées sans coût réel apparaîtront ici, budgets clôturés compris.',
+	// L'état « aucune ligne écrivable, mais des lignes lisibles » du §4.8 : le tableau est rendu
+	// ENTIER, et le dit en tête. Le masquer se lirait comme un tableau complet qui ne l'est pas.
+	'costs.pending.readonly.all':
+		'Aucune de ces lignes ne peut être modifiée avec vos droits : ce tableau est en lecture seule.',
+	'costs.pending.readonly.line': 'Vous ne pouvez pas modifier cette affaire.',
+	// « Zéro est une valeur, pas un vide » (§4.8), écrite SOUS le tableau et non supposée comprise.
+	'costs.pending.zero.notice':
+		'Saisir 0 signifie « finalement rien dépensé » et retire la ligne de l’attente ; laisser le champ vide la laisse en attente.',
+	// La consigne clavier est la raison d'être de cet écran (§5.31) : elle est ÉCRITE, jamais
+	// devinée. Un geste qui n'existe qu'au clavier doit être annoncé (§5.29).
+	'costs.pending.keyboard.notice':
+		'Entrée enregistre la ligne et place le curseur sur la suivante ; Échap annule la saisie en cours.',
+	// Le nom accessible du champ NOMME sa ligne : « Réel » répété sur douze lignes ne dirait pas
+	// laquelle on saisit (§5.29, commandes répétées d'une liste).
+	'costs.pending.field.aria': 'Coût réel de la ligne {nom}',
+	// Les trois mentions du §5.7 ter, sous le champ et dans la ligne, jamais deux à la fois.
+	'costs.pending.saving': 'Enregistrement…',
+	'costs.pending.saved': 'Enregistré',
+	'costs.pending.invalid': 'Ce montant n’est pas un nombre.',
+	// La troisième issue : `200` et zéro ligne, ni un succès ni une erreur (§4.8.1).
+	'costs.pending.refus.sans-effet':
+		'Aucune ligne n’a été enregistrée. Vos droits ont peut-être changé depuis l’ouverture : rechargez l’onglet.',
+	'costs.pending.refus.forbidden': 'Vous ne pouvez pas modifier cette affaire.',
+	'costs.pending.refus.montant-hors-echelle': 'Ce montant est trop grand pour être enregistré.',
+	'costs.pending.refus.forme-refusee': 'Cette valeur a été refusée par la base.',
+	'costs.pending.refus.reference-absente':
+		'Cette ligne n’existe plus. Rechargez l’onglet pour repartir de l’état réel.',
+	'costs.pending.refus.network': 'La requête n’a pas abouti. Réessayez.',
+	'costs.pending.refus.unknown': 'L’enregistrement a échoué.',
 } as const
 
 export type CleTraduction = keyof typeof fr

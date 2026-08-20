@@ -1,7 +1,10 @@
 // @spec CRM-086 (docs/BACKLOG.md) — écrans de coûts, TRANCHE 3 : le MONTAGE de l'écran du §4.2,
 //       première surface de l'unité réellement atteignable par un utilisateur
-// @spec docs/SPEC-costs.md §4.0 (adresse `/tracks/:slugTrack/couts`), §4.2 (histogramme du track,
-//       un budget clôturé n'y figure pas), §4.4 (la mention des réels inconnus), §4.7 (les états)
+// @spec CRM-086 (docs/BACKLOG.md) — TRANCHE 6b : l'écran devient à ONGLETS (§4.8), sa vue
+//       d'ensemble descendant dans `VueEnsembleTrack`
+// @spec docs/SPEC-costs.md §4.0 (adresse `/tracks/:slugTrack/couts`, onglet en chaîne de requête),
+//       §4.2 (histogramme du track, un budget clôturé n'y figure pas), §4.4 (la mention des réels
+//       inconnus), §4.7 (les états), §4.8 (l'onglet « À saisir » et son badge)
 // @spec docs/DESIGN_SYSTEM.md §5.30 (l'histogramme), §5.8 (états systématiques), §4 (architecture),
 //       §7 (responsive), §8 (accessibilité), §10 (aucun texte en dur)
 // @spec docs/SPEC-webapp.md §5.2 (routes), §6.4 (contrat asynchrone)
@@ -34,6 +37,7 @@ import { clientCrm } from '../lib/supabase'
 import type { ClientCrm } from '../lib/supabase'
 import { AppShell } from './AppShell'
 import { cheminCoutsBudget } from './chemins'
+import { ZoneCoutsAOnglets } from './CoutsASaisir'
 import { HistogrammeCouts, type GroupeHistogramme } from './HistogrammeCouts'
 
 /** Classes du lien de retour, identiques à celles de `RouteTrack` (docs/DESIGN_SYSTEM.md §5.5). */
@@ -138,6 +142,39 @@ export function ContenuCoutsTrack({
 		)
 	}
 
+	return (
+		<ZoneCoutsAOnglets
+			client={client}
+			portee={{ genre: 'track', idTrack }}
+			ensemble={
+				<VueEnsembleTrack
+					etat={etat}
+					onReprise={() => setTentative((precedente) => precedente + 1)}
+					{...(slugTrack === undefined ? {} : { slugTrack })}
+				/>
+			}
+		/>
+	)
+}
+
+/**
+ * La vue d'ensemble du §4.2 — l'histogramme et ses états.
+ *
+ * SÉPARÉE DE LA ZONE À ONGLETS depuis la tranche 6b : la barre d'onglets est rendue quel que soit
+ * l'état de cette lecture-ci, sans quoi une erreur d'histogramme retirerait l'accès à l'onglet
+ * « À saisir », dont la lecture est indépendante et peut parfaitement aboutir. C'est la règle du
+ * §5.3 quinquies pour la barre de filtres — un contrôle qui est la cause possible d'un vide reste
+ * rendu — transposée à une navigation.
+ */
+function VueEnsembleTrack({
+	etat,
+	onReprise,
+	slugTrack,
+}: {
+	readonly etat: EtatAsync<readonly HistogrammeDevise[]>
+	readonly onReprise: () => void
+	readonly slugTrack?: string
+}) {
 	if (etat.statut === 'chargement') {
 		return (
 			<div className="py-2">
@@ -155,7 +192,7 @@ export function ContenuCoutsTrack({
 				titre={t('state.error.title')}
 				corps={t(etat.erreur.nature === 'network' ? 'state.error.network' : 'state.error.unknown')}
 				libelleReprise={t('state.error.retry')}
-				onReprise={() => setTentative((precedente) => precedente + 1)}
+				onReprise={onReprise}
 			/>
 		)
 	}

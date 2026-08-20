@@ -40,19 +40,36 @@ type Reponse = {
  * réenregistrer ici ferait de ce fichier une seconde source de vérité sur un sujet qui n'est pas
  * le sien.
  */
-function clientQuiRend(reponses: readonly Reponse[]): ClientCrm {
+function clientQuiRend(
+	reponses: readonly Reponse[],
+	/**
+	 * La réponse de l'onglet « À saisir » — vide par défaut.
+	 *
+	 * SERVIE À PART, ET C'EST UNE RÉVISION DE LA TRANCHE 6b. Depuis que l'écran est à onglets, la
+	 * zone lit AUSSI les lignes en attente, pour le badge du §4.8 — et l'effet d'un enfant s'exécute
+	 * AVANT celui de son parent, si bien que cette lecture consommerait le premier rang de la
+	 * séquence et décalerait toutes les réponses de l'histogramme. La requête est reconnaissable à
+	 * son seul filtre `actual_cost is null`, qu'aucune autre lecture de cet écran ne pose.
+	 */
+	enAttente: Reponse = { data: [], error: null, status: 200 },
+): ClientCrm {
 	let rang = 0
 	return {
 		from: () => {
-			const reponse = reponses[rang++] ?? { data: [], error: null, status: 200 }
 			const chaine: Record<string, unknown> = {}
+			let attente = false
 			const rendre = () => chaine
-			chaine.is = rendre
+			chaine.is = (colonne: string, valeur: unknown) => {
+				if (colonne === 'actual_cost' && valeur === null) attente = true
+				return chaine
+			}
 			chaine.eq = rendre
 			chaine.in = rendre
 			chaine.order = rendre
 			chaine.then = (resoudre: (valeur: Reponse) => unknown) =>
-				Promise.resolve(reponse).then(resoudre)
+				Promise.resolve(
+					attente ? enAttente : (reponses[rang++] ?? { data: [], error: null, status: 200 }),
+				).then(resoudre)
 			return { select: () => chaine }
 		},
 	} as unknown as ClientCrm
@@ -256,8 +273,16 @@ describe('ContenuCoutsTrack — les états du §4.7 et du §5.8', () => {
 		await screen.findByText('Aucun budget sur ce track')
 		// Aucune action : la création vit dans l'administration de l'arborescence (§4.1), et y
 		// renvoyer selon le rôle ferait calculer un droit à l'interface (`CLAUDE.md` §10).
-		expect(screen.queryByRole('link')).toBeNull()
-		expect(screen.queryByRole('button')).toBeNull()
+		//
+		// L'ASSERTION EST SCOPÉE AU BLOC DE L'ÉTAT VIDE, ET C'EST UNE RÉVISION PAR LIVRAISON DE LA
+		// TRANCHE 6b. Elle portait sur l'écran entier, ce qui était exact tant que l'écran ne portait
+		// rien d'autre ; depuis le §4.8, il porte une barre d'ONGLETS — deux liens de navigation, qui
+		// ne sont pas des actions de l'état vide et qui restent rendus précisément parce que l'onglet
+		// « À saisir » peut avoir des lignes là où l'histogramme n'a aucun budget ouvert. Ce que la
+		// règle visait — l'état vide n'offre aucune issue — est éprouvé là où elle le dit.
+		const vide = screen.getByTestId('etat-vide')
+		expect(within(vide).queryByRole('link')).toBeNull()
+		expect(within(vide).queryByRole('button')).toBeNull()
 	})
 
 	it('rend le refus, et non une erreur de transport, sur un 403', async () => {

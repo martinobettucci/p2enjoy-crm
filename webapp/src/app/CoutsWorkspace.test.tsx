@@ -17,7 +17,7 @@
 // compenser ni signaler un manque qu'il ne connaît pas. C'est la preuve E2E qui exerce la RLS
 // réelle avec deux profils, et qui mesure que la différence est exactement le budget non lu.
 
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it } from 'vitest'
 import { ContenuCoutsWorkspace, enGroupesDeTracks } from './CoutsWorkspace'
@@ -40,19 +40,36 @@ type Reponse = {
  * la forme des requêtes est le contrat du module, éprouvé là-bas, et la réenregistrer ici ferait de
  * ce fichier une seconde source de vérité sur un sujet qui n'est pas le sien.
  */
-function clientQuiRend(reponses: readonly Reponse[]): ClientCrm {
+function clientQuiRend(
+	reponses: readonly Reponse[],
+	/**
+	 * La réponse de l'onglet « À saisir » — vide par défaut.
+	 *
+	 * SERVIE À PART, ET C'EST UNE RÉVISION DE LA TRANCHE 6b. Depuis que l'écran est à onglets, la
+	 * zone lit AUSSI les lignes en attente, pour le badge du §4.8 — et l'effet d'un enfant s'exécute
+	 * AVANT celui de son parent, si bien que cette lecture consommerait le premier rang de la
+	 * séquence et décalerait toutes les réponses du cumul. La requête est reconnaissable à son seul
+	 * filtre `actual_cost is null`, qu'aucune autre lecture de ces écrans ne pose.
+	 */
+	enAttente: Reponse = { data: [], error: null, status: 200 },
+): ClientCrm {
 	let rang = 0
 	return {
 		from: () => {
-			const reponse = reponses[rang++] ?? { data: [], error: null, status: 200 }
 			const chaine: Record<string, unknown> = {}
+			let attente = false
 			const rendre = () => chaine
-			chaine.is = rendre
+			chaine.is = (colonne: string, valeur: unknown) => {
+				if (colonne === 'actual_cost' && valeur === null) attente = true
+				return chaine
+			}
 			chaine.eq = rendre
 			chaine.in = rendre
 			chaine.order = rendre
 			chaine.then = (resoudre: (valeur: Reponse) => unknown) =>
-				Promise.resolve(reponse).then(resoudre)
+				Promise.resolve(
+					attente ? enAttente : (reponses[rang++] ?? { data: [], error: null, status: 200 }),
+				).then(resoudre)
 			return { select: () => chaine }
 		},
 	} as unknown as ClientCrm
@@ -116,8 +133,14 @@ describe('ContenuCoutsWorkspace — les états (§4.7, §5.8)', () => {
 		expect(await screen.findByText(fr['costs.workspace.empty.title'])).toBeTruthy()
 		// La création d'un budget vit dans l'administration de l'arborescence (§4.1) : y renvoyer
 		// conditionnellement au rôle ferait calculer un droit à l'interface (`CLAUDE.md` §10).
-		expect(screen.queryByRole('link')).toBeNull()
-		expect(screen.queryByRole('button')).toBeNull()
+		//
+		// L'ASSERTION EST SCOPÉE AU BLOC DE L'ÉTAT VIDE, ET C'EST UNE RÉVISION PAR LIVRAISON DE LA
+		// TRANCHE 6b — le motif exact écrit dans `CoutsTrack.test.tsx` : l'écran porte désormais une
+		// barre d'ONGLETS (§4.8), dont les deux liens sont une navigation et non une action de l'état
+		// vide.
+		const vide = screen.getByTestId('etat-vide')
+		expect(within(vide).queryByRole('link')).toBeNull()
+		expect(within(vide).queryByRole('button')).toBeNull()
 	})
 
 	it('rend le MÊME état vide sans aucun track lisible, sans dire lequel des deux cas s’applique', async () => {

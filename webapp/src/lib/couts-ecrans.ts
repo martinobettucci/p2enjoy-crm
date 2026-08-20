@@ -534,8 +534,22 @@ export function grouperParOccurrence(detail: DetailBudget): readonly BarresOccur
  * Rendre `null` plutôt qu'une adresse partielle est la règle d'`adresseAffaire` du carnet : un lien
  * vers `/tracks/undefined/...` mènerait à un écran que l'utilisateur croirait cassé, là où une
  * ligne sans lien dit seulement que l'affaire n'est pas adressable pour cet appelant.
+ *
+ * SON PARAMÈTRE EST STRUCTUREL ET NON `LigneBudget`, depuis la tranche 6b. L'onglet « À saisir »
+ * lit sa propre requête et porte donc son propre type de ligne (`couts-a-saisir.ts`), dont
+ * l'affaire embarquée est un SURENSEMBLE de celle-ci — même embed, une colonne de plus. Deux
+ * fonctions composant la même adresse divergeraient au premier changement de route ; élargir le
+ * paramètre à ce que la composition LIT réellement les fait partager la seule qui existe.
  */
-export function adresseAffaireLigne(ligne: LigneBudget): string | null {
+export function adresseAffaireLigne(ligne: {
+	readonly cards: {
+		readonly id: string
+		readonly channels: {
+			readonly slug: string
+			readonly tracks: { readonly slug: string } | null
+		} | null
+	} | null
+}): string | null {
 	const affaire = ligne.cards
 	const slugChannel = affaire?.channels?.slug
 	const slugTrack = affaire?.channels?.tracks?.slug
