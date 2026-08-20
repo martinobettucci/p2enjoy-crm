@@ -765,9 +765,19 @@ type _vueDerivationColonnes = Expect<
 // écriture à `authenticated` (mesure J du §16.15.1, `42501` sur un `POST` direct), donc une fonction
 // qui ne prêterait pas ses privilèges ne pourrait rien écrire.
 // Trente-quatre devient TRENTE-SIX.
-type _lesTrenteSixFonctions = Expect<
+//
+// `0052` de `CRM-086` tranche 6a ajoute `reel_saisissable`, et **ce n'est pas une RPC** : c'est une
+// COLONNE CALCULÉE au sens de PostgREST (`docs/SCHEMA.md` §9 bis.8). Elle paraît néanmoins ici,
+// parce que le générateur range toute fonction de la schéma exposé sous `Functions` sans distinguer
+// les deux usages — et c'est tant mieux : le témoin figé est ainsi ce qui a signalé la dérive.
+// **Aucun appelant ne doit l'invoquer par `client.rpc`** ; elle se demande dans un `select`, comme
+// `COLONNES_LIGNE_A_SAISIR` le fait. La distinction ne vit pas dans le type, elle vit dans le
+// commentaire du module et dans la migration.
+// Trente-six devient TRENTE-SEPT.
+type _lesTrenteSeptFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
+    | 'reel_saisissable'
     | 'change_channel_workflow'
     | 'compare_workflow_versions'
     | 'compare_workflow_with_source'
@@ -805,6 +815,24 @@ type _lesTrenteSixFonctions = Expect<
     | 'snooze_thread'
     | 'wake_thread'
   >
+>
+
+// LA COLONNE CALCULÉE PREND UNE LIGNE DE `card_costs` ET REND UN BOOLÉEN, jamais un nullable — c'est
+// le `coalesce(…, false)` d'`app.can_write_card` qui l'assure côté base (`CLAUDE.md` §10 : la
+// garantie vit là, pas dans le type). `webapp/src/lib/couts-a-saisir.ts` déclare pourtant sa colonne
+// `boolean | null` et replie vers le REFUS : un type ne garantit jamais une VALEUR RENDUE
+// (`docs/SPEC-types.md`), et un cache de schéma PostgREST périmé rend la colonne absente. Les deux
+// affirmations ne se contredisent pas — celle-ci décrit le contrat de la fonction, celle-là ce qu'un
+// écran peut réellement recevoir.
+type _signatureReelSaisissable = Expect<
+  Equal<
+    Database['public']['Functions']['reel_saisissable']['Args'],
+    { ligne: Database['public']['Tables']['card_costs']['Row'] }
+  >
+>
+
+type _retourReelSaisissable = Expect<
+  Equal<Database['public']['Functions']['reel_saisissable']['Returns'], boolean>
 >
 
 // L'arborescence de l'inbox ne prend AUCUN argument, et c'est le contrat : elle rend ce que
@@ -975,7 +1003,9 @@ export type AssertionsDuContratDeTypes = [
   _relationsWorkspaceMembers,
   _laSeuleVue,
   _vueDerivationColonnes,
-  _lesTrenteSixFonctions,
+  _lesTrenteSeptFonctions,
+  _signatureReelSaisissable,
+  _retourReelSaisissable,
   _signatureArborescence,
   _signatureCopie,
   _retourCopie,

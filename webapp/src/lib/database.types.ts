@@ -2547,6 +2547,10 @@ export type Database = {
         }
         Returns: string
       }
+      reel_saisissable: {
+        Args: { ligne: Database["public"]["Tables"]["card_costs"]["Row"] }
+        Returns: boolean
+      }
       reprendre_envois_orphelins: {
         Args: { p_seuil_minutes?: number }
         Returns: number
