@@ -796,6 +796,41 @@ dans `docs/PROD_MIGRATIONS.md` et exécutées sur instruction humaine explicite.
   (`docs/SPEC-backups.md` §10, mesure M12). La clé racine doit en outre être en place **avant le
   premier démarrage** du cluster restauré : `pgsodium_getkey.sh` en fabrique une au hasard si le
   fichier manque, et la déposer ensuite ne répare rien.
+- **Exploitation — supervision, runbook et rotation, livrées depuis `CRM-080` tranche 3.**
+  `scripts/backup-supervision.sh` observe le répertoire de sortie et rend un verdict : présence,
+  fraîcheur, forme, nombre de destinataires, effondrement de taille, résidu d'écriture, dérive de
+  rétention, copie hors site, et âge du dernier exercice de restauration réussi. **Il ne lit aucune
+  clé privée** : l'en-tête `age` est en clair, si bien qu'il peut tourner sur l'hôte de sauvegarde
+  lui-même sans annuler la propriété qui veut que cet hôte ne puisse relire aucune de ses archives.
+  **La fraîcheur se calcule sur l'horodatage porté par le NOM, jamais sur la date de modification** :
+  mesuré le 2026-08-20, une copie hors site faite par `cp` reçoit un `mtime` frais, et une
+  supervision qui jugerait sur lui déclarerait « à jour » une copie vieille d'un mois qu'on vient de
+  recopier — c'est-à-dire manquerait exactement le sinistre qu'elle existe pour détecter.
+  Ses **trois codes de retour sont distincts** — `0` vert, `1` alerte, `2` configuration
+  inutilisable — parce que les confondre ferait chercher un incident de sauvegarde là où il y a une
+  faute de frappe.
+  **Ce que la supervision ne prouve JAMAIS, c'est la restaurabilité** : le manifeste et ses
+  empreintes sont à l'intérieur du chiffré, et les observer exigerait la clé privée. C'est
+  `scripts/restore-drill.sh`, sur le poste distinct qui la détient, qui la prouve — et le contrôle
+  S9 surveille qu'il tourne, sur une empreinte de succès écrite par le déclencheur.
+  Les opérations manuelles vivent dans `docs/RUNBOOK-sauvegardes.md` (`CLAUDE.md` §12) :
+  planification quotidienne et supervision horaire sous `systemd` ou `cron`, copie hors site,
+  rotation des destinataires `age` — qui **ajoute avant de retirer** et **conserve les clés privées
+  anciennes**, une archive ancienne ne s'ouvrant pas avec une nouvelle clé —, rythme mensuel des
+  exercices, conduite à tenir pour chacune des neuf alertes, et restauration d'une production en dix
+  étapes humaines. **Aucune de ces opérations n'est automatisée** : `CLAUDE.md` §9 interdit toute
+  écriture de production non demandée, et un script capable d'écraser une production est un script
+  qui peut l'écraser par erreur.
+- **Ce qui n'est PAS dans l'archive, et doit être sauvegardé ailleurs — décision du 2026-08-20.**
+  Les objets globaux de PostgreSQL — les rôles et leurs mots de passe — **n'entrent pas** dans
+  l'archive, et la question est désormais tranchée plutôt que laissée ouverte : ce qu'ils portent est
+  une **configuration**, non une donnée ; les emporter changerait le format d'archive, donc le
+  dictionnaire de refus de la restauration et les deux harnais livrés ; et la restauration reproduit
+  déjà le chemin d'amorçage de la pile, ce que la tranche 2 prouve. **La conséquence est une
+  obligation d'exploitation à part entière** : le `.env` de production, le fichier de destinataires
+  et les clés privées `age` — anciennes comprises — se sauvegardent dans le coffre de secrets de
+  l'exploitant. Une archive parfaite et un `.env` perdu ne restaurent rien
+  (`docs/RUNBOOK-sauvegardes.md` §7).
 - **Stockage objet** : quand il est **local** — MinIO —, son bucket entre dans l'archive de
   `scripts/backup.sh`, exporté par `docker cp`, l'image MinIO ne portant ni `tar` ni `find`. Quand
   il est **externe** — fournisseur S3, cas de production —, ses objets relèvent du fournisseur : le

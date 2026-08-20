@@ -15,6 +15,53 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **L'exploitation des sauvegardes : supervision, runbook et rotation** (`CRM-080` tranche 3,
+  `docs/SPEC-backups.md` §16 à §21, `docs/RUNBOOK-sauvegardes.md`, `docs/DAT.md` §10). Le dépôt
+  savait produire une sauvegarde chiffrée, puis la restaurer et le prouver. Il sait maintenant
+  **surveiller qu'elle a bien lieu** — ce qui est le mode d'échec le plus dangereux, parce qu'il est
+  silencieux : une tâche planifiée qui ne tourne plus ne produit aucune erreur, et personne ne s'en
+  aperçoit avant d'avoir besoin de l'archive.
+
+  `scripts/backup-supervision.sh` regarde le répertoire de sauvegardes et rend un verdict sur neuf
+  points : une archive existe-t-elle, est-elle récente, est-elle bien chiffrée, pour le bon nombre
+  de destinataires, sa taille ne s'est-elle pas effondrée, une écriture est-elle morte en route, la
+  rétention s'applique-t-elle encore, la copie hors site est-elle à jour, et l'exercice de
+  restauration a-t-il eu lieu récemment. Lancé avec `--cron`, **il ne dit rien quand tout va bien** :
+  un rapport vert quotidien apprend à ignorer les courriels de la sauvegarde, ce qui supprime
+  l'alerte plus sûrement que de ne pas l'écrire.
+
+  **Il ne détient aucune clé de déchiffrement, et c'est délibéré.** L'hôte qui sauvegarde ne peut
+  relire aucune de ses propres archives — sa compromission ne livre donc pas l'historique. Ce que la
+  supervision lit tient dans l'en-tête, qui est en clair : le fait que le fichier soit bien une
+  archive chiffrée, et le nombre de destinataires pour lesquels elle l'a été. Elle ne peut donc pas
+  prouver qu'une archive est restaurable — et elle ne le prétend pas : c'est l'exercice mensuel, sur
+  un poste distinct, qui le prouve, et le neuvième contrôle surveille qu'il a bien lieu.
+
+  **Une mesure a changé la conception, et évité une supervision qui aurait menti.** Une copie hors
+  site faite par `cp` ou `rsync` reçoit une date de modification **fraîche**. Juger la fraîcheur sur
+  cette date déclarerait « à jour » une copie vieille d'un mois qu'on vient de recopier — exactement
+  le sinistre que ce contrôle existe pour détecter. La fraîcheur est donc calculée sur l'horodatage
+  porté par le **nom** de l'archive, que rien ne réécrit ; et la preuve exige qu'une copie périmée
+  mais recopiée à l'instant **reste** en alerte.
+
+  **Un runbook de production** (`docs/RUNBOOK-sauvegardes.md`) porte ce qu'un humain doit faire :
+  la planification quotidienne et la supervision horaire, sous `systemd` comme sous `cron` ; la
+  copie hors site et ses deux règles ; la **rotation des clés de chiffrement**, qui ajoute la
+  nouvelle avant de retirer l'ancienne et exige un exercice entre les deux ; la conservation des
+  clés privées anciennes, sans lesquelles tout l'historique encore conservé devient illisible ; la
+  conduite à tenir pour chacune des neuf alertes ; et la restauration d'une production, décrite pas
+  à pas et **volontairement non automatisée**.
+
+  **Une question laissée ouverte a été tranchée** : les rôles PostgreSQL et leurs mots de passe
+  n'entrent pas dans l'archive. Ils relèvent de la configuration, non des données. En contrepartie,
+  le runbook fait de la sauvegarde de cette configuration — le fichier d'environnement de
+  production, les clés de chiffrement — une obligation d'exploitation à part entière : une archive
+  parfaite et une configuration perdue ne restaurent rien.
+
+  Preuve : `scripts/verify-exploitation.sh`, **59 contrôles, aucune anomalie**. Chaque contrôle est
+  éprouvé par dégradation volontaire, et dans les deux sens — un contrôle qui alerterait toujours
+  passerait sinon inaperçu.
+
 - **La restauration prouvée des sauvegardes** (`CRM-080` tranche 2, `docs/SPEC-backups.md` §10 à
   §15, `docs/DAT.md` §10). `scripts/restore-drill.sh` prend une archive chiffrée et la **restaure
   pour de bon**, dans un environnement **jetable** qu'il monte lui-même et détruit ensuite. Une

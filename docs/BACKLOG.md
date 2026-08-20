@@ -10732,4 +10732,63 @@ suivante :
       - [ ] **Les quarante-sept autres `scripts/verify-*.sh` n'ont pas été rejoués**, la série
             entière ne tenant pas dans une session (`docs/CloudWorker.md` §2.1 ter). C'est le
             dernier reste de forme de la tranche 2.
-- [ ] **Tranche 3 — l'exploitation.** Non commencée.
+- [~] **Tranche 3 — l'exploitation. LIVRÉE ET PROUVÉE le 2026-08-20**, spécifiée d'abord,
+      `docs/SPEC-backups.md` §16 à §21, écrite avant toute ligne de code (`CLAUDE.md` §5) et fondée
+      sur **six mesures** prises sur la pile réelle et sur une archive **réellement produite** par
+      `scripts/backup.sh`. Deux d'entre elles commandent toute la conception :
+      - **M18, la mesure décisive** : une copie hors site faite par `cp` reçoit une date de
+        modification **fraîche** — mesuré, 10 s d'écart avec la source. Une supervision qui jugerait
+        la fraîcheur sur `mtime` déclarerait donc « à jour » une copie vieille d'un mois qu'on vient
+        de recopier, c'est-à-dire manquerait exactement le sinistre qu'elle existe pour détecter.
+        **La fraîcheur se calcule sur l'horodatage porté par le NOM**, que rien ne réécrit.
+      - **M16 et M17** : l'en-tête `age` est en **clair**, et le nombre de destinataires y est
+        **comptable** — une strophe `-> X25519` par destinataire, mesuré à 1 puis à 2 —, sans que
+        les destinataires soient identifiables. C'est ce qui permet à l'observateur de tourner sur
+        l'hôte de sauvegarde **sans détenir aucune clé privée**, donc sans annuler la propriété du
+        §3.4, et c'est ce dont la rotation a besoin pour constater qu'elle a pris effet.
+      - **M19** : l'intégrité, elle, n'est **pas** observable sans clé privée, le manifeste étant à
+        l'intérieur du chiffré. La supervision prouve la présence, la fraîcheur, la forme et le
+        nombre de destinataires — **jamais la restaurabilité**, qui appartient à la tranche 2 et
+        dont le contrôle S9 surveille seulement qu'elle est exercée.
+      - [x] `scripts/backup-supervision.sh` **LIVRÉ le 2026-08-20** : les neuf contrôles S1 à S9,
+            les trois codes de retour distincts — `0` vert, `1` alerte, `2` configuration
+            inutilisable —, l'option `--cron` qui se tait quand tout est vert, et les huit refus
+            R40 à R47. **S5 est relatif et jamais absolu** : un seuil en octets serait faux le jour
+            où la base grossit, et personne ne le réviserait.
+      - [x] **L'observateur n'écrit RIEN, ne supprime RIEN, ne déchiffre RIEN**, et le harnais lit
+            le code livré pour l'exiger — une promesse tenue par la seule intention se dément au
+            premier ajout.
+      - [x] `docs/RUNBOOK-sauvegardes.md` **LIVRÉ**, exigé par `CLAUDE.md` §12 : planification
+            quotidienne et supervision horaire sous `systemd` **et** sous `cron`, chacune enveloppée
+            dans `flock` ; copie hors site et ses deux règles ; **rotation des destinataires `age`**
+            qui ajoute avant de retirer et impose un exercice entre les deux ; conservation des clés
+            privées anciennes, mesurée — `age --decrypt` avec une identité non destinataire rend
+            `no identity matched any of the recipients` ; rythme mensuel des exercices ; une entrée
+            par alerte S1 à S9 ; restauration d'une production en dix étapes **humaines**, et
+            volontairement non automatisée (`CLAUDE.md` §9).
+      - [x] **La décision léguée par le §14 est TRANCHÉE** (§19.7, runbook §7) : les objets globaux
+            n'entrent pas dans l'archive — c'est une configuration, non une donnée ; les emporter
+            changerait le format de la tranche 1 et le dictionnaire de refus de la tranche 2 ; et la
+            restauration reproduit déjà le chemin d'amorçage. **En contrepartie**, la sauvegarde du
+            `.env` de production, du fichier de destinataires et des clés privées `age` devient une
+            obligation d'exploitation à part entière : une archive parfaite et un `.env` perdu ne
+            restaurent rien.
+      - [x] `scripts/verify-exploitation.sh` : **59 contrôles, aucune anomalie**. Il exerce le VRAI
+            observateur sur une archive **réellement produite** par le VRAI `scripts/backup.sh` —
+            une archive fabriquée à la main ne porterait ni le bon en-tête ni le bon nombre de
+            strophes, et S3 comme S4 ne diraient rien du produit.
+      - [x] **Non complaisant, et c'est le cas I qui l'établit.** Une copie hors site **périmée**
+            mais **recopiée à l'instant** — `mtime` frais, mesuré à 0 s — doit **rester** en alerte.
+            La non-complaisance est en outre ÉPROUVÉE : S8 récrit pour juger sur `mtime`, le harnais
+            rend « cas I : S8 s'est laissé abuser par une date de modification fraîche », **1 en
+            échec**. L'observateur a été rétabli et relu aussitôt. Chaque contrôle est éprouvé dans
+            les **deux** sens — S4 et S8 ont leur cas « bis » — car un contrôle qui alerterait
+            toujours passerait sinon inaperçu.
+      - [x] `.env.example` : les cinq variables du §18 documentées, à exemple **vide** et le motif
+            écrit ; les deux qui désignent un chemin rendent leur contrôle **non applicable** plutôt
+            que vert. `scripts/verify-scripts.sh` les justifie dans `ALLOWED_ORPHANS`. Le compte des
+            variables du gabarit est porté à **98**, chiffre **compté**.
+      - [x] `README.md` §5 et §9, `docs/DAT.md` §10, `CHANGELOG.md` mis à jour dans le même
+            changement.
+      - [~] **La campagne complète du dépôt** — voir la note de session ci-dessous : ce qui a été
+            exécuté et ce qui ne l'a pas été y est nommé.

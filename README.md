@@ -163,6 +163,8 @@ la question d'une façade `npm` par-dessus `runDev.sh` et consorts reste ouverte
 | `scripts/verify-sauvegardes.sh` | Rejoue les preuves de la sauvegarde : archive produite, déchiffrée, dump lu par `pg_restore`, clé racine comparée octet à octet, empreintes recalculées, huit refus dégradés volontairement | **disponible** |
 | `scripts/restore-drill.sh` | **Restaure** une archive dans un environnement **jetable**, compare les invariants — dont le déchiffrement effectif d'un secret de Vault — puis détruit ce seul environnement | **disponible** |
 | `scripts/verify-restauration.sh` | Rejoue les preuves de la restauration : exercice nominal, témoin objet retrouvé, **clé racine remplacée qui doit faire échouer le déchiffrement**, six refus dégradés, nom jetable usurpé dont le conteneur doit survivre | **disponible** |
+| `scripts/backup-supervision.sh` | **Observe** un répertoire de sauvegardes et rend un verdict : présence, fraîcheur, forme, destinataires, effondrement de taille, résidu d'écriture, dérive de rétention, copie hors site, âge du dernier exercice. Ne produit rien, ne supprime rien, ne déchiffre rien — `--cron` se tait quand tout est vert | **disponible** |
+| `scripts/verify-exploitation.sh` | Rejoue les preuves de l'exploitation : les neuf contrôles dégradés un à un, la **copie hors site périmée mais recopiée à l'instant** qui doit rester en alerte, les huit refus au code `2`, et les sections exigées du runbook | **disponible** |
 | `scripts/verify-functions.sh` | Rejoue les preuves des fonctions edge : runtime, isolation, route Kong, API réelle et journaux différés | **disponible** |
 | `scripts/verify-mail-sync.sh` | Rejoue les preuves du service `mail-sync` : durcissement, API interne, absence de port publié, reprise après arrêt, journaux | **disponible** |
 | `scripts/verify-mail-inbound.sh` | Rejoue les preuves des comptes entrants IMAP : secret dans Vault, `secret_id` illisible, cloisonnement des boîtes, test de connexion réel contre Stalwart, sept dégradations non complaisantes | **disponible** |
@@ -573,7 +575,7 @@ fichiers statiques.
 
 ## 9. Variables d'environnement
 
-Les **93** variables sont documentées une à une dans `.env.example` : rôle, format attendu,
+Les **98** variables sont documentées une à une dans `.env.example` : rôle, format attendu,
 caractère obligatoire, valeur d'exemple non sensible. Ce gabarit est le contrat de référence, et
 `scripts/verify-scripts.sh` vérifie qu'il couvre exactement les variables interpolées par les
 trois fichiers Compose — une variable ajoutée à un service sans être documentée fait échouer les
@@ -595,6 +597,7 @@ preuves.
 | Pile | `STACK_RLIMIT_NOFILE`, `APPLY_MIGRATIONS` | Facultatives, avec défauts. `APPLY_MIGRATIONS=false` est imposé en production |
 | Production | `APP_DOMAIN`, `CADDY_ACME_EMAIL` | Obligatoires en production uniquement |
 | Sauvegardes | `BACKUP_AGE_RECIPIENTS_FILE`, `BACKUP_OUTPUT_DIR`, `BACKUP_RETENTION_DAYS`, `RESTORE_AGE_IDENTITY_FILE` | Lues par `scripts/backup.sh` et `scripts/restore-drill.sh` **depuis `CRM-080`**, jamais par un service. `RESTORE_AGE_IDENTITY_FILE` désigne la **clé privée** et n'a rien à faire sur l'hôte qui sauvegarde : l'y poser annulerait la propriété que le chiffrement par destinataires publics apporte. Toutes quatre à exemple **vide** : la pile de développement ne sauvegarde rien, et une valeur d'exemple non vide ferait exiger par les gardes un fichier de clés que `./runDev.sh` n'a aucune raison de réclamer. `BACKUP_AGE_RECIPIENTS_FILE` ne porte que des clés **publiques** ; la clé privée vit hors de l'hôte qui sauvegarde, et le script ne la lit jamais |
+| Exploitation des sauvegardes | `BACKUP_MAX_AGE_HOURS`, `BACKUP_MIN_RECIPIENTS`, `BACKUP_OFFSITE_DIR`, `BACKUP_DRILL_STAMP_FILE`, `BACKUP_DRILL_MAX_AGE_DAYS` | Lues par `scripts/backup-supervision.sh` **depuis `CRM-080` tranche 3**, jamais par un service. Toutes facultatives, à exemple **vide** : les trois entières prennent leur défaut — 26 heures, 1 destinataire, 30 jours —, et les deux qui désignent un chemin rendent leur contrôle **non applicable** plutôt que vert, la supervision ne verdissant jamais un contrôle qu'elle n'a pas fait. `BACKUP_MAX_AGE_HOURS` vaut 26 et non 24 : une sauvegarde quotidienne décalée par une charge de l'hôte dépasserait `24` sans qu'il se soit rien passé, et une alerte qui se déclenche seule apprend à être ignorée |
 
 Les identifiants IMAP/SMTP **des utilisateurs** ne sont jamais des variables d'environnement :
 ils sont saisis dans l'application et chiffrés en base (Supabase Vault).
