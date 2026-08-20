@@ -15,6 +15,26 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Le socle de l'onglet « À saisir » des écrans de coûts** (`CRM-086` tranche 6a,
+  `docs/SPEC-costs.md` §4.8, §4.8.1 et §4.8.2, `docs/SCHEMA.md` §9 bis.8). Rien n'est encore visible
+  à l'écran — la surface est la tranche 6b —, mais tout ce dont elle a besoin existe et est prouvé :
+  la lecture des lignes de dépense **dont le coût réel n'est pas encore saisi**, dans la portée d'un
+  track ou de tout l'espace de travail, **budgets et occurrences clôturés compris** — c'est
+  précisément après la clôture que les factures arrivent ; l'ancienneté de chaque ligne, comptée
+  depuis le jour où la dépense a été engagée ; et l'enregistrement du montant réel, qui n'écrit que
+  lui et distingue le succès, le refus et le cas où l'écriture n'a rien touché.
+
+  **La base dit désormais, ligne par ligne, qui a le droit de saisir.** L'onglet doit rendre une
+  ligne qu'on peut lire mais pas modifier **en lecture seule avec son motif**, jamais la masquer :
+  c'est le seul endroit du produit où l'écran doit connaître un droit d'écriture avant d'afficher
+  son champ. Ce droit est donc rendu par la base elle-même, dans la même requête et sans appel
+  supplémentaire, plutôt que déduit d'un rôle — un même utilisateur écrit certaines affaires et pas
+  d'autres.
+
+  Le jeu de démonstration gagne **« Impression plaquettes »**, une dépense sans coût réel sur un
+  budget **clôturé** : c'est le seul cas qui peuple réellement l'onglet avec une ligne close, et il
+  manquait.
+
 - **Les coûts de tout l'espace de travail se lisent d'un écran** (`CRM-086` tranche 5,
   `docs/SPEC-costs.md` §4.0, §4.4, §4.5 et §4.7, `docs/DESIGN_SYSTEM.md` §4 et §5.33). Une entrée
   **« Coûts »** rejoint la barre latérale, aux côtés d'Inbox, Contacts et Objectifs. Elle mène à un

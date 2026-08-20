@@ -21404,6 +21404,38 @@ de la politique **dans les deux sens**. Le seed vérifie avec les **jetons réel
 developer obtient trois lignes en attente dont une close et `true` sur chacune, et que la lectrice
 obtient `false` sur celle qu'elle lit.
 
+**LA CAMPAGNE COMPLÈTE, ET LES TROIS ROUGES QU'ELLE A RENDUS.** `typecheck` vert, `test:unit`
+**65 fichiers / 2235 tests**, `build` vert, `test:sql` **50 fichiers / 2480 assertions**, `e2e:api`
+**816 passés**, `pytest` **244 passés**. Trois anomalies, de trois natures différentes, et aucune
+n'a été contournée.
+
+**(1) `types:check` rouge, IMPUTABLE.** Le générateur range toute fonction du schéma exposé sous
+`Functions`, colonne calculée comprise. Le témoin figé n'a pas menti, il a fait son travail. Types
+régénérés, `database.types.test-d.ts` porté de trente-six à trente-sept fonctions, avec le
+commentaire qui dit ce que le type ne peut pas dire — `reel_saisissable` n'est PAS une RPC et ne
+s'invoque jamais par `client.rpc`.
+
+**(2) SIX SCÉNARIOS DE `card-costs.spec.ts` ROUGES, IMPUTABLES, ET ILS AVAIENT RAISON.** La ligne de
+seed avait été posée sur « Refonte intranet Ville de Lyon », dont le seed promet en commentaire
+qu'elle porte « le cas du responsable, MOT POUR MOT (§1) » : DEUX lignes, et deux seulement. Une
+troisième cassait ce contrat. **Réviser six preuves pour l'accommoder aurait été corriger le
+symptôme** ; la ligne vit désormais sur « Portail adhérents — MGEN Loire », qui porte déjà une
+dépense et dont aucune preuve ne compte les lignes. Le budget visé — « Salon du web 2025 », clos —
+ne change pas. Rejouées : **22 passés**, et les trois écrans de coûts **23 passés**.
+
+`scripts/verify-card-costs.sh` attendait quatre lignes dont deux sans réel : la règle a changé par
+LIVRAISON, le contrôle est mis à jour avec ses vrais nombres et son motif écrit dans le fichier, et
+il gagne une assertion que le compte seul ne portait pas — au moins une ligne sans réel doit vivre
+sur un budget clôturé. Rejoué : **52 contrôles, aucune anomalie**.
+
+**(3) `mail-sync.spec.ts` §S3 ROUGE, ÉTRANGER, ET SON MÉCANISME EST ÉTABLI.** La preuve lit le
+**tampon cumulatif** de `docker logs`, qu'elle ne borne pas : un unique `veille_compte_echoue`
+journalisé pendant `e2e:ui`, à 02:42:10, la fait rougir quel qu'en soit le sujet. Après le remède du
+§2.2 bis de `docs/CloudWorker.md` — `up -d --force-recreate mail-sync` avec les deux fichiers de
+composition —, la suite rend **42 passés** sur le même code, S3 compris. Consigné à **INC-181**,
+dont il précise la cause là où les deux échecs de la décision 478 restaient sans cause établie.
+Rien n'a été corrigé.
+
 **Où reprendre.** La **tranche 6b** : la barre d'onglets `?onglet=saisir` sur les deux écrans, la
 table de saisie en série du §5.31, le geste clavier — `Entrée` valide et porte le focus sur la ligne
 suivante —, les clés de traduction, les captures aux quatre paliers, et le harnais

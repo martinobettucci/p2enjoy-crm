@@ -2991,6 +2991,38 @@ dans son propre changement.
 événement observable — un cycle de relève acquitté — plutôt qu'une fenêtre de temps, ou si
 `e2e:mail` doit être exécutée avant `e2e:ui` dans la campagne, ou les deux.
 
+**MESURE COMPLÉMENTAIRE, 2026-08-20, `CRM-086` tranche 6a — un TROISIÈME scénario, et son mécanisme
+est ÉTABLI cette fois.** `mail-sync.spec.ts` §S3, « la console opérationnelle reste silencieuse »,
+a rendu rouge en campagne complète :
+
+```
+Expected value: "WARNING"     Received array: ["DEBUG", "INFO"]
+```
+
+La cause a été LUE, et non supposée. `docker logs p2enjoy-mail-sync` portait **une seule** ligne
+d'avertissement, horodatée pendant `e2e:ui` :
+
+```
+{"timestamp":"2026-08-20T02:42:10.322Z","level":"WARNING","service":"mail-sync","event":"veille_compte_echoue"}
+```
+
+Le scénario lit le **tampon cumulatif** de `docker logs`, jamais une fenêtre : il rend donc rouge
+pour tout avertissement produit par n'importe quelle suite exécutée avant lui, sur n'importe quel
+sujet. Après le remède du §2.2 bis de `docs/CloudWorker.md` — `up -d --force-recreate mail-sync`
+avec les DEUX fichiers de composition —, la suite rend **5 passés** sur le **même code**, S3
+compris, en 107 ms.
+
+**Ce que cela ajoute à l'entrée.** Les deux échecs de la décision 478 restaient sans cause établie ;
+celui-ci en a une, et elle est structurelle : ce n'est pas un état de pile qui diverge, c'est une
+preuve qui interroge un **journal cumulatif** dont elle ne borne pas le début. La différence compte
+pour l'arbitrage : réordonner les suites ne suffirait pas ici — il faudrait que S3 borne sa lecture,
+par un horodatage de départ ou par `--since`, ou que la campagne recrée le conteneur avant elle.
+
+**Ce que ce n'est PAS.** Une régression de la session : le changement de `CRM-086` tranche 6a ne
+touche ni `mail-sync`, ni la messagerie, ni aucun de leurs journaux — le diff ne sort pas de
+`supabase/migrations`, `supabase/tests`, `supabase/seed`, `webapp/src/lib`, `scripts` et `docs`.
+Rien n'a été corrigé (§3.1).
+
 ## Consignés le 2026-08-20 — deux manques de SPÉCIFICATION relevés par `CRM-086` tranche 6
 
 Relevés en lisant `docs/SPEC-costs.md` §4.8 **avant** de le coder, comme le §3.2 point 3 de
