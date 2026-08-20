@@ -2194,10 +2194,14 @@ que celui d'un collègue, et c'est le comportement voulu.
 - **Aucun filtre, aucun tri, aucune période.** L'écran rend les budgets ouverts du track dans l'ordre
   de leur administration.
 
-### 5 quinquies.5 Ce qui n'est pas encore là
+### 5 quinquies.5 Deux onglets, et le second est celui où l'on saisit
 
-- L'onglet **« À saisir »**, qui listera toutes les lignes en attente de leur coût réel et permettra
-  de les saisir à la suite, sans ouvrir les affaires une par une.
+Cet écran porte **deux onglets** : « Vue d'ensemble » — le graphique décrit ci-dessus — et
+**« À saisir »**, qui liste les lignes de ce track en attente de leur coût réel et permet de les
+saisir à la suite. L'onglet « À saisir » porte un **compteur** : le nombre de lignes qu'il liste.
+
+Le second onglet vit dans l'adresse (`?onglet=saisir`) : il est donc **partageable et
+rechargeable**, comme le reste du produit. Tout est décrit au **§5 octies**.
 
 *Le **cumul de l'espace de travail** est livré : voir le §5 septies.*
 
@@ -2353,10 +2357,96 @@ mais « ai-je le droit de lire ce track ? ».
   tracks dans l'ordre de la barre latérale.
 - **Aucun total toutes devises confondues** — voir le §5 septies.2.
 
-### 5 septies.6 Ce qui n'est pas encore là
+### 5 septies.6 Deux onglets, ici aussi
 
-- L'onglet **« À saisir »**, qui listera ici aussi toutes les lignes en attente de leur coût réel,
-  pour tous les tracks que vous lisez, et permettra de les saisir à la suite.
+Cet écran porte les **mêmes deux onglets** que celui d'un track (§5 quinquies.5) : « Vue
+d'ensemble » et **« À saisir »**. La différence est la **portée** : ici, l'onglet liste les lignes
+en attente de **tous les tracks que vous lisez**, et non celles d'un seul. Tout est décrit au
+§5 octies.
+
+## 5 octies. L'onglet « À saisir » : renseigner les coûts réels à la suite
+
+*Livré par `CRM-086` tranche 6. Captures dans `docs/captures/CRM-086/couts-a-saisir-*.jpg`.*
+
+**Où.** Sur l'écran de coûts d'un track (§5 quinquies) ou sur celui de l'espace de travail
+(§5 septies), l'onglet **« À saisir »**, à droite de « Vue d'ensemble ». L'adresse gagne
+`?onglet=saisir` : elle se partage et se recharge, et le bouton « précédent » du navigateur revient
+à l'onglet d'avant.
+
+**À quoi il sert.** Le graphique dit **combien** de coûts réels manquent ; il ne permettait pas de
+les saisir. Il fallait ouvrir une affaire après l'autre. Cet onglet est la surface de **saisie en
+série** : une ligne par coût en attente, un champ par ligne, et le clavier pour aller de l'une à
+l'autre.
+
+**Ce que la table liste.** Toutes les lignes de coût sans coût réel que vous avez le droit de
+**lire**, dans la portée de l'écran, **de la plus ancienne à la plus récente** — celle qui attend
+depuis le plus longtemps est celle qu'on oublie. Chaque ligne porte son **ancienneté**, son
+**budget**, son **occurrence** le cas échéant, son **affaire** (le titre est un lien vers la fiche),
+la **nature** de la dépense et son **coût estimé**.
+
+**Les budgets clôturés y figurent, et c'est voulu :** c'est précisément après la clôture que les
+factures arrivent. La ligne d'un budget clos porte une pastille **« clôturé »** — une indication
+neutre, jamais une alerte : la clôture n'empêche pas de saisir le coût réel, elle empêche seulement
+de **changer le rattachement** d'une ligne.
+
+### 5 octies.1 Saisir, au clavier
+
+- **Tapez le montant dans le champ « Réel », puis `Entrée`.** La valeur est enregistrée
+  immédiatement — il n'y a **aucun bouton d'enregistrement** — et le curseur passe au champ de la
+  **ligne suivante**. C'est cela, saisir à la suite.
+- **`Échap`** annule la saisie en cours et laisse la ligne intacte : rien n'est envoyé.
+- **La ligne enregistrée ne disparaît pas sous vos doigts.** Elle reste à sa place, sur un fond
+  vert, marquée « Enregistré », **jusqu'au prochain chargement de l'onglet**. La retirer aussitôt
+  ferait remonter les lignes suivantes pendant que vous tapez, et vous feriez écrire une valeur dans
+  la mauvaise ligne.
+- **Zéro est une valeur, pas un vide.** Saisir `0` signifie « finalement rien dépensé » et retire la
+  ligne de l'attente ; **laisser le champ vide la laisse en attente**. La phrase est écrite sous la
+  table, avec la consigne clavier.
+
+### 5 octies.2 Ce que vous ne pouvez pas modifier reste visible
+
+Une ligne que vous pouvez **lire** mais pas **écrire** est rendue comme les autres, avec son champ
+**désactivé** et la phrase « Vous ne pouvez pas modifier cette affaire. » sous lui. Elle n'est
+**jamais masquée** : une table qui cacherait des lignes se lirait comme complète alors qu'elle ne
+l'est pas.
+
+Si **aucune** des lignes que vous lisez n'est modifiable — le cas d'un compte en lecture seule —, la
+table est rendue entière et le dit **en tête** : « Aucune de ces lignes ne peut être modifiée avec
+vos droits : ce tableau est en lecture seule. »
+
+Ce droit est demandé à la base, ligne par ligne, et jamais déduit de votre rôle : les droits fins
+ouvrent l'écriture channel par channel, et un rôle ne dirait pas la vérité.
+
+### 5 octies.3 Ce que l'écran écrit quand quelque chose ne va pas
+
+| Ce que vous lisez sous le champ | Ce que cela veut dire |
+|---|---|
+| « Enregistrement… » | L'envoi est en cours |
+| « Enregistré » | La base a retenu la valeur — celle qui s'affiche est **celle qu'elle a retenue**, arrondie au centime |
+| « Ce montant n'est pas un nombre. » | La saisie n'a pas été envoyée, et elle reste à l'écran pour être corrigée |
+| « Aucune ligne n'a été enregistrée. […] rechargez l'onglet. » | Ni un succès ni une erreur : vos droits ont pu changer depuis l'ouverture de l'écran. Rien n'a été écrit |
+| « Vous ne pouvez pas modifier cette affaire. » | La base a refusé l'écriture |
+| « Tous les coûts réels sont saisis » | Il n'y a rien à saisir dans cette portée. C'est une bonne nouvelle, pas un écran en panne |
+
+### 5 octies.4 Le compteur de l'onglet
+
+Le badge porte le nombre de lignes **que la table liste** — celles que vous lisez, budgets clôturés
+compris, y compris celles que vous ne pouvez pas modifier.
+
+**Il peut différer du nombre écrit sous le graphique** de la vue d'ensemble (« n ligne(s) sans coût
+réel saisi »), et ce n'est pas une erreur : le graphique **exclut les budgets clôturés** et compte
+**par devise**, là où le badge est un nombre unique. Les deux chiffres ne comptent pas la même
+chose.
+
+### 5 octies.5 Ce que cet onglet ne fait pas
+
+- **Il ne crée aucune ligne de coût** : une dépense se crée depuis la fiche de son affaire, section
+  « Coûts ».
+- **Il ne modifie que le coût réel** — ni la nature, ni le budget, ni l'occurrence, ni le coût
+  estimé.
+- **Il n'efface pas un coût réel déjà saisi** : une ligne quitte la table dès qu'elle en porte un,
+  et se corrige depuis la fiche de son affaire.
+- **Aucun import de fichier, aucun rapprochement automatique avec une facture.**
 
 ## 6. Consulter l'état de la messagerie
 

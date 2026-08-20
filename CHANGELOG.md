@@ -15,6 +15,32 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **L'onglet « À saisir » : les coûts réels se saisissent à la suite, sans ouvrir les affaires une
+  par une** (`CRM-086` tranche 6b, `docs/SPEC-costs.md` §4.0 et §4.8, `docs/DESIGN_SYSTEM.md` §5.31,
+  `docs/manual.md` §5 octies). Les deux écrans de coûts — celui d'un track et celui de l'espace de
+  travail — portent désormais **deux onglets**. « Vue d'ensemble » est le graphique déjà livré ;
+  **« À saisir »** liste les dépenses **en attente de leur coût réel**, de la plus ancienne à la
+  plus récente, et permet de les renseigner **à la suite** : on tape un montant, `Entrée`, et le
+  curseur passe à la ligne suivante. Il n'y a aucun bouton d'enregistrement — chaque ligne s'écrit
+  pour elle-même —, et `Échap` annule la saisie en cours.
+
+  **Une ligne enregistrée ne disparaît pas sous vos doigts** : elle reste à sa place, marquée
+  « Enregistré », jusqu'au prochain chargement de l'onglet. La retirer aussitôt ferait remonter les
+  lignes suivantes pendant que l'on tape, et écrire une valeur dans la mauvaise ligne. **Saisir `0`
+  signifie « finalement rien dépensé »** et retire la ligne de l'attente ; laisser le champ vide l'y
+  laisse — la distinction est écrite sous la table, avec la consigne clavier.
+
+  **Les dépenses des budgets clôturés y figurent**, avec une pastille neutre « clôturé » : c'est
+  précisément après la clôture que les factures arrivent, et les exclure viderait l'onglet de son
+  usage. **Une ligne qu'on peut lire sans pouvoir la modifier reste affichée**, champ désactivé et
+  motif écrit sous lui, jamais masquée ; et lorsque aucune n'est modifiable, la table le dit en
+  tête. L'onglet porte un **compteur** — le nombre de lignes qu'il liste —, qui peut légitimement
+  différer du nombre écrit sous le graphique : celui-ci exclut les budgets clos et compte par
+  devise.
+
+  L'onglet vit dans l'adresse (`?onglet=saisir`) : il se partage, se recharge, et le bouton
+  « précédent » du navigateur y revient.
+
 - **Le socle de l'onglet « À saisir » des écrans de coûts** (`CRM-086` tranche 6a,
   `docs/SPEC-costs.md` §4.8, §4.8.1 et §4.8.2, `docs/SCHEMA.md` §9 bis.8). Rien n'est encore visible
   à l'écran — la surface est la tranche 6b —, mais tout ce dont elle a besoin existe et est prouvé :

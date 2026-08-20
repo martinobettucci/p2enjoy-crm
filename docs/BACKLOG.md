@@ -8590,10 +8590,16 @@ uniquement quand plusieurs devises sont présentes — le §4.5 pose que « s'il
 l'utilisateur ne voit rien de cette mécanique ». `docs/DESIGN_SYSTEM.md` §5.33 décrit l'écran livré,
 et §4 porte la nouvelle entrée de barre latérale.
 
-**CE QUI RESTE** : les TROIS écrans du §4.2, du §4.3 et du §4.5 sont montés et prouvés. L'onglet
-« À saisir » du §4.8 n'existe sur aucun d'eux, et c'est la reprise. **Aucun harnais dédié
-`scripts/verify-couts-ecrans.sh` n'existe encore**, et aucune preuve pgTAP ni d'API n'est propre à
-cette unité — la Definition of Done réclame explicitement le harnais.
+**CE QUI RESTE — révisé le 2026-08-20, décision 480.** Les TROIS écrans du §4.2, du §4.3 et du §4.5
+sont montés et prouvés, **l'onglet « À saisir » du §4.8 est livré sur les deux écrans à onglets**,
+et **le harnais dédié `scripts/verify-couts-ecrans.sh` existe** — 76 contrôles, aucune anomalie.
+Il reste **deux** choses, et deux seulement :
+
+1. **la preuve d'écran de la clôture qui avertit et compte** (§4.1) — le comportement est livré,
+   c'est la preuve qui manque, et c'est le seul reste qu'une session peut lever ;
+2. **l'arbitrage d'INC-182**, qui décide ce que le badge doit annoncer. Tant qu'il n'est pas rendu,
+   le premier point de la Definition of Done ci-dessous est **inatteignable**, et ce n'est pas un
+   défaut de livraison. `CRM-086` reste donc `[~]`.
 
 **DoD** : E2E des trois écrans ; captures aux quatre paliers ; **la mention « n lignes sans coût
 réel saisi » est prouvée présente** quand des réels manquent, et absente sinon — c'est la principale
@@ -8671,29 +8677,67 @@ l'onglet de sa raison d'être en silence. (2) *Le repli du droit se fait vers le
 **absente** et non nulle ; un `!== false` l'aurait alors rendue saisissable, et l'onglet aurait offert
 des champs dont chaque envoi serait refusé.
 
-**Tranche 6b — RESTE À FAIRE.** La barre d'onglets `?onglet=saisir` sur les deux écrans, la table de
-saisie en série du §5.31, le geste clavier — `Entrée` qui valide et porte le focus sur la ligne
-suivante —, les clés de traduction, les captures aux quatre paliers et le harnais
-`scripts/verify-couts-ecrans.sh`, qu'aucune tranche n'a encore écrit.
+**Tranche 6b — LIVRÉE ET PROUVÉE** (décision 480).
+`webapp/src/app/OngletsCouts.tsx` : la barre d'onglets des deux écrans — navigation par LIENS
+(§12.1), `?onglet=saisir` dans la chaîne de requête (§4.0), badge neutre absent tant que le compte
+n'est pas connu et à zéro. `webapp/src/app/CoutsASaisir.tsx` : la zone à onglets, qui lit les lignes
+en attente **sur les deux onglets** — c'est le badge qui l'exige —, et la table de saisie en série
+du §5.31, avec `Entrée` qui enregistre et porte le focus sur la ligne suivante, `Échap` qui annule,
+la ligne enregistrée qui reste en place, la pilule « clôturé » neutre, l'ancienneté sans variante de
+danger (INC-183) et la ligne non écrivable rendue désactivée avec son motif. Les vues d'ensemble des
+deux écrans descendent dans leur propre composant : **la barre d'onglets est rendue quel que soit
+l'état de leur lecture**, sans quoi un histogramme en erreur retirerait l'accès à un onglet dont les
+lignes existent. **Le harnais `scripts/verify-couts-ecrans.sh` est livré** : 76 contrôles sur les
+quatre surfaces, trois dégradations comprises.
 
-- [ ] **Preuves propres à l'onglet**, en plus de celles ci-dessus : le badge de l'onglet porte le
-      **même nombre** que la mention « n lignes sans coût réel saisi » de la vue d'ensemble — s'ils
-      divergent, l'un des deux ment ; `Entrée` enregistre **et porte le focus sur le champ de la
-      ligne suivante**, mesuré au clavier seul ; une ligne enregistrée **reste en place** et ne
-      quitte pas la table à chaud ; saisir `0` retire la ligne de l'attente, laisser vide l'y
-      laisse ; une ligne d'un budget **clôturé** est présente et **saisissable** ; une ligne lisible
-      mais non écrivable est rendue **désactivée avec son motif**, jamais masquée ; l'état « tous
-      les coûts réels sont saisis » est capturé.
-- [ ] **La mise à jour d'`actual_cost` sur un budget clos est prouvée en pgTAP**, avec sa
+**`aria-current` EST POSÉ À LA MAIN, ET C'EST LA SEULE RÈGLE DE CETTE TRANCHE QUI NE SE DEVINE PAS.**
+Les deux onglets partagent le même CHEMIN et ne diffèrent que par leur chaîne de requête (§4.0), que
+`NavLink` ne compare pas : il poserait l'attribut sur les **deux** entrées, ou sur aucune. C'est le
+seul endroit du produit où deux liens de navigation ne se distinguent pas par leur chemin.
+
+- [x] **Preuves propres à l'onglet** — `CoutsASaisir.test.tsx` **22 tests** et
+      `e2e/ui/couts-a-saisir.spec.ts` **5 scénarios** : `Entrée` enregistre **et porte le focus sur
+      le champ de la ligne suivante**, mesuré au clavier seul ; une ligne enregistrée **reste en
+      place** ; saisir `0` retire la ligne de l'attente et un champ vide l'y laisse — mesuré au
+      rechargement, donc réellement en base ; une ligne d'un budget **clôturé** est présente et
+      **saisissable** ; une ligne lisible mais non écrivable est **désactivée avec son motif**,
+      jamais masquée ; l'état « tous les coûts réels sont saisis » est capturé.
+      **UN POINT DE CETTE LIGNE RESTE HORS D'ATTEINTE, ET IL EST NOMMÉ** : « le badge porte le même
+      nombre que la mention du §4.4 » est structurellement faux — la clôture et la devise séparent
+      les deux populations —, l'écart est consigné à **INC-182** et le comportement livré est celui
+      du §4.8.2 : le badge compte ce que le tableau LISTE. C'est mesuré à l'écran, 2 contre 1 sur le
+      seed. Ce point tombera par arbitrage, jamais par livraison.
+- [x] **La mise à jour d'`actual_cost` sur un budget clos est prouvée en pgTAP**, avec sa
       contre-épreuve : le changement de `budget_id` ou d'`occurrence_id` sur ce même budget clos
       reste **refusé**. C'est la frontière exacte posée par le §2.3, et elle ne se devine pas.
-- [ ] **La clôture d'un budget portant des réels non saisis avertit et compte** (§4.1) : prouvé à
+      **La preuve vit dans `supabase/tests/0049_card_costs.test.sql`** (`CRM-085`), dans les deux
+      sens et aux deux niveaux — trigger et politique. La rejouer dans la suite 0050 ferait deux
+      sources pour une même règle, qui divergeraient au premier ajustement.
+- [~] **La clôture d'un budget portant des réels non saisis avertit et compte** (§4.1) : prouvé à
       l'écran, et prouvé qu'elle n'est pas **empêchée** — c'est une décision de gestion.
+      **LE COMPORTEMENT EST LIVRÉ, LA PREUVE D'ÉCRAN MANQUE, et c'est le seul reste de `CRM-086`
+      qu'une session peut lever** (constaté le 2026-08-20, décision 480).
+      `webapp/src/app/BlocBudgetsTrack.tsx` rend bien les quatre états du compte —
+      `admin.budgets.close.pending.loading`, `.failed`, `.none`, `.some` — et
+      `scripts/verify-budgets.sh` vérifie que les quatre clés y sont CITÉES ; mais aucun scénario de
+      `e2e/ui/budgets.spec.ts` n'ouvre la confirmation de clôture pour lire le compte, ni ne mesure
+      que la clôture aboutit malgré des réels manquants. Un contrôle de clés dit qu'un texte existe
+      dans le code, jamais qu'un écran le rend.
+      **Ce que la preuve doit poser** : la confirmation de clôture d'un budget portant au moins une
+      ligne sans réel écrit leur nombre ; le geste ABOUTIT quand même ; et la ligne reste
+      saisissable après la clôture — ce dernier point étant déjà tenu par l'onglet du §4.8, dont la
+      preuve exerce précisément une ligne d'un budget clos. Elle écrit, donc elle restaure : la
+      règle de la décision 362, tenue par `e2e/ui/couts-a-saisir.spec.ts`.
 
-- [ ] **Ne jamais rendre un total qui inclurait un budget interdit.** Le cumul se calcule sur les
+- [x] **Ne jamais rendre un total qui inclurait un budget interdit.** Le cumul se calcule sur les
       lignes que la RLS consent, jamais avec la clé de service : un total juste au centime près qui
       divulgue par soustraction l'existence d'un budget fermé est un défaut d'autorisation, pas un
       défaut d'affichage.
+      **Prouvé par `S4` et `S5` de `e2e/ui/couts-workspace.spec.ts`** (tranche 5) : la lectrice
+      totalise 1000 EUR, l'administrateur 1800 sur le même écran et les mêmes données, et l'écart
+      vaut **exactement** les 800 de « Prospection sortante », dont le track lui est fermé. Le
+      compte des lignes sans réel suit la même règle — une pour elle, deux pour lui. `S4` vérifie en
+      outre qu'aucun nom ni aucun montant du budget fermé n'atteint son écran.
 
 ---
 
