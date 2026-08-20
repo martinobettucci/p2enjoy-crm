@@ -1739,6 +1739,8 @@ export const fr = {
 	'admin.mailAccounts.field.password': 'Mot de passe',
 	'admin.mailAccounts.field.password.help':
 		"Laissé vide, le mot de passe enregistré est conservé. Il n'est jamais affiché.",
+	'admin.mailAccounts.field.password.help.new':
+		"Obligatoire pour une boîte qui n'existe pas encore : sans lui, aucune connexion ne serait possible.",
 
 	// Les quatre valeurs de `mail_inbound_accounts_statut` (migration 0022) — jamais le code brut
 	// (docs/SPEC-mail-subsystem.md §21.3, docs/DESIGN_SYSTEM.md §5.34).

@@ -2011,10 +2011,16 @@ C'est la règle du §2.3 — « les formulaires n'affichent jamais un secret enr
   refus est explicite parce qu'un compte sans secret échouerait plus tard sur un diagnostic
   incompréhensible plutôt que sur sa cause.
 
-L'écran suit donc la base au lieu de la doubler : le champ est vide à l'ouverture, son texte d'aide
-dit qu'un champ laissé vide **conserve** le mot de passe enregistré, et le paramètre est **omis**
-plutôt qu'envoyé vide. Sur une création, le refus `password_required` est traduit et affiché ; il
-n'est **pas** anticipé par une garde de saisie.
+L'écran suit donc la base au lieu de la doubler : le champ est vide à l'ouverture, et le paramètre
+est **omis** plutôt qu'envoyé vide.
+
+**Son texte d'aide a DEUX visages, et l'un des deux a été trouvé en regardant une capture**
+(`CLAUDE.md` §16) : sur une boîte existante, « laissé vide, le mot de passe enregistré est
+conservé » ; sur une boîte qui n'existe pas encore, « obligatoire ». La première phrase serait
+**fausse** à la création — il n'y a rien d'enregistré —, et promettre une conservation inexistante
+est la valeur par défaut trompeuse que `CLAUDE.md` §18 interdit. Ce n'est **pas** une garde de
+saisie : le champ reste envoyable vide, le refus `password_required` est alors traduit et affiché,
+et il n'est **pas** anticipé.
 
 ### 21.6 Ce que la mesure a établi, et qui n'était écrit nulle part
 

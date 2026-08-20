@@ -269,6 +269,33 @@ describe('ReglagesComptesMail — le formulaire', () => {
 	})
 })
 
+describe('ReglagesComptesMail — le texte d’aide du mot de passe', () => {
+	// Défaut trouvé EN REGARDANT UNE CAPTURE (`CLAUDE.md` §16) : « laissé vide, le mot de passe
+	// enregistré est conservé » est faux sur une création, où la base refuse par
+	// `password_required` (§21.5).
+	it('promet la conservation sur une boîte EXISTANTE', async () => {
+		monter(client())
+		await screen.findByTestId('liste-comptes-mail')
+		await userEvent.click(screen.getAllByTestId('configurer-compte')[0] as HTMLElement)
+
+		expect(await screen.findByText(/le mot de passe enregistré est conservé/)).toBeTruthy()
+	})
+
+	it('dit qu’il est EXIGÉ sur une boîte qui n’existe pas encore', async () => {
+		// Driss ne voit que la sienne : viser la boîte système est une CRÉATION de son point de vue.
+		monter(
+			client({ comptes: { data: [{ ...COMPTES[0], owner_id: DRISS }], error: null, status: 200 } }),
+			DRISS,
+		)
+		await screen.findByTestId('liste-comptes-mail')
+		await userEvent.click(screen.getByTestId('configurer-compte'))
+		await userEvent.selectOptions(await screen.findByTestId('champ-boite'), 'systeme')
+
+		expect(await screen.findByText(/Obligatoire pour une boîte qui n'existe pas encore/)).toBeTruthy()
+		expect(screen.queryByText(/le mot de passe enregistré est conservé/)).toBeNull()
+	})
+})
+
 describe('ReglagesComptesMail — les refus', () => {
 	// §21.7 : une PHRASE du produit, jamais le corps d'erreur du serveur — qui divulguerait
 	// `secret_id` (INC-193).

@@ -282,7 +282,13 @@ export function ReglagesComptesMail({
 	const cibles = ciblesPossibles(comptes, idSession)
 
 	return (
-		<section aria-label={t('admin.mailAccounts.aria')} className="flex flex-col gap-4 max-w-[72ch]">
+		// LA BORNE EST À `104ch`, ET C'EST UN DÉFAUT TROUVÉ EN REGARDANT UNE CAPTURE (`CLAUDE.md`
+		// §16). Écrite d'abord à `72ch` — la largeur d'une colonne de prose —, la ligne d'une boîte
+		// personnelle se repliait DÈS 1440 px et sa commande passait seule à la ligne suivante,
+		// alors que celle de la boîte système tenait : deux lignes voisines n'avaient plus la même
+		// hauteur sans qu'aucune donnée ne le justifie. Une ligne porte ici six éléments, dont
+		// trois données techniques ; sa borne est celle de son contenu, pas celle d'un paragraphe.
+		<section aria-label={t('admin.mailAccounts.aria')} className="flex flex-col gap-4 max-w-[104ch]">
 			<LiveRegion libelle={t('admin.mailAccounts.live.aria')} message={annonce} />
 
 			{comptes.length === 0 ? (
@@ -339,6 +345,7 @@ export function ReglagesComptesMail({
 				<FormulaireCompte
 					saisie={saisie}
 					cibles={cibles}
+					creation={compteDe(comptes, saisie.idProprietaire) === undefined}
 					enCours={enCours}
 					refus={refus}
 					onCible={viser}
@@ -418,6 +425,7 @@ function LigneCompte({
 function FormulaireCompte({
 	saisie,
 	cibles,
+	creation,
 	enCours,
 	refus,
 	onCible,
@@ -427,6 +435,8 @@ function FormulaireCompte({
 }: {
 	readonly saisie: SaisieCompteEntrant
 	readonly cibles: readonly Cible[]
+	/** La boîte visée n'existe pas encore : le mot de passe est alors EXIGÉ, et le dire change. */
+	readonly creation: boolean
 	readonly enCours: boolean
 	readonly refus: CleTraduction | null
 	readonly onCible: (valeur: string) => void
@@ -546,8 +556,17 @@ function FormulaireCompte({
 						}
 						className={CLASSES_CHAMP}
 					/>
+					{/* DEUX TEXTES D'AIDE, ET C'EST UN DÉFAUT TROUVÉ EN REGARDANT UNE CAPTURE
+					    (`CLAUDE.md` §16). « Laissé vide, le mot de passe enregistré est conservé »
+					    est FAUX sur une création : il n'y a rien d'enregistré, et la base refuse par
+					    `password_required` (§21.5). Une phrase qui promet une conservation
+					    inexistante est la valeur par défaut trompeuse que `CLAUDE.md` §18 interdit.
+					    Ce n'est PAS une garde de saisie : le champ reste envoyable vide, et c'est
+					    toujours la base qui tranche. */}
 					<span className="text-sm text-text-3 max-w-[40ch]">
-						{t('admin.mailAccounts.field.password.help')}
+						{creation
+							? t('admin.mailAccounts.field.password.help.new')
+							: t('admin.mailAccounts.field.password.help')}
 					</span>
 				</label>
 			</div>

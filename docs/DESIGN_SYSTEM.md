@@ -3054,5 +3054,30 @@ modale**, focus entrant dans le premier champ et rendu à la commande qui l'a ou
   §5.13 pour l'état vide d'une surface qui agit, déjà tenue par le §5.21, le §5.23 et le §5.29
   tranche 2c. C'est l'écart assumé avec le §5.14, qui n'offre rien parce qu'il n'agit pas.
 
+- **LA LISTE EST BORNÉE À `104ch`, ET C'EST UN DÉFAUT TROUVÉ EN REGARDANT UNE CAPTURE**
+  (`CLAUDE.md` §16, 2026-08-20). Écrite d'abord à `72ch` — la largeur d'une colonne de prose, celle
+  que cette surface aurait eue si elle portait du texte —, la ligne d'une boîte **personnelle** se
+  repliait dès 1440 px et sa commande passait seule à la ligne suivante, tandis que celle de la
+  boîte système tenait : deux lignes voisines n'avaient plus la même hauteur sans qu'aucune donnée
+  ne le justifie. Une ligne porte ici **six** éléments, dont trois données techniques ; sa borne est
+  celle de son contenu, pas celle d'un paragraphe. Sous le palier `md`, la ligne se replie et gagne
+  de la hauteur — l'écart que le §5.21 assume déjà pour sa liste plate, et pour la même raison.
+
+- **LE TEXTE D'AIDE DU MOT DE PASSE A DEUX VISAGES, et c'est un second défaut trouvé sur la même
+  capture.** « Laissé vide, le mot de passe enregistré est conservé » est **faux** sur une boîte qui
+  n'existe pas encore : il n'y a rien d'enregistré, et la base refuse par `password_required`. Une
+  phrase qui promet une conservation inexistante est la valeur par défaut trompeuse que
+  `CLAUDE.md` §18 interdit. La création écrit donc « Obligatoire pour une boîte qui n'existe pas
+  encore ». Ce **n'est pas** une garde de saisie : le champ reste envoyable vide, et c'est toujours
+  la base qui tranche (§5.3 ter).
+
+- **LA PILULE NEUTRE DISPARAÎT SUR LA LIGNE SURVOLÉE, et c'est une limite OBSERVÉE et acceptée**
+  (`CLAUDE.md` §16, capture `docs/captures/CRM-088/comptes-mail-xl-1440.jpg`). Le survol d'une ligne
+  emploie `--color-hover`, qui est aussi le fond de la pilule neutre : « En attente » y perd sa
+  forme, tout en gardant son point et son mot. C'est exactement ce que le §5.15 a déjà constaté pour
+  la pilule « Modifié » — « une pilule neutre n'existe que par contraste avec ce qui la porte ». Le
+  §1 reste tenu : l'information est portée par le **mot**, jamais par la forme ni par la teinte, et
+  aucun autre état n'est concerné, les trois autres portant une couleur.
+
 - **Aucune couleur, aucun jeton, aucune icône nouvelle** : l'écran emprunte au §5.18 sa liste plate,
   au §5.6 ses pilules, au §5.7 ses champs, au §5.5 ses variantes et au §5.14 son vocabulaire d'état.
