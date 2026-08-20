@@ -21783,6 +21783,29 @@ la clé de service elle-même — la garantie que `CRM-044` a posée. Le scénar
 `verify-seed-demo.sh` étant des minorants. C'est l'affirmation qui est fausse. Le scénario que
 cette session livre ne la reprend pas : il écrit la mesure et nomme la dérive (§8.8.10).
 
+**LES TROIS HARNAIS TOUCHÉS ONT ÉTÉ REJOUÉS, ET LES TROIS SONT VERTS.**
+`scripts/verify-harness.sh` — rejoué APRÈS la révision des compteurs — rend **31 contrôles, aucune
+anomalie**, `e2e:ui` compris à **549 scénarios verts** : les cinq anomalies de comptage ont
+disparu. `scripts/verify-mail-classement.sh` rend **34 contrôles, aucune anomalie**, sa famille
+« 2 bis » de neuf contrôles comprise — et son compteur de scénarios d'API est passé de 5 à **7**
+dans le même changement, les deux preuves sous jetons réels étant nouvelles.
+`scripts/verify-mail-infra.sh` rend **90 contrôles, aucune anomalie**, dont le domaine du
+correspondant, sa boîte, sa session IMAP réelle, et le fait qu'il n'est **pas** un compte entrant
+du produit.
+
+**LA FAMILLE « 2 bis » EST NON COMPLAISANTE, ET C'EST ÉPROUVÉ PLUTÔT QU'AFFIRMÉ** : la suggestion
+retirée de la ligne du seed — `update … set suggested_card_id = null` —, le harnais rend
+« le message du correspondant suggère "aucune" : le bloc n'aurait rien à rendre », **1 en échec**.
+La valeur a été rétablie et relue aussitôt.
+
+**UNE ANOMALIE NON REPRODUCTIBLE, ET ELLE EST DITE.** La première exécution de
+`verify-mail-infra.sh` a rendu **1 anomalie sur 90** — « le provisionnement n'a pas chargé le bundle
+webadmin local » —, contrôle qui cherche une ligne dans `docker logs p2enjoy-stalwart-init`. La même
+commande, rejouée à la main immédiatement après, **trouve la ligne** ; le harnais rejoué en entier
+rend **90 contrôles, 0 anomalie**. Étrangère au changement — aucun fichier de cette session ne
+touche le bundle webadmin —, et non reproductible : elle est nommée ici plutôt que passée sous
+silence.
+
 **Ce qui n'a pas été exécuté, et il faut le dire.** Les `scripts/verify-*.sh` autres que
 `verify-mail-classement.sh`, `verify-mail-infra.sh` et `verify-harness.sh` : **aucun**. La série
 entière ne tient pas dans une session (`docs/CloudWorker.md` §2.1 ter).
