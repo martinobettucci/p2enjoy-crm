@@ -2937,3 +2937,44 @@ quatre unités différentes.
 **Arbitrage attendu.** Le responsable tranche si `TabBar` doit ne **rien** rendre hors d'une route de
 track — ce qui retirerait la bande des six écrans et ferait remonter leur contenu d'une ligne —, ou
 si l'état vide reste rendu partout pour que la coquille garde la même hauteur d'un écran à l'autre.
+
+### INC-181 — `npm run e2e:mail` lancé DERRIÈRE `npm run e2e:ui` rend deux échecs qui disparaissent seuls
+
+*Relevé pendant `CRM-086` tranche 5, décision 478. Étranger à cette unité : les deux scénarios
+portent sur l'ingestion et le backfill de la messagerie (`CRM-052`, `CRM-055`), qu'aucun fichier de
+la session ne touche — le diff ne sort pas de `webapp/src`, `e2e/ui` et `docs/`.*
+
+**Ce qui est mesuré, et les deux mesures sont sur le MÊME code, à onze minutes d'intervalle.**
+
+| Exécution | Verdict |
+|---|---|
+| `npm run e2e:mail` **immédiatement après** un `npm run e2e:ui` de 17,3 min, 01:53 | **40 passés, 2 échecs** |
+| `npm run e2e:mail` **seul**, 02:05 | **42 passés, aucun échec** |
+
+Les deux échecs :
+
+- `ingestion.spec.ts:159` — `messages_new` vaut **0** là où le scénario en attend au moins 1. La
+  relève n'a donc rien trouvé : ni la pièce infectée ni le rejeu ne sont même atteints, l'assertion
+  tombe avant ;
+- `backfill.spec.ts:268` — « un premier contact ne descend jamais l'historique ».
+
+**Ce qui n'est PAS établi, et il faut le dire.** La cause. Deux hypothèses non départagées : la
+remise par Stalwart et le cycle de relève de `mail-sync` n'ont pas eu le temps d'aboutir pendant que
+la pile finissait d'encaisser dix-sept minutes de scénarios d'interface, ou l'un des deux services a
+été ralenti au point de manquer la fenêtre d'attente du scénario. Aucune n'est mesurée, et **rien
+n'est corrigé** : le §3.1 de `docs/CloudWorker.md` interdit de corriger au passage un défaut
+étranger à l'unité, et allonger une attente serait de toute façon la temporisation arbitraire que
+`CLAUDE.md` §18 proscrit.
+
+**Ce que ce n'est PAS.** Une régression de la session : le code est identique des deux côtés, et
+c'est l'ÉTAT de la pile qui diverge — exactement la nature d'INC-177, où `test:sql` et `e2e:ui`
+partagent une base, transposée ici à l'enchaînement de deux suites sur la même pile.
+
+**Pourquoi c'est un défaut malgré tout.** Une campagne complète enchaîne ses suites par
+construction. Si `e2e:mail` ne peut rendre un verdict juste qu'à froid, alors la campagne complète
+ne peut pas le rendre du tout, et la session suivante qui verra ces deux rouges cherchera une cause
+dans son propre changement.
+
+**Arbitrage attendu.** Le responsable tranche si les scénarios d'ingestion doivent attendre un
+événement observable — un cycle de relève acquitté — plutôt qu'une fenêtre de temps, ou si
+`e2e:mail` doit être exécutée avant `e2e:ui` dans la campagne, ou les deux.
