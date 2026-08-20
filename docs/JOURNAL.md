@@ -21141,3 +21141,78 @@ aucun des deux écrans livrés. **Aucun harnais dédié `scripts/verify-couts-ec
 c'est la pièce que la Definition of Done réclame explicitement. La reprise naturelle est l'écran du
 §4.5. `CRM-083` reste bloqué par **INC-170**. Huit arbitrages attendent : **INC-169**, **INC-170**,
 **INC-172**, **INC-173**, **INC-174**, **INC-176**, **INC-177** et **INC-178**.
+
+## décision 477 — `CRM-086` tranche 4 : le détail d'un budget, et l'alignement qu'une capture a corrigé
+
+**UNE EXÉCUTION CONCURRENTE A TRAVAILLÉ LA MÊME HEURE**, sur la tranche 3 et sur le registre. Le
+rebasage a été fait SUR PLACE : le seul conflit textuel portait sur le « où reprendre » de la
+décision 476, que l'exécution concurrente avait réécrit en tenant compte de cette livraison — c'est
+SA rédaction qui est conservée. Les captures régénérées de son côté sont les siennes ; seules
+`couts-budget-*.jpg` viennent d'ici.
+
+**L'unité, et le choix.** La décision 476 laisse `CRM-086` en `[~]` et désigne la reprise : « la
+reprise naturelle est l'écran du §4.3 ». C'est le cas 1 du §4.2 de `docs/CloudWorker.md`, et
+l'unité de cette session sans discussion. La spécification EXISTE et couvre ce qui restait à coder
+— le §4.0 arrête l'adresse, le §4.3 le contenu, le §4.7 les états —, donc l'exception du §3.2
+point 3 s'applique : **aucune spécification n'a été réécrite**, le code a commencé après lecture.
+`docs/DESIGN_SYSTEM.md` a en revanche été lu intégralement avant de toucher à l'interface
+(`CLAUDE.md` §4).
+
+**Ce qui a été livré.** `webapp/src/app/CoutsBudget.tsx` à l'adresse
+`/tracks/:slugTrack/couts/:idBudget` — l'identité du budget, un `HistogrammeCouts` dont chaque paire
+de barres est une **occurrence**, et la liste de ses lignes de coût filtrable par occurrence.
+`lireDetailBudget`, `grouperParOccurrence`, `filtrerParOccurrence`, `adresseAffaireLigne` et
+`estIdentifiantBudget` dans `couts-ecrans.ts`. `CHEMIN_COUTS_BUDGET` dans `chemins.ts`, hors de
+`ROUTES` comme les autres adresses dont le titre est une donnée. La route dans `App.tsx`, chargée à
+la demande dans son propre module. Le nom d'un budget devient un **lien** depuis l'écran du §4.2.
+Trente-trois clés de traduction.
+
+**QUATRE POINTS QUI NE SE DEVINENT PAS.**
+
+(1) *Un budget CLÔTURÉ est lu ici, alors que le §4.2 l'exclut de l'histogramme du track.* Ce n'est
+pas une incohérence mais la distinction que le §4.2 nomme lui-même : « un budget clôturé n'y figure
+pas » est une règle d'ÉCRAN — il ne se propose plus —, jamais une règle d'autorisation. Ses lignes
+restent lisibles (§2.3), le §4.8 les listera, et une adresse mise en signet ne doit pas cesser de
+répondre le jour où le budget se ferme. Une assertion garde explicitement l'absence de filtre
+`closed_at` dans la requête.
+
+(2) *Une occurrence sans aucune ligne GARDE sa paire de barres, à zéro.* Le §4.3 demande « une paire
+par occurrence », pas « par occurrence dépensée » : qu'il ne se soit rien passé en février est une
+information, et la faire disparaître ferait lire le budget comme s'il n'avait jamais porté ce
+mois-là. C'est le §4.7 appliqué un cran plus fin.
+
+(3) *Une ligne dont l'occurrence n'est pas listée n'est jamais perdue.* Elle rejoint le groupe sans
+occurrence. Le cas ne devrait pas se produire, la lecture rendant toutes les occurrences du budget ;
+mais l'écarter en silence retrancherait un montant du total sans que rien ne le dise, ce qui est
+exactement ce que le §4.4 reproche à un écran de coûts.
+
+(4) *Le track de l'adresse n'est pas confronté au budget, et c'est assumé.* Le budget est lu par son
+identifiant seul, sous la politique du §3.1 ; le slug ne sert qu'à la coquille. Une adresse forgée
+rendrait donc le bon budget sous le mauvais en-tête, sans jamais rien divulguer — le compromis déjà
+pris et consigné par `RouteCard` (**INC-065**), et le corriger ici seulement laisserait le défaut
+entier ailleurs.
+
+**UN DÉFAUT TROUVÉ EN REGARDANT UNE CAPTURE, ET IL DATAIT DE LA TRANCHE 2.** Un `th` est **centré
+par défaut**, et la classe `text-left` de la ligne d'en-tête ne porte que sur les cellules de
+celle-ci. Les libellés du corps du tableau équivalent se rendaient donc **centrés**, entre un
+en-tête aligné à gauche et un pied « Total » qui, lui, posait son alignement explicitement — contre
+le §5.9, qui pose « texte à gauche » sans exception pour un en-tête de ligne. Le défaut existait
+depuis la première livraison de `HistogrammeCouts` et ne s'est vu qu'avec la **période** rendue sous
+le libellé : deux lignes centrées se remarquent là où un mot seul passait. La règle est écrite au
+§5.30 pour tout `th scope="row"` du produit.
+
+**Ce qui a été vérifié.** `couts-ecrans.test.ts` porte 42 tests — 18 neufs —, `CoutsBudget.test.tsx`
+**25 tests**, `CoutsTrack.test.tsx` **16** et `HistogrammeCouts.test.tsx` **22** après extension.
+`e2e/ui/couts-budget.spec.ts` **9 scénarios verts**, dont la mesure que ce fichier existe pour
+tenir : « Publicité 2026 » rend UNE paire de barres sur l'écran du track et DEUX ici, sur le même
+jeu de données — c'est ce que la Definition of Done demande de vérifier. Les quatre captures ont
+été **observées**, et c'est en les regardant que le défaut d'alignement a été trouvé.
+
+**Où reprendre.** `CRM-086` reste `[~]`, et il reste UN écran : le cumul du workspace (§4.5,
+`/couts`, un groupe de barres par track, entrée de barre latérale, adresse à déclarer dans
+`chemins.ts` et **dans `ROUTES`** — c'est la seule des trois qui y figure). Vient ensuite l'onglet
+« À saisir » du §4.8, qui n'existe sur aucun écran, et **aucun harnais dédié
+`scripts/verify-couts-ecrans.sh` n'existe encore**. `CRM-083` reste bloqué par **INC-170**. Huit
+arbitrages attendent : **INC-169**, **INC-170**, **INC-172**, **INC-173**, **INC-174**,
+**INC-176**, **INC-177** et **INC-178** — les deux derniers consignés par l'exécution concurrente
+de cette même heure.

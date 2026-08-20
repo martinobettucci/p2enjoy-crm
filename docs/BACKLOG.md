@@ -8515,13 +8515,43 @@ rejoignaient à l'œil et se lisaient « 1 000 €880 € », défaut vu sur une
 désormais son propre rembourrage. `docs/DESIGN_SYSTEM.md` §5.30 porte les deux règles, et §4/§12.1
 la règle nouvelle de la barre d'onglets.
 
-**CE QUI RESTE** : les DEUX autres écrans ne sont pas montés — le détail d'un budget (§4.3,
-`/tracks/:slugTrack/couts/:idBudget`, une paire de barres par occurrence et la liste des lignes) et
-le cumul du workspace (§4.5, `/couts`, un groupe de barres par track, entrée de barre latérale). Ni
-l'un ni l'autre n'a d'adresse déclarée dans `chemins.ts` à ce jour — seul `CHEMIN_COUTS_TRACK` y
-est. L'onglet « À saisir » du §4.8 n'existe sur aucun écran. **Aucun harnais dédié
-`scripts/verify-couts-ecrans.sh` n'existe encore**, et aucune preuve pgTAP ni d'API n'est propre à
-cette unité. La reprise est l'écran du §4.3.
+**Tranche 4 — l'écran du §4.3, MONTÉ ET PROUVÉ** (décision 477). `webapp/src/app/CoutsBudget.tsx` à
+l'adresse `/tracks/:slugTrack/couts/:idBudget`, hors de `ROUTES` ; l'identité du budget en liste de
+définitions ; **une paire de barres par occurrence** là où l'écran du track les agrège toutes ; la
+liste des lignes — affaire, nature, estimé, réel, auteur — **filtrable par occurrence**, avec
+l'accès à l'affaire ; et le **lien** depuis l'écran du §4.2, posé dans le tableau équivalent et non
+sur la barre `aria-hidden`. Preuves vertes : `couts-ecrans.test.ts` **42 tests** (18 neufs),
+`CoutsBudget.test.tsx` **25 tests**, `CoutsTrack.test.tsx` **16**, `HistogrammeCouts.test.tsx`
+**22**, `e2e/ui/couts-budget.spec.ts` **9 scénarios**, quatre captures OBSERVÉES sous
+`docs/captures/CRM-086/couts-budget-*.jpg`.
+
+**LA MESURE QUE CETTE TRANCHE APPORTE À LA DoD, et qu'aucune preuve unitaire ne pouvait poser** :
+« un budget récurrent est **agrégé** dans la vue du track et **détaillé par occurrence** dans sa
+fiche, les deux vérifiés sur le même jeu de données ». `S1` de `couts-budget.spec.ts` ouvre les deux
+écrans à la suite sur « Publicité 2026 » — une paire de barres 1000/880 sur l'un, deux paires
+900/880 et 100/sans réel sur l'autre — et vérifie que les **totaux coïncident**. Une régression qui
+replierait le détail sur l'agrégat, ou l'inverse, ne se voit qu'en comparant les deux.
+
+**TROIS RÈGLES DE CETTE TRANCHE, ET AUCUNE NE SE DEVINE.** (1) Un budget **clôturé est lu ici**,
+alors que le §4.2 l'exclut de l'histogramme du track : cette exclusion est une règle d'écran, jamais
+d'autorisation, et une assertion garde l'absence de filtre `closed_at` dans la requête. (2) Une
+occurrence **sans aucune ligne garde sa paire de barres**, à zéro : le §4.3 demande « une paire par
+occurrence », pas « par occurrence dépensée ». (3) Une ligne dont l'occurrence n'est pas listée
+**n'est jamais perdue** — l'écarter en silence retrancherait un montant du total, ce que le §4.4
+reproche précisément à un écran de coûts.
+
+**UN DÉFAUT DE LA TRANCHE 2 CORRIGÉ, TROUVÉ EN REGARDANT UNE CAPTURE.** Un `th` est centré par
+défaut et la classe d'alignement du `thead` ne porte que sur ses propres cellules : les libellés du
+corps du tableau équivalent se rendaient centrés, entre un en-tête et un total tous deux alignés à
+gauche, contre le §5.9. Le défaut ne s'est vu qu'avec la période rendue sous le libellé.
+`docs/DESIGN_SYSTEM.md` §5.30 porte la règle pour tout `th scope="row"`, et le §5.32 décrit l'écran
+livré.
+
+**CE QUI RESTE** : UN écran n'est pas monté — le cumul du workspace (§4.5, `/couts`, un groupe de
+barres par track, entrée de barre latérale). Son adresse n'est pas déclarée dans `chemins.ts`, et
+c'est la seule des trois qui doive figurer **dans `ROUTES`** (§4.0). L'onglet « À saisir » du §4.8
+n'existe sur aucun écran. **Aucun harnais dédié `scripts/verify-couts-ecrans.sh` n'existe encore**,
+et aucune preuve pgTAP ni d'API n'est propre à cette unité. La reprise est l'écran du §4.5.
 
 **DoD** : E2E des trois écrans ; captures aux quatre paliers ; **la mention « n lignes sans coût
 réel saisi » est prouvée présente** quand des réels manquent, et absente sinon — c'est la principale
