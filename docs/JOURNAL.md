@@ -22339,3 +22339,53 @@ de fichiers de migration, présence du `notify`, gardes de `runProd.sh`, dépend
 `rest`, couverture du tableau §3 — et non des exécutions sur pile démarrée. Le comportement décrit
 aux points 2 à 5 **n'existe pas encore** : il est porté par l'unité `CRM-087`, et tous les documents
 touchés par ce commit le signalent explicitement comme non livré.
+
+## décision 490 — CRM-087 livrée : `./runProd.sh --migrate`, confirmation d'instantané, notify pgrst
+
+**Session du 2026-08-20, ~18h UTC.** L'unité `CRM-087` créée par la décision 489 est livrée en
+`[~]` : le geste `./runProd.sh --migrate` existe, ses gardes sont éprouvées par
+`scripts/verify-scripts.sh`, et le `migrations-runner` recharge le cache de PostgREST en fin de
+passage réussi. Cinq cases sur huit du backlog sont cochées ; deux restes sont nommés — la preuve
+sur pile réelle (production non provisionnée), et INC-095 (hors périmètre de l'unité).
+
+**Ce qui a été codé.**
+
+- `runProd.sh` accepte `--migrate` et `--instantane-verifie`. Le mode surcharge `APPLY_MIGRATIONS`
+  pour la seule invocation par l'environnement passé à Compose ; le fichier `.env` n'est jamais
+  réécrit ; la garde existante `APPLY_MIGRATIONS=false` du lancement ordinaire est conservée.
+  Le script force `--force-recreate --no-deps migrations-runner` et propage le code de sortie du
+  conteneur via `docker wait`. Un échec journalise les 40 dernières lignes du conteneur et renvoie
+  vers `docs/PROD_MIGRATIONS.md` §6 (retour arrière par instantané).
+
+- La confirmation d'instantané est placée AVANT `require_docker`. Deux raisons : (a) le harnais
+  peut prouver la garde sans démon Docker, ce qui est mesuré ; (b) une fenêtre annoncée qui
+  échouerait faute d'instantané ne doit rien engager sur la pile. Au terminal, la saisie « oui »
+  est demandée ; hors terminal, seul `--instantane-verifie` autorise le geste.
+
+- `supabase/docker/migrations-runner/apply-migrations.sh` émet `notify pgrst, 'reload schema'`
+  après TOUS les fichiers, une seule fois, sous le rôle par défaut `postgres`. La notification
+  n'est jamais transactionnelle ; son échec est journalisé sur stderr sans invalider le passage.
+  Cela ferme le défaut mesuré des 34 migrations sur 52 qui n'émettaient pas cette notification.
+
+**Ce qui a été prouvé, par `scripts/verify-scripts.sh` (108 vérifications, 0 échec, 2 IGNORE
+d'environnement documentées CloudWorker §2.4).** Six contrôles nouveaux : refus hors TTY sans
+confirmation d'instantané ; `.env` inchangé après refus ; refus sur `APPLY_MIGRATIONS=true` sous
+`--migrate` ; refus sur profil dev sous `--migrate` ; émission unique du `notify pgrst` en fin de
+passage réussi ; échec en cours de répertoire qui laisse un code non nul, n'émet aucun notify et
+n'annonce aucun succès. Un contrôle existant a été RÉVISÉ, non retiré : le séquencement des rôles
+attendu par la fixture devient `postgres|supabase_admin|postgres` — le troisième appel est le
+`notify` final. Le nombre de fichiers avec `--single-transaction --file` reste 2.
+
+**Ce qui reste.** La preuve sur pile réelle (« une table de la dernière migration est joignable
+par l'API sans redémarrage ») demande une production provisionnée et n'est pas exécutable dans une
+session ordinaire — elle attend le premier déploiement. INC-095, qui bloque la première migration
+d'une production peuplée, est une entrée du registre en attente d'arbitrage : hors périmètre de
+l'unité. Le refus au terminal (saisie autre que « oui ») est couvert par lecture du code ; ajouter
+une simulation TTY au harnais est une amélioration future, pas un préalable à la livraison.
+
+**Où reprendre.** L'unité `CRM-087` est à `[~]` avec deux restes NAMES. Deux voies utiles à la
+prochaine exécution : soit poser une simulation TTY dans le harnais pour couvrir le refus au
+terminal ; soit passer à la première `[~]` produit du chunk 5 (retomber sur `CRM-060` §12.8, qui
+attend un arbitrage du responsable — voir la décision 488). Aucun instantané réel n'a été pris
+puisqu'aucune production n'est provisionnée : les preuves de la session sont toutes du fixture ou
+du refus sans effet, et la mécanique est prête pour son premier usage réel.
