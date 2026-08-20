@@ -425,7 +425,7 @@ n'aurait aucun lecteur.
 
 - le **bloc de suggestion** dans le panneau de lecture de l'inbox, sur un message non classé qui en
   porte une : l'affaire nommée, la règle écrite en toutes lettres, et **un geste qui l'accepte** ;
-- les deux colonnes `suggested_card_id` et `suggested_at` **demandées** par la lecture d'un message ;
+- la colonne `suggested_card_id` **demandée** par la lecture d'un message — et elle **seule** ;
 - la **boîte du correspondant de démonstration** — un principal Stalwart sur un troisième domaine,
   posé par le provisionnement existant (`docs/SPEC-mail-subsystem.md` §11.4) ;
 - le **quatrième message du seed**, réellement soumis depuis cette boîte et réellement relevé, qui
@@ -498,6 +498,13 @@ telles quelles.
 **Aucune requête n'est faite quand il n'y a rien à résoudre** : un message classé, ou un message non
 classé sans suggestion, ne déclenche aucune lecture supplémentaire. C'est la règle du §13.4 —
 « jamais sur une fiche qui n'en a pas besoin » — tenue sans changement.
+
+**`suggested_at` N'EST PAS DEMANDÉE, ET C'EST UNE RÈGLE PLUTÔT QU'UN OUBLI — point précisé à la
+LIVRAISON.** La rédaction d'avant-code de cette sous-tranche annonçait « les deux colonnes » ;
+écrire la surface a montré que la seconde n'a **aucun consommateur** : le §8.8.5 interdit de
+l'afficher, et rien d'autre ne s'en sert. Demander une colonne qu'aucune surface ne rend laisserait
+croire qu'elle sert, et le premier lecteur du code chercherait où. Le contrat est donc plus étroit
+que ce qu'il annonçait : **une** colonne, et le §8.8.1 est corrigé en conséquence.
 
 #### 8.8.4 Les quatre états du bloc, et aucun ne se confond avec un autre
 
@@ -669,7 +676,8 @@ Mesuré sur le seed du 2026-08-20, ou vérifiable sur lui.
 #### 8.8.12 Definition of Done — sous-tranche 2 bis
 
 - le bloc rendu selon le §8.8.2 et le §8.8.5, avec ses quatre états ;
-- les deux colonnes demandées par `COLONNES_MESSAGE`, et non par `COLONNES_LISTE` ;
+- la colonne `suggested_card_id` demandée par `COLONNES_MESSAGE`, et non par `COLONNES_LISTE` ;
+  `suggested_at` n'est **pas** demandée (§8.8.3, dernier point) ;
 - le geste appelant `classify_message` **sans nouveau contrat**, avec les quatre refus existants ;
 - la boîte du correspondant posée par `stalwart/provision.sh` et relue par lui ;
 - le quatrième message du seed, soumis et relevé pour de bon, avec sa garde de suggestion ;
