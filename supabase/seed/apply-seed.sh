@@ -2218,15 +2218,19 @@ psql_seed -c "update public.cards set entered_step_at = now()
               where id::text like '5eed%' and archived_at is null and deleted_at is null;" >/dev/null
 info "Ancienneté : les cards seedées repartent à zéro dans leur étape — le pipeline reste sain"
 
-# --- 8 nonies. Deux messages RÉELLEMENT reçus — docs/SPEC-seed.md §2.19, CRM-057 ---------------
+# --- 8 nonies. Quatre messages RÉELLEMENT reçus — docs/SPEC-seed.md §2.19, CRM-057 -------------
+# @spec CRM-060 (docs/BACKLOG.md) — sous-tranche 2 bis : le quatrième message, qui déclenche la
+#       règle 3 du classement (docs/SPEC-contacts.md §8.8.8, docs/SPEC-mail-subsystem.md §11.4)
 #
 # L'INBOX GLOBALE NE SE DÉMONTRE PAS SUR UN ÉCRAN VIDE, et CLAUDE.md §8 interdit d'y suppléer par
 # une trace fabriquée : « un e-mail de démonstration doit être envoyé par le véritable mécanisme
 # d'envoi local ». Le seed n'écrit donc pas un message : il en FAIT ARRIVER un.
 #
-# DEUX MESSAGES, DEUX ÉTATS. L'un vise l'adresse d'une card et sera classé par la règle 1 du §4.4 ;
-# l'autre ne vise que la boîte système et restera NON CLASSÉ. Le premier démontre la double
-# visibilité — dans la card et dans l'inbox —, le second démontre le panneau « Non classés ».
+# QUATRE MESSAGES, ET CHACUN EXERCE UNE RÈGLE. Le premier vise l'adresse d'une card et sera classé
+# par la règle 1 du §4.4 ; le deuxième ne vise que la boîte système et restera NON CLASSÉ ; le
+# troisième répond au premier et forme un FIL ; le quatrième est expédié par un CONTACT du
+# workspace et arrive non classé ET SUGGÉRÉ — c'est la règle 3, et sans lui le bloc du §5.4 ter du
+# design system n'aurait jamais de quoi se rendre.
 #
 # LES `Message-ID` SONT FIXES : le dédoublonnage du §4.2 fait le reste, un rejeu n'ajoute rien, et
 # les captures peuvent dépendre de ces deux objets.
@@ -2243,6 +2247,19 @@ command -v docker >/dev/null 2>&1 || die "docker est introuvable : l'envoi réel
 
 MSGID_CLASSE='seed-inbox-classe@p2enjoy.test'
 MSGID_NON_CLASSE='seed-inbox-non-classe@p2enjoy.test'
+# LE QUATRIÈME MESSAGE EXISTE POUR LA RÈGLE 3 — CRM-060 sous-tranche 2 bis. Il est le SEUL à ne pas
+# partir d'une boîte du produit : la règle 3 exige un expéditeur reconnu comme CONTACT du workspace
+# (docs/SPEC-contacts.md §8.1), et l'adresse de Léo Marchand n'appartient à aucun compte du CRM.
+# Sa boîte est provisionnée par stalwart/provision.sh (docs/SPEC-mail-subsystem.md §11.4).
+MSGID_SUGGERE='seed-inbox-suggere@sogexia.example'
+CORRESPONDANT=$(env_get "$ENV_FILE" MAIL_DEV_CORRESPONDENT_ADDRESS)
+[ -n "$CORRESPONDANT" ] || die "MAIL_DEV_CORRESPONDENT_ADDRESS est absente : le message de
+        démonstration de la règle 3 ne peut pas être expédié, et la suggestion de classement
+        n'aurait aucun écran où se montrer (docs/SPEC-contacts.md §8.8.8)."
+# L'AFFAIRE QUE LA RÈGLE 3 DOIT DÉSIGNER, et elle n'est pas choisie ici : c'est la seule affaire
+# ACTIVE de Léo Marchand (§11, garde « exactement UNE card »). Le seed la nomme pour VÉRIFIER la
+# suggestion, jamais pour l'écrire — c'est classer_message_automatiquement qui écrit, ou personne.
+CARD_SUGGEREE=5eed0000-0000-4000-8000-0000000000c2
 # LE TROISIÈME MESSAGE EST UNE RÉPONSE, ET IL EXISTE POUR LE GROUPEMENT — CRM-081 tranche 2 f,
 # docs/SPEC-cards.md §16.16.8. MESURÉ le 2026-08-19 : les deux messages ci-dessus portent des clés
 # de fil DISTINCTES, donc deux fils d'un message chacun — l'inbox groupée aurait été identique à
@@ -2280,18 +2297,18 @@ except urllib.error.HTTPError as erreur:
 }
 
 messages_seedes() {
-	curl -s "$API/rest/v1/mail_messages?select=rfc822_message_id&rfc822_message_id=in.(%3C$MSGID_CLASSE%3E,%3C$MSGID_NON_CLASSE%3E,%3C$MSGID_REPONSE%3E)" \
+	curl -s "$API/rest/v1/mail_messages?select=rfc822_message_id&rfc822_message_id=in.(%3C$MSGID_CLASSE%3E,%3C$MSGID_NON_CLASSE%3E,%3C$MSGID_REPONSE%3E,%3C$MSGID_SUGGERE%3E)" \
 		-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length'
 }
 
-if [ "$(messages_seedes)" != 3 ]; then
+if [ "$(messages_seedes)" != 4 ]; then
 	releve=$(relever_boite)
 	echo "$releve" | jq -e '.account_id? != null' >/dev/null 2>&1 \
 		|| die "la relève n'a rien rendu d'exploitable : « $releve ». Le service mail-sync
         est-il démarré ? (./runDev.sh)"
 fi
 
-if [ "$(messages_seedes)" != 3 ]; then
+if [ "$(messages_seedes)" != 4 ]; then
 	# LA SOUMISSION AUTHENTIFIÉE, seul chemin d'un message légitime (§15.4). Elle part du conteneur
 	# mail-sync parce qu'il est sur le réseau Compose et joint `stalwart` par son nom ; le port
 	# publié sur l'hôte servirait aussi, mais un seul mécanisme vaut mieux que deux.
@@ -2310,13 +2327,15 @@ if [ "$(messages_seedes)" != 3 ]; then
 		-e MSGID_CLASSE="$MSGID_CLASSE" \
 		-e MSGID_NON_CLASSE="$MSGID_NON_CLASSE" \
 		-e MSGID_REPONSE="$MSGID_REPONSE" \
+		-e MSGID_SUGGERE="$MSGID_SUGGERE" \
+		-e CORRESPONDANT="$CORRESPONDANT" \
 		mail-sync python -c '
 import os, smtplib
 from email.message import EmailMessage
 
-def composer(objet, destinataire, identifiant, corps, repond_a=None):
+def composer(objet, destinataire, identifiant, corps, repond_a=None, expediteur="bizdev@p2enjoy.test"):
     message = EmailMessage()
-    message["From"] = "bizdev@p2enjoy.test"
+    message["From"] = expediteur
     message["To"] = destinataire
     message["Subject"] = objet
     message["Message-ID"] = "<" + identifiant + ">"
@@ -2342,12 +2361,29 @@ messages = [
              "refonte.\n\nBien a vous,\nSolène Ferrand",
              repond_a=os.environ["MSGID_CLASSE"]),
 ]
+# LE QUATRIÈME PART D UNE AUTRE BOÎTE, ET C EST UNE SECONDE SESSION — CRM-060 sous-tranche 2 bis.
+# MESURÉ : un principal n expédie que depuis SES propres adresses, et le serveur refuse tout autre
+# From en « 501 5.5.4 You are not allowed to send from this address. ». Ouvrir une seconde session
+# authentifiée est donc le SEUL chemin honnête : le From ne ment pas, et rien n est forgé.
+suggere = composer("Point d’avancement — migration ERP", os.environ["DEST_SYSTEME"],
+                   os.environ["MSGID_SUGGERE"],
+                   "Bonjour,\n\nOù en sommes-nous du chantier de migration ? Le comité se réunit "
+                   "vendredi et j’aimerais lui présenter un point d’étape."
+                   "\n\nBien cordialement,\nLéo Marchand",
+                   expediteur=os.environ["CORRESPONDANT"])
+
 session = smtplib.SMTP("stalwart", 587, timeout=60)
 session.ehlo()
 session.login("bizdev@p2enjoy.test", os.environ["MDP"])
 for message in messages:
     session.send_message(message)
 session.quit()
+
+session_correspondant = smtplib.SMTP("stalwart", 587, timeout=60)
+session_correspondant.ehlo()
+session_correspondant.login(os.environ["CORRESPONDANT"], os.environ["MDP"])
+session_correspondant.send_message(suggere)
+session_correspondant.quit()
 print("envoyes")
 ' 2>&1) || die "l envoi des messages de démonstration a échoué : « $envoi »"
 	[ "${envoi##*$'\n'}" = "envoyes" ] || die "l envoi des messages de démonstration n a rien
@@ -2357,12 +2393,12 @@ print("envoyes")
 	# valent mieux qu'un délai fixe, qui serait soit trop court, soit du temps perdu.
 	for _tentative in 1 2 3 4 5; do
 		relever_boite >/dev/null
-		[ "$(messages_seedes)" = 3 ] && break
+		[ "$(messages_seedes)" = 4 ] && break
 		sleep 3
 	done
 fi
 
-[ "$(messages_seedes)" = 3 ] || die "les trois messages de démonstration ne sont pas arrivés en base
+[ "$(messages_seedes)" = 4 ] || die "les quatre messages de démonstration ne sont pas arrivés en base
         après relève : l inbox globale serait vide, et le §2.19 ne serait pas tenu."
 
 etat_courrier=$(curl -s "$API/rest/v1/mail_messages?select=rfc822_message_id,classification,card_id&rfc822_message_id=in.(%3C$MSGID_CLASSE%3E,%3C$MSGID_NON_CLASSE%3E)" \
@@ -2398,8 +2434,28 @@ fils_card=$(psql_seed -c "select count(distinct app.cle_fil(references_ids, rfc8
 [ "$fils_card" = 1 ] || die "la card ${CARD_COURRIER: -2} porte $fils_card fils au lieu d un seul :
         le groupement du §16.16.3 n aurait rien à grouper."
 
-info "Courrier : 3 messages réellement reçus — deux classés sur ${CARD_COURRIER: -2} par la règle 1"
-info "          et réunis en UN SEUL fil, un non classé pour le panneau de tri (§16.16.8)."
+# LA SUGGESTION EST VÉRIFIÉE, ET NON SUPPOSÉE — CRM-060 sous-tranche 2 bis,
+# docs/SPEC-contacts.md §8.8.8. Le seed est un CONTRAT, et celui-ci promet un message non classé
+# PORTEUR d un indice : sans lui, le bloc de suggestion du §5.4 ter n a rien à rendre, aucune
+# capture ne montre la fonctionnalité, et le parcours d interface n a pas de sujet. Les trois
+# valeurs sont relues ensemble parce qu elles se tiennent : une suggestion ne vit que sur un
+# message non classé (§8.3), et un message classé par erreur aurait perdu son indice sans bruit.
+etat_suggere=$(curl -s "$API/rest/v1/mail_messages?select=classification,card_id,suggested_card_id&rfc822_message_id=eq.%3C$MSGID_SUGGERE%3E" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY")
+classement_suggere=$(echo "$etat_suggere" | jq -r '.[0].classification // "absent"')
+card_suggeree=$(echo "$etat_suggere" | jq -r '.[0].suggested_card_id // "aucune"')
+[ "$classement_suggere" = unclassified ] || die "le message du correspondant est « $classement_suggere »
+        au lieu de « unclassified » : la règle 3 SUGGÈRE, elle ne classe pas (docs/SPEC-contacts.md
+        §8.1). Le bloc de suggestion ne se rendrait sur aucun message."
+[ "$card_suggeree" = "$CARD_SUGGEREE" ] || die "le message du correspondant suggère « $card_suggeree »
+        au lieu de « $CARD_SUGGEREE » : la règle 3 ne s est pas déclenchée, ou Léo Marchand n est
+        plus rattaché à EXACTEMENT UNE affaire active (§11). La boîte
+        « $CORRESPONDANT » est-elle provisionnée, et son adresse est-elle bien celle du contact
+        seedé ? (stalwart/provision.sh, docs/SPEC-mail-subsystem.md §11.4)"
+
+info "Courrier : 4 messages réellement reçus — deux classés sur ${CARD_COURRIER: -2} par la règle 1"
+info "          et réunis en UN SEUL fil, un non classé pour le panneau de tri (§16.16.8),"
+info "          et un non classé MAIS SUGGÉRÉ vers ${CARD_SUGGEREE: -2} par la règle 3 (CRM-060)."
 info "          Rien n a été forgé en base (§2.19)"
 
 total_evenements=$(curl -s "$API/rest/v1/card_events?select=id" \

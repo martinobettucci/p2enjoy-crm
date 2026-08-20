@@ -275,6 +275,10 @@ services:
       STALWART_MAILBOX_PASSWORD: ${STALWART_MAILBOX_PASSWORD}
       CRM_INBOUND_DOMAIN: ${CRM_INBOUND_DOMAIN}
       MAIL_DEV_PERSONAL_DOMAIN: ${MAIL_DEV_PERSONAL_DOMAIN}
+      # La boîte du CORRESPONDANT de démonstration — CRM-060 sous-tranche 2 bis,
+      # docs/SPEC-mail-subsystem.md §11.4. Elle n'appartient pas au produit : elle existe pour que
+      # la règle 3 du classement ait un expéditeur reconnu comme contact.
+      MAIL_DEV_CORRESPONDENT_ADDRESS: ${MAIL_DEV_CORRESPONDENT_ADDRESS}
     volumes:
       - ./stalwart/provision.sh:/provision.sh:ro
     entrypoint: ["/bin/sh", "/provision.sh"]

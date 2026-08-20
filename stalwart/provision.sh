@@ -16,8 +16,12 @@
 # une valeur modifiée à la main. Il ne détruit jamais un message : une boîte existante est mise à
 # jour, jamais recréée.
 #
+# @spec CRM-060 (docs/BACKLOG.md) — sous-tranche 2 bis : la boîte du correspondant de démonstration,
+#       docs/SPEC-mail-subsystem.md §11.4, docs/SPEC-contacts.md §8.8.8
+#
 # Variables attendues : STALWART_API, STALWART_ADMIN_USER, STALWART_ADMIN_PASSWORD,
-# CRM_INBOUND_DOMAIN, MAIL_DEV_PERSONAL_DOMAIN, STALWART_MAILBOX_PASSWORD.
+# CRM_INBOUND_DOMAIN, MAIL_DEV_PERSONAL_DOMAIN, STALWART_MAILBOX_PASSWORD,
+# MAIL_DEV_CORRESPONDENT_ADDRESS.
 
 set -eu
 
@@ -26,6 +30,14 @@ AUTH="${STALWART_ADMIN_USER:?}:${STALWART_ADMIN_PASSWORD:?}"
 DOMAINE_CARDS=${CRM_INBOUND_DOMAIN:?CRM_INBOUND_DOMAIN manquante}
 DOMAINE_PERSO=${MAIL_DEV_PERSONAL_DOMAIN:?MAIL_DEV_PERSONAL_DOMAIN manquante}
 MDP=${STALWART_MAILBOX_PASSWORD:?STALWART_MAILBOX_PASSWORD manquante}
+CORRESPONDANT=${MAIL_DEV_CORRESPONDENT_ADDRESS:?MAIL_DEV_CORRESPONDENT_ADDRESS manquante}
+
+# Le domaine du correspondant est DÉRIVÉ de son adresse, jamais déclaré deux fois : deux valeurs
+# pour un même fait divergeraient au premier changement.
+DOMAINE_CORRESPONDANT=${CORRESPONDANT#*@}
+[ "$DOMAINE_CORRESPONDANT" != "$CORRESPONDANT" ] \
+	|| { printf 'ERREUR MAIL_DEV_CORRESPONDENT_ADDRESS « %s » ne porte pas de domaine.\n' \
+		"$CORRESPONDANT" >&2; exit 1; }
 
 dire() { printf '  %s\n' "$*"; }
 echec() { printf 'ERREUR %s\n' "$*" >&2; exit 1; }
@@ -131,6 +143,11 @@ domaine() {
 
 domaine "$DOMAINE_CARDS"
 domaine "$DOMAINE_PERSO"
+# LE TROISIÈME DOMAINE N'EST PAS CELUI DU PRODUIT : c'est celui du CORRESPONDANT, l'extérieur que
+# cette pile n'avait pas (docs/SPEC-mail-subsystem.md §11.4). Sans lui, un principal ne pourrait pas
+# expédier depuis l'adresse d'un contact du workspace — le serveur refuse tout `From` étranger au
+# principal en `501 5.5.4` —, et la règle 3 du classement n'aurait jamais de quoi se déclencher.
+domaine "$DOMAINE_CORRESPONDANT"
 
 # --- 4. Boîtes ----------------------------------------------------------------------------------
 # `roles: ["user"]` est OBLIGATOIRE. Sans lui, le compte valide ses identifiants — le serveur écrit
@@ -183,10 +200,20 @@ boite "admin@$DOMAINE_PERSO" 'Camille Aubert' "[\"admin@$DOMAINE_PERSO\"]"
 boite "bizdev@$DOMAINE_PERSO" 'Driss Lemoine' \
 	"[\"bizdev@$DOMAINE_PERSO\",\"contact@$DOMAINE_PERSO\"]"
 
+# LA QUATRIÈME BOÎTE N'EST PAS UNE BOÎTE DU WORKSPACE — CRM-060 sous-tranche 2 bis. C'est celle du
+# correspondant de démonstration, et elle n'existe que pour ÉMETTRE : aucune ligne de
+# `mail_inbound_accounts` ne la désigne, et le produit ne relève jamais dedans (§11.4). L'y inscrire
+# en ferait une boîte du workspace, ce que le correspondant n'est pas.
+#
+# Elle porte le même `roles: ["user"]` que les trois autres, et pour la même raison mesurée : sans
+# lui, le compte valide ses identifiants puis se voit refuser la commande sans rien renvoyer au
+# client (décision 235) — donc sans pouvoir soumettre le message du seed.
+boite "$CORRESPONDANT" 'Leo Marchand - correspondant de demonstration' "[\"$CORRESPONDANT\"]"
+
 # --- 5. Contrôle de sortie ----------------------------------------------------------------------
 # Le script ne se déclare pas réussi parce qu'il n'a pas échoué : il relit ce qu'il a écrit.
 
-for attendue in "systeme@$DOMAINE_CARDS" "admin@$DOMAINE_PERSO" "bizdev@$DOMAINE_PERSO"; do
+for attendue in "systeme@$DOMAINE_CARDS" "admin@$DOMAINE_PERSO" "bizdev@$DOMAINE_PERSO" "$CORRESPONDANT"; do
 	lue=$(appel GET "/api/principal/$attendue")
 	case "$lue" in
 		*'"roles":["user"]'*) : ;;
@@ -194,4 +221,4 @@ for attendue in "systeme@$DOMAINE_CARDS" "admin@$DOMAINE_PERSO" "bizdev@$DOMAINE
 	esac
 done
 
-printf 'Trois boîtes provisionnées et relues.\n'
+printf 'Quatre boîtes provisionnées et relues, dont celle du correspondant %s.\n' "$CORRESPONDANT"

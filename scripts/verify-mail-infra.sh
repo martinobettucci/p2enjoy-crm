@@ -78,7 +78,8 @@ lire_env() {
 }
 
 # Les dix variables que l'unité introduit, et le port du conteneur qu'elles publient lorsqu'elles
-# en publient un (docs/SPEC-mail-subsystem.md §11.7 et §11.8).
+# en publient un (docs/SPEC-mail-subsystem.md §11.7 et §11.8) — plus l'onzième, ajoutée par
+# `CRM-060` sous-tranche 2 bis et commentée à sa place dans la liste.
 VARIABLES=(
 	STALWART_IMAP_PORT
 	STALWART_SMTP_PORT
@@ -90,6 +91,11 @@ VARIABLES=(
 	MAIL_DEV_PERSONAL_DOMAIN
 	ROUNDCUBE_PORT
 	CLAMAV_PORT
+	# ONZIÈME, ET ELLE N'EST PAS DE `CRM-050` : `CRM-060` sous-tranche 2 bis l'introduit pour la
+	# boîte du correspondant de démonstration (docs/SPEC-mail-subsystem.md §11.4). Elle est
+	# vérifiée ICI parce que c'est ce provisionnement-ci qui la consomme, et qu'une variable
+	# gouvernant une boîte sans harnais qui la réclame disparaîtrait sans bruit.
+	MAIL_DEV_CORRESPONDENT_ADDRESS
 )
 
 # Fichiers livrés par l'unité, et le marqueur de traçabilité attendu (CLAUDE.md §5).
@@ -384,7 +390,7 @@ else
 	fail "p2enjoy-stalwart-init n'a pas abouti (code de sortie : $code_init)"
 fi
 
-if docker logs p2enjoy-stalwart-init 2>&1 | grep -q 'Trois boîtes provisionnées et relues'; then
+if docker logs p2enjoy-stalwart-init 2>&1 | grep -q 'Quatre boîtes provisionnées et relues'; then
 	ok "le provisionnement a relu ce qu'il a écrit"
 else
 	fail "le provisionnement n'a pas relu ce qu'il a écrit"
@@ -434,7 +440,13 @@ titre "8. Domaines et boîtes provisionnés"
 API="http://$(lire_env DEV_BIND_ADDRESS):$(lire_env STALWART_ADMIN_PORT)"
 ADMIN="$(lire_env STALWART_ADMIN_USER):$(lire_env STALWART_ADMIN_PASSWORD)"
 BOITE_SYSTEME="systeme@$DOMAINE_ENV"
-BOITES=("$BOITE_SYSTEME" "admin@$DOMAINE_PERSO" "bizdev@$DOMAINE_PERSO")
+# LA QUATRIÈME BOÎTE N'EST PAS UNE BOÎTE DU WORKSPACE — `CRM-060` sous-tranche 2 bis,
+# docs/SPEC-mail-subsystem.md §11.4. C'est celle du correspondant de démonstration, qui n'existe
+# que pour ÉMETTRE ; elle est vérifiée comme les trois autres, et une famille dédiée plus bas
+# constate qu'elle ne devient PAS un compte entrant du produit.
+CORRESPONDANT=$(lire_env MAIL_DEV_CORRESPONDENT_ADDRESS)
+DOMAINE_CORRESPONDANT=${CORRESPONDANT#*@}
+BOITES=("$BOITE_SYSTEME" "admin@$DOMAINE_PERSO" "bizdev@$DOMAINE_PERSO" "$CORRESPONDANT")
 
 api() { curl -sS --noproxy '*' -u "$ADMIN" "$API$1"; }
 
@@ -462,7 +474,7 @@ else
 	fail "l'API de gestion rend $code_anonyme à une requête anonyme, 401 attendu"
 fi
 
-for domaine in "$DOMAINE_ENV" "$DOMAINE_PERSO"; do
+for domaine in "$DOMAINE_ENV" "$DOMAINE_PERSO" "$DOMAINE_CORRESPONDANT"; do
 	if api "/api/principal?types=domain&fields=name" | grep -q "\"$domaine\""; then
 		ok "le domaine $domaine est déclaré"
 	else
@@ -483,6 +495,22 @@ if api "/api/principal/$BOITE_SYSTEME" | grep -q "\"@$DOMAINE_ENV\""; then
 	ok "la boîte système porte le catch-all « @$DOMAINE_ENV »"
 else
 	fail "la boîte système ne porte pas le catch-all « @$DOMAINE_ENV »"
+fi
+
+# LE CORRESPONDANT N'EST PAS UN COMPTE ENTRANT DU PRODUIT — `CRM-060` sous-tranche 2 bis. Le
+# CRM ne relève jamais dans sa boîte ; l'y inscrire en ferait une boîte du workspace, ce qu'il
+# n'est pas (docs/SPEC-mail-subsystem.md §11.4). Le contrôle est NON COMPLAISANT : il compte les
+# lignes, il ne se contente pas de l'absence d'erreur.
+if [ "$(etat_conteneur "$DB_CONTAINER")" = running ]; then
+	comptes_correspondant=$(psql_db -c "select count(*) from mail_inbound_accounts
+	                                    where imap_username = '$CORRESPONDANT'" | head -1 | tr -d '\r ')
+	if [ "$comptes_correspondant" = 0 ]; then
+		ok "la boîte du correspondant n'est pas un compte entrant du produit"
+	else
+		fail "la boîte du correspondant est déclarée comme compte entrant ($comptes_correspondant ligne(s)) : le CRM relèverait dans une boîte qui n'est pas la sienne"
+	fi
+else
+	fail "$DB_CONTAINER ne tourne pas : le compte entrant du correspondant ne peut pas être écarté"
 fi
 
 # Farida Nowak lit ; elle ne correspond pas (docs/JOURNAL.md décision 239).

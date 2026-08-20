@@ -228,6 +228,7 @@ MAIL_SYNC_INTERNAL_TOKEN:alea:32
 MAIL_SYNC_LOG_LEVEL:gabarit
 MAIL_SYNC_IMAP_TIMEOUT_SECONDS:gabarit
 MAIL_SYNC_SMTP_TIMEOUT_SECONDS:gabarit
+MAIL_DEV_CORRESPONDENT_ADDRESS:gabarit
 "
 
 # Complète un `.env` amorcé **avant** l'unité qui a introduit une variable. Sans cela, toute unité
