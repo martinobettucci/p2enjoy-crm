@@ -22244,3 +22244,98 @@ produit livrable étant `CRM-060` §12.8 (fil unifié pour les rattachements de 
 `AFTER INSERT/DELETE` sur `card_contacts`) — mais elle demande d'abord un arbitrage du responsable
 sur ce que le fil doit rendre pour ces trois gestes.
 
+## décision 489 — la production migrera par le runner, sur geste explicite, et le retour arrière est l'instantané de la VM
+
+**Le problème, posé par le responsable le 2026-08-20.** Le contrat de déploiement actuel demande à
+un humain d'appliquer chaque migration à la main, fichier par fichier, `docker exec … psql` par
+`docker exec … psql`. Le dépôt en porte **52**. Ce geste ne passe pas à l'échelle : à chaque
+livraison, l'exploitant devrait relire un tableau, en extraire le delta depuis la dernière ligne
+appliquée, et rejouer une commande par fichier sans autre filet que son attention. Le responsable
+tranche : **le `migrations-runner` doit pouvoir migrer la production**, au relancement, derrière un
+drapeau ou une variable d'environnement explicite. Et le retour arrière n'est plus l'affaire du SQL :
+la production prend des **instantanés de machine virtuelle complets**, et une reprise consiste à
+restaurer le point de contrôle du système de fichiers.
+
+**Ce que le dépôt fait aujourd'hui, MESURÉ et non supposé.**
+
+- `supabase/docker/migrations-runner/apply-migrations.sh` rejoue **l'intégralité** de
+  `supabase/migrations/*.sql` en ordre lexicographique, une transaction par fichier,
+  `ON_ERROR_STOP=1`, **sans aucun registre** des migrations déjà appliquées. C'est la décision 20 :
+  pas de table de suivi, mais des migrations rejouables.
+- `runProd.sh` **refuse de démarrer** tant que `APPLY_MIGRATIONS` ne vaut pas `false`. Le conteneur
+  prend alors sa sortie anticipée, renvoie vers `docs/PROD_MIGRATIONS.md` et se termine en `0` — ce
+  qui laisse `rest` démarrer, celui-ci dépendant de `service_completed_successfully`.
+- **18 migrations sur 52 émettent `notify pgrst, 'reload schema'` ; les 34 autres non.** En
+  développement, c'est sans effet : `rest` ne démarre qu'après la fin du runner, et lit donc un
+  schéma déjà à jour. En production, où les migrations sont appliquées à la main **sur une pile déjà
+  en marche**, PostgREST conserve son cache : une table neuve créée par l'une des 34 répond `404`
+  jusqu'au prochain redémarrage. Le contrat de déploiement ne mentionne nulle part cette étape.
+  C'est un défaut du chemin manuel, trouvé en le documentant, et il disparaît avec le chemin runner.
+- Le tableau du §3 décrit **50** des 52 migrations. Sa ligne « 31 à 33 » déclare elle-même que trois
+  d'entre elles ne sont décrites par aucune ligne (INC-095) et qu'il ne faut pas les appliquer tant
+  que la dérive n'est pas résorbée.
+- **Le rejeu sur base peuplée a déjà mordu une fois**, et c'est l'argument le plus fort du dossier :
+  cinq migrations réinstallaient la contrainte de vocabulaire de `public.card_events` avec la liste
+  de leur époque, si bien qu'une base portant `mail_received` ou `snoozed` faisait **échouer le
+  démarrage de la pile**. Invisible sur base neuve. Levé le 2026-08-18 (INC-144, décision 431).
+
+**Ce qui a été écarté, et pourquoi c'est écrit plutôt que tu.**
+
+- **Une table de registre (`schema_migrations`).** C'est le réflexe de l'industrie, et il est ici
+  refusé : les 52 migrations du dépôt sont écrites pour être rejouables, la pile de développement le
+  prouve à **chaque** `./runDev.sh` sur une base seedée, et introduire un registre ferait diverger
+  les deux environnements — rejeu intégral en développement, application sélective en production.
+  Deux chemins, donc un seul éprouvé. La décision 20 tient.
+- **`APPLY_MIGRATIONS=true` dans le `.env` de production.** Refusé. La valeur y est **ambiante** :
+  un redémarrage d'hôte, un `docker compose up -d` visant un seul service, une reprise après panne
+  appliqueraient alors le répertoire sans que personne ne l'ait décidé, et sans instantané préalable.
+  La migration doit être un **geste**, pas un état.
+
+**La décision.**
+
+1. `APPLY_MIGRATIONS=false` **reste l'invariant du fichier d'environnement de production**, et la
+   garde de `runProd.sh` qui l'exige est conservée telle quelle. Un lancement ordinaire, une reprise
+   après panne, un redéploiement de service ne migrent **jamais**.
+2. Un geste explicite est ajouté : **`./runProd.sh --migrate`**. Il surcharge `APPLY_MIGRATIONS`
+   **pour cette seule invocation**, par l'environnement passé à Compose, et **n'écrit jamais** dans
+   `.env` — l'état du fichier ne doit pas garder trace d'une décision ponctuelle.
+3. `--migrate` **exige la confirmation que l'instantané de VM a été pris** : `oui` demandé au
+   terminal, ou `--instantane-verifie` hors terminal interactif. Motif : l'instantané est désormais
+   le seul filet, et un filet dont personne ne vérifie l'existence n'en est pas un.
+4. Le runner **émet `notify pgrst, 'reload schema'` après un passage réussi**, une fois, à la fin.
+   Cela ferme le défaut des 34 migrations muettes pour **tous** les chemins, et rend le rechargement
+   du cache indépendant de ce que chaque migration a pensé à écrire.
+5. `--migrate` **force la recréation de `migrations-runner`** : c'est un conteneur à usage unique
+   déjà sorti, et son réamorçage ne doit pas dépendre du fait que Compose juge sa configuration
+   changée.
+6. **Le retour arrière de production est la restauration de l'instantané de VM.** Les colonnes
+   « retour arrière » du §3 deviennent documentaires : elles décrivent l'annulation chirurgicale
+   d'une migration, utile quand la perte de la fenêtre est inacceptable, et non plus la procédure
+   nominale.
+
+**Ce que la décision coûte, et qui doit le savoir.** Restaurer un point de contrôle du système de
+fichiers **détruit tout ce qui a été écrit depuis l'instantané** : courrier ingéré, cards déplacées,
+commentaires postés. `--migrate` est donc une **fenêtre de maintenance** — instantané, migration,
+vérifications, réouverture — et non un geste à passer sur une production ouverte aux utilisateurs.
+Le dire ici est le prix de la simplicité choisie : l'instantané rend le retour arrière trivial pour
+l'exploitant, et coûteux pour les données de la fenêtre.
+
+**Trois conséquences que la nouvelle procédure ne supprime pas.**
+
+- **L'idempotence de chaque migration devient une propriété de sûreté de production**, et non plus
+  un confort de développement : la production rejouera les 52 fichiers à chaque migration. INC-144
+  a montré le mode d'échec exact que cela expose.
+- **Les contrôles de données préalables restent obligatoires**, mais changent de place : ils ne
+  peuvent plus être intercalés entre deux fichiers, le runner appliquant tout d'une traite. Ils
+  passent **avant** le geste — notamment le `NOT NULL` de la migration 8 et la restriction d'accès
+  de la migration 10, qui devient opposable au moment où elle s'applique.
+- **INC-095 reste bloquante avant la première migration d'une production peuplée** : le rejeu étant
+  intégral, les migrations 31 à 33 seront appliquées qu'on les ait documentées ou non. Ne pas les
+  décrire ne les empêche plus ; cela empêche seulement d'en juger le risque.
+
+**Vérifications réalisées.** Aucune : cette entrée est une **décision persistée avant toute ligne
+de code** (`CLAUDE.md` §5). Les faits cités ci-dessus sont des mesures de lecture du dépôt — nombre
+de fichiers de migration, présence du `notify`, gardes de `runProd.sh`, dépendance Compose de
+`rest`, couverture du tableau §3 — et non des exécutions sur pile démarrée. Le comportement décrit
+aux points 2 à 5 **n'existe pas encore** : il est porté par l'unité `CRM-087`, et tous les documents
+touchés par ce commit le signalent explicitement comme non livré.

@@ -239,9 +239,21 @@ explicite et refuse tout autre marqueur. `0018_pg_cron.sql` est l'unique cas act
 les ACL de l'extension sous leur propriétaire, puis exécute `SET ROLE postgres` avant de créer les
 objets applicatifs et le job. `scripts/verify-scripts.sh` éprouve le choix et son refus.
 
-En production, ce chemin est **désactivé** par `APPLY_MIGRATIONS=false` : les migrations y sont
-appliquées sur instruction humaine explicite, selon `docs/PROD_MIGRATIONS.md`. Le conteneur se
-contente alors de renvoyer vers ce document et se termine avec le code `0`.
+En production, ce chemin est **désactivé par défaut** par `APPLY_MIGRATIONS=false` : le conteneur se
+contente de renvoyer vers `docs/PROD_MIGRATIONS.md` et se termine avec le code `0`. **Décision 489,
+2026-08-20** : il devient activable pour la durée d'une **fenêtre de maintenance**, par le geste
+explicite `./runProd.sh --migrate`, qui surcharge la variable pour cette seule invocation et ne
+réécrit jamais le fichier d'environnement. L'invariant reste donc qu'un lancement ordinaire, un
+redémarrage d'hôte ou le redéploiement d'un service **ne migrent rien**. Le geste est porté par
+l'unité `CRM-087` et **n'est pas encore livré** ; jusque-là, la voie manuelle du §3.3 du contrat
+de déploiement est la seule.
+
+**Le rechargement du cache de schéma de PostgREST appartient au runner, et non aux migrations.**
+MESURÉ le 2026-08-20 : 18 des 52 migrations se terminent par `notify pgrst, 'reload schema'`, les 34
+autres non. L'écart est invisible en développement — `rest` attend la fin du runner — et visible en
+production dès qu'on applique sur une pile en marche, une table neuve répondant `404` jusqu'au
+redémarrage suivant. `CRM-087` fait émettre la notification **une fois, par le runner, après un
+passage réussi** : la propriété cesse alors de dépendre de ce que chaque migration a pensé à écrire.
 
 **Toute migration du dépôt est idempotente.** Le conteneur ne tient aucun registre des migrations
 déjà appliquées : il rejoue l'intégralité du répertoire à chaque démarrage de la pile. Une
@@ -753,8 +765,14 @@ Le stockage vise **S3 dans les deux environnements** — MinIO en développement
 production. Le repli sur système de fichiers n'est pas utilisé, afin que les deux environnements
 empruntent le même chemin de code (`docs/JOURNAL.md`, décision 13).
 
-Les migrations de production ne sont **jamais** appliquées automatiquement : elles sont listées
-dans `docs/PROD_MIGRATIONS.md` et exécutées sur instruction humaine explicite.
+Les migrations de production ne s'appliquent **jamais** d'elles-mêmes : `APPLY_MIGRATIONS=false` est
+l'invariant du fichier d'environnement de production, et `runProd.sh` refuse de démarrer sans lui.
+Elles s'appliquent dans une **fenêtre de maintenance** ouverte par un geste explicite — accès fermé,
+contrôles de données préalables, **instantané de la machine virtuelle**, `./runProd.sh --migrate`,
+vérifications du §5, réouverture. Le retour arrière de la fenêtre est la restauration de cet
+instantané, avec la perte assumée de ce qui a été écrit pendant (`docs/JOURNAL.md`, décision 489 ;
+`docs/PROD_MIGRATIONS.md` §3.1 et §6). Le geste `--migrate` est porté par `CRM-087` et n'est pas
+encore livré ; la voie manuelle fichier par fichier reste décrite au §3.3 du contrat.
 
 ## 10. Reprise et continuité
 
@@ -910,6 +928,7 @@ désigne `P2ENJOY_ENV_FILE`.
 |---|---|---|
 | `runDev.sh` | Amorce `.env` au premier lancement — chaque secret tiré au hasard, `ANON_KEY` et `SERVICE_ROLE_KEY` dérivées du `JWT_SECRET` produit — puis démarre l'assemblage de développement | Environnement complet ; profil `dev` ; `CRM_INBOUND_DOMAIN=crm.p2enjoy.test`, comme le seed |
 | `runProd.sh` | Démarre l'assemblage de production | Environnement complet ; profil `prod` ; `APPLY_MIGRATIONS=false` ; **aucun amorçage**, aucun secret inventé |
+| `runProd.sh --migrate` | Ouvre la fenêtre de migration : applique le répertoire de migrations par le `migrations-runner`, puis recharge le cache de schéma de PostgREST. **Non livré — `CRM-087`** | Les gardes de `runProd.sh`, plus la **confirmation que l'instantané de VM est pris** ; la surcharge de `APPLY_MIGRATIONS` vaut pour la seule invocation et n'écrit jamais dans `.env` |
 | `resetMe.sh` | Détruit la base et les volumes locaux, redémarre à froid, rejoue migrations et seed | Environnement complet ; profil `dev` ; confirmation explicite (`--yes` hors terminal interactif) |
 | `supabase/seed/apply-seed.sh` | Applique le seed socle par les API réelles ; convergent, ne détruit rien | Environnement complet ; profil `dev` ; pile démarrée |
 | `scripts/generate-types.sh` | Régénère `webapp/src/lib/database.types.ts` depuis la base migrée, ou le compare sans écrire (`--check`) | Environnement complet ; profil `dev` ; conteneur `meta` en marche |

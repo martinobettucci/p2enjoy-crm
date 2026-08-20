@@ -10882,3 +10882,54 @@ suivante :
             promotion à `[x]` reste toutefois due à un arbitrage du responsable sur la question du
             §INC-190 point (a) / (b) / (c) (une seule campagne pour toute la session, ou deux :
             §4.3 + série).**
+
+### CRM-087 — Migration de production par le runner, sur geste explicite `[ ]`
+*Créée le 2026-08-20 par arbitrage du responsable — `docs/JOURNAL.md` décision 489. Motif :
+l'application manuelle, fichier par fichier, des 52 migrations du dépôt ne passe pas à l'échelle
+d'une livraison ordinaire. La production prend des instantanés de VM complets ; le retour arrière
+n'a donc pas besoin d'être porté par le SQL.*
+
+La production doit pouvoir appliquer ses migrations **par le `migrations-runner`**, au relancement,
+derrière un geste explicite — et jamais par accident. **DoD** : `./runProd.sh --migrate` applique le
+répertoire sur une production réelle, une transaction par fichier ; un lancement ordinaire n'applique
+rien ; le cache de schéma de PostgREST est rechargé sans dépendre de ce que chaque migration a pensé
+à écrire ; les refus sont éprouvés par dégradation volontaire ; le contrat de déploiement et le
+runbook décrivent la fenêtre de maintenance et sa reprise par instantané.
+
+- [ ] **`./runProd.sh --migrate`** — surcharge `APPLY_MIGRATIONS=true` **pour cette seule
+      invocation**, par l'environnement passé à Compose. Le fichier `.env` n'est **jamais** écrit :
+      l'invariant `APPLY_MIGRATIONS=false` y reste, et la garde existante de `runProd.sh` qui
+      l'exige est **conservée**. Un lancement ordinaire, une reprise après panne d'hôte ou un
+      redéploiement de service unique ne migrent rien.
+- [ ] **Confirmation de l'instantané exigée** — `oui` demandé au terminal, `--instantane-verifie`
+      hors terminal interactif. L'instantané de VM est le seul filet de la fenêtre ; le script
+      refuse de migrer sans que l'exploitant l'ait affirmé.
+- [ ] **Recréation forcée de `migrations-runner`** : conteneur à usage unique déjà sorti, son
+      réamorçage ne doit pas dépendre du jugement de Compose sur sa configuration.
+- [ ] **`notify pgrst, 'reload schema'` émis par le runner** après un passage réussi, une fois, à la
+      fin. **MESURÉ : 18 migrations sur 52 l'émettent, 34 non.** En développement, sans effet —
+      `rest` attend la fin du runner. En production, sur pile en marche, une table créée par l'une
+      des 34 répond `404` jusqu'au redémarrage suivant. Le poser dans le runner ferme le défaut pour
+      tous les chemins et pour toutes les migrations à venir.
+- [ ] **Refus éprouvés par dégradation** : `--migrate` sur un fichier de profil `dev` ; `--migrate`
+      sans confirmation d'instantané, en terminal comme hors terminal ; `.env` portant
+      `APPLY_MIGRATIONS=true` toujours refusé au lancement ordinaire ; migration échouant en cours
+      de répertoire, dont il faut prouver qu'elle laisse un code non nul et n'annonce aucun succès.
+      Le harnais est `scripts/verify-scripts.sh`, qui porte déjà les gardes de profil.
+- [ ] **Preuve sur pile réelle** : un assemblage de production jetable, monté sur un `.env` de
+      profil `prod` à secrets jetables, base vierge, `--migrate`, puis constat que les 52 fichiers
+      sont appliqués et qu'une table de la dernière migration est **joignable par l'API** sans
+      redémarrage — c'est le contrôle qui prouve le rechargement du cache, et lui seul.
+- [ ] **Documentation dans le même changement** : `docs/PROD_MIGRATIONS.md` §3 (procédure de la
+      fenêtre de maintenance), §6 (retour arrière par instantané), `docs/DAT.md` §3.2 et §9,
+      `README.md` §5 et §9, `.env.example`, `CHANGELOG.md`.
+- [ ] **Dépendance bloquante avant la première migration d'une production peuplée : INC-095.** Le
+      rejeu étant intégral, les migrations 31 à 33 s'appliqueront qu'elles soient documentées ou
+      non. Leur absence du contrat n'empêche plus leur application ; elle empêche d'en juger le
+      risque, ce qui est pire.
+
+**Ce que l'unité ne fait pas, et pourquoi.** Aucune table de registre n'est introduite : les 52
+migrations sont écrites pour être rejouables, la pile de développement le prouve à chaque
+démarrage, et un registre ferait diverger le chemin de production du seul chemin réellement éprouvé
+(décisions 20 et 489). Aucun retour arrière automatique n'est écrit : la reprise est la restauration
+de l'instantané de VM, avec la perte assumée de tout ce qui a été écrit depuis.

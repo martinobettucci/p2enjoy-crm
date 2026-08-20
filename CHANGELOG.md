@@ -13,6 +13,36 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Décidé
+
+- **La production migrera par le `migrations-runner`, sur geste explicite, et le retour arrière est
+  l'instantané de la VM** (`docs/JOURNAL.md` décision 489, unité `CRM-087`, `docs/PROD_MIGRATIONS.md`
+  §3.1 et §6). Le contrat de déploiement demandait à un humain d'appliquer 52 migrations une par
+  une : cela ne passe pas à l'échelle d'une livraison ordinaire. La production les appliquera par le
+  conteneur qui le fait déjà en développement — rejeu intégral du répertoire, une transaction par
+  fichier, aucun registre — dans une **fenêtre de maintenance** ouverte par `./runProd.sh --migrate`.
+
+  **`APPLY_MIGRATIONS=false` reste l'invariant du fichier d'environnement de production**, et la
+  garde qui l'exige est conservée : un lancement ordinaire, un redémarrage d'hôte ou le
+  redéploiement d'un service ne migrent rien. La surcharge vaut pour la seule invocation du geste et
+  n'écrit jamais dans `.env` — une migration doit être un geste, pas un état.
+
+  **Le retour arrière change de nature** : la production prend un instantané complet de sa machine
+  virtuelle avant la fenêtre, et le restaurer annule la migration d'une seule main. Le prix est dit
+  plutôt que découvert — restaurer le point de contrôle détruit **tout ce qui a été écrit depuis**,
+  ce qui fait de la migration une fenêtre à accès fermé et non un geste sur une production ouverte.
+  Les annulations SQL par migration restent documentées pour le cas où cette perte est inacceptable.
+
+  **Un défaut du chemin manuel a été trouvé en le documentant, et sera fermé par l'unité.** MESURÉ :
+  **18 migrations sur 52** émettent `notify pgrst, 'reload schema'`, les 34 autres non. L'écart est
+  invisible en développement, où `rest` attend la fin du runner, et visible en production dès qu'on
+  applique sur une pile en marche : une table neuve répond `404` jusqu'au redémarrage suivant.
+  `CRM-087` fait émettre la notification par le runner, une fois, après un passage réussi.
+
+  Rien de ce qui précède n'est livré : l'unité est `[ ]`, et la voie manuelle fichier par fichier
+  reste la seule disponible (`docs/PROD_MIGRATIONS.md` §3.3), avec le rechargement du cache qu'elle
+  impose désormais explicitement.
+
 ### Ajouté
 
 - **La série entière des `scripts/verify-*.sh` REJOUÉE en une session, en mode `--rapide`** —

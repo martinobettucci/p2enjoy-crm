@@ -4,8 +4,20 @@ Ce document décrit **ce qu'un humain doit appliquer** pour déployer ou mettre 
 production. Il ne dérive jamais de l'état réel du projet : toute modification du schéma, des
 services déployés ou des variables d'environnement le met à jour **dans le même changement**.
 
-Aucune migration n'est appliquée automatiquement en production. Aucune opération décrite ici ne
-s'exécute sans instruction humaine explicite.
+Aucune migration ne s'applique **par accident** en production : ni un lancement ordinaire, ni une
+reprise après panne d'hôte, ni le redéploiement d'un service ne touchent au schéma. Aucune opération
+décrite ici ne s'exécute sans instruction humaine explicite.
+
+**Arbitrage du responsable du 2026-08-20 — `docs/JOURNAL.md`, décision 489.** L'application manuelle
+fichier par fichier ne passe pas à l'échelle : le dépôt porte 52 migrations, et une livraison
+ordinaire en ajoute. La production les appliquera donc **par le `migrations-runner`**, sur un geste
+explicite — `./runProd.sh --migrate` — et le retour arrière est la **restauration de l'instantané de
+la machine virtuelle**, que la production prend avant la fenêtre. Le §3 décrit cette procédure et le
+§6 sa reprise.
+
+**Ce geste n'est pas encore livré.** Il est porté par l'unité `CRM-087`, à ce jour `[ ]`. Tant
+qu'elle ne l'est pas, la seule voie disponible est l'application manuelle décrite au §3.3, avec le
+rechargement du cache de PostgREST qu'elle impose.
 
 ---
 
@@ -79,7 +91,7 @@ positionner `P2ENJOY_ENV_PROFILE=prod`.
 | `PASSWORD_MIN_LENGTH` | **Nouvelle variable (`CRM-011`).** Longueur minimale d'un mot de passe ; le défaut de GoTrue, 6, est mesuré comme réellement permissif. Valeur retenue : `12` (`docs/SPEC-auth.md` §4) | Oui |
 | `APP_DOMAIN` | Domaine servi par Caddy | Oui |
 | `CADDY_ACME_EMAIL` | Adresse de contact pour l'émission des certificats | Oui |
-| `APPLY_MIGRATIONS` | Doit valoir `false` : aucune migration n'est appliquée automatiquement | Oui |
+| `APPLY_MIGRATIONS` | Doit valoir `false`, **et le rester** : c'est ce qui garantit qu'un lancement ordinaire, un redémarrage d'hôte ou le redéploiement d'un service ne migrent rien. La fenêtre de migration surcharge la valeur pour sa seule invocation et ne réécrit jamais le fichier (§3.1, `CRM-087`) | Oui |
 | `STACK_RLIMIT_NOFILE` | Descripteurs de fichiers réclamés par Realtime ; défaut `10000`, à abaisser si la limite dure de l'hôte est inférieure | Non |
 
 **Deux variables du service `mail-sync` deviennent obligatoires avec `CRM-052`.** Le conteneur ne
@@ -107,8 +119,42 @@ Aucune clé de production n'est utilisée pour les tests. Aucun environnement lo
 ## 3. Migrations en attente
 
 Ces migrations existent dans le dépôt et **n'ont jamais été appliquées en production**, celle-ci
-n'étant pas provisionnée. Elles sont à appliquer dans l'ordre indiqué, une transaction par
-fichier, par un humain — `APPLY_MIGRATIONS=false` interdit tout chemin automatique.
+n'étant pas provisionnée.
+
+### 3.1 Procédure nominale — la fenêtre de maintenance (`CRM-087`, non encore livrée)
+
+Le `migrations-runner` rejoue **l'intégralité** de `supabase/migrations/*.sql` en ordre
+lexicographique, une transaction par fichier, en s'arrêtant à la première erreur, et **ne tient
+aucun registre** de ce qui a déjà été appliqué (`docs/JOURNAL.md`, décision 20). La production
+n'applique donc pas un delta : elle **rejoue tout**, ce que l'idempotence de chaque migration rend
+possible. Il n'y a rien à choisir, rien à extraire d'un tableau, rien à ordonner à la main.
+
+La contrepartie est que la migration est une **fenêtre de maintenance**, dans cet ordre :
+
+1. **Annoncer la fenêtre et fermer l'accès utilisateur.** Ce qui sera écrit pendant la fenêtre sera
+   perdu si l'on doit reprendre — voir §6.
+2. **Dérouler les contrôles de données préalables énoncés sous le tableau du §3.2** — notamment le
+   `NOT NULL` de la migration 8 et la restriction d'accès de la migration 10. Ils ne peuvent plus
+   être intercalés entre deux fichiers : le runner applique tout d'une traite.
+3. **Prendre l'instantané de la machine virtuelle**, et vérifier qu'il est complet. C'est le seul
+   filet de la fenêtre.
+4. **Appliquer** : `./runProd.sh --migrate`. Le script exige la confirmation que l'instantané est
+   pris, surcharge `APPLY_MIGRATIONS` **pour cette seule invocation** — le fichier `.env` conserve
+   `false` et n'est jamais réécrit —, force la recréation du conteneur de migrations, et recharge le
+   cache de schéma de PostgREST après un passage réussi.
+5. **Vérifier** : §5 de ce document, intégralement.
+6. **Rouvrir l'accès**, ou reprendre par l'instantané (§6).
+
+Un `./runProd.sh` sans `--migrate` **n'applique rien** : `APPLY_MIGRATIONS=false` reste l'invariant
+du fichier d'environnement de production, et la garde qui l'exige est conservée. Un redémarrage
+d'hôte ou le redéploiement d'un service unique ne migrent jamais.
+
+### 3.2 Le tableau ci-dessous n'est plus une liste de gestes
+
+Il conserve, pour chaque migration, son **objectif**, ses **dépendances** et son **annulation
+chirurgicale**. Ces trois colonnes servent à juger le risque avant la fenêtre et à annuler une
+migration précise quand la perte de la fenêtre est inacceptable. Elles ne décrivent plus la
+procédure nominale, qui est le rejeu intégral du §3.1.
 
 | Ordre | Fichier | Objectif | Dépendances | Retour arrière |
 |---|---|---|---|---|
@@ -459,10 +505,16 @@ aucun registre : il rejoue l'intégralité du répertoire à chaque démarrage d
 (`docs/DAT.md` §3.2, `docs/JOURNAL.md` décision 20). Une migration réappliquée sur une base déjà
 migrée doit donc réussir sans effet de bord — vérifié par `scripts/verify-migrations.sh`.
 
-En production, cette propriété ne dispense de rien : les migrations y sont appliquées à la main,
-dans l'ordre de ce tableau, et le tableau est vidé une fois l'application confirmée.
+**En production, cette propriété cesse d'être un confort de développement pour devenir une propriété
+de sûreté** (`docs/JOURNAL.md`, décision 489) : la production rejouant le répertoire entier à chaque
+fenêtre, une migration qui échouerait au second passage arrêterait la migration en cours de
+répertoire. Le mode d'échec exact a déjà été mesuré une fois, sur la contrainte de vocabulaire de
+`public.card_events` — voir §7, INC-144, levé le 2026-08-18.
 
-### Commande d'application manuelle en production
+### 3.3 Voie manuelle — fichier par fichier
+
+**Voie de repli, et voie unique tant que `CRM-087` n'est pas livrée.** Elle sert aussi à appliquer
+une migration isolée hors fenêtre, quand le rejeu intégral n'est pas souhaitable.
 
 ```bash
 # Depuis l'hôte de production, la pile démarrée et GoTrue sain.
@@ -473,6 +525,20 @@ for m in supabase/migrations/0001_identite_et_cloisonnement.sql \
 		--set ON_ERROR_STOP=1 --single-transaction -f - < "$m" || break
 done
 ```
+
+**Recharger ensuite le cache de schéma de PostgREST — étape obligatoire de la voie manuelle.**
+MESURÉ : **18 migrations sur 52** se terminent par `notify pgrst, 'reload schema'` ; les 34 autres
+non. En développement, cela n'a aucun effet, `rest` ne démarrant qu'après la fin du
+`migrations-runner`. En production, où l'on applique **sur une pile en marche**, une table créée par
+l'une des 34 reste invisible de l'API — `404` — jusqu'au redémarrage suivant :
+
+```bash
+docker exec -i p2enjoy-db psql -U postgres -d "$POSTGRES_DB" \
+    -c "notify pgrst, 'reload schema';"
+```
+
+`CRM-087` supprime cette étape en faisant émettre la notification par le runner lui-même, après un
+passage réussi, pour toutes les migrations et non pour dix-huit d'entre elles.
 
 Après application, contrôler que les cinq tables portent bien RLS :
 
@@ -657,19 +723,44 @@ messagerie, ce qu'elle n'a jamais été — voir INC-098.
     profils de son équipe, `workspaces` uniquement ses espaces et `workspace_members` leurs
     appartenances ; la même lecture anonyme rend `[]`. Une tentative réelle de rétrograder ou
     supprimer l'unique administrateur rend `400`, code `23514`, message `last_workspace_admin`.
+12. **Le cache de schéma de PostgREST reflète la migration qui vient d'être appliquée** : une table
+    ou une colonne introduite par la dernière migration du répertoire est lisible par l'API **sans
+    redémarrage** de `rest`. Un `404` sur une table qui existe bien en base signe un cache resté sur
+    l'ancien schéma : émettre `notify pgrst, 'reload schema';` (§3.3). C'est la seule preuve du
+    rechargement, et elle vaut pour les deux voies d'application.
 
 ## 6. Procédure de retour arrière
+
+**La reprise nominale d'une fenêtre de migration est la restauration de l'instantané de la machine
+virtuelle** (`docs/JOURNAL.md`, décision 489). La production prend un instantané complet du système
+de fichiers avant la fenêtre ; le reprendre annule la migration **et tout le reste** de la même
+main, sans jugement à porter sur l'ordre des annulations SQL.
+
+**Ce que cette reprise coûte, et il faut l'avoir dit avant de la choisir.** Restaurer le point de
+contrôle **détruit tout ce qui a été écrit depuis l'instantané** : courrier ingéré, cards déplacées,
+commentaires postés, envois placés en file. C'est la raison pour laquelle la migration est une
+fenêtre de maintenance à accès fermé (§3.1) et non un geste passé sur une production ouverte : plus
+la fenêtre est longue et vivante, plus la reprise est chère.
+
+**Les annulations SQL du §3 restent utiles pour un cas précis** : annuler une migration donnée
+**sans** perdre ce qui a été écrit depuis. Elles sont alors préférables à l'instantané, et exigent
+la même prudence qu'auparavant — l'ordre des dépendances, et le fait que certaines soient
+destructives ou élargissent des accès.
 
 | Situation | Action |
 |---|---|
 | Régression applicative | Redéployer l'image précédente ; le schéma restant compatible, aucune action base n'est requise |
-| Migration défectueuse | Appliquer le script de retour arrière fourni avec la migration ; à défaut, restaurer la sauvegarde antérieure |
+| Fenêtre de migration défaillante | **Restaurer l'instantané de VM pris à l'étape 3 du §3.1.** Ce qui a été écrit pendant la fenêtre est perdu, ce que la fermeture de l'accès a rendu négligeable |
+| Migration défectueuse, sans pouvoir perdre les écritures récentes | Appliquer l'annulation chirurgicale de la ligne correspondante du §3.2, en respectant l'ordre des dépendances ; à défaut, restaurer la sauvegarde antérieure |
 | Restauration de base sans la clé racine de Vault | **Aucun retour arrière possible** : le chiffré est intact mais définitivement illisible. Restaurer le volume `db-config` d'origine ; à défaut, chaque mot de passe IMAP/SMTP doit être ressaisi dans l'application |
 | Messagerie défaillante | Arrêter `mail-sync` : le CRM reste utilisable, la file d'envoi est persistante et reprendra |
 | Runtime edge défaillant après `CRM-016` | Restaurer la configuration Kong précédente, recréer `kong`, puis arrêter `functions`. Aucune donnée n'est perdue : la fonction `example` est sans effet et le service n'a aucun volume persistant |
 
 Toute migration non réversible doit **documenter explicitement pourquoi** et être précédée d'une
-sauvegarde vérifiée.
+sauvegarde vérifiée. L'instantané de VM **ne remplace pas** les sauvegardes chiffrées de `CRM-080` :
+il est local à l'hôte et vit avec lui, quand l'archive est chiffrée, hors site et éprouvée par
+exercice (`docs/RUNBOOK-sauvegardes.md`). L'instantané couvre la fenêtre de maintenance ; la
+sauvegarde couvre la perte de l'hôte.
 
 ## 7. Risques connus
 
