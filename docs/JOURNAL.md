@@ -21208,11 +21208,33 @@ tenir : « Publicité 2026 » rend UNE paire de barres sur l'écran du track et 
 jeu de données — c'est ce que la Definition of Done demande de vérifier. Les quatre captures ont
 été **observées**, et c'est en les regardant que le défaut d'alignement a été trouvé.
 
+**LA CAMPAGNE COMPLÈTE A ÉTÉ EXÉCUTÉE, séquentiellement et jamais de front (INC-177).**
+`typecheck` et `types:check` verts, `build` vert, `test:unit` **63 fichiers, 2164 tests**,
+`test:sql` **49 fichiers, 2464 assertions, aucune anomalie**, `e2e:api` **816 passés**, `e2e:ui`
+**532 passés, aucun échec**, `e2e:mail` **42 passés**, `pytest` **244 passés**. Les trois échecs de
+stockage objet qu'INC-167 consignait ne se sont PAS reproduits : la pile de cette session a été
+montée par `./runDev.sh` et non recomposée nue, et `storage` a donc gardé ses identifiants MinIO
+(§2.2 bis).
+
+**UN SEUL harnais a été joué — `scripts/verify-webapp.sh`**, choisi parce qu'il porte le contrôle
+des classes CSS et les scénarios de coquille que ce changement touche. Il rend **42 contrôles,
+2 anomalies**, et AUCUNE n'est imputable à cette session : (1) les trois classes mortes d'**INC-178**,
+inchangées — le contrôle compte désormais **296** classes citées contre 285, et les onze classes
+neuves de cette tranche sont **toutes** engendrées ; (2) `commentaires-gestes.spec.ts:280`, qui
+passe en campagne complète et repasse seul sur le même code — consigné à **INC-179**. Les
+cinquante-quatre autres harnais n'ont pas été rejoués : la série ne tient pas dans une session
+(`docs/CloudWorker.md` §2.1 ter), et **aucun harnais dédié n'existe pour `CRM-086`**.
+
+Les cent cinquante et une captures régénérées par la campagne sur des écrans que cette session ne
+touche pas ont été **écartées** plutôt que committées : l'exécution concurrente venait de pousser
+les siennes, et deux jeux de re-rendus JPEG du même écran ne disent rien de plus qu'un seul. Seules
+`couts-budget-*.jpg` sont versionnées ici.
+
 **Où reprendre.** `CRM-086` reste `[~]`, et il reste UN écran : le cumul du workspace (§4.5,
 `/couts`, un groupe de barres par track, entrée de barre latérale, adresse à déclarer dans
 `chemins.ts` et **dans `ROUTES`** — c'est la seule des trois qui y figure). Vient ensuite l'onglet
 « À saisir » du §4.8, qui n'existe sur aucun écran, et **aucun harnais dédié
 `scripts/verify-couts-ecrans.sh` n'existe encore**. `CRM-083` reste bloqué par **INC-170**. Huit
 arbitrages attendent : **INC-169**, **INC-170**, **INC-172**, **INC-173**, **INC-174**,
-**INC-176**, **INC-177** et **INC-178** — les deux derniers consignés par l'exécution concurrente
-de cette même heure.
+**INC-176**, **INC-177**, **INC-178** — les trois derniers consignés par l'exécution concurrente de
+cette même heure — et **INC-179**, consigné ici.
