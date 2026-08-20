@@ -1,5 +1,5 @@
-// @verifies CRM-086 (docs/BACKLOG.md) — écrans de coûts, TRANCHE 1 : l'agrégation que les trois
-//           écrans partagent
+// @verifies CRM-086 (docs/BACKLOG.md) — écrans de coûts, TRANCHES 1, 4 et 5 : l'agrégation que les
+//           trois écrans partagent, la lecture du détail d'un budget, et le cumul du workspace
 // @verifies docs/SPEC-costs.md §2.3 (`actual_cost` nul n'est PAS zéro, aucune contrainte de signe),
 //           §4.2 (un budget clôturé ne figure pas dans l'histogramme du track, les budgets sont
 //           dans l'ordre de l'administration), §4.4 (« n lignes sans coût réel saisi, pour m € de
@@ -32,12 +32,16 @@ import {
 	filtrerParOccurrence,
 	grouperParDevise,
 	grouperParOccurrence,
+	grouperTracksParDevise,
+	lireCumulWorkspace,
 	lireDetailBudget,
 	lireHistogrammeTrack,
 	type BudgetDeLEcran,
+	type BudgetDeTrack,
 	type LigneAgregeable,
 	type LigneBudget,
 	type OccurrenceDeLEcran,
+	type TrackDeLEcran,
 } from './couts-ecrans'
 import type { ClientCrm } from './supabase'
 
@@ -107,6 +111,16 @@ const ligne = (estimated_cost: number, actual_cost: number | null): LigneAgregea
 	estimated_cost,
 	actual_cost,
 })
+
+const track = (id: string, name: string, slug: string): TrackDeLEcran => ({ id, name, slug })
+
+const budgetDeTrack = (
+	id: string,
+	name: string,
+	track_id: string,
+	currency = 'EUR',
+	reste: Partial<BudgetDeLEcran> = {},
+): BudgetDeTrack => ({ ...budget(id, name, currency, reste), track_id })
 
 // ---------------------------------------------------------------------------------------------
 
@@ -737,5 +751,252 @@ describe('adresseAffaireLigne — §4.3', () => {
 			),
 		).toBeNull()
 		expect(adresseAffaireLigne(ligneBudget('l2', 100, 90))).toBeNull()
+	})
+})
+
+// ---------------------------------------------------------------------------------------------
+// Le cumul du workspace — §4.5, TRANCHE 5
+// ---------------------------------------------------------------------------------------------
+
+describe('grouperTracksParDevise — §4.5', () => {
+	it('rend une paire de barres par track, cumulant ses budgets ouverts', () => {
+		const groupes = grouperTracksParDevise(
+			[track('t1', 'Conseil & IA', 'conseil-ia'), track('t2', 'Studio web', 'studio-web')],
+			[
+				budgetDeTrack('b1', 'Prospection sortante', 't1'),
+				budgetDeTrack('b2', 'Publicité 2026', 't2'),
+				budgetDeTrack('b3', 'Salon du web', 't2'),
+			],
+			new Map([
+				['b1', [ligne(800, null)]],
+				['b2', [ligne(1000, 880)]],
+				['b3', [ligne(350, 375)]],
+			]),
+		)
+		expect(groupes).toHaveLength(1)
+		expect(groupes[0]?.devise).toBe('EUR')
+		expect(groupes[0]?.barres.map((barre) => barre.track.id)).toEqual(['t1', 't2'])
+		// Les DEUX budgets de « Studio web » sont cumulés en une seule paire de barres : c'est ce que
+		// « un groupe de barres par track » veut dire, et c'est la différence exacte avec l'écran du
+		// §4.2, qui rend une paire PAR BUDGET.
+		expect(groupes[0]?.barres[1]?.agregat).toEqual({
+			estime: 1350,
+			reel: 1255,
+			sansReel: 0,
+			estimeSansReel: 0,
+			lignes: 2,
+		})
+		expect(groupes[0]?.total.estime).toBe(2150)
+	})
+
+	it('ne mélange JAMAIS deux devises, et rend un histogramme par devise présente', () => {
+		// La règle du §4.5, et la seule qui rende ce groupement indispensable : un axe unique
+		// placerait des francs et des euros sur la même échelle.
+		const groupes = grouperTracksParDevise(
+			[track('t1', 'Conseil & IA', 'conseil-ia'), track('t2', 'Formation', 'formation')],
+			[budgetDeTrack('b1', 'Prospection', 't1'), budgetDeTrack('b2', 'Suisse romande', 't2', 'CHF')],
+			new Map([
+				['b1', [ligne(800, 700)]],
+				['b2', [ligne(500, 500)]],
+			]),
+		)
+		expect(groupes.map((groupe) => groupe.devise)).toEqual(['EUR', 'CHF'])
+		expect(groupes[0]?.barres).toHaveLength(1)
+		expect(groupes[1]?.barres).toHaveLength(1)
+		expect(groupes[1]?.total.estime).toBe(500)
+	})
+
+	it('un track à DEUX devises paraît dans les deux histogrammes, jamais dans un total unique', () => {
+		// Le cas que le groupement par devise existe pour porter, et qu'aucun autre test n'exerce :
+		// cumuler d'abord et répartir ensuite mêlerait les monnaies le temps d'une addition.
+		const groupes = grouperTracksParDevise(
+			[track('t1', 'Conseil & IA', 'conseil-ia')],
+			[budgetDeTrack('b1', 'Prospection', 't1'), budgetDeTrack('b2', 'Genève', 't1', 'CHF')],
+			new Map([
+				['b1', [ligne(800, 700)]],
+				['b2', [ligne(200, 150)]],
+			]),
+		)
+		expect(groupes.map((groupe) => groupe.devise)).toEqual(['EUR', 'CHF'])
+		expect(groupes[0]?.barres[0]?.agregat.estime).toBe(800)
+		expect(groupes[1]?.barres[0]?.agregat.estime).toBe(200)
+	})
+
+	it('un track SANS budget ouvert ne rend aucune barre, et n’invente aucune devise', () => {
+		// Une paire de barres vit dans l'histogramme d'une devise ; un track sans budget n'en a
+		// aucune, et l'y placer demanderait d'inventer sa monnaie.
+		const groupes = grouperTracksParDevise(
+			[track('t1', 'Conseil & IA', 'conseil-ia'), track('t2', 'Formation', 'formation')],
+			[budgetDeTrack('b1', 'Prospection', 't1')],
+			new Map([['b1', [ligne(800, 700)]]]),
+		)
+		expect(groupes[0]?.barres.map((barre) => barre.track.id)).toEqual(['t1'])
+	})
+
+	it('un track dont le budget ouvert n’a AUCUNE ligne garde sa paire de barres, à zéro', () => {
+		// Le §4.7 exige « deux barres nulles ET la phrase », jamais une absence de barres. Le compte
+		// de lignes est ce qui permet à l'histogramme de rendre la phrase (§5.30 du design system).
+		const groupes = grouperTracksParDevise(
+			[track('t2', 'Formation', 'formation')],
+			[budgetDeTrack('b2', 'Suisse romande', 't2', 'CHF')],
+			new Map(),
+		)
+		expect(groupes[0]?.barres).toHaveLength(1)
+		expect(groupes[0]?.barres[0]?.agregat).toEqual(AGREGAT_NUL)
+		expect(groupes[0]?.total.lignes).toBe(0)
+	})
+
+	it('préserve le COMPTE de lignes sans réel, que la mention du §4.4 et le badge du §4.8 partagent', () => {
+		const groupes = grouperTracksParDevise(
+			[track('t1', 'Conseil & IA', 'conseil-ia')],
+			[budgetDeTrack('b1', 'Prospection', 't1'), budgetDeTrack('b2', 'Salon', 't1')],
+			new Map([
+				['b1', [ligne(800, null)]],
+				['b2', [ligne(100, null), ligne(50, 50)]],
+			]),
+		)
+		expect(groupes[0]?.total.sansReel).toBe(2)
+		expect(groupes[0]?.total.estimeSansReel).toBe(900)
+	})
+
+	it('rend une liste VIDE quand aucun track ne porte de budget ouvert', () => {
+		expect(grouperTracksParDevise([track('t1', 'Conseil & IA', 'conseil-ia')], [], new Map())).toEqual(
+			[],
+		)
+	})
+})
+
+describe('lireCumulWorkspace — §4.5', () => {
+	it('émet TROIS requêtes, et pas une par track ni une par budget', async () => {
+		const { client, appels } = espion([
+			{
+				data: [
+					{ id: 't1', name: 'Conseil & IA', slug: 'conseil-ia' },
+					{ id: 't2', name: 'Studio web', slug: 'studio-web' },
+				],
+				error: null,
+				status: 200,
+			},
+			{
+				data: [budgetDeTrack('b1', 'Prospection', 't1'), budgetDeTrack('b2', 'Publicité', 't2')],
+				error: null,
+				status: 200,
+			},
+			{
+				data: [
+					{ id: 'l1', budget_id: 'b1', estimated_cost: 800, actual_cost: null },
+					{ id: 'l2', budget_id: 'b2', estimated_cost: 1000, actual_cost: 880 },
+				],
+				error: null,
+				status: 200,
+			},
+		])
+		const etat = await lireCumulWorkspace(client)
+		expect(appels.map((appel) => appel.table)).toEqual(['tracks', 'budgets', 'card_costs'])
+		expect(etat.statut).toBe('pret')
+		if (etat.statut !== 'pret') return
+		expect(etat.donnees[0]?.total).toEqual({
+			estime: 1800,
+			reel: 880,
+			sansReel: 1,
+			estimeSansReel: 800,
+			lignes: 2,
+		})
+	})
+
+	it('écarte les tracks archivés et en corbeille, et les budgets clôturés — côté SERVEUR', async () => {
+		// Les trois filtres sont portés par la requête : les appliquer après coup ferait transiter
+		// des lignes que l'écran ne montrera jamais, et le dernier est la règle d'écran du §4.5
+		// (« les budgets ouverts de chaque track »).
+		const { client, appels } = espion([
+			{ data: [{ id: 't1', name: 'Conseil & IA', slug: 'conseil-ia' }], error: null, status: 200 },
+			{ data: [], error: null, status: 200 },
+		])
+		await lireCumulWorkspace(client)
+		expect(appels[0]?.filtres).toEqual([
+			['is:archived_at', null],
+			['is:deleted_at', null],
+		])
+		expect(appels[0]?.tris).toEqual(['position', 'name'])
+		expect(appels[1]?.filtres).toEqual([
+			['in:track_id', ['t1']],
+			['is:closed_at', null],
+		])
+		expect(appels[1]?.tris).toEqual(['position', 'name'])
+	})
+
+	it('n’émet NI la lecture des budgets NI celle des lignes quand aucun track n’est consenti', async () => {
+		// Sans session, `tracks` rend `200 []` : deux requêtes dont la réponse est connue d'avance
+		// seraient payées pour rien, et un `in` sur zéro identifiant est de toute façon vide.
+		const { client, appels } = espion([{ data: [], error: null, status: 200 }])
+		const etat = await lireCumulWorkspace(client)
+		expect(appels).toHaveLength(1)
+		expect(etat).toEqual({ statut: 'pret', donnees: [] })
+	})
+
+	it('n’émet pas la lecture des lignes quand aucun budget ouvert n’est consenti', async () => {
+		const { client, appels } = espion([
+			{ data: [{ id: 't1', name: 'Conseil & IA', slug: 'conseil-ia' }], error: null, status: 200 },
+			{ data: [], error: null, status: 200 },
+		])
+		const etat = await lireCumulWorkspace(client)
+		expect(appels).toHaveLength(2)
+		expect(etat).toEqual({ statut: 'pret', donnees: [] })
+	})
+
+	it('ne demande AUCUNE somme au serveur : le cumul est calculé après la RLS', async () => {
+		// LE test du §4.5. Un `select` qui porterait un `sum(...)` ou un `count` s'exécuterait sous la
+		// politique mais rendrait un nombre que l'appelant ne peut pas recomposer — et surtout, il
+		// suffirait qu'un jour une clé de service serve cette lecture pour que le total divulgue par
+		// soustraction l'existence d'un budget interdit. Les colonnes sont donc éprouvées.
+		const { client, appels } = espion([
+			{ data: [{ id: 't1', name: 'Conseil & IA', slug: 'conseil-ia' }], error: null, status: 200 },
+			{ data: [budgetDeTrack('b1', 'Prospection', 't1')], error: null, status: 200 },
+			{ data: [], error: null, status: 200 },
+		])
+		await lireCumulWorkspace(client)
+		expect(appels[0]?.colonnes).toBe('id, name, slug')
+		expect(appels[1]?.colonnes).toContain('track_id')
+		for (const appel of appels) {
+			expect(appel.colonnes).not.toMatch(/sum\(|count|avg\(/)
+		}
+	})
+
+	it('une réponse AMPUTÉE rend un total amputé, et c’est le comportement voulu', async () => {
+		// Le pendant du test précédent, côté valeur : la lectrice ne lit pas « Conseil & IA », donc
+		// son budget n'est pas rendu, donc il n'entre pas dans la somme. Le total obtenu est celui
+		// qu'elle a le droit de connaître, jamais le total absolu.
+		const { client } = espion([
+			{ data: [{ id: 't2', name: 'Studio web', slug: 'studio-web' }], error: null, status: 200 },
+			{ data: [budgetDeTrack('b2', 'Publicité', 't2')], error: null, status: 200 },
+			{
+				data: [{ id: 'l2', budget_id: 'b2', estimated_cost: 1000, actual_cost: 880 }],
+				error: null,
+				status: 200,
+			},
+		])
+		const etat = await lireCumulWorkspace(client)
+		expect(etat.statut).toBe('pret')
+		if (etat.statut !== 'pret') return
+		expect(etat.donnees[0]?.total.estime).toBe(1000)
+	})
+
+	it('classe un refus du serveur plutôt que de rendre un cumul faux', async () => {
+		const { client } = espion([
+			{ data: null, error: { message: 'permission denied' }, status: 403 },
+		])
+		const etat = await lireCumulWorkspace(client)
+		expect(etat.statut).toBe('erreur')
+		if (etat.statut !== 'erreur') return
+		expect(etat.erreur.nature).toBe('forbidden')
+	})
+
+	it('classe une erreur survenue sur la lecture des BUDGETS, pas seulement sur celle des tracks', async () => {
+		const { client } = espion([
+			{ data: [{ id: 't1', name: 'Conseil & IA', slug: 'conseil-ia' }], error: null, status: 200 },
+			{ data: null, error: { message: 'boom' }, status: 500 },
+		])
+		const etat = await lireCumulWorkspace(client)
+		expect(etat.statut).toBe('erreur')
 	})
 })
