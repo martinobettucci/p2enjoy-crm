@@ -1,7 +1,11 @@
 # CloudWorker
 
-Prompt de la tâche planifiée « CloudWorker », exécutée automatiquement toutes les
-heures sur ce dépôt.
+Prompt de la tâche planifiée « CloudWorker », exécutée automatiquement **toutes les trois heures**
+sur ce dépôt.
+
+*Cadence portée de une à trois heures le 2026-08-20, sur demande du responsable. La tâche sait
+désormais s'ARRÊTER elle-même : voir le §4.5, qui dit à quelles deux conditions et selon quelle
+séquence.*
 
 Ce document conserve le texte intégral du prompt, afin qu'une consigne récurrente ne
 dépende pas de la seule mémoire de contexte d'un agent.
@@ -9,6 +13,26 @@ dépende pas de la seule mémoire de contexte d'un agent.
 ---
 
 Tu travailles sur le dépôt "p2enjoy-crm".
+
+## 0 bis. ANNONCE D'OUVERTURE DE SESSION — LA TOUTE PREMIÈRE LIGNE QUE TU ÉCRIS
+
+Demande du responsable, 2026-08-20, non négociable.
+
+**Avant tout diagnostic, avant Git, avant Docker, avant la moindre lecture**, la première ligne de
+ta toute première réponse est exactement :
+
+```
+A NEW SCHEDULED SESSION HAVE BEEN STARTED — <horodatage courant>
+```
+
+L'horodatage est celui de l'instant réel du démarrage, en UTC, au format `AAAA-MM-JJ HH:MM:SS UTC`.
+Tu l'obtiens en exécutant `date -u '+%Y-%m-%d %H:%M:%S UTC'`, **jamais de mémoire ni par déduction
+depuis une date de contexte** : une exécution planifiée ne sait pas quand elle s'exécute tant
+qu'elle ne l'a pas demandé à la machine.
+
+Cette annonce est le repère qui permet de distinguer, dans une suite d'exécutions horaires ou
+tri-horaires, ce qu'une session donnée a réellement fait de ce qu'une autre avait déjà fait. Elle
+n'est pas décorative, et elle ne se remplace pas par une reformulation.
 
 ## 0. TU DOIS COMMITTER ET POUSSER, SINON TOUT EST PERDU
 
@@ -56,8 +80,9 @@ Ne renonce jamais à pousser, et ne contourne jamais un conflit par une branche.
 **L'ORDRE DE LA SESSION, EN UNE LIGNE**, détaillé au §3.2 et au §4.3 :
 
 ```
-Git → Docker → pile + seed → choisir l'unité → lire et écrire la spéc COMPLÈTE → committer
-     → coder → committer et pousser au fil de l'eau → prouver SON unité
+annonce d'ouverture (§0 bis) → Git → Docker → pile + seed → choisir l'unité
+     → lire et écrire la spéc COMPLÈTE → committer → coder
+     → committer et pousser au fil de l'eau → prouver SON unité
      → [fin de session] campagne complète → boucle de correction → committer, pousser
      → journal, backlog, garde Git, compte rendu
 ```
@@ -1038,6 +1063,85 @@ Il couvre l'INTÉGRALITÉ de la session, pas seulement son dernier geste. La HI�
 5. Le commit final et la confirmation que "origin/main" le porte.
 
 Une session qui n'a livré AUCUN code reste soumise à ce compte rendu, et le dit en PREMIÈRE ligne, sans détour : l'absence de fonctionnalité codée est l'information la plus importante de ce compte rendu-là, pas un fait noyé après le travail documentaire (§4.2 bis).
+
+## 4.5. ARRÊT DÉFINITIF DE LA TÂCHE PLANIFIÉE — QUAND ET COMMENT
+
+Demande du responsable, 2026-08-20, non négociable.
+
+Cette tâche s'exécute **toutes les trois heures** et n'a pas vocation à tourner éternellement. Elle
+existe pour faire avancer le produit ; le jour où elle ne le peut plus, elle doit **s'arrêter
+elle-même** au lieu de consommer un conteneur toutes les trois heures pour redécouvrir qu'il n'y a
+rien à faire.
+
+### 4.5.1. Les DEUX conditions d'arrêt, et elles seules
+
+Tu arrêtes la tâche planifiée si, et seulement si, l'une des deux est vraie :
+
+1. **Le backlog est intégralement soldé.** Toutes les unités de `docs/BACKLOG.md` sont `[x]`, chacune
+   avec sa Definition of Done réellement vérifiée. Une unité `[~]` — même « presque finie », même
+   « il ne manque que des preuves » — **interdit** l'arrêt : il reste du travail, et c'est
+   exactement le travail de la session suivante.
+
+2. **Tu n'as plus aucune option pour avancer.** Toutes les unités restantes sont bloquées par une
+   cause que tu ne peux pas lever seul : un arbitrage du responsable qui n'est pas rendu, une
+   spécification absente que tu n'as pas le droit d'écrire à sa place, une dépendance externe
+   indisponible, un accès refusé, une pile qui ne monte pas et dont l'échec te prive de toute
+   preuve. La cause doit être **nommée et mesurée**, pas supposée.
+
+**Ce qui n'est PAS une condition d'arrêt**, et la liste est fermée :
+
+- une unité difficile, longue, ou dont tu n'as pas envie ;
+- une campagne de preuves qui ne tient pas dans la session — le §4.3 dit quoi faire : exécuter ce
+  que le changement touche, dire ce qui n'a pas été exécuté, et pousser ;
+- une anomalie préexistante ou étrangère à ton unité — elle se consigne au registre (§3.1) ;
+- une entrée du registre en attente d'arbitrage, tant qu'il reste une unité produit à faire ;
+- le manque de temps dans CETTE session — tu committes l'état intermédiaire et tu pousses (§0).
+
+En cas de doute, **tu n'arrêtes pas**. Une tâche arrêtée à tort demande une intervention humaine
+pour repartir ; une tâche qui tourne une fois pour rien ne coûte qu'une exécution.
+
+### 4.5.2. Comment tu arrêtes, dans cet ordre
+
+L'arrêt est une séquence, et aucune étape ne se saute.
+
+**1. Tu termines et tu pousses ton travail.** Tout ce qui est en cours est committé et poussé sur
+`origin/main` — l'arrêt ne dispense de rien, et surtout pas du §0.
+
+**2. Tu écris l'état final dans le dépôt, et c'est un commit dédié.** Dans `docs/JOURNAL.md`, une
+entrée datée intitulée sans ambiguïté « ARRÊT DE LA TÂCHE PLANIFIÉE », qui dit :
+
+- **où en est le produit** : ce qui est livré et prouvé, unité par unité, en une ligne chacune ;
+- **ce qui reste en attente** : les unités non closes, avec ce qu'il leur manque exactement ;
+- **ce qui t'a empêché d'aller plus loin** : la cause de chaque blocage, mesurée et nommée, avec
+  l'entrée de `docs/INCONSISTENCY_REPORT.md` ou l'arbitrage attendu qui la porte ;
+- **ce que le responsable doit faire pour que le travail reprenne** ;
+- **la phrase, en toutes lettres** : « La tâche planifiée a été ARRÊTÉE. Elle ne se rallumera pas
+  d'elle-même. »
+
+`docs/BACKLOG.md` est mis au véritable état dans le même commit. Tu pousses.
+
+**3. Tu désactives la tâche planifiée elle-même.** Une entrée de journal ne coupe rien : sans cette
+étape, la tâche refire trois heures plus tard. Avec les outils du serveur MCP `claude-code-remote` :
+
+```
+list_triggers            → repérer la routine de ce dépôt et relever son identifiant `trig_…`
+update_trigger           → { trigger_id: "trig_…", enabled: false }
+```
+
+**Une session ne peut désactiver que la routine qui l'a déclenchée**, et c'est suffisant : c'est
+précisément celle-ci. Une routine créée hors d'une session d'agent refuse toute AUTRE modification —
+renommage, changement d'horaire —, mais accepte `enabled: false` demandé par sa propre session.
+
+**Si la désactivation échoue**, tu ne fais pas semblant : tu ne prétends pas avoir arrêté ce qui
+tourne encore. Tu consignes l'échec, son message exact, dans l'entrée de journal du point 2, et ton
+compte rendu final le dit en première ligne — le responsable doit alors désactiver la routine
+lui-même depuis l'interface des Routines de claude.ai.
+
+**4. Tu exécutes la garde Git du §1.7**, comme toute session.
+
+**5. Ton compte rendu final commence par l'arrêt**, avant tout le reste : que la tâche est arrêtée,
+laquelle des deux conditions du §4.5.1 s'applique, et ce que le responsable doit faire ensuite. Le
+compte rendu du §4.4 suit, entier.
 
 ## 5. RÈGLE FINALE, AUCUNE EXCEPTION
 
