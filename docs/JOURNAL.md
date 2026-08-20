@@ -22012,3 +22012,90 @@ backlog restent PÉRIMÉES**, signalées par la décision 483 et non corrigées 
 est un geste de documentation que deux sessions ont refusé de substituer au produit : `CRM-034`
 annonce qu'aucun `card_event` `moved` n'existe et que le commentaire de `move_card` n'est conservé
 nulle part ; `CRM-035` annonce que la grille champ × étape n'a aucun écran.
+
+## décision 486 — `CRM-081` : le harnais du sommeil, et le rejeu qui a trouvé ses deux angles morts
+
+**L'unité, et le choix.** La décision 485 renvoyait au §4.2 de `docs/CloudWorker.md` : première
+unité `[~]` du backlog, dans l'ordre du plan, dont il reste du **comportement** à livrer. Le
+parcours des unités `[~]` a écarté, une à une, celles dont le reste est un arbitrage — `CRM-013` et
+`CRM-014` attendent `CRM-072`, `CRM-084` attend INC-173, `CRM-086` attend INC-182, `CRM-060` attend
+le §6 point 4 — et **trois lignes annonçant un harnais dû se sont révélées PÉRIMÉES par mesure** :
+`scripts/verify-mail-envoi.sh` et `scripts/verify-corbeille.sh` existent depuis leurs sessions
+respectives. `scripts/verify-snooze.sh`, lui, n'existait pas : le backlog en faisait « le dernier
+travail dû avant `[x]` » de `CRM-081`. C'est l'unité de la session.
+
+**La spécification n'existait pas, elle a été écrite et committée d'abord** (`CLAUDE.md` §5,
+§3.2 point 3) : `docs/SPEC-cards.md` §16 bis, sept sous-chapitres, fondés sur les mesures prises sur
+la pile démarrée et seedée le jour même — jamais sur un compte rendu antérieur. Commit documentaire
+dédié, poussé avant la première ligne de code.
+
+**CE QUE LE HARNAIS CONSTATE, ET LE CONSTAT QUI COÛTERAIT LE PLUS CHER À PERDRE.** Sept constats en
+base : les quatre gestes avec leur signature **entière** — une fonction qui perdrait son argument
+`until` porterait encore son nom, et un contrôle par le seul nom la déclarerait livrée —,
+`app.cle_fil`, le vocabulaire du fil à quatorze valeurs, le trigger de trace, la table du sommeil
+de fil avec sa RLS et ses privilèges. Le plus précieux est la **fermeture** de
+`cards.snoozed_until` : MESURÉ, `has_column_privilege` rend `false`. Rouverte, l'écran écrirait une
+échéance sans passer par la garde et les quatre refus du §16.3 deviendraient contournables **sans
+qu'aucune preuve d'API ne rougisse** — elles interrogent les fonctions, pas la colonne.
+
+**LE SEED DOIT DÉMONTRER LES DEUX ÉTATS, ET C'EST FIGÉ.** MESURÉ : deux cards portent une échéance,
+**exactement une future** et **exactement une échue**, ce que le §16.10 exigeait en toutes lettres.
+L'une des deux disparaîtrait que le filtre du §16.12 rendrait le même écran dans ses deux modes, et
+il rendrait **vert**. `mail_thread_snoozes` est vide, et c'est un constat aussi : les preuves
+réveillent le fil qu'elles endorment.
+
+**LE PREMIER REJEU A TROUVÉ UN DÉFAUT DU HARNAIS LUI-MÊME, ET C'EST CE QUI ÉTABLIT QU'IL N'EST PAS
+COMPLAISANT.** Deux des cinq dégradations sont restées **NON VUES** — celles de
+`filtre-sommeil.ts`, le filtre d'exclusion et le défaut de la bascule. La réponse n'a été ni de les
+retirer, ni d'élargir le jeu rejoué : la preuve n'était pas absente. Ce module **n'importe rien**,
+délibérément, pour rester atteignable depuis `e2e/` (`tsconfig.tools.json`), et ses deux règles sont
+éprouvées là où elles sont **consommées** — `webapp/src/lib/liste-cards.test.ts`, qui vérifie le
+filtre `or=` réellement émis et le repli du paramètre d'adresse. MESURÉ : cette suite rend **2 en
+échec** sous la première dégradation, **5** sous la seconde. Chaque dégradation nomme désormais la
+suite qui doit la voir, et cette suite rejoint le harnais comme **gardienne**, sans que son compteur
+soit figé — elle n'appartient pas à l'unité. Élargir le jeu aurait rendu vert au même prix, en
+perdant l'information qui compte : laquelle des preuves tient laquelle des règles.
+
+**Verdict : `scripts/verify-snooze.sh` rend 68 contrôles, aucune anomalie, deux exécutions de
+suite.** Sa propre non-complaisance est éprouvée dans les deux sens : un compteur volontairement
+faux — 68 tests unitaires attendus au lieu de 67, puis 46 captures au lieu de 47 — le fait rendre
+`1 en échec` à chaque fois, et le harnais est rétabli et relu **identique octet à octet** aussitôt.
+
+**LA CAMPAGNE COMPLÈTE A ÉTÉ EXÉCUTÉE, ET ELLE EST INTÉGRALEMENT VERTE.** `typecheck` vert, `build`
+vert, `test:unit` **67 fichiers / 2272 tests**, `test:sql` **50 fichiers / 2480 assertions**,
+`e2e:api` **818 passés**, `e2e:ui` **549 passés, aucun échec** — INC-188 ne s'est pas reproduite —,
+`e2e:mail` **42 passés**, `pytest` **244 passés**. Des harnais, ceux que ce changement touche :
+`verify-snooze.sh` **68 contrôles** deux fois, `verify-node-toolchain.sh` **5 contrôles** — les
+**39** harnais Node préparent tous leur chaîne, le nouveau compris —, et `verify-scripts.sh` **103
+vérifications, 1 anomalie préexistante** (INC-186, identique aux deux sessions précédentes).
+
+**CINQ LIGNES PÉRIMÉES DU BACKLOG SONT CORRIGÉES, CHACUNE PAR MESURE.** La décision 483 les avait
+signalées et deux sessions avaient refusé de substituer ce geste au produit ; celui-ci est livré, et
+ces lignes coûtent désormais du temps à chaque session — elles en ont coûté à celle-ci, qui a dû
+mesurer pour découvrir que deux harnais annoncés comme dus existaient. Corrigées : les deux harnais
+ci-dessus, le `card_event` `moved` écrit par la migration 16 depuis `CRM-044`, le motif de
+`move_card` conservé depuis la migration 35 (INC-048 **close**), et la grille champ × étape livrée
+par `CRM-076` (§7 bis.11). Le texte d'origine est conservé partout où il décrit l'état **au moment
+de la livraison**.
+
+**Ce qui n'a pas été exécuté, et il faut le dire.** Les `scripts/verify-*.sh` autres que les trois
+ci-dessus : **aucun** — la série entière ne tient pas dans une session (`docs/CloudWorker.md`
+§2.1 ter). `verify-harness.sh` en particulier n'a pas été rejoué, et son compteur reste l'écart que
+le backlog nomme depuis la tranche 2 b ; ce changement n'ajoute toutefois **aucun** scénario, donc
+rien qui déplace ce compteur. Aucune capture nouvelle : ce changement ne touche **aucune** surface —
+ni composant, ni route, ni style. Les captures réécrites par les rejeux ont été **regardées puis
+restaurées**, comme aux sessions précédentes ; deux d'entre elles l'ont été à l'écran, la vue liste
+en mode « visibles » — deux affaires, la pastille et son échéance — et le menu d'actions d'une
+carte éveillée à une étape terminale, avec ses quatre échéances usuelles.
+
+**Où reprendre.** `CRM-081` reste `[~]`, mais **plus aucun travail n'y est dû** : le harnais était
+le dernier, et il est livré. Ce qui reste tient en **deux arbitrages du responsable**, écrits au
+backlog — le mode d'affichage de l'inbox qui n'entre pas dans l'adresse (§16.15.5, point 3), et le
+§16.12.6 dont l'E2E n'éprouve que la variante filtrée, faute d'un channel du seed n'ayant **que**
+des affaires endormies. Aucune session ne peut les lever seule ; les trancher reviendrait à écrire
+une spécification à la place du responsable.
+
+La session suivante choisit donc son unité au §4.2. **Avertissement mesuré, à ne pas redécouvrir** :
+le backlog porte encore des lignes ouvertes qui décrivent des livrables existants, et le parcours de
+cette session en a corrigé cinq sans prétendre les avoir toutes trouvées. Avant de conclure qu'un
+livrable manque, **mesurer** — un `ls`, un `grep`, une requête — plutôt que de croire la ligne.
