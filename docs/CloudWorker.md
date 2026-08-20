@@ -38,7 +38,7 @@ n'est pas décorative, et elle ne se remplace pas par une reformulation.
 
 LIS CECI EN PREMIER, C'EST LA RÈGLE QUI CONDITIONNE TOUTES LES AUTRES.
 
-Cette tâche s'exécute toutes les heures, et CHAQUE EXÉCUTION PART D'UN CHECKOUT NEUF. Ta session n'est pas conservée. Tout ce que tu écris sans le POUSSER sur "origin/main" est définitivement perdu à la fin de ta session, et l'exécution suivante repartira exactement du même point pour refaire exactement le même travail. Une boucle qui ne pousse pas n'avance jamais.
+Cette tâche s'exécute toutes les trois heures, et CHAQUE EXÉCUTION PART D'UN CHECKOUT NEUF. Ta session n'est pas conservée. Tout ce que tu écris sans le POUSSER sur "origin/main" est définitivement perdu à la fin de ta session, et l'exécution suivante repartira exactement du même point pour refaire exactement le même travail. Une boucle qui ne pousse pas n'avance jamais.
 
 En conséquence, et sans exception :
 
