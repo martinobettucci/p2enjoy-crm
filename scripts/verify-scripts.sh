@@ -754,9 +754,13 @@ if PATH="$RUNNER_FIXTURE/bin:$PATH" MIGRATIONS_DIR="$RUNNER_FIXTURE/migrations" 
 else
 	runner_fixture_ok=false
 fi
+# Depuis `CRM-087`, le runner ajoute un TROISIÈME appel `psql` — le `notify pgrst` de fin — qui
+# emprunte le rôle par défaut `postgres` et ne comporte pas `--single-transaction --file`. Le
+# séquencement doit donc être `postgres|supabase_admin|postgres`, et l'assertion sur le nombre
+# de fichiers migrés (2) est inchangée.
 if [ "$runner_fixture_ok" = true ] \
 	&& [ "$(cut -d '|' -f 1 "$RUNNER_FIXTURE/roles.log" 2>/dev/null | paste -sd '|' -)" = \
-	'postgres|supabase_admin' ] \
+	'postgres|supabase_admin|postgres' ] \
 	&& [ "$(grep -c -- '--single-transaction --file' "$RUNNER_FIXTURE/roles.log" 2>/dev/null)" = 2 ]; then
 	ok "le runner garde postgres par défaut et ne prend supabase_admin que pour le fichier marqué"
 else
