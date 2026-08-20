@@ -312,6 +312,151 @@ test.describe('comptes entrants IMAP — ce que la pile consent', () => {
 		}
 	})
 
+	// ---------------------------------------------------------------------------------------
+	// CE QUE `CRM-088` EXERCE DEPUIS SON ÉCRAN, mesuré ici hors interface — §21.6.
+	//
+	// L'écran de configuration n'ouvre aucune politique : il appelle exactement cette fonction.
+	// Les deux scénarios ci-dessous fixent ce que la base consent à une LECTRICE, c'est-à-dire au
+	// profil le moins doté du seed — et c'est lui qui décide de la forme de l'écran (§21.4 : le
+	// sélecteur de boîte visée n'est jamais restreint selon le rôle).
+	// ---------------------------------------------------------------------------------------
+
+	test('CRM-088 : une lectrice configure SA PROPRE boîte, et la base l’accepte', async ({
+		request,
+	}) => {
+		const jeton = await jetonDe('viewer@p2enjoy.test')
+
+		// Farida n'a pas de boîte au seed (§13.8), et c'est précisément le cas utile : l'écran doit
+		// pouvoir en créer une pour un membre qui n'en a aucune.
+		const avant = await request.get(
+			`${URL_API}/rest/v1/mail_inbound_accounts?owner_id=eq.${FARIDA}&select=id`,
+			{ headers: enTetesService() },
+		)
+		expect((await avant.json()) as unknown[]).toHaveLength(0)
+
+		try {
+			const creation = await request.post(
+				`${URL_API}/rest/v1/rpc/upsert_mail_inbound_account`,
+				{
+					headers: enTetesAuthentifies(jeton),
+					data: {
+						p_workspace_id: WORKSPACE,
+						p_label: 'Boîte de Farida Nowak',
+						p_imap_host: 'stalwart',
+						p_imap_port: 143,
+						p_imap_security: 'none',
+						p_imap_username: 'viewer@p2enjoy.test',
+						p_password: MOT_DE_PASSE_SEED,
+						p_owner_id: FARIDA,
+					},
+				},
+			)
+			expect(creation.status()).toBe(200)
+			const idCompte = (await creation.json()) as string
+			expect(typeof idCompte).toBe('string')
+
+			// Elle LIT ensuite sa boîte, et elle seule — la RLS du §13.4 n'a pas bougé.
+			const relu = await request.get(
+				`${URL_API}/rest/v1/mail_inbound_accounts?select=id,label,owner_id,status`,
+				{ headers: enTetesAuthentifies(jeton) },
+			)
+			const lignes = (await relu.json()) as CompteLu[]
+			expect(lignes).toHaveLength(1)
+			expect(lignes[0]?.owner_id).toBe(FARIDA)
+			// Une boîte neuve naît `pending` : aucun test de connexion n'a eu lieu, et l'écran
+			// n'en déclenche aucun (§21.9).
+			expect(lignes[0]?.status).toBe('pending')
+		} finally {
+			// Le seed est rendu tel qu'il a été reçu — leçon d'INC-061. La ligne part ; son secret
+			// Vault reste orphelin et sera REPRIS au prochain passage, jamais dupliqué (§13.8, la
+			// contrainte d'unicité de `vault.secrets.name`). Les contrôles de
+			// `scripts/verify-mail-inbound.sh` joignent `secret_id` : un orphelin n'y entre pas.
+			await request.delete(`${URL_API}/rest/v1/mail_inbound_accounts?owner_id=eq.${FARIDA}`, {
+				headers: enTetesService(),
+			})
+		}
+
+		const apres = await request.get(
+			`${URL_API}/rest/v1/mail_inbound_accounts?select=id`,
+			{ headers: enTetesService() },
+		)
+		expect((await apres.json()) as unknown[]).toHaveLength(3)
+	})
+
+	test('CRM-088 : la même lectrice se voit refuser la boîte SYSTÈME', async ({ request }) => {
+		const jeton = await jetonDe('viewer@p2enjoy.test')
+
+		const refus = await request.post(`${URL_API}/rest/v1/rpc/upsert_mail_inbound_account`, {
+			headers: enTetesAuthentifies(jeton),
+			data: {
+				p_workspace_id: WORKSPACE,
+				p_label: 'Tentative sur la boîte système',
+				p_imap_host: 'stalwart',
+				p_imap_port: 143,
+				p_imap_security: 'none',
+				p_imap_username: 'systeme@crm.p2enjoy.test',
+				p_password: 'peu-importe',
+			},
+		})
+
+		expect(refus.status()).toBe(403)
+		expect(await refus.text()).toContain('forbidden')
+
+		// CONTRE-ÉPREUVE : la boîte système n'a pas bougé. Sans elle, `403` prouverait le code de
+		// retour, pas l'absence d'écriture.
+		const systeme = await request.get(
+			`${URL_API}/rest/v1/mail_inbound_accounts?owner_id=is.null&select=label`,
+			{ headers: enTetesService() },
+		)
+		expect(((await systeme.json()) as { label: string }[])[0]?.label).toBe(
+			'Boîte système du workspace',
+		)
+	})
+
+	// LE REFUS DE CONTRAINTE DIVULGUE `secret_id` — INC-193, mesuré le 2026-08-20. Ce scénario
+	// CONSIGNE le comportement plutôt que de le corriger (`CLAUDE.md` §18) : il devient rouge le
+	// jour où l'arbitrage sera rendu et la divulgation fermée, ce qui est exactement ce qu'on
+	// attend de lui. Il prouve aussi le motif de la règle du §21.7 : l'écran ne recopie jamais ce
+	// corps d'erreur.
+	test('CRM-088 / INC-193 : le corps d’un refus de contrainte porte la ligne entière', async ({
+		request,
+	}) => {
+		const jeton = await jetonDe('admin@p2enjoy.test')
+
+		const refus = await request.post(`${URL_API}/rest/v1/rpc/upsert_mail_inbound_account`, {
+			headers: enTetesAuthentifies(jeton),
+			data: {
+				p_workspace_id: WORKSPACE,
+				p_label: 'Boîte système du workspace',
+				p_imap_host: 'stalwart',
+				p_imap_port: 70000,
+				p_imap_security: 'none',
+				p_imap_username: 'systeme@crm.p2enjoy.test',
+			},
+		})
+
+		expect(refus.status()).toBe(400)
+		const corps = (await refus.json()) as { code: string; details: string | null }
+		expect(corps.code).toBe('23514')
+
+		const parService = await request.get(
+			`${URL_API}/rest/v1/mail_inbound_accounts?owner_id=is.null&select=secret_id`,
+			{ headers: enTetesService() },
+		)
+		const [ligne] = (await parService.json()) as { secret_id: string }[]
+		// La référence du secret — révoquée en lecture à `authenticated` (preuve de refus n° 6) —
+		// se lit pourtant dans le corps du refus rendu à ce même appelant.
+		expect(corps.details).toContain(ligne?.secret_id ?? 'référence introuvable')
+
+		// Le chemin normal, lui, reste bien fermé : c'est ce qui fait de la ligne au-dessus un
+		// SECOND chemin, et non une révocation qui n'aurait jamais fonctionné.
+		const direct = await request.get(
+			`${URL_API}/rest/v1/mail_inbound_accounts?select=secret_id`,
+			{ headers: enTetesAuthentifies(jeton) },
+		)
+		expect(direct.status()).toBe(403)
+	})
+
 	test('la clé anonyme employée ici n’est pas la clé de service', async () => {
 		// Sans cette garde, les contre-épreuves « par le service » pourraient mesurer exactement ce
 		// que mesure l'appelant refusé, et l'ensemble du fichier deviendrait tautologique.
