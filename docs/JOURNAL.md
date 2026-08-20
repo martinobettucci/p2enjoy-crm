@@ -21238,3 +21238,102 @@ les siennes, et deux jeux de re-rendus JPEG du même écran ne disent rien de pl
 arbitrages attendent : **INC-169**, **INC-170**, **INC-172**, **INC-173**, **INC-174**,
 **INC-176**, **INC-177**, **INC-178** — les trois derniers consignés par l'exécution concurrente de
 cette même heure — et **INC-179**, consigné ici.
+
+
+## décision 478 — `CRM-086` tranche 5 : le cumul du workspace, et la cadence de la tâche planifiée
+
+**L'unité, et le choix.** La décision 477 laisse `CRM-086` en `[~]` et désigne la reprise : « il
+reste UN écran : le cumul du workspace (§4.5) ». C'est le cas 1 du §4.2 de `docs/CloudWorker.md`, et
+l'unité de cette session sans discussion. La spécification EXISTE et couvre ce qui restait à coder —
+le §4.0 arrête l'adresse, le §4.5 le contenu, le §4.7 les états —, donc l'exception du §3.2 point 3
+s'applique : **aucune spécification n'a été réécrite**, le code a commencé après lecture.
+`docs/DESIGN_SYSTEM.md` a été lu **intégralement** avant de toucher à l'interface (`CLAUDE.md` §4).
+
+**Ce qui a été livré.** `webapp/src/app/CoutsWorkspace.tsx` à l'adresse `/couts` — un groupe de
+barres par track, cumulant ses budgets ouverts, un histogramme par devise présente, et la portée du
+cumul écrite sous les graphiques. `lireCumulWorkspace` et `grouperTracksParDevise` dans
+`couts-ecrans.ts` : les tracks lisibles, leurs budgets ouverts et leurs lignes en **trois** requêtes,
+cumulés côté client. `CHEMIN_COUTS_WORKSPACE` dans `chemins.ts` et **dans `ROUTES`** — la seule des
+trois adresses de coûts qui y figure, son titre étant une clé de traduction. L'entrée transverse
+« Coûts » de la barre latérale, icône `ChartColumn`. Douze clés de traduction.
+
+**QUATRE POINTS QUI NE SE DEVINENT PAS.**
+
+(1) *Un track sans budget ouvert ne rend AUCUNE barre, et ce n'est pas un état vide.* Une paire de
+barres vit dans l'histogramme d'une devise ; un track sans budget n'en porte aucune, et l'y placer
+demanderait d'inventer sa monnaie. L'état vide est réservé au cas où aucun track n'en porte, et il
+recouvre délibérément « aucun track lisible » — les distinguer renseignerait un appelant sans droit.
+
+(2) *Un track archivé ou en corbeille ne figure pas dans ce cumul.* Règle d'ÉCRAN et non
+d'autorisation : les filtres sont ceux de `lireTracks`, celle de la barre latérale. La conséquence
+est nommée plutôt que tue — un budget encore ouvert sur un track archivé se lit sur l'écran de coûts
+de son track, dont l'adresse continue de répondre.
+
+(3) *La portée du cumul est ÉCRITE à l'écran.* Le total est calculé après la RLS, donc deux profils
+lisent deux nombres différents sur les mêmes données ; sans cette phrase, l'écart se lirait comme
+une erreur de calcul et quelqu'un finirait par « corriger » la lecture.
+
+(4) *L'entrée de barre latérale partage l'icône `ChartColumn` de l'onglet « Coûts » d'un track.* Le
+§9 interdit que deux objets DISTINCTS partagent une icône ; ces deux entrées désignent le MÊME
+objet à deux portées.
+
+**UN DÉFAUT TROUVÉ EN REGARDANT UNE CAPTURE.** Cet écran est la **première** surface du produit où
+deux histogrammes s'empilent réellement — un track n'a en pratique qu'une devise, si bien que le
+§5.30 n'avait jamais rendu le cas. Les deux blocs se suivaient avec la même légende et les mêmes
+en-têtes, et rien à l'œil ne disait que le second comptait des francs : la devise ne se lisait que
+dans les montants. Le nom accessible de la région le disait déjà, mais un nom de région n'est pas
+rendu à l'écran. Chaque histogramme porte désormais son titre visible, **absent** quand une seule
+devise est présente (§4.5). `docs/DESIGN_SYSTEM.md` §5.33 porte la règle.
+
+**Ce qui a été vérifié.** `couts-ecrans.test.ts` **57 tests** (15 neufs), `CoutsWorkspace.test.tsx`
+**17 tests**, `routes.test.tsx` **13** après révision, `e2e/ui/couts-workspace.spec.ts` **7
+scénarios verts**. Campagne complète, séquentielle : `typecheck` vert, `test:unit` **64 fichiers /
+2200 tests**, `build` vert, `test:sql` **49 fichiers / 2464 assertions**, `e2e:api` **816 passés**,
+`pytest` **244 passés**. Les quatre captures ont été **observées**, et c'est en les regardant que le
+défaut de titre a été trouvé.
+
+**DEUX ROUGES DE CAMPAGNE, ET ILS N'ONT PAS LA MÊME NATURE.**
+
+`e2e:ui` a rendu **538 passés, 1 échec** : `coquille.spec.ts`, « le parcours complet est atteignable
+sans souris ». Celui-là est **imputable au changement**, et c'est exactement ce que cette preuve
+existe pour attraper : elle énumérait SIX entrées de navigation dans l'ordre visuel, et la septième
+— « Coûts » — s'insère entre « Objectifs » et « Ma journée ». La règle a changé par LIVRAISON, la
+preuve est donc **révisée avec son ordre réel** et non contournée (`CLAUDE.md` §18) — le précédent
+est écrit dans le fichier lui-même, `CRM-060` l'ayant déjà fait pour « Contacts ». Rejouée :
+**13 passés**.
+
+`e2e:mail` a rendu **40 passés, 2 échecs** — `ingestion.spec.ts` et `backfill.spec.ts` —, lancée
+immédiatement derrière les 17,3 minutes d'`e2e:ui`. Rejouée **seule** onze minutes plus tard, sur le
+même code : **42 passés, aucun échec**. Ce n'est ni une régression ni une preuve : c'est l'ÉTAT de
+la pile qui diverge, pas le code, exactement la nature d'INC-177 transposée à l'enchaînement de deux
+suites. Consigné à **INC-181**, rien corrigé.
+
+**Une deuxième anomalie consignée sans être corrigée : INC-180.** La barre d'onglets écrit « Aucun
+channel » sur **toutes** les routes transverses — `/contacts`, `/objectifs`, `/couts`,
+`/ma-journee`, `/reglages`, `/inbox`. Le défaut est antérieur : la capture
+`docs/captures/CRM-060/carnet-contacts-1440.jpg` le porte déjà. La livraison de `/couts` l'expose
+une sixième fois, elle ne le cause pas.
+
+**CE QUI N'A PAS ÉTÉ EXÉCUTÉ, ET IL FAUT LE DIRE.** Les cinquante-cinq `scripts/verify-*.sh` :
+**aucun**. La série entière ne tient pas dans une session (`docs/CloudWorker.md` §2.1 ter), et
+**aucun harnais dédié n'existe pour `CRM-086`** — c'est précisément la pièce que la Definition of
+Done réclame encore.
+
+**Demande du responsable reçue en cours de session, et appliquée à `docs/CloudWorker.md`.** Trois
+points : la cadence passe à **trois heures** ; chaque session s'ouvre par « A NEW SCHEDULED SESSION
+HAVE BEEN STARTED » suivi de l'horodatage réel obtenu de la machine (§0 bis) ; et la tâche sait
+désormais **s'arrêter elle-même** (§4.5) — deux conditions seulement, backlog intégralement soldé ou
+plus aucune option pour avancer avec sa cause nommée et mesurée, puis une séquence : pousser, écrire
+l'état final au journal et au backlog, désactiver la routine, garde Git, compte rendu.
+**L'horaire de la routine n'a PAS pu être changé depuis cette session** : l'API refuse toute
+modification d'une routine créée hors d'une session d'agent — seul `enabled: false` par sa propre
+session est accepté. Le changement d'horaire demande donc un geste du responsable dans l'interface
+des Routines. La documentation, elle, décrit la cadence de trois heures.
+
+**Où reprendre.** `CRM-086` reste `[~]`, et les **trois écrans sont montés et prouvés**. Il reste
+l'**onglet « À saisir »** du §4.8, qui n'existe sur aucun des trois et qui est la reprise naturelle :
+sa spécification est écrite (§4.8), ses règles de rendu aussi (`docs/DESIGN_SYSTEM.md` §5.31), et sa
+Definition of Done est détaillée au backlog. Il reste ensuite le **harnais dédié**
+`scripts/verify-couts-ecrans.sh`, qu'aucune tranche n'a écrit. `CRM-083` reste bloqué par
+**INC-170**. Dix arbitrages attendent : **INC-169**, **INC-170**, **INC-172**, **INC-173**,
+**INC-174**, **INC-176**, **INC-177**, **INC-178**, **INC-180** et **INC-181**.
