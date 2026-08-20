@@ -3728,3 +3728,137 @@ cas que le §16.16.6 rend lisible : compteur `2`, une ligne, un compte `2` sur c
 **Ce qui restera dû sur `CRM-081` après la tranche 2 f** : rien de la DoD de l'unité. Le seul écart
 subsistant est celui du §16.15.5 point 3 — le mode d'affichage n'entre pas dans l'adresse —, qui
 attend un arbitrage du responsable et ne relève pas du sommeil.
+
+---
+
+## 16 bis. Le harnais dédié — `scripts/verify-snooze.sh`
+
+*Chapitre écrit avant sa première ligne de code (`CLAUDE.md` §5). Tous les comptes cités ont été
+MESURÉS le 2026-08-20 sur la pile démarrée et seedée, et non lus dans un compte rendu antérieur.*
+
+Le §16 énumère les preuves attendues, tranche par tranche ; six tranches les ont livrées, et elles
+sont aujourd'hui **dispersées entre treize fichiers**. Aucune commande ne dit, en un verdict, si
+`CRM-081` tient encore. C'est ce que ce harnais ajoute — et rien d'autre : **il n'écrit aucune
+preuve nouvelle**, il rejoue celles qui existent, constate en base ce que les tranches ont posé, et
+refuse de rendre vert quand l'une de ces preuves a cessé de mesurer quelque chose.
+
+C'est le dernier travail dû par `docs/BACKLOG.md` sur cette unité.
+
+### 16 bis.1 Ce que le harnais constate EN BASE — mesuré, non supposé
+
+Ces sept constats portent sur ce que les tranches 1 et 2 c ont écrit dans le schéma. Ils ne
+rejouent pas les suites pgTAP : ils vérifient que l'objet **existe encore** avant de rejouer les
+preuves qui le supposent, faute de quoi une suite absente et un schéma amputé rendraient le même
+silence.
+
+| # | Constat | Mesuré le 2026-08-20 |
+|---|---|---|
+| 1 | Les quatre gestes sont livrés, avec leur signature exacte | `snooze_card(card_id uuid, until timestamptz)`, `wake_card(card_id uuid)`, `snooze_thread(workspace uuid, thread_key text, until timestamptz)`, `wake_thread(workspace uuid, thread_key text)` |
+| 2 | `app.cle_fil` est livrée | une occurrence dans le schéma `app` |
+| 3 | La colonne est **fermée** en écriture directe (§16.7) | `has_column_privilege('authenticated','public.cards','snoozed_until','update')` rend **`false`** |
+| 4 | Le vocabulaire du fil compte **quatorze** valeurs, dont `snoozed` et `woken` (§16.5) | `card_events_type_check` les énumère toutes les deux |
+| 5 | La trace est écrite par un **trigger de table** (§16.5) | `card_events_apres_maj_sommeil` sur `public.cards` |
+| 6 | `public.mail_thread_snoozes` existe, RLS **active**, **une** politique (§16.14.6) | `relrowsecurity` vrai, une ligne dans `pg_policies` |
+| 7 | La table du fil est **lisible et non écrivable** par le client (§16.14.6) | `select` accordé ; `insert`, `update` et `delete` **refusés** |
+
+Le constat n° 3 est celui qui coûterait le plus cher à perdre : la colonne rouverte, l'écran
+pourrait écrire une échéance sans passer par la garde, et les quatre refus du §16.3 deviendraient
+contournables sans qu'aucune preuve d'API ne rougisse — elles interrogent les fonctions, pas la
+colonne.
+
+### 16 bis.2 Ce que le seed doit démontrer, et pourquoi les DEUX états
+
+Le §16.10 l'exigeait en toutes lettres : « le seed devra poser au moins une affaire en sommeil et
+une affaire dont le sommeil est échu, faute de quoi l'écran ne serait démontrable ni dans un état,
+ni dans l'autre ». MESURÉ le 2026-08-20 : `public.cards` porte **deux** lignes à `snoozed_until`
+non nulle, dont **exactement une future** — `Cadrage data — Groupe Vallier` — et **exactement une
+échue** — `Refonte du site vitrine`.
+
+Le harnais fige ces trois comptes. Une seule des deux disparaîtrait que la moitié des scénarios
+d'interface se mettrait à mesurer un état absent : le filtre du §16.12 rendrait le même écran dans
+ses deux modes, et il rendrait **vert**.
+
+`public.mail_thread_snoozes` est **vide**, et c'est aussi un constat : le §16.14.7 pose qu'aucun
+fil endormi n'est seedé, les preuves réveillant le fil qu'elles endorment. Une ligne résiduelle y
+dirait qu'une preuve n'a pas rendu le seed intact.
+
+### 16 bis.3 Ce que le harnais rejoue, et les comptes qu'il FIGE
+
+| # | Preuve | Fichiers | Attendu MESURÉ, figé |
+|---|---|---|---|
+| 1 | Traçabilité | les 5 fichiers de code et les 10 fichiers de preuve de l'unité | chacun porte `@spec` ou `@verifies CRM-081` dans son en-tête |
+| 2 | Captures (`CLAUDE.md` §16) | `docs/captures/CRM-081/` | **47 fichiers**, dont les quatre paliers du filtre au board et à la vue liste, le menu de la carte, la fiche endormie et le refus d'échéance passée |
+| 3 | pgTAP | `0042_snooze_cards.test.sql`, `0046_snooze_fils.test.sql` | **2 fichiers, 67 assertions** — 30 et 37 |
+| 4 | Vitest | `sommeil-card.test.ts`, `sommeil-fil.test.ts`, `fil-inbox.test.ts` | **3 fichiers, 67 tests** — 31, 22 et 14 |
+| 5 | API, jetons réels | `snooze.spec.ts`, `filtre-sommeil.spec.ts`, `snooze-fils.spec.ts` | **3 fichiers, 30 scénarios** — 9, 11 et 10 |
+| 6 | UI, clavier et souris, console stricte | `sommeil-card.spec.ts`, `filtre-sommeil.spec.ts`, `menu-sommeil-board.spec.ts`, `sommeil-fil.spec.ts`, `groupement-fils.spec.ts` | **5 fichiers, 37 scénarios** — 6, 15, 4, 6 et 6 |
+
+**Les deux compteurs sont figés, pas seulement l'un des deux** — fichiers ET assertions pour pgTAP,
+fichiers ET tests pour Vitest, fichiers ET scénarios pour Playwright. C'est la décision 279 :
+vérifier les seules assertions ne détecte pas la disparition d'une suite entière, et vérifier les
+seuls fichiers ne détecte pas la disparition de leur contenu. Un compte qui monte est aussi un
+écart : il se constate, et le chiffre du tableau ci-dessus se met à jour **dans le même changement**
+que la preuve ajoutée.
+
+### 16 bis.4 La non-complaisance — cinq dégradations, et pourquoi celles-là
+
+Une commande qui rend `0` sans rien avoir exercé est pire qu'une commande absente
+(`docs/SPEC-test-harness.md` §1). Le harnais dégrade donc réellement les modules de décision de
+l'unité, une règle à la fois, et **exige que la suite unitaire rougisse**. Chaque dégradation vise
+une règle dont la disparition serait **silencieuse en production** — l'écran continuerait de
+s'afficher, et de s'afficher sans erreur :
+
+| Règle retirée | Ce que le produit ferait alors, sans rien signaler |
+|---|---|
+| la comparaison à l'instant dans `estEnSommeil` (§16.2) — toute échéance non nulle devient un sommeil | une affaire dont l'échéance est **échue** resterait masquée pour toujours, alors que le §16.2 fait de la sortie du sommeil un simple passage du temps, sans écriture ni réveil à demander |
+| la forme `is.null,lte` de `filtreExclusionSommeil` (§16.12.1), remplacée par `not.gt` | la vue liste écarterait **toutes** les affaires qui n'ont jamais dormi — une colonne nulle ne satisfait aucune comparaison —, et un channel entier disparaîtrait de la vue par défaut |
+| le repli de `lireModeSommeil` sur le défaut `masquees` (§16.12.4) | une adresse nue montrerait les affaires endormies : mettre une affaire en sommeil ne changerait plus rien pour l'utilisateur, ce qui est exactement ce que le filtre existe pour éviter |
+| la racine `references[0]` de `cleFil` (§16.15.2), remplacée par le `Message-ID` propre | la clé du client cesserait de coïncider avec celle du serveur : chaque message ferait fil à part, le sommeil d'un fil ne couvrirait plus que son premier message, et le refus `thread_not_found` porterait sur une clé que personne n'a affichée |
+| la reconnaissance de `snooze_date_in_past` par `classerSommeil` (§16.11.4) | le refus d'une échéance passée retomberait en `inconnu`, et l'écran cesserait de dire **pourquoi** la date est refusée — le geste paraîtrait cassé au lieu d'être guidé |
+
+**Une dégradation NON VUE est un échec du harnais, pas un détail.** Elle dit que la preuve censée
+tenir la règle ne la tient pas, et le remède est d'écrire la preuve manquante — jamais de retirer la
+dégradation.
+
+**Le témoin passe AVANT les dégradations** : la suite unitaire est rejouée intacte, et une suite
+déjà rouge fait échouer le harnais à cet endroit-là plutôt que de faire passer cinq dégradations
+pour des détections.
+
+**La restauration est CONSTATÉE, pas supposée** : après le dernier tour, le harnais compare chaque
+fichier dégradé, octet à octet, à l'instantané pris **avant** la première dégradation, et rejoue la
+suite unitaire. La comparaison à `HEAD` est interdite (`docs/SPEC-test-harness.md` §7.2 point 9) :
+le harnais doit fonctionner dans un arbre portant une évolution légitime non encore committée et ne
+doit ni la déclarer résiduelle, ni la remplacer.
+
+### 16 bis.5 Ce que ce harnais NE prouve PAS, et le dit
+
+- **Aucune règle d'autorisation n'y est réécrite.** Ce que `CRM-081` ajoute — la fermeture de la
+  colonne, les quatre refus de `snooze_card`, les trois de `snooze_thread`, la politique de
+  `mail_thread_snoozes` — est prouvé par les deux suites pgTAP et les trois suites d'API du tableau,
+  rejouées ici et non redites. Les politiques de `cards` restent celles de `CRM-040`.
+- **Aucune vérification visuelle n'y est refaite.** Le harnais constate que les captures **existent**
+  et les compte ; les observer est un geste humain que `CLAUDE.md` §16 confie à la session qui les
+  produit, et qu'aucun script ne remplace.
+- **Le mode d'affichage n'entre pas dans l'adresse de l'inbox** (§16.15.5, point 3). L'écart attend
+  un arbitrage du responsable ; le harnais ne le fige pas, parce qu'il ne relève pas du sommeil et
+  qu'une assertion l'aurait transformé en règle par la bande.
+- **Aucun réveil planifié n'est vérifié**, et il n'y en a pas à vérifier : le §16.2 rend la question
+  sans objet.
+
+### 16 bis.6 Commande
+
+```
+scripts/verify-snooze.sh            verdict complet
+scripts/verify-snooze.sh --rapide   n'exécute pas Playwright
+```
+
+Le mode `--rapide` **annonce** ce qu'il n'a pas exécuté plutôt que de le taire : une preuve non
+exécutée n'est pas une preuve verte (`CLAUDE.md` §25).
+
+### 16 bis.7 Definition of Done du harnais
+
+- `scripts/verify-snooze.sh` livré, exécutable, portant ses commentaires `@verifies` ;
+- **deux exécutions de suite** rendant le même verdict, sans anomalie ;
+- **les cinq dégradations vues**, et la restauration constatée octet à octet ;
+- `docs/BACKLOG.md` mis au véritable état de `CRM-081` dans le même changement ;
+- `CHANGELOG.md` et `docs/JOURNAL.md` dans le même changement.
