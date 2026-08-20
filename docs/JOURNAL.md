@@ -21643,3 +21643,67 @@ message, et l'unité au backlog. Le code suit.
 colonnes dans `COLONNES_MESSAGE` et la projection ; le bloc dans `RouteInbox.tsx` avec ses quatre
 états ; les clés de traduction ; puis le provisionnement Stalwart et le quatrième message du seed ;
 puis les preuves du §8.8.11.
+
+## décision 482 — `CRM-080` tranche 1 : la sauvegarde chiffrée, et la clé racine rendue obligatoire
+
+**L'unité, et le choix.** La décision 481 n'était que la spécification de `CRM-060` sous-tranche
+2 bis ; le journal s'est arrêté là, mais les commits `7b6bb8d`…`00eb3ac` montrent que la
+sous-tranche a bien été **livrée et prouvée** — l'entrée de journal correspondante manque, et le
+présent paragraphe en tient lieu. `CRM-060` ne peut plus avancer : ses deux restes — l'arbitrage
+sur les références mortes (§6, point 4) et le fil unifié (§12.8) — attendent le responsable.
+
+Le §4.2 de `docs/CloudWorker.md` a donc été appliqué à la lettre. Les unités `[~]` restantes ont
+été relues : `CRM-077` n'attend plus qu'un harnais **qui existe déjà** (voir plus bas) ; `CRM-081`
+attend `scripts/verify-snooze.sh` et un arbitrage ; `CRM-082` et `CRM-083` n'ont plus que la série
+des `verify-*.sh` ; `CRM-084` attend **INC-173** ; `CRM-086` attend **INC-182**. Aucune ne porte du
+**comportement** à livrer. Le point 3 s'applique : **la première unité `[ ]` du plan, et c'est
+`CRM-080`** — la seule du dépôt.
+
+**HUIT MESURES AVANT LA PREMIÈRE LIGNE, ET TROIS COMMANDENT LE DÉCOUPAGE.** `pg_dump` 17.6 est
+disponible **dans** le conteneur de base, ce qui évite tout client sur l'hôte et interdit à la
+version du dump de diverger de celle du serveur. Le dump complet du seed pèse 972 060 octets, et
+`pg_restore --list` le relit. Surtout : la **clé racine de Vault** vit dans le volume `db-config`,
+hors de `PGDATA` — `docs/DAT.md` §10 le disait déjà, et une sauvegarde de la seule base laisserait
+tous les secrets de messagerie **indéchiffrables**. Le conteneur MinIO ne porte **ni `tar` ni
+`find`** (`command not found`, rc=127) : l'export des objets passe par `docker cp <conteneur>:<chemin> -`,
+dont le flux est produit par le démon Docker. Et `wal-g` est configuré dans l'image mais activé par
+aucun service : la restauration à un instant quelconque est **hors périmètre**, nommée plutôt que
+découverte plus tard.
+
+**LA RÈGLE QUI JUSTIFIE CETTE TRANCHE AUTANT QUE LE DUMP.** `scripts/backup.sh` **refuse** de
+produire une archive dont la clé racine serait absente. Le DAT recommandait de la sauvegarder à
+part depuis toujours ; l'expérience de ce genre d'avertissement est qu'il n'est pas suivi, et une
+archive sans elle donnerait la confiance d'une sauvegarde sans en avoir la valeur. Le chiffrement
+n'emploie que des **clés publiques** `age` : l'hôte qui sauvegarde ne peut relire aucune de ses
+propres archives, si bien que sa compromission ne livre pas l'historique. L'archive n'apparaît sous
+son nom définitif qu'une fois entièrement écrite, et la rétention n'efface que le motif du produit
+en **énumérant** chaque suppression.
+
+**LE HARNAIS A TROUVÉ DEUX DÉFAUTS, ET C'EST CE QUI ÉTABLIT QU'IL N'EST PAS COMPLAISANT.**
+`backup.sh` créait le répertoire de sortie **avant** de vérifier qu'il est hors du dépôt : il
+déposait dans l'arbre de travail le répertoire qu'il s'apprêtait à refuser. Corrigé à la cause —
+`realpath -m` canonise `..` sans exiger que la cible existe, et précède désormais le `mkdir`. Le
+harnais, lui, mourait sur son propre `pipefail` quand `find` visait un répertoire absent, situation
+normale de tous les refus. `scripts/verify-sauvegardes.sh` rend **42 contrôles, aucune anomalie**,
+deux exécutions de suite, et le seed sort **intact** — quatre messages, aucun objet résiduel.
+
+**UNE ANOMALIE ÉTRANGÈRE, MESURÉE DES DEUX CÔTÉS — INC-186.** `scripts/verify-scripts.sh` a rougi
+deux fois : sur les trois variables orphelines de cette tranche — corrigé en ajoutant la
+justification à `ALLOWED_ORPHANS`, jamais en contournant la liste — et sur « la reconstruction sans
+CA n'emprunte pas sa branche inactive ». Ligne de base établie par `git stash` sur cette preuve
+seule : **1 anomalie des deux côtés**. Préexistante et étrangère, consignée, non corrigée au
+passage.
+
+**UN CONSTAT DE BACKLOG, CONSIGNÉ SANS ÊTRE TRANCHÉ.** `CRM-077` porte encore « Reste dû : un
+harnais dédié `scripts/verify-corbeille.sh` », alors que **le fichier existe** et porte ses
+`@verifies`. La ligne est périmée. Elle n'a pas été corrigée ici : solder une autre unité sous
+celle-ci est exactement ce que `CLAUDE.md` §13 interdit, et la session qui reprendra `CRM-077`
+n'aura qu'à exécuter ce harnais pour trancher.
+
+**Où reprendre.** `CRM-080` est `[~]`, tranche 1 livrée et prouvée. La **tranche 2** est le travail
+suivant, et le §9 de `docs/SPEC-backups.md` la cadre : `scripts/restore-drill.sh`, pile jetable à
+nom de projet Docker distinct, vérification de **toutes** les empreintes du manifeste **avant**
+toute restauration, comparaison des invariants dont le **déchiffrement effectif d'un secret de
+Vault** — seule preuve que la clé racine a suivi —, puis destruction du **seul** environnement
+jetable. Sa garde la plus importante devra être **structurelle** et non conditionnelle. Son contrat
+ligne à ligne s'écrit avant son code, comme celui-ci.
