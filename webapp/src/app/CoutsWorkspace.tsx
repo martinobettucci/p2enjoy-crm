@@ -67,6 +67,19 @@ export function ContenuCoutsWorkspace({ client }: { readonly client: ClientCrm |
 		}
 	}, [client, tentative])
 
+	// AUCUN CLIENT N'EST UN ÉTAT, PAS UNE ATTENTE. La configuration d'API absente ou la session
+	// perdue rendent `clientCrm` nul ; laisser l'écran sur son squelette ferait attendre
+	// indéfiniment une lecture que rien n'émettra — la page blanche déguisée que le §5.8 refuse.
+	// C'est l'état que `Objectifs` et le carnet traitent déjà, nommé ici pour cet écran.
+	if (client === null) {
+		return (
+			<EtatVide
+				titre={t('costs.workspace.noworkspace.title')}
+				corps={t('costs.workspace.noworkspace.body')}
+			/>
+		)
+	}
+
 	if (etat.statut === 'chargement') {
 		return (
 			<div className="py-2">

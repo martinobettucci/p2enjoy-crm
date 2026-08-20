@@ -14,6 +14,7 @@ import { ENTREES_TRANSVERSES } from './navigation'
 import {
 	CHEMIN_ADMIN_ARBORESCENCE,
 	CHEMIN_CONTACTS,
+	CHEMIN_COUTS_WORKSPACE,
 	CHEMIN_OBJECTIFS,
 	CHEMIN_DEMARRAGE,
 	CHEMIN_ETAT_MESSAGERIE,
@@ -57,6 +58,11 @@ describe('table des routes', () => {
 	// preuve est donc RÉVISÉE et non contournée : `/` rejoint les routes qui portent un écran, et
 	// son assertion propre ci-dessous vérifie qu'aucun de ses quatre cas n'est une page blanche.
 	//
+	// RÉVISÉE UNE CINQUIÈME FOIS PAR `CRM-086`, ET LA RÈGLE CHANGE PAR LIVRAISON, NON PAR
+	// CONTOURNEMENT : `/couts` n'a jamais porté d'état vide inconditionnel — l'entrée est CRÉÉE par
+	// la tranche 5 avec son écran (`docs/SPEC-costs.md` §4.0 et §4.5). Elle rejoint donc d'emblée
+	// les routes qui portent un écran chargé à la demande, et son assertion propre est plus bas.
+	//
 	// RÉVISÉE UNE QUATRIÈME FOIS PAR `CRM-060`, ET POUR LE MOTIF DÉJÀ ÉCRIT : `/contacts` portait
 	// un état vide inconditionnel, ce qui a cessé d'être vrai le jour où le carnet de contacts est
 	// arrivé (`docs/SPEC-contacts.md` §10). La règle a changé par livraison, la preuve est donc
@@ -67,6 +73,7 @@ describe('table des routes', () => {
 			route.chemin !== CHEMIN_INBOX &&
 			route.chemin !== CHEMIN_CONTACTS &&
 			route.chemin !== CHEMIN_OBJECTIFS &&
+			route.chemin !== CHEMIN_COUTS_WORKSPACE &&
 			route.chemin !== '/reglages' &&
 			route.chemin !== '/',
 	)
@@ -138,6 +145,23 @@ describe('table des routes', () => {
 		// écran chargé à la demande, et son assertion propre est ici. Montée SANS session, elle
 		// rend l'état vide « aucun tableau d'objectifs », jamais une page blanche.
 		const route = ROUTES.find((candidate) => candidate.chemin === CHEMIN_OBJECTIFS)
+		expect(route).toBeDefined()
+		render(
+			<MemoryRouter>
+				<Suspense fallback={<ChargementRoute />}>{route!.rendu()}</Suspense>
+			</MemoryRouter>,
+		)
+		expect(screen.getByLabelText(fr['state.loading.aria'])).toBeTruthy()
+		expect(await screen.findByTestId('etat-vide')).toBeTruthy()
+	})
+
+	it('la route /couts rend son écran, chargé à la demande derrière un repli — CRM-086', async () => {
+		// Même patron que `/objectifs` juste au-dessus, et pour son motif exact : l'écran est chargé
+		// à la demande parce qu'il emporte l'histogramme (`CLAUDE.md` §21), et le repli de `Suspense`
+		// est lui-même un état explicite. Montée sans configuration d'API, la route rend l'état vide
+		// « aucun espace de travail » — jamais une page blanche, et jamais un squelette perpétuel
+		// qui attendrait une lecture que rien n'émettra.
+		const route = ROUTES.find((candidate) => candidate.chemin === CHEMIN_COUTS_WORKSPACE)
 		expect(route).toBeDefined()
 		render(
 			<MemoryRouter>

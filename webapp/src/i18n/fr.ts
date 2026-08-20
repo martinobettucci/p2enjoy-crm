@@ -2130,6 +2130,11 @@ export const fr = {
 	// L'état vide du §4.7, transposé au workspace. Il n'offre AUCUNE action, pour le motif exact de
 	// l'écran du track : la création d'un budget vit dans l'administration de l'arborescence (§4.1),
 	// et y renvoyer conditionnellement au rôle ferait calculer un droit à l'interface.
+	// Aucun client d'API : configuration absente, ou session perdue. C'est un ÉTAT, jamais une
+	// attente — laisser le squelette serait la page blanche déguisée que le §5.8 refuse.
+	'costs.workspace.noworkspace.title': 'Aucun espace de travail',
+	'costs.workspace.noworkspace.body':
+		'Votre compte n’appartient à aucun espace de travail, ou votre session a expiré. Reconnectez-vous pour retrouver le cumul des coûts.',
 	'costs.workspace.empty.title': 'Aucun budget ouvert',
 	'costs.workspace.empty.body':
 		'Les budgets ouverts des tracks que vous pouvez lire sont cumulés ici, comparés à leurs coûts réels. Un administrateur peut en créer depuis l’administration de l’arborescence.',
