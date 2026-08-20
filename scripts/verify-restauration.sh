@@ -175,6 +175,23 @@ if [ -n "$CONTENEUR_MINIO" ] && [ -n "$BUCKET" ]; then
 		&& ok "témoin déposé dans le dépôt objet de la pile" \
 		|| fail "le témoin n'a pas pu être déposé dans le dépôt objet"
 	TEMOIN_ATTENDU=1
+
+	# LE NOMBRE ATTENDU EST COMPTÉ, IL N'EST PLUS SUPPOSÉ — révision du 2026-08-20.
+	#
+	# Ce contrôle exigeait littéralement « 1 objet(s) restauré(s) », nombre valide uniquement sur le
+	# dépôt objet VIDE du seed (docs/SPEC-backups.md §2, mesure M6), où le témoin est le seul objet.
+	# Or toute suite E2E qui ingère une pièce jointe en dépose de vrais : MESURÉ le 2026-08-20, après
+	# `npm run e2e:api` et `npm run e2e:mail`, le dépôt en porte QUATRE, et l'exercice rendait
+	# fidèlement « 5 objet(s) restauré(s), aucun manquant » — un dépôt sain, une restauration sans
+	# faute, et pourtant un rouge. Un harnais qui rougit sur un dépôt sain apprend à être ignoré.
+	#
+	# Le nombre est donc COMPTÉ ici, juste après le dépôt du témoin, par le même chemin que
+	# l'exercice emploie : `docker cp` produit le flux `tar` côté DÉMON, l'image MinIO ne portant ni
+	# `tar` ni `find` (mesure M5). Le contrôle est strictement PLUS FORT qu'avant : il n'exige plus
+	# un nombre convenu mais le nombre réel, et « aucun manquant » porte toujours sur CHAQUE entrée
+	# de l'archive — donc sur le témoin, dont la présence préalable vient d'être constatée.
+	OBJETS_ATTENDUS=$(docker cp "$CONTENEUR_MINIO:/data/$BUCKET" - 2>/dev/null | tar -tf - | grep -cv '/$' || true)
+	ok "le dépôt objet porte $OBJETS_ATTENDUS objet(s), témoin compris — nombre COMPTÉ, non supposé"
 else
 	ok "dépôt objet externe : le contrôle du témoin ne s'applique pas (cas y)"
 	TEMOIN_ATTENDU=0
@@ -222,9 +239,9 @@ grep -q 'référence   p2enjoy-db' "$BAC/exercice.log" \
 	|| fail "cas p : le rapport n'annonce pas de comparaison avec la pile de référence"
 
 if [ "$TEMOIN_ATTENDU" = "1" ]; then
-	grep -q 'I7 dépôt objet : 1 objet(s) restauré(s), aucun manquant' "$BAC/exercice.log" \
-		&& ok "cas f/I7 : le TÉMOIN est ressorti du dépôt objet jetable" \
-		|| fail "cas f/I7 : le témoin n'a pas été retrouvé — $(grep 'I7' "$BAC/exercice.log" || echo 'aucune ligne I7')"
+	grep -q "I7 dépôt objet : $OBJETS_ATTENDUS objet(s) restauré(s), aucun manquant" "$BAC/exercice.log" \
+		&& ok "cas f/I7 : les $OBJETS_ATTENDUS objets sont ressortis du dépôt jetable, TÉMOIN compris" \
+		|| fail "cas f/I7 : le compte restauré ne vaut pas les $OBJETS_ATTENDUS objets déposés — $(grep 'I7' "$BAC/exercice.log" || echo 'aucune ligne I7')"
 fi
 
 [ "$(jetables_restants)" = "0" ] \
