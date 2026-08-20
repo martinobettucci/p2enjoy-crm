@@ -2918,8 +2918,24 @@ done
 #   * UNE LIGNE QUI SURVIT À LA CLÔTURE DE SON BUDGET, et une autre à celle de son occurrence.
 #     « Production » est rattachée à « Salon du web 2025 » et « Portail adhérents » à
 #     « Janvier 2026 », toutes deux clôturées juste après. Elles prouvent que clôturer n'efface pas
-#     l'histoire (§2.3), et elles peuplent l'onglet « À saisir » du §4.8, qui liste précisément les
-#     lignes des budgets clos.
+#     l'histoire (§2.3).
+#
+#   * UNE LIGNE SANS RÉEL SUR UN BUDGET CLÔTURÉ — « Impression plaquettes », ajoutée le 2026-08-20
+#     par `CRM-086` tranche 6a. C'EST LE SEUL JEU QUI PEUPLE RÉELLEMENT L'ONGLET « À SAISIR » DU
+#     §4.8 AVEC UNE LIGNE CLOSE, et son absence était un défaut du contrat : les deux lignes
+#     ci-dessus survivent bien à leur clôture, mais leur réel est DÉJÀ saisi — elles ne paraissent
+#     donc pas dans un onglet qui ne liste que les réels manquants. La Definition of Done de
+#     `CRM-086` exige explicitement qu'« une ligne d'un budget clôturé soit présente et
+#     saisissable » ; sans cette ligne, cette preuve ne pouvait porter sur rien.
+#
+#     ELLE REND AUSSI MESURABLE LA DIVERGENCE D'INC-182 : l'histogramme du §4.2 exclut les budgets
+#     clos, donc la mention du §4.4 compte UNE ligne sans réel sur « Studio web » là où le badge de
+#     l'onglet en compte DEUX. Le registre attend l'arbitrage ; le jeu de données rend l'écart
+#     observable au lieu de le laisser théorique.
+#
+#     Elle est posée sur la MÊME affaire que « Production » — « Refonte intranet Ville de Lyon » —,
+#     et donc AVANT la clôture du budget, comme toutes les autres : le trigger refuserait une ligne
+#     neuve sur un budget clos, y compris à la clé de service.
 #
 #   * LA LIGNE QUI MOTIVE LA DOUBLE CONDITION DE LECTURE (§3.1), ET ELLE SEULE LA REND
 #     DÉMONTRABLE. « Formation Data & IA — promo 2026 » vit sur « Formation », que Farida LIT ;
@@ -2942,6 +2958,7 @@ COUTS_SEED=(
 	"5eed0000-0000-4000-8000-0000000000e2|5eed0000-0000-4000-8000-0000000000c4|5eed0000-0000-4000-8000-0000000000c3||Production|350.00|375.00"
 	"5eed0000-0000-4000-8000-0000000000e3|5eed0000-0000-4000-8000-0000000000cc|5eed0000-0000-4000-8000-0000000000c2|5eed0000-0000-4000-8000-0000000000d1|Achat d'espace|900.00|880.00"
 	"5eed0000-0000-4000-8000-0000000000e4|5eed0000-0000-4000-8000-0000000000c7|5eed0000-0000-4000-8000-0000000000c1||Prospection terrain|800.00|"
+	"5eed0000-0000-4000-8000-0000000000e5|5eed0000-0000-4000-8000-0000000000c4|5eed0000-0000-4000-8000-0000000000c3||Impression plaquettes|1200.00|"
 )
 
 echo
@@ -2971,7 +2988,8 @@ for ligne in "${COUTS_SEED[@]}"; do
 	printf '  %-22s estimé %8s   réel %s\n' "${libelle:0:22}" "$estime" "${reel:-— non saisi}"
 done
 
-info "Lignes de coût : ${#COUTS_SEED[@]} dont 2 sans réel, 2 sur un budget récurrent — docs/SPEC-costs.md §2.3"
+info "Lignes de coût : ${#COUTS_SEED[@]} dont 3 sans réel, 2 sur un budget récurrent, 1 sans réel sur
+      un budget clôturé — docs/SPEC-costs.md §2.3 et §4.8"
 
 # LES DEUX CLÔTURES, PAR LE VRAI GESTE. Un `PATCH` qui pose `closed_at`, exactement ce que
 # l'administration des budgets enverra (§4.1). Convergent : rejouer le seed sur une base déjà
@@ -3099,8 +3117,67 @@ maj_clos=$(curl -s -o /dev/null -w '%{http_code}' -X PATCH \
         frontière du §2.3 n'est plus tenue et il faudrait rouvrir un budget pour saisir une
         facture."
 
+# LA POPULATION DE L'ONGLET « À SAISIR » DU §4.8, ET LE DROIT D'ÉCRITURE QUE LA BASE EN REND.
+# Ajouté le 2026-08-20 par `CRM-086` tranche 6a. Le contrôle vérifie la lecture EXACTE que l'onglet
+# émet — `actual_cost is null` plus la colonne calculée `reel_saisissable` de la migration 52 — avec
+# les jetons réels des deux profils, et il porte sur les deux propriétés qu'aucun modèle ne donne :
+#
+#   1. LA LIGNE D'UN BUDGET CLÔTURÉ EST BIEN LÀ. C'est ce que la Definition of Done de `CRM-086`
+#      exige, et c'est ce que ce seed vient d'ajouter. Si elle disparaissait — un `closed_at is null`
+#      posé par erreur dans la lecture de l'onglet —, l'onglet perdrait sa raison d'être sans qu'un
+#      seul test unitaire ne s'en aperçoive.
+#
+#   2. LE DROIT D'ÉCRITURE EST RENDU PAR LA BASE, ET IL DIFFÈRE SELON L'APPELANT. Le business
+#      developer écrit ces affaires et reçoit « true » ; la lectrice reçoit « false » sur la seule
+#      ligne qu'elle lit. Une fonction posée par erreur en `SECURITY DEFINER` rendrait « true » aux
+#      deux — c'est le seul défaut que la migration 52 peut introduire, et il se voit ici.
+A_SAISIR_SELECT='id,reel_saisissable,budgets!inner(name,closed_at)'
+
+a_saisir_bizdev=$(curl -s -G "$API/rest/v1/card_costs" \
+	--data-urlencode "select=$A_SAISIR_SELECT" --data-urlencode 'actual_cost=is.null' \
+	-H "apikey: $ANON_KEY" -H "Authorization: Bearer $JETON_BIZDEV")
+
+nb_bizdev=$(printf '%s' "$a_saisir_bizdev" | jq -r 'length')
+[ "${nb_bizdev:-0}" -eq 3 ] || die "l'onglet « À saisir » doit rendre TROIS lignes au business
+        developer — « Publicité », « Prospection terrain » et « Impression plaquettes », cette
+        dernière sur le budget CLÔTURÉ « Salon du web 2025 » (docs/SPEC-costs.md §4.8) —, mais l'API
+        lui en rend « ${nb_bizdev:-0} »."
+
+clos_present=$(printf '%s' "$a_saisir_bizdev" \
+	| jq -r '[.[] | select(.budgets.closed_at != null)] | length')
+[ "${clos_present:-0}" -eq 1 ] || die "l'onglet « À saisir » doit lister la ligne d'un budget
+        CLÔTURÉ : « c'est précisément après la clôture que les factures arrivent, et les exclure
+        viderait l'onglet de son usage » (docs/SPEC-costs.md §4.8). Il en liste « ${clos_present:-0} »."
+
+non_saisissables=$(printf '%s' "$a_saisir_bizdev" \
+	| jq -r '[.[] | select(.reel_saisissable != true)] | length')
+[ "${non_saisissables:-0}" -eq 0 ] || die "le business developer ÉCRIT ces trois affaires : la
+        colonne calculée « reel_saisissable » de la migration 52 doit rendre « true » sur chacune
+        (docs/SPEC-costs.md §4.8.1). Elle rend autre chose sur « ${non_saisissables:-0} » d'entre
+        elles."
+
+a_saisir_viewer=$(curl -s -G "$API/rest/v1/card_costs" \
+	--data-urlencode "select=$A_SAISIR_SELECT" --data-urlencode 'actual_cost=is.null' \
+	-H "apikey: $ANON_KEY" -H "Authorization: Bearer $JETON_VIEWER")
+
+saisissables_viewer=$(printf '%s' "$a_saisir_viewer" \
+	| jq -r '[.[] | select(.reel_saisissable == true)] | length')
+[ "${saisissables_viewer:-0}" -eq 0 ] || die "la lectrice n'écrit AUCUNE affaire : « reel_saisissable »
+        doit rendre « false » sur toutes les lignes qu'elle lit (docs/SPEC-costs.md §4.8.1). Elle en
+        obtient « ${saisissables_viewer:-0} » à « true », ce qui signifie que
+        « public.reel_saisissable » a été posée en SECURITY DEFINER et répond pour le propriétaire de
+        la fonction au lieu de l'appelant — l'onglet rendrait alors des champs de saisie dont chaque
+        envoi serait refusé (docs/PROD_MIGRATIONS.md §3, migration 52)."
+
+lignes_viewer=$(printf '%s' "$a_saisir_viewer" | jq -r 'length')
+[ "${lignes_viewer:-0}" -ge 1 ] || die "la lectrice doit LIRE au moins une ligne en attente, sans
+        quoi le contrôle ci-dessus serait satisfait par une réponse vide et ne prouverait rien de la
+        colonne calculée."
+
 info "Vérifié avec les jetons réels : 0 ligne pour la lectrice sur une affaire qu'elle LIT,
-      400/23514 à l'insertion sur un budget clos, 200 à la saisie du réel sur ce même budget"
+      400/23514 à l'insertion sur un budget clos, 200 à la saisie du réel sur ce même budget,
+      3 lignes en attente pour le bizdev dont 1 sur un budget clos, et « reel_saisissable » vrai
+      pour lui et faux pour la lectrice"
 
 info "Budgets : ${#BUDGETS_SEED[@]} dont 1 récurrent à ${#OCCURRENCES_SEED[@]} occurrences, 1 clôturé,
       1 fermé à la lectrice et 1 en CHF — docs/SPEC-costs.md §2 et §4.7"
