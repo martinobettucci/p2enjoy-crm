@@ -190,6 +190,10 @@ test.describe('classement manuel — ce que la pile consent', () => {
 // transaction sans laisser de résidu sur une card seedée ; on ne la rejoue pas ici pour ne pas
 // écrire un card_event permanent sur une card de démonstration (`card_events` est append-only).
 const CARD_LEO = '5eed0000-0000-4000-8000-0000000000c2'
+// Le message que le SEED fait réellement arriver depuis la boîte du correspondant — CRM-060
+// sous-tranche 2 bis, docs/SPEC-seed.md §2.19. C'est le seul message du dépôt qui porte une
+// suggestion sans avoir été fabriqué pour la preuve.
+const MSGID_SUGGERE_SEED = '<seed-inbox-suggere@sogexia.example>'
 
 async function creerMessageDe(
 	request: import('@playwright/test').APIRequestContext,
@@ -247,6 +251,63 @@ test.describe('règle 3 — la suggestion par expéditeur connu', () => {
 			await request.delete(`${URL_API}/rest/v1/mail_messages?id=eq.${message}`, {
 				headers: enTetesService(),
 			})
+		}
+	})
+
+
+	// ---------------------------------------------------------------------------------------------
+	// CE QUE LA SURFACE LIT, AVEC LES VRAIS JETONS — `CRM-060` sous-tranche 2 bis,
+	// docs/SPEC-contacts.md §8.8.3 et §8.8.7.
+	// ---------------------------------------------------------------------------------------------
+	//
+	// Les deux preuves ci-dessus emploient la CLÉ DE SERVICE, qui ne prouve rien de ce qu'un membre
+	// voit. Or l'écran, lui, lit sous le jeton de son utilisateur : ce qui suit mesure donc la
+	// suggestion telle que la RLS la consent, sur le message que le SEED fait réellement arriver.
+
+	test('l’administratrice lit la suggestion que le SEED fait réellement arriver', async ({
+		request,
+	}) => {
+		const jeton = await jetonDe('admin@p2enjoy.test')
+		const lecture = await request.get(
+			`${URL_API}/rest/v1/mail_messages?rfc822_message_id=eq.${encodeURIComponent(MSGID_SUGGERE_SEED)}&select=id,classification,card_id,suggested_card_id`,
+			{ headers: enTetesAuthentifies(jeton) },
+		)
+		expect(lecture.status(), await lecture.text()).toBe(200)
+		const [ligne] = (await lecture.json()) as {
+			id: string
+			classification: string
+			card_id: string | null
+			suggested_card_id: string | null
+		}[]
+		// LE MESSAGE DU SEED PORTE SON INDICE, et il le porte pour l'appelant qui le LIT — c'est
+		// exactement ce que la surface reçoit, et rien d'autre. Les deux preuves précédentes
+		// emploient la clé de service, qui ne dit rien de ce qu'un membre voit.
+		expect(ligne?.suggested_card_id).toBe(CARD_LEO)
+		expect(ligne?.classification).toBe('unclassified')
+		expect(ligne?.card_id).toBeNull()
+
+		// CE SCÉNARIO NE CLASSE PAS, ET C'EST DÉLIBÉRÉ. Accepter la suggestion écrirait un
+		// `card_event` **permanent** sur une card de démonstration — `card_events` est append-only,
+		// et un `DELETE` y rend 403 même à la clé de service (INC-185). Le geste est prouvé de bout
+		// en bout, avec la session réelle d'une administratrice, par
+		// `e2e/ui/suggestion-classement.spec.ts` : le rejouer ici doublerait la dérive sans rien
+		// apprendre, la requête partant du même jeton dans les deux cas.
+	})
+
+	test('le business developer et la lectrice ne voient AUCUN message non classé de la boîte système', async ({
+		request,
+	}) => {
+		// UN MESSAGE NON CLASSÉ N'EST LISIBLE QUE PAR LA BOÎTE OÙ IL A ÉTÉ VU
+		// (docs/SPEC-mail-subsystem.md §18.1) : la boîte système est celle des administrateurs.
+		// L'écran ne calcule pas ce refus — il reçoit zéro ligne, et il n'a donc aucun bloc à rendre.
+		for (const compte of ['bizdev@p2enjoy.test', 'viewer@p2enjoy.test']) {
+			const jeton = await jetonDe(compte)
+			const lecture = await request.get(
+				`${URL_API}/rest/v1/mail_messages?rfc822_message_id=eq.${encodeURIComponent(MSGID_SUGGERE_SEED)}&select=id,suggested_card_id`,
+				{ headers: enTetesAuthentifies(jeton) },
+			)
+			expect(lecture.status(), `${compte} : ${await lecture.text()}`).toBe(200)
+			expect((await lecture.json()) as unknown[], `${compte} voit un message qu'il ne doit pas voir`).toHaveLength(0)
 		}
 	})
 

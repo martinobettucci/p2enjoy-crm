@@ -677,11 +677,20 @@ Mesuré sur le seed du 2026-08-20, ou vérifiable sur lui.
 | Niveau | Preuve |
 |---|---|
 | Vitest | `RouteInbox.test.tsx` étendu : les quatre états du §8.8.4, le geste accepté, le refus qui laisse le bloc rendu, l'absence de requête quand il n'y a rien à résoudre. `inbox.test.ts` : les deux colonnes demandées, et la projection de la suggestion |
-| API | `e2e/api/classement.spec.ts` ou `inbox.spec.ts` : avec les jetons réels, l'administratrice lit `suggested_card_id` sur le message du seed, et **classe** dans l'affaire suggérée ; le `business_developer` et la `viewer` reçoivent zéro ligne |
+| API | `e2e/api/classement.spec.ts` : avec les jetons réels, l'administratrice lit `suggested_card_id` sur le message du seed ; le `business_developer` et la `viewer` reçoivent zéro ligne |
 | E2E `ui` | `e2e/ui/inbox.spec.ts` : le parcours complet **au clavier et à la souris** — ouvrir le message suggéré, lire l'affaire nommée, accepter d'un geste, constater que le message porte l'affaire et a quitté « Non classés » |
 | Captures | Les **quatre paliers** — 390, 768, 1152, 1440 px — du panneau de lecture portant le bloc, produites **et observées** (`CLAUDE.md` §16) |
 | Seed | Le quatrième message **réellement soumis et relevé**, et le seed **vérifie** la suggestion plutôt que de la supposer — comme il vérifie déjà le fil (§2.19) |
-| Harnais | `scripts/verify-mail-classement.sh` et `scripts/verify-mail-inbox.sh` révisés, non contournés : la surface et la donnée de démonstration entrent dans leur périmètre |
+| Harnais | `scripts/verify-mail-classement.sh` et `scripts/verify-mail-infra.sh` révisés, non contournés : la surface et la donnée de démonstration entrent dans leur périmètre |
+
+**LA PREUVE D'API NE CLASSE PAS, ET LE POINT EST RÉVISÉ PAR LA LIVRAISON.** La rédaction
+d'avant-code demandait qu'elle « classe dans l'affaire suggérée ». Écrire les preuves a montré que
+ce geste écrirait un `card_event` **permanent** sur une card de démonstration : `card_events` est
+append-only, et un `DELETE` y rend **403** même à la clé de service (mesuré, INC-185). Or le
+parcours d'interface prouve déjà ce classement de bout en bout, avec la session réelle d'une
+administratrice — c'est le **même jeton** qui part dans les deux cas. Rejouer le geste au niveau
+de l'API doublerait donc la dérive du seed sans rien apprendre. Le fichier écrit ce motif à
+l'endroit du test, comme le faisait déjà le commentaire d'en-tête de son bloc « règle 3 ».
 
 #### 8.8.12 Definition of Done — sous-tranche 2 bis
 
