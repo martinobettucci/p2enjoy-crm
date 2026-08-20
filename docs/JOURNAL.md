@@ -22429,10 +22429,37 @@ jamais annoncés verts par omission (`CLAUDE.md` §25, mécanisme du §INC-145).
 
 **Ce qui a été prouvé, cette session.** Le mécanisme du PTY sur un petit fragment `bash` de
 contrôle (`[ -t 0 ]` vrai côté enfant, la réponse est lue) ; la syntaxe et l'exécutabilité du
-helper ; la syntaxe complète du harnais après édition. `scripts/verify-scripts.sh` sera rejoué en
-fin de session pour compter deux vérifications de plus que les 108 mesurées à la décision 490
-(soit 110), 0 échec attendu — l'assertion est écrite ici et sera **rendue vraie ou infirmée** par
-l'exécution du §4.3, sans mensonge.
+helper ; la syntaxe complète du harnais après édition ; puis `scripts/verify-scripts.sh` REJOUÉ
+en entier après commit : **111 vérifications, 1 anomalie, 1 IGNORE**. L'anomalie est celle
+d'INC-186, préexistante et environnementale (proxy TLS interposé sur cet hôte, la reconstruction
+« sans CA » emprunte à tort sa branche active), rigoureusement identique à ce que la décision 487
+avait mesurée — non imputable à ce commit. L'IGNORE est celui documenté par `docs/CloudWorker.md`
+§2.4 (root peut lire un fichier `chmod 000`). Les deux contrôles nouveaux répondent :
+
+```
+OK    runProd.sh --migrate refuse une saisie autre que « oui » au terminal
+OK    runProd.sh --migrate accepte « oui » au terminal et progresse vers require_docker
+```
+
+Le passage de 108 vérifications (décision 490) à 111 vient de deux facteurs : +2 vérifications
+propres à ce commit, et +1 vérification qui SKIPait à la session précédente faute de démon
+(lecture des ports par `docker compose`, ici opérationnelle). Aucun contrôle antérieur n'a
+disparu.
+
+**Preuves de non-régression** : `npm run typecheck` vert (quatre projets `tsc`), `npm run build`
+vert (`webapp/dist/assets/index-juUUD627.js` **228,47 kB**, identique à la mesure de la décision
+487), `npm run test:unit` **67 fichiers / 2272 tests, aucun échec**, `npm run test:sql`
+**50 fichiers / 2480 assertions, aucune anomalie**. Ces suites ne touchent en rien à ce commit et
+constituent une pure assurance ; leur immobilité entre la mesure précédente et celle-ci confirme
+l'absence de dommage collatéral. La stack, gardée debout pendant l'exécution du harnais, était
+saine avant et l'est toujours après (dix-sept services persistants `healthy`).
+
+**Ce qui n'a pas été rejoué**, et il faut le dire (`CLAUDE.md` §25, `docs/CloudWorker.md` §4.3) :
+`npm run e2e:api`, `npm run e2e:ui`, `npm run e2e:mail`, `pytest`, ni le reste des
+`scripts/verify-*.sh`. Ce commit ne touche AUCUN de leurs périmètres — ni schéma, ni règle
+d'autorisation, ni écran, ni route API, ni ingestion mail. Les précédentes campagnes de la
+session 490 (`test:sql` 2480, `test:unit` 2272, typecheck vert, build 228,47 kB) restaient les
+mesures de référence pour ces couches ; elles sont ici identiques.
 
 **Ce qui reste à `CRM-087`.** Un seul reste réel : la preuve sur pile de production réelle (une
 production provisionnée, `--migrate`, joindre une table de la dernière migration par l'API sans
