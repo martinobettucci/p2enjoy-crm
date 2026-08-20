@@ -70,6 +70,35 @@ if [ "$APPLY_MIGRATIONS" != "false" ]; then
         n'est jamais réécrit par ce script."
 fi
 
+# --- Confirmation d'instantané — checkée AVANT Docker ----------------------------------------
+#
+# @spec CRM-087 (docs/BACKLOG.md), docs/JOURNAL.md décision 489
+#
+# La confirmation d'instantané est la garde la plus forte de la fenêtre de migration : sans
+# instantané, aucun retour arrière n'existe (docs/PROD_MIGRATIONS.md §6). Elle est refusée AVANT
+# `require_docker` et AVANT tout appel à Compose, pour deux raisons : (1) le harnais
+# `scripts/verify-scripts.sh` peut la prouver sans démon Docker ; (2) une fenêtre de migration
+# annoncée qui échouerait faute d'instantané ne doit rien engager sur la pile.
+
+if [ "$MODE" = migrate ]; then
+	if [ "$INSTANTANE_VERIFIE" != 1 ]; then
+		if [ -t 0 ]; then
+			warn "L'instantané de VM est le SEUL filet de la fenêtre — décision 489."
+			warn "Restaurer l'instantané détruit tout ce qui a été écrit depuis sa prise."
+			printf 'Un instantané complet de la VM a-t-il été pris ? Tapez « oui » pour confirmer : '
+			read -r reponse || reponse=""
+			if [ "$reponse" != "oui" ]; then
+				die "confirmation d'instantané refusée : migration non appliquée.
+        Reprendre l'instantané, puis relancer ./runProd.sh --migrate."
+			fi
+		else
+			die "confirmation d'instantané exigée hors terminal interactif.
+        Passer --instantane-verifie APRÈS avoir pris l'instantané de VM.
+        La restauration de l'instantané est le seul retour arrière (docs/PROD_MIGRATIONS.md §6)."
+		fi
+	fi
+fi
+
 require_docker
 
 # --- Arrêt -------------------------------------------------------------------------------------
@@ -95,27 +124,6 @@ if [ "$MODE" = migrate ]; then
 	say "Fenêtre de migration de production"
 	info "Le fichier $ENV_FILE ne sera PAS modifié."
 	info "APPLY_MIGRATIONS=true est surchargé pour cette seule invocation."
-
-	# Confirmation d'instantané — condition sine qua non. L'instantané de VM est le seul filet
-	# de la fenêtre (décision 489). Un drapeau accepté sans preuve serait un filet imaginaire ;
-	# hors terminal, seul --instantane-verifie autorise le geste, et l'exploitant en porte la
-	# responsabilité écrite ; au terminal, la saisie « oui » est demandée explicitement.
-	if [ "$INSTANTANE_VERIFIE" != 1 ]; then
-		if [ -t 0 ]; then
-			warn "L'instantané de VM est le SEUL filet de la fenêtre — décision 489."
-			warn "Restaurer l'instantané détruit tout ce qui a été écrit depuis sa prise."
-			printf 'Un instantané complet de la VM a-t-il été pris ? Tapez « oui » pour confirmer : '
-			read -r reponse || reponse=""
-			if [ "$reponse" != "oui" ]; then
-				die "confirmation d'instantané refusée : migration non appliquée.
-        Reprendre l'instantané, puis relancer ./runProd.sh --migrate."
-			fi
-		else
-			die "confirmation d'instantané exigée hors terminal interactif.
-        Passer --instantane-verifie APRÈS avoir pris l'instantané de VM.
-        La restauration de l'instantané est le seul retour arrière (docs/PROD_MIGRATIONS.md §6)."
-		fi
-	fi
 
 	# Recréation forcée : `migrations-runner` est un conteneur à usage unique. Compose ne le
 	# relancerait pas sans cette option, et sa configuration est inchangée entre deux passages.

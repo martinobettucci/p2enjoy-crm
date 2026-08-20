@@ -616,6 +616,71 @@ else
 	ok "aucun fichier de production n'a été fabriqué par le script"
 fi
 
+# --- Gardes de la fenêtre de migration (--migrate) --------------------------------------------
+# @verifies CRM-087 (docs/BACKLOG.md), docs/JOURNAL.md décision 489
+#
+# `--migrate` ouvre la fenêtre de maintenance de la production. Trois gardes doivent tenir :
+#   (a) le profil doit être `prod` — un fichier `dev` est refusé par la garde existante ;
+#   (b) `APPLY_MIGRATIONS` DOIT rester `false` dans le fichier — la surcharge ne vit que dans
+#       l'invocation, jamais dans `.env` ;
+#   (c) sans confirmation d'instantané, `--migrate` est refusé hors terminal interactif — le seul
+#       drapeau qui autorise le geste hors TTY est `--instantane-verifie`.
+#
+# Les gardes (a) et (b) sont éprouvées par les blocs ci-dessus (profil dev / APPLY_MIGRATIONS=true) :
+# elles refusent le mode ordinaire comme le mode `--migrate`, la garde étant en tête du script.
+# Ce bloc éprouve la garde (c), qui appartient au seul mode `--migrate` et qui est appliquée
+# AVANT `require_docker` — mesuré, pour que le harnais puisse la prouver sans démon Docker.
+
+if P2ENJOY_ENV_FILE="$AS_PROD" ./runProd.sh --migrate </dev/null \
+	>"$WORK/migrate-noconfirm.log" 2>&1; then
+	fail "runProd.sh --migrate accepte l'absence de confirmation d'instantané hors TTY"
+else
+	if grep -q "instantané" "$WORK/migrate-noconfirm.log"; then
+		ok "runProd.sh --migrate refuse hors TTY sans confirmation d'instantané, en nommant la garde"
+	else
+		fail "runProd.sh --migrate a refusé sans nommer l'instantané"
+	fi
+fi
+
+# Le fichier `.env` ne doit JAMAIS être réécrit par `--migrate`, y compris quand la garde refuse.
+if diff -q "$AS_PROD" "$AS_PROD" >/dev/null 2>&1; then
+	AS_PROD_BEFORE=$(sha256sum "$AS_PROD" | cut -d' ' -f1)
+	P2ENJOY_ENV_FILE="$AS_PROD" ./runProd.sh --migrate </dev/null >/dev/null 2>&1 || true
+	AS_PROD_AFTER=$(sha256sum "$AS_PROD" | cut -d' ' -f1)
+	if [ "$AS_PROD_BEFORE" = "$AS_PROD_AFTER" ]; then
+		ok "runProd.sh --migrate n'a pas réécrit le fichier d'environnement"
+	else
+		fail "runProd.sh --migrate a modifié le fichier d'environnement"
+	fi
+fi
+
+# Le refus de `--migrate` sur `APPLY_MIGRATIONS=true` est déjà couvert par le contrôle en tête
+# de section (il touche la garde partagée à tous les modes) ; on éprouve ici que le message reste
+# clair quand on passe explicitement `--migrate` avec un fichier fautif.
+if P2ENJOY_ENV_FILE="$AS_PROD_MIGRATE" ./runProd.sh --migrate --instantane-verifie \
+	>"$WORK/migrate-badenv.log" 2>&1; then
+	fail "runProd.sh --migrate accepte APPLY_MIGRATIONS=true dans le fichier .env"
+else
+	if grep -q "APPLY_MIGRATIONS" "$WORK/migrate-badenv.log"; then
+		ok "runProd.sh --migrate refuse APPLY_MIGRATIONS=true dans le fichier .env"
+	else
+		fail "runProd.sh --migrate a refusé sans nommer APPLY_MIGRATIONS"
+	fi
+fi
+
+# Un fichier de profil dev doit être refusé, même avec `--migrate --instantane-verifie` : la
+# fenêtre de migration est un geste de PRODUCTION, jamais d'un poste de développement.
+if P2ENJOY_ENV_FILE="$BOOT1" ./runProd.sh --migrate --instantane-verifie \
+	>"$WORK/migrate-dev.log" 2>&1; then
+	fail "runProd.sh --migrate accepte un environnement de profil dev"
+else
+	if grep -q "P2ENJOY_ENV_PROFILE" "$WORK/migrate-dev.log"; then
+		ok "runProd.sh --migrate refuse un environnement de profil dev"
+	else
+		fail "runProd.sh --migrate a refusé un profil dev sans nommer la garde"
+	fi
+fi
+
 if P2ENJOY_ENV_FILE="$AS_PROD" ./resetMe.sh --yes >"$WORK/reset-prod.log" 2>&1; then
 	fail "resetMe.sh accepte de détruire un environnement de profil prod"
 else
@@ -708,6 +773,93 @@ elif grep -q "rôle refusé 'root'" "$RUNNER_FIXTURE/runner-invalid.log"; then
 	ok "le runner refuse tout rôle privilégié non explicitement autorisé"
 else
 	fail "le runner refuse le rôle arbitraire sans diagnostic exploitable"
+fi
+
+# --- Rechargement du cache de PostgREST par le runner ------------------------------------------
+# @verifies CRM-087 (docs/BACKLOG.md), docs/JOURNAL.md décision 489
+#
+# Après un passage réussi, le runner émet `notify pgrst, 'reload schema'` une seule fois. La
+# preuve : un mock `psql` qui enregistre chaque invocation. Après application des deux fichiers
+# valides (0001 et 0002), la dernière invocation doit être un `--command "notify pgrst, 'reload
+# schema';"`. Le message final « fichier(s) appliqué(s) avec succès. » doit être présent.
+
+RELOAD_FIXTURE="$WORK/runner-reload"
+mkdir -p "$RELOAD_FIXTURE/bin" "$RELOAD_FIXTURE/migrations"
+printf '%s\n' '-- migration 0001' > "$RELOAD_FIXTURE/migrations/0001.sql"
+printf '%s\n' '-- migration 0002' > "$RELOAD_FIXTURE/migrations/0002.sql"
+# Mock psql : consigne l'appel, et rend succès sauf si RUNNER_FAIL_ON désigne un fichier.
+printf '%s\n' '#!/bin/sh' \
+	'for arg in "$@"; do' \
+	'  case "$arg" in' \
+	'    --command) command_mode=1 ;;' \
+	'    --file) file_mode=1 ;;' \
+	'    *)' \
+	'      if [ "${command_mode:-0}" = 1 ] && [ -z "${captured_command:-}" ]; then' \
+	'        captured_command="$arg"' \
+	'      fi' \
+	'      if [ "${file_mode:-0}" = 1 ] && [ -z "${captured_file:-}" ]; then' \
+	'        captured_file="$arg"' \
+	'      fi' \
+	'      ;;' \
+	'  esac' \
+	'done' \
+	'printf "invocation:%s|command:%s|file:%s\n" "$PGUSER" "${captured_command:-}" "${captured_file:-}" >> "$MIGRATION_CALL_LOG"' \
+	'if [ -n "${RUNNER_FAIL_ON:-}" ] && [ "${captured_file##*/}" = "$RUNNER_FAIL_ON" ]; then' \
+	'  exit 3' \
+	'fi' \
+	'exit 0' \
+	> "$RELOAD_FIXTURE/bin/psql"
+chmod +x "$RELOAD_FIXTURE/bin/psql"
+
+if PATH="$RELOAD_FIXTURE/bin:$PATH" MIGRATIONS_DIR="$RELOAD_FIXTURE/migrations" \
+	APPLY_MIGRATIONS=true PGDATABASE=fixture PGHOST=fixture PGPORT=5432 PGUSER=postgres \
+	MIGRATION_CALL_LOG="$RELOAD_FIXTURE/calls.log" \
+	"$MIGRATION_RUNNER" >"$RELOAD_FIXTURE/runner.log" 2>&1; then
+	reload_ok=true
+else
+	reload_ok=false
+fi
+
+# Attendu : trois lignes de journal — deux --file (0001 puis 0002) et une --command finale.
+last_line=$(tail -n 1 "$RELOAD_FIXTURE/calls.log" 2>/dev/null || true)
+if [ "$reload_ok" = true ] \
+	&& grep -q "command:notify pgrst, 'reload schema';" "$RELOAD_FIXTURE/calls.log" \
+	&& [ "$(wc -l < "$RELOAD_FIXTURE/calls.log")" = 3 ] \
+	&& printf '%s\n' "$last_line" | grep -q "command:notify pgrst" \
+	&& grep -q "fichier(s) appliqué(s) avec succès" "$RELOAD_FIXTURE/runner.log"; then
+	ok "le runner émet notify pgrst, 'reload schema' après un passage réussi, une seule fois"
+else
+	fail "le runner n'a pas émis correctement le notify pgrst en fin de passage"
+fi
+
+# --- Échec en cours de répertoire : code non nul, aucun succès annoncé ------------------------
+# @verifies CRM-087 (docs/BACKLOG.md), docs/JOURNAL.md décision 489
+#
+# ON_ERROR_STOP=1 doit arrêter le runner à la première migration fautive. Il ne doit ni
+# atteindre le notify pgrst, ni annoncer le message final « appliqué(s) avec succès ».
+
+FAIL_FIXTURE="$WORK/runner-fail"
+mkdir -p "$FAIL_FIXTURE/bin" "$FAIL_FIXTURE/migrations"
+printf '%s\n' '-- migration 0001' > "$FAIL_FIXTURE/migrations/0001.sql"
+printf '%s\n' '-- migration 0002 KO' > "$FAIL_FIXTURE/migrations/0002.sql"
+printf '%s\n' '-- migration 0003' > "$FAIL_FIXTURE/migrations/0003.sql"
+cp "$RELOAD_FIXTURE/bin/psql" "$FAIL_FIXTURE/bin/psql"
+
+if PATH="$FAIL_FIXTURE/bin:$PATH" MIGRATIONS_DIR="$FAIL_FIXTURE/migrations" \
+	APPLY_MIGRATIONS=true PGDATABASE=fixture PGHOST=fixture PGPORT=5432 PGUSER=postgres \
+	RUNNER_FAIL_ON=0002.sql \
+	MIGRATION_CALL_LOG="$FAIL_FIXTURE/calls.log" \
+	"$MIGRATION_RUNNER" >"$FAIL_FIXTURE/runner.log" 2>&1; then
+	fail "le runner ignore l'échec de la migration 0002 et rend un succès"
+else
+	# Aucun succès annoncé, aucun notify émis, la migration 0003 non lancée.
+	if ! grep -q "fichier(s) appliqué(s) avec succès" "$FAIL_FIXTURE/runner.log" \
+		&& ! grep -q "notify pgrst" "$FAIL_FIXTURE/calls.log" \
+		&& ! grep -q "file:.*0003" "$FAIL_FIXTURE/calls.log"; then
+		ok "le runner s'arrête sur la première erreur, sans notify et sans annoncer de succès"
+	else
+		fail "le runner a propagé un échec de façon trompeuse (notify émis ou 0003 appliquée ou succès annoncé)"
+	fi
 fi
 
 # --- 7. Le fichier amorcé satisfait réellement Compose ------------------------------------------
