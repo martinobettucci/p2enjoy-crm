@@ -3816,9 +3816,24 @@ s'afficher, et de s'afficher sans erreur :
 | la racine `references[0]` de `cleFil` (§16.15.2), remplacée par le `Message-ID` propre | la clé du client cesserait de coïncider avec celle du serveur : chaque message ferait fil à part, le sommeil d'un fil ne couvrirait plus que son premier message, et le refus `thread_not_found` porterait sur une clé que personne n'a affichée |
 | la reconnaissance de `snooze_date_in_past` par `classerSommeil` (§16.11.4) | le refus d'une échéance passée retomberait en `inconnu`, et l'écran cesserait de dire **pourquoi** la date est refusée — le geste paraîtrait cassé au lieu d'être guidé |
 
-**Une dégradation NON VUE est un échec du harnais, pas un détail.** Elle dit que la preuve censée
-tenir la règle ne la tient pas, et le remède est d'écrire la preuve manquante — jamais de retirer la
-dégradation.
+**Chaque dégradation NOMME la suite qui doit la voir, et c'est une mesure qui l'a imposé.** La
+première rédaction rejouait un jeu unique — les trois suites du §16 bis.3 — et deux dégradations y
+sont restées **NON VUES** : celles de `filtre-sommeil.ts`. La preuve n'était pas absente pour
+autant. Ce module **n'importe rien**, délibérément, pour rester atteignable depuis `e2e/`
+(`tsconfig.tools.json`), et ses deux règles sont éprouvées là où elles sont **consommées** :
+`webapp/src/lib/liste-cards.test.ts`, qui vérifie le filtre `or=` réellement émis et le repli du
+paramètre d'adresse. MESURÉ : cette suite rend **2 en échec** sous la première dégradation et **5**
+sous la seconde.
+
+Cette suite rejoint donc le harnais comme **gardienne**, et son compteur n'est **pas** figé : elle
+n'appartient pas à `CRM-081` et bougera pour d'autres motifs. Ce qui est exigé d'elle est d'être
+**verte au témoin** et **rouge sous la dégradation qui la vise**. Élargir le jeu unique aurait
+rendu vert au même prix, mais aurait perdu l'information qui compte : on ne saurait plus **laquelle**
+des preuves tient **laquelle** des règles.
+
+**Une dégradation NON VUE reste un échec du harnais, pas un détail.** Elle dit que la preuve censée
+tenir la règle ne la tient pas, et le remède est d'écrire la preuve manquante — ou, comme ici, de
+nommer celle qui la tenait déjà. Jamais de retirer la dégradation.
 
 **Le témoin passe AVANT les dégradations** : la suite unitaire est rejouée intacte, et une suite
 déjà rouge fait échouer le harnais à cet endroit-là plutôt que de faire passer cinq dégradations

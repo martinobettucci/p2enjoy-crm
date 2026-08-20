@@ -73,6 +73,16 @@ SPECS_UI=(
 	e2e/ui/groupement-fils.spec.ts
 )
 
+# LES SUITES GARDIENNES — celles qui tiennent une règle de l'unité sans lui appartenir.
+# MESURÉ le 2026-08-20 : les deux règles de `filtre-sommeil.ts` ne sont éprouvées par AUCUNE des
+# trois suites ci-dessus. Ce module N'IMPORTE RIEN pour être atteignable depuis `e2e/`
+# (`tsconfig.tools.json`), et ses deux règles sont éprouvées là où elles sont CONSOMMÉES, dans
+# `liste-cards.test.ts` — le filtre `or=` réellement émis, et le repli du paramètre d'adresse.
+# Leur compteur n'est PAS figé : ces suites n'appartiennent pas à `CRM-081` et bougeront pour
+# d'autres motifs. Le harnais exige seulement qu'elles soient VERTES au témoin et ROUGES sous la
+# dégradation qui les vise.
+TESTS_GARDIENS=(webapp/src/lib/liste-cards.test.ts)
+
 # LES DEUX COMPTEURS DE CHAQUE FAMILLE SONT FIGÉS, jamais un seul (décision 279) : vérifier les
 # seules assertions ne détecte pas la disparition d'une suite entière, et vérifier les seuls
 # fichiers ne détecte pas la disparition de leur contenu. Un compte qui MONTE est aussi un écart :
@@ -351,26 +361,33 @@ fi
 titre "7. Non-complaisance"
 
 # LE TÉMOIN PASSE AVANT LES DÉGRADATIONS : une suite déjà rouge ferait passer cinq dégradations
-# pour des détections, et le harnais rendrait « non complaisant » sans avoir rien établi.
-if npx vitest run "${TESTS_UNIT[@]}" >"$TRAVAIL/temoin.log" 2>&1; then
-	ok "témoin : les preuves unitaires sont VERTES avant toute dégradation"
+# pour des détections, et le harnais rendrait « non complaisant » sans avoir rien établi. Il
+# couvre les gardiennes autant que les suites de l'unité — une gardienne déjà rouge rendrait sa
+# dégradation « vue » sans qu'elle ait rien vu.
+if npx vitest run "${TESTS_UNIT[@]}" "${TESTS_GARDIENS[@]}" >"$TRAVAIL/temoin.log" 2>&1; then
+	ok "témoin : les preuves unitaires et leurs gardiennes sont VERTES avant toute dégradation"
 else
 	fail_journal "témoin ROUGE : les dégradations ne prouveraient plus rien" "$TRAVAIL/temoin.log"
 fi
 
+# CHAQUE DÉGRADATION NOMME LA SUITE QUI DOIT LA VOIR, et c'est une mesure qui l'impose : rejouer
+# un jeu unique laissait deux dégradations NON VUES alors que leur preuve existait — elle vivait
+# simplement dans une autre suite. Un jeu unique et large aurait masqué l'information inverse :
+# on n'aurait plus su LAQUELLE des preuves tient LAQUELLE des règles.
 degrader() {
-	local libelle=$1 fichier=$2 motif=$3 remplacement=$4
+	local libelle=$1 fichier=$2 motif=$3 remplacement=$4; shift 4
+	local suites=("$@")
 	sauvegarder "$fichier"
 	if ! sed -i "s|$motif|$remplacement|" "$fichier" || ! grep -qF "$remplacement" "$fichier"; then
 		fail "dégradation INAPPLICABLE : $libelle"
 		rendre "$fichier"
 		return
 	fi
-	if npx vitest run "${TESTS_UNIT[@]}" >"$TRAVAIL/degrade.log" 2>&1; then
-		fail "dégradation NON VUE : $libelle"
+	if npx vitest run "${suites[@]}" >"$TRAVAIL/degrade.log" 2>&1; then
+		fail "dégradation NON VUE par ${suites[*]} : $libelle"
 		cp "$TRAVAIL/degrade.log" "$RAPPORTS/degradation-non-vue.log" 2>/dev/null || true
 	else
-		ok "dégradation vue : $libelle"
+		ok "dégradation vue par $(basename "${suites[0]}") : $libelle"
 	fi
 	rendre "$fichier"
 }
@@ -380,35 +397,40 @@ degrader() {
 degrader "l'instant retiré du prédicat — une échéance échue endormirait encore" \
 	webapp/src/lib/sommeil-card.ts \
 	'return echeance.getTime() > maintenant.getTime()' \
-	'return true'
+	'return true' \
+	webapp/src/lib/sommeil-card.test.ts
 
 # 2. `not.gt` écarterait TOUTES les affaires qui n'ont jamais dormi : une colonne nulle ne satisfait
 #    aucune comparaison, et un channel entier quitterait la vue par défaut.
 degrader "le filtre d'exclusion réduit à not.gt — les affaires jamais endormies disparaîtraient" \
 	webapp/src/lib/filtre-sommeil.ts \
 	'return `snoozed_until.is.null,snoozed_until.lte.\${maintenant.toISOString()}`' \
-	'return `snoozed_until.not.gt.${maintenant.toISOString()}`'
+	'return `snoozed_until.not.gt.${maintenant.toISOString()}`' \
+	webapp/src/lib/liste-cards.test.ts
 
 # 3. Le défaut inversé : une adresse nue montrerait les affaires endormies, et le sommeil ne
 #    changerait plus rien pour l'utilisateur.
 degrader "le défaut de la bascule inversé — le sommeil ne rangerait plus rien" \
 	webapp/src/lib/filtre-sommeil.ts \
 	"return valeur === VALEUR_URL_SOMMEIL_VISIBLES ? 'visibles' : MODE_SOMMEIL_PAR_DEFAUT" \
-	"return 'visibles'"
+	"return 'visibles'" \
+	webapp/src/lib/liste-cards.test.ts
 
 # 4. La clé du client cesserait de coïncider avec celle du serveur : chaque message ferait fil à
 #    part, et le refus `thread_not_found` porterait sur une clé que personne n'a affichée.
 degrader "la racine des références ignorée par cleFil — client et serveur ne parleraient plus de la même clé" \
 	webapp/src/lib/sommeil-fil.ts \
 	'return racine === undefined ? rfc822MessageId : racine' \
-	'return rfc822MessageId'
+	'return rfc822MessageId' \
+	webapp/src/lib/sommeil-fil.test.ts webapp/src/lib/fil-inbox.test.ts
 
 # 5. Le refus d'une échéance passée retomberait en `inconnu` : le geste paraîtrait cassé au lieu
 #    d'être guidé.
 degrader "le refus d'échéance passée retombé en « inconnu » — l'écran ne dirait plus pourquoi" \
 	webapp/src/lib/sommeil-card.ts \
 	"if (message === 'snooze_date_in_past') return 'echeance-passee'" \
-	"if (message === 'snooze_date_in_past') return 'inconnu'"
+	"if (message === 'snooze_date_in_past') return 'inconnu'" \
+	webapp/src/lib/sommeil-card.test.ts
 
 titre "8. Restauration"
 
@@ -423,8 +445,8 @@ for fichier in webapp/src/lib/sommeil-card.ts webapp/src/lib/filtre-sommeil.ts \
 	fi
 done
 
-if npx vitest run "${TESTS_UNIT[@]}" >"$TRAVAIL/restaure.log" 2>&1; then
-	ok "les preuves unitaires redeviennent vertes après restauration"
+if npx vitest run "${TESTS_UNIT[@]}" "${TESTS_GARDIENS[@]}" >"$TRAVAIL/restaure.log" 2>&1; then
+	ok "les preuves unitaires et leurs gardiennes redeviennent vertes après restauration"
 else
 	fail_journal "les preuves restent ROUGES après restauration" "$TRAVAIL/restaure.log"
 fi
