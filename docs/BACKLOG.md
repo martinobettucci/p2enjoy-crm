@@ -10654,11 +10654,17 @@ suivante :
       - [x] `README.md` §3, §5 et §9, `docs/DAT.md` §10, `CHANGELOG.md` mis à jour dans le même
             changement. Le compte des variables du gabarit est porté à **92**, chiffre **compté** et
             non déduit : le README en annonçait 90 pour 89 réelles.
-      - [ ] **La campagne complète du dépôt n'a pas été rejouée sous cette tranche.** Elle ne touche
-            ni le code applicatif, ni la base, ni une surface : `scripts/verify-scripts.sh` a été
-            rejoué (**103 contrôles, 1 anomalie préexistante**, ligne de base établie par
-            `git stash`, consignée en **INC-186**), et `scripts/verify-sauvegardes.sh` deux fois.
-            Les autres harnais et les suites Node restent à rejouer avant le passage à `[x]`.
+      - [x] **La campagne complète A ÉTÉ exécutée** : `typecheck` vert, `build` vert, `test:unit`
+            **67 fichiers / 2272 tests**, `test:sql` **50 fichiers / 2480 assertions**, `e2e:api`
+            **818 passés**, `e2e:mail` **42 passés**, `pytest` **244 passés**,
+            `scripts/verify-scripts.sh` **103 contrôles, 1 anomalie préexistante** (**INC-186**,
+            ligne de base établie par `git stash`), `scripts/verify-sauvegardes.sh` **42 contrôles**
+            deux fois. `e2e:ui` rend **546 passés, 3 échecs**, et les trois sont **étrangers** :
+            consignés en **INC-187**, ils tiennent au quatrième message du seed ajouté par
+            `CRM-060` sous-tranche 2 bis, et ils échouent **aussi rejoués seuls**.
+      - [ ] **Les quarante-huit autres `scripts/verify-*.sh` n'ont pas été rejoués**, la série
+            entière ne tenant pas dans une session (`docs/CloudWorker.md` §2.1 ter). C'est le
+            dernier reste de forme de la tranche 1.
 - [ ] **Tranche 2 — la restauration prouvée.** Non commencée. Tant qu'elle n'est pas livrée,
       l'unité ne peut pas passer à `[x]` : sa Definition of Done exige qu'« une preuve restaure
       réellement un snapshot ».

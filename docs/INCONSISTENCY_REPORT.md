@@ -196,7 +196,16 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Vingt-deux ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+**Vingt-trois ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-173, INC-174,
+INC-182, INC-183, INC-185, INC-186 et INC-187** — **INC-187** est la plus urgente des trois
+dernières : `npm run e2e:ui` rend **546 passés, 3 échecs**, et les trois tiennent au **quatrième
+message du seed** ajouté le 2026-08-20 par `CRM-060` sous-tranche 2 bis, dont la spécification
+promettait pourtant de réviser « tous les contrôles qui comptent trois messages ». Trois scénarios
+de `CRM-081` ont été manqués. Ce n'est pas un défaut du produit — les attentes sont périmées —,
+mais **aucune campagne complète ne peut être verte tant qu'elles ne sont pas révisées**.
+
+Précédemment vingt-deux : **INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-173, INC-174,
 INC-182, INC-183, INC-185 et INC-186** — **INC-186** consignée le 2026-08-20 par la session
 `CRM-080` tranche 1 : `scripts/verify-scripts.sh` rend « la reconstruction sans CA n'emprunte pas
@@ -3306,3 +3315,64 @@ distinguer demande un poste sans proxy, dont cette session ne dispose pas.
 **Aucune correction n'est proposée**, et c'est délibéré : corriger une garde de `runDev.sh` sous
 l'unité des sauvegardes reviendrait à solder une autre unité (`CLAUDE.md` §13). Le constat est
 consigné pour que la session qui touchera `CRM-002` ou `CRM-015` le trouve.
+
+## Consigné le 2026-08-20 — une régression étrangère à `CRM-080`, laissée par la session précédente
+
+### INC-187 — le quatrième message du seed rend TROIS scénarios d'interface rouges, et `CRM-060` §8.8.10 avait promis de les réviser
+
+**Ce qui est mesuré, le 2026-08-20, campagne complète de la session `CRM-080` tranche 1.**
+`npm run e2e:ui` rend **546 passés, 3 échecs**. Les trois sont dans `CRM-081` :
+
+```
+e2e/ui/groupement-fils.spec.ts:132  un fil d'UN SEUL message ne porte NI badge NI sélecteur
+e2e/ui/sommeil-fil.spec.ts:114      la bascule ramène le fil endormi, marqué, et l'état vide porte son geste
+e2e/ui/sommeil-fil.spec.ts:148      le réveil est vérifié APRÈS RECHARGEMENT, donc contre la base
+```
+
+**Ils échouent AUSSI rejoués SEULS** — `9 passés, 3 échecs` en 1,3 minute —, donc ce n'est ni
+INC-181 ni une interférence de campagne : la première exécution avait été lancée en parallèle de
+`npm run e2e:mail`, et le rejeu isolé écarte cette hypothèse.
+
+**La cause est UNE ligne, et elle est sans ambiguïté :**
+
+```
+Locator: getByTestId('inbox-panneau-liste').getByTestId('inbox-message')
+Expected: 1
+Received: 2
+```
+
+Le scénario ouvre le dossier « Non classés » et exige **un** message. Le seed en portait un —
+« Candidature spontanée ». Il en porte **deux** depuis le 2026-08-20 :
+
+```
+select subject, from_address, classification from public.mail_messages order by received_at;
+ Demande de devis — refonte         | bizdev@p2enjoy.test          | auto
+ Candidature spontanée              | bizdev@p2enjoy.test          | unclassified
+ Re: Demande de devis — refonte     | bizdev@p2enjoy.test          | auto
+ Point d'avancement — migration ERP | leo.marchand@sogexia.example | unclassified   <- ajouté par 2 bis
+```
+
+**La promesse existait, et elle n'a pas été tenue.** `docs/SPEC-contacts.md` §8.8.10, écrit par la
+session qui a ajouté ce message, dit mot pour mot : « **Le quatrième message ajoute une ligne aux
+compteurs de courrier**, et tous les contrôles qui comptent trois messages sont **révisés dans le
+même changement**, jamais contournés. » Les harnais et les suites pgTAP l'ont bien été ; **ces trois
+scénarios d'interface ont été manqués**, la session `CRM-060` sous-tranche 2 bis n'ayant pas rejoué
+`npm run e2e:ui` en entier — son compte rendu au backlog ne l'annonce nulle part.
+
+**Ce n'est PAS un défaut du produit.** L'inbox énumère correctement les deux messages non classés
+qu'elle a ; ce sont les attentes des scénarios qui sont périmées. Rien n'est cassé pour un
+utilisateur.
+
+**Pourquoi cette session ne l'a pas corrigé.** `docs/CloudWorker.md` §3.1 et `CLAUDE.md` §13 :
+corriger les preuves de `CRM-081` sous l'unité `CRM-080` reviendrait à solder une autre unité. Le
+diff de cette session ne touche que `scripts/`, `docs/`, `.env.example`, `README.md` et
+`CHANGELOG.md` — aucun fichier lu par la webapp ni par ces scénarios —, si bien qu'aucune ligne de
+base n'a été nécessaire pour établir que la régression lui est étrangère.
+
+**Ce qu'il faut faire, et c'est court.** Réviser les trois attentes en expliquant le motif **dans
+les fichiers eux-mêmes** (`docs/CloudWorker.md` §3.1 : une preuve qui rougit parce que la donnée a
+changé se RÉVISE, elle ne se contourne pas), puis rejouer les deux fichiers. La session qui reprend
+`CRM-081` — dont le dernier reste est `scripts/verify-snooze.sh` — est la mieux placée.
+
+**Tant que ce n'est pas fait, aucune campagne complète du dépôt ne peut être verte**, et chaque
+session suivante paiera vingt minutes de `e2e:ui` pour redécouvrir ces trois lignes.

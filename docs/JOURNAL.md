@@ -21700,7 +21700,33 @@ harnais dédié `scripts/verify-corbeille.sh` », alors que **le fichier existe*
 celle-ci est exactement ce que `CLAUDE.md` §13 interdit, et la session qui reprendra `CRM-077`
 n'aura qu'à exécuter ce harnais pour trancher.
 
-**Où reprendre.** `CRM-080` est `[~]`, tranche 1 livrée et prouvée. La **tranche 2** est le travail
+**LA CAMPAGNE COMPLÈTE A ÉTÉ EXÉCUTÉE, ET SON UNIQUE ANOMALIE N'EST PAS DE CETTE SESSION.**
+`typecheck` vert, `build` vert, `test:unit` **67 fichiers / 2272 tests**, `test:sql` **50 fichiers /
+2480 assertions**, `e2e:api` **818 passés**, `e2e:mail` **42 passés**, `pytest` **244 passés**,
+`scripts/verify-sauvegardes.sh` **42 contrôles** deux fois, `scripts/verify-scripts.sh`
+**103 contrôles, 1 anomalie préexistante** (INC-186). `e2e:ui` rend **546 passés, 3 échecs**.
+
+**LES TROIS ÉCHECS SONT UNE RÉGRESSION LAISSÉE PAR LA SESSION PRÉCÉDENTE — INC-187.** Ils échouent
+**aussi rejoués SEULS** (`9 passés, 3 échecs`), ce qui écarte INC-181 et l'interférence de
+campagne. La cause tient en une ligne : le scénario ouvre « Non classés » et exige **un** message,
+la base en porte **deux** depuis que la sous-tranche 2 bis a ajouté son quatrième message de seed.
+Le §8.8.10 de `docs/SPEC-contacts.md` promettait pourtant de réviser « tous les contrôles qui
+comptent trois messages » ; les harnais et les suites pgTAP l'ont été, **ces trois scénarios
+d'interface ont été manqués**. Ce n'est pas un défaut du produit : ce sont les attentes qui sont
+périmées. Non corrigé ici — corriger les preuves de `CRM-081` sous `CRM-080` reviendrait à solder
+une autre unité (`CLAUDE.md` §13). **Aucune ligne de base n'a été nécessaire** : le diff de cette
+session ne touche que `scripts/`, `docs/`, `.env.example`, `README.md` et `CHANGELOG.md`, aucun
+fichier lu par la webapp ni par ces scénarios.
+
+**CE QUI N'A PAS ÉTÉ EXÉCUTÉ, ET IL FAUT LE DIRE.** Les `scripts/verify-*.sh` autres que les deux
+que la tranche touche : **aucun**. La série entière ne tient pas dans une session
+(`docs/CloudWorker.md` §2.1 ter). Les captures réécrites par les rejeux ont été **restaurées** :
+cette tranche ne touche aucune surface, et les committer sous elle aurait mêlé des changements sans
+rapport.
+
+**Où reprendre.** `CRM-080` est `[~]`, tranche 1 livrée et prouvée. **INC-187 devrait passer
+d'abord** : tant que ces trois lignes ne sont pas révisées, aucune campagne complète ne peut être
+verte, et chaque session paiera vingt minutes de `e2e:ui` pour les redécouvrir. La **tranche 2** est le travail
 suivant, et le §9 de `docs/SPEC-backups.md` la cadre : `scripts/restore-drill.sh`, pile jetable à
 nom de projet Docker distinct, vérification de **toutes** les empreintes du manifeste **avant**
 toute restauration, comparaison des invariants dont le **déchiffrement effectif d'un secret de
