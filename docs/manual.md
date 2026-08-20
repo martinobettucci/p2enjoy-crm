@@ -2196,9 +2196,10 @@ que celui d'un collègue, et c'est le comportement voulu.
 
 ### 5 quinquies.5 Ce qui n'est pas encore là
 
-- Le **cumul de l'espace de travail**, un graphique par track.
 - L'onglet **« À saisir »**, qui listera toutes les lignes en attente de leur coût réel et permettra
   de les saisir à la suite, sans ouvrir les affaires une par une.
+
+*Le **cumul de l'espace de travail** est livré : voir le §5 septies.*
 
 ## 5 sexies. Le détail d'un budget : occurrence par occurrence, ligne par ligne
 
@@ -2265,6 +2266,97 @@ vous venez, et là où les autres budgets sont listés.
   « Réglages ▸ Arborescence ».
 - **Aucun tri, aucune période, aucun export.** La liste rend les lignes de la plus ancienne à la
   plus récente.
+
+## 5 septies. Les coûts de tout l'espace de travail : un cumul par track
+
+*Livré par `CRM-086` tranche 5. Captures dans `docs/captures/CRM-086/couts-workspace-*.jpg`.*
+
+**Où.** Barre latérale ▸ **« Coûts »**, entre « Objectifs » et « Ma journée ». L'adresse est
+`/couts` ; elle est partageable et rechargeable.
+
+**Qui.** Tout membre de l'espace de travail. Ce que l'écran montre dépend de ce que vous avez le
+droit de lire — voir le §5 septies.3, qui est la partie la plus importante de cette page.
+
+### 5 septies.1 Ce que l'écran montre
+
+**Un groupe de deux barres par track**, cumulant **tous ses budgets ouverts** : le **prévisionnel**
+— la somme des coûts estimés — et le **réel** — la somme des coûts réellement saisis. La barre du
+réel passe au rouge lorsqu'elle dépasse le prévisionnel, et la légende nomme les trois séries.
+
+C'est la différence exacte avec l'écran de coûts d'un track (§5 quinquies) : là-bas, une paire de
+barres désigne **un budget** ; ici, elle désigne **un track entier**. Un track qui porte trois
+budgets ouverts en euros rend donc **une** seule paire de barres, dont les montants sont la somme
+des trois.
+
+**Sous le graphique, le même tableau que partout ailleurs** : une ligne par track, le prévisionnel,
+le réel, le nombre de lignes en attente de leur coût réel, et un **total**. Ce tableau est la
+version lisible du graphique : il reste juste si la couleur ne passe pas, et c'est lui que lit un
+lecteur d'écran.
+
+**Le nom d'un track est un lien** vers ses propres coûts, budget par budget (§5 quinquies). C'est le
+chemin normal : on lit d'abord quels tracks dépensent, puis on ouvre celui qu'on veut détailler.
+
+**Un budget clôturé n'entre dans aucun cumul.** Il ne disparaît pas pour autant : ses lignes restent
+lisibles depuis sa propre fiche (§5 sexies).
+
+**Un track archivé ou mis à la corbeille ne figure pas sur cet écran** — comme il ne figure pas dans
+la barre latérale. Si un budget y est resté ouvert, il se lit depuis l'écran de coûts de ce track,
+dont l'adresse continue de répondre.
+
+### 5 septies.2 Les devises ne se mélangent jamais
+
+Si les budgets que vous lisez sont libellés dans **plusieurs devises**, l'écran rend **un graphique
+par devise**, chacun avec son **titre** — « Coûts en EUR », « Coûts en CHF » — et son propre total.
+Additionner des francs et des euros ne voudrait rien dire, et les poser sur un même axe rendrait la
+comparaison fausse à l'œil.
+
+Si tout est libellé dans une seule devise — le cas courant —, vous ne voyez rien de cette mécanique :
+un seul graphique, sans titre de devise.
+
+### 5 septies.3 Votre total est le vôtre, et il peut différer de celui d'un collègue
+
+**C'est la règle la plus importante de cet écran.** Le cumul est calculé **à partir de ce que vos
+droits vous laissent lire**, jamais à partir de tout ce qui existe. Un budget qui appartient à un
+track qui vous est fermé :
+
+- n'apparaît nulle part ;
+- n'entre dans **aucun** total ;
+- et **n'est signalé par rien**.
+
+Deux collègues aux droits différents lisent donc deux nombres différents sur le même écran, au même
+instant. Ce n'est pas une erreur de calcul : afficher un total « complet » vous apprendrait, par
+simple soustraction, l'existence et le montant d'un budget que vous n'avez pas le droit de voir.
+
+L'écran l'écrit sous les graphiques, pour que personne n'ait à le deviner :
+
+> « Ce cumul ne porte que sur les budgets ouverts des tracks que vous pouvez lire. Un track archivé
+> ou mis à la corbeille n'y figure pas ; ses budgets restent lisibles depuis son propre écran de
+> coûts. »
+
+Si un montant vous paraît manquer, la question à poser n'est donc pas « l'écran s'est-il trompé ? »
+mais « ai-je le droit de lire ce track ? ».
+
+### 5 septies.4 Ce que l'écran écrit quand il n'y a rien à montrer
+
+| Ce que vous lisez | Ce que cela veut dire |
+|---|---|
+| « n ligne(s) sans coût réel saisi, pour m € de prévisionnel. » | Des dépenses ont été engagées sans que leur coût réel ait encore été saisi. La barre du réel est donc plus basse que la réalité |
+| « Aucune dépense rattachée. » | Les tracks de cette devise ont bien un budget ouvert, mais aucune affaire n'y a encore rattaché la moindre ligne de coût |
+| « Aucun budget ouvert » | Aucun des tracks que vous pouvez lire ne porte de budget ouvert — **ou** vous n'en lisez aucun. Les deux cas se ressemblent volontairement : les distinguer vous apprendrait l'existence de ce que l'écran cache |
+| « Aucun espace de travail » | Votre session a expiré, ou votre compte n'appartient à aucun espace de travail. Reconnectez-vous |
+
+### 5 septies.5 Ce que cet écran ne fait pas
+
+- **On n'y saisit rien.** Les lignes de coût se créent depuis la fiche d'une affaire, section
+  « Coûts » ; les budgets s'administrent depuis « Réglages ▸ Arborescence ».
+- **Aucun filtre, aucune période, aucun export, aucune conversion de devise.** L'écran rend les
+  tracks dans l'ordre de la barre latérale.
+- **Aucun total toutes devises confondues** — voir le §5 septies.2.
+
+### 5 septies.6 Ce qui n'est pas encore là
+
+- L'onglet **« À saisir »**, qui listera ici aussi toutes les lignes en attente de leur coût réel,
+  pour tous les tracks que vous lisez, et permettra de les saisir à la suite.
 
 ## 6. Consulter l'état de la messagerie
 
