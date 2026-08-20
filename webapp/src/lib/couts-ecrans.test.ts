@@ -23,13 +23,21 @@ import { describe, expect, it } from 'vitest'
 import {
 	AGREGAT_NUL,
 	COLONNES_BUDGET_ECRAN,
+	COLONNES_LIGNE_BUDGET,
+	adresseAffaireLigne,
 	agreger,
 	cumuler,
 	depasse,
+	estIdentifiantBudget,
+	filtrerParOccurrence,
 	grouperParDevise,
+	grouperParOccurrence,
+	lireDetailBudget,
 	lireHistogrammeTrack,
 	type BudgetDeLEcran,
 	type LigneAgregeable,
+	type LigneBudget,
+	type OccurrenceDeLEcran,
 } from './couts-ecrans'
 import type { ClientCrm } from './supabase'
 
@@ -397,5 +405,337 @@ describe('lireHistogrammeTrack — la requête réellement émise', () => {
 			statut: 'erreur',
 			erreur: { nature: 'network', detail: 'coupure' },
 		})
+	})
+})
+
+// ---------------------------------------------------------------------------------------------
+// TRANCHE 4 — l'écran de détail d'un budget (§4.3)
+//
+// @verifies CRM-086 (docs/BACKLOG.md) — écrans de coûts, TRANCHE 4
+// @verifies docs/SPEC-costs.md §4.0 (le budget est désigné par son IDENTIFIANT), §4.3 (une paire de
+//           barres par occurrence, dans l'ordre des périodes puis des libellés ; un budget non
+//           récurrent en rend une seule ; la liste filtrable), §4.7 (les états),
+//           §2.2 (les périodes ne contraignent rien), §2.3 (un budget clos garde ses lignes)
+// @verifies docs/SPEC-permissions-rls.md §7 (inexistant, refusé et mal formé ne se distinguent pas)
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * Second client factice, qui parle `maybeSingle` et enregistre les OPTIONS de tri.
+ *
+ * Il n'étend pas le premier : celui-ci sert des lectures qui rendent toujours des tableaux, et lui
+ * greffer un `maybeSingle` obligerait chaque test existant à dire lequel des deux il attend. Les
+ * deux exigences propres à cette lecture — l'unicité du budget et le `nullsFirst: false` des
+ * périodes — se portent dans la requête, jamais dans la réponse (§4.3, §2.2).
+ */
+function espionDetail(reponses: readonly Reponse[]): { client: ClientCrm; appels: AppelDetail[] } {
+	const appels: AppelDetail[] = []
+	let rang = 0
+	const client = {
+		from: (table: string) => {
+			const appel: AppelDetail = { table, filtres: [], tris: [], unique: false }
+			appels.push(appel)
+			const reponse = reponses[rang++] ?? { data: [], error: null, status: 200 }
+			const chaine: Record<string, unknown> = {}
+			chaine.eq = (colonne: string, valeur: unknown) => {
+				appel.filtres.push([`eq:${colonne}`, valeur])
+				return chaine
+			}
+			chaine.order = (colonne: string, options?: { nullsFirst?: boolean }) => {
+				appel.tris.push(options === undefined ? colonne : `${colonne}:${JSON.stringify(options)}`)
+				return chaine
+			}
+			chaine.maybeSingle = () => {
+				appel.unique = true
+				// `maybeSingle` rend UN objet ou `null`, jamais un tableau : la réponse déclarée par le
+				// test est donc dépliée ici, comme PostgREST le fait.
+				const data = Array.isArray(reponse.data) ? (reponse.data[0] ?? null) : reponse.data
+				return Promise.resolve({ ...reponse, data })
+			}
+			chaine.then = (resoudre: (valeur: Reponse) => unknown) =>
+				Promise.resolve(reponse).then(resoudre)
+			return {
+				select: (colonnes: string) => {
+					appel.colonnes = colonnes
+					return chaine
+				},
+			}
+		},
+	} as unknown as ClientCrm
+	return { client, appels }
+}
+
+type AppelDetail = Appel & { unique: boolean }
+
+const ID_BUDGET = '11111111-1111-4111-8111-111111111111'
+
+const occurrence = (
+	id: string,
+	label: string,
+	reste: Partial<OccurrenceDeLEcran> = {},
+): OccurrenceDeLEcran => ({
+	id,
+	label,
+	period_start: null,
+	period_end: null,
+	planned_amount: null,
+	closed_at: null,
+	...reste,
+})
+
+const ligneBudget = (
+	id: string,
+	estimated_cost: number,
+	actual_cost: number | null,
+	reste: Partial<LigneBudget> = {},
+): LigneBudget => ({
+	id,
+	occurrence_id: null,
+	label: 'Publicité',
+	estimated_cost,
+	actual_cost,
+	created_at: '2026-08-01T10:00:00Z',
+	cards: null,
+	profiles: null,
+	...reste,
+})
+
+describe('estIdentifiantBudget — §4.0', () => {
+	it('accepte un uuid et refuse tout le reste', () => {
+		expect(estIdentifiantBudget(ID_BUDGET)).toBe(true)
+		expect(estIdentifiantBudget('salon-2025')).toBe(false)
+		expect(estIdentifiantBudget(undefined)).toBe(false)
+		expect(estIdentifiantBudget('')).toBe(false)
+	})
+})
+
+describe('lireDetailBudget — §4.3', () => {
+	it("n'émet AUCUNE requête sur un identifiant mal formé, et rend la même absence qu'un budget inconnu", async () => {
+		// Sans ce contrôle, un slug tapé à la main rendrait `400` / `22P02`, que l'écran classerait en
+		// erreur — dont l'action de reprise rejouerait la même requête pour recevoir le même refus.
+		const { client, appels } = espionDetail([])
+		const etat = await lireDetailBudget(client, 'salon-2025')
+		expect(etat).toEqual({ statut: 'pret', donnees: null })
+		expect(appels).toHaveLength(0)
+	})
+
+	it('lit le budget par son identifiant, en une seule ligne, et rend `null` quand il ne répond pas', async () => {
+		const { client, appels } = espionDetail([{ data: [], error: null, status: 200 }])
+		const etat = await lireDetailBudget(client, ID_BUDGET)
+		// Un budget inexistant et un budget refusé rendent tous deux zéro ligne, et donc le même
+		// écran : les distinguer renseignerait sur l'existence d'un budget interdit.
+		expect(etat).toEqual({ statut: 'pret', donnees: null })
+		expect(appels[0]?.table).toBe('budgets')
+		expect(appels[0]?.unique).toBe(true)
+		expect(appels[0]?.filtres).toEqual([['eq:id', ID_BUDGET]])
+		// Aucune lecture des occurrences ni des lignes n'est émise : il n'y a rien à détailler.
+		expect(appels).toHaveLength(1)
+	})
+
+	it('ne filtre PAS sur `closed_at`, contrairement à la lecture du track', async () => {
+		// Le §4.2 exclut un budget clôturé de l'histogramme du TRACK ; c'est une règle d'écran, jamais
+		// d'autorisation. Ses lignes restent lisibles (§2.3) et le §4.8 les liste. Une adresse mise en
+		// signet ne doit pas cesser de répondre le jour où le budget se ferme.
+		const { client, appels } = espionDetail([
+			{ data: [budget('b1', 'Salon 2025', 'EUR', { closed_at: '2026-07-01T00:00:00Z' })], error: null, status: 200 },
+			{ data: [], error: null, status: 200 },
+			{ data: [], error: null, status: 200 },
+		])
+		const etat = await lireDetailBudget(client, ID_BUDGET)
+		expect(appels[0]?.filtres.map(([nom]) => nom)).not.toContain('is:closed_at')
+		expect(etat.statut).toBe('pret')
+		expect(etat.statut === 'pret' ? etat.donnees?.budget.closed_at : undefined).toBe(
+			'2026-07-01T00:00:00Z',
+		)
+	})
+
+	it('ordonne les occurrences par période PUIS par libellé, les non datées en dernier', async () => {
+		// L'ordre est celui que le §4.3 écrit, et il est porté par la REQUÊTE : un test qui
+		// n'observerait que la réponse le laisserait disparaître sans bruit. `nullsFirst: false` place
+		// les occurrences sans période après celles qui en ont une — le §2.2 les rend facultatives.
+		const { client, appels } = espionDetail([
+			{ data: [budget('b1', 'Salon 2025')], error: null, status: 200 },
+			{ data: [], error: null, status: 200 },
+			{ data: [], error: null, status: 200 },
+		])
+		await lireDetailBudget(client, ID_BUDGET)
+		expect(appels[1]?.table).toBe('budget_occurrences')
+		expect(appels[1]?.filtres).toEqual([['eq:budget_id', ID_BUDGET]])
+		expect(appels[1]?.tris).toEqual(['period_start:{"nullsFirst":false}', 'label'])
+	})
+
+	it('lit les lignes du budget avec leur affaire et leur auteur, sans aucune agrégation serveur', async () => {
+		const { client, appels } = espionDetail([
+			{ data: [budget('b1', 'Salon 2025')], error: null, status: 200 },
+			{ data: [], error: null, status: 200 },
+			{ data: [], error: null, status: 200 },
+		])
+		await lireDetailBudget(client, ID_BUDGET)
+		expect(appels[2]?.table).toBe('card_costs')
+		expect(appels[2]?.filtres).toEqual([['eq:budget_id', ID_BUDGET]])
+		expect(appels[2]?.tris).toEqual(['created_at', 'label'])
+		// LA CLÉ ÉTRANGÈRE EST NOMMÉE, et c'est obligatoire : `cards` porte DEUX clés composites vers
+		// `channels`, et un embed nu rend `PGRST201` — la requête entière est refusée. Cette assertion
+		// est la seule qui le dise avant l'exécution.
+		expect(COLONNES_LIGNE_BUDGET).toContain('channels!cards_channel_id_workspace_id_fkey')
+		expect(COLONNES_LIGNE_BUDGET).toContain('profiles!card_costs_created_by_fkey')
+		// Aucune somme n'est demandée au serveur : le §4.5 exige que le cumul se fasse APRÈS la RLS.
+		expect(COLONNES_LIGNE_BUDGET).not.toContain('sum(')
+	})
+
+	it('remonte le refus de la lecture des LIGNES, et ne rend pas un budget faussement vide', async () => {
+		const { client } = espionDetail([
+			{ data: [budget('b1', 'Salon 2025')], error: null, status: 200 },
+			{ data: [], error: null, status: 200 },
+			{ data: null, error: { message: 'refus' }, status: 403 },
+		])
+		const etat = await lireDetailBudget(client, ID_BUDGET)
+		expect(etat).toEqual({ statut: 'erreur', erreur: { nature: 'forbidden', detail: 'refus' } })
+	})
+})
+
+describe('grouperParOccurrence — §4.3 et §4.7', () => {
+	it('rend UNE paire de barres par occurrence, dans l’ordre reçu', () => {
+		const groupes = grouperParOccurrence({
+			budget: budget('b1', 'Salon', 'EUR', { is_recurrent: true }),
+			occurrences: [occurrence('o1', 'Janvier'), occurrence('o2', 'Février')],
+			lignes: [
+				ligneBudget('l1', 100, 90, { occurrence_id: 'o1' }),
+				ligneBudget('l2', 200, null, { occurrence_id: 'o2' }),
+				ligneBudget('l3', 50, 50, { occurrence_id: 'o1' }),
+			],
+		})
+		expect(groupes.map((groupe) => groupe.occurrence?.label)).toEqual(['Janvier', 'Février'])
+		expect(groupes[0]?.agregat).toEqual({
+			estime: 150,
+			reel: 140,
+			sansReel: 0,
+			estimeSansReel: 0,
+			lignes: 2,
+		})
+		expect(groupes[1]?.agregat).toEqual({
+			estime: 200,
+			reel: 0,
+			sansReel: 1,
+			estimeSansReel: 200,
+			lignes: 1,
+		})
+	})
+
+	it('garde la paire de barres d’une occurrence SANS aucune ligne', () => {
+		// Le §4.3 demande « une paire de barres par occurrence », pas « par occurrence dépensée ».
+		// Faire disparaître un mois muet ferait lire le budget comme s'il n'avait jamais porté ce
+		// mois-là, alors que c'est précisément l'information.
+		const groupes = grouperParOccurrence({
+			budget: budget('b1', 'Salon', 'EUR', { is_recurrent: true }),
+			occurrences: [occurrence('o1', 'Janvier'), occurrence('o2', 'Février')],
+			lignes: [ligneBudget('l1', 100, 90, { occurrence_id: 'o1' })],
+		})
+		expect(groupes).toHaveLength(2)
+		expect(groupes[1]?.agregat).toEqual(AGREGAT_NUL)
+	})
+
+	it('rend UNE SEULE paire, sans occurrence, sur un budget NON récurrent — même sans aucune ligne', () => {
+		// Le §4.3 : « un budget non récurrent affiche une seule paire de barres et la même liste ».
+		// Elle est rendue même à vide, parce que le §4.7 exige « deux barres nulles » et non une
+		// absence de graphique.
+		const groupes = grouperParOccurrence({
+			budget: budget('b1', 'Suisse romande', 'CHF'),
+			occurrences: [],
+			lignes: [],
+		})
+		expect(groupes).toHaveLength(1)
+		expect(groupes[0]?.occurrence).toBeNull()
+		expect(groupes[0]?.agregat).toEqual(AGREGAT_NUL)
+	})
+
+	it('ne rend AUCUN groupe hors occurrence sur un budget récurrent qui n’en a pas besoin', () => {
+		const groupes = grouperParOccurrence({
+			budget: budget('b1', 'Salon', 'EUR', { is_recurrent: true }),
+			occurrences: [occurrence('o1', 'Janvier')],
+			lignes: [ligneBudget('l1', 100, 90, { occurrence_id: 'o1' })],
+		})
+		expect(groupes).toHaveLength(1)
+		expect(groupes[0]?.occurrence?.id).toBe('o1')
+	})
+
+	it('ne PERD jamais une ligne dont l’occurrence n’est pas listée', () => {
+		// L'écarter silencieusement retrancherait un montant du total sans que rien ne le dise, ce qui
+		// est exactement ce que le §4.4 reproche à un écran de coûts.
+		const groupes = grouperParOccurrence({
+			budget: budget('b1', 'Salon', 'EUR', { is_recurrent: true }),
+			occurrences: [occurrence('o1', 'Janvier')],
+			lignes: [
+				ligneBudget('l1', 100, 90, { occurrence_id: 'o1' }),
+				ligneBudget('l2', 400, null, { occurrence_id: 'o-inconnue' }),
+			],
+		})
+		expect(groupes).toHaveLength(2)
+		expect(groupes[1]?.occurrence).toBeNull()
+		expect(groupes[1]?.agregat.estime).toBe(400)
+		expect(groupes[1]?.agregat.sansReel).toBe(1)
+	})
+
+	it('ne groupe AUCUNE devise, toutes les lignes d’un budget partageant la sienne', () => {
+		// Le §2.3 pose qu'« une ligne ne porte pas de colonne `currency` » : un écran de détail ne
+		// peut donc pas mêler deux monnaies sur un même axe, et le groupement du §4.5 n'y a pas
+		// d'objet. Cette assertion garde la propriété : les groupes sont des occurrences, pas des
+		// devises.
+		const groupes = grouperParOccurrence({
+			budget: budget('b1', 'Salon', 'CHF', { is_recurrent: true }),
+			occurrences: [occurrence('o1', 'Janvier')],
+			lignes: [ligneBudget('l1', 100, 90, { occurrence_id: 'o1' })],
+		})
+		expect(groupes.every((groupe) => 'occurrence' in groupe)).toBe(true)
+	})
+})
+
+describe('filtrerParOccurrence — §4.3', () => {
+	const lignes = [
+		ligneBudget('l1', 100, 90, { occurrence_id: 'o1' }),
+		ligneBudget('l2', 200, null, { occurrence_id: 'o2' }),
+		ligneBudget('l3', 50, 50, { occurrence_id: null }),
+	]
+
+	it('rend TOUTES les lignes quand aucune occurrence n’est retenue', () => {
+		expect(filtrerParOccurrence(lignes, null)).toHaveLength(3)
+	})
+
+	it('ne rend que les lignes de l’occurrence retenue', () => {
+		expect(filtrerParOccurrence(lignes, 'o1').map((ligne) => ligne.id)).toEqual(['l1'])
+	})
+
+	it('rend un tableau VIDE sur une occurrence sans ligne, et ne retombe pas sur toutes', () => {
+		// Sans cette assertion, un filtre écrit avec un `||` de repli rendrait la liste entière sur
+		// une occurrence muette : l'utilisateur lirait des lignes qu'il vient d'exclure.
+		expect(filtrerParOccurrence(lignes, 'o-vide')).toEqual([])
+	})
+})
+
+describe('adresseAffaireLigne — §4.3', () => {
+	it('compose l’adresse de l’affaire depuis ses deux slugs', () => {
+		const adresse = adresseAffaireLigne(
+			ligneBudget('l1', 100, 90, {
+				cards: {
+					id: 'card-1',
+					title: 'ERP Groupe Vitalis',
+					archived_at: null,
+					channels: { slug: 'grands-comptes', tracks: { slug: 'conseil-ia' } },
+				},
+			}),
+		)
+		expect(adresse).toBe('/tracks/conseil-ia/grands-comptes/cards/card-1')
+	})
+
+	it('rend `null` plutôt qu’une adresse partielle quand un slug manque', () => {
+		// Un lien vers `/tracks/undefined/...` mènerait à un écran que l'utilisateur croirait cassé,
+		// là où une ligne sans lien dit seulement que l'affaire n'est pas adressable pour lui.
+		expect(
+			adresseAffaireLigne(
+				ligneBudget('l1', 100, 90, {
+					cards: { id: 'card-1', title: 'ERP', archived_at: null, channels: null },
+				}),
+			),
+		).toBeNull()
+		expect(adresseAffaireLigne(ligneBudget('l2', 100, 90))).toBeNull()
 	})
 })

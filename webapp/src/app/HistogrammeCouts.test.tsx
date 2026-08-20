@@ -17,6 +17,7 @@
 // exactement la comparaison que cet écran existe pour porter.
 
 import { cleanup, render, screen, within } from '@testing-library/react'
+import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
 	HistogrammeCouts,
@@ -117,15 +118,45 @@ describe('HistogrammeCouts — ce que le lecteur d\'écran perçoit', () => {
 	}
 
 	function rendre(groupes: readonly GroupeHistogramme[], total: AgregatCouts = TOTAL_MIXTE) {
+		// Le composant est monté sous un routeur DEPUIS LA TRANCHE 4 : un groupe portant un `lien`
+		// rend un `Link`, qui lève hors routeur. Les groupes sans lien n'en rendent aucun, et les
+		// preuves antérieures sont donc inchangées.
 		render(
-			<HistogrammeCouts
-				devise="EUR"
-				groupes={groupes}
-				total={total}
-				legendeColonne="Budget"
-			/>,
+			<MemoryRouter>
+				<HistogrammeCouts
+					devise="EUR"
+					groupes={groupes}
+					total={total}
+					legendeColonne="Budget"
+				/>
+			</MemoryRouter>,
 		)
 	}
+
+	it('rend le libellé en LIEN quand le groupe en porte un, et en texte sinon — tranche 4', () => {
+		// Le lien vit dans le tableau équivalent et jamais sur la barre : le graphique est
+		// `aria-hidden` (§5.30), et une cible interactive y serait perdue au clavier comme au
+		// lecteur d'écran (§8). Son nom accessible est DISTINCT du libellé visible, sans quoi cinq
+		// liens répétés ne diraient pas ce que chacun ouvre.
+		rendre([
+			{
+				cle: 'b-1',
+				libelle: 'Publicité',
+				lien: { adresse: '/tracks/t/couts/b-1', nomAccessible: 'Voir le détail du budget Publicité' },
+				agregat: { estime: 100, reel: 90, sansReel: 0, estimeSansReel: 0, lignes: 1 },
+			},
+			{
+				cle: 'b-2',
+				libelle: 'Production',
+				agregat: { estime: 350, reel: 375, sansReel: 0, estimeSansReel: 0, lignes: 1 },
+			},
+		])
+		const lien = screen.getByRole('link', { name: 'Voir le détail du budget Publicité' })
+		expect(lien.getAttribute('href')).toBe('/tracks/t/couts/b-1')
+		// Le groupe sans lien reste un texte : un lien mort serait pire que pas de lien (§5.10).
+		expect(screen.queryByRole('link', { name: /Production/ })).toBeNull()
+		expect(screen.getByRole('rowheader', { name: 'Production' })).toBeTruthy()
+	})
 
 	it('nomme les trois séries dans la légende — la couleur ne suffit jamais (§1)', () => {
 		rendre([groupe('b1', 'Publicité', 100, 0, 1, 100)])

@@ -313,4 +313,54 @@ describe('enGroupes', () => {
 			{ cle: 'b-1', libelle: 'Publicité', agregat: histogramme.total },
 		])
 	})
+
+	it('pose le LIEN vers le détail du budget quand le slug du track est connu — tranche 4', () => {
+		// Sans ce lien, l'écran du §4.3 serait une adresse qu'aucun geste n'ouvre. Le nom accessible
+		// NOMME le budget : « Publicité » répété sur cinq lignes ne dirait pas ce que chaque lien
+		// ouvre (docs/DESIGN_SYSTEM.md §5.29).
+		const histogramme: HistogrammeDevise = {
+			devise: 'EUR',
+			barres: [
+				{
+					budget: budget('b-1', 'Publicité'),
+					agregat: { estime: 100, reel: 90, sansReel: 0, estimeSansReel: 0, lignes: 1 },
+				},
+			],
+			total: { estime: 100, reel: 90, sansReel: 0, estimeSansReel: 0, lignes: 1 },
+		}
+		expect(enGroupes(histogramme, 'conseil-ia')[0]?.lien).toEqual({
+			adresse: '/tracks/conseil-ia/couts/b-1',
+			nomAccessible: 'Voir le détail du budget Publicité',
+		})
+	})
+
+	it("ne pose AUCUN lien quand le slug manque, plutôt qu'une adresse partielle", () => {
+		// Un lien vers `/tracks/undefined/couts/...` mènerait à un écran que l'utilisateur croirait
+		// cassé — la règle d'`adresseAffaire` du carnet, tenue ici aussi.
+		const histogramme: HistogrammeDevise = {
+			devise: 'EUR',
+			barres: [
+				{
+					budget: budget('b-1', 'Publicité'),
+					agregat: { estime: 100, reel: 90, sansReel: 0, estimeSansReel: 0, lignes: 1 },
+				},
+			],
+			total: { estime: 100, reel: 90, sansReel: 0, estimeSansReel: 0, lignes: 1 },
+		}
+		expect(enGroupes(histogramme)[0]?.lien).toBeUndefined()
+	})
+
+	it('rend le nom du budget en LIEN dans le tableau équivalent, et jamais sur la barre', async () => {
+		// Le graphique est `aria-hidden` (§5.30) : une cible interactive posée dessus serait perdue
+		// au clavier et au lecteur d'écran. Le geste vit donc dans le tableau, qui est la version
+		// accessible du graphique.
+		monter({
+			chargementTrack: false,
+			idTrack: 'track-1',
+			slugTrack: 'conseil-ia',
+			client: clientQuiRend([ok([budget('b-1', 'Publicité')]), ok([ligne('b-1', 100, 90)])]),
+		})
+		const lien = await screen.findByRole('link', { name: 'Voir le détail du budget Publicité' })
+		expect(lien.getAttribute('href')).toBe('/tracks/conseil-ia/couts/b-1')
+	})
 })
