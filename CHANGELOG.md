@@ -15,6 +15,24 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Le détail d'un budget est atteignable, occurrence par occurrence** (`CRM-086` tranche 4,
+  `docs/SPEC-costs.md` §4.0, §4.3, §4.4 et §4.7, `docs/DESIGN_SYSTEM.md` §5.9 et §5.30). Depuis
+  l'écran de coûts d'un track, le nom d'un budget est désormais un **lien** vers sa fiche. Celle-ci
+  compare le prévisionnel au réel **une paire de barres par occurrence** — là où l'écran du track
+  les agrège toutes en une seule —, et un budget non récurrent y rend une paire unique. Sous le
+  graphique, la **liste de ses lignes de coût** : l'affaire, la nature de la dépense, l'estimé, le
+  réel et l'auteur de la saisie, avec l'accès à l'affaire d'un clic. Un sélecteur **filtre par
+  occurrence** dès que le budget en porte. Un coût réel non saisi laisse sa cellule **vide** et
+  n'est jamais rendu comme un zéro : la phrase « n lignes sans coût réel saisi » reste la seule à
+  compter ce qui manque. Une occurrence qui n'a rien coûté **garde sa paire de barres à zéro** —
+  qu'il ne se soit rien passé sur une période est une information. La fiche s'ouvre aussi sur un
+  **budget clôturé**, dont les lignes restent lisibles, et le dit ; un budget récurrent qui n'a
+  encore aucune occurrence l'écrit, avec la conséquence — aucune dépense ne peut lui être rattachée.
+  Un budget qui n'existe pas, un budget fermé à vos droits et une adresse mal formée rendent le
+  **même** écran : le distinguer divulguerait l'existence d'un budget que vous n'avez pas le droit
+  de voir.
+  **Restent à venir** : le cumul de l'espace de travail, et l'onglet « À saisir ». L'unité reste
+  ouverte.
 - **L'écran de coûts d'un track est atteignable** (`CRM-086` tranche 3, `docs/SPEC-costs.md` §4.0,
   §4.2, §4.4 et §4.7, `docs/DESIGN_SYSTEM.md` §4, §5.30 et §12.1). Une entrée **« Coûts »** apparaît
   dans la barre d'onglets d'un track, à côté de ses channels et séparée d'eux : elle mène à un écran

@@ -24,6 +24,7 @@
 //    n'est qu'une saisie en retard. Le composant la rend depuis l'agrégat, et ne laisse donc pas
 //    à son appelant la possibilité de l'oublier.
 
+import { Link } from 'react-router'
 import { depasse, type AgregatCouts } from '../lib/couts-ecrans'
 import { t } from '../i18n'
 
@@ -57,6 +58,20 @@ export type GroupeHistogramme = {
 	readonly libelle: string
 	/** Rendu sous le libellé quand il existe — le nom de l'affaire, la période d'une occurrence. */
 	readonly precision?: string
+	/**
+	 * L'adresse vers laquelle le libellé mène, et le nom accessible du lien — ajoutés à la
+	 * tranche 4, parce que l'écran du §4.3 doit être ATTEIGNABLE depuis celui du §4.2.
+	 *
+	 * LE LIEN VIT DANS LE TABLEAU ÉQUIVALENT, JAMAIS SUR LA BARRE. Le graphique est `aria-hidden`
+	 * (§5.30) : y poser une cible interactive la retirerait au clavier et au lecteur d'écran, ce que
+	 * le §8 interdit sans exception. Le tableau est la version accessible du graphique, c'est donc
+	 * lui qui porte le geste.
+	 *
+	 * LE NOM ACCESSIBLE EST DISTINCT DU LIBELLÉ VISIBLE, et il est obligatoire quand le lien
+	 * existe : le libellé seul, répété sur chaque ligne, dirait « Salon 2025 » sans dire ce que le
+	 * lien ouvre — la règle du §5.29 pour les commandes répétées d'une liste.
+	 */
+	readonly lien?: { readonly adresse: string; readonly nomAccessible: string }
 	readonly agregat: AgregatCouts
 }
 
@@ -284,7 +299,17 @@ function TableauEquivalent({
 					{groupes.map((groupe) => (
 						<tr key={groupe.cle} className="border-b border-border">
 							<th scope="row" className="py-2 pr-4 font-normal text-ink">
-								{groupe.libelle}
+								{groupe.lien === undefined ? (
+									groupe.libelle
+								) : (
+									<Link
+										to={groupe.lien.adresse}
+										aria-label={groupe.lien.nomAccessible}
+										className="text-brand hover:underline"
+									>
+										{groupe.libelle}
+									</Link>
+								)}
 								{groupe.precision !== undefined && (
 									<span className="block text-[13px] text-text-2">{groupe.precision}</span>
 								)}

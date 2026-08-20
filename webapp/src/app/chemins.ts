@@ -131,3 +131,25 @@ export const CHEMIN_COUTS_TRACK = '/tracks/:slugTrack/couts' as const
 
 /** Adresse concrète de l'écran de coûts d'un track donné. */
 export const cheminCoutsTrack = (slugTrack: string) => `/tracks/${slugTrack}/couts`
+
+/**
+ * Écran de détail d'un budget — `CRM-086`, `docs/SPEC-costs.md` §4.0 et §4.3.
+ *
+ * Elle ne figure PAS dans `ROUTES`, pour le motif de `CHEMIN_COUTS_TRACK` : son titre est le nom du
+ * budget, donc une **donnée**, et son contenu dépend de deux paramètres d'adresse.
+ *
+ * **LE BUDGET EST DÉSIGNÉ PAR SON IDENTIFIANT, JAMAIS PAR SON NOM, et le §4.0 en donne la raison
+ * exacte** : le §2.1 pose que l'unicité du nom ne porte que sur les budgets **non clôturés**, si
+ * bien que deux budgets « Salon 2025 » — l'un clos, l'autre ouvert — coexistent légitimement sur un
+ * même track. Un slug dérivé du nom ne désignerait alors plus rien.
+ *
+ * **AUCUNE COLLISION AVEC `CHEMIN_COUTS_TRACK`**, et ce n'est pas une chance : le détail porte
+ * QUATRE segments, l'écran du track TROIS. Un patron à trois segments ne peut pas apparier une
+ * adresse qui en a quatre, quel que soit le classement des routes — c'est la propriété déjà
+ * retenue pour distinguer `CHEMIN_CONTACT` de `CHEMIN_ORGANISATION`.
+ */
+export const CHEMIN_COUTS_BUDGET = '/tracks/:slugTrack/couts/:idBudget' as const
+
+/** Adresse concrète de l'écran de détail d'un budget donné. */
+export const cheminCoutsBudget = (slugTrack: string, idBudget: string) =>
+	`/tracks/${slugTrack}/couts/${idBudget}`

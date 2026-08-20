@@ -1,5 +1,6 @@
-// @spec CRM-086 (docs/BACKLOG.md) — écrans de coûts, TRANCHE 1 : ce que les trois écrans lisent et
-//       agrègent, et le décompte que l'onglet « À saisir » doit rendre identique
+// @spec CRM-086 (docs/BACKLOG.md) — écrans de coûts, TRANCHES 1 et 4 : ce que les trois écrans
+//       lisent et agrègent, le décompte que l'onglet « À saisir » doit rendre identique, et la
+//       lecture propre à l'écran de détail d'un budget (§4.3)
 // @spec docs/SPEC-costs.md §4.0 (adresses des trois écrans), §4.2 (histogramme du track),
 //       §4.3 (détail d'un budget, une paire de barres par occurrence), §4.4 (ce que l'écran dit du
 //       réel inconnu), §4.5 (cumul du workspace, calculé APRÈS la RLS), §4.7 (les états)
@@ -280,4 +281,277 @@ export function cumuler(agregats: Iterable<AgregatCouts>): AgregatCouts {
 		}
 	}
 	return total
+}
+
+// ---------------------------------------------------------------------------------------------
+// L'écran de détail d'un budget — §4.3, §4.4, §4.7
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * La forme d'un identifiant de budget, telle que PostgreSQL l'exige.
+ *
+ * Le contrôle est celui de `estFormeUuid` dans `contacts.ts`, et il vaut ici pour la raison exacte
+ * qu'il y est écrite : un `id` qui n'est pas un uuid rend `400` et `22P02`, que `classerErreur`
+ * range en erreur — dont l'action de reprise rejouerait la même requête pour recevoir le même
+ * refus, soit une commande morte sur une adresse que l'utilisateur édite directement. La forme est
+ * donc contrôlée AVANT d'émettre quoi que ce soit, et un identifiant mal formé rend le même écran
+ * qu'un budget inexistant ou fermé (`docs/SPEC-permissions-rls.md` §7).
+ *
+ * La constante est recopiée plutôt qu'importée : `contacts.ts` porte le carnet et ses écritures,
+ * et faire dépendre les écrans de coûts du carnet pour une expression régulière de dix caractères
+ * créerait un lien entre deux domaines qui n'en ont aucun. L'écart est consigné au registre.
+ */
+const FORME_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/** Vrai lorsque la chaîne a la forme d'un uuid. Exportée pour être éprouvée directement. */
+export function estIdentifiantBudget(valeur: string | undefined): valeur is string {
+	return valeur !== undefined && FORME_UUID.test(valeur)
+}
+
+/**
+ * Une occurrence telle que l'écran du §4.3 la nomme.
+ *
+ * `period_start` et `period_end` sont lues bien qu'elles ne contraignent RIEN (§2.2, « purement
+ * descriptives ») : elles portent l'ORDRE que le §4.3 demande — « dans l'ordre des périodes puis
+ * des libellés » — et précisent un libellé libre que rien n'oblige à nommer sa période.
+ */
+export type OccurrenceDeLEcran = Pick<
+	Database['public']['Tables']['budget_occurrences']['Row'],
+	'id' | 'label' | 'period_start' | 'period_end' | 'planned_amount' | 'closed_at'
+>
+
+/**
+ * L'affaire d'une ligne, telle que la table du §4.3 la rend — avec de quoi l'atteindre.
+ *
+ * Les deux slugs sont embarqués parce que l'adresse d'une affaire les EXIGE tous les deux
+ * (`/tracks/:slugTrack/:slugChannel/cards/:idCard`), et qu'aucune des deux ne se déduit de
+ * l'adresse courante : la ligne de coût d'un budget peut porter sur une affaire d'un AUTRE track
+ * que celui du budget — le §3.1 autorise le rattachement croisé, et l'y supposer produirait un
+ * lien qui mène à un écran vide.
+ */
+export type AffaireDeLaLigne = {
+	readonly id: string
+	readonly title: string
+	readonly archived_at: string | null
+	readonly channels: {
+		readonly slug: string
+		readonly tracks: { readonly slug: string } | null
+	} | null
+}
+
+/**
+ * Une ligne de coût telle que la liste du §4.3 la rend : « affaire, libellé, estimé, réel, auteur ».
+ *
+ * `cards` et `profiles` sont déclarées NULLABLES, et ce n'est pas une précaution de style. La
+ * politique de `card_costs` exige `app.can_read_card` (§3.1), donc une ligne rendue s'accompagne
+ * en principe d'une affaire lisible ; mais le compilateur ne connaît pas cette implication, et
+ * supposer non nul ce que PostgREST peut rendre nul est l'hypothèse tenue pour un fait que
+ * `CLAUDE.md` §1 proscrit. `created_by` est en outre `on delete set null` : un profil supprimé
+ * laisse réellement une ligne sans auteur, et l'écran le NOMME plutôt que de laisser une cellule
+ * vide (`docs/DESIGN_SYSTEM.md` §5.16).
+ */
+export type LigneBudget = Pick<
+	Database['public']['Tables']['card_costs']['Row'],
+	'id' | 'occurrence_id' | 'label' | 'estimated_cost' | 'actual_cost' | 'created_at'
+> & {
+	readonly cards: AffaireDeLaLigne | null
+	readonly profiles: { readonly id: string; readonly full_name: string } | null
+}
+
+/** Ce que l'écran du §4.3 lit en une fois : le budget, ses occurrences, et ses lignes. */
+export type DetailBudget = {
+	readonly budget: BudgetDeLEcran
+	readonly occurrences: readonly OccurrenceDeLEcran[]
+	readonly lignes: readonly LigneBudget[]
+}
+
+/**
+ * Colonnes de la ligne détaillée, écrites **d'un seul tenant**.
+ *
+ * Une concaténation rendrait le type `string` et `supabase-js` cesserait d'inférer la forme de la
+ * réponse — la limite déjà mesurée sur `COLONNES_LIGNE_COUT` et `COLONNES_CARD_FORMULAIRE`.
+ *
+ * LES DEUX RELATIONS SONT NOMMÉES PAR LEUR CLÉ ÉTRANGÈRE, ET C'EST OBLIGATOIRE POUR L'UNE D'ELLES.
+ * `cards` porte DEUX clés composites vers `channels` — `cards_channel_id_workflow_id_fkey` et
+ * `cards_channel_id_workspace_id_fkey` — et un `channels(...)` nu est donc AMBIGU : PostgREST
+ * refuse la requête entière en `PGRST201` plutôt que d'en choisir une (mesuré par `card-costs.ts`
+ * et par `contacts.ts`, qui nomment la même). La clé retenue est celle qui passe par le workspace,
+ * seule dont la présence est structurellement garantie sur toute card. `profiles` n'a qu'une seule
+ * clé depuis `card_costs` et n'exigerait pas d'être nommée ; elle l'est quand même, pour que
+ * l'ajout d'une seconde clé demain ne casse pas cette lecture en silence.
+ */
+export const COLONNES_LIGNE_BUDGET =
+	'id, occurrence_id, label, estimated_cost, actual_cost, created_at, cards(id, title, archived_at, channels!cards_channel_id_workspace_id_fkey(slug, tracks(slug))), profiles!card_costs_created_by_fkey(id, full_name)'
+
+/**
+ * Le budget désigné par `idBudget`, ses occurrences et ses lignes — ou `null` s'il n'est pas
+ * lisible.
+ *
+ * **`null` recouvre TROIS situations, et c'est délibéré** : le budget n'existe pas, l'appelant n'a
+ * pas le droit de le lire, ou l'identifiant n'a pas la forme d'un uuid. Les distinguer
+ * renseignerait un appelant sans droit sur l'EXISTENCE d'un budget
+ * (`docs/SPEC-permissions-rls.md` §7), et c'est la règle que les fiches de contact et
+ * d'organisation tiennent déjà.
+ *
+ * **UN BUDGET CLÔTURÉ EST LU ICI, alors que le §4.2 l'exclut de l'histogramme du track.** Ce n'est
+ * pas une incohérence mais la distinction que le §4.2 nomme lui-même : « un budget clôturé n'y
+ * figure pas » est une règle d'ÉCRAN — il ne se propose plus —, jamais une règle d'autorisation.
+ * Ses lignes restent lisibles (§2.3, « clôturer n'efface pas l'histoire »), le §4.8 les liste dans
+ * l'onglet « À saisir », et une adresse qu'on a mise en signet ne doit pas cesser de répondre le
+ * jour où le budget se ferme.
+ *
+ * **TROIS REQUÊTES, ET PAS UNE DE PLUS.** Le budget d'abord — sans lui, rien à rendre —, puis ses
+ * occurrences et ses lignes. Les occurrences ne sont PAS embarquées dans la lecture du budget :
+ * elles portent leur propre ordre (`period_start` puis `label`, §4.3), qu'un embed rendrait dans
+ * l'ordre de la clé primaire.
+ *
+ * **LES LIGNES SONT LUES SOUS L'IDENTITÉ DE L'APPELANT**, comme partout dans ce module : une ligne
+ * dont l'AFFAIRE est fermée à l'appelant n'est pas rendue et n'entre donc pas dans les barres. Le
+ * total obtenu est celui que l'appelant a le droit de connaître, jamais le total absolu (§4.5).
+ */
+export async function lireDetailBudget(
+	client: ClientCrm,
+	idBudget: string | undefined,
+): Promise<EtatAsync<DetailBudget | null>> {
+	if (!estIdentifiantBudget(idBudget)) return pret(null)
+	try {
+		const budget = await client
+			.from('budgets')
+			.select(COLONNES_BUDGET_ECRAN)
+			.eq('id', idBudget)
+			.maybeSingle()
+		if (budget.error !== null) {
+			return enErreur(classerErreur(budget.status, budget.error.message))
+		}
+		if (budget.data === null) return pret(null)
+
+		const occurrences = await client
+			.from('budget_occurrences')
+			.select('id, label, period_start, period_end, planned_amount, closed_at')
+			.eq('budget_id', idBudget)
+			// `nullsFirst: false` place les occurrences SANS période après celles qui en ont une :
+			// le §2.2 rend les deux bornes facultatives, et une occurrence non datée n'a aucune
+			// raison de précéder janvier. Le second critère est le libellé, comme le §4.3 l'écrit.
+			.order('period_start', { nullsFirst: false })
+			.order('label')
+		if (occurrences.error !== null) {
+			return enErreur(classerErreur(occurrences.status, occurrences.error.message))
+		}
+
+		const lignes = await client
+			.from('card_costs')
+			.select(COLONNES_LIGNE_BUDGET)
+			.eq('budget_id', idBudget)
+			// `created_at` puis `label` : la plus ancienne d'abord, l'ordre que `lireCoutsCard` tient
+			// déjà sur la fiche d'affaire. C'est le seul qui ne bouge pas sous les doigts de qui
+			// saisit — un ordre par montant ferait sauter une ligne de place à chaque correction.
+			.order('created_at')
+			.order('label')
+		if (lignes.error !== null) {
+			return enErreur(classerErreur(lignes.status, lignes.error.message))
+		}
+
+		return pret({
+			budget: budget.data,
+			occurrences: occurrences.data,
+			lignes: lignes.data as unknown as readonly LigneBudget[],
+		})
+	} catch (cause) {
+		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
+}
+
+/**
+ * Une paire de barres de l'écran du §4.3 : l'occurrence qui la nomme, et ce qu'elle vaut.
+ *
+ * `occurrence` vaut `null` sur un budget NON RÉCURRENT, qui « affiche une seule paire de barres »
+ * (§4.3) : la paire désigne alors le budget entier, et fabriquer une occurrence fictive pour
+ * uniformiser la forme inventerait un objet que la base refuse (§2.2, un trigger interdit les
+ * occurrences d'un budget non récurrent).
+ */
+export type BarresOccurrence = {
+	readonly occurrence: OccurrenceDeLEcran | null
+	readonly agregat: AgregatCouts
+}
+
+/**
+ * Range les lignes d'un budget par occurrence — le contenu du §4.3.
+ *
+ * Fonction PURE et exportée : c'est elle que les preuves unitaires éprouvent sur des jeux
+ * construits, sans pile ni client, comme `grouperParDevise` pour l'écran du track.
+ *
+ * **UNE OCCURRENCE SANS AUCUNE LIGNE GARDE SA PAIRE DE BARRES**, à zéro. Le §4.3 demande « une
+ * paire de barres par occurrence », pas « par occurrence dépensée » : une occurrence muette est
+ * l'information qu'il ne s'est rien passé sur cette période, et la faire disparaître ferait lire
+ * un budget comme s'il n'avait jamais porté ce mois-là. C'est la même règle que l'état vide du
+ * §4.7 appliquée à un cran plus fin.
+ *
+ * **AUCUNE DEVISE N'EST GROUPÉE ICI, et c'est une propriété du modèle et non un oubli.** Toutes
+ * les lignes d'un budget partagent SA devise — le §2.3 pose qu'« une ligne ne porte pas de colonne
+ * `currency` » —, si bien qu'un écran de détail ne peut pas mêler deux monnaies sur un même axe.
+ * Le groupement du §4.5 n'a d'objet que là où plusieurs budgets partagent un graphique.
+ *
+ * **UNE LIGNE DONT L'OCCURRENCE N'EST PAS LISTÉE N'EST PAS PERDUE.** Elle rejoint le groupe sans
+ * occurrence, celui-là même que rend un budget non récurrent. Le cas ne devrait pas se produire —
+ * la lecture rend toutes les occurrences du budget —, mais l'écarter silencieusement retrancherait
+ * un montant du total sans que rien ne le dise, ce qui est exactement ce que le §4.4 reproche à un
+ * écran de coûts.
+ */
+export function grouperParOccurrence(detail: DetailBudget): readonly BarresOccurrence[] {
+	const connues = new Set(detail.occurrences.map((occurrence) => occurrence.id))
+	const parOccurrence = new Map<string, LigneBudget[]>()
+	const horsOccurrence: LigneBudget[] = []
+	for (const ligne of detail.lignes) {
+		const cle = ligne.occurrence_id
+		if (cle === null || !connues.has(cle)) {
+			horsOccurrence.push(ligne)
+			continue
+		}
+		const liste = parOccurrence.get(cle) ?? []
+		liste.push(ligne)
+		parOccurrence.set(cle, liste)
+	}
+
+	const groupes: BarresOccurrence[] = detail.occurrences.map((occurrence) => ({
+		occurrence,
+		agregat: agreger(parOccurrence.get(occurrence.id) ?? []),
+	}))
+
+	// Le groupe sans occurrence n'est rendu que s'il porte quelque chose, SAUF sur un budget non
+	// récurrent — où il est la seule paire de barres, et où son absence viderait le graphique d'un
+	// budget qui n'a simplement encore aucune dépense (§4.7, « deux barres nulles »).
+	if (horsOccurrence.length > 0 || !detail.budget.is_recurrent) {
+		groupes.push({ occurrence: null, agregat: agreger(horsOccurrence) })
+	}
+	return groupes
+}
+
+/**
+ * L'adresse de l'affaire d'une ligne, ou `null` lorsque ses slugs manquent.
+ *
+ * Rendre `null` plutôt qu'une adresse partielle est la règle d'`adresseAffaire` du carnet : un lien
+ * vers `/tracks/undefined/...` mènerait à un écran que l'utilisateur croirait cassé, là où une
+ * ligne sans lien dit seulement que l'affaire n'est pas adressable pour cet appelant.
+ */
+export function adresseAffaireLigne(ligne: LigneBudget): string | null {
+	const affaire = ligne.cards
+	const slugChannel = affaire?.channels?.slug
+	const slugTrack = affaire?.channels?.tracks?.slug
+	if (slugChannel === undefined || slugTrack === undefined || affaire === null) return null
+	return `/tracks/${slugTrack}/${slugChannel}/cards/${affaire.id}`
+}
+
+/**
+ * Les lignes retenues par le filtre d'occurrence du §4.3.
+ *
+ * `null` vaut « toutes les occurrences », qui est l'état par défaut du filtre. LE FILTRE NE
+ * RETOURNE PAS AU SERVEUR : toutes les lignes du budget sont déjà en main, et une seconde requête
+ * par changement de filtre ferait payer un aller-retour pour un tri de tableau (`CLAUDE.md` §21).
+ */
+export function filtrerParOccurrence(
+	lignes: readonly LigneBudget[],
+	idOccurrence: string | null,
+): readonly LigneBudget[] {
+	if (idOccurrence === null) return lignes
+	return lignes.filter((ligne) => ligne.occurrence_id === idOccurrence)
 }

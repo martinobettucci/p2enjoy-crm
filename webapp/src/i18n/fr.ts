@@ -2058,6 +2058,61 @@ export const fr = {
 	'costs.track.empty.title': 'Aucun budget sur ce track',
 	'costs.track.empty.body':
 		'Les budgets ouverts d’un track apparaissent ici, comparés à leurs coûts réels. Un administrateur peut en créer depuis l’administration de l’arborescence.',
+	// Le nom accessible du lien qui mène au détail d'un budget depuis le tableau équivalent. Le nom
+	// du budget est une DONNÉE : il est passé en paramètre, jamais concaténé (§10).
+	'costs.track.detail.aria': 'Voir le détail du budget {nom}',
+
+	// -------------------------------------------------------------------------------------------
+	// Écran de détail d'un budget — `CRM-086` tranche 4, docs/SPEC-costs.md §4.0, §4.3 et §4.7.
+	// Le titre de la route est le NOM DU BUDGET, une donnée ; la clé ci-dessous n'est que son repli
+	// pendant le chargement, comme `route.costs.track.title` l'est du nom du track.
+	// -------------------------------------------------------------------------------------------
+	'route.costs.budget.title': 'Détail d’un budget',
+	'costs.budget.identity.aria': 'Caractéristiques du budget',
+	'costs.budget.currency': 'Devise',
+	'costs.budget.planned': 'Enveloppe',
+	// La pilule du §5.6 : un mot, jamais une teinte seule. Un budget clos n'est pas une erreur —
+	// ses lignes restent lisibles, et leur coût réel reste saisissable (§2.3).
+	'costs.budget.closed': 'Budget clôturé — ses lignes restent lisibles et leur coût réel saisissable.',
+	// L'état « budget récurrent sans occurrence » du §4.7. Il nomme aussi la conséquence, faute de
+	// quoi on chercherait pourquoi ce budget n'apparaît pas dans le sélecteur d'une fiche d'affaire.
+	'costs.budget.nooccurrence':
+		'Aucune occurrence ouverte. Tant que ce budget récurrent n’en porte aucune, aucune dépense ne peut lui être rattachée.',
+	// Le groupe de barres sans occurrence : la seule paire d'un budget non récurrent, ou le reliquat
+	// d'un budget récurrent dont des lignes ne relèvent d'aucune occurrence listée.
+	'costs.budget.nooccurrence.group': 'Sans occurrence',
+	// L'en-tête de la première colonne du tableau équivalent (§5.30) : sur cet écran, une paire de
+	// barres désigne une occurrence.
+	'costs.budget.column': 'Occurrence',
+	// Les trois formes d'une période, composées par une CLÉ et jamais par concaténation (§10) : les
+	// deux bornes sont facultatives et indépendantes (§2.2).
+	'costs.budget.period.range': 'du {debut} au {fin}',
+	'costs.budget.period.from': 'à partir du {debut}',
+	'costs.budget.period.until': 'jusqu’au {fin}',
+	'costs.budget.lines.title': 'Lignes de coût',
+	'costs.budget.lines.aria': 'Lignes de coût rattachées à ce budget',
+	'costs.budget.lines.caption':
+		'Lignes de coût rattachées à ce budget : affaire, nature, coût estimé, coût réel et auteur de la saisie.',
+	'costs.budget.lines.column.card': 'Affaire',
+	'costs.budget.lines.column.label': 'Nature',
+	'costs.budget.lines.column.author': 'Auteur',
+	// Un profil supprimé détache son auteur (`on delete set null`) : c'est un fait à NOMMER, jamais
+	// une cellule vide — la règle du §5.16 du design system.
+	'costs.budget.lines.author.unknown': 'Auteur inconnu',
+	'costs.budget.lines.card.unknown': 'Affaire non lisible',
+	'costs.budget.lines.card.archived': 'Archivée',
+	// Deux vides DISTINCTS : un budget sans aucune dépense, et un filtre qui n'en laisse aucune.
+	// Les confondre ferait passer un filtre trop restrictif pour un budget sans histoire (§5.11).
+	'costs.budget.lines.empty': 'Aucune dépense rattachée à ce budget.',
+	'costs.budget.lines.empty.filtered': 'Aucune dépense sur cette occurrence.',
+	'costs.budget.filter.label': 'Filtrer par occurrence',
+	'costs.budget.filter.all': 'Toutes les occurrences',
+	// Un budget inexistant, un budget fermé à l'appelant et un identifiant mal formé rendent le même
+	// écran (docs/SPEC-permissions-rls.md §7) : le texte ne prétend donc rien savoir de la cause.
+	'costs.budget.notfound.title': 'Budget introuvable',
+	'costs.budget.notfound.body':
+		'Ce budget n’existe pas, ou il ne vous est pas accessible. Les budgets ouverts de ce track sont listés sur son écran de coûts.',
+	'costs.budget.notfound.action': 'Revenir aux coûts du track',
 } as const
 
 export type CleTraduction = keyof typeof fr

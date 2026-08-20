@@ -33,6 +33,7 @@ import { lireHistogrammeTrack, type HistogrammeDevise } from '../lib/couts-ecran
 import { clientCrm } from '../lib/supabase'
 import type { ClientCrm } from '../lib/supabase'
 import { AppShell } from './AppShell'
+import { cheminCoutsBudget } from './chemins'
 import { HistogrammeCouts, type GroupeHistogramme } from './HistogrammeCouts'
 
 /** Classes du lien de retour, identiques à celles de `RouteTrack` (docs/DESIGN_SYSTEM.md §5.5). */
@@ -67,6 +68,7 @@ export function CoutsTrack() {
 			<ContenuCoutsTrack
 				chargementTrack={etat.statut === 'chargement'}
 				idTrack={track?.id ?? null}
+				{...(slugTrack === undefined ? {} : { slugTrack })}
 				client={clientCrm}
 			/>
 		</AppShell>
@@ -83,10 +85,19 @@ export function CoutsTrack() {
 export function ContenuCoutsTrack({
 	chargementTrack,
 	idTrack,
+	slugTrack,
 	client,
 }: {
 	readonly chargementTrack: boolean
 	readonly idTrack: string | null
+	/**
+	 * Le slug du track, uniquement pour composer l'adresse du détail d'un budget (§4.3).
+	 *
+	 * FACULTATIF, ET SON ABSENCE RETIRE LE LIEN plutôt que de fabriquer une adresse partielle : un
+	 * lien vers `/tracks/undefined/couts/…` mènerait à un écran que l'utilisateur croirait cassé,
+	 * la règle d'`adresseAffaireLigne` et d'`adresseAffaire` du carnet.
+	 */
+	readonly slugTrack?: string
 	readonly client: ClientCrm | null
 }) {
 	const [etat, setEtat] = useState<EtatAsync<readonly HistogrammeDevise[]>>(enChargement)
@@ -166,7 +177,7 @@ export function ContenuCoutsTrack({
 				<HistogrammeCouts
 					key={histogramme.devise}
 					devise={histogramme.devise}
-					groupes={enGroupes(histogramme)}
+					groupes={enGroupes(histogramme, slugTrack)}
 					total={histogramme.total}
 					legendeColonne={t('costs.track.column')}
 				/>
@@ -189,10 +200,25 @@ export function ContenuCoutsTrack({
  * l'enveloppe — `planned_amount`, facultative — mêlerait une troisième valeur à un graphique qui en
  * compare deux, et le §5.30 n'en déclare pas de troisième.
  */
-export function enGroupes(histogramme: HistogrammeDevise): readonly GroupeHistogramme[] {
+export function enGroupes(
+	histogramme: HistogrammeDevise,
+	slugTrack?: string,
+): readonly GroupeHistogramme[] {
 	return histogramme.barres.map((barre) => ({
 		cle: barre.budget.id,
 		libelle: barre.budget.name,
+		// LE LIEN VERS LE DÉTAIL DU §4.3, ajouté à la tranche 4 : sans lui, cet écran serait la seule
+		// entrée d'une adresse qu'aucun geste n'ouvre. Il vit dans le tableau équivalent et non sur
+		// la barre, que le §5.30 rend `aria-hidden`. Le nom accessible NOMME le budget : « Salon
+		// 2025 » répété sur cinq lignes ne dirait pas ce que chaque lien ouvre.
+		...(slugTrack === undefined
+			? {}
+			: {
+					lien: {
+						adresse: cheminCoutsBudget(slugTrack, barre.budget.id),
+						nomAccessible: t('costs.track.detail.aria', { nom: barre.budget.name }),
+					},
+				}),
 		agregat: barre.agregat,
 	}))
 }

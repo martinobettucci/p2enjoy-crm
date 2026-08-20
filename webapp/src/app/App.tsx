@@ -27,6 +27,7 @@ import {
 	CHEMIN_ADMIN_WORKFLOWS,
 	CHEMIN_CARD,
 	CHEMIN_CORBEILLE,
+	CHEMIN_COUTS_BUDGET,
 	CHEMIN_COUTS_TRACK,
 	CHEMIN_DEMARRAGE,
 	CHEMIN_ETAT_MESSAGERIE,
@@ -94,6 +95,13 @@ const RouteCard = lazy(async () => ({ default: (await import('./RouteCard')).Rou
  * donc une donnée, et sa barre d'onglets dépend du chargement des channels.
  */
 const CoutsTrack = lazy(async () => ({ default: (await import('./CoutsTrack')).CoutsTrack }))
+/**
+ * Le détail d'un budget — `CRM-086` tranche 4, docs/SPEC-costs.md §4.3. Chargé à la demande pour le
+ * motif exact de l'écran du track dont il prolonge la lecture, et dans un module SÉPARÉ : les deux
+ * écrans partagent l'histogramme, jamais leur code de zone, et les fondre ferait télécharger la
+ * table des lignes à qui n'ouvre que l'histogramme du track.
+ */
+const CoutsBudget = lazy(async () => ({ default: (await import('./CoutsBudget')).CoutsBudget }))
 /**
  * La fiche d'organisation de `CRM-060` tranche 4b, chargée à la demande comme le carnet dont elle
  * prolonge la lecture — même motif : un écran que la plupart des sessions n'ouvrent pas n'a pas à
@@ -163,6 +171,11 @@ function RoutesApplication() {
 				    react-router classant ses routes par spécificité : un segment littéral l'emporte
 				    sur un segment dynamique de même rang, quel que soit l'ordre de déclaration. */}
 				<Route path={CHEMIN_COUTS_TRACK} element={<CoutsTrack />} />
+				{/* Le détail d'un budget — `CRM-086`, docs/SPEC-costs.md §4.0 et §4.3. Hors de `ROUTES` :
+				    son titre est le nom du budget — une donnée —, et son contenu dépend de deux paramètres
+				    d'adresse. Aucune collision avec la route ci-dessus, qui porte trois segments là où
+				    celle-ci en porte quatre. */}
+				<Route path={CHEMIN_COUTS_BUDGET} element={<CoutsBudget />} />
 				{/* La vue liste d'un channel — `CRM-042`. Même coquille et même résolution de track
 				    que le board, dont elle n'est qu'une seconde lecture : ce qui change est la zone
 				    principale, pas la route de track (docs/SPEC-cards.md §12.2). */}
