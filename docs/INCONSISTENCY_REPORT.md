@@ -2608,6 +2608,36 @@ entre la suite d'interface et celle de messagerie. La première rend la suite in
 ordre ; la seconde garde les suites telles quelles et déplace la contrainte dans le protocole de
 campagne.
 
+**Observation ajoutée le 2026-08-20 par la session `CRM-080` tranche 3 — LE COUPLAGE N'EST PAS
+CELUI QU'ON CROYAIT.** L'entrée attribuait l'échec à l'état laissé par `npm run e2e:ui`. Or la
+campagne de cette session a rencontré **le même échec, sur le même scénario, ligne 276**, alors que
+`npm run e2e:ui` **n'avait pas encore été exécuté** — l'ordre était `test:sql`, `e2e:api`, puis
+`e2e:mail` :
+
+```
+1 failed
+  [mail] › e2e/mail/dossiers.spec.ts:276:2 › renommer un TRACK renomme son dossier et emporte ses enfants
+    expect(relever(compte.id)['filed']).toBeGreaterThanOrEqual(1)
+    Expected: >= 1   Received: 0
+41 passed (1.4m)
+```
+
+Rejoué **seul** immédiatement après : `2 passés` en 9,5 s. Puis la **campagne de messagerie
+entière** rejouée : **42 passés, aucun échec**. L'intermittence est donc confirmée dans les deux
+sens, et sur une pile où la suite d'interface n'était pas passée.
+
+**Ce que cela change pour l'arbitrage.** L'hypothèse « l'interface renomme des tracks et laisse un
+état » ne suffit plus : `e2e:api` seul suffit à produire l'échec, ou bien l'échec ne dépend
+d'aucune suite antérieure. L'assertion qui tombe est en outre plus précise que l'entrée ne le
+disait : ce n'est pas l'arborescence renommée qui est fausse, c'est le **classement du message
+envoyé** qui rend `filed = 0` — donc une relève qui n'a pas encore vu le message au moment de
+l'assertion. Cela déplace le soupçon vers une **attente insuffisante entre l'envoi et la relève**,
+et non vers un état de dossiers hérité. La mesure qui manque reste la même : instrumenter le délai
+réel entre l'envoi et le classement sur une exécution où l'échec se produit.
+
+**Non corrigé par cette session** : le scénario relève de la messagerie, et l'unité de la session
+était `CRM-080` tranche 3 (`CLAUDE.md` §13).
+
 ## Consigné le 2026-08-19 — un manque de spécification relevé par `CRM-084` tranche 2
 
 ### INC-173 — aucune surface ne gère les occurrences d'un budget récurrent, et `CRM-085` en aura besoin
