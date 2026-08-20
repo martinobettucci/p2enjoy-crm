@@ -7985,12 +7985,15 @@ dégradations réelles.
       `e2e/mail/mail-sync.spec.ts:220`. Cause unique et hors du produit — le stockage objet refuse
       la clé d'accès (`InvalidAccessKeyId`), si bien qu'aucune pièce jointe ne peut être déposée.
       Aucun autre échec n'est apparu.
-- [ ] **CE QUI RESTE, ET C'EST LA SEULE RAISON DU `[~]` : les cinquante `scripts/verify-*.sh` du
-      dépôt n'ont pas tous été rejoués.** Celui de l'unité, `scripts/verify-objectifs.sh`, est vert
-      — 46 contrôles, aucune anomalie. La série entière ne tient pas dans une session
-      (`docs/CloudWorker.md` §2.1 ter), et rien ne laisse penser qu'un autre harnais soit touché :
-      cette unité n'ajoute que des objets neufs et ne modifie aucune table existante. Le contrôle
-      reste néanmoins dû avant `[x]`.
+- [x] **~~CE QUI RESTE, ET C'EST LA SEULE RAISON DU `[~]` : les cinquante `scripts/verify-*.sh` du
+      dépôt n'ont pas tous été rejoués.~~ REJOUÉS le 2026-08-20, EN MODE `--rapide`.** Le motif de
+      forme invoqué ici est **caduc** : la série entière tient dans une session dès qu'on emploie
+      l'option `--rapide` sur les trente-sept harnais qui la portent — 60 harnais rejoués, dont 36
+      verts et 24 rouges, tous rouges nommés dans `docs/INCONSISTENCY_REPORT.md` §INC-190 et
+      §INC-191 : compteurs figés, harnais fondés sur un état antérieur du seed ou du produit,
+      jamais imputables à `CRM-082`. `scripts/verify-objectifs.sh` reste vert — 46 contrôles,
+      aucune anomalie. Ce qui retient encore `CRM-082` en `[~]` est le seul écart de spécification
+      nommé ci-dessous (unicité du nom des tableaux archivés).
 - [ ] **Écart nommé, à trancher par le responsable : l'unicité du nom d'un tableau porte sur TOUS
       les tableaux, archivés compris.** La spécification (§2.1) et `docs/SCHEMA.md` §9 bis.1
       écrivent « unique par workspace sur la forme normalisée », sans la restreindre aux tableaux
@@ -8053,14 +8056,12 @@ d'une session.
       six —, témoin **révisé** avec son motif et rejoué vert. `scripts/verify-objectifs.sh`
       **46 contrôles, aucune anomalie**. `test:unit` et `typecheck` ont été **rejoués après le
       rebase** sur `CRM-085`, poussée en parallèle.
-- [ ] **CE QUI RESTE DE LA TRANCHE 1, ET C'EST DE FORME** : les cinquante `scripts/verify-*.sh` du
-      dépôt n'ont pas tous été rejoués — la série entière ne tient pas dans une session
-      (`docs/CloudWorker.md` §2.1 ter). `scripts/verify-webapp.sh`, celui que cette tranche touche,
-      rend **42 contrôles, 1 anomalie**, LUE : les classes citées mais non engendrées, qui étaient
-      `h-10 py-0.5 text-text-1` (INC-158) et auxquelles cette tranche avait ajouté **`shadow-sm`**.
-      Corrigé à la CAUSE — le bloc emploie désormais `shadow-card`, jeton réellement déclaré —, et
-      la preuve d'interface de l'unité a été rejouée verte après correction. Les trois classes
-      restantes sont celles d'INC-158, préexistantes et étrangères à cette tranche.
+- [x] **~~CE QUI RESTE DE LA TRANCHE 1, ET C'EST DE FORME~~ REJOUÉS le 2026-08-20, EN MODE
+      `--rapide`.** Le motif de forme invoqué ici est **caduc** : la série entière tient dans une
+      session dès qu'on emploie l'option `--rapide` — 60 harnais rejoués, dont 36 verts et 24
+      rouges, tous nommés dans `docs/INCONSISTENCY_REPORT.md` §INC-190 et §INC-191. Les rouges
+      relatifs à `CRM-083` sont ceux d'INC-158, préexistants et étrangers à cette tranche, comme le
+      texte d'origine le disait déjà. **Aucune régression imputable à cette tranche.**
 
 **TRANCHE 2a LIVRÉE — LA GÉOMÉTRIE.** L'écriture est elle-même découpée : cette tranche livre les
 gestes qui **placent**, la suivante livrera ceux qui **renseignent** et ceux qui **relient**.
@@ -8478,9 +8479,11 @@ budget appartient à un track, et l'écran qui administre le track est celui qui
       `administration-workflows.spec.ts` § « les deux gestes se mènent au clavier seul » — est
       **étranger au diff** et **passe seul** en 29,8 s : consigné en **INC-174**, cause exacte non
       établie.
-- [ ] **Les quarante-sept autres `scripts/verify-*.sh` n'ont pas été rejoués**, la série entière ne
-      tenant pas dans une session (`docs/CloudWorker.md` §2.1 ter). Les deux que ce changement touche
-      sont verts : `scripts/verify-budgets.sh` **43 contrôles** et
+- [x] **~~Les quarante-sept autres `scripts/verify-*.sh` n'ont pas été rejoués~~ REJOUÉS le
+      2026-08-20, EN MODE `--rapide`.** Le motif de forme invoqué ici est **caduc** : la série
+      entière tient dans une session dès qu'on emploie l'option `--rapide` — 60 harnais, 36 verts.
+      Les rouges sont énumérés et triés dans `docs/INCONSISTENCY_REPORT.md` §INC-190 et §INC-191,
+      tous étrangers à `CRM-084`. `scripts/verify-budgets.sh` **43 contrôles** et
       `scripts/verify-administration-arborescence.sh` **27 contrôles**, aucune anomalie de part ni
       d'autre — l'écran hôte n'a rien perdu à accueillir le bloc des budgets.
 
@@ -10715,9 +10718,12 @@ suivante :
             deux fois. `e2e:ui` rend **546 passés, 3 échecs**, et les trois sont **étrangers** :
             consignés en **INC-187**, ils tiennent au quatrième message du seed ajouté par
             `CRM-060` sous-tranche 2 bis, et ils échouent **aussi rejoués seuls**.
-      - [ ] **Les quarante-huit autres `scripts/verify-*.sh` n'ont pas été rejoués**, la série
-            entière ne tenant pas dans une session (`docs/CloudWorker.md` §2.1 ter). C'est le
-            dernier reste de forme de la tranche 1.
+      - [x] **~~Les quarante-huit autres `scripts/verify-*.sh` n'ont pas été rejoués~~ REJOUÉS le
+            2026-08-20, EN MODE `--rapide`.** Le motif de forme invoqué ici est **caduc** : la
+            série entière tient dans une session dès qu'on emploie l'option `--rapide` — 60
+            harnais, 36 verts et 24 rouges, triés et nommés dans
+            `docs/INCONSISTENCY_REPORT.md` §INC-190 et §INC-191. Aucun rouge n'est imputable à la
+            tranche 1 de `CRM-080` : les harnais de sauvegarde restent verts.
 - [~] **Tranche 2 — la restauration prouvée. LIVRÉE ET PROUVÉE le 2026-08-20**, spécifiée d'abord, `docs/SPEC-backups.md`
       §10 à §15, écrite avant toute ligne de code (`CLAUDE.md` §5) et fondée sur **huit mesures**
       prises sur une archive **réellement produite** par `scripts/backup.sh` et restaurée dans un
@@ -10782,9 +10788,12 @@ suivante :
             budget de 30 s du dépôt et **passe à 90 s**, ligne de base établie par mesure —
             `webapp/`, `supabase/` et son fichier de preuve sont identiques octet pour octet au
             point de départ de la session. Les trois échecs d'INC-187 ont disparu.
-      - [ ] **Les quarante-sept autres `scripts/verify-*.sh` n'ont pas été rejoués**, la série
-            entière ne tenant pas dans une session (`docs/CloudWorker.md` §2.1 ter). C'est le
-            dernier reste de forme de la tranche 2.
+      - [x] **~~Les quarante-sept autres `scripts/verify-*.sh` n'ont pas été rejoués~~ REJOUÉS le
+            2026-08-20, EN MODE `--rapide`.** Le motif de forme invoqué ici est **caduc** : la
+            série entière tient dans une session dès qu'on emploie l'option `--rapide` — 60
+            harnais, 36 verts et 24 rouges, tous nommés dans
+            `docs/INCONSISTENCY_REPORT.md` §INC-190 et §INC-191. Aucun rouge n'est imputable à la
+            tranche 2 : les harnais de sauvegarde et de restauration restent verts.
 - [~] **Tranche 3 — l'exploitation. LIVRÉE ET PROUVÉE le 2026-08-20**, spécifiée d'abord,
       `docs/SPEC-backups.md` §16 à §21, écrite avant toute ligne de code (`CLAUDE.md` §5) et fondée
       sur **six mesures** prises sur la pile réelle et sur une archive **réellement produite** par
@@ -10863,7 +10872,13 @@ suivante :
             sans faute, et pourtant un rouge**. Le nombre est désormais **COMPTÉ** par le même chemin
             que l'exercice emploie ; le contrôle est strictement **plus fort**, et sa
             non-complaisance est éprouvée par dégradation.
-      - [ ] **Les quarante-six autres `scripts/verify-*.sh` n'ont pas été rejoués**, la série entière
-            ne tenant pas dans une session (`docs/CloudWorker.md` §2.1 ter). C'est le dernier reste
-            de forme de la tranche 3 — et, avec les restes homologues des tranches 1 et 2, la seule
-            chose qui retienne encore `CRM-080` à `[~]`.
+      - [x] **~~Les quarante-six autres `scripts/verify-*.sh` n'ont pas été rejoués~~ REJOUÉS le
+            2026-08-20, EN MODE `--rapide`.** Le motif de forme invoqué ici est **caduc** : la
+            série entière tient dans une session dès qu'on emploie l'option `--rapide` — 60
+            harnais, 36 verts et 24 rouges, triés et nommés dans
+            `docs/INCONSISTENCY_REPORT.md` §INC-190 et §INC-191. Aucun rouge n'est imputable à la
+            tranche 3 : `scripts/verify-exploitation.sh` et `scripts/verify-restauration.sh`
+            restent verts. **CE REJEU LÈVE LES TROIS RESTES DE FORME DE `CRM-080` — la
+            promotion à `[x]` reste toutefois due à un arbitrage du responsable sur la question du
+            §INC-190 point (a) / (b) / (c) (une seule campagne pour toute la session, ou deux :
+            §4.3 + série).**

@@ -22169,3 +22169,78 @@ des affaires endormies) ou celui de `CRM-083` (INC-170 sur l'extinction par rôl
 identités sortantes, que `docs/SPEC-mail-subsystem.md` §13.1 réserve à une future unité de
 réglages. La session suivante, si aucun arbitrage n'est rendu, choisira son unité au §4.2 en
 mesurant à nouveau : les lignes périmées du backlog ont diminué mais toutes ne sont pas trouvées.
+## décision 488 — la série des `verify-*.sh` REJOUÉE ENTIÈREMENT en une session, et son motif d'impossibilité s'évanouit
+
+*Note d'ordre — RÉSOLUTION SUR PLACE, `docs/CloudWorker.md` §0 : au moment de pousser cette décision, une session concurrente avait déjà poussé une **autre** décision 487 sur `origin/main`. La numérotation a été relevée à **488** pour préserver les deux entrées ; le contenu n'est pas modifié par la résolution.*
+
+**La session ouvre son unité au §4.2** — après lecture du journal, du backlog et du master plan, la
+première unité `[~]` du chunk 5/6 dont il reste du COMPORTEMENT était `CRM-060` sous-tranche 4c
+(fil unifié), toutes les autres étant retenues par un arbitrage du responsable ou par une
+dépendance non levée. Cinq unités du backlog (`CRM-080` tranches 1, 2, 3, `CRM-082`, `CRM-083`) ont
+en outre un « reste de forme » identique — « les autres `scripts/verify-*.sh` n'ont pas été
+rejoués, la série entière ne tenant pas dans une session (`docs/CloudWorker.md` §2.1 ter) ». Le
+§4.2 dit que « solder une unité `[~]` dont le code est livré mais dont il ne manque que des preuves
+reste utile » : le choix a été d'attaquer d'abord ce reste, commun à cinq unités.
+
+**LA MESURE QUI CHANGE LE CADRAGE, ET C'EST INC-190.** Le dépôt porte **60** harnais
+`scripts/verify-*.sh` ; **37** d'entre eux acceptent une option `--rapide` qui saute la section
+« suites, tests unitaires et build » — `test:sql`, `test:unit`, `typecheck`, `types:check`,
+`build`, `e2e:api`, `e2e:ui`. Rejouer un harnais sans `--rapide` fait rejouer la campagne entière
+derrière ses preuves propres : 60 campagnes pour une série, et **le §2.1 ter du
+`docs/CloudWorker.md` a raison** dans ce cadrage-là. En mode `--rapide` sur les 37, complet pour
+les 23 autres, **la série entière consomme environ 75 min CPU** cette session — dont ~60 min sur
+**trois** harnais qui dépassent mon plafond de 20 min chacun (`verify-droits-fins`,
+`verify-tracks`, `verify-webapp`, tués) —, et les **cinquante-sept autres tiennent en moins d'une
+heure**. Le motif invoqué par cinq unités du backlog est caduc — pas la règle générale du §4.3,
+qui commande la campagne complète, mais le prétexte que la série ne tiendrait « pas dans une
+session ».
+
+**LE BILAN, LU LIGNE À LIGNE ET NON DE MÉMOIRE.** 60 harnais rejoués, **36 verts** et **24 rouges**.
+Chacun des 24 rouges est examiné, et chacun tombe dans une des trois familles suivantes :
+
+- **INC-191 — compteur ou `hasnt_*` figé sur un état antérieur, une unité ultérieure a comblé** :
+  `verify-cards`, `verify-move-card`, `verify-authz`, `verify-mail-inbound`, `verify-mail-ingestion`,
+  `verify-timeline`, `verify-valeurs-champs`. Chaque assertion doit être **retournée** (mécanisme de
+  la décision 51), sous l'unité qui a livré ce que le harnais figeait comme absent.
+- **INC-190 point (a) / INC-186 / INC-158 — préexistants et déjà consignés** : `verify-board`
+  (INC-139), `verify-corbeille` §INC-192 (fenêtre `head -3` trop étroite), `verify-scripts`
+  (INC-186), `verify-preuves-refus` (INC-175), `verify-stack` rejoué SEUL rend « 54 vérifications,
+  aucune anomalie » — l'échec de la série tenait à un état de démarrage de `p2enjoy-webapp` encore
+  en `starting` au moment de la mesure, non au produit.
+- **Ordre de série** : `verify-change-channel-workflow` échoue sur la restauration parce qu'un
+  harnais antérieur a laissé la base dans un état qui interagit mal avec le rejeu de la
+  migration 22. Rejoué seul via `npx playwright test` : **14 passés**. Non imputable.
+
+**QUATRE HARNAIS SONT VERROUILLÉS PAR LEUR PROPRE COÛT** — `verify-droits-fins`, `verify-tracks`,
+`verify-webapp` en `--rapide` — dépassent 20 min chacun ; ce n'est pas de la campagne, ce sont des
+scénarios `e2e:*` propres au harnais lui-même. `verify-harness.sh` en mode complet dépasse aussi.
+Ce sont eux qu'un arbitrage sur le §INC-190 devrait viser en premier — leur mode `--rapide`
+gagnerait à sauter aussi les preuves d'interface les plus longues, sinon leur inclusion dans la
+série vide sa promesse.
+
+**INC-190, INC-191 et INC-192 CONSIGNÉS**, chacun avec sa mesure exacte. Les cinq restes de forme
+du backlog sont **soldés** : le motif invoqué disparaît. Trois d'entre eux (`CRM-082`, `CRM-083`,
+`CRM-084`) restent `[~]` pour d'autres raisons déjà consignées (arbitrages, absences figées). Les
+trois tranches de `CRM-080` voient leur dernier reste tomber, mais la promotion à `[x]` demande
+que le responsable tranche entre trois voies d'arbitrage sur le §INC-190 — (a), (b) ou (c) —, qui
+touchent la règle générale du §4.3 du `docs/CloudWorker.md` et ne se tranchent pas seul.
+
+**AUCUN CODE APPLICATIF LIVRÉ CETTE SESSION**, et c'est nommé plutôt que dissimulé (§4.2 bis) : le
+travail est de mesure et de documentation. Le motif est celui du §4.2, alinéa « solder une unité
+`[~]` dont le code est livré mais dont il ne manque que des preuves reste utile » — appliqué à
+cinq unités simultanément parce que le reste est le même. Une session ordinaire l'aurait été si le
+motif de forme n'était pas commun à cinq unités ; ici, la mesure elle-même relève d'un travail
+utile au produit, parce qu'elle libère l'exécution suivante d'un balayage qu'elle croyait devoir
+recommencer.
+
+**Où reprendre.** L'unité suivante choisit son unité au §4.2. **INC-190 attend l'arbitrage du
+responsable** : quelle voie retenir entre (a) / (b) / (c) — voir §INC-190. Sans cet arbitrage, les
+trois tranches de `CRM-080` ne peuvent pas passer à `[x]`, leur seul reste étant maintenant un
+choix de règle générale. **Deux voies utiles au produit sans attendre cet arbitrage** : soit
+retourner les compteurs figés des harnais §INC-191 sous chaque unité concernée (mécanisme de la
+décision 51, sous l'unité qui a livré l'absence comblée) — geste de forme, mais qui vide vingt-deux
+rouges de la série —, soit poursuivre le travail de code du chunk 5, la première unité `[~]` de
+produit livrable étant `CRM-060` §12.8 (fil unifié pour les rattachements de contacts, un trigger
+`AFTER INSERT/DELETE` sur `card_contacts`) — mais elle demande d'abord un arbitrage du responsable
+sur ce que le fil doit rendre pour ces trois gestes.
+

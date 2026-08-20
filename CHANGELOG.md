@@ -15,6 +15,18 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **La série entière des `scripts/verify-*.sh` REJOUÉE en une session, en mode `--rapide`** —
+  soixante harnais, trente-six verts et vingt-quatre rouges, tous triés et consignés dans
+  `docs/INCONSISTENCY_REPORT.md`. **INC-190, INC-191 et INC-192** posent le constat : la série
+  entière tient dans une session dès qu'on emploie l'option `--rapide` sur les trente-sept harnais
+  qui la portent ; le motif de forme invoqué par cinq unités du backlog (`CRM-080` tranches 1-3,
+  `CRM-082`, `CRM-083`) est caduc. Chacune des cinq entrées a été **soldée** : `CRM-082` et
+  `CRM-083` restent `[~]` pour d'autres raisons déjà consignées ; les trois tranches de `CRM-080`
+  attendent un arbitrage du responsable sur le §INC-190 avant leur passage à `[x]`. Sept harnais
+  figent une absence qu'une unité ultérieure a comblée (**INC-191**) et rougissent de leur propre
+  succès ; un huitième (**INC-192**) cherche un `@spec` dans une fenêtre trop étroite de
+  `RouteCard.tsx`.
+
 - **Le harnais de preuves de la mise en sommeil** (`CRM-081`, `docs/SPEC-cards.md` §16 bis,
   `scripts/verify-snooze.sh`). Six tranches ont livré le sommeil des affaires puis des fils de
   messagerie, et leurs preuves vivaient dispersées entre treize fichiers : aucune commande ne

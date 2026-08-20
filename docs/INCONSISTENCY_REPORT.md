@@ -192,14 +192,19 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-122 | Deux assertions de `CRM-078` s'appuyaient sur un identifiant que le seed n'épingle pas | 2026-08-15 | `CRM-078`, première tranche | 430 |
 | INC-185 | `e2e/ui/inbox.spec.ts` affirme retirer un `card_event` que personne ne peut retirer (403 mesuré) | 2026-08-20 | *ouverte* — arbitrage attendu | 481 |
 | INC-189 | « Alt et flèche REDIMENSIONNENT » d'`Objectifs.test.tsx` échoue par INTERMITTENCE en campagne, et passe seul | 2026-08-20 | *ouverte* — relève de `CRM-081` | 485 |
+| INC-190 | La série complète des `scripts/verify-*.sh` TIENT dans une session en mode `--rapide` — cinq restes de forme du backlog en sont caducs | 2026-08-20 | *ouverte* — constat de méthode | 487 |
+| INC-191 | Sept harnais figent des ABSENCES qu'une unité ultérieure a comblées, et sont rouges de leur propre succès | 2026-08-20 | *ouverte* — relève des harnais nommés au §INC-191 | 487 |
+| INC-192 | `scripts/verify-corbeille.sh` cherche `@spec CRM-077` dans les TROIS premières lignes de `webapp/src/app/RouteCard.tsx`, qui en cumule dix | 2026-08-20 | *ouverte* — relève de `CRM-077` | 487 |
 
 ---
 
 ## Ouverts
 
-**Vingt-quatre ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+**Vingt-sept ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-173, INC-174,
-INC-182, INC-183, INC-185, INC-186, INC-188 et INC-189** — **INC-189** consignée le 2026-08-20 par la
+INC-182, INC-183, INC-185, INC-186, INC-188, INC-189, INC-190, INC-191 et INC-192** — **INC-190,
+INC-191 et INC-192** consignées le 2026-08-20 par la session qui a rejoué la série entière : la
+liste passe de vingt-quatre à vingt-sept. **INC-189** consignée le 2026-08-20 par la
 session `CRM-080` tranche 3 : « Alt et flèche REDIMENSIONNENT » d'`Objectifs.test.tsx` échoue par
 **intermittence** en campagne — une largeur restée à sa valeur de départ, donc un appui dont l'effet
 n'a pas été écrit — et **passe seul, deux fois, comme à la seconde campagne complète**. Étrangère à
@@ -3572,3 +3577,82 @@ un poste lent.
 **Non corrigé par la session `CRM-080` tranche 3** : le scénario et le composant relèvent de
 `CRM-081`, et le corriger sous une autre unité reviendrait à en solder une seconde
 (`CLAUDE.md` §13, `docs/CloudWorker.md` §3.1).
+
+## Consignées le 2026-08-20 — méthode et harnais, relevées par le rejeu complet de la série
+
+### INC-190 — la série complète des `scripts/verify-*.sh` tient dans UNE session en `--rapide`, et cinq entrées du backlog l'affirmaient impossible
+
+**Ce qui a été mesuré.** Le dépôt porte **soixante** harnais `scripts/verify-*.sh` ; **trente-sept**
+d'entre eux acceptent une option `--rapide` qui saute la section « suites, tests unitaires et
+build » — c'est-à-dire `npm run test:sql`, `npm run test:unit`, `npm run typecheck`, `npm run
+types:check`, `npm run build`, `npm run e2e:api` et `npm run e2e:ui`. Sans elle, chacun rejoue la
+**campagne complète** derrière les preuves qui lui sont propres : soixante campagnes pour une
+série. Le budget est alors intenable.
+
+**Rejoué séquentiellement, en `--rapide` pour les trente-sept qui le portent et complet pour les
+vingt-trois autres, un temps mesuré cette session :** la série entière consomme environ **75 min
+CPU**, dont **60 min sont trois harnais qui dépassent le plafond de 20 min** — `verify-droits-fins`,
+`verify-tracks`, `verify-webapp` — et que ce plafond a interrompus. Les **cinquante-sept autres**
+tiennent en moins d'une heure au total. La campagne complète du §4.3 doit s'exécuter à part.
+
+**Cinq entrées du backlog affirment que la série entière ne tient pas dans une session** —
+`CRM-080` tranches 1, 2, 3, `CRM-082` et `CRM-083`, chacune citant `docs/CloudWorker.md` §2.1 ter,
+qui écrit littéralement « la série entière ne tient pas dans une session ». La mesure de cette
+session **caduque cet énoncé** : le §2.1 ter parlait d'un temps où le mode `--rapide` n'était pas
+utilisé, ou pas généralisé. Le corriger réviserait cinq lignes de backlog et une règle du
+`docs/CloudWorker.md` : geste de documentation qui appartient à l'unité que ces harnais serviront à
+solder, ou à un arbitrage direct du responsable.
+
+**Ce qui suit du constat, et n'est PAS tranché ici** : la campagne complète du §4.3 se mène en
+parallèle de la série `--rapide` — leurs sections « suites » se recoupent —, et lancer les deux
+naïvement double le coût. Le responsable arbitre entre trois voies : (a) le §4.3 exécute la
+campagne, la série n'exécute ensuite que les harnais que le changement touche ; (b) la série
+`--rapide` remplace la campagne quand le changement est ciblé ; (c) le §4.3 conserve son énoncé, et
+la série `--rapide` s'ajoute comme geste d'ouverture de session tous les *N* rejeus.
+
+### INC-191 — sept harnais figent une absence qu'une unité ultérieure a comblée, et sont rouges de leur propre succès
+
+**Ce qui a été mesuré.** Rejoué en `--rapide` sur le seed complet, sept harnais sont rouges pour un
+motif qui n'accuse pas le produit : ils **comptent une absence** — un compteur figé à un état
+antérieur du seed, ou une preuve `hasnt_*` — qu'une unité ultérieure a comblée.
+
+- `scripts/verify-cards.sh` : « état du seed : 15/1/1/15, attendu 14/1/1/14 ». Le seed courant
+  porte quinze cards depuis `CRM-060` sous-tranche 2 bis (§8.8.8 : le correspondant qui exerce la
+  règle 3 du classement) ; le compteur est resté à quatorze. INC-141 nomme cet écart.
+- `scripts/verify-move-card.sh` : idem, compteur du seed resté à un état antérieur.
+- `scripts/verify-authz.sh` : trois compteurs « 4/6/14 » restés à un état antérieur — la base porte
+  désormais 5/8/41. INC-140 nomme la famille.
+- `scripts/verify-mail-inbound.sh` : « une synchronisation est affichée alors que rien ne l'écrit,
+  CRM-054 n'est pas livrée ». `CRM-054` est **livrée depuis** (backlog, tranche verte) ;
+  l'assertion `hasnt_` n'a pas été retournée.
+- `scripts/verify-mail-ingestion.sh` : « un message classé existe alors que rien ne sait classer,
+  CRM-055 n'est pas livrée ». Même motif — l'assertion attend l'absence d'un classement que
+  `CRM-055` a livré.
+- `scripts/verify-timeline.sh` : « le CHECK élargi à `mail_received` — une capacité inexistante
+  paraîtrait livrée ». `CRM-057` a livré `mail_received` dans le fil ; l'assertion figeait son
+  absence.
+- `scripts/verify-valeurs-champs.sh` : « valeurs : 23, attendu 21 ». Compteur figé sur un état
+  antérieur du seed.
+
+**Ce que ce n'est PAS.** Aucun de ces sept rouges ne dit quoi que ce soit du produit : le seed
+courant est **plus** riche qu'à la livraison du harnais, et l'unité qui devait combler l'absence
+l'a effectivement comblée. Les traiter comme des régressions serait la lecture inverse. Le
+mécanisme de la décision 51 s'applique : chaque assertion **doit être retournée**, motif écrit dans
+le fichier, jamais supprimée.
+
+**Ce qui suit.** La correction est ligne par ligne — un compteur à mettre à jour, un `hasnt_*` à
+retourner en `has_*` — et **relève de chaque unité que le harnais teste**. Les grouper dans une
+session de documentation reviendrait à substituer ce geste au produit (`docs/CloudWorker.md` §4.2 bis).
+
+### INC-192 — `scripts/verify-corbeille.sh` cherche `@spec CRM-077` dans les TROIS premières lignes de `webapp/src/app/RouteCard.tsx`, qui en cumule dix
+
+**Mesuré.** Le contrôle `verify-corbeille` §1 emploie `head -3 "$fichier" | grep -q '@spec CRM-077'`.
+La fiche `webapp/src/app/RouteCard.tsx` accueille désormais **dix commentaires `@spec`** — les
+en-têtes `CRM-037`, `CRM-040`, `CRM-060`, `CRM-085`, `CRM-043`, `CRM-077`, `CRM-041`, `CRM-081`,
+`CRM-036` — parce que la route est le point d'ancrage de la fiche d'affaire. `CRM-077` est cité
+ligne **11**, comme il doit l'être, mais la fenêtre de trois lignes ne le voit pas.
+
+**Ce que ce n'est PAS.** L'écart n'est pas dans le produit : le commentaire `@spec` est bien là et
+il est correct. Il est dans le harnais, qui borne sa lecture à une fenêtre trop étroite pour
+plusieurs fichiers pivots. La correction — lire l'en-tête complet du fichier, jusqu'à la première
+ligne non-commentaire — appartient à `CRM-077`, unité que le harnais teste.
