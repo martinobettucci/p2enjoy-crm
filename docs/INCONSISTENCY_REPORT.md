@@ -2865,3 +2865,45 @@ qui la porte, avec la capture qui montre l'avant et l'après ; (2) le contrôle
 `scripts/lib/classes-css.mjs` est ajouté à un harnais que **toute** session exécute — il ne vit
 aujourd'hui que dans quatre `verify-*.sh` sur cinquante, ce qui explique que ces trois classes aient
 survécu à plusieurs livraisons.
+
+## Consigné le 2026-08-20 — une preuve d'interface intermittente, étrangère à `CRM-086`
+
+### INC-179 — `commentaires-gestes.spec.ts` échoue par intermittence sur la relecture d'un commentaire modifié
+
+*Relevé pendant `CRM-086` tranche 4, décision 477. Étranger à cette unité : ce scénario porte sur le
+panneau de commentaires (`CRM-043`), qu'aucun fichier de la session ne touche.*
+
+**Ce qui est mesuré, et les trois mesures sont sur le MÊME code.**
+
+| Exécution | Verdict |
+|---|---|
+| `npm run e2e:ui` complet, 01:05 | **532 passés**, dont ce scénario |
+| `scripts/verify-webapp.sh`, 01:30 | **531 passés, 1 échec** — `commentaires-gestes.spec.ts:280` |
+| `npm run e2e:ui -- commentaires-gestes`, 01:40 | **8 passés**, dont ce scénario |
+
+L'assertion en cause relit le commentaire par l'API juste après l'avoir modifié au clavier :
+
+```
+await expect(page.getByText(`${texte} au clavier`)).toBeVisible()
+expect((await relire(request, texte))?.body).toBe(`${texte} au clavier`)
+```
+
+**Ce qui n'est PAS établi, et il faut le dire.** La cause. L'écran affiche bien le texte modifié —
+la ligne précédente passe —, et c'est la RELECTURE par l'API qui rend l'ancien corps. Deux
+hypothèses non départagées : le rendu précède l'acquittement du serveur, ou `relire` retrouve un
+autre commentaire quand deux exécutions laissent des corps voisins. La première ferait de
+l'assertion une course, la seconde un défaut de sélection dans le harnais. Aucune des deux n'est
+mesurée, et rien n'est corrigé : le §3.1 de `docs/CloudWorker.md` interdit de corriger au passage un
+défaut étranger à l'unité.
+
+**Ce que ce n'est PAS.** Une régression de la session : le scénario passe avant et après, sur le
+même code. Ni une anomalie de `CRM-086` : aucun fichier de cette unité n'entre dans ce parcours.
+
+**Pourquoi c'est un défaut malgré tout.** Une preuve qui rend deux verdicts sur un même code ne
+prouve plus rien : la session suivante qui la verra rouge cherchera une cause dans son propre
+changement, exactement ce qu'INC-177 décrit pour une autre raison. Une intermittence non consignée
+finit par être lue comme du bruit, et c'est ainsi qu'un vrai défaut passe.
+
+**Arbitrage attendu.** Le responsable tranche si ce scénario est repris dans son unité (`CRM-043`)
+avec une attente explicite sur l'acquittement du serveur, ou s'il est laissé tel quel jusqu'à ce
+qu'il devienne reproductible.
