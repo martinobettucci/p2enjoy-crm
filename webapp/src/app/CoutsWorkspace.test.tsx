@@ -183,6 +183,25 @@ describe('ContenuCoutsWorkspace — l’histogramme rendu (§4.5)', () => {
 		await waitFor(() => expect(screen.getAllByRole('table')).toHaveLength(2))
 		expect(screen.getByLabelText(fr['costs.chart.region'].replace('{devise}', 'EUR'))).toBeTruthy()
 		expect(screen.getByLabelText(fr['costs.chart.region'].replace('{devise}', 'CHF'))).toBeTruthy()
+		// ET CHAQUE HISTOGRAMME PORTE SON TITRE VISIBLE — défaut trouvé en regardant une capture :
+		// deux blocs empilés portant la même légende et les mêmes en-têtes, sans qu'aucun texte ne
+		// dise que le second compte des francs. Un nom de région n'est pas rendu à l'écran.
+		expect(screen.getByRole('heading', { name: 'Coûts en EUR' })).toBeTruthy()
+		expect(screen.getByRole('heading', { name: 'Coûts en CHF' })).toBeTruthy()
+	})
+
+	it('ne titre AUCUN histogramme quand une seule devise est présente (§4.5)', async () => {
+		// « S'il n'y en a qu'une — le cas attendu —, l'utilisateur ne voit rien de cette mécanique. »
+		// Un titre « Coûts en EUR » sur un workspace entièrement en euros serait du bruit permanent.
+		monter(
+			clientQuiRend([
+				ok([track('t1', 'Conseil & IA', 'conseil-ia')]),
+				ok([budget('b1', 'Prospection', 't1')]),
+				ok([ligne('b1', 800, 700)]),
+			]),
+		)
+		await waitFor(() => expect(screen.getByRole('table')).toBeTruthy())
+		expect(screen.queryByRole('heading', { name: /Coûts en/ })).toBeNull()
 	})
 
 	it('rend la mention du §4.4 dès qu’une ligne n’a pas de réel, et le compte est celui du cumul', async () => {

@@ -2124,6 +2124,10 @@ export const fr = {
 	// L'en-tête de la première colonne du tableau équivalent (§5.30) : sur cet écran, une paire de
 	// barres désigne un track.
 	'costs.workspace.column': 'Track',
+	// Le titre d'un histogramme de devise, rendu UNIQUEMENT quand plusieurs devises sont présentes
+	// (§4.5 : « s'il n'y en a qu'une, l'utilisateur ne voit rien de cette mécanique »). Le code de
+	// devise est une DONNÉE, passée en paramètre et jamais concaténée (§10).
+	'costs.workspace.currency': 'Coûts en {devise}',
 	// Le nom accessible du lien qui mène aux coûts d'un track depuis le tableau équivalent. Le nom
 	// du track est une DONNÉE : il est passé en paramètre, jamais concaténé (§10).
 	'costs.workspace.detail.aria': 'Voir les coûts du track {nom}',

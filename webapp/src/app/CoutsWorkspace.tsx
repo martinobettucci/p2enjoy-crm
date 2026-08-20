@@ -118,16 +118,35 @@ export function ContenuCoutsWorkspace({ client }: { readonly client: ClientCrm |
 		)
 	}
 
+	// LE TITRE DE DEVISE N'EST RENDU QUE S'IL Y A PLUSIEURS DEVISES, et c'est la lettre du §4.5 :
+	// « s'il n'y en a qu'une — le cas attendu —, l'utilisateur ne voit rien de cette mécanique ».
+	// Un titre « EUR » sur un workspace entièrement en euros serait du bruit à chaque ouverture.
+	//
+	// DÉFAUT TROUVÉ EN REGARDANT UNE CAPTURE (`CLAUDE.md` §16), et il est propre à cet écran : c'est
+	// la PREMIÈRE surface du produit où deux histogrammes s'empilent réellement — un track n'a en
+	// pratique qu'une devise, et le §4.2 n'a donc jamais rendu le cas. Sans titre, les deux blocs
+	// se suivaient avec la même légende et les mêmes en-têtes de colonne, et rien à l'œil ne disait
+	// que le second comptait des francs : la devise ne se lisait que dans les montants eux-mêmes,
+	// c'est-à-dire là où on ne la cherche pas. Le nom accessible de la région le disait déjà (§5.30),
+	// mais un nom de région n'est pas rendu à l'écran.
+	const plusieursDevises = etat.donnees.length > 1
+
 	return (
 		<div className="flex flex-col gap-8 max-w-[960px]">
 			{etat.donnees.map((histogramme) => (
-				<HistogrammeCouts
-					key={histogramme.devise}
-					devise={histogramme.devise}
-					groupes={enGroupesDeTracks(histogramme)}
-					total={histogramme.total}
-					legendeColonne={t('costs.workspace.column')}
-				/>
+				<div key={histogramme.devise} className="flex flex-col gap-2">
+					{plusieursDevises && (
+						<h2 className="text-h3 text-ink">
+							{t('costs.workspace.currency', { devise: histogramme.devise })}
+						</h2>
+					)}
+					<HistogrammeCouts
+						devise={histogramme.devise}
+						groupes={enGroupesDeTracks(histogramme)}
+						total={histogramme.total}
+						legendeColonne={t('costs.workspace.column')}
+					/>
+				</div>
 			))}
 			{/* La portée du cumul, SOUS les histogrammes et non au-dessus : c'est une note de lecture
 			    des nombres qu'on vient de lire, pas un avertissement à franchir avant de les voir.
