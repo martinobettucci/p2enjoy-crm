@@ -194,7 +194,7 @@ test.describe('navigation au clavier (docs/DESIGN_SYSTEM.md §8)', () => {
 		await page.keyboard.press('Enter')
 		expect(new URL(page.url()).hash).toBe('#contenu-principal')
 
-		// 3. Depuis le début, la tabulation atteint la bascule de repli puis les SIX
+		// 3. Depuis le début, la tabulation atteint la bascule de repli puis les SEPT
 		//    entrées de navigation, dans l'ordre visuel.
 		//
 		// RÉVISÉE le 2026-08-18 par `CRM-060`, ET LA RÈGLE A CHANGÉ PAR LIVRAISON, non par
@@ -206,12 +206,20 @@ test.describe('navigation au clavier (docs/DESIGN_SYSTEM.md §8)', () => {
 		// précisément ce qu'elle a détecté en devenant rouge. La couverture exacte
 		// `ROUTES` ⇄ `ENTREES_TRANSVERSES` est tenue par `routes.test.tsx`, qui garantit qu'aucune
 		// entrée ne manque ici.
+		//
+		// RÉVISÉE UNE SECONDE FOIS le 2026-08-20 par `CRM-086` tranche 5, ET POUR LE MOTIF ÉCRIT
+		// JUSTE AU-DESSUS : le cumul des coûts du workspace ajoute une sixième entrée transverse,
+		// « Coûts », entre « Objectifs » et « Ma journée » (`docs/SPEC-costs.md` §4.0 et §4.5,
+		// `docs/DESIGN_SYSTEM.md` §4 et §5.33). La règle change par LIVRAISON, et la preuve est mise
+		// à jour AVEC son ordre réel — jamais contournée : ce qu'elle exige est inchangé, l'ordre de
+		// tabulation doit suivre l'ordre visuel, et c'est exactement ce qu'elle a détecté en
+		// devenant rouge pendant la campagne de cette tranche.
 		await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
 		await page.keyboard.press('Tab')
 		await page.keyboard.press('Tab')
 		await expect(page.getByTestId('bascule-repli')).toBeFocused()
 
-		for (const libelle of ['Board', 'Inbox', 'Contacts', 'Objectifs', 'Ma journée', 'Réglages']) {
+		for (const libelle of ['Board', 'Inbox', 'Contacts', 'Objectifs', 'Coûts', 'Ma journée', 'Réglages']) {
 			await page.keyboard.press('Tab')
 			await expect(
 				page.getByRole('navigation', { name: 'Navigation principale' }).getByTitle(libelle),
