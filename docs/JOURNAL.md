@@ -21127,11 +21127,17 @@ rendu « Configuration incomplète ». Elle a été **arrêtée et rejouée depu
 tient en une phrase : pendant qu'une campagne d'interface tourne, on ne touche ni à la base, ni à
 `webapp/dist`, ni au port 4173.
 
-**Où reprendre.** `CRM-086` reste `[~]`, et il reste les DEUX autres écrans : le détail d'un budget
-(§4.3, `/tracks/:slugTrack/couts/:idBudget`, une paire de barres par **occurrence** et la liste des
-lignes) puis le cumul du workspace (§4.5, `/couts`, un groupe de barres par track, entrée de barre
-latérale). L'onglet « À saisir » du §4.8 n'existe sur aucun écran, et **aucun harnais dédié
-`scripts/verify-couts-ecrans.sh` n'existe**. La reprise naturelle est l'écran du §4.3, dont
-l'adresse est déjà arrêtée par le §4.0 mais pas encore déclarée dans `chemins.ts`. `CRM-083` reste
-bloqué par **INC-170**. Six arbitrages attendent : **INC-169**, **INC-170**, **INC-172**,
-**INC-173**, **INC-174** et **INC-176**.
+**UNE EXÉCUTION CONCURRENTE A LIVRÉ L'ÉCRAN DU §4.3 PENDANT CETTE SESSION**, et le rebasage a été
+fait SUR PLACE — un seul conflit, sur une capture régénérée des deux côtés, résolu en gardant celle
+de l'exécution la plus récente. `npm run typecheck` et `npm run test:unit` ont été **rejoués après
+la synchronisation** (`CLAUDE.md` §13) : **63 fichiers, 2164 tests, aucun échec**. Ce que cette
+tranche a livré n'est pas touché : l'écran du §4.2, son entrée de barre d'onglets, le compte de
+lignes de l'agrégat et les trois corrections visuelles.
+
+**Où reprendre.** `CRM-086` reste `[~]`. Les écrans des §4.2 **et** §4.3 sont désormais montés — le
+second par l'exécution concurrente. Il reste **le cumul du workspace** (§4.5, `/couts`, un groupe de
+barres par track, entrée de barre latérale) et **l'onglet « À saisir »** du §4.8, qui n'existe sur
+aucun des deux écrans livrés. **Aucun harnais dédié `scripts/verify-couts-ecrans.sh` n'existe**, et
+c'est la pièce que la Definition of Done réclame explicitement. La reprise naturelle est l'écran du
+§4.5. `CRM-083` reste bloqué par **INC-170**. Huit arbitrages attendent : **INC-169**, **INC-170**,
+**INC-172**, **INC-173**, **INC-174**, **INC-176**, **INC-177** et **INC-178**.
