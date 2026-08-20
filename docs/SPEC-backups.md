@@ -769,3 +769,392 @@ compensé par un test de substitution.
 - `README.md`, `docs/DAT.md` §10 et `CHANGELOG.md` mis à jour dans le même changement ;
 - `docs/BACKLOG.md` au véritable état — `CRM-080` reste `[~]` tant que la tranche 3 n'est pas
   livrée.
+
+---
+
+# Tranche 3 — L'exploitation
+
+Contrat écrit **avant toute ligne de code** de cette tranche (`CLAUDE.md` §5,
+`docs/CloudWorker.md` §3.2 point 3), après **six mesures** prises le **2026-08-20** sur la pile
+réelle démarrée et seedée, et sur une archive **réellement produite** par `scripts/backup.sh` —
+`p2enjoy-sauvegarde-20260820T081607Z.tar.age`, 983 464 octets, trois membres. Les paragraphes
+intitulés « MESURÉ » rapportent une sortie obtenue sur cet hôte, jamais un souvenir.
+
+Le §9 cadrait cette tranche : « un runbook dédié devra porter la planification et sa fréquence ;
+la copie hors site ; l'alerte sur échec **et** sur absence de sauvegarde récente ; la rotation des
+destinataires `age` et la conservation des clés privées anciennes ; le rythme des exercices de
+restauration ». Les mesures qui suivent en corrigent un point, et lui en ajoutent un.
+
+---
+
+## 16. Mesures du 2026-08-20 — ce que l'exploitation peut réellement observer
+
+**M16. L'en-tête `age` est en CLAIR, et la supervision peut donc lire la forme d'une archive sans
+détenir aucune clé privée.**
+
+```
+head -1 p2enjoy-sauvegarde-20260820T081607Z.tar.age   => age-encryption.org/v1
+```
+
+C'est la mesure qui rend cette tranche possible **sur l'hôte de sauvegarde**. Le §3.4 lui interdit
+de détenir une clé privée ; il ne peut donc pas ouvrir ses archives. Mais le format `age` place son
+en-tête en clair : la supervision peut constater qu'un fichier **est** une archive `age` bien
+formée, sans rien déchiffrer et sans affaiblir la propriété de sécurité du §3.4.
+
+**M17. Le NOMBRE de destinataires est lisible dans cet en-tête, et lui aussi sans clé privée.**
+
+```
+1 destinataire  => head -c 400 archive | grep -c '^-> X25519'   => 1
+2 destinataires => head -c 400 archive | grep -c '^-> X25519'   => 2
+```
+
+Chaque destinataire reçoit sa propre strophe `-> X25519`. La clé publique du destinataire n'y
+figure pas — seule une part éphémère —, si bien que **compter** est possible et **identifier** ne
+l'est pas. C'est exactement ce dont la rotation a besoin : constater qu'une archive produite après
+une rotation porte bien le nombre de destinataires attendu, sans exposer qui ils sont.
+
+**M18, LA MESURE DÉCISIVE : la date de modification MENT sur une copie hors site, le nom ne ment
+pas.**
+
+```
+source  mtime=1787213768   nom=…-20260820T081607Z
+copie   mtime=1787213778   (cp, 10 s plus tard)
+écart mtime = 10 s
+```
+
+Une copie hors site faite par `cp`, `rsync` sans `--times`, un client S3 ou un montage réseau donne
+au fichier distant une date de modification **fraîche**. Une supervision qui jugerait la fraîcheur
+sur `mtime` déclarerait donc « récente » une copie vieille d'un mois qui vient d'être recopiée —
+c'est-à-dire précisément le sinistre qu'elle est censée détecter. **La fraîcheur se calcule sur
+l'horodatage porté par le NOM** (§3.1), qui est celui du début de l'exécution et que rien ne
+réécrit.
+
+```
+date -u -d 2026-08-20T08:16:07Z +%s   => 1787213767
+```
+
+Le nom est directement convertible en instant : `AAAAMMJJTHHMMSSZ` se réécrit en ISO 8601 par
+découpage, sans dépendre d'un format de `date` propre à un système.
+
+**Conséquence pour la tranche 1, nommée plutôt que découverte.** La rétention du §3.6 travaille,
+elle, sur `-mtime`. C'est cohérent pour un répertoire de sortie dont le script est seul auteur, mais
+cela signifie qu'un `touch` sur une archive la fait échapper à la rétention. La limite est écrite au
+§21 ; elle ne justifie pas de rouvrir le contrat de la tranche 1.
+
+**M19. L'intégrité, elle, N'EST PAS observable sans clé privée — et c'est structurel.**
+Le manifeste et ses empreintes (§3.3) sont **à l'intérieur** du chiffré. L'hôte de sauvegarde ne
+peut donc constater ni que le dump est complet, ni qu'il est restaurable. Il ne le pourra jamais
+sans renoncer à la propriété du §3.4.
+
+**La supervision de cette tranche prouve donc la PRÉSENCE, la FRAÎCHEUR, la FORME et le NOMBRE DE
+DESTINATAIRES — jamais la restaurabilité.** La restaurabilité est prouvée par
+`scripts/restore-drill.sh` (tranche 2), sur le poste **distinct** qui détient l'identité. C'est
+pourquoi le rythme des exercices est un objet de supervision à part entière (S9), et non une
+recommandation du runbook : une sauvegarde jamais restaurée n'est pas une sauvegarde.
+
+**M20. L'hôte de production dispose de `systemd` ; `cron` n'est pas garanti.**
+
+```
+command -v systemctl  => /usr/bin/systemctl
+command -v crontab    => absent
+command -v flock      => /usr/bin/flock
+```
+
+Le runbook donne donc les **deux** formes — unité `systemd` avec son `timer`, et ligne `crontab` —
+plutôt que d'imposer celle qui se trouve installée sur l'hôte d'observation. `flock` étant présent,
+la garde contre deux sauvegardes simultanées est écrite avec lui.
+
+**M21. Une sauvegarde qui échoue est SILENCIEUSE si son déclencheur ne dit rien.**
+`scripts/backup.sh` rend `1` et écrit sur `stderr` (§3.7). Un `timer` `systemd` consigne cela dans
+le journal et n'avertit personne ; une ligne `crontab` envoie un courriel **si** un agent de
+transport local est configuré, ce qui n'est pas donné. **L'alerte ne peut donc pas reposer sur le
+seul code de retour du producteur** : c'est un observateur *tiers*, qui regarde le résultat et non
+l'exécution, qui la porte. C'est ce que S1 à S9 font — et c'est aussi ce qui détecte le mode
+d'échec le plus dangereux, celui où la tâche planifiée **ne tourne plus du tout**, cas où aucun code
+de retour n'est jamais produit.
+
+---
+
+## 17. Ce que `scripts/backup-supervision.sh` observe
+
+L'observateur est **une lecture, et rien d'autre**. Il ne produit aucune archive, n'en supprime
+aucune, ne déchiffre rien, ne touche ni la pile ni la base. Il regarde un répertoire de sortie et
+rend un verdict.
+
+### 17.1 Les neuf contrôles
+
+| # | Contrôle | Alerte quand |
+|---|---|---|
+| S1 | **Présence** | le répertoire de sortie ne contient aucune archive `p2enjoy-sauvegarde-*.tar.age` |
+| S2 | **Fraîcheur** | l'archive la plus récente, datée **par son nom** (M18), a plus de `BACKUP_MAX_AGE_HOURS` |
+| S3 | **Forme** | l'archive la plus récente ne commence pas par `age-encryption.org/v1` (M16) |
+| S4 | **Destinataires** | elle porte moins de `BACKUP_MIN_RECIPIENTS` strophes `-> X25519` (M17) |
+| S5 | **Effondrement de taille** | elle pèse moins de la moitié de la précédente — dump tronqué, disque plein |
+| S6 | **Résidu** | un fichier `.p2enjoy-sauvegarde-*.partiel` traîne : une exécution est morte en route (§3.5) |
+| S7 | **Dérive de rétention** | une archive dépasse `BACKUP_RETENTION_DAYS + 1` jours : la rétention ne s'applique plus |
+| S8 | **Copie hors site** | `BACKUP_OFFSITE_DIR` est renseignée et la plus récente archive **n'y porte pas le même nom** que la plus récente locale |
+| S9 | **Exercice de restauration** | `BACKUP_DRILL_STAMP_FILE` est renseignée et son horodatage a plus de `BACKUP_DRILL_MAX_AGE_DAYS` |
+
+**S5 est RELATIF, jamais absolu.** Un seuil en octets serait faux le jour où la base grossit, et
+personne ne le réviserait. La comparaison à l'archive précédente n'a pas ce défaut : elle suit la
+base. Avec une seule archive, S5 est **non applicable** et le dit, plutôt que de rendre vert.
+
+**S8 compare des NOMS, jamais des dates de modification** (M18). C'est le contrôle que la mesure a
+sauvé d'être complaisant.
+
+**S9 ne lit pas un journal d'exécution, il lit une empreinte de SUCCÈS.** Le runbook (§19.4)
+prescrit d'écrire l'empreinte derrière un `&&` : elle n'existe donc que si l'exercice a rendu `0`.
+Un exercice qui échoue laisse l'empreinte vieillir, et S9 finit par le dire. C'est le seul moyen
+dont dispose l'hôte de sauvegarde, qui ne peut pas exécuter l'exercice lui-même (§16, M19).
+
+### 17.2 Les codes de retour — c'est le contrat d'alerte
+
+| Code | Sens |
+|---|---|
+| `0` | tous les contrôles applicables sont verts |
+| `1` | **au moins une alerte** : le déclencheur doit avertir un humain |
+| `2` | **refus** : l'observateur n'a pas pu observer — configuration inutilisable |
+
+`1` et `2` sont distingués **à dessein**. Confondus, une variable mal écrite se lirait comme « pas
+de sauvegarde récente », et l'exploitant chercherait un incident de sauvegarde là où il y a une
+faute de configuration. Le runbook les traite différemment (§19.5).
+
+### 17.3 L'option `--cron`
+
+Sans elle, l'observateur imprime le détail des neuf contrôles, comme les harnais du dépôt.
+
+Avec `--cron`, **il n'imprime rien lorsque tout est vert**, et imprime les seules alertes sinon.
+C'est la forme qu'attend un déclencheur qui envoie un courriel dès qu'il y a une sortie : sans elle,
+un rapport vert quotidien apprend à l'exploitant à ignorer les courriels de la sauvegarde, ce qui
+supprime l'alerte plus sûrement que de ne pas l'écrire.
+
+Le code de retour est le même dans les deux modes.
+
+### 17.4 Les refus — dictionnaire FERMÉ
+
+| # | Condition | Message | Code |
+|---|---|---|---|
+| R40 | `BACKUP_OUTPUT_DIR` désigne un chemin inexistant ou illisible | « le répertoire de sortie « … » est introuvable ou illisible : la supervision ne peut rien observer. » | `2` |
+| R41 | `BACKUP_MAX_AGE_HOURS` non entier, ou < 1 | « `BACKUP_MAX_AGE_HOURS` doit être un entier supérieur ou égal à 1. » | `2` |
+| R42 | `BACKUP_RETENTION_DAYS` non entier, ou < 1 | « `BACKUP_RETENTION_DAYS` doit être un entier supérieur ou égal à 1. » | `2` |
+| R43 | `BACKUP_MIN_RECIPIENTS` non entier, ou < 1 | « `BACKUP_MIN_RECIPIENTS` doit être un entier supérieur ou égal à 1. » | `2` |
+| R44 | `BACKUP_DRILL_MAX_AGE_DAYS` non entier, ou < 1 | « `BACKUP_DRILL_MAX_AGE_DAYS` doit être un entier supérieur ou égal à 1. » | `2` |
+| R45 | `BACKUP_OFFSITE_DIR` renseignée mais introuvable ou illisible | « la destination hors site « … » est introuvable ou illisible. » | `2` |
+| R46 | `BACKUP_DRILL_STAMP_FILE` renseignée mais illisible, vide, ou d'horodatage illisible | « l'empreinte d'exercice « … » est illisible ou ne porte pas un horodatage ISO 8601. » | `2` |
+| R47 | argument inconnu | « argument inconnu « … ». Voir --help. » | `2` |
+
+Un nom d'archive dont l'horodatage est illisible n'est **pas** un refus : il est **ignoré** pour le
+calcul de fraîcheur, et **signalé**. Un fichier étranger déposé dans le répertoire ne doit pas
+empêcher la supervision de dire ce qu'elle sait des archives valides.
+
+### 17.5 Ce que l'observateur n'écrit JAMAIS
+
+- **aucun fichier**, nulle part : ni journal, ni empreinte, ni verrou. Il lit ;
+- **aucune suppression** : la rétention appartient à `scripts/backup.sh` (§3.6). Un observateur qui
+  supprimerait cesserait d'être un observateur, et deux auteurs dans un même répertoire est
+  précisément la manière dont on perd une sauvegarde ;
+- **aucun secret** : ni nom de destinataire — M17 montre qu'il n'est de toute façon pas lisible —,
+  ni chemin de clé privée, ni contenu d'archive (`CLAUDE.md` §20) ;
+- **aucun déchiffrement**, donc aucune lecture de clé privée : la propriété du §3.4 est préservée,
+  et c'est ce qui permet à cet observateur de tourner sur l'hôte de sauvegarde lui-même.
+
+---
+
+## 18. Les variables d'environnement de la tranche 3
+
+| Variable | Rôle | Format | Requise | Défaut |
+|---|---|---|---|---|
+| `BACKUP_MAX_AGE_HOURS` | âge maximal de la dernière archive avant alerte | entier ≥ 1 | non | `26` |
+| `BACKUP_MIN_RECIPIENTS` | nombre minimal de destinataires `age` attendu dans l'en-tête | entier ≥ 1 | non | `1` |
+| `BACKUP_OFFSITE_DIR` | répertoire de la copie hors site, monté en lecture | chemin absolu | non | vide — S8 non applicable |
+| `BACKUP_DRILL_STAMP_FILE` | fichier portant l'horodatage ISO 8601 du dernier exercice de restauration **réussi** | chemin absolu | non | vide — S9 non applicable |
+| `BACKUP_DRILL_MAX_AGE_DAYS` | âge maximal de cet exercice avant alerte | entier ≥ 1 | non | `30` |
+
+`BACKUP_OUTPUT_DIR` et `BACKUP_RETENTION_DAYS` sont **partagées avec la tranche 1** (§4) : la
+supervision observe le répertoire que la sauvegarde alimente, et juge la rétention sur la valeur que
+la sauvegarde applique. Les redéclarer aurait garanti qu'elles divergent un jour.
+
+**Le défaut de `BACKUP_MAX_AGE_HOURS` est 26 et non 24, et c'est délibéré.** Une sauvegarde
+quotidienne qui prend dix minutes, décalée par une charge de l'hôte ou par un changement d'heure,
+dépasserait `24` sans qu'il se soit rien passé. Une alerte qui se déclenche seule apprend à
+l'exploitant à l'ignorer. Deux heures de marge suppriment ce faux positif sans masquer une journée
+manquée.
+
+**Les deux variables facultatives rendent leur contrôle NON APPLICABLE quand elles sont vides**,
+et l'observateur l'écrit. Il ne rend pas vert un contrôle qu'il n'a pas fait.
+
+---
+
+## 19. Le runbook de production — `docs/RUNBOOK-sauvegardes.md`
+
+`CLAUDE.md` §12 veut que toute opération manuelle de production vive dans un document dédié. Le
+runbook est ce document ; ce paragraphe dit ce qu'il doit porter, et la Definition of Done du §21
+l'exige point par point.
+
+### 19.1 Planification et fréquence
+
+Une sauvegarde **quotidienne**, hors heures ouvrées, et une supervision **horaire**. Le motif est
+écrit plutôt que sous-entendu : la perte maximale acceptée est d'une journée de travail, et
+`pg_dump` est un instantané logique dont le coût croît avec la base — l'exécuter plus souvent
+n'apporterait rien tant que PITR n'est pas activé (§8, M8).
+
+Le runbook donne les **deux** formes mesurées au §16 (M20) : unité `systemd` avec son `timer`, et
+ligne `crontab`. Chacune enveloppe l'appel dans `flock` : deux sauvegardes simultanées écriraient
+deux assemblages dans le même répertoire de sortie, et la rétention de l'une pourrait s'appliquer
+pendant l'écriture de l'autre.
+
+### 19.2 La copie hors site
+
+Une archive laissée sur la machine qu'elle sauvegarde ne protège d'aucun sinistre matériel. Le
+runbook prescrit une copie vers une destination **d'un autre hôte**, et il dit ce qui est déjà
+acquis : **l'archive est chiffrée à la source**, donc la destination n'a besoin d'aucune confiance
+particulière — elle ne peut pas lire ce qu'elle stocke. C'est la propriété du §3.4 qui rend la
+copie hors site simple.
+
+Le runbook dit aussi ce que la copie **ne** doit **pas** faire : réécrire les noms. S8 compare des
+noms, et M18 dit pourquoi.
+
+### 19.3 La rotation des destinataires `age`
+
+Trois faits, dont deux sont mesurés, et le troisième en découle :
+
+1. **Une archive ancienne ne s'ouvre PAS avec une nouvelle clé.** MESURÉ : `age --decrypt` avec une
+   identité qui n'est pas destinataire rend `no identity matched any of the recipients`, code `1`.
+2. **Le nombre de destinataires est vérifiable après coup** (M17), sans clé privée : c'est ainsi
+   que l'on constate qu'une rotation a réellement pris effet, plutôt que de le supposer.
+3. **Donc toute clé privée ancienne se conserve aussi longtemps que la plus ancienne archive
+   qu'elle ouvre**, c'est-à-dire au moins `BACKUP_RETENTION_DAYS`. La détruire au moment de la
+   rotation rendrait illisible tout l'historique encore sous rétention.
+
+La procédure de rotation **ajoute** le nouveau destinataire avant de retirer l'ancien, et le runbook
+impose un exercice de restauration entre les deux : une rotation qui commence par retirer est une
+rotation qui peut perdre l'accès sans que rien ne le dise.
+
+### 19.4 Le rythme des exercices de restauration
+
+Un exercice **mensuel** au moins, sur le poste distinct qui détient l'identité (§11.5), et son
+succès laisse une empreinte que S9 surveille :
+
+```
+scripts/restore-drill.sh && date -u '+%Y-%m-%dT%H:%M:%SZ' > "$BACKUP_DRILL_STAMP_FILE"
+```
+
+**L'empreinte est écrite par le DÉCLENCHEUR, jamais par l'exercice.** Le §11.7 interdit à
+`scripts/restore-drill.sh` d'écrire hors de son assemblage temporaire, et cette tranche ne rouvre
+pas ce contrat : le `&&` du planificateur suffit, et il a la propriété voulue — l'empreinte n'existe
+que si l'exercice a rendu `0`.
+
+### 19.5 Que faire quand l'alerte tombe
+
+Le runbook porte une entrée par contrôle S1 à S9 : ce que l'alerte signifie, ce qu'il faut regarder
+en premier, et le geste qui la lève. Il distingue le code `1` — incident de sauvegarde — du code
+`2` — configuration inutilisable —, faute de quoi l'exploitant chercherait le premier en présence du
+second (§17.2).
+
+### 19.6 La restauration d'une production — procédure HUMAINE
+
+`scripts/restore-drill.sh` ne sait pas viser une pile existante, et c'est délibéré (§14). Restaurer
+une production est une opération humaine, et le runbook la décrit pas à pas : arrêt des services
+écrivains, sauvegarde de l'état courant **avant** d'écraser quoi que ce soit, restauration, remise
+en place de la clé racine **avant le premier démarrage** (M9), vérification, redémarrage.
+
+Le runbook n'automatise rien de tout cela. `CLAUDE.md` §9 interdit toute écriture de production non
+demandée ; un script qui saurait écraser une production serait un script qui peut l'écraser par
+erreur.
+
+### 19.7 La décision léguée par le §14 — les objets globaux
+
+Le §14 laissait une décision d'architecture à cette tranche : emporter ou non
+`pg_dumpall --globals-only` dans l'archive.
+
+**Décision : NON, et le motif est écrit.** Trois raisons, dans cet ordre :
+
+1. **Ce que les rôles porteraient n'est pas une donnée, c'est une configuration.** Les mots de passe
+   des rôles viennent de `POSTGRES_PASSWORD` et de l'amorçage de la pile (§14). Ils appartiennent au
+   coffre de secrets de l'exploitant, dont la sauvegarde est un sujet distinct et qui, lui, n'est
+   pas reconstructible.
+2. **Cela changerait le format d'archive de la tranche 1**, donc `format_version`, donc le
+   dictionnaire de refus de la tranche 2 (R22) et les deux harnais livrés. Un changement de format
+   se paie ; il doit acheter quelque chose que la configuration ne donne pas déjà.
+3. **La restauration reproduit déjà le chemin d'amorçage** — les scripts de
+   `supabase/docker/volumes/db/` créent les rôles —, et la tranche 2 le prouve : `pg_restore` rend
+   **zéro** erreur une fois ces scripts appliqués (M10).
+
+**Conséquence, et le runbook la porte** : la sauvegarde de la **configuration** — le `.env` de
+production et le fichier de destinataires — est une obligation d'exploitation à part entière,
+distincte de l'archive et hors de son périmètre. Le runbook le dit en toutes lettres, parce qu'une
+archive parfaite et un `.env` perdu ne restaurent rien.
+
+---
+
+## 20. Contrat de comportement — tranche 3, cas A à L
+
+| Cas | Situation | Attendu |
+|---|---|---|
+| A | Répertoire portant une archive fraîche et bien formée | Code `0`, les contrôles applicables verts, S8 et S9 annoncés **non applicables** |
+| B | Répertoire vide | S1 en alerte, code `1` |
+| C | Dernière archive datée par son nom d'il y a plus de `BACKUP_MAX_AGE_HOURS` | S2 en alerte, code `1`, et le message donne l'âge mesuré |
+| D | Fichier au nom d'archive valide mais sans en-tête `age` | S3 en alerte, code `1` |
+| E | `BACKUP_MIN_RECIPIENTS=2`, archive chiffrée pour un seul destinataire | S4 en alerte, code `1` |
+| F | Archive deux fois plus petite que la précédente | S5 en alerte, code `1` |
+| G | Un `.p2enjoy-sauvegarde-….partiel` présent | S6 en alerte, code `1` |
+| H | Une archive plus vieille que `BACKUP_RETENTION_DAYS + 1` jours | S7 en alerte, code `1` |
+| I | `BACKUP_OFFSITE_DIR` dont la dernière archive porte un autre nom que la locale | S8 en alerte, code `1`, et **une copie recopiée à l'instant ne suffit PAS** à verdir (M18) |
+| J | `BACKUP_DRILL_STAMP_FILE` daté d'il y a plus de `BACKUP_DRILL_MAX_AGE_DAYS` | S9 en alerte, code `1` |
+| K | `BACKUP_MAX_AGE_HOURS=0`, ou répertoire de sortie absent | Refus R41 ou R40, code **`2`**, distinct du code `1` |
+| L | `--cron` et tout vert | **Aucune sortie**, code `0` ; et avec une alerte, la seule alerte, code `1` |
+
+**Le cas I est celui qui rend cette tranche non complaisante** : il exige qu'une copie hors site
+périmée mais fraîchement recopiée soit vue comme périmée. C'est M18 rendue exécutable, et c'est le
+seul cas qui distingue une supervision utile d'une supervision qui regarde `ls -l`.
+
+---
+
+## 21. Preuves exigées, limites et Definition of Done — tranche 3
+
+### 21.1 Preuves
+
+| Niveau | Preuve |
+|---|---|
+| Harnais | `scripts/verify-exploitation.sh` : exerce le **vrai** observateur sur des répertoires réels, et couvre les cas A à L |
+| Archive réelle | Le harnais produit au moins une archive par le **vrai** `scripts/backup.sh` sur la **vraie** pile : une archive fabriquée à la main ne porterait ni le bon en-tête, ni le bon nombre de strophes |
+| Non-complaisance | Chaque contrôle S1 à S9 est éprouvé par **dégradation volontaire**, et l'alerte exigée — le contrôle vert d'un répertoire sain ne prouve rien seul |
+| Dégradation centrale | Le cas **I** : copie hors site périmée puis **recopiée à l'instant**, donc de `mtime` frais. S8 doit **rester** en alerte |
+| Runbook | `scripts/verify-exploitation.sh` vérifie que `docs/RUNBOOK-sauvegardes.md` existe et porte chacune des sections du §19, la décision du §19.7 comprise |
+| Traçabilité | En-tête `@spec`, aide `--help`, `set -euo pipefail`, variables déclarées au gabarit et justifiées dans `scripts/verify-scripts.sh` |
+| Documentation | `README.md`, `docs/DAT.md` §10, `.env.example`, `CHANGELOG.md`, `docs/BACKLOG.md` |
+
+Comme aux tranches 1 (§6) et 2 (§13), il n'y a ni test Vitest ni scénario Playwright : l'unité
+d'exécution est un script shell, et le dépôt éprouve ses scripts par des harnais. L'écart est
+nommé, non compensé par un test de substitution.
+
+### 21.2 Limites nommées
+
+- **La supervision ne prouve JAMAIS la restaurabilité** (§16, M19). Elle ne le peut pas sans clé
+  privée, et lui en donner une annulerait la propriété du §3.4. C'est `scripts/restore-drill.sh`,
+  sur un poste distinct, qui la prouve — et S9 surveille qu'il tourne.
+- **La rétention juge sur `mtime`, la supervision sur le nom** (M18). Un `touch` sur une archive la
+  soustrait à la rétention sans que S7 ne le voie changer. Le runbook interdit de toucher aux
+  archives ; le contrat de la tranche 1 n'est pas rouvert pour autant.
+- **Aucun transport hors site n'est livré.** L'observateur constate qu'une copie est à jour ; il ne
+  la fait pas. Le transport dépend de l'infrastructure de l'exploitant — `rsync`, client S3, montage
+  —, et un script qui en choisirait un serait faux partout ailleurs.
+- **Aucune alerte n'est ÉMISE.** L'observateur rend un code et un texte ; c'est le déclencheur qui
+  avertit. Câbler un courriel, un webhook ou une sonde depuis le dépôt supposerait connaître
+  l'exploitation, et enfermerait l'exploitant dans un choix qui n'est pas le sien.
+- **Aucun objet global dans l'archive** (§19.7). La configuration se sauvegarde ailleurs, et le
+  runbook l'exige.
+
+### 21.3 Definition of Done — tranche 3
+
+- `scripts/backup-supervision.sh` livré, exécutable, avec son aide et ses commentaires `@spec` ;
+- les neuf contrôles du §17.1, les trois codes de retour du §17.2, l'option `--cron` du §17.3 et
+  les huit refus du §17.4 ;
+- les cinq variables du §18 documentées dans `.env.example` et justifiées dans
+  `scripts/verify-scripts.sh` ;
+- `docs/RUNBOOK-sauvegardes.md` portant les sept sections du §19, dont la décision du §19.7 ;
+- `scripts/verify-exploitation.sh` couvrant les cas A à L, exécuté et **vert**, dont le **cas I**
+  par dégradation volontaire de la copie hors site ;
+- `README.md`, `docs/DAT.md` §10 et `CHANGELOG.md` mis à jour dans le même changement ;
+- `docs/BACKLOG.md` au véritable état — `CRM-080` ne passe à `[x]` que lorsque les trois tranches
+  sont livrées et prouvées.
