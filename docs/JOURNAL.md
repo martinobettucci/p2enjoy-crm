@@ -21436,6 +21436,25 @@ composition —, la suite rend **42 passés** sur le même code, S3 compris. Con
 dont il précise la cause là où les deux échecs de la décision 478 restaient sans cause établie.
 Rien n'a été corrigé.
 
+**LA CAMPAGNE A ÉTÉ REJOUÉE ENTIÈREMENT APRÈS LES CORRECTIONS** (§4.3, point 5). `typecheck`,
+`types:check` et `build` verts, `test:unit` **65 fichiers / 2235 tests**, `test:sql` **50 fichiers /
+2480 assertions**, `e2e:api` **816 passés**, `pytest` **244 passés**, `e2e:ui` **536 passés,
+3 échecs**. `scripts/verify-card-costs.sh`, le seul harnais que ce changement touche, rend
+**52 contrôles, aucune anomalie** — dégradations comprises. Les cinquante-quatre autres harnais
+n'ont PAS été rejoués : la série ne tient pas dans une session (`docs/CloudWorker.md` §2.1 ter), et
+aucun harnais dédié n'existe encore pour `CRM-086`. `e2e:mail` n'a pas été rejouée en second tour,
+mais l'a été **seule** après recréation de `mail-sync` : **42 passés**.
+
+**LES TROIS ÉCHECS DU SECOND TOUR SONT ÉTRANGERS, ET LEUR MÉCANISME EST DÉSORMAIS ÉTABLI.**
+`commentaires-gestes.spec.ts` — vert au premier tour, rouge au second, sur le même code. Le rejeu
+seul le laissait rouge, y compris après réapplication du seed : la base portait un **sixième
+commentaire**, absent du seed, laissé par le tour qui venait d'échouer. L'assertion qui compte les
+cartes portant des actions en trouvait deux au lieu d'une. Résidu retiré : **8 passés**. Un unique
+échec intermittent **empoisonne donc la base** et rend les tours suivants déterministes, ce qui
+ferait conclure à une régression à qui rejoue pour départager un hasard. C'est le complément qui
+manquait à **INC-179**, dont l'intermittence de départ reste, elle, sans cause. Rien n'a été corrigé
+dans le scénario.
+
 **Où reprendre.** La **tranche 6b** : la barre d'onglets `?onglet=saisir` sur les deux écrans, la
 table de saisie en série du §5.31, le geste clavier — `Entrée` valide et porte le focus sur la ligne
 suivante —, les clés de traduction, les captures aux quatre paliers, et le harnais

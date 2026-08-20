@@ -3023,6 +3023,58 @@ touche ni `mail-sync`, ni la messagerie, ni aucun de leurs journaux — le diff 
 `supabase/migrations`, `supabase/tests`, `supabase/seed`, `webapp/src/lib`, `scripts` et `docs`.
 Rien n'a été corrigé (§3.1).
 
+## Consigné le 2026-08-20 — le mécanisme d'INC-179 est ÉTABLI, et il est AUTO-ENTRETENU
+
+### INC-179 (complément) — un échec de `commentaires-gestes.spec.ts` laisse sa fixture, et se rend alors DÉTERMINISTE
+
+*Relevé pendant `CRM-086` tranche 6a. Étranger à cette unité : ce scénario porte sur le panneau de
+commentaires (`CRM-043`), qu'aucun fichier de la session ne touche.*
+
+INC-179 consignait une intermittence sans cause. Cette session en a **établi le mécanisme**, en
+mesurant les deux côtés.
+
+**Les mesures, dans l'ordre, sur le MÊME code.**
+
+| Exécution | Verdict |
+|---|---|
+| Campagne complète n° 1, `e2e:ui` | `commentaires-gestes.spec.ts` **vert**, 533 passés sur l'ensemble |
+| Campagne complète n° 2, `e2e:ui` | **3 échecs** — `:106`, `:198`, `:224` |
+| Le fichier SEUL, immédiatement après | **3 échecs**, les mêmes |
+| Le fichier seul **après réapplication du seed** | **3 échecs**, les mêmes |
+| Le fichier seul après **suppression de la fixture résiduelle** | **1 échec** — `:224` seul |
+| Le fichier seul, tour suivant | **8 passés, aucun échec** |
+
+**La cause, lue et non supposée.** La base portait un **sixième** commentaire, absent du seed :
+
+```
+ceef07a1-…  card …0c2  auteur Camille  « Geste 1787194910853-855189 »  créé à 03:01:51
+```
+
+L'horodatage est celui de l'`e2e:ui` de la campagne n° 2. Le scénario `:106` compte les cartes
+portant des actions — `expect(getByTestId('actions-commentaire')).toHaveCount(1)` — et en trouvait
+**2** : la sienne, et celle qu'un tour précédent avait laissée.
+
+**Ce que cela ajoute, et c'est le point.** L'intermittence de départ n'est pas expliquée ; ce qui
+l'est, c'est ce qui la **transforme en échec permanent**. Le nettoyage du scénario ne s'exécute pas
+lorsqu'il échoue, si bien qu'un unique échec intermittent **empoisonne la base** et rend les tours
+suivants déterministes. Une session qui rejouerait la preuve pour départager un hasard obtiendrait
+donc un rouge stable et conclurait à une régression de son propre changement.
+
+Le seed ne rattrape rien : il **converge sans détruire de donnée inconnue**, et c'est sa règle. Seule
+une remise à zéro de la base, ou une suppression manuelle, efface le résidu — et une exécution
+planifiée part d'une base neuve, ce qui explique que le défaut n'ait jamais été vu deux fois de
+suite.
+
+**Ce que ce n'est PAS.** Une régression de la session : le diff ne touche ni le panneau de
+commentaires, ni `card_comments`, ni aucune de leurs politiques. **Rien n'a été corrigé** dans le
+scénario (§3.1) ; seule la fixture résiduelle a été retirée de la base de développement, pour
+mesurer.
+
+**Arbitrage attendu.** Le scénario doit poser son nettoyage dans un `afterEach` inconditionnel — ou
+mieux, préfixer sa fixture d'un marqueur et purger tout ce qui le porte **avant** de commencer,
+comme `card-costs.spec.ts` le fait déjà avec sa fonction `purger`. La cause de l'intermittence de
+départ reste, elle, à établir.
+
 ## Consignés le 2026-08-20 — deux manques de SPÉCIFICATION relevés par `CRM-086` tranche 6
 
 Relevés en lisant `docs/SPEC-costs.md` §4.8 **avant** de le coder, comme le §3.2 point 3 de
