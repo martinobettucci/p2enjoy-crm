@@ -297,9 +297,11 @@ export function cumuler(agregats: Iterable<AgregatCouts>): AgregatCouts {
  * donc contrôlée AVANT d'émettre quoi que ce soit, et un identifiant mal formé rend le même écran
  * qu'un budget inexistant ou fermé (`docs/SPEC-permissions-rls.md` §7).
  *
- * La constante est recopiée plutôt qu'importée : `contacts.ts` porte le carnet et ses écritures,
- * et faire dépendre les écrans de coûts du carnet pour une expression régulière de dix caractères
- * créerait un lien entre deux domaines qui n'en ont aucun. L'écart est consigné au registre.
+ * La constante est recopiée plutôt qu'importée, et c'est un choix assumé : `contacts.ts` porte le
+ * carnet et ses écritures, et faire dépendre les écrans de coûts du carnet pour une expression
+ * régulière de dix caractères créerait un lien entre deux domaines qui n'en ont aucun. Le jour où
+ * un troisième module en aura besoin, elle descendra dans un module partagé — pas avant : deux
+ * occurrences ne font pas une abstraction.
  */
 const FORME_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
