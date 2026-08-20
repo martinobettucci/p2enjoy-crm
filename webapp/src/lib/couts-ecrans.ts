@@ -1,6 +1,6 @@
-// @spec CRM-086 (docs/BACKLOG.md) — écrans de coûts, TRANCHES 1 et 4 : ce que les trois écrans
-//       lisent et agrègent, le décompte que l'onglet « À saisir » doit rendre identique, et la
-//       lecture propre à l'écran de détail d'un budget (§4.3)
+// @spec CRM-086 (docs/BACKLOG.md) — écrans de coûts, TRANCHES 1, 4 et 5 : ce que les trois écrans
+//       lisent et agrègent, le décompte que l'onglet « À saisir » doit rendre identique, la
+//       lecture propre à l'écran de détail d'un budget (§4.3) et le cumul du workspace (§4.5)
 // @spec docs/SPEC-costs.md §4.0 (adresses des trois écrans), §4.2 (histogramme du track),
 //       §4.3 (détail d'un budget, une paire de barres par occurrence), §4.4 (ce que l'écran dit du
 //       réel inconnu), §4.5 (cumul du workspace, calculé APRÈS la RLS), §4.7 (les états)
@@ -556,4 +556,194 @@ export function filtrerParOccurrence(
 ): readonly LigneBudget[] {
 	if (idOccurrence === null) return lignes
 	return lignes.filter((ligne) => ligne.occurrence_id === idOccurrence)
+}
+
+// ---------------------------------------------------------------------------------------------
+// Le cumul du workspace — §4.5, §4.4, §4.7
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * Ce que l'écran du §4.5 a besoin de savoir d'un track, et rien de plus.
+ *
+ * `slug` est lu bien qu'aucune barre ne l'affiche : il porte l'ADRESSE de l'écran de coûts du track
+ * (§4.0, `/tracks/:slugTrack/couts`), vers lequel le tableau équivalent renvoie. Sans lui, le cumul
+ * serait un cul-de-sac — on lirait qu'un track dépense sans avoir aucun moyen d'aller voir ses
+ * budgets. La couleur et l'icône du track ne le sont PAS : une barre d'histogramme porte sa série,
+ * jamais la couleur de sa donnée (§5.30, qui déclare trois jetons et pas un de plus).
+ */
+export type TrackDeLEcran = Pick<
+	Database['public']['Tables']['tracks']['Row'],
+	'id' | 'name' | 'slug'
+>
+
+/** Colonnes réellement demandées pour un track du cumul. Exportée pour éprouver la requête émise. */
+export const COLONNES_TRACK_COUTS = 'id, name, slug'
+
+/**
+ * Un budget du cumul : celui du §4.2, plus le track auquel il se rattache.
+ *
+ * `track_id` est indispensable ici et inutile là-bas : l'écran du §4.2 lit les budgets D'UN track,
+ * qu'il connaît déjà ; celui du §4.5 les lit tous et doit les ranger.
+ */
+export type BudgetDeTrack = BudgetDeLEcran & { readonly track_id: string }
+
+/**
+ * Colonnes du budget du cumul, écrites **d'un seul tenant** — la règle de `COLONNES_LIGNE_BUDGET` :
+ * une concaténation rendrait le type `string` et `supabase-js` cesserait d'inférer la réponse.
+ */
+export const COLONNES_BUDGET_CUMUL =
+	'id, name, currency, is_recurrent, planned_amount, closed_at, position, track_id'
+
+/** Une paire de barres du §4.5 : le track qui la nomme, et ce que ses budgets ouverts valent. */
+export type BarresTrack = {
+	readonly track: TrackDeLEcran
+	readonly agregat: AgregatCouts
+}
+
+/**
+ * Un histogramme du cumul, c'est-à-dire les paires de barres d'UNE devise.
+ *
+ * Distinct d'`HistogrammeDevise`, dont les barres nomment des budgets : le §4.5 demande « un groupe
+ * de barres par TRACK ». Les fondre en un type générique paramétré ferait payer une abstraction à
+ * deux occurrences, ce que le §2.3 de ce même module refuse déjà pour `FORME_UUID`.
+ */
+export type HistogrammeDeviseTracks = {
+	readonly devise: string
+	readonly barres: readonly BarresTrack[]
+	/** Le total de la devise, pour la mention du §4.4 rendue sous le graphique. */
+	readonly total: AgregatCouts
+}
+
+/**
+ * Range les tracks par devise et cumule les budgets de chacun — le contenu du §4.5.
+ *
+ * Fonction PURE et exportée, comme `grouperParDevise` et `grouperParOccurrence` : c'est elle que
+ * les preuves unitaires éprouvent sur des jeux construits, sans pile ni client.
+ *
+ * **UN TRACK PEUT PORTER PLUSIEURS DEVISES, ET IL PARAÎT ALORS DANS PLUSIEURS HISTOGRAMMES.** Le
+ * §4.5 pose que « les devises ne se mélangent pas » et rend « un histogramme par devise présente » ;
+ * un track qui porte un budget en EUR et un autre en CHF a donc deux cumuls, et non un total qui
+ * additionnerait des francs à des euros. C'est la même règle que `grouperParDevise` applique aux
+ * budgets d'un track, appliquée un cran plus haut.
+ *
+ * **UN TRACK SANS AUCUN BUDGET OUVERT N'A AUCUNE BARRE, et ce n'est pas une omission.** Une paire de
+ * barres vit dans l'histogramme d'une devise ; un track sans budget n'en porte aucune, et l'y placer
+ * demanderait d'inventer la devise à laquelle il appartient. Le cas n'est pas muet pour autant :
+ * lorsque AUCUN track n'a de budget, la liste rendue est vide et l'écran rend l'état vide du §4.7.
+ *
+ * **L'ORDRE DES DEVISES SUIT CELUI DES TRACKS**, la première rencontrée d'abord — jamais un tri
+ * alphabétique, qui ferait passer CHF devant EUR sur un workspace dont tout est en euros sauf un
+ * track. Même convention que `grouperParDevise` et que `calculerTotaux` de `card-costs.ts`.
+ */
+export function grouperTracksParDevise(
+	tracks: readonly TrackDeLEcran[],
+	budgets: readonly BudgetDeTrack[],
+	lignesParBudget: ReadonlyMap<string, readonly LigneAgregeable[]>,
+): readonly HistogrammeDeviseTracks[] {
+	const budgetsParTrack = new Map<string, BudgetDeTrack[]>()
+	for (const budget of budgets) {
+		const liste = budgetsParTrack.get(budget.track_id) ?? []
+		liste.push(budget)
+		budgetsParTrack.set(budget.track_id, liste)
+	}
+
+	const parDevise = new Map<string, BarresTrack[]>()
+	for (const track of tracks) {
+		// Les agrégats du track sont d'abord rangés par devise, PUIS cumulés : cumuler d'abord et
+		// répartir ensuite mêlerait les monnaies le temps d'une addition, ce que le §4.5 refuse
+		// précisément parce qu'un tel total « n'aurait aucun sens ».
+		const parDeviseDuTrack = new Map<string, AgregatCouts[]>()
+		for (const budget of budgetsParTrack.get(track.id) ?? []) {
+			const agregats = parDeviseDuTrack.get(budget.currency) ?? []
+			agregats.push(agreger(lignesParBudget.get(budget.id) ?? []))
+			parDeviseDuTrack.set(budget.currency, agregats)
+		}
+		for (const [devise, agregats] of parDeviseDuTrack) {
+			const barres = parDevise.get(devise) ?? []
+			barres.push({ track, agregat: cumuler(agregats) })
+			parDevise.set(devise, barres)
+		}
+	}
+
+	return [...parDevise.entries()].map(([devise, barres]) => ({
+		devise,
+		barres,
+		total: cumuler(barres.map((barre) => barre.agregat)),
+	}))
+}
+
+/**
+ * Les tracks lisibles du workspace et le cumul de leurs budgets ouverts — le contenu du §4.5.
+ *
+ * **TROIS REQUÊTES, ET PAS UNE PAR TRACK NI UNE PAR BUDGET.** Les tracks, puis tous leurs budgets
+ * ouverts en un seul `in`, puis toutes les lignes de ces budgets en un second `in`. Le nombre
+ * d'allers-retours ne dépend donc ni du nombre de tracks ni du nombre de budgets (`CLAUDE.md` §21).
+ * Un `in` sur zéro identifiant n'est pas émis, sa réponse étant connue d'avance.
+ *
+ * **LE CUMUL EST CALCULÉ APRÈS LA RLS, ET C'EST L'EXIGENCE CENTRALE DU §4.5** : « le cumul est
+ * calculé après application de la RLS, jamais avant. Un total qui inclurait un budget interdit le
+ * divulguerait par soustraction. » Les trois lectures partent sous l'identité de l'appelant, aucune
+ * somme n'est demandée au serveur, et aucune clé de service n'entre ici. Le total d'un profil
+ * restreint DIFFÈRE donc de celui d'un administrateur, et cette différence est exactement ce que la
+ * Definition of Done de `CRM-086` demande de prouver — le seed pose « Prospection sortante » sur un
+ * track que la lectrice ne lit pas, pour que la mesure soit possible.
+ *
+ * **UN TRACK ARCHIVÉ OU EN CORBEILLE NE FIGURE PAS DANS CE CUMUL, ET C'EST UNE RÈGLE D'ÉCRAN.** Les
+ * deux filtres sont ceux de `lireTracks` — celle que la barre latérale emploie —, et pour son motif
+ * exact : un track archivé est un dossier clos que le produit retire du chemin, un track en
+ * corbeille n'a plus de place dans une liste (`docs/SPEC-tracks.md` §4, `docs/SPEC-corbeille.md`
+ * §3.1). Ce n'est PAS une règle d'autorisation : ces tracks restent parfaitement lisibles, et le
+ * §4.8 listera leurs lignes sans réel dans l'onglet « À saisir ». La conséquence est nommée plutôt
+ * que tue : un budget encore ouvert sur un track archivé n'entre dans aucune barre de cet écran, et
+ * se lit sur l'écran de coûts de son track, dont l'adresse continue de répondre.
+ *
+ * **`closed_at is null` EST APPLIQUÉ CÔTÉ SERVEUR**, comme dans `lireHistogrammeTrack` : le §4.5
+ * cumule « les budgets ouverts de chaque track ». Règle d'écran là aussi, et non un refus du backend
+ * (`CLAUDE.md` §10).
+ */
+export async function lireCumulWorkspace(
+	client: ClientCrm,
+): Promise<EtatAsync<readonly HistogrammeDeviseTracks[]>> {
+	try {
+		const tracks = await client
+			.from('tracks')
+			.select(COLONNES_TRACK_COUTS)
+			.is('archived_at', null)
+			.is('deleted_at', null)
+			.order('position')
+			.order('name')
+		if (tracks.error !== null) {
+			return enErreur(classerErreur(tracks.status, tracks.error.message))
+		}
+		if (tracks.data.length === 0) return pret([])
+
+		const budgets = await client
+			.from('budgets')
+			.select(COLONNES_BUDGET_CUMUL)
+			.in(
+				'track_id',
+				tracks.data.map((track) => track.id),
+			)
+			.is('closed_at', null)
+			// L'ordre est celui de l'administration des budgets (§4.1), comme dans
+			// `lireHistogrammeTrack` : il ne se voit pas sur cet écran, où les budgets d'un track sont
+			// cumulés en une seule paire de barres, mais il rend le cumul REPRODUCTIBLE — une addition
+			// de flottants dépend de l'ordre de ses termes, et deux chargements doivent rendre le même
+			// nombre.
+			.order('position')
+			.order('name')
+		if (budgets.error !== null) {
+			return enErreur(classerErreur(budgets.status, budgets.error.message))
+		}
+
+		const parBudget = await lireLignesParBudget(
+			client,
+			budgets.data.map((budget) => budget.id),
+		)
+		if (parBudget.statut !== 'pret') return parBudget
+
+		return pret(grouperTracksParDevise(tracks.data, budgets.data, parBudget.donnees))
+	} catch (cause) {
+		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
 }

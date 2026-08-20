@@ -153,3 +153,19 @@ export const CHEMIN_COUTS_BUDGET = '/tracks/:slugTrack/couts/:idBudget' as const
 /** Adresse concrète de l'écran de détail d'un budget donné. */
 export const cheminCoutsBudget = (slugTrack: string, idBudget: string) =>
 	`/tracks/${slugTrack}/couts/${idBudget}`
+
+/**
+ * Cumul des coûts du workspace — `CRM-086`, `docs/SPEC-costs.md` §4.0 et §4.5.
+ *
+ * **C'est la SEULE des trois adresses de coûts qui figure dans `ROUTES`**, et le §4.0 en donne la
+ * raison : son titre est une clé de traduction et non une donnée, et son contenu ne dépend d'aucun
+ * paramètre d'adresse. Les deux autres nomment un track ou un budget, et suivent donc le patron de
+ * `CHEMIN_CARD`.
+ *
+ * **Une route de PREMIER NIVEAU, et non une section de `/reglages`** : c'est le raisonnement exact
+ * qui a placé le carnet de contacts (`CHEMIN_CONTACTS`) et les objectifs (`CHEMIN_OBJECTIFS`) hors
+ * des réglages — un histogramme de coûts n'administre rien, il porte le travail. Elle rejoint donc
+ * les entrées transverses de la barre latérale (`webapp/src/app/navigation.ts`), et la couverture
+ * exacte `ROUTES` ⇄ `ENTREES_TRANSVERSES` est tenue par une assertion de `routes.test.tsx`.
+ */
+export const CHEMIN_COUTS_WORKSPACE = '/couts' as const

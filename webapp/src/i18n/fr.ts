@@ -27,6 +27,7 @@ export const fr = {
 	'nav.item.inbox': 'Inbox',
 	'nav.item.contacts': 'Contacts',
 	'nav.item.goals': 'Objectifs',
+	'nav.item.costs': 'Coûts',
 	'nav.item.today': 'Ma journée',
 	'nav.item.settings': 'Réglages',
 
@@ -2113,6 +2114,30 @@ export const fr = {
 	'costs.budget.notfound.body':
 		'Ce budget n’existe pas, ou il ne vous est pas accessible. Les budgets ouverts de ce track sont listés sur son écran de coûts.',
 	'costs.budget.notfound.action': 'Revenir aux coûts du track',
+
+	// -------------------------------------------------------------------------------------------
+	// Cumul des coûts du workspace — `CRM-086` tranche 5, docs/SPEC-costs.md §4.0, §4.5 et §4.7.
+	// Ces clés-ci nomment « le track » et « l'espace de travail », contrairement à celles de
+	// l'histogramme partagé : elles appartiennent à UN écran.
+	// -------------------------------------------------------------------------------------------
+	'route.costs.workspace.title': 'Coûts',
+	// L'en-tête de la première colonne du tableau équivalent (§5.30) : sur cet écran, une paire de
+	// barres désigne un track.
+	'costs.workspace.column': 'Track',
+	// Le nom accessible du lien qui mène aux coûts d'un track depuis le tableau équivalent. Le nom
+	// du track est une DONNÉE : il est passé en paramètre, jamais concaténé (§10).
+	'costs.workspace.detail.aria': 'Voir les coûts du track {nom}',
+	// L'état vide du §4.7, transposé au workspace. Il n'offre AUCUNE action, pour le motif exact de
+	// l'écran du track : la création d'un budget vit dans l'administration de l'arborescence (§4.1),
+	// et y renvoyer conditionnellement au rôle ferait calculer un droit à l'interface.
+	'costs.workspace.empty.title': 'Aucun budget ouvert',
+	'costs.workspace.empty.body':
+		'Les budgets ouverts des tracks que vous pouvez lire sont cumulés ici, comparés à leurs coûts réels. Un administrateur peut en créer depuis l’administration de l’arborescence.',
+	// La portée du cumul est ÉCRITE, jamais supposée comprise : le §4.5 pose que l'écran « ne montre
+	// que les tracks lisibles par l'appelant », et deux profils y lisent donc deux totaux différents
+	// sur les mêmes données. Sans cette phrase, l'écart se lirait comme une erreur de calcul.
+	'costs.workspace.scope':
+		'Ce cumul ne porte que sur les budgets ouverts des tracks que vous pouvez lire. Un track archivé ou mis à la corbeille n’y figure pas ; ses budgets restent lisibles depuis son propre écran de coûts.',
 } as const
 
 export type CleTraduction = keyof typeof fr

@@ -39,6 +39,7 @@ import {
 	cheminCoutsBudget,
 	CHEMIN_COUTS_TRACK,
 	cheminCoutsTrack,
+	CHEMIN_COUTS_WORKSPACE,
 	CHEMIN_DEMARRAGE,
 	CHEMIN_ETAT_MESSAGERIE,
 	CHEMIN_INBOX,
@@ -61,6 +62,7 @@ export {
 	cheminCoutsBudget,
 	CHEMIN_COUTS_TRACK,
 	cheminCoutsTrack,
+	CHEMIN_COUTS_WORKSPACE,
 	CHEMIN_DEMARRAGE,
 	CHEMIN_ETAT_MESSAGERIE,
 	CHEMIN_INBOX,
@@ -96,6 +98,19 @@ const Carnet = lazy(async () => ({ default: (await import('./Carnet')).Carnet })
  * n'a pas à peser sur le premier rendu de toutes les autres (`CLAUDE.md` §21).
  */
 const Objectifs = lazy(async () => ({ default: (await import('./Objectifs')).Objectifs }))
+
+/**
+ * Le cumul des coûts du workspace — `CRM-086` tranche 5, `docs/SPEC-costs.md` §4.5. Chargé à la
+ * demande pour le motif exact des deux autres écrans de coûts : il emporte l'histogramme, que les
+ * sessions qui n'ouvrent jamais les coûts n'ont pas à télécharger (`CLAUDE.md` §21).
+ *
+ * Contrairement à `CoutsTrack` et `CoutsBudget`, il ne porte PAS sa propre coquille : son titre est
+ * une clé de traduction et son contenu ne dépend d'aucun paramètre d'adresse, si bien que la
+ * coquille commune de `ROUTES` suffit (§4.0).
+ */
+const CoutsWorkspace = lazy(async () => ({
+	default: (await import('./CoutsWorkspace')).CoutsWorkspace,
+}))
 
 /**
  * Titre de la route d'administration — `CRM-075`.
@@ -179,6 +194,16 @@ export const ROUTES: readonly DescriptionRoute[] = [
 		chemin: CHEMIN_OBJECTIFS,
 		cleTitre: 'route.goals.title',
 		rendu: () => <Objectifs />,
+	},
+	{
+		// Le cumul des coûts du workspace — `CRM-086`, `docs/SPEC-costs.md` §4.0 et §4.5. Une entrée
+		// TRANSVERSE et non une section des réglages, pour la raison qui a déjà placé le carnet et
+		// les objectifs hors des réglages : un histogramme de coûts n'administre rien, il porte le
+		// travail. C'est la seule des trois adresses de coûts qui figure ici, les deux autres ayant
+		// pour titre une donnée — le nom d'un track, le nom d'un budget.
+		chemin: CHEMIN_COUTS_WORKSPACE,
+		cleTitre: 'route.costs.workspace.title',
+		rendu: () => <CoutsWorkspace />,
 	},
 	{
 		chemin: '/ma-journee',
