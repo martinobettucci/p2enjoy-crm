@@ -27,6 +27,14 @@ const WORKSPACE = '5eed0000-0000-4000-8000-000000000001'
 const CARD_COURRIER = 'Refonte du site vitrine'
 const OBJET_RACINE = 'Demande de devis — refonte'
 const OBJET_REPONSE = 'Re: Demande de devis — refonte'
+/**
+ * Le message NON CLASSÉ dont le fil ne porte qu'un seul message.
+ *
+ * Le dossier « Non classés » en compte DEUX depuis `CRM-060` sous-tranche 2 bis
+ * (`docs/SPEC-seed.md` §2.19) : celui-ci, et celui que la règle 3 suggère. Cette preuve vise le
+ * FIL, non le dossier, et le nomme donc explicitement.
+ */
+const OBJET_NON_CLASSE = 'Candidature spontanée'
 /** La clé du fil : la racine `References` des deux messages (§16.14.2). */
 const FIL_CLASSE = '<seed-inbox-classe@p2enjoy.test>'
 
@@ -137,12 +145,20 @@ test.describe('CRM-081 tranche 2 f — le groupement des messages en fils', () =
 		await page.getByTestId('inbox-panneau-dossiers').getByRole('button', { name: /Non classés/ }).click()
 
 		const liste = page.getByTestId('inbox-panneau-liste')
-		await expect(liste.getByTestId('inbox-message')).toHaveCount(1)
+		// LA PREUVE PORTE SUR UNE LIGNE, ET NON SUR LE NOMBRE DE LIGNES DU DOSSIER — révisée le
+		// 2026-08-20. Elle écrivait `toHaveCount(1)` sur toutes les lignes de « Non classés »,
+		// parce que le seed n'y faisait arriver qu'un message ; il en fait arriver deux depuis
+		// `CRM-060` sous-tranche 2 bis (`docs/SPEC-seed.md` §2.19), chacun formant un fil d'un
+		// seul message. Ce que la preuve vise — « un fil d'UN SEUL message ne porte NI badge NI
+		// sélecteur » — est inchangé, et se vise désormais par la LIGNE, ce qu'elle aurait dû
+		// faire dès l'origine : le compte du dossier n'a jamais été son sujet.
+		const ligne = liste.getByTestId('inbox-message').filter({ hasText: OBJET_NON_CLASSE })
+		await expect(ligne).toHaveCount(1)
 		// C'EST LA PROPRIÉTÉ QUI REND CETTE TRANCHE SÛRE (§16.16.4) : là où les fils sont d'un
 		// message — tout le courrier reçu avant le correctif du §16.16.2 —, rien ne change.
-		await expect(liste.getByTestId('inbox-fil-compte')).toHaveCount(0)
+		await expect(ligne.getByTestId('inbox-fil-compte')).toHaveCount(0)
 
-		await liste.getByTestId('inbox-message').click()
+		await ligne.click()
 		await expect(page.getByTestId('inbox-message-ouvert')).toBeVisible()
 		await expect(page.getByTestId('inbox-fil-selecteur')).toHaveCount(0)
 		await capturer(page, 'groupement-fil-unique', UNITE)

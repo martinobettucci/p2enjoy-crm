@@ -21,6 +21,11 @@ const UNITE = 'CRM-081'
 const ADMIN = 'admin@p2enjoy.test'
 const OBJET_CLASSE = 'Demande de devis — refonte'
 const OBJET_NON_CLASSE = 'Candidature spontanée'
+// LE SECOND MESSAGE NON CLASSÉ DU SEED — `CRM-060` sous-tranche 2 bis, `docs/SPEC-seed.md` §2.19.
+// Il est arrivé après ce fichier, et il en a RÉVISÉ trois scénarios : le dossier « Non classés »
+// ne porte plus UN fil mais DEUX, chacun d'un seul message. Ce que ces preuves visaient reste vrai
+// et reste prouvé — c'est leur façon de le viser qui supposait un dossier d'une seule ligne.
+const OBJET_SUGGERE = 'Point d’avancement — migration ERP'
 const WORKSPACE = '5eed0000-0000-4000-8000-000000000001'
 /** Le dossier du message classé : l'affaire dans laquelle la relève l'a rangé (seed §9.2). */
 const CARD_COURRIER = 'Refonte du site vitrine'
@@ -47,14 +52,47 @@ async function ouvrirNonClasse(page: Page): Promise<void> {
 	await expect(page.getByTestId('inbox-message-ouvert')).toBeVisible()
 }
 
-/** Ouvre le même message alors que son fil DORT : sa ligne est masquée, la bascule la ramène. */
+/**
+ * Ouvre le même message alors que son fil DORT : sa ligne est masquée, la bascule la ramène.
+ *
+ * LA BASCULE EST PRISE DANS LE PANNEAU, ET NON DANS L'ÉTAT VIDE — révisé le 2026-08-20. Ce helper
+ * cherchait `etat-vide` parce que le dossier « Non classés » ne portait qu'UN fil : l'endormir
+ * vidait la liste. Depuis que le seed en fait arriver un second (`docs/SPEC-seed.md` §2.19), la
+ * liste n'est plus vide, l'état vide n'existe pas, et la bascule vit dans l'en-tête du panneau —
+ * exactement ce que le §5.3 septies du design system prescrit, et ce que le produit fait déjà.
+ * La règle éprouvée est inchangée : une ligne masquée par le sommeil revient par la bascule.
+ */
 async function ouvrirNonClasseEndormi(page: Page): Promise<void> {
 	await page.goto('/inbox')
 	await page.getByTestId('inbox-panneau-dossiers').getByRole('button', { name: /Non classés/ }).click()
 	const liste = page.getByTestId('inbox-panneau-liste')
-	await liste.getByTestId('etat-vide').getByTestId('bascule-sommeil-case').click()
+	await expect(liste.getByText(OBJET_NON_CLASSE)).toHaveCount(0)
+	await liste.getByTestId('bascule-sommeil-case').click()
 	await liste.getByText(OBJET_NON_CLASSE).click()
 	await expect(page.getByTestId('inbox-message-ouvert')).toBeVisible()
+}
+
+/**
+ * Endort le fil d'un message désigné par son objet, par le VRAI geste de l'écran.
+ *
+ * AJOUTÉ LE 2026-08-20 : prouver que l'état vide d'un dossier porte sa bascule (§5.3 septies) exige
+ * désormais d'endormir les DEUX fils non classés du seed, et non plus un seul. La règle n'a pas
+ * bougé ; c'est la donnée de démonstration qui en porte deux.
+ */
+async function endormirLeFilDe(page: Page, objet: string): Promise<void> {
+	await page.goto('/inbox')
+	await page.getByTestId('inbox-panneau-dossiers').getByRole('button', { name: /Non classés/ }).click()
+	const liste = page.getByTestId('inbox-panneau-liste')
+	// LA BASCULE RAMÈNE LES LIGNES DÉJÀ ENDORMIES : sans elle, le second appel ne trouverait pas
+	// son message si le premier l'avait masqué.
+	if ((await liste.getByText(objet).count()) === 0) {
+		await liste.getByTestId('bascule-sommeil-case').click()
+	}
+	await liste.getByText(objet).click()
+	await expect(page.getByTestId('inbox-message-ouvert')).toBeVisible()
+	await page.getByTestId('fil-endormir').click()
+	await page.getByTestId('fil-preset-semaine').click()
+	await expect(page.getByTestId('inbox-message-ouvert').getByTestId('pastille-sommeil')).toBeVisible()
 }
 
 /** Le nettoyage : la clé de service supprime toute ligne restée derrière un scénario. */
@@ -113,13 +151,16 @@ test.describe('CRM-081 tranche 2 e — le sommeil d’un fil dans l’inbox', ()
 
 	test('la bascule ramène le fil endormi, marqué, et l’état vide porte son geste', async ({ page }) => {
 		await connecter(page)
-		await ouvrirNonClasse(page)
-		await page.getByTestId('fil-endormir').click()
-		await page.getByTestId('fil-preset-semaine').click()
-		await expect(page.getByTestId('inbox-message-ouvert').getByTestId('pastille-sommeil')).toBeVisible()
+		// LES DEUX FILS DU DOSSIER SONT ENDORMIS — révisé le 2026-08-20. Ce scénario endormait le
+		// SEUL fil non classé du seed ; il en porte deux depuis `CRM-060` sous-tranche 2 bis
+		// (`docs/SPEC-seed.md` §2.19). Ce que la preuve vise est l'état vide DÛ AU SOMMEIL, et un
+		// dossier dont une ligne reste éveillée n'est pas vide : il faut donc endormir les deux
+		// pour atteindre l'état que le §16.15.5 point 2 décrit. La règle est inchangée.
+		await endormirLeFilDe(page, OBJET_NON_CLASSE)
+		await endormirLeFilDe(page, OBJET_SUGGERE)
 
-		// LE DOSSIER « Non classés » NE PORTE QU'UN MESSAGE : la liste est donc vide, et l'état vide
-		// doit dire POURQUOI — « tous dans des fils en sommeil », et non « aucun message »
+		// LE DOSSIER « Non classés » EST ALORS ENTIÈREMENT ENDORMI : la liste est vide, et l'état
+		// vide doit dire POURQUOI — « tous dans des fils en sommeil », et non « aucun message »
 		// (§16.15.5 point 2). Le message ouvert est refermé en changeant de dossier.
 		await page.goto('/inbox')
 		const dossiers = page.getByTestId('inbox-panneau-dossiers')
@@ -141,7 +182,11 @@ test.describe('CRM-081 tranche 2 e — le sommeil d’un fil dans l’inbox', ()
 		await expect(liste.getByText(OBJET_NON_CLASSE)).toBeVisible()
 		// LA LIGNE RAMENÉE EST MARQUÉE : sans la pastille, elle serait indistinguable d'une ligne
 		// éveillée, et la bascule n'aurait aucun effet visible (§16.12.7, transposé).
-		await expect(liste.getByTestId('pastille-sommeil')).toBeVisible()
+		// LA PASTILLE EST CHERCHÉE SUR SA LIGNE, et non dans le panneau — révisé le 2026-08-20 :
+		// les DEUX fils du dossier dorment désormais, donc deux pastilles paraissent, et une
+		// recherche à l'échelle du panneau ne dit plus laquelle appartient à la ligne visée.
+		const ligneRamenee = liste.getByTestId('inbox-message').filter({ hasText: OBJET_NON_CLASSE })
+		await expect(ligneRamenee.getByTestId('pastille-sommeil')).toBeVisible()
 		await capturer(page, 'sommeil-fil-bascule', UNITE)
 	})
 
