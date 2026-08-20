@@ -2148,6 +2148,15 @@ quatre corrigent ce que la rédaction d'avant-code supposait.
   arbitraire que `CLAUDE.md` §18 proscrit. Le fond **s'installe** avec la transition de couleur du
   §3 et **demeure**, comme la mention « Enregistré » qui l'accompagne.
 
+- **UNE LIGNE GAGNE DE LA HAUTEUR QUAND SA MENTION PARAÎT, et c'est l'écart assumé avec le §5.9.**
+  Ce paragraphe pose des lignes de 44 px ; il pose aussi que les trois mentions du §5.7 ter vivent
+  « sous le champ, **dans la ligne** ». Les deux ne tiennent pas ensemble dès que la mention est
+  longue — « Vous ne pouvez pas modifier cette affaire. » se rend sur deux lignes, observé à la
+  capture `docs/captures/CRM-086/couts-a-saisir-lecture-seule-1440.jpg`. C'est le même écart que le
+  §5.21 assume pour sa liste plate, et il est pris ici pour la même raison : la mention se lit près
+  du champ qu'elle concerne, et la rejeter hors de la ligne ferait chercher à quelle ligne elle
+  appartient. Les 44 px restent la hauteur d'une ligne **au repos**, cellules alignées en haut.
+
 - **La tabulation traverse UNE cible par ligne, et non aucune.** Ce paragraphe écrivait que « la
   tabulation ne quitte pas la colonne de saisie tant qu'il reste des lignes » ; la colonne
   « Affaire » porte un **lien**, seule autre cible de la ligne, et l'ôter du parcours de tabulation
