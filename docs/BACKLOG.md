@@ -10720,7 +10720,16 @@ suivante :
             écrit. Le compte des variables du gabarit est porté à **93**, chiffre **compté**.
       - [x] `README.md` §3, §5 et §9, `docs/DAT.md` §10, `CHANGELOG.md` mis à jour dans le même
             changement. Le DAT ne dit plus « la procédure de restauration reste à éprouver ».
-      - [ ] **La campagne complète du dépôt reste à exécuter** pour cette tranche, ainsi que les
-            `scripts/verify-*.sh` que le changement ne touche pas — la série entière ne tient pas
-            dans une session (`docs/CloudWorker.md` §2.1 ter).
+      - [x] **La campagne complète A ÉTÉ exécutée** : `typecheck` vert, `build` vert, `test:unit`
+            **2272 tests**, `test:sql` **50 fichiers / 2480 assertions**, `e2e:api` **818 passés**,
+            `e2e:mail` **42 passés**, `pytest` **244 passés**, `scripts/verify-restauration.sh`
+            **35 contrôles** deux fois, `scripts/verify-sauvegardes.sh` **42 contrôles**,
+            `scripts/verify-scripts.sh` **103 contrôles, 1 anomalie préexistante** (INC-186).
+            `e2e:ui` rend **548 passés, 1 échec**, consigné en **INC-188** : le scénario dépasse le
+            budget de 30 s du dépôt et **passe à 90 s**, ligne de base établie par mesure —
+            `webapp/`, `supabase/` et son fichier de preuve sont identiques octet pour octet au
+            point de départ de la session. Les trois échecs d'INC-187 ont disparu.
+      - [ ] **Les quarante-sept autres `scripts/verify-*.sh` n'ont pas été rejoués**, la série
+            entière ne tenant pas dans une session (`docs/CloudWorker.md` §2.1 ter). C'est le
+            dernier reste de forme de la tranche 2.
 - [ ] **Tranche 3 — l'exploitation.** Non commencée.

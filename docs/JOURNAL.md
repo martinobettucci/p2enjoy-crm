@@ -21819,3 +21819,86 @@ que le commentaire de `move_card` n'est conservé nulle part (INC-048 est close 
 35) ; `CRM-035` annonce que la grille champ × étape n'a aucun écran (`CRM-076` quatrième tranche l'a
 livrée). Les corriger est un geste de documentation, et cette session ne l'a pas pris pour ne pas
 substituer de la prose à du produit (§4.2 bis).
+
+## décision 484 — `CRM-080` tranche 2 : la restauration prouvée, et la mesure qui la justifie
+
+**L'unité, et le choix.** La décision 482 désignait explicitement où reprendre : `CRM-080` est
+`[~]`, tranche 1 livrée, **tranche 2 le travail suivant**. Le §4.1 point 1 de
+`docs/CloudWorker.md` s'applique tel quel. **INC-187 a été traitée en préalable** — elle bloquait
+concrètement la campagne de fin de session, ce dont le §4.2 fait un préalable de la même session.
+Sa révision était déjà poussée par une session concurrente (`c72142e`) au moment de committer : le
+correctif de cette session a donc été **abandonné au profit de celui déjà en place**, mesuré vert
+ici (`12 passés`), et seule la clôture au registre — que `c72142e` n'avait pas écrite — a été
+retenue.
+
+**HUIT MESURES AVANT LA PREMIÈRE LIGNE, ET DEUX CORRIGENT LE CADRAGE DU §9.** La restauration ne se
+fait **pas** sous `postgres`, qui n'est pas superutilisateur ici : sur la même archive et le même
+conteneur, `pg_restore` rend **762** erreurs sous `postgres`, **14** sous `supabase_admin`, **12**
+avec les scripts d'initialisation du dépôt montés, et **0** une fois le rôle
+`supabase_realtime_admin` créé — le seul que ni l'image ni ces scripts ne créent, le service
+Realtime s'en chargeant dans la pile réelle. Sous `postgres`, `COPY vault.secrets` rend
+`permission denied` et **les cinq secrets ne sont pas restaurés du tout**, sans que rien ne
+s'arrête. Et l'isolement ne repose pas sur des « ports distincts » : l'environnement jetable **ne
+publie aucun port** et ne rejoint aucun réseau de la pile, ce qui est plus fort. La clé racine, elle,
+doit être montée **avant le premier démarrage** — `pgsodium_getkey.sh` en fabrique une au hasard si
+le fichier manque, et la déposer ensuite ne répare rien : c'est ce qui commande tout l'ordre du
+déroulé.
+
+**LA MESURE QUI JUSTIFIE L'INVARIANT CENTRAL, ET ELLE EST SANS AMBIGUÏTÉ.** Restaurée avec une clé
+racine **tirée au hasard**, la base rend `pg_restore` à **rc=0, zéro erreur**, et **tous** les
+autres invariants **identiques** : 36 tables publiques, 103 politiques RLS, 36 tables à RLS active,
+3 utilisateurs, 41 cards, 4 messages, 5 secrets. Seul `vault.decrypted_secrets` rend
+`pgsodium_crypto_aead_det_decrypt_by_id: invalid ciphertext`. **Le déchiffrement effectif d'un
+secret de Vault est donc le seul invariant qui voie une clé racine perdue** ; un exercice qui
+compterait des lignes rendrait vert sur une archive irrécupérable. Les secrets se comparent par
+**empreinte SHA-256**, jamais en clair (`CLAUDE.md` §20).
+
+**LA GARDE DE DESTRUCTION EST STRUCTURELLE, comme le §9 l'exigeait.** Le `trap` ne connaît que les
+deux noms que l'exercice a lui-même retenus à la création : il ne construit aucun motif, n'énumère
+aucune liste, n'interroge aucun filtre. Un nom déjà pris fait **refuser** l'exercice avant toute
+création. Le harnais lit le code livré pour l'exiger, et refuse tout appel à `docker compose`.
+
+**LE HARNAIS A TROUVÉ DEUX DÉFAUTS, ET C'EST CE QUI ÉTABLIT QU'IL N'EST PAS COMPLAISANT.**
+`interroger` rendait le code de `psql`, et `VALEUR=$(interroger …)` le propage : sous
+`set -euo pipefail`, l'exercice **mourait** au premier `select` en erreur — exactement le cas q — et
+rendait un code non nul **muet** au lieu d'un diagnostic. Corrigé à la cause : la fonction rend
+toujours `0` et le texte de l'erreur devient la valeur de l'invariant, sans qu'un `|| true` avale
+les vraies erreurs. Second défaut, dans le harnais lui-même : le cas w **devinait la seconde** à
+laquelle l'exercice calculerait son nom — vert à une exécution, rouge à la suivante. La réponse n'a
+été ni une temporisation ni un rejeu, mais un nom **déterministe** : l'option `--suffixe`, dont le
+préfixe reste imposé et le contenu restreint aux caractères sûrs, si bien que la garde n'est pas
+affaiblie. `scripts/verify-restauration.sh` rend **35 contrôles, aucune anomalie**, deux exécutions
+de suite.
+
+**LA CAMPAGNE COMPLÈTE A ÉTÉ EXÉCUTÉE.** `typecheck` vert, `build` vert, `test:unit` **2272 tests**,
+`test:sql` **50 fichiers / 2480 assertions**, `e2e:api` **818 passés**, `e2e:mail` **42 passés**,
+`pytest` **244 passés**, `scripts/verify-restauration.sh` **35 contrôles** deux fois,
+`scripts/verify-sauvegardes.sh` **42 contrôles**, `scripts/verify-scripts.sh` **103 contrôles,
+1 anomalie préexistante** (INC-186). **Les trois échecs d'INC-187 ont disparu.** `e2e:ui` rend
+**548 passés, 1 échec**.
+
+**CET ÉCHEC EST CONSIGNÉ EN INC-188, ET SA CAUSE EST ÉTABLIE.**
+`administration-workflows.spec.ts:1116` dépasse le budget de **30 s** du dépôt — reproductible seul
+comme en campagne, ce qui écarte INC-181 — et **passe avec 90 s** (`2 passés, 57,7 s`). Ce n'est ni
+un défaut du produit ni une régression. La ligne de base a été établie **par mesure** : le
+`git stash` du §2.4 n'était pas applicable, le travail étant déjà committé, si bien que la
+comparaison a porté sur les fichiers — `git diff --name-only 5c1b61b..HEAD -- webapp/ supabase/
+e2e/api/ e2e/ui/administration-workflows.spec.ts` rend **aucune différence**. Non corrigé :
+relever le budget verdirait la preuve sans rien corriger (`CLAUDE.md` §18), et le scénario relève de
+`CRM-076`.
+
+**Ce qui n'a pas été exécuté, et il faut le dire.** Les `scripts/verify-*.sh` autres que
+`verify-restauration.sh`, `verify-sauvegardes.sh` et `verify-scripts.sh` : **aucun**. La série
+entière ne tient pas dans une session (`docs/CloudWorker.md` §2.1 ter). Les captures réécrites par
+les rejeux ont été **restaurées** : cette tranche ne touche aucune surface, et les committer sous
+elle aurait mêlé des changements sans rapport — un commit intermédiaire en avait happé 149, il a
+été refait avant d'être poussé.
+
+**Où reprendre.** `CRM-080` reste `[~]` : la **tranche 3** est le travail suivant, et le §9 de
+`docs/SPEC-backups.md` la cadre — runbook de production, planification et fréquence, copie hors
+site, alerte sur échec **et** sur absence de sauvegarde récente, rotation des destinataires `age`
+avec conservation des clés privées anciennes, rythme des exercices de restauration, et l'exigence de
+`CLAUDE.md` §12 qui veut que toute opération manuelle de production vive dans un document dédié. Le
+§14 de la spécification lui lègue en outre une décision à trancher : **les rôles ne sont pas dans
+l'archive**, `pg_dump` ne portant aucun objet global, et emporter `pg_dumpall --globals-only`
+changerait le format de la tranche 1. Son contrat s'écrit avant son code, comme celui-ci.
