@@ -22471,3 +22471,64 @@ exécution choisit son unité au §4.2 : si le responsable a levé un arbitrage 
 INC-170 sur `CRM-083`), la première `[~]` produit du chunk 5 ou 6 débloquée devient l'unité ; à
 défaut, la mesure des `[~]` documentée en décisions 487 à 490 reste la référence.
 
+
+## décision 492 — l'écran de configuration des comptes entrants existe enfin comme unité : `CRM-088`
+
+**Session du 2026-08-20, ~22h UTC**, ouverte sur un checkout neuf. Docker démarré à la main, Node 24
+installé, pile levée par `./runDev.sh` (17 services persistants *healthy*), seed appliqué.
+
+**Le choix de l'unité, et il est motivé par une relecture, pas par une envie.** La décision 491
+laisse `CRM-087` `[~]` sur un seul reste hors de portée d'une session — une production
+provisionnée — et renvoie au §4.2 de `docs/CloudWorker.md`. Les `[~]` antérieures ont été relues
+dans l'ordre du plan, et la lecture confirme celle de la décision 487 : `CRM-001` attend un hôte
+sans interception TLS (INC-186) ; `CRM-013` et `CRM-014` attendent `audit_log` et
+`api_tokens.token_hash`, unités jamais ouvertes ; `CRM-034` à `CRM-040` ne portent plus que des
+preuves ou des lignes périmées ; `CRM-060`, `CRM-083` et `CRM-084` attendent des arbitrages du
+responsable.
+
+**Restait un fait que trois sessions successives ont noté sans le lever** : `CRM-052` et `CRM-053`
+portent chacune l'écart « aucun écran », et le §13.1 de `docs/SPEC-mail-subsystem.md` le renvoie
+explicitement à « une unité de réglages restant à créer ». La décision 487 a jugé qu'« en créer une
+serait du périmètre en plus » et a préféré `CRM-060` tranche 2, qui existait. Ce motif est tombé :
+il ne reste plus d'unité produit débloquée à faire avancer par du code, et **le périmètre n'est pas
+nouveau** — le §2.3 décrit ces formulaires depuis `CRM-000`, `docs/DESIGN_SYSTEM.md` §4 place
+« Réglages » dans la barre latérale depuis la même unité, et cinq surfaces y vivent déjà. Créer
+l'unité, c'est exécuter le plan, pas l'étendre. La règle du §3 de `docs/CloudWorker.md` tranche dans
+le même sens : la mission est de faire avancer le produit, et le backlog est la liste, pas la mesure.
+
+**Périmètre arrêté, et il est BORNÉ.** `CRM-088` porte la moitié **entrante** : lister les comptes
+visibles, créer et modifier une boîte, remplacer son mot de passe. Quatre écarts sont nommés plutôt
+que suggérés — pas de test de connexion depuis l'écran, pas de suppression, pas de paramètre
+d'ingestion, pas d'identité sortante. Le premier est le plus important, et sa cause est mesurée : le
+test de connexion est une route **interne** de `mail-sync` protégée par le jeton d'API du service
+(§12.3, §13.5), qu'un navigateur ne peut pas porter sans le publier. `CRM-053` garde son écart,
+inchangé.
+
+**Ce qui a été mesuré avant d'être écrit** (`docs/SPEC-mail-subsystem.md` §21.6), avec les jetons
+réels du seed : une **lectrice** configure sa propre boîte (`200`) et se voit refuser la boîte
+système (`403 forbidden`) — la fonction n'exige l'`admin` que pour la boîte système ou celle
+d'autrui ; un appel sans mot de passe conserve `secret_id` **et** les trois paramètres d'ingestion,
+`coalesce` par `coalesce` ; un compte neuf sans mot de passe est refusé par `password_required` ; et
+trois violations de contrainte rendent `23514` avec le nom de la contrainte, ce qui donne le
+dictionnaire fermé du §21.7. La ligne de mesure a été **retirée** de la base et son secret Vault
+avec elle : trois comptes et trois secrets, comme avant.
+
+**UN DÉFAUT DE SÉCURITÉ TROUVÉ EN MESURANT, ET IL N'EST PAS CORRIGÉ ICI — `INC-193`.** Le corps
+d'un refus `23514` rendu par PostgREST porte un champ `details` contenant **la ligne fautive
+entière**, `secret_id` compris — la colonne que `CRM-052` révoque à `authenticated` et dont la
+preuve de refus n° 6 dit qu'« aucun chemin PostgREST ne peut l'exposer ». La référence relevée dans
+le `details` est exactement celle que la clé de service lit. Le comportement est laissé **inchangé**
+(`CLAUDE.md` §18) et l'arbitrage est demandé, la sécurité des données étant réservée au responsable
+(`CLAUDE.md` §26, point 1). Ce que `CRM-088` en tire est une **règle d'écran** : le corps d'erreur du
+serveur n'est jamais affiché, et le §21.7 le remplace par un dictionnaire fermé avec repli nommé —
+exactement le §13.7 (`last_error` est un code, jamais le texte du serveur) transposé à l'interface.
+
+**Vérifications réalisées à ce stade.** Aucune preuve de code : cette entrée accompagne un commit
+**documentaire**, écrit et poussé **avant la première ligne de code** (`CLAUDE.md` §5,
+`docs/CloudWorker.md` §3.2 point 3). Les faits cités ci-dessus sont des mesures HTTP sur la pile
+démarrée, avec les jetons réels des comptes du seed ; l'écran, lui, **n'existe pas encore**.
+
+**Où reprendre si la session est interrompue ici.** `CRM-088` est `[ ]` au backlog, sa spécification
+est écrite (`docs/SPEC-mail-subsystem.md` §21, `docs/DESIGN_SYSTEM.md` §5.34) : la suite est le code
+de l'écran, dans l'ordre du §3.2 — module de lecture et d'écriture, composant, route, traductions,
+tests unitaires, preuve d'API, preuve d'interface et captures.

@@ -195,14 +195,20 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-190 | La série complète des `scripts/verify-*.sh` TIENT dans une session en mode `--rapide` — cinq restes de forme du backlog en sont caducs | 2026-08-20 | *ouverte* — constat de méthode | 487 |
 | INC-191 | Sept harnais figent des ABSENCES qu'une unité ultérieure a comblées, et sont rouges de leur propre succès | 2026-08-20 | *ouverte* — relève des harnais nommés au §INC-191 | 487 |
 | INC-192 | `scripts/verify-corbeille.sh` cherche `@spec CRM-077` dans les TROIS premières lignes de `webapp/src/app/RouteCard.tsx`, qui en cumule dix | 2026-08-20 | *ouverte* — relève de `CRM-077` | 487 |
+| INC-193 | Le `details` d'un refus de contrainte rend la ligne entière, `secret_id` compris — la colonne révoquée à `authenticated` ressort par un second chemin | 2026-08-20 | *ouverte* — arbitrage attendu, sécurité des données | 492 |
 
 ---
 
 ## Ouverts
 
-**Vingt-sept ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+**Vingt-huit ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-173, INC-174,
-INC-182, INC-183, INC-185, INC-186, INC-188, INC-189, INC-190, INC-191 et INC-192** — **INC-190,
+INC-182, INC-183, INC-185, INC-186, INC-188, INC-189, INC-190, INC-191, INC-192 et INC-193** —
+**INC-193** consignée le 2026-08-20 par la session `CRM-088`, en écrivant la spécification de
+l'écran de configuration des comptes entrants : le corps d'un refus de contrainte rendu par
+PostgREST divulgue `secret_id`, la seule colonne que `CRM-052` révoque à `authenticated`. La liste
+passe de vingt-sept à vingt-huit. Comportement **inchangé**, arbitrage attendu (sécurité des
+données, `CLAUDE.md` §26 point 1). **INC-190,
 INC-191 et INC-192** consignées le 2026-08-20 par la session qui a rejoué la série entière : la
 liste passe de vingt-quatre à vingt-sept. **INC-189** consignée le 2026-08-20 par la
 session `CRM-080` tranche 3 : « Alt et flèche REDIMENSIONNENT » d'`Objectifs.test.tsx` échoue par
@@ -3656,3 +3662,60 @@ ligne **11**, comme il doit l'être, mais la fenêtre de trois lignes ne le voit
 il est correct. Il est dans le harnais, qui borne sa lecture à une fenêtre trop étroite pour
 plusieurs fichiers pivots. La correction — lire l'en-tête complet du fichier, jusqu'à la première
 ligne non-commentaire — appartient à `CRM-077`, unité que le harnais teste.
+
+## Consigné le 2026-08-20 — une colonne révoquée qui ressort par le corps d'un refus
+
+### INC-193 — le `details` d'un refus de contrainte rend la ligne ENTIÈRE, `secret_id` compris
+
+**Mesuré le 2026-08-20**, sur la pile de développement, avec le jeton réel de la lectrice
+(`viewer@p2enjoy.test`) obtenu par la véritable route de connexion, en écrivant la spécification de
+`CRM-088` (`docs/SPEC-mail-subsystem.md` §21.6).
+
+Un appel légitime à `public.upsert_mail_inbound_account` dont un paramètre viole une contrainte de
+table rend `400` et ce corps :
+
+```
+{"code":"23514",
+ "details":"Failing row contains (a0092531-…, 5eed0000-…-0001, 5eed0000-…-0013,
+            Boîte de Farida Nowak, stalwart, 70000, none, viewer@p2enjoy.test,
+            540f1223-1111-4f00-9bcc-b277aebc1d35, {INBOX}, folder, {}, 0, pending, …).",
+ "message":"new row for relation \"mail_inbound_accounts\" violates check constraint
+            \"mail_inbound_accounts_port_borne\""}
+```
+
+Le neuvième champ de cette ligne est `secret_id`, et la valeur relevée — `540f1223-…` — est
+**exactement** celle que la clé de service lit sur la même ligne, vérifié dans la même mesure.
+
+**Pourquoi c'est un défaut, et non un inconvénient.** `secret_id` est la seule colonne de la table
+dont la lecture est **révoquée** à `authenticated` : c'est la preuve de refus n° 6 de
+`docs/SPEC-permissions-rls.md` §7, et le §2.3 du sous-système écrit qu'« aucun chemin PostgREST ne
+peut l'exposer ». Un `select=secret_id` rend bien `403 / 42501` — mesuré, et le scénario
+`e2e/api/comptes-entrants.spec.ts` le tient. Le refus de contrainte est donc un **second chemin**,
+que ni la révocation de colonne ni la RLS n'atteignent : le message est produit par PostgreSQL sous
+le rôle `security definer` de la fonction, et PostgREST le relaie tel quel.
+
+**Ce que la divulgation vaut, et ce qu'elle ne vaut pas.** Une référence Vault n'est pas un mot de
+passe : le schéma `vault` reste entièrement hors de portée d'`anon` et d'`authenticated` (§13.3,
+mesuré), et `mail_inbound_account_credentials` n'est accordée qu'à `service_role`. Ce qui fuit est
+l'**identifiant** d'un secret, que le §2.3 range pourtant explicitement parmi ce qu'un membre ne
+doit pas obtenir — « empêcher un membre du workspace de lire la *référence* du secret d'un
+collègue ». La portée exacte est donc : un appelant `authenticated` capable de provoquer un refus de
+contrainte sur une ligne obtient la référence du secret de cette ligne.
+
+**Comportement laissé INCHANGÉ** (`CLAUDE.md` §18, `docs/CloudWorker.md` §3.1) : rien n'est corrigé
+au passage, et `CRM-088` se borne à ne **jamais** afficher ce corps d'erreur (§21.7, dictionnaire
+fermé et repli nommé), ce qui borne la divulgation à qui appelle l'API directement — ce n'est pas
+une correction.
+
+**Arbitrage attendu, et il relève de la sécurité des données** (`CLAUDE.md` §26, point 1). Trois
+issues, aucune tranchée ici :
+
+1. **la fonction valide avant d'écrire** — elle vérifie les bornes et rend ses propres refus nommés
+   (`invalid_port`, `invalid_label`, …) avant que la contrainte de table ne parle. Le message de
+   contrainte devient alors inatteignable par le chemin normal, mais la validation est **doublée**
+   entre la fonction et la table, ce que le dépôt évite partout ailleurs ;
+2. **PostgREST cesse de relayer `details`** pour cette classe d'erreur — réglage global, qui porte
+   sur toutes les tables et retire un diagnostic utile aux autres appelants ;
+3. **le secret ne vit plus dans une colonne de la ligne** — une table de liaison `(account_id,
+   secret_id)` hors du schéma exposé, ce qui est une évolution de schéma qu'aucune unité n'a
+   demandée et qui rouvrirait `CRM-052`.

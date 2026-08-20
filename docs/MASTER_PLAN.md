@@ -36,6 +36,7 @@ Chunk 3  CRM UTILISABLE          CRM-020 → CRM-047
 Chunk 4  MESSAGERIE              CRM-050 → CRM-059
 Chunk 5  EXTENSIONS              CRM-060 → CRM-081
 Chunk 6  OBJECTIFS ET COÛTS      CRM-082 → CRM-086
+         MESSAGERIE (suite)      CRM-088                    (surface de CRM-052)
          PROPOSITIONS            CRM-P01 → CRM-P12  (toutes arbitrées, décision 299)
 ```
 
@@ -58,6 +59,7 @@ fonctionnalité différenciante mais aussi la plus risquée techniquement.
 | 4 | `CRM-050` → `CRM-059` | Messagerie : infrastructure mail, puis ingestion, puis interface, puis envoi. |
 | 5 | `CRM-060` → `CRM-081` | Extensions, chacune indépendamment livrable. `CRM-075` (administration des tracks et des channels, décision 332) précède `CRM-076` : un workflow s'affecte à un channel, qui vit dans un track. Le snooze, qui portait `CRM-075`, est renuméroté `CRM-081` par la décision 335. |
 | 6 | `CRM-082` → `CRM-086` | Objectifs et coûts, demandés le 2026-08-19 (décisions 431 et 432). Deux chaînes indépendantes : `CRM-082` → `CRM-083` pour la lavagna, `CRM-084` → `CRM-085` → `CRM-086` pour les budgets. |
+| 4 bis | **`CRM-088`** | Écran de configuration des comptes entrants IMAP, créé le 2026-08-20 (décision 492). Il vient **après** `CRM-052`, dont il est la surface manquante : le §2.3 de `docs/SPEC-mail-subsystem.md` décrivait ces formulaires depuis `CRM-000`, et le §13.1 les avait différés vers « une unité de réglages restant à créer ». Il ne dépend d'aucune migration : tout son contrat backend existe depuis `CRM-052`. |
 
 **Contraintes d'ordre à ne pas enfreindre :**
 

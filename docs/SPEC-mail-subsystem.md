@@ -1887,3 +1887,229 @@ affichée telle quelle.
   notification — les notifications relèvent de leur propre unité.
 - **Aucun backfill de pièces jointes anciennes au-delà de la profondeur déclarée** : ce qui n'est
   pas descendu n'est pas analysé, et l'écran ne prétend pas le contraire.
+
+---
+
+## 21. Écran de configuration des comptes entrants — `CRM-088`
+
+*Écrit avant le code, `docs/JOURNAL.md` décision 492. Le §2.3 décrit depuis `CRM-000` des
+« formulaires de configuration » qui « proposent *remplacer le mot de passe* » ; le §13.1 a
+différé cette surface vers « une unité de réglages restant à créer », qu'aucune ligne du backlog ne
+portait. Cette unité EST cette unité, et ce chapitre en est le contrat.*
+
+### 21.1 Ce que l'unité livre, et ce qu'elle ne livre pas
+
+Livré :
+
+- une surface de réglages, `/reglages/comptes-mail`, qui **liste** les comptes entrants visibles
+  par l'appelant et **écrit** par le seul chemin que `CRM-052` a ouvert ;
+- le formulaire de **création** et de **modification** d'une boîte — la sienne pour tout membre, la
+  boîte système pour qui la base l'accepte ;
+- le **remplacement du mot de passe**, jamais son affichage (§2.3) ;
+- la traduction des refus de la base par un **dictionnaire fermé**, jamais le texte du serveur.
+
+**Non livré, et nommé plutôt que suggéré :**
+
+- **le bouton « Tester la connexion » du §2.3.** MESURÉ : le test de connexion est la route interne
+  `POST /internal/v1/inbound-accounts/{id}/test` (§13.5), protégée par le jeton d'API interne du
+  service (§12.3). Un navigateur ne peut pas la joindre sans que ce jeton soit publié dans un
+  paquet JavaScript public, ce que `CLAUDE.md` §11 et le §8 du présent document interdisent. La
+  seule voie correcte serait une fonction edge relayant le geste sous une autorisation propre —
+  surface qu'aucune unité n'a spécifiée. L'écran **affiche donc l'état écrit par le service**
+  (`status`), et le geste reste celui de l'exploitant par l'API interne, comme au §13.1.
+- **les trois paramètres d'ingestion** — `watch_folders`, `folder_style`, `backfill_months`. Ils
+  appartiennent à `CRM-054` et `CRM-056`, non à la connexion d'une boîte. MESURÉ, l'écran ne les
+  **écrase jamais** : `upsert_mail_inbound_account` applique `coalesce(p_x, a.x)` sur les trois, si
+  bien qu'un appel qui les omet laisse la valeur en place, et un compte neuf reçoit les défauts de
+  la table (`{INBOX}`, `folder`, `0`).
+- **la suppression d'un compte.** Aucune fonction ne la porte : `CRM-052` n'a ouvert ni `DELETE`
+  direct ni chemin de retrait, et le §13.10 laisse déjà la purge d'un secret Vault à une unité
+  RGPD. Une commande morte serait pire que l'absence (`docs/DESIGN_SYSTEM.md` §5.10).
+- **les identités sortantes SMTP** (`CRM-053`, §14). Même écart, même motif : elles ont leur propre
+  table, leur propre fonction d'écriture et leurs propres refus. Les fondre dans un écran unique
+  ferait porter à cette unité une seconde surface que le plan n'a pas ordonnée.
+
+### 21.2 Une adresse dédiée, suivant le patron de `CRM-075`
+
+`/reglages/comptes-mail` porte l'écran, monté par `App` **hors de la table `ROUTES`** — le patron
+de `CHEMIN_ADMIN_ARBORESCENCE` et de `CHEMIN_ETAT_MESSAGERIE` : une adresse nommée dans
+`chemins.ts`, chargée à la demande, et l'index des réglages (`/reglages`) gagne une entrée.
+
+**Elle vit AVANT « État de la messagerie » dans l'index**, et l'ordre porte un sens : on configure
+une boîte avant d'en superviser la relève. C'est la règle que `CRM-030` a déjà appliquée en plaçant
+le catalogue après l'éditeur de workflows — « on découvre l'éditeur avant le vocabulaire qu'il
+emploie ».
+
+**Aucune modale**, comme les cinq autres surfaces de réglages (`docs/DESIGN_SYSTEM.md` §5.13).
+
+### 21.3 Ce que l'écran lit — aucune politique nouvelle
+
+Une seule lecture, `mail_inbound_accounts`, sous la RLS posée en `0022` et déjà décrite au §13.4 :
+un administrateur du workspace voit tous les comptes, un membre ordinaire ne voit que le sien, un
+membre sans boîte lit **zéro ligne** — MESURÉ le 2026-08-20 avec le jeton réel de la lectrice :
+`200` et `[]`, jamais un refus.
+
+Colonnes demandées, toutes couvertes par le `GRANT SELECT` de `0022` :
+`id, label, owner_id, imap_host, imap_port, imap_security, imap_username, status, last_error,
+last_checked_at`.
+
+**`secret_id` n'est jamais demandée**, et ce n'est pas une précaution de style : la demander rend
+`403 / 42501` pour l'appelant `authenticated` (preuve de refus n° 6, §13.4), donc une requête qui
+la citerait ferait échouer la lecture entière de l'écran pour tout le monde sauf le service.
+
+### 21.4 Le formulaire, champ par champ
+
+Un seul formulaire, qui **crée** ou **modifie** selon la boîte visée — c'est la forme de la
+fonction, qui est un `upsert` sur le couple `(workspace_id, owner_id)` (§13.2). Il vit **dans le
+flux du document**, sous la liste, et il est **replié par défaut** (`docs/DESIGN_SYSTEM.md` §5.23).
+
+| Champ | Contrôle | Contrainte de la base | Valeur envoyée |
+|---|---|---|---|
+| Boîte visée | `select` fermé à deux options — « Ma boîte personnelle », « Boîte système de l'espace de travail » | aucune : c'est le paramètre `p_owner_id` | l'identifiant de l'appelant, ou `null` |
+| Libellé | texte | `mail_inbound_accounts_label_borne` — 1 à 200 caractères après `btrim` | `p_label` |
+| Serveur IMAP | texte | `mail_inbound_accounts_host_borne` — 1 à 253 | `p_imap_host` |
+| Port | nombre | `mail_inbound_accounts_port_borne` — 1 à 65535 | `p_imap_port` |
+| Sécurité | `select` fermé — `ssl`, `starttls`, `none` | `mail_inbound_accounts_securite` | `p_imap_security` |
+| Identifiant | texte | `mail_inbound_accounts_username_borne` — 1 à 320 | `p_imap_username` |
+| Mot de passe | mot de passe, **vide par défaut** | aucune ; voir §21.5 | `p_password`, omis si vide |
+
+**Aucune garde de saisie ne double une contrainte de la base** — la règle du §5.3 ter du design
+system, tenue sans exception : ni `required`, ni `min`, ni `max`, ni `pattern`. Un libellé vide et
+un port hors bornes sont **envoyés**, et c'est la base qui tranche (`CLAUDE.md` §10). Le port est un
+`input type="number"` parce que c'est un nombre, non pour borner la saisie.
+
+**Le sélecteur de boîte visée n'est jamais restreint selon le rôle**, et l'écran ne calcule aucun
+droit : un membre ordinaire voit l'option « Boîte système », l'envoie, et lit le refus **traduit**.
+C'est la règle que le design system tient au §5.3, §5.13, §5.16, §5.21 et §5.27 sans exception —
+une commande grisée ferait passer une décision de la base pour une décision d'écran.
+
+**Choisir une boîte déjà configurée préremplit le formulaire** de ses valeurs courantes (§5.25), le
+mot de passe excepté (§21.5). Choisir une boîte qui n'existe pas encore vide les champs : préremplir
+une création avec les valeurs d'une autre boîte écrirait une configuration que personne n'a saisie.
+
+### 21.5 Le mot de passe ne s'affiche jamais, et un champ vide ne le touche pas
+
+C'est la règle du §2.3 — « les formulaires n'affichent jamais un secret enregistré ; ils proposent
+*remplacer le mot de passe* » —, et la base la rend applicable sans ruse. MESURÉ le 2026-08-20 :
+
+- un appel **sans** `p_password` sur une boîte existante laisse `secret_id` **inchangé** — relu par
+  la clé de service, `540f1223-…` avant et après —, et le libellé modifié est bien écrit ;
+- un appel **avec** `p_password` réécrit le secret **en conservant sa référence** (§13.8), et remet
+  `status` à `pending` en effaçant `last_error` : un `ok` obtenu avec l'ancien secret ne dit rien du
+  nouveau ;
+- un compte **neuf** sans mot de passe est **refusé** — `password_required`, `SQLSTATE 23514`. Le
+  refus est explicite parce qu'un compte sans secret échouerait plus tard sur un diagnostic
+  incompréhensible plutôt que sur sa cause.
+
+L'écran suit donc la base au lieu de la doubler : le champ est vide à l'ouverture, son texte d'aide
+dit qu'un champ laissé vide **conserve** le mot de passe enregistré, et le paramètre est **omis**
+plutôt qu'envoyé vide. Sur une création, le refus `password_required` est traduit et affiché ; il
+n'est **pas** anticipé par une garde de saisie.
+
+### 21.6 Ce que la mesure a établi, et qui n'était écrit nulle part
+
+Toutes les lignes ci-dessous sont des sorties de commande obtenues le 2026-08-20 sur la pile de
+développement, avec les jetons réels des comptes du seed, par la véritable route de connexion.
+
+| Appel | Réponse mesurée |
+|---|---|
+| `GET mail_inbound_accounts` — jeton de la lectrice (`viewer@p2enjoy.test`), qui n'a pas de boîte | `200`, `[]` |
+| `POST rpc/upsert_mail_inbound_account`, `p_owner_id` = **l'appelante elle-même** | `200`, l'identifiant du compte créé. **Une lectrice configure donc sa propre boîte** : la fonction n'exige l'`admin` que pour la boîte système ou celle d'autrui |
+| Le même appel avec `p_owner_id` **nul** (boîte système), jeton de la lectrice | `403`, `{"code":"42501","message":"forbidden"}` |
+| `p_imap_port = 70000` | `400`, `23514`, contrainte `mail_inbound_accounts_port_borne` |
+| `p_imap_security = 'bogus'` | `400`, `23514`, contrainte `mail_inbound_accounts_securite` |
+| `p_label = '   '` | `400`, `23514`, contrainte `mail_inbound_accounts_label_borne` |
+| Compte neuf sans `p_password` | `400`, `23514`, message `password_required` |
+| Mise à jour sans `p_password` | `200` ; `secret_id` inchangé, `watch_folders`, `folder_style` et `backfill_months` inchangés |
+
+**UN DÉFAUT DE DIVULGATION TROUVÉ EN MESURANT, ET IL EST ÉTRANGER À CETTE UNITÉ.** Le corps d'un
+refus `23514` rendu par PostgREST porte un champ `details` qui contient **la ligne fautive
+entière**, `secret_id` compris — la colonne précisément révoquée à `authenticated` par la preuve de
+refus n° 6. La référence Vault relevée dans ce `details` est **exactement** celle que la clé de
+service lit sur la même ligne. Le comportement est laissé **inchangé** (`CLAUDE.md` §18) et
+consigné en `INC-193` ; il n'appartient ni à cette unité ni à cet écran. Ce que cette unité en
+tire, en revanche, est une règle : **l'écran n'affiche jamais le corps d'erreur du serveur**, et le
+§21.7 en fait un dictionnaire fermé.
+
+### 21.7 Les refus sont traduits par un dictionnaire fermé, jamais recopiés
+
+C'est le §13.7 transposé à l'écran : là-bas `last_error` porte un **code** et non la phrase du
+serveur distant ; ici l'écran porte une **phrase du produit** et non le corps d'erreur de PostgREST.
+Les deux règles ont la même cause — un texte venu d'ailleurs est une entrée non maîtrisée — et le
+§21.6 vient d'en donner la démonstration la plus nette qui soit.
+
+| Cause reconnue | Ce que l'écran écrit |
+|---|---|
+| `forbidden` (`42501`) | Le refus d'autorisation, nommant la boîte visée |
+| `not_authenticated` (`42501`) | La session a expiré, reconnectez-vous |
+| `password_required` | Un mot de passe est exigé pour créer une boîte |
+| `mail_inbound_accounts_label_borne` | Le libellé est obligatoire, 200 caractères au plus |
+| `mail_inbound_accounts_host_borne` | Le serveur est obligatoire, 253 caractères au plus |
+| `mail_inbound_accounts_port_borne` | Le port doit être compris entre 1 et 65535 |
+| `mail_inbound_accounts_securite` | Le mode de sécurité n'est pas reconnu |
+| `mail_inbound_accounts_username_borne` | L'identifiant est obligatoire, 320 caractères au plus |
+| `owner_not_member` | Le propriétaire n'est pas membre de cet espace de travail |
+| aucune des précédentes | **Un refus nommé, jamais muet** : « l'enregistrement a été refusé », suivi d'aucune donnée du serveur |
+
+La dernière ligne est le **repli nommé** du §13.7, repris sans changement : nommer « je ne sais
+pas » est une réponse, le déguiser en une cause précise n'en est pas une, et recopier le message du
+serveur reviendrait à publier ce qu'`INC-193` mesure.
+
+**Un refus n'efface pas la saisie et laisse le formulaire ouvert** (`docs/DESIGN_SYSTEM.md`
+§5.7 ter, §5.25).
+
+### 21.8 États systématiques
+
+Les quatre du §5.8, plus deux qui sont propres à cette surface :
+
+| État | Rendu |
+|---|---|
+| Chargement | squelette de liste |
+| Erreur de lecture | message et **reprise qui relit réellement** |
+| Aucune boîte visible | « Aucune boîte configurée », **avec** le geste de configuration — c'est la règle du §5.13 pour l'état vide d'une surface qui agit, et l'écart assumé avec le §5.14, dont l'écran ne fait que lire |
+| Sans espace de travail | l'état déjà rendu par `EtatMessagerie`, sans action |
+| Enregistrement en vol | le bouton porte son libellé d'attente et est désactivé pendant le vol |
+| Enregistré | la liste est **relue**, jamais complétée localement (§5.21, §5.26) |
+
+### 21.9 Ce que l'écran ne fait pas
+
+- **Il ne teste aucune connexion** (§21.1), et n'écrit donc ni `status`, ni `last_error`, ni
+  `last_checked_at` — ces trois colonnes sont fermées en écriture à `authenticated` (§13.2), et
+  l'écran les **affiche** telles que le service les a écrites.
+- **Il ne supprime rien** (§21.1).
+- **Il n'affiche aucun secret**, ni le mot de passe, ni sa référence (§21.3, §21.5).
+- **Aucun flux temps réel** : la donnée est lue à l'ouverture et après chaque écriture, comme
+  toutes les autres surfaces d'administration.
+
+### 21.10 Seed
+
+**Aucune donnée nouvelle n'est due**, et c'est mesuré plutôt que supposé : le §13.8 pose déjà trois
+comptes — la boîte système et les boîtes de Camille et de Driss — écrits par le **véritable chemin
+d'écriture**, c'est-à-dire par la fonction que cet écran appelle. L'écran a donc de quoi montrer
+ses trois lectures dès le premier `apply-seed.sh` :
+
+- l'administratrice y voit **trois** lignes, la boîte système comprise ;
+- Driss y voit **la sienne**, et le formulaire préremplie de ses valeurs ;
+- Farida, qui n'a pas de boîte (§13.8), y voit l'**état vide avec son geste** — le cas le plus utile
+  de l'écran, et le seul que le seed n'aurait pas exercé si elle en avait une.
+
+### 21.11 Preuves exigées
+
+| Niveau | Preuve |
+|---|---|
+| Unitaire | Le module de lecture et d'écriture : colonnes demandées, paramètre `p_password` **omis** quand le champ est vide, classement des refus par le dictionnaire fermé du §21.7 |
+| Unitaire | Le composant : préremplissage, état vide avec geste, refus affiché sans corps de serveur, liste relue après succès |
+| API | Déjà acquise par `CRM-052` (`e2e/api/comptes-entrants.spec.ts`) pour les refus n° 6, n° 7 et le chemin d'écriture. **Ajoutée ici** : une lectrice configure sa propre boîte et se voit refuser la boîte système, mesuré avec son jeton réel |
+| E2E `ui` | Le parcours complet d'un administrateur : ouvrir l'écran, lire ses trois boîtes, modifier le libellé de la boîte système sans toucher au mot de passe, constater la relecture ; puis un refus réel obtenu par un port hors bornes, avec sa phrase du produit |
+| Vérification visuelle | Captures aux paliers du §7, **observées** (`CLAUDE.md` §16) : liste, formulaire ouvert, refus, état vide |
+
+### 21.12 Limites nommées
+
+- **Aucun test de connexion depuis l'écran** (§21.1) : l'état affiché est celui que le service a
+  écrit, et rien dans l'interface ne le rafraîchit.
+- **Aucune suppression** (§21.1).
+- **Les trois paramètres d'ingestion ne sont pas éditables** (§21.1), et ne sont jamais écrasés.
+- **Aucune identité sortante** (§21.1) : `CRM-053` garde son écart, inchangé.
+- **`INC-193` reste ouverte** : le corps d'un refus de contrainte divulgue `secret_id`. Cet écran
+  ne l'affiche pas, ce qui borne la divulgation à qui appelle l'API directement — ce n'est pas une
+  correction, et le §21.6 le dit.

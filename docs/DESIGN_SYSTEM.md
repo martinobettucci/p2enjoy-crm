@@ -2974,3 +2974,82 @@ il reprend le traitement du refus silencieux. Ce qui suit ne dit que ce qui lui 
 
 - **Aucune couleur, aucun jeton nouveau** : le geste emprunte au §5.7 ses contrôles, au §5.5 ses
   variantes, et au §5.11 son icône.
+
+### 5.34 Configuration des comptes entrants — `CRM-088`
+
+Sixième surface de réglages, et la **première de la famille « messagerie » qui écrive** : le §5.14
+lit et n'agit pas, celle-ci configure. Ce que l'écran lit, envoie et refuse est spécifié par
+`docs/SPEC-mail-subsystem.md` §21 ; les règles ci-dessous ne disent que de quoi il a l'air. Tout ce
+que le §5.13 pose vaut ici sans être répété : formulaire **dans le flux du document — aucune
+modale**, focus entrant dans le premier champ et rendu à la commande qui l'a ouvert, alerte de refus
+**dans le bloc concerné**.
+
+- **UNE `ul` DE LIGNES, ET NON LE TABLEAU DU §5.14, alors que les deux écrans lisent la MÊME
+  table.** L'écart est délibéré et il tient à ce que chaque écran montre : le §5.14 compare trois
+  colonnes homogènes — boîte, dernière relève, dernier incident — et se balaye en diagonale ; ici
+  les valeurs — serveur, port, sécurité, identifiant — **qualifient** la boîte au lieu de se
+  comparer d'une ligne à l'autre, et chaque ligne porte **sa propre commande**. C'est exactement la
+  distinction que le §5.18 a posée pour le catalogue de nœuds, reprise sans changement, avec les
+  hauteurs de ligne et les séparateurs du §5.9.
+
+- **LA CONNEXION SE REND EN DONNÉE TECHNIQUE** (§2) : `serveur:port` et l'identifiant en monospace,
+  chiffres tabulaires. Ce sont des identifiants de machine, et les rendre en texte ordinaire les
+  ferait lire comme de la prose.
+
+- **LE MODE DE SÉCURITÉ EST UN MOT, jamais une teinte ni une icône seule** (§1) : « SSL »,
+  « STARTTLS », « Aucun ». Une pastille verte pour `ssl` et rouge pour `none` porterait un jugement
+  que le produit n'a pas à porter — le §13.6 de la spécification établit que `none` est le seul mode
+  que la pile locale sait prouver, et qu'il n'est pas une faute en soi.
+
+- **L'ÉTAT DE LA BOÎTE EST UNE PILULE À QUATRE VALEURS, chacune avec son mot et son icône** (§5.6) :
+  « En attente » (`--color-hover` / `--color-text-2`, `Clock`), « Connectée » (`--color-success-soft`
+  / `--color-success-on-soft`, `CircleCheck`), « En erreur » (`--color-danger-soft` /
+  `--color-danger-on-soft`, `TriangleAlert`), « Désactivée » (neutres, `CircleSlash`). Une cinquième
+  valeur que la base rendrait serait un défaut de la contrainte `mail_inbound_accounts_statut`, pas
+  un texte à deviner : la pilule est alors **absente**, jamais remplie du code brut — la règle du
+  §5.14 pour un code d'incident inconnu.
+
+- **LE MOT DE PASSE N'A NI VALEUR AFFICHÉE, NI POINT DE SUBSTITUTION.** Aucune ligne « ●●●●●● », qui
+  affirmerait connaître une longueur que l'écran n'a pas : le champ est **vide**, et son texte d'aide
+  du §5.7 dit ce qu'un champ vide fait — il conserve le mot de passe enregistré. C'est la règle du
+  §5.9 sur la cellule vide, appliquée à une saisie : on ne rend jamais une donnée qu'on n'a pas.
+
+- **LE SÉLECTEUR DE BOÎTE VISÉE PORTE SES DEUX OPTIONS QUEL QUE SOIT LE RÔLE**, et l'écran ne
+  calcule aucun droit (§5.3, §5.13, §5.16, §5.21, §5.27, sans exception). MESURÉ : une lectrice
+  configure **sa** boîte et se voit refuser la boîte système ; masquer l'option poserait à l'écran
+  une règle que la base pose déjà, et la masquer pour tout le monde priverait l'administratrice du
+  seul chemin vers cette boîte.
+
+- **AUCUNE OPTION VIDE EN TÊTE DE CE SÉLECTEUR**, et c'est l'écart assumé avec le §5.22. Là-bas
+  l'option vide est le moyen de **vider** un champ ; ici il n'existe aucune boîte « aucune » — le
+  couple `(workspace, owner)` est la clé de l'objet, et n'en choisir aucun n'a pas de sens.
+
+- **LE FORMULAIRE EST REPLIÉ PAR DÉFAUT, et la commande et lui s'EXCLUENT** (§5.23, §5.25) : cette
+  surface est d'abord une lecture, et un formulaire toujours déployé pousserait la liste sous la
+  ligne de flottaison à chaque visite. Le retour du focus est **différé d'un tour de rendu** — la
+  commande est démontée pendant l'ouverture, le remède du §5.25, **aucune temporisation**.
+
+- **UNE SEULE COMMANDE D'ENREGISTREMENT, contrairement au §5.7 ter.** L'écart est écrit pour qu'on
+  ne recopie pas un patron sans son motif : la fonction d'écriture prend **six paramètres à la
+  fois** et réécrit la ligne entière, si bien qu'un champ qui s'enregistrerait seul renverrait
+  quand même les cinq autres — et écraserait ce qu'un collègue vient d'écrire. Le §5.29 a déjà
+  tranché dans ce sens pour la fiche d'un bloc d'objectif, en sens inverse et pour la même raison :
+  la forme suit ce que la base accepte d'écrire, jamais l'habitude.
+
+- **LE BOUTON D'ENVOI EST PRIMAIRE, JAMAIS DESTRUCTIF** — l'enregistrement n'efface rien qui ne se
+  refasse par le même formulaire (§5.28) —, et il n'est **jamais désactivé par l'état des champs** :
+  aucune garde de saisie ne double une contrainte de la base (§5.3 ter). Il l'est **pendant le vol**,
+  et porte alors son libellé d'attente.
+
+- **LE REFUS SE LIT DANS LE FORMULAIRE, `role="alert"`, sous les champs** (§5.13), et **n'efface pas
+  la saisie** (§5.7 ter, §5.25). Il porte une **phrase du produit**, jamais le corps d'erreur du
+  serveur : `docs/SPEC-mail-subsystem.md` §21.6 mesure que ce corps contient la référence Vault du
+  secret (INC-193), et le §1 du présent document n'a jamais autorisé un écran à recopier une entrée
+  qu'il ne maîtrise pas.
+
+- **L'ÉTAT VIDE PORTE LE GESTE** — « Aucune boîte configurée » suivi de la commande —, la règle du
+  §5.13 pour l'état vide d'une surface qui agit, déjà tenue par le §5.21, le §5.23 et le §5.29
+  tranche 2c. C'est l'écart assumé avec le §5.14, qui n'offre rien parce qu'il n'agit pas.
+
+- **Aucune couleur, aucun jeton, aucune icône nouvelle** : l'écran emprunte au §5.18 sa liste plate,
+  au §5.6 ses pilules, au §5.7 ses champs, au §5.5 ses variantes et au §5.14 son vocabulaire d'état.

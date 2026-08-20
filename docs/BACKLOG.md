@@ -10944,3 +10944,54 @@ migrations sont écrites pour être rejouables, la pile de développement le pro
 démarrage, et un registre ferait diverger le chemin de production du seul chemin réellement éprouvé
 (décisions 20 et 489). Aucun retour arrière automatique n'est écrit : la reprise est la restauration
 de l'instantané de VM, avec la perte assumée de tout ce qui a été écrit depuis.
+
+### CRM-088 — Réglages : configuration des comptes entrants IMAP `[ ]`
+*Créée le 2026-08-20 — `docs/JOURNAL.md` décision 492. Motif : le §2.3 de
+`docs/SPEC-mail-subsystem.md` décrit depuis `CRM-000` des « formulaires de configuration » qui
+« proposent remplacer le mot de passe », et le §13.1 les a différés vers « une unité de réglages
+restant à créer » qu'aucune ligne du backlog ne portait. L'écart « aucun écran » de `CRM-052` et de
+`CRM-053` n'était donc imputable à personne. Cette unité porte la moitié entrante ; `CRM-053` garde
+son écart, inchangé.*
+
+Une surface de réglages qui **liste** les comptes entrants visibles par l'appelant et les
+**configure** par le seul chemin d'écriture ouvert par `CRM-052`, sans jamais afficher ni le mot de
+passe ni sa référence. **DoD** : l'écran crée et modifie une boîte avec le jeton réel d'un membre ;
+un champ de mot de passe laissé vide conserve le secret enregistré ; les refus de la base sont
+traduits par un dictionnaire fermé et **aucun corps d'erreur du serveur n'est affiché** ; les trois
+lectures du §13.4 sont exercées par les trois profils du seed ; captures produites **et observées**.
+
+- [ ] **Spécification écrite et committée AVANT la première ligne de code** —
+      `docs/SPEC-mail-subsystem.md` §21, douze sous-chapitres opposables, rédigés **après mesure**
+      sur la pile réelle (§21.6) ; `docs/DESIGN_SYSTEM.md` §5.34 pour la forme.
+- [ ] **Écran `/reglages/comptes-mail`**, hors de `ROUTES`, chargé à la demande, atteint depuis
+      l'index des réglages **avant** « État de la messagerie » — on configure une boîte avant d'en
+      superviser la relève (§21.2).
+- [ ] **Liste des comptes visibles** : une `ul` de lignes (§5.34), connexion en donnée technique,
+      mode de sécurité en toutes lettres, pilule d'état à quatre valeurs. Aucune politique nouvelle :
+      la RLS de `0022` décide seule de ce que chacun voit (§21.3).
+- [ ] **Formulaire de création et de modification**, dans le flux, replié par défaut, préremplí des
+      valeurs courantes, mot de passe toujours vide (§21.4, §21.5).
+- [ ] **Le mot de passe laissé vide est OMIS de l'appel**, jamais envoyé vide : mesuré, un appel
+      sans `p_password` conserve `secret_id` et les trois paramètres d'ingestion (§21.5, §21.6).
+- [ ] **Dictionnaire fermé des refus** (§21.7), avec son **repli nommé** : un refus inconnu se dit
+      sans recopier le corps du serveur — qui divulgue `secret_id`, mesuré, `INC-193`.
+- [ ] **Aucune commande éteinte d'avance selon le rôle** : le sélecteur de boîte visée porte ses
+      deux options pour tout le monde, et la lectrice lit le refus traduit (§21.4).
+- [ ] **Test unitaire dédié** du module de lecture et d'écriture, et du composant.
+- [ ] **Test d'API dédié** : une lectrice configure sa propre boîte, et se voit refuser la boîte
+      système — avec son jeton réel, hors interface.
+- [ ] **Test E2E d'interface dédié** : parcours complet d'un administrateur, et un refus réel obtenu
+      par un port hors bornes.
+- [ ] **Vérification visuelle** : captures aux paliers du §7 de `docs/DESIGN_SYSTEM.md`, produites
+      **et observées** (`CLAUDE.md` §16).
+- [ ] **Documentation dans le même changement** : `docs/manual.md`, `docs/SPEC-webapp.md` §5.2,
+      `CHANGELOG.md` sous `[Non publié]`.
+- [ ] **Écarts nommés, jamais suggérés** (§21.1) : aucun test de connexion depuis l'écran — la route
+      interne exige le jeton d'API du service, qu'un navigateur ne peut pas porter —, aucune
+      suppression, aucun paramètre d'ingestion éditable, aucune identité sortante.
+
+**Ce que l'unité ne fait pas, et pourquoi.** Elle n'ouvre **aucune** politique, **aucune** fonction
+et **aucune** migration : tout le contrat backend existe depuis `CRM-052`, et cette unité est
+exactement la surface qui manquait pour l'exercer. Elle ne corrige pas `INC-193` — la divulgation de
+`secret_id` par le corps d'un refus de contrainte est étrangère à cet écran, qui se borne à ne
+jamais l'afficher.
