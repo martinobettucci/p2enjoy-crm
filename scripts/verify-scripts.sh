@@ -84,6 +84,11 @@ BACKUP_AGE_RECIPIENTS_FILE  lue par scripts/backup.sh depuis CRM-080, jamais par
 BACKUP_OUTPUT_DIR           lue par scripts/backup.sh depuis CRM-080, jamais par un service
 BACKUP_RETENTION_DAYS       lue par scripts/backup.sh depuis CRM-080, jamais par un service
 RESTORE_AGE_IDENTITY_FILE   lue par scripts/restore-drill.sh depuis CRM-080 tranche 2, jamais par un service ; elle désigne une clé PRIVÉE et n'a rien à faire sur l'hôte qui sauvegarde
+BACKUP_MAX_AGE_HOURS        lue par scripts/backup-supervision.sh depuis CRM-080 tranche 3, jamais par un service
+BACKUP_MIN_RECIPIENTS       lue par scripts/backup-supervision.sh depuis CRM-080 tranche 3, jamais par un service
+BACKUP_OFFSITE_DIR          lue par scripts/backup-supervision.sh depuis CRM-080 tranche 3, jamais par un service
+BACKUP_DRILL_STAMP_FILE     lue par scripts/backup-supervision.sh depuis CRM-080 tranche 3, jamais par un service ; elle est écrite par le déclencheur de l'exercice, jamais par un script du dépôt
+BACKUP_DRILL_MAX_AGE_DAYS   lue par scripts/backup-supervision.sh depuis CRM-080 tranche 3, jamais par un service
 "
 
 # --- 1. Le gabarit est le contrat exact de l'assemblage ----------------------------------------
