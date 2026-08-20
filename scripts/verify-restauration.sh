@@ -348,35 +348,34 @@ refus_exige "cas v (archive introuvable)" "aucune archive à restaurer" "$BAC/ne
 
 titre "6. Cas w — un nom déjà pris : refus, et le conteneur étranger SURVIT"
 
-# Le nom que l'exercice choisira à la seconde près. Le harnais le devine en prenant l'horodatage
-# courant ; si la seconde tourne entre-temps, l'exercice prendra un autre nom et le cas ne prouvera
-# rien : il est donc rejoué jusqu'à trois fois, et un échec de synchronisation est DIT, jamais
-# converti en succès.
-CAS_W_TENU=0
-for _ in 1 2 3; do
-	USURPATEUR="$PREFIXE_JETABLE-$(date -u '+%Y%m%dT%H%M%SZ')"
-	docker run -d --name "$USURPATEUR" --entrypoint sleep alpine:3 300 >/dev/null 2>&1 || break
-	if exercer "$ARCHIVE"; then
-		docker rm -f "$USURPATEUR" >/dev/null 2>&1; USURPATEUR=""
-		continue
-	fi
-	if grep -q "existe déjà : l'exercice refuse de réutiliser" "$BAC/exercice.log"; then
-		CAS_W_TENU=1
-		break
-	fi
-	docker rm -f "$USURPATEUR" >/dev/null 2>&1; USURPATEUR=""
-done
+# LE NOM EST IMPOSÉ, IL N'EST PAS DEVINÉ — et c'est pourquoi `--suffixe` existe. La première
+# rédaction de ce contrôle prenait l'horodatage courant en espérant que l'exercice calculerait le
+# même une fraction de seconde plus tard, APRÈS son déchiffrement et sa vérification d'empreintes,
+# dont la durée varie. MESURÉ : vert à une exécution, rouge à la suivante. Un contrôle intermittent
+# n'est pas une preuve, et la réponse n'était ni une temporisation ni un rejeu — c'était de rendre
+# le nom déterministe. L'exercice a donc gagné une option, et ce contrôle éprouve enfin R24.
+DISCRIMINANT="usurpateur-$$"
+USURPATEUR="$PREFIXE_JETABLE-$DISCRIMINANT"
+docker run -d --name "$USURPATEUR" --entrypoint sleep alpine:3 300 >/dev/null 2>&1 \
+	|| { echo "ERREUR : le conteneur d'usurpation du cas w n'a pas pu être créé." >&2; exit 1; }
+USURPATEUR_ID=$(docker ps -q --filter "name=^/$USURPATEUR$")
 
-if [ "$CAS_W_TENU" = "1" ]; then
-	ok "cas w : l'exercice refuse un nom jetable déjà pris"
-	[ -n "$(docker ps -aq --filter "name=^/$USURPATEUR$")" ] \
-		&& ok "cas w : le conteneur étranger a SURVÉCU — la garde ne détruit que ce qu'elle a créé" \
-		|| fail "cas w : le conteneur étranger a été détruit (docs/SPEC-backups.md §11.2)"
-	docker rm -f "$USURPATEUR" >/dev/null 2>&1
-	USURPATEUR=""
+if exercer --suffixe "$DISCRIMINANT" "$ARCHIVE"; then
+	fail "cas w : l'exercice a réussi alors qu'un conteneur portait déjà son nom jetable"
 else
-	fail "cas w : le nom jetable n'a pas pu être devancé en trois essais — le contrôle n'a rien prouvé"
+	grep -q "existe déjà : l'exercice refuse de réutiliser" "$BAC/exercice.log" \
+		&& ok "cas w : l'exercice refuse un nom jetable déjà pris" \
+		|| fail "cas w : refusé, mais pas pour le nom déjà pris — $(tail -2 "$BAC/exercice.log")"
 fi
+
+# LE CONTRÔLE QUI COMPTE : le conteneur étranger est toujours là, ET C'EST LE MÊME — comparé par son
+# identifiant, un conteneur recréé sous le même nom ne passerait pas.
+[ "$(docker ps -q --filter "name=^/$USURPATEUR$")" = "$USURPATEUR_ID" ] \
+	&& ok "cas w : le conteneur étranger a SURVÉCU, identifiant inchangé — la garde ne détruit que ce qu'elle a créé" \
+	|| fail "cas w : le conteneur étranger a été détruit ou recréé (docs/SPEC-backups.md §11.2)"
+
+docker rm -f "$USURPATEUR" >/dev/null 2>&1
+USURPATEUR=""
 
 # --- 7. Cas x et z : l'état final ---------------------------------------------------------------
 

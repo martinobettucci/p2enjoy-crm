@@ -18,6 +18,7 @@
 #   scripts/restore-drill.sh                 restaure la plus récente archive de $BACKUP_OUTPUT_DIR
 #   scripts/restore-drill.sh ARCHIVE         restaure l'archive désignée
 #   scripts/restore-drill.sh --conserver     laisse l'environnement jetable debout pour inspection
+#   scripts/restore-drill.sh --suffixe NOM   nomme l'environnement jetable au lieu de l'horodater
 #   scripts/restore-drill.sh --help
 #
 # Variables d'environnement (docs/SPEC-backups.md §11.5) :
@@ -55,11 +56,25 @@ DELAI_DEMARRAGE=120
 
 ARCHIVE_ARG=""
 CONSERVER=0
+SUFFIXE_ARG=""
 
 while [ $# -gt 0 ]; do
 	case "$1" in
 		--help|-h) print_header_help "$SCRIPT_PATH"; exit 0 ;;
 		--conserver) CONSERVER=1; shift ;;
+		--suffixe)
+			[ $# -ge 2 ] || die "--suffixe attend un nom."
+			SUFFIXE_ARG=$2
+			# LE PRÉFIXE N'EST JAMAIS NÉGOCIABLE, ET C'EST CE QUI REND CETTE OPTION SÛRE. Le suffixe
+			# ne peut porter que des lettres, des chiffres, un point, un tiret ou un souligné : il ne
+			# peut donc pas fabriquer un nom qui sortirait de « p2enjoy-restauration-* », ni viser un
+			# conteneur de la pile. Sans cette validation, l'option ouvrirait exactement le trou que
+			# la garde du §11.2 ferme.
+			case "$SUFFIXE_ARG" in
+				''|*[!A-Za-z0-9._-]*) die "--suffixe n'accepte que des lettres, chiffres, points, tirets et soulignés." ;;
+			esac
+			shift 2
+			;;
 		-*) die "argument inconnu « $1 ». Voir --help." ;;
 		*)
 			[ -z "$ARCHIVE_ARG" ] || die "une seule archive peut être restaurée à la fois."
@@ -208,8 +223,16 @@ info "empreintes  $MEMBRES membre(s) vérifié(s), toutes conformes"
 # --- L'environnement jetable (§11.1, §11.3 point 5) ---------------------------------------------
 
 HORODATAGE=$(date -u '+%Y%m%dT%H%M%SZ')
-NOM_DB="p2enjoy-restauration-$HORODATAGE"
-NOM_MINIO="p2enjoy-restauration-objets-$HORODATAGE"
+# `--suffixe` REND LE NOM PRÉVISIBLE, et il a été ajouté pour une raison mesurée : le refus R24 ne
+# pouvait pas être éprouvé autrement. Un harnais qui veut placer un conteneur sur le nom que
+# l'exercice s'apprête à prendre doit deviner la seconde à laquelle l'exercice l'aura calculée —
+# après le déchiffrement et la vérification des empreintes, dont la durée varie. Le contrôle
+# devenait intermittent, c'est-à-dire sans valeur probante ; l'option le rend déterministe. Elle
+# sert aussi à l'exploitation, deux exercices lancés dans la même seconde entrant sinon en
+# collision. Le préfixe, lui, reste imposé (voir la validation ci-dessus).
+DISCRIMINANT=${SUFFIXE_ARG:-$HORODATAGE}
+NOM_DB="p2enjoy-restauration-$DISCRIMINANT"
+NOM_MINIO="p2enjoy-restauration-objets-$DISCRIMINANT"
 
 # R24 — un nom déjà pris arrête l'exercice. Il ne réutilise ni n'écrase un conteneur qu'il n'a pas
 # créé : c'est ce qui rend la garde de destruction sûre, puisqu'elle ne détruira jamais que ce que

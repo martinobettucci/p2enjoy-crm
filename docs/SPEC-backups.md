@@ -560,7 +560,16 @@ L'exercice crée **exactement un** conteneur PostgreSQL, et — si l'archive por
 plus un** conteneur MinIO. Tous deux portent :
 
 - un **nom dédié**, dérivé de l'horodatage de l'exercice :
-  `p2enjoy-restauration-AAAAMMJJTHHMMSSZ` et `p2enjoy-restauration-objets-AAAAMMJJTHHMMSSZ` ;
+  `p2enjoy-restauration-AAAAMMJJTHHMMSSZ` et `p2enjoy-restauration-objets-AAAAMMJJTHHMMSSZ`.
+  `--suffixe NOM` remplace l'horodatage par un nom choisi — **le préfixe, lui, n'est jamais
+  négociable**, et le suffixe est restreint aux lettres, chiffres, points, tirets et soulignés, si
+  bien qu'aucune valeur ne peut fabriquer un nom sortant de `p2enjoy-restauration-*`. L'option
+  existe pour une raison mesurée : le refus R24 ne pouvait pas être éprouvé sans elle, un harnais
+  devant sinon **deviner la seconde** à laquelle l'exercice calculerait son nom, après un
+  déchiffrement dont la durée varie. Le contrôle était intermittent — vert à une exécution, rouge à
+  la suivante —, et la réponse juste n'était ni une temporisation ni un rejeu, mais un nom
+  déterministe. Elle sert aussi à l'exploitation : deux exercices lancés dans la même seconde
+  entreraient sinon en collision ;
 - une **étiquette dédiée** : `com.p2enjoy.restauration=AAAAMMJJTHHMMSSZ`.
 
 Aucun autre objet Docker n'est créé : ni réseau, ni volume nommé, ni pile Compose. L'exercice
@@ -646,7 +655,7 @@ qui les perdrait rendrait toutes les données lisibles par n'importe quel porteu
 
 `scripts/restore-drill.sh [ARCHIVE]` prend en argument le chemin d'une archive ; sans argument, il
 prend **la plus récente** de `BACKUP_OUTPUT_DIR` selon le tri lexicographique du nom, que le §3.1
-rend chronologique. `--conserver` et `--help` complètent l'interface.
+rend chronologique. `--conserver`, `--suffixe NOM` (§11.1) et `--help` complètent l'interface.
 
 **C'est ici, et seulement ici, qu'une clé PRIVÉE est lue.** La tranche 1 n'en lit jamais (§3.4) :
 l'hôte qui sauvegarde ne peut relire aucune de ses archives. L'exercice de restauration est donc
@@ -696,7 +705,7 @@ Chaque refus s'arrête avec le code `1`, nomme sa cause, et **laisse la pile cou
 | t | Identité `age` qui n'ouvre pas l'archive | R28, code `1`, aucun conteneur jetable créé |
 | u | `RESTORE_AGE_IDENTITY_FILE` non renseignée | R21, code `1` |
 | v | Archive inexistante, ou répertoire sans archive | R26, code `1` |
-| w | Un conteneur porte déjà le nom jetable | R24, code `1`, et le conteneur existant **n'est ni touché ni détruit** |
+| w | Un conteneur porte déjà le nom jetable | R24, code `1`, et le conteneur existant **n'est ni touché ni détruit** — vérifié par son **identifiant**, un conteneur recréé sous le même nom ne passant pas |
 | x | Exercice interrompu en cours de restauration | Le `trap` détruit l'environnement jetable ; la pile courante est intacte |
 | y | Archive sans `objets.tar` (`depot_objet=externe`) | Aucun MinIO jetable créé, I7 **annoncé non applicable**, les six autres comparés |
 | z | Après un exercice réussi ou échoué | `docker ps` ne porte **aucun** conteneur `p2enjoy-restauration-*`, et les 17 services de la pile sont intacts |
