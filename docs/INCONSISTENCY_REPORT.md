@@ -3754,3 +3754,47 @@ issues, aucune tranchée ici :
 3. **le secret ne vit plus dans une colonne de la ligne** — une table de liaison `(account_id,
    secret_id)` hors du schéma exposé, ce qui est une évolution de schéma qu'aucune unité n'a
    demandée et qui rouvrirait `CRM-052`.
+
+## Consigné le 2026-08-21 — un focus rendu à un élément détaché, étranger à `CRM-089`
+
+### INC-194 — `ReglagesComptesMail` perd le focus quand son formulaire se referme depuis la commande du bas
+
+**Où.** `webapp/src/app/ReglagesComptesMail.tsx` (`CRM-088`), le retour du focus après
+« Annuler » ou après un enregistrement réussi.
+
+**Ce que la règle demande.** `docs/DESIGN_SYSTEM.md` §5.13 : fermer un formulaire rend le focus à
+la commande qui l'a ouvert. Le §5.25 précise que ce retour est **différé d'un tour de rendu**,
+la commande étant démontée pendant l'ouverture.
+
+**Ce qui se passe, et la cause est structurelle.** Deux commandes peuvent ouvrir ce formulaire, et
+elles n'ont pas le même sort :
+
+- celle d'une **ligne** (`configurer-compte`) reste montée — la liste ne disparaît pas —, donc son
+  nœud est encore dans le document à la fermeture, et le focus lui revient correctement ;
+- celle du **bas** (`ouvrir-configuration`) s'**exclut** du formulaire (§5.23, « la commande et lui
+  s'excluent ») : son nœud est **détruit** à l'ouverture. La référence capturée au clic pointe
+  alors un élément détaché du document, et `focus()` sur un tel élément **ne fait rien** — le focus
+  retombe sur `<body>`.
+
+**Mesuré le 2026-08-21**, en écrivant la preuve de composant de `CRM-089`, dont l'écran est bâti
+sur le même patron : l'assertion « le focus revient à `ouvrir-identite` » échoue, `document.activeElement`
+valant `<body>`. Le même geste sur la commande d'une **ligne** réussit — c'est d'ailleurs le seul
+que la preuve de `CRM-088` exerce (`ReglagesComptesMail.test.tsx`, « entre le focus dans le premier
+champ, et le rend à la commande à la fermeture », qui clique `configurer-compte`). L'absence de
+preuve sur l'autre chemin est la raison pour laquelle le défaut n'avait pas été vu.
+
+**Portée.** Accessibilité au clavier (`CLAUDE.md` §22). Une personne qui ouvre le formulaire depuis
+la commande du bas, puis l'annule, perd sa position dans la page et doit re-tabuler depuis le début
+du document. Aucune donnée n'est en jeu, aucune règle d'autorisation.
+
+**Le remède est connu et déjà appliqué ailleurs** : `webapp/src/app/ReglagesIdentitesMail.tsx`
+(`CRM-089`) fait porter à la commande du bas sa **propre** référence, que React réassigne au nœud
+neuf quand elle remonte, et ne retient dans l'origine que **laquelle** des deux commandes a ouvert.
+Aucune temporisation n'est employée. La correction de `CRM-088` consiste à transposer ce patron, et
+à ajouter la preuve de composant qui manque sur ce chemin.
+
+**Laissé INCHANGÉ** conformément à `CLAUDE.md` §18 et au §3.1 de `docs/CloudWorker.md` : le défaut
+appartient à `CRM-088`, close depuis la décision 495, et le corriger au passage sortirait du
+périmètre de la session. Il n'est ni masqué, ni contourné.
+
+**Statut : ouvert.**

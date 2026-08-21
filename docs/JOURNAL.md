@@ -22629,9 +22629,17 @@ fichier avant de le restaurer. Vu à la relecture du diff, retiré de l'index. *
 pendant qu'un harnais qui dégrade des fichiers s'exécute** ; relire le diff avant chaque commit
 reste le seul filet.
 
-**Ce qui n'a pas été exécuté**, et il faut le dire (`CLAUDE.md` §25) : les **cinquante-six autres**
-`scripts/verify-*.sh`. Le budget de la session est passé dans la livraison et dans la campagne ;
-INC-190 mesure que la série entière demande environ 75 min à part.
+**Ce qui n'a pas été exécuté par CETTE session**, et il faut le dire (`CLAUDE.md` §25) : le dépôt
+porte **soixante-deux** `scripts/verify-*.sh`, dont **deux** ont été rejoués ici —
+`verify-mail-identites.sh` (**52 contrôles, aucune anomalie**) et `verify-harness.sh --rapide`
+(**31 contrôles, aucune anomalie**, après révision de ses deux compteurs). Les **soixante autres**
+ne l'ont pas été : le budget est passé dans la livraison et dans la campagne, et INC-190 mesure que
+la série entière demande environ 75 min à part.
+
+**Une session concurrente a rejoué la série entière pendant celle-ci** (décision 495) : 61 harnais
+sur 61, 38 verts, 19 rouges lus un par un et tous préexistants ou étrangers, 4 au plafond de temps.
+Cette exécution est **antérieure** à l'arrivée de `CRM-089` sur `origin/main` : elle ne dit donc
+rien de cet écran, et c'est précisément la raison pour laquelle l'unité reste `[~]`.
 
 **Où reprendre.** `CRM-088` est `[~]`, **douze points sur treize cochés** — le harnais dédié compris,
 livré par la session concurrente et rejoué ici. Le seul reste est la série des harnais non exécutés
@@ -22810,3 +22818,86 @@ backlog n'est pas soldé, et il reste des voies ouvertes — la plus utile au pr
 **retourner les compteurs figés d'INC-191 sous chaque unité concernée**, geste qui viderait dix
 rouges de la série et que la décision 488 désignait déjà. `INC-190` et `INC-193` attendent toujours
 l'arbitrage du responsable.
+
+## décision 496 — `CRM-089` livrée en `[~]` : l'écran des identités d'expédition existe
+
+**Session du 2026-08-21, 02h08 à ~04h00 UTC**, la même que la décision 494, dont elle rend compte
+de la livraison. Pile levée par `./runDev.sh` (17 services persistants *healthy*), seed appliqué,
+Node 24.19.0 installé par `nvm`, `npm ci` posé.
+
+**Ce qui a été codé.**
+
+- `webapp/src/lib/mail-identites.ts` — lecture de `mail_outbound_identities` sous la RLS de `0023`
+  (treize colonnes ; ni `secret_id`, ni `daily_quota`, ni `signature_html`), écriture par
+  `upsert_mail_outbound_identity` dans la signature que la migration `0033` fixe, et le
+  dictionnaire fermé des douze issues du §22.8.
+- `webapp/src/app/ReglagesIdentitesMail.tsx` — liste plate des identités visibles, adresse en tête
+  sous la forme `Nom <adresse>`, pilule `success` « Par défaut », formulaire dans le flux replié par
+  défaut, refus traduit **sans jamais recopier le corps du serveur**.
+- Route `/reglages/identites-mail` hors de `ROUTES`, entrée d'index **entre** « Comptes entrants »
+  et « État de la messagerie », traductions.
+- `scripts/verify-mail-identites.sh` — le harnais dédié, écrit après son contrat (§22.12 bis).
+
+**TROIS RÈGLES D'ENVOI, ET DEUX SONT OPPOSÉES.** C'est le cœur de cette unité, et rien ne se
+devinait à la lecture : `p_password` est **omis** quand le champ est vide, ce qui conserve le
+secret ; `p_from_name` est **toujours envoyé**, y compris vide, parce qu'il est sous `coalesce` et
+que l'omettre rendrait un nom d'expéditeur ineffaçable ; `p_daily_quota` et `p_signature_html` ne
+sont **jamais** envoyés, leur `coalesce` interdisant tout retour à `NULL`.
+
+**DEUX DÉFAUTS TROUVÉS EN ÉCRIVANT LES PREUVES, ET CORRIGÉS DANS LA SESSION.**
+
+- *Le focus perdu.* La commande du bas s'exclut du formulaire (§5.23) : son nœud est **détruit** à
+  l'ouverture, et lui garder une référence rendait le focus à un élément détaché du document —
+  c'est-à-dire nulle part. Elle porte désormais sa propre référence, que React réassigne au nœud
+  neuf, et l'origine ne retient que laquelle des deux commandes a ouvert. Aucune temporisation.
+  **L'écran jumeau de `CRM-088` porte le même défaut** : il est consigné au registre, non corrigé
+  ici (§3.1).
+- *Le sélecteur qui déborde.* À 390 px, « Envoi de Driss Lemoine — contact@p2enjoy.test » sortait de
+  sa carte, chevron coupé au bord de la fenêtre : un `select` tire sa largeur de sa plus longue
+  option, et le §5.35 nomme une identité par deux données. **La page ne défilait pas pour autant**,
+  si bien que l'assertion de débordement restait verte — seul l'œil l'a vu (`CLAUDE.md` §16).
+
+**UN DÉFAUT TROUVÉ EN EXÉCUTANT LA PREUVE D'INTERFACE, ET IL A CHANGÉ LA SPÉCIFICATION.** Le
+scénario du refus croyait éprouver la contrainte d'adresse ; il obtenait `password_required`.
+Mesuré : l'adresse étant dans la **clé**, une adresse que la base ne retrouve pas fait de l'appel
+une **déclaration**, et la fonction vérifie le mot de passe **avant** d'insérer. Un exploitant qui
+corrige une faute de frappe verra donc « un mot de passe est exigé ». Les deux réponses sont
+écrites au §22.4, et le manuel les dit à l'utilisateur.
+
+**Campagne complète de fin de session, exécutée une fois, et voici ses mesures.**
+
+| Preuve | Verdict |
+|---|---|
+| `npm run typecheck` | vert, quatre projets `tsc` |
+| `npm run build` | vert, paquet principal **230,12 ko** (229,34 avant : le câblage de la route ; l'écran est chargé à la demande) |
+| `npm run test:unit` | **71 fichiers, 2392 tests, aucun échec** (2325 avant : +62 de cette unité, +5 déjà présents) |
+| `npm run test:sql` | **50 fichiers, 2480 assertions, aucune anomalie** — identique |
+| `npm run e2e:api` | **824 passés** (821 avant, +3 de cette unité) |
+| `npm run e2e:ui` | **566 passés** (557 avant, +9 de cette unité) |
+| `npm run e2e:mail` | **42 passés, aucun échec** — INC-181 ne s'est pas reproduite ce jour |
+| `pytest` (`mail-sync`) | **244 passés** |
+| `scripts/verify-mail-identites.sh` | **52 contrôles, aucune anomalie**, quatre dégradations vues |
+
+**Aucun rouge n'est imputable à cette unité**, et la campagne n'en a rendu aucun.
+
+**Deux garde-fous RÉVISÉS, jamais retirés** (mécanisme de la décision 51) : `SCENARIOS_API` 821 →
+**824**, `SCENARIOS_UI` 557 → **566**, motifs écrits dans `scripts/verify-harness.sh`. Valeurs
+**comptées** par `playwright test --list`, jamais déduites.
+
+**Les captures régénérées par la campagne ont été RESTAURÉES**, hors celles de cette unité : rejouer
+la série entière réécrit cent trente fichiers dont le rendu est identique, et les committer
+laisserait croire que cent trente écrans ont été observés. Les huit captures de `CRM-089` sont, elles,
+produites **et regardées** — c'est ainsi que le débordement du sélecteur a été trouvé.
+
+**Ce qui n'a pas été exécuté**, et il faut le dire (`CLAUDE.md` §25) : les **cinquante-six autres**
+`scripts/verify-*.sh`. Le budget de la session est passé dans la livraison et dans la campagne ;
+INC-190 mesure que la série entière demande environ 75 min à part.
+
+**Où reprendre.** `CRM-089` est `[~]`, tous ses points cochés sauf ce dernier : la série des
+soixante harnais que cette session n'a pas rejoués **derrière son changement**. La prochaine
+exécution peut clore l'unité en la rejouant, ou en constatant que ce qu'elle couvre est étranger à
+cette surface — l'écran n'ouvre aucune politique, aucune fonction et aucune migration. Le reste du produit est inchangé : les `[~]` antérieures attendent toujours un
+arbitrage du responsable (`CRM-060`, `CRM-083`, `CRM-084`), une unité non ouverte (`CRM-013`,
+`CRM-014`) ou un hôte sans interception TLS (`CRM-001`, INC-186). **`INC-193` attend toujours un
+arbitrage de sécurité**, et **`INC-194` est ouverte** : l'écran de `CRM-088` perd le focus quand on
+referme son formulaire depuis la commande du bas.

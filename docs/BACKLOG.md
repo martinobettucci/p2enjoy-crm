@@ -11056,33 +11056,72 @@ produites **et observées**.
 - [x] **Spécification écrite et committée AVANT la première ligne de code** —
       `docs/SPEC-mail-subsystem.md` §22, treize sous-chapitres opposables, rédigés **après mesure**
       sur la pile réelle (§22.7) ; `docs/DESIGN_SYSTEM.md` §5.35 pour la forme, en écarts seulement.
-- [ ] **Écran `/reglages/identites-mail`**, hors de `ROUTES`, chargé à la demande, atteint depuis
+- [x] **Écran `/reglages/identites-mail`**, hors de `ROUTES`, chargé à la demande, atteint depuis
       l'index des réglages **après** « Comptes entrants » et **avant** « État de la messagerie »
       (§22.2). L'ordre de l'index est vérifié par une assertion, non seulement écrit.
-- [ ] **Liste des identités visibles** : une `ul` de lignes (§5.35), adresse d'expédition en tête,
+- [x] **Liste des identités visibles** : une `ul` de lignes (§5.35), adresse d'expédition en tête,
       nom d'expéditeur rendu `Nom <adresse>`, pilule `success` « Par défaut », pilule d'état à
       quatre valeurs. Aucune politique nouvelle : la RLS de `0023` décide seule.
-- [ ] **Formulaire de déclaration et de modification**, dans le flux, replié par défaut, prérempli
+- [x] **Formulaire de déclaration et de modification**, dans le flux, replié par défaut, prérempli
       des valeurs courantes, mot de passe toujours vide (§22.5, §22.6).
-- [ ] **Le mot de passe laissé vide est OMIS de l'appel** ; **`p_from_name` est TOUJOURS envoyé**,
+- [x] **Le mot de passe laissé vide est OMIS de l'appel** ; **`p_from_name` est TOUJOURS envoyé**,
       y compris vide — les deux mesurés en sens inverse (§22.5, §22.7).
-- [ ] **`p_daily_quota` et `p_signature_html` ne sont JAMAIS envoyés** (§22.1) : leur `coalesce`
+- [x] **`p_daily_quota` et `p_signature_html` ne sont JAMAIS envoyés** (§22.1) : leur `coalesce`
       les rend ineffaçables, et un champ qui ne sait pas revenir en arrière est un piège.
-- [ ] **Dictionnaire fermé des refus** (§22.8), avec son repli nommé : un refus inconnu se dit sans
+- [x] **Dictionnaire fermé des refus** (§22.8), avec son repli nommé : un refus inconnu se dit sans
       recopier le corps du serveur — qui divulgue `secret_id`, `INC-193`.
-- [ ] **Changer l'adresse d'expédition déclare une SECONDE identité** (§22.4) : comportement mesuré
+- [x] **Changer l'adresse d'expédition déclare une SECONDE identité** (§22.4) : comportement mesuré
       de la base, nommé par un texte d'aide, ni contrarié ni masqué.
-- [ ] **Test unitaire dédié** du module et du composant.
-- [ ] **Test d'API dédié** ajouté à `e2e/api/identites-sortantes.spec.ts` : la lectrice déclare sa
-      propre identité, se voit refuser celle de service, et le déplacement du défaut est constaté
-      par relecture.
-- [ ] **Test E2E d'interface dédié**, console vierge : parcours d'un administrateur, refus réel sur
-      une adresse d'expédition non conforme, état vide d'une lectrice, et les quatre paliers.
-- [ ] **Vérification visuelle** : captures sous `docs/captures/CRM-089/`, produites **et observées**.
-- [ ] **Documentation dans le même changement** : `docs/manual.md`, `docs/SPEC-webapp.md`,
-      `CHANGELOG.md` sous `[Non publié]`.
-- [ ] **Harnais dédié** `scripts/verify-mail-identites.sh`, non complaisant et avec son témoin.
+- [x] **Test unitaire dédié** du module et du composant :
+      `webapp/src/lib/mail-identites.test.ts` (**43 assertions**) et
+      `webapp/src/app/ReglagesIdentitesMail.test.tsx` (**19 scénarios**), tous verts. Ils éprouvent
+      la REQUÊTE ÉMISE, et non la seule valeur rendue : c'est la seule façon de voir qu'un
+      paramètre est omis. Une assertion vérifie en outre que les noms de contrainte des comptes
+      **entrants** ne classent RIEN ici — deux jeux distincts, aux bornes distinctes.
+- [x] **Test d'API dédié** : trois scénarios ajoutés à `e2e/api/identites-sortantes.spec.ts`, la
+      suite rendant **10 verts** sur la pile réelle. La lectrice déclare sa propre identité
+      (`200`), se voit refuser celle de service (`403 forbidden`) avec sa contre-épreuve, changer
+      l'adresse rend un identifiant **neuf** et laisse deux lignes, et le nom d'expéditeur s'écrit,
+      se conserve quand le paramètre est omis, s'efface quand une chaîne vide est envoyée.
+- [x] **Test E2E d'interface dédié** : `e2e/ui/reglages-identites-mail.spec.ts`, **9 scénarios
+      verts, console vierge**. Parcours depuis l'index des réglages avec l'ordre des **trois**
+      entrées vérifié par assertion, modification du libellé suivie de la **preuve que le secret
+      déchiffre toujours**, apparition de la SECONDE identité quand l'adresse change, refus réel
+      d'une adresse non conforme, état vide d'une lectrice avec son geste, et les quatre paliers.
+- [x] **Vérification visuelle** : huit captures sous `docs/captures/CRM-089/`, produites **et
+      observées**. **UN DÉFAUT Y A ÉTÉ TROUVÉ ET CORRIGÉ** : à 390 px, le sélecteur d'identité
+      débordait de sa carte, chevron coupé au bord de la fenêtre — un `select` tire sa largeur de
+      sa plus longue option, et nommer une identité « libellé — adresse » la rend longue. La page
+      ne défilait pas pour autant : **aucune assertion ne l'attrapait, seul l'œil**. Étiquettes en
+      `min-w-0`, champs en `max-w-full`.
+- [x] **Documentation dans le même changement** : `docs/manual.md` chapitre 4.13 et son tableau
+      des chapitres, `docs/SPEC-webapp.md` §5.2, `CHANGELOG.md` sous `[Non publié]`.
+- [x] **Harnais dédié `scripts/verify-mail-identites.sh`**, non complaisant et avec son témoin
+      (`docs/SPEC-mail-subsystem.md` §22.12 bis) : **52 contrôles, aucune anomalie**. Ses quatre
+      dégradations mordent, dont deux sans équivalent chez la jumelle — `p_from_name` omis quand il
+      est vide, et `p_daily_quota` envoyé.
+- [x] **Compteurs de `scripts/verify-harness.sh` révisés dans le MÊME changement** : `SCENARIOS_API`
+      821 → **824**, `SCENARIOS_UI` 557 → **566**. Valeurs **comptées**, jamais déduites. Garde-fous
+      RÉVISÉS, jamais retirés (mécanisme de la décision 51).
 
 **Ce que l'unité ne fait pas, et pourquoi.** Elle n'ouvre **aucune** politique, **aucune** fonction
 et **aucune** migration : tout le contrat backend existe depuis `CRM-053`, corrigé par la migration
 `0033`. Elle ne corrige pas `INC-193`, étrangère à cet écran, qui se borne à ne jamais l'afficher.
+
+*Pourquoi l'unité reste `[~]` et non `[x]`.* Un seul reste, et il est nommé : **la série des
+`scripts/verify-*.sh` n'a pas été rejouée derrière ce changement**. Le dépôt en porte
+soixante-deux ; deux l'ont été. Ce qui a été exécuté, et son verdict :
+
+| Preuve | Verdict |
+|---|---|
+| `scripts/verify-mail-identites.sh` | **52 contrôles, aucune anomalie**, quatre dégradations vues |
+| `scripts/verify-harness.sh --rapide` | **31 contrôles, aucune anomalie**, après révision de ses deux compteurs |
+| `npm run typecheck` / `npm run build` | verts |
+| `npm run test:unit` | **71 fichiers, 2392 tests** |
+| `npm run test:sql` | **50 fichiers, 2480 assertions** |
+| `npm run e2e:api` / `e2e:ui` / `e2e:mail` | **824** / **566** / **42** passés |
+| `pytest` (`mail-sync`) | **244 passés** |
+
+Une session concurrente a rejoué la série entière le même jour (`docs/JOURNAL.md` décision 495),
+mais **avant** l'arrivée de cet écran : son verdict ne dit rien de cette surface. Le reste de la
+Definition of Done est vert et mesuré.
