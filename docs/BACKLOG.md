@@ -3241,7 +3241,18 @@ clés manquantes.
       listant les clés manquantes existe, dans le `DETAIL` du refus. Ce que la n° 6 contrôle est
       écrit en `docs/SPEC-form-composer.md` §6.7. **Le constat d'origine est conservé ci-dessous**,
       parce qu'il porte la décision et non seulement un état.
-- [ ] **~~LA VÉRIFICATION N° 6 N'EST PAS ÉCRITE — INC-047.~~** La Definition of Done exige « pgTAP
+- [x] **~~LA VÉRIFICATION N° 6 N'EST PAS ÉCRITE — INC-047.~~ ÉCRITE, LIVRÉE ET PROUVÉE — case
+      corrigée le 2026-08-21 (décision 497), le corps ci-dessous étant conservé pour son historique.**
+      MESURÉ ce jour sur la pile réelle : `public.move_card` porte bien sa sixième garde — le bloc
+      `missing_required_fields` de `supabase/migrations/0035_commentaires_lot_g.sql`, qui calcule
+      l'union des champs `required` de l'étape cible et des liaisons de `workflow_transition_required_fields`,
+      moins les archivés, et rend les clés manquantes ordonnées par `position` dans le `DETAIL`. Les
+      deux assertions qui figeaient l'écart **ont rougi à `CRM-036` et ont été retournées**, non
+      retirées (`supabase/tests/0013_move_card.test.sql` §M7, `e2e/api/move-card.spec.ts` §M7), et
+      **INC-047 est close** (`docs/SPEC-workflow-engine.md` §5.7). La case était restée à `[ ]` alors
+      que le corps de l'unité et la spécification documentaient la livraison depuis le 2026-08-05 —
+      même oubli qu'aux sous-tranches 4b et 4d de `CRM-060`. Texte d'origine :
+      La Definition of Done exige « pgTAP
       pour chacune des **six** » ; cinq sont livrées. La n° 6 demande que les champs requis de l'étape
       cible soient **renseignés**, et l'ensemble renseigné n'a aucune source : `card_field_values`
       est le livrable de `CRM-036`. MESURÉ, `to_regclass` rend `NULL`. Les deux écritures possibles
@@ -3254,12 +3265,15 @@ clés manquantes.
       Il voyage dans le `DETAIL` du refus, ordonné par `position`, et non dans le message, qui reste
       un jeton comparable par égalité comme les cinq refus précédents (décision 126). MESURÉ :
       PostgREST l'expose dans la clé `details` de sa réponse.
-- [ ] **Aucun écran, aucune capture, aucun test E2E d'interface.** Le board est `CRM-041`, et la
-      webapp reste un appelant **anonyme** faute d'écran de connexion — **INC-021, en attente
-      d'arbitrage**. Il n'existe **aucune** vérification visuelle sensée à produire : la garde n'a
-      pas de surface. Les règles sont livrées et prouvées **en base et par l'API**, ce que
-      `CLAUDE.md` §10 exige de toute façon. **Cette preuve est bloquée par un arbitrage, pas par un
-      défaut de l'unité** — onzième unité consécutive à buter sur INC-021.
+- [x] **Aucun écran, aucune capture, aucun test E2E d'interface — et le MOTIF A CHANGÉ, révisé le
+      2026-08-21 (décision 497).** Cette ligne disait « bloquée par un arbitrage » et nommait
+      **INC-021**, la webapp étant alors un appelant anonyme. **INC-021 est close depuis `CRM-009`**
+      : la webapp porte son écran de connexion, employé par les suites d'interface, et cette preuve
+      n'est plus bloquée par quoi que ce soit. Le motif exact, définitif, est autre : `move_card`
+      est une règle de base que **par construction aucun écran ne montre**, et le board qui l'exerce
+      est `CRM-041`, livré et prouvé. Il n'existe **aucune** vérification visuelle sensée à produire
+      pour cette unité ; les règles sont livrées et prouvées **en base et par l'API**, ce que
+      `CLAUDE.md` §10 exige de toute façon. Ce point n'est donc **pas** un reste dû.
 - [x] **~~Le commentaire fourni n'est conservé nulle part — INC-048.~~ CONSERVÉ**, et cette ligne
       était **PÉRIMÉE** — constaté par mesure le 2026-08-20 : INC-048 est **close** depuis la
       reprise de `CRM-034` par la migration 35 (`0035_commentaires_lot_g.sql`), qui écrit le motif

@@ -13,6 +13,21 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Corrigé
+
+- **`scripts/verify-move-card.sh` ne rougit plus de l'enrichissement du seed** (`CRM-034`, INC-191,
+  `docs/JOURNAL.md` décision 497). Le harnais de la garde centrale comparait la population de cards
+  seedées à un nombre écrit dans le fichier — quinze, valeur juste à `CRM-077` et fausse depuis que
+  `CRM-085` et `CRM-086` ont seedé les affaires que leurs lignes de coût exigent. Il rendait donc
+  « 1 anomalie » sur un dépôt sain, ce qu'une session pressée aurait pu lire comme une régression de
+  `move_card`.
+
+  L'assertion n'est pas relevée à quarante et une : elle est **retournée** en invariant (mécanisme
+  de la décision 51). Le harnais relève la population à son ouverture et vérifie en sortant qu'il
+  l'a rendue intacte, avec une **empreinte portant l'étape de chaque card** — un simple compte ne
+  verrait pas une remise en place oubliée, MESURÉ : déplacer une card laisse le compte à 41 et
+  change l'empreinte. Le contrôle est donc plus strict qu'avant, et il ne peut plus se refiger.
+
 ### Ajouté
 
 - **Un écran pour déclarer les adresses d'expédition : « Réglages ▸ Identités d'expédition »**

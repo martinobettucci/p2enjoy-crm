@@ -26,17 +26,24 @@
 # ---------------------------------------------------------------------------------------------
 # Ce que ce harnais ne prouve pas, et le dit.
 # ---------------------------------------------------------------------------------------------
-# Il ne prouve **rien d'une interface**. Le board est `CRM-041`, et la webapp reste un appelant
-# anonyme faute d'écran de connexion (INC-021) : il n'existe ni écran ni capture à produire pour
-# cette unité. Les règles sont livrées et prouvées **en base et par l'API**, ce que `CLAUDE.md` §10
-# exige de toute façon.
+# Il ne prouve **rien d'une interface**, et le motif a CHANGÉ — révisé le 2026-08-21, décision 497.
+# Il ne disait pas « aucun écran n'est dû » mais « la webapp reste un appelant anonyme faute d'écran
+# de connexion (INC-021) » : **INC-021 est close depuis `CRM-009`**, et la webapp porte son écran de
+# connexion. Le motif exact est donc celui-ci, et il est définitif : le board est `CRM-041`, et
+# `move_card` est une règle de base que par construction aucun écran ne montre. Les règles sont
+# livrées et prouvées **en base et par l'API**, ce que `CLAUDE.md` §10 exige de toute façon.
 #
-# Il ne prouve **pas la vérification n° 6** — champs requis renseignés — parce qu'elle n'est pas
-# écrite : `card_field_values` est due par `CRM-036`. L'écart est **figé par des assertions** de la
-# suite pgTAP et du scénario d'API, qui deviendront rouges à cette unité (INC-047).
+# Il prouve la **vérification n° 6** — champs requis renseignés — par la suite pgTAP, et depuis
+# `CRM-036` seulement : `card_field_values` n'existait pas à la livraison de cette unité, l'écart
+# était figé par des assertions destinées à rougir, elles ont rougi et ont été RETOURNÉES.
+# **INC-047 est close** (`docs/SPEC-workflow-engine.md` §5.7). Le refus par l'API — `400`,
+# `missing_required_fields`, `DETAIL` portant les clés manquantes ordonnées par `position` — et son
+# cas symétrique vivent dans `scripts/verify-valeurs-champs.sh` §5, sous `CRM-036` qui livre la
+# donnée : les rejouer ici ferait deux sources pour une même règle, qui divergeraient au premier
+# ajustement.
 #
-# Il ne prouve **pas la conservation du commentaire** : `card_comments` est due par `CRM-043`, et le
-# motif fourni est perdu (INC-048).
+# Il ne prouve **pas la conservation du commentaire** ici : elle est livrée depuis le lot G
+# (migration 35, INC-048) et éprouvée sous `CRM-043`, à qui `card_comments` appartient.
 #
 # Le script ne démarre ni n'arrête rien : la pile de développement doit déjà tourner
 # (`./runDev.sh`) et le seed être appliqué (`supabase/seed/apply-seed.sh`).
@@ -176,6 +183,24 @@ fail() { checks=$((checks + 1)); failures=$((failures + 1)); printf '  \033[31mE
 titre() { printf '\n\033[1m%s\033[0m\n' "$1"; }
 
 psql_db() { docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -qtA "$@"; }
+
+# INSTANTANÉ D'OUVERTURE — INC-191, décision 497. La section 7 vérifiait « le seed est inchangé »
+# en comparant la population de cards à un NOMBRE écrit dans ce fichier. Un nombre écrit ici mesure
+# l'âge du seed, jamais le produit : il était juste à `CRM-077`, il est faux depuis que `CRM-085` et
+# `CRM-086` ont seedé les affaires dont leurs lignes de coût avaient besoin, et il redeviendrait
+# faux au prochain enrichissement. C'est la boucle qu'INC-141, INC-155 et INC-140 décrivent, et que
+# la décision 144 avait déjà nommée — « les contrôles mesuraient l'âge de la base, non le produit ».
+#
+# Le compte est donc RELEVÉ ICI, avant que ce harnais ne touche quoi que ce soit, et la section 7
+# vérifie l'INVARIANT que son titre annonce : le harnais rend la population telle qu'il l'a trouvée.
+# L'assertion n'est pas retirée, elle est retournée (mécanisme de la décision 51) — et elle ne peut
+# plus se refiger, puisqu'elle ne porte plus aucune valeur littérale.
+#
+# L'empreinte porte l'étape de chaque card, et pas seulement leur nombre : ce harnais DÉPLACE des
+# cards pour éprouver la garde, puis les remet en place par `remettre()`. Compter les lignes ne
+# verrait pas une remise en place oubliée ; comparer l'empreinte la voit.
+CARDS_A_L_OUVERTURE=$(psql_db -c "select count(*) from public.cards where id::text like '5eed%';")
+EMPREINTE_CARDS_A_L_OUVERTURE=$(psql_db -c "select md5(string_agg(id::text || ':' || coalesce(current_step_id::text, '-'), ',' order by id)) from public.cards where id::text like '5eed%';")
 
 CORPS=/tmp/p2enjoy-move-card-body
 http() {
@@ -622,11 +647,25 @@ titre '7. Le seed est inchangé par cette unité'
 	&& ok 'les cinq transitions « Marquer perdu » à commentaire sont là — la donnée qui exerce la n° 5' \
 	|| fail 'le graphe seedé a changé : les cinq transitions à commentaire ne sont plus cinq'
 
-# QUINZE DEPUIS `CRM-077`, cinquième tranche (docs/SPEC-seed.md §10.4 bis) : l'affaire `…0cf`
-# occupe `negociation` sous `dossiers-2023`, et ne franchit aucune arête.
-[ "$(psql_db -c "select count(*) from public.cards where id::text like '5eed%';")" = "15" ] \
-	&& ok 'les quinze cards du seed sont là, aux étapes déclarées' \
-	|| fail 'le nombre de cards seedées a changé'
+# RETOURNÉE LE 2026-08-21 — INC-191, décision 497. Cette assertion figeait « quinze cards », valeur
+# juste à la cinquième tranche de `CRM-077` (docs/SPEC-seed.md §10.4 bis) et fausse depuis que
+# `CRM-085` et `CRM-086` ont seedé les affaires que leurs lignes de coût exigent : MESURÉ le
+# 2026-08-21, la base en porte QUARANTE ET UNE. Le harnais rougissait donc de l'enrichissement du
+# seed, c'est-à-dire de son propre succès, et non d'un défaut de la garde.
+#
+# Ce que la section prétend tenir n'a jamais été « le seed vaut n lignes » — c'est « CE HARNAIS rend
+# le seed tel qu'il l'a trouvé ». L'assertion mesure désormais cela, contre l'instantané relevé à
+# l'ouverture, et elle ne peut plus se refiger : elle ne porte aucune valeur littérale. Elle n'est
+# pas retirée, elle est retournée (mécanisme de la décision 51).
+[ "$(psql_db -c "select count(*) from public.cards where id::text like '5eed%';")" = "$CARDS_A_L_OUVERTURE" ] \
+	&& ok "les $CARDS_A_L_OUVERTURE cards seedées sont toujours là : ce harnais n'en a créé ni détruit aucune" \
+	|| fail 'la population de cards a changé pendant ce harnais'
+
+# LE COMPTE NE SUFFIT PAS, et c'est le second membre du retournement : ce harnais déplace des cards
+# pour éprouver la garde. Une remise en place oubliée laisserait le compte juste et le seed faux.
+[ "$(psql_db -c "select md5(string_agg(id::text || ':' || coalesce(current_step_id::text, '-'), ',' order by id)) from public.cards where id::text like '5eed%';")" = "$EMPREINTE_CARDS_A_L_OUVERTURE" ] \
+	&& ok 'chaque card seedée a retrouvé son étape : les déplacements de ce harnais sont TOUS défaits' \
+	|| fail 'une card seedée n’a pas retrouvé son étape : ce harnais sort sur un seed dégradé'
 
 [ "$(psql_db -c "select count(*) from public.workflow_transitions where from_step_id = '$ETAPE_RELANCE' and to_step_id = '$ETAPE_REALISATION' and workflow_id = '$WF_GLOBAL';")" = "0" ] \
 	&& ok '62 → 65 reste NON déclarée : la paire non reliée qui exerce la n° 4' \
