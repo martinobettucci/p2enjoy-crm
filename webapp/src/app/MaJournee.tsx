@@ -227,8 +227,11 @@ export function MaJournee({ client = clientCrm, maintenant }: ProprietesMaJourne
 					/>
 				) : (
 					<EtatVide
-						titre={t('today.empty.all.title')}
-						corps={t('today.empty.all.body', { jours: String(HORIZON_JOURS) })}
+						// L'horizon est écrit DANS LE TITRE, et le paramètre y est donc passé : sans lui,
+						// le gabarit `{jours}` atteignait l'écran tel quel. Défaut trouvé par la preuve
+						// unitaire du second vide, pas à la lecture.
+						titre={t('today.empty.all.title', { jours: String(HORIZON_JOURS) })}
+						corps={t('today.empty.all.body')}
 					/>
 				)
 			) : (
