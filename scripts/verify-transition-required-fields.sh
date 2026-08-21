@@ -39,8 +39,34 @@ psql_db() {
 	docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -qtA -v ON_ERROR_STOP=1 "$@"
 }
 
+# Rejeu de la SEULE migration de cette unité. C'est le SUJET des contrôles d'idempotence du §1 et
+# des trois scénarios de mise à niveau des §2 à §4 — « cette migration converge-t-elle depuis
+# l'ancien tableau ? » —, et c'est son unique usage légitime. Elle n'est JAMAIS une restauration.
 appliquer_migration() {
 	psql_db --single-transaction -f - < "$MIGRATION"
+}
+
+# RESTAURATION PAR LE RUNNER COMPLET — INC-199, corrigée le 2026-08-21 (décision 499).
+#
+# Ce harnais restaurait en rejouant `$MIGRATION` seule. Or la 19 DÉFINIT `public.move_card`, et
+# elle n'en est plus la dernière autorité depuis le lot G (`0035_commentaires_lot_g.sql`,
+# arbitrage de la décision 367) : chaque « restauration » ramenait la fonction avant `btrim_blancs`,
+# avant la borne de longueur et avant la conservation du motif. C'est le cas EXACT d'INC-195,
+# corrigée le même jour sur `verify-copie-workflow.sh`, qui rejoue la même migration — un seul des
+# deux harnais avait été repris.
+#
+# MESURÉ le 2026-08-21, ce harnais lancé seul sur une base restaurée par le runner : 24
+# vérifications, 1 anomalie — « l'empreinte change après rejeu ». Son empreinte couvre la définition
+# de `move_card` : le contrôle avait raison, et il dénonçait le harnais, non le produit.
+#
+# Le §3.5 de `docs/SPEC-test-harness.md` l'exige depuis INC-142 : le retour à l'état courant appelle
+# le `migrations-runner` sur TOUT le répertoire. `--force-recreate` est nécessaire — le runner est un
+# conteneur à usage unique —, et l'appel porte `--env-file` et les DEUX fichiers de composition
+# (`docs/CloudWorker.md` §2.2 bis, décisions 471 et 497) : un appel nu recréerait `storage` et `db`
+# sans les surcharges `dev`.
+restaurer_etat_courant() {
+	docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
+		up --force-recreate migrations-runner
 }
 
 restaurer_liaison_copie() {
@@ -71,7 +97,7 @@ restaurer() {
 		end if;
 	end
 	\$\$;" >/dev/null 2>&1
-	appliquer_migration >/dev/null 2>&1
+	restaurer_etat_courant >/dev/null 2>&1
 	restaurer_liaison_copie
 	"$SEED" >/dev/null 2>&1
 	set -e
@@ -216,11 +242,33 @@ else
 	fail "la migration échoue sur un état déjà migré"
 	tail -n 25 "$WORK/replay.log" | sed 's/^/        /'
 fi
+# ASSERTION RETOURNÉE, JAMAIS RETIRÉE — mécanisme de la décision 51, INC-199, 2026-08-21.
+#
+# Elle exigeait « le rejeu conserve exactement schéma, politiques, trigger et fonctions », et elle
+# était rouge depuis le lot G sans que personne ne lise ce qu'elle disait : l'empreinte couvre
+# `public.move_card`, que CETTE migration définit et dont elle n'est plus la dernière autorité
+# depuis `0035_commentaires_lot_g.sql`. Rejouer la 19 SEULE ramène donc réellement la fonction
+# avant `btrim_blancs`, avant la borne de longueur et avant la conservation du motif. Le fait est
+# vrai du dépôt, pas du produit : l'assertion accusait le produit d'une régression que le harnais
+# venait de provoquer.
+#
+# Elle cesse de compter une identité et se met à mesurer l'INVARIANT qui compte réellement, en deux
+# temps : le rejeu isolé DOIT faire dériver l'empreinte — sans quoi ce harnais aurait cessé de
+# décrire le dépôt et il faut le relire —, et le rejeu complet du répertoire par le
+# `migrations-runner` DOIT la rendre à l'octet près. C'est la seule restauration que le §3.5 de
+# `docs/SPEC-test-harness.md` autorise, et c'est elle que le harnais emploie partout ailleurs.
+apres_rejeu_isole=$(empreinte)
+if [ "$avant" != "$apres_rejeu_isole" ]; then
+	ok "le rejeu ISOLÉ fait dériver l'empreinte, comme le lot G l'impose depuis la migration 35"
+else
+	fail "le rejeu isolé ne fait plus dériver l'empreinte : la 19 serait redevenue la dernière autorité sur move_card — relire ce harnais"
+fi
+restaurer_etat_courant >/dev/null 2>&1
 apres=$(empreinte)
 if [ "$avant" = "$apres" ]; then
-	ok "le rejeu conserve exactement schéma, politiques, trigger et fonctions"
+	ok "le runner complet rend l'empreinte à l'octet près : schéma, politiques, trigger et fonctions"
 else
-	fail "l'empreinte change après rejeu"
+	fail "l'empreinte reste dérivée APRÈS rejeu complet du répertoire"
 fi
 identites_apres=$(identites_structurelles)
 if [ "$identites_avant" = "$identites_apres" ]; then
@@ -291,7 +339,7 @@ fi
 psql_db -c "update public.workflow_transitions set require_fields='{}'::uuid[];
 	update public.workflow_transitions set require_fields=array['$CHAMP_SOURCE'::uuid]
 	 where id='$TRANSITION_SOURCE';" >/dev/null
-appliquer_migration >/dev/null 2>&1
+restaurer_etat_courant >/dev/null 2>&1
 
 echo
 echo "4. Un croisement de workspace arrête lui aussi la migration"
@@ -325,7 +373,7 @@ fi
 psql_db -c "update public.workflow_transitions set require_fields='{}'::uuid[];
 	update public.workflow_transitions set require_fields=array['$CHAMP_SOURCE'::uuid]
 	 where id='$TRANSITION_SOURCE';" >/dev/null
-appliquer_migration >/dev/null 2>&1
+restaurer_etat_courant >/dev/null 2>&1
 psql_db -c "delete from public.workspaces where id='$WORKSPACE_CROISE';" >/dev/null
 
 # La mise à niveau historique écarte volontairement l'ancien identifiant de champ SOURCE porté par
@@ -409,19 +457,19 @@ psql_db -c "alter table public.workflow_transition_required_fields
 	add constraint workflow_transition_required_fields_field_id_fkey
 	foreign key(field_id) references public.form_fields(id) on delete restrict;" >/dev/null
 if suite_rouge; then ok "affaiblir la cascade rend pgTAP rouge"; else fail "la cascade affaiblie passe pgTAP"; fi
-appliquer_migration >/dev/null 2>&1
+restaurer_etat_courant >/dev/null 2>&1
 
 psql_db -c "drop trigger workflow_transition_required_fields_verifier_workflow
 	on public.workflow_transition_required_fields;" >/dev/null
 if suite_rouge; then ok "retirer le trigger de cohérence rend pgTAP rouge"; else fail "le trigger absent passe pgTAP"; fi
-appliquer_migration >/dev/null 2>&1
+restaurer_etat_courant >/dev/null 2>&1
 
 psql_db -c "drop policy workflow_transition_required_fields_lecture_membre
 	on public.workflow_transition_required_fields;
 	create policy workflow_transition_required_fields_lecture_membre
 	on public.workflow_transition_required_fields for select to anon, authenticated using (true);" >/dev/null
 if suite_rouge; then ok "ouvrir la lecture anonyme rend pgTAP rouge"; else fail "la politique permissive passe pgTAP"; fi
-appliquer_migration >/dev/null 2>&1
+restaurer_etat_courant >/dev/null 2>&1
 
 psql_db -c "create or replace function public.move_card(
 	card_id uuid, to_step_id uuid, comment text default null
@@ -443,7 +491,7 @@ if suite_rouge; then
 else
 	fail "un move_card sans aucune garde passe pgTAP"
 fi
-appliquer_migration >/dev/null 2>&1
+restaurer_etat_courant >/dev/null 2>&1
 
 # Une dérive sémantique à compte constant est précisément l'angle mort de la décision 303. Le seed
 # doit la refuser sans la maquiller, puis réussir après restauration explicite de la fixture.

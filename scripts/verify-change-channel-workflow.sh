@@ -46,8 +46,41 @@ psql_db() {
 	docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -qtA -v ON_ERROR_STOP=1 "$@"
 }
 
+# Rejeu de la SEULE migration de cette unité. Elle est le SUJET des deux contrôles d'idempotence
+# du §2 — « cette migration se réapplique-t-elle sans rien reconstruire ? » —, et c'est son unique
+# usage légitime. Elle n'est JAMAIS une restauration : voir `restaurer_etat_courant` ci-dessous.
 appliquer_migration() {
 	psql_db -f - < "$MIGRATION"
+}
+
+# RESTAURATION PAR LE RUNNER COMPLET — INC-198, corrigée le 2026-08-21 (décision 499).
+#
+# Ce harnais restaurait en rejouant `$MIGRATION` SEULE, ce que le §3.5 de
+# `docs/SPEC-test-harness.md` interdit depuis INC-142 : « une liste manuelle de migrations
+# suivantes devient fausse à chaque nouvelle révision ». Deux défauts se superposaient, et le
+# second n'était visible qu'à la mesure.
+#
+# 1. La 20 n'est plus la dernière autorité sur `card_events_type_check` : les migrations 25, 30 et
+#    44 y ajoutent `mail_received`, `mail_sent`, `snoozed` et `woken`.
+# 2. SURTOUT, rejouer la 20 ne restaure MÊME PAS son propre ajout sur une base seedée. Sa
+#    convergence est gardée par la seconde garde d'INC-144, qui ne s'applique que si aucune ligne
+#    de `card_events` ne porte un type hors des dix qu'elle connaît — or le seed en produit quatre.
+#    Le `do $$ … $$` est alors un NO-OP SILENCIEUX : le harnais croyait restaurer, et ne restaurait
+#    rien.
+#
+# MESURÉ le 2026-08-21, ce harnais lancé seul sur pile fraîche et seedée : il rendait 23 contrôles,
+# 2 en échec — « pgTAP reste rouge après restauration » —, et laissait derrière lui la contrainte
+# réduite à NEUF valeurs, `workflow_changed` absente, en `NOT VALID`. Toute écriture serveur de la
+# trace échouait dès lors en `23514`, pour ce harnais comme pour tout ce qui s'exécutait ensuite.
+# Le rejeu complet du répertoire rend les QUATORZE valeurs, et la contrainte redevient `VALID`.
+#
+# `--force-recreate` n'est pas décoratif : le `migrations-runner` est un conteneur à usage unique,
+# et `docker compose up` sur un conteneur déjà sorti ne le rejoue pas. L'appel porte `--env-file` et
+# les DEUX fichiers de composition (`docs/CloudWorker.md` §2.2 bis, décisions 471 et 497) : un appel
+# nu recréerait `storage` et `db` sans les surcharges `dev`.
+restaurer_etat_courant() {
+	docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
+		up --force-recreate migrations-runner
 }
 
 nettoyer_fixture() {
@@ -61,7 +94,7 @@ restaurer() {
 	[ -n "$pid_b" ] && kill "$pid_b" >/dev/null 2>&1 || true
 	[ -s "$WORK/is_workspace_admin.sql" ] \
 		&& psql_db -f - < "$WORK/is_workspace_admin.sql" >/dev/null 2>&1
-	appliquer_migration >/dev/null 2>&1
+	restaurer_etat_courant >/dev/null 2>&1
 	nettoyer_fixture
 	set -e
 }
@@ -128,7 +161,7 @@ degrader_et_verifier() {
 	else
 		fail "DÉGRADATION NON VUE : $libelle"
 	fi
-	appliquer_migration >/dev/null
+	restaurer_etat_courant >/dev/null 2>&1
 }
 
 echo
@@ -199,6 +232,12 @@ if [ "$avant_metier" = "$(empreinte_metier)" ]; then
 else
 	fail "une donnée métier a changé pendant l'application de la migration"
 fi
+
+# Les deux contrôles ci-dessus rejouent la migration 20 SEULE : c'est leur sujet. Ce faisant, ils
+# laissent la base à l'état que la 20 décrit, et non à celui du dépôt — §3.5 de
+# `docs/SPEC-test-harness.md`. On rend donc l'état courant AVANT toute suite globale, faute de quoi
+# les mesures qui suivent porteraient sur un produit d'un instant révolu (INC-198).
+restaurer_etat_courant >/dev/null 2>&1
 
 if suite_verte; then
 	ok "suite pgTAP ciblée verte — 59 assertions"
