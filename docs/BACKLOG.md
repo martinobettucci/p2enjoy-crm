@@ -540,6 +540,16 @@ réinitialisation de mot de passe.
 **DoD** : E2E de connexion et de refus ; email d'invitation **réellement envoyé** et constaté
 dans Inbucket ; captures observées.
 
+- [x] **PREUVE N° 14 RETOURNÉE LE 2026-08-21 — elle figeait une absence que `CRM-022` a comblée**
+      (INC-201, même décision, onzième occurrence du mécanisme de la décision 51).
+      `scripts/verify-auth.sh` exigeait « 200 et zéro ligne » sur `profiles`, au motif écrit que
+      « sans politique, la lecture rend zéro ligne » ; `profiles_lecture_equipe`, livrée par
+      `CRM-022`, ouvre à tout porteur de jeton la lecture de son PROPRE profil. Le compte jetable du
+      harnais n'appartenant à aucun workspace, il voit exactement une ligne, la sienne — MESURÉ,
+      `200 [{"id":"a90c96fe-…"}]`. L'assertion mesure désormais ce que la politique GARANTIT, ce qui
+      est plus fort : le jeton est accepté, il positionne la bonne identité, et il n'ouvre rien de
+      plus. **Rejoué : 62 contrôles, aucune anomalie.**
+
 - [x] **Spécification écrite avant tout code**, `docs/SPEC-auth.md` : aucun document ne disait ce
       qu'un refus doit rendre, qui a le droit d'inviter, ni ce que le produit exige d'un mot de
       passe. Rédigée **après mesure** du comportement réel de `supabase/gotrue:v2.189.0`, la
@@ -1811,6 +1821,17 @@ Unité créée par arbitrage du responsable — `docs/JOURNAL.md`, décision 261
 et les preuves d'API mis à jour dans le même changement ; la suppression d'un champ ne laisse plus
 aucun identifiant mort.
 
+- [x] **HARNAIS REPRIS LE 2026-08-21 — il ramenait `move_card` avant le lot G** (INC-199, même
+      décision). `scripts/verify-transition-required-fields.sh` restaurait en rejouant la
+      migration 19, qui DÉFINIT `move_card` alors que `0035_commentaires_lot_g.sql` en est la
+      dernière autorité depuis l'arbitrage de la décision 367 : chaque restauration privait la
+      fonction de `app.btrim_blancs`, de la borne de longueur et de la conservation du motif. C'est
+      le cas EXACT d'INC-195, corrigée le même jour sur `verify-copie-workflow.sh` — les deux
+      harnais rejouent la même migration, un seul avait été repris. Son contrôle d'empreinte
+      **avait raison** et dénonçait le harnais, non le produit : il est **retourné** (décision 51)
+      et mesure désormais en deux temps que le rejeu isolé dérive et que le runner complet rend
+      l'empreinte à l'octet près. **Rejoué : 25 vérifications, aucune anomalie.**
+
 Unité créée par arbitrage du responsable — `docs/JOURNAL.md`, décision 262, INC-033.
 
 - [x] **Contrat stable avant code** : `docs/SPEC-transition-required-fields.md` fixe la table à
@@ -1857,6 +1878,18 @@ Changer le workflow d'un channel entier, en remappant l'étape de **toutes** ses
 **DoD** : le remappage est **explicite et exhaustif** — aucune étape de départ devinée, aucune card
 laissée sur une étape qui n'appartient pas à son nouveau workflow — et le refus est renvoyé
 **entier** plutôt qu'appliqué à moitié ; pgTAP et preuve d'API hors interface.
+
+- [x] **HARNAIS REPRIS LE 2026-08-21 — il laissait `card_events` sans `workflow_changed`**
+      (INC-198, `docs/JOURNAL.md` décision 499). `scripts/verify-change-channel-workflow.sh`
+      dégradait le vocabulaire de la trace pour prouver que la garde mord — c'est son rôle — puis
+      « restaurait » en rejouant la migration 20 seule. Deux défauts se superposaient : la 20 n'est
+      plus la dernière autorité sur `card_events_type_check`, et **rejouée seule sur une base seedée
+      elle est un NO-OP silencieux**, sa convergence étant gardée par la seconde garde d'INC-144 que
+      les types `mail_received`, `mail_sent`, `snoozed` et `woken` du seed rendent inopérante. Le
+      harnais rendait 23 contrôles, 2 en échec, et laissait la contrainte à NEUF valeurs pour tout
+      ce qui s'exécutait ensuite. Restauration désormais par le `migrations-runner` sur tout le
+      répertoire (§3.5 de `docs/SPEC-test-harness.md`). **Rejoué : 23 contrôles, aucune anomalie**,
+      et la contrainte relue en base porte ses quatorze valeurs.
 
 Unité créée par arbitrage du responsable — `docs/JOURNAL.md`, décision 263, INC-046 et INC-073.
 
@@ -1943,6 +1976,14 @@ avertissement et types générés identiques au schéma. Le méta-harnais rend *
 ### CRM-020 — Tracks `[x]`
 CRUD, ordre, archivage, barre latérale.
 **DoD** : unitaire, API (écriture refusée aux non-administrateurs), E2E, captures.
+
+- [x] **HARNAIS REPRIS LE 2026-08-21 — même défaut que `CRM-021`, sur `tracks`** (INC-200, second
+      porteur, même décision). `scripts/verify-tracks.sh` rejouait la paire `0003` + `0010`, et
+      `0003_tracks.sql` accorde `insert, update` au niveau TABLE. MESURÉ sur la pile seedée, `relacl`
+      relevée avant et après : `authenticated=ar/postgres` devient `authenticated=arw/postgres`, le
+      `w` étant l'`UPDATE` de table que la migration 37 avait fermé sur `deleted_by`. Restauration
+      par le runner complet, assertion d'empreinte **retournée** en deux temps, contrôle de
+      révocation ajouté après restauration.
 
 - [x] **Spécification écrite avant tout code**, `docs/SPEC-tracks.md` : aucun document ne disait
       comment un track s'ordonne, ce qu'archiver veut dire pour lui, ni ce que l'API doit rendre à
@@ -2100,6 +2141,19 @@ nommée comme telle (`docs/DESIGN_SYSTEM.md` §12.5).
 ### CRM-021 — Channels `[x]`
 CRUD, ordre, archivage, onglets, débordement horizontal.
 **DoD** : idem, plus le trigger de cohérence du workflow (`CRM-033`) une fois disponible.
+
+- [x] **HARNAIS REPRIS LE 2026-08-21 — IL RENDAIT À `authenticated` L'`UPDATE` DE TABLE SUR
+      `channels`** (INC-200, même décision). Défaut d'AUTORISATION.
+      `scripts/verify-channels.sh` restaurait en rejouant la paire `0004` + `0010` écrite à la main
+      — la « liste manuelle de migrations suivantes » que le §3.5 de `docs/SPEC-test-harness.md`
+      interdit précisément parce qu'elle vieillit. `0004_channels.sql` accorde l'`UPDATE` au niveau
+      TABLE ; `0037_corbeille.sql` l'avait remplacé par une énumération de colonnes, et la seule
+      colonne qu'elle exclut est **`deleted_by`**. Après une exécution de ce harnais, tout compte
+      `authenticated` pouvait donc falsifier l'audit de mise en corbeille par un `PATCH` direct, et
+      l'état persistait jusqu'au prochain rejeu complet. Le diff d'empreinte tenait en une ligne :
+      `> priv:authenticated:UPDATE`. Restauration par le runner complet, assertion d'empreinte
+      **retournée**, et un contrôle ajouté qui relit la révocation après restauration.
+      **Rejoué : 27 contrôles, aucune anomalie**, `UPDATE` de table révoqué en base.
 
 - [x] **Spécification écrite avant tout code**, `docs/SPEC-channels.md` : aucun document ne disait
       ce qu'un channel doit garantir de son cloisonnement, ni ce que la barre d'onglets doit lire.
