@@ -46,6 +46,14 @@ d'exécuter le code attendu.
   aussi un quatrième contrôle exige-t-il que la lectrice lise au moins une ligne de chaque table.
   C'est une discrimination qui est prouvée, pas un mur.
 
+- **`scripts/verify-valeurs-champs.sh` n'exige plus « exactement une » donnée de démonstration**
+  (`CRM-036`, INC-191, même décision). Le compte de valeurs seedées était figé à vingt et une —
+  vingt-trois depuis les tranches de `CRM-060` — et trois contrôles exigeaient « exactement une »
+  valeur vidée, une valeur sur champ archivé et une liaison de transition. Ce que la
+  spécification demande est qu'une donnée **permanente** exerce chacune de ces règles, pas qu'il en
+  existe une seule : les trois exigent désormais « au moins une », et zéro reste un échec. La
+  population, elle, est comparée à l'instantané d'ouverture.
+
 ### Ajouté
 
 - **Un écran pour déclarer les adresses d'expédition : « Réglages ▸ Identités d'expédition »**

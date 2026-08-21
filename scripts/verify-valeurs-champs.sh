@@ -143,6 +143,15 @@ titre() { printf '\n\033[1m%s\033[0m\n' "$1"; }
 
 psql_db() { docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -qtA "$@"; }
 
+# INSTANTANÉ D'OUVERTURE — INC-191, décision 497. La section 6 comparait la population de
+# `card_field_values` à « 21 », valeur juste à `CRM-036` et fausse depuis que les tranches de
+# `CRM-060` ont seedé les valeurs de leurs deux sélecteurs : MESURÉ le 2026-08-21, la base en porte
+# VINGT-TROIS. Ce harnais écrit et efface des valeurs pour éprouver le validateur ; ce que la
+# section prétend tenir est qu'il rend le seed tel qu'il l'a trouvé, non qu'il vaut un nombre écrit
+# ici. Le compte est donc relevé avant le premier geste.
+VALEURS_A_L_OUVERTURE=$(psql_db -c "select count(*) from public.card_field_values;")
+CARDS_VALUEES_A_L_OUVERTURE=$(psql_db -c "select count(distinct card_id) from public.card_field_values;")
+
 rejouer_migrations() {
 	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || return 1
 	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_COLONNES" >/dev/null 2>&1 || return 1
@@ -537,20 +546,33 @@ exigeantes=$(psql_db -c "select count(*) from public.workflow_transition_require
                           join public.workflow_transitions t on t.id = trf.transition_id
                          where t.workflow_id = '$WF_GLOBAL';")
 
-[ "$valeurs" = "21" ] && ok "vingt et une valeurs" || fail "valeurs : $valeurs, attendu 21"
-[ "$cards" = "11" ] && ok "sur **onze** cards" || fail "cards portant des valeurs : $cards, attendu 11"
-[ "$vides" = "1" ] \
-	&& ok "dont **une vidée explicitement** : une ligne présente n'est pas une valeur renseignée, "\
+# RETOURNÉS LE 2026-08-21 — INC-191, décision 497. Les deux premiers comptaient une population et
+# figeaient son nombre ; ils mesurent désormais l'invariant de la section — ce harnais rend le seed
+# tel qu'il l'a trouvé — contre l'instantané d'ouverture, sans aucun littéral.
+[ "$valeurs" = "$VALEURS_A_L_OUVERTURE" ] \
+	&& ok "les $VALEURS_A_L_OUVERTURE valeurs seedées sont intactes : ce harnais n'en a laissé ni ajoutée ni perdue" \
+	|| fail "la population de card_field_values a changé pendant ce harnais : $VALEURS_A_L_OUVERTURE → $valeurs"
+[ "$cards" = "$CARDS_VALUEES_A_L_OUVERTURE" ] \
+	&& ok "réparties sur les mêmes $CARDS_VALUEES_A_L_OUVERTURE cards qu'à l'ouverture" \
+	|| fail "cards portant des valeurs : $CARDS_VALUEES_A_L_OUVERTURE → $cards"
+
+# LES TROIS SUIVANTS NE COMPTENT PLUS, ILS EXIGENT. Ce que le §6.11 demande est qu'une donnée
+# PERMANENTE exerce chacune de ces trois règles — non qu'il en existe exactement une. Figer « une »
+# faisait rougir le harnais le jour où le seed en poserait une seconde, ce qui n'apprendrait rien du
+# validateur. L'exigence est donc « au moins une », et elle reste non complaisante : zéro fait
+# échouer, et c'est le seul cas où la règle cesserait d'être démontrée.
+[ "$vides" -ge 1 ] \
+	&& ok "dont **au moins une vidée explicitement** ($vides) : une ligne présente n'est pas une valeur renseignée, "\
 "et c'est démontré par une donnée permanente (§6.6)" \
-	|| fail "valeurs vides : $vides, attendu 1"
-[ "$archive" = "1" ] \
-	&& ok "une valeur portée par un champ **archivé** : l'archivage retire le champ des formulaires, "\
+	|| fail "aucune valeur vide dans le seed : la règle du §6.6 n'est plus exercée par une donnée permanente"
+[ "$archive" -ge 1 ] \
+	&& ok "au moins une valeur portée par un champ **archivé** ($archive) : l'archivage retire le champ des formulaires, "\
 "il n'efface pas les réponses (décision 129)" \
-	|| fail "valeurs sur champ archivé : $archive, attendu 1"
-[ "$exigeantes" = "1" ] \
-	&& ok "une transition porte une liaison : le second membre de l'union a enfin une donnée "\
+	|| fail "aucune valeur sur champ archivé : la règle de la décision 129 n'est plus exercée"
+[ "$exigeantes" -ge 1 ] \
+	&& ok "au moins une transition porte une liaison ($exigeantes) : le second membre de l'union a une donnée "\
 "qui l'exerce (docs/SPEC-workflow-engine.md §5.9)" \
-	|| fail "liaisons de champ exigé : $exigeantes, attendu 1"
+	|| fail "aucune liaison de champ exigé : le second membre de l'union du §3.5 n'est plus exercé"
 
 # Convergence : une valeur faussée à la main est **ramenée** au contrat par un rejeu du seed.
 psql_db -c "update public.card_field_values set value = '999'::jsonb
