@@ -1984,6 +1984,15 @@ CRUD, ordre, archivage, barre latérale.
       `w` étant l'`UPDATE` de table que la migration 37 avait fermé sur `deleted_by`. Restauration
       par le runner complet, assertion d'empreinte **retournée** en deux temps, contrôle de
       révocation ajouté après restauration.
+- [~] **BILAN DE `scripts/verify-tracks.sh` NON OBTENU, et c'est le seul reste de cette reprise.**
+      Le rejeu du 2026-08-21 a été **interrompu par un plafond de 40 min**, blocage que la
+      décision 495 connaît déjà à ce harnais : sa section de non-complaisance rejoue
+      `npm run e2e:ui` derrière chaque dégradation, et `--rapide` ne l'en dispense pas. **Acquis** :
+      zéro `ECHEC` sur toute la sortie produite, et les **trois contrôles retournés sont verts** —
+      « le rejeu ISOLÉ de la paire rouvre l'UPDATE de table », « le runner complet rend l'empreinte
+      à l'octet près », « après restauration, l'UPDATE de table reste révoqué ». L'interruption n'a
+      rien laissé de dégradé : `relacl` relue rend `authenticated=ar/postgres`, trois politiques en
+      place. **Reste dû** : un rejeu sans plafond, pour son bilan final.
 
 - [x] **Spécification écrite avant tout code**, `docs/SPEC-tracks.md` : aucun document ne disait
       comment un track s'ordonne, ce qu'archiver veut dire pour lui, ni ce que l'API doit rendre à
