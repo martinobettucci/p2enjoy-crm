@@ -445,25 +445,49 @@ degrader_et_verifier \
 	"create trigger card_events_refuser_maj before update on public.card_events
 	   for each row execute function app.card_events_refuser_maj()"
 
-# RÉVISÉ PAR `CRM-045` (mécanisme de la décision 51, et cette dégradation était de celles qui
-# CESSENT DE MORDRE plutôt que de devenir rouges — la forme la plus discrète). Les deux listes
-# ci-dessous omettaient `channel_changed`, neuvième valeur livrée par la migration 17. Le seed
-# écrivant désormais deux événements de ce type, PostgreSQL refusait la contrainte dégradée comme
-# la contrainte restaurée — MESURÉ, « is violated by some row » —, l'`ALTER` échouait en silence
-# derrière son `|| true`, et le harnais rendait « DÉGRADATION NON VUE » sans que rien du produit
-# n'ait changé. Les deux listes portent désormais les dix valeurs, et la dégradation redevient
-# l'ajout de `mail_received` — ce qu'elle a toujours prétendu être.
+# RETOURNÉE LE 2026-08-21 — INC-191, décision 497, et c'est la DEUXIÈME fois que cette dégradation
+# cesse de mordre pour la même raison. La note précédente, écrite par `CRM-045`, disait déjà que
+# c'est « la forme la plus discrète » : une dégradation qui n'échoue pas, mais qui ne change plus
+# rien. Elle recopiait le vocabulaire À LA MAIN, dans deux listes littérales, et prétendait
+# l'élargir à `mail_received`. MESURÉ le 2026-08-21 : la contrainte réelle porte QUATORZE valeurs —
+# `mail_received` depuis `CRM-057`, `mail_sent` depuis `CRM-058`, `snoozed` et `woken` depuis
+# `CRM-081`. La « dégradation » était donc un RÉTRÉCISSEMENT, refusé par les lignes déjà écrites, et
+# la « restauration » un rétrécissement plus grand encore : les deux `ALTER` échouaient derrière
+# leur `|| true`, et le harnais annonçait « DÉGRADATION NON VUE » alors que rien du produit n'avait
+# bougé. Deux corrections successives ont recopié une liste ; la troisième ne recopie plus rien.
+#
+# Le vocabulaire est LU EN BASE au moment de l'exécution. La restauration réécrit la définition
+# relevée à l'ouverture, à l'octet près : aucune liste littérale ne subsiste, donc plus aucun
+# rétrécissement possible, et cette dégradation ne pourra plus être invalidée par une valeur
+# ultérieurement livrée.
+#
+# LA VALEUR AJOUTÉE N'EST PAS QUELCONQUE, ET C'EST LE SECOND ENSEIGNEMENT DE CETTE MESURE. Une
+# première écriture ajoutait un jeton inventé, `tst_capacite_inexistante` : MESURÉ, la dégradation
+# ne mordait TOUJOURS PAS — la suite que ce harnais rejoue, `0018_timeline.test.sql`, ne connaît pas
+# ce jeton, et l'assertion qui fige la définition entière vit dans une AUTRE suite,
+# `0019_move_card_to_channel.test.sql`. Une dégradation doit viser ce que la suite rejouée tient
+# réellement. Le jeton retenu est donc `commented`, dont le §14.4 et la décision 209 disent qu'il
+# doit rester REFUSÉ : un commentaire n'écrit aucun événement, le fil est unifié à la LECTURE.
+# L'accepter romprait cette conception, et `0018` le voit.
+VOCABULAIRE_INITIAL=$(psql_db -c "select pg_get_constraintdef(oid) from pg_constraint
+	where conrelid = 'public.card_events'::regclass and conname = 'card_events_type_check'")
+VOCABULAIRE_ELARGI=$(psql_db -c "select regexp_replace(pg_get_constraintdef(oid), '\]\)\)\)\$',
+	', ''commented''::text])))') from pg_constraint
+	where conrelid = 'public.card_events'::regclass and conname = 'card_events_type_check'")
+
+JETONS_DU_FIL=$(printf '%s' "$VOCABULAIRE_INITIAL" | grep -o '::text' | wc -l | tr -d ' ')
+if [ -n "$VOCABULAIRE_INITIAL" ] && [ "$VOCABULAIRE_ELARGI" != "$VOCABULAIRE_INITIAL" ]; then
+	ok "le vocabulaire du fil est LU en base — $JETONS_DU_FIL jetons relevés, aucune liste recopiée dans ce harnais"
+else
+	fail "le vocabulaire du fil n'a pas pu être relu : la dégradation suivante ne mordrait pas"
+fi
+
 degrader_et_verifier \
-	"le CHECK élargi à mail_received — une capacité inexistante paraîtrait livrée" \
+	"le CHECK élargi à \`commented\` — le fil cesserait d'être unifié à la LECTURE (décision 209)" \
 	"alter table public.card_events drop constraint card_events_type_check;
-	 alter table public.card_events add constraint card_events_type_check
-	   check (type = any (array['created','moved','assigned','channel_changed','workflow_changed','archived',
-	                            'unarchived','trashed','restored','field_changed',
-	                            'mail_received']))" \
+	 alter table public.card_events add constraint card_events_type_check $VOCABULAIRE_ELARGI" \
 	"alter table public.card_events drop constraint card_events_type_check;
-	 alter table public.card_events add constraint card_events_type_check
-	   check (type = any (array['created','moved','assigned','channel_changed','workflow_changed','archived',
-	                            'unarchived','trashed','restored','field_changed']))"
+	 alter table public.card_events add constraint card_events_type_check $VOCABULAIRE_INITIAL"
 
 degrader_et_verifier \
 	"la politique de lecture ouverte à tous — la mémoire d'une affaire fermée serait lisible" \

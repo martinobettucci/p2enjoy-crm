@@ -77,6 +77,22 @@ d'exécuter le code attendu.
   admise, elle est bornée au bucket des pièces et gardée par `app.piece_jointe_telechargeable`, et
   cette fonction porte bien ses **deux** membres — statut `clean` et visibilité du message.
 
+- **`scripts/verify-timeline.sh` : une dégradation qui ne mordait plus, et c'était la deuxième
+  fois** (`CRM-044`, INC-191, même décision). Le harnais prétendait élargir le vocabulaire du fil à
+  `mail_received` en recopiant la liste à la main. Ce vocabulaire porte quatorze valeurs depuis
+  `CRM-057`, `CRM-058` et `CRM-081` : la « dégradation » était donc un **rétrécissement**, refusé
+  par les lignes déjà écrites, et la « restauration » un rétrécissement plus grand encore. Les deux
+  échouaient en silence et le harnais annonçait « dégradation non vue » alors que rien n'avait bougé
+  — la forme la plus discrète de la preuve morte, et une note du fichier la décrivait déjà pour
+  l'occurrence précédente.
+
+  Le vocabulaire est désormais **lu en base** et la restauration réécrit la définition relevée à
+  l'ouverture, à l'octet près : plus aucune liste recopiée, donc plus aucun rétrécissement possible.
+  **Une seconde mesure a corrigé la dégradation elle-même** : ajouter un jeton inventé ne la faisait
+  toujours pas mordre, l'assertion qui fige la définition entière vivant dans une autre suite. Le
+  jeton ajouté est donc `commented`, que la suite rejouée par ce harnais exige de voir refusé — un
+  commentaire n'écrit aucun événement, le fil est unifié à la lecture.
+
 ### Ajouté
 
 - **Un écran pour déclarer les adresses d'expédition : « Réglages ▸ Identités d'expédition »**
