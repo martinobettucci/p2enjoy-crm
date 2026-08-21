@@ -124,13 +124,51 @@ else
 	fail "le bucket est absent ou PUBLIC — la preuve n° 9 tomberait"
 fi
 
-# CE QUI PROTÈGE RÉELLEMENT : `storage.objects` accorde tous les privilèges à anon et
-# authenticated — défaut de Supabase, mesuré. Seule l'ABSENCE de politique refuse.
-if [ "$(psql_db -c "select count(*) from pg_policies where schemaname='storage' and tablename='objects'")" = 0 ]; then
-	ok "REFUS N° 9 : aucune politique de lecture d'objet — la RLS refuse par défaut"
+# RETOURNÉE LE 2026-08-21 — INC-191, décision 497, TROISIÈME OCCURRENCE DANS CE FICHIER et la
+# première à être nommée. Cette assertion figeait elle aussi une absence : « aucune politique de
+# lecture d'objet, donc la RLS refuse par défaut ». C'était vrai, et c'était le refus n° 9 obtenu
+# par le vide. La migration `0029_pieces_jointes_telechargeables.sql` a livré depuis la politique
+# `mail_attachments_objets_lecture` — MESURÉ le 2026-08-21, elle existe, en `SELECT`, pour
+# `authenticated` — de sorte que le harnais rougissait d'une fonctionnalité livrée, en annonçant
+# « le téléchargement d'une pièce infected est possible » alors que c'est le CONTRAIRE que la
+# politique tient : elle est gardée par `app.piece_jointe_telechargeable(name)`, qui refuse
+# précisément `infected` et `pending`.
+#
+# Le refus n° 9 ne repose donc plus sur le vide, et l'assertion cesse de compter des politiques pour
+# mesurer ce que la seule politique admise autorise. Elle n'est pas retirée, elle est retournée.
+politiques=$(psql_db -c "select coalesce(string_agg(policyname || ':' || cmd, ',' order by policyname), '')
+	from pg_policies where schemaname='storage' and tablename='objects'")
+if [ "$politiques" = "mail_attachments_objets_lecture:SELECT" ]; then
+	ok "une SEULE politique d'objet, en lecture : \`mail_attachments_objets_lecture\` — aucune écriture n'est ouverte sur \`storage.objects\`"
 else
-	fail "une politique d'objet est apparue : le téléchargement d'une pièce infected est possible"
+	fail "les politiques de \`storage.objects\` ne sont plus la seule lecture attendue : « $politiques »"
 fi
+
+if [ "$(psql_db -c "select qual like '%piece_jointe_telechargeable%' and qual like '%mail-attachments%'
+	from pg_policies where schemaname='storage' and tablename='objects'
+	  and policyname='mail_attachments_objets_lecture'")" = t ]; then
+	ok "REFUS N° 9 : la lecture d'objet est bornée au bucket \`mail-attachments\` ET gardée par \`app.piece_jointe_telechargeable\`"
+else
+	fail "la politique de lecture d'objet n'est plus gardée par \`app.piece_jointe_telechargeable\` : une pièce infected redeviendrait servie"
+fi
+
+# ET LA GARDE PORTE SES DEUX MEMBRES, car citer le nom de la fonction dans la politique ne dit rien
+# de ce que la fonction fait : celle-ci n'ouvre que le statut `clean` — `pending`, `skipped` et
+# `infected` sont refusés, un fichier non analysé n'étant pas un fichier sain — ET ne l'ouvre qu'à
+# qui peut déjà voir le message. Perdre l'un des deux rouvrirait la porte en silence.
+definition=$(psql_db -c "select pg_get_functiondef(oid) from pg_proc
+	where pronamespace = 'app'::regnamespace and proname = 'piece_jointe_telechargeable'")
+case "$definition" in
+	*"av_status = 'clean'"*"peut_voir_message"*)
+		ok "\`app.piece_jointe_telechargeable\` n'ouvre que \`clean\` ET seulement à qui voit le message : \`pending\`, \`skipped\` et \`infected\` restent refusés" ;;
+	*)
+		fail "\`app.piece_jointe_telechargeable\` a perdu l'un de ses deux membres : statut sain, ou visibilité du message" ;;
+esac
+
+# CE QUE CE HARNAIS NE PROUVE PAS ICI, ET IL LE DIT. Les trois contrôles ci-dessus mesurent la
+# STRUCTURE du refus n° 9. Son COMPORTEMENT — un téléchargement réellement refusé avec les jetons
+# réels — est éprouvé par `e2e/api/ingestion.spec.ts`, `supabase/tests/0016_preuves_refus.test.sql`
+# et `scripts/verify-preuves-refus.sh`. Le rejouer ici ferait deux sources pour une même règle.
 
 nb_ecriture=$(psql_db -c "select count(*) from information_schema.role_table_grants
 	where table_schema='public'
@@ -153,11 +191,31 @@ else
 	fail "les comptes seedés ne surveillent pas les deux dossiers : la relève serait aveugle"
 fi
 
-# AUCUN CLASSEMENT N'EST SIMULÉ : `CRM-055` seule le livrera.
-if [ "$(psql_db -c "select count(*) from public.mail_messages where classification <> 'unclassified'")" = 0 ]; then
-	ok "aucun message n'est classé : les quatre règles du §4.4 appartiennent à CRM-055"
+# RETOURNÉE LE 2026-08-21 — INC-191, décision 497. Cette assertion figeait une ABSENCE : « aucun
+# message n'est classé », vraie tant que `CRM-055` n'était pas livrée. Elle l'est, et son classement
+# tourne : MESURÉ le 2026-08-21, deux messages portent `auto`. Le harnais rougissait donc de la
+# livraison qu'il annonçait attendre — c'est exactement le moment que l'assertion devait désigner.
+#
+# Elle est RETOURNÉE, non retirée (mécanisme de la décision 51), et ce qu'elle mesure change de
+# nature : `CRM-054` ingère, elle ne classe pas. Ce qui doit rester vrai de l'INGESTION est qu'elle
+# ne fabrique aucun classement de son côté — un message classé porte donc toujours la trace du
+# geste qui l'a classé, jamais un classement apparu de nulle part. Le détail des quatre règles du
+# §4.4 reste sous `CRM-055` et son propre harnais ; ici, seule la frontière entre les deux unités
+# est éprouvée.
+sans_trace=$(psql_db -c "select count(*) from public.mail_messages
+	where classification <> 'unclassified' and classified_at is null")
+if [ "$sans_trace" = 0 ]; then
+	classes=$(psql_db -c "select count(*) from public.mail_messages where classification <> 'unclassified'")
+	ok "les $classes message(s) classé(s) portent tous la trace de leur classement : l'ingestion n'en fabrique aucun — la frontière CRM-054 / CRM-055 tient"
 else
-	fail "un message classé existe alors que rien ne sait classer — CRM-055 n'est pas livrée"
+	fail "$sans_trace message(s) classé(s) SANS \`classified_at\` : un classement est apparu hors du chemin de CRM-055"
+fi
+
+# LE TÉMOIN, sans lequel le contrôle ci-dessus serait vert sur une base où plus rien n'est classé.
+if [ "$(psql_db -c "select count(*) from public.mail_messages where classification = 'unclassified'")" -ge 1 ]; then
+	ok "des messages restent \`unclassified\` : l'ingestion dépose bien sans classer, et le contrôle précédent a un objet"
+else
+	fail "plus aucun message \`unclassified\` : l'ingestion ne dépose plus de message non classé"
 fi
 
 if [ "$RAPIDE" = false ]; then

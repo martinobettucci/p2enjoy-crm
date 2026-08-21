@@ -54,6 +54,29 @@ d'exécuter le code attendu.
   existe une seule : les trois exigent désormais « au moins une », et zéro reste un échec. La
   population, elle, est comparée à l'instantané d'ouverture.
 
+- **`scripts/verify-mail-inbound.sh` ne confond plus « aucune synchronisation simulée » et
+  « aucune synchronisation »** (`CRM-052`, INC-191, même décision). Il exigeait `last_sync_at` ET
+  `sync_state` vides, ce qui rougissait dès que la relève réelle de `CRM-054` écrivait les bornes
+  d'UID d'une boîte. Les deux moitiés sont séparées : `last_sync_at` reste une **absence figée**
+  assumée — aucune unité ne la remplit encore, et le contrôle rougira le jour venu pour désigner la
+  preuve à écrire — tandis que `sync_state`, désormais écrite par le produit, est vérifiée dans sa
+  **forme** : un état non vide porte les bornes d'UID entières que `mail-sync` y met, et rien
+  d'autre ne peut l'avoir écrit.
+
+- **`scripts/verify-mail-ingestion.sh` : deux absences figées retournées, dont une jamais nommée**
+  (`CRM-054`, INC-191, même décision). La première annonçait « aucun message n'est classé » : le
+  classement de `CRM-055` tourne, et le contrôle mesure désormais la **frontière** entre les deux
+  unités — un message classé porte toujours la trace du geste qui l'a classé, l'ingestion n'en
+  fabrique aucun —, avec son témoin de messages restés non classés.
+
+  La seconde n'avait jamais été relevée : le harnais exigeait **zéro politique** sur
+  `storage.objects`, le refus n° 9 étant à l'époque obtenu par le vide. La migration `0029` a livré
+  depuis la politique de téléchargement des pièces jointes, si bien que le harnais annonçait
+  « le téléchargement d'une pièce infected est possible » alors que la politique tient exactement
+  le contraire. Trois contrôles remplacent le compte : la lecture est la **seule** politique
+  admise, elle est bornée au bucket des pièces et gardée par `app.piece_jointe_telechargeable`, et
+  cette fonction porte bien ses **deux** membres — statut `clean` et visibilité du message.
+
 ### Ajouté
 
 - **Un écran pour déclarer les adresses d'expédition : « Réglages ▸ Identités d'expédition »**

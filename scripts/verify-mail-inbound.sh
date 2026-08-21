@@ -271,12 +271,39 @@ else
 	fail "une boîte a été créée pour le viewer — §11.4 et §13.8 disent le contraire"
 fi
 
-# AUCUNE SYNCHRONISATION N'EST SIMULÉE : `CRM-054` seule remplira ces deux colonnes.
-if [ "$(psql_db -c "select count(*) from public.mail_inbound_accounts
-	where last_sync_at is not null or sync_state <> '{}'::jsonb")" = 0 ]; then
-	ok "aucune synchronisation n'est prétendue : last_sync_at et sync_state restent vides"
+# RETOURNÉE LE 2026-08-21 — INC-191, décision 497. Cette assertion figeait une ABSENCE — « aucune
+# synchronisation n'est prétendue » — sur les DEUX colonnes à la fois, à une époque où rien ne les
+# écrivait. `CRM-054` est livrée depuis, et sa relève réelle écrit `sync_state` : le harnais
+# rougissait donc du fonctionnement du produit, et non d'une synchronisation simulée. La précision
+# mesurée par la session `CRM-088` désigne la moitié exacte à retourner, et les deux moitiés se
+# séparent ici.
+#
+# MOITIÉ 1 — `last_sync_at` reste nulle, et l'assertion RESTE une absence figée, délibérément :
+# aucune unité ne remplit encore cette colonne. Elle rougira le jour où l'une le fera, et désignera
+# alors le contrôle à écrire. C'est le mécanisme de la décision 51, et il n'a pas encore joué ici.
+if [ "$(psql_db -c "select count(*) from public.mail_inbound_accounts where last_sync_at is not null")" = 0 ]; then
+	ok "\`last_sync_at\` reste nulle partout : aucune unité ne la remplit encore — absence FIGÉE, qui rougira le jour venu"
 else
-	fail "une synchronisation est affichée alors que rien ne l'écrit — CRM-054 n'est pas livrée"
+	fail "\`last_sync_at\` est renseignée : une unité a livré son écriture, ce contrôle doit être retourné en preuve de cette écriture"
+fi
+
+# MOITIÉ 2 — `sync_state` est écrite par la relève réelle de `CRM-054`, et l'absence ne se fige plus.
+# Ce qui doit rester vrai est que RIEN D'AUTRE que cette relève ne l'écrit : un état non vide porte
+# donc, pour chaque dossier, les deux bornes d'UID entières que `mail-sync` y met — MESURÉ le
+# 2026-08-21 sur la boîte système, `{"INBOX": {"uid_max": 4, "uid_min": 1}}`. Un état vide reste
+# légitime : il dit qu'aucune relève n'a encore tourné sur cette boîte.
+mal_formes=$(psql_db -c "select count(*) from public.mail_inbound_accounts a
+	where a.sync_state <> '{}'::jsonb
+	  and exists (
+	      select 1 from jsonb_each(a.sync_state) d
+	       where jsonb_typeof(d.value) <> 'object'
+	          or jsonb_typeof(d.value -> 'uid_min') <> 'number'
+	          or jsonb_typeof(d.value -> 'uid_max') <> 'number')")
+if [ "$mal_formes" = 0 ]; then
+	renseignes=$(psql_db -c "select count(*) from public.mail_inbound_accounts where sync_state <> '{}'::jsonb")
+	ok "\`sync_state\` n'est écrite que par la relève de \`CRM-054\` : $renseignes boîte(s) relevée(s), chacune portant ses bornes d'UID par dossier"
+else
+	fail "$mal_formes boîte(s) portent un \`sync_state\` que la relève de \`CRM-054\` n'a pas pu écrire : bornes d'UID absentes ou non numériques"
 fi
 
 if [ "$RAPIDE" = false ]; then
