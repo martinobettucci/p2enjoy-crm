@@ -497,7 +497,14 @@ ASSERTIONS_ATTENDUES=2480
 # et `INC-193` est FIGÉE — le corps d'un refus de contrainte porte la référence Vault que le chemin
 # normal refuse en `403`. 818 + 3 = **821**, valeur COMPTÉE par `npm run e2e:api` (« 821 passed »),
 # jamais déduite (INC-101). Le garde-fou est RÉVISÉ, jamais retiré (mécanisme de la décision 51).
-SCENARIOS_API=821
+# **RÉVISION DU 2026-08-21 — `CRM-089`.** Trois scénarios d'API ajoutés à
+# `e2e/api/identites-sortantes.spec.ts` : la lectrice DÉCLARE sa propre identité et se voit refuser
+# celle de service avec sa contre-épreuve ; changer l'adresse d'expédition rend un identifiant NEUF
+# et laisse DEUX lignes, l'adresse faisant partie de la clé ; et le nom d'expéditeur, sous
+# `coalesce`, est conservé quand le paramètre est omis mais EFFACÉ quand une chaîne vide est
+# envoyée. 821 + 3 = **824**, valeur COMPTÉE par `playwright test --list` (« Total: 824 tests »),
+# jamais déduite (INC-101). Le garde-fou est RÉVISÉ, jamais retiré (mécanisme de la décision 51).
+SCENARIOS_API=824
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -709,7 +716,15 @@ SCENARIOS_API=821
 # déchiffre toujours, le refus réel d'un port hors bornes avec sa phrase du produit, l'état vide
 # d'une lectrice AVEC son geste, et les quatre paliers. 549 + 8 = **557**, valeur COMPTÉE par
 # `npm run e2e:ui` (« 557 passed »), jamais déduite. Garde-fou RÉVISÉ, jamais retiré.
-SCENARIOS_UI=557
+# **RÉVISION DU 2026-08-21 — `CRM-089`.** Neuf scénarios d'interface ajoutés par
+# `e2e/ui/reglages-identites-mail.spec.ts` : le parcours depuis l'index des réglages avec la
+# vérification de l'ORDRE des trois entrées de la famille « messagerie », la modification du
+# libellé suivie de la preuve que le secret déchiffre toujours, l'apparition de la SECONDE identité
+# quand l'adresse change, le refus réel d'une adresse non conforme avec sa phrase du produit,
+# l'état vide d'une lectrice AVEC son geste, et les quatre paliers. 557 + 9 = **566**, valeur
+# COMPTÉE par `playwright test --list` (« Total: 566 tests »), jamais déduite. Garde-fou RÉVISÉ,
+# jamais retiré.
+SCENARIOS_UI=566
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,
