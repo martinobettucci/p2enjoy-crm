@@ -93,6 +93,34 @@ d'exécuter le code attendu.
   jeton ajouté est donc `commented`, que la suite rejouée par ce harnais exige de voir refusé — un
   commentaire n'écrit aucun événement, le fil est unifié à la lecture.
 
+- **`scripts/verify-copie-workflow.sh` vérifie que la copie REPRODUIT sa source** (`CRM-032`,
+  INC-191, même décision). Il figeait « sept étapes, onze transitions, sept champs… » ; la
+  sous-tranche 4d de `CRM-060` a posé deux sélecteurs de plus sur le workflow source, et la copie
+  les a fidèlement repris — le harnais rougissait donc au moment même où la copie faisait
+  exactement ce qu'on lui demande. Les cinq dimensions sont désormais comparées **à la source**,
+  comptée à l'exécution, avec un témoin qui interdit à l'égalité d'être verte sur deux workflows
+  vides.
+
+- **Deux défauts réels de harnais, trouvés par mesure et corrigés à leur cause** (INC-195 et
+  INC-196, même décision). `scripts/verify-copie-workflow.sh` rejoue la migration 19, qui redéfinit
+  `move_card` : la 19 n'en est plus la dernière autorité depuis le lot G, si bien que le harnais
+  sortait sur une fonction **amputée** de la conservation du motif, de sa borne de longueur et des
+  blancs Unicode — en annonçant « aucune anomalie ». Une session qui aurait enchaîné les harnais
+  dans cet ordre aurait lu une régression de `move_card` là où il n'y en avait pas. Quatrième
+  occurrence du mécanisme d'INC-154 ; chaque rejeu est désormais suivi du lot G.
+
+  `scripts/verify-move-card.sh`, de son côté, déposait **un commentaire à chaque exécution** : la
+  ligne de son contrat d'API qui éprouve le succès fournit un motif, et `move_card` conserve ce
+  motif depuis le lot G. Le jeu de démonstration gonflait sans borne. Le motif est retiré, et le
+  harnais compare maintenant la population de commentaires à son instantané d'ouverture — un
+  résidu de cette famille se dénoncera désormais lui-même.
+
+- **L'annexe A du manuel est remise au véritable état** (`CRM-047`, même décision) : seize
+  questions de formulaire actives au lieu de douze, vingt-trois réponses au lieu de vingt et une.
+  Le compte de commentaires, lui, n'a pas été « corrigé » — il était juste, et c'est la base qui
+  était fausse, gonflée par le résidu ci-dessus. `scripts/verify-manual.sh` rend
+  **127 contrôles, aucune anomalie**.
+
 ### Ajouté
 
 - **Un écran pour déclarer les adresses d'expédition : « Réglages ▸ Identités d'expédition »**

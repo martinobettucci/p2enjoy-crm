@@ -202,6 +202,11 @@ psql_db() { docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -qtA "$@
 CARDS_A_L_OUVERTURE=$(psql_db -c "select count(*) from public.cards where id::text like '5eed%';")
 EMPREINTE_CARDS_A_L_OUVERTURE=$(psql_db -c "select md5(string_agg(id::text || ':' || coalesce(current_step_id::text, '-'), ',' order by id)) from public.cards where id::text like '5eed%';")
 
+# LES COMMENTAIRES SONT RELEVÉS EUX AUSSI, et c'est ce relevé qui manquait : depuis le lot G,
+# `move_card` conserve le motif fourni, donc ce harnais ÉCRIT dans `card_comments` — voir la note de
+# la ligne l. Un invariant qui ne regarde que les cards ne voit pas ce résidu-là.
+COMMENTAIRES_A_L_OUVERTURE=$(psql_db -c "select count(*) from public.card_comments;")
+
 CORPS=/tmp/p2enjoy-move-card-body
 http() {
 	local method=$1 url=$2
@@ -506,6 +511,19 @@ code=$(deplacer "$JETON_ADMIN" "$CARD_C6" "$ETAPE_PERDU" 'Budget reporté en 202
 	|| fail "ligne l — attendu 200 avec commentaire, obtenu $code"
 remettre "$CARD_C6" "$etape_avant" "$position_avant"
 
+# LE MOTIF DÉPOSÉ EST RETIRÉ, ET CE N'EST PAS UNE PRÉCAUTION DE STYLE — défaut trouvé le
+# 2026-08-21 (décision 497) par le compteur de `scripts/verify-manual.sh`, qui annonçait « le
+# manuel dit 5 commentaires, la base en dit 7 ». Depuis le lot G (migration 35, INC-048),
+# `move_card` CONSERVE le motif fourni : cet appel, écrit à une époque où le motif était perdu,
+# laissait donc UNE LIGNE DE PLUS dans `card_comments` À CHAQUE EXÉCUTION du harnais. MESURÉ : deux
+# lignes « Budget reporté en 2027 » après deux exécutions, sur une base fraîchement seedée.
+#
+# Ce n'est pas le résidu d'une interruption comme celui de la décision 495 — c'est un résidu du
+# chemin NOMINAL, et il gonflait sans fin le jeu de démonstration. Le retrait passe par psql, donc
+# par le propriétaire : `card_comments` n'ouvre aucun `DELETE` au client, et c'est très bien ainsi.
+psql_db -c "delete from public.card_comments
+             where card_id = '$CARD_C6' and body = 'Budget reporté en 2027';" >/dev/null
+
 # --- ligne m : la garde n'est pas contournable -------------------------------------------------
 etape_avant=$(etape_de "$CARD_C3"); position_avant=$(position_de "$CARD_C3"); instant_avant=$(instant_de "$CARD_C3")
 code=$(http PATCH "$API/rest/v1/cards?id=eq.$CARD_C3" \
@@ -666,6 +684,14 @@ titre '7. Le seed est inchangé par cette unité'
 [ "$(psql_db -c "select md5(string_agg(id::text || ':' || coalesce(current_step_id::text, '-'), ',' order by id)) from public.cards where id::text like '5eed%';")" = "$EMPREINTE_CARDS_A_L_OUVERTURE" ] \
 	&& ok 'chaque card seedée a retrouvé son étape : les déplacements de ce harnais sont TOUS défaits' \
 	|| fail 'une card seedée n’a pas retrouvé son étape : ce harnais sort sur un seed dégradé'
+
+# L'INVARIANT QUI MANQUAIT — décision 497. Ce harnais dépose un motif de transition, que `move_card`
+# conserve depuis le lot G. Sans ce contrôle, chaque exécution gonflait `card_comments` d'une ligne
+# sans que rien ne le dise : c'est `scripts/verify-manual.sh`, deux unités plus loin, qui a fini par
+# le voir. Un harnais doit constater lui-même qu'il ne laisse rien derrière lui.
+[ "$(psql_db -c "select count(*) from public.card_comments;")" = "$COMMENTAIRES_A_L_OUVERTURE" ] \
+	&& ok "les $COMMENTAIRES_A_L_OUVERTURE commentaires sont intacts : le motif déposé par la ligne l est bien retiré" \
+	|| fail 'ce harnais laisse un commentaire derrière lui : le jeu de démonstration gonflerait à chaque exécution'
 
 [ "$(psql_db -c "select count(*) from public.workflow_transitions where from_step_id = '$ETAPE_RELANCE' and to_step_id = '$ETAPE_REALISATION' and workflow_id = '$WF_GLOBAL';")" = "0" ] \
 	&& ok '62 → 65 reste NON déclarée : la paire non reliée qui exerce la n° 4' \

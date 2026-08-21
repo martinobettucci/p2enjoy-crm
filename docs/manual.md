@@ -2590,13 +2590,13 @@ ne bougent qu'avec le produit.
 | Workflows copiés dans un track | 1 |
 | Étapes du workflow général | 7 |
 | Déplacements déclarés par le workflow général | 11 |
-| Questions du formulaire actives | 12 |
+| Questions du formulaire actives | 16 |
 | Questions du formulaire retirées | 2 |
 | Affaires | 41 |
 | Affaires actives | 39 |
 | Affaires archivées | 1 |
 | Affaires en corbeille | 1 |
-| Réponses de formulaire | 21 |
+| Réponses de formulaire | 23 |
 | Affaires portant au moins une réponse | 11 |
 | Commentaires | 5 |
 | Commentaires supprimés | 1 |

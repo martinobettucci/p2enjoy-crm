@@ -50,6 +50,22 @@ node_toolchain_prepare "$PWD/.nvmrc" || exit 1
 
 TEST_FILE=supabase/tests/0008_copie_workflow.test.sql
 MIGRATION_FILE=supabase/migrations/0019_transition_required_fields.sql
+# QUATRIÈME OCCURRENCE D'INC-154, TROUVÉE PAR MESURE LE 2026-08-21 (décision 497). La migration 19
+# ci-dessus ne se contente pas de livrer la table de liaison : son §7 REDÉFINIT `public.move_card`
+# pour y lire la sixième garde. Elle n'en est plus la dernière autorité depuis le lot G — la
+# migration 35 y ajoute `app.btrim_blancs` (INC-052), la borne de longueur du motif (n° 5 bis) et
+# la CONSERVATION du motif dans `card_comments` (INC-048). Rejouer la 19 seule laissait donc
+# `move_card` AMPUTÉE de ces trois acquis, et le harnais sortait sur un produit dégradé.
+#
+# MESURÉ, et c'est ainsi que le défaut a été trouvé : `verify-move-card.sh` lancé derrière celui-ci
+# rendait « 8 assertions en échec sur 82 » — les quatre de `btrim_blancs` et de la borne, les
+# quatre de la conservation du motif —, alors qu'il était vert lancé seul. Une session qui aurait
+# rejoué la série dans cet ordre aurait lu une régression de `move_card` là où il n'y en avait pas.
+#
+# Chaque rejeu de la 19 est donc suivi du lot G, exactement comme `scripts/verify-valeurs-champs.sh`
+# le fait depuis la décision 448. Trois autres harnais portaient déjà ce défaut ; celui-ci est le
+# quatrième, et il est corrigé ici parce qu'il vit dans un fichier de cette session.
+MIGRATION_LOT_G=supabase/migrations/0035_commentaires_lot_g.sql
 DB_CONTAINER=p2enjoy-db
 
 WS_SEED=5eed0000-0000-4000-8000-000000000001
@@ -181,8 +197,9 @@ empreinte() {
 }
 
 avant=$(empreinte)
-if psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1; then
-	ok "la migration se réapplique sans erreur sur une base déjà migrée"
+if psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 \
+   && psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_LOT_G" >/dev/null 2>&1; then
+	ok "la migration se réapplique sans erreur sur une base déjà migrée, le lot G derrière elle (INC-154)"
 else
 	fail "la migration échoue au rejeu — l'idempotence n'est pas acquise"
 fi
@@ -199,6 +216,7 @@ fi
 psql_db -c "grant execute on function public.copy_workflow_to_track(uuid, uuid, text) to anon;" \
 	>/dev/null
 psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || true
+psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_LOT_G" >/dev/null 2>&1 || true
 if [ "$(psql_db -c "select has_function_privilege('anon',
                      'public.copy_workflow_to_track(uuid, uuid, text)', 'EXECUTE');")" = "f" ]; then
 	ok "un privilège rendu à \`anon\` est **retiré** par un rejeu : la migration répare"
@@ -387,9 +405,35 @@ contenu=$(psql_db -c "
 	    || '/' || (select name from public.workflows
 	                where derived_from_workflow_id = '$WF_SEED'
 	                  and name = '$NOM_COPIE_SEED');")
-[ "$contenu" = "7/11/7/15/1/Cycle commercial — Conseil IA" ] \
-	&& ok "la copie du seed porte étapes, transitions, formulaire, exigence et nom du contrat" \
-	|| fail "copie du seed : « $contenu »"
+# RETOURNÉE LE 2026-08-21 — INC-191, décision 497, occurrence relevée par la décision 495 sans être
+# nommée. Cette assertion figeait « 7/11/7/15/1 », juste à `CRM-032` et fausse depuis que la
+# sous-tranche 4d de `CRM-060` a posé les deux sélecteurs `contact` et `user` sur le workflow
+# SOURCE : MESURÉ le 2026-08-21, source et copie portent NEUF champs chacune. Le harnais rougissait
+# d'un enrichissement du formulaire, pas d'un défaut de la copie — et il rougissait alors même que
+# la copie faisait exactement ce qu'on lui demande, puisqu'elle avait fidèlement repris les deux
+# champs neufs.
+#
+# Ce que `copy_workflow_to_track` doit garantir n'est pas « sept champs » : c'est que la copie
+# REPRODUISE sa source. Les cinq dimensions sont donc comparées à la source, comptée au moment de
+# l'exécution. Aucun littéral, et le contrôle devient strictement plus fort : il verrait une copie
+# fidèle à un nombre périmé, ce que l'ancienne écriture ne pouvait pas voir.
+source=$(psql_db -c "
+	select (select count(*) from public.workflow_steps s where s.workflow_id = '$WF_SEED')::text
+	    || '/' || (select count(*) from public.workflow_transitions t where t.workflow_id = '$WF_SEED')::text
+	    || '/' || (select count(*) from public.form_fields f where f.workflow_id = '$WF_SEED')::text
+	    || '/' || (select count(*) from public.form_field_rules r where r.workflow_id = '$WF_SEED')::text
+	    || '/' || (select count(*) from public.workflow_transition_required_fields rf
+	                 join public.workflow_transitions t on t.id = rf.transition_id
+	                where t.workflow_id = '$WF_SEED')::text
+	    || '/$NOM_COPIE_SEED';")
+[ "$contenu" = "$source" ] \
+	&& ok "la copie du seed REPRODUIT sa source — « ${contenu%/*} » étapes/transitions/champs/règles/exigences de part et d'autre, sous le nom du contrat" \
+	|| fail "la copie du seed diverge de sa source : copie « $contenu », source « $source »"
+
+# LE TÉMOIN, sans lequel l'égalité ci-dessus serait verte sur deux workflows vides.
+[ "${source%%/*}" -ge 1 ] \
+	&& ok "la source porte ${source%%/*} étapes : l'égalité ci-dessus a un objet" \
+	|| fail "le workflow source est vide : le contrôle de fidélité ne prouverait rien"
 
 defauts=$(psql_db -c "select count(*) from public.workflows
                        where workspace_id = '$WS_SEED' and is_default;")
@@ -482,6 +526,7 @@ fi
 
 # b. Le privilège rendu à `anon` : le refus 401 doit disparaître.
 psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || true
+psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_LOT_G" >/dev/null 2>&1 || true
 psql_db -c "grant execute on function public.copy_workflow_to_track(uuid, uuid, text) to anon;
             notify pgrst, 'reload schema';" >/dev/null
 sleep 1
@@ -510,6 +555,7 @@ fi
 
 # d. Restauration **constatée**, et non supposée.
 psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || true
+psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_LOT_G" >/dev/null 2>&1 || true
 ./supabase/seed/apply-seed.sh >/dev/null 2>&1 || fail "le seed a échoué à la restauration"
 sleep 1
 

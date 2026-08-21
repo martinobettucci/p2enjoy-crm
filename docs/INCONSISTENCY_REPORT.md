@@ -196,6 +196,8 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-191 | Sept harnais figent des ABSENCES qu'une unité ultérieure a comblées, et sont rouges de leur propre succès | 2026-08-20 | *ouverte* — relève des harnais nommés au §INC-191 | 487 |
 | INC-192 | `scripts/verify-corbeille.sh` cherche `@spec CRM-077` dans les TROIS premières lignes de `webapp/src/app/RouteCard.tsx`, qui en cumule dix | 2026-08-20 | *ouverte* — relève de `CRM-077` | 487 |
 | INC-193 | Le `details` d'un refus de contrainte rend la ligne entière, `secret_id` compris — la colonne révoquée à `authenticated` ressort par un second chemin | 2026-08-20 | *ouverte* — arbitrage attendu, sécurité des données | 492 |
+| INC-195 | `scripts/verify-copie-workflow.sh` rejoue la migration 19 et laissait `move_card` AMPUTÉE du lot G — quatrième occurrence d'INC-154 | 2026-08-21 | **close** — corrigée par la décision 497 | 497 |
+| INC-196 | `scripts/verify-move-card.sh` déposait un commentaire à CHAQUE exécution, le lot G conservant désormais le motif | 2026-08-21 | **close** — corrigée par la décision 497 | 497 |
 
 ---
 
@@ -3798,3 +3800,54 @@ appartient à `CRM-088`, close depuis la décision 495, et le corriger au passag
 périmètre de la session. Il n'est ni masqué, ni contourné.
 
 **Statut : ouvert.**
+
+### INC-195 — `scripts/verify-copie-workflow.sh` laissait `move_card` amputée du lot G
+
+**Ouverte ET close le 2026-08-21 (décision 497), parce qu'elle vit dans un fichier de la session
+qui l'a trouvée** — même geste que la décision 447 pour INC-153 et que la décision 448 pour
+INC-154, dont ceci est la **quatrième occurrence**.
+
+**Ce qui a été mesuré.** `scripts/verify-copie-workflow.sh` rejoue quatre fois
+`supabase/migrations/0019_transition_required_fields.sql`, dont le §7 REDÉFINIT `public.move_card`.
+La 19 n'en est plus la dernière autorité depuis le lot G (`0035_commentaires_lot_g.sql`), qui y
+ajoute `app.btrim_blancs` (INC-052), la borne de longueur du motif (n° 5 bis) et la CONSERVATION du
+motif dans `card_comments` (INC-048). Le harnais sortait donc sur une fonction amputée de ces trois
+acquis, **en annonçant « 29 contrôles, aucune anomalie »**.
+
+Le défaut a été trouvé par un enchaînement, non par une lecture : `scripts/verify-move-card.sh`,
+vert lancé seul, rendait **8 assertions en échec sur 82** lancé derrière celui-ci. Isolé harnais par
+harnais, l'état de `move_card` relevé après chacun : `verify-cards`, `verify-valeurs-champs`,
+`verify-colonnes-protegees` et `verify-timeline` le laissent intact ; `verify-copie-workflow` non.
+
+**Ce que ce n'est PAS.** Une régression de `move_card` — une session qui aurait rejoué la série dans
+cet ordre l'aurait pourtant lue ainsi.
+
+**Corrigé** : chaque rejeu de la 19 est suivi du lot G, exactement comme
+`scripts/verify-valeurs-champs.sh` le fait depuis la décision 448. **Constaté** : `move_card` porte
+`btrim_blancs` avant comme après, et `verify-move-card.sh` rend **57 contrôles, aucune anomalie**
+lancé derrière.
+
+**Statut : close.**
+
+### INC-196 — `scripts/verify-move-card.sh` déposait un commentaire à chaque exécution
+
+**Ouverte ET close le 2026-08-21 (décision 497)**, dans le fichier de l'unité de la session.
+
+**Ce qui a été mesuré.** La ligne l du contrat d'API appelle `move_card` avec le motif
+« Budget reporté en 2027 » pour éprouver le sens du SUCCÈS. Écrit à une époque où le motif était
+**perdu** (INC-048), cet appel ne laissait rien. Depuis le lot G, `move_card` CONSERVE le motif dans
+`card_comments` : chaque exécution du harnais ajoutait donc **une ligne** au jeu de démonstration,
+sans que rien ne le dise. MESURÉ sur une base fraîchement seedée : deux lignes après deux
+exécutions, cinq commentaires seedés devenus sept.
+
+Ce n'est pas le résidu d'une interruption, comme celui de la décision 495 : c'est un résidu du
+chemin **nominal**, et il croissait sans borne. Il a été trouvé par `scripts/verify-manual.sh`, deux
+unités plus loin, qui annonçait « le manuel dit 5, la base dit 7 » — un harnais doit constater
+lui-même qu'il ne laisse rien derrière lui.
+
+**Corrigé** : le motif est retiré par le propriétaire — `card_comments` n'ouvre aucun `DELETE` au
+client, et c'est très bien ainsi. **Et l'invariant qui manquait est posé** : la section 7 du harnais
+compare désormais la population de `card_comments` à son instantané d'ouverture, de sorte qu'un
+résidu de cette famille se dénonce lui-même à l'exécution suivante.
+
+**Statut : close.**
