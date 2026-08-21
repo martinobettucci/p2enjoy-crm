@@ -55,6 +55,30 @@ rejouer_migrations() {
 	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || return 1
 	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_DROITS_FINS" >/dev/null 2>&1 || return 1
 }
+
+# RESTAURATION PAR LE RUNNER COMPLET — INC-200, corrigée le 2026-08-21 (décision 499).
+#
+# La paire `0004` + `0010` ci-dessus est exactement la « liste manuelle de migrations suivantes »
+# que le §3.5 de `docs/SPEC-test-harness.md` interdit depuis INC-142, et elle avait vieilli. Elle
+# reste le SUJET du contrôle d'idempotence du §2 — « la 4 se réapplique-t-elle ? » — mais elle
+# n'est plus jamais une restauration.
+#
+# CE QUI ÉTAIT MESURÉ, ET C'EST UN DÉFAUT D'AUTORISATION. `0004_channels.sql` accorde l'`UPDATE` au
+# niveau TABLE à `authenticated`. `0037_corbeille.sql` l'a délibérément remplacé par une
+# ÉNUMÉRATION DE COLONNES, en écrivant pourquoi : « un privilège accordé au niveau TABLE implique
+# toutes les colonnes, y compris futures ». La seule colonne que l'énumération exclut est
+# `deleted_by`, relevée en base et non supposée. Après une exécution de ce harnais, tout compte
+# `authenticated` pouvait donc écrire `channels.deleted_by` par un `PATCH` direct — falsifier
+# l'audit de mise en corbeille livré par `CRM-077` —, et l'état persistait jusqu'au prochain rejeu
+# complet du répertoire. Le diff d'empreinte tenait en une ligne : `> priv:authenticated:UPDATE`.
+#
+# `--force-recreate` est nécessaire — le `migrations-runner` est un conteneur à usage unique —, et
+# l'appel porte `--env-file` et les DEUX fichiers de composition (`docs/CloudWorker.md` §2.2 bis,
+# décisions 471 et 497) : un appel nu recréerait `storage` et `db` sans les surcharges `dev`.
+restaurer_etat_courant() {
+	docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
+		up --force-recreate migrations-runner
+}
 DB_CONTAINER=p2enjoy-db
 
 WS_SEED=5eed0000-0000-4000-8000-000000000001
@@ -133,7 +157,20 @@ menage() {
 		delete from public.workspaces where slug like 'tst-crm021-%';
 	" >/dev/null 2>&1 || true
 }
-trap 'menage; rm -f "$CORPS"' EXIT
+# `schema_degrade` est la sécurité d'interruption exigée par le §3.5 de
+# `docs/SPEC-test-harness.md` : les trois dégradations du §7 touchent le SCHÉMA, et une exécution
+# tuée entre la dégradation et sa restauration laissait jusqu'ici la base durablement affaiblie —
+# c'est le mécanisme même qu'INC-200 décrit. Le drapeau évite de payer le rejeu complet du
+# répertoire sur les sorties où rien n'a été dégradé.
+schema_degrade=false
+menage_complet() {
+	menage
+	if [ "$schema_degrade" = true ]; then
+		restaurer_etat_courant >/dev/null 2>&1 || true
+	fi
+	rm -f "$CORPS"
+}
+trap menage_complet EXIT
 menage
 
 titre "1. Suite pgTAP"
@@ -176,11 +213,36 @@ if rejouer_migrations; then
 else
 	fail "la migration échoue au rejeu — l'idempotence n'est pas acquise"
 fi
+# ASSERTION RETOURNÉE, JAMAIS RETIRÉE — mécanisme de la décision 51, INC-200, 2026-08-21.
+#
+# Elle exigeait « le rejeu ne modifie ni la structure, ni les politiques, ni les privilèges », et
+# elle avait RAISON : le rejeu de la paire modifie bien un privilège, et c'est ce qu'elle dénonçait
+# sans être lue. `0004_channels.sql` rend l'`UPDATE` de TABLE à `authenticated`, que
+# `0037_corbeille.sql` avait remplacé par une énumération de colonnes excluant `deleted_by`.
+#
+# Elle cesse d'exiger une neutralité que le dépôt a cessé d'avoir, et se met à mesurer l'invariant
+# qui protège réellement le produit, en deux temps : le rejeu isolé de la paire DOIT rouvrir
+# l'`UPDATE` de table — sans quoi ce harnais aurait cessé de décrire le dépôt et il faut le
+# relire —, et le rejeu complet du répertoire DOIT rendre l'empreinte à l'octet près, `deleted_by`
+# refermée. C'est la seule restauration que le §3.5 de `docs/SPEC-test-harness.md` autorise.
+apres_rejeu_isole=$(empreinte)
+if [ "$avant" != "$apres_rejeu_isole" ] \
+	&& printf '%s' "$apres_rejeu_isole" | grep -q 'priv:authenticated:UPDATE'; then
+	ok "le rejeu ISOLÉ de la paire rouvre l'UPDATE de table, comme la corbeille l'a fermé en migration 37"
+else
+	fail "le rejeu isolé ne rouvre plus l'UPDATE de table : la 4 serait redevenue la dernière autorité sur les privilèges de channels — relire ce harnais"
+fi
+restaurer_etat_courant >/dev/null 2>&1
 apres=$(empreinte)
 if [ "$avant" = "$apres" ]; then
-	ok "le rejeu ne modifie ni la structure, ni les politiques, ni les privilèges"
+	ok "le runner complet rend l'empreinte à l'octet près : structure, politiques et privilèges"
 else
-	fail "le rejeu a modifié quelque chose : l'empreinte diffère"
+	fail "l'empreinte reste dérivée APRÈS rejeu complet du répertoire"
+fi
+if ! printf '%s' "$apres" | grep -q 'priv:authenticated:UPDATE'; then
+	ok "après restauration, l'UPDATE de table reste révoqué : \`deleted_by\` n'est pas écrivable par un membre"
+else
+	fail "l'UPDATE de table sur channels subsiste après restauration : l'audit de corbeille est falsifiable"
 fi
 
 titre "3. Le cloisonnement est garanti en base, indépendamment de la RLS"
@@ -325,6 +387,7 @@ fi
 
 titre "6. Non-complaisance : le harnais échoue quand le produit est affaibli"
 
+schema_degrade=true
 # a. Politique d'écriture relâchée : un viewer devrait alors créer un channel.
 psql_db -c "
 	drop policy if exists channels_insertion_admin on public.channels;
@@ -384,8 +447,10 @@ else
 	ok "unicité déplacée au workspace : un slug homonyme dans un autre track est refusé à tort"
 fi
 
-# d. Restauration **constatée**, et non supposée. La paire, dans l'ordre du runner.
-rejouer_migrations || true
+# d. Restauration **constatée**, et non supposée. Par le runner complet, seule forme qui ne
+# vieillisse pas (§3.5, INC-200) : la paire manuelle laissait l'`UPDATE` de table rouvert.
+restaurer_etat_courant >/dev/null 2>&1 || true
+schema_degrade=false
 sleep 1
 restaure=$(psql_db -c "
 	select (select count(*) from pg_constraint
