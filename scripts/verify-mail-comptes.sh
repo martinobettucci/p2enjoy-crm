@@ -234,9 +234,19 @@ else
 	fi
 
 	# L'ÉCRIT RESTE REFUSÉ À `anon` : le classement `session-expiree` sur `401` en dépend (§21.6).
-	if [ "$(psql_db -c "select has_function_privilege('anon',
-		'public.upsert_mail_inbound_account(uuid, uuid, text, text, integer, text, text, text, text[], text, integer)',
-		'execute')")" = f ]; then
+	#
+	# LA SIGNATURE EST RÉSOLUE EN BASE, jamais recopiée ici : figer une liste d'arguments dans ce
+	# harnais ferait rendre à `has_function_privilege` une ERREUR le jour où la fonction gagne un
+	# paramètre — erreur qu'un test naïf lirait comme « le droit est ouvert ». Le contrôle
+	# distingue donc les deux cas, et une fonction absente le dit pour ce qu'elle est.
+	signature=$(psql_db -c "select p.oid::regprocedure from pg_proc p
+		join pg_namespace n on n.oid = p.pronamespace
+		where n.nspname = 'public' and p.proname = 'upsert_mail_inbound_account'")
+	if [ -z "${signature:-}" ]; then
+		fail "upsert_mail_inbound_account est ABSENTE : l'écran n'a plus de chemin d'écriture"
+	elif [ "$(printf '%s\n' "$signature" | wc -l)" -ne 1 ]; then
+		fail "upsert_mail_inbound_account est SURCHARGÉE : PostgREST ne saurait laquelle appeler"
+	elif [ "$(psql_db -c "select has_function_privilege('anon', '$signature', 'execute')")" = f ]; then
 		ok "upsert_mail_inbound_account reste refusée à anon (§21.6)"
 	else
 		fail "la fonction d'écriture est offerte à anon : une session n'est plus exigée"
