@@ -519,14 +519,29 @@ else
 	fail "n° 14 — durée de vie du jeton = $duree s, attendu $JWT_EXPIRY"
 fi
 
-# Le jeton n'est pas seulement bien formé : PostgREST l'accepte et positionne l'identité. Sans
-# politique, la lecture rend zéro ligne — c'est bien l'attendu de CRM-003 et CRM-010.
+# ASSERTION RETOURNÉE, JAMAIS RETIRÉE — mécanisme de la décision 51, onzième occurrence,
+# 2026-08-21 (décision 499). Elle figeait une ABSENCE qu'une unité ultérieure a comblée, exactement
+# la famille d'INC-191.
+#
+# Elle exigeait « 200 et zéro ligne », et son commentaire disait pourquoi : « sans politique, la
+# lecture rend zéro ligne ». `public.profiles` PORTE désormais une politique — `profiles_lecture_
+# equipe`, livrée par `CRM-022` : un appelant lit son PROPRE profil, plus ceux des membres des
+# workspaces auxquels il appartient. Le compte jetable de ce harnais n'appartient à aucun
+# workspace : il voit donc exactement UNE ligne, la sienne. MESURÉ le 2026-08-21 — le harnais
+# rendait « 200 [{"id":"a90c96fe-…"}] », l'identifiant du compte qu'il venait lui-même de créer.
+#
+# L'assertion cesse donc de mesurer une absence et se met à mesurer ce que la politique GARANTIT,
+# ce qui est plus fort : le jeton est accepté, il positionne la bonne identité, et il n'ouvre RIEN
+# de plus — une ligne, et c'est `sub`. Une politique relâchée sur `profiles` la rendrait rouge, là
+# où l'ancienne rédaction ne pouvait plus rien dire du produit.
 code=$(http GET "$API/rest/v1/profiles?select=id" -H "apikey: $ANON_KEY" \
 	-H "Authorization: Bearer $acces")
-if [ "$code" = "200" ] && [ "$(corps)" = "[]" ]; then
-	ok "n° 14 — le jeton est accepté par PostgREST ; refus par défaut : 200 et zéro ligne"
+lignes=$(corps | jq -r 'length')
+vu=$(corps | jq -r '.[0].id // empty')
+if [ "$code" = "200" ] && [ "$lignes" = "1" ] && [ "$vu" = "$sub" ]; then
+	ok "n° 14 — le jeton est accepté par PostgREST, et n'ouvre QUE le profil de son porteur (CRM-022)"
 else
-	fail "n° 14 — lecture PostgREST avec le jeton : $code $(corps | head -c 120)"
+	fail "n° 14 — lecture PostgREST avec le jeton : $code, $lignes ligne(s), vue='$vu' attendu '$sub'"
 fi
 
 # --- 9. Rafraîchissement et déconnexion (preuves n° 15 et 16) ----------------------------------
