@@ -638,8 +638,33 @@ export const fr = {
 	'goals.board.refused.invalid': 'Le nom est exigé : un tableau sans nom ne se retrouve pas.',
 
 	'route.today.title': 'Ma journée',
-	'route.today.empty.title': 'Rien pour aujourd’hui',
-	'route.today.empty.body': 'Les prochaines actions et les relances dues apparaîtront ici.',
+
+	// « Ma journée » — CRM-061, docs/SPEC-cards.md §17, docs/DESIGN_SYSTEM.md §5.36.
+	// `route.today.empty.*` a été RETIRÉ : l'écran ne rend plus un état vide inconditionnel, et ses
+	// deux vides sont désormais distincts (§17.8). Une clé que rien ne rend est une clé morte.
+	'today.aria': 'Ma journée',
+	'today.scope.aria': 'Portée de la journée',
+	'today.scope.mine': 'Mes affaires',
+	'today.scope.all': 'Tout l’espace de travail',
+	'today.live.aria': 'Contenu de la journée',
+	'today.live.message': '{portee} : {total} affaire(s) à échéance.',
+	'today.section.late': 'En retard',
+	'today.section.today': 'Aujourd’hui',
+	'today.section.upcoming': 'À venir',
+	'today.empty.mine.title': 'Aucune échéance dans votre journée',
+	'today.empty.mine.body':
+		'Aucune affaire dont vous êtes responsable n’a d’échéance en retard, aujourd’hui, ni dans les {jours} prochains jours.',
+	'today.empty.mine.action': 'Voir tout l’espace de travail',
+	'today.empty.all.title': 'Aucune échéance dans les {jours} prochains jours',
+	'today.empty.all.body':
+		'Aucune affaire lisible ne porte d’échéance en retard, aujourd’hui, ni dans les jours qui viennent.',
+	'today.error.title': 'La journée n’a pas pu être chargée',
+	'today.error.body':
+		'La liste des échéances n’a pas pu être lue. Vérifiez votre connexion, puis réessayez.',
+	'today.error.retry': 'Réessayer',
+	'today.noWorkspace.title': 'Aucun espace de travail',
+	'today.noWorkspace.body':
+		'Aucune configuration d’espace de travail n’est disponible : la journée ne peut pas être lue.',
 	'route.settings.title': 'Réglages',
 	'route.track.title': 'Track',
 	'route.track.notfound.title': 'Track introuvable',

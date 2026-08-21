@@ -45,6 +45,7 @@ import {
 	CHEMIN_DEMARRAGE,
 	CHEMIN_ETAT_MESSAGERIE,
 	CHEMIN_INBOX,
+	CHEMIN_MA_JOURNEE,
 	CHEMIN_CONTACT,
 	cheminContact,
 	CHEMIN_OBJECTIFS,
@@ -70,6 +71,7 @@ export {
 	CHEMIN_DEMARRAGE,
 	CHEMIN_ETAT_MESSAGERIE,
 	CHEMIN_INBOX,
+	CHEMIN_MA_JOURNEE,
 	CHEMIN_CONTACT,
 	cheminContact,
 	CHEMIN_OBJECTIFS,
@@ -95,6 +97,10 @@ const RouteInbox = lazy(async () => ({ default: (await import('./RouteInbox')).R
  * (`CLAUDE.md` §21). Le repli de `Suspense` est déjà posé par `App`.
  */
 const Carnet = lazy(async () => ({ default: (await import('./Carnet')).Carnet }))
+
+// `CRM-061` — l'écran de la journée, chargé À LA DEMANDE comme le carnet et l'inbox : il n'est pas
+// sur le chemin du premier rendu, et son module tire `Intl.DateTimeFormat` et la lecture des cards.
+const MaJournee = lazy(async () => ({ default: (await import('./MaJournee')).MaJournee }))
 
 /**
  * La liste des tableaux d'objectifs — `CRM-083`, `docs/SPEC-goals.md` §5.1. Chargée à la demande
@@ -219,9 +225,14 @@ export const ROUTES: readonly DescriptionRoute[] = [
 		rendu: () => <CoutsWorkspace />,
 	},
 	{
-		chemin: '/ma-journee',
+		// Ma journée — `CRM-061`, `docs/SPEC-cards.md` §17. L'adresse rendait un état vide
+		// INCONDITIONNEL depuis `CRM-007` : une entrée de barre latérale qui ne menait nulle part,
+		// alors que le modèle — `next_action`, `next_action_at` et leur index — est livré depuis
+		// `CRM-040`. Elle porte désormais l'écran. Une route TRANSVERSE, au même titre que le carnet
+		// et les objectifs : une journée de travail n'administre rien, elle porte le travail.
+		chemin: CHEMIN_MA_JOURNEE,
 		cleTitre: 'route.today.title',
-		rendu: () => <EtatVide titre={t('route.today.empty.title')} corps={t('route.today.empty.body')} />,
+		rendu: () => <MaJournee />,
 	},
 	{
 		// `CRM-075` remplace l'état vide de `CRM-007` par un **index des sections**. L'écran

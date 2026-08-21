@@ -2,6 +2,7 @@
 // @spec CRM-060 (docs/BACKLOG.md) — le carnet de contacts entre dans la navigation transverse
 // @spec CRM-083 (docs/BACKLOG.md) — l'entrée « Objectifs » (docs/SPEC-goals.md §5.1)
 // @spec CRM-086 (docs/BACKLOG.md) — l'entrée « Coûts » (docs/SPEC-costs.md §4.0 et §4.5)
+// @spec CRM-061 (docs/BACKLOG.md) — l'entrée « Ma journée » mène enfin à un écran (docs/SPEC-cards.md §17.2)
 // @spec docs/DESIGN_SYSTEM.md §4 (barre latérale : tracks, Inbox, Contacts, Ma journée, Réglages)
 // @spec docs/SPEC-contacts.md §10.2 (pourquoi le carnet est une route de premier niveau)
 // @spec docs/SPEC-webapp.md §5.2 (routes)
@@ -21,6 +22,7 @@ import {
 	Settings,
 } from 'lucide-react'
 import type { CleTraduction } from '../i18n'
+import { CHEMIN_MA_JOURNEE } from './chemins'
 
 export type EntreeNavigation = {
 	readonly chemin: string
@@ -45,6 +47,6 @@ export const ENTREES_TRANSVERSES: readonly EntreeNavigation[] = [
 	// entrées désignent le MÊME objet, les coûts, à deux portées différentes. Leur donner deux
 	// icônes ferait chercher deux choses là où il n'y en a qu'une.
 	{ chemin: '/couts', cleLibelle: 'nav.item.costs', icone: ChartColumn },
-	{ chemin: '/ma-journee', cleLibelle: 'nav.item.today', icone: CalendarCheck },
+	{ chemin: CHEMIN_MA_JOURNEE, cleLibelle: 'nav.item.today', icone: CalendarCheck },
 	{ chemin: '/reglages', cleLibelle: 'nav.item.settings', icone: Settings },
 ]

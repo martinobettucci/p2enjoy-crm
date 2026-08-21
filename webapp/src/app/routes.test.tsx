@@ -15,6 +15,7 @@ import {
 	CHEMIN_ADMIN_ARBORESCENCE,
 	CHEMIN_CONTACTS,
 	CHEMIN_COUTS_WORKSPACE,
+	CHEMIN_MA_JOURNEE,
 	CHEMIN_OBJECTIFS,
 	CHEMIN_DEMARRAGE,
 	CHEMIN_ETAT_MESSAGERIE,
@@ -68,12 +69,21 @@ describe('table des routes', () => {
 	// arrivé (`docs/SPEC-contacts.md` §10). La règle a changé par livraison, la preuve est donc
 	// RÉVISÉE et non contournée : la route rejoint celles qui portent un écran, et son assertion
 	// propre ci-dessous vérifie qu'elle rend bien un état explicite sans session.
+	//
+	// RÉVISÉE UNE SIXIÈME FOIS PAR `CRM-061`, ET POUR LE MOTIF DÉJÀ ÉCRIT QUATRE FOIS AU-DESSUS :
+	// `/ma-journee` portait un état vide **inconditionnel** depuis `CRM-007`, ce qui a cessé d'être
+	// vrai le jour où l'écran de la journée est arrivé (`docs/SPEC-cards.md` §17). La règle a changé
+	// par LIVRAISON, la preuve est donc RÉVISÉE et non contournée : la route rejoint celles qui
+	// portent un écran chargé à la demande, et son assertion propre plus bas vérifie qu'elle rend
+	// bien un état explicite sans session — l'état vide « rien pour moi » du §17.8, jamais une page
+	// blanche.
 	const ROUTES_EN_ATTENTE = ROUTES.filter(
 		(route) =>
 			route.chemin !== CHEMIN_INBOX &&
 			route.chemin !== CHEMIN_CONTACTS &&
 			route.chemin !== CHEMIN_OBJECTIFS &&
 			route.chemin !== CHEMIN_COUTS_WORKSPACE &&
+			route.chemin !== CHEMIN_MA_JOURNEE &&
 			route.chemin !== '/reglages' &&
 			route.chemin !== '/',
 	)
@@ -170,6 +180,27 @@ describe('table des routes', () => {
 		)
 		expect(screen.getByLabelText(fr['state.loading.aria'])).toBeTruthy()
 		expect(await screen.findByTestId('etat-vide')).toBeTruthy()
+	})
+
+	it('la route /ma-journee rend son écran, chargé à la demande derrière un repli — CRM-061', async () => {
+		// Même patron que `/couts` et `/objectifs` juste au-dessus, et pour son motif exact. Montée
+		// sans configuration d'API, la route rend l'état vide « aucun espace de travail » du §17.8 —
+		// jamais une page blanche, et jamais un squelette perpétuel qui attendrait une lecture que
+		// rien n'émettra.
+		//
+		// Les DEUX autres vides — « rien pour moi », qui porte l'action d'élargissement, et « rien
+		// pour personne », qui n'en porte aucune — sont éprouvés par `MaJournee.test.tsx`, avec un
+		// client substitué : ils demandent une réponse du backend, que cette preuve-ci n'a pas.
+		const route = ROUTES.find((candidate) => candidate.chemin === CHEMIN_MA_JOURNEE)
+		expect(route).toBeDefined()
+		render(
+			<MemoryRouter>
+				<Suspense fallback={<ChargementRoute />}>{route!.rendu()}</Suspense>
+			</MemoryRouter>,
+		)
+		expect(screen.getByLabelText(fr['state.loading.aria'])).toBeTruthy()
+		expect(await screen.findByTestId('etat-vide')).toBeTruthy()
+		expect(screen.getByRole('heading').textContent).toBe(fr['today.noWorkspace.title'])
 	})
 
 	it('la route /contacts rend son écran, chargé à la demande derrière un repli — CRM-060', async () => {

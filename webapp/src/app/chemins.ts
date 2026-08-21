@@ -26,6 +26,20 @@ export const CHEMIN_INBOX = '/inbox' as const
 export const CHEMIN_CONTACTS = '/contacts' as const
 
 /**
+ * Ma journée — `CRM-061`, `docs/SPEC-cards.md` §17.2.
+ *
+ * Une route de PREMIER NIVEAU, portée par une entrée de la barre latérale que
+ * `docs/DESIGN_SYSTEM.md` §4 déclare **depuis `CRM-000`**. Elle existait déjà comme adresse et
+ * rendait un état vide inconditionnel depuis `CRM-007` ; elle est ici **nommée** pour cesser d'être
+ * une chaîne littérale recopiée, comme les six autres avant elle.
+ *
+ * Elle RESTE dans `ROUTES` : son titre est une clé de traduction et son contenu ne dépend d'aucun
+ * paramètre de chemin. Seule la **portée** vit dans la chaîne de requête (`?qui=tous`), qui n'entre
+ * pas dans la table des routes.
+ */
+export const CHEMIN_MA_JOURNEE = '/ma-journee' as const
+
+/**
  * Fiche d'organisation — `CRM-060` tranche 4b, `docs/SPEC-contacts.md` §11.2.
  *
  * Une route de DÉTAIL sous le carnet, et non une route de premier niveau `/organisations/:id` :
