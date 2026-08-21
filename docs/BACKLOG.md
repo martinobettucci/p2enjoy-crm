@@ -11008,9 +11008,20 @@ exactement la surface qui manquait pour l'exercer. Elle ne corrige pas `INC-193`
 `secret_id` par le corps d'un refus de contrainte est étrangère à cet écran, qui se borne à ne
 jamais l'afficher.
 
+- [x] **Harnais dédié `scripts/verify-mail-comptes.sh`**, non complaisant et avec son témoin,
+      livré par la session suivante (`docs/SPEC-mail-subsystem.md` §21.11 bis). **REJOUÉ le
+      2026-08-20 en `--rapide` : 43 contrôles, aucune anomalie.**
+
 *Pourquoi l'unité reste `[~]` et non `[x]`.* Un seul reste, et il est nommé : **la campagne
-complète des `scripts/verify-*.sh` n'a pas été rejouée en entier** dans la session de livraison, et
-aucun harnais `scripts/verify-mail-comptes.sh` propre à cette surface n'est écrit — les autres
-unités d'interface en portent un. Tout le reste de la Definition of Done est vert et mesuré. La
-prochaine exécution peut clore l'unité en écrivant ce harnais, non complaisant et avec son témoin,
-puis en le rejouant.
+complète des `scripts/verify-*.sh` n'a pas été rejouée en entier**. Ce qui l'a été, et son verdict :
+
+| Harnais | Verdict |
+|---|---|
+| `scripts/verify-mail-comptes.sh --rapide` | **43 contrôles, aucune anomalie** |
+| `scripts/verify-harness.sh --rapide` | **31 contrôles, aucune anomalie**, après révision de ses deux compteurs de scénarios |
+| `scripts/verify-webapp.sh` | **42 contrôles, 1 anomalie** — `INC-178`, préexistante : `h-10`, `py-0.5` et `text-text-1` sont citées par cinq fichiers qu'aucun changement de cette unité ne touche, et le compte de classes citées passe de 285 à 307 sans qu'aucune des nouvelles manque |
+| `scripts/verify-mail-inbound.sh --rapide` | **31 contrôles, 1 en échec** — `INC-191`, préexistante : le harnais fige l'absence d'une synchronisation que la relève de `CRM-054` écrit désormais dans `sync_state` |
+
+Le reste de la Definition of Done est vert et mesuré. La prochaine exécution peut clore l'unité en
+rejouant les cinquante-six harnais restants, ou en constatant que ce qu'ils couvrent est étranger à
+cette surface.

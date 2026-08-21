@@ -22603,14 +22603,39 @@ et `e2e:api` — qui ne disaient rien du produit. Rejouée **seule**, la même c
 contrôles, aucune anomalie*. C'est INC-177 sous une autre forme : **un harnais qui dégrade la base
 ne se lance jamais à deux**.
 
-**Ce qui n'a pas été exécuté**, et il faut le dire (`CLAUDE.md` §25) : les **cinquante-huit autres**
-`scripts/verify-*.sh`. Le budget de la session est passé dans la livraison et dans la campagne ;
-INC-190 mesure que la série entière demande environ 75 min à part. Aucun harnais propre à cette
-surface n'est écrit non plus — c'est le seul reste réel de l'unité.
+**Deux harnais de plus, exécutés après la rédaction de ce qui précède, et leurs verdicts.**
 
-**Où reprendre.** `CRM-088` est `[~]`, onze points sur douze cochés. La prochaine exécution peut la
-clore en écrivant `scripts/verify-mail-comptes.sh`, non complaisant et avec son témoin, puis en le
-rejouant. Le reste du produit est inchangé : les `[~]` antérieures attendent toujours un arbitrage
+- `scripts/verify-webapp.sh` — **42 contrôles, 1 anomalie**, et elle est **INC-178**, préexistante :
+  `h-10`, `py-0.5` et `text-text-1` sont citées par cinq fichiers qu'aucun changement de cette unité
+  ne touche. Le compte de classes citées passe de 285 à **307** avec cet écran, et **aucune des
+  nouvelles ne manque** au CSS produit — c'est précisément ce que ce contrôle existe pour dire.
+- `scripts/verify-mail-comptes.sh --rapide` — **43 contrôles, aucune anomalie.** Ce harnais est
+  celui que cette entrée nommait comme le reste de l'unité ; il a été **écrit et poussé par une
+  session concurrente** pendant que celle-ci finissait sa campagne (commits `baa3fdc` à `98b91df`),
+  et il est ici **rejoué et mesuré**. Le paragraphe du backlog qui le disait manquant était devenu
+  faux : il est corrigé dans le même changement.
+
+**UNE SESSION CONCURRENTE A TRAVAILLÉ SUR LA MÊME UNITÉ, et c'est un fait à consigner.** Le `git
+push` de cette entrée a été refusé : `origin/main` portait quatre commits `CRM-088` d'une autre
+exécution, partie de mon travail poussé au fil de l'eau. Le rebase n'a présenté que des conflits de
+**captures binaires**, réglés en gardant celles d'`origin/main` — les deux séries rendent le même
+écran. C'est exactement ce que le §0 de `docs/CloudWorker.md` prévoit : pousser tôt et souvent
+permet à une autre exécution de reprendre le travail au lieu de le refaire.
+
+**UN PIÈGE DE MÉTHODE, ÉVITÉ DE JUSTESSE, ET QUI DOIT ÊTRE ÉCRIT.** `git add -A` a failli committer
+`webapp/src/app/TabBar.tsx` **dégradé** — une couleur hexadécimale en dur et un texte visible non
+traduit —, parce que `scripts/verify-webapp.sh` tournait au même instant et dégrade délibérément ce
+fichier avant de le restaurer. Vu à la relecture du diff, retiré de l'index. **Ne jamais committer
+pendant qu'un harnais qui dégrade des fichiers s'exécute** ; relire le diff avant chaque commit
+reste le seul filet.
+
+**Ce qui n'a pas été exécuté**, et il faut le dire (`CLAUDE.md` §25) : les **cinquante-six autres**
+`scripts/verify-*.sh`. Le budget de la session est passé dans la livraison et dans la campagne ;
+INC-190 mesure que la série entière demande environ 75 min à part.
+
+**Où reprendre.** `CRM-088` est `[~]`, **douze points sur treize cochés** — le harnais dédié compris,
+livré par la session concurrente et rejoué ici. Le seul reste est la série des harnais non exécutés
+ci-dessus. Le reste du produit est inchangé : les `[~]` antérieures attendent toujours un arbitrage
 du responsable (`CRM-060`, `CRM-083`, `CRM-084`), une unité non ouverte (`CRM-013`, `CRM-014`) ou
 un hôte sans interception TLS (`CRM-001`, INC-186). **`INC-193` attend un arbitrage de sécurité** :
 le corps d'un refus de contrainte divulgue `secret_id` à tout appelant `authenticated` capable de
