@@ -11020,11 +11020,11 @@ jamais l'afficher.
 *Ce qui a clos l'unité.* Les deux restes nommés à la livraison sont levés. Le harnais existe et il
 est vert. Et la série des `scripts/verify-*.sh` a été rejouée dans le cadrage MESURÉ par la
 décision 488 — `--rapide` sur les 38 harnais qui l'acceptent, complet sur les 23 autres, plafond de
-20 min chacun : **59 harnais sur 61 dans la session de la décision 495**, dont **37 verts**,
-**19 rouges tous préexistants et consignés** (INC-186, INC-191, INC-192, INC-175, INC-139) et
-**3 au plafond** — `verify-droits-fins`, `verify-harness`, `verify-tracks`, exactement les trois que
-la décision 488 nomme comme verrouillés par leur propre coût. Les verdicts relevés séparément par la
-session de la décision 493 complètent la série :
+20 min chacun. **LA SÉRIE ENTIÈRE Y EST PASSÉE — 61 harnais sur 61** : **38 verts**, **19 rouges
+tous préexistants et consignés** (INC-186, INC-191, INC-192, INC-175, INC-139, INC-178) et **4 au
+plafond** — `verify-droits-fins`, `verify-harness`, `verify-tracks`, `verify-webapp`. Aucun harnais
+n'a été sauté. Les verdicts relevés séparément par la session de la décision 493 complètent deux des
+quatre plafonnés :
 
 | Harnais | Verdict |
 |---|---|
@@ -11033,10 +11033,9 @@ session de la décision 493 complètent la série :
 | `scripts/verify-webapp.sh` | **42 contrôles, 1 anomalie** — `INC-178`, préexistante : trois classes citées par cinq fichiers qu'aucun changement de cette unité ne touche |
 | `scripts/verify-mail-inbound.sh --rapide` | **31 contrôles, 1 en échec** — `INC-191`, préexistante : le harnais fige l'absence d'une synchronisation que la relève de `CRM-054` écrit désormais dans `sync_state` |
 
-**Un seul harnais n'a été rejoué par aucune des deux sessions : `scripts/verify-workflows.sh`**, et
-c'est dit plutôt que dissimulé (`docs/CloudWorker.md` §4.3). Il ne touche pas cette surface — ni
-l'écran, ni le module, ni la table `mail_inbound_accounts`. `INC-193` reste ouverte et n'appartient
-pas à cette unité (§21.12).
+`scripts/verify-workflows.sh`, que la session de livraison n'avait pas rejoué, rend
+**42 contrôles, aucune anomalie**. `INC-193` reste ouverte et n'appartient pas à cette unité
+(§21.12).
 
 ### CRM-089 — Réglages : configuration des identités sortantes SMTP `[~]`
 *Créée le 2026-08-21 — `docs/JOURNAL.md` décision 494. Motif : le §14.1 de

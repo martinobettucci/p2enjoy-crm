@@ -22777,13 +22777,13 @@ ces trois rouges les lirait comme une régression du fil de commentaires ; ils n
 
 **La série des `scripts/verify-*.sh`, rejouée dans le cadrage MESURÉ par la décision 488** —
 `--rapide` sur les 38 harnais qui l'acceptent, complet sur les 23 autres, plafond de 20 min chacun.
-**59 harnais sur 61** rejoués : **37 verts**, **19 rouges**, **3 au plafond**
-(`verify-droits-fins`, `verify-harness`, `verify-tracks` — exactement les trois que la décision 488
-nomme comme verrouillés par leur propre coût). **`verify-webapp` et `verify-workflows` n'ont PAS
-été exécutés ICI**, le budget de la session s'achevant ; c'est dit plutôt que dissimulé (§4.3). La
-session concurrente de la décision 493 a rejoué `verify-webapp` de son côté — **42 contrôles,
-1 anomalie**, `INC-178` préexistante —, si bien que **`verify-workflows` est le seul harnais du
-dépôt qu'aucune des deux sessions n'a rejoué**.
+**LA SÉRIE ENTIÈRE — 61 harnais sur 61 —** est passée :
+**38 verts**, **19 rouges**, **4 au plafond de 20 min** (`verify-droits-fins`, `verify-harness`,
+`verify-tracks`, `verify-webapp` — les trois premiers sont exactement ceux que la décision 488 nomme
+comme verrouillés par leur propre coût, et le quatrième les rejoint). Aucun harnais n'a été sauté.
+Des quatre plafonnés, deux ont un verdict relevé le même jour par la session concurrente de la
+décision 493 : `verify-harness --rapide` **31 contrôles, aucune anomalie**, et `verify-webapp`
+**42 contrôles, 1 anomalie** — `INC-178`, préexistante.
 
 Les dix-neuf rouges ont été lus un par un, et **aucun n'est imputable à cette session**, qui n'a
 ajouté qu'un fichier de harnais et de la documentation :
