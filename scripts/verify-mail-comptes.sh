@@ -101,22 +101,30 @@ titre "1. Fichiers livrés et traçabilité"
 for fichier in "$MODULE" "$COMPOSANT" "$TEST_MODULE" "$TEST_COMPOSANT" "$SPEC_API" "$SPEC_UI"; do
 	if [ -f "$fichier" ]; then ok "$fichier est livré"; else fail "$fichier est ABSENT"; fi
 done
+
+# L'EN-TÊTE EST LU EN ENTIER, jamais par une fenêtre de trois lignes : un fichier pivot cumule les
+# citations de plusieurs unités, et la sienne peut être la dixième. C'est exactement le défaut
+# qu'`INC-192` mesure sur `verify-corbeille.sh` ; il n'est pas reproduit ici. La lecture s'arrête à
+# la première ligne qui n'est plus un commentaire, donc avant tout code.
+entete() {
+	awk '/^[[:space:]]*(\/\/|#|\/\*|\*)/ { print; next } /^[[:space:]]*$/ { next } { exit }' "$1"
+}
 for fichier in "$MODULE" "$COMPOSANT"; do
-	if head -3 "$fichier" | grep -q '@spec CRM-088'; then
+	if entete "$fichier" | grep -q '@spec CRM-088'; then
 		ok "$(basename "$fichier") porte son commentaire @spec"
 	else
-		fail "$(basename "$fichier") ne cite pas son unité"
+		fail "$(basename "$fichier") ne cite pas son unité dans son en-tête"
 	fi
 done
 for fichier in "$TEST_MODULE" "$TEST_COMPOSANT" "$SPEC_UI"; do
-	if head -3 "$fichier" | grep -q '@verifies CRM-088'; then
+	if entete "$fichier" | grep -q '@verifies CRM-088'; then
 		ok "$(basename "$fichier") porte son commentaire @verifies"
 	else
-		fail "$(basename "$fichier") ne cite pas son unité"
+		fail "$(basename "$fichier") ne cite pas son unité dans son en-tête"
 	fi
 done
-# `comptes-entrants.spec.ts` appartient à `CRM-052` et cite CRM-088 EN PLUS, dans son préambule :
-# la citation n'est donc pas cherchée sur les trois premières lignes.
+# `comptes-entrants.spec.ts` appartient à `CRM-052` et cite CRM-088 EN PLUS, plus bas dans le
+# fichier, à l'endroit des scénarios ajoutés : la citation est donc cherchée partout.
 if grep -q 'CRM-088' "$SPEC_API"; then
 	ok "$(basename "$SPEC_API") cite CRM-088 à côté de son unité d'origine"
 else
