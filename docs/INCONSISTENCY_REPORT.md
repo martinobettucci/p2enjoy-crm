@@ -193,7 +193,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-185 | `e2e/ui/inbox.spec.ts` affirme retirer un `card_event` que personne ne peut retirer (403 mesuré) | 2026-08-20 | *ouverte* — arbitrage attendu | 481 |
 | INC-189 | « Alt et flèche REDIMENSIONNENT » d'`Objectifs.test.tsx` échoue par INTERMITTENCE en campagne, et passe seul | 2026-08-20 | *ouverte* — relève de `CRM-081` | 485 |
 | INC-190 | La série complète des `scripts/verify-*.sh` TIENT dans une session en mode `--rapide` — cinq restes de forme du backlog en sont caducs | 2026-08-20 | *ouverte* — constat de méthode | 487 |
-| INC-191 | Sept harnais figent des ABSENCES qu'une unité ultérieure a comblées, et sont rouges de leur propre succès | 2026-08-20 | *ouverte* — relève des harnais nommés au §INC-191 | 487 |
+| INC-191 | Sept harnais figent des ABSENCES qu'une unité ultérieure a comblées, et sont rouges de leur propre succès | 2026-08-20 | **close** — les dix harnais retournés par la décision 498 | 487, 497, 498 |
 | INC-192 | `scripts/verify-corbeille.sh` cherche `@spec CRM-077` dans les TROIS premières lignes de `webapp/src/app/RouteCard.tsx`, qui en cumule dix | 2026-08-20 | *ouverte* — relève de `CRM-077` | 487 |
 | INC-193 | Le `details` d'un refus de contrainte rend la ligne entière, `secret_id` compris — la colonne révoquée à `authenticated` ressort par un second chemin | 2026-08-20 | *ouverte* — arbitrage attendu, sécurité des données | 492 |
 | INC-195 | `scripts/verify-copie-workflow.sh` rejoue la migration 19 et laissait `move_card` AMPUTÉE du lot G — quatrième occurrence d'INC-154 | 2026-08-21 | **close** — corrigée par la décision 497 | 497 |
@@ -3667,6 +3667,19 @@ le fichier, jamais supprimée.
 **Ce qui suit.** La correction est ligne par ligne — un compteur à mettre à jour, un `hasnt_*` à
 retourner en `has_*` — et **relève de chaque unité que le harnais teste**. Les grouper dans une
 session de documentation reviendrait à substituer ce geste au produit (`docs/CloudWorker.md` §4.2 bis).
+
+**SOLDÉE LE 2026-08-21 — décision 498, et la correction n'a été « ligne par ligne » qu'en apparence.**
+Les dix harnais ont été repris, chacun sous l'unité qu'il éprouve, et aucun n'a reçu un nouveau
+nombre : relever un compteur de 15 à 41 l'aurait refigé au prochain enrichissement du seed, ce qui
+est exactement la boucle que cette entrée décrit. Chaque assertion mesure désormais l'**invariant**
+que sa section prétend tenir — instantané d'ouverture, égalité copie/source, plancher, forme d'une
+donnée — sans aucune valeur littérale. La méthode est arrêtée à la décision 497.
+
+**Et le geste a payé au-delà de son objet : TROIS DÉFAUTS RÉELS** ont été trouvés en rejouant ces
+harnais, tous invisibles à la lecture — INC-195, INC-196 et INC-197. Deux d'entre eux faisaient
+rendre à d'autres harnais des verdicts qui accusaient le produit à tort.
+
+**Statut : close.**
 
 **PRÉCISION MESURÉE LE 2026-08-20 par la session `CRM-088`, sur le quatrième harnais de la liste,
 et elle désigne la MOITIÉ exacte du prédicat à retourner.** `scripts/verify-mail-inbound.sh` §4

@@ -3218,6 +3218,20 @@ clés manquantes.
       `verify-catalogue` 32, `verify-workflows` 42, `verify-copie-workflow` 27,
       `verify-coherence-workflow` 26, `verify-champs-formulaire` 30, `verify-droits-fins` 35,
       `verify-cards` 37 —, aucune anomalie.
+- [x] **HARNAIS REMIS EN ÉTAT LE 2026-08-21 — décision 498, INC-191.** Il rendait « 55 contrôles,
+      1 anomalie » sur un dépôt sain : son contrôle « le seed est inchangé » comparait la population
+      de cards à **quinze**, valeur juste à `CRM-077` et fausse depuis que `CRM-085` et `CRM-086`
+      ont seedé les affaires de leurs lignes de coût — MESURÉ, **quarante et une**. L'assertion n'a
+      pas reçu un nouveau nombre, elle a été **retournée** : le harnais relève la population à son
+      ouverture et vérifie en sortant qu'il l'a rendue intacte, avec une **empreinte portant l'étape
+      de chaque card**. MESURÉ que c'est plus strict : déplacer une card laisse le compte à 41 et
+      change l'empreinte. **57 contrôles, aucune anomalie.**
+- [x] **UN DÉFAUT RÉEL DE CE HARNAIS, TROUVÉ PAR UN COMPTEUR DE `verify-manual.sh` — INC-196.**
+      La ligne l de son contrat d'API fournit un motif de transition pour éprouver le SUCCÈS. Écrite
+      quand le motif était perdu (INC-048), elle ne laissait rien ; depuis le lot G, `move_card`
+      CONSERVE le motif, et le harnais déposait donc **un commentaire à chaque exécution** — cinq
+      commentaires seedés devenus sept. Le motif est retiré par le propriétaire, et l'invariant qui
+      manquait est posé : la population de `card_comments` est comparée à l'instantané d'ouverture.
 - [x] Harnais de preuves rejouable `scripts/verify-move-card.sh` : **56 contrôles, aucune
       anomalie**, et **non complaisant, éprouvé par trois dégradations réelles** — privilège de
       colonne rendu, `anon` retrouvant `EXECUTE`, et **la vérification n° 4 retirée**. Chacune fait
