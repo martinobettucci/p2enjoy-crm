@@ -45,6 +45,32 @@ MIGRATION_FILE=supabase/migrations/0003_tracks.sql
 # `0010` redéfinit `tracks_lecture_membre` : toute réapplication de `0003` doit être suivie de la
 # sienne, comme le fait le `migrations-runner` (docs/PROD_MIGRATIONS.md §3, dépendance de 0010).
 MIGRATION_DROITS_FINS=supabase/migrations/0010_droits_fins.sql
+
+# RESTAURATION PAR LE RUNNER COMPLET — INC-200, second porteur, corrigé le 2026-08-21
+# (décision 499).
+#
+# La paire `0003` + `0010` est une « liste manuelle de migrations suivantes », que le §3.5 de
+# `docs/SPEC-test-harness.md` interdit depuis INC-142 précisément parce qu'elle vieillit. Elle a
+# vieilli : `0003_tracks.sql` accorde `insert, update` au niveau TABLE à `authenticated`, et
+# `0037_corbeille.sql` a délibérément remplacé cet `update` par une ÉNUMÉRATION DE COLONNES, en
+# écrivant pourquoi — « un privilège accordé au niveau TABLE implique toutes les colonnes, y
+# compris futures ». La colonne que l'énumération exclut est `deleted_by`, l'audit de mise en
+# corbeille livré par `CRM-077`.
+#
+# MESURÉ le 2026-08-21 sur la pile seedée, `relacl` de `public.tracks` relevée avant et après le
+# rejeu de la paire : `authenticated=ar/postgres` devient `authenticated=arw/postgres`. Le `w` est
+# l'`UPDATE` de table. Tout compte `authenticated` pouvait dès lors écrire `tracks.deleted_by` par
+# un `PATCH` direct, et l'état persistait jusqu'au prochain rejeu complet du répertoire.
+# `scripts/verify-channels.sh` portait le même défaut sur `public.channels`, que la 37 traite dans
+# le même geste ; les deux sont corrigés ensemble.
+#
+# `--force-recreate` est nécessaire — le `migrations-runner` est un conteneur à usage unique —, et
+# l'appel porte `--env-file` et les DEUX fichiers de composition (`docs/CloudWorker.md` §2.2 bis,
+# décisions 471 et 497) : un appel nu recréerait `storage` et `db` sans les surcharges `dev`.
+restaurer_etat_courant() {
+	docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
+		up --force-recreate migrations-runner
+}
 DB_CONTAINER=p2enjoy-db
 
 WS_SEED=5eed0000-0000-4000-8000-000000000001
@@ -197,12 +223,35 @@ if psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 	&& psql_
 else
 	fail "la migration échoue au second passage : elle n'est pas idempotente"
 fi
+# ASSERTION RETOURNÉE, JAMAIS RETIRÉE — mécanisme de la décision 51, INC-200, 2026-08-21.
+#
+# Elle exigeait « structure, contraintes, politiques et privilèges inchangés après rejeu », et elle
+# avait RAISON : le rejeu de la paire rouvre bien un privilège — l'`UPDATE` de TABLE que la
+# migration 37 avait remplacé par une énumération de colonnes excluant `deleted_by`.
+#
+# Elle cesse d'exiger une neutralité que le dépôt a cessé d'avoir, et se met à mesurer l'invariant
+# qui protège réellement le produit, en deux temps : le rejeu isolé de la paire DOIT rouvrir le `w`
+# de `relacl` — sans quoi ce harnais aurait cessé de décrire le dépôt et il faut le relire —, et le
+# rejeu complet du répertoire DOIT rendre l'empreinte à l'octet près, `deleted_by` refermée.
+apres_rejeu_isole=$(empreinte_tracks)
+if [ "$avant" != "$apres_rejeu_isole" ] \
+	&& printf '%s' "$apres_rejeu_isole" | grep -q 'authenticated=arw'; then
+	ok "le rejeu ISOLÉ de la paire rouvre l'UPDATE de table, comme la corbeille l'a fermé en migration 37"
+else
+	fail "le rejeu isolé ne rouvre plus l'UPDATE de table : la 3 serait redevenue la dernière autorité sur les privilèges de tracks — relire ce harnais"
+fi
+restaurer_etat_courant >/dev/null 2>&1
 apres=$(empreinte_tracks)
 if [ "$avant" = "$apres" ]; then
-	ok "structure, contraintes, politiques et privilèges inchangés après rejeu"
+	ok "le runner complet rend l'empreinte à l'octet près : structure, contraintes, politiques et privilèges"
 else
-	fail "le rejeu a modifié la table"
+	fail "l'empreinte reste dérivée APRÈS rejeu complet du répertoire"
 	diff <(printf '%s\n' "$avant") <(printf '%s\n' "$apres") | sed 's/^/        /' || true
+fi
+if ! printf '%s' "$apres" | grep -q 'authenticated=arw'; then
+	ok "après restauration, l'UPDATE de table reste révoqué : \`deleted_by\` n'est pas écrivable par un membre"
+else
+	fail "l'UPDATE de table sur tracks subsiste après restauration : l'audit de corbeille est falsifiable"
 fi
 
 # Le `migrations-runner` rejoue **tout** le répertoire à chaque démarrage : c'est lui, et non
@@ -402,8 +451,9 @@ verifier_mutation() {
 	# **La paire, et dans l'ordre du runner** : `0010_droits_fins.sql` redéfinit
 	# `tracks_lecture_membre` pour y appliquer les droits fins. Restaurer `0003` seule ramènerait
 	# la politique à l'état de `CRM-020` et laisserait le produit dégradé — mesuré à `CRM-012`.
-	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || true
-	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_DROITS_FINS" >/dev/null 2>&1 || true
+	# INC-200 : par le runner complet, seule restauration qui ne vieillisse pas (§3.5). La paire
+	# manuelle laissait l'`UPDATE` de table rouvert sur `tracks`, `deleted_by` comprise.
+	restaurer_etat_courant >/dev/null 2>&1 || true
 }
 
 verifier_mutation "l'écriture est ouverte à tout membre du workspace" \
