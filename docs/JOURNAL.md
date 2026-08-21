@@ -23000,3 +23000,27 @@ relevant de `CRM-077`) et les rouges d'« ordre de série » que la décision 49
 qui sont d'une autre famille : ils ne figent pas une absence, ils dépendent de l'état laissé par le
 harnais précédent. INC-197 en explique peut-être une partie, et c'est la piste à suivre.
 `INC-190` et `INC-193` attendent toujours l'arbitrage du responsable.
+
+**Campagne complète de fin de session, exécutée une fois, et ENTIÈREMENT VERTE.**
+
+| Preuve | Verdict |
+|---|---|
+| `npm run typecheck` | vert |
+| `npm run build` | vert, paquet principal **230,12 ko** — inchangé, la session ne touche aucun code d'application |
+| `npm run test:unit` | **71 fichiers, 2392 tests, aucun échec** |
+| `npm run test:sql` | **50 fichiers, 2480 assertions, aucune anomalie** |
+| `npm run e2e:api` | **824 passés** |
+| `npm run e2e:ui` | **566 passés, aucun échec** |
+| `npm run e2e:mail` | **42 passés** |
+| `pytest` (`mail-sync`) | **244 passés** |
+| les dix harnais repris | chacun « aucune anomalie » |
+
+Aucun rouge, et aucune boucle de correction n'a donc été nécessaire à ce stade — les corrections
+avaient toutes été faites et poussées pendant le travail. Les **51 captures réécrites** par la
+campagne d'interface ont été **restaurées** : cette session ne touche aucun composant d'interface,
+et les committer laisserait croire que cinquante et un écrans ont été observés.
+
+**Ce qui n'a PAS été exécuté, et il faut le dire** (`CLAUDE.md` §25) : les **cinquante autres**
+`scripts/verify-*.sh`. Le budget est passé dans les dix reprises, leurs contre-épreuves,
+l'isolement des trois défauts et la campagne. Les rouges d'« ordre de série » énumérés ci-dessus
+restent donc non revérifiés derrière ce changement.
