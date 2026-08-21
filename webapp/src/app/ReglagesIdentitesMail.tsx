@@ -143,10 +143,20 @@ const CLASSES_BOUTON_DISCRET = [
 	'hover:bg-hover disabled:opacity-60 disabled:cursor-not-allowed',
 ].join(' ')
 
+// `max-w-full` N'EST PAS DÉCORATIF, ET C'EST UN DÉFAUT TROUVÉ EN REGARDANT UNE CAPTURE
+// (`CLAUDE.md` §16). Un `select` tire sa largeur intrinsèque de sa PLUS LONGUE option, et le §5.35
+// nomme une identité « libellé — adresse » : à 390 px, « Envoi de Driss Lemoine —
+// contact@p2enjoy.test » débordait de sa carte, chevron coupé au bord de la fenêtre. La page ne
+// défilait pas pour autant, si bien qu'aucune assertion de débordement ne l'attrapait — seul l'œil.
+// La borne va de pair avec le `min-w-0` posé sur les étiquettes : dans une rangée `flex`, un
+// élément refuse par défaut de descendre sous la taille de son contenu.
 const CLASSES_CHAMP = [
-	'min-h-[var(--size-target)] px-3 rounded-sm',
+	'min-h-[var(--size-target)] px-3 rounded-sm max-w-full',
 	'border border-border bg-surface text-ink',
 ].join(' ')
+
+/** L'étiquette d'un champ : une colonne qui accepte de rétrécir (voir `CLASSES_CHAMP`). */
+const CLASSES_ETIQUETTE = 'flex flex-col gap-1 text-sm text-text-2 min-w-0'
 
 export type ProprietesReglagesIdentitesMail = {
 	readonly client?: ClientCrm | null
@@ -511,7 +521,7 @@ function FormulaireIdentite({
 			<h3 className="text-h3">{t('admin.mailIdentities.form.title')}</h3>
 
 			<div className="flex flex-wrap gap-3">
-				<label className="flex flex-col gap-1 text-sm text-text-2">
+				<label className={CLASSES_ETIQUETTE}>
 					{t('admin.mailIdentities.field.target')}
 					<select
 						ref={premier}
@@ -528,7 +538,7 @@ function FormulaireIdentite({
 					</select>
 				</label>
 
-				<label className="flex flex-col gap-1 text-sm text-text-2">
+				<label className={CLASSES_ETIQUETTE}>
 					{t('admin.mailIdentities.field.fromAddress')}
 					{/* AUCUN `type="email"` NI `pattern` : c'est la contrainte
 					    `mail_outbound_identities_from_address` qui tranche, et son refus est traduit
@@ -553,7 +563,7 @@ function FormulaireIdentite({
 					)}
 				</label>
 
-				<label className="flex flex-col gap-1 text-sm text-text-2">
+				<label className={CLASSES_ETIQUETTE}>
 					{t('admin.mailIdentities.field.fromName')}
 					{/* TOUJOURS ENVOYÉ, Y COMPRIS VIDE, à l'inverse du mot de passe : `coalesce`
 					    rendrait un nom omis INEFFAÇABLE, tandis qu'une chaîne vide l'écrase — les deux
@@ -568,7 +578,7 @@ function FormulaireIdentite({
 					/>
 				</label>
 
-				<label className="flex flex-col gap-1 text-sm text-text-2">
+				<label className={CLASSES_ETIQUETTE}>
 					{t('admin.mailIdentities.field.label')}
 					<input
 						data-testid="champ-libelle-identite"
@@ -578,7 +588,7 @@ function FormulaireIdentite({
 					/>
 				</label>
 
-				<label className="flex flex-col gap-1 text-sm text-text-2">
+				<label className={CLASSES_ETIQUETTE}>
 					{t('admin.mailIdentities.field.host')}
 					<input
 						data-testid="champ-hote-smtp"
@@ -588,7 +598,7 @@ function FormulaireIdentite({
 					/>
 				</label>
 
-				<label className="flex flex-col gap-1 text-sm text-text-2">
+				<label className={CLASSES_ETIQUETTE}>
 					{t('admin.mailIdentities.field.port')}
 					{/* `type="number"` parce que c'est un nombre, JAMAIS pour borner la saisie (§5.3
 					    ter, §22.5). */}
@@ -601,7 +611,7 @@ function FormulaireIdentite({
 					/>
 				</label>
 
-				<label className="flex flex-col gap-1 text-sm text-text-2">
+				<label className={CLASSES_ETIQUETTE}>
 					{t('admin.mailIdentities.field.security')}
 					<select
 						data-testid="champ-securite-smtp"
@@ -617,7 +627,7 @@ function FormulaireIdentite({
 					</select>
 				</label>
 
-				<label className="flex flex-col gap-1 text-sm text-text-2">
+				<label className={CLASSES_ETIQUETTE}>
 					{t('admin.mailIdentities.field.username')}
 					<input
 						data-testid="champ-identifiant-smtp"
@@ -629,7 +639,7 @@ function FormulaireIdentite({
 					/>
 				</label>
 
-				<label className="flex flex-col gap-1 text-sm text-text-2">
+				<label className={CLASSES_ETIQUETTE}>
 					{t('admin.mailIdentities.field.password')}
 					{/* AUCUNE VALEUR DE SUBSTITUTION : le champ est vide, et son texte d'aide dit ce
 					    qu'un champ vide fait (§5.34, §22.6). */}

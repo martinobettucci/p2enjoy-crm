@@ -2277,6 +2277,23 @@ L'écran ne masque pas ce comportement et ne le contrarie pas :
 
 C'est la règle constante de ce produit : l'écran suit la base et l'explique, il ne la double pas.
 
+**UNE CONSÉQUENCE DE PLUS, MESURÉE EN ÉCRIVANT LA PREUVE D'INTERFACE, ET ELLE SURPREND** : sur une
+identité existante dont on modifie l'adresse, le refus que la base rend en premier n'est pas celui
+qu'on attend. Mesuré le 2026-08-21, sur l'identité de Driss :
+
+| Appel | Réponse |
+|---|---|
+| `p_from_address = 'pas-une-adresse'`, **sans** `p_password` | `400`, `23514`, **`password_required`** |
+| le même **avec** `p_password` | `400`, `23514`, contrainte `mail_outbound_identities_from_address` |
+
+La cause tient en une phrase : l'adresse étant dans la clé, une adresse que la base ne retrouve pas
+fait de l'appel une **déclaration**, et la fonction vérifie le mot de passe **avant** d'insérer. Un
+exploitant qui corrige une adresse mal saisie verra donc « un mot de passe est exigé » — message
+exact, mais dont la cause réelle est ailleurs. C'est un argument de plus pour le texte d'aide du
+§22.5 : il dit ce qui va se passer avant que le refus ne le rappelle. **Aucune ligne n'est laissée
+derrière** : la contrainte annule la transaction, et le secret Vault créé au passage disparaît avec
+elle — vérifié, aucun orphelin `pas-une-adresse` dans `vault.secrets`.
+
 ### 22.5 Le formulaire, champ par champ
 
 Un seul formulaire, qui **déclare** ou **modifie** selon l'identité visée. Il vit **dans le flux du
