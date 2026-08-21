@@ -121,6 +121,23 @@ d'exécuter le code attendu.
   était fausse, gonflée par le résidu ci-dessus. `scripts/verify-manual.sh` rend
   **127 contrôles, aucune anomalie**.
 
+- **`scripts/verify-preuves-refus.sh` : trois garde-fous qui punissaient l'enrichissement**
+  (`CRM-014`, INC-191, INC-175, même décision). Il exigeait **exactement** cinquante-cinq
+  assertions et **exactement** soixante-six politiques ; la base en porte cinquante-huit et cent
+  trois, les objectifs, budgets, coûts, contacts et la corbeille en ayant ajouté depuis. Un lecteur
+  pressé aurait pu lire « 103 politiques attendues 66 » comme une brèche d'autorisation. Les deux
+  deviennent des **planchers** — ce qui doit alarmer est une preuve ou une politique **retirée**,
+  jamais ajoutée. Le compte de scénarios reste une égalité, et le motif est écrit : lu dans la
+  sortie de Playwright, il dit « aucun scénario n'a été silencieusement sauté ».
+
+- **Deux harnais appelaient `docker compose up` nu, et cassaient MinIO pour toute la suite de la
+  série** (INC-197, même décision). `verify-colonnes-protegees.sh` et
+  `verify-move-card-to-channel.sh` rejouaient le `migrations-runner` sans `--env-file` ni le second
+  fichier de composition : le cas exact de la décision 471. MESURÉ ce jour — `storage` et `db`
+  recréés avec la configuration de base, `AWS_ACCESS_KEY_ID` perdu, MinIO rendant
+  `InvalidAccessKeyId`, et `verify-preuves-refus.sh` annonçant « la preuve n° 9 n'est pas exercée »,
+  un verdict qui ne parle pas du produit. Les deux appels portent désormais la commande complète.
+
 ### Ajouté
 
 - **Un écran pour déclarer les adresses d'expédition : « Réglages ▸ Identités d'expédition »**

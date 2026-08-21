@@ -198,6 +198,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-193 | Le `details` d'un refus de contrainte rend la ligne entière, `secret_id` compris — la colonne révoquée à `authenticated` ressort par un second chemin | 2026-08-20 | *ouverte* — arbitrage attendu, sécurité des données | 492 |
 | INC-195 | `scripts/verify-copie-workflow.sh` rejoue la migration 19 et laissait `move_card` AMPUTÉE du lot G — quatrième occurrence d'INC-154 | 2026-08-21 | **close** — corrigée par la décision 497 | 497 |
 | INC-196 | `scripts/verify-move-card.sh` déposait un commentaire à CHAQUE exécution, le lot G conservant désormais le motif | 2026-08-21 | **close** — corrigée par la décision 497 | 497 |
+| INC-197 | Deux harnais appelaient `docker compose up` NU et recréaient `storage` et `db` sans les surcharges `dev` — cas exact de la décision 471 | 2026-08-21 | **close** — corrigée par la décision 497 | 497 |
 
 ---
 
@@ -3849,5 +3850,30 @@ lui-même qu'il ne laisse rien derrière lui.
 client, et c'est très bien ainsi. **Et l'invariant qui manquait est posé** : la section 7 du harnais
 compare désormais la population de `card_comments` à son instantané d'ouverture, de sorte qu'un
 résidu de cette famille se dénonce lui-même à l'exécution suivante.
+
+**Statut : close.**
+
+### INC-197 — deux harnais appelaient `docker compose up` nu, et cassaient MinIO pour la suite de la série
+
+**Ouverte ET close le 2026-08-21 (décision 497).**
+
+**Ce qui a été mesuré.** `scripts/verify-colonnes-protegees.sh` et
+`scripts/verify-move-card-to-channel.sh` rejouent le `migrations-runner` par
+`docker compose up --force-recreate migrations-runner`, **sans `--env-file` ni le second fichier de
+composition**. C'est le cas exact que la décision 471 a mesuré et que `docs/CloudWorker.md` §2.2 bis
+documente comme coûteux : un appel nu ne voit que `docker-compose.yml` et **recrée avec la
+configuration de base les conteneurs qu'il touche**.
+
+Constaté ce jour après avoir lancé `verify-colonnes-protegees.sh` : `storage` et `db` ne citaient
+plus qu'UN fichier dans `com.docker.compose.project.config_files`, quand les quinze autres en
+citaient deux. `storage` avait perdu `AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}`, que seul le fichier
+`dev` pose, et MinIO refusait ses identifiants — `InvalidAccessKeyId`. Conséquence pour la série :
+`scripts/verify-preuves-refus.sh` rendait **« la preuve n° 9 n'est pas exercée »**, un verdict qui
+ne parle ni des pièces jointes, ni du produit. La pile réparée par `./runDev.sh` et le seed, le même
+harnais rend **22 contrôles, aucune anomalie**.
+
+**Corrigé** dans les deux fichiers : la commande complète, avec `--env-file .env` et les deux
+fichiers de composition. La note du §2.2 bis est recopiée à côté de chaque appel, avec la mesure du
+jour, pour qu'un futur raccourci se heurte à l'explication plutôt qu'à un silence.
 
 **Statut : close.**

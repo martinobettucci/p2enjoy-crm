@@ -194,7 +194,16 @@ restaurer() {
 	# Sans ce drapeau, la restauration ne restaurait rien — `move_card` restait à la version amputée
 	# laissée par la dégradation, et trois suites accusaient le produit d'une régression que ce
 	# harnais venait de provoquer.
-	docker compose up --force-recreate migrations-runner >/dev/null 2>&1 || true
+	# APPEL NU CORRIGÉ LE 2026-08-21 — décision 497, cas EXACT de la décision 471 que
+	# `docs/CloudWorker.md` §2.2 bis documente comme coûteux. La pile de développement est composée
+	# de DEUX fichiers ; `docker compose up` NU n'en voit qu'un et **recrée avec la configuration de
+	# base les conteneurs qu'il touche**. MESURÉ ce jour : ce rejeu a recréé `storage` et `db`, et
+	# `storage` a perdu `AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}` que seul le fichier `dev` pose —
+	# MinIO a dès lors refusé ses identifiants (`InvalidAccessKeyId`), et la preuve n° 9 de
+	# `scripts/verify-preuves-refus.sh` est devenue rouge sans aucun rapport avec les pièces
+	# jointes. Le diagnostic est sans ambiguïté : les conteneurs recréés nus ne citent qu'UN fichier
+	# dans `com.docker.compose.project.config_files`.
+	docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml up --force-recreate migrations-runner >/dev/null 2>&1 || true
 	psql_db -c "update public.cards set description = null, next_action = 'Relancer la DSI après la démo'
 	             where id = '$CARD_C1';" >/dev/null 2>&1 || true
 	psql_db -c "delete from public.cards where title like 'tst-crm013%';" >/dev/null 2>&1 || true

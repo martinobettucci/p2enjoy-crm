@@ -488,7 +488,16 @@ fi
 # vocabulaire appartient désormais à la DERNIÈRE migration qui l'étend, aujourd'hui la 44. La
 # restauration rejoue donc TOUT le répertoire, comme le fait le `migrations-runner` au démarrage —
 # c'est la correction déjà appliquée à verify-colonnes-protegees.sh, pour le même motif.
-if docker compose up --force-recreate migrations-runner >"$TRAVAIL/rejeu_complet.log" 2>&1 &&
+	# APPEL NU CORRIGÉ LE 2026-08-21 — décision 497, cas EXACT de la décision 471 que
+	# `docs/CloudWorker.md` §2.2 bis documente comme coûteux. La pile de développement est composée
+	# de DEUX fichiers ; `docker compose up` NU n'en voit qu'un et **recrée avec la configuration de
+	# base les conteneurs qu'il touche**. MESURÉ ce jour : ce rejeu a recréé `storage` et `db`, et
+	# `storage` a perdu `AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}` que seul le fichier `dev` pose —
+	# MinIO a dès lors refusé ses identifiants (`InvalidAccessKeyId`), et la preuve n° 9 de
+	# `scripts/verify-preuves-refus.sh` est devenue rouge sans aucun rapport avec les pièces
+	# jointes. Le diagnostic est sans ambiguïté : les conteneurs recréés nus ne citent qu'UN fichier
+	# dans `com.docker.compose.project.config_files`.
+if docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml up --force-recreate migrations-runner >"$TRAVAIL/rejeu_complet.log" 2>&1 &&
 	! grep -q "ERROR" "$TRAVAIL/rejeu_complet.log"; then
 	ok "le répertoire entier se rejoue sur une base peuplée (INC-144)"
 else

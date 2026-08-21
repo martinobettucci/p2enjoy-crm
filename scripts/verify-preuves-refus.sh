@@ -70,7 +70,19 @@ SPEC_FILE=e2e/api/preuves-refus.spec.ts
 SPEC_PREUVE_9=e2e/api/inbox.spec.ts
 DB_CONTAINER=p2enjoy-db
 
-ASSERTIONS_ATTENDUES=55
+# RETOURNÉS EN PLANCHERS LE 2026-08-21 — INC-191, décision 497. Ces deux garde-fous exigeaient une
+# ÉGALITÉ : « le plan annonce exactement 55 assertions ». Toute unité ultérieure qui ENRICHIT la
+# preuve les faisait rougir — MESURÉ le 2026-08-21, le plan en annonce 58 — alors que c'est
+# précisément ce qu'on veut encourager. Le risque qu'ils gardent est l'inverse : qu'une assertion
+# soit RETIRÉE en silence pour verdir une campagne (`CLAUDE.md` §26). Ils deviennent donc des
+# PLANCHER, et la valeur ci-dessous est celle au-dessous de laquelle la preuve régresse : ajouter
+# ne rougit plus, retirer rougit toujours.
+ASSERTIONS_PLANCHER=55
+# `SCENARIOS_ATTENDUS` reste une ÉGALITÉ, et ce n'est pas une inconséquence : il se lit dans la
+# sortie de Playwright sous la forme « N passed », qui compte les scénarios RÉELLEMENT exécutés. Une
+# égalité y dit « aucun scénario n'a été silencieusement sauté », ce qu'un plancher ne dirait pas.
+# Il est à jour — MESURÉ le 2026-08-21, quarante scénarios — et il se révise avec la preuve qu'il
+# compte, comme la décision 51 le prescrit.
 SCENARIOS_ATTENDUS=40
 
 RAPIDE=false
@@ -175,10 +187,10 @@ else
 fi
 
 plan=$(printf '%s\n' "$sortie_tap" | grep -oE '1\.\.[0-9]+' | head -1 | cut -d. -f3)
-if [ "${plan:-0}" = "$ASSERTIONS_ATTENDUES" ]; then
-	ok "le plan annonce $ASSERTIONS_ATTENDUES assertions"
+if [ "${plan:-0}" -ge "$ASSERTIONS_PLANCHER" ] 2>/dev/null; then
+	ok "le plan annonce ${plan} assertions, au moins les $ASSERTIONS_PLANCHER du plancher — enrichir est permis, retirer ne l'est pas"
 else
-	fail "plan attendu $ASSERTIONS_ATTENDUES, obtenu « ${plan:-aucun} »"
+	fail "plan tombé à « ${plan:-aucun} » sous le plancher de $ASSERTIONS_PLANCHER : des assertions ont été RETIRÉES"
 fi
 
 # =============================================================================================
@@ -240,11 +252,23 @@ titre "3. Inventaire de référence des politiques"
 # `pg_get_expr` peut rendre une expression sur plusieurs lignes : compter les lignes de la
 # signature textuelle surestimait alors le nombre de politiques (54 lignes pour 48 objets après
 # CRM-018). Le nombre vient du catalogue ; `REFERENCE` reste la signature exacte de restauration.
+# RETOURNÉ EN PLANCHER LE 2026-08-21 — INC-191, INC-175, décision 497. Ce contrôle exigeait
+# EXACTEMENT soixante-six politiques. Chaque unité qui en pose une le faisait rougir : MESURÉ le
+# 2026-08-21, le schéma `public` en porte CENT TROIS — les objectifs, les budgets, les coûts, les
+# contacts et la corbeille en ont ajouté trente-sept depuis. Le harnais accusait donc le produit de
+# s'être enrichi, et un lecteur pressé y aurait lu une brèche d'autorisation.
+#
+# Ce que ce contrôle doit voir est l'inverse : une politique RETIRÉE, c'est-à-dire un refus qui
+# cesse d'être opposable. C'est donc un plancher. Et il ne porte pas seul : la signature complète de
+# l'inventaire — nom, table, commande, rôles, `USING`, `WITH CHECK` — est relevée dans `REFERENCE`
+# et comparée après dégradation, ce qui reste la garde exacte, celle qui verrait une politique
+# remplacée par une autre à nombre constant.
+POLITIQUES_PLANCHER=66
 nb_politiques=$(psql_db -c "select count(*) from pg_policies where schemaname='public';")
-if [ "$nb_politiques" = "66" ]; then
-	ok "66 politiques relevées dans le schéma public, boîte de réception et envoi compris"
+if [ "$nb_politiques" -ge "$POLITIQUES_PLANCHER" ] 2>/dev/null; then
+	ok "$nb_politiques politiques relevées dans le schéma public, au moins les $POLITIQUES_PLANCHER du plancher — aucune n'a été retirée"
 else
-	fail "66 politiques attendues, $nb_politiques relevées"
+	fail "politiques tombées à $nb_politiques sous le plancher de $POLITIQUES_PLANCHER : un refus a cessé d'être opposable"
 fi
 
 if printf '%s\n' "$REFERENCE" | grep -q '^cards|cards_lecture|SELECT|'; then
