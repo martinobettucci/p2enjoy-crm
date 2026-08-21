@@ -23024,3 +23024,54 @@ et les committer laisserait croire que cinquante et un écrans ont été observ�
 `scripts/verify-*.sh`. Le budget est passé dans les dix reprises, leurs contre-épreuves,
 l'isolement des trois défauts et la campagne. Les rouges d'« ordre de série » énumérés ci-dessus
 restent donc non revérifiés derrière ce changement.
+
+## décision 499 — les rouges d'« ordre de série » ont une cause, et ce sont les harnais qui dégradent le produit derrière eux
+
+**Session du 2026-08-21, ouverte à 06:21:43 UTC.** Docker démarré à la main (§2 de
+`docs/CloudWorker.md`), Node 24.19.0 / npm 11.17.0 installés par `nvm`, `npm ci` posé derrière le
+paquet CA de l'hôte, pile levée par `./runDev.sh` — **dix-sept services persistants *healthy*** —,
+seed appliqué.
+
+**Le choix de l'unité.** La dernière entrée du journal (décision 498) désigne « la piste à suivre » :
+les rouges d'« ordre de série » que la décision 495 énumère — `verify-stack`,
+`verify-change-channel-workflow`, `verify-mail-sync`, `verify-auth` n° 14, `verify-channels`,
+`verify-transition-required-fields` —, d'une autre famille que les compteurs figés d'INC-191 : ils
+ne figent pas une absence, ils dépendent de l'état laissé par le harnais précédent. Un harnais est
+du code, et chacun est repris **sous l'unité qu'il éprouve** (méthode de la décision 497).
+
+**LA MESURE RENVERSE L'ÉTIQUETTE, ET C'EST LE RÉSULTAT PRINCIPAL.** « Ordre de série » suggérait des
+verdicts faussés par un voisin. Les six harnais ont été rejoués **seuls**, sur pile fraîche et
+seedée, chacun précédé au besoin d'un rejeu complet du répertoire par le `migrations-runner` :
+
+| Harnais | Seul, base restaurée | Ce que la mesure dit |
+|---|---|---|
+| `verify-stack` | **54 vérifications, aucune anomalie** (deux rejeus) | vert ; une anomalie transitoire au tout premier rejeu, non reproduite |
+| `verify-change-channel-workflow` | **23 contrôles, 2 en échec** | INC-198 — il laisse `card_events` sans `workflow_changed` |
+| `verify-transition-required-fields` | **24 vérifications, 1 anomalie** | INC-199 — il ramène `move_card` avant le lot G |
+| `verify-channels --rapide` | **1 échec** | INC-200 — il rend l'`UPDATE` de table sur `channels` à `authenticated` |
+| `verify-auth` | **62 contrôles, 1 anomalie** (n° 14) | à diagnostiquer |
+| `verify-mail-sync` | **1 contrôle en échec sur 61** (`pytest`) | à diagnostiquer |
+
+Trois de ces rouges ne sont donc **pas** des effets de voisinage : ce sont des harnais qui
+**dégradent le produit et ne le restaurent pas**, chacun en violation du §3.5 de
+`docs/SPEC-test-harness.md`, qui exige depuis INC-142 que toute restauration appelle le
+`migrations-runner` sur **tout** le répertoire et interdit la « liste manuelle de migrations
+suivantes ». Ce sont eux qui salissent la série ; l'étiquette « ordre de série » nommait le
+symptôme chez la victime au lieu de la cause chez l'auteur.
+
+**INC-200 est un défaut d'AUTORISATION, et c'est le plus grave.** `verify-channels.sh` rejoue
+`0004_channels.sql`, qui accorde l'`UPDATE` au niveau **TABLE** ; `0037_corbeille.sql` l'avait
+délibérément remplacé par une énumération de colonnes. La seule colonne que l'énumération exclut
+est `deleted_by`. Après une exécution de ce harnais, tout compte `authenticated` peut donc écrire
+`channels.deleted_by` par un `PATCH` direct — falsifier l'audit de mise en corbeille —, et l'état
+persiste jusqu'au prochain rejeu complet.
+
+**INC-198 porte une seconde cause, invisible à la lecture.** Rejouer la migration 20 ne restaure pas
+même son propre ajout : sa convergence est gardée par la seconde garde d'INC-144, qui ne s'applique
+que si aucune ligne de `card_events` ne porte un type hors des dix qu'elle connaît. Le seed en
+produit quatre. Sur une base seedée, ce `do $$ … $$` est un **NO-OP silencieux**.
+
+**Où reprendre si cette session est interrompue** : les trois corrections sous les unités
+correspondantes — `CRM-019`, `CRM-018`, `CRM-021` —, puis le diagnostic de `verify-auth` n° 14 et
+de `verify-mail-sync`. `scripts/verify-tracks.sh` porte vraisemblablement le motif d'INC-200 sur
+`public.tracks`, non vérifié faute de budget.

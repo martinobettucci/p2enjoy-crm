@@ -199,6 +199,9 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-195 | `scripts/verify-copie-workflow.sh` rejoue la migration 19 et laissait `move_card` AMPUTÉE du lot G — quatrième occurrence d'INC-154 | 2026-08-21 | **close** — corrigée par la décision 497 | 497 |
 | INC-196 | `scripts/verify-move-card.sh` déposait un commentaire à CHAQUE exécution, le lot G conservant désormais le motif | 2026-08-21 | **close** — corrigée par la décision 497 | 497 |
 | INC-197 | Deux harnais appelaient `docker compose up` NU et recréaient `storage` et `db` sans les surcharges `dev` — cas exact de la décision 471 | 2026-08-21 | **close** — corrigée par la décision 497 | 497 |
+| INC-198 | `verify-change-channel-workflow.sh` laisse `card_events` sans `workflow_changed` : la migration 20 est un NO-OP rejouée seule sur base seedée | 2026-08-21 | *ouverte* — relève de `CRM-019` | 499 |
+| INC-199 | `verify-transition-required-fields.sh` rejoue la migration 19 et ramène `move_card` avant le lot G — cas exact d'INC-195 | 2026-08-21 | *ouverte* — relève de `CRM-018` | 499 |
+| INC-200 | `verify-channels.sh` rend à `authenticated` l'`UPDATE` de TABLE sur `public.channels`, rouvrant `deleted_by` que la corbeille avait fermée | 2026-08-21 | *ouverte* — relève de `CRM-021`, autorisation | 499 |
 
 ---
 
@@ -3890,3 +3893,104 @@ fichiers de composition. La note du §2.2 bis est recopiée à côté de chaque 
 jour, pour qu'un futur raccourci se heurte à l'explication plutôt qu'à un silence.
 
 **Statut : close.**
+
+### INC-198 — `verify-change-channel-workflow.sh` laisse `card_events` SANS `workflow_changed`, et la migration 20 ne sait pas se rejouer seule
+
+**Ouverte le 2026-08-21 (décision 499).**
+
+**Ce qui a été mesuré**, pile fraîche levée par `./runDev.sh` et seed appliqué, ce harnais lancé
+**seul** en deuxième position derrière `verify-stack.sh` (lecture seule) : **23 contrôles,
+2 en échec** — « pgTAP reste rouge après restauration » et « l'API ciblée reste rouge après
+restauration ». Les six dégradations ont bien mordu ; c'est la restauration qui ne restaure pas.
+
+La cause est relevée en base, pas déduite. Après l'exécution :
+
+```
+select pg_get_constraintdef(oid) from pg_constraint where conname='card_events_type_check';
+CHECK ((type = ANY (ARRAY['created', 'moved', 'assigned', 'channel_changed', 'archived',
+                          'unarchived', 'trashed', 'restored', 'field_changed']))) NOT VALID
+```
+
+Neuf valeurs, et `workflow_changed` absente — c'est-à-dire **exactement la dégradation** que le
+harnais pose à sa quatrième épreuve. Toute écriture serveur de la trace échoue dès lors en `23514` :
+
+```
+ERROR: new row for relation "card_events" violates check constraint "card_events_type_check"
+CONTEXT: SQL function "card_event_ecrire"
+PL/pgSQL function public.change_channel_workflow(uuid,uuid,jsonb,boolean) line 161
+```
+
+**Deux défauts distincts se superposent, et le second est le plus coûteux.**
+
+1. `appliquer_migration()` rejoue `supabase/migrations/0020_change_channel_workflow.sql` **seule**.
+   C'est la violation du §3.5 de `docs/SPEC-test-harness.md`, cinquième occurrence de la famille
+   d'INC-154 après INC-142, INC-153 et INC-195.
+2. **Rejouer la 20 ne restaure même pas son propre ajout**, et c'est la mesure qui le dit. Sa
+   convergence est gardée par la seconde garde d'INC-144 : elle ne s'applique **que si** aucune
+   ligne de `card_events` ne porte un type hors des dix qu'elle connaît. Or le seed en produit —
+   `mail_received`, `mail_sent`, `snoozed`, `woken`. Sur une base seedée, le `do $$ … $$` de la 20
+   est donc un **NO-OP silencieux** : le harnais croit restaurer, et ne restaure rien. Le rejeu
+   complet du répertoire par le `migrations-runner`, lui, rend les **quatorze** valeurs, la
+   contrainte redevenant `VALID` par surcroît.
+
+**Conséquence pour la série.** Tout ce qui s'exécute derrière ce harnais mesure un produit dont la
+trace de changement de workflow est refusée en base. C'est un des mécanismes que la décision 495
+rangeait sous « ordre de série » sans en nommer la cause.
+
+**Statut : ouverte** — correction dans la même session, sous `CRM-019`.
+
+### INC-199 — `verify-transition-required-fields.sh` rejoue la migration 19 et ramène `move_card` avant le lot G
+
+**Ouverte le 2026-08-21 (décision 499).**
+
+**Ce qui a été mesuré**, ce harnais lancé sur une base restaurée par le `migrations-runner` :
+**24 vérifications, 1 anomalie** — « l'empreinte change après rejeu ». Son empreinte couvre, entre
+autres objets, la définition de `public.move_card` ; `appliquer_migration()` rejoue
+`supabase/migrations/0019_transition_required_fields.sql`, qui **définit** `move_card`, alors que
+le lot G (`0035_commentaires_lot_g.sql`) en est la dernière autorité depuis l'arbitrage de la
+décision 367.
+
+C'est **le cas exact d'INC-195**, corrigée le même jour sur `verify-copie-workflow.sh` : les deux
+harnais rejouent la même migration 19, et un seul avait été repris. Le contrôle d'empreinte de ce
+harnais **avait donc raison** — il dénonçait le harnais lui-même, non le produit.
+
+**Conséquence pour la série** : `move_card` reste amputée de `app.btrim_blancs`, de la borne de
+longueur et de la conservation du motif pour tout ce qui s'exécute ensuite.
+
+**Statut : ouverte** — correction dans la même session, sous `CRM-018`.
+
+### INC-200 — `verify-channels.sh` REND À `authenticated` l'`UPDATE` de table sur `public.channels`, que la corbeille avait révoqué
+
+**Ouverte le 2026-08-21 (décision 499).** Défaut d'AUTORISATION, et le plus grave des trois.
+
+**Ce qui a été mesuré.** Base restaurée par le `migrations-runner`, empreinte des privilèges de
+`public.channels` relevée, puis `rejouer_migrations()` du harnais reproduit à l'identique —
+`0004_channels.sql` puis `0010_droits_fins.sql`, la « liste manuelle de migrations suivantes » que
+le §3.5 de `docs/SPEC-test-harness.md` interdit précisément. Une seule ligne diffère :
+
+```
+> priv:authenticated:UPDATE
+```
+
+`0004_channels.sql` accorde l'`UPDATE` au niveau **TABLE**. `0037_corbeille.sql` l'a délibérément
+remplacé par une **énumération de colonnes**, en écrivant pourquoi : « un privilège accordé au
+niveau TABLE implique toutes les colonnes, y compris futures ». La colonne que l'énumération
+exclut est relevée en base, elle n'est pas supposée :
+
+```
+select attname from pg_attribute where attrelid='public.channels'::regclass … et hors de la liste
+=> deleted_by
+```
+
+**Conséquence, et elle n'est pas théorique.** Après une exécution de `verify-channels.sh`, tout
+compte `authenticated` peut écrire `channels.deleted_by` par un `PATCH` direct — c'est-à-dire
+falsifier l'audit de mise en corbeille que `CRM-077` a livré, et que la révocation de la 37
+protégeait. L'état persiste jusqu'au prochain rejeu complet du répertoire. C'est un
+**relâchement d'autorisation introduit par un harnais de preuves**, et tout ce qui s'exécute
+derrière lui mesure une surface d'écriture plus large que celle que le dépôt décrit.
+
+`scripts/verify-tracks.sh` porte le même motif sur `public.tracks`, que la 37 traite dans le même
+geste : **non vérifié dans cette session**, faute de budget — ce harnais est l'un de ceux que la
+décision 495 a vus atteindre le plafond de 20 min.
+
+**Statut : ouverte** — correction dans la même session, sous `CRM-021`.
