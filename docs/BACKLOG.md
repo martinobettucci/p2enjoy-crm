@@ -3391,6 +3391,14 @@ l'absence qui était nommée ici a été comblée par l'unité que le plan dési
   prédisaient : démon Docker lancé à la main, image `webapp` construite avec le certificat du proxy
   (INC-032, INC-042), `npm ci` précédé d'un `npm config set cafile` (INC-042), et l'arborescence de
   compatibilité des navigateurs Playwright (INC-036, **cinquième** occurrence).
+- **`e2e/api/move-card.spec.ts` NE RENDAIT PAS LE PRODUIT DANS L'ÉTAT OÙ IL LE TROUVAIT — corrigé
+  le 2026-08-21** (`docs/JOURNAL.md` décision 501). Il déplace huit fois la card seedée `…0c3` et
+  remettait son étape et sa position, jamais `entered_step_at`, que `move_card` ramène à `now()`
+  par règle. Le défaut était inerte tant qu'aucune ancienneté du seed n'était un contrat ; la
+  tranche 3 de `CRM-046` l'a rendu visible en une campagne. Le motif écrit dans le fichier —
+  « il faudrait la connaître à la microseconde » — était **faux**, son propre `lire` projetant
+  `select=*` ; il est révisé sur place, pas recopié. **26 scénarios verts**, et l'ancienneté relue
+  en base après exécution est celle d'avant.
 
 ### CRM-035 — Définition des champs `[~]`
 `form_fields`, `form_field_rules`, grille champ × étape dans l'éditeur.

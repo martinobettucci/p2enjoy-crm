@@ -23158,3 +23158,61 @@ soldés — cinq par correction, un (`verify-mail-sync`) par la condition d'hôt
 session a remplie. Restent au registre `INC-192` (relevant de `CRM-077`) et `verify-board`
 (INC-139), `verify-scripts` (INC-186), `verify-corbeille` (INC-192), non repris ici. **`INC-190` et
 `INC-193` attendent toujours l'arbitrage du responsable.**
+
+## décision 501 — le jeu de démonstration montre enfin une affaire en retard, et une preuve qui l'effaçait est réparée
+
+**Session du 2026-08-21, 08:12:11 UTC.**
+
+**Unité choisie, et pourquoi.** La reprise que la décision 500 désignait — obtenir le bilan de
+`scripts/verify-tracks.sh` — est une preuve, pas une unité produit ; le §4.2 de
+`docs/CloudWorker.md` fait passer la construction avant. Les unités `[~]` antérieures dans l'ordre
+du plan ont été relues une par une : `CRM-001` attend un hôte sans interception TLS, `CRM-013` et
+`CRM-014` attendent des tables que `CRM-072` et `CRM-073` n'ont pas créées, `CRM-034` et `CRM-035`
+ne portent plus de comportement dû. Le premier comportement réellement livrable était l'écart que
+`CRM-040` renvoyait à `CRM-046` : **le seed ne démontrait pas la bascule de la pastille
+d'ancienneté**.
+
+**Le manque, mesuré et non supposé.** Les **40** cards actives du seed avaient toutes moins d'une
+minute d'ancienneté dans leur étape, contre des seuils de relance de **5 à 30 jours**. La pastille
+de `CRM-041` — neutre, puis `danger` au-delà du seuil — ne basculait donc sur **aucune donnée
+permanente** : elle n'était prouvée que par un test unitaire et par une réponse **substituée**. La
+Definition of Done de `CRM-046`, « chaque fonctionnalité livrée est démontrable depuis le seed »,
+n'était pas tenue pour elle, et trois endroits du dépôt le disaient sans que personne ne le comble.
+
+**Ce qui a été livré.** `docs/SPEC-seed.md` §9.12, sept sous-chapitres, écrit après mesure et
+committé **avant** la première ligne de code. Puis la section 8 octies ter du seed :
+`5eed0000-0000-4000-8000-0000000000c3` — « Audit sécurité applicative », seule card de sa colonne —
+est posée à **30 jours** d'une étape dont le seuil est de **14**, hérité du nœud et non surchargé.
+Les **39** autres repartent à zéro : un pipeline sain, avec un unique retard voulu. La colonne
+voisine garde deux cards fraîches, de sorte que le contraste tient sur un écran.
+
+**Deux garde-fous RETOURNÉS, jamais retirés** (mécanisme de la décision 51) : le contrôle de
+`scripts/verify-board.sh` et le scénario de `e2e/api/board.spec.ts` figeaient l'absence que cette
+tranche comble. Le harnais reçoit sa **contre-épreuve** — vieillir une seconde card fait passer le
+compte à 2, MESURÉ — et son `trap EXIT` rend la donnée même si l'exécution est tuée.
+
+**UNE PREUVE EFFAÇAIT LE CONTRAT NEUF, ET C'EST LE RÉSULTAT LE PLUS UTILE DE LA SESSION.** Les deux
+scénarios d'interface neufs étaient verts isolément et **rouges dans la campagne complète**.
+Diagnostic par `card_events` plutôt que par relecture : huit `moved` sur `…0c3`, aller-retour
+`Prospection ↔ Relance`, tous dans la même seconde. `e2e/api/move-card.spec.ts` déplace huit fois
+cette card SEEDÉE et remettait son étape et sa position, jamais `entered_step_at` — que `move_card`
+ramène à `now()` par règle. **Le motif écrit dans le fichier était faux** : « la restaurer
+supposerait de connaître sa valeur d'origine à la microseconde », alors que son propre `lire`
+projette `select=*`. L'impossibilité était une croyance, pas une mesure. C'est le défaut du §3.5 de
+`docs/SPEC-test-harness.md`, celui des décisions 499 et 500, sur un fichier de scénarios cette
+fois : une preuve qui dégrade le produit et ne le restaure pas. Corrigé, motif révisé dans le
+fichier, et l'ancienneté relue en base après exécution est celle d'avant.
+
+**Un défaut de la session, trouvé par `npm run typecheck` et corrigé** : le scénario d'API sur la
+card archivée déréférençait une ligne destructurée sans garde (`TS18048`). La preuve est rendue
+explicite, pas contournée.
+
+**`scripts/verify-board.sh` : 60 contrôles, 4 en échec.** Les quatre sont **INC-138** et les trois
+d'**INC-139**, consignées le 2026-08-17, préexistantes et étrangères — elles portent sur
+`webapp/`, que cette session ne touche pas d'une ligne (`git diff` à l'appui). Le harnais est passé
+de 56 à 60 contrôles, les quatre neufs étant verts.
+
+**Où reprendre.** Le bilan de `scripts/verify-tracks.sh` reste dû, et il reste la reprise que la
+décision 500 désignait. Puis les cinquante-neuf autres `scripts/verify-*.sh`, non rejoués ici faute
+de budget. `INC-138`, `INC-139`, `INC-190` et `INC-193` attendent toujours l'arbitrage du
+responsable.

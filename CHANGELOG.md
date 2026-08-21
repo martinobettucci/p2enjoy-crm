@@ -15,6 +15,19 @@ d'exécuter le code attendu.
 
 ### Corrigé
 
+- **UN SIXIÈME FICHIER DE PREUVES CESSAIT DE RENDRE LE PRODUIT DANS L'ÉTAT OÙ IL L'AVAIT TROUVÉ**
+  (`CRM-034`, `CRM-046`, `docs/JOURNAL.md` décision 501). `e2e/api/move-card.spec.ts` déplace huit
+  fois l'affaire seedée « Audit sécurité applicative » pour éprouver les gardes de `move_card`,
+  puis remettait son étape et sa position — jamais son **ancienneté dans l'étape**, que `move_card`
+  ramène à zéro par règle. Le fichier sortait donc en ayant effacé cette ancienneté.
+
+  Tant que le jeu de démonstration ne portait aucune affaire en retard, la perte était invisible.
+  Depuis que cette affaire est posée à trente jours, l'ancienneté est un **contrat**, et la perte
+  s'est vue immédiatement : les deux preuves d'interface de la bascule, vertes isolément, étaient
+  **rouges dans la campagne complète**. Le motif que le fichier invoquait pour ne pas restaurer —
+  « il faudrait connaître la valeur d'origine à la microseconde » — était faux : sa propre lecture
+  projette toute la ligne. Corrigé, avec son motif révisé sur place.
+
 - **CINQ HARNAIS DE PREUVES CESSENT DE DÉGRADER LE PRODUIT DERRIÈRE EUX** (`CRM-018`, `CRM-019`,
   `CRM-020`, `CRM-021`, INC-198, INC-199, INC-200, `docs/JOURNAL.md` décision 499). Chacun
   affaiblissait volontairement la base pour prouver que ses gardes mordent — c'est leur rôle —, puis
