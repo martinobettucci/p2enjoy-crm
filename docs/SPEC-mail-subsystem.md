@@ -2452,6 +2452,45 @@ trois lectures dès le premier `apply-seed.sh` :
 | E2E `ui` | Le parcours d'un administrateur : ouvrir l'écran, lire ses deux identités, modifier le libellé sans toucher au mot de passe, constater la relecture ; un refus réel obtenu par une adresse d'expédition non conforme, avec sa phrase du produit ; l'état vide d'une lectrice avec son geste |
 | Vérification visuelle | Captures aux paliers du §7, **observées** (`CLAUDE.md` §16) : liste, formulaire ouvert, refus, état vide |
 
+#### 22.12 bis Le harnais dédié — `scripts/verify-mail-identites.sh`
+
+*Sur le modèle du §21.11 bis, et pour la même raison : les preuves d'une unité doivent être
+rejouables d'un seul geste, et non commande par commande.*
+
+Le harnais rejoue, sur une pile démarrée et seedée, ce que le §22.12 exige, et il ajoute **ce
+qu'aucune de ces preuves ne couvre** : la vérification que le contrat de base sur lequel l'écran
+s'appuie est toujours celui que le §22.7 a mesuré.
+
+1. **Traçabilité** : les six fichiers livrés existent et portent leur `@spec` ou `@verifies` citant
+   `CRM-089`. L'en-tête est lu **en entier**, jamais par une fenêtre de trois lignes (INC-192).
+2. **La surface est câblée** : le chemin est déclaré, l'écran est monté **hors** de la table
+   `ROUTES`, et son entrée d'index vient **après** « Comptes entrants » et **avant** « État de la
+   messagerie » (§22.2) — l'ordre des **trois** entrées est lu dans la source, non supposé.
+3. **Le contrat de base, relu en base.** Les **six** noms de contrainte sur lesquels le dictionnaire
+   du §22.8 classe ses refus sont des identifiants du schéma : un renommage ferait retomber l'écran
+   sur son repli « refus inconnu » **silencieusement**, et aucune preuve existante ne le verrait,
+   toutes simulant la réponse. Le harnais les relit dans `pg_constraint`, puis vérifie que le module
+   les cite — les deux sens. Il constate en outre que `secret_id` reste révoquée à `authenticated`
+   (§22.3) et qu'`upsert_mail_outbound_identity` reste refusée à `anon` (§22.7).
+4. **Preuves exécutables** : les deux suites unitaires, `e2e/api/identites-sortantes.spec.ts`,
+   `e2e/ui/reglages-identites-mail.spec.ts`, et la présence des huit captures du §22.12.
+5. **Non-complaisance, témoin compris.** Le harnais dégrade **réellement** le module livré, puis
+   constate que la suite rougit, sur les **quatre** règles qui portent cet écran — et deux d'entre
+   elles sont propres à cette unité, la jumelle n'ayant rien d'équivalent :
+   - `p_password` envoyé même vide — le secret enregistré serait écrasé ;
+   - **`p_from_name` OMIS quand il est vide** — un nom d'expéditeur deviendrait ineffaçable, et
+     c'est la règle la plus contre-intuitive de l'unité (§22.5) ;
+   - **`p_daily_quota` envoyé** — le quota que `CRM-058` consomme serait écrasé par l'écran ;
+   - `secret_id` ajoutée aux colonnes lues — la lecture entière deviendrait `403`, y compris pour
+     l'administratrice (§22.3).
+
+   Un témoin vert précède les quatre.
+6. **Restauration constatée** : les fichiers altérés sont rendus identiques **octet à octet** à
+   l'instantané pris avant la dégradation, et la suite redevient verte.
+
+L'option `--rapide` saute les preuves Playwright et n'exécute que ce qui ne demande pas de
+navigateur. Elle ne saute **aucun** contrôle de base : une pile est requise dans les deux cas.
+
 ### 22.13 Limites nommées
 
 - **Aucun test de connexion depuis l'écran** (§22.1).
