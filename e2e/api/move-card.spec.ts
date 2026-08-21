@@ -96,23 +96,34 @@ async function lire(requete: APIRequestContext, id: string): Promise<Card> {
 }
 
 /**
- * Remet une card à l'étape et à la position données, par la clé de service et par identifiant.
+ * Remet une card dans l'état où `lire` l'avait trouvée, par la clé de service et par identifiant.
  *
- * `entered_step_at` n'est PAS restaurée, et ne peut pas l'être : `CRM-034` a fermé cette colonne à
- * `authenticated` comme à toute écriture directe autre que celle de la garde. La clé de service la
- * franchit, mais la restaurer supposerait de connaître sa valeur d'origine à la microseconde. Les
- * scénarios qui la mesurent le font donc par comparaison avec l'instant de l'appel, jamais avec une
- * valeur absolue.
+ * **`entered_step_at` EST RESTAURÉE DEPUIS LE 2026-08-21, et le motif du contraire était faux.**
+ * Ce commentaire disait « elle ne peut pas l'être : la restaurer supposerait de connaître sa
+ * valeur d'origine à la microseconde ». Or `lire` projette `select=*` : l'appelant CONNAÎT cette
+ * valeur, exactement comme il connaît l'étape et la position qu'il restaure déjà. L'impossibilité
+ * était une croyance, pas une mesure.
+ *
+ * **CE QUE CETTE OMISSION COÛTAIT.** `move_card` remet `entered_step_at` à `now()` — c'est sa
+ * règle (`docs/SPEC-cards.md` §2.9). Les scénarios ci-dessous déplacent la card SEEDÉE `…0c3`
+ * huit fois et rendaient donc l'ancienneté du jeu de démonstration à zéro en sortant. Tant que
+ * cette ancienneté n'était portée par rien, la perte ne se voyait pas ; depuis la tranche 3 de
+ * `CRM-046` (`docs/SPEC-seed.md` §9.12), `…0c3` est posée à trente jours et cette ancienneté est
+ * un CONTRAT. Un fichier de preuves qui dégrade le produit et ne le restaure pas est exactement ce
+ * que le §3.5 de `docs/SPEC-test-harness.md` proscrit depuis INC-142.
+ *
+ * La colonne est fermée à `authenticated` par `CRM-013` ; la clé de service la franchit, et c'est
+ * le seul emploi légitime de ce privilège ici — faire EXISTER l'état d'avant, jamais prouver un
+ * droit.
  */
-async function remettre(
-	requete: APIRequestContext,
-	id: string,
-	etape: string,
-	position: string | number,
-): Promise<void> {
+async function remettre(requete: APIRequestContext, id: string, avant: Card): Promise<void> {
 	const reponse = await requete.patch(`${CARDS}?id=eq.${id}`, {
 		headers: { ...enTetesService(), 'Content-Type': 'application/json' },
-		data: { current_step_id: etape, position },
+		data: {
+			current_step_id: avant.current_step_id,
+			position: avant.position,
+			entered_step_at: avant.entered_step_at,
+		},
 	})
 	expect(reponse.status()).toBe(204)
 }
@@ -252,7 +263,7 @@ test.describe('M2 — lignes b à d : le succès et ses effets', () => {
 			// La valeur rendue est bien celle de la base, et non un écho de la requête.
 			expect((await lire(request, CARD_C3)).current_step_id).toBe(ETAPE_RELANCE)
 		} finally {
-			await remettre(request, CARD_C3, avant.current_step_id, avant.position)
+			await remettre(request, CARD_C3, avant)
 		}
 	})
 
@@ -278,7 +289,7 @@ test.describe('M2 — lignes b à d : le succès et ses effets', () => {
 				new Date(instantAppel).getTime(),
 			)
 		} finally {
-			await remettre(request, CARD_C3, avant.current_step_id, avant.position)
+			await remettre(request, CARD_C3, avant)
 		}
 	})
 
@@ -314,7 +325,7 @@ test.describe('M2 — lignes b à d : le succès et ses effets', () => {
 			expect(Number((await lire(request, CARD_C1)).position)).toBe(Number(c1.position))
 			expect(Number((await lire(request, CARD_C2)).position)).toBe(Number(c2.position))
 		} finally {
-			await remettre(request, CARD_C3, avant.current_step_id, avant.position)
+			await remettre(request, CARD_C3, avant)
 		}
 	})
 
@@ -336,7 +347,7 @@ test.describe('M2 — lignes b à d : le succès et ses effets', () => {
 				avant.channel_id,
 			)
 		} finally {
-			await remettre(request, CARD_C3, avant.current_step_id, avant.position)
+			await remettre(request, CARD_C3, avant)
 		}
 	})
 })
@@ -463,7 +474,7 @@ test.describe('M4 — lignes h et i : forbidden ou card_not_found, selon ce que 
 				'le `bizdev` écrit sur `grands-comptes` : aucun droit fin ne le lui ferme',
 			).toBe(200)
 		} finally {
-			await remettre(request, CARD_C2, avant.current_step_id, avant.position)
+			await remettre(request, CARD_C2, avant)
 		}
 	})
 
@@ -655,7 +666,7 @@ test.describe('M5 — lignes j à l : le graphe devient opposable', () => {
 			await request.delete(`/rest/v1/card_comments?card_id=eq.${CARD_C6}`, {
 				headers: enTetesService(),
 			})
-			await remettre(request, CARD_C6, avant.current_step_id, avant.position)
+			await remettre(request, CARD_C6, avant)
 		}
 	})
 })
@@ -777,7 +788,7 @@ test.describe('M7 — INC-047 CLOSE : la vérification n° 6 est livrée par `CR
 					'nommait sans pouvoir le livrer, existe : il voyage dans le `DETAIL` (décision 126)',
 			).toBe('budget')
 		} finally {
-			await remettre(request, CARD_C1, avant.current_step_id, avant.position)
+			await remettre(request, CARD_C1, avant)
 		}
 	})
 
