@@ -23075,3 +23075,86 @@ produit quatre. Sur une base seedée, ce `do $$ … $$` est un **NO-OP silencieu
 correspondantes — `CRM-019`, `CRM-018`, `CRM-021` —, puis le diagnostic de `verify-auth` n° 14 et
 de `verify-mail-sync`. `scripts/verify-tracks.sh` porte vraisemblablement le motif d'INC-200 sur
 `public.tracks`, non vérifié faute de budget.
+
+## décision 500 — cinq harnais rendus honnêtes, dont deux qui rouvraient une porte d'écriture
+
+**Session du 2026-08-21, 06:21:43 UTC**, la même que la décision 499, dont elle rend compte de
+l'exécution.
+
+**Ce qui a été codé : cinq harnais, et un sixième rouge élucidé.** Chacun est repris sous l'unité
+qu'il éprouve, et aucune assertion n'est retirée.
+
+| Harnais | Unité | Ce qu'il laissait derrière lui | Après reprise |
+|---|---|---|---|
+| `verify-change-channel-workflow.sh` | `CRM-019` | `card_events_type_check` à NEUF valeurs, `workflow_changed` absente | **23 contrôles, aucune anomalie** |
+| `verify-transition-required-fields.sh` | `CRM-018` | `move_card` ramenée avant le lot G | **25 vérifications, aucune anomalie** |
+| `verify-channels.sh` | `CRM-021` | l'`UPDATE` de TABLE rendu à `authenticated` sur `channels` | **27 contrôles, aucune anomalie** |
+| `verify-tracks.sh` | `CRM-020` | le même, sur `tracks` — `relacl` passant de `ar` à `arw` | *interrompu au plafond, voir plus bas* |
+| `verify-auth.sh` | `CRM-011` | rien ; sa preuve n° 14 figeait une absence comblée par `CRM-022` | **62 contrôles, aucune anomalie** |
+| `verify-mail-sync.sh` | `CRM-051` | rien ; `pytest` manquait à l'hôte (INC-202) | **61 contrôles verts** |
+
+La correction est la même dans les cinq fichiers, et c'est celle que le §3.5 de
+`docs/SPEC-test-harness.md` prescrit depuis INC-142 : **la restauration appelle le
+`migrations-runner` sur tout le répertoire**, jamais la migration de l'unité ni une paire écrite à
+la main. Les appels portent `--env-file` et les deux fichiers de composition (§2.2 bis de
+`docs/CloudWorker.md`), et `--force-recreate`, sans quoi le conteneur à usage unique ne rejoue rien.
+
+**DEUX DE CES TROIS DÉFAUTS SONT DES RELÂCHEMENTS D'AUTORISATION**, et c'est le résultat qui
+compte. `0004_channels.sql` et `0003_tracks.sql` accordent l'`UPDATE` au niveau TABLE ;
+`0037_corbeille.sql` l'avait délibérément remplacé par une énumération de colonnes dont la seule
+exclusion est **`deleted_by`**. Après une exécution de l'un ou l'autre harnais, tout compte
+`authenticated` pouvait falsifier l'audit de mise en corbeille par un `PATCH` direct, et l'état
+persistait jusqu'au prochain rejeu complet. Ce n'est pas une preuve fausse : c'est le produit
+laissé plus ouvert que le dépôt ne le décrit, par l'outil même qui devait le surveiller.
+
+**Trois assertions RETOURNÉES, jamais retirées** (mécanisme de la décision 51) — les deux contrôles
+d'empreinte de `verify-channels` et `verify-tracks`, et la preuve n° 14 de `verify-auth`. Les deux
+premiers exigeaient une neutralité que le dépôt a cessé d'avoir ; ils mesurent désormais en deux
+temps que le rejeu isolé dérive **et** que le rejeu complet rend l'empreinte à l'octet près,
+`deleted_by` refermée — un contrôle de révocation étant ajouté après restauration dans chacun. La
+troisième cesse de constater « zéro ligne » sur `profiles` et mesure ce que
+`profiles_lecture_equipe` garantit : une ligne, et c'est `sub`.
+
+**`verify-channels.sh` reçoit en outre la sécurité d'interruption que le §3.5 exige** : ses trois
+dégradations touchent le SCHÉMA, et une exécution tuée entre la dégradation et sa restauration
+laissait la base affaiblie. Un drapeau `schema_degrade` fait restaurer le `trap EXIT`, sans payer le
+rejeu complet sur les sorties où rien n'a été dégradé.
+
+**Campagne complète de fin de session, exécutée une fois, ENTIÈREMENT VERTE.**
+
+| Preuve | Verdict |
+|---|---|
+| `npm run typecheck` | vert |
+| `npm run build` | vert, paquet principal **230,12 ko** — inchangé, aucun code d'application touché |
+| `npm run test:unit` | **71 fichiers, 2392 tests, aucun échec** |
+| `npm run test:sql` | **50 fichiers, 2480 assertions, aucune anomalie** |
+| `npm run e2e:api` | **824 passés** |
+| `npm run e2e:ui` | **566 passés**, 17,2 min |
+| `npm run e2e:mail` | **42 passés** |
+| `pytest` (`mail-sync`) | **244 passés** |
+
+Aucun rouge, aucune boucle de correction nécessaire à ce stade : les corrections avaient toutes été
+faites et poussées pendant le travail. Les captures réécrites par les campagnes d'interface ont été
+**restaurées** — cette session ne touche aucun composant d'interface, et les committer laisserait
+croire que deux cents écrans ont été observés.
+
+**CE QUI N'A PAS ÉTÉ EXÉCUTÉ, ET IL FAUT LE DIRE** (`CLAUDE.md` §25).
+
+- **`scripts/verify-tracks.sh` n'a PAS rendu de verdict.** Il a été interrompu par un plafond de
+  **40 min** que la session lui avait fixé, exactement le blocage que la décision 495 lui
+  connaît — sa section de non-complaisance rejoue `npm run e2e:ui` derrière chaque dégradation, et
+  `--rapide` ne l'en dispense pas. **Ce qui est acquis** : zéro `ECHEC` sur la totalité de la sortie
+  produite, et **ses trois contrôles retournés sont verts**, relevés nommément — « le rejeu ISOLÉ de
+  la paire rouvre l'UPDATE de table », « le runner complet rend l'empreinte à l'octet près »,
+  « après restauration, l'UPDATE de table reste révoqué ». L'interruption n'a rien laissé de
+  dégradé : `relacl` relue en base rend `authenticated=ar/postgres` et les trois politiques sont en
+  place. **Ce qui manque est son bilan final**, à obtenir par un rejeu sans plafond.
+- **Les cinquante-cinq autres `scripts/verify-*.sh`.** Le budget est passé dans le diagnostic des
+  six rouges, les cinq corrections, leurs contre-épreuves et la campagne.
+
+**Où reprendre.** Rejouer `scripts/verify-tracks.sh` sans plafond pour obtenir son bilan, puis
+reprendre la série au §4.2. Les six rouges d'« ordre de série » que la décision 495 nommait sont
+soldés — cinq par correction, un (`verify-mail-sync`) par la condition d'hôte du §2.1 ter que la
+session a remplie. Restent au registre `INC-192` (relevant de `CRM-077`) et `verify-board`
+(INC-139), `verify-scripts` (INC-186), `verify-corbeille` (INC-192), non repris ici. **`INC-190` et
+`INC-193` attendent toujours l'arbitrage du responsable.**
