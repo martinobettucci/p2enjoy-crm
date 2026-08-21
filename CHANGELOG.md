@@ -15,6 +15,37 @@ d'exécuter le code attendu.
 
 ### Corrigé
 
+- **CINQ HARNAIS DE PREUVES CESSENT DE DÉGRADER LE PRODUIT DERRIÈRE EUX** (`CRM-018`, `CRM-019`,
+  `CRM-020`, `CRM-021`, INC-198, INC-199, INC-200, `docs/JOURNAL.md` décision 499). Chacun
+  affaiblissait volontairement la base pour prouver que ses gardes mordent — c'est leur rôle —, puis
+  « restaurait » en rejouant SA migration seule, ce que le §3.5 de `docs/SPEC-test-harness.md`
+  interdit depuis INC-142 : une migration cesse d'être la dernière autorité sur ses objets dès
+  qu'une migration ultérieure les révise. La restauration passe désormais, dans les cinq fichiers,
+  par le rejeu complet du répertoire par le `migrations-runner`.
+
+  Les trois états qu'ils laissaient derrière eux sont mesurés, et non supposés :
+  `card_events_type_check` réduite à neuf valeurs, `workflow_changed` absente — toute écriture
+  serveur de la trace échouant alors en `23514` ; `public.move_card` ramenée avant le lot G, donc
+  privée de `app.btrim_blancs`, de la borne de longueur et de la conservation du motif ; et surtout
+  l'**`UPDATE` de TABLE rendu à `authenticated` sur `public.channels` et `public.tracks`**, que
+  `0037_corbeille.sql` avait délibérément remplacé par une énumération de colonnes. La seule colonne
+  que cette énumération exclut est `deleted_by` : après une exécution de ces deux harnais, un membre
+  pouvait falsifier l'audit de mise en corbeille par un `PATCH` direct.
+
+  Aucune assertion n'est retirée. Les deux contrôles d'empreinte qui rougissaient sont **retournés**
+  (mécanisme de la décision 51) : ils exigeaient une neutralité que le dépôt a cessé d'avoir, ils
+  mesurent désormais en deux temps que le rejeu isolé dérive bien — sans quoi le harnais aurait
+  cessé de décrire le dépôt — et que le rejeu complet rend l'empreinte à l'octet près, `deleted_by`
+  refermée.
+
+- **`scripts/verify-auth.sh` mesure ce que la politique de `CRM-022` garantit, au lieu de figer une
+  absence** (`CRM-011`, INC-201, même décision). Sa preuve n° 14 exigeait « 200 et zéro ligne » sur
+  `profiles`, au motif écrit que « sans politique, la lecture rend zéro ligne » ; `CRM-022` a livré
+  `profiles_lecture_equipe`, et un porteur de jeton lit désormais son propre profil. L'assertion est
+  **retournée** : elle vérifie que le jeton est accepté, qu'il positionne la bonne identité et qu'il
+  n'ouvre **rien de plus** — une ligne, et c'est `sub`. Une politique relâchée sur `profiles` la
+  rendrait rouge, ce dont l'ancienne rédaction était devenue incapable.
+
 - **`scripts/verify-move-card.sh` ne rougit plus de l'enrichissement du seed** (`CRM-034`, INC-191,
   `docs/JOURNAL.md` décision 497). Le harnais de la garde centrale comparait la population de cards
   seedées à un nombre écrit dans le fichier — quinze, valeur juste à `CRM-077` et fausse depuis que

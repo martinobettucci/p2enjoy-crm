@@ -199,9 +199,11 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-195 | `scripts/verify-copie-workflow.sh` rejoue la migration 19 et laissait `move_card` AMPUTÉE du lot G — quatrième occurrence d'INC-154 | 2026-08-21 | **close** — corrigée par la décision 497 | 497 |
 | INC-196 | `scripts/verify-move-card.sh` déposait un commentaire à CHAQUE exécution, le lot G conservant désormais le motif | 2026-08-21 | **close** — corrigée par la décision 497 | 497 |
 | INC-197 | Deux harnais appelaient `docker compose up` NU et recréaient `storage` et `db` sans les surcharges `dev` — cas exact de la décision 471 | 2026-08-21 | **close** — corrigée par la décision 497 | 497 |
-| INC-198 | `verify-change-channel-workflow.sh` laisse `card_events` sans `workflow_changed` : la migration 20 est un NO-OP rejouée seule sur base seedée | 2026-08-21 | *ouverte* — relève de `CRM-019` | 499 |
-| INC-199 | `verify-transition-required-fields.sh` rejoue la migration 19 et ramène `move_card` avant le lot G — cas exact d'INC-195 | 2026-08-21 | *ouverte* — relève de `CRM-018` | 499 |
-| INC-200 | `verify-channels.sh` rend à `authenticated` l'`UPDATE` de TABLE sur `public.channels`, rouvrant `deleted_by` que la corbeille avait fermée | 2026-08-21 | *ouverte* — relève de `CRM-021`, autorisation | 499 |
+| INC-198 | `verify-change-channel-workflow.sh` laisse `card_events` sans `workflow_changed` : la migration 20 est un NO-OP rejouée seule sur base seedée | 2026-08-21 | **close** — corrigée par la décision 499 | 499 |
+| INC-199 | `verify-transition-required-fields.sh` rejoue la migration 19 et ramène `move_card` avant le lot G — cas exact d'INC-195 | 2026-08-21 | **close** — corrigée par la décision 499 | 499 |
+| INC-200 | `verify-channels.sh` ET `verify-tracks.sh` rendent à `authenticated` l'`UPDATE` de TABLE, rouvrant `deleted_by` que la corbeille avait fermée | 2026-08-21 | **close** — corrigée par la décision 499 dans les deux fichiers | 499 |
+| INC-201 | La preuve n° 14 de `verify-auth.sh` figeait « zéro ligne sur `profiles` », absence que `CRM-022` a comblée | 2026-08-21 | **close** — assertion retournée par la décision 499 | 499 |
+| INC-202 | `verify-mail-sync.sh` rouge d'un `pytest` absent de l'hôte, condition du §2.1 ter de `docs/CloudWorker.md` | 2026-08-21 | **close** — condition d'hôte, aucun fichier du dépôt en cause | 499 |
 
 ---
 
@@ -3994,3 +3996,49 @@ geste : **non vérifié dans cette session**, faute de budget — ce harnais est
 décision 495 a vus atteindre le plafond de 20 min.
 
 **Statut : ouverte** — correction dans la même session, sous `CRM-021`.
+
+### INC-201 — la preuve n° 14 de `verify-auth.sh` figeait une absence que `CRM-022` a comblée
+
+**Ouverte ET close le 2026-08-21 (décision 499).** Onzième occurrence du mécanisme de la
+décision 51, et famille exacte d'INC-191.
+
+**Ce qui a été mesuré.** Ce harnais exigeait, jeton réel en main,
+`GET /rest/v1/profiles?select=id` → « 200 et zéro ligne », et son commentaire disait le motif :
+« sans politique, la lecture rend zéro ligne ». Il rendait **`200 [{"id":"a90c96fe-…"}]`** — une
+ligne, l'identifiant du compte jetable que le harnais venait lui-même de créer.
+
+`public.profiles` porte désormais deux politiques, relevées en base :
+
+```
+profiles_lecture_equipe | SELECT | id = auth.uid() OR (le profil est membre d'un de mes workspaces)
+profiles_maj_propre     | UPDATE | id = auth.uid()
+```
+
+`profiles_lecture_equipe` est livrée par `CRM-022`. Le compte jetable n'appartient à aucun
+workspace : il voit donc exactement UNE ligne, la sienne. Le produit n'a rien perdu ; c'est
+l'assertion qui mesurait l'âge du modèle d'autorisation.
+
+**Retournée, jamais retirée.** Elle cesse de constater une absence et mesure ce que la politique
+GARANTIT, ce qui est strictement plus fort : le jeton est accepté, il positionne la bonne identité,
+et il n'ouvre **rien de plus** — une ligne, et c'est `sub`. Une politique relâchée sur `profiles`
+la rendrait rouge, là où l'ancienne rédaction ne pouvait plus rien dire du produit. Rejoué :
+`scripts/verify-auth.sh` rend **62 contrôles, aucune anomalie**.
+
+**Statut : close.**
+
+### INC-202 — `verify-mail-sync.sh` était rouge d'un `pytest` absent de l'hôte, pas d'un défaut
+
+**Ouverte ET close le 2026-08-21 (décision 499).** Consignée pour qu'une session suivante ne relise
+pas ce rouge comme une régression.
+
+**Ce qui a été mesuré.** Le harnais rendait **1 contrôle en échec sur 61** — « pytest
+`mail-sync/tests` échoue » —, et la ligne suivante du journal donnait la cause en clair :
+`/usr/local/bin/python3: No module named pytest`. Le checkout de départ ne porte aucune dépendance
+Python, ce que le §2.1 ter de `docs/CloudWorker.md` documente déjà et dont il donne le remède.
+Après `python3 -m pip install --cert /root/.ccr/ca-bundle.crt -r mail-sync/requirements-dev.txt`,
+le même harnais rend **61 contrôles verts**.
+
+Ce n'est ni un verdict rouge du produit, ni une preuve : c'est une condition d'hôte non remplie.
+Aucun fichier du dépôt n'est modifié à ce titre.
+
+**Statut : close.**
