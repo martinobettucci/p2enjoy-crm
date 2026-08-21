@@ -23212,7 +23212,15 @@ d'**INC-139**, consignées le 2026-08-17, préexistantes et étrangères — ell
 `webapp/`, que cette session ne touche pas d'une ligne (`git diff` à l'appui). Le harnais est passé
 de 56 à 60 contrôles, les quatre neufs étant verts.
 
-**Où reprendre.** Le bilan de `scripts/verify-tracks.sh` reste dû, et il reste la reprise que la
-décision 500 désignait. Puis les cinquante-neuf autres `scripts/verify-*.sh`, non rejoués ici faute
-de budget. `INC-138`, `INC-139`, `INC-190` et `INC-193` attendent toujours l'arbitrage du
-responsable.
+**LA REPRISE QUE LA DÉCISION 500 DÉSIGNAIT EST SOLDÉE, DANS LA MÊME SESSION.**
+`scripts/verify-tracks.sh`, relancé **sans plafond** une fois la campagne verte, a mis **environ
+55 min** et rendu **46 contrôles, aucune anomalie**. Le plafond de 40 min était donc le seul
+obstacle, et non un blocage du harnais. Ses trois contrôles retournés sont verts, et sa section 8
+constate ce qu'il laisse derrière lui : trois politiques d'origine, `DELETE` toujours refusé à
+`authenticated`, seed rendu à son contrat, fichier de jetons **octet pour octet** identique,
+`0004_tracks.test.sql` à **80 assertions**. `CRM-020` n'a plus de reste.
+
+**Où reprendre.** Les cinquante-neuf autres `scripts/verify-*.sh`, non rejoués ici faute de budget —
+la session a dépensé le sien dans l'unité, sa campagne complète, la correction de la preuve qui
+l'effaçait et ce rejeu d'une heure. `INC-138`, `INC-139`, `INC-190` et `INC-193` attendent toujours
+l'arbitrage du responsable.
