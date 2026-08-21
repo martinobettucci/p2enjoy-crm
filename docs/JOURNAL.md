@@ -22935,3 +22935,68 @@ avaient besoin. Le produit n'a rien perdu ; le compteur, lui, mesurait l'âge du
 
 **Où reprendre si cette session est interrompue** : les harnais restants de la liste d'INC-191,
 chacun sous l'unité qu'il éprouve, avec la même méthode.
+
+## décision 498 — dix détecteurs de régression remis en état, et TROIS DÉFAUTS RÉELS trouvés en le faisant
+
+**Session du 2026-08-21, 04h09 UTC**, la même que la décision 497, dont elle rend compte de
+l'exécution. Pile levée par `./runDev.sh` (dix-sept services persistants *healthy*), seed appliqué,
+Node 24.19.0, `npm ci` posé.
+
+**Ce qui a été codé : dix harnais.** Chacun rendait un verdict rouge qui ne disait rien du produit,
+et chacun est **retourné** au sens de la décision 51 — l'assertion n'est jamais retirée, elle cesse
+de compter une population pour mesurer l'invariant que sa section prétend tenir, motif écrit dans le
+fichier avec la valeur mesurée du jour.
+
+| Harnais | Ce qui était figé | Ce qui est mesuré désormais |
+|---|---|---|
+| `verify-move-card` | « quinze cards » (41 en base) | le harnais rend le seed intact, **empreinte portant l'étape de chaque card** |
+| `verify-cards` | « 14/1/1/14 » | l'unicité des adresses, les deux états exceptionnels **nommés par leur identifiant**, la population contre l'instantané d'ouverture |
+| `verify-authz` | « 4/6/14 » et « 4/4/8 » | la **discrimination** contre les totaux relevés en base, plus un contrôle qui interdit à « strictement moins » d'être vert sur un mur |
+| `verify-valeurs-champs` | « 21 valeurs », « exactement une » ×3 | l'instantané d'ouverture, et « **au moins une** » donnée permanente par règle |
+| `verify-mail-inbound` | absence de toute synchronisation | `last_sync_at` reste une absence **assumée** ; `sync_state` est vérifiée dans sa **forme** |
+| `verify-mail-ingestion` | « aucun message classé » | la **frontière** `CRM-054` / `CRM-055`, avec son témoin |
+| `verify-mail-ingestion` | « zéro politique sur `storage.objects` » | la lecture est la **seule** politique, bornée au bucket et gardée par `app.piece_jointe_telechargeable`, dont les **deux** membres sont contrôlés |
+| `verify-timeline` | vocabulaire recopié à la main | vocabulaire **lu en base**, restauration à l'octet près |
+| `verify-copie-workflow` | « 7/11/7/15/1 » | la copie **reproduit sa source**, comptée à l'exécution, avec témoin |
+| `verify-preuves-refus` | « exactement 55 » et « exactement 66 » | des **planchers** : retirer rougit, enrichir non |
+| `docs/manual.md` annexe A | 12 questions, 21 réponses | 16 et 23 — ici le harnais avait raison, c'est le manuel qui avait dérivé |
+
+**TROIS DÉFAUTS RÉELS, ET AUCUN N'A ÉTÉ TROUVÉ PAR LECTURE.**
+
+- **INC-195** — `verify-copie-workflow.sh` rejoue la migration 19, qui redéfinit `move_card` ; la 19
+  n'en est plus la dernière autorité depuis le lot G. Le harnais sortait sur une fonction **amputée**
+  de `btrim_blancs`, de la borne de longueur et de la conservation du motif, **en annonçant
+  « aucune anomalie »**. Trouvé par enchaînement : `verify-move-card.sh`, vert seul, rendait
+  **8 assertions en échec sur 82** lancé derrière. Isolé harnais par harnais, l'état de `move_card`
+  relevé après chacun. Quatrième occurrence d'INC-154 ; corrigé, chaque rejeu suit le lot G.
+- **INC-196** — `verify-move-card.sh` déposait **un commentaire à chaque exécution** : sa ligne l
+  fournit un motif, et `move_card` le CONSERVE depuis le lot G. Écrit quand le motif était perdu, cet
+  appel ne laissait rien ; il gonflait désormais le jeu de démonstration sans borne. Trouvé par
+  `verify-manual.sh`, deux unités plus loin : « le manuel dit 5, la base dit 7 ». Corrigé, et
+  l'invariant qui manquait est posé — la population de `card_comments` est comparée à l'instantané
+  d'ouverture, de sorte qu'un résidu de cette famille se dénonce lui-même.
+- **INC-197** — `verify-colonnes-protegees.sh` et `verify-move-card-to-channel.sh` appelaient
+  `docker compose up` **NU**. Cas exact de la décision 471, que le §2.2 bis de `docs/CloudWorker.md`
+  documente : `storage` et `db` recréés avec la configuration de base, `AWS_ACCESS_KEY_ID` perdu,
+  MinIO rendant `InvalidAccessKeyId`, et `verify-preuves-refus.sh` annonçant « la preuve n° 9 n'est
+  pas exercée » — un verdict sans rapport avec les pièces jointes. Diagnostiqué par les étiquettes
+  `config_files`, réparé par `./runDev.sh` et le seed, corrigé dans les deux fichiers.
+
+**Preuves de la session, toutes rejouées après correction.** Les dix harnais rendent, chacun,
+« aucune anomalie » : `verify-move-card` **57**, `verify-cards` **42**, `verify-authz` **36**,
+`verify-valeurs-champs` **41**, `verify-mail-inbound` **32**, `verify-mail-ingestion` **25**,
+`verify-timeline` **70**, `verify-copie-workflow` **29**, `verify-preuves-refus` **22**,
+`verify-manual` **127**. Chaque retournement a été éprouvé dans les deux sens quand il s'y prêtait —
+l'empreinte de `verify-move-card` mord sur un déplacement que le compte de cards ne voyait pas
+(41 → 41, empreinte changée, restauration constatée) ; la dégradation de `verify-timeline` a dû être
+**visée deux fois** avant de mordre, un jeton inventé ne réveillant pas la suite que ce harnais
+rejoue.
+
+**Où reprendre.** Les dix rouges qu'INC-190 et INC-191 énuméraient sont soldés ; INC-191 est close.
+Restent au registre `INC-192` (fenêtre de recherche trop étroite dans `verify-corbeille.sh`,
+relevant de `CRM-077`) et les rouges d'« ordre de série » que la décision 495 nomme — `verify-board`
+(INC-139), `verify-scripts` (INC-186), `verify-stack`, `verify-change-channel-workflow`,
+`verify-mail-sync`, `verify-auth` n° 14, `verify-channels`, `verify-transition-required-fields` —,
+qui sont d'une autre famille : ils ne figent pas une absence, ils dépendent de l'état laissé par le
+harnais précédent. INC-197 en explique peut-être une partie, et c'est la piste à suivre.
+`INC-190` et `INC-193` attendent toujours l'arbitrage du responsable.
