@@ -44,6 +44,17 @@ d'exécuter le code attendu.
   de boîte, aucun paramètre d'ingestion éditable, et aucune identité sortante SMTP (`CRM-053` garde
   son écart).
 
+- **Un harnais rejouable pour cet écran** (`scripts/verify-mail-comptes.sh`, `CRM-088`,
+  `docs/SPEC-mail-subsystem.md` §21.11 bis). Les preuves de l'écran existaient mais n'étaient
+  rejouables qu'à la main, commande par commande ; elles le sont désormais d'un seul geste, avec
+  leurs compteurs figés et leurs trois dégradations réelles.
+
+  Ce que le harnais ajoute et qu'aucune preuve existante ne couvrait : les **cinq noms de
+  contrainte** sur lesquels l'écran classe ses refus sont relus **en base**. Ce sont des
+  identifiants du schéma ; si une migration en renommait un, l'écran retomberait silencieusement
+  sur son repli « refus inconnu » et toutes les preuves resteraient vertes, puisqu'elles simulent
+  la réponse du serveur.
+
 ### Décidé
 
 - **Une colonne révoquée ressort par le corps d'un refus de contrainte** (`INC-193`,
