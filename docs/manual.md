@@ -27,6 +27,7 @@
 | 2 | Comprendre l'organisation : espace, tracks, channels, cards | `CRM-020`, `CRM-021` | À livrer |
 | 3 | Naviguer : barre latérale, onglets, recherche | `CRM-007`, `CRM-065` | **Partiellement livré** — voir ci-dessous ; la recherche relève de `CRM-065` |
 | 3 ter | Le carnet de contacts | `CRM-060` | **Livré en LECTURE** — voir la section 3 *ter*. L'entrée « Contacts » de la barre latérale ouvre le carnet de l'espace : nom, organisation, fonction, email et téléphone, une ligne par personne. Tout membre le lit, y compris un compte en lecture seule. Le nom d'organisation ouvre sa **fiche** (sous-tranche 4b) : domaine, site web et contacts rattachés. Une affaire **rattache et détache** ses contacts depuis sa fiche (sous-tranche 4c, chapitre 4.7 *ter*). Un contact **se crée** depuis le carnet (sous-tranche 4e) : le bouton « Nouveau contact » ouvre un formulaire au-dessus du tableau. Il **se modifie** depuis sa fiche (sous-tranche 4g) : le bouton « Modifier » ouvre le même formulaire, prérempli. Il **se rattache à une affaire** depuis sa fiche (sous-tranche 4h) : le bouton « Rattacher à une affaire » vit dans le bloc des affaires, et il **s'en détache** depuis la même page (sous-tranche 4i), chaque ligne du tableau portant sa commande. Le **rôle** d'un rattachement **se corrige** depuis la même page (sous-tranche 4j) : un bouton « Modifier le rôle » par ligne, et vider le champ efface le rôle sans défaire le lien. Ce qui manque est dit : aucune suppression d'un contact, aucune création d'organisation, aucune recherche |
+| 3 quater | Ma journée : ce qui est en retard, ce qui est dû aujourd'hui | `CRM-061` | **Livré en LECTURE, vérifié visuellement** — voir la section 3 *quater*. L'entrée « Ma journée » rassemble les affaires à échéance de tout l'espace, en trois sections : **En retard** (sans limite d'ancienneté), **Aujourd'hui** (dans le fuseau de votre appareil) et **À venir** (sept jours, horizon non réglable). Deux portées, dont le choix vit dans l'adresse : vos affaires, ou tout ce que vos droits vous laissent lire. Les affaires archivées, à la corbeille et **en sommeil** en sont absentes. Ce qui manque est dit : l'écran **lit** et n'écrit pas — reporter une échéance reste le geste de l'en-tête de la fiche —, il n'est ni un agenda, ni la liste des relances |
 
 ### Suivi quotidien
 
@@ -39,7 +40,7 @@
 | 7 bis | Ranger une affaire dans un autre dossier | `CRM-045` | **Livré côté serveur, sans écran** — voir le chapitre 4.11. Une affaire peut changer de channel — donc, si le channel d'arrivée suit un autre processus, changer de processus. L'étape d'arrivée doit alors être **choisie explicitement** : l'application ne devine jamais l'étape équivalente, deux processus pouvant porter la même étape sans qu'elle veuille dire la même chose. **Les réponses au formulaire de l'affaire sont perdues** lorsque le processus change — elles répondaient aux questions de l'ancien —, et l'opération est refusée tant que cette perte n'a pas été acceptée explicitement ; le refus indique combien de réponses seraient perdues. L'historique de l'affaire, lui, conserve les réponses données : la mémoire survit à la donnée. Le déplacement laisse une trace **« Dossier changé »** dans l'historique, y compris quand personne ne passe par l'application. Ce qui manque est uniquement l'écran : aucun bouton ne permet encore ce rangement |
 | 4.7 bis | Mettre une affaire à la corbeille | `CRM-077` | **Livré et vérifié** — voir le chapitre 4.7 *bis*. Le bouton vit en bas de la fiche de l'affaire, demande une confirmation qui la nomme, et remplace ensuite l'écran par les deux chemins utiles : revenir au channel, ou ouvrir la corbeille. Le geste suppose le droit d'**écrire** sur l'onglet, et non un rôle d'administrateur |
 | 8 | Vue liste, filtres et vues sauvegardées | `CRM-042`, `CRM-071` | **Partiellement livré** — la vue liste, son tri, ses deux filtres et sa pagination existent (chapitre 4.9) ; les **vues sauvegardées** relèvent de `CRM-071` et ne sont pas livrées |
-| 9 | Prochaine action et vue « Ma journée » | `CRM-061` | À livrer |
+| 9 | Prochaine action et vue « Ma journée » | `CRM-061` | **Livré avec son écran, vérifié visuellement** — voir le chapitre 3 *quater*. L'entrée « Ma journée » de la barre latérale rassemble les affaires à échéance de tout l'espace de travail, en trois sections : **En retard**, **Aujourd'hui**, **À venir dans sept jours**. Deux portées — vos affaires, ou tout ce que vos droits vous laissent lire —, dont le choix vit dans l'adresse. Les affaires archivées, à la corbeille et **en sommeil** en sont absentes. Ce qui manque : l'écran **lit** et n'écrit pas — reporter une échéance ou la saisir reste le geste de l'en-tête de la fiche (chapitre 4.2 *bis*) —, et l'horizon de sept jours n'est pas réglable |
 
 ### Messagerie
 
@@ -603,6 +604,104 @@ En cas de panne du serveur, l'application **réessaie trois fois** avant d'affic
 message peut donc mettre quelques secondes à apparaître.
 
 ---
+
+## 3 quater. Ma journée : ce qui est en retard, ce qui est dû aujourd'hui
+
+*Livré par `CRM-061`, tranche 1. Décrit l'application réellement exécutée ; captures dans
+`docs/captures/CRM-061/`.*
+
+L'entrée **Ma journée** de la barre latérale répond à une seule question : **que dois-je faire
+aujourd'hui ?** Elle rassemble les affaires qui portent une **échéance** — la date de leur prochaine
+action —, à travers tout votre espace de travail, sans avoir à ouvrir un dossier après l'autre.
+
+C'est la troisième façon de lire vos affaires, et elle range par le **temps** :
+
+- le **tableau** d'un channel les range par étape du processus — « où en est chaque affaire ? » ;
+- la **vue liste** les range par leurs colonnes, dans un channel — « laquelle dois-je ouvrir ? » ;
+- **Ma journée** les range par échéance, partout — « qu'est-ce qui est en retard ? ».
+
+### 3 quater.1 Les trois sections
+
+L'écran se lit de haut en bas, en trois sections, et chacune écrit **combien** d'affaires elle
+porte :
+
+| Section | Ce qu'elle contient |
+|---|---|
+| **En retard** | Les échéances passées, **sans aucune limite d'ancienneté** — une échéance oubliée depuis trois mois est précisément celle qu'il faut voir |
+| **Aujourd'hui** | Les échéances du jour, de minuit à minuit, dans le fuseau horaire de **votre** appareil |
+| **À venir** | Les échéances des **sept prochains jours**, pas au-delà |
+
+**Une section sans affaire n'est pas affichée.** Trois titres surmontant trois vides diraient trois
+fois « rien » ; leur absence le dit une fois.
+
+**L'horizon est de sept jours, et il n'est pas réglable.** Au-delà, ce ne serait plus une journée :
+c'est la vue liste d'un channel, triée par échéance, qui répond à cette question-là.
+
+### 3 quater.2 Ce qu'une ligne montre
+
+Chaque ligne porte, dans cet ordre : l'**échéance** avec son heure, le **titre** de l'affaire — qui
+est un lien vers sa fiche —, la **prochaine action** à mener, et la **situation** de l'affaire sous
+la forme « Track › Channel », elle-même un lien qui ouvre le dossier.
+
+L'échéance vient en tête parce que c'est elle qui range l'écran : une colonne de dates alignées se
+lit d'un seul regard. **L'heure est toujours affichée** — une échéance du jour sans heure ne dirait
+pas si la matinée est déjà passée.
+
+Dans la section **En retard**, et là seulement, l'échéance est teintée de rouge. La teinte porte sur
+la **date**, jamais sur la ligne entière : une affaire en retard est un travail à faire, pas une
+erreur.
+
+**Une affaire peut porter une échéance sans prochaine action écrite.** La colonne reste alors vide —
+ni tiret, ni « non renseigné ». L'échéance seule est déjà une information.
+
+### 3 quater.3 « Mes affaires » ou tout l'espace de travail
+
+Deux onglets en haut de l'écran choisissent la **portée** :
+
+- **Mes affaires**, la vue par défaut : les affaires dont **vous** êtes responsable ;
+- **Tout l'espace de travail** : toutes celles que vos droits vous laissent lire.
+
+Le choix vit dans l'**adresse** : `/ma-journee` d'un côté, `/ma-journee?qui=tous` de l'autre. Une
+adresse copiée à un collègue lui montre donc ce que vous voyez — sous réserve de ses propres droits,
+qui restent seuls juges de ce qu'il peut lire.
+
+**Élargir la portée n'ouvre rien.** Ce que vous voyez reste ce que le serveur vous consent : une
+affaire d'un track qui vous est fermé n'apparaît dans aucune des deux portées, et l'écran ne la
+nomme jamais.
+
+### 3 quater.4 Ce qui n'apparaît pas, et pourquoi
+
+| Absent de l'écran | Motif |
+|---|---|
+| Les affaires **archivées** et celles **à la corbeille** | Elles ne sont plus en cours (chapitre 4.5) |
+| Les affaires **en sommeil** | Les endormir est précisément le geste qui dit « pas aujourd'hui » (chapitre 4.6). Elles restent visibles dans leur tableau et leur vue liste, où une case à cocher les ramène |
+| Les affaires **sans échéance** | Il n'y a rien à ranger dans une journée |
+| Les échéances au-delà de **sept jours** | Voir l'horizon ci-dessus |
+
+### 3 quater.5 Ce que l'écran ne fait pas
+
+**Il lit, il n'écrit pas.** Aucun bouton n'y reporte une échéance, ne coche « fait » ni ne saisit une
+prochaine action. Ces deux valeurs se modifient à un seul endroit — l'**en-tête de la fiche** de
+l'affaire (chapitre 4.2 *bis*) —, et le rester est ce qui évite deux façons de faire la même chose.
+
+**Ce n'est pas un agenda** : ni créneau, ni durée, ni rendez-vous, ni récurrence. Une affaire porte
+un instant, pas une plage.
+
+**Ce n'est pas la liste des relances.** Une affaire peut stagner dans son étape au-delà de son seuil
+de relance sans porter aucune échéance, et l'inverse. La **pastille d'ancienneté** du tableau
+(chapitre 4.8) répond à cette autre question.
+
+### 3 quater.6 Quand il n'y a rien
+
+Deux messages, et ils ne disent pas la même chose :
+
+- **« Aucune échéance dans votre journée »** — vous n'êtes responsable d'aucune affaire à échéance.
+  L'écran offre alors le geste qui élargit la portée : *Voir tout l'espace de travail* ;
+- **« Aucune échéance dans les 7 prochains jours »** — personne n'en a, parmi ce que vous pouvez
+  lire. Il n'y a rien à élargir, et l'écran n'offre donc aucun bouton.
+
+Sans session, c'est le **premier** de ces deux messages que vous lisez : « mes affaires » n'a pas de
+sujet tant que personne n'est connecté.
 
 ## 4. L'affaire : ce qu'elle porte, son adresse, ses deux façons de disparaître
 

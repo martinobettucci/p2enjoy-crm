@@ -68,6 +68,15 @@ export type AffaireDuJour = {
 	readonly echeance: Date
 	/** L'adresse de la fiche, ou `null` lorsque les slugs manquent (§17.4). */
 	readonly adresse: string | null
+	/**
+	 * L'adresse du CHANNEL, ou `null` lorsque les slugs manquent.
+	 *
+	 * La pilule du §5.29 est un LIEN qui ouvre le channel — « ouverture du channel au clic ». Elle
+	 * est réemployée « sans copie » (§17.6), et une pilule qui porterait son icône de sortie sans
+	 * mener nulle part serait la commande morte que le §5.10 proscrit : l'icône promettrait une
+	 * navigation qui n'existe pas.
+	 */
+	readonly adresseChannel: string | null
 	readonly nomTrack: string | null
 	readonly nomChannel: string | null
 }
@@ -87,10 +96,21 @@ export type SectionsJournee = readonly {
  * system, tenue sans changement.
  */
 export function adresseAffaire(ligne: LigneJournee): string | null {
+	const base = adresseChannel(ligne)
+	return base === null ? null : `${base}/cards/${ligne.id}`
+}
+
+/**
+ * L'adresse du channel de l'affaire, ou `null` lorsque ses slugs manquent.
+ *
+ * Elle est calculée ICI et non recomposée dans l'écran : les deux adresses partagent leur préfixe,
+ * et deux compositions divergeraient au premier changement de route (décision 167).
+ */
+export function adresseChannel(ligne: LigneJournee): string | null {
 	const slugChannel = ligne.channels?.slug
 	const slugTrack = ligne.channels?.tracks?.slug
 	if (slugChannel === undefined || slugTrack === undefined) return null
-	return `/tracks/${slugTrack}/${slugChannel}/cards/${ligne.id}`
+	return `/tracks/${slugTrack}/${slugChannel}`
 }
 
 /**
@@ -111,6 +131,7 @@ export function projeterAffaire(ligne: LigneJournee): AffaireDuJour | null {
 		prochaineAction: ligne.next_action,
 		echeance,
 		adresse: adresseAffaire(ligne),
+		adresseChannel: adresseChannel(ligne),
 		nomTrack: ligne.channels?.tracks?.name ?? null,
 		nomChannel: ligne.channels?.name ?? null,
 	}

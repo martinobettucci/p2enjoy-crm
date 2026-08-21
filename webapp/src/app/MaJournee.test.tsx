@@ -190,11 +190,19 @@ describe('MaJournee — ce que chaque ligne rend (§17.6)', () => {
 		expect(action.getAttribute('title')).toBeNull()
 	})
 
-	it('rend la pilule « Track › Channel », qui FERME la ligne', async () => {
+	it('rend la pilule « Track › Channel », qui FERME la ligne et OUVRE le channel', async () => {
 		rendre(clientQuiRend({ data: [AUDIT], error: null, status: 200 }), '/ma-journee?qui=tous')
 		const pilule = await screen.findByTestId('pilule-situation')
 		expect(pilule.textContent).toContain('Conseil & IA')
 		expect(pilule.textContent).toContain('Grands comptes')
+		// LA PILULE EST UN LIEN (§5.29, « ouverture du channel au clic ») : elle porte l'icône de
+		// sortie, et une icône qui ne mènerait nulle part promettrait une navigation qui n'existe
+		// pas — la commande morte du §5.10.
+		expect(pilule.tagName.toLowerCase()).toBe('a')
+		expect(pilule.getAttribute('href')).toBe('/tracks/conseil-ia/grands-comptes')
+		// Son nom accessible NOMME sa destination : quatre pilules ne portant que leur libellé ne
+		// diraient pas ce que chacune ouvre (§5.36).
+		expect(pilule.getAttribute('aria-label')).toContain('Conseil & IA')
 	})
 
 	it('rend une affaire SANS adresse comme un texte, jamais comme un lien mort (§5.32)', async () => {

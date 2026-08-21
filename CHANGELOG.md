@@ -13,6 +13,45 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Ajouté
+
+- **LA VUE « MA JOURNÉE » EST LIVRÉE, ET L'ENTRÉE DE BARRE LATÉRALE MÈNE ENFIN QUELQUE PART**
+  (`CRM-061` tranche 1, `docs/SPEC-cards.md` §17, `docs/manual.md` chapitre 3 *quater*). L'adresse
+  `/ma-journee` rendait un état vide **inconditionnel** depuis `CRM-007`, alors que son modèle —
+  `next_action`, `next_action_at` et l'index `cards_workspace_next_action_idx` — est livré depuis
+  `CRM-040`. L'écran rassemble les affaires à échéance de tout l'espace de travail, en trois
+  sections : **En retard** — sans aucune limite d'ancienneté —, **Aujourd'hui**, et **À venir dans
+  sept jours**. Deux portées, « mes affaires » et « tout l'espace de travail », dont le choix vit
+  dans l'adresse et non dans un stockage sur l'appareil.
+
+  Les affaires **archivées**, **à la corbeille** et **en sommeil** en sont absentes ; l'exclusion du
+  sommeil réemploie le filtre existant plutôt que de le réécrire. L'écran **lit** et n'écrit pas :
+  reporter une échéance reste le geste de l'en-tête de la fiche, et un second chemin en ferait une
+  seconde définition.
+
+- **LE JEU DE DÉMONSTRATION SUIT DÉSORMAIS LE CALENDRIER** (`docs/SPEC-seed.md` §13). Une
+  translation unique porte les échéances de l'ancre du contrat vers le jour courant : la
+  distribution du §9 est préservée à la journée près, et le seed **échoue** si les trois sections ne
+  sont plus démontrables. Mesuré à l'exécution : Camille Aubert porte une affaire en retard, une
+  aujourd'hui, une à venir ; tout l'espace de travail en rend sept, dont une endormie écartée.
+
+### Corrigé — trouvés par les preuves de `CRM-061`
+
+- **UNE PILULE PORTAIT L'ICÔNE DE SORTIE SANS MENER NULLE PART.** Trouvé **en regardant une
+  capture** (`CLAUDE.md` §16) : la pilule « Track › Channel » de « Ma journée » était rendue en
+  simple texte, alors que le §5.29 du design system la définit comme « l'ouverture du channel au
+  clic ». Une icône qui promet une navigation inexistante est la commande morte que le §5.10
+  proscrit. Elle est désormais un lien, et son nom accessible nomme sa destination.
+
+- **UN GABARIT DE TRADUCTION ATTEIGNAIT L'ÉCRAN.** Le titre du second état vide écrit son horizon,
+  et le paramètre n'y était pas passé : « Aucune échéance dans les {jours} prochains jours ».
+  Invisible partout ailleurs — ce vide n'est atteint que par une portée élargie sans aucune
+  échéance. Trouvé par la preuve unitaire.
+
+- **SOUS 390 PX, LE REPLI D'UNE LIGNE ÉTAIT IRRÉGULIER.** Le titre se rangeait tantôt à côté de la
+  date, tantôt en dessous, selon sa longueur : quatre lignes voisines n'avaient pas la même forme
+  sans qu'aucune donnée ne le justifie.
+
 ### Spécifié
 
 - **LA VUE « MA JOURNÉE » A ENFIN UN CONTRAT** (`CRM-061`, `docs/JOURNAL.md` décision 502).

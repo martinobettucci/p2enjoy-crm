@@ -175,8 +175,12 @@ describe('projeterAffaire — ce que chaque ligne rend (§17.6)', () => {
 		expect(affaire?.adresse).toBe(
 			'/tracks/conseil-ia/grands-comptes/cards/5eed0000-0000-4000-8000-0000000000c3',
 		)
+		expect(affaire?.adresseChannel).toBe('/tracks/conseil-ia/grands-comptes')
 		expect(affaire?.nomTrack).toBe('Conseil & IA')
 		expect(affaire?.nomChannel).toBe('Grands comptes')
+		// Les deux adresses partagent leur préfixe, et une seule fonction les compose : deux
+		// compositions divergeraient au premier changement de route (décision 167).
+		expect(affaire?.adresse?.startsWith(affaire.adresseChannel ?? 'x')).toBe(true)
 	})
 
 	it('garde une affaire SANS prochaine action : l’échéance seule est une information', () => {
@@ -201,6 +205,7 @@ describe('projeterAffaire — ce que chaque ligne rend (§17.6)', () => {
 		const sansTrack = projeterAffaire({ ...AUDIT, channels: { ...AUDIT.channels, tracks: null } })
 		expect(sansTrack).not.toBeNull()
 		expect(sansTrack?.adresse).toBeNull()
+		expect(sansTrack?.adresseChannel).toBeNull()
 		expect(sansTrack?.nomTrack).toBeNull()
 	})
 })
@@ -213,6 +218,7 @@ describe('decouperEnSections — le découpage se fait à la COMPOSITION (§17.5
 		prochaineAction: null,
 		echeance,
 		adresse: null,
+		adresseChannel: null,
 		nomTrack: null,
 		nomChannel: null,
 	})

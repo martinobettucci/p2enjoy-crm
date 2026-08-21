@@ -52,7 +52,13 @@ const etatVide = (page: Page) => page.getByTestId('etat-vide')
 const LIBELLES = {
 	board: 'Aucun board à afficher',
 	refus: 'Accès refusé',
-	journee: 'Rien pour aujourd’hui',
+	// RÉVISÉ PAR `CRM-061` (mécanisme de la décision 51). Ce libellé était celui du gabarit vide
+	// INCONDITIONNEL que `/ma-journee` rendait depuis `CRM-007` ; la route porte désormais un écran
+	// (`docs/SPEC-cards.md` §17), et le visiteur anonyme y lit le premier des DEUX vides du §17.8 —
+	// la portée « mes affaires » n'ayant aucun sujet sans session (§17.3). La règle a changé par
+	// LIVRAISON : le contrat de `docs/SPEC-manual.md` §7 — « état vide explicite » — est tenu, et
+	// c'est son TEXTE qui change, jamais l'exigence.
+	journee: 'Aucune échéance dans votre journée',
 	reglagesIndex: 'Sections de réglages',
 	reglagesArborescence: 'Arborescence : tracks et channels',
 	trackIntrouvable: 'Track introuvable',

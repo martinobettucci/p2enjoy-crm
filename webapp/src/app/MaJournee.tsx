@@ -305,7 +305,13 @@ export function MaJournee({ client = clientCrm, maintenant }: ProprietesMaJourne
 										  l'utilisateur croirait cassé (§5.32).
 										*/}
 										<span
-											className="min-w-0 grow truncate font-medium"
+											// SOUS LE PALIER `md`, LE TITRE PREND SA PROPRE LIGNE, et c'est un
+											// défaut trouvé EN REGARDANT UNE CAPTURE (`CLAUDE.md` §16, 390 px) :
+											// avec `grow` seul, il se rangeait tantôt à côté de la date, tantôt
+											// en dessous, selon sa longueur — quatre lignes voisines n'avaient
+											// pas la même forme sans qu'aucune donnée ne le justifie. `basis-full`
+											// rend le repli RÉGULIER, ce que le §5.36 exige de la ligne repliée.
+											className="basis-full md:basis-auto min-w-0 grow truncate font-medium"
 											title={affaire.titre}
 										>
 											{affaire.adresse === null ? (
@@ -327,7 +333,7 @@ export function MaJournee({ client = clientCrm, maintenant }: ProprietesMaJourne
 										*/}
 										<span
 											data-testid="action-journee"
-											className="min-w-0 grow truncate text-sm text-text-2"
+											className="basis-full md:basis-auto min-w-0 grow truncate text-sm text-text-2"
 											{...(affaire.prochaineAction === null
 												? {}
 												: { title: affaire.prochaineAction })}
@@ -341,10 +347,28 @@ export function MaJournee({ client = clientCrm, maintenant }: ProprietesMaJourne
 										  pas. Sans destination lisible, aucune pilule n'est rendue : l'écran
 										  ne nomme jamais ce qu'il ne peut pas ouvrir (§5.29).
 										*/}
-										{affaire.nomTrack === null || affaire.nomChannel === null ? null : (
-											<span
+										{affaire.nomTrack === null ||
+										affaire.nomChannel === null ||
+										affaire.adresseChannel === null ? null : (
+											<Link
+												to={affaire.adresseChannel}
 												data-testid="pilule-situation"
-												className="shrink-0 inline-flex items-center gap-1 max-w-full px-2 py-1 rounded-full bg-brand-soft text-brand text-xs truncate"
+												// LA PILULE EST UN LIEN, ET C'EST UN DÉFAUT TROUVÉ EN REGARDANT UNE
+												// CAPTURE (`CLAUDE.md` §16). Écrite d'abord en `span`, elle portait
+												// l'icône de sortie du §5.29 sans mener nulle part : l'icône
+												// promettait une navigation qui n'existe pas — la commande morte que
+												// le §5.10 proscrit. Le §5.29 définit cette pilule comme
+												// « l'ouverture du channel au clic », et la réemployer « sans copie »
+												// (§17.6) veut dire l'employer ENTIÈRE, destination comprise.
+												//
+												// Son nom accessible NOMME sa destination : « Conseil & IA › Grands
+												// comptes » répété sur quatre lignes ne dirait pas ce que chacune
+												// ouvre (§5.29, §5.36).
+												aria-label={t('today.pill.open', {
+													track: affaire.nomTrack,
+													channel: affaire.nomChannel,
+												})}
+												className="shrink-0 inline-flex items-center gap-1 max-w-full px-2 py-1 rounded-full bg-brand-soft text-brand text-xs truncate hover:bg-brand-soft-strong"
 											>
 												<SquareArrowOutUpRight aria-hidden="true" size={12} strokeWidth={2} />
 												<span className="truncate">
@@ -353,7 +377,7 @@ export function MaJournee({ client = clientCrm, maintenant }: ProprietesMaJourne
 														channel: affaire.nomChannel,
 													})}
 												</span>
-											</span>
+											</Link>
 										)}
 									</li>
 								))}

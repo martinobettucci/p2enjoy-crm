@@ -49,6 +49,15 @@ test.describe('coquille', () => {
 		// cessé d'en être un le jour où la messagerie a été livrée. Pour un visiteur anonyme, elle
 		// n'est pas vide — elle est REFUSÉE. La garantie ne change pas : aucune route n'est une page
 		// blanche ; c'est la forme de l'état explicite qui diffère (docs/DESIGN_SYSTEM.md §5.8).
+		//
+		// RÉVISÉ PAR `CRM-061`, ET L'ASSERTION RESTE VERTE — c'est précisément pourquoi elle est
+		// RENFORCÉE plutôt que laissée telle quelle. « Ma journée » rendait un état vide
+		// INCONDITIONNEL depuis `CRM-007` ; elle porte désormais un écran (`docs/SPEC-cards.md`
+		// §17). Pour un visiteur anonyme, l'état reste vide — la portée « mes affaires » n'a aucun
+		// sujet (§17.3) —, si bien qu'une assertion qui se borne à « un état vide est visible »
+		// aurait continué de passer sans rien dire du changement. Elle vérifie donc désormais
+		// LEQUEL des deux vides est rendu, et que la bascule de portée l'accompagne : c'est ce qui
+		// distingue l'écran livré du gabarit qu'il remplace.
 		for (const [libelle, etat] of [
 			['Inbox', 'etat-refus'],
 			['Ma journée', 'etat-vide'],
@@ -57,6 +66,9 @@ test.describe('coquille', () => {
 			await expect(page.getByRole('heading', { level: 1 })).toHaveText(libelle)
 			await expect(page.getByTestId(etat).first()).toBeVisible()
 		}
+		await expect(page.getByTestId('etat-vide')).toContainText('Aucune échéance dans votre journée')
+		await expect(page.getByTestId('portee-journee')).toBeVisible()
+		await expect(page.getByTestId('lien-portee')).toHaveCount(2)
 
 		// RÉVISÉ PAR `CRM-075` : « Réglages » a cessé d'être un état vide le jour où
 		// l'administration de l'arborescence lui a donné une première section — `/reglages` est

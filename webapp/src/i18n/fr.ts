@@ -648,6 +648,7 @@ export const fr = {
 	'today.scope.all': 'Tout l’espace de travail',
 	'today.live.aria': 'Contenu de la journée',
 	'today.live.message': '{portee} : {total} affaire(s) à échéance.',
+	'today.pill.open': 'Ouvrir {track} › {channel}',
 	'today.section.late': 'En retard',
 	'today.section.today': 'Aujourd’hui',
 	'today.section.upcoming': 'À venir',

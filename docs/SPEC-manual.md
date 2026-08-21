@@ -158,7 +158,7 @@ depuis `CRM-007`, et range chaque image sous `docs/captures/<unité>/` (`docs/DE
 |---|---|---|
 | `/` | §3.1, §3.2 | « Aucun board à afficher », « Aucun track », « Aucun workspace accessible » |
 | `/inbox` | §3.1 | état vide explicite |
-| `/ma-journee` | §3.1 | état vide explicite |
+| `/ma-journee` | §3.1, **§9** | état vide explicite — depuis `CRM-061`, c'est le premier des deux vides du §17.8 de `docs/SPEC-cards.md` (« Aucune échéance dans votre journée »), la portée « mes affaires » n'ayant aucun sujet sans session. L'exigence est inchangée ; c'est son texte qui a changé, par livraison |
 | `/reglages` | §3.1 | état vide explicite |
 | `/tracks/conseil-ia` | §3.2 *ter* | « Track introuvable » et retour à l'accueil |
 | `/tracks/conseil-ia/grands-comptes` | §4.8 | « Track introuvable » : le board n'est jamais atteint |

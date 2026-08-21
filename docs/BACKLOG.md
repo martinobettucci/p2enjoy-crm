@@ -8062,9 +8062,63 @@ produites **et observées** ; console navigateur vierge ; harnais dédié.
       retenu — « mes affaires » par défaut, tout l'espace de travail sur un lien — tient les deux :
       le prédicat sélectif est l'**intervalle d'échéance**, donc l'index déclaré sert exactement
       cette requête, et le filtre par responsable ne porte que sur le reliquat.
-- [ ] **Tranche 1 — la lecture.** Module de composition, écran, seed déterministe, tests unitaires,
-      preuve d'API, E2E d'interface et captures.
-- [ ] **Tranche 2 — le harnais et le manuel.**
+- [x] **TRANCHE 1 LIVRÉE ET PROUVÉE le 2026-08-21 — la lecture.**
+      - [x] `webapp/src/lib/colonnes-ma-journee.ts` : ce que la vue demande, l'horizon de **sept
+            jours**, la clôture de la portée et le découpage en trois sections. Il n'importe que
+            `filtre-sommeil.ts`, pour que la preuve d'API l'atteigne comme `colonnes-liste.ts`
+            (décision 177) ; `webapp/src/lib/ma-journee.ts` : la lecture, en **UNE** requête.
+      - [x] `webapp/src/app/MaJournee.tsx` : trois sections titrées portant leur compte, une section
+            vide n'étant **pas** rendue ; la teinte de retard porte sur l'**échéance** et non sur la
+            ligne ; la bascule de portée est une paire de **liens** avec `aria-current` posé à la
+            main — les deux entrées partagent leur chemin, `NavLink` le poserait sur les deux ;
+            deux vides distincts, dont un seul porte l'action qui élargit.
+      - [x] **L'INSTANT EST ARRÊTÉ DANS L'EFFET ET VOYAGE AVEC LES DONNÉES.** La requête et le
+            découpage doivent employer la MÊME borne : deux appels à `new Date()` séparés de
+            quelques millisecondes suffiraient, au passage de minuit, à demander la journée d'hier
+            pour la découper sur celle d'aujourd'hui.
+      - [x] **Le seed est rendu DÉTERMINISTE** (`docs/SPEC-seed.md` §13). Les échéances littérales
+            du §9 ne démontraient plus rien — MESURÉ : **zéro** affaire dans le jour courant, et
+            cinq « en retard » qu'aucun contrat n'avait voulues. Une **translation unique** de
+            l'ancre du contrat vers le jour courant, convergente parce qu'appliquée après la
+            réécriture des littéraux. Le seed **échoue** désormais si le contrat du §13.5 n'est plus
+            tenu : cinq contrôles, avec les prédicats exacts de l'écran.
+      - [x] **Preuves, toutes exécutées et vertes** : `webapp/src/lib/ma-journee.test.ts`
+            **29 tests**, `webapp/src/app/MaJournee.test.tsx` **22 scénarios**,
+            `e2e/api/ma-journee.spec.ts` **11 passés** sur la pile réelle avec les jetons des trois
+            profils, `e2e/ui/ma-journee.spec.ts` **13 scénarios** sur session réelle **sans aucune
+            substitution**, console **vierge**.
+      - [x] **Six captures produites ET OBSERVÉES** sous `docs/captures/CRM-061/` : les quatre
+            paliers et les **deux** états vides. Elles ont trouvé **trois défauts**, tous corrigés à
+            leur cause — voir plus bas.
+      - [x] **Deux garde-fous figés RÉVISÉS, jamais retirés** (mécanisme de la décision 51) :
+            l'assertion des « routes en attente » de `routes.test.tsx`, qui exigeait un état vide
+            inconditionnel sur `/ma-journee` — sixième révision de cette assertion —, et le libellé
+            de `manuel.spec.ts`, qui figeait le texte du gabarit remplacé. Le contrôle de
+            `coquille.spec.ts` restait **vert** : il est donc **renforcé** plutôt que laissé tel
+            quel, et vérifie désormais LEQUEL des deux vides est rendu.
+      - [x] `docs/manual.md` chapitre 3 *quater* et son sommaire, `docs/SPEC-manual.md` §7,
+            `docs/SPEC-webapp.md` §5.2, `CHANGELOG.md` dans le même changement.
+- [ ] **TROIS DÉFAUTS TROUVÉS PAR LA PREUVE ET PAR L'ŒIL, ET CORRIGÉS À LEUR CAUSE.**
+      - Le titre du second état vide écrit son horizon, et le **paramètre n'y était pas passé** : le
+        gabarit `{jours}` atteignait l'écran. Trouvé par la preuve unitaire, invisible ailleurs — ce
+        vide n'est atteint que par une portée élargie sans aucune échéance.
+      - **La pilule « Track › Channel » portait l'icône de sortie sans mener nulle part.** Trouvé
+        **en regardant une capture** : le §5.29 définit cette pilule comme « l'ouverture du channel
+        au clic », et la réemployer « sans copie » veut dire l'employer ENTIÈRE, destination
+        comprise. Une icône qui promet une navigation inexistante est la commande morte du §5.10.
+      - **Sous 390 px, le repli de la ligne était IRRÉGULIER.** Trouvé en regardant la même série :
+        avec `grow` seul, le titre se rangeait tantôt à côté de la date, tantôt en dessous, selon sa
+        longueur — quatre lignes voisines n'avaient pas la même forme sans qu'aucune donnée ne le
+        justifie.
+- [ ] **UN QUATRIÈME DÉFAUT ÉTAIT DANS LA PREUVE, PAS DANS LE PRODUIT**, et il est nommé : la
+      capture du palier `md` montrait le tiroir de navigation OUVERT, là où la capture de référence
+      de `CRM-060` au même palier le montre fermé. Cause : redimensionner une page **déjà montée**
+      fait franchir les ruptures du §7 en cours de session. Le palier est désormais posé **avant** la
+      connexion, un test par palier — le patron de `contacts.spec.ts`, repris plutôt que réinventé.
+- [ ] **Tranche 2 — le harnais.** `scripts/verify-ma-journee.sh`, non complaisant et avec son
+      témoin. C'est le seul reste de l'unité ; le chapitre 9 du manuel, qui lui était attaché, a été
+      livré avec la tranche 1 — `CLAUDE.md` §7 exige que la documentation suive le comportement dans
+      le **même** changement, et il n'était donc pas différable.
 - [ ] **Ce que l'unité ne livrera pas, et les motifs sont écrits au §17.10** : aucune écriture
       (reporter, marquer « fait » — le seul chemin reste l'en-tête de la fiche, §15 bis), aucun
       horizon réglable (périmètre inventé, §12.6), aucune bascule de sommeil (elle annulerait le

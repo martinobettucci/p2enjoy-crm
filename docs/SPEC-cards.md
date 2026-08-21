@@ -4077,7 +4077,7 @@ montrer.
 | **Échéance** | `next_action_at` | **donnée technique** (§2 du design system) : monospace, chiffres tabulaires. Format court avec l'heure — une échéance sans heure ne dirait pas si la matinée est déjà passée |
 | **Affaire** | `title`, **lien** vers `/tracks/:slugTrack/:slugChannel/cards/:idCard` | une ligne, ellipse, valeur entière portée par `title` |
 | **Prochaine action** | `next_action` | une ligne, ellipse. **Vide si nulle** — ni tiret, ni « non renseigné » (§5.9) |
-| **Situation** | pilule « Track › Channel » | réemploi de la pilule de channel du §5.29, jamais une seconde forme |
+| **Situation** | pilule « Track › Channel », **lien** vers `/tracks/:slugTrack/:slugChannel` | réemploi de la pilule de channel du §5.29, jamais une seconde forme — et le §5.29 la définit comme « l'**ouverture du channel au clic** ». La réemployer *sans copie* veut dire l'employer **entière**, destination comprise : rendue en simple texte, elle porterait l'icône de sortie sans mener nulle part, ce qui est la **commande morte** que le §5.10 du design system proscrit. Son nom accessible nomme sa destination. *Défaut trouvé en regardant une capture (`CLAUDE.md` §16), et corrigé à sa cause.* |
 
 **Une affaire sans prochaine action mais AVEC échéance est rendue**, et c'est mesuré plutôt que
 supposé : les deux colonnes sont indépendantes en base, aucune contrainte ne les lie, et le seed en
@@ -4086,6 +4086,11 @@ seule chose que cette vue existe pour montrer.
 
 **Une affaire archivée n'est jamais rendue** (§5), et il n'y a donc aucune pilule « Archivé » sur
 cet écran.
+
+**Une affaire dont les slugs manquent est LISTÉE, mais sans lien ni pilule.** La masquer
+retrancherait une échéance de la journée ; lui donner un lien vers une adresse incomplète mènerait
+à un écran que l'utilisateur croirait cassé (§5.32 du design system). L'écran ne nomme jamais ce
+qu'il ne peut pas ouvrir.
 
 ### 17.7 Contrat d'API, mesuré
 
