@@ -11025,3 +11025,53 @@ complète des `scripts/verify-*.sh` n'a pas été rejouée en entier**. Ce qui l
 Le reste de la Definition of Done est vert et mesuré. La prochaine exécution peut clore l'unité en
 rejouant les cinquante-six harnais restants, ou en constatant que ce qu'ils couvrent est étranger à
 cette surface.
+
+### CRM-089 — Réglages : configuration des identités sortantes SMTP `[~]`
+*Créée le 2026-08-21 — `docs/JOURNAL.md` décision 494. Motif : le §14.1 de
+`docs/SPEC-mail-subsystem.md` nomme l'écart « aucun écran non plus » de `CRM-053`, et `CRM-088` l'a
+laissé intact en se bornant à la moitié entrante — « `CRM-053` garde son écart, inchangé » (§21.1).
+Cette unité est la moitié SORTANTE, et elle referme le dernier écart de comportement encore
+imputable à personne dans le sous-système mail.*
+
+Une surface de réglages qui **liste** les identités sortantes visibles par l'appelant et les
+**configure** par le seul chemin d'écriture ouvert par `CRM-053`, sans jamais afficher ni le mot de
+passe ni sa référence. **DoD** : l'écran déclare et modifie une identité avec le jeton réel d'un
+membre ; un champ de mot de passe laissé vide conserve le secret enregistré ; le nom d'expéditeur
+est effaçable ; le déplacement de l'identité par défaut est visible après relecture ; les refus de
+la base sont traduits par un dictionnaire fermé et **aucun corps d'erreur du serveur n'est
+affiché** ; les trois lectures du §14.3 sont exercées par les trois profils du seed ; captures
+produites **et observées**.
+
+- [x] **Spécification écrite et committée AVANT la première ligne de code** —
+      `docs/SPEC-mail-subsystem.md` §22, treize sous-chapitres opposables, rédigés **après mesure**
+      sur la pile réelle (§22.7) ; `docs/DESIGN_SYSTEM.md` §5.35 pour la forme, en écarts seulement.
+- [ ] **Écran `/reglages/identites-mail`**, hors de `ROUTES`, chargé à la demande, atteint depuis
+      l'index des réglages **après** « Comptes entrants » et **avant** « État de la messagerie »
+      (§22.2). L'ordre de l'index est vérifié par une assertion, non seulement écrit.
+- [ ] **Liste des identités visibles** : une `ul` de lignes (§5.35), adresse d'expédition en tête,
+      nom d'expéditeur rendu `Nom <adresse>`, pilule `success` « Par défaut », pilule d'état à
+      quatre valeurs. Aucune politique nouvelle : la RLS de `0023` décide seule.
+- [ ] **Formulaire de déclaration et de modification**, dans le flux, replié par défaut, prérempli
+      des valeurs courantes, mot de passe toujours vide (§22.5, §22.6).
+- [ ] **Le mot de passe laissé vide est OMIS de l'appel** ; **`p_from_name` est TOUJOURS envoyé**,
+      y compris vide — les deux mesurés en sens inverse (§22.5, §22.7).
+- [ ] **`p_daily_quota` et `p_signature_html` ne sont JAMAIS envoyés** (§22.1) : leur `coalesce`
+      les rend ineffaçables, et un champ qui ne sait pas revenir en arrière est un piège.
+- [ ] **Dictionnaire fermé des refus** (§22.8), avec son repli nommé : un refus inconnu se dit sans
+      recopier le corps du serveur — qui divulgue `secret_id`, `INC-193`.
+- [ ] **Changer l'adresse d'expédition déclare une SECONDE identité** (§22.4) : comportement mesuré
+      de la base, nommé par un texte d'aide, ni contrarié ni masqué.
+- [ ] **Test unitaire dédié** du module et du composant.
+- [ ] **Test d'API dédié** ajouté à `e2e/api/identites-sortantes.spec.ts` : la lectrice déclare sa
+      propre identité, se voit refuser celle de service, et le déplacement du défaut est constaté
+      par relecture.
+- [ ] **Test E2E d'interface dédié**, console vierge : parcours d'un administrateur, refus réel sur
+      une adresse d'expédition non conforme, état vide d'une lectrice, et les quatre paliers.
+- [ ] **Vérification visuelle** : captures sous `docs/captures/CRM-089/`, produites **et observées**.
+- [ ] **Documentation dans le même changement** : `docs/manual.md`, `docs/SPEC-webapp.md`,
+      `CHANGELOG.md` sous `[Non publié]`.
+- [ ] **Harnais dédié** `scripts/verify-mail-identites.sh`, non complaisant et avec son témoin.
+
+**Ce que l'unité ne fait pas, et pourquoi.** Elle n'ouvre **aucune** politique, **aucune** fonction
+et **aucune** migration : tout le contrat backend existe depuis `CRM-053`, corrigé par la migration
+`0033`. Elle ne corrige pas `INC-193`, étrangère à cet écran, qui se borne à ne jamais l'afficher.

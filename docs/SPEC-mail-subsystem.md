@@ -2167,3 +2167,279 @@ navigateur. Elle ne saute **aucun** contrôle de base : une pile est requise dan
 - **`INC-193` reste ouverte** : le corps d'un refus de contrainte divulgue `secret_id`. Cet écran
   ne l'affiche pas, ce qui borne la divulgation à qui appelle l'API directement — ce n'est pas une
   correction, et le §21.6 le dit.
+
+---
+
+## 22. Écran de configuration des identités sortantes — `CRM-089`
+
+*Écrit avant le code, `docs/JOURNAL.md` décision 494. Le §14.1 nomme l'écart « aucun écran non
+plus, pour la même raison qu'au §13.1 », et le §21.1 l'a laissé intact en bornant `CRM-088` à la
+moitié entrante : « `CRM-053` garde son écart, inchangé ». Cette unité est la moitié SORTANTE, et
+ce chapitre en est le contrat.*
+
+### 22.1 Ce que l'unité livre, et ce qu'elle ne livre pas
+
+Livré :
+
+- une surface de réglages, `/reglages/identites-mail`, qui **liste** les identités sortantes
+  visibles par l'appelant et **écrit** par le seul chemin que `CRM-053` a ouvert — la fonction
+  `upsert_mail_outbound_identity`, dans la signature que la migration `0033` fixe ;
+- le formulaire de **déclaration** et de **modification** d'une identité — la sienne pour tout
+  membre, l'identité de service pour qui la base l'accepte ;
+- l'**adresse d'expédition** et le **nom d'expéditeur**, qui sont les deux seules données de cette
+  table qu'un destinataire verra (§14.2) ;
+- le **choix de l'identité par défaut**, dont le déplacement est tenu par la base (§14.2) ;
+- le **remplacement du mot de passe**, jamais son affichage (§2.3) ;
+- la traduction des refus par un **dictionnaire fermé**, jamais le texte du serveur (§21.7).
+
+**Non livré, et nommé plutôt que suggéré :**
+
+- **le bouton « Tester la connexion »**, pour la raison exacte du §21.1 : le test SMTP est la route
+  interne `POST /internal/v1/outbound-identities/{id}/test` (§14.4), protégée par le jeton d'API
+  interne du service (§12.3), qu'un navigateur ne peut pas porter sans le publier. L'écran
+  **affiche l'état écrit par le service** (`status`), et le geste reste celui de l'exploitant.
+- **le quota journalier** — `daily_quota`. Il appartient à `CRM-058`, qui le consomme (§19.4), et sa
+  sémantique à trois valeurs — `NULL` aucun plafond, `0` interdiction explicite, `n` plafond — a été
+  posée par la migration `0030` puis corrigée par la `0033` après un défaut réel (décision 347).
+  MESURÉ : la branche `UPDATE` applique `coalesce(p_daily_quota, i.daily_quota)`, si bien qu'un
+  appel qui l'omet laisse la valeur en place — mais aussi qu'**aucun appel ne peut la ramener à
+  `NULL`**. Un champ d'écran qui ne sait pas revenir en arrière poserait un piège ; l'écran ne
+  l'envoie donc jamais, et ne l'écrase jamais.
+- **la signature HTML** — `signature_html`. Même mécanique de `coalesce`, et surtout : une signature
+  est un contenu riche, dont aucune unité n'a spécifié l'éditeur ni l'assainissement. Le §18.4 a
+  posé qu'aucun HTML d'origine extérieure ne s'affiche sans être maîtrisé ; ouvrir ici un champ
+  libre sans ce contrat serait ouvrir une surface que rien ne borne.
+- **la suppression d'une identité.** Aucune fonction ne la porte, exactement comme au §21.1, et une
+  commande morte serait pire que l'absence (`docs/DESIGN_SYSTEM.md` §5.10).
+- **les comptes entrants IMAP** (`CRM-052`, `CRM-088`, §21) : ils ont leur écran, et les fondre
+  ferait porter à cette unité une seconde surface.
+
+### 22.2 Une adresse dédiée, la SEPTIÈME section de réglages
+
+`/reglages/identites-mail` porte l'écran, monté par `App` **hors de la table `ROUTES`** — le patron
+du §21.2, repris sans changement.
+
+**Elle vit APRÈS « Comptes entrants » et AVANT « État de la messagerie »**, et l'ordre porte le même
+sens qu'au §21.2 : on reçoit avant d'expédier, et on configure avant de superviser. Les trois
+entrées de la famille « messagerie » se suivent donc dans l'ordre du parcours réel.
+
+**Aucune modale** (`docs/DESIGN_SYSTEM.md` §5.13).
+
+### 22.3 Ce que l'écran lit — aucune politique nouvelle
+
+Une seule lecture, `mail_outbound_identities`, sous la RLS posée en `0023` et décrite au §14.3 :
+l'administrateur du workspace lit tout, un membre ne lit que ses propres identités, un anonyme ne
+lit rien.
+
+MESURÉ le 2026-08-21 avec les jetons réels du seed :
+
+| Appelant | Réponse |
+|---|---|
+| Camille, administratrice | `200`, **deux** lignes — l'identité de service et celle de Driss |
+| Driss, membre | `200`, **une** ligne — la sienne |
+| Farida, lectrice sans identité | `200`, `[]` — jamais un refus |
+
+Colonnes demandées, toutes couvertes par le `GRANT SELECT` de `0023` :
+`id, label, owner_id, smtp_host, smtp_port, smtp_security, smtp_username, from_address, from_name,
+is_default, status, last_error, last_checked_at`.
+
+**`secret_id` n'est jamais demandée** — MESURÉ : la citer rend `403 / 42501`
+`permission denied for table mail_outbound_identities` pour l'appelant `authenticated`, y compris
+pour l'**administratrice**. C'est la seconde moitié de la preuve de refus n° 6 (§14.3), et une
+requête qui la citerait ferait échouer la lecture entière de l'écran pour tout le monde.
+
+**`daily_quota` et `signature_html` ne sont pas demandées non plus** : l'écran ne les affiche pas
+plus qu'il ne les écrit (§22.1). Ne pas lire ce qu'on ne montre pas est la même discipline que ne
+pas envoyer ce qu'on ne modifie pas.
+
+### 22.4 L'objet de cet écran n'est PAS celui du §21, et c'est la différence qui commande sa forme
+
+Au §21, la clé est le couple `(workspace_id, owner_id)` : **une** boîte par personne, et le
+sélecteur énumère donc des personnes. Ici la clé est le triplet
+`(workspace_id, owner_id, from_address)` — MESURÉ, et c'est écrit dans la fonction : « rien
+n'interdit d'en déclarer plusieurs, contrairement aux comptes entrants » (§14.2). Une personne peut
+donc porter **plusieurs** identités sortantes, et le sélecteur énumère des **identités**, pas des
+personnes.
+
+**CONSÉQUENCE MESURÉE, ET ELLE DOIT ÊTRE DITE À L'UTILISATEUR** : modifier l'adresse d'expédition
+d'une identité existante n'en change pas l'adresse — elle **déclare une seconde identité**, et la
+première demeure. Mesuré le 2026-08-21 : partant d'une identité `mesure@…`, un appel identique
+portant `mesure-bis@…` a rendu un **nouvel** identifiant, et la relecture montre **deux** lignes,
+la nouvelle par défaut et l'ancienne rabattue.
+
+L'écran ne masque pas ce comportement et ne le contrarie pas :
+
+- il **n'interdit pas** la saisie — ce serait une garde d'écran sur une règle que la base ne pose
+  pas, et le §5.3 ter n'autorise pas davantage l'inverse de ce qu'il interdit ;
+- il le **nomme**, par le texte d'aide du champ, sur une identité existante seulement ;
+- il **relit la liste** après l'enregistrement (§22.8), si bien que les deux lignes apparaissent et
+  que le geste est visible plutôt que deviné.
+
+C'est la règle constante de ce produit : l'écran suit la base et l'explique, il ne la double pas.
+
+### 22.5 Le formulaire, champ par champ
+
+Un seul formulaire, qui **déclare** ou **modifie** selon l'identité visée. Il vit **dans le flux du
+document**, sous la liste, **replié par défaut** (`docs/DESIGN_SYSTEM.md` §5.23).
+
+| Champ | Contrôle | Contrainte de la base | Valeur envoyée |
+|---|---|---|---|
+| Identité visée | `select` construit depuis ce que l'appelant voit, plus ce qu'il peut déclarer | aucune : c'est le couple `p_owner_id` / `p_from_address` | l'identifiant du propriétaire, ou rien pour l'identité de service |
+| Libellé | texte | `mail_outbound_identities_label_borne` — 1 à **120** caractères après `btrim` | `p_label` |
+| Serveur SMTP | texte | `mail_outbound_identities_host_borne` — 1 à 253 | `p_smtp_host` |
+| Port | nombre | `mail_outbound_identities_port_borne` — 1 à 65535 | `p_smtp_port` |
+| Sécurité | `select` fermé — `ssl`, `starttls`, `none` | `mail_outbound_identities_securite` | `p_smtp_security` |
+| Identifiant | texte | `mail_outbound_identities_username_borne` — 1 à 320 | `p_smtp_username` |
+| Adresse d'expédition | texte | `mail_outbound_identities_from_address` — 3 à 320, et la forme `x@y.z` | `p_from_address` |
+| Nom d'expéditeur | texte | aucune | `p_from_name`, **toujours envoyé** — voir ci-dessous |
+| Identité par défaut | case à cocher | aucune ; l'invariant est tenu par un index et un trigger (§14.2) | `p_is_default` |
+| Mot de passe | mot de passe, **vide par défaut** | aucune ; voir §22.6 | `p_password`, omis si vide |
+
+**Le libellé est borné à 120 caractères ici, contre 200 au §21.4**, et ce n'est pas une coquille :
+`mail_outbound_identities_label_borne` et `mail_inbound_accounts_label_borne` sont deux contraintes
+distinctes, relues en base. Recopier la borne de l'une sur l'autre ferait mentir le message de
+refus.
+
+**`p_from_name` est TOUJOURS envoyé, y compris vide, et c'est l'exact contraire de `p_password`.**
+MESURÉ le 2026-08-21 : la fonction applique `coalesce(p_from_name, i.from_name)`, si bien qu'un
+paramètre **omis** conserve la valeur — un nom d'expéditeur serait alors ineffaçable —, tandis
+qu'une **chaîne vide** est une valeur et l'écrase. Les deux mesures se suivent : `"Farida Nowak"`
+écrit le nom, `""` le rend vide. Le champ est donc envoyé tel quel, et l'utilisateur peut retirer un
+nom qu'il a posé.
+
+**Aucune garde de saisie ne double une contrainte de la base** (§5.3 ter) : ni `required`, ni `min`,
+ni `max`, ni `pattern`, ni `type="email"` sur l'adresse d'expédition — c'est la contrainte
+`mail_outbound_identities_from_address` qui tranche, et son refus est traduit.
+
+**Le sélecteur énumère les identités VISIBLES, plus celles que l'appelant peut déclarer.** Une
+identité existante y est nommée par son `label` suivi de son `from_address` — deux **données**
+(`docs/DESIGN_SYSTEM.md` §10) —, parce que le seul libellé ne suffit plus à distinguer deux
+identités d'une même personne, ce que le §21.4 n'avait pas à trancher. Les deux entrées de
+déclaration portent une clé, faute de donnée à afficher : « Nouvelle identité personnelle »,
+« Nouvelle identité de service ». **Le sélecteur n'est jamais restreint selon le rôle** (§21.4,
+même règle) : un membre ordinaire voit l'option de service, l'envoie, et lit le refus **traduit** —
+MESURÉ, `403 forbidden`.
+
+**Choisir une identité existante préremplit le formulaire** de ses valeurs courantes (§5.25), le mot
+de passe excepté. Choisir une entrée de déclaration vide les champs, sauf la case « identité par
+défaut », **cochée** : c'est le défaut de la fonction (`coalesce(p_is_default, true)`), et l'écran
+montre ce que la base ferait plutôt qu'un état qu'elle ne tiendrait pas.
+
+### 22.6 Le mot de passe ne s'affiche jamais, et un champ vide ne le touche pas
+
+La règle du §21.5, **remesurée sur cette table** plutôt que recopiée :
+
+- un appel **sans** `p_password` sur une identité existante laisse `secret_id` **inchangé** — relu
+  par la clé de service, `4156e0bc-…` avant et après —, et le libellé modifié est bien écrit ;
+- un compte **neuf** sans mot de passe est **refusé** — `password_required`, `SQLSTATE 23514` ;
+- toute modification de la connexion — hôte, port, sécurité, identifiant — ou du mot de passe remet
+  `status` à `pending` et efface `last_error` : un `ok` obtenu avec l'ancien réglage ne dit rien du
+  nouveau (§14.2, mesuré au §22.3 sur les deux identités du seed, toutes deux `pending`).
+
+Le paramètre est donc **omis** plutôt qu'envoyé vide, et le texte d'aide a **deux visages** comme au
+§21.5 : « laissé vide, le mot de passe enregistré est conservé » sur une identité existante,
+« obligatoire » sur une déclaration — la première phrase serait fausse sur la seconde, et promettre
+une conservation inexistante est la valeur par défaut trompeuse que `CLAUDE.md` §18 interdit.
+
+### 22.7 Ce que la mesure a établi, et qui n'était écrit nulle part
+
+Sorties de commande obtenues le 2026-08-21 sur la pile de développement, avec les jetons réels des
+comptes du seed, par la véritable route de connexion. La ligne de mesure et son secret Vault ont été
+**retirés** ensuite : deux identités et cinq secrets, comme avant.
+
+| Appel | Réponse mesurée |
+|---|---|
+| `GET mail_outbound_identities` — jeton de la lectrice, qui n'a pas d'identité | `200`, `[]` |
+| `GET …?select=id,secret_id` — jeton de l'**administratrice** | `403`, `42501`, `permission denied for table mail_outbound_identities` |
+| `POST rpc/upsert_mail_outbound_identity`, `p_owner_id` = **l'appelante elle-même**, jeton de la lectrice | `200`, l'identifiant de l'identité créée. **Une lectrice déclare donc sa propre identité** : la fonction n'exige l'`admin` que pour l'identité de service ou celle d'autrui |
+| Le même appel avec `p_owner_id` **omis** (identité de service), jeton de la lectrice | `403`, `{"code":"42501","message":"forbidden"}` |
+| `p_smtp_port = 70000` | `400`, `23514`, contrainte `mail_outbound_identities_port_borne` |
+| `p_from_address = 'pas-une-adresse'` | `400`, `23514`, contrainte `mail_outbound_identities_from_address` |
+| `p_smtp_security = 'bogus'` | `400`, `23514`, contrainte `mail_outbound_identities_securite` |
+| `p_label = '   '` | `400`, `23514`, contrainte `mail_outbound_identities_label_borne` |
+| Identité neuve sans `p_password` | `400`, `23514`, message `password_required` |
+| `p_daily_quota = 200000` | `400`, `23514`, contrainte `mail_outbound_identities_quota_borne` — **l'écran n'envoie jamais ce paramètre** (§22.1), et la mesure établit qu'il refuserait |
+| `p_smtp_port` nul | `400`, `23502`, `null value in column "smtp_port" … violates not-null constraint` |
+| `p_smtp_port` non entier | `400`, `22P02`, `invalid input syntax for type integer` |
+| `p_owner_id` inconnu du workspace | `400`, `23514`, message `owner_not_member` |
+| Appel sans session (clé anonyme seule) | `401`, `42501`, `permission denied for function upsert_mail_outbound_identity` |
+| Mise à jour **sans** `p_password` | `200` ; `secret_id` inchangé |
+| Mise à jour changeant `p_from_address` | `200`, **nouvel** identifiant ; deux lignes en base, la nouvelle par défaut, l'ancienne rabattue (§22.4) |
+| `p_from_name` = `"Farida Nowak"` puis `""` | `200` deux fois ; le nom est écrit, puis **vidé** — la chaîne vide est une valeur, l'omission n'en est pas une (§22.5) |
+
+**`INC-193` vaut ici mot pour mot** : le corps d'un refus `23514` rendu par PostgREST porte un champ
+`details` contenant la ligne fautive entière. L'écran n'affiche donc **jamais** le corps d'erreur du
+serveur, et le §22.8 en fait un dictionnaire fermé.
+
+### 22.8 Les refus sont traduits par un dictionnaire fermé, jamais recopiés
+
+| Cause reconnue | Ce que l'écran écrit |
+|---|---|
+| `forbidden` (`42501`) | Le refus d'autorisation, nommant l'identité visée |
+| `not_authenticated` (`42501`) | La session a expiré, reconnectez-vous |
+| `password_required` | Un mot de passe est exigé pour déclarer une identité |
+| `mail_outbound_identities_label_borne` | Le libellé est obligatoire, 120 caractères au plus |
+| `mail_outbound_identities_host_borne` | Le serveur est obligatoire, 253 caractères au plus |
+| `mail_outbound_identities_port_borne` (`23514`), `smtp_port` absent (`23502`), saisie non entière (`22P02`) | Le port doit être un nombre entier compris entre 1 et 65535 — **trois refus, une seule phrase**, règle du §21.7 |
+| `mail_outbound_identities_securite` | Le mode de sécurité n'est pas reconnu |
+| `mail_outbound_identities_username_borne` | L'identifiant est obligatoire, 320 caractères au plus |
+| `mail_outbound_identities_from_address` | L'adresse d'expédition doit être une adresse électronique |
+| `owner_not_member` | Le propriétaire n'est pas membre de cet espace de travail |
+| aucune des précédentes | **Un refus nommé, jamais muet** : « l'enregistrement a été refusé », suivi d'aucune donnée du serveur |
+
+L'attribution de `22P02` au port suit l'argument du §21.7, et elle est ici **encore plus étroite** :
+`p_smtp_port` est le seul entier que ce module envoie, `p_daily_quota` n'étant jamais transmis
+(§22.1). L'attribution est une propriété de l'appel, pas une devinette sur la prose du serveur.
+
+**Un refus n'efface pas la saisie et laisse le formulaire ouvert** (§5.7 ter, §5.25).
+
+### 22.9 États systématiques
+
+Les quatre du §5.8, plus les deux du §21.8 :
+
+| État | Rendu |
+|---|---|
+| Chargement | squelette de liste |
+| Erreur de lecture | message et **reprise qui relit réellement** |
+| Aucune identité visible | « Aucune identité d'expédition », **avec** le geste de déclaration (§5.13) |
+| Sans espace de travail | l'état déjà rendu par `EtatMessagerie`, sans action |
+| Enregistrement en vol | le bouton porte son libellé d'attente et est désactivé pendant le vol |
+| Enregistré | la liste est **relue**, jamais complétée localement (§5.21, §5.26) — et c'est cette relecture qui rend visibles le déplacement du défaut et la seconde identité du §22.4 |
+
+### 22.10 Ce que l'écran ne fait pas
+
+- **Il ne teste aucune connexion** (§22.1), et n'écrit donc ni `status`, ni `last_error`, ni
+  `last_checked_at` — trois colonnes fermées en écriture à `authenticated` (§14.2).
+- **Il ne supprime rien**, **n'écrit ni quota ni signature**, **n'affiche aucun secret** (§22.1).
+- **Aucun flux temps réel** : la donnée est lue à l'ouverture et après chaque écriture.
+
+### 22.11 Seed
+
+**Aucune donnée nouvelle n'est due**, et c'est mesuré : le §14.6 pose déjà deux identités, écrites
+par le véritable chemin d'écriture — celui que cet écran appelle. L'écran a donc de quoi montrer ses
+trois lectures dès le premier `apply-seed.sh` :
+
+- l'administratrice y voit **deux** lignes, l'identité de service comprise ;
+- Driss y voit **la sienne**, et le formulaire préremplí de ses valeurs — dont l'adresse
+  `contact@p2enjoy.test`, qui diverge de sa boîte entrante `bizdev@p2enjoy.test` : le cas d'usage du
+  §2.2, visible à l'écran pour la première fois ;
+- Farida, qui n'a aucune identité, y voit l'**état vide avec son geste**.
+
+### 22.12 Preuves exigées
+
+| Niveau | Preuve |
+|---|---|
+| Unitaire | Le module : colonnes demandées, `p_password` **omis** quand le champ est vide, `p_from_name` **toujours** envoyé, `p_daily_quota` et `p_signature_html` **jamais** envoyés, classement des refus par le dictionnaire du §22.8 |
+| Unitaire | Le composant : préremplissage, état vide avec geste, refus affiché sans corps de serveur, liste relue après succès, case « par défaut » cochée sur une déclaration |
+| API | Déjà acquise par `CRM-053` (`e2e/api/identites-sortantes.spec.ts`) pour les refus n° 6 et n° 7. **Ajoutée ici** : une lectrice déclare sa propre identité et se voit refuser celle de service ; et le déplacement du défaut constaté par relecture, avec les jetons réels |
+| E2E `ui` | Le parcours d'un administrateur : ouvrir l'écran, lire ses deux identités, modifier le libellé sans toucher au mot de passe, constater la relecture ; un refus réel obtenu par une adresse d'expédition non conforme, avec sa phrase du produit ; l'état vide d'une lectrice avec son geste |
+| Vérification visuelle | Captures aux paliers du §7, **observées** (`CLAUDE.md` §16) : liste, formulaire ouvert, refus, état vide |
+
+### 22.13 Limites nommées
+
+- **Aucun test de connexion depuis l'écran** (§22.1).
+- **Aucune suppression** (§22.1).
+- **Ni quota, ni signature** (§22.1) : jamais envoyés, jamais écrasés.
+- **Changer l'adresse d'expédition déclare une seconde identité** (§22.4) : c'est le comportement de
+  la base, il est nommé à l'écran, et il n'est ni contrarié ni masqué.
+- **`INC-193` reste ouverte**, comme au §21.12.

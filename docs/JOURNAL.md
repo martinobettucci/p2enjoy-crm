@@ -22640,3 +22640,66 @@ du responsable (`CRM-060`, `CRM-083`, `CRM-084`), une unité non ouverte (`CRM-0
 un hôte sans interception TLS (`CRM-001`, INC-186). **`INC-193` attend un arbitrage de sécurité** :
 le corps d'un refus de contrainte divulgue `secret_id` à tout appelant `authenticated` capable de
 provoquer ce refus.
+
+## décision 494 — `CRM-089` ouverte : l'écran des identités sortantes, spécifié avant d'être codé
+
+**Session du 2026-08-21, ouverte à 02h08 UTC.** Pile levée par `./runDev.sh` (17 services
+persistants *healthy*), seed appliqué, Node 24 installé par `nvm`, `npm ci` posé — le checkout de
+départ n'a toujours aucun `node_modules`.
+
+**Choix de l'unité, et il suit le §4.2 de `docs/CloudWorker.md`.** La dernière entrée du journal
+(décision 493) laisse `CRM-088` en `[~]` avec **douze points sur treize**, son seul reste étant la
+série des `verify-*.sh` non rejoués — des preuves, pas du comportement. Les `[~]` antérieures sont
+inchangées : `CRM-001` attend un hôte sans interception TLS (INC-186) ; `CRM-013` et `CRM-014`
+attendent des unités jamais ouvertes ; `CRM-034` à `CRM-040` ne portent plus que des preuves ;
+`CRM-060`, `CRM-083` et `CRM-084` attendent des arbitrages. **Il restait un écart de COMPORTEMENT,
+et un seul** : `CRM-053` porte « aucun écran », que `CRM-088` a explicitement laissé intact en se
+bornant à la moitié entrante (§21.1, « `CRM-053` garde son écart, inchangé »). C'est la moitié
+sortante, et c'est `CRM-089`.
+
+**Périmètre arrêté, et il est BORNÉ.** L'écran liste les identités visibles, en déclare et en
+modifie une, remplace son mot de passe, écrit son nom d'expéditeur et choisit l'identité par défaut.
+Cinq écarts sont **nommés** plutôt que suggérés : pas de test de connexion depuis l'écran — même
+cause mesurée qu'au §21.1, la route est interne et protégée par le jeton d'API du service —, pas de
+suppression, **pas de quota**, **pas de signature HTML**, et aucun compte entrant.
+
+**Le quota et la signature sont exclus pour une raison MESURÉE, pas par confort.** La branche
+`UPDATE` applique `coalesce(p_daily_quota, i.daily_quota)` et `coalesce(p_signature_html,
+i.signature_html)` : un appel qui les omet conserve la valeur, mais **aucun appel ne peut les
+ramener à `NULL`**. Un champ d'écran qui ne sait pas revenir en arrière est un piège ; l'écran ne les
+envoie donc jamais. Le quota appartient d'ailleurs à `CRM-058`, et sa sémantique à trois valeurs a
+déjà coûté un défaut réel (décision 347).
+
+**UNE DIFFÉRENCE DE MODÈLE COMMANDE TOUTE LA FORME DE L'ÉCRAN, et elle n'était écrite nulle part.**
+Au §21, la clé d'un compte entrant est le couple `(workspace_id, owner_id)` : une boîte par
+personne, et le sélecteur énumère des personnes. Ici la clé est le **triplet**
+`(workspace_id, owner_id, from_address)`. MESURÉ le 2026-08-21 : partant d'une identité `mesure@…`,
+un appel identique portant `mesure-bis@…` rend un **nouvel** identifiant, et la relecture montre
+**deux** lignes — la nouvelle par défaut, l'ancienne rabattue par le trigger. **Modifier une adresse
+d'expédition ne renomme donc rien : cela déclare une seconde identité.** L'écran ne l'interdit pas
+— ce serait une garde d'écran sur une règle que la base ne pose pas —, il le **nomme** par un texte
+d'aide et relit la liste, si bien que les deux lignes apparaissent (§22.4).
+
+**Une seconde mesure retourne la règle du mot de passe, et il fallait la faire.** `p_from_name` est
+sous `coalesce`, donc **omis, il est ineffaçable** ; envoyé **vide**, il efface. Les deux appels se
+suivent dans la mesure : `"Farida Nowak"` écrit, `""` vide. Le nom d'expéditeur est donc **toujours
+envoyé**, exactement à l'inverse du mot de passe, qui est **toujours omis quand il est vide**. Deux
+champs voisins, deux règles opposées, et aucune ne se devine à la lecture du code.
+
+**Les autres mesures**, avec les jetons réels du seed, sont au §22.7 : une lectrice déclare sa
+propre identité (`200`) et se voit refuser celle de service (`403 forbidden`) ; `secret_id` est
+refusée **même à l'administratrice** (`403`, `permission denied for table`) ; sept violations de
+contrainte rendent leur nom, ce qui donne le dictionnaire fermé du §22.8 ; et le libellé est borné à
+**120** caractères ici contre 200 au §21 — deux contraintes distinctes, relues en base, qu'il aurait
+été facile de recopier l'une sur l'autre. La ligne de mesure et son secret Vault ont été retirés :
+deux identités et cinq secrets, comme avant.
+
+**Vérifications réalisées à ce stade.** Aucune preuve de code : cette entrée accompagne un commit
+**documentaire**, écrit et poussé **avant la première ligne de code** (`CLAUDE.md` §5,
+`docs/CloudWorker.md` §3.2 point 3). Les faits cités sont des mesures HTTP sur la pile démarrée ;
+l'écran, lui, **n'existe pas encore**.
+
+**Où reprendre si la session est interrompue ici.** `CRM-089` est `[~]` au backlog, sa spécification
+est écrite (`docs/SPEC-mail-subsystem.md` §22, `docs/DESIGN_SYSTEM.md` §5.35) : la suite est le code
+de l'écran, dans l'ordre du §3.2 — module de lecture et d'écriture, composant, route, traductions,
+tests unitaires, preuve d'API, preuve d'interface et captures.

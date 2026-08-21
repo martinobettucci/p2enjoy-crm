@@ -3081,3 +3081,57 @@ modale**, focus entrant dans le premier champ et rendu à la commande qui l'a ou
 
 - **Aucune couleur, aucun jeton, aucune icône nouvelle** : l'écran emprunte au §5.18 sa liste plate,
   au §5.6 ses pilules, au §5.7 ses champs, au §5.5 ses variantes et au §5.14 son vocabulaire d'état.
+
+### 5.35 Configuration des identités sortantes — `CRM-089`
+
+Septième surface de réglages, et la **jumelle** du §5.34 : celle-là configure ce qu'on reçoit,
+celle-ci ce qu'on expédie. `docs/SPEC-mail-subsystem.md` §22 dit ce que l'écran lit, envoie et
+refuse ; les règles ci-dessous ne disent que de quoi il a l'air. **Tout ce que le §5.34 pose vaut
+ici sans être répété** — `ul` de lignes et non tableau, connexion en donnée technique, mode de
+sécurité en toutes lettres, pilule d'état à quatre valeurs, mot de passe sans point de substitution,
+sélecteur jamais restreint selon le rôle, formulaire replié dans le flux, commande d'enregistrement
+unique et jamais désactivée par l'état des champs, refus `role="alert"` sous les champs, état vide
+porteur du geste. Seuls les **écarts** sont écrits ci-dessous, et chacun a sa cause.
+
+- **LA LIGNE PORTE L'ADRESSE D'EXPÉDITION EN TÊTE, avant le libellé.** C'est la seule donnée de
+  cette table qu'un destinataire verra (`docs/SPEC-mail-subsystem.md` §14.2), et c'est elle qui
+  distingue deux identités d'une même personne — le libellé, lui, peut être identique. Le §5.34
+  plaçait le libellé en tête parce qu'une personne n'a qu'**une** boîte entrante ; ici la clé est un
+  triplet, et la tête de ligne suit la clé.
+
+- **LE NOM D'EXPÉDITEUR SE REND AVEC L'ADRESSE, dans la forme `Nom <adresse>`**, et jamais sur deux
+  colonnes séparées : c'est ainsi qu'un destinataire le lira. Absent, seule l'adresse est rendue —
+  la règle de la cellule vide du §5.9, jamais un tiret ni une valeur inventée.
+
+- **L'IDENTITÉ PAR DÉFAUT PORTE UNE PILULE `success` « Par défaut »**, et les autres n'en portent
+  aucune. Une pilule neutre « Secondaire » sur chaque autre ligne remplirait la liste d'une
+  information que son absence dit déjà, et le §1 réserve la couleur à ce qui la mérite : ici, une
+  seule ligne par personne la porte, et c'est exactement ce que l'index unique partiel garantit.
+
+- **DEUX PILULES PEUVENT COHABITER SUR UNE LIGNE** — « Par défaut » et l'état de la connexion —, et
+  c'est le seul écran de réglages où cela arrive. Elles ne disent pas la même chose : l'une est un
+  **choix** de l'utilisateur, l'autre un **constat** du service. L'ordre les sépare — le choix suit
+  l'identité, le constat ferme la ligne, juste avant la commande —, et aucune ne change de forme
+  selon l'autre.
+
+- **LA CASE « IDENTITÉ PAR DÉFAUT » EST UNE CASE À COCHER, ET ELLE EST COCHÉE SUR UNE
+  DÉCLARATION.** C'est le défaut de la fonction d'écriture, pas une préférence d'écran
+  (`coalesce(p_is_default, true)`), et montrer autre chose ferait mentir le formulaire sur ce que
+  l'enregistrement va faire. **Aucune confirmation ne précède le déplacement du défaut** : la base
+  rabat l'ancienne identité sans état intermédiaire (§14.2), le geste est réversible par le même
+  formulaire, et le §5.28 réserve la confirmation à ce qui ne se refait pas.
+
+- **LE CHAMP « ADRESSE D'EXPÉDITION » PORTE UN TEXTE D'AIDE SUR UNE IDENTITÉ EXISTANTE, ET LUI
+  SEUL.** Il dit que changer l'adresse **déclare une seconde identité** au lieu de renommer celle-ci
+  — comportement mesuré de la base (`docs/SPEC-mail-subsystem.md` §22.4). Ce n'est **pas** une garde
+  de saisie : le champ reste modifiable, rien n'est désactivé, et la liste relue montre les deux
+  lignes. C'est la même discipline que les deux textes d'aide du mot de passe au §5.34 — l'écran
+  explique ce que la base fera, il ne l'empêche pas.
+
+- **LE SÉLECTEUR NOMME UNE IDENTITÉ PAR SON LIBELLÉ SUIVI DE SON ADRESSE**, et non par son seul
+  libellé comme au §5.34. Deux identités d'une même personne peuvent porter le même libellé ; les
+  distinguer par la donnée qui est leur clé vaut mieux que d'ajouter un rang ou un identifiant, que
+  personne ne lit.
+
+- **Aucune couleur, aucun jeton, aucune icône nouvelle** : l'écran emprunte au §5.34 sa forme
+  entière, au §5.18 sa liste plate, au §5.6 ses pilules et au §5.7 ses champs.
