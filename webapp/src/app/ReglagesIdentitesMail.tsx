@@ -181,8 +181,21 @@ export function ReglagesIdentitesMail({
 	// Une réponse arrivée après le démontage, ou périmée par un rechargement, ne doit pas écraser un
 	// état plus récent — même garde que les six autres surfaces de réglages.
 	const courant = useRef(0)
-	/** La commande qui a ouvert le formulaire, pour lui rendre le focus (§5.13). */
+	/**
+	 * La commande qui a ouvert le formulaire, pour lui rendre le focus (§5.13).
+	 *
+	 * DEUX COMMANDES PEUVENT L'OUVRIR, ET UNE SEULE SURVIT À L'OUVERTURE. Celle d'une ligne reste
+	 * montée — la liste ne disparaît pas —, si bien que son nœud est encore là à la fermeture. Celle
+	 * du bas, elle, s'EXCLUT du formulaire (§5.23) : son nœud est DÉTRUIT à l'ouverture, et lui
+	 * garder une référence rendrait le focus à un élément détaché du document, c'est-à-dire nulle
+	 * part. Le remède n'est pas une temporisation : la commande du bas porte sa PROPRE référence,
+	 * que React réassigne au nœud neuf quand elle remonte, et l'origine ne retient que LAQUELLE des
+	 * deux a ouvert.
+	 */
 	const origineFocus = useRef<HTMLButtonElement | null>(null)
+	const origineEstCommandeDuBas = useRef(false)
+	/** La commande du bas — ou celle de l'état vide, qui occupe la même place et le même rôle. */
+	const commandeDuBas = useRef<HTMLButtonElement | null>(null)
 	/** Le retour du focus est DIFFÉRÉ d'un tour de rendu : la commande est démontée (§5.25). */
 	const focusARendre = useRef(false)
 
@@ -208,7 +221,10 @@ export function ReglagesIdentitesMail({
 	useEffect(() => {
 		if (saisie !== null || !focusARendre.current) return
 		focusARendre.current = false
-		origineFocus.current?.focus()
+		// Le nœud est relu MAINTENANT, après le rendu qui a remonté la commande du bas — jamais
+		// celui qui a été capturé à l'ouverture, et que le démontage a détaché.
+		const cible = origineEstCommandeDuBas.current ? commandeDuBas.current : origineFocus.current
+		cible?.focus()
 	}, [saisie])
 
 	const recharger = useCallback(() => setTentative((precedente) => precedente + 1), [])
@@ -222,9 +238,12 @@ export function ReglagesIdentitesMail({
 	 * déclaration personnelle, `null` pour l'identité de service.
 	 */
 	const ouvrir = useCallback(
-		(valeurCible: string, depuis: HTMLButtonElement | null) => {
+		(valeurCible: string, depuis: HTMLButtonElement | null, estCommandeDuBas = false) => {
 			if (idWorkspace === null) return
-			if (depuis !== null) origineFocus.current = depuis
+			if (depuis !== null) {
+				origineFocus.current = depuis
+				origineEstCommandeDuBas.current = estCommandeDuBas
+			}
 			setRefus(null)
 			setCible(valeurCible)
 			const existante = identiteDe(identites, valeurCible)
@@ -313,8 +332,9 @@ export function ReglagesIdentitesMail({
 						saisie === null ? (
 							<button
 								type="button"
+								ref={commandeDuBas}
 								data-testid="ouvrir-identite"
-								onClick={(evenement) => ouvrir(cibleNeuve, evenement.currentTarget)}
+								onClick={(evenement) => ouvrir(cibleNeuve, evenement.currentTarget, true)}
 								className={CLASSES_BOUTON_PRIMAIRE}
 							>
 								<Plus aria-hidden="true" className="size-4" />
@@ -344,8 +364,9 @@ export function ReglagesIdentitesMail({
 					<div>
 						<button
 							type="button"
+							ref={commandeDuBas}
 							data-testid="ouvrir-identite"
-							onClick={(evenement) => ouvrir(cibleNeuve, evenement.currentTarget)}
+							onClick={(evenement) => ouvrir(cibleNeuve, evenement.currentTarget, true)}
 							className={CLASSES_BOUTON_PRIMAIRE}
 						>
 							<Plus aria-hidden="true" className="size-4" />
