@@ -1769,9 +1769,10 @@ et ses suivantes réécrivent `next_action_at` depuis les **littéraux** du cont
 donc toujours de la valeur littérale, jamais de la valeur déjà translatée : **deux rejeux successifs
 laissent la même base**, et non une base décalée deux fois.
 
-Le décalage est appliqué **après** toutes les sections qui écrivent des cards, et **avant** le
-sommeil de démonstration de la section 8 duodecies, dont la convergence par état lit `snoozed_until`
-et non l'échéance.
+Le décalage est appliqué **après** toutes les sections qui écrivent des cards, et **après** le
+sommeil de démonstration de la section 8 duodecies : le contrôle de la ligne *e* du §13.5 lit
+`snoozed_until`, qui n'est posée que là. Les deux sections sont par ailleurs indépendantes — le
+sommeil ne lit aucune échéance, et la translation n'écrit aucun sommeil.
 
 L'écriture passe par la **clé de service**, comme au §9.12.3 : `next_action_at` est ouverte à
 `authenticated` (`CRM-013`), mais le seed n'a pas à se connecter pour poser un état de

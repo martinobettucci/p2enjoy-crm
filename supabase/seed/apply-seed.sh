@@ -459,7 +459,7 @@ CARDS=(
 	'5eed0000-0000-4000-8000-0000000000c4|5eed0000-0000-4000-8000-000000000034|5eed0000-0000-4000-8000-000000000063|Refonte intranet Ville de Lyon|5eed0000-0000-4000-8000-000000000012|72000.00|EUR|1|Négocier le lot accessibilité|2026-08-18T10:30:00Z|-|-'
 	'5eed0000-0000-4000-8000-0000000000c5|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000061|Support niveau 2 — Atelier Meunier|5eed0000-0000-4000-8000-000000000013|9600.00|EUR|1|Confirmer le périmètre d’astreinte|2026-08-25T09:00:00Z|-|-'
 	'5eed0000-0000-4000-8000-0000000000c6|5eed0000-0000-4000-8000-000000000036|5eed0000-0000-4000-8000-000000000061|Piste entrante à qualifier|-|-|EUR|1|-|-|-|-'
-	'5eed0000-0000-4000-8000-0000000000c7|5eed0000-0000-4000-8000-000000000036|5eed0000-0000-4000-8000-000000000064|Formation Data & IA — promo 2026|5eed0000-0000-4000-8000-000000000011|28000.00|CHF|2|Faire signer la convention|2026-08-10T08:00:00Z|-|-'
+	'5eed0000-0000-4000-8000-0000000000c7|5eed0000-0000-4000-8000-000000000036|5eed0000-0000-4000-8000-000000000064|Formation Data & IA — promo 2026|5eed0000-0000-4000-8000-000000000011|28000.00|CHF|2|Faire signer la convention|2026-08-21T09:00:00Z|-|-'
 	'5eed0000-0000-4000-8000-0000000000c8|5eed0000-0000-4000-8000-000000000032|5eed0000-0000-4000-8000-000000000066|Contrat cadre 2025|5eed0000-0000-4000-8000-000000000011|96000.00|EUR|1|-|-|2026-03-31T16:00:00Z|-'
 	'5eed0000-0000-4000-8000-0000000000c9|5eed0000-0000-4000-8000-000000000032|5eed0000-0000-4000-8000-000000000061|Saisie erronée|5eed0000-0000-4000-8000-000000000011|-|EUR|2|-|-|-|2026-04-02T11:00:00Z'
 	'5eed0000-0000-4000-8000-0000000000cc|5eed0000-0000-4000-8000-000000000034|5eed0000-0000-4000-8000-000000000065|Portail adhérents — MGEN Loire|5eed0000-0000-4000-8000-000000000012|64000.00|EUR|1|Recetter le module de cotisations|2026-09-04T09:00:00Z|-|-'
@@ -525,7 +525,7 @@ CARDS_VOLUME=(
 	'5eed0000-0000-4000-8000-00000000d005|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000061|Maintenance évolutive — boutique Havas Nord|5eed0000-0000-4000-8000-000000000011|11900.00|EUR|6|Recueillir les besoins de la saison 2027|2026-10-06T10:00:00Z|-|-'
 	'5eed0000-0000-4000-8000-00000000d006|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000061|Reprise de dette technique — API Sogexia|5eed0000-0000-4000-8000-000000000012|26500.00|EUR|7|Cadrer le périmètre avec l’architecte|2026-09-24T09:30:00Z|-|-'
 	'5eed0000-0000-4000-8000-00000000d007|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000062|Contrat TMA 2026 — Mairie de Vaulx|5eed0000-0000-4000-8000-000000000013|33000.00|EUR|1|Relancer le service juridique|2026-09-08T09:00:00Z|-|-'
-	'5eed0000-0000-4000-8000-00000000d008|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000062|Hébergement infogéré — Éditions Bertrand|5eed0000-0000-4000-8000-000000000011|21750.00|EUR|2|Obtenir la validation budgétaire|2026-09-15T11:00:00Z|-|-'
+	'5eed0000-0000-4000-8000-00000000d008|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000062|Hébergement infogéré — Éditions Bertrand|5eed0000-0000-4000-8000-000000000011|21750.00|EUR|2|Obtenir la validation budgétaire|2026-08-24T11:00:00Z|-|-'
 	'5eed0000-0000-4000-8000-00000000d009|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000062|Sauvegardes externalisées — Cabinet Lorris|5eed0000-0000-4000-8000-000000000012|9400.00|EUR|3|-|-|-|-'
 	'5eed0000-0000-4000-8000-00000000d010|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000062|Mise à niveau PHP — intranet Duchamp|5eed0000-0000-4000-8000-000000000013|13600.00|EUR|4|Confirmer la date de gel des développements|2026-09-30T09:00:00Z|-|-'
 	'5eed0000-0000-4000-8000-00000000d011|5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000062|Support de niveau 3 — plateforme Nordis|5eed0000-0000-4000-8000-000000000011|47000.00|CHF|5|Arbitrer le volume d’heures mensuel|2026-10-13T08:30:00Z|-|-'
@@ -2711,6 +2711,96 @@ traces=$(curl -s "$API/rest/v1/card_events?type=eq.snoozed&select=id" 	-H "apike
 
 info "Sommeil : 2 affaires — une endormie, une dont l'échéance est échue — docs/SPEC-cards.md §16.11.6"
 
+
+# --- 8 duodecies bis. Les ÉCHÉANCES suivent le calendrier — docs/SPEC-seed.md §13 ------------
+# @spec CRM-061 (docs/BACKLOG.md) — tranche 1 : la vue « Ma journée » doit être démontrable depuis
+#       le seed quel que soit le jour où il s'applique (docs/SPEC-seed.md §13, §13.1 à §13.6 ;
+#       docs/SPEC-cards.md §17.12 ; docs/DESIGN_SYSTEM.md §5.36)
+#
+# MÊME DÉFAUT QUE LA SECTION 8 OCTIES BIS, SUR UNE AUTRE COLONNE. Le §9 pose les échéances en dates
+# LITTÉRALES ; elles étaient justes le jour où le contrat a été écrit, et le calendrier les défait
+# ensuite. MESURÉ le 2026-08-21 sur les 26 affaires actives portant une échéance : cinq « en
+# retard » qu'aucun contrat n'avait voulues, ZÉRO dans le jour courant, une seule dans les sept
+# jours à venir. La section centrale de « Ma journée » n'avait aucune donnée pour l'exercer.
+#
+# LE CONTRAT DU §9 N'EST PAS RÉÉCRIT. Une seule instruction translate toutes les échéances de
+# l'ANCRE du contrat — 2026-08-21, la journée pour laquelle ses dates ont été choisies — vers le
+# jour courant. Le jour de l'ancre le décalage vaut zéro ; un mois plus tard il vaut trente et un
+# jours, et TOUTE LA DISTRIBUTION est préservée à la journée près : écarts, ordre, regroupements.
+#
+# ELLE EST CONVERGENTE, ET C'EST L'ORDRE QUI LE GARANTIT (§13.3) : les sections 8 ter, 8 ter bis et
+# 8 ter ter réécrivent `next_action_at` depuis les littéraux à chaque passage. La translation part
+# donc toujours du littéral, jamais d'une valeur déjà translatée — deux rejeux successifs laissent
+# la même base. Elle vient APRÈS ces trois sections, et APRÈS le sommeil de la section 8 duodecies :
+# le contrôle de la ligne e du §13.5 lit `snoozed_until`, qui n'est posée que là. Les deux sections
+# sont par ailleurs indépendantes — le sommeil ne lit aucune échéance, et la translation n'écrit
+# aucun sommeil.
+#
+# L'ÉCRITURE PASSE PAR LA CLÉ DE SERVICE, comme la section 8 octies bis : `next_action_at` est bien
+# ouverte à `authenticated` (CRM-013), mais le seed n'a pas à se connecter pour poser un état de
+# démonstration.
+echo
+say "8 duodecies bis. Échéances"
+
+ANCRE_ECHEANCES='2026-08-21 00:00:00+00'
+psql_seed -c "update public.cards
+              set next_action_at = next_action_at
+                  + (date_trunc('day', now()) - timestamptz '$ANCRE_ECHEANCES')
+              where id::text like '5eed%' and next_action_at is not null;" >/dev/null
+
+# LE CONTRAT DU §13.5 EST VÉRIFIÉ, ET NON SUPPOSÉ. Un jeu de démonstration qui ne démontre plus est
+# un contrat rompu, pas un détail cosmétique (CLAUDE.md §8). Les prédicats sont EXACTEMENT ceux de
+# l'écran (docs/SPEC-cards.md §17.4 et §17.5) : affaires actives, non endormies, échéance non nulle,
+# horizon de sept jours, bornes prises sur le début du jour courant.
+CAMILLE='5eed0000-0000-4000-8000-000000000011'
+lire_sections() { # $1 = clause de responsable, vide pour tout l'espace de travail
+	psql_seed -c "
+		select count(*) filter (where c.next_action_at < date_trunc('day', now()))
+		    || '|' || count(*) filter (where c.next_action_at >= date_trunc('day', now())
+		                                 and c.next_action_at <  date_trunc('day', now()) + interval '1 day')
+		    || '|' || count(*) filter (where c.next_action_at >= date_trunc('day', now()) + interval '1 day'
+		                                 and c.next_action_at <  date_trunc('day', now()) + interval '8 days')
+		from public.cards c
+		where c.archived_at is null and c.deleted_at is null
+		  and c.next_action_at is not null
+		  and (c.snoozed_until is null or c.snoozed_until <= now())
+		  and c.next_action_at < date_trunc('day', now()) + interval '8 days'
+		  $1;"
+}
+
+IFS='|' read -r retard aujourdhui avenir <<< "$(lire_sections "and c.owner_id = '$CAMILLE'")"
+[ "${retard:-0}"     -ge 1 ] || die "échéances : Camille Aubert n'a AUCUNE affaire en retard —
+        le contrat du §13.5 ligne a n'est pas tenu, et la section « En retard » de « Ma journée »
+        n'aurait rien à montrer."
+[ "${aujourdhui:-0}" -ge 1 ] || die "échéances : Camille Aubert n'a AUCUNE affaire due aujourd'hui —
+        le contrat du §13.5 ligne b n'est pas tenu, et la section qui donne son nom à l'écran
+        n'aurait rien à montrer."
+[ "${avenir:-0}"     -ge 1 ] || die "échéances : Camille Aubert n'a AUCUNE affaire dans les sept
+        jours à venir — le contrat du §13.5 ligne c n'est pas tenu."
+
+IFS='|' read -r r_tous a_tous v_tous <<< "$(lire_sections "")"
+mien=$(( retard + aujourdhui + avenir ))
+tous=$(( r_tous + a_tous + v_tous ))
+[ "$tous" -gt "$mien" ] || die "échéances : la portée « tout l'espace de travail » rend $tous ligne(s)
+        contre $mien pour Camille Aubert — le contrat du §13.5 ligne d exige STRICTEMENT plus, sans
+        quoi la bascule de portée de docs/SPEC-cards.md §17.2 ne démontrerait rien."
+
+# LIGNE e : une affaire endormie porte une échéance DANS l'horizon, et c'est ce qui prouve que le
+# filtre d'exclusion du §17.4 mord — sans elle, son absence de l'écran ne dirait rien.
+endormies=$(psql_seed -c "
+	select count(*) from public.cards c
+	where c.archived_at is null and c.deleted_at is null
+	  and c.next_action_at is not null
+	  and c.next_action_at < date_trunc('day', now()) + interval '8 days'
+	  and c.snoozed_until is not null and c.snoozed_until > now();")
+[ "${endormies:-0}" -ge 1 ] || die "échéances : AUCUNE affaire endormie ne porte d'échéance dans
+        l'horizon de sept jours — le contrat du §13.5 ligne e n'est pas tenu, et l'exclusion des
+        affaires en sommeil ne serait démontrée par rien."
+
+info "Échéances : translatées de l'ancre 2026-08-21 vers le jour courant — la distribution du §9
+  est préservée, et « Ma journée » se démontre quel que soit le jour"
+info "  Camille Aubert : $retard en retard, $aujourdhui aujourd'hui, $avenir à venir ;
+  tout l'espace de travail : $tous lignes, dont $endormies endormie(s) écartée(s)"
 
 # --- 8 terdecies. Tableau d'objectifs de démonstration — docs/SPEC-goals.md §5, CRM-082 ---------
 # @spec CRM-082 (docs/BACKLOG.md) — objectifs : modèle, RLS et API
