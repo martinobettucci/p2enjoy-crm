@@ -15,6 +15,35 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Un écran pour déclarer les adresses d'expédition : « Réglages ▸ Identités d'expédition »**
+  (`CRM-089`, `docs/SPEC-mail-subsystem.md` §22, `docs/DESIGN_SYSTEM.md` §5.35, `docs/manual.md`
+  chapitre 4.13). Jumelle de l'écran ci-dessous, et elle referme l'écart « aucun écran » que
+  `CRM-053` portait depuis sa livraison : la moitié **sortante** existe désormais.
+
+  L'écran liste les identités visibles par l'appelant — la RLS posée par `CRM-053` décide seule de
+  ce que chacun voit —, et son formulaire déclare ou corrige une identité par le seul chemin
+  d'écriture ouvert par cette unité. L'adresse d'expédition est en tête de ligne, précédée du nom
+  affiché quand il existe, sous la forme `Nom <adresse>` — celle que verra le destinataire.
+
+  **Trois règles d'écriture, mesurées et non déduites.** Un mot de passe laissé vide n'est pas
+  envoyé, et conserve donc le secret enregistré. Un nom d'expéditeur, lui, est **toujours** envoyé,
+  y compris vide : l'omettre le rendrait ineffaçable. Le quota quotidien et la signature ne sont
+  jamais envoyés, pour la même raison inverse — rien ne saurait les ramener à leur valeur d'origine
+  une fois posés, et un champ qui ne sait pas revenir en arrière est un piège.
+
+  **Une conséquence du modèle est dite plutôt que masquée** : l'adresse d'expédition fait partie de
+  ce qui identifie une configuration, si bien que la changer **déclare une seconde identité** au
+  lieu de renommer la première. L'écran l'écrit sous le champ, ne l'interdit pas, et relit la liste
+  après l'enregistrement — les deux lignes apparaissent alors, plutôt que d'être devinées.
+
+  Les refus de la base sont traduits par un dictionnaire fermé, et **aucun corps d'erreur du
+  serveur n'est affiché** : il contient la ligne fautive entière, référence du secret comprise
+  (`INC-193`, inchangée).
+
+  Ce que l'écran ne fait pas, et qui est nommé : aucun test de connexion depuis l'interface — la
+  route qui l'exécute est interne au service de messagerie et exige son jeton d'API —, aucune
+  suppression, aucun quota, aucune signature.
+
 - **Un écran pour déclarer les boîtes de réception : « Réglages ▸ Comptes de messagerie
   entrante »** (`CRM-088`, `docs/SPEC-mail-subsystem.md` §21, `docs/DESIGN_SYSTEM.md` §5.34,
   `docs/manual.md` chapitre 4.12). Le §2.3 du sous-système de messagerie décrivait ces formulaires

@@ -239,6 +239,7 @@ Conforme à `docs/DESIGN_SYSTEM.md` §4 :
 | `/ma-journee` | État vide de la journée |
 | `/reglages` | Réglages — index des sections, et rappel des sources de configuration |
 | `/reglages/comptes-mail` | **Configuration des comptes entrants IMAP** — `CRM-088`, `docs/SPEC-mail-subsystem.md` §21.2. Une SIXIÈME section de réglages, hors de `ROUTES` comme les cinq autres : elle est atteinte depuis l'index, jamais depuis la barre latérale. Distincte de `/reglages/messagerie`, qui **lit** là où celle-ci **écrit** |
+| `/reglages/identites-mail` | **Configuration des identités sortantes SMTP** — `CRM-089`, `docs/SPEC-mail-subsystem.md` §22.2. Une SEPTIÈME section de réglages, jumelle de la précédente et montée de la même façon : l'une configure ce qu'on reçoit, l'autre ce qu'on expédie. Elle vient **après** `/reglages/comptes-mail` et **avant** `/reglages/messagerie` dans l'index |
 | `/tracks/:slugTrack[/:slugChannel]` | Route d'un track et de ses onglets — `CRM-021`. Avec un channel ouvert, elle rend son **board kanban** — `CRM-041`, `docs/SPEC-workflow-engine.md` §7 |
 | `/tracks/:slugTrack/:slugChannel/cards/:idCard` | Détail d'une card : son **formulaire conditionnel** — `CRM-037`. La card est désignée par son identifiant, `docs/SPEC-cards.md` ne lui donnant aucun slug |
 | toute autre | Route inconnue, avec retour explicite vers `/` |

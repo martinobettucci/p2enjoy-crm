@@ -46,7 +46,7 @@
 | Chapitre | Contenu | Unité | État |
 |---|---|---|---|
 | 10 | Connecter sa boîte de réception (IMAP) | `CRM-052`, `CRM-088` | **Livré avec son écran, vérifié visuellement** — voir le chapitre 4.12. « Réglages ▸ Comptes de messagerie entrante » déclare la boîte système de l'espace de travail et la boîte personnelle de chacun : serveur, port, sécurité, identifiant et mot de passe. Le mot de passe n'est **jamais** affiché, et un champ laissé vide conserve celui qui est enregistré. Ce qui manque : **aucun bouton « Tester la connexion »** depuis l'écran, et **aucune suppression** de boîte |
-| 11 | Configurer son adresse d'expédition (SMTP) | `CRM-053` | À livrer |
+| 11 | Configurer son adresse d'expédition (SMTP) | `CRM-053`, `CRM-089` | **Livré avec son écran, vérifié visuellement** — voir le chapitre 4.13. « Réglages ▸ Identités d'expédition » déclare l'identité de service de l'espace de travail et celles de chacun : adresse d'expédition, nom affiché, serveur SMTP, identifiant et mot de passe. Le mot de passe n'est **jamais** affiché, et un champ laissé vide conserve celui qui est enregistré. Ce qui manque : **aucun bouton « Tester la connexion »** depuis l'écran, **aucune suppression**, et ni le quota ni la signature ne sont modifiables |
 | 12 | L'adresse email d'une card : à quoi elle sert | `CRM-040`, `CRM-013`, `CRM-054` | **Partiellement livré** : l'adresse est **générée** à la création de chaque affaire, non devinable, et depuis `CRM-013` **non modifiable** — le refus est appliqué par le serveur et tient hors de l'écran (chapitre 4.2). Ce à quoi elle sert — recevoir les messages et les rattacher à l'affaire — relève de `CRM-054` |
 | 13 | L'inbox : dossiers, messages non classés, classement, **suggestion** | `CRM-055`, `CRM-057`, `CRM-060` | À livrer |
 | 14 | Répondre depuis une card ou depuis l'inbox | `CRM-058` | À livrer |
@@ -1438,6 +1438,40 @@ finirait affiché, puis dans une capture d'écran. Le produit note **la cause**,
 volontaire : une option de ce genre finit toujours par rester activée.
 
 ### 4.13 Les adresses d'expédition
+
+**Où se fait la déclaration : « Réglages ▸ Identités d'expédition »** (`CRM-089`). L'écran liste
+les adresses que vous voyez, avec leur connexion et leur état, et porte un formulaire pour les
+déclarer ou les corriger. Il vient **après** « Comptes de messagerie entrante » et **avant** « État
+de la messagerie » : on reçoit avant d'expédier, et on configure avant de superviser.
+
+- **Une ligne commence par l'adresse**, précédée du nom affiché quand il est renseigné — sous la
+  forme `Nom <adresse>`, celle que verront vos destinataires. C'est cette adresse qui distingue
+  deux identités, et non leur libellé, qui peut être le même.
+- **Choisissez d'abord l'identité visée.** La liste propose celles que vous voyez, plus deux
+  entrées pour en déclarer une nouvelle : la vôtre, ou celle de service de l'espace de travail.
+- **L'identité de service et celle d'un collègue sont réservées à une administratrice ou un
+  administrateur.** L'entrée reste proposée à tout le monde, et le produit vous répond en toutes
+  lettres si vous n'en avez pas le droit : un bouton grisé ne dirait pas pourquoi.
+- **ATTENTION — changer l'adresse d'expédition ne renomme pas une identité : cela en déclare une
+  seconde**, et la première demeure. L'adresse fait partie de ce qui identifie la configuration, au
+  même titre que son propriétaire. L'écran vous le rappelle sous le champ, et la liste relue vous
+  montre alors **deux** lignes. Si vous vouliez corriger une faute de frappe, retirez ensuite
+  l'ancienne — ce que l'écran ne sait pas encore faire, voir plus bas.
+- **Le mot de passe est toujours vide à l'ouverture, et il n'est jamais affiché.** Le laisser vide
+  **conserve** celui qui est enregistré ; le remplir le **remplace**. Sur une identité qui n'existe
+  pas encore, il est obligatoire. *Conséquence de la règle précédente* : si vous modifiez l'adresse
+  sans saisir de mot de passe, le produit vous répond qu'un mot de passe est exigé — parce que la
+  nouvelle adresse fait de votre enregistrement une déclaration, et non une correction.
+- **Le nom d'expéditeur se vide en effaçant le champ**, contrairement au mot de passe : un champ
+  vide y est une valeur, et non une absence de changement.
+- **La case « identité par défaut » est cochée d'avance sur une déclaration**, parce que c'est ce
+  que le produit ferait de toute façon. La décocher n'est utile que si vous en avez déjà une.
+- **Ce que l'écran n'offre pas**, et c'est écrit plutôt que suggéré : aucun bouton *Tester la
+  connexion* — l'essai est fait par le service de messagerie, et son résultat s'affiche dans l'état
+  de l'identité ; aucune **suppression** ; ni le **quota quotidien** ni la **signature**, que
+  l'écran ne touche jamais et n'écrase donc jamais.
+
+Le reste du chapitre décrit ce que le produit garantit une fois l'adresse déclarée.
 
 **Recevoir et expédier sont deux choses distinctes.** Une personne peut relever sa boîte
 `bizdev@…` et pourtant écrire à ses clients depuis `contact@…` : le produit ne lie pas les deux, et
