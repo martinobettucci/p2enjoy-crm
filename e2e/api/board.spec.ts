@@ -413,8 +413,10 @@ test.describe('B5 — les identités consenties au board sont mesurées (§7.4)'
 			{ headers: enTetesAuthentifies(jetonAdmin) },
 		)
 		const [card] = (await reponse.json()) as { entered_step_at: string }[]
+		expect(card, 'la card archivée du seed est bien là').toBeDefined()
 		const JOUR = 24 * 60 * 60 * 1000
-		expect(Math.floor((Date.now() - new Date(card.entered_step_at).getTime()) / JOUR)).toBe(0)
+		const age = Date.now() - new Date(card?.entered_step_at ?? 0).getTime()
+		expect(Math.floor(age / JOUR)).toBe(0)
 	})
 })
 

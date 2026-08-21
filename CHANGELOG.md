@@ -171,6 +171,28 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Le jeu de démonstration montre enfin une affaire EN RETARD, et sa pastille rouge**
+  (`CRM-046` tranche 3, `docs/SPEC-seed.md` §9.12, `docs/SPEC-workflow-engine.md` §7.4,
+  `docs/DESIGN_SYSTEM.md` §5.1). Chaque carte du board porte le temps passé à son étape, et cette
+  pastille vire au rouge au-delà du seuil de relance : c'est le signal qui fait remonter l'affaire
+  qu'on oublie. Sur le jeu de démonstration, il ne s'allumait **jamais** — le seed remettait
+  l'ancienneté de ses quarante affaires à zéro à chaque application, contre des seuils de cinq à
+  trente jours. Une personne qui découvrait le produit ne voyait donc jamais ce à quoi il sert.
+
+  « Audit sécurité applicative » est désormais posée à **30 jours** d'une étape dont le seuil est de
+  **14**, seule dans sa colonne, la colonne voisine gardant deux affaires fraîches : la bascule et
+  son contraste — pastille rouge, pastille neutre, et pas de pastille du tout à l'étape « Livré »,
+  qui ne porte aucun seuil — se voient sur le board sans rien fabriquer. Les trente-neuf autres
+  affaires continuent de repartir à zéro : le pipeline de démonstration reste sain, avec un unique
+  retard voulu.
+
+  **Deux garde-fous sont retournés, jamais retirés** : un contrôle de `scripts/verify-board.sh` et
+  un scénario de `e2e/api/board.spec.ts` figeaient l'absence que cette tranche comble. Ils mesurent
+  désormais la présence — exactement une affaire au-delà de son seuil, et c'est celle-là —, et le
+  harnais reçoit sa contre-épreuve : vieillir une seconde affaire le fait échouer. La bascule est
+  en outre prouvée **à l'écran, sur la donnée réelle et sans aucune substitution réseau**
+  (`e2e/ui/anciennete-board.spec.ts`), là où elle ne l'était que contre une réponse fabriquée.
+
 - **Un écran pour déclarer les adresses d'expédition : « Réglages ▸ Identités d'expédition »**
   (`CRM-089`, `docs/SPEC-mail-subsystem.md` §22, `docs/DESIGN_SYSTEM.md` §5.35, `docs/manual.md`
   chapitre 4.13). Jumelle de l'écran ci-dessous, et elle referme l'écart « aucun écran » que

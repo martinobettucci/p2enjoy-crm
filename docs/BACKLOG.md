@@ -4549,11 +4549,14 @@ vérifié ; captures aux quatre paliers ; vidéo `.webm` du glisser-déposer.
       et l'API confirme `current_step_id`. Le `viewer` tente le même geste sur une card qu'il voit :
       le backend refuse, l'interface affiche la raison et la card reste dans sa colonne. Aucune
       réponse réseau n'est substituée et la donnée d'essai est nettoyée.
-- [ ] **Le seed ne démontre pas la bascule de la pastille d'ancienneté.** MESURÉ : il pose
-      `entered_step_at` à `now()`, contre des seuils de 5 à 30 jours — aucune card n'atteint jamais
-      le sien. La règle est prouvée par un test unitaire et par une réponse substituée, jamais par
-      une donnée permanente. Un contrôle du harnais **échoue** si cela venait à changer. Le manque
-      appartient au seed de démonstration, `CRM-046`.
+- [x] **~~Le seed ne démontre pas la bascule de la pastille d'ancienneté.~~ COMBLÉ le 2026-08-21
+      par la tranche 3 de `CRM-046`** (`docs/SPEC-seed.md` §9.12). Le relevé d'origine était exact :
+      le seed posait `entered_step_at` à `now()` pour ses quarante cards actives, contre des seuils
+      de 5 à 30 jours, et la règle n'était prouvée que par un test unitaire et par une réponse
+      substituée. `5eed0000-0000-4000-8000-0000000000c3` est désormais posée à **30 jours** pour un
+      seuil de **14**, et le contrôle du harnais qui figeait l'absence a été **retourné**, jamais
+      retiré. La bascule est prouvée à l'écran sur la donnée réelle, sans aucune substitution
+      (`e2e/ui/anciennete-board.spec.ts`), captures comprises.
 - [x] **L'éditeur de workflow a désormais un porteur — INC-066 arbitrée.** CRM-076 livrera l'écran
       administrateur complet ; la phrase reste hors du périmètre de CRM-041 sans être orpheline.
 - [x] **Le seed a été étendu depuis par CRM-046.** Le board démontre toujours ses colonnes vides,
@@ -5880,10 +5883,58 @@ démontrable depuis le seed.
       protège plus de rien : il rend « vert mais N au lieu de M » à chaque passage, et l'œil finit
       par lire le vert sans lire le nombre — le contraire de ce qu'on lui demande.
 
+- [x] **TRANCHE 3 — L'ANCIENNETÉ DANS L'ÉTAPE, LIVRÉE ET PROUVÉE le 2026-08-21**, spécifiée
+      d'abord : `docs/SPEC-seed.md` §9.12, sept sous-chapitres opposables, commit documentaire
+      dédié poussé **avant** la première ligne de code.
+      **Le manque, mesuré et non supposé** : les **40** cards actives du seed avaient toutes moins
+      d'une minute d'ancienneté dans leur étape, contre des seuils de relance de **5 à 30 jours**.
+      La pastille d'ancienneté de `CRM-041` — neutre, puis `danger` au-delà du seuil
+      (`docs/DESIGN_SYSTEM.md` §5.1) — ne basculait donc sur **aucune donnée permanente**, et la
+      Definition of Done « chaque fonctionnalité livrée est démontrable depuis le seed » n'était
+      pas tenue pour elle. Le §7.4 de `docs/SPEC-workflow-engine.md` et l'énoncé de `CRM-040` le
+      renvoyaient ici nommément.
+      **Ce qui est posé** : `5eed0000-0000-4000-8000-0000000000c3` — « Audit sécurité applicative »,
+      seule card de sa colonne — à **30 jours** d'une étape dont le seuil est de **14**, hérité du
+      nœud `prospection` et non surchargé. Les **39** autres repartent à zéro : un pipeline sain,
+      avec un unique retard **voulu, choisi et écrit**, jamais subi par le calendrier. Le recul
+      part de `now()` : un rejeu ne cumule rien. L'écriture passe par le rôle `postgres`,
+      `entered_step_at` n'étant pas des douze colonnes que `CRM-013` ouvre à `authenticated`.
+      **DEUX GARDE-FOUS RETOURNÉS, JAMAIS RETIRÉS** (mécanisme de la décision 51) : le contrôle de
+      `scripts/verify-board.sh` et le scénario de `e2e/api/board.spec.ts` figeaient l'ABSENCE que
+      cette tranche comble. Ils mesurent désormais la PRÉSENCE — exactement une card au-delà, et
+      c'est celle-là —, plus la présence d'au moins une card **en deçà**, sans quoi « au-delà » ne
+      serait pas un contraste. Le scénario d'API devient **trois** : le compte et l'identité, le
+      seuil hérité du nœud lu à sa source, et l'absence de vieillissement des cards **archivées**.
+      **Contre-épreuve du harnais** : vieillir une **seconde** card fait passer le compte à 2 et le
+      contrôle échoue — MESURÉ —, puis l'ancienneté est rendue et constatée, le `trap EXIT`
+      restaurant la donnée même si l'exécution est tuée.
+      **Preuve d'interface neuve, SANS AUCUNE SUBSTITUTION** : `e2e/ui/anciennete-board.spec.ts`,
+      **2 scénarios verts, console vierge**. Session ouverte par le formulaire réel, board de
+      `grands-comptes`, les **trois** états lus sur la donnée du seed — `data-depassee="oui"` et
+      « 30 j » sur `…0c3`, `"non"` sur `…0c1`, **aucune** pastille sur `…0cd` à `Livré` —, chacune
+      dans la colonne attendue ; puis le palier 390 px, où la pastille est mesurée **dans** la
+      largeur de la carte.
+      **Vérification visuelle** : trois captures sous `docs/captures/CRM-046/`, produites **ET
+      observées** — `anciennete-contraste-1440.jpg` (rouge à gauche, neutre à droite),
+      `anciennete-sans-seuil-1440.jpg` et `anciennete-depassee-390.jpg`. **Le nombre de captures
+      vient de l'œil, pas du plan** : la première annonçait « les trois états sur un seul écran »,
+      et l'observation a montré que `Livré`, sixième colonne, reste hors champ à 1440 px. La
+      troisième capture l'amène à l'écran plutôt que d'annoncer trois états sur une image qui n'en
+      porte que deux ; le §9.12.7 a été corrigé en conséquence.
+      **Compteurs de `scripts/verify-harness.sh` révisés dans le MÊME changement** : `SCENARIOS_API`
+      824 → **826**, `SCENARIOS_UI` 566 → **568**. Valeurs **comptées** par
+      `playwright test --list`, jamais déduites.
+      **Un défaut de cette session, trouvé par `npm run typecheck` et corrigé** : le troisième
+      scénario d'API déréférençait une card destructurée sans garde (`TS18048`). La preuve est
+      rendue explicite — la présence de la ligne est assérée avant d'être lue —, pas contournée.
+
 *Definition of Done tenue.* Elle demandait « `resetMe.sh` reproduit exactement le même état ;
 chaque fonctionnalité livrée est démontrable depuis le seed ». **Les deux sont mesurées** : la
 première par une destruction réelle du cluster et deux empreintes identiques, la seconde par les
 soixante-deux contrôles du harnais, dont ce que chacun des trois profils lit avec son jeton réel.
+La tranche 3 ci-dessus a fermé la dernière fonctionnalité livrée qui n'était **pas** démontrable
+depuis le seed — la pastille d'ancienneté —, et la seconde moitié de cette Definition of Done cesse
+d'avoir une exception non nommée.
 **~~Seule INC-021 retient l'unité en `[~]`.~~ RÉVISÉ le 2026-08-18 :** INC-021 est close depuis le
 2026-08-07 et ne retenait plus rien quand cette phrase a été écrite (INC-143). L'unité est `[x]`.
 
