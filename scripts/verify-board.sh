@@ -92,6 +92,13 @@ mkdir -p "$SAUVEGARDES"
 # Toute dégradation est restaurée, y compris si le script échoue en cours de route : un harnais
 # qui laisse le produit dégradé derrière lui est pire que pas de harnais du tout (décisions 143,
 # 145, 157).
+#
+# LA DÉGRADATION D9 TOUCHE LA DONNÉE, PAS UN FICHIER (docs/SPEC-seed.md §9.12.4) : elle vieillit
+# une seconde card. Elle est donc rendue ici aussi, et par la même écriture que le seed — la
+# remise à zéro de sa section 8 octies bis —, sans quoi une exécution tuée entre la dégradation et
+# sa restauration laisserait le jeu de démonstration avec deux cards en retard.
+CARD_TEMOIN_ANCIENNETE='5eed0000-0000-4000-8000-0000000000c1'
+anciennete_degradee=false
 restaurer() {
 	for fichier in "$SAUVEGARDES"/*; do
 		[ -e "$fichier" ] || continue
@@ -99,6 +106,10 @@ restaurer() {
 		cible=$(basename "$fichier" | tr '@' '/')
 		cp "$fichier" "$cible"
 	done
+	if [ "$anciennete_degradee" = true ]; then
+		psql_db -c "update public.cards set entered_step_at = now()
+		            where id = '$CARD_TEMOIN_ANCIENNETE';" >/dev/null
+	fi
 	rm -rf "$TRAVAIL" "${DEPART:-}"
 }
 trap restaurer EXIT
@@ -227,19 +238,49 @@ else
 	fail "les cards occupent $occupees étapes au lieu de 3"
 fi
 
-# Le seed ne démontre PAS la bascule de la pastille d'ancienneté, et ce fait est FIGÉ ici plutôt
-# que découvert en regardant une capture (§7.4). Il appartient à `CRM-046`.
-au_dela=$(psql_db -c "
-	select count(*) from public.cards c
-	join public.workflow_steps s on s.id = c.current_step_id
-	join public.workflow_nodes_catalog n on n.id = s.node_id
-	where c.archived_at is null and c.deleted_at is null
-	  and coalesce(s.stale_after_days, n.default_stale_after_days) is not null
-	  and now() - c.entered_step_at > make_interval(days => coalesce(s.stale_after_days, n.default_stale_after_days))")
-if [ "${au_dela:-0}" -eq 0 ]; then
-	ok "aucune card du seed n'atteint son seuil : l'écart du §7.4 est constaté, pas oublié"
+# CONTRÔLE RETOURNÉ — décision 51, et le motif est écrit ici plutôt que dans un journal.
+#
+# Ce contrôle assérait « aucune card du seed n'atteint son seuil : l'écart du §7.4 est constaté,
+# pas oublié ». Il figeait une ABSENCE, et la tranche 3 de `CRM-046` (docs/SPEC-seed.md §9.12) la
+# comble : le seed pose désormais `…0c3` à trente jours d'une étape dont le seuil est de quatorze.
+# L'assertion n'est pas retirée — elle est retournée, et mesure la PRÉSENCE : exactement une card
+# au-delà, et c'est celle-là.
+#
+# LA COMPARAISON EST `>=`, ET CE N'EST PAS UN DÉTAIL : `evaluerAnciennete` de
+# `webapp/src/lib/board.ts` bascule à `jours >= seuilJours`. Un `>` ici mesurerait une autre règle
+# que celle que l'écran applique, et laisserait passer la card posée exactement sur son seuil.
+CARD_EN_RETARD='5eed0000-0000-4000-8000-0000000000c3'
+# $1 : ce qui est projeté ; $2 : la comparaison à l'intervalle du seuil.
+lire_anciennete() {
+	psql_db -c "select $1 from public.cards c
+		join public.workflow_steps s on s.id = c.current_step_id
+		join public.workflow_nodes_catalog n on n.id = s.node_id
+		where c.archived_at is null and c.deleted_at is null
+		  and coalesce(s.stale_after_days, n.default_stale_after_days) is not null
+		  and now() - c.entered_step_at $2
+		      make_interval(days => coalesce(s.stale_after_days, n.default_stale_after_days))"
+}
+au_dela=$(lire_anciennete 'count(*)' '>=')
+if [ "${au_dela:-0}" -eq 1 ]; then
+	ok "une card du seed, et une seule, dépasse son seuil : la bascule du §7.4 est démontrable"
 else
-	fail "$au_dela cards dépassent leur seuil : l'écart du §7.4 doit être révisé (CRM-046)"
+	fail "$au_dela cards dépassent leur seuil au lieu d'une seule (docs/SPEC-seed.md §9.12.6 a)"
+fi
+
+# Ligne b du contrat : c'est bien `…0c3`, et non une card qu'un rejeu aurait vieillie par accident.
+laquelle=$(lire_anciennete 'c.id::text' '>=')
+if [ "$laquelle" = "$CARD_EN_RETARD" ]; then
+	ok "la card en retard est « Audit sécurité applicative » — l'identifiant est celui du §9.12.1"
+else
+	fail "la card en retard est « $laquelle » au lieu de $CARD_EN_RETARD"
+fi
+
+# Ligne e : sans une card EN DEÇÀ, « au-delà » ne serait pas un contraste mais un état général.
+en_deca=$(lire_anciennete 'count(*)' '<')
+if [ "${en_deca:-0}" -ge 1 ]; then
+	ok "$en_deca cards portent un seuil et restent en deçà : la pastille neutre se démontre aussi"
+else
+	fail "aucune card en deçà de son seuil : le contraste du §9.12.6 e a disparu"
 fi
 
 # --- 3. Tests unitaires --------------------------------------------------------------------------
@@ -427,6 +468,29 @@ else
 		"			.is('archived_at', null)
 			.is('deleted_at', null)" \
 		"			.order('position')" unit
+
+	# D9 — CONTRE-ÉPREUVE DU CONTRÔLE RETOURNÉ (docs/SPEC-seed.md §9.12.4, §9.12.7 point 6). Elle
+	# ne touche aucun fichier : elle vieillit une SECONDE card, `…0c1`, de huit jours dans une
+	# étape dont le seuil est de sept. Sans elle, « exactement une » ne serait pas mesuré — un
+	# contrôle qui compte pourrait compter n'importe quoi tant que rien ne le contredit.
+	anciennete_degradee=true
+	psql_db -c "update public.cards set entered_step_at = now() - interval '8 days'
+	            where id = '$CARD_TEMOIN_ANCIENNETE';" >/dev/null
+	temoin=$(lire_anciennete 'count(*)' '>=')
+	if [ "${temoin:-0}" -eq 1 ]; then
+		fail "COMPLAISANT : une seconde card vieillie et le compte reste à une seule"
+	else
+		ok "« une seconde card vieillie » fait bien passer le compte à $temoin : le contrôle mord"
+	fi
+	psql_db -c "update public.cards set entered_step_at = now()
+	            where id = '$CARD_TEMOIN_ANCIENNETE';" >/dev/null
+	anciennete_degradee=false
+	rendu=$(lire_anciennete 'count(*)' '>=')
+	if [ "${rendu:-0}" -eq 1 ]; then
+		ok "l'ancienneté est rendue : une seule card en retard, comme le seed la pose"
+	else
+		fail "l'ancienneté est laissée DÉGRADÉE : $rendu cards en retard après restauration"
+	fi
 fi
 
 # --- 7. L'état rendu derrière le harnais ---------------------------------------------------------

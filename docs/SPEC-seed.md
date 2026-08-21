@@ -1315,9 +1315,10 @@ Trois raisons, et aucune n'est esthétique :
    change aucun ordre — l'ordre d'une colonne est `position` puis `title` (§2.6 de
    `docs/SPEC-cards.md`) et ne lit jamais `entered_step_at` ;
 3. **le contraste reste sur le même écran** : la colonne `Relance`, immédiatement à droite, porte
-   `…0c1` et `…0c2`, fraîches et de seuil 7 jours. Une capture unique montre donc les **trois**
-   états du §7.4 — pastille absente (`Livré`, sans seuil), pastille neutre (`Relance`), pastille
-   `danger` (`Prospection`).
+   `…0c1` et `…0c2`, fraîches et de seuil 7 jours. Une capture unique montre donc la **bascule** —
+   pastille `danger` sur `Prospection`, pastille neutre sur `Relance`. Le troisième état du §7.4,
+   la pastille **absente**, vit à `Livré`, sixième colonne que le board laisse hors champ à
+   1440 px : il a sa propre capture (§9.12.7 point 5).
 
 **Trente jours**, et non huit ou quinze : le seuil est de quatorze, et un écart du simple au double
 ne dépend d'aucune heure d'application. Une card posée à quinze jours basculerait aussi, mais son
@@ -1398,7 +1399,11 @@ spécification qui survit à sa mesure est un mensonge à retardement.
 4. la bascule constatée **à l'écran, sur la donnée réelle et sans aucune substitution** : session
    ouverte par le formulaire de connexion, board de `grands-comptes`, pastille `data-depassee="oui"`
    sur `…0c3` et `data-depassee="non"` sur `…0c1`, console vierge ;
-5. capture produite **et observée**, montrant les trois états sur le même écran ;
+5. captures produites **et observées**, sous `docs/captures/CRM-046/`. **Trois, et non une** : le
+   contraste `danger` / neutre tient sur un seul écran à 1440 px, `Prospection` et `Relance` étant
+   voisines, mais `Livré` est la **sixième** colonne et le board la laisse hors champ. La troisième
+   capture l'amène à l'écran plutôt que d'annoncer trois états sur une image qui n'en porte que
+   deux. La quatrième mesure le repli à 390 px ;
 6. `scripts/verify-board.sh` rejoué, son contrôle retourné compris, avec sa **contre-épreuve** :
    une seconde card vieillie fait échouer le contrôle, puis la base est rendue à son état.
 

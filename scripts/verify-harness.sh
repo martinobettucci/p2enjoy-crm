@@ -504,7 +504,14 @@ ASSERTIONS_ATTENDUES=2480
 # `coalesce`, est conservé quand le paramètre est omis mais EFFACÉ quand une chaîne vide est
 # envoyée. 821 + 3 = **824**, valeur COMPTÉE par `playwright test --list` (« Total: 824 tests »),
 # jamais déduite (INC-101). Le garde-fou est RÉVISÉ, jamais retiré (mécanisme de la décision 51).
-SCENARIOS_API=824
+# **RÉVISION DU 2026-08-21 — `CRM-046`, tranche 3.** Le scénario « aucune card du seed n'atteint son
+# seuil de relance » de `e2e/api/board.spec.ts` figeait une ABSENCE que le seed comble désormais : il
+# est RETOURNÉ et devient TROIS scénarios — exactement une card au-delà de son seuil et c'est
+# `…0c3` à trente jours pour un seuil de quatorze ; ce seuil hérité du nœud et non surchargé par
+# l'étape ; et aucune card ARCHIVÉE vieillie au passage. 824 - 1 + 3 = **826**, valeur COMPTÉE par
+# `playwright test --list` (« Total: 826 tests »), jamais déduite (INC-101). Le garde-fou est
+# RÉVISÉ, jamais retiré (mécanisme de la décision 51).
+SCENARIOS_API=826
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -724,7 +731,13 @@ SCENARIOS_API=824
 # l'état vide d'une lectrice AVEC son geste, et les quatre paliers. 557 + 9 = **566**, valeur
 # COMPTÉE par `playwright test --list` (« Total: 566 tests »), jamais déduite. Garde-fou RÉVISÉ,
 # jamais retiré.
-SCENARIOS_UI=566
+# **RÉVISION DU 2026-08-21 — `CRM-046`, tranche 3.** Deux scénarios d'interface ajoutés par
+# `e2e/ui/anciennete-board.spec.ts` : les trois états de la pastille d'ancienneté rendus sur la
+# donnée RÉELLE du seed, sans aucune substitution réseau, avec leurs captures ; et la bascule
+# mesurée au palier 390 px, pastille comprise dans la largeur de la carte. 566 + 2 = **568**, valeur
+# COMPTÉE par `playwright test --list` (« Total: 568 tests »), jamais déduite. Garde-fou RÉVISÉ,
+# jamais retiré.
+SCENARIOS_UI=568
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

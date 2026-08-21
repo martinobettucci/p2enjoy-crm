@@ -2888,11 +2888,16 @@ silence :
 n'est **pas** rendue lorsque le seuil est absent : MESURÉ, l'étape `Livré` n'en porte aucun, et
 inventer un seuil par défaut serait une règle de produit que personne n'a prise.
 
-**AUCUNE CARD DU SEED N'ATTEINT SON SEUIL, ET C'EST MESURÉ.** Le seed pose `entered_step_at` à
-`now()` au moment où il s'applique : l'âge de toute card seedée est de quelques secondes, contre des
-seuils de 5 à 30 jours. La bascule vers `danger` ne peut donc être démontrée **par aucune donnée
-permanente** ; elle l'est par un test unitaire et par une preuve d'interface à réponse substituée.
-Le manque appartient au seed de démonstration, `CRM-046`, et il est nommé plutôt que compensé.
+**~~AUCUNE CARD DU SEED N'ATTEINT SON SEUIL, ET C'EST MESURÉ.~~ RÉVISÉ le 2026-08-21 : UNE CARD
+L'ATTEINT, ET UNE SEULE.** La phrase disait vrai à son écriture — le seed posait `entered_step_at`
+à `now()` pour toutes ses cards, de sorte que la bascule vers `danger` n'était démontrée que par un
+test unitaire et par une preuve d'interface à **réponse substituée**. Le manque appartenait au seed
+de démonstration, `CRM-046`, et il est **comblé** par sa tranche 3 (`docs/SPEC-seed.md` §9.12) :
+`5eed0000-0000-4000-8000-0000000000c3` — « Audit sécurité applicative » — est posée à **30 jours**
+d'une étape dont le seuil est de **14**, et les trente-neuf autres cards actives repartent à zéro.
+La bascule est désormais portée par une **donnée permanente**, prouvée à l'écran sans aucune
+substitution, et le contraste des trois états — pastille absente, neutre, `danger` — tient sur une
+seule capture.
 
 ### 7.5 Les transitions atteignables, source unique du geste
 

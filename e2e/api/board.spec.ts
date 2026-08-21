@@ -33,6 +33,8 @@ const ETAPE_RELANCE = '5eed0000-0000-4000-8000-000000000062'
 const ETAPE_LIVRE = '5eed0000-0000-4000-8000-000000000066'
 const CARD_ARCHIVEE = '5eed0000-0000-4000-8000-0000000000c8'
 const CARD_CORBEILLE = '5eed0000-0000-4000-8000-0000000000c9'
+/** Ajoutée par la tranche 3 de `CRM-046` : la seule card que le seed pose EN RETARD (§9.12.1). */
+const CARD_EN_RETARD = '5eed0000-0000-4000-8000-0000000000c3'
 
 /**
  * Les colonnes réellement demandées par la webapp, **recopiées depuis le module qu'elle
@@ -333,18 +335,86 @@ test.describe('B5 — les identités consenties au board sont mesurées (§7.4)'
 		}
 	})
 
-	// La pastille d'ancienneté ne bascule jamais sur le seed : `entered_step_at` vaut `now()` à
-	// son application. Le fait est FIGÉ ici plutôt que découvert en regardant une capture vide.
-	test('aucune card du seed n’atteint son seuil de relance', async ({ request }) => {
+	// SCÉNARIO RETOURNÉ — décision 51, et le motif est écrit ici plutôt que dans un journal.
+	//
+	// Il assérait « aucune card du seed n'atteint son seuil de relance » et bornait l'âge de
+	// TOUTES les cards à cinq jours. Il figeait une ABSENCE, celle que la tranche 3 de `CRM-046`
+	// comble (docs/SPEC-seed.md §9.12) : le seed pose désormais `…0c3` à trente jours d'une étape
+	// dont le seuil est de quatorze. L'assertion n'est pas retirée — elle est retournée, et mesure
+	// contre la vraie API les lignes *a* à *e* du contrat du §9.12.6.
+	//
+	// LE SEUIL EST RELU DEPUIS L'ÉTAPE ET SON NŒUD, jamais recopié : `stale_after_days` de l'étape
+	// s'il existe, sinon `default_stale_after_days` du nœud. C'est la règle exacte que
+	// `evaluerAnciennete` applique, et la seule façon que ce scénario reste vrai si le seuil du
+	// catalogue change.
+	test('une card du seed, et une seule, dépasse son seuil de relance', async ({ request }) => {
 		const reponse = await request.get(
-			`${CARDS}?select=entered_step_at&deleted_at=is.null&archived_at=is.null`,
+			`${CARDS}?select=id,entered_step_at,workflow_steps!cards_current_step_id_workflow_id_fkey(stale_after_days,workflow_nodes_catalog(default_stale_after_days))&deleted_at=is.null&archived_at=is.null`,
 			{ headers: enTetesAuthentifies(jetonAdmin) },
 		)
-		const cards = (await reponse.json()) as { entered_step_at: string }[]
-		const cinqJours = 5 * 24 * 60 * 60 * 1000
-		for (const card of cards) {
-			expect(Date.now() - new Date(card.entered_step_at).getTime()).toBeLessThan(cinqJours)
-		}
+		expect(reponse.status(), await reponse.text()).toBe(200)
+		const cards = (await reponse.json()) as {
+			id: string
+			entered_step_at: string
+			workflow_steps: {
+				stale_after_days: number | null
+				workflow_nodes_catalog: { default_stale_after_days: number | null } | null
+			} | null
+		}[]
+		expect(cards.length).toBeGreaterThan(0)
+
+		const JOUR = 24 * 60 * 60 * 1000
+		const avecSeuil = cards
+			.map((card) => ({
+				id: card.id,
+				jours: Math.floor((Date.now() - new Date(card.entered_step_at).getTime()) / JOUR),
+				seuil:
+					card.workflow_steps?.stale_after_days ??
+					card.workflow_steps?.workflow_nodes_catalog?.default_stale_after_days ??
+					null,
+			}))
+			.filter((card): card is { id: string; jours: number; seuil: number } => card.seuil !== null)
+
+		const auDela = avecSeuil.filter((card) => card.jours >= card.seuil)
+		// Ligne *a* : exactement une, et ligne *b* : c'est celle que le §9.12.1 nomme.
+		expect(auDela).toHaveLength(1)
+		expect(auDela[0]?.id).toBe(CARD_EN_RETARD)
+		// Ligne *c* : trente jours pleins, et pas trente et un — le seed la repose à chaque passage.
+		expect(auDela[0]?.jours).toBe(30)
+		// Ligne *d* : le seuil est celui du nœud `prospection`, non surchargé par l'étape.
+		expect(auDela[0]?.seuil).toBe(14)
+		// Ligne *e* : sans une card EN DEÇÀ, « au-delà » ne serait pas un contraste.
+		expect(avecSeuil.filter((card) => card.jours < card.seuil).length).toBeGreaterThan(0)
+	})
+
+	// Ligne *d* de nouveau, mais lue à sa source : le scénario ci-dessus prouverait la même chose
+	// si l'étape portait `14` en surcharge. Le §9.12.1 dit « hérité du nœud », et c'est mesurable.
+	test('le seuil de la card en retard est hérité du nœud, non surchargé par l’étape', async ({
+		request,
+	}) => {
+		const reponse = await request.get(
+			`${ETAPES}?select=id,stale_after_days,workflow_nodes_catalog(default_stale_after_days)&id=eq.${ETAPE_PROSPECTION}`,
+			{ headers: enTetesAuthentifies(jetonAdmin) },
+		)
+		const [etape] = (await reponse.json()) as {
+			stale_after_days: number | null
+			workflow_nodes_catalog: { default_stale_after_days: number | null } | null
+		}[]
+		expect(etape?.stale_after_days).toBeNull()
+		expect(etape?.workflow_nodes_catalog?.default_stale_after_days).toBe(14)
+	})
+
+	// Ligne *f* : la card ARCHIVÉE de « Livré » n'est pas vieillie. Sans cette ligne, un seed qui
+	// vieillirait tout ce qu'il trouve passerait les deux scénarios ci-dessus — l'étape « Livré »
+	// ne portant aucun seuil, ses cards ne sont comptées nulle part.
+	test('aucune card archivée n’est vieillie par le seed', async ({ request }) => {
+		const reponse = await request.get(
+			`${CARDS}?select=id,entered_step_at&id=eq.${CARD_ARCHIVEE}`,
+			{ headers: enTetesAuthentifies(jetonAdmin) },
+		)
+		const [card] = (await reponse.json()) as { entered_step_at: string }[]
+		const JOUR = 24 * 60 * 60 * 1000
+		expect(Math.floor((Date.now() - new Date(card.entered_step_at).getTime()) / JOUR)).toBe(0)
 	})
 })
 

@@ -2218,6 +2218,42 @@ psql_seed -c "update public.cards set entered_step_at = now()
               where id::text like '5eed%' and archived_at is null and deleted_at is null;" >/dev/null
 info "Ancienneté : les cards seedées repartent à zéro dans leur étape — le pipeline reste sain"
 
+# --- 8 octies ter. UNE card, et une seule, est VOULUE EN RETARD — docs/SPEC-seed.md §9.12 -----
+# @spec CRM-046 (docs/BACKLOG.md) — tranche 3 : la bascule de la pastille d'ancienneté est
+#       démontrable sur une donnée permanente (docs/SPEC-seed.md §9.12, §9.12.1 à §9.12.4 ;
+#       docs/SPEC-workflow-engine.md §7.4 ; docs/DESIGN_SYSTEM.md §5.1)
+#
+# C'EST LA PROMESSE DE LA SECTION PRÉCÉDENTE, TENUE. Elle annonçait qu'une card en retard « se
+# posera explicitement, avec une date choisie, non avec le temps qui passe » : la voici. Sans elle,
+# la pastille `danger` du §5.1 n'était démontrable que contre une réponse SUBSTITUÉE, et la
+# Definition of Done de `CRM-046` — « chaque fonctionnalité livrée est démontrable depuis le
+# seed » — n'était pas tenue pour elle.
+#
+# `…0c3` EST SEULE DANS SA COLONNE, et c'est ce qui la désigne (§9.12.1) : la vieillir ne déplace
+# aucun cumul et ne change aucun ordre — l'ordre d'une colonne est `position` puis `title`, jamais
+# `entered_step_at`. Son seuil est de 14 jours, hérité du nœud `prospection` et non surchargé par
+# l'étape ; trente jours placent le retard au double du seuil, hors d'atteinte de l'heure à
+# laquelle le seed s'applique.
+#
+# L'ORDRE DES DEUX INSTRUCTIONS PORTE LA RÈGLE : tout repart à zéro ci-dessus, PUIS la seule card
+# voulue en retard recule. Le recul part de `now()` et non de la valeur courante : un rejeu ne
+# cumule donc rien, et les trente-neuf autres cards restent à zéro (§9.12.2).
+CARD_EN_RETARD='5eed0000-0000-4000-8000-0000000000c3'
+psql_seed -c "update public.cards set entered_step_at = now() - interval '30 days'
+              where id = '$CARD_EN_RETARD' and archived_at is null and deleted_at is null;" >/dev/null
+au_dela=$(psql_seed -c "
+	select count(*) from public.cards c
+	join public.workflow_steps s on s.id = c.current_step_id
+	join public.workflow_nodes_catalog n on n.id = s.node_id
+	where c.archived_at is null and c.deleted_at is null
+	  and coalesce(s.stale_after_days, n.default_stale_after_days) is not null
+	  and now() - c.entered_step_at >=
+	      make_interval(days => coalesce(s.stale_after_days, n.default_stale_after_days));")
+[ "${au_dela:-0}" = "1" ] || die "ancienneté : $au_dela cards au-delà de leur seuil au lieu d'une
+        seule — le contrat du §9.12.6 ligne a n'est pas tenu."
+info "Ancienneté : « Audit sécurité applicative » est à 30 jours pour un seuil de 14 — la pastille
+  d'ancienneté bascule sur une donnée permanente, et elle seule"
+
 # --- 8 nonies. Quatre messages RÉELLEMENT reçus — docs/SPEC-seed.md §2.19, CRM-057 -------------
 # @spec CRM-060 (docs/BACKLOG.md) — sous-tranche 2 bis : le quatrième message, qui déclenche la
 #       règle 3 du classement (docs/SPEC-contacts.md §8.8.8, docs/SPEC-mail-subsystem.md §11.4)

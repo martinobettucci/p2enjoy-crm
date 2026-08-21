@@ -132,9 +132,12 @@ const TRANSITIONS_SERVIES = [
 /**
  * Les trois cards actives de `grands-comptes`, telles que le seed les porte.
  *
- * `c3` est **ancienne de trente jours** ici, alors que le seed pose `entered_step_at` à `now()` :
- * c'est la seule façon d'exercer la bascule de la pastille d'ancienneté (§7.4), qu'aucune donnée
- * permanente ne démontre. Le fait est nommé, il n'est pas maquillé — et il appartient à `CRM-046`.
+ * `c3` est **ancienne de trente jours** ici. Ce n'était longtemps « la seule façon d'exercer la
+ * bascule de la pastille d'ancienneté (§7.4) », le seed posant `entered_step_at` à `now()` pour
+ * toutes ses cards. **RÉVISÉ le 2026-08-21** : la tranche 3 de `CRM-046` (`docs/SPEC-seed.md`
+ * §9.12) pose désormais cette MÊME card à trente jours en base. La fixture et la donnée
+ * permanente racontent donc la même histoire, au lieu de se contredire, et la bascule est prouvée
+ * **sans aucune substitution** par `e2e/ui/anciennete-board.spec.ts`.
  */
 const CARDS_SERVIES = [
 	{
