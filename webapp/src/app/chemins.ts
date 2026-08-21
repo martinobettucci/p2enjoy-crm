@@ -85,6 +85,15 @@ export const CHEMIN_ADMIN_CATALOGUE = '/reglages/catalogue' as const
  */
 export const CHEMIN_ADMIN_COMPTES_MAIL = '/reglages/comptes-mail' as const
 
+/**
+ * Configuration des identités sortantes — `CRM-089`, `docs/SPEC-mail-subsystem.md` §22.2.
+ *
+ * Une SEPTIÈME section de réglages, et la jumelle de `CHEMIN_ADMIN_COMPTES_MAIL` : l'une configure
+ * ce qu'on reçoit, l'autre ce qu'on expédie. Les deux tables sont distinctes, leurs fonctions
+ * d'écriture aussi, et les fondre en une adresse ferait porter à un écran deux objets métier.
+ */
+export const CHEMIN_ADMIN_IDENTITES_MAIL = '/reglages/identites-mail' as const
+
 /** État de la messagerie — `CRM-059`. */
 export const CHEMIN_ETAT_MESSAGERIE = '/reglages/messagerie' as const
 

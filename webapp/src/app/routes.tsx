@@ -33,6 +33,7 @@ import {
 	CHEMIN_ADMIN_ARBORESCENCE,
 	CHEMIN_ADMIN_CATALOGUE,
 	CHEMIN_ADMIN_COMPTES_MAIL,
+	CHEMIN_ADMIN_IDENTITES_MAIL,
 	CHEMIN_ADMIN_WORKFLOWS,
 	CHEMIN_CONTACTS,
 	CHEMIN_CORBEILLE,
@@ -57,6 +58,7 @@ export {
 	CHEMIN_ADMIN_ARBORESCENCE,
 	CHEMIN_ADMIN_CATALOGUE,
 	CHEMIN_ADMIN_COMPTES_MAIL,
+	CHEMIN_ADMIN_IDENTITES_MAIL,
 	CHEMIN_ADMIN_WORKFLOWS,
 	CHEMIN_CONTACTS,
 	CHEMIN_CORBEILLE,
@@ -142,6 +144,9 @@ export const CLE_TITRE_ETAT_MESSAGERIE: CleTraduction = 'admin.mail.title'
  * (docs/SPEC-mail-subsystem.md §21.2).
  */
 export const CLE_TITRE_COMPTES_MAIL: CleTraduction = 'admin.mailAccounts.title'
+
+/** Titre de l'écran des identités d'expédition — `CRM-089`. */
+export const CLE_TITRE_IDENTITES_MAIL: CleTraduction = 'admin.mailIdentities.title'
 
 /**
  * Titre de la corbeille — `CRM-077`, même patron que les trois autres (docs/SPEC-corbeille.md §4.1).
@@ -292,6 +297,20 @@ export function IndexReglages() {
 						<span className="font-medium">{t('admin.settings.index.mailAccounts')}</span>
 						<span className="text-sm text-text-2">
 							{t('admin.settings.index.mailAccounts.body')}
+						</span>
+					</Link>
+				</li>
+				{/* Les identités d'expédition viennent APRÈS les comptes entrants et AVANT
+				    l'état — `CRM-089`, docs/SPEC-mail-subsystem.md §22.2 : on reçoit avant
+				    d'expédier, et on configure avant de superviser. */}
+				<li>
+					<Link
+						to={CHEMIN_ADMIN_IDENTITES_MAIL}
+						className="flex flex-col gap-1 px-4 py-3 min-h-[var(--size-target)] hover:bg-hover rounded-lg"
+					>
+						<span className="font-medium">{t('admin.settings.index.mailIdentities')}</span>
+						<span className="text-sm text-text-2">
+							{t('admin.settings.index.mailIdentities.body')}
 						</span>
 					</Link>
 				</li>

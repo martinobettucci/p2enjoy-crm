@@ -31,6 +31,7 @@ import {
 	CHEMIN_COUTS_TRACK,
 	CHEMIN_DEMARRAGE,
 	CHEMIN_ADMIN_COMPTES_MAIL,
+	CHEMIN_ADMIN_IDENTITES_MAIL,
 	CHEMIN_ETAT_MESSAGERIE,
 	CHEMIN_LISTE,
 	CHEMIN_CONTACT,
@@ -43,6 +44,7 @@ import {
 	CLE_TITRE_CORBEILLE,
 	CLE_TITRE_DEMARRAGE,
 	CLE_TITRE_COMPTES_MAIL,
+	CLE_TITRE_IDENTITES_MAIL,
 	CLE_TITRE_ETAT_MESSAGERIE,
 	CLE_TITRE_INTROUVABLE,
 	CLE_TITRE_OBJECTIFS,
@@ -88,6 +90,13 @@ const EtatMessagerie = lazy(async () => ({
  */
 const ReglagesComptesMail = lazy(async () => ({
 	default: (await import('./ReglagesComptesMail')).ReglagesComptesMail,
+}))
+/**
+ * L'écran des identités d'expédition de `CRM-089`, jumeau du précédent et chargé à la demande pour
+ * la même raison : il porte un formulaire que la seule supervision n'a pas à télécharger.
+ */
+const ReglagesIdentitesMail = lazy(async () => ({
+	default: (await import('./ReglagesIdentitesMail')).ReglagesIdentitesMail,
 }))
 /** La corbeille de `CRM-077`, chargée à la demande pour la même raison que les trois autres. */
 const Corbeille = lazy(async () => ({ default: (await import('./Corbeille')).Corbeille }))
@@ -262,6 +271,17 @@ function RoutesApplication() {
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_COMPTES_MAIL}>
 							<ReglagesComptesMail />
+						</AppShell>
+					}
+				/>
+				{/* Les identités d'expédition — `CRM-089`. Déclarée APRÈS les comptes entrants
+				    et AVANT l'état de la messagerie, comme dans l'index des réglages
+				    (docs/SPEC-mail-subsystem.md §22.2). */}
+				<Route
+					path={CHEMIN_ADMIN_IDENTITES_MAIL}
+					element={
+						<AppShell cleTitreRoute={CLE_TITRE_IDENTITES_MAIL}>
+							<ReglagesIdentitesMail />
 						</AppShell>
 					}
 				/>

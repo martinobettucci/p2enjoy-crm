@@ -1774,6 +1774,96 @@ export const fr = {
 	'admin.mailAccounts.refusal.unknown':
 		"L'enregistrement a été refusé, et la cause n'est pas reconnue par le produit.",
 
+	// --- Identités sortantes SMTP — CRM-089, docs/SPEC-mail-subsystem.md §22 -------------------
+	'admin.settings.index.mailIdentities': 'Identités d’expédition',
+	'admin.settings.index.mailIdentities.body':
+		"Adresse d'expédition, nom affiché, serveur SMTP et mot de passe de chaque identité employée pour répondre.",
+
+	'admin.mailIdentities.title': 'Identités d’expédition',
+	'admin.mailIdentities.aria': 'Configuration des identités d’expédition SMTP',
+	'admin.mailIdentities.live.aria': 'Enregistrement des identités d’expédition',
+	'admin.mailIdentities.noWorkspace.title': 'Aucun espace de travail accessible',
+	'admin.mailIdentities.noWorkspace.body':
+		"Sans espace de travail, il n'y a aucune identité d'expédition à configurer.",
+	'admin.mailIdentities.empty.title': 'Aucune identité d’expédition',
+	'admin.mailIdentities.empty.body':
+		"Aucune identité d'expédition n'est visible avec ce compte. Déclarez-en une pour pouvoir répondre depuis le produit.",
+	'admin.mailIdentities.error.title': 'Les identités d’expédition n’ont pas pu être chargées',
+	'admin.mailIdentities.error.body': "La requête n'a pas abouti. Réessayer relance le chargement.",
+	'admin.mailIdentities.error.retry': 'Réessayer',
+
+	'admin.mailIdentities.open': 'Déclarer une identité',
+	'admin.mailIdentities.configure': 'Configurer',
+	'admin.mailIdentities.configure.aria': 'Configurer l’identité {identite}',
+	'admin.mailIdentities.form.title': 'Configuration de l’identité d’expédition',
+	'admin.mailIdentities.save': 'Enregistrer',
+	'admin.mailIdentities.saving': 'Enregistrement…',
+	'admin.mailIdentities.saved': 'Identité enregistrée.',
+	'admin.mailIdentities.cancel': 'Annuler',
+	'admin.mailIdentities.default': 'Par défaut',
+
+	// Les deux entrées de DÉCLARATION du sélecteur — une identité existante y est nommée par ses
+	// données, libellé et adresse (docs/SPEC-mail-subsystem.md §22.5, docs/DESIGN_SYSTEM.md §5.35).
+	'admin.mailIdentities.target.newMine': 'Nouvelle identité personnelle',
+	'admin.mailIdentities.target.newSystem': 'Nouvelle identité de service',
+
+	'admin.mailIdentities.field.target': 'Identité visée',
+	'admin.mailIdentities.field.fromAddress': 'Adresse d’expédition',
+	'admin.mailIdentities.field.fromAddress.help':
+		"Changer cette adresse ne renomme pas cette identité : cela en déclare une seconde, et celle-ci demeure.",
+	'admin.mailIdentities.field.fromName': 'Nom d’expéditeur',
+	'admin.mailIdentities.field.label': 'Libellé',
+	'admin.mailIdentities.field.host': 'Serveur SMTP',
+	'admin.mailIdentities.field.port': 'Port',
+	'admin.mailIdentities.field.security': 'Sécurité',
+	'admin.mailIdentities.field.username': 'Identifiant',
+	'admin.mailIdentities.field.default': 'Identité par défaut pour cet expéditeur',
+	'admin.mailIdentities.field.password': 'Mot de passe',
+	'admin.mailIdentities.field.password.help':
+		"Laissé vide, le mot de passe enregistré est conservé. Il n'est jamais affiché.",
+	'admin.mailIdentities.field.password.help.new':
+		"Obligatoire pour une identité qui n'existe pas encore : sans lui, aucune expédition ne serait possible.",
+
+	// Les quatre valeurs de `mail_outbound_identities_statut` (migration 0023) — jamais le code
+	// brut (docs/SPEC-mail-subsystem.md §22.3, docs/DESIGN_SYSTEM.md §5.35).
+	'admin.mailIdentities.status.pending': 'En attente',
+	'admin.mailIdentities.status.ok': 'Connectée',
+	'admin.mailIdentities.status.error': 'En erreur',
+	'admin.mailIdentities.status.disabled': 'Désactivée',
+
+	// Les trois modes de `mail_outbound_identities_securite`, en toutes lettres (§1, §5.35).
+	'admin.mailIdentities.security.ssl': 'SSL',
+	'admin.mailIdentities.security.starttls': 'STARTTLS',
+	'admin.mailIdentities.security.none': 'Aucune',
+
+	// Dictionnaire fermé des refus — docs/SPEC-mail-subsystem.md §22.8. Aucun corps d'erreur du
+	// serveur n'est affiché : il divulguerait `secret_id` (INC-193).
+	'admin.mailIdentities.refusal.forbidden':
+		"Vous ne pouvez pas configurer cette identité : seule une administratrice ou un administrateur de l'espace de travail configure l'identité de service et celle d'un collègue.",
+	'admin.mailIdentities.refusal.session':
+		'Votre session a expiré. Reconnectez-vous, puis réessayez.',
+	'admin.mailIdentities.refusal.passwordRequired':
+		"Un mot de passe est exigé pour déclarer une identité : sans lui, aucune expédition ne serait possible.",
+	// LA BORNE EST 120, ET NON 200 : `mail_outbound_identities_label_borne` est une contrainte
+	// DISTINCTE de celle des comptes entrants, relue en base (§22.5).
+	'admin.mailIdentities.refusal.label':
+		'Le libellé est obligatoire, et ne dépasse pas 120 caractères.',
+	'admin.mailIdentities.refusal.host':
+		'Le serveur est obligatoire, et ne dépasse pas 253 caractères.',
+	'admin.mailIdentities.refusal.port':
+		'Le port doit être un nombre entier compris entre 1 et 65535.',
+	'admin.mailIdentities.refusal.security': "Le mode de sécurité n'est pas reconnu.",
+	'admin.mailIdentities.refusal.username':
+		"L'identifiant est obligatoire, et ne dépasse pas 320 caractères.",
+	'admin.mailIdentities.refusal.fromAddress':
+		"L'adresse d'expédition doit être une adresse électronique, de la forme nom@domaine.test.",
+	'admin.mailIdentities.refusal.owner':
+		"Le propriétaire de cette identité n'est pas membre de l'espace de travail.",
+	'admin.mailIdentities.refusal.network':
+		"L'enregistrement n'a pas abouti : le serveur n'a pas répondu.",
+	'admin.mailIdentities.refusal.unknown':
+		"L'enregistrement a été refusé, et la cause n'est pas reconnue par le produit.",
+
 	// --- Corbeille — CRM-077, docs/SPEC-corbeille.md §4 ---------------------------------------
 	'admin.settings.index.trash': 'Corbeille',
 	'admin.settings.index.trash.body':
