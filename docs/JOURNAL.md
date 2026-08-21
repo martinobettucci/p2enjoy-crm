@@ -22901,3 +22901,37 @@ arbitrage du responsable (`CRM-060`, `CRM-083`, `CRM-084`), une unité non ouver
 `CRM-014`) ou un hôte sans interception TLS (`CRM-001`, INC-186). **`INC-193` attend toujours un
 arbitrage de sécurité**, et **`INC-194` est ouverte** : l'écran de `CRM-088` perd le focus quand on
 referme son formulaire depuis la commande du bas.
+
+## décision 497 — les compteurs figés d'INC-191 se retournent en INVARIANTS, jamais en nouveaux nombres
+
+**Session du 2026-08-21, ouverte à 04h09 UTC.** Pile levée par `./runDev.sh` — dix-sept services
+persistants *healthy* —, seed appliqué, Node 24.19.0 installé par `nvm`, `npm ci` posé derrière le
+paquet CA de l'hôte.
+
+**Le choix de l'unité, et il est mesuré.** Les unités `[~]` du plan sont, l'une après l'autre,
+bloquées par une cause qu'une session ne peut pas lever : `CRM-001` exige un hôte sans interception
+TLS ; `CRM-013` et `CRM-014` attendent les tables de `CRM-072` et `CRM-073` ; `CRM-060`, `CRM-081`,
+`CRM-084` et `CRM-086` attendent un arbitrage du responsable (§6 point 4, INC-169, INC-173,
+INC-182). Ce qui reste ouvert et relève du code est ce que la décision 494 avait déjà désigné comme
+« la voie la plus utile au produit » : **les détecteurs de régression figés d'INC-191**, dix harnais
+rouges non pas du produit mais de leur propre succès. Un harnais est du code ; le remettre en état
+rend au dépôt sa capacité à voir une vraie régression.
+
+**LA MÉTHODE EST TRANCHÉE ICI, ET ELLE N'EST PAS « METTRE LE BON NOMBRE ».** Relever un compteur de
+15 à 41 le refigerait au prochain enrichissement du seed : c'est exactement la boucle qu'INC-141,
+INC-155 et INC-140 décrivent depuis trois semaines, et la décision 144 l'avait déjà nommée — « les
+contrôles mesuraient l'âge de la base, non le produit ». Chaque assertion figée est donc
+**retournée** au sens de la décision 51 : elle cesse de compter une population et se met à mesurer
+l'**invariant** que sa section prétend tenir — le harnais rend le seed tel qu'il l'a trouvé, et les
+lignes que ce harnais emprunte sont à leur place déclarée. Le motif est écrit dans le fichier, à
+côté de l'assertion, avec la valeur mesurée le jour du retournement. Aucune assertion n'est retirée.
+
+**Mesure d'ouverture, sur la pile réelle.** `scripts/verify-move-card.sh --rapide` rend
+**55 contrôles, 1 anomalie** : « le nombre de cards seedées a changé ». Relevé en base au même
+instant : `select count(*) from public.cards where id::text like '5eed%'` vaut **41**, contre les
+**15** que le harnais fige depuis la cinquième tranche de `CRM-077`. Les vingt-six cards
+supplémentaires viennent de `CRM-085` et de `CRM-086`, qui ont seedé les lignes de coût dont elles
+avaient besoin. Le produit n'a rien perdu ; le compteur, lui, mesurait l'âge du seed.
+
+**Où reprendre si cette session est interrompue** : les harnais restants de la liste d'INC-191,
+chacun sous l'unité qu'il éprouve, avec la même méthode.
