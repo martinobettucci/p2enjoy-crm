@@ -22532,3 +22532,86 @@ démarrée, avec les jetons réels des comptes du seed ; l'écran, lui, **n'exis
 est écrite (`docs/SPEC-mail-subsystem.md` §21, `docs/DESIGN_SYSTEM.md` §5.34) : la suite est le code
 de l'écran, dans l'ordre du §3.2 — module de lecture et d'écriture, composant, route, traductions,
 tests unitaires, preuve d'API, preuve d'interface et captures.
+
+## décision 493 — `CRM-088` livrée en `[~]` : l'écran de configuration des comptes entrants existe
+
+**Session du 2026-08-20, 22h12 à ~00h30 UTC**, la même que la décision 492, dont elle rend compte
+de la livraison. Pile levée par `./runDev.sh` (17 services persistants *healthy*), seed appliqué,
+Node 24 installé, `npm ci` posé — le checkout de départ n'a aucun `node_modules`.
+
+**Ce qui a été codé.**
+
+- `webapp/src/lib/mail-comptes.ts` — lecture de `mail_inbound_accounts` sous la RLS de `0022`
+  (dix colonnes, `secret_id` jamais demandée), écriture par `upsert_mail_inbound_account`, et le
+  dictionnaire fermé des onze issues du §21.7. **Le mot de passe vide est OMIS de l'appel**, jamais
+  envoyé vide : c'est ce qui conserve le secret enregistré, et c'est mesuré des deux côtés.
+- `webapp/src/app/ReglagesComptesMail.tsx` — liste plate des boîtes visibles, formulaire dans le
+  flux replié par défaut, sélecteur construit depuis les boîtes visibles plus celles que l'appelant
+  peut créer, aucune commande éteinte d'avance, refus traduit **sans jamais recopier le corps du
+  serveur**.
+- Route `/reglages/comptes-mail` hors de `ROUTES`, entrée d'index **avant** « État de la
+  messagerie », traductions.
+
+**Deux défauts trouvés en REGARDANT les captures** (`CLAUDE.md` §16), corrigés dans la même
+session : la ligne d'une boîte personnelle se repliait dès 1440 px, la liste étant bornée à `72ch`
+— la largeur d'une colonne de prose, pour une ligne qui porte six éléments ; et le texte d'aide du
+mot de passe promettait de « conserver le mot de passe enregistré » sur une boîte qui n'existe pas
+encore, où la base refuse par `password_required` — une promesse fausse, donc la valeur par défaut
+trompeuse que `CLAUDE.md` §18 interdit.
+
+**Un défaut trouvé en EXÉCUTANT la preuve d'interface** : la restauration du seed par la **clé de
+service** échouait en silence, `upsert_mail_inbound_account` lisant `auth.uid()` en première ligne
+et refusant `not_authenticated` quand il est nul. Le scénario suivant trouvait alors un seed
+modifié. La restauration passe par le jeton réel et **vérifie son code de retour**.
+
+**Campagne complète de fin de session, exécutée une fois, et voici ses mesures.**
+
+| Preuve | Verdict |
+|---|---|
+| `npm run typecheck` | vert, quatre projets `tsc` |
+| `npm run build` | vert, paquet principal **229,34 ko** (228,47 avant : le câblage de la route ; l'écran lui-même est chargé à la demande) |
+| `npm run test:unit` | **69 fichiers, 2325 tests, aucun échec** (2272 avant : +48 de cette unité, +5 déjà présents) |
+| `npm run test:sql` | **50 fichiers, 2480 assertions, aucune anomalie** — identique à la décision 491 |
+| `npm run e2e:api` | **821 passés** (818 avant, +3 de cette unité) |
+| `npm run e2e:ui` | **557 passés** (549 avant, +8 de cette unité) |
+| `npm run e2e:mail` | **41 passés, 1 échec** — INC-181, voir ci-dessous |
+| `pytest` (`mail-sync`) | **244 passés** |
+| `scripts/verify-harness.sh --rapide` | **31 contrôles, aucune anomalie**, après révision de ses deux compteurs |
+| `scripts/verify-mail-inbound.sh --rapide` | **31 contrôles, 1 en échec** — INC-191, voir ci-dessous |
+
+**Les deux rouges, et pourquoi aucun ne m'appartient.**
+
+- `e2e/mail/ingestion.spec.ts:223` échoue **derrière** une campagne d'interface de 13,5 min et
+  **passe seul** au rejeu. C'est la **troisième occurrence d'INC-181**, consignée avec sa mesure :
+  le scénario en échec **change** d'une occurrence à l'autre, ce qui écarte l'hypothèse d'un défaut
+  propre à un scénario et confirme que c'est l'état de la pile qui décide.
+- `scripts/verify-mail-inbound.sh` §4 rougit sur « une synchronisation est affichée alors que rien
+  ne l'écrit ». Mesuré en base : `last_sync_at` est **nulle sur les trois boîtes** ; c'est
+  `sync_state` qui porte les bornes d'UID que la relève réelle de `CRM-054` vient d'écrire. C'est
+  **INC-191**, déjà ouverte et nommant ce harnais ; la précision apportée désigne la moitié exacte
+  du prédicat à retourner. Cette session ne touche ni `mail-sync`, ni les migrations, ni le seed, et
+  la colonne est fermée en écriture à `authenticated`.
+
+**Deux garde-fous RÉVISÉS, jamais retirés** (mécanisme de la décision 51) : `SCENARIOS_API` passe de
+818 à **821**, `SCENARIOS_UI` de 549 à **557**, motifs écrits dans `scripts/verify-harness.sh`. Les
+valeurs sont **comptées**, jamais déduites.
+
+**Une erreur de méthode, faite et corrigée dans la session**, parce qu'elle coûterait cher à la
+suivante : deux exécutions de `scripts/verify-harness.sh` ont été lancées **en parallèle**, la
+seconde pendant que la première dégradait délibérément la base. Elle a rendu deux rouges — `test:sql`
+et `e2e:api` — qui ne disaient rien du produit. Rejouée **seule**, la même commande rend *31
+contrôles, aucune anomalie*. C'est INC-177 sous une autre forme : **un harnais qui dégrade la base
+ne se lance jamais à deux**.
+
+**Ce qui n'a pas été exécuté**, et il faut le dire (`CLAUDE.md` §25) : les **cinquante-huit autres**
+`scripts/verify-*.sh`. Le budget de la session est passé dans la livraison et dans la campagne ;
+INC-190 mesure que la série entière demande environ 75 min à part. Aucun harnais propre à cette
+surface n'est écrit non plus — c'est le seul reste réel de l'unité.
+
+**Où reprendre.** `CRM-088` est `[~]`, onze points sur douze cochés. La prochaine exécution peut la
+clore en écrivant `scripts/verify-mail-comptes.sh`, non complaisant et avec son témoin, puis en le
+rejouant. Le reste du produit est inchangé : les `[~]` antérieures attendent toujours un arbitrage
+du responsable (`CRM-060`, `CRM-083`, `CRM-084`), une unité non ouverte (`CRM-013`, `CRM-014`) ou
+un hôte sans interception TLS (`CRM-001`, INC-186). **`INC-193` attend un arbitrage de sécurité** :
+le corps d'un refus de contrainte divulgue `secret_id` à tout appelant `authenticated` capable de
+provoquer ce refus.
