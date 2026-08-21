@@ -10945,7 +10945,7 @@ démarrage, et un registre ferait diverger le chemin de production du seul chemi
 (décisions 20 et 489). Aucun retour arrière automatique n'est écrit : la reprise est la restauration
 de l'instantané de VM, avec la perte assumée de tout ce qui a été écrit depuis.
 
-### CRM-088 — Réglages : configuration des comptes entrants IMAP `[~]`
+### CRM-088 — Réglages : configuration des comptes entrants IMAP `[x]`
 *Créée le 2026-08-20 — `docs/JOURNAL.md` décision 492. Motif : le §2.3 de
 `docs/SPEC-mail-subsystem.md` décrit depuis `CRM-000` des « formulaires de configuration » qui
 « proposent remplacer le mot de passe », et le §13.1 les a différés vers « une unité de réglages
@@ -11008,23 +11008,35 @@ exactement la surface qui manquait pour l'exercer. Elle ne corrige pas `INC-193`
 `secret_id` par le corps d'un refus de contrainte est étrangère à cet écran, qui se borne à ne
 jamais l'afficher.
 
-- [x] **Harnais dédié `scripts/verify-mail-comptes.sh`**, non complaisant et avec son témoin,
-      livré par la session suivante (`docs/SPEC-mail-subsystem.md` §21.11 bis). **REJOUÉ le
-      2026-08-20 en `--rapide` : 43 contrôles, aucune anomalie.**
+- [x] **Harnais dédié `scripts/verify-mail-comptes.sh`** (`docs/SPEC-mail-subsystem.md` §21.11 bis,
+      `docs/JOURNAL.md` décisions 493 et 495) : **45 contrôles, aucune anomalie** en mode complet,
+      **43** en `--rapide`. Trois dégradations réelles du module livré — mot de passe vide envoyé,
+      `secret_id` ajoutée aux colonnes lues, refus de contrainte déclassé —, témoin vert avant, et
+      restauration constatée **octet à octet**. Il ajoute ce qu'aucune autre preuve ne couvrait :
+      **les cinq noms de contrainte du dictionnaire fermé sont relus dans `pg_constraint`**, un
+      renommage en migration faisant sinon retomber l'écran sur son repli sans qu'aucune preuve le
+      voie, toutes simulant la réponse du serveur.
 
-*Pourquoi l'unité reste `[~]` et non `[x]`.* Un seul reste, et il est nommé : **la campagne
-complète des `scripts/verify-*.sh` n'a pas été rejouée en entier**. Ce qui l'a été, et son verdict :
+*Ce qui a clos l'unité.* Les deux restes nommés à la livraison sont levés. Le harnais existe et il
+est vert. Et la série des `scripts/verify-*.sh` a été rejouée dans le cadrage MESURÉ par la
+décision 488 — `--rapide` sur les 38 harnais qui l'acceptent, complet sur les 23 autres, plafond de
+20 min chacun : **59 harnais sur 61 dans la session de la décision 495**, dont **37 verts**,
+**19 rouges tous préexistants et consignés** (INC-186, INC-191, INC-192, INC-175, INC-139) et
+**3 au plafond** — `verify-droits-fins`, `verify-harness`, `verify-tracks`, exactement les trois que
+la décision 488 nomme comme verrouillés par leur propre coût. Les verdicts relevés séparément par la
+session de la décision 493 complètent la série :
 
 | Harnais | Verdict |
 |---|---|
-| `scripts/verify-mail-comptes.sh --rapide` | **43 contrôles, aucune anomalie** |
+| `scripts/verify-mail-comptes.sh` | **45 contrôles, aucune anomalie** (complet) ; **43** en `--rapide` |
 | `scripts/verify-harness.sh --rapide` | **31 contrôles, aucune anomalie**, après révision de ses deux compteurs de scénarios |
-| `scripts/verify-webapp.sh` | **42 contrôles, 1 anomalie** — `INC-178`, préexistante : `h-10`, `py-0.5` et `text-text-1` sont citées par cinq fichiers qu'aucun changement de cette unité ne touche, et le compte de classes citées passe de 285 à 307 sans qu'aucune des nouvelles manque |
+| `scripts/verify-webapp.sh` | **42 contrôles, 1 anomalie** — `INC-178`, préexistante : trois classes citées par cinq fichiers qu'aucun changement de cette unité ne touche |
 | `scripts/verify-mail-inbound.sh --rapide` | **31 contrôles, 1 en échec** — `INC-191`, préexistante : le harnais fige l'absence d'une synchronisation que la relève de `CRM-054` écrit désormais dans `sync_state` |
 
-Le reste de la Definition of Done est vert et mesuré. La prochaine exécution peut clore l'unité en
-rejouant les cinquante-six harnais restants, ou en constatant que ce qu'ils couvrent est étranger à
-cette surface.
+**Un seul harnais n'a été rejoué par aucune des deux sessions : `scripts/verify-workflows.sh`**, et
+c'est dit plutôt que dissimulé (`docs/CloudWorker.md` §4.3). Il ne touche pas cette surface — ni
+l'écran, ni le module, ni la table `mail_inbound_accounts`. `INC-193` reste ouverte et n'appartient
+pas à cette unité (§21.12).
 
 ### CRM-089 — Réglages : configuration des identités sortantes SMTP `[~]`
 *Créée le 2026-08-21 — `docs/JOURNAL.md` décision 494. Motif : le §14.1 de

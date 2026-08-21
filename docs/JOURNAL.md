@@ -22703,3 +22703,110 @@ l'écran, lui, **n'existe pas encore**.
 est écrite (`docs/SPEC-mail-subsystem.md` §22, `docs/DESIGN_SYSTEM.md` §5.35) : la suite est le code
 de l'écran, dans l'ordre du §3.2 — module de lecture et d'écriture, composant, route, traductions,
 tests unitaires, preuve d'API, preuve d'interface et captures.
+
+## décision 495 — `CRM-088` close : le harnais qui manquait, et la série entière rejouée derrière lui
+
+*Note d'ordre — RÉSOLUTION SUR PLACE, `docs/CloudWorker.md` §0 : au moment de pousser cette
+décision, une session concurrente avait déjà poussé les décisions 493 et 494 sur `origin/main`.
+La numérotation a été relevée à **495** pour préserver les trois entrées ; le contenu n'est pas
+modifié par la résolution.*
+
+**Session du 2026-08-21, ouverte à 00:14:50 UTC** sur un checkout neuf. Docker démarré à la main
+(§2 de `docs/CloudWorker.md`), Node 24.19.0 / npm 11.17.0 installés par `nvm`, `npm ci` avec le
+paquet CA de l'hôte, pile levée par `./runDev.sh` — **dix-sept services persistants *healthy***,
+plus le `migrations-runner` en one-shot —, seed appliqué. Les vingt conteneurs citent **les deux**
+fichiers Compose (diagnostic du §2.2 bis) : aucune recréation nue n'est en cause dans ce qui suit.
+
+**Le choix de l'unité, et il tient en une ligne du backlog.** La dernière entrée du journal
+(décision 492) accompagnait le commit **documentaire** de `CRM-088` ; les six commits de code qui
+ont suivi ont livré l'écran sans que le journal reçoive son entrée de clôture. Le backlog, lui,
+était à jour et nommait le reste exact : « la campagne complète des `scripts/verify-*.sh` n'a pas
+été rejouée en entier, et aucun harnais `scripts/verify-mail-comptes.sh` propre à cette surface
+n'est écrit ». C'est du comportement à livrer — un harnais est du code —, donc l'unité de la
+session au titre du §4.2, règle 2.
+
+**Ce qui a été codé : `scripts/verify-mail-comptes.sh`, 45 contrôles.** Son contrat a été écrit et
+committé **avant** lui (`docs/SPEC-mail-subsystem.md` §21.11 bis), la spécification de l'écran
+existant déjà et couvrant tout le reste (§3.2, exception). Il rejoue les preuves de l'unité d'un
+seul geste — traçabilité, câblage de la surface, suites unitaires, API, interface, six captures —
+et il **ajoute ce qu'aucune preuve existante ne couvrait** :
+
+- **les cinq noms de contrainte sont relus EN BASE.** `classerEnregistrement` classe ses refus sur
+  `mail_inbound_accounts_label_borne`, `…_host_borne`, `…_port_borne`, `…_securite` et
+  `…_username_borne` : ce sont des identifiants du schéma. Si une migration en renommait un,
+  l'écran retomberait **silencieusement** sur son repli « refus inconnu » et toutes les preuves
+  resteraient vertes, puisqu'elles simulent la réponse du serveur. Le harnais relit chaque nom dans
+  `pg_constraint`, puis vérifie que le module cite bien les cinq — les deux sens, sans quoi le
+  contrôle ne prouverait rien de l'écran ;
+- **`secret_id` reste révoquée à `authenticated`** et **`upsert_mail_inbound_account` reste refusée
+  à `anon`** : les deux faits mesurés dont le §21.3 et le §21.6 tirent leurs règles ;
+- **l'ordre de l'index des réglages** est lu dans la source, et l'écran est constaté **hors** de la
+  table `ROUTES`.
+
+**Deux défauts trouvés dans ce harnais en le rejouant, et corrigés.** La signature de la fonction
+d'écriture, d'abord recopiée à la main, était fausse : `has_function_privilege` rendait une
+**erreur** que le contrôle lisait comme « le droit est ouvert ». La signature est désormais résolue
+depuis `pg_proc`, et l'absence de fonction se dit pour ce qu'elle est. Ensuite, la traçabilité était
+cherchée par `head -3` — la fenêtre trop étroite qu'`INC-192` mesure sur `verify-corbeille.sh` : le
+harnais lit maintenant l'en-tête complet, jusqu'à la première ligne qui n'est plus un commentaire.
+
+**Preuves de l'unité.** `scripts/verify-mail-comptes.sh` rend **45 contrôles, aucune anomalie** en
+mode complet, **43** en `--rapide`. Ses trois dégradations mordent : mot de passe vide envoyé,
+`secret_id` ajoutée aux colonnes lues, refus de contrainte déclassé — chacune rougit les suites, et
+la restauration est constatée **octet à octet** contre l'instantané d'avant dégradation. Les quatre
+captures du §21.11 régénérées par la campagne d'interface ont été **observées** (`CLAUDE.md` §16) :
+la liste des trois boîtes, le formulaire préremplí de la boîte système avec son champ de mot de
+passe **vide** et son texte d'aide de conservation, et le refus de port — `70000` conservé dans le
+champ, formulaire ouvert, et la phrase du produit seule, sans aucun corps de serveur.
+
+**Campagne de fin de session.** `npm run typecheck` vert (quatre projets `tsc`), `npm run build`
+vert (`index-BZOCjx6y.js` **229,34 kB**), `npm run test:unit` **69 fichiers / 2325 tests**,
+`npm run test:sql` **50 fichiers / 2480 assertions**, `npm run e2e:api` **821 passés**,
+`npm run e2e:mail` **42 passés**, `pytest` **244 passés**.
+
+**`npm run e2e:ui` a rendu 554 passés et 3 échecs, et LA CAUSE ÉTAIT MOI.** Les trois échecs sont
+dans `e2e/ui/commentaires-gestes.spec.ts` — « `actions-commentaire` : attendu 1, obtenu 2 ». Une
+**première** exécution de cette suite avait été tuée par le plafond de mon outillage ; le scénario
+crée un commentaire `Geste <horodatage>-<aléa>` et le supprime **physiquement dans son `finally`**,
+qui n'a donc jamais tourné. La ligne `8f43fd91-…` est restée en base, et la suite suivante a compté
+deux cartes d'actions au lieu d'une. **`apply-seed.sh` ne la retire pas** : le seed est additif sur
+`card_comments`. La ligne a été supprimée par le même chemin que le scénario, et la suite rejouée
+rend **8 passés**. C'est le mécanisme d'INC-061 (décision 296) sous une forme nouvelle : ce n'est
+pas le harnais qui laisse le résidu, c'est **son interruption**. Une session suivante qui trouverait
+ces trois rouges les lirait comme une régression du fil de commentaires ; ils n'en sont pas.
+
+**La série des `scripts/verify-*.sh`, rejouée dans le cadrage MESURÉ par la décision 488** —
+`--rapide` sur les 38 harnais qui l'acceptent, complet sur les 23 autres, plafond de 20 min chacun.
+**59 harnais sur 61** rejoués : **37 verts**, **19 rouges**, **3 au plafond**
+(`verify-droits-fins`, `verify-harness`, `verify-tracks` — exactement les trois que la décision 488
+nomme comme verrouillés par leur propre coût). **`verify-webapp` et `verify-workflows` n'ont PAS
+été exécutés ICI**, le budget de la session s'achevant ; c'est dit plutôt que dissimulé (§4.3). La
+session concurrente de la décision 493 a rejoué `verify-webapp` de son côté — **42 contrôles,
+1 anomalie**, `INC-178` préexistante —, si bien que **`verify-workflows` est le seul harnais du
+dépôt qu'aucune des deux sessions n'a rejoué**.
+
+Les dix-neuf rouges ont été lus un par un, et **aucun n'est imputable à cette session**, qui n'a
+ajouté qu'un fichier de harnais et de la documentation :
+
+- **INC-191, compteur ou `hasnt_*` figé** : `verify-cards` (15/1/1/15 vs 14/1/1/14),
+  `verify-authz` (5/8/41 vs 4/6/14), `verify-move-card`, `verify-mail-inbound`,
+  `verify-mail-ingestion`, `verify-timeline`, `verify-valeurs-champs`, plus **trois occurrences que
+  la décision 488 n'avait pas nommées** — `verify-copie-workflow` (« 7/11/9/15/1 »),
+  `verify-manual` (annexe A : « 12 » et « 21 » contre 16 et 23 en base) et `verify-preuves-refus`
+  (INC-175, plan 55 contre 58, 66 politiques contre 103) ;
+- **préexistants déjà consignés** : `verify-board` (INC-139), `verify-corbeille` (INC-192, message
+  identique au mot près), `verify-scripts` (INC-186, **111 vérifications, 1 anomalie**, rigoureusement
+  la mesure des décisions 487 et 491) ;
+- **ordre de série** : `verify-change-channel-workflow` (restauration, cas nommé par la
+  décision 488), `verify-stack` (« `p2enjoy-webapp` health=starting », le cas exact de la
+  décision 488, plus trois contrôles Storage/MinIO), `verify-mail-sync` (deux événements
+  « absents » que `docker logs` porte pourtant — 3 `service_started` et 687 `request_completed`
+  relevés à la main), `verify-auth` n° 14, `verify-channels` (« le rejeu a modifié quelque chose »),
+  `verify-transition-required-fields`.
+
+**Où reprendre.** `CRM-088` passe à **`[x]`** : son harnais existe et il est vert, et la série a été
+rejouée. La prochaine exécution choisit son unité au §4.2. **Rien n'a été arrêté** (§4.5) : le
+backlog n'est pas soldé, et il reste des voies ouvertes — la plus utile au produit étant de
+**retourner les compteurs figés d'INC-191 sous chaque unité concernée**, geste qui viderait dix
+rouges de la série et que la décision 488 désignait déjà. `INC-190` et `INC-193` attendent toujours
+l'arbitrage du responsable.
