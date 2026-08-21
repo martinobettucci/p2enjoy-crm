@@ -1164,6 +1164,9 @@ se retrouvant jamais à l'identique. Le harnais ne dégrade donc que ce qu'il sa
   droit fin a désormais son chemin (§9.7).
 - **~~Ni volume, ni donnée longue.~~** Le manque est réel et il est mesuré au §9.11 ; il est fermé
   par la tranche que ce §9.11 spécifie.
+- **~~Aucune card en retard sur son seuil de relance.~~** Le manque est réel, il est mesuré au
+  §9.12, et il est fermé par la tranche que ce §9.12 spécifie : une card — et une seule — est
+  posée à trente jours d'une étape dont le seuil est de quatorze.
 
 ### 9.11 Le volume et les données longues — tranche 2 de `CRM-046`
 
@@ -1276,6 +1279,128 @@ elle n'est ni supprimée, ni contournée.
 6. les captures de données longues sont produites **et observées** à 1440 et à 390 px, sur la
    donnée **réelle** ;
 7. `scripts/verify-liste.sh` rejoué, ses deux contrôles retournés compris.
+
+### 9.12 L'ancienneté dans l'étape — tranche 3 de `CRM-046`
+
+**Ce qui manque, mesuré le 2026-08-21 sur la pile de développement**, seed appliqué :
+
+| Manque | Mesure |
+|---|---|
+| **Aucune pastille d'ancienneté ne bascule** | Les **40** cards actives du seed ont toutes `now() - entered_step_at` inférieur à **une minute**, contre des seuils de relance de **5 à 30 jours** : aucune n'atteint le sien, et la bascule vers `danger` du §5.1 du design system n'a **aucune donnée permanente** qui la porte |
+
+Ce manque appartient à `CRM-046`, et il y est renvoyé nommément depuis trois endroits : l'énoncé de
+`CRM-040` dans `docs/BACKLOG.md`, le §7.4 de `docs/SPEC-workflow-engine.md`, et un contrôle de
+`scripts/verify-board.sh` qui **échoue** si le fait venait à changer. La Definition of Done de
+`CRM-046` exige que « chaque fonctionnalité livrée soit démontrable depuis le seed » : la pastille
+d'ancienneté est livrée par `CRM-041` et ne l'est pas. Cette tranche la rend démontrable.
+
+Aujourd'hui la bascule est prouvée **contre une réponse substituée** (`e2e/ui/board.spec.ts`, carte
+`…0c3` vieillie de trente jours dans la seule fixture) et par un test unitaire. Une substitution
+prouve que l'écran réagit à une réponse **donnée** ; elle ne prouve pas qu'un utilisateur du jeu de
+démonstration rencontre jamais le cas — c'est exactement le raisonnement du §9.11.
+
+#### 9.12.1 La card retenue, et pourquoi celle-là
+
+**`5eed0000-0000-4000-8000-0000000000c3` — « Audit sécurité applicative »**, seule card active du
+channel `grands-comptes` à l'étape `Prospection`, dont le seuil de relance est de **14 jours**
+(`workflow_nodes_catalog.default_stale_after_days`, l'étape n'en surcharge aucun).
+
+Trois raisons, et aucune n'est esthétique :
+
+1. **C'est la card que la fixture d'interface vieillit déjà.** `e2e/ui/board.spec.ts` la sert à
+   trente jours depuis `CRM-041`, en écrivant dans son commentaire que « le seed pose
+   `entered_step_at` à `now()` ». La donnée permanente et la réponse substituée racontent
+   désormais la **même** histoire, au lieu de se contredire ;
+2. **elle est seule dans sa colonne**, si bien que le vieillissement ne déplace aucun cumul, ne
+   change aucun ordre — l'ordre d'une colonne est `position` puis `title` (§2.6 de
+   `docs/SPEC-cards.md`) et ne lit jamais `entered_step_at` ;
+3. **le contraste reste sur le même écran** : la colonne `Relance`, immédiatement à droite, porte
+   `…0c1` et `…0c2`, fraîches et de seuil 7 jours. Une capture unique montre donc les **trois**
+   états du §7.4 — pastille absente (`Livré`, sans seuil), pastille neutre (`Relance`), pastille
+   `danger` (`Prospection`).
+
+**Trente jours**, et non huit ou quinze : le seuil est de quatorze, et un écart du simple au double
+ne dépend d'aucune heure d'application. Une card posée à quinze jours basculerait aussi, mais son
+« 15 jours » contre un seuil de 14 se lit comme une limite ; « 30 jours » se lit comme un retard.
+
+#### 9.12.2 Les autres cards ne bougent pas, et c'est le contrat
+
+Les **39** autres cards actives continuent de repartir à zéro à chaque application, comme la
+section 8 octies bis du script le pose depuis sa décision d'origine : le jeu de démonstration
+montre un pipeline **sain**, avec un unique retard que le CRM est précisément fait pour faire
+remonter. Un pipeline entièrement en retard ne démontrerait pas la bascule : il démontrerait un
+seuil mal choisi.
+
+L'unique retard est donc **voulu, choisi et écrit**, jamais subi par le temps qui passe — ce que la
+section 8 octies bis avait annoncé en toutes lettres : « la démonstration d'une card en retard,
+quand elle sera voulue, se posera explicitement, avec une date choisie, non avec le temps qui
+passe. »
+
+#### 9.12.3 L'écriture, et pourquoi elle passe par la clé de service
+
+Comme la remise à zéro qui la précède, la date est posée par `psql` avec le rôle `postgres` :
+`entered_step_at` ne figure pas parmi les douze colonnes que `CRM-013` ouvre à `authenticated`, et
+c'est très bien ainsi — un client n'a pas à vieillir ni à rajeunir une ancienneté.
+
+Elle est écrite **après** la remise à zéro générale, dans la même section, de sorte que l'ordre des
+deux instructions porte la règle : tout repart à zéro, **puis** la seule card voulue en retard
+recule de trente jours. Aucun rejeu ne cumule le recul, la date étant calculée depuis `now()` et
+non depuis la valeur courante.
+
+#### 9.12.4 Convergence et reproductibilité
+
+Le §9.8 exige qu'un rejeu rende le **même** état. Il le rend, au sens qui compte ici : l'ancienneté
+du jeu est définie **relativement à l'instant d'application**, non par un horodatage absolu. Deux
+applications successives rendent donc deux dates absolues différentes et le **même** état
+observable — une card à trente jours de son étape, trente-neuf à zéro, une seule au-delà de son
+seuil. C'est déjà la règle que la remise à zéro générale applique depuis son écriture ; cette
+tranche ne l'invente pas, elle l'étend d'une ligne.
+
+Un contrôle de non-complaisance est dû : reculer la date d'une **seconde** card doit faire échouer
+le harnais, faute de quoi « exactement une » ne serait pas mesuré.
+
+#### 9.12.5 Ce que cette tranche coûte aux preuves existantes, et pourquoi c'est légitime
+
+Deux preuves **doivent** devenir rouges, et elles sont **révisées, jamais retirées** (`CLAUDE.md`
+§18, `docs/CloudWorker.md` §3.1) :
+
+- `scripts/verify-board.sh` fige « aucune card du seed n'atteint son seuil : l'écart du §7.4 est
+  constaté, pas oublié ». Ce contrôle **assère l'absence** que cette tranche comble : il est
+  retourné et assère désormais la **présence** — exactement une card au-delà de son seuil, et c'est
+  `…0c3` —, plus la présence d'au moins une card en deçà, sans quoi « au-delà » ne serait pas un
+  contraste ;
+- `e2e/api/board.spec.ts` porte le scénario « aucune card du seed n'atteint son seuil de relance »,
+  qui borne l'âge de **toutes** les cards à cinq jours. Il est retourné et mesure le contrat du
+  §9.12.6 contre la vraie API, avec le jeton réel de l'administratrice.
+
+Le §7.4 de `docs/SPEC-workflow-engine.md` porte la phrase « AUCUNE CARD DU SEED N'ATTEINT SON
+SEUIL, ET C'EST MESURÉ », et il est révisé dans le **même** changement que le code : une
+spécification qui survit à sa mesure est un mensonge à retardement.
+
+#### 9.12.6 Contrat, mesurable en base et par l'API
+
+| # | Énoncé | Vérifiable par |
+|---|---|---|
+| a | Exactement **une** card active du seed a `now() - entered_step_at` supérieur ou égal à son seuil | `count(*) = 1` sur la jointure card → étape → nœud |
+| b | Cette card est `5eed0000-0000-4000-8000-0000000000c3` | son `id` |
+| c | Son ancienneté est d'au moins **30** jours et de moins de **31** | `now() - entered_step_at` |
+| d | Son seuil est de **14** jours, hérité du nœud et non surchargé par l'étape | `stale_after_days is null` et `default_stale_after_days = 14` |
+| e | Au moins une card active porte un seuil et reste **en deçà** | `count(*) >= 1` sur le complément de *a* |
+| f | Aucune card **archivée** ou **en corbeille** n'est vieillie | `archived_at`, `deleted_at` |
+| g | Les cards à l'étape `Livré`, sans seuil, n'ont **aucune** pastille — inchangé | seuil `null` |
+
+#### 9.12.7 Preuves exigées
+
+1. le seed appliqué deux fois de suite rend le **même** état observable — convergence, §9.8 ;
+2. les sept lignes du contrat du §9.12.6 mesurées en base ;
+3. les lignes *a* à *e* mesurées par l'**API**, avec le jeton réel de l'administratrice — scénario
+   retourné de `e2e/api/board.spec.ts` ;
+4. la bascule constatée **à l'écran, sur la donnée réelle et sans aucune substitution** : session
+   ouverte par le formulaire de connexion, board de `grands-comptes`, pastille `data-depassee="oui"`
+   sur `…0c3` et `data-depassee="non"` sur `…0c1`, console vierge ;
+5. capture produite **et observée**, montrant les trois états sur le même écran ;
+6. `scripts/verify-board.sh` rejoué, son contrôle retourné compris, avec sa **contre-épreuve** :
+   une seconde card vieillie fait échouer le contrôle, puis la base est rendue à son état.
 
 ---
 
