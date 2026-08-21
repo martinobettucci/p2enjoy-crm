@@ -369,6 +369,10 @@ PORT_RAPPORT=9323
 #   | ASSERTIONS_ATTENDUES  | 2269 |   2480 |                  0 |
 #   | SCENARIOS_API         |  774 |    818 |                 +2 |
 #   | SCENARIOS_UI          |  437 |    549 |                 +4 |
+#
+#   Ces deux lignes ont été REVUES le 2026-08-20 par `CRM-088`, qui ajoute ses propres preuves :
+#   821 pour l'API (+3) et 557 pour l'interface (+8). La dérive décrite ci-dessous reste entière —
+#   ces deux révisions-là sont, elles, celles de la session qui les a produites.
 #   | SCENARIOS_MAIL        |   42 |     42 |                  0 |
 #
 # LA DÉRIVE N'EST PAS DE CETTE SESSION, et la preuve est écrite ailleurs : `docs/JOURNAL.md`
@@ -487,7 +491,13 @@ ASSERTIONS_ATTENDUES=2480
 # par `playwright test --list` (« Total: 818 tests »), dont **+2** pour la sous-tranche 2 bis de
 # `CRM-060` : la lecture de la suggestion du seed sous le jeton de l'administratrice, et le refus
 # opposé au `business_developer` comme à la `viewer`.
-SCENARIOS_API=818
+# **RÉVISION DU 2026-08-20 — `CRM-088`.** Trois scénarios d'API ajoutés à
+# `e2e/api/comptes-entrants.spec.ts` : la lectrice CRÉE sa propre boîte et la relit seule, la même
+# lectrice se voit refuser la boîte système avec la contre-épreuve qu'aucune écriture n'a eu lieu,
+# et `INC-193` est FIGÉE — le corps d'un refus de contrainte porte la référence Vault que le chemin
+# normal refuse en `403`. 818 + 3 = **821**, valeur COMPTÉE par `npm run e2e:api` (« 821 passed »),
+# jamais déduite (INC-101). Le garde-fou est RÉVISÉ, jamais retiré (mécanisme de la décision 51).
+SCENARIOS_API=821
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -693,7 +703,13 @@ SCENARIOS_API=818
 # par `playwright test --list` (« Total: 549 tests »), dont **+4** pour la sous-tranche 2 bis de
 # `CRM-060` : le bloc de suggestion et son lien, le TÉMOIN d'un message sans suggestion,
 # l'acceptation au clavier relue par l'API, et les quatre paliers avec la mesure du débordement.
-SCENARIOS_UI=549
+# **RÉVISION DU 2026-08-20 — `CRM-088`.** Huit scénarios d'interface ajoutés par
+# `e2e/ui/reglages-comptes-mail.spec.ts` : le parcours depuis l'index des réglages avec la
+# vérification de l'ORDRE des entrées, la modification du libellé suivie de la preuve que le secret
+# déchiffre toujours, le refus réel d'un port hors bornes avec sa phrase du produit, l'état vide
+# d'une lectrice AVEC son geste, et les quatre paliers. 549 + 8 = **557**, valeur COMPTÉE par
+# `npm run e2e:ui` (« 557 passed »), jamais déduite. Garde-fou RÉVISÉ, jamais retiré.
+SCENARIOS_UI=557
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

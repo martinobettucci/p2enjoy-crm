@@ -3077,6 +3077,21 @@ dans son propre changement.
 événement observable — un cycle de relève acquitté — plutôt qu'une fenêtre de temps, ou si
 `e2e:mail` doit être exécutée avant `e2e:ui` dans la campagne, ou les deux.
 
+**TROISIÈME OCCURRENCE, MESURÉE LE 2026-08-20 par la session `CRM-088`, et elle CONFIRME la
+nature du défaut.** Même enchaînement, même signature, un scénario différent :
+
+| Exécution | Verdict |
+|---|---|
+| `npm run e2e:mail` **immédiatement après** un `npm run e2e:ui` de 13,5 min | **41 passés, 1 échec** |
+| Le scénario en échec, **rejoué seul**, quelques minutes plus tard | **passé** |
+
+L'échec porte sur `ingestion.spec.ts:223` — « un email adressé à l'adresse d'une card y est classé
+automatiquement » —, et non sur les deux scénarios de la première mesure. Le fait que **le scénario
+change d'une occurrence à l'autre** écarte définitivement l'hypothèse d'un défaut propre à un
+scénario : c'est l'ÉTAT de la pile après une campagne d'interface qui décide, comme l'entrée le
+disait déjà. La session `CRM-088` ne touche ni `mail-sync`, ni les migrations, ni le seed — son
+diff ne sort pas de `webapp/src`, `e2e/`, `scripts/` et `docs/` —, et **rien n'est corrigé ici**.
+
 **MESURE COMPLÉMENTAIRE, 2026-08-20, `CRM-086` tranche 6a — un TROISIÈME scénario, et son mécanisme
 est ÉTABLI cette fois.** `mail-sync.spec.ts` §S3, « la console opérationnelle reste silencieuse »,
 a rendu rouge en campagne complète :
@@ -3649,6 +3664,26 @@ le fichier, jamais supprimée.
 **Ce qui suit.** La correction est ligne par ligne — un compteur à mettre à jour, un `hasnt_*` à
 retourner en `has_*` — et **relève de chaque unité que le harnais teste**. Les grouper dans une
 session de documentation reviendrait à substituer ce geste au produit (`docs/CloudWorker.md` §4.2 bis).
+
+**PRÉCISION MESURÉE LE 2026-08-20 par la session `CRM-088`, sur le quatrième harnais de la liste,
+et elle désigne la MOITIÉ exacte du prédicat à retourner.** `scripts/verify-mail-inbound.sh` §4
+teste `last_sync_at is not null OR sync_state <> '{}'::jsonb`, et rend **31 contrôles, 1 en échec**.
+Relevé en base juste après :
+
+```
+label                      | status  | last_sync_at | last_checked_at
+Boîte de Camille Aubert    | pending |              | 2026-08-20 23:10:53+00
+Boîte de Driss Lemoine     | pending |              | 2026-08-20 23:10:51+00
+Boîte système du workspace | ok      |              | 2026-08-20 23:10:50+00
+```
+
+`last_sync_at` est **nulle sur les trois** ; c'est `sync_state` qui porte désormais les bornes d'UID
+que la relève de `CRM-054` écrit — `{"INBOX": {"uid_max": 4, "uid_min": 1}}`, relevé sur la boîte
+système. Le harnais est donc rouge **de la relève réelle** qu'une campagne `e2e:mail` vient de
+provoquer, et non d'une synchronisation « prétendue ». La ligne à retourner est celle de
+`sync_state`, pas celle de `last_sync_at`, qu'aucune unité ne remplit encore. Rien n'est corrigé
+ici : `CRM-088` ne touche ni `mail-sync`, ni les migrations, ni le seed, et cette colonne est fermée
+en écriture à `authenticated`.
 
 ### INC-192 — `scripts/verify-corbeille.sh` cherche `@spec CRM-077` dans les TROIS premières lignes de `webapp/src/app/RouteCard.tsx`, qui en cumule dix
 
