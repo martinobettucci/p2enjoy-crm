@@ -23224,3 +23224,58 @@ constate ce qu'il laisse derrière lui : trois politiques d'origine, `DELETE` to
 la session a dépensé le sien dans l'unité, sa campagne complète, la correction de la preuve qui
 l'effaçait et ce rejeu d'une heure. `INC-138`, `INC-139`, `INC-190` et `INC-193` attendent toujours
 l'arbitrage du responsable.
+
+## décision 502 — « Ma journée » cesse d'être une entrée de menu qui ne mène nulle part
+
+**Session du 2026-08-21, 10:12:40 UTC.**
+
+**Unité choisie, et pourquoi celle-là.** La reprise que la décision 501 désignait — obtenir le
+bilan de `scripts/verify-tracks.sh` — est une **preuve**, pas une unité produit ; le §4.2 de
+`docs/CloudWorker.md` fait passer la construction avant. Les unités `[~]` antérieures dans l'ordre
+du plan ont été relues une par une : `CRM-001` attend un hôte sans interception TLS ; `CRM-013` et
+`CRM-014` attendent `audit_log` et `api_tokens`, que `CRM-072` et `CRM-073` — toutes deux `[ ]` —
+n'ont pas créées ; `CRM-034`, `CRM-035`, `CRM-052`, `CRM-053`, `CRM-057`, `CRM-058`, `CRM-060`,
+`CRM-077`, `CRM-081` et `CRM-089` ne portent plus que des preuves à rejouer ou des limites nommées ;
+`CRM-082`, `CRM-083` et `CRM-084` sont retenues par des arbitrages ouverts — INC-169, INC-170,
+INC-173. Aucune unité `[~]` ne portait donc du **comportement** livrable sans arbitrage, et la
+règle 3 du §4.2 s'applique : la première unité `[ ]` dans l'ordre du plan, **`CRM-061`**.
+
+**Le modèle était livré depuis `CRM-040` ; il ne manquait que l'écran.** `cards.next_action`,
+`cards.next_action_at` et l'index `cards_workspace_next_action_idx` existent, et la colonne
+« Usage » de cet index porte le nom de cette vue dans `docs/SCHEMA.md` §10 **depuis `CRM-000`**.
+Sept endroits du dépôt nommaient « Ma journée » — schéma, spécification des cards à trois reprises,
+design system, spécification de la webapp, manuel — et **aucun** ne disait ce que l'écran montre.
+L'adresse `/ma-journee` rendait un état vide **inconditionnel** depuis `CRM-007` : une entrée de
+barre latérale qui ne mène nulle part.
+
+**Ce qui a été écrit, et committé avant la première ligne de code** (`CLAUDE.md` §5,
+`docs/CloudWorker.md` §3.2 point 3) : `docs/SPEC-cards.md` §17 en douze sous-chapitres,
+`docs/SPEC-seed.md` §13 en six, `docs/DESIGN_SYSTEM.md` §5.36, la section `CRM-061` de
+`docs/BACKLOG.md` avec sa Definition of Done et son découpage en deux tranches, et le changelog.
+Tout est **mesuré** sur la pile debout et seedée, jetons réels des trois profils, et non de mémoire.
+
+**UN ARBITRAGE IMPLICITE A ÉTÉ TRANCHÉ EXPLICITEMENT, ET IL EST RÉVERSIBLE.** Deux lectures du
+dépôt se contredisaient sur la portée de l'écran : le **nom** dit « **Ma** journée » ; l'**index**
+déclaré pour lui porte `(workspace_id, next_action_at)` et non `(owner_id, next_action_at)`. Plutôt
+que d'en sacrifier une, le §17.3 retient « mes affaires » par défaut et « tout l'espace de travail »
+sur un lien, et il **écrit le motif** : le prédicat sélectif de cette requête est l'intervalle
+d'échéance, pas le responsable, donc l'index déclaré sert exactement cette lecture. Le choix tient
+dans une constante et une valeur d'adresse ; si le responsable préfère l'autre défaut, la bascule
+est d'une ligne.
+
+**LE SEED NE DÉMONTRAIT PAS CETTE VUE, ET LA MESURE L'A ÉTABLI AVANT L'ÉCRITURE.** Sur les 26
+affaires actives portant une échéance, **aucune** ne tombait dans le jour courant, et les cinq
+« en retard » ne l'étaient que parce que le calendrier avait dépassé leur date littérale. C'est le
+défaut exact que la décision 501 a corrigé pour `entered_step_at`, retrouvé sur `next_action_at`.
+Le remède est spécifié au §13 de `docs/SPEC-seed.md` : une **translation unique** des échéances,
+de l'ancre du contrat vers le jour courant, appliquée après l'écriture des cards — donc convergente,
+puisque la translation repart toujours du littéral que la section 8 ter vient de réécrire. Trois
+échéances du contrat seulement sont révisées, aucune preuve du dépôt n'en dépendant : vérifié
+fichier par fichier avant la révision.
+
+**Où reprendre.** La tranche 1 — module de composition, écran, seed déterministe, preuves et
+captures. Puis la tranche 2 — harnais et chapitre 9 du manuel. Le bilan de
+`scripts/verify-tracks.sh`, encore dû à l'ouverture de cette session, a été obtenu entre-temps par
+une session concurrente — **46 contrôles, aucune anomalie** (fin de la décision 501) ; il ne
+figure donc plus au reste. `INC-138`, `INC-139`, `INC-169`, `INC-170`, `INC-173`, `INC-190` et
+`INC-193` attendent toujours l'arbitrage du responsable.

@@ -1712,3 +1712,109 @@ traversant la RLS.
 | 6 | `select count(*) from public.budget_occurrences where closed_at is not null` | `1` |
 | 7 | `select count(distinct currency) from public.budgets` | `2` — `EUR` et `CHF` |
 | 8 | Second rejeu du seed | Aucune erreur, mêmes comptes, clôtures conservées |
+
+---
+
+## 13. Les échéances suivent le calendrier — `CRM-061`
+
+Écrit **avant toute ligne de code** de `CRM-061`, et **après mesure** sur la pile seedée le
+2026-08-21. Ce chapitre est au `next_action_at` ce que le §9.12 est à `entered_step_at`, et il
+naît du même défaut, constaté une seconde fois.
+
+### 13.1 Le manque, mesuré et non supposé
+
+Le §9 pose les échéances du contrat en **dates littérales** — `2026-08-07T14:00:00Z`,
+`2026-08-25T09:00:00Z`, et ainsi de suite. Elles étaient justes le jour où le contrat a été écrit ;
+le calendrier les défait ensuite, exactement comme il défaisait l'ancienneté avant le §9.12.
+
+MESURÉ le 2026-08-21, base fraîchement seedée, sur les **26** affaires actives portant une échéance :
+
+| Ce que la vue « Ma journée » aurait montré | Compte |
+|---|---|
+| **En retard** | 5 — aucune voulue, toutes rattrapées par le calendrier |
+| **Aujourd'hui** | **0** |
+| **À venir dans sept jours** | 1 |
+
+La section centrale de l'écran — celle qui donne son nom à la vue — n'avait **aucune donnée pour
+l'exercer**, et n'en aurait jamais eu : aucune date littérale ne tombe le jour où on la regarde. Le
+§9 de `docs/SPEC-cards.md` annonçait pourtant que ces colonnes existent « sans quoi la vue *Ma
+journée* et l'index du §2.8 seraient livrés sans aucune donnée pour les exercer ». La donnée était
+là ; c'est sa **date** qui ne l'était plus.
+
+### 13.2 Le remède : un DÉCALAGE unique, appliqué après l'écriture du contrat
+
+Le contrat du §9 **n'est pas réécrit**. Ses dates littérales restent la référence lisible, et une
+seule instruction les translate toutes du même intervalle :
+
+```
+next_action_at ← next_action_at + (date_trunc('day', now()) − date '2026-08-21')
+```
+
+`2026-08-21` est l'**ancre** du contrat : la journée pour laquelle ses dates ont été choisies. Le
+jour de l'ancre, le décalage vaut zéro et rien ne bouge ; un mois plus tard il vaut trente et un
+jours, et **toute la distribution est préservée à la journée près** — les écarts entre affaires,
+l'ordre, les regroupements par channel, tout ce que le §9 décrit reste vrai.
+
+**Pourquoi un décalage global et non une date relative par ligne.** Écrire chaque échéance en
+« `now()` plus tant de jours » aurait rendu le contrat du §9 illisible — quarante lignes de tableau
+dont aucune ne dit plus quand l'affaire est due par rapport aux autres — et aurait dispersé la règle
+dans quarante endroits. Une translation unique laisse le contrat lisible et met la règle à un seul
+endroit.
+
+### 13.3 Convergence, et l'ordre qui la porte
+
+L'instruction est **convergente**, et c'est l'ordre des sections qui le garantit : la section 8 ter
+et ses suivantes réécrivent `next_action_at` depuis les **littéraux** du contrat à chaque passage
+(`Prefer: resolution=merge-duplicates`, colonne envoyée y compris nulle, §9.2). La translation part
+donc toujours de la valeur littérale, jamais de la valeur déjà translatée : **deux rejeux successifs
+laissent la même base**, et non une base décalée deux fois.
+
+Le décalage est appliqué **après** toutes les sections qui écrivent des cards, et **avant** le
+sommeil de démonstration de la section 8 duodecies, dont la convergence par état lit `snoozed_until`
+et non l'échéance.
+
+L'écriture passe par la **clé de service**, comme au §9.12.3 : `next_action_at` est ouverte à
+`authenticated` (`CRM-013`), mais le seed n'a pas à se connecter pour poser un état de
+démonstration.
+
+### 13.4 Trois échéances du contrat sont RÉVISÉES, et chacune a son motif
+
+Le décalage préserve la distribution ; il ne crée pas ce qu'elle ne contient pas. Le contrat du §9
+ne portait **aucune** échéance le jour de l'ancre, et aucune échéance proche appartenant à
+l'administratrice — les deux manques du §13.1. Trois lignes sont donc révisées, et **seulement**
+trois :
+
+| Affaire | Avant | Après | Ce qu'elle démontre |
+|---|---|---|---|
+| `…0c7` « Formation Data & IA — promo 2026 » | `2026-08-10T08:00:00Z` | `2026-08-21T09:00:00Z` | la section **Aujourd'hui**, qui n'avait aucune donnée. Responsable : Camille Aubert |
+| `…d008` « Hébergement infogéré — Éditions Bertrand » | `2026-09-15T11:00:00Z` | `2026-08-24T11:00:00Z` | la section **À venir** pour Camille Aubert, dont aucune affaire ne tombait dans l'horizon de sept jours |
+| *(inchangée)* `…0c3` « Audit sécurité applicative » | `2026-08-07T14:00:00Z` | — | la section **En retard**, quatorze jours avant l'ancre. C'est déjà la card que le §9.12 vieillit dans son étape : une seule affaire porte les deux retards, et ce n'est pas une coïncidence — c'est la même affaire négligée |
+
+**Ce que ces trois révisions ne changent pas** : ni le channel, ni l'étape, ni le responsable, ni le
+montant, ni la position d'aucune affaire. Aucune preuve du dépôt n'assortit d'assertion à ces deux
+échéances — vérifié fichier par fichier avant la révision.
+
+### 13.5 Contrat, mesurable en base
+
+Quel que soit le jour où le seed s'applique, et pour l'administratrice `…011` :
+
+| # | Ce qui doit être vrai | Vérifié par |
+|---|---|---|
+| a | **Au moins une** affaire active, non endormie, dont elle est responsable, a une échéance **strictement antérieure** au début du jour courant | le seed lui-même |
+| b | **Au moins une**, dans le **jour courant** | le seed lui-même |
+| c | **Au moins une**, entre demain et l'horizon de sept jours | le seed lui-même |
+| d | La portée « tout l'espace de travail » rend **strictement plus** de lignes que « mes affaires » | le seed lui-même |
+| e | **Exactement une** affaire endormie porte une échéance dans l'horizon — `…0ca` « Cadrage data — Groupe Vallier » | le seed lui-même |
+| f | Un second rejeu laisse les mêmes échéances, à la seconde près | rejeu |
+
+Le seed **échoue** si l'un de ces contrôles n'est pas tenu : un jeu de démonstration qui ne
+démontre plus est un contrat rompu, pas un détail cosmétique (`CLAUDE.md` §8).
+
+### 13.6 Ce que ce chapitre ne fait pas
+
+- Il **ne touche à aucune autre colonne de date** : `created_at`, `entered_step_at`, `archived_at`,
+  `deleted_at` et `snoozed_until` gardent leurs règles, écrites ailleurs.
+- Il **n'invente aucune affaire**. Les quarante et une cards du seed restent les mêmes, aux trois
+  échéances révisées près.
+- Il **ne rend pas les dates du §9 fausses**. Elles restent le contrat lisible ; le décalage est
+  une translation, pas une réécriture.

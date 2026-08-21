@@ -7152,7 +7152,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | Unité | Objet | État |
 |---|---|---|
 | CRM-060 | Contacts et organisations, historique transverse | `[~]` |
-| CRM-061 | Prochaine action, échéance, vue « Ma journée » | `[ ]` |
+| CRM-061 | Prochaine action, échéance, vue « Ma journée » | `[~]` |
 | CRM-062 | Relances automatiques des cards figées | `[ ]` |
 | CRM-063 | Templates d'emails, signatures, séquences de relance | `[ ]` |
 | CRM-064 | @mentions, notifications temps réel et préférences | `[ ]` |
@@ -8023,6 +8023,55 @@ rapprochement automatique email → organisation par domaine sont **hors périm�
 et **nommés au §6** de la spécification comme appelant l'arbitrage du responsable, plutôt que
 inventés au passage (`CLAUDE.md` §1).
 
+### CRM-061 — Prochaine action, échéance, vue « Ma journée » `[~]`
+
+*Unité ouverte le 2026-08-21. Elle était `[ ]` et n'avait **aucune section** dans ce document : la
+table du chunk 5 la nommait en une ligne, et sept endroits du dépôt la citaient sans lui donner de
+contrat (`docs/SPEC-cards.md` §17, tableau d'ouverture). Le modèle est livré depuis `CRM-040` —
+`cards.next_action`, `cards.next_action_at` et l'index `cards_workspace_next_action_idx`, dont la
+colonne « Usage » porte le nom de cette vue depuis `docs/SCHEMA.md` §10. Il ne manquait que
+l'écran.*
+
+Une surface transverse qui répond à **« que dois-je faire aujourd'hui ? »** : les affaires actives
+portant une échéance, rangées en trois sections — **En retard**, **Aujourd'hui**, **À venir dans
+sept jours** —, à travers tout l'espace de travail, avec une portée « mes affaires » par défaut et
+« tout l'espace de travail » sur un geste.
+
+**DoD** : l'écran remplace l'état vide inconditionnel de `/ma-journee` ; les trois sections sont
+découpées sur les bornes du fuseau du **lecteur** ; les affaires archivées, en corbeille et **en
+sommeil** en sont absentes ; le refus est mesuré **hors interface** avec les jetons réels des trois
+profils ; le seed démontre les trois sections **quel que soit le jour** où il s'applique ; E2E
+souris **et** clavier sur une session réelle, sans substitution ; captures aux quatre paliers,
+produites **et observées** ; console navigateur vierge ; harnais dédié.
+
+**Découpage en deux tranches**, écrit avant la première ligne de code (`docs/SPEC-cards.md` §17) :
+
+- **tranche 1 — la lecture** : le module de composition, l'écran, ses six états, la bascule de
+  portée, et le seed rendu **déterministe** (`docs/SPEC-seed.md` §13). Aucune écriture ;
+- **tranche 2 — le harnais et le manuel** : `scripts/verify-ma-journee.sh` non complaisant, et le
+  chapitre 9 de `docs/manual.md`, déclaré « à livrer » depuis `CRM-047`.
+
+- [x] **Spécification écrite et committée AVANT la première ligne de code** — `docs/SPEC-cards.md`
+      §17, douze sous-chapitres opposables rédigés **après mesure** sur la pile réelle avec les
+      jetons des trois profils (§17.7) ; `docs/SPEC-seed.md` §13, six sous-chapitres ;
+      `docs/DESIGN_SYSTEM.md` §5.36 pour la forme, en écarts seulement. Commit documentaire dédié,
+      poussé.
+- [x] **LA PORTÉE PAR DÉFAUT EST UN CHOIX NOMMÉ, MOTIVÉ ET RÉVERSIBLE** (§17.3), et non une
+      préférence tue. Deux lectures du dépôt se contredisaient : le **nom** dit « **Ma** journée »,
+      l'**index** du §2.8 porte `(workspace_id, next_action_at)` et non `(owner_id, …)`. Le choix
+      retenu — « mes affaires » par défaut, tout l'espace de travail sur un lien — tient les deux :
+      le prédicat sélectif est l'**intervalle d'échéance**, donc l'index déclaré sert exactement
+      cette requête, et le filtre par responsable ne porte que sur le reliquat.
+- [ ] **Tranche 1 — la lecture.** Module de composition, écran, seed déterministe, tests unitaires,
+      preuve d'API, E2E d'interface et captures.
+- [ ] **Tranche 2 — le harnais et le manuel.**
+- [ ] **Ce que l'unité ne livrera pas, et les motifs sont écrits au §17.10** : aucune écriture
+      (reporter, marquer « fait » — le seul chemin reste l'en-tête de la fiche, §15 bis), aucun
+      horizon réglable (périmètre inventé, §12.6), aucune bascule de sommeil (elle annulerait le
+      geste à l'endroit où il agit), aucun groupement par track (le rangement de cette vue est le
+      **temps**), aucune notification ni digest (`CRM-064`, `CRM-069`).
+
+---
 ### CRM-070 — précision d'arbitrage : l'invitation d'un membre
 
 **Arbitrage du responsable — `docs/JOURNAL.md`, décision 256 (INC-015).** `POST /auth/v1/invite`

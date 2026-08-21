@@ -3135,3 +3135,75 @@ porteur du geste. Seuls les **écarts** sont écrits ci-dessous, et chacun a sa 
 
 - **Aucune couleur, aucun jeton, aucune icône nouvelle** : l'écran emprunte au §5.34 sa forme
   entière, au §5.18 sa liste plate, au §5.6 ses pilules et au §5.7 ses champs.
+
+### 5.36 Ma journée — `CRM-061`
+
+Deuxième surface **de travail** transverse du produit, après le carnet (§5.19), et la première dont
+le rangement est le **temps**. Ce que l'écran lit, découpe et refuse de deviner est spécifié par
+`docs/SPEC-cards.md` §17 ; les règles ci-dessous ne disent que de quoi il a l'air.
+
+- **TROIS SECTIONS, ET NON UN TABLEAU DE PLUS.** Le §5.9 régit des colonnes comparables que l'œil
+  balaye en diagonale ; ici la question n'est pas « laquelle est la plus grosse » mais « qu'est-ce
+  qui est en retard ». Le patron est donc une `section` par groupe, chacune portant son `h2` et sa
+  `ul` de lignes — la liste plate du §5.18, avec les hauteurs de ligne et les séparateurs du §5.9 :
+  `--size-target`, bordure basse `--color-border`, survol `--color-hover`, aucune zébrure.
+
+- **LE COMPTE VIT DANS LE TITRE DE SA SECTION, EN TOUTES LETTRES** — « En retard (3) » —, dans son
+  **propre élément** et jamais comme un nœud de texte accolé au libellé : c'est le défaut
+  « Discussion1 » du §5.11, dont le remède est écrit une fois pour tout le produit. Un badge nu
+  serait pire encore : un chiffre ne dit pas ce qu'il compte.
+
+- **UNE SECTION VIDE N'EST PAS RENDUE.** C'est l'écart assumé avec le §5.8, et son motif est celui
+  du §5.11 pour la barre de filtres du fil : trois titres surmontant trois vides diraient trois fois
+  « rien » là où leur absence le dit une fois. Le cas où **tout** est vide est traité par les deux
+  états vides ci-dessous, qui, eux, sont explicites et nommés.
+
+- **« EN RETARD » PORTE LA TEINTE DE DANGER, ET ELLE PORTE SUR L'ÉCHÉANCE, PAS SUR LA LIGNE.**
+  `--color-danger-on-soft` sur `--color-danger-soft`, sur la seule donnée qui est en cause — c'est
+  la pastille d'ancienneté d'une card (§5.1) et l'ancienneté de la table de saisie (§5.31), même
+  signal, même forme. Teinter la ligne entière ferait d'une affaire en retard une **erreur**, ce
+  qu'elle n'est pas : c'est un travail à faire. Le §1 est tenu par le titre de la section, qui écrit
+  « En retard » en toutes lettres.
+
+- **L'ÉCHÉANCE EST EN TÊTE DE LIGNE, ET C'EST UNE DONNÉE TECHNIQUE** (§2) : monospace, chiffres
+  tabulaires. Elle vient **avant** le titre de l'affaire, contrairement à toutes les autres listes
+  du produit — parce que c'est elle qui range cet écran, et qu'une colonne de dates alignées se lit
+  d'un regard là où des dates en fin de ligne se cherchent. **L'heure est rendue avec la date** :
+  une échéance du jour sans heure ne dirait pas si la matinée est déjà passée.
+
+- **LA PILULE « Track › Channel » EST CELLE DU §5.29**, réemployée sans copie — c'est la même
+  donnée, elle doit se reconnaître d'un écran à l'autre. Elle ferme la ligne, après la prochaine
+  action : elle situe l'affaire, elle ne la nomme pas.
+
+- **LA PORTÉE EST UNE PAIRE DE LIENS, PAS UNE CASE À COCHER.** « Mes affaires » et « Tout l'espace
+  de travail » changent d'**adresse** (`docs/SPEC-cards.md` §17.2), et le §12.1 a déjà tranché que
+  ce qui change d'adresse est un lien : en faire un contrôle de formulaire retirerait le clic du
+  milieu, le nouvel onglet et la copie de l'adresse. `aria-current="page"` porte l'état, et une
+  bordure basse de même épaisseur dans les deux états empêche le texte de se décaler — le patron
+  exact de la barre d'onglets.
+
+  *C'est l'écart avec la bascule de sommeil du §5.3 quinquies, qui est une case à cocher : celle-là
+  ne change pas d'adresse dans le board, celle-ci en change.*
+
+- **ELLE RESTE RENDUE SUR UN ÉCRAN VIDE**, comme la barre de filtres du §5.3 quinquies et les
+  onglets du §5.31 : elle est la cause possible de ce vide, et la masquer priverait l'utilisateur du
+  seul geste qui l'en sort.
+
+- **DEUX VIDES DISTINCTS, ET AUCUN NE SE CONFOND AVEC L'AUTRE** (§5.11, §5.32). « Aucune échéance
+  dans votre journée » **porte l'action** qui élargit la portée — le patron du §5.8 ; « aucune
+  échéance dans les sept prochains jours » n'en porte **aucune**, il n'y a rien à élargir et un
+  bouton y serait un chemin vers nulle part (§5.16, §5.19).
+
+- **AUCUNE COMMANDE D'ÉCRITURE, ET L'ABSENCE EST ASSUMÉE.** Ni report, ni « fait », ni saisie : le
+  seul chemin d'écriture de ces deux colonnes est l'en-tête de la fiche (§5.3 ter). Une commande
+  morte serait pire que l'absence (§5.25).
+
+- **SOUS LE PALIER `md`, LA LIGNE SE REPLIE ET GAGNE DE LA HAUTEUR** — l'écart que le §5.21 assume
+  déjà pour sa liste plate, et pris ici pour la même raison : quatre éléments ne tiennent pas sur
+  390 px, et la réponse d'une liste plate au manque de place est de se replier, non de tronquer une
+  donnée. `md` et jamais `sm`, qui est un variant inconnu que Tailwind supprime en silence (§11,
+  §5.20). La page ne défile jamais horizontalement (§7).
+
+- **Aucune couleur, aucun jeton, aucune icône nouvelle** : l'écran emprunte au §5.18 sa liste plate,
+  au §5.29 sa pilule de channel, au §12.1 son patron de liens, au §5.1 sa teinte de retard et au
+  §5.8 ses états. Son entrée de barre latérale porte `CalendarCheck`, déjà déclarée par `CRM-007`.

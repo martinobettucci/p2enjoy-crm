@@ -3877,3 +3877,311 @@ exécutée n'est pas une preuve verte (`CLAUDE.md` §25).
 - **les cinq dégradations vues**, et la restauration constatée octet à octet ;
 - `docs/BACKLOG.md` mis au véritable état de `CRM-081` dans le même changement ;
 - `CHANGELOG.md` et `docs/JOURNAL.md` dans le même changement.
+
+---
+
+## 17. Interface : la vue « Ma journée » — `CRM-061`
+
+Ce chapitre n'existait pas. `CRM-061` tenait en **une ligne** de table au backlog — « Prochaine
+action, échéance, vue *Ma journée* », état `[ ]` — et le reste du dépôt ne la nommait qu'en creux,
+**sept fois**, sans jamais lui donner un contrat :
+
+| Où | Ce qui y était écrit |
+|---|---|
+| `docs/SCHEMA.md` §5 | « `next_action_at` … échéance, **alimente la vue « Ma journée »** » |
+| `docs/SPEC-cards.md` §2.1 | la même phrase, au futur — « alimentera » |
+| `docs/SPEC-cards.md` §2.8 | l'index `cards_workspace_next_action_idx` `(workspace_id, next_action_at)`, dont la colonne « Usage » dit **« Vue « Ma journée » »** |
+| `docs/SPEC-cards.md` §9 | « sans quoi la vue « Ma journée » et l'index du §2.8 seraient livrés **sans aucune donnée pour les exercer** » |
+| `docs/DESIGN_SYSTEM.md` §4 | l'entrée de barre latérale, dans le schéma d'écran **depuis `CRM-000`** |
+| `docs/SPEC-webapp.md` §5.2 | l'adresse `/ma-journee`, « **état vide de la journée** » |
+| `docs/manual.md` §9 | un chapitre de manuel déclaré « **à livrer** » |
+
+Sept renvois, aucun contrat. Ce chapitre est le contrat, et il est écrit **après mesure de la pile
+réelle** — PostgREST `v14.12`, PostgreSQL `supabase/postgres:17.6.1.136`, le seed en base — et non
+de mémoire. Les comptes, les codes HTTP et les filtres cités ci-dessous ont été **observés le
+2026-08-21**, avec les jetons réels des trois profils seedés (`docs/SPEC-seed.md` §2.3).
+
+### 17.1 Ce que la vue est, et ce qu'elle n'est pas
+
+« Ma journée » est la **troisième lecture** de `cards`, et la première qui ne soit bornée par aucun
+channel. Le board (`CRM-041`) montre les affaires rangées par le **graphe** ; la vue liste
+(`CRM-042`) les montre rangées par les **colonnes de la table**, dans un channel ; celle-ci les
+montre rangées par leur **échéance**, à travers tout l'espace de travail. Le board répond à « où en
+est chaque affaire ? », la liste à « laquelle, parmi toutes celles de ce channel, dois-je
+ouvrir ? », celle-ci à **« que dois-je faire aujourd'hui ? »**.
+
+C'est la raison pour laquelle sa spécification vit **ici**, dans le document des cards, et non dans
+un document propre : elle ne livre ni table, ni fonction, ni politique, et ne fait que **lire** deux
+colonnes que `CRM-040` a livrées. C'est le raisonnement exact du §12.1 pour la vue liste, tenu une
+seconde fois.
+
+Elle **n'est pas** :
+
+- **une autorisation.** Ce qu'elle montre est ce que la RLS a consenti. `CLAUDE.md` §10 interdit
+  qu'un écran porte une règle d'accès, et aucune ligne de cette vue n'en porte. MESURÉ : l'anonyme
+  reçoit `200` et `[]` sur la requête exacte du §17.4 ;
+- **un écran d'écriture.** Ni création, ni édition d'échéance, ni report, ni « fait ». La prochaine
+  action et son échéance s'écrivent depuis l'en-tête de la fiche (§15 bis), qui est le seul chemin
+  d'écriture de ces deux colonnes, et le rester est ce qui empêche deux définitions du même geste
+  (§12.1, troisième tiret) ;
+- **un agenda.** Aucune notion de créneau, de durée, de rendez-vous ni de récurrence : `cards` ne
+  porte qu'un instant, et inventer un calendrier au-dessus serait un périmètre que personne n'a
+  demandé. Les activités typées — appels, réunions, visios — sont `CRM-067` ;
+- **une file de relances.** L'ancienneté dans l'étape (`entered_step_at`, seuil de relance) est une
+  **autre** mesure, celle de la pastille du board (`docs/SPEC-workflow-engine.md` §7.4). Une affaire
+  peut être en retard de relance sans porter d'échéance, et l'inverse. Les deux ne se confondent
+  pas, et cette vue ne lit que `next_action_at` ;
+- **une vue des archives ni une corbeille.** Elle applique la définition d'« active » du §5, la
+  **même** que le board et que la vue liste.
+
+### 17.2 Où elle s'ouvre, et ce que l'adresse porte
+
+L'adresse est `/ma-journee`. Elle existe **depuis `CRM-007`** et rendait jusqu'ici un état vide
+inconditionnel ; elle reste dans `ROUTES`, son titre étant une clé de traduction et son contenu ne
+dépendant d'aucun paramètre de chemin.
+
+**La portée vit dans la chaîne de requête**, non dans l'état du composant, et pour les trois motifs
+du §12.2, qui valent ici sans changement — une adresse partagée doit montrer ce que son auteur
+voit, aucune persistance côté client n'est introduite (`CLAUDE.md` §11), et une preuve ouvre un état
+directement au lieu de le reconstituer au clic :
+
+```
+/ma-journee            → mes affaires        (le défaut, jamais écrit dans l'adresse)
+/ma-journee?qui=tous   → tout l'espace de travail
+```
+
+**La liste des valeurs est CLOSE**, comme les tris du §12.2 et comme le mode de sommeil du
+§16.12.4 : `qui=n_importe_quoi` se replie sur le défaut, et l'écran n'affiche **aucune erreur** —
+une adresse tapée à la main n'est pas une panne.
+
+### 17.3 La portée par défaut est « mes affaires », et c'est un choix NOMMÉ
+
+Aucun document du dépôt ne dit si cette vue montre les affaires de l'appelant ou celles de tout
+l'espace de travail. Les deux lectures existent, et elles se contredisent :
+
+- **le nom** dit « **Ma** journée », au singulier et au possessif ;
+- **l'index** du §2.8 porte `(workspace_id, next_action_at)`, et non `(owner_id, next_action_at)`.
+
+Le choix retenu est **« mes affaires » par défaut, tout l'espace de travail sur un geste**, et il
+concilie les deux plutôt que d'en sacrifier une :
+
+1. le nom de l'écran est tenu — celui qui l'ouvre voit **sa** journée, pas celle de ses collègues ;
+2. **l'index reste le bon**, et c'est mesuré plutôt que supposé : le prédicat sélectif de cette vue
+   est l'**intervalle d'échéance** du §17.5, pas le responsable. `workspace_id` borne l'espace,
+   `next_action_at` borne l'horizon, et le filtre par responsable ne porte que sur le reliquat.
+   L'index déclaré par `CRM-040` sert donc exactement cette requête ;
+3. **rien n'est caché.** La portée élargie est un contrôle unique, à un clic, dont l'état est écrit
+   dans l'adresse. Ce n'est pas une règle d'accès — la RLS reste seule juge de ce qui est lisible
+   (`CLAUDE.md` §10) —, c'est un rangement, exactement comme le filtre de sommeil du §16.12.
+
+Le choix est **réversible** : il tient dans une constante du module de composition et dans une
+valeur d'adresse. Si le responsable préfère l'autre défaut, la bascule est d'une ligne, et les
+preuves du §17.11 la suivent.
+
+**Sans session, la portée « mes affaires » n'a pas de sujet.** L'écran rend alors l'état vide du
+§17.8, qui est ce que le backend consent : `200` et zéro ligne. Il n'invente ni refus, ni page
+blanche — c'est ce que `docs/SPEC-manual.md` §7 capture déjà sur cette adresse en visiteur anonyme,
+et cette tranche **ne change pas** cet état-là.
+
+### 17.4 Ce que la vue lit, et en combien de requêtes
+
+**UNE seule requête**, et c'est la mesure qui l'autorise : tout ce que l'écran affiche est porté par
+`cards` et par deux relations embarquées.
+
+| Élément | Source | Motif |
+|---|---|---|
+| échéance, titre, prochaine action | `cards` | les colonnes de la ligne |
+| l'adresse de l'affaire | `channels!cards_channel_id_workspace_id_fkey(slug, tracks(slug))` | `/tracks/:slugTrack/:slugChannel/cards/:idCard` **exige les deux slugs**, et aucun ne se déduit de l'autre — l'embarquement retenu par `docs/SPEC-costs.md` §4.4, repris sans changement |
+| le nom du track et du channel | la même relation, `name` | la pilule « Track › Channel » du §5.29 de `docs/DESIGN_SYSTEM.md`, réemployée |
+
+**Aucune lecture des étapes**, contrairement à la vue liste (§12.3, requête n° 1) : cette vue ne
+range pas par le graphe et n'offre aucun déplacement, donc elle n'a ni libellé d'étape à rendre, ni
+transition à proposer. Une requête qui ne sert rien est une requête de trop.
+
+**Aucun `count=exact`**, contrairement au §12.3 : il n'y a pas de pagination, donc pas de nombre de
+pages à calculer, et le compte de chaque section est celui des lignes **rendues**. Demander un total
+que rien n'affiche serait un `count(*)` gratuit à chaque ouverture.
+
+Le filtre complet, tel qu'il part sur le réseau :
+
+```
+select   = id,title,next_action,next_action_at,
+           channels!cards_channel_id_workspace_id_fkey(slug,name,tracks(slug,name))
+filtres  = next_action_at=not.is.null
+           next_action_at=lt.<borne du §17.5>
+           archived_at=is.null
+           deleted_at=is.null
+           or=(snoozed_until.is.null,snoozed_until.lte.<instant>)
+           [owner_id=eq.<identifiant de session>]      ← portée « mes affaires » seulement
+ordre    = next_action_at.asc, title.asc, id.asc
+```
+
+**L'ordre est TOTAL**, et ce n'est pas une précaution : c'est la leçon mesurée du §12.4, tenue sans
+changement. Deux affaires de même échéance se rangent par leur titre, puis par leur identifiant —
+sans quoi PostgreSQL ne promet **aucun** ordre entre elles, et deux ouvertures successives de
+l'écran n'afficheraient pas la même liste. `nullslast` n'est pas écrit : la colonne de tri est
+rendue non nulle par le filtre `not.is.null`, et l'écrire quand même donnerait à croire qu'un cas
+nul existe.
+
+**L'exclusion des affaires en sommeil réemploie `filtreExclusionSommeil`**, elle ne la réécrit pas
+(§16.12.1). C'est la règle de la décision 167 — la même donnée lue deux fois finit par être lue de
+deux façons —, déjà appliquée par la vue liste. Une affaire endormie **sort des vues par défaut**
+(§16.12.4), et une journée de travail est une vue par défaut.
+
+**Aucune bascule « afficher les affaires en sommeil » n'est offerte ici**, et c'est un écart nommé
+avec le board et la vue liste (§5.3 quinquies de `docs/DESIGN_SYSTEM.md`) : celles-ci sont les
+surfaces où l'on **range** une affaire, donc celles où l'on doit pouvoir la retrouver. Endormir une
+affaire est précisément le geste qui dit « pas aujourd'hui » ; lui donner une case pour reparaître
+dans la journée annulerait le geste à l'endroit exact où il agit. L'affaire reste atteignable depuis
+son board et depuis sa liste, où la bascule vit.
+
+### 17.5 Les trois sections, et les deux bornes qui les découpent
+
+L'écran rend **trois sections**, dans cet ordre, chacune titrée et portant son compte :
+
+| Section | Prédicat | Ordre |
+|---|---|---|
+| **En retard** | `next_action_at < début du jour courant` | de la plus ancienne à la plus récente |
+| **Aujourd'hui** | `début du jour courant ≤ next_action_at < début du lendemain` | par heure croissante |
+| **À venir** | `début du lendemain ≤ next_action_at < borne` | par échéance croissante |
+
+**Les bornes sont calculées dans le fuseau du LECTEUR**, jamais en UTC ni dans celui du serveur : la
+journée d'un utilisateur est celle de sa montre. C'est la même règle que l'instant du filtre de
+sommeil (§16.12.2), et pour le même motif — ce n'est pas un contrôle d'accès déporté chez le client,
+c'est un **rangement**. La RLS reste seule juge de ce qui est lisible.
+
+**Le découpage se fait à la COMPOSITION, pas au serveur**, et c'est mesuré : trois requêtes
+d'intervalle rendraient trois lectures là où une seule suffit, et le serveur ne connaît pas le
+fuseau du lecteur. C'est le raisonnement du §16.15.5, où le masquage d'un fil endormi se fait « à la
+composition, comme le board ».
+
+**L'horizon est de SEPT JOURS**, borne exclusive au début du huitième jour. Valeur **fixée, non
+configurable**, exactement comme les 25 lignes par page du §12.6 :
+
+- une vue qui montrerait les échéances d'octobre en août ne serait plus une **journée**, ce serait
+  la vue liste triée par échéance, qui existe déjà (§12.4) ;
+- l'horizon est ce qui **borne la lecture**, et c'est ce qui rend la pagination inutile (§17.4) : la
+  requête ne peut pas ramener un volume arbitraire, puisqu'elle ne regarde jamais plus loin que huit
+  jours dans le futur ;
+- il est déclaré **une seule fois**, dans le module de composition, et les preuves l'importent au
+  lieu de le recopier — la règle du §12.6 pour `LIGNES_PAR_PAGE`.
+
+**« En retard » n'a AUCUNE borne inférieure**, et c'est délibéré : une échéance oubliée depuis trois
+mois est précisément celle qu'il faut voir. En poser une masquerait ce que cette vue existe pour
+montrer.
+
+### 17.6 Ce que chaque ligne rend
+
+| Élément | Contenu | Règle |
+|---|---|---|
+| **Échéance** | `next_action_at` | **donnée technique** (§2 du design system) : monospace, chiffres tabulaires. Format court avec l'heure — une échéance sans heure ne dirait pas si la matinée est déjà passée |
+| **Affaire** | `title`, **lien** vers `/tracks/:slugTrack/:slugChannel/cards/:idCard` | une ligne, ellipse, valeur entière portée par `title` |
+| **Prochaine action** | `next_action` | une ligne, ellipse. **Vide si nulle** — ni tiret, ni « non renseigné » (§5.9) |
+| **Situation** | pilule « Track › Channel » | réemploi de la pilule de channel du §5.29, jamais une seconde forme |
+
+**Une affaire sans prochaine action mais AVEC échéance est rendue**, et c'est mesuré plutôt que
+supposé : les deux colonnes sont indépendantes en base, aucune contrainte ne les lie, et le seed en
+porte le cas. L'échéance seule est une information ; la taire parce que le texte manque perdrait la
+seule chose que cette vue existe pour montrer.
+
+**Une affaire archivée n'est jamais rendue** (§5), et il n'y a donc aucune pilule « Archivé » sur
+cet écran.
+
+### 17.7 Contrat d'API, mesuré
+
+MESURÉ le 2026-08-21, pile debout et seedée, sur la requête exacte du §17.4 avec l'horizon du §17.5.
+Chaque refus de lecture est mesuré comme **zéro ligne**, jamais comme une erreur (§7 de
+`docs/SPEC-permissions-rls.md`).
+
+| # | Appelant | Portée | Attendu |
+|---|---|---|---|
+| a | `admin` | tous | `200`, les affaires de tous les channels qu'il lit — **6** dans l'horizon |
+| b | `viewer` | tous | `200`, **3** — le track `conseil-ia` lui est fermé, et les trois affaires qu'il porte disparaissent sans qu'aucune mention ne les nomme |
+| c | anonyme | tous | `200`, `[]` — **preuve n° 11**, aucune erreur |
+| d | `admin` | moi | `200`, **strictement moins** que la ligne *a* : le filtre par responsable retranche, il n'ajoute jamais |
+| e | `business_developer` | moi | `200`, ses propres affaires, différentes de celles de *d* — deux profils ne voient pas la même journée |
+| f | `admin` | tous | l'affaire **endormie** du seed est **absente**, bien que son échéance tombe dans l'horizon — c'est le filtre du §17.4, et non un hasard de date |
+| g | `admin` | tous | l'affaire **archivée** et celle **en corbeille** sont absentes |
+| h | `admin` | tous | une affaire dont l'échéance dépasse l'horizon est **absente**, et la même affaire ramenée dans l'horizon **paraît** — la borne est éprouvée dans les deux sens |
+| i | `admin` | tous | l'ordre rendu est croissant par `next_action_at`, et **stable** entre deux appels identiques |
+
+### 17.8 États systématiques
+
+Les quatre états du §5.8 du design system sont traités, plus deux vides propres à cette vue :
+
+| État | Rendu |
+|---|---|
+| Chargement | squelettes à la forme des lignes attendues, jamais un écran vide |
+| Erreur | message et **action de reprise**, la reprise relançant réellement la requête |
+| Vide — **rien pour moi** | « Aucune échéance dans votre journée », avec l'action qui **élargit la portée** — c'est le patron du §5.8 : un état vide porte le geste qui l'en sort |
+| Vide — **rien pour personne** | « Aucune échéance dans les sept prochains jours », **sans action** : il n'y a rien à élargir, et un bouton y serait un chemin vers nulle part (§5.16, §5.19) |
+| Absence d'espace de travail | l'état vide de la coquille, comme le carnet (§5.19) |
+| Section vide | la section **n'est pas rendue** ; voir ci-dessous |
+
+**Une section vide n'est pas rendue, et c'est l'écart assumé avec le §5.8.** Trois titres surmontant
+trois vides diraient trois fois « rien », là où l'absence de titre le dit une fois. C'est le
+raisonnement du §5.11 du design system pour la barre de filtres du fil — « un contrôle sans objet »
+— appliqué à un intertitre. Le cas où **toutes** les sections sont vides est traité par les deux
+états vides ci-dessus, qui, eux, sont explicites.
+
+**Un refus par RLS n'est pas une erreur** : il rend `200` et zéro ligne, donc l'état vide. C'est le
+contrat de `webapp/src/lib/async.ts`, inchangé.
+
+### 17.9 Accessibilité et clavier
+
+- **Trois `section` titrées**, chacune portant son `h2` — l'écran a un titre de route, ses sections
+  ont le niveau suivant, sans saut (§8 du design system).
+- **Le compte de chaque section est écrit en toutes lettres** dans son titre, jamais laissé à
+  deviner ni porté par un badge nu — la règle du §5.17 pour la progression du guide, et celle du
+  §5.11 pour le compte d'une bascule, qui vit « dans son propre élément ».
+- **Le contrôle de portée est un groupe de deux liens**, `aria-current="page"` sur celui qui est
+  ouvert — le patron de la bascule board ↔ liste (§12.8) et de la barre d'onglets (§12.1), et pour
+  le même motif : les deux portées **changent d'adresse**.
+- **Le titre de l'affaire est le libellé du lien**, sans `aria-label` qui le remplacerait : deux
+  liens portant le même libellé générique seraient indiscernables au lecteur d'écran (§5.19).
+- **Le changement de portée est annoncé** par la région `aria-live` polie déjà livrée
+  (`webapp/src/components/ui/LiveRegion.tsx`) : une liste qui se recompose sans un mot est un
+  changement invisible pour qui ne voit pas l'écran.
+- **La console du navigateur reste vierge**, garde de `fixtures.ts` (`CLAUDE.md` §16).
+
+### 17.10 Ce que cette tranche ne livre pas, et pourquoi
+
+| Absent | Motif |
+|---|---|
+| Toute **écriture** — reporter une échéance, marquer « fait », saisir une prochaine action | Le seul chemin d'écriture de ces deux colonnes est l'en-tête de la fiche (§15 bis). Un second geste ici en ferait une seconde définition (§12.1) |
+| Un **horizon réglable** | Périmètre inventé, exactement comme le nombre de lignes par page (§12.6) |
+| Une **bascule de sommeil** | §17.4, dernier paragraphe : elle annulerait le geste à l'endroit où il agit |
+| Un **groupement par track ou par channel** | Le rangement de cette vue est le **temps**. Un second axe demanderait de choisir lequel prime, ce qu'aucun document ne tranche |
+| Les **relances par ancienneté** | Autre mesure, autre colonne (§17.1) |
+| Une **notification** ou un **digest** | `CRM-064` et `CRM-069` |
+
+### 17.11 Preuves attendues de `CRM-061`
+
+| Niveau | Preuves |
+|---|---|
+| pgTAP | **Aucune dédiée.** L'unité ne livre ni table, ni fonction, ni politique ; ce qu'elle lit est couvert par la suite de `CRM-040`. La conformité du **seed** au contrat du §17.12 est en revanche éprouvée par le seed lui-même |
+| Unitaire | Le module de composition : clôture de la portée et repli d'une valeur inconnue, calcul des deux bornes dans le fuseau du lecteur, découpage en trois sections, ordre total, filtre envoyé — y compris la présence et l'absence du filtre par responsable —, et le composant réel avec ses six états |
+| API | Les neuf lignes du §17.7, avec les jetons réels des trois profils seedés, sur la pile réelle |
+| E2E d'interface | Sur une session **réelle**, sans substitution : la barre latérale mène à l'écran par un CLIC, les trois sections sont rendues avec les affaires du seed, la bascule de portée change l'adresse et le contenu, la lectrice voit **moins** que l'administratrice, l'affaire endormie n'y est pas, le titre d'une affaire mène à sa fiche, et le parcours **clavier** atteint tout |
+| Visuel | Captures aux **quatre paliers** du §7 du design system, plus l'état vide et l'état « données longues » que le seed porte déjà (`…d001`) |
+| Harnais | `scripts/verify-ma-journee.sh`, rejouable et **non complaisant** |
+
+### 17.12 Ce que le seed doit démontrer
+
+La Definition of Done commune de `CRM-046` — « chaque fonctionnalité livrée est démontrable depuis
+le seed » — s'applique ici, et elle n'était **pas** tenue : le §9 pose des échéances **littérales**,
+si bien que la journée démontrée par le seed est celle du jour où le contrat a été écrit, et non
+celle du jour où on le regarde. MESURÉ le 2026-08-21 : sur les 26 affaires actives portant une
+échéance, **aucune** ne tombait dans le jour courant, et les cinq « en retard » ne l'étaient que
+parce que le calendrier avait dépassé leur date.
+
+C'est exactement le défaut que le §9.12 a corrigé pour l'ancienneté dans l'étape, et le remède est
+le même — voir `docs/SPEC-seed.md` §13, écrit dans le même changement que ce chapitre.
+
+Le contrat, en trois lignes :
+
+| # | Ce que le seed garantit, quel que soit le jour où il s'applique |
+|---|---|
+| a | L'administratrice a **au moins une** affaire dans **chacune** des trois sections, en portée « mes affaires » |
+| b | La portée « tout l'espace de travail » rend **strictement plus** de lignes que « mes affaires » |
+| c | **Une** affaire dont l'échéance tombe dans l'horizon est **en sommeil**, et n'est donc rendue par aucune des deux portées |

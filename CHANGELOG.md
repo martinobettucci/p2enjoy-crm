@@ -13,6 +13,46 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Spécifié
+
+- **LA VUE « MA JOURNÉE » A ENFIN UN CONTRAT** (`CRM-061`, `docs/JOURNAL.md` décision 502).
+  L'unité tenait en **une ligne de table** au backlog, et sept endroits du dépôt la nommaient sans
+  la décrire : `docs/SCHEMA.md` §5 et `docs/SPEC-cards.md` §2.1 pour la colonne qui « alimente »
+  la vue, §2.8 pour l'index `cards_workspace_next_action_idx` dont la colonne « Usage » porte son
+  nom, §9 pour les données du seed posées « sans quoi la vue serait livrée sans rien pour
+  l'exercer », `docs/DESIGN_SYSTEM.md` §4 pour son entrée de barre latérale — présente depuis
+  `CRM-000` —, `docs/SPEC-webapp.md` §5.2 pour son adresse, et `docs/manual.md` §9 pour un chapitre
+  « à livrer ». Sept renvois, aucun contrat.
+
+  `docs/SPEC-cards.md` §17 est ce contrat, en douze sous-chapitres écrits **après mesure** sur la
+  pile réelle avec les jetons des trois profils seedés : ce que la vue lit et en combien de
+  requêtes (**une**), les trois sections et les deux bornes qui les découpent, l'horizon de sept
+  jours et pourquoi il rend la pagination inutile, les neuf lignes du contrat d'API, les six états,
+  et ce que la tranche ne livrera pas. `docs/DESIGN_SYSTEM.md` §5.36 dit de quoi l'écran a l'air,
+  en écarts seulement.
+
+- **LA PORTÉE PAR DÉFAUT DE CET ÉCRAN EST UN CHOIX NOMMÉ, ET IL EST RÉVERSIBLE** (§17.3). Deux
+  lectures du dépôt se contredisaient : le **nom** dit « **Ma** journée », l'**index** déclaré par
+  `CRM-040` porte `(workspace_id, next_action_at)` et non `(owner_id, …)`. Le choix retenu — « mes
+  affaires » par défaut, « tout l'espace de travail » sur un lien dont l'état vit dans l'adresse —
+  tient les deux : le prédicat sélectif de la requête est l'**intervalle d'échéance**, donc l'index
+  déclaré sert exactement cette lecture, et le filtre par responsable ne porte que sur le reliquat.
+  Rien n'est caché, et la RLS reste seule juge de ce qui est lisible.
+
+- **LE JEU DE DÉMONSTRATION NE DÉMONTRAIT PAS CETTE VUE, ET C'EST MESURÉ** (`docs/SPEC-seed.md`
+  §13). Les échéances du seed sont des **dates littérales** ; elles étaient justes le jour où le
+  contrat a été écrit, puis le calendrier les a défaites — exactement le défaut que le §9.12 avait
+  corrigé pour l'ancienneté dans l'étape. MESURÉ le 2026-08-21 sur les 26 affaires actives portant
+  une échéance : cinq « en retard » qu'aucun contrat n'avait voulues, **zéro** dans le jour courant,
+  une seule dans les sept jours à venir. La section centrale de l'écran — celle qui lui donne son
+  nom — n'avait aucune donnée pour l'exercer, et n'en aurait jamais eu.
+
+  Le remède est spécifié avant d'être écrit : une **translation unique** des échéances, depuis
+  l'ancre du contrat vers le jour courant, appliquée après l'écriture des cards et donc convergente.
+  Le contrat du §9 reste lisible et n'est pas réécrit ; trois de ses échéances seulement sont
+  révisées, chacune avec son motif.
+
+
 ### Corrigé
 
 - **UN SIXIÈME FICHIER DE PREUVES CESSAIT DE RENDRE LE PRODUIT DANS L'ÉTAT OÙ IL L'AVAIT TROUVÉ**
