@@ -456,25 +456,58 @@ compter() {
 	http_body | jq 'length'
 }
 
-# Retourné après CRM-046 : le seed complet porte quatorze cards. Les droits fins continuent de
-# discriminer le viewer, qui n'en lit que huit, tandis que les deux rôles d'écriture lisent tout.
-for profil in "admin@p2enjoy.test:4/6/14" \
-              "bizdev@p2enjoy.test:4/6/14" \
-              "viewer@p2enjoy.test:4/4/8"; do
-	mail=${profil%%:*}
-	attendu=${profil#*:}
+# RETOURNÉ LE 2026-08-21 — INC-191, décision 497. Cette boucle figeait « 4/6/14 » et « 4/4/8 »,
+# valeurs justes après `CRM-046` et fausses depuis : MESURÉ le 2026-08-21, la base porte 5/8/41 et
+# le `viewer` en lit 5/6/35. Les trois contrôles rougissaient donc de l'enrichissement du seed par
+# `CRM-060`, `CRM-085` et `CRM-086`, et non d'un défaut des fonctions d'autorisation.
+#
+# Ce que la section prouve n'a jamais été « le seed vaut n lignes » : c'est que les trois fonctions
+# `can_read_*` **discriminent** sous PostgREST. Le contrôle mesure désormais cette relation, contre
+# les totaux relevés EN BASE au moment de l'exécution. Aucun littéral, donc aucun refigement.
+#
+# LE PIÈGE EST NOMMÉ ET FERMÉ : « le viewer lit strictement moins » serait vert sur une RLS qui
+# refuserait TOUT. Le contrôle exige donc aussi qu'il lise au moins une ligne de chaque table — une
+# discrimination, pas un mur.
+TOTAL_TRACKS=$(psql_db -c "select count(*) from public.tracks;")
+TOTAL_CHANNELS=$(psql_db -c "select count(*) from public.channels;")
+TOTAL_CARDS=$(psql_db -c "select count(*) from public.cards;")
+
+declare -A LU_TRACKS LU_CHANNELS LU_CARDS
+for mail in admin@p2enjoy.test bizdev@p2enjoy.test viewer@p2enjoy.test; do
 	jeton=$(jeton_seed "$mail")
 	if [ -z "$jeton" ]; then
 		fail "connexion du compte seedé $mail refusée — le seed est-il appliqué ? (supabase/seed/apply-seed.sh)"
 		continue
 	fi
-	obtenu="$(compter tracks "$jeton")/$(compter channels "$jeton")/$(compter cards "$jeton")"
-	if [ "$obtenu" = "$attendu" ]; then
-		ok "$mail voit $obtenu tracks/channels/cards : can_read_track, can_read_channel et can_read_card sont opposables sous PostgREST"
+	LU_TRACKS[$mail]=$(compter tracks "$jeton")
+	LU_CHANNELS[$mail]=$(compter channels "$jeton")
+	LU_CARDS[$mail]=$(compter cards "$jeton")
+done
+
+# Les deux rôles d'écriture lisent TOUT ce que la base porte : aucun droit fin ne les restreint.
+for mail in admin@p2enjoy.test bizdev@p2enjoy.test; do
+	if [ "${LU_TRACKS[$mail]:-}" = "$TOTAL_TRACKS" ] \
+	   && [ "${LU_CHANNELS[$mail]:-}" = "$TOTAL_CHANNELS" ] \
+	   && [ "${LU_CARDS[$mail]:-}" = "$TOTAL_CARDS" ]; then
+		ok "$mail lit l'INTÉGRALITÉ de ce que la base porte — $TOTAL_TRACKS/$TOTAL_CHANNELS/$TOTAL_CARDS tracks/channels/cards"
 	else
-		fail "$mail voit $obtenu au lieu de $attendu"
+		fail "$mail lit ${LU_TRACKS[$mail]:-?}/${LU_CHANNELS[$mail]:-?}/${LU_CARDS[$mail]:-?} là où la base porte $TOTAL_TRACKS/$TOTAL_CHANNELS/$TOTAL_CARDS"
 	fi
 done
+
+# Le `viewer`, lui, est REFERMÉ par les droits fins du seed — strictement moins, jamais rien.
+v=viewer@p2enjoy.test
+if [ "${LU_CHANNELS[$v]:-0}" -lt "$TOTAL_CHANNELS" ] && [ "${LU_CARDS[$v]:-0}" -lt "$TOTAL_CARDS" ]; then
+	ok "$v lit STRICTEMENT MOINS que les rôles d'écriture — ${LU_CHANNELS[$v]}/$TOTAL_CHANNELS channels, ${LU_CARDS[$v]}/$TOTAL_CARDS cards : can_read_channel et can_read_card sont opposables sous PostgREST"
+else
+	fail "$v lit ${LU_CHANNELS[$v]:-?}/${LU_CARDS[$v]:-?} channels/cards : les droits fins ne discriminent plus"
+fi
+
+if [ "${LU_TRACKS[$v]:-0}" -ge 1 ] && [ "${LU_CHANNELS[$v]:-0}" -ge 1 ] && [ "${LU_CARDS[$v]:-0}" -ge 1 ]; then
+	ok "$v lit tout de même ${LU_TRACKS[$v]}/${LU_CHANNELS[$v]}/${LU_CARDS[$v]} : c'est une discrimination, pas un mur — sans ce contrôle, une RLS refusant TOUT satisferait le précédent"
+else
+	fail "$v ne lit rien : le contrôle de discrimination ci-dessus serait vert sur un produit cassé"
+fi
 
 obtenu="$(compter tracks '')/$(compter channels '')/$(compter cards '')"
 if [ "$obtenu" = "0/0/0" ]; then

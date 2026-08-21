@@ -37,6 +37,15 @@ d'exécuter le code attendu.
   si l'archivage passait sur une autre ligne), et la population comparée à l'instantané
   d'ouverture. Aucun littéral ne subsiste.
 
+- **`scripts/verify-authz.sh` mesure la discrimination des droits fins, plus l'âge du seed**
+  (`CRM-010`, `CRM-012`, INC-191, INC-140, même décision). Trois contrôles figeaient « 4/6/14 » et
+  « 4/4/8 » : MESURÉ le 2026-08-21, la base porte 5/8/41 et la lectrice en lit 5/6/35. Ils
+  comparent désormais ce que chaque profil lit **aux totaux relevés en base au moment de
+  l'exécution** — les deux rôles d'écriture lisent tout, la lectrice strictement moins. **Un piège
+  est fermé au passage** : « lit strictement moins » serait vert sur une RLS qui refuserait tout,
+  aussi un quatrième contrôle exige-t-il que la lectrice lise au moins une ligne de chaque table.
+  C'est une discrimination qui est prouvée, pas un mur.
+
 ### Ajouté
 
 - **Un écran pour déclarer les adresses d'expédition : « Réglages ▸ Identités d'expédition »**
