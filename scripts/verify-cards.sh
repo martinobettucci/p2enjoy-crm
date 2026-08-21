@@ -138,6 +138,13 @@ titre() { printf '\n\033[1m%s\033[0m\n' "$1"; }
 
 psql_db() { docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -qtA "$@"; }
 
+# INSTANTANÉ D'OUVERTURE — INC-191, décision 497. La section 8 comparait l'état des fixtures `…c%`
+# à la chaîne littérale « 14/1/1/14 », juste à la livraison de `CRM-040` et fausse depuis que la
+# cinquième tranche de `CRM-077` a posé l'affaire `…0cf`. Le harnais rougissait donc d'un
+# enrichissement du seed, pas d'un défaut des cards. Le compte est relevé ICI, avant que ce harnais
+# ne crée la moindre ligne, et la section 8 vérifie qu'il l'a rendu intact.
+FIXTURES_A_L_OUVERTURE=$(psql_db -c "select count(*) from public.cards where id::text like '5eed0000-0000-4000-8000-0000000000c%';")
+
 CORPS=/tmp/p2enjoy-cards-body
 http() {
 	local method=$1 url=$2
@@ -450,15 +457,45 @@ code=$(http DELETE "$API/rest/v1/cards?id=eq.$carte_cycle" \
 
 titre "8. Le seed est conforme et convergent — §9"
 
-etat=$(psql_db -c "select count(*) || '/' ||
-                          count(*) filter (where archived_at is not null) || '/' ||
-                          count(*) filter (where deleted_at is not null) || '/' ||
-                          count(distinct email_local_part)
+# RETOURNÉE LE 2026-08-21 — INC-191, décision 497. Cette assertion comparait l'état des fixtures à
+# « 14/1/1/14 ». Trois de ces quatre nombres n'étaient qu'une même population recomptée ; le
+# quatrième — les adresses distinctes — portait seul une propriété du produit. En figeant les
+# quatre ensemble, le contrôle rougissait dès qu'une unité ultérieure seedait une affaire de plus,
+# ce qu'a fait la cinquième tranche de `CRM-077` avec `…0cf` : MESURÉ le 2026-08-21, « 15/1/1/15 ».
+#
+# Les trois membres sont séparés, et chacun mesure désormais ce qu'il prétend mesurer.
+#
+# 1. L'UNICITÉ DES ADRESSES est le seul invariant de produit du lot, et c'est celui sur lequel
+#    `docs/SCHEMA.md` §5 fonde la non-devinabilité : deux cards ne partagent jamais leur
+#    `email_local_part`. Écrit en comparaison de deux comptes, il ne porte aucun littéral et ne peut
+#    pas se refiger.
+etat=$(psql_db -c "select count(*) || '/' || count(distinct email_local_part)
                      from public.cards
                     where id::text like '5eed0000-0000-4000-8000-0000000000c%';")
-[ "$etat" = "14/1/1/14" ] \
-	&& ok "quatorze cards, une archivée, une en corbeille, quatorze adresses distinctes" \
-	|| fail "état du seed : « $etat », attendu « 14/1/1/14 »"
+[ "${etat%/*}" = "${etat#*/}" ] \
+	&& ok "les ${etat%/*} fixtures portent ${etat#*/} adresses DISTINCTES : aucune collision" \
+	|| fail "collision d'adresses dans les fixtures : « $etat »"
+
+# 2. LES DEUX ÉTATS EXCEPTIONNELS SONT NOMMÉS PAR LEUR IDENTIFIANT, et non comptés. Les scénarios
+#    de ce harnais désignent `…0c8` et `…0c9` ; ce sont eux qui doivent porter l'archivage et la
+#    corbeille, et un compte de « une archivée » resterait vert si l'archivage passait sur une autre
+#    ligne.
+[ "$(psql_db -c "select count(*) from public.cards
+                  where id = '5eed0000-0000-4000-8000-0000000000c8' and archived_at is not null;")" = "1" ] \
+	&& ok "\`…0c8\` est bien la card ARCHIVÉE des fixtures" \
+	|| fail "\`…0c8\` n'est plus archivée : les scénarios d'archivage perdent leur objet"
+[ "$(psql_db -c "select count(*) from public.cards
+                  where id = '5eed0000-0000-4000-8000-0000000000c9' and deleted_at is not null;")" = "1" ] \
+	&& ok "\`…0c9\` est bien la card en CORBEILLE des fixtures" \
+	|| fail "\`…0c9\` n'est plus en corbeille : les scénarios de corbeille perdent leur objet"
+
+# 3. LA POPULATION est comparée à l'instantané d'ouverture, et non à un nombre écrit ici : ce que
+#    la section prétend tenir est « le seed est convergent », c'est-à-dire que CE harnais le rend
+#    tel qu'il l'a trouvé — il crée des cards de sonde, et une purge de sortie incomplète est
+#    exactement ce que ce contrôle doit voir.
+[ "$(psql_db -c "select count(*) from public.cards where id::text like '5eed0000-0000-4000-8000-0000000000c%';")" = "$FIXTURES_A_L_OUVERTURE" ] \
+	&& ok "les $FIXTURES_A_L_OUVERTURE fixtures seedées sont intactes : ce harnais n'en a ni créé ni détruit" \
+	|| fail "la population des fixtures a changé pendant ce harnais"
 
 [ "$(psql_db -c "select count(*) from public.cards c
 	                  join public.workflows w on w.id = c.workflow_id

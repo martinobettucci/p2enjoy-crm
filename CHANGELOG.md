@@ -28,6 +28,15 @@ d'exécuter le code attendu.
   verrait pas une remise en place oubliée, MESURÉ : déplacer une card laisse le compte à 41 et
   change l'empreinte. Le contrôle est donc plus strict qu'avant, et il ne peut plus se refiger.
 
+- **`scripts/verify-cards.sh` ne rougit plus de l'affaire que `CRM-077` a seedée** (`CRM-040`,
+  INC-191, même décision). Il comparait l'état des fixtures à la chaîne « 14/1/1/14 » : quinze
+  depuis la cinquième tranche de `CRM-077`. Trois de ces quatre nombres n'étaient qu'une même
+  population recomptée. Le contrôle est éclaté en trois, chacun mesurant ce qu'il prétend mesurer —
+  l'**unicité des adresses** écrite en comparaison de deux comptes, les deux états exceptionnels
+  **nommés par leur identifiant** plutôt que comptés (un compte de « une archivée » resterait vert
+  si l'archivage passait sur une autre ligne), et la population comparée à l'instantané
+  d'ouverture. Aucun littéral ne subsiste.
+
 ### Ajouté
 
 - **Un écran pour déclarer les adresses d'expédition : « Réglages ▸ Identités d'expédition »**
