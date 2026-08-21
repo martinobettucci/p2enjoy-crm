@@ -511,7 +511,12 @@ ASSERTIONS_ATTENDUES=2480
 # l'étape ; et aucune card ARCHIVÉE vieillie au passage. 824 - 1 + 3 = **826**, valeur COMPTÉE par
 # `playwright test --list` (« Total: 826 tests »), jamais déduite (INC-101). Le garde-fou est
 # RÉVISÉ, jamais retiré (mécanisme de la décision 51).
-SCENARIOS_API=826
+# **RÉVISION DU 2026-08-21 — `CRM-061`, tranche 1.** `e2e/api/ma-journee.spec.ts` déclare **11**
+# scénarios : les neuf lignes du contrat du §17.7 de `docs/SPEC-cards.md`, plus les deux contrôles
+# du seed du §13.5 de `docs/SPEC-seed.md`. Aucun autre fichier n'a gagné ni perdu de scénario.
+# 826 + 11 = **837**, valeur COMPTÉE par `playwright test --list` (« Total: 837 tests in 49
+# files »), jamais déduite (INC-101). Le garde-fou est RÉVISÉ, jamais retiré (décision 51).
+SCENARIOS_API=837
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -737,7 +742,14 @@ SCENARIOS_API=826
 # mesurée au palier 390 px, pastille comprise dans la largeur de la carte. 566 + 2 = **568**, valeur
 # COMPTÉE par `playwright test --list` (« Total: 568 tests »), jamais déduite. Garde-fou RÉVISÉ,
 # jamais retiré.
-SCENARIOS_UI=568
+# **RÉVISION DU 2026-08-21 — `CRM-061`, tranche 1.** `e2e/ui/ma-journee.spec.ts` déclare **13**
+# scénarios : le parcours depuis la barre latérale, la teinte de retard portée par l'échéance, les
+# deux liens d'une ligne — la fiche et le channel —, la bascule de portée, la lectrice qui voit
+# moins, le parcours clavier, la clôture de la portée, les QUATRE paliers — un test chacun, le
+# palier étant posé avant la connexion — et les deux états vides en visiteur anonyme.
+# 568 + 13 = **581**, valeur COMPTÉE par `playwright test --list` (« Total: 581 tests in 47
+# files »), jamais déduite. Garde-fou RÉVISÉ, jamais retiré.
+SCENARIOS_UI=581
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,
