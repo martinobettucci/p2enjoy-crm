@@ -15,6 +15,22 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **UN ÉCRAN QUI LISTE TOUT CE QUI DORT** (`CRM-062` tranche 3, `docs/SPEC-relances.md` §10). Une
+  nouvelle entrée de barre latérale, **Affaires figées**, sous *Ma journée* : elle rassemble les
+  affaires restées dans leur étape au-delà du seuil de relance de cette étape, groupées par dossier
+  et rangées du plus gros retard au plus petit. Chaque ligne dit le retard, l'étape, le seuil et le
+  dossier ; le titre mène à la fiche, la pilule ouvre le dossier. L'écran **lit** et n'écrit rien :
+  reporter, endormir ou traiter une affaire reste le geste de sa fiche. Les affaires archivées, à
+  la corbeille et en sommeil n'y figurent jamais, et une étape sans seuil ne fige rien.
+- **LA RELANCE NOCTURNE EST ENFIN LISIBLE DANS L'AFFAIRE** (`CRM-062` tranche 3b). La tranche 2
+  inscrivait déjà une trace chaque nuit, mais le fil l'affichait sous le mot « Événement », sans
+  rien dire de plus. Elle s'y lit désormais **« Relance automatique — 16 jours de retard, pour un
+  seuil de 14 jours »**, avec son icône et sa teinte.
+- **L'ESPACE DE DÉMONSTRATION MONTRE QUATRE AFFAIRES FIGÉES au lieu d'une** (`CRM-062` tranche 3a),
+  dans quatre dossiers de trois tracks, avec des retards de 35, 18, 16 et 7 jours : le classement
+  et le regroupement du nouvel écran s'y démontrent sur une donnée permanente, et la lectrice en
+  voit trois — le quatrième dossier lui est fermé.
+
 - **LES AFFAIRES QUI DORMENT SE SIGNALENT TOUTES SEULES** (`CRM-062` tranche 2, migration `0054`,
   `docs/SCHEMA.md` §9 bis.10). Chaque nuit, une affaire restée dans son étape au-delà du seuil de
   relance de cette étape reçoit une inscription dans sa timeline : « relancée », avec le seuil

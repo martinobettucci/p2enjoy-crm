@@ -3207,3 +3207,139 @@ le rangement est le **temps**. Ce que l'écran lit, découpe et refuse de devine
 - **Aucune couleur, aucun jeton, aucune icône nouvelle** : l'écran emprunte au §5.18 sa liste plate,
   au §5.29 sa pilule de channel, au §12.1 son patron de liens, au §5.1 sa teinte de retard et au
   §5.8 ses états. Son entrée de barre latérale porte `CalendarCheck`, déjà déclarée par `CRM-007`.
+
+### 5.37 Affaires figées — `CRM-062`
+
+Troisième surface **de travail** transverse du produit, après le carnet (§5.19) et « Ma journée »
+(§5.36), et la première dont le rangement est le **retard**. Ce que l'écran lit, groupe et refuse
+de deviner est spécifié par `docs/SPEC-relances.md` §10 ; les règles ci-dessous ne disent que de
+quoi il a l'air. Tout ce que le §5.36 pose vaut ici sans être répété : liste plate du §5.18 avec les
+hauteurs de ligne et les séparateurs du §5.9, compte dans son propre élément, pilule de channel du
+§5.29 réemployée entière.
+
+- **UN GROUPE PAR DOSSIER, ET NON PAR TRACK.** Le dossier est là où l'affaire vit, c'est lui que la
+  pilule « Track › Channel » nomme, et c'est le grain auquel on va agir. Un regroupement par track
+  fondrait deux dossiers distincts d'un même track — cas que le jeu de démonstration exerce
+  réellement, `studio-web` portant `refonte` **et** `maintenance`. C'est l'écart avec les trois
+  sections FIXES du §5.36 : là-bas les groupes sont connus d'avance et se nomment « En retard »,
+  « Aujourd'hui », « À venir » ; ici ils sont une **donnée**, et leur nombre varie.
+
+- **L'ORDRE DES GROUPES EST CELUI DE LEUR PREMIÈRE LIGNE**, donc du plus gros retard. Un ordre
+  alphabétique de dossier ferait descendre en bas d'écran celui qui est le plus en retard, ce qui
+  est exactement l'information que l'écran existe pour donner. L'ordre **à l'intérieur** d'un groupe
+  est celui du serveur, conservé tel quel.
+
+- **UN GROUPE VIDE N'EXISTE PAS**, contrairement au §5.36 qui doit dire pourquoi il ne rend pas une
+  section vide : un groupe naît d'au moins une ligne, et il n'y a donc rien à écrire sur l'absence.
+
+- **LE RETARD EST EN TÊTE DE LIGNE, ET C'EST UNE DONNÉE TECHNIQUE** (§2) : monospace, chiffres
+  tabulaires. Il vient **avant** le titre, pour la raison exacte qui met l'échéance en tête au
+  §5.36 — c'est lui qui range cet écran, et une colonne de nombres alignés se lit d'un regard.
+  **L'unité « j » occupe son propre élément**, jamais un nœud de texte accolé au nombre : c'est le
+  défaut « Discussion1 » du §5.11, dont le remède est écrit une fois pour tout le produit.
+
+- **LA TEINTE DE DANGER PORTE SUR LE RETARD, PAS SUR LA LIGNE.** `--color-danger-on-soft` sur
+  `--color-danger-soft`, sur la seule donnée qui est en cause — c'est la pastille d'ancienneté d'une
+  card (§5.1), l'ancienneté de la table de saisie (§5.31) et le retard de « Ma journée » (§5.36) :
+  même signal, même forme. Teinter la ligne entière ferait d'une affaire figée une **erreur**, ce
+  qu'elle n'est pas : c'est un travail à faire. Le §1 est tenu par le titre de l'écran et par
+  l'unité, écrits en toutes lettres.
+
+- **UN RETARD DE ZÉRO SE REND « 0 j », ET CE N'EST PAS UNE CELLULE VIDE.** La borne de la règle est
+  LARGE (`docs/SPEC-relances.md` §2.5) : une affaire atteinte exactement sur son seuil est figée.
+  C'est une donnée, pas une absence, et la règle du §5.9 ne s'applique donc pas.
+
+- **LE SEUIL ACCOMPAGNE LE RETARD**, en 13 px `--color-text-2` — « seuil 14 j ». Il n'est pas
+  décoratif : un retard sans son seuil n'a pas d'échelle, exactement la raison pour laquelle le
+  `payload` d'une relance porte les deux nombres et non un seul (§9.6 de la spécification).
+
+- **L'ÉTAPE EST UNE PILULE NEUTRE** `--color-hover` / `--color-text-2`, `rounded-full` (§5.6) : c'est
+  le dossier interne de l'affaire, pas son identité, et une teinte de donnée lui ferait porter une
+  urgence qu'elle n'a pas. Une étape que la seconde lecture n'a pas rapportée ne rend **rien** — ni
+  tiret, ni « non renseigné » (§5.9).
+
+- **UNE AFFAIRE QUE LA SECONDE LECTURE N'A PAS RAPPORTÉE RESTE LISTÉE**, sans lien, sans étape et
+  sans pilule. Elle garde son titre, son retard et son seuil, que la règle rend déjà. La masquer
+  retrancherait une affaire en retard de la liste qui existe pour les montrer ; lui donner un lien
+  vers une adresse incomplète mènerait à un écran que l'utilisateur croirait cassé (§5.32). Le cas
+  n'est pas théorique — les deux lectures de l'écran ne sont pas atomiques.
+
+- **AUCUNE BASCULE DE PORTÉE**, contrairement au §5.36. Ce n'est pas un oubli : `cards_figees()` ne
+  prend **aucun argument** et rend « ce que l'appelant peut lire », sans autre dimension. Poser un
+  filtre « mes affaires » à l'écran ferait de l'interface le juge d'un rangement que la base ne
+  connaît pas (`CLAUDE.md` §10), et l'écart est **nommé** au §10.6 de la spécification plutôt que
+  comblé au passage.
+
+- **UN SEUL ÉTAT VIDE, ET IL N'OFFRE AUCUNE ACTION.** C'est l'écart au §5.8 que la corbeille (§5.16)
+  et le carnet (§5.19) prennent déjà : il n'y a rien à faire d'une liste d'affaires en retard qui
+  est vide, et un bouton y serait un chemin vers nulle part. **Le message dit que l'état est SAIN**,
+  pas qu'il manque quelque chose — « aucune affaire ne dort dans son étape » est une bonne nouvelle.
+  Un seul et non deux comme au §5.36 : il n'y a aucune portée à élargir, donc rien ne distingue
+  « rien pour moi » de « rien pour personne ».
+
+- **L'ÉCHEC DE LA RÈGLE EST UNE ERREUR AVEC REPRISE, JAMAIS L'ÉTAT VIDE.** Rendre « aucune affaire
+  ne dort » sur une panne ferait passer un défaut pour une bonne nouvelle — la simulation de succès
+  que `CLAUDE.md` §18 interdit. L'échec de la **seconde** lecture, lui, ne remplace rien : la liste
+  reste, dégradée, comme une affaire absente de cette lecture.
+
+- **L'ÉCRAN NE NOMME JAMAIS CE QU'IL NE MONTRE PAS.** Aucune phrase ne dit « une affaire vous est
+  masquée » : c'est la règle que le cumul des coûts (§5.33) et le canevas d'objectifs (§5.29)
+  tiennent déjà, et elle est ici **mesurée** — la lectrice du jeu de démonstration lit trois des
+  quatre affaires figées, et rien à l'écran ne trahit la quatrième.
+
+- **AUCUNE COMMANDE D'ÉCRITURE, ET L'ABSENCE EST ASSUMÉE.** Ni report, ni « traité », ni mise en
+  sommeil : le seul chemin d'écriture est la fiche de l'affaire (§5.3 ter, §5.3 quater), et un
+  second geste ici en ferait une seconde définition du même geste. C'est la règle du §5.36, tenue
+  sans changement.
+
+- **SOUS LE PALIER `md`, LA LIGNE SE REPLIE ET GAGNE DE LA HAUTEUR** — l'écart que le §5.21 assume
+  pour sa liste plate et que le §5.36 reprend : cinq éléments ne tiennent pas sur 390 px, et la
+  réponse d'une liste plate au manque de place est de se replier, non de tronquer une donnée. Le
+  **titre prend sa propre ligne** (`basis-full`), ce qui rend le repli régulier là où `grow` seul le
+  faisait varier d'une ligne à l'autre — défaut déjà mesuré au §5.36. `md` et jamais `sm`, qui est
+  un variant inconnu que Tailwind supprime en silence (§11, §5.20). **Mesuré aux quatre paliers : la
+  page ne défile jamais horizontalement** (§7).
+
+- **L'ENTRÉE DE BARRE LATÉRALE PORTE `Hourglass`, ET ELLE SUIT IMMÉDIATEMENT « Ma journée ».** Les
+  deux écrans répondent à la même question — « qu'est-ce qui me réclame ? » — et se lisent dans cet
+  ordre : ce qui est **dû** aujourd'hui, puis ce qui **dort** depuis trop longtemps. Ce n'est pas
+  une commodité de rangement : une échéance dépassée et une affaire figée sont deux notions
+  différentes qui se recoupent souvent, et la navigation est le seul endroit où cette différence
+  s'enseigne. L'icône dit le temps qui s'écoule sans que rien n'avance ; aucune autre entrée ne la
+  porte (§9).
+
+- **Aucune couleur, aucun jeton nouveau** : l'écran emprunte au §5.18 sa liste plate, au §5.29 sa
+  pilule de channel, au §5.6 sa pilule neutre, au §5.1 sa teinte de retard et au §5.8 ses états.
+
+### 5.38 La relance automatique dans le fil — `CRM-062`
+
+Quatorzième type d'événement de la timeline unifiée (§5.11), et **le seul que la teinte de danger
+qualifie**. Ce qu'il est et ce qu'il porte est spécifié par `docs/SPEC-relances.md` §10.3.1.
+
+- **Pastille `--color-danger-soft`, icône `--color-danger`, icône Lucide `AlarmClock`.** C'est le
+  même signal que l'ancienneté dépassée du §5.1 et que le retard du §5.37 : il doit avoir la même
+  forme d'un écran à l'autre. Aucun autre type du fil ne porte `AlarmClock`, et le §9 interdit
+  qu'une icône serve deux objets distincts. Elle est **distincte de l'`Hourglass`** de l'entrée de
+  navigation du §5.37 : l'écran montre un **état**, cette ligne date un **geste**.
+
+- **Famille « Cycle de vie »**, avec les six autres : « qu'est devenue cette affaire ? » — elle a
+  stagné. **Aucune sixième bascule de filtre** n'est ajoutée pour un type, arbitrage que `CRM-081` a
+  déjà rendu pour les deux gestes du sommeil (§5.11).
+
+- **Le libellé nomme le FAIT, pas la mécanique** : « Relance automatique », jamais « Affaire figée »
+  — le second décrirait un état, or la ligne du fil date un geste. Le mot `stalled` est le
+  vocabulaire de la base, et il n'atteint jamais l'écran (§10).
+
+- **Le détail dit le retard AVEC son seuil**, et il est **composé par une clé de traduction, jamais
+  par concaténation** (§10). L'accord est posé — « 1 jour » n'est pas « 1 jours » —, et un retard de
+  **zéro** se dit autrement : « atteint son seuil de 14 jours », parce que « 0 jours de retard » se
+  lirait comme une erreur de calcul.
+
+- **Un `payload` amputé ne rend AUCUN détail**, et surtout pas un `undefined` : la ligne retombe sur
+  son seul libellé, exactement comme un libellé d'étape non résolu (§5.11).
+
+- **L'acteur reste muet.** Une relance n'a pas d'auteur humain, et le fil ne nomme jamais un acteur
+  nul (§5.11) : lui en inventer un serait la valeur par défaut trompeuse que `CLAUDE.md` §18
+  proscrit.
+
+- **Aucune couleur, aucun jeton nouveau** : la ligne emprunte au §5.11 sa forme et au §1 sa teinte.

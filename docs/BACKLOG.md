@@ -8188,7 +8188,7 @@ preuves, l'écran vérifié visuellement aux quatre paliers, console vierge.
 |---|---|---|
 | 1 | La règle en base — `public.cards_figees()`, migration `0053`, pgTAP, contrat d'API, harnais | en cours |
 | 2 | La relance automatique — job `pg_cron` quotidien, événement `stalled` dans la timeline | livrée, `[~]` (série des `verify-*.sh` non rejouée) |
-| 3 | La surface — écran, navigation, manuel chapitre 30, captures, extension du seed | `[ ]` |
+| 3 | La surface — écran, navigation, manuel `3 quinquies`, captures, extension du seed | livrée, `[~]` (série des `verify-*.sh` non rejouée) |
 
 - [x] **Spécification écrite et committée AVANT la première ligne de code** — `docs/SPEC-relances.md`,
       huit chapitres, rédigés **après mesure** sur la pile de développement le 2026-08-24, seed
@@ -8299,8 +8299,84 @@ preuves, l'écran vérifié visuellement aux quatre paliers, console vierge.
       (**31 contrôles, aucune anomalie**, qui valide les compteurs révisés). Aucun écran, aucune
       capture, aucune vérification visuelle : la tranche 2 ne livre **aucune** surface, et l'absence
       est nommée plutôt que compensée par une preuve de substitution.
-- [ ] **Tranche 3** : l'écran, et **l'extension du seed que le §5 nomme déjà** — une seule card
-      figée ne démontre ni classement par retard, ni regroupement.
+- [x] **Tranche 3 SPÉCIFIÉE avant sa première ligne de code**, 2026-08-24 — `docs/SPEC-relances.md`
+      **§10**, treize sections écrites après mesure sur la pile debout et seedée. Elle s'y découpe
+      en **trois** sous-tranches, et l'ordre est celui de la dépendance : le jeu de démonstration,
+      la relance nommée dans le fil, puis l'écran.
+- [x] **MESURÉ AVANT D'ÊTRE ÉCRIT, ET CELA DÉCIDE L'ARCHITECTURE DE L'ÉCRAN** :
+      `rpc/cards_figees?select=…,channels(slug)` rend **`PGRST200`** — la fonction rend un
+      `TABLE(...)` et non un `SETOF`, donc PostgREST ne lui connaît aucune clé étrangère. L'écran
+      lit donc **deux** fois, la seconde bornée aux identifiants que la règle a déjà filtrés
+      (§10.5). Les deux désambiguïsations de sa chaîne `select` ont été trouvées **par l'erreur** :
+      `cards` porte deux FK vers `channels` (`PGRST201`), et `workflow_steps` n'a pas de colonne
+      `label` (`42703`).
+- [x] **Sous-tranche 3a — LE JEU DE DÉMONSTRATION PASSE DE UNE À QUATRE AFFAIRES FIGÉES.** La dette
+      était nommée au §5 depuis la tranche 1. Retards **35, 18, 16, 7**, deux à deux distincts —
+      donc l'ordre du §3.4 est **total** sur ce jeu et une preuve peut asserter la suite entière ;
+      **quatre dossiers pour trois tracks**, un track en portant deux, seul cas qui prouve que le
+      regroupement porte sur le channel ; **trois seuils différents**, sans quoi une preuve ne
+      distinguerait pas une donnée lue d'une constante. `…0c3` **ne bouge pas**.
+- [x] **LA PREUVE DU REFUS EN SORT RENFORCÉE, ET C'EST LA RAISON PRINCIPALE DU CHOIX.** MESURÉ avec
+      les jetons réels : l'`admin` et le `business_developer` lisent **quatre** affaires, la
+      lectrice **trois**. Le refus se mesure désormais comme une **ligne manquante dans une liste
+      peuplée** — forme bien plus stricte que l'écran vide d'avant, qu'une fonction cassée aurait
+      rendu tout aussi vert.
+- [x] **Les six porteurs du contrat « exactement une » RÉVISÉS, jamais retirés ni relâchés** :
+      `docs/SPEC-seed.md` §9.12.6, `scripts/verify-board.sh`, `e2e/api/board.spec.ts`,
+      `e2e/api/relances.spec.ts`, les deux suites pgTAP et les gardes du seed. Aucun `>= 1` : les
+      assertions comptent quatre et portent sur la **suite entière**.
+- [x] **La garde de non-complaisance gagne un SECOND sens** : `D9` vieillit une **cinquième** card,
+      `D9 bis` en **rajeunit** une des quatre. Sans la seconde, un seed qui cesserait de vieillir
+      `…0cf` passerait inaperçu et l'écran perdrait son classement sans qu'aucun contrôle ne
+      bronche. Les deux sont restaurées par le `trap`, et la restauration est **constatée**.
+- [x] **Sous-tranche 3b — INC-207 : LA RELANCE DE LA TRANCHE 2 ÉTAIT ILLISIBLE, ET C'EST MESURÉ.**
+      `stalled` n'était ni dans `TYPES_EVENEMENT`, ni dans `FAMILLE_PAR_TYPE`, ni dans les
+      traductions : le fil la rendait **« Événement »**. Le §9.1 promettait « un fait que
+      l'utilisateur rencontre en ouvrant la timeline de son affaire » ; la tranche 2 avait livré la
+      moitié de sa propre spécification, et sa grille de preuves ne pouvait pas le voir — elle
+      écrivait « aucun écran livré », ce qui était vrai et insuffisant.
+- [x] **Le vocabulaire de l'écran passe à QUATORZE**, sixième évolution et aucune valeur jamais
+      retirée. La famille `cycle` est désormais **écrite** et non plus obtenue par repli, avec son
+      assertion propre : sans elle, retirer la ligne laisserait la suite verte. Libellé « Relance
+      automatique », icône `AlarmClock`, teinte de danger — seul type du fil à la porter.
+- [x] **Le détail composé par une CLÉ DE TRADUCTION, en trois formes**, jamais par concaténation :
+      l'accord est posé, et un retard de **zéro** — légitime, la borne du §2.5 étant large — se dit
+      « atteint son seuil de N jours ». Six payloads dégradés éprouvés : aucun ne rend d'`undefined`.
+- [x] **Sous-tranche 3c — L'ÉCRAN EST LIVRÉ**, à `/affaires-figees`, route de premier niveau chargée
+      à la demande, avec son entrée de barre latérale `Hourglass` **immédiatement après « Ma
+      journée »** : les deux écrans répondent à la même question et s'enseignent l'un après l'autre
+      (§10.4). Groupement par **dossier**, groupes ordonnés par le retard de leur première ligne,
+      ordre serveur conservé **dans** un groupe.
+- [x] **Une affaire que la seconde lecture n'a pas rapportée reste LISTÉE**, sans lien, sans étape
+      et sans pilule : les deux lectures ne sont pas atomiques. L'échec de la **seconde** lecture ne
+      remplace rien ; l'échec de la **règle**, lui, rend une erreur avec reprise — « aucune affaire
+      ne dort » sur une panne ferait passer un défaut pour une bonne nouvelle.
+- [x] **Tests unitaires dédiés** : `affaires-figees.test.ts` **17 assertions** (résolution du
+      libellé d'étape, adresses, appariement, retard nul, regroupement, homonymes, les quatre cas de
+      lecture) et `AffairesFigees.test.tsx` **11 assertions** (groupes, ordre, teinte sur le retard,
+      seuil variable, pilules, affaire orpheline, les trois états, annonce polie). Plus **six**
+      assertions dans `timeline.test.ts` pour la sous-tranche 3b.
+- [x] **Preuve E2E dédiée** : `e2e/ui/affaires-figees.spec.ts`, **9 scénarios verts** sur session
+      réelle, au clavier et à la souris — dont celui de la lectrice, **console vierge** sur le
+      parcours complet, et **aucun débordement horizontal aux quatre paliers**, mesuré par
+      `scrollWidth > clientWidth`.
+- [x] **Six captures produites ET OBSERVÉES** sous `docs/captures/CRM-062/`. **Un défaut trouvé en
+      regardant** (`CLAUDE.md` §16) : la capture du fil, prise sans `fullPage`, poussait la ligne de
+      relance sous la ligne de flottaison — l'image montrait l'écran, pas ce qu'elle prétend
+      prouver. La ligne est désormais amenée dans le champ avant la prise.
+- [x] **LES TYPES GÉNÉRÉS IGNORAIENT `cards_figees`, ET LE TÉMOIN FIGÉ DORMAIT AVEC EUX.** La
+      tranche 1 a livré la migration `0053` sans rejouer `scripts/generate-types.sh` : le témoin de
+      `database.types.test-d.ts` comparait deux états également périmés et restait **vert**. Il n'a
+      rougi qu'à la régénération, faite ici parce que l'écran appelle `client.rpc('cards_figees')`.
+      Trente-sept devient **trente-huit**, motif écrit dans le fichier.
+- [x] **Documentation dans le même changement** : `docs/DESIGN_SYSTEM.md` **§5.37** (l'écran) et
+      **§5.38** (la relance dans le fil) ; `docs/manual.md` chapitre **`3 quinquies`** et sa ligne
+      de sommaire ; `docs/SPEC-relances.md` §10 ; registre INC-206 et INC-207.
+- [ ] **Ce qui retient la tranche 3 en `[~]`, et c'est nommé** : la série des soixante et un autres
+      `scripts/verify-*.sh` n'a pas été rejouée derrière ce changement. Deux écarts sont **nommés**
+      plutôt que comblés (§11) : aucune portée « mes affaires » — elle demanderait un argument à
+      `public.cards_figees()`, donc une révision du contrat de la tranche 1 — et aucune pagination,
+      l'ordre venant du serveur et le volume n'étant pas mesuré.
 
 ---
 ### CRM-070 — précision d'arbitrage : l'invitation d'un membre

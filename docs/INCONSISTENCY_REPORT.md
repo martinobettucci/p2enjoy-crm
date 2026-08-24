@@ -209,6 +209,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-205 | `e2e/mail/ingestion.spec.ts`, puis `e2e/mail/dossiers.spec.ts`, échouent en CAMPAGNE et passent seuls — même famille qu'INC-128 et INC-172. Quatre campagnes enchaînées le 2026-08-24 : deux échecs sur deux scénarios DIFFÉRENTS, puis deux campagnes vertes, sans qu'une ligne du dépôt ne bouge | 2026-08-24 | **ouverte** — comportement inchangé, étrangère à `CRM-062` | 504, 505 |
 | INC-206 | `docs/SPEC-relances.md` renvoyait, depuis la tranche 1, à un « chapitre 30 » de `docs/manual.md` qui n'existe pas et ne peut pas exister — le manuel numérote de 1 à 6 avec des suffixes latins | 2026-08-24 | **close** — référence corrigée en `3 quinquies` par la tranche 3, motif au §10.13 | 506 |
 | INC-207 | La tranche 2 de `CRM-062` écrit un événement `stalled` que le fil d'une affaire rend **« Événement »** : le type n'est ni nommé, ni rangé, ni traduit | 2026-08-24 | **close par livraison** — la sous-tranche 3b le nomme, §10.3 | 506 |
+| INC-208 | Les **six** routes transverses — `/ma-journee`, `/contacts`, `/couts`, `/objectifs`, `/affaires-figees`, `/reglages` — écrivent « Aucun channel » là où il n'y a pas de track courant : un manque énoncé pour une absence de contexte | 2026-08-24 | **ouverte** — comportement inchangé, étrangère à `CRM-062` ; arbitrage attendu | 506 |
 
 ---
 
@@ -4252,3 +4253,40 @@ deux clés de son `payload` par une clé de traduction, jamais par concaténatio
 
 **Leçon de méthode, et elle vaut au-delà de cette unité** : « cette tranche ne livre aucun écran »
 ne dispense pas de demander ce que les écrans **déjà livrés** feront de la donnée qu'elle ajoute.
+
+### INC-208 — les SIX routes transverses écrivent « Aucun channel » là où aucun track n'est ouvert
+
+**Constat, MESURÉ le 2026-08-24** sur la pile debout et seedée, session de l'administratrice, en
+attendant `networkidle` avant chaque comptage :
+
+```
+/ma-journee      -> onglets-vides x1
+/contacts        -> onglets-vides x1
+/couts           -> onglets-vides x1
+/objectifs       -> onglets-vides x1
+/affaires-figees -> onglets-vides x1
+/reglages        -> onglets-vides x1
+```
+
+La barre d'onglets du §4 du design system décrit « les channels du **track courant** ». Sur une
+route transverse, il n'y a pas de track courant : `slugTrack` vaut `undefined`, et `TabBar` rend
+alors son état vide, « Aucun channel ». Le comportement est **écrit** dans le composant — « Hors
+d'une route de track, il n'y a ni channel ni coûts à proposer : l'état vide reste seul » — donc il
+n'est pas accidentel.
+
+**Pourquoi c'est consigné plutôt que corrigé.** « Aucun channel » énonce un **manque** là où il n'y
+a qu'une **absence de contexte** : un lecteur peut comprendre que son espace de travail n'en porte
+aucun, alors que la barre latérale en montre trois juste à côté. La distinction entre « il n'y en a
+pas » et « il n'y a pas lieu d'en montrer » est celle que le §5.9 tient déjà entre une cellule vide
+et un fait à nommer.
+
+**Elle est ÉTRANGÈRE à `CRM-062`**, et la mesure ci-dessus le prouve : les six routes se comportent
+à l'identique, dont cinq livrées avant cette unité. Une première mesure prise **sans attendre le
+chargement** avait rendu `0` pour deux d'entre elles et donnait à croire que `/affaires-figees` était
+un cas particulier — elle est écrite ici parce qu'une mesure trop rapide est exactement la façon dont
+on consigne un faux constat.
+
+**Le comportement est laissé INCHANGÉ** (`CLAUDE.md` §18) : la corriger toucherait `AppShell` et
+`TabBar`, qui appartiennent à `CRM-007` et `CRM-021`, et dépasserait l'unité autorisée
+(`CLAUDE.md` §13). L'arbitrage attendu du responsable : la barre doit-elle être **absente** hors
+d'une route de track, ou dire autre chose ?

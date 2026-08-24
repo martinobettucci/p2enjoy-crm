@@ -40,6 +40,7 @@
 | 7 bis | Ranger une affaire dans un autre dossier | `CRM-045` | **Livré côté serveur, sans écran** — voir le chapitre 4.11. Une affaire peut changer de channel — donc, si le channel d'arrivée suit un autre processus, changer de processus. L'étape d'arrivée doit alors être **choisie explicitement** : l'application ne devine jamais l'étape équivalente, deux processus pouvant porter la même étape sans qu'elle veuille dire la même chose. **Les réponses au formulaire de l'affaire sont perdues** lorsque le processus change — elles répondaient aux questions de l'ancien —, et l'opération est refusée tant que cette perte n'a pas été acceptée explicitement ; le refus indique combien de réponses seraient perdues. L'historique de l'affaire, lui, conserve les réponses données : la mémoire survit à la donnée. Le déplacement laisse une trace **« Dossier changé »** dans l'historique, y compris quand personne ne passe par l'application. Ce qui manque est uniquement l'écran : aucun bouton ne permet encore ce rangement |
 | 4.7 bis | Mettre une affaire à la corbeille | `CRM-077` | **Livré et vérifié** — voir le chapitre 4.7 *bis*. Le bouton vit en bas de la fiche de l'affaire, demande une confirmation qui la nomme, et remplace ensuite l'écran par les deux chemins utiles : revenir au channel, ou ouvrir la corbeille. Le geste suppose le droit d'**écrire** sur l'onglet, et non un rôle d'administrateur |
 | 8 | Vue liste, filtres et vues sauvegardées | `CRM-042`, `CRM-071` | **Partiellement livré** — la vue liste, son tri, ses deux filtres et sa pagination existent (chapitre 4.9) ; les **vues sauvegardées** relèvent de `CRM-071` et ne sont pas livrées |
+| 9 bis | Les affaires figées et leurs relances | `CRM-062` | **Livré avec son écran, vérifié visuellement** — voir le chapitre 3 *quinquies*. L'entrée « Affaires figées » de la barre latérale, sous *Ma journée*, liste les affaires restées dans leur étape au-delà du **seuil de relance** de cette étape, groupées par dossier et rangées du plus gros retard au plus petit. Chaque nuit, une ligne **« Relance automatique »** est inscrite dans l'historique de chaque affaire figée, avec son retard et son seuil — au plus une par séjour dans une étape, sans auteur. Les affaires archivées, à la corbeille et **en sommeil** en sont absentes, et une étape sans seuil ne fige jamais rien. Ce qui n'est **pas** livré, et l'absence est voulue : **aucun email**, **aucune notification**, aucune cadence réglable, et l'écran **lit** sans jamais écrire |
 | 9 | Prochaine action et vue « Ma journée » | `CRM-061` | **Livré avec son écran, vérifié visuellement** — voir le chapitre 3 *quater*. L'entrée « Ma journée » de la barre latérale rassemble les affaires à échéance de tout l'espace de travail, en trois sections : **En retard**, **Aujourd'hui**, **À venir dans sept jours**. Deux portées — vos affaires, ou tout ce que vos droits vous laissent lire —, dont le choix vit dans l'adresse. Les affaires archivées, à la corbeille et **en sommeil** en sont absentes. Ce qui manque : l'écran **lit** et n'écrit pas — reporter une échéance ou la saisir reste le geste de l'en-tête de la fiche (chapitre 4.2 *bis*) —, et l'horizon de sept jours n'est pas réglable |
 
 ### Messagerie
@@ -702,6 +703,106 @@ Deux messages, et ils ne disent pas la même chose :
 
 Sans session, c'est le **premier** de ces deux messages que vous lisez : « mes affaires » n'a pas de
 sujet tant que personne n'est connecté.
+
+## 3 quinquies. Les affaires figées : ce qui dort depuis trop longtemps
+
+*Livré par `CRM-062`, tranche 3. Captures : `docs/captures/CRM-062/`.*
+
+« Ma journée » vous dit ce qui est **dû**. Cet écran-ci vous dit ce qui **dort**. Les deux
+questions se ressemblent et ne sont pas la même : une affaire peut porter une prochaine action à
+demain et n'avoir pas bougé d'étape depuis six semaines. C'est pourquoi les deux entrées sont
+voisines dans la barre latérale, dans cet ordre.
+
+Vous y arrivez par **Affaires figées**, immédiatement sous *Ma journée*.
+
+### 3 quinquies.1 Ce qu'être « figée » veut dire
+
+Une affaire est **figée** lorsqu'elle est restée dans son étape **au-delà du seuil de relance de
+cette étape**. Ce n'est ni un jugement ni un score : c'est une durée comparée à un seuil.
+
+Le seuil vient du **processus**, et il se lit en deux temps :
+
+1. l'étape elle-même peut porter un seuil, réglé dans l'éditeur de workflows (chapitre 5 *bis*) ;
+2. sinon, c'est celui du **nœud** du catalogue dont l'étape est une occurrence (chapitre 5
+   *quater*).
+
+**Une étape sans seuil ne fige jamais ses affaires.** Personne n'a dit au bout de combien de temps
+elle est en retard, et le produit n'invente pas ce chiffre. C'est le cas des étapes terminales de
+l'espace de démonstration — *Livré* et *Perdu* —, dont les affaires n'apparaissent donc jamais ici.
+
+Le compte se fait en **jours révolus**, et la borne est **large** : une affaire qui atteint
+exactement son seuil est figée, et son retard vaut alors zéro.
+
+**Trois affaires ne sont jamais figées, quel que soit leur âge** :
+
+- une affaire **archivée** — elle n'est pas en retard, elle est rangée ;
+- une affaire **à la corbeille** — elle est sortie du produit (chapitre 5 *ter*) ;
+- une affaire **en sommeil** — mettre en sommeil est précisément le geste qui dit « pas
+  maintenant » (chapitre 4.9 *bis*), et la relancer annulerait le seul geste posé contre les
+  relances. Une échéance de sommeil **échue** ne protège plus : l'affaire est réveillée de fait.
+
+### 3 quinquies.2 Ce que l'écran montre
+
+Les affaires sont **groupées par dossier**, et les groupes sont rangés du **plus gros retard au
+plus petit**. Chaque titre de groupe porte son compte entre parenthèses.
+
+Une ligne se lit de gauche à droite :
+
+| Élément | Ce qu'il dit |
+|---|---|
+| **35 j** | le retard, en jours, sur fond rouge pâle |
+| **le titre** | un lien vers la fiche de l'affaire |
+| **Négociation** | l'étape où l'affaire est restée |
+| **seuil 5 j** | le seuil de cette étape, sans lequel le retard n'a pas d'échelle |
+| **Studio web › Refonte** | le dossier où elle vit ; un clic l'ouvre |
+
+Le rouge porte sur le **retard seul**, jamais sur la ligne entière : une affaire figée est un
+travail à faire, pas une erreur.
+
+### 3 quinquies.3 Deux personnes n'y lisent pas la même chose
+
+L'écran ne montre que les affaires que **vos droits vous laissent lire**. Deux collègues ouvrant la
+même page au même instant peuvent donc y voir des listes différentes, et c'est voulu : les droits
+par track et par onglet (chapitre 3.2 *quater*) s'appliquent ici comme partout.
+
+**L'écran ne dit jamais qu'il vous cache quelque chose.** Aucune mention « une affaire vous est
+masquée » n'apparaît : ce serait divulguer par la bande l'existence de ce que vos droits ferment.
+
+Dans l'espace de démonstration, l'administratrice et le business developer lisent **quatre**
+affaires figées ; la lectrice en lit **trois** — la quatrième vit dans un track qui lui est fermé.
+
+### 3 quinquies.4 La relance inscrite dans l'affaire
+
+Chaque nuit, le produit parcourt les affaires figées et inscrit dans l'historique de chacune une
+ligne **« Relance automatique »**, avec son retard et son seuil au moment du passage. Vous la
+trouvez dans le fil de la fiche (chapitre 4.10), dans la famille *Cycle de vie*.
+
+**Au plus une par séjour dans une étape** : une affaire figée depuis six semaines ne reçoit pas
+quarante-deux lignes. Si vous la déplacez puis qu'elle s'y rendort, une nouvelle relance est écrite
+— elle y dort une seconde fois.
+
+Cette ligne **n'a pas d'auteur** : personne ne l'a écrite, c'est l'horloge.
+
+### 3 quinquies.5 Ce que le produit ne fait PAS
+
+- **Aucun email n'est envoyé.** Une relance est un fait inscrit dans le produit, que vous rencontrez
+  en l'ouvrant. Les modèles d'emails et les séquences de relance relèvent d'une autre unité, non
+  livrée ;
+- **aucune notification** ne vous prévient ;
+- **aucune cadence n'est réglable** : le passage a lieu une fois par jour, et l'heure n'est pas un
+  réglage du produit ;
+- **l'écran n'écrit rien.** Ni « traité », ni report, ni mise en sommeil depuis cette liste : ces
+  gestes vivent sur la fiche de l'affaire, et les dédoubler ici en ferait deux définitions du même
+  geste.
+
+### 3 quinquies.6 Quand il n'y a rien
+
+**« Aucune affaire figée »** — aucune affaire, parmi celles que vous pouvez lire, ne dort dans son
+étape au-delà de son seuil. Le message ne propose aucun bouton, et ce n'est pas un oubli : il n'y a
+rien à faire d'une liste vide, et c'est une bonne nouvelle.
+
+Si la liste **n'a pas pu être lue**, l'écran le dit et propose *Réessayer*. Un écran vide et une
+panne ne se confondent jamais.
 
 ## 4. L'affaire : ce qu'elle porte, son adresse, ses deux façons de disparaître
 
