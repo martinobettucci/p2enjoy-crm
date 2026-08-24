@@ -8293,11 +8293,12 @@ preuves, l'écran vérifié visuellement aux quatre paliers, console vierge.
 - [x] **Garde-fou du vocabulaire RÉVISÉ, jamais contourné** :
       `supabase/tests/0019_move_card_to_channel.test.sql` passe de quatorze à quinze valeurs, motif
       écrit dans le fichier. Sixième évolution, et aucune valeur n'a jamais été retirée.
-- [ ] **Ce qui retient la tranche 2 en `[~]`, et c'est nommé** : la série des soixante-deux autres
-      `scripts/verify-*.sh` n'a pas été rejouée derrière ce changement — seul `verify-relances.sh`
-      l'a été. Aucun écran, aucune capture, aucune vérification visuelle : la tranche 2 ne livre
-      **aucune** surface, et l'absence est nommée plutôt que compensée par une preuve de
-      substitution.
+- [ ] **Ce qui retient la tranche 2 en `[~]`, et c'est nommé** : la série des soixante et un autres
+      `scripts/verify-*.sh` n'a pas été rejouée derrière ce changement — **deux** l'ont été,
+      `verify-relances.sh` (**55 contrôles, aucune anomalie**) et `verify-harness.sh`
+      (**31 contrôles, aucune anomalie**, qui valide les compteurs révisés). Aucun écran, aucune
+      capture, aucune vérification visuelle : la tranche 2 ne livre **aucune** surface, et l'absence
+      est nommée plutôt que compensée par une preuve de substitution.
 - [ ] **Tranche 3** : l'écran, et **l'extension du seed que le §5 nomme déjà** — une seule card
       figée ne démontre ni classement par retard, ni regroupement.
 

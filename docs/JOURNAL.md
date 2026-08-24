@@ -23573,6 +23573,11 @@ dans une même transaction, une card ne peut pas être entrée dans son étape a
 vocabulaire de `0019_move_card_to_channel.test.sql` est **révisé** de quatorze à quinze valeurs,
 motif écrit dans le fichier : sixième fois qu'il évolue, et aucune valeur n'a jamais été retirée.
 
+`scripts/verify-harness.sh` **31 contrôles, aucune anomalie** — il valide les compteurs révisés.
+`npm run e2e:ui` **581 passés** ; les captures réécrites par la campagne ont été **restaurées**,
+cette session ne touchant aucun composant d'interface (précédent des décisions 500, 503 bis et
+504 bis). **Non exécutés** : les soixante et un autres `scripts/verify-*.sh`.
+
 **`npm run e2e:mail` : QUATRE campagnes enchaînées, et le relevé vaut mieux qu'un `git stash`.**
 Passage 1 : un échec, `dossiers.spec.ts:212`. Passage 2 : un échec, `dossiers.spec.ts:276` — un
 scénario **différent du même fichier**. Passages 3 et 4 : **42 passés**. Chacun des deux scénarios,
