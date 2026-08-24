@@ -403,8 +403,19 @@ PORT_RAPPORT=9323
 # écrit, et les trois exclusions héritées dans les deux sens. `0019_move_card_to_channel.test.sql`
 # n'en gagne aucune : son garde-fou du vocabulaire est RÉVISÉ de quatorze à quinze valeurs, sixième
 # fois qu'il évolue. 2504 + 25 = **2529**, valeur COMPTÉE par `npm run test:sql`.
+# RÉVISÉES PAR `CRM-062` TRANCHE 3a, LE 2026-08-24, ET LE FICHIER NE BOUGE PAS.
+#
+# La tranche ne livre AUCUNE suite pgTAP neuve : `FICHIERS_SQL_ATTENDUS` reste à 52. Elle RÉVISE en
+# revanche la conformité du seed de `0051_cards_figees.test.sql`, qui passe de 24 à 26 assertions —
+# le jeu porte désormais QUATRE affaires figées (`docs/SPEC-relances.md` §10.2), et la conformité y
+# assère la SUITE ENTIÈRE des retards dans son ordre ainsi que les deux dimensions du regroupement,
+# là où elle comptait une ligne unique. 2529 + 2 = **2531**.
+#
+# `SCENARIOS_API` est INCHANGÉ à 858 : la tranche révise huit scénarios de `relances.spec.ts` et un
+# de `board.spec.ts`, elle n'en ajoute aucun. Une révision qui renforce une assertion ne change pas
+# un compte, et c'est précisément ce que ce témoin doit laisser passer. Valeurs COMPTÉES.
 FICHIERS_SQL_ATTENDUS=52
-ASSERTIONS_ATTENDUES=2529
+ASSERTIONS_ATTENDUES=2531
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
