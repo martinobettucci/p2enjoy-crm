@@ -521,7 +521,11 @@ ASSERTIONS_ATTENDUES=2504
 # du seed du §13.5 de `docs/SPEC-seed.md`. Aucun autre fichier n'a gagné ni perdu de scénario.
 # 826 + 11 = **837**, valeur COMPTÉE par `playwright test --list` (« Total: 837 tests in 49
 # files »), jamais déduite (INC-101). Le garde-fou est RÉVISÉ, jamais retiré (décision 51).
-SCENARIOS_API=837
+# **RÉVISION DU 2026-08-24 — `CRM-062`, tranche 1.** `e2e/api/relances.spec.ts` déclare **11**
+# scénarios : les dix lignes du contrat d'API du §4 de `docs/SPEC-relances.md`, plus le constat que
+# le seed sort intact. Aucun autre fichier n'a gagné ni perdu de scénario. 837 + 11 = **848**,
+# valeur COMPTÉE par `playwright test --list` (« Total: 848 tests in 50 files »), jamais déduite.
+SCENARIOS_API=848
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
