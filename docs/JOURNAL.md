@@ -23376,9 +23376,13 @@ liste est rendue, et pas seulement que l'ancienne a disparu.
 dégradation D9 du harnais posée — le filtre par responsable envoyé sous la portée élargie —, le
 scénario redevient **rouge**. Rejoué intact : **13 passés**.
 
+**LA CAMPAGNE D'INTERFACE A ÉTÉ REJOUÉE EN ENTIER APRÈS LA CORRECTION, et elle rend 581 passés,
+AUCUN ÉCHEC** — les treize scénarios de `ma-journee.spec.ts` compris. La course ne se reproduit
+plus, et aucune autre preuve n'a été cassée par la correction (`docs/CloudWorker.md` §4.3 point 5).
+
 **Reste de la campagne.** `npm run test:sql` **50 fichiers, 2480 assertions, aucune anomalie** ;
-`npm run e2e:api` **837 passés** ; `pytest` **244 passés** ; `npm run typecheck` et `npm run build`
-verts. Les **199** captures réécrites par la campagne d'interface ont été **restaurées** : cette
+`npm run e2e:api` **837 passés** ; `npm run e2e:mail` **42 passés** ; `pytest` **244 passés** ;
+`npm run typecheck` et `npm run build` verts. Les **199** captures réécrites par la campagne d'interface ont été **restaurées** : cette
 session ne touche aucun composant d'interface, et les committer laisserait croire que deux cents
-écrans ont été observés (précédent de la décision 500). **Non exécutés** : `npm run e2e:mail` et les
-soixante-deux autres `scripts/verify-*.sh`.
+écrans ont été observés (précédent de la décision 500). **Non exécutés** : les soixante-deux autres
+`scripts/verify-*.sh`, hors `verify-node-toolchain.sh` qui a été rejoué.
