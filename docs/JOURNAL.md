@@ -23386,3 +23386,92 @@ plus, et aucune autre preuve n'a été cassée par la correction (`docs/CloudWor
 session ne touche aucun composant d'interface, et les committer laisserait croire que deux cents
 écrans ont été observés (précédent de la décision 500). **Non exécutés** : les soixante-deux autres
 `scripts/verify-*.sh`, hors `verify-node-toolchain.sh` qui a été rejoué.
+
+## décision 504 — `CRM-062` : la notion de « card figée » descend en base, et une règle d'interface cesse d'en être une
+
+**Session du 2026-08-24, 18:11:09 UTC.**
+
+**Unité choisie, et le chemin qui y mène.** La décision 503 laissait `CRM-061` sans comportement dû.
+Le §4.2 de `docs/CloudWorker.md` a donc été rejoué dans l'ordre : aucune unité `[~]` ne portait de
+comportement livrable — `CRM-013` et `CRM-014` sont bloquées par des tables que `CRM-072` et
+`CRM-073` n'ont pas créées, `CRM-035` et `CRM-036` ne doivent plus que des preuves, la grille
+champ × étape qu'elles nommaient ayant été livrée par `CRM-076` §7 bis.11, `CRM-052` et `CRM-053`
+ont reçu leurs écrans de `CRM-088` et `CRM-089`, et `CRM-082` à `CRM-084` attendent toujours
+INC-169, INC-170 et INC-173. La règle 3 s'applique donc : la première unité `[ ]` du plan, et c'est
+**`CRM-062`**.
+
+**CE QUE LA MESURE A ÉTABLI AVANT LA PREMIÈRE LIGNE DE SPÉCIFICATION.** La notion de « card figée »
+existe dans ce produit depuis `CRM-041` — mais **uniquement dans un composant d'interface**.
+`webapp/src/lib/board.ts` calcule `ancienneteDepassee` et allume la pastille `danger` du §7.4 ; rien
+en base ne dit ce qu'être figée signifie. Le modèle, lui, est entier depuis `CRM-030` :
+`workflow_nodes_catalog.default_stale_after_days` et `workflow_steps.stale_after_days` portent les
+seuils, et le seed les exerce — cinq nœuds de 7 à 30 jours, une étape qui surcharge le sien à 5.
+
+C'est un cas exact de `CLAUDE.md` §10 : « à relancer » est une règle de produit, et une règle de
+produit s'applique là où l'interface ne peut pas être contournée. Deux conséquences concrètes, et
+elles ne sont pas théoriques : l'ordonnanceur de `CRM-017`, qui portera la relance automatique, n'a
+pas de `board.ts` ; et un écran qui listerait les affaires figées devrait télécharger **toutes** les
+cards pour en écarter la quasi-totalité.
+
+**Ce qui a été écrit et committé avant la première ligne de code** : `docs/SPEC-relances.md`, huit
+chapitres, rédigés **après mesure** sur la pile debout et seedée — sonde SQL créée puis détruite,
+quatre-vingt-dix jours de vieillissement appliqués en transaction annulée sur une card archivée, une
+en corbeille, une endormie et une sans seuil, et les deux côtés de la borne relevés à la main. La
+section `CRM-062` de `docs/BACKLOG.md` avec son découpage en trois tranches, et le changelog.
+
+**DEUX POINTS ONT ÉTÉ TRANCHÉS ET ÉCRITS PLUTÔT QUE SUBIS.** *Premier* : les nœuds terminaux ne sont
+**pas** nommés par la règle. Écrire `kind not in ('won','lost')` était possible ; c'eût été créer
+une **seconde** définition de « terminal » alors que l'absence de seuil les écarte déjà. La
+conséquence — un seuil posé sur `livre` rend ses cards relançables — est **figée par une assertion**
+plutôt que tue, pour que le jour où cette liberté gêne, la preuve le dise. *Second* : le seed porte
+deux cards en sommeil, l'une d'échéance future et l'autre **échue**, et le prédicat doit les
+séparer. Vieillies toutes deux, la première reste écartée et la seconde devient figée : « endormie »
+n'est pas « a été endormie ».
+
+**UN DÉFAUT DE PRIVILÈGE RÉEL, TROUVÉ PAR LA MESURE PAR L'API ET PAR ELLE SEULE.** La première
+écriture de la migration 53 ne révoquait que `public` — le geste habituel du dépôt. MESURÉ :
+l'appelant anonyme obtenait `200 []` là où le contrat annonce `401`. La cause est dans la
+plateforme, et elle est vérifiable : `pg_default_acl` porte
+`alter default privileges in schema public … on functions to anon`, si bien que **toute fonction
+neuve de `public` naît avec `anon=X`** — et `revoke … from public` ne retire rien à un rôle
+**nommé**. C'est le point de sûreté que les migrations 48 à 52 nomment pour les TABLES, et il vaut
+pour les fonctions ; `public.etat_messagerie` révoque `public, anon` depuis la migration 31 pour
+cette raison exacte. Corrigé, re-mesuré : `401` / `42501`. **La suite pgTAP resterait verte sans
+cette mesure** — c'est un privilège, pas un comportement de corps de fonction.
+
+**LA RÈGLE N'A PLUS QU'UNE DÉCLARATION DE CHAQUE CÔTÉ, ET C'EST VÉRIFIÉ, NON AFFIRMÉ.** Le seuil
+effectif, le compte des jours révolus et la borne large descendent de `board.ts` dans
+`webapp/src/lib/carte-figee.ts`, un module qui n'importe rien — condition de son atteignabilité
+depuis `e2e/`, `board.ts` important `./supabase` (mesuré et écrit dans `colonnes-board.ts`). Deux
+scénarios d'API confrontent alors le verdict SQL et le verdict TypeScript **sur toutes les affaires
+que l'administratrice lit**, et sur le compte des jours de la ligne rendue. Sans eux, « les deux
+règles disent la même chose » serait une affirmation.
+
+**Un nom de clé étrangère corrigé par la mesure** : `cards` porte
+`cards_current_step_id_workflow_id_fkey`, composite, et l'omettre rend `PGRST200`.
+
+**Preuves exécutées.** `npm run test:sql` **51 fichiers, 2504 assertions, aucune anomalie** ;
+`npm run test:unit` **74 fichiers, 2463 tests** ; `npm run typecheck` et `npm run build` verts ;
+`npm run e2e:api` **850 passés** ; `pytest` **244 passés** ; `scripts/verify-relances.sh`
+**34 contrôles, aucune anomalie**, ses **huit** dégradations mordant toutes ;
+`scripts/verify-node-toolchain.sh` **5 contrôles**, ses **41** harnais Node protégés comprenant le
+nouveau.
+
+**`npm run e2e:mail` : 41 passés, 1 échec au PREMIER passage**, `ingestion.spec.ts:223`, le
+classement automatique. Rejoué seul : **3 passés**. Campagne entière rejouée : **42 passés, aucun
+échec**. C'est la troisième occurrence du motif d'INC-128 et INC-172, et elle est consignée en
+**INC-205** : `CRM-062` tranche 1 n'ajoute qu'une fonction SQL en lecture seule et une extraction de
+module d'interface, dont aucun n'est lu par `mail-sync` — vérifié fichier par fichier.
+
+**Ce qui N'A PAS été exécuté, et il faut le dire** (`CLAUDE.md` §25) : les soixante-deux autres
+`scripts/verify-*.sh`, hors `verify-node-toolchain.sh` et le nouveau. Le budget est passé dans
+l'unité et dans la campagne.
+
+**Où reprendre.** `CRM-062` **tranche 2** : la relance automatique. Ses trois propriétés —
+idempotence ancrée sur `entered_step_at`, acteur nul, `payload` sans libellé — sont nommées au §7.2
+de `docs/SPEC-relances.md` et **restent à spécifier avant d'être écrites**. La quinzième valeur du
+`card_events_type_check`, `stalled`, sera posée par la même migration. Puis la **tranche 3** :
+l'écran, le chapitre 30 du manuel, les captures, et **l'extension du seed que le §5 nomme déjà** —
+une seule card figée ne démontre ni classement par retard, ni regroupement. `INC-138`, `INC-139`,
+`INC-169`, `INC-170`, `INC-173`, `INC-190`, `INC-193`, `INC-203` et `INC-204` attendent toujours
+l'arbitrage du responsable ; `INC-205` est consignée par cette session.

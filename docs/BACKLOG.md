@@ -8207,8 +8207,44 @@ preuves, l'écran vérifié visuellement aux quatre paliers, console vierge.
       avec `snoozed_until` : l'une future, l'autre **échue**. Vieillies toutes deux de quatre-vingt-dix
       jours, la première reste écartée, la seconde devient figée. Le prédicat est celui d'`estEnSommeil`,
       au caractère près.
-- [ ] **Tranche 1** : migration `0053`, `public.cards_figees()`, suite pgTAP, `e2e/api/relances.spec.ts`,
-      `scripts/verify-relances.sh`, `docs/SCHEMA.md`, `docs/PROD_MIGRATIONS.md`, `CHANGELOG.md`.
+- [x] **Migration `0053`** : `public.cards_figees()`, `stable`, `search_path` vide, **`security
+      invoker`**, dix colonnes, ordre `retard_jours desc, title asc`. Aucune table, aucune politique,
+      aucun trigger, aucun job. `docs/SCHEMA.md` §9 bis.9 et `docs/PROD_MIGRATIONS.md` migration 53
+      mis à jour dans le même changement.
+- [x] **UN DÉFAUT DE PRIVILÈGE RÉEL, TROUVÉ PAR LA MESURE PAR L'API ET PAR ELLE SEULE.** La première
+      écriture ne révoquait que `public` — le geste habituel du dépôt. MESURÉ : l'anonyme obtenait
+      `200 []` là où le contrat annonce `401`. `pg_default_acl` porte
+      `alter default privileges … on functions to anon` : toute fonction neuve de `public` naît avec
+      `anon=X`, et `revoke … from public` ne retire rien à un rôle **nommé**. C'est le point de
+      sûreté des migrations 48 à 52, valable pour les fonctions. Corrigé, re-mesuré : `401` /
+      `42501`. **La suite pgTAP serait restée verte** : c'est un privilège, pas un corps de fonction.
+- [x] **LA RÈGLE N'A PLUS QU'UNE DÉCLARATION DE CHAQUE CÔTÉ, ET C'EST VÉRIFIÉ.** Le seuil effectif,
+      les jours révolus et la borne large descendent de `board.ts` dans
+      `webapp/src/lib/carte-figee.ts`, module qui n'importe rien — condition de son atteignabilité
+      depuis `e2e/`. Deux scénarios d'API confrontent le verdict SQL et le verdict TypeScript sur
+      **toutes** les affaires que l'administratrice lit. Comportement du board inchangé.
+- [x] **Test unitaire dédié** : `webapp/src/lib/carte-figee.test.ts`, **12 assertions** — bornes des
+      deux côtés, date illisible rendant zéro et non `NaN`, absence de seuil, et « zéro n'est pas
+      nul », qui fige le choix de `??` plutôt que `||`.
+- [x] **Suite pgTAP dédiée** : `supabase/tests/0051_cards_figees.test.sql`, **24 assertions** — forme
+      dans le catalogue, ACL rôle par rôle, les trois exclusions éprouvées en vieillissant chaque
+      card de quatre-vingt-dix jours, la distinction « endormie » / « a été endormie », les deux
+      côtés de la borne, la surcharge de seuil, et l'ordre total.
+- [x] **Test d'API dédié** : `e2e/api/relances.spec.ts`, **13 scénarios verts** — les dix lignes du
+      contrat du §4 avec les jetons réels des trois profils, les deux cohérences, et le seed constaté
+      intact. Deux prédictions corrigées **par la mesure**, jamais le test relâché.
+- [x] **Harnais dédié `scripts/verify-relances.sh`** : **34 contrôles, aucune anomalie**, non
+      complaisant — **huit** dégradations réelles, toutes mordantes. La substitution compare le texte
+      avant et après et dit « IMPOSSIBLE » plutôt que de mentir (défaut de la décision 503).
+      Restauration **constatée**, pas supposée.
+- [x] **Compteurs de `scripts/verify-harness.sh` révisés dans le MÊME changement** :
+      `FICHIERS_SQL_ATTENDUS` 50 → **51**, `ASSERTIONS_ATTENDUES` 2480 → **2504**, `SCENARIOS_API`
+      837 → **850**. Valeurs COMPTÉES, jamais déduites.
+- [ ] **Ce qui retient la tranche 1 en `[~]`, et c'est nommé** : la série des soixante-deux autres
+      `scripts/verify-*.sh` n'a pas été rejouée derrière ce changement — deux l'ont été,
+      `verify-relances.sh` et `verify-node-toolchain.sh`. Aucun écran, aucune capture, aucune
+      vérification visuelle : la tranche 1 ne livre **aucune** surface, et l'absence est nommée
+      plutôt que compensée par une preuve de substitution.
 - [ ] **Tranche 2** : ses trois propriétés — idempotence ancrée sur `entered_step_at`, acteur nul,
       `payload` sans libellé — sont **à spécifier avant** de l'écrire, et ne le sont pas encore (§7.2).
 - [ ] **Tranche 3** : l'écran, et **l'extension du seed que le §5 nomme déjà** — une seule card

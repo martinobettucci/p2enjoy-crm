@@ -29,6 +29,26 @@ d'exécuter le code attendu.
   ne sont pas nommés par la règle, l'absence de seuil les écartant déjà ; et une échéance de
   sommeil **échue** ne protège plus, ce que le seed démontre en portant les deux cas.
 
+- **`public.cards_figees()` — LES AFFAIRES FIGÉES SE LISENT DÉSORMAIS EN BASE** (`CRM-062`
+  tranche 1, migration `0053`, `docs/SCHEMA.md` §9 bis.9). Une fonction en lecture seule, `stable`
+  et **`security invoker`**, qui rend à l'appelant — et à lui seul — ses affaires restées dans leur
+  étape au-delà du seuil de relance de cette étape, avec leur seuil, leur ancienneté et leur retard.
+  Trois exclusions et aucune quatrième : archivée, en corbeille, en sommeil. La RLS de `cards`
+  décide seule, et le refus est **zéro ligne**, jamais une erreur ; l'anonyme, lui, est refusé par
+  le **privilège**.
+
+  **UN DÉFAUT DE PRIVILÈGE A ÉTÉ TROUVÉ PAR LA MESURE PAR L'API, ET PAR ELLE SEULE.** La première
+  écriture ne révoquait que `public` — le geste habituel du dépôt. L'anonyme obtenait alors `200 []`
+  au lieu de `401` : `pg_default_acl` accorde `execute` à `anon` **nommément** à la création de
+  toute fonction de `public`, et `revoke … from public` ne le lui retire pas. La suite pgTAP serait
+  restée verte.
+
+  **La règle « figée » n'a plus qu'une déclaration de chaque côté.** Le seuil effectif, les jours
+  révolus et la borne descendent de `board.ts` dans `webapp/src/lib/carte-figee.ts` ; la pastille
+  d'ancienneté du board est inchangée au caractère près, et deux scénarios d'API confrontent
+  désormais le verdict SQL et le verdict TypeScript sur toutes les affaires lues. **Aucun écran,
+  aucune relance automatique, aucun email** : ce sont les tranches 2 et 3.
+
 - **« MA JOURNÉE » A SON HARNAIS DE PREUVES REJOUABLE ET NON COMPLAISANT**
   (`CRM-061` tranche 2, `scripts/verify-ma-journee.sh`, `docs/SPEC-cards.md` §17.11). Il rejoue en
   une commande tout ce que la Definition of Done de l'unité exige : la traçabilité des sept

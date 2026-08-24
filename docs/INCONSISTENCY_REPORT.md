@@ -206,6 +206,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-202 | `verify-mail-sync.sh` rouge d'un `pytest` absent de l'hôte, condition du §2.1 ter de `docs/CloudWorker.md` | 2026-08-21 | **close** — condition d'hôte, aucun fichier du dépôt en cause | 499 |
 | INC-203 | Quatre tests unitaires de `CRM-081` et `CRM-044` figent une date rendue dans le fuseau de l'HÔTE : ils échouent sous tout fuseau autre qu'UTC | 2026-08-24 | **ouverte** — comportement inchangé, étrangère à `CRM-061` | 503 |
 | INC-204 | `h-10` et `py-0.5` n'existent pas dans le CSS produit — même cause qu'INC-130, sur `EnTeteCard`, `Sommeil` et `BlocCoutsCard` | 2026-08-24 | **ouverte** — comportement inchangé, étrangère à `CRM-061` | 503 |
+| INC-205 | `e2e/mail/ingestion.spec.ts` « un email adressé à l'adresse d'une card y est classé automatiquement » échoue en CAMPAGNE et passe seul — même famille qu'INC-128 et INC-172 | 2026-08-24 | **ouverte** — comportement inchangé, étrangère à `CRM-062` | 504 |
 
 ---
 
@@ -2396,6 +2397,47 @@ ici à **moins d'une seconde de charge de la machine** — ce qui explique qu'un
 que la suivante ne le voie pas. C'est un argument de plus en faveur de la première des deux
 réponses ci-dessus : porter le budget déplacerait la limite sans supprimer la boucle qui l'atteint.
 Le comportement reste **inchangé**, et l'arbitrage reste dû.
+
+## Consigné le 2026-08-24 — une intermittence de campagne, étrangère à `CRM-062` tranche 1
+
+### INC-205 — le classement automatique d'`ingestion.spec.ts` rend un verdict intermittent en campagne
+
+**Statut : ouvert.** Constaté pendant la campagne de fin de session de `CRM-062` tranche 1.
+**Étranger à l'unité, et le rejeu a été EXÉCUTÉ, non supposé.**
+
+**Ce qui est mesuré.** La campagne de messagerie rend, au premier passage :
+
+```
+1 failed
+  [mail] › e2e/mail/ingestion.spec.ts:223:2 › un email adressé à l'adresse d'une card
+                                              y est classé automatiquement
+41 passed (1.4m)
+```
+
+Le scénario rejoué **seul** immédiatement après : **3 passés** en 6,3 s. La **campagne de messagerie
+entière** rejouée ensuite : **42 passés, aucun échec**. L'intermittence est donc confirmée dans les
+deux sens, comme pour INC-128 et INC-172.
+
+**Pourquoi elle n'est pas imputable à cette unité, et ce n'est pas une supposition de portée.**
+`CRM-062` tranche 1 ajoute une fonction SQL **en lecture seule** (`public.cards_figees()`), extrait
+trois fonctions pures de `board.ts` vers `carte-figee.ts` sans changer un caractère de leur
+comportement, et ajoute trois suites de preuves. Aucun de ces fichiers n'est lu par `mail-sync`, par
+la relève IMAP, ni par `classer_message_automatiquement` — vérifié fichier par fichier. Une
+extraction de module d'interface ne peut pas rendre un classement de messagerie intermittent.
+
+**Ce que l'échec dit, et il est plus précis que « flake ».** L'assertion qui tombe porte sur le
+**classement** d'un message qui vient d'être envoyé, exactement comme l'observation ajoutée à
+INC-172 le 2026-08-20 : « ce n'est pas l'arborescence renommée qui est fausse, c'est le classement
+du message envoyé », donc une relève qui n'a pas encore vu le message au moment de l'assertion.
+INC-205 est une **troisième occurrence** du même motif, sur une troisième preuve, et elle renforce
+la même mesure manquante : instrumenter le délai réel entre l'envoi et le classement sur une
+exécution où l'échec se produit. Tant que cette mesure n'est pas faite, l'attente ne doit pas être
+« relevée » au jugé — `CLAUDE.md` §18 proscrit la temporisation arbitraire, et allonger un délai
+sans connaître celui qu'on attend en est une.
+
+**Non corrigé par cette session** : le scénario relève de la messagerie, et l'unité de la session
+était `CRM-062` tranche 1 (`CLAUDE.md` §13, `docs/CloudWorker.md` §3.1).
+
 
 ## Consigné le 2026-08-19 — un constat d'environnement, étranger à `CRM-081` tranche 2 f
 
