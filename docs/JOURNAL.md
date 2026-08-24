@@ -23513,3 +23513,77 @@ passage (INC-205) ; `pytest` **244 passés** ; `typecheck` et `build` verts ;
 `scripts/verify-relances.sh` **34 contrôles, aucune anomalie** ;
 `scripts/verify-node-toolchain.sh` **5 contrôles, aucune anomalie**. **Non exécutés** : les
 soixante-et-un autres `scripts/verify-*.sh`.
+
+## décision 505 — `CRM-062` tranche 2 : la relance existe, et c'est le harnais qui a trouvé les deux preuves complaisantes
+
+**Session planifiée du 2026-08-24, 20 h 14 UTC.** Unité choisie par la règle 1 du §4.2 de
+`docs/CloudWorker.md` : la dernière entrée du journal désignait une reprise d'unité produit en
+cours — `CRM-062` **tranche 2**, la relance automatique, dont les trois propriétés restaient à
+spécifier.
+
+**CE QUI A ÉTÉ ÉCRIT ET COMMITTÉ AVANT LA PREMIÈRE LIGNE DE CODE.** `docs/SPEC-relances.md` **§9**,
+onze sections, rédigées après mesure sur la pile debout et seedée. Les trois propriétés annoncées
+au §7.2 y sont tranchées, et deux mesures ont décidé de l'architecture au lieu d'être supposées :
+
+- **`postgres` porte `BYPASSRLS`** (`rolbypassrls = t`, `rolsuper = f`). Le job peut donc **appeler
+  `public.cards_figees()`** au lieu de recopier son `where`, et « figée » garde **une seule**
+  définition en base — ce qui était tout l'objet de la tranche 1.
+- **`auth.uid()` rend `NULL` sous `postgres`**, exactement le contexte du job. La nullité de
+  `actor_id` est donc **obtenue** par `app.card_event_ecrire()`, jamais affectée. Inventer un
+  acteur — l'assignataire, le dernier intervenant — aurait été la valeur par défaut trompeuse que
+  `CLAUDE.md` §18 proscrit.
+- **Le `CHECK` refusait encore `stalled` en `23514`**, troisième constat de cette garde : la
+  quinzième valeur est ajoutée par la migration même qui l'écrit.
+
+**CE QUI EST LIVRÉ.** Migration `0054` : le vocabulaire du fil passe à quinze valeurs ;
+`app.relancer_cards_figees() returns integer`, `security definer` propriétaire `postgres`,
+privilèges révoqués des **quatre** rôles clients et d'aucune route exposée ; le job
+`p2enjoy-relances-cards-figees` à `23 3 * * *`, amorcé à dix secondes et **promu par son propre
+premier passage**, forme mesurée du heartbeat de `CRM-017`. L'idempotence est ancrée sur l'entrée
+dans l'étape — `not exists (stalled avec created_at >= entered_step_at)` —, de sorte que tout
+`move_card` réarme la relance **sans qu'aucune ligne ne le prévoie**, et qu'aucune colonne d'état
+ne soit ajoutée à `cards`.
+
+**LE SEED ÉCRIT SA RELANCE PAR LE VRAI MÉCANISME.** `apply-seed.sh` appelle
+`app.relancer_cards_figees()`, la fonction que le job appelle, au lieu d'insérer une fixture
+(`CLAUDE.md` §8). Vérifié en supprimant l'événement puis en réappliquant le seed : il réapparaît.
+Le seed appelle plutôt que d'attendre le job parce que celui-ci s'amorce **avant** que le script
+n'ait antidaté la card, et que le passage suivant n'aurait lieu que le lendemain.
+
+**LE HARNAIS A PRIS LA SUITE pgTAP EN DÉFAUT, ET C'EST LE FAIT LE PLUS UTILE DE LA SESSION.** Deux
+dégradations réelles — un libellé ajouté au `payload`, un acteur inventé par `set_config` — ont
+laissé la suite **VERTE**. La cause n'était pas dans le harnais : les assertions sur l'acteur et le
+payload lisaient l'événement **du seed**, écrit avant toute dégradation et que rien ne réécrit. Une
+preuve qui ne relit que le passé ne mesure pas le produit courant. Deux assertions portent
+désormais sur l'événement que le passage **courant** vient d'écrire ; la suite passe à 25
+assertions, et les six dégradations mordent toutes.
+
+Deux détails de méthode, mesurés, sont écrits dans les fichiers eux-mêmes plutôt que redécouverts :
+la copie dégradée de la migration **neutralise l'amorçage à dix secondes**, faute de quoi un passage
+tiré au milieu d'une dégradation de l'idempotence écrirait un doublon hors transaction, donc
+définitif ; et le réarmement est éprouvé par une **fixture antidatée**, la contrainte
+`workflow_steps_stale_check` exigeant un seuil strictement positif et `card_events` étant immuable —
+dans une même transaction, une card ne peut pas être entrée dans son étape après son dernier
+`stalled` **et** y séjourner depuis un jour.
+
+**Preuves exécutées.** `npm run test:sql` **52 fichiers, 2529 assertions, aucune anomalie** ;
+`npm run test:unit` **74 fichiers, 2463 tests** ; `npm run typecheck` et `npm run build` verts ;
+`npm run e2e:api` **858 passés** ; `pytest` **244 passés** ; `scripts/verify-relances.sh`
+**55 contrôles, aucune anomalie**, ses **quatorze** dégradations mordant toutes. Le garde-fou du
+vocabulaire de `0019_move_card_to_channel.test.sql` est **révisé** de quatorze à quinze valeurs,
+motif écrit dans le fichier : sixième fois qu'il évolue, et aucune valeur n'a jamais été retirée.
+
+**`npm run e2e:mail` : QUATRE campagnes enchaînées, et le relevé vaut mieux qu'un `git stash`.**
+Passage 1 : un échec, `dossiers.spec.ts:212`. Passage 2 : un échec, `dossiers.spec.ts:276` — un
+scénario **différent du même fichier**. Passages 3 et 4 : **42 passés**. Chacun des deux scénarios,
+rejoué seul, passe. Une régression est déterministe ; deux échecs successifs sur deux scénarios
+différents suivis de deux campagnes vertes, sans qu'une ligne du dépôt n'ait bougé, désignent
+l'ordonnancement de la campagne. Consigné en **INC-205**, quatrième et cinquième occurrences.
+
+**Où reprendre.** `CRM-062` **tranche 3** : l'écran qui liste les affaires figées de l'appelant, son
+entrée de navigation, le chapitre 30 du manuel, les captures aux quatre paliers, et **l'extension du
+seed** que le §5 nomme — une seule card figée ne démontre ni classement par retard, ni regroupement.
+La tranche 3 n'est **pas encore spécifiée** : le §7.3 l'esquisse, il ne la contracte pas ; elle se
+spécifie avant d'être écrite, comme la tranche 2 vient de l'être. `INC-138`, `INC-139`, `INC-169`,
+`INC-170`, `INC-173`, `INC-190`, `INC-193`, `INC-203`, `INC-204` et `INC-205` attendent toujours
+l'arbitrage du responsable.

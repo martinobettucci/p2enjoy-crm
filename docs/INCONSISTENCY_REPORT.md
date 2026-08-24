@@ -206,7 +206,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-202 | `verify-mail-sync.sh` rouge d'un `pytest` absent de l'hôte, condition du §2.1 ter de `docs/CloudWorker.md` | 2026-08-21 | **close** — condition d'hôte, aucun fichier du dépôt en cause | 499 |
 | INC-203 | Quatre tests unitaires de `CRM-081` et `CRM-044` figent une date rendue dans le fuseau de l'HÔTE : ils échouent sous tout fuseau autre qu'UTC | 2026-08-24 | **ouverte** — comportement inchangé, étrangère à `CRM-061` | 503 |
 | INC-204 | `h-10` et `py-0.5` n'existent pas dans le CSS produit — même cause qu'INC-130, sur `EnTeteCard`, `Sommeil` et `BlocCoutsCard` | 2026-08-24 | **ouverte** — comportement inchangé, étrangère à `CRM-061` | 503 |
-| INC-205 | `e2e/mail/ingestion.spec.ts` « un email adressé à l'adresse d'une card y est classé automatiquement » échoue en CAMPAGNE et passe seul — même famille qu'INC-128 et INC-172 | 2026-08-24 | **ouverte** — comportement inchangé, étrangère à `CRM-062` | 504 |
+| INC-205 | `e2e/mail/ingestion.spec.ts`, puis `e2e/mail/dossiers.spec.ts`, échouent en CAMPAGNE et passent seuls — même famille qu'INC-128 et INC-172. Quatre campagnes enchaînées le 2026-08-24 : deux échecs sur deux scénarios DIFFÉRENTS, puis deux campagnes vertes, sans qu'une ligne du dépôt ne bouge | 2026-08-24 | **ouverte** — comportement inchangé, étrangère à `CRM-062` | 504, 505 |
 
 ---
 
@@ -2437,6 +2437,34 @@ sans connaître celui qu'on attend en est une.
 
 **Non corrigé par cette session** : le scénario relève de la messagerie, et l'unité de la session
 était `CRM-062` tranche 1 (`CLAUDE.md` §13, `docs/CloudWorker.md` §3.1).
+
+**QUATRIÈME ET CINQUIÈME OCCURRENCES, LE 2026-08-24, SUR UNE QUATRIÈME PREUVE** — session
+`CRM-062` tranche 2. `e2e/mail/dossiers.spec.ts` rejoint la famille, et la mesure est plus parlante
+que les précédentes parce que **quatre campagnes complètes ont été enchaînées** :
+
+| Passage | Verdict |
+|---|---|
+| 1 | **1 échec** — `dossiers.spec.ts:212` « un message classé crée son arborescence, y est COPIÉ, et reste dans INBOX » |
+| 2 | **1 échec** — `dossiers.spec.ts:276` « renommer un TRACK renomme son dossier et emporte ses enfants », soit **un test DIFFÉRENT du même fichier** |
+| 3 | **42 passés** |
+| 4 | **42 passés** |
+
+Chacun des deux scénarios, rejoué **seul**, passe : `2 passés` en 7,8 s.
+
+**CE QUE CE RELEVÉ ÉTABLIT, ET IL VAUT MIEUX QU'UNE LIGNE DE BASE PAR `git stash`.** Une régression
+introduite par un changement est **déterministe** : elle tombe sur le même scénario à chaque
+passage. Ici, deux passages consécutifs tombent sur **deux scénarios différents**, puis deux
+passages n'en font tomber aucun, sans qu'une seule ligne du dépôt ait bougé entre les quatre. La
+cause est donc dans l'**ordonnancement de la campagne**, non dans le diff de la session — dont la
+tranche 2 n'ajoute qu'une fonction SQL privée, un job quotidien et une quinzième valeur au
+`card_events_type_check`, qu'aucun chemin de `mail-sync` ne lit.
+
+Cette occurrence **renforce la mesure manquante** déjà nommée ci-dessus, et en précise la cible :
+elle ne concerne pas un scénario en particulier mais **`e2e/mail/` pris comme campagne**. Tant que
+le délai réel entre l'action et son effet observable n'est pas instrumenté sur une exécution où
+l'échec se produit, aucune attente ne doit être relevée au jugé.
+
+**Non corrigé par cette session non plus** : l'unité était `CRM-062` tranche 2.
 
 
 ## Consigné le 2026-08-19 — un constat d'environnement, étranger à `CRM-081` tranche 2 f

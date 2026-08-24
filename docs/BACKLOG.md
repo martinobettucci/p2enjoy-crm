@@ -8187,7 +8187,7 @@ preuves, l'écran vérifié visuellement aux quatre paliers, console vierge.
 | Tranche | Objet | État |
 |---|---|---|
 | 1 | La règle en base — `public.cards_figees()`, migration `0053`, pgTAP, contrat d'API, harnais | en cours |
-| 2 | La relance automatique — job `pg_cron` quotidien, événement `stalled` dans la timeline | spécifiée (§9), en cours |
+| 2 | La relance automatique — job `pg_cron` quotidien, événement `stalled` dans la timeline | livrée, `[~]` (série des `verify-*.sh` non rejouée) |
 | 3 | La surface — écran, navigation, manuel chapitre 30, captures, extension du seed | `[ ]` |
 
 - [x] **Spécification écrite et committée AVANT la première ligne de code** — `docs/SPEC-relances.md`,
@@ -8260,10 +8260,44 @@ preuves, l'écran vérifié visuellement aux quatre paliers, console vierge.
 - [x] **MESURÉ : le `CHECK` refuse encore `stalled` en `23514`** — troisième constat de la garde du
       §14.4 de `docs/SPEC-cards.md`. La quinzième valeur est ajoutée par la **même** migration que
       la fonction qui l'écrit (§9.8).
-- [ ] **Tranche 2 — reste à livrer** : migration `0054` (vocabulaire à quinze valeurs,
-      `app.relancer_cards_figees()`, job `p2enjoy-relances-cards-figees` à `23 3 * * *` avec
-      amorçage observable), sa suite pgTAP, l'appel du seed par le **vrai** mécanisme, l'extension
-      de `scripts/verify-relances.sh`, et les preuves du §9.10.
+- [x] **Migration `0054` LIVRÉE** : le `card_events_type_check` passe de quatorze à **quinze**
+      valeurs avec `stalled` ; `app.relancer_cards_figees() returns integer`, `volatile`,
+      `security definer` propriétaire `postgres`, `search_path` vide, `execute` **révoqué des
+      quatre rôles clients** ; le job `p2enjoy-relances-cards-figees` à `23 3 * * *`, amorcé à dix
+      secondes et **promu par son propre premier passage**. `docs/SCHEMA.md` §9 bis.10 et
+      `docs/PROD_MIGRATIONS.md` migration 54 mis à jour dans le même changement.
+- [x] **LA RÈGLE N'EST PAS RÉÉCRITE** : le job **appelle** `public.cards_figees()`. Les trois
+      exclusions et l'absence de seuil sont donc héritées, et la suite pgTAP le prouve **par le
+      comportement** — archivée, en corbeille, désarchivée — plutôt que par la lecture du corps.
+- [x] **Suite pgTAP dédiée** : `supabase/tests/0052_relances_automatiques.test.sql`, **25
+      assertions** — vocabulaire, forme et ACL, contrat du job et son passage `succeeded`, état du
+      seed, idempotence, réarmement, acteur et payload de l'événement que le passage **courant**
+      écrit, et les trois exclusions héritées dans les deux sens.
+- [x] **LE HARNAIS A PRIS CETTE SUITE EN DÉFAUT, ET C'EST LE FAIT LE PLUS UTILE DE LA SESSION.**
+      Deux dégradations réelles — un libellé ajouté au `payload`, un acteur inventé — ont laissé la
+      suite **VERTE** : les assertions lisaient l'événement **du seed**, écrit avant toute
+      dégradation et que rien ne réécrit. Deux assertions portent désormais sur l'événement que le
+      passage courant vient d'écrire, et les six dégradations mordent.
+- [x] **Preuve d'API étendue** : `e2e/api/relances.spec.ts`, **21 scénarios verts** — les treize de
+      la tranche 1, plus huit qui lisent la relance dans la timeline sous les jetons réels. La
+      lectrice obtient **zéro ligne** : une relance n'ouvre aucune porte. `rpc/relancer_cards_figees`
+      rend `404 / PGRST202`, le schéma `app` n'étant pas exposé.
+- [x] **Le seed écrit sa relance par le VRAI mécanisme** : `apply-seed.sh` appelle
+      `app.relancer_cards_figees()` au lieu d'insérer une fixture (`CLAUDE.md` §8), sous deux
+      gardes qui mesurent le résultat. Vérifié en supprimant l'événement puis en réappliquant le
+      seed.
+- [x] **Harnais étendu** : `scripts/verify-relances.sh` couvre les deux tranches — **55 contrôles,
+      aucune anomalie**, ses **quatorze** dégradations mordant toutes. Compteurs de
+      `scripts/verify-harness.sh` révisés dans le même changement : **52** fichiers SQL, **2529**
+      assertions, **858** scénarios d'API — valeurs COMPTÉES.
+- [x] **Garde-fou du vocabulaire RÉVISÉ, jamais contourné** :
+      `supabase/tests/0019_move_card_to_channel.test.sql` passe de quatorze à quinze valeurs, motif
+      écrit dans le fichier. Sixième évolution, et aucune valeur n'a jamais été retirée.
+- [ ] **Ce qui retient la tranche 2 en `[~]`, et c'est nommé** : la série des soixante-deux autres
+      `scripts/verify-*.sh` n'a pas été rejouée derrière ce changement — seul `verify-relances.sh`
+      l'a été. Aucun écran, aucune capture, aucune vérification visuelle : la tranche 2 ne livre
+      **aucune** surface, et l'absence est nommée plutôt que compensée par une preuve de
+      substitution.
 - [ ] **Tranche 3** : l'écran, et **l'extension du seed que le §5 nomme déjà** — une seule card
       figée ne démontre ni classement par retard, ni regroupement.
 

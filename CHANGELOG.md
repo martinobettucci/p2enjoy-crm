@@ -15,6 +15,26 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **LES AFFAIRES QUI DORMENT SE SIGNALENT TOUTES SEULES** (`CRM-062` tranche 2, migration `0054`,
+  `docs/SCHEMA.md` §9 bis.10). Chaque nuit, une affaire restée dans son étape au-delà du seuil de
+  relance de cette étape reçoit une inscription dans sa timeline : « relancée », avec le seuil
+  franchi et le nombre de jours de retard. Personne n'a plus à chercher ce qui dort — le CRM le
+  dit de lui-même, à l'ouverture de l'affaire.
+
+  **Une affaire ne reçoit qu'UNE inscription par séjour dans son étape.** Une affaire figée depuis
+  six semaines n'accumule pas quarante-deux lignes ; en revanche, dès qu'elle est déplacée puis
+  s'endort de nouveau, elle est signalée une seconde fois. L'inscription n'a **aucun auteur
+  humain** : ce n'est pas un geste, c'est un fait de l'horloge. Elle ne porte **aucun libellé
+  recopié** — le nom de l'étape se lit là où il est à jour, jamais dans une trace figée.
+
+  **Elle n'ouvre aucune porte** : la trace suit l'affaire, et qui ne voit pas l'affaire ne voit pas
+  sa relance. Aucun client ne peut déclencher les relances, et aucune route ne les expose.
+  **Aucun email ne part** : une relance de `CRM-062` est un fait inscrit dans le produit ; l'envoi
+  suppose un modèle, un expéditeur et une cadence, les trois objets de `CRM-063`.
+
+  Le jeu de démonstration montre la relance de son affaire figée, **écrite par la fonction du
+  produit** et non par une fixture.
+
 - **LA RELANCE AUTOMATIQUE EST SPÉCIFIÉE AVANT D'ÊTRE ÉCRITE** (`CRM-062` tranche 2,
   `docs/SPEC-relances.md` §9). Onze sections rédigées le 2026-08-24 **après mesure** sur la pile
   debout et seedée, et **avant** la première ligne de la migration. Les trois propriétés que la
