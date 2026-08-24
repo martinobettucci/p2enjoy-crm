@@ -7153,7 +7153,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 |---|---|---|
 | CRM-060 | Contacts et organisations, historique transverse | `[~]` |
 | CRM-061 | Prochaine action, échéance, vue « Ma journée » | `[~]` |
-| CRM-062 | Relances automatiques des cards figées | `[ ]` |
+| CRM-062 | Relances automatiques des cards figées | `[~]` |
 | CRM-063 | Templates d'emails, signatures, séquences de relance | `[ ]` |
 | CRM-064 | @mentions, notifications temps réel et préférences | `[ ]` |
 | CRM-065 | Recherche globale plein texte et palette Cmd+K | `[ ]` |
@@ -8169,6 +8169,50 @@ produites **et observées** ; console navigateur vierge ; harnais dédié.
       horizon réglable (périmètre inventé, §12.6), aucune bascule de sommeil (elle annulerait le
       geste à l'endroit où il agit), aucun groupement par track (le rangement de cette vue est le
       **temps**), aucune notification ni digest (`CRM-064`, `CRM-069`).
+
+---
+### CRM-062 — Relances automatiques des cards figées `[~]`
+Une card **figée** est une affaire restée dans son étape au-delà du seuil de relance de cette
+étape. L'unité livre cette notion **en base**, là où l'ordonnanceur et l'API peuvent la lire, puis
+la relance automatique qui la fait remonter, puis la surface qui la montre.
+**Spécification** : `docs/SPEC-relances.md`, écrite après mesure sur la pile réelle et committée
+avant la première ligne de code.
+**DoD** : la règle est appliquée **côté backend** et prouvée sous les jetons réels des trois
+profils ; le refus se mesure comme **zéro ligne** et non comme une erreur ; l'anonyme est refusé
+par le privilège ; pgTAP, API, harnais non complaisant ; les tranches 2 et 3 livrées avec leurs
+preuves, l'écran vérifié visuellement aux quatre paliers, console vierge.
+
+**Découpage en trois tranches**, arrêté au §7 de `docs/SPEC-relances.md` :
+
+| Tranche | Objet | État |
+|---|---|---|
+| 1 | La règle en base — `public.cards_figees()`, migration `0053`, pgTAP, contrat d'API, harnais | en cours |
+| 2 | La relance automatique — job `pg_cron` quotidien, événement `stalled` dans la timeline | `[ ]` |
+| 3 | La surface — écran, navigation, manuel chapitre 30, captures, extension du seed | `[ ]` |
+
+- [x] **Spécification écrite et committée AVANT la première ligne de code** — `docs/SPEC-relances.md`,
+      huit chapitres, rédigés **après mesure** sur la pile de développement le 2026-08-24, seed
+      appliqué : sonde SQL créée puis détruite, quatre-vingt-dix jours de vieillissement appliqués
+      en transaction annulée sur une card archivée, une en corbeille, une endormie et une sans
+      seuil, et les deux côtés de la borne relevés à la main.
+- [x] **LA RÈGLE VIVAIT DANS UN COMPOSANT D'INTERFACE, ET LA MESURE L'A ÉTABLI.** `board.ts`
+      calcule `ancienneteDepassee` depuis `CRM-041` ; rien en base ne dit ce qu'« être figée »
+      signifie. Un ordonnanceur n'a pas de `board.ts`, et un écran qui listerait les affaires
+      figées devrait télécharger toutes les cards pour en écarter la quasi-totalité (§2.1).
+- [x] **UNE DÉCISION EST PRISE ET ÉCRITE PLUTÔT QUE SUBIE : les nœuds terminaux ne sont PAS nommés
+      par la règle** (§2.3). Les écarter par `kind` créerait une **seconde** définition de
+      « terminal » alors que l'absence de seuil les écarte déjà. La conséquence — un seuil posé sur
+      un nœud terminal rend ses cards relançables — est **figée par une assertion** plutôt que tue.
+- [x] **UNE MESURE DISTINGUE « ENDORMIE » DE « A ÉTÉ ENDORMIE »** (§2.4). Le seed pose deux cards
+      avec `snoozed_until` : l'une future, l'autre **échue**. Vieillies toutes deux de quatre-vingt-dix
+      jours, la première reste écartée, la seconde devient figée. Le prédicat est celui d'`estEnSommeil`,
+      au caractère près.
+- [ ] **Tranche 1** : migration `0053`, `public.cards_figees()`, suite pgTAP, `e2e/api/relances.spec.ts`,
+      `scripts/verify-relances.sh`, `docs/SCHEMA.md`, `docs/PROD_MIGRATIONS.md`, `CHANGELOG.md`.
+- [ ] **Tranche 2** : ses trois propriétés — idempotence ancrée sur `entered_step_at`, acteur nul,
+      `payload` sans libellé — sont **à spécifier avant** de l'écrire, et ne le sont pas encore (§7.2).
+- [ ] **Tranche 3** : l'écran, et **l'extension du seed que le §5 nomme déjà** — une seule card
+      figée ne démontre ni classement par retard, ni regroupement.
 
 ---
 ### CRM-070 — précision d'arbitrage : l'invitation d'un membre

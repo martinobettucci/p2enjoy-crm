@@ -15,6 +15,20 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **LA NOTION DE « CARD FIGÉE » EST SPÉCIFIÉE, ET ELLE DESCEND EN BASE** (`CRM-062`,
+  `docs/SPEC-relances.md`). Une card figée est une affaire restée dans son étape au-delà du seuil
+  de relance de cette étape. La règle existait depuis `CRM-041`, mais **uniquement dans un
+  composant d'interface** : `board.ts` allume la pastille `danger` du §7.4 et rien en base ne dit
+  ce qu'être figée signifie. Un ordonnanceur n'a pas de `board.ts`, et un écran qui listerait ces
+  affaires devrait télécharger toutes les cards pour en écarter la quasi-totalité.
+
+  La spécification est écrite **après mesure** sur la pile réelle, sonde créée puis détruite : les
+  trois exclusions — archivée, en corbeille, en sommeil — vérifiées **dans les deux sens** par
+  vieillissement de quatre-vingt-dix jours en transaction annulée, et les deux côtés de la borne
+  relevés à la main. Deux points y sont tranchés et écrits plutôt que subis : les nœuds terminaux
+  ne sont pas nommés par la règle, l'absence de seuil les écartant déjà ; et une échéance de
+  sommeil **échue** ne protège plus, ce que le seed démontre en portant les deux cas.
+
 - **« MA JOURNÉE » A SON HARNAIS DE PREUVES REJOUABLE ET NON COMPLAISANT**
   (`CRM-061` tranche 2, `scripts/verify-ma-journee.sh`, `docs/SPEC-cards.md` §17.11). Il rejoue en
   une commande tout ce que la Definition of Done de l'unité exige : la traçabilité des sept
