@@ -774,9 +774,22 @@ type _vueDerivationColonnes = Expect<
 // `COLONNES_LIGNE_A_SAISIR` le fait. La distinction ne vit pas dans le type, elle vit dans le
 // commentaire du module et dans la migration.
 // Trente-six devient TRENTE-SEPT.
-type _lesTrenteSeptFonctions = Expect<
+//
+// `0053` de `CRM-062` tranche 1 ajoute `cards_figees`, et LE TÉMOIN NE L'A PAS VU EN SON TEMPS —
+// c'est le fait le plus utile de cette révision. La migration a été livrée le 2026-08-24 sans que
+// `scripts/generate-types.sh` soit rejoué : le fichier généré ignorait la fonction, ce témoin
+// comparait donc deux états également périmés, et il est resté VERT. Il n'a rougi qu'à la
+// régénération, faite par la tranche 3c parce que son écran appelle `client.rpc('cards_figees')` —
+// appel que TypeScript refusait sur des types qui ne connaissaient pas la fonction.
+//
+// LA LEÇON EST DANS LA CHAÎNE, PAS DANS LE TÉMOIN : un témoin figé ne mesure une dérive que si la
+// source qu'il observe est elle-même à jour. Une migration qui ajoute une fonction au schéma exposé
+// régénère les types DANS LE MÊME CHANGEMENT, faute de quoi le garde-fou dort avec elle.
+// Trente-sept devient TRENTE-HUIT.
+type _lesTrenteHuitFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
+    | 'cards_figees'
     | 'reel_saisissable'
     | 'change_channel_workflow'
     | 'compare_workflow_versions'
@@ -1003,7 +1016,7 @@ export type AssertionsDuContratDeTypes = [
   _relationsWorkspaceMembers,
   _laSeuleVue,
   _vueDerivationColonnes,
-  _lesTrenteSeptFonctions,
+  _lesTrenteHuitFonctions,
   _signatureReelSaisissable,
   _retourReelSaisissable,
   _signatureArborescence,

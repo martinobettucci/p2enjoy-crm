@@ -2248,6 +2248,21 @@ export type Database = {
       }
     }
     Functions: {
+      cards_figees: {
+        Args: never
+        Returns: {
+          card_id: string
+          channel_id: string
+          entered_step_at: string
+          jours_dans_etape: number
+          owner_id: string
+          retard_jours: number
+          seuil_jours: number
+          step_id: string
+          title: string
+          workspace_id: string
+        }[]
+      }
       change_channel_workflow: {
         Args: {
           channel_id: string
