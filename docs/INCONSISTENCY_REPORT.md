@@ -207,6 +207,8 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-203 | Quatre tests unitaires de `CRM-081` et `CRM-044` figent une date rendue dans le fuseau de l'HÔTE : ils échouent sous tout fuseau autre qu'UTC | 2026-08-24 | **ouverte** — comportement inchangé, étrangère à `CRM-061` | 503 |
 | INC-204 | `h-10` et `py-0.5` n'existent pas dans le CSS produit — même cause qu'INC-130, sur `EnTeteCard`, `Sommeil` et `BlocCoutsCard` | 2026-08-24 | **ouverte** — comportement inchangé, étrangère à `CRM-061` | 503 |
 | INC-205 | `e2e/mail/ingestion.spec.ts`, puis `e2e/mail/dossiers.spec.ts`, échouent en CAMPAGNE et passent seuls — même famille qu'INC-128 et INC-172. Quatre campagnes enchaînées le 2026-08-24 : deux échecs sur deux scénarios DIFFÉRENTS, puis deux campagnes vertes, sans qu'une ligne du dépôt ne bouge | 2026-08-24 | **ouverte** — comportement inchangé, étrangère à `CRM-062` | 504, 505 |
+| INC-206 | `docs/SPEC-relances.md` renvoyait, depuis la tranche 1, à un « chapitre 30 » de `docs/manual.md` qui n'existe pas et ne peut pas exister — le manuel numérote de 1 à 6 avec des suffixes latins | 2026-08-24 | **close** — référence corrigée en `3 quinquies` par la tranche 3, motif au §10.13 | 506 |
+| INC-207 | La tranche 2 de `CRM-062` écrit un événement `stalled` que le fil d'une affaire rend **« Événement »** : le type n'est ni nommé, ni rangé, ni traduit | 2026-08-24 | **close par livraison** — la sous-tranche 3b le nomme, §10.3 | 506 |
 
 ---
 
@@ -4192,3 +4194,61 @@ appartient à `CRM-081` et à `CRM-057`.
 
 **Statut : ouverte.** Relève de `CRM-081` et de `CRM-057`. Voisine d'INC-130, qu'elle ne remplace
 pas.
+
+## Consignées le 2026-08-24 — deux références fausses trouvées en spécifiant la tranche 3 de `CRM-062`
+
+### INC-206 — `docs/SPEC-relances.md` renvoyait à un « chapitre 30 » que le manuel ne peut pas avoir
+
+**Constat.** L'en-tête de `docs/SPEC-relances.md` et son §7.3 écrivaient, depuis la tranche 1 :
+« Manuel : `docs/manual.md` chapitre 30 ». La référence est reprise telle quelle par
+`docs/BACKLOG.md` (ligne de découpage de `CRM-062`) et par deux entrées de `docs/JOURNAL.md`.
+
+**Mesure.** `docs/manual.md` numérote ses chapitres **de 1 à 6**, avec des suffixes latins pour les
+insertions : `1 bis`, `3 ter`, `3 quater`, `4`, `5 bis`, `5 septies`, `6`. Il n'existe aucun
+chapitre au-delà de 6, et la convention du document n'en permet aucun : un chapitre 30 supposerait
+une renumérotation entière que personne n'a prise.
+
+**Ce que c'était.** Un repère d'intention — « il faudra un chapitre » — écrit sous la forme d'une
+adresse. Une spécification qui cite une adresse inexistante fait chercher un document absent, et
+c'est exactement ce qu'une session future aurait fait.
+
+**Résolution.** La tranche 3 lui donne son adresse réelle : **`3 quinquies`**, immédiatement après
+`3 quater` « Ma journée », pour le motif écrit au §10.13 — les deux écrans répondent à la même
+question et s'enseignent l'un après l'autre. Les deux occurrences de `docs/SPEC-relances.md` sont
+corrigées dans le même changement que cette entrée.
+
+**Ce qui n'est PAS corrigé, et c'est délibéré** : les deux entrées de `docs/JOURNAL.md` gardent leur
+texte. Le journal est une trace chronologique, et réécrire ce qu'une session a réellement écrit
+ferait perdre le fait que la référence a vécu fausse pendant deux tranches.
+
+### INC-207 — la relance de la tranche 2 est écrite en base et se lit « Événement »
+
+**Constat, relevé par lecture du produit le 2026-08-24**, en spécifiant la surface :
+
+- `webapp/src/lib/timeline.ts` déclare `TYPES_EVENEMENT` avec **treize** valeurs ; `stalled`, écrite
+  par `app.relancer_cards_figees()` depuis la migration `0054`, n'en fait pas partie ;
+- `FAMILLE_PAR_TYPE` ne la range nulle part : `familleDe('stalled')` tombe sur son repli documenté
+  et rend `cycle` ;
+- `webapp/src/i18n/fr.ts` ne porte aucune clé `timeline.event.stalled` : le fil rend
+  `timeline.event.unknown`, dont le texte est le mot **« Événement »**.
+
+**Le repli a fait son travail** — « un événement inconnu doit rester **visible** : c'est une
+mémoire » —, et c'est ce qui a évité un `undefined` à l'écran. Le défaut n'est pas là.
+
+**Le défaut est un écart entre la spécification et le produit.** Le §9.1 de `docs/SPEC-relances.md`
+écrit qu'une relance « est un fait inscrit dans le produit, que l'utilisateur rencontre **en ouvrant
+la timeline de son affaire** ». Une ligne intitulée « Événement », sans détail, ne tient pas cette
+promesse : la tranche 2 a livré la moitié de sa propre spécification.
+
+**Pourquoi la tranche 2 ne l'a pas vu.** Son §9.10 énumère ses preuves attendues et écrit, pour
+l'interface : « **Aucun** : la tranche 2 ne livre aucun écran. L'absence est nommée, non compensée ».
+L'énoncé est vrai — elle n'a livré aucun écran — et il est **insuffisant** : elle a livré une donnée
+que des écrans existants rendent déjà. Le manque était donc invisible à sa propre grille de preuves.
+
+**Résolution.** La sous-tranche **3b**, spécifiée au §10.3 avant sa première ligne de code : le type
+est **nommé** parmi quatorze, **rangé** explicitement dans `cycle` — la valeur qu'il obtenait par
+repli devient une valeur choisie —, **traduit** « Relance automatique », et son détail compose les
+deux clés de son `payload` par une clé de traduction, jamais par concaténation.
+
+**Leçon de méthode, et elle vaut au-delà de cette unité** : « cette tranche ne livre aucun écran »
+ne dispense pas de demander ce que les écrans **déjà livrés** feront de la donnée qu'elle ajoute.

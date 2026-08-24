@@ -8,12 +8,16 @@ Contrat exécutable de `CRM-062` (`docs/BACKLOG.md`, chunk 5).
 - Ordonnancement : `docs/SPEC-scheduler.md` (`CRM-017`).
 - Interface existante qui porte déjà la notion : `docs/SPEC-workflow-engine.md` §7.4 (pastille
   d'ancienneté du board), `docs/DESIGN_SYSTEM.md` §5.1.
-- Manuel : `docs/manual.md` chapitre 30.
+- Manuel : `docs/manual.md` chapitre **`3 quinquies`**, immédiatement après `3 quater` « Ma
+  journée ». *Cette ligne écrivait « chapitre 30 » depuis la tranche 1 ; ce chapitre n'existe pas et
+  ne peut pas exister — le manuel numérote de 1 à 6 avec des suffixes latins. Corrigé le 2026-08-24,
+  motif au §10.13, écart consigné au registre.*
 - Ordonnanceur livré dont la tranche 2 réemploie le mécanisme : `docs/SPEC-scheduler.md` §3
   (démarrage observable), §4 (fermeture des privilèges), §5 (convergence).
-- État : **tranche 1 livrée** (§1 à §6), **tranche 2 spécifiée au §9** le 2026-08-24 après mesure
-  sur la pile debout et seedée, avant sa première ligne de code. La tranche 3 est esquissée au
-  §7.3 et **non spécifiée**.
+- État : **tranche 1 livrée** (§1 à §6), **tranche 2 livrée** (§9), **tranche 3 spécifiée au §10**
+  le 2026-08-24 après mesure sur la pile debout et seedée, avant sa première ligne de code. Elle se
+  découpe en trois sous-tranches — **3a** le jeu de démonstration, **3b** la relance nommée dans le
+  fil, **3c** l'écran.
 
 ---
 
@@ -311,9 +315,13 @@ n'en est plus que le sommaire.
 
 ### 7.3 Tranche 3 — la surface
 
-L'écran qui liste les affaires figées de l'appelant, son entrée de navigation, le chapitre 30 du
-manuel, les captures aux quatre paliers, et **l'extension du seed** que le §5 a nommée : une seule
-card figée ne démontre ni classement, ni regroupement.
+L'écran qui liste les affaires figées de l'appelant, son entrée de navigation, le chapitre
+`3 quinquies` du manuel, les captures aux quatre paliers, et **l'extension du seed** que le §5 a
+nommée : une seule card figée ne démontre ni classement, ni regroupement.
+
+Ce §7.3 n'est plus qu'un sommaire : la tranche est **spécifiée au §10**, écrit après mesure sur la
+pile réelle le 2026-08-24, et elle s'y découpe en **trois** sous-tranches — le jeu de démonstration,
+la relance nommée dans le fil, puis l'écran.
 
 ## 8. Points ouverts
 
@@ -560,3 +568,432 @@ Le retour arrière de la migration `0054` désordonnance `p2enjoy-relances-cards
 faits d'histoire, et `card_events` est immuable par construction. Le `CHECK` conserve donc ses
 quinze valeurs ; le rétrécir invaliderait des lignes existantes. `pg_cron` n'est pas désinstallé,
 d'autres jobs y vivent (`docs/SPEC-scheduler.md` §7).
+
+---
+
+## 10. Tranche 3 — la surface, contrat exécutable
+
+Chapitre écrit le **2026-08-24**, après mesure sur la pile de développement debout et seedée, et
+**avant** la première ligne de la tranche 3. Chaque valeur citée ici a été relevée sur cette pile ;
+aucune ne vient d'un souvenir.
+
+Le §7.3 esquissait cette tranche en une phrase ; il ne la contractait pas. Ce chapitre la contracte,
+et il commence par nommer un fait que le §7.3 ne voyait pas : **la relance de la tranche 2 est
+écrite en base et n'est lisible nulle part**. C'est mesuré au §10.3, et cela change le découpage.
+
+### 10.1 Trois sous-tranches, et l'ordre est celui de la dépendance
+
+| Sous-tranche | Objet | Pourquoi à cette place |
+|---|---|---|
+| **3a** | Le jeu de démonstration : **quatre** affaires figées au lieu d'une | Le §5 nomme cette dette depuis la tranche 1. Une seule ligne ne démontre ni classement, ni regroupement : les preuves de 3b et 3c seraient à réécrire derrière elle |
+| **3b** | La relance **nommée dans le fil** d'une affaire | La tranche 2 écrit un `stalled` que le fil rend « Événement » (§10.3, mesuré). Le §9.1 promet « un fait que l'utilisateur rencontre en ouvrant la timeline » : la promesse n'est pas tenue |
+| **3c** | L'**écran** qui liste les affaires figées de l'appelant, son entrée de navigation, son chapitre de manuel et ses captures | C'est la surface que le §7.3 nomme. Elle lit ce que 3a peuple et renvoie vers le fil que 3b rend lisible |
+
+**Hors périmètre, et l'unité qui le porte** : tout email (`CRM-063`), toute notification
+(`CRM-064`), tout score de santé (`CRM-066`), tout digest (`CRM-069`) — la frontière du §1, tenue
+sans changement. **Aucune écriture** n'est livrée par cette tranche : ni report, ni « traité », ni
+mise en sommeil depuis l'écran. Le seul chemin d'écriture reste la fiche de l'affaire, et un second
+geste ici en ferait une seconde définition du même geste (`docs/DESIGN_SYSTEM.md` §5.36, règle
+reprise telle quelle).
+
+### 10.2 Sous-tranche 3a — le jeu de démonstration, et ce que sa révision coûte
+
+#### 10.2.1 Les quatre affaires retenues, MESURÉES et non prédites
+
+Le §9.12 de `docs/SPEC-seed.md` pose **exactement une** affaire au-delà de son seuil. Le §5 du
+présent document annonce depuis la tranche 1 que cela ne suffira pas. Le vieillissement proposé a
+été **appliqué dans une transaction annulée** le 2026-08-24, et `public.cards_figees()` rend, sous
+`postgres` :
+
+| Affaire | Channel / Track | Seuil | Âge posé | `retard_jours` |
+|---|---|---|---|---|
+| `…0c4` « Refonte intranet Ville de Lyon » | `refonte` / `studio-web` | 5 | 40 j | **35** |
+| `…d007` « Contrat TMA 2026 — Mairie de Vaulx » | `maintenance` / `studio-web` | 7 | 25 j | **18** |
+| `…0c3` « Audit sécurité applicative » *(inchangée)* | `grands-comptes` / `conseil-ia` | 14 | 30 j | **16** |
+| `…0cf` « Reprise du dossier Marchand » | `dossiers-2023` / `legacy-2023` | 5 | 12 j | **7** |
+
+**Quatre affaires, quatre channels, trois tracks, et quatre retards deux à deux distincts.** Chacun
+de ces quatre nombres porte une exigence, et aucun n'est décoratif :
+
+1. **Les retards sont distincts**, donc l'ordre `retard_jours desc` du §3.4 est **total** sur ce
+   jeu : deux applications successives rendent la même suite, et une preuve peut asserter la suite
+   entière plutôt qu'un ensemble. Le départage par `title` reste écrit dans la fonction, il n'est
+   simplement pas exercé par ce jeu — et c'est préférable : une preuve qui dépendrait d'une égalité
+   de retard casserait au premier changement de seuil ;
+2. **quatre channels distincts**, donc le regroupement du §10.7 a quatre groupes d'une ligne, et
+   `studio-web` en porte **deux** — le seul cas où le regroupement par track a plus d'un membre, et
+   donc le seul qui prouve qu'il regroupe ;
+3. **les seuils diffèrent** — 5, 7, 14 — donc la ligne rend une donnée qui varie, et une preuve ne
+   peut pas confondre `seuil_jours` avec une constante ;
+4. **`…0c3` ne bouge pas.** Elle reste à trente jours pour un seuil de quatorze : tout ce que
+   `docs/SPEC-seed.md` §9.12 écrit d'elle, et tout ce que `e2e/ui/anciennete-board.spec.ts` mesure
+   sur le board de `grands-comptes`, reste vrai **au caractère près**. La révision **ajoute**, elle
+   ne déplace pas.
+
+**Pourquoi ces quatre-là, et pas quatre autres.** Le critère est la **lisibilité par les trois
+profils**, mesurée le 2026-08-24 avec les jetons réels :
+
+| Profil | Affaires figées lues |
+|---|---|
+| `admin` | **4** |
+| `business_developer` | **4** |
+| `viewer` | **3** — toutes sauf `…0c3`, dont le track `conseil-ia` lui est fermé (`CRM-012`) |
+
+C'est un **gain de valeur probante**, et c'est la raison principale du choix. Aujourd'hui la
+lectrice obtient un écran **vide**, indistinguable d'un écran sans donnée ; demain elle obtient
+**trois lignes sur quatre**, et le refus de la quatrième se mesure comme une ligne manquante dans
+une liste peuplée — la forme la plus stricte du « zéro ligne, jamais une erreur » du §3.2.
+
+**Le vieillissement passe par la clé de service**, après la remise à zéro générale et dans la même
+section que `…0c3`, exactement comme le §9.12.3 de `docs/SPEC-seed.md` le pose : `entered_step_at`
+n'est ouverte à aucun rôle client, et le recul part de `now()` — un rejeu ne cumule rien.
+
+#### 10.2.2 Ce que la révision coûte, nommé fichier par fichier
+
+Le contrat « exactement une » est **écrit à six endroits**, et chacun est **révisé, jamais retiré**
+(`CLAUDE.md` §18, `docs/CloudWorker.md` §3.1). L'inventaire a été fait par lecture, et il est
+exhaustif à la date d'écriture :
+
+| Porteur | Ce qu'il assère aujourd'hui | Révision |
+|---|---|---|
+| `docs/SPEC-seed.md` §9.12.6 ligne *a* | « Exactement **une** card active » | **quatre**, énumérées avec leur retard, et l'ordre attendu |
+| `scripts/verify-board.sh` | `au_dela -eq 1` | `-eq 4`, plus l'assertion que `…0c3` en fait partie et que son âge est inchangé |
+| `e2e/api/board.spec.ts` | « une card du seed, et une seule, dépasse son seuil » | quatre, mesurées par la vraie API avec le jeton réel |
+| `e2e/api/relances.spec.ts` lignes *a*, *d*, *e* | `toHaveLength(1)` ; `viewer` ⇒ `[]` | quatre pour l'`admin` et le `business_developer`, **trois** pour la lectrice — un refus qui se lit dans une liste peuplée |
+| `supabase/tests/0051_cards_figees.test.sql` et `0052_relances_automatiques.test.sql` | conformité du seed : une ligne, et c'est `…0c3` | quatre lignes, `…0c3` comprise, et l'ordre |
+| `supabase/seed/apply-seed.sh` | gardes `au_dela = 1`, `relances = 1`, `autres = 0` | `au_dela = 4`, `relances = 4`, et la garde « aucun `stalled` hors des quatre » |
+
+**Le §7.4 de `docs/SPEC-workflow-engine.md` n'est PAS touché** : il a déjà été révisé par le §9.12
+et porte la présence d'une bascule, non un compte. Vérifié par lecture, et écrit ici pour que la
+prochaine session ne le rouvre pas pour rien.
+
+**Une garde de non-complaisance est due, et elle change de forme.** Le §9.12.4 exigeait qu'« reculer
+la date d'une **seconde** card fasse échouer le harnais ». Avec quatre affaires voulues, la garde
+devient : reculer la date d'une **cinquième** doit faire échouer, et **rajeunir l'une des quatre**
+aussi. Deux dégradations, deux sens — sans la seconde, un seed qui cesserait de vieillir `…0cf`
+passerait inaperçu.
+
+#### 10.2.3 Ce que le seed écrit, et par quel mécanisme
+
+Rien de neuf : `apply-seed.sh` appelle déjà `app.relancer_cards_figees()` après l'antidatage
+(§9.9). Les quatre affaires reçoivent donc leur `stalled` **par la fonction du produit**, jamais par
+une fixture — `CLAUDE.md` §8, tenu sans changement. L'appel reste **convergent** par le prédicat du
+§9.4.
+
+**MESURÉ le 2026-08-24**, sur le seed courant, le `payload` réellement écrit :
+
+```
+type    = stalled
+payload = {"seuil_jours": 14, "retard_jours": 16}
+actor_id = NULL
+```
+
+Les deux clés du §9.6 et la nullité **obtenue** du §9.5 sont donc constatées sur la donnée, et non
+supposées. Les trois affaires ajoutées porteront leurs propres nombres — 5/35, 7/18, 5/7 —, ce qui
+donne au §10.3 quatre détails différents à rendre plutôt qu'un seul répété.
+
+### 10.3 Sous-tranche 3b — la relance est écrite et ILLISIBLE, et c'est mesuré
+
+**Le fait, relevé le 2026-08-24 par lecture du produit** — `webapp/src/lib/timeline.ts` et
+`webapp/src/i18n/fr.ts` :
+
+- `TYPES_EVENEMENT` compte **treize** valeurs, et `stalled` n'en fait pas partie ;
+- `FAMILLE_PAR_TYPE` ne le range nulle part, donc `familleDe('stalled')` tombe sur son **repli**
+  documenté et rend `cycle` ;
+- aucune clé `timeline.event.stalled` n'existe, donc le fil rend `timeline.event.unknown`, dont le
+  texte est le mot **« Événement »**.
+
+Le repli fait exactement ce pour quoi il a été écrit — « un événement inconnu doit rester
+**visible** : c'est une mémoire » — et c'est ce qui a évité un `undefined` à l'écran. Mais le §9.1
+de ce document promet que la relance est « un fait inscrit dans le produit, que l'utilisateur
+rencontre **en ouvrant la timeline de son affaire** » : une ligne intitulée « Événement » ne tient
+pas cette promesse. La tranche 2 a livré la moitié de sa propre spécification, et **c'est cette
+tranche qui livre l'autre**.
+
+#### 10.3.1 Le contrat
+
+| Point | Valeur | Motif |
+|---|---|---|
+| `TYPES_EVENEMENT` | **quatorze** valeurs, `stalled` comprise | Le type est écrit par le produit depuis la migration `0054` : il est nommé, et non plus toléré par un repli |
+| Famille | **`cycle`** | « Qu'est devenue cette affaire ? » — elle a **stagné**. C'est le même repli qu'aujourd'hui, désormais **écrit** : une valeur obtenue par défaut et une valeur choisie ne se distinguent pas à l'œil, et seule la seconde résiste à un changement du repli |
+| Libellé | **« Relance automatique »** | Il nomme le **fait**, pas la mécanique : « Affaire figée » décrirait un état, or la ligne du fil date un geste. Le vocabulaire est celui du produit, jamais `stalled` |
+| Icône | **`AlarmClock`** (Lucide) | Aucun autre type du §5.11 ne la porte ; `Sparkles`, `Archive`, `Moon` et `Sun` sont pris, et le §9 du design system interdit qu'une icône serve deux objets distincts |
+| Pastille | `--color-danger-soft`, icône `--color-danger` | C'est le **seul** type du fil que la teinte de danger qualifie, et elle est déjà celle de l'ancienneté dépassée (§5.1, §5.36) : le même signal doit avoir la même forme |
+| Détail | **« {retard} jours de retard, pour un seuil de {seuil} jours »** | Les deux clés du `payload` (§9.6), et **rien d'autre** — aucun libellé d'étape, que le §9.6 refuse de recopier |
+
+**Le détail est composé par une CLÉ DE TRADUCTION, jamais par concaténation** (§10 du design
+system). L'accord se pose : « 1 jour de retard » et « 16 jours de retard » ne prennent pas la même
+forme, et un retard de **zéro** est légitime — la borne du §2.5 est large, donc une affaire atteinte
+exactement sur son seuil porte `retard_jours = 0` et se lit « atteint son seuil de 14 jours », phrase
+distincte plutôt que « 0 jours de retard ».
+
+**Un `payload` amputé ne rend AUCUN détail, et surtout pas un `undefined`** : la ligne retombe alors
+sur son seul libellé, comme le §5.11 l'exige déjà d'un libellé d'étape non résolu. La valeur vient
+du backend, et un type ne garantit jamais une valeur (`docs/SPEC-types.md`).
+
+**Aucune sixième bascule de filtre.** Le §5.11 du design system pose cinq familles et écrit pourquoi
+— « une sixième bascule pour deux types contredirait le §5.11 » a déjà été tranché par `CRM-081`. Un
+type de plus dans `cycle` ne rouvre pas cet arbitrage.
+
+### 10.4 Sous-tranche 3c — l'adresse de l'écran, et sa place dans la navigation
+
+**Adresse : `/affaires-figees`.** Une route de **premier niveau**, portée par une entrée de la barre
+latérale, et non une section de `/reglages`. C'est le raisonnement qui a déjà placé le carnet
+(`CHEMIN_CONTACTS`), les objectifs, les coûts et « Ma journée » hors des réglages : **une liste
+d'affaires en retard n'administre rien, elle porte le travail**.
+
+Elle figure dans `ROUTES` — son titre est une clé de traduction et son contenu ne dépend d'aucun
+paramètre d'adresse —, et la couverture exacte `ROUTES` ⇄ `ENTREES_TRANSVERSES` que
+`routes.test.tsx` tient reste donc vraie, avec une entrée de plus **des deux côtés**.
+
+**Place dans la barre latérale : immédiatement après « Ma journée », avant « Réglages ».** Les deux
+écrans répondent à la même question — « qu'est-ce qui me réclame ? » — et se lisent dans cet ordre :
+ce qui est **dû** aujourd'hui, puis ce qui **dort** depuis trop longtemps. Les placer côte à côte
+n'est pas une commodité : le §2.6 pose qu'une échéance dépassée et une affaire figée sont deux
+notions **différentes** qui se recoupent souvent, et le seul endroit où cette différence
+s'enseigne est la navigation, où l'on voit les deux entrées voisines.
+
+**Icône : `Hourglass`** (Lucide). Aucune entrée transverse ne la porte — `LayoutGrid`, `Inbox`,
+`Contact`, `Goal`, `ChartColumn`, `CalendarCheck` et `Settings` sont prises —, et elle dit le temps
+qui s'écoule sans que rien n'avance, ce qu'est exactement une affaire figée. Elle est **distincte
+d'`AlarmClock`** du §10.3.1, et la distinction est voulue : l'écran montre un **état**, la ligne du
+fil date un **geste**.
+
+**Chargée à la demande** (`lazy`), comme le carnet, l'inbox, les objectifs et « Ma journée » : un
+écran que la plupart des sessions n'ouvrent pas n'a pas à peser sur le premier rendu de toutes les
+autres (`CLAUDE.md` §21).
+
+### 10.5 Ce que l'écran lit, et pourquoi en DEUX requêtes — MESURÉ
+
+L'écran fait **deux lectures successives**, et ce n'est pas un défaut de conception : c'est ce que
+la pile permet, mesuré.
+
+**Lecture 1 — la règle.** `POST /rest/v1/rpc/cards_figees`, sans argument. Elle rend les dix
+colonnes du §3.1, dont `retard_jours` et `seuil_jours`, que rien d'autre ne sait calculer.
+
+**Lecture 2 — les libellés.** `GET /rest/v1/cards?id=in.(…)` avec ses relations embarquées, sur les
+**seuls identifiants que la lecture 1 a rendus**.
+
+**POURQUOI PAS UNE SEULE, ET C'EST MESURÉ LE 2026-08-24.** `public.cards_figees()` rend un
+`TABLE(...)`, c'est-à-dire un type composite anonyme, et non un `SETOF public.cards`. PostgREST ne
+lui connaît donc aucune clé étrangère :
+
+```
+POST /rest/v1/rpc/cards_figees?select=card_id,title,channels(slug)
+=> PGRST200
+   "Searched for a foreign key relationship between 'record' and 'channels'
+    in the schema 'public', but no matches were found."
+```
+
+Le §3.1 refuse par ailleurs de recopier un libellé d'étape dans la fonction — « une fonction qui
+recopierait le libellé dirait demain ce qui était vrai aujourd'hui » —, et cette règle n'est pas
+rouverte pour économiser un aller-retour. La seconde lecture est donc **la conséquence assumée** de
+deux décisions déjà prises, et elle est bornée : elle porte sur les identifiants **déjà filtrés**
+par la règle, jamais sur le pipeline entier. C'est précisément ce que le §2.1 exigeait — ne pas
+« télécharger toutes les cards pour en écarter la quasi-totalité ».
+
+**La chaîne `select` de la lecture 2, MESURÉE sur la pile** — les deux désambiguïsations sont
+obligatoires et ont été trouvées par l'erreur, pas par la lecture :
+
+```
+id, title,
+channels!cards_channel_id_workspace_id_fkey(slug, name, tracks(slug, name)),
+workflow_steps!cards_current_step_id_workflow_id_fkey(id, label_override,
+                                                      workflow_nodes_catalog(label))
+```
+
+- **`channels` doit être désambiguïsé** : `cards` porte **deux** clés étrangères vers `channels` —
+  `cards_channel_id_workflow_id_fkey` et `cards_channel_id_workspace_id_fkey` —, et un `channels(…)`
+  nu rend `PGRST201`. La seconde est retenue, comme `colonnes-ma-journee.ts` et `card-costs.ts` le
+  font déjà : une seule forme dans tout le produit ;
+- **`workflow_steps` porte `label_override`, jamais `label`** : un `workflow_steps(label)` rend
+  `42703 — column workflow_steps_1.label does not exist`. Le libellé d'une étape est
+  `coalesce(label_override, workflow_nodes_catalog.label)`, exactement la résolution de
+  `resoudreEtape` dans `board.ts`, et l'écran la **réemploie** au lieu d'en écrire une seconde.
+
+**Réponse mesurée**, pour `…0c3` :
+
+```json
+{"id":"…0c3","title":"Audit sécurité applicative",
+ "channels":{"slug":"grands-comptes","name":"Grands comptes",
+             "tracks":{"slug":"conseil-ia","name":"Conseil & IA"}},
+ "workflow_steps":{"id":"…0061","label_override":null,
+                   "workflow_nodes_catalog":{"label":"Prospection"}}}
+```
+
+**Une affaire rendue par la lecture 1 mais absente de la lecture 2 reste LISTÉE**, avec son retard,
+son seuil et son titre — que la lecture 1 rend déjà —, mais **sans lien, sans pilule et sans nom
+d'étape**. C'est la règle du §5.32 du design system : un lien vers une adresse incomplète mènerait à
+un écran que l'utilisateur croirait cassé. Le cas n'est pas théorique — les deux lectures ne sont
+pas atomiques, et une affaire mise à la corbeille entre elles disparaîtrait de la seconde.
+
+**Aucune troisième lecture, et aucun `count=exact`** : il n'y a pas de pagination, donc pas de
+nombre de pages à calculer, et le compte de chaque groupe est celui des lignes **rendues**. C'est le
+§17.4 de `docs/SPEC-cards.md`, tenu sans changement.
+
+### 10.6 La portée, et pourquoi il n'y en a qu'une
+
+**L'écran n'offre AUCUNE bascule de portée**, contrairement à « Ma journée » (§5.36). Ce n'est pas
+un oubli, et le motif est dans la fonction : `public.cards_figees()` est `security invoker` (§3.2) et
+ne prend **aucun argument**. Elle rend donc « ce que l'appelant peut lire », sans autre dimension —
+il n'existe aucun `owner_id = moi` à filtrer côté serveur, et le poser côté client ferait de l'écran
+le juge d'un rangement que la base ne connaît pas.
+
+Ajouter un argument à la fonction est une **modification de la tranche 1**, dont le contrat d'API
+est écrit, mesuré et prouvé au §4. Elle n'est pas faite ici, et l'écart est **nommé** plutôt que
+comblé au passage : si le besoin « seulement mes affaires » se manifeste, il se traitera par une
+révision explicite du §3.1 et de son contrat, jamais par un filtre d'écran.
+
+### 10.7 Le regroupement et le classement
+
+**Les affaires sont regroupées par CHANNEL, et les groupes sont ordonnés par le retard de leur
+première ligne.**
+
+- **Par channel, et non par track** : le channel est le dossier où l'affaire vit, c'est lui que la
+  pilule « Track › Channel » du §5.29 nomme, et c'est le grain auquel on va agir. Un regroupement
+  par track mettrait `refonte` et `maintenance` dans le même bloc alors que ce sont deux dossiers
+  distincts — mesuré sur le jeu de 3a, où `studio-web` porte les deux ;
+- **l'ordre à l'intérieur d'un groupe est celui du serveur**, conservé tel quel : `retard_jours desc,
+  title asc` (§3.4). Le rejouer à l'écran le ferait diverger le jour où la fonction changera —
+  c'est la règle que `decouperEnSections` tient déjà pour « Ma journée » ;
+- **l'ordre DES GROUPES est celui de leur première ligne**, donc du plus gros retard du groupe. Un
+  ordre alphabétique de channel ferait descendre en bas d'écran le dossier le plus en retard, ce qui
+  est exactement l'information que l'écran existe pour donner.
+
+**Le regroupement se fait à la COMPOSITION, jamais au serveur** : la fonction rend une suite
+ordonnée, et découper cette suite en groupes est une opération de rendu qui ne demande aucune
+seconde requête. C'est le raisonnement du §17.5 de `docs/SPEC-cards.md`, réemployé.
+
+**Un groupe porte son compte, en toutes lettres et dans son propre élément** — « Grands comptes (1) »
+—, jamais un badge nu : un chiffre ne dit pas ce qu'il compte, et un nœud de texte accolé au libellé
+devient un élément flex anonyme que `gap` ne sépare pas (défaut « Discussion1 », §5.11).
+
+**Un groupe vide n'existe pas** : un groupe naît d'au moins une ligne. Il n'y a donc rien à écrire
+sur l'absence, contrairement aux sections fixes de « Ma journée ».
+
+### 10.8 Ce que chaque ligne rend, et dans quel ordre
+
+| Rang | Élément | Forme |
+|---|---|---|
+| 1 | **Le retard** — « 35 j » | Donnée technique (§2) : monospace, chiffres tabulaires, pastille `--color-danger-soft` / `--color-danger-on-soft`. **En tête de ligne**, comme l'échéance du §5.36 : c'est lui qui range cet écran |
+| 2 | **Le titre de l'affaire** | Lien vers sa fiche. Le titre **est** le libellé du lien, sans `aria-label` qui le remplacerait |
+| 3 | **L'étape** — « Prospection » | Pilule neutre `--color-hover` / `--color-text-2`, `rounded-full` (§5.6). C'est le dossier interne de l'affaire, pas son identité |
+| 4 | **Le seuil** — « seuil 14 j » | 13 px `--color-text-2`. Sans lui, « 35 j de retard » ne se lit pas : un retard sans son seuil n'a pas d'échelle (§9.6, même raison) |
+| 5 | **La pilule « Track › Channel »** | Celle du §5.29, réemployée **sans copie** et **entière**, destination comprise. Elle ferme la ligne : elle situe l'affaire, elle ne la nomme pas |
+
+**La teinte de danger porte sur le RETARD, jamais sur la ligne** — la règle du §5.36, tenue au
+caractère près : une affaire figée est un travail à faire, pas une erreur. Le §1 est tenu par le
+titre de l'écran et par l'unité « j », écrits en toutes lettres.
+
+**Le retard s'écrit en jours, avec son unité, dans son PROPRE élément** — « 35 » puis « j », jamais
+un nœud de texte accolé au nombre (§5.18, §5.11). Un retard de **zéro** est légitime (borne large du
+§2.5) et se rend « 0 j » : c'est une donnée, pas une absence, et la cellule vide du §5.9 ne
+s'applique pas.
+
+**Sous le palier `md`, la ligne se replie et gagne de la hauteur** — l'écart que le §5.21 assume pour
+sa liste plate, pris ici pour la même raison : cinq éléments ne tiennent pas sur 390 px, et la
+réponse d'une liste plate au manque de place est de se replier, non de tronquer une donnée. `md` et
+jamais `sm`, qui est un variant inconnu que Tailwind supprime en silence (§11, §5.20). La page ne
+défile jamais horizontalement (§7).
+
+### 10.9 Les états
+
+Les quatre états du §5.8 sont traités, plus l'absence d'espace de travail — le patron de
+`MaJournee`, tenu sans écart :
+
+| État | Rendu |
+|---|---|
+| Chargement | Squelette de liste, jamais un spinner plein écran |
+| Erreur | Message compréhensible et **action de reprise qui relit réellement** |
+| Aucun espace de travail | Le client n'existe pas : état vide nommé, sans action |
+| **Vide** | « Aucune affaire figée », et **AUCUNE action** |
+
+**L'état vide n'offre aucune action, et c'est l'écart assumé au §5.8** — le même que la corbeille
+(§5.16) et le carnet (§5.19) prennent : il n'y a rien à faire d'une liste d'affaires en retard qui
+est vide, et un bouton y serait un chemin vers nulle part. **Le message dit que l'état est sain, pas
+qu'il manque quelque chose** : « aucune affaire ne dort dans son étape » est une bonne nouvelle.
+
+**Un seul vide, et non deux.** « Ma journée » en porte deux parce qu'elle a une portée à élargir
+(§5.36) ; ici il n'y en a pas (§10.6), donc rien ne distingue « rien pour moi » de « rien pour
+personne ». En écrire deux inventerait une distinction que la donnée ne porte pas.
+
+**Le vide de la lectrice est le vide ordinaire, jamais un refus mis en scène.** La RLS rend `200` et
+zéro ligne ; l'écran ne calcule aucun droit et ne nomme jamais ce qu'il ne montre pas
+(`docs/SPEC-permissions-rls.md` §7, §5.33 du design system). Sur le jeu de 3a, elle en voit **trois**
+et l'écran n'écrit nulle part qu'une quatrième existe.
+
+### 10.10 Accessibilité et clavier
+
+- La liste est une `section` par groupe, chacune portant son `h2` et sa `ul` — le patron du §5.36 ;
+- **le compte de lignes est ANNONCÉ** dans une région `aria-live` polie : une liste qui se recompose
+  sans un mot est un changement invisible pour qui ne voit pas l'écran (§8) ;
+- **le nom accessible de la pilule de channel nomme sa destination** — « Ouvrir Conseil & IA ›
+  Grands comptes » —, la règle du §5.29 : la même pilule répétée sur quatre lignes ne dirait pas ce
+  que chacune ouvre ;
+- **aucune cible sous 40 px**, et le retard n'est pas une cible : c'est une donnée ;
+- **la console du navigateur reste vierge** de toute erreur et de tout avertissement
+  (`docs/CloudWorker.md` §3).
+
+### 10.11 Contrat d'API de la tranche 3
+
+Aucune route neuve. Le contrat porte sur ce que les **deux lectures** de l'écran rendent aux jetons
+réels des trois profils, sur le jeu de 3a :
+
+| # | Appelant | Appel | Attendu |
+|---|---|---|---|
+| a | `admin` | `rpc/cards_figees` | `200`, **4** lignes, dans l'ordre `…0c4`, `…d007`, `…0c3`, `…0cf` |
+| b | `admin` | ligne *a* | les retards valent **35, 18, 16, 7**, strictement décroissants |
+| c | `business_developer` | `rpc/cards_figees` | `200`, **4** lignes, la même suite |
+| d | `viewer` | `rpc/cards_figees` | `200`, **3** lignes — `…0c3` **absente**, et **aucune erreur** |
+| e | anonyme | `rpc/cards_figees` | `401` / `42501` — inchangé (§4 ligne *f*) |
+| f | `admin` | la lecture 2 sur les quatre identifiants | `200`, 4 lignes, chacune portant son channel, son track et le libellé de son étape |
+| g | `viewer` | la lecture 2 sur les **quatre** identifiants | `200`, **3** lignes : la seconde lecture applique la même RLS que la première, et l'écran ne peut donc pas rendre par la bande ce que la règle refuse |
+| h | `admin` | `card_events?type=eq.stalled` | `200`, **4** événements, un par affaire figée, `actor_id` nul et `payload` aux deux clés |
+
+La ligne *g* est la plus importante des huit : elle mesure que **la seconde lecture ne rouvre
+aucune porte**. Un écran qui obtiendrait les libellés d'une affaire dont la règle lui refuse la
+ligne divulguerait par la bande — et rien dans la lecture 1 ne l'en empêcherait.
+
+### 10.12 Preuves exigées
+
+| Niveau | Preuves attendues |
+|---|---|
+| pgTAP | Conformité du seed révisée : **quatre** affaires figées, leur ordre, `…0c3` comprise et inchangée ; **quatre** `stalled`, un par affaire, acteur nul et `payload` aux deux clés |
+| API | Les huit lignes du §10.11, avec les jetons réels des trois profils. Les scénarios *a*, *d* et *e* de `e2e/api/relances.spec.ts` sont **révisés**, jamais retirés, motif écrit dans le fichier |
+| Unitaire (webapp) | Le module de composition : le regroupement par channel, l'ordre des groupes, la conservation de l'ordre serveur **dans** un groupe, la ligne rendue sans sa lecture 2, le retard nul, la famille et le libellé de `stalled` |
+| E2E d'interface | Le parcours réel, **au clavier et à la souris**, depuis la barre latérale : les quatre lignes de l'`admin`, les **trois** de la lectrice, l'ordre, le lien vers une fiche, la pilule qui ouvre son channel, l'état vide, et la ligne « Relance automatique » **dans le fil** d'une affaire figée |
+| Visuel | Captures aux **quatre** paliers du §7 — 1440, 1152, 900 et 390 px —, produites depuis l'application réellement exécutée et **observées** (`CLAUDE.md` §16). Plus une capture du fil portant la relance nommée |
+| Harnais | `scripts/verify-relances.sh` étendu, non complaisant : la dégradation du regroupement, celle de l'ordre des groupes et celle du libellé de `stalled` doivent chacune faire rougir, et la restauration est **constatée** |
+| Seed | `scripts/verify-board.sh` révisé : **quatre** affaires au-delà de leur seuil, et au moins une en deçà. Les deux dégradations du §10.2.2 mordent |
+
+### 10.13 Le manuel — « chapitre 30 » n'existe pas, et voici ce qu'il devient
+
+L'en-tête de ce document et le §7.3 renvoient au « chapitre 30 » de `docs/manual.md`. **Ce chapitre
+n'existe pas, et il ne peut pas exister** : le manuel numérote ses chapitres de 1 à 6 avec des
+suffixes latins — `1 bis`, `3 ter`, `3 quater`, `5 septies` —, et n'a jamais compté jusqu'à trente.
+La référence était un repère d'intention, pas une adresse.
+
+**Le chapitre de cette tranche est `3 quinquies` — « Les affaires figées : ce qui dort depuis trop
+longtemps »**, immédiatement après `3 quater` « Ma journée ». La place suit exactement celle de
+l'entrée de navigation (§10.4), et pour son motif : les deux écrans répondent à la même question et
+s'enseignent l'un après l'autre.
+
+Il couvre : ce qu'être figée veut dire et d'où vient le seuil, ce que l'écran montre et ce qu'il ne
+montre pas, pourquoi deux personnes n'y lisent pas la même chose, la relance inscrite dans le fil, et
+ce que le produit ne fait **pas** — aucun email, aucune notification (§1).
+
+La référence « chapitre 30 » est **corrigée** dans l'en-tête de ce document et au §7.3 par le même
+changement, et l'écart est consigné à `docs/INCONSISTENCY_REPORT.md` : une référence documentaire
+fausse pendant deux tranches est un fait à enregistrer, pas à effacer en silence.
+
+## 11. Points ouverts de la tranche 3
+
+Aucun arbitrage n'est demandé. Deux écarts sont **nommés** plutôt que comblés au passage, et chacun
+porte la condition de sa reprise :
+
+1. **Aucune portée « mes affaires »** (§10.6) — elle demanderait un argument à
+   `public.cards_figees()`, donc une révision du contrat de la tranche 1 ;
+2. **Aucune pagination, aucun tri commandé** — l'ordre vient du serveur, et poser une pagination sur
+   une lecture dont personne n'a mesuré le volume serait de l'optimisation sans mesure
+   (`CLAUDE.md` §21). C'est l'écart que le §10.7 de `docs/SPEC-contacts.md` prend déjà pour le
+   carnet, avec la même condition de reprise : une mesure.
