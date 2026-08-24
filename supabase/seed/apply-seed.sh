@@ -9,6 +9,8 @@
 # @spec CRM-018 (docs/BACKLOG.md) — champs exigés par une transition, avec intégrité référentielle
 # @spec CRM-078 (docs/BACKLOG.md) — une version publiée du workflow par défaut
 # @spec CRM-081 (docs/BACKLOG.md) — deux affaires en sommeil, dont une échue (docs/SPEC-cards.md §16.11.6)
+# @spec CRM-062 (docs/BACKLOG.md) — la relance de la card figée, écrite par le VRAI mécanisme
+#       (docs/SPEC-relances.md §9.9)
 # @spec CRM-060 (docs/BACKLOG.md) — contacts et organisations, tranche 1 (docs/SPEC-contacts.md §5)
 # @spec docs/SPEC-seed.md §2 (contrat), §2.9 (copie), §3 (mécanismes mesurés), §4 (identifiants),
 #       §5 (gardes)
@@ -2253,6 +2255,35 @@ au_dela=$(psql_seed -c "
         seule — le contrat du §9.12.6 ligne a n'est pas tenu."
 info "Ancienneté : « Audit sécurité applicative » est à 30 jours pour un seuil de 14 — la pastille
   d'ancienneté bascule sur une donnée permanente, et elle seule"
+
+# --- 8 octies bis. La relance de la card figée, PAR LE VRAI MÉCANISME — CRM-062 tranche 2 -------
+# @spec CRM-062 (docs/BACKLOG.md) — relances automatiques, tranche 2
+# @spec docs/SPEC-relances.md §9.9 (ce que le seed démontre, et par quel chemin)
+#
+# CLAUDE.md §8 interdit de « fabriquer artificiellement des traces censées représenter l'exécution
+# d'un processus réel ». L'événement `stalled` du jeu de développement n'est donc PAS inséré par
+# une fixture : le seed appelle `app.relancer_cards_figees()`, la fonction même que le job
+# quotidien `p2enjoy-relances-cards-figees` appelle.
+#
+# POURQUOI LE SEED APPELLE PLUTÔT QUE D'ATTENDRE LE JOB. Le job s'amorce dix secondes après
+# l'application des migrations, donc AVANT que ce script n'ait antidaté la card ci-dessus : son
+# premier passage ne trouve rien, et le suivant n'aura lieu que le lendemain. Sans cet appel, un
+# développeur qui monte la pile ne verrait aucune relance de la journée — l'écran vide que le §8
+# proscrit.
+#
+# L'APPEL EST CONVERGENT : rejoué, il n'écrit rien de plus, l'ancre étant l'entrée dans l'étape
+# (§9.4). La garde ci-dessous mesure le résultat au lieu de le supposer.
+psql_seed -c "select app.relancer_cards_figees();" >/dev/null
+relances=$(psql_seed -c "select count(*) from public.card_events
+                          where type = 'stalled' and card_id = '$CARD_EN_RETARD';")
+[ "${relances:-0}" = "1" ] || die "relances : $relances événements « stalled » sur la card figée au
+        lieu d'un seul — l'ancrage sur l'entrée dans l'étape du §9.4 n'est pas tenu."
+autres=$(psql_seed -c "select count(*) from public.card_events
+                        where type = 'stalled' and card_id <> '$CARD_EN_RETARD';")
+[ "${autres:-0}" = "0" ] || die "relances : $autres événements « stalled » hors de la seule card
+        figée du jeu — le prédicat du §2.4 ne tient pas."
+info "Relance : la card figée porte UN événement « stalled », écrit par app.relancer_cards_figees()
+  — la fonction que le job quotidien appelle, jamais une fixture"
 
 # --- 8 nonies. Quatre messages RÉELLEMENT reçus — docs/SPEC-seed.md §2.19, CRM-057 -------------
 # @spec CRM-060 (docs/BACKLOG.md) — sous-tranche 2 bis : le quatrième message, qui déclenche la
