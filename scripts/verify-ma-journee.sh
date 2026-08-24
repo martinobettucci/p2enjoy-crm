@@ -433,16 +433,33 @@ titre "6. Dégradations volontaires — le harnais échoue-t-il vraiment ?"
 degradation() {
 	local libelle=$1 fichier=$2 avant=$3 apres=$4 cible=$5 fuseau=${6:-}
 	sauvegarder "$fichier"
-	if ! grep -qF "$avant" "$fichier"; then
-		fail "dégradation « $libelle » impossible : motif introuvable dans $fichier"
-		return
-	fi
-	python3 - "$fichier" "$avant" "$apres" <<'PY'
+	# LA SUBSTITUTION SE VÉRIFIE ELLE-MÊME, ET C'EST UNE LEÇON MESURÉE LE 2026-08-24.
+	#
+	# Ce garde-fou était écrit `grep -qF "$avant"`. Or `grep -F` traite un motif contenant un saut
+	# de ligne comme PLUSIEURS motifs alternatifs, et la dernière ligne d'un motif qui se termine
+	# par un saut est la chaîne VIDE — qui correspond à tout. Le garde-fou rendait donc vrai pour
+	# n'importe quel motif multi-ligne, y compris un motif faux. MESURÉ : la dégradation D1 portait
+	# quatre tabulations là où le fichier en porte trois ; le garde-fou a laissé passer, `replace`
+	# n'a RIEN remplacé, la suite est restée verte, et le harnais a conclu « COMPLAISANT » sur une
+	# dégradation qui n'avait jamais eu lieu. Un verdict faux dans un détecteur de complaisance est
+	# exactement ce qu'il existe pour empêcher.
+	#
+	# Le remède est de faire trancher Python, qui compare le texte AVANT et APRÈS : une substitution
+	# sans effet sort en erreur, et le contrôle dit « IMPOSSIBLE » au lieu de mentir dans un sens ou
+	# dans l'autre.
+	if ! python3 - "$fichier" "$avant" "$apres" <<'PY'
 import sys
 chemin, avant, apres = sys.argv[1:4]
 source = open(chemin, encoding='utf-8').read()
-open(chemin, 'w', encoding='utf-8').write(source.replace(avant, apres, 1))
+neuf = source.replace(avant, apres, 1)
+if neuf == source:
+	sys.exit(1)
+open(chemin, 'w', encoding='utf-8').write(neuf)
 PY
+	then
+		fail "dégradation « $libelle » IMPOSSIBLE : le motif n'existe plus dans $fichier — ce contrôle ne dit RIEN"
+		return
+	fi
 	if [ "$cible" = unit ]; then
 		# Sous un fuseau décalé, le rejeu est borné aux deux suites de l'unité : quatre tests
 		# étrangers y échouent (INC-203), et la suite entière ferait passer la dégradation pour
@@ -477,7 +494,7 @@ else
 	# mesurée du §12.4, tenue au §17.4 — deux ouvertures de l'écran n'afficheraient plus la même
 	# liste entre deux affaires de même échéance et de même titre.
 	degradation "l'ordre n'est plus total (§17.4 nié)" "$MODULE" \
-		"				.order('id', { ascending: true })
+		"			.order('id', { ascending: true })
 " "" unit
 
 	# D2 — la borne d'horizon tombe : la vue cesse d'être une JOURNÉE et devient la vue liste triée

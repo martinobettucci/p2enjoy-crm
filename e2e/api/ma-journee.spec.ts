@@ -194,12 +194,70 @@ test.describe('la lecture de « Ma journée » (§17.4, §17.7)', () => {
 	})
 
 	test('g — l’affaire archivée et celle en corbeille sont absentes (§5)', async ({ request }) => {
-		const reponse = await request.get(adresseJournee(), {
-			headers: enTetesAuthentifies(jetonAdmin),
-		})
-		const ids = ((await reponse.json()) as LigneJournee[]).map((ligne) => ligne.id)
-		expect(ids).not.toContain(CARD_ARCHIVEE)
-		expect(ids).not.toContain(CARD_CORBEILLE)
+		// CETTE ASSERTION ÉTAIT TAUTOLOGIQUE, ET C'EST MESURÉ le 2026-08-24 : les deux affaires
+		// rangées du seed — `…0c8` archivée, `…0c9` en corbeille — portent `next_action_at` À NULL.
+		// Le filtre `next_action_at=not.is.null` les écartait donc à lui seul, et les deux `expect`
+		// ci-dessous restaient verts même si `archived_at=is.null` et `deleted_at=is.null`
+		// disparaissaient de la requête. Une preuve qui tient sans la règle qu'elle prétend éprouver
+		// ne prouve rien (`docs/SPEC-test-harness.md` §7.2, mécanisme de la décision 51).
+		//
+		// La preuve est donc RETOURNÉE, jamais retirée : les deux affaires reçoivent une échéance
+		// DANS l'horizon — elles appartiennent l'une et l'autre à Camille Aubert et au channel
+		// `grands-comptes`, qu'elle lit —, ce qui en fait de véritables candidates, et l'absence
+		// constatée devient celle des deux filtres d'exclusion. La valeur d'origine est relue avant
+		// d'être touchée et rendue dans un `finally`, comme à la ligne *h* (décision 501).
+		const origines = new Map<string, string | null>()
+		for (const identifiant of [CARD_ARCHIVEE, CARD_CORBEILLE]) {
+			const avant = await request.get(`${CARDS}?select=next_action_at&id=eq.${identifiant}`, {
+				headers: enTetesService(),
+			})
+			const lignes = (await avant.json()) as { next_action_at: string | null }[]
+			expect(lignes).toHaveLength(1)
+			origines.set(identifiant, lignes[0]?.next_action_at ?? null)
+		}
+
+		// Demain matin : dans l'horizon des sept jours, quel que soit le jour d'exécution.
+		const echeance = new Date(bornesJournee(new Date()).debutLendemain.getTime())
+		echeance.setHours(9, 0, 0, 0)
+
+		try {
+			for (const identifiant of [CARD_ARCHIVEE, CARD_CORBEILLE]) {
+				const posee = await request.patch(`${CARDS}?id=eq.${identifiant}`, {
+					headers: { ...enTetesService(), Prefer: 'return=representation' },
+					data: { next_action_at: echeance.toISOString() },
+				})
+				expect(posee.status()).toBe(200)
+			}
+
+			const reponse = await request.get(adresseJournee(), {
+				headers: enTetesAuthentifies(jetonAdmin),
+			})
+			const ids = ((await reponse.json()) as LigneJournee[]).map((ligne) => ligne.id)
+			expect(ids).not.toContain(CARD_ARCHIVEE)
+			expect(ids).not.toContain(CARD_CORBEILLE)
+
+			// LA CONTRE-ÉPREUVE, dans le même souffle : la MÊME échéance rend une affaire ACTIVE
+			// présente. Sans elle, un `select` qui ne rendrait plus rien du tout ferait passer les
+			// deux assertions ci-dessus pour une preuve d'exclusion.
+			expect(ids.length).toBeGreaterThan(0)
+		} finally {
+			for (const identifiant of [CARD_ARCHIVEE, CARD_CORBEILLE]) {
+				await request.patch(`${CARDS}?id=eq.${identifiant}`, {
+					headers: { ...enTetesService(), Prefer: 'return=representation' },
+					data: { next_action_at: origines.get(identifiant) ?? null },
+				})
+			}
+		}
+
+		// LA RESTAURATION EST CONSTATÉE, PAS SUPPOSÉE (décision 501) : le §13.5 du seed rougirait au
+		// passage suivant sans que rien ne dise pourquoi.
+		for (const identifiant of [CARD_ARCHIVEE, CARD_CORBEILLE]) {
+			const apres = await request.get(`${CARDS}?select=next_action_at&id=eq.${identifiant}`, {
+				headers: enTetesService(),
+			})
+			const lignes = (await apres.json()) as { next_action_at: string | null }[]
+			expect(lignes[0]?.next_action_at ?? null).toBe(origines.get(identifiant) ?? null)
+		}
 	})
 
 	test('h — la borne d’horizon est éprouvée dans les DEUX sens, et le seed est RESTAURÉ', async ({

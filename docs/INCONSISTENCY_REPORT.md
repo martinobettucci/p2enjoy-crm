@@ -205,6 +205,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-201 | La preuve n° 14 de `verify-auth.sh` figeait « zéro ligne sur `profiles` », absence que `CRM-022` a comblée | 2026-08-21 | **close** — assertion retournée par la décision 499 | 499 |
 | INC-202 | `verify-mail-sync.sh` rouge d'un `pytest` absent de l'hôte, condition du §2.1 ter de `docs/CloudWorker.md` | 2026-08-21 | **close** — condition d'hôte, aucun fichier du dépôt en cause | 499 |
 | INC-203 | Quatre tests unitaires de `CRM-081` et `CRM-044` figent une date rendue dans le fuseau de l'HÔTE : ils échouent sous tout fuseau autre qu'UTC | 2026-08-24 | **ouverte** — comportement inchangé, étrangère à `CRM-061` | 503 |
+| INC-204 | `h-10` et `py-0.5` n'existent pas dans le CSS produit — même cause qu'INC-130, sur `EnTeteCard`, `Sommeil` et `BlocCoutsCard` | 2026-08-24 | **ouverte** — comportement inchangé, étrangère à `CRM-061` | 503 |
 
 ---
 
@@ -4082,3 +4083,42 @@ rendrait un rouge qui ne dirait rien des bornes de la journée, et pire, ferait 
 dégradation D9 pour détectée alors qu'elle ne l'aurait pas été.
 
 **Statut : ouverte.** Relève de `CRM-081` et de `CRM-044`.
+
+### INC-204 — deux classes de plus n'existent pas dans le CSS produit, sur d'autres écrans qu'INC-130
+
+**Ouverte le 2026-08-24 (décision 503).** Mesurée par `scripts/verify-ma-journee.sh` en campagne
+complète, dont le contrôle de classes balaie **tout** `webapp/src`. **Étrangère à `CRM-061`** : le
+même contrôle nomme ses trois classes et leurs fichiers, et aucun n'appartient à cette unité —
+vérifié fichier par fichier.
+
+**Ce qui a été mesuré.** Sur **316** classes relevées dans `webapp/src`, **trois** manquent au CSS
+produit :
+
+```
+classes absentes du CSS produit : h-10 py-0.5 text-text-1
+```
+
+`text-text-1` est **INC-130**, déjà ouverte et portée par `CRM-076`. Les **deux autres sont
+nouvelles**, et elles ne relèvent pas du même écran :
+
+| Classe | Fichier | Unité |
+|---|---|---|
+| `h-10` | `webapp/src/app/EnTeteCard.tsx:936` | `CRM-081` |
+| `py-0.5` | `webapp/src/components/ui/Sommeil.tsx:99` et `webapp/src/app/BlocCoutsCard.tsx:681` | `CRM-081`, `CRM-057` |
+
+**La cause est celle d'INC-130, sur une autre échelle.** Le §11 du design system dit qu'une classe
+dont le jeton n'est pas déclaré n'est **pas engendrée, en silence** : la règle ne s'applique pas, et
+rien ne le signale. `h-10` demande une hauteur fixe que l'échelle des tailles ne déclare pas —
+là où le dépôt écrit `min-h-[var(--size-target)]` —, et `py-0.5` un demi-pas d'espacement que
+l'échelle du §3 ne porte pas non plus, ses pas commençant à `1`.
+
+**Conséquence visible** : le champ de l'en-tête de fiche et les deux pilules concernées rendent leur
+hauteur et leur rembourrage par défaut, et non ceux que leur code annonce. Aucune capture existante
+ne le dénonce, ce qui est précisément le silence que le §11 décrit.
+
+**Comportement INCHANGÉ, et rien n'est corrigé ici** (`docs/CloudWorker.md` §3.1). La correction —
+remplacer chaque classe par le jeton déclaré de son échelle, puis reprendre la capture concernée —
+appartient à `CRM-081` et à `CRM-057`.
+
+**Statut : ouverte.** Relève de `CRM-081` et de `CRM-057`. Voisine d'INC-130, qu'elle ne remplace
+pas.
