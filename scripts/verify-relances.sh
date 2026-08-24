@@ -326,8 +326,8 @@ else
 fi
 
 if npm run --silent e2e:api -- "$SUITE_API" >"$TRAVAIL/api.log" 2>&1 \
-	&& grep -qE '13 passed' "$TRAVAIL/api.log"; then
-	ok "API : 13 scénarios verts, les dix lignes du contrat et les deux cohérences"
+	&& grep -qE '21 passed' "$TRAVAIL/api.log"; then
+	ok "API : 21 scénarios verts — les dix lignes du contrat, les deux cohérences, et les huit de la tranche 2"
 else
 	fail "suite d'API en échec ou compte inattendu"
 	sed 's/^/        /' "$TRAVAIL/api.log" | tail -n 25

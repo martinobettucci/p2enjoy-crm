@@ -204,8 +204,14 @@ select ok(
 	'`auth.uid()` étant nul pour la clé de service (docs/SPEC-seed.md §2.16)');
 
 -- =============================================================================================
--- 2. Le vocabulaire courant compte QUATORZE valeurs — docs/SPEC-cards.md §14.4 et §16.5
+-- 2. Le vocabulaire courant compte QUINZE valeurs — docs/SPEC-cards.md §14.4 et §16.5
 -- =============================================================================================
+-- RÉVISÉE LE 2026-08-24 PAR `CRM-062` TRANCHE 2, ET LA RÉVISION EST LA RAISON D'ÊTRE DE CE
+-- GARDE-FOU. `docs/SPEC-relances.md` §9.8 ajoute `stalled` — la quinzième — dans la MÊME migration
+-- que la fonction qui l'écrit, ce que cette assertion exige de toute unité qui étend le vocabulaire.
+-- Elle est donc mise à jour plutôt que contournée : l'assertion fige l'énumération ENTIÈRE, de
+-- sorte qu'une valeur ajoutée en douce, ou une valeur PERDUE par un rejeu partiel, la fasse rougir.
+-- C'est la SIXIÈME fois qu'elle évolue de cette façon, et aucune valeur n'a jamais été retirée.
 
 select is(
 	(select pg_get_constraintdef(c.oid) from pg_constraint c
@@ -213,10 +219,11 @@ select is(
 	'CHECK ((type = ANY (ARRAY[''created''::text, ''moved''::text, ''assigned''::text, '
 	'''channel_changed''::text, ''workflow_changed''::text, ''archived''::text, '
 	'''unarchived''::text, ''trashed''::text, ''restored''::text, ''field_changed''::text, '
-	'''mail_received''::text, ''mail_sent''::text, ''snoozed''::text, ''woken''::text])))',
-	'Le `CHECK` compte QUATORZE valeurs : `CRM-081` ajoute `snoozed` et `woken` sans retirer '
-	'aucune des douze précédentes. Le garde-fou historique ÉVOLUE avec le vocabulaire au lieu de '
-	'figer un état périmé — et c''est la CINQUIÈME fois qu''il le fait');
+	'''mail_received''::text, ''mail_sent''::text, ''snoozed''::text, ''woken''::text, '
+	'''stalled''::text])))',
+	'Le `CHECK` compte QUINZE valeurs : `CRM-062` ajoute `stalled` sans retirer aucune des '
+	'quatorze précédentes. Le garde-fou historique ÉVOLUE avec le vocabulaire au lieu de figer '
+	'un état périmé — et c''est la SIXIÈME fois qu''il le fait');
 
 -- LE MÉCANISME A JOUÉ UNE FOIS DE PLUS. `CRM-058` a étendu l'énumération dans la même migration
 -- que son écriture, exactement comme l'assertion le lui demandait. Elle est donc RETOURNÉE : le

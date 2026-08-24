@@ -395,8 +395,16 @@ PORT_RAPPORT=9323
 # `public.cards_figees` dans le catalogue, son ACL rôle par rôle, ses trois exclusions dans les deux
 # sens, les deux côtés de sa borne, la surcharge de seuil, la conséquence écrite du §2.3 et son
 # ordre total. Valeurs COMPTÉES par `npm run test:sql`, jamais déduites.
-FICHIERS_SQL_ATTENDUS=51
-ASSERTIONS_ATTENDUES=2504
+# --- CRM-062 tranche 2, le 2026-08-24 : **52 fichiers / 2529 assertions** ------------------------
+# `supabase/tests/0052_relances_automatiques.test.sql` ajoute **25** assertions : la quinzième
+# valeur du vocabulaire et son écriture réelle, la forme et l'ACL de `app.relancer_cards_figees`,
+# le contrat du job et son passage `succeeded`, l'état du seed, l'idempotence, le réarmement après
+# une entrée d'étape postérieure, l'acteur et le payload de l'événement que le passage COURANT
+# écrit, et les trois exclusions héritées dans les deux sens. `0019_move_card_to_channel.test.sql`
+# n'en gagne aucune : son garde-fou du vocabulaire est RÉVISÉ de quatorze à quinze valeurs, sixième
+# fois qu'il évolue. 2504 + 25 = **2529**, valeur COMPTÉE par `npm run test:sql`.
+FICHIERS_SQL_ATTENDUS=52
+ASSERTIONS_ATTENDUES=2529
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -529,7 +537,11 @@ ASSERTIONS_ATTENDUES=2504
 # `public.cards_figees()` à celui de `webapp/src/lib/carte-figee.ts`, la règle du produit importée
 # et non recopiée, sur toutes les affaires que l'administratrice lit. « Total: 850 tests in 50
 # files ».
-SCENARIOS_API=850
+# **RÉVISÉE à 858 par `CRM-062` tranche 2, le 2026-08-24** : `e2e/api/relances.spec.ts` gagne huit
+# scénarios — la relance lue dans la timeline par les trois profils réels et par l'anonyme, l'acteur
+# nul, le payload aux deux seules clés, l'absence de route `rpc/relancer_cards_figees`, et le
+# constat que ces lectures n'ont rien écrit. 850 + 8 = **858**, valeur COMPTÉE.
+SCENARIOS_API=858
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la

@@ -1,4 +1,4 @@
-// @verifies CRM-062 (docs/BACKLOG.md) — relances automatiques des cards figées, TRANCHE 1
+// @verifies CRM-062 (docs/BACKLOG.md) — relances automatiques des cards figées, TRANCHES 1 ET 2
 // @verifies docs/SPEC-relances.md §4 (les dix lignes du contrat d'API), §3.1 (les dix colonnes
 //           rendues), §3.3 (anon refusé par le PRIVILÈGE, pas par une politique), §3.4 (l'ordre),
 //           §5 (ce que le seed rend à chaque profil)
@@ -332,5 +332,125 @@ test.describe('les affaires figées, par la vraie route (docs/SPEC-relances.md �
 		expect(lignes).toHaveLength(1)
 		expect(lignes[0]?.card_id).toBe(CARD_FIGEE)
 		expect(lignes[0]?.seuil_jours).toBe(14)
+	})
+})
+
+// =================================================================================================
+// TRANCHE 2 — la relance inscrite dans la timeline, lue par la vraie route
+// =================================================================================================
+// @verifies CRM-062 (docs/BACKLOG.md) — relances automatiques, TRANCHE 2
+// @verifies docs/SPEC-relances.md §9.5 (l'acteur est nul), §9.6 (le payload sans libellé),
+//           §9.9 (le seed écrit par le VRAI mécanisme), §9.10 (les preuves d'API de la tranche 2)
+// @verifies docs/SPEC-cards.md §14.7 (aucune écriture cliente de la timeline)
+//
+// LA QUESTION À LAQUELLE CE BLOC RÉPOND, ET QUE LA SUITE pgTAP NE POSE PAS. La relance est écrite
+// par un job, sous `postgres`, hors de toute politique. Rien ne garantit pour autant que ce qu'elle
+// écrit soit LISIBLE par les bonnes personnes et INVISIBLE aux autres : `card_events` a sa propre
+// politique de lecture, et une trace qui fuiterait vers un profil fermé serait une fuite créée par
+// une fonctionnalité de confort. Ces scénarios lisent la timeline avec les jetons réels.
+
+const CARD_EVENTS = '/rest/v1/card_events'
+
+type EvenementTimeline = {
+	card_id: string
+	type: string
+	actor_id: string | null
+	payload: Record<string, unknown>
+}
+
+test.describe('la relance dans la timeline (docs/SPEC-relances.md §9.10)', () => {
+	test('k — l’administratrice lit l’événement `stalled` de l’affaire figée', async ({ request }) => {
+		const reponse = await request.get(
+			`${CARD_EVENTS}?card_id=eq.${CARD_FIGEE}&type=eq.stalled&select=card_id,type,actor_id,payload`,
+			{ headers: enTetesAuthentifies(jetonAdmin) },
+		)
+		expect(reponse.status()).toBe(200)
+		const evenements = (await reponse.json()) as EvenementTimeline[]
+		// UN SEUL, et c'est l'ancrage sur l'entrée dans l'étape (§9.4) mesuré par la vraie route :
+		// le seed a appelé la fonction, le job l'a appelée aussi, et la timeline n'en porte qu'un.
+		expect(evenements).toHaveLength(1)
+		expect(evenements[0]?.type).toBe('stalled')
+	})
+
+	test('l — l’acteur est nul : une relance n’a pas d’auteur humain', async ({ request }) => {
+		const reponse = await request.get(
+			`${CARD_EVENTS}?card_id=eq.${CARD_FIGEE}&type=eq.stalled&select=actor_id`,
+			{ headers: enTetesAuthentifies(jetonAdmin) },
+		)
+		const [evenement] = (await reponse.json()) as EvenementTimeline[]
+		expect(evenement?.actor_id).toBeNull()
+	})
+
+	test('m — le payload porte exactement le seuil et le retard, et aucun libellé', async ({
+		request,
+	}) => {
+		const reponse = await request.get(
+			`${CARD_EVENTS}?card_id=eq.${CARD_FIGEE}&type=eq.stalled&select=payload`,
+			{ headers: enTetesAuthentifies(jetonAdmin) },
+		)
+		const [evenement] = (await reponse.json()) as EvenementTimeline[]
+		// L'assertion porte sur l'ENSEMBLE des clés : un libellé d'étape ajouté demain dirait ce qui
+		// était vrai aujourd'hui (docs/SPEC-cards.md §14.6), et « contient seuil_jours » ne le
+		// verrait pas.
+		expect(Object.keys(evenement?.payload ?? {}).sort()).toEqual(['retard_jours', 'seuil_jours'])
+		expect(evenement?.payload?.seuil_jours).toBe(14)
+	})
+
+	test('n — le business developer lit la même relance : le track lui est ouvert', async ({
+		request,
+	}) => {
+		const reponse = await request.get(
+			`${CARD_EVENTS}?card_id=eq.${CARD_FIGEE}&type=eq.stalled&select=card_id`,
+			{ headers: enTetesAuthentifies(jetonBizdev) },
+		)
+		expect(reponse.status()).toBe(200)
+		expect((await reponse.json()) as EvenementTimeline[]).toHaveLength(1)
+	})
+
+	test('o — la lectrice ne voit PAS la relance : zéro ligne, pas une erreur', async ({
+		request,
+	}) => {
+		const reponse = await request.get(
+			`${CARD_EVENTS}?card_id=eq.${CARD_FIGEE}&type=eq.stalled&select=card_id`,
+			{ headers: enTetesAuthentifies(jetonViewer) },
+		)
+		// La relance n'ouvre AUCUNE porte : le channel « Grands comptes » lui est fermé par un droit
+		// fin de `CRM-012`, et la trace suit la card, non l'inverse. `200 []`, jamais `403`.
+		expect(reponse.status()).toBe(200)
+		expect((await reponse.json()) as EvenementTimeline[]).toEqual([])
+	})
+
+	test('p — l’anonyme ne lit aucune relance', async ({ request }) => {
+		const reponse = await request.get(
+			`${CARD_EVENTS}?card_id=eq.${CARD_FIGEE}&type=eq.stalled&select=card_id`,
+			{ headers: enTetesAnonymes() },
+		)
+		expect([200, 401]).toContain(reponse.status())
+		if (reponse.status() === 200) {
+			expect((await reponse.json()) as EvenementTimeline[]).toEqual([])
+		}
+	})
+
+	test('q — la relance n’est appelable par AUCUNE route : `app` n’est pas exposé', async ({
+		request,
+	}) => {
+		// `app.relancer_cards_figees()` est privée (§9.3). Une fonction homonyme qui apparaîtrait un
+		// jour dans `public` donnerait à tout porteur de jeton le pouvoir de déclencher les relances.
+		const reponse = await request.post('/rest/v1/rpc/relancer_cards_figees', {
+			headers: enTetesAuthentifies(jetonAdmin),
+			data: {},
+		})
+		expect(reponse.status()).toBe(404)
+		expect((await reponse.json())?.code).toBe('PGRST202')
+	})
+
+	test('r — aucune de ces lectures n’a écrit : la timeline est inchangée', async ({ request }) => {
+		const reponse = await request.get(
+			`${CARD_EVENTS}?type=eq.stalled&select=card_id`,
+			{ headers: enTetesAuthentifies(jetonAdmin) },
+		)
+		const evenements = (await reponse.json()) as EvenementTimeline[]
+		expect(evenements).toHaveLength(1)
+		expect(evenements[0]?.card_id).toBe(CARD_FIGEE)
 	})
 })
