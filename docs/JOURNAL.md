@@ -23475,3 +23475,41 @@ l'écran, le chapitre 30 du manuel, les captures, et **l'extension du seed que l
 une seule card figée ne démontre ni classement par retard, ni regroupement. `INC-138`, `INC-139`,
 `INC-169`, `INC-170`, `INC-173`, `INC-190`, `INC-193`, `INC-203` et `INC-204` attendent toujours
 l'arbitrage du responsable ; `INC-205` est consignée par cette session.
+
+### décision 504 bis — la campagne complète est verte, et la ligne de base de `verify-board.sh` a été EXÉCUTÉE
+
+**Même session, 2026-08-24.** `npm run e2e:ui` rejoué en entier : **581 passés, aucun échec**. Les
+captures réécrites par la campagne ont été **restaurées** — cette session ne touche aucun composant
+d'interface, et les committer laisserait croire que deux cents écrans ont été observés (précédent des
+décisions 500 et 503 bis).
+
+**`scripts/verify-board.sh` rend 60 contrôles, 4 en échec — ET LA LIGNE DE BASE DIT QUE LES QUATRE
+SONT PRÉEXISTANTS.** Le §2.4 de `docs/CloudWorker.md` interdit de conclure à une régression sans
+l'avoir établie : `webapp/src/lib/board.ts` a donc été ramené à sa version d'avant l'extraction
+(`git checkout 1841014 -- webapp/src/lib/board.ts`), le harnais rejoué, puis le fichier rendu à
+`HEAD`. Verdict de la ligne de base : **60 contrôles, 4 en échec**, à l'identique. C'est le seul
+harnais que l'extraction de `carte-figee.ts` pouvait toucher, et elle ne le touche pas.
+
+Les quatre anomalies, nommées plutôt que comptées :
+
+1. **`from('channels')` apparaît dans CINQ modules** là où le §5.4 de `docs/SPEC-channels.md` en veut
+   un — `administration-arborescence`, `corbeille`, `inbox`, `channels`, `objectifs-ecriture`. Dérive
+   d'unités postérieures à `CRM-041` ; aucun de ces fichiers n'est touché ici.
+2. **Des classes citées n'existent pas dans le CSS produit** — INC-130 et INC-204, déjà consignées.
+3. **La dégradation D4 est IMPOSSIBLE** : son motif figé, `return { cle: null, champsManquants: [],
+   brut: message }`, ne correspond plus — `board.ts` porte désormais `clesManquantes` dans ce retour,
+   ajouté par une unité ultérieure. Le garde-fou fige un texte que le produit a légitimement changé.
+4. **La dégradation D5 est déclarée COMPLAISANTE** sur `Board.tsx`, fichier qu'aucune ligne de cette
+   session ne touche. Même famille que la précédente.
+
+Les points 3 et 4 relèvent de `CRM-041`, dont le harnais est le sujet, et les corriger dépasse
+l'unité autorisée (`CLAUDE.md` §13). Ils ne sont **pas** consignés comme entrées neuves du registre :
+ce sont des garde-fous figés à retourner par leur unité porteuse, exactement le mécanisme de la
+décision 51, et non des contradictions du produit.
+
+**Reste de la campagne** : `npm run test:sql` **51 fichiers, 2504 assertions** ; `npm run test:unit`
+**2463 tests** ; `npm run e2e:api` **850 passés** ; `npm run e2e:mail` **42 passés** au second
+passage (INC-205) ; `pytest` **244 passés** ; `typecheck` et `build` verts ;
+`scripts/verify-relances.sh` **34 contrôles, aucune anomalie** ;
+`scripts/verify-node-toolchain.sh` **5 contrôles, aucune anomalie**. **Non exécutés** : les
+soixante-et-un autres `scripts/verify-*.sh`.
