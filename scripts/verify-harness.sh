@@ -390,8 +390,13 @@ PORT_RAPPORT=9323
 # mesure aujourd'hui, elle NOMME la part qui revient à cette session, et elle ne supprime aucun
 # contrôle. Les compteurs redeviennent ce qu'ils doivent être — un piège qui se déclenche à la
 # prochaine preuve ajoutée sans révision.
-FICHIERS_SQL_ATTENDUS=50
-ASSERTIONS_ATTENDUES=2480
+# --- CRM-062 tranche 1, le 2026-08-24 : **51 fichiers / 2504 assertions** ------------------------
+# `supabase/tests/0051_cards_figees.test.sql` ajoute **24** assertions : la forme de
+# `public.cards_figees` dans le catalogue, son ACL rôle par rôle, ses trois exclusions dans les deux
+# sens, les deux côtés de sa borne, la surcharge de seuil, la conséquence écrite du §2.3 et son
+# ordre total. Valeurs COMPTÉES par `npm run test:sql`, jamais déduites.
+FICHIERS_SQL_ATTENDUS=51
+ASSERTIONS_ATTENDUES=2504
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
