@@ -36,8 +36,26 @@ const CARDS = '/rest/v1/cards'
 
 /** Identifiants du seed — `docs/SPEC-seed.md` §2.3, §9.12.1 et `docs/SPEC-cards.md` §9. */
 const CAMILLE = '5eed0000-0000-4000-8000-000000000011'
-/** « Audit sécurité applicative » : l'unique affaire du seed au-delà de son seuil (§9.12.1). */
+/** « Audit sécurité applicative » : l'affaire figée de `CRM-046`, celle que la lectrice NE voit pas. */
 const CARD_FIGEE = '5eed0000-0000-4000-8000-0000000000c3'
+
+/**
+ * LES QUATRE AFFAIRES FIGÉES DU SEED, DANS L'ORDRE DU §3.4 — `CRM-062` tranche 3a, §10.2.1.
+ *
+ * Le jeu n'en portait qu'une jusqu'au 2026-08-24, et le §5 nommait cette dette depuis la tranche 1 :
+ * une seule ligne ne démontre ni classement, ni regroupement. Les quatre retards sont deux à deux
+ * DISTINCTS, donc l'ordre est total sur ce jeu et une assertion peut porter sur la suite entière
+ * plutôt que sur un ensemble.
+ */
+const FIGEES = [
+	{ id: '5eed0000-0000-4000-8000-0000000000c4', retard: 35, seuil: 5 },
+	{ id: '5eed0000-0000-4000-8000-00000000d007', retard: 18, seuil: 7 },
+	{ id: '5eed0000-0000-4000-8000-0000000000c3', retard: 16, seuil: 14 },
+	{ id: '5eed0000-0000-4000-8000-0000000000cf', retard: 7, seuil: 5 },
+] as const
+
+/** Ce que la LECTRICE lit : les quatre moins `…0c3`, dont le track lui est fermé (`CRM-012`). */
+const FIGEES_LECTRICE = FIGEES.filter((affaire) => affaire.id !== CARD_FIGEE).map((a) => a.id)
 /** Le channel « Grands comptes », fermé à la lectrice par un droit fin de `CRM-012`. */
 const CHANNEL_GRANDS_COMPTES = '5eed0000-0000-4000-8000-000000000032'
 
@@ -83,7 +101,11 @@ test.beforeAll(async () => {
 })
 
 test.describe('les affaires figées, par la vraie route (docs/SPEC-relances.md §4)', () => {
-	test('a — l’administratrice obtient `200` et l’unique affaire figée du seed', async ({
+	// RÉVISÉ LE 2026-08-24 — `CRM-062` tranche 3a. Ce scénario assérait UNE ligne ; le jeu en pose
+	// quatre (§10.2). L'assertion n'est pas relâchée en `toBeGreaterThan(0)`, ce qui aurait été le
+	// contournement que `CLAUDE.md` §18 interdit : elle porte sur la SUITE ENTIÈRE, dans son ordre,
+	// qui est exactement ce que l'écran de la tranche 3c rendra.
+	test('a — l’administratrice obtient `200` et les QUATRE affaires figées, dans l’ordre du §3.4', async ({
 		request,
 	}) => {
 		const reponse = await request.post(RPC, {
@@ -92,8 +114,12 @@ test.describe('les affaires figées, par la vraie route (docs/SPEC-relances.md �
 		})
 		expect(reponse.status()).toBe(200)
 		const lignes = (await reponse.json()) as LigneFigee[]
-		expect(lignes).toHaveLength(1)
-		expect(lignes[0]?.card_id).toBe(CARD_FIGEE)
+		expect(lignes.map((ligne) => ligne.card_id)).toEqual(FIGEES.map((affaire) => affaire.id))
+		// Ligne *b* du §10.11 : les retards sont ceux du §10.2.1, et ils sont STRICTEMENT
+		// décroissants — sans quoi l'ordre ne serait pas total et l'assertion ci-dessus serait
+		// fragile sans que rien ne le dise.
+		expect(lignes.map((ligne) => ligne.retard_jours)).toEqual(FIGEES.map((a) => a.retard))
+		expect(lignes.map((ligne) => ligne.seuil_jours)).toEqual(FIGEES.map((a) => a.seuil))
 	})
 
 	test('b — les trois grandeurs de la ligne sont celles du §9.12 du seed, et elles sont cohérentes entre elles', async ({
@@ -103,7 +129,12 @@ test.describe('les affaires figées, par la vraie route (docs/SPEC-relances.md �
 			headers: enTetesAuthentifies(jetonAdmin),
 			data: {},
 		})
-		const [ligne] = (await reponse.json()) as LigneFigee[]
+		// LA LIGNE EST DÉSIGNÉE PAR SON IDENTIFIANT, ET PLUS PAR SON RANG. Avant la tranche 3a
+		// `[ligne]` était la seule ; elle est désormais la TROISIÈME, et un scénario qui lirait la
+		// première mesurerait « Refonte intranet Ville de Lyon » sous un commentaire parlant
+		// d'« Audit sécurité applicative ». Un rang n'est pas une désignation.
+		const lignes = (await reponse.json()) as LigneFigee[]
+		const ligne = lignes.find((candidate) => candidate.card_id === CARD_FIGEE)
 		expect(ligne).toBeDefined()
 		// Le seuil est celui du NŒUD `prospection`, l'étape n'en surchargeant aucun (§9.12.6 ligne d).
 		expect(ligne?.seuil_jours).toBe(14)
@@ -124,7 +155,8 @@ test.describe('les affaires figées, par la vraie route (docs/SPEC-relances.md �
 			headers: enTetesAuthentifies(jetonAdmin),
 			data: {},
 		})
-		const [ligne] = (await reponse.json()) as LigneFigee[]
+		const lignes = (await reponse.json()) as LigneFigee[]
+		const ligne = lignes.find((candidate) => candidate.card_id === CARD_FIGEE)
 		expect(ligne).toBeDefined()
 		for (const colonne of COLONNES) {
 			expect(Object.hasOwn(ligne as object, colonne)).toBe(true)
@@ -136,9 +168,15 @@ test.describe('les affaires figées, par la vraie route (docs/SPEC-relances.md �
 		expect(ligne?.title).toBe('Audit sécurité applicative')
 		expect(ligne?.channel_id).toBe(CHANNEL_GRANDS_COMPTES)
 		expect(ligne?.owner_id).toBe(CAMILLE)
+		// LES QUATRE LIGNES PORTENT LE MÊME JEU DE COLONNES, et pas seulement celle-là : une
+		// fonction qui rendrait une colonne de plus sur une seule ligne est impossible en SQL, mais
+		// une preuve qui ne lit qu'une ligne ne le sait pas — elle le vérifie donc sur les quatre.
+		for (const autre of lignes) {
+			expect(Object.keys(autre).sort()).toEqual([...COLONNES].sort())
+		}
 	})
 
-	test('d — le business developer obtient la même affaire : le track lui est ouvert', async ({
+	test('d — le business developer obtient les mêmes quatre affaires : les tracks lui sont ouverts', async ({
 		request,
 	}) => {
 		const reponse = await request.post(RPC, {
@@ -147,21 +185,29 @@ test.describe('les affaires figées, par la vraie route (docs/SPEC-relances.md �
 		})
 		expect(reponse.status()).toBe(200)
 		const lignes = (await reponse.json()) as LigneFigee[]
-		expect(lignes.map((ligne) => ligne.card_id)).toEqual([CARD_FIGEE])
+		expect(lignes.map((ligne) => ligne.card_id)).toEqual(FIGEES.map((affaire) => affaire.id))
 	})
 
-	test('e — la lectrice obtient `200` et `[]` : zéro ligne, jamais une erreur — preuve n° 4', async ({
+	// RÉVISÉ LE 2026-08-24 — `CRM-062` tranche 3a, et LA PREUVE EN SORT RENFORCÉE.
+	//
+	// La lectrice obtenait `[]`, ce qu'une fonction cassée — ou une fonction qui ne rendrait jamais
+	// rien à personne — aurait rendu tout aussi vert. Elle obtient désormais TROIS lignes sur
+	// quatre, et l'assertion NOMME celle qui manque : le refus se mesure comme un trou dans une
+	// liste peuplée, forme bien plus stricte que le tableau vide d'avant.
+	test('e — la lectrice obtient `200` et TROIS des quatre : le refus est un trou dans une liste peuplée — preuve n° 4', async ({
 		request,
 	}) => {
 		const reponse = await request.post(RPC, {
 			headers: enTetesAuthentifies(jetonViewer),
 			data: {},
 		})
-		// LE REFUS EST UN TABLEAU VIDE. Le track « Grands comptes » lui est fermé par un droit fin
+		// LE REFUS N'EST PAS UNE ERREUR. Le track « Conseil & IA » lui est fermé par un droit fin
 		// de `CRM-012`, et la fonction n'ajoute aucune règle : c'est `app.can_read_card` qui écarte
 		// la ligne, à travers `security invoker`.
 		expect(reponse.status()).toBe(200)
-		expect(await reponse.json()).toEqual([])
+		const lignes = (await reponse.json()) as LigneFigee[]
+		expect(lignes.map((ligne) => ligne.card_id)).toEqual(FIGEES_LECTRICE)
+		expect(lignes.map((ligne) => ligne.card_id)).not.toContain(CARD_FIGEE)
 	})
 
 	test('f — l’anonyme est refusé par le PRIVILÈGE : `401` et `42501`, pas un tableau vide', async ({
@@ -184,7 +230,7 @@ test.describe('les affaires figées, par la vraie route (docs/SPEC-relances.md �
 		const reponse = await request.get(RPC, { headers: enTetesAuthentifies(jetonAdmin) })
 		expect(reponse.status()).toBe(200)
 		const lignes = (await reponse.json()) as LigneFigee[]
-		expect(lignes.map((ligne) => ligne.card_id)).toEqual([CARD_FIGEE])
+		expect(lignes.map((ligne) => ligne.card_id)).toEqual(FIGEES.map((affaire) => affaire.id))
 	})
 
 	test('h — la projection s’applique à la sortie de la fonction', async ({ request }) => {
@@ -193,24 +239,32 @@ test.describe('les affaires figées, par la vraie route (docs/SPEC-relances.md �
 		})
 		expect(reponse.status()).toBe(200)
 		const lignes = (await reponse.json()) as Partial<LigneFigee>[]
-		expect(lignes).toHaveLength(1)
+		expect(lignes).toHaveLength(FIGEES.length)
 		expect(Object.keys(lignes[0] as object).sort()).toEqual(['card_id', 'retard_jours'])
 	})
 
 	test('i — un filtre porte sur les colonnes de sortie, et il est appliqué APRÈS la fonction', async ({
 		request,
 	}) => {
-		// Le retard mesuré est de seize jours : au-dessus de vingt, la seule ligne disparaît. Les
-		// deux appels tiennent l'assertion des deux côtés — un filtre ignoré rendrait la ligne dans
-		// les deux cas, et l'assertion ne dirait rien.
-		const [au_dessus, en_dessous] = await Promise.all([
+		// LE FILTRE COUPE LA SUITE EN DEUX, ET C'EST PLUS FORT QU'AVANT LA TRANCHE 3a. Sur une
+		// ligne unique, « tout » et « rien » étaient les deux seuls résultats possibles et un
+		// filtre inversé aurait pu passer. Sur quatre retards distincts, un seuil intermédiaire
+		// rend un sous-ensemble PROPRE, que seul un filtre réellement appliqué produit.
+		const [au_dessus, intermediaire, en_dessous] = await Promise.all([
 			request.get(`${RPC}?retard_jours=gt.100`, { headers: enTetesAuthentifies(jetonAdmin) }),
+			request.get(`${RPC}?retard_jours=gte.18`, { headers: enTetesAuthentifies(jetonAdmin) }),
 			request.get(`${RPC}?retard_jours=gte.1`, { headers: enTetesAuthentifies(jetonAdmin) }),
 		])
 		expect(au_dessus.status()).toBe(200)
 		expect(await au_dessus.json()).toEqual([])
+		expect(intermediaire.status()).toBe(200)
+		expect(((await intermediaire.json()) as LigneFigee[]).map((l) => l.retard_jours)).toEqual([
+			35, 18,
+		])
 		expect(en_dessous.status()).toBe(200)
-		expect(((await en_dessous.json()) as LigneFigee[]).map((l) => l.card_id)).toEqual([CARD_FIGEE])
+		expect(((await en_dessous.json()) as LigneFigee[]).map((l) => l.card_id)).toEqual(
+			FIGEES.map((affaire) => affaire.id),
+		)
 	})
 
 	test('j — contre-épreuve de la ligne *e* : c’est bien la RLS, et non la fonction, qui refuse', async ({
@@ -301,8 +355,10 @@ test.describe('les affaires figées, par la vraie route (docs/SPEC-relances.md �
 		const rendusParSql = ((await parSql.json()) as LigneFigee[]).map((ligne) => ligne.card_id).sort()
 
 		expect(rendusParSql).toEqual(attenduParTypeScript)
-		// Et le verdict n'est pas vide des deux côtés, sans quoi l'égalité ne dirait rien.
-		expect(rendusParSql).toEqual([CARD_FIGEE])
+		// Et le verdict n'est pas vide des deux côtés, sans quoi l'égalité ne dirait rien. Depuis
+		// la tranche 3a il porte sur QUATRE affaires : une coïncidence sur une ligne unique était
+		// une chance sur peu, elle l'est bien moins sur quatre.
+		expect(rendusParSql).toEqual([...FIGEES].map((affaire) => affaire.id).sort())
 	})
 
 	test('cohérence — les jours comptés par le SQL sont ceux que la règle TypeScript compte', async ({
@@ -313,14 +369,16 @@ test.describe('les affaires figées, par la vraie route (docs/SPEC-relances.md �
 			headers: enTetesAuthentifies(jetonAdmin),
 			data: {},
 		})
-		const [ligne] = (await reponse.json()) as LigneFigee[]
-		expect(ligne).toBeDefined()
+		const lignes = (await reponse.json()) as LigneFigee[]
+		expect(lignes).toHaveLength(FIGEES.length)
 		// `floor` sur des millisecondes d'un côté, `floor(epoch / 86400)` de l'autre. Un écart d'une
 		// unité ferait diverger la pastille et la relance d'une journée entière, et personne ne
-		// saurait laquelle a raison. Une seconde de tolérance suffit à absorber l'écart d'instant
-		// entre l'appel et cette ligne.
-		const parTypeScript = joursDansEtape(ligne?.entered_step_at ?? '', maintenant)
-		expect(Math.abs(parTypeScript - (ligne?.jours_dans_etape ?? -1))).toBeLessThanOrEqual(0)
+		// saurait laquelle a raison. Le compte est confronté sur les QUATRE affaires : un décalage
+		// qui ne toucherait qu'un seuil — 5, 7 ou 14 — ne se verrait pas sur une seule.
+		for (const ligne of lignes) {
+			const parTypeScript = joursDansEtape(ligne.entered_step_at, maintenant)
+			expect(Math.abs(parTypeScript - ligne.jours_dans_etape)).toBeLessThanOrEqual(0)
+		}
 	})
 
 	test('le seed sort intact : aucune de ces lectures n’a écrit', async ({ request }) => {
@@ -329,9 +387,8 @@ test.describe('les affaires figées, par la vraie route (docs/SPEC-relances.md �
 			data: {},
 		})
 		const lignes = (await reponse.json()) as LigneFigee[]
-		expect(lignes).toHaveLength(1)
-		expect(lignes[0]?.card_id).toBe(CARD_FIGEE)
-		expect(lignes[0]?.seuil_jours).toBe(14)
+		expect(lignes.map((ligne) => ligne.card_id)).toEqual(FIGEES.map((affaire) => affaire.id))
+		expect(lignes.map((ligne) => ligne.seuil_jours)).toEqual(FIGEES.map((affaire) => affaire.seuil))
 	})
 })
 
@@ -450,7 +507,10 @@ test.describe('la relance dans la timeline (docs/SPEC-relances.md §9.10)', () =
 			{ headers: enTetesAuthentifies(jetonAdmin) },
 		)
 		const evenements = (await reponse.json()) as EvenementTimeline[]
-		expect(evenements).toHaveLength(1)
-		expect(evenements[0]?.card_id).toBe(CARD_FIGEE)
+		// QUATRE depuis la tranche 3a, un par affaire figée du jeu (§10.2.3), et aucun ailleurs :
+		// c'est le compte que le seed constate lui-même après avoir appelé la fonction du produit.
+		expect([...evenements.map((evenement) => evenement.card_id)].sort()).toEqual(
+			[...FIGEES].map((affaire) => affaire.id).sort(),
+		)
 	})
 })

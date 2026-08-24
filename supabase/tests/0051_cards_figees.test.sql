@@ -59,7 +59,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(24);
+select plan(26);
 
 create or replace function pg_temp.endosser(utilisateur uuid)
 returns void language plpgsql as $$
@@ -133,19 +133,46 @@ select results_eq(
 
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
-select is(
-	(select count(*) from public.cards_figees()),
-	1::bigint,
-	'seed : l''administratrice voit EXACTEMENT une affaire figée');
+-- RÉVISÉ LE 2026-08-24 — `CRM-062` tranche 3a, docs/SPEC-relances.md §10.2.
+--
+-- Ces quatre assertions posaient UNE affaire figée, et c'était le contrat du seed tant que la
+-- tranche 1 était seule à l'écrire. Le jeu en pose désormais QUATRE : le §5 nomme depuis la tranche
+-- 1 qu'une seule ligne ne démontre ni classement, ni regroupement. Les assertions ne sont ni
+-- retirées ni relâchées — un `>= 1` aurait été le contournement que CLAUDE.md §18 interdit : elles
+-- comptent quatre, et la suivante assère l'ORDRE ENTIER, qui est ce que l'écran rend.
 
 select is(
-	(select f.card_id from public.cards_figees() f),
-	'5eed0000-0000-4000-8000-0000000000c3'::uuid,
-	'seed : et c''est « Audit sécurité applicative », l''unique retard voulu du §9.12');
+	(select count(*) from public.cards_figees()),
+	4::bigint,
+	'seed : l''administratrice voit EXACTEMENT quatre affaires figées (§10.2.1)');
+
+-- L'ORDRE EST ASSÉRÉ ENTIER, ET PAS SEULEMENT SON CONTENU. Les quatre retards sont deux à deux
+-- distincts (§10.2.1 point 1), donc l'ordre `retard_jours desc` du §3.4 est TOTAL sur ce jeu : la
+-- suite est reproductible, et une assertion peut porter dessus. `…0c3` y est en troisième position
+-- et son retard vaut toujours 16 — la tranche 3a AJOUTE, elle ne déplace pas.
+select results_eq(
+	$$ select f.card_id, f.retard_jours from public.cards_figees() f $$,
+	$$ values ('5eed0000-0000-4000-8000-0000000000c4'::uuid, 35),
+	          ('5eed0000-0000-4000-8000-00000000d007'::uuid, 18),
+	          ('5eed0000-0000-4000-8000-0000000000c3'::uuid, 16),
+	          ('5eed0000-0000-4000-8000-0000000000cf'::uuid,  7) $$,
+	'seed : les quatre affaires figées, dans l''ordre du §3.4, « Audit sécurité applicative » '
+	'comprise et inchangée à 16 jours de retard');
+
+-- Le regroupement de l'écran porte sur le CHANNEL (§10.7), et il n'aurait rien à regrouper si les
+-- quatre vivaient dans un seul dossier — ni rien à distinguer si chaque track n'en portait qu'un.
+select results_eq(
+	$$ select count(distinct f.channel_id), count(distinct ch.track_id)
+	     from public.cards_figees() f
+	     join public.channels ch on ch.id = f.channel_id $$,
+	$$ values (4::bigint, 3::bigint) $$,
+	'seed : quatre dossiers pour trois tracks — un track en porte deux, seul cas qui prouve que '
+	'le regroupement porte sur le channel');
 
 select results_eq(
 	$$ select f.seuil_jours, f.jours_dans_etape >= 30, f.retard_jours = f.jours_dans_etape - f.seuil_jours
-	     from public.cards_figees() f $$,
+	     from public.cards_figees() f
+	    where f.card_id = '5eed0000-0000-4000-8000-0000000000c3' $$,
 	$$ values (14, true, true) $$,
 	'seed : seuil de 14 jours hérité du nœud, au moins 30 jours dans l''étape, et retard_jours '
 	'cohérent avec les deux autres colonnes');
@@ -154,19 +181,32 @@ select pg_temp.endosser('5eed0000-0000-4000-8000-000000000012');
 
 select is(
 	(select count(*) from public.cards_figees()),
-	1::bigint,
-	'seed : le business developer voit la même affaire figée — le track lui est ouvert');
+	4::bigint,
+	'seed : le business developer voit les mêmes quatre affaires figées — les tracks lui sont '
+	'ouverts');
 
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000013');
 
 -- LE REFUS EST ZÉRO LIGNE, JAMAIS UNE ERREUR (docs/SPEC-permissions-rls.md §7). La fonction
 -- n'ajoute aucune règle : c'est `app.can_read_card` qui écarte la card, le track « Grands comptes »
 -- étant fermé à la lectrice par un droit fin de `CRM-012`.
+--
+-- RÉVISÉ PAR LA TRANCHE 3a, ET LA PREUVE EN SORT RENFORCÉE. La lectrice obtenait ZÉRO ligne, ce
+-- qu'un défaut de la fonction — ou une fonction qui ne rendrait jamais rien — aurait rendu tout
+-- aussi vert. Elle en obtient désormais TROIS sur quatre, et l'assertion nomme celle qui manque :
+-- le refus se mesure comme un trou dans une liste peuplée, forme bien plus stricte.
 select is(
 	(select count(*) from public.cards_figees()),
+	3::bigint,
+	'seed : la lectrice voit TROIS des quatre affaires figées — le refus est une ligne manquante '
+	'dans une liste peuplée, jamais une erreur');
+
+select is(
+	(select count(*) from public.cards_figees() f
+	  where f.card_id = '5eed0000-0000-4000-8000-0000000000c3'),
 	0::bigint,
-	'seed : la lectrice voit ZÉRO affaire figée — le track lui est fermé, et le refus est zéro '
-	'ligne, pas une erreur');
+	'seed : et celle qui manque à la lectrice est « Audit sécurité applicative », dont le track '
+	'« Conseil & IA » lui est fermé par un droit fin de CRM-012');
 
 select pg_temp.redevenir_proprietaire();
 

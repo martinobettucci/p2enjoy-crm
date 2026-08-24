@@ -347,7 +347,15 @@ test.describe('B5 — les identités consenties au board sont mesurées (§7.4)'
 	// s'il existe, sinon `default_stale_after_days` du nœud. C'est la règle exacte que
 	// `evaluerAnciennete` applique, et la seule façon que ce scénario reste vrai si le seuil du
 	// catalogue change.
-	test('une card du seed, et une seule, dépasse son seuil de relance', async ({ request }) => {
+	//
+	// RETOURNÉ UNE SECONDE FOIS — `CRM-062` tranche 3a, docs/SPEC-relances.md §10.2.2. Le jeu pose
+	// désormais QUATRE affaires au-delà de leur seuil : une seule ne démontrerait ni le classement
+	// ni le regroupement de l'écran des affaires figées (§5). L'assertion n'est ni retirée ni
+	// relâchée — un `toBeGreaterThan(0)` aurait été le contournement que `CLAUDE.md` §18 interdit :
+	// elle compte quatre, et la suite des retards est assérée ENTIÈRE, dans son ordre.
+	test('quatre cards du seed dépassent leur seuil de relance, et ce sont celles du §10.2.1', async ({
+		request,
+	}) => {
 		const reponse = await request.get(
 			`${CARDS}?select=id,entered_step_at,workflow_steps!cards_current_step_id_workflow_id_fkey(stale_after_days,workflow_nodes_catalog(default_stale_after_days))&deleted_at=is.null&archived_at=is.null`,
 			{ headers: enTetesAuthentifies(jetonAdmin) },
@@ -375,14 +383,30 @@ test.describe('B5 — les identités consenties au board sont mesurées (§7.4)'
 			}))
 			.filter((card): card is { id: string; jours: number; seuil: number } => card.seuil !== null)
 
-		const auDela = avecSeuil.filter((card) => card.jours >= card.seuil)
-		// Ligne *a* : exactement une, et ligne *b* : c'est celle que le §9.12.1 nomme.
-		expect(auDela).toHaveLength(1)
-		expect(auDela[0]?.id).toBe(CARD_EN_RETARD)
-		// Ligne *c* : trente jours pleins, et pas trente et un — le seed la repose à chaque passage.
-		expect(auDela[0]?.jours).toBe(30)
-		// Ligne *d* : le seuil est celui du nœud `prospection`, non surchargé par l'étape.
-		expect(auDela[0]?.seuil).toBe(14)
+		const auDela = avecSeuil
+			.filter((card) => card.jours >= card.seuil)
+			.map((card) => ({ ...card, retard: card.jours - card.seuil }))
+			.sort((gauche, droite) => droite.retard - gauche.retard)
+
+		// Ligne *a* : exactement quatre, et ligne *b* : ce sont celles que le §10.2.1 nomme, dans
+		// l'ordre du §3.4. La SUITE ENTIÈRE est assérée : un compte de quatre serait vert même si
+		// les quatre étaient les mauvaises, et une liste d'identifiants le serait même si les
+		// retards étaient égaux — or c'est cet ordre-là que l'écran rend.
+		expect(auDela.map((card) => [card.id, card.retard])).toEqual([
+			['5eed0000-0000-4000-8000-0000000000c4', 35],
+			['5eed0000-0000-4000-8000-00000000d007', 18],
+			[CARD_EN_RETARD, 16],
+			['5eed0000-0000-4000-8000-0000000000cf', 7],
+		])
+		// Ligne *c* : `…0c3` garde ses trente jours pleins, et pas trente et un — le seed la repose
+		// à chaque passage, et la tranche 3a ne l'a PAS déplacée.
+		const audit = auDela.find((card) => card.id === CARD_EN_RETARD)
+		expect(audit?.jours).toBe(30)
+		// Ligne *d* : son seuil est celui du nœud `prospection`, non surchargé par l'étape.
+		expect(audit?.seuil).toBe(14)
+		// Les seuils DIFFÈRENT — 5, 7, 14 —, sans quoi une preuve ne distinguerait pas une donnée
+		// lue d'une constante (§10.2.1 point 3).
+		expect(new Set(auDela.map((card) => card.seuil)).size).toBeGreaterThan(1)
 		// Ligne *e* : sans une card EN DEÇÀ, « au-delà » ne serait pas un contraste.
 		expect(avecSeuil.filter((card) => card.jours < card.seuil).length).toBeGreaterThan(0)
 	})

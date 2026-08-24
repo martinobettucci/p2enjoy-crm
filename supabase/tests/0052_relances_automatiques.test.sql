@@ -176,33 +176,50 @@ select is(
 -- ---------------------------------------------------------------------------------------------
 -- 13 à 16. Ce que le seed démontre, écrit par le VRAI mécanisme — §9.9
 -- ---------------------------------------------------------------------------------------------
--- Le §5 a mesuré qu'une seule card du seed est figée. Ces assertions constatent que la relance a
--- eu lieu, et qu'elle a eu lieu SUR CETTE CARD-LÀ.
+-- RÉVISÉ LE 2026-08-24 — `CRM-062` tranche 3a, docs/SPEC-relances.md §10.2.3.
+--
+-- Ces quatre assertions lisaient « l'événement stalled », au singulier, parce que le jeu n'en
+-- portait qu'un. Il en porte QUATRE, un par affaire figée du §10.2.1, et elles sont révisées et non
+-- retirées : le compte devient quatre, la liste est assérée ENTIÈRE et dans l'ordre, et les deux
+-- assertions de forme portent désormais sur les quatre à la fois — un `payload` correct sur une
+-- affaire et amputé sur une autre serait vert si l'assertion n'en lisait qu'une.
 
 select results_eq(
-	$$ select card_id from public.card_events where type = 'stalled' $$,
-	$$ values ('5eed0000-0000-4000-8000-0000000000c3'::uuid) $$,
-	'exactement UN événement stalled dans toute la base après le seed, et il porte sur la seule '
-	'card figée du jeu');
+	$$ select card_id from public.card_events where type = 'stalled' order by card_id $$,
+	$$ values ('5eed0000-0000-4000-8000-0000000000c3'::uuid),
+	          ('5eed0000-0000-4000-8000-0000000000c4'::uuid),
+	          ('5eed0000-0000-4000-8000-0000000000cf'::uuid),
+	          ('5eed0000-0000-4000-8000-00000000d007'::uuid) $$,
+	'exactement QUATRE événements stalled dans toute la base après le seed, un par affaire figée '
+	'du jeu et aucun ailleurs');
 
 select is(
-	(select actor_id from public.card_events where type = 'stalled'),
-	null::uuid,
-	'l''acteur est NUL : auth.uid() rend NULL hors d''une requête PostgREST, et la nullité est donc '
-	'OBTENUE par app.card_event_ecrire — jamais affectée, jamais remplacée par l''assignataire');
+	(select count(*) from public.card_events where type = 'stalled' and actor_id is not null),
+	0::bigint,
+	'l''acteur est NUL sur les QUATRE : auth.uid() rend NULL hors d''une requête PostgREST, et la '
+	'nullité est donc OBTENUE par app.card_event_ecrire — jamais affectée, jamais remplacée par '
+	'l''assignataire');
 
-select results_eq(
-	$$ select jsonb_object_keys(payload) from public.card_events where type = 'stalled' order by 1 $$,
-	$$ values ('retard_jours'), ('seuil_jours') $$,
-	'le payload porte EXACTEMENT deux clés : un libellé recopié dirait demain ce qui était vrai '
-	'aujourd''hui (docs/SPEC-cards.md §14.6), et le step_id serait un doublon de l''ordre du fil');
+-- LE COMPTE PORTE SUR LES QUATRE, ET C'EST LE POINT. Écrite `jsonb_object_keys(payload)` sur un
+-- seul événement, l'assertion serait verte alors qu'une seconde relance porterait trois clés.
+select is(
+	(select count(*) from public.card_events
+	  where type = 'stalled'
+	    and (select array_agg(k order by k) from jsonb_object_keys(payload) k)
+	        <> array['retard_jours', 'seuil_jours']),
+	0::bigint,
+	'les QUATRE payloads portent EXACTEMENT deux clés : un libellé recopié dirait demain ce qui '
+	'était vrai aujourd''hui (docs/SPEC-cards.md §14.6), et le step_id serait un doublon de '
+	'l''ordre du fil');
 
+-- Les quatre couples (seuil, retard) sont ceux du §10.2.1, et ils DIFFÈRENT tous : une assertion
+-- qui n'en lirait qu'un ne distinguerait pas un payload calculé d'un payload constant.
 select results_eq(
 	$$ select (payload->>'seuil_jours')::int, (payload->>'retard_jours')::int
-	     from public.card_events where type = 'stalled' $$,
-	$$ values (14, 16) $$,
-	'les deux nombres sont ceux que public.cards_figees() rend : le seuil de l''étape et le retard '
-	'à l''instant de l''inscription, seul nombre non recalculable après coup');
+	     from public.card_events where type = 'stalled' order by 2 desc $$,
+	$$ values (5, 35), (7, 18), (14, 16), (5, 7) $$,
+	'les deux nombres de chaque relance sont ceux que public.cards_figees() rend : le seuil de '
+	'l''étape et le retard à l''instant de l''inscription, seul nombre non recalculable après coup');
 
 -- ---------------------------------------------------------------------------------------------
 -- 17 et 18. L'idempotence — §9.4
