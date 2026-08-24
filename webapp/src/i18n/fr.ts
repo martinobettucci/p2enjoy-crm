@@ -957,6 +957,16 @@ export const fr = {
 	'timeline.event.mail_received': 'Message reçu',
 	'timeline.event.snoozed': 'Affaire mise en sommeil',
 	'timeline.event.woken': 'Affaire réveillée',
+	// `CRM-062` tranche 3b — docs/SPEC-relances.md §10.3.1. Le libellé nomme le FAIT, pas la
+	// mécanique : « Affaire figée » décrirait un état, or la ligne du fil date un geste. Le mot
+	// `stalled` est le vocabulaire de la base, jamais celui de l'écran.
+	'timeline.event.stalled': 'Relance automatique',
+	// Trois formes, et l'accord est POSÉ plutôt que construit par concaténation (§10). La borne du
+	// §2.5 étant large, un retard de zéro est légitime : il se dit autrement, sans quoi « 0 jours
+	// de retard » se lirait comme une erreur de calcul.
+	'timeline.stalled.days': '{retard} jours de retard, pour un seuil de {seuil} jours',
+	'timeline.stalled.oneDay': '1 jour de retard, pour un seuil de {seuil} jours',
+	'timeline.stalled.onThreshold': 'atteint son seuil de {seuil} jours',
 	'timeline.event.unknown': 'Événement',
 	// Le fil nomme le courrier qu'il annonce — un événement qui ne dit pas de quel message il
 	// parle n'est pas une mémoire (docs/SPEC-mail-subsystem.md §18.6).

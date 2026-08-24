@@ -1,4 +1,6 @@
 // @verifies CRM-044 (docs/BACKLOG.md) — fusion du fil, familles, filtres et résolution des libellés
+// @verifies CRM-062 (docs/BACKLOG.md) — tranche 3b : le vocabulaire à quatorze et le détail d'une
+//           relance (docs/SPEC-relances.md §10.3.1 ; docs/INCONSISTENCY_REPORT.md INC-207)
 // @verifies CRM-022 (docs/BACKLOG.md) — acteur embarqué et auteur nommé
 // @verifies docs/SPEC-cards.md §14.4 (les dix types), §14.6 (payloads, aucun libellé),
 //           §14.10 (une requête par source, fusion en mémoire, ordre total)
@@ -68,14 +70,28 @@ describe('les familles (docs/DESIGN_SYSTEM.md §5.11)', () => {
 	// l'écran à TREIZE (docs/SPEC-cards.md §16.11.5). Le compte est révisé avec son motif écrit
 	// ici, jamais retiré (décision 51) : c'est un arbitrage, non une régression. Les cinq familles
 	// restent cinq, et c'est précisément ce que cette assertion garde.
-	it('range les treize types livrés dans exactement cinq familles d’événements', () => {
-		expect(TYPES_EVENEMENT).toHaveLength(13)
+	//
+	// RÉVISÉE UNE TROISIÈME FOIS PAR `CRM-062` tranche 3b, ET ELLE A JOUÉ EXACTEMENT COMME ATTENDU.
+	// `stalled` porte le vocabulaire de l'écran à QUATORZE (docs/SPEC-relances.md §10.3.1). Le type
+	// existait EN BASE depuis la migration `0054` sans être nommé ici, et le fil le rendait
+	// « Événement » (INC-207) : cette assertion est devenue rouge à la ligne près où il fallait
+	// qu'elle le devienne. Sixième évolution du vocabulaire, et aucune valeur n'a jamais été
+	// retirée. Les cinq familles restent cinq.
+	it('range les quatorze types livrés dans exactement cinq familles d’événements', () => {
+		expect(TYPES_EVENEMENT).toHaveLength(14)
 		const familles = new Set(TYPES_EVENEMENT.map((type) => familleDe(type)))
 		expect([...familles].sort()).toEqual(['champs', 'cycle', 'discussion', 'etapes', 'organisation'])
 		expect(TYPES_EVENEMENT).toContain('channel_changed')
 		expect(TYPES_EVENEMENT).toContain('workflow_changed')
 		expect(familleDe('channel_changed')).toBe('organisation')
 		expect(familleDe('workflow_changed')).toBe('organisation')
+		// LA FAMILLE DE `stalled` EST ASSÉRÉE, et ce n'est pas redondant avec la ligne ci-dessus :
+		// elle valait DÉJÀ `cycle` avant la tranche 3b, obtenue par le repli de `familleDe`. Sans
+		// cette assertion, retirer `stalled` de `FAMILLE_PAR_TYPE` laisserait la suite VERTE — le
+		// repli rendrait la même valeur, et le choix cesserait d'être un choix sans que rien ne le
+		// dise (§10.3.1).
+		expect(TYPES_EVENEMENT).toContain('stalled')
+		expect(familleDe('stalled')).toBe('cycle')
 	})
 
 	// RÉVISÉE ELLE AUSSI : la discussion n'était portée par aucun TYPE — seuls les commentaires y
@@ -208,6 +224,78 @@ describe('la résolution des libellés (§14.6)', () => {
 			libelles,
 		)
 		expect(detail.detail).toBeNull()
+	})
+
+	// ------------------------------------------------------------------------------------------
+	// `CRM-062` tranche 3b — le détail d'une relance (docs/SPEC-relances.md §10.3.1)
+	// ------------------------------------------------------------------------------------------
+	// LA PHRASE EST COMPOSÉE PAR UNE CLÉ DE TRADUCTION, jamais par concaténation (§10 du design
+	// system). Ces assertions portent sur le TEXTE RENDU, et non sur la clé choisie : une clé
+	// exacte pointant vers une phrase fausse serait verte si l'on n'assérait que la clé.
+
+	it('dit le retard d’une relance avec son seuil', () => {
+		expect(
+			resoudreDetail(
+				ligne({ id: 'e1', type: 'stalled', payload: { seuil_jours: 14, retard_jours: 16 } }),
+				libelles,
+			).detail,
+		).toBe('16 jours de retard, pour un seuil de 14 jours')
+	})
+
+	// L'ACCORD EST POSÉ, JAMAIS CONSTRUIT. « 1 jours de retard » serait faux, et c'est exactement
+	// la faute que le §10 du design system nomme — une phrase ne se fabrique pas en collant un
+	// nombre à un pluriel.
+	it('accorde au singulier un retard d’un seul jour', () => {
+		expect(
+			resoudreDetail(
+				ligne({ id: 'e1', type: 'stalled', payload: { seuil_jours: 7, retard_jours: 1 } }),
+				libelles,
+			).detail,
+		).toBe('1 jour de retard, pour un seuil de 7 jours')
+	})
+
+	// LA BORNE DU §2.5 EST LARGE, DONC ZÉRO EST UNE VALEUR LÉGITIME — une affaire atteinte
+	// exactement sur son seuil est figée. « 0 jours de retard » se lirait comme une erreur de
+	// calcul ; la phrase change, elle ne se tait pas.
+	it('dit autrement une affaire atteinte EXACTEMENT sur son seuil', () => {
+		expect(
+			resoudreDetail(
+				ligne({ id: 'e1', type: 'stalled', payload: { seuil_jours: 5, retard_jours: 0 } }),
+				libelles,
+			).detail,
+		).toBe('atteint son seuil de 5 jours')
+	})
+
+	// UN PAYLOAD AMPUTÉ NE REND AUCUN DÉTAIL, et surtout pas un `undefined` traversé jusqu'à
+	// l'écran : la ligne retombe sur son seul libellé, comme un libellé d'étape non résolu
+	// (§14.10). La valeur vient du backend, et un type ne garantit jamais une valeur.
+	it('ne rend AUCUN détail sur un payload de relance incomplet ou mal typé', () => {
+		for (const payload of [
+			{ seuil_jours: 14 },
+			{ retard_jours: 16 },
+			{},
+			{ seuil_jours: '14', retard_jours: '16' },
+			{ seuil_jours: 14, retard_jours: Number.NaN },
+			{ seuil_jours: 14, retard_jours: 2.5 },
+		]) {
+			expect(resoudreDetail(ligne({ id: 'e1', type: 'stalled', payload }), libelles).detail).toBeNull()
+		}
+	})
+
+	// LE DÉTAIL D'UNE RELANCE NE LIT QUE SES DEUX NOMBRES. Un `payload` qui prétendrait porter un
+	// libellé d'étape ne doit rien changer : c'est la règle du §14.6, déjà tenue pour `moved`
+	// juste en dessous, et le §9.6 refuse explicitement d'y mettre autre chose.
+	it('ignore ce qu’un payload de relance prétendrait porter en plus', () => {
+		expect(
+			resoudreDetail(
+				ligne({
+					id: 'e1',
+					type: 'stalled',
+					payload: { seuil_jours: 14, retard_jours: 16, step_label: 'Prospection' },
+				}),
+				libelles,
+			).detail,
+		).toBe('16 jours de retard, pour un seuil de 14 jours')
 	})
 
 	it('nomme le champ d’un événement de valeur, et rien s’il est inconnu', () => {

@@ -1,4 +1,6 @@
 // @spec CRM-044 (docs/BACKLOG.md) — lecture des événements et fusion du fil unifié
+// @spec CRM-062 (docs/BACKLOG.md) — tranche 3b : la relance automatique NOMMÉE dans le fil
+//       (docs/SPEC-relances.md §10.3, §10.3.1 ; docs/INCONSISTENCY_REPORT.md INC-207)
 // @spec CRM-022 (docs/BACKLOG.md) — acteur embarqué et nommé quand il existe
 // @spec docs/SPEC-cards.md §14.4 (les dix types), §14.6 (payloads, et les libellés absents),
 //       §14.10 (interface : une requête par source, fusion en mémoire, filtre qui ne recharge pas)
@@ -17,6 +19,10 @@
 // politiques, puis rangées ensemble sur `(created_at, id)`.
 
 import { classerErreur, enErreur, pret, type EtatAsync } from './async'
+// LE DÉTAIL D'UNE RELANCE EST UNE PHRASE, ET UNE PHRASE NE SE CONSTRUIT PAS PAR CONCATÉNATION
+// (`CLAUDE.md` §23) : ce module importe donc la traduction, comme il importe déjà `Intl` pour la
+// date courte du sommeil. Aucun texte visible n'est écrit en dur ici.
+import { t } from '../i18n'
 import type { CommentaireAffiche } from './commentaires'
 import type { Database } from './database.types'
 import type { ProfilAffiche } from './identites'
@@ -40,11 +46,18 @@ export type EvenementLu = Pick<
 }
 
 /**
- * Les types que l'écran nomme — TREIZE depuis `CRM-081` (docs/SPEC-cards.md §14.4, §16.11.5).
+ * Les types que l'écran nomme — QUATORZE depuis `CRM-062` tranche 3b (docs/SPEC-relances.md §10.3).
  *
  * `mail_sent`, quatorzième valeur du `CHECK` depuis la migration 44, n'est écrit par aucun trigger
  * et n'est donc pas nommé ici : lui donner un libellé annoncerait un fait que le produit ne trace
  * pas encore. Le repli de `familleDe` le garderait visible s'il apparaissait.
+ *
+ * `stalled` EST DANS L'AUTRE CAS, ET C'EST LA DIFFÉRENCE QUI DÉCIDE. La migration `0054` l'écrit
+ * réellement, par `app.relancer_cards_figees()`, et le seed en porte quatre : le produit trace ce
+ * fait. Il était pourtant absent d'ici, si bien que le fil le rendait « Événement » — le repli
+ * documenté ci-dessous a fait son travail et évité un `undefined`, mais le §9.1 de
+ * `docs/SPEC-relances.md` promet « un fait que l'utilisateur rencontre en ouvrant la timeline de
+ * son affaire », et une ligne anonyme ne tient pas cette promesse (INC-207).
  */
 export const TYPES_EVENEMENT = [
 	'created',
@@ -60,6 +73,9 @@ export const TYPES_EVENEMENT = [
 	'mail_received',
 	'snoozed',
 	'woken',
+	// `CRM-062` tranche 3b, docs/SPEC-relances.md §10.3.1 — la relance automatique, écrite par le
+	// job quotidien `p2enjoy-relances-cards-figees` depuis la migration `0054`.
+	'stalled',
 ] as const
 
 export type TypeEvenement = (typeof TYPES_EVENEMENT)[number]
@@ -92,6 +108,15 @@ const FAMILLE_PAR_TYPE: Readonly<Record<TypeEvenement, Famille>> = {
 	// réveil répondent. Une sixième bascule pour deux types contredirait le §5.11 (§16.11.5).
 	snoozed: 'cycle',
 	woken: 'cycle',
+	// « QU'EST DEVENUE CETTE AFFAIRE ? » — elle a STAGNÉ. C'est exactement la question du cycle de
+	// vie, et aucune sixième bascule n'est ajoutée pour un type (§5.11, arbitrage déjà rendu par
+	// `CRM-081` pour le sommeil).
+	//
+	// LA VALEUR ÉTAIT DÉJÀ `cycle` AVANT CETTE LIGNE, obtenue par le repli de `familleDe`. Elle est
+	// désormais CHOISIE, et l'écart n'est pas cosmétique : une valeur obtenue par défaut et une
+	// valeur écrite ne se distinguent pas à l'œil, mais seule la seconde survit à un changement du
+	// repli — et seule la seconde dit qu'on y a pensé (§10.3.1).
+	stalled: 'cycle',
 }
 
 /**
@@ -257,8 +282,47 @@ export function resoudreDetail(ligne: LigneEvenement, libelles: LibellesFil): De
 		const cle = ligne.type === 'snoozed' ? 'until' : 'from'
 		return { detail: dateCourte(texte(ligne.payload[cle])) }
 	}
+	// LA RELANCE — `CRM-062` tranche 3b, §10.3.1. Second cas où le fil lit des valeurs du `payload`
+	// plutôt que des libellés résolus, et il est motivé par le §9.6 : le retard n'est PAS
+	// recalculable après coup — il dépend de `now()` à l'instant du passage, et une lecture faite
+	// trois semaines plus tard rendrait un autre nombre. Ce n'est donc pas un libellé qui pourrait
+	// changer de sens demain, c'est la valeur même du fait, comme la date du sommeil au-dessus.
+	if (ligne.type === 'stalled') return { detail: detailRelance(ligne.payload) }
 	return { detail: null }
 }
+
+/**
+ * Le détail d'une relance : « 16 jours de retard, pour un seuil de 14 jours ».
+ *
+ * COMPOSÉ PAR UNE CLÉ DE TRADUCTION, JAMAIS PAR CONCATÉNATION (`CLAUDE.md` §23,
+ * docs/DESIGN_SYSTEM.md §10). L'accord se pose — « 1 jour » et « 16 jours » ne prennent pas la
+ * même forme —, et la borne du §2.5 étant LARGE, un retard de **zéro** est légitime : une affaire
+ * atteinte exactement sur son seuil porte `retard_jours = 0` et se lit « atteint son seuil de 14
+ * jours », phrase distincte plutôt que le « 0 jours de retard » qui se lirait comme une erreur.
+ *
+ * UN `payload` AMPUTÉ NE REND AUCUN DÉTAIL, et surtout pas un `undefined` : la ligne retombe alors
+ * sur son seul libellé, exactement comme un libellé d'étape non résolu (§14.10). La valeur vient du
+ * backend, et un type ne garantit jamais une valeur (`docs/SPEC-types.md`).
+ */
+export function detailRelance(payload: Record<string, unknown>): string | null {
+	const seuil = entier(payload['seuil_jours'])
+	const retard = entier(payload['retard_jours'])
+	if (seuil === null || retard === null) return null
+	if (retard === 0) return t('timeline.stalled.onThreshold', { seuil: String(seuil) })
+	return t(retard === 1 ? 'timeline.stalled.oneDay' : 'timeline.stalled.days', {
+		retard: String(retard),
+		seuil: String(seuil),
+	})
+}
+
+/**
+ * Un entier du `payload`, ou `null`.
+ *
+ * `jsonb` rend un nombre JavaScript, mais rien ne garantit qu'il soit fini ni entier : une valeur
+ * fractionnaire ou `NaN` traversée jusqu'à l'écran serait pire qu'un détail absent.
+ */
+const entier = (valeur: unknown): number | null =>
+	typeof valeur === 'number' && Number.isInteger(valeur) ? valeur : null
 
 const texte = (valeur: unknown): string | null => (typeof valeur === 'string' ? valeur : null)
 

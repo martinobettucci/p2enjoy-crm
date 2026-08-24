@@ -1,6 +1,8 @@
 // @spec CRM-044 (docs/BACKLOG.md) — timeline unifiée du détail de card
 // @spec CRM-043 (docs/BACKLOG.md) — le fil des commentaires, que cette unité REPREND
 // @spec CRM-022 (docs/BACKLOG.md) — auteurs et acteurs nommés sans UUID
+// @spec CRM-062 (docs/BACKLOG.md) — tranche 3b : la relance automatique NOMMÉE dans le fil
+//       (docs/SPEC-relances.md §10.3.1 ; docs/INCONSISTENCY_REPORT.md INC-207)
 // @spec docs/SPEC-cards.md §14.10 (ce que le fil unifié montre), §13.10 (le panneau que
 //       `CRM-043` a livré et que le §5.10 annonçait comme « la première voie d'un fil unifié »),
 //       §13.4 (la pierre tombale), §13.5 (la mention « modifié »), §13.6 (le refus vient du
@@ -33,6 +35,7 @@
 // « Compte supprimé » ; un acteur nul reste muet, car ce `null` peut aussi désigner le service.
 
 import {
+	AlarmClock,
 	Archive,
 	ArchiveRestore,
 	ArrowRightLeft,
@@ -107,6 +110,19 @@ const PRESENTATION: Readonly<
 	// résolue par `resoudreDetail` : le fil nomme jusqu'à quand l'affaire a dormi.
 	snoozed: { cle: 'timeline.event.snoozed', icone: Moon, pastille: 'bg-brand-soft text-brand' },
 	woken: { cle: 'timeline.event.woken', icone: Sun, pastille: 'bg-accent-soft text-ink' },
+	// `CRM-062` tranche 3b, docs/SPEC-relances.md §10.3.1 — la relance automatique du job
+	// quotidien. Elle était rendue « Événement » par le repli ci-dessous (INC-207).
+	//
+	// L'ICÔNE EST `AlarmClock`, ET AUCUN AUTRE TYPE NE LA PORTE : `Sparkles`, `Archive`, `Moon` et
+	// `Sun` sont prises, et le §9 du design system interdit qu'une icône serve deux objets
+	// distincts. Elle est aussi DISTINCTE de l'`Hourglass` de l'entrée de navigation des affaires
+	// figées — l'écran montre un ÉTAT, cette ligne date un GESTE.
+	//
+	// LA TEINTE DE DANGER, ET C'EST LE SEUL TYPE DU FIL QUI LA PORTE. Elle est déjà celle de
+	// l'ancienneté dépassée sur une carte de board (§5.1) et du retard de « Ma journée » (§5.36) :
+	// le même signal doit avoir la même forme. Le §1 reste tenu — le libellé « Relance
+	// automatique » porte l'information, la couleur ne fait que l'accompagner.
+	stalled: { cle: 'timeline.event.stalled', icone: AlarmClock, pastille: 'bg-danger-soft text-danger' },
 }
 
 /**
