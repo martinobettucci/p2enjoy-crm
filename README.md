@@ -508,6 +508,7 @@ scripts/verify-timeline.sh     # timeline : mémoire append-only, filtres et cap
 scripts/verify-move-card-to-channel.sh # déplacement entre channels et perte explicite (CRM-045)
 scripts/verify-seed-demo.sh    # jeu de démonstration complet : toutes les étapes peuplées (CRM-046)
 scripts/verify-manual.sh       # manuel utilisateur : annexe A, captures, libellés réels  (CRM-047)
+scripts/verify-ma-journee.sh   # « Ma journée » : sections, bornes, portée, seed daté  (CRM-061)
 scripts/verify-corbeille.sh    # corbeille : modèle, garde, écran, gestes, non-complaisance (CRM-077)
 ```
 

@@ -15,6 +15,29 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **« MA JOURNÉE » A SON HARNAIS DE PREUVES REJOUABLE ET NON COMPLAISANT**
+  (`CRM-061` tranche 2, `scripts/verify-ma-journee.sh`, `docs/SPEC-cards.md` §17.11). Il rejoue en
+  une commande tout ce que la Definition of Done de l'unité exige : la traçabilité des sept
+  fichiers, le contrat du seed **mesuré en base** — les trois sections de l'administratrice
+  peuplées quel que soit le jour, la portée élargie strictement plus fournie, l'unique affaire
+  endormie de l'horizon —, l'absence de tout chemin d'écriture et de tout stockage sur l'appareil,
+  la chaîne de colonnes réellement envoyée, les quatre suites de preuves, le build et les six
+  captures.
+
+  **Douze dégradations volontaires** éprouvent qu'il n'est pas complaisant : ordre non total, borne
+  d'horizon retirée, filtre de sommeil réécrit, affaires archivées ramenées, filtre par responsable
+  envoyé sous la portée élargie, échéance absente rangée en 1970, portée inconnue atteignant la
+  requête, horizon porté à trente jours, bornes passées en UTC, section vide rendue, `aria-current`
+  posé sur les deux portées, et pilule de channel privée de sa destination. Chacune doit faire
+  **réellement** échouer une preuve, et le harnais constate ensuite — plutôt qu'il ne suppose — que
+  les trois fichiers sont rendus intacts et que le seed porte les mêmes trois sections qu'à
+  l'entrée.
+
+  **Les bornes du fuseau du lecteur sont éprouvées ailleurs qu'en UTC.** Sur un hôte réglé en UTC,
+  `setHours` et `setUTCHours` coïncident, et une suite verte ne dirait pas laquelle est écrite : le
+  contrôle rejoue donc les deux suites de l'unité sous `TZ=Pacific/Auckland`, où elles divergent de
+  treize heures.
+
 - **LA VUE « MA JOURNÉE » EST LIVRÉE, ET L'ENTRÉE DE BARRE LATÉRALE MÈNE ENFIN QUELQUE PART**
   (`CRM-061` tranche 1, `docs/SPEC-cards.md` §17, `docs/manual.md` chapitre 3 *quater*). L'adresse
   `/ma-journee` rendait un état vide **inconditionnel** depuis `CRM-007`, alors que son modèle —
