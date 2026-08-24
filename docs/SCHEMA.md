@@ -1064,6 +1064,44 @@ ligne que l'appelant ne lit pas n'est pas rendue, et sa colonne calculée ne l'e
 `security invoker` est **obligatoire** — en `definer`, elle répondrait pour le propriétaire de la
 fonction et rendrait `true` à tout le monde.
 
+### 9 bis.9 `public.cards_figees()` — les affaires figées de l'appelant, migration 53
+
+Ajoutée le 2026-08-24 par `CRM-062` tranche 1 (`docs/SPEC-relances.md` §2 et §3).
+
+| | |
+|---|---|
+| Signature | `public.cards_figees() returns table (card_id, workspace_id, channel_id, title, owner_id, step_id, entered_step_at, seuil_jours, jours_dans_etape, retard_jours)` |
+| Volatilité | `stable`, `set search_path to ''`, **`security invoker`** — jamais `definer` |
+| Privilèges | `execute` à `authenticated` et `service_role` ; **`anon` révoqué nommément** |
+| Ordre | `retard_jours desc, title asc` |
+
+**Une card figée** est une affaire restée dans son étape au-delà du seuil de relance de cette étape :
+
+```
+seuil_effectif   = coalesce(workflow_steps.stale_after_days,
+                            workflow_nodes_catalog.default_stale_after_days)
+jours_dans_etape = floor((now() - cards.entered_step_at) en jours)
+figee            = seuil_effectif is not null and jours_dans_etape >= seuil_effectif
+```
+
+C'est, au caractère près, la règle que `webapp/src/lib/board.ts` applique depuis `CRM-041` pour la
+pastille d'ancienneté du §7.4 de `docs/SPEC-workflow-engine.md`. La fonction ne la **duplique** pas :
+elle la **descend** là où l'ordonnanceur et l'API peuvent la lire, l'écran du board restant seul à
+la calculer sur une carte déjà téléchargée.
+
+**Trois exclusions, et aucune quatrième** : archivée, en corbeille, en sommeil — cette dernière au
+prédicat exact d'`estEnSommeil` (`snoozed_until` non nul **et strictement** postérieur à `now()`).
+Les nœuds terminaux ne sont **pas** nommés par la règle : ils ne portent aucun seuil, et une seconde
+définition de « terminal » serait une définition de trop (`docs/SPEC-relances.md` §2.3).
+
+**`security invoker` est obligatoire** : en `definer`, la fonction rendrait à chacun les affaires
+figées de tout le monde, droits fins de `CRM-012` compris. Elle n'ajoute aucune règle d'accès et
+hérite d'`app.can_read_card` ; le refus est **zéro ligne**, jamais une erreur.
+
+**`anon` doit être révoqué NOMMÉMENT**, et c'est mesuré : `pg_default_acl` porte
+`alter default privileges … on functions to anon`, si bien qu'une fonction neuve de `public` naît
+avec `anon=X` et qu'un `revoke … from public` seul ne lui retire rien.
+
 ## 10. Index principaux
 
 | Table | Index |

@@ -200,12 +200,23 @@ par la preuve de refus n° 4 (`docs/SPEC-permissions-rls.md` §7).
 
 ### 3.3 Autorisations
 
-`execute` est révoqué de `public`, puis accordé à `authenticated` et `service_role` — exactement
-l'ACL mesurée de `public.etat_messagerie` et de `public.previsualiser_exigence`.
+`execute` est révoqué de `public` **et d'`anon` nommément**, puis accordé à `authenticated` et
+`service_role` — exactement l'ACL mesurée de `public.etat_messagerie` et de
+`public.previsualiser_exigence`.
 
 `anon` n'a **aucun** privilège d'exécution : un appelant anonyme est refusé par le **privilège**,
 avant toute politique, et PostgREST rend `401` / `42501`. C'est plus strict qu'une politique qui
 rendrait un tableau vide, et c'est ce que les deux fonctions jumelles font déjà.
+
+**RÉVOQUER `public` NE SUFFIT PAS, ET C'EST MESURÉ.** La première écriture de la migration ne
+révoquait que `public` ; l'appelant anonyme obtenait alors `200` et `[]`, non `401`. La cause est
+dans la plateforme : `pg_default_acl` porte
+`alter default privileges in schema public … on functions to anon`, si bien que **toute fonction
+neuve de `public` naît avec `anon=X`**, et `revoke … from public` ne retire rien à un rôle **nommé**.
+C'est le point de sûreté que les migrations 48 à 52 nomment pour les tables, et il vaut pour les
+fonctions : `public.etat_messagerie` révoque `public, anon` depuis la migration 31 pour cette raison
+exacte. La suite pgTAP fige l'ACL rôle par rôle, afin qu'une prochaine fonction ne refasse pas
+l'erreur en silence.
 
 ### 3.4 Ordre
 
@@ -225,14 +236,21 @@ seedés.
 | c | `admin` | ligne *a* | `title = 'Audit sécurité applicative'`, `owner_id` non nul, `step_id` = l'étape `Prospection` du workflow du channel `grands-comptes` |
 | d | `business_developer` | `rpc/cards_figees` | `200`, **1** ligne, la même : le track lui est ouvert |
 | e | `viewer` | `rpc/cards_figees` | `200`, **`[]`** — le track `grands-comptes` lui est fermé (`CRM-012`). **Zéro ligne, pas une erreur** |
-| f | anonyme | `rpc/cards_figees` | `401`, `42501` — refusé par le privilège |
-| g | `admin` | `GET` sur la même route | `404` : la fonction est `stable`, PostgREST l'expose aussi en `GET` — **à mesurer**, la ligne est une prédiction |
-| h | `admin` | `rpc/cards_figees?select=card_id,retard_jours` | `200` : la projection s'applique à une fonction rendant `setof record` — **à mesurer**, prédiction |
-| i | `admin` | `rpc/cards_figees?retard_jours=gt.20` | `200`, `[]` : le filtre s'applique après la fonction — **à mesurer**, prédiction |
+| f | anonyme | `rpc/cards_figees` | `401`, `42501` — refusé par le **privilège**, avant toute politique |
+| g | `admin` | `GET` sur la même route | `200`, la même ligne : la fonction est `stable`, donc PostgREST l'expose aussi en lecture |
+| h | `admin` | `rpc/cards_figees?select=card_id,retard_jours` | `200`, la ligne **projetée sur les deux colonnes demandées** |
+| i | `admin` | `rpc/cards_figees?retard_jours=gt.20` | `200`, `[]` : le filtre s'applique **après** la fonction, sur ses colonnes de sortie |
 | j | `viewer` | la card `…00c3` par `GET /cards?id=eq.…` | `200`, `[]` — contre-épreuve de la ligne *e* : c'est bien la RLS, et non la fonction, qui refuse |
 
-Les lignes *g*, *h* et *i* sont **signalées comme des prédictions** et seront corrigées par la
-mesure plutôt que le test relâché, selon le précédent de `CRM-013`.
+**Les dix lignes sont MESURÉES le 2026-08-24**, migration appliquée, jetons obtenus par la véritable
+route `POST /auth/v1/token?grant_type=password`. Deux prédictions ont été corrigées **par la
+mesure**, jamais le test relâché :
+
+- la ligne *g* annonçait `404` en se contredisant dans sa propre justification ; PostgREST expose
+  bien une fonction `stable` en `GET`, et elle rend `200` ;
+- la ligne *f* annonçait `401` et rendait `200 []` : c'est le défaut de privilège corrigé au §3.3,
+  et la ligne est donc rétablie telle qu'elle était écrite, **après** correction du produit — non
+  l'inverse.
 
 ## 5. Ce que le seed démontre, et ce qu'il ne démontre pas encore
 
