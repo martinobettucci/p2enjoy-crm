@@ -54,7 +54,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(23);
+select plan(25);
 
 -- Les identifiants du seed, stables (docs/SPEC-seed.md §4).
 create or replace function pg_temp.card_figee() returns uuid language sql immutable as
@@ -220,7 +220,7 @@ select is(
 	'et la card ne porte toujours qu''un seul stalled — le compte, pas seulement la valeur rendue');
 
 -- ---------------------------------------------------------------------------------------------
--- 19 et 20. Le réarmement après une nouvelle entrée dans l'étape — §9.4
+-- 19 à 22. Le réarmement, et ce que le passage COURANT écrit — §9.4, §9.5, §9.6
 -- ---------------------------------------------------------------------------------------------
 -- L'histoire posée : un `stalled` écrit il y a soixante jours, lors d'un séjour PRÉCÉDENT, puis une
 -- entrée dans l'étape il y a trente jours — ce que fait `move_card`, qui repose `entered_step_at`.
@@ -247,8 +247,32 @@ select is(
 	'la card porte alors DEUX stalled : un par séjour dans l''étape, et l''histoire des deux '
 	'séjours est conservée');
 
+-- LES DEUX ASSERTIONS SUIVANTES PORTENT SUR L'ÉVÉNEMENT QUE CETTE SUITE VIENT DE FAIRE ÉCRIRE, et
+-- non sur celui du seed. La distinction n'est pas cosmétique : elle a été TROUVÉE PAR LE HARNAIS.
+-- `scripts/verify-relances.sh` a dégradé la fonction — un libellé ajouté au payload, un acteur
+-- inventé par `set_config` — et la suite est restée VERTE, parce que les assertions 14 et 15 lisent
+-- l'événement du seed, écrit AVANT la dégradation et que rien ne réécrit. Une preuve qui ne relit
+-- que le passé ne mesure pas le produit courant.
+
+select is(
+	(select e.actor_id from public.card_events e
+	  where e.card_id = pg_temp.card_rearmement() and e.type = 'stalled'
+	  order by e.created_at desc limit 1),
+	null::uuid,
+	'l''acteur de l''événement QUE CE PASSAGE VIENT D''ÉCRIRE est nul : la nullité est obtenue à '
+	'chaque inscription, et non héritée d''une ligne ancienne');
+
+select results_eq(
+	$$ select jsonb_object_keys(payload) from public.card_events
+	    where card_id = '5eed0000-0000-4000-8000-0000000000c2' and type = 'stalled'
+	      and created_at >= now() - interval '1 day'
+	    order by 1 $$,
+	$$ values ('retard_jours'), ('seuil_jours') $$,
+	'le payload QUE CE PASSAGE VIENT D''ÉCRIRE porte exactement deux clés : un libellé ajouté au '
+	'code serait vu ici, là où l''assertion sur l''événement du seed ne le verrait jamais');
+
 -- ---------------------------------------------------------------------------------------------
--- 21 à 23. Les exclusions sont HÉRITÉES, dans les deux sens — §9.2
+-- 23 à 25. Les exclusions sont HÉRITÉES, dans les deux sens — §9.2
 -- ---------------------------------------------------------------------------------------------
 -- La fonction n'a aucune garde propre : elle relance ce que `public.cards_figees()` lui rend. Ces
 -- assertions le prouvent par le comportement plutôt que par la lecture du corps — une garde
