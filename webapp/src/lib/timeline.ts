@@ -89,7 +89,18 @@ export type TypeEvenement = (typeof TYPES_EVENEMENT)[number]
 export const FAMILLES = ['discussion', 'etapes', 'champs', 'organisation', 'cycle'] as const
 export type Famille = (typeof FAMILLES)[number]
 
-const FAMILLE_PAR_TYPE: Readonly<Record<TypeEvenement, Famille>> = {
+/**
+ * EXPORTÉ, ET C'EST LE HARNAIS QUI L'A EXIGÉ.
+ *
+ * `familleDe('stalled')` rend `cycle` que la ligne soit **écrite** ici ou obtenue par le repli
+ * documenté plus bas : une assertion qui n'interroge que la fonction ne distingue donc pas les deux
+ * cas. `scripts/verify-relances.sh` l'a mesuré — sa dégradation D-E retire la ligne, et la suite
+ * unitaire restait VERTE. Le choix cessait d'être un choix sans que rien ne le dise.
+ *
+ * La table est donc exposée, et la preuve assère l'existence de la CLÉ plutôt que la valeur rendue.
+ * C'est le seul moyen de mesurer une intention là où un repli donne le même résultat.
+ */
+export const FAMILLE_PAR_TYPE: Readonly<Record<TypeEvenement, Famille>> = {
 	moved: 'etapes',
 	field_changed: 'champs',
 	created: 'cycle',

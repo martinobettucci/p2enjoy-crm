@@ -226,12 +226,30 @@ test.describe('navigation au clavier (docs/DESIGN_SYSTEM.md §8)', () => {
 		// à jour AVEC son ordre réel — jamais contournée : ce qu'elle exige est inchangé, l'ordre de
 		// tabulation doit suivre l'ordre visuel, et c'est exactement ce qu'elle a détecté en
 		// devenant rouge pendant la campagne de cette tranche.
+		//
+		// RÉVISÉE UNE TROISIÈME FOIS le 2026-08-24 par `CRM-062` tranche 3c, ET POUR LE MOTIF ÉCRIT
+		// DEUX FOIS AU-DESSUS : l'écran des affaires figées ajoute une septième entrée transverse,
+		// « Affaires figées », entre « Ma journée » et « Réglages » (`docs/SPEC-relances.md` §10.4,
+		// `docs/DESIGN_SYSTEM.md` §4 et §5.37). La place n'est pas arbitraire — les deux écrans
+		// répondent à la même question et s'enseignent l'un après l'autre —, et l'ordre de
+		// tabulation doit suivre cet ordre visuel. La preuve est mise à jour AVEC son ordre réel,
+		// jamais contournée : elle est devenue rouge pendant la campagne de cette tranche, ce qui
+		// est exactement son travail.
 		await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
 		await page.keyboard.press('Tab')
 		await page.keyboard.press('Tab')
 		await expect(page.getByTestId('bascule-repli')).toBeFocused()
 
-		for (const libelle of ['Board', 'Inbox', 'Contacts', 'Objectifs', 'Coûts', 'Ma journée', 'Réglages']) {
+		for (const libelle of [
+			'Board',
+			'Inbox',
+			'Contacts',
+			'Objectifs',
+			'Coûts',
+			'Ma journée',
+			'Affaires figées',
+			'Réglages',
+		]) {
 			await page.keyboard.press('Tab')
 			await expect(
 				page.getByRole('navigation', { name: 'Navigation principale' }).getByTitle(libelle),

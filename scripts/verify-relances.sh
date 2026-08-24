@@ -239,12 +239,18 @@ echo "3. Le contrat du seed, mesuré EN BASE avec les prédicats exacts de la fo
 # traverse la RLS : ce que le harnais vérifie ici, c'est la RÈGLE, pas le cloisonnement — celui-ci
 # est mesuré par la suite pgTAP et par la preuve d'API sous les trois jetons réels.
 
-contrat=$(psql_db -F '|' -c "select count(*), min(f.card_id::text), min(f.seuil_jours), min(f.jours_dans_etape) >= 30
-	from public.cards_figees() f;")
-if [ "$contrat" = "1|$CARD_FIGEE|14|t" ]; then
-	ok "seed : exactement une affaire figée, « Audit sécurité applicative », seuil 14, ≥ 30 jours"
+# RÉVISÉ PAR LA TRANCHE 3a (§10.2) : le jeu porte QUATRE affaires figées. La mesure ne porte donc
+# plus sur un `min()` agrégé — qui, sur quatre lignes, mêlerait le seuil de l'une au retard d'une
+# autre et ne dirait plus rien — mais sur le COMPTE et sur la ligne de `…0c3`, lue nommément et
+# inchangée depuis `CRM-046`.
+contrat=$(psql_db -F '|' -c "select
+	(select count(*) from public.cards_figees()),
+	(select f.seuil_jours from public.cards_figees() f where f.card_id = '$CARD_FIGEE'),
+	(select f.jours_dans_etape >= 30 from public.cards_figees() f where f.card_id = '$CARD_FIGEE');")
+if [ "$contrat" = "4|14|t" ]; then
+	ok "seed : quatre affaires figées, dont « Audit sécurité applicative » à seuil 14 et ≥ 30 jours"
 else
-	fail "contrat du seed inattendu : '$contrat'"
+	fail "contrat du seed inattendu : '$contrat' au lieu de '4|14|t' (§10.2.1)"
 fi
 
 if [ "$(psql_db -c "select count(*) from public.cards_figees() f
@@ -319,8 +325,10 @@ echo
 echo "5. Les quatre suites de preuves de l'unité"
 # =================================================================================================
 
-if suite_sql_verte && grep -q '1 fichiers, 24 assertions, aucune anomalie' "$TRAVAIL/tap.log"; then
-	ok "pgTAP : 24 assertions, aucune anomalie"
+# VINGT-SIX depuis la tranche 3a : la conformité du seed y assère la suite entière et les deux
+# dimensions du regroupement, là où elle comptait une ligne (§10.2.2).
+if suite_sql_verte && grep -q '1 fichiers, 26 assertions, aucune anomalie' "$TRAVAIL/tap.log"; then
+	ok "pgTAP : 26 assertions, aucune anomalie"
 else
 	fail "suite pgTAP en échec ou compte inattendu"
 	sed 's/^/        /' "$TRAVAIL/tap.log" | tail -n 25
@@ -484,14 +492,19 @@ fi
 
 # LE SEED, ÉCRIT PAR LE VRAI MÉCANISME (§9.9). L'assertion porte sur l'ENSEMBLE DES CLÉS du payload :
 # « contient seuil_jours » laisserait passer un libellé ajouté demain.
-relance_seed=$(psql_db -F '|' -c "select count(*), min(card_id::text),
+# RÉVISÉ PAR LA TRANCHE 3a (§10.2.3) : QUATRE relances, une par affaire figée. Le compte des cards
+# DISTINCTES est celui qui compte — un compte global de quatre serait vert si une seule card en
+# portait quatre, ce qui nierait l'idempotence du §9.4. Les deux prédicats de forme portent sur
+# l'ENSEMBLE des lignes : un payload correct sur l'une et amputé sur l'autre passerait sinon.
+relance_seed=$(psql_db -F '|' -c "select count(*), count(distinct card_id),
 	bool_and(actor_id is null),
-	min((select string_agg(k, ',' order by k) from jsonb_object_keys(payload) k))
+	bool_and((select string_agg(k, ',' order by k) from jsonb_object_keys(payload) k)
+	         = 'retard_jours,seuil_jours')
 	from public.card_events where type = 'stalled';")
-if [ "$relance_seed" = "1|$CARD_FIGEE|t|retard_jours,seuil_jours" ]; then
-	ok "seed : UN stalled, sur la seule card figée, acteur nul, payload aux deux seules clés"
+if [ "$relance_seed" = "4|4|t|t" ]; then
+	ok "seed : QUATRE stalled sur quatre cards distinctes, acteur nul, payload aux deux seules clés"
 else
-	fail "état de relance du seed inattendu : '$relance_seed'"
+	fail "état de relance du seed inattendu : '$relance_seed' au lieu de '4|4|t|t'"
 fi
 
 # L'IDEMPOTENCE, MESURÉE HORS TRANSACTION : la suite pgTAP la prouve dans un `rollback`, mais un
@@ -596,12 +609,15 @@ else
 	fail "la fonction n'est pas restaurée : '$forme_finale'"
 fi
 
-contrat_final=$(psql_db -F '|' -c "select count(*), min(f.card_id::text), min(f.seuil_jours)
-	from public.cards_figees() f;")
-if [ "$contrat_final" = "1|$CARD_FIGEE|14" ]; then
-	ok "le seed est rendu intact : une affaire figée, la même, au même seuil"
+# RÉVISÉ PAR LA TRANCHE 3a : le constat porte sur la SUITE des quatre retards, et non plus sur un
+# `min()` agrégé. Sur quatre lignes, un `min()` mêlerait le seuil de l'une au retard d'une autre et
+# ne dirait plus rien ; la suite, elle, est ce que l'écran rend.
+contrat_final=$(psql_db -c "select string_agg(retard_jours::text, ',' order by retard_jours desc)
+	from public.cards_figees();")
+if [ "$contrat_final" = "$SUITE_ATTENDUE" ]; then
+	ok "le seed est rendu intact : les quatre affaires figées, dans leur ordre « $SUITE_ATTENDUE »"
 else
-	fail "le seed ne retrouve pas son état : '$contrat_final'"
+	fail "le seed ne retrouve pas son état : '$contrat_final' au lieu de '$SUITE_ATTENDUE'"
 fi
 
 if suite_sql_verte; then

@@ -14,6 +14,7 @@ import { describe, expect, it } from 'vitest'
 import type { CommentaireAffiche } from './commentaires'
 import {
 	COLONNES_EVENEMENT,
+	FAMILLE_PAR_TYPE,
 	FAMILLES,
 	TYPES_EVENEMENT,
 	compterParFamille,
@@ -85,13 +86,25 @@ describe('les familles (docs/DESIGN_SYSTEM.md §5.11)', () => {
 		expect(TYPES_EVENEMENT).toContain('workflow_changed')
 		expect(familleDe('channel_changed')).toBe('organisation')
 		expect(familleDe('workflow_changed')).toBe('organisation')
-		// LA FAMILLE DE `stalled` EST ASSÉRÉE, et ce n'est pas redondant avec la ligne ci-dessus :
-		// elle valait DÉJÀ `cycle` avant la tranche 3b, obtenue par le repli de `familleDe`. Sans
-		// cette assertion, retirer `stalled` de `FAMILLE_PAR_TYPE` laisserait la suite VERTE — le
-		// repli rendrait la même valeur, et le choix cesserait d'être un choix sans que rien ne le
-		// dise (§10.3.1).
+		// LA FAMILLE DE `stalled` EST ASSÉRÉE SUR LA TABLE, ET NON SUR LA FONCTION — et cette
+		// correction vient du HARNAIS, pas de la lecture.
+		//
+		// La première écriture assérait `familleDe('stalled') === 'cycle'` en affirmant dans son
+		// commentaire que retirer la ligne de `FAMILLE_PAR_TYPE` ferait rougir. C'était FAUX, et
+		// `scripts/verify-relances.sh` l'a mesuré : sa dégradation D-E retire la ligne, le repli
+		// documenté rend `cycle` à son tour, et la suite restait VERTE. Une preuve qui interroge une
+		// fonction dont le repli donne le même résultat ne mesure rien.
+		//
+		// L'assertion porte donc sur l'existence de la CLÉ dans la table, seule façon de distinguer
+		// une valeur ÉCRITE d'une valeur obtenue par défaut (§10.3.1).
 		expect(TYPES_EVENEMENT).toContain('stalled')
-		expect(familleDe('stalled')).toBe('cycle')
+		expect(Object.hasOwn(FAMILLE_PAR_TYPE, 'stalled')).toBe(true)
+		expect(FAMILLE_PAR_TYPE.stalled).toBe('cycle')
+		// LA TABLE COUVRE LES QUATORZE TYPES, sans exception : un type ajouté demain sans y être
+		// rangé retomberait sur le repli, et c'est précisément l'oubli d'INC-207 qui se répéterait.
+		for (const type of TYPES_EVENEMENT) {
+			expect(Object.hasOwn(FAMILLE_PAR_TYPE, type), `${type} n'est rangé nulle part`).toBe(true)
+		}
 	})
 
 	// RÉVISÉE ELLE AUSSI : la discussion n'était portée par aucun TYPE — seuls les commentaires y
