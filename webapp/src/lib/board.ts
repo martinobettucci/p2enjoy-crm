@@ -23,6 +23,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './async'
+import { ancienneteDepassee, joursDansEtape, seuilEffectif } from './carte-figee'
 import {
 	COLONNES_CARD_BOARD,
 	COLONNES_CHAMP_LIBELLE,
@@ -172,7 +173,12 @@ export type ModeleBoard = {
 	readonly nombreEnSommeilMasquees: number
 }
 
-const MILLISECONDES_PAR_JOUR = 24 * 60 * 60 * 1000
+// LE SEUIL, LE COMPTE DES JOURS ET LA BORNE VIVENT DÉSORMAIS DANS `carte-figee.ts`, et non plus
+// ici. Le comportement est inchangé au caractère près ; ce qui change, c'est que la preuve d'API de
+// `CRM-062` peut lire la MÊME déclaration, ce module-ci important `./supabase` et étant donc
+// inatteignable depuis `e2e/` (mesuré, `colonnes-board.ts`). `public.cards_figees()` applique la
+// même règle en SQL, et `e2e/api/relances.spec.ts` confronte les deux verdicts sur la donnée réelle
+// (`docs/SPEC-relances.md` §2.1).
 
 /**
  * Résout une étape lue en étape de board.
@@ -190,7 +196,7 @@ export function resoudreEtape(lue: EtapeLue): EtapeBoard {
 		libelle: lue.label_override ?? noeud?.label ?? '',
 		couleur: couleurNoeud(noeud?.color),
 		kind: noeud?.kind ?? 'open',
-		seuilJours: lue.stale_after_days ?? noeud?.default_stale_after_days ?? null,
+		seuilJours: seuilEffectif(lue.stale_after_days, noeud?.default_stale_after_days),
 	}
 }
 
@@ -260,13 +266,12 @@ export function evaluerAnciennete(
 	seuilJours: number | null,
 	maintenant: Date,
 ): CarteBoard {
-	const entree = new Date(card.entered_step_at).getTime()
-	const jours = Math.floor((maintenant.getTime() - entree) / MILLISECONDES_PAR_JOUR)
+	const jours = joursDansEtape(card.entered_step_at, maintenant)
 	return {
 		card,
-		joursDansEtape: Number.isFinite(jours) ? Math.max(jours, 0) : 0,
+		joursDansEtape: jours,
 		seuilJours,
-		ancienneteDepassee: seuilJours !== null && Number.isFinite(jours) && jours >= seuilJours,
+		ancienneteDepassee: ancienneteDepassee(jours, seuilJours),
 		// Le MÊME instant que celui du filtre de `composerBoard` (§16.12.3) : c'est le seul moyen
 		// qu'une carte rendue par l'un soit marquée par l'autre.
 		enSommeil: estEnSommeil(card.snoozed_until, maintenant),

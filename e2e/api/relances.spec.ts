@@ -21,7 +21,18 @@
 import { expect, test } from '@playwright/test'
 import { enTetesAnonymes, enTetesAuthentifies, jetonDe } from './jetons'
 
+/**
+ * La règle du produit, **importée depuis le module qu'il emploie** et non redéclarée ici.
+ *
+ * `carte-figee.ts` n'importe rien, précisément pour être atteignable des deux côtés : la pastille
+ * du board s'en sert par `board.ts`, et cette preuve s'en sert pour confronter le verdict
+ * TypeScript à celui du SQL. Recopier la règle ici prouverait qu'une règle quelconque coïncide avec
+ * la base, pas que **celle du produit** y coïncide (procédé de `colonnes-board.ts`, décision 177).
+ */
+import { ancienneteDepassee, joursDansEtape, seuilEffectif } from '../../webapp/src/lib/carte-figee'
+
 const RPC = '/rest/v1/rpc/cards_figees'
+const CARDS = '/rest/v1/cards'
 
 /** Identifiants du seed — `docs/SPEC-seed.md` §2.3, §9.12.1 et `docs/SPEC-cards.md` §9. */
 const CAMILLE = '5eed0000-0000-4000-8000-000000000011'
@@ -219,6 +230,97 @@ test.describe('les affaires figées, par la vraie route (docs/SPEC-relances.md �
 			headers: enTetesAuthentifies(jetonAdmin),
 		})
 		expect(((await parAdmin.json()) as { id: string }[]).map((l) => l.id)).toEqual([CARD_FIGEE])
+	})
+
+	test('cohérence — le SQL et la règle TypeScript du produit rendent le MÊME verdict sur toutes les affaires lues', async ({
+		request,
+	}) => {
+		// C'EST L'ASSERTION QUE LE §2.1 EXIGE. La règle existe à deux endroits — ici pour la pastille
+		// du board, en SQL pour l'ordonnanceur et l'écran à venir —, et rien ne les oblige
+		// structurellement à dire la même chose. Une divergence rendrait le produit menteur dans un
+		// sens ou dans l'autre : pastille éteinte sur une affaire relancée, ou l'inverse.
+		//
+		// L'INSTANT EST PRIS UNE FOIS, avant les deux lectures. Deux `new Date()` distincts feraient
+		// diverger les deux verdicts d'une carte assise exactement sur sa borne, et la preuve
+		// deviendrait intermittente pour une raison qui ne dit rien du produit.
+		const maintenant = new Date()
+
+		const colonnes =
+			'id, entered_step_at, snoozed_until, archived_at, deleted_at,' +
+			// LE NOM DE LA CLÉ EST CELUI DE LA CONTRAINTE COMPOSITE, et il est MESURÉ : `cards` porte
+			// `cards_current_step_id_workflow_id_fkey`, jamais `cards_current_step_id_fkey`. Le désigner
+			// est obligatoire — sans indication, PostgREST rend `PGRST200`, ne trouvant pas la relation.
+			'workflow_steps!cards_current_step_id_workflow_id_fkey(stale_after_days,' +
+			'workflow_nodes_catalog(default_stale_after_days))'
+		const lues = await request.get(`${CARDS}?select=${encodeURIComponent(colonnes)}`, {
+			headers: enTetesAuthentifies(jetonAdmin),
+		})
+		expect(lues.status()).toBe(200)
+		type CardLue = {
+			id: string
+			entered_step_at: string
+			snoozed_until: string | null
+			archived_at: string | null
+			deleted_at: string | null
+			workflow_steps: {
+				stale_after_days: number | null
+				workflow_nodes_catalog: { default_stale_after_days: number | null } | null
+			} | null
+		}
+		const cards = (await lues.json()) as CardLue[]
+		// Le seed porte quarante et une affaires, dont deux rangées : sans ce garde-fou, une lecture
+		// vide rendrait l'égalité ci-dessous vraie et vide de sens.
+		expect(cards.length).toBeGreaterThan(30)
+
+		const attenduParTypeScript = cards
+			.filter((card) => card.archived_at === null && card.deleted_at === null)
+			// « En sommeil » : non nul ET STRICTEMENT postérieur (§2.4). Le prédicat est celui
+			// d'`estEnSommeil`, qui vit dans un module du navigateur et n'est donc pas importable
+			// ici ; il est réécrit sur une ligne, et la suite pgTAP le tient des deux côtés.
+			.filter(
+				(card) =>
+					card.snoozed_until === null ||
+					new Date(card.snoozed_until).getTime() <= maintenant.getTime(),
+			)
+			.filter((card) =>
+				ancienneteDepassee(
+					joursDansEtape(card.entered_step_at, maintenant),
+					seuilEffectif(
+						card.workflow_steps?.stale_after_days,
+						card.workflow_steps?.workflow_nodes_catalog?.default_stale_after_days,
+					),
+				),
+			)
+			.map((card) => card.id)
+			.sort()
+
+		const parSql = await request.post(RPC, {
+			headers: enTetesAuthentifies(jetonAdmin),
+			data: {},
+		})
+		const rendusParSql = ((await parSql.json()) as LigneFigee[]).map((ligne) => ligne.card_id).sort()
+
+		expect(rendusParSql).toEqual(attenduParTypeScript)
+		// Et le verdict n'est pas vide des deux côtés, sans quoi l'égalité ne dirait rien.
+		expect(rendusParSql).toEqual([CARD_FIGEE])
+	})
+
+	test('cohérence — les jours comptés par le SQL sont ceux que la règle TypeScript compte', async ({
+		request,
+	}) => {
+		const maintenant = new Date()
+		const reponse = await request.post(RPC, {
+			headers: enTetesAuthentifies(jetonAdmin),
+			data: {},
+		})
+		const [ligne] = (await reponse.json()) as LigneFigee[]
+		expect(ligne).toBeDefined()
+		// `floor` sur des millisecondes d'un côté, `floor(epoch / 86400)` de l'autre. Un écart d'une
+		// unité ferait diverger la pastille et la relance d'une journée entière, et personne ne
+		// saurait laquelle a raison. Une seconde de tolérance suffit à absorber l'écart d'instant
+		// entre l'appel et cette ligne.
+		const parTypeScript = joursDansEtape(ligne?.entered_step_at ?? '', maintenant)
+		expect(Math.abs(parTypeScript - (ligne?.jours_dans_etape ?? -1))).toBeLessThanOrEqual(0)
 	})
 
 	test('le seed sort intact : aucune de ces lectures n’a écrit', async ({ request }) => {

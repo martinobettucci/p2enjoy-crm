@@ -524,8 +524,12 @@ ASSERTIONS_ATTENDUES=2504
 # **RÉVISION DU 2026-08-24 — `CRM-062`, tranche 1.** `e2e/api/relances.spec.ts` déclare **11**
 # scénarios : les dix lignes du contrat d'API du §4 de `docs/SPEC-relances.md`, plus le constat que
 # le seed sort intact. Aucun autre fichier n'a gagné ni perdu de scénario. 837 + 11 = **848**,
-# valeur COMPTÉE par `playwright test --list` (« Total: 848 tests in 50 files »), jamais déduite.
-SCENARIOS_API=848
+# valeur COMPTÉE par `playwright test --list`, jamais déduite. **RÉVISÉE dans la même session à
+# 850** : deux scénarios de COHÉRENCE ont été ajoutés après coup — ils confrontent le verdict de
+# `public.cards_figees()` à celui de `webapp/src/lib/carte-figee.ts`, la règle du produit importée
+# et non recopiée, sur toutes les affaires que l'administratrice lit. « Total: 850 tests in 50
+# files ».
+SCENARIOS_API=850
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
