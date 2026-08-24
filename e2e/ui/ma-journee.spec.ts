@@ -123,9 +123,26 @@ test.describe('« Ma journée » (docs/SPEC-cards.md §17)', () => {
 
 		await page.getByTestId('lien-portee').filter({ hasText: 'Tout l’espace' }).click()
 		await expect(page).toHaveURL(/\/ma-journee\?qui=tous$/)
-		// Le contenu change, pas seulement l'adresse : la nouvelle liste doit être RENDUE avant
-		// d'être comptée, sans quoi le compte serait celui de l'ancienne — ou zéro.
-		await expect(page.getByTestId('ligne-journee')).not.toHaveCount(miennes)
+		// L'ATTENTE PORTE SUR LE SIGNAL QUE VOIT L'UTILISATEUR, ET C'EST UNE CORRECTION MESURÉE LE
+		// 2026-08-24.
+		//
+		// Elle était écrite `not.toHaveCount(miennes)`, et ce garde-fou ACCEPTE l'état transitoire :
+		// entre le clic et la réponse, l'écran rend ses squelettes, donc ZÉRO ligne — et zéro est
+		// bien différent de trois. L'assertion passait donc immédiatement, et le `count()` suivant
+		// lisait le zéro du chargement. Isolé, l'écran répond assez vite pour que le cas ne se
+		// produise pas ; en campagne complète, sur un hôte chargé, il s'est produit : « Expected:
+		// > 3, Received: 0 » — une portée élargie rendant MOINS que la portée personnelle, ce qui
+		// est logiquement impossible et ne disait donc rien du produit.
+		//
+		// Le remède n'est ni une temporisation ni un délai relevé (`CLAUDE.md` §18) : c'est
+		// d'attendre le signal de réussite que l'utilisateur voit, comme le §7.2 de
+		// `docs/SPEC-test-harness.md` l'exige déjà d'une écriture. Ici, c'est la région live du
+		// §17.9 : elle n'est rendue QUE dans l'état « prêt », et son message NOMME la portée
+		// affichée. La voir annoncer « Tout l'espace de travail » est la preuve que la nouvelle
+		// liste est rendue, et pas seulement que l'ancienne a disparu.
+		await expect(page.getByRole('status', { name: 'Contenu de la journée' })).toHaveText(
+			/^Tout l’espace de travail : \d+ affaire\(s\) à échéance\.$/,
+		)
 		const toutes = await page.getByTestId('ligne-journee').count()
 		// Le filtre par responsable RETRANCHE, il n'ajoute jamais (§17.7 ligne d).
 		expect(toutes).toBeGreaterThan(miennes)

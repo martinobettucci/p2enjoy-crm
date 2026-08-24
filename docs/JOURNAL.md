@@ -23348,3 +23348,37 @@ complètes et les deux corrections ci-dessus.
 et d'INC-204 par leurs unités porteuses. La prochaine unité se choisit donc au §4.2 dans l'ordre du
 plan. `INC-138`, `INC-139`, `INC-169`, `INC-170`, `INC-173`, `INC-190` et `INC-193` attendent
 toujours l'arbitrage du responsable ; `INC-203` et `INC-204` sont consignées par cette session.
+
+### décision 503 bis — la campagne complète a trouvé une COURSE dans la preuve de la tranche 1
+
+**Même session, 2026-08-24.** La campagne d'interface complète — **580 passés, 1 en échec** — a
+rendu rouge un scénario de `CRM-061` **vert isolément** : « la bascule de portée change l'adresse ET
+le contenu ». C'est le motif d'« ordre de série » des décisions 499 et 501, mais la cause n'est ici
+ni un voisin, ni le seed : elle est **dans la preuve elle-même**.
+
+**Ce qui a été mesuré.** `Expected: > 3, Received: 0` — la portée « tout l'espace de travail »
+rendant **moins** de lignes que « mes affaires », ce qui est logiquement impossible et ne dit donc
+rien du produit. La cause est l'attente qui précède le compte : elle était écrite
+`not.toHaveCount(miennes)`, et ce garde-fou **accepte l'état transitoire**. Entre le clic et la
+réponse, l'écran rend ses squelettes, donc **zéro** ligne — et zéro est bien différent de trois.
+L'assertion passait immédiatement, et le `count()` suivant lisait le zéro du chargement. Isolé,
+l'écran répond assez vite pour que le cas ne survienne pas ; en campagne, sur un hôte chargé, il
+survient. Le commentaire du fichier nommait pourtant le risque — « sans quoi le compte serait celui
+de l'ancienne — ou zéro » — mais le garde-fou ne l'écartait pas.
+
+**Le remède n'est ni une temporisation, ni un délai relevé** (`CLAUDE.md` §18). C'est d'attendre le
+**signal que voit l'utilisateur**, ce que le §7.2 de `docs/SPEC-test-harness.md` exige déjà d'une
+écriture : la région live du §17.9, qui n'est rendue que dans l'état « prêt » et dont le message
+**nomme la portée affichée**. La voir annoncer « Tout l'espace de travail » prouve que la nouvelle
+liste est rendue, et pas seulement que l'ancienne a disparu.
+
+**Contre-épreuve mesurée, pour établir que la correction ne rend pas l'assertion complaisante** : la
+dégradation D9 du harnais posée — le filtre par responsable envoyé sous la portée élargie —, le
+scénario redevient **rouge**. Rejoué intact : **13 passés**.
+
+**Reste de la campagne.** `npm run test:sql` **50 fichiers, 2480 assertions, aucune anomalie** ;
+`npm run e2e:api` **837 passés** ; `pytest` **244 passés** ; `npm run typecheck` et `npm run build`
+verts. Les **199** captures réécrites par la campagne d'interface ont été **restaurées** : cette
+session ne touche aucun composant d'interface, et les committer laisserait croire que deux cents
+écrans ont été observés (précédent de la décision 500). **Non exécutés** : `npm run e2e:mail` et les
+soixante-deux autres `scripts/verify-*.sh`.
