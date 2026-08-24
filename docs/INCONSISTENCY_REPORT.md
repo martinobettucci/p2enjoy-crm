@@ -204,6 +204,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-200 | `verify-channels.sh` ET `verify-tracks.sh` rendent à `authenticated` l'`UPDATE` de TABLE, rouvrant `deleted_by` que la corbeille avait fermée | 2026-08-21 | **close** — corrigée par la décision 499 dans les deux fichiers | 499 |
 | INC-201 | La preuve n° 14 de `verify-auth.sh` figeait « zéro ligne sur `profiles` », absence que `CRM-022` a comblée | 2026-08-21 | **close** — assertion retournée par la décision 499 | 499 |
 | INC-202 | `verify-mail-sync.sh` rouge d'un `pytest` absent de l'hôte, condition du §2.1 ter de `docs/CloudWorker.md` | 2026-08-21 | **close** — condition d'hôte, aucun fichier du dépôt en cause | 499 |
+| INC-203 | Quatre tests unitaires de `CRM-081` et `CRM-044` figent une date rendue dans le fuseau de l'HÔTE : ils échouent sous tout fuseau autre qu'UTC | 2026-08-24 | **ouverte** — comportement inchangé, étrangère à `CRM-061` | 503 |
 
 ---
 
@@ -4042,3 +4043,42 @@ Ce n'est ni un verdict rouge du produit, ni une preuve : c'est une condition d'h
 Aucun fichier du dépôt n'est modifié à ce titre.
 
 **Statut : close.**
+
+### INC-203 — quatre tests unitaires figent une date rendue dans le fuseau de l'HÔTE
+
+**Ouverte le 2026-08-24 (décision 503).** Consignée par la session `CRM-061` tranche 2, en écrivant
+`scripts/verify-ma-journee.sh`. **Étrangère à cette unité**, et la ligne de base est établie par
+mesure : la session n'a touché aucun fichier de `webapp/`, et les quatre tests échouent sur le
+dépôt tel qu'il est à `HEAD`.
+
+**Ce qui a été mesuré.** `npm run test:unit` est **vert** sur cet hôte, qui est réglé en `UTC`.
+Rejoué sous `TZ=Pacific/Auckland`, il rend **4 échoués sur 2449**, dans trois fichiers :
+
+| Fichier | Unité | Ce qui échoue |
+|---|---|---|
+| `webapp/src/lib/sommeil-card.test.ts` | `CRM-081` | `formaterEcheanceSommeil('2026-08-26T12:00:00Z')` rend `27/08/2026`, le test attend `26/08/2026` |
+| `webapp/src/app/EnTeteCard.test.tsx` | `CRM-081` | deux scénarios de la pastille de sommeil, sur la même date rendue |
+| `webapp/src/lib/timeline.test.ts` | `CRM-044` | l'échéance en date courte pour `snoozed` et `woken` |
+
+**La cause est unique, et ce n'est pas un défaut du produit.** `formaterEcheanceSommeil` rend la
+date dans le fuseau du **lecteur**, ce que le produit doit faire — une échéance affichée est celle
+de la montre de qui la lit. `2026-08-26T12:00:00Z` est bien le **27** à Auckland. Ce sont les
+**tests** qui figent la date d'un hôte en UTC : ils écrivent une échéance en `Z` et attendent le
+jour civil UTC, ce qui n'est vrai que sur un hôte dont le fuseau ne décale pas la journée.
+
+**Conséquence.** Le verdict de ces quatre tests dépend du fuseau de la machine qui les exécute, ce
+qui est la même famille de défaut que la décision 501 pour l'ancienneté : une preuve dont le
+résultat dépend de l'environnement plutôt que du code. Sur cet hôte, aucun rouge n'apparaît, et
+c'est pourquoi le défaut a survécu.
+
+**Comportement INCHANGÉ, et rien n'est corrigé ici** (`docs/CloudWorker.md` §3.1). La correction
+tient dans les tests eux-mêmes — fixer le fuseau du rendu attendu, ou construire l'échéance en
+heure locale —, elle appartient à `CRM-081` et à `CRM-044`, et elle dépasse l'unité autorisée de
+cette session.
+
+**Ce que la session a fait à la place.** `scripts/verify-ma-journee.sh` rejoue sous fuseau décalé
+les **deux seules** suites de `CRM-061`, et son en-tête écrit pourquoi : rejouer la suite entière
+rendrait un rouge qui ne dirait rien des bornes de la journée, et pire, ferait passer sa
+dégradation D9 pour détectée alors qu'elle ne l'aurait pas été.
+
+**Statut : ouverte.** Relève de `CRM-081` et de `CRM-044`.
