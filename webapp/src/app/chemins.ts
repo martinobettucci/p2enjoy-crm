@@ -1,5 +1,6 @@
 // @spec CRM-079 (docs/BACKLOG.md) — adresses des surfaces atteintes hors de `ROUTES`
 // @spec CRM-086 (docs/BACKLOG.md) — adresse de l'écran de coûts d'un track (docs/SPEC-costs.md §4.0)
+// @spec CRM-062 (docs/BACKLOG.md) — adresse de l'écran des affaires figées (docs/SPEC-relances.md §10.4)
 // @spec docs/SPEC-onboarding.md §4.1 (une adresse propre), §4.3 (entrée dans l'index des réglages)
 // @spec docs/SPEC-webapp.md §5.2 (routes) ; docs/SPEC-administration-arborescence.md §3.1 ;
 //       docs/SPEC-mail-subsystem.md §20.11.1 ; docs/SPEC-corbeille.md §4.1 ;
@@ -138,6 +139,23 @@ export const CHEMIN_OBJECTIFS_TABLEAU = '/objectifs/:idTableau' as const
 
 /** Adresse concrète du canevas d'un tableau donné. */
 export const cheminTableauObjectifs = (idTableau: string) => `/objectifs/${idTableau}`
+
+/**
+ * Affaires figées — `CRM-062` tranche 3c, `docs/SPEC-relances.md` §10.4.
+ *
+ * Une route de PREMIER NIVEAU, et non une section de `/reglages` : c'est le raisonnement qui a déjà
+ * placé le carnet, les objectifs, les coûts et « Ma journée » hors des réglages — **une liste
+ * d'affaires en retard n'administre rien, elle porte le travail**.
+ *
+ * Elle RESTE dans `ROUTES` : son titre est une clé de traduction et son contenu ne dépend d'aucun
+ * paramètre d'adresse. La couverture exacte `ROUTES` ⇄ `ENTREES_TRANSVERSES` que `routes.test.tsx`
+ * tient reste donc vraie, avec une entrée de plus **des deux côtés**.
+ *
+ * AUCUNE PORTÉE DANS LA CHAÎNE DE REQUÊTE, contrairement à `/ma-journee` : `public.cards_figees()`
+ * ne prend aucun argument et rend « ce que l'appelant peut lire », sans autre dimension (§10.6). Un
+ * filtre d'écran ferait de la webapp le juge d'un rangement que la base ne connaît pas.
+ */
+export const CHEMIN_AFFAIRES_FIGEES = '/affaires-figees' as const
 
 /** Guide de démarrage — `CRM-079`, `docs/SPEC-onboarding.md` §4.1. */
 export const CHEMIN_DEMARRAGE = '/demarrage' as const

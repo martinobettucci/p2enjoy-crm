@@ -2,6 +2,7 @@
 // @spec CRM-075 (docs/BACKLOG.md) — index des réglages et route de l'administration
 // @spec CRM-076 (docs/BACKLOG.md) — adresse de l'éditeur de workflows
 // @spec CRM-059 (docs/BACKLOG.md) — route de l'écran d'état de la messagerie
+// @spec CRM-062 (docs/BACKLOG.md) — route de l'écran des affaires figées (docs/SPEC-relances.md §10.4)
 // @spec CRM-077 (docs/BACKLOG.md) — adresse de la corbeille (docs/SPEC-corbeille.md §4.1)
 // @spec CRM-060 (docs/BACKLOG.md) — route du carnet de contacts (docs/SPEC-contacts.md §10.2)
 // @spec CRM-086 (docs/BACKLOG.md) — adresse de l'écran de coûts d'un track (docs/SPEC-costs.md §4.0)
@@ -30,6 +31,7 @@ export type DescriptionRoute = {
 // de ce fichier-là pour le motif (`CRM-079` : éviter un cycle avec le guide de démarrage). Elles
 // sont RÉEXPORTÉES ici : aucun appelant existant n'est modifié.
 import {
+	CHEMIN_AFFAIRES_FIGEES,
 	CHEMIN_ADMIN_ARBORESCENCE,
 	CHEMIN_ADMIN_CATALOGUE,
 	CHEMIN_ADMIN_COMPTES_MAIL,
@@ -56,6 +58,7 @@ import {
 } from './chemins'
 
 export {
+	CHEMIN_AFFAIRES_FIGEES,
 	CHEMIN_ADMIN_ARBORESCENCE,
 	CHEMIN_ADMIN_CATALOGUE,
 	CHEMIN_ADMIN_COMPTES_MAIL,
@@ -101,6 +104,17 @@ const Carnet = lazy(async () => ({ default: (await import('./Carnet')).Carnet })
 // `CRM-061` — l'écran de la journée, chargé À LA DEMANDE comme le carnet et l'inbox : il n'est pas
 // sur le chemin du premier rendu, et son module tire `Intl.DateTimeFormat` et la lecture des cards.
 const MaJournee = lazy(async () => ({ default: (await import('./MaJournee')).MaJournee }))
+
+/**
+ * L'écran des affaires figées — `CRM-062` tranche 3c, `docs/SPEC-relances.md` §10.4.
+ *
+ * Chargé à la demande, pour le motif exact du carnet, de l'inbox et de « Ma journée » : un écran
+ * que la plupart des sessions n'ouvrent pas n'a pas à peser sur le premier rendu de toutes les
+ * autres (`CLAUDE.md` §21). Le repli de `Suspense` est déjà posé par `App`.
+ */
+const AffairesFigees = lazy(async () => ({
+	default: (await import('./AffairesFigees')).AffairesFigees,
+}))
 
 /**
  * La liste des tableaux d'objectifs — `CRM-083`, `docs/SPEC-goals.md` §5.1. Chargée à la demande
@@ -233,6 +247,16 @@ export const ROUTES: readonly DescriptionRoute[] = [
 		chemin: CHEMIN_MA_JOURNEE,
 		cleTitre: 'route.today.title',
 		rendu: () => <MaJournee />,
+	},
+	{
+		// Les affaires figées — `CRM-062` tranche 3c, `docs/SPEC-relances.md` §10.4. Une route
+		// TRANSVERSE au même titre que le carnet, les objectifs, les coûts et « Ma journée » : une
+		// liste d'affaires en retard n'administre rien, elle porte le travail. Elle vient
+		// IMMÉDIATEMENT après « Ma journée », et le §10.4 dit pourquoi — les deux écrans répondent
+		// à la même question et s'enseignent l'un après l'autre.
+		chemin: CHEMIN_AFFAIRES_FIGEES,
+		cleTitre: 'route.stalled.title',
+		rendu: () => <AffairesFigees />,
 	},
 	{
 		// `CRM-075` remplace l'état vide de `CRM-007` par un **index des sections**. L'écran

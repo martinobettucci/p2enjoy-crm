@@ -29,6 +29,7 @@ export const fr = {
 	'nav.item.goals': 'Objectifs',
 	'nav.item.costs': 'Coûts',
 	'nav.item.today': 'Ma journée',
+	'nav.item.stalled': 'Affaires figées',
 	'nav.item.settings': 'Réglages',
 
 	'skip.toContent': 'Aller au contenu',
@@ -638,6 +639,8 @@ export const fr = {
 	'goals.board.refused.invalid': 'Le nom est exigé : un tableau sans nom ne se retrouve pas.',
 
 	'route.today.title': 'Ma journée',
+	// `CRM-062` tranche 3c — docs/SPEC-relances.md §10.4.
+	'route.stalled.title': 'Affaires figées',
 
 	// « Ma journée » — CRM-061, docs/SPEC-cards.md §17, docs/DESIGN_SYSTEM.md §5.36.
 	// `route.today.empty.*` a été RETIRÉ : l'écran ne rend plus un état vide inconditionnel, et ses
@@ -663,6 +666,31 @@ export const fr = {
 	'today.error.body':
 		'La liste des échéances n’a pas pu être lue. Vérifiez votre connexion, puis réessayez.',
 	'today.error.retry': 'Réessayer',
+	// ---------------------------------------------------------------------------------------
+	// Affaires figées — `CRM-062` tranche 3c, docs/SPEC-relances.md §10
+	// ---------------------------------------------------------------------------------------
+	'stalled.aria': 'Affaires figées',
+	'stalled.live.aria': 'Contenu des affaires figées',
+	'stalled.live.message': '{total} affaire(s) figée(s).',
+	// L'unité occupe SON PROPRE ÉLÉMENT à côté du nombre, jamais un nœud de texte accolé (§5.18).
+	'stalled.unit.days': 'j',
+	'stalled.threshold': 'seuil {seuil} j',
+	// Un dossier dont la seconde lecture n'a pas rapporté le nom garde son groupe : le retirer
+	// ferait disparaître des affaires en retard de la liste qui existe pour les montrer (§10.5).
+	'stalled.group.unknown': 'Dossier non identifié',
+	'stalled.pill.open': 'Ouvrir {track} › {channel}',
+	// L'ÉTAT VIDE DIT QUE L'ÉTAT EST SAIN, pas qu'il manque quelque chose, et il n'offre AUCUNE
+	// action : il n'y a rien à faire d'une liste d'affaires en retard qui est vide (§10.9).
+	'stalled.empty.title': 'Aucune affaire figée',
+	'stalled.empty.body':
+		'Aucune affaire ne dort dans son étape au-delà de son seuil de relance. C’est une bonne nouvelle.',
+	'stalled.error.title': 'Les affaires figées n’ont pas pu être chargées',
+	'stalled.error.body':
+		'La liste n’a pas pu être lue. Réessayez ; si le problème persiste, prévenez un administrateur.',
+	'stalled.error.retry': 'Réessayer',
+	'stalled.noWorkspace.title': 'Aucun espace de travail',
+	'stalled.noWorkspace.body':
+		'Aucun espace de travail n’est configuré : il n’y a donc aucune affaire à suivre.',
 	'today.noWorkspace.title': 'Aucun espace de travail',
 	'today.noWorkspace.body':
 		'Aucune configuration d’espace de travail n’est disponible : la journée ne peut pas être lue.',

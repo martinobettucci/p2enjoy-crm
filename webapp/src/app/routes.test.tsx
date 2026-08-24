@@ -15,6 +15,7 @@ import {
 	CHEMIN_ADMIN_ARBORESCENCE,
 	CHEMIN_CONTACTS,
 	CHEMIN_COUTS_WORKSPACE,
+	CHEMIN_AFFAIRES_FIGEES,
 	CHEMIN_MA_JOURNEE,
 	CHEMIN_OBJECTIFS,
 	CHEMIN_DEMARRAGE,
@@ -77,6 +78,11 @@ describe('table des routes', () => {
 	// portent un écran chargé à la demande, et son assertion propre plus bas vérifie qu'elle rend
 	// bien un état explicite sans session — l'état vide « rien pour moi » du §17.8, jamais une page
 	// blanche.
+	//
+	// RÉVISÉE UNE SEPTIÈME FOIS PAR `CRM-062` tranche 3c, ET LA RÈGLE CHANGE PAR LIVRAISON :
+	// `/affaires-figees` n'a jamais porté d'état vide inconditionnel — l'entrée est CRÉÉE avec son
+	// écran (`docs/SPEC-relances.md` §10.4), comme `/couts` avant elle. Elle rejoint donc d'emblée
+	// les routes qui portent un écran chargé à la demande, et son assertion propre est plus bas.
 	const ROUTES_EN_ATTENTE = ROUTES.filter(
 		(route) =>
 			route.chemin !== CHEMIN_INBOX &&
@@ -84,6 +90,7 @@ describe('table des routes', () => {
 			route.chemin !== CHEMIN_OBJECTIFS &&
 			route.chemin !== CHEMIN_COUTS_WORKSPACE &&
 			route.chemin !== CHEMIN_MA_JOURNEE &&
+			route.chemin !== CHEMIN_AFFAIRES_FIGEES &&
 			route.chemin !== '/reglages' &&
 			route.chemin !== '/',
 	)
@@ -201,6 +208,28 @@ describe('table des routes', () => {
 		expect(screen.getByLabelText(fr['state.loading.aria'])).toBeTruthy()
 		expect(await screen.findByTestId('etat-vide')).toBeTruthy()
 		expect(screen.getByRole('heading').textContent).toBe(fr['today.noWorkspace.title'])
+	})
+
+	it('la route /affaires-figees rend son écran, chargé à la demande derrière un repli — CRM-062', async () => {
+		// Même patron que `/ma-journee` juste au-dessus, et pour son motif exact. Montée sans
+		// configuration d'API, la route rend l'état vide « aucun espace de travail » du §10.9 —
+		// jamais une page blanche, et jamais un squelette perpétuel qui attendrait une lecture que
+		// rien n'émettra.
+		//
+		// L'autre vide — « aucune affaire figée », qui n'offre AUCUNE action (§10.9) — est éprouvé
+		// par `AffairesFigees.test.tsx` avec un client substitué : il demande une réponse du
+		// backend, que cette preuve-ci n'a pas. Il n'y en a qu'UN, contrairement à « Ma journée » :
+		// cet écran n'a aucune portée à élargir (§10.6).
+		const route = ROUTES.find((candidate) => candidate.chemin === CHEMIN_AFFAIRES_FIGEES)
+		expect(route).toBeDefined()
+		render(
+			<MemoryRouter>
+				<Suspense fallback={<ChargementRoute />}>{route!.rendu()}</Suspense>
+			</MemoryRouter>,
+		)
+		expect(screen.getByLabelText(fr['state.loading.aria'])).toBeTruthy()
+		expect(await screen.findByTestId('etat-vide')).toBeTruthy()
+		expect(screen.getByRole('heading').textContent).toBe(fr['stalled.noWorkspace.title'])
 	})
 
 	it('la route /contacts rend son écran, chargé à la demande derrière un repli — CRM-060', async () => {
