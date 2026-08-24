@@ -8187,7 +8187,7 @@ preuves, l'écran vérifié visuellement aux quatre paliers, console vierge.
 | Tranche | Objet | État |
 |---|---|---|
 | 1 | La règle en base — `public.cards_figees()`, migration `0053`, pgTAP, contrat d'API, harnais | en cours |
-| 2 | La relance automatique — job `pg_cron` quotidien, événement `stalled` dans la timeline | `[ ]` |
+| 2 | La relance automatique — job `pg_cron` quotidien, événement `stalled` dans la timeline | spécifiée (§9), en cours |
 | 3 | La surface — écran, navigation, manuel chapitre 30, captures, extension du seed | `[ ]` |
 
 - [x] **Spécification écrite et committée AVANT la première ligne de code** — `docs/SPEC-relances.md`,
@@ -8245,8 +8245,25 @@ preuves, l'écran vérifié visuellement aux quatre paliers, console vierge.
       `verify-relances.sh` et `verify-node-toolchain.sh`. Aucun écran, aucune capture, aucune
       vérification visuelle : la tranche 1 ne livre **aucune** surface, et l'absence est nommée
       plutôt que compensée par une preuve de substitution.
-- [ ] **Tranche 2** : ses trois propriétés — idempotence ancrée sur `entered_step_at`, acteur nul,
-      `payload` sans libellé — sont **à spécifier avant** de l'écrire, et ne le sont pas encore (§7.2).
+- [x] **Tranche 2 SPÉCIFIÉE avant sa première ligne de code**, 2026-08-24 — `docs/SPEC-relances.md`
+      **§9**, onze sections écrites après mesure sur la pile debout et seedée. Les trois propriétés
+      annoncées au §7.2 y sont tranchées : idempotence par `not exists (stalled avec created_at >=
+      entered_step_at)`, acteur **obtenu** et non affecté, `payload` réduit à `seuil_jours` et
+      `retard_jours`.
+- [x] **MESURÉ AVANT D'ÊTRE ÉCRIT : `postgres` porte `BYPASSRLS`** (`rolbypassrls = t`,
+      `rolsuper = f`). Le job peut donc **appeler `public.cards_figees()`** au lieu de recopier son
+      prédicat, et voir l'ensemble global — condition pour que « figée » garde **une seule**
+      définition en base (§9.2).
+- [x] **MESURÉ : `auth.uid()` rend `NULL` sous `postgres`**, exactement le contexte du job. La
+      nullité de `actor_id` est donc **obtenue** par `app.card_event_ecrire()`, jamais affectée
+      (§9.5).
+- [x] **MESURÉ : le `CHECK` refuse encore `stalled` en `23514`** — troisième constat de la garde du
+      §14.4 de `docs/SPEC-cards.md`. La quinzième valeur est ajoutée par la **même** migration que
+      la fonction qui l'écrit (§9.8).
+- [ ] **Tranche 2 — reste à livrer** : migration `0054` (vocabulaire à quinze valeurs,
+      `app.relancer_cards_figees()`, job `p2enjoy-relances-cards-figees` à `23 3 * * *` avec
+      amorçage observable), sa suite pgTAP, l'appel du seed par le **vrai** mécanisme, l'extension
+      de `scripts/verify-relances.sh`, et les preuves du §9.10.
 - [ ] **Tranche 3** : l'écran, et **l'extension du seed que le §5 nomme déjà** — une seule card
       figée ne démontre ni classement par retard, ni regroupement.
 

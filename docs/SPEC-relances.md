@@ -9,8 +9,11 @@ Contrat exécutable de `CRM-062` (`docs/BACKLOG.md`, chunk 5).
 - Interface existante qui porte déjà la notion : `docs/SPEC-workflow-engine.md` §7.4 (pastille
   d'ancienneté du board), `docs/DESIGN_SYSTEM.md` §5.1.
 - Manuel : `docs/manual.md` chapitre 30.
-- État : **tranche 1 en cours**, rédigée après mesure sur la pile de développement le
-  2026-08-24, seed appliqué. Les tranches 2 et 3 sont spécifiées au §7 et **non livrées**.
+- Ordonnanceur livré dont la tranche 2 réemploie le mécanisme : `docs/SPEC-scheduler.md` §3
+  (démarrage observable), §4 (fermeture des privilèges), §5 (convergence).
+- État : **tranche 1 livrée** (§1 à §6), **tranche 2 spécifiée au §9** le 2026-08-24 après mesure
+  sur la pile debout et seedée, avant sa première ligne de code. La tranche 3 est esquissée au
+  §7.3 et **non spécifiée**.
 
 ---
 
@@ -302,14 +305,9 @@ Un job `pg_cron` quotidien, enregistré par migration sous un nom stable comme l
 `card_events` de type **`stalled`** — quinzième valeur du `card_events_type_check`, à ajouter par
 la même migration.
 
-Trois propriétés à spécifier avant d'écrire cette tranche, et qui ne le sont pas encore :
-
-1. **l'idempotence** : une card figée depuis six semaines ne doit pas recevoir quarante-deux
-   événements. L'ancrage naturel est `entered_step_at` — un événement par *entrée dans l'étape* —,
-   ce qui rearme automatiquement la relance après tout `move_card` ;
-2. **l'acteur** : `actor_id` est nul, comme pour la clé de service (§14.5). Une relance n'a pas
-   d'auteur humain ;
-3. **le `payload`** : le seuil et le retard au moment de l'inscription, sans aucun libellé (§14.6).
+Ses trois propriétés — idempotence, acteur nul, `payload` sans libellé — **sont désormais
+spécifiées, et elles le sont au §9**, écrit après mesure sur la pile réelle le 2026-08-24. Ce §7.2
+n'en est plus que le sommaire.
 
 ### 7.3 Tranche 3 — la surface
 
@@ -319,5 +317,246 @@ card figée ne démontre ni classement, ni regroupement.
 
 ## 8. Points ouverts
 
-Aucun arbitrage n'est demandé par la tranche 1. Les trois propriétés du §7.2 seront spécifiées
-avant la tranche 2, et non pendant.
+Aucun arbitrage n'est demandé par la tranche 1 ni par la tranche 2. Les trois propriétés annoncées
+au §7.2 sont spécifiées au §9, **avant** la première ligne de la tranche 2 et non pendant.
+
+---
+
+## 9. Tranche 2 — la relance automatique, contrat exécutable
+
+Chapitre écrit le **2026-08-24**, après mesure sur la pile de développement debout et seedée, et
+**avant** la première ligne de la migration `0054`. Chaque valeur citée ici a été relevée sur cette
+pile ; aucune ne vient d'un souvenir.
+
+### 9.1 Ce que la tranche livre, et la frontière qu'elle ne franchit pas
+
+La tranche 1 a rendu la notion de card figée **lisible** en base. Elle ne la rend pas encore
+**agissante** : personne n'est prévenu tant que personne n'appelle la fonction. La tranche 2 livre
+le geste qui manque — une inscription, quotidienne et automatique, dans la mémoire de l'affaire.
+
+| Dans le périmètre | Hors périmètre, et l'unité qui le porte |
+|---|---|
+| Un job `pg_cron` quotidien, nommé, enregistré par migration | Toute cadence configurable par l'utilisateur — `CRM-063` |
+| Un événement `card_events` de type `stalled` par *entrée dans l'étape* | Tout email, tout modèle, toute séquence — `CRM-063` (§1) |
+| La quinzième valeur du `card_events_type_check` | Toute notification temps réel ou préférence — `CRM-064` |
+| L'extension du seed qui rend la relance visible en développement | L'écran qui liste les affaires figées — tranche 3 (§7.3) |
+
+**Une relance de `CRM-062` ne part pas par email**, et le §1 dit pourquoi : un email suppose un
+modèle, un expéditeur et une cadence, c'est-à-dire les trois objets de `CRM-063` qu'aucune table ne
+tient. Elle est **un fait inscrit dans le produit**, que l'utilisateur rencontre en ouvrant la
+timeline de son affaire.
+
+### 9.2 La règle n'est PAS réécrite : le job appelle `public.cards_figees()`
+
+Le job ne redérive aucun prédicat. Il appelle la fonction de la tranche 1, et c'est la condition
+pour que « figée » garde **une seule définition en base** — l'exigence du §2.1, qui perdrait tout
+son sens si la tranche 2 recopiait le `where` de la migration 53.
+
+Cela suppose que la fonction, appelée par l'ordonnanceur, voie **toutes** les affaires et non
+celles d'un appelant. `public.cards_figees()` est `security invoker` (§3.2) : elle voit ce que voit
+son appelant. **MESURÉ le 2026-08-24 :**
+
+```
+select rolbypassrls, rolsuper from pg_roles where rolname = 'postgres';
+ rolbypassrls | rolsuper
+--------------+----------
+ t            | f
+```
+
+`postgres` — le rôle sous lequel `pg_cron` exécute la commande, comme le heartbeat de `CRM-017`
+(`docs/SPEC-scheduler.md` §3) — porte `BYPASSRLS`. Appelée par lui, la fonction rend donc
+l'ensemble global. Mesuré sur le seed : `1` ligne pour `postgres`, la card `5eed…00c3`, celle-là
+même que la lectrice ne voit pas (`0` ligne pour `viewer`, §5).
+
+**Ce n'est pas une élévation de privilège cachée** : la fonction n'a pas changé, et aucun rôle
+client n'a gagné quoi que ce soit. C'est le rôle d'exploitation qui voit tout, comme il voit déjà
+tout par `select * from public.cards`.
+
+### 9.3 `app.relancer_cards_figees()` — le contrat
+
+| Propriété | Valeur | Motif |
+|---|---|---|
+| Schéma | `app` | Objet privé d'exploitation, comme `app.scheduler_heartbeat_tick()` (`docs/SPEC-scheduler.md` §2) |
+| Signature | `app.relancer_cards_figees() returns integer` | Rend le **nombre d'événements réellement inscrits** — grandeur que le seed, la suite pgTAP et le harnais lisent au lieu de la déduire |
+| `language` | `plpgsql` | Une insertion ensembliste, un compte, une promotion de cadence |
+| Volatilité | `volatile` | Elle écrit |
+| `security` | **definer**, propriétaire `postgres` | Aucun rôle ne détient `INSERT` sur `card_events` (§14.7 de `docs/SPEC-cards.md`) ; c'est la même raison qu'aux six triggers de la timeline |
+| `search_path` | `''` | Tous les objets qualifiés, règle générale des fonctions `definer` du dépôt |
+| Privilèges | `revoke execute` de `public`, `anon`, `authenticated`, `service_role` | Aucun client ne déclenche une relance. Même fermeture que `app.scheduler_heartbeat_tick()` (`docs/SPEC-scheduler.md` §4) |
+
+**Elle n'est exposée par aucune route.** Elle vit dans `app`, schéma que PostgREST n'expose pas.
+Un client qui voudrait « forcer les relances » n'a pas de bouton, et c'est voulu : la relance est
+un fait de l'horloge, pas un geste d'utilisateur.
+
+### 9.4 Propriété 1 — l'idempotence, ancrée sur `entered_step_at`
+
+Une card figée depuis six semaines ne doit pas recevoir quarante-deux événements. L'ancrage est
+**l'entrée dans l'étape** : *au plus un `stalled` par entrée dans une étape*.
+
+Le prédicat, écrit une fois :
+
+```sql
+not exists (
+  select 1
+    from public.card_events e
+   where e.card_id    = f.card_id
+     and e.type       = 'stalled'
+     and e.created_at >= f.entered_step_at
+)
+```
+
+Trois conséquences, et chacune est voulue :
+
+1. **Le rejeu du même jour n'écrit rien.** Le second passage voit l'événement du premier.
+2. **Tout `move_card` réarme la relance**, sans qu'aucune ligne de code ne le prévoie : `move_card`
+   repose `entered_step_at` à l'instant du déplacement, qui devient donc postérieur à l'événement
+   précédent. Une affaire qui repasse par une étape déjà relancée sera relancée de nouveau, et
+   c'est le comportement attendu — elle y dort une **seconde** fois.
+3. **Aucune colonne n'est inventée pour tenir l'état.** L'ancre est la timeline elle-même, table
+   dont l'immuabilité est déjà prouvée (`docs/SPEC-cards.md` §14). Une colonne `last_stalled_at`
+   sur `cards` aurait créé une seconde source de vérité à maintenir en cohérence avec la première.
+
+**Pourquoi `created_at >= entered_step_at` et non une égalité stockée dans le `payload`.** La borne
+large suffit et ne dépend d'aucune donnée recopiée. Elle repose sur un fait de la table :
+`created_at` est posé par `clock_timestamp()` au moment de l'écriture (§14.3), donc toujours
+postérieur à l'entrée dans l'étape qui l'a rendue possible. **MESURÉ sur le seed**, où
+`entered_step_at` est antidatée de trente jours par la fixture — cas le plus défavorable, puisque
+l'antidatage éloigne l'ancre du présent :
+
+```
+entered_step_at = 2026-07-25 20:17:44+00     (antidatée par le seed)
+created (évén.) = 2026-08-24 20:17:42+00     (écrit à l'application du seed)
+```
+
+Aucun `stalled` n'existe encore sur cette card ; le prédicat rend donc `1` ligne à inscrire, et
+zéro au passage suivant.
+
+### 9.5 Propriété 2 — l'acteur est nul, et ce n'est pas une affectation
+
+`actor_id` est **nul**. Une relance automatique n'a pas d'auteur humain, et lui en inventer un —
+l'assignataire, l'administrateur, le dernier acteur — serait la « valeur par défaut trompeuse »
+que `CLAUDE.md` §18 proscrit.
+
+Cette nullité n'est pas écrite : elle est **obtenue**. L'écriture passe par
+`app.card_event_ecrire()`, seule voie d'écriture de la table (§14.5), qui pose
+`(select p.id from public.profiles p where p.id = auth.uid())`. **MESURÉ le 2026-08-24**, dans une
+session `psql` sous `postgres`, exactement le contexte du job :
+
+```
+select coalesce(auth.uid()::text, 'NULL');
+ NULL
+```
+
+Aucune revendication JWT n'existe hors d'une requête PostgREST : `auth.uid()` rend `NULL`, la
+sous-requête rend `NULL`, l'événement est attribué à personne. C'est le point 2 du §14.5, déjà
+constaté pour la clé de service, et la tranche 2 ne fait que s'y conformer.
+
+### 9.6 Propriété 3 — le `payload`, deux nombres et aucun libellé
+
+```json
+{ "seuil_jours": 14, "retard_jours": 16 }
+```
+
+Le seuil effectif et le retard **au moment de l'inscription**, tels que
+`public.cards_figees()` les rend, et rien d'autre.
+
+**Aucun libellé d'étape, aucun titre de card, aucun nom de responsable.** C'est la règle du §14.6 :
+un `payload` qui recopierait un libellé dirait demain ce qui était vrai aujourd'hui. Le lecteur du
+fil qui veut le nom de l'étape le lit dans `workflow_steps`, où il est à jour.
+
+**Aucun `step_id` non plus**, et c'est une décision plutôt qu'un oubli : l'étape concernée est
+celle où la card se trouvait à l'instant de l'inscription, et la timeline la porte déjà — le
+`moved` (ou le `created`) qui précède immédiatement le `stalled` la nomme. Ajouter `step_id`
+dupliquerait une information que l'ordre du fil donne déjà.
+
+Le retard est conservé **parce qu'il n'est pas recalculable après coup** : il dépend de `now()` au
+moment du passage, et une lecture faite trois semaines plus tard rendrait un autre nombre. Le
+seuil l'accompagne parce qu'un retard sans son seuil ne se lit pas.
+
+### 9.7 Le job `pg_cron`
+
+`docs/SPEC-scheduler.md` §1 l'annonce : « chacune de ces unités enregistrera son propre job
+`pg_cron` par migration ». Le contrat, dans la forme mesurée du heartbeat :
+
+| Propriété | Valeur |
+|---|---|
+| Nom | `p2enjoy-relances-cards-figees` |
+| Base / rôle | `postgres` / `postgres` |
+| Commande | `select app.relancer_cards_figees();` |
+| Cadence d'amorçage | `10 seconds` |
+| Cadence nominale | `23 3 * * *` — une fois par jour, à 03 h 23 UTC |
+| État | actif |
+
+**Une fois par jour, et non par heure.** Le retard se compte en jours révolus (§2.5) : un passage
+horaire produirait vingt-quatre évaluations pour une frontière qui ne bouge qu'une fois. L'heure
+creuse évite de disputer les ressources aux passages interactifs, et la minute `23` la partage avec
+le heartbeat, qui occupe la minute `7`.
+
+**Le démarrage observable est celui du §3 de `docs/SPEC-scheduler.md`, et il est repris tel quel.**
+Un job quotidien serait autrement invérifiable : une preuve froide attendrait jusqu'à vingt-quatre
+heures son premier passage. La cadence d'amorçage de dix secondes est donc **transitoire** — le
+premier passage inscrit ce qu'il doit, puis appelle `cron.alter_job` **dans la même transaction**
+pour revenir à la cadence quotidienne. Si la promotion échoue, le passage entier échoue et
+`cron.job_run_details` le dit ; aucune relance à demi écrite ne subsiste.
+
+Ce mécanisme est **exactement** celui que `CRM-017` a livré et prouvé ; la tranche 2 ne le
+réinvente pas, elle l'applique.
+
+### 9.8 La quinzième valeur du vocabulaire
+
+`card_events_type_check` porte quatorze valeurs depuis la migration `0044`. `stalled` est la
+quinzième, et elle est ajoutée **par la même migration que la fonction qui l'écrit** — la règle du
+§14.4, éprouvée par `CRM-045` puis par `CRM-081`.
+
+**Le mécanisme tient encore, et c'est MESURÉ le 2026-08-24**, avant la migration `0054` :
+
+```
+select app.card_event_ecrire('5eed…00c3', …, 'stalled', '{}');
+=> SONDE: stalled REFUSE par le CHECK (23514)
+```
+
+La base refuse une valeur que rien ne produit. C'est la troisième occurrence constatée de cette
+garde, et elle est relevée ici plutôt que supposée.
+
+La contrainte est **remplacée** — jamais « ajoutée si absente » —, dans la forme convergente des
+migrations `0030` et `0044` : si la définition courante ne cite pas `stalled`, elle est déposée et
+réécrite avec les quinze valeurs. Un rétrécissement manuel est ainsi réparé, non constaté.
+
+### 9.9 Ce que le seed démontre, par le VRAI mécanisme
+
+Le §5 a mesuré qu'une seule card du seed est figée : `5eed…00c3`. La tranche 2 ne change **ni
+cette card, ni son antidatage** — le §7.3 réserve l'extension du jeu à la tranche 3, qui en a
+besoin pour démontrer un classement.
+
+Elle ajoute une seule chose : **le seed appelle `app.relancer_cards_figees()`**, après l'antidatage
+qui rend la card figée. Le `stalled` du jeu de développement est donc écrit par **la fonction du
+produit**, celle que le job appelle, et non fabriqué par un `insert` de fixture — l'exigence de
+`CLAUDE.md` §8, qui interdit de « fabriquer artificiellement des traces censées représenter
+l'exécution d'un processus réel ».
+
+L'appel est **convergent** : rejoué, il n'écrit rien de plus, par le prédicat du §9.4.
+
+**Pourquoi le seed appelle plutôt que d'attendre le job.** Le job s'amorce à dix secondes après
+l'application des migrations, donc **avant** que le seed n'ait créé ses cards : son premier passage
+ne trouve rien, et le suivant n'aura lieu que le lendemain. Sans cet appel, un développeur qui
+monte la pile ne verrait aucune relance de la journée — un écran vide que `CLAUDE.md` §8 proscrit.
+
+### 9.10 Les preuves exigées de la tranche 2
+
+| Niveau | Preuves attendues |
+|---|---|
+| pgTAP | Le vocabulaire compte quinze valeurs et accepte `stalled` ; forme de la fonction — `volatile`, `security definer`, `search_path` vide, propriétaire `postgres` ; ACL : aucun des quatre rôles clients n'a `execute` ; le job existe, unique, avec son nom, sa commande, sa base, son rôle, son activation et sa cadence **nominale** après promotion ; une ligne `succeeded` dans `cron.job_run_details` ; **l'inscription** — une card figée reçoit exactement un `stalled`, `actor_id` nul, `payload` aux deux clés attendues ; **l'idempotence** — le second appel rend `0` et n'ajoute aucune ligne ; **le réarmement** — après déplacement de l'étape, un nouvel appel inscrit de nouveau ; **les exclusions héritées** — une card archivée, en corbeille ou endormie ne reçoit rien, puisque la fonction du §3 ne la rend pas |
+| API | Le `stalled` du seed est **lisible dans la timeline** par les profils autorisés et **absent** pour la lectrice, dont le track est fermé : la relance n'ouvre aucune porte. Aucune route neuve n'est ajoutée — la fonction est privée, et une preuve doit constater qu'elle **n'est pas** appelable par `rpc/` |
+| Unitaire (webapp) | **Aucun** : la tranche 2 ne touche aucun module de la webapp |
+| E2E d'interface | **Aucun** : la tranche 2 ne livre aucun écran. L'absence est nommée, non compensée |
+| Visuel | **Aucun**, pour la même raison |
+| Harnais | `scripts/verify-relances.sh` étendu, non complaisant : la dégradation de l'idempotence, celle de la fermeture des privilèges et celle de la cadence du job doivent chacune faire rougir la suite, et la restauration est **constatée** |
+| Seed | `scripts/verify-seed-demo.sh` ou le harnais dédié constate qu'après application du seed la card `5eed…00c3` porte exactement **un** `stalled`, écrit par la fonction et non par une fixture |
+
+### 9.11 Retour arrière
+
+Le retour arrière de la migration `0054` désordonnance `p2enjoy-relances-cards-figees`, supprime
+`app.relancer_cards_figees()`, puis **laisse les événements `stalled` déjà écrits** : ce sont des
+faits d'histoire, et `card_events` est immuable par construction. Le `CHECK` conserve donc ses
+quinze valeurs ; le rétrécir invaliderait des lignes existantes. `pg_cron` n'est pas désinstallé,
+d'autres jobs y vivent (`docs/SPEC-scheduler.md` §7).

@@ -15,6 +15,21 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **LA RELANCE AUTOMATIQUE EST SPÉCIFIÉE AVANT D'ÊTRE ÉCRITE** (`CRM-062` tranche 2,
+  `docs/SPEC-relances.md` §9). Onze sections rédigées le 2026-08-24 **après mesure** sur la pile
+  debout et seedée, et **avant** la première ligne de la migration. Les trois propriétés que la
+  tranche 1 avait laissées ouvertes y sont tranchées : l'idempotence est ancrée sur l'entrée dans
+  l'étape — au plus un `stalled` par entrée, ce qui réarme la relance après tout déplacement sans
+  qu'aucune ligne ne le prévoie ; l'acteur est **nul**, non parce qu'on l'affecte mais parce que
+  `auth.uid()` rend `NULL` hors d'une requête PostgREST, **mesuré** ; le `payload` se réduit au
+  seuil et au retard, sans aucun libellé qui dirait demain ce qui était vrai aujourd'hui.
+
+  Deux mesures ont décidé de l'architecture au lieu de la supposer. `postgres` porte `BYPASSRLS` :
+  le job peut donc **appeler `public.cards_figees()`** plutôt que recopier son prédicat, et
+  « figée » garde ainsi **une seule** définition en base. Et le `CHECK` du vocabulaire refuse
+  toujours `stalled` en `23514`, troisième constat de cette garde : la quinzième valeur sera
+  ajoutée par la même migration que la fonction qui l'écrit, jamais avant.
+
 - **LA NOTION DE « CARD FIGÉE » EST SPÉCIFIÉE, ET ELLE DESCEND EN BASE** (`CRM-062`,
   `docs/SPEC-relances.md`). Une card figée est une affaire restée dans son étape au-delà du seuil
   de relance de cette étape. La règle existait depuis `CRM-041`, mais **uniquement dans un
