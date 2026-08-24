@@ -23592,3 +23592,103 @@ La tranche 3 n'est **pas encore spécifiée** : le §7.3 l'esquisse, il ne la co
 spécifie avant d'être écrite, comme la tranche 2 vient de l'être. `INC-138`, `INC-139`, `INC-169`,
 `INC-170`, `INC-173`, `INC-190`, `INC-193`, `INC-203`, `INC-204` et `INC-205` attendent toujours
 l'arbitrage du responsable.
+
+## décision 506 — `CRM-062` tranche 3 : l'écran des affaires figées, et une relance qui se lisait « Événement »
+
+**Session planifiée du 2026-08-24, 22 h 13 UTC.** Unité choisie par la règle 1 du §4.2 de
+`docs/CloudWorker.md` : la dernière entrée du journal désignait une reprise d'unité produit en
+cours — `CRM-062` **tranche 3**, la surface, dont le §7.3 n'était qu'une esquisse.
+
+**CE QUI A ÉTÉ ÉCRIT ET COMMITTÉ AVANT LA PREMIÈRE LIGNE DE CODE.** `docs/SPEC-relances.md` **§10**,
+treize sections rédigées après mesure sur la pile debout et seedée. Trois mesures ont **décidé
+l'architecture** au lieu d'être supposées :
+
+- **`rpc/cards_figees?select=…,channels(slug)` rend `PGRST200`** — la fonction rend un `TABLE(...)`,
+  type composite anonyme, et non un `SETOF public.cards` : PostgREST ne lui connaît **aucune clé
+  étrangère**. L'écran lit donc **deux fois**, la seconde bornée aux identifiants que la règle a
+  déjà filtrés. Ce n'est pas un pis-aller : c'est la conséquence assumée de deux décisions déjà
+  prises — la règle est en base (§2.1), et la fonction refuse de recopier un libellé (§3.1) ;
+- **les deux désambiguïsations de la seconde lecture ont été trouvées PAR L'ERREUR**, jamais par la
+  lecture du schéma : `cards` porte **deux** clés étrangères vers `channels` (`PGRST201`), et
+  `workflow_steps` **n'a pas de colonne `label`** (`42703`) — le libellé d'une étape est
+  `coalesce(label_override, workflow_nodes_catalog.label)` ;
+- **le vieillissement proposé pour le seed a été appliqué dans une transaction ANNULÉE** avant
+  d'être écrit : `public.cards_figees()` rend alors quatre lignes, quatre dossiers, trois tracks, et
+  les retards `35, 18, 16, 7`.
+
+La tranche s'y découpe en **trois sous-tranches**, et l'ordre est celui de la dépendance.
+
+**3a — LE JEU DE DÉMONSTRATION PASSE DE UNE À QUATRE AFFAIRES FIGÉES.** La dette était nommée au §5
+depuis la tranche 1 : « une seule ligne ne démontre ni classement, ni regroupement ». Les quatre
+retards sont **deux à deux distincts**, donc l'ordre du §3.4 est **total** sur ce jeu et une preuve
+peut asserter la suite entière ; **quatre dossiers pour trois tracks**, un track en portant deux —
+seul cas qui prouve que le regroupement porte sur le channel ; **trois seuils différents**, sans
+quoi une preuve ne distinguerait pas une donnée lue d'une constante. `…0c3` **ne bouge pas**, et
+tout ce que `docs/SPEC-seed.md` §9.12 écrit d'elle reste vrai au caractère près.
+
+**LA PREUVE DU REFUS EN SORT RENFORCÉE, ET C'EST LA RAISON PRINCIPALE DU CHOIX.** MESURÉ avec les
+jetons réels : l'`admin` et le `business_developer` lisent **quatre** affaires, la lectrice
+**trois**. Le refus se mesure désormais comme une **ligne manquante dans une liste peuplée** — forme
+bien plus stricte que le tableau vide d'avant, qu'une fonction cassée aurait rendu tout aussi vert.
+
+Les **six** porteurs du contrat « exactement une » sont **révisés, jamais retirés ni relâchés** —
+aucun `>= 1`, qui aurait été le contournement que `CLAUDE.md` §18 interdit. La garde de
+non-complaisance gagne un **second sens** : `D9` vieillit une cinquième card, `D9 bis` en
+**rajeunit** une des quatre. Sans la seconde, un seed qui cesserait de vieillir `…0cf` passerait
+inaperçu et l'écran perdrait son classement sans qu'aucun contrôle ne bronche.
+
+**3b — LA RELANCE DE LA TRANCHE 2 ÉTAIT ÉCRITE ET ILLISIBLE, ET C'EST LE FAIT LE PLUS UTILE DE LA
+SESSION** (INC-207). `stalled` n'était ni dans `TYPES_EVENEMENT`, ni dans `FAMILLE_PAR_TYPE`, ni
+dans les traductions : le fil la rendait **« Événement »**. Le repli documenté de `familleDe` avait
+fait son travail — il a évité un `undefined` —, et ce n'est pas lui le défaut. Le §9.1 promet « un
+fait que l'utilisateur rencontre **en ouvrant la timeline de son affaire** » : la tranche 2 avait
+livré la moitié de sa propre spécification, et **sa grille de preuves ne pouvait pas le voir** —
+elle écrivait « aucun écran livré », ce qui était vrai et insuffisant. La leçon de méthode est
+consignée : « cette tranche ne livre aucun écran » ne dispense pas de demander ce que les écrans
+**déjà livrés** feront de la donnée qu'elle ajoute.
+
+Le vocabulaire passe à **quatorze**, sixième évolution et aucune valeur jamais retirée. La famille
+`cycle` est désormais **écrite** et non plus obtenue par repli, avec son assertion propre : sans
+elle, retirer la ligne laisserait la suite verte, et le choix cesserait d'être un choix.
+
+**3c — L'ÉCRAN EST LIVRÉ**, à `/affaires-figees`, entrée `Hourglass` **immédiatement après « Ma
+journée »** : les deux écrans répondent à la même question et s'enseignent l'un après l'autre. Le
+regroupement porte sur l'**identifiant** du dossier, jamais sur son nom — deux tracks peuvent nommer
+le leur « Prospection ». Une affaire que la seconde lecture n'a pas rapportée reste **listée**, sans
+lien ; l'échec de cette lecture ne remplace rien, tandis que l'échec de la **règle** rend une erreur
+avec reprise — « aucune affaire ne dort » sur une panne ferait passer un défaut pour une bonne
+nouvelle.
+
+**LES TYPES GÉNÉRÉS IGNORAIENT `cards_figees`, ET LE TÉMOIN FIGÉ DORMAIT AVEC EUX.** La tranche 1 a
+livré la migration `0053` sans rejouer `scripts/generate-types.sh` : `database.types.test-d.ts`
+comparait deux états également périmés et restait **vert**. Il n'a rougi qu'à la régénération, faite
+ici parce que l'écran appelle `client.rpc('cards_figees')`. Un témoin figé ne mesure une dérive que
+si la source qu'il observe est elle-même à jour.
+
+**UN DÉFAUT TROUVÉ EN REGARDANT UNE CAPTURE** (`CLAUDE.md` §16) : la capture du fil, prise sans
+`fullPage`, poussait la ligne de relance sous la ligne de flottaison — l'image montrait l'écran, pas
+ce qu'elle prétend prouver. Une capture qui ne porte pas son sujet n'est pas une vérification
+visuelle.
+
+**Preuves exécutées.** `npm run test:sql` **52 fichiers, 2531 assertions, aucune anomalie** ;
+`npm run test:unit` **76 fichiers, 2503 tests** ; `npm run typecheck` et `npm run build` verts ;
+`npm run e2e:api` **858 passés** ; `pytest` **244 passés** ; `e2e/ui/affaires-figees.spec.ts`
+**9 passés**, console vierge et aucun débordement horizontal aux quatre paliers ;
+`e2e/ui/manuel.spec.ts` **9 passés**. Six captures produites **et observées** sous
+`docs/captures/CRM-062/`.
+
+**Registre.** INC-206, la référence « chapitre 30 » d'un manuel qui numérote de 1 à 6, corrigée en
+`3 quinquies` ; INC-207, close par livraison ; **INC-208**, les six routes transverses qui écrivent
+« Aucun channel » là où il n'y a pas de track courant — étrangère à cette unité, comportement
+inchangé, arbitrage attendu. Une première mesure prise **sans attendre le chargement** avait rendu
+`0` pour deux d'entre elles et donnait à croire que `/affaires-figees` était un cas particulier ;
+c'est écrit parce qu'une mesure trop rapide est exactement la façon dont on consigne un faux
+constat.
+
+**Où reprendre.** `CRM-062` reste `[~]` pour une seule raison, et elle est nommée : la série des
+soixante et un autres `scripts/verify-*.sh` n'a pas été rejouée derrière ce changement. Deux écarts
+sont **nommés** plutôt que comblés (§11 de la spécification) : aucune portée « mes affaires » — elle
+demanderait un argument à `public.cards_figees()`, donc une révision du contrat de la tranche 1 — et
+aucune pagination, l'ordre venant du serveur et le volume n'étant pas mesuré. `INC-138`, `INC-139`,
+`INC-169`, `INC-170`, `INC-173`, `INC-190`, `INC-193`, `INC-203`, `INC-204`, `INC-205` et `INC-208`
+attendent l'arbitrage du responsable.

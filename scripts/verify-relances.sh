@@ -39,6 +39,21 @@ SUITE_TS=webapp/src/lib/carte-figee.test.ts
 SUITE_API=e2e/api/relances.spec.ts
 CARD_FIGEE=5eed0000-0000-4000-8000-0000000000c3
 
+# --- Tranche 3 : la surface (docs/SPEC-relances.md §10) ------------------------------------------
+MODULE_FIGEES=webapp/src/lib/affaires-figees.ts
+COLONNES_FIGEES=webapp/src/lib/colonnes-affaires-figees.ts
+COMPOSANT_FIGEES=webapp/src/app/AffairesFigees.tsx
+SUITE_FIGEES=webapp/src/lib/affaires-figees.test.ts
+SUITE_COMPOSANT=webapp/src/app/AffairesFigees.test.tsx
+SUITE_UI=e2e/ui/affaires-figees.spec.ts
+MODULE_TIMELINE=webapp/src/lib/timeline.ts
+TRADUCTIONS=webapp/src/i18n/fr.ts
+# Les quatre retards du §10.2.1, deux à deux distincts : l'ordre est donc TOTAL sur ce jeu.
+SUITE_ATTENDUE='35,18,16,7'
+PROFIL_ADMIN=5eed0000-0000-4000-8000-000000000011
+PROFIL_BIZDEV=5eed0000-0000-4000-8000-000000000012
+PROFIL_VIEWER=5eed0000-0000-4000-8000-000000000013
+
 controles=0
 anomalies=0
 TRAVAIL=$(mktemp -d)
@@ -603,10 +618,11 @@ etat_2=$(psql_db -F '|' -c "select
 	has_function_privilege('authenticated','app.relancer_cards_figees()','execute'),
 	(select schedule from cron.job where jobname = '$JOB_RELANCES'),
 	(select count(*) from public.card_events where type = 'stalled');")
-if [ "$etat_2" = 'f|23 3 * * *|1' ]; then
-	ok "tranche 2 restaurée : ACL refermée, job quotidien, et UN seul stalled dans le seed"
+# RÉVISÉ PAR LA TRANCHE 3a : le jeu porte QUATRE affaires figées, donc quatre relances (§10.2.3).
+if [ "$etat_2" = 'f|23 3 * * *|4' ]; then
+	ok "tranche 2 restaurée : ACL refermée, job quotidien, et QUATRE stalled dans le seed"
 else
-	fail "la tranche 2 n'est pas restaurée : '$etat_2' au lieu de 'f|23 3 * * *|1'"
+	fail "la tranche 2 n'est pas restaurée : '$etat_2' au lieu de 'f|23 3 * * *|4'"
 fi
 
 SUITE_COURANTE="$SUITE_SQL_2"
@@ -617,6 +633,151 @@ else
 	sed 's/^/        /' "$TRAVAIL/tap.log" | tail -n 25
 fi
 SUITE_COURANTE="$SUITE_SQL"
+
+# =================================================================================================
+# TRANCHE 3 — la surface : le jeu de démonstration, la relance nommée, l'écran
+# =================================================================================================
+# @verifies docs/SPEC-relances.md §10.2 (le jeu de démonstration), §10.3 (la relance nommée dans le
+#           fil), §10.5 (les deux lectures), §10.7 (regroupement et classement), §10.12 (preuves)
+
+echo
+echo "Tranche 3 — la surface"
+
+# --- 3.1. Les fichiers livrés et leur traçabilité ------------------------------------------------
+
+for fichier in "$MODULE_FIGEES" "$COLONNES_FIGEES" "$COMPOSANT_FIGEES"; do
+	if [ -f "$fichier" ]; then ok "$fichier est livré"; else fail "$fichier est ABSENT"; fi
+done
+for fichier in "$SUITE_FIGEES" "$SUITE_COMPOSANT" "$SUITE_UI"; do
+	if [ -f "$fichier" ]; then ok "$fichier est livré"; else fail "$fichier est ABSENT"; fi
+done
+for fichier in "$MODULE_FIGEES" "$COLONNES_FIGEES" "$COMPOSANT_FIGEES"; do
+	if head -4 "$fichier" 2>/dev/null | grep -q '@spec CRM-062'; then
+		ok "$(basename "$fichier") porte son commentaire @spec"
+	else
+		fail "$(basename "$fichier") ne cite pas son unité de backlog"
+	fi
+done
+for fichier in "$SUITE_FIGEES" "$SUITE_COMPOSANT" "$SUITE_UI"; do
+	if head -4 "$fichier" 2>/dev/null | grep -q '@verifies CRM-062'; then
+		ok "$(basename "$fichier") porte son commentaire @verifies"
+	else
+		fail "$(basename "$fichier") ne cite pas son unité de backlog"
+	fi
+done
+
+# --- 3.2. Le jeu de démonstration, mesuré en base ------------------------------------------------
+#
+# LA SUITE ENTIÈRE, ET PAS SEULEMENT SON COMPTE (§10.2.1 point 1) : un compte de quatre serait vert
+# même si les quatre étaient les mauvaises, et une liste d'identifiants le serait même si les
+# retards étaient égaux — or c'est cet ordre-là que l'écran rend.
+suite_figees=$(psql_db -c "select string_agg(retard_jours::text, ',' order by retard_jours desc)
+                             from public.cards_figees()")
+if [ "$suite_figees" = "$SUITE_ATTENDUE" ]; then
+	ok "le jeu porte quatre affaires figées de retards « $SUITE_ATTENDUE » — deux à deux distincts,
+   donc l'ordre du §3.4 est TOTAL sur ce jeu"
+else
+	fail "les retards du jeu sont « $suite_figees » au lieu de « $SUITE_ATTENDUE » (§10.2.1)"
+fi
+
+dimensions=$(psql_db -F '|' -c "select count(distinct f.channel_id), count(distinct ch.track_id)
+                                  from public.cards_figees() f
+                                  join public.channels ch on ch.id = f.channel_id")
+if [ "$dimensions" = '4|3' ]; then
+	ok "quatre dossiers pour trois tracks : un track en porte deux, seul cas qui prouve que le
+   regroupement du §10.7 porte sur le channel et non sur le track"
+else
+	fail "$dimensions dossiers|tracks au lieu de '4|3' (§10.2.1 point 2)"
+fi
+
+# LES TROIS PROFILS, ET C'EST LA MESURE LA PLUS UTILE DU JEU (§10.2.1). La lectrice en voit TROIS :
+# le refus se mesure comme un trou dans une liste peuplée, et non comme un écran vide qu'une
+# fonction cassée aurait rendu tout aussi vert.
+for couple in "$PROFIL_ADMIN:4" "$PROFIL_BIZDEV:4" "$PROFIL_VIEWER:3"; do
+	profil=${couple%%:*}
+	attendu=${couple##*:}
+	lues=$(psql_db -c "set local role authenticated;
+	  select set_config('request.jwt.claims', json_build_object('sub','$profil','role','authenticated')::text, true);
+	  select count(*) from public.cards_figees();" | tail -1)
+	if [ "$lues" = "$attendu" ]; then
+		ok "le profil $profil lit $attendu affaires figées"
+	else
+		fail "le profil $profil lit $lues affaires figées au lieu de $attendu (§10.2.1)"
+	fi
+done
+
+# --- 3.3. La relance NOMMÉE dans le fil — sous-tranche 3b, INC-207 -------------------------------
+#
+# LE TYPE EXISTAIT EN BASE SANS ÊTRE NOMMÉ À L'ÉCRAN, et le fil le rendait « Événement ». Ces trois
+# contrôles figent les trois endroits où l'oubli vivait, afin qu'un quinzième type ne les refasse
+# pas dormir.
+if grep -q "^	'stalled'," "$MODULE_TIMELINE"; then
+	ok "« stalled » est NOMMÉ dans TYPES_EVENEMENT (§10.3.1)"
+else
+	fail "« stalled » est absent de TYPES_EVENEMENT : le fil le rendrait « Événement » (INC-207)"
+fi
+if grep -q "^	stalled: 'cycle'," "$MODULE_TIMELINE"; then
+	ok "« stalled » est RANGÉ dans la famille cycle, par une ligne écrite et non par le repli"
+else
+	fail "« stalled » n'est rangé nulle part : sa famille ne serait qu'un repli (§10.3.1)"
+fi
+if grep -q "'timeline.event.stalled'" "$TRADUCTIONS"; then
+	ok "« stalled » a son libellé « Relance automatique » et ses trois formes de détail"
+else
+	fail "« stalled » n'a aucune traduction : le fil rendrait timeline.event.unknown"
+fi
+
+# --- 3.4. NON-COMPLAISANCE — les dégradations de la tranche 3 ------------------------------------
+#
+# Chaque affaiblissement volontaire DOIT faire rougir une preuve, et la restauration est CONSTATÉE.
+# Sans elles, « la suite est verte » ne dirait rien de plus que « la suite s'exécute ».
+
+# D-A — le regroupement porte sur le TRACK au lieu du dossier. Le jeu de 3a est construit pour que
+# cette dégradation morde : `studio-web` porte deux dossiers figés, et un regroupement par track les
+# fondrait en un bloc — trois groupes au lieu de quatre.
+degrader_unitaire() {
+	local nom=$1 fichier=$2 avant=$3 apres=$4
+	cp "$fichier" "$TRAVAIL/$(basename "$fichier").sauf"
+	if ! grep -qF "$avant" "$fichier"; then
+		fail "dégradation « $nom » IMPOSSIBLE : le motif figé ne correspond plus à $fichier"
+		return 0
+	fi
+	python3 - "$fichier" "$avant" "$apres" <<'PYEOF'
+import sys
+chemin, avant, apres = sys.argv[1], sys.argv[2], sys.argv[3]
+texte = open(chemin, encoding='utf-8').read()
+open(chemin, 'w', encoding='utf-8').write(texte.replace(avant, apres, 1))
+PYEOF
+	if npx vitest run --config webapp/vitest.config.ts "$5" >"$TRAVAIL/unit.log" 2>&1; then
+		fail "COMPLAISANT — « $nom » et les tests unitaires restent VERTS"
+	else
+		ok "dégradation « $nom » : les tests unitaires rougissent, comme ils doivent"
+	fi
+	cp "$TRAVAIL/$(basename "$fichier").sauf" "$fichier"
+	if diff -q "$TRAVAIL/$(basename "$fichier").sauf" "$fichier" >/dev/null; then
+		ok "$(basename "$fichier") est RENDU intact — constaté, pas supposé"
+	else
+		fail "$(basename "$fichier") est laissé DÉGRADÉ"
+	fi
+}
+
+degrader_unitaire "regroupement par track au lieu du dossier" "$MODULE_FIGEES" 	'const rang = rangs.get(affaire.idChannel)' 	'const rang = rangs.get(affaire.nomTrack ?? affaire.idChannel)' 	src/lib/affaires-figees.test.ts
+
+# D-B — l'ordre des groupes devient alphabétique. Le dossier le plus en retard descendrait alors en
+# bas d'écran, ce qui est exactement l'information que l'écran existe pour donner (§10.7).
+degrader_unitaire "ordre des groupes par nom au lieu du retard" "$MODULE_FIGEES" 	'	return groupes' 	'	return [...groupes].sort((a, b) => (a.idChannel < b.idChannel ? -1 : 1))' 	src/lib/affaires-figees.test.ts
+
+# D-C — une affaire absente de la seconde lecture est ÉCARTÉE au lieu d'être listée. Elle
+# disparaîtrait alors de la liste qui existe pour montrer les affaires en retard (§10.5).
+degrader_unitaire "une affaire sans libellés est écartée au lieu d'être listée" "$MODULE_FIGEES" 	'		return pret(figees.map((ligne) => apparier(ligne, cards)))' 	'		return pret(figees.filter((l) => cards.has(l.card_id)).map((ligne) => apparier(ligne, cards)))' 	src/lib/affaires-figees.test.ts
+
+# D-D — le détail d'une relance est construit par CONCATÉNATION au lieu d'une clé de traduction.
+# « 1 jours de retard » est faux, et c'est la faute que le §10 du design system nomme.
+degrader_unitaire "détail de relance construit par concaténation" "$MODULE_TIMELINE" 	"	if (retard === 0) return t('timeline.stalled.onThreshold', { seuil: String(seuil) })" 	"	if (retard === 0) return \`\${retard} jours de retard\`" 	src/lib/timeline.test.ts
+
+# D-E — `stalled` retiré de FAMILLE_PAR_TYPE. Sa famille resterait `cycle` PAR LE REPLI, et sans
+# l'assertion propre du §10.3.1 la suite resterait verte : c'est elle qu'on éprouve ici.
+degrader_unitaire "stalled retiré de FAMILLE_PAR_TYPE, le repli le rattraperait" "$MODULE_TIMELINE" 	"	stalled: 'cycle'," 	"" 	src/lib/timeline.test.ts
 
 echo
 if [ "$anomalies" -eq 0 ]; then
