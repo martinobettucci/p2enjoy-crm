@@ -1102,6 +1102,40 @@ hérite d'`app.can_read_card` ; le refus est **zéro ligne**, jamais une erreur.
 `alter default privileges … on functions to anon`, si bien qu'une fonction neuve de `public` naît
 avec `anon=X` et qu'un `revoke … from public` seul ne lui retire rien.
 
+### 9 bis.10 `app.relancer_cards_figees()` et le job quotidien — migration 54
+
+Ajoutée le 2026-08-24 par `CRM-062` tranche 2 (`docs/SPEC-relances.md` §9). **Aucune table, aucune
+colonne** : une fonction privée, un job, et la quinzième valeur du vocabulaire du fil.
+
+| | |
+|---|---|
+| Signature | `app.relancer_cards_figees() returns integer` — le nombre d'événements réellement inscrits |
+| Volatilité | `volatile`, `set search_path to ''`, **`security definer`**, propriétaire `postgres` |
+| Privilèges | **aucun** : `execute` révoqué de `public`, `anon`, `authenticated` et `service_role` |
+| Exposition | **aucune** — le schéma `app` n'est pas exposé par PostgREST |
+| Job | `p2enjoy-relances-cards-figees`, `23 3 * * *`, base et rôle `postgres`, actif ; amorçage transitoire à `10 seconds` promu par le premier passage |
+
+Elle **appelle** `public.cards_figees()` et n'en recopie pas le prédicat : « figée » garde une seule
+définition en base. C'est possible parce que `postgres` porte `BYPASSRLS` — mesuré — et que la
+fonction `security invoker` lui rend donc l'ensemble global.
+
+Pour chaque affaire figée, elle inscrit un `card_events` de type **`stalled`** par le seul chemin
+d'écriture de la table, `app.card_event_ecrire()` :
+
+```
+inscrire  <=>  not exists (stalled sur cette card avec created_at >= cards.entered_step_at)
+payload    =   { "seuil_jours": …, "retard_jours": … }        -- deux nombres, aucun libellé
+actor_id   =   NULL                                            -- auth.uid() rend NULL hors PostgREST
+```
+
+L'ancre est **l'entrée dans l'étape** : au plus un `stalled` par entrée. Le rejeu du même jour
+n'écrit rien, et tout `move_card` réarme la relance sans qu'aucune ligne ne le prévoie, puisqu'il
+repose `entered_step_at`. Aucune colonne d'état n'est ajoutée à `cards` : la timeline, déjà
+immuable, tient l'ancre.
+
+**`card_events.type` porte désormais quinze valeurs** — les quatorze de la migration 44, plus
+`stalled`. C'est la seule que nul geste humain ne produit.
+
 ## 10. Index principaux
 
 | Table | Index |
