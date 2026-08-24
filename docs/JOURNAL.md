@@ -23279,3 +23279,72 @@ captures. Puis la tranche 2 — harnais et chapitre 9 du manuel. Le bilan de
 une session concurrente — **46 contrôles, aucune anomalie** (fin de la décision 501) ; il ne
 figure donc plus au reste. `INC-138`, `INC-139`, `INC-169`, `INC-170`, `INC-173`, `INC-190` et
 `INC-193` attendent toujours l'arbitrage du responsable.
+
+## décision 503 — `CRM-061` a son harnais, et il a commencé par se prendre lui-même en défaut
+
+**Session du 2026-08-24, 16:19:09 UTC.**
+
+**Unité choisie.** La décision 502 désignait la reprise sans ambiguïté : `CRM-061`, tranche 1 puis
+tranche 2. La tranche 1 était livrée et poussée par une session dont l'entrée de journal manque —
+quatre commits, de `96b629f` à `0bf35fb` —, et le backlog ne portait plus qu'un reste :
+`scripts/verify-ma-journee.sh`. La spécification existait déjà (§17.11), donc pas de commit
+documentaire d'ouverture : le §3.2 de `docs/CloudWorker.md` dit d'aller directement au code.
+
+**Ce qui a été livré.** `scripts/verify-ma-journee.sh`, **79 contrôles**, sur le patron de
+`verify-liste.sh` : traçabilité des sept fichiers, contrat du seed **mesuré en base** avec les
+prédicats exacts de l'écran, absence de tout chemin d'écriture et de tout stockage sur l'appareil,
+chaîne de colonnes réellement envoyée — lue dans la déclaration et non dans le fichier, dont les
+commentaires ÉNUMÈRENT ce qui n'est pas demandé —, les quatre suites de preuves, le build, les six
+captures, **douze dégradations volontaires**, et la restauration constatée des trois fichiers **et
+du seed**.
+
+**LE HARNAIS A COMMENCÉ PAR SE PRENDRE LUI-MÊME EN DÉFAUT, ET C'EST LE RÉSULTAT LE PLUS UTILE DE LA
+SESSION.** Sa première campagne a rendu « COMPLAISANT » sur la dégradation de l'ordre total. La
+cause n'était pas dans le produit : son garde-fou de substitution était `grep -qF "$avant"`, et
+`grep -F` traite un motif contenant un saut de ligne comme **plusieurs** motifs alternatifs, dont la
+chaîne **vide** — qui correspond à tout. Le motif portait quatre tabulations là où le fichier en
+porte trois ; le garde-fou a laissé passer, `replace` n'a rien remplacé, la suite est restée verte,
+et le harnais a conclu à la complaisance d'une dégradation **qui n'avait jamais eu lieu**. Un
+verdict faux dans un détecteur de complaisance est précisément ce qu'il existe pour empêcher. La
+substitution compare désormais le texte avant et après, et dit « IMPOSSIBLE » plutôt que de mentir
+dans un sens ou dans l'autre. Contre-épreuve : la dégradation corrigée fait échouer **l'assertion
+exacte** visée.
+
+**UNE PREUVE D'API DE LA TRANCHE 1 ÉTAIT TAUTOLOGIQUE.** Mesuré en écrivant le contrôle du seed :
+les deux affaires rangées — `…0c8` archivée, `…0c9` en corbeille — portent `next_action_at` **à
+NULL**. Le filtre `next_action_at=not.is.null` les écartait donc à lui seul, et la ligne *g* du
+§17.7 restait verte **même sans** `archived_at=is.null` ni `deleted_at=is.null`. La preuve est
+retournée, jamais retirée (mécanisme de la décision 51) : elle pose une échéance dans l'horizon sur
+les deux — l'une et l'autre appartiennent à Camille Aubert et au channel `grands-comptes`, qu'elle
+lit —, constate leur absence, et restaure dans un `finally` avec relecture, comme la ligne *h*.
+Contre-épreuve mesurée : les deux filtres retirés de la requête, la ligne *g* devient **rouge**.
+
+**LES BORNES DU FUSEAU DU LECTEUR NE SE PROUVENT PAS EN UTC**, et l'hôte l'est. `setHours` et
+`setUTCHours` y coïncident : la dégradation correspondante aurait été **inerte**, et le contrôle
+n'aurait rien dit. Les deux suites de l'unité sont donc rejouées sous `TZ=Pacific/Auckland`, où
+elles divergent de treize heures. Le rejeu est **borné à ces deux suites**, et le motif est mesuré :
+sous ce fuseau, quatre tests étrangers échouent — **INC-203**.
+
+**Verdict final : 79 contrôles, 1 en échec**, et cet échec est étranger : le contrôle de classes CSS
+balaie tout `webapp/src` et rend `h-10 py-0.5 text-text-1`. `text-text-1` est INC-130 ; les deux
+autres sont **INC-204**, consignée ici. Aucune n'est citée par un fichier de `CRM-061`, vérifié
+fichier par fichier. `CRM-061` reste donc `[~]`, l'écart nommé — affaiblir le harnais pour le verdir
+est ce que le §3.1 interdit.
+
+**Preuves exécutées.** `npm run test:unit` **2449 tests** ; les deux suites de l'unité sous fuseau
+décalé ; `npm run typecheck` vert ; `npm run build` vert ; `e2e/api/ma-journee.spec.ts` **11
+passés** avant et après la correction de la ligne *g* ; `e2e/ui/ma-journee.spec.ts` **13
+scénarios** ; `scripts/verify-node-toolchain.sh` **5 contrôles, aucune anomalie**, ses **40**
+harnais Node/npm protégés comprenant le nouveau ; `scripts/verify-ma-journee.sh` **79 contrôles**,
+deux campagnes complètes. **INC-189** a mordu à la première et pas aux trois suivantes, ce qui est
+l'intermittence que son entrée décrit.
+
+**CE QUI N'A PAS ÉTÉ EXÉCUTÉ, ET IL FAUT LE DIRE** (`CLAUDE.md` §25) : `npm run test:sql`,
+`npm run e2e:api` et `npm run e2e:ui` **en entier**, `npm run e2e:mail`, `pytest`, et les
+**soixante-deux** autres `scripts/verify-*.sh`. Le budget est passé dans l'unité, ses deux campagnes
+complètes et les deux corrections ci-dessus.
+
+**Où reprendre.** `CRM-061` n'a plus de comportement dû ; il ne lui reste que la fermeture d'INC-130
+et d'INC-204 par leurs unités porteuses. La prochaine unité se choisit donc au §4.2 dans l'ordre du
+plan. `INC-138`, `INC-139`, `INC-169`, `INC-170`, `INC-173`, `INC-190` et `INC-193` attendent
+toujours l'arbitrage du responsable ; `INC-203` et `INC-204` sont consignées par cette session.

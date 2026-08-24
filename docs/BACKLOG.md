@@ -8115,10 +8115,55 @@ produites **et observées** ; console navigateur vierge ; harnais dédié.
       de `CRM-060` au même palier le montre fermé. Cause : redimensionner une page **déjà montée**
       fait franchir les ruptures du §7 en cours de session. Le palier est désormais posé **avant** la
       connexion, un test par palier — le patron de `contacts.spec.ts`, repris plutôt que réinventé.
-- [ ] **Tranche 2 — le harnais.** `scripts/verify-ma-journee.sh`, non complaisant et avec son
-      témoin. C'est le seul reste de l'unité ; le chapitre 9 du manuel, qui lui était attaché, a été
-      livré avec la tranche 1 — `CLAUDE.md` §7 exige que la documentation suive le comportement dans
-      le **même** changement, et il n'était donc pas différable.
+- [x] **TRANCHE 2 LIVRÉE ET PROUVÉE le 2026-08-24 — le harnais.** `scripts/verify-ma-journee.sh`,
+      **79 contrôles**, rejouable et non complaisant. Le chapitre 9 du manuel, qui lui était
+      attaché, avait été livré avec la tranche 1 — `CLAUDE.md` §7 exige que la documentation suive
+      le comportement dans le **même** changement, et il n'était donc pas différable.
+      - [x] **Le contrat du seed est mesuré EN BASE, et non supposé** : les cinq lignes du §13.5 de
+            `docs/SPEC-seed.md` avec les prédicats exacts de l'écran — une affaire en retard, une
+            aujourd'hui, une à venir pour l'administratrice ; sept lignes en portée élargie contre
+            trois en portée personnelle ; une **seule** affaire endormie dans l'horizon, et le
+            harnais vérifie que c'est bien celle que le contrat nomme.
+      - [x] **DOUZE DÉGRADATIONS VOLONTAIRES, toutes vérifiées mordantes** : ordre non total, borne
+            d'horizon retirée, filtre de sommeil réécrit au lieu d'être réemployé, affaires
+            archivées ramenées, filtre par responsable envoyé sous la portée élargie, échéance
+            absente rangée en 1970, portée inconnue atteignant la requête, horizon porté à trente
+            jours, bornes passées en UTC, section vide rendue, `aria-current` posé sur les deux
+            portées, pilule de channel privée de sa destination.
+      - [x] **LES BORNES DU FUSEAU DU LECTEUR SONT ÉPROUVÉES AILLEURS QU'EN UTC.** Sur cet hôte,
+            réglé en UTC, `setHours` et `setUTCHours` coïncident : une suite verte n'aurait pas dit
+            laquelle est écrite, et la dégradation correspondante aurait été **inerte**. Les deux
+            suites de l'unité sont donc rejouées sous `TZ=Pacific/Auckland`, où elles divergent de
+            treize heures. Le rejeu est **borné à ces deux suites**, et le motif est mesuré :
+            **INC-203**, quatre tests étrangers y échouent.
+      - [x] **UN DÉFAUT DU HARNAIS TROUVÉ PAR LE HARNAIS LUI-MÊME, ET CORRIGÉ À SA CAUSE.** Son
+            garde-fou de substitution était `grep -qF "$avant"`. Or `grep -F` traite un motif
+            contenant un saut de ligne comme **plusieurs** motifs, dont la chaîne **vide**, qui
+            correspond à tout. MESURÉ : la dégradation de l'ordre total portait quatre tabulations
+            là où le fichier en porte trois ; le garde-fou a laissé passer, la substitution n'a rien
+            remplacé, et le harnais a conclu « COMPLAISANT » sur une dégradation **qui n'avait
+            jamais eu lieu**. La substitution se vérifie désormais elle-même — texte comparé avant
+            et après — et dit « IMPOSSIBLE » plutôt que de mentir dans un sens ou dans l'autre.
+      - [x] **UNE PREUVE D'API DE LA TRANCHE 1 ÉTAIT TAUTOLOGIQUE, ET ELLE EST RETOURNÉE.** MESURÉ :
+            les deux affaires rangées du seed — `…0c8` archivée, `…0c9` en corbeille — portent
+            `next_action_at` **à NULL**. Le filtre `next_action_at=not.is.null` les écartait donc à
+            lui seul, et la ligne *g* du §17.7 restait verte même sans `archived_at=is.null` ni
+            `deleted_at=is.null`. La preuve pose désormais une échéance **dans l'horizon** sur les
+            deux — elles appartiennent l'une et l'autre à Camille Aubert et au channel
+            `grands-comptes`, qu'elle lit —, constate leur absence, et restaure dans un `finally`
+            avec relecture. **Contre-épreuve mesurée** : les deux filtres retirés de la requête, la
+            ligne *g* devient **rouge**, là où elle restait verte auparavant.
+- [~] **`scripts/verify-ma-journee.sh` rend 79 contrôles, 1 en échec, et cet échec est ÉTRANGER.**
+      C'est ce qui retient l'unité en `[~]`, et l'écart est nommé plutôt que contourné : affaiblir
+      le harnais pour le verdir est ce que `docs/CloudWorker.md` §3.1 interdit.
+      - Le contrôle de classes CSS balaie **tout** `webapp/src` et rend `h-10 py-0.5 text-text-1` :
+        `text-text-1` est **INC-130** (`CRM-076`), les deux autres sont **INC-204**, consignée par
+        cette session (`EnTeteCard.tsx`, `Sommeil.tsx`, `BlocCoutsCard.tsx`). **Aucune n'est citée
+        par un fichier de `CRM-061`** — vérifié fichier par fichier.
+      - **INC-189 a mordu au premier passage, et pas au second** : `npm run test:unit` rejoué en
+        entier a rougi une fois sur `Objectifs.test.tsx`, puis est resté vert aux trois exécutions
+        suivantes. C'est exactement l'intermittence que l'entrée du 2026-08-20 décrit, et elle
+        relève de `CRM-081`.
 - [ ] **Ce que l'unité ne livrera pas, et les motifs sont écrits au §17.10** : aucune écriture
       (reporter, marquer « fait » — le seul chemin reste l'en-tête de la fiche, §15 bis), aucun
       horizon réglable (périmètre inventé, §12.6), aucune bascule de sommeil (elle annulerait le
