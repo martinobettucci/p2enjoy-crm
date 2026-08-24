@@ -1360,6 +1360,13 @@ tranche ne l'invente pas, elle l'étend d'une ligne.
 Un contrôle de non-complaisance est dû : reculer la date d'une **seconde** card doit faire échouer
 le harnais, faute de quoi « exactement une » ne serait pas mesuré.
 
+> **RÉVISION DU 2026-08-24 — `CRM-062` tranche 3a.** Avec **quatre** affaires voulues, la garde
+> change de forme et gagne un second sens : reculer la date d'une **cinquième** doit faire échouer
+> — c'est D9 —, **et rajeunir l'une des quatre** aussi — c'est D9 bis. Sans la seconde, un seed qui
+> cesserait de vieillir `…0cf` passerait inaperçu, et l'écran perdrait son classement sans qu'aucun
+> contrôle ne bronche. Les deux vivent dans `scripts/verify-board.sh`, avec leur restauration
+> **constatée** et non supposée.
+
 #### 9.12.5 Ce que cette tranche coûte aux preuves existantes, et pourquoi c'est légitime
 
 Deux preuves **doivent** devenir rouges, et elles sont **révisées, jamais retirées** (`CLAUDE.md`
@@ -1380,10 +1387,28 @@ spécification qui survit à sa mesure est un mensonge à retardement.
 
 #### 9.12.6 Contrat, mesurable en base et par l'API
 
+> **RÉVISION DU 2026-08-24 — `CRM-062` tranche 3a**, `docs/SPEC-relances.md` §10.2. Les lignes *a*
+> et *b* posaient **une** card au-delà de son seuil ; le jeu en pose désormais **quatre**. Le motif
+> est écrit là-bas et se résume ici : l'écran des affaires figées ne démontrerait ni son classement
+> par retard, ni son regroupement par dossier, sur une ligne unique — dette que le §5 de
+> `docs/SPEC-relances.md` nomme depuis la tranche 1. **`…0c3` ne bouge pas** : elle reste à trente
+> jours pour un seuil de quatorze, et tout ce que le §9.12.1 écrit d'elle reste vrai au caractère
+> près. La révision **ajoute**, elle ne déplace pas. Les lignes *c* à *g* sont inchangées.
+>
+> Les trois affaires ajoutées, avec leur retard **mesuré** :
+>
+> | Affaire | Dossier / Track | Seuil | Âge posé | Retard |
+> |---|---|---|---|---|
+> | `…0c4` « Refonte intranet Ville de Lyon » | `refonte` / `studio-web` | 5 | 40 j | 35 |
+> | `…d007` « Contrat TMA 2026 — Mairie de Vaulx » | `maintenance` / `studio-web` | 7 | 25 j | 18 |
+> | `…0cf` « Reprise du dossier Marchand » | `dossiers-2023` / `legacy-2023` | 5 | 12 j | 7 |
+
 | # | Énoncé | Vérifiable par |
 |---|---|---|
-| a | Exactement **une** card active du seed a `now() - entered_step_at` supérieur ou égal à son seuil | `count(*) = 1` sur la jointure card → étape → nœud |
-| b | Cette card est `5eed0000-0000-4000-8000-0000000000c3` | son `id` |
+| a | Exactement **quatre** cards actives du seed ont `now() - entered_step_at` supérieur ou égal à leur seuil | `count(*) = 4` sur la jointure card → étape → nœud |
+| b | Ce sont `…0c3`, `…0c4`, `…0cf` et `…d007`, et leurs retards valent **35, 18, 16, 7** — deux à deux distincts, donc l'ordre `retard_jours desc` est **total** sur ce jeu | `string_agg` sur `public.cards_figees()` |
+| b bis | Elles vivent dans **quatre** dossiers pour **trois** tracks : un track en porte deux, seul cas qui prouve que le regroupement porte sur le channel | `count(distinct channel_id)`, `count(distinct track_id)` |
+| b ter | L'`admin` et le `business_developer` en lisent **quatre**, la lectrice **trois** — `…0c3` vit dans `grands-comptes`, dont le track lui est fermé | `rpc/cards_figees` avec les trois jetons réels |
 | c | Son ancienneté est d'au moins **30** jours et de moins de **31** | `now() - entered_step_at` |
 | d | Son seuil est de **14** jours, hérité du nœud et non surchargé par l'étape | `stale_after_days is null` et `default_stale_after_days = 14` |
 | e | Au moins une card active porte un seuil et reste **en deçà** | `count(*) >= 1` sur le complément de *a* |

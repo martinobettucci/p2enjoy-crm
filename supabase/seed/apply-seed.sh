@@ -2243,6 +2243,49 @@ info "Ancienneté : les cards seedées repartent à zéro dans leur étape — l
 CARD_EN_RETARD='5eed0000-0000-4000-8000-0000000000c3'
 psql_seed -c "update public.cards set entered_step_at = now() - interval '30 days'
               where id = '$CARD_EN_RETARD' and archived_at is null and deleted_at is null;" >/dev/null
+
+# --- 8 octies quater. TROIS AUTRES affaires figées — CRM-062 tranche 3a ------------------------
+# @spec CRM-062 (docs/BACKLOG.md) — tranche 3a : le jeu de démonstration de l'écran des affaires
+#       figées (docs/SPEC-relances.md §10.2.1, §10.2.2 ; docs/SPEC-seed.md §9.12.6 ligne a révisée)
+#
+# LA DETTE ÉTAIT NOMMÉE DEPUIS LA TRANCHE 1, et la voici payée. Le §5 de `docs/SPEC-relances.md`
+# écrit qu'« une seule ligne suffit à la tranche 1 et ne suffira PAS à la tranche 3 : un écran qui
+# liste les affaires figées et n'en montre qu'une ne démontre ni son classement par retard, ni son
+# regroupement ». Trois affaires rejoignent donc `…0c3`, et chacune est choisie, jamais tirée.
+#
+# CE QUE LES QUATRE DÉMONTRENT ENSEMBLE, ET AUCUN DE CES NOMBRES N'EST DÉCORATIF (§10.2.1) :
+#
+#   * QUATRE RETARDS DEUX À DEUX DISTINCTS — 35, 18, 16, 7 — donc l'ordre `retard_jours desc` du
+#     §3.4 est TOTAL sur ce jeu : deux applications rendent la même suite, et une preuve peut
+#     asserter la suite entière plutôt qu'un ensemble. Le départage par `title` reste écrit dans la
+#     fonction et n'est simplement pas exercé — préférable : une preuve qui dépendrait d'une égalité
+#     de retard casserait au premier changement de seuil ;
+#   * QUATRE CHANNELS DISTINCTS, donc le regroupement a quatre groupes, et `studio-web` en porte
+#     DEUX — le seul cas où un track a plus d'un dossier figé, et donc le seul qui prouve qu'on
+#     regroupe par channel et non par track ;
+#   * TROIS SEUILS DIFFÉRENTS — 5, 7, 14 — donc la ligne rend une donnée qui varie, et une preuve
+#     ne peut pas confondre `seuil_jours` avec une constante ;
+#   * TROIS PROFILS, TROIS VUES : l'admin et le business developer en lisent QUATRE, la lectrice
+#     TROIS — `…0c3` vit dans `grands-comptes`, dont le track lui est fermé (`CRM-012`). Le refus
+#     se mesure désormais comme une LIGNE MANQUANTE DANS UNE LISTE PEUPLÉE, forme bien plus stricte
+#     que l'écran vide d'avant cette tranche.
+#
+# `…0c3` NE BOUGE PAS. Elle reste à trente jours pour un seuil de quatorze : tout ce que
+# `docs/SPEC-seed.md` §9.12 écrit d'elle, et tout ce qu'`e2e/ui/anciennete-board.spec.ts` mesure sur
+# le board de `grands-comptes`, reste vrai au caractère près. Cette section AJOUTE, elle ne déplace
+# pas — c'est pourquoi elle vient après, et non à la place.
+#
+# LE RECUL PART DE `now()`, comme au-dessus : un rejeu ne cumule rien.
+CARD_FIGEE_REFONTE='5eed0000-0000-4000-8000-0000000000c4'   # refonte / studio-web,      seuil 5
+CARD_FIGEE_TMA='5eed0000-0000-4000-8000-00000000d007'       # maintenance / studio-web,  seuil 7
+CARD_FIGEE_LEGACY='5eed0000-0000-4000-8000-0000000000cf'    # dossiers-2023 / legacy-2023, seuil 5
+psql_seed -c "update public.cards set entered_step_at = now() - interval '40 days'
+              where id = '$CARD_FIGEE_REFONTE' and archived_at is null and deleted_at is null;" >/dev/null
+psql_seed -c "update public.cards set entered_step_at = now() - interval '25 days'
+              where id = '$CARD_FIGEE_TMA' and archived_at is null and deleted_at is null;" >/dev/null
+psql_seed -c "update public.cards set entered_step_at = now() - interval '12 days'
+              where id = '$CARD_FIGEE_LEGACY' and archived_at is null and deleted_at is null;" >/dev/null
+
 au_dela=$(psql_seed -c "
 	select count(*) from public.cards c
 	join public.workflow_steps s on s.id = c.current_step_id
@@ -2251,10 +2294,32 @@ au_dela=$(psql_seed -c "
 	  and coalesce(s.stale_after_days, n.default_stale_after_days) is not null
 	  and now() - c.entered_step_at >=
 	      make_interval(days => coalesce(s.stale_after_days, n.default_stale_after_days));")
-[ "${au_dela:-0}" = "1" ] || die "ancienneté : $au_dela cards au-delà de leur seuil au lieu d'une
-        seule — le contrat du §9.12.6 ligne a n'est pas tenu."
-info "Ancienneté : « Audit sécurité applicative » est à 30 jours pour un seuil de 14 — la pastille
-  d'ancienneté bascule sur une donnée permanente, et elle seule"
+[ "${au_dela:-0}" = "4" ] || die "ancienneté : $au_dela cards au-delà de leur seuil au lieu de
+        quatre — le contrat du §9.12.6 ligne a, révisé par la tranche 3a, n'est pas tenu."
+
+# LA SUITE EST ASSÉRÉE ENTIÈRE, ET PAS SEULEMENT SON COMPTE. Un compte de quatre serait vert même
+# si les quatre étaient les mauvaises, ou dans le mauvais ordre — or c'est l'ORDRE que l'écran
+# rend, et c'est lui qui doit être tenu par le jeu (§10.2.1 point 1).
+suite=$(psql_seed -c "select string_agg(retard_jours::text, ',' order by retard_jours desc)
+                        from public.cards_figees();")
+[ "$suite" = "35,18,16,7" ] || die "ancienneté : les retards du jeu sont « $suite » au lieu de
+        « 35,18,16,7 » — l'ordre total du §10.2.1 n'est pas tenu."
+
+# Ligne e du §9.12.6 : sans une card EN DEÇÀ, « au-delà » ne serait pas un contraste mais un état
+# général. Le contrôle est CONSERVÉ tel quel — la tranche 3a en change le complément, pas le sens.
+en_deca=$(psql_seed -c "
+	select count(*) from public.cards c
+	join public.workflow_steps s on s.id = c.current_step_id
+	join public.workflow_nodes_catalog n on n.id = s.node_id
+	where c.archived_at is null and c.deleted_at is null
+	  and coalesce(s.stale_after_days, n.default_stale_after_days) is not null
+	  and now() - c.entered_step_at <
+	      make_interval(days => coalesce(s.stale_after_days, n.default_stale_after_days));")
+[ "${en_deca:-0}" -ge 1 ] || die "ancienneté : aucune card en deçà de son seuil — le contraste du
+        §9.12.6 ligne e a disparu."
+info "Ancienneté : QUATRE affaires figées, quatre dossiers, trois tracks, retards 35/18/16/7 — le
+  classement et le regroupement de l'écran se démontrent sur une donnée permanente ; $en_deca cards
+  restent en deçà de leur seuil"
 
 # --- 8 octies bis. La relance de la card figée, PAR LE VRAI MÉCANISME — CRM-062 tranche 2 -------
 # @spec CRM-062 (docs/BACKLOG.md) — relances automatiques, tranche 2
@@ -2273,17 +2338,28 @@ info "Ancienneté : « Audit sécurité applicative » est à 30 jours pour un s
 #
 # L'APPEL EST CONVERGENT : rejoué, il n'écrit rien de plus, l'ancre étant l'entrée dans l'étape
 # (§9.4). La garde ci-dessous mesure le résultat au lieu de le supposer.
+#
+# RÉVISÉ PAR LA TRANCHE 3a : les gardes comptaient UNE relance, sur UNE card. Elles en comptent
+# désormais QUATRE, une par affaire figée du §10.2.1, et la seconde vérifie qu'il n'en existe
+# aucune AILLEURS — c'est elle qui mesure que le prédicat du §2.4 n'a pas débordé.
+FIGEES_SQL="'$CARD_EN_RETARD', '$CARD_FIGEE_REFONTE', '$CARD_FIGEE_TMA', '$CARD_FIGEE_LEGACY'"
 psql_seed -c "select app.relancer_cards_figees();" >/dev/null
 relances=$(psql_seed -c "select count(*) from public.card_events
-                          where type = 'stalled' and card_id = '$CARD_EN_RETARD';")
-[ "${relances:-0}" = "1" ] || die "relances : $relances événements « stalled » sur la card figée au
-        lieu d'un seul — l'ancrage sur l'entrée dans l'étape du §9.4 n'est pas tenu."
+                          where type = 'stalled' and card_id in ($FIGEES_SQL);")
+[ "${relances:-0}" = "4" ] || die "relances : $relances événements « stalled » sur les quatre cards
+        figées au lieu de quatre — l'ancrage sur l'entrée dans l'étape du §9.4 n'est pas tenu."
+# UNE PAR AFFAIRE, ET PAS QUATRE SUR UNE SEULE : le compte global serait vert si une card en portait
+# quatre. Le compte des cards DISTINCTES est le seul qui mesure l'idempotence par affaire.
+distinctes=$(psql_seed -c "select count(distinct card_id) from public.card_events
+                            where type = 'stalled' and card_id in ($FIGEES_SQL);")
+[ "${distinctes:-0}" = "4" ] || die "relances : les événements « stalled » portent sur $distinctes
+        affaires au lieu de quatre — une affaire en porte plusieurs, contre le §9.4."
 autres=$(psql_seed -c "select count(*) from public.card_events
-                        where type = 'stalled' and card_id <> '$CARD_EN_RETARD';")
-[ "${autres:-0}" = "0" ] || die "relances : $autres événements « stalled » hors de la seule card
-        figée du jeu — le prédicat du §2.4 ne tient pas."
-info "Relance : la card figée porte UN événement « stalled », écrit par app.relancer_cards_figees()
-  — la fonction que le job quotidien appelle, jamais une fixture"
+                        where type = 'stalled' and card_id not in ($FIGEES_SQL);")
+[ "${autres:-0}" = "0" ] || die "relances : $autres événements « stalled » hors des quatre cards
+        figées du jeu — le prédicat du §2.4 ne tient pas."
+info "Relance : les QUATRE affaires figées portent chacune UN événement « stalled », écrit par
+  app.relancer_cards_figees() — la fonction que le job quotidien appelle, jamais une fixture"
 
 # --- 8 nonies. Quatre messages RÉELLEMENT reçus — docs/SPEC-seed.md §2.19, CRM-057 -------------
 # @spec CRM-060 (docs/BACKLOG.md) — sous-tranche 2 bis : le quatrième message, qui déclenche la

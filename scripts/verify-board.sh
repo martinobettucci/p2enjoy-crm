@@ -93,12 +93,17 @@ mkdir -p "$SAUVEGARDES"
 # qui laisse le produit dégradé derrière lui est pire que pas de harnais du tout (décisions 143,
 # 145, 157).
 #
-# LA DÉGRADATION D9 TOUCHE LA DONNÉE, PAS UN FICHIER (docs/SPEC-seed.md §9.12.4) : elle vieillit
-# une seconde card. Elle est donc rendue ici aussi, et par la même écriture que le seed — la
-# remise à zéro de sa section 8 octies bis —, sans quoi une exécution tuée entre la dégradation et
-# sa restauration laisserait le jeu de démonstration avec deux cards en retard.
+# LES DÉGRADATIONS D9 ET D9 BIS TOUCHENT LA DONNÉE, PAS UN FICHIER (docs/SPEC-seed.md §9.12.4,
+# révisé par docs/SPEC-relances.md §10.2.2). D9 vieillit une CINQUIÈME card ; D9 bis en RAJEUNIT
+# une des quatre. Les deux sont donc rendues ici aussi, et par les mêmes écritures que le seed — la
+# remise à zéro de sa section 8 octies bis et l'antidatage de sa 8 octies quater —, sans quoi une
+# exécution tuée entre une dégradation et sa restauration laisserait le jeu de démonstration avec
+# cinq cards en retard, ou avec trois.
 CARD_TEMOIN_ANCIENNETE='5eed0000-0000-4000-8000-0000000000c1'
+# La moins en retard des quatre du §10.2.1 : douze jours pour un seuil de cinq.
+CARD_FIGEE_LEGACY='5eed0000-0000-4000-8000-0000000000cf'
 anciennete_degradee=false
+figee_rajeunie=false
 restaurer() {
 	for fichier in "$SAUVEGARDES"/*; do
 		[ -e "$fichier" ] || continue
@@ -109,6 +114,10 @@ restaurer() {
 	if [ "$anciennete_degradee" = true ]; then
 		psql_db -c "update public.cards set entered_step_at = now()
 		            where id = '$CARD_TEMOIN_ANCIENNETE';" >/dev/null
+	fi
+	if [ "$figee_rajeunie" = true ]; then
+		psql_db -c "update public.cards set entered_step_at = now() - interval '12 days'
+		            where id = '$CARD_FIGEE_LEGACY';" >/dev/null
 	fi
 	rm -rf "$TRAVAIL" "${DEPART:-}"
 }
@@ -260,19 +269,55 @@ lire_anciennete() {
 		  and now() - c.entered_step_at $2
 		      make_interval(days => coalesce(s.stale_after_days, n.default_stale_after_days))"
 }
+# CONTRÔLE RÉVISÉ UNE SECONDE FOIS — `CRM-062` tranche 3a, docs/SPEC-relances.md §10.2.2.
+#
+# Il assérait « exactement UNE card au-delà », ce qui était le contrat du §9.12.6 ligne a tant que
+# `CRM-046` était seul à l'écrire. La tranche 3a le révise : l'écran des affaires figées ne
+# démontrerait ni son classement ni son regroupement sur une ligne unique (§5), et le seed en pose
+# donc QUATRE. L'assertion n'est ni retirée ni relâchée — un `-ge 1` aurait été le contournement que
+# `CLAUDE.md` §18 interdit : elle compte quatre, et la suivante nomme lesquelles.
 au_dela=$(lire_anciennete 'count(*)' '>=')
-if [ "${au_dela:-0}" -eq 1 ]; then
-	ok "une card du seed, et une seule, dépasse son seuil : la bascule du §7.4 est démontrable"
+if [ "${au_dela:-0}" -eq 4 ]; then
+	ok "quatre cards du seed dépassent leur seuil : la bascule du §7.4 et le classement de l'écran
+   des affaires figées sont démontrables"
 else
-	fail "$au_dela cards dépassent leur seuil au lieu d'une seule (docs/SPEC-seed.md §9.12.6 a)"
+	fail "$au_dela cards dépassent leur seuil au lieu de quatre (docs/SPEC-seed.md §9.12.6 a,
+   révisé par docs/SPEC-relances.md §10.2.2)"
 fi
 
-# Ligne b du contrat : c'est bien `…0c3`, et non une card qu'un rejeu aurait vieillie par accident.
-laquelle=$(lire_anciennete 'c.id::text' '>=')
-if [ "$laquelle" = "$CARD_EN_RETARD" ]; then
-	ok "la card en retard est « Audit sécurité applicative » — l'identifiant est celui du §9.12.1"
+# Ligne b du contrat : ce sont bien LES QUATRE du §10.2.1, et non des cards qu'un rejeu aurait
+# vieillies par accident. La liste est triée pour que la comparaison ne dépende d'aucun ordre de
+# lecture, et `…0c3` — celle de `CRM-046` — doit toujours en faire partie.
+lesquelles=$(lire_anciennete "string_agg(c.id::text, ',' order by c.id::text)" '>=')
+ATTENDUES='5eed0000-0000-4000-8000-0000000000c3,5eed0000-0000-4000-8000-0000000000c4,5eed0000-0000-4000-8000-0000000000cf,5eed0000-0000-4000-8000-00000000d007'
+if [ "$lesquelles" = "$ATTENDUES" ]; then
+	ok "les quatre cards en retard sont celles du §10.2.1, « Audit sécurité applicative » comprise"
 else
-	fail "la card en retard est « $laquelle » au lieu de $CARD_EN_RETARD"
+	fail "les cards en retard sont « $lesquelles » au lieu de « $ATTENDUES »"
+fi
+
+# L'ORDRE EST ASSÉRÉ ENTIER, ET C'EST LUI QUE L'ÉCRAN REND. Un compte de quatre et une liste
+# d'identifiants seraient verts même si les retards étaient égaux — or le §10.2.1 point 1 exige
+# qu'ils soient deux à deux DISTINCTS, sans quoi l'ordre du §3.4 ne serait pas total sur ce jeu et
+# aucune preuve ne pourrait asserter une suite.
+suite=$(psql_db -c "select string_agg(retard_jours::text, ',' order by retard_jours desc)
+                      from public.cards_figees()")
+if [ "$suite" = "35,18,16,7" ]; then
+	ok "les retards valent 35, 18, 16, 7 — deux à deux distincts, donc l'ordre du §3.4 est total"
+else
+	fail "les retards du jeu sont « $suite » au lieu de « 35,18,16,7 » (§10.2.1)"
+fi
+
+# Le regroupement de l'écran porte sur le CHANNEL (§10.7), et il n'a rien à regrouper si les quatre
+# affaires vivent dans quatre dossiers d'un même track. Le contrôle mesure les deux dimensions.
+dossiers=$(psql_db -c "select count(distinct f.channel_id) from public.cards_figees() f")
+pistes=$(psql_db -c "select count(distinct ch.track_id) from public.cards_figees() f
+                       join public.channels ch on ch.id = f.channel_id")
+if [ "$dossiers" = "4" ] && [ "$pistes" = "3" ]; then
+	ok "quatre dossiers pour trois tracks : un track en porte deux, seul cas qui prouve que le
+   regroupement du §10.7 porte sur le channel et non sur le track"
+else
+	fail "$dossiers dossiers et $pistes tracks au lieu de quatre et trois (§10.2.1 point 2)"
 fi
 
 # Ligne e : sans une card EN DEÇÀ, « au-delà » ne serait pas un contraste mais un état général.
@@ -469,27 +514,50 @@ else
 			.is('deleted_at', null)" \
 		"			.order('position')" unit
 
-	# D9 — CONTRE-ÉPREUVE DU CONTRÔLE RETOURNÉ (docs/SPEC-seed.md §9.12.4, §9.12.7 point 6). Elle
-	# ne touche aucun fichier : elle vieillit une SECONDE card, `…0c1`, de huit jours dans une
-	# étape dont le seuil est de sept. Sans elle, « exactement une » ne serait pas mesuré — un
-	# contrôle qui compte pourrait compter n'importe quoi tant que rien ne le contredit.
+	# D9 — CONTRE-ÉPREUVE DU CONTRÔLE RETOURNÉ (docs/SPEC-seed.md §9.12.4, révisé par
+	# docs/SPEC-relances.md §10.2.2). Elle ne touche aucun fichier : elle vieillit une CINQUIÈME
+	# card, `…0c1`, de huit jours dans une étape dont le seuil est de sept. Sans elle, « exactement
+	# quatre » ne serait pas mesuré — un contrôle qui compte pourrait compter n'importe quoi tant
+	# que rien ne le contredit.
 	anciennete_degradee=true
 	psql_db -c "update public.cards set entered_step_at = now() - interval '8 days'
 	            where id = '$CARD_TEMOIN_ANCIENNETE';" >/dev/null
 	temoin=$(lire_anciennete 'count(*)' '>=')
-	if [ "${temoin:-0}" -eq 1 ]; then
-		fail "COMPLAISANT : une seconde card vieillie et le compte reste à une seule"
+	if [ "${temoin:-0}" -eq 4 ]; then
+		fail "COMPLAISANT : une cinquième card vieillie et le compte reste à quatre"
 	else
-		ok "« une seconde card vieillie » fait bien passer le compte à $temoin : le contrôle mord"
+		ok "« une cinquième card vieillie » fait bien passer le compte à $temoin : le contrôle mord"
 	fi
 	psql_db -c "update public.cards set entered_step_at = now()
 	            where id = '$CARD_TEMOIN_ANCIENNETE';" >/dev/null
 	anciennete_degradee=false
-	rendu=$(lire_anciennete 'count(*)' '>=')
-	if [ "${rendu:-0}" -eq 1 ]; then
-		ok "l'ancienneté est rendue : une seule card en retard, comme le seed la pose"
+
+	# D9 bis — LA DÉGRADATION DANS L'AUTRE SENS, et elle est due depuis que le jeu en compte
+	# quatre (§10.2.2). D9 seule ne mesure qu'un débordement ; un seed qui CESSERAIT de vieillir
+	# l'une des quatre passerait inaperçu, et l'écran perdrait son classement sans qu'un contrôle
+	# ne bronche. Elle rajeunit `…0cf`, la moins en retard des quatre.
+	figee_rajeunie=true
+	psql_db -c "update public.cards set entered_step_at = now()
+	            where id = '$CARD_FIGEE_LEGACY';" >/dev/null
+	manquante=$(lire_anciennete 'count(*)' '>=')
+	if [ "${manquante:-0}" -eq 4 ]; then
+		fail "COMPLAISANT : une des quatre rajeunie et le compte reste à quatre"
 	else
-		fail "l'ancienneté est laissée DÉGRADÉE : $rendu cards en retard après restauration"
+		ok "« une des quatre rajeunie » fait bien passer le compte à $manquante : le contrôle mord
+   dans les DEUX sens"
+	fi
+	psql_db -c "update public.cards set entered_step_at = now() - interval '12 days'
+	            where id = '$CARD_FIGEE_LEGACY';" >/dev/null
+	figee_rajeunie=false
+
+	rendu=$(lire_anciennete 'count(*)' '>=')
+	rendu_suite=$(psql_db -c "select string_agg(retard_jours::text, ',' order by retard_jours desc)
+	                            from public.cards_figees()")
+	if [ "${rendu:-0}" -eq 4 ] && [ "$rendu_suite" = "35,18,16,7" ]; then
+		ok "l'ancienneté est rendue : quatre cards en retard et la suite 35,18,16,7, comme le seed
+   les pose — la restauration est CONSTATÉE, pas supposée"
+	else
+		fail "l'ancienneté est laissée DÉGRADÉE : $rendu cards en retard, suite « $rendu_suite »"
 	fi
 fi
 
