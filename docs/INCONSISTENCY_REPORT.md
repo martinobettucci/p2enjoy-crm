@@ -216,6 +216,8 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-211 | `scripts/verify-move-card.sh` rend « la restauration n'a pas rétabli l'état initial » EN SÉRIE et **57 contrôles, aucune anomalie** rejoué seul, seed reposé — la dégradation `b`, qui emploie la MÊME restauration, est verte dans le même passage | 2026-08-25 | *ouverte* — cause non établie, comportement inchangé, relève de `CRM-034` | 507 |
 | INC-212 | `scripts/verify-mail-infra.sh` laisse en base son message « Preuve journal Stalwart propre », NON classé : l'inbox porte dès lors un troisième fil non classé, et l'état vide de `e2e/ui/sommeil-fil.spec.ts` ne peut plus être atteint. Troisième fichier de la famille d'INC-209 | 2026-08-25 | *ouverte* — comportement inchangé, relève de `CRM-051` / `CRM-052` | 507 |
 | INC-215 | `mail_outbound_identities.signature_html` existe depuis `CRM-053` et n'est lue par PERSONNE — ni `mail-sync` à l'envoi, ni l'écran de `CRM-089`, qui n'envoie délibérément jamais `p_signature_html`. Son nom annonce du **HTML** là où tout le sous-système expédie du **texte** | 2026-08-25 | *ouverte* — comportement inchangé, relève de `CRM-063` tranche 3, qui devra trancher le type et le nom | 512 |
+| INC-216 | `public.rendre_modele_email` rend `card.next_action_at` **en UTC** : MESURÉ, aucune colonne de fuseau n'existe dans le schéma — seule `profiles.locale`, qui est une **langue**. Un destinataire français lira 09:00 là où le rendez-vous est à 11:00 en heure d'été | 2026-08-25 | *ouverte* — comportement ASSUMÉ et figé par une assertion, **arbitrage attendu** : à qui appartient le fuseau d'un email sortant | 514 |
+| INC-217 | `supabase/tests/0052_relances_automatiques.test.sql` assertion 11 exige un passage `succeeded` de `p2enjoy-relances-cards-figees` dans `cron.job_run_details`, or ce job est planifié `23 3 * * *` : la preuve est verte ou rouge **selon l'heure à laquelle la pile a été montée**, jamais selon l'état du produit | 2026-08-25 | *ouverte* — comportement inchangé, relève de `CRM-062` tranche 2, qui porte la preuve | 514 |
 
 ---
 
@@ -4791,3 +4793,90 @@ la coder — son type (texte ou HTML), son nom, sa position dans le corps expéd
 si une signature appartient à une **identité** ou à une **personne**. Aucun arbitrage du responsable
 n'est requis pour cela : les trois constats ci-dessus se mesurent, et le §18 du sous-système mail a
 déjà tranché la question du type pour tout le reste du produit.
+
+### INC-216 — un horodatage rendu dans un email est en UTC, faute de fuseau dans le schéma
+
+**Ouverte le 2026-08-25 par `CRM-063` tranche 2a, comportement ASSUMÉ et figé par une assertion** —
+ce n'est pas un défaut trouvé au passage, c'est une **limite de la sous-tranche**, nommée dans sa
+spécification (`docs/SPEC-modeles-emails.md` §8.6) plutôt que découverte par un destinataire.
+
+**Ce qui a été mesuré**, sur la pile debout et seedée :
+
+```
+select table_name || '.' || column_name from information_schema.columns
+ where table_schema = 'public'
+   and (column_name ilike '%timezone%' or column_name ilike '%locale%' or column_name ilike '%tz%');
+  profiles.locale
+```
+
+**Aucune colonne de fuseau n'existe dans le schéma.** La seule préférence portée par un profil est
+`locale`, qui est une **langue** et ne dit rien de l'heure. `public.rendre_modele_email` rend donc
+`card.next_action_at` par
+`to_char(… at time zone 'UTC', 'DD/MM/YYYY HH24:MI')` — mesuré `24/08/2026 09:00` sur l'affaire
+`Migration ERP Sogexia` du seed.
+
+**Pourquoi UTC, et pourquoi ce n'est pas neutre.** UTC est le seul choix qui ne soit pas arbitraire
+en l'absence de fuseau : `now()` au fuseau du serveur ferait dépendre le contenu d'un email de la
+configuration d'un conteneur, et deviner un fuseau depuis la langue serait la valeur par défaut
+trompeuse que `CLAUDE.md` §18 interdit. Le prix est réel et il est écrit : **un destinataire français
+lira 09:00 là où le rendez-vous est à 11:00 en heure d'été**, et rien dans le texte rendu ne le
+signale — la mention « UTC » a été écartée, parce qu'elle serait du bruit dans une phrase française
+et ne corrigerait pas l'erreur, elle la déplacerait sur le lecteur.
+
+**Pourquoi ce n'est pas corrigé ici.** Poser un fuseau est une **colonne** sur `workspaces` ou sur
+`profiles`, donc une migration sur le contrat d'une autre unité, et une question de produit que
+personne n'a tranchée : le fuseau d'un email est-il celui du workspace, celui de l'expéditeur, ou
+celui du destinataire — dont le produit ne sait rien ? La sous-tranche 2a livre un rendu ; elle
+n'invente pas une règle de produit (`CLAUDE.md` §10, dans les deux sens).
+
+**Ce qu'il faut pour la fermer** : un arbitrage du responsable sur **à qui appartient le fuseau**
+d'un email sortant, puis la colonne et la migration correspondantes. L'assertion
+`CRM-063 §8.6 — card.next_action_at rend JJ/MM/AAAA HH:MM en UTC, limite nommée` de
+`supabase/tests/0054_rendu_modeles_emails.test.sql` **fige** le comportement actuel : la voir rougir
+signalera qu'un fuseau a été introduit sans réviser le §8.6.
+
+### INC-217 — la preuve du job de relance exige un passage que `pg_cron` ne produit qu'à 03 h 23
+
+**Ouverte le 2026-08-25 par `CRM-063` tranche 2a, comportement inchangé** — constat **étranger à la
+sous-tranche** de la session, consigné sans être corrigé au passage (`CLAUDE.md` §18,
+`docs/CloudWorker.md` §3.1).
+
+**Ce qui a été mesuré**, sur la pile debout et seedée, à 12 h 45 UTC :
+
+```
+npm run test:sql
+  ECHEC supabase/tests/0052_relances_automatiques.test.sql — 1 assertion(s) en échec sur 25
+  not ok 11 - le moteur a RÉELLEMENT lancé la commande : cron.job_run_details porte un
+              passage succeeded — preuve indépendante de l'état que la fonction écrit elle-même
+
+select jobid, jobname, schedule from cron.job;
+  1 | p2enjoy-scheduler-heartbeat    | 7 * * * *
+  2 | p2enjoy-relances-cards-figees  | 23 3 * * *
+
+select jobid, status, start_time from cron.job_run_details order by start_time desc;
+  1 | succeeded | 2026-08-25 12:35:02+00
+
+docker inspect p2enjoy-db --format '{{.State.StartedAt}}'
+  2026-08-25T12:34:38Z
+```
+
+**Le défaut n'est pas dans le produit, il est dans la PREUVE.** Le job `p2enjoy-relances-cards-figees`
+est planifié **une fois par jour, à 03 h 23 UTC**. `cron.job_run_details` est vidée avec le volume de
+la base, si bien qu'une pile démarrée après 03 h 23 ne portera **jamais** ce passage avant le
+lendemain. L'assertion 11 est donc **verte ou rouge selon l'heure à laquelle la pile a été montée**,
+et non selon l'état du produit. Le job voisin, `p2enjoy-scheduler-heartbeat`, est planifié à l'heure
+(`7 * * * *`) et a bien son passage — c'est la comparaison des deux qui isole la cause.
+
+**Ce n'est PAS une régression de la session.** La migration 56 n'ajoute aucun job, ne touche à
+`cron` ni à `card_events`, et ne modifie aucune table existante. Les cinquante-trois autres fichiers
+de `npm run test:sql` sont verts, `0051_cards_figees.test.sql` — l'unité voisine — compris.
+
+**Pourquoi ce n'est pas corrigé ici.** La preuve appartient à `CRM-062` tranche 2, et la corriger
+demande de trancher **comment** on éprouve qu'un moteur a réellement exécuté une commande sans
+attendre son heure : forcer un passage par `cron.schedule` sur un nom jetable, ou lire l'état que la
+fonction écrit — ce que l'assertion refuse délibérément, et à juste titre. Le choix appartient à
+l'unité qui porte la preuve.
+
+**Ce qu'il faut pour la fermer** : que `CRM-062` rende cette assertion indépendante de l'heure de
+démarrage de la pile, ou qu'elle nomme explicitement la condition sous laquelle elle est exécutable.
+Aucun arbitrage du responsable n'est requis : les trois mesures ci-dessus suffisent à trancher.
