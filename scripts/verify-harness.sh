@@ -885,7 +885,12 @@ SCENARIOS_API=893
 # étant un test à part entière parce que le palier doit être posé AVANT la connexion. 594 + 10 =
 # **604**, valeur COMPTÉE par `playwright test --list` (« Total: 604 tests in 49 files »), jamais
 # déduite. Le compteur est repris DANS LE MÊME CHANGEMENT que les scénarios.
-SCENARIOS_UI=604
+#
+# **RÉVISÉ À 605 PAR `CRM-063` TRANCHE 3, le 2026-08-25.** `e2e/ui/reglages-identites-mail.spec.ts`
+# gagne **un** scénario : la signature écrite, relue, puis VIDÉE — c'est l'effacement qui compte,
+# l'écriture prouvant peu et l'effacement étant impossible avant la migration 58. 604 + 1 = **605**,
+# valeur COMPTÉE par l'exécution de la suite.
+SCENARIOS_UI=605
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

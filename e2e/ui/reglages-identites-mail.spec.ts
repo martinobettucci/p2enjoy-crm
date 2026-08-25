@@ -41,6 +41,8 @@ const DRISS = '5eed0000-0000-4000-8000-000000000012'
 /** Les libellés du seed (`docs/SPEC-seed.md` §2.18) — des littéraux stables, jamais des identifiants. */
 const LABEL_DRISS = 'Envoi de Driss Lemoine'
 const ADRESSE_DRISS = 'contact@p2enjoy.test'
+/** La signature que le seed pose sur l'identité de Driss — `CRM-063` §10, deux lignes. */
+const SIGNATURE_DRISS = 'Driss Lemoine — Business developer\nP2Enjoy SAS'
 
 async function connecter(page: Page, email: string): Promise<void> {
 	await page.goto('/connexion')
@@ -62,6 +64,11 @@ async function connecter(page: Page, email: string): Promise<void> {
  * `p_from_name` est envoyé VIDE ici, puis remis à `null` par la clé de service : la fonction
  * n'accepte que des valeurs, et seule une écriture directe peut rendre la colonne nulle comme le
  * seed la laisse.
+ *
+ * `p_signature_text` EST envoyé, et il doit l'être : depuis `CRM-063` tranche 3, un scénario peut
+ * l'avoir vidée, et l'OMETTRE la laisserait vide — la fonction conserve alors la valeur en place
+ * (§10.4). C'est exactement l'inverse du mot de passe, et les deux règles cohabitent dans le même
+ * appel : l'une omet pour conserver, l'autre envoie pour restaurer.
  */
 async function restaurerIdentiteDriss(page: Page): Promise<void> {
 	const jeton = await jetonDe(BIZDEV)
@@ -78,6 +85,7 @@ async function restaurerIdentiteDriss(page: Page): Promise<void> {
 				p_smtp_username: BIZDEV,
 				p_from_address: ADRESSE_DRISS,
 				p_owner_id: DRISS,
+				p_signature_text: SIGNATURE_DRISS,
 				p_is_default: true,
 			},
 		},
@@ -187,6 +195,75 @@ test.describe('configuration des identités sortantes (docs/SPEC-mail-subsystem.
 			expect(identifiants.status()).toBe(200)
 			const [ligneSecret] = (await identifiants.json()) as { password: string }[]
 			expect(ligneSecret?.password).toBe(MOT_DE_PASSE_SEED)
+		} finally {
+			await restaurerIdentiteDriss(page)
+		}
+	})
+
+	// LA SIGNATURE, DE BOUT EN BOUT — `CRM-063` tranche 3, `docs/SPEC-modeles-emails.md` §10.6.
+	//
+	// LE SCÉNARIO ÉPROUVE LES DEUX SENS, et le second est celui qui compte : écrire une signature
+	// prouve peu — c'est l'EFFACEMENT qui était impossible avant la migration 58, et c'est lui qui
+	// a justifié d'ouvrir ce champ. Un scénario qui ne ferait qu'écrire laisserait la réparation
+	// non éprouvée.
+	test('elle écrit une signature, la voit dans la liste, puis la VIDE et la voit disparaître', async ({
+		page,
+	}) => {
+		try {
+			await connecter(page, BIZDEV)
+			await page.goto('/reglages/identites-mail')
+
+			// La pilule de présence est allumée par le SEED, avant tout geste : c'est ce qui
+			// distingue « l'écran sait la rendre » de « l'écran sait rendre ce qu'il vient
+			// d'écrire ».
+			const ligne = page.getByTestId('ligne-identite-mail').filter({ hasText: ADRESSE_DRISS })
+			await expect(ligne.getByText('Signature', { exact: true })).toBeVisible()
+
+			await ligne.getByTestId('configurer-identite').click()
+			const champ = page.getByTestId('champ-signature-identite')
+			// PRÉREMPLI : l'écran ne peut pas proposer de MODIFIER une signature sans montrer celle
+			// qui est enregistrée (§10.6). Les deux lignes du seed y sont, retour à la ligne compris.
+			await expect(champ).toHaveValue(SIGNATURE_DRISS)
+			await expect(page.getByTestId('formulaire-identite-mail')).toContainText(
+				'Videz le champ pour la supprimer',
+			)
+
+			await capturer(page, 'identites-mail-signature-1440', UNITE)
+
+			// AU CLAVIER, comme un utilisateur : le champ est atteint, vidé, réécrit.
+			await champ.click()
+			await page.keyboard.press('Control+a')
+			await page.keyboard.type('Driss Lemoine')
+			await page.keyboard.press('Enter')
+			await page.keyboard.type('P2Enjoy — 01 23 45 67 89')
+			await page.getByTestId('valider-identite-mail').click()
+
+			await expect(page.getByTestId('formulaire-identite-mail')).toHaveCount(0)
+			await ligne.getByTestId('configurer-identite').click()
+			await expect(page.getByTestId('champ-signature-identite')).toHaveValue(
+				'Driss Lemoine\nP2Enjoy — 01 23 45 67 89',
+			)
+
+			// L'EFFACEMENT — la réparation de la tranche. Vider le champ SUPPRIME la signature ;
+			// avant la migration 58, le `coalesce` l'aurait laissée en place et le geste n'aurait
+			// eu aucun effet visible, ce qui est le piège que le §22.1 décrivait.
+			await page.getByTestId('champ-signature-identite').fill('')
+			await page.getByTestId('valider-identite-mail').click()
+			await expect(page.getByTestId('formulaire-identite-mail')).toHaveCount(0)
+
+			// LA PILULE S'ÉTEINT, et c'est la LISTE RELUE qui le montre — jamais un état local.
+			await expect(ligne.getByText('Signature', { exact: true })).toHaveCount(0)
+
+			await capturer(page, 'identites-mail-signature-effacee-1440', UNITE)
+
+			// ET LA BASE LE CONFIRME, hors interface : `null`, jamais la chaîne vide (§10.4).
+			const relecture = await page.request.get(
+				`${URL_API}/rest/v1/mail_outbound_identities?select=signature_text&owner_id=eq.${DRISS}`,
+				{ headers: enTetesService() },
+			)
+			expect(relecture.status()).toBe(200)
+			const [ligneBase] = (await relecture.json()) as { signature_text: string | null }[]
+			expect(ligneBase?.signature_text).toBeNull()
 		} finally {
 			await restaurerIdentiteDriss(page)
 		}
