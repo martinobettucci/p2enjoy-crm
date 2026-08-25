@@ -24700,3 +24700,97 @@ spécifier ligne à ligne avant sa première ligne de code**. Elle devra tranche
 du §7.3 et dire **comment un palier met un message en file** : `public.queue_outbound_email` exige
 `auth.uid()` non nul et le refuse en `42501` sans jeton, si bien qu'un job `pg_cron` **ne peut pas
 l'emprunter tel quel** — mesuré, et écrit au §11.12 pour que 4b ne le redécouvre pas.
+
+
+## décision 518 — `CRM-063` sous-tranche 4b : l'armement, et les quatre questions tranchées par la mesure
+
+**Session planifiée du 2026-08-25, ouverte à 20 h 10 UTC.** Reprise à l'endroit exact où la
+décision 517 s'arrêtait : « `CRM-063` **sous-tranche 4b — l'armement et l'exécution** ». Choix de
+l'unité par le §4.2 point 1 de `docs/CloudWorker.md`.
+
+**LA SPÉCIFICATION A ÉTÉ ÉCRITE ET COMMITTÉE AVANT LA PREMIÈRE LIGNE DE CODE**, au §12 de
+`docs/SPEC-modeles-emails.md`, après sondes sur la pile debout et seedée. Les **quatre** questions
+ouvertes — les trois du §7.3 et celle que le §11.12 avait ajoutée — y sont tranchées chacune par une
+mesure, jamais par raisonnement seul.
+
+**QUI ARME : UN GESTE HUMAIN.** Le workspace de démonstration porte **deux** identités sortantes et
+la séquence n'en porte aucune (§11.2). Un job qui armerait seul devrait choisir entre elles, et
+toute règle qu'il appliquerait — « la première », « celle du responsable » — serait la valeur par
+défaut trompeuse que `CLAUDE.md` §18 proscrit. L'identité est donc **stockée sur l'inscription**.
+
+**CE QUI INTERROMPT : UN SEUL PRÉDICAT POUR QUATRE INTERRUPTIONS.** Le §7.3 en nommait quatre —
+déplacement d'étape, sommeil, archivage, geste explicite —, et les trois premières tombent
+**gratuitement** dès lors que le job demande à `public.cards_figees()` si l'affaire y est encore :
+`move_card` repose `entered_step_at`, et le sommeil, l'archivage et la corbeille sont les trois
+exclusions du §2.4 de `docs/SPEC-relances.md`. Recopier ces prédicats aurait créé la **seconde
+définition de « figée »** que le §2.1 existe pour empêcher.
+
+**UNE LIGNE DU CADRAGE TROUVÉE FAUSSE PAR LA MESURE.** Le §11.12 annonçait que « `mail_messages`
+porte `direction`, `card_id` et `sent_at`, donc la donnée existe ». La donnée existe, **mais pas
+dans cette colonne-là** : `sent_at` est **NULLE sur les quatre messages du seed**. C'est la date que
+l'en-tête déclare, et rien n'oblige un correspondant à la renseigner. L'ancre est `created_at`,
+posée par la base. Après la ligne 15 du contrat d'API de 4a, c'est la seconde ligne de cadrage que
+sa propre preuve corrige — et la règle tient : **on révise en disant pourquoi, on ne contourne pas**.
+
+**L'INSERTION DANS `mail_outbox` EST EXTRAITE, ET C'ÉTAIT LE CHOIX ARCHITECTURAL DE LA SESSION.**
+`public.queue_outbound_email` rend `42501 / not_authenticated` sous `postgres` — contexte exact d'un
+job `pg_cron` —, ce que le §11.12 avait déjà mesuré. Deux issues : assouplir le premier refus, ce
+qui aurait ouvert à `anon` un chemin que sept refus protègent, ou **extraire**. La seconde est
+retenue : `app.mail_outbox_inserer` est désormais la seule ligne d'insertion, et la règle du §10.3 —
+« ce qui est stocké est ce qui part », le corps **signé** — garde UNE définition. Ce qui est écrit
+deux fois diverge une fois ; la migration 59 l'a payé sur ses clés déclarées en ligne.
+
+**CINQ DÉFAUTS TROUVÉS PAR LES PREUVES, ET AUCUN N'ÉTAIT UN DÉFAUT DU PRODUIT.** C'est le fait
+marquant de la session, et il mérite d'être nommé tel quel :
+
+1. **Le refus (a) ne protège pas le chemin `anon`** — le PRIVILÈGE l'a déjà fermé. Le premier refus
+   travaille sur le chemin `service_role`, qui détient le privilège. Les deux rendent `42501` et le
+   client ne voit aucune différence ; le dépôt, lui, doit savoir laquelle des deux gardes tient.
+2. **PostgREST rend `403`, et non `401`, à un appelant AUTHENTIFIÉ sans privilège.** Le contrat
+   annonçait « 401/403 » : il dit désormais `403` sans hésiter.
+3. **La suite pgTAP supposait une table vierge.** Le contrat d'API laisse derrière lui les
+   inscriptions qu'il a **fermées** — une inscription est une trace, et aucune suppression n'est
+   exposée à personne. Ses lectures visent désormais sa propre ligne.
+4. **Le `viewer` LIT trois des quatre affaires figées** et n'en écrit aucune. Le scénario de
+   cloisonnement visait une affaire qu'il lit : il aurait été **vert pour rien**.
+5. **La dégradation « index rendu TOTAL » est inapplicable**, la base portant déjà plusieurs
+   inscriptions fermées sur la même affaire — et cette inapplicabilité est **elle-même la preuve**
+   de ce que le prédicat partiel sert à permettre. La dégradation retire l'index entier.
+
+**UNE MOITIÉ DE CONDITION MORTE, TROUVÉE ET CONSIGNÉE — INC-220.** Le refus « la card n'a pas
+d'adresse », repris de `queue_outbound_email`, teste `email_local_part is not null` : la colonne
+porte une contrainte **`not null`**, et ce prédicat ne peut jamais être faux. Ce qui fait réellement
+tomber la garde est la concaténation avec `inbound_domain`, **nullable**, qui rend `NULL`. Le refus
+est donc atteignable et utile, mais pour une raison que son `where` ne dit pas. La forme est reprise
+**à l'identique** — deux gardes qui divergeraient sur le même fait seraient pires qu'une garde à
+moitié redondante —, et le défaut de la migration 30 est consigné plutôt que corrigé au passage.
+
+**LE SEED N'ARME RIEN, ET C'EST UNE DÉCISION.** Une inscription armée serait exécutée **dix
+secondes** après le démarrage de la pile, par la cadence d'amorçage, et des messages partiraient
+réellement chez les adresses du jeu de démonstration. C'est la pollution que la décision 516 a payée
+pour apprendre. Une troisième garde du seed le vérifie, et elle attrape **deux** choses : un seed qui
+armerait, et une preuve qui n'aurait pas refermé ce qu'elle a armé.
+
+**CAMPAGNE COMPLÈTE EXÉCUTÉE** : `typecheck` et `build` verts ; `test:unit` **77 fichiers, 2551
+tests** ; `test:sql` **58 fichiers, 2808 assertions** ; `e2e:api` **922 passés** ; `pytest` **244
+passés** ; `scripts/verify-armement-sequences.sh` **48 contrôles, aucune anomalie**, ses sept
+dégradations vues et la restauration constatée octet à octet.
+
+**UNE ANOMALIE ÉTRANGÈRE, ET C'EST UNE RÉCURRENCE — INC-219.** `e2e:mail` rend **1 échec** sur
+`backfill.spec.ts`, exactement le scénario et exactement le bilan que la décision 517 avait
+consignés la veille au soir ; il passe **seul** en 5,6 s contre 5,1 s alors. **Deux sous-tranches
+successives, sans aucun chemin vers l'ingestion IMAP, produisent le même échec** : cela écarte
+définitivement l'hypothèse d'une régression apportée par l'une ou l'autre. L'entrée du registre dit
+désormais ce que la prochaine session devrait mesurer — quel scénario s'exécute juste avant celui-ci
+et ce qu'il laisse derrière — plutôt que de re-constater. Aucun test désactivé, aucune temporisation.
+
+**Ce qui n'a PAS été exécuté, et qui est dit** : les cinquante autres `scripts/verify-*.sh`, la
+série entière ne tenant pas dans une session (`docs/CloudWorker.md` §2.1 ter).
+
+**Où reprendre.** `CRM-063` **sous-tranche 4c — l'écran**, dernière de l'unité. Elle devra livrer
+l'administration des séquences, l'**armement depuis l'affaire**, et la **RPC de réordonnancement**
+que le §11.6 bis rend nécessaire — PostgREST ne posant que des valeurs littérales, aucun `PATCH`
+n'exprime un échange de positions. Elle devra aussi **réviser la confirmation de suppression d'un
+modèle** : le §9.7 annonce une suppression inconditionnelle, que le `on delete restrict` de la
+migration 59 rend fausse depuis. Et elle héritera d'un écart nommé au §12.12 : décider si une
+inscription de démonstration peut devenir **montrable sans être expédiée**.

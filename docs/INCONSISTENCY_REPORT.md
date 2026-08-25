@@ -219,6 +219,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-216 | `public.rendre_modele_email` rend `card.next_action_at` **en UTC** : MESURÉ, aucune colonne de fuseau n'existe dans le schéma — seule `profiles.locale`, qui est une **langue**. Un destinataire français lira 09:00 là où le rendez-vous est à 11:00 en heure d'été | 2026-08-25 | *ouverte* — comportement ASSUMÉ et figé par une assertion, **arbitrage attendu** : à qui appartient le fuseau d'un email sortant | 514 |
 | INC-217 | `supabase/tests/0052_relances_automatiques.test.sql` assertion 11 exige un passage `succeeded` de `p2enjoy-relances-cards-figees` dans `cron.job_run_details`, or ce job est planifié `23 3 * * *`. MESURÉ deux fois dans la même session : **rouge** à 12 h 45, **verte** à 13 h 50, le job ayant tourné entre-temps hors horaire — l'amorçage de dix secondes de `docs/SPEC-relances.md` §9.7 est réarmé par tout rejeu de la migration 54, et `verify-relances.sh` promeut le job. La preuve est donc verte **parce qu'un autre harnais a tourné avant elle**, jamais selon l'état du produit | 2026-08-25 | **close** — assertion révisée et preuve du moteur ARMÉE par le harnais, décision 508 | 514 |
 | INC-218 | `scripts/verify-modeles-emails.sh` extrayait la liste des variables du §2.4 par un motif appliqué à TOUT le document : le tableau du §8.6 commence deux de ses lignes par `card.amount` et `card.next_action_at`, et le harnais rendait « la base et le §2.4 divergent » — quatorze noms contre douze — alors que la base et le §2.4 étaient d'accord. **Faux verdict rouge**, ligne de base établie | 2026-08-25 | **CLOSE le 2026-08-25** par `CRM-063` tranche 3 : l'extraction est bornée au seul §2.4 par `sed`. Le harnais rend de nouveau **44 contrôles, aucune anomalie** | 515, 516 |
+| INC-219 | `e2e/mail/backfill.spec.ts` §« un premier contact ne descend jamais l'historique » échoue dans la SÉRIE complète et passe SEUL. Ouverte par `CRM-063` 4a le 2026-08-25 ; **REPRODUITE À L'IDENTIQUE le même jour par la sous-tranche 4b** — `e2e:mail` rend « 1 failed, 41 passed », le scénario seul rend « 1 passed » en **5,6 s** contre 5,1 s à l'ouverture. Deux sous-tranches sans aucun chemin vers l'ingestion IMAP produisent le même échec : la cause n'est donc imputable ni à l'une ni à l'autre | 2026-08-25 | *ouverte* — cause NON établie, et « intermittent » n'est pas un diagnostic. Comportement inchangé, aucun test désactivé, aucune temporisation. Relève de `CRM-056` | 517, 518 |
 | INC-220 | `public.queue_outbound_email` (migration `0030`, `CRM-058`) garde son adresse de réponse par `where c.id = p_card_id and c.email_local_part is not null`. MESURÉ le 2026-08-25 : `cards.email_local_part` porte une contrainte **`not null`**, et une sonde qui tente de l'effacer est refusée par la base avant d'atteindre la fonction — ce prédicat ne peut JAMAIS être faux. Ce qui fait réellement tomber la garde est la concaténation `email_local_part || '@' || inbound_domain`, qui rend `NULL` quand `workspaces.inbound_domain` est nul, cette colonne-là étant nullable. La garde est **atteignable et utile** ; c'est la moitié explicite de sa condition qui est morte, et le code dit donc autre chose que ce qu'il fait | 2026-08-25 | *ouverte* — **comportement inchangé**, étranger à `CRM-063` 4b : `armer_sequence_relance` reprend la forme À L'IDENTIQUE plutôt que de faire diverger deux gardes sur le même fait. Relève de `CRM-058`. Le §12.4 bis de `docs/SPEC-modeles-emails.md` porte la mesure | 518 |
 
 ---
@@ -5070,6 +5071,26 @@ npm run e2e:mail                      => 42 passed (1,3 min)
 **Le scénario passe seul, et la série entière repasse au tour suivant.** Le second passage complet
 est le **seul** rejeu dépensé (`docs/CloudWorker.md` §4.3), et il rend le verdict vert que la
 campagne de cette session retient.
+
+**RÉCURRENCE MESURÉE LE 2026-08-25 PAR LA SOUS-TRANCHE 4b (décision 518), et c'est le fait le plus
+utile de cette entrée.** La campagne de 4b rend EXACTEMENT le même bilan, sur le même scénario :
+
+```
+npm run e2e:mail                                   => 1 failed, 41 passed
+npx playwright test --project=mail backfill        => 1 passed  (5,6 s)
+```
+
+**Deux sous-tranches successives, sans aucun chemin vers l'ingestion IMAP, produisent le même
+échec.** 4a ajoutait deux tables, huit politiques et un index ; 4b ajoute une table, trois fonctions
+et un job `pg_cron` qui ne s'exécute que sur des inscriptions — et il n'y en a aucune. Que le même
+scénario tombe dans les deux campagnes, et se relève seul dans les deux, **écarte définitivement
+l'hypothèse d'une régression apportée par l'une ou l'autre** : la cause est dans la série elle-même,
+ou dans l'état que la série laisse à ce scénario.
+
+**Ce que la prochaine session devrait mesurer**, plutôt que de re-constater : quel scénario
+d'`e2e:mail` s'exécute JUSTE AVANT celui-ci dans la série, et ce qu'il laisse en base ou dans la
+boîte IMAP. L'entrée reste ouverte tant que cette cause n'est pas nommée — « intermittent » n'est
+pas un diagnostic, et un rejeu vert n'est pas une explication.
 
 **Pourquoi ce n'est PAS la sous-tranche de la session.** La sous-tranche 4a ajoute deux tables
 — `mail_sequences`, `mail_sequence_steps` —, huit politiques et un index unique sur

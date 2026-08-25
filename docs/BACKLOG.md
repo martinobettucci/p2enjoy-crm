@@ -8559,15 +8559,84 @@ avant la suivante :
   - [x] **4a — la séquence et ses paliers** : les deux tables, leurs contraintes, RLS, privilèges,
         pgTAP, contrat d'API, seed, harnais. **LIVRÉE ET PROUVÉE le 2026-08-25** ; voir le détail
         plus bas.
-  - [~] **4b — l'armement et l'exécution** : l'application d'une séquence à une affaire figée, le
+  - [x] **4b — l'armement et l'exécution** : l'application d'une séquence à une affaire figée, le
         job qui met les messages en file, l'interruption. **SPÉCIFIÉE au §12** de
         `docs/SPEC-modeles-emails.md` le 2026-08-25, après mesure sur la pile debout et seedée, et
-        **avant sa première ligne de code**. Les **quatre** questions — les trois du §7.3 et celle
-        que le §11.12 a ajoutée — y sont tranchées **chacune par une mesure** (§12.1).
+        **avant sa première ligne de code** ; **LIVRÉE ET PROUVÉE le 2026-08-25**. Les **quatre**
+        questions — les trois du §7.3 et celle que le §11.12 a ajoutée — y sont tranchées **chacune
+        par une mesure** (§12.1). Voir le détail plus bas.
   - [ ] **4c — l'écran** : administration des séquences, armement depuis l'affaire, et la **RPC de
         réordonnancement** que le §11.6 bis rend nécessaire. Elle devra aussi **réviser la
         confirmation de suppression d'un modèle** : le §9.7 annonce une suppression
         inconditionnelle, que le `on delete restrict` de la migration 59 rend **fausse**.
+
+**Sous-tranche 4b livrée, 2026-08-25 — l'armement et l'exécution**
+(`docs/SPEC-modeles-emails.md` §12, `docs/SCHEMA.md` §7) :
+
+- [x] **Spécification écrite et COMMITTÉE avant la première ligne de code** (`CLAUDE.md` §5) : le
+      §12, dont les **quatre** questions tranchées **chacune par une sonde** exécutée sur la pile.
+- [x] **`supabase/migrations/0060_armement_sequences.sql`** : `public.card_sequence_enrollments` et
+      ses cinq contraintes, l'**index unique PARTIEL** d'inscription active, l'unique politique de
+      lecture, `app.mail_outbox_inserer`, `public.armer_sequence_relance` (huit refus),
+      `public.interrompre_sequence_relance` (idempotente), `app.executer_sequences_relance()` et
+      le job `p2enjoy-sequences-relance`.
+- [x] **QUI ARME : un geste humain.** MESURÉ — le workspace porte **deux** identités sortantes et la
+      séquence n'en porte aucune (§11.2) : aucun job ne peut choisir entre elles sans inventer la
+      valeur par défaut trompeuse que `CLAUDE.md` §18 proscrit.
+- [x] **CE QUI INTERROMPT : la sortie de `public.cards_figees()`.** UN SEUL prédicat, déjà livré,
+      couvre **quatre** interruptions — le déplacement d'étape repose `entered_step_at`, et le
+      sommeil, l'archivage et la corbeille sont les trois exclusions du §2.4 de
+      `docs/SPEC-relances.md`. Les recopier aurait créé la **seconde définition de « figée »** que
+      le §2.1 de ce document existe pour empêcher.
+- [x] **CE QU'UNE RÉPONSE PRODUIT : elle TERMINE**, ce que `docs/SCHEMA.md` annonçait depuis
+      `CRM-000`. **UNE LIGNE DU CADRAGE TROUVÉE FAUSSE PAR LA MESURE** : le §11.12 désignait
+      `sent_at`, **nulle sur les quatre messages du seed**. L'ancre est `created_at`, posée par la
+      base et non déclarée par un tiers. La borne est `armed_at` et non `last_sent_at` — un message
+      arrivé avant le premier palier est une réponse.
+- [x] **COMMENT UN PALIER MET EN FILE : `app.mail_outbox_inserer`, EXTRAITE.**
+      `queue_outbound_email` rend `42501 / not_authenticated` sous `postgres`, contexte exact d'un
+      job `pg_cron` (mesuré). L'insertion est extraite pour que la règle « ce qui est stocké est ce
+      qui part » (§10.3) garde **UNE** définition ; les **sept refus** de la porte humaine sont
+      intacts, seules les cinq lignes de son `insert` se déplacent. Assouplir le premier refus était
+      l'autre issue : **écartée**, et le motif est écrit.
+- [x] **Suite pgTAP dédiée** : `supabase/tests/0058_armement_sequences.test.sql`, **47
+      assertions** — les huit refus chacun précédé de son témoin, les **quatre fins** du §12.7
+      chacune **PRODUITE** et non simulée, et le délai relatif éprouvé sur des inscriptions
+      antidatées.
+- [x] **DEUX MESURES ONT CORRIGÉ LA SUITE, aucune n'étant un défaut du produit.** Le refus (a) **ne
+      protège pas** le chemin `anon` — le PRIVILÈGE l'a déjà fermé ; il travaille sur le chemin
+      `service_role`. Et la suite **supposait une table vierge**, alors que le contrat d'API laisse
+      derrière lui les inscriptions qu'il a FERMÉES : une inscription est une **trace**, aucune
+      suppression n'est exposée à personne.
+- [x] **Test d'API dédié** : `e2e/api/armement-sequences.spec.ts`, **17 scénarios verts**, dont la
+      fermeture en écriture de la table à tout le monde et les deux `409` — l'index partiel et le
+      `on delete restrict` d'une séquence armée.
+- [x] **TROIS LIGNES DU CONTRAT D'API TROUVÉES FAUSSES PAR LA PREUVE, ET RÉVISÉES.** PostgREST rend
+      **`403`** — et non `401` — à un appelant AUTHENTIFIÉ sans privilège ; le refus (a) n'est pas ce
+      qui ferme le chemin anonyme ; et sur les quatre affaires figées du seed, le `viewer` en **LIT
+      trois** et n'en écrit aucune — une seule prouve donc le cloisonnement de la lecture.
+- [x] **Un garde-fou global RÉVISÉ, jamais retiré** : l'inventaire de `0016_preuves_refus.test.sql`
+      passe de 115 à **116** politiques, la nouvelle table y étant inventoriée **nommément**.
+- [x] **Seed : la TROISIÈME garde**, et le seed **n'arme RIEN** (§12.12). Une inscription armée
+      serait exécutée **dix secondes** après le démarrage de la pile et des messages partiraient
+      réellement chez les adresses de démonstration — la pollution mesurée par la décision 516. La
+      garde attrape deux choses : un seed qui armerait, et une preuve qui n'aurait pas refermé.
+- [x] **Harnais dédié `scripts/verify-armement-sequences.sh`** : **48 contrôles, aucune anomalie**,
+      **sept** dégradations toutes mordantes, restauration constatée octet à octet. Il porte le seul
+      contrôle du dépôt qui verrait un **second `insert into public.mail_outbox`** apparaître.
+- [x] **UNE DÉGRADATION INAPPLICABLE, ET SON INAPPLICABILITÉ EST UNE PREUVE.** « Rendre l'index
+      TOTAL » est refusé à la création — la base porte déjà plusieurs inscriptions fermées sur la
+      même affaire —, ce qui démontre exactement ce que le prédicat partiel sert à permettre. La
+      dégradation retire donc l'index entier, `comment on index` compris.
+- [x] **Compteurs de `scripts/verify-harness.sh` révisés dans le MÊME changement** :
+      `FICHIERS_SQL_ATTENDUS` 57 → **58**, `ASSERTIONS_ATTENDUES` 2760 → **2808**, `SCENARIOS_API`
+      905 → **922**. Valeurs **COMPTÉES** par les deux chemins.
+- [x] **Documentation dans le même changement** : `docs/SCHEMA.md` §7 (la table passe de « non
+      livrée » à livrée, avec son chapitre), `docs/PROD_MIGRATIONS.md` migration 60 — dont les deux
+      conséquences pour l'exploitant sont dites —, `CHANGELOG.md`, et
+      `docs/INCONSISTENCY_REPORT.md` où **INC-220** est consignée.
+- [ ] **E2E d'interface** : **aucun**, et l'écart est nommé — cette sous-tranche ne livre aucun
+      écran, qui est 4c.
 
 **Sous-tranche 4a livrée, 2026-08-25 — la séquence et ses paliers**
 (`docs/SPEC-modeles-emails.md` §11, `docs/SCHEMA.md` §7) :
