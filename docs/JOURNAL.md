@@ -24430,3 +24430,83 @@ comment l'écran choisit l'affaire, le contact et l'identité de la prévisualis
 deviner ; comment `variables_nulles` se rend ; comment la liste fermée est proposée au rédacteur ; et
 ce que la confirmation de suppression annonce, la tranche 4 devant poser un `on delete restrict` qui
 n'existe pas encore.
+
+
+## décision 515 — `CRM-063` tranche 2 CLOSE : l'écran des modèles, et le guichet qu'il a fallu poser
+
+**Session planifiée du 2026-08-25, ouverte à 14 h 24 UTC.** Reprise à l'endroit exact où la
+décision 514 s'arrêtait : « `CRM-063` **sous-tranche 2b** — l'administration des modèles et leur
+prévisualisation ». Choix de l'unité par le §4.2 point 1 de `docs/CloudWorker.md`.
+
+**LA SPÉCIFICATION A ÉTÉ ÉCRITE ET COMMITTÉE AVANT LA PREMIÈRE LIGNE DE CODE.** Le §8.11 n'était
+qu'un **cadrage** ; le §9 a été rédigé en entier après mesure sur la pile debout et seedée, et
+`docs/DESIGN_SYSTEM.md` a gagné son **§5.39** dans le même commit documentaire.
+
+**LA TROISIÈME QUESTION DU §8.11 A EXIGÉ UNE MIGRATION, ET C'EST UNE MESURE QUI L'A DÉCIDÉ.**
+`PGRST_DB_SCHEMAS` vaut `public,storage,graphql_public` : le schéma `app` n'est **pas exposé**, si
+bien qu'`app.mail_template_variables()` — source unique du §3 — était **hors de portée de l'écran**,
+et que `to_regprocedure('public.mail_template_variables()')` rendait `NULL`. Les deux issues ont été
+pesées. Recopier les douze noms en TypeScript est écarté : une treizième variable ajoutée au §2.4
+laisserait la palette muette sans qu'aucune preuve ne le voie — la contrainte l'accepterait, le rendu
+la substituerait, et seule l'interface l'ignorerait. La migration `0057` pose donc un **guichet** qui
+délègue, et une assertion pgTAP exige l'**égalité dans les deux sens** plutôt que celle des
+cardinaux : un guichet qui aurait cessé de déléguer resterait vert tant qu'il rendrait douze noms,
+fussent-ils les mauvais.
+
+**DEUX MESURES DU SEED ONT DÉCIDÉ LES SÉLECTEURS DE LA PRÉVISUALISATION**, et aucune ne venait d'un
+document. `card_contacts` ne porte que **2 lignes pour 41 affaires** : un sélecteur de contact
+restreint au rattachement serait vide sur **39 affaires sur 41**, c'est-à-dire inutile là où il sert
+le plus. Et **aucun** des trois sélecteurs ne présélectionne, pas même celui de l'affaire, pourtant
+obligatoire — choisir la première du tri ferait rendre un texte au sujet d'une affaire que personne
+n'a désignée, et cette affaire-là serait « Assistant IA support — Nordis » par le seul effet du tri.
+
+**LA CONFIRMATION DE SUPPRESSION SE TAIT SUR LA CASCADE, ET C'EST UNE MESURE** : `pg_constraint` ne
+porte **aucune** clé étrangère vers `mail_templates`. Annoncer une rupture de séquence décrirait un
+objet que la tranche 4 n'a pas posé ; promettre le refus de son futur `on delete restrict` mentirait
+dans l'autre sens.
+
+**DEUX DÉFAUTS TROUVÉS EN REGARDANT LES CAPTURES** (`CLAUDE.md` §16), et aucun à la lecture. Le
+scénario des paliers réduisait la fenêtre **après** le chargement : la barre latérale, déployée au
+chargement, devenait un tiroir en restant **ouverte**, et `modeles-emails-sm-390.jpg` montrait
+l'écran à moitié recouvert — un état qu'un utilisateur arrivant à 390 px ne rencontre jamais. Le
+palier est désormais posé **avant** la connexion, comme la suite jumelle du §5.35 le fait déjà. Et
+`modeles-emails-fiche-1440.jpg` montrait la **liste** : la capture était prise après une validation
+qui referme la fiche — une capture dont le nom ne décrit pas ce qu'elle montre se relit comme la
+preuve de ce qu'elle ne porte pas.
+
+**UNE ASSERTION FAUSSE CORRIGÉE PAR LA MESURE.** Le scénario de prévisualisation annonçait **deux**
+trous sur « Relance sans réponse », en supposant que le modèle citait les deux variables d'identité.
+Mesuré : il ne cite que `{{identity.from_name}}`. Une variable que le modèle **n'emploie pas** n'est
+pas un trou (§8.4). Le scénario éprouve désormais les **deux** accords — singulier et pluriel — et la
+preuve **inverse** : retirer le contact fait réapparaître `contact.full_name`, ce qui montre qu'elle
+était **pleine** et non ignorée.
+
+**UN TROISIÈME DÉFAUT DU HARNAIS TROUVÉ PAR LE HARNAIS, ET LE PREMIER FAUX ROUGE** (§9.10 bis). Ses
+contrôles cherchent ce que l'écran **s'interdit** — `required`, `maxLength`, un droit calculé — et
+les trouvaient dans le **commentaire** qui explique pourquoi ils sont absents. Le §2.11 avait corrigé
+l'échec silencieux de la **substitution**, le §8.9 bis celui de l'**application** : deux faux
+**verts**. Celui-ci est un faux **rouge**, et il est tout aussi grave — un harnais qui rougit sur du
+texte juste finit par être lu comme du bruit. Corrigé à sa cause : les contrôles lisent le **code**
+sans ses commentaires. La règle vaut au-delà de ce harnais : **un contrôle qui cherche l'absence d'un
+motif doit chercher dans ce qui s'exécute**.
+
+**LES TYPES GÉNÉRÉS ÉTAIENT RESTÉS EN ARRIÈRE DE DEUX TRANCHES.** `scripts/generate-types.sh` n'avait
+pas été rejoué par la tranche 1 ni par la 2a : le fichier ignorait `mail_templates`,
+`rendre_modele_email` et `mail_template_variables`, si bien que les deux témoins figés de
+`database.types.test-d.ts` comparaient deux états également périmés et restaient **verts**. C'est
+exactement le défaut de chaîne déjà consigné pour `cards_figees`, et sa répétition dit que la leçon
+vaut pour la **chaîne** et non pour un cas.
+
+**CAMPAGNE COMPLÈTE EXÉCUTÉE, ET ENTIÈREMENT VERTE** : `typecheck` et `build` verts ; `test:unit`
+**77 fichiers, 2549 tests** ; `test:sql` **55 fichiers, 2651 assertions** ; `e2e:api` **885
+passés** ; `e2e:ui` **604 passés, 15,3 min** ; `e2e:mail` **42 passés** ; `pytest` **244 passés** ;
+`scripts/verify-modeles-emails-ecran.sh` **37 contrôles, aucune anomalie**, ses cinq dégradations
+vues et la restauration constatée.
+
+**Où reprendre.** `CRM-063` **tranche 3 — la signature**, cadrée au §7.2 et **à spécifier ligne à
+ligne avant sa première ligne de code**. Elle devra trancher ce qu'INC-215 laisse ouvert depuis la
+tranche 1 : `mail_outbound_identities.signature_html` est **morte** — personne ne la lit — et **mal
+nommée**, son nom annonçant du HTML là où tout le sous-système expédie du **texte**. Les questions
+sont nommées au §7.2 : le nom et le type de la colonne, sa position dans le corps expédié, son
+effacement, et si une signature est propre à une **identité** ou à une **personne**. C'est une
+migration sur la table d'une autre unité, et le nom porte une question de produit.
