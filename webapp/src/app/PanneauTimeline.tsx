@@ -37,6 +37,9 @@
 import {
 	AlarmClock,
 	Archive,
+	UserRoundPlus,
+	UserRoundMinus,
+	UserRoundPen,
 	ArchiveRestore,
 	ArrowRightLeft,
 	FolderSync,
@@ -44,6 +47,7 @@ import {
 	RotateCcw,
 	Mail,
 	Moon,
+	Send,
 	Sparkles,
 	Sun,
 	Trash2,
@@ -67,6 +71,7 @@ import {
 	type ResultatGeste,
 } from '../lib/commentaires'
 import { lireMessagesDeCard } from '../lib/inbox'
+import { lireNomsDeContacts } from '../lib/contacts'
 import type { ClientCrm } from '../lib/supabase'
 import {
 	FAMILLES,
@@ -106,6 +111,9 @@ const PRESENTATION: Readonly<
 	field_changed: { cle: 'timeline.event.field_changed', icone: PencilLine, pastille: 'bg-hover text-text-3' },
 	// `CRM-057` §18.6 — le fil cesse de montrer un événement sans détail : il nomme le courrier.
 	mail_received: { cle: 'timeline.event.mail_received', icone: Mail, pastille: 'bg-brand-soft text-brand' },
+	// `CRM-058` §19.5 — INC-220. `Send` et non `Mail` : le §9 interdit qu'une icône serve deux
+	// objets, et la direction du courrier est précisément ce qui distingue ces deux lignes.
+	mail_sent: { cle: 'timeline.event.mail_sent', icone: Send, pastille: 'bg-brand-soft text-brand' },
 	// `CRM-081` §16.11.5 — les deux gestes du sommeil. Leur détail est l'échéance en date courte,
 	// résolue par `resoudreDetail` : le fil nomme jusqu'à quand l'affaire a dormi.
 	snoozed: { cle: 'timeline.event.snoozed', icone: Moon, pastille: 'bg-brand-soft text-brand' },
@@ -123,6 +131,22 @@ const PRESENTATION: Readonly<
 	// le même signal doit avoir la même forme. Le §1 reste tenu — le libellé « Relance
 	// automatique » porte l'information, la couleur ne fait que l'accompagner.
 	stalled: { cle: 'timeline.event.stalled', icone: AlarmClock, pastille: 'bg-danger-soft text-danger' },
+	// `CRM-060` tranche 5, docs/SPEC-contacts.md §19.5 — les trois gestes de rattachement. Ils sont
+	// posés ICI dans le même changement que la migration qui les écrit : `stalled` a vécu deux
+	// tranches en base sans figurer dans cette table et se rendait « Événement » (INC-207), et
+	// cette tranche ne refait pas l'oubli.
+	//
+	// TROIS ICÔNES DISTINCTES, de la même famille visuelle : le geste diffère — rattacher, détacher,
+	// changer le rôle —, et le §9 du design system interdit qu'une icône serve deux objets. Aucune
+	// n'est prise ailleurs dans cette table ; `UserRoundCog` reste au changement de RESPONSABLE,
+	// qui n'est pas un contact.
+	//
+	// AUCUNE TEINTE DE JUGEMENT : la teinte neutre `accent` pour les trois. Un détachement n'est
+	// pas une perte, un rattachement pas un succès — ce sont des faits d'organisation, et le
+	// `danger` reste réservé à ce qui appelle une action (§5.1, §5.36).
+	contact_linked: { cle: 'timeline.event.contact_linked', icone: UserRoundPlus, pastille: 'bg-accent-soft text-ink' },
+	contact_unlinked: { cle: 'timeline.event.contact_unlinked', icone: UserRoundMinus, pastille: 'bg-hover text-text-3' },
+	contact_role_changed: { cle: 'timeline.event.contact_role_changed', icone: UserRoundPen, pastille: 'bg-accent-soft text-ink' },
 }
 
 /**
@@ -243,6 +267,8 @@ export function PanneauTimeline({
 	// événements : un classement fait depuis l'inbox ajoute un `mail_received` que le fil doit
 	// pouvoir nommer sans attendre un rechargement complet.
 	const [libellesMessages, setLibellesMessages] = useState<ReadonlyMap<string, string>>(new Map())
+	// Les contacts cités par les trois événements de rattachement — `CRM-060` tranche 5, §19.5.
+	const [libellesContacts, setLibellesContacts] = useState<ReadonlyMap<string, string>>(new Map())
 	// AUCUNE PERSISTANCE (`CLAUDE.md` §11) : ni `localStorage`, ni `sessionStorage`. L'état d'un
 	// filtre n'est pas nécessaire au fonctionnement, et repartir complet est la seule valeur qui
 	// ne cache jamais rien.
@@ -281,7 +307,12 @@ export function PanneauTimeline({
 	// aucun courrier, et bruyante pour un appelant sans droit — mesuré, elle laissait un `401`
 	// dans la console de chaque preuve d'interface à session anonyme, ce que `CRM-007` interdit.
 	const porteDuCourrier = useMemo(
-		() => evenements.some((ligne) => ligne.genre === 'evenement' && ligne.type === 'mail_received'),
+		() =>
+			evenements.some(
+				(ligne) =>
+					ligne.genre === 'evenement' &&
+					(ligne.type === 'mail_received' || ligne.type === 'mail_sent'),
+			),
 		[evenements],
 	)
 
@@ -310,6 +341,39 @@ export function PanneauTimeline({
 			vivant = false
 		}
 	}, [client, idCard, porteDuCourrier])
+
+	// LES CONTACTS CITÉS PAR LE FIL — `CRM-060` tranche 5, docs/SPEC-contacts.md §19.5. Même règle
+	// que le courrier ci-dessus, et pour le même motif mesuré : la lecture n'a lieu que s'il y a
+	// quelque chose à nommer. Les identifiants viennent des ÉVÉNEMENTS, non du bloc des contacts de
+	// la fiche — un `contact_unlinked` cite précisément un contact qui n'y est plus.
+	const contactsCites = useMemo(
+		() =>
+			evenements.flatMap((ligne) =>
+				ligne.genre === 'evenement' &&
+				(ligne.type === 'contact_linked' ||
+					ligne.type === 'contact_unlinked' ||
+					ligne.type === 'contact_role_changed') &&
+				typeof ligne.payload['contact_id'] === 'string'
+					? [ligne.payload['contact_id']]
+					: [],
+			),
+		[evenements],
+	)
+
+	useEffect(() => {
+		if (contactsCites.length === 0) {
+			setLibellesContacts(new Map())
+			return
+		}
+		let vivant = true
+		void (async () => {
+			const noms = await lireNomsDeContacts(client, contactsCites)
+			if (vivant) setLibellesContacts(noms)
+		})()
+		return () => {
+			vivant = false
+		}
+	}, [client, contactsCites])
 
 	const commentaires = etat.statut === 'pret' ? etat.donnees : []
 	const fil = useMemo(() => fusionnerFil(commentaires, evenements), [commentaires, evenements])
@@ -410,7 +474,12 @@ export function PanneauTimeline({
 				etat={etat}
 				lignes={visibles}
 				totalCharge={fil.length}
-				libelles={{ etapes: libellesEtapes, champs: libellesChamps, messages: libellesMessages }}
+				libelles={{
+					etapes: libellesEtapes,
+					champs: libellesChamps,
+					messages: libellesMessages,
+					contacts: libellesContacts,
+				}}
 				onReprise={reprendre}
 				idUtilisateur={idUtilisateur}
 				estAdminWorkspace={estAdminWorkspace}

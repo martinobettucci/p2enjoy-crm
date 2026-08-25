@@ -78,8 +78,16 @@ describe('les familles (docs/DESIGN_SYSTEM.md §5.11)', () => {
 	// « Événement » (INC-207) : cette assertion est devenue rouge à la ligne près où il fallait
 	// qu'elle le devienne. Sixième évolution du vocabulaire, et aucune valeur n'a jamais été
 	// retirée. Les cinq familles restent cinq.
-	it('range les quatorze types livrés dans exactement cinq familles d’événements', () => {
-		expect(TYPES_EVENEMENT).toHaveLength(14)
+	//
+	// RÉVISÉE UNE QUATRIÈME FOIS PAR `CRM-060` tranche 5, ET ELLE A JOUÉ ENCORE UNE FOIS. Les trois
+	// gestes de rattachement d'un contact — `contact_linked`, `contact_unlinked`,
+	// `contact_role_changed` — portent le vocabulaire de l'écran à DIX-HUIT
+	// (docs/SPEC-contacts.md §19.5). Cette fois le type n'a PAS vécu en base avant d'être nommé
+	// ici : la migration `0061`, la table de familles, les libellés et la présentation sont du même
+	// changement, et c'est l'assertion ci-dessous qui a exigé qu'ils le soient. Septième évolution
+	// du vocabulaire, aucune valeur jamais retirée, et les cinq familles restent cinq.
+	it('range les dix-huit types livrés dans exactement cinq familles d’événements', () => {
+		expect(TYPES_EVENEMENT).toHaveLength(18)
 		const familles = new Set(TYPES_EVENEMENT.map((type) => familleDe(type)))
 		expect([...familles].sort()).toEqual(['champs', 'cycle', 'discussion', 'etapes', 'organisation'])
 		expect(TYPES_EVENEMENT).toContain('channel_changed')
@@ -100,7 +108,25 @@ describe('les familles (docs/DESIGN_SYSTEM.md §5.11)', () => {
 		expect(TYPES_EVENEMENT).toContain('stalled')
 		expect(Object.hasOwn(FAMILLE_PAR_TYPE, 'stalled')).toBe(true)
 		expect(FAMILLE_PAR_TYPE.stalled).toBe('cycle')
-		// LA TABLE COUVRE LES QUATORZE TYPES, sans exception : un type ajouté demain sans y être
+		// LES TROIS GESTES DE RATTACHEMENT SONT ASSÉRÉS SUR LA TABLE, pour le motif exact de
+		// `stalled` juste au-dessus : le repli rendrait `cycle` et une assertion sur `familleDe`
+		// ne distinguerait pas une valeur écrite d'une valeur obtenue par défaut. Ici le repli
+		// donnerait même une famille FAUSSE — `cycle` au lieu d'`organisation` —, ce qu'aucune
+		// preuve interrogeant la seule fonction ne verrait.
+		for (const type of ['contact_linked', 'contact_unlinked', 'contact_role_changed'] as const) {
+			expect(TYPES_EVENEMENT).toContain(type)
+			expect(Object.hasOwn(FAMILLE_PAR_TYPE, type), `${type} n'est pas ÉCRIT dans la table`).toBe(
+				true,
+			)
+			expect(FAMILLE_PAR_TYPE[type]).toBe('organisation')
+		}
+		// `mail_sent` EST ASSÉRÉ SUR LA TABLE, comme les trois ci-dessus : INC-220 a vécu cinq
+		// unités en base sans être nommé ici, et le repli le rangeait silencieusement en `cycle`
+		// alors qu'il appartient à la discussion.
+		expect(TYPES_EVENEMENT).toContain('mail_sent')
+		expect(Object.hasOwn(FAMILLE_PAR_TYPE, 'mail_sent')).toBe(true)
+		expect(FAMILLE_PAR_TYPE.mail_sent).toBe('discussion')
+		// LA TABLE COUVRE LES DIX-HUIT TYPES, sans exception : un type ajouté demain sans y être
 		// rangé retomberait sur le repli, et c'est précisément l'oubli d'INC-207 qui se répéterait.
 		for (const type of TYPES_EVENEMENT) {
 			expect(Object.hasOwn(FAMILLE_PAR_TYPE, type), `${type} n'est rangé nulle part`).toBe(true)
@@ -110,19 +136,31 @@ describe('les familles (docs/DESIGN_SYSTEM.md §5.11)', () => {
 	// RÉVISÉE ELLE AUSSI : la discussion n'était portée par aucun TYPE — seuls les commentaires y
 	// tombaient. `CRM-057` y range le courrier reçu, parce qu'un message est une parole et non un
 	// fait de cycle de vie (docs/SPEC-mail-subsystem.md §18.6). La famille reste unique.
-	it('déclare cinq familles, dont la discussion que le courrier reçu porte désormais', () => {
+	// RÉVISÉE : la discussion porte les DEUX sens du courrier depuis INC-220. `mail_sent` existait
+	// en base depuis la migration `0030` et n'était nommé nulle part côté écran ; les ranger
+	// différemment ferait disparaître la moitié d'une conversation quand l'utilisateur filtre.
+	it('déclare cinq familles, dont la discussion que le courrier des DEUX SENS porte', () => {
 		expect([...FAMILLES]).toEqual(['discussion', 'etapes', 'champs', 'organisation', 'cycle'])
 		expect(TYPES_EVENEMENT.filter((type) => familleDe(type) === 'discussion')).toEqual([
 			'mail_received',
+			'mail_sent',
 		])
 	})
 
 	// Le repli est DOCUMENTÉ : la valeur vient du backend, et un type ne garantit jamais une
-	// valeur. Un événement inconnu doit rester VISIBLE — c'est une mémoire. Le témoin n'est plus
-	// `mail_received`, qui est désormais un type CONNU : s'en servir encore aurait mesuré autre
-	// chose que le repli.
+	// valeur. Un événement inconnu doit rester VISIBLE — c'est une mémoire.
+	//
+	// LE TÉMOIN A ÉTÉ CHOISI DEUX FOIS PARMI DES TYPES QUE LE PRODUIT LIVRAIT DÉJÀ, ET C'EST
+	// AINSI QU'UN DÉFAUT A SURVÉCU CINQ UNITÉS — INC-220. D'abord `mail_received`, révisé quand
+	// `CRM-057` l'a nommé ; puis `mail_sent`, qui semblait « pas encore livré » alors que la
+	// migration `0030` l'ÉCRIVAIT depuis `CRM-058` et que la base en portait NEUF, rendus
+	// « Événement » à l'écran. La preuve s'était appropriée le manque au lieu de le dénoncer.
+	//
+	// LA RÈGLE DE LA DÉCISION 408 EST DONC APPLIQUÉE ICI : un témoin n'emploie jamais une valeur
+	// que le produit peut livrer un jour. Celui-ci n'est pas dans `card_events_type_check` et ne
+	// peut donc pas être écrit en base ; il ne cessera jamais d'être inconnu.
 	it('replie un type inconnu sur le cycle de vie plutôt que de le perdre', () => {
-		expect(familleDe('mail_sent')).toBe('cycle')
+		expect(familleDe('sonde_type_jamais_livre')).toBe('cycle')
 		expect(familleDe('')).toBe('cycle')
 	})
 })

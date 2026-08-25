@@ -983,12 +983,26 @@ export const fr = {
 	'timeline.event.restored': 'Affaire restaurée',
 	'timeline.event.field_changed': 'Champ renseigné',
 	'timeline.event.mail_received': 'Message reçu',
+	// `CRM-058` §19.5 — INC-220. Le type existait en base depuis la migration `0030` et n'avait
+	// jamais eu de libellé : neuf lignes du fil se lisaient « Événement ».
+	'timeline.event.mail_sent': 'Message envoyé',
 	'timeline.event.snoozed': 'Affaire mise en sommeil',
 	'timeline.event.woken': 'Affaire réveillée',
 	// `CRM-062` tranche 3b — docs/SPEC-relances.md §10.3.1. Le libellé nomme le FAIT, pas la
 	// mécanique : « Affaire figée » décrirait un état, or la ligne du fil date un geste. Le mot
 	// `stalled` est le vocabulaire de la base, jamais celui de l'écran.
 	'timeline.event.stalled': 'Relance automatique',
+	// `CRM-060` tranche 5 — docs/SPEC-contacts.md §19.5. Les libellés nomment le GESTE, et le
+	// détail porte le nom du contact, résolu à la lecture : le payload n'en porte aucun (§14.6),
+	// un nom recopié dans un événement immuable deviendrait faux au premier renommage.
+	'timeline.event.contact_linked': 'Contact rattaché',
+	'timeline.event.contact_unlinked': 'Contact détaché',
+	'timeline.event.contact_role_changed': 'Rôle du contact modifié',
+	// Deux formes, et l'accord est POSÉ plutôt que construit par concaténation (§10) : un
+	// rattachement sans rôle est légitime — le §12 laisse le rôle libre et facultatif.
+	'timeline.contact.avecRole': '{contact} ({role})',
+	'timeline.contact.roleChange': '{contact} : {avant} → {apres}',
+	'timeline.contact.sansRole': 'aucun rôle',
 	// Trois formes, et l'accord est POSÉ plutôt que construit par concaténation (§10). La borne du
 	// §2.5 étant large, un retard de zéro est légitime : il se dit autrement, sans quoi « 0 jours
 	// de retard » se lirait comme une erreur de calcul.

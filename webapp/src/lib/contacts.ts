@@ -1234,3 +1234,36 @@ export async function modifierRoleRattachement(
 		}
 	}
 }
+
+// =================================================================================================
+// Les NOMS des contacts cités par le fil d'une affaire — CRM-060 tranche 5, §19.5
+// =================================================================================================
+
+/**
+ * Rend, pour les identifiants demandés, le nom complet de chaque contact LISIBLE par l'appelant.
+ *
+ * POURQUOI UNE LECTURE À PART, ET NON `lireContactsDeLAffaire`. Un événement `contact_unlinked`
+ * cite un contact qui n'est justement PLUS rattaché : la lecture du bloc de la fiche ne le rend
+ * pas, et le fil resterait sans nom là où il en a le plus besoin — au moment du détachement.
+ *
+ * LA CARTE EST INCOMPLÈTE PLUTÔT QUE FAUSSE. Un contact supprimé, ou qu'une politique masque, n'a
+ * simplement pas d'entrée : le fil retombe alors sur son libellé sans détail (§19.5), et n'invente
+ * ni « inconnu », ni identifiant brut. La mémoire ne ment pas, elle se tait — c'est la règle déjà
+ * suivie par les messages classés (`CRM-057` §18.6).
+ */
+export async function lireNomsDeContacts(
+	client: ClientCrm | null,
+	identifiants: readonly string[],
+): Promise<ReadonlyMap<string, string>> {
+	if (client === null || identifiants.length === 0) return new Map()
+	try {
+		const reponse = await client
+			.from('contacts')
+			.select('id,full_name')
+			.in('id', [...new Set(identifiants)])
+		if (reponse.error !== null) return new Map()
+		return new Map(reponse.data.map((ligne) => [ligne.id, ligne.full_name]))
+	} catch {
+		return new Map()
+	}
+}

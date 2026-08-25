@@ -601,12 +601,16 @@ describe('le fil unifié (docs/DESIGN_SYSTEM.md §5.11)', () => {
 	})
 
 	// Le repli d'un type inconnu est DOCUMENTÉ : une mémoire ne cache pas ce qu'elle ne comprend
-	// pas. Le jour où `CRM-054` écrira `mail_received`, le fil le montrera.
-	// RÉVISÉ PAR `CRM-057` : le témoin était `mail_received`, qui est devenu un type CONNU et porte
-	// désormais son propre libellé. Continuer à s'en servir aurait mesuré le contraire de ce que le
-	// test dit mesurer. Le témoin est donc un type que le produit n'a pas encore livré.
+	// pas.
+	//
+	// RÉVISÉ UNE SECONDE FOIS — INC-220. Le témoin fut `mail_received`, révisé par `CRM-057` qui
+	// l'a nommé ; puis `mail_sent`, réputé « pas encore livré » alors que la migration `0030`
+	// l'écrivait depuis `CRM-058`. Ce test mesurait donc le repli sur un type que le produit
+	// PRODUISAIT, et rendait ainsi invisible le fait que neuf lignes du fil se lisaient
+	// « Événement ». Le témoin est désormais une valeur que `card_events_type_check` REFUSE : elle
+	// ne peut pas être écrite en base, donc elle ne cessera jamais d'être inconnue (décision 408).
 	it('montre un type inconnu plutôt que de le faire disparaître', async () => {
-		monter({ evenements: [evenement({ id: 'e1', type: 'mail_sent' })] })
+		monter({ evenements: [evenement({ id: 'e1', type: 'sonde_type_jamais_livre' })] })
 
 		await waitFor(() => {
 			expect(screen.getByText(fr['timeline.event.unknown'])).not.toBeNull()

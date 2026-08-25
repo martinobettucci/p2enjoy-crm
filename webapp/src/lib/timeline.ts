@@ -71,11 +71,24 @@ export const TYPES_EVENEMENT = [
 	'restored',
 	'field_changed',
 	'mail_received',
+	// `CRM-058` §19.5 — le courrier ENVOYÉ, écrit par `public.marquer_envoi_reussi` depuis la
+	// migration `0030`. Il manquait ici depuis, et la base en portait NEUF que le fil rendait
+	// « Événement » : INC-220, trouvée le 2026-08-25 parce que l'assertion de couverture de
+	// `CRM-060` tranche 5 a exigé de compter les types un à un. Même défaut qu'INC-207, même
+	// correction — le type est nommé, rangé, traduit et présenté.
+	'mail_sent',
 	'snoozed',
 	'woken',
 	// `CRM-062` tranche 3b, docs/SPEC-relances.md §10.3.1 — la relance automatique, écrite par le
 	// job quotidien `p2enjoy-relances-cards-figees` depuis la migration `0054`.
 	'stalled',
+	// `CRM-060` tranche 5, docs/SPEC-contacts.md §19.3 — les trois gestes de rattachement d'un
+	// contact, écrits par le trigger de TABLE de la migration `0061`. Ils sont inscrits ICI, dans
+	// le même changement que la migration : c'est l'oubli exact d'INC-207, où `stalled` avait vécu
+	// deux tranches en base sans que le fil sache le nommer, et rendait « Événement ».
+	'contact_linked',
+	'contact_unlinked',
+	'contact_role_changed',
 ] as const
 
 export type TypeEvenement = (typeof TYPES_EVENEMENT)[number]
@@ -115,10 +128,22 @@ export const FAMILLE_PAR_TYPE: Readonly<Record<TypeEvenement, Famille>> = {
 	// répond à la même question — « qu'est-ce qui s'est dit sur cette affaire ? » — et évite une
 	// sixième bascule pour un seul type (`CRM-057`, docs/SPEC-mail-subsystem.md §18.6).
 	mail_received: 'discussion',
+	// UN COURRIER ENVOYÉ EST UNE PAROLE AUTANT QU'UN COURRIER REÇU : même famille, même motif
+	// (§18.6). Les ranger différemment ferait disparaître la moitié d'une conversation quand
+	// l'utilisateur filtre sur « Discussion ».
+	mail_sent: 'discussion',
 	// « Qu'est devenue cette affaire ? » est exactement la question à laquelle le sommeil et le
 	// réveil répondent. Une sixième bascule pour deux types contredirait le §5.11 (§16.11.5).
 	snoozed: 'cycle',
 	woken: 'cycle',
+	// LES TROIS GESTES DE RATTACHEMENT SONT DE L'ORGANISATION, non du cycle de vie
+	// (docs/SPEC-contacts.md §19.5). « Qui travaille sur cette affaire, et où vit-elle ? » est la
+	// question de cette famille — celle qui porte déjà `channel_changed` et `workflow_changed` —,
+	// tandis que le cycle de vie répond à « qu'est devenue cette affaire ? ». Aucune sixième
+	// bascule n'est ajoutée (§5.11).
+	contact_linked: 'organisation',
+	contact_unlinked: 'organisation',
+	contact_role_changed: 'organisation',
 	// « QU'EST DEVENUE CETTE AFFAIRE ? » — elle a STAGNÉ. C'est exactement la question du cycle de
 	// vie, et aucune sixième bascule n'est ajoutée pour un type (§5.11, arbitrage déjà rendu par
 	// `CRM-081` pour le sommeil).
@@ -237,6 +262,15 @@ export type LibellesFil = {
 	 * elle se tait.
 	 */
 	readonly messages?: ReadonlyMap<string, string>
+	/**
+	 * Nom complet des contacts cités par les trois événements de rattachement — `CRM-060`
+	 * tranche 5, docs/SPEC-contacts.md §19.5.
+	 *
+	 * Absente tant que la fiche ne les a pas chargés, et incomplète lorsqu'un contact n'est pas
+	 * lisible — supprimé, ou masqué par une politique. L'événement retombe alors sur son libellé
+	 * sans détail, comme les messages ci-dessus : la mémoire ne ment pas, elle se tait.
+	 */
+	readonly contacts?: ReadonlyMap<string, string>
 }
 
 export type ComptesFamille = Readonly<Record<Famille, number>>
@@ -281,7 +315,9 @@ export function resoudreDetail(ligne: LigneEvenement, libelles: LibellesFil): De
 		const nom = champ === null ? undefined : libelles.champs.get(champ)
 		return { detail: nom ?? null }
 	}
-	if (ligne.type === 'mail_received') {
+	// `mail_sent` suit `mail_received` : son `payload` porte le même `message_id`, et le message
+	// envoyé est archivé sur l'affaire (`CRM-058` §19.5), donc la même carte de libellés le nomme.
+	if (ligne.type === 'mail_received' || ligne.type === 'mail_sent') {
 		const message = texte(ligne.payload['message_id'])
 		const resume = message === null ? undefined : libelles.messages?.get(message)
 		return { detail: resume ?? null }
@@ -299,6 +335,23 @@ export function resoudreDetail(ligne: LigneEvenement, libelles: LibellesFil): De
 	// trois semaines plus tard rendrait un autre nombre. Ce n'est donc pas un libellé qui pourrait
 	// changer de sens demain, c'est la valeur même du fait, comme la date du sommeil au-dessus.
 	if (ligne.type === 'stalled') return { detail: detailRelance(ligne.payload) }
+	// LES TROIS GESTES DE RATTACHEMENT — `CRM-060` tranche 5, §19.5. Le NOM est résolu à la lecture,
+	// jamais lu dans le `payload` (§14.6) : un nom recopié dans un événement immuable deviendrait
+	// faux au premier renommage du contact, et le fil mentirait sur son propre passé. Le RÔLE, lui,
+	// est bien lu dans le payload — c'est la valeur même du fait, comme la date du sommeil : le
+	// rôle qu'un contact portait au moment du détachement n'est plus lisible nulle part après.
+	if (
+		ligne.type === 'contact_linked' ||
+		ligne.type === 'contact_unlinked' ||
+		ligne.type === 'contact_role_changed'
+	) {
+		const identifiant = texte(ligne.payload['contact_id'])
+		const nom = identifiant === null ? undefined : libelles.contacts?.get(identifiant)
+		// Sans nom, aucun détail : « (décideur) » seul ne dit pas DE QUI il s'agit, et une phrase
+		// tronquée est exactement ce que le §5.11 refuse.
+		if (nom === undefined) return { detail: null }
+		return { detail: detailContact(ligne.type, nom, ligne.payload) }
+	}
 	return { detail: null }
 }
 
@@ -324,6 +377,36 @@ export function detailRelance(payload: Record<string, unknown>): string | null {
 		retard: String(retard),
 		seuil: String(seuil),
 	})
+}
+
+/**
+ * Le détail d'un geste de rattachement : « Léo Marchand (décideur) », ou la bascule de rôle.
+ *
+ * COMPOSÉ PAR UNE CLÉ DE TRADUCTION, JAMAIS PAR CONCATÉNATION (`CLAUDE.md` §23,
+ * docs/DESIGN_SYSTEM.md §10). Le rôle est FACULTATIF depuis la tranche 1 — le §12 le laisse libre
+ * —, et un rattachement sans rôle rend donc le seul nom : « Léo Marchand () » serait un gabarit
+ * qui a fui jusqu'à l'écran.
+ *
+ * Le rôle est lu dans le `payload`, et c'est le second cas motivé du §14.6 : le rôle qu'un contact
+ * portait AU MOMENT de son détachement n'est plus lisible nulle part après, la ligne ayant disparu.
+ * Ce n'est pas un libellé qui pourrait changer de sens demain, c'est la valeur même du fait.
+ */
+export function detailContact(
+	type: 'contact_linked' | 'contact_unlinked' | 'contact_role_changed',
+	nom: string,
+	payload: Record<string, unknown>,
+): string {
+	if (type === 'contact_role_changed') {
+		const avant = texte(payload['from'])
+		const apres = texte(payload['to'])
+		return t('timeline.contact.roleChange', {
+			contact: nom,
+			avant: avant ?? t('timeline.contact.sansRole'),
+			apres: apres ?? t('timeline.contact.sansRole'),
+		})
+	}
+	const role = texte(payload['role'])
+	return role === null ? nom : t('timeline.contact.avecRole', { contact: nom, role })
 }
 
 /**
