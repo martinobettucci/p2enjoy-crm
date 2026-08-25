@@ -453,8 +453,20 @@ PORT_RAPPORT=9323
 # `0052_relances_automatiques.test.sql` entièrement verte, un harnais ayant promu le job de relance
 # avant elle (INC-217, dont la cause est l'ordre des exécutions et non le produit). Les deux chemins
 # concordent, et c'est cette concordance qui autorise la valeur.
-FICHIERS_SQL_ATTENDUS=55
-ASSERTIONS_ATTENDUES=2651
+#
+# **RÉVISÉS À 56 ET 2691 PAR `CRM-063` TRANCHE 3, le 2026-08-25.** Elle livre
+# `supabase/tests/0056_signature_identite.test.sql` — la colonne renommée et bornée, les quatre
+# règles de composition comparées CARACTÈRE À CARACTÈRE, les trois états de l'effacement chacun
+# précédé de son témoin, le septième refus de la garde et la borne du corps composé :
+# `FICHIERS_SQL_ATTENDUS` passe de 55 à **56**, et 2651 + 40 = **2691**. Elle ne RÉVISE aucune suite
+# existante — la migration 58 renomme une colonne que personne ne lisait, et les six refus de
+# `CRM-058` sont repris à l'identique, codes compris.
+#
+# LA VALEUR EST COMPTÉE PAR LES DEUX CHEMINS : la suite seule rend **40 assertions**, et
+# `npm run test:sql` somme **56 fichiers, 2691 assertions**. Les deux chemins concordent, et c'est
+# cette concordance qui autorise la valeur.
+FICHIERS_SQL_ATTENDUS=56
+ASSERTIONS_ATTENDUES=2691
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS

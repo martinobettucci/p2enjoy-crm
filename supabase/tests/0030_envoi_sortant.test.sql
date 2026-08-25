@@ -170,8 +170,18 @@ select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
 -- `0` GARDE SON SENS LITTÉRAL : cette identité n'envoie pas. C'est `NULL` qui signifie « aucun
 -- plafond » depuis `CRM-058` — le défaut `0` d'origine interdisait tout envoi sans le dire.
+--
+-- ASSERTION RÉVISÉE PAR `CRM-063` TRANCHE 3, le 2026-08-25, ET LE MOTIF EST UN CHANGEMENT DE RÈGLE,
+-- jamais un contournement (`docs/CloudWorker.md` §3.1). Elle s'appuyait sur le corps par DÉFAUT de
+-- la garde — la chaîne vide —, ce qui lui était indifférent tant que rien ne regardait le corps.
+-- Le §10.3 de `docs/SPEC-modeles-emails.md` a posé un SEPTIÈME refus, `body_required`, ANTÉRIEUR au
+-- quota : sans lui, une signature suffirait à rendre non vide un message que personne n'a écrit, et
+-- il partirait. Le corps est donc désormais RENSEIGNÉ ici, et l'assertion prouve exactement ce
+-- qu'elle annonçait : le quota de zéro refuse. La preuve du refus `body_required` lui-même vit dans
+-- `supabase/tests/0056_signature_identite.test.sql`, avec son témoin.
 select throws_ok(
-	format($$ select public.queue_outbound_email(%L::uuid, %L::uuid, array['a@b.test']) $$,
+	format($$ select public.queue_outbound_email(%L::uuid, %L::uuid, array['a@b.test'],
+	                                             'Objet 0030', 'Corps non vide.') $$,
 		(select valeur from pg_temp_ref where nom = 'card'),
 		(select valeur from pg_temp_ref where nom = 'identite_service')),
 	'23505',
