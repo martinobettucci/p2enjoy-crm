@@ -24794,3 +24794,82 @@ n'exprime un échange de positions. Elle devra aussi **réviser la confirmation 
 modèle** : le §9.7 annonce une suppression inconditionnelle, que le `on delete restrict` de la
 migration 59 rend fausse depuis. Et elle héritera d'un écart nommé au §12.12 : décider si une
 inscription de démonstration peut devenir **montrable sans être expédiée**.
+
+## décision 508 — les arbitrages sont DÉLÉGUÉS, quatre entrées du registre sont closes, et le fil apprend les rattachements
+
+**2026-08-25, seconde partie de la session.** Le responsable a donné deux instructions successives :
+« ferme toute incohérence en attente », puis « finis toutes les tâches et finis le produit ; si
+quelque chose empêche d'avancer, soit tu prends une décision, soit tu me demandes une par une ».
+Les arbitrages qui bloquaient le comportement à construire sont donc **rendus** et écrits dans
+`docs/ARBITRAGES.md` §5 — décisions **509 à 517** —, chacun avec son motif, de sorte qu'aucun ne
+dépende plus de la mémoire d'une session.
+
+**QUATRE ENTRÉES DU REGISTRE CLOSES, ET DEUX D'ENTRE ELLES ONT RÉSISTÉ À LEUR PREMIÈRE CORRECTION.**
+
+- **INC-212** — `verify-mail-infra.sh` laissait en base le message qu'il soumet, ce qui privait
+  `sommeil-fil.spec.ts` de son état vide. La première correction **reproduisait le défaut qu'elle
+  corrige** : la recherche IMAP `HEADER Message-ID <id@domaine>`, écrite avec ses chevrons comme
+  l'en-tête s'écrit, rend une recherche **VIDE** — mesuré contre `"id@domaine"` et `SUBJECT`, qui
+  trouvent tous deux. Le harnais reprend désormais son message des deux côtés, attend sa remise, et
+  refuse d'être vert sur une absence. **91 contrôles, aucune anomalie**, deux exécutions de suite.
+- **INC-209** — les deux preuves d'interface sont rejouables : locators portés sur leur carte,
+  filet pour ce qu'une exécution interrompue laisse. Là aussi, le premier filet écrit **ne
+  nettoyait rien** — `id=not.like.5eed*` sur une colonne `uuid`, que PostgREST n'applique qu'à du
+  texte —, et c'est une sonde posée en base qui l'a établi. `8 passés` puis `8 passés`.
+- **INC-203** — les quatre attentes de date sont construites en heure LOCALE : la suite rend
+  **2551 tests** sous `UTC` comme sous `Pacific/Auckland`, là où ce dernier rendait quatre échecs.
+- **INC-217** — l'assertion du job de relance ne dépend plus de l'ordre des harnais, et la preuve
+  que le moteur exécute réellement la commande est **armée par le harnais** sur un job jetable, ce
+  qu'un fichier pgTAP ne peut pas faire — il vit dans une transaction que `pg_cron` ne voit pas.
+
+**LA SÉRIE LENTE A ÉTÉ MENÉE À TERME, ET ELLE NE MESURE PAS LE PRODUIT.** Les quatre harnais que
+personne n'avait jamais fini — `verify-droits-fins` **45 min**, `verify-tracks` **40 min**,
+`verify-webapp` **20 min**, `verify-harness` **30 min** — sont des MÉTA-harnais : ils rejouent
+d'autres harnais et la campagne entière. Aucun n'échoue sur son propre sujet ; leurs trois rouges
+sont `types:check` (travail EN VOL de la session concurrente, dont la migration `0059` est poussée
+sans ses types générés), `test:unit` (**vert seul**, rouge par contention avec mes propres
+exécutions) et `e2e:ui` (INC-212, corrigée depuis). C'est la mesure qui justifie la **décision
+515** : la série entière devient un geste périodique, non un rite de fin de session.
+
+**LE PRODUIT : `CRM-060` TRANCHE 5 EST LIVRÉE ET PROUVÉE.** Le fil d'une affaire apprend les trois
+gestes de rattachement d'un contact — `contact_linked`, `contact_unlinked`, `contact_role_changed`
+—, écrits par un **trigger de TABLE** sur `card_contacts` : trois surfaces écrivent déjà dans cette
+table, et une trace posée par chacune serait trois fois la même règle. Le vocabulaire passe de
+quinze à **dix-huit** valeurs, sous les DEUX gardes d'INC-144 — la leçon du matin appliquée le jour
+même. L'écran apprend les trois types dans le MÊME changement que la migration, ce qu'INC-207 avait
+rendu obligatoire.
+
+**TROIS DÉFAUTS RÉELS TROUVÉS EN CHEMIN, ET CHACUN PAR UN MÉCANISME DIFFÉRENT.**
+
+1. **La suppression d'une affaire échouait** — trouvée par une preuve EXISTANTE (`0049_card_costs`)
+   avant toute livraison. `card_contacts` cascade depuis `cards` : le trigger écrivait dans le fil
+   d'une affaire déjà supprimée, la clé étrangère refusait, et la suppression entière échouait. La
+   garde est posée, et l'assertion qui l'aurait attrapée vit désormais dans la suite de la tranche.
+2. **INC-220 — `mail_sent` n'existait que dans la base.** Écrit depuis `CRM-058`, jamais nommé côté
+   écran : **neuf lignes du fil se lisaient « Événement »**. Trouvée parce que l'assertion de
+   couverture du vocabulaire a exigé de compter les types un à un. **Et deux preuves du repli
+   l'employaient comme témoin de type « inconnu »** — elles étaient vertes PARCE QUE le défaut
+   existait, et le protégeaient au lieu de le dénoncer. Les deux témoins sont révisés vers une
+   valeur que la base REFUSE d'écrire (décision 408).
+3. **Une capture qui ne portait pas son sujet**, vue en REGARDANT : cadrée sur la première ligne,
+   elle montrait des traces sans nom — celles de contacts sondes supprimés depuis. Le comportement
+   est juste (la mémoire se tait au lieu de mentir) ; l'image, elle, ne prouvait rien.
+
+**UNE LEÇON DE MÉTHODE, PAYÉE TROIS FOIS DANS LA MÊME SESSION** : sur une table **append-only**,
+aucune preuve ne peut mesurer un ABSOLU sur une donnée partagée. Le compte « exactement un » est
+vrai à la première exécution et faux ensuite. Les preuves d'API mesurent donc un **delta**, et la
+suite pgTAP **crée son propre contact** — qui n'a, par construction, aucune histoire.
+
+**Campagne** : `typecheck`, `build` verts ; `test:unit` **77 fichiers / 2551 tests** ; `test:sql`
+**59 fichiers / 2826 assertions** ; `e2e:api` **80 scénarios sur contacts, suite complète verte** ;
+`e2e:mail` **42 passés** ; `pytest` **244** ; `e2e:ui` **604 passés, 2 échecs** — les deux dans
+`groupement-fils.spec.ts`, et leur cause est MESURÉE : ma réparation du seed avait ingéré la réponse
+AVANT le message qu'elle répond. Données de démonstration reconstruites en une passe, le fichier
+rend **6 passés** et `verify-seed-demo.sh` **69 contrôles, aucune anomalie**.
+
+**Où reprendre.** `CRM-060` reste `[~]` pour une seule chose, désormais débloquée par la décision
+516 : la **suppression d'un contact**, à spécifier en tranche 6. Les quatre harnais lents n'ont pas
+été rejoués derrière la tranche 5 — décision 515, ils ne sont plus un rite de fin de session. La
+seule question encore posée au responsable est celle des unités **`CRM-072`** (`audit_log`) et
+**`CRM-073`** (`api_tokens`), qui n'existent pas et dont onze unités dépendent : leur périmètre est
+un choix produit qu'aucune mesure ne donne.
