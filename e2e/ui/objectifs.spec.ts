@@ -1220,3 +1220,190 @@ test.describe('tableaux d’objectifs — CRM-083 tranche 2c', () => {
 		expect(await tableauEnBase(TABLEAU_JETABLE)).toBeNull()
 	})
 })
+
+// =================================================================================================
+// TRANCHE 2g — LE CLAVIER DES GESTES D'ADMINISTRATION
+// =================================================================================================
+//
+// @verifies CRM-083 (docs/BACKLOG.md) — tranche 2g
+// @verifies docs/SPEC-goals.md §5.5 bis.1 (les quatre mesures), §5.5 bis.2 (l'ancre de retour du
+//           focus SURVIT au geste), §5.5 bis.3 (`Échap` referme les trois surfaces de la liste)
+// @verifies docs/DESIGN_SYSTEM.md §5.29 (administration des tableaux, clavier), §5.13 (le focus
+//           revient à la commande qui a ouvert) ; CLAUDE.md §22 (navigation clavier)
+//
+// AUCUN CLIC N'EST EMPLOYÉ POUR LES GESTES ÉPROUVÉS ICI. C'est la condition même de la preuve :
+// un parcours qui ouvrirait le formulaire à la souris ne dirait rien de ce qu'un utilisateur au
+// clavier peut faire, et le défaut mesuré — le focus perdu après un archivage — ne se voit QUE
+// dans le parcours clavier.
+
+/** Décrit l'élément qui porte le focus, sans rien supposer de l'écran. */
+async function focusCourant(page: Page): Promise<{ testid: string; aria: string }> {
+	return page.evaluate(() => {
+		const element = document.activeElement as HTMLElement | null
+		return {
+			testid: element?.getAttribute('data-testid') ?? (element?.tagName ?? 'null').toLowerCase(),
+			aria: element?.getAttribute('aria-label') ?? '',
+		}
+	})
+}
+
+test.describe('clavier des gestes d’administration — CRM-083 tranche 2g', () => {
+	test.beforeEach(async () => {
+		await nettoyerTableauxJetables()
+	})
+	test.afterEach(async () => {
+		await nettoyerTableauxJetables()
+	})
+
+	test('CRÉER puis ARCHIVER entièrement au clavier, sans jamais perdre le focus', async ({ page }) => {
+		await connecter(page, ADMIN)
+		await page.getByRole('link', { name: 'Objectifs', exact: true }).first().click()
+		await expect(page.getByTestId('tableau-objectifs').first()).toBeVisible()
+
+        // --- CRÉATION. La commande est atteinte par le focus, ouverte par `Entrée`, et la saisie
+        // part sans un `Tab` de plus : le focus entre dans le premier champ (§5.13).
+		await page.getByTestId('creer-tableau').focus()
+		await page.keyboard.press('Enter')
+		await expect(page.getByTestId('formulaire-creation-tableau')).toBeVisible()
+		expect((await focusCourant(page)).testid).toBe('champ-nom-tableau')
+		await page.keyboard.type(TABLEAU_JETABLE)
+		await page.keyboard.press('Tab')
+		await page.keyboard.type('Preuve clavier de la tranche 2g.')
+		await capturer(page, 'tableau-clavier-creation-1440', UNITE)
+		// `Entrée` dans un champ soumet le formulaire par le PREMIER bouton de soumission, qui est
+		// « Valider » : « Annuler » porte `type="button"`, et ne peut donc pas le devancer.
+		await page.keyboard.press('Enter')
+
+		await expect(page.getByTestId('mention-ecriture')).toHaveText('Tableau créé')
+		const ligne = page.getByTestId('tableau-objectifs').filter({ hasText: TABLEAU_JETABLE })
+		await expect(ligne).toHaveCount(1)
+		expect(await tableauEnBase(TABLEAU_JETABLE)).not.toBeNull()
+		// Le formulaire fermé, le focus revient à la commande qui l'a ouvert — elle survit au geste.
+		await expect
+			.poll(async () => (await focusCourant(page)).testid)
+			.toBe('creer-tableau')
+
+        // --- ARCHIVAGE. C'est le geste qui détruit la ligne portant sa propre commande, donc le
+        // seul dont l'ancre de retour ne peut pas être celle du §5.13.
+		await page.getByRole('button', { name: `Archiver le tableau ${TABLEAU_JETABLE}` }).focus()
+		await page.keyboard.press('Enter')
+		await expect(page.getByTestId('confirmation-archivage-tableau')).toBeVisible()
+		// Le focus entre sur le bouton d'action : la confirmation ouverte au clavier doit être
+		// répondue sans traverser la liste.
+		expect((await focusCourant(page)).testid).toBe('confirmer-archivage-tableau')
+		// DÉFAUT TROUVÉ EN REGARDANT CETTE CAPTURE (CLAUDE.md §16, docs/SPEC-goals.md §5.5 bis.5) :
+		// la confirmation portait « Tableau créé » — l'issue du geste PRÉCÉDENT — en vert sous son
+		// bouton destructif. Ouvrir une surface efface désormais la mention de la précédente.
+		await expect(page.getByTestId('confirmation-archivage-tableau')).not.toContainText('Tableau créé')
+		await expect(page.getByTestId('mention-formulaire-tableau')).toBeEmpty()
+		await capturer(page, 'tableau-clavier-confirmation-1440', UNITE)
+		await page.keyboard.press('Enter')
+
+		await expect(page.getByTestId('mention-ecriture')).toHaveText('Tableau archivé')
+		await expect(ligne).toHaveCount(0)
+		expect((await tableauEnBase(TABLEAU_JETABLE))?.archived_at).not.toBeNull()
+
+		// L'ASSERTION QUI TIENT TOUTE LA TRANCHE. Avant correction, `document.activeElement`
+		// retombait ici sur `body` — la commande visée venait d'être démontée avec sa ligne.
+		await expect
+			.poll(async () => (await focusCourant(page)).testid)
+			.toBe('creer-tableau')
+		// Et le `Tab` suivant reste DANS l'écran : il repartait du lien d'évitement, en tête de
+		// document, ce qui obligeait à retraverser toute la coquille pour revenir à la liste.
+		await page.keyboard.press('Tab')
+		expect((await focusCourant(page)).testid).not.toBe('lien-evitement')
+		await capturer(page, 'tableau-clavier-apres-archivage-1440', UNITE)
+	})
+
+	test('`ÉCHAP` referme les TROIS surfaces, rend le focus à sa commande, et n’écrit rien', async ({ page }) => {
+		await creerTableauDeService(TABLEAU_JETABLE, 95)
+		await connecter(page, ADMIN)
+		await page.getByRole('link', { name: 'Objectifs', exact: true }).first().click()
+		await expect(
+			page.getByTestId('tableau-objectifs').filter({ hasText: TABLEAU_JETABLE }),
+		).toHaveCount(1)
+
+		// --- 1. LA CRÉATION.
+		await page.getByTestId('creer-tableau').focus()
+		await page.keyboard.press('Enter')
+		await expect(page.getByTestId('formulaire-creation-tableau')).toBeVisible()
+		await page.keyboard.type('Tableau que personne ne veut')
+		await page.keyboard.press('Escape')
+		await expect(page.getByTestId('formulaire-creation-tableau')).toHaveCount(0)
+		await expect.poll(async () => (await focusCourant(page)).testid).toBe('creer-tableau')
+
+		// --- 2. LE RENOMMAGE, et `Échap` frappé depuis le SECOND champ : l'écoute est posée sur le
+		// conteneur, jamais sur le seul champ qui reçoit le focus à l'ouverture.
+		await page.getByRole('button', { name: `Renommer le tableau ${TABLEAU_JETABLE}` }).focus()
+		await page.keyboard.press('Enter')
+		await expect(page.getByTestId('formulaire-renommage-tableau')).toBeVisible()
+		await page.getByTestId('champ-nom-tableau').fill(TABLEAU_JETABLE_RENOMME)
+		await page.getByTestId('champ-description-tableau').focus()
+		await capturer(page, 'tableau-clavier-echap-renommage-1440', UNITE)
+		await page.keyboard.press('Escape')
+		await expect(page.getByTestId('formulaire-renommage-tableau')).toHaveCount(0)
+		await expect
+			.poll(async () => (await focusCourant(page)).aria)
+			.toBe(`Renommer le tableau ${TABLEAU_JETABLE}`)
+
+		// --- 3. LA CONFIRMATION D'ARCHIVAGE.
+		await page.getByRole('button', { name: `Archiver le tableau ${TABLEAU_JETABLE}` }).focus()
+		await page.keyboard.press('Enter')
+		await expect(page.getByTestId('confirmation-archivage-tableau')).toBeVisible()
+		await page.keyboard.press('Escape')
+		await expect(page.getByTestId('confirmation-archivage-tableau')).toHaveCount(0)
+		await expect
+			.poll(async () => (await focusCourant(page)).aria)
+			.toBe(`Archiver le tableau ${TABLEAU_JETABLE}`)
+
+		// LA BASE EST RELUE, ET C'EST ELLE QUI DIT QUE `ÉCHAP` N'A RIEN ENVOYÉ : le nom est intact,
+		// le tableau n'est pas archivé, et aucun second tableau n'a été créé. Une fermeture qui
+		// aurait envoyé son geste serait pire que l'absence du raccourci.
+		const enBase = await tableauEnBase(TABLEAU_JETABLE)
+		expect(enBase?.name).toBe(TABLEAU_JETABLE)
+		expect(enBase?.archived_at).toBeNull()
+		expect(await tableauEnBase(TABLEAU_JETABLE_RENOMME)).toBeNull()
+		// La ligne est toujours là, et l'écran n'a annoncé aucune écriture.
+		await expect(
+			page.getByTestId('tableau-objectifs').filter({ hasText: TABLEAU_JETABLE }),
+		).toHaveCount(1)
+	})
+
+	test('LES QUATRE PALIERS gardent les trois surfaces utilisables, sans débordement — §7', async ({
+		page,
+	}) => {
+		// Cette tranche ne change aucune géométrie : elle ajoute une touche et déplace une ancre de
+		// focus. Le palier est éprouvé quand même, parce que la tranche 2c n'avait capturé que le
+		// 1440 et que `Échap` fait désormais de la confirmation une surface qu'on ouvre et referme
+		// beaucoup plus souvent — y compris sur un écran où elle occupe presque toute la hauteur.
+		await creerTableauDeService(TABLEAU_JETABLE, 96)
+		await connecter(page, ADMIN)
+		await page.getByRole('link', { name: 'Objectifs', exact: true }).first().click()
+		await expect(
+			page.getByTestId('tableau-objectifs').filter({ hasText: TABLEAU_JETABLE }),
+		).toHaveCount(1)
+
+		for (const palier of PALIERS) {
+			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
+			await page.getByRole('button', { name: `Archiver le tableau ${TABLEAU_JETABLE}` }).focus()
+			await page.keyboard.press('Enter')
+			await expect(page.getByTestId('confirmation-archivage-tableau')).toBeVisible()
+			// Le focus entre sur l'action à CHAQUE palier : la largeur ne change pas le clavier.
+			expect((await focusCourant(page)).testid).toBe('confirmer-archivage-tableau')
+			const debordement = await page.evaluate(
+				() => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+			)
+			expect(debordement, `débordement horizontal au palier ${palier.nom}`).toBe(false)
+			await capturer(page, `tableau-clavier-confirmation-${palier.nom}`, UNITE)
+			// Et `Échap` la referme au même palier, en rendant le focus à la commande de la ligne.
+			await page.keyboard.press('Escape')
+			await expect(page.getByTestId('confirmation-archivage-tableau')).toHaveCount(0)
+			await expect
+				.poll(async () => (await focusCourant(page)).aria)
+				.toBe(`Archiver le tableau ${TABLEAU_JETABLE}`)
+		}
+
+		// Rien n'a été écrit : quatre ouvertures, quatre renoncements.
+		expect((await tableauEnBase(TABLEAU_JETABLE))?.archived_at).toBeNull()
+	})
+})

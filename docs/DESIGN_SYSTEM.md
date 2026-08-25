@@ -2118,6 +2118,17 @@ défaut. Les deux compléments viennent d'une **mesure** (§5.5 bis.1), pas d'un
   règle ci-dessus tait tant qu'une surface est ouverte. C'est la même discipline que « sans effet »
   au §5.3 ter : on ne montre jamais une issue que le serveur n'a pas rendue.
 
+- **OUVRIR UNE SURFACE EFFACE LA MENTION DE LA PRÉCÉDENTE, ET C'EST UN DÉFAUT TROUVÉ EN REGARDANT
+  UNE CAPTURE** (`CLAUDE.md` §16, 2026-08-25). La confirmation d'archivage ouverte juste après une
+  création réussie affichait « Tableau créé », en vert, **sous son bouton destructif** : l'issue
+  d'un geste qu'elle n'a pas causé, lue à l'endroit exact où l'on s'apprête à en commettre un
+  autre. La cause n'est pas cosmétique — la mention est portée par un **état unique** de la liste,
+  là où les trois surfaces la rendent chacune près de son propre champ —, et elle contredit la
+  règle que le §5.13 pose depuis la première surface d'administration : le message se lit près de
+  ce qui l'a **causé**. Ouvrir remet donc la mention à vide ; **fermer ne l'efface pas**, la
+  fermeture étant précisément ce qui la fait paraître dans la mention de section. La règle vaut
+  pour **toute** surface partageant un état de mention avec ses voisines.
+
 ### 5.30 Histogramme prévisionnel / réel — `CRM-086`
 
 Spécifié avant code, `docs/SPEC-costs.md` §4.2.

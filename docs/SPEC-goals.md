@@ -311,6 +311,29 @@ autre.
 - **Aucun piège de focus, aucun voile, aucune modale** : les trois surfaces vivent dans le flux du
   document, et c'est ce qui rend `Échap` suffisant.
 
+#### 5.5 bis.5 Ouvrir une surface efface la mention de la précédente
+
+**Défaut trouvé EN REGARDANT UNE CAPTURE** (`CLAUDE.md` §16), et non en lisant un test : la
+confirmation d'archivage ouverte juste après une création réussie affichait « Tableau créé », en
+vert, **sous son bouton destructif** — l'issue d'un geste qu'elle n'a pas causé, lue à l'endroit
+exact où l'on s'apprête à en commettre un autre.
+
+La cause est structurelle et non cosmétique : la mention est portée par un **état unique** de la
+liste, tandis que les trois surfaces la rendent chacune près de son propre champ (§5.13, « le
+message se lit près de ce qui l'a causé »). Une mention qui survit à la surface qui l'a produite
+change donc de propriétaire au lieu de disparaître.
+
+**Règle : ouvrir l'une des trois surfaces remet la mention à vide.** Rien n'est masqué pour autant
+— elle avait déjà été lue dans la mention de **section**, seul endroit où elle vit tant qu'aucune
+surface n'est ouverte. Fermer, en revanche, ne l'efface pas : c'est la fermeture qui la fait
+**paraître** dans la section, et l'effacer là reviendrait à taire l'issue du geste qu'on vient de
+faire.
+
+Ce défaut est **antérieur à cette tranche** — il vit dans la liste depuis la tranche 2 c et se
+produit aussi à la souris —, mais il n'est pas étranger à elle : c'est le parcours clavier de cette
+tranche qui enchaîne les surfaces assez vite pour le rendre visible, et c'est sa capture qui l'a
+montré.
+
 ## 6. Ce qui n'est pas au périmètre
 
 Nommé pour que personne ne le suppose livré :

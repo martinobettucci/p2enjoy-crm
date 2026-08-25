@@ -302,6 +302,22 @@ function ListeTableaux({
 		setFocusARendre(idFocus)
 	}, [])
 
+	// @spec CRM-083 (docs/BACKLOG.md) — tranche 2 g
+	// @spec docs/SPEC-goals.md §5.5 bis.5 ; docs/DESIGN_SYSTEM.md §5.29, §5.13
+	//
+	// OUVRIR UNE SURFACE EFFACE LA MENTION DE LA PRÉCÉDENTE, et c'est un défaut trouvé EN REGARDANT
+	// UNE CAPTURE (`CLAUDE.md` §16). La mention est portée par un état unique, tandis que les trois
+	// surfaces la rendent chacune près de son propre champ : la confirmation d'archivage ouverte
+	// après une création réussie affichait « Tableau créé » — en vert, sous son bouton destructif —,
+	// c'est-à-dire l'issue d'un GESTE QU'ELLE N'A PAS CAUSÉ. Le §5.13 exige l'inverse : le message
+	// se lit près du champ qui l'a causé. Rien n'est masqué pour autant — la mention avait déjà été
+	// lue dans la section, seul endroit où elle vit tant qu'aucune surface n'est ouverte. FERMER, en
+	// revanche, ne l'efface pas : c'est la fermeture qui la fait paraître dans la section.
+	const ouvrir = useCallback((surface: FormulaireTableau) => {
+		setMessage(null)
+		setFormulaire(surface)
+	}, [])
+
 	useEffect(() => {
 		if (focusARendre === null) return
 		const commande = document.querySelector<HTMLElement>(`[data-focus="${focusARendre}"]`)
@@ -398,7 +414,7 @@ function ListeTableaux({
 					data-focus="creer"
 					aria-pressed={formulaire?.mode === 'creation'}
 					onClick={() =>
-						formulaire?.mode === 'creation' ? fermer('creer') : setFormulaire({ mode: 'creation' })
+						formulaire?.mode === 'creation' ? fermer('creer') : ouvrir({ mode: 'creation' })
 					}
 				>
 					<SquarePlus aria-hidden="true" size={16} strokeWidth={2} />
@@ -449,8 +465,8 @@ function ListeTableaux({
 								<LigneTableau
 									tableau={tableau}
 									ordonnables={ordonnables}
-									onRenommer={() => setFormulaire({ mode: 'renommage', id: tableau.id })}
-									onArchiver={() => setFormulaire({ mode: 'archivage', id: tableau.id })}
+									onRenommer={() => ouvrir({ mode: 'renommage', id: tableau.id })}
+									onArchiver={() => ouvrir({ mode: 'archivage', id: tableau.id })}
 									onDeplacer={(sens) => deplacer(tableau.id, sens)}
 								/>
 							)}

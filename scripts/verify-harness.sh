@@ -797,7 +797,15 @@ SCENARIOS_API=858
 # 581 + 9 = **590**, valeur COMPTÉE par `playwright test --list` (« Total: 590 tests in 48 files »)
 # et corroborée par le décompte de la décision 506 bis, jamais déduite. Garde-fou RÉVISÉ, jamais
 # retiré : un compte qui MONTE reste un écart au même titre qu'un compte qui descend.
-SCENARIOS_UI=590
+#
+# **`CRM-083` tranche 2g, le 2026-08-25** : `e2e/ui/objectifs.spec.ts` gagne **trois** scénarios —
+# créer puis archiver un tableau entièrement au clavier sans perdre le focus, `Échap` refermant les
+# trois surfaces de la liste sans rien écrire, et les quatre paliers gardant la confirmation
+# utilisable au clavier. 590 + 3 = **593**, valeur COMPTÉE par `playwright test --list`
+# (« Total: 593 tests in 48 files »), jamais déduite. Le compteur est repris DANS LE MÊME
+# CHANGEMENT que les scénarios, ce qui est précisément ce que la révision ci-dessus reprochait à la
+# livraison de `/affaires-figees`.
+SCENARIOS_UI=593
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

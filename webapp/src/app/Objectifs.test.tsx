@@ -1652,3 +1652,31 @@ describe('clavier des gestes d’administration — SPEC-goals §5.5 bis', () =>
 		expect(typeof journal[0]?.archived_at).toBe('string')
 	})
 })
+
+describe('la mention appartient au geste qui l’a causée — SPEC-goals §5.5 bis.5', () => {
+	it('OUVRIR UNE SURFACE EFFACE LA MENTION DE LA PRÉCÉDENTE — défaut vu à la capture', async () => {
+		// La confirmation d'archivage ouverte après une création réussie affichait « Tableau créé »,
+		// en vert, SOUS son bouton destructif : l'issue d'un geste qu'elle n'a pas causé. Le §5.13
+		// exige que le message se lise près de ce qui l'a CAUSÉ.
+		const journal: Record<string, unknown>[] = []
+		rendreListe(
+			clientListe([TABLEAU], [], {
+				journal,
+				reponse: ok([{ id: 'b9', name: 'Tableau neuf', description: null, position: 9 }]),
+			}),
+		)
+		fireEvent.click(await screen.findByTestId('creer-tableau'))
+		fireEvent.change(screen.getByTestId('champ-nom-tableau'), { target: { value: 'Tableau neuf' } })
+		await act(async () => {
+			fireEvent.submit(screen.getByTestId('formulaire-creation-tableau'))
+		})
+		// La mention EST lue, et elle l'est dans la section — c'est ce que la fermeture fait paraître.
+		expect(screen.getByTestId('mention-ecriture').textContent).toContain(fr['goals.board.created'])
+
+		// Puis on ouvre une AUTRE surface : elle ne doit rien porter du geste précédent.
+		fireEvent.click((await screen.findAllByTestId('archiver-tableau'))[0] as HTMLElement)
+		const confirmation = screen.getByTestId('confirmation-archivage-tableau')
+		expect(confirmation.textContent).not.toContain(fr['goals.board.created'])
+		expect(screen.getByTestId('mention-formulaire-tableau').textContent).toBe('')
+	})
+})

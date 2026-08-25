@@ -13,8 +13,27 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Corrigé
+
+- **ARCHIVER UN TABLEAU D'OBJECTIFS AU CLAVIER NE FAIT PLUS PERDRE SA PLACE** (`CRM-083`
+  tranche 2 g, `docs/SPEC-goals.md` §5.5 bis). Le focus revenait à la commande de la ligne que
+  l'archivage venait de faire disparaître : il retombait donc sur le document, et la tabulation
+  suivante repartait du tout début de la page. Il revient désormais à **« Créer un tableau »**, la
+  seule commande de cet écran qui survive au geste — et qui reste offerte même quand la liste
+  devient vide.
+- **LA CONFIRMATION D'ARCHIVAGE N'AFFICHE PLUS LE MESSAGE DU GESTE PRÉCÉDENT** (`CRM-083`
+  tranche 2 g, `docs/SPEC-goals.md` §5.5 bis.5). Ouverte juste après une création réussie, elle
+  portait « Tableau créé » en vert **sous son bouton rouge** — l'issue d'un geste qu'elle n'avait
+  pas causé, lue à l'endroit exact où l'on s'apprête à en commettre un autre. Défaut trouvé en
+  regardant une capture.
+
 ### Ajouté
 
+- **« ÉCHAP » REFERME LES TROIS SURFACES DE LA LISTE DES TABLEAUX D'OBJECTIFS** (`CRM-083`
+  tranche 2 g) : le formulaire de création, celui de renommage et la confirmation d'archivage, depuis
+  n'importe lequel de leurs champs, en rendant le focus à la commande qui les a ouverts. La fiche
+  d'un bloc du même écran se refermait déjà ainsi ; la liste, elle, ignorait la touche. Renoncer
+  n'envoie rien : le nom saisi est abandonné, le tableau n'est pas archivé.
 - **UN ÉCRAN QUI LISTE TOUT CE QUI DORT** (`CRM-062` tranche 3, `docs/SPEC-relances.md` §10). Une
   nouvelle entrée de barre latérale, **Affaires figées**, sous *Ma journée* : elle rassemble les
   affaires restées dans leur étape au-delà du seuil de relance de cette étape, groupées par dossier
