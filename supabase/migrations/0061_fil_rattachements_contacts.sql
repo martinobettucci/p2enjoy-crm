@@ -99,8 +99,23 @@ begin
 		perform app.card_event_ecrire(new.card_id, new.workspace_id, 'contact_linked',
 			jsonb_build_object('contact_id', new.contact_id, 'role', new.role));
 	elsif tg_op = 'DELETE' then
-		perform app.card_event_ecrire(old.card_id, old.workspace_id, 'contact_unlinked',
-			jsonb_build_object('contact_id', old.contact_id, 'role', old.role));
+		-- LA CARD PEUT AVOIR DISPARU AVANT SES RATTACHEMENTS, ET C'EST UNE PREUVE EXISTANTE QUI
+		-- L'A ÉTABLI. `card_contacts` référence `cards` en `on delete cascade` : supprimer une
+		-- affaire retire ses rattachements, et le trigger tentait alors d'écrire « contact
+		-- détaché » dans le fil d'une affaire qui n'existe plus. MESURÉ le 2026-08-25 par
+		-- `supabase/tests/0049_card_costs.test.sql` :
+		--
+		--   ERROR: insert or update on table "card_events" violates foreign key constraint
+		--          "card_events_card_id_workspace_id_fkey"
+		--
+		-- La suppression de l'affaire ÉCHOUAIT donc entièrement — un défaut du produit, non de la
+		-- preuve. La trace n'est écrite que si l'affaire est encore là : un fil appartient à sa
+		-- card, et l'histoire d'une affaire supprimée n'a nulle part où s'écrire. Le détachement
+		-- individuel, lui, garde sa trace — c'est le cas b du §19.7, et il est prouvé.
+		if exists (select 1 from public.cards c where c.id = old.card_id) then
+			perform app.card_event_ecrire(old.card_id, old.workspace_id, 'contact_unlinked',
+				jsonb_build_object('contact_id', old.contact_id, 'role', old.role));
+		end if;
 	-- `is distinct from` comme les cinq gardes de `CRM-044` : une écriture qui ne déplace pas la
 	-- valeur n'allonge pas l'histoire, ce qui rend un rejeu convergent. Deux nulls sont « la même
 	-- valeur » pour cet opérateur, ce qui est exactement le comportement voulu.

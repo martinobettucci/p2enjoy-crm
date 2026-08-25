@@ -212,6 +212,11 @@ select ok(
 -- Elle est donc mise à jour plutôt que contournée : l'assertion fige l'énumération ENTIÈRE, de
 -- sorte qu'une valeur ajoutée en douce, ou une valeur PERDUE par un rejeu partiel, la fasse rougir.
 -- C'est la SIXIÈME fois qu'elle évolue de cette façon, et aucune valeur n'a jamais été retirée.
+--
+-- RÉVISÉE LE 2026-08-25 PAR `CRM-060` TRANCHE 5 — SEPTIÈME ÉVOLUTION. Les trois gestes de
+-- rattachement d'un contact portent l'énumération à DIX-HUIT (docs/SPEC-contacts.md §19.3), dans la
+-- même migration que le trigger qui les écrit — exactement ce que ce garde-fou exige de toute unité
+-- qui étend le vocabulaire. Aucune valeur retirée, la septième fois comme les six précédentes.
 
 select is(
 	(select pg_get_constraintdef(c.oid) from pg_constraint c
@@ -220,10 +225,11 @@ select is(
 	'''channel_changed''::text, ''workflow_changed''::text, ''archived''::text, '
 	'''unarchived''::text, ''trashed''::text, ''restored''::text, ''field_changed''::text, '
 	'''mail_received''::text, ''mail_sent''::text, ''snoozed''::text, ''woken''::text, '
-	'''stalled''::text])))',
-	'Le `CHECK` compte QUINZE valeurs : `CRM-062` ajoute `stalled` sans retirer aucune des '
-	'quatorze précédentes. Le garde-fou historique ÉVOLUE avec le vocabulaire au lieu de figer '
-	'un état périmé — et c''est la SIXIÈME fois qu''il le fait');
+	'''stalled''::text, ''contact_linked''::text, ''contact_unlinked''::text, '
+	'''contact_role_changed''::text])))',
+	'Le `CHECK` compte DIX-HUIT valeurs : `CRM-060` tranche 5 ajoute les trois gestes de '
+	'rattachement sans retirer aucune des quinze précédentes. Le garde-fou historique ÉVOLUE avec '
+	'le vocabulaire au lieu de figer un état périmé — et c''est la SEPTIÈME fois qu''il le fait');
 
 -- LE MÉCANISME A JOUÉ UNE FOIS DE PLUS. `CRM-058` a étendu l'énumération dans la même migration
 -- que son écriture, exactement comme l'assertion le lui demandait. Elle est donc RETOURNÉE : le

@@ -31,7 +31,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(16);
+select plan(18);
 
 -- Les identifiants du seed employés ici — docs/SPEC-seed.md §2.3 et §2.18.
 create temporary table sonde as
@@ -186,6 +186,43 @@ select is(
 	    and privilege_type in ('INSERT', 'UPDATE', 'DELETE')),
 	0::bigint,
 	'aucun rôle client ne gagne d''écriture sur card_events : la tranche n''ouvre rien');
+
+-- =============================================================================================
+-- 6. SUPPRIMER L'AFFAIRE NE DOIT PAS ÉCHOUER — le défaut que la tranche a réellement introduit
+-- =============================================================================================
+-- `card_contacts` référence `cards` en `on delete cascade` : supprimer une affaire retire ses
+-- rattachements, et le trigger de DELETE tentait alors d'écrire dans le fil d'une affaire qui
+-- n'existe plus. La clé étrangère de `card_events` refusait, et la SUPPRESSION DE L'AFFAIRE
+-- ÉCHOUAIT ENTIÈREMENT — défaut du produit, trouvé le 2026-08-25 par
+-- `supabase/tests/0049_card_costs.test.sql`, qui supprime une card en fin de suite.
+--
+-- L'assertion vit ICI parce que c'est cette tranche qui a introduit le défaut, et elle porte sur le
+-- GESTE ENTIER : une card sondée, dotée d'un rattachement, puis supprimée.
+create temporary table sonde_suppression as
+select gen_random_uuid() as card,
+       (select s.workspace from sonde s) as workspace,
+       (select s.contact from sonde s) as contact;
+
+insert into public.cards (id, workspace_id, channel_id, workflow_id, current_step_id, title,
+                          position, created_by)
+select ss.card, ss.workspace, c.channel_id, c.workflow_id, c.current_step_id,
+       'Sonde suppression tranche 5', 9999, c.created_by
+  from sonde_suppression ss, public.cards c, sonde s
+ where c.id = s.card;
+
+insert into public.card_contacts (workspace_id, card_id, contact_id, role)
+select ss.workspace, ss.card, ss.contact, 'decideur' from sonde_suppression ss;
+
+select is(
+	(select count(*) from public.card_events e, sonde_suppression ss
+	  where e.card_id = ss.card and e.type = 'contact_linked'),
+	1::bigint,
+	'témoin : la card sondée porte bien son rattachement ET sa trace avant la suppression');
+
+select lives_ok(
+	$$delete from public.cards where title = 'Sonde suppression tranche 5'$$,
+	'SUPPRIMER une affaire qui porte des contacts RÉUSSIT : le trigger n''écrit pas dans le fil '
+	'd''une affaire qui n''existe plus, ce qui faisait échouer la suppression entière');
 
 select * from finish();
 rollback;
