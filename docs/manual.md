@@ -1388,13 +1388,24 @@ lieu :
 | Elle a été archivée, ou remise en service | *Affaire archivée* / *Affaire désarchivée* |
 | Elle a été mise à la corbeille, ou restaurée | *Affaire mise à la corbeille* / *Affaire restaurée* |
 | Une réponse de formulaire a été saisie ou changée | *Champ renseigné*, avec le nom du champ |
+| Un courrier est arrivé sur l'affaire, ou en est parti | *Message reçu* / *Message envoyé*, avec son objet et son correspondant |
+| Un contact a été rattaché à l'affaire, ou détaché | *Contact rattaché* / *Contact détaché*, avec son nom et son rôle |
+| Le rôle d'un contact rattaché a changé | *Rôle du contact modifié*, avec l'ancien rôle et le nouveau |
+| L'affaire a été mise en sommeil, ou réveillée | *Affaire mise en sommeil* / *Affaire réveillée*, avec l'échéance |
+| L'affaire est restée trop longtemps dans son étape | *Relance automatique*, avec le retard et le seuil |
 
 **Ces traces ne peuvent être ni fabriquées, ni corrigées, ni effacées.** Personne ne peut en écrire
 une à la main — ni un utilisateur, ni un administrateur, ni le compte technique qui installe le jeu
 de démonstration. C'est le serveur qui les écrit, au moment de l'acte. Une fois écrite, une trace ne
 peut plus être modifiée par qui que ce soit. Ce que l'historique montre a donc **réellement eu
-lieu** ; en revanche, il ne dit **pas qui** l'a fait, pour la même raison qu'ailleurs dans le
-produit : aucun nom de personne n'est aujourd'hui lisible.
+lieu**, et il dit désormais **qui** l'a fait lorsque l'acte a un auteur : le nom apparaît à côté de
+la date. Certaines lignes n'en portent pas, et c'est normal — une relance nocturne n'a pas d'auteur,
+c'est un fait de l'horloge.
+
+**Le nom d'un contact rattaché est lu au moment où vous ouvrez le fil**, jamais recopié dans la
+trace : si la personne est renommée, l'historique dit son nom d'aujourd'hui plutôt qu'un nom périmé.
+Si elle a été supprimée entre-temps, la ligne reste — le geste a bien eu lieu — mais sans nom :
+l'historique préfère se taire que d'inventer.
 
 **Une action qui ne change rien ne laisse rien.** Réenregistrer une réponse identique, ou
 réattribuer une affaire à la personne qui en est déjà responsable, n'ajoute aucune ligne au fil.
