@@ -14,10 +14,11 @@ Contrat exécutable de `CRM-063` (`docs/BACKLOG.md`, chunk 5).
 - Interface : `docs/DESIGN_SYSTEM.md`.
 - Manuel : `docs/manual.md`, chapitre **15** annoncé par le sommaire depuis `CRM-000` et jamais
   écrit — « Modèles d'emails, signature et séquences de relance ».
-- État : **tranche 1 spécifiée ici** (§2 à §6), écrite le 2026-08-25 **après mesure sur la pile
-  debout et seedée**, avant sa première ligne de code (`CLAUDE.md` §5, `docs/CloudWorker.md` §3.2).
-  Les tranches 2 à 4 sont **cadrées** au §7 et seront spécifiées ligne à ligne avant d'être
-  écrites, chacune dans son propre chunk.
+- État : **tranches 1, 2 et 3 spécifiées ici** — la 1 aux §2 à §6, la 2 au §8 (rendu) et au §9
+  (écran), la 3 au **§10** —, chacune écrite le 2026-08-25 **après mesure sur la pile debout et
+  seedée**, avant sa première ligne de code (`CLAUDE.md` §5, `docs/CloudWorker.md` §3.2). La
+  tranche 4 est **cadrée** au §7.3 et sera spécifiée ligne à ligne avant d'être écrite, dans son
+  propre chunk.
 
 ---
 
@@ -337,6 +338,10 @@ nulle rend** — la chaîne vide, un tiret, ou le refus d'envoyer.
 Rendre effectif ce que `CRM-053` a posé et que personne n'emploie (§6). Elle devra dire : le nom et
 le type de la colonne, sa position dans le corps expédié, son effacement, et si une signature est
 propre à une identité ou à une personne.
+
+> **SPÉCIFIÉE le 2026-08-25, au §10 ci-dessous**, après mesure sur la pile debout et seedée, et
+> **avant sa première ligne de code**. Les quatre questions ci-dessus y sont tranchées aux §10.2,
+> §10.3, §10.4 et §10.5.
 
 ### 7.3 Tranche 4 — la séquence de relance
 
@@ -848,3 +853,250 @@ paraître violée.
 - **Aucune signature, aucune séquence** — tranches 3 et 4.
 - **Aucun fuseau horaire** : la prévisualisation rend ce que la base rend, c'est-à-dire de l'UTC
   (§8.6, INC-216). L'écran ne corrige pas un écart consigné.
+
+---
+
+## 10. Tranche 3 — la signature
+
+Écrite le **2026-08-25**, après mesure sur la pile debout et seedée, et **avant sa première ligne
+de code** (`CLAUDE.md` §5, `docs/CloudWorker.md` §3.2). Elle tranche les quatre questions que le
+§7.2 avait nommées sans y répondre, et chacune l'est par une **mesure**, jamais par un souvenir.
+
+### 10.1 Ce que la tranche livre, et ce qu'elle répare
+
+`mail_outbound_identities.signature_html` existe depuis `CRM-053` et **personne ne la lit** — c'est
+INC-215, consignée par la tranche 1 (§6) et laissée intacte par les tranches 2a et 2b. La tranche 3
+la rend effective, et pour cela elle doit d'abord la rendre **nommable** : son nom annonce du HTML
+là où tout le sous-système expédie du **texte**.
+
+MESURÉ le 2026-08-25 sur la pile seedée, et c'est ce qui rend la réparation possible sans perte :
+
+| Mesure | Résultat |
+|---|---|
+| `information_schema.columns` | `signature_html text`, `is_nullable = YES`, aucune borne |
+| `pg_constraint` sur la table | douze contraintes, **aucune** ne cite `signature_html` |
+| Vues dépendant de la table | **aucune** |
+| Lignes du seed | **deux** identités, `signature_html is null` sur les **deux** |
+| Lecteurs applicatifs | **aucun** : `mail-sync` ne la demande pas, l'écran de `CRM-089` ne la lit ni ne l'écrit (§22.1, §22.3 de `docs/SPEC-mail-subsystem.md`) |
+
+La colonne est donc **vide partout**, **libre de contrainte** et **sans lecteur**. La renommer ne
+casse aucun appelant et ne perd aucune donnée — ce qui ne sera plus vrai le jour où une signature y
+sera écrite. C'est maintenant, ou jamais sans migration de données.
+
+### 10.2 PREMIÈRE QUESTION — le nom et le type de la colonne
+
+**Décision : `signature_html` devient `signature_text`, et reste `text` NULLABLE.**
+
+Le type ne change pas ; c'est le **contrat annoncé par le nom** qui change, et il n'est pas
+cosmétique. Trois raisons, mesurées :
+
+1. **Ce qui part est du texte.** `mail_sync.composition.composer` appelle
+   `EmailMessage.set_content(envoi.body_text)` et rien d'autre : le message soumis est un
+   `text/plain; charset="utf-8"` à part unique. MESURÉ le 2026-08-25 en exécutant la fonction sur
+   un corps signé — l'en-tête rendu est `Content-Type: text/plain`, `Content-Transfer-Encoding:
+   7bit`. Une colonne nommée `_html` remplie de balises produirait donc un message où le
+   destinataire lit `<br>` en toutes lettres.
+2. **Le HTML entrant est déjà proscrit.** `docs/SPEC-mail-subsystem.md` §18.4 pose qu'aucun HTML
+   d'origine extérieure ne s'affiche sans être maîtrisé. Le §22.1 refuse explicitement d'ouvrir un
+   champ de signature HTML pour cette raison : « ouvrir ici un champ libre sans ce contrat serait
+   ouvrir une surface que rien ne borne ». **Renommer en texte lève l'obstacle au lieu de le
+   contourner** : il n'y a plus de HTML à assainir, donc plus de surface à border.
+3. **Un nom faux coûte plus tard.** La colonne est morte ; le premier lecteur qu'elle recevra sera
+   celui de cette tranche. Lui faire lire `signature_html` pour y mettre du texte installerait
+   durablement la divergence qu'INC-215 dénonce.
+
+**Une borne est posée dans le même geste** : `mail_outbound_identities_signature_borne`,
+`char_length(signature_text) <= 2000`. La table borne déjà son libellé (120), son hôte, son
+identifiant ; la signature était la seule colonne de texte libre **sans borne**, et elle va
+désormais être **concaténée à chaque corps expédié** (§10.3). La borne n'est pas une garde de
+saisie : elle protège la borne d'en face, mesurée — `mail_outbox_corps` exige
+`char_length(body_text) between 1 and 100000`.
+
+**Aucun `NOT NULL`** : `NULL` est l'absence de signature, et c'est le seul état que les deux
+identités du seed connaissent aujourd'hui.
+
+### 10.3 DEUXIÈME QUESTION — la position dans le corps expédié
+
+**Décision : la signature est ajoutée à la FIN du corps, précédée d'une ligne vide et du séparateur
+`-- `, et elle l'est À LA MISE EN FILE, dans `public.queue_outbound_email`.**
+
+**Le séparateur est celui de la RFC 3676 §4.3** : une ligne contenant exactement deux tirets et une
+espace. C'est la convention que les clients de messagerie reconnaissent pour replier ou griser une
+signature, et l'inventer autrement priverait le destinataire de ce repli. MESURÉ : Python conserve
+cette espace de fin telle quelle sous `7bit` — le corps soumis porte bien `\n\n-- \nDriss Lemoine`.
+La **limite** est nommée au §10.8 : aucun produit ne peut garantir qu'un relais intermédiaire ne
+rognera pas cette espace.
+
+La forme exacte, et elle est éprouvable caractère à caractère :
+
+```
+<corps écrit par l'utilisateur>
+                                  ← une ligne vide, toujours exactement une
+-- 
+<signature>
+```
+
+**LA COMPOSITION VIT EN BASE, ET C'EST UNE DÉCISION, PAS UNE COMMODITÉ.** Deux endroits pouvaient
+la porter, et l'un ment :
+
+- **au moment de l'envoi**, dans `mail_sync.envoi.vider_la_file`, en ajoutant `signature_text` à ce
+  que `reserver_envois` rend. Écarté : `mail_outbox.body_text` serait alors **différent de ce que
+  le destinataire a reçu**. Or c'est cette colonne que le CRM conserve, que la RLS ouvre à qui lit
+  l'affaire, et que les preuves relisent. Un archivage qui diffère de l'envoi est un archivage qui
+  ment, et le mensonge ne se verrait qu'en comparant deux systèmes ;
+- **à la mise en file**, dans la garde. Retenu : `queue_outbound_email` est **la seule porte** de
+  la file (§19.4 de `docs/SPEC-mail-subsystem.md`), donc la règle vaut pour l'écran de composition,
+  pour une réponse, et pour tout envoi automatique futur — la tranche 4 comprise — sans qu'aucun
+  appelant ait à y penser. Et le worker reste ce qu'il est : « il orchestre, il ne décide pas ».
+
+**QUATRE RÈGLES DE COMPOSITION, chacune éprouvée par une assertion :**
+
+1. **Identité sans signature** — `signature_text is null` — : le corps est stocké **inchangé**,
+   sans ligne vide ajoutée, sans séparateur. Aujourd'hui, les deux identités du seed sont dans ce
+   cas : la tranche ne change donc **rien** pour un envoi existant tant qu'aucune signature n'est
+   écrite.
+2. **Signature vide après `app.btrim_blancs`** : traitée comme absente. Elle ne peut pas être
+   écrite (§10.4 la ramène à `NULL`), mais la garde ne s'en remet pas à cette promesse — une
+   donnée posée par une autre voie ne doit pas produire un séparateur suivi de rien.
+3. **Le corps est joint tel quel, ses blancs de fin retirés** avant la ligne vide : un corps
+   terminé par trois retours à la ligne produirait sinon quatre lignes vides avant le séparateur,
+   et l'écart serait invisible à l'écran et visible chez le destinataire. `app.btrim_blancs` est la
+   fonction du produit pour cela (migration 35, INC-052) ; elle n'est **pas** recopiée.
+4. **Le corps vide reste refusé, et il l'est AVANT la composition.** MESURÉ : `mail_outbox_corps`
+   exige `char_length(body_text) >= 1`, si bien qu'un corps vide est refusé aujourd'hui en `23514`.
+   Sans garde explicite, une signature le rendrait **non vide** et un message ne portant que la
+   signature partirait. La garde refuse donc `body_required` en `23514` **avant** d'ajouter quoi
+   que ce soit. Le code d'état ne change pas, et le dictionnaire de l'écran, qui classe par
+   `SQLSTATE` et non par message (`webapp/src/lib/envoi.ts`), rend le même `invalide` qu'avant.
+
+**LA BORNE HAUTE S'APPLIQUE AU CORPS COMPOSÉ, et c'est dit plutôt que subi** : un corps de 99 900
+caractères expédié depuis une identité portant 200 caractères de signature dépasse les 100 000 de
+`mail_outbox_corps` et sera **refusé** en `23514`. C'est le comportement voulu — ce qui est stocké
+est ce qui part, donc c'est bien le tout qui doit tenir dans la borne — et la borne de 2 000
+caractères du §10.2 garantit que l'écart ne dépasse jamais 2 % de la place.
+
+### 10.4 TROISIÈME QUESTION — l'effacement
+
+**Décision : `p_signature_text` est TOUJOURS envoyé par l'écran, y compris vide, et la fonction
+normalise le vide en `NULL`.**
+
+C'est exactement la règle mesurée de `p_from_name` (§22.5 de `docs/SPEC-mail-subsystem.md`), et
+l'inverse de celle de `p_daily_quota`. Le motif est le `coalesce` de la branche `UPDATE`, lu dans
+la migration `0033` : `signature_html = coalesce(p_signature_html, i.signature_html)`. Sous cette
+écriture, **omettre conserve** — ce qui est voulu — mais **rien ne peut jamais ramener la colonne à
+`NULL`**. Le §22.1 en avait tiré la seule conclusion honnête à l'époque : ne pas ouvrir de champ
+qu'on ne saurait pas vider. La tranche 3 ouvre le champ, elle doit donc d'abord réparer
+l'effacement.
+
+**La normalisation vit dans la fonction, pas dans l'écran** (`CLAUDE.md` §10) :
+
+```
+signature_text = case
+                   when p_signature_text is null then i.signature_text
+                   when app.btrim_blancs(p_signature_text) = '' then null
+                   else p_signature_text
+                 end
+```
+
+Trois états, et non deux : **omis** conserve, **vide** efface, **rempli** écrit. La branche
+`INSERT` applique la même normalisation, pour qu'une déclaration portant un champ vide ne pose pas
+une chaîne vide là où une relecture attend `NULL`.
+
+**LA SIGNATURE N'EST PAS RECADRÉE** : ses blancs internes et ses retours à la ligne sont conservés
+tels quels — une signature EST une mise en forme. Seul le test de vacuité passe par
+`app.btrim_blancs` ; la valeur écrite est celle qui a été saisie.
+
+**RENOMMER UN PARAMÈTRE EXIGE UN `drop`**, et c'est mesuré, pas supposé : PostgreSQL refuse
+`create or replace function` qui change le **nom** d'un paramètre d'entrée. La migration retire
+donc `public.upsert_mail_outbound_identity(...)` avant de la reposer, et **repose ses `grant` dans
+la même transaction** — un `drop` emporte les privilèges, et une fonction rendue exécutable par
+`public` par les `alter default privileges` de la plateforme serait une porte ouverte (le point de
+sûreté des migrations 48 à 57).
+
+### 10.5 QUATRIÈME QUESTION — une signature appartient-elle à une identité ou à une personne ?
+
+**Décision : à l'IDENTITÉ.** La colonne reste où `CRM-053` l'a posée, et ce n'est pas de la
+paresse : c'est ce que la clé impose.
+
+MESURÉ, et c'est écrit dans le §22.4 de `docs/SPEC-mail-subsystem.md` : la clé de cette table est
+le **triplet** `(workspace_id, owner_id, from_address)`. Une personne peut donc porter **plusieurs**
+identités sortantes, chacune avec sa propre adresse d'expédition. Or une signature nomme presque
+toujours l'adresse, la fonction ou la société sous lesquelles on écrit : la même personne qui
+expédie depuis `contact@…` et depuis `recrutement@…` ne signe pas de la même façon. Rattacher la
+signature à la personne obligerait à choisir **une** de ses signatures pour toutes ses adresses.
+
+Le seed le démontre plutôt que de le décrire : l'**identité de service**
+`systeme@crm.p2enjoy.test` n'a **aucun propriétaire** (`owner_id is null`). Une signature portée
+par la personne laisserait cette identité — celle qui expédie au nom du workspace — sans aucune
+signature possible.
+
+### 10.6 L'écran — le champ, et le seul écart au §5.35
+
+L'écran des identités sortantes de `CRM-089` (`/reglages/identites-mail`) gagne **un champ**, et
+rien d'autre :
+
+- **une zone de texte multiligne « Signature »**, dans le groupe « Expédition », **après** le nom
+  d'expéditeur — l'ordre du message : d'abord qui écrit, ensuite ce qui ferme ;
+- **facultative**, sans `required`, sans `maxLength` : la borne est en base et c'est elle qui
+  refuse (§10.2), une garde de saisie qui la doublerait ferait deux règles pour une (`CLAUDE.md`
+  §10, et la discipline du §9.8) ;
+- **un texte d'aide** qui dit ce que la base fera : la signature est ajoutée à la fin de chaque
+  message expédié depuis cette identité, précédée d'une ligne de séparation ; vider le champ la
+  supprime ;
+- **la valeur est relue** : `signature_text` entre dans les colonnes demandées par
+  `COLONNES_IDENTITE_SORTANTE`. Le §22.3 écrivait « ne pas lire ce qu'on ne montre pas » ; la
+  réciproque vaut, et l'écran ne peut pas proposer de modifier une signature sans montrer celle qui
+  est enregistrée ;
+- **la liste ne rend PAS la signature**, seulement une pilule neutre **« Signature »** sur les
+  lignes qui en portent une. Une signature de deux mille caractères dans une `ul` de lignes
+  détruirait la densité que le §5.35 tient ; sa présence, elle, est une information de liste.
+
+`p_signature_text` rejoint donc `p_from_name` dans les paramètres **toujours envoyés**, et le
+commentaire de `argumentsEnregistrementIdentite` qui affirme le contraire est **révisé dans le même
+changement** — de même que les deux tests unitaires qui figent aujourd'hui son absence
+(`webapp/src/lib/mail-identites.test.ts`, `webapp/src/app/ReglagesIdentitesMail.test.tsx`). Ce sont
+des preuves d'une règle qui change par arbitrage : elles sont **révisées en expliquant pourquoi
+dans le fichier lui-même**, jamais supprimées ni contournées (`docs/CloudWorker.md` §3.1).
+
+### 10.7 Preuves exigées — tranche 3
+
+| Preuve | Ce qu'elle doit montrer |
+|---|---|
+| pgTAP `supabase/tests/0055_signature_identite.test.sql` | la colonne renommée et bornée ; les trois états de l'effacement — omis conserve, vide efface, rempli écrit — chacun **précédé de son témoin** ; les quatre règles de composition du §10.3 comparées **caractère à caractère** ; le refus `body_required` ; le refus de borne haute sur le corps composé |
+| API `e2e/api/signature-identite.spec.ts` | avec les **jetons réels** : Driss écrit sa signature et la relit ; il la vide et relit `null` ; un envoi mis en file depuis son identité porte le corps **composé** ; la lectrice est refusée |
+| Unitaires webapp | `p_signature_text` **toujours** envoyé, vide compris ; `signature_text` dans les colonnes lues ; la pilule rendue si et seulement si la signature est non vide |
+| E2E `e2e/ui/reglages-identites-mail.spec.ts` (révisé) | la saisie, l'enregistrement, la relecture, l'effacement, au clavier et à la souris, console **vierge** |
+| Harnais `scripts/verify-signature-identite.sh` | non complaisant : dégradations réelles, restauration constatée octet à octet |
+| Captures | `docs/captures/CRM-063/` — le champ rempli, la liste avec la pilule, les paliers responsive |
+
+### 10.8 Ce que la tranche 3 ne fait PAS, et qui n'est pas masqué
+
+- **Aucune variable dans la signature.** `{{contact.full_name}}` écrit dans une signature est
+  expédié **littéralement** : la substitution du §8 appartient au corps d'un modèle, et une
+  signature n'est pas rendue par `rendre_modele_email`. Une assertion **fige** ce comportement
+  plutôt que de le laisser à l'interprétation.
+- **Aucune garantie sur l'espace de fin du séparateur.** `-- ` est écrit et stocké avec son espace,
+  MESURÉ jusqu'à la sortie de `set_content` ; ce qu'un relais intermédiaire en fait n'appartient
+  pas à ce produit. Les clients qui replient la signature acceptent très majoritairement les deux
+  formes.
+- **Aucune signature HTML.** Le type est le texte, définitivement (§10.2). Une signature riche
+  demanderait un éditeur, un assainissement et un message multipart : trois surfaces qu'aucune
+  unité n'a spécifiées.
+- **Aucune signature par défaut du workspace.** Chaque identité porte la sienne ou n'en porte pas.
+- **Aucune séquence de relance** — tranche 4.
+
+### 10.9 Definition of Done — tranche 3
+
+- migration `0058_signature_identite_sortante.sql` appliquée et **rejouable** ;
+- suite pgTAP dédiée verte ;
+- contrat d'API mesuré avec les jetons réels des trois profils ;
+- écran livré et **vérifié visuellement**, captures produites ET observées (`CLAUDE.md` §16) ;
+- tests unitaires et E2E verts, y compris les preuves **révisées** du §10.6 ;
+- harnais dédié vert, ses dégradations vues ;
+- seed enrichi : au moins une identité **porte** une signature, au moins une n'en porte pas ;
+- `docs/SCHEMA.md` §7, `docs/DESIGN_SYSTEM.md` §5.35, `docs/SPEC-mail-subsystem.md` §14.2 / §22,
+  `docs/PROD_MIGRATIONS.md`, `docs/SPEC-seed.md`, `README.md`, `docs/manual.md` chapitre 15 et
+  `CHANGELOG.md` mis à jour **dans le même changement** ;
+- INC-215 **close** au registre, avec la mesure qui la clôt ;
+- commentaires `@spec` / `@verifies` sur chaque fichier ;
+- commit poussé sur `origin/main`.

@@ -8492,10 +8492,15 @@ avant la suivante :
         réelle. **LIVRÉE ET PROUVÉE le 2026-08-25** ; voir le détail plus bas. Les quatre questions
         du §8.11 sont tranchées au **§9**, et la troisième a exigé une **migration** : le schéma
         `app` n'étant pas exposé, la liste fermée était hors de portée de l'écran.
-- [ ] **Tranche 3 — la signature** : rendre effectif ce que `CRM-053` a posé et que personne
+- [~] **Tranche 3 — la signature** : rendre effectif ce que `CRM-053` a posé et que personne
       n'emploie. `mail_outbound_identities.signature_html` est **morte et mal nommée** — son nom
-      annonce du HTML là où tout le sous-système expédie du texte. Consigné au registre, comportement
-      **inchangé** (§6).
+      annonce du HTML là où tout le sous-système expédie du texte. Consigné au registre (INC-215).
+      **SPÉCIFIÉE le 2026-08-25 au §10** de `docs/SPEC-modeles-emails.md`, après mesure sur la pile
+      debout et seedée et **avant sa première ligne de code** : la colonne devient `signature_text`
+      et reçoit une borne, la signature est composée **à la mise en file** dans
+      `queue_outbound_email` — séparateur `-- ` de la RFC 3676 —, elle s'efface par un champ vide
+      comme `from_name`, et elle appartient à l'**identité** parce que la clé de la table est un
+      triplet. Definition of Done au §10.9.
 - [ ] **Tranche 4 — la séquence de relance** : paliers ordonnés, chacun portant un modèle
       (`on delete restrict`) et un délai, appliqués à une affaire figée au sens de `CRM-062`.
 
