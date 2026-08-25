@@ -659,7 +659,7 @@ ASSERTIONS_ATTENDUES=2808
 # code que l'écran de 4c devra reconnaître —, et les deux détours par lesquels un client tenterait
 # de réordonner sans transaction, l'un et l'autre fermés (§11.6 bis). 893 + 12 = **905**, valeur
 # COMPTÉE par l'exécution de la suite, jamais déduite.
-SCENARIOS_API=905
+SCENARIOS_API=922
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la

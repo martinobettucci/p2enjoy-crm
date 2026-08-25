@@ -1825,17 +1825,17 @@ lui-même n'aurait plus aucun refus.
 | # | Appel | Profil | Issue attendue |
 |---|---|---|---|
 | 1 | `GET /rest/v1/card_sequence_enrollments` | administratrice | `200`, les inscriptions des cards qu'elle lit |
-| 2 | `GET` idem | `viewer` fermé sur « Grands comptes » | `200`, **aucune** inscription d'une card de ce track |
+| 2 | `GET` idem | `viewer` | `200`, **aucune** inscription d'une card qu'il ne lit pas. **MESURÉ** : sur les quatre affaires figées du seed, le `viewer` en LIT trois et n'en ÉCRIT aucune ; « Audit sécurité applicative » est la SEULE qu'il ne lit pas, et c'est donc la seule qui prouve le cloisonnement |
 | 3 | `GET` idem | `anon` | `200` et **zéro ligne** — le refus est zéro ligne (§7 de `docs/SPEC-permissions-rls.md`) |
-| 4 | `POST /rest/v1/card_sequence_enrollments` | administratrice | **`401`/`403`** — aucun `insert` n'est accordé |
-| 5 | `PATCH /rest/v1/card_sequence_enrollments?id=eq.…` | administratrice | **`401`/`403`** — aucun `update` |
-| 6 | `DELETE` idem | administratrice | **`401`/`403`** — aucun `delete` |
+| 4 | `POST /rest/v1/card_sequence_enrollments` | administratrice | **`403`** — aucun `insert` n'est accordé. **MESURÉ** : PostgREST rend `401` à un appelant ANONYME et `403` à un appelant AUTHENTIFIÉ dont le rôle n'a pas le privilège |
+| 5 | `PATCH /rest/v1/card_sequence_enrollments?id=eq.…` | administratrice | **`403`** — aucun `update` |
+| 6 | `DELETE` idem | administratrice | **`403`** — aucun `delete` |
 | 7 | `POST /rest/v1/rpc/armer_sequence_relance` — card figée, séquence et identité valides | administratrice | `200`, un `uuid` |
 | 8 | Le même, **répété** sur la même card | administratrice | `409` — `23505`, refus `h` du §12.4 |
 | 9 | `armer_sequence_relance` sur une card **non figée** | administratrice | `400` — `23514`, refus `f` |
 | 10 | `armer_sequence_relance` avec l'identité **d'un autre** | Driss | `403` — `42501`, refus `e` |
 | 11 | `armer_sequence_relance` sur une card qu'il ne peut pas écrire | `viewer` | `403` — `42501`, refus `b` |
-| 12 | `armer_sequence_relance` sans jeton | `anon` | `401` — `42501`, refus `a` |
+| 12 | `armer_sequence_relance` sans jeton | `anon` | `401` — `42501`. **MESURÉ, et ce n'est PAS le refus `a`** : la fonction étant révoquée d'`anon`, le PRIVILÈGE arrête l'appel avant qu'elle ne s'exécute. Le refus `a` travaille sur le chemin `service_role`, qui détient le privilège |
 | 13 | `POST /rest/v1/rpc/interrompre_sequence_relance` sur son inscription | administratrice | `204`, l'inscription relue porte `status='closed'` et `closed_reason='manual'` |
 | 14 | Le même, **répété** | administratrice | `204` — idempotent, et la ligne relue est **inchangée** |
 | 15 | `interrompre_sequence_relance` sans jeton | `anon` | `401` — `42501` |
