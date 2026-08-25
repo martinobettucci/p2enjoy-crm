@@ -23685,10 +23685,56 @@ inchangé, arbitrage attendu. Une première mesure prise **sans attendre le char
 c'est écrit parce qu'une mesure trop rapide est exactement la façon dont on consigne un faux
 constat.
 
+### décision 506 bis — la campagne est verte, et ses deux verdicts rouges venaient de preuves qui n'avaient pas repris leurs écritures
+
+**Même session, 2026-08-24.** La campagne d'interface a rendu deux verdicts rouges successifs, et
+**aucun des deux n'était une régression** — la ligne de base a été établie dans les deux cas (§2.4).
+
+**Premier passage : 507 passés, 4 échecs** — trois dans `coquille.spec.ts`, un dans
+`commentaires-gestes.spec.ts`. La révision de `coquille.spec.ts` due à la septième entrée de
+navigation était légitime et faite ; le reste ne l'était pas. Mesuré en isolement, puis après
+réapplication du seed, puis après **retrait des commentaires non seedés** : `8 passés`. Cause :
+`commentaires-gestes.spec.ts` publie un commentaire et le désigne par un locator **non porté sur sa
+carte**, si bien qu'un second passage en trouve deux.
+
+**Second passage, depuis cet état rendu : 588 passés, 2 échecs** — et ils avaient **changé de
+fichier**, `authentification.spec.ts` cette fois. Reproduits en isolement, donc étrangers à
+l'ordonnancement de campagne d'INC-205. Cause de la même famille :
+`administration-arborescence.spec.ts` crée un track `cree-par-admin` et ne le retire pas ;
+l'administratrice en voit quatre au lieu de trois. Retiré, la suite rend `8 passés`.
+
+**588 + 2 = 590 = 581 + 9**, et ce compte vaut d'être écrit : les neuf scénarios de la tranche 3
+sont exactement ceux que la campagne a gagnés. Aucune preuve n'a disparu en chemin.
+
+**Les deux cas sont consignés en INC-209**, avec la règle générale qu'ils donnent : une preuve
+d'interface qui ÉCRIT dans la base de développement doit reprendre ses écritures. `apply-seed.sh`
+est convergent sur **les lignes qu'il pose**, et il n'a jamais prétendu nettoyer ce que d'autres
+écrivent. Le comportement est laissé inchangé — la correction appartient à `CRM-043` et à
+`CRM-075`.
+
+**Reste de la campagne** : `npm run test:sql` **52 fichiers, 2531 assertions** ; `npm run test:unit`
+**76 fichiers, 2503 tests** ; `npm run e2e:api` **858 passés** ; `npm run e2e:mail` **42 passés** ;
+`pytest` **244 passés** ; `typecheck` et `build` verts ; `scripts/verify-relances.sh` **85
+contrôles, aucune anomalie**, ses **dix-neuf** dégradations mordant toutes. **Non exécutés** : les
+soixante et un autres `scripts/verify-*.sh`.
+
+**LE HARNAIS A PRIS MA PROPRE PREUVE EN DÉFAUT, et c'est le fait le plus utile de la campagne.** La
+dégradation D-E — `stalled` retiré de `FAMILLE_PAR_TYPE` — a rendu `COMPLAISANT` : l'assertion
+écrite en 3b portait sur `familleDe('stalled')`, et son commentaire **affirmait** que retirer la
+ligne ferait rougir. C'était faux, le repli documenté rendant `cycle` à son tour. `FAMILLE_PAR_TYPE`
+est donc **exportée** — le harnais l'a exigé —, l'assertion porte sur l'existence de la **clé**, et
+une boucle vérifie que les quatorze types y sont rangés : un quinzième ajouté sans y figurer
+retomberait sur le repli, et l'oubli d'INC-207 se répéterait.
+
+**Les captures réécrites par la campagne sur des écrans que cette session ne touche pas ont été
+RESTAURÉES** — les committer laisserait croire que deux cents écrans ont été observés (précédent des
+décisions 500, 503 bis, 504 bis et 505). Les six de `docs/captures/CRM-062/` sont conservées : elles
+sont celles de la surface livrée, et elles ont été **regardées**.
+
 **Où reprendre.** `CRM-062` reste `[~]` pour une seule raison, et elle est nommée : la série des
 soixante et un autres `scripts/verify-*.sh` n'a pas été rejouée derrière ce changement. Deux écarts
 sont **nommés** plutôt que comblés (§11 de la spécification) : aucune portée « mes affaires » — elle
 demanderait un argument à `public.cards_figees()`, donc une révision du contrat de la tranche 1 — et
 aucune pagination, l'ordre venant du serveur et le volume n'étant pas mesuré. `INC-138`, `INC-139`,
-`INC-169`, `INC-170`, `INC-173`, `INC-190`, `INC-193`, `INC-203`, `INC-204`, `INC-205` et `INC-208`
-attendent l'arbitrage du responsable.
+`INC-169`, `INC-170`, `INC-173`, `INC-190`, `INC-193`, `INC-203`, `INC-204`, `INC-205`, `INC-208`
+et `INC-209` attendent l'arbitrage du responsable.

@@ -209,6 +209,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-205 | `e2e/mail/ingestion.spec.ts`, puis `e2e/mail/dossiers.spec.ts`, échouent en CAMPAGNE et passent seuls — même famille qu'INC-128 et INC-172. Quatre campagnes enchaînées le 2026-08-24 : deux échecs sur deux scénarios DIFFÉRENTS, puis deux campagnes vertes, sans qu'une ligne du dépôt ne bouge | 2026-08-24 | **ouverte** — comportement inchangé, étrangère à `CRM-062` | 504, 505 |
 | INC-206 | `docs/SPEC-relances.md` renvoyait, depuis la tranche 1, à un « chapitre 30 » de `docs/manual.md` qui n'existe pas et ne peut pas exister — le manuel numérote de 1 à 6 avec des suffixes latins | 2026-08-24 | **close** — référence corrigée en `3 quinquies` par la tranche 3, motif au §10.13 | 506 |
 | INC-207 | La tranche 2 de `CRM-062` écrit un événement `stalled` que le fil d'une affaire rend **« Événement »** : le type n'est ni nommé, ni rangé, ni traduit | 2026-08-24 | **close par livraison** — la sous-tranche 3b le nomme, §10.3 | 506 |
+| INC-209 | **DEUX preuves d'interface ne sont pas rejouables** : `commentaires-gestes.spec.ts` laisse le commentaire qu'il publie, `administration-arborescence.spec.ts` laisse le track `cree-par-admin` qu'il crée. `apply-seed.sh` est convergent sur les seules lignes `5eed…` et ne les retire donc pas — une seconde campagne dans la même session rend un verdict rouge qui ne dit rien du produit | 2026-08-24 | **ouverte** — comportement inchangé, étrangère à `CRM-062` ; appartient à `CRM-043` et `CRM-075` | 506 |
 | INC-208 | Les **six** routes transverses — `/ma-journee`, `/contacts`, `/couts`, `/objectifs`, `/affaires-figees`, `/reglages` — écrivent « Aucun channel » là où il n'y a pas de track courant : un manque énoncé pour une absence de contexte | 2026-08-24 | **ouverte** — comportement inchangé, étrangère à `CRM-062` ; arbitrage attendu | 506 |
 
 ---
@@ -4290,3 +4291,94 @@ on consigne un faux constat.
 `TabBar`, qui appartiennent à `CRM-007` et `CRM-021`, et dépasserait l'unité autorisée
 (`CLAUDE.md` §13). L'arbitrage attendu du responsable : la barre doit-elle être **absente** hors
 d'une route de track, ou dire autre chose ?
+
+### INC-209 — deux preuves d'interface accumulent leurs propres écritures et ne sont pas rejouables
+
+**Constat, MESURÉ le 2026-08-24** en rejouant la campagne d'interface deux fois dans la même
+session, sans qu'une ligne du dépôt n'ait bougé entre les deux :
+
+| Passage | Verdict de `e2e/ui/commentaires-gestes.spec.ts` |
+|---|---|
+| 1 (campagne) | **1 échec** — `:224`, « les deux actions sont atteignables AU CLAVIER » |
+| 2 (fichier seul) | **3 échecs** — `:106`, `:198`, `:224` |
+| 3 (après `apply-seed.sh`) | **3 échecs**, identiques |
+| 4 (après retrait des commentaires **non seedés**) | **8 passés, aucun échec** |
+
+**La cause est nommée, et elle est dans la preuve.** Le message de Playwright la donne mot pour mot :
+
+```
+Error: strict mode violation: getByTestId('actions-commentaire') resolved to 2 elements:
+  1) … 'Camille Aubert 24/08/2026 23:24 Modifier Supprimer Geste 1787613876264-'
+  2) … 'Camille Aubert 24/08/2026 23:38 Modifier Supprimer Geste 1787614732293-'
+```
+
+Les **deux** portent le préfixe « Geste » suivi d'un horodatage : ce sont deux commentaires écrits
+par **deux exécutions différentes de cette suite**. Le scénario publie un commentaire, puis désigne
+ses commandes par un `getByTestId('actions-commentaire')` **non porté sur sa carte** — locator qui
+résout donc toutes les cartes dont l'appelant est l'auteur. Il ne tient que tant que Camille n'a
+**qu'un** commentaire sur cette affaire.
+
+**`apply-seed.sh` ne le rattrape pas, et c'est cohérent avec ce qu'il promet.** Il est convergent
+sur les **cinq** commentaires seedés, dont les identifiants sont stables et commencent par `5eed` ;
+un commentaire créé par une preuve porte un identifiant neuf, qu'aucune ligne du seed ne connaît, et
+il survit donc à une réapplication. Mesuré : `5|1` — cinq seedés, un ajouté — juste avant le
+passage 4.
+
+**Ce n'est PAS une régression de `CRM-062`**, et la mesure le montre de deux façons : le passage 4
+est vert sans qu'aucune ligne du dépôt n'ait été touchée entre les passages 3 et 4 — seul l'état de
+la base a changé —, et cette unité ne touche aucun module de commentaire.
+
+**Le comportement est laissé INCHANGÉ** (`CLAUDE.md` §18) : la correction appartient à `CRM-043`, qui
+porte cette suite, et deux voies existent — porter le locator sur la carte du commentaire que le
+scénario vient de publier, ou faire nettoyer ses écritures par la suite elle-même. Choisir entre les
+deux dépasse l'unité autorisée (`CLAUDE.md` §13).
+
+**Conséquence pratique pour les sessions suivantes, et elle vaut d'être écrite** : une campagne
+d'interface rejouée **deux fois** sans retirer les commentaires non seedés rendra un verdict rouge
+qui ne dit rien du produit. Le retrait est une commande, et elle est sans risque sur le profil de
+développement :
+
+```
+delete from public.card_comments where id::text not like '5eed%';
+```
+
+#### Le SECOND cas, trouvé par la campagne suivante : `administration-arborescence.spec.ts`
+
+La campagne rejouée depuis l'état de commentaires rendu au seed a rendu **588 passés, 2 échecs** —
+et les deux échecs avaient **changé de fichier** : `authentification.spec.ts`, lignes 85 et 402. Ils
+se reproduisent **en isolement**, ce qui écarte d'emblée l'ordonnancement de campagne d'INC-205.
+
+La cause est de la même famille, et la mesure la donne sans ambiguïté :
+
+```
+Locator: getByTestId('entree-track')
+Expected: 3    Received: 4
+```
+
+Relevé en base :
+
+| Track | Seedé ? | Vivant ? |
+|---|---|---|
+| `conseil-ia`, `formation`, `studio-web` | oui | oui |
+| `pipeline-2024` | oui | oui, mais **archivé** |
+| `legacy-2023` | oui | non — **en corbeille**, c'est le contrat du §10.4 bis de `CRM-077` |
+| **`cree-par-admin`** | **NON** | oui |
+
+`e2e/ui/administration-arborescence.spec.ts` crée un track nommé `cree-par-admin` et ne le retire
+pas. Il porte un identifiant neuf, qu'aucune ligne du seed ne connaît : l'administratrice en voit
+donc **quatre** au lieu de trois au passage suivant.
+
+**Retiré, la suite rend 8 passés, aucun échec** — sans qu'aucune ligne du dépôt n'ait bougé entre
+les deux mesures. C'est la contre-épreuve, et elle établit que ni `CRM-062`, ni son entrée de
+navigation ne sont en cause : l'assertion porte sur les **pilules de track**, que cette unité ne
+touche pas.
+
+**La règle générale que ces deux cas donnent, et qui vaut au-delà d'eux** : une preuve d'interface
+qui ÉCRIT dans la base de développement doit reprendre ses écritures, ou les rendre reconnaissables
+au seed. `apply-seed.sh` est **convergent sur les lignes qu'il pose**, et il n'a jamais prétendu
+nettoyer ce que d'autres écrivent. La commande de remise à zéro est, pour les deux :
+
+```
+delete from public.card_comments where id::text not like '5eed%';
+delete from public.tracks         where id::text not like '5eed%';
+```
