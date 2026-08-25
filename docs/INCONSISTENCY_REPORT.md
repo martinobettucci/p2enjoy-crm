@@ -214,7 +214,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-208 | Les **six** routes transverses — `/ma-journee`, `/contacts`, `/couts`, `/objectifs`, `/affaires-figees`, `/reglages` — écrivent « Aucun channel » là où il n'y a pas de track courant : un manque énoncé pour une absence de contexte | 2026-08-24 | **ouverte** — comportement inchangé, étrangère à `CRM-062` ; arbitrage attendu | 506 |
 | INC-210 | La migration 44 n'a pas la SECONDE garde d'INC-144 : depuis que `CRM-062` écrit `stalled`, tout rejeu du répertoire sur une base dont la contrainte a été réduite s'arrête en `23514` sur la 44, et les migrations 45 à 54 ne s'appliquent plus. La pile reste avec un vocabulaire amputé et toute trace serveur est refusée | 2026-08-25 | **close** — seconde garde posée par la décision 507, imputable à `CRM-062` | 507 |
 | INC-211 | `scripts/verify-move-card.sh` rend « la restauration n'a pas rétabli l'état initial » EN SÉRIE et **57 contrôles, aucune anomalie** rejoué seul, seed reposé — la dégradation `b`, qui emploie la MÊME restauration, est verte dans le même passage | 2026-08-25 | *ouverte* — cause non établie, comportement inchangé, relève de `CRM-034` | 507 |
-| INC-212 | `scripts/verify-mail-infra.sh` laisse en base son message « Preuve journal Stalwart propre », NON classé : l'inbox porte dès lors un troisième fil non classé, et l'état vide de `e2e/ui/sommeil-fil.spec.ts` ne peut plus être atteint. Troisième fichier de la famille d'INC-209 | 2026-08-25 | *ouverte* — comportement inchangé, relève de `CRM-051` / `CRM-052` | 507 |
+| INC-212 | `scripts/verify-mail-infra.sh` laisse en base son message « Preuve journal Stalwart propre », NON classé : l'inbox porte dès lors un troisième fil non classé, et l'état vide de `e2e/ui/sommeil-fil.spec.ts` ne peut plus être atteint. Troisième fichier de la famille d'INC-209 | 2026-08-25 | **close** — le harnais reprend son message des DEUX côtés, décision 508 | 507, 508 |
 | INC-215 | `mail_outbound_identities.signature_html` existe depuis `CRM-053` et n'est lue par PERSONNE — ni `mail-sync` à l'envoi, ni l'écran de `CRM-089`, qui n'envoie délibérément jamais `p_signature_html`. Son nom annonce du **HTML** là où tout le sous-système expédie du **texte** | 2026-08-25 | **CLOSE le 2026-08-25** par `CRM-063` tranche 3, migration 58 : la colonne devient `signature_text`, elle est bornée, elle est LUE par la garde d'envoi et ÉCRITE par l'écran | 512, 516 |
 | INC-216 | `public.rendre_modele_email` rend `card.next_action_at` **en UTC** : MESURÉ, aucune colonne de fuseau n'existe dans le schéma — seule `profiles.locale`, qui est une **langue**. Un destinataire français lira 09:00 là où le rendez-vous est à 11:00 en heure d'été | 2026-08-25 | *ouverte* — comportement ASSUMÉ et figé par une assertion, **arbitrage attendu** : à qui appartient le fuseau d'un email sortant | 514 |
 | INC-217 | `supabase/tests/0052_relances_automatiques.test.sql` assertion 11 exige un passage `succeeded` de `p2enjoy-relances-cards-figees` dans `cron.job_run_details`, or ce job est planifié `23 3 * * *`. MESURÉ deux fois dans la même session : **rouge** à 12 h 45, **verte** à 13 h 50, le job ayant tourné entre-temps hors horaire — l'amorçage de dix secondes de `docs/SPEC-relances.md` §9.7 est réarmé par tout rejeu de la migration 54, et `verify-relances.sh` promeut le job. La preuve est donc verte **parce qu'un autre harnais a tourné avant elle**, jamais selon l'état du produit | 2026-08-25 | *ouverte* — comportement inchangé, relève de `CRM-062` tranche 2, qui porte la preuve | 514 |
@@ -4620,8 +4620,17 @@ développement et ne reprend pas ses écritures —, après `commentaires-gestes
 `administration-arborescence.spec.ts`. `apply-seed.sh` est convergent sur les lignes qu'il pose, et
 un message ingéré par un harnais n'en fait pas partie.
 
-**Comportement laissé inchangé** : le harnais appartient à `CRM-051` / `CRM-052`, non à l'unité de
-cette session. La remise à zéro est :
+**CORRIGÉE À SA CAUSE le 2026-08-25, décision 508**, sur demande explicite du responsable — le
+harnais REPREND son message des deux côtés : la boîte système d'abord (`UID SEARCH HEADER
+Message-ID`, `UID STORE +Flags \Deleted`, `EXPUNGE`), la base ensuite ; l'ordre compte, une relève
+ultérieure réingérerait sinon la ligne qu'on vient d'effacer. Le message porte désormais un
+`Message-ID` STABLE : sans en-tête, `mail-sync` lui calculait un `fallback-sha256:…` qui change avec
+le contenu, et la reprise n'aurait su quoi reprendre. La reprise est **constatée** par un contrôle
+qui relit les deux côtés — éprouvé par dégradation : le `delete` retiré, il rend « 1 en base » et le
+harnais rougit. `scripts/verify-mail-infra.sh` passe de 90 à **91 contrôles, aucune anomalie**.
+
+*Formulation d'origine, conservée* : le harnais appartient à `CRM-051` / `CRM-052`, non à l'unité de
+la session qui l'a trouvée. La remise à zéro est :
 
 ```
 delete from public.mail_messages where rfc822_message_id like 'fallback-sha256:%';

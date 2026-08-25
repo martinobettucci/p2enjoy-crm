@@ -547,8 +547,13 @@ else
 fi
 
 EXPEDITEUR="admin@$DOMAINE_PERSO"
-if printf 'From: %s\r\nTo: %s\r\nSubject: Preuve journal Stalwart propre\r\n\r\nMessage de contrôle.\r\n' \
-	"$EXPEDITEUR" "$BOITE_SYSTEME" \
+# LE MESSAGE PORTE DÉSORMAIS UN `Message-ID` STABLE, ET CE N'EST PAS UN DÉTAIL DE FORME — INC-212.
+# Sans en-tête, `mail-sync` lui calcule un identifiant de repli `fallback-sha256:…` qui change avec
+# le contenu : le message n'était reconnaissable NI dans la boîte, NI en base, et la reprise
+# ci-dessous n'aurait su quoi reprendre. Le domaine est celui du harnais, jamais celui du produit.
+MESSAGE_ID_CONTROLE='<preuve-journal-stalwart@verify-mail-infra.p2enjoy.test>'
+if printf 'From: %s\r\nTo: %s\r\nMessage-ID: %s\r\nSubject: Preuve journal Stalwart propre\r\n\r\nMessage de contrôle.\r\n' \
+	"$EXPEDITEUR" "$BOITE_SYSTEME" "$MESSAGE_ID_CONTROLE" \
 	| curl -sS --noproxy '*' --url "smtp://$HOTE:$(lire_env STALWART_SUBMISSION_PORT)" \
 		--user "$EXPEDITEUR:$MDP" --mail-from "$EXPEDITEUR" --mail-rcpt "$BOITE_SYSTEME" \
 		--upload-file - >/dev/null; then
@@ -604,6 +609,50 @@ if docker logs p2enjoy-stalwart 2>&1 | grep -qE '(^|[[:space:]])(WARN|ERROR)([[:
 	fail "le journal Stalwart contient au moins un WARN ou ERROR après les protocoles"
 else
 	ok "le journal Stalwart reste sans WARN ni ERROR après les protocoles"
+fi
+
+# ---------------------------------------------------------------------------------------------
+# LE HARNAIS REPREND SON MESSAGE — INC-212, corrigée le 2026-08-25.
+# ---------------------------------------------------------------------------------------------
+# Le contrôle du journal ci-dessus EXIGE une soumission réelle ; il n'exige pas qu'elle survive au
+# harnais. Or elle survivait deux fois : dans la boîte système, où chaque exécution ajoutait une
+# copie, et en base dès qu'une relève l'ingérait — un message NON CLASSÉ de plus dans l'inbox.
+#
+# MESURÉ le 2026-08-25 : `e2e/ui/sommeil-fil.spec.ts` endort les fils du dossier « Non classés »
+# puis exige son état vide ; ce message formait un fil de plus, et l'état vide devenait
+# inatteignable. La campagne rendait `589 passés, 1 échec` sur un défaut qui n'était pas celui du
+# produit. C'est la famille d'INC-209 : une preuve qui écrit dans la base de développement doit
+# reprendre ses écritures.
+#
+# La reprise porte sur les DEUX côtés, et l'ordre compte : la boîte d'abord — sans quoi une relève
+# ultérieure réingérerait la ligne qu'on vient d'effacer —, la base ensuite.
+uids_controle=$(curl -sS --noproxy '*' --url "imap://$HOTE:$(lire_env STALWART_IMAP_PORT)/INBOX" \
+	--user "$BOITE_SYSTEME:$MDP" \
+	--request "UID SEARCH HEADER Message-ID $MESSAGE_ID_CONTROLE" 2>/dev/null \
+	| tr -d '\r' | sed -n 's/^\* SEARCH //p')
+for uid in $uids_controle; do
+	curl -sS --noproxy '*' --url "imap://$HOTE:$(lire_env STALWART_IMAP_PORT)/INBOX" \
+		--user "$BOITE_SYSTEME:$MDP" --request "UID STORE $uid +Flags \\Deleted" >/dev/null 2>&1 || true
+done
+curl -sS --noproxy '*' --url "imap://$HOTE:$(lire_env STALWART_IMAP_PORT)/INBOX" \
+	--user "$BOITE_SYSTEME:$MDP" --request 'EXPUNGE' >/dev/null 2>&1 || true
+psql_db -c "delete from public.mail_messages
+	where rfc822_message_id in ('$MESSAGE_ID_CONTROLE', 'preuve-journal-stalwart@verify-mail-infra.p2enjoy.test')
+	   or subject = 'Preuve journal Stalwart propre';" >/dev/null 2>&1 || true
+
+# LA REPRISE EST CONSTATÉE, JAMAIS SUPPOSÉE (docs/SPEC-test-harness.md §7.2) : les deux côtés sont
+# relus. Un `delete` qui n'aurait rien effacé et un `EXPUNGE` sans effet rendraient ce contrôle
+# rouge, au lieu de laisser la dérive repartir silencieusement à l'exécution suivante.
+restes_boite=$(curl -sS --noproxy '*' --url "imap://$HOTE:$(lire_env STALWART_IMAP_PORT)/INBOX" \
+	--user "$BOITE_SYSTEME:$MDP" \
+	--request "UID SEARCH HEADER Message-ID $MESSAGE_ID_CONTROLE" 2>/dev/null \
+	| tr -d '\r' | sed -n 's/^\* SEARCH //p' | wc -w)
+restes_base=$(psql_db -c "select count(*) from public.mail_messages
+	where subject = 'Preuve journal Stalwart propre';" | tr -d '[:space:]')
+if [ "$restes_boite" = 0 ] && [ "$restes_base" = 0 ]; then
+	ok "le harnais REPREND son message de contrôle : ni dans la boîte système, ni en base"
+else
+	fail "le message de contrôle survit au harnais : $restes_boite dans la boîte, $restes_base en base"
 fi
 
 # ---------------------------------------------------------------------------------------------
