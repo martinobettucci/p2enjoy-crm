@@ -8492,15 +8492,64 @@ avant la suivante :
         réelle. **LIVRÉE ET PROUVÉE le 2026-08-25** ; voir le détail plus bas. Les quatre questions
         du §8.11 sont tranchées au **§9**, et la troisième a exigé une **migration** : le schéma
         `app` n'étant pas exposé, la liste fermée était hors de portée de l'écran.
-- [~] **Tranche 3 — la signature** : rendre effectif ce que `CRM-053` a posé et que personne
-      n'emploie. `mail_outbound_identities.signature_html` est **morte et mal nommée** — son nom
-      annonce du HTML là où tout le sous-système expédie du texte. Consigné au registre (INC-215).
-      **SPÉCIFIÉE le 2026-08-25 au §10** de `docs/SPEC-modeles-emails.md`, après mesure sur la pile
-      debout et seedée et **avant sa première ligne de code** : la colonne devient `signature_text`
-      et reçoit une borne, la signature est composée **à la mise en file** dans
-      `queue_outbound_email` — séparateur `-- ` de la RFC 3676 —, elle s'efface par un champ vide
-      comme `from_name`, et elle appartient à l'**identité** parce que la clé de la table est un
-      triplet. Definition of Done au §10.9.
+- [x] **Tranche 3 — la signature** : rendre effectif ce que `CRM-053` a posé et que personne
+      n'employait. **SPÉCIFIÉE au §10** de `docs/SPEC-modeles-emails.md` le 2026-08-25, après mesure
+      et **avant sa première ligne de code**, puis **LIVRÉE ET PROUVÉE le 2026-08-25** ; voir le
+      détail plus bas. **INC-215 est CLOSE** : la colonne est renommée `signature_text`, bornée,
+      LUE par la garde d'envoi et ÉCRITE par l'écran.
+
+**Tranche 3 livrée, 2026-08-25 — la signature** (`docs/SPEC-modeles-emails.md` §10,
+`docs/SCHEMA.md` §7, `docs/DESIGN_SYSTEM.md` §5.35) :
+
+- [x] **Spécification écrite et COMMITTÉE avant la première ligne de code** (`CLAUDE.md` §5) : le
+      §10, dont les quatre questions du §7.2 tranchées **chacune par une mesure**.
+- [x] **`supabase/migrations/0058_signature_identite_sortante.sql`** : le renommage gardé, la borne
+      convergente, le `grant select` de colonne reposé, `app.mail_corps_signe(text, text)`
+      `immutable`, `upsert_mail_outbound_identity` dont le `coalesce` devient TROIS états, et
+      `queue_outbound_email` qui stocke le corps SIGNÉ derrière un septième refus `body_required`.
+- [x] **LE PRIX DU RENOMMAGE PAYÉ À SA SOURCE, et deux mesures l'imposaient.** Le `grant select` de
+      la migration 23 nommait la colonne — `ERROR: column "signature_html" … does not exist` au
+      rejeu —, et `create or replace function` refuse de changer le nom d'un paramètre d'entrée.
+      Les migrations **23 et 33 sont corrigées dans le même changement**. La panne ne se serait vue
+      qu'au **deuxième** démarrage suivant, c'est-à-dire chez le prochain contributeur.
+- [x] **Suite pgTAP dédiée** : `supabase/tests/0056_signature_identite.test.sql`, **40
+      assertions** — la forme, les quatre règles de composition comparées **caractère à
+      caractère**, les trois états de l'effacement chacun précédé de son témoin, le septième refus
+      et la borne du corps composé dont le témoin est la MÊME identité sans sa signature.
+- [x] **Un garde-fou RÉVISÉ, jamais retiré** : l'assertion 17 de `0030_envoi_sortant.test.sql`
+      s'appuyait sur le corps par défaut de la garde, que `body_required` rend invalide. Le corps y
+      est renseigné, et elle prouve ce qu'elle annonce.
+- [x] **Test d'API dédié** : `e2e/api/signature-identite.spec.ts`, **8 scénarios verts**, dont
+      celui qui prouve que le renommage a été **PROPAGÉ** — `select=signature_html` rend `42703`
+      par la route — et non seulement appliqué en base.
+- [x] **UNE RÉGRESSION DE LA SESSION, TROUVÉE PAR LA CAMPAGNE ET CORRIGÉE À SA CAUSE.** Le contrat
+      d'API ne retirait pas sa ligne de file : `mail-sync` expédiait vraiment, et la pollution
+      revenait par **deux** chemins — le message dans la boîte de l'affaire, et **une minute plus
+      tard** son avis de non-remise dans « Non classés ». Six scénarios de `e2e/ui` rougissaient.
+      Retrait dans un `finally`, patron de `e2e/api/envoi.spec.ts`.
+- [x] **Écran livré et vérifié visuellement** : un champ « Signature » multiligne après le nom
+      d'expéditeur, son texte d'aide, la colonne LUE, et une pilule neutre de présence dans la
+      liste. Captures observées sous `docs/captures/CRM-089/`.
+- [x] **E2E** : un scénario qui éprouve les **deux** sens — écriture puis EFFACEMENT, qui est la
+      réparation de la tranche —, au clavier, console vierge.
+- [x] **Seed enrichi** : Driss signe sur **deux** lignes, l'identité de service ne signe pas ; deux
+      gardes de ce que le jeu doit démontrer, dont l'une a dénoncé une signature tronquée à sa
+      première ligne, `read` s'arrêtant au premier saut de ligne.
+- [x] **Harnais dédié `scripts/verify-signature-identite.sh`** : **33 contrôles, aucune anomalie**,
+      **sept** dégradations toutes mordantes, restauration constatée octet à octet. Il rejoue les
+      migrations 23, 33 et 58 : le seul contrôle du dépôt qui verrait une convergence perdue.
+- [x] **UN QUATRIÈME DÉFAUT DU HARNAIS TROUVÉ PAR LE HARNAIS**, et le second faux verdict : la
+      borne était écrite **trois** fois, si bien qu'aucune substitution ne pouvait la desserrer et
+      que le harnais accusait la suite pgTAP d'un trou qu'elle n'avait pas. La valeur est désormais
+      écrite **une** fois. Après la substitution puis l'application qui échouaient en silence,
+      c'est la **dégradation qui converge**.
+- [x] **Compteurs de `scripts/verify-harness.sh` révisés dans le MÊME changement** :
+      `FICHIERS_SQL_ATTENDUS` 55 → **56**, `ASSERTIONS_ATTENDUES` 2651 → **2691**, `SCENARIOS_API`
+      885 → **893**, `SCENARIOS_UI` 604 → **605**. Valeurs **COMPTÉES**.
+- [x] **Documentation dans le même changement** : `docs/SCHEMA.md` §7,
+      `docs/SPEC-mail-subsystem.md` §22.1 et §22.3, `docs/PROD_MIGRATIONS.md` migration 58,
+      `docs/DESIGN_SYSTEM.md` §5.35, `docs/manual.md` chapitre **7 bis**, `CHANGELOG.md`, et
+      `docs/INCONSISTENCY_REPORT.md` où **INC-215** et **INC-218** sont closes.
 - [ ] **Tranche 4 — la séquence de relance** : paliers ordonnés, chacun portant un modèle
       (`on delete restrict`) et un délai, appliqués à une affaire figée au sens de `CRM-062`.
 

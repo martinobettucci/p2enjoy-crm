@@ -24530,3 +24530,73 @@ nommée**, son nom annonçant du HTML là où tout le sous-système expédie du 
 sont nommées au §7.2 : le nom et le type de la colonne, sa position dans le corps expédié, son
 effacement, et si une signature est propre à une **identité** ou à une **personne**. C'est une
 migration sur la table d'une autre unité, et le nom porte une question de produit.
+
+
+## décision 516 — `CRM-063` tranche 3 : la signature, et le prix d'un renommage de colonne
+
+**Session planifiée du 2026-08-25, ouverte à 16 h 16 UTC.** Reprise à l'endroit exact où la
+décision 515 s'arrêtait : « `CRM-063` **tranche 3 — la signature** ». Choix de l'unité par le §4.2
+point 1 de `docs/CloudWorker.md`.
+
+**LA SPÉCIFICATION A ÉTÉ ÉCRITE ET COMMITTÉE AVANT LA PREMIÈRE LIGNE DE CODE**, au §10 de
+`docs/SPEC-modeles-emails.md`, après mesure sur la pile debout et seedée. Les quatre questions que
+le §7.2 avait nommées y sont tranchées, et chacune par une mesure : la colonne devient
+`signature_text` et reçoit une borne de deux mille caractères ; la signature est composée **à la
+mise en file** et non à l'envoi ; elle s'efface par un champ vide, comme `from_name` ; elle
+appartient à l'**identité**, la clé de la table étant un triplet et l'identité de service n'ayant
+aucun propriétaire.
+
+**LE RENOMMAGE ÉTAIT POSSIBLE MAINTENANT, ET IL NE L'AURAIT PLUS ÉTÉ APRÈS.** Mesuré avant
+d'écrire : la colonne est nullable, sans contrainte, sans vue dépendante, sans lecteur applicatif et
+`NULL` sur les deux identités du seed. Le premier lecteur qu'elle recevait était celui de cette
+tranche ; lui faire lire un nom faux aurait installé durablement la divergence qu'INC-215 dénonce.
+
+**LE PRIX DU RENOMMAGE N'ÉTAIT PAS PRÉVU, ET IL EST LA LEÇON DE CETTE SESSION.** Le
+`migrations-runner` ne tient aucun registre et rejoue TOUT le répertoire à chaque démarrage. Deux
+écritures antérieures s'en trouvaient condamnées, et aucune ne l'aurait dit au moment du renommage :
+
+1. le `grant select (…)` de la migration 23 **nommait la colonne**. MESURÉ :
+   `ERROR: column "signature_html" … does not exist` dès le rejeu suivant. La colonne ne peut être
+   nommée là ni sous l'ancien nom — faux après la 58 — ni sous le nouveau — faux avant elle, la 23
+   passant en premier. Le privilège appartient donc désormais à la migration qui possède le nom ;
+2. `create or replace function` **REFUSE de changer le nom d'un paramètre d'entrée**. Les migrations
+   23 et 33 retirent désormais la fonction avant de la reposer, comme la 30 le fait pour
+   `reserver_envois` depuis toujours.
+
+**La panne ne se serait manifestée qu'au DEUXIÈME démarrage suivant le renommage**, c'est-à-dire
+chez le prochain contributeur et jamais chez celui qui l'écrit. Le §2 du harnais dédié rejoue donc
+les trois migrations et relit le nom du paramètre : c'est le seul contrôle du dépôt qui verrait une
+convergence perdue, et il vaudra pour tout renommage futur.
+
+**UNE RÉGRESSION DE LA SESSION, TROUVÉE PAR LA CAMPAGNE, ET SA POLLUTION EST ARRIVÉE PAR DEUX
+CHEMINS.** Six scénarios de `e2e/ui` ont rougi. La cause est le contrat d'API de la tranche, qui
+mettait un message en file **sans le retirer** : `mail-sync` l'a donc vraiment expédié. Le serveur
+l'a remis dans la boîte de « Refonte du site vitrine », que `groupement-fils.spec.ts` compte — trois
+messages au lieu d'un fil ; et **une minute plus tard**, le destinataire inexistant a produit un
+`Failed to deliver message` revenu dans « Non classés », si bien que `sommeil-fil.spec.ts` ne voyait
+plus son état vide. Le second chemin est le plus instructif : **la pollution d'une preuve qui laisse
+partir un courrier est DIFFÉRÉE, et elle atterrit ailleurs que le message**. Le remède est le patron
+de `e2e/api/envoi.spec.ts` — retrait dans un `finally` —, repris tel quel plutôt que redécouvert.
+
+**UN QUATRIÈME DÉFAUT DU HARNAIS TROUVÉ PAR LE HARNAIS, ET LE SECOND FAUX VERDICT.** Le harnais
+dédié rendait « COMPLAISANT — la borne de la signature saute » et accusait la suite pgTAP d'un trou
+qu'elle n'avait pas : c'est la **dégradation** qui ne dégradait pas. La migration écrivait la borne
+**trois fois** — définition attendue et deux `add` —, si bien qu'aucune substitution ponctuelle ne
+pouvait la desserrer : la convergence la ramenait à sa valeur. Corrigé à sa cause, et par la règle
+que la tranche 1 avait déjà posée pour la liste des variables : **la valeur est écrite une seule
+fois**, `v_borne`, et les trois usages la lisent. Après le §2.11 (substitution qui échoue en
+silence) et le §8.9 bis (application qui échoue en silence), c'est la troisième forme du même
+mensonge tranquille : **la dégradation qui converge**.
+
+**INC-218 CLOSE, et c'était la dette explicitement laissée par la décision 515.**
+`scripts/verify-modeles-emails.sh` extrayait la liste des variables de **tout** le document et
+comptait deux fois `card.amount` et `card.next_action_at`, écrits dans le tableau du §8.6. La borne
+retenue est celle de **section** — `sed` jusqu'au titre suivant — et non un marqueur qu'il faudrait
+maintenir. Le harnais rend de nouveau **44 contrôles, aucune anomalie**. Sa ligne de tableau
+manquait au registre : elle est ajoutée, close.
+
+**Où reprendre.** `CRM-063` **tranche 4 — la séquence de relance**, cadrée au §7.3 et **à spécifier
+ligne à ligne avant sa première ligne de code**. Elle devra trancher : qui arme une séquence, ce qui
+l'interrompt, et ce qu'une réponse du destinataire produit. Elle posera aussi le `on delete restrict`
+vers `mail_templates` que la sous-tranche 2b a délibérément laissé hors de sa confirmation de
+suppression (§9.7), et son écran devra alors le dire.
