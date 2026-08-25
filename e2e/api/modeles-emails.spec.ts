@@ -48,6 +48,20 @@ type Modele = {
 	updated_at: string
 }
 
+/**
+ * La PREMIÈRE ligne d'une réponse, ou un échec qui dit ce qui manque.
+ *
+ * `noUncheckedIndexedAccess` est actif dans ce dépôt, et il a raison : `const [x] = tableau` rend
+ * `Modele | undefined`, et une assertion posée sur `undefined` passerait pour une preuve. Le
+ * helper transforme le cas vide en ÉCHEC NOMMÉ — « la réponse est vide » dit bien plus au
+ * diagnostic qu'un `Cannot read properties of undefined`.
+ */
+function premiere<T>(lignes: T[], quoi: string): T {
+	const ligne = lignes[0]
+	expect(ligne, `${quoi} : la réponse est VIDE — seed non appliqué, ou écriture refusée ?`).toBeDefined()
+	return ligne as T
+}
+
 let jetonAdmin: string
 let jetonBizdev: string
 let jetonViewer: string
@@ -197,7 +211,7 @@ test.describe('les modèles d’email, par la vraie route (docs/SPEC-modeles-ema
 			},
 		})
 		expect(reponse.status()).toBe(201)
-		const [cree] = (await reponse.json()) as Modele[]
+		const cree = premiere((await reponse.json()) as Modele[], 'le modèle créé')
 		// Les blancs de bord dans les accolades sont tolérés (§2.3) : le corps est stocké TEL QUEL,
 		// la tolérance vivant dans la validation et non dans une normalisation qui réécrirait le
 		// texte de l'utilisateur.
@@ -260,7 +274,7 @@ test.describe('les modèles d’email, par la vraie route (docs/SPEC-modeles-ema
 			data: { body_text: `${avant.body_text}\n\nPost-scriptum de la preuve.` },
 		})
 		expect(reponse.status()).toBe(200)
-		const [modifie] = (await reponse.json()) as Modele[]
+		const modifie = premiere((await reponse.json()) as Modele[], 'le modèle modifié')
 		// Le trigger `mail_templates_set_updated_at` est la seule chose qui fasse avancer cette
 		// date : l'assertion prouve qu'il est bien POSÉ, ce qu'aucune lecture ne dirait.
 		expect(new Date(modifie.updated_at).getTime()).toBeGreaterThan(
@@ -291,7 +305,7 @@ test.describe('les modèles d’email, par la vraie route (docs/SPEC-modeles-ema
 			},
 		})
 		expect(reponse.status()).toBe(201)
-		const [cree] = (await reponse.json()) as Modele[]
+		const cree = premiere((await reponse.json()) as Modele[], 'le modèle portant created_by d’autrui')
 		// La colonne accepte l'identifiant d'autrui, et cela ne DONNE rien à personne : aucune
 		// politique ne la lit. L'assertion FIGE ce fait plutôt que de le taire — sans elle, une
 		// session future pourrait croire à un oubli de garde et en ajouter une par précaution.
@@ -335,7 +349,5 @@ async function lire(
 		headers: enTetesAuthentifies(jeton),
 	})
 	expect(reponse.status()).toBe(200)
-	const [ligne] = (await reponse.json()) as Modele[]
-	expect(ligne, `le modèle ${id} doit exister — seed non appliqué ?`).toBeTruthy()
-	return ligne
+	return premiere((await reponse.json()) as Modele[], `le modèle ${id}`)
 }
