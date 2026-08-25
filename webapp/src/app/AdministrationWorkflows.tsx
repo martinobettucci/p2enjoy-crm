@@ -2297,10 +2297,13 @@ function CommandeComparaison({
 			    surface demandait `text-text-1`, un niveau que l'échelle des neutres ne porte pas :
 			    elle nomme `--color-text`, `--color-text-2` et `--color-text-3`, sans `-1`. La
 			    classe n'était donc pas engendrée du tout (`docs/DESIGN_SYSTEM.md` §11), et le
-			    document HÉRITAIT la teinte de la mention — mesuré, `#736e2c` quand la source a
-			    changé, `#4b5563` sinon : deux couleurs selon un état que ce document ne décrit
-			    pas. `text-text` est l'encre du corps (§2), la seule des trois que ce bloc
-			    n'emprunte pas déjà à son cadre. */}
+			    document HÉRITAIT la teinte de la mention — mesuré : `--color-accent-on-soft`
+			    quand la source a changé, `--color-text-2` sinon, soit deux couleurs selon un état
+			    que ce document ne décrit pas. Les valeurs relevées sont au §5.15 du design system
+			    et dans INC-130 : elles ne se recopient pas ici, aucun hexadécimal n'entrant dans
+			    un composant (§11, garde d'`i18n.test.ts`, qui a dénoncé une première version de
+			    ce commentaire). `text-text` est l'encre du corps (§2), la seule des trois que ce
+			    bloc n'emprunte pas déjà à son cadre. */}
 			{comparaison !== null && !comparaison.identique ? (
 				<span
 					data-testid="comparaison-source-resultat"
