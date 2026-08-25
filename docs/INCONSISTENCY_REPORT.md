@@ -4525,3 +4525,66 @@ supabase/seed/apply-seed.sh
 
 Les seuls messages réellement étrangers au seed sont ceux dont le `rfc822_message_id` ne commence
 pas par `<seed-inbox-`.
+## Consignée le 2026-08-25 — une restauration de harnais qui certifiait l'état qu'elle venait de dégrader
+
+### INC-213 — `verify-droits-fins.sh` rejoue la migration 10 seule et ampute la lecture transitive d'un track
+
+**Ouverte et CORRIGÉE le 2026-08-25**, par le rejeu complet de la série des `scripts/verify-*.sh`.
+**Sixième occurrence de la famille d'INC-142**, après INC-153, INC-154, INC-195, INC-199 et INC-200 :
+un harnais réapplique la migration de son unité **seule**, là où le §3.5 de
+`docs/SPEC-test-harness.md` exige le `migrations-runner` sur tout le répertoire.
+
+**Ce qui a été mesuré**, base restaurée par le runner puis seedée :
+
+```
+scripts/verify-droits-fins.sh --rapide   =>  35 contrôles, 1 en échec
+  ECHEC  le rejeu a modifié quelque chose : l'empreinte diffère
+```
+
+L'empreinte du harnais couvre sept fonctions du schéma `app` et les prédicats de quatre politiques.
+**Un seul élément dérive**, et le relevé le nomme sans ambiguïté :
+
+```
+< pol:tracks_lecture_membre:06fcef031be67b28dab03eaf85540bf8
+> pol:tracks_lecture_membre:4f91d913ff6c57420e43d61c9f067ff6
+```
+
+`0010_droits_fins.sql` pose `using (app.resolve_track_access(workspace_id, id) <> 'none')`.
+`0034_lecture_track_transitive.sql` en est la dernière autorité depuis, et ajoute
+`or app.track_has_readable_channel(id)` : sans cette branche, un channel rouvert par un droit fin
+serait joignable dans un track invisible. Le rejeu isolé ramène donc réellement le prédicat
+d'avant la 34.
+
+**L'EFFET EST USAGER, PAS COSMÉTIQUE**, et il est mesuré avec le rôle réel sur le seed. La lectrice
+a `conseil-ia` fermé au niveau du track (`track_members.access = 'none'`) et le channel
+`prospection` rouvert (`channel_members.access = 'member'`) :
+
+```
+après rejeu isolé de la migration 10   =>  la lectrice lit 4 tracks sur 5
+après rejeu complet par le runner      =>  elle en lit 5
+```
+
+Le harnais laissait donc derrière lui un produit qui **ferme un track que le produit ouvre**, pour
+tout ce qui s'exécutait ensuite — les sections suivantes du harnais comprises, et les harnais
+suivants d'une série.
+
+**LE PLUS COÛTEUX N'EST PAS LA DÉGRADATION, C'EST QUE LA SECTION 7 LA CERTIFIAIT.** « Restauration
+constatée, et non supposée » réappliquait la migration 10 seule, puis vérifiait deux choses qui ne
+pouvaient pas voir l'amputation : son contrôle de prédicat cherche `resolve_track_access`, présent
+des **deux** côtés ; et son contrôle de compte attendait « 4 tracks sur 5 » pour la lectrice,
+c'est-à-dire **exactement le nombre que seul l'état amputé produit**. Un garde-fou figé avant la
+migration 34 s'était mué en certificat de la dégradation.
+
+**CORRIGÉE À SA CAUSE, sous `CRM-012`**, unité que ce harnais éprouve :
+
+- la restauration appelle le `migrations-runner` sur tout le répertoire, avec `--env-file` et les
+  DEUX fichiers de composition (`docs/CloudWorker.md` §2.2 bis) ;
+- le contrôle de convergence cesse de compter une identité et mesure l'invariant, en deux temps :
+  le rejeu **isolé** DOIT faire dériver l'empreinte — et le contrôle **nomme** l'élément dérivé,
+  de sorte qu'une dérive inattendue ne se cache pas derrière la dérive attendue —, puis le rejeu
+  **complet** DOIT la rendre à l'octet près ;
+- le compte de la section 7 est **révisé, jamais relâché** (mécanisme de la décision 51) : cinq
+  tracks pour la lectrice, motif écrit dans le fichier. **Le refus n'est pas perdu pour autant, il
+  est mesuré là où il tient encore et il y est plus strict** : la lectrice lit six channels sur
+  huit, `grands-comptes` et `appels-offres` restant masqués. Sans cette ligne ajoutée, réviser le
+  compte aurait retiré une preuve de refus au lieu de la déplacer.

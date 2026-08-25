@@ -176,16 +176,58 @@ empreinte() {
 	"
 }
 
+# Le retour à l'état courant appelle le `migrations-runner` sur TOUT le répertoire, et jamais une
+# réapplication isolée de la migration 10 : c'est le §3.5 de `docs/SPEC-test-harness.md`, et c'est
+# la restauration que `verify-copie-workflow.sh` et `verify-transition-required-fields.sh`
+# emploient depuis INC-195 et INC-199. `--force-recreate` est nécessaire — le runner est un
+# conteneur à usage unique —, et l'appel porte `--env-file` et les DEUX fichiers de composition
+# (`docs/CloudWorker.md` §2.2 bis, décisions 471 et 497) : un appel nu recréerait `storage` et `db`
+# sans les surcharges `dev`.
+restaurer_etat_courant() {
+	docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
+		up --force-recreate migrations-runner
+}
+
+# Rend le NOM des éléments d'empreinte qui diffèrent entre deux relevés. Comparer deux sommes
+# globales dit qu'il y a eu dérive ; nommer l'élément dit LAQUELLE, et c'est ce qui empêche une
+# dérive inattendue de se cacher derrière une dérive attendue.
+elements_derives() {
+	comm -3 <(printf '%s' "$1" | tr '|' '\n' | sort) <(printf '%s' "$2" | tr '|' '\n' | sort) \
+		| sed 's/^[[:space:]]*//' | cut -d: -f1-2 | sort -u | paste -sd, -
+}
+
 avant=$(empreinte)
 if psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1; then
 	ok "la migration se réapplique sans erreur sur une base déjà migrée"
 else
 	fail "la migration échoue au rejeu — l'idempotence n'est pas acquise"
 fi
-apres=$(empreinte)
-[ "$avant" = "$apres" ] \
-	&& ok "le rejeu ne modifie ni les sept fonctions, ni les prédicats des politiques" \
-	|| fail "le rejeu a modifié quelque chose : l'empreinte diffère"
+
+# CE CONTRÔLE COMPTAIT UNE IDENTITÉ ; IL MESURE DÉSORMAIS L'INVARIANT QUI COMPTE — INC-213,
+# mesurée le 2026-08-25, sixième occurrence de la famille d'INC-142 après INC-153, INC-154,
+# INC-195, INC-199 et INC-200.
+#
+# `0010_droits_fins.sql` n'est plus la dernière autorité sur `tracks_lecture_membre` :
+# `0034_lecture_track_transitive.sql` a ajouté `app.track_has_readable_channel(id)` au prédicat,
+# sans quoi un channel rouvert par un droit fin serait joignable dans un track invisible. Rejouer
+# la 10 SEULE ramène donc réellement le prédicat d'avant la 34, et l'effet est USAGER, pas
+# cosmétique — MESURÉ sur le seed avec le rôle réel : la lectrice, à qui `conseil-ia` est fermé au
+# niveau du track et dont le seul channel `prospection` est rouvert, lit **4** tracks sur 5 après
+# le rejeu isolé, et **5** dans l'état que le runner produit. L'assertion accusait le produit d'une
+# dérive que le harnais venait de provoquer.
+#
+# Elle se mesure maintenant en deux temps, et le premier NOMME l'élément qui dérive : un rejeu
+# isolé qui ferait dériver autre chose que `pol:tracks_lecture_membre` serait un fait neuf, et le
+# contrôle le dirait au lieu de le confondre avec la dérive attendue.
+apres_rejeu_isole=$(empreinte)
+derives=$(elements_derives "$avant" "$apres_rejeu_isole")
+if [ "$derives" = "pol:tracks_lecture_membre" ]; then
+	ok "le rejeu ISOLÉ fait dériver le SEUL prédicat dont la migration 34 est devenue l'autorité"
+elif [ -z "$derives" ]; then
+	fail "le rejeu isolé ne fait plus rien dériver : la 10 serait redevenue la dernière autorité sur tracks_lecture_membre — relire ce harnais"
+else
+	fail "le rejeu isolé fait dériver autre chose que le prédicat attendu : « $derives »"
+fi
 
 # Convergence, et non simple idempotence (décision 57) : une politique **retirée** est rétablie.
 psql_db -c "drop policy track_members_suppression_admin on public.track_members;" >/dev/null
@@ -195,6 +237,16 @@ psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || true
                     and policyname = 'track_members_suppression_admin';")" = "1" ] \
 	&& ok "une politique retirée à la main est **rétablie** par un rejeu : la migration répare" \
 	|| fail "la politique retirée n'est pas rétablie"
+
+# Second temps de la mesure : le rejeu COMPLET du répertoire doit rendre l'empreinte à l'octet
+# près. Sans ce retour, tout ce qui s'exécute derrière ce harnais — les sections suivantes
+# comprises, et les harnais suivants d'une série — mesurerait un produit dont la lecture
+# transitive d'un track est amputée.
+restaurer_etat_courant >/dev/null 2>&1
+apres=$(empreinte)
+[ "$avant" = "$apres" ] \
+	&& ok "le rejeu COMPLET du répertoire rend l'empreinte à l'octet près : sept fonctions et quatre politiques" \
+	|| fail "l'empreinte reste dérivée APRÈS rejeu complet du répertoire : « $(elements_derives "$avant" "$apres") »"
 
 titre "3. Le seed est convergent, et pose exactement quatre droits fins"
 
@@ -368,7 +420,13 @@ psql_db -c "
 
 titre "7. Restauration constatée, et non supposée"
 
-psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || true
+# LA RESTAURATION PASSE PAR LE RUNNER, PLUS PAR UN REJEU ISOLÉ DE LA MIGRATION 10 — INC-213.
+# Rejouer la 10 seule laissait `tracks_lecture_membre` amputée de la lecture transitive de la
+# migration 34, et cette section CERTIFIAIT cet état : son contrôle de prédicat cherche
+# `resolve_track_access`, présent des deux côtés, et son contrôle de compte attendait le nombre
+# que SEUL l'état amputé produit. Une restauration qui se déclare réussie sur l'état qu'elle a
+# elle-même dégradé n'est pas une restauration ; c'est le faux vert que `CLAUDE.md` §17 proscrit.
+restaurer_etat_courant >/dev/null 2>&1
 
 restaure=$(psql_db -c "
 	select (select case when pg_get_expr(polqual, polrelid) like '%resolve_track_access%'
@@ -390,12 +448,27 @@ restaure=$(psql_db -c "
 "résolution est de nouveau tolérante à l'absence de ligne, et la lecture est de nouveau réservée" \
 	|| fail "restauration incomplète : « $restaure », attendu « fine/externe/admin »"
 
-[ "$(lire "tracks?select=id&workspace_id=eq.$WS_SEED" "$T_VIEWER")" = "4" ] \
-	&& ok "et le refus est de nouveau opposé au \`viewer\` : 4 tracks sur 5" \
-	|| fail "après restauration, le viewer voit encore le track qui doit lui être masqué"
+# CE COMPTE EST RÉVISÉ, JAMAIS RELÂCHÉ — mécanisme de la décision 51, et son motif est MESURÉ.
+# Il attendait « 4 tracks sur 5 » pour la lectrice, et ce nombre était celui de l'état AMPUTÉ que
+# la restauration isolée laissait derrière elle. Dans l'état que le runner produit, la lectrice en
+# lit **cinq** : le seed lui ferme `conseil-ia` au niveau du track, puis lui ROUVRE le channel
+# `prospection`, et la migration 34 rend alors le track visible — sans quoi un channel joignable
+# vivrait dans un track invisible.
+[ "$(lire "tracks?select=id&workspace_id=eq.$WS_SEED" "$T_VIEWER")" = "5" ] \
+	&& ok "et la lectrice lit de nouveau les cinq tracks : son channel rouvert rend son track visible (migration 34)" \
+	|| fail "après restauration, la lectrice ne retrouve pas la lecture transitive de son track"
+
+# LE REFUS N'EST PAS PERDU AU PASSAGE, IL EST MESURÉ LÀ OÙ IL TIENT ENCORE — et il y est plus
+# strict. Le droit fin de la lectrice ne masque plus le track, mais il masque toujours les DEUX
+# autres channels de `conseil-ia`, `grands-comptes` et `appels-offres` : elle lit six channels sur
+# huit. Sans cette ligne, réviser le compte au-dessus aurait retiré une preuve de refus au lieu de
+# la déplacer, ce que `CLAUDE.md` §18 interdit.
+[ "$(lire "channels?select=id" "$T_VIEWER")" = "6" ] \
+	&& ok "et le refus reste opposé à la lectrice là où il tient : 6 channels sur 8, \`grands-comptes\` et \`appels-offres\` masqués" \
+	|| fail "après restauration, le droit fin de la lectrice ne masque plus ses deux channels"
 
 [ "$(lire "tracks?select=id&workspace_id=eq.$WS_SEED" "$T_BIZDEV")" = "5" ] \
-	&& ok "et le \`business_developer\`, qu'aucun droit fin ne vise, voit de nouveau les cinq" \
+	&& ok "et le \`business_developer\`, qu'aucun droit fin ne ferme, voit de nouveau les cinq" \
 	|| fail "après restauration, le business_developer reste fermé"
 
 titre "8. Non-régression des unités précédentes"

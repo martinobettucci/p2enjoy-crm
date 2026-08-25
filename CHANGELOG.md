@@ -202,6 +202,17 @@ d'exécuter le code attendu.
 
 ### Corrigé
 
+- **UN HARNAIS FERMAIT UN DOSSIER QUE LE PRODUIT OUVRE, ET SE DÉCLARAIT RESTAURÉ**
+  (`CRM-012`, `docs/INCONSISTENCY_REPORT.md` INC-213). Le harnais des droits fins réappliquait sa
+  seule migration d'origine pour se restaurer. Une migration ultérieure avait depuis élargi la
+  règle — un dossier reste visible dès qu'une personne peut lire l'un de ses channels, sans quoi ce
+  channel vivrait dans un dossier introuvable —, et cette réapplication isolée la retirait :
+  mesuré, une lectrice passait de cinq dossiers visibles à quatre, et tout ce qui s'exécutait
+  ensuite mesurait ce produit-là. Le contrôle de restauration ne pouvait pas le voir : il attendait
+  précisément le nombre que l'état dégradé produit. La restauration passe désormais par le rejeu
+  complet des migrations, et le compte attendu est corrigé — sans perdre le refus qu'il portait,
+  désormais mesuré au niveau des channels, où il reste opposé.
+
 - **UNE PREUVE ACCUSAIT UN FICHIER CONFORME** (`CRM-077`, `docs/INCONSISTENCY_REPORT.md` INC-192).
   Le harnais de la corbeille vérifie que chaque fichier de l'unité cite sa spécification en tête ;
   il ne lisait que les trois premières lignes. La fiche d'une affaire étant le point d'ancrage de
