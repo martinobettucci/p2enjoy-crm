@@ -34,15 +34,35 @@ create extension if not exists pgtap with schema extensions;
 select plan(18);
 
 -- Les identifiants du seed employés ici — docs/SPEC-seed.md §2.3 et §2.18.
-create temporary table sonde as
-select '5eed0000-0000-4000-8000-000000000001'::uuid as workspace,
-       '5eed0000-0000-4000-8000-0000000000c1'::uuid as card,
-       (select c.id from public.contacts c
-         where not exists (
-           select 1 from public.card_contacts cc
-            where cc.card_id = '5eed0000-0000-4000-8000-0000000000c1'::uuid
-              and cc.contact_id = c.id)
-         order by c.id limit 1) as contact;
+--
+-- TOUTE MESURE EST FILTRÉE SUR LE CONTACT DE LA SONDE, ET C'EST OBLIGATOIRE. `card_events` est
+-- APPEND-ONLY et refuse le `DELETE` même à la clé de service (`CRM-044` §14.7) : les preuves d'API
+-- et d'interface de cette tranche écrivent sur la même affaire et ne peuvent pas reprendre leurs
+-- lignes. MESURÉ le 2026-08-25 : un témoin « aucun événement avant le geste » attendait zéro et en
+-- trouvait CENT QUATRE-VINGT-DEUX. Compter par affaire mesure l'histoire du dépôt ; compter par
+-- CONTACT mesure le geste — et le contact choisi n'est rattaché à rien, ce qu'un témoin établit.
+-- LA SONDE CRÉE SON PROPRE CONTACT, ET C'EST LA SEULE FORME QUI TIENNE. `card_events` est
+-- APPEND-ONLY et refuse le `DELETE` même à la clé de service (`CRM-044` §14.7) : les preuves d'API
+-- et d'interface de cette tranche écrivent sur la même affaire, sur le même contact du seed, et ne
+-- peuvent pas reprendre leurs lignes. MESURÉ le 2026-08-25 : un témoin « aucun événement avant le
+-- geste » attendait zéro et en trouvait CENT QUATRE-VINGT-DEUX ; filtré sur le contact du seed, il
+-- en trouvait encore QUATRE.
+--
+-- Un contact créé ICI n'a, par construction, aucune histoire — et la suite fait `rollback`, donc il
+-- n'en laisse aucune non plus. Les comptes redeviennent ABSOLUS et disent exactement ce qu'ils
+-- prétendent dire : ce que CE geste a écrit.
+create temporary table sonde (workspace uuid, card uuid, contact uuid);
+
+with cree as (
+	insert into public.contacts (workspace_id, full_name)
+	values ('5eed0000-0000-4000-8000-000000000001'::uuid, 'Sonde tranche 5')
+	returning id
+)
+insert into sonde (workspace, card, contact)
+select '5eed0000-0000-4000-8000-000000000001'::uuid,
+       '5eed0000-0000-4000-8000-0000000000c1'::uuid,
+       cree.id
+  from cree;
 
 -- =============================================================================================
 -- 1. Le vocabulaire, et la forme du trigger — §19.3, §19.4
@@ -95,33 +115,37 @@ select is(
 -- 2. Cas a — rattacher écrit UNE ligne, et son payload n'a que deux clés — §19.7
 -- =============================================================================================
 
--- TÉMOIN D'ABORD : sans lui, les comptes ci-dessous seraient vrais sur une affaire qui n'a jamais
--- rien porté, et ne diraient rien du trigger.
+-- TÉMOIN D'ABORD, et il porte sur le CONTACT choisi plutôt que sur l'affaire : celui-ci n'est
+-- rattaché à rien, donc rien ne le cite encore. Sans ce témoin, les deltas ci-dessous seraient
+-- vrais sur un contact déjà rattaché, et ne diraient rien du geste.
 select is(
-	(select count(*) from public.card_events e, sonde s
-	  where e.card_id = s.card and e.type like 'contact%'),
+	(select count(*) from public.card_contacts cc, sonde s
+	  where cc.card_id = s.card and cc.contact_id = s.contact),
 	0::bigint,
-	'témoin : l''affaire ne porte aucun événement de rattachement avant le geste');
+	'témoin : le contact de la sonde n''est PAS rattaché à l''affaire avant le geste');
 
 insert into public.card_contacts (workspace_id, card_id, contact_id, role)
 select s.workspace, s.card, s.contact, 'decideur' from sonde s;
 
 select is(
 	(select count(*) from public.card_events e, sonde s
-	  where e.card_id = s.card and e.type = 'contact_linked'),
+	  where e.card_id = s.card and e.type = 'contact_linked'
+	    and e.payload ->> 'contact_id' = s.contact::text),
 	1::bigint,
 	'cas a : rattacher écrit EXACTEMENT un contact_linked');
 
 select is(
 	(select array_agg(cle order by cle)
 	   from public.card_events e, sonde s, jsonb_object_keys(e.payload) as cle
-	  where e.card_id = s.card and e.type = 'contact_linked'),
+	  where e.card_id = s.card and e.type = 'contact_linked'
+	    and e.payload ->> 'contact_id' = s.contact::text),
 	array['contact_id', 'role'],
 	'le payload porte DEUX clés et pas une de plus : aucun libellé recopié (§14.6)');
 
 select is(
 	(select e.payload ->> 'contact_id' from public.card_events e, sonde s
-	  where e.card_id = s.card and e.type = 'contact_linked'),
+	  where e.card_id = s.card and e.type = 'contact_linked'
+	    and e.payload ->> 'contact_id' = s.contact::text),
 	(select s.contact::text from sonde s),
 	'le payload désigne le contact rattaché, par son identifiant');
 
@@ -134,7 +158,8 @@ update public.card_contacts cc set role = 'decideur'
 
 select is(
 	(select count(*) from public.card_events e, sonde s
-	  where e.card_id = s.card and e.type = 'contact_role_changed'),
+	  where e.card_id = s.card and e.type = 'contact_role_changed'
+	    and e.payload ->> 'contact_id' = s.contact::text),
 	0::bigint,
 	'cas d : le MÊME rôle réécrit n''allonge pas l''histoire — is distinct from');
 
@@ -143,14 +168,16 @@ update public.card_contacts cc set role = 'prescripteur'
 
 select is(
 	(select count(*) from public.card_events e, sonde s
-	  where e.card_id = s.card and e.type = 'contact_role_changed'),
+	  where e.card_id = s.card and e.type = 'contact_role_changed'
+	    and e.payload ->> 'contact_id' = s.contact::text),
 	1::bigint,
 	'cas c : le rôle DÉPLACÉ écrit exactement un contact_role_changed');
 
 select is(
 	(select (e.payload ->> 'from') || '→' || (e.payload ->> 'to')
 	   from public.card_events e, sonde s
-	  where e.card_id = s.card and e.type = 'contact_role_changed'),
+	  where e.card_id = s.card and e.type = 'contact_role_changed'
+	    and e.payload ->> 'contact_id' = s.contact::text),
 	'decideur→prescripteur',
 	'le payload porte les DEUX bornes : un « avant » sans « après » serait une phrase tronquée');
 
@@ -163,7 +190,8 @@ delete from public.card_contacts cc using sonde s
 
 select is(
 	(select count(*) from public.card_events e, sonde s
-	  where e.card_id = s.card and e.type = 'contact_unlinked'),
+	  where e.card_id = s.card and e.type = 'contact_unlinked'
+	    and e.payload ->> 'contact_id' = s.contact::text),
 	1::bigint,
 	'cas b : détacher écrit exactement un contact_unlinked');
 
@@ -171,7 +199,8 @@ select is(
 -- disparu, et rien d'autre ne dit quel rôle le contact portait au moment du détachement.
 select is(
 	(select e.payload ->> 'role' from public.card_events e, sonde s
-	  where e.card_id = s.card and e.type = 'contact_unlinked'),
+	  where e.card_id = s.card and e.type = 'contact_unlinked'
+	    and e.payload ->> 'contact_id' = s.contact::text),
 	'prescripteur',
 	'le détachement conserve le rôle porté au moment du geste, lu dans OLD');
 
