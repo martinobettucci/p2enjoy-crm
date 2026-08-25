@@ -30,7 +30,7 @@
 // résiduelle serait exécutée par le job dès le démarrage suivant de la pile, et des messages
 // partiraient réellement chez les adresses du jeu de démonstration.
 
-import { expect, test } from '@playwright/test'
+import { expect, test, type APIRequestContext } from '@playwright/test'
 import { enTetesAnonymes, enTetesAuthentifies, jetonDe } from './jetons'
 
 const INSCRIPTIONS = '/rest/v1/card_sequence_enrollments'
@@ -119,7 +119,7 @@ test.beforeAll(async ({ request }) => {
  * démarrage suivant de la pile.
  */
 async function avecInscription(
-	requete: typeof test extends never ? never : Parameters<Parameters<typeof test>[1]>[0]['request'],
+	requete: APIRequestContext,
 	cardId: string,
 	corps: (inscriptionId: string) => Promise<void>,
 ): Promise<void> {
