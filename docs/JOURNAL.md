@@ -24342,3 +24342,77 @@ donc à être rejouée de ce fait.
 question qu'elle doit trancher est nommée : **ce qu'un trou dont la source est nulle rend** — la
 chaîne vide, un tiret, ou le refus d'envoyer. Le seed porte déjà `{{card.amount}}`, variable
 nullable, pour qu'elle ne s'écrive pas à l'aveugle.
+
+## décision 514 — `CRM-063` tranche 2a livrée : le rendu, et ce qu'un trou vide rend
+
+**Session planifiée du 2026-08-25, ouverte à 12 h 32 UTC.** Reprise à l'endroit exact où la
+décision 513 s'arrêtait : « `CRM-063` **tranche 2** — le rendu et l'écran ». Choix de l'unité par le
+§4.2 point 1 de `docs/CloudWorker.md` — la dernière entrée du journal désigne une reprise d'unité
+produit en cours, et elle prime.
+
+**LA SPÉCIFICATION A ÉTÉ ÉCRITE ET COMMITTÉE AVANT LA PREMIÈRE LIGNE DE CODE.** Le §7.1 n'était
+qu'un **cadrage** ; l'exception du §3.2 — « ne pas réécrire une spécification qui existe déjà » — ne
+s'appliquait donc pas, et le §8 a été rédigé en entier après mesure sur la pile debout et seedée.
+La tranche y est découpée en **deux sous-tranches** : `2a` le rendu en base, `2b` l'écran. Seule
+`2a` est livrée par cette session.
+
+**LA QUESTION QUE LA TRANCHE 1 AVAIT LAISSÉE OUVERTE EST TRANCHÉE** (§8.4) : un trou dont la source
+est nulle rend la **chaîne vide**, et le rendu le **NOMME** dans un troisième retour,
+`variables_nulles`. Les deux autres branches du §7.1 sont écartées, chacune pour une raison écrite :
+le **tiret** invente une valeur — « au sujet de X (— EUR) » se lit comme un montant, pas comme une
+absence, et `docs/DESIGN_SYSTEM.md` §5.9 l'interdit déjà en tableau ; le **refus d'envoyer**
+appartient à l'expéditeur, et une fonction qui refuse ne rendrait rien à prévisualiser — or c'est
+précisément sur une affaire incomplète que la prévisualisation de `2b` sert. **MESURÉ** : « Relance
+sans réponse » appliqué à `Piste entrante à qualifier` rend « au sujet de X ( EUR) », double espace
+compris. C'est l'inventaire qui rend ce texte tenable, et sans lui le défaut n'apparaîtrait qu'à
+l'envoi.
+
+**DEUX MESURES ONT DÉCIDÉ LE CONTRAT, ET AUCUNE NE VENAIT D'UN DOCUMENT.** `card_contacts` admet
+plusieurs contacts par affaire, et la plupart des affaires du seed n'en portent **aucun** : le rendu
+ne devine jamais le destinataire, sous peine de commettre la faute la moins rattrapable du
+sous-système. Et **deux** identités du seed portent `is_default` — les index uniques partiels sont
+**par personne** et **pour le service** —, si bien que « l'identité par défaut du workspace »
+n'existe pas. Passer `null` fait donc des trous **nommés**, jamais un choix arbitraire.
+
+**LA SUBSTITUTION DÉCOUPE LE TEXTE SUR LE MÊME MOTIF QUE LE REFUS DE LA MIGRATION 55**, et ce n'est
+pas une élégance : la fonction qui refuse à l'écriture et celle qui substitue à la lecture doivent
+découper de la même façon, sans quoi un texte **accepté** porterait un trou que le rendu ne verrait
+pas. Un contrôle du harnais relie d'ailleurs les deux migrations — le gabarit des douze variables,
+posé en modèle jetable, doit rendre un inventaire **vide** ; une variable ajoutée au §2.4 sans être
+ajoutée à la carte de valeurs serait acceptée à l'écriture et inventoriée comme nulle pour toujours.
+
+**UN DÉFAUT DU HARNAIS TROUVÉ PAR LE HARNAIS, DE LA FAMILLE DE LA DÉCISION 513.** Son premier
+passage rendait « 32 contrôles, 2 anomalies », et l'une des deux était un **faux verdict** : la
+dégradation D-E produisait un SQL qui ne compile pas — un `trou[1]` posé sur un `text` —, `degrader`
+ignorait le code de retour de `psql`, la base restait donc **inchangée**, la suite pgTAP restait
+verte, et le harnais concluait « COMPLAISANT » alors que **rien n'avait été dégradé**. La
+décision 513 avait corrigé l'échec silencieux de la **substitution** ; celui-ci est l'échec
+silencieux de l'**application**. Le code de retour est désormais testé. La seconde anomalie était de
+même nature : un contrôle qui rendait une chaîne vide en cas d'échec SQL, si bien que le harnais
+écrivait « des variables ne sont pas rendues : » suivi de rien — **un contrôle dont l'échec ne se
+distingue pas de son verdict est un contrôle qui ment**.
+
+**DEUX ENTRÉES CONSIGNÉES AU REGISTRE.** **INC-216** est une limite **assumée** de la sous-tranche,
+et non un défaut trouvé au passage : un horodatage rendu dans un email l'est en **UTC**, aucune
+colonne de fuseau n'existant dans le schéma — seule `profiles.locale`, qui est une langue. Le prix
+est écrit : un destinataire français lira 09:00 là où le rendez-vous est à 11:00 en heure d'été. Une
+assertion **fige** le comportement, et la question attend un arbitrage : **à qui appartient le
+fuseau d'un email sortant** ? **INC-217** est étrangère à l'unité : l'assertion 11 de
+`0052_relances_automatiques.test.sql` exige un passage du job de relance dans `cron.job_run_details`,
+or ce job est planifié `23 3 * * *` — la preuve est verte ou rouge **selon l'heure à laquelle la
+pile a été montée**, jamais selon l'état du produit. Comportement inchangé.
+
+**CAMPAGNE COMPLÈTE EXÉCUTÉE.** `typecheck` et `build` verts ; `test:unit` **76 fichiers, 2508
+tests** ; `test:sql` **54 fichiers, 1 en échec** — INC-217, mesurée et étrangère ; `e2e:api` **881
+passés** ; `e2e:mail` **42 passés** ; `pytest` **244 passés** ;
+`scripts/verify-rendu-modeles-emails.sh` **32 contrôles, aucune anomalie**, ses sept dégradations
+vues et la restauration constatée ; `scripts/verify-node-toolchain.sh` **5 contrôles, aucune
+anomalie** — les **43** harnais préparent la chaîne Node.
+
+**Où reprendre.** `CRM-063` **sous-tranche 2b** — l'administration des modèles et leur
+prévisualisation —, cadrée au §8.11 de `docs/SPEC-modeles-emails.md` et **à spécifier ligne à ligne
+avant sa première ligne de code**. Les quatre questions qu'elle doit trancher y sont nommées :
+comment l'écran choisit l'affaire, le contact et l'identité de la prévisualisation sans rien
+deviner ; comment `variables_nulles` se rend ; comment la liste fermée est proposée au rédacteur ; et
+ce que la confirmation de suppression annonce, la tranche 4 devant poser un `on delete restrict` qui
+n'existe pas encore.
