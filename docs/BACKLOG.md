@@ -8905,22 +8905,68 @@ la 2b-1 l'ont été : **2b-2a livre le LIEN**, 2b-2b livrera les **flèches** et
       `Entrée`, sa saisie complète et sa fermeture par `Échap` avec retour du focus au bloc** sont
       livrés au clavier et prouvés ; **le tracé d'une flèche par `Espace` l'est depuis la tranche
       2b-2b**, et **les deux suppressions depuis la 2b-2c** — commande, confirmation, annulation et
-      retour du focus, toutes atteignables au clavier. Ce qui reste dû au clavier suivra les gestes
-      d'administration d'un tableau. C'est la partie la plus facile à oublier de cette unité.
+      retour du focus, toutes atteignables au clavier. **Ce qui restait dû au clavier — les gestes
+      d'administration d'un tableau — est LIVRÉ ET PROUVÉ par la tranche 2 g ci-dessous, le
+      2026-08-25.** C'est la partie la plus facile à oublier de cette unité.
 
-- [~] **LE CLAVIER DES GESTES D'ADMINISTRATION — tranche 2 g, ouverte le 2026-08-25.** C'est le seul
-      reste du point ci-dessus : la liste du §5.1 est devenue administrable à la tranche 2 c, et son
-      clavier n'avait jamais été ni écrit ni éprouvé. **Spécification écrite et committée AVANT la
-      première ligne de code** — `docs/SPEC-goals.md` §5.5 bis en quatre sous-chapitres, fondés sur
-      **quatre mesures** relevées sur la pile seedée avec le jeton réel de l'administratrice, et
-      `docs/DESIGN_SYSTEM.md` §5.29 pour la forme, en compléments seulement.
-      **UN DÉFAUT DU PRODUIT EST MESURÉ, pas supposé** : l'archivage confirmé rend le focus à la
-      commande de la ligne **que le geste fait disparaître**, si bien que `document.activeElement`
-      retombe sur `body` et que le `Tab` suivant repart du lien d'évitement, en tête de document.
-      `Échap` est en outre **sans effet** sur les trois surfaces de la liste, là où la fiche d'un
-      bloc du même écran se referme ainsi depuis la tranche 2 b-1.
-      **INC-214 consignée au passage, comportement inchangé** : `docs/manual.md` ne porte aucun
-      chapitre sur les objectifs, écart d'une autre unité que celle-ci ne solde pas.
+**LE CLAVIER DES GESTES D'ADMINISTRATION — tranche 2 g, livrée et prouvée le 2026-08-25.** C'était
+le seul reste du point ci-dessus : la liste du §5.1 est devenue administrable à la tranche 2 c, et
+son clavier n'avait jamais été ni écrit ni éprouvé.
+
+- [x] **Spécification écrite et committée AVANT la première ligne de code** —
+      `docs/SPEC-goals.md` §5.5 bis en cinq sous-chapitres, fondés sur **quatre mesures** relevées
+      sur la pile seedée avec le jeton réel de l'administratrice, et `docs/DESIGN_SYSTEM.md` §5.29
+      pour la forme, en **compléments** du §5.13 et jamais en remplacement.
+- [x] **UN DÉFAUT DU PRODUIT MESURÉ, PAS SUPPOSÉ, ET CORRIGÉ À SA CAUSE.** L'archivage confirmé
+      rendait le focus à la commande de la ligne **que le geste fait disparaître** : la relecture la
+      démontait, `document.activeElement` retombait sur `body`, et le `Tab` suivant repartait du
+      lien d'évitement, en tête de document. Le retour vise désormais une **ancre qui survit au
+      geste** — la commande de création de l'en-tête, rendue en toute circonstance, liste vide
+      comprise. L'annulation et `Échap` gardent l'ancre de la ligne, qui leur survit : deux ancres
+      et non une, choisies à l'issue et non au geste.
+- [x] **`Échap` referme les TROIS surfaces de la liste** — création, renommage, confirmation
+      d'archivage —, depuis n'importe lequel de leurs contrôles, en rendant le focus à la commande
+      qui les a ouvertes. La touche était **sans effet**, là où la fiche d'un bloc du même écran se
+      referme ainsi depuis la tranche 2 b-1 : le même écran opposait deux conventions contraires à
+      la même touche. Renoncer **n'envoie rien**, et c'est la base relue qui le dit.
+- [x] **UN SECOND DÉFAUT TROUVÉ EN REGARDANT UNE CAPTURE** (`CLAUDE.md` §16, §5.5 bis.5) : la
+      confirmation d'archivage ouverte juste après une création réussie affichait « Tableau créé »,
+      en vert, **sous son bouton destructif** — l'issue d'un geste qu'elle n'avait pas causé. La
+      mention est portée par un **état unique** là où les trois surfaces la rendent chacune près de
+      son propre champ. Ouvrir une surface la remet à vide ; **fermer ne l'efface pas**, la
+      fermeture étant précisément ce qui la fait paraître dans la mention de section. Défaut
+      antérieur à la tranche — il vit dans la liste depuis la 2 c et se produit aussi à la souris —,
+      mais c'est son parcours clavier qui l'a rendu visible.
+- [x] **Preuves unitaires dédiées** : cinq scénarios ajoutés à `webapp/src/app/Objectifs.test.tsx`,
+      qui passe de **73 à 78**. Chacun **mord** sur une dégradation réelle du composant, éprouvée
+      dans les deux sens : ancre d'archivage ramenée à la ligne → le scénario échoue ; écoute
+      `Échap` retirée du formulaire → deux scénarios échouent ; retirée de la confirmation → un
+      scénario échoue ; effacement de la mention retiré → un scénario échoue. Le scénario de
+      l'ancre porte son montage comme preuve : **la liste se vide à la relecture**, sans quoi
+      l'ancien comportement passerait aussi, la commande d'avant étant encore montée.
+- [x] **Preuve E2E d'interface dédiée** : trois scénarios ajoutés à `e2e/ui/objectifs.spec.ts`, la
+      suite passant de **33 à 36 verts**, console vierge, sans aucune substitution. Aucun clic n'est
+      employé pour les gestes éprouvés — c'est la condition même de la preuve. Le parcours crée puis
+      archive un tableau **entièrement au clavier** et relit `document.activeElement` après chaque
+      geste ; `Échap` est frappé depuis le **second** champ du renommage, l'écoute étant posée sur
+      le conteneur ; et la base est relue pour établir que renoncer n'a rien envoyé. Éprouvés par
+      dégradation sur la pile réelle : l'ancienne ancre y rend `body`, exactement la mesure C.
+- [x] **Vérification visuelle** : huit captures sous `docs/captures/CRM-083/`
+      (`tableau-clavier-creation-1440.jpg`, `tableau-clavier-confirmation-1440.jpg` et ses **quatre
+      paliers**, `tableau-clavier-echap-renommage-1440.jpg`,
+      `tableau-clavier-apres-archivage-1440.jpg`), produites **et observées** — c'est l'observation
+      qui a trouvé le second défaut ci-dessus. Les quatre paliers du §7 sont mesurés **sans
+      débordement horizontal**, la confirmation restant utilisable au clavier à 390 px.
+- [x] **Compteur de `scripts/verify-harness.sh` révisé DANS LE MÊME CHANGEMENT** : `SCENARIOS_UI`
+      590 → **593**, valeur COMPTÉE par `playwright test --list` (« Total: 593 tests in 48 files »),
+      jamais déduite. Garde-fou **révisé, jamais retiré** (mécanisme de la décision 51). C'est
+      précisément ce que la révision précédente reprochait à la livraison de `/affaires-figees`.
+- [x] **Documentation dans le même changement** : `docs/SPEC-goals.md` §5.5 bis,
+      `docs/DESIGN_SYSTEM.md` §5.29, `CHANGELOG.md` sous `[Non publié]`.
+- [ ] **INC-214 consignée, comportement inchangé** : `docs/manual.md` ne porte **aucun** chapitre
+      sur les objectifs, alors que `CRM-082` et `CRM-083` ont livré un écran complet. Écrire ce
+      chapitre couvre deux unités et demande ses propres captures : le combler ici reviendrait à
+      solder une autre unité sous couvert de celle-ci (`CLAUDE.md` §13).
 - [ ] **Écart nommé, consigné en INC-169 plutôt que tranché** : le §5.4 demande « lien perdu » pour
       un channel **supprimé** (`channel_id` devenu nul), état qui ne se distingue en rien d'un bloc
       jamais lié. L'écran lève la mention pour le seul état détectable — une destination partie à

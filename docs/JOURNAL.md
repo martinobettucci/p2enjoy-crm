@@ -23975,3 +23975,77 @@ décisions 500, 503 bis et 505.
 correction tient en un caractère, mais seule cette unité sait si le bloc voulait `text-text` ou
 `text-text-2`. `CRM-062` n'a plus de reste connu. Le constat des décisions 507 et 508 tient :
 au-delà, aucune unité `[~]` du plan ne porte de comportement livrable sans arbitrage du responsable.
+
+## décision 510 — `CRM-083` tranche 2 g : le clavier de la liste des tableaux, et les deux défauts qu'il a révélés
+
+**Session planifiée du 2026-08-25, 06 h 28 UTC.** Unité choisie par la règle 2 du §4.2 de
+`docs/CloudWorker.md`, et **contre le constat que les décisions 507, 508 et 509 répétaient** :
+« aucune unité `[~]` du plan ne porte de comportement livrable sans arbitrage du responsable ».
+Ce constat était faux d'un point, et la relecture unité par unité l'a montré — `CRM-083` porte un
+sous-point `[~]` explicite, « le canevas doit être utilisable entièrement au clavier », dont la
+dernière phrase disait ce qui restait dû : « ce qui reste dû au clavier suivra les gestes
+d'administration d'un tableau ». Ces gestes ont été livrés par la tranche 2 c **après** l'écriture
+de cette phrase, et leur clavier n'avait jamais été ni spécifié ni éprouvé. Aucun arbitrage ne le
+retenait : c'était du comportement à livrer.
+
+**LE PREMIER GESTE A ÉTÉ DE MESURER, PAS DE LIRE LE CODE.** Une preuve d'interface temporaire,
+lancée sur la pile seedée avec le jeton réel de l'administratrice, relève
+`document.activeElement` après chaque geste. Quatre mesures (§5.5 bis.1 de `docs/SPEC-goals.md`),
+dont deux sont des défauts :
+
+- **A** — la tabulation traverse la liste dans l'ordre visuel et **saute** les commandes d'ordre
+  désactivées aux extrémités : rien à corriger ;
+- **B** — `Entrée` sur « Monter » déplace la ligne et **le focus reste sur la commande**, qui n'est
+  pas démontée : rien à corriger ;
+- **C** — `Entrée` sur « Archiver » puis sur la confirmation rend le focus à
+  « Archiver le tableau X », **la commande de la ligne que le geste fait disparaître**. La relecture
+  la démonte, `document.activeElement` retombe sur `body`, et le `Tab` suivant repart du **lien
+  d'évitement**, en tête de document ;
+- **D** — `Échap` est **sans effet** sur les trois surfaces de la liste, là où la fiche d'un bloc du
+  **même écran** se referme ainsi depuis la tranche 2 b-1.
+
+**LA MESURE C EST LE DÉFAUT QUE LE §5.13 NOMME, SOUS UNE FORME QUE SA RÈGLE NE COUVRAIT PAS.** Le
+design system pose depuis la première surface d'administration que fermer une surface rend le focus
+« à la commande qui l'a ouverte » — règle qui **suppose que cette commande existe encore**, ce qui
+est vrai partout ailleurs dans le produit. L'archivage d'un tableau est le seul geste qui détruise
+la ligne portant sa propre commande. Le §5.29 est donc **complété, jamais remplacé** : le retour
+vise une ancre qui **survit au geste** — la commande de création de l'en-tête, rendue en toute
+circonstance, liste vide comprise —, et l'annulation comme `Échap` gardent l'ancre de la ligne.
+**Deux ancres, choisies à l'issue et non au geste.**
+
+**LE SECOND DÉFAUT N'A ÉTÉ TROUVÉ QU'EN REGARDANT UNE CAPTURE** (`CLAUDE.md` §16), et c'est le fait
+le plus utile de la session. `tableau-clavier-confirmation-1440.jpg` montre la confirmation
+d'archivage portant **« Tableau créé », en vert, sous son bouton rouge** : l'issue du geste
+précédent, lue à l'endroit exact où l'on s'apprête à en commettre un autre. La cause est
+structurelle — la mention est portée par un **état unique** de la liste, tandis que les trois
+surfaces la rendent chacune près de son propre champ —, et elle contredit la règle que le §5.13
+pose depuis toujours : le message se lit près de ce qui l'a **causé**. Ouvrir une surface remet donc
+la mention à vide ; **fermer ne l'efface pas**, la fermeture étant précisément ce qui la fait
+paraître dans la mention de section. Le défaut est **antérieur à cette tranche** — il vit dans la
+liste depuis la 2 c et se produit aussi à la souris —, mais aucune assertion ne pouvait l'attraper,
+et c'est le parcours clavier de cette tranche qui enchaîne les surfaces assez vite pour le montrer.
+
+**LES PREUVES MORDENT, ET CHACUNE A ÉTÉ ÉPROUVÉE PAR DÉGRADATION.** Cinq scénarios unitaires
+(`Objectifs.test.tsx` passe de 73 à **78**) et trois d'interface (`objectifs.spec.ts` passe de 33 à
+**36**). Quatre dégradations réelles ont été appliquées puis retirées : l'ancre d'archivage ramenée
+à la ligne, l'écoute `Échap` retirée du formulaire puis de la confirmation, l'effacement de la
+mention retiré — chacune fait rougir exactement les scénarios qui la visent, et la dégradation de
+l'ancre reproduit sur la pile réelle la mesure C, `body`. **Le montage du scénario unitaire de
+l'ancre est lui-même une preuve** : la liste s'y vide à la relecture, sans quoi l'ancien
+comportement passerait aussi, la commande d'avant étant encore montée.
+
+**Compteur `SCENARIOS_UI` de `scripts/verify-harness.sh` révisé DANS LE MÊME CHANGEMENT** :
+590 → **593**, valeur comptée par `playwright test --list`. C'est précisément ce que la décision
+508 bis reprochait à la livraison de `/affaires-figees`, qui avait laissé son garde-fou en retard.
+
+**INC-214 consignée, comportement inchangé** : `docs/manual.md` ne porte **aucun** chapitre sur les
+objectifs, alors que `CRM-082` et `CRM-083` ont livré un écran complet. L'écrire couvre deux unités
+et demande ses propres captures ; le combler ici aurait soldé une autre unité sous couvert de
+celle-ci.
+
+**Où reprendre.** `CRM-083` n'a plus de reste **de comportement** : ce qui la retient en `[~]` est
+désormais uniquement l'arbitrage INC-169 et le point « état lecture seule du `viewer` » d'INC-170,
+tous deux nommés dans son corps. La leçon de méthode, elle, vaut au-delà : **le constat « aucune
+unité ne porte de comportement livrable » se vérifie sous-point par sous-point, pas unité par
+unité** — celui-ci vivait dans une phrase de fin d'un item `[~]`, et trois sessions l'ont lu sans le
+voir. Les autres unités méritent la même relecture avant qu'on reconduise le constat.
