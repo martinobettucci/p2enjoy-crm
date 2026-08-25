@@ -712,7 +712,7 @@ passe n'atteint jamais la table — il va dans Vault.
 | `secret_id` | `uuid` | référence Vault, mêmes restrictions |
 | `from_address` | `text` | non nul — l'adresse réellement affichée |
 | `from_name` | `text` | |
-| `signature_html` | `text` | |
+| `signature_text` | `text` | signature en **texte brut**, bornée à 2000 caractères (`mail_outbound_identities_signature_borne`). **Renommée depuis `signature_html` par `CRM-063` tranche 3** — le sous-système expédie du `text/plain`, et INC-215 dénonçait une colonne morte au nom faux. `public.queue_outbound_email` l'ajoute à la fin de chaque corps mis en file, précédée d'une ligne vide et du séparateur `-- ` de la RFC 3676 §4.3 (`docs/SPEC-modeles-emails.md` §10.3). `NULL` = aucune signature ; une chaîne vide est ramenée à `NULL` à l'écriture |
 | `is_default` | `boolean` | une seule par utilisateur — index unique **partiel**, et un trigger **rabat** les autres au lieu de refuser (`CRM-053`, `docs/SPEC-mail-subsystem.md` §14.2) |
 | `daily_quota` | `integer` | garde-fou anti-abus. **Révisée par `CRM-058`** : `NULL` = aucun plafond, un entier = le plafond du jour **UTC**, `0` = cette identité n'envoie pas. Le `not null default 0` d'origine interdisait tout envoi dès qu'un consommateur existait — mesuré |
 | `status`, `last_error` | | mêmes règles qu'au §12 des comptes entrants : écrites par le serveur seul, `last_error` portant l'un des six codes du §13.7 |

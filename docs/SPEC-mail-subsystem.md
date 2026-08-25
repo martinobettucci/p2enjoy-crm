@@ -2205,10 +2205,17 @@ Livré :
   appel qui l'omet laisse la valeur en place — mais aussi qu'**aucun appel ne peut la ramener à
   `NULL`**. Un champ d'écran qui ne sait pas revenir en arrière poserait un piège ; l'écran ne
   l'envoie donc jamais, et ne l'écrase jamais.
-- **la signature HTML** — `signature_html`. Même mécanique de `coalesce`, et surtout : une signature
-  est un contenu riche, dont aucune unité n'a spécifié l'éditeur ni l'assainissement. Le §18.4 a
-  posé qu'aucun HTML d'origine extérieure ne s'affiche sans être maîtrisé ; ouvrir ici un champ
-  libre sans ce contrat serait ouvrir une surface que rien ne borne.
+- ~~**la signature HTML** — `signature_html`. Même mécanique de `coalesce`, et surtout : une
+  signature est un contenu riche, dont aucune unité n'a spécifié l'éditeur ni l'assainissement. Le
+  §18.4 a posé qu'aucun HTML d'origine extérieure ne s'affiche sans être maîtrisé ; ouvrir ici un
+  champ libre sans ce contrat serait ouvrir une surface que rien ne borne.~~
+  **LIVRÉE PAR `CRM-063` TRANCHE 3, le 2026-08-25, et les DEUX objections sont levées à leur
+  source** (`docs/SPEC-modeles-emails.md` §10). La colonne est renommée `signature_text` : il n'y a
+  plus de HTML à assainir, donc plus de surface à border — le §18.4 n'a plus prise. Et le
+  `coalesce` est remplacé par TROIS états — omis conserve, vide EFFACE, rempli écrit —, si bien que
+  le champ sait revenir en arrière et n'est plus le piège que ce paragraphe décrivait. Le §22.5
+  gagne donc un champ « Signature », et le §22.1 ne refuse plus que le quota, le test de connexion,
+  la suppression d'une identité et les comptes entrants.
 - **la suppression d'une identité.** Aucune fonction ne la porte, exactement comme au §21.1, et une
   commande morte serait pire que l'absence (`docs/DESIGN_SYSTEM.md` §5.10).
 - **les comptes entrants IMAP** (`CRM-052`, `CRM-088`, §21) : ils ont leur écran, et les fondre
@@ -2248,9 +2255,14 @@ is_default, status, last_error, last_checked_at`.
 pour l'**administratrice**. C'est la seconde moitié de la preuve de refus n° 6 (§14.3), et une
 requête qui la citerait ferait échouer la lecture entière de l'écran pour tout le monde.
 
-**`daily_quota` et `signature_html` ne sont pas demandées non plus** : l'écran ne les affiche pas
-plus qu'il ne les écrit (§22.1). Ne pas lire ce qu'on ne montre pas est la même discipline que ne
-pas envoyer ce qu'on ne modifie pas.
+**`daily_quota` n'est pas demandée non plus** : l'écran ne l'affiche pas plus qu'il ne l'écrit
+(§22.1). Ne pas lire ce qu'on ne montre pas est la même discipline que ne pas envoyer ce qu'on ne
+modifie pas.
+
+**`signature_text` EST demandée depuis `CRM-063` tranche 3**, et c'est la RÉCIPROQUE de cette même
+discipline : l'écran ne peut pas proposer de MODIFIER une signature sans montrer celle qui est
+enregistrée. La liste, elle, n'en rend que la PRÉSENCE, par une pilule neutre
+(`docs/SPEC-modeles-emails.md` §10.6).
 
 ### 22.4 L'objet de cet écran n'est PAS celui du §21, et c'est la différence qui commande sa forme
 
@@ -2446,7 +2458,7 @@ trois lectures dès le premier `apply-seed.sh` :
 
 | Niveau | Preuve |
 |---|---|
-| Unitaire | Le module : colonnes demandées, `p_password` **omis** quand le champ est vide, `p_from_name` **toujours** envoyé, `p_daily_quota` et `p_signature_html` **jamais** envoyés, classement des refus par le dictionnaire du §22.8 |
+| Unitaire | Le module : colonnes demandées, `p_password` **omis** quand le champ est vide, `p_from_name` et — depuis `CRM-063` tranche 3 — `p_signature_text` **toujours** envoyés, `p_daily_quota` **jamais** envoyé, classement des refus par le dictionnaire du §22.8 |
 | Unitaire | Le composant : préremplissage, état vide avec geste, refus affiché sans corps de serveur, liste relue après succès, case « par défaut » cochée sur une déclaration |
 | API | Déjà acquise par `CRM-053` (`e2e/api/identites-sortantes.spec.ts`) pour les refus n° 6 et n° 7. **Ajoutée ici** : une lectrice déclare sa propre identité et se voit refuser celle de service ; et le déplacement du défaut constaté par relecture, avec les jetons réels |
 | E2E `ui` | Le parcours d'un administrateur : ouvrir l'écran, lire ses deux identités, modifier le libellé sans toucher au mot de passe, constater la relecture ; un refus réel obtenu par une adresse d'expédition non conforme, avec sa phrase du produit ; l'état vide d'une lectrice avec son geste |

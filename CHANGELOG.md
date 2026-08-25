@@ -15,6 +15,26 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **UNE IDENTITÉ SORTANTE PEUT ENFIN SIGNER SES MESSAGES** (`CRM-063` tranche 3, migration 58,
+  `docs/SPEC-modeles-emails.md` §10, `docs/DESIGN_SYSTEM.md` §5.35). La colonne existait depuis
+  `CRM-053` et **personne ne la lisait** : ni l'envoi, ni l'écran. « Réglages ▸ Identités
+  d'expédition » porte désormais un champ **Signature**, et tout message expédié depuis cette
+  identité la reçoit à la fin, après une ligne de séparation — celle que les clients de messagerie
+  reconnaissent pour la replier.
+
+  **Ce qui est stocké est ce qui part.** La signature est ajoutée au moment de la **mise en file**,
+  et non à l'envoi : le message conservé par le CRM est donc, caractère pour caractère, celui que
+  le destinataire a reçu. L'autre solution aurait fait diverger l'archive et l'envoi, et l'écart ne
+  se serait vu qu'en comparant deux systèmes.
+
+  **Le champ sait revenir en arrière**, et c'est ce qui a permis de l'ouvrir : le vider supprime la
+  signature. L'écriture précédente ne savait que l'ajouter — une signature posée par erreur y serait
+  restée pour toujours —, et c'est précisément pour cela que l'écran refusait ce champ jusqu'ici.
+
+  **La colonne a été renommée**, de `signature_html` à `signature_text` : son nom annonçait du HTML
+  là où toute la messagerie du produit expédie du texte. Un message qui ne porte que sa signature ne
+  part pas : un corps vide est refusé, et il l'est avant que la signature n'y soit ajoutée.
+
 - **LES MODÈLES D'EMAILS ONT LEUR ÉCRAN, ET IL PRÉVISUALISE SUR UNE AFFAIRE RÉELLE** (`CRM-063`
   tranche 2, sous-tranche 2b, migration 57, `docs/SPEC-modeles-emails.md` §9,
   `docs/DESIGN_SYSTEM.md` §5.39). Les deux sous-tranches précédentes avaient posé les textes à

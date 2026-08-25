@@ -3196,6 +3196,26 @@ porteur du geste. Seuls les **écarts** sont écrits ci-dessous, et chacun a sa 
   lignes. C'est la même discipline que les deux textes d'aide du mot de passe au §5.34 — l'écran
   explique ce que la base fera, il ne l'empêche pas.
 
+- **LE CHAMP « SIGNATURE » EST UNE ZONE DE TEXTE MULTILIGNE, ET IL SUIT LE NOM D'EXPÉDITEUR**
+  — l'ordre du message : d'abord qui écrit, ensuite ce qui ferme (`CRM-063`,
+  `docs/SPEC-modeles-emails.md` §10.6). Quatre lignes visibles, jamais une seule ligne : une
+  signature EST une mise en forme, et un champ d'une ligne ferait croire le contraire. **Ni
+  `required`, ni `maxLength`** — la borne de deux mille caractères vit en base et c'est elle qui
+  refuse, comme pour tous les champs de cet écran (§5.3 ter). Il porte **un texte d'aide**, sur le
+  patron de ceux du mot de passe au §5.34 : il dit ce que la base FERA — la signature est ajoutée à
+  la fin de chaque message expédié depuis cette identité, et vider le champ la supprime —, il
+  n'empêche rien.
+
+- **LA LISTE NE REND PAS LA SIGNATURE, SEULEMENT SA PRÉSENCE**, par une pilule **neutre**
+  « Signature ». Deux mille caractères dans une `ul` de lignes détruiraient la densité que cette
+  surface tient ; sa présence, elle, est une information de liste. La pilule est **neutre** et non
+  colorée parce qu'elle n'est ni un choix comme « Par défaut », ni un constat du service comme
+  l'état de connexion : c'est un fait de configuration, et le §1 réserve la couleur à ce qui la
+  mérite. **Une TROISIÈME pilule peut donc cohabiter sur une ligne**, et l'ordre reste celui du
+  sens : le choix, puis la configuration, puis le constat qui ferme la ligne. La pilule ne s'allume
+  que sur une signature **réelle** — une signature entièrement blanche n'en allume aucune, la garde
+  rendant alors le corps inchangé : l'écran dit exactement ce que la base fera.
+
 - **LE SÉLECTEUR NOMME UNE IDENTITÉ PAR SON LIBELLÉ SUIVI DE SON ADRESSE**, et non par son seul
   libellé comme au §5.34. Deux identités d'une même personne peuvent porter le même libellé ; les
   distinguer par la donnée qui est leur clé vaut mieux que d'ajouter un rang ou un identifiant, que

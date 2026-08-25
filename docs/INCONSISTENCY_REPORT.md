@@ -215,7 +215,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-210 | La migration 44 n'a pas la SECONDE garde d'INC-144 : depuis que `CRM-062` écrit `stalled`, tout rejeu du répertoire sur une base dont la contrainte a été réduite s'arrête en `23514` sur la 44, et les migrations 45 à 54 ne s'appliquent plus. La pile reste avec un vocabulaire amputé et toute trace serveur est refusée | 2026-08-25 | **close** — seconde garde posée par la décision 507, imputable à `CRM-062` | 507 |
 | INC-211 | `scripts/verify-move-card.sh` rend « la restauration n'a pas rétabli l'état initial » EN SÉRIE et **57 contrôles, aucune anomalie** rejoué seul, seed reposé — la dégradation `b`, qui emploie la MÊME restauration, est verte dans le même passage | 2026-08-25 | *ouverte* — cause non établie, comportement inchangé, relève de `CRM-034` | 507 |
 | INC-212 | `scripts/verify-mail-infra.sh` laisse en base son message « Preuve journal Stalwart propre », NON classé : l'inbox porte dès lors un troisième fil non classé, et l'état vide de `e2e/ui/sommeil-fil.spec.ts` ne peut plus être atteint. Troisième fichier de la famille d'INC-209 | 2026-08-25 | *ouverte* — comportement inchangé, relève de `CRM-051` / `CRM-052` | 507 |
-| INC-215 | `mail_outbound_identities.signature_html` existe depuis `CRM-053` et n'est lue par PERSONNE — ni `mail-sync` à l'envoi, ni l'écran de `CRM-089`, qui n'envoie délibérément jamais `p_signature_html`. Son nom annonce du **HTML** là où tout le sous-système expédie du **texte** | 2026-08-25 | *ouverte* — comportement inchangé, relève de `CRM-063` tranche 3, qui devra trancher le type et le nom | 512 |
+| INC-215 | `mail_outbound_identities.signature_html` existe depuis `CRM-053` et n'est lue par PERSONNE — ni `mail-sync` à l'envoi, ni l'écran de `CRM-089`, qui n'envoie délibérément jamais `p_signature_html`. Son nom annonce du **HTML** là où tout le sous-système expédie du **texte** | 2026-08-25 | **CLOSE le 2026-08-25** par `CRM-063` tranche 3, migration 58 : la colonne devient `signature_text`, elle est bornée, elle est LUE par la garde d'envoi et ÉCRITE par l'écran | 512, 516 |
 | INC-216 | `public.rendre_modele_email` rend `card.next_action_at` **en UTC** : MESURÉ, aucune colonne de fuseau n'existe dans le schéma — seule `profiles.locale`, qui est une **langue**. Un destinataire français lira 09:00 là où le rendez-vous est à 11:00 en heure d'été | 2026-08-25 | *ouverte* — comportement ASSUMÉ et figé par une assertion, **arbitrage attendu** : à qui appartient le fuseau d'un email sortant | 514 |
 | INC-217 | `supabase/tests/0052_relances_automatiques.test.sql` assertion 11 exige un passage `succeeded` de `p2enjoy-relances-cards-figees` dans `cron.job_run_details`, or ce job est planifié `23 3 * * *`. MESURÉ deux fois dans la même session : **rouge** à 12 h 45, **verte** à 13 h 50, le job ayant tourné entre-temps hors horaire — l'amorçage de dix secondes de `docs/SPEC-relances.md` §9.7 est réarmé par tout rejeu de la migration 54, et `verify-relances.sh` promeut le job. La preuve est donc verte **parce qu'un autre harnais a tourné avant elle**, jamais selon l'état du produit | 2026-08-25 | *ouverte* — comportement inchangé, relève de `CRM-062` tranche 2, qui porte la preuve | 514 |
 
@@ -4793,6 +4793,27 @@ la coder — son type (texte ou HTML), son nom, sa position dans le corps expéd
 si une signature appartient à une **identité** ou à une **personne**. Aucun arbitrage du responsable
 n'est requis pour cela : les trois constats ci-dessus se mesurent, et le §18 du sous-système mail a
 déjà tranché la question du type pour tout le reste du produit.
+
+> **CLOSE LE 2026-08-25 PAR `CRM-063` TRANCHE 3**, spécification `docs/SPEC-modeles-emails.md` §10,
+> migration `0058_signature_identite_sortante.sql`. Les **trois** constats sont levés, et chacun par
+> un changement mesuré :
+>
+> 1. **la colonne est LUE** — `public.queue_outbound_email` l'ajoute au corps mis en file, par
+>    `app.mail_corps_signe` ;
+> 2. **elle est ÉCRITE** — l'écran des identités porte un champ « Signature », et le `coalesce` qui
+>    la rendait ineffaçable est remplacé par trois états : omis conserve, vide EFFACE, rempli écrit ;
+> 3. **elle est renommée `signature_text`** et bornée à deux mille caractères. Le nom cesse
+>    d'annoncer un type que le produit n'expédie pas, et le §18.4 n'a plus prise : il n'y a plus de
+>    HTML à assainir.
+>
+> **CE QUE LA FERMETURE A COÛTÉ, et qui n'était pas prévu** : le renommage a condamné deux écritures
+> antérieures, l'une et l'autre mesurées — le `grant select (…)` de la migration 23 nommait la
+> colonne et échouait au premier rejeu, et `create or replace function` refuse de changer le nom
+> d'un paramètre d'entrée. Les migrations 23 et 33 sont corrigées à leur source dans le même
+> changement. **La leçon vaut au-delà de ce cas** : dans un dépôt dont le `migrations-runner`
+> rejoue TOUT le répertoire à chaque démarrage, renommer un objet oblige à relire toutes les
+> migrations qui le nomment — et une colonne nommée dans un `grant` de colonne est la plus facile à
+> oublier, parce qu'aucune fonction ne la mentionne.
 
 ### INC-216 — un horodatage rendu dans un email est en UTC, faute de fuseau dans le schéma
 
