@@ -807,8 +807,7 @@ File d'envoi persistante. **Livrée par `CRM-058`** (migration 30). Aucune écri
 | Table | Contenu |
 |---|---|
 | `mail_folder_map` | Correspondance entre une card/channel/track et le chemin IMAP réellement créé, par compte |
-| `mail_sequences`, `mail_sequence_steps` | Cadences de relance (J+3, J+8, J+15) — **non livrées**, `CRM-063` tranche 4 |
-| `card_sequence_enrollments` | Inscription d'une card à une cadence, arrêtée dès qu'une réponse arrive — **non livrée**, `CRM-063` tranche 4 |
+| `card_sequence_enrollments` | Inscription d'une card à une cadence, arrêtée dès qu'une réponse arrive — **non livrée**, `CRM-063` sous-tranche 4b |
 
 ### `mail_templates` — modèle d'email (`CRM-063` tranche 1, migration 55)
 
@@ -896,6 +895,63 @@ exposé** et que la source unique est hors de portée de l'écran. L'autre issue
 noms en TypeScript — est écartée : une treizième variable ajoutée au §2.4 laisserait la palette de
 l'écran muette sur elle, sans qu'aucune preuve ne le voie. Une assertion pgTAP compare les **deux**
 fonctions et exige leur **égalité dans les deux sens**, jamais leurs seuls cardinaux.
+
+### `mail_sequences` et `mail_sequence_steps` — la séquence de relance (`CRM-063` sous-tranche 4a, migration 59)
+
+Spécification : `docs/SPEC-modeles-emails.md` §11. **Livrées le 2026-08-25.** Une séquence est une
+**cadence éditoriale nommée** : une suite ordonnée de paliers, chacun portant un modèle et un délai.
+
+#### `mail_sequences`
+
+| Colonne | Type | Contraintes |
+|---|---|---|
+| `id` | `uuid` | clé primaire, `gen_random_uuid()` |
+| `workspace_id` | `uuid` | FK `workspaces` `ON DELETE CASCADE` — la séquence appartient au **workspace**, comme le modèle (§11.2) |
+| `name` | `text` | non nul, 1 à 120 caractères après `app.btrim_blancs` ; **unique par workspace** sur la forme normalisée (`mail_sequences_workspace_name_key`) |
+| `created_by` | `uuid` | FK `profiles` `ON DELETE SET NULL` — **trace, jamais un droit** : aucune politique ne la lit |
+| `created_at`, `updated_at` | `timestamptz` | `updated_at` par `app.set_updated_at()` |
+
+**Ce que la table NE porte PAS, et c'est décidé** (§11.2, §11.3) : aucune `description`, aucun
+`is_active`, aucun `archived_at`, **aucune identité sortante** — quelle identité expédie est une
+question d'armement, donc de 4b — et **aucun seuil de déclenchement**, « figée » ayant une seule
+définition en base depuis `public.cards_figees()` (`CRM-062`). Cinq assertions `hasnt_column` de
+`supabase/tests/0057_sequences_relance.test.sql` figent ces décisions.
+
+Elle porte en outre `mail_sequences_id_workspace_key`, unique sur `(id, workspace_id)` : il rend le
+couple **référençable** par la clé composite du palier et n'ajoute aucune règle, `id` étant déjà
+unique seul. `mail_templates` a reçu le même index par la migration 59, pour la même raison.
+
+#### `mail_sequence_steps`
+
+| Colonne | Type | Contraintes |
+|---|---|---|
+| `id` | `uuid` | clé primaire, `gen_random_uuid()` |
+| `workspace_id` | `uuid` | FK `workspaces` `ON DELETE CASCADE`, **dénormalisée** pour que les politiques la lisent sans jointure |
+| `sequence_id` | `uuid` | FK `mail_sequences` `ON DELETE CASCADE` — un palier n'a aucune existence hors de sa séquence |
+| `position` | `integer` | non nulle, 1 à 50 ; **unique par séquence**, contrainte `DEFERRABLE INITIALLY IMMEDIATE` |
+| `delai_jours` | `integer` | non nul, 1 à 365 — **jours depuis le palier PRÉCÉDENT**, le premier depuis l'armement (§11.4) |
+| `template_id` | `uuid` | FK `mail_templates` **`ON DELETE RESTRICT`**, annoncée par le §2.2 quatre tranches avant d'être posée. **Non unique** : un même modèle sert plusieurs paliers |
+| `created_at`, `updated_at` | `timestamptz` | `updated_at` par `app.set_updated_at()` |
+
+**Deux clés étrangères COMPOSITES** interdisent en base la divergence de workspace — vers la
+séquence et vers le modèle. Le refus est un `23503`, donc une clé étrangère, jamais une politique :
+une colonne dénormalisée qui pourrait diverger silencieusement rendrait le cloisonnement faux là où
+il compte.
+
+**LA POSITION EST `DEFERRABLE`, ET UNE MESURE L'IMPOSE** (§11.6). Avec une contrainte unique simple,
+**même l'échange atomique** `update … set position = 3 - position` rend `23505`, PostgreSQL
+vérifiant l'index ligne à ligne. Différée à la fin de l'**instruction**, la vérification le laisse
+passer. Elle reste `initially immediate` : hors réordonnancement, un doublon est refusé par
+l'instruction qui le crée.
+
+**Ce que la route ne sait pas faire, et 4c en hérite** (§11.6 bis) : PostgREST ne pose que des
+valeurs **littérales**, si bien qu'aucun `PATCH` n'exprime cet échange. Réordonner depuis un écran
+exigera une **RPC** ouvrant une transaction et différant la contrainte. Les deux détours qu'un
+client tenterait sont fermés — position tampon hors bornes `23514`, doublon direct `23505`.
+
+**RLS et privilèges** : le patron de `mail_templates` (§2.6), quatre politiques par table. Lecture
+par tout membre du workspace ; insertion, modification et suppression par `admin` et
+`business_developer`. `anon` conserve `select` et n'obtient rien, la RLS le filtrant.
 
 ### `mail_thread_snoozes` — le sommeil d'un FIL (`CRM-081`, migration 48)
 

@@ -8550,8 +8550,70 @@ avant la suivante :
       `docs/SPEC-mail-subsystem.md` §22.1 et §22.3, `docs/PROD_MIGRATIONS.md` migration 58,
       `docs/DESIGN_SYSTEM.md` §5.35, `docs/manual.md` chapitre **7 bis**, `CHANGELOG.md`, et
       `docs/INCONSISTENCY_REPORT.md` où **INC-215** et **INC-218** sont closes.
-- [ ] **Tranche 4 — la séquence de relance** : paliers ordonnés, chacun portant un modèle
+- [~] **Tranche 4 — la séquence de relance** : paliers ordonnés, chacun portant un modèle
       (`on delete restrict`) et un délai, appliqués à une affaire figée au sens de `CRM-062`.
+      **SPÉCIFIÉE au §11** de `docs/SPEC-modeles-emails.md` le 2026-08-25, après mesure et **avant
+      sa première ligne de code**, et **DÉCOUPÉE EN TROIS SOUS-TRANCHES** dans l'ordre de leur
+      dépendance. Les trois questions du §7.3 portent sur l'**application** d'une séquence à une
+      affaire : elles appartiennent à **4b** et sont cadrées au §11.12.
+  - [x] **4a — la séquence et ses paliers** : les deux tables, leurs contraintes, RLS, privilèges,
+        pgTAP, contrat d'API, seed, harnais. **LIVRÉE ET PROUVÉE le 2026-08-25** ; voir le détail
+        plus bas.
+  - [ ] **4b — l'armement et l'exécution** : l'application d'une séquence à une affaire figée, le
+        job qui met les messages en file, l'interruption. Elle devra trancher les trois questions
+        du §7.3, **chacune par une mesure**, et dire comment un palier met un message en file —
+        `public.queue_outbound_email` exige `auth.uid()` non nul et le refuse en `42501` sans
+        jeton, si bien qu'un job `pg_cron` ne peut pas l'emprunter tel quel (mesuré, §11.12).
+  - [ ] **4c — l'écran** : administration des séquences, armement depuis l'affaire, et la **RPC de
+        réordonnancement** que le §11.6 bis rend nécessaire. Elle devra aussi **réviser la
+        confirmation de suppression d'un modèle** : le §9.7 annonce une suppression
+        inconditionnelle, que le `on delete restrict` de la migration 59 rend **fausse**.
+
+**Sous-tranche 4a livrée, 2026-08-25 — la séquence et ses paliers**
+(`docs/SPEC-modeles-emails.md` §11, `docs/SCHEMA.md` §7) :
+
+- [x] **Spécification écrite et COMMITTÉE avant la première ligne de code** (`CLAUDE.md` §5) : le
+      §11, écrit après mesure sur la pile debout et seedée.
+- [x] **`supabase/migrations/0059_sequences_relance.sql`** : `public.mail_sequences` et
+      `public.mail_sequence_steps`, leurs bornes, les **deux clés composites** qui interdisent la
+      divergence de workspace, le `on delete restrict` vers `mail_templates` que le §2.2 avait
+      annoncé quatre tranches à l'avance, huit politiques et les privilèges des deux tables.
+- [x] **LA POSITION EST `DEFERRABLE INITIALLY IMMEDIATE`, ET UNE MESURE L'IMPOSE.** Avec une
+      contrainte unique simple, **même l'échange atomique** `set position = 3 - position` rend
+      `23505`, PostgreSQL vérifiant l'index ligne à ligne. Différée en fin d'**instruction**, elle
+      le laisse passer sans qu'aucun appelant n'émette `set constraints`.
+- [x] **Suite pgTAP dédiée** : `supabase/tests/0057_sequences_relance.test.sql`, **67
+      assertions** — les seize refus du §11.5 chacun précédé de son témoin, le `deferrable` prouvé
+      par le catalogue **et** par le geste, et cinq `hasnt_column` qui figent les décisions de
+      forme du §11.2 et du §11.3.
+- [x] **Test d'API dédié** : `e2e/api/sequences-relance.spec.ts`, **12 scénarios verts**, dont le
+      `on delete restrict` vu par la route — PostgREST classe `23503` en **`409`**.
+- [x] **UNE LIGNE DU CONTRAT D'API TROUVÉE FAUSSE PAR LA PREUVE, ET RÉVISÉE.** La ligne 15
+      annonçait un échange de deux positions en une requête ; PostgREST ne pose que des valeurs
+      **littérales**, si bien qu'aucun `PATCH` ne l'exprime. Le §11.6 bis dit ce que la mesure a
+      trouvé, et la ligne mesure désormais que les **deux détours** d'un client sont fermés. La
+      conséquence — 4c devra livrer une RPC — est nommée plutôt que laissée à découvrir.
+- [x] **UN DÉFAUT DE LA MIGRATION TROUVÉ PAR SON PROPRE HARNAIS.** La dégradation du
+      `on delete restrict` laissait la suite pgTAP verte : les clés étrangères étaient déclarées
+      **en ligne** dans le `create table if not exists`, qui est un **no-op** sur une table
+      existante. Une règle déclarée là n'est posée que sur une base neuve, et une correction
+      n'atteindrait **aucune base déjà migrée**, production comprise. Les trois clés sont
+      désormais posées par `alter table`, forme convergente qui répare.
+- [x] **DEUX DÉFAUTS DU HARNAIS TROUVÉS PAR LE HARNAIS**, tous deux des faux **rouges** : ses
+      sondes lisaient un `raise notice`, qui écrit sur **stderr**, et concluaient donc au refus
+      quoi qu'il arrive ; et `relrowsecurity::text` d'un booléen rend `true`, jamais `t`.
+- [x] **Seed enrichi** : « Relance en trois temps » et ses trois paliers, créés par l'API REST avec
+      le jeton réel de l'administratrice. Deux gardes — la convergence, et le fait que les paliers
+      1 et 3 portent le **même** modèle, seul montage qui démontre qu'un modèle sert plusieurs
+      paliers.
+- [x] **Harnais dédié `scripts/verify-sequences-relance.sh`** : **40 contrôles, aucune anomalie**,
+      **sept** dégradations toutes mordantes, restauration constatée octet à octet. Il applique la
+      migration **trois fois de suite** : c'est le contrôle qui a dénoncé que ses deux contraintes
+      uniques référencées ne pouvaient pas être déposées.
+- [x] **Documentation dans le même changement** : `docs/SCHEMA.md` §7,
+      `docs/PROD_MIGRATIONS.md` migration 59, `CHANGELOG.md`.
+- [ ] **E2E d'interface** : **aucun**, et l'écart est nommé — cette sous-tranche ne livre aucun
+      écran, qui est 4c.
 
 **Première tranche livrée, 2026-08-25 — le modèle d'email** (`docs/SPEC-modeles-emails.md` §2,
 `docs/SCHEMA.md` §7) :

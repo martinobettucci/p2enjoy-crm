@@ -15,6 +15,28 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **LES SÉQUENCES DE RELANCE EXISTENT EN BASE** (`CRM-063` sous-tranche 4a, migration 59,
+  `docs/SPEC-modeles-emails.md` §11, `docs/SCHEMA.md` §7). Une séquence est une **cadence
+  éditoriale nommée** : « au bout de trois jours, envoyer ce texte ; sept jours après, celui-là ;
+  quatorze jours après, le premier de nouveau ». Deux tables la portent — la séquence et ses
+  paliers —, avec leurs contraintes, leurs politiques et leurs privilèges. Le jeu de démonstration
+  pose « Relance en trois temps », dont le troisième palier réemploie le modèle du premier.
+
+  **Les délais sont comptés depuis le palier précédent**, et non depuis l'armement. Insérer une
+  relance au milieu d'une cadence ne renumérote alors rien ; en absolu, il aurait fallu réécrire le
+  décalage de tous les paliers suivants, et un oubli aurait produit deux envois le même jour sans
+  qu'aucune contrainte ne le voie.
+
+  **Un modèle d'email employé par une séquence ne se supprime plus.** La contrainte avait été
+  écrite quatre tranches à l'avance, pour que celle-ci ne la découvre pas. L'écran des modèles
+  annonce encore une suppression inconditionnelle : c'est faux depuis cette migration, et sa
+  révision appartient à l'écran des séquences (sous-tranche 4c).
+
+  **Ce que cette sous-tranche NE fait PAS**, et qui n'est pas masqué : aucune affaire n'est encore
+  **armée** sur une séquence, aucun message n'est mis en file, aucun écran n'est livré. Qui arme
+  une séquence, ce qui l'interrompt et ce qu'une réponse du destinataire produit sont les trois
+  questions de la sous-tranche 4b, cadrées au §11.12.
+
 - **UNE IDENTITÉ SORTANTE PEUT ENFIN SIGNER SES MESSAGES** (`CRM-063` tranche 3, migration 58,
   `docs/SPEC-modeles-emails.md` §10, `docs/DESIGN_SYSTEM.md` §5.35). La colonne existait depuis
   `CRM-053` et **personne ne la lisait** : ni l'envoi, ni l'écran. « Réglages ▸ Identités
