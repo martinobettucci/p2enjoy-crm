@@ -24058,6 +24058,26 @@ objectifs, alors que `CRM-082` et `CRM-083` ont livré un écran complet. L'écr
 et demande ses propres captures ; le combler ici aurait soldé une autre unité sous couvert de
 celle-ci.
 
+**LA CAMPAGNE COMPLÈTE A ÉTÉ EXÉCUTÉE, ET ELLE EST VERTE.** `npm run test:sql` **52 fichiers,
+2531 assertions** ; `npm run test:unit` **76 fichiers, 2508 tests** ; `npm run e2e:api` **858
+verts** ; `npm run e2e:ui` **593 verts, aucun avertissement, 15,4 min** ; `npm run e2e:mail`
+**42 verts** ; `pytest` **244 passés** ; `typecheck` et `build` verts. Les deux harnais que le
+changement touche : `scripts/verify-objectifs-canevas.sh` **44 contrôles, aucune anomalie**, ses
+sept dégradations vues et la restauration constatée ; `scripts/verify-harness.sh --rapide`
+**31 contrôles, aucune anomalie**, et c'est lui qui certifie le compteur — « projet ui : 593
+scénarios énumérés, conforme au compteur ».
+
+**UN PLAFOND MESURÉ, ET IL N'EST PAS UN VERDICT.** `verify-harness.sh --rapide` a d'abord été tué à
+**1500 s** (`timeout`, code 143) sans rendre une ligne : il rejoue la campagne entière derrière ses
+propres contrôles, et `e2e:ui` seul y prend 15,4 min depuis que la suite compte 593 scénarios.
+Relancé à **3300 s**, il va à son terme en une trentaine de minutes. Le plafond de vingt-cinq
+minutes retenu par la décision 508 ne suffit donc plus pour ce harnais-là.
+
+**LE RESTE DE LA SÉRIE DES `verify-*.sh` N'A PAS ÉTÉ REJOUÉ**, et c'est dit plutôt que tu (§4.3,
+budget) : le dépôt en porte soixante-quatre, deux l'ont été — ceux que le changement touche. La
+série entière a été menée à son terme la veille (décision 508), avant cette tranche ; son verdict ne
+dit rien de cet écran.
+
 **Où reprendre.** `CRM-083` n'a plus de reste **de comportement** : ce qui la retient en `[~]` est
 désormais uniquement l'arbitrage INC-169 et le point « état lecture seule du `viewer` » d'INC-170,
 tous deux nommés dans son corps. La leçon de méthode, elle, vaut au-delà : **le constat « aucune

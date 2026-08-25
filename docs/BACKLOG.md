@@ -8967,6 +8967,19 @@ son clavier n'avait jamais été ni écrit ni éprouvé.
       sur les objectifs, alors que `CRM-082` et `CRM-083` ont livré un écran complet. Écrire ce
       chapitre couvre deux unités et demande ses propres captures : le combler ici reviendrait à
       solder une autre unité sous couvert de celle-ci (`CLAUDE.md` §13).
+- [x] **LA CAMPAGNE COMPLÈTE A ÉTÉ EXÉCUTÉE derrière ce changement, et elle est VERTE** :
+      `test:sql` **52 fichiers / 2531 assertions**, `test:unit` **76 fichiers / 2508 tests**,
+      `e2e:api` **858**, `e2e:ui` **593 verts, aucun avertissement**, `e2e:mail` **42**, `pytest`
+      **244**, `typecheck` et `build` verts. Les deux harnais que le changement touche sont verts :
+      `scripts/verify-objectifs-canevas.sh` **44 contrôles, aucune anomalie** et
+      `scripts/verify-harness.sh --rapide` **31 contrôles, aucune anomalie**, ce dernier certifiant
+      le compteur révisé — « projet ui : 593 scénarios énumérés, conforme au compteur ».
+- [ ] **Le RESTE de la série des `scripts/verify-*.sh` n'a pas été rejoué derrière cette tranche**,
+      et l'écart est nommé plutôt que tu (`docs/CloudWorker.md` §4.3, budget) : le dépôt en porte
+      soixante-quatre, deux l'ont été. La série entière a été menée à son terme la **veille**
+      (`docs/JOURNAL.md` décision 508), donc **avant** cet écran. Mesuré au passage :
+      `verify-harness.sh --rapide` **dépasse le plafond de 1500 s** — tué à 25 min sans rendre une
+      ligne — depuis que `e2e:ui` compte 593 scénarios ; il va à son terme à 3300 s.
 - [ ] **Écart nommé, consigné en INC-169 plutôt que tranché** : le §5.4 demande « lien perdu » pour
       un channel **supprimé** (`channel_id` devenu nul), état qui ne se distingue en rien d'un bloc
       jamais lié. L'écran lève la mention pour le seul état détectable — une destination partie à
