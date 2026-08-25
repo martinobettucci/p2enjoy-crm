@@ -595,6 +595,96 @@ SUITE_COURANTE="$SUITE_SQL"
 
 # =================================================================================================
 echo
+echo "7 ter. Le répertoire de migrations se rejoue sur une base qui porte « stalled » — INC-210"
+# =================================================================================================
+# POURQUOI CE CONTRÔLE EXISTE, ET POURQUOI IL APPARTIENT À CETTE UNITÉ.
+#
+# La quinzième valeur du vocabulaire de `card_events` est posée par la migration 54, celle de cette
+# unité. Les migrations 20, 25 et 30 portent DEUX gardes de convergence (INC-144) : la première
+# regarde la contrainte, la seconde regarde les LIGNES et interdit de converger si l'une d'elles
+# porte un type que la migration ne connaît pas. La migration 44 n'avait que la première.
+#
+# MESURÉ le 2026-08-25, avant correction : le `migrations-runner` s'arrêtait en `23514` sur la 44
+# — quatre lignes `stalled` violant ses quatorze valeurs —, code 3, et les migrations 45 à 54 ne
+# s'appliquaient PLUS DU TOUT. La base restait avec le vocabulaire qu'elle avait, et toute écriture
+# serveur de la trace échouait ensuite. Le défaut ne se voyait pas d'une pile fraîche : il fallait
+# une contrainte déjà réduite, ce que tout harnais qui dégrade le vocabulaire produit. INC-210.
+#
+# Le contrôle reproduit exactement cette situation. Il n'est complaisant sous aucun angle : sans la
+# seconde garde de la migration 44, il rougit ; et son témoin refuse de le déclarer vert sur une
+# base qui ne porterait aucune ligne `stalled`, cas où le rejeu réussirait sans rien prouver.
+# LE CODE DE RETOUR DE `docker compose up` NE DIT RIEN, ET C'EST MESURÉ le 2026-08-25 : la commande
+# rend 0 alors que le conteneur, lui, est sorti en 3. Écrit naïvement, ce contrôle aurait été
+# COMPLAISANT — il l'a été, et c'est la dégradation volontaire de la migration 44 qui l'a montré.
+# Le verdict est donc lu sur l'ÉTAT du conteneur, seul endroit où le `psql` du runner l'écrit.
+rejouer_repertoire() {
+	docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
+		up --force-recreate migrations-runner >"$TRAVAIL/runner.log" 2>&1
+	[ "$(docker inspect p2enjoy-migrations --format '{{.State.ExitCode}}')" = '0' ]
+}
+
+VOCABULAIRE_ATTENDU="created,moved,assigned,channel_changed,workflow_changed,archived,unarchived,trashed,restored,field_changed,mail_received,mail_sent,snoozed,woken,stalled"
+
+# Le vocabulaire est LU dans la contrainte de la base, jamais dans le texte d'une migration : ce
+# qui garde les écritures est ce que PostgreSQL porte, pas ce qu'un fichier prétend poser.
+vocabulaire_courant() {
+	psql_db -c "select string_agg(v, ',')
+		from pg_constraint c,
+		     regexp_split_to_table(
+		       substring(pg_get_constraintdef(c.oid) from 'ARRAY\[(.*)\]'), ',') as x,
+		     lateral (select trim(both '''' from split_part(btrim(x), '::', 1)) as v) w
+		 where c.conrelid = 'public.card_events'::regclass
+		   and c.conname  = 'card_events_type_check';"
+}
+
+lignes_stalled=$(psql_db -c "select count(*) from public.card_events where type = 'stalled';")
+if [ "$lignes_stalled" -gt 0 ]; then
+	ok "témoin : la base porte $lignes_stalled ligne(s) « stalled » — le rejeu a de quoi buter"
+else
+	fail "témoin ABSENT : aucune ligne « stalled », ce contrôle ne prouverait rien"
+fi
+
+# La réduction exacte que produit `scripts/verify-change-channel-workflow.sh` : les neuf valeurs
+# d'avant la migration 20, en `not valid` — la contrainte ne peut pas être posée `valid` sur des
+# lignes qui la violent déjà.
+psql_db -c "alter table public.card_events drop constraint card_events_type_check;
+	alter table public.card_events add constraint card_events_type_check
+	check (type = any (array['created','moved','assigned','channel_changed','archived',
+	'unarchived','trashed','restored','field_changed'])) not valid" >/dev/null
+restauration_due=true
+
+if rejouer_repertoire; then
+	ok "le répertoire entier se rejoue sans erreur sur une base au vocabulaire réduit"
+else
+	fail "le rejeu du répertoire ÉCHOUE — les migrations suivantes ne s'appliquent plus"
+	sed 's/^/        /' "$TRAVAIL/runner.log" | tail -n 12
+fi
+
+vocabulaire=$(vocabulaire_courant)
+if [ "$vocabulaire" = "$VOCABULAIRE_ATTENDU" ]; then
+	ok "le vocabulaire est rendu ENTIER par le rejeu : les quinze valeurs, « stalled » comprise"
+else
+	fail "vocabulaire non rendu : « $vocabulaire »"
+fi
+
+if [ "$(psql_db -c "select convalidated from pg_constraint
+	where conrelid = 'public.card_events'::regclass
+	  and conname  = 'card_events_type_check';")" = 't' ]; then
+	ok "la contrainte redevient VALID : elle garde les écritures à venir, et non les seules futures"
+else
+	fail "la contrainte reste NOT VALID après le rejeu"
+fi
+
+# Le rejeu du répertoire remet le job de la 54 à son amorçage de dix secondes (§9.7) : la même
+# promotion immédiate qu'après toute application de cette migration, sans quoi la section 8
+# constaterait une cadence qui n'est pas celle du produit. L'appel est DIRECT et non `promouvoir_job`,
+# qui ne fait rien tant que `MIGRATION_COURANTE` n'est pas la 54 — ici elle est revenue à la 53.
+# La fonction est idempotente (§9.4) : elle n'écrit aucune relance de plus.
+psql_db -c "select app.relancer_cards_figees();" >/dev/null
+restauration_due=false
+
+# =================================================================================================
+echo
 echo "8. Restauration CONSTATÉE, jamais supposée"
 # =================================================================================================
 
