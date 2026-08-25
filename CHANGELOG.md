@@ -202,6 +202,16 @@ d'exécuter le code attendu.
 
 ### Corrigé
 
+- **METTRE À JOUR UNE PILE EXISTANTE POUVAIT LA LAISSER À MOITIÉ MIGRÉE** (`CRM-062`,
+  `docs/INCONSISTENCY_REPORT.md` INC-210). Depuis que les relances automatiques écrivent un
+  quinzième type d'événement, `stalled`, le rejeu de l'ensemble des migrations sur une base dont le
+  vocabulaire des événements avait été réduit s'arrêtait en erreur au milieu du répertoire : les dix
+  dernières migrations — contacts, objectifs, coûts, relances — ne s'appliquaient plus, et la base
+  restait avec un vocabulaire amputé où toute écriture d'événement était refusée. La cause était une
+  condition d'abstention manquante dans la migration de la mise en sommeil ; elle est posée, dans la
+  forme exacte des trois migrations qui la portaient déjà. Le rejeu du répertoire entier redevient
+  sûr, et un contrôle du harnais des relances le mesure désormais à chaque exécution.
+
 - **UN SIXIÈME FICHIER DE PREUVES CESSAIT DE RENDRE LE PRODUIT DANS L'ÉTAT OÙ IL L'AVAIT TROUVÉ**
   (`CRM-034`, `CRM-046`, `docs/JOURNAL.md` décision 501). `e2e/api/move-card.spec.ts` déplace huit
   fois l'affaire seedée « Audit sécurité applicative » pour éprouver les gardes de `move_card`,

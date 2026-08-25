@@ -530,6 +530,20 @@ La contrainte est **remplacée** — jamais « ajoutée si absente » —, dans 
 migrations `0030` et `0044` : si la définition courante ne cite pas `stalled`, elle est déposée et
 réécrite avec les quinze valeurs. Un rétrécissement manuel est ainsi réparé, non constaté.
 
+**CE QU'UNE QUINZIÈME VALEUR EXIGE DES MIGRATIONS ANTÉRIEURES, et que la tranche 2 avait manqué —
+INC-210, MESURÉ le 2026-08-25.** Une migration qui converge le vocabulaire porte **deux** gardes
+(INC-144) : la première regarde la contrainte, la seconde regarde les **lignes** et lui interdit de
+converger si l'une d'elles porte un type qu'elle ne connaît pas. Les migrations `0020`, `0025` et
+`0030` les portent toutes deux ; la `0044` n'avait que la première. Tant que ses quatorze valeurs
+étaient les plus larges du dépôt, l'omission était inerte — poser la quinzième l'a rendue
+bloquante : sur une base dont la contrainte a été réduite, la `0044` tentait de reposer un
+vocabulaire que les quatre lignes `stalled` du seed violent, le `migrations-runner` s'arrêtait en
+`23514` avec le code 3, et **les migrations `0045` à `0054` ne s'appliquaient plus du tout**.
+
+La seconde garde est donc posée sur la `0044`, dans la forme exacte des trois autres. La `0054`
+reste seule responsable d'installer les quinze valeurs, ce que sa propre garde — qui ne regarde que
+`stalled` — sait faire sur une base réduite comme sur une base à jour.
+
 ### 9.9 Ce que le seed démontre, par le VRAI mécanisme
 
 Le §5 a mesuré qu'une seule card du seed est figée : `5eed…00c3`. La tranche 2 ne change **ni
@@ -558,7 +572,7 @@ monte la pile ne verrait aucune relance de la journée — un écran vide que `C
 | Unitaire (webapp) | **Aucun** : la tranche 2 ne touche aucun module de la webapp |
 | E2E d'interface | **Aucun** : la tranche 2 ne livre aucun écran. L'absence est nommée, non compensée |
 | Visuel | **Aucun**, pour la même raison |
-| Harnais | `scripts/verify-relances.sh` étendu, non complaisant : la dégradation de l'idempotence, celle de la fermeture des privilèges et celle de la cadence du job doivent chacune faire rougir la suite, et la restauration est **constatée** |
+| Harnais | `scripts/verify-relances.sh` étendu, non complaisant : la dégradation de l'idempotence, celle de la fermeture des privilèges et celle de la cadence du job doivent chacune faire rougir la suite, et la restauration est **constatée**. **Section 7 ter, ajoutée le 2026-08-25 (INC-210)** : la contrainte est réduite aux neuf valeurs d'avant la migration `0020`, le répertoire ENTIER est rejoué, et le harnais exige que le conteneur sorte en `0` et que le vocabulaire revienne **entier et `VALID`**. Le verdict est lu sur l'état du conteneur, `docker compose up` rendant `0` même quand le runner sort en `3` — mesuré. Un témoin refuse de déclarer le contrôle vert sur une base sans ligne `stalled`, cas où le rejeu réussirait sans rien prouver |
 | Seed | `scripts/verify-seed-demo.sh` ou le harnais dédié constate qu'après application du seed la card `5eed…00c3` porte exactement **un** `stalled`, écrit par la fonction et non par une fixture |
 
 ### 9.11 Retour arrière
