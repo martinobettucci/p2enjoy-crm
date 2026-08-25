@@ -15,6 +15,15 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **L'HISTORIQUE D'UNE AFFAIRE APPREND ENFIN QUI TRAVAILLE DESSUS** (`CRM-060` tranche 5,
+  `docs/SPEC-contacts.md` §19). Rattacher un contact à une affaire, changer son rôle ou le détacher
+  laisse désormais une ligne dans le fil : « Contact rattaché — Élise Fabre (decideur) », avec son
+  icône, sa date et le nom de qui a fait le geste. Jusqu'ici ces trois gestes ne laissaient **aucune
+  trace** : l'affaire changeait d'interlocuteur sans que son histoire le sache. Le nom est lu au
+  moment où vous ouvrez le fil, jamais recopié dans la trace — un contact renommé apparaît sous son
+  nom d'aujourd'hui, et un contact supprimé laisse une ligne sans nom plutôt qu'un nom faux. Les
+  trois lignes se rangent dans le filtre *Organisation*.
+
 - **LES RELANCES AUTOMATIQUES PARTENT VRAIMENT** (`CRM-063` sous-tranche 4b, migration 60,
   `docs/SPEC-modeles-emails.md` §12, `docs/SCHEMA.md` §7). La sous-tranche 4a avait livré la
   cadence — un objet éditorial que personne n'appliquait. Celle-ci livre l'**application** : on
@@ -181,6 +190,19 @@ d'exécuter le code attendu.
   cadrées au §7 de la spécification.
 
 ### Corrigé
+
+- **NEUF LIGNES DE L'HISTORIQUE SE LISAIENT « ÉVÉNEMENT »** (`docs/INCONSISTENCY_REPORT.md`
+  INC-220). Le produit inscrit un fait dans le fil chaque fois qu'un courrier PART d'une affaire, et
+  il le faisait depuis la livraison de l'envoi sortant — mais l'écran n'avait jamais appris à le
+  nommer : la ligne s'affichait sous le mot générique « Événement », sans objet ni correspondant.
+  Elle se lit désormais « Message envoyé », avec son objet et son destinataire, et se range dans le
+  filtre *Discussion* avec le courrier reçu — filtrer une conversation ne montre plus la moitié de
+  ce qui s'est dit.
+
+- **SUPPRIMER UNE AFFAIRE QUI PORTE DES CONTACTS ÉCHOUAIT**, le temps d'une journée de
+  développement : le trigger livré par la tranche 5 tentait d'écrire « contact détaché » dans le fil
+  d'une affaire déjà supprimée. Trouvé par une preuve existante avant toute livraison, corrigé à sa
+  cause et prouvé par une assertion dédiée.
 
 - **LA COMPARAISON D'UN WORKFLOW À SA SOURCE NE SE TEINTE PLUS EN AVERTISSEMENT** (`CRM-076`,
   INC-130, `docs/DESIGN_SYSTEM.md` §5.15). Le document qui énumère les écarts posait sa surface
