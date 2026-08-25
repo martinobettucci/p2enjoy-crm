@@ -714,6 +714,7 @@ cela ferait entrer une dépendance structurante dans le bundle pour deux écrans
 | Canevas d'objectifs (webapp) | pan, zoom, glisser-déposer, tracé des flèches, **clavier complet** | PostgREST, aucune bibliothèque tierce |
 | `budgets`, `budget_occurrences` | enveloppes d'un track et leurs instances manuelles | `tracks`, `app.can_read_track` |
 | `card_costs` | lignes de coût d'une affaire | `cards`, `budgets`, `app.can_read_card`, `app.can_write_card` |
+| `mail_templates` | modèles d'email d'un workspace, à trous (`CRM-063` tranche 1, migration 55) | `workspaces`, `app.is_workspace_member`, `app.workspace_role` ; **aucune dépendance de service** — la validation des trous est une CONTRAINTE, `app.mail_template_variables_inconnues`, et non un contrôle d'écran |
 | Écrans de coûts (webapp) | histogramme du track, détail par occurrence, cumul du workspace | PostgREST ; **agrégation calculée après RLS**, jamais par la clé de service |
 | Onglet « À saisir » (webapp) | saisie en série des coûts réels, sur les deux écrans à onglets (`docs/SPEC-costs.md` §4.8) | PostgREST ; **une seule lecture**, dont le droit d'écriture de chaque ligne est une COLONNE CALCULÉE de la base (`public.reel_saisissable`, migration 52), jamais un rôle relu par l'écran |
 

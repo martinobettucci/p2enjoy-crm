@@ -215,6 +215,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-210 | La migration 44 n'a pas la SECONDE garde d'INC-144 : depuis que `CRM-062` écrit `stalled`, tout rejeu du répertoire sur une base dont la contrainte a été réduite s'arrête en `23514` sur la 44, et les migrations 45 à 54 ne s'appliquent plus. La pile reste avec un vocabulaire amputé et toute trace serveur est refusée | 2026-08-25 | **close** — seconde garde posée par la décision 507, imputable à `CRM-062` | 507 |
 | INC-211 | `scripts/verify-move-card.sh` rend « la restauration n'a pas rétabli l'état initial » EN SÉRIE et **57 contrôles, aucune anomalie** rejoué seul, seed reposé — la dégradation `b`, qui emploie la MÊME restauration, est verte dans le même passage | 2026-08-25 | *ouverte* — cause non établie, comportement inchangé, relève de `CRM-034` | 507 |
 | INC-212 | `scripts/verify-mail-infra.sh` laisse en base son message « Preuve journal Stalwart propre », NON classé : l'inbox porte dès lors un troisième fil non classé, et l'état vide de `e2e/ui/sommeil-fil.spec.ts` ne peut plus être atteint. Troisième fichier de la famille d'INC-209 | 2026-08-25 | *ouverte* — comportement inchangé, relève de `CRM-051` / `CRM-052` | 507 |
+| INC-215 | `mail_outbound_identities.signature_html` existe depuis `CRM-053` et n'est lue par PERSONNE — ni `mail-sync` à l'envoi, ni l'écran de `CRM-089`, qui n'envoie délibérément jamais `p_signature_html`. Son nom annonce du **HTML** là où tout le sous-système expédie du **texte** | 2026-08-25 | *ouverte* — comportement inchangé, relève de `CRM-063` tranche 3, qui devra trancher le type et le nom | 512 |
 
 ---
 
@@ -4725,3 +4726,41 @@ manuel plutôt que de le laisser invisible.
 **Ce qu'il faut pour la fermer** : un chapitre du manuel décrivant l'écran des objectifs, avec sa
 ligne au sommaire et son état réel, et la correction du renvoi du chapitre 29, qui promet
 « objectifs » sous une unité qui ne les livre pas.
+
+### INC-215 — `signature_html` est une colonne morte, et son nom annonce un type que le produit n'expédie pas
+
+**Ouverte le 2026-08-25 par `CRM-063` tranche 1, comportement inchangé** — constat **étranger à la
+tranche** de la session, consigné sans être corrigé au passage (`CLAUDE.md` §18,
+`docs/CloudWorker.md` §3.1).
+
+**Ce qui a été mesuré**, sur la pile debout et seedée :
+
+```
+\d public.mail_outbound_identities
+  signature_html | text |  |  |
+```
+
+La colonne existe depuis `CRM-053`. Trois constats, et aucun n'est une supposition :
+
+1. **`mail-sync` ne la lit pas à l'envoi.** `CRM-058` le dit dans son propre corps de backlog —
+   « aucune pièce jointe à l'envoi, **aucune signature**, aucune copie cachée — absences figées ».
+2. **L'écran des identités ne l'écrit pas**, et c'est délibéré : `docs/SPEC-mail-subsystem.md` §22.1
+   pose que `p_signature_html` n'est **jamais** envoyé, le `coalesce` de la RPC le rendant
+   ineffaçable — « un champ qui ne sait pas revenir en arrière est un piège ».
+3. **Son nom annonce du HTML**, alors que `docs/SPEC-mail-subsystem.md` §18 a tranché que le corps
+   affiché et expédié est du **texte** : « injecter le HTML d'un expéditeur inconnu lui offrirait
+   scripts, images distantes et pistage à l'ouverture ».
+
+La colonne est donc **morte** et **mal nommée**, et les deux défauts se tiennent : la faire vivre
+oblige à décider ce qu'elle porte.
+
+**Pourquoi ce n'est PAS corrigé ici.** La tranche 1 de `CRM-063` livre les modèles d'email et ne
+touche à aucune table d'une autre unité. Renommer la colonne ou changer son type est une
+**migration** sur `mail_outbound_identities`, donc une modification du contrat de `CRM-053` et de
+l'écran de `CRM-089` — deux unités que ce commit ne traite pas.
+
+**Ce qu'il faut pour la fermer** : la tranche 3 de `CRM-063`, qui spécifiera la signature avant de
+la coder — son type (texte ou HTML), son nom, sa position dans le corps expédié, son effacement, et
+si une signature appartient à une **identité** ou à une **personne**. Aucun arbitrage du responsable
+n'est requis pour cela : les trois constats ci-dessus se mesurent, et le §18 du sous-système mail a
+déjà tranché la question du type pour tout le reste du produit.

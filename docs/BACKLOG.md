@@ -8476,9 +8476,10 @@ chapitre **15**, annoncé par le sommaire depuis `CRM-000` et jamais écrit.
 **Découpage en quatre tranches, motivé** (§1 de la spécification) — chacune committée et prouvée
 avant la suivante :
 
-- [~] **Tranche 1 — le modèle d'email** : `public.mail_templates`, la liste fermée des douze
+- [x] **Tranche 1 — le modèle d'email** : `public.mail_templates`, la liste fermée des douze
       variables et son refus en base, RLS, privilèges, pgTAP, contrat d'API, seed, harnais. C'est
-      l'objet dont les deux autres dépendent. **En cours — voir le détail ci-dessous.**
+      l'objet dont les deux autres dépendent. **LIVRÉE ET PROUVÉE le 2026-08-25** ; voir le détail
+      plus bas.
 - [ ] **Tranche 2 — le rendu et l'écran** : substitution des variables, écran d'administration des
       modèles, prévisualisation sur une affaire réelle. Elle devra trancher ce qu'un trou dont la
       source est nulle rend (§7.1).
@@ -8488,6 +8489,76 @@ avant la suivante :
       **inchangé** (§6).
 - [ ] **Tranche 4 — la séquence de relance** : paliers ordonnés, chacun portant un modèle
       (`on delete restrict`) et un délai, appliqués à une affaire figée au sens de `CRM-062`.
+
+**Première tranche livrée, 2026-08-25 — le modèle d'email** (`docs/SPEC-modeles-emails.md` §2,
+`docs/SCHEMA.md` §7) :
+
+- [x] **Spécification écrite et COMMITTÉE avant la première ligne de code** (`CLAUDE.md` §5,
+      `docs/CloudWorker.md` §3.2) : `docs/SPEC-modeles-emails.md`, sept chapitres, rédigés **après
+      mesure sur la pile debout et seedée**.
+- [x] **LE NOM DE LA TABLE ET LA FORME DES VARIABLES N'ONT PAS ÉTÉ INVENTÉS, et la première
+      écriture les inventait.** `docs/SCHEMA.md` §7 nomme cette table `mail_templates` depuis
+      `CRM-000` et illustre ses variables par `{{card.title}}`. La table s'appelait
+      `email_templates` et portait `{{affaire.titre}}` lorsque la relecture du chapitre l'a
+      constaté : le travail a été **défait et refait** plutôt que de laisser une divergence de
+      nommage s'installer dans le sous-système mail.
+- [x] **`supabase/migrations/0055_modeles_emails.sql`** : la table, ses trois bornes, l'unicité par
+      workspace sur la forme **normalisée**, l'index de liste, le trigger d'horodatage, la RLS et
+      **quatre politiques** sur le patron de `goal_boards` ; les deux fonctions `immutable`
+      `app.mail_template_variables()` et `app.mail_template_variables_inconnues(text)`. Aucune table
+      existante n'est touchée.
+- [x] **LA LISTE DES VARIABLES EST FERMÉE, ET LE REFUS VIT EN BASE** (§2.3). Un modèle portant
+      `{{card.titel}}` est refusé à l'écriture, en **nommant la colonne fautive** — sans quoi
+      l'écran de la tranche 2 devrait deviner près de quel champ poser son message. Le défaut
+      n'apparaîtrait sinon qu'à l'envoi, c'est-à-dire chez le destinataire.
+- [x] **TROIS SOURCES DE VARIABLES CORRIGÉES PAR LA MESURE**, et non par la lecture d'un document :
+      `contacts` ne sépare ni prénom ni nom ; `workflow_steps` ne porte aucune colonne `label` — le
+      `42703` de la décision 507 — ; `cards` porte `next_action_at` et non `due_date`.
+- [x] **Suite pgTAP dédiée** : `supabase/tests/0053_modeles_emails.test.sql`, **55 assertions** — la
+      forme, la liste comparée **nom à nom** et non par son cardinal, les neuf cas de la fonction de
+      refus dont le trou vide et la triple accolade, les treize refus **chacun précédé de son
+      témoin**, les quatre politiques avec les trois profils réels, et le cloisonnement prouvé sur un
+      **second workspace** fabriqué puis rendu par le `rollback`.
+- [x] **Un garde-fou RÉVISÉ, jamais retiré** (mécanisme de la décision 51) :
+      `0016_preuves_refus.test.sql` gagne l'inventaire **nominal** des quatre politiques et son
+      compte passe de 103 à **107**, dans le même changement.
+- [x] **Test d'API dédié** : `e2e/api/modeles-emails.spec.ts`, **12 scénarios verts** pour les
+      quatorze lignes du contrat du §2.7, avec les jetons réels. **Deux refus de nature
+      différente** y sont distingués au lieu d'être confondus : `401` pour l'anonyme, refusé par le
+      **privilège**, `403` pour la lectrice, refusée par la **politique**. Chaque refus relit la
+      ligne pour la constater inchangée.
+- [x] **UNE LIGNE DU CONTRAT RÉVISÉE PAR LA MESURE** : la lecture anonyme rend `200 []` et non
+      `401`. La politique est ouverte `to anon` délibérément — un `401` révélerait que la table
+      existe et qu'elle est protégée, là où un filtrage ne révèle rien.
+- [x] **Seed enrichi** (`docs/SPEC-seed.md` §14) : **deux** modèles, créés par la route REST avec le
+      **jeton réel de l'administratrice** — ce qui exerce au passage la politique d'insertion, qu'un
+      seed passant par la clé de service laisserait non éprouvée. Ils sont différents **par
+      construction** : variables dans l'objet ET le corps pour l'un, dans le corps seul pour l'autre.
+      Garde de convergence, plus deux gardes sur ce que le jeu doit **démontrer**.
+- [x] **Harnais dédié `scripts/verify-modeles-emails.sh`** : **44 contrôles, aucune anomalie**,
+      **six** dégradations réelles toutes mordantes, restauration constatée **octet à octet** contre
+      un instantané pris avant la première — jamais contre `HEAD`.
+- [x] **UN DÉFAUT DU HARNAIS TROUVÉ PAR LE HARNAIS, corrigé à sa cause** (§2.11). Son premier
+      passage rendait « 44 contrôles, aucune anomalie » et **mentait sur une ligne** : `degrader`
+      étant appelée dans un `||`, `set -e` y est suspendu, si bien qu'un motif ambigu faisait échouer
+      le substituteur sans arrêter la fonction — la dégradation **précédente** était réappliquée et
+      annoncée comme la nouvelle. Exactement le mensonge tranquille de la décision 503.
+- [x] **Compteurs de `scripts/verify-harness.sh` révisés dans le MÊME changement** :
+      `FICHIERS_SQL_ATTENDUS` 52 → **53**, `ASSERTIONS_ATTENDUES` 2531 → **2587**, `SCENARIOS_API`
+      858 → **870**. Valeurs **COMPTÉES**, jamais déduites. `SCENARIOS_UI` et `SCENARIOS_MAIL`
+      inchangés : la tranche ne livre aucun écran et n'envoie aucun email.
+- [x] **Documentation dans le même changement** : `docs/SCHEMA.md` §7, `docs/DAT.md`,
+      `docs/PROD_MIGRATIONS.md` migration 55, `docs/SPEC-seed.md` §14, `README.md` — les **trois**
+      listes de harnais —, `CHANGELOG.md` sous `[Non publié]`.
+- [x] **Ce que la tranche ne prouve pas, et qui est dit** (§5) : aucun **rendu** — la substitution
+      est la tranche 2 —, aucun **écran**, aucun **envoi**. Aucun test unitaire TypeScript non
+      plus : la validation vit en SQL, et un test unitaire de façade ne prouverait rien de plus que
+      la suite pgTAP, qui est son niveau.
+
+**UN ÉCART CONSIGNÉ SANS ÊTRE CORRIGÉ** (§6, INC-215) : `mail_outbound_identities.signature_html`
+existe depuis `CRM-053` et **n'est lue par personne** — ni `mail-sync` à l'envoi, ni l'écran de
+`CRM-089`. Son nom annonce du **HTML** là où tout le sous-système expédie du **texte**. La corriger
+est la tranche 3, et le nom porte une question de produit qui appartient à sa spécification.
 
 ---
 ### CRM-070 — précision d'arbitrage : l'invitation d'un membre
