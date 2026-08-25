@@ -1312,8 +1312,21 @@ n'écrit rien, et tout `move_card` réarme la relance sans qu'aucune ligne ne le
 repose `entered_step_at`. Aucune colonne d'état n'est ajoutée à `cards` : la timeline, déjà
 immuable, tient l'ancre.
 
-**`card_events.type` porte désormais quinze valeurs** — les quatorze de la migration 44, plus
-`stalled`. C'est la seule que nul geste humain ne produit.
+**`card_events.type` porte désormais DIX-HUIT valeurs** — les quatorze de la migration 44, plus
+`stalled` (migration 54), plus les trois gestes de rattachement d'un contact posés par la
+migration 61 : `contact_linked`, `contact_unlinked` et `contact_role_changed`
+(`docs/SPEC-contacts.md` §19.3). `stalled` reste la seule que nul geste humain ne produit.
+
+**LES TROIS DERNIÈRES SONT ÉCRITES PAR UN TRIGGER DE TABLE**, `app.card_events_apres_maj_contacts()`
+sur `card_contacts`, et non par les écrans : trois surfaces écrivent déjà dans cette table, et une
+trace posée par chacune serait trois fois la même règle. La trace suit donc la DONNÉE, ce qui la
+rend inoubliable par une quatrième surface — et un rattachement posé par la clé de service en laisse
+une, lui aussi.
+
+**Le trigger de suppression ne écrit RIEN quand l'affaire elle-même disparaît.** `card_contacts`
+référence `cards` en `on delete cascade` : sans cette garde, supprimer une affaire tentait d'écrire
+dans le fil d'une affaire qui n'existe plus, la clé étrangère refusait, et **la suppression échouait
+entièrement**. Mesuré et corrigé le 2026-08-25.
 
 ## 10. Index principaux
 

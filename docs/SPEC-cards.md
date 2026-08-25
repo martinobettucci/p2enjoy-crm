@@ -1631,6 +1631,27 @@ nouveau : le `CHECK` a refusé `channel_changed` en `23514` — MESURÉ le 2026-
 sa migration étende l'énumération dans le même changement que son trigger. Ce qui n'était qu'une
 intention écrite est désormais un fait constaté.
 
+**LE VOCABULAIRE A ÉTÉ ÉTENDU SEPT FOIS DEPUIS, ET IL COMPTE DIX-HUIT VALEURS.** Aux dix
+ci-dessus s'ajoutent `mail_received` (`CRM-055`, migration 25), `mail_sent` (`CRM-058`,
+migration 30), `snoozed` et `woken` (`CRM-081`, migration 44), `stalled` (`CRM-062`, migration 54),
+puis les trois gestes de rattachement d'un contact — `contact_linked`, `contact_unlinked`,
+`contact_role_changed` (`CRM-060` tranche 5, migration 61, `docs/SPEC-contacts.md` §19.3). **Aucune
+valeur n'a jamais été retirée**, et le garde-fou de
+`supabase/tests/0019_move_card_to_channel.test.sql` fige l'énumération ENTIÈRE pour qu'une valeur
+ajoutée en douce — ou PERDUE par un rejeu partiel — le fasse rougir.
+
+**LES TROIS DERNIERS SONT ÉCRITS PAR UN TRIGGER DE `card_contacts`**, non par `cards` : la trace
+suit la donnée qu'elle raconte. Le trigger de suppression s'abstient quand l'affaire elle-même
+disparaît — la cascade emporte les rattachements, et écrire dans le fil d'une card supprimée faisait
+échouer la suppression entière (mesuré le 2026-08-25).
+
+**LA PROMESSE DU PARAGRAPHE PRÉCÉDENT A ÉTÉ TENUE DEUX FOIS, ET MANQUÉE UNE.** `mail_received` a
+bien été livré par `CRM-055` avec son trigger. `mail_sent` l'a été par `CRM-058`… **en base
+seulement** : il n'a jamais été nommé côté écran, et neuf lignes du fil se sont lues « Événement »
+pendant cinq unités — INC-220, trouvée et corrigée le 2026-08-25. Étendre le `CHECK` dans la même
+migration que le trigger ne suffit donc pas : l'écran doit apprendre le type dans le MÊME
+changement, et c'est ce qu'INC-207 avait déjà établi pour `stalled`.
+
 **`moved`, `channel_changed` et `workflow_changed` s'excluent.** La garde `moved` exige channel et
 workflow inchangés : une card remappée entre deux graphes n'a franchi **aucune arête**, même si son
 étape change. Le changement de channel prévaut lorsqu'il existe ; sinon le changement de workflow
