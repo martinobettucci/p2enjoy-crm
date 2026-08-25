@@ -7167,7 +7167,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | Unité | Objet | État |
 |---|---|---|
 | CRM-060 | Contacts et organisations, historique transverse | `[~]` |
-| CRM-061 | Prochaine action, échéance, vue « Ma journée » | `[~]` |
+| CRM-061 | Prochaine action, échéance, vue « Ma journée » | `[x]` |
 | CRM-062 | Relances automatiques des cards figées | `[~]` |
 | CRM-063 | Templates d'emails, signatures, séquences de relance | `[ ]` |
 | CRM-064 | @mentions, notifications temps réel et préférences | `[ ]` |
@@ -8038,7 +8038,7 @@ rapprochement automatique email → organisation par domaine sont **hors périm�
 et **nommés au §6** de la spécification comme appelant l'arbitrage du responsable, plutôt que
 inventés au passage (`CLAUDE.md` §1).
 
-### CRM-061 — Prochaine action, échéance, vue « Ma journée » `[~]`
+### CRM-061 — Prochaine action, échéance, vue « Ma journée » `[x]`
 
 *Unité ouverte le 2026-08-21. Elle était `[ ]` et n'avait **aucune section** dans ce document : la
 table du chunk 5 la nommait en une ligne, et sept endroits du dépôt la citaient sans lui donner de
@@ -8168,9 +8168,28 @@ produites **et observées** ; console navigateur vierge ; harnais dédié.
             `grands-comptes`, qu'elle lit —, constate leur absence, et restaure dans un `finally`
             avec relecture. **Contre-épreuve mesurée** : les deux filtres retirés de la requête, la
             ligne *g* devient **rouge**, là où elle restait verte auparavant.
-- [~] **`scripts/verify-ma-journee.sh` rend 79 contrôles, 1 en échec, et cet échec est ÉTRANGER.**
-      C'est ce qui retient l'unité en `[~]`, et l'écart est nommé plutôt que contourné : affaiblir
-      le harnais pour le verdir est ce que `docs/CloudWorker.md` §3.1 interdit.
+- [x] **~~`scripts/verify-ma-journee.sh` rend 79 contrôles, 1 en échec, et cet échec est ÉTRANGER.~~
+      LE HARNAIS EST VERT — `79 contrôles, aucune anomalie`, 2026-08-25.** Son unique reste était
+      INC-130, et cette session l'a levée comme le **préalable** de cette unité
+      (`docs/CloudWorker.md` §4.2, premier cas), jamais en affaiblissant le harnais.
+      - **Ce qui a été corrigé, chez `CRM-076` et non ici** : le document de comparaison de
+        l'éditeur de workflows posait sa surface `--color-bg` sans poser son encre, la demandait
+        en `text-text-1` — niveau que l'échelle des neutres ne porte pas —, et **héritait donc de
+        la teinte de la mention** qui l'annonce : mesuré, `--color-accent-on-soft` quand la source
+        a changé, `--color-text-2` sinon. `text-text` est retenu après relevé des deux héritages
+        sur la pile réelle. Le relevé de `scripts/lib/classes-css.mjs` sur le CSS produit passe de
+        « 314 citées, absentes : `text-text-1` » à « 313 citées, **aucune classe manquante** » —
+        **premier relevé vide depuis le 2026-08-16**. Décision 511, `docs/DESIGN_SYSTEM.md` §5.15.
+      - **TROIS EXÉCUTIONS DU HARNAIS, ET LEUR SUITE EST ELLE-MÊME UNE MESURE** : `79/2` avant la
+        correction, `79/1` après, `79/0` au troisième passage — **sans qu'une ligne du dépôt ne
+        bouge entre le deuxième et le troisième**. Le contrôle de classes est vert dès le
+        deuxième ; c'est le **rejeu final de `npm run test:unit`** qui a rougi une fois, puis non.
+        `npm run test:unit` rejoué **trois fois isolément** est vert (76 fichiers, 2508 tests). Le
+        test fautif n'est **pas nommé** : le harnais efface son répertoire de travail, et son
+        journal avec. C'est l'intermittence qu'INC-189 décrit, sans que cette session puisse
+        l'imputer à ce test précis — l'écart est nommé plutôt que deviné.
+      - *Historique du diagnostic, conservé :* l'écart est nommé plutôt que contourné, affaiblir
+        le harnais pour le verdir étant ce que `docs/CloudWorker.md` §3.1 interdit.
       - Le contrôle de classes CSS balaie **tout** `webapp/src` et rendait `h-10 py-0.5 text-text-1` :
         `text-text-1` est **INC-130** (`CRM-076`), les deux autres étaient **INC-204**, consignée par
         cette session (`EnTeteCard.tsx`, `Sommeil.tsx`, `BlocCoutsCard.tsx`). **Aucune n'est citée
@@ -8192,6 +8211,21 @@ produites **et observées** ; console navigateur vierge ; harnais dédié.
       horizon réglable (périmètre inventé, §12.6), aucune bascule de sommeil (elle annulerait le
       geste à l'endroit où il agit), aucun groupement par track (le rangement de cette vue est le
       **temps**), aucune notification ni digest (`CRM-064`, `CRM-069`).
+
+**L'UNITÉ PASSE À `[x]` LE 2026-08-25**, et voici contre quoi ce passage est vérifié — la
+Definition of Done ci-dessus, point par point, chacun porté par une case `[x]` de cette section :
+l'écran remplace l'état vide inconditionnel de `/ma-journee` ; les trois sections sont découpées sur
+les bornes du fuseau du **lecteur**, et le harnais le rejoue sous `TZ=Pacific/Auckland` ; les
+affaires archivées, en corbeille et en sommeil en sont absentes ; le refus est mesuré **hors
+interface** avec les jetons réels des trois profils (`e2e/api/ma-journee.spec.ts`) ; le seed
+démontre les trois sections **quel que soit le jour** (`docs/SPEC-seed.md` §13) ; l'E2E souris et
+clavier tourne sur session réelle sans substitution ; les captures des quatre paliers et des deux
+états vides sont produites **et observées** ; la console est vierge ; et le **harnais dédié rend
+désormais `79 contrôles, aucune anomalie`**.
+
+Le dernier item ci-dessus reste `[ ]` **par nature, non par dette** : il énumère ce que l'unité a
+décidé de ne pas livrer, motifs écrits au §17.10 de `docs/SPEC-cards.md`. Le cocher affirmerait
+qu'une absence a été livrée.
 
 ---
 ### CRM-062 — Relances automatiques des cards figées `[~]`

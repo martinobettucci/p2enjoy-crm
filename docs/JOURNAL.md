@@ -24084,3 +24084,79 @@ tous deux nommés dans son corps. La leçon de méthode, elle, vaut au-delà : *
 unité ne porte de comportement livrable » se vérifie sous-point par sous-point, pas unité par
 unité** — celui-ci vivait dans une phrase de fin d'un item `[~]`, et trois sessions l'ont lu sans le
 voir. Les autres unités méritent la même relecture avant qu'on reconduise le constat.
+
+## décision 511 — INC-130 : trancher par la mesure ce que neuf sessions ont renvoyé à « l'unité qui sait »
+
+**Session planifiée du 2026-08-25, ouverte à 08 h 11 UTC.** Unité choisie par le §4.2 de
+`docs/CloudWorker.md` : **`CRM-061`**, dont la décision 509 venait d'établir que le seul reste est
+« STRICTEMENT étranger et désormais unique » — INC-130. Cette entrée a donc été traitée comme le
+**préalable** de l'unité, premier cas du §4.2, et non comme une ligne d'une file de travail.
+
+**CE QUI BLOQUAIT N'ÉTAIT PAS UNE DÉCISION DIFFICILE, C'ÉTAIT UNE MESURE JAMAIS FAITE.** INC-130
+renvoyait le choix — `text-text` ou `text-text-2` — à « l'unité qui sait laquelle des deux était
+voulue ». Or `CRM-076` est `[x]` : aucune session ne l'ouvrait, personne ne « savait », et l'entrée
+est restée ouverte du 2026-08-16 au 2026-08-25 en retenant `CRM-061` au passage. La question posée
+était insoluble telle qu'elle était posée ; celle qui se répond est : **que rend le bloc
+aujourd'hui ?**
+
+Relevé sur la pile seedée, `getComputedStyle` sur `comparaison-source-resultat` avec le jeton réel
+de l'administratrice :
+
+| Mention qui le porte | Encre rendue | Jeton hérité | Contraste sur `--color-bg` |
+|---|---|---|---|
+| `data-divergente="oui"` | `#736e2c` | `--color-accent-on-soft` | 4,95:1 |
+| `data-divergente="non"` | `#4b5563` | `--color-text-2` | 7,11:1 |
+
+Le **fond**, lui, était bien posé (`rgb(247, 248, 250)`). Le bloc a donc sa surface propre et pas
+son encre, et l'héritage lui donne la teinte du **cadre**. Les deux valeurs tiennent l'AA du §8 :
+**ce n'est pas un défaut de contraste, c'est un défaut de sens** — le document qui rapporte des
+écarts se teintait de la couleur que le produit réserve à l'avertissement. Le dire autrement aurait
+été plus grave que le défaut.
+
+La mesure tranche aussi le choix : les deux couleurs constatées **sont** celles de la mention, donc
+`--color-text-2` figerait l'un des deux héritages et laisserait le document se confondre avec le
+cadre qui l'annonce. `--color-text` est l'encre du corps (§2) et la seule des trois que ce bloc
+n'emprunte pas déjà. Règle écrite au §5.15 de `docs/DESIGN_SYSTEM.md`, valable pour **toute**
+surface qui pose son fond à l'intérieur d'un bloc teinté, et **committée avant la première ligne de
+code** (`CLAUDE.md` §5).
+
+**LA PREUVE MESURE UNE COULEUR, ET NON UNE CLASSE — c'est le fait le plus réutilisable de la
+session.** Une assertion sur le `className` serait restée verte tout du long : le code demandait
+bien quelque chose, c'est le navigateur qui ne rendait rien. Le scénario ajouté à
+`e2e/ui/administration-workflows.spec.ts` relève donc `getComputedStyle` dans l'état **divergent**
+— seul état où l'héritage se voit à l'œil — et exige l'encre du corps, la surface propre, **et** que
+les deux diffèrent de l'encre de la mention. **Dégradation vue** : la classe fautive remise, il
+rougit sur `Expected "rgb(55, 65, 81)" / Received "color(srgb 0.45098 0.431373 0.170588)"`, la
+valeur exacte du relevé. Seed rendu intact des deux côtés.
+
+**UN COMMENTAIRE EST DU CODE POUR LES GARDES, ET LA MIENNE L'A APPRIS À MES DÉPENS.** Le premier
+push a fait **rougir `npm run test:unit`** : mon commentaire d'explication citait les deux couleurs
+en hexadécimal, et la garde « aucune couleur hexadécimale hors des jetons » d'`i18n.test.ts` lit le
+**fichier entier**, commentaires compris. Elle a raison — le §11 interdit un hexadécimal dans un
+composant, et un commentaire est ce qu'on recopie ensuite. Corrigé à la cause dans le commit
+suivant : le composant **nomme** les jetons, les valeurs restent au design system et au registre.
+La garde n'est ni affaiblie ni contournée.
+
+**TROIS EXÉCUTIONS DE `scripts/verify-ma-journee.sh`, ET LEUR SUITE EST ELLE-MÊME UNE MESURE** :
+`79/2` avant la correction, `79/1` après, **`79 contrôles, aucune anomalie`** au troisième passage —
+**sans qu'une ligne du dépôt ne bouge entre le deuxième et le troisième**. Le contrôle de classes
+est vert dès le deuxième : c'est ma correction. Le **rejeu final de `npm run test:unit`** a rougi
+une fois puis non ; rejoué **trois fois isolément**, il est vert (76 fichiers, 2508 tests). **Le
+test fautif n'est pas nommé**, et il ne le sera pas par cette session : le harnais efface son
+répertoire de travail, et son journal avec — une capture posée sur le troisième passage n'a rien
+trouvé, celui-ci étant vert. C'est l'intermittence qu'INC-189 décrit ; l'imputer à ce test précis
+serait une supposition, pas une mesure.
+
+**`CRM-061` PASSE À `[x]`**, sa Definition of Done vérifiée point par point dans le corps de
+l'unité, et son harnais dédié vert pour la première fois.
+
+**Où reprendre.** La leçon de méthode de la décision 510 se double d'une seconde, et les deux se
+lisent ensemble : le constat « aucune unité ne porte de comportement livrable » se vérifie
+**sous-point par sous-point** (510), et **une entrée du registre qui renvoie son arbitrage à une
+unité close ne trouvera jamais preneur** — c'est à la session qui la rencontre de la trancher **par
+la mesure**, quand la mesure suffit. Il reste au moins deux entrées de cette forme :
+`INC-157` (« Aucun channel » sur les routes transverses, renvoyée à `CRM-007`, close) et
+`INC-192` (`verify-corbeille.sh` cherche un `@spec` dans les trois premières lignes de
+`RouteCard.tsx`, renvoyée à `CRM-077`). Aucune n'exige d'arbitrage produit : toutes deux se
+mesurent. `INC-214` reste due — `docs/manual.md` ne porte aucun chapitre sur les objectifs, alors
+que `CRM-082` et `CRM-083` ont livré un écran complet.
