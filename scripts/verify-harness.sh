@@ -465,8 +465,23 @@ PORT_RAPPORT=9323
 # LA VALEUR EST COMPTÉE PAR LES DEUX CHEMINS : la suite seule rend **40 assertions**, et
 # `npm run test:sql` somme **56 fichiers, 2691 assertions**. Les deux chemins concordent, et c'est
 # cette concordance qui autorise la valeur.
-FICHIERS_SQL_ATTENDUS=56
-ASSERTIONS_ATTENDUES=2691
+#
+# **RÉVISÉS PAR `CRM-063` SOUS-TRANCHE 4a, le 2026-08-25.**
+# `supabase/tests/0057_sequences_relance.test.sql` ajoute **67** assertions : la forme des deux
+# tables, les seize refus du §11.5 chacun précédé de son témoin, le `deferrable` prouvé par le
+# catalogue ET par le geste, et cinq `hasnt_column` qui figent les décisions de forme.
+# `FICHIERS_SQL_ATTENDUS` passe de 56 à **57**.
+#
+# Elle RÉVISE en outre une suite existante, et c'est pourquoi le total ne se déduit pas des seules
+# assertions neuves : `0016_preuves_refus.test.sql` passe de 59 à **61** assertions — l'inventaire
+# nominal des politiques des deux tables —, et son compte global passe de 107 à **115**. Un
+# garde-fou global est RÉVISÉ, jamais retiré (`docs/CloudWorker.md` §3.1).
+#
+# 2691 + 67 + 2 = **2760**. LA VALEUR EST COMPTÉE PAR LES DEUX CHEMINS : la suite seule rend
+# **67 assertions**, et `npm run test:sql` somme **57 fichiers, 2760 assertions**. Les deux chemins
+# concordent, et c'est cette concordance qui autorise la valeur.
+FICHIERS_SQL_ATTENDUS=57
+ASSERTIONS_ATTENDUES=2760
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -625,7 +640,14 @@ ASSERTIONS_ATTENDUES=2691
 # migration appliquée —, les trois états de l'effacement chacun relu, la borne et son témoin, le
 # corps mis en file comparé caractère à caractère, et le refus de la lectrice. 885 + 8 = **893**,
 # valeur COMPTÉE par l'exécution de la suite, jamais déduite.
-SCENARIOS_API=893
+#
+# **RÉVISÉ À 905 PAR `CRM-063` SOUS-TRANCHE 4a, le 2026-08-25.**
+# `e2e/api/sequences-relance.spec.ts` ajoute **12** scénarios, dont deux qui ne se prouvent que
+# là : le `on delete restrict` vu par la ROUTE — PostgREST classe `23503` en **`409`**, et c'est ce
+# code que l'écran de 4c devra reconnaître —, et les deux détours par lesquels un client tenterait
+# de réordonner sans transaction, l'un et l'autre fermés (§11.6 bis). 893 + 12 = **905**, valeur
+# COMPTÉE par l'exécution de la suite, jamais déduite.
+SCENARIOS_API=905
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
