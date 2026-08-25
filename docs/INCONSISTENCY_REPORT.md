@@ -211,6 +211,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-207 | La tranche 2 de `CRM-062` écrit un événement `stalled` que le fil d'une affaire rend **« Événement »** : le type n'est ni nommé, ni rangé, ni traduit | 2026-08-24 | **close par livraison** — la sous-tranche 3b le nomme, §10.3 | 506 |
 | INC-209 | **DEUX preuves d'interface ne sont pas rejouables** : `commentaires-gestes.spec.ts` laisse le commentaire qu'il publie, `administration-arborescence.spec.ts` laisse le track `cree-par-admin` qu'il crée. `apply-seed.sh` est convergent sur les seules lignes `5eed…` et ne les retire donc pas — une seconde campagne dans la même session rend un verdict rouge qui ne dit rien du produit | 2026-08-24 | **ouverte** — comportement inchangé, étrangère à `CRM-062` ; appartient à `CRM-043` et `CRM-075` | 506 |
 | INC-208 | Les **six** routes transverses — `/ma-journee`, `/contacts`, `/couts`, `/objectifs`, `/affaires-figees`, `/reglages` — écrivent « Aucun channel » là où il n'y a pas de track courant : un manque énoncé pour une absence de contexte | 2026-08-24 | **ouverte** — comportement inchangé, étrangère à `CRM-062` ; arbitrage attendu | 506 |
+| INC-210 | La migration 44 n'a pas la SECONDE garde d'INC-144 : depuis que `CRM-062` écrit `stalled`, tout rejeu du répertoire sur une base dont la contrainte a été réduite s'arrête en `23514` sur la 44, et les migrations 45 à 54 ne s'appliquent plus. La pile reste avec un vocabulaire amputé et toute trace serveur est refusée | 2026-08-25 | **close** — seconde garde posée par la décision 507, imputable à `CRM-062` | 507 |
 
 ---
 
@@ -4382,3 +4383,48 @@ nettoyer ce que d'autres écrivent. La commande de remise à zéro est, pour les
 delete from public.card_comments where id::text not like '5eed%';
 delete from public.tracks         where id::text not like '5eed%';
 ```
+
+---
+
+### INC-210 — la migration 44 n'a pas la seconde garde d'INC-144, et `stalled` la rend bloquante
+
+**MESURÉ le 2026-08-25**, pile debout et seedée, en rejouant la série complète des
+`scripts/verify-*.sh`. `scripts/verify-change-channel-workflow.sh` rend
+`23 contrôles, 2 en échec` — « pgTAP reste rouge après restauration », « l'API ciblée reste rouge
+après restauration » — et laisse derrière lui `card_events_type_check` réduite et `NOT VALID`.
+C'est le symptôme d'INC-198, que la décision 499 avait pourtant close : sa correction — restaurer
+par le **rejeu du répertoire entier** plutôt que par la migration 20 seule — est bonne, et ce n'est
+pas elle qui a cédé.
+
+**LA CAUSE EST DANS LE RÉPERTOIRE, ET ELLE EST NÉE AVEC `CRM-062`.** Le rejeu lancé à la main rend
+le fait sans ambiguïté :
+
+```
+p2enjoy-migrations | migrations : application de 0044_snooze_cards.sql (rôle postgres)
+p2enjoy-migrations | ERROR: check constraint "card_events_type_check" of relation
+p2enjoy-migrations |        "card_events" is violated by some row
+p2enjoy-migrations exited with code 3
+```
+
+Les migrations 20, 25 et 30 portent **deux** gardes de convergence (INC-144) : la première regarde
+la contrainte, la seconde regarde les **lignes** et interdit de converger si l'une d'elles porte un
+type que cette migration ne connaît pas. La migration 44 n'a que la première. Tant que son
+vocabulaire de quatorze valeurs était le plus large du dépôt, l'omission était inerte. La migration
+54 de `CRM-062` en a posé une quinzième, `stalled`, et le seed en écrit quatre lignes : la
+migration 44 tente désormais de reposer une contrainte que les données violent.
+
+**LA CONSÉQUENCE DÉPASSE LE HARNAIS QUI L'A RÉVÉLÉE.** Le `migrations-runner` s'arrête en code 3 sur
+la 44 : les migrations **45 à 54 ne s'appliquent plus du tout**. La base reste avec le vocabulaire
+qu'elle avait — ici huit valeurs —, et toute écriture serveur de la trace échoue en `23514`, pour
+tout ce qui s'exécute ensuite. Mesuré dans la même série : `scripts/verify-mail-classement.sh`
+(« `mail_received` n'est pas dans le vocabulaire ») et `scripts/verify-mail-envoi.sh` rougissent sur
+un défaut qui n'est pas le leur.
+
+**Ce que ce n'est PAS.** Ce n'est pas une régression du harnais de `CRM-019`, ni une anomalie de
+l'hôte : le harnais dégrade la contrainte **volontairement**, ce qui est son travail, et il demande
+au répertoire de la rendre. C'est le répertoire qui ne sait plus la rendre.
+
+**CORRIGÉE À SA CAUSE, décision 507** : la migration 44 reçoit la seconde garde d'INC-144, écrite
+comme celle des migrations 20, 25 et 30 — elle ne converge que si aucune ligne ne porte un type hors
+de ses quatorze valeurs. La 54 reste alors seule responsable d'installer les quinze, ce qu'elle sait
+faire. Aucune donnée n'est touchée, aucune contrainte n'est relâchée.
