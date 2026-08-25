@@ -4588,3 +4588,14 @@ migration 34 s'était mué en certificat de la dégradation.
   est mesuré là où il tient encore et il y est plus strict** : la lectrice lit six channels sur
   huit, `grands-comptes` et `appels-offres` restant masqués. Sans cette ligne ajoutée, réviser le
   compte aurait retiré une preuve de refus au lieu de la déplacer.
+
+**LA CORRECTION A DÉCOUVERT UNE TROISIÈME OCCURRENCE, ET C'EST LE FAIT LE PLUS UTILE.** Rendue à la
+section 2, la restauration correcte a fait rougir la section 4 — « le viewer voit 5 tracks, attendu
+4 » —, contrôle qui passait jusque-là **parce que** le harnais avait amputé la base quelques lignes
+plus haut. Son propre commentaire l'écrivait déjà, au nom d'INC-113 : « ce harnais mesure un produit
+d'une arbitration en arrière ». Un contrôle qui a besoin d'une dégradation du harnais pour passer ne
+mesure pas le produit. Le compte devient CINQ, et la **preuve n° 4** est portée là où le refus tient
+encore : `grands-comptes` reste à zéro pour la lectrice, et le compte global — six channels sur huit
+— dit combien lui restent fermés, ce qu'un « zéro sur ce channel-ci » ne dirait pas. INC-115 avait
+déjà tranché le fond en retirant la preuve n° 13, qui exigeait elle aussi que la lectrice ne lise
+pas `conseil-ia`.

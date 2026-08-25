@@ -295,23 +295,38 @@ n_service=$(http GET "$API/rest/v1/tracks?select=id&workspace_id=eq.$WS_SEED" \
 # `viewer` comme de tous — la corbeille ne restreint pas la lecture (docs/SPEC-corbeille.md §2.2) —,
 # et le seul track qui lui reste masqué est toujours `conseil-ia`.
 #
-# CE COMPTE VAUT DANS LE CONTEXTE DE CE HARNAIS, ET C'EST À NOTER — INC-113. Le §3 ci-dessus rejoue
-# `0010_droits_fins.sql` SEULE, ce qui ramène la politique de `tracks` à sa version `CRM-012` et
-# retire la transitivité livrée par `0034_lecture_track_transitive.sql` (décision 333). Sur une base
-# à jour, ce même `viewer` voit les CINQ tracks, `prospection` lui rouvrant `conseil-ia`. Ce harnais
-# mesure donc un produit d'une arbitration en arrière, et ses comptes ne sont pas comparables à ceux
-# de `e2e/api/tracks.spec.ts`, qui en attend cinq.
-[ "$(lire "tracks?select=id&workspace_id=eq.$WS_SEED" "$T_VIEWER")" = "4" ] \
-	&& ok "PREUVE N° 4 — le \`viewer\` ne voit que 4 des 5 tracks : son droit fin en masque un" \
-	|| fail "le viewer voit $(lire "tracks?select=id&workspace_id=eq.$WS_SEED" "$T_VIEWER") tracks, attendu 4"
+# CE COMPTE MESURAIT UN PRODUIT D'UNE ARBITRATION EN ARRIÈRE, ET IL EST RÉVISÉ — INC-213.
+# L'ancien commentaire de ces lignes le disait lui-même, au nom d'INC-113 : « le §3 ci-dessus rejoue
+# 0010 SEULE, ce qui retire la transitivité livrée par 0034_lecture_track_transitive.sql ; sur une
+# base à jour, ce même viewer voit les CINQ tracks ». Autrement dit, ce contrôle n'était vert que
+# parce que le harnais avait lui-même amputé la base juste avant — et il rougissait dès que la
+# restauration devenait correcte. Un contrôle qui dépend d'une dégradation du harnais pour passer
+# ne mesure pas le produit : c'est le faux vert que `CLAUDE.md` §17 proscrit, et INC-115 avait déjà
+# tranché le fond en retirant la preuve n° 13, qui exigeait elle aussi que la lectrice ne lise PAS
+# `conseil-ia`.
+#
+# Le compte devient CINQ, et la preuve n° 4 n'est pas perdue : elle est portée par les deux lignes
+# suivantes, là où le refus tient réellement. Le droit fin de la lectrice ne masque plus le track —
+# `prospection` le lui rouvre, et un track invisible rendrait ce channel injoignable —, mais il
+# masque toujours `grands-comptes`. Le refus se mesure donc au CHANNEL, et il y est plus strict
+# qu'un track manquant : six channels sur huit.
+[ "$(lire "tracks?select=id&workspace_id=eq.$WS_SEED" "$T_VIEWER")" = "5" ] \
+	&& ok "la lectrice voit les 5 tracks : son droit fin ferme \`conseil-ia\`, et son channel rouvert le rend de nouveau visible (migration 34)" \
+	|| fail "la lectrice voit $(lire "tracks?select=id&workspace_id=eq.$WS_SEED" "$T_VIEWER") tracks, attendu 5"
 
 [ "$(lire "tracks?select=id&workspace_id=eq.$WS_SEED" "$T_ADMIN")" = "5" ] \
 	&& ok "RÈGLE 2 — l'administratrice porte le **même** droit fin et voit les 5 : jamais restreinte" \
 	|| fail "l'administratrice est restreinte par un droit fin, ce que le §2.2 interdit"
 
+# PREUVE N° 4, à l'endroit où le refus est réellement opposable depuis la migration 34.
 [ "$(lire "channels?select=id&id=eq.$CH_GRANDS_COMPTES" "$T_VIEWER")" = "0" ] \
-	&& ok "le droit fin de **track** masque aussi ses channels, sans ligne \`channel_members\`" \
+	&& ok "PREUVE N° 4 — le droit fin de **track** masque ses channels, sans ligne \`channel_members\`" \
 	|| fail "un channel du track fermé reste visible au viewer"
+
+# Et le compte global, sans lequel « zéro sur ce channel-ci » ne dirait pas combien restent fermés.
+[ "$(lire "channels?select=id" "$T_VIEWER")" = "6" ] \
+	&& ok "PREUVE N° 4 (compte) — la lectrice lit 6 channels sur 8 : \`grands-comptes\` et \`appels-offres\` lui restent fermés" \
+	|| fail "la lectrice lit $(lire "channels?select=id" "$T_VIEWER") channels, attendu 6"
 
 [ "$(lire "channels?select=id&id=eq.$CH_PROSPECTION" "$T_VIEWER")" = "1" ] \
 	&& ok "et un \`channel_members = 'member'\` **rouvre** ce channel-là : le plus spécifique gagne" \
