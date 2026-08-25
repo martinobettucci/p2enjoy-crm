@@ -328,6 +328,10 @@ modification, suppression avec confirmation, et prévisualisation sur une affair
 question qu'elle devra trancher, et qui n'est pas tranchée ici : **ce qu'un trou dont la source est
 nulle rend** — la chaîne vide, un tiret, ou le refus d'envoyer.
 
+> **SPÉCIFIÉE le 2026-08-25, au §8 ci-dessous**, après mesure sur la pile debout et seedée, et
+> **avant sa première ligne de code**. La tranche y est découpée en deux sous-tranches, `2a` — le
+> rendu — et `2b` — l'écran. La question ci-dessus est tranchée au **§8.4**.
+
 ### 7.2 Tranche 3 — la signature
 
 Rendre effectif ce que `CRM-053` a posé et que personne n'emploie (§6). Elle devra dire : le nom et
@@ -340,3 +344,207 @@ Des paliers ordonnés, chacun portant un modèle (`on delete restrict`, §2.2) e
 à une affaire figée au sens de `docs/SPEC-relances.md` §2. Elle réemploiera l'ordonnanceur de
 `CRM-017` et le job quotidien de `CRM-062` tranche 2, et devra trancher : qui arme une séquence, ce
 qui l'interrompt, et ce qu'une réponse du destinataire produit.
+
+---
+
+## 8. Tranche 2 — le rendu et l'écran
+
+Écrite le 2026-08-25 **après mesure sur la pile debout et seedée**, et **avant la première ligne de
+code** (`CLAUDE.md` §5, `docs/CloudWorker.md` §3.2). Elle développe le cadrage du §7.1, qu'elle ne
+remplace pas : le §7.1 disait *quoi*, ce chapitre dit *ligne à ligne*.
+
+### 8.1 Découpe en deux sous-tranches, et son motif
+
+| Sous-tranche | Objet | Pourquoi elle est séparée |
+|---|---|---|
+| **2a** | Le **rendu** en base : `public.rendre_modele_email`, pgTAP, contrat d'API, harnais | C'est l'objet dont l'écran dépend : une prévisualisation qui n'a rien à appeler n'existe pas |
+| **2b** | L'**écran** d'administration : liste, création, modification, suppression avec confirmation, prévisualisation sur une affaire réelle | Elle consomme 2a et n'ajoute aucune règle de base |
+
+L'ordre est celui de la dépendance, comme les quatre tranches de l'unité (§1). Chacune est
+committée et prouvée avant la suivante.
+
+### 8.2 La substitution vit EN BASE, et ce n'est pas une commodité
+
+Trois raisons, dont deux sont déjà celles du §2.3 et dont la troisième est propre à cette tranche :
+
+1. **la tranche 4 fera écrire des emails par l'ORDONNANCEUR**, qui n'a pas d'écran
+   (`docs/SPEC-scheduler.md`). Un rendu qui ne vivrait que dans la webapp serait hors de sa portée ;
+2. **la prévisualisation de 2b doit montrer EXACTEMENT ce qui partira.** Deux implémentations — une
+   en TypeScript pour l'écran, une en SQL pour l'ordonnanceur — divergeraient au premier
+   ajustement, et l'écran mentirait alors sur le contenu de l'envoi. C'est le raisonnement du §3 sur
+   la liste des variables, transposé au rendu ;
+3. **les valeurs viennent de tables sous RLS.** Substituer côté client obligerait à rapatrier
+   l'affaire, son channel, son étape, son contact et l'identité, puis à refaire la jointure
+   d'étape — quatre lectures et une règle de plus dans l'écran, pour un résultat que la base sait
+   produire en une.
+
+### 8.3 Contrat de `public.rendre_modele_email`
+
+```
+public.rendre_modele_email(
+    p_template_id uuid,
+    p_card_id     uuid,
+    p_contact_id  uuid default null,
+    p_identity_id uuid default null
+) returns table (
+    subject           text,
+    body_text         text,
+    variables_nulles  text[]
+)
+```
+
+- **`stable`**, jamais `volatile` : la fonction ne fait que lire. C'est la volatilité mesurée de
+  `public.cards_figees()`, le seul autre lecteur public de ce genre.
+- **`security invoker`**, comme `cards_figees()` — mesuré : `prosecdef = f`. La RLS de
+  `mail_templates`, `cards`, `channels`, `contacts`, `organizations` et
+  `mail_outbound_identities` s'applique **telle quelle**. Aucun prédicat n'est recopié : les
+  recopier créerait la duplication que la décision de `CRM-062` §9.2 combat.
+- **Zéro ligne** lorsque le modèle ou l'affaire n'est pas lisible — jamais une erreur, jamais un
+  identifiant divulgué (`docs/SPEC-permissions-rls.md` §7). Un identifiant inconnu et un identifiant
+  masqué rendent **la même chose**, et c'est la seule façon de ne rien révéler.
+
+### 8.4 CE QU'UN TROU DONT LA SOURCE EST NULLE REND — la décision de la tranche
+
+**Il rend la CHAÎNE VIDE, et le rendu NOMME le trou dans `variables_nulles`.** Les trois branches du
+§7.1 ont été pesées, et deux sont écartées pour une raison mesurable.
+
+- **Le tiret est écarté.** `docs/DESIGN_SYSTEM.md` §5.9 l'interdit déjà dans un tableau — « ni
+  tiret, ni « — », ni « non renseigné » : un tiret est un caractère que rien ne distingue d'une
+  donnée ». En **prose**, c'est pire encore : « je reviens vers vous au sujet de Migration ERP
+  (— EUR) » se lit comme une valeur, pas comme une absence. Un tiret **invente une valeur**.
+
+- **Le refus d'envoyer est écarté À CET ENDROIT, et seulement à cet endroit.** Refuser appartient à
+  l'**expéditeur**, jamais au rendu : la prévisualisation de 2b doit pouvoir montrer un modèle
+  appliqué à une affaire incomplète — c'est même le cas où elle sert le plus, puisque c'est là qu'on
+  découvre le trou. Une fonction qui refuserait ne rendrait rien à afficher, et l'écran ne pourrait
+  pas dire **quel** trou est en cause.
+
+- **La chaîne vide SEULE serait le mensonge tranquille.** MESURÉ sur la pile : le modèle du seed
+  « Relance sans réponse » appliqué à une affaire sans montant rend « au sujet de X ( EUR) » —
+  double espace compris —, et rien ne le signale. C'est exactement le défaut que le §2.3 refuse : il
+  n'apparaîtrait qu'à l'envoi, c'est-à-dire chez le destinataire.
+
+**`variables_nulles` est donc le troisième retour, et il n'est pas décoratif** : il est la condition
+à laquelle la chaîne vide est acceptable. Il est **trié, dédoublonné**, et **ne compte que les
+variables réellement présentes** dans l'objet ou le corps du modèle — une variable que le modèle
+n'emploie pas n'est pas un trou, et l'y faire figurer donnerait à lire une liste d'absences sans
+objet.
+
+La tranche 4, qui expédie, y trouvera ce qu'il lui faut pour refuser ; l'écran de 2b y trouvera ce
+qu'il lui faut pour prévenir. Aucun des deux n'a besoin de remesurer.
+
+### 8.5 LES SOURCES NE SE DEVINENT PAS, et deux mesures l'imposent
+
+- **`p_card_id` est OBLIGATOIRE.** Sept des douze variables en viennent, directement ou par
+  jointure. Un rendu sans affaire n'aurait presque rien à substituer.
+
+- **`p_contact_id` est FACULTATIF, et nul il fait trois trous NOMMÉS.** Le rendu ne choisit **jamais**
+  un contact parmi ceux de l'affaire. MESURÉ sur le seed : `card_contacts` admet plusieurs lignes par
+  affaire, deux affaires seulement en portent une, et **la plupart n'en portent aucune**. Deviner
+  reviendrait à écrire au mauvais destinataire — la faute la moins rattrapable de tout le
+  sous-système.
+
+- **`p_identity_id` est FACULTATIF, et nul il fait deux trous NOMMÉS.** Prendre « l'identité par
+  défaut » est impossible, et ce n'est pas une prudence mais une MESURE : **deux** lignes du seed
+  portent `is_default = true`. Les index uniques partiels
+  `mail_outbound_identities_defaut_personne` et `mail_outbound_identities_defaut_service` garantissent
+  l'unicité **par personne** et **pour le service**, jamais pour le workspace — « l'identité par
+  défaut du workspace » n'existe pas.
+
+- **UN CONTACT NON RATTACHÉ À L'AFFAIRE EST ACCEPTÉ**, et l'écart est écrit plutôt que découvert. La
+  RLS garantit déjà que l'appelant **lit** ce contact ; exiger en plus le rattachement poserait une
+  règle de produit que personne n'a prise, et `CLAUDE.md` §10 refuse cela **dans les deux sens** —
+  pas seulement dans celui du laxisme. La tranche 4 choisira son destinataire par la séquence, et
+  c'est là que la règle, si elle doit exister, sera prise.
+
+### 8.6 Le formatage des valeurs non textuelles, mesuré
+
+Dix des douze variables sont du `text` et se substituent telles quelles. Les deux autres ne le sont
+pas, et leur rendu est une décision.
+
+| Variable | Type réel | Rendu | Mesure |
+|---|---|---|---|
+| `card.amount` | `numeric` | `to_char(…, 'FM999999999990.00')` | `48000.00` |
+| `card.next_action_at` | `timestamptz` | `to_char(… at time zone 'UTC', 'DD/MM/YYYY HH24:MI')` | `16/08/2026 09:00` |
+
+- **Aucun séparateur de milliers, et aucun symbole de devise.** Le séparateur dépend d'une locale
+  que la base ne porte pas pour un workspace ; le symbole doublerait `card.currency`, qui est une
+  variable **distincte** que le rédacteur du modèle place où il veut.
+
+- **L'HORODATAGE EST RENDU EN UTC, ET C'EST UNE LIMITE NOMMÉE.** MESURÉ : aucune colonne de fuseau
+  n'existe dans le schéma — la seule colonne de préférence est `profiles.locale`, qui est une
+  **langue**. UTC est donc le seul choix qui ne soit pas arbitraire, et il est écrit **ici** plutôt
+  que découvert par un destinataire à qui l'on donnerait rendez-vous à la mauvaise heure. L'écart est
+  consigné au registre (§8.10), et il se referme le jour où le produit portera un fuseau.
+
+### 8.7 Autorisations et privilèges
+
+- `grant execute` à **`authenticated`** et **`service_role`**, jamais à `anon` — les privilèges
+  mesurés de `public.cards_figees()`, repris sans changement. Un appelant anonyme ne lit **aucune**
+  affaire : lui donner l'exécution ne lui rendrait que du vide, au prix d'une surface de plus.
+- **`revoke all … from public` NE SUFFIT PAS** : c'est le point de sûreté des migrations 48 à 55,
+  la distribution posant des `alter default privileges … to anon`. La migration révoque donc
+  **nommément** puis attribue.
+- **Le refus de l'anonyme est un `401` de PRIVILÈGE**, distinct du `200 []` de la lecture de
+  `mail_templates` (§2.7 ligne 1) : là-bas la politique est ouverte `to anon` et filtre ; ici la
+  fonction n'est pas exécutable. Les deux refus sont de **nature différente** et la preuve les
+  distingue, comme le §2.7 distingue déjà le `401` du `403`.
+
+### 8.8 Contrat d'API — `/rest/v1/rpc/rendre_modele_email`
+
+À mesurer avec les jetons réels des trois profils. `admin` = Camille Aubert,
+`business_developer` = Driss Lemoine, `viewer` = Farida Nowak.
+
+| # | Appelant | Requête | Attendu |
+|---|---|---|---|
+| 1 | anonyme | modèle et affaire du seed | `401`, `42501` — refusé par le **privilège** |
+| 2 | `viewer` | modèle du seed + affaire qu'elle LIT + son contact | `200`, une ligne, objet et corps substitués |
+| 3 | `business_developer` | idem | `200`, la **même** ligne — le rendu ne dépend pas du rôle |
+| 4 | `admin` | idem | `200`, la même ligne |
+| 5 | `viewer` | affaire d'un track qui lui est FERMÉ | `200` et **`[]`** — zéro ligne, aucun identifiant divulgué |
+| 6 | `admin` | `p_template_id` inconnu | `200` et `[]` — même rendu qu'un modèle masqué |
+| 7 | `admin` | `p_card_id` inconnu | `200` et `[]` |
+| 8 | `admin` | modèle à variables + affaire **sans montant** | `200`, le trou rendu **vide**, `card.amount` dans `variables_nulles` |
+| 9 | `admin` | sans `p_contact_id` sur un modèle citant `contact.full_name` | `200`, `contact.full_name` dans `variables_nulles` |
+| 10 | `admin` | sans `p_identity_id` sur un modèle citant `identity.from_address` | `200`, `identity.from_address` dans `variables_nulles` |
+| 11 | `admin` | modèle **sans aucune variable** | `200`, texte identique à l'entrée, `variables_nulles` **vide** |
+| 12 | `admin` | modèle dont toutes les variables sont renseignées | `200`, `variables_nulles` **vide** — une variable pleine n'est jamais listée |
+| 13 | `admin` | contact **non rattaché** à l'affaire visée | `200`, substitué — la règle du §8.5 figée par une assertion |
+| 14 | `admin` | `identity.from_name` d'une identité du seed | `200`, `identity.from_name` dans `variables_nulles` — MESURÉ : les **deux** identités du seed ont un `from_name` nul |
+
+**La ligne 14 n'est pas un cas de laboratoire** : le jeu de démonstration porte réellement ce trou,
+et c'est ce qui rend la règle du §8.4 observable sans fabriquer de donnée.
+
+### 8.9 Preuves exigées — sous-tranche 2a
+
+| Niveau | Preuve |
+|---|---|
+| pgTAP | `supabase/tests/0054_rendu_modeles_emails.test.sql` : la forme de la fonction dans le catalogue (volatilité, `security invoker`, privilèges rôle par rôle), la substitution des **douze** variables une à une, les deux formatages du §8.6, les trous nuls et leur nomination, le tri et le dédoublonnage de `variables_nulles`, la variable absente du modèle qui n'est **pas** listée, et le cloisonnement par la RLS prouvé avec les trois profils réels |
+| API | `e2e/api/rendu-modeles-emails.spec.ts` : les quatorze lignes du §8.8 avec les jetons réels ; chaque zéro-ligne relu pour constater qu'aucune erreur n'est rendue |
+| Unitaire | **aucun** : la sous-tranche ne livre aucune logique TypeScript. La règle vit en SQL, et pgTAP est son niveau. L'écart est **nommé** plutôt que compensé par un test de façade — même position qu'au §2.9 |
+| Harnais | `scripts/verify-rendu-modeles-emails.sh` : verdict unique, non complaisant, avec des **dégradations réelles** dont la restauration est constatée **octet à octet** contre un instantané pris avant la première, jamais contre `HEAD` (§2.11) |
+| Seed | **inchangé** : les deux modèles du §2.8 suffisent, et le trou de `card.amount` qu'ils exercent est précisément ce que le §8.4 rend observable |
+| E2E interface | **aucun** : 2a ne livre aucun écran. L'écart est nommé, et l'écran est 2b |
+
+### 8.10 Ce que la sous-tranche 2a ne prouve pas, et qui n'est pas masqué
+
+- **Aucun écran.** Le rendu ne s'atteint que par l'API. L'écran est 2b, cadré au §8.11.
+- **Aucun envoi.** `mail_outbox` ignore toujours les modèles ; rien n'est changé à `CRM-058`.
+- **Aucune signature, aucune séquence** — tranches 3 et 4, cadrées au §7.2 et au §7.3.
+- **Aucun fuseau horaire.** Le rendu d'un horodatage est en UTC (§8.6), et l'écart est consigné au
+  registre plutôt que comblé par une valeur devinée.
+
+### 8.11 Cadrage de la sous-tranche 2b — l'écran, à spécifier avant d'être écrite
+
+Une **huitième surface de réglages**, jumelle des §5.34 et §5.35 du design system par sa forme :
+liste des modèles, création, modification, suppression **avec confirmation**, et prévisualisation
+appelant `rendre_modele_email` sur une affaire réelle. Les questions qu'elle devra trancher, et qui
+ne le sont pas ici :
+
+- comment l'écran **choisit** l'affaire, le contact et l'identité de la prévisualisation, sachant
+  que les trois se lisent sous RLS et qu'aucun n'est deviné (§8.5) ;
+- comment `variables_nulles` se **rend** — la liste, sa place, et ce qu'elle dit ;
+- comment la liste **fermée** des douze variables est proposée au rédacteur, `app.mail_template_variables()`
+  étant la source unique (§3) ;
+- ce que la confirmation de suppression **annonce**, la tranche 4 devant poser un `on delete restrict`
+  qui n'existe pas encore (§2.2).
