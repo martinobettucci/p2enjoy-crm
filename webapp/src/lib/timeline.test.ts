@@ -338,16 +338,21 @@ describe('la résolution des libellés (§14.6)', () => {
 
 	// LE SEUL CAS OÙ LE FIL LIT UNE VALEUR DU `payload` (§16.11.5) : une date n'est pas un libellé
 	// qui pourrait changer de sens demain, c'est la valeur même du fait.
+	// Les deux instants sont construits en heure LOCALE — INC-203 : écrits en `Z`, ils figeaient le
+	// jour civil d'un hôte réglé en UTC, et la preuve changeait de verdict selon le fuseau de la
+	// machine. Midi local d'un jour donné est ce jour-là partout.
 	it('rend l’échéance en date courte pour `snoozed` et pour `woken`', () => {
+		const midiLocal26Aout = new Date(2026, 7, 26, 12, 0, 0).toISOString()
+		const midiLocal4Septembre = new Date(2026, 8, 4, 12, 0, 0).toISOString()
 		expect(
 			resoudreDetail(
-				ligne({ id: 'e-s', type: 'snoozed', payload: { until: '2026-08-26T12:00:00Z' } }),
+				ligne({ id: 'e-s', type: 'snoozed', payload: { until: midiLocal26Aout } }),
 				libelles,
 			).detail,
 		).toBe('26/08/2026')
 		expect(
 			resoudreDetail(
-				ligne({ id: 'e-w', type: 'woken', payload: { from: '2026-09-04T08:00:00Z' } }),
+				ligne({ id: 'e-w', type: 'woken', payload: { from: midiLocal4Septembre } }),
 				libelles,
 			).detail,
 		).toBe('04/09/2026')

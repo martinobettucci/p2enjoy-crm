@@ -205,7 +205,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-200 | `verify-channels.sh` ET `verify-tracks.sh` rendent à `authenticated` l'`UPDATE` de TABLE, rouvrant `deleted_by` que la corbeille avait fermée | 2026-08-21 | **close** — corrigée par la décision 499 dans les deux fichiers | 499 |
 | INC-201 | La preuve n° 14 de `verify-auth.sh` figeait « zéro ligne sur `profiles` », absence que `CRM-022` a comblée | 2026-08-21 | **close** — assertion retournée par la décision 499 | 499 |
 | INC-202 | `verify-mail-sync.sh` rouge d'un `pytest` absent de l'hôte, condition du §2.1 ter de `docs/CloudWorker.md` | 2026-08-21 | **close** — condition d'hôte, aucun fichier du dépôt en cause | 499 |
-| INC-203 | Quatre tests unitaires de `CRM-081` et `CRM-044` figent une date rendue dans le fuseau de l'HÔTE : ils échouent sous tout fuseau autre qu'UTC | 2026-08-24 | **ouverte** — comportement inchangé, étrangère à `CRM-061` | 503 |
+| INC-203 | Quatre tests unitaires de `CRM-081` et `CRM-044` figent une date rendue dans le fuseau de l'HÔTE : ils échouent sous tout fuseau autre qu'UTC | 2026-08-24 | **close** — les quatre attentes construites en heure locale, décision 508 ; suite verte sous quatre fuseaux | 503, 508 |
 | INC-204 | `h-10` et `py-0.5` n'existent pas dans le CSS produit — même cause qu'INC-130, sur `EnTeteCard`, `Sommeil` et `BlocCoutsCard` | 2026-08-24 | **close** — réécrites en valeur arbitraire assumée par la décision 509 ; relevé du CSS produit ramené à la seule INC-130 | 503, 509 |
 | INC-205 | `e2e/mail/ingestion.spec.ts`, puis `e2e/mail/dossiers.spec.ts`, échouent en CAMPAGNE et passent seuls — même famille qu'INC-128 et INC-172. Quatre campagnes enchaînées le 2026-08-24 : deux échecs sur deux scénarios DIFFÉRENTS, puis deux campagnes vertes, sans qu'une ligne du dépôt ne bouge | 2026-08-24 | **ouverte** — comportement inchangé, étrangère à `CRM-062` | 504, 505 |
 | INC-206 | `docs/SPEC-relances.md` renvoyait, depuis la tranche 1, à un « chapitre 30 » de `docs/manual.md` qui n'existe pas et ne peut pas exister — le manuel numérote de 1 à 6 avec des suffixes latins | 2026-08-24 | **close** — référence corrigée en `3 quinquies` par la tranche 3, motif au §10.13 | 506 |
@@ -4261,10 +4261,26 @@ qui est la même famille de défaut que la décision 501 pour l'ancienneté : un
 résultat dépend de l'environnement plutôt que du code. Sur cet hôte, aucun rouge n'apparaît, et
 c'est pourquoi le défaut a survécu.
 
-**Comportement INCHANGÉ, et rien n'est corrigé ici** (`docs/CloudWorker.md` §3.1). La correction
-tient dans les tests eux-mêmes — fixer le fuseau du rendu attendu, ou construire l'échéance en
-heure locale —, elle appartient à `CRM-081` et à `CRM-044`, et elle dépasse l'unité autorisée de
-cette session.
+**CORRIGÉE LE 2026-08-25, décision 508**, sur demande explicite du responsable, et par la seconde
+des deux voies nommées ci-dessous : **l'échéance est construite en heure locale**. `new Date(2026,
+7, 26, 12, 0, 0)` est midi LOCAL du 26 août, donc le 26 août sous tout fuseau ; le produit continue
+de rendre la date dans le fuseau du lecteur, ce qu'il doit faire, et c'est l'attente qui cesse de
+dépendre de la montre de l'hôte. Aucune ligne de `webapp/src/lib/sommeil-card.ts` ni de
+`timeline.ts` n'est touchée : le défaut était dans les preuves.
+
+**Le quatrième cas est devenu PLUS STRICT au passage.** « une échéance usuelle envoie une date
+FUTURE, et la pastille naît de la ligne rendue » renvoyait, dans sa réponse simulée, la **même**
+date que celle envoyée par l'écran : une pastille recomposée depuis la saisie serait passée pour
+juste. La ligne rendue porte désormais une date **différente** (15/09 contre 19/08 envoyé), ce qui
+fait dire à l'assertion exactement ce que son commentaire annonçait.
+
+**Mesuré après correction** : les trois fichiers rendent `99 passés` sous `UTC`,
+`Pacific/Auckland`, `America/Los_Angeles` et `Asia/Kolkata` ; `npm run test:unit` rend
+**77 fichiers / 2551 tests** sous `UTC` comme sous `Pacific/Auckland`, là où ce dernier rendait
+quatre échecs.
+
+*Formulation d'origine, conservée* : la correction tient dans les tests eux-mêmes, et appartient à
+`CRM-081` et à `CRM-044`.
 
 **Ce que la session a fait à la place.** `scripts/verify-ma-journee.sh` rejoue sous fuseau décalé
 les **deux seules** suites de `CRM-061`, et son en-tête écrit pourquoi : rejouer la suite entière

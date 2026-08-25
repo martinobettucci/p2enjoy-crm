@@ -49,8 +49,15 @@ describe('estEnSommeil — le prédicat du §16.2, des deux côtés', () => {
 })
 
 describe('formaterEcheanceSommeil — la date courte du produit', () => {
+	// L'ÉCHÉANCE EST CONSTRUITE EN HEURE LOCALE, ET C'EST LA CORRECTION D'INC-203. Écrite en `Z`,
+	// elle figeait le jour civil d'un hôte réglé en UTC : `2026-08-26T12:00:00Z` est le **27** à
+	// Auckland, et la preuve rougissait sur une machine dont le fuseau décale la journée, sans que
+	// le produit ait bougé. `formaterEcheanceSommeil` rend la date dans le fuseau du LECTEUR, ce
+	// qu'elle doit faire ; c'est l'attente qui devait cesser de dépendre de la montre de l'hôte.
+	// Midi LOCAL du 26 août est le 26 août partout, par construction.
 	it('rend la date courte de l’échéance', () => {
-		expect(formaterEcheanceSommeil('2026-08-26T12:00:00Z')).toBe('26/08/2026')
+		const midiLocal = new Date(2026, 7, 26, 12, 0, 0).toISOString()
+		expect(formaterEcheanceSommeil(midiLocal)).toBe('26/08/2026')
 	})
 
 	it('rend `null` sur une valeur illisible, jamais « Invalid Date »', () => {

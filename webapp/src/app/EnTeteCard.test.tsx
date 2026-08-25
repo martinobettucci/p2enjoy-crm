@@ -507,11 +507,14 @@ describe("la mise en sommeil (CRM-081, docs/SPEC-cards.md §16.11)", () => {
 		return { client, appels }
 	}
 
+	// L'ÉCHÉANCE EST CONSTRUITE EN HEURE LOCALE — INC-203. Écrite en `+00:00`, elle figeait le jour
+	// civil d'un hôte réglé en UTC ; la pastille rend la date dans le fuseau du LECTEUR, ce qu'elle
+	// doit faire, et c'est l'attente qui devait cesser de dépendre de la montre de l'hôte.
 	it("porte la pastille et son échéance quand l'affaire dort", () => {
 		const { client } = clientSommeil({ status: 200, error: null, data: null })
 		render(
 			<EnTeteCard
-				card={card({ snoozed_until: '2026-08-26T12:00:00+00:00' })}
+				card={card({ snoozed_until: new Date(2026, 7, 26, 12, 0, 0).toISOString() })}
 				client={client}
 				maintenant={MAINTENANT}
 			/>,
@@ -552,10 +555,16 @@ describe("la mise en sommeil (CRM-081, docs/SPEC-cards.md §16.11)", () => {
 	})
 
 	it("une échéance usuelle envoie une date FUTURE, et la pastille naît de la ligne rendue", async () => {
+		// LA LIGNE RENDUE PORTE UNE AUTRE DATE QUE LA SAISIE, ET C'EST VOULU — l'assertion du bas
+		// dit que la pastille naît de la RÉPONSE, jamais de ce que l'écran a envoyé. Tant que les
+		// deux dates coïncidaient, une pastille recomposée depuis la saisie serait passée pour
+		// juste. Elle est construite en heure LOCALE (INC-203) : midi local du 15 septembre est le
+		// 15 septembre sous tout fuseau, là où un instant en `Z` figeait le jour civil de l'hôte.
+		const midiLocal15Septembre = new Date(2026, 8, 15, 12, 0, 0).toISOString()
 		const { client, appels } = clientSommeil({
 			status: 200,
 			error: null,
-			data: { id: 'card-1', snoozed_until: '2026-08-19T12:00:00+00:00' },
+			data: { id: 'card-1', snoozed_until: midiLocal15Septembre },
 		})
 		render(<EnTeteCard card={card()} client={client} maintenant={MAINTENANT} />)
 		screen.getByTestId('entete-card-endormir').click()
@@ -566,10 +575,10 @@ describe("la mise en sommeil (CRM-081, docs/SPEC-cards.md §16.11)", () => {
 		await waitFor(() => expect(appels).toHaveLength(1))
 		expect(appels[0]?.nom).toBe('snooze_card')
 		expect(String(appels[0]?.arguments['until'])).toBe('2026-08-19T12:00:00.000Z')
-		// LA LIGNE RENDUE EST LA SOURCE, jamais la saisie : la pastille porte 19/08, ce que le
-		// serveur a répondu, et non une date recomposée par l'écran.
+		// LA LIGNE RENDUE EST LA SOURCE, jamais la saisie : la pastille porte le 15/09, ce que le
+		// serveur a répondu, et non le 19/08 que l'écran a envoyé.
 		await waitFor(() =>
-			expect(screen.getByTestId('entete-card-sommeil').textContent).toContain('19/08/2026'),
+			expect(screen.getByTestId('entete-card-sommeil').textContent).toContain('15/09/2026'),
 		)
 	})
 
