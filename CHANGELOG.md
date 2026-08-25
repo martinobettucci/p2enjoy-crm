@@ -202,6 +202,14 @@ d'exécuter le code attendu.
 
 ### Corrigé
 
+- **UNE PREUVE ACCUSAIT UN FICHIER CONFORME** (`CRM-077`, `docs/INCONSISTENCY_REPORT.md` INC-192).
+  Le harnais de la corbeille vérifie que chaque fichier de l'unité cite sa spécification en tête ;
+  il ne lisait que les trois premières lignes. La fiche d'une affaire étant le point d'ancrage de
+  neuf unités, sa citation de la corbeille arrive ligne 11 — correctement posée, mais hors de la
+  fenêtre : le harnais rendait un échec sur un fichier en règle. Il lit désormais l'en-tête
+  complet, jusqu'à la première ligne de code, et pas une ligne au-delà — une citation glissée au
+  milieu du code n'est toujours pas acceptée. Aucun comportement du produit n'est touché.
+
 - **METTRE À JOUR UNE PILE EXISTANTE POUVAIT LA LAISSER À MOITIÉ MIGRÉE** (`CRM-062`,
   `docs/INCONSISTENCY_REPORT.md` INC-210). Depuis que les relances automatiques écrivent un
   quinzième type d'événement, `stalled`, le rejeu de l'ensemble des migrations sur une base dont le

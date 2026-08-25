@@ -127,15 +127,36 @@ done
 # Le chemin ENTIER est affiché, jamais le seul nom de base : `e2e/api/corbeille.spec.ts` et
 # `e2e/ui/corbeille.spec.ts` le partagent, et deux lignes identiques ne diraient pas laquelle des
 # deux a été contrôlée.
+#
+# `entete` rend l'en-tête COMPLET d'un fichier — ses lignes de commentaire et ses lignes vides,
+# jusqu'à la première ligne de code — et non ses trois premières lignes. Le contrôle employait
+# `head -3`, fenêtre qui suffisait quand un fichier ne servait qu'une unité, et qui a cessé de
+# suffire : `webapp/src/app/RouteCard.tsx` est le point d'ancrage de la fiche d'affaire et cumule
+# DIX commentaires `@spec` — CRM-037, CRM-040, CRM-060, CRM-085, CRM-043, CRM-077, CRM-041,
+# CRM-081, CRM-036 —, si bien que `@spec CRM-077`, cité ligne 11 comme il doit l'être, tombait
+# hors de la fenêtre et rendait le contrôle ROUGE sur un fichier CONFORME. C'est INC-192, mesurée
+# le 2026-08-20 et corrigée ici, sous l'unité que ce harnais éprouve. La règle que le contrôle
+# tient est inchangée — la citation vit dans l'EN-TÊTE, jamais au milieu du code —, seule sa
+# fenêtre de lecture cesse d'être arbitraire. Le contrôle reste donc non complaisant : une
+# citation posée après la première ligne de code n'est toujours pas vue.
+entete() {
+	awk '{
+		ligne = $0
+		sub(/^[ \t]+/, "", ligne)
+		if (ligne == "" || ligne ~ /^(\/\/|--|\*|\/\*)/) { print; next }
+		exit
+	}' "$1"
+}
+
 for fichier in "${FICHIERS_CODE[@]}"; do
-	if [ -f "$fichier" ] && head -3 "$fichier" | grep -q '@spec CRM-077'; then
+	if [ -f "$fichier" ] && entete "$fichier" | grep -q '@spec CRM-077'; then
 		ok "$fichier porte son commentaire @spec"
 	else
 		fail "$fichier ne cite pas CRM-077 en tête de fichier"
 	fi
 done
 for fichier in "${FICHIERS_PREUVE[@]}"; do
-	if [ -f "$fichier" ] && head -3 "$fichier" | grep -q '@verifies CRM-077'; then
+	if [ -f "$fichier" ] && entete "$fichier" | grep -q '@verifies CRM-077'; then
 		ok "$fichier porte son commentaire @verifies"
 	else
 		fail "$fichier ne cite pas CRM-077"

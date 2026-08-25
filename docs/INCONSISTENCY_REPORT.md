@@ -3796,6 +3796,27 @@ il est correct. Il est dans le harnais, qui borne sa lecture à une fenêtre tro
 plusieurs fichiers pivots. La correction — lire l'en-tête complet du fichier, jusqu'à la première
 ligne non-commentaire — appartient à `CRM-077`, unité que le harnais teste.
 
+**SOLDÉE LE 2026-08-25, PAR EXÉCUTION, sous `CRM-077`.** Le rejeu de la série a rendu le même
+verdict — `scripts/verify-corbeille.sh --rapide` : **38 contrôles, 1 en échec**, sur ce seul
+contrôle. `head -3` est remplacé par une fonction `entete` qui rend les lignes de commentaire et
+les lignes vides du fichier **jusqu'à sa première ligne de code**, et rien au-delà. La règle tenue
+ne bouge pas : la citation vit dans l'EN-TÊTE. Éprouvé dans les **trois** sens plutôt qu'affirmé :
+citation retirée → NON VUE ; citation posée **après** la première ligne de code → NON VUE ;
+citation en tête → VUE. La seconde épreuve est celle qui compte : sans elle, élargir la fenêtre
+aurait pu se dégrader en « n'importe où dans le fichier », et le contrôle serait devenu
+complaisant.
+
+**CE QUI RESTE, ET N'EST PAS CORRIGÉ ICI — VINGT-CINQ AUTRES HARNAIS PORTENT LE MÊME `head -3`.**
+Mesuré le même jour : `administration-arborescence`, `board`, `budgets`, `card-costs`,
+`change-channel-workflow`, `commentaires`, `couts-ecrans`, `formulaire`, `identites`, `liste`,
+`mail-classement`, `mail-dossiers`, `mail-envoi`, `mail-inbound`, `mail-inbox`, `mail-ingestion`,
+`mail-outbound`, `mail-resilience`, `move-card-to-channel`, `objectifs-canevas`, `objectifs`,
+`onboarding`, `seed-demo`, `snooze`, `timeline`. **Aucun n'est rouge aujourd'hui** : leurs fichiers
+citent leur unité dans les trois premières lignes. Le défaut y est donc **latent**, et il se
+réveillera exactement comme ici — le jour où un fichier pivot accueillera une unité de plus. Chaque
+correction appartient à l'unité que son harnais éprouve (`CLAUDE.md` §13), et les grouper ici
+reviendrait à solder vingt-cinq unités sous une seule. L'entrée reste **ouverte pour ce reste**.
+
 ## Consigné le 2026-08-20 — une colonne révoquée qui ressort par le corps d'un refus
 
 ### INC-193 — le `details` d'un refus de contrainte rend la ligne ENTIÈRE, `secret_id` compris
