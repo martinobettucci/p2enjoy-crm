@@ -570,3 +570,260 @@ ne le sont pas ici :
   étant la source unique (§3) ;
 - ce que la confirmation de suppression **annonce**, la tranche 4 devant poser un `on delete restrict`
   qui n'existe pas encore (§2.2).
+
+> **SPÉCIFIÉE le 2026-08-25, au §9 ci-dessous**, après mesure sur la pile debout et seedée, et
+> **avant sa première ligne de code**. Les quatre questions ci-dessus y sont tranchées : la
+> première au §9.5, la deuxième au §9.6, la troisième au **§9.3** — qui a exigé une mesure et une
+> migration —, et la quatrième au §9.7.
+
+---
+
+## 9. Sous-tranche 2b — l'écran d'administration des modèles
+
+Écrite le 2026-08-25 **après mesure sur la pile debout et seedée**, et **avant la première ligne de
+code** (`CLAUDE.md` §5, `docs/CloudWorker.md` §3.2). Elle développe le cadrage du §8.11, qu'elle ne
+remplace pas.
+
+### 9.1 Ce que l'écran est, et où il vit
+
+Une **huitième surface de réglages**, à l'adresse `/reglages/modeles-emails`, jumelle des §5.34 et
+§5.35 du design system par sa forme — `ul` de lignes plates, formulaire replié **dans le flux du
+document et jamais une modale**, refus `role="alert"` dans le bloc concerné, état vide porteur du
+geste, commande jamais éteinte selon le rôle.
+
+**Elle vient APRÈS les identités sortantes et AVANT l'état de la messagerie** dans l'index des
+réglages, et l'ordre a une raison : on déclare l'expéditeur avant d'écrire le texte qu'il expédiera,
+et on configure avant de superviser — c'est l'argument qui a déjà placé `CHEMIN_ADMIN_COMPTES_MAIL`
+avant `CHEMIN_ETAT_MESSAGERIE`, repris sans changement.
+
+**Elle n'ouvre AUCUNE politique et n'ajoute AUCUNE règle de produit.** Elle lit `mail_templates`
+sous la RLS de la migration `0055`, écrit par les routes REST de cette même table, et appelle
+`public.rendre_modele_email` de la migration `0056`. La seule migration qu'elle porte est le
+guichet du §9.3, qui n'est pas une règle mais une **exposition**.
+
+### 9.2 Ce que l'écran lit, et ce qu'il n'ouvre pas
+
+| Source | Emploi | Volume mesuré sur le seed |
+|---|---|---|
+| `mail_templates` | la liste, la fiche | 2 |
+| `cards` (`id`, `title`) | le sélecteur d'affaire de la prévisualisation | **41** |
+| `contacts` (`id`, `full_name`, `email`) | le sélecteur de contact | 3 |
+| `mail_outbound_identities` (`id`, `label`, `from_address`, `from_name`) | le sélecteur d'identité | 2 |
+| `public.mail_template_variables()` | la palette du §9.3 | 12 |
+
+Les quatre premières sont **déjà** lues ailleurs dans la webapp et se relisent ici sous la RLS de
+l'appelant. Aucune n'est filtrée par l'écran : ce que la base rend est ce que le sélecteur propose,
+et c'est la règle tenue par les sept surfaces de réglages précédentes.
+
+### 9.3 LA LISTE FERMÉE DES DOUZE VARIABLES — une MESURE a décidé, et elle impose une migration
+
+**MESURÉ le 2026-08-25** : `PGRST_DB_SCHEMAS` vaut `public,storage,graphql_public`
+(`docker-compose.yml`, `.env.example`). Le schéma **`app` n'est donc pas exposé**, et
+`app.mail_template_variables()` — source unique du §3 — est **hors de portée de l'écran**.
+Mesuré aussi : `to_regprocedure('public.mail_template_variables()')` rend `NULL`, aucun guichet
+public n'existant.
+
+Deux issues, et une seule est tenable :
+
+- **Recopier les douze noms en TypeScript est ÉCARTÉ.** Le §3 pose que la liste est écrite une
+  seule fois « parce qu'écrire la liste deux fois serait garantir qu'elles divergent ». Une
+  treizième variable ajoutée au §2.4 laisserait la palette de l'écran muette sur elle, sans qu'aucune
+  preuve ne le voie : la contrainte l'accepterait, le rendu la substituerait, et seule l'interface
+  l'ignorerait.
+- **Un GUICHET PUBLIC est posé**, migration `0057_guichet_variables_modeles.sql` :
+  `public.mail_template_variables()`, `immutable`, `security invoker`, qui **délègue** à
+  `app.mail_template_variables()` et ne redéclare rien. `grant execute` à `authenticated` et
+  `service_role`, **jamais à `anon`** — un appelant anonyme n'écrit aucun modèle ; ce sont les
+  privilèges de `public.rendre_modele_email` (§8.7), repris sans changement, et le `revoke all …
+  from public` nommément précédé, point de sûreté des migrations 48 à 56.
+
+**Une assertion pgTAP compare les DEUX fonctions et exige leur ÉGALITÉ**, jamais leurs seuls
+cardinaux : c'est cette assertion qui rend la délégation vérifiable, et sans elle le guichet
+pourrait dériver en silence — exactement le défaut que la duplication aurait produit.
+
+**Ce que la palette fait de la liste.** Sous le champ du corps, un bloc « Variables disponibles »
+rend les douze noms, **chacun en donnée technique** (§2 du design system) et **chacun dans un
+bouton**. Le bouton **insère** `{{nom}}` à la position du curseur du dernier champ que le rédacteur
+a visité — l'objet ou le corps —, et **le corps à défaut**, aucun des deux n'ayant encore été
+visité à l'ouverture. Ce n'est **pas** une garde de saisie (§5.3 ter) : le rédacteur peut taper
+n'importe quoi dans les deux champs, et c'est la contrainte `mail_templates_subject_variables` ou
+`mail_templates_body_variables` qui refuse, refus **traduit** par le §9.8.
+
+### 9.4 La liste, et ce qu'une ligne porte
+
+`ul` de lignes plates (§5.18), avec les hauteurs et les séparateurs du §5.9.
+
+- **LE NOM EST EN TÊTE DE LIGNE, et c'est la clé** : `mail_templates_workspace_name_key` le rend
+  unique par workspace sur sa forme normalisée (§2.2). C'est le raisonnement du §5.35 — « la tête
+  de ligne suit la clé » —, appliqué ici à une clé d'un seul champ.
+- **L'objet suit, en second ton et tronqué**, parce que c'est ce qu'un destinataire lira en premier
+  et que deux modèles de même intention s'y distinguent. Il **peut porter des variables**, et elles
+  se rendent **telles quelles** : la liste n'est pas une prévisualisation, et substituer ici
+  supposerait une affaire que la liste n'a pas.
+- **AUCUNE PILULE, AUCUNE COULEUR, AUCUN COMPTE DE VARIABLES.** Un modèle n'a pas d'état : la table
+  ne porte ni statut, ni `archived_at` (§2.2). Un compte de variables serait un chiffre qui ne dit
+  pas ce qu'il compte (§5.36) et que rien du produit ne consomme.
+- **Deux commandes par ligne** : « Prévisualiser » et « Modifier ». La **suppression n'est pas sur
+  la ligne** : elle vit dans la fiche, derrière la confirmation du §9.7 — patron du §5.29, dont le
+  motif vaut ici sans changement, un geste destructeur ne se déclenchant pas depuis une liste qu'on
+  balaye.
+- **La lectrice voit les deux commandes.** Aucune n'est éteinte selon le rôle (§5.3, §5.13, §5.21,
+  §5.27, sans exception) : « Prévisualiser » lui rend un rendu, mesuré `200` au §8.8 ligne 2, et
+  « Modifier » lui rend le refus traduit du §9.8 — `403` sur un `PATCH`, ou **zéro ligne** selon le
+  verbe (§2.7 lignes 6 et 7).
+- **La borne est `104ch`**, celle du §5.34 et pour son motif exact : une ligne porte ici quatre
+  éléments dont deux commandes, et la borne d'un paragraphe de prose l'y replierait.
+- **L'état vide porte le geste** — « Aucun modèle d'email » suivi de la commande de création
+  (§5.13). Le seed en pose deux, si bien qu'il ne se rencontre qu'après une suppression complète.
+
+### 9.5 LA PRÉVISUALISATION — comment l'écran choisit ses trois sources, sans rien deviner
+
+C'est la première des quatre questions du §8.11, et le §8.5 en fixe déjà la moitié : le **rendu** ne
+devine jamais. L'écran ne devine pas davantage, et **ne présélectionne rien**.
+
+- **L'affaire — un `select` dont l'option de tête est VIDE, et aucune prévisualisation n'est
+  demandée tant qu'elle est choisie.** `p_card_id` est obligatoire (§8.5) ; présélectionner la
+  première affaire de la liste ferait rendre un texte au sujet d'une affaire que personne n'a
+  désignée, et cette affaire-là, MESURÉ, serait « Assistant IA support — Nordis » simplement parce
+  qu'elle vient en tête de tri. L'option vide est ici l'aveu qu'aucun choix n'est fait, et le bloc
+  de rendu porte alors l'état vide du §9.6.
+- **Le contact — facultatif, option vide « Aucun contact », et la liste porte TOUS les contacts que
+  l'appelant lit**, jamais les seuls contacts rattachés à l'affaire choisie. **MESURÉ** :
+  `card_contacts` ne porte que **2 lignes pour 41 affaires**. Un sélecteur restreint au rattachement
+  serait donc **vide sur 39 affaires sur 41**, et la prévisualisation ne pourrait jamais montrer
+  `{{contact.full_name}}` rempli — c'est-à-dire précisément ce qu'elle sert à montrer. Le §8.5
+  accepte explicitement un contact non rattaché, et l'accepter ici est cette règle appliquée, non
+  une tolérance nouvelle.
+- **L'identité — facultative, option vide « Aucune identité ».** « L'identité par défaut du
+  workspace » **n'existe pas**, et c'est une mesure et non une prudence (§8.5) : **deux** lignes du
+  seed portent `is_default = true`, les index uniques partiels garantissant l'unicité **par
+  personne** et **pour le service**. En présélectionner une reviendrait à choisir entre deux
+  défauts également légitimes.
+- **Une identité est nommée `libellé — adresse`**, comme au §5.35 et pour son motif : deux identités
+  d'une même personne peuvent porter le même libellé, et l'adresse est leur clé.
+- **La prévisualisation est un GESTE EXPLICITE**, un bouton, jamais un rendu qui suivrait chaque
+  frappe : la fonction lit six tables sous RLS, et la déclencher à chaque changement de sélecteur
+  ferait trois appels pour un seul choix. Le bouton porte son libellé d'attente pendant le vol et
+  **n'est jamais désactivé par l'état des champs** (§5.3 ter) — une affaire non choisie fait rendre
+  **zéro ligne** par la fonction, ce que le §9.6 rend en toutes lettres.
+
+### 9.6 CE QUE `variables_nulles` REND — la deuxième question
+
+Le rendu réussi porte trois valeurs (§8.3), et l'écran les rend **toutes les trois**.
+
+- **L'objet et le corps se rendent tels que la base les a substitués**, dans un bloc de lecture. Le
+  corps préserve ses retours à la ligne (`white-space: pre-wrap`) : le sous-système expédie du
+  **texte** (`docs/SPEC-mail-subsystem.md` §18), et un corps reflué mentirait sur ce qui partira.
+- **`variables_nulles` NON VIDE rend un bloc nommé**, `role="status"` et jamais `role="alert"` : la
+  prévisualisation a **réussi**, rien n'est refusé, et employer le rôle du refus ferait lire une
+  panne là où il y a une information. Le bloc porte son compte **en toutes lettres et dans son
+  propre élément** — « 1 variable sans valeur », « 3 variables sans valeur » — jamais un badge nu
+  ni un nœud de texte accolé, qui est le défaut « Discussion1 » du §5.11. **L'accord se fait par
+  CLÉ**, jamais par un gabarit paramétré : « les 1 variables » est faux (§10).
+- **Il dit ce que le trou DEVIENT, et c'est la moitié utile de l'information** : « ces variables
+  sont rendues vides dans le message ci-dessus ». C'est la décision du §8.4 rendue lisible ; sans
+  cette phrase, la liste nommerait un défaut sans dire sa conséquence.
+- **Chaque nom est rendu en donnée technique**, la graphie exacte que le rédacteur a tapée dans le
+  modèle — `identity.from_name`, jamais « le nom de l'expéditeur » : c'est la chaîne qu'il ira
+  chercher dans son texte, et la traduire l'obligerait à la retraduire.
+- **`variables_nulles` VIDE ne rend RIEN.** Aucun « aucune variable manquante », aucune pilule
+  verte : c'est la règle de la cellule vide du §5.9 — l'absence dit déjà ce qu'un message
+  répéterait —, et le §1 réserve la couleur à ce qui la mérite.
+- **Zéro ligne rendue par la fonction n'est PAS une erreur, et se dit** : « Aucun rendu — choisissez
+  une affaire, ou l'affaire choisie n'est plus lisible ». Les deux causes sont **volontairement
+  confondues dans une seule phrase**, parce que la fonction les confond elle-même (§8.3) et qu'une
+  phrase qui les distinguerait divulguerait ce que le zéro-ligne cache.
+
+### 9.7 CE QUE LA CONFIRMATION DE SUPPRESSION ANNONCE — la quatrième question
+
+Une suppression détruit un texte qu'il faudra réécrire : le §6 du design system exige donc une
+confirmation, et elle **nomme le modèle** (§5.27).
+
+- **Elle N'ANNONCE AUCUNE CASCADE, et c'est une MESURE** : `pg_constraint` ne porte **aucune** clé
+  étrangère vers `mail_templates` au 2026-08-25. Rien dans le produit ne référence un modèle
+  aujourd'hui. Annoncer « les séquences qui l'emploient seront rompues » serait décrire un objet
+  que la tranche 4 n'a pas encore posé — l'invention exacte que le §8.5 refuse.
+- **Elle n'annonce pas non plus le refus À VENIR** de l'`on delete restrict` de la tranche 4 (§2.2) :
+  une confirmation qui promettrait un refus que la base ne sait pas encore rendre mentirait dans
+  l'autre sens. Le jour où la tranche 4 posera cette clé, c'est **elle** qui écrira ce que la
+  confirmation ajoute, et le §2.2 lui a déjà écrit la contrainte pour qu'elle ne la découvre pas.
+- **Elle dit ce qui est vrai aujourd'hui, et rien de plus** : « Supprimer « Relance sans réponse » ?
+  Le texte du modèle est définitivement perdu. » — le nom, et l'irréversibilité.
+- **Le bouton de la confirmation est destructif plein** (§5.5), celui qui l'ouvre ne l'est pas
+  (§5.28). La commande reste **montée et DÉSACTIVÉE** pendant la confirmation, et le retour du focus
+  est **différé d'un tour de rendu** : un bouton désactivé refuse le focus, défaut mesuré au §5.29 et
+  dont le remède est un drapeau puis un effet — **aucune temporisation** (`CLAUDE.md` §18).
+- **LE SILENCE DE LA CLAUSE `using` SE DIT EN TOUTES LETTRES.** MESURÉ au §2.7 ligne 8 : la lectrice
+  qui confirme reçoit `204` et **la ligne est toujours là**. L'écran relit la liste et, si le modèle
+  y figure encore, écrit « Aucun modèle n'a été supprimé » — jamais un succès qui n'a pas eu lieu.
+  C'est la règle du §5.29, reprise mot pour mot parce que la situation est identique.
+
+### 9.8 Le dictionnaire fermé des refus, et pourquoi aucune phrase du serveur n'atteint l'écran
+
+Comme les deux surfaces jumelles, l'écran **classe** un refus en une issue nommée et ne rend jamais
+le corps d'erreur. Le motif est ici plus étroit que l'INC-193 des identités, et il est propre à
+cette table : le corps d'un `23514` de PostgREST porte le champ `details`, qui contient la **ligne
+fautive entière** — c'est-à-dire le corps du modèle, jusqu'à 20 000 caractères.
+
+| Issue | Réponse mesurée | Ce que l'écran dit |
+|---|---|---|
+| `enregistre` | `201` / `200` | rien : la liste relue est la preuve |
+| `refus` | `403`, `42501` | l'écriture est réservée à l'administration et au développement commercial |
+| `zero-ligne` | `200` et `[]` sur un `PATCH` | aucun modèle n'a été modifié |
+| `variable-inconnue` | `400`, `23514`, `mail_templates_subject_variables` / `_body_variables` | une variable n'existe pas, avec **la colonne nommée** — c'est pour cela que la migration `0055` nomme deux contraintes plutôt qu'une (§2.3) |
+| `nom-borne` | `400`, `23514`, `mail_templates_name_borne` | le nom doit faire de 1 à 120 caractères |
+| `objet-borne` | `400`, `23514`, `mail_templates_subject_borne` | l'objet doit faire de 1 à 300 caractères |
+| `corps-borne` | `400`, `23514`, `mail_templates_body_borne` | le corps doit faire de 1 à 20 000 caractères |
+| `nom-pris` | `409`, `23505`, `mail_templates_workspace_name_key` | ce nom est déjà employé |
+| `session-expiree` | `401` | la session a expiré |
+| `reseau` | aucune réponse | la requête n'a pas abouti |
+| `inconnu` | tout le reste | **repli nommé** : l'interface ne prétend pas savoir |
+
+**Le classement se fait sur des identifiants STABLES** — les noms de contrainte, versionnés par la
+migration `0055` —, jamais sur de la prose. C'est la discipline de `mail-identites.ts`, et son
+harnais relit les noms **en base** pour qu'une migration qui renommerait une contrainte fasse rougir
+une preuve plutôt que retomber en silence sur `inconnu`.
+
+### 9.9 Contrat d'API consommé — aucune ligne nouvelle
+
+L'écran n'appelle **que** des routes déjà mesurées : les quatorze lignes du §2.7 pour la table, et
+les quatorze du §8.8 pour le rendu. Il ajoute **un seul** appel neuf, celui du guichet du §9.3 :
+
+| # | Appelant | Requête | Attendu |
+|---|---|---|---|
+| 1 | anonyme | `POST /rest/v1/rpc/mail_template_variables` | `401`, `42501` — refusé par le **privilège**, comme `rendre_modele_email` |
+| 2 | `viewer` | idem | `200`, les **douze** noms triés |
+| 3 | `admin` | idem | `200`, la même liste — la liste ne dépend pas du rôle |
+| 4 | `admin` | comparaison au §2.4 | les douze noms **un à un**, jamais par leur cardinal |
+
+### 9.10 Preuves exigées — sous-tranche 2b
+
+| Niveau | Preuve |
+|---|---|
+| pgTAP | `supabase/tests/0055_guichet_variables_modeles.test.sql` : la forme du guichet dans le catalogue (volatilité, `security invoker`, privilèges rôle par rôle, `anon` **exclu**), et l'**égalité** avec `app.mail_template_variables()` — jamais l'égalité des seuls cardinaux |
+| Unitaire | `webapp/src/lib/modeles-emails.test.ts` : le classement des onze issues du §9.8 sur des messages réels, l'insertion d'une variable à une position de curseur, la composition du corps de requête, et le libellé d'une identité |
+| API | `e2e/api/guichet-variables-modeles.spec.ts` : les quatre lignes du §9.9 avec les jetons réels |
+| E2E interface | `e2e/ui/modeles-emails.spec.ts` : la liste, la création, la modification, le refus d'une variable inconnue **traduit**, la suppression derrière sa confirmation, le zéro-ligne de la lectrice, la prévisualisation d'un modèle sur une affaire réelle, et le bloc `variables_nulles` **nommé** ; captures conformes à `CLAUDE.md` §16 |
+| Harnais | `scripts/verify-modeles-emails-ecran.sh` : verdict unique, non complaisant, avec des **dégradations réelles** dont la restauration est constatée **octet à octet** contre un instantané pris avant la première (§2.11, §8.9 bis) |
+| Seed | **inchangé** : les deux modèles du §2.8 ouvrent l'écran sur du contenu, et l'état vide ne se rencontre qu'après une suppression complète |
+
+### 9.11 Definition of Done — sous-tranche 2b
+
+- migration `0057_guichet_variables_modeles.sql` appliquée et rejouable ;
+- suite pgTAP dédiée verte ;
+- écran livré, atteignable depuis l'index des réglages, et **vérifié visuellement** — captures
+  produites ET observées (`CLAUDE.md` §16) ;
+- tests unitaires, contrat d'API et scénarios E2E verts ;
+- harnais dédié vert, ses dégradations vues ;
+- `docs/DESIGN_SYSTEM.md` §5.39, `docs/SCHEMA.md` §7, `docs/PROD_MIGRATIONS.md`, `README.md`,
+  `docs/manual.md` chapitre 15 et `CHANGELOG.md` mis à jour **dans le même changement** ;
+- commentaires `@spec` / `@verifies` sur chaque fichier ;
+- commit poussé sur `origin/main`.
+
+### 9.12 Ce que la sous-tranche 2b ne fera PAS, et qui n'est pas masqué
+
+- **Aucun envoi.** L'écran prévisualise ; il n'écrit rien dans `mail_outbox`. Composer un message à
+  partir d'un modèle est un geste de l'écran d'envoi, et il appartient à la tranche 4.
+- **Aucune signature, aucune séquence** — tranches 3 et 4.
+- **Aucun fuseau horaire** : la prévisualisation rend ce que la base rend, c'est-à-dire de l'UTC
+  (§8.6, INC-216). L'écran ne corrige pas un écart consigné.

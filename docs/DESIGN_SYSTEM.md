@@ -3411,3 +3411,83 @@ qualifie**. Ce qu'il est et ce qu'il porte est spécifié par `docs/SPEC-relance
   proscrit.
 
 - **Aucune couleur, aucun jeton nouveau** : la ligne emprunte au §5.11 sa forme et au §1 sa teinte.
+
+### 5.39 Modèles d'emails — `CRM-063`
+
+**Huitième surface de réglages**, et la troisième de la famille « messagerie » qui écrive, après le
+§5.34 — ce qu'on reçoit — et le §5.35 — ce qu'on expédie. Celle-ci porte le **texte** qui sera
+expédié. `docs/SPEC-modeles-emails.md` §9 dit ce que l'écran lit, envoie et refuse ; les règles
+ci-dessous ne disent que de quoi il a l'air.
+
+**Tout ce que le §5.34 pose vaut ici sans être répété** : `ul` de lignes plates et non tableau,
+formulaire replié **dans le flux du document — aucune modale**, focus entrant dans le premier champ
+et rendu à la commande qui l'a ouvert, commande d'enregistrement unique et **jamais désactivée par
+l'état des champs**, refus `role="alert"` sous les champs qui **n'efface pas la saisie**, état vide
+porteur du geste, sélecteur jamais restreint selon le rôle, borne de liste à `104ch`. Seuls les
+**écarts** sont écrits ci-dessous, et chacun a sa cause.
+
+- **LE NOM EST EN TÊTE DE LIGNE, ET C'EST LA CLÉ.** `mail_templates_workspace_name_key` rend le nom
+  unique par workspace sur sa forme normalisée : la tête de ligne suit la clé, comme au §5.35, à
+  ceci près que la clé n'a ici qu'un seul champ.
+
+- **L'OBJET SUIT, EN SECOND TON, ET SES VARIABLES SE RENDENT TELLES QUELLES.** Un objet portant
+  `{{card.title}}` s'affiche avec ses accolades : **la liste n'est pas une prévisualisation**, et
+  substituer y supposerait une affaire que la liste n'a pas. C'est la même discipline qu'au §5.9 —
+  on ne rend jamais une donnée qu'on n'a pas.
+
+- **AUCUNE PILULE, AUCUNE COULEUR, AUCUN COMPTE.** Un modèle n'a pas d'état : la table ne porte ni
+  statut ni `archived_at`, et c'est le seul écran de réglages dont les lignes n'en portent aucune.
+  Un compte de variables serait un chiffre qui ne dit pas ce qu'il compte — le défaut que le §5.36
+  a déjà refusé pour ses sections.
+
+- **LA SUPPRESSION N'EST PAS SUR LA LIGNE, elle vit dans la fiche** — patron du §5.29. Un geste
+  destructeur ne se déclenche pas depuis une liste qu'on balaye, et la fiche est le seul endroit où
+  le rédacteur a sous les yeux le texte qu'il va perdre.
+
+- **LA CONFIRMATION NOMME LE MODÈLE ET N'ANNONCE AUCUNE CASCADE**, et c'est une **mesure** : rien,
+  dans la base au 2026-08-25, ne référence un modèle. Annoncer une rupture de séquence décrirait un
+  objet que la tranche 4 n'a pas posé, et promettre le refus de son futur `on delete restrict`
+  mentirait dans l'autre sens. La confirmation dit ce qui est vrai : le nom, et que le texte est
+  définitivement perdu.
+
+- **LA PALETTE DES VARIABLES EST UNE LISTE DE BOUTONS, chacun portant un nom en DONNÉE TECHNIQUE**
+  (§2), sous le champ du corps. Le bouton **insère** `{{nom}}` à la position du curseur du dernier
+  champ visité — l'objet ou le corps —, **et le corps à défaut**. Ce n'est **pas** une garde de
+  saisie (§5.3 ter) : les deux champs restent librement saisissables, et c'est la contrainte de la
+  base qui refuse une variable inconnue, refus **traduit**. La liste vient de la base et n'est
+  **jamais recopiée dans l'écran** : une treizième variable y paraîtrait sans qu'on touche à
+  l'interface.
+
+- **LA PRÉVISUALISATION NE PRÉSÉLECTIONNE RIEN.** Ses trois sélecteurs — affaire, contact, identité
+  — ouvrent tous sur une **option vide**, y compris celui de l'affaire, qui est pourtant
+  obligatoire. C'est l'écart assumé avec le §5.34, dont le sélecteur n'a aucune option vide : là-bas
+  la cible est la clé de l'objet configuré, ici c'est un **choix de simulation** que personne n'a
+  encore fait, et présélectionner la première affaire du tri ferait rendre un texte au sujet d'une
+  affaire que le rédacteur n'a pas désignée.
+
+- **LE RENDU EST UN GESTE EXPLICITE, jamais un effet de frappe** : la fonction lit six tables sous
+  RLS, et rendre à chaque changement de sélecteur ferait trois appels pour un seul choix. Le bouton
+  porte son libellé d'attente pendant le vol.
+
+- **LE CORPS PRÉVISUALISÉ PRÉSERVE SES RETOURS À LA LIGNE** (`white-space: pre-wrap`) : le
+  sous-système expédie du **texte**, et un corps reflué mentirait sur ce qui partira.
+
+- **LE BLOC DES VARIABLES SANS VALEUR EST UN `role="status"`, JAMAIS UN `role="alert"`.** La
+  prévisualisation a **réussi** ; employer le rôle du refus ferait lire une panne là où il y a une
+  information. Son compte est **en toutes lettres et dans son propre élément** — « 3 variables sans
+  valeur » —, jamais un badge nu ni un nœud de texte accolé, qui est le défaut « Discussion1 » du
+  §5.11, et **l'accord se fait par clé** (§10). Chaque nom y est rendu en **donnée technique**, dans
+  la graphie exacte que le rédacteur a tapée : c'est la chaîne qu'il ira chercher dans son texte.
+
+- **UNE LISTE DE VARIABLES VIDE NE REND RIEN.** Aucun « aucune variable manquante », aucune pilule
+  verte : l'absence dit déjà ce qu'un message répéterait (§5.9), et le §1 réserve la couleur à ce
+  qui la mérite.
+
+- **UN RENDU À ZÉRO LIGNE N'EST PAS UNE ERREUR, ET SE DIT EN UNE SEULE PHRASE** — « choisissez une
+  affaire, ou l'affaire choisie n'est plus lisible ». Les deux causes sont **volontairement
+  confondues**, parce que la fonction les confond elle-même : une phrase qui les distinguerait
+  divulguerait ce que le zéro-ligne cache.
+
+- **Aucune couleur, aucun jeton, aucune icône nouvelle** : l'écran emprunte au §5.34 sa forme
+  entière, au §5.18 sa liste plate, au §5.7 ses champs, au §5.5 ses variantes et au §5.29 son patron
+  de suppression confirmée.
