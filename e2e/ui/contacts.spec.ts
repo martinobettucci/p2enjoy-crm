@@ -26,7 +26,7 @@ import {
 	test,
 	type Page,
 } from './fixtures'
-import { MOT_DE_PASSE_SEED } from '../api/jetons'
+import { MOT_DE_PASSE_SEED, URL_API, enTetesService } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-060'
@@ -1270,5 +1270,92 @@ test.describe('modification du rôle d’un rattachement (docs/SPEC-contacts.md 
 		await capturer(page, 'fiche-contact-role-390', UNITE)
 		// On referme sans écrire : ce scénario mesure une mise en page.
 		await page.getByTestId('annuler-role-affaire').click()
+	})
+})
+
+// =================================================================================================
+// TRANCHE 5 — le fil de l'affaire NOMME les rattachements (docs/SPEC-contacts.md §19, cas g)
+// =================================================================================================
+//
+// CE QUE CE SCÉNARIO PROUVE, ET QU'AUCUNE AUTRE PREUVE DE LA TRANCHE NE PROUVE. La suite pgTAP
+// mesure le trigger, les scénarios d'API mesurent la trace et son acteur ; ni l'une ni les autres
+// ne voient ce que l'UTILISATEUR lit. C'est exactement l'écart d'INC-207 : `stalled` était écrit,
+// prouvé en base et par l'API, et se lisait « Événement » à l'écran pendant deux tranches.
+//
+// Le geste est fait À L'ÉCRAN, sur la pile réelle, et le fil est lu à l'écran derrière lui.
+test.describe('le fil apprend les rattachements (docs/SPEC-contacts.md §19.5, cas g)', () => {
+	// LE FILET D'UNE EXÉCUTION INTERROMPUE — INC-209, et cette preuve-ci l'a mérité dès sa
+	// première exécution : elle a rattaché Élise, échoué sur un locator, et laissé le
+	// rattachement derrière elle. Le scénario restitue le seed PAR LES GESTES DE L'ÉCRAN
+	// (§12.6) dans son chemin nominal ; ce filet ne rattrape que ce qu'un échec a laissé, et il
+	// ne touche QUE le couple de ce scénario — les deux rattachements du seed portent d'autres
+	// contacts, et `scripts/verify-seed-demo.sh` les compte.
+	test.beforeEach(async ({ request }) => {
+		await request.delete(
+			`${URL_API}/rest/v1/card_contacts?card_id=eq.${CARD_VITRINE_UI}` +
+				`&contact_id=eq.${ID_ELISE_UI}`,
+			{ headers: enTetesService() },
+		)
+	})
+
+	test('rattacher puis détacher écrit DEUX lignes NOMMÉES dans le fil de l’affaire', async ({
+		page,
+	}) => {
+		await connecter(page, ADMIN)
+		await page.goto(`/contacts/${ID_ELISE_UI}`)
+		await expect(page.getByRole('heading', { name: 'Élise Fabre' })).toBeVisible()
+
+		// Le geste, par l'écran : Élise n'a aucune affaire au seed, donc rien n'est à défaire si le
+		// scénario s'arrête ici.
+		await page.getByTestId('ouvrir-rattachement-affaire').click()
+		await page.getByTestId('champ-affaire').selectOption(CARD_VITRINE_UI)
+		await page.getByTestId('champ-role-affaire').fill('decideur')
+		await page.getByTestId('confirmer-rattachement-affaire').click()
+		await expect(
+			page.getByTestId('ligne-affaire-contact').filter({ hasText: TITRE_VITRINE }),
+		).toBeVisible()
+
+		// LE FIL DE L'AFFAIRE, LU À L'ÉCRAN. La ligne porte son LIBELLÉ — « Contact rattaché » — et
+		// non le générique « Événement » du repli, et son DÉTAIL nomme le contact et son rôle.
+		await page.goto(`/tracks/conseil-ia/grands-comptes/cards/${CARD_VITRINE_UI}`)
+		const rattachement = page.getByText('Contact rattaché').first()
+		await expect(rattachement).toBeVisible()
+		// LE DÉTAIL NOMME LE CONTACT ET SON RÔLE, par une clé de traduction et jamais par
+		// concaténation (§19.5). Le nom vient d'une résolution à la LECTURE : le payload n'en porte
+		// aucun (§14.6).
+		// `.first()` : `card_events` est IMMUABLE (`CRM-044` §14.7), et les preuves d'API de cette
+		// tranche laissent leurs propres lignes sur la même affaire. Une assertion stricte
+		// mesurerait l'histoire du dépôt, pas le geste — c'est la même règle que le delta des
+		// preuves d'API.
+		const ligneNommee = page.getByText('Élise Fabre (decideur)').first()
+		await expect(ligneNommee).toBeVisible()
+		// LA CAPTURE EST CADRÉE SUR LA LIGNE QUI PORTE LE NOM, et c'est un défaut trouvé EN
+		// REGARDANT (`CLAUDE.md` §16). Cadrée sur le premier « Contact rattaché », elle montrait
+		// des lignes SANS détail — celles des contacts sondes que les preuves d'API créent puis
+		// suppriment, et dont le nom n'est donc plus résoluble. Le comportement est juste : la
+		// mémoire se tait au lieu de mentir (§19.5). Mais l'image ne portait pas son sujet, et une
+		// capture qui ne porte pas son sujet n'est pas une vérification visuelle — c'est le même
+		// défaut que la relance de `CRM-062`, et il ne se refait pas.
+		await ligneNommee.scrollIntoViewIfNeeded()
+		await capturer(page, 'fil-rattachement-contact-1440', UNITE)
+
+		// LE DÉTACHEMENT LAISSE SA PROPRE LIGNE, et elle conserve le rôle porté au moment du geste :
+		// la ligne de `card_contacts` a disparu, et plus rien d'autre ne le dit.
+		await detacherDepuisLAffaire(page, 'Élise Fabre')
+		await page.reload()
+		const detachement = page.getByText('Contact détaché').first()
+		await expect(detachement).toBeVisible()
+		await detachement.scrollIntoViewIfNeeded()
+		await expect(page.getByText('Élise Fabre (decideur)').first()).toBeVisible()
+
+		// LE FILTRE « ORGANISATION » LES PORTE — §19.5 : ce sont des faits d'organisation, non de
+		// cycle de vie. Éteindre la famille les retire, et c'est ce qui prouve qu'ils y sont rangés
+		// plutôt que tombés sur le repli, qui les aurait mis dans « Cycle de vie ».
+		await page.getByRole('button', { name: /Organisation/ }).click()
+		await expect(page.getByText('Contact rattaché')).toHaveCount(0)
+		await expect(page.getByText('Contact détaché')).toHaveCount(0)
+		// LE FIL N'EST PAS VIDE POUR AUTANT : la famille éteinte retire ces lignes-là, non le fil
+		// entier. Sans ce témoin, un panneau cassé rendrait le contrôle ci-dessus vert.
+		await expect(page.getByText('Affaire créée').first()).toBeVisible()
 	})
 })
