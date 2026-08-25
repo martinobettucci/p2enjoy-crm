@@ -785,7 +785,19 @@ SCENARIOS_API=858
 # palier étant posé avant la connexion — et les deux états vides en visiteur anonyme.
 # 568 + 13 = **581**, valeur COMPTÉE par `playwright test --list` (« Total: 581 tests in 47
 # files »), jamais déduite. Garde-fou RÉVISÉ, jamais retiré.
-SCENARIOS_UI=581
+#
+# **RÉVISION DU 2026-08-25 — `CRM-062`, tranche 3, révision EN RETARD d'une livraison.** L'écran
+# `/affaires-figees` a été livré le 2026-08-24 avec `e2e/ui/affaires-figees.spec.ts` et ses **neuf**
+# scénarios — le parcours depuis la barre latérale, le classement par retard, le regroupement par
+# dossier, la lectrice qui voit un dossier de moins, le clavier, les quatre paliers —, sans que ce
+# compteur ne soit repris dans le même changement. Le harnais a donc rendu `31 contrôles, 2
+# anomalies` au rejeu de la série, les DEUX portant ce seul écart : « projet ui : 581 attendus, 590
+# énumérés » et « e2e:ui VERT mais 590 scénarios au lieu de 581 ». Le second mot compte : la suite
+# est verte, aucun scénario n'a disparu, et c'est le garde-fou qui est en retard, pas le produit.
+# 581 + 9 = **590**, valeur COMPTÉE par `playwright test --list` (« Total: 590 tests in 48 files »)
+# et corroborée par le décompte de la décision 506 bis, jamais déduite. Garde-fou RÉVISÉ, jamais
+# retiré : un compte qui MONTE reste un écart au même titre qu'un compte qui descend.
+SCENARIOS_UI=590
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

@@ -202,6 +202,12 @@ d'exécuter le code attendu.
 
 ### Corrigé
 
+- **LE GARDE-FOU DES SUITES D'INTERFACE ÉTAIT EN RETARD D'UN ÉCRAN** (`CRM-062`). Le harnais
+  transverse fige le nombre de scénarios d'interface du dépôt, pour qu'aucun ne disparaisse en
+  silence. L'écran des affaires figées et ses neuf scénarios avaient été livrés sans que ce nombre
+  soit repris dans le même changement : le harnais signalait un écart alors que la suite est verte
+  et que rien n'a disparu. Le compte est porté à sa valeur mesurée, cinq cent quatre-vingt-dix.
+
 - **UN HARNAIS FERMAIT UN DOSSIER QUE LE PRODUIT OUVRE, ET SE DÉCLARAIT RESTAURÉ**
   (`CRM-012`, `docs/INCONSISTENCY_REPORT.md` INC-213). Le harnais des droits fins réappliquait sa
   seule migration d'origine pour se restaurer. Une migration ultérieure avait depuis élargi la
