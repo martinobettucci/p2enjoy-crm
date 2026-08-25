@@ -3706,6 +3706,33 @@ tranche, et le corriger sous une autre unité reviendrait à en solder une secon
 
 ### INC-189 — « Alt et flèche REDIMENSIONNENT » échoue par INTERMITTENCE en campagne, et passe seul
 
+> **L'ENTRÉE S'ÉLARGIT LE 2026-08-25 — CE N'EST PAS UN TEST, C'EST UNE FAMILLE, et la mesure du
+> jour le montre** (décision 511). Le titre nomme `Objectifs.test.tsx` parce que c'est le test qui
+> a rougi le 2026-08-20. Aujourd'hui, **trois rejeux de `npm run test:unit` DEPUIS UN HARNAIS ont
+> rougi**, sur un test **différent** :
+>
+> ```
+> scripts/verify-ma-journee.sh  (1er passage)  => test:unit ROUGE, test non nommé (journal effacé)
+> scripts/verify-ma-journee.sh  (2e passage)   => test:unit ROUGE au rejeu final, idem
+> scripts/verify-webapp.sh                     => test:unit ROUGE — routes.test.tsx:231
+> npm run test:unit  (isolé, SIX exécutions dont la campagne complète) => 2508 passés, VERT
+> ```
+>
+> **Le seul échec dont le journal a survécu nomme sa cause** : `routes.test.tsx:231` attend
+> `findByTestId('etat-vide')` sur une route rendue derrière `Suspense` et `React.lazy`. L'échec est
+> un **`waitFor` expiré**, jamais une assertion fausse : le module chargé à la demande n'a pas fini
+> son import dans le délai par défaut d'une seconde. C'est une sensibilité à la **charge**, et elle
+> explique pourquoi ces rouges n'arrivent que sous harnais — un harnais lance `test:unit` pendant
+> qu'une pile Docker de dix-huit services tourne, souvent derrière une campagne d'interface.
+>
+> **Conséquence pratique, et c'est ce qui rend l'entrée coûteuse** : un harnais peut rendre « une
+> anomalie » qui ne dit **rien du produit** et dont la cause n'est même pas nommable, les harnais
+> effaçant leur répertoire de travail — et son journal — en sortant. Une session pressée y lit une
+> régression. **Comportement inchangé** : relever le délai d'un `findBy` verdirait la preuve sans
+> rien corriger, et masquerait une lenteur réelle de chargement de route. L'arbitrage reste dû, et
+> il porte désormais sur deux points : la robustesse de ces preuves à la charge, et le fait qu'un
+> harnais doive **conserver le journal du rejeu qui l'a fait rougir**.
+
 **Consignée le 2026-08-20** par la session `CRM-080` tranche 3 (décision 485). **Étrangère à cette
 session, et la ligne de base l'établit par mesure** : `git diff --name-only 96f9e9e..HEAD -- webapp/
 supabase/ e2e/` rend **aucune différence** — la session n'a touché que `scripts/`, `docs/`,

@@ -24170,6 +24170,25 @@ une à une (`CLAUDE.md` §16) : `docs/captures/CRM-076/comparaison-source-diverg
 et `docs/captures/CRM-032/comparaison-source-divergente-1440.jpg`, l'état neutre, où l'écart avec la
 mention est plus discret mais réel. C'est la règle des décisions 500, 503 bis et 505.
 
+**DEUX HARNAIS DE PLUS, ET UN CONSTAT QUI DÉPASSE CETTE SESSION.**
+`scripts/verify-harness.sh --rapide` rend **31 contrôles, aucune anomalie** — il confirme le
+compteur révisé, « projet ui : 594 scénarios énumérés, conforme au compteur ».
+`scripts/verify-webapp.sh` **n'a pas été mené à son terme** : mon propre plafond de dix minutes l'a
+tué en section 8. Ce n'est pas un verdict, et il n'est pas présenté comme tel. Mais ses sections 1
+à 7 sont passées, et l'une d'elles est **exactement la preuve de cette session** — « 4. Classes
+utilitaires engendrées : classes citées : 313 — **aucune classe manquante** ». Le tronçon exécuté a
+laissé le dépôt **intact**, vérifié : seules des captures diffèrent, aucun fichier source.
+
+Il a aussi rougi sur `npm run test:unit`, et c'est ce rouge-là qui apprend quelque chose :
+**INC-189 est élargie**. Trois rejeux de `test:unit` **depuis un harnais** ont rougi aujourd'hui,
+contre **six exécutions isolées vertes**, campagne complète comprise. Le seul dont le journal ait
+survécu nomme sa cause : `routes.test.tsx:231`, un `findByTestId` expiré sur une route rendue
+derrière `Suspense` et `React.lazy` — un `waitFor` qui expire, jamais une assertion fausse. C'est
+une sensibilité à la **charge**, ce qui explique que ces rouges n'arrivent que sous harnais. Et
+c'est coûteux : un harnais peut rendre « une anomalie » qui ne dit rien du produit et dont la cause
+n'est pas même nommable, puisqu'il efface son répertoire de travail — et son journal — en sortant.
+Comportement inchangé, arbitrage consigné.
+
 **Où reprendre.** La leçon de méthode de la décision 510 se double d'une seconde, et les deux se
 lisent ensemble : le constat « aucune unité ne porte de comportement livrable » se vérifie
 **sous-point par sous-point** (510), et **une entrée du registre qui renvoie son arbitrage à une
