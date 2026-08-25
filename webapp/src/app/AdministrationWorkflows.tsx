@@ -2291,11 +2291,20 @@ function CommandeComparaison({
 			    §5.15 porte ce MÊME jeton. Rendue à l'intérieur, elle perdait sa forme et se
 			    confondait avec le fond. Le mot restait lisible — le §1 était donc tenu —, mais la
 			    pilule ne se distinguait plus des deux autres. La poser sur `--color-bg` rend aux
-			    trois genres la distinction que le design system leur donne. */}
+			    trois genres la distinction que le design system leur donne.
+
+			    L'ENCRE SE POSE AVEC LE FOND, ET C'EST INC-130 — corrigée le 2026-08-25. Cette
+			    surface demandait `text-text-1`, un niveau que l'échelle des neutres ne porte pas :
+			    elle nomme `--color-text`, `--color-text-2` et `--color-text-3`, sans `-1`. La
+			    classe n'était donc pas engendrée du tout (`docs/DESIGN_SYSTEM.md` §11), et le
+			    document HÉRITAIT la teinte de la mention — mesuré, `#736e2c` quand la source a
+			    changé, `#4b5563` sinon : deux couleurs selon un état que ce document ne décrit
+			    pas. `text-text` est l'encre du corps (§2), la seule des trois que ce bloc
+			    n'emprunte pas déjà à son cadre. */}
 			{comparaison !== null && !comparaison.identique ? (
 				<span
 					data-testid="comparaison-source-resultat"
-					className="flex flex-col gap-2 rounded-sm bg-bg px-3 py-2 text-text-1"
+					className="flex flex-col gap-2 rounded-sm bg-bg px-3 py-2 text-text"
 				>
 					<span className="font-medium">{t('admin.workflows.compareSource.title')}</span>
 					<span data-testid="comparaison-source-resume" className="text-sm">

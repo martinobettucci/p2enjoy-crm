@@ -15,6 +15,14 @@ d'exécuter le code attendu.
 
 ### Corrigé
 
+- **LA COMPARAISON D'UN WORKFLOW À SA SOURCE NE SE TEINTE PLUS EN AVERTISSEMENT** (`CRM-076`,
+  INC-130, `docs/DESIGN_SYSTEM.md` §5.15). Le document qui énumère les écarts posait sa surface
+  sans poser son encre : il héritait donc de la couleur de la mention qui l'annonce, et rendait
+  **deux couleurs différentes** selon un état — « la source a changé » ou non — qu'il ne décrit
+  pas. Quand la source avait changé, le rapport prenait le jaune sombre que le produit réserve à
+  l'avertissement. Il porte désormais l'encre du corps. Ce n'était pas un défaut de contraste : les
+  deux teintes tenaient l'AA, et le défaut était de **sens**.
+
 - **ARCHIVER UN TABLEAU D'OBJECTIFS AU CLAVIER NE FAIT PLUS PERDRE SA PLACE** (`CRM-083`
   tranche 2 g, `docs/SPEC-goals.md` §5.5 bis). Le focus revenait à la commande de la ligne que
   l'archivage venait de faire disparaître : il retombait donc sur le document, et la tabulation

@@ -190,7 +190,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-120 | La garde des élévations de privilège n'admettait qu'une migration, le dépôt en compte deux — **INC-094 rouverte** | 2026-08-15 | `CRM-002` — garde par propriété mécanique | 363, 428 |
 | INC-121 | Trois compteurs figés de `verify-preuves-refus.sh` périmés de plusieurs unités | 2026-08-15 | `CRM-014` et `CRM-013` (preuves dues), `CRM-008` (calcul des compteurs) | 413, 429 |
 | INC-122 | Deux assertions de `CRM-078` s'appuyaient sur un identifiant que le seed n'épingle pas | 2026-08-15 | `CRM-078`, première tranche | 430 |
-| INC-130 | `text-text-1` n'existe pas dans le CSS produit : le document de comparaison de l'éditeur de workflows HÉRITE la teinte de la mention qui le porte, et rend donc deux couleurs selon un état qu'il ne décrit pas | 2026-08-25 | `text-text` retenu par la décision 511 après relevé des deux héritages sur la pile réelle ; règle au §5.15 de `docs/DESIGN_SYSTEM.md` | 511 |
+| INC-130 | `text-text-1` n'existe pas dans le CSS produit : le document de comparaison de l'éditeur de workflows HÉRITE la teinte de la mention qui le porte, et rend donc deux couleurs selon un état qu'il ne décrit pas | 2026-08-25 | **close** — `text-text` retenu par la décision 511 après relevé des deux héritages sur la pile réelle ; règle au §5.15 de `docs/DESIGN_SYSTEM.md`, relevé du CSS produit désormais **vide** | 511 |
 | INC-185 | `e2e/ui/inbox.spec.ts` affirme retirer un `card_event` que personne ne peut retirer (403 mesuré) | 2026-08-20 | *ouverte* — arbitrage attendu | 481 |
 | INC-189 | « Alt et flèche REDIMENSIONNENT » d'`Objectifs.test.tsx` échoue par INTERMITTENCE en campagne, et passe seul | 2026-08-20 | *ouverte* — relève de `CRM-081` | 485 |
 | INC-190 | La série complète des `scripts/verify-*.sh` TIENT dans une session en mode `--rapide` — cinq restes de forme du backlog en sont caducs | 2026-08-20 | *ouverte* — constat de méthode | 487 |
@@ -1759,11 +1759,22 @@ laisserait le document se confondre avec le cadre qui l'annonce. Le document est
 l'écran ; il prend l'encre du corps du §2, `--color-text` (`#374151`, 9,70:1). La règle est écrite
 au §5.15 de `docs/DESIGN_SYSTEM.md` et vaut au-delà de ce bloc.
 
-**Reste dû au moment où cet arbitrage est committé** : la correction elle-même, et sa vérification
-par le contrôle qui avait dénoncé le défaut — `scripts/lib/classes-css.mjs` sur le CSS réellement
-produit par `npm run build`, qui rend aujourd'hui « 314 citées, absentes : `text-text-1` ». La
-décision est écrite d'abord parce qu'elle est ce qui a manqué neuf sessions durant
-(`CLAUDE.md` §5) ; le code suit dans le commit suivant.
+**CLOSE PAR LE COMMIT SUIVANT, ET VÉRIFIÉE PAR LE CONTRÔLE QUI L'AVAIT DÉNONCÉE.**
+`scripts/lib/classes-css.mjs`, sur le CSS réellement produit par `npm run build`, passe de
+« **314** citées, absentes : `text-text-1` » à « **313** citées, **aucune classe manquante** ».
+Le total baisse d'une unité parce que `text-text` était déjà cité ailleurs : le dépôt ne perd pas
+une classe, il cesse d'en citer une qui n'existait pas. **C'est la première fois depuis le
+2026-08-16 que ce relevé est vide.**
+
+**LA PREUVE MESURE UNE COULEUR, ET NON UNE CLASSE**, et c'est la leçon de cette entrée : une
+assertion sur le `className` serait restée verte tout du long, puisque le code demandait bien
+quelque chose — c'est le navigateur qui ne rendait rien. `e2e/ui/administration-workflows.spec.ts`
+ajoute donc un scénario qui relève `getComputedStyle` sur le document, dans l'état DIVERGENT, et
+exige à la fois l'encre du corps, la surface propre, et que les deux **diffèrent** de l'encre de la
+mention. **Dégradation vue** : la classe fautive remise, le scénario rougit sur
+`Expected: "rgb(55, 65, 81)" / Received: "color(srgb 0.45098 0.431373 0.170588)"` — la valeur exacte
+du relevé ci-dessus. Le seed est rendu **intact**, `label_override` retrouvé nul après le passage
+rouge comme après le vert.
 
 **Deux défauts du même genre ont été trouvés et corrigés dans le même passage**, ceux-là imputables
 à cette session : `mt-0.5`, absent de l'échelle fermée du §3, et `enregistre` — une valeur de phase

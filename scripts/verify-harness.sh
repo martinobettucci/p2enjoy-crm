@@ -805,7 +805,7 @@ SCENARIOS_API=858
 # (« Total: 593 tests in 48 files »), jamais déduite. Le compteur est repris DANS LE MÊME
 # CHANGEMENT que les scénarios, ce qui est précisément ce que la révision ci-dessus reprochait à la
 # livraison de `/affaires-figees`.
-SCENARIOS_UI=593
+SCENARIOS_UI=594
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

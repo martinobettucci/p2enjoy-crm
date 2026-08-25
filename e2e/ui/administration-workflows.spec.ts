@@ -7,7 +7,9 @@
 //           §7 bis.3 (catalogue lu à l'ouverture du sélecteur), §7 bis.4 (les six gestes sur la
 //           vraie base, refus d'une étape occupée constaté et non simulé), §7 bis.6 (états,
 //           paliers, clavier), §2.5 (`0` n'est pas `NULL`), §3.5 (désignation de l'initiale)
-// @verifies docs/DESIGN_SYSTEM.md §7 (paliers), §8 (accessibilité clavier)
+// @verifies docs/DESIGN_SYSTEM.md §7 (paliers), §8 (accessibilité clavier),
+//           §5.15 (le document de comparaison pose SA surface ET SON encre — INC-130), §11 (une
+//           classe hors échelle n'est pas engendrée : la preuve mesure une couleur, pas une classe)
 // @verifies CLAUDE.md §16 (vérification visuelle), §22 (accessibilité clavier)
 //
 // LES GESTES SONT PROUVÉS SUR LA VRAIE BASE, ET CHACUN Y EST CONFIRMÉ APRÈS COUP par une lecture
@@ -2129,6 +2131,68 @@ test.describe('le geste « comparer à la source » (§4 quater)', () => {
 			.getByRole('button', { name: /Cycle commercial standard/ })
 			.click()
 		await expect(page.getByTestId('comparaison-source-identique')).toHaveCount(0)
+	})
+
+	/**
+	 * INC-130 — LE DOCUMENT PORTE SON ENCRE, IL NE L'HÉRITE PAS DE LA MENTION.
+	 *
+	 * La preuve mesure une COULEUR, et non une classe : le défaut était précisément qu'une classe
+	 * citée par le composant — `text-text-1`, niveau que l'échelle des neutres ne porte pas —
+	 * n'était **pas engendrée du tout** (`docs/DESIGN_SYSTEM.md` §11). Une assertion sur le
+	 * `className` serait donc restée verte tout du long : elle aurait constaté que le code demande,
+	 * jamais que le navigateur rend.
+	 *
+	 * Le cas retenu est celui de la mention DIVERGENTE, seul état où l'héritage est visible à
+	 * l'œil : la mention porte alors `--color-accent-on-soft`, et le document rapportant ce qui
+	 * diffère se teintait de la couleur que le produit réserve à l'avertissement. Sur la mention
+	 * neutre, l'héritage vaut `--color-text-2` et la faute passe inaperçue — c'est pourquoi elle a
+	 * survécu neuf sessions.
+	 */
+	test('le document de comparaison porte l’encre du corps, jamais la teinte de la mention (INC-130)', async ({
+		page,
+		request,
+	}) => {
+		await page.setViewportSize({ width: 1440, height: 900 })
+		await connecter(page)
+
+		// La SOURCE est modifiée, jamais la copie : c'est ce qui allume la teinte d'accent.
+		const mutation = await request.patch(`${CHEMIN_ETAPES}?id=eq.${ETAPE_INITIALE_SEED}`, {
+			headers: enTetesService(),
+			data: { label_override: 'Sonde de divergence' },
+		})
+		expect(mutation.status(), 'surcharge posée sur une étape de la source').toBe(204)
+
+		try {
+			await ouvrirEditeur(page)
+			await choisirWorkflow(page, COPIE_SEED)
+			const mention = page.getByTestId('mention-divergence')
+			await expect(mention).toHaveAttribute('data-divergente', 'oui')
+			const encreDeLaMention = await mention.evaluate((n) => getComputedStyle(n).color)
+
+			await page.getByTestId('comparer-source').click()
+			const resultat = page.getByTestId('comparaison-source-resultat')
+			await expect(resultat).toBeVisible()
+			const rendu = await resultat.evaluate((n) => ({
+				encre: getComputedStyle(n).color,
+				fond: getComputedStyle(n).backgroundColor,
+			}))
+
+			// `--color-text` (#374151) et `--color-bg` (#f7f8fa) : la surface ET son encre.
+			expect(rendu.encre, 'le document prend l’encre du corps (§2)').toBe('rgb(55, 65, 81)')
+			expect(rendu.fond, 'le document repose sur sa propre surface (§5.15)').toBe(
+				'rgb(247, 248, 250)',
+			)
+			// L'assertion qui MORD : sans encre propre, les deux valeurs seraient identiques.
+			expect(rendu.encre, 'l’encre n’est pas héritée de la mention').not.toBe(encreDeLaMention)
+
+			await capturer(page, 'comparaison-source-divergence-encre-1440', 'CRM-076')
+		} finally {
+			const restauration = await request.patch(`${CHEMIN_ETAPES}?id=eq.${ETAPE_INITIALE_SEED}`, {
+				headers: enTetesService(),
+				data: { label_override: null },
+			})
+			expect(restauration.status(), 'la source est rendue à son état seedé').toBe(204)
+		}
 	})
 
 	test('le résultat tient au palier étroit, sans débordement', async ({ page }) => {
