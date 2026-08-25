@@ -23894,9 +23894,29 @@ qui ne dit rien du produit. Et `timeout` ne tue que son enfant direct : un harna
 plafond laisse ses suites Playwright écrire dans la base partagée pendant que les suivants mesurent.
 Les deux expliquent des rouges de série sans rien dire du dépôt.
 
-**Où reprendre.** `verify-harness.sh` reste le seul harnais de la série non mené à terme : il rejoue
-la campagne entière et demande une trentaine de minutes à lui seul. Au-delà, le constat de la
-décision 507 est confirmé unité par unité : **aucune unité `[~]` du plan ne porte de comportement
+### décision 508 bis — `verify-harness` est mené à terme, et il était en retard d'un écran
+
+**Même session, 2026-08-25.** Relancé avec un plafond de cinquante minutes, `scripts/verify-harness.sh`
+rend d'abord **31 contrôles, 2 anomalies**, et les deux portent le MÊME écart : « projet ui : 581
+attendus, 590 énumérés » et « `e2e:ui` **VERT** mais 590 scénarios au lieu de 581 ». Le second mot
+décide de la lecture — la suite est verte, aucun scénario n'a disparu, et c'est le garde-fou qui est
+en retard, pas le produit. `e2e/ui/affaires-figees.spec.ts` a été livré la veille avec ses **neuf**
+scénarios sans que `SCENARIOS_UI` soit repris dans le même changement. 581 + 9 = **590**, valeur
+COMPTÉE par `playwright test --list` (« Total: 590 tests in 48 files ») et corroborée par le
+décompte de la décision 506 bis. Garde-fou **révisé, jamais retiré**. Rejoué : **31 contrôles,
+aucune anomalie**.
+
+**La campagne complète est donc verte, et elle est celle que ce harnais exécute** : `test:sql`
+**52 fichiers, 2531 assertions** ; `test:unit` **2503 tests** ; `e2e:api` **858 verts** ; `e2e:ui`
+**590 verts, aucun avertissement** ; `e2e:mail` **42 verts** ; `pytest` **244 passés** ; `typecheck`
+et `build` verts. Le seul rouge d'interface de la session précédente — INC-212, le message laissé
+par `verify-mail-infra` — a été retiré par la procédure que cette entrée écrit, et `e2e:ui` passe de
+589 verts et 1 échec à **590 verts**.
+
+**Les quatre harnais que la décision 507 laissait dus sont donc TOUS menés à terme**, et la série
+des soixante-quatre est close pour ce rejeu.
+
+**Où reprendre.** Le constat de la décision 507 est confirmé unité par unité : **aucune unité `[~]` du plan ne porte de comportement
 livrable sans arbitrage du responsable**. Les arbitrages qui bloquent effectivement du produit sont
 INC-138 (les cinq lecteurs de `channels`), INC-169 et INC-170 (`CRM-083`), INC-173 (`CRM-084`),
 INC-182 (`CRM-086`), et le §6 point 4 de `docs/SPEC-contacts.md` (suppression d'un contact, `CRM-060`).

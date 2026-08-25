@@ -8270,10 +8270,17 @@ preuves, l'écran vérifié visuellement aux quatre paliers, console vierge.
       **INC-211**, cause non établie. `verify-mail-sync.sh` était rouge d'un `pytest` absent de
       l'hôte (**INC-202**, §2.1 ter de `docs/CloudWorker.md`) et rend **61 contrôles verts** une
       fois le paquet posé.
-- [ ] **Ce qui retient la tranche 1 en `[~]`, et c'est nommé** : quatre harnais de la série n'ont pas
-      été menés à terme dans le plafond de dix minutes (ci-dessus). Aucun écran, aucune capture,
-      aucune vérification visuelle : la tranche 1 ne livre **aucune** surface, et l'absence est
-      nommée plutôt que compensée par une preuve de substitution.
+- [x] **~~Ce qui retient la tranche 1 en `[~]`~~ — LA SÉRIE EST MENÉE À SON TERME, 2026-08-25.**
+      Les quatre harnais que le plafond de dix minutes avait interrompus sont exécutés jusqu'au
+      bout : `verify-droits-fins` (1314 s), `verify-tracks` (**43 contrôles, aucune anomalie**),
+      `verify-webapp` et `verify-harness` (**31 contrôles, aucune anomalie** après révision de son
+      compteur de scénarios d'interface). **64 harnais, 53 verts, 11 rouges dont aucun n'accuse le
+      produit** — deux vrais défauts de harnais corrigés dans le même mouvement (INC-192, INC-213),
+      trois entrées déjà ouvertes, trois verdicts de `docker logs` qui repassent au vert rejoués
+      seuls, et les derniers nommés avec ce qui est établi et ce qui ne l'est pas
+      (`docs/JOURNAL.md`, décision 508).
+      Aucun écran, aucune capture, aucune vérification visuelle : la tranche 1 ne livre **aucune**
+      surface, et l'absence est nommée plutôt que compensée par une preuve de substitution.
 - [x] **Tranche 2 SPÉCIFIÉE avant sa première ligne de code**, 2026-08-24 — `docs/SPEC-relances.md`
       **§9**, onze sections écrites après mesure sur la pile debout et seedée. Les trois propriétés
       annoncées au §7.2 y sont tranchées : idempotence par `not exists (stalled avec created_at >=
@@ -8322,11 +8329,11 @@ preuves, l'écran vérifié visuellement aux quatre paliers, console vierge.
 - [x] **Garde-fou du vocabulaire RÉVISÉ, jamais contourné** :
       `supabase/tests/0019_move_card_to_channel.test.sql` passe de quatorze à quinze valeurs, motif
       écrit dans le fichier. Sixième évolution, et aucune valeur n'a jamais été retirée.
-- [ ] **Ce qui retient la tranche 2 en `[~]`, et c'est nommé** : la série est rejouée (voir la
-      tranche 1), mais quatre harnais n'y ont pas été menés à terme. `verify-relances.sh` rend
-      désormais **89 contrôles, aucune anomalie**, section « 7 ter » comprise. Aucun écran, aucune
-      capture, aucune vérification visuelle : la tranche 2 ne livre **aucune** surface, et l'absence
-      est nommée plutôt que compensée par une preuve de substitution.
+- [x] **~~Ce qui retient la tranche 2 en `[~]`~~ — LA SÉRIE EST MENÉE À SON TERME, 2026-08-25**
+      (voir la tranche 1). `verify-relances.sh` rend **89 contrôles, aucune anomalie**, section
+      « 7 ter » comprise. Aucun écran, aucune capture, aucune vérification visuelle : la tranche 2
+      ne livre **aucune** surface, et l'absence est nommée plutôt que compensée par une preuve de
+      substitution.
 - [x] **Tranche 3 SPÉCIFIÉE avant sa première ligne de code**, 2026-08-24 — `docs/SPEC-relances.md`
       **§10**, treize sections écrites après mesure sur la pile debout et seedée. Elle s'y découpe
       en **trois** sous-tranches, et l'ordre est celui de la dépendance : le jeu de démonstration,
@@ -8400,12 +8407,16 @@ preuves, l'écran vérifié visuellement aux quatre paliers, console vierge.
 - [x] **Documentation dans le même changement** : `docs/DESIGN_SYSTEM.md` **§5.37** (l'écran) et
       **§5.38** (la relance dans le fil) ; `docs/manual.md` chapitre **`3 quinquies`** et sa ligne
       de sommaire ; `docs/SPEC-relances.md` §10 ; registre INC-206 et INC-207.
-- [ ] **Ce qui retient la tranche 3 en `[~]`, et c'est nommé** : la série est rejouée (voir la
-      tranche 1) ; quatre de ses harnais n'ont pas été menés à terme dans le plafond retenu, et
-      c'est le seul reste de forme de l'unité. Deux écarts sont **nommés** plutôt que comblés
-      (§11) : aucune portée « mes affaires » — elle demanderait un argument à
-      `public.cards_figees()`, donc une révision du contrat de la tranche 1 — et aucune pagination,
-      l'ordre venant du serveur et le volume n'étant pas mesuré.
+- [x] **~~Ce qui retient la tranche 3 en `[~]`~~ — LA SÉRIE EST MENÉE À SON TERME, 2026-08-25**
+      (voir la tranche 1), et le reste de forme de l'unité est levé. Le rejeu a d'ailleurs trouvé
+      que **cette tranche avait laissé un garde-fou en retard** : `SCENARIOS_UI` de
+      `scripts/verify-harness.sh` était resté à 581 alors que `e2e/ui/affaires-figees.spec.ts`
+      ajoute neuf scénarios. Compteur **révisé, jamais retiré**, à 590 — valeur comptée par
+      `playwright test --list`, corroborée par le décompte de la décision 506 bis —, et le harnais
+      redevient vert.
+      Deux écarts restent **nommés** plutôt que comblés (§11) : aucune portée « mes affaires » —
+      elle demanderait un argument à `public.cards_figees()`, donc une révision du contrat de la
+      tranche 1 — et aucune pagination, l'ordre venant du serveur et le volume n'étant pas mesuré.
 
 ---
 ### CRM-070 — précision d'arbitrage : l'invitation d'un membre
