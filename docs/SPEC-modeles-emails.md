@@ -1297,7 +1297,34 @@ l'appelant ne saura plus quelle écriture a fauté.
 **Ce qui n'est PAS acquis, et qui est nommé plutôt que tu** : un réordonnancement qui ne serait pas
 exprimable en une seule instruction — insérer un palier au milieu, par exemple — exige toujours une
 transaction et un `set constraints … deferred`, donc une RPC. 4a n'en livre aucune : elle livre la
-contrainte qui la rend possible, et 4c dira si l'écran en a besoin.
+contrainte qui la rend possible.
+
+### 11.6 bis CE QUE LA ROUTE NE SAIT PAS FAIRE — mesuré, et 4c en hérite
+
+Le §11.6 établit qu'un échange **atomique** passe : `update … set position = 3 - position` est une
+seule instruction, et la vérification différée en fin d'instruction le laisse passer. La suite pgTAP
+le prouve, et elle relit la position échangée pour qu'un `no-op` ne passe pas pour un succès.
+
+**Ce que la mesure a trouvé le 2026-08-25, en écrivant la preuve d'API : cette instruction n'est pas
+exprimable par PostgREST.** Un `PATCH` ne pose que des valeurs **littérales** — il n'y a pas de
+syntaxe pour `position = 3 - position`. La ligne 15 du §11.8, écrite avant la mesure, annonçait donc
+un geste qu'aucun client REST ne peut émettre.
+
+Les deux détours qu'un client tenterait sont **fermés**, et c'est ce que la ligne 15 mesure
+désormais :
+
+| Détour | Mesuré |
+|---|---|
+| poser une position **tampon** hors bornes — `0` —, puis échanger | `400`, `23514`, `mail_sequence_steps_position_borne` |
+| poser directement la position de l'autre palier | `409`, `23505` — la contrainte est `initially immediate` |
+
+**La conséquence appartient à 4c, et elle est nommée ici plutôt que laissée à découvrir** :
+réordonner des paliers depuis un écran exige une **RPC** qui ouvre une transaction, émet
+`set constraints … deferred` et repose les positions. La contrainte différée reste le préalable qui
+la rend possible ; sans elle, même la RPC échouerait. 4a livre le préalable, 4c livre la RPC.
+
+**Ce n'est pas un défaut du produit, et rien n'est masqué** : aucune écriture n'est acceptée qui
+laisserait deux paliers sur la même position, et le refus est le même par toutes les portes.
 
 ### 11.7 Autorisations
 
@@ -1343,15 +1370,14 @@ Mesuré avec les jetons réels des trois profils du seed. `admin` = Camille Aube
 | 12 | `business_developer` | `POST /mail_sequence_steps` valide | `201`, ligne relue |
 | 13 | `business_developer` | `POST` d'un palier de `position` déjà prise | `409`, `23505` |
 | 14 | `business_developer` | `POST` d'un palier de `delai_jours` valant `0` | `400`, `23514` |
-| 15 | `business_developer` | `PATCH` échangeant deux positions en **une** requête | `200` — la contrainte différée le permet (§11.6) |
+| 15 | `business_developer` | `PATCH` posant une position tampon hors bornes, puis `PATCH` créant un doublon direct | `400` / `23514`, puis `409` / `23505` — **aucun détour client ne contourne la contrainte** (§11.6 bis) |
 | 16 | `admin` | `DELETE` d'un `mail_templates` employé par un palier | `409`, `23503` — le `restrict` du §2.2 |
 | 17 | `admin` | `POST` d'un palier dont le `template_id` est d'un autre workspace | `409`, `23503`, clé composite |
 | 18 | `admin` | `DELETE` de la séquence qu'il a créée | `204`, et ses paliers **partis avec elle** |
 
-**Le point 15 est la mesure du §11.6 portée jusqu'à la route**, et il vaut d'être prouvé là : c'est
-la seule ligne du contrat qui distingue une contrainte différée d'une contrainte simple vue depuis
-un client. Une preuve qui ne l'exercerait qu'en `psql` laisserait ouverte la question de savoir si
-PostgREST émet bien **un** `update`.
+**Le point 15 a été RÉVISÉ PAR LA MESURE, et son écriture d'origine était FAUSSE.** Elle annonçait
+« `PATCH` échangeant deux positions en une requête ⇒ `200` ». Le §11.6 bis dit ce que la mesure a
+trouvé et ce que la révision coûte à 4c.
 
 **Le point 16 rend `409` et non `400`** parce que PostgREST classe `23503` en conflit. La ligne est
 mesurée plutôt que déduite, et son code est celui que l'écran de 4c devra reconnaître.
