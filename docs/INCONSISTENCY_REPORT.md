@@ -213,6 +213,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-208 | Les **six** routes transverses — `/ma-journee`, `/contacts`, `/couts`, `/objectifs`, `/affaires-figees`, `/reglages` — écrivent « Aucun channel » là où il n'y a pas de track courant : un manque énoncé pour une absence de contexte | 2026-08-24 | **ouverte** — comportement inchangé, étrangère à `CRM-062` ; arbitrage attendu | 506 |
 | INC-210 | La migration 44 n'a pas la SECONDE garde d'INC-144 : depuis que `CRM-062` écrit `stalled`, tout rejeu du répertoire sur une base dont la contrainte a été réduite s'arrête en `23514` sur la 44, et les migrations 45 à 54 ne s'appliquent plus. La pile reste avec un vocabulaire amputé et toute trace serveur est refusée | 2026-08-25 | **close** — seconde garde posée par la décision 507, imputable à `CRM-062` | 507 |
 | INC-211 | `scripts/verify-move-card.sh` rend « la restauration n'a pas rétabli l'état initial » EN SÉRIE et **57 contrôles, aucune anomalie** rejoué seul, seed reposé — la dégradation `b`, qui emploie la MÊME restauration, est verte dans le même passage | 2026-08-25 | *ouverte* — cause non établie, comportement inchangé, relève de `CRM-034` | 507 |
+| INC-212 | `scripts/verify-mail-infra.sh` laisse en base son message « Preuve journal Stalwart propre », NON classé : l'inbox porte dès lors un troisième fil non classé, et l'état vide de `e2e/ui/sommeil-fil.spec.ts` ne peut plus être atteint. Troisième fichier de la famille d'INC-209 | 2026-08-25 | *ouverte* — comportement inchangé, relève de `CRM-051` / `CRM-052` | 507 |
 
 ---
 
@@ -4478,3 +4479,49 @@ fichier de `move_card` n'a été touché.
 précède immédiatement en ordre alphabétique, `verify-move-card-to-channel.sh`, qui dégrade lui aussi
 des privilèges. Comportement **laissé inchangé** : la correction relève de `CRM-034`, dont
 `verify-move-card.sh` porte les preuves.
+
+---
+
+### INC-212 — `verify-mail-infra.sh` laisse un message non classé, et un scénario d'interface n'a plus d'état vide
+
+**MESURÉ le 2026-08-25**, après la campagne complète. `npm run e2e:ui` rend **589 passés, 1 échec** :
+
+```
+✘ e2e/ui/sommeil-fil.spec.ts:152 — CRM-081 tranche 2 e
+  la bascule ramène le fil endormi, marqué, et l’état vide porte son geste
+  Locator: getByTestId('inbox-panneau-liste')
+           .getByText('Tous les messages de ce dossier sont dans des fils en sommeil')
+```
+
+Le scénario endort les fils du dossier « Non classés » puis exige son **état vide**. Le dossier en
+portait un de plus que le seed : `Preuve journal Stalwart propre`,
+`rfc822_message_id` en `fallback-sha256:…`, écrit par `scripts/verify-mail-infra.sh` et jamais
+repris. Le message retiré, le scénario rend **6 passés**. La cause est donc **établie, non
+supposée**.
+
+**C'est la troisième occurrence de la famille d'INC-209** — une preuve qui écrit dans la base de
+développement et ne reprend pas ses écritures —, après `commentaires-gestes.spec.ts` et
+`administration-arborescence.spec.ts`. `apply-seed.sh` est convergent sur les lignes qu'il pose, et
+un message ingéré par un harnais n'en fait pas partie.
+
+**Comportement laissé inchangé** : le harnais appartient à `CRM-051` / `CRM-052`, non à l'unité de
+cette session. La remise à zéro est :
+
+```
+delete from public.mail_messages where rfc822_message_id like 'fallback-sha256:%';
+```
+
+**UN AVERTISSEMENT POUR LA SESSION SUIVANTE, ET IL EST PAYÉ D'EXPÉRIENCE.** Les quatre messages de
+démonstration ne portent PAS d'identifiant `5eed…` : le seed les fait **envoyer puis relever par le
+vrai mécanisme** (`CLAUDE.md` §8), et leurs identifiants sont ceux de la messagerie. Les effacer sur
+le motif « ils ne sont pas seedés » détruit le jeu de démonstration — fait cette session, et réparé.
+La réparation, elle aussi, est écrite plutôt que redécouverte : le curseur IMAP du compte système
+doit d'abord être remis à zéro, sans quoi la relève du seed ne réingère rien.
+
+```
+update public.mail_inbound_accounts set sync_state = '{}'::jsonb;
+supabase/seed/apply-seed.sh
+```
+
+Les seuls messages réellement étrangers au seed sont ceux dont le `rfc822_message_id` ne commence
+pas par `<seed-inbox-`.

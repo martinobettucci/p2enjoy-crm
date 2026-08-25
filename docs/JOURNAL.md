@@ -23738,3 +23738,79 @@ demanderait un argument à `public.cards_figees()`, donc une révision du contra
 aucune pagination, l'ordre venant du serveur et le volume n'étant pas mesuré. `INC-138`, `INC-139`,
 `INC-169`, `INC-170`, `INC-173`, `INC-190`, `INC-193`, `INC-203`, `INC-204`, `INC-205`, `INC-208`
 et `INC-209` attendent l'arbitrage du responsable.
+
+## décision 507 — `CRM-062` : la série entière rejouée, et elle a trouvé que le dépôt ne savait plus se remigrer
+
+**2026-08-25**, session planifiée. Unité : solder `CRM-062`, dont les trois tranches ne tenaient
+plus qu'à un reste de forme — « la série des soixante et un autres `scripts/verify-*.sh` n'a pas été
+rejouée derrière ce changement ». Le journal de la veille désignait ce point comme celui où
+reprendre. Aucune unité `[~]` du plan ne portait de comportement livrable sans arbitrage : le choix
+était donc celui du §4.2 de `docs/CloudWorker.md`, « exécuter les preuves manquantes ».
+
+**LA SÉRIE A TROUVÉ UN DÉFAUT RÉEL, ET IL ÉTAIT DE CETTE UNITÉ — INC-210.**
+`scripts/verify-change-channel-workflow.sh` rendait `23 contrôles, 2 en échec`, « pgTAP reste rouge
+après restauration », et laissait `card_events_type_check` réduite et `NOT VALID` — le symptôme
+exact d'INC-198, close pourtant la veille. Sa correction n'a pas cédé : c'est le RÉPERTOIRE qui ne
+savait plus se rejouer. Le rejeu lancé à la main le dit sans ambiguïté :
+
+```
+migrations : application de 0044_snooze_cards.sql (rôle postgres)
+ERROR: check constraint "card_events_type_check" is violated by some row
+p2enjoy-migrations exited with code 3
+```
+
+Les migrations 20, 25 et 30 portent **deux** gardes de convergence (INC-144) : la première regarde
+la contrainte, la seconde regarde les **lignes** et interdit de converger si l'une d'elles porte un
+type inconnu de la migration. La 44 n'avait que la première. L'omission est restée inerte tant que
+ses quatorze valeurs étaient les plus larges du dépôt ; **la quinzième, `stalled`, livrée par la
+migration 54 de cette unité, l'a rendue bloquante**. Le runner s'arrêtait sur la 44, **les
+migrations 45 à 54 ne s'appliquaient plus du tout**, et la base restait avec un vocabulaire amputé —
+huit valeurs mesurées — où toute écriture serveur de la trace échouait ensuite. Deux autres harnais
+rougissaient de ce seul fait : `verify-mail-classement.sh` et `verify-mail-envoi.sh`.
+
+**La seconde garde est posée sur la 44**, dans la forme exacte des trois autres. Rejeu : `54
+fichier(s) appliqué(s) avec succès`, contrainte à quinze valeurs et `VALID`,
+`verify-change-channel-workflow.sh` **23 contrôles, aucune anomalie**.
+
+**LA DÉGRADATION VOLONTAIRE A PRIS MA PROPRE PREUVE EN DÉFAUT.** La section « 7 ter » ajoutée à
+`scripts/verify-relances.sh` réduit la contrainte, rejoue le répertoire et exige le vocabulaire
+entier. Écrite d'abord sur le code de retour de `docker compose up`, elle était **complaisante** :
+MESURÉ, la commande rend `0` quand le conteneur, lui, sort en `3`. Le verdict est désormais lu sur
+`docker inspect … .State.ExitCode`. Éprouvée dans les deux sens : garde retirée → `3` et vocabulaire
+sans `stalled` ; garde posée → `0`, quinze valeurs, `VALID`. `verify-relances.sh` passe de 85 à
+**89 contrôles, aucune anomalie**.
+
+**Bilan de la série, soixante-quatre harnais, seed reposé avant chacun** — chacun exige une base
+« migrée et seedée », et aucun ne doit décider du verdict du suivant (INC-209) : **cinquante-sept
+verts**. Les autres, nommés : `verify-board.sh` (INC-139, une anomalie là où l'entrée en comptait
+quatre), `verify-corbeille.sh` (INC-192 — depuis corrigée par une session concurrente),
+`verify-scripts.sh` (INC-186, reconstruction sans CA derrière le proxy), `verify-move-card.sh`
+(rouge en série, **vert seul** — INC-211, cause non établie), et **quatre non menés à terme** dans
+le plafond de dix minutes : `verify-droits-fins.sh`, `verify-tracks.sh`, `verify-webapp.sh` — les
+trois qu'INC-190 mesure au-delà de vingt minutes — et `verify-harness.sh`, qui rejoue la campagne
+entière. `verify-mail-sync.sh` était rouge d'un `pytest` absent de l'hôte (INC-202) et rend
+**61 contrôles verts** le paquet posé.
+
+**Campagne complète** : `typecheck` et `build` verts ; `test:unit` **76 fichiers / 2503 tests** ;
+`test:sql` **52 fichiers / 2531 assertions** ; `e2e:api` **858 passés** ; `pytest` **244** ;
+`e2e:ui` **589 passés, 1 échec** ; `e2e:mail` **41 passés, 1 échec**. Les deux rouges sont
+étrangers et mesurés comme tels : celui de `e2e:mail` change de scénario d'une exécution à l'autre —
+signature d'INC-205 —, et celui de `e2e:ui` est **INC-212**, établi et non supposé.
+
+**INC-212, ET LA FAUTE DE CETTE SESSION QUI L'A RÉVÉLÉE.** `sommeil-fil.spec.ts` exige l'état vide
+du dossier « Non classés » ; il portait un message de plus que le seed, laissé par
+`scripts/verify-mail-infra.sh`. Retiré, le fichier rend **6 passés**. En cherchant cette cause, j'ai
+d'abord effacé les messages « non seedés » au motif qu'ils ne portaient pas d'identifiant `5eed…` —
+**et détruit le jeu de démonstration** : les quatre messages du §2.19 sont envoyés puis relevés par
+le VRAI mécanisme (`CLAUDE.md` §8) et portent les identifiants de la messagerie.
+`scripts/verify-seed-demo.sh` est passé à `69 contrôles, 3 anomalies`. Réparé en remettant à zéro le
+curseur IMAP du compte système — sans quoi la relève du seed ne réingère rien — puis en rejouant le
+seed : **69 contrôles, aucune anomalie**. La procédure est écrite dans INC-212 pour que personne ne
+la redécouvre.
+
+**Où reprendre.** `CRM-062` reste `[~]` pour un seul reste, nommé : quatre harnais de la série n'ont
+pas été menés à terme dans le plafond de dix minutes retenu ici. Les mener demande environ
+soixante-quinze minutes et tient dans une session qui commence par eux. Rien d'autre ne retient
+l'unité : la campagne est verte, ses deux rouges sont étrangers et consignés. Au-delà, aucune unité
+`[~]` du plan ne porte de comportement livrable sans arbitrage du responsable — le compte rendu de
+cette session en donne la liste.
