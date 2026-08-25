@@ -8899,6 +8899,20 @@ la 2b-1 l'ont été : **2b-2a livre le LIEN**, 2b-2b livrera les **flèches** et
       2b-2b**, et **les deux suppressions depuis la 2b-2c** — commande, confirmation, annulation et
       retour du focus, toutes atteignables au clavier. Ce qui reste dû au clavier suivra les gestes
       d'administration d'un tableau. C'est la partie la plus facile à oublier de cette unité.
+
+- [~] **LE CLAVIER DES GESTES D'ADMINISTRATION — tranche 2 g, ouverte le 2026-08-25.** C'est le seul
+      reste du point ci-dessus : la liste du §5.1 est devenue administrable à la tranche 2 c, et son
+      clavier n'avait jamais été ni écrit ni éprouvé. **Spécification écrite et committée AVANT la
+      première ligne de code** — `docs/SPEC-goals.md` §5.5 bis en quatre sous-chapitres, fondés sur
+      **quatre mesures** relevées sur la pile seedée avec le jeton réel de l'administratrice, et
+      `docs/DESIGN_SYSTEM.md` §5.29 pour la forme, en compléments seulement.
+      **UN DÉFAUT DU PRODUIT EST MESURÉ, pas supposé** : l'archivage confirmé rend le focus à la
+      commande de la ligne **que le geste fait disparaître**, si bien que `document.activeElement`
+      retombe sur `body` et que le `Tab` suivant repart du lien d'évitement, en tête de document.
+      `Échap` est en outre **sans effet** sur les trois surfaces de la liste, là où la fiche d'un
+      bloc du même écran se referme ainsi depuis la tranche 2 b-1.
+      **INC-214 consignée au passage, comportement inchangé** : `docs/manual.md` ne porte aucun
+      chapitre sur les objectifs, écart d'une autre unité que celle-ci ne solde pas.
 - [ ] **Écart nommé, consigné en INC-169 plutôt que tranché** : le §5.4 demande « lien perdu » pour
       un channel **supprimé** (`channel_id` devenu nul), état qui ne se distingue en rien d'un bloc
       jamais lié. L'écran lève la mention pour le seul état détectable — une destination partie à

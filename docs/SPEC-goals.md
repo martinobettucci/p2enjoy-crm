@@ -228,6 +228,89 @@ Chaque bloc porte un `aria-label` complet — titre, remplissage, channel lié �
 textuelle équivalente** du diagramme est rendue pour les lecteurs d'écran : « A → B », « B ↔ C ».
 Un diagramme qui n'existe que visuellement n'est pas accessible.
 
+### 5.5 bis Les gestes d'ADMINISTRATION d'un tableau au clavier — tranche 2 g
+
+**Complété le 2026-08-25.** Le §5.5 ci-dessus décrit le clavier du **canevas** — poser, déplacer,
+redimensionner, éditer, tracer, supprimer. La **liste** du §5.1 est devenue administrable après lui
+(tranche 2 c : créer, renommer, réordonner, archiver), et son clavier n'a jamais été écrit ni
+éprouvé. Ce chapitre le fait, et rien d'autre n'est révisé.
+
+#### 5.5 bis.1 Trois mesures, relevées avant d'écrire une règle
+
+Relevées le 2026-08-25 sur la pile seedée, avec le jeton réel de l'administratrice, en lisant
+`document.activeElement` après chaque geste — jamais en lisant le code.
+
+| # | Ce qui est mesuré | Relevé |
+|---|---|---|
+| A | Ordre de tabulation de la liste | depuis « Créer un tableau » : lien du tableau, puis ses commandes **actives** dans l'ordre visuel — monter, descendre, renommer, archiver —, puis le tableau suivant. Une commande désactivée à une extrémité est **sautée** par `Tab`, et n'est donc jamais un cul-de-sac |
+| B | `Entrée` sur « Monter » | la ligne change de place, la liste est relue, et **le focus reste sur la commande** : le bouton n'est pas démonté, `document.activeElement` le désigne encore |
+| C | `Entrée` sur « Archiver », puis sur la confirmation | le focus revient sur « Archiver le tableau X » — **la commande de la ligne que le geste fait disparaître**. La relecture la démonte, `document.activeElement` retombe sur `body`, et le `Tab` suivant repart du **lien d'évitement**, en tête de document |
+| D | `Échap` dans les trois surfaces de la liste | **sans effet** : le formulaire de création, celui de renommage et la confirmation d'archivage restent ouverts, là où la fiche d'un bloc et le repère de pose se referment (§5.5) |
+
+La mesure C est un **défaut du produit**, pas un manque de preuve : celui qui archive au clavier
+perd sa place dans le document et doit retraverser l'écran entier pour revenir à la liste qu'il
+était en train d'administrer. C'est exactement le défaut que `docs/DESIGN_SYSTEM.md` §5.13 nomme —
+« activer *Annuler* au clavier laisse le focus sur un bouton qui vient de disparaître » — sous une
+seconde forme que sa règle ne couvrait pas : là-bas la commande survit au geste, ici elle ne lui
+survit pas.
+
+#### 5.5 bis.2 Le retour du focus vise une ancre qui SURVIT au geste
+
+`docs/DESIGN_SYSTEM.md` §5.13 pose que fermer une surface rend le focus « à la commande qui l'a
+ouverte ». Cette règle suppose que la commande existe encore. **Elle est complétée, jamais
+remplacée** : lorsque le geste détruit la ligne qui porte sa propre commande, le focus revient à la
+**commande de création de l'en-tête**, qui est rendue en toute circonstance — y compris sur une
+liste devenue vide, où elle est le seul geste restant (§5.1). Il ne retombe jamais sur le document.
+
+| Geste | Issue | Le focus revient à |
+|---|---|---|
+| Création | succès, annulation, `Échap` | « Créer un tableau » — la commande qui l'a ouverte, jamais démontée |
+| Renommage | succès, annulation, `Échap` | « Renommer le tableau X » — la ligne survit au geste |
+| Archivage | annulation, `Échap` | « Archiver le tableau X » — la ligne est encore là |
+| Archivage | **succès** | « Créer un tableau » — la ligne, et donc la commande, viennent de disparaître |
+| Réordonnancement | succès, refus, déplacement impossible | il ne bouge pas : aucune surface ne s'ouvre, et la commande reste montée (mesure B) |
+
+**Aucune temporisation** n'est employée pour l'obtenir (`CLAUDE.md` §18) : le mécanisme est celui
+que la tranche 2 c porte déjà — un drapeau, puis un effet qui cherche l'ancre par son attribut
+`data-focus`. Seule l'**ancre visée** change, et elle est choisie au moment où l'issue est connue.
+
+**Pourquoi l'en-tête et non la ligne voisine.** Une ligne voisine serait une meilleure continuité,
+mais elle n'est pas connaissable au moment du retour : la liste est relue de façon asynchrone, et
+viser une ligne qui n'est pas encore rendue rejouerait le défaut de la mesure C sous une autre
+forme. La commande de création est adjacente à la liste, stable, et c'est le geste qu'on enchaîne le
+plus souvent après avoir rangé.
+
+#### 5.5 bis.3 `Échap` referme les trois surfaces de la liste
+
+`Échap` ferme le formulaire de création, le formulaire de renommage et la confirmation d'archivage,
+depuis **n'importe lequel de leurs contrôles**, et rend le focus selon le tableau du §5.5 bis.2.
+Ce n'est pas un geste inventé pour cette surface : c'est la règle que le design system pose déjà
+trois fois pour une surface qui **remplace sa commande** — §5.3 quater, §5.3 septies —, et que la
+fiche d'édition d'un bloc du même écran tient depuis la tranche 2 b-1 (§5.5). Sans elle, l'écran
+oppose deux conventions contraires à la même touche selon qu'on administre la liste ou qu'on édite
+un bloc.
+
+**`Échap` ne ferme que la surface la plus intérieure, et il n'y en a jamais deux.** L'état de la
+liste n'admet qu'une surface ouverte à la fois — création, renommage d'un tableau, ou confirmation
+d'archivage d'un tableau —, si bien qu'aucune précédence n'est à écrire. `Échap` ne quitte pas
+l'écran et ne remonte pas au canevas.
+
+**Une écriture en vol n'est pas annulée par `Échap`** — rien ne l'annule côté serveur, et prétendre
+le contraire serait faux. La surface se ferme, l'écriture aboutit, et son issue est lue dans la
+mention de la **section**, qui n'est tue que tant qu'une surface est ouverte (`docs/DESIGN_SYSTEM.md`
+§5.29). Le focus, déjà rendu à son ancre, y reste : l'issue le ramène à la même ancre, jamais à une
+autre.
+
+#### 5.5 bis.4 Ce que ce chapitre ne change pas
+
+- **Aucune commande n'est éteinte d'avance selon le rôle** : la lectrice atteint les quatre
+  commandes au clavier, envoie, et lit le refus traduit. La règle est inchangée.
+- **Les commandes d'ordre restent désactivées aux extrémités et jamais masquées** (§5.13) : la
+  mesure A établit que `Tab` les saute, ce qui est le comportement natif d'un bouton désactivé et
+  non une décision de l'écran.
+- **Aucun piège de focus, aucun voile, aucune modale** : les trois surfaces vivent dans le flux du
+  document, et c'est ce qui rend `Échap` suffisant.
+
 ## 6. Ce qui n'est pas au périmètre
 
 Nommé pour que personne ne le suppose livré :

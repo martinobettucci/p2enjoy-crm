@@ -4624,3 +4624,44 @@ encore : `grands-comptes` reste à zéro pour la lectrice, et le compte global �
 — dit combien lui restent fermés, ce qu'un « zéro sur ce channel-ci » ne dirait pas. INC-115 avait
 déjà tranché le fond en retirant la preuve n° 13, qui exigeait elle aussi que la lectrice ne lise
 pas `conseil-ia`.
+
+### INC-214 — `docs/manual.md` ne porte AUCUN chapitre sur les objectifs, alors que l'écran est livré
+
+**Ouverte le 2026-08-25 par `CRM-083` tranche 2 g, comportement inchangé** — constat **étranger à
+l'unité** de la session, consigné sans être corrigé au passage (`CLAUDE.md` §5, `docs/CloudWorker.md`
+§3.1).
+
+**Ce qui a été mesuré**, sur la version courante du manuel :
+
+```
+grep -n "objectifs\|Objectifs" docs/manual.md
+  84   | 29 | Prévisionnel pondéré et objectifs | `CRM-066` | À livrer |
+  2555 **Où.** Barre latérale ▸ « Coûts », entre « Objectifs » et « Ma journée » (chapitre 5 septies)
+
+grep -n "canevas\|CRM-083\|CRM-082" docs/manual.md
+  => aucune occurrence
+```
+
+**Deux occurrences, et aucune des deux ne décrit l'écran** : la première est une ligne de sommaire,
+la seconde situe l'entrée « Coûts » par rapport à celle des objectifs, dans le chapitre d'une autre
+unité.
+
+Le sommaire du manuel range en outre « Prévisionnel pondéré et **objectifs** » au chapitre 29, sous
+`CRM-066`, avec l'état « À livrer ». Ce chapitre-là parle d'analytique de conversion, pas de la
+lavagna : `CRM-082` et `CRM-083` ont livré depuis un écran complet — entrée de navigation, liste
+administrable des tableaux, canevas pannable et zoomable, blocs, flèches, jauge, pilule de channel,
+suppressions — dont **aucune ligne du manuel ne rend compte**.
+
+**Pourquoi ce n'est pas corrigé ici.** Écrire ce chapitre est le travail d'une unité, pas d'un
+paragraphe ajouté au passage : il couvre deux unités (`CRM-082` pour ce que la base consent,
+`CRM-083` pour tous les gestes de l'écran), et il demande ses propres captures produites et
+observées (`CLAUDE.md` §16). Le combler depuis la tranche 2 g reviendrait à solder une autre unité
+sous couvert de celle-ci — ce que `CLAUDE.md` §13 refuse.
+
+**Ce que la tranche 2 g a donc fait à la place** : elle a écrit sa règle là où elle est opposable —
+`docs/SPEC-goals.md` §5.5 bis et `docs/DESIGN_SYSTEM.md` §5.29 —, et elle consigne ici l'écart du
+manuel plutôt que de le laisser invisible.
+
+**Ce qu'il faut pour la fermer** : un chapitre du manuel décrivant l'écran des objectifs, avec sa
+ligne au sommaire et son état réel, et la correction du renvoi du chapitre 29, qui promet
+« objectifs » sous une unité qui ne les livre pas.

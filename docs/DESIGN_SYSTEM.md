@@ -2088,6 +2088,36 @@ ci-dessous ne disent que ce qui lui est propre.
   arithmétique du §5.13 réemployée telle quelle. Quand ce milieu n'existe pas, l'écran le **nomme**
   au lieu d'écrire une valeur qui ne changerait rien.
 
+**Le clavier de cette liste — tranche 2 g, `docs/SPEC-goals.md` §5.5 bis.** Elle n'ajoute aucun
+bloc et aucun jeton : elle complète deux règles de ce document sur la surface qui les a mises en
+défaut. Les deux compléments viennent d'une **mesure** (§5.5 bis.1), pas d'une relecture.
+
+- **LE RETOUR DU FOCUS VISE UNE ANCRE QUI SURVIT AU GESTE, et c'est un COMPLÉMENT au §5.13, jamais
+  son remplacement.** Le §5.13 pose que fermer une surface rend le focus « à la commande qui l'a
+  ouverte » ; il suppose que cette commande existe encore, ce qui est vrai partout ailleurs.
+  **L'archivage confirmé est le seul geste du produit qui détruise la ligne portant sa propre
+  commande** : MESURÉ, le focus y était rendu à un bouton que la relecture démontait aussitôt,
+  `document.activeElement` retombait sur `body`, et le `Tab` suivant repartait du lien d'évitement,
+  en tête de document. Le focus revient donc à la **commande de création de l'en-tête**, rendue en
+  toute circonstance — y compris sur une liste devenue vide, où elle est le seul geste restant. Les
+  trois autres issues sont inchangées, la ligne leur survivant. **Aucune temporisation**
+  (`CLAUDE.md` §18) : le mécanisme du §5.25 — un drapeau, puis un effet — est celui de la tranche
+  2 c, et seule l'ancre visée change.
+
+- **`ÉCHAP` REFERME LES TROIS SURFACES DE LA LISTE**, depuis n'importe lequel de leurs contrôles, et
+  rend le focus selon la règle ci-dessus. Le §5.13 ne l'écrivait pas parce qu'il écartait la
+  **modale**, dont `Échap` est l'un des trois mécanismes ; mais une surface dans le flux **qui
+  remplace sa commande** se referme par `Échap` partout ailleurs dans ce document — §5.3 quater,
+  §5.3 septies —, et la fiche d'un bloc du même écran (§5.29 ci-dessus) le fait depuis la tranche
+  2 b-1. MESURÉ avant correction : la touche était **sans effet** sur les trois surfaces de la
+  liste, si bien que le même écran opposait deux conventions contraires à la même touche selon
+  qu'on administrait la liste ou qu'on éditait un bloc.
+
+- **Une écriture en vol n'est pas annulée par `Échap`**, et l'écran ne le prétend pas : la surface
+  se ferme, l'écriture aboutit, et son issue est lue dans la mention de **section** — celle que la
+  règle ci-dessus tait tant qu'une surface est ouverte. C'est la même discipline que « sans effet »
+  au §5.3 ter : on ne montre jamais une issue que le serveur n'a pas rendue.
+
 ### 5.30 Histogramme prévisionnel / réel — `CRM-086`
 
 Spécifié avant code, `docs/SPEC-costs.md` §4.2.
