@@ -24625,3 +24625,78 @@ ligne à ligne avant sa première ligne de code**. Elle devra trancher : qui arm
 l'interrompt, et ce qu'une réponse du destinataire produit. Elle posera aussi le `on delete restrict`
 vers `mail_templates` que la sous-tranche 2b a délibérément laissé hors de sa confirmation de
 suppression (§9.7), et son écran devra alors le dire.
+
+
+## décision 517 — `CRM-063` tranche 4a : la séquence de relance, et le prix d'une clé posée en ligne
+
+**Session planifiée du 2026-08-25, ouverte à 18 h 10 UTC.** Reprise à l'endroit exact où la
+décision 516 s'arrêtait : « `CRM-063` **tranche 4 — la séquence de relance** ». Choix de l'unité par
+le §4.2 point 1 de `docs/CloudWorker.md`.
+
+**LA SPÉCIFICATION A ÉTÉ ÉCRITE ET COMMITTÉE AVANT LA PREMIÈRE LIGNE DE CODE**, au §11 de
+`docs/SPEC-modeles-emails.md`, après mesure sur la pile debout et seedée. La tranche est **découpée
+en trois sous-tranches**, et le motif est écrit : les trois questions du §7.3 — qui arme, ce qui
+interrompt, ce qu'une réponse produit — portent sur l'**application** d'une séquence à une affaire,
+donc supposent qu'un objet « séquence » existe. Y répondre avant d'avoir cet objet serait spécifier
+un comportement sur une table qui n'existe pas. **4a** livre la séquence et ses paliers, **4b**
+l'armement et l'exécution, **4c** l'écran.
+
+**LE DÉLAI EST COMPTÉ DEPUIS LE PALIER PRÉCÉDENT, et non depuis l'armement.** Insérer une relance au
+milieu d'une cadence ne renumérote alors rien ; en absolu, il aurait fallu réécrire le décalage de
+tous les paliers suivants, et un oubli aurait produit deux envois le même jour sans qu'aucune
+contrainte ne le voie. Le décalage absolu reste dérivable ; l'inverse ne l'est pas.
+
+**LA POSITION EST `DEFERRABLE`, ET UNE MESURE L'IMPOSE.** Sur deux tables sondes : avec une
+contrainte unique SIMPLE, **même l'échange atomique** `set position = 3 - position` rend `23505`,
+PostgreSQL vérifiant l'index ligne à ligne. `deferrable initially immediate` reporte la vérification
+à la fin de l'**instruction** et le laisse passer, sans qu'aucun appelant n'émette `set constraints`.
+
+**UNE LIGNE DU CONTRAT D'API TROUVÉE FAUSSE PAR LA PREUVE QUI DEVAIT LA VÉRIFIER.** La ligne 15
+annonçait « un `PATCH` échangeant deux positions en une requête rend `200` ». En l'écrivant :
+PostgREST ne pose que des valeurs **littérales**, et n'exprime donc pas cette instruction. L'échange
+atomique reste vrai EN BASE — la suite pgTAP le prouve —, mais **la route ne sait pas le demander**.
+La ligne mesure désormais que les deux détours d'un client sont fermés, et le §11.6 bis nomme la
+conséquence : **4c devra livrer une RPC** qui ouvre une transaction et diffère la contrainte. Une
+ligne de contrat trouvée fausse se **révise en disant pourquoi**, jamais ne se contourne.
+
+**UN DÉFAUT DE LA MIGRATION TROUVÉ PAR SON PROPRE HARNAIS, ET LE FAUX VERDICT N'ÉTAIT QUE LE
+SYMPTÔME.** La dégradation du `on delete restrict` laissait la suite pgTAP verte. Cause : les clés
+étrangères du palier étaient déclarées **en ligne** dans le `create table if not exists`, qui est un
+**no-op** sur une table existante. Une règle déclarée là n'est posée que sur une base **neuve** —
+donc une correction apportée à cette règle n'atteindrait **aucune base déjà migrée, production
+comprise**, et la divergence serait muette. Les trois clés sont désormais posées par `alter table`.
+La leçon vaut au-delà de cette migration : **ce qui est déclaré en ligne dans un
+`create table if not exists` n'est jamais réparé.**
+
+**DEUX DÉFAUTS DU HARNAIS TROUVÉS PAR LE HARNAIS, tous deux des faux ROUGES.** Ses sondes lisaient
+un `raise notice`, qui écrit sur **stderr** : ne capturant que stdout, elles lisaient la chaîne vide
+et concluaient au refus **quoi qu'il arrive**, accusant la migration d'un défaut qu'elle n'avait
+pas. Et `relrowsecurity::text` d'un booléen rend `true`, jamais `t` — trois comparaisons rendaient
+une RLS pourtant activée pour absente. Après la substitution puis l'application qui échouaient en
+silence, et la dégradation qui convergeait, c'est la quatrième forme du même mensonge tranquille :
+**la sonde qui n'écoute pas**.
+
+**UN GARDE-FOU GLOBAL RÉVISÉ, jamais retiré.** L'inventaire de `0016_preuves_refus.test.sql` compte
+les politiques de `public` et attendait 107 ; les huit nouvelles le portent à **115**. Les deux
+tables y sont inventoriées **nommément** — le compte seul ne verrait pas une politique remplacée par
+une autre.
+
+**CAMPAGNE COMPLÈTE EXÉCUTÉE, ET ENTIÈREMENT VERTE** : `typecheck` et `build` verts ; `test:unit`
+**77 fichiers, 2551 tests** ; `test:sql` **57 fichiers, 2760 assertions** ; `e2e:api` **905
+passés** ; `e2e:ui` **605 passés, 14,4 min** ; `e2e:mail` **42 passés** ; `pytest` **244 passés** ;
+`scripts/verify-sequences-relance.sh` **40 contrôles, aucune anomalie**, ses sept dégradations vues
+et la restauration constatée octet à octet. **Ce qui n'a PAS été exécuté, et qui est dit** : les
+quarante-neuf autres `scripts/verify-*.sh`, la série entière ne tenant pas dans une session
+(`docs/CloudWorker.md` §2.1 ter).
+
+**UNE ANOMALIE ÉTRANGÈRE CONSIGNÉE, INC-219.** Le premier passage de `e2e:mail` a rendu **1 échec**
+sur `backfill.spec.ts` ; le scénario passe **seul** en 5,1 s, et la série entière repasse à **42
+passés** au second et unique rejeu dépensé. Aucun chemin ne relie la sous-tranche — deux tables,
+huit politiques, un index — à l'ingestion IMAP. La **cause** de l'échec en série n'est pas établie,
+et c'est dit : « intermittent » n'est pas un diagnostic. Aucun test désactivé, aucune temporisation.
+
+**Où reprendre.** `CRM-063` **sous-tranche 4b — l'armement et l'exécution**, cadrée au §11.12 et **à
+spécifier ligne à ligne avant sa première ligne de code**. Elle devra trancher les trois questions
+du §7.3 et dire **comment un palier met un message en file** : `public.queue_outbound_email` exige
+`auth.uid()` non nul et le refuse en `42501` sans jeton, si bien qu'un job `pg_cron` **ne peut pas
+l'emprunter tel quel** — mesuré, et écrit au §11.12 pour que 4b ne le redécouvre pas.
