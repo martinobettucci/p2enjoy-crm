@@ -685,6 +685,70 @@ restauration_due=false
 
 # =================================================================================================
 echo
+echo "7 quater. Le moteur pg_cron exécute RÉELLEMENT la commande — INC-217"
+# =================================================================================================
+# CETTE PREUVE VIENT DE `supabase/tests/0052_relances_automatiques.test.sql`, ET ELLE Y ÉTAIT
+# INTENABLE. L'assertion exigeait un passage `succeeded` du job de relance ; celui-ci est planifié à
+# `23 3 * * *`, si bien qu'une pile montée après 03 h 23 n'en porte aucun. Elle rendait donc vert ou
+# rouge selon l'heure de démarrage — et, plus précisément, selon qu'un AUTRE harnais avait rejoué la
+# migration 54 dans la vie de cette pile, ce qui réarme le job sur dix secondes (§9.7). Une preuve
+# verte parce qu'une autre preuve a tourné avant elle ne prouve pas ce qu'elle annonce.
+#
+# Ici, le harnais ARME LUI-MÊME ce qu'il mesure : un job JETABLE, nommé de façon unique, portant la
+# commande du produit — `select app.relancer_cards_figees();` —, à la cadence d'amorçage de dix
+# secondes. Ce que la suite pgTAP ne peut pas faire : elle s'exécute dans UNE transaction, et
+# `pg_cron` ne voit que ce qui est committé.
+#
+# La commande est celle du produit, et c'est le point : un job jetable qui exécuterait `select 1`
+# prouverait que le moteur tourne, non qu'il sait exécuter CETTE fonction — dont l'ACL refuse
+# `execute` aux quatre rôles clients (§9.3). La fonction est idempotente (§9.4) : ces passages
+# n'écrivent aucune relance de plus.
+JOB_JETABLE="p2enjoy-preuve-moteur-$$"
+psql_db -c "select cron.schedule('$JOB_JETABLE', '10 seconds',
+	'select app.relancer_cards_figees();');" >/dev/null
+restauration_due=true
+
+passage=''
+for _tentative in $(seq 1 12); do
+	passage=$(psql_db -c "select d.status from cron.job_run_details d
+		join cron.job j on j.jobid = d.jobid
+		 where j.jobname = '$JOB_JETABLE'
+		 order by d.start_time desc limit 1;" | tr -d '[:space:]')
+	[ -n "$passage" ] && break
+	sleep 5
+done
+
+psql_db -c "select cron.unschedule('$JOB_JETABLE');" >/dev/null 2>&1 || true
+restauration_due=false
+
+if [ "$passage" = 'succeeded' ]; then
+	ok "le moteur a RÉELLEMENT exécuté « select app.relancer_cards_figees(); » — passage succeeded"
+elif [ -z "$passage" ]; then
+	fail "aucun passage en 60 s : le moteur pg_cron ne tire pas, ou n'est pas armé"
+else
+	fail "le moteur a lancé la commande et elle a ÉCHOUÉ : passage « $passage »"
+fi
+
+# LE JOB JETABLE NE SURVIT PAS AU HARNAIS. Un job de dix secondes oublié écrirait, à l'échelle d'une
+# journée, huit mille six cents passages — exactement ce que le §9.7 reproche à l'amorçage laissé en
+# place. Le constat est relu, jamais supposé.
+if [ "$(psql_db -c "select count(*) from cron.job where jobname = '$JOB_JETABLE';" | tr -d '[:space:]')" = 0 ]; then
+	ok "le job jetable est désordonnancé : le harnais ne laisse aucun passage derrière lui"
+else
+	fail "le job jetable « $JOB_JETABLE » SURVIT au harnais"
+fi
+
+# Le job du PRODUIT n'a pas bougé pendant cette section : ni sa cadence, ni son unicité.
+etat_job=$(psql_db -F '|' -c "select count(*), max(schedule) from cron.job
+	where jobname = '$JOB_RELANCES';" | tr -d '[:space:]')
+if [ "$etat_job" = '1|233***' ]; then
+	ok "le job du produit reste unique et à sa cadence nominale — le jetable ne l'a pas touché"
+else
+	fail "le job du produit a changé pendant la preuve du moteur : « $etat_job »"
+fi
+
+# =================================================================================================
+echo
 echo "8. Restauration CONSTATÉE, jamais supposée"
 # =================================================================================================
 

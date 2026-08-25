@@ -159,12 +159,32 @@ select results_eq(
 	'le job est à sa cadence NOMINALE : l''amorçage à dix secondes est transitoire, et un job resté '
 	'à dix secondes ferait huit mille six cents passages par jour là où un seul est dû');
 
-select isnt_empty(
+-- ASSERTION RÉVISÉE le 2026-08-25 — INC-217, et le motif est écrit ici plutôt que dans un journal.
+--
+-- Elle exigeait un passage `succeeded` pour CE job. Le job est planifié à `23 3 * * *` : une pile
+-- montée après 03 h 23 n'en porte aucun avant le lendemain, `cron.job_run_details` étant vidée avec
+-- le volume. MESURÉ : la même suite rendait rouge puis verte sur la MÊME pile, selon qu'un autre
+-- harnais avait entre-temps rejoué la migration 54 — qui réarme le job sur un amorçage de dix
+-- secondes (docs/SPEC-relances.md §9.7) — ou l'avait promue. Une preuve verte parce qu'une AUTRE
+-- preuve a tourné avant elle ne prouve pas ce qu'elle annonce.
+--
+-- Elle n'est ni retirée, ni relâchée en `>= 0` : elle est REMPLACÉE par la propriété que ce fichier
+-- peut tenir seul — AUCUN passage de ce job n'a jamais échoué. Sur une pile qui n'en porte aucun,
+-- l'assertion est vraie sans rien affirmer de faux ; sur une pile qui en porte, elle est plus
+-- stricte que l'ancienne, qui se contentait d'un `succeeded` et fermait les yeux sur un `failed`
+-- voisin.
+--
+-- LA PREUVE QUE LE MOTEUR EXÉCUTE RÉELLEMENT LA COMMANDE VIT DÉSORMAIS DANS
+-- `scripts/verify-relances.sh`, section « 7 quater », et elle y est PLUS FORTE : le harnais arme
+-- lui-même un job JETABLE portant la commande du produit, attend son passage et le désordonnance.
+-- Un fichier pgTAP ne peut pas le faire — il s'exécute dans UNE transaction, et le moteur `pg_cron`
+-- ne voit que ce qui est committé : un job planifié ici ne tournerait jamais.
+select is_empty(
 	$$ select 1 from cron.job_run_details d
 	     join cron.job j on j.jobid = d.jobid
-	    where j.jobname = 'p2enjoy-relances-cards-figees' and d.status = 'succeeded' $$,
-	'le moteur a RÉELLEMENT lancé la commande : cron.job_run_details porte un passage succeeded — '
-	'preuve indépendante de l''état que la fonction écrit elle-même');
+	    where j.jobname = 'p2enjoy-relances-cards-figees' and d.status <> 'succeeded' $$,
+	'aucun passage du job de relance n''a jamais ÉCHOUÉ — propriété que ce fichier tient seul, là '
+	'où exiger un passage dépendait de l''heure de démarrage de la pile et de l''ordre des harnais');
 
 select is(
 	(select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace

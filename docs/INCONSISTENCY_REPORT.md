@@ -217,7 +217,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-212 | `scripts/verify-mail-infra.sh` laisse en base son message « Preuve journal Stalwart propre », NON classé : l'inbox porte dès lors un troisième fil non classé, et l'état vide de `e2e/ui/sommeil-fil.spec.ts` ne peut plus être atteint. Troisième fichier de la famille d'INC-209 | 2026-08-25 | **close** — le harnais reprend son message des DEUX côtés, décision 508 | 507, 508 |
 | INC-215 | `mail_outbound_identities.signature_html` existe depuis `CRM-053` et n'est lue par PERSONNE — ni `mail-sync` à l'envoi, ni l'écran de `CRM-089`, qui n'envoie délibérément jamais `p_signature_html`. Son nom annonce du **HTML** là où tout le sous-système expédie du **texte** | 2026-08-25 | **CLOSE le 2026-08-25** par `CRM-063` tranche 3, migration 58 : la colonne devient `signature_text`, elle est bornée, elle est LUE par la garde d'envoi et ÉCRITE par l'écran | 512, 516 |
 | INC-216 | `public.rendre_modele_email` rend `card.next_action_at` **en UTC** : MESURÉ, aucune colonne de fuseau n'existe dans le schéma — seule `profiles.locale`, qui est une **langue**. Un destinataire français lira 09:00 là où le rendez-vous est à 11:00 en heure d'été | 2026-08-25 | *ouverte* — comportement ASSUMÉ et figé par une assertion, **arbitrage attendu** : à qui appartient le fuseau d'un email sortant | 514 |
-| INC-217 | `supabase/tests/0052_relances_automatiques.test.sql` assertion 11 exige un passage `succeeded` de `p2enjoy-relances-cards-figees` dans `cron.job_run_details`, or ce job est planifié `23 3 * * *`. MESURÉ deux fois dans la même session : **rouge** à 12 h 45, **verte** à 13 h 50, le job ayant tourné entre-temps hors horaire — l'amorçage de dix secondes de `docs/SPEC-relances.md` §9.7 est réarmé par tout rejeu de la migration 54, et `verify-relances.sh` promeut le job. La preuve est donc verte **parce qu'un autre harnais a tourné avant elle**, jamais selon l'état du produit | 2026-08-25 | *ouverte* — comportement inchangé, relève de `CRM-062` tranche 2, qui porte la preuve | 514 |
+| INC-217 | `supabase/tests/0052_relances_automatiques.test.sql` assertion 11 exige un passage `succeeded` de `p2enjoy-relances-cards-figees` dans `cron.job_run_details`, or ce job est planifié `23 3 * * *`. MESURÉ deux fois dans la même session : **rouge** à 12 h 45, **verte** à 13 h 50, le job ayant tourné entre-temps hors horaire — l'amorçage de dix secondes de `docs/SPEC-relances.md` §9.7 est réarmé par tout rejeu de la migration 54, et `verify-relances.sh` promeut le job. La preuve est donc verte **parce qu'un autre harnais a tourné avant elle**, jamais selon l'état du produit | 2026-08-25 | **close** — assertion révisée et preuve du moteur ARMÉE par le harnais, décision 508 | 514 |
 | INC-218 | `scripts/verify-modeles-emails.sh` extrayait la liste des variables du §2.4 par un motif appliqué à TOUT le document : le tableau du §8.6 commence deux de ses lignes par `card.amount` et `card.next_action_at`, et le harnais rendait « la base et le §2.4 divergent » — quatorze noms contre douze — alors que la base et le §2.4 étaient d'accord. **Faux verdict rouge**, ligne de base établie | 2026-08-25 | **CLOSE le 2026-08-25** par `CRM-063` tranche 3 : l'extraction est bornée au seul §2.4 par `sed`. Le harnais rend de nouveau **44 contrôles, aucune anomalie** | 515, 516 |
 
 ---
@@ -4961,10 +4961,25 @@ C'est plus grave que la première formulation, et non moins : une preuve **verte
 preuve a tourné avant elle** ne prouve pas ce qu'elle annonce. Le comportement du produit est
 inchangé dans les deux cas.
 
-**Ce qu'il faut pour la fermer** : que `CRM-062` rende cette assertion indépendante de ce qu'un
-autre harnais a fait avant elle — en armant elle-même le passage qu'elle mesure, sur un nom de job
-jetable —, ou qu'elle nomme explicitement la précondition. Aucun arbitrage du responsable n'est
-requis : les mesures ci-dessus suffisent à trancher.
+**FERMÉE LE 2026-08-25 par `CRM-062`, décision 508**, et par les DEUX voies à la fois, car elles ne
+règlent pas la même chose.
+
+- **L'assertion pgTAP est RÉVISÉE, jamais retirée ni relâchée** (mécanisme de la décision 51). Elle
+  exigeait un passage `succeeded` ; elle exige désormais qu'**aucun passage de ce job n'ait jamais
+  échoué**. Sur une pile qui n'en porte aucun, elle est vraie sans rien affirmer de faux ; sur une
+  pile qui en porte, elle est **plus stricte que l'ancienne**, qui se contentait d'un `succeeded` et
+  fermait les yeux sur un `failed` voisin. Le motif est écrit dans le fichier de preuve lui-même.
+- **La preuve que le moteur exécute réellement la commande est ARMÉE par le harnais**, section
+  « 7 quater » de `scripts/verify-relances.sh` : un job **jetable**, au nom unique, portant la
+  commande du produit — et non un `select 1`, qui prouverait que le moteur tourne sans prouver qu'il
+  sait exécuter cette fonction-là —, à la cadence d'amorçage ; le passage est attendu, exigé
+  `succeeded`, puis le job est désordonnancé et son absence **constatée**. Un fichier pgTAP ne
+  pouvait pas le faire : il s'exécute dans UNE transaction, et `pg_cron` ne voit que le committé.
+
+**Non-complaisance éprouvée** : le jetable pointé sur une fonction inexistante fait rendre « le
+moteur a lancé la commande et elle a ÉCHOUÉ : passage failed », verdict distinct de « aucun passage
+en 60 s ». Le harnais passe de 89 à **92 contrôles, aucune anomalie** ; `npm run test:sql` rend
+**57 fichiers, 2760 assertions, aucune anomalie**.
 
 
 ### INC-218 — le harnais de la tranche 1 lit la liste des variables dans TOUS les tableaux de la spécification
