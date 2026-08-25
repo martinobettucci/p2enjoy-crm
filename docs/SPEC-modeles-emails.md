@@ -526,6 +526,28 @@ et c'est ce qui rend la règle du §8.4 observable sans fabriquer de donnée.
 | Seed | **inchangé** : les deux modèles du §2.8 suffisent, et le trou de `card.amount` qu'ils exercent est précisément ce que le §8.4 rend observable |
 | E2E interface | **aucun** : 2a ne livre aucun écran. L'écart est nommé, et l'écran est 2b |
 
+### 8.9 bis UN DÉFAUT DU HARNAIS TROUVÉ PAR LE HARNAIS, corrigé à sa cause
+
+Son premier passage a rendu « 32 contrôles, 2 anomalies » — et l'une des deux était un **faux
+verdict**, exactement de la famille que le §2.11 a corrigée sur la tranche 1, sous une forme
+nouvelle.
+
+La dégradation D-E remplaçait la source de l'inventaire par la liste fermée. Le SQL obtenu portait
+un `trou[1]` posé sur un `text` : il **ne compile pas**. Or `degrader` ignorait le code de retour de
+`psql`, si bien que la base restait **inchangée**, la suite pgTAP restait verte, et le harnais
+concluait « COMPLAISANT — la suite reste VERTE » alors que **rien n'avait été dégradé**.
+
+Le §2.11 avait corrigé l'échec silencieux de la **substitution** ; celui-ci est l'échec silencieux
+de l'**application**. Corrigé à sa cause : le code de retour de `psql` est **testé**, un échec est
+nommé « IMPOSSIBLE » plutôt que compté pour une preuve, et la migration est restaurée
+immédiatement. La dégradation D-E est réécrite dans une forme qui s'applique, et elle **mord**.
+
+La seconde anomalie était de même nature : le contrôle de couverture nourrissait `psql` par son
+entrée standard sans capturer son erreur, et rendait donc une chaîne **vide** en cas d'échec — le
+harnais écrivait alors « des variables ne sont pas rendues : » suivi de rien. **Un contrôle dont
+l'échec ne se distingue pas de son verdict est un contrôle qui ment** ; il passe désormais par un
+fichier et capture sa sortie d'erreur.
+
 ### 8.10 Ce que la sous-tranche 2a ne prouve pas, et qui n'est pas masqué
 
 - **Aucun écran.** Le rendu ne s'atteint que par l'API. L'écran est 2b, cadré au §8.11.
