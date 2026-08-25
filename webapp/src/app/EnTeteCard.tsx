@@ -933,7 +933,13 @@ function BlocSommeil({
 								id="entete-card-sommeil-echeance"
 								data-testid="entete-card-sommeil-echeance"
 								type="datetime-local"
-								className="h-10 rounded-sm border border-border px-2"
+								// `min-h-[var(--size-target)]`, JAMAIS `h-10` : l'échelle est CLOSE (§11 du
+								// design system) et ne porte pas `10`, si bien que la classe n'était pas
+								// engendrée du tout — le champ rendait sa hauteur par défaut, sous la cible
+								// de 40 px du §8, sans que rien ne le signale. C'est INC-204. La forme
+								// retenue est celle du MÊME champ dans `RouteInbox.tsx` (§5.3 quater), et
+								// non une valeur inventée ici.
+								className="min-h-[var(--size-target)] rounded-sm border border-border px-2"
 								value={saisie}
 								aria-describedby={mention === null ? undefined : 'entete-card-sommeil-mention'}
 								onChange={(evenement) => setSaisie(evenement.target.value)}

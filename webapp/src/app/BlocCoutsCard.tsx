@@ -678,7 +678,11 @@ export function BlocCoutsCard({
 												{clos ? (
 													<span
 														data-testid="cout-pilule-cloture"
-														className="rounded-sm bg-bg px-2 py-0.5 text-sm text-text-2"
+														// `py-[2px]`, JAMAIS `py-0.5` : l'échelle du §3 est
+														// CLOSE et ne porte pas de demi-pas — la classe n'était
+														// pas engendrée, et la pilule rendait son rembourrage
+														// par défaut (INC-204).
+														className="rounded-sm bg-bg px-2 py-[2px] text-sm text-text-2"
 													>
 														{t('card.costs.budget.closed')}
 													</span>

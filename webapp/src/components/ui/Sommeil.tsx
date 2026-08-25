@@ -96,7 +96,12 @@ export function PastilleSommeil({
 			// `rounded-full` —, en `text-xs` : c'est la même information dans une place plus étroite.
 			// `shrink-0` : dans une ligne de tableau, le titre garde son ellipse et la pastille sa
 			// largeur, sans quoi la ligne passerait sur deux lignes et contredirait la densité du §5.9.
-			className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-xs text-brand"
+			// `py-[2px]`, JAMAIS `py-0.5` : l'échelle du §3 est CLOSE et ne porte pas de demi-pas,
+			// si bien que la classe n'était pas engendrée du tout et que la pastille rendait son
+			// rembourrage par défaut (INC-204, même cause qu'INC-158). Une mesure hors de
+			// l'échelle s'écrit en valeur arbitraire ASSUMÉE, comme le §11 le dit et comme
+			// `BlocContactsCard.tsx` l'écrit déjà.
+			className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-soft px-2 py-[2px] text-xs text-brand"
 		>
 			<Moon aria-hidden="true" className="size-3" />
 			{/* La date est déjà dans le nom accessible : la répéter au lecteur d'écran la ferait
