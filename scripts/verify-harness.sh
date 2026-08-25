@@ -414,8 +414,19 @@ PORT_RAPPORT=9323
 # `SCENARIOS_API` est INCHANGÉ à 858 : la tranche révise huit scénarios de `relances.spec.ts` et un
 # de `board.spec.ts`, elle n'en ajoute aucun. Une révision qui renforce une assertion ne change pas
 # un compte, et c'est précisément ce que ce témoin doit laisser passer. Valeurs COMPTÉES.
-FICHIERS_SQL_ATTENDUS=52
-ASSERTIONS_ATTENDUES=2531
+# RÉVISÉES PAR `CRM-063` TRANCHE 1, LE 2026-08-25.
+#
+# La tranche livre `supabase/tests/0053_modeles_emails.test.sql` — la table des modèles d'email,
+# ses deux contraintes de variables et ses quatre politiques : `FICHIERS_SQL_ATTENDUS` passe de 52 à
+# **53**, et 2531 + 55 = **2586**. Elle RÉVISE en outre `0016_preuves_refus.test.sql`, dont
+# l'inventaire des politiques gagne une assertion nominale et dont le compte passe de 103 à 107 —
+# garde-fou RÉVISÉ, jamais retiré (mécanisme de la décision 51). 2586 + 1 = **2587**, valeur
+# COMPTÉE par `npm run test:sql` et non déduite.
+#
+# `SCENARIOS_UI` et `SCENARIOS_MAIL` sont INCHANGÉS : cette tranche ne livre aucun écran et n'envoie
+# aucun email.
+FICHIERS_SQL_ATTENDUS=53
+ASSERTIONS_ATTENDUES=2587
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS

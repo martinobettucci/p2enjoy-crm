@@ -37,7 +37,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(58);
+select plan(59);
 
 -- =============================================================================================
 -- 1. Inventaire des politiques — ce qui rend le harnais capable d'échouer (§7.4)
@@ -165,10 +165,31 @@ select is(pg_temp.politiques('card_costs'),
 	'`card_costs` porte ses QUATRE politiques : lecture par la card ET le budget, les trois '
 	'écritures par qui écrit la card (docs/SPEC-costs.md §3)');
 
+-- RÉVISÉ PAR `CRM-063` tranche 1, qui livre les modèles d'email. Même geste que pour `CRM-084` et
+-- `CRM-085` : le compte ET l'inventaire nominal, ensemble.
+--
+-- CE QUE CES QUATRE NOMS DISENT DE LA RÈGLE. Le suffixe est `_membre` sur la lecture et
+-- `_membre_ecrivant` sur les trois écritures : un modèle d'email est un objet ÉDITORIAL COLLECTIF
+-- du workspace, lu par tout membre — la lectrice comprise — et écrit par l'administrateur comme par
+-- le business developer (docs/SPEC-modeles-emails.md §2.6). C'est le patron de `goal_boards`, et
+-- non celui des budgets : un texte n'est pas un cadre de gestion.
+select is(pg_temp.politiques('mail_templates'),
+	array['mail_templates_insertion_membre_ecrivant', 'mail_templates_lecture_membre',
+	      'mail_templates_maj_membre_ecrivant', 'mail_templates_suppression_membre_ecrivant'],
+	'`mail_templates` porte ses QUATRE politiques : lecture par tout membre, les trois écritures '
+	'par l''administrateur et le business developer (docs/SPEC-modeles-emails.md §2.6)');
+
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	103,
-	'CENT TROIS politiques dans `public`, et pas une de plus — 99 avant `CRM-085`, plus les QUATRE '
+	107,
+	'CENT SEPT politiques dans `public`, et pas une de plus — 103 avant `CRM-063` tranche 1, plus '
+	'les QUATRE politiques des modèles d''email : lecture, insertion, MAJ, suppression sur '
+	'`mail_templates` (docs/SCHEMA.md §7). CETTE TABLE N''A AUCUNE RPC NON PLUS — écrire un modèle '
+	'est une écriture ordinaire dont la règle tient ENTIÈREMENT dans les politiques —, et la '
+	'validation de ses variables ne vit PAS dans une politique mais dans DEUX CONTRAINTES DE '
+	'VÉRIFICATION : une contrainte refuse un contenu, une politique refuse un appelant, et les '
+	'confondre ferait dépendre la justesse d''un modèle de l''identité de qui l''écrit. Avant '
+	'elles : 103 avant `CRM-063`, soit 99 avant `CRM-085`, plus les QUATRE '
 	'politiques des lignes de coût : lecture, insertion, MAJ, suppression sur `card_costs` '
 	'(docs/SCHEMA.md §9 bis.7). CETTE TABLE N''A AUCUNE RPC NON PLUS, et ses quatre politiques ne '
 	'portent pas toutes la même condition — c''est ce qui les rend irréductibles les unes aux '
