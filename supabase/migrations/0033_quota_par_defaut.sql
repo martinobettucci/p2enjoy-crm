@@ -18,6 +18,14 @@
 -- (`coalesce(p_daily_quota, i.daily_quota)`, qui préserve la valeur existante), et tout le reste de
 -- la fonction — droits, secret, adresse par défaut — est recopié à l'identique de la `0023`.
 
+-- LE `drop` A LE MÊME MOTIF QUE DANS LA MIGRATION 23, et il est MESURÉ (`CRM-063` tranche 3) : la
+-- migration 58 renomme `p_signature_html` en `p_signature_text`, et `create or replace function`
+-- REFUSE de changer le nom d'un paramètre d'entrée. Sans ce retrait, le rejeu intégral du
+-- répertoire s'arrêterait ici dès le deuxième démarrage suivant la 58.
+drop function if exists public.upsert_mail_outbound_identity(
+	uuid, text, text, integer, text, text, text, text, uuid, text, text, boolean, integer
+);
+
 create or replace function public.upsert_mail_outbound_identity(
 	p_workspace_id   uuid,
 	p_label          text,
@@ -29,7 +37,7 @@ create or replace function public.upsert_mail_outbound_identity(
 	p_password       text default null,
 	p_owner_id       uuid default null,
 	p_from_name      text default null,
-	p_signature_html text default null,
+	p_signature_text text default null,
 	p_is_default     boolean default true,
 	p_daily_quota    integer default null
 )
@@ -129,14 +137,14 @@ begin
 
 		insert into public.mail_outbound_identities (
 			workspace_id, owner_id, label, smtp_host, smtp_port, smtp_security, smtp_username,
-			secret_id, from_address, from_name, signature_html, is_default, daily_quota
+			secret_id, from_address, from_name, signature_text, is_default, daily_quota
 		)
 		values (
 			p_workspace_id, p_owner_id, btrim(p_label), btrim(p_smtp_host), p_smtp_port,
 			p_smtp_security, btrim(p_smtp_username), v_secret_id, btrim(p_from_address),
 			-- SEULE LIGNE CHANGÉE : `p_daily_quota`, sans `coalesce` — « rien de précisé » reste
 			-- `NULL` (aucun plafond), comme la migration 0030 l'a établi.
-			p_from_name, p_signature_html, coalesce(p_is_default, true), p_daily_quota
+			p_from_name, p_signature_text, coalesce(p_is_default, true), p_daily_quota
 		)
 		returning id into v_id;
 	else
@@ -148,7 +156,7 @@ begin
 		       smtp_username  = btrim(p_smtp_username),
 		       secret_id      = v_secret_id,
 		       from_name      = coalesce(p_from_name, i.from_name),
-		       signature_html = coalesce(p_signature_html, i.signature_html),
+		       signature_text = coalesce(p_signature_text, i.signature_text),
 		       is_default     = coalesce(p_is_default, i.is_default),
 		       daily_quota    = coalesce(p_daily_quota, i.daily_quota),
 		       status         = case

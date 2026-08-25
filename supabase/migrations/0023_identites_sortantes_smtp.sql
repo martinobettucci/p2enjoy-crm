@@ -35,7 +35,10 @@ create table if not exists public.mail_outbound_identities (
 	-- le démontre au lieu de le décrire.
 	from_address    text not null,
 	from_name       text,
-	signature_html  text,
+	-- RENOMMÉE PAR LA MIGRATION 58 (`CRM-063` tranche 3, INC-215) : le sous-système expédie du
+	-- TEXTE, et un nom annonçant du HTML mentait sur son contenu. Le nom est posé directement ici
+	-- pour une base neuve ; la 58 renomme celles qui portent encore l'ancien.
+	signature_text  text,
 	is_default      boolean not null default false,
 	-- CRÉÉE SANS CONSOMMATEUR, et le dire vaut mieux que de laisser croire qu'un quota est
 	-- appliqué : l'envoi appartient à `CRM-058` (§14.1).
@@ -231,6 +234,16 @@ create policy mail_outbound_identities_lecture_proprietaire
 -- 3. Le chemin d'écriture, et il est unique
 -- =============================================================================================
 
+-- LE `drop` EST OBLIGATOIRE, ET C'EST MESURÉ (`CRM-063` tranche 3) : la migration 58 renomme le
+-- paramètre `p_signature_html` en `p_signature_text`, et PostgreSQL REFUSE qu'un
+-- `create or replace function` change le nom d'un paramètre d'entrée. Sans ce retrait, le rejeu
+-- intégral du répertoire — le `migrations-runner` ne tient aucun registre (`docs/DAT.md` §3.2) —
+-- s'arrêterait ici dès le deuxième démarrage suivant la 58. Même geste, et même motif, que pour
+-- `public.reserver_envois` dans la migration 30.
+drop function if exists public.upsert_mail_outbound_identity(
+	uuid, text, text, integer, text, text, text, text, uuid, text, text, boolean, integer
+);
+
 create or replace function public.upsert_mail_outbound_identity(
 	p_workspace_id   uuid,
 	p_label          text,
@@ -242,7 +255,7 @@ create or replace function public.upsert_mail_outbound_identity(
 	p_password       text default null,
 	p_owner_id       uuid default null,
 	p_from_name      text default null,
-	p_signature_html text default null,
+	p_signature_text text default null,
 	p_is_default     boolean default true,
 	p_daily_quota    integer default null
 )
@@ -358,12 +371,12 @@ begin
 
 		insert into public.mail_outbound_identities (
 			workspace_id, owner_id, label, smtp_host, smtp_port, smtp_security, smtp_username,
-			secret_id, from_address, from_name, signature_html, is_default, daily_quota
+			secret_id, from_address, from_name, signature_text, is_default, daily_quota
 		)
 		values (
 			p_workspace_id, p_owner_id, btrim(p_label), btrim(p_smtp_host), p_smtp_port,
 			p_smtp_security, btrim(p_smtp_username), v_secret_id, btrim(p_from_address),
-			p_from_name, p_signature_html, coalesce(p_is_default, true), coalesce(p_daily_quota, 0)
+			p_from_name, p_signature_text, coalesce(p_is_default, true), coalesce(p_daily_quota, 0)
 		)
 		returning id into v_id;
 	else
@@ -375,7 +388,7 @@ begin
 		       smtp_username  = btrim(p_smtp_username),
 		       secret_id      = v_secret_id,
 		       from_name      = coalesce(p_from_name, i.from_name),
-		       signature_html = coalesce(p_signature_html, i.signature_html),
+		       signature_text = coalesce(p_signature_text, i.signature_text),
 		       is_default     = coalesce(p_is_default, i.is_default),
 		       daily_quota    = coalesce(p_daily_quota, i.daily_quota),
 		       -- Toute modification de la connexion REMET l'état à `pending` : un `ok` obtenu
@@ -485,9 +498,16 @@ comment on function public.mail_outbound_identity_record_check is
 revoke all on public.mail_outbound_identities from anon, authenticated;
 
 -- `secret_id` est ABSENTE de cette liste : seconde moitié de la preuve de refus n° 6.
+-- LA COLONNE DE SIGNATURE N'EST PLUS NOMMÉE ICI, et c'est une MESURE qui l'impose (`CRM-063`
+-- tranche 3). Sur une base existante, la colonne s'appelle encore `signature_html` au moment où
+-- cette migration est rejouée — la 58, qui la renomme, passe APRÈS elle. Une liste nommant
+-- `signature_text` échouerait donc au premier rejeu, et une liste nommant `signature_html`
+-- échouerait à tous les suivants. Le privilège de cette colonne appartient à la migration qui
+-- possède son nom : la 58 pose `grant select (signature_text)`. Un privilège de colonne SUIT le
+-- renommage, si bien qu'aucune base ne perd le sien entre les deux.
 grant select (
 	id, workspace_id, owner_id, label, smtp_host, smtp_port, smtp_security, smtp_username,
-	from_address, from_name, signature_html, is_default, daily_quota, status, last_error,
+	from_address, from_name, is_default, daily_quota, status, last_error,
 	last_checked_at, created_at, updated_at
 ) on public.mail_outbound_identities to authenticated;
 
