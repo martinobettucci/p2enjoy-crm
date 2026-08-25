@@ -44,6 +44,24 @@ begin
 		 where conrelid = 'public.card_events'::regclass
 		   and conname  = 'card_events_type_check'
 		   and pg_get_constraintdef(oid) like '%snoozed%'
+	) and not exists (
+		-- INC-144 — DEUXIÈME GARDE, celle des migrations 20, 25 et 30, qui manquait ici. La
+		-- première ne regarde que la contrainte et ne voit rien lorsqu'elle a été déposée ou
+		-- réduite ; les lignes, elles, peuvent déjà porter un type qu'une migration POSTÉRIEURE a
+		-- livré. Tant que ces quatorze valeurs étaient les plus larges du dépôt, l'omission était
+		-- inerte. La migration 54 (`CRM-062`) en a posé une quinzième, `stalled`, et le seed en
+		-- écrit quatre lignes : sans cette garde, la convergence tentait de reposer une contrainte
+		-- que les données violent, le rejeu s'arrêtait ici en `23514`, et les migrations 45 à 54 ne
+		-- s'appliquaient plus du tout — INC-210, MESURÉ le 2026-08-25.
+		--
+		-- On ne converge donc que si les lignes sont compatibles avec les quatorze valeurs que
+		-- CETTE migration pose. Sinon la 54 reste seule responsable du vocabulaire complet, ce
+		-- qu'elle sait faire : sa propre garde ne regarde que `stalled`.
+		select 1 from public.card_events
+		 where type <> all (array[
+			'created', 'moved', 'assigned', 'channel_changed', 'workflow_changed',
+			'archived', 'unarchived', 'trashed', 'restored', 'field_changed',
+			'mail_received', 'mail_sent', 'snoozed', 'woken'])
 	) then
 		alter table public.card_events drop constraint if exists card_events_type_check;
 		alter table public.card_events add constraint card_events_type_check
