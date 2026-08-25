@@ -8246,7 +8246,8 @@ preuves, l'écran vérifié visuellement aux quatre paliers, console vierge.
       du suivant (INC-209). Bilan : **cinquante-sept verts**. Les autres, nommés un à un —
       `verify-board.sh` (**INC-139**, une seule anomalie là où l'entrée en comptait quatre),
       `verify-corbeille.sh` (**INC-192**, `@spec CRM-077` cherchée dans les trois premières lignes
-      d'un fichier qui en cumule dix), `verify-scripts.sh` (**INC-186**, la reconstruction sans CA
+      d'un fichier qui en cumule dix — **corrigée depuis par une session concurrente**, commit
+      `752d3b4`), `verify-scripts.sh` (**INC-186**, la reconstruction sans CA
       derrière le proxy), et **quatre non menés à terme** dans le plafond de dix minutes retenu ici :
       `verify-droits-fins.sh`, `verify-tracks.sh`, `verify-webapp.sh` — les trois qu'**INC-190**
       mesure au-delà de vingt minutes — et `verify-harness.sh`, qui rejoue la campagne entière.
