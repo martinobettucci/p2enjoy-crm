@@ -807,6 +807,27 @@ les quatorze du §8.8 pour le rendu. Il ajoute **un seul** appel neuf, celui du 
 | Harnais | `scripts/verify-modeles-emails-ecran.sh` : verdict unique, non complaisant, avec des **dégradations réelles** dont la restauration est constatée **octet à octet** contre un instantané pris avant la première (§2.11, §8.9 bis) |
 | Seed | **inchangé** : les deux modèles du §2.8 ouvrent l'écran sur du contenu, et l'état vide ne se rencontre qu'après une suppression complète |
 
+### 9.10 bis UN DÉFAUT DU HARNAIS TROUVÉ PAR LE HARNAIS — le troisième, et le premier FAUX ROUGE
+
+Son premier passage a rendu « 37 contrôles, 1 anomalie », et l'anomalie **n'en était pas une**.
+
+Les contrôles de sa section 4 cherchent ce que l'écran **s'interdit** : `required`, `maxLength`, un
+droit calculé. Écrits sur le fichier **brut**, ils trouvaient ces mots dans le **commentaire** qui
+explique pourquoi ils sont absents — « AUCUNE GARDE DE SAISIE : ni `required`, ni `maxLength` » — et
+le harnais rendait « ECHEC » sur un écran parfaitement conforme.
+
+**LES DEUX DÉFAUTS PRÉCÉDENTS ÉTAIENT DES FAUX VERTS ; CELUI-CI EST UN FAUX ROUGE, ET IL EST TOUT
+AUSSI GRAVE.** Le §2.11 avait corrigé l'échec silencieux de la **substitution**, le §8.9 bis celui de
+l'**application** : dans les deux cas, le harnais annonçait une preuve qu'il n'avait pas faite. Ici
+il annonce un défaut qui n'existe pas — et un harnais qui rougit sur du texte juste finit par être lu
+comme du bruit, ce qui revient au même : son verdict cesse de vouloir dire quelque chose.
+
+Corrigé **à sa cause** : les quatre contrôles qui lisent un fichier source passent désormais par
+`code_seul`, qui retire les commentaires avant de chercher. Le contrôle mesure le **code**, jamais la
+prose qui le décrit. La règle vaut au-delà de ce harnais : **un contrôle qui cherche l'absence d'un
+motif doit chercher dans ce qui s'exécute**, sans quoi la documentation d'une règle suffit à la faire
+paraître violée.
+
 ### 9.11 Definition of Done — sous-tranche 2b
 
 - migration `0057_guichet_variables_modeles.sql` appliquée et rejouable ;
