@@ -215,6 +215,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-210 | La migration 44 n'a pas la SECONDE garde d'INC-144 : depuis que `CRM-062` écrit `stalled`, tout rejeu du répertoire sur une base dont la contrainte a été réduite s'arrête en `23514` sur la 44, et les migrations 45 à 54 ne s'appliquent plus. La pile reste avec un vocabulaire amputé et toute trace serveur est refusée | 2026-08-25 | **close** — seconde garde posée par la décision 507, imputable à `CRM-062` | 507 |
 | INC-211 | `scripts/verify-move-card.sh` rend « la restauration n'a pas rétabli l'état initial » EN SÉRIE et **57 contrôles, aucune anomalie** rejoué seul, seed reposé — la dégradation `b`, qui emploie la MÊME restauration, est verte dans le même passage | 2026-08-25 | *ouverte* — cause non établie, comportement inchangé, relève de `CRM-034` | 507 |
 | INC-212 | `scripts/verify-mail-infra.sh` laisse en base son message « Preuve journal Stalwart propre », NON classé : l'inbox porte dès lors un troisième fil non classé, et l'état vide de `e2e/ui/sommeil-fil.spec.ts` ne peut plus être atteint. Troisième fichier de la famille d'INC-209 | 2026-08-25 | **close** — le harnais reprend son message des DEUX côtés, décision 508 | 507, 508 |
+| INC-220 | `mail_sent` est écrit en base depuis la migration `0030` (`CRM-058`) et n'a JAMAIS figuré dans le vocabulaire de l'écran : neuf lignes du fil se lisent « Événement ». Deux preuves du repli s'en servaient comme témoin de type « inconnu », ce qui a rendu le manque invisible cinq unités durant | 2026-08-25 | **close** — type nommé, rangé en `discussion`, traduit et présenté ; les deux témoins révisés (décision 408) | 518 |
 | INC-215 | `mail_outbound_identities.signature_html` existe depuis `CRM-053` et n'est lue par PERSONNE — ni `mail-sync` à l'envoi, ni l'écran de `CRM-089`, qui n'envoie délibérément jamais `p_signature_html`. Son nom annonce du **HTML** là où tout le sous-système expédie du **texte** | 2026-08-25 | **CLOSE le 2026-08-25** par `CRM-063` tranche 3, migration 58 : la colonne devient `signature_text`, elle est bornée, elle est LUE par la garde d'envoi et ÉCRITE par l'écran | 512, 516 |
 | INC-216 | `public.rendre_modele_email` rend `card.next_action_at` **en UTC** : MESURÉ, aucune colonne de fuseau n'existe dans le schéma — seule `profiles.locale`, qui est une **langue**. Un destinataire français lira 09:00 là où le rendez-vous est à 11:00 en heure d'été | 2026-08-25 | *ouverte* — comportement ASSUMÉ et figé par une assertion, **arbitrage attendu** : à qui appartient le fuseau d'un email sortant | 514 |
 | INC-217 | `supabase/tests/0052_relances_automatiques.test.sql` assertion 11 exige un passage `succeeded` de `p2enjoy-relances-cards-figees` dans `cron.job_run_details`, or ce job est planifié `23 3 * * *`. MESURÉ deux fois dans la même session : **rouge** à 12 h 45, **verte** à 13 h 50, le job ayant tourné entre-temps hors horaire — l'amorçage de dix secondes de `docs/SPEC-relances.md` §9.7 est réarmé par tout rejeu de la migration 54, et `verify-relances.sh` promeut le job. La preuve est donc verte **parce qu'un autre harnais a tourné avant elle**, jamais selon l'état du produit | 2026-08-25 | **close** — assertion révisée et preuve du moteur ARMÉE par le harnais, décision 508 | 514 |
@@ -5171,3 +5172,52 @@ fichier purge désormais par slug dans son `finally`, et à l'entrée de chaque 
 et `8 passés`, la base ne portant **aucun** track non seedé derrière — le `cree-par-admin` que
 l'entrée citait n'existe plus. `e2e/ui/authentification.spec.ts`, dont les deux échecs étaient la
 conséquence, rend **8 passés**.
+
+---
+
+### INC-220 — `mail_sent` n'existait que dans la base, et deux preuves s'étaient approprié son absence
+
+**Trouvée le 2026-08-25 par `CRM-060` tranche 5**, et par un mécanisme qui vaut d'être écrit :
+l'assertion de couverture du vocabulaire — celle qu'INC-207 avait fait naître — a exigé de compter
+les types un à un. Le compte attendu était dix-huit, la table de l'écran en rendait dix-sept.
+
+**Ce qui a été mesuré.**
+
+```
+grep -rn "'mail_sent'" supabase/migrations/*.sql
+  0030_envoi_sortant.sql:480 :  perform app.card_event_ecrire(…, 'mail_sent', …)
+
+select count(*) from public.card_events where type = 'mail_sent';
+  9
+```
+
+Le type est **écrit par le produit** depuis `CRM-058` — `public.marquer_envoi_reussi` inscrit la
+trace d'un envoi réussi —, et la base en portait **neuf** au moment de la mesure. Côté écran, il ne
+figurait ni dans `TYPES_EVENEMENT`, ni dans `FAMILLE_PAR_TYPE`, ni dans les traductions, ni dans la
+table de présentation : le repli documenté le rangeait en `cycle` et le fil le rendait
+**« Événement »**. C'est le défaut exact d'INC-207, sur un autre type, et il a vécu **cinq unités**.
+
+**POURQUOI IL A SURVÉCU SI LONGTEMPS, ET C'EST LE FAIT LE PLUS UTILE DE CETTE ENTRÉE.** Deux preuves
+du repli employaient `mail_sent` **comme témoin de type inconnu** :
+
+```
+timeline.test.ts        expect(familleDe('mail_sent')).toBe('cycle')
+PanneauTimeline.test.tsx  monter({ evenements: [evenement({ type: 'mail_sent' })] })
+                          → attend le libellé générique « Événement »
+```
+
+Les deux étaient VERTES, et elles l'étaient **parce que** le défaut existait. Une preuve qui prend un
+manque pour témoin cesse de le dénoncer : elle le protège. Le commentaire de la seconde disait même
+« le témoin est un type que le produit n'a pas encore livré », ce qui était faux depuis `CRM-058`.
+
+**CORRIGÉE À SA CAUSE, décision 518.** `mail_sent` est nommé, rangé en **`discussion`** — un courrier
+envoyé est une parole autant qu'un courrier reçu, et les séparer ferait disparaître la moitié d'une
+conversation quand l'utilisateur filtre —, traduit « Message envoyé », et présenté avec l'icône
+`Send`, distincte du `Mail` de la réception (§9 du design system). Son détail suit le même chemin
+que `mail_received` : le `payload` porte le même `message_id`, et le message envoyé est archivé sur
+l'affaire (`CRM-058` §19.5).
+
+**Les deux témoins sont RÉVISÉS, jamais retirés**, et selon la règle de la décision 408 — un témoin
+n'emploie jamais une valeur que le produit peut livrer un jour. Le nouveau,
+`sonde_type_jamais_livre`, n'est pas dans `card_events_type_check` : la base **refuse** de l'écrire,
+donc il ne cessera jamais d'être inconnu.
