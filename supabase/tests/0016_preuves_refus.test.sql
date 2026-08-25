@@ -37,7 +37,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(59);
+select plan(61);
 
 -- =============================================================================================
 -- 1. Inventaire des politiques — ce qui rend le harnais capable d'échouer (§7.4)
@@ -179,10 +179,42 @@ select is(pg_temp.politiques('mail_templates'),
 	'`mail_templates` porte ses QUATRE politiques : lecture par tout membre, les trois écritures '
 	'par l''administrateur et le business developer (docs/SPEC-modeles-emails.md §2.6)');
 
+-- RÉVISÉ PAR `CRM-063` SOUS-TRANCHE 4a, qui livre les séquences de relance. Même geste que pour la
+-- tranche 1 : le compte ET l'inventaire nominal, ensemble.
+--
+-- LES DEUX TABLES PORTENT CHACUNE LES QUATRE POLITIQUES, ET C'EST UNE DÉCISION. Un palier
+-- modifiable par qui ne peut pas modifier sa séquence serait un contournement : la cadence vit dans
+-- les PALIERS, et une séquence sans eux n'envoie rien (docs/SPEC-modeles-emails.md §11.7). Les
+-- suffixes sont ceux des modèles d'email — `_membre` en lecture, `_membre_ecrivant` sur les trois
+-- écritures —, parce qu'une cadence est le même genre d'objet : éditorial et collectif.
+select is(pg_temp.politiques('mail_sequences'),
+	array['mail_sequences_insertion_membre_ecrivant', 'mail_sequences_lecture_membre',
+	      'mail_sequences_maj_membre_ecrivant', 'mail_sequences_suppression_membre_ecrivant'],
+	'`mail_sequences` porte ses QUATRE politiques : lecture par tout membre, les trois écritures '
+	'par l''administrateur et le business developer (docs/SPEC-modeles-emails.md §11.7)');
+
+select is(pg_temp.politiques('mail_sequence_steps'),
+	array['mail_sequence_steps_insertion_membre_ecrivant', 'mail_sequence_steps_lecture_membre',
+	      'mail_sequence_steps_maj_membre_ecrivant', 'mail_sequence_steps_suppression_membre_ecrivant'],
+	'`mail_sequence_steps` porte ses QUATRE politiques : la cadence vit dans les paliers, et les '
+	'ouvrir plus largement que leur séquence serait un contournement (§11.7)');
+
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	107,
-	'CENT SEPT politiques dans `public`, et pas une de plus — 103 avant `CRM-063` tranche 1, plus '
+	115,
+	'CENT QUINZE politiques dans `public`, et pas une de plus — 107 avant `CRM-063` '
+	'sous-tranche 4a, plus les HUIT politiques des séquences de relance : QUATRE par table — '
+	'lecture, insertion, MAJ, suppression — sur `mail_sequences` et `mail_sequence_steps` '
+	'(docs/SCHEMA.md §7, docs/SPEC-modeles-emails.md §11.7). CE COUPLE N''A AUCUNE RPC : composer '
+	'une cadence est une écriture ordinaire dont la règle tient ENTIÈREMENT dans les politiques. '
+	'LES DEUX TABLES EN PORTENT QUATRE CHACUNE, et non quatre pour le couple : un palier '
+	'modifiable par qui ne peut pas modifier sa séquence serait un contournement, la cadence vivant '
+	'dans les paliers. Ce que ces politiques ne portent PAS est tenu par des CLÉS ÉTRANGÈRES — la '
+	'divergence de workspace d''un palier, refusée en `23503` par deux clés composites, et la '
+	'suppression d''un modèle employé, refusée par le `on delete restrict` du §2.2 : une clé '
+	'refuse une INCOHÉRENCE, une politique refuse un APPELANT, et les confondre rendrait le '
+	'cloisonnement dépendant de l''identité de qui écrit. Avant elles : 107 avant la '
+	'sous-tranche 4a, soit 103 avant `CRM-063` tranche 1, plus '
 	'les QUATRE politiques des modèles d''email : lecture, insertion, MAJ, suppression sur '
 	'`mail_templates` (docs/SCHEMA.md §7). CETTE TABLE N''A AUCUNE RPC NON PLUS — écrire un modèle '
 	'est une écriture ordinaire dont la règle tient ENTIÈREMENT dans les politiques —, et la '
