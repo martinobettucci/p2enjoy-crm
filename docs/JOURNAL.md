@@ -24503,6 +24503,26 @@ passés** ; `e2e:ui` **604 passés, 15,3 min** ; `e2e:mail` **42 passés** ; `py
 `scripts/verify-modeles-emails-ecran.sh` **37 contrôles, aucune anomalie**, ses cinq dégradations
 vues et la restauration constatée.
 
+**UNE ANOMALIE PRÉEXISTANTE TROUVÉE PAR LA CAMPAGNE, ET LA LIGNE DE BASE L'A TRANCHÉE.**
+`scripts/verify-modeles-emails.sh --rapide` rend **44 contrôles, 1 anomalie** : « la base et le §2.4
+divergent », quatorze noms côté spécification contre douze côté base. Son extraction prend **toute**
+ligne de **tout** tableau du document commençant par un nom de la forme `objet.colonne`, et le
+tableau du **§8.6** — écrit par la sous-tranche **2a** — commence ses deux lignes par `card.amount`
+et `card.next_action_at`. L'extraction rendue par la spécification **au commit `c2dfd7a`**, avant la
+moindre écriture de cette session, est **identique octet pour octet** à celle de l'arbre courant :
+l'anomalie est **préexistante**, elle date de 2a, et elle n'a pas été vue en son temps parce que la
+campagne de la décision 514 n'a pas rejoué ce harnais-là. Consignée **INC-218**, comportement
+inchangé ; aucune preuve du produit n'est en défaut, c'est le harnais qui lit mal sa source. La
+correction — borner l'extraction au seul §2.4 — appartient à la prochaine session qui touchera
+`CRM-063`.
+
+**Autres harnais rejoués** : `scripts/verify-rendu-modeles-emails.sh --rapide` **32 contrôles, aucune
+anomalie** ; `scripts/verify-harness.sh --rapide` **31 contrôles, aucune anomalie**, ce qui certifie
+les quatre compteurs révisés ; `scripts/verify-node-toolchain.sh` **5 contrôles, aucune anomalie** —
+les **44** harnais préparent la chaîne Node, le neuf compris. **Ce qui n'a PAS été exécuté, et qui
+est dit** : les quarante-six autres `scripts/verify-*.sh`, la série entière ne tenant pas dans une
+session (`docs/CloudWorker.md` §2.1 ter).
+
 **Où reprendre.** `CRM-063` **tranche 3 — la signature**, cadrée au §7.2 et **à spécifier ligne à
 ligne avant sa première ligne de code**. Elle devra trancher ce qu'INC-215 laisse ouvert depuis la
 tranche 1 : `mail_outbound_identities.signature_html` est **morte** — personne ne la lit — et **mal
