@@ -18,7 +18,7 @@
 // la relit pour la constater.
 
 import { expect, test } from '@playwright/test'
-import { enTetesAnonymes, enTetesAuthentifies, jetonDe } from './jetons'
+import { URL_API, enTetesAnonymes, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
 
 const IDENTITES = '/rest/v1/mail_outbound_identities'
 const ECRIRE_IDENTITE = '/rest/v1/rpc/upsert_mail_outbound_identity'
@@ -191,31 +191,48 @@ test.describe('la signature d’une identité sortante, par la vraie route (§10
 		const idIdentite = ((await identites.json()) as { id: string }[])[0]?.id
 		expect(idIdentite, 'l’identité de Driss est introuvable').toBeDefined()
 
+		// LA LIGNE MISE EN FILE EST RETIRÉE DANS UN `finally`, ET CE N'EST PAS DE LA POLITESSE.
+		// MESURÉ le 2026-08-25 : sans ce retrait, `mail-sync` a VRAIMENT expédié le message, le
+		// serveur l'a remis dans la boîte de l'affaire, l'ingestion l'a classé — et les cinq
+		// scénarios de `e2e/ui/groupement-fils.spec.ts` ont rougi, cette suite-là comptant les
+		// messages de l'affaire « Refonte du site vitrine », qui est celle-ci. Une preuve qui
+		// laisse partir un courrier n'est pas isolée : elle change l'état que les autres lisent.
+		// C'est le patron de `e2e/api/envoi.spec.ts`, repris tel quel plutôt que redécouvert.
 		const objet = `${PREFIXE} ${Date.now()}`
-		const miseEnFile = await request.post(METTRE_EN_FILE, {
-			headers: enTetesAuthentifies(jetonBizdev),
-			data: {
-				p_card_id: CARD,
-				p_identity_id: idIdentite,
-				p_to: ['client@example.test'],
-				p_subject: objet,
-				p_body_text: 'Bonjour.',
-			},
-		})
-		expect(miseEnFile.status()).toBe(200)
+		let idFile: string | undefined
+		try {
+			const miseEnFile = await request.post(METTRE_EN_FILE, {
+				headers: enTetesAuthentifies(jetonBizdev),
+				data: {
+					p_card_id: CARD,
+					p_identity_id: idIdentite,
+					p_to: ['client@example.test'],
+					p_subject: objet,
+					p_body_text: 'Bonjour.',
+				},
+			})
+			expect(miseEnFile.status()).toBe(200)
+			idFile = (await miseEnFile.json()) as string
 
-		const file = await request.get(
-			`${OUTBOX}?select=body_text&subject=eq.${encodeURIComponent(objet)}`,
-			{ headers: enTetesAuthentifies(jetonBizdev) },
-		)
-		expect(file.status()).toBe(200)
-		const ligne = ((await file.json()) as { body_text: string }[])[0]
-		expect(ligne, 'la ligne de file est introuvable').toBeDefined()
-		// CARACTÈRE À CARACTÈRE : c'est la seule comparaison qui dénonce une ligne vide de trop ou
-		// l'espace du séparateur perdue en route.
-		expect((ligne as { body_text: string }).body_text).toBe(
-			`Bonjour.\n\n${SEPARATEUR}\n${signature}`,
-		)
+			const file = await request.get(
+				`${OUTBOX}?select=body_text&subject=eq.${encodeURIComponent(objet)}`,
+				{ headers: enTetesAuthentifies(jetonBizdev) },
+			)
+			expect(file.status()).toBe(200)
+			const ligne = ((await file.json()) as { body_text: string }[])[0]
+			expect(ligne, 'la ligne de file est introuvable').toBeDefined()
+			// CARACTÈRE À CARACTÈRE : c'est la seule comparaison qui dénonce une ligne vide de trop
+			// ou l'espace du séparateur perdue en route.
+			expect((ligne as { body_text: string }).body_text).toBe(
+				`Bonjour.\n\n${SEPARATEUR}\n${signature}`,
+			)
+		} finally {
+			if (idFile !== undefined) {
+				await request.delete(`${URL_API}${OUTBOX}?id=eq.${idFile}`, {
+					headers: enTetesService(),
+				})
+			}
+		}
 
 		// LE SEPTIÈME REFUS, et son témoin est l'appel qui précède : le même envoi avec un corps
 		// non vide vient d'être accepté.
