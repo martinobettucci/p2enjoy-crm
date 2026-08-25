@@ -367,12 +367,14 @@ eprouver_degradation "la garde cesse de signer le corps mis en file" \
 	"app.mail_corps_signe(p_body_text, v_identite.signature_text)," \
 	"p_body_text,"
 
-# D-G — la borne saute.
-eprouver_degradation "la borne de la signature saute" \
-	"check (char_length(signature_text) <= 2000);
-	elsif v_definition_reelle <> v_definition_attendue then" \
-	"check (char_length(signature_text) <= 200000);
-	elsif v_definition_reelle <> v_definition_attendue then"
+# D-G — la borne est DESSERRÉE. Elle ne portait pas au premier essai, et c'est ce harnais qui l'a
+# dit : la migration écrivait alors la valeur TROIS fois, si bien qu'aucune substitution ponctuelle
+# ne pouvait la changer — la convergence ramenait la borne à deux mille, la suite pgTAP restait
+# verte, et le verdict « COMPLAISANT » accusait la suite d'un défaut qui était celui de la
+# dégradation. La migration écrit désormais la borne UNE fois, et un seul point suffit.
+eprouver_degradation "la borne de la signature est desserrée" \
+	"v_borne constant integer := 2000;" \
+	"v_borne constant integer := 200000;"
 
 # =================================================================================================
 echo

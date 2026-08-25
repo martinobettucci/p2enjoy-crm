@@ -86,8 +86,18 @@ comment on column public.mail_outbound_identities.signature_text is
 
 do $$
 declare
+	-- LA BORNE EST ÉCRITE UNE SEULE FOIS, ET C'EST LE HARNAIS DÉDIÉ QUI L'A IMPOSÉ. Sa première
+	-- écriture la répétait trois fois — dans la définition attendue et dans les deux `add` —, si
+	-- bien qu'AUCUNE substitution ponctuelle ne pouvait la desserrer : changer la définition
+	-- attendue faisait rejouer un `add` resté à deux mille, et la convergence ramenait la borne à
+	-- sa valeur. `scripts/verify-signature-identite.sh` a donc conclu « COMPLAISANT » à propos
+	-- d'une suite pgTAP qui, elle, était parfaitement capable de rougir : c'est la DÉGRADATION qui
+	-- ne dégradait pas, la troisième forme de ce mensonge tranquille après celles des §2.11 et
+	-- §8.9 bis. Le remède est celui du §3 de la spécification : la valeur est écrite une fois, et
+	-- les trois usages la lisent.
+	v_borne constant integer := 2000;
 	v_definition_attendue constant text :=
-		'CHECK ((char_length(signature_text) <= 2000))';
+		format('CHECK ((char_length(signature_text) <= %s))', v_borne);
 	v_definition_reelle text;
 begin
 	select pg_catalog.pg_get_constraintdef(c.oid) into v_definition_reelle
@@ -95,16 +105,13 @@ begin
 	 where c.conrelid = 'public.mail_outbound_identities'::regclass
 	   and c.conname  = 'mail_outbound_identities_signature_borne';
 
-	if v_definition_reelle is null then
-		alter table public.mail_outbound_identities
-			add constraint mail_outbound_identities_signature_borne
-			check (char_length(signature_text) <= 2000);
-	elsif v_definition_reelle <> v_definition_attendue then
-		alter table public.mail_outbound_identities
-			drop constraint mail_outbound_identities_signature_borne;
-		alter table public.mail_outbound_identities
-			add constraint mail_outbound_identities_signature_borne
-			check (char_length(signature_text) <= 2000);
+	if v_definition_reelle is distinct from v_definition_attendue then
+		execute 'alter table public.mail_outbound_identities '
+		        'drop constraint if exists mail_outbound_identities_signature_borne';
+		execute format(
+			'alter table public.mail_outbound_identities '
+			'add constraint mail_outbound_identities_signature_borne '
+			'check (char_length(signature_text) <= %s)', v_borne);
 	end if;
 end;
 $$;
