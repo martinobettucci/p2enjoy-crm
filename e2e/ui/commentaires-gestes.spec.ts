@@ -22,7 +22,9 @@
 // LE SEED EST RENDU INTACT. Chaque scénario crée son propre commentaire et le supprime
 // physiquement dans son `finally`, avec la clé de service — le seul chemin qui le peut, la table
 // n'accordant aucun `DELETE` à `authenticated` (§13.8, ligne *o*). Les cinq commentaires seedés ne
-// sont jamais touchés : `scripts/verify-commentaires.sh` les compte.
+// sont jamais touchés : `scripts/verify-commentaires.sh` les compte. Un `beforeEach` retire en
+// outre ce qu'une exécution INTERROMPUE aurait laissé, dont aucun `finally` ne s'est chargé —
+// INC-209, et le motif complet est écrit à sa place plus bas.
 
 import { expect, test, type Page } from './fixtures'
 import {
@@ -102,6 +104,47 @@ async function effacer(
 	await request.delete(`${URL_API}/rest/v1/card_comments?id=eq.${id}`, { headers: enTetesService() })
 }
 
+// LE FILET DE SÉCURITÉ D'UNE EXÉCUTION INTERROMPUE — INC-209.
+//
+// Chaque scénario efface son commentaire dans son `finally`, et cela suffit tant qu'il va au bout.
+// Une exécution TUÉE — un `pkill`, un plafond de temps, une campagne interrompue — n'exécute aucun
+// `finally` : le commentaire reste, et le passage suivant trouve deux cartes de Camille là où ses
+// assertions n'en attendaient qu'une. MESURÉ le 2026-08-24, c'est exactement ce qui a rendu ce
+// fichier non rejouable.
+//
+// Les assertions ont été portées sur leur carte (ci-dessous), ce qui suffit à les rendre justes ;
+// ce filet règle l'autre moitié du problème — la base de développement qui se remplit d'un
+// commentaire de plus à chaque exécution interrompue. Il ne touche QUE les lignes non seedées des
+// deux affaires de ce fichier : les cinq commentaires du seed portent un identifiant `5eed…`, et
+// `scripts/verify-commentaires.sh` les compte.
+// LE FILTRE NE PEUT PAS ÊTRE « l'identifiant ne commence pas par 5eed » : `id` est un `uuid`, et
+// PostgREST n'applique `like` qu'à du texte. Écrit ainsi, le nettoyage n'effaçait RIEN — mesuré par
+// une sonde qui lui a survécu. Il porte donc sur ce que le SEED pose réellement, relevé en base :
+// aucun commentaire seedé ne vit sur `…0c2`, et un seul sur `…0c4`, `…0d4` (docs/SPEC-seed.md
+// §13.11). Le nettoyage est donc exact, et il est CONSTATÉ plutôt que supposé — un `delete` sans
+// effet ferait échouer le scénario ici, au lieu de le laisser échouer plus loin sur un symptôme.
+const COMMENTAIRE_SEEDE_MODERE = '5eed0000-0000-4000-8000-0000000000d4'
+
+test.beforeEach(async ({ request }) => {
+	await request.delete(`${URL_API}/rest/v1/card_comments?card_id=eq.${CARD}`, {
+		headers: enTetesService(),
+	})
+	await request.delete(
+		`${URL_API}/rest/v1/card_comments?card_id=eq.${CARD_MODEREE}` +
+			`&id=neq.${COMMENTAIRE_SEEDE_MODERE}`,
+		{ headers: enTetesService() },
+	)
+
+	const restes = await request.get(
+		`${URL_API}/rest/v1/card_comments?card_id=eq.${CARD}&select=id`,
+		{ headers: enTetesService() },
+	)
+	expect(
+		(await restes.json()) as unknown[],
+		'le filet d’INC-209 doit RENDRE l’affaire vide de commentaires avant le scénario',
+	).toHaveLength(0)
+})
+
 test.describe('les deux gestes de l’auteur, sur la vraie base', () => {
 	test('Camille corrige son commentaire, et la base porte le nouveau corps ET `edited_at`', async ({
 		page,
@@ -119,9 +162,20 @@ test.describe('les deux gestes de l’auteur, sur la vraie base', () => {
 			id = avant?.id
 
 			const carte = page.getByTestId('commentaire').filter({ hasText: texte })
-			// Les actions ne sont pas offertes sur les commentaires d'autrui : la carte de Camille
-			// est la seule à en porter, et c'est ce que compte cette assertion.
-			await expect(page.getByTestId('actions-commentaire')).toHaveCount(1)
+			// LES ACTIONS NE SONT PAS OFFERTES SUR LES COMMENTAIRES D'AUTRUI. L'assertion disait
+			// cette règle par un compte ABSOLU — « une seule carte en porte sur toute la page ».
+			// Elle était vraie tant que Camille n'avait qu'un commentaire sur cette affaire, et
+			// fausse dès qu'une exécution interrompue en laissait un second : INC-209. Elle est
+			// RÉVISÉE, jamais relâchée (mécanisme de la décision 51) — elle porte désormais sur les
+			// deux faits qu'elle voulait dire, et chacun est plus strict que le compte d'avant :
+			// la carte publiée porte ses actions, et AUCUNE carte d'un autre auteur n'en porte.
+			await expect(carte.getByTestId('actions-commentaire')).toHaveCount(1)
+			await expect(
+				page
+					.getByTestId('commentaire')
+					.filter({ hasNotText: 'Camille Aubert' })
+					.getByTestId('actions-commentaire'),
+			).toHaveCount(0)
 
 			await carte.getByRole('button', { name: 'Modifier' }).click()
 			const zone = page.getByLabel('Corriger votre commentaire')
@@ -215,7 +269,9 @@ test.describe('les deux gestes de l’auteur, sur la vraie base', () => {
 
 			// Le trigger refuse toute écriture ultérieure : offrir le geste serait une commande
 			// morte, et le §5.10 ne demande des actions que là où elles peuvent aboutir.
-			await expect(page.getByTestId('actions-commentaire')).toHaveCount(0)
+			// Le compte porte sur LA CARTE de la pierre tombale, non sur la page : un autre
+			// commentaire de Camille rendait ce zéro faux sans rien dire du produit (INC-209).
+			await expect(carte.getByTestId('actions-commentaire')).toHaveCount(0)
 		} finally {
 			await effacer(request, id)
 		}
@@ -264,8 +320,11 @@ test.describe('les deux gestes de l’auteur, sur la vraie base', () => {
 			await page.keyboard.press('Shift+Tab')
 			await expect(modifier).toBeFocused()
 			// Le §5.10 exige « au survol ET au focus clavier » : le focus SEUL doit suffire, et
-			// aucun `hover()` n'est émis ici.
-			await expect(page.getByTestId('actions-commentaire')).toHaveCSS('opacity', '1')
+			// aucun `hover()` n'est émis ici. Le locator est PORTÉ SUR LA CARTE : non porté, il
+			// résolvait toutes les cartes de Camille et Playwright refusait en `strict mode
+			// violation` dès qu'une exécution antérieure en avait laissé une — INC-209, et c'est
+			// l'échec exact qu'elle cite.
+			await expect(carte.getByTestId('actions-commentaire')).toHaveCSS('opacity', '1')
 			await carte.scrollIntoViewIfNeeded()
 			await capturer(page, 'commentaire-actions-focus-1440', 'CRM-043')
 
