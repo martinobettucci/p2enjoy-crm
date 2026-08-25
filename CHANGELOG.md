@@ -15,6 +15,50 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **LES MODÈLES D'EMAILS ONT LEUR ÉCRAN, ET IL PRÉVISUALISE SUR UNE AFFAIRE RÉELLE** (`CRM-063`
+  tranche 2, sous-tranche 2b, migration 57, `docs/SPEC-modeles-emails.md` §9,
+  `docs/DESIGN_SYSTEM.md` §5.39). Les deux sous-tranches précédentes avaient posé les textes à
+  trous et su les remplir ; personne ne pouvait encore les écrire autrement qu'en appelant l'API.
+  « Réglages ▸ Modèles d'emails » liste les modèles de l'espace de travail, en crée, en modifie, en
+  supprime derrière une confirmation qui les nomme, et applique n'importe lequel à une affaire
+  réelle pour montrer **exactement ce qui partira**.
+
+  **La liste des douze variables n'est PAS recopiée dans l'écran, et c'est une migration qui l'a
+  permis.** Le schéma qui la porte n'est pas exposé par l'API : l'écran ne pouvait pas l'atteindre.
+  Plutôt que d'en écrire une seconde copie en TypeScript — qui aurait divergé à la première
+  variable ajoutée, sans qu'aucune preuve ne le voie —, une fonction publique **délègue** à la
+  source unique. Une assertion exige l'égalité des deux, et une dégradation du harnais fait cesser
+  la délégation pour vérifier que la preuve le dénonce.
+
+  **La prévisualisation ne présélectionne RIEN**, pas même l'affaire, qui est pourtant obligatoire :
+  choisir la première du tri ferait rendre un texte au sujet d'une affaire que personne n'a
+  désignée. Le sélecteur de contact porte **tous** les contacts lisibles et non les seuls rattachés
+  à l'affaire — mesuré, le jeu de démonstration ne rattache un contact qu'à 2 affaires sur 41, et un
+  sélecteur restreint aurait été vide presque partout, c'est-à-dire inutile là où il sert le plus.
+
+  **Les trous sans valeur sont nommés sous le message**, avec leur compte en toutes lettres et leur
+  graphie exacte, et la mention disparaît quand il n'y en a aucun. C'est ce qui permet de voir le
+  manque **avant** l'envoi plutôt que le destinataire après.
+
+  **La confirmation de suppression n'annonce aucune cascade**, et c'est une mesure : rien, dans la
+  base, ne référence un modèle aujourd'hui. Promettre une rupture de séquence décrirait un objet que
+  la tranche 4 n'a pas encore posé ; promettre son futur refus mentirait dans l'autre sens. Elle dit
+  ce qui est vrai : le nom, et que le texte est définitivement perdu.
+
+  **Aucune commande n'est éteinte selon le rôle et aucun champ ne porte de garde de saisie** : c'est
+  le serveur qui refuse, et l'écran traduit son refus par un dictionnaire fermé — aucune phrase du
+  serveur n'atteint l'utilisateur, le détail d'un refus de contrainte contenant le corps entier du
+  modèle. La lectrice qui tente d'écrire lit « Aucun modèle n'a été enregistré », jamais un succès
+  qui n'a pas eu lieu.
+
+  Preuves : pgTAP `0055` **11 assertions**, unitaires **37 tests**, contrat d'API **4 scénarios**,
+  parcours E2E **10 scénarios** avec captures observées, harnais dédié
+  `scripts/verify-modeles-emails-ecran.sh` **37 contrôles, aucune anomalie**, cinq dégradations
+  réelles toutes mordantes. Manuel : chapitre **7**, annoncé par le sommaire depuis `CRM-000`.
+
+  Ce que la sous-tranche ne livre pas, et qui est dit : **aucun envoi**, **aucune signature**,
+  **aucune séquence** — tranches 3 et 4 —, et les horodatages restent rendus en **UTC** (INC-216).
+
 - **UN MODÈLE D'EMAIL SE REND** (`CRM-063` tranche 2, sous-tranche 2a, migration 56,
   `docs/SPEC-modeles-emails.md` §8). La tranche 1 avait posé les textes à trous ; personne ne
   savait encore les remplir. `public.rendre_modele_email` prend un modèle et une affaire — plus,

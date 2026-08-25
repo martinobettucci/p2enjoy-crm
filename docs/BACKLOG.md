@@ -8480,16 +8480,18 @@ avant la suivante :
       variables et son refus en base, RLS, privilèges, pgTAP, contrat d'API, seed, harnais. C'est
       l'objet dont les deux autres dépendent. **LIVRÉE ET PROUVÉE le 2026-08-25** ; voir le détail
       plus bas.
-- [~] **Tranche 2 — le rendu et l'écran** : substitution des variables, écran d'administration des
+- [x] **Tranche 2 — le rendu et l'écran** : substitution des variables, écran d'administration des
       modèles, prévisualisation sur une affaire réelle. **Spécifiée au §8 le 2026-08-25**, après
-      mesure et avant code, et découpée en deux sous-tranches :
+      mesure et avant code, découpée en deux sous-tranches, et **CLOSE le 2026-08-25** — les deux
+      sont livrées et intégralement prouvées :
   - [x] **2a — le rendu**, migration `0056`. **LIVRÉE ET PROUVÉE le 2026-08-25** ; voir le détail
         plus bas. La question laissée ouverte par la tranche 1 y est **tranchée** (§8.4) : un trou
         dont la source est nulle rend la **chaîne vide**, et le rendu le **nomme**.
-  - [ ] **2b — l'écran** : administration des modèles — liste, création, modification, suppression
+  - [x] **2b — l'écran** : administration des modèles — liste, création, modification, suppression
         avec confirmation — et prévisualisation appelant `rendre_modele_email` sur une affaire
-        réelle. **Cadrée au §8.11**, à spécifier ligne à ligne avant sa première ligne de code. Les
-        quatre questions qu'elle doit trancher y sont nommées.
+        réelle. **LIVRÉE ET PROUVÉE le 2026-08-25** ; voir le détail plus bas. Les quatre questions
+        du §8.11 sont tranchées au **§9**, et la troisième a exigé une **migration** : le schéma
+        `app` n'étant pas exposé, la liste fermée était hors de portée de l'écran.
 - [ ] **Tranche 3 — la signature** : rendre effectif ce que `CRM-053` a posé et que personne
       n'emploie. `mail_outbound_identities.signature_html` est **morte et mal nommée** — son nom
       annonce du HTML là où tout le sous-système expédie du texte. Consigné au registre, comportement
@@ -8631,6 +8633,89 @@ avant la suivante :
       l'administration des modèles est 2b —, aucun **envoi**, aucune **signature**, aucune
       **séquence**. Aucun test unitaire TypeScript non plus : la règle vit en SQL, et pgTAP est son
       niveau.
+
+**Sous-tranche 2b livrée, 2026-08-25 — l'écran** (`docs/SPEC-modeles-emails.md` §9,
+`docs/DESIGN_SYSTEM.md` §5.39, `docs/SCHEMA.md` §7) :
+
+- [x] **Spécification écrite et COMMITTÉE avant la première ligne de code** (`CLAUDE.md` §5,
+      `docs/CloudWorker.md` §3.2) : `docs/SPEC-modeles-emails.md` §9, douze sections, rédigées
+      **après mesure sur la pile debout et seedée**. `docs/DESIGN_SYSTEM.md` gagne son **§5.39**,
+      huitième surface de réglages, écrite en **écarts** du §5.34 — dans le **même** commit
+      documentaire, avant tout code.
+- [x] **LA TROISIÈME QUESTION DU §8.11 A EXIGÉ UNE MIGRATION, ET C'EST UNE MESURE QUI L'A DÉCIDÉ**
+      (§9.3). `PGRST_DB_SCHEMAS` vaut `public,storage,graphql_public` : le schéma `app` n'est **pas
+      exposé**, et `app.mail_template_variables()` — source unique du §3 — était **hors de portée de
+      l'écran**. Recopier les douze noms en TypeScript est **écarté** : une treizième variable
+      ajoutée au §2.4 laisserait la palette muette sans qu'aucune preuve ne le voie.
+- [x] **`supabase/migrations/0057_guichet_variables_modeles.sql`** : `public.mail_template_variables()`
+      — `immutable`, `security invoker` — qui **DÉLÈGUE** et ne redéclare rien. Privilèges de
+      `public.rendre_modele_email` repris sans changement, `anon` **exclu**, révocation **nommée**.
+      **Aucune table, aucune colonne, aucune politique, aucune règle et aucun trigger n'est touché.**
+- [x] **Suite pgTAP dédiée** : `supabase/tests/0055_guichet_variables_modeles.test.sql`,
+      **11 assertions**. La plus importante compare les **deux** fonctions et exige leur **égalité
+      dans les deux sens**, jamais celle de leurs cardinaux : un guichet qui aurait cessé de
+      déléguer resterait vert tant qu'il rendrait douze noms, fussent-ils les mauvais.
+- [x] **`webapp/src/lib/modeles-emails.ts` et `webapp/src/app/ReglagesModelesEmails.tsx`** : la
+      liste, la fiche, la palette, la suppression confirmée et la prévisualisation. L'écran est
+      routé à `/reglages/modeles-emails`, **après** les identités et **avant** l'état de la
+      messagerie — on déclare l'expéditeur avant d'écrire le texte qu'il expédiera.
+- [x] **LES TROIS SÉLECTEURS DE LA PRÉVISUALISATION NE PRÉSÉLECTIONNENT RIEN** (§9.5), y compris
+      celui de l'affaire, pourtant obligatoire. Le sélecteur de contact porte **tous** les contacts
+      lisibles : **MESURÉ**, `card_contacts` ne porte que **2 lignes pour 41 affaires**, si bien
+      qu'un sélecteur restreint au rattachement serait vide sur **39 affaires sur 41**.
+- [x] **`variables_nulles` SE REND DANS UN `role="status"`, JAMAIS UN `role="alert"`** (§9.6) : la
+      prévisualisation a **réussi**. Compte **en toutes lettres**, dans son propre élément, accordé
+      **par clé** ; noms en **donnée technique**, dans la graphie tapée ; bloc **absent** quand la
+      liste est vide.
+- [x] **LA CONFIRMATION DE SUPPRESSION N'ANNONCE AUCUNE CASCADE, et c'est une MESURE** (§9.7) :
+      `pg_constraint` ne porte **aucune** clé étrangère vers `mail_templates`. Promettre une rupture
+      de séquence décrirait un objet que la tranche 4 n'a pas posé ; promettre le refus de son futur
+      `on delete restrict` mentirait dans l'autre sens.
+- [x] **Tests unitaires dédiés** : `webapp/src/lib/modeles-emails.test.ts`, **37 tests**. Ils
+      éprouvent la **requête émise** et pas seulement la valeur rendue : `workspace_id` n'est envoyé
+      qu'à la création, toute écriture **relit** sa ligne, et la chaîne vide d'un sélecteur part en
+      `null`. C'est le premier test unitaire de `CRM-063` — les tranches précédentes n'en avaient
+      aucun, et le disaient.
+- [x] **Test d'API dédié** : `e2e/api/guichet-variables-modeles.spec.ts`, **4 scénarios verts**. Le
+      quatrième relie les deux fonctions par le **comportement du produit** : un modèle bâti depuis
+      la liste que le guichet rend doit être **accepté** par la contrainte, qui appelle la fonction
+      déléguée.
+- [x] **Parcours E2E dédié** : `e2e/ui/reglages-modeles-emails.spec.ts`, **10 scénarios verts**, au
+      clavier et à la souris, console **vierge**. Captures observées sous `docs/captures/CRM-063/`.
+- [x] **DEUX DÉFAUTS TROUVÉS EN REGARDANT LES CAPTURES** (`CLAUDE.md` §16) : le scénario des paliers
+      réduisait la fenêtre **après** le chargement, si bien que la barre latérale devenait un tiroir
+      en restant **ouverte** — un état qu'un utilisateur arrivant à 390 px ne rencontre jamais ; et
+      `modeles-emails-fiche-1440.jpg` montrait la **liste**, la capture étant prise après une
+      validation qui referme la fiche.
+- [x] **UNE ASSERTION FAUSSE CORRIGÉE PAR LA MESURE** : elle annonçait **deux** trous sur « Relance
+      sans réponse », en supposant que le modèle citait les deux variables d'identité. Mesuré : il ne
+      cite que `{{identity.from_name}}`. Une variable que le modèle **n'emploie pas** n'est pas un
+      trou (§8.4). Le scénario éprouve désormais les **deux** accords et la preuve **inverse**.
+- [x] **Harnais dédié `scripts/verify-modeles-emails-ecran.sh`** : **37 contrôles, aucune anomalie**,
+      **cinq** dégradations réelles toutes mordantes, restauration constatée **octet à octet**. La
+      plus importante fait **cesser le guichet de déléguer** ; deux portent sur le **module
+      TypeScript**, écart avec les harnais jumeaux motivé par la logique que cette sous-tranche livre.
+- [x] **UN TROISIÈME DÉFAUT DU HARNAIS TROUVÉ PAR LE HARNAIS, et le premier FAUX ROUGE** (§9.10 bis).
+      Ses contrôles cherchent ce que l'écran **s'interdit** — `required`, `maxLength` — et les
+      trouvaient dans le **commentaire** qui explique pourquoi ils sont absents. Les deux défauts
+      précédents étaient des faux **verts** ; celui-ci est aussi grave, un harnais qui rougit sur du
+      texte juste finissant par être lu comme du bruit. Corrigé à sa cause : les contrôles lisent le
+      **code** sans ses commentaires.
+- [x] **Compteurs de `scripts/verify-harness.sh` révisés dans le MÊME changement** :
+      `FICHIERS_SQL_ATTENDUS` 54 → **55**, `ASSERTIONS_ATTENDUES` 2640 → **2651**, `SCENARIOS_API`
+      881 → **885**, `SCENARIOS_UI` 594 → **604**. Valeurs **COMPTÉES**, jamais déduites.
+      `SCENARIOS_MAIL` inchangé : la sous-tranche n'envoie aucun email.
+- [x] **Types régénérés, et deux témoins figés révisés** : `scripts/generate-types.sh` rejoué — le
+      fichier généré ignorait `mail_templates`, `rendre_modele_email` et `mail_template_variables`,
+      les tranches 1 et 2a ayant livré sans régénérer. **Même défaut de chaîne que celui déjà
+      consigné pour `cards_figees`**, et sa répétition dit que la leçon vaut pour la chaîne.
+- [x] **Documentation dans le même changement** : `docs/SCHEMA.md` §7, `docs/DESIGN_SYSTEM.md` §5.39,
+      `docs/PROD_MIGRATIONS.md` migration 57, `README.md` — les **trois** listes de harnais —,
+      `docs/manual.md` **chapitre 7**, annoncé par le sommaire depuis `CRM-000` et jamais écrit,
+      `CHANGELOG.md` sous `[Non publié]`.
+- [x] **Ce que la sous-tranche ne livre pas, et qui est dit** (§9.12) : aucun **envoi** — l'écran
+      prévisualise, il n'écrit rien dans `mail_outbox` —, aucune **signature**, aucune **séquence**,
+      et aucun **fuseau horaire** : la prévisualisation rend l'UTC que la base rend (INC-216).
 
 **UN SECOND ÉCART CONSIGNÉ, ET IL ATTEND UN ARBITRAGE** (§8.6, INC-216) : un horodatage rendu dans
 un email l'est **en UTC**, aucune colonne de fuseau n'existant dans le schéma — mesuré, seule

@@ -877,6 +877,26 @@ texte sur le **même motif** que `app.mail_template_variables_inconnues` : la fo
 l'écriture et celle qui substitue à la lecture doivent découper de la même façon, sans quoi un texte
 accepté porterait un trou que le rendu ne verrait pas.
 
+#### `public.mail_template_variables` — le guichet de la liste (`CRM-063` tranche 2b, migration 57)
+
+Spécification : `docs/SPEC-modeles-emails.md` §9.3. **Livrée le 2026-08-25.**
+
+```
+public.mail_template_variables() returns text[]
+```
+
+`immutable`, `security invoker`. Elle **DÉLÈGUE** à `app.mail_template_variables()` et ne redéclare
+rien : la liste reste écrite **une seule fois** (§3). `grant execute` à `authenticated` et
+`service_role`, **jamais à `anon`** — les privilèges de `public.rendre_modele_email`, repris sans
+changement.
+
+**POURQUOI CE GUICHET EXISTE, ET CE N'EST PAS UNE COMMODITÉ.** MESURÉ le 2026-08-25 :
+`PGRST_DB_SCHEMAS` vaut `public,storage,graphql_public`, si bien que le schéma `app` n'est **pas
+exposé** et que la source unique est hors de portée de l'écran. L'autre issue — recopier les douze
+noms en TypeScript — est écartée : une treizième variable ajoutée au §2.4 laisserait la palette de
+l'écran muette sur elle, sans qu'aucune preuve ne le voie. Une assertion pgTAP compare les **deux**
+fonctions et exige leur **égalité dans les deux sens**, jamais leurs seuls cardinaux.
+
 ### `mail_thread_snoozes` — le sommeil d'un FIL (`CRM-081`, migration 48)
 
 Spécification : `docs/SPEC-cards.md` §16.14.

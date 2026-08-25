@@ -52,7 +52,7 @@
 | 12 | L'adresse email d'une card : à quoi elle sert | `CRM-040`, `CRM-013`, `CRM-054` | **Partiellement livré** : l'adresse est **générée** à la création de chaque affaire, non devinable, et depuis `CRM-013` **non modifiable** — le refus est appliqué par le serveur et tient hors de l'écran (chapitre 4.2). Ce à quoi elle sert — recevoir les messages et les rattacher à l'affaire — relève de `CRM-054` |
 | 13 | L'inbox : dossiers, messages non classés, classement, **suggestion** | `CRM-055`, `CRM-057`, `CRM-060` | À livrer |
 | 14 | Répondre depuis une card ou depuis l'inbox | `CRM-058` | À livrer |
-| 15 | Modèles d'emails, signature et séquences de relance | `CRM-063` | À livrer |
+| 15 | Modèles d'emails, signature et séquences de relance | `CRM-063` | **Partiellement livré — les MODÈLES ont leur écran, vérifié visuellement ; la signature et les séquences n'existent pas.** Voir le chapitre 7. « Réglages ▸ Modèles d'emails » écrit les textes réutilisables de l'espace de travail, à trous, et les prévisualise sur une affaire réelle. Ce qui manque, et l'absence est voulue : **aucun envoi** — composer un message à partir d'un modèle n'est pas encore offert —, **aucune signature** attachée à une identité d'expédition, et **aucune séquence de relance** à paliers |
 | 16 | Que faire quand un compte mail est en erreur | `CRM-059` | **Livré avec son écran, vérifié visuellement** — voir le chapitre 6. « Réglages ▸ État de la messagerie » montre la dernière relève réussie et le dernier incident de chaque boîte visible, ainsi que la file sortante en attente et en échec définitif. Ce qui manque : aucune alerte n'est envoyée, l'écran reste le seul endroit où le constater |
 
 ### Administration
@@ -2762,6 +2762,95 @@ rafraîchissez la page pour la mettre à jour.
 - **Aucune veille par IDLE** : la relève reste une scrutation régulière, dont l'intervalle se règle
   par la variable d'environnement `MAIL_SYNC_POLL_INTERVAL` (opération d'exploitation, hors de cet
   écran).
+
+## 7. Écrire des modèles d'emails et les prévisualiser
+
+*Livré par `CRM-063`, tranche 2. Les règles d'accès sont celles de la tranche 1 : cet écran n'en
+invente aucune.*
+
+**Où.** Barre latérale ▸ **Réglages** ▸ « Modèles d'emails ».
+
+**À quoi cela sert.** Un modèle est un texte que vous écrivez **une fois** et que tout l'espace de
+travail réemploie : une relance sans réponse, une prise de contact. Il porte des **trous** —
+`{{card.title}}`, `{{contact.full_name}}` — que le produit remplace par les valeurs de l'affaire
+concernée. Deux personnes qui écrivent au même prospect envoient ainsi le même texte.
+
+**Qui.** Tout membre de l'espace de travail **lit** les modèles et peut les prévisualiser. Les
+**écrire** — créer, modifier, supprimer — est réservé aux rôles *administrateur* et *développement
+commercial*. Aucun bouton n'est masqué selon votre rôle : si vous n'avez pas le droit d'écrire, le
+produit vous le dit en toutes lettres au moment où vous enregistrez, plutôt que de vous laisser
+croire que le geste n'existe pas.
+
+**La liste.** Une ligne par modèle : son **nom** — unique dans l'espace de travail — puis son
+**objet**. L'objet y est montré **tel qu'il est écrit**, trous compris : la liste n'est pas une
+prévisualisation, et elle n'a pas d'affaire sur laquelle remplir les trous.
+
+### 7.1 Écrire un modèle
+
+« Nouveau modèle » ouvre la fiche, sous la liste — jamais dans une fenêtre qui recouvrirait l'écran.
+Trois champs : le **nom**, l'**objet** et le **corps du message**.
+
+**Les variables disponibles sont proposées sous le corps**, en douze boutons. Un clic insère la
+variable **à l'endroit du curseur**, dans le champ que vous venez de quitter — l'objet ou le corps.
+Vous pouvez aussi les taper à la main : rien ne vous en empêche.
+
+**Une variable qui n'existe pas est refusée**, et le produit dit **dans quel champ** elle se trouve :
+« L'objet emploie une variable qui n'existe pas ». C'est le serveur qui refuse, pas l'écran — ce qui
+signifie que la faute ne peut pas passer par un autre chemin et se découvrir chez le destinataire.
+Votre saisie n'est pas effacée : corrigez la variable et réenregistrez.
+
+Les autres refus sont dits de la même façon : un nom de plus de 120 caractères, un objet de plus de
+300, un corps de plus de 20 000, ou un nom déjà employé par un autre modèle.
+
+### 7.2 Prévisualiser un modèle sur une affaire réelle
+
+« Prévisualiser », sur la ligne d'un modèle, ouvre un panneau à trois choix :
+
+- **l'affaire** — obligatoire. Aucune n'est choisie d'avance : le produit ne devine pas de quelle
+  affaire vous voulez parler ;
+- **le contact** — facultatif. La liste porte **tous** les contacts que vous pouvez lire, et pas
+  seulement ceux qui sont rattachés à l'affaire choisie ;
+- **l'identité d'expédition** — facultative. Aucune n'est choisie d'avance non plus : plusieurs
+  identités peuvent être « par défaut », chacune pour une personne, et le produit ne tranche pas à
+  votre place.
+
+« Prévisualiser » affiche alors l'**objet** et le **corps** exactement tels qu'ils partiront, retours
+à la ligne compris.
+
+**Les trous sans valeur sont NOMMÉS.** Si l'affaire n'a pas de montant, ou si vous n'avez choisi
+aucune identité, le produit rend ces trous **vides** — jamais un tiret, qui se lirait comme une
+valeur — et l'écrit sous le message : « 2 variables sans valeur », suivi de la liste des variables
+concernées, dans la graphie exacte que vous avez tapée. C'est ce qui vous permet de voir le manque
+**avant** l'envoi, plutôt que le destinataire après.
+
+Quand toutes les variables employées ont une valeur, **rien n'est affiché** : l'absence de message
+dit déjà que tout est rempli.
+
+**Si aucune affaire n'est choisie**, ou si l'affaire choisie ne vous est plus lisible, le produit
+écrit « Aucun rendu : choisissez une affaire, ou l'affaire choisie n'est plus lisible ». Les deux
+causes sont volontairement dites ensemble : les distinguer révélerait l'existence d'affaires que vos
+droits vous cachent.
+
+### 7.3 Supprimer un modèle
+
+Le bouton vit **dans la fiche** du modèle, et non sur sa ligne : un geste qui détruit ne se déclenche
+pas depuis une liste qu'on parcourt du regard. Il demande une confirmation qui **nomme** le modèle et
+dit ce qui est perdu : « Le texte du modèle est définitivement perdu. »
+
+Il n'y a **pas de corbeille** pour un modèle : il ne contient aucun travail, c'est un texte. Une fois
+supprimé, il faut le réécrire.
+
+### 7.4 Ce qui n'est pas encore offert
+
+- **Aucun envoi depuis cet écran.** La prévisualisation montre ; elle n'expédie rien. Composer un
+  message à partir d'un modèle viendra avec les séquences de relance.
+- **Aucune signature.** Une identité d'expédition ne porte pas encore de pied de message employé à
+  l'envoi.
+- **Aucune séquence de relance.** Les paliers — un modèle, un délai, puis le suivant — ne sont pas
+  livrés.
+- **Les dates sont rendues en UTC.** Une échéance affichée « 16/08/2026 09:00 » dans un message est
+  exprimée en temps universel : le produit ne connaît pas encore le fuseau de votre espace de
+  travail. Un destinataire français lira donc 09:00 là où le rendez-vous est à 11:00 en heure d'été.
 
 ## Annexe A — Ce que contient l'espace de démonstration
 
