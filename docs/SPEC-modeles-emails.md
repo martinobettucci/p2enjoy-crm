@@ -1462,3 +1462,396 @@ une supposition, et elle est écrite ici pour que 4b ne la redécouvre pas.
 **réviser la confirmation de suppression d'un modèle** : le §9.7 annonce aujourd'hui une suppression
 inconditionnelle, ce que le `on delete restrict` du §11.4 rend faux dès l'application de la
 migration `0059`. L'écart est nommé ici, et il appartient à 4c.
+
+---
+
+## 12. Sous-tranche 4b — l'armement et l'exécution
+
+Écrite le 2026-08-25 **après mesure sur la pile debout et seedée**, et **avant la première ligne de
+code** (`CLAUDE.md` §5, `docs/CloudWorker.md` §3.2). Elle développe le cadrage du §11.12, qu'elle ne
+remplace pas.
+
+La sous-tranche 4a a livré la **cadence** — une séquence et ses paliers, un objet éditorial que
+personne n'applique encore. Ce chapitre livre l'**application** : le lien entre une affaire et une
+cadence, le job qui fait partir les messages, et les cinq façons dont ce lien se termine.
+
+### 12.1 Les quatre questions, et la mesure qui tranche chacune
+
+Le §7.3 en posait trois ; le §11.12 en a ajouté une quatrième. Aucune n'est tranchée par
+raisonnement seul — chacune l'est par une sonde exécutée sur la pile du 2026-08-25.
+
+| # | Question | Réponse | La mesure qui l'impose |
+|---|---|---|---|
+| 1 | Qui arme une séquence ? | Un **geste humain**, portant l'identité expéditrice | Le workspace de démonstration porte **DEUX** identités sortantes, et la séquence n'en porte aucune (§11.2) : aucun job ne peut choisir entre elles sans inventer une règle |
+| 2 | Qu'est-ce qui l'interrompt ? | Le fait que l'affaire **sorte de `public.cards_figees()`**, plus le geste explicite, la réponse, et l'épuisement | Les trois exclusions de `cards_figees()` (archivée, corbeille, sommeil) et la remise à zéro d'`entered_step_at` par `move_card` couvrent **quatre** interruptions par **un seul** prédicat déjà livré |
+| 3 | Que produit une réponse ? | Elle **TERMINE** l'inscription, et l'ancre est `created_at` | `sent_at` est **NULL sur les quatre messages du seed** (mesuré) : la date d'en-tête ne peut pas ancrer « après l'armement » |
+| 4 | Comment un palier met-il un message en file ? | Par `app.mail_outbox_inserer`, **extraite** de `queue_outbound_email` | `public.queue_outbound_email` sous `postgres` rend `42501 / not_authenticated` (sonde ci-dessous) : le job ne peut pas l'emprunter |
+
+**Sonde de la question 4, exécutée le 2026-08-25 dans `psql` sous `postgres`, contexte exact d'un
+job `pg_cron`** :
+
+```
+select coalesce(auth.uid()::text, 'NULL');   =>  NULL
+perform public.queue_outbound_email(…);      =>  SONDE: REFUS 42501 / not_authenticated
+```
+
+**Sonde de la question 3, même session** — les quatre messages du seed, colonne par colonne :
+
+```
+inbound | sent_at=NULL | created_at=2026-08-25 20:14:05.723696+00 | card=5eed…00c1
+inbound | sent_at=NULL | created_at=2026-08-25 20:14:05.803094+00 | card=NULL
+inbound | sent_at=NULL | created_at=2026-08-25 20:14:05.819942+00 | card=5eed…00c1
+inbound | sent_at=NULL | created_at=2026-08-25 20:14:05.868892+00 | card=NULL
+```
+
+Le §11.12 annonçait « `mail_messages` porte `direction`, `card_id` et `sent_at`, donc la donnée
+existe ». **La donnée existe, mais pas dans cette colonne-là** : `sent_at` est la date que l'en-tête
+du message déclare, et l'ingestion ne la renseigne pas. `created_at` est l'instant où le produit a
+VU le message, il est `not null`, et c'est lui qui ancre la comparaison. Une ligne de cadrage
+trouvée fausse par la mesure se **révise en disant pourquoi**, jamais ne se contourne — c'est la
+règle déjà appliquée au §11.6 bis.
+
+### 12.2 QUI ARME — un geste humain, et pourquoi aucun job ne peut le poser
+
+Armer une séquence, c'est choisir **deux** choses : quelle cadence, et **de quelle adresse** les
+messages partent. La séquence ne porte aucune identité, et le §11.2 dit pourquoi — « deux personnes
+appliquant la même séquence à deux affaires signent chacune de leur adresse ».
+
+**MESURÉ** : le workspace de démonstration porte deux identités sortantes — « Identité de service »,
+sans propriétaire, et « Envoi de Driss Lemoine ». Un job qui armerait tout seul devrait choisir
+entre elles, et toute règle qu'il appliquerait — « la première », « celle du responsable de
+l'affaire », « celle de service » — serait la **valeur par défaut trompeuse** que `CLAUDE.md` §18
+proscrit. L'armement est donc un **geste**, et l'identité choisie est **stockée sur l'inscription**.
+
+**L'affaire doit être FIGÉE à l'instant de l'armement**, au sens de `public.cards_figees()` et
+d'aucun autre : c'est ce que le §7.3 dit — « appliqués à une affaire figée au sens de
+`docs/SPEC-relances.md` §2 » — et le §11.2 a déjà refusé qu'une séquence porte son propre seuil.
+`public.cards_figees()` rend **4** affaires sur le seed (mesuré sous `postgres`, donc l'ensemble
+global) ; l'appelant, lui, n'en voit que celles que ses droits lui rendent, la fonction étant
+`SECURITY INVOKER` (§3.2 de `docs/SPEC-relances.md`).
+
+**Une affaire ne porte qu'UNE inscription active à la fois**, et c'est un index unique **partiel**,
+pas une garde applicative. Deux cadences armées sur la même affaire enverraient deux messages le
+même jour sans qu'aucune contrainte ne le voie — exactement le défaut que le délai relatif du §11.4
+existe pour empêcher à l'intérieur d'une cadence.
+
+### 12.3 `public.card_sequence_enrollments` — l'inscription
+
+Le nom n'est pas choisi ici : `docs/SCHEMA.md` §7 l'annonce depuis `CRM-000`, avec sa définition en
+une ligne — « inscription d'une card à une cadence, **arrêtée dès qu'une réponse arrive** ». La
+sous-tranche livre ce que le schéma promettait, et la question 3 ne fait que confirmer par la mesure
+ce que cette ligne disait déjà.
+
+| Colonne | Type | Nullable | Règle |
+|---|---|---|---|
+| `id` | `uuid` | non | `gen_random_uuid()` |
+| `workspace_id` | `uuid` | non | → `workspaces (id) on delete cascade`, **et** cohérent avec ceux de la card et de la séquence par clés étrangères composites |
+| `card_id` | `uuid` | non | → `cards (id) on delete cascade` — une affaire supprimée n'a plus d'inscription |
+| `sequence_id` | `uuid` | non | → `mail_sequences (id)` **`on delete restrict`** |
+| `identity_id` | `uuid` | non | → `mail_outbound_identities (id)` **`on delete restrict`** |
+| `armed_by` | `uuid` | oui | → `profiles (id) on delete set null`. **Trace, jamais un droit**, même règle qu'au §2.2 |
+| `armed_at` | `timestamptz` | non | `now()`. **Ancre du premier palier** (§12.5) et borne de la détection de réponse (§12.6) |
+| `last_position` | `integer` | oui | position du **dernier palier expédié**. `null` = aucun encore |
+| `last_sent_at` | `timestamptz` | oui | instant de cette mise en file. **Ancre du palier suivant** (§12.5) |
+| `status` | `text` | non | `active` ou `closed`. Deux valeurs, et le §12.7 dit pourquoi il n'y en a pas trois |
+| `closed_reason` | `text` | oui | `reply`, `card_ineligible`, `manual`, `exhausted` — les **quatre** fins du §12.7. Non nul si et seulement si `status = 'closed'` |
+| `closed_at` | `timestamptz` | oui | non nul si et seulement si `status = 'closed'` |
+| `created_at` | `timestamptz` | non | `now()` |
+| `updated_at` | `timestamptz` | non | `now()`, tenu par `app.set_updated_at()` |
+
+**`sequence_id` et `identity_id` sont `on delete restrict`, et `card_id` est `on delete cascade`.**
+L'asymétrie est voulue : une affaire supprimée emporte tout ce qui la décrit, mais supprimer une
+cadence ou une adresse **pendant qu'elle relance** laisserait une inscription qui ne sait plus quoi
+envoyer ni d'où. Le refus rend `23503`, que PostgREST classe en **409** — mesuré par 4a sur le
+`on delete restrict` du modèle.
+
+**`last_position` et `last_sent_at` sont nulles ensemble ou renseignées ensemble**, et une
+contrainte le dit. Une inscription qui porterait une position sans son instant ne saurait pas quand
+le palier suivant est dû ; l'inverse ne saurait pas lequel.
+
+**Aucune colonne `next_due_at`.** Elle serait la **seconde source de vérité** que le §9.4 de
+`docs/SPEC-relances.md` a déjà refusée : l'échéance se **dérive** de `last_sent_at` (ou d'`armed_at`)
+et du `delai_jours` du palier suivant, et une colonne recopiée divergerait dès qu'un palier serait
+modifié.
+
+### 12.4 `public.armer_sequence_relance` — le geste, et ses huit refus
+
+```
+public.armer_sequence_relance(p_card_id uuid, p_sequence_id uuid, p_identity_id uuid) returns uuid
+```
+
+`security definer`, propriétaire `postgres`, `search_path` vide — `authenticated` ne détient aucun
+`insert` sur la table (§12.8), exactement comme pour `mail_outbox`.
+
+| # | Refus | `SQLSTATE` | Motif |
+|---|---|---|---|
+| a | `auth.uid()` nul | `42501` `not_authenticated` | Le geste est humain par construction (§12.2) |
+| b | `app.can_write_card` faux | `42501` `forbidden` | Relancer au nom d'une affaire, c'est y ajouter du contenu : même exigence qu'au §19.4 de `docs/SPEC-mail-subsystem.md` |
+| c | La séquence n'existe pas, ou n'est pas dans le workspace de la card | `23514` `sequence_not_available` | |
+| d | La séquence ne porte **aucun palier** | `23514` `sequence_empty` | Une cadence vide n'enverrait jamais rien, et l'inscription serait un objet mort |
+| e | L'identité n'est pas empruntable par l'appelant | `42501` `identity_not_available` | Règle reprise **telle quelle** de `queue_outbound_email` : la sienne, ou celle de service s'il est administrateur |
+| f | La card n'est pas figée au sens de `public.cards_figees()` | `23514` `card_not_stalled` | §12.2 |
+| g | La card n'a pas d'adresse (`email_local_part` nul) | `23514` `card_not_available` | Reprise de `queue_outbound_email` : une relance dont la réponse ne reviendrait nulle part est pire qu'un refus |
+| h | Une inscription **active** existe déjà sur cette card | `23505` `enrollment_exists` | L'index unique partiel du §12.3, opposé **avant** l'insertion pour que le refus porte un nom |
+
+Elle rend l'`id` de l'inscription créée.
+
+**`public.interrompre_sequence_relance(p_enrollment_id uuid) returns void`** ferme une inscription
+active avec `closed_reason = 'manual'`. Deux refus : `not_authenticated` (`42501`), et `forbidden`
+(`42501`) si l'appelant ne peut pas écrire la card. Fermer une inscription **déjà fermée** ne lève
+rien et n'écrit rien — l'idempotence est celle d'un geste que l'on peut poser deux fois sans le
+savoir, et un second refus n'apprendrait rien à l'utilisateur.
+
+### 12.5 QUAND UN PALIER EST DÛ — le délai relatif, appliqué
+
+Le §11.4 a posé la règle : le délai se compte **depuis le palier précédent**, et le premier depuis
+l'armement. Son application est une seule expression :
+
+```
+palier dû  ⇔  position = coalesce(last_position, 0) + 1
+              et  now() >= coalesce(last_sent_at, armed_at) + delai_jours * interval '1 day'
+```
+
+**Un seul palier part par passage**, même si deux sont échus. Un job resté arrêté trois jours ne
+doit pas déverser trois messages d'un coup chez le destinataire : ce serait le doublon que la borne
+basse de `1` jour (§11.4) existe précisément pour empêcher. La cadence **glisse** — le palier
+suivant se compte depuis l'envoi réel, pas depuis l'échéance théorique —, ce qui est la conséquence
+directe du délai relatif et non une correction ajoutée.
+
+**L'unité de compte est le jour au sens de `interval '1 day'`**, et non le `floor` sur 86 400
+secondes du §2.5 de `docs/SPEC-relances.md`. Les deux ne mesurent pas la même chose : là-bas il
+s'agit de compter des jours **révolus** pour les comparer à un seuil affiché par une pastille ;
+ici, d'ajouter un délai à un instant. Ajouter `interval '1 day'` respecte les changements d'heure,
+ce qu'une arithmétique en secondes ne fait pas.
+
+### 12.6 CE QU'UNE RÉPONSE PRODUIT — elle TERMINE, et l'ancre est `created_at`
+
+`docs/SCHEMA.md` §7 l'annonce depuis `CRM-000` : l'inscription est « arrêtée dès qu'une réponse
+arrive ». La sous-tranche l'honore, et le motif tient en une phrase : **relancer quelqu'un qui vient
+de répondre est le seul défaut qu'un système de relance ne doit jamais avoir.** Suspendre plutôt que
+terminer supposerait de savoir quand reprendre, ce que rien dans le produit ne dit ; et « n'affecte
+pas » ferait du produit un publipostage.
+
+Une réponse est, précisément :
+
+```sql
+exists (
+  select 1
+    from public.mail_messages m
+   where m.card_id    = e.card_id
+     and m.direction  = 'inbound'
+     and m.created_at >  e.armed_at
+)
+```
+
+**L'ancre est `created_at` et NON `sent_at`, et c'est une MESURE qui l'impose** (§12.1) : `sent_at`
+est nulle sur les quatre messages du seed. C'est la date que l'en-tête du message déclare, et rien
+n'oblige un correspondant à la renseigner ni à la renseigner juste. `created_at` est l'instant où le
+produit a vu le message ; il est `not null`, il est posé par la base, et il ne dépend d'aucun tiers.
+
+**La borne est `armed_at` et non `last_sent_at`**, et c'est voulu : un message arrivé entre
+l'armement et le premier palier est une réponse à la conversation, même si aucune relance n'est
+encore partie. Prendre `last_sent_at` laisserait partir un premier palier chez quelqu'un qui avait
+déjà répondu.
+
+**Aucun trigger sur `mail_messages`.** La détection est **lue par le job**, au passage, comme
+l'idempotence de `CRM-062` est lue et non stockée (§9.4). Un trigger ferait de l'ingestion IMAP —
+chemin chaud, tenu par `mail-sync` — le porteur d'une règle de relance, et une panne de l'un
+deviendrait une panne de l'autre.
+
+### 12.7 LES QUATRE FINS, et pourquoi `status` ne porte que deux valeurs
+
+| `closed_reason` | Ce qui l'a produite |
+|---|---|
+| `reply` | Un message entrant est arrivé sur l'affaire après l'armement (§12.6) |
+| `card_ineligible` | L'affaire n'est plus rendue par `public.cards_figees()` |
+| `manual` | `public.interrompre_sequence_relance` |
+| `exhausted` | Le dernier palier de la séquence a été mis en file |
+
+**`card_ineligible` couvre QUATRE interruptions par UN prédicat, et aucune n'est réécrite ici.** Le
+§7.3 en nommait quatre — déplacement d'étape, sommeil, archivage, geste explicite — et les trois
+premières tombent **gratuitement** :
+
+- un **déplacement d'étape** repose `entered_step_at` à `now()` (`0012_move_card.sql`), donc
+  `jours_dans_etape` retombe à zéro et l'affaire sort de `cards_figees()` ;
+- une **mise en sommeil**, un **archivage** et une **mise en corbeille** sont les trois exclusions du
+  §2.4 de `docs/SPEC-relances.md`, déjà portées par la fonction.
+
+Réécrire ces prédicats ici aurait créé la **seconde définition de « figée »** que le §2.1 de
+`docs/SPEC-relances.md` existe pour empêcher, et que le commentaire d'en-tête de la migration `0059`
+nomme parmi ce que la tranche 4 « n'est pas ». Le job **appelle** `public.cards_figees()`, il ne la
+recopie pas — c'est exactement ce que le §9.2 de `docs/SPEC-relances.md` a établi pour `CRM-062`.
+
+**`status` ne porte que `active` et `closed`, et il n'y a pas de troisième valeur.** Une inscription
+est en cours, ou elle est finie ; `closed_reason` dit **pourquoi**. Un `status = 'paused'`
+supposerait un geste de reprise que le produit n'offre pas, et une valeur d'état qu'aucun chemin ne
+quitte est la colonne sans lecteur que le §11.3 refuse.
+
+**Une inscription fermée n'est jamais rouverte.** Réarmer, c'est armer de nouveau — une **nouvelle**
+inscription, dont l'`armed_at` est neuf et dont la détection de réponse repart de cet instant. La
+règle est celle de l'immuabilité de la timeline : on n'efface pas ce qui a eu lieu.
+
+### 12.8 `app.mail_outbox_inserer` — la porte du job, EXTRAITE et non dupliquée
+
+La question 4 est tranchée par la sonde du §12.1 : `public.queue_outbound_email` rend `42501` sous
+`postgres`. Deux issues étaient possibles, et la seconde est retenue.
+
+**Écartée — assouplir `queue_outbound_email`.** Rendre `auth.uid()` facultatif ouvrirait à `anon` un
+chemin d'envoi que sept refus protègent. Le premier refus n'est pas une formalité : il est ce qui
+garantit que tout message en file a un auteur ou un job identifié.
+
+**Retenue — extraire la composition et l'insertion.** Le corps de l'`insert` de
+`queue_outbound_email` devient :
+
+```
+app.mail_outbox_inserer(p_workspace_id, p_identity_id, p_card_id, p_in_reply_to_message_id,
+                        p_to, p_cc, p_subject, p_body_text, p_signature, p_created_by) returns uuid
+```
+
+`security definer`, propriétaire `postgres`, `search_path` vide, privilèges **révoqués des quatre
+rôles** — elle vit dans `app`, que PostgREST n'expose pas.
+
+**`public.queue_outbound_email` l'appelle, et ses sept refus ne bougent pas.** Seules les cinq
+lignes de l'`insert` se déplacent. Le motif est la règle que la tranche 3 a écrite et que le §10.3
+porte : « ce qui est stocké est ce qui part ». Cette règle — le corps mis en file est le corps
+**signé** par `app.mail_corps_signe` — doit avoir **UNE** définition. Écrire un second `insert` dans
+le job aurait produit deux endroits où la signature s'ajoute, et le jour où l'un change, l'autre
+enverrait autre chose sans que rien ne le dise. C'est la leçon que la migration `0059` a payée sur
+les clés déclarées en ligne, transposée : **ce qui est écrit deux fois diverge une fois.**
+
+**`p_created_by` est nul pour le job**, et cette nullité est **obtenue et non affectée** : la colonne
+`mail_outbox.created_by` est nullable (mesuré), et le job passe `null` parce qu'une relance
+automatique n'a pas d'auteur humain. C'est le §9.5 de `docs/SPEC-relances.md`, mot pour mot.
+
+### 12.9 `app.executer_sequences_relance()` — le job
+
+| Propriété | Valeur | Motif |
+|---|---|---|
+| Signature | `app.executer_sequences_relance() returns integer` | Rend le nombre de **messages réellement mis en file** — grandeur que le seed, la suite pgTAP et le harnais lisent au lieu de la déduire, comme `app.relancer_cards_figees()` (§9.3 de `docs/SPEC-relances.md`) |
+| `security` | **definer**, propriétaire `postgres` | Aucun rôle ne détient `insert` sur `mail_outbox` (mesuré : `authenticated=r/postgres`) |
+| `search_path` | `''` | Règle générale des fonctions `definer` du dépôt |
+| Privilèges | `revoke execute` de `public`, `anon`, `authenticated`, `service_role` | Aucun client ne déclenche une relance : c'est un fait de l'horloge |
+| Job | `p2enjoy-sequences-relance`, `postgres`/`postgres`, `select app.executer_sequences_relance();` | |
+| Cadence d'amorçage | `10 seconds` | Démarrage observable du §3 de `docs/SPEC-scheduler.md` |
+| Cadence nominale | `41 3 * * *` | Une fois par jour. La minute `41` évite le heartbeat (`7`) et les relances de `CRM-062` (`23`) |
+
+**L'ordre du passage est FERMER D'ABORD, ENVOYER ENSUITE**, et il n'est pas indifférent :
+
+1. **fermer** les inscriptions dont l'affaire est sortie de `cards_figees()` → `card_ineligible` ;
+2. **fermer** celles qui ont reçu une réponse → `reply` ;
+3. pour chaque inscription **encore** active dont le palier suivant est dû, composer par
+   `public.rendre_modele_email` et mettre en file par `app.mail_outbox_inserer` ; avancer
+   `last_position` et `last_sent_at` ;
+4. **fermer** celles dont le palier expédié était le dernier → `exhausted` ;
+5. promouvoir la cadence d'amorçage vers la cadence quotidienne, **dans la même transaction**.
+
+Envoyer avant de fermer ferait partir une relance chez quelqu'un qui a répondu la veille : la
+fermeture doit précéder, et c'est la seule raison de cet ordre.
+
+**Le corps est composé par `public.rendre_modele_email`**, jamais recopié. Elle est `SECURITY
+INVOKER` (mesuré, `prosecdef=false`) et `postgres` porte `rolbypassrls` : sous le job, elle rend
+donc l'ensemble global, exactement comme `cards_figees()` (§9.2 de `docs/SPEC-relances.md`). Le
+`p_identity_id` passé est celui de l'inscription, de sorte que les variables d'expéditeur du §8.5
+soient celles de l'adresse qui expédie réellement.
+
+**Un palier dont le rendu échoue ne bloque pas les autres**, et il ne se tait pas non plus :
+l'inscription reste active, son `last_position` n'avance pas, et le passage suivant réessaie. Aucun
+`try/catch` vide (`CLAUDE.md` §18) : ce qui échoue est ce que la base refuse, et le job échoue
+**avec** lui — un `raise` avorte le passage entier et `cron.job_run_details` le porte, plutôt qu'une
+relance à demi écrite.
+
+**Aucune seizième valeur au vocabulaire du fil.** Mettre en file n'est pas envoyer : le `mail_sent`
+de la timeline est écrit quand le worker a réellement expédié, et l'inscrire à la mise en file
+dirait au lecteur qu'un message est parti alors qu'il attend encore. La quinzième valeur, `stalled`,
+suffit à dire ce que le produit sait — l'affaire dort — et la relance qui en découle se lit dans la
+boîte de l'affaire.
+
+### 12.10 Autorisations
+
+| Opération | Qui | Comment |
+|---|---|---|
+| `select` | Ceux qui peuvent **lire la card** | `app.can_read_card(card_id)`, patron des tables filles (§3.6 de `docs/SPEC-permissions-rls.md`) |
+| `insert` | **Personne** directement | `public.armer_sequence_relance` est la seule porte |
+| `update` | **Personne** directement | `public.interrompre_sequence_relance` et le job |
+| `delete` | **Personne** | Une inscription est une trace ; on la ferme, on ne l'efface pas |
+
+`authenticated` reçoit `select` seul ; `anon` ne reçoit rien. La fermeture des trois autres verbes
+est celle de `mail_outbox`, et pour la même raison : une file d'envoi que le client écrirait
+lui-même n'aurait plus aucun refus.
+
+### 12.11 Contrat d'API — les routes et les RPC
+
+| # | Appel | Profil | Issue attendue |
+|---|---|---|---|
+| 1 | `GET /rest/v1/card_sequence_enrollments` | administratrice | `200`, les inscriptions des cards qu'elle lit |
+| 2 | `GET` idem | `viewer` fermé sur « Grands comptes » | `200`, **aucune** inscription d'une card de ce track |
+| 3 | `GET` idem | `anon` | `200` et **zéro ligne** — le refus est zéro ligne (§7 de `docs/SPEC-permissions-rls.md`) |
+| 4 | `POST /rest/v1/card_sequence_enrollments` | administratrice | **`401`/`403`** — aucun `insert` n'est accordé |
+| 5 | `PATCH /rest/v1/card_sequence_enrollments?id=eq.…` | administratrice | **`401`/`403`** — aucun `update` |
+| 6 | `DELETE` idem | administratrice | **`401`/`403`** — aucun `delete` |
+| 7 | `POST /rest/v1/rpc/armer_sequence_relance` — card figée, séquence et identité valides | administratrice | `200`, un `uuid` |
+| 8 | Le même, **répété** sur la même card | administratrice | `409` — `23505`, refus `h` du §12.4 |
+| 9 | `armer_sequence_relance` sur une card **non figée** | administratrice | `400` — `23514`, refus `f` |
+| 10 | `armer_sequence_relance` avec l'identité **d'un autre** | Driss | `403` — `42501`, refus `e` |
+| 11 | `armer_sequence_relance` sur une card qu'il ne peut pas écrire | `viewer` | `403` — `42501`, refus `b` |
+| 12 | `armer_sequence_relance` sans jeton | `anon` | `401` — `42501`, refus `a` |
+| 13 | `POST /rest/v1/rpc/interrompre_sequence_relance` sur son inscription | administratrice | `204`, l'inscription relue porte `status='closed'` et `closed_reason='manual'` |
+| 14 | Le même, **répété** | administratrice | `204` — idempotent, et la ligne relue est **inchangée** |
+| 15 | `interrompre_sequence_relance` sans jeton | `anon` | `401` — `42501` |
+| 16 | `DELETE /rest/v1/mail_sequences?id=eq.…` d'une séquence **armée** | administratrice | `409` — `23503`, le `on delete restrict` du §12.3 vu par la route |
+| 17 | Le seed constaté **intact** en fin de suite | — | une séquence, trois paliers, aucune inscription résiduelle |
+
+Chaque refus **relit la ligne** pour la constater inchangée (décision 70).
+
+### 12.12 Le seed
+
+Le seed **n'arme aucune inscription**, et c'est une décision plutôt qu'un oubli.
+
+Une inscription armée sur le jeu de démonstration serait exécutée par le job dès le premier passage
+— dix secondes après le démarrage de la pile, par la cadence d'amorçage du §12.9 —, et **quatre
+messages de relance partiraient réellement** chez les adresses du seed. C'est précisément la
+pollution que la tranche 3 a payée pour apprendre (décision 516 : « le contrat d'API ne retirait pas
+sa ligne de file, et six scénarios d'interface rougissaient »). Le jeu de démonstration doit
+**montrer**, pas **expédier**.
+
+L'armement est donc exercé par les **preuves**, qui arment, mesurent et referment dans un `finally`,
+patron d'`e2e/api/envoi.spec.ts`. Une **garde** du seed vérifie qu'aucune inscription ne subsiste
+après son application : un jeu qui en laisserait une ferait partir des messages à chaque démarrage.
+
+L'écart est **nommé** : `docs/BACKLOG.md` le porte, et 4c — qui livre l'écran d'armement — décidera
+si une inscription de démonstration devient montrable sans être expédiée.
+
+### 12.13 Preuves exigées — sous-tranche 4b
+
+| Niveau | Preuve |
+|---|---|
+| pgTAP | `supabase/tests/0058_armement_sequences.test.sql` : la forme de la table et sa RLS, les contraintes **nommées**, l'ACL rôle par rôle, les huit refus du §12.4 **chacun précédé de son témoin**, l'échéance du §12.5 éprouvée sur une inscription antidatée, les quatre fins du §12.7 chacune **produite** et non simulée, et le fait que `app.mail_outbox_inserer` est bien la seule ligne d'`insert` — `queue_outbound_email` et le job mettant en file le **même** corps signé |
+| API | `e2e/api/armement-sequences.spec.ts` : les dix-sept lignes du §12.11 avec les jetons réels, chaque refus relisant la ligne, et **toute inscription armée refermée dans un `finally`** |
+| Unitaire | aucune logique TypeScript n'est livrée : les règles vivent en SQL et sont éprouvées par pgTAP, qui est leur niveau. L'écart est **nommé** plutôt que compensé par un test de façade |
+| Harnais | `scripts/verify-armement-sequences.sh` : verdict unique, non complaisant, ses dégradations réelles et la restauration **constatée octet à octet** |
+| Seed | la garde du §12.12 — **aucune** inscription résiduelle |
+| E2E interface | **aucun** : cette sous-tranche ne livre aucun écran. L'écart est nommé, et l'écran est 4c |
+
+### 12.14 Definition of Done — sous-tranche 4b
+
+- migration `0060_armement_sequences.sql` appliquée et **rejouable** : la table, ses contraintes,
+  l'index unique partiel, la RLS, les privilèges, les deux RPC, `app.mail_outbox_inserer`,
+  `app.executer_sequences_relance()` et son job ;
+- `public.queue_outbound_email` **révisée** pour appeler la porte extraite, ses sept refus intacts ;
+- suite pgTAP dédiée verte ;
+- contrat d'API du §12.11 vert avec les jetons réels des trois profils ;
+- garde du seed verte ;
+- harnais dédié vert, ses dégradations vues ;
+- `docs/SCHEMA.md` §7, `docs/PROD_MIGRATIONS.md`, `docs/SPEC-relances.md` et `CHANGELOG.md` mis à
+  jour **dans le même changement** ;
+- compteurs de `scripts/verify-harness.sh` révisés **par comptage**, jamais par estimation ;
+- commentaires `@spec` / `@verifies` sur chaque fichier ;
+- commit poussé sur `origin/main`.
+
+### 12.15 Ce que 4b ne fait PAS, et qui n'est pas masqué
+
+1. **Aucun écran.** Armer se fait aujourd'hui par la RPC, donc par les preuves. L'écran est 4c.
+2. **Aucune reprise d'une inscription fermée** (§12.7). Réarmer, c'est armer de nouveau.
+3. **Aucun rattrapage des paliers échus** (§12.5) : un seul palier par passage.
+4. **Aucune révision de la confirmation de suppression d'un modèle** — le §9.7 reste faux depuis la
+   migration `0059`, et c'est nommément le travail de 4c (§11.12).

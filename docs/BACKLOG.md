@@ -8559,11 +8559,11 @@ avant la suivante :
   - [x] **4a — la séquence et ses paliers** : les deux tables, leurs contraintes, RLS, privilèges,
         pgTAP, contrat d'API, seed, harnais. **LIVRÉE ET PROUVÉE le 2026-08-25** ; voir le détail
         plus bas.
-  - [ ] **4b — l'armement et l'exécution** : l'application d'une séquence à une affaire figée, le
-        job qui met les messages en file, l'interruption. Elle devra trancher les trois questions
-        du §7.3, **chacune par une mesure**, et dire comment un palier met un message en file —
-        `public.queue_outbound_email` exige `auth.uid()` non nul et le refuse en `42501` sans
-        jeton, si bien qu'un job `pg_cron` ne peut pas l'emprunter tel quel (mesuré, §11.12).
+  - [~] **4b — l'armement et l'exécution** : l'application d'une séquence à une affaire figée, le
+        job qui met les messages en file, l'interruption. **SPÉCIFIÉE au §12** de
+        `docs/SPEC-modeles-emails.md` le 2026-08-25, après mesure sur la pile debout et seedée, et
+        **avant sa première ligne de code**. Les **quatre** questions — les trois du §7.3 et celle
+        que le §11.12 a ajoutée — y sont tranchées **chacune par une mesure** (§12.1).
   - [ ] **4c — l'écran** : administration des séquences, armement depuis l'affaire, et la **RPC de
         réordonnancement** que le §11.6 bis rend nécessaire. Elle devra aussi **réviser la
         confirmation de suppression d'un modèle** : le §9.7 annonce une suppression
