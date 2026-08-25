@@ -3435,3 +3435,110 @@ exerce `card_contacts_maj`, posée par la migration `0045` et jamais atteinte pa
 **Ce qui restera dû sur `CRM-060` après 4j** : l'arbitrage sur les **références mortes** (§6,
 point 4) et, derrière lui, la **suppression** d'un contact ; le **fil unifié**, qui n'apprend rien
 des trois gestes de rattachement (§12.8). L'unité demeure `[~]`.
+
+---
+
+## 19. Tranche 5 — Le fil de l'affaire apprend les rattachements de contacts
+
+**Écrite avant la première ligne de code**, le 2026-08-25, en exécution de la **décision 517**
+(`docs/ARBITRAGES.md` §5), qui tranche l'écart nommé au §12.8 : « le fil unifié n'apprend rien de ce
+geste ».
+
+### 19.1 Ce que la tranche livre, et ce qu'elle ne livre pas
+
+**Livré** : les trois gestes de `card_contacts` — rattacher, détacher, changer le rôle — laissent
+chacun une trace dans `card_events`, et le fil de l'affaire la NOMME.
+
+**Non livré, et nommé plutôt que compensé** : aucune trace côté **contact**. La fiche d'un contact
+n'a pas de fil, et lui en donner un demanderait une table dont personne n'a besoin ailleurs. Aucun
+filtre nouveau non plus : la barre du §5.11 reste à cinq bascules.
+
+### 19.2 Pourquoi un trigger de TABLE, et non les écrans
+
+Trois surfaces écrivent aujourd'hui dans `card_contacts` — la fiche d'affaire (4c), la fiche de
+contact (4h, 4i) et la modification du rôle (4j) —, et rien n'interdit qu'une quatrième arrive. Une
+trace écrite par chaque écran serait **trois fois la même règle**, donc trois occasions de diverger,
+et une quatrième surface l'oublierait en silence.
+
+Le trigger est posé sur la TABLE, exactement comme `CRM-081` l'a fait pour le sommeil
+(`docs/SPEC-cards.md` §16.5) : la trace suit la DONNÉE, pas le geste. Un rattachement écrit par la
+clé de service — un import, un seed — laisse donc lui aussi sa trace.
+
+### 19.3 Les trois types, et le vocabulaire qui passe de quinze à dix-huit
+
+| Type | Écrit quand | Payload, clés exactes |
+|---|---|---|
+| `contact_linked` | `INSERT` sur `card_contacts` | `contact_id`, `role` (nul si absent) |
+| `contact_unlinked` | `DELETE` sur `card_contacts` | `contact_id`, `role` (celui qu'il portait) |
+| `contact_role_changed` | `UPDATE OF role`, et **seulement si la valeur bouge** | `contact_id`, `from`, `to` |
+
+**Le payload ne porte AUCUN libellé** (`docs/SPEC-cards.md` §14.6) : ni le nom du contact, ni celui
+de l'organisation. Un nom recopié dans un événement immuable devient faux le jour où le contact est
+renommé, et le fil se mettrait à mentir sur son propre passé. L'écran résout le nom à la lecture.
+
+**`is distinct from` sur le rôle**, comme les cinq gardes de `CRM-044` : une écriture qui ne déplace
+pas la valeur n'allonge pas l'histoire, ce qui rend un rejeu convergent.
+
+### 19.4 La migration, et la garde qu'INC-210 rend obligatoire
+
+La contrainte `card_events_type_check` passe à **dix-huit** valeurs, et la migration porte les
+**deux** gardes d'INC-144 : la première regarde la contrainte — converger seulement si
+`contact_linked` en est absent —, la seconde regarde les **lignes** et interdit de converger si
+l'une porte un type que cette migration ne connaît pas. La migration 44 avait omis la seconde, et
+`stalled` a rendu le répertoire non rejouable (INC-210, décision 507) : la leçon est appliquée le
+jour même, et non redécouverte.
+
+### 19.5 Ce que l'écran en fait — et le piège d'INC-207, qui ne se répétera pas
+
+`CRM-062` a livré `stalled` en base sans l'inscrire dans `TYPES_EVENEMENT`, `FAMILLE_PAR_TYPE` ni
+les traductions : le fil rendait **« Événement »**, et la tranche avait livré la moitié de sa propre
+spécification. Les trois types sont donc, **dans le même changement** :
+
+- ajoutés à `TYPES_EVENEMENT` (`webapp/src/lib/timeline.ts`) ;
+- rangés **explicitement** dans `FAMILLE_PAR_TYPE`, famille **`organisation`** — « qui travaille sur
+  cette affaire, et où vit-elle ? » est la question de cette famille, celle qui porte déjà
+  `channel_changed` et `workflow_changed`. Aucune sixième bascule n'est ajoutée (§5.11) ;
+- traduits dans `webapp/src/i18n/fr.ts`, avec leur détail : « Contact rattaché », « Contact
+  détaché », « Rôle du contact modifié », et le rôle en détail quand il existe.
+
+Une boucle de preuve vérifie que **les dix-huit** types sont rangés dans `FAMILLE_PAR_TYPE` : un
+dix-neuvième ajouté sans y figurer retomberait sur le repli documenté, et l'oubli d'INC-207 se
+répéterait sans que rien ne rougisse.
+
+### 19.6 Autorisations — aucune n'est ajoutée, et c'est un point de contrôle
+
+`card_events` n'accorde **aucun** privilège d'écriture, `service_role` compris
+(`docs/SPEC-cards.md` §14.7) : le trigger passe par `app.card_event_ecrire()`, seule voie
+d'écriture. La lecture d'un événement suit la lecture de son affaire — un profil qui ne lit pas
+l'affaire ne lit pas ses rattachements. Aucune politique n'est créée, aucune n'est modifiée.
+
+### 19.7 Contrat de comportement — mesuré sur le seed
+
+| Cas | Geste | Attendu |
+|---|---|---|
+| a | rattacher un contact à une affaire | exactement **un** `contact_linked`, `payload` aux deux clés, acteur = l'appelant |
+| b | détacher ce contact | exactement **un** `contact_unlinked`, portant le rôle qu'il avait |
+| c | changer le rôle | **un** `contact_role_changed`, `from` et `to` distincts |
+| d | réécrire le MÊME rôle | **aucun** événement de plus — `is distinct from` |
+| e | rattacher par la clé de service | trace écrite quand même : elle suit la donnée |
+| f | lire le fil sans lire l'affaire | **aucune** ligne — la RLS de `card_events` décide seule |
+| g | le fil de l'affaire, à l'écran | les trois libellés rendus, jamais « Événement » |
+
+### 19.8 Preuves exigées — tranche 5
+
+| Niveau | Preuves attendues |
+|---|---|
+| pgTAP | le vocabulaire compte dix-huit valeurs ; le trigger existe sur `card_contacts` et sa fonction est `SECURITY DEFINER`, propriétaire `postgres`, `search_path` vide ; les cas a à e, chacun précédé de son témoin |
+| API | les trois gestes par la vraie route PostgREST avec les jetons réels, la trace relue dans `card_events` ; le cas f mesuré avec le jeton de la lectrice |
+| Unitaire (webapp) | les trois types rangés dans `FAMILLE_PAR_TYPE`, la boucle sur les dix-huit, les trois libellés et leur détail |
+| E2E d'interface | le fil d'une affaire montre le rattachement fait à l'écran, avec son libellé — cas g |
+| Visuel | une capture du fil portant les trois lignes, produite **et observée** |
+| Harnais | `scripts/verify-contacts.sh` étendu, non complaisant : retirer un type de `FAMILLE_PAR_TYPE` doit faire rougir, retirer le trigger aussi |
+| Seed | le seed pose ses rattachements par le VRAI chemin, donc les traces existent sans fixture |
+
+### 19.9 Definition of Done — tranche 5
+
+Les sept preuves ci-dessus vertes, la migration rejouable **sur une base portant déjà ses propres
+types** (INC-210), le vocabulaire à dix-huit dans `docs/SCHEMA.md` et `docs/SPEC-cards.md` §14.4,
+`docs/manual.md` mis à jour là où il décrit le fil, et le §12.8 **révisé par livraison** — l'écart
+qu'il nommait n'existe plus.
