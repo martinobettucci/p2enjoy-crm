@@ -187,3 +187,41 @@ suivi historique de la récupération demeure clos en **INC-081**, et l'écart d
 À l'inverse, l'unité de l'écran de connexion (décision 253) et la session en `sessionStorage`
 (décision 254) sont **déjà appliquées** sur `main` par la décision 243 : seule leur trace manquait.
 Les quinze autres entrées n'ont pas été mesurées une à une.
+
+---
+
+## 5. Arbitrages du 2026-08-25 — DÉLÉGUÉS À L'AGENT par le responsable, décisions 509 à 517
+
+**Instruction du responsable, 2026-08-25, en toutes lettres** : « finir toutes les tâches et finir
+le produit ; si quelque chose empêche d'avancer, soit tu prends une décision, soit tu me demandes
+une par une ». Les entrées ci-dessous étaient **toutes** en attente d'arbitrage, et elles bloquaient
+le comportement encore à construire. Elles sont tranchées ici, chacune avec son motif, de sorte
+qu'aucune ne dépende plus de la mémoire d'une session.
+
+**Règle générale retenue pour toutes** : quand le dépôt porte déjà une doctrine écrite, la décision
+la SUIT au lieu d'inventer une exception ; quand il n'en porte aucune, elle prend la solution qui
+coûte le moins à défaire.
+
+| Décision | Entrée | Ce qui est tranché | Porteur |
+|---|---|---|---|
+| **509** | INC-170 | **Le `viewer` n'a AUCUNE commande éteinte d'avance.** `docs/DESIGN_SYSTEM.md` pose neuf fois qu'une commande n'est jamais grisée par le rôle : l'écran envoie le geste et **traduit le refus** de la base, qui est la seule autorité. L'énoncé du §5.4 de `docs/SPEC-goals.md` — « tous les gestes d'écriture indisponibles » — est celui qui cède, et il est réécrit. Motif : une extinction par rôle duplique la règle d'autorisation dans le client, où elle finit par diverger ; le refus traduit, lui, ne peut pas mentir | `CRM-083` |
+| **510** | INC-169 | **Un `channel_id` nul ne se distingue pas d'un lien jamais posé, et l'écran ne prétendra pas le contraire.** La mention « lien perdu » reste réservée au seul état DÉTECTABLE — une destination partie à la corbeille. Motif : distinguer les deux demanderait une colonne d'historique sur `goal_blocks` dont personne n'a besoin ailleurs ; l'inventer pour une mention d'écran est un coût permanent pour un gain d'affichage | `CRM-083` |
+| **511** | INC-182 | **Le badge de l'onglet « À saisir » compte EXACTEMENT ce que l'onglet liste**, budgets clôturés compris et toutes devises confondues. La mention du §4.4 garde son propre périmètre, qui est celui de l'histogramme. Les deux nombres peuvent donc différer, et c'est **écrit à l'écran** plutôt que masqué : « n lignes à saisir, dont m hors des budgets affichés ». Motif : un badge qui compterait autre chose que sa liste enverrait l'utilisateur chercher des lignes qu'il ne verrait pas | `CRM-086` |
+| **512** | INC-183 | **Aucun seuil d'ancienneté sur une ligne de coût.** Le §5.31 de `docs/DESIGN_SYSTEM.md` en supposait un ; rien n'en porte dans le modèle, et une couleur d'alerte inventée sur une date de création dirait une urgence que le produit ne connaît pas. La règle du design system est retirée, pas contournée | `CRM-086` |
+| **513** | INC-185 | **`card_events` est append-only, y compris pour une preuve.** `e2e/ui/inbox.spec.ts` affirme retirer un événement que la base refuse de supprimer même à la clé de service : c'est l'AFFIRMATION qui est fausse, la garantie de `CRM-044` étant, elle, exactement ce qu'on veut. Le commentaire est corrigé et la preuve assume sa dérive bornée | `CRM-057` |
+| **514** | INC-193 | **Aucun corps d'erreur du serveur n'est jamais rendu à l'utilisateur**, et c'est déjà la règle des dictionnaires fermés. La divulgation de `secret_id` par le `details` de PostgREST est **acceptée en développement** et **fermée en production par la règle d'écran**, jamais par un espoir sur le serveur. Exigence attachée, opposable : toute surface qui parle à `mail_inbound_accounts` ou `mail_outbound_identities` traduit ses refus par dictionnaire fermé et **ne recopie jamais** `message`, `details` ni `hint` | `CRM-088`, `CRM-089` |
+| **515** | INC-190 | **Voie (a).** Le §4.3 de `docs/CloudWorker.md` conserve la campagne complète de fin de session ; la série `verify-*.sh` n'exécute ensuite QUE les harnais que le changement touche. La série ENTIÈRE devient un geste **périodique**, à mener quand une session n'a rien de mieux à faire — et le 2026-08-25 a montré ce qu'elle vaut : c'est elle qui a trouvé INC-210 | `docs/CloudWorker.md` |
+| **516** | `CRM-060` §6 point 4 | **Une valeur de formulaire qui désigne un contact supprimé est CONSERVÉE, et l'écran le dit.** Aucun trigger de balayage, aucune table de liaison : la résolution reste vérifiée **à l'écriture** (migration 47), et la lecture d'un identifiant devenu introuvable rend « contact supprimé » au lieu d'un vide. Motif : effacer la valeur détruirait une donnée historique juste ; la table de liaison est un changement de modèle dont le coût dépasse le défaut | `CRM-060` |
+| **517** | `CRM-060` §12.8 | **Les trois gestes de rattachement d'un contact ÉCRIVENT dans le fil de l'affaire** — `contact_linked`, `contact_unlinked`, `contact_role_changed` —, par un trigger de TABLE sur `card_contacts`, comme `CRM-081` l'a fait pour le sommeil. Motif : le §12.8 nommait l'écart comme « à arbitrer » ; un rattachement est un fait de la vie de l'affaire au même titre qu'un déplacement, et la timeline est l'endroit où le produit répond à « que s'est-il passé ? » | `CRM-060` |
+
+### Ce que ces décisions NE tranchent pas, et pourquoi
+
+- **`CRM-072` (`audit_log`) et `CRM-073` (`api_tokens`) n'existent toujours pas comme unités.**
+  Onze unités leur renvoient, et `CRM-013` comme `CRM-014` restent `[~]` de leur seule absence.
+  Les créer demande un périmètre PRODUIT — que journalise-t-on, qui le lit, combien de temps le
+  garde-t-on ; à qui sert un jeton d'API et que peut-il faire — qui n'est pas un détail technique
+  et qu'aucune mesure ne donne. **C'est la seule question qui reste posée au responsable**, et elle
+  est posée en ces termes dans le compte rendu de la session.
+- **INC-173 (aucune surface de gestion des occurrences, `CRM-084`)** est tranchée sur le principe —
+  la surface est due — mais elle est du **travail**, pas une question : elle vaut une sous-tranche
+  à part entière, spécifiée avant son code comme toutes les autres.
