@@ -7986,6 +7986,45 @@ rôle **non nul**, ce que le préremplissage du cas b exige, et l'un d'eux est s
 rien des trois gestes de rattachement (§12.8). La modification du rôle, que le §18.8 nommait, est
 **livrée par 4j**. `CRM-060` demeure `[~]`.
 
+**RÉVISÉ LE 2026-08-25 — LES DEUX POINTS SONT ARBITRÉS, ET LE SECOND EST LIVRÉ.** Le responsable a
+délégué les arbitrages en attente (`docs/ARBITRAGES.md` §5) : la **décision 516** tranche les
+références mortes — la valeur est CONSERVÉE et la lecture dit « contact supprimé », aucun trigger de
+balayage, aucune table de liaison —, et la **décision 517** ouvre le fil aux trois gestes.
+
+- [x] **Tranche 5 — le fil de l'affaire apprend les rattachements. LIVRÉE ET PROUVÉE le
+      2026-08-25**, spécifiée d'abord (`docs/SPEC-contacts.md` §19, neuf sous-chapitres écrits et
+      committés avant la première ligne de code).
+      - `supabase/migrations/0061_fil_rattachements_contacts.sql` : vocabulaire de `card_events`
+        porté de quinze à **dix-huit** valeurs sous les **DEUX** gardes d'INC-144 — la leçon
+        d'INC-210, appliquée le jour même plutôt que redécouverte —, `app.card_events_apres_maj_contacts()`
+        et **trois triggers de TABLE** sur `card_contacts`. Le trigger suit la DONNÉE et non le
+        geste : trois surfaces écrivent déjà dans cette table, une quatrième ne pourra pas oublier
+        la trace.
+      - **UN DÉFAUT RÉEL INTRODUIT PAR LA TRANCHE, TROUVÉ PAR UNE PREUVE EXISTANTE AVANT TOUTE
+        LIVRAISON** : `card_contacts` cascade depuis `cards`, et le trigger de suppression écrivait
+        dans le fil d'une affaire déjà supprimée — la clé étrangère refusait et **la suppression de
+        l'affaire échouait entièrement**. `supabase/tests/0049_card_costs.test.sql` l'a fait rougir.
+        Corrigé à sa cause, et l'assertion qui l'aurait attrapé vit désormais dans la suite de la
+        tranche, éprouvée par dégradation.
+      - **INC-220 TROUVÉE ET CLOSE AU PASSAGE** : `mail_sent` était écrit en base depuis `CRM-058`
+        et n'avait jamais été nommé côté écran — neuf lignes du fil se lisaient « Événement ». Deux
+        preuves du repli l'employaient comme témoin de type « inconnu », ce qui protégeait le manque
+        au lieu de le dénoncer ; les deux témoins sont révisés (décision 408).
+      - **Preuves** : `supabase/tests/0059_fil_rattachements_contacts.test.sql` **18 assertions**,
+        `e2e/api/contacts.spec.ts` **80 scénarios** (les traces mesurées en DELTA, seule forme
+        qu'un journal immuable autorise), `e2e/ui/contacts.spec.ts` **50 scénarios** dont le
+        parcours du fil, `npm run test:unit` **77 fichiers / 2551 tests**, `npm run test:sql`
+        **59 fichiers / 2826 assertions**. Une capture produite **et observée** —
+        `docs/captures/CRM-060/fil-rattachement-contact-1440.jpg` —, et elle a trouvé son propre
+        défaut : cadrée sur la première ligne, elle montrait des traces SANS nom.
+      - **Documentation dans le même changement** : `docs/SPEC-contacts.md` §19, `docs/SCHEMA.md`
+        §5, `docs/SPEC-cards.md` §14.4, `docs/manual.md` chapitre 4.10, `docs/PROD_MIGRATIONS.md`
+        (migration 61), `CHANGELOG.md`, `docs/ARBITRAGES.md` §5.
+
+**Ce qui reste dû sur `CRM-060` après la tranche 5** : la **suppression** d'un contact, désormais
+débloquée par la décision 516 mais non écrite — c'est une tranche 6 à spécifier. `CRM-060` demeure
+`[~]` pour cette seule raison.
+
 **Troisième tranche livrée, 2026-08-18 — la résolution des champs `contact` et `user`**
 (`docs/SPEC-contacts.md` §9, migration `0047`) :
 
