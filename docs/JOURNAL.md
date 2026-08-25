@@ -24325,6 +24325,18 @@ depuis `CRM-053` — ni `mail-sync` ni l'écran de `CRM-089` ne la lisent — et
 là où tout le sous-système expédie du texte. La corriger est une **migration sur la table d'une
 autre unité** : c'est la tranche 3, qui devra trancher le type et le nom avant de coder.
 
+**LES TROIS COMPTEURS RÉVISÉS SONT CERTIFIÉS** : `scripts/verify-harness.sh --rapide` rend
+**31 contrôles, aucune anomalie** — « 53 fichiers, 2587 assertions », « projet api : 870 scénarios
+énumérés, conforme au compteur », « projet ui : 594 », « projet mail : 42 ». Son **premier** passage
+avait rougi, et sur un manque réel : `scripts/verify-node-toolchain.sh` vérifie mécaniquement que
+tout harnais invoquant `npm` prépare d'abord la chaîne Node 24, et le harnais neuf ne le faisait pas.
+Garde posée ; les **quarante-deux** harnais concernés la portent de nouveau tous. Les captures
+réécrites par ce second rejeu ont été restaurées comme celles de la campagne.
+
+**UNE SESSION CONCURRENTE A POUSSÉ PENDANT CELLE-CI** — décision 512 bis, INC-189 élargie. Le
+rebase s'est fait sans conflit et son commit ne touche que deux documents ; aucune preuve n'avait
+donc à être rejouée de ce fait.
+
 **Où reprendre.** `CRM-063` **tranche 2** — le rendu et l'écran des modèles —, cadrée au §7.1 de
 `docs/SPEC-modeles-emails.md` et à spécifier ligne à ligne avant sa première ligne de code. La
 question qu'elle doit trancher est nommée : **ce qu'un trou dont la source est nulle rend** — la
