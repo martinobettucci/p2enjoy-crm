@@ -133,6 +133,14 @@ type _tables = Expect<
     | 'mail_messages'
     | 'mail_outbound_identities'
     | 'mail_outbox'
+    // `0055` de `CRM-063` tranche 1 ajoute `mail_templates`, et LE TÉMOIN NE L'A PAS VU EN SON
+    // TEMPS — même défaut de chaîne que celui décrit plus bas pour `cards_figees`, et pour la
+    // même cause : la migration a été livrée sans que `scripts/generate-types.sh` soit rejoué. Le
+    // fichier généré ignorait la table, ce témoin comparait donc deux états également périmés, et
+    // il est resté VERT. Il n'a rougi qu'à la régénération, faite par la sous-tranche 2b parce que
+    // son écran lit cette table. La leçon reste celle de la chaîne : une migration qui ajoute un
+    // objet au schéma exposé régénère les types DANS LE MÊME CHANGEMENT.
+    | 'mail_templates'
     | 'mail_thread_snoozes'
     | 'organizations'
     | 'profiles'
@@ -786,10 +794,20 @@ type _vueDerivationColonnes = Expect<
 // source qu'il observe est elle-même à jour. Une migration qui ajoute une fonction au schéma exposé
 // régénère les types DANS LE MÊME CHANGEMENT, faute de quoi le garde-fou dort avec elle.
 // Trente-sept devient TRENTE-HUIT.
-type _lesTrenteHuitFonctions = Expect<
+//
+// `0056` et `0057` de `CRM-063` tranche 2 ajoutent `rendre_modele_email` et
+// `mail_template_variables`, et LE TÉMOIN NE LES A PAS VUES NON PLUS EN LEUR TEMPS : la 2a a livré
+// sa fonction sans régénérer, et c'est la 2b — dont l'écran appelle les deux par `client.rpc` —
+// qui a rejoué le générateur. Le défaut est le MÊME que celui de `cards_figees` décrit ci-dessus,
+// et sa répétition dit que la leçon vaut pour la chaîne et non pour un cas : une migration qui
+// ajoute une fonction au schéma exposé régénère les types dans le même changement.
+// Trente-huit devient QUARANTE.
+type _lesQuaranteFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
     | 'cards_figees'
+    | 'mail_template_variables'
+    | 'rendre_modele_email'
     | 'reel_saisissable'
     | 'change_channel_workflow'
     | 'compare_workflow_versions'
@@ -1016,7 +1034,7 @@ export type AssertionsDuContratDeTypes = [
   _relationsWorkspaceMembers,
   _laSeuleVue,
   _vueDerivationColonnes,
-  _lesTrenteHuitFonctions,
+  _lesQuaranteFonctions,
   _signatureReelSaisissable,
   _retourReelSaisissable,
   _signatureArborescence,

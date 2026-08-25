@@ -1561,6 +1561,54 @@ export type Database = {
           },
         ]
       }
+      mail_templates: {
+        Row: {
+          body_text: string
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          subject: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          body_text: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          subject: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          body_text?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          subject?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mail_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_templates_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mail_thread_snoozes: {
         Row: {
           created_at: string
@@ -2409,6 +2457,7 @@ export type Database = {
         Args: { p_error?: string; p_identity_id: string; p_status: string }
         Returns: string
       }
+      mail_template_variables: { Args: never; Returns: string[] }
       marquer_envoi_echoue: {
         Args: { p_code: string; p_outbox_id: string }
         Returns: undefined
@@ -2565,6 +2614,19 @@ export type Database = {
       reel_saisissable: {
         Args: { ligne: Database["public"]["Tables"]["card_costs"]["Row"] }
         Returns: boolean
+      }
+      rendre_modele_email: {
+        Args: {
+          p_card_id: string
+          p_contact_id?: string
+          p_identity_id?: string
+          p_template_id: string
+        }
+        Returns: {
+          body_text: string
+          subject: string
+          variables_nulles: string[]
+        }[]
       }
       reprendre_envois_orphelins: {
         Args: { p_seuil_minutes?: number }
