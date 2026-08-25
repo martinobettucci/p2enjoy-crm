@@ -2140,3 +2140,133 @@ test.describe('CRM-060 4j — la modification du rôle d’un rattachement (§19
 		])
 	})
 })
+
+// =================================================================================================
+// TRANCHE 5 — le fil de l'affaire apprend les rattachements
+// (docs/SPEC-contacts.md §19, docs/ARBITRAGES.md §5 décision 517)
+// =================================================================================================
+//
+// CE QUE CES SCÉNARIOS MESURENT, ET QUE LA SUITE pgTAP NE PEUT PAS MESURER. La suite écrit en SQL
+// direct, donc sous `postgres` : elle prouve que le TRIGGER écrit, jamais que la trace survit au
+// chemin réel — PostgREST, la RLS, le jeton d'un profil. Ici les trois gestes passent par la
+// véritable route, avec les jetons réels, et la trace est relue par le même chemin que l'écran.
+//
+// L'ACTEUR EST LA MESURE LA PLUS IMPORTANTE. En SQL direct, `auth.uid()` est nul et l'événement
+// porte un acteur nul (§9.5 de `docs/SPEC-relances.md`, même mécanique). Par la route réelle, il
+// doit porter le profil de CELUI QUI A FAIT LE GESTE : sans cela, le fil dirait ce qui s'est passé
+// sans dire qui l'a fait, et la moitié de sa valeur disparaîtrait.
+test.describe('CRM-060 tranche 5 — les trois gestes laissent leur trace dans le fil', () => {
+	const CARD_FIL = '5eed0000-0000-4000-8000-0000000000c1'
+	const CONTACT_FIL = '5eed0000-0000-4000-8000-000000000093' // Élise, non rattachée au seed
+	const PROFIL_CAMILLE = '5eed0000-0000-4000-8000-000000000011'
+
+	async function evenementsDuFil(
+		request: APIRequestContext,
+		type: string,
+	): Promise<readonly { readonly actor_id: string | null; readonly payload: Record<string, unknown> }[]> {
+		// LA LECTURE EST FILTRÉE SUR LE CONTACT DE CE SCÉNARIO, ET C'EST OBLIGATOIRE. `card_events`
+		// est append-only et refuse le `DELETE` même à la clé de service (`CRM-044`, §14.7) : les
+		// autres scénarios de ce fichier rattachent et détachent leurs propres sondes sur la même
+		// affaire, et y laissent donc leurs traces. MESURÉ à la première écriture de ce scénario :
+		// vingt-huit `contact_linked` sur l'affaire, dont un seul était le sien. Compter par
+		// affaire mesurerait l'histoire du fichier, pas le geste.
+		const reponse = await request.get(
+			`/rest/v1/card_events?card_id=eq.${CARD_FIL}&type=eq.${type}` +
+				`&payload->>contact_id=eq.${CONTACT_FIL}` +
+				'&select=actor_id,payload&order=created_at.desc',
+			{ headers: enTetesService() },
+		)
+		return (await reponse.json()) as never
+	}
+
+	async function detacher(request: APIRequestContext): Promise<void> {
+		await request.delete(
+			`/rest/v1/card_contacts?card_id=eq.${CARD_FIL}&contact_id=eq.${CONTACT_FIL}`,
+			{ headers: enTetesService() },
+		)
+	}
+
+	test('rattacher, changer le rôle, détacher — trois traces, et chacune nomme son auteur', async ({
+		request,
+	}) => {
+		const jeton = await jetonDe(COMPTES_SEED[0].adresse)
+		// L'ÉTAT D'ENTRÉE EST RELEVÉ, non supposé : voir le commentaire du delta plus bas.
+		const avantLies = (await evenementsDuFil(request, 'contact_linked')).length
+		const avantChanges = (await evenementsDuFil(request, 'contact_role_changed')).length
+		const avantDetaches = (await evenementsDuFil(request, 'contact_unlinked')).length
+		try {
+			// a — le rattachement, par la vraie route et le jeton réel de l'administratrice.
+			const pose = await request.post('/rest/v1/card_contacts', {
+				headers: enTetesAuthentifies(jeton),
+				data: {
+					workspace_id: WORKSPACE_SEED,
+					card_id: CARD_FIL,
+					contact_id: CONTACT_FIL,
+					role: 'decideur',
+				},
+			})
+			expect(pose.status(), 'le rattachement est accepté').toBe(201)
+
+			const lies = await evenementsDuFil(request, 'contact_linked')
+			// LE COMPTE EST UN DELTA, JAMAIS UN ABSOLU, et c'est la seule forme qu'un journal
+			// IMMUABLE autorise. `card_events` refuse le `DELETE` même à la clé de service
+			// (`CRM-044` §14.7) : ce scénario ne peut pas reprendre ses écritures, et une attente
+			// absolue rendrait « 1 » à la première exécution puis « 2 », « 3 »… MESURÉ : la
+			// quatrième exécution en trouvait quatre. Le delta, lui, vaut un à chaque fois.
+			expect(
+				lies.length - avantLies,
+				'le geste écrit EXACTEMENT une trace de plus, écrite par le trigger et non par l’écran',
+			).toBe(1)
+			expect(lies[0]?.payload['contact_id']).toBe(CONTACT_FIL)
+			expect(lies[0]?.payload['role']).toBe('decideur')
+			// L'ACTEUR EST CELUI DU JETON, et c'est ce que le SQL direct ne pouvait pas montrer.
+			expect(lies[0]?.actor_id, 'le fil dit QUI a rattaché').toBe(PROFIL_CAMILLE)
+
+			// c — le rôle déplacé.
+			const change = await request.patch(
+				`/rest/v1/card_contacts?card_id=eq.${CARD_FIL}&contact_id=eq.${CONTACT_FIL}`,
+				{ headers: enTetesAuthentifies(jeton), data: { role: 'prescripteur' } },
+			)
+			expect(change.status()).toBe(204)
+
+			const changes = await evenementsDuFil(request, 'contact_role_changed')
+			expect(changes.length - avantChanges).toBe(1)
+			expect(changes[0]?.payload['from']).toBe('decideur')
+			expect(changes[0]?.payload['to']).toBe('prescripteur')
+			expect(changes[0]?.actor_id).toBe(PROFIL_CAMILLE)
+
+			// b — le détachement, qui conserve le rôle porté au moment du geste.
+			const retrait = await request.delete(
+				`/rest/v1/card_contacts?card_id=eq.${CARD_FIL}&contact_id=eq.${CONTACT_FIL}`,
+				{ headers: enTetesAuthentifies(jeton) },
+			)
+			expect(retrait.status()).toBe(204)
+
+			const detaches = await evenementsDuFil(request, 'contact_unlinked')
+			expect(detaches.length - avantDetaches).toBe(1)
+			expect(detaches[0]?.payload['role'], 'le rôle du moment, lu dans OLD').toBe('prescripteur')
+			expect(detaches[0]?.actor_id).toBe(PROFIL_CAMILLE)
+		} finally {
+			await detacher(request)
+			// LES ÉVÉNEMENTS NE SE REPRENNENT PAS, ET C'EST LA GARANTIE DE `CRM-044` : `card_events`
+			// refuse le `DELETE` même à la clé de service. La dérive est bornée et connue — c'est la
+			// limite déjà nommée pour `inbox.spec.ts` (INC-185, arbitrée par la décision 513) : le
+			// fil est une mémoire, et une preuve n'efface pas une mémoire.
+		}
+	})
+
+	test('la lectrice ne lit AUCUNE trace de rattachement sur une affaire fermée', async ({
+		request,
+	}) => {
+		// La lectrice ne lit pas le track « Grands comptes » (docs/SPEC-seed.md §9.7) : elle ne lit
+		// donc ni l'affaire, ni son fil. La RLS de `card_events` décide seule — cette tranche
+		// n'ajoute aucune politique, et cette mesure est ce qui le prouve.
+		const jeton = await jetonDe(COMPTES_SEED[2].adresse)
+		const reponse = await request.get(
+			`/rest/v1/card_events?card_id=eq.${CARD_FIL}&select=id`,
+			{ headers: enTetesAuthentifies(jeton) },
+		)
+		expect(reponse.status(), 'un refus de lecture rend zéro ligne, jamais une erreur').toBe(200)
+		expect(await reponse.json()).toEqual([])
+	})
+})
