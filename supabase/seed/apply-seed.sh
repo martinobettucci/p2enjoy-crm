@@ -12,6 +12,8 @@
 # @spec CRM-062 (docs/BACKLOG.md) — la relance de la card figée, écrite par le VRAI mécanisme
 #       (docs/SPEC-relances.md §9.9)
 # @spec CRM-060 (docs/BACKLOG.md) — contacts et organisations, tranche 1 (docs/SPEC-contacts.md §5)
+# @spec CRM-063 (docs/BACKLOG.md) — tranche 4a : la séquence de relance de démonstration et ses
+#       trois paliers (docs/SPEC-modeles-emails.md §11.9)
 # @spec docs/SPEC-seed.md §2 (contrat), §2.9 (copie), §3 (mécanismes mesurés), §4 (identifiants),
 #       §5 (gardes)
 # @spec docs/SPEC-tracks.md §8 (seed des tracks) ; docs/SPEC-channels.md §8 (seed des channels)
@@ -3583,6 +3585,88 @@ esac
 
 info "Modèles d'email : $modeles_mail — variables dans l'objet ET le corps pour l'un, dans le corps
       seul pour l'autre — CRM-063, docs/SPEC-modeles-emails.md §2.8"
+
+# --- 8 septdecies. Séquence de relance de démonstration — docs/SPEC-modeles-emails.md §11.9 ------
+# @spec CRM-063 (docs/BACKLOG.md) — modèles d'emails, tranche 4, sous-tranche 4a
+# @spec docs/SPEC-modeles-emails.md §11.4 (le délai est compté depuis le palier précédent),
+#       §11.9 (le jeu de démonstration et ses deux gardes)
+# @spec docs/SCHEMA.md §7 (`mail_sequences`, `mail_sequence_steps`)
+#
+# UNE SÉQUENCE, « Relance en trois temps », ET TROIS PALIERS. Trois sont NÉCESSAIRES, et deux ne
+# suffiraient pas (§11.9) :
+#
+#   * le palier 3 RÉEMPLOIE le modèle du palier 1 : c'est le seul jeu qui démontre qu'un modèle
+#     sert plusieurs paliers, et qu'aucune unicité n'est posée sur `template_id` ;
+#   * les trois délais sont DISTINCTS et croissants : un jeu à délais égaux laisserait passer une
+#     contrainte qui les confondrait ;
+#   * trois positions donnent un ÉCHANGE à prouver, que deux paliers rendraient indiscernable
+#     d'une permutation triviale.
+#
+# LES DÉLAIS SONT COMPTÉS DEPUIS LE PALIER PRÉCÉDENT (§11.4), et le premier depuis l'armement :
+# 3, puis 7, puis 14 — soit J+3, J+10 et J+24 en absolu. Le décalage absolu reste DÉRIVABLE, c'est
+# la somme des délais des paliers de position inférieure ou égale ; l'inverse n'est pas vrai.
+#
+# CRÉÉES PAR L'API REST AVEC LE JETON RÉEL DE L'ADMINISTRATRICE, jamais par un INSERT direct ni par
+# la clé de service : `CLAUDE.md` §8 exige que les données de démonstration empruntent le chemin du
+# produit, et ce chemin-ci EXERCE au passage les politiques d'insertion du §11.7 — un seed qui
+# passerait par `service_role` serait vert même si elles étaient cassées.
+
+SEQ_ID='5e900000-0000-4000-8000-000000000001'
+MODELE_RELANCE='7e11a7e0-0000-4000-8000-000000000001'
+MODELE_CONTACT='7e11a7e0-0000-4000-8000-000000000002'
+
+charge=$(jq -nc --arg id "$SEQ_ID" --arg ws "$WS_ID" \
+                --arg par '5eed0000-0000-4000-8000-000000000011' \
+     '{id: $id, workspace_id: $ws, name: "Relance en trois temps", created_by: $par}')
+code=$(api_admin POST /rest/v1/mail_sequences \
+	-H 'Prefer: return=representation,resolution=merge-duplicates' \
+	-d "$charge")
+attendu "$code" "création de la séquence « Relance en trois temps »" 200 201
+
+# position|délai|modèle — le palier 3 réemploie DÉLIBÉRÉMENT le modèle du palier 1.
+PALIERS_MAIL=(
+	"5e900000-0000-4000-8000-0000000000a1|1|3|$MODELE_RELANCE"
+	"5e900000-0000-4000-8000-0000000000a2|2|7|$MODELE_CONTACT"
+	"5e900000-0000-4000-8000-0000000000a3|3|14|$MODELE_RELANCE"
+)
+
+for entree in "${PALIERS_MAIL[@]}"; do
+	IFS='|' read -r pa_id pa_pos pa_delai pa_modele <<< "$entree"
+	charge=$(jq -nc --arg id "$pa_id" --arg ws "$WS_ID" --arg seq "$SEQ_ID" \
+	                --argjson pos "$pa_pos" --argjson delai "$pa_delai" --arg tpl "$pa_modele" \
+	     '{id: $id, workspace_id: $ws, sequence_id: $seq, position: $pos,
+	       delai_jours: $delai, template_id: $tpl}')
+	code=$(api_admin POST /rest/v1/mail_sequence_steps \
+		-H 'Prefer: return=representation,resolution=merge-duplicates' \
+		-d "$charge")
+	attendu "$code" "création du palier $pa_pos de « Relance en trois temps »" 200 201
+done
+
+# PREMIÈRE GARDE — LA CONVERGENCE. Un rejeu ne doit RIEN dupliquer.
+# `resolution=merge-duplicates` s'appuie sur la clé primaire, et les identifiants sont stables.
+sequences_mail=$(curl -s "$API/rest/v1/mail_sequences?select=id" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
+[ "$sequences_mail" = "1" ] || die "séquences de relance : $sequences_mail lignes au lieu de 1 —
+        le rejeu a dupliqué, ou une écriture a été refusée."
+
+paliers_mail=$(curl -s "$API/rest/v1/mail_sequence_steps?select=id" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
+[ "$paliers_mail" = "${#PALIERS_MAIL[@]}" ] || die "paliers de séquence : $paliers_mail lignes au
+        lieu de ${#PALIERS_MAIL[@]} — le rejeu a dupliqué, ou une écriture a été refusée."
+
+# SECONDE GARDE — CE QUE LE JEU DOIT DÉMONTRER, et non son seul compte. Le palier 3 réemploie le
+# modèle du palier 1 ; un jeu qui perdrait cette égalité ne prouverait plus qu'un modèle sert
+# PLUSIEURS paliers, et une unicité posée par erreur sur `template_id` passerait inaperçue.
+modele_p1=$(curl -s "$API/rest/v1/mail_sequence_steps?select=template_id&sequence_id=eq.$SEQ_ID&position=eq.1" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r '.[0].template_id')
+modele_p3=$(curl -s "$API/rest/v1/mail_sequence_steps?select=template_id&sequence_id=eq.$SEQ_ID&position=eq.3" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r '.[0].template_id')
+[ "$modele_p1" = "$modele_p3" ] || die "les paliers 1 et 3 de « Relance en trois temps » doivent
+        porter le MÊME modèle (docs/SPEC-modeles-emails.md §11.9) : sans cette égalité, aucune
+        preuve ne démontre qu'un modèle sert plusieurs paliers."
+
+info "Séquence de relance : $sequences_mail — $paliers_mail paliers à J+3, J+10 et J+24, le
+      troisième réemployant le modèle du premier — CRM-063, docs/SPEC-modeles-emails.md §11.9"
 
 # --- 9. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
 # Rappel volontaire, affiché à chaque exécution, et **mis à jour par `CRM-020`** : peupler la base
