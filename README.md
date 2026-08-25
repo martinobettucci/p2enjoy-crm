@@ -195,6 +195,8 @@ la question d'une façade `npm` par-dessus `runDev.sh` et consorts reste ouverte
 | `scripts/verify-manual.sh --contre-epreuve` | Dégrade une **copie** du manuel et exige que le harnais morde ; ne touche jamais au dépôt | **disponible** |
 | `scripts/verify-corbeille.sh` | Rejoue les preuves de la corbeille et de la restauration : traçabilité, captures, pgTAP, Vitest, API et interface aux comptes figés, quatre dégradations réelles et restauration constatée | **disponible** |
 | `scripts/verify-corbeille.sh --rapide` | Omet Playwright, et l'annonce dans sa sortie plutôt que de le taire | **disponible** |
+| `scripts/verify-modeles-emails.sh` | Rejoue les preuves des modèles d'email : traçabilité, forme de la table et privilèges mesurés dans le catalogue, la liste fermée des douze variables comparée à sa spécification, le jeu de démonstration, pgTAP, contrat d'API, **six dégradations réelles** et restauration constatée octet à octet | **disponible** |
+| `scripts/verify-modeles-emails.sh --rapide` | Omet le contrat d'API Playwright, et l'annonce dans sa sortie plutôt que de le taire | **disponible** |
 | `scripts/verify-mail-infra.sh` | Rejoue les preuves de l'infrastructure mail de développement : configuration versionnée, placement des services, variables, domaines convergents, boîtes et rôles, IMAP réel, détection ClamAV, Roundcube | **disponible** |
 | `scripts/verify-mail-infra.sh --contre-epreuve` | Dégrade une **copie** des fichiers versionnés et exige que le harnais morde ; ne touche jamais au dépôt | **disponible** |
 | `scripts/verify-seed.sh` | Rejoue les preuves du seed : contrat, identifiants stables, connexion réelle, convergence | **disponible** |
@@ -510,6 +512,7 @@ scripts/verify-seed-demo.sh    # jeu de démonstration complet : toutes les éta
 scripts/verify-manual.sh       # manuel utilisateur : annexe A, captures, libellés réels  (CRM-047)
 scripts/verify-ma-journee.sh   # « Ma journée » : sections, bornes, portée, seed daté  (CRM-061)
 scripts/verify-corbeille.sh    # corbeille : modèle, garde, écran, gestes, non-complaisance (CRM-077)
+scripts/verify-modeles-emails.sh # modèles d'email : liste fermée des variables, RLS, seed (CRM-063)
 ```
 
 La cible courante de `scripts/verify-harness.sh` est **28 contrôles** : sélection de Node
@@ -635,6 +638,7 @@ Livré à ce jour :
 │   ├── verify-timeline.sh      Preuves de la timeline unifiée et de ses filtres
 │   ├── verify-move-card-to-channel.sh  Preuves du déplacement entre channels
 │   ├── verify-corbeille.sh     Preuves de la corbeille, de ses gestes et de sa restauration
+│   ├── verify-modeles-emails.sh Preuves des modèles d'email et de leurs variables fermées
 │   ├── verify-scripts.sh       Preuves rejouables des scripts et du contrat d'environnement
 │   ├── verify-migrations.sh    Preuves rejouables des migrations et du refus par défaut
 │   ├── verify-vault.sh         Preuves rejouables du chiffrement des secrets de messagerie

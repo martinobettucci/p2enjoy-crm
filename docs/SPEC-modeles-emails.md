@@ -242,7 +242,7 @@ identités sortantes.
 | pgTAP | `supabase/tests/0053_modeles_emails.test.sql` : forme dans le catalogue, les huit contraintes, l'unicité normalisée, l'ACL rôle par rôle, les treize lignes du §2.5, et **un témoin avant chaque refus** — un refus vert sur une absence ne prouve rien |
 | API | `e2e/api/modeles-emails.spec.ts` : les quatorze lignes du §2.7 avec les jetons réels, chaque refus **relisant la ligne** pour la constater inchangée (décision 70), et le seed constaté **intact** en fin de suite |
 | Unitaire | aucune logique TypeScript n'est livrée par cette tranche : la validation vit en SQL. La règle est éprouvée par pgTAP, qui est son niveau. L'écart est **nommé** plutôt que compensé par un test unitaire de façade |
-| Harnais | `scripts/verify-modeles-emails.sh` : verdict unique, non complaisant, **dégradations réelles** dont la restauration est **constatée** |
+| Harnais | `scripts/verify-modeles-emails.sh` : **44 contrôles**, verdict unique, non complaisant — **six** dégradations réelles, dont la restauration est **constatée octet à octet** contre un instantané pris avant la première, jamais contre `HEAD` |
 | Seed | `supabase/seed/apply-seed.sh` §8 sexdecies, avec sa garde de convergence |
 | E2E interface | **aucun** : cette tranche ne livre aucun écran. L'écart est nommé, et l'écran est la tranche 2 |
 
@@ -293,6 +293,20 @@ une intention.
   pose deux pour que l'écran de la tranche 2 n'ouvre pas sur du vide.
 - **Aucun envoi.** `mail_outbox` ignore les modèles ; rien n'est changé à `CRM-058`.
 - **Aucune signature, aucune séquence.** Ce sont les tranches 3 et 4, cadrées au §7.
+
+### 2.11 Un défaut trouvé par le harnais DANS LE HARNAIS, et corrigé à sa cause
+
+Le premier passage a rendu « 44 contrôles, aucune anomalie » — et il **mentait sur une ligne**. La
+dégradation D-E vise la politique d'insertion, dont la clause `with check` est **mot pour mot**
+celle de la mise à jour : le substituteur a donc refusé un motif ambigu, comme il doit. Mais
+`degrader` est appelée dans un `||`, ce qui **suspend `set -e`** sur tout le composé : l'échec n'a
+pas arrêté la fonction, le fichier `degrade.sql` portait encore la dégradation **précédente**, et
+le harnais a réappliqué celle-là en annonçant celle-ci comme mordante.
+
+C'est exactement le mensonge tranquille que la décision 503 reproche. Corrigé **à sa cause** : la
+copie est détruite avant chaque substitution, l'échec du substituteur est **testé** et rendu
+« IMPOSSIBLE », et le motif de D-E est ancré sur les deux lignes qui précèdent la clause. Le harnais
+rend de nouveau 44 contrôles, et ses **six** dégradations mordent réellement.
 
 ## 6. Registre — ce que la mesure a trouvé et qui n'est pas corrigé ici
 
