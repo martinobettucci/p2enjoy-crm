@@ -109,6 +109,17 @@ export const CHEMIN_ADMIN_COMPTES_MAIL = '/reglages/comptes-mail' as const
  */
 export const CHEMIN_ADMIN_IDENTITES_MAIL = '/reglages/identites-mail' as const
 
+/**
+ * Administration des modèles d'emails — `CRM-063`, `docs/SPEC-modeles-emails.md` §9.1.
+ *
+ * Une HUITIÈME section de réglages, et la troisième de la famille « messagerie » qui écrive après
+ * `CHEMIN_ADMIN_COMPTES_MAIL` — ce qu'on reçoit — et `CHEMIN_ADMIN_IDENTITES_MAIL` — ce qu'on
+ * expédie. Celle-ci porte le TEXTE qui sera expédié. Elle vient après les identités et avant
+ * l'état de la messagerie, et l'ordre a une raison : on déclare l'expéditeur avant d'écrire le
+ * texte qu'il expédiera, et on configure avant de superviser.
+ */
+export const CHEMIN_ADMIN_MODELES_MAIL = '/reglages/modeles-emails' as const
+
 /** État de la messagerie — `CRM-059`. */
 export const CHEMIN_ETAT_MESSAGERIE = '/reglages/messagerie' as const
 

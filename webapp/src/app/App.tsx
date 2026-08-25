@@ -32,6 +32,7 @@ import {
 	CHEMIN_DEMARRAGE,
 	CHEMIN_ADMIN_COMPTES_MAIL,
 	CHEMIN_ADMIN_IDENTITES_MAIL,
+	CHEMIN_ADMIN_MODELES_MAIL,
 	CHEMIN_ETAT_MESSAGERIE,
 	CHEMIN_LISTE,
 	CHEMIN_CONTACT,
@@ -45,6 +46,7 @@ import {
 	CLE_TITRE_DEMARRAGE,
 	CLE_TITRE_COMPTES_MAIL,
 	CLE_TITRE_IDENTITES_MAIL,
+	CLE_TITRE_MODELES_MAIL,
 	CLE_TITRE_ETAT_MESSAGERIE,
 	CLE_TITRE_INTROUVABLE,
 	CLE_TITRE_OBJECTIFS,
@@ -97,6 +99,14 @@ const ReglagesComptesMail = lazy(async () => ({
  */
 const ReglagesIdentitesMail = lazy(async () => ({
 	default: (await import('./ReglagesIdentitesMail')).ReglagesIdentitesMail,
+}))
+/**
+ * L'écran des modèles d'emails de `CRM-063` sous-tranche 2b, chargé à la demande pour la même
+ * raison que ses deux jumeaux : il porte une fiche et une prévisualisation dont la seule
+ * supervision n'a pas besoin.
+ */
+const ReglagesModelesEmails = lazy(async () => ({
+	default: (await import('./ReglagesModelesEmails')).ReglagesModelesEmails,
 }))
 /** La corbeille de `CRM-077`, chargée à la demande pour la même raison que les trois autres. */
 const Corbeille = lazy(async () => ({ default: (await import('./Corbeille')).Corbeille }))
@@ -282,6 +292,17 @@ function RoutesApplication() {
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_IDENTITES_MAIL}>
 							<ReglagesIdentitesMail />
+						</AppShell>
+					}
+				/>
+				{/* Les modèles d'emails — `CRM-063` sous-tranche 2b. Déclarée APRÈS les identités
+				    et AVANT l'état de la messagerie, comme dans l'index des réglages
+				    (docs/SPEC-modeles-emails.md §9.1). */}
+				<Route
+					path={CHEMIN_ADMIN_MODELES_MAIL}
+					element={
+						<AppShell cleTitreRoute={CLE_TITRE_MODELES_MAIL}>
+							<ReglagesModelesEmails />
 						</AppShell>
 					}
 				/>

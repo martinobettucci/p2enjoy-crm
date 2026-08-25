@@ -2448,6 +2448,99 @@ export const fr = {
 		'Cette ligne n’existe plus. Rechargez l’onglet pour repartir de l’état réel.',
 	'costs.pending.refus.network': 'La requête n’a pas abouti. Réessayez.',
 	'costs.pending.refus.unknown': 'L’enregistrement a échoué.',
+
+	// --- CRM-063 sous-tranche 2b : l'écran des modèles d'emails ---------------------------------
+	// docs/SPEC-modeles-emails.md §9, docs/DESIGN_SYSTEM.md §5.39.
+	'admin.mailTemplates.title': 'Modèles d’emails',
+	'admin.settings.index.mailTemplates': 'Modèles d’emails',
+	'admin.settings.index.mailTemplates.body':
+		'Écrire les textes réutilisables, à trous, et les prévisualiser sur une affaire réelle.',
+	'admin.mailTemplates.aria': 'Administration des modèles d’emails',
+	'admin.mailTemplates.live.aria': 'Modèles d’emails',
+	'admin.mailTemplates.noWorkspace.title': 'Aucun espace de travail',
+	'admin.mailTemplates.noWorkspace.body':
+		'Les modèles d’emails appartiennent à un espace de travail, et aucun n’est accessible.',
+	'admin.mailTemplates.error.title': 'Les modèles n’ont pas pu être chargés',
+	'admin.mailTemplates.error.body':
+		'La liste des modèles d’emails n’a pas pu être lue. Réessayez ; si le problème persiste, la pile est peut-être arrêtée.',
+	'admin.mailTemplates.error.retry': 'Réessayer',
+	'admin.mailTemplates.empty.title': 'Aucun modèle d’email',
+	'admin.mailTemplates.empty.body':
+		'Un modèle est un texte réutilisable, à trous, partagé par tout l’espace de travail.',
+	'admin.mailTemplates.open': 'Nouveau modèle',
+	'admin.mailTemplates.edit': 'Modifier',
+	'admin.mailTemplates.edit.aria': 'Modifier le modèle {modele}',
+	'admin.mailTemplates.preview': 'Prévisualiser',
+	'admin.mailTemplates.preview.aria': 'Prévisualiser le modèle {modele}',
+	'admin.mailTemplates.saved': 'Modèle enregistré.',
+	'admin.mailTemplates.deleted': 'Modèle supprimé.',
+	// La fiche — §9.3, §9.8.
+	'admin.mailTemplates.form.title.new': 'Nouveau modèle',
+	'admin.mailTemplates.form.title.edit': 'Modifier le modèle',
+	'admin.mailTemplates.field.name': 'Nom',
+	'admin.mailTemplates.field.name.help':
+		'Le nom identifie le modèle dans la liste. Il est unique dans l’espace de travail.',
+	'admin.mailTemplates.field.subject': 'Objet',
+	'admin.mailTemplates.field.body': 'Corps du message',
+	'admin.mailTemplates.save': 'Enregistrer',
+	'admin.mailTemplates.saving': 'Enregistrement…',
+	'admin.mailTemplates.cancel': 'Annuler',
+	// La palette — §9.3. Le nom accessible dit ce que le bouton FAIT, jamais seulement la variable.
+	'admin.mailTemplates.variables.title': 'Variables disponibles',
+	'admin.mailTemplates.variables.body':
+		'Ces trous sont remplacés à l’envoi par la valeur de l’affaire. Un clic insère la variable à l’endroit du curseur.',
+	'admin.mailTemplates.variables.insert.aria': 'Insérer la variable {variable}',
+	'admin.mailTemplates.variables.error':
+		'La liste des variables n’a pas pu être lue. Les modèles restent modifiables, mais aucune variable n’est proposée.',
+	// Les refus de la fiche — §9.8, dictionnaire fermé. Aucune phrase du serveur n'atteint l'écran.
+	'admin.mailTemplates.refusal.forbidden':
+		'Vous ne pouvez pas écrire de modèle : cette action est réservée à l’administration et au développement commercial.',
+	'admin.mailTemplates.refusal.zeroLigne':
+		'Aucun modèle n’a été enregistré. Vos droits ont peut-être changé depuis l’ouverture : rechargez l’onglet.',
+	'admin.mailTemplates.refusal.subjectVariable':
+		'L’objet emploie une variable qui n’existe pas. Reprenez-la dans la liste ci-dessous.',
+	'admin.mailTemplates.refusal.bodyVariable':
+		'Le corps emploie une variable qui n’existe pas. Reprenez-la dans la liste ci-dessous.',
+	'admin.mailTemplates.refusal.name': 'Le nom doit faire de 1 à 120 caractères.',
+	'admin.mailTemplates.refusal.subject': 'L’objet doit faire de 1 à 300 caractères.',
+	'admin.mailTemplates.refusal.body': 'Le corps doit faire de 1 à 20 000 caractères.',
+	'admin.mailTemplates.refusal.nameTaken': 'Ce nom est déjà employé par un autre modèle.',
+	'admin.mailTemplates.refusal.session': 'Votre session a expiré. Reconnectez-vous, puis réessayez.',
+	'admin.mailTemplates.refusal.network': 'La requête n’a pas abouti. Réessayez.',
+	'admin.mailTemplates.refusal.unknown': 'L’enregistrement a échoué.',
+	// La suppression — §9.7. La confirmation NOMME le modèle et n'annonce AUCUNE cascade.
+	'admin.mailTemplates.delete': 'Supprimer ce modèle',
+	'admin.mailTemplates.delete.confirm.title': 'Supprimer « {modele} » ?',
+	'admin.mailTemplates.delete.confirm.body': 'Le texte du modèle est définitivement perdu.',
+	'admin.mailTemplates.delete.confirm.action': 'Supprimer définitivement',
+	'admin.mailTemplates.delete.cancel': 'Annuler',
+	'admin.mailTemplates.delete.refusal.zeroLigne':
+		'Aucun modèle n’a été supprimé. Vos droits ont peut-être changé depuis l’ouverture : rechargez l’onglet.',
+	// La prévisualisation — §9.5, §9.6.
+	'admin.mailTemplates.previewPane.title': 'Prévisualisation de « {modele} »',
+	'admin.mailTemplates.previewPane.card': 'Affaire',
+	'admin.mailTemplates.previewPane.card.none': 'Choisissez une affaire',
+	'admin.mailTemplates.previewPane.contact': 'Contact',
+	'admin.mailTemplates.previewPane.contact.none': 'Aucun contact',
+	'admin.mailTemplates.previewPane.identity': 'Identité d’expédition',
+	'admin.mailTemplates.previewPane.identity.none': 'Aucune identité',
+	'admin.mailTemplates.previewPane.run': 'Prévisualiser',
+	'admin.mailTemplates.previewPane.running': 'Rendu…',
+	'admin.mailTemplates.previewPane.close': 'Fermer',
+	'admin.mailTemplates.previewPane.subject': 'Objet',
+	'admin.mailTemplates.previewPane.body': 'Corps',
+	'admin.mailTemplates.previewPane.idle':
+		'Choisissez une affaire, puis lancez le rendu pour voir le message tel qu’il partira.',
+	'admin.mailTemplates.previewPane.empty':
+		'Aucun rendu : choisissez une affaire, ou l’affaire choisie n’est plus lisible.',
+	'admin.mailTemplates.previewPane.error':
+		'Le rendu n’a pas abouti. Réessayez ; si le problème persiste, la pile est peut-être arrêtée.',
+	// `variables_nulles` — §9.6. Le compte est en TOUTES LETTRES, dans son propre élément, et
+	// l'accord se fait PAR CLÉ : « les 1 variables » serait faux (§10 du design system).
+	'admin.mailTemplates.previewPane.nulls.one': '1 variable sans valeur',
+	'admin.mailTemplates.previewPane.nulls.many': '{compte} variables sans valeur',
+	'admin.mailTemplates.previewPane.nulls.body':
+		'Ces variables sont rendues vides dans le message ci-dessus.',
 } as const
 
 export type CleTraduction = keyof typeof fr

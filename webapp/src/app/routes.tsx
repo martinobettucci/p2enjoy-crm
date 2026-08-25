@@ -36,6 +36,7 @@ import {
 	CHEMIN_ADMIN_CATALOGUE,
 	CHEMIN_ADMIN_COMPTES_MAIL,
 	CHEMIN_ADMIN_IDENTITES_MAIL,
+	CHEMIN_ADMIN_MODELES_MAIL,
 	CHEMIN_ADMIN_WORKFLOWS,
 	CHEMIN_CONTACTS,
 	CHEMIN_CORBEILLE,
@@ -63,6 +64,7 @@ export {
 	CHEMIN_ADMIN_CATALOGUE,
 	CHEMIN_ADMIN_COMPTES_MAIL,
 	CHEMIN_ADMIN_IDENTITES_MAIL,
+	CHEMIN_ADMIN_MODELES_MAIL,
 	CHEMIN_ADMIN_WORKFLOWS,
 	CHEMIN_CONTACTS,
 	CHEMIN_CORBEILLE,
@@ -167,6 +169,9 @@ export const CLE_TITRE_COMPTES_MAIL: CleTraduction = 'admin.mailAccounts.title'
 
 /** Titre de l'écran des identités d'expédition — `CRM-089`. */
 export const CLE_TITRE_IDENTITES_MAIL: CleTraduction = 'admin.mailIdentities.title'
+
+/** Titre de l'administration des modèles d'emails — `CRM-063`, sous-tranche 2b. */
+export const CLE_TITRE_MODELES_MAIL: CleTraduction = 'admin.mailTemplates.title'
 
 /**
  * Titre de la corbeille — `CRM-077`, même patron que les trois autres (docs/SPEC-corbeille.md §4.1).
@@ -346,6 +351,20 @@ export function IndexReglages() {
 						<span className="font-medium">{t('admin.settings.index.mailIdentities')}</span>
 						<span className="text-sm text-text-2">
 							{t('admin.settings.index.mailIdentities.body')}
+						</span>
+					</Link>
+				</li>
+				{/* Les modèles d'emails viennent APRÈS les identités et AVANT l'état — `CRM-063`
+				    sous-tranche 2b, docs/SPEC-modeles-emails.md §9.1 : on déclare l'expéditeur
+				    avant d'écrire le texte qu'il expédiera, et on configure avant de superviser. */}
+				<li>
+					<Link
+						to={CHEMIN_ADMIN_MODELES_MAIL}
+						className="flex flex-col gap-1 px-4 py-3 min-h-[var(--size-target)] hover:bg-hover rounded-lg"
+					>
+						<span className="font-medium">{t('admin.settings.index.mailTemplates')}</span>
+						<span className="text-sm text-text-2">
+							{t('admin.settings.index.mailTemplates.body')}
 						</span>
 					</Link>
 				</li>
