@@ -195,7 +195,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-189 | « Alt et flèche REDIMENSIONNENT » d'`Objectifs.test.tsx` échoue par INTERMITTENCE en campagne, et passe seul | 2026-08-20 | *ouverte* — relève de `CRM-081` | 485 |
 | INC-190 | La série complète des `scripts/verify-*.sh` TIENT dans une session en mode `--rapide` — cinq restes de forme du backlog en sont caducs | 2026-08-20 | *ouverte* — constat de méthode | 487 |
 | INC-191 | Sept harnais figent des ABSENCES qu'une unité ultérieure a comblées, et sont rouges de leur propre succès | 2026-08-20 | **close** — les dix harnais retournés par la décision 498 | 487, 497, 498 |
-| INC-192 | `scripts/verify-corbeille.sh` cherche `@spec CRM-077` dans les TROIS premières lignes de `webapp/src/app/RouteCard.tsx`, qui en cumule dix | 2026-08-20 | *ouverte* — relève de `CRM-077` | 487 |
+| INC-192 | `scripts/verify-corbeille.sh` cherche `@spec CRM-077` dans les TROIS premières lignes de `webapp/src/app/RouteCard.tsx`, qui en cumule dix | 2026-08-20 | **close** — fenêtre de lecture portée à l'en-tête entier (commit `752d3b4`), verdict vérifié le 2026-08-25 : 38 contrôles, aucune anomalie | 487, 508 |
 | INC-193 | Le `details` d'un refus de contrainte rend la ligne entière, `secret_id` compris — la colonne révoquée à `authenticated` ressort par un second chemin | 2026-08-20 | *ouverte* — arbitrage attendu, sécurité des données | 492 |
 | INC-195 | `scripts/verify-copie-workflow.sh` rejoue la migration 19 et laissait `move_card` AMPUTÉE du lot G — quatrième occurrence d'INC-154 | 2026-08-21 | **close** — corrigée par la décision 497 | 497 |
 | INC-196 | `scripts/verify-move-card.sh` déposait un commentaire à CHAQUE exécution, le lot G conservant désormais le motif | 2026-08-21 | **close** — corrigée par la décision 497 | 497 |
@@ -4591,9 +4591,21 @@ verdict, et le seed n'est pas ce qui manque — il venait d'être reposé.
 vocabulaire est entier et `VALID`. Ce n'est pas non plus une régression de la session : aucun
 fichier de `move_card` n'a été touché.
 
-**Cause non établie**, et elle n'est pas supposée. La piste à mesurer d'abord est le harnais qui
-précède immédiatement en ordre alphabétique, `verify-move-card-to-channel.sh`, qui dégrade lui aussi
-des privilèges. Comportement **laissé inchangé** : la correction relève de `CRM-034`, dont
+**Cause non établie**, et elle n'est pas supposée. La piste nommée ici — le harnais qui précède
+immédiatement en ordre alphabétique, `verify-move-card-to-channel.sh`, qui dégrade lui aussi des
+privilèges — a été MESURÉE le 2026-08-25 et **ne reproduit pas** : seed reposé, les deux harnais
+enchaînés dans cet ordre rendent `aucune anomalie` puis `57 contrôles, aucune anomalie`.
+
+**Une seconde piste est écartée par la mesure, et mérite d'être écrite parce qu'elle paraissait
+solide.** `restaurer_privileges` rend à `authenticated` la liste `COLONNES_OUVERTES`, qui **cite
+`snoozed_until`** — colonne que la migration 44 (`CRM-081`) a précisément révoquée. Une restauration
+qui rouvrirait cette colonne laisserait le produit affaibli et ferait rougir la suite. MESURÉ après
+exécution complète du harnais : `has_column_privilege('authenticated','public.cards',
+'snoozed_until','update')` rend **`f`** — la colonne reste fermée, et l'hypothèse tombe.
+
+Un fait de plus, relevé sans être expliqué : le nombre d'assertions que la dégradation `b` fait
+rougir **varie** d'une exécution à l'autre — `9` en série, `1` seule. L'état d'entrée décide donc de
+plus d'une chose dans ce fichier. Comportement **laissé inchangé** : la correction relève de `CRM-034`, dont
 `verify-move-card.sh` porte les preuves.
 
 ---
