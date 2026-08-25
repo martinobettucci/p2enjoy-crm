@@ -23920,3 +23920,58 @@ des soixante-quatre est close pour ce rejeu.
 livrable sans arbitrage du responsable**. Les arbitrages qui bloquent effectivement du produit sont
 INC-138 (les cinq lecteurs de `channels`), INC-169 et INC-170 (`CRM-083`), INC-173 (`CRM-084`),
 INC-182 (`CRM-086`), et le §6 point 4 de `docs/SPEC-contacts.md` (suppression d'un contact, `CRM-060`).
+
+## décision 509 — INC-204 : trois mesures que le code annonçait et que le CSS n'engendrait pas
+
+**2026-08-25**, session planifiée ouverte à 04 h 11 UTC. Unité d'ouverture : `CRM-062`, sur la
+consigne « où reprendre » de la décision 507 — mener à terme les quatre harnais restants.
+
+**CE QUE CETTE SESSION A MESURÉ SUR `CRM-062`, ET CE QU'ELLE N'A PAS EU À ÉCRIRE.** Une session
+concurrente, ouverte deux heures plus tôt et encore active, a livré pendant ce temps exactement le
+même travail : INC-213 et sa correction, puis la révision de `SCENARIOS_UI`. Les deux commits
+préparés ici étaient des doublons et ont été **abandonnés au profit des siens**, sur place, sans
+écraser quoi que ce soit (`CLAUDE.md` §13). Ce qui reste de cette part de la session est une mesure
+qui, elle, n'est pas un doublon : **`scripts/verify-harness.sh` mené à terme DEUX FOIS**, sur deux
+bases indépendamment remigrées et reseedées — `31 contrôles, 2 anomalies` en 33 min 42 s avant la
+révision du compteur, puis **`31 contrôles, aucune anomalie` en 35 min 05 s** après. Les deux
+anomalies étaient bien le seul compteur, et la campagne complète que ce harnais exécute est verte.
+
+**L'UNITÉ DE CONSTRUCTION DE LA SESSION EST DONC INC-204**, choisie par le §4.2 de
+`docs/CloudWorker.md` — `CRM-062` n'ayant plus de reste, la session passe à du comportement. Le
+défaut est réel, visible, et ne demandait aucun arbitrage : le §11 du design system remet à zéro les
+espaces de noms de Tailwind, si bien qu'une classe hors échelle **n'est pas engendrée du tout**, en
+silence. Trois endroits en vivaient :
+
+- `EnTeteCard.tsx` demandait `h-10` au champ `datetime-local` de la mise en sommeil. L'échelle ne
+  porte pas `10` : le champ rendait la hauteur par défaut du navigateur, **sous la cible de 40 px du
+  §8**, à côté d'un bouton qui, lui, la respecte. Le **même champ** dans `RouteInbox.tsx` écrit
+  `min-h-[var(--size-target)]` : la correction reprend cette forme, elle n'en invente aucune ;
+- `Sommeil.tsx` et `BlocCoutsCard.tsx` demandaient `py-0.5`, demi-pas que l'échelle close du §3 ne
+  porte pas. C'est la faute exacte qu'INC-158 consigne et que le §5.11 raconte déjà — « la jauge
+  avait d'abord été écrite `h-1.5`, la pilule `py-0.5` : ni l'une ni l'autre n'existe ». Une mesure
+  hors échelle s'écrit en valeur arbitraire ASSUMÉE : `py-[2px]`, forme que le dépôt emploie déjà
+  cinq fois.
+
+**PREUVE PAR LE CONTRÔLE QUI AVAIT DÉNONCÉ LE DÉFAUT.** `scripts/lib/classes-css.mjs`, lancé sur le
+CSS réellement produit par `npm run build`, passe de « 316 citées, absentes : `h-10 py-0.5
+text-text-1` » à « 314 citées, absentes : `text-text-1` ». Le reliquat est **INC-130**, portée par
+`CRM-076`, laissée inchangée. `npm run typecheck` vert sur les quatre projets ; `npm run build`
+vert ; les quatre suites unitaires qui couvrent les trois composants — `EnTeteCard`, `ListeCards`,
+`Board`, `RouteCard` — rendent **158 tests verts** ; `sommeil-card.spec.ts` et
+`menu-sommeil-board.spec.ts` **10 passés**, `card-costs.spec.ts` **22 passés**, sur session réelle.
+
+**VÉRIFICATION VISUELLE RÉELLEMENT FAITE** (`CLAUDE.md` §16), et bornée à ce qui a été REGARDÉ :
+sept captures conservées et observées une à une — `sommeil-panneau-ouvert-1440` (le champ est
+désormais à la hauteur du bouton voisin), `sommeil-fiche-endormie-1440`, `sommeil-fiche-sm-390`,
+`sommeil-fil-1440`, `menu-sommeil-board-endormie-1440` (la pastille compacte retrouve son
+rembourrage), `couts-xl-1440` et `couts-md-900` (la pilule « clôturé »). Les **neuf autres**
+réécrites par ces suites ont été **restaurées** : ne les committer que regardées est la règle des
+décisions 500, 503 bis et 505.
+
+**UNE ATTRIBUTION D'INC-204 ÉTAIT FAUSSE, corrigée sur mesure** : l'entrée rangeait
+`BlocCoutsCard.tsx` sous `CRM-057`, dont il ne relève pas — son en-tête `@spec` cite `CRM-085`.
+
+**Où reprendre.** INC-204 est close ; INC-130 reste ouverte et appartient à `CRM-076` — sa
+correction tient en un caractère, mais seule cette unité sait si le bloc voulait `text-text` ou
+`text-text-2`. `CRM-062` n'a plus de reste connu. Le constat des décisions 507 et 508 tient :
+au-delà, aucune unité `[~]` du plan ne porte de comportement livrable sans arbitrage du responsable.

@@ -205,7 +205,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-201 | La preuve n° 14 de `verify-auth.sh` figeait « zéro ligne sur `profiles` », absence que `CRM-022` a comblée | 2026-08-21 | **close** — assertion retournée par la décision 499 | 499 |
 | INC-202 | `verify-mail-sync.sh` rouge d'un `pytest` absent de l'hôte, condition du §2.1 ter de `docs/CloudWorker.md` | 2026-08-21 | **close** — condition d'hôte, aucun fichier du dépôt en cause | 499 |
 | INC-203 | Quatre tests unitaires de `CRM-081` et `CRM-044` figent une date rendue dans le fuseau de l'HÔTE : ils échouent sous tout fuseau autre qu'UTC | 2026-08-24 | **ouverte** — comportement inchangé, étrangère à `CRM-061` | 503 |
-| INC-204 | `h-10` et `py-0.5` n'existent pas dans le CSS produit — même cause qu'INC-130, sur `EnTeteCard`, `Sommeil` et `BlocCoutsCard` | 2026-08-24 | **ouverte** — comportement inchangé, étrangère à `CRM-061` | 503 |
+| INC-204 | `h-10` et `py-0.5` n'existent pas dans le CSS produit — même cause qu'INC-130, sur `EnTeteCard`, `Sommeil` et `BlocCoutsCard` | 2026-08-24 | **close** — réécrites en valeur arbitraire assumée par la décision 509 ; relevé du CSS produit ramené à la seule INC-130 | 503, 509 |
 | INC-205 | `e2e/mail/ingestion.spec.ts`, puis `e2e/mail/dossiers.spec.ts`, échouent en CAMPAGNE et passent seuls — même famille qu'INC-128 et INC-172. Quatre campagnes enchaînées le 2026-08-24 : deux échecs sur deux scénarios DIFFÉRENTS, puis deux campagnes vertes, sans qu'une ligne du dépôt ne bouge | 2026-08-24 | **ouverte** — comportement inchangé, étrangère à `CRM-062` | 504, 505 |
 | INC-206 | `docs/SPEC-relances.md` renvoyait, depuis la tranche 1, à un « chapitre 30 » de `docs/manual.md` qui n'existe pas et ne peut pas exister — le manuel numérote de 1 à 6 avec des suffixes latins | 2026-08-24 | **close** — référence corrigée en `3 quinquies` par la tranche 3, motif au §10.13 | 506 |
 | INC-207 | La tranche 2 de `CRM-062` écrit un événement `stalled` que le fil d'une affaire rend **« Événement »** : le type n'est ni nommé, ni rangé, ni traduit | 2026-08-24 | **close par livraison** — la sous-tranche 3b le nomme, §10.3 | 506 |
@@ -4218,8 +4218,33 @@ ne le dénonce, ce qui est précisément le silence que le §11 décrit.
 remplacer chaque classe par le jeton déclaré de son échelle, puis reprendre la capture concernée —
 appartient à `CRM-081` et à `CRM-057`.
 
-**Statut : ouverte.** Relève de `CRM-081` et de `CRM-057`. Voisine d'INC-130, qu'elle ne remplace
-pas.
+**SOLDÉE LE 2026-08-25 — décision 509.** Les deux classes sont réécrites en **valeur arbitraire
+assumée**, forme que le §11 prescrit et que le dépôt emploie déjà ; aucune n'est inventée ici, chacune
+reprend celle d'un frère du même dépôt :
+
+| Classe | Fichier | Écrite désormais | Modèle repris |
+|---|---|---|---|
+| `h-10` | `webapp/src/app/EnTeteCard.tsx` | `min-h-[var(--size-target)]` | `RouteInbox.tsx` — le **même** champ `datetime-local` de mise en sommeil |
+| `py-0.5` | `webapp/src/components/ui/Sommeil.tsx` | `py-[2px]` | `BlocContactsCard.tsx`, `AdministrationWorkflows.tsx` (4 occurrences) |
+| `py-0.5` | `webapp/src/app/BlocCoutsCard.tsx` | `py-[2px]` | idem |
+
+**MESURÉ par le contrôle qui avait dénoncé le défaut**, `scripts/lib/classes-css.mjs`, sur le CSS
+réellement produit par `npm run build` :
+
+```
+avant : classes citées : 316 — absentes : h-10 py-0.5 text-text-1
+après : classes citées : 314 — absentes : text-text-1
+```
+
+Le reliquat `text-text-1` est **INC-130**, portée par `CRM-076`, et il est laissé inchangé.
+
+**UNE ATTRIBUTION DE CETTE ENTRÉE ÉTAIT FAUSSE, et elle est corrigée sur mesure.** Le tableau
+ci-dessus rangeait `BlocCoutsCard.tsx` sous `CRM-057` ; l'en-tête `@spec` du fichier cite
+`CRM-085` — « lignes de coût d'une affaire, TRANCHE 2 ». `CRM-057` n'y est pour rien. Les trois
+fichiers relèvent donc de `CRM-040` (`EnTeteCard.tsx`), `CRM-081` (`Sommeil.tsx`) et `CRM-085`
+(`BlocCoutsCard.tsx`).
+
+**Statut : close.** Voisine d'INC-130, qu'elle ne remplace pas et qui reste ouverte.
 
 ## Consignées le 2026-08-24 — deux références fausses trouvées en spécifiant la tranche 3 de `CRM-062`
 

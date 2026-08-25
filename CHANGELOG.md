@@ -202,6 +202,17 @@ d'exécuter le code attendu.
 
 ### Corrigé
 
+- **DEUX MESURES QUE LE CODE ANNONÇAIT ET QUE L'ÉCRAN NE RENDAIT PAS** (`CRM-040`, `CRM-081`,
+  `CRM-085`, `docs/INCONSISTENCY_REPORT.md` INC-204). Trois endroits de l'interface demandaient
+  une hauteur ou un rembourrage au moyen d'une classe qui **n'existe pas** dans le CSS produit :
+  la règle n'était donc pas appliquée du tout, en silence, et l'élément rendait la valeur par
+  défaut du navigateur. Le champ d'échéance de la mise en sommeil, dans l'en-tête d'une fiche
+  d'affaire, passait ainsi **sous la cible interactive de 40 px** alors que le même champ, dans le
+  fil de l'inbox, la respecte ; la pastille « en sommeil » d'une carte de board et la pilule
+  « clôturé » d'une ligne de coût perdaient leur rembourrage vertical. Les trois s'écrivent
+  désormais dans la forme que le design system prescrit pour une mesure hors de son échelle, et le
+  relevé des classes absentes du CSS produit tombe de trois à une.
+
 - **LE GARDE-FOU DES SUITES D'INTERFACE ÉTAIT EN RETARD D'UN ÉCRAN** (`CRM-062`). Le harnais
   transverse fige le nombre de scénarios d'interface du dépôt, pour qu'aucun ne disparaisse en
   silence. L'écran des affaires figées et ses neuf scénarios avaient été livrés sans que ce nombre
