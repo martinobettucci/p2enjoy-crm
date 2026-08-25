@@ -626,10 +626,40 @@ fi
 #
 # La reprise porte sur les DEUX côtés, et l'ordre compte : la boîte d'abord — sans quoi une relève
 # ultérieure réingérerait la ligne qu'on vient d'effacer —, la base ensuite.
-uids_controle=$(curl -sS --noproxy '*' --url "imap://$HOTE:$(lire_env STALWART_IMAP_PORT)/INBOX" \
-	--user "$BOITE_SYSTEME:$MDP" \
-	--request "UID SEARCH HEADER Message-ID $MESSAGE_ID_CONTROLE" 2>/dev/null \
-	| tr -d '\r' | sed -n 's/^\* SEARCH //p')
+# LA REMISE N'EST PAS INSTANTANÉE, ET LE PREMIER ÉCRIT DE CETTE REPRISE L'IGNORAIT. Le serveur
+# ACCEPTE la soumission, puis dépose — c'est ce que `supabase/seed/apply-seed.sh` gère déjà par
+# cinq tentatives espacées. Cherché trop tôt, le message n'est pas encore dans la boîte : la
+# recherche ne rend rien, l'`EXPUNGE` n'a rien à retirer, le message arrive APRÈS, et une relève
+# ultérieure l'ingère — exactement le défaut qu'INC-212 décrit, reproduit par sa propre correction.
+# MESURÉ le 2026-08-25 : un exemplaire portant le `Message-ID` stable a survécu de cette façon.
+# On attend donc qu'il soit là avant de le retirer, et l'attente est BORNÉE.
+# LA FORME DE LA RECHERCHE EST MESURÉE, ET LES CHEVRONS LA CASSENT. Trois formes essayées le
+# 2026-08-25 sur la même boîte, le même message :
+#
+#   UID SEARCH HEADER Message-ID <id@domaine>    => * SEARCH        (RIEN)
+#   UID SEARCH HEADER Message-ID "id@domaine"    => * SEARCH 37     (trouvé)
+#   UID SEARCH SUBJECT "Preuve journal…"         => * SEARCH 37     (trouvé)
+#
+# La première est celle qu'on écrit spontanément, puisque c'est ainsi que l'en-tête s'écrit ; elle
+# rend une recherche VIDE, donc un `EXPUNGE` sans objet, donc un message qui survit — et la reprise
+# d'INC-212 reproduisait ainsi le défaut qu'elle corrige. La valeur est donc cherchée SANS ses
+# chevrons et ENTRE GUILLEMETS.
+IDENTIFIANT_NU=${MESSAGE_ID_CONTROLE#<}
+IDENTIFIANT_NU=${IDENTIFIANT_NU%>}
+
+chercher_controle() {
+	curl -sS --noproxy '*' --url "imap://$HOTE:$(lire_env STALWART_IMAP_PORT)/INBOX" \
+		--user "$BOITE_SYSTEME:$MDP" \
+		--request "UID SEARCH HEADER Message-ID \"$IDENTIFIANT_NU\"" 2>/dev/null \
+		| tr -d '\r' | sed -n 's/^\* SEARCH //p'
+}
+
+uids_controle=''
+for _tentative in 1 2 3 4 5 6 7 8 9 10; do
+	uids_controle=$(chercher_controle)
+	[ -n "$uids_controle" ] && break
+	sleep 2
+done
 for uid in $uids_controle; do
 	curl -sS --noproxy '*' --url "imap://$HOTE:$(lire_env STALWART_IMAP_PORT)/INBOX" \
 		--user "$BOITE_SYSTEME:$MDP" --request "UID STORE $uid +Flags \\Deleted" >/dev/null 2>&1 || true
@@ -643,13 +673,15 @@ psql_db -c "delete from public.mail_messages
 # LA REPRISE EST CONSTATÉE, JAMAIS SUPPOSÉE (docs/SPEC-test-harness.md §7.2) : les deux côtés sont
 # relus. Un `delete` qui n'aurait rien effacé et un `EXPUNGE` sans effet rendraient ce contrôle
 # rouge, au lieu de laisser la dérive repartir silencieusement à l'exécution suivante.
-restes_boite=$(curl -sS --noproxy '*' --url "imap://$HOTE:$(lire_env STALWART_IMAP_PORT)/INBOX" \
-	--user "$BOITE_SYSTEME:$MDP" \
-	--request "UID SEARCH HEADER Message-ID $MESSAGE_ID_CONTROLE" 2>/dev/null \
-	| tr -d '\r' | sed -n 's/^\* SEARCH //p' | wc -w)
+# Le constat porte AUSSI sur le fait que la reprise a eu quelque chose à reprendre : un
+# `uids_controle` vide signifierait que le message n'est jamais arrivé en vingt secondes, et le
+# contrôle serait vert sur une absence au lieu d'un retrait.
+restes_boite=$(chercher_controle | wc -w)
 restes_base=$(psql_db -c "select count(*) from public.mail_messages
 	where subject = 'Preuve journal Stalwart propre';" | tr -d '[:space:]')
-if [ "$restes_boite" = 0 ] && [ "$restes_base" = 0 ]; then
+if [ -z "$uids_controle" ]; then
+	fail "le message de contrôle n'est pas arrivé dans la boîte en 20 s : rien n'a été repris"
+elif [ "$restes_boite" = 0 ] && [ "$restes_base" = 0 ]; then
 	ok "le harnais REPREND son message de contrôle : ni dans la boîte système, ni en base"
 else
 	fail "le message de contrôle survit au harnais : $restes_boite dans la boîte, $restes_base en base"

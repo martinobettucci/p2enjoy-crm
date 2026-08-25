@@ -4680,6 +4680,28 @@ supabase/seed/apply-seed.sh
 
 Les seuls messages réellement étrangers au seed sont ceux dont le `rfc822_message_id` ne commence
 pas par `<seed-inbox-`.
+
+**LA PREMIÈRE CORRECTION REPRODUISAIT LE DÉFAUT QU'ELLE CORRIGE, ET C'EST LA SÉRIE LENTE QUI L'A
+MONTRÉ.** Le message est réapparu en base après les méta-harnais, portant pourtant le `Message-ID`
+stable que la correction venait de lui donner. Cause MESURÉE, et elle tient à la forme de la
+recherche IMAP — trois formes essayées sur la même boîte et le même message :
+
+```
+UID SEARCH HEADER Message-ID <id@domaine>    => * SEARCH        (RIEN)
+UID SEARCH HEADER Message-ID "id@domaine"    => * SEARCH 37     (trouvé)
+UID SEARCH SUBJECT "Preuve journal…"         => * SEARCH 37     (trouvé)
+```
+
+La première est celle qu'on écrit spontanément — c'est ainsi que l'en-tête s'écrit —, et elle rend
+une recherche **vide** : aucun `UID` marqué, un `EXPUNGE` sans objet, le message qui reste dans la
+boîte et qu'une relève ultérieure ingère. La reprise cherche désormais l'identifiant **sans ses
+chevrons et entre guillemets**, et elle **attend** que le message soit remis avant de le retirer,
+la soumission SMTP étant acceptée puis déposée. Le contrôle refuse en outre d'être vert sur une
+absence : si le message n'est jamais arrivé, il le DIT plutôt que de constater une boîte vide.
+
+**Mesuré après cette seconde correction** : `scripts/verify-mail-infra.sh` rend **91 contrôles,
+aucune anomalie** deux exécutions de suite, la boîte et la base ne portant plus rien de lui, et
+`e2e/ui/sommeil-fil.spec.ts` rend **6 passés**.
 ## Consignée le 2026-08-25 — une restauration de harnais qui certifiait l'état qu'elle venait de dégrader
 
 ### INC-213 — `verify-droits-fins.sh` rejoue la migration 10 seule et ampute la lecture transitive d'un track
