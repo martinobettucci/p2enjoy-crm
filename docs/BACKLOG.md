@@ -726,6 +726,21 @@ Résolution « le plus spécifique gagne », administrateur jamais restreint.
       trois dégradations réelles** — politique revenue à `is_workspace_member`, jointure interne,
       lecture des droits fins ouverte à tout membre. Chacune fait passer une lecture qui doit être
       refusée, et la restauration est **constatée**.
+- [x] **CE HARNAIS SE RESTAURAIT EN AMPUTANT LE PRODUIT, ET IL CERTIFIAIT L'AMPUTATION — INC-213,
+      corrigée le 2026-08-25 par le rejeu complet de la série.** Il réappliquait
+      `0010_droits_fins.sql` **seule**, ce que le §3.5 de `docs/SPEC-test-harness.md` interdit
+      depuis INC-142 ; or `0034_lecture_track_transitive.sql` en est la dernière autorité sur
+      `tracks_lecture_membre`, dont elle élargit le prédicat. MESURÉ avec le rôle réel sur le seed :
+      la lectrice passait de **cinq** tracks lisibles à **quatre**, pour tout ce qui s'exécutait
+      derrière. Le plus coûteux n'était pas la dégradation mais le fait que la section
+      « Restauration constatée » **la certifiait** — son contrôle de prédicat cherche
+      `resolve_track_access`, présent des deux côtés, et son compte attendait exactement le nombre
+      que seul l'état amputé produit. Trois corrections : restauration par le `migrations-runner`
+      sur tout le répertoire ; contrôle de convergence en deux temps, qui **nomme** l'élément
+      dérivé ; comptes révisés à cinq tracks, jamais relâchés, la **preuve n° 4 étant déplacée là
+      où le refus tient encore et y est plus strict** — six channels sur huit, `grands-comptes` et
+      `appels-offres` masqués. **38 contrôles, aucune anomalie** après correction, section 8 de
+      non-régression comprise.
 - [x] **Neuf assertions figées par des unités précédentes ont échoué comme prévu, et ont été
       révisées** (mécanisme de la décision 51, huitième et neuvième occurrences) : dans
       `0001`, `0002`, `0003`, `0004`, `0005`, et dans `verify-authz.sh`, `verify-tracks.sh`,
@@ -10262,9 +10277,18 @@ spécifié avant toute ligne de code) :
       bloc de succès et le refus « sans effet », dans `docs/captures/CRM-077/`, préfixés `card-`.
 - [x] **Le manuel gagne le chapitre 4.7 bis**, et le chapitre 5 ter cesse d'annoncer qu'une affaire
       ne se retire d'aucun écran.
-- [ ] **Non exécutés, et nommés** : les `scripts/verify-*.sh` qui passent par `scripts/lib/node.sh`
-      — l'environnement de cette session fournit **Node 22**, le dépôt exige Node 24. Aucune de ces
-      preuves n'est annoncée comme verte.
+- [x] **~~Non exécutés, et nommés~~ — EXÉCUTÉS le 2026-08-25, sous Node 24.** Le motif invoqué ici
+      — « l'environnement de cette session fournit Node 22 » — est **caduc** depuis que
+      `docs/CloudWorker.md` §2.1 bis pose l'installation de Node 24 comme préalable mesuré.
+      `scripts/verify-corbeille.sh --rapide` rend **38 contrôles, aucune anomalie**, ses quatre
+      dégradations vues et sa restauration constatée octet à octet.
+      **ET LE REJEU A TROUVÉ UN DÉFAUT DE CE HARNAIS, corrigé à sa cause dans le même changement**
+      (INC-192) : il cherchait la traçabilité `@spec CRM-077` dans les **trois premières lignes**
+      des fichiers de l'unité. `webapp/src/app/RouteCard.tsx` cumule dix commentaires `@spec` — la
+      route est le point d'ancrage de la fiche d'affaire — et cite `CRM-077` ligne 11 : le contrôle
+      rendait un ÉCHEC sur un fichier conforme. Il lit désormais l'en-tête complet, jusqu'à la
+      première ligne de code, et pas une ligne au-delà — éprouvé dans les trois sens, dont celui qui
+      compte : une citation posée **après** la première ligne de code n'est toujours pas vue.
 
 **Neuvième tranche livrée, 2026-08-15 — le harnais dédié** (`scripts/verify-corbeille.sh`,
 `docs/SPEC-corbeille.md` §5 bis, spécifié avant toute ligne de code) :

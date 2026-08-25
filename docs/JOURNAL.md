@@ -23814,3 +23814,89 @@ soixante-quinze minutes et tient dans une session qui commence par eux. Rien d'a
 l'unité : la campagne est verte, ses deux rouges sont étrangers et consignés. Au-delà, aucune unité
 `[~]` du plan ne porte de comportement livrable sans arbitrage du responsable — le compte rendu de
 cette session en donne la liste.
+
+## décision 508 — les quatre harnais que la session précédente n'a pas menés à terme, et ce que le plus long d'entre eux cachait
+
+**Session planifiée du 2026-08-25, 02 h 09 UTC.** Unité choisie par la règle 2 du §4.2 de
+`docs/CloudWorker.md` : aucune unité `[~]` du plan ne porte de comportement livrable sans arbitrage
+— la lecture du backlog, faite unité par unité, le confirme — et la cause nommée qui retient le plus
+d'unités est la même depuis des semaines, « la série des `scripts/verify-*.sh` n'a pas été rejouée ».
+La session s'est donc donné cette série pour unité, ce que le §4.2 autorise expressément lorsqu'il
+ne reste que ce choix.
+
+**LE PREMIER GESTE UTILE A ÉTÉ DE RELIRE INC-190 AVANT DE LANCER QUOI QUE CE SOIT.** La série a
+d'abord été lancée **sans** `--rapide` : au premier harnais, chacun rejoue la campagne entière
+derrière ses propres preuves, soixante-quatre campagnes pour une série. Arrêtée et relancée en
+`--rapide` pour les **quarante** harnais qui le portent, complète pour les vingt-quatre autres, la
+série entière a été menée **à son terme** — plafond de vingt-cinq minutes par harnais, contre dix à
+la session précédente, précisément pour atteindre les quatre qu'elle n'avait pas pu mener.
+
+**Les quatre sont exécutés** : `verify-droits-fins` (1314 s), `verify-tracks` (1084 s, **43
+contrôles, aucune anomalie**), `verify-webapp` (1090 s) et `verify-harness`, seul à dépasser encore
+le plafond — il rejoue la campagne entière et reste dû.
+
+**LE PLUS LONG CACHAIT UN DÉFAUT RÉEL, ET C'EST LE FAIT LE PLUS UTILE DE LA SESSION — INC-213.**
+`scripts/verify-droits-fins.sh` rend `35 contrôles, 1 en échec` : « le rejeu a modifié quelque
+chose ». Son empreinte couvre sept fonctions et quatre politiques ; **un seul élément dérive**, et
+le relevé le nomme : `pol:tracks_lecture_membre`. Le harnais réapplique `0010_droits_fins.sql`
+**seule**, alors que `0034_lecture_track_transitive.sql` en est la dernière autorité et ajoute
+`or app.track_has_readable_channel(id)`. C'est la septième occurrence de la famille d'INC-142, et
+l'effet est **usager** : mesuré avec le rôle réel sur le seed, la lectrice passe de **cinq** tracks
+lisibles à **quatre** — un channel rouvert par un droit fin se retrouvant dans un track invisible —,
+et tout ce qui s'exécute derrière mesure ce produit-là.
+
+**Le plus coûteux n'était pas la dégradation, mais que la section « Restauration constatée » la
+CERTIFIAIT.** Son contrôle de prédicat cherche `resolve_track_access`, présent des **deux** côtés ;
+son compte attendait « 4 tracks sur 5 », c'est-à-dire exactement le nombre que **seul** l'état
+amputé produit. Un garde-fou écrit avant la migration 34 s'était mué en certificat de la
+dégradation.
+
+**Et la correction en a découvert une troisième occurrence, invisible tant que la restauration était
+fausse.** Rendue correcte, elle a fait rougir la section 4 — « le viewer voit 5 tracks, attendu 4 »
+—, contrôle qui ne passait que **parce que** le harnais avait amputé la base quelques lignes plus
+haut ; son propre commentaire l'écrivait déjà au nom d'INC-113, « ce harnais mesure un produit d'une
+arbitration en arrière ». Les comptes sont **révisés, jamais relâchés** (décision 51), et la
+**preuve n° 4 n'est pas perdue : elle est déplacée là où le refus tient encore**, au niveau du
+channel, où il est plus strict — six channels sur huit, `grands-comptes` et `appels-offres` masqués.
+Sans cette ligne ajoutée, réviser le compte aurait retiré une preuve de refus au lieu de la
+déplacer. Verdict après correction : **38 contrôles, aucune anomalie**, section 8 de non-régression
+comprise.
+
+**INC-192 est SOLDÉE, sous `CRM-077`.** `scripts/verify-corbeille.sh` cherchait `@spec CRM-077` dans
+les **trois premières lignes** ; `webapp/src/app/RouteCard.tsx` cumule dix commentaires `@spec` et
+cite l'unité ligne 11 : le contrôle accusait un fichier conforme. Il lit désormais l'en-tête complet,
+jusqu'à la première ligne de code. **Éprouvé dans les trois sens**, et c'est le troisième qui compte :
+citation retirée → non vue ; citation posée **après** la première ligne de code → non vue ; citation
+en tête → vue. Sans cette seconde épreuve, élargir la fenêtre aurait pu se dégrader en « n'importe
+où dans le fichier ». **38 contrôles, aucune anomalie.** Vingt-cinq autres harnais portent le même
+`head -3` **sans être rouges aujourd'hui** : le défaut y est latent, chaque correction appartient à
+l'unité de son harnais, et l'entrée reste ouverte pour ce reste.
+
+**Bilan de la série : 64 harnais, 53 verts, 11 rouges** — et aucun des onze n'accuse le produit.
+Deux étaient de vrais défauts de harnais, corrigés ici (INC-192, INC-213). Trois sont des entrées
+déjà ouvertes et non tranchables seul : INC-138 (`verify-board`, cinq lecteurs de `channels` là où
+le §5.4 en veut un), INC-186 (`verify-scripts`), INC-211 (`verify-move-card`, consignée par la
+session concurrente). Trois reposent sur `docker logs` et **repassent au vert rejoués seuls** —
+`verify-functions`, `verify-mail-infra`, `verify-mail-sync` —, le premier ayant été remesuré à la
+main : `docker compose config --services` cite bien `functions`. `verify-relances` rend neuf
+anomalies parce que le jeu de démonstration avait perdu une de ses quatre affaires figées à ce
+moment-là ; il en porte de nouveau quatre après rejeu du runner et du seed, et la cause exacte
+n'est **pas établie** — elle n'est donc pas supposée. `verify-harness` n'est pas un verdict mais un
+dépassement de plafond. `verify-webapp` rend trois anomalies dont les classes CSS d'INC-130 et
+INC-204, un `test:unit` **non reproductible** — rejoué seul sur base restaurée : **76 fichiers,
+2503 tests, aucun échec** — et un `e2e:ui` qui est INC-212, établie par la session concurrente.
+
+**DEUX ARTEFACTS DE MÉTHODE, ÉCRITS PLUTÔT QUE RÉPÉTÉS.** Le §2.1 ter prescrit `pkill -f "[v]ite"`
+pour libérer le port 4173 ; sur cet hôte, le démon Docker tournant sans isolation de PID, les
+processus des conteneurs sont visibles depuis `ps`, et ce `pkill` tue aussi le serveur de la
+**webapp conteneurisée**. `verify-stack` rend alors « p2enjoy-webapp : running / starting » — verdict
+qui ne dit rien du produit. Et `timeout` ne tue que son enfant direct : un harnais interrompu au
+plafond laisse ses suites Playwright écrire dans la base partagée pendant que les suivants mesurent.
+Les deux expliquent des rouges de série sans rien dire du dépôt.
+
+**Où reprendre.** `verify-harness.sh` reste le seul harnais de la série non mené à terme : il rejoue
+la campagne entière et demande une trentaine de minutes à lui seul. Au-delà, le constat de la
+décision 507 est confirmé unité par unité : **aucune unité `[~]` du plan ne porte de comportement
+livrable sans arbitrage du responsable**. Les arbitrages qui bloquent effectivement du produit sont
+INC-138 (les cinq lecteurs de `channels`), INC-169 et INC-170 (`CRM-083`), INC-173 (`CRM-084`),
+INC-182 (`CRM-086`), et le §6 point 4 de `docs/SPEC-contacts.md` (suppression d'un contact, `CRM-060`).
