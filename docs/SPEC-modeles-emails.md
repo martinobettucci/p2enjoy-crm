@@ -14,11 +14,11 @@ Contrat exécutable de `CRM-063` (`docs/BACKLOG.md`, chunk 5).
 - Interface : `docs/DESIGN_SYSTEM.md`.
 - Manuel : `docs/manual.md`, chapitre **15** annoncé par le sommaire depuis `CRM-000` et jamais
   écrit — « Modèles d'emails, signature et séquences de relance ».
-- État : **tranches 1, 2 et 3 spécifiées ici** — la 1 aux §2 à §6, la 2 au §8 (rendu) et au §9
-  (écran), la 3 au **§10** —, chacune écrite le 2026-08-25 **après mesure sur la pile debout et
-  seedée**, avant sa première ligne de code (`CLAUDE.md` §5, `docs/CloudWorker.md` §3.2). La
-  tranche 4 est **cadrée** au §7.3 et sera spécifiée ligne à ligne avant d'être écrite, dans son
-  propre chunk.
+- État : **les quatre tranches sont spécifiées ici** — la 1 aux §2 à §6, la 2 au §8 (rendu) et au
+  §9 (écran), la 3 au §10, la **sous-tranche 4a** au **§11** —, chacune écrite le 2026-08-25
+  **après mesure sur la pile debout et seedée**, avant sa première ligne de code (`CLAUDE.md` §5,
+  `docs/CloudWorker.md` §3.2). Les sous-tranches **4b** et **4c** sont **cadrées** au §11.12 et
+  seront spécifiées ligne à ligne avant d'être écrites, dans leur propre chunk.
 
 ---
 
@@ -349,6 +349,12 @@ Des paliers ordonnés, chacun portant un modèle (`on delete restrict`, §2.2) e
 à une affaire figée au sens de `docs/SPEC-relances.md` §2. Elle réemploiera l'ordonnanceur de
 `CRM-017` et le job quotidien de `CRM-062` tranche 2, et devra trancher : qui arme une séquence, ce
 qui l'interrompt, et ce qu'une réponse du destinataire produit.
+
+> **DÉCOUPÉE EN TROIS SOUS-TRANCHES ET SPÉCIFIÉE le 2026-08-25, au §11 ci-dessous**, après mesure
+> sur la pile debout et seedée, et **avant sa première ligne de code**. Le §11 est le contrat
+> exécutable de la sous-tranche **4a** — la séquence et ses paliers. Les trois questions ci-dessus
+> portent sur l'**application** d'une séquence à une affaire : elles appartiennent à **4b**, et
+> sont cadrées au §11.12.
 
 ---
 
@@ -1100,3 +1106,333 @@ dans le fichier lui-même**, jamais supprimées ni contournées (`docs/CloudWork
 - INC-215 **close** au registre, avec la mesure qui la clôt ;
 - commentaires `@spec` / `@verifies` sur chaque fichier ;
 - commit poussé sur `origin/main`.
+
+---
+
+## 11. Tranche 4 — la séquence de relance
+
+Écrite le 2026-08-25 **après mesure sur la pile debout et seedée**, et **avant la première ligne de
+code** (`CLAUDE.md` §5, `docs/CloudWorker.md` §3.2). Elle développe le cadrage du §7.3, qu'elle ne
+remplace pas : le §7.3 disait *quoi*, ce chapitre dit *ligne à ligne*.
+
+### 11.1 Découpe en trois sous-tranches, et son motif
+
+Le §7.3 nomme trois questions — qui arme une séquence, ce qui l'interrompt, et ce qu'une réponse du
+destinataire produit. Ces trois questions portent sur l'**application** d'une séquence à une
+affaire, pas sur la séquence elle-même : elles supposent qu'un objet « séquence » existe et qu'un
+palier sache quel modèle il envoie et quand. Répondre aux trois avant d'avoir cet objet reviendrait
+à spécifier un comportement sur une table qui n'existe pas.
+
+| Sous-tranche | Objet | Pourquoi elle est séparée |
+|---|---|---|
+| **4a** | La **séquence et ses paliers** en base : `public.mail_sequences`, `public.mail_sequence_steps`, contraintes, RLS, privilèges, pgTAP, contrat d'API, seed, harnais | C'est l'objet dont les deux autres dépendent : un armement qui n'a rien à armer n'existe pas |
+| **4b** | L'**armement et l'exécution** : l'application d'une séquence à une affaire figée, le job qui met les messages en file, l'interruption | Elle consomme 4a et répond aux trois questions du §7.3 |
+| **4c** | L'**écran** d'administration des séquences et l'armement depuis l'affaire | Elle consomme 4a et 4b et n'ajoute aucune règle de base |
+
+L'ordre est celui de la dépendance, comme les quatre tranches de l'unité (§1) et les deux
+sous-tranches de la tranche 2 (§8.1). Chacune est committée et prouvée avant la suivante.
+
+**Ce chapitre spécifie la sous-tranche 4a, et elle seule.** Les §11.2 à §11.11 sont son contrat
+exécutable ; le §11.12 cadre 4b et 4c, qui seront spécifiées ligne à ligne avant d'être écrites,
+dans leur propre chunk.
+
+### 11.2 Ce qu'une séquence est, et à qui elle appartient
+
+Une séquence de relance est une **cadence éditoriale nommée** : « au bout de trois jours, envoyer
+ce texte ; sept jours après, celui-là ; quatorze jours après, le premier de nouveau ».
+
+Elle appartient au **workspace**, exactement comme un modèle (§2.1) et pour la même raison : deux
+personnes qui relancent le même prospect doivent relancer à la même cadence, et dupliquer une
+cadence par channel serait la duplication que `CLAUDE.md` §4 proscrit.
+
+**Elle ne porte aucune identité sortante.** Le §2.1 a écarté le lien inverse pour le modèle — un
+contenu ne dépend pas du compte SMTP qui l'expédie — et l'argument vaut ici sans changement : deux
+personnes appliquant la même séquence à deux affaires signent chacune de leur adresse. **Quelle
+identité expédie est une question d'armement**, donc de 4b (§11.12).
+
+**Elle ne porte aucun seuil de déclenchement.** « Figée » a UNE définition en base depuis
+`CRM-062` — `public.cards_figees()`, dont le seuil effectif est celui de l'étape ou du nœud
+(`docs/SPEC-relances.md` §2.2). Une séquence qui porterait son propre seuil en créerait une
+seconde, et le §2.1 de `docs/SPEC-relances.md` existe précisément pour l'empêcher.
+
+### 11.3 `public.mail_sequences` — colonnes
+
+| Colonne | Type | Nullable | Règle |
+|---|---|---|---|
+| `id` | `uuid` | non | `gen_random_uuid()` |
+| `workspace_id` | `uuid` | non | → `workspaces (id) on delete cascade` |
+| `name` | `text` | non | 1 à 120 caractères après `app.btrim_blancs` ; **unique par workspace** sur la forme normalisée, comme `mail_templates.name` |
+| `created_by` | `uuid` | oui | → `profiles (id) on delete set null`. **Trace, jamais un droit**, même règle qu'au §2.2 |
+| `created_at` | `timestamptz` | non | `now()` |
+| `updated_at` | `timestamptz` | non | `now()`, tenu par `app.set_updated_at()` |
+
+**Aucune colonne `description`, et c'est une décision.** Personne ne la lirait : 4a ne livre aucun
+écran, et 4c n'a encore rien demandé. La tranche 3 vient de payer le prix d'une colonne posée « au
+cas où » — `signature_html`, morte depuis `CRM-053`, mal nommée, et dont la réparation a coûté un
+renommage gardé et la correction de deux migrations antérieures (§10.2, INC-215). La leçon est
+appliquée ici : **aucune colonne sans lecteur**.
+
+**Aucune colonne `is_active` ni `archived_at`.** Une séquence se **supprime** réellement, comme un
+modèle (§2.2). L'état « armée / non armée » n'appartient pas à la séquence mais au lien entre une
+séquence et une affaire, et ce lien est l'objet de 4b : le poser ici serait décider 4b sans l'avoir
+spécifiée.
+
+**Aucune unicité globale du nom.** L'unicité est **par workspace**, comme au §2.2 : deux workspaces
+nomment leur cadence « Relance longue » sans se gêner.
+
+### 11.4 `public.mail_sequence_steps` — le palier
+
+| Colonne | Type | Nullable | Règle |
+|---|---|---|---|
+| `id` | `uuid` | non | `gen_random_uuid()` |
+| `workspace_id` | `uuid` | non | → `workspaces (id) on delete cascade`, **et** cohérent avec celui de sa séquence par clé étrangère composite (§11.5 point n) |
+| `sequence_id` | `uuid` | non | → `mail_sequences (id) on delete cascade` — supprimer une séquence emporte ses paliers, qui n'ont aucune existence sans elle |
+| `position` | `integer` | non | 1 à 50 ; **unique par séquence**, contrainte `deferrable initially immediate` (§11.6) |
+| `delai_jours` | `integer` | non | 1 à 365 |
+| `template_id` | `uuid` | non | → `mail_templates (id)` **`on delete restrict`**, et cohérent en workspace par clé étrangère composite |
+| `created_at` | `timestamptz` | non | `now()` |
+| `updated_at` | `timestamptz` | non | `now()`, tenu par `app.set_updated_at()` |
+
+#### Le délai se compte depuis le palier PRÉCÉDENT, et le premier depuis l'armement
+
+C'est la décision de forme de la sous-tranche, et l'alternative était un décalage **absolu** depuis
+l'armement. Le délai relatif est retenu pour une raison vérifiable : **insérer un palier au milieu
+d'une cadence ne renumérote rien**. En absolu, glisser une relance entre J+3 et J+14 obligerait à
+réécrire le décalage de tous les paliers suivants, et un oubli produirait deux envois le même jour
+sans qu'aucune contrainte ne le voie. En relatif, le palier inséré porte son propre délai et les
+suivants gardent le leur.
+
+Le décalage absolu reste **dérivable** — c'est la somme des délais des paliers de position
+inférieure ou égale — et 4b le calculera au moment où il en aura besoin. L'inverse n'est pas vrai :
+d'un décalage absolu, on ne retrouve le délai relatif qu'en supposant qu'aucun palier ne manque.
+
+**La borne basse est `1`, et non `0`.** Un palier de délai nul partirait à l'instant même de
+l'armement, ou en même temps que le palier qui le précède : ce n'est pas une cadence, c'est un
+doublon. Une séquence commence donc au plus tôt le lendemain de son armement. La borne haute de 365
+tient la même place que les 20 000 caractères du §2.2 : au-delà d'un an, on n'écrit plus une
+cadence de relance.
+
+#### La clé étrangère du modèle est `on delete restrict`, et le §2.2 l'avait annoncée
+
+Le §2.2 l'a écrite quatre tranches à l'avance, pour que celle-ci ne la découvre pas :
+
+> « La tranche 4, qui fera référencer un modèle par un palier de séquence, posera cette clé
+> étrangère en `on delete restrict` — un modèle employé par une séquence ne se supprimera plus, et
+> le refus sera nommé. »
+
+Elle est posée telle quelle. Le refus rend `23503` en base (§11.5 point k), et l'écran de la
+sous-tranche 2b devra le dire : sa confirmation de suppression annonce aujourd'hui une suppression
+inconditionnelle (§9.7), ce qui **deviendra faux** à l'application de cette migration. C'est un
+travail de 4c, et il est nommé au §11.12 plutôt que tu.
+
+**Un même modèle peut servir PLUSIEURS paliers**, et la clé étrangère n'est donc pas unique : une
+cadence qui répète le même texte à J+3 et à J+14 est un usage courant, et le seed le démontre
+(§11.8).
+
+### 11.5 Ce que la base refuse, ligne à ligne
+
+| # | Écriture | Issue attendue |
+|---|---|---|
+| a | `mail_sequences.name` vide ou fait de blancs | refusée, `mail_sequences_name_borne` (`23514`) |
+| b | `name` de 121 caractères | refusée, même contrainte |
+| c | `name` déjà pris dans le workspace, aux blancs de bord près | refusée, `mail_sequences_workspace_name_key` (`23505`) |
+| d | `name` identique dans un AUTRE workspace | acceptée : l'unicité est par workspace |
+| e | `position` valant `0`, `-1` ou `51` | refusée, `mail_sequence_steps_position_borne` (`23514`) |
+| f | `position` déjà prise dans la même séquence | refusée, `mail_sequence_steps_sequence_position_key` (`23505`) |
+| g | même `position` dans une AUTRE séquence | acceptée : l'unicité est par séquence |
+| h | échange de deux positions **en un seul `update`** | **acceptée** — la contrainte est `deferrable initially immediate`, donc vérifiée en fin d'instruction (§11.6) |
+| i | `delai_jours` valant `0`, `-1` ou `366` | refusée, `mail_sequence_steps_delai_borne` (`23514`) |
+| j | `template_id` inexistant | refusée, `23503` |
+| k | suppression d'un `mail_templates` employé par un palier | refusée, `23503`, `mail_sequence_steps_template_id_fkey` — c'est le `on delete restrict` du §2.2 |
+| l | suppression d'un `mail_templates` employé par AUCUN palier | acceptée : le `restrict` ne protège que ce qui est employé |
+| m | suppression d'une `mail_sequences` portant des paliers | acceptée, et ses paliers disparaissent avec elle (`on delete cascade`) |
+| n | palier dont le `template_id` appartient à un AUTRE workspace que sa séquence | refusée, `23503`, clé étrangère **composite** — jamais par une politique |
+| o | palier dont le `workspace_id` diverge de celui de sa séquence | refusée, `23503`, clé étrangère composite |
+| p | `workspace_id` d'un workspace dont l'appelant n'est pas membre | refusée par la **RLS**, jamais par une contrainte |
+
+**Les points n et o sont la seule notion nouvelle de cette sous-tranche, et ils sont tenus par une
+clé étrangère plutôt que par une politique.** Un palier porte `workspace_id` parce que ses
+politiques RLS le lisent sans jointure — c'est le patron de `card_contacts` et de `goal_blocks`. Une
+colonne dénormalisée peut diverger de sa source ; la faire diverger *silencieusement* rendrait le
+cloisonnement faux là où il compte. Les deux clés composites l'interdisent en base :
+
+```
+(sequence_id, workspace_id) references public.mail_sequences (id, workspace_id)
+(template_id, workspace_id) references public.mail_templates (id, workspace_id)
+```
+
+Chacune exige un index unique sur `(id, workspace_id)` de la table cible. `mail_sequences` le pose
+elle-même ; `mail_templates` **ne l'a pas** — MESURÉ le 2026-08-25, ses seuls index uniques sont
+`mail_templates_pkey` et `mail_templates_workspace_name_key`. La migration l'ajoute donc, et c'est
+un ajout **additif** : il ne refuse aucune écriture que la clé primaire n'interdisait déjà.
+
+C'est exactement le patron `workflow_steps_id_workflow_id_key`, posé pour la même raison par
+`CRM-031`, et il est repris plutôt que réinventé.
+
+### 11.6 LA POSITION EST `DEFERRABLE`, ET UNE MESURE L'IMPOSE
+
+Réordonner des paliers, c'est **échanger deux positions**. L'opération passe nécessairement par un
+état transitoire où deux lignes portent la même position, ou par une position intermédiaire
+inventée. **MESURÉ le 2026-08-25** sur la pile, sur deux tables sondes portant deux lignes en
+positions 1 et 2 :
+
+| Sonde | Contrainte | Geste | Résultat mesuré |
+|---|---|---|---|
+| C | `unique` simple | `update … set pos = 3 - pos` — **un seul `update`** | **`23505`** |
+| D | `unique` simple | deux `update` séparés dans une transaction | **`23505`** |
+| B1 | `unique … deferrable initially immediate` | `update … set pos = 3 - pos` — un seul `update` | **accepté** |
+| E | `unique … deferrable initially immediate` + `set constraints … deferred` | deux `update` séparés | **accepté** |
+
+La ligne C est celle qui décide. Avec une contrainte simple, **même l'échange atomique est refusé** :
+PostgreSQL vérifie un index unique ligne à ligne, et la première ligne réécrite entre en collision
+avec la seconde, encore intacte. `deferrable initially immediate` reporte la vérification à la **fin
+de l'instruction**, si bien que l'échange en un `update` passe **sans qu'aucun appelant n'ait à
+demander quoi que ce soit** — donc y compris par un `PATCH` PostgREST, qui n'a pas de moyen d'émettre
+`set constraints`.
+
+La contrainte reste `initially immediate` et non `initially deferred` : hors réordonnancement, un
+doublon doit être refusé à l'instruction qui le crée, et non à la validation d'une transaction dont
+l'appelant ne saura plus quelle écriture a fauté.
+
+**Ce qui n'est PAS acquis, et qui est nommé plutôt que tu** : un réordonnancement qui ne serait pas
+exprimable en une seule instruction — insérer un palier au milieu, par exemple — exige toujours une
+transaction et un `set constraints … deferred`, donc une RPC. 4a n'en livre aucune : elle livre la
+contrainte qui la rend possible, et 4c dira si l'écran en a besoin.
+
+### 11.7 Autorisations
+
+Aucune notion nouvelle. Le patron est **exactement** celui de `mail_templates` (§2.6), et la raison
+est la même : une séquence est un objet éditorial collectif du workspace.
+
+| Action | Qui | Fonction |
+|---|---|---|
+| lecture | tout membre du workspace | `app.is_workspace_member(workspace_id)` |
+| insertion | `admin` et `business_developer` | `app.workspace_role(workspace_id) in ('admin','business_developer')` |
+| modification | idem | idem, en `using` **et** en `with check` |
+| suppression | idem | idem |
+
+Les **deux** tables portent les **quatre** politiques, sans exception : un palier modifiable par qui
+ne peut pas modifier sa séquence serait un contournement, la cadence vivant dans les paliers.
+
+**La lectrice lit et n'écrit pas**, et le refus se mesure comme `docs/SPEC-permissions-rls.md` §7
+l'exige : **zéro ligne**, jamais une erreur, pour un `PATCH` ou un `DELETE` que la politique ne
+consent pas ; `401` pour l'anonyme, refusé par le **privilège** avant toute politique.
+
+**Le point de sûreté des migrations 48 à 58 s'applique** : la plateforme porte des
+`alter default privileges … to anon`, si bien qu'un `revoke … from public` ne retire rien à un rôle
+**nommé**. La migration révoque donc nommément puis attribue action par action.
+
+### 11.8 Contrat d'API — `/rest/v1/mail_sequences` et `/rest/v1/mail_sequence_steps`
+
+Mesuré avec les jetons réels des trois profils du seed. `admin` = Camille Aubert,
+`business_developer` = Driss Lemoine, `viewer` = Farida Nowak.
+
+| # | Appelant | Requête | Attendu |
+|---|---|---|---|
+| 1 | anonyme | `GET /mail_sequences` | **`200` et `[]`** — un filtrage, jamais une erreur |
+| 2 | anonyme | `POST /mail_sequences` | `401`, code PostgreSQL `42501`, refusé par le **privilège** |
+| 3 | anonyme | `GET /mail_sequence_steps` | **`200` et `[]`** |
+| 4 | `viewer` | `GET /mail_sequences` | `200`, la séquence du seed |
+| 5 | `viewer` | `GET /mail_sequence_steps` | `200`, ses trois paliers |
+| 6 | `business_developer` | `GET` des deux | `200`, les mêmes |
+| 7 | `viewer` | `POST /mail_sequences` | `403`, `42501` |
+| 8 | `viewer` | `PATCH` d'un palier existant | `200` et **`[]`** — zéro ligne, le palier relu **inchangé** |
+| 9 | `viewer` | `DELETE` d'un palier existant | `204` et le palier **toujours là** |
+| 10 | `business_developer` | `POST /mail_sequences` valide | `201`, ligne relue |
+| 11 | `business_developer` | `POST` d'un `name` déjà pris | `409`, `23505` |
+| 12 | `business_developer` | `POST /mail_sequence_steps` valide | `201`, ligne relue |
+| 13 | `business_developer` | `POST` d'un palier de `position` déjà prise | `409`, `23505` |
+| 14 | `business_developer` | `POST` d'un palier de `delai_jours` valant `0` | `400`, `23514` |
+| 15 | `business_developer` | `PATCH` échangeant deux positions en **une** requête | `200` — la contrainte différée le permet (§11.6) |
+| 16 | `admin` | `DELETE` d'un `mail_templates` employé par un palier | `409`, `23503` — le `restrict` du §2.2 |
+| 17 | `admin` | `POST` d'un palier dont le `template_id` est d'un autre workspace | `409`, `23503`, clé composite |
+| 18 | `admin` | `DELETE` de la séquence qu'il a créée | `204`, et ses paliers **partis avec elle** |
+
+**Le point 15 est la mesure du §11.6 portée jusqu'à la route**, et il vaut d'être prouvé là : c'est
+la seule ligne du contrat qui distingue une contrainte différée d'une contrainte simple vue depuis
+un client. Une preuve qui ne l'exercerait qu'en `psql` laisserait ouverte la question de savoir si
+PostgREST émet bien **un** `update`.
+
+**Le point 16 rend `409` et non `400`** parce que PostgREST classe `23503` en conflit. La ligne est
+mesurée plutôt que déduite, et son code est celui que l'écran de 4c devra reconnaître.
+
+### 11.9 Le seed
+
+Le seed pose **une** séquence dans le workspace de démonstration, « **Relance en trois temps** »,
+portant **trois** paliers :
+
+| Position | Délai | Modèle |
+|---|---|---|
+| 1 | 3 jours | « Relance sans réponse » |
+| 2 | 7 jours | « Prise de contact » |
+| 3 | 14 jours | « Relance sans réponse » |
+
+**Trois paliers, et trois sont nécessaires** — deux ne suffiraient pas :
+
+1. le palier 3 **réemploie** le modèle du palier 1 : c'est le seul jeu qui démontre qu'un modèle
+   sert plusieurs paliers, et qu'aucune unicité n'est posée sur `template_id` (§11.4) ;
+2. les trois délais sont **distincts et croissants** : un jeu à délais égaux laisserait passer une
+   contrainte qui les confondrait ;
+3. trois positions donnent un **échange** à prouver — le point 15 du contrat d'API échange les
+   positions 1 et 2 et les remet en place, ce que deux paliers rendraient indiscernable d'une
+   permutation triviale.
+
+La séquence et ses paliers sont créés **par l'API REST avec le jeton réel de l'administratrice**,
+jamais par un `INSERT` direct ni par la clé de service : `CLAUDE.md` §8 exige que les données de
+démonstration empruntent le chemin du produit, et ce chemin-ci **exerce au passage** la politique
+d'insertion du §11.7 — un seed qui passerait par `service_role` serait vert même si la politique
+était cassée.
+
+Une **garde de convergence** compare les comptes à `1` et `3` et échoue si un rejeu duplique, comme
+celle des modèles (§2.8). Une **seconde garde** vérifie ce que le jeu doit démontrer : que le modèle
+du palier 1 est bien celui du palier 3. Un jeu qui perdrait cette égalité ne prouverait plus rien du
+point 1 ci-dessus.
+
+### 11.10 Preuves exigées — sous-tranche 4a
+
+| Niveau | Preuve |
+|---|---|
+| pgTAP | `supabase/tests/0057_sequences_relance.test.sql` : la forme des deux tables dans le catalogue, leurs contraintes **nommées**, le caractère `deferrable` de la contrainte de position lu dans `pg_constraint.condeferrable`, l'ACL rôle par rôle, les seize lignes du §11.5, et **un témoin avant chaque refus** — un refus vert sur une absence ne prouve rien |
+| API | `e2e/api/sequences-relance.spec.ts` : les dix-huit lignes du §11.8 avec les jetons réels, chaque refus **relisant la ligne** pour la constater inchangée (décision 70), et le seed constaté **intact** en fin de suite |
+| Unitaire | aucune logique TypeScript n'est livrée par cette sous-tranche : les règles vivent en SQL et sont éprouvées par pgTAP, qui est leur niveau. L'écart est **nommé** plutôt que compensé par un test unitaire de façade |
+| Harnais | `scripts/verify-sequences-relance.sh` : verdict unique, non complaisant, ses dégradations réelles et la restauration **constatée octet à octet** contre un instantané pris avant la première, jamais contre `HEAD` |
+| Seed | `supabase/seed/apply-seed.sh`, avec ses deux gardes |
+| E2E interface | **aucun** : cette sous-tranche ne livre aucun écran. L'écart est nommé, et l'écran est 4c |
+
+### 11.11 Definition of Done — sous-tranche 4a
+
+- migration `0059_sequences_relance.sql` appliquée et **rejouable** : les deux tables, leurs
+  contraintes, l'index composite ajouté à `mail_templates`, la RLS, les privilèges ;
+- suite pgTAP dédiée verte ;
+- contrat d'API du §11.8 vert avec les jetons réels des trois profils ;
+- seed enrichi et **convergent**, ses deux gardes vertes ;
+- harnais dédié vert, ses dégradations vues ;
+- `docs/SCHEMA.md` §7, `docs/PROD_MIGRATIONS.md`, `docs/SPEC-seed.md` et `CHANGELOG.md` mis à jour
+  **dans le même changement** ;
+- compteurs de `scripts/verify-harness.sh` révisés **par comptage**, jamais par estimation ;
+- commentaires `@spec` / `@verifies` sur chaque fichier ;
+- commit poussé sur `origin/main`.
+
+### 11.12 Cadrage de 4b et 4c — à spécifier avant d'être écrites
+
+**4b — l'armement et l'exécution.** Elle répond aux trois questions du §7.3, qu'elle devra trancher
+**chacune par une mesure** :
+
+- **qui arme une séquence**, et sur quoi : une affaire figée au sens de `public.cards_figees()`, un
+  geste humain, ou le job quotidien de `CRM-062` tranche 2 ; quelle identité sortante expédie, la
+  séquence n'en portant aucune (§11.2) ;
+- **ce qui l'interrompt** : un déplacement d'étape — qui réarme déjà la relance de `CRM-062`
+  (`docs/SPEC-relances.md` §9.4) —, une mise en sommeil, un archivage, un geste explicite ;
+- **ce qu'une réponse du destinataire produit** : `mail_messages` porte `direction`, `card_id` et
+  `sent_at`, donc la donnée existe ; reste à dire si une réponse suspend, termine ou n'affecte pas
+  la séquence.
+
+Elle devra aussi dire **comment un palier met un message en file**. Le chemin d'aujourd'hui,
+`public.queue_outbound_email`, exige `auth.uid()` non nul et le refuse en `42501` sans jeton
+(migration 58) : un job `pg_cron` ne peut donc pas l'emprunter tel quel. C'est une **mesure**, pas
+une supposition, et elle est écrite ici pour que 4b ne la redécouvre pas.
+
+**4c — l'écran.** Administration des séquences, et armement depuis l'affaire. Elle devra aussi
+**réviser la confirmation de suppression d'un modèle** : le §9.7 annonce aujourd'hui une suppression
+inconditionnelle, ce que le `on delete restrict` du §11.4 rend faux dès l'application de la
+migration `0059`. L'écart est nommé ici, et il appartient à 4c.
