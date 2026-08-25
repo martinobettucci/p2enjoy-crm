@@ -8240,11 +8240,24 @@ preuves, l'écran vérifié visuellement aux quatre paliers, console vierge.
 - [x] **Compteurs de `scripts/verify-harness.sh` révisés dans le MÊME changement** :
       `FICHIERS_SQL_ATTENDUS` 50 → **51**, `ASSERTIONS_ATTENDUES` 2480 → **2504**, `SCENARIOS_API`
       837 → **850**. Valeurs COMPTÉES, jamais déduites.
-- [ ] **Ce qui retient la tranche 1 en `[~]`, et c'est nommé** : la série des soixante-deux autres
-      `scripts/verify-*.sh` n'a pas été rejouée derrière ce changement — deux l'ont été,
-      `verify-relances.sh` et `verify-node-toolchain.sh`. Aucun écran, aucune capture, aucune
-      vérification visuelle : la tranche 1 ne livre **aucune** surface, et l'absence est nommée
-      plutôt que compensée par une preuve de substitution.
+- [x] **LA SÉRIE A ÉTÉ REJOUÉE le 2026-08-25, LES SOIXANTE-QUATRE HARNAIS, et elle a trouvé un
+      DÉFAUT RÉEL DE CETTE UNITÉ** — INC-210, décision 507. Le seed est reposé **avant chaque
+      harnais**, chacun exigeant une base « migrée et seedée » et aucun ne devant décider du verdict
+      du suivant (INC-209). Bilan : **cinquante-sept verts**. Les autres, nommés un à un —
+      `verify-board.sh` (**INC-139**, une seule anomalie là où l'entrée en comptait quatre),
+      `verify-corbeille.sh` (**INC-192**, `@spec CRM-077` cherchée dans les trois premières lignes
+      d'un fichier qui en cumule dix), `verify-scripts.sh` (**INC-186**, la reconstruction sans CA
+      derrière le proxy), et **quatre non menés à terme** dans le plafond de dix minutes retenu ici :
+      `verify-droits-fins.sh`, `verify-tracks.sh`, `verify-webapp.sh` — les trois qu'**INC-190**
+      mesure au-delà de vingt minutes — et `verify-harness.sh`, qui rejoue la campagne entière.
+      `verify-move-card.sh` est rouge en série et **vert seul** (57 contrôles) : consigné en
+      **INC-211**, cause non établie. `verify-mail-sync.sh` était rouge d'un `pytest` absent de
+      l'hôte (**INC-202**, §2.1 ter de `docs/CloudWorker.md`) et rend **61 contrôles verts** une
+      fois le paquet posé.
+- [ ] **Ce qui retient la tranche 1 en `[~]`, et c'est nommé** : quatre harnais de la série n'ont pas
+      été menés à terme dans le plafond de dix minutes (ci-dessus). Aucun écran, aucune capture,
+      aucune vérification visuelle : la tranche 1 ne livre **aucune** surface, et l'absence est
+      nommée plutôt que compensée par une preuve de substitution.
 - [x] **Tranche 2 SPÉCIFIÉE avant sa première ligne de code**, 2026-08-24 — `docs/SPEC-relances.md`
       **§9**, onze sections écrites après mesure sur la pile debout et seedée. Les trois propriétés
       annoncées au §7.2 y sont tranchées : idempotence par `not exists (stalled avec created_at >=
@@ -8293,10 +8306,9 @@ preuves, l'écran vérifié visuellement aux quatre paliers, console vierge.
 - [x] **Garde-fou du vocabulaire RÉVISÉ, jamais contourné** :
       `supabase/tests/0019_move_card_to_channel.test.sql` passe de quatorze à quinze valeurs, motif
       écrit dans le fichier. Sixième évolution, et aucune valeur n'a jamais été retirée.
-- [ ] **Ce qui retient la tranche 2 en `[~]`, et c'est nommé** : la série des soixante et un autres
-      `scripts/verify-*.sh` n'a pas été rejouée derrière ce changement — **deux** l'ont été,
-      `verify-relances.sh` (**55 contrôles, aucune anomalie**) et `verify-harness.sh`
-      (**31 contrôles, aucune anomalie**, qui valide les compteurs révisés). Aucun écran, aucune
+- [ ] **Ce qui retient la tranche 2 en `[~]`, et c'est nommé** : la série est rejouée (voir la
+      tranche 1), mais quatre harnais n'y ont pas été menés à terme. `verify-relances.sh` rend
+      désormais **89 contrôles, aucune anomalie**, section « 7 ter » comprise. Aucun écran, aucune
       capture, aucune vérification visuelle : la tranche 2 ne livre **aucune** surface, et l'absence
       est nommée plutôt que compensée par une preuve de substitution.
 - [x] **Tranche 3 SPÉCIFIÉE avant sa première ligne de code**, 2026-08-24 — `docs/SPEC-relances.md`
@@ -8372,9 +8384,10 @@ preuves, l'écran vérifié visuellement aux quatre paliers, console vierge.
 - [x] **Documentation dans le même changement** : `docs/DESIGN_SYSTEM.md` **§5.37** (l'écran) et
       **§5.38** (la relance dans le fil) ; `docs/manual.md` chapitre **`3 quinquies`** et sa ligne
       de sommaire ; `docs/SPEC-relances.md` §10 ; registre INC-206 et INC-207.
-- [ ] **Ce qui retient la tranche 3 en `[~]`, et c'est nommé** : la série des soixante et un autres
-      `scripts/verify-*.sh` n'a pas été rejouée derrière ce changement. Deux écarts sont **nommés**
-      plutôt que comblés (§11) : aucune portée « mes affaires » — elle demanderait un argument à
+- [ ] **Ce qui retient la tranche 3 en `[~]`, et c'est nommé** : la série est rejouée (voir la
+      tranche 1) ; quatre de ses harnais n'ont pas été menés à terme dans le plafond retenu, et
+      c'est le seul reste de forme de l'unité. Deux écarts sont **nommés** plutôt que comblés
+      (§11) : aucune portée « mes affaires » — elle demanderait un argument à
       `public.cards_figees()`, donc une révision du contrat de la tranche 1 — et aucune pagination,
       l'ordre venant du serveur et le volume n'étant pas mesuré.
 

@@ -212,6 +212,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-209 | **DEUX preuves d'interface ne sont pas rejouables** : `commentaires-gestes.spec.ts` laisse le commentaire qu'il publie, `administration-arborescence.spec.ts` laisse le track `cree-par-admin` qu'il crée. `apply-seed.sh` est convergent sur les seules lignes `5eed…` et ne les retire donc pas — une seconde campagne dans la même session rend un verdict rouge qui ne dit rien du produit | 2026-08-24 | **ouverte** — comportement inchangé, étrangère à `CRM-062` ; appartient à `CRM-043` et `CRM-075` | 506 |
 | INC-208 | Les **six** routes transverses — `/ma-journee`, `/contacts`, `/couts`, `/objectifs`, `/affaires-figees`, `/reglages` — écrivent « Aucun channel » là où il n'y a pas de track courant : un manque énoncé pour une absence de contexte | 2026-08-24 | **ouverte** — comportement inchangé, étrangère à `CRM-062` ; arbitrage attendu | 506 |
 | INC-210 | La migration 44 n'a pas la SECONDE garde d'INC-144 : depuis que `CRM-062` écrit `stalled`, tout rejeu du répertoire sur une base dont la contrainte a été réduite s'arrête en `23514` sur la 44, et les migrations 45 à 54 ne s'appliquent plus. La pile reste avec un vocabulaire amputé et toute trace serveur est refusée | 2026-08-25 | **close** — seconde garde posée par la décision 507, imputable à `CRM-062` | 507 |
+| INC-211 | `scripts/verify-move-card.sh` rend « la restauration n'a pas rétabli l'état initial » EN SÉRIE et **57 contrôles, aucune anomalie** rejoué seul, seed reposé — la dégradation `b`, qui emploie la MÊME restauration, est verte dans le même passage | 2026-08-25 | *ouverte* — cause non établie, comportement inchangé, relève de `CRM-034` | 507 |
 
 ---
 
@@ -4449,3 +4450,31 @@ au répertoire de la rendre. C'est le répertoire qui ne sait plus la rendre.
 comme celle des migrations 20, 25 et 30 — elle ne converge que si aucune ligne ne porte un type hors
 de ses quatorze valeurs. La 54 reste alors seule responsable d'installer les quinze, ce qu'elle sait
 faire. Aucune donnée n'est touchée, aucune contrainte n'est relâchée.
+
+---
+
+### INC-211 — `verify-move-card.sh` rouge en série, vert seul, sur la restauration de sa première dégradation
+
+**MESURÉ le 2026-08-25**, série complète des soixante-quatre harnais, seed reposé avant chacun. En
+série, `scripts/verify-move-card.sh` rend `57 contrôles, 1 anomalie(s)` :
+
+```
+OK     dégradation a (privilège de colonne rendu) — la suite pgTAP échoue : 9 assertion(s)
+ECHEC  dégradation a — la restauration n’a pas rétabli l’état initial
+OK     dégradation b (anon retrouve EXECUTE) — la suite pgTAP échoue : 9 assertion(s)
+OK     dégradation b — restauration CONSTATÉE
+```
+
+**Ce qui rend le constat intéressant** : les dégradations `a` et `b` appellent la **même**
+`restaurer_privileges`, dans le même passage, et `b` la voit réussir. Rejoué SEUL derrière un seed
+reposé, le harnais rend `57 contrôles, aucune anomalie`. L'état de la base à l'entrée décide donc du
+verdict, et le seed n'est pas ce qui manque — il venait d'être reposé.
+
+**Ce que ce n'est PAS.** Ce n'est pas INC-210 : mesuré après sa correction, sur une base dont le
+vocabulaire est entier et `VALID`. Ce n'est pas non plus une régression de la session : aucun
+fichier de `move_card` n'a été touché.
+
+**Cause non établie**, et elle n'est pas supposée. La piste à mesurer d'abord est le harnais qui
+précède immédiatement en ordre alphabétique, `verify-move-card-to-channel.sh`, qui dégrade lui aussi
+des privilèges. Comportement **laissé inchangé** : la correction relève de `CRM-034`, dont
+`verify-move-card.sh` porte les preuves.
