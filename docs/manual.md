@@ -52,7 +52,7 @@
 | 12 | L'adresse email d'une card : à quoi elle sert | `CRM-040`, `CRM-013`, `CRM-054` | **Partiellement livré** : l'adresse est **générée** à la création de chaque affaire, non devinable, et depuis `CRM-013` **non modifiable** — le refus est appliqué par le serveur et tient hors de l'écran (chapitre 4.2). Ce à quoi elle sert — recevoir les messages et les rattacher à l'affaire — relève de `CRM-054` |
 | 13 | L'inbox : dossiers, messages non classés, classement, **suggestion** | `CRM-055`, `CRM-057`, `CRM-060` | À livrer |
 | 14 | Répondre depuis une card ou depuis l'inbox | `CRM-058` | À livrer |
-| 15 | Modèles d'emails, signature et séquences de relance | `CRM-063` | **Partiellement livré — les MODÈLES ont leur écran, vérifié visuellement ; la signature et les séquences n'existent pas.** Voir le chapitre 7. « Réglages ▸ Modèles d'emails » écrit les textes réutilisables de l'espace de travail, à trous, et les prévisualise sur une affaire réelle. Ce qui manque, et l'absence est voulue : **aucun envoi** — composer un message à partir d'un modèle n'est pas encore offert —, **aucune signature** attachée à une identité d'expédition, et **aucune séquence de relance** à paliers |
+| 15 | Modèles d'emails, signature et séquences de relance | `CRM-063` | **Partiellement livré — les MODÈLES et la SIGNATURE sont livrés et vérifiés visuellement ; les séquences n'existent pas.** Voir les chapitres 7 et **7 bis**. « Réglages ▸ Modèles d'emails » écrit les textes réutilisables de l'espace de travail, à trous, et les prévisualise sur une affaire réelle ; « Réglages ▸ Identités d'expédition » porte la **signature** ajoutée à la fin de chaque message expédié depuis une adresse. Ce qui manque, et l'absence est voulue : **aucun envoi depuis l'écran des modèles** — composer un message à partir d'un modèle n'est pas encore offert — et **aucune séquence de relance** à paliers |
 | 16 | Que faire quand un compte mail est en erreur | `CRM-059` | **Livré avec son écran, vérifié visuellement** — voir le chapitre 6. « Réglages ▸ État de la messagerie » montre la dernière relève réussie et le dernier incident de chaque boîte visible, ainsi que la file sortante en attente et en échec définitif. Ce qui manque : aucune alerte n'est envoyée, l'écran reste le seul endroit où le constater |
 
 ### Administration
@@ -2844,13 +2844,85 @@ supprimé, il faut le réécrire.
 
 - **Aucun envoi depuis cet écran.** La prévisualisation montre ; elle n'expédie rien. Composer un
   message à partir d'un modèle viendra avec les séquences de relance.
-- **Aucune signature.** Une identité d'expédition ne porte pas encore de pied de message employé à
-  l'envoi.
+- ~~**Aucune signature.**~~ **Livrée** — voir le chapitre **7 bis** ci-dessous. Une identité
+  d'expédition porte désormais sa signature, ajoutée à la fin de chaque message expédié depuis elle.
 - **Aucune séquence de relance.** Les paliers — un modèle, un délai, puis le suivant — ne sont pas
   livrés.
 - **Les dates sont rendues en UTC.** Une échéance affichée « 16/08/2026 09:00 » dans un message est
   exprimée en temps universel : le produit ne connaît pas encore le fuseau de votre espace de
   travail. Un destinataire français lira donc 09:00 là où le rendez-vous est à 11:00 en heure d'été.
+
+## 7 bis. Signer les messages expédiés depuis une identité
+
+*Livré par `CRM-063`, tranche 3. L'écran est celui des identités d'expédition (`CRM-089`) ; cette
+tranche y ajoute un champ, et rien d'autre.*
+
+**Où.** Barre latérale ▸ **Réglages** ▸ « Identités d'expédition », puis « Configurer » sur
+l'identité concernée.
+
+**À quoi cela sert.** Une signature est le pied de message que vos destinataires liront sous chaque
+courriel parti depuis cette adresse : votre nom, votre fonction, votre société, un téléphone. Vous
+l'écrivez **une fois**, et le produit l'ajoute ensuite à **tous** les messages expédiés depuis cette
+identité — ceux que vous composez à la main comme ceux que le produit enverra pour vous.
+
+**La signature appartient à l'ADRESSE, pas à vous.** Si vous expédiez depuis deux adresses —
+`contact@` et `recrutement@`, par exemple —, chacune porte la sienne, et vous les remplissez
+séparément. C'est voulu : on ne signe pas de la même façon selon l'adresse sous laquelle on écrit.
+L'identité de service de l'espace de travail, qui n'appartient à personne en particulier, a elle
+aussi la sienne.
+
+### 7 bis.1 Écrire, modifier, supprimer une signature
+
+Le champ **Signature** se trouve dans le formulaire, juste après le nom d'expéditeur. Il accepte
+plusieurs lignes, et les conserve telles que vous les écrivez : les retours à la ligne et les
+alignements que vous posez sont ceux que votre destinataire verra.
+
+- **Écrire** : remplissez le champ, puis « Enregistrer ». C'est immédiat, et cela vaut pour le
+  prochain message.
+- **Modifier** : rouvrez « Configurer ». Le champ est prérempli avec la signature enregistrée — le
+  produit ne vous demande jamais de la réécrire de mémoire.
+- **Supprimer** : **videz le champ**, puis « Enregistrer ». La signature disparaît, et les messages
+  suivants partent sans elle.
+
+Une signature est limitée à **2 000 caractères**. Au-delà, l'enregistrement est refusé et le produit
+vous le dit : rien n'est écrit à moitié.
+
+### 7 bis.2 Où la signature apparaît dans le message
+
+Elle est ajoutée **à la fin** du corps, après une ligne vide et une ligne de séparation composée de
+deux tirets. C'est la convention que les logiciels de messagerie reconnaissent pour replier ou
+griser une signature :
+
+```
+Bonjour,
+
+voici le devis dont nous avons parlé.
+
+-- 
+Driss Lemoine — Business developer
+P2Enjoy SAS
+```
+
+**Ce que vous voyez dans le CRM est exactement ce qui est parti.** Le message conservé par le
+produit porte sa signature : il n'y a pas d'un côté ce que vous avez écrit et de l'autre ce que
+votre destinataire a reçu.
+
+**Dans la liste des identités**, une pastille « Signature » marque les identités qui en portent une.
+La signature elle-même n'y est pas montrée — elle serait trop longue pour une ligne de liste ; c'est
+sa **présence** qui vous intéresse d'un coup d'œil.
+
+### 7 bis.3 Ce qui n'est pas offert
+
+- **Une signature est du texte, jamais de la mise en forme riche.** Pas de gras, pas de logo, pas de
+  lien cliquable : toute la messagerie du produit expédie du texte, et une signature en HTML
+  arriverait chez votre destinataire avec ses balises en toutes lettres.
+- **Aucun trou dans une signature.** `{{contact.full_name}}` écrit dans une signature part
+  **littéralement**. Les trous sont une propriété des modèles d'emails (chapitre 7), pas des
+  signatures.
+- **Un message vide ne part pas, même signé.** Si vous laissez le corps vide, le produit refuse
+  l'envoi : une signature seule n'est pas un message.
+- **Aucune signature commune à tout l'espace de travail.** Chaque identité porte la sienne, ou n'en
+  porte pas.
 
 ## Annexe A — Ce que contient l'espace de démonstration
 

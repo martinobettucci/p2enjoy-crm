@@ -218,6 +218,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-215 | `mail_outbound_identities.signature_html` existe depuis `CRM-053` et n'est lue par PERSONNE — ni `mail-sync` à l'envoi, ni l'écran de `CRM-089`, qui n'envoie délibérément jamais `p_signature_html`. Son nom annonce du **HTML** là où tout le sous-système expédie du **texte** | 2026-08-25 | **CLOSE le 2026-08-25** par `CRM-063` tranche 3, migration 58 : la colonne devient `signature_text`, elle est bornée, elle est LUE par la garde d'envoi et ÉCRITE par l'écran | 512, 516 |
 | INC-216 | `public.rendre_modele_email` rend `card.next_action_at` **en UTC** : MESURÉ, aucune colonne de fuseau n'existe dans le schéma — seule `profiles.locale`, qui est une **langue**. Un destinataire français lira 09:00 là où le rendez-vous est à 11:00 en heure d'été | 2026-08-25 | *ouverte* — comportement ASSUMÉ et figé par une assertion, **arbitrage attendu** : à qui appartient le fuseau d'un email sortant | 514 |
 | INC-217 | `supabase/tests/0052_relances_automatiques.test.sql` assertion 11 exige un passage `succeeded` de `p2enjoy-relances-cards-figees` dans `cron.job_run_details`, or ce job est planifié `23 3 * * *`. MESURÉ deux fois dans la même session : **rouge** à 12 h 45, **verte** à 13 h 50, le job ayant tourné entre-temps hors horaire — l'amorçage de dix secondes de `docs/SPEC-relances.md` §9.7 est réarmé par tout rejeu de la migration 54, et `verify-relances.sh` promeut le job. La preuve est donc verte **parce qu'un autre harnais a tourné avant elle**, jamais selon l'état du produit | 2026-08-25 | *ouverte* — comportement inchangé, relève de `CRM-062` tranche 2, qui porte la preuve | 514 |
+| INC-218 | `scripts/verify-modeles-emails.sh` extrayait la liste des variables du §2.4 par un motif appliqué à TOUT le document : le tableau du §8.6 commence deux de ses lignes par `card.amount` et `card.next_action_at`, et le harnais rendait « la base et le §2.4 divergent » — quatorze noms contre douze — alors que la base et le §2.4 étaient d'accord. **Faux verdict rouge**, ligne de base établie | 2026-08-25 | **CLOSE le 2026-08-25** par `CRM-063` tranche 3 : l'extraction est bornée au seul §2.4 par `sed`. Le harnais rend de nouveau **44 contrôles, aucune anomalie** | 515, 516 |
 
 ---
 
@@ -4981,3 +4982,16 @@ simple : borner la lecture au chapitre §2.4.
 **Ce qu'il ne faut PAS en conclure.** Ce verdict rouge n'est **pas** une régression de la
 sous-tranche 2b, et il ne doit pas être lu comme tel : il est reproductible à l'identique sur la
 ligne de base.
+
+> **CLOSE LE 2026-08-25 PAR `CRM-063` TRANCHE 3**, qui est la « prochaine session touchant
+> `CRM-063` » que le paragraphe ci-dessus désignait. La correction retenue est la **borne de
+> section** — `sed -n '/^### 2\.4 …/,/^### [^2]/p'` avant le `grep` —, et non un marqueur posé dans
+> le tableau : un marqueur devrait être maintenu par quiconque édite le §2.4, là où la borne suit le
+> document sans qu'on ait à y penser. Le harnais rend de nouveau **44 contrôles, aucune anomalie**,
+> et l'extraction bornée rend exactement les **douze** noms de la base.
+>
+> **LA LEÇON EST PLUS LARGE QUE CE HARNAIS, et elle rejoint celles des §2.11, §8.9 bis et §9.10 bis
+> de `docs/SPEC-modeles-emails.md`** : un contrôle qui compare une source documentaire à la base
+> doit lire la source **exactement** au périmètre qu'il annonce. Trop étroit, il ne voit pas une
+> dérive ; trop large, il en invente une. Le quatrième défaut du harnais trouvé par le harnais, et
+> le second faux verdict.

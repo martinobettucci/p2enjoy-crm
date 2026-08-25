@@ -268,7 +268,17 @@ echo "4. La liste des douze variables, comparée nom à nom au §2.4"
 # tableau — deux sources indépendantes, ce qui est le seul montage qui puisse dénoncer une dérive.
 
 liste_base=$(psql_db -c "select array_to_string(app.mail_template_variables(), ',');")
-liste_spec=$(grep -oE '^\| `[a-z]+\.[a-z_]+` \|' "$SPEC" | tr -d '|` ' | sort | paste -sd, -)
+# L'EXTRACTION EST BORNÉE AU SEUL §2.4, ET C'EST LA CORRECTION D'INC-218 (mesurée le 2026-08-25).
+# Non bornée, elle prenait TOUTE ligne de TOUT tableau du document commençant par un nom de la forme
+# `objet.colonne` : le tableau du §8.6, écrit par la sous-tranche 2a, commence deux de ses lignes
+# par `card.amount` et `card.next_action_at`, et le harnais rendait « la base et le §2.4 divergent »
+# — quatorze noms côté spécification contre douze côté base — alors que la base et le §2.4 étaient
+# d'accord. Un contrôle qui lit sa source plus large que ce qu'il annonce dénonce des divergences
+# qui n'existent pas, et finit par être lu comme du bruit.
+#
+# La borne est le titre suivant de MÊME niveau : `sed` s'arrête au prochain `### `.
+liste_spec=$(sed -n '/^### 2\.4 La liste fermée des variables/,/^### [^2]/p' "$SPEC" \
+	| grep -oE '^\| `[a-z]+\.[a-z_]+` \|' | tr -d '|` ' | sort | paste -sd, -)
 if [ "$liste_base" = "$liste_spec" ]; then
 	ok "les douze variables de la base sont EXACTEMENT celles du tableau du §2.4"
 else
