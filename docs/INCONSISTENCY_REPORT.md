@@ -4906,3 +4906,57 @@ inchangé dans les deux cas.
 autre harnais a fait avant elle — en armant elle-même le passage qu'elle mesure, sur un nom de job
 jetable —, ou qu'elle nomme explicitement la précondition. Aucun arbitrage du responsable n'est
 requis : les mesures ci-dessus suffisent à trancher.
+
+
+### INC-218 — le harnais de la tranche 1 lit la liste des variables dans TOUS les tableaux de la spécification
+
+**Ouverte le 2026-08-25 par `CRM-063` sous-tranche 2b, comportement inchangé** — constat **étranger à
+la sous-tranche** de la session, consigné sans être corrigé au passage (`CLAUDE.md` §18,
+`docs/CloudWorker.md` §3.1).
+
+**Ce qui a été mesuré**, sur la pile debout et seedée :
+
+```
+scripts/verify-modeles-emails.sh --rapide
+  ECHEC la base et le §2.4 divergent :
+    base='card.amount,card.channel,…,identity.from_name'                 (12 noms)
+    spec='card.amount,card.amount,card.channel,…,identity.from_name'     (14 noms)
+  Bilan : 44 contrôles, 1 anomalie(s).
+```
+
+**La cause.** Le contrôle extrait la liste de la spécification par
+
+```
+grep -oE '^\| `[a-z]+\.[a-z_]+` \|' docs/SPEC-modeles-emails.md
+```
+
+c'est-à-dire **toute** ligne de **tout** tableau du document dont la première cellule est un nom de
+la forme `objet.colonne`. Le §2.4 n'est pas le seul à en porter : le tableau du **§8.6**, écrit par la
+sous-tranche **2a**, décrit le formatage de `card.amount` et de `card.next_action_at` et commence ses
+deux lignes par ces mêmes noms. Ils sont donc comptés **deux fois**, et la comparaison échoue sur une
+divergence qui n'existe pas dans le produit.
+
+**LA LIGNE DE BASE A ÉTÉ ÉTABLIE, ET L'ANOMALIE EST PRÉEXISTANTE** (`docs/CloudWorker.md` §2.4).
+L'extraction rendue par la spécification **au commit `c2dfd7a`**, c'est-à-dire avant la moindre
+écriture de cette session, est **identique octet pour octet** à celle de l'arbre courant : quatorze
+noms, `card.amount` et `card.next_action_at` en double. Le défaut date du 2026-08-25, sous-tranche
+2a, et non de la 2b. Il n'a pas été vu en son temps parce que la campagne de la décision 514 a rejoué
+`verify-rendu-modeles-emails.sh` et `verify-harness.sh`, mais **pas** `verify-modeles-emails.sh` —
+une campagne partielle annoncée comme telle, et c'est précisément le prix qu'elle a coûté.
+
+**Ce que le produit fait, et qui est JUSTE** : la base rend bien les douze variables du §2.4, et
+`scripts/verify-modeles-emails-ecran.sh` le vérifie contre le **catalogue** — « le guichet rend 12
+variables », « le guichet rend EXACTEMENT la liste déléguée ». La suite pgTAP `0053` compare la liste
+nom à nom, et la `0055` la compare deux fois. Aucune preuve du **produit** n'est en défaut ; c'est le
+**harnais** qui lit mal sa source.
+
+**Pourquoi ce n'est pas corrigé ici.** Le harnais appartient à la tranche 1, et la corriger suppose de
+choisir comment ancrer l'extraction sur le seul §2.4 — par une borne de section, ou par un marqueur
+posé dans le tableau. C'est un geste sur une preuve d'une autre tranche, et le §3.1 de
+`docs/CloudWorker.md` demande de laisser le comportement inchangé plutôt que de le corriger au
+passage. **La correction appartient à la prochaine session qui touchera `CRM-063`**, et elle est
+simple : borner la lecture au chapitre §2.4.
+
+**Ce qu'il ne faut PAS en conclure.** Ce verdict rouge n'est **pas** une régression de la
+sous-tranche 2b, et il ne doit pas être lu comme tel : il est reproductible à l'identique sur la
+ligne de base.
