@@ -807,9 +807,38 @@ File d'envoi persistante. **Livrée par `CRM-058`** (migration 30). Aucune écri
 | Table | Contenu |
 |---|---|
 | `mail_folder_map` | Correspondance entre une card/channel/track et le chemin IMAP réellement créé, par compte |
-| `mail_templates` | Modèles avec variables (`{{card.title}}`, `{{contact.full_name}}`, …) |
-| `mail_sequences`, `mail_sequence_steps` | Cadences de relance (J+3, J+8, J+15) |
-| `card_sequence_enrollments` | Inscription d'une card à une cadence, arrêtée dès qu'une réponse arrive |
+| `mail_sequences`, `mail_sequence_steps` | Cadences de relance (J+3, J+8, J+15) — **non livrées**, `CRM-063` tranche 4 |
+| `card_sequence_enrollments` | Inscription d'une card à une cadence, arrêtée dès qu'une réponse arrive — **non livrée**, `CRM-063` tranche 4 |
+
+### `mail_templates` — modèle d'email (`CRM-063` tranche 1, migration 55)
+
+Spécification : `docs/SPEC-modeles-emails.md` §2. **Livrée le 2026-08-25** ; cette table était
+annoncée par le présent chapitre depuis `CRM-000`, avec la forme de variable qu'elle emploie.
+
+| Colonne | Type | Contraintes |
+|---|---|---|
+| `id` | `uuid` | clé primaire, `gen_random_uuid()` |
+| `workspace_id` | `uuid` | FK `workspaces` `ON DELETE CASCADE` — le modèle appartient au **workspace**, jamais à un track, à un channel ou à une identité (§2.1) |
+| `name` | `text` | non nul, 1 à 120 caractères après `app.btrim_blancs` ; **unique par workspace** sur la forme normalisée (`mail_templates_workspace_name_key`) |
+| `subject` | `text` | non nul, 1 à 300 caractères normalisés ; **aucune variable inconnue** |
+| `body_text` | `text` | non nul, 1 à 20 000 caractères normalisés ; **aucune variable inconnue**. Texte, jamais HTML — `docs/SPEC-mail-subsystem.md` §18 |
+| `created_by` | `uuid` | FK `profiles` `ON DELETE SET NULL` — **trace, jamais un droit** : aucune politique ne la lit |
+| `created_at`, `updated_at` | `timestamptz` | `updated_at` par `app.set_updated_at()` |
+
+**Aucune colonne `archived_at`** : un modèle se **supprime** réellement, comme un bloc d'objectif.
+La tranche 4 posera la clé étrangère du palier de séquence en `on delete restrict`.
+
+**Les variables sont une liste FERMÉE, et le refus vit en base.** `app.mail_template_variables()`
+— `immutable` — rend les **douze** noms, chacun désignant une colonne réelle ; la migration écrit sa
+source en regard de chacun. `app.mail_template_variables_inconnues(text)` — `immutable` — rend les
+trous du texte absents de cette liste, triés et dédoublonnés, et les deux contraintes
+`mail_templates_subject_variables` et `mail_templates_body_variables` exigent qu'elle rende un
+tableau vide. Le refus est nommé **par colonne**, pour que l'écran sache où placer son message.
+
+**Autorisations, patron de `goal_boards`** : lecture par tout membre (`app.is_workspace_member`),
+insertion, mise à jour et suppression réservées à `admin` et `business_developer`
+(`app.workspace_role`). Privilèges refermés nommément — `revoke all … from anon, authenticated`
+puis `grant` par action —, la distribution accordant `all privileges` par défaut.
 
 ### `mail_thread_snoozes` — le sommeil d'un FIL (`CRM-081`, migration 48)
 

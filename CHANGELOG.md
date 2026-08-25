@@ -13,6 +13,27 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Ajouté
+
+- **LES MODÈLES D'EMAIL EXISTENT** (`CRM-063` tranche 1, migration 55,
+  `docs/SPEC-modeles-emails.md` §2). Un workspace peut désormais tenir des textes réutilisables et
+  nommés — « Relance sans réponse », « Prise de contact » —, à trous, employés par toutes ses
+  compositions. C'est le premier des trois objets que `CRM-062`, `CRM-058` et `CRM-089` renvoyaient
+  nommément à cette unité, faute de quoi une relance ne pouvait pas partir par email.
+
+  **La liste des trous est fermée, et le refus vit en base.** Un modèle portant `{{card.titel}}`
+  est refusé à l'écriture, en nommant la colonne fautive — l'objet ou le corps —, plutôt que de
+  s'écrire sans bruit et de ne se voir qu'à l'arrivée chez le destinataire. Les douze variables
+  désignent chacune une colonne réelle du produit, écrite en regard dans la migration.
+
+  **Une lectrice lit les modèles et n'en écrit aucun** : le patron d'autorisation est exactement
+  celui des tableaux d'objectifs — lecture pour tout membre, écriture pour l'administrateur et le
+  business developer —, et le refus se mesure hors interface, en zéro ligne pour une modification
+  et en `403` pour une création.
+
+  Cette tranche ne livre **aucun écran** et **n'envoie aucun email** : ce sont les tranches 2 et 3,
+  cadrées au §7 de la spécification.
+
 ### Corrigé
 
 - **LA COMPARAISON D'UN WORKFLOW À SA SOURCE NE SE TEINTE PLUS EN AVERTISSEMENT** (`CRM-076`,

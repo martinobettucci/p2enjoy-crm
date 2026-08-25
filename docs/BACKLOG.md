@@ -8476,7 +8476,7 @@ chapitre **15**, annoncé par le sommaire depuis `CRM-000` et jamais écrit.
 **Découpage en quatre tranches, motivé** (§1 de la spécification) — chacune committée et prouvée
 avant la suivante :
 
-- [~] **Tranche 1 — le modèle d'email** : `public.email_templates`, la liste fermée des douze
+- [~] **Tranche 1 — le modèle d'email** : `public.mail_templates`, la liste fermée des douze
       variables et son refus en base, RLS, privilèges, pgTAP, contrat d'API, seed, harnais. C'est
       l'objet dont les deux autres dépendent. **En cours — voir le détail ci-dessous.**
 - [ ] **Tranche 2 — le rendu et l'écran** : substitution des variables, écran d'administration des

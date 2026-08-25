@@ -48,7 +48,7 @@ Trois unités livrées renvoient nommément à `CRM-063` un manque qu'elles ont 
 | Modèles de **cards** et checklists — objets distincts, malgré le mot « modèle » | `CRM-068` |
 | Rendu HTML d'un corps de message | aucune : `docs/SPEC-mail-subsystem.md` §18 a tranché que le corps affiché et expédié est du **texte** |
 
-## 2. Tranche 1 — `public.email_templates`, le modèle d'email
+## 2. Tranche 1 — `public.mail_templates`, le modèle d'email
 
 ### 2.1 Pourquoi une table, et pourquoi elle appartient au workspace
 
@@ -89,41 +89,46 @@ que la tranche 4 ne la découvre pas.
 
 ### 2.3 Les variables d'un modèle, et pourquoi elles sont validées EN BASE
 
-Un modèle est un texte **à trous** : `Bonjour {{contact.nom}}, où en est {{affaire.titre}} ?`
+Un modèle est un texte **à trous** : `Bonjour {{contact.full_name}}, où en est {{card.title}} ?`
 
 La liste des trous est **fermée**, et la base refuse à l'écriture tout trou qu'elle ne connaît pas.
 Ce refus n'est pas une commodité d'interface :
 
-1. un modèle portant `{{affaire.montnat}}` s'écrirait sans bruit, et le défaut n'apparaîtrait qu'au
+1. un modèle portant `{{card.titel}}` s'écrirait sans bruit, et le défaut n'apparaîtrait qu'au
    moment de l'envoi — c'est-à-dire chez le destinataire ;
 2. `CLAUDE.md` §10 : « autorisé », « valide » sont des règles appliquées côté backend. Une
    validation qui ne vivrait que dans l'écran serait contournée par le premier appel PostgREST ;
 3. la tranche 4 fera écrire des emails par l'**ordonnanceur**, qui n'a pas d'écran.
 
 **La syntaxe est exactement `{{nom}}`**, avec des blancs de bord tolérés à l'intérieur des
-accolades : `{{ affaire.titre }}` désigne la même variable que `{{affaire.titre}}`. Toute autre
-forme n'est pas une variable et n'est pas examinée — un texte portant `{ affaire.titre }` ou
+accolades : `{{ card.title }}` désigne la même variable que `{{card.title}}`. Toute autre
+forme n'est pas une variable et n'est pas examinée — un texte portant `{ card.title }` ou
 `{{{x}}}` est du texte ordinaire, et le §2.5 dit ce que le second devient.
 
 ### 2.4 La liste fermée des variables, et sa source mesurée
+
+**La forme d'une variable n'est pas inventée ici** : `docs/SCHEMA.md` §7 illustre ce nommage depuis
+`CRM-000` par `{{card.title}}` et `{{contact.full_name}}`. Une variable s'écrit donc
+`<objet>.<colonne>`, et chaque nom ci-dessous **désigne la colonne réelle** dont il tire sa valeur —
+ce qui rend la liste vérifiable au lieu d'être à retenir.
 
 Chaque variable désigne une donnée qui **existe en base aujourd'hui**. Aucune n'anticipe une colonne
 à venir : une variable dont la source n'existe pas serait un trou qui ne se remplit jamais.
 
 | Variable | Source mesurée | Nulle possible |
 |---|---|---|
-| `affaire.titre` | `cards.title` | non |
-| `affaire.montant` | `cards.amount` | oui |
-| `affaire.devise` | `cards.currency` | non |
-| `affaire.prochaine_action` | `cards.next_action` | oui |
-| `affaire.echeance` | `cards.next_action_at` | oui |
-| `affaire.etape` | `coalesce(workflow_steps.label_override, workflow_nodes_catalog.label)` — **mesuré** : `workflow_steps` ne porte AUCUNE colonne `label`, ce que la décision 507 avait déjà relevé par un `42703` | non |
-| `affaire.dossier` | `channels.name` | non |
-| `contact.nom` | `contacts.full_name` — **mesuré** : la table ne sépare ni prénom ni nom, il n'y a donc pas de `contact.prenom` | non |
+| `card.title` | `cards.title` | non |
+| `card.amount` | `cards.amount` | oui |
+| `card.currency` | `cards.currency` | non |
+| `card.next_action` | `cards.next_action` | oui |
+| `card.next_action_at` | `cards.next_action_at` — **mesuré** : `cards` ne porte aucune colonne `due_date` | oui |
+| `card.step` | `coalesce(workflow_steps.label_override, workflow_nodes_catalog.label)` — **mesuré** : `workflow_steps` ne porte AUCUNE colonne `label`, ce que la décision 507 avait déjà relevé par un `42703`. La variable est donc `card.step` et non `card.step_label` | non |
+| `card.channel` | `channels.name` | non |
+| `contact.full_name` | `contacts.full_name` — **mesuré** : la table ne sépare ni prénom ni nom, il n'y a donc pas de `contact.first_name`. C'est la graphie que `docs/SCHEMA.md` §7 illustrait déjà | non |
 | `contact.email` | `contacts.email` | oui |
-| `contact.organisation` | `organizations.name` par `contacts.organization_id` | oui |
-| `expediteur.nom` | `mail_outbound_identities.from_name` | oui |
-| `expediteur.adresse` | `mail_outbound_identities.from_address` | non |
+| `contact.organization` | `organizations.name` par `contacts.organization_id` | oui |
+| `identity.from_name` | `mail_outbound_identities.from_name` | oui |
+| `identity.from_address` | `mail_outbound_identities.from_address` | non |
 
 **Douze variables, et pas une de plus.** La colonne « nulle possible » n'a aucun effet dans la
 tranche 1 — elle est écrite ici parce que c'est la tranche 2, celle du rendu, qui devra dire ce
@@ -131,7 +136,7 @@ qu'un trou vide devient, et qu'elle ne doit pas avoir à remesurer.
 
 ### 2.5 Ce que la base refuse, ligne à ligne
 
-`app.modele_variables_inconnues(texte)` rend le tableau **trié et dédoublonné** des noms de
+`app.mail_template_variables_inconnues(texte)` rend le tableau **trié et dédoublonné** des noms de
 variables qui ne figurent pas au §2.4. Deux contraintes de vérification l'appellent, une par
 colonne portant des variables.
 
@@ -139,15 +144,15 @@ colonne portant des variables.
 |---|---|---|
 | a | `subject` ou `body_text` sans aucune variable | acceptée |
 | b | variables toutes connues, y compris répétées | acceptée |
-| c | `{{ affaire.titre }}`, blancs de bord dans les accolades | acceptée — même variable qu'en b |
-| d | `{{affaire.montnat}}` dans `subject` | refusée, `email_templates_subject_variables` |
-| e | `{{affaire.montnat}}` dans `body_text` | refusée, `email_templates_body_variables` |
+| c | `{{ card.title }}`, blancs de bord dans les accolades | acceptée — même variable qu'en b |
+| d | `{{card.titel}}` dans `subject` | refusée, `mail_templates_subject_variables` |
+| e | `{{card.titel}}` dans `body_text` | refusée, `mail_templates_body_variables` |
 | f | `{{}}` — trou vide | refusée : la chaîne vide n'est pas au §2.4 |
-| g | `{{AFFAIRE.TITRE}}` | refusée : les noms sont **sensibles à la casse**, une seule graphie par variable |
-| h | `name` vide ou fait de blancs | refusée, `email_templates_name_borne` |
-| i | `name` déjà pris dans le workspace, aux blancs de bord près | refusée, `email_templates_workspace_name_key` (`23505`) |
+| g | `{{CARD.TITLE}}` | refusée : les noms sont **sensibles à la casse**, une seule graphie par variable |
+| h | `name` vide ou fait de blancs | refusée, `mail_templates_name_borne` |
+| i | `name` déjà pris dans le workspace, aux blancs de bord près | refusée, `mail_templates_workspace_name_key` (`23505`) |
 | j | `name` identique dans un AUTRE workspace | acceptée : l'unicité est par workspace |
-| k | `subject` vide, `body_text` vide | refusées, `email_templates_subject_borne` / `_body_borne` |
+| k | `subject` vide, `body_text` vide | refusées, `mail_templates_subject_borne` / `_body_borne` |
 | l | `subject` de 301 caractères, `body_text` de 20 001 | refusées, mêmes contraintes |
 | m | `workspace_id` d'un workspace dont l'appelant n'est pas membre | refusée par la RLS, jamais par une contrainte |
 
@@ -177,15 +182,15 @@ un `PATCH` ou un `DELETE` que la politique ne consent pas ; `401` pour l'anonyme
 `alter default privileges … to anon`, si bien qu'un `revoke … from public` ne retire rien à un rôle
 **nommé**. La migration révoque donc nommément puis attribue action par action, comme la 49.
 
-### 2.7 Contrat d'API — `/rest/v1/email_templates`
+### 2.7 Contrat d'API — `/rest/v1/mail_templates`
 
 Mesuré avec les jetons réels des trois profils du seed. `admin` = Camille Aubert,
 `business_developer` = Driss Lemoine, `viewer` = Farida Nowak.
 
 | # | Appelant | Requête | Attendu |
 |---|---|---|---|
-| 1 | anonyme | `GET` | `401` |
-| 2 | anonyme | `POST` | `401` |
+| 1 | anonyme | `GET` | **`200` et `[]`** — un filtrage, jamais une erreur |
+| 2 | anonyme | `POST` | `401`, code PostgreSQL `42501`, refusé par le **privilège** |
 | 3 | `viewer` | `GET` | `200`, les modèles du seed |
 | 4 | `business_developer` | `GET` | `200`, les mêmes |
 | 5 | `admin` | `GET` | `200`, les mêmes |
@@ -193,14 +198,26 @@ Mesuré avec les jetons réels des trois profils du seed. `admin` = Camille Aube
 | 7 | `viewer` | `PATCH` sur un modèle existant | `200` et **`[]`** — zéro ligne, la ligne relue **inchangée** |
 | 8 | `viewer` | `DELETE` sur un modèle existant | `204` et la ligne **toujours là** |
 | 9 | `business_developer` | `POST` valide | `201`, ligne relue |
-| 10 | `business_developer` | `POST` portant `{{affaire.montnat}}` | `400`, `23514`, contrainte nommée |
+| 10 | `business_developer` | `POST` portant `{{card.titel}}` | `400`, `23514`, contrainte nommée |
 | 11 | `business_developer` | `POST` d'un `name` déjà pris | `409`, `23505` |
 | 12 | `admin` | `PATCH` du corps | `200`, `updated_at` **avancé** |
 | 13 | `admin` | `DELETE` de ce qu'il a créé | `204`, relecture vide |
 | 14 | `admin` | `POST` portant `created_by` d'autrui | accepté et **sans effet de droit** : la colonne est une trace ; aucune politique ne la lit |
 
 **Le point 14 est figé par une assertion** plutôt que tu : `created_by` n'est pas gardée, et il faut
-que la prochaine session qui lira cette table sache que ce n'est pas un oubli.
+que la prochaine session qui lira cette table sache que ce n'est pas un oubli. **MESURÉ** : un
+`POST` de l'administratrice portant le `created_by` de la lectrice rend `201`, et la ligne relue
+porte bien l'identifiant d'autrui. Aucune politique ne le lit, donc rien n'en dépend.
+
+**La ligne 1 a été RÉVISÉE PAR LA MESURE, et l'écriture d'origine — `401` — était fausse.** La
+politique de lecture est ouverte `to anon` délibérément, comme celle de `goal_boards` : `auth.uid()`
+valant `null` hors session, le refus se fait par **zéro ligne** et non par une erreur de privilège
+(`docs/SPEC-permissions-rls.md` §7). La distinction compte : un `401` révélerait que la table existe
+et qu'elle est protégée, là où `200 []` ne révèle rien.
+
+**Le refus de la ligne 2 divulgue la commande `GRANT` à exécuter, dans son `hint`.** Comportement de
+PostgREST, occurrence connue d'**INC-026**, inchangé et non masqué — la preuve le constate plutôt
+que de laisser la divulgation devenir invisible à force d'être habituelle.
 
 ### 2.8 Le seed
 
@@ -208,7 +225,7 @@ Le seed pose **deux** modèles dans le workspace de démonstration, et deux suff
 l'objet parce qu'ils sont **différents par construction** :
 
 1. **« Relance sans réponse »** — porte des variables dans l'objet **et** dans le corps, dont une
-   variable pouvant être nulle (`affaire.montant`) : c'est le cas que la tranche 2 devra rendre.
+   variable pouvant être nulle (`card.amount`) : c'est le cas que la tranche 2 devra rendre.
 2. **« Prise de contact »** — porte des variables **uniquement** dans le corps, l'objet étant un
    texte fixe : sans ce second cas, une preuve ne distinguerait pas « les deux colonnes sont
    examinées » de « la première l'est ».
@@ -242,7 +259,7 @@ identités sortantes.
 - commentaires `@spec` / `@verifies` sur chaque fichier ;
 - commit poussé sur `origin/main`.
 
-## 3. `app.modele_variables_connues()` — la liste, écrite une seule fois
+## 3. `app.mail_template_variables()` — la liste, écrite une seule fois
 
 Fonction `immutable`, sans argument, rendant le `text[]` du §2.4 **trié**. Elle est la source unique
 de la liste : la contrainte l'appelle, la preuve pgTAP la compare au §2.4, et la tranche 2 la lira
@@ -254,7 +271,7 @@ liste ne revalide pas les lignes existantes**, et c'est sans danger dans ce sens
 que s'élargir. **En retirer une laisserait des lignes non conformes en base** ; le jour où cela se
 présentera, la migration qui retire devra porter sa propre reprise de données.
 
-## 4. `app.modele_variables_inconnues(texte)` — le refus
+## 4. `app.mail_template_variables_inconnues(texte)` — le refus
 
 Fonction `immutable`, rendant le `text[]` **trié et dédoublonné** des variables du texte absentes de
 la liste. Un texte sans variable rend `{}`. Un texte `null` rend `{}` — c'est la convention de
@@ -269,7 +286,7 @@ une intention.
 
 ## 5. Ce que la tranche 1 ne prouve pas, et qui n'est pas masqué
 
-- **Aucun rendu.** Un modèle n'est jamais substitué : aucune fonction ne remplace `{{affaire.titre}}`
+- **Aucun rendu.** Un modèle n'est jamais substitué : aucune fonction ne remplace `{{card.title}}`
   par un titre. La tranche 2 le fera, et c'est elle qui devra dire ce qu'un trou dont la source est
   nulle devient — la colonne « nulle possible » du §2.4 existe pour elle.
 - **Aucun écran.** Un modèle ne se crée, ne se modifie et ne se supprime que par l'API. Le seed en
