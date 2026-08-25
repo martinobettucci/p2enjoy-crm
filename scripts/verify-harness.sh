@@ -618,7 +618,14 @@ ASSERTIONS_ATTENDUES=2691
 # lignes du contrat du §9.9 — le quatrième relie les deux fonctions par le COMPORTEMENT du produit
 # et non par une égalité de catalogue. Le fichier compte passe de 52 à **53**. 881 + 4 = **885**,
 # valeur COMPTÉE par « Total: 885 tests in 53 files », jamais déduite.
-SCENARIOS_API=885
+#
+# **RÉVISÉ À 893 PAR `CRM-063` TRANCHE 3, le 2026-08-25.** `e2e/api/signature-identite.spec.ts`
+# ajoute **8** scénarios : la colonne renommée vue par la ROUTE — un `select=signature_html` rend
+# désormais `42703`, ce qui prouve que le cache de schéma a été propagé et non seulement la
+# migration appliquée —, les trois états de l'effacement chacun relu, la borne et son témoin, le
+# corps mis en file comparé caractère à caractère, et le refus de la lectrice. 885 + 8 = **893**,
+# valeur COMPTÉE par l'exécution de la suite, jamais déduite.
+SCENARIOS_API=893
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
