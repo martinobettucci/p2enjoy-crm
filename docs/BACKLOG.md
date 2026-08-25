@@ -8171,10 +8171,18 @@ produites **et observées** ; console navigateur vierge ; harnais dédié.
 - [~] **`scripts/verify-ma-journee.sh` rend 79 contrôles, 1 en échec, et cet échec est ÉTRANGER.**
       C'est ce qui retient l'unité en `[~]`, et l'écart est nommé plutôt que contourné : affaiblir
       le harnais pour le verdir est ce que `docs/CloudWorker.md` §3.1 interdit.
-      - Le contrôle de classes CSS balaie **tout** `webapp/src` et rend `h-10 py-0.5 text-text-1` :
-        `text-text-1` est **INC-130** (`CRM-076`), les deux autres sont **INC-204**, consignée par
+      - Le contrôle de classes CSS balaie **tout** `webapp/src` et rendait `h-10 py-0.5 text-text-1` :
+        `text-text-1` est **INC-130** (`CRM-076`), les deux autres étaient **INC-204**, consignée par
         cette session (`EnTeteCard.tsx`, `Sommeil.tsx`, `BlocCoutsCard.tsx`). **Aucune n'est citée
         par un fichier de `CRM-061`** — vérifié fichier par fichier.
+      - **RÉDUIT LE 2026-08-25 À LA SEULE INC-130, par la décision 509**, qui solde INC-204 : les
+        deux classes de l'échelle sont réécrites en valeur arbitraire assumée. Le harnais rejoué
+        derrière rend **79 contrôles, 1 en échec**, et le message est passé au SINGULIER — « une
+        classe citée n'existe pas dans le CSS produit ». Le reste appartient entièrement à
+        `CRM-076`, dont seule l'unité sait si le bloc voulait `text-text` ou `text-text-2`.
+        `INC-189` n'a pas mordu à ce passage : `npm run test:unit` est vert, avant comme après les
+        dégradations. L'unité reste donc `[~]` pour un motif STRICTEMENT étranger et désormais
+        unique.
       - **INC-189 a mordu au premier passage, et pas au second** : `npm run test:unit` rejoué en
         entier a rougi une fois sur `Objectifs.test.tsx`, puis est resté vert aux trois exécutions
         suivantes. C'est exactement l'intermittence que l'entrée du 2026-08-20 décrit, et elle
