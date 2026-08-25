@@ -425,8 +425,24 @@ PORT_RAPPORT=9323
 #
 # `SCENARIOS_UI` et `SCENARIOS_MAIL` sont INCHANGÉS : cette tranche ne livre aucun écran et n'envoie
 # aucun email.
-FICHIERS_SQL_ATTENDUS=53
-ASSERTIONS_ATTENDUES=2587
+#
+# RÉVISÉES PAR `CRM-063` TRANCHE 2, SOUS-TRANCHE 2a, LE 2026-08-25.
+#
+# La sous-tranche livre `supabase/tests/0054_rendu_modeles_emails.test.sql` — le rendu d'un modèle,
+# ses douze variables assertées une à une, ses deux formatages et l'inventaire des trous nuls :
+# `FICHIERS_SQL_ATTENDUS` passe de 53 à **54**, et 2587 + 53 = **2640**. Elle ne RÉVISE aucune suite
+# existante : la migration 56 n'ajoute ni table, ni colonne, ni politique, et ne touche à rien.
+#
+# LA VALEUR EST COMPTÉE, ET LE COMPTE A DEMANDÉ UNE ADDITION. `npm run test:sql` somme **2615**
+# assertions et laisse `0052_relances_automatiques.test.sql` hors du total, son bilan s'écrivant
+# « 1 assertion(s) en échec sur 25 » — INC-217, dont la cause est l'heure de démarrage de la pile et
+# non le produit. 2615 + 25 = **2640**, ce qui recoupe 2587 + 53. Les deux chemins concordent, et
+# c'est cette concordance qui autorise la valeur.
+#
+# `SCENARIOS_UI` et `SCENARIOS_MAIL` restent INCHANGÉS : 2a ne livre aucun écran — l'administration
+# des modèles est la sous-tranche 2b — et n'envoie aucun email.
+FICHIERS_SQL_ATTENDUS=54
+ASSERTIONS_ATTENDUES=2640
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -568,7 +584,12 @@ ASSERTIONS_ATTENDUES=2587
 # lecture tiennent en un seul scénario, qui les joue pour les trois profils, et le nettoyage porte
 # la ligne 13 avec le constat que le seed sort intact. Le fichier compte est donc porté de 50 à
 # **51**. 858 + 12 = **870**, valeur COMPTÉE par « Total: 870 tests in 51 files », jamais déduite.
-SCENARIOS_API=870
+# **RÉVISÉE à 881 par `CRM-063` tranche 2a, le 2026-08-25** : `e2e/api/rendu-modeles-emails.spec.ts`
+# est neuf et déclare **11** scénarios pour les quatorze lignes du contrat du §8.8 — les trois
+# profils tiennent en un scénario, et les trois zéro-lignes en un autre, parce que c'est leur
+# ÉGALITÉ qui porte la preuve. Le fichier compte passe de 51 à **52**. 870 + 11 = **881**, valeur
+# COMPTÉE par « Total: 881 tests in 52 files », jamais déduite.
+SCENARIOS_API=881
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la

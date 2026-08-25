@@ -8480,9 +8480,16 @@ avant la suivante :
       variables et son refus en base, RLS, privilèges, pgTAP, contrat d'API, seed, harnais. C'est
       l'objet dont les deux autres dépendent. **LIVRÉE ET PROUVÉE le 2026-08-25** ; voir le détail
       plus bas.
-- [ ] **Tranche 2 — le rendu et l'écran** : substitution des variables, écran d'administration des
-      modèles, prévisualisation sur une affaire réelle. Elle devra trancher ce qu'un trou dont la
-      source est nulle rend (§7.1).
+- [~] **Tranche 2 — le rendu et l'écran** : substitution des variables, écran d'administration des
+      modèles, prévisualisation sur une affaire réelle. **Spécifiée au §8 le 2026-08-25**, après
+      mesure et avant code, et découpée en deux sous-tranches :
+  - [x] **2a — le rendu**, migration `0056`. **LIVRÉE ET PROUVÉE le 2026-08-25** ; voir le détail
+        plus bas. La question laissée ouverte par la tranche 1 y est **tranchée** (§8.4) : un trou
+        dont la source est nulle rend la **chaîne vide**, et le rendu le **nomme**.
+  - [ ] **2b — l'écran** : administration des modèles — liste, création, modification, suppression
+        avec confirmation — et prévisualisation appelant `rendre_modele_email` sur une affaire
+        réelle. **Cadrée au §8.11**, à spécifier ligne à ligne avant sa première ligne de code. Les
+        quatre questions qu'elle doit trancher y sont nommées.
 - [ ] **Tranche 3 — la signature** : rendre effectif ce que `CRM-053` a posé et que personne
       n'emploie. `mail_outbound_identities.signature_html` est **morte et mal nommée** — son nom
       annonce du HTML là où tout le sous-système expédie du texte. Consigné au registre, comportement
@@ -8554,6 +8561,83 @@ avant la suivante :
       est la tranche 2 —, aucun **écran**, aucun **envoi**. Aucun test unitaire TypeScript non
       plus : la validation vit en SQL, et un test unitaire de façade ne prouverait rien de plus que
       la suite pgTAP, qui est son niveau.
+
+**Sous-tranche 2a livrée, 2026-08-25 — le rendu** (`docs/SPEC-modeles-emails.md` §8,
+`docs/SCHEMA.md` §7) :
+
+- [x] **Spécification écrite et COMMITTÉE avant la première ligne de code** (`CLAUDE.md` §5,
+      `docs/CloudWorker.md` §3.2) : `docs/SPEC-modeles-emails.md` §8, onze sections, rédigées
+      **après mesure sur la pile debout et seedée**. Le §7.1 n'était qu'un cadrage ; il renvoie
+      désormais au §8 et ne le remplace pas.
+- [x] **LA QUESTION LAISSÉE OUVERTE PAR LA TRANCHE 1 EST TRANCHÉE** (§8.4) : un trou dont la source
+      est nulle rend la **chaîne vide**, et le rendu le **NOMME** dans un troisième retour,
+      `variables_nulles`. Le tiret est écarté — il **invente une valeur**, en prose plus encore
+      qu'en tableau (`docs/DESIGN_SYSTEM.md` §5.9). Le refus d'envoyer est écarté **à cet endroit
+      seulement** : il appartient à l'expéditeur, et une fonction qui refuse ne rendrait rien à
+      prévisualiser. **MESURÉ** : « Relance sans réponse » sur une affaire sans montant rend « au
+      sujet de X ( EUR) » — c'est l'inventaire qui rend ce texte tenable.
+- [x] **`supabase/migrations/0056_rendu_modeles_emails.sql`** : `app.mail_template_substituer(text,
+      jsonb)` — `immutable` — et `public.rendre_modele_email(uuid, uuid, uuid, uuid)` — `stable`,
+      **`security invoker`**. **Aucune table, aucune colonne, aucune politique, aucun privilège et
+      aucun trigger d'une autre unité n'est touché.**
+- [x] **LA SUBSTITUTION DÉCOUPE LE TEXTE SUR LE MÊME MOTIF QUE LE REFUS DE LA MIGRATION 55.** La
+      fonction qui refuse à l'écriture et celle qui substitue à la lecture doivent découper de la
+      même façon, sans quoi un texte **accepté** porterait un trou que le rendu ne verrait pas.
+      C'est le raisonnement du §3 sur la liste des variables, transposé au rendu.
+- [x] **LES SOURCES NE SE DEVINENT PAS, et deux MESURES l'imposent** (§8.5) : `card_contacts` admet
+      plusieurs contacts par affaire et la plupart des affaires du seed n'en portent aucun — deviner
+      reviendrait à écrire au mauvais destinataire ; et **deux** identités du seed portent
+      `is_default`, les index uniques partiels étant **par personne** et **pour le service**, si
+      bien que « l'identité par défaut du workspace » n'existe pas.
+- [x] **Suite pgTAP dédiée** : `supabase/tests/0054_rendu_modeles_emails.test.sql`, **53
+      assertions** — la forme des deux fonctions dans le catalogue, les **douze** variables
+      assertées une à une et non par une comparaison du corps entier, les deux formatages du §8.6,
+      les trous nuls et leur nomination, le tri, le dédoublonnage, la **borne** de l'inventaire, les
+      cas de bord du découpage éprouvés sur la fonction seule, et le cloisonnement joué avec les
+      **trois profils réels**.
+- [x] **Test d'API dédié** : `e2e/api/rendu-modeles-emails.spec.ts`, **11 scénarios verts** pour les
+      quatorze lignes du contrat du §8.8, avec les jetons réels. Les **trois zéro-lignes** — affaire
+      masquée, modèle inconnu, affaire inconnue — sont écrits dans le **même** scénario, parce que
+      c'est leur **égalité** qui porte la preuve : si l'un rendait autre chose, il divulguerait par
+      la bande ce que les deux autres cachent.
+- [x] **DEUX REFUS DE NATURE DIFFÉRENTE, DISTINGUÉS** (§8.7) : `401` de **privilège** pour
+      l'anonyme, qui n'exécute pas la fonction, là où la **lecture** de `mail_templates` lui rend
+      `200 []`. La politique de lecture est ouverte `to anon` et **filtre** ; la fonction, elle,
+      n'est pas exécutable. Les confondre masquerait la disparition de l'un des deux remparts.
+- [x] **Harnais dédié `scripts/verify-rendu-modeles-emails.sh`** : **32 contrôles, aucune
+      anomalie**, **sept** dégradations réelles toutes mordantes, restauration constatée **octet à
+      octet** contre un instantané pris avant la première. La plus importante est D-C, qui remplace
+      la chaîne vide par un **tiret** : si la suite restait verte, la décision du §8.4 ne serait
+      éprouvée nulle part.
+- [x] **UN DÉFAUT DU HARNAIS TROUVÉ PAR LE HARNAIS, corrigé à sa cause** (§8.9 bis). Son premier
+      passage rendait « 32 contrôles, 2 anomalies » et l'une était un **faux verdict** : la
+      dégradation D-E produisait un SQL qui ne compile pas, `degrader` ignorait le code de retour de
+      `psql`, la base restait **inchangée**, et le harnais concluait « COMPLAISANT » alors que rien
+      n'avait été dégradé. Le §2.11 avait corrigé l'échec silencieux de la **substitution** ;
+      celui-ci est celui de l'**application**.
+- [x] **Un contrôle qui relie les DEUX migrations** : le gabarit des douze variables est posé en
+      modèle jetable et rendu, et l'inventaire doit être **vide**. Une variable ajoutée au §2.4 sans
+      être ajoutée à la carte de valeurs du rendu serait **acceptée** à l'écriture et rendrait un
+      trou vide à l'envoi — inventoriée comme nulle pour toujours, sur une affaire pourtant
+      complète.
+- [x] **Compteurs de `scripts/verify-harness.sh` révisés dans le MÊME changement** :
+      `FICHIERS_SQL_ATTENDUS` 53 → **54**, `ASSERTIONS_ATTENDUES` 2587 → **2640**, `SCENARIOS_API`
+      870 → **881**. Valeurs **COMPTÉES** par deux chemins concordants, jamais déduites.
+      `SCENARIOS_UI` et `SCENARIOS_MAIL` inchangés : 2a ne livre aucun écran et n'envoie aucun email.
+- [x] **Documentation dans le même changement** : `docs/SCHEMA.md` §7, `docs/DAT.md`,
+      `docs/PROD_MIGRATIONS.md` migration 56, `README.md` — les **trois** listes de harnais —,
+      `CHANGELOG.md` sous `[Non publié]`.
+- [x] **Ce que la sous-tranche ne prouve pas, et qui est dit** (§8.10) : aucun **écran** —
+      l'administration des modèles est 2b —, aucun **envoi**, aucune **signature**, aucune
+      **séquence**. Aucun test unitaire TypeScript non plus : la règle vit en SQL, et pgTAP est son
+      niveau.
+
+**UN SECOND ÉCART CONSIGNÉ, ET IL ATTEND UN ARBITRAGE** (§8.6, INC-216) : un horodatage rendu dans
+un email l'est **en UTC**, aucune colonne de fuseau n'existant dans le schéma — mesuré, seule
+`profiles.locale` existe, qui est une **langue**. Un destinataire français lira 09:00 là où le
+rendez-vous est à 11:00 en heure d'été. Le comportement est **assumé et figé par une assertion** ; la
+question ouverte est : **à qui appartient le fuseau d'un email sortant** — au workspace, à
+l'expéditeur, ou au destinataire dont le produit ne sait rien ?
 
 **UN ÉCART CONSIGNÉ SANS ÊTRE CORRIGÉ** (§6, INC-215) : `mail_outbound_identities.signature_html`
 existe depuis `CRM-053` et **n'est lue par personne** — ni `mail-sync` à l'envoi, ni l'écran de

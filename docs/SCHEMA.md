@@ -840,6 +840,43 @@ insertion, mise à jour et suppression réservées à `admin` et `business_devel
 (`app.workspace_role`). Privilèges refermés nommément — `revoke all … from anon, authenticated`
 puis `grant` par action —, la distribution accordant `all privileges` par défaut.
 
+#### `public.rendre_modele_email` — le rendu (`CRM-063` tranche 2a, migration 56)
+
+Spécification : `docs/SPEC-modeles-emails.md` §8. **Livrée le 2026-08-25.**
+
+```
+public.rendre_modele_email(p_template_id uuid, p_card_id uuid,
+                           p_contact_id uuid default null, p_identity_id uuid default null)
+  returns table (subject text, body_text text, variables_nulles text[])
+```
+
+`stable`, **`security invoker`** — la RLS de `mail_templates`, `cards`, `channels`, `contacts`,
+`organizations` et `mail_outbound_identities` s'applique telle quelle, et **aucun prédicat n'est
+recopié**. Un modèle ou une affaire non lisible rend **zéro ligne**, jamais une erreur, et
+**indiscernable** d'un identifiant inconnu. `grant execute` à `authenticated` et `service_role`,
+**jamais à `anon`**.
+
+**UN TROU DONT LA SOURCE EST NULLE REND LA CHAÎNE VIDE, ET LE RENDU LE NOMME** dans
+`variables_nulles` — trié, dédoublonné, et **borné aux variables que le modèle emploie réellement**.
+Le tiret est écarté : il inventerait une valeur. Le refus d'envoyer est écarté **à cet endroit** : il
+appartient à l'expéditeur, et une fonction qui refuse ne rend rien à prévisualiser. C'est ce
+troisième retour qui rend la chaîne vide acceptable — sans lui, le défaut n'apparaîtrait qu'à
+l'envoi, c'est-à-dire chez le destinataire.
+
+**LES SOURCES NE SE DEVINENT PAS** (§8.5) : `p_contact_id` nul fait trois trous nommés — `card_contacts`
+admet plusieurs contacts par affaire —, et `p_identity_id` nul en fait deux — **deux** identités du
+seed portent `is_default`, les index uniques partiels étant par personne et pour le service.
+
+**Deux valeurs non textuelles sont formatées** : `card.amount` par `to_char(…, 'FM999999999990.00')`,
+et `card.next_action_at` par `to_char(… at time zone 'UTC', 'DD/MM/YYYY HH24:MI')` — **en UTC**,
+aucune colonne de fuseau n'existant dans le schéma. C'est une limite nommée, consignée à INC-216 et
+figée par une assertion.
+
+La substitution vit dans `app.mail_template_substituer(text, jsonb)` — `immutable` —, qui découpe le
+texte sur le **même motif** que `app.mail_template_variables_inconnues` : la fonction qui refuse à
+l'écriture et celle qui substitue à la lecture doivent découper de la même façon, sans quoi un texte
+accepté porterait un trou que le rendu ne verrait pas.
+
 ### `mail_thread_snoozes` — le sommeil d'un FIL (`CRM-081`, migration 48)
 
 Spécification : `docs/SPEC-cards.md` §16.14.

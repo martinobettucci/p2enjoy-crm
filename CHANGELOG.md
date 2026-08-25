@@ -15,6 +15,39 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **UN MODÈLE D'EMAIL SE REND** (`CRM-063` tranche 2, sous-tranche 2a, migration 56,
+  `docs/SPEC-modeles-emails.md` §8). La tranche 1 avait posé les textes à trous ; personne ne
+  savait encore les remplir. `public.rendre_modele_email` prend un modèle et une affaire — plus,
+  si on les lui donne, un contact et une identité d'expédition — et rend l'objet et le corps
+  **substitués**, prêts à partir.
+
+  **Ce qu'un trou dont la source est nulle devient était la question laissée ouverte, et elle est
+  tranchée : il rend le vide, et le rendu le NOMME.** Un troisième retour énumère les variables
+  dont la source était nulle. Un tiret aurait inventé une valeur — « au sujet de X (— EUR) » se lit
+  comme un montant, pas comme une absence ; refuser d'emblée aurait privé la prévisualisation à
+  venir de ce qu'elle sert précisément à montrer. Le vide seul, lui, serait parti chez le
+  destinataire sans que rien ne le signale : c'est l'inventaire qui rend ce choix tenable, et c'est
+  lui que l'écran de la sous-tranche suivante affichera.
+
+  **Le rendu ne devine JAMAIS le destinataire ni l'expéditeur.** Une affaire peut porter plusieurs
+  contacts, et « l'identité par défaut du workspace » n'existe pas — deux identités du jeu de
+  démonstration portent ce drapeau, l'unicité étant par personne. Ne pas passer un contact fait
+  donc trois trous nommés, jamais un choix arbitraire : écrire au mauvais destinataire est la faute
+  la moins rattrapable de tout le sous-système.
+
+  **Chacun lit ce qu'il a le droit de lire, et rien de plus.** La fonction n'ajoute aucune règle
+  d'autorisation et n'en recopie aucune : une affaire fermée à la lectrice ne rend **rien**, de
+  façon **indiscernable** d'un identifiant qui n'existe pas — l'écran ne nomme jamais ce qu'il
+  cache. Un appelant anonyme est refusé avant tout, faute de privilège.
+
+  **Une limite est nommée plutôt que tue** : une échéance rendue dans un email l'est en **UTC**,
+  aucun fuseau n'existant dans le produit. Un destinataire français lira 09:00 là où le rendez-vous
+  est à 11:00 en heure d'été. L'écart est consigné (INC-216) et attend un arbitrage : à qui
+  appartient le fuseau d'un email sortant ?
+
+  **Aucun écran, aucun envoi** : l'administration des modèles et leur prévisualisation sont la
+  sous-tranche 2b, la signature la tranche 3, la séquence de relance la tranche 4.
+
 - **LES MODÈLES D'EMAIL EXISTENT** (`CRM-063` tranche 1, migration 55,
   `docs/SPEC-modeles-emails.md` §2). Un workspace peut désormais tenir des textes réutilisables et
   nommés — « Relance sans réponse », « Prise de contact » —, à trous, employés par toutes ses
