@@ -2405,6 +2405,21 @@ que la suivante ne le voie pas. C'est un argument de plus en faveur de la premi�
 réponses ci-dessus : porter le budget déplacerait la limite sans supprimer la boucle qui l'atteint.
 Le comportement reste **inchangé**, et l'arbitrage reste dû.
 
+**REMESURÉ le 2026-08-25 par la décision 509, et la limite a CESSÉ D'ÊTRE FRANCHISSABLE.** Là où
+INC-174 mesurait « rejoué seul : 2 passés, 29,8 s », ce scénario échoue désormais **aussi bien seul
+qu'en campagne**, sur une base fraîchement remigrée et reseedée dont le contrat est vérifié —
+`form_fields` avec `key like 'e2e-wf-%'` : **zéro** résiduel, neuf champs au workflow par défaut,
+aucun track `cree-par-admin` laissé. Trois exécutions : campagne complète `592 passés, 1 échec` ;
+la suite entière seule `69 passés, 1 échec` ; le seul scénario, `36,0 s`. La **ligne de base du
+§2.4** a été rejouée sur ce seul scénario — les trois fichiers de la décision 509 ramenés à leur
+état d'avant, `npm run build` refait —, et l'échec est **présent des deux côtés**. Il n'est donc pas
+imputable à cette session, dont le diff ne touche aucun écran d'administration.
+
+Ce que la mesure ajoute : les trente secondes ne sont plus « atteintes de justesse » mais dépassées
+de six, ce qui retire à l'option « porter le budget » le peu qu'il lui restait et désigne la boucle
+de `purgerChamps` comme la seule réponse tenable. L'arbitrage reste dû, et le comportement
+**inchangé** : le fichier appartient à `CRM-076`.
+
 ## Consigné le 2026-08-24 — une intermittence de campagne, étrangère à `CRM-062` tranche 1
 
 ### INC-205 — le classement automatique d'`ingestion.spec.ts` rend un verdict intermittent en campagne
