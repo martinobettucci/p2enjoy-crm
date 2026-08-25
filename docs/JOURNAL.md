@@ -24150,6 +24150,26 @@ serait une supposition, pas une mesure.
 **`CRM-061` PASSE À `[x]`**, sa Definition of Done vérifiée point par point dans le corps de
 l'unité, et son harnais dédié vert pour la première fois.
 
+**CAMPAGNE COMPLÈTE DE FIN DE SESSION, EXÉCUTÉE ENTIÈRE ET ENTIÈREMENT VERTE** : `typecheck` et
+`build` verts ; `test:unit` **76 fichiers, 2508 tests** ; `test:sql` **52 fichiers, 2531
+assertions** ; `e2e:api` **858 passés** ; `e2e:mail` **42 passés** ; `pytest` **244 passés** ;
+`e2e:ui` **594 passés, aucun échec** — le compte inclut le scénario ajouté ici, et `SCENARIOS_UI`
+est révisé 593 → 594, valeur **comptée** par `playwright test --list`.
+
+**INC-166 N'A PAS MORDU, ET C'EST UNE MESURE À CONSIGNER PLUTÔT QU'UNE BONNE NOUVELLE À TAIRE.** La
+décision 509 rendait `e2e:ui` à « 592 passés, 1 échec », cet échec étant le scénario clavier de la
+grille champ × étape (`administration-workflows.spec.ts`), rouge en campagne **et** rejoué seul.
+Aujourd'hui il passe **en campagne**, sans qu'aucune ligne le concernant n'ait bougé — cette session
+n'a touché ce fichier que pour y **ajouter** un scénario, à 1 000 lignes de là. L'entrée n'est pas
+close pour autant : une preuve qui passe une fois ne prouve pas qu'elle ne rougira plus, et
+c'est exactement ce que son intermittence rend difficile à trancher.
+
+**Les captures réécrites par la campagne ont été RESTAURÉES**, sauf **deux**, produites et regardées
+une à une (`CLAUDE.md` §16) : `docs/captures/CRM-076/comparaison-source-divergence-encre-1440.jpg`
+— l'état divergent, où le document prend enfin l'encre du corps à l'intérieur d'une mention jaune —
+et `docs/captures/CRM-032/comparaison-source-divergente-1440.jpg`, l'état neutre, où l'écart avec la
+mention est plus discret mais réel. C'est la règle des décisions 500, 503 bis et 505.
+
 **Où reprendre.** La leçon de méthode de la décision 510 se double d'une seconde, et les deux se
 lisent ensemble : le constat « aucune unité ne porte de comportement livrable » se vérifie
 **sous-point par sous-point** (510), et **une entrée du registre qui renvoie son arbitrage à une
