@@ -378,6 +378,14 @@ echo "7. Le contrat d'API, par la vraie route"
 # PostgREST ni des privilèges tels que la route les applique. C'est exactement le défaut que la
 # migration 53 portait et que seule la mesure par l'API avait trouvé (décision 504).
 
+# LA CHAÎNE NODE EST PRÉPARÉE AVANT LE PREMIER APPEL À `npm`, et ce n'est pas une formalité :
+# l'hôte démarre sur la v22 du système alors que le dépôt exige Node 24, et `scripts/verify-node-
+# toolchain.sh` vérifie mécaniquement que TOUT harnais invoquant `npm` porte cette garde. Il a
+# d'ailleurs dénoncé son absence ici, au premier passage de `verify-harness.sh --rapide`.
+# shellcheck source=scripts/lib/node.sh
+source scripts/lib/node.sh
+node_toolchain_prepare "$PWD/.nvmrc" || exit 1
+
 if [ "$RAPIDE" = true ]; then
 	ok "contrat d'API NON exécuté (--rapide) — dit plutôt que tu"
 else

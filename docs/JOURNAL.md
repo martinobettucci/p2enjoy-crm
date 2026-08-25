@@ -24255,3 +24255,78 @@ tranche 3, et le nom porte une question de produit qui appartient à sa spécifi
 **Où reprendre.** Tranche 1 de `CRM-063` : migration `0055`, suite pgTAP, contrat d'API, seed,
 harnais. La suite est cadrée au §7 de la spécification, chaque tranche à spécifier ligne à ligne
 avant d'être écrite.
+
+## décision 513 — `CRM-063` tranche 1 livrée : les modèles d'email, et deux défauts trouvés par la mesure
+
+**Même session planifiée du 2026-08-25, ouverte à 10 h 12 UTC** (décision 512 pour le choix de
+l'unité et la spécification). Cette entrée rend compte de la LIVRAISON.
+
+**CE QUI EST LIVRÉ** : `public.mail_templates` — migration `0055` —, la liste **fermée** des douze
+variables d'un modèle et son refus **en base**, la RLS et ses quatre politiques, la suite pgTAP
+(**55 assertions**), le contrat d'API (**12 scénarios**), deux modèles dans le jeu de démonstration
+et le harnais dédié (**44 contrôles**).
+
+**LE PREMIER DÉFAUT ÉTAIT LE MIEN, ET LE DOCUMENT LE DISAIT DÉJÀ.** La table s'appelait
+`email_templates` et ses variables s'écrivaient `{{affaire.titre}}` — jusqu'à ce que la relecture de
+`docs/SCHEMA.md` §7 constate que le chapitre nomme cette table `mail_templates` **depuis
+`CRM-000`** et illustre ses variables par `{{card.title}}`. La migration appliquée a été **défaite
+et refaite**, table détruite comprise : laisser une divergence de nommage s'installer dans le
+sous-système mail aurait coûté bien plus qu'un quart d'heure. La leçon est étroite mais utile —
+**un chapitre qui décrit une table à venir est une spécification, pas une note**.
+
+**LE SECOND DÉFAUT A ÉTÉ TROUVÉ PAR LE HARNAIS, DANS LE HARNAIS.** Son premier passage rendait
+« 44 contrôles, aucune anomalie » et **mentait sur une ligne**. La dégradation qui vise la politique
+d'insertion emploie un motif — la clause `with check` — qui est **mot pour mot** celui de la
+politique de mise à jour ; le substituteur a refusé l'ambiguïté, comme il doit. Mais `degrader` est
+appelée dans un `||`, ce qui **suspend `set -e` sur tout le composé** : l'échec n'a pas arrêté la
+fonction, le fichier de travail portait encore la dégradation **précédente**, et le harnais a
+réappliqué celle-là en annonçant celle-ci comme mordante. C'est exactement le mensonge tranquille
+que la décision 503 reproche, sous une forme nouvelle. **Corrigé à sa cause** : la copie est
+détruite avant chaque substitution, l'échec du substituteur est **testé** et rendu « IMPOSSIBLE »,
+et le motif est ancré sur les lignes qui le rendent unique.
+
+**LA RÈGLE STRUCTURANTE, ET CE QU'ELLE COÛTE.** La liste des variables est fermée et vit dans une
+seule fonction `immutable`, appelée par **deux** contraintes — une par colonne portant des
+variables. Le refus **nomme la colonne**, sans quoi l'écran de la tranche 2 devrait deviner près de
+quel champ poser son message. Le prix de l'`immutable` est écrit dans la migration plutôt que
+découvert : élargir la liste ne revalide pas les lignes existantes — sans danger dans ce sens —, et
+**en retirer une** laisserait des lignes non conformes, ce que la migration qui retirera devra
+reprendre.
+
+**TROIS MESURES ONT CORRIGÉ TROIS INTENTIONS**, et aucune ne venait d'un document : `contacts` ne
+sépare ni prénom ni nom ; `workflow_steps` ne porte aucune colonne `label` — le `42703` de la
+décision 507 ; `cards` porte `next_action_at` et non `due_date`. Une quatrième a corrigé le contrat
+d'API : la lecture anonyme rend **`200 []`** et non `401`, la politique étant ouverte `to anon`
+délibérément — un `401` révélerait que la table existe et qu'elle est protégée.
+
+**DEUX REFUS DE NATURE DIFFÉRENTE, DISTINGUÉS PLUTÔT QUE CONFONDUS** : `401` pour l'anonyme, refusé
+par le **privilège** avant toute politique, et `403` pour la lectrice, qui a le privilège et que la
+**politique** arrête. Les confondre masquerait la disparition de l'un des deux remparts.
+
+**LE SEED EMPRUNTE LE CHEMIN DU PRODUIT, ET CE N'EST PAS QU'UNE QUESTION DE PRINCIPE** : les deux
+modèles sont créés par la route REST avec le **jeton réel de l'administratrice**, ce qui **exerce**
+la politique d'insertion. Un seed passant par la clé de service serait resté vert même si cette
+politique était cassée.
+
+**CAMPAGNE COMPLÈTE EXÉCUTÉE, ET ENTIÈREMENT VERTE** : `typecheck` et `build` verts ; `test:unit`
+**76 fichiers, 2508 tests** ; `test:sql` **53 fichiers, 2587 assertions** ; `e2e:api` **870
+passés** ; `e2e:ui` **594 passés, aucun échec, 17,4 min** ; `e2e:mail` **42 passés** ; `pytest`
+**244 passés** ; `scripts/verify-modeles-emails.sh` **44 contrôles, aucune anomalie**, ses six
+dégradations vues et la restauration constatée. Les captures réécrites par la campagne ont été
+**restaurées** : cette tranche ne touche aucun écran (règle des décisions 500, 503 bis et 505).
+
+**LE TYPECHECK A TROUVÉ CE QUE L'EXÉCUTION NE POUVAIT PAS VOIR.** Le contrat d'API passait au
+rouge sur `noUncheckedIndexedAccess` : `const [x] = tableau` rend `Modele | undefined`, et une
+assertion posée sur `undefined` passerait pour une preuve alors que la réponse serait vide. La
+déstructuration est remplacée par un helper qui transforme le cas vide en **échec nommé**.
+
+**INC-215 consignée, comportement inchangé** : `mail_outbound_identities.signature_html` est morte
+depuis `CRM-053` — ni `mail-sync` ni l'écran de `CRM-089` ne la lisent — et son nom annonce du HTML
+là où tout le sous-système expédie du texte. La corriger est une **migration sur la table d'une
+autre unité** : c'est la tranche 3, qui devra trancher le type et le nom avant de coder.
+
+**Où reprendre.** `CRM-063` **tranche 2** — le rendu et l'écran des modèles —, cadrée au §7.1 de
+`docs/SPEC-modeles-emails.md` et à spécifier ligne à ligne avant sa première ligne de code. La
+question qu'elle doit trancher est nommée : **ce qu'un trou dont la source est nulle rend** — la
+chaîne vide, un tiret, ou le refus d'envoyer. Le seed porte déjà `{{card.amount}}`, variable
+nullable, pour qu'elle ne s'écrive pas à l'aveugle.
