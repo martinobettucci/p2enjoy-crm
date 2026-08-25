@@ -37,7 +37,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(61);
+select plan(62);
 
 -- =============================================================================================
 -- 1. Inventaire des politiques — ce qui rend le harnais capable d'échouer (§7.4)
@@ -199,10 +199,24 @@ select is(pg_temp.politiques('mail_sequence_steps'),
 	'`mail_sequence_steps` porte ses QUATRE politiques : la cadence vit dans les paliers, et les '
 	'ouvrir plus largement que leur séquence serait un contournement (§11.7)');
 
+select is(pg_temp.politiques('card_sequence_enrollments'),
+	array['card_sequence_enrollments_lecture'],
+	'`card_sequence_enrollments` porte son UNIQUE politique de LECTURE : une inscription se lit '
+	'par qui lit son affaire, et ne s''écrit par PERSONNE — `armer_sequence_relance`, '
+	'`interrompre_sequence_relance` et le job sont les seuls chemins, et la fermeture est tenue '
+	'par le PRIVILÈGE, non par une politique (docs/SPEC-modeles-emails.md §12.10)');
+
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	115,
-	'CENT QUINZE politiques dans `public`, et pas une de plus — 107 avant `CRM-063` '
+	116,
+	'CENT SEIZE politiques dans `public`, et pas une de plus — 115 avant `CRM-063` '
+	'sous-tranche 4b, plus l''UNIQUE politique de LECTURE de `card_sequence_enrollments`. CETTE '
+	'TABLE EST FERMÉE EN ÉCRITURE À TOUT LE MONDE, et c''est la fermeture de `mail_outbox` pour la '
+	'même raison : une file d''envoi que le client écrirait lui-même n''aurait plus aucun refus. '
+	'Les huit refus de l''armement et l''idempotence de l''interruption vivent donc dans DEUX RPC '
+	'`security definer`, jamais dans une politique — une politique refuse un APPELANT, elle ne '
+	'sait pas dire qu''une affaire n''est pas figée. Avant elle : 115 avant la sous-tranche 4b, '
+	'soit 107 avant `CRM-063` '
 	'sous-tranche 4a, plus les HUIT politiques des séquences de relance : QUATRE par table — '
 	'lecture, insertion, MAJ, suppression — sur `mail_sequences` et `mail_sequence_steps` '
 	'(docs/SCHEMA.md §7, docs/SPEC-modeles-emails.md §11.7). CE COUPLE N''A AUCUNE RPC : composer '

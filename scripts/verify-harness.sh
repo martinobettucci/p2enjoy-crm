@@ -480,8 +480,20 @@ PORT_RAPPORT=9323
 # 2691 + 67 + 2 = **2760**. LA VALEUR EST COMPTÉE PAR LES DEUX CHEMINS : la suite seule rend
 # **67 assertions**, et `npm run test:sql` somme **57 fichiers, 2760 assertions**. Les deux chemins
 # concordent, et c'est cette concordance qui autorise la valeur.
-FICHIERS_SQL_ATTENDUS=57
-ASSERTIONS_ATTENDUES=2760
+#
+# **`CRM-063` SOUS-TRANCHE 4b, le 2026-08-25** : `0058_armement_sequences.test.sql` livre
+# **47 assertions** — la forme de `card_sequence_enrollments`, les huit refus de l'armement chacun
+# précédé de son témoin, les quatre fins du §12.7 chacune PRODUITE et non simulée, et le délai
+# relatif éprouvé sur des inscriptions antidatées.
+#
+# Elle RÉVISE elle aussi `0016_preuves_refus.test.sql`, qui passe de 61 à **62** assertions —
+# l'inventaire nominal de l'unique politique de lecture de la nouvelle table —, et dont le compte
+# global passe de 115 à **116**. Un garde-fou global est RÉVISÉ, jamais retiré.
+#
+# 2760 + 47 + 1 = **2808**. LA VALEUR EST COMPTÉE PAR LES DEUX CHEMINS : la suite seule rend
+# **47 assertions**, et `npm run test:sql` somme **58 fichiers, 2808 assertions**.
+FICHIERS_SQL_ATTENDUS=58
+ASSERTIONS_ATTENDUES=2808
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
