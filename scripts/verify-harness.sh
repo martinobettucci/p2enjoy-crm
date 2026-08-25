@@ -563,7 +563,12 @@ ASSERTIONS_ATTENDUES=2587
 # scénarios — la relance lue dans la timeline par les trois profils réels et par l'anonyme, l'acteur
 # nul, le payload aux deux seules clés, l'absence de route `rpc/relancer_cards_figees`, et le
 # constat que ces lectures n'ont rien écrit. 850 + 8 = **858**, valeur COMPTÉE.
-SCENARIOS_API=858
+# **RÉVISÉE à 870 par `CRM-063` tranche 1, le 2026-08-25** : `e2e/api/modeles-emails.spec.ts` est
+# neuf et déclare **12** scénarios pour les quatorze lignes du contrat du §2.7 — trois lignes de
+# lecture tiennent en un seul scénario, qui les joue pour les trois profils, et le nettoyage porte
+# la ligne 13 avec le constat que le seed sort intact. Le fichier compte est donc porté de 50 à
+# **51**. 858 + 12 = **870**, valeur COMPTÉE par « Total: 870 tests in 51 files », jamais déduite.
+SCENARIOS_API=870
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
