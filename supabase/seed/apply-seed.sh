@@ -3479,6 +3479,78 @@ info "Vérifié avec les jetons réels : 0 ligne pour la lectrice sur une affair
 info "Budgets : ${#BUDGETS_SEED[@]} dont 1 récurrent à ${#OCCURRENCES_SEED[@]} occurrences, 1 clôturé,
       1 fermé à la lectrice et 1 en CHF — docs/SPEC-costs.md §2 et §4.7"
 
+# --- 8 sexdecies. Modèles d'email de démonstration — docs/SPEC-modeles-emails.md §2.8, CRM-063 ---
+# @spec CRM-063 (docs/BACKLOG.md) — modèles d'emails, tranche 1
+# @spec docs/SPEC-modeles-emails.md §2.4 (les douze variables), §2.8 (le jeu de démonstration)
+# @spec docs/SCHEMA.md §7 (`mail_templates`)
+#
+# DEUX MODÈLES, ET DEUX SUFFISENT PARCE QU'ILS SONT DIFFÉRENTS PAR CONSTRUCTION (§2.8).
+#
+#   * « Relance sans réponse » porte des variables dans l'OBJET **et** dans le corps, dont une
+#     variable pouvant être NULLE — `{{card.amount}}`. C'est le cas que le rendu de la tranche 2
+#     devra trancher : ce qu'un trou dont la source est vide devient.
+#
+#   * « Prise de contact » porte des variables UNIQUEMENT dans le corps, son objet étant un texte
+#     fixe. Sans ce second cas, aucune preuve ne distinguerait « les deux colonnes sont examinées »
+#     de « la première l'est » : une contrainte posée sur le seul `subject` passerait le premier
+#     modèle et tous les contrôles.
+#
+# LES DEUX SONT CRÉÉS PAR L'API REST AVEC LE JETON RÉEL DE L'ADMINISTRATRICE, jamais par un INSERT
+# direct ni par la clé de service : `CLAUDE.md` §8 exige que les données de démonstration empruntent
+# le chemin du produit, et ce chemin-ci EXERCE au passage la politique d'insertion du §2.6 — un seed
+# qui passerait par `service_role` serait vert même si la politique était cassée.
+
+MODELES_MAIL=(
+	"7e11a7e0-0000-4000-8000-000000000001|Relance sans réponse|Où en est {{card.title}} ?|Bonjour {{contact.full_name}},\n\nje me permets de revenir vers vous au sujet de {{card.title}} ({{card.amount}} {{card.currency}}), actuellement à l'étape « {{card.step}} ».\n\nAvez-vous pu avancer de votre côté ?\n\nBien à vous,\n{{identity.from_name}}"
+	"7e11a7e0-0000-4000-8000-000000000002|Prise de contact|Prise de contact|Bonjour {{contact.full_name}},\n\nnous accompagnons {{contact.organization}} sur des sujets proches de {{card.channel}}.\n\nSeriez-vous disponible pour en échanger ?\n\nBien à vous,\n{{identity.from_name}}\n{{identity.from_address}}"
+)
+
+for entree in "${MODELES_MAIL[@]}"; do
+	IFS='|' read -r mt_id mt_nom mt_objet mt_corps <<< "$entree"
+
+	# `created_by` est posé EXPLICITEMENT sur l'administratrice : la colonne est une trace, aucune
+	# politique ne la lit (§2.7 point 14), et un écran qui rendrait « créé par » sur une colonne
+	# toujours nulle ne démontrerait rien.
+	charge=$(jq -nc --arg id "$mt_id" --arg ws "$WS_ID" --arg n "$mt_nom" \
+	                --arg o "$mt_objet" --arg c "$mt_corps" --arg par '5eed0000-0000-4000-8000-000000000011' \
+	     '{id: $id, workspace_id: $ws, name: $n, subject: $o, created_by: $par,
+	       body_text: ($c | gsub("\\\\n"; "\n"))}')
+
+	code=$(api_admin POST /rest/v1/mail_templates \
+		-H 'Prefer: return=representation,resolution=merge-duplicates' \
+		-d "$charge")
+	attendu "$code" "création du modèle d'email « $mt_nom »" 200 201
+done
+
+# GARDE DE CONVERGENCE, comme celle des identités sortantes : un rejeu ne doit RIEN dupliquer.
+# `resolution=merge-duplicates` s'appuie sur la clé primaire, et les identifiants sont stables.
+modeles_mail=$(curl -s "$API/rest/v1/mail_templates?select=id" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
+[ "$modeles_mail" = "${#MODELES_MAIL[@]}" ] || die "modèles d'email : $modeles_mail lignes au lieu
+        de ${#MODELES_MAIL[@]} — le rejeu a dupliqué, ou une écriture a été refusée."
+
+# LE JEU EST VÉRIFIÉ SUR CE QU'IL DOIT DÉMONTRER, et non sur son seul compte : le premier modèle
+# porte des variables dans les DEUX colonnes, le second dans le corps SEUL. Un jeu qui perdrait
+# cette différence laisserait passer une contrainte posée sur une seule colonne.
+objet_avec_variable=$(curl -s "$API/rest/v1/mail_templates?select=subject&id=eq.7e11a7e0-0000-4000-8000-000000000001" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r '.[0].subject')
+case "$objet_avec_variable" in
+	*'{{'*) : ;;
+	*) die "« Relance sans réponse » doit porter une variable dans son OBJET (docs/SPEC-modeles-emails.md
+        §2.8) : sans elle, aucune preuve ne distingue les deux colonnes validées." ;;
+esac
+
+objet_fixe=$(curl -s "$API/rest/v1/mail_templates?select=subject&id=eq.7e11a7e0-0000-4000-8000-000000000002" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r '.[0].subject')
+case "$objet_fixe" in
+	*'{{'*) die "« Prise de contact » doit porter un objet FIXE (docs/SPEC-modeles-emails.md §2.8) :
+        c'est le seul cas qui prouve qu'un modèle sans variable dans l'objet est légitime." ;;
+	*) : ;;
+esac
+
+info "Modèles d'email : $modeles_mail — variables dans l'objet ET le corps pour l'un, dans le corps
+      seul pour l'autre — CRM-063, docs/SPEC-modeles-emails.md §2.8"
+
 # --- 9. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
 # Rappel volontaire, affiché à chaque exécution, et **mis à jour par `CRM-020`** : peupler la base
 # ne la rend pas lisible pour autant. L'état réel est désormais mixte, et le dire faux dans un sens

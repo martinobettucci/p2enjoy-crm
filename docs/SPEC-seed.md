@@ -1844,3 +1844,47 @@ démontre plus est un contrat rompu, pas un détail cosmétique (`CLAUDE.md` §8
   échéances révisées près.
 - Il **ne rend pas les dates du §9 fausses**. Elles restent le contrat lisible ; le décalage est
   une translation, pas une réécriture.
+
+## 14. Modèles d'email — `CRM-063` tranche 1
+
+Unité : `CRM-063`. Spécification de l'objet : `docs/SPEC-modeles-emails.md` §2.8.
+Section du script : `supabase/seed/apply-seed.sh`, « 8 sexdecies ».
+
+### 14.1 Ce que le seed pose
+
+**Deux modèles**, et deux suffisent parce qu'ils sont **différents par construction** — le compte
+n'est pas le contrat, la différence l'est.
+
+| Identifiant | Nom | Objet | Ce que ce modèle démontre, et lui seul |
+|---|---|---|---|
+| `7e11a7e0-…001` | Relance sans réponse | `Où en est {{card.title}} ?` | des variables dans l'**objet** ET dans le corps, dont une **pouvant être nulle** (`{{card.amount}}`) : le cas que le rendu de la tranche 2 devra trancher |
+| `7e11a7e0-…002` | Prise de contact | texte fixe | des variables dans le **corps seul** : sans lui, une contrainte posée sur le seul `subject` passerait tous les contrôles |
+
+Les deux portent `created_by` = Camille Aubert, **explicitement**. La colonne est une trace
+qu'aucune politique ne lit (`docs/SPEC-modeles-emails.md` §2.7 point 14) ; la laisser nulle rendrait
+indémontrable l'écran de la tranche 2, qui affichera l'auteur.
+
+### 14.2 Les deux modèles sont créés PAR LE PRODUIT
+
+`api_admin`, c'est-à-dire la route REST avec le **jeton réel de l'administratrice** — jamais un
+`INSERT` direct, jamais la clé de service. `CLAUDE.md` §8 l'exige, et ce chemin a ici une vertu de
+plus : il **exerce** la politique d'insertion du §2.6. Un seed qui passerait par `service_role`
+resterait vert même si cette politique était cassée.
+
+### 14.3 Convergence
+
+`resolution=merge-duplicates` sur des identifiants **stables** : un rejeu ne duplique rien. Le
+script relit ensuite le compte et **échoue** s'il diffère de deux — la garde des identités
+sortantes, transposée.
+
+Deux gardes supplémentaires portent sur ce que le jeu doit **démontrer**, et non sur son compte :
+l'objet du premier modèle doit porter une variable, celui du second ne doit pas en porter. Un jeu
+qui perdrait cette différence laisserait passer une validation posée sur une seule colonne.
+
+### 14.4 Preuves exigées
+
+- `supabase/tests/0053_modeles_emails.test.sql` : la suite pose ses propres fixtures et rend le
+  seed **intact** par son `rollback` ;
+- `e2e/api/modeles-emails.spec.ts` : les quatorze lignes du contrat d'API, et le seed constaté
+  **intact** en fin de suite ;
+- `scripts/verify-modeles-emails.sh` : le verdict unique de la tranche.
