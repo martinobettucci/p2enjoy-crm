@@ -217,7 +217,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-212 | `scripts/verify-mail-infra.sh` laisse en base son message « Preuve journal Stalwart propre », NON classé : l'inbox porte dès lors un troisième fil non classé, et l'état vide de `e2e/ui/sommeil-fil.spec.ts` ne peut plus être atteint. Troisième fichier de la famille d'INC-209 | 2026-08-25 | *ouverte* — comportement inchangé, relève de `CRM-051` / `CRM-052` | 507 |
 | INC-215 | `mail_outbound_identities.signature_html` existe depuis `CRM-053` et n'est lue par PERSONNE — ni `mail-sync` à l'envoi, ni l'écran de `CRM-089`, qui n'envoie délibérément jamais `p_signature_html`. Son nom annonce du **HTML** là où tout le sous-système expédie du **texte** | 2026-08-25 | *ouverte* — comportement inchangé, relève de `CRM-063` tranche 3, qui devra trancher le type et le nom | 512 |
 | INC-216 | `public.rendre_modele_email` rend `card.next_action_at` **en UTC** : MESURÉ, aucune colonne de fuseau n'existe dans le schéma — seule `profiles.locale`, qui est une **langue**. Un destinataire français lira 09:00 là où le rendez-vous est à 11:00 en heure d'été | 2026-08-25 | *ouverte* — comportement ASSUMÉ et figé par une assertion, **arbitrage attendu** : à qui appartient le fuseau d'un email sortant | 514 |
-| INC-217 | `supabase/tests/0052_relances_automatiques.test.sql` assertion 11 exige un passage `succeeded` de `p2enjoy-relances-cards-figees` dans `cron.job_run_details`, or ce job est planifié `23 3 * * *` : la preuve est verte ou rouge **selon l'heure à laquelle la pile a été montée**, jamais selon l'état du produit | 2026-08-25 | *ouverte* — comportement inchangé, relève de `CRM-062` tranche 2, qui porte la preuve | 514 |
+| INC-217 | `supabase/tests/0052_relances_automatiques.test.sql` assertion 11 exige un passage `succeeded` de `p2enjoy-relances-cards-figees` dans `cron.job_run_details`, or ce job est planifié `23 3 * * *`. MESURÉ deux fois dans la même session : **rouge** à 12 h 45, **verte** à 13 h 50, le job ayant tourné entre-temps hors horaire — l'amorçage de dix secondes de `docs/SPEC-relances.md` §9.7 est réarmé par tout rejeu de la migration 54, et `verify-relances.sh` promeut le job. La preuve est donc verte **parce qu'un autre harnais a tourné avant elle**, jamais selon l'état du produit | 2026-08-25 | *ouverte* — comportement inchangé, relève de `CRM-062` tranche 2, qui porte la preuve | 514 |
 
 ---
 
@@ -4877,6 +4877,32 @@ attendre son heure : forcer un passage par `cron.schedule` sur un nom jetable, o
 fonction écrit — ce que l'assertion refuse délibérément, et à juste titre. Le choix appartient à
 l'unité qui porte la preuve.
 
-**Ce qu'il faut pour la fermer** : que `CRM-062` rende cette assertion indépendante de l'heure de
-démarrage de la pile, ou qu'elle nomme explicitement la condition sous laquelle elle est exécutable.
-Aucun arbitrage du responsable n'est requis : les trois mesures ci-dessus suffisent à trancher.
+**LA CAUSE A ÉTÉ RESSERRÉE UNE HEURE PLUS TARD, DANS LA MÊME SESSION, ET ELLE EST PLUS PRÉCISE QUE
+« L'HEURE DE DÉMARRAGE ».** La campagne complète terminée, `npm run test:sql` rend
+**« 54 fichiers, 2640 assertions, aucune anomalie »** — la même suite, verte, sur la même pile.
+Mesure de l'écart :
+
+```
+select jobid, status, start_time from cron.job_run_details order by start_time desc;
+  2 | succeeded | 2026-08-25 13:41:09+00     <- hors de l'horaire 23 3 * * *
+  1 | succeeded | 2026-08-25 13:41:07+00
+  1 | succeeded | 2026-08-25 13:07:00+00
+  2 | succeeded | 2026-08-25 13:01:59+00     <- hors de l'horaire, lui aussi
+  1 | succeeded | 2026-08-25 12:35:02+00
+```
+
+Le job **2** a tourné deux fois entre les deux mesures, loin de `23 3 * * *`. La cause est écrite
+dans le dépôt : `docs/SPEC-relances.md` §9.7 pose que `cron.schedule` réarme le job sur un
+**amorçage de dix secondes** à chaque rejeu de la migration 54, et `scripts/verify-relances.sh` le
+**promeut** en outre par un appel direct. La précondition de l'assertion 11 n'est donc pas l'heure :
+c'est **qu'un autre harnais ait rejoué la migration 54, ou l'ait promue, dans la vie de cette
+pile** — un ordre d'exécution entre harnais, que rien dans le fichier de preuve ne dit.
+
+C'est plus grave que la première formulation, et non moins : une preuve **verte parce qu'une autre
+preuve a tourné avant elle** ne prouve pas ce qu'elle annonce. Le comportement du produit est
+inchangé dans les deux cas.
+
+**Ce qu'il faut pour la fermer** : que `CRM-062` rende cette assertion indépendante de ce qu'un
+autre harnais a fait avant elle — en armant elle-même le passage qu'elle mesure, sur un nom de job
+jetable —, ou qu'elle nomme explicitement la précondition. Aucun arbitrage du responsable n'est
+requis : les mesures ci-dessus suffisent à trancher.

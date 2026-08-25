@@ -24402,12 +24402,26 @@ fuseau d'un email sortant** ? **INC-217** est étrangère à l'unité : l'assert
 or ce job est planifié `23 3 * * *` — la preuve est verte ou rouge **selon l'heure à laquelle la
 pile a été montée**, jamais selon l'état du produit. Comportement inchangé.
 
-**CAMPAGNE COMPLÈTE EXÉCUTÉE.** `typecheck` et `build` verts ; `test:unit` **76 fichiers, 2508
-tests** ; `test:sql` **54 fichiers, 1 en échec** — INC-217, mesurée et étrangère ; `e2e:api` **881
-passés** ; `e2e:mail` **42 passés** ; `pytest` **244 passés** ;
+**CAMPAGNE COMPLÈTE EXÉCUTÉE, ET ENTIÈREMENT VERTE.** `typecheck` et `build` verts ; `test:unit`
+**76 fichiers, 2508 tests** ; `test:sql` **54 fichiers, 2640 assertions** ; `e2e:api` **881
+passés** ; `e2e:ui` **594 passés, 16,4 min** ; `e2e:mail` **42 passés** ; `pytest` **244 passés** ;
 `scripts/verify-rendu-modeles-emails.sh` **32 contrôles, aucune anomalie**, ses sept dégradations
-vues et la restauration constatée ; `scripts/verify-node-toolchain.sh` **5 contrôles, aucune
-anomalie** — les **43** harnais préparent la chaîne Node.
+vues et la restauration constatée ; `scripts/verify-harness.sh --rapide` **31 contrôles, aucune
+anomalie**, ce qui certifie les trois compteurs révisés ; `scripts/verify-node-toolchain.sh`
+**5 contrôles, aucune anomalie** — les **43** harnais préparent la chaîne Node. Les captures
+réécrites par la campagne ont été **restaurées** : cette sous-tranche ne touche aucun écran (règle
+des décisions 500, 503 bis et 505).
+
+**INC-217 A ÉTÉ RESSERRÉE PAR UNE SECONDE MESURE, ET LE MOTIF EST INSTRUCTIF.** À 12 h 45,
+`test:sql` rendait « 1 en échec » sur l'assertion 11 de `0052_relances_automatiques.test.sql` ; à
+13 h 50, la **même** suite sur la **même** pile rend « 2640 assertions, aucune anomalie ». Le job
+`p2enjoy-relances-cards-figees` avait tourné deux fois entre-temps, **hors de son horaire
+`23 3 * * *`** : `docs/SPEC-relances.md` §9.7 réarme un amorçage de dix secondes à chaque rejeu de
+la migration 54, et `scripts/verify-relances.sh` promeut le job par un appel direct. La précondition
+de cette preuve n'est donc pas l'heure de démarrage, c'est **qu'un autre harnais ait tourné avant
+elle** — et une preuve verte parce qu'une autre preuve l'a précédée ne prouve pas ce qu'elle
+annonce. Le registre porte la mesure corrigée ; le comportement du produit est inchangé dans les
+deux cas, et la correction appartient à `CRM-062`.
 
 **Où reprendre.** `CRM-063` **sous-tranche 2b** — l'administration des modèles et leur
 prévisualisation —, cadrée au §8.11 de `docs/SPEC-modeles-emails.md` et **à spécifier ligne à ligne
