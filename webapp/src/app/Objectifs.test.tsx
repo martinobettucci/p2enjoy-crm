@@ -1522,3 +1522,133 @@ describe('administration des tableaux — §3, §5.1, DESIGN_SYSTEM §5.13', () 
 		)
 	})
 })
+
+// =================================================================================================
+// TRANCHE 2g — LE CLAVIER DES GESTES D'ADMINISTRATION
+// =================================================================================================
+//
+// @verifies CRM-083 (docs/BACKLOG.md) — tranche 2g
+// @verifies docs/SPEC-goals.md §5.5 bis.2 (l'ancre de retour du focus SURVIT au geste),
+//           §5.5 bis.3 (`Échap` referme les trois surfaces de la liste)
+// @verifies docs/DESIGN_SYSTEM.md §5.29 (administration des tableaux), §5.13 (le focus revient à
+//           la commande qui a ouvert), §8 (navigation clavier)
+//
+// CE QUE CES SCÉNARIOS TIENNENT, ET QUE RIEN D'AUTRE NE TIENDRAIT :
+//
+//   * `Échap` ferme, et il NE FERME PAS SEULEMENT : il rend le focus à une ancre NOMMÉE, et il
+//     n'écrit rien. Une fermeture qui aurait envoyé le geste serait pire que l'absence ;
+//   * l'archivage confirmé rend le focus à une ancre qui existe ENCORE. Le scénario fait donc
+//     DISPARAÎTRE la ligne à la relecture — sans quoi l'ancien comportement passerait aussi, la
+//     commande d'avant étant encore montée, et la preuve serait complaisante.
+
+/**
+ * Une liste qui SE VIDE à la relecture : le tableau est rendu au premier chargement, et plus
+ * jamais ensuite. C'est le seul montage sous lequel l'ancre d'avant la correction — la commande
+ * « Archiver » de la ligne — n'existe plus au moment du retour du focus.
+ */
+function clientListeQuiSeVide(
+	tableau: unknown,
+	journal: Record<string, unknown>[],
+	reponse: Reponse,
+): ClientCrm {
+	let lectures = 0
+	const construire = (table: string) => {
+		const chaine: Record<string, unknown> = {}
+		const lecture = (): Reponse => {
+			if (table === 'workspaces') return ok([{ id: 'w1', name: 'P2Enjoy', slug: 'p2enjoy' }])
+			if (table !== 'goal_boards') return ok([])
+			lectures += 1
+			return lectures === 1 ? ok([tableau]) : ok([])
+		}
+		for (const methode of ['select', 'eq', 'is', 'in', 'order']) {
+			chaine[methode] = () => chaine
+		}
+		chaine.update = (charge: Record<string, unknown>) => {
+			journal.push({ table, operation: 'update', ...charge })
+			const apres: Record<string, unknown> = {}
+			for (const methode of ['select', 'eq', 'is', 'in', 'order']) {
+				apres[methode] = () => apres
+			}
+			apres.single = () => Promise.resolve(reponse)
+			apres.then = (resoudre: (valeur: Reponse) => unknown) => Promise.resolve(reponse).then(resoudre)
+			return apres
+		}
+		chaine.maybeSingle = () => Promise.resolve(lecture())
+		chaine.single = () => Promise.resolve(lecture())
+		chaine.then = (resoudre: (valeur: Reponse) => unknown) => Promise.resolve(lecture()).then(resoudre)
+		return chaine
+	}
+	return { from: (table: string) => construire(table) } as unknown as ClientCrm
+}
+
+describe('clavier des gestes d’administration — SPEC-goals §5.5 bis', () => {
+	it('`Échap` ferme le formulaire de CRÉATION et rend le focus à la commande, sans rien écrire', async () => {
+		// Le formulaire remplace sa commande (`aria-pressed`), et le design system referme par
+		// `Échap` toute surface de cette forme — §5.3 quater, §5.3 septies, et la fiche d'un bloc
+		// du même écran. MESURÉ avant correction : la touche était sans effet.
+		const journal: Record<string, unknown>[] = []
+		rendreListe(clientListe([TABLEAU], [], { journal, reponse: ok([]) }))
+		fireEvent.click(await screen.findByTestId('creer-tableau'))
+		expect(document.activeElement).toBe(screen.getByTestId('champ-nom-tableau'))
+		fireEvent.keyDown(screen.getByTestId('champ-nom-tableau'), { key: 'Escape' })
+		await waitFor(() => expect(screen.queryByTestId('formulaire-creation-tableau')).toBeNull())
+		await waitFor(() => expect(document.activeElement).toBe(screen.getByTestId('creer-tableau')))
+		// Renoncer n'envoie RIEN : une fermeture qui aurait créé le tableau serait pire que l'absence.
+		expect(journal).toHaveLength(0)
+	})
+
+	it('`Échap` ferme le formulaire de RENOMMAGE depuis le SECOND champ, et rend le focus à sa commande', async () => {
+		// L'écoute est posée sur le conteneur, jamais sur le premier champ : un raccourci qui ne
+		// fonctionnerait qu'à l'ouverture serait un raccourci qu'on n'apprend pas.
+		const journal: Record<string, unknown>[] = []
+		rendreListe(clientListe([TABLEAU], [], { journal, reponse: ok([]) }))
+		fireEvent.click((await screen.findAllByTestId('renommer-tableau'))[0] as HTMLElement)
+		fireEvent.change(screen.getByTestId('champ-nom-tableau'), { target: { value: 'Autre nom' } })
+		fireEvent.keyDown(screen.getByTestId('champ-description-tableau'), { key: 'Escape' })
+		await waitFor(() => expect(screen.queryByTestId('formulaire-renommage-tableau')).toBeNull())
+		await waitFor(() =>
+			expect(document.activeElement).toBe(screen.getAllByTestId('renommer-tableau')[0]),
+		)
+		expect(journal).toHaveLength(0)
+	})
+
+	it('`Échap` RENONCE à l’archivage : la confirmation se ferme, le focus revient à sa ligne, rien n’est écrit', async () => {
+		// Ici la ligne SURVIT au geste, donc l'ancre est la sienne — c'est le pendant du scénario
+		// suivant, et les deux ensemble disent que l'ancre dépend de l'issue, pas du geste.
+		const journal: Record<string, unknown>[] = []
+		rendreListe(clientListe([TABLEAU], [], { journal, reponse: ok([]) }))
+		fireEvent.click((await screen.findAllByTestId('archiver-tableau'))[0] as HTMLElement)
+		expect(document.activeElement).toBe(screen.getByTestId('confirmer-archivage-tableau'))
+		fireEvent.keyDown(screen.getByTestId('confirmer-archivage-tableau'), { key: 'Escape' })
+		await waitFor(() => expect(screen.queryByTestId('confirmation-archivage-tableau')).toBeNull())
+		await waitFor(() =>
+			expect(document.activeElement).toBe(screen.getAllByTestId('archiver-tableau')[0]),
+		)
+		expect(journal).toHaveLength(0)
+	})
+
+	it('UN ARCHIVAGE CONFIRMÉ REND LE FOCUS À UNE ANCRE QUI EXISTE ENCORE, jamais au document', async () => {
+		// LE MONTAGE EST LA PREUVE : la liste se vide à la relecture, donc la commande « Archiver »
+		// de la ligne — l'ancre d'avant la correction — n'existe plus au moment du retour. MESURÉ
+		// sur la pile réelle avant correction : `document.activeElement` retombait sur `body`, et
+		// le `Tab` suivant repartait du lien d'évitement, en tête de document.
+		const journal: Record<string, unknown>[] = []
+		render(
+			<MemoryRouter>
+				<Objectifs
+					client={clientListeQuiSeVide(TABLEAU, journal, ok([{ id: 'b1', name: TABLEAU.name }]))}
+				/>
+			</MemoryRouter>,
+		)
+		fireEvent.click((await screen.findAllByTestId('archiver-tableau'))[0] as HTMLElement)
+		await act(async () => {
+			fireEvent.click(screen.getByTestId('confirmer-archivage-tableau'))
+		})
+		await waitFor(() => expect(screen.queryAllByTestId('archiver-tableau')).toHaveLength(0))
+		// L'ancre survit au geste, et l'état vide la porte encore (§5.1, DESIGN_SYSTEM §5.29).
+		await waitFor(() => expect(document.activeElement).toBe(screen.getByTestId('creer-tableau')))
+		expect(document.activeElement).not.toBe(document.body)
+		expect(journal).toHaveLength(1)
+		expect(typeof journal[0]?.archived_at).toBe('string')
+	})
+})
