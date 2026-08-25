@@ -23971,9 +23971,24 @@ décisions 500, 503 bis et 505.
 **UNE ATTRIBUTION D'INC-204 ÉTAIT FAUSSE, corrigée sur mesure** : l'entrée rangeait
 `BlocCoutsCard.tsx` sous `CRM-057`, dont il ne relève pas — son en-tête `@spec` cite `CRM-085`.
 
+**CAMPAGNE COMPLÈTE DE FIN DE SESSION, exécutée entière après le changement** : `test:unit`
+**76 fichiers, 2508 tests** ; `test:sql` **52 fichiers, 2531 assertions** ; `typecheck` et `build`
+verts ; `pytest` **244 passés** ; `e2e:api` **858 passés** ; `e2e:mail` **42 passés** ; `e2e:ui`
+**592 passés, 1 échec**.
+
+**L'UNIQUE ROUGE EST INC-166, ET LA LIGNE DE BASE LE DIT.** C'est le scénario clavier de la grille
+champ × étape, `administration-workflows.spec.ts:1116`, qui expire dans `purgerChamps`. Rejoué
+seul : il échoue encore. Le §2.4 a donc été appliqué **sur cette seule preuve** — les trois fichiers
+de cette décision ramenés à leur état d'avant, `npm run build` refait, scénario rejoué : **l'échec
+est présent des deux côtés**. Il est préexistant, étranger, et l'entrée est **remesurée** plutôt que
+réécrite : là où INC-174 le voyait passer seul, il échoue désormais seul aussi, à 36,0 s pour un
+budget de 30. Le seed a été vérifié intact avant de conclure — zéro champ `e2e-wf-%` résiduel, neuf
+champs au workflow par défaut — pour écarter la famille d'INC-209.
+
 **Où reprendre.** INC-204 est close ; INC-130 reste ouverte et appartient à `CRM-076` — sa
 correction tient en un caractère, mais seule cette unité sait si le bloc voulait `text-text` ou
-`text-text-2`. `CRM-062` n'a plus de reste connu. Le constat des décisions 507 et 508 tient :
+`text-text-2`. INC-166 attend toujours son arbitrage, et la mesure du jour réduit les deux options
+à une seule. `CRM-062` n'a plus de reste connu. Le constat des décisions 507 et 508 tient :
 au-delà, aucune unité `[~]` du plan ne porte de comportement livrable sans arbitrage du responsable.
 
 ## décision 510 — `CRM-083` tranche 2 g : le clavier de la liste des tableaux, et les deux défauts qu'il a révélés
