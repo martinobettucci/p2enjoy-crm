@@ -163,7 +163,10 @@ describe('ReglagesIdentitesMail — la liste', () => {
 		await screen.findByTestId('liste-identites-mail')
 		expect(colonnes).not.toContain('secret_id')
 		expect(colonnes).not.toContain('daily_quota')
-		expect(colonnes).not.toContain('signature_html')
+		// `CRM-063` §10.6 — la signature, elle, EST demandée depuis la tranche 3 : l'écran ne peut
+		// pas proposer de la modifier sans montrer celle qui est enregistrée. L'assertion qui
+		// exigeait son absence est RÉVISÉE en celle qui exige sa présence, jamais retirée.
+		expect(colonnes).toContain('signature_text')
 	})
 
 	it('sur une erreur de lecture, propose une reprise qui RELIT réellement', async () => {
@@ -331,7 +334,9 @@ describe('ReglagesIdentitesMail — l’enregistrement', () => {
 		expect('p_password' in recu).toBe(false)
 		expect('p_from_name' in recu).toBe(true)
 		expect('p_daily_quota' in recu).toBe(false)
-		expect('p_signature_html' in recu).toBe(false)
+		// `CRM-063` §10.4 — la signature est TOUJOURS envoyée depuis que la migration 58 l'a rendue
+		// effaçable. Elle a quitté la famille du quota, qui n'a pas bougé.
+		expect('p_signature_text' in recu).toBe(true)
 	})
 
 	// LA LISTE EST RELUE, jamais complétée localement : c'est cette relecture qui rend visibles le

@@ -1876,6 +1876,12 @@ export const fr = {
 	'admin.mailIdentities.field.fromAddress.help':
 		"Changer cette adresse ne renomme pas cette identité : cela en déclare une seconde, et celle-ci demeure.",
 	'admin.mailIdentities.field.fromName': 'Nom d’expéditeur',
+	// La signature — CRM-063 tranche 3 (docs/SPEC-modeles-emails.md §10.6). L'aide dit ce que la
+	// BASE fera, comme celle du mot de passe : elle explique, elle n'empêche pas.
+	'admin.mailIdentities.field.signature': 'Signature',
+	'admin.mailIdentities.field.signature.help':
+		"Ajoutée à la fin de chaque message expédié depuis cette identité, après une ligne de séparation. Videz le champ pour la supprimer.",
+	'admin.mailIdentities.badge.signature': 'Signature',
 	'admin.mailIdentities.field.label': 'Libellé',
 	'admin.mailIdentities.field.host': 'Serveur SMTP',
 	'admin.mailIdentities.field.port': 'Port',

@@ -2,6 +2,9 @@
 // @spec docs/SPEC-mail-subsystem.md §22.3 (ce que l'écran lit), §22.4 (la clé est un TRIPLET),
 //       §22.5 (les champs du formulaire), §22.6 (un mot de passe vide est OMIS), §22.7 (le
 //       contrat mesuré), §22.8 (dictionnaire fermé des refus, et son repli nommé)
+// @spec CRM-063 (docs/BACKLOG.md), tranche 3 — la signature d'une identité sortante
+// @spec docs/SPEC-modeles-emails.md §10.4 (l'effacement : omis conserve, vide efface), §10.6 (le
+//       champ, et le seul écart au §5.35)
 // @spec docs/DESIGN_SYSTEM.md §5.35 (la surface) ; docs/SPEC-permissions-rls.md §7 (refus n° 6)
 // @spec docs/INCONSISTENCY_REPORT.md INC-193 (le corps d'un refus divulgue `secret_id`)
 //
@@ -35,6 +38,7 @@ export type IdentiteSortante = Pick<
 	| 'smtp_username'
 	| 'from_address'
 	| 'from_name'
+	| 'signature_text'
 	| 'is_default'
 	| 'status'
 	| 'last_error'
@@ -49,13 +53,18 @@ export type IdentiteSortante = Pick<
  * l'administratrice** (§22.7). Une requête qui la nommerait ferait échouer la lecture entière de
  * l'écran pour tout le monde.
  *
- * `daily_quota` et `signature_html` en sont absentes aussi : l'écran ne les affiche pas plus qu'il
- * ne les écrit (§22.1). Ne pas lire ce qu'on ne montre pas est la même discipline que ne pas
- * envoyer ce qu'on ne modifie pas.
+ * `daily_quota` en est absente : l'écran ne l'affiche pas plus qu'il ne l'écrit (§22.1). Ne pas
+ * lire ce qu'on ne montre pas est la même discipline que ne pas envoyer ce qu'on ne modifie pas.
+ *
+ * `signature_text` Y EST ENTRÉE AVEC `CRM-063` TRANCHE 3, et la RÉCIPROQUE de cette discipline
+ * l'impose : l'écran ne peut pas proposer de MODIFIER une signature sans montrer celle qui est
+ * enregistrée. Elle n'y était pas tant qu'elle s'appelait `signature_html` et qu'aucun champ ne
+ * l'éditait — le §22.1 refusait le champ parce que la colonne était INEFFAÇABLE, ce que le §10.4
+ * a réparé.
  */
 const COLONNES_IDENTITE = 'id, label, owner_id' as const
 const COLONNES_CONNEXION = 'smtp_host, smtp_port, smtp_security, smtp_username' as const
-const COLONNES_EXPEDITION = 'from_address, from_name, is_default' as const
+const COLONNES_EXPEDITION = 'from_address, from_name, signature_text, is_default' as const
 const COLONNES_ETAT = 'status, last_error, last_checked_at' as const
 
 // LA COMPOSITION EST UN GABARIT `as const`, ET NON UNE CONCATÉNATION : `supabase-js` type la
@@ -63,6 +72,18 @@ const COLONNES_ETAT = 'status, last_error, last_checked_at' as const
 // ce qui ferait retomber la ligne rendue sur `GenericStringError`. Même raison qu'au module jumeau.
 export const COLONNES_IDENTITE_SORTANTE =
 	`${COLONNES_IDENTITE}, ${COLONNES_CONNEXION}, ${COLONNES_EXPEDITION}, ${COLONNES_ETAT}` as const
+
+/**
+ * Une identité porte-t-elle une signature ? — `CRM-063` §10.6.
+ *
+ * LE TEST EST CELUI DE LA BASE, ET NON `!== null` : la migration 58 ramène le vide et le blanc à
+ * `null` à l'écriture (§10.4), mais une donnée posée par une autre voie ne doit pas allumer une
+ * pilule qui promettrait une signature que le destinataire ne verra pas — `app.mail_corps_signe`
+ * rend le corps INCHANGÉ sur une signature blanche. L'écran dit donc la même chose que la garde.
+ */
+export function signatureRenseignee(identite: IdentiteSortante): boolean {
+	return (identite.signature_text ?? '').trim() !== ''
+}
 
 /**
  * Les identités sortantes visibles par l'appelant, triées par adresse d'expédition.
@@ -148,6 +169,14 @@ export type SaisieIdentiteSortante = {
 	readonly adresseExpedition: string
 	/** Vide = le nom d'expéditeur est EFFACÉ, et le paramètre est envoyé vide (§22.5). */
 	readonly nomExpediteur: string
+	/**
+	 * La signature ajoutée à la fin de chaque message expédié depuis cette identité.
+	 *
+	 * Vide = la signature est EFFACÉE, exactement comme le nom d'expéditeur et pour la même raison
+	 * mesurée : le paramètre est TOUJOURS envoyé, et la fonction ramène le vide à `null` (§10.4).
+	 * La borne de deux mille caractères vit en base, et c'est elle qui refuse.
+	 */
+	readonly signature: string
 	readonly parDefaut: boolean
 	/** Vide = le mot de passe enregistré est CONSERVÉ, et le paramètre n'est pas envoyé (§22.6). */
 	readonly motDePasse: string
@@ -251,8 +280,14 @@ export type ResultatEnregistrementIdentite =
  *   INEFFAÇABLE, tandis qu'une chaîne vide est une valeur et l'écrase. Mesuré dans les deux sens ;
  * - **`p_owner_id` est OMIS pour l'identité de service**, et vaut alors son défaut `null` (§22.5).
  *
- * `p_daily_quota` et `p_signature_html` ne sont JAMAIS envoyés : leur `coalesce` les rend
- * ineffaçables, et un champ d'écran qui ne sait pas revenir en arrière est un piège (§22.1).
+ * `p_daily_quota` n'est JAMAIS envoyé : son `coalesce` le rend ineffaçable, et un champ d'écran
+ * qui ne sait pas revenir en arrière est un piège (§22.1).
+ *
+ * **`p_signature_text` EST TOUJOURS ENVOYÉ, y compris vide, ET C'EST UN CHANGEMENT DE RÈGLE**
+ * (`CRM-063` tranche 3, §10.4). Il rejoint `p_from_name` et quitte la famille de `p_daily_quota` :
+ * la migration 58 a remplacé son `coalesce` par trois états — omis conserve, vide EFFACE, rempli
+ * écrit —, si bien que le champ sait désormais revenir en arrière. C'est précisément la réparation
+ * qui autorise le §10.6 à ouvrir le champ que le §22.1 refusait.
  */
 export function argumentsEnregistrementIdentite(
 	saisie: SaisieIdentiteSortante,
@@ -269,6 +304,7 @@ export function argumentsEnregistrementIdentite(
 		p_smtp_username: saisie.identifiant,
 		p_from_address: saisie.adresseExpedition,
 		p_from_name: saisie.nomExpediteur,
+		p_signature_text: saisie.signature,
 		p_is_default: saisie.parDefaut,
 	}
 	if (saisie.idProprietaire !== null) arguments_['p_owner_id'] = saisie.idProprietaire
@@ -333,6 +369,7 @@ export function saisieDepuisIdentite(
 			identifiant: '',
 			adresseExpedition: '',
 			nomExpediteur: '',
+			signature: '',
 			parDefaut: true,
 			motDePasse: '',
 		}
@@ -349,6 +386,9 @@ export function saisieDepuisIdentite(
 		// `from_name` est nullable en base ; le formulaire porte une chaîne, et une absence se saisit
 		// comme un champ vide — qui, envoyé, laissera la colonne vide (§22.5).
 		nomExpediteur: identite.from_name ?? '',
+		// `signature_text` est nullable en base ; le formulaire porte une chaîne, et une absence se
+		// saisit comme un champ vide — qui, envoyé, effacera la colonne (§10.4).
+		signature: identite.signature_text ?? '',
 		parDefaut: identite.is_default,
 		motDePasse: '',
 	}

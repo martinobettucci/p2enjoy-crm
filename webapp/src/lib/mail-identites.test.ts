@@ -25,6 +25,7 @@ import {
 	identiteDe,
 	lireIdentitesSortantes,
 	saisieDepuisIdentite,
+	signatureRenseignee,
 	type IdentiteSortante,
 	type SaisieIdentiteSortante,
 } from './mail-identites'
@@ -43,6 +44,7 @@ const SAISIE: SaisieIdentiteSortante = {
 	identifiant: 'bizdev@p2enjoy.test',
 	adresseExpedition: 'contact@p2enjoy.test',
 	nomExpediteur: '',
+	signature: '',
 	parDefaut: true,
 	motDePasse: '',
 }
@@ -57,6 +59,7 @@ const IDENTITE: IdentiteSortante = {
 	smtp_username: 'bizdev@p2enjoy.test',
 	from_address: 'contact@p2enjoy.test',
 	from_name: null,
+	signature_text: null,
 	is_default: true,
 	status: 'pending',
 	last_error: null,
@@ -129,16 +132,26 @@ describe('lecture des identités sortantes — §22.3', () => {
 	// PREUVE DE REFUS N° 6, côté client, et la mesure est plus dure que pour les comptes entrants :
 	// citer `secret_id` rend `403` même à l'ADMINISTRATRICE (§22.7). Sans cette assertion,
 	// l'ajouter par mégarde ferait échouer la lecture ENTIÈRE de l'écran, pour tout le monde.
-	it('ne demande JAMAIS `secret_id`, ni le quota, ni la signature', () => {
+	//
+	// ASSERTION RÉVISÉE PAR `CRM-063` TRANCHE 3, et le motif est un CHANGEMENT DE RÈGLE, jamais un
+	// contournement (`docs/CloudWorker.md` §3.1). Elle exigeait aussi l'absence de la signature,
+	// parce que le §22.1 refusait le champ — la colonne étant alors INEFFAÇABLE. Le §10.4 a réparé
+	// l'effacement, le §10.6 ouvre le champ, et la RÉCIPROQUE de la discipline s'applique : l'écran
+	// ne peut pas proposer de modifier une signature sans montrer celle qui est enregistrée. La
+	// colonne est donc désormais LUE, et l'assertion qui l'interdisait est remplacée par celle qui
+	// l'exige, plus bas.
+	it('ne demande JAMAIS `secret_id`, ni le quota', () => {
 		expect(COLONNES_IDENTITE_SORTANTE).not.toContain('secret_id')
 		expect(COLONNES_IDENTITE_SORTANTE).not.toContain('daily_quota')
-		expect(COLONNES_IDENTITE_SORTANTE).not.toContain('signature_html')
 	})
 
 	it('demande bien les colonnes que l’écran affiche', () => {
 		for (const colonne of [
 			'from_address',
 			'from_name',
+			// `CRM-063` §10.6 — la signature est LUE : le champ la prérempli, et la liste allume sa
+			// pilule d'après elle.
+			'signature_text',
 			'is_default',
 			'smtp_host',
 			'smtp_port',
@@ -199,15 +212,48 @@ describe('les arguments envoyés — §22.5, §22.6', () => {
 		expect(rempli['p_from_name']).toBe('Driss Lemoine')
 	})
 
-	// Leur `coalesce` les rend ineffaçables : un champ d'écran qui ne sait pas revenir en arrière
-	// est un piège, et l'écran ne les envoie donc jamais (§22.1).
-	it('n’envoie JAMAIS `p_daily_quota` ni `p_signature_html`', () => {
+	// Son `coalesce` le rend ineffaçable : un champ d'écran qui ne sait pas revenir en arrière est
+	// un piège, et l'écran ne l'envoie donc jamais (§22.1).
+	//
+	// ASSERTION RÉVISÉE PAR `CRM-063` TRANCHE 3 : elle couvrait aussi la signature, qui a QUITTÉ
+	// cette famille. La migration 58 a remplacé son `coalesce` par trois états — omis conserve,
+	// vide EFFACE, rempli écrit (§10.4) —, si bien que le champ sait revenir en arrière. Le quota,
+	// lui, n'a pas bougé.
+	it('n’envoie JAMAIS `p_daily_quota`', () => {
 		const arguments_ = argumentsEnregistrementIdentite({
 			...SAISIE,
 			motDePasse: 'x',
 		}) as Record<string, unknown>
 		expect('p_daily_quota' in arguments_).toBe(false)
-		expect('p_signature_html' in arguments_).toBe(false)
+	})
+
+	// LA CONTRE-ÉPREUVE DE LA RÈGLE PRÉCÉDENTE, et elle est indispensable : « toujours envoyé, y
+	// compris vide » ne se prouve que sur le cas VIDE. Envoyé vide, il EFFACE (§10.4) ; omis, il
+	// laisserait la signature en place et le champ vidé n'aurait aucun effet — le piège exact que
+	// le §22.1 dénonçait pour le quota.
+	it('envoie TOUJOURS `p_signature_text`, y compris vide, comme `p_from_name`', () => {
+		const vide = argumentsEnregistrementIdentite({
+			...SAISIE,
+			signature: '',
+		}) as Record<string, unknown>
+		expect('p_signature_text' in vide).toBe(true)
+		expect(vide['p_signature_text']).toBe('')
+
+		const remplie = argumentsEnregistrementIdentite({
+			...SAISIE,
+			signature: 'Driss Lemoine\nP2Enjoy',
+		}) as Record<string, unknown>
+		expect(remplie['p_signature_text']).toBe('Driss Lemoine\nP2Enjoy')
+	})
+
+	// LA PILULE DIT LA MÊME CHOSE QUE LA GARDE, et c'est le seul montage juste : une signature
+	// entièrement blanche rend le corps INCHANGÉ (`app.mail_corps_signe`, §10.3). Une pilule allumée
+	// sur `!== null` promettrait alors une signature que le destinataire ne verra jamais.
+	it('n’allume la pilule de signature que sur une signature RÉELLE', () => {
+		expect(signatureRenseignee({ ...IDENTITE, signature_text: null })).toBe(false)
+		expect(signatureRenseignee({ ...IDENTITE, signature_text: '' })).toBe(false)
+		expect(signatureRenseignee({ ...IDENTITE, signature_text: '  \n ' })).toBe(false)
+		expect(signatureRenseignee({ ...IDENTITE, signature_text: 'Driss Lemoine' })).toBe(true)
 	})
 
 	it('OMET `p_owner_id` pour l’identité de service, et l’envoie sinon', () => {

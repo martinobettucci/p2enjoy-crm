@@ -2177,28 +2177,61 @@ info "Comptes entrants : $comptes_entrants, dont la boîte système — secrets 
 #
 # Le statut reste `pending` : aucune session SMTP n'est ouverte ici (même règle qu'au §2.17).
 
-# `label|owner_id|smtp_username|from_address`
+# LA SIGNATURE EST DÉMONTRÉE PAR LA DIFFÉRENCE, jamais décrite — `CRM-063` tranche 3
+# (`docs/SPEC-modeles-emails.md` §10). Driss SIGNE, l'identité de service NE SIGNE PAS : le jeu de
+# démonstration porte donc les deux états de la colonne, et un écran qui n'allumerait jamais sa
+# pilule — ou qui l'allumerait toujours — se verrait immédiatement.
+#
+# La signature de Driss porte DEUX lignes : une signature d'une seule ligne ne dirait rien de la
+# conservation des retours à la ligne, que le §10.3 garantit et qu'une preuve mesure.
+
+# `label|owner_id|smtp_username|from_address|signature`
 IDENTITES_SORTANTES=(
-	"Identité de service||systeme@$INBOUND_DOMAIN|systeme@$INBOUND_DOMAIN"
-	"Envoi de Driss Lemoine|5eed0000-0000-4000-8000-000000000012|bizdev@$PERSONAL_DOMAIN|contact@$PERSONAL_DOMAIN"
+	"Identité de service||systeme@$INBOUND_DOMAIN|systeme@$INBOUND_DOMAIN|"
+	"Envoi de Driss Lemoine|5eed0000-0000-4000-8000-000000000012|bizdev@$PERSONAL_DOMAIN|contact@$PERSONAL_DOMAIN|Driss Lemoine — Business developer\\nP2Enjoy SAS"
 )
 
 for entree in "${IDENTITES_SORTANTES[@]}"; do
-	IFS='|' read -r mi_label mi_owner mi_user mi_from <<< "$entree"
+	IFS='|' read -r mi_label mi_owner mi_user mi_from mi_signature <<< "$entree"
+	# LE RETOUR À LA LIGNE EST ÉCHAPPÉ DANS LA TABLE, ET C'EST MESURÉ : `read` s'arrête au premier
+	# saut de ligne, si bien qu'une signature écrite sur deux lignes dans le tableau arrivait
+	# TRONQUÉE à sa première — la garde de deux lignes plus bas l'a dénoncé. `printf %b` restitue le
+	# retour à la ligne après la découpe.
+	mi_signature=$(printf '%b' "$mi_signature")
 	code=$(api_admin POST /rest/v1/rpc/upsert_mail_outbound_identity \
 		-d "$(jq -nc --arg ws "$WS_ID" --arg l "$mi_label" --arg u "$mi_user" --arg f "$mi_from" \
-		         --arg p "$MAILBOX_PASSWORD" --arg o "$mi_owner" \
+		         --arg p "$MAILBOX_PASSWORD" --arg o "$mi_owner" --arg s "$mi_signature" \
 		      '{p_workspace_id: $ws, p_label: $l, p_smtp_host: "stalwart", p_smtp_port: 587,
 		        p_smtp_security: "none", p_smtp_username: $u, p_from_address: $f, p_password: $p,
-		        p_owner_id: (if $o == "" then null else $o end), p_is_default: true}')")
+		        p_owner_id: (if $o == "" then null else $o end), p_signature_text: $s,
+		        p_is_default: true}')")
 	attendu "$code" "configuration de l'identité sortante « $mi_label »" 200
 done
+
+# GARDE DE CE QUE LE JEU DOIT DÉMONTRER : exactement UNE identité signe. Une garde sur le seul
+# nombre de lignes laisserait passer un jeu où les deux signent, ou aucune — c'est-à-dire un jeu qui
+# ne démontre plus la différence pour laquelle il est écrit.
+signatures=$(curl -s "$API/rest/v1/mail_outbound_identities?select=signature_text" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+	| jq -r '[.[] | select(.signature_text != null)] | length')
+[ "$signatures" = "1" ] || die "signatures : $signatures identité(s) signent au lieu d'exactement
+        une — le jeu ne démontre plus les deux états de la colonne (CRM-063 §10)."
+
+# ET LA SIGNATURE EST BIEN MULTILIGNE : sans cette garde, un séparateur de champ malencontreux
+# aplatirait les deux lignes en une, et la preuve de conservation des retours à la ligne mesurerait
+# une donnée que le seed n'a plus.
+lignes_signature=$(curl -s "$API/rest/v1/mail_outbound_identities?select=signature_text&signature_text=not.is.null" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+	| jq -r '.[0].signature_text | split("\n") | length')
+[ "$lignes_signature" = "2" ] || die "signature de Driss : $lignes_signature ligne(s) au lieu de 2 —
+        la conservation des retours à la ligne n'est plus démontrée (CRM-063 §10.3)." 
 
 identites_sortantes=$(curl -s "$API/rest/v1/mail_outbound_identities?select=id" \
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
 [ "$identites_sortantes" = "${#IDENTITES_SORTANTES[@]}" ] || die "identités sortantes :
         $identites_sortantes lignes au lieu de ${#IDENTITES_SORTANTES[@]} — le rejeu a dupliqué."
 info "Identités sortantes : $identites_sortantes ; Driss reçoit sur bizdev@ et expédie depuis contact@"
+info "Signatures : une identité signe (Driss, deux lignes), l'identité de service ne signe pas"
 
 # --- 8 octies bis. L'ancienneté dans l'étape est RAFRAÎCHIE — CLAUDE.md §8 -------------------
 #

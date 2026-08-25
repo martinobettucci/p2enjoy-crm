@@ -1378,7 +1378,7 @@ export type Database = {
           last_error: string | null
           owner_id: string | null
           secret_id: string | null
-          signature_html: string | null
+          signature_text: string | null
           smtp_host: string
           smtp_port: number
           smtp_security: string
@@ -1399,7 +1399,7 @@ export type Database = {
           last_error?: string | null
           owner_id?: string | null
           secret_id?: string | null
-          signature_html?: string | null
+          signature_text?: string | null
           smtp_host: string
           smtp_port: number
           smtp_security?: string
@@ -1420,7 +1420,7 @@ export type Database = {
           last_error?: string | null
           owner_id?: string | null
           secret_id?: string | null
-          signature_html?: string | null
+          signature_text?: string | null
           smtp_host?: string
           smtp_port?: number
           smtp_security?: string
@@ -2743,7 +2743,7 @@ export type Database = {
           p_label: string
           p_owner_id?: string
           p_password?: string
-          p_signature_html?: string
+          p_signature_text?: string
           p_smtp_host: string
           p_smtp_port: number
           p_smtp_security: string

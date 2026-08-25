@@ -28,6 +28,7 @@ import {
 	lireIdentitesSortantes,
 	MODES_SECURITE_SORTANTE,
 	saisieDepuisIdentite,
+	signatureRenseignee,
 	type EtatIdentiteSortante,
 	type IdentiteSortante,
 	type IssueEnregistrementIdentite,
@@ -439,6 +440,13 @@ function LigneIdentite({
 			{identite.is_default && (
 				<Badge ton="success">{t('admin.mailIdentities.default')}</Badge>
 			)}
+			{/* LA LISTE NE REND PAS LA SIGNATURE, SEULEMENT SA PRÉSENCE (§10.6). Deux mille
+			    caractères dans une `ul` de lignes détruiraient la densité que le §5.35 tient ; sa
+			    présence, elle, est une information de liste. Pilule NEUTRE : c'est un constat de
+			    configuration, ni un choix comme « Par défaut », ni un état de service (§1). */}
+			{signatureRenseignee(identite) && (
+				<Badge ton="neutre">{t('admin.mailIdentities.badge.signature')}</Badge>
+			)}
 			<span className="text-sm text-text-2 truncate max-w-[22ch]" title={identite.label}>
 				{identite.label}
 			</span>
@@ -576,6 +584,29 @@ function FormulaireIdentite({
 						}
 						className={CLASSES_CHAMP}
 					/>
+				</label>
+
+				<label className={CLASSES_ETIQUETTE}>
+					{t('admin.mailIdentities.field.signature')}
+					{/* NI `required`, NI `maxLength` : la borne de deux mille caractères vit en base
+					    (`mail_outbound_identities_signature_borne`), et c'est elle qui refuse. Une
+					    garde de saisie qui la doublerait ferait DEUX règles pour une (§5.3 ter,
+					    §10.6).
+
+					    TOUJOURS ENVOYÉE, Y COMPRIS VIDE, comme le nom d'expéditeur : la migration 58
+					    a remplacé le `coalesce` par trois états, si bien qu'un champ vidé EFFACE la
+					    signature au lieu de la laisser en place (§10.4). C'est cette réparation qui
+					    autorise le champ que le §22.1 refusait. */}
+					<textarea
+						data-testid="champ-signature-identite"
+						value={saisie.signature}
+						rows={4}
+						onChange={(evenement) => onChangement({ ...saisie, signature: evenement.target.value })}
+						className={[CLASSES_CHAMP, 'min-h-0 py-2 leading-normal'].join(' ')}
+					/>
+					<span className="text-sm text-text-3 max-w-[44ch]">
+						{t('admin.mailIdentities.field.signature.help')}
+					</span>
 				</label>
 
 				<label className={CLASSES_ETIQUETTE}>
