@@ -24180,3 +24180,59 @@ la mesure**, quand la mesure suffit. Il reste au moins deux entrées de cette fo
 `RouteCard.tsx`, renvoyée à `CRM-077`). Aucune n'exige d'arbitrage produit : toutes deux se
 mesurent. `INC-214` reste due — `docs/manual.md` ne porte aucun chapitre sur les objectifs, alors
 que `CRM-082` et `CRM-083` ont livré un écran complet.
+
+## décision 512 — `CRM-063` ouverte : la première unité `[ ]` du plan, et la spécification de sa tranche 1
+
+**Session planifiée du 2026-08-25, ouverte à 10 h 12 UTC.** Choix de l'unité par le §4.2 de
+`docs/CloudWorker.md`, et la relecture demandée par la décision 510 — **sous-point par sous-point**
+— a été faite avant de conclure. Elle rend un constat net : **aucune unité `[~]` du plan ne porte
+plus de comportement livrable**, et cette fois le détail est nommé plutôt qu'affirmé.
+
+| Unité `[~]` | Ce qui la retient | Livrable en session ? |
+|---|---|---|
+| `CRM-001` | un contrôle exigeant un hôte **sans** interception TLS | non, propriété de l'hôte |
+| `CRM-013`, `CRM-014` | deux cibles dues par `CRM-072` / `CRM-073`, quatre preuves dues par d'autres unités | non, ne leur appartient pas |
+| `CRM-034`, `CRM-035`, `CRM-036` | preuves et copies portées par `CRM-018`, arbitrages INC-050/051/052 | non |
+| `CRM-037` | « captures de chaque étape » : sept affaires, une par étape, que le seed ne pose pas — dette de `CRM-046` | non, dépasse l'unité |
+| `CRM-040` | la ligne cite INC-046 comme ouverte ; **MESURÉ à l'application du seed**, « Prospection porte enfin des cards, sur le workflow DÉRIVÉ » et INC-046 est close depuis `CRM-019`. La ligne est **périmée**, pas un reste |
+| `CRM-052` → `CRM-058` | absences **figées par assertion**, chacune portée par une unité nommée ou par un arbitrage | non |
+| `CRM-060` | références mortes et suppression d'un contact (arbitrage §6.4), fil unifié (§12.8, « toujours à arbitrer ») | non |
+| `CRM-062`, `CRM-077`, `CRM-080`, `CRM-081`, `CRM-084`, `CRM-086`, `CRM-089` | preuves de forme déjà soldées, ou arbitrages nommés — INC-173, INC-182, INC-190, rétention de la corbeille | non |
+| `CRM-083` | INC-169 et le point « lecture seule du `viewer` » d'INC-170 (décision 510) | non |
+| `CRM-087` | INC-095, dépendance bloquante avant la première migration d'une production peuplée | non |
+
+La règle 3 s'applique donc, et elle désigne **`CRM-063`** : première unité `[ ]` dans l'ordre du
+plan, chunk 5. Ce n'est pas un choix par défaut — trois unités livrées lui renvoient nommément un
+manque qu'elles ont refusé d'inventer (`CRM-062` §1, `CRM-058`, `CRM-089` §22.1).
+
+**LA SPÉCIFICATION EST ÉCRITE APRÈS MESURE, ET LA MESURE A CORRIGÉ TROIS INTENTIONS.**
+`docs/SPEC-modeles-emails.md`, sept chapitres, committée **avant la première ligne de code** :
+
+1. **`contact.prenom` n'existe pas et n'existera pas ici** : `public.contacts` porte `full_name`,
+   sans séparation. La variable est `contact.nom`, et le §2.4 le dit avec sa source.
+2. **`affaire.etape` ne peut pas venir d'un `label` de `workflow_steps`** : la table n'en porte
+   aucun — le même `42703` que la décision 507 avait relevé. La source est
+   `coalesce(label_override, workflow_nodes_catalog.label)`.
+3. **La lectrice du seed est Farida Nowak**, non Sophie, qui est un **contact**. Le contrat d'API du
+   §2.7 nomme les trois jetons réels.
+
+**LA DÉCISION STRUCTURANTE DE LA TRANCHE 1 : LA LISTE DES VARIABLES EST FERMÉE, ET LE REFUS EST EN
+BASE.** Un modèle portant `{{affaire.montnat}}` s'écrirait sans bruit, et le défaut n'apparaîtrait
+qu'au moment de l'envoi — c'est-à-dire chez le destinataire. `CLAUDE.md` §10 exige d'ailleurs que
+« valide » soit une règle de backend, et la tranche 4 fera écrire des emails par l'**ordonnanceur**,
+qui n'a pas d'écran. La liste vit dans **une seule** fonction `immutable`, appelée par les deux
+contraintes de vérification ; l'écrire deux fois serait garantir qu'elles divergent. La conséquence
+de l'`immutable` est écrite plutôt que découverte : élargir la liste ne revalide pas les lignes
+existantes, ce qui est sans danger dans ce sens, et **en retirer une** laisserait des lignes non
+conformes — la migration qui retirera devra porter sa reprise.
+
+**UN ÉCART TROUVÉ PAR LA MESURE, CONSIGNÉ ET NON CORRIGÉ** (§6, `CLAUDE.md` §18) :
+`mail_outbound_identities.signature_html` existe depuis `CRM-053` et **n'est lue par personne** — ni
+`mail-sync` à l'envoi, ni l'écran de `CRM-089`, qui n'envoie délibérément jamais
+`p_signature_html`. Son nom annonce du **HTML** là où tout le sous-système expédie du **texte**
+(`docs/SPEC-mail-subsystem.md` §18). La colonne est morte et mal nommée ; la corriger est la
+tranche 3, et le nom porte une question de produit qui appartient à sa spécification.
+
+**Où reprendre.** Tranche 1 de `CRM-063` : migration `0055`, suite pgTAP, contrat d'API, seed,
+harnais. La suite est cadrée au §7 de la spécification, chaque tranche à spécifier ligne à ligne
+avant d'être écrite.

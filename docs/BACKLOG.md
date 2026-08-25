@@ -7169,7 +7169,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-060 | Contacts et organisations, historique transverse | `[~]` |
 | CRM-061 | Prochaine action, échéance, vue « Ma journée » | `[x]` |
 | CRM-062 | Relances automatiques des cards figées | `[~]` |
-| CRM-063 | Templates d'emails, signatures, séquences de relance | `[ ]` |
+| CRM-063 | Templates d'emails, signatures, séquences de relance | `[~]` |
 | CRM-064 | @mentions, notifications temps réel et préférences | `[ ]` |
 | CRM-065 | Recherche globale plein texte et palette Cmd+K | `[ ]` |
 | CRM-066 | Analytique de conversion et prévisionnel pondéré | `[ ]` |
@@ -8459,6 +8459,35 @@ preuves, l'écran vérifié visuellement aux quatre paliers, console vierge.
       Deux écarts restent **nommés** plutôt que comblés (§11) : aucune portée « mes affaires » —
       elle demanderait un argument à `public.cards_figees()`, donc une révision du contrat de la
       tranche 1 — et aucune pagination, l'ordre venant du serveur et le volume n'étant pas mesuré.
+
+### CRM-063 — Modèles d'emails, signatures, séquences de relance `[~]`
+
+Trois unités livrées renvoient nommément ici un manque qu'elles ont refusé d'inventer : `CRM-062`
+(« une relance ne part pas par email : cela suppose un modèle, un expéditeur et une cadence »),
+`CRM-058` (« aucune signature ») et `CRM-089` (`p_signature_html` jamais envoyé). L'unité porte les
+**trois objets** et rien d'autre.
+**Spécification** : `docs/SPEC-modeles-emails.md`, écrite le 2026-08-25 **après mesure sur la pile
+debout et seedée**, et committée **avant la première ligne de code** (`CLAUDE.md` §5).
+**DoD** : les objets existent en base avec leurs contraintes, RLS et privilèges ; suite pgTAP
+dédiée ; contrat d'API dédié mesuré avec les jetons réels des trois profils ; seed enrichi et
+convergent ; harnais dédié non complaisant ; écrans livrés et vérifiés visuellement ; manuel
+chapitre **15**, annoncé par le sommaire depuis `CRM-000` et jamais écrit.
+
+**Découpage en quatre tranches, motivé** (§1 de la spécification) — chacune committée et prouvée
+avant la suivante :
+
+- [~] **Tranche 1 — le modèle d'email** : `public.email_templates`, la liste fermée des douze
+      variables et son refus en base, RLS, privilèges, pgTAP, contrat d'API, seed, harnais. C'est
+      l'objet dont les deux autres dépendent. **En cours — voir le détail ci-dessous.**
+- [ ] **Tranche 2 — le rendu et l'écran** : substitution des variables, écran d'administration des
+      modèles, prévisualisation sur une affaire réelle. Elle devra trancher ce qu'un trou dont la
+      source est nulle rend (§7.1).
+- [ ] **Tranche 3 — la signature** : rendre effectif ce que `CRM-053` a posé et que personne
+      n'emploie. `mail_outbound_identities.signature_html` est **morte et mal nommée** — son nom
+      annonce du HTML là où tout le sous-système expédie du texte. Consigné au registre, comportement
+      **inchangé** (§6).
+- [ ] **Tranche 4 — la séquence de relance** : paliers ordonnés, chacun portant un modèle
+      (`on delete restrict`) et un délai, appliqués à une affaire figée au sens de `CRM-062`.
 
 ---
 ### CRM-070 — précision d'arbitrage : l'invitation d'un membre

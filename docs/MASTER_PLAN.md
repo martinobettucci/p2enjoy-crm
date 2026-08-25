@@ -86,6 +86,7 @@ Les commentaires `@spec` citent au minimum l'unité et le chapitre applicable :
 | Formulaires conditionnels | `docs/SPEC-form-composer.md` |
 | Cards, adresse générée, archivage et corbeille | `docs/SPEC-cards.md` |
 | Messagerie | `docs/SPEC-mail-subsystem.md` |
+| Modèles d'emails, signatures, séquences de relance | `docs/SPEC-modeles-emails.md` |
 | Squelette de la webapp, coquille, états | `docs/SPEC-webapp.md` |
 | Données de développement, seed | `docs/SPEC-seed.md` |
 | Types TypeScript générés | `docs/SPEC-types.md` |
