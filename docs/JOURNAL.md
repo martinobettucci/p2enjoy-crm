@@ -24595,6 +24595,31 @@ retenue est celle de **section** — `sed` jusqu'au titre suivant — et non un 
 maintenir. Le harnais rend de nouveau **44 contrôles, aucune anomalie**. Sa ligne de tableau
 manquait au registre : elle est ajoutée, close.
 
+**CAMPAGNE COMPLÈTE EXÉCUTÉE DEUX FOIS, ET ENTIÈREMENT VERTE À LA SECONDE.** `typecheck` et
+`build` verts ; `test:unit` **77 fichiers, 2551 tests** ; `test:sql` **56 fichiers, 2691
+assertions** ; `e2e:api` **893 passés** ; `e2e:ui` **605 passés, 16,2 min** ; `e2e:mail` **42
+passés** ; `pytest` **244 passés**. La première campagne rendait **six** scénarios rouges, tous
+imputables à la session et corrigés à leur cause (voir plus haut) ; la seconde, après correction,
+ne rend aucune anomalie. Les trois compteurs de scénarios sont **dénombrés** par
+`scripts/verify-harness.sh` et concordent : api **893**, ui **605**, mail **42**.
+
+**Harnais rejoués** : `scripts/verify-signature-identite.sh` **33 contrôles, aucune anomalie**, ses
+sept dégradations vues et la restauration constatée ; `scripts/verify-harness.sh --rapide` **31
+contrôles, aucune anomalie**, ce qui certifie les quatre compteurs révisés ;
+`scripts/verify-mail-identites.sh --rapide` **50 contrôles** ; `verify-mail-outbound.sh --rapide`
+**34 contrôles** ; `verify-modeles-emails.sh --rapide` **44 contrôles** — INC-218 close ;
+`verify-mail-resilience.sh --rapide` **45 contrôles** ; toutes sans anomalie.
+
+**UNE MESURE À NE PAS EMBELLIR** : la PREMIÈRE exécution de `scripts/verify-harness.sh --rapide`
+avait rendu « 31 contrôles, 1 anomalie », et sa sortie n'a pas été conservée assez largement pour
+dire LEQUEL des contrôles avait échoué. La seconde exécution, sur le **même arbre**, rend 31
+contrôles sans anomalie. Le fait est consigné tel quel : il n'est ni expliqué, ni requalifié en
+« flottement », et une prochaine session qui verrait ce harnais rougir devrait conserver sa sortie
+ENTIÈRE avant de conclure quoi que ce soit.
+
+**Ce qui n'a PAS été exécuté, et qui est dit** : les quarante-cinq autres `scripts/verify-*.sh`, la
+série entière ne tenant pas dans une session (`docs/CloudWorker.md` §2.1 ter).
+
 **Où reprendre.** `CRM-063` **tranche 4 — la séquence de relance**, cadrée au §7.3 et **à spécifier
 ligne à ligne avant sa première ligne de code**. Elle devra trancher : qui arme une séquence, ce qui
 l'interrompt, et ce qu'une réponse du destinataire produit. Elle posera aussi le `on delete restrict`
