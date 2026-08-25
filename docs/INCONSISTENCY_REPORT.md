@@ -4995,3 +4995,45 @@ ligne de base.
 > doit lire la source **exactement** au périmètre qu'il annonce. Trop étroit, il ne voit pas une
 > dérive ; trop large, il en invente une. Le quatrième défaut du harnais trouvé par le harnais, et
 > le second faux verdict.
+
+## Consigné le 2026-08-25 — un scénario de `e2e/mail` qui échoue en série et passe seul
+
+### INC-219 — `backfill.spec.ts` §« un premier contact ne descend jamais l'historique » échoue dans la série complète, jamais isolé
+
+**Ouverte le 2026-08-25 par `CRM-063` sous-tranche 4a, comportement inchangé** — constat **étranger
+à la sous-tranche** de la session, consigné sans être corrigé au passage (`CLAUDE.md` §18,
+`docs/CloudWorker.md` §3.1).
+
+**Ce qui a été mesuré**, sur la pile debout et seedée, dans cet ordre :
+
+```
+npm run e2e:mail                      => 1 failed, 41 passed
+   [mail] backfill.spec.ts:268 « un premier contact ne descend jamais l'historique,
+                                  même déjà présent et autorisé »
+npm run e2e:mail -- backfill          => 1 passed  (5,1 s)
+npm run e2e:mail                      => 42 passed (1,3 min)
+```
+
+**Le scénario passe seul, et la série entière repasse au tour suivant.** Le second passage complet
+est le **seul** rejeu dépensé (`docs/CloudWorker.md` §4.3), et il rend le verdict vert que la
+campagne de cette session retient.
+
+**Pourquoi ce n'est PAS la sous-tranche de la session.** La sous-tranche 4a ajoute deux tables
+— `mail_sequences`, `mail_sequence_steps` —, huit politiques et un index unique sur
+`mail_templates`. Elle ne touche ni `mail-sync`, ni l'ingestion IMAP, ni le backfill, ni aucune des
+tables que ce scénario lit ou écrit. Aucun chemin ne relie le changement au scénario.
+
+**Ce qui n'est PAS établi, et qui est dit plutôt que supposé** : la cause de l'échec en série. Le
+scénario dépend d'un état que la série construit avant lui — un compte, une boîte, un tour de
+backfill — et « intermittent » n'est pas un diagnostic. Ce qui est établi est seulement qu'il
+échoue en série et passe isolé, ce qui **oriente vers un couplage d'ordre entre scénarios** plutôt
+que vers le backfill lui-même.
+
+**Ce qu'il faut faire, et à qui cela appartient.** La session qui touchera l'ingestion ou le
+backfill doit rejouer `npm run e2e:mail` **plusieurs fois de suite** et isoler l'état partagé : soit
+le scénario pose lui-même l'état qu'il exige, soit la série le lui garantit, mais pas « parfois ».
+Un scénario qui ne rend pas le même verdict selon ce qui l'a précédé finit par être lu comme du
+bruit, et c'est ainsi qu'un vrai défaut passe inaperçu.
+
+**Comportement laissé inchangé** : aucun test n'est désactivé, aucune temporisation n'est ajoutée,
+aucun `retry` n'est posé — ce sont précisément les contournements que `CLAUDE.md` §18 proscrit.
