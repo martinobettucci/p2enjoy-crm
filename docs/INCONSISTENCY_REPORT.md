@@ -190,6 +190,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-120 | La garde des élévations de privilège n'admettait qu'une migration, le dépôt en compte deux — **INC-094 rouverte** | 2026-08-15 | `CRM-002` — garde par propriété mécanique | 363, 428 |
 | INC-121 | Trois compteurs figés de `verify-preuves-refus.sh` périmés de plusieurs unités | 2026-08-15 | `CRM-014` et `CRM-013` (preuves dues), `CRM-008` (calcul des compteurs) | 413, 429 |
 | INC-122 | Deux assertions de `CRM-078` s'appuyaient sur un identifiant que le seed n'épingle pas | 2026-08-15 | `CRM-078`, première tranche | 430 |
+| INC-130 | `text-text-1` n'existe pas dans le CSS produit : le document de comparaison de l'éditeur de workflows HÉRITE la teinte de la mention qui le porte, et rend donc deux couleurs selon un état qu'il ne décrit pas | 2026-08-25 | `text-text` retenu par la décision 511 après relevé des deux héritages sur la pile réelle ; règle au §5.15 de `docs/DESIGN_SYSTEM.md` | 511 |
 | INC-185 | `e2e/ui/inbox.spec.ts` affirme retirer un `card_event` que personne ne peut retirer (403 mesuré) | 2026-08-20 | *ouverte* — arbitrage attendu | 481 |
 | INC-189 | « Alt et flèche REDIMENSIONNENT » d'`Objectifs.test.tsx` échoue par INTERMITTENCE en campagne, et passe seul | 2026-08-20 | *ouverte* — relève de `CRM-081` | 485 |
 | INC-190 | La série complète des `scripts/verify-*.sh` TIENT dans une session en mode `--rapide` — cinq restes de forme du backlog en sont caducs | 2026-08-20 | *ouverte* — constat de méthode | 487 |
@@ -1730,6 +1731,39 @@ n'écrive quoi que ce soit.
 corriger ici rouvrirait cette unité (`CLAUDE.md` §13). La correction tient en un caractère —
 `text-text-1` → `text-text` ou `text-text-2` selon l'intention du bloc —, et c'est précisément
 pourquoi elle doit être faite **par l'unité qui sait laquelle des deux était voulue**.
+
+**ARBITRAGE RENDU LE 2026-08-25 — décision 511, et l'intention s'est TRANCHÉE PAR LA MESURE, non par
+la lecture.** L'entrée ci-dessus renvoyait le choix à « l'unité qui sait », et neuf sessions l'ont lue
+sans pouvoir avancer : `CRM-076` est `[x]`, aucune session ne l'ouvrait, et l'entrée retenait
+`CRM-061` — dont `scripts/verify-ma-journee.sh` rendait *79 contrôles, 1 en échec* pour cette seule
+classe (décision 509). Elle a donc été traitée comme le **préalable** de `CRM-061`
+(`docs/CloudWorker.md` §4.2, premier cas), et non comme une entrée de file de travail.
+
+Ce qui manquait pour trancher n'était pas une intention à deviner, mais une **mesure jamais faite** :
+que rend le bloc aujourd'hui ? Relevé sur la pile seedée avec le jeton réel de l'administratrice,
+`getComputedStyle` sur `comparaison-source-resultat` :
+
+| Mention qui le porte | Encre rendue | Jeton hérité | Contraste sur `--color-bg` |
+|---|---|---|---|
+| `data-divergente="oui"` | `#736e2c` | `--color-accent-on-soft` | 4,95:1 |
+| `data-divergente="non"` | `#4b5563` | `--color-text-2` | 7,11:1 |
+
+**Le fond, lui, était bien posé** — `rgb(247, 248, 250)`, soit `--color-bg` : le bloc a sa surface
+propre et pas son encre, et l'héritage lui donne alors la teinte du cadre. Les deux valeurs tiennent
+l'AA du §8 : **ce n'est pas un défaut de contraste**, c'est un défaut de sens — le document rapporte
+ce qui diffère, et il se teintait de la couleur que le produit réserve à l'avertissement.
+
+La mesure tranche aussi `text-text` **contre** `text-text-2` : les deux couleurs constatées sont
+celles de la mention, si bien que retenir `--color-text-2` figerait l'un des deux héritages et
+laisserait le document se confondre avec le cadre qui l'annonce. Le document est le contenu de
+l'écran ; il prend l'encre du corps du §2, `--color-text` (`#374151`, 9,70:1). La règle est écrite
+au §5.15 de `docs/DESIGN_SYSTEM.md` et vaut au-delà de ce bloc.
+
+**Reste dû au moment où cet arbitrage est committé** : la correction elle-même, et sa vérification
+par le contrôle qui avait dénoncé le défaut — `scripts/lib/classes-css.mjs` sur le CSS réellement
+produit par `npm run build`, qui rend aujourd'hui « 314 citées, absentes : `text-text-1` ». La
+décision est écrite d'abord parce qu'elle est ce qui a manqué neuf sessions durant
+(`CLAUDE.md` §5) ; le code suit dans le commit suivant.
 
 **Deux défauts du même genre ont été trouvés et corrigés dans le même passage**, ceux-là imputables
 à cette session : `mt-0.5`, absent de l'échelle fermée du §3, et `enregistre` — une valeur de phase

@@ -1413,6 +1413,33 @@ décrit le workflow choisi.
   trois genres cessaient d'être distingués pareillement. C'est la limite d'une pilule neutre : elle
   n'existe que par contraste avec ce qui la porte.
 
+- **CETTE SURFACE POSE AUSSI SA COULEUR DE TEXTE, ET C'EST `--color-text` — INC-130, MESURÉE ET
+  CLOSE le 2026-08-25.** Poser un fond sans poser l'encre qui va dessus laisse le document **hériter
+  de la mention**, dont la teinte dit l'état de la SOURCE et non le contenu de la comparaison. Le
+  code le savait et l'écrivait `text-text-1` — un niveau que l'échelle des neutres du §1 ne porte
+  pas : elle nomme `--color-text`, `--color-text-2` et `--color-text-3`, sans `-1`. La classe
+  n'était donc **pas engendrée du tout** (§11), et le document rendait deux couleurs différentes
+  selon un état qu'il ne décrit pas. **Les deux sont relevées sur la pile réelle avec le jeton de
+  l'administratrice**, `getComputedStyle` sur le document lui-même :
+
+  | Mention qui le porte | Encre réellement rendue | Jeton hérité | Contraste sur `--color-bg` |
+  |---|---|---|---|
+  | `data-divergente="oui"` | `#736e2c` | `--color-accent-on-soft` | 4,95:1 |
+  | `data-divergente="non"` | `#4b5563` | `--color-text-2` | 7,11:1 |
+
+  **Ce n'est PAS un défaut de contraste**, et le dire autrement serait plus grave que le défaut :
+  les deux valeurs tiennent l'AA du §8. C'est un défaut de **sens** — le document de comparaison se
+  teinte d'accent, c'est-à-dire de la couleur que ce document réserve à l'avertissement, alors qu'il
+  ne fait que rapporter ce qui diffère.
+
+  **`--color-text` et non `--color-text-2`**, et le choix se tranche par la mesure plutôt que par le
+  goût : les deux valeurs héritées sont celles de la mention, si bien que retenir `--color-text-2`
+  reviendrait à figer l'un des deux héritages et à laisser le document se confondre avec le cadre
+  qui l'annonce. Ce document est le **contenu** de l'écran, pas une note de son cadre : il prend
+  l'encre du corps du §2 (`#374151`, 9,70:1). La règle vaut pour **toute** surface qui pose son
+  propre fond à l'intérieur d'un bloc teinté : poser le fond sans l'encre est un demi-geste, et
+  l'héritage rend alors la teinte du cadre.
+
 - **L'en-tête non comparé est ÉCRIT, pas tu.** Les cinq collections rendues n'incluent pas le nom,
   la portée ni le track — la copie ne les copie pas (§4 ter.3). Afficher un intitulé « Workflow »
   toujours vide enseignerait qu'on a regardé et que c'est identique ; l'écran écrit donc une ligne
