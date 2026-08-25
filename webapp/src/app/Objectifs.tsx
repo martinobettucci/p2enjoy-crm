@@ -8,7 +8,9 @@
 //       tranche 2b-2c : les SUPPRESSIONS — supprimer une flèche depuis la liste des liens,
 //       supprimer un bloc depuis sa fiche, chacune derrière sa confirmation ;
 //       tranche 2c : les TABLEAUX — créer, renommer, réordonner et archiver un tableau depuis sa
-//       liste
+//       liste ;
+//       tranche 2g : le CLAVIER de ces gestes d'administration — `Échap` sur les trois surfaces de
+//       la liste, et une ancre de retour du focus qui survit au geste
 // @spec docs/SPEC-goals.md §2.3 (trois directions ; unicité de la paire — corriger une flèche
 //       existante est une modification, pas un ajout ; `on delete cascade` des deux extrémités)
 // @spec docs/SPEC-goals.md §2.1 (le tableau : nom unique par workspace après normalisation,
@@ -25,6 +27,9 @@
 // @spec docs/SPEC-goals.md §4.1 (le bloc masqué n'est pas rendu, et l'écran ne le nomme jamais)
 // @spec docs/DESIGN_SYSTEM.md §5.29 (bloc, jauge, flèche, focus), §5.8 (états), §8 (clavier),
 //       §5.5 bis (pilule de track réemployée par la pilule de channel)
+// @spec docs/SPEC-goals.md §5.5 bis (le clavier des gestes d'administration d'un tableau :
+//       §5.5 bis.2, l'ancre de retour du focus survit au geste ; §5.5 bis.3, `Échap` referme les
+//       trois surfaces de la liste)
 //
 // CE QUE CES TRANCHES LIVRENT, ET CE QU'ELLES NE LIVRENT PAS — nommé ici plutôt que découvert à
 // l'usage (`CLAUDE.md` §25) :
@@ -50,6 +55,10 @@
 //     la liste du §5.1 — formulaires dans le FLUX du document, commandes d'ordre désactivées aux
 //     extrémités et jamais masquées, confirmation d'archivage qui dit que le tableau quitte la
 //     liste ;
+//   * TRANCHE 2g, LE CLAVIER DE CES GESTES : `Échap` referme le formulaire de création, celui de
+//     renommage et la confirmation d'archivage, depuis n'importe lequel de leurs contrôles ; et le
+//     retour du focus vise une ancre qui SURVIT au geste — la commande de création de l'en-tête
+//     après un archivage confirmé, la commande de la ligne partout ailleurs ;
 //   * NON LIVRÉ, et donc non simulé : DÉSARCHIVER un tableau. Le §5.1 ne décrit qu'une liste des
 //     tableaux non archivés, et aucun écran ne rend un tableau archivé : poser la commande
 //     supposerait d'abord une surface où le retrouver, qu'aucune unité ne spécifie. La confirmation
@@ -355,11 +364,21 @@ function ListeTableaux({
 		[client, tableaux, traiter],
 	)
 
+	// @spec CRM-083 (docs/BACKLOG.md) — tranche 2 g, le clavier des gestes d'administration
+	// @spec docs/SPEC-goals.md §5.5 bis.2 ; docs/DESIGN_SYSTEM.md §5.29 (administration des tableaux)
+	//
+	// LE FOCUS REVIENT À « creer », ET NON À LA COMMANDE QUI A OUVERT LA CONFIRMATION. C'est le seul
+	// geste de cet écran qui détruise la ligne portant sa propre commande : MESURÉ, viser
+	// `archiver-<id>` rendait le focus à un bouton que la relecture démontait aussitôt,
+	// `document.activeElement` retombait sur `body`, et le `Tab` suivant repartait du lien
+	// d'évitement, en tête de document. La commande de création est rendue en toute circonstance,
+	// liste vide comprise. Le retour à `archiver-<id>` reste correct pour l'ANNULATION et pour
+	// `Échap`, où la ligne survit — d'où deux ancres et non une.
 	const archiver = useCallback(
 		async (id: string) => {
 			setMessage({ ton: 'attente', texte: t('goals.write.saving') })
 			const resultat = await archiverTableau(client, id)
-			if (traiter(resultat, t('goals.board.archived'))) fermer(`archiver-${id}`)
+			if (traiter(resultat, t('goals.board.archived'))) fermer('creer')
 		},
 		[client, traiter, fermer],
 	)
@@ -619,6 +638,17 @@ function FormulaireNomTableau({
 				evenement.preventDefault()
 				onValider(nom, description)
 			}}
+			/* @spec CRM-083 (docs/BACKLOG.md) — tranche 2 g
+			   @spec docs/SPEC-goals.md §5.5 bis.3 ; docs/DESIGN_SYSTEM.md §5.29
+			   `Échap` referme le formulaire depuis N'IMPORTE lequel de ses champs et rend le focus à
+			   la commande qui l'a ouvert — le patron exact de la fiche d'un bloc du même écran, posé
+			   sur le conteneur et non sur chaque contrôle : un raccourci qui ne fonctionnerait que
+			   sur le premier champ serait un raccourci qu'on n'apprend pas. */
+			onKeyDown={(evenement) => {
+				if (evenement.key !== 'Escape') return
+				evenement.preventDefault()
+				onAnnuler()
+			}}
 		>
 			<p className="font-medium">{titre}</p>
 			<label className="flex flex-col gap-1 text-sm">
@@ -683,7 +713,21 @@ function ConfirmationArchivageTableau({
 		action.current?.focus()
 	}, [])
 	return (
-		<div data-testid="confirmation-archivage-tableau" className="flex flex-col gap-2 p-4">
+		<div
+			data-testid="confirmation-archivage-tableau"
+			className="flex flex-col gap-2 p-4"
+			/* @spec CRM-083 (docs/BACKLOG.md) — tranche 2 g
+			   @spec docs/SPEC-goals.md §5.5 bis.3 ; docs/DESIGN_SYSTEM.md §5.29
+			   `Échap` renonce à l'archivage et rend le focus à la commande qui a ouvert la
+			   confirmation — la ligne est encore là, l'ancre est donc la sienne. Une confirmation
+			   dont on ne pourrait sortir qu'en atteignant « Annuler » opposerait à la même touche
+			   une convention contraire à celle de la fiche d'un bloc. */
+			onKeyDown={(evenement) => {
+				if (evenement.key !== 'Escape') return
+				evenement.preventDefault()
+				onAnnuler()
+			}}
+		>
 			<p className="font-medium">{t('goals.board.archive.confirm.title', { nom })}</p>
 			<p className="text-sm text-text-2">{t('goals.board.archive.confirm.body')}</p>
 			<div className="flex flex-wrap gap-2">
