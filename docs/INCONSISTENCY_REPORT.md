@@ -210,7 +210,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-205 | `e2e/mail/ingestion.spec.ts`, puis `e2e/mail/dossiers.spec.ts`, échouent en CAMPAGNE et passent seuls — même famille qu'INC-128 et INC-172. Quatre campagnes enchaînées le 2026-08-24 : deux échecs sur deux scénarios DIFFÉRENTS, puis deux campagnes vertes, sans qu'une ligne du dépôt ne bouge | 2026-08-24 | **ouverte** — comportement inchangé, étrangère à `CRM-062` | 504, 505 |
 | INC-206 | `docs/SPEC-relances.md` renvoyait, depuis la tranche 1, à un « chapitre 30 » de `docs/manual.md` qui n'existe pas et ne peut pas exister — le manuel numérote de 1 à 6 avec des suffixes latins | 2026-08-24 | **close** — référence corrigée en `3 quinquies` par la tranche 3, motif au §10.13 | 506 |
 | INC-207 | La tranche 2 de `CRM-062` écrit un événement `stalled` que le fil d'une affaire rend **« Événement »** : le type n'est ni nommé, ni rangé, ni traduit | 2026-08-24 | **close par livraison** — la sous-tranche 3b le nomme, §10.3 | 506 |
-| INC-209 | **DEUX preuves d'interface ne sont pas rejouables** : `commentaires-gestes.spec.ts` laisse le commentaire qu'il publie, `administration-arborescence.spec.ts` laisse le track `cree-par-admin` qu'il crée. `apply-seed.sh` est convergent sur les seules lignes `5eed…` et ne les retire donc pas — une seconde campagne dans la même session rend un verdict rouge qui ne dit rien du produit | 2026-08-24 | **ouverte** — comportement inchangé, étrangère à `CRM-062` ; appartient à `CRM-043` et `CRM-075` | 506 |
+| INC-209 | **DEUX preuves d'interface ne sont pas rejouables** : `commentaires-gestes.spec.ts` laisse le commentaire qu'il publie, `administration-arborescence.spec.ts` laisse le track `cree-par-admin` qu'il crée. `apply-seed.sh` est convergent sur les seules lignes `5eed…` et ne les retire donc pas — une seconde campagne dans la même session rend un verdict rouge qui ne dit rien du produit | 2026-08-24 | **close** — les DEUX cas corrigés et mesurés rejouables, décision 508 | 506, 508 |
 | INC-208 | Les **six** routes transverses — `/ma-journee`, `/contacts`, `/couts`, `/objectifs`, `/affaires-figees`, `/reglages` — écrivent « Aucun channel » là où il n'y a pas de track courant : un manque énoncé pour une absence de contexte | 2026-08-24 | **ouverte** — comportement inchangé, étrangère à `CRM-062` ; arbitrage attendu | 506 |
 | INC-210 | La migration 44 n'a pas la SECONDE garde d'INC-144 : depuis que `CRM-062` écrit `stalled`, tout rejeu du répertoire sur une base dont la contrainte a été réduite s'arrête en `23514` sur la 44, et les migrations 45 à 54 ne s'appliquent plus. La pile reste avec un vocabulaire amputé et toute trace serveur est refusée | 2026-08-25 | **close** — seconde garde posée par la décision 507, imputable à `CRM-062` | 507 |
 | INC-211 | `scripts/verify-move-card.sh` rend « la restauration n'a pas rétabli l'état initial » EN SÉRIE et **57 contrôles, aucune anomalie** rejoué seul, seed reposé — la dégradation `b`, qui emploie la MÊME restauration, est verte dans le même passage | 2026-08-25 | *ouverte* — cause non établie, comportement inchangé, relève de `CRM-034` | 507 |
@@ -5046,3 +5046,41 @@ bruit, et c'est ainsi qu'un vrai défaut passe inaperçu.
 
 **Comportement laissé inchangé** : aucun test n'est désactivé, aucune temporisation n'est ajoutée,
 aucun `retry` n'est posé — ce sont précisément les contournements que `CLAUDE.md` §18 proscrit.
+
+---
+
+### INC-209 — CLOSE le 2026-08-25 : les deux preuves sont rejouables, et c'est MESURÉ des deux côtés
+
+Sur demande explicite du responsable, les deux cas de cette entrée sont corrigés — décision 508.
+
+**PREMIER CAS, `e2e/ui/commentaires-gestes.spec.ts`.** Les deux voies que l'entrée nommait ne
+s'excluaient pas : elles règlent chacune une moitié, et les deux sont posées.
+
+- **Les locators sont PORTÉS SUR LEUR CARTE.** Trois assertions désignaient
+  `page.getByTestId('actions-commentaire')` sans portée : la première comptait `1` sur toute la
+  page, la deuxième `0`, la troisième exigeait son opacité. Chacune ne tenait que tant que Camille
+  n'avait **qu'un** commentaire sur l'affaire. Les trois sont **révisées, jamais relâchées**
+  (mécanisme de la décision 51) — et la première dit désormais la règle qu'elle voulait dire, plus
+  strictement qu'avant : la carte publiée porte ses actions, et **aucune carte d'un autre auteur**
+  n'en porte, ce que le compte absolu ne vérifiait pas.
+- **Le fichier reprend ce qu'une exécution INTERROMPUE laisse.** Chaque scénario efface déjà son
+  commentaire dans son `finally` ; un `pkill` ou un plafond de temps n'exécute aucun `finally`. Un
+  `beforeEach` retire donc les commentaires non seedés des deux affaires du fichier, et **constate**
+  le résultat plutôt que de le supposer.
+
+**LE PREMIER FILET ÉCRIT NE NETTOYAIT RIEN, ET UNE SONDE L'A ÉTABLI.** Écrit
+`id=not.like.5eed*`, il ne pouvait pas fonctionner : `id` est un `uuid`, et PostgREST n'applique
+`like` qu'à du texte. MESURÉ — un commentaire sonde posé en base a **survécu** au `beforeEach`. Le
+filtre porte désormais sur ce que le seed pose réellement, relevé en base : **aucun** commentaire
+seedé ne vit sur `…0c2`, un seul sur `…0c4` (`…0d4`). Sonde reposée : elle ne survit plus.
+
+**Preuve de rejouabilité** : le fichier lancé **deux fois de suite**, sans rien nettoyer entre les
+deux, rend `8 passés` puis `8 passés`. `scripts/verify-commentaires.sh` rend **54 contrôles, aucune
+anomalie** derrière.
+
+**SECOND CAS, `e2e/ui/administration-arborescence.spec.ts` : déjà corrigé, et vérifié ici.** Le
+fichier purge désormais par slug dans son `finally`, et à l'entrée de chaque scénario contre le
+`23505` d'une exécution tuée. MESURÉ le 2026-08-25 : deux passages consécutifs rendent `8 passés`
+et `8 passés`, la base ne portant **aucun** track non seedé derrière — le `cree-par-admin` que
+l'entrée citait n'existe plus. `e2e/ui/authentification.spec.ts`, dont les deux échecs étaient la
+conséquence, rend **8 passés**.
