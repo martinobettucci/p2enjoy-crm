@@ -370,9 +370,18 @@ select lives_ok(
 	       where card_id = '5eed0000-0000-4000-8000-0000000000cf' and status = 'active')) $$,
 	'30. Le geste explicite ferme une inscription active');
 
+-- LA TABLE N'EST PAS VIERGE, ET C'EST VOULU. `e2e/api/armement-sequences.spec.ts` laisse derrière
+-- lui les inscriptions qu'il a FERMÉES : une inscription est une TRACE, on la ferme, on ne l'efface
+-- pas (§12.10), et aucune suppression n'est exposée à personne. Les lectures qui suivent visent donc
+-- LA PLUS RÉCENTE ligne de l'affaire — la sienne —, jamais « la ligne de cette affaire ».
+--
+-- MESURÉ : écrite sans cette précaution, l'assertion meurt en « more than one row returned by a
+-- subquery » dès qu'un contrat d'API a tourné avant elle. Ce n'était pas un défaut du produit, mais
+-- une suite qui supposait une table vide.
 select is(
 	(select status || '/' || closed_reason from public.card_sequence_enrollments
-	  where card_id = '5eed0000-0000-4000-8000-0000000000cf'),
+	  where card_id = '5eed0000-0000-4000-8000-0000000000cf'
+	  order by created_at desc limit 1),
 	'closed/manual',
 	'31. FIN 3 sur 4 — `manual` : l''inscription est fermée et le motif la nomme (§12.7)');
 
@@ -381,12 +390,14 @@ select is(
 select lives_ok(
 	$$ select public.interrompre_sequence_relance(
 	     (select id from public.card_sequence_enrollments
-	       where card_id = '5eed0000-0000-4000-8000-0000000000cf')) $$,
+	       where card_id = '5eed0000-0000-4000-8000-0000000000cf'
+	       order by created_at desc limit 1)) $$,
 	'32. IDEMPOTENTE — fermer une inscription déjà fermée ne lève RIEN');
 
 select is(
 	(select closed_reason from public.card_sequence_enrollments
-	  where card_id = '5eed0000-0000-4000-8000-0000000000cf'),
+	  where card_id = '5eed0000-0000-4000-8000-0000000000cf'
+	  order by created_at desc limit 1),
 	'manual',
 	'33. Et la ligne est INCHANGÉE — le second geste n''a rien réécrit');
 
@@ -444,19 +455,22 @@ select lives_ok(
 
 select is(
 	(select status || '/' || closed_reason from public.card_sequence_enrollments
-	  where card_id = '5eed0000-0000-4000-8000-0000000000c3' and status = 'closed'),
+	  where card_id = '5eed0000-0000-4000-8000-0000000000c3' and status = 'closed'
+	  order by created_at desc limit 1),
 	'closed/reply',
 	'38. FIN 1 sur 4 — `reply` : une réponse TERMINE l''inscription (§12.6)');
 
 select is(
 	(select last_position from public.card_sequence_enrollments
-	  where card_id = '5eed0000-0000-4000-8000-0000000000c3'),
+	  where card_id = '5eed0000-0000-4000-8000-0000000000c3'
+	  order by created_at desc limit 1),
 	null,
 	'39. Et AUCUN palier n''est parti — fermer précède envoyer, sinon on relance qui a répondu');
 
 select is(
 	(select status || '/' || closed_reason from public.card_sequence_enrollments
-	  where card_id = '5eed0000-0000-4000-8000-00000000d010' and status = 'closed'),
+	  where card_id = '5eed0000-0000-4000-8000-00000000d010' and status = 'closed'
+	  order by created_at desc limit 1),
 	'closed/card_ineligible',
 	'40. FIN 2 sur 4 — `card_ineligible` : sortir de `cards_figees()` termine l''inscription');
 
@@ -468,7 +482,8 @@ select is(
 
 select is(
 	(select last_position from public.card_sequence_enrollments
-	  where card_id = '5eed0000-0000-4000-8000-0000000000c4' and status = 'active'),
+	  where card_id = '5eed0000-0000-4000-8000-0000000000c4' and status = 'active'
+	  order by created_at desc limit 1),
 	1,
 	'41. Le palier 1 est parti — trois jours écoulés depuis l''armement (§12.5)');
 
@@ -490,7 +505,8 @@ select is(
 
 select is(
 	(select status || '/' || closed_reason from public.card_sequence_enrollments
-	  where card_id = '5eed0000-0000-4000-8000-0000000000c4' and status = 'closed'),
+	  where card_id = '5eed0000-0000-4000-8000-0000000000c4' and status = 'closed'
+	  order by created_at desc limit 1),
 	'closed/exhausted',
 	'44. FIN 4 sur 4 — `exhausted` : le DERNIER palier expédié ferme l''inscription (§12.7)');
 
@@ -504,7 +520,8 @@ select is(
 -- comptant les messages : un compte figé rougirait le jour où la suite ferait partir un palier de
 -- plus, sans que la règle ait bougé d'un iota.
 select is(
-	(select count(*)::integer from public.mail_outbox where created_by is not null),
+	(select count(*)::integer from public.mail_outbox
+	  where created_by is not null and created_at >= (select min(armed_at) from public.card_sequence_enrollments)),
 	0,
 	'45. AUCUN message mis en file par le job ne porte d''auteur — l''acteur est obtenu (§9.5)');
 

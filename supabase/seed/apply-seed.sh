@@ -3668,6 +3668,30 @@ modele_p3=$(curl -s "$API/rest/v1/mail_sequence_steps?select=template_id&sequenc
 info "Séquence de relance : $sequences_mail — $paliers_mail paliers à J+3, J+10 et J+24, le
       troisième réemployant le modèle du premier — CRM-063, docs/SPEC-modeles-emails.md §11.9"
 
+# TROISIÈME GARDE — LE SEED N'ARME AUCUNE INSCRIPTION, et ce n'est PAS un oubli
+# (`docs/SPEC-modeles-emails.md` §12.12, sous-tranche 4b).
+#
+# Une inscription armée sur le jeu de démonstration serait exécutée par
+# `app.executer_sequences_relance()` dès le premier passage — DIX SECONDES après le démarrage de la
+# pile, par la cadence d'amorçage du §12.9 —, et des messages de relance partiraient RÉELLEMENT chez
+# les adresses du seed. C'est la pollution que la décision 516 a payée pour apprendre : une ligne de
+# file laissée derrière, `mail-sync` qui expédie vraiment, et six scénarios d'interface rouges pour
+# une raison sans rapport avec leur objet.
+#
+# Le jeu de démonstration doit MONTRER, pas EXPÉDIER. L'armement est exercé par les preuves —
+# `e2e/api/armement-sequences.spec.ts` —, qui arment, mesurent et referment dans un `finally`.
+#
+# Cette garde attrape DEUX choses : un seed qui armerait par mégarde, et une preuve qui aurait
+# oublié de refermer ce qu'elle a armé.
+inscriptions_actives=$(curl -s "$API/rest/v1/card_sequence_enrollments?select=id&status=eq.active" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
+[ "$inscriptions_actives" = "0" ] || die "inscriptions de séquence ACTIVES : $inscriptions_actives au
+        lieu de 0 — le seed n'en arme aucune (docs/SPEC-modeles-emails.md §12.12), et une preuve a
+        laissé la sienne ouverte. Le job la ferait partir au prochain démarrage de la pile."
+
+info "Aucune inscription de séquence armée : le jeu de démonstration MONTRE une cadence, il ne
+      l'EXPÉDIE pas — CRM-063, docs/SPEC-modeles-emails.md §12.12"
+
 # --- 9. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
 # Rappel volontaire, affiché à chaque exécution, et **mis à jour par `CRM-020`** : peupler la base
 # ne la rend pas lisible pour autant. L'état réel est désormais mixte, et le dire faux dans un sens

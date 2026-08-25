@@ -15,6 +15,33 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **LES RELANCES AUTOMATIQUES PARTENT VRAIMENT** (`CRM-063` sous-tranche 4b, migration 60,
+  `docs/SPEC-modeles-emails.md` §12, `docs/SCHEMA.md` §7). La sous-tranche 4a avait livré la
+  cadence — un objet éditorial que personne n'appliquait. Celle-ci livre l'**application** : on
+  arme une cadence sur une affaire qui dort, et les messages partent tout seuls, à la cadence
+  prévue, jusqu'à ce que quelque chose y mette fin.
+
+  **Armer est un GESTE, et il choisit l'adresse expéditrice.** Le workspace porte plusieurs
+  identités sortantes et la séquence n'en porte aucune : aucun automatisme ne peut choisir entre
+  elles sans inventer une règle arbitraire. L'affaire doit être **figée** au sens de `CRM-062`, et
+  une affaire ne porte **qu'une inscription active à la fois** — deux cadences armées enverraient
+  deux messages le même jour.
+
+  **Une réponse du destinataire ARRÊTE la relance.** C'est le seul défaut qu'un système de relance
+  ne doit jamais avoir : relancer quelqu'un qui vient de répondre. La détection est ancrée sur
+  l'instant où le produit a **vu** le message, et non sur la date que son en-tête déclare — celle-ci
+  est vide sur tous les messages du jeu de démonstration.
+
+  **Déplacer l'affaire d'étape, l'endormir, l'archiver ou la mettre en corbeille arrête aussi la
+  relance** — par un seul et même mécanisme, l'affaire cessant alors d'être « figée ». Aucune de
+  ces quatre règles n'est réécrite : elles étaient déjà là, et la relance s'y adosse.
+
+  **Un seul message part par passage**, même si plusieurs paliers sont échus : un système resté
+  arrêté trois jours ne déverse pas trois relances d'un coup chez le destinataire.
+
+  Le jeu de démonstration **n'arme aucune cadence**, et c'est délibéré : il montrerait la
+  fonctionnalité en expédiant réellement des messages aux adresses de démonstration.
+
 - **LES SÉQUENCES DE RELANCE EXISTENT EN BASE** (`CRM-063` sous-tranche 4a, migration 59,
   `docs/SPEC-modeles-emails.md` §11, `docs/SCHEMA.md` §7). Une séquence est une **cadence
   éditoriale nommée** : « au bout de trois jours, envoyer ce texte ; sept jours après, celui-là ;

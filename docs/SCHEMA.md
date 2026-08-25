@@ -807,7 +807,44 @@ File d'envoi persistante. **Livrée par `CRM-058`** (migration 30). Aucune écri
 | Table | Contenu |
 |---|---|
 | `mail_folder_map` | Correspondance entre une card/channel/track et le chemin IMAP réellement créé, par compte |
-| `card_sequence_enrollments` | Inscription d'une card à une cadence, arrêtée dès qu'une réponse arrive — **non livrée**, `CRM-063` sous-tranche 4b |
+| `card_sequence_enrollments` | Inscription d'une card à une cadence, arrêtée dès qu'une réponse arrive — **LIVRÉE le 2026-08-25** par `CRM-063` sous-tranche 4b, migration 60. Voir le détail ci-dessous |
+
+### `card_sequence_enrollments` — l'inscription d'une affaire à une cadence (`CRM-063` sous-tranche 4b, migration 60)
+
+Spécification : `docs/SPEC-modeles-emails.md` §12. **Livrée le 2026-08-25** ; cette table était
+annoncée par le présent chapitre depuis `CRM-000`, avec sa définition en une ligne — « arrêtée dès
+qu'une réponse arrive » —, et la mesure du §12.1 n'a fait que confirmer ce que cette ligne disait.
+
+| Colonne | Type | Contraintes |
+|---|---|---|
+| `id`, `workspace_id` | `uuid` | |
+| `card_id` | `uuid` | FK composite `(card_id, workspace_id)` → `cards` **`on delete cascade`** |
+| `sequence_id` | `uuid` | FK composite → `mail_sequences` **`on delete restrict`** |
+| `identity_id` | `uuid` | FK → `mail_outbound_identities` **`on delete restrict`** — la séquence n'en porte aucune (§11.2), l'armement la choisit |
+| `armed_by` | `uuid` | FK `profiles` `on delete set null`. **Trace, jamais un droit** |
+| `armed_at` | `timestamptz` | ancre du **premier palier** ET borne de la détection de réponse |
+| `last_position`, `last_sent_at` | `integer`, `timestamptz` | dernier palier expédié et son instant. **Nuls ensemble ou renseignés ensemble** (`card_sequence_enrollments_progression_coherente`) : une position sans son instant ne saurait pas quand le palier suivant est dû |
+| `status` | `text` | `active` ou `closed`, et **il n'y a pas de troisième valeur** — `closed_reason` dit pourquoi |
+| `closed_reason` | `text` | `reply`, `card_ineligible`, `manual`, `exhausted` — les quatre fins du §12.7 |
+| `closed_at` | `timestamptz` | non nul **si et seulement si** `status = 'closed'` (`card_sequence_enrollments_fermeture_coherente`) |
+
+**Aucune colonne `next_due_at`** : l'échéance se **dérive** de `last_sent_at` (ou d'`armed_at`) et du
+`delai_jours` du palier suivant. Une colonne recopiée serait la seconde source de vérité que le §9.4
+de `docs/SPEC-relances.md` a déjà refusée.
+
+**Index unique PARTIEL** `card_sequence_enrollments_active_unique` sur `(card_id) where status =
+'active'` : **une seule inscription active par affaire**, et autant de fermées que son histoire en
+compte. Deux cadences armées enverraient deux messages le même jour sans qu'aucune contrainte ne le
+voie.
+
+**Écriture fermée à TOUT LE MONDE**, comme `mail_outbox` et pour la même raison. Une seule politique,
+de **lecture** — `app.can_read_card(card_id)`. Les trois portes sont
+`public.armer_sequence_relance(uuid, uuid, uuid)` (huit refus), `public.interrompre_sequence_relance(uuid)`
+(idempotente) et `app.executer_sequences_relance()`, le job quotidien `p2enjoy-sequences-relance`.
+
+**`app.mail_outbox_inserer`** est, depuis cette migration, la **seule ligne d'insertion** dans
+`mail_outbox` : `queue_outbound_email` la délègue, et le job l'emprunte. La règle « ce qui est stocké
+est ce qui part » (§10.3) garde ainsi une définition unique.
 
 ### `mail_templates` — modèle d'email (`CRM-063` tranche 1, migration 55)
 
