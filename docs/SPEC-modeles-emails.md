@@ -1591,10 +1591,51 @@ public.armer_sequence_relance(p_card_id uuid, p_sequence_id uuid, p_identity_id 
 | d | La séquence ne porte **aucun palier** | `23514` `sequence_empty` | Une cadence vide n'enverrait jamais rien, et l'inscription serait un objet mort |
 | e | L'identité n'est pas empruntable par l'appelant | `42501` `identity_not_available` | Règle reprise **telle quelle** de `queue_outbound_email` : la sienne, ou celle de service s'il est administrateur |
 | f | La card n'est pas figée au sens de `public.cards_figees()` | `23514` `card_not_stalled` | §12.2 |
-| g | La card n'a pas d'adresse (`email_local_part` nul) | `23514` `card_not_available` | Reprise de `queue_outbound_email` : une relance dont la réponse ne reviendrait nulle part est pire qu'un refus |
+| g | L'adresse de réponse de la card **ne se compose pas** | `23514` `card_not_available` | Reprise de `queue_outbound_email` : une relance dont la réponse ne reviendrait nulle part est pire qu'un refus. **Ce qui la fait tomber est mesuré au §12.4 bis, et ce n'est pas `email_local_part`** |
 | h | Une inscription **active** existe déjà sur cette card | `23505` `enrollment_exists` | L'index unique partiel du §12.3, opposé **avant** l'insertion pour que le refus porte un nom |
 
 Elle rend l'`id` de l'inscription créée.
+
+#### 12.4 bis CE QUI FAIT TOMBER LE REFUS (g), et la moitié de sa condition qui est MORTE
+
+Le refus (g) est repris de `queue_outbound_email`, qui le teste ainsi depuis la migration `0030` :
+
+```sql
+select c.email_local_part || '@' || w.inbound_domain into v_adresse
+  from public.cards c join public.workspaces w on w.id = c.workspace_id
+ where c.id = p_card_id and c.email_local_part is not null;
+if v_adresse is null then …
+```
+
+**MESURÉ le 2026-08-25, et la mesure corrige ce que la lecture du code suggère** :
+
+```
+cards.email_local_part        nullable = NO      ← contrainte NOT NULL
+workspaces.inbound_domain     nullable = YES
+cards sans adresse            = 0
+```
+
+Le prédicat `c.email_local_part is not null` **ne peut donc jamais être faux** : la colonne porte une
+contrainte `not null`, et une sonde qui tente de l'effacer est refusée par la base avant d'atteindre
+la fonction. Cette moitié de la condition est **morte**.
+
+Ce qui fait réellement tomber le refus est l'autre moitié, et elle est **implicite** : la
+concaténation `c.email_local_part || '@' || w.inbound_domain` rend `NULL` dès que `inbound_domain`
+est nul — et cette colonne-là, elle, est nullable. **Sonde, transaction annulée** :
+
+```
+update public.workspaces set inbound_domain = null where id = …;
+perform public.armer_sequence_relance(…);
+=> REFUS g card_not_available (inbound_domain NUL) : 23514 / card_not_available
+```
+
+Le refus est donc **atteignable et utile**, mais pour une raison que son `where` ne dit pas. La ligne
+du contrat le dit désormais, plutôt que de laisser une prochaine session conclure d'une lecture
+rapide que le refus est mort et le retirer. `armer_sequence_relance` conserve la forme de
+`queue_outbound_email` **à l'identique** : deux gardes qui divergeraient sur le même fait seraient
+pires qu'une garde dont une moitié est redondante. Le prédicat redondant de la migration `0030` est
+**étranger à cette sous-tranche** et consigné au registre plutôt que corrigé au passage
+(`CLAUDE.md` §3.1).
 
 **`public.interrompre_sequence_relance(p_enrollment_id uuid) returns void`** ferme une inscription
 active avec `closed_reason = 'manual'`. Deux refus : `not_authenticated` (`42501`), et `forbidden`
