@@ -158,22 +158,47 @@ $$;
 -- 3. `public.mail_sequence_steps` — le palier — §11.4
 -- =============================================================================================
 
+-- AUCUNE CLÉ ÉTRANGÈRE N'EST DÉCLARÉE EN LIGNE ICI, ET C'EST UNE DÉCISION MESURÉE.
+--
+-- `create table if not exists` est un NO-OP sur une table qui existe déjà. Toute règle déclarée en
+-- ligne n'est donc posée que sur une base NEUVE : sur une base déjà migrée, la modifier ici ne la
+-- répare JAMAIS, et la divergence est muette. Le harnais dédié l'a trouvé le 2026-08-25 en
+-- dégradant `on delete restrict` en `on delete cascade` — la suite pgTAP est restée VERTE, parce
+-- que la base avait conservé le `restrict` de sa création.
+--
+-- Une dégradation qui ne dégrade pas rend un harnais complaisant ; mais le défaut réel est plus
+-- grave que le faux verdict : une correction de règle apportée à une clé en ligne n'atteindrait
+-- aucune base existante, production comprise. Les trois clés sont donc posées par des
+-- `alter table … drop constraint if exists … add constraint`, forme CONVERGENTE qui répare.
+
 create table if not exists public.mail_sequence_steps (
 	id           uuid        primary key default gen_random_uuid(),
 	-- Dénormalisée pour que les politiques RLS la lisent SANS JOINTURE — patron de `card_contacts`
 	-- et de `goal_blocks`. Une colonne dénormalisée peut diverger de sa source ; la section 3.2
 	-- l'interdit en base plutôt que de compter sur les écrivains.
-	workspace_id uuid        not null references public.workspaces (id) on delete cascade,
-	-- `cascade` : un palier n'a AUCUNE existence hors de sa séquence.
-	sequence_id  uuid        not null references public.mail_sequences (id) on delete cascade,
+	workspace_id uuid        not null,
+	sequence_id  uuid        not null,
 	position     integer     not null,
 	delai_jours  integer     not null,
-	-- `restrict` : c'est la contrainte que le §2.2 a écrite QUATRE TRANCHES à l'avance, pour que
-	-- celle-ci ne la découvre pas. Un modèle employé par une séquence ne se supprime plus.
-	template_id  uuid        not null references public.mail_templates (id) on delete restrict,
+	template_id  uuid        not null,
 	created_at   timestamptz not null default now(),
 	updated_at   timestamptz not null default now()
 );
+
+alter table public.mail_sequence_steps drop constraint if exists mail_sequence_steps_workspace_id_fkey;
+alter table public.mail_sequence_steps add  constraint mail_sequence_steps_workspace_id_fkey
+	foreign key (workspace_id) references public.workspaces (id) on delete cascade;
+
+-- `cascade` : un palier n'a AUCUNE existence hors de sa séquence.
+alter table public.mail_sequence_steps drop constraint if exists mail_sequence_steps_sequence_id_fkey;
+alter table public.mail_sequence_steps add  constraint mail_sequence_steps_sequence_id_fkey
+	foreign key (sequence_id) references public.mail_sequences (id) on delete cascade;
+
+-- `restrict` : c'est la contrainte que le §2.2 a écrite QUATRE TRANCHES à l'avance, pour que
+-- celle-ci ne la découvre pas. Un modèle employé par une séquence ne se supprime plus.
+alter table public.mail_sequence_steps drop constraint if exists mail_sequence_steps_template_id_fkey;
+alter table public.mail_sequence_steps add  constraint mail_sequence_steps_template_id_fkey
+	foreign key (template_id) references public.mail_templates (id) on delete restrict;
 
 -- --- 3.1 Bornes de valeur ---------------------------------------------------------------------
 --
