@@ -46,8 +46,13 @@
 --    l'insertion comme pour la suppression. Les quatre sont figés séparément : sans cela, on ne
 --    saurait pas lequel refuse.
 --
--- 7. QUE LA TABLE N'EST PAS PUBLIÉE AU TEMPS RÉEL (§16.3), pour qu'une publication ajoutée « par
---    précaution » se voie ici d'abord.
+-- 7. QUE LA TABLE EST PUBLIÉE AU TEMPS RÉEL (§25.1). **ASSERTION RÉVISÉE, JAMAIS RETIRÉE**, le
+--    2026-08-26 par la sous-tranche 3a (mécanisme de la décision 51). Elle exigeait l'ABSENCE de
+--    publication, en écrivant elle-même la condition de sa levée : « la tranche 3 la publiera DANS
+--    LE MÊME CHANGEMENT que l'écran qui l'écoute ». La condition est remplie — la migration 0065
+--    publie la table, et `webapp/src/app/Notifications.tsx` l'écoute —, donc l'assertion suit le
+--    fait vers ce qui le porte. Elle garde son office : une publication RETIRÉE par mégarde se
+--    verrait ici d'abord, et le temps réel cesserait de délivrer sans qu'aucun écran ne le dise.
 --
 -- La suite écrit puis fait `rollback` : le seed est rendu intact.
 
@@ -443,18 +448,24 @@ select ok(
 	'instruction, elle ne doit pas être ouverte à quiconque détient la clé anonyme');
 
 -- ---------------------------------------------------------------------------------------------
--- 40. LA TABLE N'EST PAS PUBLIÉE AU TEMPS RÉEL — §16.3
+-- 40. LA TABLE EST PUBLIÉE AU TEMPS RÉEL — §25.1 (assertion RÉVISÉE, jamais retirée)
 -- ---------------------------------------------------------------------------------------------
+-- Elle exigeait `0` jusqu'au 2026-08-26, et elle avait raison de le faire : rien ne s'y abonnait,
+-- et publier une table que personne n'écoute revient à poser une surface d'autorisation sans
+-- preuve. La condition qu'elle écrivait elle-même est remplie — la migration `0065` publie la
+-- table, et la cloche de la sous-tranche 3a l'écoute —, donc elle mesure désormais le NOUVEL état.
+-- Elle n'est pas devenue décorative pour autant : une publication retirée par mégarde ferait
+-- cesser toute délivrance en temps réel sans qu'aucun écran ne le dise, et c'est ici que cela se
+-- verrait d'abord.
 
 select is(
 	(select count(*)::int from pg_publication_tables
 	  where pubname = 'supabase_realtime' and schemaname = 'public'
 	    and tablename = 'notifications'),
-	0,
-	'CRM-064 §16.3 — la table n''est PAS publiée : rien ne s''y abonne encore. La tranche 3 la '
-	'publiera DANS LE MÊME CHANGEMENT que l''écran qui l''écoute — le temps réel évalue la '
-	'politique `SELECT` de chaque abonné, et c''est une propriété qui se prouve, pas qui s''ajoute '
-	'par précaution');
+	1,
+	'CRM-064 §25.1 — la table EST publiée, dans le même changement que l''écran qui l''écoute. Le '
+	'temps réel évalue la politique `SELECT` de chaque abonné : c''est une surface d''autorisation, '
+	'et les lignes u, v et w du §27 l''exercent comme telle');
 
 -- ---------------------------------------------------------------------------------------------
 -- 41 à 42. Ce que le seed livre — docs/SPEC-notifications.md §19
