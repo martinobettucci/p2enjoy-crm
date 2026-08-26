@@ -2068,6 +2068,99 @@ mentions_lectrice=$(curl -s "$API/rest/v1/card_comment_mentions?select=profile_i
 info "Mentions : 2, posées par le VRAI chemin avec les jetons réels de leurs deux auteurs — CRM-064"
 info "La lectrice n'en porte AUCUNE : « none » sur grands-comptes, et le trigger refuse (§5.1)"
 
+# --- 8 quinquies ter. Notifications — CRM-064 tranche 2, docs/SPEC-notifications.md §19 -------
+# LE SEED NE FABRIQUE AUCUNE NOTIFICATION : IL LES PROVOQUE. Le trigger
+# `notifications_apres_mention` est `AFTER INSERT` sur `card_comment_mentions` ; les deux `POST`
+# de la section précédente, faits par le vrai chemin avec les jetons réels de leurs auteurs,
+# produisent les deux notifications. Aucun `insert` de fixture, aucune clé de service — c'est
+# exactement ce que `CLAUDE.md` §8 exige.
+#
+# ---------------------------------------------------------------------------------------------
+# MAIS LA CONVERGENCE DE LA SECTION PRÉCÉDENTE ANNULE CELLE-CI, ET C'EST MESURÉ.
+# ---------------------------------------------------------------------------------------------
+# Le §19 de la spécification annonçait que ces deux notifications naîtraient « sans qu'une seule
+# ligne ne soit ajoutée au seed ». MESURÉ le 2026-08-26, sur la base où les mentions
+# PRÉEXISTAIENT : zéro notification, et un second passage n'en produit aucune.
+#
+# La cause est la convergence elle-même. `resolution=ignore-duplicates` fait rendre à PostgREST
+# un `on conflict do nothing` : sur une mention déjà posée, AUCUNE LIGNE N'EST INSÉRÉE, donc le
+# trigger `AFTER INSERT` NE S'EXÉCUTE PAS. La prédiction n'était vraie que sur une base neuve.
+#
+# LE SEED DOIT CONVERGER DANS LES DEUX CAS (`CLAUDE.md` §8) : base neuve comme base déjà seedée,
+# et base seedée AVANT la migration 0064 comme après. Il ne peut donc pas se contenter de poser
+# la mention et d'espérer.
+#
+# LE GESTE RETENU RESTE LE VRAI CHEMIN, ET IL EST CONDITIONNEL : quand la notification attendue
+# MANQUE, l'auteur RETIRE sa mention puis la REPOSE, avec son propre jeton. Les deux gestes sont
+# ouverts à l'auteur — `card_comment_mentions_suppression` et `card_comment_mentions_insertion`
+# portent le même prédicat —, donc rien ici n'emprunte de raccourci. Et la reprise produit la
+# notification, le §14.5 le disant en toutes lettres : « retirer une mention puis la reposer
+# produit une seconde notification, et c'est correct — c'est un second geste ».
+#
+# CONVERGENT PARCE QUE CONDITIONNEL : quand la notification est déjà là, RIEN n'est touché. Sans
+# la condition, chaque passage en produirait une de plus.
+
+echo
+say "8 quinquies ter. Notifications"
+
+# Rend le nombre de notifications de type « mention » portant ce commentaire, lu avec la clé de
+# service — donc hors de toute politique : la garde mesure l'état RÉEL, pas ce que l'appelant voit.
+notifications_du_commentaire() {
+	curl -s "$API/rest/v1/notifications?select=id&type=eq.mention&payload->>comment_id=eq.$1" \
+		-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length'
+}
+
+# Réarme la production d'une mention dont la notification manque : retrait puis repose, par le
+# jeton de l'AUTEUR du commentaire. Ne fait rien si la notification est déjà là.
+#
+#   $1 = commentaire, $2 = profil mentionné, $3 = fonction d'appel portant le jeton de l'auteur
+reprovoquer_notification() {
+	local commentaire=$1 profil=$2 appel=$3 deja
+	deja=$(notifications_du_commentaire "$commentaire")
+	if [ "$deja" != '0' ]; then
+		info "notification de $commentaire déjà produite : rien à faire (convergence par état)"
+		return 0
+	fi
+
+	code=$("$appel" DELETE "/rest/v1/card_comment_mentions?comment_id=eq.$commentaire&profile_id=eq.$profil")
+	attendu "$code" "retrait de la mention $commentaire → $profil, par son auteur" 204
+
+	code=$("$appel" POST /rest/v1/card_comment_mentions \
+		-H 'Prefer: return=representation,resolution=ignore-duplicates' \
+		-d "$(jq -nc --arg c "$commentaire" --arg p "$profil" \
+		      '{comment_id: $c, profile_id: $p}')")
+	attendu "$code" "repose de la mention $commentaire → $profil, qui PRODUIT sa notification" 200 201
+}
+
+reprovoquer_notification '5eed0000-0000-4000-8000-0000000000d1' \
+	'5eed0000-0000-4000-8000-000000000012' api_admin
+reprovoquer_notification '5eed0000-0000-4000-8000-0000000000d2' \
+	'5eed0000-0000-4000-8000-000000000011' api_bizdev
+
+# LA GARDE MESURE LE RÉSULTAT, ELLE NE LE SUPPOSE PAS. Si le trigger cessait de produire, ou s'il
+# produisait pour la mauvaise personne, ou s'il produisait une notification déjà lue, chacune de
+# ces trois lignes le dirait — et c'est tout l'intérêt d'une garde qui compte plutôt qu'annonce.
+notifications_posees=$(curl -s "$API/rest/v1/notifications?select=id" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
+[ "$notifications_posees" = '2' ] || die "le seed devait laisser DEUX notifications, il en compte
+        « $notifications_posees » — docs/SPEC-notifications.md §19. Une notification se PRODUIT :
+        si le compte est nul, le trigger notifications_apres_mention ne s'exécute plus."
+
+notifications_non_lues=$(curl -s "$API/rest/v1/notifications?select=id&read_at=is.null" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
+[ "$notifications_non_lues" = '2' ] || die "les deux notifications du seed doivent être NON LUES
+        (« $notifications_non_lues » l'est/le sont) : une notification naît non lue, et le
+        compteur de la tranche 3 s'appuie dessus — docs/SPEC-notifications.md §15.1."
+
+notifications_lectrice=$(curl -s "$API/rest/v1/notifications?select=id&recipient_id=eq.5eed0000-0000-4000-8000-000000000013" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
+[ "$notifications_lectrice" = '0' ] || die "la lectrice porte « $notifications_lectrice »
+        notification(s) alors qu'aucune mention ne la désigne : le trigger produit pour quelqu'un
+        que la règle d'éligibilité refuse — docs/SPEC-notifications.md §14.5."
+
+info "Notifications : 2, PRODUITES par les deux mentions et non posées — CRM-064 tranche 2"
+info "Toutes deux NON LUES ; la lectrice n'en porte aucune, aucune mention ne la désignant"
+
 # --- 8 sexies. Événements de timeline — docs/SPEC-cards.md §14.11, docs/SPEC-seed.md §2.15 -----
 # LE SEED N'ÉCRIT AUCUN ÉVÉNEMENT, ET IL NE LE PEUT PAS. `card_events` n'accorde le privilège
 # `INSERT` à personne, `service_role` compris — MESURÉ, décision 205. Cette section est donc la

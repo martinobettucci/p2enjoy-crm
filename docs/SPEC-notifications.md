@@ -1140,10 +1140,37 @@ des traces censées représenter l'exécution d'un processus réel »).
 notifications existent, qu'elles sont **non lues**, et que **Farida n'en porte aucune**. Si le
 trigger cessait de produire, le seed passerait sans rien dire ; la garde le fait échouer.
 
-**Convergent** : un second passage ne pose aucune mention nouvelle — `resolution=ignore-duplicates`
-et la clé primaire du §4.1 —, donc il ne produit aucune notification nouvelle. Le compte reste
-deux. **C'est la convergence de la tranche 1 qui porte celle-ci**, et c'est pourquoi le §14.5
-n'ajoute aucune garde propre au trigger.
+> **CETTE SECTION A ÉTÉ TROUVÉE FAUSSE PAR LA MESURE, ET ELLE EST RÉVISÉE PLUTÔT QUE RÉÉCRITE**
+> (mécanisme de la décision 51, et de la révision du §5.5 par la décision 522). Elle annonçait que
+> les deux notifications naîtraient « sans qu'une seule ligne ne soit ajoutée au seed ». MESURÉ le
+> 2026-08-26, sur la base où les deux mentions **préexistaient** : **zéro notification**, et un
+> second passage n'en produit aucune.
+>
+> **La cause est la convergence elle-même.** `resolution=ignore-duplicates` fait rendre à PostgREST
+> un `on conflict do nothing` : sur une mention déjà posée, **aucune ligne n'est insérée**, donc le
+> trigger `AFTER INSERT` **ne s'exécute pas**. La prédiction n'était vraie que sur une base neuve —
+> c'est-à-dire dans le seul cas que je n'avais pas mesuré.
+>
+> **Le seed doit converger dans les deux cas** (`CLAUDE.md` §8) : base neuve, base déjà seedée, et
+> base seedée **avant** la migration `0064` comme après. Cette dernière est le cas réel de toute
+> pile de développement existante.
+
+**LE GESTE RETENU RESTE LE VRAI CHEMIN, ET IL EST CONDITIONNEL.** Quand la notification attendue
+**manque**, l'auteur **retire** sa mention puis la **repose**, avec son propre jeton. Les deux
+gestes sont ouverts à l'auteur — `card_comment_mentions_suppression` et
+`card_comment_mentions_insertion` portent le **même** prédicat —, donc rien n'emprunte de
+raccourci ni de clé de service. Et la reprise produit la notification, le §14.5 le disant en toutes
+lettres : « retirer une mention puis la reposer produit une seconde notification, et c'est correct
+— c'est un second geste, à un second instant ».
+
+**Convergent parce que CONDITIONNEL** : quand la notification est déjà là, **rien n'est touché**.
+Sans la condition, chaque passage en produirait une de plus. Mesuré sur deux passages consécutifs :
+le second annonce « déjà produite : rien à faire » pour les deux, et le compte reste **deux**.
+
+**Ce que cette section apprend, au-delà du seed.** Une production par trigger `AFTER INSERT` et un
+seed convergent sont en **tension** : le premier a besoin qu'une ligne soit réellement insérée, le
+second existe pour éviter de la réinsérer. Toute tranche ultérieure qui produira par trigger
+rencontrera la même tension, et devra la traiter par l'état plutôt que par le geste.
 
 ---
 
