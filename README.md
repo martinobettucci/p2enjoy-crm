@@ -201,6 +201,8 @@ la question d'une façade `npm` par-dessus `runDev.sh` et consorts reste ouverte
 | `scripts/verify-rendu-modeles-emails.sh --rapide` | Omet le contrat d'API Playwright, et l'annonce dans sa sortie plutôt que de le taire | **disponible** |
 | `scripts/verify-modeles-emails-ecran.sh` | Rejoue les preuves de l'**écran** des modèles : traçabilité, le guichet mesuré dans le catalogue, la vérification qu'aucun des douze noms n'est recopié dans le code, les règles que seule une lecture du code constate — relecture après écriture, aucune garde de saisie, aucun droit calculé —, pgTAP, unitaires, contrat d'API, parcours E2E, **cinq dégradations réelles** et restauration constatée octet à octet | **disponible** |
 | `scripts/verify-modeles-emails-ecran.sh --rapide` | Omet le contrat d'API et le parcours E2E Playwright, et l'annonce dans sa sortie plutôt que de le taire | **disponible** |
+| `scripts/verify-sequences-ecran.sh` | Rejoue les preuves de l'**écran des séquences** et de l'**armement depuis l'affaire** : traçabilité, la RPC mesurée dans le catalogue — `security invoker`, `anon` exclu, aucun `set constraints` —, les deux compositions qui NOMMENT leur relation, les règles que seule une lecture du code constate — relecture après écriture, le `0` de la RPC distingué d'un succès, aucune garde de saisie, aucun droit calculé, aucune recopie du prédicat « figée » —, la garde du seed qui vérifie qu'aucune inscription n'est ACTIVE, pgTAP, unitaires, contrat d'API, deux parcours E2E, **sept dégradations réelles** et restauration constatée octet à octet | **disponible** |
+| `scripts/verify-sequences-ecran.sh --rapide` | Omet le contrat d'API et les parcours E2E Playwright, et l'annonce dans sa sortie plutôt que de le taire | **disponible** |
 | `scripts/verify-mail-infra.sh` | Rejoue les preuves de l'infrastructure mail de développement : configuration versionnée, placement des services, variables, domaines convergents, boîtes et rôles, IMAP réel, détection ClamAV, Roundcube | **disponible** |
 | `scripts/verify-mail-infra.sh --contre-epreuve` | Dégrade une **copie** des fichiers versionnés et exige que le harnais morde ; ne touche jamais au dépôt | **disponible** |
 | `scripts/verify-seed.sh` | Rejoue les preuves du seed : contrat, identifiants stables, connexion réelle, convergence | **disponible** |
@@ -519,6 +521,7 @@ scripts/verify-corbeille.sh    # corbeille : modèle, garde, écran, gestes, non
 scripts/verify-modeles-emails.sh # modèles d'email : liste fermée des variables, RLS, seed (CRM-063)
 scripts/verify-rendu-modeles-emails.sh # rendu d'un modèle : substitution, trous nuls nommés (CRM-063)
 scripts/verify-modeles-emails-ecran.sh # écran des modèles : palette, prévisualisation, suppression (CRM-063)
+scripts/verify-sequences-ecran.sh    # écran des séquences et armement depuis l'affaire (CRM-063)
 ```
 
 La cible courante de `scripts/verify-harness.sh` est **28 contrôles** : sélection de Node
@@ -647,6 +650,7 @@ Livré à ce jour :
 │   ├── verify-modeles-emails.sh Preuves des modèles d'email et de leurs variables fermées
 │   ├── verify-rendu-modeles-emails.sh Preuves du rendu d'un modèle et de ses trous nuls
 │   ├── verify-modeles-emails-ecran.sh Preuves de l'écran des modèles et de sa prévisualisation
+│   ├── verify-sequences-ecran.sh  Preuves de l'écran des séquences et de l'armement
 │   ├── verify-scripts.sh       Preuves rejouables des scripts et du contrat d'environnement
 │   ├── verify-migrations.sh    Preuves rejouables des migrations et du refus par défaut
 │   ├── verify-vault.sh         Preuves rejouables du chiffrement des secrets de messagerie

@@ -317,14 +317,28 @@ test.describe('administration des modèles d’emails (docs/SPEC-modeles-emails.
 			.click()
 		await page.getByTestId('supprimer-modele-email').click()
 
-		// LA CONFIRMATION NOMME LE MODÈLE ET N'ANNONCE AUCUNE CASCADE (§9.7) : rien, dans la base,
-		// ne référence un modèle aujourd'hui, et promettre une rupture de séquence décrirait un objet
-		// que la tranche 4 n'a pas posé.
+		// CETTE ASSERTION EST RÉVISÉE, ET NON RETIRÉE — 2026-08-26, sous-tranche 4c,
+		// `docs/CloudWorker.md` §3.1. Elle exigeait que la confirmation NE PARLE PAS de séquence, et
+		// c'était juste le 2026-08-25 : `pg_constraint` ne portait alors aucune clé étrangère vers
+		// `mail_templates`, et promettre une rupture aurait décrit un objet que la tranche 4 n'avait
+		// pas posé.
+		//
+		// LA MIGRATION `0059` A POSÉ CETTE CLÉ — le `on delete restrict` du §11.4 —, et la règle a
+		// donc changé. Elle a rougi À JUSTE TITRE, faisant exactement ce pour quoi elle a été écrite :
+		// dénoncer une confirmation devenue fausse. Le §13.9 dit ce qu'elle annonce désormais.
+		//
+		// CE QU'ELLE MESURE MAINTENANT, ET C'EST L'ESSENTIEL DE LA RÉVISION : la confirmation annonce
+		// la RÈGLE et NE COMPTE PAS. L'écran des modèles ne lit pas `mail_sequence_steps`, et un
+		// nombre lu pour l'occasion pourrait changer entre la lecture et le geste — c'est ce que le
+		// §13.9 écarte, et l'assertion négative porte désormais sur le CHIFFRE, non sur le mot.
 		const confirmation = page.getByTestId('confirmation-suppression-modele')
 		await expect(confirmation).toBeVisible()
 		await expect(confirmation).toContainText(`Supprimer « ${PREFIXE}-a-supprimer » ?`)
 		await expect(confirmation).toContainText('Le texte du modèle est définitivement perdu.')
-		await expect(confirmation).not.toContainText('séquence')
+		await expect(confirmation).toContainText(
+			'Un modèle employé par une séquence de relance ne peut pas être supprimé.',
+		)
+		await expect(confirmation).not.toContainText(/\d+ (palier|séquence)/)
 		// LE FOCUS ENTRE SUR LE BOUTON D'ACTION — patron du §5.29.
 		await expect(page.getByTestId('confirmer-suppression-modele')).toBeFocused()
 

@@ -364,12 +364,37 @@ else
 	fail "l'écran calcule un droit — aucune surface de réglages n'a le droit de le faire"
 fi
 
-# LA CONFIRMATION N'ANNONCE AUCUNE CASCADE (§9.7), et c'est une MESURE : rien ne référence un modèle.
-references=$(psql_db -c "select count(*) from pg_constraint where confrelid = 'public.mail_templates'::regclass;")
-if [ "$references" = 0 ]; then
-	ok "aucune clé étrangère ne référence mail_templates : la confirmation a raison de se taire"
+# CE CONTRÔLE EST RÉVISÉ, ET NON RETIRÉ — 2026-08-26, sous-tranche 4c, `CLAUDE.md` §18.
+#
+# Il mesurait, le 2026-08-25, que RIEN ne référençait `mail_templates`, et il en concluait que la
+# confirmation du §9.7 avait raison de se taire. LA MIGRATION `0059` A POSÉ CETTE CLÉ — le
+# `on delete restrict` du §11.4, annoncé quatre tranches à l'avance —, et le contrôle rougissait
+# donc À JUSTE TITRE : il a fait exactement ce pour quoi il a été écrit, dénoncer une confirmation
+# devenue fausse.
+#
+# Il mesure désormais l'ÉTAT ATTENDU : la clé existe, la confirmation annonce la RÈGLE (§13.9), et
+# l'écran sait TRADUIRE le refus. Les trois sont vérifiés ensemble — la clé sans la phrase serait
+# une confirmation muette sur un refus réel, et la phrase sans la traduction ferait retomber le
+# refus dans le repli `inconnu`.
+references=$(psql_db -c "select count(*) from pg_constraint
+	where confrelid = 'public.mail_templates'::regclass
+	  and conname = 'mail_sequence_steps_template_id_fkey';")
+if [ "$references" = 1 ]; then
+	ok "le on delete restrict de la migration 59 référence mail_templates, comme le §11.4 l'annonçait"
 else
-	fail "$references clé(s) étrangère(s) référencent mail_templates — la confirmation du §9.7 doit être révisée"
+	fail "mail_sequence_steps_template_id_fkey ABSENTE — la migration 59 n'a pas été appliquée"
+fi
+
+if code_seul "$ECRAN" | grep -q "admin.mailTemplates.delete.confirm.sequenceRule"; then
+	ok "la confirmation annonce la RÈGLE du §13.9 : un modèle employé ne se supprime pas"
+else
+	fail "la confirmation ne dit rien du on delete restrict — le §9.7 reste faux (§13.9)"
+fi
+
+if code_seul "$MODULE" | grep -q "mail_sequence_steps_template_id_fkey"; then
+	ok "le refus du on delete restrict est CLASSÉ, jamais rangé dans le repli inconnu"
+else
+	fail "le module ne classe pas mail_sequence_steps_template_id_fkey — le refus retomberait sur inconnu"
 fi
 
 # L'ÉCRAN EST ATTEIGNABLE, et son adresse est celle du §9.1.
