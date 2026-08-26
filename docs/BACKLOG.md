@@ -9190,8 +9190,87 @@ avant la suivante :
       annoncée —, la chaîne est **généralisée par un paramètre** et les quatre fonctions existantes
       deviennent des délégations d'une ligne. `app.resolve_access`, qui porte la règle, n'est pas
       touchée.
-- [~] **Ce qui reste dû sur la tranche 1** : la migration, sa suite pgTAP, le contrat d'API du §8,
-      le seed du §9 et le harnais dédié. Nommés ici tant qu'ils ne sont pas livrés.
+- [x] **Migration `0063` LIVRÉE** : `public.card_comment_mentions` — clé primaire
+      `(comment_id, profile_id)`, trois clés étrangères, l'index de la lecture inverse, un trigger
+      de dérivation à **trois refus**, trois politiques, ses privilèges —, l'unicité
+      `card_comments (id, workspace_id)` qu'exigeait la clé composite, et le **retrait** de
+      `card_comments.mentions`. Appliquée et **rejouée** sur la pile réelle : 63 fichiers, code 0.
+- [x] **LE RETRAIT SE GARDE LUI-MÊME** : la migration compte les lignes non vides et **refuse
+      d'agir** s'il en reste une (`card_comments_mentions_non_vide`). C'est la garde posée par la
+      migration `0019` avant de retirer `require_fields` — une migration ne détruit pas ce qu'elle
+      ne sait pas transposer. `docs/PROD_MIGRATIONS.md` nomme cette migration comme **la seule
+      destructrice de la série** et donne le compte à vérifier en production AVANT de l'appliquer.
+- [x] **LA CHAÎNE D'ACCÈS EST GÉNÉRALISÉE, ET LA RÈGLE N'A TOUJOURS QU'UNE ÉCRITURE.** Cinq
+      fonctions ajoutées, quatre réécrites en **délégations d'une ligne**. `app.resolve_access` n'est
+      pas touchée. La preuve de non-régression était **nommée d'avance** (§5.4) et elle est
+      acquise : `0002_fonctions_autorisation.test.sql` et `0011_droits_fins.test.sql` sont verts
+      **sans une modification**. Le harnais vérifie en outre que chaque déléguée **appelle** sa
+      variante et **ne relit aucune** table d'appartenance : une déléguée qui recopierait la lecture
+      serait la seconde écriture qu'on a voulu éviter.
+- [x] **UN DÉFAUT RÉEL, TROUVÉ PAR LA MESURE PAR L'API ET PAR ELLE SEULE** (décision 522). Le
+      privilège d'exécution de `app.can_read_card_pour` manquait à `authenticated`. Le trigger étant
+      `SECURITY INVOKER`, il l'exécute **sous ce rôle** : quatre lignes du contrat rendaient
+      `403 / 42501` là où trois attendaient un refus **métier** et une un succès. **La suite pgTAP
+      serait restée verte** — elle s'exécute sous le propriétaire, qui n'a besoin d'aucun privilège.
+      Même famille de défaut que la migration `0053` de `CRM-062`. La ligne du §5.5 qui refusait ce
+      privilège est **révisée**, et la divulgation qu'elle craignait est mesurée **sans canal** :
+      PostgREST expose `public, storage, graphql_public`, jamais `app`.
+- [x] **Suite pgTAP dédiée** : `supabase/tests/0061_mentions_commentaires.test.sql`, **46
+      assertions**. Elle ne reprouve pas la règle d'accès — deux suites la tiennent — et prouve ce
+      que rien d'autre ne prouve, dont **la clé étrangère éprouvée trigger DÉSACTIVÉ** : le refus
+      métier tombant le premier, aucun appel d'API ne peut la faire parler, et sans cette assertion
+      une clé oubliée passerait inaperçue.
+- [x] **Contrat d'API dédié** : `e2e/api/mentions.spec.ts`, **15 scénarios verts** avec les jetons
+      réels des trois profils, chaque refus **relu en base** avec la clé de service, et le fichier
+      rend le produit dans l'état où il le trouve — une dernière lecture le **constate**.
+- [x] **DEUX LIGNES DU CONTRAT ONT ÉTÉ CORRIGÉES PAR LA MESURE, ET AUCUNE LIGNE DE CODE N'A ÉTÉ
+      PLIÉE POUR LEUR OBÉIR** (§8.1). La ligne *d* attendait la clé étrangère ; le trigger étant
+      `BEFORE INSERT`, il refuse **avant** elle et **sans dire si le profil existe** — comportement
+      meilleur que celui qui était prévu, et exactement la discrétion que le §6 recherchait. La
+      ligne *h* a rendu **deux** refus selon la card, et le second — `comment_not_found` sur un
+      commentaire fermé — devient la ligne *h bis*, éprouvée pour elle-même.
+- [x] **Seed enrichi, par le VRAI chemin** : deux mentions posées en `POST` avec les jetons réels
+      de **leurs deux auteurs**, jamais par la clé de service (`CLAUDE.md` §8). Ses gardes
+      **mesurent** le résultat — deux mentions, et **aucune pour la lectrice**. Convergent : deux
+      passages en laissent deux, par la clé primaire et non par une garde propre au seed.
+- [x] **LE SECOND AUTEUR A ÉTÉ CHOISI PAR UNE MESURE, NON PAR CONVENANCE.** Le §9 visait d'abord le
+      commentaire de la lectrice sur `…0c5` ; mesuré : `403 / 42501`. Elle n'est que `read` sur
+      `maintenance` — son commentaire y a été posé par la clé de service — et ne peut donc pas le
+      compléter (INC-071). L'écart qui en résulte — les deux mentions vivent sur la même card — est
+      **nommé** au point ouvert n° 5 plutôt que masqué.
+- [x] **Harnais dédié `scripts/verify-mentions.sh`** : **47 contrôles, aucune anomalie**, **sept
+      dégradations** qui mordent toutes. La première est sans équivalent ailleurs : elle rend
+      l'éligibilité **toujours vraie** en laissant la table, ses clés, ses politiques et ses
+      privilèges debout — une suite qui resterait verte prouverait qu'elle ne mesure que de la forme.
+- [x] **LE HARNAIS A PRIS MES PROPRES PREUVES EN DÉFAUT, DEUX FOIS, ET C'EST LE FAIT LE PLUS UTILE
+      DE LA SESSION.** La suite pgTAP était **complaisante** sur `created_at` : elle n'envoyait
+      aucune valeur, si bien qu'un simple `coalesce` l'aurait satisfaite. Elle en envoie désormais
+      une **vieille de dix ans** et exige qu'elle ne survive pas. Et le harnais **s'est accusé
+      lui-même à tort** : une dégradation dont le SQL portait des apostrophes doublées par le
+      passage en argument shell était **refusée par `psql`**, laissant le produit intact et la suite
+      verte. `degrader()` vérifie donc désormais que `psql` a **appliqué** la copie dégradée — la
+      leçon de la décision 503 poussée d'un cran, un faux verdict de complaisance étant plus
+      dangereux qu'un vrai puisqu'il accuse une preuve saine.
+- [x] **Six assertions figées de `0017_commentaires.test.sql` RÉVISÉES, jamais retirées** (mécanisme
+      de la décision 51) : celle qui exigeait la présence de la colonne mesure désormais son
+      **absence**, et les cinq autres suivent le fait vers ce qui le porte. **98 assertions vertes.**
+      Le témoin de types et le compteur de politiques de `0016_preuves_refus.test.sql` (116 → **119**)
+      sont révisés dans le même changement, avec leur motif écrit dans le fichier.
+- [x] **Documentation dans le même changement** : `docs/SPEC-notifications.md` (le document
+      n'existait pas), `docs/SCHEMA.md` §5, `docs/PROD_MIGRATIONS.md` migration 63, `README.md`
+      (ligne du harnais), `CHANGELOG.md` sous `[Non publié]`, registre INC-226.
+- [~] **CE QUI RETIENT L'UNITÉ EN `[~]`, ET C'EST NOMMÉ PLUTÔT QUE MASQUÉ.** La **tranche 1 est
+      close** ; les tranches **2, 3 et 4** — la notification, la surface et le temps réel, les
+      préférences — ne sont pas commencées. `docs/manual.md` ne gagne **aucun chapitre** : la
+      tranche 1 ne livre aucune surface, et un chapitre sur une fonctionnalité invisible
+      décrirait un geste que personne ne peut faire. Il naîtra avec la tranche 3.
+- [ ] **La série des `scripts/verify-*.sh` n'a PAS été rejouée derrière ce changement**, et l'écart
+      est nommé (`docs/CloudWorker.md` §4.3, budget) : le dépôt en porte **soixante-douze**, et
+      **un** l'a été — `verify-mentions.sh`. `verify-harness.sh --rapide` n'a pas été lancé non
+      plus : il dépasse le plafond de 1500 s depuis qu'`e2e:ui` compte plus de 590 scénarios
+      (mesuré à la décision 509), et ses deux compteurs révisés ici l'ont été **par comptage
+      direct** — `npm run test:sql` rend « 61 fichiers, 2896 assertions », et
+      `playwright test --list` rend « 958 tests in 58 files ».
 
 ---
 ### CRM-070 — précision d'arbitrage : l'invitation d'un membre
