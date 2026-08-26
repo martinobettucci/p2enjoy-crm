@@ -523,11 +523,43 @@ porte pas, et qui sont opposables :
 | `workspace_id` | `uuid` | non nul, **dérivé de la card par trigger** ; clé composite `(card_id, workspace_id) → cards (id, workspace_id)` |
 | `author_id` | `uuid` | nullable, FK `profiles` `ON DELETE SET NULL`, défaut `auth.uid()` |
 | `body` | `text` | non nul, markdown ; `CHECK` **conditionnel** : 1 à 10 000 caractères tant que le commentaire vit, **chaîne vide** dès qu'il est supprimé |
-| `mentions` | `uuid[]` | non nul, défaut `'{}'` — destinataires de notification, **jamais alimentée** par `CRM-043` |
 | `created_at` | `timestamptz` | non nul, défaut `now()` |
 | `edited_at` | `timestamptz` | posé par trigger quand le corps change, jamais par le client |
 | `deleted_at` | `timestamptz` | posé par trigger ; **irréversible**, et le corps est alors vidé |
 | `deleted_by` | `uuid` | nullable, FK `profiles` `ON DELETE SET NULL` ; posé par trigger avec `deleted_at` — **audit de la modération** (migration 35, décision 374) |
+
+**`mentions uuid[]` A ÉTÉ RETIRÉE par la migration 63** (`CRM-064`, `docs/SPEC-notifications.md`
+§7.4). Elle était décrite ici comme « destinataires de notification, jamais alimentée » ; la mesure
+M8 du §2 de cette spécification a établi qu'elle n'était pas inerte mais **ouverte à l'insertion** —
+le privilège `INSERT` de la table étant de table —, sans intégrité référentielle (INC-033) ni règle
+d'éligibilité. Elle est remplacée par la relation ci-dessous.
+
+### `public.card_comment_mentions` — `CRM-064`
+
+Une personne nommément désignée dans un commentaire. **Poser une mention ne prévient personne** :
+c'est un fait, pas encore un message — la table `notifications` est la tranche 2 de `CRM-064`.
+
+| Colonne | Type | Contraintes |
+|---|---|---|
+| `comment_id` | `uuid` | non nul, partie de la clé primaire ; clé composite `(comment_id, workspace_id) → card_comments (id, workspace_id)` `on delete cascade` |
+| `profile_id` | `uuid` | non nul, partie de la clé primaire, FK `profiles (id)` `on delete cascade` |
+| `workspace_id` | `uuid` | non nul, **dérivé du commentaire par trigger**, jamais décidé par le client |
+| `created_at` | `timestamptz` | non nul, posé par le trigger |
+
+**Clé primaire `(comment_id, profile_id)`** : on ne mentionne pas deux fois la même personne dans le
+même commentaire, et aucun code n'a à le vérifier. **Index** `(profile_id, created_at desc)` pour la
+lecture inverse — « qu'est-ce qui me mentionne ».
+
+**La règle d'éligibilité est appliquée par un trigger** : un profil ne peut être mentionné que s'il
+a un accès effectif différent de `none` sur le channel de la card. Elle s'appuie sur
+`app.can_read_card_pour(card, profil)`, **généralisation** de `app.can_read_card` par un paramètre —
+les quatre fonctions historiques de la chaîne d'accès sont devenues des délégations d'une ligne, de
+sorte que la règle n'a toujours **qu'une seule écriture** (`docs/SPEC-notifications.md` §5.3).
+
+**Trois politiques et trois seulement** : lecture pour qui lit l'affaire, insertion et suppression
+pour l'**auteur** du commentaire tant qu'il conserve le droit d'écriture. **Aucune politique
+`UPDATE` et aucun privilège `UPDATE`** — une mention se retire, elle ne se modifie pas. **La table
+n'est pas publiée au temps réel** : rien ne s'y abonne avant la tranche 3.
 
 **Commenter exige le droit d'ÉCRITURE sur le channel de la card, non le droit de lecture.** Cette
 ligne corrige une phrase de ce chapitre — « tout membre pouvant lire la card peut commenter » — que

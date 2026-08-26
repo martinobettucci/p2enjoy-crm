@@ -121,6 +121,49 @@ export type Database = {
           },
         ]
       }
+      card_comment_mentions: {
+        Row: {
+          comment_id: string
+          created_at: string
+          profile_id: string
+          workspace_id: string
+        }
+        Insert: {
+          comment_id: string
+          created_at?: string
+          profile_id: string
+          workspace_id: string
+        }
+        Update: {
+          comment_id?: string
+          created_at?: string
+          profile_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_comment_mentions_comment_id_workspace_id_fkey"
+            columns: ["comment_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "card_comments"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "card_comment_mentions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_comment_mentions_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       card_comments: {
         Row: {
           author_id: string | null
@@ -131,7 +174,6 @@ export type Database = {
           deleted_by: string | null
           edited_at: string | null
           id: string
-          mentions: string[]
           workspace_id: string
         }
         Insert: {
@@ -143,7 +185,6 @@ export type Database = {
           deleted_by?: string | null
           edited_at?: string | null
           id?: string
-          mentions?: string[]
           workspace_id: string
         }
         Update: {
@@ -155,7 +196,6 @@ export type Database = {
           deleted_by?: string | null
           edited_at?: string | null
           id?: string
-          mentions?: string[]
           workspace_id?: string
         }
         Relationships: [

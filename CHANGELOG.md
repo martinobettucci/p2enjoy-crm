@@ -15,6 +15,35 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **UNE MENTION EST DÉSORMAIS UNE RELATION, ET NON PLUS UN TABLEAU D'IDENTIFIANTS SANS RÈGLE**
+  (`CRM-064` tranche 1, migration 63, `docs/SPEC-notifications.md`). Depuis `CRM-043`, un
+  commentaire portait une colonne `mentions uuid[]` que le dépôt décrivait comme « alimentée par
+  rien ». **La mesure a établi qu'elle n'était pas inerte** : le privilège `INSERT` de
+  `card_comments` étant *de table*, n'importe quel client authentifié pouvait y écrire — un
+  identifiant ne désignant **aucun compte** était accepté, et une personne **n'ayant aucun accès à
+  l'affaire** l'était tout autant.
+  `public.card_comment_mentions` la remplace. Une mention y porte de vraies clés étrangères, ne
+  peut plus désigner deux fois la même personne, et surtout **ne peut désigner que quelqu'un qui
+  peut lire l'affaire** — règle appliquée par la base, refusée avec `mention_destinataire_sans_acces`,
+  et sans jamais dire *qui* : le refus nomme la règle, jamais la personne ni ses droits.
+  Poser une mention **ne prévient encore personne** : c'est un fait, pas un message. La
+  notification, la surface et les préférences sont les tranches 2 à 4.
+
+### Modifié
+
+- **La chaîne d'autorisation est généralisée, et la règle n'a toujours qu'une seule écriture**
+  (`CRM-064`, migration 63). Les fonctions d'accès jugeaient toutes *l'appelant* ; l'éligibilité
+  d'une mention porte sur un *tiers*. Plutôt qu'un second prédicat qui aurait relu les mêmes tables
+  — et divergé du premier au premier droit ajouté —, la chaîne reçoit un paramètre et les quatre
+  fonctions existantes deviennent des délégations d'une ligne. `app.resolve_access`, qui porte la
+  règle elle-même, n'est pas touchée.
+
+### Retiré
+
+- **`card_comments.mentions`** (`CRM-064`, migration 63). Le retrait est protégé par une garde qui
+  compte les lignes non vides et **refuse d'agir** s'il en reste une : la migration ne détruit pas
+  ce qu'elle ne sait pas transposer.
+
 - **LES SÉQUENCES DE RELANCE ONT ENFIN LEURS ÉCRANS** (`CRM-063` sous-tranche 4c, migration 62,
   `docs/SPEC-modeles-emails.md` §13, `docs/DESIGN_SYSTEM.md` §5.41 et §5.42, manuel chapitre
   **7 ter**). Les tranches précédentes avaient livré la cadence et son exécution ; **aucun écran ne

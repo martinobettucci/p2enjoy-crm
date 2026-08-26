@@ -83,8 +83,13 @@ select has_column('public', 'card_comments', 'workspace_id',
 	'clé composite');
 select has_column('public', 'card_comments', 'author_id', '`author_id` existe');
 select has_column('public', 'card_comments', 'body', '`body` existe');
-select has_column('public', 'card_comments', 'mentions',
-	'`mentions` existe — livrée par docs/SCHEMA.md §5, ALIMENTÉE PAR RIEN (INC-033)');
+-- ASSERTION RETOURNÉE PAR `CRM-064`, JAMAIS RETIRÉE (mécanisme de la décision 51). Elle figeait
+-- la PRÉSENCE d'une colonne « alimentée par rien » ; la tranche 1 de `CRM-064` a mesuré qu'elle
+-- n'était pas inerte mais OUVERTE À L'INSERTION (docs/SPEC-notifications.md §2, mesure M8), et
+-- l'a remplacée par `public.card_comment_mentions`. L'assertion mesure désormais l'ABSENCE.
+select hasnt_column('public', 'card_comments', 'mentions',
+	'`mentions` est RETIRÉE par la migration 63 — docs/SPEC-notifications.md §7.4. La relation qui '
+	'la remplace porte l''intégrité qu''un `uuid[]` ne pouvait pas porter (INC-033)');
 select has_column('public', 'card_comments', 'created_at', '`created_at` existe');
 select has_column('public', 'card_comments', 'edited_at', '`edited_at` existe');
 select has_column('public', 'card_comments', 'deleted_at', '`deleted_at` existe');
@@ -102,17 +107,25 @@ select col_not_null('public', 'card_comments', 'workspace_id', '`workspace_id` e
 select col_is_null('public', 'card_comments', 'author_id',
 	'`author_id` est nullable depuis CRM-022 : un commentaire historique survit au compte supprimé');
 select col_not_null('public', 'card_comments', 'body', '`body` est non nul');
-select col_not_null('public', 'card_comments', 'mentions', '`mentions` est non nul');
+-- `mentions` ayant disparu, sa non-nullité n'a plus d'objet. L'assertion est REPORTÉE sur ce qui
+-- porte désormais le fait, plutôt que retirée : `CRM-064` §4.1.
+select col_not_null('public', 'card_comment_mentions', 'profile_id',
+	'`card_comment_mentions.profile_id` est non nul : il est partie de la clé primaire, et c''est '
+	'ce qui remplace la non-nullité que `card_comments.mentions` portait');
 select col_is_null('public', 'card_comments', 'edited_at',
 	'`edited_at` est nullable : un commentaire non modifié n''a pas de date de modification');
 select col_is_null('public', 'card_comments', 'deleted_at', '`deleted_at` est nullable');
 
+-- Le défaut `'{}'` disparaît avec la colonne. Ce qu'il disait — « aucun client n'a à l'envoyer » —
+-- est désormais porté par le trigger de la relation, qui DÉRIVE ce que le client ne décide pas
+-- (`CRM-064` §6). L'assertion suit le fait plutôt que le nom.
 select ok(
-	(select pg_get_expr(d.adbin, d.adrelid) = '''{}''::uuid[]'
+	(select pg_get_expr(d.adbin, d.adrelid) = 'now()'
 	   from pg_attrdef d
 	   join pg_attribute a on a.attrelid = d.adrelid and a.attnum = d.adnum
-	  where d.adrelid = 'public.card_comments'::regclass and a.attname = 'mentions'),
-	'`mentions` vaut le tableau vide par défaut : aucun client n''a à l''envoyer');
+	  where d.adrelid = 'public.card_comment_mentions'::regclass and a.attname = 'created_at'),
+	'`card_comment_mentions.created_at` a son défaut, et le trigger le RÉÉCRIT de toute façon : '
+	'aucun client n''a à l''envoyer, comme le défaut `''{}''` de `mentions` le disait avant lui');
 
 -- Décision 196 : le défaut est un CONFORT, la politique est la RÈGLE. Les deux existent.
 select ok(
@@ -173,10 +186,14 @@ select is(
 	(select deleted_at from public.card_comments where id = '5eed0000-0000-4000-8000-0000000000e1'),
 	null,
 	'un commentaire ne naît pas supprimé');
+-- « `mentions` naît vide » devient « un commentaire neuf ne mentionne personne » : le fait est le
+-- même, son porteur a changé (`CRM-064` §4).
 select is(
-	(select mentions from public.card_comments where id = '5eed0000-0000-4000-8000-0000000000e1'),
-	'{}'::uuid[],
-	'`mentions` naît vide : rien ne l''alimente (INC-033)');
+	(select count(*) from public.card_comment_mentions
+	  where comment_id = '5eed0000-0000-4000-8000-0000000000e1'),
+	0::bigint,
+	'un commentaire neuf ne mentionne PERSONNE : une mention est un geste explicite de son auteur, '
+	'jamais une conséquence de l''écriture (docs/SPEC-notifications.md §4.4)');
 
 -- Un commentaire né supprimé est refusé : le trigger remet `deleted_at` à nul, et le `CHECK`
 -- exige alors un corps non vide.
@@ -470,8 +487,12 @@ select ok(not has_column_privilege('authenticated', 'public.card_comments', 'wor
 	'`workspace_id` est fermé');
 select ok(not has_column_privilege('authenticated', 'public.card_comments', 'created_at', 'UPDATE'),
 	'`created_at` est fermé');
-select ok(not has_column_privilege('authenticated', 'public.card_comments', 'mentions', 'UPDATE'),
-	'`mentions` est fermée : rien ne l''alimente, et l''ouvrir donnerait un champ libre sans usage');
+-- La colonne ayant disparu, le privilège de colonne n'a plus d'objet. Ce qu'il protégeait est
+-- désormais protégé par le refus DOUBLE de la relation — aucun privilège `UPDATE`, aucune politique
+-- `UPDATE` (`CRM-064` §7.1). L'assertion est REPORTÉE, jamais retirée.
+select ok(not has_table_privilege('authenticated', 'public.card_comment_mentions', 'UPDATE'),
+	'`card_comment_mentions` n''accorde AUCUN `UPDATE` à `authenticated` : une mention se retire, '
+	'elle ne se modifie pas — changer le destinataire serait une SUBSTITUTION, pas une correction');
 
 -- =============================================================================================
 -- 10. Le temps réel — §13.9, décision 195
@@ -574,8 +595,12 @@ select is(
 	0, '`card_comments` ne porte AUCUN trigger de timeline : un commentaire n''écrit pas '
 	   'd''événement, le fil est unifié à la LECTURE (`CRM-044`, décision 209)');
 
+-- INC-226 : ce renvoi désignait `CRM-063`, unité qui porte les modèles d'emails et rien d'autre.
+-- Les notifications sont `CRM-064`, dont la tranche 1 a livré la MENTION et la tranche 2 livrera
+-- la notification.
 select is(to_regclass('public.notifications')::text, null,
-	'`notifications` n''existe pas : `mentions` n''a aucun destinataire à servir. `CRM-063`');
+	'`notifications` n''existe toujours pas : poser une mention ne prévient PERSONNE. Elle est un '
+	'fait, pas encore un message — `CRM-064` tranche 2, docs/SPEC-notifications.md §1.2');
 
 select is(to_regclass('public.card_activities')::text, null,
 	'`card_activities` n''existe pas : le §5 de docs/SCHEMA.md la décrit, aucune unité du chunk 3 '
