@@ -1,6 +1,8 @@
 // @spec CRM-007 (docs/BACKLOG.md) — en-tête de la coquille
 // @spec CRM-009 (docs/BACKLOG.md) — identité de session, connexion et déconnexion
 // @spec CRM-022 (docs/BACKLOG.md) — nom et avatar du profil courant
+// @spec CRM-064 (docs/BACKLOG.md) — tranche 3a : la cloche de notifications, entre le contexte
+//       d'espace de travail et l'identité de session (docs/DESIGN_SYSTEM.md §5.43)
 // @spec docs/DESIGN_SYSTEM.md §4 (en-tête), §5.12 (session), §7, §8
 // @spec docs/SPEC-webapp.md §5.1 ; docs/SPEC-auth.md §9.1, §9.4
 // @spec docs/SPEC-identite.md §7 (identité d'en-tête)
@@ -18,6 +20,7 @@ import { SkeletonListe } from '../components/ui/Skeleton'
 import type { EtatAsync } from '../lib/async'
 import type { Workspace } from '../lib/workspaces'
 import { useAuthentification } from './Authentification'
+import { ClocheNotifications } from './Notifications'
 
 export type ProprietesHeader = {
 	readonly titreRoute: string
@@ -68,6 +71,15 @@ export function Header({ titreRoute, onOuvrirTiroir, etatWorkspaces }: Propriete
 			</nav>
 
 			<ContexteWorkspace etat={etatWorkspaces} />
+			{/*
+			  LA CLOCHE VIT ENTRE LE CONTEXTE ET L'IDENTITÉ, et l'ordre porte un sens (`CRM-064`,
+			  docs/SPEC-notifications.md §23.1, docs/DESIGN_SYSTEM.md §5.43) : ce que le produit a à
+			  me dire précède qui je suis, et le geste qui SORT du produit ferme la ligne.
+
+			  Elle ne rend rien sans session — l'en-tête rend « Se connecter » à sa place (§5.12), et
+			  une cloche offerte à un anonyme annoncerait une boîte qu'aucune session ne peut remplir.
+			*/}
+			<ClocheNotifications />
 			<ControleSession />
 		</header>
 	)

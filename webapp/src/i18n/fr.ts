@@ -42,6 +42,41 @@ export const fr = {
 	'header.auth.login': 'Se connecter',
 	'header.auth.logout': 'Se déconnecter',
 	'header.auth.logout.error': "La déconnexion n'a pas abouti. Réessayez.",
+
+	// --- Cloche et panneau de notifications — CRM-064 tranche 3a -------------------------------
+	// docs/SPEC-notifications.md §26 ; docs/DESIGN_SYSTEM.md §5.43.
+	//
+	// LE NOM ACCESSIBLE DE LA CLOCHE PORTE LE COMPTE EXACT, jamais la forme tronquée « 99+ » :
+	// un chiffre dessiné sur une icône n'existe pas pour un lecteur d'écran (§5.43). L'accord se
+	// fait par CLÉ et jamais par un gabarit paramétré — « 1 notifications » est faux (§10).
+	'notifications.bell.none': 'Notifications — aucune non lue',
+	'notifications.bell.one': 'Notifications — 1 non lue',
+	'notifications.bell.many': 'Notifications — {compte} non lues',
+	'notifications.bell.unknown': 'Notifications',
+	'notifications.panel.aria': 'Vos notifications',
+	'notifications.panel.title': 'Notifications',
+	'notifications.panel.close': 'Fermer les notifications',
+	'notifications.loading': 'Chargement de vos notifications',
+	'notifications.empty': 'Aucune notification.',
+	'notifications.empty.body': 'Vous serez prévenu ici lorsqu’on vous mentionnera dans une affaire.',
+	'notifications.error.title': 'Notifications indisponibles',
+	'notifications.error.body': 'Vos notifications n’ont pas pu être lues.',
+	'notifications.error.retry': 'Réessayer',
+	// LA TRONCATURE EST ÉCRITE, jamais laissée à deviner (§26.5, §5.43).
+	'notifications.truncated': 'Les {compte} plus récentes.',
+	// LE PROPOS N'EST PAS RENDU quand il n'est plus lisible : la ligne garde sa place, son affaire
+	// et son lien, et ne dit NI que le propos a été supprimé NI qu'il est illisible (§24.3).
+	'notifications.mention.author': '{auteur} vous a mentionné',
+	'notifications.mention.anonymous': 'Vous avez été mentionné',
+	'notifications.item.open': 'Ouvrir {affaire}',
+	'notifications.item.markRead': 'Marquer comme lue',
+	'notifications.item.markUnread': 'Marquer comme non lue',
+	'notifications.item.unread': 'Non lue',
+	// L'ISSUE « SANS EFFET » EST DITE, et elle n'affirme ni le refus ni la disparition — les deux
+	// sont indistinguables (§26.4, docs/DESIGN_SYSTEM.md §5.40).
+	'notifications.mark.noEffect':
+		'Aucune notification n’a été modifiée. Vos droits ont peut-être changé depuis l’ouverture : rechargez la page.',
+	'notifications.mark.error': 'La notification n’a pas pu être modifiée.',
 	'identity.owner.aria': 'Responsable : {nom}',
 
 	// --- Authentification ---------------------------------------------------------------
