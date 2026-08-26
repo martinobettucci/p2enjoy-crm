@@ -86,6 +86,7 @@ type Options = {
 	readonly compte?: number | null
 	readonly lignesMarquees?: readonly unknown[]
 	readonly onMarquage?: () => void
+	readonly onRetraitCanal?: () => void
 }
 
 /**
@@ -104,7 +105,10 @@ function client(options: Options): ClientCrm {
 	}
 	return {
 		channel: () => canal,
-		removeChannel: () => Promise.resolve('ok'),
+		removeChannel: () => {
+			options.onRetraitCanal?.()
+			return Promise.resolve('ok')
+		},
 		from: (table: string) => {
 			if (table === 'card_comments') {
 				return {
@@ -160,6 +164,49 @@ function monter(options: Options = {}) {
 		</MemoryRouter>,
 	)
 }
+
+describe('l’abonnement partagé (docs/SPEC-notifications.md §25, décision 525)', () => {
+	// L'ABONNEMENT SURVIT AU DÉMONTAGE, ET C'EST UN DÉFAUT TROUVÉ PAR LA CAMPAGNE. Chaque route
+	// rend sa propre coquille : la cloche est donc démontée et remontée À CHAQUE NAVIGATION, et un
+	// canal créé puis retiré à ce rythme faisait fermer la socket avant la fin de sa poignée de
+	// main — « WebSocket is closed before the connection is established » dans la console, que le
+	// parcours clavier de « Ma journée » a fait paraître. Le remède est à la CAUSE : le canal vit
+	// au niveau du module, il n'appartient plus au composant.
+	it('ne retire PAS le canal au démontage : la navigation ne paie aucune reconnexion', async () => {
+		let retraits = 0
+		injecte.client = client({ onRetraitCanal: () => (retraits += 1) })
+		injecte.session = { statut: 'authentifie', utilisateur: { id: 'p12' } }
+		const rendu = render(
+			<MemoryRouter>
+				<ClocheNotifications />
+			</MemoryRouter>,
+		)
+		await waitFor(() => expect(screen.getByTestId('cloche-notifications')).toBeTruthy())
+		rendu.unmount()
+		expect(retraits).toBe(0)
+	})
+
+	// UNE DÉCONNEXION, ELLE, FERME LE CANAL : le laisser ouvert au nom de qui vient de partir
+	// délivrerait des événements à une session qui n'existe plus.
+	it('ferme le canal quand la session disparaît', async () => {
+		let retraits = 0
+		injecte.client = client({ onRetraitCanal: () => (retraits += 1) })
+		injecte.session = { statut: 'authentifie', utilisateur: { id: 'p12' } }
+		const rendu = render(
+			<MemoryRouter>
+				<ClocheNotifications />
+			</MemoryRouter>,
+		)
+		await waitFor(() => expect(screen.getByTestId('cloche-notifications')).toBeTruthy())
+		injecte.session = { statut: 'anonyme' }
+		rendu.rerender(
+			<MemoryRouter>
+				<ClocheNotifications />
+			</MemoryRouter>,
+		)
+		await waitFor(() => expect(retraits).toBe(1))
+	})
+})
 
 describe('la cloche (docs/SPEC-notifications.md §26.1, §26.7)', () => {
 	// SANS SESSION, RIEN N'EST RENDU (§26.7). Une cloche offerte à un anonyme annoncerait une boîte

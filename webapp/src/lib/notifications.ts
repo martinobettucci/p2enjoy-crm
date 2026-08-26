@@ -334,6 +334,107 @@ export async function marquerNotification(
 }
 
 /**
+ * L'abonnement en cours, PARTAGÉ par tous les montages successifs de la cloche.
+ *
+ * IL VIT AU NIVEAU DU MODULE, ET NON DANS LE CYCLE DE VIE D'UN COMPOSANT — c'est un défaut trouvé
+ * par la CAMPAGNE, jamais à la lecture, et il n'appartenait pas à l'écran qui l'a révélé.
+ *
+ * **MESURÉ** le 2026-08-26 : chaque `<Route>` de `App.tsx` rend sa **propre** `AppShell`, si bien
+ * que l'en-tête — donc la cloche — est **démontée et remontée à chaque navigation**. Un canal créé
+ * puis retiré à ce rythme fait fermer la socket `supabase-js` avant la fin de sa poignée de main,
+ * et Chromium émet alors :
+ *
+ * ```
+ * console.warning: WebSocket connection to 'ws://…/realtime/v1/websocket?…' failed:
+ *   WebSocket is closed before the connection is established.
+ * ```
+ *
+ * La console doit rester **vierge** (`docs/SPEC-webapp.md` §12.3), et le parcours clavier de « Ma
+ * journée » — qui navigue vite — l'a fait paraître. **La cause n'est pas cet écran-là** : c'est la
+ * cloche, qui vit sur **tous** les écrans, là où le fil de commentaires de `CRM-043` ne vit que sur
+ * la fiche d'une affaire et n'a donc jamais rencontré ce cycle.
+ *
+ * LE REMÈDE EST À LA CAUSE, JAMAIS AU SYMPTÔME (`CLAUDE.md` §18) : ni temporisation, ni
+ * avertissement ajouté à une liste tolérée. Le canal **survit au démontage** et n'est retiré que
+ * lorsque son profil change — c'est-à-dire à la déconnexion, ou sur une reprise explicite. Il y en
+ * a exactement **un** à tout instant, donc rien ne fuit ; et la navigation cesse de payer une
+ * reconnexion par écran.
+ */
+type Inscription = {
+	readonly client: ClientCrm
+	readonly idProfil: string
+	readonly canal: ReturnType<ClientCrm['channel']>
+	readonly ecouteurs: Set<() => void>
+	/** Vrai dès que le canal a rendu son premier statut : un montage tardif lit alors sans attendre. */
+	etabli: boolean
+}
+
+let inscriptionCourante: Inscription | null = null
+
+/** Retire l'abonnement en cours, s'il existe. Exportée pour que les preuves l'observent. */
+export function fermerAbonnementNotifications(): void {
+	if (inscriptionCourante === null) return
+	const { client, canal } = inscriptionCourante
+	inscriptionCourante = null
+	void client.removeChannel(canal)
+}
+
+/**
+ * Rend l'abonnement du profil, en le créant si nécessaire.
+ *
+ * `recreer` force un canal neuf : c'est la reprise explicite du §5.8, qui doit refaire l'abonnement
+ * autant que la lecture — une erreur peut venir du canal comme de la requête.
+ */
+function obtenirInscription(
+	client: ClientCrm,
+	idProfil: string,
+	recreer: boolean,
+): Inscription {
+	const courante = inscriptionCourante
+	if (
+		courante !== null &&
+		!recreer &&
+		courante.client === client &&
+		courante.idProfil === idProfil
+	) {
+		return courante
+	}
+	fermerAbonnementNotifications()
+
+	const ecouteurs = new Set<() => void>()
+	const prevenir = () => {
+		for (const ecouteur of ecouteurs) ecouteur()
+	}
+	const canal = client.channel(nomCanalNotifications(idProfil)).on(
+		'postgres_changes',
+		{
+			event: '*',
+			schema: 'public',
+			table: 'notifications',
+			filter: filtreCanalNotifications(idProfil),
+		},
+		prevenir,
+	)
+
+	// L'INSCRIPTION EXISTE AVANT L'ABONNEMENT, ET C'EST UN DÉFAUT TROUVÉ PAR LA PREUVE. Écrit
+	// d'abord en une seule expression — `.on(…).subscribe(…)` puis affectation —, le rappel de
+	// `subscribe` s'exécutait alors que `inscriptionCourante` portait encore la valeur précédente :
+	// `etabli` était posé sur la mauvaise inscription, ou sur aucune. Le navigateur ne le montrait
+	// pas, sa poignée de main étant asynchrone ; le double de test, lui, rappelle
+	// **synchroniquement**, et c'est ce qui l'a révélé. Un ordre qui n'est juste que parce qu'une
+	// dépendance est lente n'est pas un ordre juste.
+	const inscription: Inscription = { client, idProfil, canal, ecouteurs, etabli: false }
+	inscriptionCourante = inscription
+	canal.subscribe((statut) => {
+		if (statut === 'SUBSCRIBED' || statut === 'CHANNEL_ERROR' || statut === 'TIMED_OUT') {
+			inscription.etabli = true
+			prevenir()
+		}
+	})
+	return inscription
+}
+
+/**
  * La boîte de l'appelant, tenue à jour.
  *
  * LES DEUX RÈGLES DE `CRM-043` SONT REPRISES SANS CHANGEMENT (§25.2), et les recopier autrement en
@@ -376,6 +477,9 @@ export function useNotifications(
 	useEffect(() => {
 		++courant.current
 		if (client === null || idProfil === null) {
+			// UNE DÉCONNEXION FERME LE CANAL. Le laisser ouvert au nom de qui vient de partir
+			// délivrerait des événements à une session qui n'existe plus.
+			fermerAbonnementNotifications()
 			// SANS SESSION, L'ÉTAT EST PRÊT ET VIDE, jamais un chargement qui n'aboutira pas. La
 			// cloche n'est pas rendue dans ce cas (§26.7), et un état de chargement perpétuel ferait
 			// croire à une lecture en vol.
@@ -403,26 +507,18 @@ export function useNotifications(
 		}
 		relecture.current = charger
 
-		const canal = client
-			.channel(nomCanalNotifications(idProfil))
-			.on(
-				'postgres_changes',
-				{
-					event: '*',
-					schema: 'public',
-					table: 'notifications',
-					filter: filtreCanalNotifications(idProfil),
-				},
-				charger,
-			)
-			.subscribe((statut) => {
-				if (statut === 'SUBSCRIBED' || statut === 'CHANNEL_ERROR' || statut === 'TIMED_OUT') {
-					charger()
-				}
-			})
+		// L'ABONNEMENT EST PARTAGÉ, ET IL SURVIT AU DÉMONTAGE (voir `Inscription` ci-dessus). Le
+		// composant s'y INSCRIT ; il ne le possède pas. `tentative` — la reprise explicite — est la
+		// seule chose qui force un canal neuf.
+		const inscription = obtenirInscription(client, idProfil, tentative > 0)
+		inscription.ecouteurs.add(charger)
+		// UN MONTAGE TARDIF LIT SANS ATTENDRE : le canal étant déjà établi, aucun statut ne viendra
+		// plus déclencher la lecture. La règle 1 est tenue — la lecture reste subordonnée à
+		// l'abonnement, elle ne le devance jamais.
+		if (inscription.etabli) charger()
 
 		return () => {
-			void client.removeChannel(canal)
+			inscription.ecouteurs.delete(charger)
 		}
 	}, [client, idProfil, tentative])
 
