@@ -25558,3 +25558,93 @@ pas entre onglets** du même navigateur.
 **La question posée au responsable reste la même, et une seule** : les unités **`CRM-072`**
 (`audit_log`) et **`CRM-073`** (`api_tokens`) n'existent pas, onze unités leur renvoient, et leur
 périmètre est un choix produit qu'aucune mesure ne donne.
+
+---
+
+## décision 526 — `CRM-064` sous-tranche 3b livrée : le composeur pose une mention, et deux mesures ont décidé la forme à la place du réflexe
+
+*2026-08-26, session planifiée `CloudWorker`. Unité : `CRM-064`, sous-tranche 3b — l'émission. La
+spécification a été écrite et **committée avant la première ligne de code** (`CLAUDE.md` §5) :
+`docs/SPEC-notifications.md` §32 à §40 et `docs/DESIGN_SYSTEM.md` §5.44, fondés sur neuf mesures
+prises sur la pile debout et seedée, sondes détruites et état du seed relu après.*
+
+**LE §30 POSAIT DEUX EXIGENCES QUI SE CONTREDISAIENT EN APPARENCE**, et c'est la mesure qui les a
+réconciliées. Il demandait que le sélecteur n'offre **que des personnes éligibles** (§5.1) et que
+l'écran **ne calcule aucun droit** (`CLAUDE.md` §10). Or la seule liste que l'écran savait lire —
+`workspace_members` — est rendue **entière aux trois profils**, `viewer` compris (M2), tandis qu'une
+mention posée sur l'un de ces noms est **refusée** (M3, `400` / `P0001`). Un sélecteur alimenté par
+la première mesure aurait donc proposé un nom que la seconde refuse : la commande morte du §5.10.
+
+**La réponse n'est ni un filtre dans l'écran, ni un sélecteur complaisant.** Filtrer côté client
+aurait été la **seconde écriture de la règle d'accès** que la tranche 1 avait refusée en base,
+réécrite cette fois en TypeScript — donc divergente au premier niveau de droit ajouté, et
+invérifiable hors navigateur. La liste est demandée au backend, qui porte déjà la règle :
+`public.mentionnables(card_id)`, `security invoker`, qui appelle `app.can_read_card_pour` pour chaque
+membre. **C'est la première fois qu'une surface emploie la chaîne généralisée par la tranche 1.**
+
+**UNE SECONDE MESURE A DÉCIDÉ LA FORME DE L'ÉMISSION, ET ELLE CONTREDIT LE RÉFLEXE** (M5). Un `POST`
+groupé de deux mentions dont une seule est inéligible est **TOUT OU RIEN** : `400`, **aucune**
+mention posée — pas même celle qui était éligible —, et le refus **ne dit pas laquelle** est en
+cause. Deux `POST` séparés (M6) rendent `201` puis `400` : le résultat est **partiel** et
+**attribuable**. L'écran envoie donc une requête par personne, et paie `N` requêtes pour qu'un refus
+puisse nommer quelqu'un. Un refus qui ne nomme personne ne se corrige pas.
+
+**LE CAS QUE LE §30 DEMANDAIT DE TRAITER EST TRANCHÉ** : un commentaire publié dont une mention
+échoue **reste publié**. Le retirer détruirait un propos réellement tenu, et la suppression est une
+pierre tombale définitive, pas une annulation. L'écran rend une **troisième issue**, distincte du
+succès comme du refus, qui nomme les personnes ; le brouillon est vidé — le commentaire existe — et
+le sélecteur ne garde que les refusés, c'est-à-dire exactement ce qu'il reste à faire.
+
+**LE MOT `security invoker` EST ÉCRIT ALORS QU'IL EST LE DÉFAUT, et la raison dépasse cette
+migration.** L'écrire ne change rien à l'exécution ; il change ce qu'une relecture voit, et ce qu'un
+harnais peut dégrader. **Une propriété de sécurité qui n'existe que par omission ne se relit pas** :
+personne ne remarque l'absence d'un mot qui n'a jamais été là.
+
+**QUATRE PREUVES ONT ROUGI PENDANT LA SESSION, ET LES QUATRE FOIS C'ÉTAIT LA PREUVE QUI ÉTAIT
+FAUSSE, JAMAIS LE PRODUIT.** Deux d'entre elles partagent la **même** cause, et c'est ce qui en fait
+une leçon plutôt qu'un incident : une assertion pgTAP écrite sur `pg_get_functiondef` **brut** et
+deux contrôles du harnais écrits sur des noms de tables nus prenaient en défaut les **commentaires
+qui expliquent la règle** — la migration nomme `track_members` précisément pour dire qu'elle ne le
+lit pas. **Un contrôle qui prend en défaut la prose expliquant la règle ne mesure pas la règle** : la
+définition est désormais lue sans ses commentaires, et les motifs visent le code (`from('…')`).
+
+La troisième portait sur le contrat d'API. La ligne *ag*, qui mesure le refus de la **politique**,
+visait un destinataire inéligible : le trigger étant `BEFORE INSERT`, il tombe **avant** la clause
+`WITH CHECK`, si bien que le refus de l'auteur restait invisible derrière celui du destinataire.
+**Deux juges, deux refus — et l'ordre entre eux est une propriété du modèle, pas un détail.**
+
+**UNE DÉGRADATION DU HARNAIS NE DÉGRADAIT RIEN, ET LE FAIT VAUT POUR TOUT LE DÉPÔT.** Retirer le mot
+`anon` de la ligne `revoke` laissait la suite pgTAP verte **à juste titre** : `create or replace
+function` **conserve l'ACL existante**. La dégradation accorde donc explicitement, pour reproduire
+l'état d'une base **neuve**. Conséquence directe pour l'exploitation, et elle n'était écrite nulle
+part : **sur une base où la fonction existe déjà, corriger une ACL fautive demande un `revoke`
+explicite, jamais un simple rejeu de la migration corrigée.**
+
+**UN DÉFAUT DE PREUVE A ÉTÉ TROUVÉ EN REGARDANT L'IMAGE** (`CLAUDE.md` §16), et aucun test ne
+pouvait le voir : la capture du refus partiel montrait le **bas de la fiche**. La fenêtre n'avait pas
+suivi le composeur, et l'image ne portait **aucun** des éléments qu'elle prétendait attester. Une
+capture qui ne montre pas ce qu'elle prouve ne prouve rien ; l'alerte est amenée dans le cadre avant
+la prise.
+
+**UN ÉCART EST NOMMÉ PLUTÔT QUE COMBLÉ PAR UNE DONNÉE FABRIQUÉE.** L'état vide du sélecteur n'existe
+dans **aucune** affaire du seed — mesuré : l'administratrice lit toutes les affaires, si bien qu'un
+non-administrateur a toujours au moins elle. Il est donc éprouvé par la suite unitaire, jamais par le
+parcours d'interface. Le §36.4 est **révisé sur ce point**, et l'écart devient le point ouvert n° 4
+du §39. C'est la seule raison pour laquelle la sous-tranche reste `[~]`.
+
+**CAMPAGNE.** `typecheck`, `types:check` et `build` verts ; `test:sql` **63 fichiers / 2951
+assertions** ; `test:unit` **81 fichiers / 2737 tests** ; `e2e:api` **984 passés** (974 avant, plus
+les 10 de la sous-tranche) ; `e2e:mail` **42 passés** ; `pytest` **244 passés** ;
+`scripts/verify-mentions-composeur.sh` **53 contrôles, aucune anomalie**, huit dégradations toutes
+mordantes. **`e2e:ui` était en cours d'exécution à l'heure où ces lignes sont committées**, et son
+résultat est ajouté ci-dessous dès qu'il est connu — la règle du §0 de `docs/CloudWorker.md` : ce
+qui n'est pas poussé n'existe pas, et une session peut être interrompue à tout instant.
+
+**Où reprendre.** `CRM-064` **sous-tranche 3b livrée**, `[~]` pour le seul écart de l'état vide
+ci-dessus. Vient ensuite la **tranche 4 — les préférences**, qui n'est pas commencée et dont aucun
+chapitre n'existe : elle est à **spécifier avant son code**, et le §18, point 3, en énonce le
+périmètre.
+
+**La question posée au responsable reste la même, et une seule** : les unités **`CRM-072`**
+(`audit_log`) et **`CRM-073`** (`api_tokens`) n'existent pas, onze unités leur renvoient, et leur
+périmètre est un choix produit qu'aucune mesure ne donne.
