@@ -1359,3 +1359,274 @@ test.describe('le fil apprend les rattachements (docs/SPEC-contacts.md §19.5, c
 		await expect(page.getByText('Affaire créée').first()).toBeVisible()
 	})
 })
+
+// =================================================================================================
+// TRANCHE 6 — LA SUPPRESSION D'UN CONTACT, PAR LES GESTES DE L'ÉCRAN
+// =================================================================================================
+//
+// @verifies CRM-060 (docs/BACKLOG.md) — tranche 6 : la suppression d'un contact
+// @verifies docs/SPEC-contacts.md §20.4 (le retour au carnet sur le SEUL succès), §20.6 (les deux
+//           conséquences énoncées), §20.7 (contrat de comportement, cas a à n)
+// @verifies docs/DESIGN_SYSTEM.md §5.40 (le geste), §5.24 révisé (la fiche porte DEUX commandes)
+//
+// LE CONTACT SUPPRIMÉ EST TOUJOURS UNE SONDE CRÉÉE PAR LES GESTES DE L'ÉCRAN, jamais un contact du
+// seed : le seed est un contrat maintenu (`CLAUDE.md` §8), et une preuve qui le détruirait ferait
+// dériver les compteurs de tous les autres harnais. La garde de clôture le vérifie.
+
+const NOM_SONDE_T6 = 'Sonde tranche 6 — à supprimer'
+
+/** L'affaire qui porte le champ `contact` du §13.5 — celle du seed, sur le workflow global. */
+const ID_CARD_VITRINE_T6 = CARD_VITRINE_UI
+const CHEMIN_AFFAIRE_VITRINE = `/tracks/conseil-ia/grands-comptes/cards/${ID_CARD_VITRINE_T6}`
+/** Le champ `contact-principal` du workflow global — type `contact`, résolu à l'écriture (§9.3). */
+const CLE_CHAMP_CONTACT = 'contact-principal'
+const ID_CHAMP_CONTACT_T6 = '5eed0000-0000-4000-8000-000000000088'
+
+/** Crée un contact PAR LES GESTES DU CARNET (4e), et rend l'adresse de sa fiche. */
+async function creerUnContactSonde(page: Page, nom: string): Promise<string> {
+	await page.goto('/contacts')
+	await page.getByTestId('ouvrir-creation-contact').click()
+	await page.getByTestId('champ-nom-contact').fill(nom)
+	await page.getByTestId('envoyer-creation-contact').click()
+	const ligne = page.getByTestId('ligne-contact').filter({ hasText: nom })
+	await expect(ligne).toHaveCount(1)
+	await ligne.getByTestId('lien-contact').click()
+	await expect(page.getByRole('heading', { name: nom })).toBeVisible()
+	return page.url()
+}
+
+test.describe('suppression d’un contact (docs/SPEC-contacts.md §20.7)', () => {
+	test('cas a, b, e, g : la commande, sa confirmation, ses conséquences, et le RETOUR AU CARNET', async ({
+		page,
+	}) => {
+		await connecter(page, ADMIN)
+		await creerUnContactSonde(page, NOM_SONDE_T6)
+
+		// Cas a : DEUX commandes dans la zone, « Modifier » puis « Supprimer » (§5.24 révisé).
+		await expect(page.getByTestId('ouvrir-modification-contact')).toBeVisible()
+		const supprimer = page.getByTestId('ouvrir-suppression-contact')
+		await expect(supprimer).toBeVisible()
+		await expect(page.getByTestId('confirmation-suppression-contact')).toHaveCount(0)
+
+		// Cas b : la confirmation vit DANS LE FLUX — jamais en modale —, NOMME le contact, et la
+		// commande reste MONTÉE, seulement désactivée (§5.40).
+		await supprimer.click()
+		const confirmation = page.getByTestId('confirmation-suppression-contact')
+		await expect(confirmation).toBeVisible()
+		await expect(confirmation).toContainText(NOM_SONDE_T6)
+		await expect(supprimer).toBeVisible()
+		await expect(supprimer).toBeDisabled()
+		// LES DEUX ZONES DE LECTURE RESTENT SOUS LA CONFIRMATION : on décide en voyant l'objet.
+		await expect(page.getByTestId('caracteristiques-contact')).toBeVisible()
+
+		// Cas e : la sonde n'a AUCUNE affaire, et la phrase des rattachements n'est PAS rendue —
+		// annoncer « 0 affaire » ferait lire une conséquence inexistante (§20.6).
+		await expect(page.getByTestId('consequence-affaires-suppression')).toHaveCount(0)
+		// La conséquence 2, elle, est TOUJOURS rendue : c'est la décision 516, dite à l'utilisateur.
+		await expect(page.getByTestId('consequence-valeurs-suppression')).toBeVisible()
+		await capturer(page, 'fiche-contact-suppression-confirmation-1440', UNITE)
+
+		// Cas g : le geste aboutit, et l'écran QUITTE la fiche pour le carnet — qui ne porte plus
+		// la ligne. Rester rendrait « contact introuvable », c'est-à-dire un écran d'échec au bout
+		// d'un geste réussi (§20.4).
+		await page.getByTestId('confirmer-suppression-contact').click()
+		await expect(page.getByTestId('tableau-contacts')).toBeVisible()
+		await expect(page.getByTestId('ligne-contact').filter({ hasText: NOM_SONDE_T6 })).toHaveCount(0)
+		await capturer(page, 'fiche-contact-suppression-carnet-1440', UNITE)
+	})
+
+	test('cas d : rattaché à une affaire, la confirmation ANNONCE la trace laissée dans l’historique', async ({
+		page,
+	}) => {
+		await connecter(page, ADMIN)
+		const nom = 'Sonde tranche 6 — rattachée'
+		await creerUnContactSonde(page, nom)
+
+		// Le rattachement est posé PAR LES GESTES DE L'ÉCRAN (4h) : la conséquence annoncée doit
+		// porter sur un état que l'utilisateur a lui-même produit.
+		await page.getByTestId('ouvrir-rattachement-affaire').click()
+		await page.getByTestId('champ-affaire').selectOption(CARD_VITRINE_UI)
+		await page.getByTestId('confirmer-rattachement-affaire').click()
+		await expect(page.getByTestId('ligne-affaire-contact')).toHaveCount(1)
+
+		await page.getByTestId('ouvrir-suppression-contact').click()
+		const consequence = page.getByTestId('consequence-affaires-suppression')
+		await expect(consequence).toBeVisible()
+		// C'EST LA SEULE CONSÉQUENCE QUE L'UTILISATEUR NE PEUT PAS LIRE SUR L'ÉCRAN QU'IL REGARDE :
+		// la trace `contact_unlinked` écrite dans le fil de l'affaire (§20.2, mesure 7).
+		await expect(consequence).toContainText('historique')
+		await capturer(page, 'fiche-contact-suppression-rattachee-1440', UNITE)
+
+		await page.getByTestId('confirmer-suppression-contact').click()
+		await expect(page.getByTestId('tableau-contacts')).toBeVisible()
+		await expect(page.getByTestId('ligne-contact').filter({ hasText: nom })).toHaveCount(0)
+	})
+
+	test('cas c et l : au CLAVIER, « Annuler » rend le focus, et un seul geste est ouvert à la fois', async ({
+		page,
+	}) => {
+		await connecter(page, ADMIN)
+		await page.goto(`/contacts/${ID_ELISE_UI}`)
+		await expect(page.getByRole('heading', { name: 'Élise Fabre' })).toBeVisible()
+
+		const commande = page.getByTestId('ouvrir-suppression-contact')
+		await commande.focus()
+		await page.keyboard.press('Enter')
+		// Cas b : le focus ENTRE dans le bouton de confirmation — une question destructrice qui
+		// s'ouvrirait sans prendre le focus obligerait à la chercher au clavier.
+		await expect(page.getByTestId('confirmer-suppression-contact')).toBeFocused()
+
+		// Cas l : ouvrir la MODIFICATION referme la confirmation. Deux questions simultanées sur le
+		// même objet ne diraient pas à laquelle on répond (§5.40).
+		await page.getByTestId('ouvrir-modification-contact').click()
+		await expect(page.getByTestId('confirmation-suppression-contact')).toHaveCount(0)
+		await expect(page.getByTestId('formulaire-modification-contact')).toBeVisible()
+		// Et réciproquement.
+		await page.getByTestId('ouvrir-suppression-contact').click()
+		await expect(page.getByTestId('formulaire-modification-contact')).toHaveCount(0)
+
+		// Cas c : « Annuler » démonte la confirmation et REND le focus à la commande. Le retour est
+		// différé — la commande reste montée mais `disabled`, et un élément désactivé ne reçoit pas
+		// le focus (§5.40). Aucune temporisation.
+		await page.getByTestId('annuler-suppression-contact').click()
+		await expect(page.getByTestId('confirmation-suppression-contact')).toHaveCount(0)
+		await expect(commande).toBeFocused()
+		// LE SEED EST INTACT : Élise n'a pas été supprimée.
+		await expect(page.getByRole('heading', { name: 'Élise Fabre' })).toBeVisible()
+	})
+
+	test('cas h et j : la LECTRICE voit la commande, confirme, et reçoit « sans effet » — l’écran ne calcule aucun droit', async ({
+		page,
+	}) => {
+		await connecter(page, VIEWER)
+		await page.goto(`/contacts/${ID_SOPHIE_UI}`)
+		await expect(page.getByRole('heading', { name: 'Sophie Dupont' })).toBeVisible()
+
+		// Cas j : AUCUNE COMMANDE N'EST ÉTEINTE D'AVANCE SELON LE RÔLE (§5.40, décision 509).
+		const supprimer = page.getByTestId('ouvrir-suppression-contact')
+		await expect(supprimer).toBeVisible()
+		await expect(supprimer).toBeEnabled()
+
+		await supprimer.click()
+		await page.getByTestId('confirmer-suppression-contact').click()
+
+		// Cas h : le message « sans effet », `role="alert"`, sous les commandes. L'écran RESTE sur
+		// la fiche, la relit, et le contact est TOUJOURS LÀ — la base l'a gardé (§20.2, mesure 3).
+		const message = page.getByTestId('message-suppression-contact')
+		await expect(message).toBeVisible()
+		await expect(message).toContainText('Aucun contact n’a été supprimé')
+		await expect(page.getByTestId('confirmation-suppression-contact')).toHaveCount(0)
+		await expect(page.getByRole('heading', { name: 'Sophie Dupont' })).toBeVisible()
+		await expect(page.getByTestId('caracteristiques-contact')).toBeVisible()
+		await capturer(page, 'fiche-contact-suppression-sans-effet-1440', UNITE)
+	})
+
+	test('cas m : un contact supprimé laisse sa valeur de formulaire en RÉFÉRENCE INCONNUE, jamais en champ vidé', async ({
+		page,
+		request,
+	}) => {
+		// C'EST LA PREUVE QUE LE §20.3 RÉCLAME, ET ELLE N'EXISTAIT PAS. Le cas j du §13.5 était
+		// éprouvé sur un identifiant FABRIQUÉ : il prouvait le rendu, pas la chaîne. Ici le contact
+		// est réellement créé, réellement désigné par une valeur de formulaire, et réellement
+		// supprimé PAR LES GESTES DE L'ÉCRAN — ce qui éprouve la décision 516 de bout en bout.
+		await connecter(page, ADMIN)
+		const nom = 'Sonde tranche 6 — référence morte'
+		await creerUnContactSonde(page, nom)
+		const adresseFiche = page.url()
+		const idContact = adresseFiche.slice(adresseFiche.lastIndexOf('/') + 1)
+
+		try {
+			// La valeur est posée sur l'affaire par le formulaire de l'écran : le sélecteur du §13.5
+			// offre le contact sonde tant qu'il existe.
+			await page.goto(CHEMIN_AFFAIRE_VITRINE)
+			const selecteur = page.getByTestId(`selecteur-${CLE_CHAMP_CONTACT}`)
+			await expect(selecteur).toBeVisible()
+			await selecteur.selectOption(idContact)
+			// LE TÉMOIN : la valeur est acceptée, et le sélecteur retient bien le contact sonde.
+			await expect(selecteur).toHaveValue(idContact)
+
+			// Le contact est supprimé PAR L'ÉCRAN.
+			await page.goto(adresseFiche)
+			await page.getByTestId('ouvrir-suppression-contact').click()
+			await page.getByTestId('confirmer-suppression-contact').click()
+			await expect(page.getByTestId('tableau-contacts')).toBeVisible()
+
+			// ET LA VALEUR EST TOUJOURS LÀ, RENDUE COMME UNE RÉFÉRENCE INCONNUE. Un `select` qui ne
+			// porterait pas d'option pour elle afficherait sa PREMIÈRE option comme si elle avait été
+			// choisie : la donnée enregistrée serait remplacée à l'écran par une autre, et un simple
+			// passage sur le champ risquerait de l'écraser en base. C'est la « valeur par défaut
+			// trompeuse » que `CLAUDE.md` §18 interdit.
+			await page.goto(CHEMIN_AFFAIRE_VITRINE)
+			const apres = page.getByTestId(`selecteur-${CLE_CHAMP_CONTACT}`)
+			await expect(apres).toBeVisible()
+			await expect(apres).toHaveValue(idContact)
+			await expect(apres.locator(`option[value="${idContact}"]`)).toContainText(
+				'Référence inconnue',
+			)
+			// LA CAPTURE DOIT PORTER SON SUJET, ET C'EST UN DÉFAUT DÉJÀ PAYÉ (décision 508) : cadrée
+			// sur le haut de la fiche d'affaire, elle montrait l'en-tête et le début du formulaire,
+			// jamais le champ qu'elle prouve. Le sélecteur est amené dans le champ visible avant le
+			// déclenchement — l'image doit montrer ce que l'assertion vient de mesurer.
+			await apres.scrollIntoViewIfNeeded()
+			await capturer(page, 'fiche-contact-suppression-reference-inconnue-1440', UNITE)
+		} finally {
+			// LE SEED EST RENDU INTACT : la valeur sonde est retirée, et la sonde avec elle si le
+			// geste de l'écran n'a pas abouti. La clé de service PURGE — elle ne prouve rien ici
+			// (décision 50).
+			await request.delete(
+				`${URL_API}/rest/v1/card_field_values?card_id=eq.${ID_CARD_VITRINE_T6}` +
+					`&field_id=eq.${ID_CHAMP_CONTACT_T6}`,
+				{ headers: enTetesService() },
+			)
+			await request.delete(`${URL_API}/rest/v1/contacts?id=eq.${idContact}`, {
+				headers: enTetesService(),
+			})
+		}
+	})
+
+	test('la confirmation reste ENTIÈREMENT LISIBLE à 390 px, et la page ne défile pas', async ({
+		page,
+	}) => {
+		// LA CONFIRMATION PORTE DE LA PROSE, ET C'EST CE QUI EN FAIT UN RISQUE AU PALIER ÉTROIT : le
+		// §5.27 a déjà payé ce défaut sur une confirmation posée dans un tableau défilant. Celle-ci
+		// vit hors du tableau (§5.40) et ne devrait donc pas être amputée — la mesure le vérifie
+		// plutôt que de le supposer, et elle vérifie la seule chose qui compte : que la question
+		// destructrice se LIT avant qu'on y réponde (§6).
+		await page.setViewportSize({ width: 390, height: 780 })
+		await connecter(page, ADMIN)
+		await page.goto(`/contacts/${ID_ELISE_UI}`)
+		await page.getByTestId('ouvrir-suppression-contact').click()
+		const confirmation = page.getByTestId('confirmation-suppression-contact')
+		await expect(confirmation).toBeVisible()
+		await expect(confirmation).toContainText('Élise Fabre')
+		await expect(page.getByTestId('confirmer-suppression-contact')).toBeVisible()
+
+		const debordePage = await page.evaluate(
+			() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+		)
+		expect(debordePage, 'la page ne doit jamais défiler horizontalement').toBe(false)
+		// LE BLOC TIENT DANS LA FENÊTRE : une confirmation dont le bord droit sortirait de l'écran
+		// perdrait la fin de sa phrase, c'est-à-dire la conséquence qu'elle sert à annoncer.
+		const boite = await confirmation.boundingBox()
+		expect(boite).not.toBeNull()
+		expect((boite?.x ?? 0) + (boite?.width ?? 0)).toBeLessThanOrEqual(390)
+
+		await capturer(page, 'fiche-contact-suppression-confirmation-sm-390', UNITE)
+		// LE SEED EST INTACT : la confirmation est ABANDONNÉE, jamais confirmée.
+		await page.getByTestId('annuler-suppression-contact').click()
+		await expect(page.getByRole('heading', { name: 'Élise Fabre' })).toBeVisible()
+	})
+
+	test('le seed est rendu INTACT : le carnet porte exactement les trois contacts d’origine', async ({
+		page,
+	}) => {
+		// GARDE DE CLÔTURE. Une sonde oubliée ferait dériver les compteurs d'autres harnais, et le
+		// défaut se lirait chez eux plutôt qu'ici.
+		await connecter(page, ADMIN)
+		await page.goto('/contacts')
+		await expect(page.getByTestId('ligne-contact')).toHaveCount(3)
+		await expect(page.getByTestId('ligne-contact').filter({ hasText: 'Sonde tranche 6' })).toHaveCount(
+			0,
+		)
+	})
+})
