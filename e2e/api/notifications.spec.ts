@@ -17,7 +17,7 @@
 // retirée, et une dernière lecture le CONSTATE — décision 501 : une preuve qui laisse ses sondes
 // en base fait rougir la suivante.
 
-import { expect, test } from '@playwright/test'
+import { expect, request as requetePlaywright, test } from '@playwright/test'
 import { CLE_ANONYME, CLE_SERVICE, URL_API, enTetesAnonymes, enTetesAuthentifies, jetonDe } from './jetons'
 
 const NOTIFICATIONS = '/rest/v1/notifications'
@@ -45,6 +45,23 @@ const CARD_FERMEE = '5eed0000-0000-4000-8000-0000000000c1'
 const ANTIDATEE = '2016-01-01T00:00:00.000Z'
 
 const enTetesService = () => ({ apikey: CLE_SERVICE, Authorization: `Bearer ${CLE_SERVICE}` })
+
+/**
+ * Rend LA ligne attendue, en échouant explicitement si elle manque.
+ *
+ * `noUncheckedIndexedAccess` est actif dans ce dépôt, et c'est une bonne chose : une preuve qui
+ * accède à `[0]` sans rien dire suppose silencieusement que la ligne existe, et rend un message
+ * illisible le jour où elle manque. Cette fonction transforme cette supposition en assertion.
+ */
+function laLigne(
+	lignes: Array<Record<string, unknown>>,
+	quoi: string,
+): Record<string, unknown> {
+	expect(lignes.length, `${quoi} : une ligne et une seule était attendue`).toBe(1)
+	const premiere = lignes[0]
+	if (premiere === undefined) throw new Error(`${quoi} : aucune ligne`)
+	return premiere
+}
 
 /**
  * Relit les notifications **avec la clé de service**, donc hors de toute politique.
@@ -76,12 +93,11 @@ test.describe('CRM-064 tranche 2 — le contrat d’API de la notification', () 
 		driss = await jetonDe('bizdev@p2enjoy.test')
 		farida = await jetonDe('viewer@p2enjoy.test')
 
-		const [notification] = await enBase(request, `select=id&payload->>comment_id=eq.${D1_DE_CAMILLE}`)
-		expect(
-			notification,
+		const notification = laLigne(
+			await enBase(request, `select=id&payload->>comment_id=eq.${D1_DE_CAMILLE}`),
 			'le seed doit avoir PROVOQUÉ la notification de la mention posée sur `…0d1` ' +
 				'(docs/SPEC-notifications.md §19) : sans elle, ce fichier ne mesure rien',
-		).toBeDefined()
+		)
 		n1 = notification.id as string
 	})
 
@@ -192,7 +208,7 @@ test.describe('CRM-064 tranche 2 — le contrat d’API de la notification', () 
 		})
 		expect(marquage.status()).toBe(204)
 
-		const [apres] = await enBase(request, `select=read_at&id=eq.${n1}`)
+		const apres = laLigne(await enBase(request, `select=read_at&id=eq.${n1}`), 'la notification marquée')
 		expect(apres.read_at).not.toBeNull()
 		expect(
 			new Date(apres.read_at as string).getTime(),
@@ -220,7 +236,7 @@ test.describe('CRM-064 tranche 2 — le contrat d’API de la notification', () 
 		})
 		expect(retour.status()).toBe(204)
 
-		const [restaure] = await enBase(request, `select=read_at&id=eq.${n1}`)
+		const restaure = laLigne(await enBase(request, `select=read_at&id=eq.${n1}`), 'la notification remise non lue')
 		expect(
 			restaure.read_at,
 			'`null` reste `null` : un état à deux valeurs qu’on ne peut parcourir que dans un sens ' +
@@ -243,7 +259,7 @@ test.describe('CRM-064 tranche 2 — le contrat d’API de la notification', () 
 				'dépôt attend d’un `UPDATE`, et non un 403',
 		).toBe(204)
 
-		const [apres] = await enBase(request, `select=read_at&id=eq.${n1}`)
+		const apres = laLigne(await enBase(request, `select=read_at&id=eq.${n1}`), 'la notification de Driss')
 		expect(
 			apres.read_at,
 			'AUCUNE ligne n’a été touchée, et c’est relu en base : un refus qui laisse une trace ' +
@@ -270,7 +286,10 @@ test.describe('CRM-064 tranche 2 — le contrat d’API de la notification', () 
 			expect((await reponse.json()).code).toBe('42501')
 		}
 
-		const [intacte] = await enBase(request, `select=recipient_id,payload&id=eq.${n1}`)
+		const intacte = laLigne(
+			await enBase(request, `select=recipient_id,payload&id=eq.${n1}`),
+			'la notification restée intacte',
+		)
 		expect(
 			intacte.recipient_id,
 			'`grant update (read_at)` SEUL fige toutes les autres colonnes ' +
@@ -309,22 +328,24 @@ test.describe('CRM-064 tranche 2 — le contrat d’API de la notification', () 
 		})
 		expect(posee.status()).toBe(201)
 
-		const produites = await enBase(request, `select=recipient_id,type,subject_card_id,payload,read_at&payload->>comment_id=eq.${D3_LIBRE}`)
-		expect(
-			produites.length,
+		const produite = laLigne(
+			await enBase(
+				request,
+				`select=recipient_id,type,subject_card_id,payload,read_at&payload->>comment_id=eq.${D3_LIBRE}`,
+			),
 			'poser une mention PRODUIT une notification — c’est l’objet de la tranche, et toutes ' +
 				'les assertions de forme passeraient sans que ce soit vrai',
-		).toBe(1)
-		expect(produites[0].recipient_id).toBe(DRISS)
-		expect(produites[0].type).toBe('mention')
-		expect(produites[0].subject_card_id).toBe(CARD_FERMEE)
+		)
+		expect(produite.recipient_id).toBe(DRISS)
+		expect(produite.type).toBe('mention')
+		expect(produite.subject_card_id).toBe(CARD_FERMEE)
 		expect(
-			produites[0].payload,
+			produite.payload,
 			'la charge utile porte de quoi DÉSIGNER, jamais de quoi lire : ni le corps du ' +
 				'commentaire, ni le titre de la card, ni le nom de l’auteur ' +
 				'(docs/SPEC-notifications.md §13.4)',
 		).toEqual({ comment_id: D3_LIBRE, author_id: CAMILLE })
-		expect(produites[0].read_at, 'une notification naît NON LUE').toBeNull()
+		expect(produite.read_at, 'une notification naît NON LUE').toBeNull()
 
 		// Et le destinataire la voit RÉELLEMENT, par la vraie route : la produire sans la rendre
 		// lisible ne servirait à rien, et seule cette lecture-ci le prouve.
@@ -346,13 +367,12 @@ test.describe('CRM-064 tranche 2 — le contrat d’API de la notification', () 
 				'destinataire puisse LIRE l’affaire, et l’auteur le peut toujours (§12, M5)',
 		).toBe(201)
 
-		const apresAuto = await enBase(request, `select=recipient_id&payload->>comment_id=eq.${D3_LIBRE}`)
-		expect(
-			apresAuto.length,
+		const apresAuto = laLigne(
+			await enBase(request, `select=recipient_id&payload->>comment_id=eq.${D3_LIBRE}`),
 			'deux mentions posées, UNE seule notification : se prévenir soi-même de ce qu’on vient ' +
 				'd’écrire n’est pas une information (docs/SPEC-notifications.md §14.3)',
-		).toBe(1)
-		expect(apresAuto[0].recipient_id).toBe(DRISS)
+		)
+		expect(apresAuto.recipient_id).toBe(DRISS)
 
 		// --- p : retirer la mention n'efface PAS la notification --------------------------------
 		const retrait = await request.delete(
@@ -374,8 +394,10 @@ test.describe('CRM-064 tranche 2 — le contrat d’API de la notification', () 
 	// LE PRODUIT EST RENDU DANS L'ÉTAT OÙ IL A ÉTÉ TROUVÉ — décision 501
 	// -------------------------------------------------------------------------------------------
 
-	test.afterAll(async ({}, infos) => {
-		const contexte = await test.request.newContext({ baseURL: URL_API })
+	test.afterAll(async () => {
+		// La fixture `request` est de portée TEST : elle n'existe plus ici. Le contexte est donc
+		// créé à la main, exactement comme `jetons.ts` le fait pour la route de connexion.
+		const contexte = await requetePlaywright.newContext({ baseURL: URL_API })
 		try {
 			await contexte.delete(`${URL_API}${MENTIONS}?comment_id=eq.${D3_LIBRE}`, {
 				headers: enTetesService(),
@@ -403,6 +425,5 @@ test.describe('CRM-064 tranche 2 — le contrat d’API de la notification', () 
 		} finally {
 			await contexte.dispose()
 		}
-		void infos
 	})
 })

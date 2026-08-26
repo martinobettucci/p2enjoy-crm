@@ -159,6 +159,27 @@ type _tables = Expect<
     // objet au schéma exposé régénère les types DANS LE MÊME CHANGEMENT.
     | 'mail_templates'
     | 'mail_thread_snoozes'
+    // `0064` de `CRM-064` tranche 2 ajoute `notifications`, ET LE TÉMOIN L'A VUE DÈS SA NAISSANCE
+    // — deuxième fois consécutive, après `card_comment_mentions`. La tranche 2 ne touche aucun
+    // écran non plus, et régénère quand même : c'est la règle formulée plus bas, appliquée.
+    //
+    // CE QUE LE GÉNÉRATEUR VOIT, ET CE QUI LUI ÉCHAPPE. Il voit `read_at: string | null` — l'état
+    // lu / non lu —, et c'est la seule des règles de cette table qu'un type puisse porter. Les
+    // autres lui échappent entièrement :
+    //
+    //   * `Insert` expose toutes les colonnes comme si un client pouvait poser une ligne. AUCUN
+    //     ne le peut : le refus est DOUBLE — ni privilège `INSERT`, ni politique — et le seul
+    //     chemin est le trigger `app.notifications_apres_mention`
+    //     (`docs/SPEC-notifications.md` §15.3) ;
+    //   * `Update` expose les huit colonnes, alors qu'un privilège de COLONNE borne le geste à
+    //     `read_at` seule. C'est un `42501` que le type ne saura jamais annoncer (§15.2) ;
+    //   * la date de lecture est imposée par la base : `read_at` envoyé est remplacé par `now()`,
+    //     ce qu'aucun type ne dit (§15.1).
+    //
+    // `app.notifications_apres_mention` et `app.notifications_avant_maj` n'apparaissent pas dans
+    // `_fonctions` : elles vivent dans le schéma `app`, que PostgREST n'expose pas. Le compte de
+    // fonctions appelables en RPC reste inchangé.
+    | 'notifications'
     | 'organizations'
     | 'profiles'
     | 'track_members'
