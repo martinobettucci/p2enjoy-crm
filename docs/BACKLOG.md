@@ -9160,7 +9160,7 @@ avant la suivante :
 |---|---|---|
 | 1 | La mention en base — relation, intégrité, règle d'éligibilité, RLS, contrat d'API, seed, harnais. Aucune surface | en cours |
 | 2 | La notification — table `public.notifications`, production à partir d'une mention, état lu / non lu | **livrée** |
-| 3 | La surface et le temps réel — composeur, liste, compteur, abonnement | `[ ]` |
+| 3 | La surface et le temps réel — composeur, liste, compteur, abonnement. **Découpée en deux sous-tranches** (spécification §22.1) : `3a` la réception, `3b` l'émission | `3a` en cours, `3b` `[ ]` |
 | 4 | Les préférences — ce que chacun reçoit, et par quel canal | `[ ]` |
 
 - [x] **Spécification écrite et committée AVANT la première ligne de code** —
@@ -9349,11 +9349,42 @@ avant la suivante :
       **aucune surface**. Un chapitre sur une notification que personne ne peut voir décrirait un
       geste que personne ne peut faire. Il naîtra avec la **tranche 3**.
 
+#### Tranche 3a — la réception `[~]`
+
+- [x] **Spécification écrite et committée AVANT la première ligne de code** —
+      `docs/SPEC-notifications.md` §21 à §31, fondés sur **treize mesures** prises le 2026-08-26 sur
+      la pile réelle, seed appliqué, avec les jetons des trois profils. Les deux mesures qui
+      écrivent ont été **remises dans l'état où elles ont trouvé le produit** (M9 bis). Le §1.2
+      nommait cette tranche ; aucun chapitre ne la décrivait.
+- [x] **LA TRANCHE 3 EST DÉCOUPÉE EN DEUX SOUS-TRANCHES, ET LE MOTIF EST MESURÉ** (§22.1). Elle
+      porte deux surfaces indépendantes — celle qui **reçoit** et celle qui **envoie**. Le seed
+      livrant déjà deux notifications (§19), la réception se prouve **immédiatement et de bout en
+      bout**, sans attendre l'émission. C'est le découpage des dix sous-tranches de `CRM-060`.
+- [x] **UNE PRÉDICTION DU §13.4 EST CORRIGÉE PAR LA MESURE, ET EN FAVEUR DE LA DÉCISION QU'ELLE
+      FONDAIT** (M8, §26.3). Il annonçait « une lecture par notification affichée » comme le prix de
+      n'embarquer aucun contenu dans le `payload`. Mesuré : `id=in.(…)` groupe **toute la page** en
+      une requête, et la relation `card_comments → profiles` y embarque l'auteur. Le coût réel est
+      de **deux requêtes pour la liste entière**, non de `N + 1`. Le §13.4 est **révisé sur place**
+      sur son coût, jamais réécrit — ce qu'il décidait est inchangé.
+- [x] **LA LIGNE DONT L'AFFAIRE EST ILLISIBLE N'EXISTE PAS, ET C'EST UNE PROPRIÉTÉ DE LA POLITIQUE**
+      (§24.3). Le prédicat du §16.1 exige `app.can_read_card(subject_card_id)` : une notification
+      dont l'affaire se ferme **sort de la liste entière**. L'écran ne prévoit donc **aucun** rendu
+      pour ce cas — écrire un repli pour un état que la base rend impossible enseignerait qu'il peut
+      arriver. La ligne dont le **commentaire** est illisible, elle, arrive réellement (§14.4) et a
+      son rendu dégradé.
+- [ ] **Migration `0065`** : publication de `public.notifications` au temps réel, idempotente.
+- [ ] **Module de lecture, de marquage et d'abonnement** — deux requêtes (§24.1), le canal nommé par
+      le destinataire (§25.3), les trois issues du marquage (§26.4).
+- [ ] **La cloche, son compteur et le panneau** — `docs/DESIGN_SYSTEM.md` §5.43.
+- [ ] **Suite unitaire, contrat d'API (§27), E2E d'interface, captures observées, harnais dédié.**
+- [ ] **`docs/manual.md` gagne son chapitre AVEC cette sous-tranche** (§30) : c'est elle qui livre
+      la surface.
+
 - [~] **CE QUI RETIENT L'UNITÉ EN `[~]`, ET C'EST NOMMÉ PLUTÔT QUE MASQUÉ.** Les tranches **1 et
-      2 sont closes** ; les tranches **3 et 4** — la surface et le temps réel, les préférences —
-      ne sont pas commencées. `docs/manual.md` ne gagne toujours **aucun chapitre** : ni la
-      tranche 1 ni la tranche 2 ne livrent de surface, et un chapitre sur une fonctionnalité
-      invisible décrirait un geste que personne ne peut faire. Il naîtra avec la tranche 3.
+      2 sont closes** ; la sous-tranche **3a est en cours**, et **3b** — le composeur qui pose une
+      mention — n'est pas commencée, son contrat étant énoncé au §30 et restant à spécifier avant
+      son code. La **tranche 4** — les préférences — n'est pas commencée. `docs/manual.md` ne gagne
+      son chapitre qu'avec la sous-tranche 3a, première surface de l'unité.
 - [ ] **La série des `scripts/verify-*.sh` n'a PAS été rejouée derrière ces changements**, et
       l'écart est nommé (`docs/CloudWorker.md` §4.3, budget) : le dépôt en porte **soixante-treize**
       depuis la tranche 2, et **deux** l'ont été — `verify-mentions.sh` à la tranche 1,

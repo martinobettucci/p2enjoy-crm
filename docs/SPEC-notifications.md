@@ -33,11 +33,16 @@ prouvée et poussée avant la suivante — le découpage retenu par `CRM-063`, `
 |---|---|---|
 | **1** | **La mention en base** | La relation, son intégrité référentielle, sa règle d'éligibilité, ses politiques, ses privilèges, son contrat d'API et son seed. **Aucune surface.** |
 | 2 | La notification | Table `public.notifications`, sa production à partir d'une mention, l'état lu / non lu, RLS et contrat d'API. |
-| 3 | La surface et le temps réel | Le composeur qui pose une mention, la liste des notifications, le compteur, l'abonnement Realtime. |
+| 3 | La surface et le temps réel | Le composeur qui pose une mention, la liste des notifications, le compteur, l'abonnement Realtime. **Découpée en deux sous-tranches au §22.1** — `3a` la réception, `3b` l'émission. |
 | 4 | Les préférences | Ce que chacun reçoit, et par quel canal. |
 
 **Ce document spécifie intégralement la tranche 1.** Les tranches 2 à 4 y sont nommées pour que le
 périmètre de la 1 soit lisible, et elles seront spécifiées à leur tour, avant leur code.
+
+> **ÉTAT DU DOCUMENT AU 2026-08-26.** La tranche 1 est spécifiée aux §2 à §11, la tranche 2 aux
+> §12 à §20, et la **sous-tranche 3a** aux §21 à §31. La sous-tranche 3b est **énoncée** au §30 —
+> le contrat qu'elle devra tenir — et reste à spécifier avant son code. La tranche 4 n'est pas
+> commencée.
 
 ### 1.3 Ce que la tranche 1 n'est pas
 
@@ -1184,3 +1189,582 @@ rencontrera la même tension, et devra la traiter par l'état plutôt que par le
 | Harnais | `scripts/verify-notifications.sh`, non complaisant, éprouvé par dégradations réelles et restauration constatée |
 | Seed | Les deux notifications du §19, **produites** et non posées, et le passage convergent |
 | E2E d'interface | **Aucun**, et l'écart est nommé : la tranche 2 ne livre aucune surface (§13.1) |
+
+---
+---
+
+# TRANCHE 3 — LA SURFACE ET LE TEMPS RÉEL
+
+Chapitres écrits le **2026-08-26**, **avant la première ligne de code** de la tranche 3
+(`CLAUDE.md` §5), et **après mesure sur la pile de développement debout et seedée** — migrations
+`0001` à `0064` appliquées, `supabase/seed/apply-seed.sh` passé. Les treize mesures du §21 ont été
+prises avec les jetons réels des trois profils ; celles qui écrivent ont été **remises dans l'état
+où elles ont trouvé le produit**, et l'état du seed relu après (M9 bis).
+
+Le §1.2 nomme cette tranche en une ligne — « le composeur qui pose une mention, la liste des
+notifications, le compteur, l'abonnement Realtime ». Aucun chapitre ne la décrivait. Ces chapitres
+sont la spécification qui manquait.
+
+**C'est la PREMIÈRE SURFACE de `CRM-064`.** Les deux tranches précédentes ont livré une règle
+d'accès, une table et une production que **personne ne peut voir**. Le §13.1 l'a écrit deux fois :
+« un chapitre sur une notification que personne ne peut voir décrirait un geste que personne ne
+peut faire ». La tranche 3 est celle qui rend le geste possible — et c'est donc elle qui écrit le
+chapitre de `docs/manual.md`.
+
+---
+
+## 21. Les treize mesures de la tranche 3, prises avant d'écrire
+
+Toutes relevées le 2026-08-26 sur la pile de développement, migrations `0001` à `0064` appliquées
+et seed passé, avec les jetons réels obtenus par `POST /auth/v1/token?grant_type=password`.
+`A` = Camille (`admin`), `B` = Driss (`business_developer`), `V` = Farida (`viewer`).
+
+**M1 — la boîte de `B` porte exactement une notification, non lue.**
+
+```
+GET /rest/v1/notifications?select=*   (jeton de B)
+=> 200, une ligne :
+   id             2163edb1-3e29-4df1-8512-98003467ffc2
+   workspace_id   …0001
+   recipient_id   …012              (Driss)
+   type           "mention"
+   subject_card_id …0c1
+   payload        { "author_id": "…011", "comment_id": "…0d1" }
+   read_at        null
+   created_at     2026-08-26T16:25:30.556393+00:00
+```
+
+**M2 — la boîte de `A` porte l'autre, et une seule.** `recipient_id` = `…011`, `payload.author_id`
+= `…012`, `payload.comment_id` = `…0d2`, `read_at` nul.
+
+**M3 — la boîte de `V` est VIDE, et c'est `200 []`, jamais une erreur.** Le refus se mesure comme
+une liste vide, exactement comme la tranche 1 le demandait pour les mentions.
+
+**M4 — le compteur de non-lues se lit en une requête SANS CORPS.**
+
+```
+HEAD /rest/v1/notifications?select=id&read_at=is.null    Prefer: count=exact   (jeton de B)
+=> 200, en-tête « Content-Range: 0-0/1 »
+```
+
+Le nombre est **dans l'en-tête**, et aucune ligne ne traverse le réseau. C'est la lecture qu'une
+cloche fait le plus souvent, et c'est la moins chère que la pile sache rendre.
+
+**M5 — l'AFFAIRE s'embarque par la clé étrangère composite, en une seule requête.**
+
+```
+GET /rest/v1/notifications?select=id,subject_card_id,
+      cards(id,title,channels!cards_channel_id_workspace_id_fkey(slug,name,tracks(slug,name)))
+=> 200 : cards.title = « Refonte du site vitrine »,
+         channels.slug = « grands-comptes », tracks.slug = « conseil-ia »
+```
+
+Les deux slugs arrivent avec le titre. L'adresse d'une affaire les **exige tous les deux**
+(`/tracks/:slugTrack/:slugChannel/cards/:idCard`), et aucun ne se déduit de l'autre : c'est
+l'embarquement de `docs/SPEC-costs.md` §4.4 et de `colonnes-ma-journee.ts`, repris sans changement.
+
+**M5 bis — `cards` ne porte AUCUNE colonne `slug`.** `select=…,cards(slug)` rend
+`42703 column cards_1.slug does not exist`. Une affaire est désignée par son identifiant ; ce sont
+son channel et son track qui portent des slugs.
+
+**M6 — le destinataire LIT le profil de l'auteur qui l'a mentionné.**
+
+```
+GET /rest/v1/profiles?select=id,full_name,avatar_url&id=eq.…011   (jeton de B)
+=> 200 : « Camille Aubert », « /avatars/camille-aubert.svg »
+```
+
+**M7 — le destinataire LIT le commentaire qui le mentionne.**
+
+```
+GET /rest/v1/card_comments?select=id,body,created_at,deleted_at,author_id&id=eq.…0d1  (jeton de B)
+=> 200 : « La DSI a confirmé le périmètre de la refonte : trois gabarits, pas cinq. »
+```
+
+Les deux lectures que le §13.4 a rendues nécessaires en refusant toute copie dans le `payload`
+**aboutissent réellement**, sous la RLS courante et sans privilège particulier.
+
+**M8 — UNE SEULE REQUÊTE SUFFIT POUR TOUS LES COMMENTAIRES CITÉS, AUTEUR EMBARQUÉ, ET C'EST LA
+MESURE QUI CORRIGE UNE PRÉDICTION DU §13.4.**
+
+```
+GET /rest/v1/card_comments?select=id,body,deleted_at,author_id,
+      auteur:profiles!card_comments_author_id_fkey(id,full_name,avatar_url)
+    &id=in.(…0d1,…0d2)                                            (jeton de B)
+=> 200, deux lignes, chacune portant son auteur complet
+```
+
+Le §13.4 écrivait : « l'écran de la tranche 3 fera **une lecture par notification affichée** ». La
+mesure dit autre chose : `id=in.(…)` groupe **toute la page** en une requête, et la relation
+`card_comments → profiles` embarque l'auteur au passage. Le coût réel est de **deux requêtes pour
+la liste entière** — les notifications avec leur affaire, puis les commentaires avec leurs auteurs
+—, et non de `N + 1`. Le §13.4 est **révisé sur place** au §26.3, jamais réécrit.
+
+**M9 — un identifiant INCONNU dans `id=in.(…)` ne fait pas échouer la lecture groupée.**
+
+```
+GET /rest/v1/card_comments?select=id&id=in.(…0d1,00000000-0000-4000-8000-000000000000)
+=> 200
+```
+
+Il rend simplement une ligne de moins. C'est ce qui rend la lecture groupée sûre quand un
+commentaire a été **détruit** ou est devenu illisible entre-temps.
+
+**M9 bis — l'état du seed après les mesures : deux notifications, toutes deux non lues.** Les deux
+écritures de M10 et M11 ont été **remises** dans leur état de départ.
+
+**M10 — la date de lecture est imposée par la base, et une date antidatée ne survit pas.**
+
+```
+PATCH /rest/v1/notifications?id=eq.<N1>  {"read_at":"2016-01-01T00:00:00Z"}   (jeton de B)
+=> 204, puis relecture : read_at = 2026-08-26T16:28:05.960975+00:00
+```
+
+**M11 — le retour à « non lu » fonctionne, et `null` reste `null`.**
+
+```
+PATCH … {"read_at":null}  => 204, relecture : read_at = null
+```
+
+Les deux sens du §15.1 sont donc réellement ouverts à l'écran.
+
+**M12 — l'ordre `created_at.desc` est celui que le serveur sait rendre**, et l'index
+`(recipient_id, created_at desc)` du §13.7 le sert exactement.
+
+**M13 — SEULE `public.card_comments` est publiée au temps réel.**
+
+```
+select schemaname||'.'||tablename from pg_publication_tables where pubname='supabase_realtime';
+=> public.card_comments
+```
+
+C'est la ligne de base que le §16.3 a figée par une assertion. La tranche 3 est celle qui la
+**change**, et qui doit donc réviser cette assertion — dans le même changement que l'écran qui
+écoute, jamais avant.
+
+---
+
+## 22. Ce que la tranche 3 est, et ce qu'elle n'est pas
+
+Elle livre **la boîte de réception**, et le geste qui la remplit. Chaque absence est figée par une
+assertion ou par un énoncé, jamais compensée :
+
+- **aucune préférence.** Ce que chacun consent à recevoir est la tranche 4 (§18, point 3) ;
+- **aucune rétention.** Rien ne supprime, rien n'expire. Le point ouvert n° 1 du §18 est
+  **rencontré** ici pour la première fois, et il est traité par une **borne de lecture**, jamais
+  par une suppression que personne n'a spécifiée (§26.5) ;
+- **aucun regroupement.** Dix mentions sur la même affaire rendent dix lignes. Le point ouvert
+  n° 2 reste ouvert, et le §26.6 dit pourquoi il n'est pas tranché ici ;
+- **aucun canal sortant.** Ni email, ni digest, ni notification du navigateur ;
+- **aucune analyse du corps d'un commentaire.** Le §4.4 tient sans changement : la syntaxe `@`
+  n'existe pas, et le composeur de la sous-tranche 3b pose des mentions par un **sélecteur**, pas
+  en lisant du texte.
+
+### 22.1 Découpage en deux sous-tranches, et son motif
+
+La tranche 3 porte deux surfaces qui ne dépendent pas l'une de l'autre : celle qui **reçoit** et
+celle qui **envoie**. Le seed livre déjà deux notifications (§19), donc la première se prouve
+**immédiatement** et de bout en bout ; la seconde produit ce que la première montre.
+
+| Sous-tranche | Objet | Ce qu'elle livre |
+|---|---|---|
+| **3a** | **La réception** | La publication au temps réel, le module de lecture, la cloche et son compteur, le panneau de liste, le marquage lu / non lu, l'abonnement. |
+| 3b | L'émission | Le sélecteur de personnes du composeur de commentaires, qui pose une mention par le vrai chemin de la tranche 1. |
+
+**Ce document spécifie intégralement la sous-tranche 3a**, et énonce au §30 le contrat que 3b
+devra tenir. Le découpage est celui que `CRM-060` a employé pour ses dix sous-tranches, et il est
+pris ici pour le motif que le §0 de `docs/CloudWorker.md` impose : une session interrompue doit
+laisser derrière elle une surface **entière et prouvée**, pas deux moitiés.
+
+---
+
+## 23. Où la surface vit, et pourquoi là
+
+### 23.1 La cloche est dans l'EN-TÊTE, pas dans la barre latérale
+
+`docs/DESIGN_SYSTEM.md` §4 décrit l'en-tête comme portant « fil d'Ariane · recherche · Cmd+K ·
+profil » et la barre latérale comme portant les **destinations** — Inbox, Contacts, Objectifs,
+Coûts, Ma journée, Réglages. Une notification n'est pas une destination : c'est un **état de
+l'utilisateur courant**, au même titre que son identité de session, qui vit déjà dans l'en-tête
+(§5.12).
+
+Deux conséquences que ce choix assume :
+
+- **la cloche est visible depuis TOUS les écrans**, l'en-tête étant rendu par la coquille. Une
+  entrée de barre latérale l'aurait été aussi, mais elle aurait fait passer la boîte pour un
+  septième écran de travail, à côté du carnet et de « Ma journée » ;
+- **elle vit à côté de l'identité de session**, avant l'action de déconnexion. L'ordre de l'en-tête
+  devient : fil d'Ariane, contexte d'espace de travail, **cloche**, identité, déconnexion. Ce qui
+  concerne *ce que le produit a à me dire* précède ce qui concerne *qui je suis*, et le geste qui
+  **sort** du produit ferme la ligne.
+
+### 23.2 La liste est un PANNEAU sous la cloche, jamais une route, jamais une modale
+
+**Jamais une modale**, et ce n'est pas une préférence : `docs/DESIGN_SYSTEM.md` §5 n'en déclare
+aucune, et `CRM-043` puis `CRM-075` ont tranché ce cas deux fois — « une surface qui recouvre
+l'écran demanderait un piège de focus, une gestion d'`Échap` et le voile `--color-veil`, trois
+mécanismes qu'aucune unité n'a spécifiés ».
+
+**Jamais une route non plus**, et c'est l'écart avec le carnet (§5.19) et « Ma journée » (§5.36).
+Le critère est celui que `docs/DESIGN_SYSTEM.md` §5.33 emploie pour ranger une adresse : une route
+sert une surface **où l'on va travailler**. On ne va pas travailler dans sa boîte de notifications
+— on y jette un œil, on l'ouvre, on suit un lien, et l'on retourne à ce qu'on faisait. Une route
+ferait **perdre l'écran courant** à chaque coup d'œil, et obligerait à revenir.
+
+**Le panneau est donc ancré à la cloche, dans le flux du document**, et il se referme par `Échap`,
+par un clic hors de lui, et par la cloche elle-même. C'est le patron du §5.3 quater — « le panneau
+remplace la commande, il ne s'y ajoute pas » —, à ceci près que la cloche **reste rendue** : elle
+est l'ancre visuelle du panneau et porte `aria-expanded`.
+
+### 23.3 Ce que le panneau n'a PAS
+
+- **aucun filtre**, ni « non lues seulement », ni par affaire. La liste est courte par
+  construction (§26.5), et un filtre sur une liste de dix lignes est un contrôle sans objet — la
+  règle du §5.11 pour la barre de filtres du fil ;
+- **aucune pagination**, et l'écart est nommé au §26.5 avec la condition de sa reprise ;
+- **aucun « tout marquer comme lu »**. Le geste est tentant et il est **écarté par mesure** : il
+  écrirait `read_at` sur N lignes en un `PATCH` dont la clause `USING` filtre en silence, et le
+  §5.40 de `docs/DESIGN_SYSTEM.md` exige alors qu'un « sans effet » **partiel** soit dit — or un
+  `PATCH` de masse ne dit pas *lesquelles* n'ont pas bougé. Livrer un geste dont on ne sait pas
+  rendre compte serait la simulation de succès que `CLAUDE.md` §18 interdit. Le point est nommé
+  au §29, point 3.
+
+---
+
+## 24. Le modèle de lecture : ce que l'écran demande
+
+### 24.1 Deux requêtes, et deux seulement
+
+**Requête 1 — les notifications, avec leur affaire embarquée** (M5) :
+
+```
+select=id,type,read_at,created_at,subject_card_id,payload,
+       cards(id,title,channels!cards_channel_id_workspace_id_fkey(slug,name,tracks(slug,name)))
+&order=created_at.desc
+&limit=<BORNE_LISTE>
+```
+
+**Requête 2 — les commentaires cités, avec leur auteur embarqué** (M8), émise **seulement si** la
+première a rapporté au moins un `payload.comment_id` :
+
+```
+select=id,body,deleted_at,author_id,auteur:profiles!card_comments_author_id_fkey(id,full_name,avatar_url)
+&id=in.(<les identifiants distincts de la page>)
+```
+
+**LE `payload` N'EST PAS UNE CLÉ ÉTRANGÈRE, ET C'EST POURQUOI IL FAUT DEUX REQUÊTES.** Le §13.4
+refuse toute copie de contenu dans la charge utile ; la contrepartie est que PostgREST ne peut pas
+embarquer le commentaire, faute de relation déclarée. La lecture groupée est la réponse la moins
+chère que la pile sache rendre, et M8 la mesure.
+
+**AUCUNE TROISIÈME REQUÊTE POUR LE COMPTEUR quand le panneau est ouvert** : le compteur se déduit
+des lignes rendues. Le `HEAD` de M4 sert la cloche **fermée**, où il n'y a rien d'autre à lire.
+
+### 24.2 Ce qui n'est PAS demandé, et c'est une décision
+
+Ni `workspace_id` — l'écran ne l'affiche pas —, ni `recipient_id` — la politique garantit déjà que
+c'est moi, et le redemander laisserait croire qu'on pourrait lire celui d'un autre. Une requête ne
+rapporte que ce que l'écran montre : c'est la règle que `COLONNES_COMMENTAIRE` tient depuis
+`CRM-043`.
+
+### 24.3 Trois lignes possibles, et l'écran les distingue
+
+| Cas | Ce que la lecture rend | Ce que la ligne montre |
+|---|---|---|
+| **complet** | la notification, son affaire, son commentaire et son auteur | l'auteur, l'extrait, l'affaire, la date, le lien |
+| **commentaire illisible ou détruit** | la notification et son affaire ; **aucune** ligne dans la requête 2 (M9) | l'affaire, la date, le lien — **aucun extrait, aucun auteur** |
+| **affaire illisible** | ne peut pas arriver | — |
+
+**Le troisième cas est impossible, et c'est une propriété de la politique, pas une chance** : le
+prédicat du §16.1 exige `app.can_read_card(subject_card_id)`. Une notification dont l'affaire est
+devenue illisible **sort de la liste entière** ; l'écran n'a donc jamais à rendre une ligne dont
+l'affaire manque, et il ne prévoit **aucun** rendu pour ce cas. Écrire un repli pour un état que la
+base rend impossible enseignerait qu'il peut arriver.
+
+**Le second, lui, arrive réellement** : le §14.4 conserve la notification quand la mention est
+retirée, et le §13.4 rappelle qu'une suppression de commentaire **vide réellement le corps**. La
+ligne dégradée est donc le rendu normal d'un propos retiré, et elle ne dit **ni** que le
+commentaire a été supprimé, **ni** qu'il est illisible : les deux causes sont indistinguables à
+l'écran, exactement comme le §5.40 de `docs/DESIGN_SYSTEM.md` l'exige d'un zéro-ligne.
+
+---
+
+## 25. Le temps réel
+
+### 25.1 La table est publiée, DANS LE MÊME CHANGEMENT que l'écran qui l'écoute
+
+Le §16.3 posait l'absence de publication et disait la condition de sa levée : « la tranche 3
+publiera la table dans le même changement que l'écran qui l'écoute ». La condition est remplie, et
+la levée se fait **par livraison**, jamais par précaution.
+
+La migration `0065` ajoute `public.notifications` à `supabase_realtime`, **idempotente** comme
+celle de `card_comments` (`0015` §8) : le `migrations-runner` rejoue le répertoire à chaque
+démarrage, et `alter publication … add table` rend `42710` sur une table déjà publiée.
+
+`REPLICA IDENTITY` reste à sa valeur par défaut — la clé primaire. Elle suffit : aucune suppression
+n'est exposée (§15.4), et le marquage lu est un `UPDATE` dont la ligne d'arrivée est lisible par
+son destinataire.
+
+**LE TEMPS RÉEL EST UNE SURFACE D'AUTORISATION.** `realtime.apply_rls` évalue la politique `SELECT`
+de la table pour le rôle et les revendications de **chaque** abonné : un membre qui n'est pas le
+destinataire ne reçoit **rien**, et un destinataire dont le droit sur l'affaire retombe cesse de
+recevoir. C'est une propriété qui se **prouve** — le contrat d'API du §27 l'exerce comme telle —,
+et c'est la raison pour laquelle publier une table que personne n'écoute était refusé.
+
+### 25.2 Les deux règles de l'abonnement sont celles de `CRM-043`, reprises SANS changement
+
+`useFilCommentaires` les a établies et mesurées (décisions 195 et 201) ; les recopier autrement ici
+en ferait diverger une.
+
+1. **La lecture est déclenchée par l'abonnement, jamais avant.** Charger puis s'abonner laisse une
+   fenêtre dont la largeur n'est connue de personne ; s'abonner puis charger la referme, au prix
+   d'une lecture. `SUBSCRIBED`, `CHANNEL_ERROR` et `TIMED_OUT` déclenchent tous les trois la
+   lecture : une cloche muette serait pire qu'une cloche qui ne se met pas à jour toute seule.
+
+2. **Le flux DÉCLENCHE la lecture, il ne la remplace pas.** Un événement ne porte pas la boîte : il
+   dit qu'elle a changé. C'est une requête de plus par événement, et c'est le prix de trois choses
+   qu'aucune fusion locale ne donnerait — l'ordre total est celui du serveur, un événement perdu ou
+   dupliqué ne laisse aucune trace, et la lecture applique la **RLS courante** plutôt que celle du
+   moment de l'abonnement.
+
+### 25.3 Le canal, son nom et son filtre
+
+```
+nom     : « notifications:<identifiant du destinataire> »
+filtre  : « recipient_id=eq.<identifiant du destinataire> »
+table   : public.notifications, événement « * »
+```
+
+**Le filtre porte sur le destinataire, et il n'est PAS une garde d'accès.** La politique du §16.1
+est la garde, et elle est évaluée par `realtime.apply_rls` quoi qu'il arrive. Le filtre est une
+**économie** : sans lui, le serveur évaluerait la politique pour chaque ligne insérée dans toute la
+table avant de conclure qu'elle ne me concerne pas.
+
+**Le nom porte l'identifiant du destinataire**, et non un nom fixe : deux sessions ouvertes dans le
+même navigateur — deux onglets, deux comptes — s'abonneraient sinon au **même** canal, et le
+client `supabase-js` réutilise un canal par son nom. C'est le procédé de `nomCanal(idCard)` de
+`CRM-043`, transposé à l'objet qui varie ici.
+
+**AUCUN ABONNEMENT SANS SESSION.** Le hook ne s'abonne pas tant que l'identifiant du destinataire
+est inconnu : un anonyme n'a aucune notification (M3), et ouvrir un canal pour ne rien recevoir
+coûterait une connexion permanente à chaque visiteur de l'écran de connexion.
+
+---
+
+## 26. Ce que l'écran rend, règle par règle
+
+Les règles **visuelles** vivent dans `docs/DESIGN_SYSTEM.md` §5.43, écrit dans le même changement.
+Ce chapitre dit ce que l'écran **lit, calcule et refuse de deviner**.
+
+### 26.1 Le compteur
+
+**Il compte les non-lues, jamais le total.** Une cloche portant « 12 » sur douze messages tous lus
+ne dirait rien qui vaille d'être affiché.
+
+**Il est ABSENT tant que le compte n'est pas connu**, et pas seulement à zéro. C'est la règle que
+`docs/DESIGN_SYSTEM.md` §5.31 a posée pour le badge de l'onglet « À saisir » : pendant la lecture,
+un badge « 0 » affirmerait que tout est lu alors que rien n'a été lu — la valeur par défaut
+trompeuse que `CLAUDE.md` §18 interdit.
+
+**Il est absent à zéro**, pour la même règle : l'absence dit déjà ce que « 0 » répéterait.
+
+**Il est BORNÉ à l'affichage, et la borne est dite.** Au-delà de `BORNE_COMPTEUR` (99), la cloche
+écrit « 99+ ». Ce n'est pas une troncature silencieuse : le nom accessible de la cloche porte le
+**compte exact**, et c'est lui que le lecteur d'écran annonce. Un badge à quatre chiffres
+déformerait la cloche, et un compte exact que personne ne lit à l'œil ne vaut pas cette déformation.
+
+### 26.2 L'ordre de la liste
+
+**Le plus récent en haut, sans exception**, et c'est l'INVERSE du fil de commentaires (§5.10 du
+design system, ordre chronologique croissant). L'écart est **voulu** et il est écrit ici pour qu'on
+ne l'aligne pas par habitude : une conversation se lit dans le sens où elle s'est tenue, une boîte
+de réception se lit en commençant par ce qui vient d'arriver.
+
+**Les non-lues ne remontent PAS en tête.** Un second critère de tri ferait **sauter** une ligne
+d'un endroit à l'autre au moment exact où l'on vient de la marquer lue — et l'utilisateur perdrait
+de vue ce qu'il vient de toucher. L'état de lecture se rend par la **forme** (§5.43), jamais par la
+place.
+
+### 26.3 La ligne ne porte AUCUNE copie, et le §13.4 est révisé sur son COÛT
+
+Le contenu affiché — le nom de l'auteur, l'extrait du propos, le titre de l'affaire — est **relu à
+travers les politiques existantes**, jamais pris dans le `payload`. Le §13.4 tient sans changement
+sur le fond.
+
+> **RÉVISION DU §13.4 PAR LA MESURE, 2026-08-26** (mécanisme de la décision 51). Il annonçait « une
+> lecture par notification affichée, là où une charge utile dénormalisée en aurait fait zéro ».
+> **MESURÉ (M8)** : `id=in.(…)` groupe toute la page en **une** requête, et la relation
+> `card_comments → profiles` y embarque l'auteur. Le coût réel est de **deux requêtes pour la liste
+> entière**, et non de `N + 1`. Ce que le §13.4 décidait — aucune copie — est **inchangé** ; seule
+> son estimation de coût était fausse, et elle l'était **en défaveur** de la décision prise. La
+> conclusion qu'il tirait n'en est que plus solide.
+
+**L'extrait est BORNÉ à l'affichage, jamais à la lecture.** La requête rapporte le corps entier ; la
+ligne en montre les premiers caractères. Borner au serveur exigerait une vue ou une fonction, donc
+une **seconde** écriture de ce que l'écran montre, pour économiser des octets que personne n'a
+mesurés (`CLAUDE.md` §21).
+
+### 26.4 Le geste de lecture
+
+**Marquer lu et marquer non lu, les deux sens** (§15.1). Le second n'est pas un ornement : on ouvre
+une notification par mégarde, et une boîte dont on ne peut pas remettre un message de côté n'est
+pas une boîte.
+
+**LE CLIC SUR LA LIGNE NE MARQUE RIEN.** Suivre un lien et marquer lu sont deux gestes, et les
+fondre ferait disparaître le compteur d'une notification qu'on a seulement effleurée en visant
+autre chose. Le marquage est **son propre bouton**, sur la ligne. C'est la distinction que le §5.13
+du design system tient depuis la première surface d'administration — « une ligne entièrement
+cliquable rendrait ambiguë la cible d'un clic qui porte déjà plusieurs commandes ».
+
+**LES TROIS ISSUES, ET LA TROISIÈME DOIT ÊTRE DITE.** Un `PATCH` est filtré par la clause `USING`
+de `notifications_marquage` : le serveur rend `204` **sans erreur** et sans avoir rien changé
+(ligne *i* du §17, mesurée). L'écran écrit alors « aucune notification n'a été modifiée », **relit**
+la liste, et n'affirme **ni** le refus **ni** la disparition — les deux étant indistinguables. C'est
+la règle des §5.25, §5.27, §5.28 et §5.40 du design system, retrouvée ici pour la même cause
+structurelle.
+
+**AUCUNE COMMANDE N'EST ÉTEINTE D'AVANCE**, quel que soit le rôle (§5.3, §5.13, §5.16, §5.21,
+§5.27, sans exception). L'écran n'a d'ailleurs aucun droit à calculer : la seule ligne qu'il rend
+est déjà la sienne.
+
+**LE MARQUAGE EST OPTIMISTE À L'ÉCRAN ? NON.** La ligne ne change qu'après la réponse du serveur.
+Le §5.3 sexies a déjà tranché ce cas pour la mise en sommeil, et pour le même motif : le geste
+change le **compteur**, c'est-à-dire une valeur visible ailleurs sur l'écran, et une annulation
+ferait clignoter deux endroits à la fois.
+
+### 26.5 La borne de lecture, et le point ouvert n° 1 qu'elle traite SANS le trancher
+
+La liste lit **au plus `BORNE_LISTE` lignes** (20), les plus récentes. Ce n'est pas une pagination :
+il n'y a ni page suivante, ni « voir tout », et l'écart est **nommé** plutôt que comblé.
+
+**Le motif est le point ouvert n° 1 du §18** — aucune notification ne se supprime ni n'expire, donc
+une boîte croît indéfiniment. Une liste non bornée finirait par lire des milliers de lignes pour en
+montrer dix. La borne est la réponse **la moins engageante** qui rende l'écran sûr : elle ne détruit
+rien, elle ne décide d'aucune rétention, et elle tombe le jour où le responsable en tranche une.
+
+**LE COMPTEUR, LUI, N'EST PAS BORNÉ PAR CETTE VALEUR** : il compte **toutes** les non-lues (M4),
+pas seulement celles de la page. Un compteur qui s'arrêterait à vingt mentirait sur ce qui reste à
+lire, et c'est précisément ce qu'une cloche existe pour dire. La borne d'**affichage** du §26.1
+(« 99+ ») est autre chose : elle borne le dessin, pas la mesure.
+
+**Ce que la borne coûte est dit à l'écran** : lorsque la liste est pleine, le panneau écrit en
+toutes lettres qu'il montre les plus récentes. Une troncature silencieuse se lirait comme une boîte
+complète.
+
+### 26.6 Le regroupement n'est PAS livré, et le motif est écrit
+
+Le point ouvert n° 2 du §18 — dix mentions sur la même affaire rendent dix messages — reste
+**ouvert**. Regrouper demanderait de décider ce que devient l'état de lecture d'un groupe (lu si
+toutes ? si une ?), quel extrait le groupe porte, et ce que le compteur compte. Trois décisions de
+produit qu'aucune mesure ne donne, et que le seed n'exerce pas : ses deux notifications ont deux
+auteurs différents sur la même affaire. L'inventer ici serait écrire une spécification à la place du
+responsable (`CLAUDE.md` §1).
+
+### 26.7 Les quatre états, et le vide qui n'en est pas un
+
+Les quatre états du §5.8 du design system sont traités : chargement, erreur avec reprise **qui
+relit réellement**, liste vide, et l'absence de session.
+
+**L'ÉTAT VIDE N'OFFRE AUCUNE ACTION**, et c'est l'écart au §5.8 que la corbeille (§5.16), le carnet
+(§5.19) et les affaires figées (§5.37) prennent déjà. Il n'y a rien à faire d'une boîte vide, et un
+bouton y serait un chemin vers nulle part. **Le message dit que l'état est SAIN** — « aucune
+notification » n'est pas un manque.
+
+**SANS SESSION, LA CLOCHE N'EST PAS RENDUE.** C'est l'écart avec le reste de l'en-tête, qui rend
+« Se connecter » à sa place (§5.12). Une cloche vide offerte à un anonyme annoncerait une boîte
+qu'aucune session ne peut remplir, et son compteur serait un zéro permanent.
+
+---
+
+## 27. Contrat d'API de la sous-tranche 3a, ligne à ligne
+
+Les seize lignes du §17 restent **vraies et vertes sans modification** : la tranche 3 ne change
+aucune règle de la table. Les lignes ci-dessous sont **celles que la tranche 3 ajoute**, et elles
+portent toutes sur ce que la publication au temps réel change ou ne change pas.
+
+| # | Appelant | Requête | Attendu |
+|---|---|---|---|
+| q | — | `select … from pg_publication_tables where pubname='supabase_realtime'` | `public.notifications` **y figure** — la ligne de base de M13 est changée par la migration `0065` |
+| r | `B` | `GET /notifications?select=…,cards(id,title,channels(slug,name,tracks(slug,name)))` | `200`, une ligne, l'affaire et **les deux slugs** embarqués (M5) |
+| s | `B` | `HEAD /notifications?select=id&read_at=is.null` avec `Prefer: count=exact` | `200`, en-tête `Content-Range` portant le compte (M4) |
+| t | `B` | `GET /card_comments?select=…,auteur:profiles!…(…)&id=in.(…0d1,<inconnu>)` | `200`, **une** ligne avec son auteur — l'identifiant inconnu ne fait pas échouer (M8, M9) |
+| u | `V` | abonnement `Realtime` à `notifications`, filtre `recipient_id=eq.<Farida>` | l'abonnement **s'établit**, et **aucun événement** n'est reçu quand une notification naît pour un autre |
+| v | `B` | abonnement `Realtime`, filtre `recipient_id=eq.<Driss>` ; puis `A` pose une mention sur `B` | **un événement `INSERT` est reçu**, et la relecture rend la nouvelle notification |
+| w | anonyme | abonnement `Realtime` à `notifications` | aucun événement — `auth.uid()` est nul, le prédicat du §16.1 est faux |
+
+**Les lignes *u*, *v* et *w* sont le cœur du contrat de cette tranche** : elles éprouvent le temps
+réel **comme une surface d'autorisation**, ce qu'aucune preuve du dépôt ne fait encore pour cette
+table. Les autres éprouvent la lecture que l'écran émet.
+
+**Chaque ligne posée est retirée, et une dernière lecture le constate** (décision 501). L'état du
+seed après la suite est celui d'avant : deux notifications, toutes deux non lues.
+
+---
+
+## 28. Ce que le seed livre, et ce qu'il ne change pas
+
+**Rien de neuf, et cette fois c'est mesuré avant d'être écrit** (la leçon du §19). Le seed pose déjà
+deux notifications par le vrai chemin ; la tranche 3 ne pose aucune ligne et n'en retire aucune.
+
+Sa **garde** existante — deux notifications, toutes deux non lues, aucune pour la lectrice — reste
+vraie sans modification. Aucune garde n'est ajoutée : la tranche 3 ne livre aucune donnée, elle
+livre une surface qui montre celles qui existent.
+
+**Ce que le seed exerce déjà pour cette surface, et qui n'est pas une chance** : les deux
+notifications ont **deux destinataires différents** et **deux auteurs différents**, si bien que la
+cloche de Camille et celle de Driss montrent chacune une ligne, et une seule — et que la preuve
+d'interface peut vérifier que ni l'une ni l'autre ne voit celle de l'autre. Farida, elle, ouvre une
+boîte **vide**, ce qui exerce l'état vide du §26.7 sans aucune donnée fabriquée.
+
+---
+
+## 29. Points ouverts, nommés et non tranchés ici
+
+1. **La rétention** (point n° 1 du §18) est **rencontrée** mais non tranchée : la borne de lecture
+   du §26.5 rend l'écran sûr sans décider quoi que ce soit. Le responsable doit trancher au bout de
+   combien de temps une notification disparaît, et avec quel effet sur le compteur.
+2. **Le regroupement** (point n° 2 du §18) reste ouvert — §26.6.
+3. **« Tout marquer comme lu » n'est pas livré** — §23.3. Le geste demande de savoir rendre compte
+   d'un `PATCH` de masse dont la clause `USING` filtre en silence, et le dépôt n'a aucun précédent
+   pour ce cas. Il appartient à une tranche ultérieure, ou à un arbitrage.
+4. **Aucune préférence** (point n° 3 du §18) : la tranche 4.
+5. **Aucune notification du navigateur**, ni son, ni titre d'onglet modifié. Trois mécanismes qui
+   demandent un consentement explicite (`CLAUDE.md` §11) et qu'aucun document ne porte.
+6. **Le compteur ne se met pas à jour lorsque la boîte change dans un AUTRE onglet du même
+   navigateur.** Chaque onglet tient son propre abonnement, donc il se met bien à jour ; mais rien
+   ne partage l'état entre onglets, et deux onglets peuvent afficher deux comptes pendant le temps
+   d'un aller-retour. L'écart est **nommé** plutôt que comblé par un `BroadcastChannel` que
+   personne n'a spécifié.
+
+---
+
+## 30. Le contrat que la sous-tranche 3b devra tenir
+
+Écrit ici pour que le périmètre de 3a soit lisible, et **à compléter avant son code**, jamais après.
+
+- **Le composeur pose une mention par le VRAI chemin de la tranche 1** : un `POST` sur
+  `card_comment_mentions` avec le jeton de l'auteur, après la publication du commentaire. Aucune
+  analyse du corps (§4.4), aucun raccourci par la clé de service.
+- **La mention se pose APRÈS le commentaire, et c'est une contrainte du modèle** : la clé primaire
+  est `(comment_id, profile_id)`, donc le commentaire doit exister. Les deux écritures ne sont pas
+  atomiques, et 3b devra dire ce que l'écran fait quand la seconde échoue — un commentaire publié
+  sans sa mention est le cas à traiter, pas à taire.
+- **Le sélecteur n'offre que des personnes ÉLIGIBLES au sens du §5.1**, et le refus reste
+  **traduit** : l'écran ne calcule aucun droit, il envoie et traduit le refus (§5.22 du design
+  system, sans exception).
+- **`docs/manual.md` gagne son chapitre avec 3a**, pas avec 3b : c'est 3a qui livre la surface, et
+  un manuel décrivant un geste dont personne ne voit l'effet ne décrirait rien.
+
+---
+
+## 31. Preuves attendues de la sous-tranche 3a
+
+| Niveau | Preuves |
+|---|---|
+| pgTAP | L'**appartenance** de `public.notifications` à `supabase_realtime` — assertion **révisée**, jamais retirée (§16.3, M13) —, et la non-régression des quarante-deux assertions de `0062` |
+| Unitaire | La chaîne `select` réellement émise par les deux requêtes du §24.1, le nom et le filtre du canal (§25.3), le découpage des trois cas de ligne du §24.3, la borne du compteur (§26.1), la borne de lecture (§26.5), et les trois issues du marquage (§26.4) |
+| API | Les sept lignes du §27, dont **trois abonnements `Realtime` réels** avec les jetons des trois profils, chaque refus mesuré comme une **absence d'événement** et non comme une erreur |
+| Non-régression | `0062_notifications.test.sql` et `e2e/api/notifications.spec.ts` verts **sans autre modification que l'assertion de publication** ; `0061` et `e2e/api/mentions.spec.ts` verts **sans aucune** |
+| E2E d'interface | Le parcours complet des trois profils : la cloche et son compteur, l'ouverture du panneau, la ligne et son lien, le marquage lu puis non lu, la boîte vide de Farida, l'absence de cloche pour l'anonyme, `Échap` et le retour du focus |
+| Visuel | Captures aux quatre paliers, panneau ouvert et fermé, boîte peuplée et boîte vide, **observées** conformément à `CLAUDE.md` §16. Console **vierge** |
+| Harnais | `scripts/verify-notifications-surface.sh`, non complaisant, éprouvé par dégradations réelles et restauration constatée |

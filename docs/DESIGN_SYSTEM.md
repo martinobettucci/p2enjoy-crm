@@ -3683,3 +3683,124 @@ contacts.
 
 - **Aucune couleur, aucun jeton, aucune icône nouvelle** : le bloc emprunte au §5.21 sa place et sa
   forme, au §5.5 ses variantes, au §5.8 ses états et au §5.35 le libellé de ses identités.
+
+### 5.43 Cloche et panneau de notifications — `CRM-064`
+
+**Première surface de l'en-tête depuis `CRM-009`**, et la première du produit dont l'objet est un
+**état de l'utilisateur courant** plutôt qu'un objet métier. Spécifiée avant code,
+`docs/SPEC-notifications.md` §22 à §31 ; les règles ci-dessous ne disent que de quoi elle a l'air.
+
+**Elle vit dans l'EN-TÊTE, entre le contexte d'espace de travail et l'identité de session**, et
+l'ordre porte un sens (§23.1 de la spécification) : ce que le produit a à me dire précède qui je
+suis, et le geste qui **sort** du produit ferme la ligne. Ce n'est pas une entrée de barre latérale
+— le §4 y range les **destinations**, et une boîte de notifications n'en est pas une : on y jette
+un œil, on suit un lien, on revient à ce qu'on faisait.
+
+- **LA CLOCHE EST UN BOUTON, ICÔNE `Bell`, ET SON NOM ACCESSIBLE PORTE LE COMPTE EXACT.** « 3
+  notifications non lues » et non « Notifications » : un chiffre dessiné sur une icône n'existe pas
+  pour un lecteur d'écran, et le §1 vaut ici comme partout. Elle porte `aria-expanded` et
+  `aria-controls` vers le panneau, comme la commande « Modifier » du §5.3 ter. Cible
+  `--size-target`, sans exception (§8).
+
+- **LE COMPTEUR EST UNE PASTILLE `--color-brand` À TEXTE `--color-white`, POSÉE SUR LA CLOCHE**, en
+  `--text-xs` `tabular-nums`, `rounded-full`. **Pas `--color-danger`** : une mention n'est pas une
+  erreur, et la teinte de danger est réservée à ce qui échoue ou détruit (§1, §5.31 pour la pilule
+  « clôturé », §5.41 pour la séquence vide). C'est le seul endroit du produit où `--color-white` se
+  pose sur un aplat de marque hors d'un bouton primaire, et c'est exactement l'emploi que le §1 lui
+  réserve.
+
+- **IL EST ABSENT TANT QUE LE COMPTE N'EST PAS CONNU, et absent à zéro** — la règle du §5.31 pour
+  le badge de l'onglet « À saisir », reprise sans changement et pour ses deux motifs : un « 0 »
+  pendant la lecture affirmerait que tout est lu alors que rien n'a été lu, et à zéro l'absence dit
+  déjà ce que le chiffre répéterait.
+
+- **AU-DELÀ DE 99, LA PASTILLE ÉCRIT « 99+ », ET LE NOM ACCESSIBLE GARDE LE COMPTE EXACT.** Un
+  badge à quatre chiffres déformerait la cloche ; une troncature qui ne serait nulle part rattrapée
+  serait une donnée perdue. C'est la règle du §5.15 pour l'empreinte tronquée à douze caractères —
+  l'œil reçoit la forme, la technologie d'assistance reçoit la valeur.
+
+- **SANS SESSION, LA CLOCHE N'EST PAS RENDUE.** L'en-tête rend « Se connecter » à sa place (§5.12).
+  Une cloche offerte à un anonyme annoncerait une boîte qu'aucune session ne peut remplir, et son
+  compteur serait un zéro permanent — la commande morte que le §5.10 proscrit.
+
+- **LE PANNEAU EST ANCRÉ À LA CLOCHE, DANS LE FLUX DU DOCUMENT — AUCUNE MODALE.** Le §5 n'en
+  déclare aucune, et `CRM-043` puis `CRM-075` l'ont tranché deux fois. Surface `--color-surface`,
+  `--radius-lg`, bordure `--color-border`, `--shadow-card-hover`, largeur bornée à `40ch` — celle
+  d'une colonne de prose courte, une ligne portant un extrait de phrase. Il se ferme par `Échap`,
+  par un clic hors de lui, et par la cloche.
+
+- **LA CLOCHE RESTE RENDUE PENDANT QUE LE PANNEAU EST OUVERT**, et c'est l'écart avec le §5.3
+  quater — « le panneau remplace la commande, il ne s'y ajoute pas ». Le motif : elle est l'**ancre
+  visuelle** du panneau et porte son `aria-expanded` ; la démonter ferait sauter la largeur de
+  l'en-tête et laisserait le focus sur un bouton disparu. C'est la situation du §5.27, où la
+  commande reste montée : **le retour du focus n'a donc pas à être différé**, et aucune
+  temporisation n'est écrite (`CLAUDE.md` §18).
+
+- **UNE NOTIFICATION EST UNE LIGNE, PAS UNE CARTE.** C'est la distinction que le §5.11 a posée pour
+  le fil — « l'un est une parole, l'autre un fait » — et elle vaut ici : une notification **date un
+  fait**. Hauteur libre, bordure basse `--color-border`, survol `--color-hover`, aucune zébrure : la
+  liste plate du §5.18, dont les lignes gagnent de la hauteur pour porter leur extrait, comme celles
+  du §5.21.
+
+- **L'ÉTAT DE LECTURE SE REND PAR LA FORME, JAMAIS PAR LA PLACE.** Une ligne non lue porte un
+  **liseré gauche de 3 px `--color-brand`** et son libellé en graisse moyenne ; une ligne lue n'en
+  porte pas. C'est le liseré de la carte de board (§5.1) tourné d'un quart de tour, celui-là même
+  que le §5.7 quater emploie déjà — aucun jeton n'est ajouté. **Le §1 est tenu par un MOT** : le nom
+  accessible du bouton de marquage dit « Marquer comme lue » ou « Marquer comme non lue », et
+  l'information ne repose donc jamais sur le seul liseré.
+
+- **L'ORDRE EST LE PLUS RÉCENT EN HAUT, ET C'EST L'INVERSE DU §5.10.** L'écart est **voulu** et
+  écrit ici pour qu'on ne l'aligne pas par habitude : une conversation se lit dans le sens où elle
+  s'est tenue, une boîte de réception se lit en commençant par ce qui vient d'arriver. **Les non-lues
+  ne remontent pas** : un second critère de tri ferait sauter une ligne d'un endroit à l'autre au
+  moment précis où on vient de la marquer.
+
+- **LA LIGNE PORTE TROIS CHOSES ET UN LIEN** : l'auteur avec son avatar 24 px — celui du §5.10 —,
+  l'extrait du propos borné à l'affichage, et l'affaire en **pilule « Track › Channel »** du §5.29,
+  réemployée sans copie. La date est **absolue et en donnée technique** (§2), comme celle d'un
+  commentaire (§5.10). **Le titre de l'affaire est le lien**, jamais la ligne entière : la cible du
+  clic doit être la cible annoncée (§5.9, §5.13).
+
+- **UNE LIGNE DONT LE COMMENTAIRE N'EST PLUS LISIBLE GARDE SA PLACE, SANS AUTEUR NI EXTRAIT.** Elle
+  conserve l'affaire, la date et le lien. Elle **ne dit ni** que le propos a été supprimé **ni**
+  qu'il est devenu illisible : les deux causes sont indistinguables, et les nommer divulguerait ce
+  que la seconde cache — la règle du §5.39 pour un rendu à zéro ligne, et du §5.33 pour ce que
+  l'écran ne montre pas. C'est le cas normal d'un propos retiré, pas une panne.
+
+- **LE MARQUAGE EST SON PROPRE BOUTON, DISCRET COMPACT, SUR LA LIGNE**, avec les icônes `MailOpen`
+  et `Mail` — deux visages, un seul rendu à la fois, le patron du §5.15 pour `Archive` /
+  `ArchiveRestore`. **Le clic sur le lien ne marque rien** : suivre un lien et marquer lu sont deux
+  gestes, et les fondre ferait disparaître du compteur une notification qu'on a effleurée en visant
+  autre chose. Aucune de ces deux icônes ne sert ailleurs dans le produit (§9).
+
+- **LA LIGNE NE CHANGE QU'APRÈS LA RÉPONSE DU SERVEUR** — le marquage n'est **pas** optimiste,
+  contrairement au déplacement d'une card (§6). C'est la règle du §5.3 sexies pour la mise en
+  sommeil, et pour son motif exact : le geste change aussi le **compteur**, visible ailleurs sur
+  l'écran, et une annulation ferait clignoter deux endroits à la fois.
+
+- **L'ISSUE « SANS EFFET » EST DITE**, comme aux §5.25, §5.27, §5.28 et §5.40, et pour la même cause
+  structurelle : la clause `USING` filtre en silence et le serveur rend `204` sans erreur. Le
+  message vit **sous la liste**, `role="alert"`, jamais en tête du panneau, et il **survit à la
+  relecture** — la place que le §5.21 lui donne déjà.
+
+- **AUCUN FILTRE, AUCUNE PAGINATION, AUCUN « TOUT MARQUER COMME LU ».** Les trois absences sont
+  motivées au §23.3 de la spécification. **La troncature est ÉCRITE** quand la liste est pleine —
+  « les 20 plus récentes » —, jamais laissée à deviner : c'est la règle du §5.15 pour le plan de
+  remappage, où « 3 affaires listées sur 13 » s'écrit en toutes lettres.
+
+- **L'ÉTAT VIDE N'OFFRE AUCUNE ACTION, ET SON MESSAGE DIT QUE L'ÉTAT EST SAIN** — l'écart au §5.8
+  que la corbeille (§5.16), le carnet (§5.19) et les affaires figées (§5.37) prennent déjà. « Aucune
+  notification » est une bonne nouvelle, pas un manque.
+
+- **LE PANNEAU EST UNE RÉGION NOMMÉE, ET SON OUVERTURE DÉPLACE LE FOCUS DANS LUI** (§5.13). `Échap`
+  le referme depuis n'importe lequel de ses contrôles et rend le focus à la cloche — la règle du
+  §5.29 tranche 2 g pour les trois surfaces de la liste des tableaux, reprise sans changement.
+
+- **SOUS LE PALIER `md`, LE PANNEAU OCCUPE LA LARGEUR DISPONIBLE MOINS 16 px DE MARGE**, aligné sous
+  la cloche et jamais débordant à droite. `md` et jamais `sm`, qui est un variant inconnu que
+  Tailwind supprime en silence (§11, §5.20). **La page ne défile jamais horizontalement** (§7).
+
+- **Aucune couleur, aucun jeton nouveau** : la surface emprunte au §5.18 sa liste plate, au §5.29 sa
+  pilule de channel, au §5.10 son avatar et sa date, au §5.1 son liseré, au §5.5 ses variantes et au
+  §5.8 ses états. **Trois icônes Lucide nouvelles** — `Bell`, `Mail`, `MailOpen` —, aucune ne
+  servant déjà un autre objet (§9).
