@@ -25517,6 +25517,29 @@ un échec** — celui ci-dessus, corrigé à sa cause, et les deux suites concer
 `scripts/verify-notifications-surface.sh` **43 contrôles**, aucune anomalie de part et d'autre,
 quinze dégradations toutes mordantes et restauration constatée.
 
+**LA CAMPAGNE D'INTERFACE A ÉTÉ REJOUÉE EN ENTIER APRÈS LA CORRECTION** (§4.3, point 5) : **639
+passés, deux échecs**, tous deux **étrangers à l'unité** et l'un et l'autre **mesurés** plutôt que
+supposés.
+
+- `budgets.spec.ts:249` échoue **dans la série** et **passe isolément**, avec les treize scénarios
+  de son fichier : famille d'INC-219 et d'INC-225 ;
+- `administration-workflows.spec.ts:1118` est **INC-224**, déjà ouverte. La session lui apporte la
+  mesure qui lui manquait : ce scénario est passé **vert en 29,0 s** à la première campagne et rouge
+  au-delà de 30 s à la seconde, **sur le même code**, et ses trois voisins de la même famille
+  portent tous `test.setTimeout(120_000)` là où il n'en porte aucun. **La ligne de base a été refaite
+  par un autre chemin que celui d'INC-223** — le travail étant committé, la cloche a été
+  **neutralisée** le temps d'une exécution : **même échec des deux côtés**. Le remède tient en une
+  ligne et n'a **pas** été appliqué : le fichier est étranger à `CRM-064` (`CLAUDE.md` §3.1).
+
+**LES CAPTURES DU DÉPÔT SONT CONSERVÉES TELLES QUE LA CAMPAGNE LES A ÉCRITES, ET C'EST L'ÉCART AVEC
+LES DEUX TRANCHES PRÉCÉDENTES.** Elles les restauraient, et elles avaient raison : leur contenu ne
+changeait pas, seul leur encodage JPEG différait. **Ici il change réellement** — la cloche vit dans
+l'en-tête, donc sur **tous** les écrans connectés. Les restaurer figerait un en-tête qui n'existe
+plus, ce que `CLAUDE.md` §16 interdit et que le §7 demande de renouveler. Vérifié à l'œil à 390 px et
+à 1152 px : l'en-tête reste équilibré, et l'ordre de sacrifice du §12.2 est tenu. **La règle générale
+est là** : on restaure des captures qu'un changement n'a pas touchées, on renouvelle celles qu'il
+touche — et une surface de coquille les touche toutes.
+
 **Où reprendre.** `CRM-064` **sous-tranche 3a CLOSE** : toutes ses preuves sont exécutées et vertes,
 son harnais dédié compris.
 
