@@ -24873,3 +24873,60 @@ rend **6 passés** et `verify-seed-demo.sh` **69 contrôles, aucune anomalie**.
 seule question encore posée au responsable est celle des unités **`CRM-072`** (`audit_log`) et
 **`CRM-073`** (`api_tokens`), qui n'existent pas et dont onze unités dépendent : leur périmètre est
 un choix produit qu'aucune mesure ne donne.
+
+## décision 519 — `CRM-060` tranche 6 : la suppression d'un contact, et ce qu'une décision déjà exécutée coûte à vérifier
+
+**2026-08-26, session planifiée de 00:18 UTC.** La dernière entrée du journal désignait la reprise :
+« `CRM-060` reste `[~]` pour une seule chose, désormais débloquée par la décision 516 : la
+**suppression** d'un contact, à spécifier en tranche 6 ». C'est l'unité de cette session, et elle est
+**livrée et prouvée**.
+
+**LA SPÉCIFICATION A ÉTÉ ÉCRITE ET COMMITTÉE AVANT LA PREMIÈRE LIGNE DE CODE** (`CLAUDE.md` §5) :
+`docs/SPEC-contacts.md` §20, dix sous-chapitres, fondés sur **neuf mesures** prises sur la pile
+réelle et non sur un souvenir. Aucune migration : la politique `contacts_suppression_bizdev_admin`
+existe depuis la migration `0045` et n'avait jamais été exercée par un écran.
+
+**TROIS MESURES ONT FAÇONNÉ LA TRANCHE.**
+
+1. **La lectrice reçoit `200` et un tableau VIDE, sans erreur, sur une ligne qui reste en base.** La
+   clause `USING` rend la ligne invisible à l'écriture, et PostgREST n'a rien à supprimer. C'est la
+   troisième issue, déjà rencontrée en 4g et en 4i, et elle est **indistinguable** d'un contact déjà
+   parti : un seul message les couvre, il n'affirme ni le refus ni la disparition, et la fiche est
+   relue.
+2. **Supprimer un contact CASCADE sur `card_contacts`, et le trigger de la tranche 5 écrit
+   `contact_unlinked` dans le fil de chaque affaire encore vivante** — mesuré, 9 → 10 événements sur
+   `…0c1`, la trace portant le rôle du moment. C'est le comportement voulu depuis la décision 517,
+   mais c'est **la seule conséquence que l'utilisateur ne peut pas lire sur l'écran qu'il regarde** :
+   la confirmation la dit, avec le nombre d'affaires, pris de la donnée déjà lue et jamais d'une
+   requête de plus.
+3. **Une valeur `jsonb` désignant le contact supprimé SURVIT et revient inchangée.**
+
+**CE QUE LA DÉCISION 516 DEMANDAIT À LA LECTURE ÉTAIT DÉJÀ LIVRÉ, ET C'EST LE RÉSULTAT LE PLUS UTILE
+DE LA SESSION.** L'arbitrage disait « la lecture d'un identifiant devenu introuvable rend quelque
+chose au lieu d'un vide ». Le **cas j du §13.5**, écrit par la sous-tranche 4d le 2026-08-18 —
+c'est-à-dire **avant** que l'arbitrage ne soit rendu —, ajoute déjà une option retenue portant
+l'identifiant brut et la mention « référence inconnue ». **Aucun code n'a donc été écrit pour ce
+point**, et c'est un résultat plutôt qu'un renoncement : le texte existant dit exactement ce qui est
+su, là où une mention « contact supprimé » affirmerait une cause que l'écran n'a pas mesurée — il ne
+relit pas la table, et deux causes produisent le même symptôme.
+
+Ce qui manquait n'était pas le comportement, c'était **la preuve** : le cas j n'était éprouvé que
+sur un identifiant **fabriqué**. Il prouvait le rendu, pas la chaîne. Le nouveau scénario crée un
+contact par les gestes de l'écran, le désigne par une valeur de formulaire, le supprime par l'écran,
+et constate le rendu — la décision 516 éprouvée de bout en bout.
+
+**UN DÉFAUT DE CAPTURE, TROUVÉ EN REGARDANT, ET C'EST LA SECONDE FOIS.** L'image de la référence
+inconnue était cadrée sur le haut de la fiche d'affaire : elle montrait l'en-tête et le début du
+formulaire, **jamais le champ qu'elle prouve**. L'assertion était verte, l'image ne disait rien.
+C'est exactement le défaut que la décision 508 avait consigné la veille sur une capture du fil. Le
+remède est le même — amener l'élément dans le champ visible avant le déclenchement —, et il vaut la
+peine d'être écrit ici : **une capture qui ne porte pas son sujet est une preuve vide, et aucune
+assertion ne le signale**.
+
+**LES PREUVES SONT NON COMPLAISANTES, ÉPROUVÉES PAR DÉGRADATION** : le succès qui ne navigue plus
+fait rougir deux cas ; `select('*')` au lieu de `select('id')` fait rougir l'assertion qui protège
+l'issue « sans effet » ; la phrase des rattachements rendue à zéro affaire fait rougir le cas e.
+
+**Une mesure de plus au palier 390 px**, sur la **boîte** de la confirmation et non sur sa seule
+visibilité : le §5.27 avait payé ce risque une fois, sur une confirmation posée dans un tableau
+défilant. Celle-ci vit hors du tableau et tient dans la fenêtre — mesuré, plutôt que supposé.
