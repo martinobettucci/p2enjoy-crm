@@ -533,9 +533,23 @@ seulement la peupler.
 1. sur le commentaire `…0d1` de la card `…0c1` (`grands-comptes`), écrit par Camille : mention de
    **Driss**. Driss y est `write` ; Farida y est `none` et **ne peut donc pas y être mentionnée** —
    la ligne que le seed ne pose pas est aussi porteuse que celle qu'il pose ;
-2. sur le commentaire `…0d5` de la card `…0c5` (`maintenance`), écrit par Farida : mention de
-   **Camille**. Le destinataire y est en écriture, l'auteure en écriture par droit fin : le cas
-   nominal, sur un autre track et un autre channel que le premier.
+2. sur le commentaire `…0d2` de la même card, écrit par **Driss** : mention de **Camille**. Second
+   auteur, second destinataire, et surtout **second jeton** : la règle est exercée deux fois par
+   deux personnes différentes plutôt qu'une fois par la seule administratrice.
+
+> **LE SECOND CHOIX A ÉTÉ CORRIGÉ PAR LA MESURE.** Il visait d'abord le commentaire `…0d5` de la
+> card `…0c5`, écrit par Farida — un autre track, un autre channel. **Mesuré : refusé, `403` /
+> `42501`**, et c'est la ligne *h* du §8. Farida n'est que `read` sur `maintenance` : elle y a un
+> commentaire au seed **parce que la clé de service l'y a posé**, mais elle ne peut pas le
+> compléter avec son propre jeton, `card_comment_mentions_insertion` exigeant le droit d'**écriture
+> courant** (INC-071). Le seed ne peut donc pas poser cette mention par le vrai chemin — et le
+> poser par la clé de service ne prouverait rien (`CLAUDE.md` §8). Le cas est reporté sur `…0d2`.
+>
+> **L'écart qui en résulte est nommé plutôt que masqué** : les deux mentions du seed vivent sur la
+> **même card**. Un jeu qui les répartirait sur deux channels serait meilleur ; il exigerait qu'un
+> membre en écriture ait un commentaire ailleurs qu'en `grands-comptes`, ce que le seed courant ne
+> porte pas et qu'ajouter ici ferait varier le compte de commentaires — figé par six preuves
+> depuis `CRM-043`. Point ouvert n° 5 du §10.
 
 **Le seed écrit ces deux mentions par le VRAI chemin** — un `POST` sur la relation avec le jeton
 réel de l'auteur du commentaire —, jamais par un `insert` de fixture sous la clé de service
@@ -561,6 +575,10 @@ profile_id)` qui l'assure, pas une garde propre au seed.
    qu'il advient de la **notification** déjà produite ; ce n'est pas la même question.
 4. **Aucune mention d'un groupe, d'un rôle ou d'un channel entier.** Rien ne le demande, et
    l'inventer créerait un destinataire qui n'est pas une personne.
+5. **Les deux mentions du seed vivent sur la même card** (§9). Les répartir sur deux channels
+   exigerait qu'un membre en écriture ait un commentaire ailleurs qu'en `grands-comptes` ; en
+   ajouter un ferait varier le compte de commentaires, figé par six preuves depuis `CRM-043`.
+   L'écart est nommé, et il appartient à une reprise du seed, pas à cette tranche.
 
 ---
 

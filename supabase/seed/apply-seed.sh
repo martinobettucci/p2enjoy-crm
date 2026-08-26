@@ -1994,6 +1994,80 @@ info "Commentaires : ${#COMMENTAIRES[@]} sur 3 cards, dont un modifié et un RET
 info "Celui de la card c5 porte pour auteur le viewer : témoin de la preuve de lecture (décision 50)"
 info "Celui de la card c4 est retiré par un TIERS : deleted_by diffère d'author_id (INC-072, décision 376)"
 
+# --- 8 quinquies bis. Mentions — CRM-064, docs/SPEC-notifications.md §9 ------------------------
+# LES DEUX MENTIONS SONT POSÉES PAR LE VRAI CHEMIN, ET C'EST TOUT L'INTÉRÊT DE LA SECTION
+# (`CLAUDE.md` §8). Un `insert` de fixture sous la clé de service prouverait que la table accepte
+# des lignes ; le jeton RÉEL de l'auteur du commentaire prouve que la RÈGLE les accepte — la
+# politique `card_comment_mentions_insertion` exige l'auteur ET son droit d'écriture COURANT, et le
+# trigger exige que le destinataire puisse lire l'affaire.
+#
+# LE SECOND AUTEUR EST DRISS, ET C'EST UNE MESURE QUI L'A IMPOSÉ (docs/SPEC-notifications.md §9).
+# La spécification visait d'abord `…d5`, écrit par la lectrice sur `…c5`. MESURÉ : `403` / `42501`.
+# Elle n'est que `read` sur `maintenance` — son commentaire y a été posé par la clé de service —,
+# et elle ne peut donc pas le compléter avec son propre jeton (INC-071). Le cas est reporté sur
+# `…d2`, écrit par Driss sur `…c1`, où il est en écriture.
+#
+# CONVERGENTE PAR LA CLÉ PRIMAIRE `(comment_id, profile_id)`, non par une garde propre au seed :
+# `resolution=ignore-duplicates` laisse un second passage sans effet.
+#
+# ELLE VIENT APRÈS LES COMMENTAIRES : le trigger lit le commentaire pour en dériver le workspace,
+# et la clé composite exige qu'il existe.
+
+echo
+say "8 quinquies bis. Mentions"
+
+JETON_BIZDEV_MENTIONS=$(curl -s -X POST "$API/auth/v1/token?grant_type=password" \
+	-H "apikey: $(env_get "$ENV_FILE" ANON_KEY)" -H 'Content-Type: application/json' \
+	-d "$(jq -nc --arg m 'bizdev@p2enjoy.test' --arg p "$SEED_PASSWORD" \
+	      '{email: $m, password: $p}')" \
+	| jq -r '.access_token // empty')
+[ -n "$JETON_BIZDEV_MENTIONS" ] || die "connexion du business developer seedé impossible : la
+        seconde mention ne peut pas être posée par la véritable route."
+
+# Rend le code HTTP d'un appel effectué avec le jeton RÉEL du business developer.
+api_bizdev() {
+	local method=$1 chemin=$2
+	shift 2
+	curl -s -o "$CORPS" -w '%{http_code}' -X "$method" "$API$chemin" \
+		-H "apikey: $(env_get "$ENV_FILE" ANON_KEY)" \
+		-H "Authorization: Bearer $JETON_BIZDEV_MENTIONS" \
+		-H 'Content-Type: application/json' \
+		"$@"
+}
+
+# 1. Camille mentionne Driss sur SON commentaire `…d1` (card `…c1`, `grands-comptes`).
+#    Driss y est en écriture ; la lectrice y est « none » et ne PEUT PAS y être mentionnée — la
+#    ligne que le seed ne pose pas est aussi porteuse que celle qu'il pose.
+code=$(api_admin POST /rest/v1/card_comment_mentions \
+	-H 'Prefer: return=representation,resolution=ignore-duplicates' \
+	-d '{"comment_id": "5eed0000-0000-4000-8000-0000000000d1",
+	     "profile_id": "5eed0000-0000-4000-8000-000000000012"}')
+attendu "$code" "mention de Driss Lemoine sur d1, par l'administratrice" 200 201
+
+# 2. Driss mentionne Camille sur SON commentaire `…d2`, même card. Second auteur, second
+#    destinataire, second JETON : la règle est exercée par deux personnes différentes.
+code=$(api_bizdev POST /rest/v1/card_comment_mentions \
+	-H 'Prefer: return=representation,resolution=ignore-duplicates' \
+	-d '{"comment_id": "5eed0000-0000-4000-8000-0000000000d2",
+	     "profile_id": "5eed0000-0000-4000-8000-000000000011"}')
+attendu "$code" "mention de Camille Aubert sur d2, par le business developer" 200 201
+
+# LA GARDE MESURE LE RÉSULTAT, ELLE NE LE SUPPOSE PAS. Deux mentions, et la lectrice n'en porte
+# AUCUNE : si le trigger cessait de refuser, la troisième ligne apparaîtrait ici.
+mentions_posees=$(curl -s "$API/rest/v1/card_comment_mentions?select=profile_id" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
+[ "$mentions_posees" = '2' ] || die "le seed devait laisser DEUX mentions, il en compte
+        « $mentions_posees » — docs/SPEC-notifications.md §9."
+
+mentions_lectrice=$(curl -s "$API/rest/v1/card_comment_mentions?select=profile_id&profile_id=eq.5eed0000-0000-4000-8000-000000000013" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
+[ "$mentions_lectrice" = '0' ] || die "la lectrice porte « $mentions_lectrice » mention(s) alors
+        qu'aucune card commentée ne lui est ouverte : la règle d'éligibilité ne refuse plus
+        (docs/SPEC-notifications.md §5.1)."
+
+info "Mentions : 2, posées par le VRAI chemin avec les jetons réels de leurs deux auteurs — CRM-064"
+info "La lectrice n'en porte AUCUNE : « none » sur grands-comptes, et le trigger refuse (§5.1)"
+
 # --- 8 sexies. Événements de timeline — docs/SPEC-cards.md §14.11, docs/SPEC-seed.md §2.15 -----
 # LE SEED N'ÉCRIT AUCUN ÉVÉNEMENT, ET IL NE LE PEUT PAS. `card_events` n'accorde le privilège
 # `INSERT` à personne, `service_role` compris — MESURÉ, décision 205. Cette section est donc la
