@@ -208,8 +208,17 @@ select is(pg_temp.politiques('card_sequence_enrollments'),
 
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	116,
-	'CENT SEIZE politiques dans `public`, et pas une de plus — 115 avant `CRM-063` '
+	119,
+	'CENT DIX-NEUF politiques dans `public`, et pas une de plus — 116 avant `CRM-064` tranche 1, '
+	'plus les TROIS de `card_comment_mentions` : lecture, insertion, suppression '
+	'(docs/SPEC-notifications.md §7.1). ELLES SONT TROIS, ET NON QUATRE, ET C''EST LA MOITIÉ D''UN '
+	'REFUS DOUBLE : une mention se RETIRE, elle ne se modifie pas, car changer `profile_id` ne '
+	'serait pas une correction mais une SUBSTITUTION de destinataire. L''absence de la quatrième '
+	'est donc une propriété, non un oubli, et le PRIVILÈGE la double — aucun `UPDATE` accordé. '
+	'Ce que ces politiques ne portent PAS est tenu ailleurs : la règle d''ÉLIGIBILITÉ du '
+	'destinataire vit dans un TRIGGER, parce qu''une politique juge la ligne écrite et son '
+	'APPELANT, jamais un TIERS — et l''éligibilité porte précisément sur un tiers. Avant elles : '
+	'116 avant `CRM-064`, soit 115 avant `CRM-063` '
 	'sous-tranche 4b, plus l''UNIQUE politique de LECTURE de `card_sequence_enrollments`. CETTE '
 	'TABLE EST FERMÉE EN ÉCRITURE À TOUT LE MONDE, et c''est la fermeture de `mail_outbox` pour la '
 	'même raison : une file d''envoi que le client écrirait lui-même n''aurait plus aucun refus. '

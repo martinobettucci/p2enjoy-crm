@@ -112,6 +112,12 @@ type _tables = Expect<
     keyof Database['public']['Tables'],
     | 'budget_occurrences'
     | 'budgets'
+    // `0063` de `CRM-064` tranche 1 ajoute `card_comment_mentions`, ET LE TÉMOIN L'A VU CETTE
+    // FOIS-CI. C'est la première fois de la série : les trois occurrences ci-dessous ont toutes
+    // pour cause une migration livrée sans que `scripts/generate-types.sh` soit rejoué, au motif
+    // que la tranche ne touchait aucun écran. `CRM-064` tranche 1 n'en touche aucun non plus, et
+    // régénère quand même — la règle formulée plus bas, appliquée.
+    | 'card_comment_mentions'
     | 'card_comments'
     | 'card_contacts'
     | 'card_events'

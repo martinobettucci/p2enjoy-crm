@@ -95,9 +95,10 @@ test.describe('CRM-064 tranche 1 — le contrat d’API de la mention', () => {
 
 		const posee = (await pose.json()) as Array<Record<string, unknown>>
 		expect(posee).toHaveLength(1)
+		const ligne = posee[0]!
 		// `workspace_id` est DÉRIVÉ par le trigger, jamais envoyé (§6).
-		expect(posee[0].workspace_id).toBe('5eed0000-0000-4000-8000-000000000001')
-		expect(posee[0].created_at, '`created_at` est posé par le trigger').toBeTruthy()
+		expect(ligne.workspace_id).toBe('5eed0000-0000-4000-8000-000000000001')
+		expect(ligne.created_at, '`created_at` est posé par le trigger').toBeTruthy()
 
 		const retrait = await request.delete(
 			`${URL_API}${MENTIONS}?comment_id=eq.${D1_DE_CAMILLE}&profile_id=eq.${CAMILLE}`,
@@ -246,7 +247,7 @@ test.describe('CRM-064 tranche 1 — le contrat d’API de la mention', () => {
 		expect(ouverte.status()).toBe(200)
 		const lues = (await ouverte.json()) as Array<Record<string, unknown>>
 		expect(lues).toHaveLength(1)
-		expect(lues[0].profile_id).toBe(DRISS)
+		expect(lues[0]!.profile_id).toBe(DRISS)
 
 		// k — l'anonyme obtient `200 []`, jamais `401`. Le privilège existe précisément pour cela :
 		// `auth.uid()` étant nul, le prédicat de la politique est faux.
