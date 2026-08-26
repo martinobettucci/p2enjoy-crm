@@ -25636,9 +25636,32 @@ du §39. C'est la seule raison pour laquelle la sous-tranche reste `[~]`.
 assertions** ; `test:unit` **81 fichiers / 2737 tests** ; `e2e:api` **984 passés** (974 avant, plus
 les 10 de la sous-tranche) ; `e2e:mail` **42 passés** ; `pytest` **244 passés** ;
 `scripts/verify-mentions-composeur.sh` **53 contrôles, aucune anomalie**, huit dégradations toutes
-mordantes. **`e2e:ui` était en cours d'exécution à l'heure où ces lignes sont committées**, et son
-résultat est ajouté ci-dessous dès qu'il est connu — la règle du §0 de `docs/CloudWorker.md` : ce
-qui n'est pas poussé n'existe pas, et une session peut être interrompue à tout instant.
+mordantes. `e2e:ui` **652 scénarios, deux échecs**, tous deux corrigés à leur cause — voir
+ci-dessous.
+
+**LA CAMPAGNE D'INTERFACE A PRIS DEUX PREUVES CLAVIER EN DÉFAUT, ET C'ÉTAIT LA LIVRAISON QUI AVAIT
+CHANGÉ LA RÈGLE.** `commentaires.spec.ts` et `commentaires-gestes.spec.ts` tabulaient de la zone de
+saisie vers « Publier » ; le sélecteur vit désormais entre les deux, si bien que `Entrée` ouvrait le
+sélecteur au lieu de publier. Les deux preuves sont **révisées pour MESURER la halte**, jamais
+franchies par une tabulation muette de plus : un contrôle inséré demain au mauvais endroit passerait
+sinon inaperçu. Le sélecteur n'est ouvert dans aucune des deux — l'un des deux écrans est servi par
+**substitution**, et y ouvrir la liste mesurerait la substitution plutôt que le produit.
+
+**LA CAMPAGNE A ÉTÉ REJOUÉE EN ENTIER APRÈS CORRECTION** (§4.3, point 5) : **651 passés, un échec**,
+et cet échec est **INC-227**, consignée. La contre-épreuve est **interne**, et c'est ce qui la rend
+concluante sans ligne de base : le **même scénario**, sur le **même commit**, a été **vert à la
+première campagne et rouge à la seconde**, puis **vert isolé en 2,0 s** contre 31,3 s dans la série.
+Un changement de code ne rend pas un verdict un coup sur deux. Quatrième entrée de la famille
+d'INC-219 ; le comportement est laissé inchangé, aucun délai n'est relevé — relever un délai pour un
+scénario qui prend deux secondes masquerait la cause au lieu de la traiter.
+
+**LES CAPTURES ONT ÉTÉ TRIÉES PAR MESURE, PIXEL À PIXEL**, et non au jugé. Des 140 réécrites par la
+campagne, **32 ne différaient que par l'encodage JPEG** — écart maximal inférieur à 40 sur les trois
+canaux — et sont **restaurées** ; **108 portent un contenu réellement différent** et sont
+**renouvelées**, ce que `CLAUDE.md` §16 demande. Les deux causes se distinguent à la **position** de
+l'écart : les captures du détail d'une affaire diffèrent dans la **colonne de droite**, où le
+composeur a gagné sa commande — celles-là, ce changement les touche vraiment —, les autres sur des
+bandes étroites portant des **horodatages du seed**, qui dérivent à chaque exécution.
 
 **Où reprendre.** `CRM-064` **sous-tranche 3b livrée**, `[~]` pour le seul écart de l'état vide
 ci-dessus. Vient ensuite la **tranche 4 — les préférences**, qui n'est pas commencée et dont aucun

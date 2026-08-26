@@ -216,6 +216,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-211 | `scripts/verify-move-card.sh` rend « la restauration n'a pas rétabli l'état initial » EN SÉRIE et **57 contrôles, aucune anomalie** rejoué seul, seed reposé — la dégradation `b`, qui emploie la MÊME restauration, est verte dans le même passage | 2026-08-25 | *ouverte* — cause non établie, comportement inchangé, relève de `CRM-034` | 507 |
 | INC-212 | `scripts/verify-mail-infra.sh` laisse en base son message « Preuve journal Stalwart propre », NON classé : l'inbox porte dès lors un troisième fil non classé, et l'état vide de `e2e/ui/sommeil-fil.spec.ts` ne peut plus être atteint. Troisième fichier de la famille d'INC-209 | 2026-08-25 | **close** — le harnais reprend son message des DEUX côtés, décision 508 | 507, 508 |
 | INC-220 | `mail_sent` est écrit en base depuis la migration `0030` (`CRM-058`) et n'a JAMAIS figuré dans le vocabulaire de l'écran : neuf lignes du fil se lisent « Événement ». Deux preuves du repli s'en servaient comme témoin de type « inconnu », ce qui a rendu le manque invisible cinq unités durant | 2026-08-25 | **close** — type nommé, rangé en `discussion`, traduit et présenté ; les deux témoins révisés (décision 408) | 518 |
+| INC-227 | `e2e/ui/armement-sequence.spec.ts` §224 « UN SECOND ARMEMENT SUR LA MÊME AFFAIRE EST REFUSÉ » dépasse les 30 000 ms du délai de test **dans la série complète**, et passe SEUL en **2,0 s**. MESURÉ le 2026-08-26 par la session `CRM-064` 3b : la **même campagne, sur le même code**, l'a rendu VERT au premier passage et ROUGE au second — le changement de la session ne peut donc pas en être la cause déterministe. Même famille qu'INC-219, INC-224 et INC-225 | 2026-08-26 | *ouverte* — cause NON établie, et « intermittent » n'est pas un diagnostic. Comportement inchangé, aucun test désactivé, aucune temporisation. Relève de `CRM-063` | 526 |
 | INC-215 | `mail_outbound_identities.signature_html` existe depuis `CRM-053` et n'est lue par PERSONNE — ni `mail-sync` à l'envoi, ni l'écran de `CRM-089`, qui n'envoie délibérément jamais `p_signature_html`. Son nom annonce du **HTML** là où tout le sous-système expédie du **texte** | 2026-08-25 | **CLOSE le 2026-08-25** par `CRM-063` tranche 3, migration 58 : la colonne devient `signature_text`, elle est bornée, elle est LUE par la garde d'envoi et ÉCRITE par l'écran | 512, 516 |
 | INC-216 | `public.rendre_modele_email` rend `card.next_action_at` **en UTC** : MESURÉ, aucune colonne de fuseau n'existe dans le schéma — seule `profiles.locale`, qui est une **langue**. Un destinataire français lira 09:00 là où le rendez-vous est à 11:00 en heure d'été | 2026-08-25 | *ouverte* — comportement ASSUMÉ et figé par une assertion, **arbitrage attendu** : à qui appartient le fuseau d'un email sortant | 514 |
 | INC-217 | `supabase/tests/0052_relances_automatiques.test.sql` assertion 11 exige un passage `succeeded` de `p2enjoy-relances-cards-figees` dans `cron.job_run_details`, or ce job est planifié `23 3 * * *`. MESURÉ deux fois dans la même session : **rouge** à 12 h 45, **verte** à 13 h 50, le job ayant tourné entre-temps hors horaire — l'amorçage de dix secondes de `docs/SPEC-relances.md` §9.7 est réarmé par tout rejeu de la migration 54, et `verify-relances.sh` promeut le job. La preuve est donc verte **parce qu'un autre harnais a tourné avant elle**, jamais selon l'état du produit | 2026-08-25 | **close** — assertion révisée et preuve du moteur ARMÉE par le harnais, décision 508 | 514 |
@@ -227,10 +228,12 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Trente et une ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+**Trente-deux ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-173, INC-174,
 INC-182, INC-183, INC-185, INC-186, INC-188, INC-189, INC-190, INC-191, INC-192, INC-193, INC-224,
-INC-225 et INC-226.** — **INC-226** consignée le 2026-08-26 par la session `CRM-064` tranche 1 :
+INC-225, INC-226 et INC-227.** — **INC-227** consignée le 2026-08-26 par la session `CRM-064`
+sous-tranche 3b : quatrième entrée de la famille d'INC-219, et la première dont la contre-épreuve
+est INTERNE — deux campagnes sur le même commit, un vert puis un rouge. — **INC-226** consignée le 2026-08-26 par la session `CRM-064` tranche 1 :
 trois lieux du dépôt renvoient les notifications à `CRM-063`, unité qui porte désormais tout autre
 chose. — **INC-224 et INC-225** consignées le 2026-08-26 par la session `CRM-063`
 sous-tranche 4c, toutes deux rencontrées en rejouant la campagne d'interface, toutes deux étrangères
@@ -5548,6 +5551,43 @@ au passage un défaut qui n'appartient pas à l'unité. Le geste tient en une li
 responsable le demande.
 
 ---
+
+### INC-227 — `armement-sequence.spec.ts` §224 dépasse les 30 s dans la série, et passe seul en 2 s
+
+**Consignée le 2026-08-26** par la session `CRM-064` sous-tranche 3b, rencontrée en rejouant la
+campagne d'interface après correction. **Même famille qu'INC-219, INC-224 et INC-225.**
+
+**Ce qui est mesuré, et la mesure est décisive.** Le scénario « UN SECOND ARMEMENT SUR LA MÊME
+AFFAIRE EST REFUSÉ, et le refus est traduit » a été exécuté **deux fois dans la même session, sur le
+même code committé** :
+
+```
+campagne 1 (17,0 min) : VERT      — les deux seuls échecs sont ailleurs, et attribués
+campagne 2 (16,8 min) : ROUGE     — « Test timeout of 30000ms exceeded », mesuré à 31,3 s
+isolé, juste après      : VERT     — 6 passés, ce scénario en 2,0 s
+```
+
+**CE QUE CETTE MESURE ÉTABLIT, ET POURQUOI ELLE VAUT MIEUX QU'UNE LIGNE DE BASE PAR `git stash`.**
+INC-223 rapporte qu'une ligne de base par `git stash -u` ne vaut RIEN sur du travail déjà committé,
+et INC-224 a dû recourir à l'arbre pré-session. Ici, la contre-épreuve est **interne** : le même
+arbre, le même commit, la même commande, deux verdicts opposés à quinze minutes d'intervalle. Un
+changement de code ne produit pas un verdict un coup sur deux ; l'anomalie n'est donc pas imputable
+à la sous-tranche 3b, et aucune ligne de base supplémentaire ne l'établirait mieux.
+
+**Deux mille millisecondes contre trente et un mille.** L'écart n'est pas un dépassement de peu :
+isolé, le scénario prend **2,0 s**, soit un quinzième du délai. Ce qui le fait échouer dans la série
+n'est donc pas sa propre lenteur, mais quelque chose que la série lui fait subir — la même signature
+qu'INC-219 et INC-225, où un scénario ne rougit **jamais** seul.
+
+**Le comportement est laissé inchangé** (`CLAUDE.md` §3.1) : l'anomalie vit dans le fichier d'une
+autre unité (`CRM-063`), et la corriger au passage élargirait cette session. Aucun test n'est
+désactivé, aucune temporisation n'est ajoutée, et `test.setTimeout` n'est pas relevé — relever un
+délai pour faire passer un scénario qui prend 2 s masquerait la cause au lieu de la traiter.
+
+**Arbitrage attendu du responsable** : cette famille compte désormais **quatre** entrées ouvertes
+sur quatre fichiers différents. Le point commun est la SÉRIE, jamais le fichier. Tant que la cause
+n'est pas cherchée pour elle-même — parallélisme, épuisement d'une ressource de la pile, ou
+accumulation d'état entre scénarios —, chaque session continuera d'en consigner une de plus.
 
 ### INC-225 — deux scénarios de `commentaires-gestes.spec.ts` échouent dans la SÉRIE et jamais isolés
 
