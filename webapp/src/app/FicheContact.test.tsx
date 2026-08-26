@@ -1644,7 +1644,16 @@ describe('modification du rôle d’un rattachement (docs/SPEC-contacts.md §19.
  * un compteur ne le verrait pas. Les LECTURES sont rejouables — les issues « sans effet » et
  * « refus » relisent la fiche (§20.6).
  */
-function clientQuiSupprimeLeContact(options: { lectures: Reponse[]; suppression?: Reponse }) {
+type ReponseSuppression = {
+	data: unknown[] | null
+	error: { message: string; code?: string } | null
+	status: number
+}
+
+function clientQuiSupprimeLeContact(options: {
+	lectures: Reponse[]
+	suppression?: ReponseSuppression
+}) {
 	const suppressions: Array<Record<string, unknown>> = []
 	let rangLecture = 0
 	const lireChaine = () => {
@@ -1673,9 +1682,12 @@ function clientQuiSupprimeLeContact(options: { lectures: Reponse[]; suppression?
 						select: (colonnes: string) => {
 							filtres.colonnes = colonnes
 							suppressions.push(filtres)
-							return Promise.resolve(
-								options.suppression ?? { data: [{ id: ID_LEO }], error: null, status: 200 },
-							)
+							const reponse: ReponseSuppression = options.suppression ?? {
+								data: [{ id: ID_LEO }],
+								error: null,
+								status: 200,
+							}
+							return Promise.resolve(reponse)
 						},
 					}
 					return chaine
@@ -1826,8 +1838,8 @@ describe('suppression d’un contact (docs/SPEC-contacts.md §20.7)', () => {
 	})
 
 	it('cas f : pendant l’envoi, la confirmation est `aria-busy` et l’envoi ne part QU’UNE fois', async () => {
-		let resoudre: ((valeur: Reponse) => void) | null = null
-		const enAttente = new Promise<Reponse>((r) => {
+		let resoudre: (valeur: ReponseSuppression) => void = () => {}
+		const enAttente = new Promise<ReponseSuppression>((r) => {
 			resoudre = r
 		})
 		let appels = 0
@@ -1862,7 +1874,7 @@ describe('suppression d’un contact (docs/SPEC-contacts.md §20.7)', () => {
 		expect(confirmer.textContent).toContain(fr['contact.delete.pending'])
 		await userEvent.click(confirmer)
 		expect(appels).toBe(1)
-		resoudre?.({ data: [{ id: ID_LEO }], error: null, status: 200 })
+		resoudre({ data: [{ id: ID_LEO }], error: null, status: 200 })
 		expect(await screen.findByTestId(TEMOIN_CARNET)).toBeTruthy()
 	})
 
