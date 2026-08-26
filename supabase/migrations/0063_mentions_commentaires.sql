@@ -246,10 +246,31 @@ comment on function app.can_read_channel(uuid) is
 	'droit fin du channel surcharge celui de son track, y compris pour rouvrir. Délègue.';
 
 -- --- 2.4 `app.can_read_card_pour` -------------------------------------------------------------
--- LA FONCTION QUE LA TRANCHE EXISTE POUR POSER. Elle n'est PAS accordée à `anon`, contrairement à
--- ses quatre déléguées : celles-ci doivent l'être pour que le refus d'un anonyme soit ZÉRO LIGNE
--- et non une erreur de privilège (docs/SPEC-permissions-rls.md §7). Elle, personne d'anonyme n'a
--- de raison de la poser, et le trigger de la section 5 n'est atteint que par un authentifié.
+-- LA FONCTION QUE LA TRANCHE EXISTE POUR POSER.
+--
+-- ELLE EST ACCORDÉE À `authenticated`, ET C'EST UNE PREUVE QUI L'A IMPOSÉ (décision 522). La
+-- première écriture la refusait aux deux rôles clients, au motif que « le trigger n'est atteint
+-- que par un authentifié ». Le raisonnement se contredisait : le trigger de la section 5 est
+-- `SECURITY INVOKER`, donc il l'exécute PRÉCISÉMENT SOUS CE RÔLE. MESURÉ — les quatre premières
+-- lignes du contrat du §8 rendaient
+--
+--   403 / 42501 — permission denied for function can_read_card_pour
+--
+-- là où trois d'entre elles attendaient un refus MÉTIER et une un succès. Un refus de privilège
+-- qui masque la règle n'est pas la règle.
+--
+-- LA DIVULGATION QUE LE REFUS VOULAIT ÉVITER N'A AUCUN CANAL, et c'est mesuré aussi : PostgREST
+-- expose `public, storage, graphql_public` — jamais `app`. Un appel direct rend `404 / PGRST202`,
+-- comme `app.relancer_cards_figees` l'a établi pour CRM-062. Le privilège sert l'exécution EN
+-- BASE sous le trigger, et rien d'autre.
+--
+-- `anon` reste exclu : il ne détient aucun privilège `INSERT` sur la table (section 7), donc le
+-- trigger ne s'exécute jamais sous son rôle. Lui accorder l'exécution n'ouvrirait aucun chemin et
+-- élargirait la surface sans contrepartie.
+--
+-- Les trois autres variantes `_pour` restent refusées aux deux rôles : elles ne sont atteintes que
+-- DEPUIS celle-ci, qui est `SECURITY DEFINER` de propriétaire `postgres`, donc exécutées sous
+-- `postgres` et non sous l'appelant. C'est vérifié par le contrat, non supposé.
 
 create or replace function app.can_read_card_pour(card uuid, p_user uuid)
 returns boolean
@@ -306,6 +327,10 @@ revoke all on function app.workspace_role_pour(uuid, uuid)                      
 revoke all on function app.resolve_channel_access_pour(uuid, uuid, uuid, uuid)    from anon, authenticated;
 revoke all on function app.can_read_channel_pour(uuid, uuid)                      from anon, authenticated;
 revoke all on function app.can_read_card_pour(uuid, uuid)                         from anon, authenticated;
+
+-- Le trigger de la section 5 est `SECURITY INVOKER` : il exécute celle-ci SOUS LE RÔLE DE
+-- L'APPELANT. Sans ce `grant`, les refus métier du §8 sont masqués par un `42501` — MESURÉ.
+grant execute on function app.can_read_card_pour(uuid, uuid) to authenticated, service_role;
 
 grant execute on function app.workspace_role(uuid)                     to anon, authenticated, service_role;
 grant execute on function app.resolve_channel_access(uuid, uuid, uuid) to anon, authenticated, service_role;

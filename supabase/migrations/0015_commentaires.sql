@@ -29,9 +29,12 @@
 -- Non livré, et nommé — chaque manque est **figé par une assertion** de
 -- `supabase/tests/0017_commentaires.test.sql` :
 --
---   * **aucune notification.** `mentions` est livrée par docs/SCHEMA.md §5 et n'est alimentée par
---     rien : ni analyse du corps, ni écriture par l'interface. `CRM-063`, et la table
---     `notifications` n'existe pas. INC-033 : un `uuid[]` ne porte aucune intégrité référentielle ;
+--   * **aucune notification.** `CRM-043` livrait `mentions uuid[]`, que rien n'alimentait — ni
+--     analyse du corps, ni écriture par l'interface —, et INC-033 notait qu'un `uuid[]` ne porte
+--     aucune intégrité référentielle. **RÉVISÉ le 2026-08-26** : les notifications sont `CRM-064`
+--     (INC-226 — ce renvoi désignait `CRM-063`, unité qui porte tout autre chose), et sa tranche 1
+--     a remplacé la colonne par `public.card_comment_mentions` (docs/SPEC-notifications.md,
+--     migration 0063). La table `notifications` n'existe toujours pas : elle est la tranche 2 ;
 --
 --   * **aucun événement de timeline.** `card_events` est due par `CRM-044` : un commentaire écrit,
 --     modifié ou supprimé ne laisse aucune trace typée ;
@@ -133,8 +136,11 @@ create table if not exists public.card_comments (
 	-- un défaut ne s'applique qu'à une colonne omise, et un client qui l'envoie le contourne.
 	author_id    uuid        not null default auth.uid() references public.profiles (id),
 	body         text        not null,
-	-- Livrée par docs/SCHEMA.md §5, ALIMENTÉE PAR RIEN (INC-033).
-	mentions     uuid[]      not null default '{}',
+	-- CRM-064 REMPLACE `mentions uuid[]` PAR LA TABLE `public.card_comment_mentions`
+	-- (docs/SPEC-notifications.md §3, migration 0063). Ne pas nommer ici l'ancienne colonne est
+	-- INDISPENSABLE : le runner rejoue aussi cette migration sur un schéma final d'où elle a été
+	-- retirée, et un `comment on column` sur une colonne absente arrête le rejeu — MESURÉ. C'est
+	-- le geste exact de la migration 0007 pour `require_fields` (CRM-018, décision 262).
 	created_at   timestamptz not null default now(),
 	edited_at    timestamptz,
 	deleted_at   timestamptz
@@ -173,10 +179,6 @@ comment on column public.card_comments.body is
 	'CRM-043 — docs/SPEC-cards.md §13.4. Markdown STOCKÉ, rendu en TEXTE BRUT par le produit : '
 	'aucune unité ne porte l''assainissement qu''un rendu exigerait (§13.13). Vidé — non masqué — '
 	'dès que le commentaire est supprimé, et le `CHECK` conditionnel le tient.';
-
-comment on column public.card_comments.mentions is
-	'CRM-043 — docs/SCHEMA.md §5. Destinataires de notification. ALIMENTÉE PAR RIEN : les '
-	'notifications sont `CRM-063`, et un `uuid[]` ne porte aucune intégrité (INC-033).';
 
 comment on column public.card_comments.edited_at is
 	'CRM-043 — docs/SPEC-cards.md §13.5, décision 197. Posée par le trigger SI ET SEULEMENT SI le '
@@ -425,8 +427,9 @@ comment on policy card_comments_maj on public.card_comments is
 -- relâché à la main.
 --
 -- DEUX COLONNES OUVERTES EN MISE À JOUR, ET DEUX SEULEMENT. `id`, `card_id`, `workspace_id`,
--- `author_id`, `created_at` et `mentions` sont fermées par voie de conséquence : un commentaire ne
--- change ni de card, ni d'auteur, ni de date de naissance. `edited_at` est fermée ET POURTANT
+-- `author_id` et `created_at` sont fermées par voie de conséquence : un commentaire ne
+-- change ni de card, ni d'auteur, ni de date de naissance. `mentions` figurait dans cette liste
+-- jusqu'au 2026-08-26 ; la migration 0063 l'a retirée du schéma (CRM-064). `edited_at` est fermée ET POURTANT
 -- ÉCRITE, par le trigger — MESURÉ (décision 197).
 --
 -- Le privilège `INSERT` reste DE TABLE, comme pour `cards` (décision 140) : le défaut de colonne

@@ -318,10 +318,32 @@ rendrait « non » pour toute personne dont l'appelant ne voit pas l'appartenanc
 dépendrait de qui la pose.
 
 **La conséquence est une divulgation, et elle est bornée.** La fonction répond « oui » ou « non »
-sur un tiers. Elle n'est **pas** accordée à `anon` — contrairement à ses quatre déléguées, qui
-doivent l'être pour que le refus soit zéro ligne (§7 de `docs/SPEC-permissions-rls.md`). Un
-appelant anonyme n'a aucune raison de poser la question, et le trigger du §6 n'est atteint que par
-un client authentifié.
+sur un tiers.
+
+> **CETTE LIGNE A ÉTÉ TROUVÉE FAUSSE PAR LA PREUVE, ET ELLE EST RÉVISÉE PLUTÔT QUE RÉÉCRITE
+> (décision 522).** Elle annonçait que la fonction ne serait accordée **ni** à `anon` **ni** à
+> `authenticated`, au motif que « le trigger du §6 n'est atteint que par un client authentifié ».
+> Le raisonnement se contredisait lui-même : le trigger du §6 est **`SECURITY INVOKER`**, donc il
+> exécute la fonction **précisément sous ce rôle**. MESURÉ — les quatre premières lignes du §8
+> rendaient `403` / `42501` `permission denied for function can_read_card_pour`, là où trois
+> attendaient un refus **métier** et une un succès. Un refus de privilège qui masque la règle
+> n'est pas la règle.
+
+**La fonction est donc accordée à `authenticated`**, et **la divulgation que le refus voulait
+éviter n'a aucun canal** — mesuré, et non supposé : PostgREST expose `public, storage,
+graphql_public`, jamais `app`. Un appel direct rend `404` / `PGRST202`, exactement comme
+`app.relancer_cards_figees` l'a établi pour `CRM-062`. Le privilège sert l'exécution **en base**
+sous le trigger, et rien d'autre.
+
+**`anon` reste exclu**, et cette moitié-là du raisonnement tenait : il ne détient aucun privilège
+`INSERT` sur la table (§7.2), donc le trigger ne s'exécute jamais sous son rôle. Lui accorder
+l'exécution n'ouvrirait aucun chemin et élargirait la surface sans contrepartie.
+
+**Les trois autres variantes `_pour` restent refusées aux deux rôles clients** : elles ne sont
+atteintes que **depuis** `app.can_read_card_pour`, qui est `security definer` de propriétaire
+`postgres` — donc exécutées sous `postgres`, et non sous l'appelant. Le contrat du §8 le vérifie
+plutôt que de le supposer : si l'une d'elles avait eu besoin d'un privilège, la ligne *a*
+rougirait sur son nom.
 
 ---
 
@@ -449,11 +471,12 @@ Mesuré avec les jetons réels des trois comptes du seed. `A` = Camille (`admin`
 | a | `A` | `POST /card_comment_mentions` sur son commentaire de `…0c5`, `profile_id` = `B` | `201` |
 | b | `A` | même appel, rejoué à l'identique | `409` / `23505` — la clé primaire refuse le doublon |
 | c | `A` | `POST` sur son commentaire de `…0c1`, `profile_id` = `V` | `400` / `P0001` `mention_destinataire_sans_acces` |
-| d | `A` | `POST` avec `profile_id` = `00000000-…-dead` | `409` / `23503` — la clé étrangère refuse |
+| d | `A` | `POST` avec `profile_id` = `00000000-…-dead` | `400` / `P0001` `mention_destinataire_sans_acces` |
 | e | `A` | `POST` avec `comment_id` inconnu | `400` / `P0001` `comment_not_found` |
 | f | `A` | `POST` sur le commentaire tombale `…0d4` | `400` / `P0001` `comment_deleted` |
 | g | `B` | `POST` sur un commentaire dont `A` est l'auteur | `403` / `42501` — la politique refuse |
-| h | `V` | `POST` sur un commentaire de `…0c5` | `403` / `42501` — elle y est `read` |
+| h | `V` | `POST` sur **son propre** commentaire `…0d5` (`…0c5`) | `403` / `42501` — elle y est `read`, non `write` |
+| h bis | `V` | `POST` sur `…0d1`, commentaire qu'elle ne peut pas lire | `400` / `P0001` `comment_not_found` |
 | i | `V` | `GET /card_comment_mentions` de `…0c1` | `200` **`[]`** — refus par zéro ligne, jamais par erreur |
 | j | `V` | `GET /card_comment_mentions` de `…0c5` | `200`, les lignes posées |
 | k | anonyme | `GET /card_comment_mentions` | `200` **`[]`** |
@@ -467,6 +490,36 @@ un refus.
 
 **La ligne *o* est la contre-épreuve du §7.4.** Sans elle, le retrait de la colonne ne serait
 prouvé que par l'absence d'erreur ailleurs.
+
+### 8.1 Deux lignes que la mesure a corrigées, et ce qu'elles apprennent
+
+Les quinze lignes ont été exécutées le 2026-08-26 contre la migration réelle. Treize ont rendu ce
+qui était écrit. **Deux ne l'ont pas fait, et aucune des deux n'est un défaut du produit** : c'est
+la prédiction qui était fausse, et elle est **révisée par la mesure** plutôt que le code plié pour
+lui obéir.
+
+**Ligne *d* — la clé étrangère ne parle pas la première.** Il était écrit `409` / `23503`.
+Mesuré : `400` / `P0001` `mention_destinataire_sans_acces`. La cause est l'ordre d'exécution — le
+trigger est `BEFORE INSERT`, donc il s'exécute **avant** la vérification de la clé étrangère —, et
+`app.can_read_card_pour` rend `false` pour un identifiant qui ne désigne aucun profil, comme pour
+un profil sans accès.
+
+**Le comportement obtenu est MEILLEUR que celui qui était prévu**, et c'est ce qui décide de ne
+rien changer : le refus **ne dit pas si le profil existe**. Un `23503` l'aurait dit. Le §6 exige
+que le refus « ne dise pas qui » ; l'ordre des barrières le lui donne gratuitement.
+
+**La clé étrangère reste une barrière réelle, et cela se prouve plutôt que se supposer.** Elle est
+la **seconde**, invisible depuis l'API tant que la première tient. La suite pgTAP l'éprouve en
+désactivant le trigger sous le propriétaire, puis en constatant le `23503` : sans cette assertion,
+rien ne distinguerait une clé étrangère posée d'une clé étrangère oubliée.
+
+**Ligne *h* — deux refus différents selon la card, et c'est la discrétion du §6 en action.** La
+ligne écrite visait un commentaire de `…0c5`, que `V` **peut** lire : elle rend bien `403` /
+`42501`, la politique refusant son droit `read` là où il faut `write`. Mais la même requête sur
+`…0d1` — commentaire d'une card **fermée** pour elle — rend `400` / `P0001` `comment_not_found`,
+parce que le trigger `SECURITY INVOKER` ne voit pas ce que la RLS lui cache. **C'est exactement la
+propriété que le §6 recherchait** : un commentaire fermé et un commentaire inexistant rendent le
+même refus. Elle devient la ligne *h bis*, éprouvée pour elle-même.
 
 ---
 
