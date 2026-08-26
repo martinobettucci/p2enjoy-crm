@@ -25373,8 +25373,18 @@ que le témoin lui-même formule est désormais appliquée deux fois de suite.
 assertions** ; `test:unit` **78 fichiers / 2646 tests** ; `e2e:api` **967 passés** (958 avant, plus
 les 9 de la tranche) ; `e2e:mail` **42 passés** ; `pytest` **244 passés** ;
 `scripts/verify-notifications.sh` **43 contrôles, aucune anomalie**, huit dégradations toutes
-mordantes et restauration constatée. `e2e:ui` lancée en fin de campagne — son bilan est consigné
-au compte rendu.
+mordantes et restauration constatée ; `e2e:ui` **629 passés, aucun échec, en 21,0 minutes**.
+
+**Les 167 captures réécrites par la campagne d'interface ont été RESTAURÉES**, comme aux unités
+précédentes : cette tranche ne touche aucun composant d'interface, leur contenu ne change pas, et
+seul leur encodage JPEG diffère. **Aucune capture n'est produite par cette tranche**, et c'est
+cohérent avec son périmètre — elle ne livre **aucune surface** (§13.1). L'état du seed a été relu
+après toute la campagne : **2 notifications, toutes deux non lues, 2 mentions, 5 commentaires**.
+
+**Un écart de méthode, dit plutôt que tu** : `e2e:ui` a tourné pendant que rien d'autre ne
+touchait la base — le harnais de la tranche, qui dégrade et restaure, avait terminé bien avant.
+Le verdict est donc pris sur un produit stable, et il n'a pas eu besoin d'être rejoué, à la
+différence de la tranche 1 (décision 522).
 
 **Où reprendre.** `CRM-064` **tranche 2 close**. La session suivante prend la **tranche 3 — la
 surface et le temps réel** : le composeur qui pose une mention, la liste des notifications, le
