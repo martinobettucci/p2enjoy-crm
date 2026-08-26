@@ -89,8 +89,26 @@ export function BlocSequenceCard({ idCard, client = clientCrm }: ProprietesBlocS
 	// que `BlocContactsCard` et `BlocCoutsCard`.
 	const courant = useRef(0)
 
+	// LES LECTURES N'ONT LIEU QU'AVEC UNE SESSION, ET C'EST UNE CORRECTION À LA CAUSE — 2026-08-26.
+	//
+	// MESURÉ : `card_sequence_enrollments` n'accorde RIEN à `anon` (§12.10), et
+	// `mail_outbound_identities` non plus. Émises sans session, ces deux lectures rendent donc
+	// `401`, et PostgREST les journalise dans la console du navigateur. `mail_sequences`, elle,
+	// accorde `select` à `anon` et rend `200 []` — c'est pourquoi il y avait DEUX `401` et non trois.
+	//
+	// CE N'EST PAS MASQUER UNE ERREUR (`CLAUDE.md` §18) : c'est ne pas émettre une requête dont le
+	// produit SAIT qu'elle sera refusée par le privilège. Ce n'est pas davantage un droit calculé
+	// (§10) — la session n'est pas un rôle, et rien n'est masqué SELON un rôle : une lectrice
+	// connectée voit le bloc entier, comme le §5.42 l'exige.
+	//
+	// CE QUE LA MESURE A COÛTÉ, ET IL EST ÉCRIT ICI PLUTÔT QUE TU. La première livraison de ce bloc
+	// a rendu **50 scénarios d'interface rouges** dans `formulaire.spec.ts`, `timeline.spec.ts`,
+	// `commentaires.spec.ts` et `manuel.spec.ts` — quatre fichiers sans aucun rapport avec les
+	// séquences. Ces suites servent la fiche d'affaire **par substitution de réponse réseau**, donc
+	// SANS session : en production, une fiche sans session rend « card introuvable » et ce bloc ne
+	// se monte jamais. La garde de console de `e2e/ui/fixtures.ts` a fait exactement son travail.
 	useEffect(() => {
-		if (client === null) return
+		if (client === null || idUtilisateur === null) return
 		const rang = ++courant.current
 		setInscription(enChargement())
 		void (async () => {
@@ -98,12 +116,12 @@ export function BlocSequenceCard({ idCard, client = clientCrm }: ProprietesBlocS
 			if (rang !== courant.current) return
 			setInscription(lue)
 		})()
-	}, [client, idCard, tentative])
+	}, [client, idCard, idUtilisateur, tentative])
 
 	// LES DEUX SÉLECTEURS SE CHARGENT UNE FOIS. Leur échec ne bloque pas la lecture de l'état : une
 	// liste vide empêche d'armer et le DIT, elle n'empêche pas de voir ce qui est en cours.
 	useEffect(() => {
-		if (client === null) return
+		if (client === null || idUtilisateur === null) return
 		let vivant = true
 		void (async () => {
 			const lues = await lireSequences(client)
@@ -165,7 +183,15 @@ export function BlocSequenceCard({ idCard, client = clientCrm }: ProprietesBlocS
 		if (relue.statut === 'pret') setInscription(relue)
 	}, [client, enCours, idCard, inscription])
 
-	if (client === null) return null
+	// SANS SESSION, LE BLOC NE SE MONTE PAS. Armer une relance est un geste qui suppose un acteur :
+	// l'inscription porte `armed_by`, et `armer_sequence_relance` refuse en `not_authenticated`
+	// (§12.4 refus a). Offrir le geste à qui n'a aucune identité proposerait une action dont le
+	// produit sait déjà qu'elle sera refusée.
+	//
+	// CE N'EST PAS LE CAS D'UN UTILISATEUR RÉEL : sans session, `RouteCard` rend « card
+	// introuvable », et cette branche n'est atteinte que par une preuve qui substitue la réponse
+	// réseau de la card.
+	if (client === null || idUtilisateur === null) return null
 
 	const active = inscription.statut === 'pret' ? inscription.donnees : null
 

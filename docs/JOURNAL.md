@@ -25035,15 +25035,36 @@ conforme, pendant qu'une dégradation trouvait la même ligne — deux contrôle
 contredisaient dans le même passage. Le motif porte désormais ce que le contrôle veut dire, non sa
 syntaxe.
 
-**CAMPAGNE.** `typecheck` et `build` verts ; `test:unit` **78 fichiers / 2646 tests** ; `test:sql`
-**60 fichiers / 2850 assertions, aucune anomalie** ; `e2e:api` **943 passés** ; `pytest` **244
-passés** ; `verify-sequences-ecran.sh` **51 contrôles, aucune anomalie** avec sept dégradations
-toutes mordantes ; `verify-modeles-emails-ecran.sh` **39 contrôles, aucune anomalie** ;
-`verify-manual.sh` **129 contrôles, aucune anomalie**.
+**LA CAMPAGNE A TROUVÉ UNE RÉGRESSION DE CETTE SESSION, ET C'EST LE SECOND RÉSULTAT LE PLUS UTILE.**
+`e2e:ui` a rendu **50 échecs** dans quatre fichiers sans aucun rapport avec les séquences —
+`formulaire.spec.ts` (23), `timeline.spec.ts` (13), `commentaires.spec.ts` (13), `manuel.spec.ts`
+(1) —, tous sur la même signature : deux `console.error … 401 (Unauthorized)` laissés dans la
+console. **La cause est `BlocSequenceCard`** : il émettait deux lectures — `card_sequence_enrollments`
+et `mail_outbound_identities` — qui n'accordent RIEN à `anon`, et ces suites servent la fiche
+d'affaire **par substitution de réponse réseau**, donc **sans session**. Corrigé à sa cause : le bloc
+n'émet plus aucune lecture sans session et ne se monte pas ; en production, une fiche sans session
+rend « card introuvable » et il ne se montait déjà jamais.
 
-**INC-223 consignée** : un scénario de `e2e/ui/manuel.spec.ts` laisse deux `401` dans la console.
-**La ligne de base est établie** — même échec derrière un `git stash -u` —, l'anomalie est donc
-préexistante et le comportement est laissé inchangé.
+**ET UNE FAUTE DE MÉTHODE, QUI VAUT PLUS QUE LE DÉFAUT.** J'avais d'abord consigné ces `401` comme
+**préexistants**, sur une ligne de base par `git stash -u`. **Elle était invalide** : le composant
+fautif était déjà **committé**, si bien que le `stash` ne retirait rien et que les deux exécutions
+comparaient le MÊME code. Une ligne de base qui ne change rien rend « préexistant » quel que soit le
+défaut. La vraie mesure — le bloc retiré à la main, puis restauré octet à octet — donne **13 échecs
+et 26 `401` avec**, **22 passés et 0 `401` sans**. **INC-223** est conservée au registre, close, et
+porte cette leçon : le §2.4 de `docs/CloudWorker.md` décrit la ligne de base sans dire qu'elle ne
+vaut que sur du travail NON COMMITTÉ, alors que le §0 du même document EXIGE de committer au fil de
+l'eau. Les deux se contredisent sur ce point.
+
+**CAMPAGNE, APRÈS CORRECTION.** `typecheck` et `build` verts ; `test:unit` **78 fichiers / 2646
+tests** ; `test:sql` **60 fichiers / 2850 assertions, aucune anomalie** ; `e2e:api` **943 passés** ;
+`e2e:mail` **42 passés** ; `pytest` **244 passés** ; `verify-sequences-ecran.sh` **51 contrôles,
+aucune anomalie** avec sept dégradations toutes mordantes ; `verify-modeles-emails-ecran.sh` **39
+contrôles, aucune anomalie** ; `verify-manual.sh` **129 contrôles, aucune anomalie**.
+
+**UN DÉFAUT DE MÉTHODE DE PLUS, ET IL A FAILLI COÛTER LA SESSION** : le premier passage d'`e2e:ui`
+était capturé par `| tail -12`, si bien que **la ligne « 50 failed » était hors du champ visible** et
+que seul « 579 passed » restait. Une campagne dont on ne lit que la queue n'est pas une campagne
+lue. Le second passage écrit dans un fichier complet.
 
 **Où reprendre.** `CRM-063` est **close** : ses trois objets — le modèle, la signature, la séquence —
 existent en base, sont prouvés, et ont chacun leur écran. La session suivante prend la **première

@@ -227,12 +227,15 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Vingt-neuf ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+**Vingt-huit ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-173, INC-174,
-INC-182, INC-183, INC-185, INC-186, INC-188, INC-189, INC-190, INC-191, INC-192, INC-193 et
-INC-223** — **INC-223** consignée le 2026-08-26 par la session `CRM-063` sous-tranche 4c : un
-scénario de `e2e/ui/manuel.spec.ts` laisse deux `401` dans la console, anomalie mesurée **des deux
-côtés d'un `git stash`** et donc préexistante.
+INC-182, INC-183, INC-185, INC-186, INC-188, INC-189, INC-190, INC-191, INC-192 et INC-193.**
+
+**INC-223 a été ouverte puis CLOSE le même jour, et à tort dans les deux sens.** La session
+`CRM-063` sous-tranche 4c l'a consignée comme préexistante sur une **ligne de base invalide** — le
+composant fautif était déjà COMMITTÉ, si bien que `git stash -u` ne retirait rien et que les deux
+exécutions comparaient le même code. La vraie mesure a montré une **régression de la session
+elle-même**, corrigée à sa cause. L'entrée est conservée pour la leçon de méthode qu'elle porte.
 
 **INC-221 et INC-222 sont CLOSES le 2026-08-26**, par la sous-tranche 4c de l'unité qui les portait
 — le journal de la décision 519 avait écrit que 4c en hériterait. Les deux rendaient rouge une
@@ -5374,39 +5377,51 @@ n'emploie jamais une valeur que le produit peut livrer un jour. Le nouveau,
 donc il ne cessera jamais d'être inconnu.
 
 
-### INC-223 — `manuel.spec.ts` §INC-077 laisse DEUX `401` dans la console, et l'anomalie est mesurée des DEUX côtés d'un `git stash`
+### INC-223 — CLOSE le 2026-08-26, ET ELLE N'AURAIT JAMAIS DÛ ÊTRE OUVERTE : les deux `401` étaient une RÉGRESSION de la session qui les a consignés
 
-**Consignée le 2026-08-26** par la session `CRM-063` sous-tranche 4c, qui l'a rencontrée en
-rejouant `e2e/ui/manuel.spec.ts` après avoir écrit le chapitre **7 ter** du manuel.
+**Consignée puis CLOSE le 2026-08-26** par la session `CRM-063` sous-tranche 4c. Elle est conservée
+parce que **la faute de méthode qu'elle contient vaut plus que le défaut qu'elle décrivait**.
 
-**Ce qui est mesuré.** Le scénario « un `channel_changed` s'affiche sous son libellé métier, sans
-nommer les dossiers » échoue sur la garde de console de `e2e/ui/fixtures.ts`, et non sur une
-assertion du produit :
+**CE QUI A ÉTÉ CONSIGNÉ À TORT.** L'entrée affirmait que deux `console.error: … 401 (Unauthorized)`
+laissés par `e2e/ui/manuel.spec.ts` étaient **préexistants**, et elle s'appuyait sur une ligne de
+base : le fichier rejoué derrière un `git stash -u` échouait de la même façon.
 
-```
-Error: aucun warning, error ou pageerror ne reste dans le navigateur
-+   "console.error: Failed to load resource: the server responded with a status of 401 (Unauthorized)",
-+   "console.error: Failed to load resource: the server responded with a status of 401 (Unauthorized)",
-```
+**LA LIGNE DE BASE ÉTAIT INVALIDE, ET LE MOTIF EST SIMPLE : `git stash -u` NE RETIRE QUE CE QUI
+N'EST PAS COMMITTÉ.** Le composant fautif — `webapp/src/app/BlocSequenceCard.tsx`, monté dans
+`RouteCard` — avait été **committé une heure plus tôt** par la même session. Le `stash` n'a donc
+rien retiré du tout, et les deux exécutions comparaient **le même code**. Une ligne de base qui ne
+change rien ne mesure rien, et elle rend « préexistant » quel que soit le défaut.
 
-Les huit autres scénarios du fichier sont VERTS.
+**LA VRAIE MESURE, PRISE ENSUITE, EST SANS AMBIGUÏTÉ** — le bloc retiré à la main de `RouteCard`,
+puis restauré octet à octet :
 
-**LA LIGNE DE BASE EST ÉTABLIE, ET L'ANOMALIE EST PRÉEXISTANTE** (`docs/CloudWorker.md` §2.4). Le
-fichier a été rejoué derrière un `git stash -u`, c'est-à-dire sur le dépôt tel qu'il était avant la
-sous-tranche 4c : **même échec, même scénario, mêmes deux `401`**. Elle n'appartient donc pas à
-cette session, et le comportement est laissé INCHANGÉ (`CLAUDE.md` §3.1).
+| État | `e2e/ui/commentaires.spec.ts` | `401` dans la console |
+|---|---|---|
+| avec `BlocSequenceCard` | **13 échecs**, 9 passés | **26** |
+| sans `BlocSequenceCard` | **22 passés**, 0 échec | **0** |
 
-**Ce qui n'est pas su, et qui est dit plutôt que supposé.** L'origine des deux `401` n'a pas été
-recherchée : ils peuvent venir d'une lecture anonyme légitime que le scénario provoque et n'a jamais
-consommée par `autoriserErreursConsole`, ou d'une requête que le scénario ne connaît pas. Le
-distinguer demande de lire la trace du scénario, ce qui dépasse le périmètre autorisé de la session
-qui l'a constatée.
+**LA CAUSE, ET ELLE EST DU PRODUIT.** Le bloc émettait deux lectures —
+`card_sequence_enrollments` et `mail_outbound_identities` — qui n'accordent **rien** à `anon`
+(§12.10 de `docs/SPEC-modeles-emails.md`). Quatre fichiers de preuves servent la fiche d'affaire
+**par substitution de réponse réseau**, donc **sans session** : les deux lectures y rendaient `401`.
+`mail_sequences`, elle, accorde `select` à `anon` et rend `200 []` — c'est pourquoi il y avait DEUX
+`401` et non trois. **CINQUANTE scénarios** de `formulaire.spec.ts`, `timeline.spec.ts`,
+`commentaires.spec.ts` et `manuel.spec.ts` étaient rouges.
 
-**Ce que la session suivante doit savoir.** Un verdict rouge de `manuel` sur ce seul scénario ne
-doit être lu ni comme une régression, ni comme une preuve : il est de ce défaut-là tant que cette
-entrée reste ouverte. Le reste du fichier, lui, est probant.
+**CORRIGÉE À SA CAUSE** : le bloc n'émet plus aucune lecture sans session, et ne se monte pas. Ce
+n'est pas masquer une erreur (`CLAUDE.md` §18) — c'est ne pas émettre une requête dont le produit
+sait qu'elle sera refusée par le privilège —, et ce n'est pas un droit calculé (`CLAUDE.md` §10) :
+la session n'est pas un rôle, et une lectrice **connectée** voit le bloc entier, comme le §5.42
+l'exige. En production, une fiche sans session rend « card introuvable » et le bloc ne se monte
+jamais. **Après correction : les quatre fichiers sont verts.**
 
-**Arbitrage attendu du responsable** : si les deux `401` sont légitimes, le scénario doit les
-consommer nommément par `autoriserErreursConsole`, comme le font les suites de `CRM-063` ; s'ils ne
-le sont pas, c'est une lecture que le produit émet sans session et qu'il faudrait supprimer. Les
-deux corrections sont hors du périmètre d'une session qui traite une autre unité.
+**CE QUE CETTE ENTRÉE LAISSE AU DÉPÔT, ET C'EST SA SEULE RAISON D'ÊTRE.** Une ligne de base par
+`git stash` ne vaut que sur du travail **NON COMMITTÉ**. Le §2.4 de `docs/CloudWorker.md` décrit la
+procédure sans nommer cette condition, et une session qui committe au fil de l'eau — ce que le §0 du
+même document EXIGE — se retrouve mécaniquement dans le cas où elle ne mesure rien. **Les deux
+règles se contredisent sur ce point**, et la seule ligne de base valable pour du travail déjà
+committé est de comparer à `origin/main` **avant la session**, ou de retirer le changement suspect à
+la main.
+
+**Rien n'est attendu du responsable** : le défaut est corrigé, et la leçon est écrite ici.
+
