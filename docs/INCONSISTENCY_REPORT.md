@@ -227,10 +227,12 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Trente ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+**Trente et une ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-173, INC-174,
-INC-182, INC-183, INC-185, INC-186, INC-188, INC-189, INC-190, INC-191, INC-192, INC-193, INC-221
-et INC-222** — **INC-221 et INC-222** consignées le 2026-08-26 par la session `CRM-060` tranche 6 :
+INC-182, INC-183, INC-185, INC-186, INC-188, INC-189, INC-190, INC-191, INC-192, INC-193, INC-221,
+INC-222 et INC-223** — **INC-223** consignée le 2026-08-26 par la session `CRM-063` sous-tranche
+4c : un scénario de `e2e/ui/manuel.spec.ts` laisse deux `401` dans la console, anomalie mesurée
+**des deux côtés d'un `git stash`** et donc préexistante. La liste passe de trente à trente et une. — **INC-221 et INC-222** consignées le 2026-08-26 par la session `CRM-060` tranche 6 :
 la liste passe de vingt-huit à trente. Toutes deux rendent **rouge** une partie de `npm run
 test:sql`, toutes deux appartiennent à `CRM-063`, et toutes deux sont **reproduites dans les deux
 sens** plutôt que constatées. Le détail est en fin de section. —
@@ -5324,3 +5326,41 @@ l'affaire (`CRM-058` §19.5).
 n'emploie jamais une valeur que le produit peut livrer un jour. Le nouveau,
 `sonde_type_jamais_livre`, n'est pas dans `card_events_type_check` : la base **refuse** de l'écrire,
 donc il ne cessera jamais d'être inconnu.
+
+
+### INC-223 — `manuel.spec.ts` §INC-077 laisse DEUX `401` dans la console, et l'anomalie est mesurée des DEUX côtés d'un `git stash`
+
+**Consignée le 2026-08-26** par la session `CRM-063` sous-tranche 4c, qui l'a rencontrée en
+rejouant `e2e/ui/manuel.spec.ts` après avoir écrit le chapitre **7 ter** du manuel.
+
+**Ce qui est mesuré.** Le scénario « un `channel_changed` s'affiche sous son libellé métier, sans
+nommer les dossiers » échoue sur la garde de console de `e2e/ui/fixtures.ts`, et non sur une
+assertion du produit :
+
+```
+Error: aucun warning, error ou pageerror ne reste dans le navigateur
++   "console.error: Failed to load resource: the server responded with a status of 401 (Unauthorized)",
++   "console.error: Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+```
+
+Les huit autres scénarios du fichier sont VERTS.
+
+**LA LIGNE DE BASE EST ÉTABLIE, ET L'ANOMALIE EST PRÉEXISTANTE** (`docs/CloudWorker.md` §2.4). Le
+fichier a été rejoué derrière un `git stash -u`, c'est-à-dire sur le dépôt tel qu'il était avant la
+sous-tranche 4c : **même échec, même scénario, mêmes deux `401`**. Elle n'appartient donc pas à
+cette session, et le comportement est laissé INCHANGÉ (`CLAUDE.md` §3.1).
+
+**Ce qui n'est pas su, et qui est dit plutôt que supposé.** L'origine des deux `401` n'a pas été
+recherchée : ils peuvent venir d'une lecture anonyme légitime que le scénario provoque et n'a jamais
+consommée par `autoriserErreursConsole`, ou d'une requête que le scénario ne connaît pas. Le
+distinguer demande de lire la trace du scénario, ce qui dépasse le périmètre autorisé de la session
+qui l'a constatée.
+
+**Ce que la session suivante doit savoir.** Un verdict rouge de `manuel` sur ce seul scénario ne
+doit être lu ni comme une régression, ni comme une preuve : il est de ce défaut-là tant que cette
+entrée reste ouverte. Le reste du fichier, lui, est probant.
+
+**Arbitrage attendu du responsable** : si les deux `401` sont légitimes, le scénario doit les
+consommer nommément par `autoriserErreursConsole`, comme le font les suites de `CRM-063` ; s'ils ne
+le sont pas, c'est une lecture que le produit émet sans session et qu'il faudrait supprimer. Les
+deux corrections sont hors du périmètre d'une session qui traite une autre unité.

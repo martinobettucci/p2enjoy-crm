@@ -52,7 +52,7 @@
 | 12 | L'adresse email d'une card : à quoi elle sert | `CRM-040`, `CRM-013`, `CRM-054` | **Partiellement livré** : l'adresse est **générée** à la création de chaque affaire, non devinable, et depuis `CRM-013` **non modifiable** — le refus est appliqué par le serveur et tient hors de l'écran (chapitre 4.2). Ce à quoi elle sert — recevoir les messages et les rattacher à l'affaire — relève de `CRM-054` |
 | 13 | L'inbox : dossiers, messages non classés, classement, **suggestion** | `CRM-055`, `CRM-057`, `CRM-060` | À livrer |
 | 14 | Répondre depuis une card ou depuis l'inbox | `CRM-058` | À livrer |
-| 15 | Modèles d'emails, signature et séquences de relance | `CRM-063` | **Partiellement livré — les MODÈLES et la SIGNATURE sont livrés et vérifiés visuellement ; les séquences n'existent pas.** Voir les chapitres 7 et **7 bis**. « Réglages ▸ Modèles d'emails » écrit les textes réutilisables de l'espace de travail, à trous, et les prévisualise sur une affaire réelle ; « Réglages ▸ Identités d'expédition » porte la **signature** ajoutée à la fin de chaque message expédié depuis une adresse. Ce qui manque, et l'absence est voulue : **aucun envoi depuis l'écran des modèles** — composer un message à partir d'un modèle n'est pas encore offert — et **aucune séquence de relance** à paliers |
+| 15 | Modèles d'emails, signature et séquences de relance | `CRM-063` | **Livré et vérifié visuellement, les TROIS objets.** Voir les chapitres 7, **7 bis** et **7 ter**. « Réglages ▸ Modèles d'emails » écrit les textes réutilisables de l'espace de travail, à trous, et les prévisualise sur une affaire réelle ; « Réglages ▸ Identités d'expédition » porte la **signature** ajoutée à la fin de chaque message expédié ; « Réglages ▸ Séquences de relance » enchaîne des modèles à des délais choisis, et le bloc « Relance automatique » de la fiche d'affaire **arme** la cadence sur une affaire figée puis l'**interrompt**. Une relance s'arrête d'elle-même dès qu'une réponse arrive, ou dès que l'affaire cesse d'être figée. Ce qui manque, et l'absence est voulue : **aucun envoi depuis l'écran des modèles** — composer un message à partir d'un modèle n'est pas encore offert —, **aucune date de prochain envoi** — la cadence glisse sur les envois réels —, et aucune trace de l'armement dans l'historique de l'affaire |
 | 16 | Que faire quand un compte mail est en erreur | `CRM-059` | **Livré avec son écran, vérifié visuellement** — voir le chapitre 6. « Réglages ▸ État de la messagerie » montre la dernière relève réussie et le dernier incident de chaque boîte visible, ainsi que la file sortante en attente et en échec définitif. Ce qui manque : aucune alerte n'est envoyée, l'écran reste le seul endroit où le constater |
 
 ### Administration
@@ -2975,6 +2975,121 @@ sa **présence** qui vous intéresse d'un coup d'œil.
   l'envoi : une signature seule n'est pas un message.
 - **Aucune signature commune à tout l'espace de travail.** Chaque identité porte la sienne, ou n'en
   porte pas.
+
+## 7 ter. Enchaîner des relances : les séquences
+
+*Livré par `CRM-063`, tranche 4. L'écran n'invente aucune règle d'accès : ce sont celles des
+sous-tranches 4a et 4b.*
+
+**Où.** Deux endroits, et le partage est délibéré : la **cadence** s'écrit dans Barre latérale ▸
+**Réglages** ▸ « Séquences de relance » ; elle **s'arme** depuis la fiche de l'affaire qu'elle doit
+relancer, dans le bloc « Relance automatique », sous les coûts.
+
+**À quoi cela sert.** Une séquence enchaîne plusieurs **modèles d'emails** (chapitre 7) à des délais
+choisis. Armée sur une affaire qui n'avance plus, elle expédie le premier modèle après son délai, le
+deuxième après le sien, et ainsi de suite — **et elle s'arrête dès qu'une réponse arrive**.
+
+**Qui.** Tout membre de l'espace de travail **lit** les séquences. Les **écrire** — créer, modifier,
+réordonner, supprimer — est réservé aux rôles *administrateur* et *développement commercial*.
+**Armer** une relance sur une affaire suppose le droit d'y **écrire**. Aucun bouton n'est masqué
+selon votre rôle : le produit vous dit en toutes lettres qu'il refuse, au moment où vous agissez.
+
+### 7 ter.1 Écrire une cadence
+
+« Nouvelle séquence » ouvre la fiche, sous la liste. Un seul champ pour commencer : le **nom**,
+unique dans l'espace de travail.
+
+**Les paliers n'apparaissent qu'une fois la séquence enregistrée**, et ce n'est pas une contrainte
+d'écran : un palier appartient à une séquence, et il ne peut pas être posé avant qu'elle existe. La
+fiche vous le dit — « Enregistrez la séquence pour lui ajouter des paliers ».
+
+**Un palier, c'est un modèle et un délai.** Choisissez le modèle dans la liste, tapez le délai en
+jours, « Ajouter le palier ». Le palier prend le **rang suivant** : vous n'avez jamais à saisir une
+position.
+
+**LE DÉLAI SE COMPTE DEPUIS LE PALIER PRÉCÉDENT**, et le tout premier depuis l'armement. C'est ce
+que « J+3 », « J+7 », « J+14 » veulent dire dans la liste : trois jours après l'armement, puis sept
+jours après le premier envoi, puis quatorze après le deuxième. Un palier glissé au milieu d'une
+cadence ne vous oblige donc à rien renuméroter.
+
+**Le délai va de 1 à 365 jours.** Zéro est refusé : un palier de délai nul partirait en même temps
+que celui qui le précède, ce qui n'est pas une cadence mais un doublon.
+
+**Un même modèle peut servir plusieurs paliers.** La séquence de démonstration le fait : ses paliers
+1 et 3 emploient tous deux « Relance sans réponse ».
+
+### 7 ter.2 Changer l'ordre des paliers
+
+Deux flèches par ligne, **Monter** et **Descendre**. La flèche qui n'a pas de sens — monter le
+premier, descendre le dernier — reste **visible mais inactive** : elle ne disparaît pas, sans quoi
+les boutons sauteraient d'une ligne à l'autre sous votre curseur.
+
+**L'ordre est enregistré immédiatement**, et la liste est **relue** : ce que vous voyez après un
+déplacement est ce que le produit a réellement retenu, jamais un affichage optimiste. Si vos droits
+ne permettent pas l'écriture, le produit écrit « Aucun palier n'a été réordonné » — jamais un succès
+qui n'a pas eu lieu.
+
+**« Retirer » ne demande aucune confirmation**, et c'est voulu : retirer un palier ne détruit aucun
+texte. Le modèle reste, la séquence reste, et reposer le palier est un formulaire de deux champs.
+
+### 7 ter.3 Supprimer une séquence
+
+Le bouton vit **dans la fiche**, jamais sur la ligne de la liste : un geste destructeur ne se
+déclenche pas depuis une liste qu'on parcourt. La confirmation **nomme la séquence** et dit combien
+de paliers partiront avec elle.
+
+**Une séquence qui relance actuellement une affaire ne peut pas être supprimée**, et la confirmation
+vous en avertit avant que vous ne cliquiez. Interrompez la relance depuis l'affaire concernée, puis
+réessayez.
+
+**Un modèle employé par une séquence ne peut pas être supprimé non plus** (chapitre 7) : retirez-le
+d'abord des paliers qui l'emploient.
+
+### 7 ter.4 Armer une relance sur une affaire
+
+Ouvrez la fiche de l'affaire, descendez jusqu'au bloc **« Relance automatique »**. Deux choix : la
+**séquence**, et l'**adresse d'expédition** depuis laquelle les messages partiront. Aucun des deux
+n'est présélectionné — le produit ne choisit pas à votre place l'adresse qui signera vos relances.
+
+**L'affaire doit être « figée »**, c'est-à-dire immobile dans son étape depuis plus longtemps que le
+seuil de relance de cette étape (chapitre 3 *quinquies*). Si elle ne l'est pas, le produit vous le
+dit : « Cette affaire n'a pas dépassé le seuil d'inactivité de son étape ». Faites avancer l'affaire,
+ou attendez — une relance automatique n'a de sens que sur une conversation qui s'est arrêtée.
+
+**Une seule relance à la fois par affaire.** Si une autre personne en a armé une entre-temps, le
+produit refuse la seconde plutôt que d'envoyer deux fois.
+
+**Ce que le bloc montre ensuite** : le nom de la séquence, l'adresse qui expédie, et où en est la
+cadence — « Aucun palier envoyé pour l'instant », puis « Palier 2 envoyé le 12/09/2026 ».
+
+**« Interrompre la relance »** ferme la cadence. Le bloc revient alors à son geste, et il ne
+l'annonce qu'après avoir **vérifié** que la relance est bien close.
+
+### 7 ter.5 Ce qui arrête une relance, sans que vous ayez rien à faire
+
+Quatre choses la terminent, et trois d'entre elles ne vous demandent aucun geste :
+
+1. **une réponse du destinataire arrive sur l'affaire** — c'est la raison d'être de la cadence, et
+   relancer quelqu'un qui vient de répondre est le seul défaut qu'un système de relance ne doit
+   jamais avoir ;
+2. **l'affaire cesse d'être figée** : vous la faites avancer d'une étape, vous la mettez en sommeil,
+   vous l'archivez ou vous la mettez à la corbeille ;
+3. **le dernier palier est parti** : la cadence est épuisée ;
+4. **vous l'interrompez** depuis le bloc.
+
+### 7 ter.6 Ce qui n'est pas offert
+
+- **Aucune date de prochain envoi n'est affichée.** La cadence **glisse** sur les envois réels : un
+  palier parti avec un jour de retard décale tous les suivants d'autant. Une date annoncée serait
+  fausse au premier décalage, et le produit préfère ne rien dire plutôt que dire faux.
+- **Aucune prévisualisation d'une séquence entière.** Prévisualisez ses modèles un par un depuis
+  l'écran des modèles (chapitre 7.2).
+- **Aucune trace dans l'historique de l'affaire.** L'armement et l'interruption n'y écrivent rien.
+- **Les relances passées ne sont pas listées.** Le bloc porte un geste, pas une histoire.
+- **Aucun réordonnancement à la souris par glisser-déposer.** Les deux flèches font le même travail,
+  et elles restent utilisables au clavier.
+- **Aucune duplication de séquence**, aucun archivage, aucune corbeille : une séquence se supprime
+  ou se garde.
 
 ## Annexe A — Ce que contient l'espace de démonstration
 
