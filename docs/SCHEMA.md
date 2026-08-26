@@ -981,10 +981,23 @@ vérifiant l'index ligne à ligne. Différée à la fin de l'**instruction**, la
 passer. Elle reste `initially immediate` : hors réordonnancement, un doublon est refusé par
 l'instruction qui le crée.
 
-**Ce que la route ne sait pas faire, et 4c en hérite** (§11.6 bis) : PostgREST ne pose que des
-valeurs **littérales**, si bien qu'aucun `PATCH` n'exprime cet échange. Réordonner depuis un écran
-exigera une **RPC** ouvrant une transaction et différant la contrainte. Les deux détours qu'un
-client tenterait sont fermés — position tampon hors bornes `23514`, doublon direct `23505`.
+**Ce que la route ne sait pas faire** (§11.6 bis) : PostgREST ne pose que des valeurs
+**littérales**, si bien qu'aucun `PATCH` n'exprime cet échange. Les deux détours qu'un client
+tenterait sont fermés — position tampon hors bornes `23514`, doublon direct `23505`.
+
+**`public.reordonner_paliers_sequence(uuid, uuid[])` — la RPC de 4c, migration 62.** Elle prend un
+**ordre** — le tableau des identifiants de paliers — et repose les positions `1..n` **en une seule
+instruction**. Elle est `security invoker` : la RLS de la migration 59 fait tout le tri, et un
+appelant que la politique d'écriture ne consent pas obtient **`0`**, jamais une erreur (§7 de
+`docs/SPEC-permissions-rls.md`). Trois refus, tous en `23514` : `paliers_requis` (tableau vide),
+`paliers_dupliques`, `paliers_incomplets` — ce dernier couvrant aussi bien un ordre partiel qu'une
+séquence que l'appelant ne lit pas, **délibérément**, pour ne pas révéler qu'une séquence existe.
+
+**ELLE N'ÉMET AUCUN `set constraints`, et le §11.6 bis annonçait le contraire.** MESURÉ le
+2026-08-26 : la contrainte étant `deferrable initially immediate`, une permutation **complète**
+écrite en une instruction n'a jamais deux lignes en collision en fin d'instruction. Le §11.6 bis
+raisonnait sur le cas d'un réordonnancement **partiel** et généralisait à tort ; le §13.2 dit ce que
+la mesure a trouvé.
 
 **RLS et privilèges** : le patron de `mail_templates` (§2.6), quatre politiques par table. Lecture
 par tout membre du workspace ; insertion, modification et suppression par `admin` et

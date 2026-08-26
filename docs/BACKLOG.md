@@ -8730,7 +8730,7 @@ avant la suivante :
       positions est **une seule instruction**, et la contrainte `deferrable initially immediate` est
       vérifiée en fin d'instruction — `set constraints` est **inutile**. Le §13.2 dit ce que la
       mesure a trouvé, et pourquoi émettre la commande quand même serait **pire** qu'inutile.
-- [ ] `supabase/migrations/0061_reordonnancement_paliers.sql` — `public.reordonner_paliers_sequence`,
+- [ ] `supabase/migrations/0062_reordonnancement_paliers.sql` — `public.reordonner_paliers_sequence`,
       `security invoker`, ses trois refus, ses privilèges.
 - [ ] Suite pgTAP dédiée, contrat d'API du §13.10, tests unitaires, parcours E2E, harnais dédié.
 - [ ] Écran `/reglages/sequences-relance`, bloc d'armement de la fiche d'affaire, révision de la

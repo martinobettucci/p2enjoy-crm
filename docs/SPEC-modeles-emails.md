@@ -2285,7 +2285,7 @@ mesurant, et en refermant dans un `finally`, patron d'`e2e/api/envoi.spec.ts` et
 
 ### 13.13 Definition of Done — sous-tranche 4c
 
-- migration `0061_reordonnancement_paliers.sql` appliquée et **rejouable** ;
+- migration `0062_reordonnancement_paliers.sql` appliquée et **rejouable** ;
 - suite pgTAP dédiée verte ;
 - contrat d'API du §13.10 vert avec les jetons réels des trois profils ;
 - écran d'administration des séquences livré, routé, et **vérifié visuellement** ;
