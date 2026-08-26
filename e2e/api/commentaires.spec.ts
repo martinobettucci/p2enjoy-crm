@@ -194,7 +194,6 @@ test.describe('Écriture — §13.6, INC-071', () => {
 				workspace_id: string
 				edited_at: string | null
 				deleted_at: string | null
-				mentions: string[]
 			}[],
 			'création du premier commentaire',
 		)
@@ -202,7 +201,18 @@ test.describe('Écriture — §13.6, INC-071', () => {
 		expect(ligne.workspace_id).toBe(WORKSPACE)
 		expect(ligne.edited_at).toBeNull()
 		expect(ligne.deleted_at).toBeNull()
-		expect(ligne.mentions).toEqual([])
+		// ASSERTION RETIRÉE AVEC SA COLONNE PAR `CRM-064`, ET SON FAIT EST REPORTÉ, NON PERDU.
+		// Elle lisait `ligne.mentions` et exigeait `[]` — « un commentaire neuf ne mentionne
+		// personne ». La colonne `mentions` a été retirée par la migration 63
+		// (`docs/SPEC-notifications.md` §7.4), la mesure M8 ayant établi qu'elle était OUVERTE à
+		// l'insertion, sans intégrité ni règle d'éligibilité. Le même fait est désormais éprouvé
+		// sur ce qui le porte : `supabase/tests/0017_commentaires.test.sql` — « un commentaire neuf
+		// ne mentionne PERSONNE » — et `e2e/api/mentions.spec.ts`, qui mesure les quinze lignes du
+		// contrat de la relation. Le retrait de la colonne a sa propre contre-épreuve, ligne o.
+		expect(
+			(ligne as Record<string, unknown>).mentions,
+			'`card_comments.mentions` n’existe plus — CRM-064, migration 63',
+		).toBeUndefined()
 	})
 
 	test('b. …et ne peut pas signer du nom d’un autre', async ({ request }) => {
