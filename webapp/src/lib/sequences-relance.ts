@@ -397,10 +397,21 @@ export function rangSuivant(paliers: readonly { readonly position: number }[]): 
 /**
  * Le corps d'un palier ajouté.
  *
- * `delai_jours` EST CONVERTI ICI, ET UNE VALEUR NON NUMÉRIQUE PART EN `NaN` PLUTÔT QUE D'ÊTRE
- * CORRIGÉE : le champ est un `input[type=number]`, dont la valeur vide rend la chaîne vide. La
- * garde vit dans la base — `mail_sequence_steps_delai_borne` —, et poser ici un repli à `1` ferait
- * enregistrer un délai que personne n'a saisi (§5.3 ter, `CLAUDE.md` §18).
+ * `delai_jours` EST CONVERTI ICI, ET UN CHAMP VIDE PART EN `0` PLUTÔT QUE D'ÊTRE CORRIGÉ. Poser ici
+ * un repli à `1` ferait enregistrer un délai que personne n'a saisi (§5.3 ter, `CLAUDE.md` §18) ;
+ * la garde vit dans la base, et `mail_sequence_steps_delai_borne` refuse `0` — MESURÉ, `400` /
+ * `23514`, refus classé `delai-borne` et traduit en toutes lettres.
+ *
+ * QUE `Number('')` RENDE `0` ET NON `NaN` EST UNE MESURE, ET SON PREMIER COMMENTAIRE DISAIT LE
+ * CONTRAIRE : un test unitaire l'a dénoncé. Le résultat est le bon, et il est même MEILLEUR que
+ * celui que l'écriture d'origine annonçait — `0` heurte la borne, dont le refus porte un nom, là où
+ * `NaN` serait sérialisé en `null` par `JSON.stringify` et heurterait le `not null`, dont le `23502`
+ * retomberait dans le repli `inconnu`.
+ *
+ * LA LIMITE EST NOMMÉE PLUTÔT QUE GARDÉE : une saisie non numérique produirait bien `NaN`, donc
+ * `inconnu`. Un `input[type=number]` ne peut pas la produire — il rend la chaîne vide sur une
+ * saisie invalide —, et poser ici la garde qui la couvrirait serait exactement la garde de saisie
+ * que le §5.3 ter interdit.
  */
 export function corpsEcriturePalier(
 	saisie: SaisiePalier,
