@@ -710,7 +710,12 @@ ASSERTIONS_ATTENDUES=2850
 # que la tranche précédente de cette unité aurait dû déplacer. Les deux scénarios d'API et le
 # scénario d'interface restants viennent, eux, d'unités tierces, et leur origine exacte n'a pas été
 # recherchée : le compteur est COMPTÉ, jamais déduit (INC-101).
-SCENARIOS_API=933
+#
+# **`CRM-063` SOUS-TRANCHE 4c, le 2026-08-26** : `e2e/api/reordonnancement-paliers.spec.ts` ajoute
+# **10 scénarios** — les dix lignes du §13.10, dont la contre-épreuve du §11.6 bis rejouée juste
+# avant la RPC qui la lève. 933 + 10 = **943**, valeur COMPTÉE par `playwright test --list`, qui
+# rend « 943 tests in 57 files ».
+SCENARIOS_API=943
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
