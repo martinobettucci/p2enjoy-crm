@@ -1369,6 +1369,37 @@ hérite d'`app.can_read_card` ; le refus est **zéro ligne**, jamais une erreur.
 `alter default privileges … on functions to anon`, si bien qu'une fonction neuve de `public` naît
 avec `anon=X` et qu'un `revoke … from public` seul ne lui retire rien.
 
+### 9 bis.9 bis `public.mentionnables(card_id)` — qui un commentaire peut mentionner, migration 66
+
+Ajoutée le 2026-08-26 par `CRM-064` sous-tranche 3b (`docs/SPEC-notifications.md` §34).
+
+| | |
+|---|---|
+| Signature | `public.mentionnables(card_id uuid) returns table (profile_id, full_name, avatar_url)` |
+| Volatilité | `stable`, `set search_path to ''`, **`security invoker`** — jamais `definer` |
+| Privilèges | `execute` à `authenticated` et `service_role` ; **`anon` révoqué nommément** |
+| Ordre | `full_name collate "fr-FR-x-icu"` |
+
+Elle rend les membres du workspace de l'affaire pour lesquels `app.can_read_card_pour(card, profil)`
+est vrai — c'est-à-dire la règle d'éligibilité du §5.1 de `docs/SPEC-notifications.md` —, **l'appelant
+excepté**.
+
+**Elle ne duplique aucune règle** : elle appelle la chaîne qu'a généralisée la migration `0063`, et
+c'est sa raison d'être. Le sélecteur du composeur avait besoin de la liste des personnes éligibles ;
+la calculer dans l'écran aurait été une **seconde écriture de la règle d'accès**, en TypeScript cette
+fois (`docs/SPEC-notifications.md` §34.1).
+
+**`security invoker` est obligatoire** : en `definer`, elle rendrait les membres d'un workspace que
+l'appelant n'atteint pas, sur une affaire qui ne lui est pas ouverte. La lecture de `public.cards`
+applique la RLS de l'appelant, si bien qu'une affaire fermée — ou inexistante — rend **zéro ligne**,
+jamais une erreur.
+
+**L'appelant est retiré de sa propre liste** parce qu'une auto-mention est acceptée par le trigger de
+la migration `0063` mais **ne produit aucune notification** (§14.3) : l'offrir serait offrir un geste
+sans effet. **Sous la clé de service, `auth.uid()` est nul et personne n'est retiré** — limite nommée
+plutôt que masquée, et rendue explicite par le `coalesce` sur l'UUID nul, sans lequel la comparaison
+vaudrait `NULL` et la fonction rendrait zéro ligne au service.
+
 ### 9 bis.10 `app.relancer_cards_figees()` et le job quotidien — migration 54
 
 Ajoutée le 2026-08-24 par `CRM-062` tranche 2 (`docs/SPEC-relances.md` §9). **Aucune table, aucune
