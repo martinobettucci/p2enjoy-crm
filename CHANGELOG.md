@@ -13,6 +13,41 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-064` sous-tranche 3a — la surface de réception
+
+- **Une cloche apparaît dans l'en-tête, sur tous les écrans**, entre le nom de l'espace de travail
+  et votre identité. Elle porte le nombre de vos notifications **non lues** — jamais le total —, et
+  ce chiffre est absent tant qu'il n'est pas connu comme il l'est à zéro : un « 0 » affiché pendant
+  la lecture affirmerait que tout est lu alors que rien n'a été lu.
+- **Un panneau s'ouvre sous elle, sans quitter l'écran où vous êtes.** Ni modale, ni route : on
+  jette un œil à sa boîte, on suit un lien, et l'on retourne à ce qu'on faisait. `Échap`, un clic à
+  l'extérieur ou la commande de fermeture le referment, et le focus revient à la cloche.
+- **Chaque ligne nomme qui vous a mentionné, montre ce qui a été écrit, et mène à l'affaire.** Le
+  contenu est **relu** à travers les règles d'accès au moment où il s'affiche, jamais recopié : une
+  notification ne devient donc jamais une copie divergente du produit, et un propos retiré ne reste
+  pas lisible dans la notification de celui qui y était nommé.
+- **Une ligne dont le propos n'est plus lisible garde sa place**, avec son affaire, sa date et son
+  lien, mais sans auteur ni extrait — et le produit ne dit **ni** que le message a été supprimé
+  **ni** que vous n'y avez plus accès : les deux causes sont indistinguables, et les nommer
+  divulguerait la seconde.
+- **Marquer lu, et marquer non lu.** Les deux sens, parce qu'on ouvre une notification par mégarde.
+  **Suivre le lien d'une affaire ne marque rien** : ce sont deux gestes. Si vos droits ont changé
+  depuis l'ouverture du panneau, l'écran écrit « Aucune notification n'a été modifiée » plutôt que
+  d'annoncer une modification qui n'a pas eu lieu.
+- **La cloche et le panneau se mettent à jour sans rechargement** (migration `0065`) : la table est
+  publiée au temps réel, dans le même changement que l'écran qui l'écoute. Le flux est une
+  **surface d'autorisation** — un membre qui n'est pas le destinataire ne reçoit rien, et un
+  anonyme non plus.
+- **Le panneau montre les vingt plus récentes et le dit en toutes lettres** ; le compteur, lui, les
+  compte toutes. Ce n'est pas une pagination : aucune notification ne s'efface ni n'expire, et
+  décider d'une rétention appartient au responsable.
+- **Aucun email, aucun son, aucun titre d'onglet modifié, aucune préférence, aucun regroupement, et
+  aucun « tout marquer comme lu »** — chacune de ces absences est motivée dans la spécification.
+- **Poser une mention depuis l'interface reste à livrer** (sous-tranche 3b) : cette sous-tranche
+  livre la réception, pas l'émission.
+- **`docs/manual.md` gagne son chapitre 8**, le premier de `CRM-064` : les deux tranches
+  précédentes ne livraient aucune surface.
+
 ### `CRM-064` tranche 2 — la notification
 
 - **`public.notifications` est livrée** (migration `0064`). Mentionner quelqu'un dans un

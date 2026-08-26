@@ -3091,6 +3091,87 @@ Quatre choses la terminent, et trois d'entre elles ne vous demandent aucun geste
 - **Aucune duplication de séquence**, aucun archivage, aucune corbeille : une séquence se supprime
   ou se garde.
 
+## 8. Vos notifications : savoir qu'on vous a nommé
+
+*Livré par `CRM-064`, sous-tranche 3a. Les règles d'accès sont celles des tranches 1 et 2 : cet
+écran n'en invente aucune. Captures : `docs/captures/CRM-064/`.*
+
+**Où.** En haut à droite de chaque écran, la **cloche**, entre le nom de votre espace de travail et
+votre identité. Elle est visible partout, parce qu'une notification n'est pas une destination : on
+y jette un œil et l'on retourne à ce qu'on faisait.
+
+**Qui.** Chacun voit **ses** notifications, et elles seules. Personne d'autre — ni un collègue, ni
+un administrateur de l'espace de travail. La boîte de quelqu'un n'est pas une donnée
+d'exploitation. Sans session ouverte, aucune cloche n'est affichée.
+
+### 8.1 Ce que la cloche annonce
+
+Le chiffre posé sur la cloche compte vos notifications **non lues**, jamais le total : une cloche
+qui afficherait « 12 » sur douze messages tous lus ne dirait rien d'utile.
+
+- **Aucun chiffre** signifie l'une de deux choses, et jamais « zéro par défaut » : soit vous n'avez
+  rien de non lu, soit le compte n'a pas encore été mesuré. Dans le second cas, la cloche
+  s'annonce simplement « Notifications », sans prétendre que tout est lu.
+- **Au-delà de quatre-vingt-dix-neuf**, la cloche écrit « 99+ » — un badge à quatre chiffres la
+  déformerait. Le compte **exact** reste annoncé aux lecteurs d'écran.
+
+### 8.2 Ce que le panneau montre
+
+Un clic — ou `Entrée` au clavier — ouvre le panneau **sous la cloche**, sans quitter l'écran où
+vous êtes. `Échap`, un clic à l'extérieur, ou « Fermer les notifications » le referment ; le focus
+revient alors à la cloche.
+
+Chaque ligne porte :
+
+- **qui vous a nommé**, avec son avatar — « Camille Aubert vous a mentionné » ;
+- **ce qui a été écrit**, en extrait ;
+- **l'affaire concernée**, dont le titre est un lien vers sa fiche ;
+- **le dossier**, en pastille « Track › Channel », qui mène au channel ;
+- **la date et l'heure**, absolues.
+
+Une **ligne non lue** porte un liseré bleu à gauche et son libellé en gras. L'ordre est celui de
+l'arrivée : **le plus récent en haut**. C'est l'inverse du fil de discussion d'une affaire, où la
+conversation se lit dans le sens où elle s'est tenue ; une boîte de réception, elle, se lit en
+commençant par ce qui vient d'arriver. **Les non-lues ne remontent pas en tête** : une ligne qui
+sauterait au moment où vous la marquez vous la ferait perdre de vue.
+
+**Une ligne dont le propos n'est plus lisible garde sa place**, avec son affaire, sa date et son
+lien, mais sans auteur ni extrait. Le produit ne dit alors ni que le message a été supprimé, ni que
+vous n'y avez plus accès : les deux causes sont indistinguables, et les nommer divulguerait la
+seconde.
+
+### 8.3 Marquer lu, et marquer non lu
+
+Le bouton en bout de ligne bascule l'état, **dans les deux sens** : on ouvre une notification par
+mégarde, et une boîte dont on ne peut pas remettre un message de côté n'est pas une boîte.
+
+**Suivre le lien d'une affaire ne marque rien.** Ce sont deux gestes distincts : fondre les deux
+ferait disparaître du compteur une notification que vous avez seulement effleurée en visant autre
+chose.
+
+La ligne ne change qu'**après** la réponse du serveur. Si vos droits ont changé depuis l'ouverture
+du panneau, le produit écrit « Aucune notification n'a été modifiée » et invite à recharger la
+page — il n'annonce jamais une modification qui n'a pas eu lieu.
+
+### 8.4 La mise à jour est immédiate
+
+Le panneau et le compteur s'actualisent **sans rechargement** dès qu'une notification vous est
+adressée : ils écoutent la base en temps réel. Le produit ne vous envoie **aucun email**, ne fait
+sonner **aucun son** et ne modifie **pas** le titre de l'onglet.
+
+### 8.5 Ce qui n'est pas encore là
+
+- **Poser une mention depuis l'interface n'est pas encore possible.** Le panneau montre les
+  notifications produites ; le sélecteur qui permet de nommer quelqu'un dans un commentaire arrive
+  avec la sous-tranche suivante.
+- **Aucune préférence** : vous ne pouvez pas encore choisir ce que vous recevez, ni par quel canal.
+- **Aucune suppression, et aucune expiration.** Une notification ne s'efface pas. Le panneau montre
+  les **vingt plus récentes**, et le dit en toutes lettres quand il en manque ; le compteur, lui,
+  les compte toutes.
+- **Aucun regroupement** : dix mentions sur la même affaire font dix lignes.
+- **Aucun « tout marquer comme lu »** : un geste de masse ne saurait pas dire *lesquelles* n'ont pas
+  bougé si vos droits ont changé, et le produit ne montre jamais une issue qu'il n'a pas mesurée.
+
 ## Annexe A — Ce que contient l'espace de démonstration
 
 *Livrée par `CRM-047` ; le jeu lui-même est livré par `CRM-046` (`docs/SPEC-seed.md` §9).*

@@ -559,7 +559,8 @@ sorte que la règle n'a toujours **qu'une seule écriture** (`docs/SPEC-notifica
 **Trois politiques et trois seulement** : lecture pour qui lit l'affaire, insertion et suppression
 pour l'**auteur** du commentaire tant qu'il conserve le droit d'écriture. **Aucune politique
 `UPDATE` et aucun privilège `UPDATE`** — une mention se retire, elle ne se modifie pas. **La table
-n'est pas publiée au temps réel** : rien ne s'y abonne avant la tranche 3.
+n'est pas publiée au temps réel** : rien ne s'y abonne — c'est `notifications` que la sous-tranche
+3a a publiée, jamais la mention, dont l'écran ne lit que la conséquence.
 
 **Commenter exige le droit d'ÉCRITURE sur le channel de la card, non le droit de lecture.** Cette
 ligne corrige une phrase de ce chapitre — « tout membre pouvant lire la card peut commenter » — que
@@ -1110,8 +1111,13 @@ message déjà délivré (§14.4). La règle d'accès le rattrape autrement — 
 notification sans détruire aucune ligne, et que la règle d'accès n'a **toujours qu'une seule
 écriture**.
 
-**Pas publiée au temps réel** : la tranche 3 la publiera dans le même changement que l'écran qui
-l'écoute.
+**PUBLIÉE AU TEMPS RÉEL depuis la migration `0065`** (`CRM-064` sous-tranche 3a,
+`docs/SPEC-notifications.md` §25.1). Cette ligne écrivait « pas publiée : la tranche 3 la publiera
+dans le même changement que l'écran qui l'écoute » ; la condition est remplie, et elle est
+**révisée par livraison**. `realtime.apply_rls` évalue `notifications_lecture` pour chaque abonné :
+un membre qui n'est pas le destinataire ne reçoit **rien**, et un destinataire dont le droit sur
+l'affaire retombe cesse de recevoir. La table est donc, au flux comme à la lecture, une **surface
+d'autorisation** — deuxième du produit après `card_comments`.
 
 
 ### Objets privés d'ordonnancement

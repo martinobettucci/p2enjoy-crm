@@ -3,7 +3,9 @@
 # @verifies docs/SPEC-notifications.md §13 (modèle, `check` de `type`, clés étrangères, index),
 #           §14 (la production, l'auto-mention écartée, l'absence de clé vers la mention),
 #           §15 (le seul geste ouvert, les deux refus doubles, la date imposée par la base),
-#           §16 (les deux politiques, l'absence des deux autres, aucune publication), §19 (le seed)
+#           §16 (les deux politiques, l'absence des deux autres), §19 (le seed),
+#           §25.1 (la table EST publiée au temps réel depuis la sous-tranche 3a — trois contrôles
+#           de ce harnais sont RÉVISÉS pour cela, jamais retirés, et le §5 ci-dessous dit pourquoi)
 # @verifies docs/SCHEMA.md §8 ; docs/PROD_MIGRATIONS.md §3 (migration 64)
 # @verifies docs/SPEC-test-harness.md §7.2 (un harnais dégrade réellement et constate la restauration)
 # @verifies CLAUDE.md §10 (une règle d'accès se prouve hors interface)
@@ -34,6 +36,10 @@ cd "$(dirname "$0")/.."
 
 DB_CONTAINER=p2enjoy-db
 MIGRATION=supabase/migrations/0064_notifications.sql
+# LA PUBLICATION VIT DANS SA PROPRE MIGRATION depuis la sous-tranche 3a : `0064` crée la table,
+# `0065` la publie. Restaurer exige donc de rejouer LES DEUX — rejouer `0064` seule laisserait la
+# table dépubliée, c'est-à-dire le produit CASSÉ, la cloche cessant de se mettre à jour.
+MIGRATION_TEMPS_REEL=supabase/migrations/0065_notifications_temps_reel.sql
 SUITE_SQL=supabase/tests/0062_notifications.test.sql
 SUITE_API=e2e/api/notifications.spec.ts
 SPEC=docs/SPEC-notifications.md
@@ -61,9 +67,13 @@ nettoyer() {
 			printf 'ERREUR : la restauration de secours de %s a échoué.\n' "$MIGRATION" >&2
 			statut=1
 		fi
-		# Même motif que dans `restaurer` : la migration ne retire pas la table de la publication.
-		psql_db -c "alter publication supabase_realtime drop table public.notifications;" \
-			>/dev/null 2>&1
+		# RÉVISÉ PAR LA SOUS-TRANCHE 3a, ET C'ÉTAIT UN NETTOYAGE DEVENU DESTRUCTEUR. Cette ligne
+		# RETIRAIT la table de la publication, parce que la dégradation d'alors consistait à l'y
+		# ajouter. Depuis la migration `0065`, la table EST publiée : la retirer laisserait le
+		# produit cassé — la cloche cesserait de se mettre à jour sans qu'aucun écran ne le dise.
+		# Le nettoyage rejoue donc la migration de publication, comme il rejoue déjà celle de la
+		# table.
+		psql_db -f - < "$MIGRATION_TEMPS_REEL" >/dev/null 2>&1
 		psql_db -c "delete from public.notifications
 		             where payload->>'comment_id' is null
 		                or payload->>'comment_id' not in ('$COMMENTAIRE_D1', '$COMMENTAIRE_D2');" \
@@ -128,12 +138,12 @@ degrader() {
 
 restaurer() {
 	psql_db -f - < "$MIGRATION" >/dev/null 2>&1
-	# LA MIGRATION PROPRE NE SAIT PAS EXPRIMER UNE ABSENCE : elle n'ajoute pas la table à la
-	# publication, mais elle ne l'en retire pas non plus. Rejouer la migration ne défait donc PAS
-	# la dégradation D-F, et le harnais sortirait en laissant le produit publié — exactement le
-	# défaut de la décision 108.
-	psql_db -c "alter publication supabase_realtime drop table public.notifications;" \
-		>/dev/null 2>&1 || true
+	# LA PUBLICATION VIT DANS SA PROPRE MIGRATION, ET IL FAUT LA REJOUER AUSSI (sous-tranche 3a).
+	# Ce bloc RETIRAIT la table de la publication jusqu'au 2026-08-26, la dégradation d'alors
+	# consistant à l'y ajouter ; le sens s'est inversé avec la règle. Rejouer `0064` seule
+	# laisserait la table dépubliée après la dégradation D-G — le harnais sortirait en laissant le
+	# produit cassé, ce qui est exactement le défaut de la décision 108, dans l'autre sens.
+	psql_db -f - < "$MIGRATION_TEMPS_REEL" >/dev/null 2>&1 || true
 	# ELLE NE SAIT PAS DÉFAIRE UNE PRODUCTION NON PLUS, et c'est propre à CETTE tranche : les
 	# dégradations D-A et D-B font NAÎTRE des notifications que la suite pgTAP compte ensuite. Une
 	# ligne surnuméraire laissée ici ferait rougir l'assertion 41 sur un état que plus rien ne
@@ -318,9 +328,16 @@ mesurer "la lecture DÉLÈGUE à \`app.can_read_card\` — une seule écriture d
 	  and tablename = 'notifications' and policyname = 'notifications_lecture'
 	  and qual like '%can_read_card%';" 1
 
-mesurer "la table n'est PAS publiée au temps réel (§16.3)" \
+# CONTRÔLE RÉVISÉ, JAMAIS RETIRÉ, le 2026-08-26 par la sous-tranche 3a (mécanisme de la décision
+# 51). Il exigeait `0`, et il avait raison de le faire : rien ne s'y abonnait, et publier une table
+# que personne n'écoute revient à poser une surface d'autorisation sans preuve. Le §16.3 écrivait
+# lui-même la condition de sa levée — « la tranche 3 la publiera dans le même changement que
+# l'écran qui l'écoute » — et cette condition est remplie. Le contrôle suit le fait vers ce qui le
+# porte, et il garde tout son office : une publication RETIRÉE par mégarde ferait cesser toute
+# délivrance en temps réel sans qu'aucun écran ne le dise.
+mesurer "la table EST publiée au temps réel (§25.1)" \
 	"select count(*) from pg_publication_tables where pubname = 'supabase_realtime'
-	  and schemaname = 'public' and tablename = 'notifications';" 0
+	  and schemaname = 'public' and tablename = 'notifications';" 1
 
 # =================================================================================================
 echo "5. Ce que le seed livre, et ce qu'il ne livre pas"
@@ -419,16 +436,23 @@ eprouver_degradation "la mise à jour bornée à la seule colonne \`read_at\` (�
 	'grant update (read_at) on public.notifications to authenticated;' \
 	'grant update           on public.notifications to authenticated;'
 
-# D-G — la table est publiée au temps réel. Une surface d'autorisation sans preuve (§16.3).
+# D-G — la table CESSE d'être publiée au temps réel. La cloche de la sous-tranche 3a continue de
+# lire à l'ouverture, mais cesse de se mettre à jour toute seule, et RIEN à l'écran ne le dit
+# (§25.1).
+#
+# LA DÉGRADATION S'EST INVERSÉE AVEC LA RÈGLE, le 2026-08-26 : elle AJOUTAIT la table à la
+# publication tant que la tranche 2 exigeait son absence. Ce qu'elle éprouve n'a pas changé — que
+# la suite pgTAP sait dire si l'état de publication n'est pas celui que le produit exige —, seul
+# le sens de l'écart a changé, parce que la livraison a changé l'exigence.
 #
 # LA SUBSTITUTION EST UN `ALTER PUBLICATION` NU, SANS AUCUNE APOSTROPHE, ET C'EST DÉLIBÉRÉ : la
 # tranche 1 a mesuré qu'un SQL portant des apostrophes est doublé par son passage en argument
 # shell, si bien que `psql` refuse le fichier, que le produit reste intact et que le harnais
 # accuse à tort sa propre preuve d'être complaisante.
-eprouver_degradation "l'absence de publication au temps réel (§16.3)" \
+eprouver_degradation "la publication au temps réel (§25.1)" \
 	"alter table public.notifications enable row level security;" \
 	"alter table public.notifications enable row level security;
-alter publication supabase_realtime add table public.notifications;"
+alter publication supabase_realtime drop table public.notifications;"
 
 # D-H — la seconde condition de la politique de lecture disparaît. Le refus « ce n'est pas ta
 # boîte » tient encore ; ce qui tombe est le RATTRAPAGE du §14.4 — la seule raison pour laquelle
@@ -458,9 +482,9 @@ mesurer "après restauration : la mise à jour est de nouveau bornée à \`read_
 	  where table_schema = 'public' and table_name = 'notifications'
 	    and grantee = 'authenticated' and privilege_type = 'UPDATE';" 1
 
-mesurer "après restauration : la table n'est toujours pas publiée" \
+mesurer "après restauration : la table est de nouveau publiée" \
 	"select count(*) from pg_publication_tables where pubname = 'supabase_realtime'
-	  and schemaname = 'public' and tablename = 'notifications';" 0
+	  and schemaname = 'public' and tablename = 'notifications';" 1
 
 mesurer "après restauration : la lecture délègue de nouveau à \`app.can_read_card\`" \
 	"select count(*) from pg_policies where schemaname = 'public'

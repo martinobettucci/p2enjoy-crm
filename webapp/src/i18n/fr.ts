@@ -71,7 +71,10 @@ export const fr = {
 	'notifications.item.open': 'Ouvrir {affaire}',
 	'notifications.item.markRead': 'Marquer comme lue',
 	'notifications.item.markUnread': 'Marquer comme non lue',
-	'notifications.item.unread': 'Non lue',
+	// AUCUNE CLÉ « Non lue » : l'état de lecture est porté par le liseré du §5.43 ET par le nom
+	// accessible des deux commandes ci-dessus, qui disent lequel des deux gestes elles portent. Une
+	// troisième formulation du même fait divergerait au premier ajustement, et le contrôle de clés
+	// mortes de ce dictionnaire l'a d'ailleurs dénoncée avant qu'elle ne soit rendue.
 	// L'ISSUE « SANS EFFET » EST DITE, et elle n'affirme ni le refus ni la disparition — les deux
 	// sont indistinguables (§26.4, docs/DESIGN_SYSTEM.md §5.40).
 	'notifications.mark.noEffect':
