@@ -329,6 +329,37 @@ export const fr = {
 	'contact.detach.refus.network':
 		'Le détachement n’a pas pu être envoyé. Vérifiez votre connexion, puis réessayez.',
 	'contact.detach.refus.unknown': 'Le détachement a échoué. Réessayez dans un instant.',
+	// Tranche 6 — la SUPPRESSION d'un contact depuis sa fiche (docs/SPEC-contacts.md §20).
+	'contact.delete.action': 'Supprimer',
+	// LA CONFIRMATION NOMME LE CONTACT (docs/SPEC-contacts.md §20.6) : c'est le §18.6 retourné,
+	// puisque c'est le contact lui-même que l'on retire, et non son lien avec une affaire.
+	'contact.delete.confirm.title': 'Supprimer « {nom} » ?',
+	// CONSÉQUENCE 1 — CE QUE LE GESTE EMPORTE, mesuré le 2026-08-26 (§20.2, mesure 7) : la
+	// suppression cascade sur `card_contacts`, et le trigger de la migration 0061 écrit
+	// `contact_unlinked` dans le fil de chaque affaire encore vivante. C'est la seule conséquence
+	// que l'utilisateur ne peut PAS lire sur l'écran qu'il regarde. Deux clés et non une
+	// concaténation (`CLAUDE.md` §23) : le moteur de traduction n'a délibérément aucune règle de
+	// pluriel, et l'ordre des mots du français ne doit pas se figer dans du JSX.
+	'contact.delete.confirm.deals.one':
+		'Ce contact est rattaché à 1 affaire. Le rattachement sera retiré, et l’affaire gardera dans son historique la trace de ce détachement.',
+	'contact.delete.confirm.deals.many':
+		'Ce contact est rattaché à {compte} affaires. Les rattachements seront retirés, et chaque affaire gardera dans son historique la trace de ce détachement.',
+	// CONSÉQUENCE 2 — CE QUE LE GESTE NE DÉTRUIT PAS (décision 516, §20.2 mesure 9). Propriété
+	// rassurante et contre-intuitive : la taire laisserait croire à une purge.
+	'contact.delete.confirm.values':
+		'Les formulaires d’affaires qui désignent ce contact conservent leur valeur : ils afficheront une référence inconnue plutôt qu’un champ vidé.',
+	'contact.delete.confirm.action': 'Supprimer définitivement',
+	'contact.delete.cancel': 'Annuler',
+	'contact.delete.pending': 'Suppression…',
+	// LA TROISIÈME ISSUE, QUI N'EST NI UN SUCCÈS NI UNE ERREUR (§20.2, mesures 3 et 5) : la clause
+	// `USING` rend la ligne invisible à l'écriture, et le serveur rend `200` avec zéro ligne, SANS
+	// erreur. Le texte n'affirme ni le refus ni la disparition — les deux causes sont
+	// indistinguables par construction —, et il dit ce qui est vrai des deux.
+	'contact.delete.noeffect':
+		'Aucun contact n’a été supprimé. Vous n’avez peut-être pas le droit de supprimer ce contact, ou il avait déjà été supprimé. La fiche a été relue.',
+	'contact.delete.refus.forbidden':
+		'La suppression a été refusée. Rechargez la fiche pour voir son état réel.',
+	'contact.delete.refus.unavailable': 'La suppression a échoué. Réessayez dans un instant.',
 	// Sous-tranche 4j — la modification du rôle d'un rattachement (docs/SPEC-contacts.md §19).
 	'contact.role.action': 'Modifier le rôle',
 	// LE FORMULAIRE NOMME L'AFFAIRE (docs/SPEC-contacts.md §19.6) : sur cette page le contact est

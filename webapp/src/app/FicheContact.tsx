@@ -34,10 +34,21 @@
 //       §19.7 (contrat de comportement, cas a à p), §19.8 (limites nommées)
 // @spec docs/DESIGN_SYSTEM.md §5.28 (le geste de modification du rôle)
 //
-// L'ÉCRAN LIT, IL MODIFIE DEPUIS 4g, IL RATTACHE DEPUIS 4h, IL DÉTACHE DEPUIS 4i ET IL CORRIGE LE
-// RÔLE DEPUIS 4j. Un écart demeure, et il est NOMMÉ plutôt que compensé par une commande morte : la
-// SUPPRESSION d'un contact, dont le motif n'est pas le temps — elle dépend de l'arbitrage NON
-// TRANCHÉ du §6 point 4, les valeurs `jsonb` qui désignent un contact supprimé demeurant en base.
+// @spec docs/SPEC-contacts.md §20.4 (où le geste de SUPPRESSION s'ancre : la zone de commandes, à
+//       côté de « Modifier », et le retour au carnet sur le SEUL succès), §20.6 (les deux
+//       conséquences énoncées, et la relecture sur les deux autres issues),
+//       §20.7 (contrat de comportement, cas a à n), §20.8 (limites nommées)
+// @spec docs/DESIGN_SYSTEM.md §5.40 (le geste de suppression), §5.24 révisé par livraison (la
+//       fiche porte désormais DEUX commandes)
+//
+// L'ÉCRAN LIT, IL MODIFIE DEPUIS 4g, IL RATTACHE DEPUIS 4h, IL DÉTACHE DEPUIS 4i, IL CORRIGE LE
+// RÔLE DEPUIS 4j ET IL SUPPRIME DEPUIS LA TRANCHE 6. L'écart que ce fichier nommait — « la
+// SUPPRESSION d'un contact, dont le motif n'est pas le temps : elle dépend de l'arbitrage NON
+// TRANCHÉ du §6 point 4 » — N'EXISTE PLUS. L'arbitrage est rendu (décision 516) : les valeurs
+// `jsonb` qui désignent un contact supprimé sont CONSERVÉES, et le cas j du §13.5, livré par 4d,
+// les rend déjà en « référence inconnue » plutôt qu'en champ vidé. Rien n'a eu à être écrit pour la
+// lecture ; ce que la tranche 6 ajoute est le geste, et la PREUVE de cette chaîne sur une
+// suppression réelle.
 //
 // L'ASYMÉTRIE QUE LE §17.8 ASSUMAIT EST COMBLÉE : le détachement, qui n'existait que depuis la
 // fiche de l'affaire (§12.6), vit désormais aussi ici. Ce que 4h laissait ouvert — la place de la
@@ -58,7 +69,7 @@
 
 import { Archive } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useNavigate, useParams } from 'react-router'
 import { EtatErreur, EtatVide } from '../components/ui/States'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t, type CleTraduction } from '../i18n'
@@ -91,6 +102,10 @@ import {
 	CommandeRoleRattachement,
 	FormulaireRoleRattachement,
 } from './ModificationRoleRattachement'
+import {
+	CommandeSuppressionContact,
+	ConfirmationSuppressionContact,
+} from './SuppressionContact'
 
 /** Cellule ordinaire du tableau des affaires — mêmes règles qu'au carnet (§5.9). */
 const CLASSES_CELLULE = 'h-[var(--size-target)] px-3 truncate max-w-[32ch]'
@@ -258,6 +273,87 @@ export function ContenuFicheContact({
 		setOuvert(false)
 		setFocusARendre(true)
 	}, [])
+
+	// --- TRANCHE 6 : LE GESTE DE SUPPRESSION (§20.4) --------------------------------------------
+	// Il vit dans la zone de commandes, à côté de « Modifier » et APRÈS lui : l'ordre de lecture met
+	// le geste réparable avant l'irréversible (§5.40). Il n'est PAS posé au carnet — le motif du
+	// §16.2 vaut mot pour mot, et davantage : le carnet est la surface où l'on CHERCHE un contact,
+	// et poser un geste irréversible au bout de chaque ligne d'une liste que l'on parcourt est le
+	// patron qui produit les suppressions par mégarde.
+	const [suppressionOuverte, setSuppressionOuverte] = useState(false)
+	const [messageSuppression, setMessageSuppression] = useState<string | null>(null)
+	const commandeSuppression = useRef<HTMLButtonElement | null>(null)
+	const naviguer = useNavigate()
+
+	/**
+	 * LE FOCUS REVIENT À LA COMMANDE À LA FERMETURE, ET CE RETOUR EST DIFFÉRÉ (cas c du §20.7).
+	 *
+	 * **LE MOTIF EST CELUI DU §5.27, NON CELUI DE 4g**, et il est écrit pour qu'on ne recopie pas un
+	 * remède sans sa cause : la commande de modification est DÉMONTÉE pendant que son formulaire est
+	 * ouvert, sa référence vaut `null` ; celle-ci reste MONTÉE mais devient `disabled` tant que la
+	 * confirmation est là, et **un élément désactivé ne reçoit pas le focus**. Le drapeau est posé à
+	 * la fermeture, l'effet rend le focus au tour suivant, quand le bouton est de nouveau actif.
+	 * **Aucune temporisation** (`CLAUDE.md` §18) : c'est le cycle de rendu de React qui ordonne les
+	 * deux gestes.
+	 */
+	const [focusSuppressionARendre, setFocusSuppressionARendre] = useState(false)
+
+	useEffect(() => {
+		if (suppressionOuverte || !focusSuppressionARendre) return
+		commandeSuppression.current?.focus()
+		setFocusSuppressionARendre(false)
+	}, [suppressionOuverte, focusSuppressionARendre])
+
+	/**
+	 * UNE SEULE QUESTION OUVERTE À TOUT INSTANT SUR CETTE FICHE (cas l du §20.7, §5.40).
+	 *
+	 * Ouvrir la confirmation REFERME le formulaire de modification, et réciproquement. C'est la
+	 * règle du §19.4 — « un seul bloc ouvert » — étendue à deux gestes qui ne partagent pas leur
+	 * forme : deux questions simultanées sur le même objet ne diraient pas à laquelle on répond, et
+	 * l'une des deux est destructrice.
+	 *
+	 * La fermeture du formulaire de modification passe ici par `setOuvert(false)` SANS
+	 * `setFocusARendre` : le focus part dans le bouton de confirmation qui vient d'apparaître
+	 * (§20.7 cas b), et le lui reprendre pour le rendre à « Modifier » déplacerait l'utilisateur
+	 * hors du geste qu'il vient d'ouvrir.
+	 */
+	const ouvrirSuppression = useCallback(() => {
+		setOuvert(false)
+		setSuppressionOuverte(true)
+	}, [])
+
+	const annulerSuppression = useCallback(() => {
+		setSuppressionOuverte(false)
+		setFocusSuppressionARendre(true)
+	}, [])
+
+	/**
+	 * TROIS ISSUES, ET DEUX SEULEMENT RESTENT SUR L'ÉCRAN (§20.4, §20.6).
+	 *
+	 * **Le succès QUITTE la fiche pour le carnet.** La fiche d'un contact supprimé n'a plus de
+	 * sujet : relire rendrait l'écran « contact introuvable » du §15.9 cas h — le même écran qu'un
+	 * identifiant inconnu ou qu'un refus de lecture —, et un geste RÉUSSI se solderait par un écran
+	 * d'échec dont l'utilisateur ne saurait pas conclure que sa suppression a abouti. Le carnet, lui,
+	 * PROUVE le succès en ne portant plus la ligne.
+	 *
+	 * **Les deux autres issues RESTENT, et la fiche est RELUE** — après un « sans effet » parce que
+	 * l'écran ne sait pas laquelle des deux causes s'applique et ne prétend pas le savoir, après un
+	 * refus parce que l'état affiché peut être périmé. Aucun retrait optimiste : sur « sans effet »,
+	 * il effacerait un contact que la base a GARDÉ (mesure 3).
+	 */
+	const surSuppression = useCallback(
+		(message: string | null) => {
+			if (message === null) {
+				naviguer(CHEMIN_CONTACTS)
+				return
+			}
+			setMessageSuppression(message)
+			setSuppressionOuverte(false)
+			setFocusSuppressionARendre(true)
+			setTentative((precedente) => precedente + 1)
+		},
+		[naviguer],
+	)
 
 	/**
 	 * LA FICHE PREND LA LIGNE RENDUE, ET NE RELIT RIEN (§16.7).
@@ -499,12 +595,54 @@ export function ContenuFicheContact({
 						ref={commandeOuverture}
 						data-testid="ouvrir-modification-contact"
 						className="self-start min-h-[var(--size-target)] rounded-md bg-brand px-4 text-surface"
-						onClick={() => setOuvert(true)}
+						// RÉCIPROQUE DU CAS l DU §20.7 : ouvrir la modification referme la
+						// confirmation de suppression. Une question destructrice laissée ouverte
+						// derrière un formulaire que l'on vient d'ouvrir attendrait une réponse que
+						// plus rien ne demande.
+						onClick={() => {
+							setSuppressionOuverte(false)
+							setOuvert(true)
+						}}
 					>
 						{t('contact.modification.open')}
 					</button>
 				)
 			}
+			gesteSuppression={
+				// LE GESTE N'EXISTE QUE S'IL Y A QUELQUE CHOSE À SUPPRIMER (cas k du §20.7) : ni sur
+				// l'introuvable, ni sur l'erreur, ni sans client. `ContenuFiche` rend ces trois états
+				// avant d'atteindre la zone de commandes, mais le construire ici sans contact serait
+				// impossible — la confirmation a besoin de son nom et de son compte d'affaires.
+				//
+				// LA COMMANDE N'EST JAMAIS DÉMONTÉE (§5.40) : sa confirmation vit SOUS elle et non à
+				// sa place, et la retirer ferait sauter la hauteur de la zone au moment précis où
+				// l'on demande à l'utilisateur de lire. Elle est seulement DÉSACTIVÉE — ce n'est pas
+				// une garde de droit (§20.6), c'est une commande sans objet. AUCUNE COMMANDE N'EST
+				// ÉTEINTE D'AVANCE SELON LE RÔLE : la lectrice la voit, confirme, et reçoit « sans
+				// effet » (mesure 3).
+				client === null || contact === null ? null : (
+					<CommandeSuppressionContact
+						commande={commandeSuppression}
+						confirmationOuverte={suppressionOuverte}
+						onDemander={ouvrirSuppression}
+					/>
+				)
+			}
+			confirmationSuppression={
+				client === null || contact === null || !suppressionOuverte ? null : (
+					<ConfirmationSuppressionContact
+						client={client}
+						idContact={contact.id}
+						nom={contact.full_name}
+						// LE COMPTE VIENT DE LA DONNÉE DÉJÀ LUE (§20.6), jamais d'une requête de
+						// plus : la zone 2 le porte déjà (§15.3).
+						nombreAffaires={contact.affaires.length}
+						onGeste={surSuppression}
+						onAnnuler={annulerSuppression}
+					/>
+				)
+			}
+			messageSuppression={messageSuppression}
 		/>
 	)
 }
@@ -518,6 +656,25 @@ type ProprietesContenu = {
 	readonly geste?: React.ReactNode
 	/** Le geste de rattachement, ou `null` quand il n'y a rien à rattacher (§17.7 cas n). */
 	readonly gesteRattachement?: React.ReactNode
+	/** La COMMANDE de suppression, ou `null` quand il n'y a rien à supprimer (§20.7 cas k). */
+	readonly gesteSuppression?: React.ReactNode
+	/**
+	 * La CONFIRMATION de suppression, rendue SOUS les deux commandes (§5.40) et non à côté d'elles.
+	 *
+	 * Elle est un nœud DISTINCT de la commande, et non son enfant : la zone de commandes est une
+	 * ligne (`flex-wrap`), et une confirmation qui y vivrait se placerait À CÔTÉ du bouton plutôt
+	 * qu'en dessous — la question destructrice se lirait alors dans la marge du geste qui l'ouvre.
+	 */
+	readonly confirmationSuppression?: React.ReactNode
+	/**
+	 * Le message des deux issues qui RESTENT sur l'écran (§20.6), `role="alert"`.
+	 *
+	 * Il vit ICI et non dans la confirmation, pour le motif exact du message de détachement (§18.6) :
+	 * la confirmation est DÉMONTÉE après le geste, et un message qu'elle porterait partirait avec
+	 * elle — c'est-à-dire précisément dans le cas où il compte, l'issue « sans effet » où le contact
+	 * RESTE. Il survit aussi à la relecture, qui remonte toute la fiche.
+	 */
+	readonly messageSuppression?: string | null
 	/** L'état des DEUX gestes de ligne, tenu par la fiche pour l'exclusivité (§18.4, §19.4). */
 	readonly gestesLigne?: EtatGestesLigne
 }
@@ -548,6 +705,9 @@ function ContenuFiche({
 	onReprise,
 	geste = null,
 	gesteRattachement = null,
+	gesteSuppression = null,
+	confirmationSuppression = null,
+	messageSuppression = null,
 	gestesLigne,
 }: ProprietesContenu) {
 	if (client === null) {
@@ -593,8 +753,46 @@ function ContenuFiche({
 			  LE GESTE DE MODIFICATION — §16.2. Il vit AVANT les deux zones, dans le FLUX du
 			  document : une modale recouvrirait précisément ce que l'on vient corriger. Le
 			  formulaire ouvert REMPLACE la commande — les deux s'excluent (§16.5).
+
+			  LA ZONE DE COMMANDES PORTE DEUX GESTES DEPUIS LA TRANCHE 6 (§5.24 révisé par
+			  livraison, §5.40) : « Modifier » puis « Supprimer ». Ce sont deux gestes sur le MÊME
+			  objet, non deux états d'un même geste, et l'ordre de lecture met le réparable avant
+			  l'irréversible. Une SEULE question reste ouverte à tout instant (cas l du §20.7) :
+			  ouvrir l'une referme l'autre.
 			*/}
-			{geste}
+			<div className="flex flex-col items-start gap-3">
+				{/*
+				  LES DEUX COMMANDES SUR UNE MÊME LIGNE, la destructive en second. Quand le
+				  formulaire de modification est ouvert il REMPLACE sa commande (§16.5) et occupe
+				  cette ligne ; « Supprimer » reste à côté de lui, ce qui est exact — le geste reste
+				  offert, et la règle du cas l a déjà fermé toute confirmation.
+				*/}
+				<div className="flex flex-wrap items-start gap-2">
+					{geste}
+					{gesteSuppression}
+				</div>
+				{/*
+				  LA CONFIRMATION VIT SOUS LES DEUX COMMANDES, DANS LE FLUX (§5.40, §5.13) — jamais
+				  en modale, et jamais dans une ligne de tableau : la règle du `colSpan` du §5.27
+				  vaut pour une confirmation qui porte sur UNE LIGNE, et ce geste n'en vise aucune.
+				*/}
+				{confirmationSuppression}
+				{/*
+				  LE MESSAGE DES DEUX ISSUES QUI RESTENT (§20.6), `role="alert"`, jamais en tête
+				  d'écran (§5.13, §5.16) : il se lit là où le geste a été demandé. Il SURVIT à la
+				  relecture, qui remonte toute la fiche — c'est pourquoi il est porté par la fiche et
+				  non par la confirmation, démontée après le geste (§18.6, même règle).
+				*/}
+				{messageSuppression === null ? null : (
+					<p
+						role="alert"
+						data-testid="message-suppression-contact"
+						className="text-sm text-danger max-w-[72ch]"
+					>
+						{messageSuppression}
+					</p>
+				)}
+			</div>
 			{/*
 			  ZONE 1 — CE QUI CARACTÉRISE LE CONTACT. Une liste de DÉFINITIONS et non un tableau :
 			  ce sont des couples libellé/valeur qui ne se comparent pas entre eux (§15.5, §5.24).

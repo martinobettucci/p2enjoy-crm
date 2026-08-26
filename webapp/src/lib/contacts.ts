@@ -1267,3 +1267,91 @@ export async function lireNomsDeContacts(
 		return new Map()
 	}
 }
+
+// =================================================================================================
+// TRANCHE 6 — LA SUPPRESSION D'UN CONTACT
+// =================================================================================================
+//
+// @spec CRM-060 (docs/BACKLOG.md) — tranche 6 : la suppression d'un contact
+// @spec docs/SPEC-contacts.md §20.2 (les neuf mesures du 2026-08-26), §20.5 (dictionnaire fermé et
+//       les trois natures structurellement inatteignables), §20.7 (contrat de comportement),
+//       §20.8 (limites nommées)
+// @spec docs/DESIGN_SYSTEM.md §5.40 (le geste de suppression de la fiche de contact)
+//
+// AUCUNE POLITIQUE NOUVELLE, AUCUNE MIGRATION : `contacts_suppression_bizdev_admin` est posée par
+// la migration 0045 et prouvée par la tranche 1. Ce bloc l'EXERCE, exactement comme
+// `modifierContact` exerce `contacts_maj_bizdev_admin`.
+
+/**
+ * Les six natures de refus d'une suppression : les cinq de la création, plus `sans-effet`.
+ *
+ * C'est le type de `RefusModificationContact`, et le partage est délibéré — les deux gestes
+ * classent par la MÊME fonction (§20.5). Un second classifieur divergerait du premier au premier
+ * code ajouté, ce que le §17.5 a déjà écrit pour l'écriture.
+ *
+ * TROIS DE CES NATURES SONT STRUCTURELLEMENT INATTEIGNABLES ICI, et c'est écrit plutôt que masqué
+ * (§20.5) : `doublon` (`23505`) suppose une insertion, `organisation-inconnue` (`23503`) suppose
+ * une clé étrangère sortante à éprouver — une suppression n'en éprouve aucune —, et
+ * `saisie-invalide` (`23514`) suppose une valeur écrite. Le type reste EXHAUSTIF, et l'écran leur
+ * donne le texte d'`indisponible` : leur inventer une phrase propre ferait entrer dans le produit
+ * un texte que rien ne peut afficher, donc qu'aucune preuve ne peut éprouver.
+ */
+export type RefusSuppressionContact = {
+	readonly nature: RefusCreationContact['nature'] | 'sans-effet'
+	readonly detail: string
+}
+
+/** Les deux issues d'une suppression : la ligne retirée, ou un refus traduit (§20.2). */
+export type ResultatSuppressionContact =
+	| { readonly statut: 'supprimee' }
+	| { readonly statut: 'refus'; readonly refus: RefusSuppressionContact }
+
+/**
+ * Supprime un contact du workspace courant.
+ *
+ * `.select('id')` accompagne la suppression précisément pour que « zéro ligne touchée » existe
+ * comme réponse — c'est le patron de `detacherContact` et de `mettreCardALaCorbeille`. Sans lui,
+ * PostgREST ne rend aucun corps, et le refus SILENCIEUX de la politique serait indistinguable d'un
+ * succès.
+ *
+ * ZÉRO LIGNE, ET AUCUNE ERREUR (§20.2, mesures 3 et 5). Deux situations aboutissent ici et sont
+ * INDISTINGUABLES par construction : l'appelante n'a pas le droit de supprimer — la clause `USING`
+ * rend la ligne invisible à l'écriture, et PostgREST n'a rien à supprimer —, ou le contact a
+ * disparu entre l'ouverture de la fiche et l'envoi. Une relecture ne les séparerait pas davantage,
+ * et prétendre les distinguer renseignerait une appelante sans droit sur l'existence de la ligne
+ * (`docs/SPEC-permissions-rls.md` §7). Un seul message les couvre.
+ *
+ * CE QUE LA SUPPRESSION EMPORTE N'EST PAS CALCULÉ ICI, ET C'EST LA BASE QUI LE FAIT : `card_contacts`
+ * référence `contacts` en `on delete cascade`, et le trigger de la migration 0061 écrit
+ * `contact_unlinked` dans le fil de chaque affaire encore vivante (mesure 7). Aucune requête
+ * supplémentaire n'est émise pour cela — l'écran ne fait qu'en AVERTIR (§20.6).
+ *
+ * L'ÉCRAN N'ANTICIPE AUCUN DROIT : il envoie, puis traduit ce qu'il reçoit (§20.6). Ne lève jamais.
+ */
+export async function supprimerContact(
+	client: ClientCrm,
+	idContact: string,
+): Promise<ResultatSuppressionContact> {
+	try {
+		const reponse = await client.from('contacts').delete().eq('id', idContact).select('id')
+		if (reponse.error !== null) {
+			return {
+				statut: 'refus',
+				refus: classerRefusCreation(reponse.status, reponse.error.code, reponse.error.message),
+			}
+		}
+		if (reponse.data !== null && reponse.data.length === 0) {
+			return { statut: 'refus', refus: { nature: 'sans-effet', detail: 'aucun contact supprimé' } }
+		}
+		return { statut: 'supprimee' }
+	} catch (cause) {
+		return {
+			statut: 'refus',
+			refus: classerRefusCreation(
+				undefined,
+				undefined,
+				cause instanceof Error ? cause.message : String(cause),
+			),
+		}
+	}
+}
