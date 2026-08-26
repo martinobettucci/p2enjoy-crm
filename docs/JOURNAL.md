@@ -25085,3 +25085,61 @@ première `[ ]`.
 **La question posée au responsable reste la même, et une seule** : les unités **`CRM-072`**
 (`audit_log`) et **`CRM-073`** (`api_tokens`) n'existent pas, onze unités leur renvoient, et leur
 périmètre est un choix produit qu'aucune mesure ne donne.
+
+## décision 521 — `CRM-064` tranche 1 : la mention devient une relation, et la règle d'accès reste écrite une seule fois
+
+**2026-08-26, session planifiée de 08:15 UTC.** La dernière entrée du journal ne désignait aucune
+reprise : elle disait « la session suivante prend la première unité `[~]` du backlog dans l'ordre du
+plan dont il reste du comportement à livrer, sinon la première `[ ]` ».
+
+**LE PARCOURS DU BACKLOG A ÉTÉ FAIT, ET SON RÉSULTAT EST LE FAIT LE PLUS UTILE DE L'OUVERTURE.**
+Les vingt-trois unités `[~]` ont été relues une à une. **Aucune ne porte encore du comportement à
+livrer** : `CRM-001`, `CRM-014`, `CRM-035` et `CRM-089` n'attendent que des preuves ; `CRM-013`
+attend deux tables qui n'existent pas (`CRM-072`, `CRM-073`) ; `CRM-034`, `CRM-077`, `CRM-081`,
+`CRM-082`, `CRM-083` et `CRM-084` attendent un **arbitrage** du responsable, nommé dans chacune ;
+`CRM-052`, `CRM-053`, `CRM-054`, `CRM-055`, `CRM-057` et `CRM-058` renvoient leurs écarts à des
+unités qui les ont depuis livrés. La règle du §4.2 de `docs/CloudWorker.md` conduit donc à son
+troisième point : **la première unité `[ ]` dans l'ordre du plan**, et c'est **`CRM-064` —
+« @mentions, notifications temps réel et préférences »**.
+
+**LA SPÉCIFICATION A ÉTÉ ÉCRITE ET COMMITTÉE AVANT LA PREMIÈRE LIGNE DE CODE** (`CLAUDE.md` §5) :
+`docs/SPEC-notifications.md`, onze chapitres, fondés sur **neuf mesures** prises sur la pile debout
+et seedée, sondes créées par l'API avec les jetons réels puis détruites et état du seed relu après.
+Aucun document du dépôt ne décrivait cette unité : trois lieux la nommaient sans la spécifier.
+
+**LE FAIT QUI DÉCIDE LA TRANCHE EST MESURÉ, ET IL EST PIRE QUE CE QUE LE DÉPÔT EN DISAIT.** Depuis
+`CRM-043`, `card_comments.mentions` est décrite comme « alimentée par rien », et INC-033 note qu'un
+`uuid[]` ne porte aucune intégrité. Mesuré (M7, M8) : le `PATCH` de la colonne rend bien
+`403` / `42501` — elle est fermée en **mise à jour** —, mais le privilège `INSERT` de la table est
+**de table** (décision 140), si bien qu'elle est **grande ouverte à l'insertion**. Deux sondes
+envoyées avec le jeton réel de l'administratrice ont été **acceptées** : l'une portant un `uuid` qui
+ne désigne **aucun profil**, l'autre désignant une personne qui **ne lit pas la card**. « Non
+alimentée » n'était donc pas « inerte » : c'était une colonne écrivable sans aucune règle.
+
+**DEUX PRÉCÉDENTS SONT SUIVIS PLUTÔT QU'UNE SOLUTION INVENTÉE.** La mention devient une **table de
+liaison** — c'est le remède que `CRM-018` a appliqué au même défaut sur `require_fields`
+(décision 262) —, et `card_comments.mentions` est retirée par la même migration, derrière la garde
+de vérification qu'a posée `0019` avant de retirer sa propre colonne. M1 mesure que le retrait est
+sûr : 0 mention sur 5 commentaires.
+
+**LA DÉCISION DE FORME EST CELLE-CI : DÉLÉGATION, JAMAIS SECONDE ÉCRITURE DE LA RÈGLE D'ACCÈS.**
+L'éligibilité — « on ne mentionne que quelqu'un qui peut lire l'affaire » — porte sur un **tiers**,
+alors que les onze fonctions du schéma `app` jugent toutes **l'appelant** par `auth.uid()`. Écrire
+un prédicat neuf qui relirait `workspace_members`, `track_members` et `channel_members` pour le
+profil visé aurait donné **deux écritures de la même règle**, qui divergent au premier niveau de
+droit ajouté — c'est ce que la décision de `CRM-063` sous-tranche 4c a refusé pour sa RPC. La chaîne
+est donc **généralisée par un paramètre** (`app.can_read_card_pour`, `app.can_read_channel_pour`,
+`app.resolve_channel_access_pour`, `app.workspace_role_pour`), et les quatre fonctions existantes
+deviennent des **délégations d'une ligne**. `app.resolve_access`, qui porte la règle elle-même,
+n'est pas touchée. La preuve de non-régression retenue est nommée d'avance : les suites
+`0002_fonctions_autorisation` et `0011_droits_fins` doivent rester **vertes sans être modifiées**.
+
+**INC-226 CONSIGNÉE.** Trois lieux du dépôt renvoient les notifications à `CRM-063`, unité qui porte
+désormais les modèles d'emails et qui est close. Le mode de défaillance est celui d'INC-069 et de la
+décision 335 — un numéro cité dans le corps d'un document plutôt que lu dans la table du chunk. Les
+trois renvois désignant l'objet **de l'unité qui les corrige**, ils sont redressés dans le même
+changement ; aucune autre occurrence n'est cherchée au passage.
+
+**Où reprendre.** La spécification est écrite et poussée ; la tranche 1 est en cours. Reste dû : la
+migration, sa suite pgTAP, les quinze lignes de contrat d'API du §8, le seed du §9 et le harnais
+dédié.

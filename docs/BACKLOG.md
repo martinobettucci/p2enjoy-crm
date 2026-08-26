@@ -7170,7 +7170,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-061 | Prochaine action, échéance, vue « Ma journée » | `[x]` |
 | CRM-062 | Relances automatiques des cards figées | `[~]` |
 | CRM-063 | Templates d'emails, signatures, séquences de relance | `[x]` |
-| CRM-064 | @mentions, notifications temps réel et préférences | `[ ]` |
+| CRM-064 | @mentions, notifications temps réel et préférences | `[~]` |
 | CRM-065 | Recherche globale plein texte et palette Cmd+K | `[ ]` |
 | CRM-066 | Analytique de conversion et prévisionnel pondéré | `[ ]` |
 | CRM-067 | Activités typées : appels, réunions, visios | `[ ]` |
@@ -9139,6 +9139,59 @@ l'expéditeur, ou au destinataire dont le produit ne sait rien ?
 existe depuis `CRM-053` et **n'est lue par personne** — ni `mail-sync` à l'envoi, ni l'écran de
 `CRM-089`. Son nom annonce du **HTML** là où tout le sous-système expédie du **texte**. La corriger
 est la tranche 3, et le nom porte une question de produit qui appartient à sa spécification.
+
+---
+
+### CRM-064 — @mentions, notifications temps réel et préférences `[~]`
+
+Mentionner nommément une personne dans un commentaire, la prévenir, et lui laisser décider de ce
+qu'elle reçoit.
+**Spécification** : `docs/SPEC-notifications.md`, écrite le 2026-08-26 **après mesure sur la pile
+debout et seedée**, et committée **avant la première ligne de code** (`CLAUDE.md` §5).
+**DoD** : la règle est appliquée **côté backend** et prouvée sous les jetons réels des trois
+profils ; le refus de lecture se mesure comme **zéro ligne** et non comme une erreur ; l'anonyme
+est refusé par le privilège ; pgTAP, contrat d'API, seed par le vrai chemin, harnais non
+complaisant ; les surfaces livrées et vérifiées visuellement, console vierge.
+
+**Découpage en quatre tranches**, arrêté au §1.2 de la spécification — chacune committée et prouvée
+avant la suivante :
+
+| Tranche | Objet | État |
+|---|---|---|
+| 1 | La mention en base — relation, intégrité, règle d'éligibilité, RLS, contrat d'API, seed, harnais. Aucune surface | en cours |
+| 2 | La notification — table `public.notifications`, production à partir d'une mention, état lu / non lu | `[ ]` |
+| 3 | La surface et le temps réel — composeur, liste, compteur, abonnement | `[ ]` |
+| 4 | Les préférences — ce que chacun reçoit, et par quel canal | `[ ]` |
+
+- [x] **Spécification écrite et committée AVANT la première ligne de code** —
+      `docs/SPEC-notifications.md`, onze chapitres, fondés sur **neuf mesures** prises le
+      2026-08-26 sur la pile réelle, seed appliqué : sondes créées par l'API avec les jetons réels
+      puis **détruites**, et l'état du seed **relu après** pour établir qu'aucune n'a survécu.
+- [x] **AUCUN DOCUMENT DU DÉPÔT NE DÉCRIVAIT CETTE UNITÉ.** Trois lieux la nommaient sans la
+      spécifier — le §5 de `docs/SCHEMA.md`, le §13.1 de `docs/SPEC-cards.md`, et le commentaire de
+      la colonne posé par la migration `0015`. C'est le même point de départ que `CRM-043` avait
+      trouvé, et la même réponse : écrire d'abord.
+- [x] **LE FAIT QUI DÉCIDE LA TRANCHE EST MESURÉ, PAS SUPPOSÉ** (§2, M8). Le privilège `INSERT` de
+      `card_comments` est **de table** (décision 140) : `mentions` est donc **grande ouverte à
+      l'insertion**, alors que M7 montre le `PATCH` refusé par `403` / `42501`. Deux sondes envoyées
+      avec le jeton réel de l'administratrice ont été **acceptées** — l'une portant un `uuid` qui ne
+      désigne **aucun profil**, l'autre désignant une personne qui **ne lit pas la card**. Le trou
+      n'était donc pas « une colonne inutilisée » mais une colonne écrivable sans aucune règle.
+- [x] **LE CAS DE REFUS EXISTE DÉJÀ DANS LE SEED, et c'est ce qui rend la preuve stricte** (§2, M5
+      et M6) : Farida est `none` sur `grands-comptes`, où vit la card `…0c1` qui porte trois des
+      cinq commentaires. Mesuré par l'API : elle obtient `200 []` sur `…0c1` et lit `…0c5`. Le refus
+      se mesurera donc comme **une ligne absente d'une liste peuplée**, non comme un écran vide.
+- [x] **DEUX PRÉCÉDENTS DU DÉPÔT SONT SUIVIS PLUTÔT QU'UNE SOLUTION INVENTÉE** (§3) : la table de
+      liaison de `CRM-018` — INC-033, le même défaut sur `require_fields` — et la garde de retrait
+      de la migration `0019`, qui vérifie avant de détruire.
+- [x] **LA RÈGLE D'ACCÈS N'AURA QU'UNE SEULE ÉCRITURE** (§5.3). Les onze fonctions du schéma `app`
+      jugent **l'appelant** ; l'éligibilité porte sur un **tiers**. Plutôt qu'un prédicat neuf qui
+      relirait les trois tables d'appartenance — seconde écriture de la règle, donc divergence
+      annoncée —, la chaîne est **généralisée par un paramètre** et les quatre fonctions existantes
+      deviennent des délégations d'une ligne. `app.resolve_access`, qui porte la règle, n'est pas
+      touchée.
+- [~] **Ce qui reste dû sur la tranche 1** : la migration, sa suite pgTAP, le contrat d'API du §8,
+      le seed du §9 et le harnais dédié. Nommés ici tant qu'ils ne sont pas livrés.
 
 ---
 ### CRM-070 — précision d'arbitrage : l'invitation d'un membre

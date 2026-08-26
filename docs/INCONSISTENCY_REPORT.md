@@ -227,10 +227,12 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Trente ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+**Trente et une ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-173, INC-174,
-INC-182, INC-183, INC-185, INC-186, INC-188, INC-189, INC-190, INC-191, INC-192, INC-193, INC-224
-et INC-225.** — **INC-224 et INC-225** consignées le 2026-08-26 par la session `CRM-063`
+INC-182, INC-183, INC-185, INC-186, INC-188, INC-189, INC-190, INC-191, INC-192, INC-193, INC-224,
+INC-225 et INC-226.** — **INC-226** consignée le 2026-08-26 par la session `CRM-064` tranche 1 :
+trois lieux du dépôt renvoient les notifications à `CRM-063`, unité qui porte désormais tout autre
+chose. — **INC-224 et INC-225** consignées le 2026-08-26 par la session `CRM-063`
 sous-tranche 4c, toutes deux rencontrées en rejouant la campagne d'interface, toutes deux étrangères
 à son unité. **INC-224** est mesurée sur l'**arbre pré-session** — la seule ligne de base valable
 pour du travail déjà committé, leçon d'INC-223 — et rend le **même bilan des deux côtés**.
@@ -390,6 +392,40 @@ Une nouvelle entrée n'est ouverte ici que dans les conditions de la doctrine ci
 qu'aucune mesure ne permet de trancher seul, ou un point que `CLAUDE.md` §26 réserve au responsable.
 
 ---
+
+---
+
+### INC-226 — Trois lieux renvoient les notifications à `CRM-063`, unité qui porte tout autre chose
+
+*Consignée le 2026-08-26 par la session `CRM-064` tranche 1, en écrivant `docs/SPEC-notifications.md`.*
+
+**Le constat, mesuré par lecture.** Trois lieux du dépôt annoncent que les notifications de mention
+appartiennent à `CRM-063` :
+
+- `docs/SPEC-cards.md` §13.1 : « Les notifications appartiennent à `CRM-063`, et la table
+  `notifications` n'existe pas » ;
+- `supabase/migrations/0015_commentaires.sql`, commentaire de la colonne
+  `card_comments.mentions` : « les notifications sont `CRM-063` » ;
+- `supabase/migrations/0015_commentaires.sql` §0, même renvoi.
+
+**Or `CRM-063` est « Modèles d'emails, signatures, séquences de relance »**, livrée et close le
+2026-08-26, et elle ne porte aucune notification. L'unité qui les porte est **`CRM-064` —
+« @mentions, notifications temps réel et préférences »**, `[ ]` à la table du chunk 5.
+
+**La cause probable est une renumérotation.** Le renvoi date de `CRM-043` (2026-08-05), et la table
+du chunk 5 a bougé depuis — c'est le mode de défaillance exact d'INC-069 et de la décision 335, qui
+avaient déjà imposé qu'un numéro d'unité s'attribue en lisant la table et jamais le corps du
+document.
+
+**Ce que la session en fait, et ce qu'elle n'en fait pas.** Les trois renvois désignent l'objet
+**de l'unité qui les corrige** : les laisser faux pendant qu'on livre la mention serait laisser le
+dépôt se contredire sur le sujet même du changement. Les trois sont donc **corrigés vers `CRM-064`
+et vers `docs/SPEC-notifications.md`** dans le même changement que la spécification. Aucune autre
+occurrence n'est cherchée ni corrigée au passage : ce serait solder une dette de documentation
+générale sous couvert de cette unité (`CLAUDE.md` §13).
+
+**Aucun comportement ne change.** L'entrée est conservée ouverte le temps qu'un relecteur confirme
+qu'aucun quatrième porteur ne subsiste.
 
 ---
 
