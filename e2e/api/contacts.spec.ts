@@ -26,6 +26,9 @@ const WORKSPACE_SEED = '5eed0000-0000-4000-8000-000000000001'
 const CARD_SEEDEE_1  = '5eed0000-0000-4000-8000-0000000000c1'  // Refonte du site vitrine (grands-comptes)
 const CARD_SEEDEE_4  = '5eed0000-0000-4000-8000-0000000000c4'  // Refonte intranet Ville de Lyon (refonte)
 const ORGANISATION_SOGEXIA = '5eed0000-0000-4000-8000-000000000081'  // Sogexia, seule organisation à domaine
+// Le champ `contact-principal` du workflow global — type `contact`, résolu à l'écriture depuis la
+// tranche 3 (docs/SPEC-contacts.md §9.3). C'est lui qui porte la mesure 9 de la tranche 6.
+const CHAMP_CONTACT_PRINCIPAL = '5eed0000-0000-4000-8000-000000000088'
 
 type Sonde = {
 	organizationsSupprimees: string[]
@@ -2268,5 +2271,299 @@ test.describe('CRM-060 tranche 5 — les trois gestes laissent leur trace dans l
 		)
 		expect(reponse.status(), 'un refus de lecture rend zéro ligne, jamais une erreur').toBe(200)
 		expect(await reponse.json()).toEqual([])
+	})
+})
+
+// =================================================================================================
+// TRANCHE 6 — LES NEUF MESURES DE LA SUPPRESSION D'UN CONTACT (docs/SPEC-contacts.md §20.2)
+// =================================================================================================
+//
+// @verifies CRM-060 (docs/BACKLOG.md) — tranche 6 : la suppression d'un contact
+// @verifies docs/SPEC-contacts.md §20.2 (les neuf mesures du 2026-08-26, et les quatre qui
+//           décident), §20.3 (ce que la décision 516 exige de la lecture est déjà livré)
+// @verifies docs/ARBITRAGES.md §5, décision 516 (la valeur qui désigne un contact supprimé est
+//           CONSERVÉE : aucun trigger de balayage, aucune table de liaison)
+// @verifies docs/SPEC-permissions-rls.md §7 (un refus silencieux est zéro ligne, jamais une erreur)
+//
+// AUCUNE POLITIQUE N'EST AJOUTÉE PAR LA TRANCHE 6 : ces mesures exercent
+// `contacts_suppression_bizdev_admin`, posée par la migration 0045. Ce que la tranche prouve n'est
+// donc pas un droit neuf, mais le COMPORTEMENT COMPLET que l'écran doit traduire — dont deux faits
+// qu'aucune preuve ne portait : le silence opposé à la lectrice, et la trace laissée dans le fil.
+//
+// LES TRACES SONT MESURÉES EN DELTA, jamais en absolu. `card_events` est append-only : un compte
+// « exactement un » serait vrai à la première exécution et faux à la deuxième. C'est la leçon que
+// la tranche 5 a payée, et elle s'applique ici sans réapprentissage.
+
+test.describe('CRM-060 tranche 6 — la suppression d’un contact (§20.2)', () => {
+	/** Crée un contact sonde par le VRAI chemin applicatif, et rend son identifiant. */
+	async function sonderUnContact(request: APIRequestContext, nom: string): Promise<string> {
+		const jeton = await jetonDe('admin@p2enjoy.test')
+		const cree = await request.post('/rest/v1/contacts', {
+			headers: { ...enTetesAuthentifies(jeton), Prefer: 'return=representation' },
+			data: { workspace_id: WORKSPACE_SEED, full_name: nom },
+		})
+		expect(cree.status()).toBe(201)
+		const [{ id }] = (await cree.json()) as [{ id: string }]
+		return id
+	}
+
+	/** Relit à la clé de service — pour CONSTATER un état, jamais pour prouver un refus (décision 50). */
+	async function relireAuService(request: APIRequestContext, id: string): Promise<unknown[]> {
+		const relu = await request.get(`/rest/v1/contacts?id=eq.${id}&select=id,full_name`, {
+			headers: enTetesService(),
+		})
+		return (await relu.json()) as unknown[]
+	}
+
+	test('mesure 1 — l’administratrice supprime, et la ligne est réellement partie', async ({
+		request,
+	}) => {
+		const jeton = await jetonDe('admin@p2enjoy.test')
+		const id = await sonderUnContact(request, 'Sonde T6 mesure 1')
+		const suppression = await request.delete(`/rest/v1/contacts?id=eq.${id}`, {
+			headers: { ...enTetesAuthentifies(jeton), Prefer: 'return=representation' },
+		})
+		expect(suppression.status()).toBe(200)
+		expect((await suppression.json()) as unknown[]).toHaveLength(1)
+		// LA RELECTURE EST CE QUI PROUVE LE GESTE : un `200` seul ne dit rien de la base.
+		expect(await relireAuService(request, id)).toEqual([])
+	})
+
+	test('mesure 2 — le `business_developer` supprime aussi : ce n’est PAS un geste d’administration', async ({
+		request,
+	}) => {
+		const jeton = await jetonDe('bizdev@p2enjoy.test')
+		const id = await sonderUnContact(request, 'Sonde T6 mesure 2')
+		const suppression = await request.delete(`/rest/v1/contacts?id=eq.${id}`, {
+			headers: { ...enTetesAuthentifies(jeton), Prefer: 'return=representation' },
+		})
+		expect(suppression.status()).toBe(200)
+		expect((await suppression.json()) as unknown[]).toHaveLength(1)
+		expect(await relireAuService(request, id)).toEqual([])
+	})
+
+	test('mesures 3 et 5 — la lectrice et le contact inexistant rendent le MÊME `200` et `[]`', async ({
+		request,
+	}) => {
+		// C'EST LA MESURE QUI DÉCIDE DE LA TROISIÈME ISSUE. La clause `USING` rend la ligne
+		// invisible à l'écriture : PostgREST n'a rien à supprimer et rend `200` avec un tableau
+		// VIDE, sans la moindre erreur, sur une ligne qui EXISTE. L'écran ne peut donc pas conclure
+		// à un succès, et il ne peut pas non plus distinguer ce refus d'un contact déjà parti.
+		const jeton = await jetonDe('viewer@p2enjoy.test')
+		const id = await sonderUnContact(request, 'Sonde T6 mesure 3')
+		try {
+			const refusee = await request.delete(`/rest/v1/contacts?id=eq.${id}`, {
+				headers: { ...enTetesAuthentifies(jeton), Prefer: 'return=representation' },
+			})
+			expect(refusee.status(), 'aucune erreur : le refus est SILENCIEUX').toBe(200)
+			expect(await refusee.json()).toEqual([])
+			// LA LIGNE EST RELUE POUR ÊTRE CONSTATÉE INCHANGÉE (décision 70) : sans cela, la preuve
+			// serait verte sur une suppression réussie qui aurait simplement rendu un corps vide.
+			const relue = (await relireAuUneLigne(request, id)) as { full_name: string } | undefined
+			expect(relue?.full_name).toBe('Sonde T6 mesure 3')
+
+			// LE CONTACT INEXISTANT REND EXACTEMENT LA MÊME CHOSE (mesure 5), et c'est ce qui
+			// interdit à l'écran de distinguer les deux causes.
+			const admin = await jetonDe('admin@p2enjoy.test')
+			const fantome = await request.delete(
+				'/rest/v1/contacts?id=eq.5eed0000-0000-4000-8000-0000000009ff',
+				{ headers: { ...enTetesAuthentifies(admin), Prefer: 'return=representation' } },
+			)
+			expect(fantome.status()).toBe(200)
+			expect(await fantome.json()).toEqual([])
+		} finally {
+			await request.delete(`/rest/v1/contacts?id=eq.${id}`, { headers: enTetesService() })
+		}
+	})
+
+	async function relireAuUneLigne(request: APIRequestContext, id: string): Promise<unknown> {
+		const lignes = await relireAuService(request, id)
+		return lignes[0]
+	}
+
+	test('mesure 4 — l’anonyme reçoit `401` / `42501`, et la ligne est INCHANGÉE', async ({
+		request,
+	}) => {
+		const id = await sonderUnContact(request, 'Sonde T6 mesure 4')
+		try {
+			const refusee = await request.delete(`/rest/v1/contacts?id=eq.${id}`, {
+				headers: enTetesAnonymes(),
+			})
+			expect(refusee.status()).toBe(401)
+			expect(((await refusee.json()) as { code: string }).code).toBe('42501')
+			const relue = (await relireAuUneLigne(request, id)) as { full_name: string } | undefined
+			expect(relue?.full_name).toBe('Sonde T6 mesure 4')
+		} finally {
+			await request.delete(`/rest/v1/contacts?id=eq.${id}`, { headers: enTetesService() })
+		}
+	})
+
+	test('mesure 6 — un identifiant mal formé rend `400` / `22P02`', async ({ request }) => {
+		const jeton = await jetonDe('admin@p2enjoy.test')
+		const refusee = await request.delete('/rest/v1/contacts?id=eq.pas-un-uuid', {
+			headers: enTetesAuthentifies(jeton),
+		})
+		expect(refusee.status()).toBe(400)
+		expect(((await refusee.json()) as { code: string }).code).toBe('22P02')
+	})
+
+	test('mesure 7 — la suppression CASCADE, et chaque affaire gagne UNE trace `contact_unlinked`', async ({
+		request,
+	}) => {
+		// C'EST LE FAIT NEUF DE LA TRANCHE, ET IL VIENT DE LA TRANCHE 5. `card_contacts` référence
+		// `contacts` en `on delete cascade`, et le trigger de la migration 0061 écrit dans le fil de
+		// chaque affaire encore vivante. La confirmation de l'écran ÉNONCE cette conséquence : c'est
+		// la seule que l'utilisateur ne peut pas lire sur l'écran qu'il regarde.
+		const jeton = await jetonDe('admin@p2enjoy.test')
+		const id = await sonderUnContact(request, 'Sonde T6 mesure 7')
+		const compterTraces = async (): Promise<number> => {
+			const lues = await request.get(
+				`/rest/v1/card_events?card_id=eq.${CARD_SEEDEE_1}&type=eq.contact_unlinked&select=id`,
+				{ headers: enTetesService() },
+			)
+			return ((await lues.json()) as unknown[]).length
+		}
+
+		const rattachement = await request.post('/rest/v1/card_contacts', {
+			headers: enTetesAuthentifies(jeton),
+			data: {
+				workspace_id: WORKSPACE_SEED,
+				card_id: CARD_SEEDEE_1,
+				contact_id: id,
+				role: 'sonde-t6',
+			},
+		})
+		expect(rattachement.status()).toBe(201)
+		const avant = await compterTraces()
+
+		const suppression = await request.delete(`/rest/v1/contacts?id=eq.${id}`, {
+			headers: { ...enTetesAuthentifies(jeton), Prefer: 'return=representation' },
+		})
+		expect(suppression.status()).toBe(200)
+
+		// LA CASCADE : le rattachement est parti sans qu'aucun geste ne le vise.
+		const liaisons = await request.get(`/rest/v1/card_contacts?contact_id=eq.${id}&select=card_id`, {
+			headers: enTetesService(),
+		})
+		expect(await liaisons.json()).toEqual([])
+
+		// LA TRACE, MESURÉE EN DELTA : un journal immuable interdit toute mesure absolue.
+		expect((await compterTraces()) - avant, 'exactement une trace de plus').toBe(1)
+
+		// ET ELLE PORTE LE RÔLE DU MOMENT, lu dans OLD par le trigger — la donnée que le geste
+		// détruit sans reprise, et que la confirmation annonce comme perdue.
+		const dernieres = await request.get(
+			`/rest/v1/card_events?card_id=eq.${CARD_SEEDEE_1}&type=eq.contact_unlinked` +
+				'&select=payload&order=created_at.desc&limit=1',
+			{ headers: enTetesService() },
+		)
+		const [trace] = (await dernieres.json()) as [{ payload: Record<string, unknown> }]
+		expect(trace.payload['contact_id']).toBe(id)
+		expect(trace.payload['role']).toBe('sonde-t6')
+	})
+
+	test('mesure 8 — l’organisation du contact supprimé est INCHANGÉE', async ({ request }) => {
+		// La clé étrangère va du CONTACT vers l'organisation : rien ne remonte. La mesure ferme la
+		// question plutôt que de la laisser à la déduction.
+		const jeton = await jetonDe('admin@p2enjoy.test')
+		const cree = await request.post('/rest/v1/contacts', {
+			headers: { ...enTetesAuthentifies(jeton), Prefer: 'return=representation' },
+			data: {
+				workspace_id: WORKSPACE_SEED,
+				full_name: 'Sonde T6 mesure 8',
+				organization_id: ORGANISATION_SOGEXIA,
+			},
+		})
+		expect(cree.status()).toBe(201)
+		const [{ id }] = (await cree.json()) as [{ id: string }]
+
+		const suppression = await request.delete(`/rest/v1/contacts?id=eq.${id}`, {
+			headers: { ...enTetesAuthentifies(jeton), Prefer: 'return=representation' },
+		})
+		expect(suppression.status()).toBe(200)
+
+		const organisation = await request.get(
+			`/rest/v1/organizations?id=eq.${ORGANISATION_SOGEXIA}&select=id,name`,
+			{ headers: enTetesAuthentifies(jeton) },
+		)
+		expect((await organisation.json()) as [{ name: string }]).toEqual([
+			{ id: ORGANISATION_SOGEXIA, name: 'Sogexia' },
+		])
+	})
+
+	test('mesure 9 — une valeur de formulaire qui désigne le supprimé DEMEURE (décision 516)', async ({
+		request,
+	}) => {
+		// C'EST L'EXÉCUTION DE LA DÉCISION 516, ET ELLE ÉTAIT DÉJÀ VRAIE. `value` est un `jsonb` :
+		// aucune clé étrangère n'y est possible (§9.4), et rien ne va donc la balayer. La tranche 6
+		// n'écrit AUCUN code pour ce point — elle PROUVE la propriété sur une suppression RÉELLE, ce
+		// qu'aucune preuve ne faisait : le cas j du §13.5 n'était éprouvé que sur un identifiant
+		// FABRIQUÉ. Un contact fabriqué prouve le rendu ; un contact SUPPRIMÉ prouve la chaîne.
+		const jeton = await jetonDe('admin@p2enjoy.test')
+		const id = await sonderUnContact(request, 'Sonde T6 mesure 9')
+
+		const affaire = await request.get(
+			`/rest/v1/cards?id=eq.${CARD_SEEDEE_1}&select=workflow_id`,
+			{ headers: enTetesAuthentifies(jeton) },
+		)
+		const [{ workflow_id: idWorkflow }] = (await affaire.json()) as [{ workflow_id: string }]
+
+		const ecrite = await request.post('/rest/v1/card_field_values', {
+			headers: { ...enTetesAuthentifies(jeton), Prefer: 'return=representation' },
+			data: {
+				card_id: CARD_SEEDEE_1,
+				workspace_id: WORKSPACE_SEED,
+				workflow_id: idWorkflow,
+				field_id: CHAMP_CONTACT_PRINCIPAL,
+				value: id,
+			},
+		})
+		// LE TÉMOIN : la valeur est ACCEPTÉE tant que le contact existe. Sans lui, la mesure serait
+		// verte sur une écriture qui n'aurait jamais eu lieu (§9.5).
+		expect(ecrite.status(), 'la résolution du §9.3 accepte un contact qui existe').toBe(201)
+
+		try {
+			const suppression = await request.delete(`/rest/v1/contacts?id=eq.${id}`, {
+				headers: { ...enTetesAuthentifies(jeton), Prefer: 'return=representation' },
+			})
+			expect(suppression.status()).toBe(200)
+
+			const relue = await request.get(
+				`/rest/v1/card_field_values?card_id=eq.${CARD_SEEDEE_1}` +
+					`&field_id=eq.${CHAMP_CONTACT_PRINCIPAL}&select=value`,
+				{ headers: enTetesAuthentifies(jeton) },
+			)
+			// LA VALEUR DEMEURE, INCHANGÉE. Elle n'est ni effacée, ni mise à `null` : c'est ce que la
+			// décision 516 a tranché, et l'écran la rend en « référence inconnue » (§13.5 cas j).
+			expect((await relue.json()) as [{ value: string }]).toEqual([{ value: id }])
+		} finally {
+			// La valeur sonde est retirée : le seed doit être rendu INTACT (§20.9).
+			await request.delete(
+				`/rest/v1/card_field_values?card_id=eq.${CARD_SEEDEE_1}` +
+					`&field_id=eq.${CHAMP_CONTACT_PRINCIPAL}`,
+				{ headers: enTetesService() },
+			)
+			await request.delete(`/rest/v1/contacts?id=eq.${id}`, { headers: enTetesService() })
+		}
+	})
+
+	test('le seed est rendu INTACT : trois contacts, deux rattachements, trois organisations', async ({
+		request,
+	}) => {
+		// GARDE DE CLÔTURE. Ces mesures créent et suppriment beaucoup ; une sonde oubliée ferait
+		// dériver les compteurs d'autres harnais, et le défaut se lirait chez eux plutôt qu'ici.
+		const jeton = await jetonDe('admin@p2enjoy.test')
+		const contacts = await request.get('/rest/v1/contacts?select=id', {
+			headers: enTetesAuthentifies(jeton),
+		})
+		expect((await contacts.json()) as unknown[]).toHaveLength(3)
+		const organisations = await request.get('/rest/v1/organizations?select=id', {
+			headers: enTetesAuthentifies(jeton),
+		})
+		expect((await organisations.json()) as unknown[]).toHaveLength(3)
+		const rattachements = await request.get('/rest/v1/card_contacts?select=card_id', {
+			headers: enTetesAuthentifies(jeton),
+		})
+		expect((await rattachements.json()) as unknown[]).toHaveLength(2)
 	})
 })
