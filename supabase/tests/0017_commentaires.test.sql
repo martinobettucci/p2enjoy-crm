@@ -35,7 +35,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(98);
+select plan(99);
 
 create or replace function pg_temp.endosser(utilisateur uuid)
 returns void language plpgsql as $$
@@ -596,11 +596,27 @@ select is(
 	   'd''événement, le fil est unifié à la LECTURE (`CRM-044`, décision 209)');
 
 -- INC-226 : ce renvoi désignait `CRM-063`, unité qui porte les modèles d'emails et rien d'autre.
--- Les notifications sont `CRM-064`, dont la tranche 1 a livré la MENTION et la tranche 2 livrera
--- la notification.
-select is(to_regclass('public.notifications')::text, null,
-	'`notifications` n''existe toujours pas : poser une mention ne prévient PERSONNE. Elle est un '
-	'fait, pas encore un message — `CRM-064` tranche 2, docs/SPEC-notifications.md §1.2');
+-- Les notifications sont `CRM-064`, dont la tranche 1 a livré la MENTION et la tranche 2 la
+-- NOTIFICATION.
+--
+-- ASSERTION RÉVISÉE PAR `CRM-064` TRANCHE 2, JAMAIS RETIRÉE (mécanisme de la décision 51). Elle
+-- exigeait que `public.notifications` n'existe PAS, et disait « poser une mention ne prévient
+-- personne ». C'est exactement ce pour quoi elle avait été écrite : elle devait rougir le jour où
+-- la tranche 2 livrerait la table, et elle a rougi. Elle mesure désormais le NOUVEL état, et elle
+-- mesure la CONSÉQUENCE plutôt que la seule présence — une table créée mais sans production
+-- laisserait la première moitié verte.
+select isnt(to_regclass('public.notifications')::text, null,
+	'`notifications` existe depuis `CRM-064` tranche 2 : une mention PRODUIT désormais un message '
+	'(docs/SPEC-notifications.md §13)');
+
+select is(
+	(select count(*)::int from pg_trigger
+	  where tgrelid = 'public.card_comment_mentions'::regclass and not tgisinternal
+	    and tgname = 'notifications_apres_mention'),
+	1,
+	'poser une mention PRÉVIENT désormais la personne désignée, et c''est un trigger porté par la '
+	'MENTION qui le fait — `CRM-064` tranche 2, docs/SPEC-notifications.md §14. Sans cette moitié, '
+	'une table créée sans production passerait l''assertion précédente');
 
 select is(to_regclass('public.card_activities')::text, null,
 	'`card_activities` n''existe pas : le §5 de docs/SCHEMA.md la décrit, aucune unité du chunk 3 '

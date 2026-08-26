@@ -208,8 +208,17 @@ select is(pg_temp.politiques('card_sequence_enrollments'),
 
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	119,
-	'CENT DIX-NEUF politiques dans `public`, et pas une de plus — 116 avant `CRM-064` tranche 1, '
+	121,
+	'CENT VINGT ET UNE politiques dans `public`, et pas une de plus — 119 avant `CRM-064` '
+	'tranche 2, plus les DEUX de `notifications` : lecture et marquage lu/non lu '
+	'(docs/SPEC-notifications.md §16.1). ELLES SONT DEUX, ET NON QUATRE, ET C''EST DEUX REFUS '
+	'DOUBLES : une notification se PRODUIT — le seul chemin est un trigger, aucun client n''en '
+	'écrit — et ne se SUPPRIME pas, la rétention étant une décision de produit qu''aucune mesure '
+	'ne donne (§15.3, §15.4). Les deux absences sont doublées par le PRIVILÈGE : ni `INSERT` ni '
+	'`DELETE` accordés. Et ce que la politique de lecture ne réécrit PAS est ce qui compte le '
+	'plus : sa seconde condition DÉLÈGUE à `app.can_read_card`, si bien qu''une perte d''accès '
+	'masque la notification sans détruire aucune ligne, et que la règle d''accès n''a TOUJOURS '
+	'QU''UNE SEULE ÉCRITURE (§14.4, §16.1). Avant elles : 116 avant `CRM-064` tranche 1, '
 	'plus les TROIS de `card_comment_mentions` : lecture, insertion, suppression '
 	'(docs/SPEC-notifications.md §7.1). ELLES SONT TROIS, ET NON QUATRE, ET C''EST LA MOITIÉ D''UN '
 	'REFUS DOUBLE : une mention se RETIRE, elle ne se modifie pas, car changer `profile_id` ne '
