@@ -33,7 +33,10 @@ export function Header({ titreRoute, onOuvrirTiroir, etatWorkspaces }: Propriete
 		<header
 			aria-label={t('header.aria')}
 			data-testid="entete"
-			className="flex items-center gap-3 px-4 py-3 bg-surface border-b border-border"
+			// `relative` PORTE LE PANNEAU DE NOTIFICATIONS (`CRM-064`), qui s'ancre sur
+			// l'en-tête et non sur la cloche : ancré sur elle, il sortait de l'écran par la
+			// gauche à 390 px — défaut trouvé en regardant une capture (`CLAUDE.md` §16).
+			className="relative flex items-center gap-3 px-4 py-3 bg-surface border-b border-border"
 		>
 			<button
 				type="button"

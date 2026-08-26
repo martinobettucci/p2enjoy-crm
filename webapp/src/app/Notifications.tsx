@@ -124,7 +124,12 @@ export function ClocheNotifications() {
 	}
 
 	return (
-		<div ref={ancre} className="relative shrink-0">
+		// LE CONTENEUR N'EST PAS `relative`, ET C'EST UN DÉFAUT TROUVÉ EN REGARDANT UNE CAPTURE
+		// (`CLAUDE.md` §16, capture `notifications-panneau-sm-390.jpg`). Ancré sur la cloche, le
+		// panneau alignait son bord DROIT sous elle : à 390 px, sa largeur le faisait sortir de
+		// l'écran par la GAUCHE. Le repère de positionnement est donc l'EN-TÊTE, qui occupe toute la
+		// largeur — voir le panneau ci-dessous. `ancre` ne sert plus qu'à reconnaître un clic intérieur.
+		<div ref={ancre} className="shrink-0">
 			<button
 				ref={cloche}
 				type="button"
@@ -172,12 +177,14 @@ export function ClocheNotifications() {
 					aria-label={t('notifications.panel.aria')}
 					data-testid="panneau-notifications"
 					className={[
-						'absolute right-0 top-full z-40 mt-2',
-						// Bornée à `40ch` — une colonne de prose courte, une ligne portant un extrait
-						// de phrase. Sous `md`, la largeur disponible moins la marge, alignée sous la
-						// cloche et jamais débordante à droite (§5.43, §7). `md` et jamais `sm`, qui
-						// est un variant inconnu que Tailwind supprime en silence (§11).
-						'w-[calc(100vw-var(--spacing-4))] md:w-[40ch]',
+						// LE PANNEAU EST ANCRÉ À L'EN-TÊTE, QUI OCCUPE TOUTE LA LARGEUR, et non à la
+						// cloche. Sous `md` il s'étend d'un bord à l'autre de la fenêtre, moins la
+						// marge ; à partir de `md` il retrouve sa colonne de `40ch` alignée à droite.
+						// C'est ce qui l'empêche de sortir de l'écran d'un côté ou de l'autre (§5.43,
+						// §7). `md` et jamais `sm`, qui est un variant inconnu que Tailwind supprime
+						// en silence (§11).
+						'absolute top-full z-40 mt-2',
+						'left-4 right-4 md:left-auto md:right-4 md:w-[40ch]',
 						'max-h-[70vh] overflow-y-auto',
 						'bg-surface border border-border rounded-lg shadow-[var(--shadow-card-hover)]',
 					].join(' ')}
@@ -351,11 +358,22 @@ function LigneNotification({
 				notification.lue ? 'border-l-[3px] border-l-transparent' : 'border-l-[3px] border-l-brand',
 			].join(' ')}
 		>
-			<div className="flex items-center gap-2 min-w-0">
-				{auteur === null ? null : <Avatar profil={auteur} taille={24} decoratif />}
+			<div className="flex items-start gap-2 min-w-0">
+				{auteur === null ? null : (
+					<span className="shrink-0">
+						<Avatar profil={auteur} taille={24} decoratif />
+					</span>
+				)}
+				{/*
+				  LA PHRASE SE REPLIE, ELLE NE SE TRONQUE PAS, et c'est le second défaut trouvé sur la
+				  même capture : « Camille Aubert vous a ment… » coupait le nom de la personne qui
+				  vous écrit, c'est-à-dire l'information même de la ligne. Une liste plate répond au
+				  manque de place en gagnant de la hauteur (§5.21, §5.37) ; l'ellipse du §5.9 est la
+				  règle d'un TABLEAU, qui se balaye en diagonale.
+				*/}
 				<span
 					className={[
-						'min-w-0 truncate text-sm',
+						'min-w-0 flex-1 break-words text-sm',
 						notification.lue ? 'text-text-2' : 'text-ink font-medium',
 					].join(' ')}
 				>
@@ -365,7 +383,7 @@ function LigneNotification({
 				</span>
 				<time
 					dateTime={notification.date}
-					className="ml-auto shrink-0 font-mono text-xs tabular-nums text-text-3"
+					className="ml-auto shrink-0 font-mono text-xs tabular-nums text-text-3 leading-normal"
 				>
 					{formaterDateNotification(notification.date)}
 				</time>
@@ -382,28 +400,35 @@ function LigneNotification({
 				</p>
 			)}
 
-			<div className="flex items-center gap-2 min-w-0">
-				{/*
-				  LE TITRE DE L'AFFAIRE EST LE LIEN, jamais la ligne entière : la cible du clic doit
-				  être la cible annoncée (§5.9, §5.13). Sans adresse lisible, aucun lien n'est rendu —
-				  un lien vers une adresse incomplète mènerait à un écran que l'utilisateur croirait
-				  cassé (§5.32).
-				*/}
-				{notification.titreAffaire === null ? null : notification.adresse === null ? (
-					<span className="min-w-0 truncate text-sm text-text-2">
-						{notification.titreAffaire}
-					</span>
-				) : (
-					<Link
-						to={notification.adresse}
-						data-testid="notification-lien"
-						aria-label={t('notifications.item.open', { affaire: notification.titreAffaire })}
-						className="min-w-0 truncate text-sm text-brand font-medium hover:underline"
-					>
-						{notification.titreAffaire}
-					</Link>
-				)}
+			{/*
+			  LE TITRE DE L'AFFAIRE OCCUPE SA PROPRE LIGNE, ET C'EST UN DÉFAUT TROUVÉ EN REGARDANT
+			  UNE CAPTURE (`CLAUDE.md` §16, `notifications-panneau-xl-1440.jpg`). Posé d'abord sur la
+			  même ligne que la pilule et le bouton, il se rendait « Refonte d… » dans une colonne de
+			  `40ch` où la pilule, `shrink-0`, prenait toute la place : le lien ne nommait plus
+			  l'affaire qu'il ouvre. C'est le repli d'une liste plate (§5.21, §5.37) — la réponse au
+			  manque de place est de gagner de la hauteur, jamais de tronquer une donnée.
 
+			  LE LIEN, jamais la ligne entière : la cible du clic doit être la cible annoncée (§5.9,
+			  §5.13). Sans adresse lisible, aucun lien n'est rendu — un lien vers une adresse
+			  incomplète mènerait à un écran que l'utilisateur croirait cassé (§5.32).
+			*/}
+			{notification.titreAffaire === null ? null : notification.adresse === null ? (
+				<span className="block truncate text-sm text-text-2" title={notification.titreAffaire}>
+					{notification.titreAffaire}
+				</span>
+			) : (
+				<Link
+					to={notification.adresse}
+					data-testid="notification-lien"
+					title={notification.titreAffaire}
+					aria-label={t('notifications.item.open', { affaire: notification.titreAffaire })}
+					className="block truncate text-sm text-brand font-medium hover:underline"
+				>
+					{notification.titreAffaire}
+				</Link>
+			)}
+
+			<div className="flex items-center gap-2 min-w-0">
 				{/*
 				  LA PILULE « Track › Channel » EST CELLE DU §5.29, réemployée sans copie — c'est la
 				  même donnée, elle doit se reconnaître d'un écran à l'autre. Sans destination

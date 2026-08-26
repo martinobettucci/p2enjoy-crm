@@ -3796,9 +3796,33 @@ un œil, on suit un lien, on revient à ce qu'on faisait.
   le referme depuis n'importe lequel de ses contrôles et rend le focus à la cloche — la règle du
   §5.29 tranche 2 g pour les trois surfaces de la liste des tableaux, reprise sans changement.
 
-- **SOUS LE PALIER `md`, LE PANNEAU OCCUPE LA LARGEUR DISPONIBLE MOINS 16 px DE MARGE**, aligné sous
-  la cloche et jamais débordant à droite. `md` et jamais `sm`, qui est un variant inconnu que
-  Tailwind supprime en silence (§11, §5.20). **La page ne défile jamais horizontalement** (§7).
+- **SOUS LE PALIER `md`, LE PANNEAU OCCUPE LA LARGEUR DISPONIBLE MOINS 16 px DE MARGE.** `md` et
+  jamais `sm`, qui est un variant inconnu que Tailwind supprime en silence (§11, §5.20). **La page
+  ne défile jamais horizontalement** (§7).
+
+- **IL EST ANCRÉ À L'EN-TÊTE, ET NON À LA CLOCHE, ET C'EST UN DÉFAUT TROUVÉ EN REGARDANT UNE
+  CAPTURE** (`CLAUDE.md` §16, `docs/captures/CRM-064/notifications-panneau-sm-390.jpg`, 2026-08-26).
+  Cette entrée écrivait « aligné sous la cloche et jamais débordant à droite » : elle ne parlait que
+  d'un bord. Ancré sur la cloche, le panneau alignait son bord **droit** sous elle, si bien qu'à
+  390 px sa largeur le faisait sortir de l'écran **par la gauche** — la moitié de la ligne était
+  hors cadre. L'en-tête occupant toute la largeur, l'y ancrer borne le panneau des **deux** côtés.
+  La règle vaut pour **toute** surface flottante ancrée à un contrôle proche d'un bord : le repère
+  de positionnement est le conteneur pleine largeur, jamais le contrôle.
+
+  **La preuve de débordement ne le voyait pas non plus**, et c'est la seconde moitié de la leçon :
+  `scrollWidth > clientWidth` ne mesure qu'un débordement à **droite**, une coordonnée négative
+  n'engendrant aucun défilement. Toute preuve de palier portant sur une surface flottante mesure
+  désormais son **cadre** — bord gauche ≥ 0, bord droit ≤ largeur de la fenêtre.
+
+- **LA LIGNE SE REPLIE, ELLE NE TRONQUE NI LE NOM NI LE TITRE, ET C'EST UN SECOND DÉFAUT TROUVÉ SUR
+  LA MÊME CAPTURE.** Écrite d'abord avec le titre de l'affaire, sa pilule et le bouton de marquage
+  sur une seule ligne, elle rendait « Refonte d… » dans une colonne de `40ch` où la pilule,
+  `shrink-0`, prenait toute la place : le lien ne nommait plus l'affaire qu'il ouvre. La phrase de
+  mention, elle, rendait « Camille Aubert vous a ment… », coupant le nom de la personne qui écrit —
+  c'est-à-dire l'information même de la ligne. **Le titre occupe donc sa propre ligne**, et la
+  phrase **se replie**. C'est le repli d'une liste plate (§5.21, §5.37) : la réponse au manque de
+  place est de gagner de la hauteur, jamais de tronquer une donnée. L'ellipse du §5.9 est la règle
+  d'un **tableau**, qui se balaye en diagonale ; un panneau de `40ch` n'en est pas un.
 
 - **Aucune couleur, aucun jeton nouveau** : la surface emprunte au §5.18 sa liste plate, au §5.29 sa
   pilule de channel, au §5.10 son avatar et sa date, au §5.1 son liseré, au §5.5 ses variantes et au
