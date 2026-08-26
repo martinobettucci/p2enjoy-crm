@@ -9494,13 +9494,65 @@ avant la suivante :
       troisième issue, distincte du succès comme du refus, qui **nomme les personnes** non
       mentionnées ; le brouillon est vidé — le commentaire existe — et le sélecteur ne garde que
       les refusés.
-- [ ] **Migration `0066` — `public.mentionnables(card_id uuid)`** : `SECURITY INVOKER`, `stable`,
-      `search_path` vide, `anon` révoqué **nommément**, notification du cache de schéma.
-- [ ] **Module client et surface** : la lecture de la liste, la séquence d'émission et le sélecteur
-      du composeur.
-- [ ] **Preuves de la sous-tranche** : suite pgTAP dédiée, contrat d'API des dix lignes du §37,
-      suite unitaire, E2E d'interface, captures observées, harnais
-      `scripts/verify-mentions-composeur.sh`.
+- [x] **Migration `0066` LIVRÉE** : `public.mentionnables(card_id uuid)` — `security invoker`
+      **écrit explicitement** alors qu'il est le défaut de PostgreSQL, `stable`, `search_path` vide,
+      `anon` révoqué **nommément**, notification du cache de schéma. Appliquée et rejouée sur la
+      pile réelle : **66 fichiers, code 0**. Une propriété de sécurité qui n'existe que par omission
+      ne se relit pas, et ne se dégrade pas non plus.
+- [x] **LA RÈGLE D'ACCÈS N'A TOUJOURS QU'UNE SEULE ÉCRITURE.** La fonction appelle
+      `app.can_read_card_pour` pour chaque membre — la chaîne que la tranche 1 a généralisée,
+      employée ici pour la **première fois par une surface**. Le harnais le vérifie des deux côtés :
+      la fonction délègue, et ni le module ni la surface n'interrogent une table d'appartenance.
+- [x] **Module `mentions.ts` et sélecteur du composeur LIVRÉS** — `docs/DESIGN_SYSTEM.md` §5.44.
+      Un `fieldset` de cases à cocher plutôt qu'un `select multiple`, replié par défaut, commande
+      portant le compte même repliée, quatre états traités, et le refus partiel qui **nomme les
+      personnes**. `publierCommentaire` rend désormais l'identifiant de la ligne créée : la clé
+      primaire de `card_comment_mentions` étant `(comment_id, profile_id)`, rien ne se pose sans lui.
+- [x] **Suite pgTAP dédiée** : `supabase/tests/0063_mentionnables.test.sql`, **12 assertions**. Elle
+      ne reprouve ni l'éligibilité ni la production — `0061` et `0062` les tiennent et restent
+      **vertes sans aucune modification**, ce qui EST la preuve de non-régression. Elle prouve ce
+      que rien d'autre ne prouve : le `security invoker` et le `stable`, que seul le catalogue
+      porte ; la révocation nommée d'`anon`, qui ne dépend d'aucun jeton ; que la fonction
+      **délègue** au lieu de recopier le prédicat — qu'aucune assertion de résultat ne verrait,
+      une copie rendant aujourd'hui les mêmes lignes ; et la limite de la clé de service.
+- [x] **DEUX ASSERTIONS ONT ROUGI, ET LES DEUX FOIS C'ÉTAIT LA PREUVE QUI ÉTAIT FAUSSE.** La
+      seconde est la plus instructive : écrite sur `pg_get_functiondef` brut, elle prenait en défaut
+      le **propre commentaire** de la migration, qui nomme `track_members` pour dire qu'elle ne le
+      lit pas. Une assertion qui prend en défaut la prose expliquant la règle ne mesure pas la
+      règle. Le même piège a repris **deux contrôles du harnais**, corrigés de la même façon.
+- [x] **Contrat d'API dédié** : `e2e/api/mentions-composeur.spec.ts`, **10 scénarios verts** avec
+      les jetons réels, chaque sonde détruite et l'état du seed **constaté** après. La ligne *af*
+      est la plus importante et **n'éprouve pas le produit** : elle fige une propriété de PostgREST
+      dont la forme de l'émission dépend entièrement.
+- [x] **UNE LIGNE DU CONTRAT A ROUGI, ET LA PREUVE ÉTAIT FAUSSE, PAS LE PRODUIT.** La ligne *ag*
+      mesure le refus de la **politique** ; elle visait un destinataire inéligible, si bien que le
+      trigger — `BEFORE INSERT`, donc antérieur à la clause `WITH CHECK` — tombait le premier et
+      masquait le refus de l'auteur.
+- [x] **E2E d'interface** : `e2e/ui/mentions-composeur.spec.ts`, **11 scénarios verts**, console
+      vierge. Le parcours complet va de la case cochée jusqu'à **la cloche du destinataire**, dans
+      une session réellement distincte : toute la chaîne de `CRM-064`, éprouvée de bout en bout.
+- [x] **UN DÉFAUT DE PREUVE TROUVÉ EN REGARDANT L'IMAGE** (`CLAUDE.md` §16). La capture du refus
+      partiel montrait le bas de la fiche : la fenêtre n'avait pas suivi le composeur, et l'image ne
+      portait **aucun** des éléments qu'elle prétendait attester. Cinq captures observées aux quatre
+      paliers, sous `docs/captures/CRM-064/`.
+- [x] **Harnais dédié `scripts/verify-mentions-composeur.sh`** : **53 contrôles, aucune anomalie**,
+      **huit dégradations** qui mordent toutes. Il dégrade les **deux** niveaux — la base et la
+      surface —, et c'est le premier du dépôt à devoir **rendre la base** aussi bien que le fichier :
+      une fonction laissée `SECURITY DEFINER` par un harnais interrompu serait une fuite persistante
+      qu'aucun `git diff` ne verrait.
+- [x] **UNE DÉGRADATION NE DÉGRADAIT RIEN, ET LE FAIT DÉPASSE CE HARNAIS.** Retirer le mot `anon` de
+      la ligne `revoke` laissait la suite pgTAP verte **à juste titre** : `create or replace
+      function` **conserve l'ACL existante**. L'état à reproduire est celui d'une base neuve, et il
+      est désormais posé explicitement. Conséquence pour l'exploitation : sur une base où la
+      fonction existe déjà, corriger une ACL fautive demande un `revoke` explicite, jamais un
+      simple rejeu de la migration corrigée.
+- [x] **Documentation dans le même changement** : `docs/SPEC-notifications.md` §32 à §40,
+      `docs/DESIGN_SYSTEM.md` §5.44, `docs/manual.md` §8.5 et §8.6, `docs/SCHEMA.md` §9 bis.9 bis,
+      `docs/PROD_MIGRATIONS.md` migration 66, `README.md`, `CHANGELOG.md` sous `[Non publié]`.
+- [~] **CE QUI RETIENT LA SOUS-TRANCHE EN `[~]`, ET C'EST NOMMÉ PLUTÔT QUE MASQUÉ** : **l'état vide
+      du sélecteur n'est pas exerçable sur le seed** (§36.4, mesuré — aucun couple affaire/lecteur
+      n'y laisse l'appelant seul). Il est éprouvé par la suite unitaire, jamais par le parcours
+      d'interface, et l'écart est porté par le point ouvert n° 4 du §39.
 
 ---
 ### CRM-070 — précision d'arbitrage : l'invitation d'un membre

@@ -13,6 +13,25 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-064` sous-tranche 3b — l'émission d'une mention
+
+- **Le composeur d'un commentaire porte désormais un sélecteur de personnes.** Sous la zone de
+  saisie, la commande « Mentionner » ouvre la liste de celles que ce commentaire peut prévenir ;
+  cochez, publiez, et chacune reçoit sa notification. La commande porte le nombre de personnes
+  cochées, **même repliée**.
+- **Il n'y a aucune syntaxe à connaître.** Taper « @ » dans le texte ne fait rien : le produit ne
+  lit pas votre commentaire pour y deviner des noms. Vous voyez qui vous prévenez avant d'envoyer.
+- **La liste ne contient que les personnes qui peuvent lire cette affaire, et elle change d'une
+  affaire à l'autre.** Ce n'est pas l'écran qui décide : la liste est calculée **en base**, par la
+  même règle d'autorisation que partout ailleurs. Vous n'y figurez jamais vous-même — se
+  mentionner n'enverrait rien.
+- **Quand une mention échoue, votre commentaire reste publié**, et un message **nomme la personne**
+  qui n'a pas été prévenue. Les personnes refusées restent cochées, pour que vous sachiez ce qu'il
+  reste à faire. Retirer le commentaire effacerait un propos réellement tenu.
+- **Mentionner reste facultatif** : un commentaire sans mention se publie exactement comme avant.
+- **Migration `0066`** : `public.mentionnables(card_id)`, `security invoker`, `stable`, `anon`
+  révoqué nommément. Voir `docs/PROD_MIGRATIONS.md`.
+
 ### `CRM-064` sous-tranche 3a — la surface de réception
 
 - **Une cloche apparaît dans l'en-tête, sur tous les écrans**, entre le nom de l'espace de travail

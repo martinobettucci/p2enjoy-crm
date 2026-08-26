@@ -2066,8 +2066,15 @@ personne, et une requête émise sur chaque ouverture d'écran serait gratuite s
 
 - **chargement** : le sélecteur est ouvert, `aria-busy`, et ne porte aucune case ;
 - **erreur** : la mention d'erreur du §5.8 et son **action de reprise**, qui relit la liste ;
-- **vide** : « personne d'autre ne peut lire cette affaire », sans action. C'est un état réel et
-  mesurable — une affaire dont l'appelant est le seul lecteur —, pas un repli ;
+- **vide** : « personne d'autre ne peut lire cette affaire », sans action. C'est un état réel — une
+  affaire dont l'appelant est le seul lecteur —, pas un repli.
+
+  > **CE CAS N'EXISTE DANS AUCUNE AFFAIRE DU SEED, ET C'EST MESURÉ, PAS SUPPOSÉ.** La requête qui
+  > compte les personnes éligibles de chaque couple (affaire, lecteur) rend **1 au minimum** partout :
+  > l'administratrice lit toutes les affaires, si bien qu'un non-administrateur a toujours au moins
+  > elle, et elle a toujours au moins le `business_developer`. L'état vide est donc éprouvé par la
+  > **suite unitaire** et non par le parcours d'interface. L'écart est nommé au point ouvert n° 5 du
+  > §39 plutôt que comblé par une donnée fabriquée ;
 - **peuplé** : les cases, dans l'ordre rendu par la fonction.
 
 **Aucun rendu n'est prévu pour « la liste contient l'appelant »** : le §34.3 le rend impossible en
@@ -2133,7 +2140,12 @@ fabriquée.
 3. **Le fil ne montre pas qui un commentaire mentionne.** Les mentions sont lisibles par qui lit
    l'affaire (§7.1), mais la ligne du fil ne les rend pas. C'est la contrepartie du §33 : 3b livre
    l'émission, pas l'affichage rétrospectif.
-4. **Les points ouverts du §29 restent ouverts sans changement** : rétention, regroupement, « tout
+4. **L'état vide du sélecteur n'est pas exerçable sur le seed.** Aucun couple (affaire, lecteur)
+   n'y laisse l'appelant seul (§36.4, mesuré). Le rendre exerçable demanderait soit une affaire
+   dont même l'administratrice serait exclue — ce que son rôle interdit —, soit un quatrième profil
+   sans droits, c'est-à-dire une décision sur le jeu de démonstration qui dépasse cette
+   sous-tranche.
+5. **Les points ouverts du §29 restent ouverts sans changement** : rétention, regroupement, « tout
    marquer comme lu », préférences, notifications du navigateur, partage entre onglets.
 
 ---
