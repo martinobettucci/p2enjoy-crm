@@ -8023,7 +8023,8 @@ balayage, aucune table de liaison —, et la **décision 517** ouvre le fil aux 
 
 **Ce qui reste dû sur `CRM-060` après la tranche 5** : la **suppression** d'un contact, désormais
 débloquée par la décision 516 mais non écrite — c'est une tranche 6 à spécifier. `CRM-060` demeure
-`[~]` pour cette seule raison.
+`[~]` pour cette seule raison. *(**RÉVISÉ PAR LIVRAISON le 2026-08-26** : la tranche 6 est
+spécifiée, livrée et prouvée ; voir ci-dessous.)*
 
 - [~] **Tranche 6 — la suppression d'un contact. SPÉCIFIÉE le 2026-08-26**
       (`docs/SPEC-contacts.md` §20, dix sous-chapitres écrits et committés **avant** la première
@@ -8042,7 +8043,43 @@ débloquée par la décision 516 mais non écrite — c'est une tranche 6 à sp�
         le cas j du §13.5, livré par 4d le 2026-08-18, rend déjà l'option « référence inconnue » au
         lieu d'un vide. Ce que la tranche 6 ajoute est la **preuve** de cette chaîne sur une
         suppression **réelle** — le cas j n'était éprouvé que sur un identifiant fabriqué.
-      - **Reste dû** : le code du geste, ses preuves (§20.9) et ses captures. L'unité demeure `[~]`.
+      - **LIVRÉE ET PROUVÉE le 2026-08-26.** Definition of Done du §20.10 tenue point par point :
+        - `webapp/src/lib/contacts.ts` : `supprimerContact` et `RefusSuppressionContact`, qui
+          décident `sans-effet` **avant** de classer une erreur. Le classement est celui de
+          `classerRefusCreation`, repris sans changement — un second classifieur divergerait du
+          premier au premier code ajouté ;
+        - `webapp/src/app/SuppressionContact.tsx` : la commande destructive, sa confirmation dans le
+          flux, ses **deux conséquences énoncées**, et le retour du focus **non différé par une
+          temporisation** mais par le cycle de rendu ;
+        - `webapp/src/app/FicheContact.tsx` : la commande montée à côté de « Modifier »,
+          l'exclusion mutuelle des deux gestes, la relecture sur deux issues et la navigation vers
+          le carnet sur la troisième ;
+        - **Unitaire** : `contacts.test.ts` **86 tests** (la chaîne exacte, le filtre réellement
+          posé, l'issue « sans effet », l'absence de toute requête de comptage) ;
+          `FicheContact.test.tsx` **79 tests** (cas a à l, le retour au carnet observé par une VRAIE
+          route et non par un espion). **Non complaisants, éprouvés par trois dégradations** : le
+          succès qui ne navigue plus fait rougir les cas g et f ; `select('*')` au lieu de
+          `select('id')` fait rougir la première assertion ; la phrase des rattachements rendue à
+          zéro affaire fait rougir le cas e ;
+        - **API** : `e2e/api/contacts.spec.ts` porté de 80 à **89 scénarios**, les neuf mesures avec
+          les jetons réels, chaque refus relisant la ligne, la trace du fil mesurée en **DELTA** ;
+        - **E2E d'interface** : `e2e/ui/contacts.spec.ts` **7 scénarios** de plus, tous sur des
+          sondes créées par les gestes de l'écran, dont le **cas m** — un contact réellement
+          supprimé, et le champ qui rend « Référence inconnue » plutôt qu'un vide — et la mesure du
+          palier **390 px** sur la boîte de la confirmation ;
+        - **Captures produites ET OBSERVÉES** (`CLAUDE.md` §16) sous `docs/captures/CRM-060/` :
+          `fiche-contact-suppression-{confirmation-1440, rattachee-1440, sans-effet-1440,
+          reference-inconnue-1440, carnet-1440, confirmation-sm-390}` ;
+        - **Documentation dans le même changement** : `docs/SPEC-contacts.md` §20 (et §6 point 4,
+          §16.8 **révisés par livraison**), `docs/DESIGN_SYSTEM.md` §5.40 ajouté et §5.24 révisé,
+          `docs/manual.md` chapitre 3 *ter*, `CHANGELOG.md`.
+      - **UN DÉFAUT DE CAPTURE, TROUVÉ EN REGARDANT — et déjà payé une fois** (décision 508).
+        L'image de la référence inconnue était cadrée sur le haut de la fiche d'affaire : elle
+        montrait l'en-tête et le début du formulaire, jamais le champ qu'elle prouve. L'assertion
+        était verte, l'image ne disait rien. Le sélecteur est désormais amené dans le champ visible
+        avant le déclenchement.
+      - **Aucune migration, et `docs/PROD_MIGRATIONS.md` n'a rien reçu** : la tranche exerce
+        `contacts_suppression_bizdev_admin`, posée par la migration `0045`.
 
 **Troisième tranche livrée, 2026-08-18 — la résolution des champs `contact` et `user`**
 (`docs/SPEC-contacts.md` §9, migration `0047`) :

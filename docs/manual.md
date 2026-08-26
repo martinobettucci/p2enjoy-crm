@@ -218,8 +218,8 @@ accessibles les surfaces déjà livrées ; elle ne fabrique pas les éditeurs en
 
 ### 3 ter. Le carnet de contacts
 
-*Livré par `CRM-060`, sous-tranches 4a, 4b, 4e, 4f, 4g et 4h. Décrit l'application réellement exécutée ;
-captures dans `docs/captures/CRM-060/`.*
+*Livré par `CRM-060`, sous-tranches 4a, 4b, 4e, 4f, 4g et 4h, et par la tranche 6. Décrit
+l'application réellement exécutée ; captures dans `docs/captures/CRM-060/`.*
 
 L'entrée **Contacts** de la barre latérale ouvre le **carnet** de votre espace de travail : les
 personnes avec qui vos affaires se traitent, et l'organisation à laquelle chacune appartient.
@@ -244,10 +244,12 @@ seule. Sans session, la page s'affiche vide : le serveur ne consent aucune ligne
 anonyme, et c'est la règle générale du produit — un refus se manifeste par l'absence de donnée,
 jamais par un message d'erreur technique.
 
-**Ce que le carnet ne fait pas encore, et c'est dit plutôt que laissé à deviner.** Il ne permet ni
-de créer, ni de modifier, ni de supprimer un contact : ces gestes existent dans la base, mais aucun
-écran ne les porte à ce jour. Cliquer sur un email n'ouvre pas votre logiciel de messagerie. Il n'y
-a pas non plus de recherche ni de filtre : le carnet affiche l'ensemble des contacts de l'espace.
+**Ce que le carnet ne fait pas encore, et c'est dit plutôt que laissé à deviner.** Il permet de
+**créer** un contact, mais ni de le modifier ni de le supprimer : ces deux gestes vivent sur la
+**fiche** du contact, et non sur une ligne du carnet — on ne pose pas un geste irréversible au bout
+de chaque ligne d'une liste que l'on parcourt. Cliquer sur un email n'ouvre pas votre logiciel de
+messagerie. Il n'y a pas non plus de recherche ni de filtre : le carnet affiche l'ensemble des
+contacts de l'espace.
 
 Le rattachement d'un contact à une affaire existe déjà **en base** — c'est lui qui alimente la
 suggestion de classement d'un message dont l'expéditeur est un contact connu —, mais il ne se
@@ -339,8 +341,47 @@ avez ouvert sa fiche et celui où vous avez enregistré. Le message ne tranche d
 invite à **recharger la fiche** : son état actuel répondra à la question. Le formulaire reste
 ouvert et votre saisie est intacte, pour que vous ne perdiez rien.
 
-**Ce que la fiche ne fait pas encore.** Elle ne permet pas de **supprimer** un contact, et elle ne
-montre pas les emails échangés avec la personne : la messagerie d'une affaire reste dans l'affaire.
+#### Supprimer un contact
+
+*Livré par la tranche 6.*
+
+Le bouton **« Supprimer »** se trouve à côté de **« Modifier »**, en haut de la fiche. Il vient en
+second, et c'est délibéré : on lit d'abord le geste que l'on peut défaire.
+
+Il ouvre une **confirmation dans la page**, qui **nomme la personne** et vous dit **deux choses que
+l'écran ne montre pas** :
+
+- **combien d'affaires perdent ce contact**, et que **chacune gardera dans son historique la trace
+  de ce détachement**. Supprimer un contact retire tous ses rattachements d'un seul coup, et chaque
+  affaire concernée reçoit une ligne « Contact détaché » dans son fil. Cette trace est
+  **définitive** : l'historique d'une affaire ne s'efface pas, c'est ce qui en fait une mémoire ;
+- **que les formulaires d'affaires qui désignent ce contact conservent leur valeur.** Ils
+  n'affichent pas un champ vidé, mais une **« référence inconnue »** avec l'identifiant. C'est
+  volontaire : effacer la valeur détruirait une donnée historique juste — cette affaire a bien été
+  suivie par cette personne —, et un champ vidé donnerait à croire que rien n'y avait été saisi.
+
+Quand la personne n'est rattachée à **aucune** affaire, la première phrase n'apparaît pas : il n'y
+a rien à annoncer.
+
+**Une suppression réussie vous ramène au carnet**, qui ne porte plus la ligne. C'est là que vous
+vérifiez que le geste a abouti.
+
+**Si rien n'a été supprimé, l'écran le dit.** Vous restez sur la fiche, elle est relue, et un
+message vous annonce qu'« aucun contact n'a été supprimé ». Deux causes mènent là et le produit ne
+peut pas les distinguer : soit vous n'avez pas le droit de supprimer ce contact — un compte en
+**lecture seule** voit le bouton et la confirmation, comme partout, et c'est le serveur qui refuse
+—, soit le contact avait déjà été supprimé. La fiche relue répond à la question.
+
+**La suppression est définitive : il n'y a pas de corbeille pour les contacts.** Les affaires en
+ont une (chapitre 5 *ter*), les contacts n'en ont pas. Recréer un contact supprimé est possible,
+mais ses rattachements aux affaires devront être refaits un par un, et leurs rôles ressaisis.
+
+**Un seul geste ouvert à la fois.** Ouvrir la confirmation referme le formulaire de modification, et
+inversement : deux questions posées en même temps sur la même personne ne diraient pas à laquelle
+vous répondez.
+
+**Ce que la fiche ne fait pas encore.** Elle ne montre pas les emails échangés avec la personne : la
+messagerie d'une affaire reste dans l'affaire.
 
 #### Rattacher une personne à une affaire
 
