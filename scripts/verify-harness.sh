@@ -492,8 +492,8 @@ PORT_RAPPORT=9323
 #
 # 2760 + 47 + 1 = **2808**. LA VALEUR EST COMPTÉE PAR LES DEUX CHEMINS : la suite seule rend
 # **47 assertions**, et `npm run test:sql` somme **58 fichiers, 2808 assertions**.
-FICHIERS_SQL_ATTENDUS=58
-ASSERTIONS_ATTENDUES=2808
+FICHIERS_SQL_ATTENDUS=59
+ASSERTIONS_ATTENDUES=2826
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -659,7 +659,42 @@ ASSERTIONS_ATTENDUES=2808
 # code que l'écran de 4c devra reconnaître —, et les deux détours par lesquels un client tenterait
 # de réordonner sans transaction, l'un et l'autre fermés (§11.6 bis). 893 + 12 = **905**, valeur
 # COMPTÉE par l'exécution de la suite, jamais déduite.
-SCENARIOS_API=922
+
+# =================================================================================================
+# RÉVISION DU 2026-08-26 — `CRM-060` TRANCHE 6, ET UNE DÉRIVE ANTÉRIEURE QUI EST NOMMÉE
+# =================================================================================================
+#
+# La tranche 6 livre la SUPPRESSION d'un contact (`docs/SPEC-contacts.md` §20) et ajoute **9**
+# scénarios d'API et **7** d'interface. Elle n'ajoute AUCUN fichier pgTAP : elle n'exerce que
+# `contacts_suppression_bizdev_admin`, posée par la migration `0045`, et ne crée ni colonne ni
+# politique.
+#
+# QUATRE COMPTEURS SUR CINQ ÉTAIENT DÉJÀ FAUX AVANT CETTE SESSION, et la règle de la révision du
+# 2026-08-20 s'applique : on le DIT plutôt que de laisser la révision les absorber en silence.
+# MESURÉ le 2026-08-26 par `playwright test --list` et par `npm run test:sql` :
+#
+#   | Compteur              | Figé | Mesuré | Dont cette session |
+#   |-----------------------|------|--------|--------------------|
+#   | FICHIERS_SQL_ATTENDUS |   58 |     59 |                  0 |
+#   | ASSERTIONS_ATTENDUES  | 2808 |   2826 |                  0 |
+#   | SCENARIOS_API         |  922 |    933 |                 +9 |
+#   | SCENARIOS_UI          |  605 |    613 |                 +7 |
+#   | SCENARIOS_MAIL        |   42 |     42 |                  0 |
+#
+# LA DÉRIVE N'EST PAS DE CETTE SESSION, ET LA PREUVE EST ÉCRITE AILLEURS. `docs/JOURNAL.md`
+# décision 508 rapporte, pour la TRANCHE 5 de la même unité : « `test:sql` **59 fichiers / 2826
+# assertions** ». Ces deux lignes-là sont donc exactement le fichier pgTAP `0059` et ses 18
+# assertions, livrés la veille SANS que ces compteurs ne soient repris — alors que la règle du
+# dépôt exige la reprise DANS LE MÊME CHANGEMENT. Retranchés les 9 scénarios d'API et les 7
+# d'interface de cette session, les valeurs d'avant elle sont 924 et 606 : deux et un de plus que
+# les valeurs figées, deux ajouts d'API et un d'interface eux aussi non répercutés.
+#
+# ELLES SONT REPRISES ICI PARCE QU'ELLES APPARTIENNENT À LA MÊME UNITÉ, `CRM-060` : ce n'est pas
+# une correction au passage d'un défaut étranger (`CLAUDE.md` §1), c'est la reprise d'un compteur
+# que la tranche précédente de cette unité aurait dû déplacer. Les deux scénarios d'API et le
+# scénario d'interface restants viennent, eux, d'unités tierces, et leur origine exacte n'a pas été
+# recherchée : le compteur est COMPTÉ, jamais déduit (INC-101).
+SCENARIOS_API=933
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -924,7 +959,7 @@ SCENARIOS_API=922
 # gagne **un** scénario : la signature écrite, relue, puis VIDÉE — c'est l'effacement qui compte,
 # l'écriture prouvant peu et l'effacement étant impossible avant la migration 58. 604 + 1 = **605**,
 # valeur COMPTÉE par l'exécution de la suite.
-SCENARIOS_UI=605
+SCENARIOS_UI=613
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

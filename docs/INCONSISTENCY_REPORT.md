@@ -227,9 +227,13 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Vingt-huit ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+**Trente ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-173, INC-174,
-INC-182, INC-183, INC-185, INC-186, INC-188, INC-189, INC-190, INC-191, INC-192 et INC-193** —
+INC-182, INC-183, INC-185, INC-186, INC-188, INC-189, INC-190, INC-191, INC-192, INC-193, INC-221
+et INC-222** — **INC-221 et INC-222** consignées le 2026-08-26 par la session `CRM-060` tranche 6 :
+la liste passe de vingt-huit à trente. Toutes deux rendent **rouge** une partie de `npm run
+test:sql`, toutes deux appartiennent à `CRM-063`, et toutes deux sont **reproduites dans les deux
+sens** plutôt que constatées. Le détail est en fin de section. —
 **INC-193** consignée le 2026-08-20 par la session `CRM-088`, en écrivant la spécification de
 l'écran de configuration des comptes entrants : le corps d'un refus de contrainte rendu par
 PostgREST divulgue `secret_id`, la seule colonne que `CRM-052` révoque à `authenticated`. La liste
@@ -374,6 +378,105 @@ Une nouvelle entrée n'est ouverte ici que dans les conditions de la doctrine ci
 qu'aucune mesure ne permet de trancher seul, ou un point que `CLAUDE.md` §26 réserve au responsable.
 
 ---
+
+---
+
+### INC-221 — une preuve d'armement laisse ses inscriptions en base, et le `ON DELETE RESTRICT` de la migration 60 en fait rougir DEUX suites pgTAP sans rapport
+
+*Consignée le 2026-08-26 par la session `CRM-060` tranche 6. Porteur : `CRM-063` sous-tranche 4b.
+Comportement laissé **inchangé** (`CLAUDE.md` §1) : le défaut vit dans les fichiers d'une autre
+unité, et le corriger au passage élargirait cette session.*
+
+**Le constat.** `npm run test:sql` rend `0025_identites_sortantes_smtp.test.sql` et
+`0033_quota_par_defaut.test.sql` en **« psql a échoué (code 3) »**, avec la même erreur pour les
+deux :
+
+```
+ERROR: update or delete on table "mail_outbound_identities" violates foreign key constraint
+       "card_sequence_enrollments_identity_fk" on table "card_sequence_enrollments"
+DETAIL: Key (id)=(8abf5abc-…) is still referenced from table "card_sequence_enrollments".
+```
+
+**La chaîne, mesurée.** La migration `0060` pose `card_sequence_enrollments_identity_fk` vers
+`mail_outbound_identities` en **`ON DELETE RESTRICT`** (`confdeltype = 'r'`, relevé dans
+`pg_constraint`). `e2e/api/armement-sequences.spec.ts` arme quatre inscriptions sur une identité du
+**seed**, les **ferme** — son propre contrat l'exige, et il le tient : leur `status` vaut `closed` —
+mais ne les **supprime pas**. Les deux suites pgTAP ci-dessus suppriment cette identité dans leur
+mise en place ; le `RESTRICT` le leur refuse, et leur transaction entière est abandonnée.
+
+**REPRODUITE DANS LES DEUX SENS, le 2026-08-26, ce qui écarte l'hypothèse d'un état accidentel :**
+
+| # | État | Mesure |
+|---|---|---|
+| 1 | `card_sequence_enrollments` **vidée** | `0025` rend ses **38** assertions, `0033` ses **4** — aucune erreur |
+| 2 | `e2e/api/armement-sequences.spec.ts` joué **une fois** (17 scénarios verts) | **4** inscriptions `closed` demeurent, toutes sur l'identité `8abf5abc-…` |
+| 3 | les deux mêmes suites rejouées | **la même violation de clé étrangère**, aux mêmes lignes |
+
+**Pourquoi personne ne l'avait vue.** La décision 518, qui a livré la sous-tranche 4b la veille,
+rapporte `test:sql` **vert**. Elle l'était : la table venait d'être créée et aucune inscription
+n'existait encore. Le défaut n'apparaît qu'**une fois la preuve d'armement exécutée au moins une
+fois** sur une base donnée, et il y **reste** — les inscriptions fermées ne sont retirées par
+personne. Toute campagne qui joue `e2e:api` avant `test:sql` le rencontre donc, et toute campagne
+qui les joue dans l'autre ordre ne le voit pas.
+
+**Ce que cela dit du contrat.** Ce n'est pas la clé étrangère qui est en cause — un `RESTRICT` sur
+une identité encore référencée est exactement ce que `CRM-063` voulait. C'est qu'une preuve d'API
+laisse derrière elle un état que le dépôt ne considère pas comme du résidu, parce qu'elle a
+**fermé** ce qu'elle a armé et croit donc avoir rangé. « Fermée » n'est pas « absente », et la clé
+étrangère ne fait pas la différence.
+
+**Arbitrage attendu du responsable, et deux voies existent** — aucune n'est prise ici :
+
+- **la preuve range ce qu'elle crée** : `armement-sequences.spec.ts` supprime ses inscriptions en
+  `finally`, à la clé de service, comme `contacts.spec.ts` le fait de ses sondes ;
+- **les deux suites pgTAP créent leur propre identité** au lieu de supprimer une identité du seed,
+  ce qui est la doctrine que la tranche 5 de `CRM-060` a payée pour apprendre — « sur une donnée
+  partagée, une preuve ne mesure pas un absolu ».
+
+La première est plus étroite et suffit ; la seconde est plus robuste et vaut pour tout référencement
+futur. Le choix appartient au porteur de `CRM-063`.
+
+---
+
+### INC-222 — une assertion pgTAP fige une date que le seed TRANSLATE chaque jour : elle est rouge tous les jours sauf celui où elle a été écrite
+
+*Consignée le 2026-08-26 par la session `CRM-060` tranche 6. Porteur : `CRM-063`. Comportement
+laissé **inchangé**.*
+
+**Le constat.** `supabase/tests/0054_rendu_modeles_emails.test.sql`, assertion 13 :
+
+```
+not ok 13 - CRM-063 §8.6 — card.next_action_at rend JJ/MM/AAAA HH:MM en UTC, limite nommée
+#         have: 25/08/2026 09:00
+#         want: 24/08/2026 09:00
+```
+
+**La cause, mesurée.** L'assertion compare le rendu à la **chaîne littérale** `'24/08/2026 09:00'`.
+Or `supabase/seed/apply-seed.sh`, section « 8 duodecies bis. Échéances », **translate** toutes les
+échéances du seed sur le jour courant :
+
+```sql
+update public.cards
+set next_action_at = next_action_at + (date_trunc('day', now()) - timestamptz '2026-08-21 00:00:00+00')
+```
+
+La valeur en base pour `…0c2` vaut donc `2026-08-25 09:00` aujourd'hui, `2026-08-26 09:00` demain,
+et ainsi de suite. Elle valait `2026-08-24 09:00` le 2026-08-25 — le jour où l'assertion a été
+écrite, et le seul où elle peut être verte.
+
+**CE N'EST PAS CE QUE SON PROPRE COMMENTAIRE ANNONCE**, et c'est le point : le fichier écrit « la
+voir rougir un jour signalerait qu'un fuseau a été introduit sans réviser le §8.6 ». Le garde-fou
+est donc **déjà déclenché**, mais pour une cause que son auteur n'avait pas prévue — le calendrier,
+non un fuseau. Une session pressée y lirait une régression de fuseau et chercherait sa cause là où
+elle n'est pas. C'est la famille d'INC-203, sur un autre axe : là une heure locale, ici une date
+mobile.
+
+**Ce qu'il faudrait, et qui n'est pas fait ici** : l'assertion doit dériver son attendu de la MÊME
+translation que le seed — comparer au rendu de `to_char(c.next_action_at, 'DD/MM/YYYY HH24:MI')` lu
+en base, ou figer l'écart au jour courant plutôt que la date absolue. Elle garderait alors son objet
+— prouver le FORMAT et le fuseau — sans dépendre du jour où on l'exécute. Le choix appartient au
+porteur de `CRM-063`.
+
 
 ## Consignées le 2026-08-16 — trois constats étrangers à `CRM-079`, puis INC-126 et INC-127
 
