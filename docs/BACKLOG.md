@@ -9160,7 +9160,7 @@ avant la suivante :
 |---|---|---|
 | 1 | La mention en base — relation, intégrité, règle d'éligibilité, RLS, contrat d'API, seed, harnais. Aucune surface | en cours |
 | 2 | La notification — table `public.notifications`, production à partir d'une mention, état lu / non lu | **livrée** |
-| 3 | La surface et le temps réel — composeur, liste, compteur, abonnement. **Découpée en deux sous-tranches** (spécification §22.1) : `3a` la réception, `3b` l'émission | `3a` **livrée**, `[~]` (harnais dédié non écrit) ; `3b` `[ ]` |
+| 3 | La surface et le temps réel — composeur, liste, compteur, abonnement. **Découpée en deux sous-tranches** (spécification §22.1) : `3a` la réception, `3b` l'émission | `3a` **close** ; `3b` `[ ]` |
 | 4 | Les préférences — ce que chacun reçoit, et par quel canal | `[ ]` |
 
 - [x] **Spécification écrite et committée AVANT la première ligne de code** —
@@ -9421,18 +9421,42 @@ avant la suivante :
 - [x] **Documentation dans le même changement** : `docs/SPEC-notifications.md` §21 à §31,
       `docs/DESIGN_SYSTEM.md` §5.43, `docs/manual.md` §8, `docs/SCHEMA.md` §8,
       `docs/PROD_MIGRATIONS.md` migration 65, `README.md`, `CHANGELOG.md` sous `[Non publié]`.
-- [ ] **HARNAIS DÉDIÉ `scripts/verify-notifications-surface.sh` NON ÉCRIT**, et l'écart est nommé :
-      le §31 le demande. Les preuves qu'il rejouerait existent et sont vertes — suite unitaire,
-      contrat d'API, E2E d'interface, captures —, mais aucune **dégradation réelle** n'a éprouvé
-      qu'elles savent rougir sur la surface. `verify-notifications.sh` en éprouve **une** au
-      passage : sa dégradation D-G retire la publication, et la suite pgTAP la dénonce.
+- [x] **Harnais dédié `scripts/verify-notifications-surface.sh`** : **43 contrôles, aucune
+      anomalie**, **sept dégradations** qui mordent toutes. Il dégrade la **surface** là où
+      `verify-notifications.sh` dégrade la **base** — les deux niveaux voient des choses
+      différentes. La première dégradation fait compter au compteur les lignes de la **page** au
+      lieu de celles du serveur, en laissant module, types, requêtes et canal debout ; la seconde
+      est sans équivalent : elle fait **nommer** au panneau la cause d'un propos illisible, le rendu
+      restant complet — ce qui tombe est la **discrétion** du §24.3. La restauration est constatée
+      par `git diff`.
+- [x] **UN DÉFAUT TROUVÉ PAR LA CAMPAGNE, ET IL N'APPARTENAIT PAS À L'ÉCRAN QUI L'A RÉVÉLÉ.**
+      `ma-journee.spec.ts` a rougi sur son parcours clavier : `console.warning: WebSocket is closed
+      before the connection is established`. **MESURÉ** : chaque `<Route>` rend sa **propre**
+      `AppShell`, donc la cloche est démontée et remontée **à chaque navigation**, et un canal créé
+      puis retiré à ce rythme fait fermer la socket avant la fin de sa poignée de main. Le fil de
+      `CRM-043` n'avait jamais rencontré ce cycle : il ne vit que sur la fiche d'une affaire.
+      **Corrigé à la cause** — l'abonnement vit au niveau du module, survit au démontage, et n'est
+      retiré qu'à la déconnexion ou sur une reprise explicite. Ni temporisation, ni avertissement
+      ajouté à une liste tolérée.
+- [x] **UN SECOND DÉFAUT EST NÉ DE CETTE CORRECTION, ET LA PREUVE L'A PRIS.** L'inscription était
+      affectée **après** le `subscribe`, si bien que le rappel posait son état sur la mauvaise. Le
+      navigateur ne le montrait pas — sa poignée de main est asynchrone —, le double de test
+      rappelle **synchroniquement**. Un ordre qui n'est juste que parce qu'une dépendance est lente
+      n'est pas un ordre juste.
+
+#### Sous-tranche 3a — la réception `[x]`
+
+- [x] **CLOSE.** Toutes ses preuves sont exécutées et vertes : suite unitaire (33 + 23 tests),
+      contrat d'API (7 scénarios, dont trois abonnements `Realtime` réels), E2E d'interface (12
+      scénarios, console vierge), six captures **observées** aux quatre paliers, et harnais dédié
+      (43 contrôles, sept dégradations mordantes).
 
 - [~] **CE QUI RETIENT L'UNITÉ EN `[~]`, ET C'EST NOMMÉ PLUTÔT QUE MASQUÉ.** Les tranches **1 et
-      2 sont closes**, et la sous-tranche **3a est livrée et prouvée** — elle reste `[~]` pour une
-      seule raison, nommée ci-dessus : son **harnais dédié n'est pas écrit**. La sous-tranche **3b**
+      2 sont closes**, et la sous-tranche **3a l'est aussi**. Ce qui reste : la sous-tranche **3b**
       — le composeur qui pose une mention — n'est pas commencée, son contrat étant énoncé au §30 et
-      restant à spécifier avant son code. La **tranche 4** — les préférences — n'est pas commencée.
-      `docs/manual.md` porte désormais son chapitre 8, et son §8.5 nomme les six absences.
+      restant à spécifier avant son code ; et la **tranche 4** — les préférences — n'est pas
+      commencée. `docs/manual.md` porte désormais son chapitre 8, et son §8.5 nomme les six
+      absences.
 - [ ] **La série des `scripts/verify-*.sh` n'a PAS été rejouée derrière ces changements**, et
       l'écart est nommé (`docs/CloudWorker.md` §4.3, budget) : le dépôt en porte **soixante-treize**
       depuis la tranche 2, et **deux** l'ont été — `verify-mentions.sh` à la tranche 1,

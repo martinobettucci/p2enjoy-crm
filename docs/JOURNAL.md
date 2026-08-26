@@ -25489,17 +25489,36 @@ seulement mort (décision 50). La notification de la preuve naît du **trigger**
 insertion directe, et l'attente porte sur un **fait** — l'arrivée de l'événement — et non sur une
 durée devinée.
 
+**LA CAMPAGNE A TROUVÉ UN DÉFAUT QUI N'APPARTENAIT PAS À L'ÉCRAN QUI L'A RÉVÉLÉ, ET C'EST LE FAIT LE
+PLUS UTILE DE LA SESSION.** `ma-journee.spec.ts` a rougi sur son parcours clavier :
+`console.warning: WebSocket is closed before the connection is established`. **MESURÉ** : chaque
+`<Route>` de `App.tsx` rend sa **propre** `AppShell`, si bien que l'en-tête — donc la cloche — est
+démontée et remontée **à chaque navigation** ; un canal créé puis retiré à ce rythme fait fermer la
+socket `supabase-js` avant la fin de sa poignée de main. Le fil de commentaires de `CRM-043`
+n'avait jamais rencontré ce cycle, ne vivant que sur la fiche d'une affaire — **une règle
+d'abonnement juste sur une route peut être fausse sur toutes**.
+
+**LE REMÈDE EST À LA CAUSE** (`CLAUDE.md` §18) : ni temporisation, ni avertissement ajouté à une
+liste tolérée. L'abonnement vit désormais au **niveau du module** — un canal par profil, qui survit
+au démontage et n'est retiré qu'à la déconnexion ou sur une reprise explicite. Il y en a exactement
+un à tout instant, donc rien ne fuit, et la navigation cesse de payer une reconnexion par écran.
+
+**UN SECOND DÉFAUT EST NÉ DE CETTE CORRECTION, ET LA PREUVE L'A PRIS.** Écrite en une seule
+expression, l'inscription était affectée **après** le `subscribe`, si bien que son rappel posait
+l'état d'établissement sur la mauvaise inscription. **Le navigateur ne le montrait pas**, sa poignée
+de main étant asynchrone ; le double de test, lui, rappelle **synchroniquement**, et c'est ce qui l'a
+révélé. Un ordre qui n'est juste que parce qu'une dépendance est lente n'est pas un ordre juste.
+
 **CAMPAGNE.** `typecheck`, `types:check` et `build` verts ; `test:sql` **62 fichiers / 2939
 assertions** ; `test:unit` **80 fichiers / 2706 tests** ; `e2e:api` **974 passés** (967 avant, plus
-les 7 de la tranche) ; `e2e:mail` **42 passés** ; `pytest` **244 passés** ;
-`scripts/verify-notifications.sh` **43 contrôles, aucune anomalie**, huit dégradations toutes
-mordantes et restauration constatée ; `e2e:ui` — verdict consigné au compte rendu.
+les 7 de la tranche) ; `e2e:mail` **42 passés** ; `pytest` **244 passés** ; `e2e:ui` **640 passés,
+un échec** — celui ci-dessus, corrigé à sa cause, et les deux suites concernées rejouées **vertes**
+(25 scénarios, console vierge) ; `scripts/verify-notifications.sh` **43 contrôles** et
+`scripts/verify-notifications-surface.sh` **43 contrôles**, aucune anomalie de part et d'autre,
+quinze dégradations toutes mordantes et restauration constatée.
 
-**Où reprendre.** `CRM-064` **sous-tranche 3a livrée**, et l'unité reste `[~]` pour une seule raison
-nommée au backlog : **le harnais dédié `scripts/verify-notifications-surface.sh` n'est pas écrit**.
-Les preuves qu'il rejouerait existent et sont vertes, mais aucune **dégradation réelle** n'a éprouvé
-qu'elles savent rougir sur la surface — `verify-notifications.sh` n'en éprouve qu'**une** au passage.
-C'est le premier travail de la session suivante, et il est court.
+**Où reprendre.** `CRM-064` **sous-tranche 3a CLOSE** : toutes ses preuves sont exécutées et vertes,
+son harnais dédié compris.
 
 Vient ensuite la **sous-tranche 3b — le composeur qui pose une mention**, dont le contrat est énoncé
 au §30 et qui est à **spécifier avant son code**. Le point qu'elle devra trancher est nommé : la
