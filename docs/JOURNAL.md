@@ -24930,3 +24930,43 @@ l'issue « sans effet » ; la phrase des rattachements rendue à zéro affaire f
 **Une mesure de plus au palier 390 px**, sur la **boîte** de la confirmation et non sur sa seule
 visibilité : le §5.27 avait payé ce risque une fois, sur une confirmation posée dans un tableau
 défilant. Celle-ci vit hors du tableau et tient dans la fenêtre — mesuré, plutôt que supposé.
+
+**CAMPAGNE COMPLÈTE, ET ELLE A COÛTÉ TROIS MESURES POUR UNE.** `typecheck` et `build` verts ;
+`test:unit` **77 fichiers / 2571 tests** ; `e2e:api` **933 passés** ; `e2e:ui` **613 passés** ;
+`e2e:mail` **42 passés** ; `pytest` **244 passés** ; `test:sql` **59 fichiers, une anomalie**.
+
+**CE QUE LA CAMPAGNE A APPRIS SUR LA CAMPAGNE ELLE-MÊME, ET QUI VAUT POUR LES SESSIONS SUIVANTES.**
+Les premiers bilans étaient FAUX, et dans les deux sens. Trois pièges, tous mesurés :
+
+1. **Lancer `test:sql` pendant qu'une suite E2E tourne détruit la mesure.** Les suites pgTAP
+   dégradent puis restaurent le schéma ; une exécution concurrente les entrelace. Le compte
+   d'échecs est monté de **4 à 5 puis à 16** sur trois passages successifs d'un dépôt INCHANGÉ.
+   Rejouer les migrations (`up migrations-runner`, jamais nu) puis le seed l'a ramené à **3**.
+2. **`e2e:mail` laisse la pile amputée quand ses preuves de résilience sont perturbées.** Le
+   conteneur `mail-sync` était **ABSENT** de `docker compose ps` — arrêté par un scénario qui ne
+   l'avait pas remonté. La suite rendait alors **18 passés** et une douzaine d'échecs qui ne
+   disaient rien du produit. `./runDev.sh` puis le seed : **42 passés**, aucun échec.
+3. **La campagne RÉÉCRIT environ deux cent vingt captures d'autres unités**, et pas seulement en
+   ré-encodant : `docs/captures/CRM-083/tableau-liste-1440.jpg` revenait avec un **« Tableau
+   jetable de preuve »** — le résidu d'un scénario — dans l'image de référence d'une autre unité.
+   Toutes ont été restaurées (`git checkout -- docs/captures/`), les six de la tranche 6 étant
+   déjà committées.
+
+**LA SEULE ANOMALIE QUI TIENT SUR UNE PILE SAINE EST INC-222**, étrangère à cette unité. **INC-221**
+ne se déclenche qu'après un passage de `e2e/api/armement-sequences.spec.ts` : la pile venant d'être
+remontée, elle ne figure pas au bilan final — ce qui est exactement le mécanisme décrit dans son
+entrée, et non une disparition.
+
+**`CRM-060` PASSE À `[x]`.** Sa Definition of Done est tenue point par point (tableau au backlog), et
+les trois points restants du §6 — archivage réversible, fusion de doublons, purge RGPD ;
+rapprochement par domaine ; rôles normalisés — sont **hors périmètre depuis la spécification du
+2026-08-18**, chacun appelant une décision produit. Ils ne sont pas un reste dû de l'unité.
+
+**Où reprendre.** `CRM-063` **sous-tranche 4c — l'écran**, dernière de son unité : l'administration
+des séquences, l'armement depuis l'affaire, et la RPC de réordonnancement que le §11.6 bis rend
+nécessaire. Elle héritera d'**INC-221**, qui vit dans ses propres fichiers, et d'**INC-222**, dont
+l'assertion figée est à dériver de la translation du seed plutôt que d'une date absolue.
+
+**La question posée au responsable reste la même, et une seule** : les unités **`CRM-072`**
+(`audit_log`) et **`CRM-073`** (`api_tokens`) n'existent pas, onze unités leur renvoient, et leur
+périmètre est un choix produit qu'aucune mesure ne donne.

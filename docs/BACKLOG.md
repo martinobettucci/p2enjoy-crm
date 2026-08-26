@@ -7197,7 +7197,7 @@ INC-086 et par le corps de ce document, là où le snooze n'existait qu'en ligne
 d'unité s'attribue désormais en lisant **cette table**, jamais le dernier numéro cité dans le corps
 du document.*
 
-### CRM-060 — Contacts et organisations `[~]`
+### CRM-060 — Contacts et organisations `[x]`
 
 Carnet de contacts et d'organisations d'un workspace, historique transverse, rattachement d'un
 contact à une affaire. Objet métier de première classe, débloque la règle 3 du classement
@@ -8101,6 +8101,31 @@ spécifiée, livrée et prouvée ; voir ci-dessous.)*
         avant le déclenchement.
       - **Aucune migration, et `docs/PROD_MIGRATIONS.md` n'a rien reçu** : la tranche exerce
         `contacts_suppression_bizdev_admin`, posée par la migration `0045`.
+
+**`CRM-060` PASSE À `[x]` LE 2026-08-26, ET LA DEFINITION OF DONE EST TENUE POINT PAR POINT.**
+
+| Exigence de la DoD | État |
+|---|---|
+| les trois tables avec contraintes, RLS et privilèges | tranche 1, migration `0045` |
+| suite pgTAP dédiée | `0043` **38**, `0044` **21**, `0045` **19**, `0059` **18** assertions — les quatre VERTES le 2026-08-26 |
+| preuve d'API dédiée avec les jetons réels | `e2e/api/contacts.spec.ts`, **89 scénarios** verts |
+| seed enrichi | organisations, contacts et rattachements, convergent, rendu **INTACT** par les preuves de la tranche 6 |
+| écrans (carnet, fiche, rattachement) | tranche 4, **dix** sous-tranches, `e2e/ui/contacts.spec.ts` vert dans la campagne complète (**613 passés**) |
+| règle 3 du classement activée | tranche 2, et sa **surface** livrée par 2 bis |
+| résolution `contact` livrée | tranche 3, migration `0047` |
+
+**CE QUI N'EST PAS DANS CETTE UNITÉ, ET QUI EST NOMMÉ PLUTÔT QU'INVENTÉ** (`CLAUDE.md` §1) : les
+points **1**, **2** et **3** du §6 de `docs/SPEC-contacts.md` — archivage réversible d'un contact et
+fusion de doublons, purge RGPD ; rapprochement automatique email → organisation par domaine ; rôles
+de `card_contacts` normalisés. Ils étaient **hors périmètre dès la spécification du 2026-08-18** et
+appellent chacun une décision produit du responsable. Le point **4**, lui, est tranché
+(décision 516) et exécuté par la tranche 6. **L'unité ne reste donc pas `[~]` de ces trois points :
+ils ne lui appartiennent pas**, et les porter en unités propres est une décision du responsable.
+
+**Campagne complète du 2026-08-26, sur pile remontée** : `typecheck` et `build` verts ;
+`test:unit` **77 fichiers / 2571 tests** ; `test:sql` **59 fichiers**, **une** anomalie, étrangère et
+consignée (**INC-222**) ; `e2e:api` **933 passés** ; `e2e:ui` **613 passés** ; `e2e:mail`
+**42 passés** ; `pytest` **244 passés**.
 
 **Troisième tranche livrée, 2026-08-18 — la résolution des champs `contact` et `user`**
 (`docs/SPEC-contacts.md` §9, migration `0047`) :
