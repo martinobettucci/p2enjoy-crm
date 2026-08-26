@@ -319,7 +319,21 @@ test.describe('le composeur, et le refus qui vient du backend (§13.6)', () => {
 
 		await page.getByLabel('Votre commentaire').focus()
 		await page.keyboard.type('Au clavier')
+		// L'ORDRE DE TABULATION DU COMPOSEUR A CHANGÉ AVEC `CRM-064` SOUS-TRANCHE 3B, et cette
+		// preuve est RÉVISÉE pour le mesurer plutôt que contournée (mécanisme de la décision 51).
+		// Le sélecteur de mentions vit entre la zone de saisie et le bouton de publication
+		// (docs/DESIGN_SYSTEM.md §5.44), donc le clavier y fait désormais une halte. Elle est
+		// VÉRIFIÉE, et non simplement franchie : un contrôle inséré demain au mauvais endroit
+		// passerait inaperçu derrière une tabulation de plus.
+		//
+		// LE SÉLECTEUR N'EST PAS OUVERT ICI, et c'est délibéré : cet écran est SERVI par
+		// substitution, sa liste de personnes n'est pas routée, et l'ouvrir mesurerait la
+		// substitution plutôt que le produit. Le parcours qui ouvre, coche et publie vit dans
+		// `e2e/ui/mentions-composeur.spec.ts`, sur session réelle.
 		await page.keyboard.press('Tab')
+		await expect(page.getByRole('button', { name: 'Mentionner' })).toBeFocused()
+		await page.keyboard.press('Tab')
+		await expect(page.getByRole('button', { name: 'Publier' })).toBeFocused()
 		await page.keyboard.press('Enter')
 
 		const charge = JSON.parse((await envoi).postData() ?? '{}')

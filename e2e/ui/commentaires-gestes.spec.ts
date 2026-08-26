@@ -301,7 +301,14 @@ test.describe('les deux gestes de l’auteur, sur la vraie base', () => {
 			const texte = `Geste ${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`
 			await page.getByLabel('Votre commentaire').click()
 			await page.keyboard.type(texte)
+			// LA HALTE DU SÉLECTEUR DE MENTIONS EST SUR LE CHEMIN depuis `CRM-064` sous-tranche 3b
+			// (docs/DESIGN_SYSTEM.md §5.44) : cette preuve est RÉVISÉE pour la mesurer, jamais
+			// contournée par une tabulation muette de plus. Le sélecteur n'est pas ouvert — ce
+			// scénario éprouve les gestes d'auteur, pas l'émission d'une mention.
 			await page.keyboard.press('Tab')
+			await expect(page.getByRole('button', { name: 'Mentionner' })).toBeFocused()
+			await page.keyboard.press('Tab')
+			await expect(page.getByRole('button', { name: 'Publier' })).toBeFocused()
 			await page.keyboard.press('Enter')
 			await expect(page.getByText(texte)).toBeVisible()
 			id = (await relire(request, texte))?.id
