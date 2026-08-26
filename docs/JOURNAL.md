@@ -25225,7 +25225,13 @@ et restauration constatée.
 le harnais dégradait et restaurait la même base. Il a rendu 629 verts, et aucune dégradation ne
 portait sur un objet qu'un scénario d'interface lit — elles ne touchaient que la relation créée par
 cette tranche. La campagne a néanmoins été **rejouée seule** derrière l'arbre final, parce qu'un
-verdict pris dans une fenêtre où le produit bougeait n'est pas un verdict.
+verdict pris dans une fenêtre où le produit bougeait n'est pas un verdict. **Second passage :
+629 passés, aucun échec, en 20,7 minutes** — même bilan, cette fois sans rien d'autre sur la base.
+
+**Les cent trente-deux captures réécrites par les deux rejeus ont été RESTAURÉES**, comme aux
+unités précédentes : cette tranche ne touche aucun composant d'interface, leur contenu ne change
+pas, et seul leur encodage JPEG diffère. Aucune capture n'est produite par cette tranche, et
+c'est cohérent avec son périmètre — elle ne livre **aucune surface** (§1.3).
 
 **Où reprendre.** `CRM-064` **tranche 1 close**. La session suivante prend la **tranche 2 — la
 notification** : table `public.notifications`, sa production à partir d'une mention, l'état lu / non
