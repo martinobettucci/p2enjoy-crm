@@ -46,6 +46,7 @@ import {
 	classerRefusRattachement,
 	creerContact,
 	modifierContact,
+	supprimerContact,
 	detacherContact,
 	modifierRoleRattachement,
 	classerRefusRole,
@@ -1627,5 +1628,146 @@ describe('classerRefusRole (§19.5)', () => {
 		expect(classerRefusRole(401, undefined, 'x').nature).toBe('forbidden')
 		expect(classerRefusRole(undefined, undefined, 'x').nature).toBe('network')
 		expect(classerRefusRole(500, undefined, 'x').nature).toBe('unknown')
+	})
+})
+
+// ================================================================================================
+// TRANCHE 6 — `supprimerContact` (docs/SPEC-contacts.md §20.2 et §20.5)
+// ================================================================================================
+//
+// @verifies CRM-060 (docs/BACKLOG.md) — tranche 6 : la suppression d'un contact
+// @verifies docs/SPEC-contacts.md §20.2 (les neuf mesures du 2026-08-26, dont la troisième issue),
+//           §20.5 (dictionnaire FERMÉ, et les trois natures structurellement inatteignables)
+//
+// L'ESPION ÉPROUVE LA CHAÎNE EXACTE, `delete().eq().select()`, et pas seulement la valeur rendue.
+// Le `.select('id')` est une EXIGENCE de la spécification, non un détail : sans lui, PostgREST ne
+// rend aucun corps, et le refus SILENCIEUX de la politique (mesure 3) serait indistinguable d'un
+// succès. Un espion qui ne le vérifierait pas laisserait passer un code qui annonce une suppression
+// que la base a refusée.
+
+type AppelSuppression = {
+	table?: string
+	supprime: boolean
+	colonnes?: string
+	filtre?: { colonne: string; valeur: unknown }
+}
+
+function espionSuppression(reponse: {
+	data: unknown[] | null
+	error: { message: string; code?: string } | null
+	status: number
+}): { client: ClientCrm; appel: AppelSuppression } {
+	const appel: AppelSuppression = { supprime: false }
+	const chaine: Record<string, unknown> = {
+		eq: (colonne: string, valeur: unknown) => {
+			appel.filtre = { colonne, valeur }
+			return chaine
+		},
+		select: (colonnes: string) => {
+			appel.colonnes = colonnes
+			return Promise.resolve(reponse)
+		},
+	}
+	const client = {
+		from: (table: string) => {
+			appel.table = table
+			return {
+				delete: () => {
+					appel.supprime = true
+					return chaine
+				},
+			}
+		},
+	} as unknown as ClientCrm
+	return { client, appel }
+}
+
+const ID_SONDE = '5eed0000-0000-4000-8000-000000000091'
+
+describe('supprimerContact (§20.2)', () => {
+	it('supprime la ligne d’`id` demandé, et DEMANDE une représentation — mesures 1 et 2', async () => {
+		const { client, appel } = espionSuppression({
+			data: [{ id: ID_SONDE }],
+			error: null,
+			status: 200,
+		})
+		const resultat = await supprimerContact(client, ID_SONDE)
+
+		expect(appel.table).toBe('contacts')
+		expect(appel.supprime).toBe(true)
+		expect(appel.filtre).toEqual({ colonne: 'id', valeur: ID_SONDE })
+		// `.select('id')` REND L'ISSUE « ZÉRO LIGNE » OBSERVABLE (§20.2). C'est l'assertion qui
+		// protège la mesure 3 : sans corps, le silence de la politique passerait pour un succès.
+		expect(appel.colonnes).toBe('id')
+		expect(resultat.statut).toBe('supprimee')
+	})
+
+	it('rend `sans-effet` sur ZÉRO LIGNE et AUCUNE erreur — mesures 3 et 5', async () => {
+		// LA LECTRICE, ET UN CONTACT DÉJÀ PARTI, SONT INDISTINGUABLES PAR CONSTRUCTION : la clause
+		// `USING` rend la ligne invisible à l'écriture, et PostgREST rend `200` avec un tableau
+		// vide, SANS erreur. Une seule issue les couvre, et elle n'affirme ni l'un ni l'autre.
+		const { client } = espionSuppression({ data: [], error: null, status: 200 })
+		const resultat = await supprimerContact(client, ID_SONDE)
+		expect(resultat.statut).toBe('refus')
+		if (resultat.statut !== 'refus') return
+		expect(resultat.refus.nature).toBe('sans-effet')
+	})
+
+	it('classe l’anonyme en `interdit` — mesure 4', async () => {
+		const { client } = espionSuppression({
+			data: null,
+			error: { message: 'permission denied for table contacts', code: '42501' },
+			status: 401,
+		})
+		const resultat = await supprimerContact(client, ID_SONDE)
+		expect(resultat.statut).toBe('refus')
+		if (resultat.statut !== 'refus') return
+		expect(resultat.refus.nature).toBe('interdit')
+		// LE MESSAGE DU SERVEUR N'ATTEINT JAMAIS L'ÉCRAN, mais il est CONSERVÉ pour le diagnostic
+		// (§20.5) : c'est `detail`, et aucune surface ne le rend tel quel.
+		expect(resultat.refus.detail).toContain('permission denied')
+	})
+
+	it('classe un identifiant mal formé en `indisponible` — mesure 6', async () => {
+		const { client } = espionSuppression({
+			data: null,
+			error: { message: 'invalid input syntax for type uuid', code: '22P02' },
+			status: 400,
+		})
+		const resultat = await supprimerContact(client, 'pas-un-uuid')
+		expect(resultat.statut).toBe('refus')
+		if (resultat.statut !== 'refus') return
+		expect(resultat.refus.nature).toBe('indisponible')
+	})
+
+	it('ne lève jamais : une exception du client devient un refus `indisponible`', async () => {
+		const client = {
+			from: () => {
+				throw new Error('réseau coupé')
+			},
+		} as unknown as ClientCrm
+		const resultat = await supprimerContact(client, ID_SONDE)
+		expect(resultat.statut).toBe('refus')
+		if (resultat.statut !== 'refus') return
+		expect(resultat.refus.nature).toBe('indisponible')
+	})
+
+	it('n’émet AUCUNE requête de comptage : une seule chaîne, sur la seule table `contacts`', async () => {
+		// §20.8 : le nombre d'affaires vient de la donnée déjà lue, et les valeurs de formulaire ne
+		// sont pas comptées — les balayer demanderait de parcourir `card_field_values` sur un
+		// `jsonb` sans index à chaque ouverture de la confirmation.
+		const tables: string[] = []
+		const chaine: Record<string, unknown> = {
+			eq: () => chaine,
+			select: () => Promise.resolve({ data: [{ id: ID_SONDE }], error: null, status: 200 }),
+		}
+		const client = {
+			from: (table: string) => {
+				tables.push(table)
+				return { delete: () => chaine }
+			},
+		} as unknown as ClientCrm
+		await supprimerContact(client, ID_SONDE)
+		expect(tables).toEqual(['contacts'])
 	})
 })

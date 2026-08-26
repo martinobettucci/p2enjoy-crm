@@ -23,7 +23,7 @@
 
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router'
+import { MemoryRouter, Route, Routes } from 'react-router'
 import { afterEach, describe, expect, it } from 'vitest'
 import { ContenuFicheContact } from './FicheContact'
 import { fr } from '../i18n/fr'
@@ -1623,5 +1623,277 @@ describe('modification du rôle d’un rattachement (docs/SPEC-contacts.md §19.
 		for (const commande of await screen.findAllByTestId('modifier-role-affaire')) {
 			expect((commande as HTMLButtonElement).disabled).toBe(false)
 		}
+	})
+})
+
+// ================================================================================================
+// TRANCHE 6 — LA SUPPRESSION D'UN CONTACT (docs/SPEC-contacts.md §20.7, cas a à n)
+// ================================================================================================
+//
+// @verifies CRM-060 (docs/BACKLOG.md) — tranche 6 : la suppression d'un contact
+// @verifies docs/SPEC-contacts.md §20.4 (le retour au carnet sur le SEUL succès), §20.5
+//           (dictionnaire fermé), §20.6 (les deux conséquences énoncées, la relecture sur les deux
+//           autres issues), §20.7 (contrat de comportement, cas a à n)
+// @verifies docs/DESIGN_SYSTEM.md §5.40 (le geste de suppression), §5.24 révisé (deux commandes)
+
+/**
+ * Espion de suppression : `from('contacts').delete().eq('id', …).select('id')`, chaîne EXACTE.
+ *
+ * **`suppressions` porte les FILTRES réellement posés**, et non un compteur : un code qui
+ * n'ajouterait pas `.eq('id', …)` supprimerait TOUS les contacts que la politique laisse voir, et
+ * un compteur ne le verrait pas. Les LECTURES sont rejouables — les issues « sans effet » et
+ * « refus » relisent la fiche (§20.6).
+ */
+function clientQuiSupprimeLeContact(options: { lectures: Reponse[]; suppression?: Reponse }) {
+	const suppressions: Array<Record<string, unknown>> = []
+	let rangLecture = 0
+	const lireChaine = () => {
+		const chaine: Record<string, unknown> = {
+			then: (resoudre: (valeur: Reponse) => unknown) => {
+				const reponse = options.lectures[Math.min(rangLecture, options.lectures.length - 1)]
+				rangLecture += 1
+				return Promise.resolve(reponse ?? VIDE).then(resoudre)
+			},
+		}
+		for (const nom of ['eq', 'is', 'order', 'limit']) chaine[nom] = () => chaine
+		return chaine
+	}
+	return {
+		suppressions,
+		client: {
+			from: (table: string) => ({
+				select: () => lireChaine(),
+				delete: () => {
+					const filtres: Record<string, unknown> = { table }
+					const chaine: Record<string, unknown> = {
+						eq: (colonne: string, valeur: unknown) => {
+							filtres[colonne] = valeur
+							return chaine
+						},
+						select: (colonnes: string) => {
+							filtres.colonnes = colonnes
+							suppressions.push(filtres)
+							return Promise.resolve(
+								options.suppression ?? { data: [{ id: ID_LEO }], error: null, status: 200 },
+							)
+						},
+					}
+					return chaine
+				},
+			}),
+		} as unknown as ClientCrm,
+	}
+}
+
+/**
+ * Monte la fiche DANS UN ROUTEUR QUI PORTE LE CARNET, pour que la navigation du §20.4 soit
+ * OBSERVABLE. Sans cette route, un `navigate('/contacts')` réussi ne se distinguerait pas d'un
+ * geste qui n'aurait rien fait — la preuve serait verte sur une absence.
+ */
+const TEMOIN_CARNET = 'temoin-carnet-atteint'
+
+function monterAvecCarnet(client: ClientCrm | null, idContact: string | undefined) {
+	return render(
+		<MemoryRouter initialEntries={[`/contacts/${idContact ?? ''}`]}>
+			<Routes>
+				<Route
+					path="/contacts/:idContact"
+					element={<ContenuFicheContact client={client} idContact={idContact} />}
+				/>
+				<Route path="/contacts" element={<p data-testid={TEMOIN_CARNET}>carnet</p>} />
+			</Routes>
+		</MemoryRouter>,
+	)
+}
+
+async function ouvrirLaSuppression() {
+	await userEvent.click(await screen.findByTestId('ouvrir-suppression-contact'))
+	return screen.findByTestId('confirmation-suppression-contact')
+}
+
+describe('suppression d’un contact (docs/SPEC-contacts.md §20.7)', () => {
+	it('cas a : UNE commande « Supprimer » à côté de « Modifier », aucune confirmation rendue', async () => {
+		monter(clientQuiRend(OK(LEO)), ID_LEO)
+		const supprimer = await screen.findByTestId('ouvrir-suppression-contact')
+		expect(supprimer.textContent).toContain(fr['contact.delete.action'])
+		expect(screen.getByTestId('ouvrir-modification-contact')).toBeTruthy()
+		expect(screen.queryByTestId('confirmation-suppression-contact')).toBeNull()
+		// AUCUNE COMMANDE ÉTEINTE D'AVANCE (§20.6) : elle n'est désactivée que par sa propre
+		// confirmation, jamais par un rôle.
+		expect((supprimer as HTMLButtonElement).disabled).toBe(false)
+	})
+
+	it('cas b : la confirmation NOMME le contact, le focus y entre, et la commande est DÉSACTIVÉE sans être démontée', async () => {
+		monter(clientQuiRend(OK(LEO)), ID_LEO)
+		const bloc = await ouvrirLaSuppression()
+		expect(bloc.textContent).toContain('Léo Marchand')
+		expect(document.activeElement).toBe(screen.getByTestId('confirmer-suppression-contact'))
+		// LA COMMANDE RESTE MONTÉE (§5.40) : la retirer ferait sauter la hauteur de la zone au
+		// moment précis où l'on demande à l'utilisateur de lire.
+		const commande = screen.getByTestId('ouvrir-suppression-contact') as HTMLButtonElement
+		expect(commande.disabled).toBe(true)
+	})
+
+	it('cas c : « Annuler » démonte la confirmation et REND le focus à la commande', async () => {
+		monter(clientQuiRend(OK(LEO)), ID_LEO)
+		await ouvrirLaSuppression()
+		await userEvent.click(screen.getByTestId('annuler-suppression-contact'))
+		await waitFor(() => expect(screen.queryByTestId('confirmation-suppression-contact')).toBeNull())
+		// LE RETOUR DU FOCUS EST DIFFÉRÉ, et c'est le motif du §5.27 : la commande reste montée mais
+		// `disabled`, et un élément désactivé ne reçoit pas le focus. Aucune temporisation.
+		await waitFor(() =>
+			expect(document.activeElement).toBe(screen.getByTestId('ouvrir-suppression-contact')),
+		)
+	})
+
+	it('cas d : rattaché à UNE affaire, la confirmation dit la trace laissée dans l’historique', async () => {
+		monter(clientQuiRend(OK(LEO)), ID_LEO)
+		const bloc = await ouvrirLaSuppression()
+		expect(screen.getByTestId('consequence-affaires-suppression').textContent).toBe(
+			fr['contact.delete.confirm.deals.one'],
+		)
+		// CONSÉQUENCE 2, TOUJOURS RENDUE (§20.6, décision 516) : les valeurs de formulaire demeurent.
+		expect(bloc.textContent).toContain(fr['contact.delete.confirm.values'])
+	})
+
+	it('cas d bis : rattaché à DEUX affaires, la phrase est celle du pluriel, avec le compte', async () => {
+		monter(clientQuiRend(OK(LEO_DEUX_AFFAIRES)), ID_LEO)
+		await ouvrirLaSuppression()
+		expect(screen.getByTestId('consequence-affaires-suppression').textContent).toContain('2')
+		// DEUX CLÉS, JAMAIS UNE CONCATÉNATION (`CLAUDE.md` §23) : le singulier n'est pas rendu ici.
+		expect(screen.getByTestId('consequence-affaires-suppression').textContent).not.toBe(
+			fr['contact.delete.confirm.deals.one'],
+		)
+	})
+
+	it('cas e : rattaché à ZÉRO affaire, la phrase des rattachements N’EST PAS rendue', async () => {
+		monter(clientQuiRend(OK(ELISE)), ID_ELISE)
+		const bloc = await ouvrirLaSuppression()
+		// Annoncer « 0 affaire » ferait lire une conséquence inexistante (§20.6).
+		expect(screen.queryByTestId('consequence-affaires-suppression')).toBeNull()
+		// La conséquence 2 reste, elle : une valeur de formulaire peut désigner un contact qui n'est
+		// rattaché à aucune affaire, la résolution du §9.3 ne l'exigeant nulle part.
+		expect(bloc.textContent).toContain(fr['contact.delete.confirm.values'])
+	})
+
+	it('cas g : une suppression appliquée QUITTE la fiche pour le carnet', async () => {
+		const { client, suppressions } = clientQuiSupprimeLeContact({ lectures: [OK(LEO)] })
+		monterAvecCarnet(client, ID_LEO)
+		await ouvrirLaSuppression()
+		await userEvent.click(screen.getByTestId('confirmer-suppression-contact'))
+		expect(await screen.findByTestId(TEMOIN_CARNET)).toBeTruthy()
+		// LE FILTRE EST POSÉ SUR `id`, ET LA REPRÉSENTATION EST DEMANDÉE (§20.2).
+		expect(suppressions).toHaveLength(1)
+		expect(suppressions[0]).toMatchObject({ table: 'contacts', id: ID_LEO, colonnes: 'id' })
+	})
+
+	it('cas h : « sans effet » AFFICHE son message, RELIT la fiche, et NE QUITTE PAS l’écran', async () => {
+		// LA MESURE 3 : la lectrice reçoit `200` et un tableau vide, sans erreur, sur une ligne qui
+		// RESTE en base. Quitter la fiche annoncerait une suppression qui n'a pas eu lieu.
+		const { client } = clientQuiSupprimeLeContact({
+			lectures: [OK(LEO)],
+			suppression: SILENCE,
+		})
+		monterAvecCarnet(client, ID_LEO)
+		await ouvrirLaSuppression()
+		await userEvent.click(screen.getByTestId('confirmer-suppression-contact'))
+		const message = await screen.findByTestId('message-suppression-contact')
+		expect(message.textContent).toBe(fr['contact.delete.noeffect'])
+		expect(message.getAttribute('role')).toBe('alert')
+		expect(screen.queryByTestId(TEMOIN_CARNET)).toBeNull()
+		// LA CONFIRMATION SE FERME, ET LA FICHE EST RELUE : le contact est toujours là.
+		await waitFor(() => expect(screen.queryByTestId('confirmation-suppression-contact')).toBeNull())
+		expect(screen.getByTestId('caracteristiques-contact')).toBeTruthy()
+	})
+
+	it('cas i : un refus affiche le texte du dictionnaire FERMÉ, jamais le message du serveur', async () => {
+		const { client } = clientQuiSupprimeLeContact({
+			lectures: [OK(LEO)],
+			suppression: {
+				data: null,
+				error: { message: 'permission denied for table contacts', code: '42501' },
+				status: 401,
+			},
+		})
+		monterAvecCarnet(client, ID_LEO)
+		await ouvrirLaSuppression()
+		await userEvent.click(screen.getByTestId('confirmer-suppression-contact'))
+		const message = await screen.findByTestId('message-suppression-contact')
+		expect(message.textContent).toBe(fr['contact.delete.refus.forbidden'])
+		// LE MESSAGE DU SERVEUR N'ATTEINT JAMAIS L'ÉCRAN (§20.5, règle du §12.5).
+		expect(message.textContent).not.toContain('permission denied')
+		expect(screen.queryByTestId(TEMOIN_CARNET)).toBeNull()
+	})
+
+	it('cas f : pendant l’envoi, la confirmation est `aria-busy` et l’envoi ne part QU’UNE fois', async () => {
+		let resoudre: ((valeur: Reponse) => void) | null = null
+		const enAttente = new Promise<Reponse>((r) => {
+			resoudre = r
+		})
+		let appels = 0
+		const lireChaine = () => {
+			const chaine: Record<string, unknown> = {
+				then: (r: (valeur: Reponse) => unknown) => Promise.resolve(OK(LEO)).then(r),
+			}
+			for (const nom of ['eq', 'is', 'order', 'limit']) chaine[nom] = () => chaine
+			return chaine
+		}
+		const client = {
+			from: () => ({
+				select: () => lireChaine(),
+				delete: () => {
+					const chaine: Record<string, unknown> = {
+						eq: () => chaine,
+						select: () => {
+							appels += 1
+							return enAttente
+						},
+					}
+					return chaine
+				},
+			}),
+		} as unknown as ClientCrm
+		monterAvecCarnet(client, ID_LEO)
+		await ouvrirLaSuppression()
+		const confirmer = screen.getByTestId('confirmer-suppression-contact') as HTMLButtonElement
+		await userEvent.click(confirmer)
+		await waitFor(() => expect(confirmer.getAttribute('aria-busy')).toBe('true'))
+		expect(confirmer.disabled).toBe(true)
+		expect(confirmer.textContent).toContain(fr['contact.delete.pending'])
+		await userEvent.click(confirmer)
+		expect(appels).toBe(1)
+		resoudre?.({ data: [{ id: ID_LEO }], error: null, status: 200 })
+		expect(await screen.findByTestId(TEMOIN_CARNET)).toBeTruthy()
+	})
+
+	it('cas k : ni sur l’introuvable, ni sur l’erreur, ni sans client, la commande n’existe', async () => {
+		monter(clientQuiRend(VIDE), ID_LEO)
+		expect(await screen.findByText(fr['contact.notFound.title'])).toBeTruthy()
+		expect(screen.queryByTestId('ouvrir-suppression-contact')).toBeNull()
+
+		cleanup()
+		monter(clientQuiRend({ data: null, error: { message: 'boom' }, status: 500 }), ID_LEO)
+		expect(await screen.findByText(fr['contact.error.title'])).toBeTruthy()
+		expect(screen.queryByTestId('ouvrir-suppression-contact')).toBeNull()
+
+		cleanup()
+		monter(null, ID_LEO)
+		expect(await screen.findByText(fr['contact.noWorkspace.title'])).toBeTruthy()
+		expect(screen.queryByTestId('ouvrir-suppression-contact')).toBeNull()
+	})
+
+	it('cas l : UNE SEULE question ouverte — chaque geste referme l’autre', async () => {
+		monter(clientQuiRend(OK(LEO)), ID_LEO)
+		// La modification d'abord, puis la suppression : le formulaire se referme.
+		await userEvent.click(await screen.findByTestId('ouvrir-modification-contact'))
+		expect(screen.getByTestId('formulaire-modification-contact')).toBeTruthy()
+		await userEvent.click(screen.getByTestId('ouvrir-suppression-contact'))
+		expect(screen.queryByTestId('formulaire-modification-contact')).toBeNull()
+		expect(screen.getByTestId('confirmation-suppression-contact')).toBeTruthy()
+
+		// Et réciproquement : rouvrir la modification referme la confirmation.
+		await userEvent.click(screen.getByTestId('ouvrir-modification-contact'))
+		expect(screen.queryByTestId('confirmation-suppression-contact')).toBeNull()
+		expect(screen.getByTestId('formulaire-modification-contact')).toBeTruthy()
 	})
 })
