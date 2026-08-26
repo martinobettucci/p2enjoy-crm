@@ -227,15 +227,17 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Trente et une ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+**Vingt-neuf ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-173, INC-174,
-INC-182, INC-183, INC-185, INC-186, INC-188, INC-189, INC-190, INC-191, INC-192, INC-193, INC-221,
-INC-222 et INC-223** — **INC-223** consignée le 2026-08-26 par la session `CRM-063` sous-tranche
-4c : un scénario de `e2e/ui/manuel.spec.ts` laisse deux `401` dans la console, anomalie mesurée
-**des deux côtés d'un `git stash`** et donc préexistante. La liste passe de trente à trente et une. — **INC-221 et INC-222** consignées le 2026-08-26 par la session `CRM-060` tranche 6 :
-la liste passe de vingt-huit à trente. Toutes deux rendent **rouge** une partie de `npm run
-test:sql`, toutes deux appartiennent à `CRM-063`, et toutes deux sont **reproduites dans les deux
-sens** plutôt que constatées. Le détail est en fin de section. —
+INC-182, INC-183, INC-185, INC-186, INC-188, INC-189, INC-190, INC-191, INC-192, INC-193 et
+INC-223** — **INC-223** consignée le 2026-08-26 par la session `CRM-063` sous-tranche 4c : un
+scénario de `e2e/ui/manuel.spec.ts` laisse deux `401` dans la console, anomalie mesurée **des deux
+côtés d'un `git stash`** et donc préexistante.
+
+**INC-221 et INC-222 sont CLOSES le 2026-08-26**, par la sous-tranche 4c de l'unité qui les portait
+— le journal de la décision 519 avait écrit que 4c en hériterait. Les deux rendaient rouge une
+partie de `npm run test:sql` ; après correction, la campagne rend **60 fichiers, 2850 assertions,
+aucune anomalie**. La liste passe donc de trente à **vingt-neuf**. —
 **INC-193** consignée le 2026-08-20 par la session `CRM-088`, en écrivant la spécification de
 l'écran de configuration des comptes entrants : le corps d'un refus de contrainte rendu par
 PostgREST divulgue `secret_id`, la seule colonne que `CRM-052` révoque à `authenticated`. La liste
@@ -383,11 +385,37 @@ qu'aucune mesure ne permet de trancher seul, ou un point que `CLAUDE.md` §26 r�
 
 ---
 
-### INC-221 — une preuve d'armement laisse ses inscriptions en base, et le `ON DELETE RESTRICT` de la migration 60 en fait rougir DEUX suites pgTAP sans rapport
+### INC-221 — CLOSE le 2026-08-26 : une preuve d'armement laissait ses inscriptions en base, et le `ON DELETE RESTRICT` de la migration 60 en faisait rougir DEUX suites pgTAP sans rapport
 
-*Consignée le 2026-08-26 par la session `CRM-060` tranche 6. Porteur : `CRM-063` sous-tranche 4b.
-Comportement laissé **inchangé** (`CLAUDE.md` §1) : le défaut vit dans les fichiers d'une autre
-unité, et le corriger au passage élargirait cette session.*
+*Consignée le 2026-08-26 par la session `CRM-060` tranche 6. **CLOSE le même jour par la session
+`CRM-063` sous-tranche 4c**, qui est le porteur que cette entrée désignait — le journal de la
+décision 519 écrivait que 4c « héritera d'INC-221 ».*
+
+**CE QUI A ÉTÉ FAIT, ET C'EST LA PREMIÈRE DES DEUX VOIES QUE CETTE ENTRÉE PROPOSAIT** — son texte
+disait qu'elle suffit. `e2e/api/armement-sequences.spec.ts` **retire** désormais ses inscriptions à
+la clé de SERVICE, dans le même `finally` qui les refermait, et son scénario 17 gagne une seconde
+assertion : **aucune inscription ne subsiste, FERMÉE COMPRISE**. La première assertion filtrait sur
+`status=eq.active`, et elle était verte pendant tout le temps où le défaut existait — une preuve qui
+prend un résidu pour un rangement cesse de le dénoncer.
+
+`e2e/ui/armement-sequence.spec.ts`, livrée par 4c, porte la même garde dans son `afterEach`.
+
+**LA CLÉ DE SERVICE EST NÉCESSAIRE, ET C'EST LE SEUL ENDROIT DU DÉPÔT OÙ ELLE L'EST SUR CETTE
+TABLE** : le §12.10 n'expose AUCUN `delete` à personne — une inscription est une trace —, donc aucun
+jeton de profil ne peut ranger ce résidu. La seconde assertion LIT elle aussi à la clé de service,
+et pour une raison mesurée : la politique de lecture est `app.can_read_card`, si bien qu'un jeton de
+profil ne verrait pas un résidu posé sur une affaire qu'il ne lit pas, et le contrôle serait vert
+pour la mauvaise raison.
+
+**MESURE APRÈS CORRECTION, 2026-08-26** : `npm run test:sql` rend **60 fichiers, 2850 assertions,
+aucune anomalie**, et `e2e/api/armement-sequences.spec.ts` ses **17 scénarios**, la table restant
+vide après son passage.
+
+**La seconde voie n'est pas prise, et son intérêt demeure** : faire créer aux deux suites pgTAP leur
+propre identité plutôt que de supprimer celle du seed les rendrait robustes à tout référencement
+futur. Elle appartient à leur unité, non à `CRM-063`.
+
+*Texte d'origine conservé ci-dessous.*
 
 **Le constat.** `npm run test:sql` rend `0025_identites_sortantes_smtp.test.sql` et
 `0033_quota_par_defaut.test.sql` en **« psql a échoué (code 3) »**, avec la même erreur pour les
@@ -440,10 +468,28 @@ futur. Le choix appartient au porteur de `CRM-063`.
 
 ---
 
-### INC-222 — une assertion pgTAP fige une date que le seed TRANSLATE chaque jour : elle est rouge tous les jours sauf celui où elle a été écrite
+### INC-222 — CLOSE le 2026-08-26 : une assertion pgTAP figeait une date que le seed TRANSLATE chaque jour
 
-*Consignée le 2026-08-26 par la session `CRM-060` tranche 6. Porteur : `CRM-063`. Comportement
-laissé **inchangé**.*
+*Consignée le 2026-08-26 par la session `CRM-060` tranche 6. **CLOSE le même jour par la session
+`CRM-063` sous-tranche 4c**, porteur désigné.*
+
+**CE QUI A ÉTÉ FAIT, ET C'EST EXACTEMENT CE QUE CETTE ENTRÉE DEMANDAIT.** L'assertion 13 de
+`supabase/tests/0054_rendu_modeles_emails.test.sql` dérive désormais son attendu de la MÊME colonne
+que le rendu :
+
+```sql
+(select to_char(c.next_action_at, 'DD/MM/YYYY HH24:MI')
+   from public.cards c where c.id = '5eed0000-0000-4000-8000-0000000000c2')
+```
+
+**ELLE GARDE SON OBJET ENTIER, et c'est le point** : ce qu'elle prouve n'a jamais été la DATE, c'est
+le FORMAT et le FUSEAU. `to_char` sans `at time zone` lit la colonne dans le fuseau de la session,
+que `run-sql-tests.sh` laisse en UTC ; un rendu qui basculerait en heure locale ferait donc toujours
+rougir l'assertion, et une date qui avance d'un jour ne la fera plus.
+
+**MESURE APRÈS CORRECTION, 2026-08-26** : le fichier rend ses **53 assertions**, sans anomalie.
+
+*Texte d'origine conservé ci-dessous.*
 
 **Le constat.** `supabase/tests/0054_rendu_modeles_emails.test.sql`, assertion 13 :
 

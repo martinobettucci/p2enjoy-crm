@@ -31,7 +31,7 @@
 // partiraient réellement chez les adresses du jeu de démonstration.
 
 import { expect, test, type APIRequestContext } from '@playwright/test'
-import { enTetesAnonymes, enTetesAuthentifies, jetonDe } from './jetons'
+import { enTetesAnonymes, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
 
 const INSCRIPTIONS = '/rest/v1/card_sequence_enrollments'
 const SEQUENCES = '/rest/v1/mail_sequences'
@@ -112,11 +112,43 @@ test.beforeAll(async ({ request }) => {
 })
 
 /**
- * Arme une inscription, exécute le corps, et la referme QUOI QU'IL ARRIVE.
+ * RETIRE toute inscription laissée par cette suite — INC-221, corrigée le 2026-08-26.
+ *
+ * « FERMÉE » N'EST PAS « ABSENTE », ET LA CLÉ ÉTRANGÈRE NE FAIT PAS LA DIFFÉRENCE. C'est le
+ * constat exact d'INC-221 : cette suite fermait bien ce qu'elle armait — son propre scénario 17 le
+ * vérifie —, mais laissait les lignes en base. La migration `0060` pose
+ * `card_sequence_enrollments_identity_fk` en `ON DELETE RESTRICT` vers `mail_outbound_identities`,
+ * si bien que `0025_identites_sortantes_smtp.test.sql` et `0033_quota_par_defaut.test.sql`, qui
+ * suppriment cette identité du seed dans leur mise en place, voyaient leur transaction ENTIÈRE
+ * abandonnée — deux suites pgTAP sans aucun rapport avec l'armement.
+ *
+ * MESURÉ : le défaut n'apparaissait qu'APRÈS un premier passage de cette suite, et il y RESTAIT.
+ * Toute campagne jouant `e2e:api` avant `test:sql` le rencontrait ; l'ordre inverse ne le voyait
+ * pas. C'est ce qui l'a fait échapper à la sous-tranche 4b, dont le `test:sql` était vert la veille.
+ *
+ * LA VOIE RETENUE EST LA PREMIÈRE DES DEUX QU'INC-221 PROPOSE, et son entrée dit qu'elle suffit :
+ * la preuve RANGE ce qu'elle crée. La suppression passe par la clé de SERVICE, et c'est le seul
+ * endroit du dépôt où elle est justifiée sur cette table : le §12.10 n'expose AUCUN `delete` à
+ * personne — une inscription est une TRACE —, donc aucun jeton de profil ne peut ranger ce résidu.
+ * Le patron est celui des sondes de `contacts.spec.ts`.
+ */
+async function retirerInscription(
+	requete: APIRequestContext,
+	inscriptionId: string,
+): Promise<void> {
+	await requete.delete(`${INSCRIPTIONS}?id=eq.${inscriptionId}`, { headers: enTetesService() })
+}
+
+/**
+ * Arme une inscription, exécute le corps, la referme puis la RETIRE, quoi qu'il arrive.
  *
  * Le `finally` n'est pas une précaution de style : la décision 516 a mesuré ce que coûte son
  * absence sur la file d'envoi. Une inscription laissée active serait exécutée par le job au
  * démarrage suivant de la pile.
+ *
+ * LA FERMETURE EST CONSERVÉE, ET ELLE N'EST PAS REDONDANTE AVEC LE RETRAIT : c'est elle qui exerce
+ * `interrompre_sequence_relance`, donc le chemin du produit. Le retrait, lui, ne range que le
+ * résidu d'INC-221, et il n'est le chemin de personne.
  */
 async function avecInscription(
 	requete: APIRequestContext,
@@ -136,6 +168,7 @@ async function avecInscription(
 			headers: enTetesAuthentifies(jetonAdmin),
 			data: { p_enrollment_id: inscriptionId },
 		})
+		await retirerInscription(requete, inscriptionId)
 	}
 }
 
@@ -381,6 +414,10 @@ test.describe("l'armement des séquences, par la vraie route (docs/SPEC-modeles-
 		)
 		const [ligneApres] = (await apres.json()) as Inscription[]
 		expect(ligneApres?.closed_reason, 'la ligne est INCHANGÉE').toBe('manual')
+
+		// CE SCÉNARIO ARME HORS DU HELPER — il doit voir la ligne FERMÉE pour prouver
+		// l'idempotence —, et il range donc lui-même son résidu (INC-221).
+		await retirerInscription(request, inscriptionId)
 	})
 
 	test('15 — l’anonyme n’interrompt rien', async ({ request }) => {
@@ -433,6 +470,26 @@ test.describe("l'armement des séquences, par la vraie route (docs/SPEC-modeles-
 		expect(
 			(await reponse.json()) as unknown[],
 			'aucune inscription ACTIVE ne subsiste — ni du seed, ni de cette suite',
+		).toHaveLength(INSCRIPTIONS_DU_SEED)
+
+		// ET AUCUNE INSCRIPTION FERMÉE NON PLUS — assertion AJOUTÉE le 2026-08-26, INC-221.
+		//
+		// L'assertion au-dessus filtrait sur `status=eq.active`, et elle était VERTE pendant tout le
+		// temps où le défaut existait : « fermée » n'est pas « absente », et c'est précisément la
+		// distinction que la clé étrangère `ON DELETE RESTRICT` de la migration `0060` fait, là où
+		// l'assertion ne la faisait pas. Une preuve qui prend un résidu pour un rangement cesse de
+		// le dénoncer.
+		//
+		// LA LECTURE EST FAITE À LA CLÉ DE SERVICE, et c'est nécessaire : la politique de lecture du
+		// §12.10 est `app.can_read_card`, si bien qu'un jeton de profil ne verrait pas un résidu posé
+		// sur une affaire qu'il ne lit pas — et le contrôle serait vert pour la mauvaise raison.
+		const toutes = await request.get(`${INSCRIPTIONS}?select=id,status`, {
+			headers: enTetesService(),
+		})
+		expect(toutes.status()).toBe(200)
+		expect(
+			(await toutes.json()) as unknown[],
+			'aucune inscription ne subsiste, FERMÉE COMPRISE — sans quoi 0025 et 0033 rougissent (INC-221)',
 		).toHaveLength(INSCRIPTIONS_DU_SEED)
 	})
 

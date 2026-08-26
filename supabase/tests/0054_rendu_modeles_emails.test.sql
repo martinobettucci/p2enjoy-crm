@@ -191,12 +191,30 @@ select is(
 	'Obtenir le cadrage technique',
 	'CRM-063 §2.4 — card.next_action vient de cards.next_action');
 
--- L'HORODATAGE EST RENDU EN UTC, ET C'EST LA LIMITE NOMMÉE DU §8.6 (INC-216). L'assertion la FIGE :
--- la voir rougir un jour signalerait qu'un fuseau a été introduit sans réviser le §8.6.
+-- L'HORODATAGE EST RENDU EN UTC, ET C'EST LA LIMITE NOMMÉE DU §8.6 (INC-216).
+--
+-- CETTE ASSERTION EST RÉVISÉE, ET NON RETIRÉE — 2026-08-26, sous-tranche 4c, INC-222.
+--
+-- Elle comparait à la chaîne LITTÉRALE `'24/08/2026 09:00'`, et elle était donc verte le seul jour
+-- où elle a été écrite. `supabase/seed/apply-seed.sh`, section « 8 duodecies bis. Échéances »,
+-- TRANSLATE toutes les échéances du seed sur le jour courant : la valeur en base avance d'un jour
+-- chaque jour, et l'assertion rougissait tous les autres.
+--
+-- CE N'EST PAS CE QUE SON PROPRE COMMENTAIRE ANNONÇAIT, et c'était le défaut : le fichier disait
+-- « la voir rougir signalerait qu'un fuseau a été introduit ». Le garde-fou se déclenchait donc
+-- pour une cause que son auteur n'avait pas prévue — le calendrier, non un fuseau —, et une
+-- session pressée aurait cherché une régression de fuseau là où elle n'était pas.
+--
+-- ELLE DÉRIVE DÉSORMAIS SON ATTENDU DE LA MÊME COLONNE QUE LE RENDU, et elle garde son objet
+-- ENTIER : ce qu'elle prouve n'a jamais été la DATE, c'est le FORMAT et le FUSEAU. `to_char(…, 'DD/
+-- MM/YYYY HH24:MI')` sans `at time zone` lit la colonne dans le fuseau de la session, que
+-- `run-sql-tests.sh` laisse en UTC ; un rendu qui basculerait en heure locale ferait donc toujours
+-- rougir l'assertion, et une date qui avance d'un jour ne la fera plus.
 select is(
 	substring(pg_temp.corps('c0000000-0000-4000-8000-0000000000a1',
 	                        '5eed0000-0000-4000-8000-0000000000c2') from '5=([^ ]* [^ ]*) 6='),
-	'24/08/2026 09:00',
+	(select to_char(c.next_action_at, 'DD/MM/YYYY HH24:MI')
+	   from public.cards c where c.id = '5eed0000-0000-4000-8000-0000000000c2'),
 	'CRM-063 §8.6 — card.next_action_at rend JJ/MM/AAAA HH:MM en UTC, limite nommée');
 
 select is(

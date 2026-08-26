@@ -15,7 +15,7 @@
 // C'est cette suite qui produit l'autre état, en armant, en mesurant, et en refermant.
 
 import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole, expect, test, type Page } from './fixtures'
-import { MOT_DE_PASSE_SEED, URL_API, enTetesAuthentifies, jetonDe } from '../api/jetons'
+import { MOT_DE_PASSE_SEED, URL_API, enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-063'
@@ -58,10 +58,17 @@ async function connecter(page: Page, email = ADMIN): Promise<void> {
 }
 
 /**
- * Referme toute inscription active de l'affaire, et CONSTATE qu'il n'en reste aucune.
+ * Referme toute inscription de l'affaire par le CHEMIN DU PRODUIT, puis RETIRE le résidu.
  *
- * Elle passe par la RPC réelle avec le jeton de l'administratrice — le chemin du produit —, jamais
- * par un `DELETE` : la table n'en expose aucun, une inscription étant une TRACE (§12.10).
+ * DEUX GESTES, ET ILS NE FONT PAS DOUBLE EMPLOI. La fermeture passe par
+ * `interrompre_sequence_relance` avec le jeton de l'administratrice : c'est le chemin qu'un
+ * utilisateur emprunte, et l'exercer ici prouve au passage que la RPC consent à ce profil. Le
+ * retrait, lui, passe par la clé de SERVICE et n'est le chemin de personne — le §12.10 n'expose
+ * aucun `delete` à personne, une inscription étant une TRACE.
+ *
+ * LE RETRAIT EST DÛ À INC-221 : une inscription FERMÉE reste référencée par
+ * `card_sequence_enrollments_identity_fk`, posée en `ON DELETE RESTRICT`, et fait rougir deux
+ * suites pgTAP sans rapport avec l'armement dès la campagne suivante.
  */
 async function refermerToutArmement(page: Page): Promise<void> {
 	const jeton = await jetonDe(ADMIN)
@@ -82,6 +89,25 @@ async function refermerToutArmement(page: Page): Promise<void> {
 	expect(
 		((await restantes.json()) as unknown[]).length,
 		'aucune inscription ne doit rester ACTIVE : le job en expédierait les paliers',
+	).toBe(0)
+
+	// ET AUCUN RÉSIDU FERMÉ NON PLUS — INC-221. « Fermée » n'est pas « absente » : la clé étrangère
+	// `card_sequence_enrollments_identity_fk` est en `ON DELETE RESTRICT`, et une inscription fermée
+	// laissée en base fait rougir `0025_identites_sortantes_smtp.test.sql` et
+	// `0033_quota_par_defaut.test.sql`, deux suites pgTAP sans aucun rapport avec l'armement.
+	//
+	// LA SUPPRESSION PASSE PAR LA CLÉ DE SERVICE, et c'est le seul chemin possible : le §12.10
+	// n'expose AUCUN `delete` à personne, une inscription étant une TRACE.
+	await page.request.delete(`${URL_API}/rest/v1/card_sequence_enrollments?card_id=eq.${AFFAIRE_FIGEE.id}`, {
+		headers: enTetesService(),
+	})
+	const residus = await page.request.get(
+		`${URL_API}/rest/v1/card_sequence_enrollments?select=id`,
+		{ headers: enTetesService() },
+	)
+	expect(
+		((await residus.json()) as unknown[]).length,
+		'aucun résidu, FERMÉ COMPRIS — sans quoi deux suites pgTAP rougissent (INC-221)',
 	).toBe(0)
 }
 
