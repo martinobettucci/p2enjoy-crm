@@ -980,7 +980,11 @@ SCENARIOS_API=943
 # gagne **un** scénario : la signature écrite, relue, puis VIDÉE — c'est l'effacement qui compte,
 # l'écriture prouvant peu et l'effacement étant impossible avant la migration 58. 604 + 1 = **605**,
 # valeur COMPTÉE par l'exécution de la suite.
-SCENARIOS_UI=613
+#
+# **`CRM-063` SOUS-TRANCHE 4c, le 2026-08-26** : `e2e/ui/reglages-sequences-relance.spec.ts` ajoute
+# **10 scénarios** et `e2e/ui/armement-sequence.spec.ts` **6**. 613 + 16 = **629**, valeur COMPTÉE
+# par `playwright test --list`, qui rend « 629 tests in 51 files ».
+SCENARIOS_UI=629
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,
