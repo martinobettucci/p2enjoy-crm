@@ -117,6 +117,13 @@ type _tables = Expect<
     | 'card_events'
     | 'card_costs'
     | 'card_field_values'
+    // `0060` de `CRM-063` sous-tranche 4b ajoute `card_sequence_enrollments`, et LE TÉMOIN NE L'A
+    // PAS VU EN SON TEMPS : la sous-tranche ne livrait aucune ligne de TypeScript, donc aucune
+    // raison de régénérer. C'est la TROISIÈME occurrence du même défaut de chaîne — après
+    // `cards_figees` et `mail_templates` —, et sa répétition dit que la règle ne peut pas dépendre
+    // du fait qu'une sous-tranche touche ou non l'interface : une migration qui ajoute un objet au
+    // schéma exposé régénère les types DANS LE MÊME CHANGEMENT, écran ou pas.
+    | 'card_sequence_enrollments'
     | 'cards'
     | 'channel_members'
     | 'channels'
@@ -133,6 +140,10 @@ type _tables = Expect<
     | 'mail_messages'
     | 'mail_outbound_identities'
     | 'mail_outbox'
+    // `0059` de `CRM-063` sous-tranche 4a — même défaut de chaîne que juste au-dessus, et même
+    // cause : 4a ne livrait aucun écran.
+    | 'mail_sequence_steps'
+    | 'mail_sequences'
     // `0055` de `CRM-063` tranche 1 ajoute `mail_templates`, et LE TÉMOIN NE L'A PAS VU EN SON
     // TEMPS — même défaut de chaîne que celui décrit plus bas pour `cards_figees`, et pour la
     // même cause : la migration a été livrée sans que `scripts/generate-types.sh` soit rejoué. Le
@@ -802,10 +813,18 @@ type _vueDerivationColonnes = Expect<
 // et sa répétition dit que la leçon vaut pour la chaîne et non pour un cas : une migration qui
 // ajoute une fonction au schéma exposé régénère les types dans le même changement.
 // Trente-huit devient QUARANTE.
-type _lesQuaranteFonctions = Expect<
+//
+// `0060` de la sous-tranche 4b ajoute `armer_sequence_relance` et `interrompre_sequence_relance`,
+// et `0062` de la 4c ajoute `reordonner_paliers_sequence`. LES DEUX PREMIÈRES N'ONT PAS ÉTÉ VUES
+// EN LEUR TEMPS, pour la cause désormais habituelle : 4b ne livrait aucun écran. La 4c régénère,
+// et les trois entrent ensemble. Quarante devient QUARANTE-TROIS.
+type _lesQuaranteTroisFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
+    | 'armer_sequence_relance'
     | 'cards_figees'
+    | 'interrompre_sequence_relance'
+    | 'reordonner_paliers_sequence'
     | 'mail_template_variables'
     | 'rendre_modele_email'
     | 'reel_saisissable'
@@ -1034,7 +1053,7 @@ export type AssertionsDuContratDeTypes = [
   _relationsWorkspaceMembers,
   _laSeuleVue,
   _vueDerivationColonnes,
-  _lesQuaranteFonctions,
+  _lesQuaranteTroisFonctions,
   _signatureReelSaisissable,
   _retourReelSaisissable,
   _signatureArborescence,
