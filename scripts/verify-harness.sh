@@ -492,8 +492,24 @@ PORT_RAPPORT=9323
 #
 # 2760 + 47 + 1 = **2808**. LA VALEUR EST COMPTÉE PAR LES DEUX CHEMINS : la suite seule rend
 # **47 assertions**, et `npm run test:sql` somme **58 fichiers, 2808 assertions**.
-FICHIERS_SQL_ATTENDUS=59
-ASSERTIONS_ATTENDUES=2826
+#
+# **`CRM-063` SOUS-TRANCHE 4c, le 2026-08-26** : `0060_reordonnancement_paliers.test.sql` livre
+# **24 assertions** — la forme de `public.reordonner_paliers_sequence` dans le catalogue avec `anon`
+# EXCLU, les trois refus du §13.3 chacun précédé de son témoin, la permutation RELUE position à
+# position, et le zéro-ligne de la lectrice qui verrait la fonction basculer en `security definer`.
+#
+# ELLE FIGE AUSSI UNE DÉCISION DE FORME : le corps de la fonction n'émet AUCUN `set constraints`
+# (§13.2). L'assertion lit le code SANS ses commentaires — écrite sur le corps brut, elle trouvait
+# la commande dans le commentaire qui explique pourquoi elle est absente, et rougissait sur une
+# fonction conforme. C'est le FAUX ROUGE du §9.10 bis, rencontré une seconde fois.
+#
+# Aucun garde-fou global n'est révisé : la sous-tranche n'ajoute ni table ni politique, et
+# `0016_preuves_refus.test.sql` reste à 116.
+#
+# 2826 + 24 = **2850**. LA VALEUR EST COMPTÉE PAR LES DEUX CHEMINS : `select plan()` sommé sur les
+# soixante fichiers rend **2850**, et le fichier seul en déclare **24**.
+FICHIERS_SQL_ATTENDUS=60
+ASSERTIONS_ATTENDUES=2850
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
