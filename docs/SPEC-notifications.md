@@ -592,3 +592,568 @@ profile_id)` qui l'assure, pas une garde propre au seed.
 | Harnais | `scripts/verify-mentions.sh`, non complaisant, éprouvé par dégradations réelles et restauration constatée |
 | Seed | Les deux mentions du §9, posées par le vrai chemin, et le passage convergent |
 | E2E d'interface | **Aucun**, et l'écart est nommé : la tranche 1 ne livre aucune surface (§1.3) |
+
+---
+---
+
+# TRANCHE 2 — LA NOTIFICATION
+
+Chapitres écrits le **2026-08-26**, **avant la première ligne de code** de la tranche 2
+(`CLAUDE.md` §5), et **après mesure sur la pile de développement debout et seedée** — migrations
+`0001` à `0063` appliquées, `supabase/seed/apply-seed.sh` passé. Les sondes du §12 ont été créées
+puis **annulées** ou **détruites**, et l'état du seed a été **relu après** (M15) pour établir
+qu'aucune n'a survécu.
+
+Le §1.2 nomme cette tranche en une ligne — « table `public.notifications`, sa production à partir
+d'une mention, l'état lu / non lu, RLS et contrat d'API ». Aucun chapitre ne la décrivait. Ces
+chapitres sont la spécification qui manquait.
+
+---
+
+## 12. Les huit mesures de la tranche 2, prises avant d'écrire
+
+**M1 — aucune des trois tables du §8 de `docs/SCHEMA.md` n'existe.**
+
+```
+select to_regclass('public.notifications'), to_regclass('public.notification_preferences'),
+       to_regclass('public.card_watchers');
+=> NULL, NULL, NULL
+```
+
+Le §8 de `docs/SCHEMA.md` les annonce en une ligne chacune — « destinataire, type, charge utile,
+date de lecture » — sans les décrire. La tranche 2 livre **la première**, et elle seule.
+
+**M2 — les deux mentions du seed, et où elles vivent.**
+
+| Commentaire | Auteur | Mentionné | Card | Channel |
+|---|---|---|---|---|
+| `…0d1` | Camille (`admin`) | **Driss** | `…0c1` | `grands-comptes` |
+| `…0d2` | **Driss** | Camille | `…0c1` | `grands-comptes` |
+
+Les deux vivent sur la **même card**, et c'est l'écart nommé au point ouvert n° 5 du §10. La
+tranche 2 en hérite : les deux notifications qu'elle produira vivront elles aussi sur cette card.
+
+**M3 — une seule table est publiée au temps réel.**
+
+```
+select tablename from pg_publication_tables where pubname = 'supabase_realtime';
+=> card_comments
+```
+
+**M4 — les cinq commentaires du seed, dont la pierre tombale `…0d4`.** Trois sur `…0c1`, un sur
+`…0c4` (retiré par la modération), un sur `…0c5` écrit par la lectrice.
+
+**M5 — L'AUTO-MENTION EST ACCEPTÉE, ET C'EST LE FAIT QUI DÉCIDE LE §14.3.** Sonde envoyée avec le
+jeton réel de l'administratrice, sur **son propre** commentaire `…0d3` :
+
+```
+POST /rest/v1/card_comment_mentions {"comment_id":"…0d3","profile_id":"…011"}
+=> 201, {"comment_id":"…0d3","profile_id":"…011","workspace_id":"…001","created_at":"…"}
+```
+
+Rien ne l'a refusée, et **c'est correct** : la règle d'éligibilité du §5.1 demande que le
+destinataire puisse lire l'affaire, et l'auteur le peut nécessairement. La tranche 1 n'a jamais
+prétendu interdire ce cas. Il n'en reste pas moins que la notification qui en découlerait dirait à
+Camille que Camille l'a mentionnée. Le §14.3 en tire la règle. **La sonde a été détruite**
+(`DELETE` → `204`), et M15 le constate.
+
+**M6 — la sonde détruite, le seed rendu intact** : deux mentions, `…0d1 → …012` et `…0d2 → …011`.
+
+**M7 — UNE MENTION SURVIT À LA PIERRE TOMBALE DE SON COMMENTAIRE, ET LE CORPS EST VIDÉ.** Sonde en
+transaction **annulée** :
+
+```
+insert into card_comment_mentions (…0d3, …012, …001);           => 1 mention
+update card_comments set deleted_at = now() where id = …0d3;
+select count(*), body = '' from …                                => 1 mention, corps vide = true
+rollback;
+```
+
+La suppression d'un commentaire est **douce** — `deleted_at` et un corps réellement vidé
+(décision 193) — et elle n'emporte pas les mentions. **C'est le fait qui décide du §13.4** : un
+instantané du texte placé dans la charge utile survivrait à l'effacement de ce texte, et la
+suppression d'un commentaire cesserait d'être une suppression.
+
+**M8 — les compteurs figés que la tranche va faire bouger.**
+
+```
+select count(*) from pg_policies where schemaname = 'public';  => 119
+select count(*) from pg_tables   where schemaname = 'public';  => 41
+```
+
+Le premier est figé par `supabase/tests/0016_preuves_refus.test.sql`, révisé de 116 à 119 par la
+tranche 1. Il sera révisé, jamais retiré (mécanisme de la décision 51).
+
+**M9 et M10 — LE TRIGGER PRODUCTEUR NE PEUT PAS ÊTRE `SECURITY INVOKER`, ET C'EST MESURÉ.** Deux
+sondes symétriques, toutes deux en transaction **annulée**, une table `sonde` fermée à
+`authenticated` par `revoke all`, un trigger `AFTER INSERT` sur `card_comment_mentions` qui y
+écrit, l'insertion faite sous `set local role authenticated` avec le `sub` de Camille :
+
+```
+trigger SECURITY INVOKER  => REFUS : 42501 / permission denied for table sonde_m11
+trigger SECURITY DEFINER  => INSERTION ACCEPTÉE
+```
+
+Le §14.1 en tire la divergence avec la tranche 1 — dont le trigger est `SECURITY INVOKER` par
+**discrétion** —, et le motif de cette divergence.
+
+**M11 — LE PRIVILÈGE DE COLONNE FERME TOUT LE RESTE, ET LE REFUS EST UN `42501`.** `card_comments`
+porte `grant update (body, deleted_at)`. Mesuré avec le jeton réel de l'administratrice :
+
+```
+PATCH /rest/v1/card_comments?id=eq.…0d1 {"card_id":"…0c5"}
+=> 403 / 42501 — permission denied for table card_comments
+PATCH /rest/v1/card_comments?id=eq.…0d1 {"colonne_inexistante":"x"}
+=> 400 / PGRST204 — Could not find the 'colonne_inexistante' column
+```
+
+Le §15.2 s'appuie dessus : `grant update (read_at)` suffit à figer toutes les autres colonnes, et
+le refus est un refus de **privilège**, pas un refus silencieux.
+
+**M12 — l'état du seed relu après toutes les sondes** : `card_comments` = **5**,
+`card_comment_mentions` = **2**. Aucune sonde n'a survécu.
+
+---
+
+## 13. Modèle : `public.notifications`
+
+### 13.1 Ce que la tranche 2 est, et ce qu'elle n'est pas
+
+Elle livre **un message adressé à une personne**, produit par un fait, et l'état de sa lecture.
+Chaque absence est figée par une assertion, jamais compensée :
+
+- **aucune surface.** Ni liste, ni compteur, ni cloche. La tranche 3 les livre ;
+- **aucun temps réel.** La table n'est pas publiée — §16.3, même motif que le §7.3 ;
+- **aucune préférence.** Ce que chacun consent à recevoir est la tranche 4 ;
+- **aucun canal sortant.** Ni email, ni digest, ni webhook. La notification vit en base et rien
+  ne l'en fait sortir ;
+- **aucune suppression par le destinataire** — §15.4, et le motif y est écrit ;
+- **aucune source autre que la mention.** Une seule valeur de `type`, et le §13.3 dit pourquoi
+  la colonne existe malgré cela.
+
+### 13.2 Colonnes
+
+| Colonne | Type | Contrainte |
+|---|---|---|
+| `id` | `uuid` | clé primaire, `gen_random_uuid()` |
+| `workspace_id` | `uuid` | non nul, **dérivé** par le trigger, jamais décidé par le client |
+| `recipient_id` | `uuid` | non nul, la personne à qui le message s'adresse |
+| `type` | `text` | non nul, `check (type in ('mention'))` |
+| `subject_card_id` | `uuid` | **nullable** — l'affaire dont le message parle, quand il en parle d'une |
+| `payload` | `jsonb` | non nul, `default '{}'` |
+| `read_at` | `timestamptz` | **nullable** — nul tant que le message n'est pas lu |
+| `created_at` | `timestamptz` | non nul, posé par le trigger |
+
+**UNE CLÉ PRIMAIRE TECHNIQUE, ET C'EST L'INVERSE DE LA MENTION.** Le §4.1 refuse une colonne `id`
+à `card_comment_mentions` parce qu'une mention **est** le fait que deux entités sont liées. Une
+notification n'est pas un fait : c'est un **message**, une chose qui a sa propre existence, qu'on
+lit, qu'on marque, qu'on compte. Deux messages identiques adressés à la même personne à deux
+instants sont deux messages. La clé technique dit cela ; une clé naturelle prétendrait le
+contraire.
+
+**Aucune colonne `updated_at`.** `read_at` est la seule mutation ouverte, et elle porte sa propre
+date. Une seconde date ne dirait rien de plus. Même écart assumé aux conventions générales de
+`docs/SCHEMA.md` que `card_comments` et `card_comment_mentions` (INC-025).
+
+### 13.3 `type`, et pourquoi la colonne existe alors qu'elle n'a qu'une valeur
+
+La tranche 2 ne produit qu'une source. Une colonne à une seule valeur ressemble à de
+l'anticipation, et `CLAUDE.md` §1 l'interdit — mais ce n'est pas ce qu'elle est ici : **elle est la
+garde qui empêche d'écrire un type inventé.** Sans elle, la tranche 4 ajouterait sa source en
+écrivant ce qu'elle veut dans la charge utile, et deux lecteurs interpréteraient différemment la
+même ligne.
+
+Le `check` est **fermé sur `'mention'`**, et il est convergent : une tranche ultérieure qui ajoute
+une source **remplace la contrainte** par le mécanisme `app.migration_00xx_converger_contrainte`
+déjà employé par la migration `0063`. Écrire aujourd'hui `check (type in ('mention', 'assignation',
+'echeance'))` pour des sources qui n'existent pas serait, cela, de l'anticipation : la contrainte
+autoriserait des lignes que rien ne produit et qu'aucune preuve n'éprouve.
+
+### 13.4 La charge utile ne porte AUCUN CONTENU, et M7 le décide
+
+`payload` porte **de quoi désigner, jamais de quoi lire** :
+
+```json
+{ "comment_id": "…0d1", "author_id": "…011" }
+```
+
+Ni le corps du commentaire, ni le titre de la card, ni le nom de l'auteur. L'écran de la tranche 3
+les relira **à travers les politiques existantes**, au moment où il affiche.
+
+**LE MOTIF EST MESURÉ, ET IL N'EST PAS UNE PRÉFÉRENCE DE STYLE.** M7 établit que la suppression
+d'un commentaire est **douce** et qu'elle **vide réellement le corps** (décision 193), tandis que
+la mention survit. Un instantané du texte placé ici survivrait donc à l'effacement de ce texte :
+un propos retiré resterait lisible dans la notification de celui qui y était nommé, et la
+suppression d'un commentaire **cesserait d'être une suppression**. Le même raisonnement vaut pour
+le titre d'une card renommée, ou pour le nom d'un compte supprimé — que `CRM-022` remplace par
+« Compte supprimé » partout ailleurs.
+
+**Ce que cela coûte est nommé** : l'écran de la tranche 3 fera une lecture par notification
+affichée, là où une charge utile dénormalisée en aurait fait zéro. C'est un coût de lecture, payé
+pour que la notification ne devienne jamais une copie divergente du produit. Si la mesure montre
+un jour que ce coût est réel, la réponse sera une **vue** ou une jointure `select=…`, jamais une
+copie.
+
+### 13.5 `subject_card_id`, et ce qu'elle porte
+
+**Elle n'est pas une redondance du `payload`** : elle est la colonne sur laquelle la **politique de
+lecture** s'appuie (§16.1). Une politique ne peut pas raisonnablement extraire un `uuid` d'un
+`jsonb` pour le passer à une fonction d'accès — elle serait illisible, non indexable, et sensible à
+une charge utile mal formée.
+
+**Nullable, et c'est délibéré.** Une notification de mention parle toujours d'une affaire ; une
+notification future — un digest, une invitation, un message d'exploitation — peut n'en désigner
+aucune. Le §16.1 traite les deux cas explicitement plutôt que d'exiger une card fictive.
+
+`ON DELETE CASCADE` vers `cards` : une affaire supprimée n'a plus de notification qui la désigne.
+
+### 13.6 Trois clés étrangères
+
+| Clé | Cible | `ON DELETE` | Ce qu'elle rend impossible |
+|---|---|---|---|
+| `recipient_id` | `profiles (id)` | `CASCADE` | Un message adressé à un compte qui n'existe pas |
+| `workspace_id` | `workspaces (id)` | `CASCADE` | Un message hors de tout espace |
+| `(subject_card_id, workspace_id)` | `cards (id, workspace_id)` | `CASCADE` | Un message dont l'affaire vit dans un **autre** espace que lui |
+
+La troisième est **composite**, et pour la raison du §4.2 : elle interdit l'incohérence **même par
+la clé de service**, qui contourne la RLS mais pas les contraintes. `cards` porte déjà
+`UNIQUE (id, workspace_id)` — posée par la migration `0015` §1 —, donc rien à ajouter ici.
+
+Une clé étrangère composite acceptant `NULL` dans une de ses colonnes n'est **pas** vérifiée par
+défaut (`MATCH SIMPLE`) : une notification sans card passe, et c'est exactement ce que le §13.5
+demande.
+
+**AUCUNE CLÉ ÉTRANGÈRE VERS LA MENTION**, et c'est une décision, pas un oubli. Le §14.4 la porte.
+
+### 13.7 Index
+
+| Index | Ce qu'il sert |
+|---|---|
+| `(recipient_id, created_at desc)` | « mes notifications, les plus récentes d'abord » — la liste de la tranche 3 |
+| `(recipient_id) where read_at is null` | **le compteur de non-lues**, qui est le geste le plus fréquent d'une cloche |
+
+Le second est **partiel**, et c'est ce qui le rend petit : il n'indexe que les lignes non lues,
+c'est-à-dire une fraction qui décroît avec l'usage, là où un index total croîtrait indéfiniment
+pour servir une question qui ne porte que sur la queue.
+
+---
+
+## 14. La production : de la mention au message
+
+### 14.1 `SECURITY DEFINER`, et pourquoi la tranche 2 diverge de la tranche 1
+
+`app.notifications_apres_mention()`, **`AFTER INSERT`** sur `public.card_comment_mentions`,
+**`SECURITY DEFINER`**, propriétaire `postgres`, `search_path` vide.
+
+Le §6 fait le choix **inverse** pour le trigger de la mention : `SECURITY INVOKER`, par
+**discrétion**, pour qu'un commentaire fermé et un commentaire inexistant rendent le même refus.
+La divergence n'est pas une inconstance ; les deux triggers ne font pas la même chose :
+
+- celui de la tranche 1 **lit pour juger**. Ce qu'il ne voit pas doit lui rester caché, sinon le
+  refus devient un moyen de sonder ;
+- celui de la tranche 2 **écrit pour le compte d'un tiers**. Le destinataire n'a demandé rien, et
+  l'appelant n'a aucun droit sur la boîte de quelqu'un d'autre.
+
+**ET CE N'EST PAS UN RAISONNEMENT, C'EST UNE MESURE.** M9 et M10 :
+
+```
+trigger SECURITY INVOKER  => 42501 / permission denied for table  (l'insertion échoue)
+trigger SECURITY DEFINER  => insertion acceptée
+```
+
+En `SECURITY INVOKER`, le trigger s'exécute sous `authenticated`, qui n'a **aucun privilège
+`INSERT`** sur `notifications` (§15.2) — et il ne doit pas en avoir, sinon un client pourrait
+s'écrire des messages. La production serait donc refusée, et **la pose d'une mention échouerait
+avec elle**, le trigger étant dans la même transaction.
+
+### 14.2 `AFTER`, jamais `BEFORE`
+
+Le trigger de la tranche 1 est `BEFORE INSERT` parce qu'il **modifie la ligne** — il dérive
+`workspace_id` et pose `created_at`. Celui-ci ne touche pas la mention : il en **conséquence** une
+autre ligne. Le faire en `BEFORE` produirait la notification avant que la mention ne soit
+réellement acquise — avant, notamment, que les clés étrangères du §4.2 n'aient parlé.
+
+Il rend `null`, comme tout trigger `AFTER … FOR EACH ROW`.
+
+### 14.3 UNE AUTO-MENTION NE PRODUIT AUCUNE NOTIFICATION
+
+> Quand le profil mentionné est **l'auteur du commentaire**, le trigger n'écrit rien et sort.
+
+**Le cas est réel, et M5 le mesure** : l'auto-mention est acceptée par la tranche 1, avec le jeton
+réel, sur son propre commentaire. Ce n'est pas un défaut — la règle d'éligibilité demande que le
+destinataire puisse lire l'affaire, et l'auteur le peut toujours.
+
+Mais une notification n'est pas un fait, c'est un **message**, et se prévenir soi-même de ce qu'on
+vient d'écrire n'est pas une information : c'est du bruit dans la seule liste où le bruit se paie
+en confiance. Une cloche qui sonne pour ce qu'on vient de taper cesse d'être lue.
+
+**LA COMPARAISON PORTE SUR `author_id`, JAMAIS SUR `auth.uid()`**, et la différence est mesurable.
+La politique `card_comment_mentions_insertion` exige déjà que l'appelant **soit** l'auteur, si bien
+que les deux coïncident **par la vraie route**. Mais la clé de service contourne la RLS — pas les
+triggers — et `auth.uid()` y est **nul** : un trigger qui comparerait à `auth.uid()` produirait,
+sous la clé de service, une notification que la vraie route n'aurait pas produite. Le seed et les
+harnais empruntent ce chemin ; la règle doit valoir des deux côtés.
+
+**La mention, elle, reste posée.** La tranche 1 n'est pas rejugée : le fait est enregistré, seul le
+message ne l'est pas. Une assertion le figera — auto-mention = **une** ligne dans
+`card_comment_mentions`, **zéro** dans `notifications`.
+
+### 14.4 AUCUNE CLÉ ÉTRANGÈRE VERS LA MENTION — le point ouvert n° 3 est tranché ici
+
+Le §10, point 3, laissait à cette tranche la question : « la tranche 2 devra décider ce qu'il
+advient de la **notification** déjà produite ». Elle est tranchée, et en deux temps.
+
+**1. Retirer une mention n'efface PAS la notification.** Il n'y a donc ni clé étrangère vers
+`card_comment_mentions`, ni `ON DELETE CASCADE` depuis elle.
+
+Le §7.1 dit ce qu'est le retrait d'une mention : « la correction d'une erreur de frappe ». Une
+notification, elle, est un **message déjà délivré** — possiblement déjà lu. L'effacer
+rétroactivement réécrirait le passé du destinataire : il aurait vu quelque chose dont il ne
+resterait aucune trace, et il n'aurait aucun moyen de savoir s'il a rêvé. Le dépôt tranche déjà
+ainsi ailleurs : `card_comments` conserve le propos d'un compte supprimé derrière « Compte
+supprimé » (`CRM-022`, INC-014), parce qu'un propos tenu reste tenu.
+
+**Le prix est nommé** : une mention posée par erreur puis retirée laisse une notification. Le
+destinataire cliquera, et trouvera une affaire où son nom n'apparaît plus. C'est le comportement de
+tous les produits qui délivrent des messages, et il est **honnête** — l'autre choix ne l'est pas.
+
+**2. Mais la notification n'échappe pas à la règle d'accès**, et c'est le §16.1 qui l'assure : sa
+lecture est conditionnée à `app.can_read_card(subject_card_id)`. Un destinataire dont le droit
+retombe à `none` **cesse de voir** la notification, sans qu'aucune ligne ne soit détruite — et la
+revoit si le droit revient. C'est exactement le traitement que le §10 point 3 avait retenu pour la
+mention elle-même : « la politique de lecture le couvre déjà ».
+
+### 14.5 Ce que le trigger écrit, ligne à ligne
+
+```
+recipient_id     := new.profile_id
+workspace_id     := new.workspace_id          -- déjà dérivé et vérifié par la tranche 1
+subject_card_id  := la card du commentaire
+type             := 'mention'
+payload          := jsonb_build_object('comment_id', new.comment_id, 'author_id', <auteur>)
+created_at       := now()
+read_at          := null
+```
+
+**`workspace_id` est repris de la mention, jamais relu.** La tranche 1 l'a dérivé du commentaire et
+la clé composite du §4.2 le tient ; le relire ouvrirait la possibilité qu'il diverge.
+
+**AUCUNE CONVERGENCE, ET C'EST DÉLIBÉRÉ.** Poser deux fois la même mention est impossible — la
+clé primaire `(comment_id, profile_id)` du §4.1 le refuse —, donc le trigger ne peut pas s'exécuter
+deux fois pour le même fait. Retirer une mention puis la reposer produit, elle, **une seconde
+notification**, et c'est correct : c'est un second geste, à un second instant.
+
+### 14.6 Ce que le trigger ne fait PAS
+
+- **il ne juge rien.** L'éligibilité a été jugée par le trigger `BEFORE` de la tranche 1 ; la
+  rejuger serait la seconde écriture que le §5.3 refuse ;
+- **il ne lit aucune préférence.** Il n'y en a pas — tranche 4 ;
+- **il n'envoie rien.** Aucun email, aucun `pg_net`, aucune sortie hors de la base ;
+- **il ne notifie personne d'autre** que le mentionné : ni l'auteur, ni les membres du channel.
+  Les abonnements (`card_watchers`, §5 de `docs/SCHEMA.md`) n'existent pas (M1).
+
+---
+
+## 15. Ce que le destinataire peut faire, et ce qu'il ne peut pas
+
+### 15.1 Le seul geste ouvert est `read_at`
+
+Marquer lu, et **marquer non lu**. Les deux sens, parce qu'un état à deux valeurs qu'on ne peut
+parcourir que dans un sens n'est pas un état : c'est un compteur. Rien ne rend le retour dangereux,
+et le geste est courant — on ouvre une notification par mégarde et on la remet de côté.
+
+**LA DATE EST POSÉE PAR LA BASE, JAMAIS PAR LE CLIENT.** Un trigger `BEFORE UPDATE` remplace toute
+valeur non nulle envoyée par `now()`. C'est le mécanisme de la décision 95, déjà appliqué au
+`created_at` de la mention (§6) : une date antidatée fausserait l'ordre de lecture et rendrait le
+compteur de non-lues incohérent avec ce que l'écran affiche. Envoyer `null` reste `null` — c'est le
+« marquer non lu ».
+
+### 15.2 Privilèges
+
+```sql
+revoke all on public.notifications from anon, authenticated;
+
+grant select              on public.notifications to anon;
+grant select              on public.notifications to authenticated;
+grant update (read_at)    on public.notifications to authenticated;
+grant all privileges      on public.notifications to service_role;
+```
+
+Le `revoke` est écrit **avant** les `grant`, et c'est la décision 134 : l'image Supabase pose un
+`ALTER DEFAULT PRIVILEGES IN SCHEMA public` qui accorde tout, nommément, à `anon` et
+`authenticated` sur toute table nouvelle. Sans lui, il n'y aurait ni refus d'insertion, ni refus de
+suppression, ni colonnes figées.
+
+**`grant update (read_at)` seul fige toutes les autres colonnes**, et M11 le mesure : un `PATCH`
+sur une colonne non accordée rend `403` / `42501` — un refus de **privilège**, pas un silence.
+`type`, `payload`, `recipient_id`, `subject_card_id`, `workspace_id` et `created_at` sont donc
+fermés sans qu'aucune politique n'ait à s'en occuper.
+
+**`anon` reçoit `SELECT`**, pour la raison du §3.2 de `docs/SPEC-permissions-rls.md` : sans le
+privilège, un anonyme recevrait une **erreur** là où le comportement exigé est **zéro ligne**.
+`auth.uid()` étant nul, le prédicat du §16.1 est faux.
+
+### 15.3 AUCUNE INSERTION PAR UN CLIENT — refus DOUBLE
+
+Une notification se **produit**, elle ne se demande pas. Le seul chemin est le trigger du §14.
+
+Le refus est **double**, comme celui du §7.1 pour la mise à jour d'une mention : aucun privilège
+`INSERT` (§15.2) **et** aucune politique `INSERT`. Sans les deux, on ne saurait pas lequel refuse,
+et la dégradation du harnais ne pourrait pas éprouver la seconde barrière en relâchant la première.
+
+Sans ce refus, un client s'écrirait des messages — ou, bien pire, en écrirait à quelqu'un d'autre.
+
+### 15.4 AUCUNE SUPPRESSION, et le motif est écrit
+
+Ni privilège `DELETE`, ni politique `DELETE`. Un destinataire ne peut pas effacer une notification.
+
+**Ce n'est pas une omission**, et ce n'est pas non plus la bonne réponse définitive : c'est le
+périmètre. Vider une liste est une décision de **rétention** — au bout de combien de temps ? avec
+quel effet sur le compteur ? avec ou sans archive ? — qu'aucune mesure ne donne et qu'aucun
+document du dépôt ne porte. L'inventer ici serait écrire une spécification à la place du
+responsable (`CLAUDE.md` §1).
+
+**Point ouvert n° 6 du §18.** La tranche 3, qui livre la liste, sera la première à en avoir un
+besoin concret.
+
+---
+
+## 16. Autorisations
+
+### 16.1 La politique de lecture, et sa seconde condition
+
+| Politique | Rôles | Prédicat |
+|---|---|---|
+| `notifications_lecture` (`SELECT`) | `anon`, `authenticated` | `recipient_id = (select auth.uid())` **et** (`subject_card_id is null` **ou** `app.can_read_card(subject_card_id)`) |
+| `notifications_marquage` (`UPDATE`) | `authenticated` | même prédicat, en `USING` **et** en `WITH CHECK` |
+
+**La première condition est celle qu'on attend** : mes notifications sont à moi. Personne d'autre —
+ni un collègue, ni un administrateur du workspace. La boîte de quelqu'un n'est pas une donnée
+d'exploitation.
+
+**LA SECONDE EST CELLE QUI TRANCHE LE POINT OUVERT N° 3** (§14.4). Elle délègue à
+`app.can_read_card`, qui **existe déjà** et que la tranche 1 vient de généraliser : la règle
+d'accès n'a **toujours qu'une seule écriture**. Écrire ici un prédicat qui relirait
+`channel_members` serait exactement la seconde écriture que le §5.3 a refusée.
+
+**Le `is null` traite le cas d'une notification sans affaire** — aucune aujourd'hui, mais la
+colonne est nullable (§13.5) — plutôt que de le laisser tomber dans un `NULL` que le moteur
+interpréterait comme faux. Une notification qui ne parle d'aucune card est lisible par son seul
+destinataire, et c'est la bonne réponse.
+
+**`WITH CHECK` autant que `USING` sur l'`UPDATE`** : sans lui, un destinataire pourrait faire
+sortir une ligne de son propre périmètre. Le privilège de colonne (§15.2) le rend déjà impossible
+puisque `recipient_id` n'est pas modifiable ; le `WITH CHECK` est la **seconde** barrière, et le
+dépôt en pose systématiquement deux.
+
+### 16.2 Aucune politique `INSERT`, aucune politique `DELETE`
+
+§15.3 et §15.4. Leur **absence** est figée par une assertion pgTAP qui compte les politiques de la
+table et les nomme : sans cela, une politique ajoutée par mégarde passerait inaperçue.
+
+### 16.3 La table n'est PAS publiée au temps réel
+
+Même motif qu'au §7.3, et il tient toujours : rien ne s'y abonne. La cloche, la liste et
+l'abonnement `Realtime` sont la tranche 3, qui **publiera la table dans le même changement que
+l'écran qui l'écoute**. Publier une table que personne n'écoute serait poser une surface
+d'autorisation sans preuve — le temps réel évalue la politique `SELECT` de chaque abonné, et c'est
+une propriété qui se prouve, pas qui s'ajoute par précaution.
+
+L'absence est **figée** par une assertion (M3 en donne la ligne de base : seule `card_comments` est
+publiée).
+
+---
+
+## 17. Contrat d'API, ligne à ligne
+
+`A` = Camille (`admin`), `B` = Driss (`business_developer`), `V` = Farida (`viewer`). Le seed livre
+**deux** notifications (§19) : `N1` adressée à Driss, `N2` adressée à Camille, toutes deux sur la
+card `…0c1` (`grands-comptes`), fermée à Farida (M5 de la tranche 1).
+
+| # | Appelant | Requête | Attendu |
+|---|---|---|---|
+| a | `B` | `GET /notifications` | `200`, **`N1` seule** — pas `N2`, qui ne lui est pas adressée |
+| b | `A` | `GET /notifications` | `200`, **`N2` seule** |
+| c | `V` | `GET /notifications` | `200` **`[]`** — aucune ne lui est adressée |
+| d | anonyme | `GET /notifications` | `200` **`[]`** — zéro ligne, jamais une erreur |
+| e | `A` | `POST /notifications` (message à soi-même) | `403` / `42501` — aucun privilège `INSERT` |
+| f | `A` | `POST /notifications` avec `recipient_id` = `B` | `403` / `42501` — le même refus, et c'est le geste dangereux |
+| g | `B` | `PATCH N1 {"read_at":"…"}` | `204`, et la relecture rend une date **du jour**, non celle envoyée |
+| h | `B` | `PATCH N1 {"read_at":null}` | `204`, et la relecture rend `null` — marquer non lu |
+| i | `A` | `PATCH N1 {"read_at":"…"}` — la notification **de `B`** | `204` **sans effet** — la politique filtre ; relu en base |
+| j | `B` | `PATCH N1 {"payload":{"x":1}}` | `403` / `42501` — colonne non accordée |
+| k | `B` | `PATCH N1 {"recipient_id":"…011"}` | `403` / `42501` — le destinataire n'est pas modifiable |
+| l | `B` | `DELETE N1` | `403` / `42501` — aucun privilège `DELETE` |
+| m | `B` | `GET /notifications?select=id&read_at=is.null` | `200`, le compteur de non-lues, cohérent avec *g* et *h* |
+| n | `A` | `POST` d'une mention sur son commentaire, `profile_id` = `B` | `201`, **et une notification apparaît** pour `B` — relue avec la clé de service |
+| o | `A` | `POST` d'une **auto-mention** | `201`, **et AUCUNE notification** — §14.3, relu avec la clé de service |
+| p | `A` | `DELETE` de la mention posée en *n* | `204`, **et la notification demeure** — §14.4, relue en base |
+
+**Chaque refus est relu en base avec la clé de service** : un refus qui laisse une trace n'est pas
+un refus. Chaque ligne posée est retirée, et une dernière lecture le **constate** (décision 501).
+
+**Les lignes *n*, *o* et *p* sont le cœur du contrat** : elles éprouvent la **production**, qui est
+l'objet de la tranche. Les autres éprouvent la boîte ; celles-ci éprouvent ce qui la remplit.
+
+**La ligne *i* n'est pas un doublon de la ligne *a*.** La lecture refuse par zéro ligne ; l'écriture
+refuse par un `USING` qui filtre. Un `204` sans effet et un `403` sont deux comportements
+différents, et le second serait un défaut ici : PostgREST rend `204` quand aucune ligne ne
+correspond, et c'est le refus **discret** que le dépôt attend d'un `UPDATE` (précédent : la ligne
+*n* du §8).
+
+---
+
+## 18. Points ouverts, nommés et non tranchés ici
+
+1. **La rétention.** Aucune notification ne se supprime ni n'expire (§15.4). Une boîte croît
+   indéfiniment. La tranche 3, qui livre la liste, sera la première à en souffrir.
+2. **Le regroupement.** Dix mentions sur la même card produisent dix messages. Les regrouper est
+   une décision d'écran autant que de modèle ; elle appartient à la tranche 3.
+3. **Les préférences ne sont pas lues** (§14.6). Le trigger produit pour tout le monde. La
+   tranche 4 devra décider si une préférence filtre **à la production** ou **à la lecture** — et
+   les deux ne se valent pas : la première perd l'information, la seconde la garde.
+4. **Aucune notification pour l'auteur d'un commentaire auquel on répond**, ni pour les membres
+   du channel. `card_watchers` n'existe pas (M1) et son périmètre est un choix produit.
+5. **Les deux notifications du seed vivent sur la même card**, parce que les deux mentions y
+   vivent (M2, et point ouvert n° 5 du §10). L'écart est hérité, non créé.
+6. **`notification_preferences` reste à spécifier** (tranche 4), et `audit_log` — `CRM-072` — reste
+   une unité qui n'existe pas.
+
+---
+
+## 19. Ce que le seed livre
+
+**Rien de neuf, et c'est le fait le plus intéressant de cette section.** Le seed pose déjà deux
+mentions par le vrai chemin (§9). Le trigger du §14 étant `AFTER INSERT`, ces deux `POST`
+**produisent** deux notifications sans qu'une seule ligne ne soit ajoutée au seed.
+
+C'est la meilleure démonstration possible de la tranche : le seed ne fabrique pas de notification,
+il en **provoque** — exactement ce que `CLAUDE.md` §8 exige (« ne pas fabriquer artificiellement
+des traces censées représenter l'exécution d'un processus réel »).
+
+| Notification | Destinataire | Produite par | Card |
+|---|---|---|---|
+| `N1` | Driss | la mention de Camille sur `…0d1` | `…0c1` |
+| `N2` | Camille | la mention de Driss sur `…0d2` | `…0c1` |
+
+**Le seed gagne néanmoins une GARDE**, et elle n'est pas décorative : elle **mesure** que les deux
+notifications existent, qu'elles sont **non lues**, et que **Farida n'en porte aucune**. Si le
+trigger cessait de produire, le seed passerait sans rien dire ; la garde le fait échouer.
+
+**Convergent** : un second passage ne pose aucune mention nouvelle — `resolution=ignore-duplicates`
+et la clé primaire du §4.1 —, donc il ne produit aucune notification nouvelle. Le compte reste
+deux. **C'est la convergence de la tranche 1 qui porte celle-ci**, et c'est pourquoi le §14.5
+n'ajoute aucune garde propre au trigger.
+
+---
+
+## 20. Preuves attendues de la tranche 2
+
+| Niveau | Preuves |
+|---|---|
+| pgTAP | Forme de la table, les trois clés étrangères dans les deux sens, le `check` de `type`, les deux index, la production par le trigger, **l'auto-mention qui ne produit rien** (§14.3), la **survivance** de la notification au retrait de sa mention (§14.4), la date de lecture **imposée par la base** (§15.1), les deux politiques et **l'absence** des deux autres (§16.2), les privilèges y compris l'absence d'`INSERT` et de `DELETE` et la **restriction de colonne** sur `UPDATE`, la **non-appartenance** à la publication (§16.3), et la conformité du seed |
+| API | Les seize lignes du §17 avec les jetons réels des trois profils, chaque refus **relu en base** |
+| Non-régression | `0061_mentions_commentaires.test.sql` et `e2e/api/mentions.spec.ts` **verts sans modification** : la tranche 2 ajoute une conséquence à la pose d'une mention, elle n'en change pas la règle. Une seule assertion révisée y serait un signal, pas un détail |
+| Harnais | `scripts/verify-notifications.sh`, non complaisant, éprouvé par dégradations réelles et restauration constatée |
+| Seed | Les deux notifications du §19, **produites** et non posées, et le passage convergent |
+| E2E d'interface | **Aucun**, et l'écart est nommé : la tranche 2 ne livre aucune surface (§13.1) |

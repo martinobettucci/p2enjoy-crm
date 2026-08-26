@@ -25242,3 +25242,58 @@ backlog : la série des `scripts/verify-*.sh`, dont **un sur soixante-douze** a 
 **La question posée au responsable reste la même, et une seule** : les unités **`CRM-072`**
 (`audit_log`) et **`CRM-073`** (`api_tokens`) n'existent pas, onze unités leur renvoient, et leur
 périmètre est un choix produit qu'aucune mesure ne donne.
+
+## décision 523 — `CRM-064` tranche 2 spécifiée avant son code : la notification, et le trigger qui ne peut pas être discret
+
+**2026-08-26, session planifiée de 12:51 UTC, suite de la décision 522.** La tranche 1 étant close,
+la session prend la **tranche 2 — la notification**, que le §1.2 de `docs/SPEC-notifications.md`
+nommait sans qu'aucun chapitre ne la décrive. **La spécification est écrite et committée AVANT la
+première ligne de code** (`CLAUDE.md` §5) : neuf chapitres, §12 à §20, fondés sur **douze mesures**
+prises sur la pile debout et seedée, sondes créées puis annulées ou détruites et état du seed relu
+après (M12).
+
+**LA MESURE QUI DÉCIDE LA FORME DU TRIGGER, ET ELLE CONTREDIT LE PRÉCÉDENT DE LA TRANCHE 1.** Deux
+sondes symétriques, en transaction annulée, une table fermée à `authenticated` et un trigger
+`AFTER INSERT` qui y écrit sous `set local role authenticated` : en `SECURITY INVOKER`, l'insertion
+est **refusée** — `42501 permission denied for table` —, en `SECURITY DEFINER` elle passe. Le
+trigger de la tranche 1 est `INVOKER` par **discrétion** ; celui-ci doit être `DEFINER`, et le
+motif n'est pas une inconstance : le premier **lit pour juger**, le second **écrit pour le compte
+d'un tiers**. Sans ce choix, la production échouerait et **la pose de la mention échouerait avec
+elle**, les deux étant dans la même transaction.
+
+**L'AUTO-MENTION EST ACCEPTÉE PAR LA TRANCHE 1, ET C'EST MESURÉ** (M5) : `201`, avec le jeton réel
+de l'administratrice, sur son propre commentaire. Ce n'est pas un défaut — la règle d'éligibilité
+demande que le destinataire puisse lire l'affaire, et l'auteur le peut toujours. Mais une
+notification n'est pas un fait, c'est un message : le §14.3 décide que le trigger **n'en produit
+aucune** dans ce cas, la mention restant posée. La comparaison porte sur `author_id` et **jamais
+sur `auth.uid()`**, parce que la clé de service — qu'empruntent le seed et les harnais — contourne
+la RLS et y rend `auth.uid()` nul : un trigger qui comparerait à l'appelant produirait par ce
+chemin une notification que la vraie route n'aurait pas produite.
+
+**LE POINT OUVERT N° 3 DU §10 EST TRANCHÉ, ET EN DEUX TEMPS.** Retirer une mention **n'efface pas**
+la notification : aucune clé étrangère vers `card_comment_mentions`, aucun `CASCADE`. Le §7.1 dit
+que le retrait d'une mention est « la correction d'une erreur de frappe » ; une notification est un
+message **déjà délivré**, possiblement déjà lu, et l'effacer réécrirait le passé du destinataire —
+le dépôt tranche déjà ainsi pour le propos d'un compte supprimé (`CRM-022`). Mais la notification
+n'échappe pas à la règle d'accès pour autant : sa politique de lecture porte
+`app.can_read_card(subject_card_id)`, **déléguée** à la fonction que la tranche 1 vient de
+généraliser. Un destinataire dont le droit retombe à `none` cesse de la voir sans qu'aucune ligne
+ne soit détruite. La règle d'accès n'a **toujours qu'une seule écriture**.
+
+**LA CHARGE UTILE NE PORTE AUCUN CONTENU, ET C'EST UNE MESURE QUI L'IMPOSE.** M7 : une mention
+**survit** à la pierre tombale de son commentaire, dont le corps est réellement vidé
+(décision 193). Un instantané du texte dans le `payload` survivrait donc à l'effacement de ce
+texte, et **la suppression d'un commentaire cesserait d'être une suppression**. La charge utile ne
+porte que de quoi désigner — `comment_id`, `author_id` — ; l'écran de la tranche 3 relira à travers
+les politiques existantes. Le coût est nommé : une lecture par notification affichée, payée pour
+que la notification ne devienne jamais une copie divergente du produit.
+
+**LE SEED N'AJOUTE AUCUNE LIGNE, ET C'EST LE FAIT LE PLUS INTÉRESSANT DU §19.** Le trigger étant
+`AFTER INSERT`, les deux `POST` de mention que le seed effectue déjà par le vrai chemin
+**produisent** deux notifications. Le seed n'en fabrique pas, il en provoque — exactement ce que
+`CLAUDE.md` §8 exige. Il gagne néanmoins une **garde** qui mesure les deux notifications, leur état
+non lu, et l'absence de toute notification pour la lectrice.
+
+**Où reprendre.** La spécification est écrite et poussée ; la tranche 2 est en cours. Reste dû : la
+migration `0064`, sa suite pgTAP, les seize lignes de contrat d'API du §17, la garde de seed du §19
+et le harnais dédié.

@@ -9159,7 +9159,7 @@ avant la suivante :
 | Tranche | Objet | État |
 |---|---|---|
 | 1 | La mention en base — relation, intégrité, règle d'éligibilité, RLS, contrat d'API, seed, harnais. Aucune surface | en cours |
-| 2 | La notification — table `public.notifications`, production à partir d'une mention, état lu / non lu | `[ ]` |
+| 2 | La notification — table `public.notifications`, production à partir d'une mention, état lu / non lu | en cours |
 | 3 | La surface et le temps réel — composeur, liste, compteur, abonnement | `[ ]` |
 | 4 | Les préférences — ce que chacun reçoit, et par quel canal | `[ ]` |
 
