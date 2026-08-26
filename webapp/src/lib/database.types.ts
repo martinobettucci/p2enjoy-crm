@@ -410,6 +410,93 @@ export type Database = {
           },
         ]
       }
+      card_sequence_enrollments: {
+        Row: {
+          armed_at: string
+          armed_by: string | null
+          card_id: string
+          closed_at: string | null
+          closed_reason: string | null
+          created_at: string
+          id: string
+          identity_id: string
+          last_position: number | null
+          last_sent_at: string | null
+          sequence_id: string
+          status: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          armed_at?: string
+          armed_by?: string | null
+          card_id: string
+          closed_at?: string | null
+          closed_reason?: string | null
+          created_at?: string
+          id?: string
+          identity_id: string
+          last_position?: number | null
+          last_sent_at?: string | null
+          sequence_id: string
+          status?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          armed_at?: string
+          armed_by?: string | null
+          card_id?: string
+          closed_at?: string | null
+          closed_reason?: string | null
+          created_at?: string
+          id?: string
+          identity_id?: string
+          last_position?: number | null
+          last_sent_at?: string | null
+          sequence_id?: string
+          status?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_sequence_enrollments_armed_by_fk"
+            columns: ["armed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_sequence_enrollments_card_fk"
+            columns: ["card_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "card_sequence_enrollments_identity_fk"
+            columns: ["identity_id"]
+            isOneToOne: false
+            referencedRelation: "mail_outbound_identities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_sequence_enrollments_sequence_fk"
+            columns: ["sequence_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "mail_sequences"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "card_sequence_enrollments_workspace_fk"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cards: {
         Row: {
           amount: number | null
@@ -1561,6 +1648,117 @@ export type Database = {
           },
         ]
       }
+      mail_sequence_steps: {
+        Row: {
+          created_at: string
+          delai_jours: number
+          id: string
+          position: number
+          sequence_id: string
+          template_id: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          delai_jours: number
+          id?: string
+          position: number
+          sequence_id: string
+          template_id: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          delai_jours?: number
+          id?: string
+          position?: number
+          sequence_id?: string
+          template_id?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mail_sequence_steps_sequence_id_fkey"
+            columns: ["sequence_id"]
+            isOneToOne: false
+            referencedRelation: "mail_sequences"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_sequence_steps_sequence_workspace_fkey"
+            columns: ["sequence_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "mail_sequences"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "mail_sequence_steps_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "mail_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_sequence_steps_template_workspace_fkey"
+            columns: ["template_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "mail_templates"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "mail_sequence_steps_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mail_sequences: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mail_sequences_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_sequences_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mail_templates: {
         Row: {
           body_text: string
@@ -2296,6 +2494,14 @@ export type Database = {
       }
     }
     Functions: {
+      armer_sequence_relance: {
+        Args: {
+          p_card_id: string
+          p_identity_id: string
+          p_sequence_id: string
+        }
+        Returns: string
+      }
       cards_figees: {
         Args: never
         Returns: {
@@ -2415,6 +2621,10 @@ export type Database = {
           track_id: string
           track_name: string
         }[]
+      }
+      interrompre_sequence_relance: {
+        Args: { p_enrollment_id: string }
+        Returns: undefined
       }
       mail_folder_map_reparenter: {
         Args: {
@@ -2627,6 +2837,10 @@ export type Database = {
           subject: string
           variables_nulles: string[]
         }[]
+      }
+      reordonner_paliers_sequence: {
+        Args: { p_paliers: string[]; p_sequence_id: string }
+        Returns: number
       }
       reprendre_envois_orphelins: {
         Args: { p_seuil_minutes?: number }

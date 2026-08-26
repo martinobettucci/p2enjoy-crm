@@ -2059,6 +2059,43 @@ la RLS de `0059`, lit `mail_templates` sous celle de `0055`, et appelle la RPC d
 - **L'état vide porte le geste** — « Aucune séquence de relance » suivi de la commande de création.
   Le seed en pose une, si bien qu'il ne se rencontre qu'après une suppression complète.
 
+### 13.5 bis LES DEUX CLÉS COMPOSITES RENDENT L'EMBARQUEMENT AMBIGU — mesuré, et 4a ne pouvait pas le voir
+
+Le §11.5 points n et o ont posé **deux** clés étrangères de `mail_sequence_steps` vers sa séquence,
+et **deux** vers son modèle : la clé simple, et la clé composite qui interdit la divergence de
+workspace. C'était juste, et ça l'est resté.
+
+**MESURÉ le 2026-08-26, en écrivant la lecture de l'écran** : PostgREST ne sait pas choisir entre
+elles, et refuse d'embarquer.
+
+```
+GET /mail_sequences?select=id,name,mail_sequence_steps(count)
+=> 300  PGRST201  « Could not embed because more than one relationship was found »
+
+GET /mail_sequence_steps?select=id,position,mail_templates(name)
+=> 300  PGRST201  idem
+```
+
+**Le remède est de NOMMER la relation**, et la mesure confirme qu'il suffit :
+
+```
+mail_sequence_steps!mail_sequence_steps_sequence_id_fkey(count)   => 200, « count: 3 »
+mail_templates!mail_sequence_steps_template_id_fkey(name)         => 200, le nom du modèle
+```
+
+**LA CLÉ NOMMÉE EST LA CLÉ SIMPLE, ET C'EST UN CHOIX** : les deux mènent aux mêmes lignes — la clé
+composite ne peut pas rendre autre chose, puisqu'elle ne diffère que par une colonne dont la base
+garantit l'égalité. La simple est retenue parce qu'elle est la relation que le produit **exprime**,
+la composite étant un **garde-fou** ; nommer le garde-fou dans une lecture ferait croire qu'il est
+consultable, et une migration qui le retirerait un jour casserait toutes les lectures de l'écran au
+lieu de la seule règle qu'il porte.
+
+C'est un fait que 4a ne pouvait pas mesurer — elle ne livrait aucun écran, et le §11.8 n'embarque
+rien —, et il est écrit ici plutôt que laissé à découvrir par un `300` en production. `03 00` n'est
+d'ailleurs pas un code d'erreur qu'un client classe spontanément : l'écran le rangerait dans son
+repli `inconnu`, et le rédacteur lirait « l'interface ne prétend pas savoir » sur une liste
+parfaitement saine.
+
 ### 13.6 La fiche d'une séquence — le nom, puis le tableau des paliers
 
 La fiche porte **deux** zones, et l'ordre est celui de la dépendance : une séquence existe avant
