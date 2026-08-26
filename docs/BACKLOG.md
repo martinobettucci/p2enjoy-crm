@@ -8025,6 +8025,25 @@ balayage, aucune table de liaison —, et la **décision 517** ouvre le fil aux 
 débloquée par la décision 516 mais non écrite — c'est une tranche 6 à spécifier. `CRM-060` demeure
 `[~]` pour cette seule raison.
 
+- [~] **Tranche 6 — la suppression d'un contact. SPÉCIFIÉE le 2026-08-26**
+      (`docs/SPEC-contacts.md` §20, dix sous-chapitres écrits et committés **avant** la première
+      ligne de code), sur les **neuf mesures** du §20.2 prises sur la pile réelle.
+      - **Aucune migration, aucune politique, aucun privilège** : `contacts_suppression_bizdev_admin`
+        est posée par la migration `0045` et prouvée par la tranche 1. Cette tranche **exerce** ce
+        qui existe, comme 4g le fait pour `contacts_maj_bizdev_admin`.
+      - **Trois mesures décident, et la septième est le fait neuf** : la lectrice reçoit `200` et
+        `[]` sans erreur — troisième issue « sans effet », indistinguable d'un contact déjà parti ;
+        et supprimer un contact **cascade** sur `card_contacts`, ce qui fait écrire au trigger de la
+        migration `0061` un `contact_unlinked` dans le fil de **chaque** affaire encore vivante
+        (mesuré : 9 → 10 événements sur `…0c1`). C'est le comportement voulu (décision 517), et
+        c'est la conséquence que la confirmation doit **dire**.
+      - **La décision 516 est exécutée sans une ligne de code côté lecture, et c'est MESURÉ** : une
+        valeur `jsonb` désignant le contact supprimé **survit** et revient inchangée (mesure 9), et
+        le cas j du §13.5, livré par 4d le 2026-08-18, rend déjà l'option « référence inconnue » au
+        lieu d'un vide. Ce que la tranche 6 ajoute est la **preuve** de cette chaîne sur une
+        suppression **réelle** — le cas j n'était éprouvé que sur un identifiant fabriqué.
+      - **Reste dû** : le code du geste, ses preuves (§20.9) et ses captures. L'unité demeure `[~]`.
+
 **Troisième tranche livrée, 2026-08-18 — la résolution des champs `contact` et `user`**
 (`docs/SPEC-contacts.md` §9, migration `0047`) :
 

@@ -227,12 +227,19 @@ Nommés plutôt que tranchés ici (`CLAUDE.md` §1, §26) :
    email d'un domaine connu) touche l'ingestion et mérite son propre arbitrage.
 3. **Rôles de `card_contacts` normalisés.** La tranche 1 laisse le rôle libre ; une éventuelle liste
    contrôlée (`decideur`, `prescripteur`, …) devra être décidée avec le vocabulaire métier.
-4. **Références mortes après suppression d'un contact** (ajouté par la tranche 3, §9.4). La
+4. **~~Références mortes après suppression d'un contact~~ — TRANCHÉ, décision 516, et RÉVISÉ PAR
+   LIVRAISON le 2026-08-26** (ajouté par la tranche 3, §9.4). *Texte d'origine conservé* : « La
    résolution des champs `contact` et `user` est vérifiée **à l'écriture** ; `value` étant un
    `jsonb`, aucune clé étrangère n'y est possible. Supprimer un contact laisse donc en place les
    valeurs qui le désignaient. Les balayer par un trigger `AFTER DELETE`, ou remplacer le `jsonb`
    par une table de liaison, sont deux réponses possibles dont le coût et les effets de bord
-   dépassent l'unité : la question est **nommée**, non tranchée.
+   dépassent l'unité : la question est **nommée**, non tranchée. »
+
+   **La décision 516** (`docs/ARBITRAGES.md` §5) retient la réponse qui ne coûte rien : **la valeur
+   est CONSERVÉE**, aucun trigger de balayage, aucune table de liaison, et **la lecture le dit** au
+   lieu de rendre un vide. Les deux propositions sont mesurées au §20.2 (mesure 9) et le §20.3
+   établit que la seconde est **déjà livrée** par le cas j du §13.5, depuis la sous-tranche 4d.
+   Ce point ne bloque donc plus la **tranche 6** (§20), qui livre la suppression.
 
 ---
 
@@ -2467,9 +2474,11 @@ l'ancien nom après une correction de coquille serait précisément le défaut q
 
 ### 16.8 Limites nommées — sous-tranche 4g
 
-- **aucune suppression d'un contact** : le privilège existe (§3), aucun écran ne l'exerce, et le
+- **~~aucune suppression d'un contact~~ — RÉVISÉ PAR LIVRAISON le 2026-08-26, la TRANCHE 6 la
+  livre** (§20). *Texte d'origine* : « le privilège existe (§3), aucun écran ne l'exerce, et le
   motif est l'arbitrage **non tranché** du §6 point 4 — supprimer laisse des références mortes dans
-  les valeurs `jsonb` que la tranche 3 a résolues à l'écriture ;
+  les valeurs `jsonb` que la tranche 3 a résolues à l'écriture ». L'arbitrage **est rendu**
+  (décision 516), le §6 point 4 est révisé, et la limite que cette ligne nommait n'existe plus ;
 - **aucun rattachement depuis la fiche**, pour le motif du §15.8 ;
 - **aucune création d'organisation** : le sélecteur n'offre que celles qui existent (§14.7) ;
 - **aucune détection d'écriture concurrente** : ni `ETag`, ni `If-Match`. Deux personnes qui
@@ -3542,3 +3551,276 @@ Les sept preuves ci-dessus vertes, la migration rejouable **sur une base portant
 types** (INC-210), le vocabulaire à dix-huit dans `docs/SCHEMA.md` et `docs/SPEC-cards.md` §14.4,
 `docs/manual.md` mis à jour là où il décrit le fil, et le §12.8 **révisé par livraison** — l'écart
 qu'il nommait n'existe plus.
+
+---
+
+## 20. Tranche 6 — La suppression d'un contact
+
+*Spécifiée le 2026-08-26, avant toute ligne de code (`CLAUDE.md` §5), après les neuf mesures du
+§20.2 prises sur la pile réelle et non d'après un souvenir. Cette tranche est **débloquée par la
+décision 516** (`docs/ARBITRAGES.md` §5), qui a tranché le point 4 du §6 — le seul motif pour
+lequel la sous-tranche 4g avait écrit « aucune suppression d'un contact » au §16.8.*
+
+### 20.1 Ce que la tranche livre, et ce qu'elle ne livre pas
+
+**Elle livre le dernier geste manquant du cycle de vie d'un contact** : le supprimer depuis sa
+fiche. Le carnet crée (4e), la fiche lit (4f), modifie (4g), rattache (4h), détache (4i) et corrige
+le rôle (4j) ; il ne restait qu'à retirer.
+
+Elle **ne livre pas** :
+
+- **aucune migration, aucune politique, aucun privilège** : `contacts_suppression_bizdev_admin` est
+  posée par la migration `0045` et prouvée par la tranche 1 depuis le 2026-08-18. Cette tranche
+  n'ouvre rien — elle **exerce** ce qui existe. C'est le même rapport que 4g entretient avec
+  `contacts_maj_bizdev_admin` ;
+- **aucun archivage réversible**, aucune fusion de doublons, aucune purge RGPD : ce sont les points
+  1 et 2 du §6, toujours **non tranchés**, et la décision 516 ne porte que sur les références
+  mortes ;
+- **aucune suppression depuis le carnet** : le motif est celui du §16.2, repris sans changement —
+  une ligne de liste n'est pas l'endroit d'un geste destructeur nommant son objet ;
+- **aucune suppression d'une organisation** : elle a sa propre fiche, ses propres cascades
+  (`on delete set null (organization_id)`, §2.2) et mériterait sa propre mesure.
+
+### 20.2 Ce que la suppression rend — NEUF MESURES, le 2026-08-26
+
+`DELETE /rest/v1/contacts?id=eq.<contact>`, avec `Prefer: return=representation`, contre la pile de
+développement seedée.
+
+| # | Acteur / requête | Mesure |
+|---|---|---|
+| 1 | administratrice, contact sonde **sans rattachement** | **`200`** et **la ligne** ; relue à la clé de service : **absente** |
+| 2 | **business developer**, contact sonde | **`200`** et **la ligne** — le geste n'est **PAS** un geste d'administration |
+| 3 | **lectrice**, contact sonde | **`200`** et **`[]`** — **aucune erreur** ; la ligne relue à la clé de service est **INCHANGÉE** |
+| 4 | **anonyme** | **`401`**, code **`42501`**, « permission denied for table contacts » |
+| 5 | administratrice, identifiant **inexistant** | **`200`** et **`[]`** |
+| 6 | administratrice, identifiant **mal formé** | **`400`**, code **`22P02`** |
+| 7 | administratrice, contact **rattaché** à une affaire vivante | **`200`** et **la ligne** ; le rattachement **CASCADE** (1 → 0) et le fil de l'affaire gagne **exactement une** trace (9 → 10 événements) |
+| 8 | l'**organisation** du contact supprimé | **inchangée** — 3 organisations avant, 3 après, `Sogexia` toujours là |
+| 9 | valeur `jsonb` d'un champ de type `contact` **désignant le supprimé** | elle **DEMEURE** : PostgREST la rend **inchangée** après la suppression |
+
+**QUATRE MESURES DÉCIDENT DE CETTE TRANCHE. Les autres ferment le classement.**
+
+**1. LA MESURE 3 IMPOSE UNE TROISIÈME ISSUE, et c'est exactement celle de 4g et de 4i.** La lectrice
+reçoit `200` et un tableau **vide**, sans la moindre erreur, sur une ligne qui **existe** et qui
+reste en base. La cause est structurelle et déjà écrite deux fois dans ce document : une suppression
+est filtrée par la clause `USING`, qui rend la ligne **invisible à l'écriture**, et PostgREST n'a
+alors rien à supprimer. Refermer la confirmation sur ce silence en annonçant une suppression serait
+le mensonge que le §5.25 du design system interdit déjà.
+
+**2. LES MESURES 3 ET 5 SONT INDISTINGUABLES, ET C'EST ASSUMÉ.** Un refus de droit et un contact
+déjà parti rendent tous deux `200` et `[]`. Prétendre les séparer renseignerait un appelant sans
+droit sur l'existence de la ligne (`docs/SPEC-permissions-rls.md` §7). **Un seul message** les
+couvre : il dit ce qui est vrai — « aucun contact n'a été supprimé » —, n'affirme ni le refus ni la
+disparition, et la fiche est **relue** pour montrer l'état réel.
+
+**3. LA MESURE 7 EST LE FAIT NEUF DE CETTE TRANCHE, ET ELLE VIENT DE LA TRANCHE 5.** Supprimer un
+contact ne retire pas seulement une ligne de `contacts` : `card_contacts` le référence en
+`on delete cascade` (§2.3), et le trigger de table posé par la migration `0061` écrit
+`contact_unlinked` dans le fil de **chaque** affaire encore vivante à laquelle il était rattaché.
+Mesuré sur `…0c1` : le fil passe de 9 à 10 événements, et la trace porte
+`{"role": "sonde", "contact_id": "…"}`. **Ce n'est pas un effet de bord à masquer, c'est le
+comportement voulu** — un contact qui quitte une affaire est un fait de la vie de cette affaire
+(décision 517) —, mais c'est une conséquence que **la confirmation doit dire** : le geste touche
+des surfaces que l'on ne regarde pas en le déclenchant.
+
+La trace est **définitive** : `card_events` est append-only et refuse un `DELETE` même à la clé de
+service (garantie de `CRM-044`). Une suppression ne se défait donc pas, ni dans la table, ni dans
+l'histoire des affaires — c'est la raison pour laquelle ce geste est **destructif au sens du §5.3
+du design system** et demande une confirmation qui nomme son objet.
+
+**4. LA MESURE 9 EST L'EXÉCUTION DE LA DÉCISION 516, ET ELLE ÉTAIT DÉJÀ VRAIE.** Une valeur de
+formulaire qui désigne le contact supprimé **survit** à la suppression et revient inchangée. C'est
+précisément ce que la décision 516 a tranché — la valeur est **conservée**, aucun trigger de
+balayage, aucune table de liaison —, et c'est ce que la base fait déjà **sans qu'on ait rien à y
+ajouter** : `value` est un `jsonb`, aucune clé étrangère n'y est possible (§9.4), et rien ne va donc
+la balayer. **La tranche 6 n'a aucun code à écrire pour ce point** ; elle a une propriété à
+**prouver** et à **dire à l'utilisateur** (§20.3).
+
+**Les mesures 4 et 6 ne sont pas atteignables depuis l'écran**, et sont relevées pour fermer le
+classement : la route est derrière l'authentification, et l'identifiant du contact vient de la
+**donnée déjà lue**, jamais d'une saisie. Elles disent néanmoins ce que le dictionnaire du §20.5
+doit couvrir sans jamais mentir.
+
+### 20.3 Ce que la décision 516 exige de la LECTURE est DÉJÀ LIVRÉ — mesuré, non supposé
+
+La décision 516 tient en deux propositions : **la valeur est conservée**, et **la lecture d'un
+identifiant devenu introuvable dit quelque chose au lieu de rendre un vide**. La mesure 9 établit la
+première. La seconde est **livrée depuis la sous-tranche 4d**, le 2026-08-18, et c'est le **cas j du
+§13.5** — écrit alors précisément pour cette situation, avant que l'arbitrage ne soit rendu :
+
+> une option **supplémentaire** est ajoutée, **retenue**, portant l'identifiant brut et la mention
+> « référence inconnue ». Aucune écriture n'est émise.
+
+Et le **cas m** pour la section repliée : l'identifiant brut en donnée technique, « jamais un nom
+inventé ». Le texte est `form.reference.unknown` — « Référence inconnue ({identifiant}) ».
+
+**Aucun code n'est donc écrit ici pour la lecture, et c'est un résultat, pas un renoncement.** Le
+§13.5 couvre **deux** causes d'un même symptôme — le contact supprimé, et la liste périmée ou
+indisponible —, que l'écran ne peut pas distinguer : il ne relit pas la table pour savoir laquelle
+s'applique, et une mention « contact supprimé » affirmerait une cause qu'il n'a pas mesurée. Le
+texte existant dit exactement ce qui est su. **La tranche 6 se contente de le PROUVER** — une
+preuve qui supprime réellement un contact désigné par une valeur, et constate que l'écran rend
+l'option supplémentaire plutôt qu'un vide —, ce qu'aucune preuve ne faisait jusqu'ici : le cas j
+n'était éprouvé que sur un identifiant **fabriqué**, jamais sur une suppression réelle.
+
+Le §6 point 4 est **révisé par livraison** : l'arbitrage qu'il attendait est rendu, et la réponse
+retenue est celle qui ne coûte rien — ni trigger de balayage, ni table de liaison.
+
+### 20.4 Où le geste s'ancre — sur la fiche, à côté de « Modifier », et le retour au carnet
+
+**Décision : la commande vit dans la zone de commandes de la fiche, avec « Modifier » (§16.2), et
+sa confirmation occupe une place à elle DANS LE FLUX, sous les deux commandes.**
+
+- **Pas au carnet** : le motif du §16.2 vaut mot pour mot, et davantage encore ici. Une ligne de
+  liste est bornée, et une confirmation qui **nomme le contact** et **énumère ce qui part avec lui**
+  y serait tronquée. Surtout, le carnet est la surface où l'on **cherche** un contact ; poser un
+  geste irréversible au bout de chaque ligne d'une liste que l'on parcourt est le patron qui produit
+  les suppressions par mégarde.
+- **Pas en modale** (§5.13) : `CRM-043` l'a tranché trois fois, et cette fiche le tient déjà pour
+  ses cinq autres gestes.
+- **Pas dans une ligne de tableau** : ce geste ne porte sur aucune ligne du tableau des affaires. La
+  règle du §18.4 — la confirmation en `colSpan` — ne s'applique pas ici et ne doit pas être recopiée.
+
+**LE SUCCÈS RAMÈNE AU CARNET, et c'est la seule décision de navigation de cette tranche.** La fiche
+d'un contact supprimé n'a plus de sujet. Deux issues étaient possibles :
+
+- **rester sur la fiche et relire** : elle rendrait alors l'écran « contact introuvable » du §15.9
+  cas h — le même écran qu'un identifiant inconnu ou qu'un refus de lecture. Un geste **réussi** se
+  solderait par un écran d'échec, et l'utilisateur ne saurait pas si sa suppression a abouti ;
+- **revenir au carnet** — retenu. C'est la surface d'où l'on vient (§15.2), celle qui **prouve** le
+  succès en ne portant plus la ligne, et celle qui offre la suite naturelle du geste. C'est aussi ce
+  que fait déjà le lien de retour de l'état « contact introuvable ».
+
+La navigation n'a lieu **que sur le succès**. Sur « sans effet » et sur un refus, on **reste**, la
+fiche est relue, et le message se lit à l'écran.
+
+### 20.5 Les refus, traduits par un dictionnaire FERMÉ
+
+Le message du serveur n'atteint **jamais** l'écran (§12.5, §14.4, §16.4, §18.5). Le classement est
+celui de `classerRefusCreation`, **repris sans changement** : code PostgreSQL d'abord, code HTTP
+ensuite. Écrire un second classifieur ferait diverger deux contrats au premier code ajouté — c'est
+le motif que le §17.5 a déjà écrit pour l'écriture.
+
+L'issue **`sans-effet`** n'est ni un succès ni une erreur : elle se décide sur l'**absence de ligne
+rendue**, avant tout classement, exactement comme au §16.3. Elle rejoint donc
+`RefusSuppressionContact` par le même chemin que `RefusModificationContact`.
+
+| Nature | Atteignable ici ? | Ce que l'écran dit |
+|---|---|---|
+| `sans-effet` (zéro ligne, aucune erreur) | **oui** (mesures 3 et 5) | aucun contact n'a été supprimé ; la fiche a été relue |
+| `interdit` (`401`/`403`) | **oui**, hors écran (mesure 4) | la suppression a été refusée ; rechargez la fiche |
+| `indisponible` (réseau, `22P02`, tout le reste) | **oui** | la suppression a échoué |
+| `doublon` (`23505`) | **non** — suppose une insertion | même texte que `indisponible` |
+| `organisation-inconnue` (`23503`) | **non** — une suppression n'éprouve aucune clé étrangère **sortante** | même texte que `indisponible` |
+| `saisie-invalide` (`23514`) | **non** — aucune valeur n'est écrite | même texte que `indisponible` |
+
+**Les trois natures inatteignables reçoivent le texte d'`indisponible`, et ce n'est pas un repli
+paresseux** : leur donner un texte propre ferait entrer dans le produit une phrase que **rien** ne
+peut afficher, donc qu'aucune preuve ne peut éprouver. Le dictionnaire reste **exhaustif** — le type
+l'impose —, et le motif est écrit dans le fichier. C'est la règle que le §18.5 a posée.
+
+### 20.6 De quoi le geste a l'air
+
+Le détail visuel est écrit dans `docs/DESIGN_SYSTEM.md` §5.40, ajouté dans le même changement. Ce
+qui suit ne dit que ce qui découle de la **donnée**.
+
+- **Une seule commande, destructive** (teinte de danger, §5.3), à l'icône `Trash2` — celle que le
+  §5.16 et le §5.21 emploient déjà pour retirer. Elle vit à côté de « Modifier », et les deux ne
+  s'excluent pas : ce sont deux gestes sur le même objet, pas deux états d'un même geste.
+- **La confirmation NOMME LE CONTACT** (§6 du design system) et **énumère ce qui part avec lui** :
+  le nombre d'affaires auxquelles il est rattaché, et le fait que **chacune en gardera la trace dans
+  son historique** (mesure 7). Cette seconde phrase est la seule chose que l'utilisateur ne peut
+  **pas** déduire de l'écran qu'il regarde, et c'est donc celle qu'il faut écrire.
+- **Le nombre d'affaires vient de la DONNÉE DÉJÀ LUE**, jamais d'une requête de plus : la zone 2 le
+  porte (§15.3). Quand il vaut zéro, la phrase des rattachements **n'est pas rendue** — annoncer
+  « 0 affaire » ferait lire une conséquence inexistante.
+- **La confirmation dit aussi ce que la suppression NE détruit PAS** : les valeurs de formulaire qui
+  désignent ce contact demeurent (mesure 9, décision 516). C'est une propriété rassurante et
+  contre-intuitive ; la taire laisserait croire à une purge.
+- **Le bouton de confirmation est destructif, « Annuler » est secondaire** (§5.3).
+- **AUCUNE COMMANDE N'EST ÉTEINTE D'AVANCE SELON LE RÔLE** (§5.21, §5.23, §5.25, §5.26, §5.27, sans
+  exception, et décision 509). La lectrice voit la commande, confirme, et reçoit le message
+  « sans effet » (mesure 3). Griser ferait passer une décision de la base pour une décision d'écran
+  (`CLAUDE.md` §10).
+- **Le focus entre dans le bouton de confirmation à l'ouverture, et revient à la commande à la
+  fermeture.** La commande n'est **pas démontée** — elle est seulement désactivée pendant que la
+  confirmation est ouverte, comme au §5.27 —, donc **aucune temporisation** n'est nécessaire
+  (`CLAUDE.md` §18).
+- **Le message du geste se lit à la place de la confirmation**, `role="alert"`, jamais en tête
+  d'écran (§5.13, §5.16). Il **survit à la relecture**.
+- **La fiche est RELUE sur « sans effet » et sur un refus**, jamais amputée localement. Sur le
+  succès, elle n'est pas relue : on **quitte** l'écran (§20.4).
+
+### 20.7 Contrat de comportement, cas a à n
+
+| # | Situation | Attendu |
+|---|---|---|
+| a | fiche chargée, geste replié | **une** commande « Supprimer », à côté de « Modifier » ; aucune confirmation rendue |
+| b | commande activée | la confirmation apparaît **dans le flux**, sous les commandes ; elle **nomme le contact** ; le focus entre dans son bouton de confirmation ; la commande reste **montée** et devient **désactivée** |
+| c | fermeture par « Annuler » | la confirmation est démontée, **le focus revient à la commande**, sans temporisation |
+| d | contact rattaché à **n ≥ 1** affaires | la confirmation dit le nombre d'affaires et que **chacune gardera la trace** du détachement |
+| e | contact rattaché à **zéro** affaire | la phrase des rattachements **n'est pas rendue** |
+| f | confirmation activée pendant que la requête vole | le bouton est **désactivé**, porte son libellé d'attente et `aria-busy` ; **aucune** seconde requête |
+| g | suppression **appliquée** | l'écran **quitte la fiche** pour le carnet ; le carnet ne porte plus la ligne |
+| h | suppression **sans effet** (lectrice, ou contact déjà parti) | message « aucun contact n'a été supprimé », `role="alert"` ; la confirmation se ferme ; **la fiche est relue** ; on **reste** sur la fiche |
+| i | suppression **refusée** (`401`, réseau, inattendu) | message du dictionnaire **fermé** ; la confirmation se ferme ; la fiche est **relue** ; on **reste** |
+| j | **lectrice** | **aucune commande éteinte d'avance** ; elle confirme et reçoit le cas h (mesure 3) |
+| k | contact **introuvable**, fiche en erreur, ou aucun espace de travail | **aucune commande « Supprimer »** — il n'y a rien à supprimer (règle du §16.9 cas r) |
+| l | le formulaire de **modification** est ouvert | la commande « Supprimer » reste rendue ; les deux gestes ne s'excluent pas, et ouvrir la confirmation **referme** le formulaire de modification — deux questions ouvertes sur le même objet ne diraient pas à laquelle on répond |
+| m | une affaire du contact portait une **valeur de formulaire** le désignant | la valeur **demeure** ; le formulaire de l'affaire rend l'option supplémentaire du §13.5 cas j, jamais un vide (mesure 9) |
+| n | l'**organisation** du contact | **inchangée**, et sa fiche ne porte plus le contact dans sa liste (mesure 8) |
+
+### 20.8 Ce que la tranche ne fait PAS, et pourquoi
+
+- **aucune corbeille pour les contacts** : la suppression est **physique**, comme la tranche 1 l'a
+  livrée. Une corbeille est un modèle (`deleted_at`, politiques, écran de restauration) que
+  `CRM-077` a payé pour les affaires ; l'ouvrir ici serait une unité, pas une tranche, et le §6
+  point 1 la nomme déjà comme non tranchée ;
+- **aucune détection d'écriture concurrente** : ni `ETag`, ni `If-Match`. Le motif est celui du
+  §16.8, inchangé — le produit ne porte aucun verrou optimiste nulle part ;
+- **aucune suppression en série** depuis le carnet : voir §20.4 ;
+- **aucun avertissement calculé sur les valeurs de formulaire** qui désignent le contact. Les
+  compter demanderait de balayer `card_field_values` sur un `jsonb`, sans index, à chaque ouverture
+  de la confirmation ; la mesure 9 dit que la conséquence est la **conservation**, ce que la phrase
+  du §20.6 écrit sans avoir à compter ;
+- **aucune trace `contact_deleted`** dans un journal quelconque : `audit_log` est due par `CRM-072`,
+  qui **n'existe pas comme unité**. Les seules traces écrites sont celles de la mesure 7, dans les
+  fils des affaires concernées, et elles suffisent à répondre à « que s'est-il passé ? » là où la
+  question se pose.
+
+### 20.9 Preuves exigées — tranche 6
+
+| Niveau | Preuve |
+|---|---|
+| Unitaire | `webapp/src/lib/contacts.test.ts` (étendu) : la requête réellement émise par `supprimerContact`, la ligne rendue, l'issue `sans-effet` sur zéro ligne, et le classement des refus atteignables |
+| Unitaire | `webapp/src/app/FicheContact.test.tsx` (étendu) : les cas a à n du §20.7, dont le retour au carnet sur le succès et la **non**-navigation sur les deux autres issues |
+| API | `e2e/api/contacts.spec.ts` (étendu) : les mesures 1 à 9 du §20.2 avec les jetons réels des trois profils, chaque refus **relisant la ligne** pour la constater inchangée (décision 70), la cascade et la trace du fil mesurées en **DELTA** (un journal immuable interdit toute mesure absolue, décision de la tranche 5) |
+| E2E | `e2e/ui/contacts.spec.ts` (étendu) : la suppression d'un contact **créé par les gestes de l'écran** puis supprimé par eux — le seed est rendu **intact** —, le parcours au **clavier**, et la lectrice recevant « sans effet » ; console **vierge** |
+| E2E | le cas m : un contact sonde désigné par une valeur de formulaire, supprimé, et le formulaire de l'affaire rendant l'option « référence inconnue » — la preuve que le §20.3 réclame et qui n'existait pas |
+| Visible | captures sous `docs/captures/CRM-060/`, préfixées `fiche-contact-suppression-`, **observées** (`CLAUDE.md` §16) : la confirmation ouverte avec ses deux conséquences, le message « sans effet » de la lectrice, le carnet après la suppression, et le rendu à 390 px |
+| i18n | `webapp/src/i18n/i18n.test.ts` (existant) : aucun texte visible en dur, aucune clé morte |
+| Seed | rendu **INTACT** : trois contacts, deux rattachements, trois organisations |
+
+### 20.10 Definition of Done — tranche 6
+
+- `webapp/src/lib/contacts.ts` : `supprimerContact`, `RefusSuppressionContact`, et le classement qui
+  décide `sans-effet` **avant** de classer une erreur ;
+- `webapp/src/app/SuppressionContact.tsx` : la commande destructive, sa confirmation dans le flux,
+  ses deux conséquences énoncées, et le retour du focus ;
+- `webapp/src/app/FicheContact.tsx` : la commande montée à côté de « Modifier », l'exclusion mutuelle
+  du cas l, la relecture sur deux issues et la navigation vers le carnet sur la troisième ;
+- clés de traduction ajoutées, aucun texte en dur ;
+- preuves du §20.9 exécutées et vertes, captures produites **et observées** ;
+- `docs/DESIGN_SYSTEM.md` §5.40 ajouté et §5.24 **révisé par livraison** (la fiche porte deux
+  commandes) ; `docs/manual.md` ; `CHANGELOG.md` ; `docs/BACKLOG.md`, dans le même changement ;
+- le §6 point 4 et le §16.8 **révisés par livraison**, jamais retirés : l'écart qu'ils nommaient
+  n'existe plus ;
+- commentaires `@spec` / `@verifies` sur chaque fichier touché.
+
+**Aucune migration, et `docs/PROD_MIGRATIONS.md` n'a donc rien à recevoir.** Cette tranche n'exerce
+que `contacts_suppression_bizdev_admin`, posée par la migration `0045`.
+
+**Ce qui restera dû sur `CRM-060` après la tranche 6** : les points **1**, **2** et **3** du §6 —
+archivage réversible, fusion de doublons, purge RGPD ; rapprochement automatique email →
+organisation par domaine ; rôles de `card_contacts` normalisés. Aucun n'est tranché, et aucun n'est
+inventé au passage (`CLAUDE.md` §1).

@@ -3511,3 +3511,71 @@ porteur du geste, sélecteur jamais restreint selon le rôle, borne de liste à 
 - **Aucune couleur, aucun jeton, aucune icône nouvelle** : l'écran emprunte au §5.34 sa forme
   entière, au §5.18 sa liste plate, au §5.7 ses champs, au §5.5 ses variantes et au §5.29 son patron
   de suppression confirmée.
+
+### 5.40 Suppression d'un contact, depuis sa fiche — `CRM-060`
+
+Le dernier geste du cycle de vie d'un contact (`docs/SPEC-contacts.md` §20). Il **hérite du §5.25** —
+la commande posée dans la zone de commandes de la fiche, avant les deux zones — et du **§5.27** pour
+tout ce qui touche à une confirmation destructive. Ce qui suit ne dit que ce qui lui est propre.
+
+- **DEUX COMMANDES DANS LA ZONE DE COMMANDES, ET ELLES NE S'EXCLUENT PAS.** Le §5.24 posait qu'une
+  commande — « Modifier » — vivait avant les deux zones ; il y en a désormais **deux**, « Modifier »
+  puis « Supprimer ». Ce sont deux gestes sur le **même objet**, non deux états d'un même geste :
+  masquer l'une pendant l'autre ferait sauter la hauteur de la zone à chaque ouverture.
+
+- **LA COMMANDE DESTRUCTIVE VIENT EN SECOND**, jamais en premier : l'ordre de lecture met le geste
+  réparable avant le geste irréversible, comme le §5.16 place « Restaurer » avant « Supprimer
+  définitivement ». Icône `Trash2`, teinte de danger (§5.3).
+
+- **LA CONFIRMATION VIT DANS LE FLUX, SOUS LES DEUX COMMANDES** (§5.13) — jamais en modale, et
+  **jamais dans une ligne de tableau** : la règle du `colSpan` posée au §5.27 vaut pour une
+  confirmation qui porte sur **une ligne**, et ce geste n'en vise aucune. Recopier ce remède sans son
+  motif poserait une confirmation dans un tableau qui n'est pas son sujet.
+
+- **UNE SEULE QUESTION OUVERTE À TOUT INSTANT SUR CETTE FICHE.** Ouvrir la confirmation **referme**
+  le formulaire de modification, et réciproquement. C'est la règle du §5.28 — « un seul bloc ouvert »
+  — étendue à deux gestes qui ne partagent pas leur forme : deux questions simultanées sur le même
+  objet ne diraient pas à laquelle on répond.
+
+- **LA COMMANDE RESTE MONTÉE ET DEVIENT DÉSACTIVÉE** pendant que sa confirmation est ouverte, comme
+  au §5.27 et pour la même cause : sa référence reste valide, **le retour du focus n'a donc pas à
+  être différé**, et aucune temporisation n'est écrite (`CLAUDE.md` §18). C'est l'écart avec le
+  §5.25, où la commande est démontée.
+
+- **LA CONFIRMATION NOMME LE CONTACT ET ÉNONCE SES DEUX CONSÉQUENCES**, et c'est la règle propre à
+  cette surface :
+
+  1. **ce que le geste emporte** — le nombre d'affaires auxquelles le contact est rattaché, et le
+     fait que **chacune gardera dans son historique la trace de son détachement**. MESURÉ : la
+     suppression cascade sur `card_contacts` et le trigger de la migration `0061` écrit
+     `contact_unlinked` dans chaque fil. C'est la seule conséquence que l'utilisateur ne peut **pas**
+     lire sur l'écran qu'il regarde ;
+  2. **ce que le geste NE détruit PAS** — les valeurs de formulaire qui désignent ce contact
+     **demeurent** (décision 516). Propriété rassurante et contre-intuitive : la taire laisserait
+     croire à une purge.
+
+  Le nombre d'affaires vient de la **donnée déjà lue** (§5.24, zone 2), jamais d'une requête de plus.
+  **À zéro, la phrase des rattachements n'est pas rendue** — annoncer « 0 affaire » ferait lire une
+  conséquence inexistante.
+
+- **TROIS ISSUES, ET DEUX SEULEMENT RESTENT SUR L'ÉCRAN.** Le succès **quitte la fiche pour le
+  carnet** (§5.19) : la fiche d'un contact supprimé n'a plus de sujet, et la relire rendrait l'écran
+  « contact introuvable » du §5.24 — un geste réussi se solderait par un écran d'échec. Les deux
+  autres issues **restent**, relisent la fiche, et affichent leur message à la place de la
+  confirmation, `role="alert"`, jamais en tête d'écran (§5.13, §5.16).
+
+- **L'ISSUE « SANS EFFET » DOIT ÊTRE DITE**, comme au §5.25 et au §5.27, et pour la même cause
+  structurelle : une suppression est filtrée par la clause `USING`, et le serveur rend « aucune ligne
+  retirée » **sans erreur**. MESURÉ sur la lectrice. Quitter l'écran sur ce silence annoncerait une
+  suppression qui n'a pas eu lieu.
+
+- **AUCUNE COMMANDE N'EST ÉTEINTE D'AVANCE SELON LE RÔLE** (§5.21, §5.23, §5.25, §5.26, §5.27, sans
+  exception, et décision 509).
+
+- **Aucune couleur, aucun jeton, aucune icône nouvelle** : le geste emprunte au §5.3 sa teinte de
+  danger, au §5.16 son icône, au §5.25 sa place et au §5.27 sa mécanique de confirmation.
+
+> **RÉVISION DU §5.24 PAR LIVRAISON, 2026-08-26.** La phrase « la fiche porte désormais une
+> commande, posée avant les deux zones » devient : **la fiche porte deux commandes**, « Modifier »
+> puis « Supprimer ». Le reste du §5.24 est inchangé — le tableau des affaires se lit toujours à
+> quatre colonnes, et son état vide ne gagne aucune commande.

@@ -15,6 +15,16 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **UN CONTACT PEUT ENFIN ÊTRE SUPPRIMÉ** (`CRM-060` tranche 6, `docs/SPEC-contacts.md` §20).
+  Sa fiche portait cinq gestes — modifier, rattacher une affaire, la détacher, corriger un rôle —
+  et pas celui-là : un contact créé par erreur, ou une personne qui demande son effacement,
+  restaient dans le carnet sans recours. La commande vit à côté de « Modifier », et sa confirmation
+  **dit les deux conséquences** avant d'agir : combien d'affaires perdent ce contact — et que
+  **chacune en gardera la trace dans son historique** —, et que les formulaires qui le désignent
+  **conservent** leur valeur plutôt que de se vider. Une suppression réussie ramène au carnet, qui
+  ne porte plus la ligne. Aucune migration : le droit existait depuis la première tranche, aucun
+  écran ne l'exerçait.
+
 - **L'HISTORIQUE D'UNE AFFAIRE APPREND ENFIN QUI TRAVAILLE DESSUS** (`CRM-060` tranche 5,
   `docs/SPEC-contacts.md` §19). Rattacher un contact à une affaire, changer son rôle ou le détacher
   laisse désormais une ligne dans le fil : « Contact rattaché — Élise Fabre (decideur) », avec son
