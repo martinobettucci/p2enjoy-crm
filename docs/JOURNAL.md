@@ -25143,3 +25143,96 @@ changement ; aucune autre occurrence n'est cherchée au passage.
 **Où reprendre.** La spécification est écrite et poussée ; la tranche 1 est en cours. Reste dû : la
 migration, sa suite pgTAP, les quinze lignes de contrat d'API du §8, le seed du §9 et le harnais
 dédié.
+
+## décision 522 — `CRM-064` tranche 1 livrée : la mention devient une relation, et un privilège manquant que seule l'API pouvait voir
+
+**2026-08-26, session planifiée de 08:15 UTC, suite de la décision 521.** La spécification écrite et
+poussée d'abord, la tranche 1 est **livrée et prouvée**. Ce qui suit ne répète pas la 521 : il dit ce
+que la mise en œuvre a appris.
+
+**LE PRIVILÈGE MANQUANT, ET POURQUOI SEULE L'API POUVAIT LE VOIR.** La première écriture refusait
+`app.can_read_card_pour` aux deux rôles clients, au motif écrit noir sur blanc que « le trigger n'est
+atteint que par un client authentifié ». Le raisonnement se contredisait : le trigger est
+**`SECURITY INVOKER`**, donc il l'exécute **précisément sous ce rôle**. MESURÉ : quatre lignes du
+contrat rendaient `403 / 42501 permission denied for function can_read_card_pour`, là où trois
+attendaient un refus **métier** et une un succès. **La suite pgTAP serait restée verte** — elle
+s'exécute sous le propriétaire, qui n'a besoin d'aucun privilège. C'est la famille exacte du défaut
+de la migration `0053` (`CRM-062`), et elle redit la même chose : une règle prouvée en base n'est pas
+une règle rendue par la pile.
+
+La divulgation que le refus voulait éviter **n'a aucun canal**, et c'est mesuré plutôt que supposé :
+PostgREST expose `public, storage, graphql_public`, jamais `app` — un appel direct rend
+`404 / PGRST202`. Le privilège sert l'exécution en base, et rien d'autre. La ligne du §5.5 est
+**révisée sur place**, avec la mesure qui l'a corrigée.
+
+**LE REJEU DU RÉPERTOIRE A TROUVÉ UNE SECONDE FAUTE, ET LE DÉPÔT PORTAIT DÉJÀ SA RÉPONSE.** Retirer
+`card_comments.mentions` faisait échouer le rejeu de la migration `0015`, qui posait un
+`comment on column` sur une colonne devenue absente. La migration `0007` écrit textuellement le
+geste attendu, pour `require_fields` : « ne pas nommer ici l'ancienne colonne est indispensable, le
+runner rejouant aussi cette migration sur un schéma final ». `0015` cesse donc de la nommer, motif
+écrit à sa place. **Le rejeu complet rend 63 fichiers, code 0.**
+
+**DEUX LIGNES DU CONTRAT ONT ÉTÉ CORRIGÉES PAR LA MESURE, ET AUCUNE LIGNE DE CODE N'A ÉTÉ PLIÉE POUR
+LEUR OBÉIR.** La ligne *d* attendait `409 / 23503`, la clé étrangère. Le trigger étant
+`BEFORE INSERT`, il refuse **avant** elle, et pour un identifiant qui ne désigne personne comme pour
+un profil sans accès : le refus **ne dit pas si le profil existe**, ce qu'un `23503` aurait dit.
+Le comportement obtenu est **meilleur** que celui qui était prévu, et c'est ce qui décide de ne rien
+changer. La clé reste la **seconde** barrière — invisible depuis l'API tant que la première tient —,
+donc éprouvée en pgTAP **trigger désactivé** : sans cette assertion, une clé oubliée passerait
+inaperçue. La ligne *h* a rendu deux refus selon la card, et le second — `comment_not_found` sur un
+commentaire fermé — est exactement la discrétion que le §6 recherchait ; il devient la ligne *h bis*.
+
+**LE HARNAIS A PRIS MES PROPRES PREUVES EN DÉFAUT, DEUX FOIS.** La suite pgTAP était **complaisante**
+sur `created_at` : elle n'envoyait aucune valeur, si bien qu'un `coalesce` l'aurait satisfaite. Elle
+en envoie désormais une **vieille de dix ans** et exige qu'elle ne survive pas.
+
+**Et le harnais s'est accusé lui-même à tort, ce qui vaut plus que le défaut.** Une dégradation dont
+le SQL portait des apostrophes — doublées par leur passage en argument shell entre apostrophes
+simples — était **refusée par `psql`**. Le produit restait intact, la suite restait verte, et le
+harnais concluait « COMPLAISANT ». **Un faux verdict de complaisance est plus dangereux qu'un vrai :
+il accuse une preuve saine, et invite à l'affaiblir pour la faire rougir.** `degrader()` vérifie donc
+désormais que `psql` a **appliqué** la copie dégradée, et nomme le refus quand il survient. C'est la
+décision 503 poussée d'un cran : elle exigeait que la substitution change quelque chose ; il faut
+aussi que l'application réussisse.
+
+`restaurer()` retire en outre explicitement la table de la publication : **la migration propre ne
+sait pas exprimer une absence** — elle n'ajoute pas la table, mais ne l'en retire pas —, si bien
+qu'un simple rejeu aurait laissé le produit publié en sortie. Défaut de la décision 108, évité.
+
+**LE SECOND AUTEUR DU SEED A ÉTÉ CHOISI PAR UNE MESURE.** Le §9 visait le commentaire de la lectrice
+sur `…0c5` ; mesuré : `403 / 42501`. Elle n'est que `read` sur `maintenance` — son commentaire y a
+été posé par la clé de service — et ne peut donc pas le compléter (INC-071). Le cas est reporté sur
+`…0d2`, écrit par Driss. L'écart qui en résulte — les deux mentions vivent sur la même card — est
+**nommé** au point ouvert n° 5 plutôt que masqué : le combler ferait varier le compte de
+commentaires, figé par six preuves depuis `CRM-043`.
+
+**QUATRE GARDE-FOUS FIGÉS ONT ROUGI COMME PRÉVU, ET ONT ÉTÉ RÉVISÉS PLUTÔT QUE RETIRÉS** (mécanisme
+de la décision 51) : six assertions de `0017_commentaires.test.sql` — dont celle qui exigeait la
+présence de la colonne, désormais retournée en `hasnt_column` —, le compteur de politiques de
+`0016_preuves_refus.test.sql` (116 → **119**), le témoin de types, et une assertion de
+`e2e/api/commentaires.spec.ts`. Chacune porte son motif dans son fichier. **Le témoin de types a vu
+la table le jour où elle est née**, et c'est la première fois de la série : les trois occurrences
+précédentes venaient d'une migration livrée sans régénérer les types, au motif que la tranche ne
+touchait aucun écran. Celle-ci n'en touche aucun non plus, et régénère.
+
+**CAMPAGNE.** `typecheck`, `types:check` et `build` verts ; `test:sql` **61 fichiers / 2896
+assertions** ; `test:unit` **78 fichiers / 2646 tests** ; `e2e:api` **958 passés** ; `e2e:mail`
+**42 passés** ; `pytest` **244 passés** ; `e2e:ui` **629 passés, aucun échec** ;
+`scripts/verify-mentions.sh` **47 contrôles, aucune anomalie**, sept dégradations toutes mordantes
+et restauration constatée.
+
+**Un point de méthode, dit plutôt que tu** : le premier passage d'`e2e:ui` a tourné **pendant** que
+le harnais dégradait et restaurait la même base. Il a rendu 629 verts, et aucune dégradation ne
+portait sur un objet qu'un scénario d'interface lit — elles ne touchaient que la relation créée par
+cette tranche. La campagne a néanmoins été **rejouée seule** derrière l'arbre final, parce qu'un
+verdict pris dans une fenêtre où le produit bougeait n'est pas un verdict.
+
+**Où reprendre.** `CRM-064` **tranche 1 close**. La session suivante prend la **tranche 2 — la
+notification** : table `public.notifications`, sa production à partir d'une mention, l'état lu / non
+lu, RLS et contrat d'API. Elle est à **spécifier avant son code** (`docs/SPEC-notifications.md` §1.2
+la nomme, aucun chapitre ne la décrit encore). Reste également dû sur la tranche 1, et nommé au
+backlog : la série des `scripts/verify-*.sh`, dont **un sur soixante-douze** a été rejoué.
+
+**La question posée au responsable reste la même, et une seule** : les unités **`CRM-072`**
+(`audit_log`) et **`CRM-073`** (`api_tokens`) n'existent pas, onze unités leur renvoient, et leur
+périmètre est un choix produit qu'aucune mesure ne donne.
