@@ -3,6 +3,8 @@
 // @spec CRM-022 (docs/BACKLOG.md) — auteurs et acteurs nommés sans UUID
 // @spec CRM-062 (docs/BACKLOG.md) — tranche 3b : la relance automatique NOMMÉE dans le fil
 //       (docs/SPEC-relances.md §10.3.1 ; docs/INCONSISTENCY_REPORT.md INC-207)
+// @spec CRM-064 (docs/BACKLOG.md) — sous-tranche 3b : le sélecteur de mentions du composeur
+//       (docs/SPEC-notifications.md §33 à §36 ; docs/DESIGN_SYSTEM.md §5.44)
 // @spec docs/SPEC-cards.md §14.10 (ce que le fil unifié montre), §13.10 (le panneau que
 //       `CRM-043` a livré et que le §5.10 annonçait comme « la première voie d'un fil unifié »),
 //       §13.4 (la pierre tombale), §13.5 (la mention « modifié »), §13.6 (le refus vient du
@@ -37,6 +39,7 @@
 import {
 	AlarmClock,
 	Archive,
+	AtSign,
 	UserRoundPlus,
 	UserRoundMinus,
 	UserRoundPen,
@@ -70,8 +73,17 @@ import {
 	type NatureRefusPublication,
 	type ResultatGeste,
 } from '../lib/commentaires'
+import {
+	lireMentionnables,
+	poserMentions,
+	resumerPublication,
+	type IssueMention,
+	type NatureRefusMention,
+	type PersonneMentionnable,
+} from '../lib/mentions'
 import { lireMessagesDeCard } from '../lib/inbox'
 import { lireNomsDeContacts } from '../lib/contacts'
+import { enChargement, type EtatAsync } from '../lib/async'
 import type { ClientCrm } from '../lib/supabase'
 import {
 	FAMILLES,
@@ -183,6 +195,24 @@ const CLES_REFUS: Readonly<Record<NatureRefusPublication, Parameters<typeof t>[0
 }
 
 /**
+ * Traductions des refus de mention, écrites une fois — `CRM-064` §35.4.
+ *
+ * ELLES SONT DISTINCTES DE `CLES_REFUS`, et ce n'est pas une duplication : les deux ensembles
+ * nomment deux gestes différents, jugés par deux autorités différentes. Le trigger de la migration
+ * `0063` juge le **destinataire** de la mention ; la politique d'insertion juge l'**auteur** du
+ * commentaire. Fondre les deux dictionnaires rendrait « ce commentaire a été supprimé » à quelqu'un
+ * dont le commentaire est vivant et dont la mention seule a été refusée.
+ */
+const CLES_REFUS_MENTION: Readonly<Record<NatureRefusMention, Parameters<typeof t>[0]>> = {
+	'destinataire-sans-acces': 'comments.mentions.refus.destinataire-sans-acces',
+	'commentaire-supprime': 'comments.mentions.refus.commentaire-supprime',
+	'commentaire-introuvable': 'comments.mentions.refus.commentaire-introuvable',
+	forbidden: 'comments.mentions.refus.forbidden',
+	network: 'comments.mentions.refus.network',
+	unknown: 'comments.mentions.refus.unknown',
+}
+
+/**
  * Alias de la promesse rendue par un geste d'auteur.
  *
  * Il fut d'abord un contournement : écrite `=> Promise<boolean>`, la signature faisait un faux
@@ -256,6 +286,25 @@ export function PanneauTimeline({
 	const [annonce, setAnnonce] = useState('')
 	// Le champ de composition, pour lui rendre le focus après une publication réussie (décision 315).
 	const zoneComposition = useRef<HTMLTextAreaElement>(null)
+
+	// --- Le sélecteur de mentions — `CRM-064` sous-tranche 3b, §36 -----------------------------
+	//
+	// LA LISTE N'EST LUE QU'À LA PREMIÈRE OUVERTURE (§36.3), jamais au chargement de la fiche :
+	// la plupart des visites d'une affaire ne mentionnent personne, et une requête émise sur chaque
+	// ouverture d'écran serait gratuite sur les neuf dixièmes. `null` distingue « jamais ouvert »
+	// de « ouvert et en chargement » — sans quoi l'effet de lecture ne saurait pas s'il doit partir.
+	const [selecteurOuvert, setSelecteurOuvert] = useState(false)
+	const [mentionnables, setMentionnables] = useState<EtatAsync<
+		readonly PersonneMentionnable[]
+	> | null>(null)
+	const [tentativeListe, setTentativeListe] = useState(0)
+	// Les personnes cochées, par identifiant. Un `Set` et non un tableau : l'appartenance est la
+	// seule question posée à cet état, et l'ordre d'envoi vient de la LISTE, pas des clics (§35.2).
+	const [choisies, setChoisies] = useState<ReadonlySet<string>>(() => new Set())
+	// Les mentions refusées de la dernière publication. Elles ne sont PAS une nature de refus du
+	// composeur : le commentaire, lui, est publié (§35.3). Les fondre avec `refus` ferait croire
+	// que rien n'a eu lieu.
+	const [mentionsRefusees, setMentionsRefusees] = useState<readonly IssueMention[]>([])
 
 	// LES ÉVÉNEMENTS SONT LUS SÉPARÉMENT DES COMMENTAIRES, et relus chaque fois que le fil des
 	// commentaires change : `card_events` n'est PAS publiée au temps réel (§14.1), et un
@@ -375,6 +424,37 @@ export function PanneauTimeline({
 		}
 	}, [client, contactsCites])
 
+	// LA LECTURE PART À LA PREMIÈRE OUVERTURE, ET REPART SUR REPRISE OU CHANGEMENT D'AFFAIRE.
+	// Elle ne repart PAS à chaque repli-dépli : la liste ne change pas entre deux clics, et la
+	// relire ferait payer une requête à un geste d'interface.
+	useEffect(() => {
+		if (client === null || !selecteurOuvert) return
+		if (mentionnables !== null && tentativeListe === 0) return
+		let vivant = true
+		setMentionnables(enChargement())
+		void (async () => {
+			const resultat = await lireMentionnables(client, idCard)
+			if (vivant) setMentionnables(resultat)
+		})()
+		return () => {
+			vivant = false
+		}
+		// `mentionnables` est délibérément absent des dépendances : l'effet l'ÉCRIT, et l'y mettre
+		// le ferait se rappeler lui-même. La garde ci-dessus lit sa valeur courante, ce qui suffit.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [client, idCard, selecteurOuvert, tentativeListe])
+
+	// CHANGER D'AFFAIRE REMET LE SÉLECTEUR À ZÉRO, et c'est nécessaire : l'éligibilité dépend de
+	// l'affaire (§32, M1), si bien qu'une personne cochée sur l'une peut être refusée sur l'autre.
+	// Garder les choix ferait poser des mentions que l'auteur n'a pas voulues là.
+	useEffect(() => {
+		setSelecteurOuvert(false)
+		setMentionnables(null)
+		setTentativeListe(0)
+		setChoisies(new Set())
+		setMentionsRefusees([])
+	}, [idCard])
+
 	const commentaires = etat.statut === 'pret' ? etat.donnees : []
 	const fil = useMemo(() => fusionnerFil(commentaires, evenements), [commentaires, evenements])
 	const comptes = useMemo(() => compterParFamille(fil), [fil])
@@ -394,17 +474,48 @@ export function PanneauTimeline({
 		if (client === null || envoiEnCours) return
 		setEnvoiEnCours(true)
 		setRefus(null)
+		setMentionsRefusees([])
 		const resultat = await publierCommentaire(client, {
 			idCard,
 			idWorkspace,
 			corps: brouillon,
 		})
-		setEnvoiEnCours(false)
 		if (resultat.statut === 'refus') {
+			setEnvoiEnCours(false)
 			// LE TEXTE SAISI EST CONSERVÉ (docs/DESIGN_SYSTEM.md §5.10) : le vider ferait perdre à
-			// l'utilisateur un texte pour une erreur qui n'est pas la sienne.
+			// l'utilisateur un texte pour une erreur qui n'est pas la sienne. Le sélecteur garde
+			// ses choix pour la même raison — AUCUNE mention n'a été tentée (§35.4, troisième ligne).
 			setRefus(resultat.refus.nature)
 			return
+		}
+
+		// LES MENTIONS SE POSENT APRÈS LE COMMENTAIRE, ET C'EST UNE CONTRAINTE DU MODÈLE (§35) : la
+		// clé primaire est `(comment_id, profile_id)`, donc le commentaire doit exister. Les deux
+		// écritures ne sont pas atomiques, et ce qui suit est ce que l'écran fait quand la seconde
+		// échoue — le cas que le §30 demandait de traiter plutôt que de taire.
+		//
+		// L'ORDRE D'ENVOI EST CELUI DE LA LISTE, jamais celui des clics : deux publications faites
+		// des mêmes choix rendent le même compte rendu.
+		const aMentionner =
+			mentionnables?.statut === 'pret'
+				? mentionnables.donnees.filter((personne) => choisies.has(personne.id))
+				: []
+		const issues =
+			resultat.idCommentaire === null || aMentionner.length === 0
+				? []
+				: await poserMentions(client, resultat.idCommentaire, idWorkspace, aMentionner)
+		setEnvoiEnCours(false)
+
+		const bilan = resumerPublication(issues)
+		if (bilan.statut === 'partiel') {
+			// LE COMMENTAIRE PUBLIÉ N'EST JAMAIS RETIRÉ (§35.3). Le brouillon EST vidé — le
+			// commentaire existe, et le reproposer ferait publier deux fois le même propos —, et le
+			// sélecteur ne garde que les personnes refusées : ce qui reste coché est exactement ce
+			// qu'il reste à faire, sur un autre commentaire.
+			setMentionsRefusees(bilan.refusees)
+			setChoisies(new Set(bilan.refusees.map((issue) => issue.personne.id)))
+		} else {
+			setChoisies(new Set())
 		}
 		setBrouillon('')
 		setAnnonce(t('live.comments.published'))
@@ -532,6 +643,43 @@ export function PanneauTimeline({
 						{t(CLES_REFUS[refus])}
 					</p>
 				)}
+
+				<SelecteurMentions
+					ouvert={selecteurOuvert}
+					onBasculer={() => setSelecteurOuvert((precedent) => !precedent)}
+					etat={mentionnables}
+					choisies={choisies}
+					onBasculerPersonne={(idPersonne) =>
+						setChoisies((precedentes) => {
+							const suivantes = new Set(precedentes)
+							if (suivantes.has(idPersonne)) suivantes.delete(idPersonne)
+							else suivantes.add(idPersonne)
+							return suivantes
+						})
+					}
+					onReprise={() => setTentativeListe((precedente) => precedente + 1)}
+				/>
+
+				{/* LE REFUS PARTIEL EST UNE TROISIÈME ISSUE, ET IL VIT SOUS LE COMPOSEUR (§5.44) :
+				    le commentaire EST publié, et le ranger avec le refus de publication ci-dessus
+				    ferait croire que rien n'a eu lieu. */}
+				{mentionsRefusees.length === 0 ? null : (
+					<p role="alert" className="text-sm text-danger" data-testid="mentions-refusees">
+						{mentionsRefusees.length === 1
+							? t('comments.mentions.partiel', {
+									noms: mentionsRefusees[0]?.personne.nom ?? '',
+									cause: t(CLES_REFUS_MENTION[natureDe(mentionsRefusees[0])]),
+								})
+							: t('comments.mentions.partiel.pluriel', {
+									// LES NOMS SONT UNE DONNÉE, la phrase reste dans le dictionnaire
+									// (`CLAUDE.md` §23). Le séparateur est le seul morceau composé ici,
+									// et il ne porte aucun mot.
+									noms: mentionsRefusees.map((issue) => issue.personne.nom).join(', '),
+									cause: t(CLES_REFUS_MENTION[natureDe(mentionsRefusees[0])]),
+								})}
+					</p>
+				)}
+
 				<div className="flex justify-end">
 					<Button
 						type="submit"
@@ -543,6 +691,131 @@ export function PanneauTimeline({
 				</div>
 			</form>
 		</section>
+	)
+}
+
+/**
+ * La nature d'une issue refusée, ou le repli `unknown`.
+ *
+ * `IssueMention` est un type somme dont seule la branche `refus` porte une nature ; la liste des
+ * refusées ne contient que celle-là, mais le compilateur ne le sait pas. Le repli est écrit **une
+ * fois**, ici, plutôt que dilué en assertions de type dans le JSX — une assertion ferait taire le
+ * compilateur sans rien garantir, et `unknown` rend un message honnête si la garantie tombait.
+ */
+function natureDe(issue: IssueMention | undefined): NatureRefusMention {
+	return issue !== undefined && issue.statut === 'refus' ? issue.nature : 'unknown'
+}
+
+/**
+ * Le sélecteur de mentions du composeur — `CRM-064` sous-tranche 3b,
+ * `docs/SPEC-notifications.md` §36, `docs/DESIGN_SYSTEM.md` §5.44.
+ *
+ * CE N'EST PAS UN `select`, ET L'ÉCART AVEC LE §5.22 EST MOTIVÉ : là-bas le choix est unique, ici il
+ * est multiple. `<select multiple>` est le contrôle que les plateformes rendent le plus mal —
+ * sélection à la souris destructrice, hauteur illisible sous le palier `md` —, et le §8 exige mieux.
+ * Un `fieldset` de cases à cocher n'ajoute aucune dépendance et porte le clavier de la plateforme.
+ *
+ * IL NE PORTE AUCUNE RÈGLE D'ACCÈS (`CLAUDE.md` §10). La liste vient de `public.mentionnables`, qui
+ * appelle `app.can_read_card_pour` : le composant n'écarte personne, il rend ce que la base donne.
+ */
+function SelecteurMentions({
+	ouvert,
+	onBasculer,
+	etat,
+	choisies,
+	onBasculerPersonne,
+	onReprise,
+}: {
+	readonly ouvert: boolean
+	readonly onBasculer: () => void
+	readonly etat: EtatAsync<readonly PersonneMentionnable[]> | null
+	readonly choisies: ReadonlySet<string>
+	readonly onBasculerPersonne: (idPersonne: string) => void
+	readonly onReprise: () => void
+}) {
+	return (
+		<div className="flex flex-col gap-2">
+			{/*
+			 * LA COMMANDE PORTE LE COMPTE (§5.44) : un auteur qui replie le sélecteur ne saurait
+			 * plus, sinon, qui son commentaire mentionne. Deux clés et non une phrase à trou —
+			 * « Mentionner » et « Mentionner (2) » ne sont pas la même phrase (`CLAUDE.md` §23).
+			 */}
+			<button
+				type="button"
+				onClick={onBasculer}
+				aria-expanded={ouvert}
+				aria-controls="mentions-liste"
+				className={[
+					'inline-flex w-fit items-center gap-2 rounded-sm px-3',
+					'min-h-[var(--size-target)] text-sm text-text-2 hover:bg-hover',
+					'focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2',
+				].join(' ')}
+			>
+				<AtSign aria-hidden="true" className="size-4" />
+				<span>
+					{choisies.size === 0
+						? t('comments.mentions.toggle')
+						: t('comments.mentions.toggle.count', { compte: String(choisies.size) })}
+				</span>
+			</button>
+
+			{/*
+			 * LE CONTENU N'EST RENDU QUE REPLIÉ-DÉPLIÉ, et non masqué en CSS : une case à cocher
+			 * cachée reste atteignable au clavier et se soumettrait avec le formulaire (§8).
+			 */}
+			{!ouvert ? null : (
+				<fieldset
+					id="mentions-liste"
+					className="flex flex-col gap-2 rounded-sm border border-border px-3 py-2"
+					aria-busy={etat === null || etat.statut === 'chargement'}
+				>
+					<legend className="px-1 text-sm text-text-3">{t('comments.mentions.legend')}</legend>
+					{etat === null || etat.statut === 'chargement' ? (
+						<p className="text-sm text-text-3">{t('comments.mentions.loading')}</p>
+					) : etat.statut === 'erreur' ? (
+						// L'ERREUR PORTE SON ACTION DE REPRISE (§5.8) : une liste absente sans moyen
+						// de la redemander est une impasse.
+						<div className="flex flex-col items-start gap-2">
+							<p className="text-sm text-danger">{t('comments.mentions.error')}</p>
+							<Button type="button" variante="secondaire" onClick={onReprise}>
+								{t('comments.mentions.retry')}
+							</Button>
+						</div>
+					) : etat.donnees.length === 0 ? (
+						// L'ÉTAT VIDE N'OFFRE AUCUNE ACTION, et son message dit que l'état est SAIN
+						// (§5.44) : être seul à lire une affaire n'est pas un manque.
+						<p className="text-sm text-text-3">{t('comments.mentions.empty')}</p>
+					) : (
+						etat.donnees.map((personne) => (
+							<label
+								key={personne.id}
+								className="flex min-h-[var(--size-target)] items-center gap-2 text-sm text-ink"
+							>
+								<input
+									type="checkbox"
+									checked={choisies.has(personne.id)}
+									onChange={() => onBasculerPersonne(personne.id)}
+									className="size-4 accent-brand focus:outline-none focus:ring-2 focus:ring-brand"
+								/>
+								{/* L'AVATAR EST DÉCORATIF : le nom est écrit juste à côté, et le
+								    répéter au lecteur d'écran ferait entendre la personne deux
+								    fois (§5.4). */}
+								<Avatar
+									profil={{
+										id: personne.id,
+										full_name: personne.nom,
+										avatar_url: personne.avatar,
+									}}
+									taille={24}
+									decoratif
+								/>
+								<span>{personne.nom}</span>
+							</label>
+						))
+					)}
+				</fieldset>
+			)}
+		</div>
 	)
 }
 

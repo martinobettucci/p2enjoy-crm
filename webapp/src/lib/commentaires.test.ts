@@ -242,9 +242,20 @@ function clientInsertion(reponse: {
 		from: (table: string) => {
 			appel.table = table
 			return {
+				// `insert(...).select('id')` — la forme exacte de l'appel depuis `CRM-064`
+				// sous-tranche 3b : le composeur a besoin de l'identifiant de la ligne créée pour
+				// poser ses mentions (docs/SPEC-notifications.md §35.2). Le double est RÉVISÉ pour
+				// suivre le fait, jamais contourné.
 				insert: (charge: Record<string, unknown>) => {
 					appel.charge = charge
-					return Promise.resolve(reponse)
+					return {
+						select: () =>
+							Promise.resolve(
+								reponse.error === null
+									? { ...reponse, data: [{ id: 'commentaire-neuf' }] }
+									: { ...reponse, data: null },
+							),
+					}
 				},
 			}
 		},

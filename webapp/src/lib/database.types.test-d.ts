@@ -845,11 +845,18 @@ type _vueDerivationColonnes = Expect<
 // et `0062` de la 4c ajoute `reordonner_paliers_sequence`. LES DEUX PREMIÈRES N'ONT PAS ÉTÉ VUES
 // EN LEUR TEMPS, pour la cause désormais habituelle : 4b ne livrait aucun écran. La 4c régénère,
 // et les trois entrent ensemble. Quarante devient QUARANTE-TROIS.
-type _lesQuaranteTroisFonctions = Expect<
+//
+// `0066` de `CRM-064` sous-tranche 3b ajoute `mentionnables`, ET LE TÉMOIN L'A VUE DANS LE MÊME
+// CHANGEMENT — pour la troisième fois consécutive depuis que la leçon ci-dessus a été tirée. La
+// migration et la régénération des types sont dans le même commit, parce que l'écran qui appelle
+// `client.rpc('mentionnables')` est livré par la même sous-tranche : la chaîne tient quand la
+// fonction naît AVEC son appelant. Quarante-trois devient QUARANTE-QUATRE.
+type _lesQuaranteQuatreFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
     | 'armer_sequence_relance'
     | 'cards_figees'
+    | 'mentionnables'
     | 'interrompre_sequence_relance'
     | 'reordonner_paliers_sequence'
     | 'mail_template_variables'
@@ -1080,7 +1087,7 @@ export type AssertionsDuContratDeTypes = [
   _relationsWorkspaceMembers,
   _laSeuleVue,
   _vueDerivationColonnes,
-  _lesQuaranteTroisFonctions,
+  _lesQuaranteQuatreFonctions,
   _signatureReelSaisissable,
   _retourReelSaisissable,
   _signatureArborescence,

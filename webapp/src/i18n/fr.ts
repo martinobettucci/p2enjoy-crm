@@ -1130,6 +1130,40 @@ export const fr = {
 	'comments.deleted.moderation': 'Commentaire retiré par la modération',
 	'comments.geste.sans-effet':
 		"Ce commentaire n'est plus le vôtre, ou vous n'écrivez plus sur cette affaire : rien n'a été modifié.",
+
+	// --- Sélecteur de mentions du composeur — `CRM-064` sous-tranche 3b -------------------
+	// docs/SPEC-notifications.md §33 à §36, docs/DESIGN_SYSTEM.md §5.44.
+	//
+	// LE LIBELLÉ DE LA COMMANDE PORTE LE COMPTE, et il est paramétré plutôt que concaténé
+	// (`CLAUDE.md` §23) : un auteur qui replie le sélecteur ne saurait plus, sinon, qui son
+	// commentaire mentionne. Deux clés et non une, parce que « Mentionner » et « Mentionner
+	// (2) » ne sont pas la même phrase avec un morceau optionnel : une langue peut les
+	// construire tout autrement.
+	'comments.mentions.toggle': 'Mentionner',
+	'comments.mentions.toggle.count': 'Mentionner ({compte})',
+	'comments.mentions.legend': 'Personnes à prévenir',
+	'comments.mentions.loading': 'Chargement des personnes…',
+	'comments.mentions.error': 'La liste des personnes n’a pas pu être chargée.',
+	'comments.mentions.retry': 'Réessayer',
+	// L'ÉTAT VIDE EST UN ÉTAT SAIN, PAS UN MANQUE, et il n'offre aucune action : aucun écran du
+	// produit ne donne accès à une affaire, et un bouton y serait un chemin vers nulle part.
+	'comments.mentions.empty': 'Personne d’autre ne peut lire cette affaire.',
+	// LE REFUS PARTIEL NOMME LES PERSONNES (§35.4). La liste des noms est une DONNÉE, composée
+	// par le module et passée en paramètre ; la phrase, elle, reste dans le dictionnaire.
+	'comments.mentions.partiel':
+		'Votre commentaire est publié, mais {noms} n’a pas pu être mentionné : {cause}',
+	'comments.mentions.partiel.pluriel':
+		'Votre commentaire est publié, mais ces personnes n’ont pas pu être mentionnées : {noms} — {cause}',
+	// Les causes, telles que le §35.4 les traduit. Aucune n'invente de message pour un code
+	// inconnu : `unknown` dit ce qu'il sait, c'est-à-dire rien de plus que l'échec.
+	'comments.mentions.refus.destinataire-sans-acces':
+		'cette personne ne peut pas lire cette affaire.',
+	'comments.mentions.refus.commentaire-supprime':
+		'ce commentaire a été supprimé et ne reçoit plus de mention.',
+	'comments.mentions.refus.commentaire-introuvable': 'ce commentaire est introuvable.',
+	'comments.mentions.refus.forbidden': 'vous ne pouvez pas mentionner sur ce commentaire.',
+	'comments.mentions.refus.network': 'la mention n’a pas pu être envoyée. Vérifiez votre connexion.',
+	'comments.mentions.refus.unknown': 'la mention n’a pas pu être posée.',
 	'timeline.actor': 'par {nom}',
 
 	// --- Région d'annonces (docs/DESIGN_SYSTEM.md §8) ------------------------------------

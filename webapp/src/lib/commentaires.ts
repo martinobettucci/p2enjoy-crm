@@ -1,5 +1,8 @@
 // @spec CRM-043 (docs/BACKLOG.md) — lecture, publication et flux du fil de commentaires
 // @spec CRM-022 (docs/BACKLOG.md) — auteur embarqué et compte supprimé détaché
+// @spec CRM-064 (docs/BACKLOG.md) — sous-tranche 3b : `publierCommentaire` rend l'identifiant de la
+//       ligne créée, sans lequel aucune mention ne peut être posée
+//       (docs/SPEC-notifications.md §30, §35.2)
 // @spec docs/SPEC-cards.md §13.4 (la pierre tombale), §13.5 (`edited_at`), §13.6 (autorisations),
 //       §13.9 (le temps réel, et la règle « recharger à l'abonnement »), §13.10 (le panneau)
 // @spec docs/DESIGN_SYSTEM.md §5.10 (panneau de commentaires), §5.8 (états systématiques)
@@ -209,29 +212,48 @@ export type Publication = {
 }
 
 /**
- * Publie un commentaire.
+ * Publie un commentaire, et rend l'identifiant de la ligne créée.
  *
  * `author_id` **n'est pas envoyé** : la colonne vaut `auth.uid()` par défaut, et la politique
  * d'insertion refuse toute autre valeur (décision 196). L'envoyer reviendrait à demander au client
  * de signer, ce qu'il n'a pas à faire.
+ *
+ * `select('id')` A ÉTÉ AJOUTÉ PAR `CRM-064` SOUS-TRANCHE 3B, ET IL EST NÉCESSAIRE, PAS DÉCORATIF.
+ * La clé primaire de `card_comment_mentions` est `(comment_id, profile_id)` : une mention ne peut
+ * donc être posée qu'APRÈS le commentaire qu'elle porte, et son identifiant est le seul lien entre
+ * les deux écritures (`docs/SPEC-notifications.md` §30, §35). Sans lui, le composeur devrait relire
+ * le fil et deviner quelle ligne est la sienne — un appariement par date et par auteur, faux dès
+ * deux publications dans la même seconde.
+ *
+ * `idCommentaire` peut être `null` alors que la publication a RÉUSSI, et ce n'est pas une
+ * inconstance : PostgREST ne rend le corps que si la politique `SELECT` laisse relire la ligne
+ * insérée. Le cas n'a pas été observé sur ce produit — l'auteur lit toujours l'affaire où il écrit
+ * —, mais le prétendre impossible ferait planter le composeur là où il doit seulement renoncer aux
+ * mentions et le dire.
  */
 export async function publierCommentaire(
 	client: ClientCrm,
 	publication: Publication,
-): Promise<{ readonly statut: 'publie' } | { readonly statut: 'refus'; readonly refus: RefusPublication }> {
+): Promise<
+	| { readonly statut: 'publie'; readonly idCommentaire: string | null }
+	| { readonly statut: 'refus'; readonly refus: RefusPublication }
+> {
 	try {
-		const reponse = await client.from('card_comments').insert({
-			card_id: publication.idCard,
-			workspace_id: publication.idWorkspace,
-			body: publication.corps,
-		})
+		const reponse = await client
+			.from('card_comments')
+			.insert({
+				card_id: publication.idCard,
+				workspace_id: publication.idWorkspace,
+				body: publication.corps,
+			})
+			.select('id')
 		if (reponse.error !== null) {
 			return {
 				statut: 'refus',
 				refus: classerRefusPublication(reponse.status, reponse.error.code, reponse.error.message),
 			}
 		}
-		return { statut: 'publie' }
+		return { statut: 'publie', idCommentaire: (reponse.data ?? [])[0]?.id ?? null }
 	} catch (cause) {
 		return {
 			statut: 'refus',

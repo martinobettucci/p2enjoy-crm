@@ -2779,6 +2779,14 @@ export type Database = {
         Args: { p_message_id: string }
         Returns: undefined
       }
+      mentionnables: {
+        Args: { card_id: string }
+        Returns: {
+          avatar_url: string
+          full_name: string
+          profile_id: string
+        }[]
+      }
       messages_a_ranger: {
         Args: { p_account_id: string }
         Returns: {

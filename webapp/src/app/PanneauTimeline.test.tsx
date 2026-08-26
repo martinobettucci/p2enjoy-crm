@@ -171,9 +171,22 @@ function clientFactice({
 					: table === 'card_events'
 						? chaineDe(evenements, false)
 						: chaineDe(etapes, false),
+			// `insert(...).select('id')` : LA FORME EXACTE QUE LA BIBLIOTHÈQUE EMPLOIE DEPUIS
+			// `CRM-064` SOUS-TRANCHE 3B. Le `select` final n'est pas décoratif — l'identifiant de
+			// la ligne créée est le seul lien entre le commentaire et les mentions qu'il porte, la
+			// clé primaire de `card_comment_mentions` étant `(comment_id, profile_id)`
+			// (docs/SPEC-notifications.md §35.2). Ce double est RÉVISÉ, jamais contourné : il
+			// suivait la forme de l'appel, il la suit toujours.
 			insert: (charge: Record<string, unknown>) => {
 				journal.charge = charge
-				return Promise.resolve(insertion)
+				return {
+					select: () =>
+						Promise.resolve(
+							insertion.error === null
+								? { ...insertion, data: [{ id: 'commentaire-neuf' }] }
+								: { ...insertion, data: null },
+						),
+				}
 			},
 			// `update(...).eq(...).select(...)` : la forme EXACTE que la bibliothèque emploie. Le
 			// `select` final n'est pas décoratif — sans lui, PostgREST ne rend aucun corps et le
@@ -499,13 +512,26 @@ describe('le composeur (§13.10)', () => {
 		expect((await screen.findByRole('alert')).textContent).toContain(fr['comments.refus.invalide'])
 	})
 
-	it('publie au CLAVIER, sans aucune souris', async () => {
+	// L'ORDRE DE TABULATION DU COMPOSEUR A CHANGÉ AVEC `CRM-064` SOUS-TRANCHE 3B, et cette preuve
+	// est RÉVISÉE pour le mesurer plutôt que contournée (mécanisme de la décision 51). Le sélecteur
+	// de mentions vit entre la zone de saisie et le bouton de publication
+	// (docs/DESIGN_SYSTEM.md §5.44), donc le clavier y fait désormais une halte. Elle n'ajoute pas
+	// simplement une tabulation : elle VÉRIFIE la halte, sans quoi un contrôle inséré demain au
+	// mauvais endroit passerait inaperçu.
+	it('publie au CLAVIER, sans aucune souris — et le sélecteur de mentions est sur le chemin', async () => {
 		const utilisateur = userEvent.setup()
 		const journal = monter({ lignes: [] })
 		const champ = await screen.findByLabelText(fr['comments.compose.label'])
 		champ.focus()
 		await utilisateur.keyboard('Au clavier')
 		await utilisateur.tab()
+		expect(document.activeElement).toBe(
+			screen.getByRole('button', { name: fr['comments.mentions.toggle'] }),
+		)
+		await utilisateur.tab()
+		expect(document.activeElement).toBe(
+			screen.getByRole('button', { name: fr['comments.compose.submit'] }),
+		)
 		await utilisateur.keyboard('{Enter}')
 		await waitFor(() => expect(journal.charge?.['body']).toBe('Au clavier'))
 	})
