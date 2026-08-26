@@ -65,9 +65,15 @@ stable
 -- MESURÉ (§32, M8), sonde créée dans une transaction ANNULÉE : sous Farida, sur la card `…0c1`
 -- qu'elle ne lit pas, la fonction rend 0 ligne.
 --
+-- LE MOT-CLÉ EST ÉCRIT, ALORS QU'IL EST LE DÉFAUT DE PostgreSQL. L'écrire ne change rien à
+-- l'exécution ; il change ce qu'une relecture voit, et ce qu'un harnais peut dégrader. Une
+-- propriété de sécurité qui n'existe que par omission ne se relit pas : personne ne remarque
+-- l'absence d'un mot qui n'a jamais été là.
+--
 -- `search_path` VIDE : tous les objets du corps sont pleinement qualifiés. La consigne vise en
 -- premier lieu les fonctions `SECURITY DEFINER`, mais la poser ici ne coûte rien et aligne cette
 -- fonction sur `public.cards_figees` et `public.inbox_arborescence`, ses jumelles de forme.
+security invoker
 set search_path to ''
 as $$
 	select p.id, p.full_name, p.avatar_url

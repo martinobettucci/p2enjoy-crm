@@ -3159,11 +3159,45 @@ Le panneau et le compteur s'actualisent **sans rechargement** dès qu'une notifi
 adressée : ils écoutent la base en temps réel. Le produit ne vous envoie **aucun email**, ne fait
 sonner **aucun son** et ne modifie **pas** le titre de l'onglet.
 
-### 8.5 Ce qui n'est pas encore là
+### 8.5 Mentionner quelqu’un dans un commentaire
 
-- **Poser une mention depuis l'interface n'est pas encore possible.** Le panneau montre les
-  notifications produites ; le sélecteur qui permet de nommer quelqu'un dans un commentaire arrive
-  avec la sous-tranche suivante.
+*Livré par `CRM-064`, sous-tranche 3b. Captures : `docs/captures/CRM-064/`.*
+
+Sous la zone de saisie du fil d'une affaire, la commande **« Mentionner »** ouvre la liste des
+personnes que ce commentaire peut prévenir. Cochez-en une ou plusieurs, écrivez votre message, et
+publiez : chacune reçoit sa notification.
+
+**Il n'y a pas de syntaxe à connaître.** Taper « @ » dans le texte ne fait rien : le produit ne lit
+pas votre commentaire pour y deviner des noms. Vous choisissez explicitement qui vous prévenez, et
+vous le voyez avant d'envoyer — la commande porte le nombre de personnes cochées, même repliée.
+
+**La liste ne contient que les personnes qui peuvent lire cette affaire**, et elle **change d'une
+affaire à l'autre** : un collègue proposé sur un dossier peut être absent d'un autre, parce que ses
+droits ne sont pas les mêmes partout. Ce n'est pas l'écran qui décide — c'est la même règle
+d'autorisation que partout ailleurs dans le produit.
+
+**Vous n'y figurez jamais vous-même.** Se mentionner n'enverrait rien : vous savez déjà ce que vous
+venez d'écrire.
+
+**Si personne d'autre ne peut lire l'affaire**, la liste le dit en toutes lettres. Ce n'est pas une
+panne : c'est un dossier dont vous êtes le seul lecteur.
+
+**Quand une mention échoue, votre commentaire reste publié.** Le cas est rare — il faut qu'un droit
+change entre le moment où vous ouvrez la liste et celui où vous publiez —, et le produit ne le
+cache pas : un message sous le composeur **nomme la personne** qui n'a pas été prévenue et dit
+pourquoi. Votre texte, lui, est bien en ligne : le retirer effacerait un propos que vous avez
+réellement tenu. Les personnes qui n'ont pas pu être prévenues restent cochées, pour que vous
+sachiez ce qu'il reste à faire.
+
+**Mentionner est facultatif.** Un commentaire sans mention se publie exactement comme avant.
+
+### 8.6 Ce qui n'est pas encore là
+
+- **Les mentions d'un commentaire déjà publié ne se corrigent pas.** On choisit avant de publier,
+  pas après ; ni la liste des personnes nommées, ni leur retrait ne sont offerts par l'écran.
+- **Le fil ne montre pas qui un commentaire mentionne.** La personne prévenue le voit dans sa
+  cloche ; le commentaire, lui, ne l'affiche pas.
+- **La liste des personnes n'a ni recherche ni pagination.**
 - **Aucune préférence** : vous ne pouvez pas encore choisir ce que vous recevez, ni par quel canal.
 - **Aucune suppression, et aucune expiration.** Une notification ne s'efface pas. Le panneau montre
   les **vingt plus récentes**, et le dit en toutes lettres quand il en manque ; le compteur, lui,
