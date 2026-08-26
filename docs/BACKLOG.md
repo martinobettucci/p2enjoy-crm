@@ -9160,7 +9160,7 @@ avant la suivante :
 |---|---|---|
 | 1 | La mention en base — relation, intégrité, règle d'éligibilité, RLS, contrat d'API, seed, harnais. Aucune surface | en cours |
 | 2 | La notification — table `public.notifications`, production à partir d'une mention, état lu / non lu | **livrée** |
-| 3 | La surface et le temps réel — composeur, liste, compteur, abonnement. **Découpée en deux sous-tranches** (spécification §22.1) : `3a` la réception, `3b` l'émission | `3a` **close** ; `3b` `[ ]` |
+| 3 | La surface et le temps réel — composeur, liste, compteur, abonnement. **Découpée en deux sous-tranches** (spécification §22.1) : `3a` la réception, `3b` l'émission | `3a` **close** ; `3b` `[~]` |
 | 4 | Les préférences — ce que chacun reçoit, et par quel canal | `[ ]` |
 
 - [x] **Spécification écrite et committée AVANT la première ligne de code** —
@@ -9453,9 +9453,8 @@ avant la suivante :
 
 - [~] **CE QUI RETIENT L'UNITÉ EN `[~]`, ET C'EST NOMMÉ PLUTÔT QUE MASQUÉ.** Les tranches **1 et
       2 sont closes**, et la sous-tranche **3a l'est aussi**. Ce qui reste : la sous-tranche **3b**
-      — le composeur qui pose une mention — n'est pas commencée, son contrat étant énoncé au §30 et
-      restant à spécifier avant son code ; et la **tranche 4** — les préférences — n'est pas
-      commencée. `docs/manual.md` porte désormais son chapitre 8, et son §8.5 nomme les six
+      — le composeur qui pose une mention — est **en cours** (voir sa section ci-dessous) ; et la
+      **tranche 4** — les préférences — n'est pas commencée. `docs/manual.md` porte désormais son chapitre 8, et son §8.5 nomme les six
       absences.
 - [ ] **La série des `scripts/verify-*.sh` n'a PAS été rejouée derrière ces changements**, et
       l'écart est nommé (`docs/CloudWorker.md` §4.3, budget) : le dépôt en porte **soixante-treize**
@@ -9466,6 +9465,42 @@ avant la suivante :
       (mesuré à la décision 509), et ses deux compteurs révisés ici l'ont été **par comptage
       direct** — `npm run test:sql` rend « 61 fichiers, 2896 assertions », et
       `playwright test --list` rend « 958 tests in 58 files ».
+
+#### Sous-tranche 3b — l'émission `[~]`
+
+- [x] **Spécification écrite et committée AVANT la première ligne de code** —
+      `docs/SPEC-notifications.md` §32 à §40 et `docs/DESIGN_SYSTEM.md` §5.44, fondés sur **neuf
+      mesures** prises le 2026-08-26 sur la pile réelle, seed appliqué, avec les jetons des trois
+      profils. Toutes les sondes qui écrivent ont été **détruites**, et l'état du seed **relu
+      après** : cinq commentaires, deux mentions, deux notifications. Le §30 énonçait le contrat ;
+      aucun chapitre ne le spécifiait.
+- [x] **LA CONTRADICTION APPARENTE DU §30 EST TRANCHÉE PAR LA MESURE** (§34.1). Il exige que le
+      sélecteur n'offre que des personnes **éligibles** et que l'écran **ne calcule aucun droit**.
+      M2 et M3 mesurent le conflit : la seule liste que l'écran sait lire — les trois membres du
+      workspace, visibles des trois profils, `viewer` compris — contient un nom que le backend
+      **refuse** (`400` / `P0001` `mention_destinataire_sans_acces`). La réponse n'est ni un filtre
+      dans l'écran — seconde écriture de la règle d'accès, en TypeScript cette fois —, ni un
+      sélecteur complaisant : c'est une **RPC de lecture** qui demande la liste au backend, lequel
+      porte déjà la règle.
+- [x] **LA FORME DE L'ÉMISSION EST DÉCIDÉE PAR UNE MESURE, ET ELLE CONTREDIT LE RÉFLEXE** (§35.1,
+      M5). Un `POST` groupé de deux mentions dont une seule est inéligible est **TOUT OU RIEN** :
+      `400`, et **aucune** mention posée, pas même celle qui était éligible — et le refus ne dit
+      **pas laquelle** est en cause. Deux `POST` séparés (M6) rendent un résultat **partiel** et
+      **attribuable** : `201` pour l'une, `400` pour l'autre. L'écran envoie donc une requête par
+      personne, séquentiellement, et paie `N` requêtes pour que le refus nomme quelqu'un.
+- [x] **LE CAS QUE LE §30 DEMANDAIT DE TRAITER EST TRANCHÉ** (§35.3, §35.4) : un commentaire publié
+      dont une mention échoue **reste publié**. Le retirer détruirait un propos réellement tenu, et
+      la suppression est une **pierre tombale définitive**, pas une annulation. L'écran rend une
+      troisième issue, distincte du succès comme du refus, qui **nomme les personnes** non
+      mentionnées ; le brouillon est vidé — le commentaire existe — et le sélecteur ne garde que
+      les refusés.
+- [ ] **Migration `0066` — `public.mentionnables(card_id uuid)`** : `SECURITY INVOKER`, `stable`,
+      `search_path` vide, `anon` révoqué **nommément**, notification du cache de schéma.
+- [ ] **Module client et surface** : la lecture de la liste, la séquence d'émission et le sélecteur
+      du composeur.
+- [ ] **Preuves de la sous-tranche** : suite pgTAP dédiée, contrat d'API des dix lignes du §37,
+      suite unitaire, E2E d'interface, captures observées, harnais
+      `scripts/verify-mentions-composeur.sh`.
 
 ---
 ### CRM-070 — précision d'arbitrage : l'invitation d'un membre

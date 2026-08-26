@@ -1768,3 +1768,384 @@ boîte **vide**, ce qui exerce l'état vide du §26.7 sans aucune donnée fabriq
 | E2E d'interface | Le parcours complet des trois profils : la cloche et son compteur, l'ouverture du panneau, la ligne et son lien, le marquage lu puis non lu, la boîte vide de Farida, l'absence de cloche pour l'anonyme, `Échap` et le retour du focus |
 | Visuel | Captures aux quatre paliers, panneau ouvert et fermé, boîte peuplée et boîte vide, **observées** conformément à `CLAUDE.md` §16. Console **vierge** |
 | Harnais | `scripts/verify-notifications-surface.sh`, non complaisant, éprouvé par dégradations réelles et restauration constatée |
+
+---
+
+# SOUS-TRANCHE 3B — L'ÉMISSION
+
+## 32. Les neuf mesures de la sous-tranche 3b, prises avant d'écrire
+
+Toutes relevées le 2026-08-26 sur la pile de développement, migrations `0001` à `0065` appliquées et
+seed passé, avec les jetons réels obtenus par `POST /auth/v1/token?grant_type=password`.
+`A` = Camille (`admin`), `B` = Driss (`business_developer`), `V` = Farida (`viewer`).
+
+**Toutes les sondes écrites ci-dessous ont été DÉTRUITES, et l'état du seed relu après** : cinq
+commentaires, deux mentions, deux notifications — exactement l'état d'avant (`CLAUDE.md` §9).
+
+**M1 — l'éligibilité du §5.1, mesurée profil par profil et card par card**, directement sur
+`app.can_read_card_pour` :
+
+```
+card …0c1 (channel « Grands comptes »)   Camille t   Driss t   Farida f
+card …0c4 (channel « Refonte de site »)  Camille t   Driss t   Farida t
+card …0c5 (channel « Maintenance »)      Camille t   Driss t   Farida t
+```
+
+C'est le fait qui rend la preuve de 3b stricte, et il existe **déjà dans le seed** : la même
+personne est éligible sur une affaire et ne l'est pas sur une autre. Un sélecteur qui offrirait
+partout la même liste serait faux sur `…0c1`, et seulement là.
+
+**M2 — les trois membres du workspace sont lisibles par les TROIS profils**, `viewer` compris :
+
+```
+GET /rest/v1/workspace_members?select=user_id,profiles(full_name)   (jetons A, B, V)
+=> 200, trois lignes pour chacun : Camille Aubert, Driss Lemoine, Farida Nowak
+```
+
+`lireMembresAffectables` (`entete-card.ts`, `CRM-060`) rend donc **exactement cette liste**. Elle
+est le bon universel — le nom d'un collègue est une donnée d'équipe —, mais elle **n'est pas** la
+liste des personnes mentionnables : elle ignore l'éligibilité, qui dépend de l'affaire.
+
+**M3 — la conséquence, mesurée et non supposée** : une mention posée sur `…0d1` (card `…0c1`) pour
+Farida, avec le jeton réel de Camille qui en est l'auteur, est **refusée** :
+
+```
+POST /rest/v1/card_comment_mentions   (jeton de A)
+{ comment_id: …0d1, profile_id: …013, workspace_id: …0001 }
+=> 400  { "code": "P0001",
+          "message": "mention_destinataire_sans_acces",
+          "details": "Une mention ne désigne que quelqu'un qui peut lire cette affaire." }
+```
+
+Un sélecteur alimenté par M2 proposerait donc un nom que le backend refuse — la commande morte que
+le §5.10 du design system interdit.
+
+**M4 — la politique d'insertion refuse la mention posée sur le commentaire d'AUTRUI**, et le refus
+n'a pas la même forme que M3 :
+
+```
+POST /rest/v1/card_comment_mentions   (jeton de A, sur …0d2 qui est le commentaire de B)
+{ comment_id: …0d2, profile_id: …012, workspace_id: …0001 }
+=> 403  { "code": "42501",
+          "message": "new row violates row-level security policy for table \"card_comment_mentions\"" }
+```
+
+Le trigger du §6 juge le **destinataire** ; la politique du §7.1 juge l'**auteur**. Deux refus, deux
+codes, deux causes — et l'écran ne doit pas les confondre.
+
+**M5 — UN `POST` GROUPÉ EST TOUT OU RIEN, ET C'EST LA MESURE QUI DÉCIDE LA FORME DE L'ÉMISSION.**
+Deux mentions envoyées dans un seul tableau, la première éligible et la seconde non :
+
+```
+POST /rest/v1/card_comment_mentions   (jeton de A)
+[ { comment_id: <sonde>, profile_id: …012 },      ← Driss, éligible
+  { comment_id: <sonde>, profile_id: …013 } ]     ← Farida, inéligible sur cette card
+=> 400  P0001 mention_destinataire_sans_acces
+   état relu : AUCUNE mention posée, pas même celle de Driss
+```
+
+Une seule entrée périmée fait donc perdre **toutes** les mentions du commentaire, et le refus ne dit
+**pas laquelle** est en cause. Le §35 en tire sa décision.
+
+**M6 — deux `POST` SÉPARÉS rendent un résultat PARTIEL, et chacun est nommé** :
+
+```
+POST … profile_id=…012   => 201
+POST … profile_id=…013   => 400  P0001 mention_destinataire_sans_acces
+état relu : une mention, celle de Driss
+```
+
+C'est le cas que le §30 demandait de traiter plutôt que de taire.
+
+**M7 — la liste des personnes mentionnables se calcule EN BASE, et la sonde le mesure.** La fonction
+candidate du §34, créée dans une transaction **annulée**, exécutée sous le rôle `authenticated` avec
+les revendications réelles :
+
+```
+sous Camille, card …0c1  =>  Driss Lemoine                      (une ligne)
+sous Camille, card …0c5  =>  Driss Lemoine, Farida Nowak        (deux lignes)
+sous Farida,  card …0c5  =>  Camille Aubert, Driss Lemoine      (deux lignes)
+```
+
+Farida est absente de la première liste par l'éligibilité, et l'appelant est absent des trois par la
+règle du §34.3.
+
+**M8 — LE REFUS DE LECTURE DE CETTE FONCTION EST ZÉRO LIGNE, JAMAIS UNE ERREUR.** Même sonde, sous
+Farida, sur la card `…0c1` qu'elle ne lit pas :
+
+```
+sous Farida, card …0c1  =>  0 ligne
+```
+
+C'est la forme exigée par la preuve de refus n° 4 de `docs/SPEC-permissions-rls.md` §7, et celle que
+`public.cards_figees` a établie pour une RPC de lecture (`CRM-062`).
+
+**M9 — la notification naît bien de la mention posée par ce chemin.** La sonde de M6 a produit une
+notification pour Driss, dont le `payload.comment_id` désignait le commentaire sonde ; elle a été
+détruite avec lui, et le compte est revenu à deux.
+
+---
+
+## 33. Ce que la sous-tranche 3b est, et ce qu'elle n'est pas
+
+Elle livre **le geste qui remplit la boîte** : choisir, dans le composeur de commentaires, les
+personnes que ce commentaire mentionne, et poser ces mentions par le vrai chemin de la tranche 1.
+
+Chaque absence est figée par un énoncé, jamais compensée :
+
+- **aucune syntaxe `@`.** Le §4.4 tient sans changement : rien ne lit le corps d'un commentaire. Le
+  choix se fait par un **sélecteur**, et l'auteur voit qui il mentionne avant d'envoyer ;
+- **aucune mention posée après coup.** Le sélecteur appartient au composeur, pas à la ligne d'un
+  commentaire déjà publié. Corriger les mentions d'un commentaire existant demanderait une surface
+  d'édition que le §7.1 ouvre en base (`DELETE` est accordé à l'auteur) mais qu'aucun document ne
+  décrit ; c'est le point ouvert n° 1 du §39 ;
+- **aucun retrait de mention depuis l'écran**, pour la même raison ;
+- **aucune préférence** : la tranche 4 ;
+- **aucune recherche dans le sélecteur.** Le nombre de membres d'un workspace n'est pas mesuré ;
+  c'est le raisonnement du §5.22 du design system, repris sans changement, et le point ouvert n° 2.
+
+---
+
+## 34. D'où vient la liste du sélecteur : `public.mentionnables`
+
+### 34.1 Le problème, et il est le même qu'au §5.2
+
+Le §30 pose deux exigences qui se contredisent en apparence : **le sélecteur n'offre que des
+personnes éligibles**, et **l'écran ne calcule aucun droit** (`CLAUDE.md` §10, §5.22 du design
+system). M2 et M3 mesurent la contradiction : la seule liste que l'écran sait lire aujourd'hui —
+les membres du workspace — contient un nom que le backend refuse.
+
+Deux voies s'offraient, et la seconde est retenue :
+
+- **filtrer dans l'écran** en relisant `track_members` et `channel_members`. **Refusée** : ce serait
+  la **seconde écriture de la règle d'accès** que le §5.3 a refusée en base, réécrite cette fois en
+  TypeScript — donc divergente au premier niveau de droit ajouté, et invérifiable hors navigateur ;
+- **demander la liste au backend**, qui porte déjà la règle. **Retenue.**
+
+### 34.2 La forme : une RPC de lecture, `SECURITY INVOKER`
+
+```sql
+public.mentionnables(card_id uuid)
+  returns table (profile_id uuid, full_name text, avatar_url text)
+  language sql  stable  security invoker  set search_path to ''
+```
+
+Elle rend les membres du workspace de l'affaire pour lesquels `app.can_read_card_pour(card, profil)`
+est vrai, ordonnés par nom.
+
+**`SECURITY INVOKER`, et c'est le point même de la fonction** — la forme de `public.cards_figees`
+(`CRM-062` §3.2). En `SECURITY DEFINER`, elle répondrait pour `postgres`, qui traverse toute la RLS,
+et rendrait la liste des membres d'un workspace que l'appelant n'atteint pas : une fuite, pas une
+commodité. En `INVOKER`, la lecture de `public.cards` applique la RLS de l'appelant, si bien qu'une
+affaire qui ne lui est pas ouverte rend **zéro ligne** — mesuré en M8.
+
+**`app.can_read_card_pour` reste la SEULE écriture de la règle.** La fonction ne juge rien : elle
+l'appelle pour chaque membre. C'est la chaîne que la tranche 1 a généralisée (§5.3), employée ici
+pour la première fois par une surface.
+
+**`stable` et non `volatile`** : PostgREST n'expose en `GET` que les fonctions non volatiles, et
+l'écran lit cette liste, il ne la modifie pas.
+
+**`workspace_members` est l'universel, et le §5.1 le justifie** : l'accès effectif se résout depuis
+le rôle de workspace, puis les surcharges de track et de channel. Une personne absente de
+`workspace_members` n'a aucun rôle, donc aucun accès — la joindre par une autre table ajouterait un
+chemin que `app.resolve_access` ne connaît pas.
+
+### 34.3 L'APPELANT NE FIGURE PAS DANS SA PROPRE LISTE
+
+Le §14.3 a mesuré qu'une auto-mention est **acceptée** par la tranche 1 et ne produit **aucune**
+notification. Offrir son propre nom dans le sélecteur serait donc offrir un geste voué au néant :
+la mention serait posée, et personne ne serait prévenu — exactement la commande morte que le §5.10
+du design system refuse, et le raisonnement qu'`estAdminWorkspace` tient déjà dans `PanneauTimeline`.
+
+L'exclusion est **en base**, dans la fonction, et non dans l'écran : une seule écriture, et elle est
+prouvable par le contrat d'API.
+
+**La conséquence sous la clé de service est nommée** : `auth.uid()` y est nul, donc personne n'est
+exclu et la fonction rend tous les membres éligibles. Le seed et les harnais, qui empruntent cette
+clé, le savent ; c'est la même limite que le §14.3 a nommée pour le trigger.
+
+### 34.4 Privilèges
+
+```sql
+revoke all on function public.mentionnables(uuid) from public, anon;
+grant execute on function public.mentionnables(uuid) to authenticated, service_role;
+```
+
+`anon` est révoqué **nommément**, et c'est la leçon payée par la migration `0053` : `pg_default_acl`
+accorde `execute` à `anon` sur toute fonction neuve de `public`, et `revoke … from public` ne lui
+retire rien, `public` étant le pseudo-rôle. Un appelant anonyme est donc refusé **par le privilège**,
+avant toute politique — et c'est plus strict qu'une liste vide.
+
+**Le cache de schéma de PostgREST est notifié dans la migration**, comme en `0053` : une fonction
+neuve reste invisible jusqu'au rechargement, et le `migrations-runner` rejoue le répertoire sur une
+pile déjà chaude.
+
+---
+
+## 35. LES DEUX ÉCRITURES NE SONT PAS ATOMIQUES, ET VOICI CE QUE L'ÉCRAN FAIT
+
+C'est le point que le §30 laissait ouvert, et il est tranché ici par la mesure.
+
+### 35.1 La mesure qui décide : le `POST` groupé est tout ou rien
+
+M5 est sans ambiguïté : deux mentions dans un seul tableau, une seule inéligible, et **aucune** n'est
+posée. Le refus ne dit pas laquelle est en cause. Un sélecteur peut se périmer entre sa lecture et
+l'envoi — un droit retiré pendant la rédaction suffit —, si bien que le cas n'est pas théorique.
+
+### 35.2 UN `POST` PAR MENTION, SÉQUENTIEL
+
+L'écran envoie donc **une requête par personne**, dans l'ordre du sélecteur, et retient l'issue de
+chacune. M6 mesure ce que cela rend : la mention éligible passe, l'autre est refusée, et l'écran
+sait **laquelle**.
+
+Le coût est nommé : `N` requêtes au lieu d'une, pour un `N` que le §33 ne borne pas. Il est payé pour
+que le refus soit **attribuable** — un refus qui ne nomme personne ne se corrige pas.
+
+**Aucune parallélisation.** Les requêtes sont séquentielles : elles écrivent toutes sur la même clé
+primaire composite, et un ordre stable rend le compte rendu lisible.
+
+### 35.3 LE COMMENTAIRE PUBLIÉ N'EST JAMAIS RETIRÉ
+
+Quand une mention échoue, le commentaire reste publié. Le supprimer pour « défaire » l'envoi
+détruirait un propos que son auteur a réellement tenu, au motif d'une erreur qui ne le concerne pas
+— et la suppression est une **pierre tombale définitive** (§13.4 de `docs/SPEC-cards.md`), pas une
+annulation. Le dépôt tranche déjà ainsi au §14.4 pour la notification d'une mention retirée : ce qui
+est délivré ne se réécrit pas.
+
+### 35.4 Ce que l'écran dit, et ce qu'il ne dit pas
+
+Trois issues, et aucune n'est confondue avec une autre — c'est la règle des trois issues du geste
+d'auteur (`PanneauTimeline`, §13.8 ligne *j*), transposée :
+
+| Issue | Ce que l'écran rend |
+|---|---|
+| Le commentaire et **toutes** les mentions sont posés | L'annonce ordinaire de publication, le brouillon vidé, le sélecteur remis à zéro |
+| Le commentaire est publié, **une ou plusieurs** mentions refusées | Une alerte qui **nomme les personnes** non mentionnées et la cause traduite. Le brouillon EST vidé — le commentaire existe —, le sélecteur ne garde que les personnes refusées |
+| Le **commentaire** est refusé | Le comportement actuel, inchangé : le texte est conservé, aucune mention n'est tentée |
+
+**Le sélecteur ne garde que les personnes refusées**, et c'est délibéré : les mentions réussies sont
+posées, les reproposer inviterait à un doublon que la clé primaire refuserait. Ce qui reste coché est
+exactement ce qui reste à faire — mais **sur un autre commentaire**, l'ancien étant déjà publié.
+
+**La cause est traduite, jamais devinée** : `mention_destinataire_sans_acces` devient « cette
+personne ne peut pas lire cette affaire » ; `42501` devient le refus d'autorisation ordinaire ;
+`comment_deleted` et `comment_not_found` gardent les libellés que le fil emploie déjà. L'écran
+n'invente aucun message pour un code qu'il ne connaît pas : il rend le refus générique du §5.8.
+
+---
+
+## 36. Ce que l'écran rend, règle par règle
+
+`docs/DESIGN_SYSTEM.md` §5.44 en porte l'apparence ; ce chapitre porte les règles.
+
+### 36.1 Le sélecteur vit DANS le composeur, sous la zone de saisie
+
+Il appartient au formulaire qui publie : ce qu'il choisit part avec le commentaire, et disparaît
+avec lui. Le poser ailleurs — dans l'en-tête du panneau, par exemple — le ferait passer pour un
+filtre du fil.
+
+### 36.2 CE N'EST PAS UN `select`, ET L'ÉCART AVEC LE §5.22 EST MOTIVÉ
+
+Le §5.22 retient un `select` natif parce que le choix y est **unique**. Ici il est **multiple** : un
+commentaire peut mentionner plusieurs personnes. Un `<select multiple>` natif est le contrôle que
+les plateformes rendent le plus mal — sélection à la souris destructrice, rendu illisible sur
+mobile —, et le §8 exige mieux.
+
+Le sélecteur est donc un **`fieldset` de cases à cocher**, une par personne éligible. Aucune
+dépendance nouvelle, le clavier de la plateforme, le focus visible du §8, et l'état de chaque choix
+lisible d'un coup d'œil.
+
+### 36.3 La liste n'est lue QU'À L'OUVERTURE DU SÉLECTEUR
+
+Jamais au chargement de la fiche. C'est la règle de `lireMembresAffectables` (§15 bis.6 de
+`docs/SPEC-cards.md`), et pour le même motif : la plupart des visites d'une affaire ne mentionnent
+personne, et une requête émise sur chaque ouverture d'écran serait gratuite sur les neuf dixièmes.
+
+### 36.4 Les quatre états de la liste
+
+- **chargement** : le sélecteur est ouvert, `aria-busy`, et ne porte aucune case ;
+- **erreur** : la mention d'erreur du §5.8 et son **action de reprise**, qui relit la liste ;
+- **vide** : « personne d'autre ne peut lire cette affaire », sans action. C'est un état réel et
+  mesurable — une affaire dont l'appelant est le seul lecteur —, pas un repli ;
+- **peuplé** : les cases, dans l'ordre rendu par la fonction.
+
+**Aucun rendu n'est prévu pour « la liste contient l'appelant »** : le §34.3 le rend impossible en
+base, et écrire un repli pour un état que la base interdit enseignerait qu'il peut arriver — la
+règle du §24.3.
+
+### 36.5 Le compte des personnes choisies est rendu, et il est la seule donnée dérivée
+
+La commande qui ouvre le sélecteur porte le nombre de personnes cochées. Sans lui, un auteur qui
+replie le sélecteur ne sait plus qui son commentaire mentionne.
+
+### 36.6 Ce que le sélecteur ne fait PAS
+
+Il ne **désactive** pas le bouton de publication, il n'exige aucun choix, et il ne modifie pas le
+corps du commentaire. Mentionner est facultatif ; le composeur reste ce qu'il était.
+
+---
+
+## 37. Contrat d'API de la sous-tranche 3b, ligne à ligne
+
+Les seize lignes du §17 et les sept du §27 restent **vraies et vertes sans modification** : 3b ne
+change aucune règle des deux tables. Les lignes ci-dessous portent sur la fonction neuve et sur la
+séquence d'émission.
+
+| # | Appelant | Requête | Attendu |
+|---|---|---|---|
+| x | anonyme | `POST /rpc/mentionnables` | `401` / `42501` — refusé **par le privilège** (§34.4) |
+| y | `A` | `POST /rpc/mentionnables { card_id: …0c1 }` | `200`, **une** ligne : Driss. Farida absente par l'éligibilité, Camille absente par le §34.3 |
+| z | `A` | `POST /rpc/mentionnables { card_id: …0c5 }` | `200`, **deux** lignes : Driss, Farida — la même personne, éligible ici et pas là (M1) |
+| aa | `V` | `POST /rpc/mentionnables { card_id: …0c1 }` | `200` et **zéro ligne** — la card ne lui est pas ouverte, et le refus n'est pas une erreur (M8) |
+| ab | `V` | `POST /rpc/mentionnables { card_id: …0c5 }` | `200`, deux lignes : Camille, Driss — la lectrice y est éligible, et n'est pas dans sa propre liste |
+| ac | `A` | `POST /rpc/mentionnables { card_id: <uuid inconnu> }` | `200` et **zéro ligne** — une affaire inexistante et une affaire fermée rendent le même résultat (discrétion, §6) |
+| ad | `A` | commentaire sonde sur `…0c1`, puis `POST` de la mention de Driss | `201`, et **une notification** naît pour Driss (§14) |
+| ae | `A` | sur le même commentaire, `POST` de la mention de Farida | `400` / `P0001` `mention_destinataire_sans_acces`, et la mention de Driss **reste posée** (M6) |
+| af | `A` | les deux mentions dans **un seul** `POST` | `400`, et **aucune** mention posée — la mesure M5, figée pour qu'un changement de PostgREST ne passe pas inaperçu |
+| ag | `B` | `POST` d'une mention sur `…0d1`, commentaire de `A` | `403` / `42501` — la politique juge l'auteur (M4) |
+
+**Chaque ligne posée est retirée, et une dernière lecture le constate** (décision 501) : cinq
+commentaires, deux mentions, deux notifications.
+
+---
+
+## 38. Ce que le seed livre, et ce qu'il ne change pas
+
+**Rien de neuf, et c'est mesuré avant d'être écrit** (la leçon du §19). Le seed pose déjà deux
+mentions par le vrai chemin (§9) et les deux notifications qu'elles produisent. 3b ne pose aucune
+ligne et n'en retire aucune : elle livre le geste qui les aurait produites.
+
+**Ce que le seed exerce déjà pour cette surface, et qui n'est pas une chance** : Farida est éligible
+sur `…0c5` et ne l'est pas sur `…0c1` (M1). La preuve d'interface peut donc ouvrir le sélecteur sur
+deux affaires et constater que **la même personne** y est offerte puis absente, sans aucune donnée
+fabriquée.
+
+---
+
+## 39. Points ouverts, nommés et non tranchés ici
+
+1. **Les mentions d'un commentaire déjà publié ne se corrigent pas depuis l'écran.** La base ouvre
+   `DELETE` à l'auteur (§7.1) ; aucune surface ne l'emploie. Ajouter, retirer et rendre les mentions
+   d'une ligne du fil est une surface entière, qu'aucun document ne décrit.
+2. **Le sélecteur n'a ni recherche ni pagination**, et le nombre de membres d'un workspace n'est
+   toujours pas mesuré — même écart qu'au §5.22 du design system, nommé plutôt que comblé.
+3. **Le fil ne montre pas qui un commentaire mentionne.** Les mentions sont lisibles par qui lit
+   l'affaire (§7.1), mais la ligne du fil ne les rend pas. C'est la contrepartie du §33 : 3b livre
+   l'émission, pas l'affichage rétrospectif.
+4. **Les points ouverts du §29 restent ouverts sans changement** : rétention, regroupement, « tout
+   marquer comme lu », préférences, notifications du navigateur, partage entre onglets.
+
+---
+
+## 40. Preuves attendues de la sous-tranche 3b
+
+| Niveau | Preuves |
+|---|---|
+| pgTAP | L'existence, la volatilité, le `security invoker`, le `search_path` vide et l'**ACL** de `public.mentionnables` — `anon` révoqué nommément —, et la non-régression des assertions de `0061` et `0062` |
+| Unitaire | La chaîne réellement émise par la lecture de la liste, le découpage des trois issues du §35.4, la classification des refus du §35.4, l'ordre séquentiel des `POST` et le fait que le commentaire publié n'est jamais retiré |
+| API | Les dix lignes du §37, dont la ligne *af* qui **fige la mesure M5** |
+| Non-régression | `0061`, `0062`, `e2e/api/mentions.spec.ts`, `e2e/api/notifications.spec.ts` et `e2e/api/notifications-surface.spec.ts` verts **sans aucune modification** |
+| E2E d'interface | Le parcours complet : ouvrir le sélecteur sur `…0c1` et n'y trouver que Driss, l'ouvrir sur `…0c5` et y trouver Farida, cocher, publier, et **voir la notification arriver dans la cloche du destinataire** ; le refus nommé ; l'état vide ; le clavier de bout en bout |
+| Visuel | Captures aux quatre paliers, sélecteur replié et déplié, liste peuplée et liste vide, alerte de refus, **observées** conformément à `CLAUDE.md` §16. Console **vierge** |
+| Harnais | `scripts/verify-mentions-composeur.sh`, non complaisant, éprouvé par dégradations réelles et restauration constatée |

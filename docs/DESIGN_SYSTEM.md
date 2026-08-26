@@ -3828,3 +3828,63 @@ un œil, on suit un lien, on revient à ce qu'on faisait.
   pilule de channel, au §5.10 son avatar et sa date, au §5.1 son liseré, au §5.5 ses variantes et au
   §5.8 ses états. **Trois icônes Lucide nouvelles** — `Bell`, `Mail`, `MailOpen` —, aucune ne
   servant déjà un autre objet (§9).
+
+### 5.44 Sélecteur de mentions du composeur — `CRM-064`
+
+Le contrôle par lequel un auteur choisit qui son commentaire mentionne. Spécifié avant code,
+`docs/SPEC-notifications.md` §33 à §36 ; les règles ci-dessous ne disent que de quoi il a l'air.
+
+**Il vit DANS le composeur du fil (§5.10, §5.11), sous la zone de saisie et au-dessus du bouton de
+publication.** Ce qu'il choisit part avec le commentaire et disparaît avec lui ; le poser dans
+l'en-tête du panneau le ferait passer pour un filtre du fil (§5.11).
+
+- **CE N'EST PAS UN `select`, ET L'ÉCART AVEC LE §5.22 EST MOTIVÉ.** Là-bas le choix est unique, et
+  un `select` natif porte la recherche au clavier, le rendu du système et le focus visible sans une
+  ligne de code. Ici le choix est **multiple** : un commentaire peut mentionner plusieurs personnes.
+  `<select multiple>` est le contrôle que les plateformes rendent le plus mal — sélection à la
+  souris destructrice, hauteur illisible sous le palier `md` —, et le §8 exige mieux. Le sélecteur
+  est un **`fieldset` de cases à cocher**, une par personne, avec sa `legend`.
+
+- **IL EST REPLIÉ PAR DÉFAUT, ET SA COMMANDE PORTE LE COMPTE.** Bouton discret compact, icône
+  `AtSign`, `aria-expanded` et `aria-controls` — le patron du §5.13. Le libellé porte le nombre de
+  personnes cochées, parce qu'un auteur qui replie le sélecteur ne saurait plus, sinon, qui son
+  commentaire mentionne. `AtSign` ne sert nulle part ailleurs dans le produit (§9), et c'est la
+  seule apparition de la syntaxe `@` : elle est un **signe**, jamais une saisie (§4.4 de la
+  spécification).
+
+- **LA LISTE N'EST LUE QU'À LA PREMIÈRE OUVERTURE**, jamais au chargement de la fiche — la règle du
+  §5.7 ter pour la liste des responsables, et pour le même motif mesuré : la plupart des visites
+  d'une affaire ne mentionnent personne.
+
+- **LES QUATRE ÉTATS SONT TRAITÉS (§5.8), ET LE VIDE N'EST PAS UNE PANNE.** Chargement : `aria-busy`
+  et aucune case. Erreur : la mention et son **action de reprise**, qui relit la liste. Vide :
+  « personne d'autre ne peut lire cette affaire », **sans action** — l'écart au §5.8 que prennent
+  déjà la corbeille (§5.16) et le carnet (§5.19). Peuplé : les cases, dans l'ordre du serveur.
+
+- **UNE CASE PORTE UN NOM ET UN AVATAR**, réemployant `Avatar` (§5.4) et la présentation d'identité
+  du §5.10. Le nom est une **donnée**, jamais une traduction (§10). Aucune case ne porte de niveau
+  d'accès ni de rôle : la liste dit qui peut être mentionné, jamais pourquoi — nommer la cause
+  ferait du sélecteur un moyen de sonder les droits d'autrui (§6 de la spécification).
+
+- **L'APPELANT N'EST JAMAIS DANS SA PROPRE LISTE**, et c'est la base qui l'en retire (§34.3 de la
+  spécification). L'écran ne prévoit **aucun** rendu pour ce cas : écrire un repli pour un état que
+  la base interdit enseignerait qu'il peut arriver — la règle du §5.43 pour la ligne dont l'affaire
+  est illisible.
+
+- **LE REFUS PARTIEL EST NOMMÉ, ET IL NOMME LES PERSONNES.** Quand le commentaire est publié mais
+  qu'une mention est refusée, l'alerte vit **sous le composeur**, `role="alert"`, et écrit qui n'a
+  pas été mentionné et pourquoi. C'est la place et la forme que le §5.10 donne au refus de
+  publication, et la règle des trois issues du §5.43 : un succès partiel n'est ni un succès, ni un
+  échec, et le confondre avec l'un ou l'autre ferait croire à un effet qui n'a pas eu lieu.
+
+- **APRÈS UN REFUS PARTIEL, LE BROUILLON EST VIDÉ ET LE SÉLECTEUR NE GARDE QUE LES REFUSÉS.** C'est
+  l'écart assumé avec le §5.10, qui conserve le texte après un refus : ici le commentaire **existe**,
+  et le reproposer ferait publier deux fois le même propos. Ce qui reste coché est exactement ce
+  qu'il reste à faire.
+
+- **LE SÉLECTEUR NE DÉSACTIVE RIEN ET N'EXIGE RIEN.** Le bouton de publication reste gouverné par le
+  seul corps du commentaire (§5.10). Mentionner est facultatif ; un composeur qui exigerait un choix
+  changerait le geste que `CRM-043` a livré.
+
+- **Aucune couleur, aucun jeton nouveau.** Le contrôle emprunte entièrement au §5.7, au §5.10 et au
+  §5.13.
