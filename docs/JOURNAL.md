@@ -24970,3 +24970,86 @@ l'assertion figée est à dériver de la translation du seed plutôt que d'une d
 **La question posée au responsable reste la même, et une seule** : les unités **`CRM-072`**
 (`audit_log`) et **`CRM-073`** (`api_tokens`) n'existent pas, onze unités leur renvoient, et leur
 périmètre est un choix produit qu'aucune mesure ne donne.
+
+## décision 520 — `CRM-063` sous-tranche 4c : les deux écrans de la séquence, et une ligne de cadrage trouvée fausse par la mesure
+
+**2026-08-26, session planifiée de 04:11 UTC.** La dernière entrée du journal désignait la reprise :
+« `CRM-063` **sous-tranche 4c — l'écran**, dernière de son unité ». C'est l'unité de cette session, et
+elle est **livrée et prouvée**.
+
+**LA SPÉCIFICATION A ÉTÉ ÉCRITE ET COMMITTÉE AVANT LA PREMIÈRE LIGNE DE CODE** (`CLAUDE.md` §5) :
+`docs/SPEC-modeles-emails.md` §13, quatorze sections, fondées sur **douze sondes** prises par la
+route REST avec les jetons réels du seed, et non sur un souvenir. `docs/DESIGN_SYSTEM.md` gagne ses
+**§5.41** et **§5.42** dans le même commit documentaire.
+
+**UNE LIGNE DU §11.6 bis EST TROUVÉE FAUSSE, ET C'EST LE RÉSULTAT LE PLUS UTILE DE LA SESSION.**
+Elle annonçait, la veille, que la RPC de réordonnancement devrait « ouvrir une transaction, émettre
+`set constraints … deferred` et reposer les positions ». **Mesuré** : un `update … from unnest(…)
+with ordinality` reposant TOUTES les positions est **une seule instruction**, et la contrainte
+`deferrable initially immediate` est vérifiée en fin d'instruction — `set constraints` est
+**inutile**. Le §11.6 bis raisonnait sur le cas d'un réordonnancement **partiel** et généralisait à
+tort. La commande n'est donc pas émise, et le motif est écrit dans la migration : la poser quand même
+ferait déduire au prochain lecteur que la contrainte est `initially deferred`, ce qu'elle n'est pas
+et ne doit pas devenir.
+
+**UNE SECONDE MESURE A FAÇONNÉ LE CODE, ET 4a NE POUVAIT PAS LA VOIR** (§13.5 bis). Les **deux** clés
+étrangères du §11.5 points n et o — la simple et la composite — rendent l'embarquement PostgREST
+**ambigu** : `GET /mail_sequences?select=…,mail_sequence_steps(count)` rend **`300` / `PGRST201`**.
+Le remède est de **nommer** la relation, et c'est la clé **simple** qui est nommée : la composite est
+un garde-fou, pas une relation que le produit exprime. 4a ne livrait aucun écran, et son contrat
+d'API n'embarque rien.
+
+**LA RPC EST `security invoker`, ET C'EST LA DÉCISION DE FORME.** La migration 59 a déjà posé les
+quatre politiques ; une fonction `security definer` devrait **réécrire** la règle d'écriture, et deux
+écritures de la même règle divergent. La conséquence est mesurée : la lectrice obtient **`200` et
+`0`** — un succès HTTP portant un refus métier —, et l'écran le nomme « Aucun palier n'a été
+réordonné » plutôt que d'annoncer un succès qui n'a pas eu lieu.
+
+**DEUX ÉCRANS LIVRÉS.** `/reglages/sequences-relance` — neuvième surface de réglages — porte la
+liste, la fiche, l'ajout d'un palier, le réordonnancement par deux flèches et les deux suppressions.
+Le bloc **« Relance automatique »** vit dans la colonne gauche de la fiche d'affaire, entre les coûts
+et la corbeille : armer est un geste **sur l'affaire**, non un réglage. **L'écran ne calcule pas si
+l'affaire est figée** — `public.cards_figees()` porte cette définition une seule fois —, et le refus
+`card_not_stalled` est **traduit**.
+
+**LE §9.7 EST RÉVISÉ, JAMAIS RÉÉCRIT** (§13.9). La migration `0059` a posé le `on delete restrict`
+qu'il annonçait absent, et sa phrase est devenue fausse. La confirmation annonce désormais la
+**règle**, **sans compter** : l'écran des modèles ne lit pas `mail_sequence_steps`, et un nombre lu
+pour l'occasion pourrait changer entre la lecture et le geste.
+
+**TROIS PREUVES ONT ROUGI À JUSTE TITRE, ET ELLES ONT ÉTÉ RÉVISÉES PLUTÔT QUE RETIRÉES** — un
+contrôle de `verify-modeles-emails-ecran.sh` qui exigeait qu'aucune clé ne référence
+`mail_templates`, une assertion E2E qui exigeait que la confirmation ne parle pas de séquence, et
+l'assertion figée d'INC-222. Chacune faisait exactement ce pour quoi elle avait été écrite.
+
+**INC-221 ET INC-222 SONT CLOSES**, et le journal de la décision 519 avait écrit que 4c en
+hériterait. La campagne les a rencontrées — trois suites pgTAP rouges sur soixante. `INC-221` : une
+preuve d'armement **fermait** ce qu'elle armait sans le **retirer**, et « fermée » n'est pas
+« absente » pour un `ON DELETE RESTRICT`. Elle range désormais, et son scénario 17 gagne une seconde
+assertion — la première filtrait sur `status=eq.active` et restait verte pendant tout le temps où le
+défaut existait.
+
+**UN QUATRIÈME DÉFAUT DE HARNAIS TROUVÉ PAR LE HARNAIS, second faux rouge de sa famille** : un
+contrôle recopiait un fragment de code **à la parenthèse près** et rendait `ECHEC` sur un module
+conforme, pendant qu'une dégradation trouvait la même ligne — deux contrôles du même fichier se
+contredisaient dans le même passage. Le motif porte désormais ce que le contrôle veut dire, non sa
+syntaxe.
+
+**CAMPAGNE.** `typecheck` et `build` verts ; `test:unit` **78 fichiers / 2646 tests** ; `test:sql`
+**60 fichiers / 2850 assertions, aucune anomalie** ; `e2e:api` **943 passés** ; `pytest` **244
+passés** ; `verify-sequences-ecran.sh` **51 contrôles, aucune anomalie** avec sept dégradations
+toutes mordantes ; `verify-modeles-emails-ecran.sh` **39 contrôles, aucune anomalie** ;
+`verify-manual.sh` **129 contrôles, aucune anomalie**.
+
+**INC-223 consignée** : un scénario de `e2e/ui/manuel.spec.ts` laisse deux `401` dans la console.
+**La ligne de base est établie** — même échec derrière un `git stash -u` —, l'anomalie est donc
+préexistante et le comportement est laissé inchangé.
+
+**Où reprendre.** `CRM-063` est **close** : ses trois objets — le modèle, la signature, la séquence —
+existent en base, sont prouvés, et ont chacun leur écran. La session suivante prend la **première
+unité `[~]` du backlog dans l'ordre du plan dont il reste du comportement à livrer**, sinon la
+première `[ ]`.
+
+**La question posée au responsable reste la même, et une seule** : les unités **`CRM-072`**
+(`audit_log`) et **`CRM-073`** (`api_tokens`) n'existent pas, onze unités leur renvoient, et leur
+périmètre est un choix produit qu'aucune mesure ne donne.

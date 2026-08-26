@@ -15,6 +15,29 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **LES SÉQUENCES DE RELANCE ONT ENFIN LEURS ÉCRANS** (`CRM-063` sous-tranche 4c, migration 62,
+  `docs/SPEC-modeles-emails.md` §13, `docs/DESIGN_SYSTEM.md` §5.41 et §5.42, manuel chapitre
+  **7 ter**). Les tranches précédentes avaient livré la cadence et son exécution ; **aucun écran ne
+  les atteignait**, si bien qu'une séquence n'existait que pour les preuves qui l'appelaient.
+  « Réglages ▸ Séquences de relance » écrit désormais la cadence : un nom, puis des **paliers**
+  portant chacun un modèle et un délai en jours, réordonnés par deux flèches. Le délai se compte
+  **depuis le palier précédent** — « J+3 », « J+7 », « J+14 » —, si bien qu'insérer une relance au
+  milieu ne renumérote rien.
+  Et le bloc **« Relance automatique »**, dans la fiche d'une affaire, **arme** la cadence puis
+  l'**interrompt**. Il dit où en est la relance — « Aucun palier envoyé », puis « Palier 2 envoyé le
+  … » — et **jamais la date du prochain envoi** : la cadence glisse sur les envois réels, et une
+  date annoncée serait fausse au premier décalage.
+  L'écran **ne calcule pas** si l'affaire est figée : c'est la base qui le sait, et son refus est
+  **traduit** en disant ce qu'il faudrait pour que le geste devienne possible.
+
+- **LA SUPPRESSION D'UN MODÈLE DIT DÉSORMAIS CE QUI PEUT L'EMPÊCHER** (`CRM-063` sous-tranche 4c,
+  `docs/SPEC-modeles-emails.md` §13.9). Depuis que les séquences référencent les modèles, un modèle
+  employé par une cadence **ne se supprime plus**. La confirmation l'annonce avant que vous ne
+  cliquiez — « Un modèle employé par une séquence de relance ne peut pas être supprimé » —, et le
+  refus, quand il tombe, est rendu en toutes lettres plutôt qu'en « l'enregistrement a échoué ».
+  Elle n'annonce **aucun nombre** : l'écran des modèles ne lit pas les paliers, et un chiffre lu
+  pour l'occasion pourrait changer entre la lecture et le geste.
+
 - **UN CONTACT PEUT ENFIN ÊTRE SUPPRIMÉ** (`CRM-060` tranche 6, `docs/SPEC-contacts.md` §20).
   Sa fiche portait cinq gestes — modifier, rattacher une affaire, la détacher, corriger un rôle —
   et pas celui-là : un contact créé par erreur, ou une personne qui demande son effacement,

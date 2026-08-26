@@ -7169,7 +7169,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-060 | Contacts et organisations, historique transverse | `[~]` |
 | CRM-061 | Prochaine action, échéance, vue « Ma journée » | `[x]` |
 | CRM-062 | Relances automatiques des cards figées | `[~]` |
-| CRM-063 | Templates d'emails, signatures, séquences de relance | `[~]` |
+| CRM-063 | Templates d'emails, signatures, séquences de relance | `[x]` |
 | CRM-064 | @mentions, notifications temps réel et préférences | `[ ]` |
 | CRM-065 | Recherche globale plein texte et palette Cmd+K | `[ ]` |
 | CRM-066 | Analytique de conversion et prévisionnel pondéré | `[ ]` |
@@ -8601,7 +8601,7 @@ preuves, l'écran vérifié visuellement aux quatre paliers, console vierge.
       elle demanderait un argument à `public.cards_figees()`, donc une révision du contrat de la
       tranche 1 — et aucune pagination, l'ordre venant du serveur et le volume n'étant pas mesuré.
 
-### CRM-063 — Modèles d'emails, signatures, séquences de relance `[~]`
+### CRM-063 — Modèles d'emails, signatures, séquences de relance `[x]`
 
 Trois unités livrées renvoient nommément ici un manque qu'elles ont refusé d'inventer : `CRM-062`
 (« une relance ne part pas par email : cela suppose un modèle, un expéditeur et une cadence »),
@@ -8691,7 +8691,7 @@ avant la suivante :
       `docs/SPEC-mail-subsystem.md` §22.1 et §22.3, `docs/PROD_MIGRATIONS.md` migration 58,
       `docs/DESIGN_SYSTEM.md` §5.35, `docs/manual.md` chapitre **7 bis**, `CHANGELOG.md`, et
       `docs/INCONSISTENCY_REPORT.md` où **INC-215** et **INC-218** sont closes.
-- [~] **Tranche 4 — la séquence de relance** : paliers ordonnés, chacun portant un modèle
+- [x] **Tranche 4 — la séquence de relance** : paliers ordonnés, chacun portant un modèle
       (`on delete restrict`) et un délai, appliqués à une affaire figée au sens de `CRM-062`.
       **SPÉCIFIÉE au §11** de `docs/SPEC-modeles-emails.md` le 2026-08-25, après mesure et **avant
       sa première ligne de code**, et **DÉCOUPÉE EN TROIS SOUS-TRANCHES** dans l'ordre de leur
@@ -8706,20 +8706,15 @@ avant la suivante :
         **avant sa première ligne de code** ; **LIVRÉE ET PROUVÉE le 2026-08-25**. Les **quatre**
         questions — les trois du §7.3 et celle que le §11.12 a ajoutée — y sont tranchées **chacune
         par une mesure** (§12.1). Voir le détail plus bas.
-  - [~] **4c — l'écran** : administration des séquences, armement depuis l'affaire, et la **RPC de
-        réordonnancement** que le §11.6 bis rend nécessaire. Elle devra aussi **réviser la
-        confirmation de suppression d'un modèle** : le §9.7 annonce une suppression
-        inconditionnelle, que le `on delete restrict` de la migration 59 rend **fausse**.
-        **SPÉCIFIÉE au §13** de `docs/SPEC-modeles-emails.md` le 2026-08-26, après **douze sondes**
-        sur la pile debout et seedée, et **avant sa première ligne de code**. Les **quatre**
-        questions du §13.1 y sont tranchées chacune par une mesure, et l'une d'elles **RÉVISE le
-        §11.6 bis** : un réordonnancement complet écrit en UNE instruction passe **sans**
-        `set constraints`, la contrainte étant `deferrable initially immediate`. `docs/DESIGN_SYSTEM.md`
-        gagne ses **§5.41** et **§5.42** dans le même commit documentaire. Reste à livrer : voir le
-        détail plus bas.
+  - [x] **4c — l'écran** : administration des séquences, armement depuis l'affaire, et la **RPC de
+        réordonnancement**. **SPÉCIFIÉE au §13** de `docs/SPEC-modeles-emails.md` le 2026-08-26,
+        après **douze sondes** sur la pile debout et seedée, et **avant sa première ligne de code**,
+        puis **LIVRÉE ET PROUVÉE le 2026-08-26** ; voir le détail plus bas. Les **quatre** questions
+        du §13.1 sont tranchées chacune par une mesure, et l'une d'elles **RÉVISE le §11.6 bis**.
+        Le §9.7 est **révisé** par le §13.9.
 
-**Sous-tranche 4c en cours, 2026-08-26 — l'écran** (`docs/SPEC-modeles-emails.md` §13,
-`docs/DESIGN_SYSTEM.md` §5.41 et §5.42) :
+**Sous-tranche 4c livrée, 2026-08-26 — l'écran** (`docs/SPEC-modeles-emails.md` §13,
+`docs/DESIGN_SYSTEM.md` §5.41 et §5.42, `docs/manual.md` chapitre 7 ter) :
 
 - [x] **Spécification écrite et COMMITTÉE avant la première ligne de code** (`CLAUDE.md` §5) : le
       §13, quatorze sections, dont les **quatre** questions du §13.1 tranchées **chacune par une
@@ -8729,14 +8724,77 @@ avant la suivante :
       positions ». **Mesuré** : un `update … from unnest(…) with ordinality` reposant TOUTES les
       positions est **une seule instruction**, et la contrainte `deferrable initially immediate` est
       vérifiée en fin d'instruction — `set constraints` est **inutile**. Le §13.2 dit ce que la
-      mesure a trouvé, et pourquoi émettre la commande quand même serait **pire** qu'inutile.
-- [ ] `supabase/migrations/0062_reordonnancement_paliers.sql` — `public.reordonner_paliers_sequence`,
-      `security invoker`, ses trois refus, ses privilèges.
-- [ ] Suite pgTAP dédiée, contrat d'API du §13.10, tests unitaires, parcours E2E, harnais dédié.
-- [ ] Écran `/reglages/sequences-relance`, bloc d'armement de la fiche d'affaire, révision de la
-      confirmation de suppression d'un modèle (§13.9).
-- [ ] `docs/SCHEMA.md`, `docs/PROD_MIGRATIONS.md`, `docs/manual.md` chapitre **7 ter**, `README.md`,
-      `CHANGELOG.md`, compteurs de `scripts/verify-harness.sh`.
+      mesure a trouvé, et pourquoi émettre la commande quand même serait **pire** qu'inutile : le
+      prochain lecteur en déduirait que la contrainte est `initially deferred`.
+- [x] **`supabase/migrations/0062_reordonnancement_paliers.sql`** — `public.reordonner_paliers_sequence(uuid, uuid[])`,
+      `security invoker`, trois refus (`paliers_requis`, `paliers_dupliques`, `paliers_incomplets`),
+      `anon` révoqué. **Numérotée 62 et non 61** : `CRM-060` tranche 5 occupe déjà `0061`.
+- [x] **`security invoker` EST LA DÉCISION DE FORME.** La migration 59 a déjà posé les quatre
+      politiques ; une fonction `definer` devrait RÉÉCRIRE la règle d'écriture, et deux écritures de
+      la même règle divergent. **Mesuré** : la lectrice obtient `200` et **`0`** — un succès HTTP
+      portant un refus métier —, et l'écran le NOMME plutôt que d'annoncer un succès.
+- [x] **UNE SECONDE MESURE QUE 4a NE POUVAIT PAS VOIR** (§13.5 bis) : les **deux** clés étrangères du
+      §11.5 points n et o rendent l'embarquement PostgREST **AMBIGU** — `300` / `PGRST201`. Le remède
+      est de NOMMER la relation, et c'est la clé **simple** qui est nommée : la composite est un
+      garde-fou, pas une relation que le produit exprime.
+- [x] **Suite pgTAP dédiée** : `supabase/tests/0060_reordonnancement_paliers.test.sql`, **24
+      assertions** — la forme dans le catalogue avec `anon` exclu, les trois refus chacun précédé de
+      son témoin, la permutation RELUE position à position, et le zéro-ligne de la lectrice qui
+      verrait la fonction basculer en `definer`.
+- [x] **DEUX ASSERTIONS CORRIGÉES PAR LA MESURE, aucune n'étant un défaut du produit** : `proconfig`
+      stocke `search_path=""` et non `search_path=` ; et l'assertion qui interdit `set constraints`
+      lisait le corps BRUT, trouvant la commande dans le commentaire qui explique son absence — le
+      **faux rouge du §9.10 bis**, rencontré une seconde fois.
+- [x] **Test d'API dédié** : `e2e/api/reordonnancement-paliers.spec.ts`, **10 scénarios verts**, dont
+      la contre-épreuve du §11.6 bis rejouée juste avant la RPC qui la lève.
+- [x] **Tests unitaires dédiés** : `webapp/src/lib/sequences-relance.test.ts`, **69 tests**. **Un
+      test a trouvé une affirmation FAUSSE dans le commentaire du module** : il annonçait qu'un délai
+      vide partait en `NaN` ; `Number('')` rend `0`. Le comportement est le bon et même MEILLEUR —
+      `0` heurte la borne, dont le refus porte un nom que l'écran traduit.
+- [x] **`webapp/src/lib/sequences-relance.ts`** : deux lectures désambiguïsées, deux dictionnaires
+      fermés — **quatorze** issues pour l'écran, **dix** pour l'armement —, le calcul de l'ordre, le
+      rang du palier ajouté, et des écritures qui RELISENT leur ligne.
+- [x] **`webapp/src/app/ReglagesSequencesRelance.tsx`** : neuvième surface de réglages, à
+      `/reglages/sequences-relance`, après les modèles et avant l'état de la messagerie. **La
+      position n'est JAMAIS un champ** : c'est le rang dans la liste, et un déplacement RELIT au lieu
+      de réordonner localement.
+- [x] **`webapp/src/app/BlocSequenceCard.tsx`** : le geste dans la colonne gauche de la fiche
+      d'affaire, entre les coûts et la corbeille. **L'écran NE CALCULE PAS si l'affaire est figée** —
+      `cards_figees()` porte cette définition une seule fois —, et le sélecteur d'identité réemploie
+      `lireIdentitesDisponibles` de `CRM-058` plutôt qu'un second filtre.
+- [x] **Le §9.7 RÉVISÉ, jamais réécrit** (§13.9) : la migration `0059` a posé le `on delete restrict`
+      qu'il annonçait absent. La confirmation annonce la **règle**, **sans compter** — l'écran ne lit
+      pas `mail_sequence_steps` —, et le refus est traduit en `modele-employe`.
+- [x] **Deux parcours E2E** : `e2e/ui/reglages-sequences-relance.spec.ts` (**10 scénarios**) et
+      `e2e/ui/armement-sequence.spec.ts` (**6 scénarios**), au clavier et à la souris, console
+      **vierge**. Captures observées sous `docs/captures/CRM-063/`.
+- [x] **TROIS PREUVES RÉVISÉES PARCE QUE LA RÈGLE A CHANGÉ, jamais retirées** (`docs/CloudWorker.md`
+      §3.1) : un contrôle de `verify-modeles-emails-ecran.sh` qui exigeait qu'AUCUNE clé ne référence
+      `mail_templates`, une assertion E2E qui exigeait que la confirmation ne parle pas de séquence,
+      et l'assertion figée d'INC-222. Chacune faisait exactement ce pour quoi elle avait été écrite.
+- [x] **Harnais dédié `scripts/verify-sequences-ecran.sh`** : **51 contrôles, aucune anomalie**,
+      **sept** dégradations toutes mordantes, restauration constatée octet à octet. La plus
+      importante fait passer la RPC en `security definer`.
+- [x] **UN QUATRIÈME DÉFAUT DU HARNAIS TROUVÉ PAR LE HARNAIS, et le second FAUX ROUGE** : un contrôle
+      recopiait un fragment de code **à la parenthèse près**, et rendait `ECHEC` sur un module
+      conforme pendant qu'une dégradation trouvait la même ligne. Le motif porte désormais ce que le
+      contrôle veut dire, non sa syntaxe.
+- [x] **INC-221 et INC-222 CLOSES**, héritage que la décision 519 avait nommé. Une preuve d'armement
+      **fermait** ce qu'elle armait sans le **retirer**, et « fermée » n'est pas « absente » pour un
+      `ON DELETE RESTRICT` ; une assertion comparait à une date que le seed translate chaque jour.
+- [x] **Compteurs de `scripts/verify-harness.sh` révisés dans le MÊME changement** :
+      `FICHIERS_SQL_ATTENDUS` 59 → **60**, `ASSERTIONS_ATTENDUES` 2826 → **2850**, `SCENARIOS_API`
+      933 → **943**, `SCENARIOS_UI` 613 → **629**. Valeurs **COMPTÉES** par `playwright --list` et
+      par la campagne, jamais déduites.
+- [x] **Documentation dans le même changement** : `docs/SCHEMA.md` §7, `docs/PROD_MIGRATIONS.md`
+      migration 62, `docs/DESIGN_SYSTEM.md` §5.41 et §5.42, `docs/manual.md` chapitre **7 ter** et
+      son sommaire, `README.md` — les trois listes de harnais —, `CHANGELOG.md`, et
+      `docs/INCONSISTENCY_REPORT.md` où **INC-221** et **INC-222** sont closes et **INC-223**
+      consignée.
+- [x] **Ce que 4c ne fait PAS, et qui est dit** (§13.14) : aucune prévisualisation d'une séquence
+      entière, aucune date de prochain envoi — ce serait la seconde source de vérité que le §12.3 a
+      refusée —, aucune liste des inscriptions fermées, aucune trace de l'armement dans le fil,
+      aucun glisser-déposer, aucune duplication de séquence.
 
 **Sous-tranche 4b livrée, 2026-08-25 — l'armement et l'exécution**
 (`docs/SPEC-modeles-emails.md` §12, `docs/SCHEMA.md` §7) :
