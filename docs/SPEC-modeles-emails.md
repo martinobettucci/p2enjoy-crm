@@ -747,6 +747,14 @@ Le rendu réussi porte trois valeurs (§8.3), et l'écran les rend **toutes les 
 
 ### 9.7 CE QUE LA CONFIRMATION DE SUPPRESSION ANNONCE — la quatrième question
 
+> **RÉVISÉ PAR LA SOUS-TRANCHE 4c, 2026-08-26 — le premier point de cette liste est devenu FAUX.**
+> Il l'est depuis l'application de la migration `0059`, qui pose le `on delete restrict` du §11.4 :
+> `pg_constraint` porte désormais `mail_sequence_steps_template_id_fkey`, et un modèle employé par
+> un palier **ne se supprime plus**. Le §13.9 dit ce que la confirmation annonce à partir de
+> maintenant, et la MESURE qui l'impose. Le texte ci-dessous est conservé — jamais réécrit — parce
+> qu'il porte le raisonnement qui était juste au 2026-08-25, et que le §11.4 avait explicitement
+> nommé son échéance : « c'est un travail de 4c ».
+
 Une suppression détruit un texte qu'il faudra réécrire : le §6 du design system exige donc une
 confirmation, et elle **nomme le modèle** (§5.27).
 
@@ -1896,3 +1904,416 @@ si une inscription de démonstration devient montrable sans être expédiée.
 3. **Aucun rattrapage des paliers échus** (§12.5) : un seul palier par passage.
 4. **Aucune révision de la confirmation de suppression d'un modèle** — le §9.7 reste faux depuis la
    migration `0059`, et c'est nommément le travail de 4c (§11.12).
+
+---
+
+## 13. Sous-tranche 4c — l'écran
+
+Écrite le 2026-08-26 **après mesure sur la pile debout et seedée**, et **avant la première ligne de
+code** (`CLAUDE.md` §5, `docs/CloudWorker.md` §3.2). Elle développe le cadrage du §11.12 et du
+§12.15, qu'elle ne remplace pas.
+
+C'est la **dernière** sous-tranche de `CRM-063`. Les trois objets de l'unité — le modèle, la
+signature, la séquence — existent en base et sont prouvés ; deux d'entre eux ont leur écran. Celui
+de la séquence manque, et **une cadence qu'aucun écran n'arme n'est pas une fonctionnalité du
+produit** : elle n'existe que pour les preuves qui l'appellent.
+
+### 13.1 Les quatre questions, et la mesure qui tranche chacune
+
+Aucune n'est tranchée par raisonnement seul. Chacune l'est par une sonde exécutée sur la pile du
+2026-08-26.
+
+| # | Question | Réponse | La mesure qui l'impose |
+|---|---|---|---|
+| 1 | Comment un écran réordonne-t-il des paliers ? | Par une **RPC**, `public.reordonner_paliers_sequence`, qui repose **toutes** les positions en **UNE seule instruction** | `PATCH position=2` sur le palier 1 rend `409` / `23505` / `mail_sequence_steps_sequence_position_key` (§11.6 bis, re-mesuré) ; l'`update … from unnest(…) with ordinality` passe, lui, **sans `set constraints`** |
+| 2 | La RPC ajoute-t-elle une règle d'accès ? | **Non.** `security invoker`, et la RLS de `0059` fait tout le tri | La lectrice qui `PATCH` un palier reçoit **`200` et `[]`** — le refus est zéro ligne (mesuré, §11.8 ligne 8). Une RPC `security definer` devrait **réécrire** cette règle, et deux écritures de la même règle divergent |
+| 3 | Où l'armement vit-il ? | Dans la **fiche de l'affaire**, jamais dans les réglages | `armer_sequence_relance` prend `p_card_id` et exige que l'affaire soit **figée** : le geste appartient à l'affaire. Une liste de réglages devrait porter un sélecteur de 41 affaires dont **4** seulement sont armables |
+| 4 | Que dit désormais la confirmation de suppression d'un modèle ? | Elle **annonce la règle**, sans compter, et l'écran **traduit** le refus quand il tombe | `DELETE` d'un modèle employé rend `409` / `23503` / `mail_sequence_steps_template_id_fkey` (mesuré) — le §9.7 est devenu faux, et il est révisé plutôt que réécrit |
+
+**Sondes du 2026-08-26, toutes exécutées par la route REST avec les jetons réels du seed** :
+
+```
+DELETE /mail_templates?id=eq.7e11…001            => 409  23503  mail_sequence_steps_template_id_fkey
+PATCH  /mail_sequence_steps … {"position":2}     => 409  23505  mail_sequence_steps_sequence_position_key
+GET    /mail_sequences            (viewer)       => 200  la séquence du seed
+PATCH  /mail_sequence_steps       (viewer)       => 200  []      — zéro ligne, jamais une erreur
+POST   /rpc/armer_sequence_relance (séquence vide) => 400  23514  sequence_empty
+POST   /rpc/armer_sequence_relance (card non figée) => 400 23514  card_not_stalled
+POST   /rpc/armer_sequence_relance (répété)      => 409  23505  enrollment_exists
+DELETE /mail_sequences d'une séquence ARMÉE      => 409  23503  card_sequence_enrollments_sequence_fk
+DELETE /mail_sequences portant un palier, non armée => 204, et son palier parti avec elle
+POST   /mail_sequences  {"name":"   "}           => 400  23514  mail_sequences_name_borne
+POST   /mail_sequences  nom déjà pris aux blancs près => 409 23505 mail_sequences_workspace_name_key
+POST   /mail_sequence_steps {"delai_jours":0}    => 400  23514  mail_sequence_steps_delai_borne
+```
+
+### 13.2 LE RÉORDONNANCEMENT — la mesure qui RÉVISE le §11.6 bis
+
+Le §11.6 bis, écrit le 2026-08-25, annonçait ce que 4c devrait livrer :
+
+> « réordonner des paliers depuis un écran exige une **RPC** qui ouvre une transaction, émet
+> `set constraints … deferred` et repose les positions. »
+
+**La première moitié est vraie ; la seconde est FAUSSE, et c'est une mesure qui le dit.** Sonde du
+2026-08-26, dans une transaction annulée, sur les trois paliers du seed :
+
+```sql
+update public.mail_sequence_steps s
+   set position = o.rang
+  from (select u.id, u.ord::integer as rang
+          from unnest(array[…a3, …a1, …a2]::uuid[]) with ordinality as u(id, ord)) o
+ where s.id = o.id and s.sequence_id = '5e90…001';
+=> UPDATE 3 ; positions relues : a3=1, a1=2, a2=3
+```
+
+**Aucun `set constraints` n'a été émis.** Le §11.6 avait déjà mesuré pourquoi : la contrainte est
+`deferrable initially immediate`, donc vérifiée **en fin d'instruction**, et une permutation
+complète écrite en **une** instruction n'a jamais deux lignes en collision à cet instant-là. Le
+§11.6 bis raisonnait sur le cas d'un réordonnancement **partiel** — insérer un palier au milieu — et
+concluait à tort que le cas général l'exigeait aussi.
+
+**La conséquence est écrite plutôt que tue** : la RPC **n'émet pas** `set constraints`, et son code
+porte le motif. Émettre une commande qui ne sert à rien serait pire qu'inutile — le prochain
+lecteur en déduirait que la contrainte est `initially deferred`, ce qu'elle n'est pas et ne doit pas
+devenir (§11.6).
+
+**Ce qui rend l'instruction unique possible, c'est que la RPC repose TOUTES les positions et non les
+seules qui bougent.** Réordonner, du point de vue de l'écran, c'est donner l'ordre voulu ; la base
+le transcrit en positions `1..n`. Une RPC qui prendrait « ce palier monte d'un cran » devrait
+calculer l'échange, donc connaître l'état courant, donc le relire — et deux appels concurrents
+liraient le même état.
+
+### 13.3 `public.reordonner_paliers_sequence` — signature, refus, privilèges
+
+```
+public.reordonner_paliers_sequence(p_sequence_id uuid, p_paliers uuid[]) returns integer
+```
+
+`language plpgsql`, `volatile`, **`security invoker`**, `set search_path = ''`. Elle rend le
+**nombre de paliers effectivement repositionnés**.
+
+**`security invoker` est la décision de forme, et le §13.1 question 2 la motive** : la migration
+`0059` a déjà posé les quatre politiques des deux tables, et une fonction `security definer`
+devrait réécrire la règle d'écriture. Deux écritures de la même règle divergent — c'est le
+raisonnement du §3 sur la liste des variables, transposé aux droits. La RPC est une **exposition**,
+comme le guichet du §9.3, jamais une règle.
+
+| # | Refus | `SQLSTATE` | Motif |
+|---|---|---|---|
+| a | `p_paliers` nul ou vide | `23514` `paliers_requis` | Réordonner sans ordre n'a pas de sens, et un tableau vide reposerait zéro position en rendant `0` — indiscernable d'un refus de politique |
+| b | `p_paliers` porte un doublon | `23514` `paliers_dupliques` | Deux fois le même palier laisserait un rang inoccupé et un palier non repositionné |
+| c | `p_paliers` n'est pas **exactement** l'ensemble des paliers **lisibles** de la séquence | `23514` `paliers_incomplets` | Un ordre partiel laisserait des positions hors de `1..n`, ou en collision avec celles qu'il n'a pas nommées |
+
+**Le refus (c) se mesure sur ce que l'appelant LIT, et c'est délibéré.** La fonction est
+`security invoker` : `select` sur `mail_sequence_steps` est ouvert à tout membre du workspace
+(§11.7), si bien que « les paliers lisibles » et « les paliers » coïncident pour un membre. Pour un
+appelant à qui la RLS cache la séquence entière, l'ensemble lu est **vide**, et le refus tombe en
+`paliers_incomplets` — jamais en révélant qu'une séquence existe.
+
+**Aucun refus (a) `not_authenticated`, et c'est une différence assumée avec les deux RPC de 4b.**
+Celles-ci sont `security definer` : le privilège les ouvre, et la fonction doit se défendre
+elle-même. Celle-ci est `security invoker`, et un appelant sans session n'a **aucun** `update` sur
+la table (`grant insert, update, delete … to authenticated` seul, §11.7) : l'écriture ne passe pas,
+et le compte rendu est `0`. Le privilège de la fonction est en outre **révoqué d'`anon`**, point de
+sûreté des migrations 48 à 60, si bien que l'appel s'arrête avant la fonction — c'est exactement le
+mécanisme mesuré au §12.11 ligne 12.
+
+**Rendre `0` N'EST PAS UN REFUS NOMMÉ, et l'écran le dit en toutes lettres** : c'est le zéro-ligne
+du §7 de `docs/SPEC-permissions-rls.md`, celui que la lectrice reçoit. L'écran relit les paliers et
+écrit « Aucun palier n'a été réordonné », jamais un succès qui n'a pas eu lieu — la règle du §9.7,
+reprise mot pour mot parce que la situation est identique.
+
+`revoke all … from public, anon` ; `grant execute … to authenticated, service_role`.
+
+### 13.4 L'écran d'administration des séquences — où il vit
+
+Une **neuvième surface de réglages**, à l'adresse `/reglages/sequences-relance`, **après** les
+modèles d'emails et **avant** l'état de la messagerie. L'ordre suit celui que le §9.1 a posé et pour
+son motif exact : on déclare l'expéditeur, puis le texte, puis la **cadence** qui enchaîne les
+textes ; et on configure avant de superviser.
+
+Elle est la **jumelle du §5.39** par sa forme — `ul` de lignes plates, fiche repliée **dans le flux
+du document et jamais une modale**, refus `role="alert"` dans le bloc concerné, état vide porteur du
+geste, commande jamais éteinte selon le rôle, borne de liste à `104ch`.
+
+**Elle n'ouvre AUCUNE politique.** Elle lit et écrit `mail_sequences` et `mail_sequence_steps` sous
+la RLS de `0059`, lit `mail_templates` sous celle de `0055`, et appelle la RPC du §13.3.
+
+### 13.5 La liste des séquences, et ce qu'une ligne porte
+
+- **LE NOM EST EN TÊTE DE LIGNE, ET C'EST LA CLÉ** — `mail_sequences_workspace_name_key` le rend
+  unique par workspace sur sa forme normalisée (§11.3). Même raisonnement qu'au §9.4.
+- **LE NOMBRE DE PALIERS SUIT, EN SECOND TON, ET IL EST EN TOUTES LETTRES** — « 3 paliers ». Ce
+  n'est **pas** le « compte qui ne dit pas ce qu'il compte » que le §9.4 refuse pour les modèles :
+  une séquence **sans palier** n'arme rien du tout (refus `sequence_empty`, mesuré), et le nombre de
+  paliers est donc la seule donnée qui dise si la cadence est utilisable. Il vit dans son **propre
+  élément**, jamais un nœud de texte accolé — défaut « Discussion1 » du §5.11 —, et **l'accord se
+  fait par clé** (§10 du design system).
+- **AUCUNE PILULE, AUCUNE COULEUR.** Une séquence n'a pas d'état : la table ne porte ni statut ni
+  `archived_at` (§11.3). Une cadence vide n'est pas une **erreur** — c'est une cadence qu'on est en
+  train d'écrire —, et la teindre en danger ferait lire une panne là où il y a un brouillon.
+- **UNE SEULE COMMANDE PAR LIGNE : « Modifier ».** La suppression vit dans la fiche (§9.4, patron du
+  §5.29) ; il n'y a **rien à prévisualiser** — une séquence n'a pas de texte propre, ses paliers
+  renvoient à des modèles que le §5.39 prévisualise déjà. Ajouter ici un second chemin vers la même
+  prévisualisation en ferait une seconde définition.
+- **L'état vide porte le geste** — « Aucune séquence de relance » suivi de la commande de création.
+  Le seed en pose une, si bien qu'il ne se rencontre qu'après une suppression complète.
+
+### 13.6 La fiche d'une séquence — le nom, puis le tableau des paliers
+
+La fiche porte **deux** zones, et l'ordre est celui de la dépendance : une séquence existe avant
+d'avoir des paliers, et la migration `0059` l'impose — `sequence_id` est `not null`.
+
+**Zone 1, le nom.** Un champ, sa commande d'enregistrement unique, et le patron du §5.34 sans
+écart. **AUCUNE GARDE DE SAISIE** : ni `required`, ni `maxLength` (§5.3 ter) — c'est
+`mail_sequences_name_borne` qui refuse, refus traduit par le §13.7.
+
+**Zone 2, les paliers, et elle n'apparaît qu'après la création.** Une séquence en cours de création
+n'a pas d'identifiant ; proposer d'y ajouter un palier serait proposer une écriture que la base
+refusera en `23503`. La zone porte alors, en une phrase, ce qu'il faut faire : « Enregistrez la
+séquence pour lui ajouter des paliers. »
+
+- **LES PALIERS SONT UNE LISTE ORDONNÉE, ET LEUR ORDRE EST LA DONNÉE** — `ul` de lignes plates,
+  triées par `position`. La position **n'est pas un champ saisissable** : c'est le rang dans la
+  liste, et deux chemins vers le même fait — un champ et des flèches — divergeraient au premier
+  geste. C'est l'écart le plus net avec le §5.39, et il est motivé par le §13.2 : la RPC prend un
+  **ordre**, pas des positions.
+- **Chaque ligne porte le RANG, le MODÈLE, le DÉLAI, et trois commandes** : « Monter », « Descendre »
+  et « Retirer ». Le rang est rendu en `tabular-nums` comme le retard du §5.37.
+- **« Monter » sur le premier palier et « Descendre » sur le dernier sont MONTÉS ET DÉSACTIVÉS**, et
+  c'est le seul endroit de l'écran où une commande l'est. Ce n'est **pas** un droit calculé
+  (`CLAUDE.md` §10) : c'est un geste qui n'a pas de sens sur cet élément-là, exactement comme le
+  §5.31 désactive le report d'une occurrence qui n'a pas de suivante. Leur `aria-label` nomme le
+  palier, deux flèches identiques répétées sur trois lignes ne disant pas ce que chacune déplace.
+- **UN DÉPLACEMENT EST UN APPEL À LA RPC, ET IL PORTE L'ORDRE ENTIER** (§13.2). L'écran calcule
+  l'ordre voulu depuis ce qu'il affiche, l'envoie, puis **relit les paliers** — jamais il ne
+  réordonne sa propre liste en supposant que l'écriture a réussi. C'est la relecture du §9.8, et
+  elle est ici la seule façon de distinguer un déplacement consenti d'un `0` de politique.
+- **L'ajout d'un palier est un formulaire replié** : un sélecteur de modèle — option de tête
+  **vide** —, un champ de délai en jours, et la commande. **La position n'y figure pas** : un palier
+  ajouté prend le rang suivant, `max(position) + 1`, calculé depuis la donnée **déjà lue** et jamais
+  d'une requête de plus. Le rédacteur le remonte ensuite s'il le veut, ce qui est un geste de plus
+  mais **un seul concept** au lieu de deux.
+- **Le sélecteur de modèle porte TOUS les modèles que l'appelant lit**, et n'est jamais restreint
+  selon le rôle (§9.4). Un modèle sert plusieurs paliers, et le §11.9 le démontre sur le seed :
+  aucune option n'est retirée parce qu'elle est déjà employée.
+- **« Retirer » est un `DELETE` direct, SANS confirmation, et c'est un écart motivé.** Le §5.29
+  exige une confirmation d'un geste destructeur ; celui-ci ne détruit **aucun texte** — le modèle
+  reste, la séquence reste, seule la ligne qui les relie disparaît, et la reposer est un geste de
+  deux champs. La confirmation est réservée à ce qui est **irréversible** (§6 du design system), et
+  l'étendre à ce qui ne l'est pas la ferait lire comme une formalité partout ailleurs.
+- **La suppression de la séquence est en bas de la fiche, derrière sa confirmation** (§5.29). Elle
+  **nomme la séquence** et annonce la cascade que la base applique : « ses N paliers seront
+  supprimés avec elle » — pris de la donnée **déjà lue**. C'est vrai et mesuré (`on delete cascade`,
+  §11.5 point m, sonde 20).
+- **ELLE ANNONCE AUSSI CE QU'ELLE NE PEUT PAS PROMETTRE** : une séquence **armée** ne se supprime
+  pas (`card_sequence_enrollments_sequence_fk`, `409` / `23503`, mesuré). L'écran ne compte pas les
+  inscriptions — il ne les lit pas, et une requête de plus dirait un nombre qui peut changer entre
+  la lecture et le geste. La confirmation dit la **règle** ; le refus, quand il tombe, est traduit
+  (§13.7).
+
+### 13.7 Le dictionnaire fermé des refus de l'écran des séquences
+
+Même discipline qu'au §9.8, et pour la même raison : **rien du serveur n'atteint l'écran**. Un refus
+est **classé** en une issue nommée, sur des **identifiants stables** — les noms de contrainte,
+versionnés par la migration `0059` —, jamais sur de la prose.
+
+| Issue | Réponse mesurée | Ce que l'écran dit |
+|---|---|---|
+| `enregistre` | `201` / `200` | rien : la liste relue est la preuve |
+| `refus` | `403`, `42501` | l'écriture est réservée à l'administration et au développement commercial |
+| `zero-ligne` | `200` et `[]` sur un `PATCH`, ou `0` rendu par la RPC | aucune séquence n'a été modifiée / aucun palier n'a été réordonné |
+| `nom-borne` | `400`, `23514`, `mail_sequences_name_borne` | le nom doit faire de 1 à 120 caractères |
+| `nom-pris` | `409`, `23505`, `mail_sequences_workspace_name_key` | ce nom est déjà employé |
+| `delai-borne` | `400`, `23514`, `mail_sequence_steps_delai_borne` | le délai doit faire de 1 à 365 jours |
+| `position-borne` | `400`, `23514`, `mail_sequence_steps_position_borne` | une séquence porte au plus 50 paliers |
+| `position-prise` | `409`, `23505`, `mail_sequence_steps_sequence_position_key` | deux paliers ne peuvent pas occuper le même rang |
+| `ordre-invalide` | `400`, `23514`, `paliers_requis` / `paliers_dupliques` / `paliers_incomplets` | l'ordre envoyé ne décrit pas la séquence : rechargez l'écran |
+| `sequence-armee` | `409`, `23503`, `card_sequence_enrollments_sequence_fk` | cette séquence relance actuellement une affaire, et ne peut pas être supprimée |
+| `modele-introuvable` | `409`, `23503`, `mail_sequence_steps_template_id_fkey` | ce modèle n'existe plus : rechargez l'écran |
+| `session-expiree` | `401` | la session a expiré |
+| `reseau` | aucune réponse | la requête n'a pas abouti |
+| `inconnu` | tout le reste | **repli nommé** : l'interface ne prétend pas savoir |
+
+**L'ORDRE DES TESTS COMPTE, ET IL EST VÉRIFIÉ PLUTÔT QUE SUPPOSÉ.** `mail_sequences` n'est **pas**
+un préfixe de `mail_sequence_steps` — après `mail_sequence` vient `_` et non `s` —, si bien que les
+deux familles ne se capturent pas l'une l'autre. Le point est écrit ici parce que le §9.8 a payé le
+piège inverse sur `mail_templates_subject_variables` / `mail_templates_subject_borne`, et qu'un
+lecteur pressé ajouterait la même précaution au mauvais endroit.
+
+### 13.8 L'ARMEMENT DEPUIS L'AFFAIRE — où le bloc vit, et ce qu'il rend
+
+**Il vit dans la colonne gauche de la fiche d'affaire**, sous le bloc des contacts et **au-dessus**
+du geste de corbeille : c'est un geste sur l'affaire, non un réglage (§13.1 question 3). Le
+raisonnement est celui du §12.2 de `docs/SPEC-contacts.md`, repris sans changement — le geste vit
+là où vit l'objet sur lequel il porte.
+
+**LE BLOC EST TOUJOURS RENDU, ET SA COMMANDE N'EST JAMAIS ÉTEINTE SELON LE RÔLE NI SELON L'ÉTAT DE
+L'AFFAIRE** (§5.3, §5.13, §5.21, §5.27, sans exception). En particulier, **l'écran ne calcule pas si
+l'affaire est figée** : `public.cards_figees()` porte cette définition, une seule fois, et la
+recopier en TypeScript créerait la seconde définition que le §12.15 de `docs/SPEC-relances.md`
+existe pour empêcher. Le rédacteur arme, et la base refuse en `card_not_stalled` — refus
+**traduit**, en disant ce qu'il faut pour que le geste devienne possible.
+
+**Deux états, et deux seulement, parce que la table n'en porte que deux** (§12.7) :
+
+- **Aucune inscription active** — le bloc porte le geste : deux sélecteurs, la séquence et
+  l'identité expéditrice, puis « Armer la relance ».
+  - **Le sélecteur de séquence ouvre sur une option VIDE** et porte toutes les séquences que
+    l'appelant lit (§9.5, même règle).
+  - **Le sélecteur d'identité RÉEMPLOIE `lireIdentitesDisponibles`** de `webapp/src/lib/envoi.ts`,
+    et n'en écrit pas un second. Ce module porte déjà le filtre mesuré de `CRM-058` — « la RLS ouvre
+    la lecture aux administrateurs sur TOUTES les identités du workspace, y compris les identités
+    personnelles de leurs collègues » —, et `armer_sequence_relance` reprend **telle quelle** la
+    règle d'emprunt de `queue_outbound_email` (§12.4 refus e). Deux filtres pour une même règle
+    divergeraient.
+- **Une inscription active** — le bloc rend ce que la cadence fait, et porte « Interrompre » :
+  - le **nom de la séquence** et l'**adresse expéditrice**, lus par jointure en **un seul appel**
+    (mesuré : `select=…,mail_sequences(name),mail_outbound_identities(label,from_address)` rend
+    `200` et la ligne complète) ;
+  - **où en est la cadence** : « aucun palier envoyé » quand `last_position` est nulle, sinon
+    « palier N envoyé le … ». Les deux colonnes sont **nulles ensemble ou renseignées ensemble**, et
+    une contrainte le dit (§12.3) : l'écran n'a donc aucun cas mixte à inventer ;
+  - **AUCUNE DATE DE PROCHAIN ENVOI.** Elle serait la **seconde source de vérité** que le §12.3 a
+    refusée en base, et l'écran ne peut pas la calculer honnêtement : le job glisse la cadence sur
+    l'envoi **réel** (§12.5), et une échéance affichée serait fausse dès qu'un passage manquerait.
+- **Les inscriptions FERMÉES ne sont pas listées, et c'est dit.** Une inscription est une trace
+  (§12.10), mais le bloc porte un **geste**, pas une histoire ; l'histoire de l'affaire est le fil
+  de la timeline, et l'y verser est un travail que personne n'a spécifié. L'écart est **nommé**
+  plutôt que comblé au passage.
+
+**Le dictionnaire fermé des refus de l'armement**, chaque ligne mesurée le 2026-08-26 :
+
+| Issue | Réponse mesurée | Ce que l'écran dit |
+|---|---|---|
+| `arme` | `200` et un `uuid` | rien : le bloc relu est la preuve |
+| `deja-armee` | `409`, `23505`, `enrollment_exists` | une relance est déjà armée sur cette affaire |
+| `non-figee` | `400`, `23514`, `card_not_stalled` | cette affaire n'a pas dépassé le seuil d'inactivité de son étape |
+| `sequence-vide` | `400`, `23514`, `sequence_empty` | cette séquence ne porte aucun palier |
+| `sequence-indisponible` | `400`, `23514`, `sequence_not_available` | cette séquence n'est pas disponible |
+| `adresse-absente` | `400`, `23514`, `card_not_available` | l'adresse de réponse de cette affaire ne se compose pas |
+| `identite-refusee` | `403`, `42501`, `identity_not_available` | vous ne pouvez pas expédier depuis cette adresse |
+| `refus` | `403`, `42501`, `forbidden` | vous ne pouvez pas écrire au nom de cette affaire |
+| `session-expiree` | `401` | la session a expiré |
+| `reseau` / `inconnu` | — | comme au §13.7 |
+
+**`identity_not_available` EST DISTINGUÉ DE `forbidden`, et ce n'est pas un raffinement** : les deux
+rendent `403` / `42501`, mais ils demandent deux gestes différents — choisir une autre adresse, ou
+demander un droit. Les confondre serait la valeur par défaut trompeuse que `CLAUDE.md` §18 proscrit,
+et c'est exactement la distinction que `classerRefusEnvoi` fait déjà pour le quota (`CRM-058`).
+
+**L'interruption est IDEMPOTENTE et rend `204`** (§12.11 lignes 13 et 14). L'écran **relit
+l'inscription** après le geste : `204` ne dit pas qu'une ligne a été fermée, seulement que rien n'a
+été levé. Si la ligne relue est encore `active`, l'écran écrit « La relance n'a pas été
+interrompue » — la règle du §9.7, appliquée à une RPC plutôt qu'à un `DELETE`.
+
+### 13.9 LA CONFIRMATION DE SUPPRESSION D'UN MODÈLE, RÉVISÉE — la quatrième question
+
+Le §9.7 disait, le 2026-08-25 : « Elle n'annonce AUCUNE cascade, et c'est une MESURE :
+`pg_constraint` ne porte aucune clé étrangère vers `mail_templates`. » **La migration `0059` a posé
+cette clé, et la phrase est devenue fausse.** Le §11.4 l'avait annoncé — « c'est un travail de 4c ».
+
+**MESURÉ le 2026-08-26** : `DELETE /rest/v1/mail_templates?id=eq.<modèle employé>` rend `409`,
+`23503`, `mail_sequence_steps_template_id_fkey`.
+
+Ce que la confirmation dit désormais, et **rien de plus** :
+
+- **elle nomme le modèle et l'irréversibilité**, comme avant ;
+- **elle annonce la RÈGLE, sans compter** : « Un modèle employé par une séquence de relance ne peut
+  pas être supprimé. » C'est vrai inconditionnellement, et cela ne coûte **aucune lecture** ;
+- **elle ne dit PAS combien de paliers l'emploient**, et c'est une décision. Pour l'écrire, l'écran
+  devrait lire `mail_sequence_steps` — une requête que l'écran des modèles ne fait pas, sur une
+  donnée qui peut changer entre la lecture et le geste. Le §20 de `docs/SPEC-contacts.md` a pu
+  annoncer un nombre d'affaires parce qu'il était **déjà lu** ; ici il ne l'est pas, et l'aller
+  chercher pour l'afficher serait annoncer un chiffre dont la fraîcheur n'est pas garantie.
+- **le refus, quand il tombe, est traduit** : une issue de plus au dictionnaire du §9.8,
+  `modele-employe`, classée sur `mail_sequence_steps_template_id_fkey`, et rendue « Ce modèle est
+  employé par une séquence de relance et ne peut pas être supprimé. »
+
+**La suppression d'un modèle qu'AUCUN palier n'emploie reste inconditionnelle** (§11.5 point l) : le
+`restrict` ne protège que ce qui est employé, et la confirmation ne promet donc aucun refus — elle
+nomme une règle qui peut ou non s'appliquer, ce qui est exactement ce que l'écran sait.
+
+### 13.10 Contrat d'API — les lignes nouvelles
+
+Les écrans consomment **des routes déjà mesurées** : les dix-huit lignes du §11.8 pour les deux
+tables, les dix-sept du §12.11 pour l'armement, les quatorze du §2.7 pour les modèles. Seule la RPC
+du §13.3 est neuve.
+
+| # | Appelant | Requête | Attendu |
+|---|---|---|---|
+| 1 | anonyme | `POST /rest/v1/rpc/reordonner_paliers_sequence` | `401`, `42501` — refusé par le **privilège**, la fonction étant révoquée d'`anon` |
+| 2 | `business_developer` | ordre complet des trois paliers du seed, inversé | `200` et **`3`** ; les positions relues valent l'ordre envoyé |
+| 3 | `business_developer` | l'ordre d'origine, reposé | `200` et `3` ; le seed est **rendu intact** |
+| 4 | `viewer` | le même appel | `200` et **`0`** — zéro ligne, et les positions relues **inchangées** |
+| 5 | `admin` | tableau **vide** | `400`, `23514`, `paliers_requis` |
+| 6 | `admin` | tableau portant **deux fois** le même palier | `400`, `23514`, `paliers_dupliques` |
+| 7 | `admin` | tableau ne portant que **deux** des trois paliers | `400`, `23514`, `paliers_incomplets` |
+| 8 | `admin` | tableau portant un palier d'une **autre** séquence | `400`, `23514`, `paliers_incomplets` |
+| 9 | `admin` | séquence **inconnue** | `400`, `23514`, `paliers_incomplets` — jamais une phrase qui dirait qu'elle n'existe pas |
+| 10 | — | le seed constaté **intact** en fin de suite | une séquence, trois paliers, positions 1-2-3, aucune inscription active |
+
+Chaque refus **relit les positions** pour les constater inchangées (décision 70).
+
+### 13.11 Le seed
+
+**Inchangé pour les séquences** : la séquence du §11.9 et ses trois paliers ouvrent les deux écrans
+sur du contenu, et l'état vide ne se rencontre qu'après une suppression complète.
+
+**Toujours AUCUNE inscription armée**, et le §12.12 dit pourquoi — une inscription armée ferait
+partir quatre messages réels dix secondes après le démarrage de la pile. Le §12.12 laissait à 4c la
+question de savoir si une inscription de démonstration devenait montrable : **la réponse est non**,
+et elle est mesurée plutôt que prudente. La cadence d'amorçage du job est de dix secondes (§12.9) ;
+aucun état « armé mais non exécuté » n'est donc stable sur une pile de démonstration, et un seed qui
+en poserait un ne montrerait ce qu'il prétend montrer que pendant dix secondes.
+
+**L'écart est nommé** : le bloc d'armement de la fiche s'ouvre donc sur son état « aucune
+inscription », qui est le geste, et c'est **l'E2E** qui éprouve l'autre état — en armant, en
+mesurant, et en refermant dans un `finally`, patron d'`e2e/api/envoi.spec.ts` et de
+`e2e/api/armement-sequences.spec.ts`.
+
+### 13.12 Preuves exigées — sous-tranche 4c
+
+| Niveau | Preuve |
+|---|---|
+| pgTAP | `supabase/tests/0059_reordonnancement_paliers.test.sql` : la forme de la fonction dans le catalogue — volatilité, `security invoker`, privilèges rôle par rôle, `anon` **exclu** —, les trois refus **chacun précédé de son témoin**, la permutation complète **relue position à position**, et le fait qu'**aucun `set constraints`** n'est requis (§13.2) |
+| Unitaire | `webapp/src/lib/sequences-relance.test.ts` : le classement des quatorze issues du §13.7 et des dix du §13.8 sur des messages réels, le calcul de l'ordre après « Monter » et « Descendre », le rang du palier ajouté, et la composition des corps de requête |
+| API | `e2e/api/reordonnancement-paliers.spec.ts` : les dix lignes du §13.10 avec les jetons réels, chaque refus relisant les positions, et le seed constaté intact |
+| E2E interface | `e2e/ui/reglages-sequences-relance.spec.ts` : la liste, la création, l'ajout d'un palier, le réordonnancement **relu**, le retrait, la suppression derrière sa confirmation, le zéro-ligne de la lectrice ; `e2e/ui/armement-sequence.spec.ts` : le bloc de la fiche, l'armement d'une affaire **figée**, le refus **traduit** sur une affaire qui ne l'est pas, et l'interruption — toute inscription refermée dans un `finally`. Captures conformes à `CLAUDE.md` §16 |
+| Harnais | `scripts/verify-sequences-ecran.sh` : verdict unique, non complaisant, ses dégradations réelles et la restauration constatée **octet à octet** contre un instantané pris avant la première |
+| Seed | **inchangé**, et le §13.11 dit pourquoi |
+
+### 13.13 Definition of Done — sous-tranche 4c
+
+- migration `0061_reordonnancement_paliers.sql` appliquée et **rejouable** ;
+- suite pgTAP dédiée verte ;
+- contrat d'API du §13.10 vert avec les jetons réels des trois profils ;
+- écran d'administration des séquences livré, routé, et **vérifié visuellement** ;
+- bloc d'armement livré dans la fiche d'affaire, et **vérifié visuellement** ;
+- confirmation de suppression d'un modèle **révisée**, et son refus traduit ;
+- tests unitaires dédiés verts ;
+- parcours E2E dédiés verts, console **vierge**, captures **observées** ;
+- harnais dédié vert, ses dégradations vues ;
+- `docs/SCHEMA.md`, `docs/PROD_MIGRATIONS.md`, `docs/DESIGN_SYSTEM.md` §5.41 et §5.42,
+  `docs/manual.md` chapitre **7 ter**, `README.md` et `CHANGELOG.md` mis à jour **dans le même
+  changement** ;
+- compteurs de `scripts/verify-harness.sh` révisés **par comptage**, jamais par estimation ;
+- commentaires `@spec` / `@verifies` sur chaque fichier ;
+- commit poussé sur `origin/main`.
+
+### 13.14 Ce que 4c ne fait PAS, et qui n'est pas masqué
+
+1. **Aucune prévisualisation d'une séquence entière.** Rendre les N modèles d'une cadence sur une
+   affaire est N appels à `rendre_modele_email` ; le §5.39 prévisualise déjà un modèle, et la
+   composition est un écran que personne n'a spécifié.
+2. **Aucune date de prochain envoi** (§13.8), et le motif est écrit : ce serait la seconde source de
+   vérité que le §12.3 a refusée en base.
+3. **Aucune liste des inscriptions fermées** (§13.8) : le bloc porte un geste, pas une histoire.
+4. **Aucune trace de l'armement dans le fil de l'affaire.** `CRM-062` a posé le patron d'un
+   événement de relance dans la timeline (§5.38 du design system) ; l'y verser suppose un type
+   d'événement que `docs/SCHEMA.md` ne porte pas, et l'inventer ici serait ouvrir une unité.
+5. **Aucun réordonnancement à la souris par glisser-déposer.** Deux flèches au clavier couvrent le
+   geste, sont accessibles sans surcouche (§8), et le glisser-déposer accessible est un composant
+   entier que le design system ne porte pas.
+6. **Aucune duplication de séquence**, aucun archivage, aucune corbeille : `mail_sequences` ne porte
+   aucune de ces colonnes (§11.3), et les poser serait une migration hors périmètre.

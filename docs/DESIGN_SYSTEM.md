@@ -3579,3 +3579,107 @@ tout ce qui touche à une confirmation destructive. Ce qui suit ne dit que ce qu
 > commande, posée avant les deux zones » devient : **la fiche porte deux commandes**, « Modifier »
 > puis « Supprimer ». Le reste du §5.24 est inchangé — le tableau des affaires se lit toujours à
 > quatre colonnes, et son état vide ne gagne aucune commande.
+
+### 5.41 Séquences de relance — `CRM-063`
+
+**Neuvième surface de réglages**, et la quatrième de la famille « messagerie » qui écrive, après le
+§5.34 — ce qu'on reçoit —, le §5.35 — ce qu'on expédie — et le §5.39 — le texte expédié. Celle-ci
+porte la **cadence** qui enchaîne les textes. `docs/SPEC-modeles-emails.md` §13 dit ce que l'écran
+lit, envoie et refuse ; les règles ci-dessous ne disent que de quoi il a l'air.
+
+**Tout ce que le §5.39 pose vaut ici sans être répété** : `ul` de lignes plates et non tableau,
+fiche repliée **dans le flux du document — aucune modale**, focus entrant dans le premier champ et
+rendu à la commande qui l'a ouvert, commande d'enregistrement unique et **jamais désactivée par
+l'état des champs**, refus `role="alert"` sous les champs sans effacer la saisie, état vide porteur
+du geste, sélecteur jamais restreint selon le rôle, borne de liste à `104ch`. Seuls les **écarts**
+sont écrits ci-dessous, et chacun a sa cause.
+
+- **LE NOM EST EN TÊTE DE LIGNE, ET C'EST LA CLÉ** — `mail_sequences_workspace_name_key`. Même
+  raisonnement qu'au §5.39.
+
+- **LE NOMBRE DE PALIERS SUIT, EN SECOND TON, EN TOUTES LETTRES, DANS SON PROPRE ÉLÉMENT.** C'est
+  l'écart le plus visible avec le §5.39, qui refuse tout compte sur une ligne de modèle, et il a une
+  cause **mesurée** : une séquence sans palier n'arme rien — la base rend `sequence_empty` —, si
+  bien que ce nombre est la seule donnée qui dise si la cadence est utilisable. Ce n'est donc pas
+  « un chiffre qui ne dit pas ce qu'il compte » (§5.36). **L'accord se fait par clé** (§10), et le
+  compte n'est jamais un nœud de texte accolé — défaut « Discussion1 » du §5.11.
+
+- **AUCUNE PILULE, AUCUNE COULEUR.** Une séquence n'a pas d'état. Une cadence vide est un
+  **brouillon**, pas une erreur : la teindre en danger ferait lire une panne là où il y a un travail
+  en cours, et le §1 réserve la couleur à ce qui la mérite.
+
+- **UNE SEULE COMMANDE PAR LIGNE, « Modifier ».** Rien à prévisualiser : une séquence n'a pas de
+  texte propre, et le §5.39 prévisualise déjà les modèles vers lesquels ses paliers renvoient.
+
+- **LES PALIERS SONT UNE LISTE ORDONNÉE, ET L'ORDRE EST LA DONNÉE.** La position **n'est jamais un
+  champ saisissable** : c'est le rang dans la liste, déplacé par deux flèches. Deux chemins vers le
+  même fait — un champ et des flèches — divergeraient au premier geste. Le rang se rend en
+  `tabular-nums`, comme le retard du §5.37.
+
+- **« Monter » SUR LE PREMIER ET « Descendre » SUR LE DERNIER SONT MONTÉS ET DÉSACTIVÉS**, et c'est
+  le seul endroit de cette surface où une commande l'est. **Ce n'est pas un droit calculé** : c'est
+  un geste sans objet sur cet élément-là, exactement comme le §5.31 désactive le report d'une
+  occurrence sans suivante. Leur `aria-label` **nomme le palier** — deux flèches identiques répétées
+  sur trois lignes ne diraient pas ce que chacune déplace.
+
+- **UN DÉPLACEMENT RELIT LA LISTE, il ne la réordonne jamais localement.** L'écriture peut être
+  refusée en silence par la politique — le serveur rend alors « zéro palier réordonné » —, et une
+  liste réordonnée d'avance montrerait un ordre que la base n'a pas.
+
+- **L'AJOUT D'UN PALIER NE DEMANDE PAS SA POSITION.** Le palier ajouté prend le rang suivant,
+  calculé depuis la donnée **déjà lue**. Un champ de position ferait saisir deux fois la même
+  intention.
+
+- **« Retirer » N'A PAS DE CONFIRMATION, ET C'EST UN ÉCART MOTIVÉ AU §6.** Le geste ne détruit aucun
+  texte : le modèle reste, la séquence reste, seule la ligne qui les relie disparaît, et la reposer
+  est un formulaire de deux champs. La confirmation est réservée à l'**irréversible** ; l'étendre à
+  ce qui ne l'est pas la ferait lire comme une formalité partout ailleurs.
+
+- **LA CONFIRMATION DE SUPPRESSION D'UNE SÉQUENCE ANNONCE LA CASCADE ET LA RÈGLE.** La cascade est
+  **comptée depuis la donnée déjà lue** — « ses 3 paliers seront supprimés avec elle » —, ce que la
+  base applique vraiment (`on delete cascade`, mesuré). La règle qu'elle ne peut pas promettre est
+  dite sans chiffre : une séquence **armée** ne se supprime pas, et l'écran ne lit pas les
+  inscriptions pour en donner le nombre — ce nombre changerait entre la lecture et le geste.
+
+- **Aucune couleur, aucun jeton, aucune icône nouvelle** : l'écran emprunte au §5.39 sa forme
+  entière, au §5.18 sa liste plate, au §5.5 ses variantes, au §5.29 son patron de suppression
+  confirmée et au §9 ses flèches Lucide.
+
+### 5.42 Armer une relance depuis l'affaire — `CRM-063`
+
+Le geste qui applique une cadence à une affaire. Il vit dans la **colonne gauche de la fiche
+d'affaire**, sous le bloc des contacts (§5.21) et **au-dessus** du geste de corbeille (§5.3) : c'est
+un geste **sur l'affaire**, non un réglage, et le §5.21 a déjà posé ce raisonnement pour les
+contacts.
+
+- **LE BLOC EST TOUJOURS RENDU, ET SA COMMANDE N'EST JAMAIS ÉTEINTE — ni selon le rôle, ni selon
+  l'état de l'affaire** (§5.3, §5.13, §5.21, §5.27, sans exception). En particulier, **l'écran ne
+  calcule pas si l'affaire est figée** : cette définition vit dans la base, une seule fois, et la
+  recopier ici en créerait une seconde. Le refus est **traduit**, en disant ce qu'il faudrait pour
+  que le geste devienne possible.
+
+- **DEUX ÉTATS, ET DEUX SEULEMENT**, parce que la donnée n'en porte que deux : aucune inscription
+  active — le bloc porte le **geste** — ou une inscription active — le bloc porte l'**état** et
+  « Interrompre ».
+
+- **LES DEUX SÉLECTEURS OUVRENT SUR UNE OPTION VIDE**, séquence et adresse expéditrice, et aucun ne
+  présélectionne : c'est la règle du §5.39, et le motif y est le même — le workspace porte deux
+  identités également légitimes.
+
+- **L'IDENTITÉ EST NOMMÉE `libellé — adresse`**, forme du §5.35, et la liste proposée est celle que
+  l'envoi propose déjà : une seule règle d'emprunt, écrite une seule fois.
+
+- **L'ÉTAT DIT OÙ EN EST LA CADENCE, ET RIEN DE PLUS** : le nom de la séquence, l'adresse
+  expéditrice, et « aucun palier envoyé » ou « palier N envoyé le … ». **AUCUNE DATE DE PROCHAIN
+  ENVOI** : la cadence glisse sur l'envoi réel, et une échéance affichée serait fausse dès qu'un
+  passage manquerait — c'est la donnée qu'on n'a pas, du §5.9.
+
+- **LES INSCRIPTIONS FERMÉES NE SONT PAS LISTÉES.** Le bloc porte un geste, pas une histoire ;
+  l'histoire de l'affaire est le fil du §5.11.
+
+- **L'INTERRUPTION RELIT L'INSCRIPTION.** Le serveur rend `204` même quand rien n'a été fermé —
+  l'appel est idempotent —, et annoncer une interruption sur ce silence serait annoncer un succès
+  qui n'a pas eu lieu (§5.29, §5.40).
+
+- **Aucune couleur, aucun jeton, aucune icône nouvelle** : le bloc emprunte au §5.21 sa place et sa
+  forme, au §5.5 ses variantes, au §5.8 ses états et au §5.35 le libellé de ses identités.

@@ -8706,10 +8706,37 @@ avant la suivante :
         **avant sa première ligne de code** ; **LIVRÉE ET PROUVÉE le 2026-08-25**. Les **quatre**
         questions — les trois du §7.3 et celle que le §11.12 a ajoutée — y sont tranchées **chacune
         par une mesure** (§12.1). Voir le détail plus bas.
-  - [ ] **4c — l'écran** : administration des séquences, armement depuis l'affaire, et la **RPC de
+  - [~] **4c — l'écran** : administration des séquences, armement depuis l'affaire, et la **RPC de
         réordonnancement** que le §11.6 bis rend nécessaire. Elle devra aussi **réviser la
         confirmation de suppression d'un modèle** : le §9.7 annonce une suppression
         inconditionnelle, que le `on delete restrict` de la migration 59 rend **fausse**.
+        **SPÉCIFIÉE au §13** de `docs/SPEC-modeles-emails.md` le 2026-08-26, après **douze sondes**
+        sur la pile debout et seedée, et **avant sa première ligne de code**. Les **quatre**
+        questions du §13.1 y sont tranchées chacune par une mesure, et l'une d'elles **RÉVISE le
+        §11.6 bis** : un réordonnancement complet écrit en UNE instruction passe **sans**
+        `set constraints`, la contrainte étant `deferrable initially immediate`. `docs/DESIGN_SYSTEM.md`
+        gagne ses **§5.41** et **§5.42** dans le même commit documentaire. Reste à livrer : voir le
+        détail plus bas.
+
+**Sous-tranche 4c en cours, 2026-08-26 — l'écran** (`docs/SPEC-modeles-emails.md` §13,
+`docs/DESIGN_SYSTEM.md` §5.41 et §5.42) :
+
+- [x] **Spécification écrite et COMMITTÉE avant la première ligne de code** (`CLAUDE.md` §5) : le
+      §13, quatorze sections, dont les **quatre** questions du §13.1 tranchées **chacune par une
+      sonde** exécutée sur la pile du 2026-08-26.
+- [x] **UNE LIGNE DU §11.6 bis TROUVÉE FAUSSE PAR LA MESURE, ET RÉVISÉE.** Elle annonçait que la RPC
+      devrait « ouvrir une transaction, émettre `set constraints … deferred` et reposer les
+      positions ». **Mesuré** : un `update … from unnest(…) with ordinality` reposant TOUTES les
+      positions est **une seule instruction**, et la contrainte `deferrable initially immediate` est
+      vérifiée en fin d'instruction — `set constraints` est **inutile**. Le §13.2 dit ce que la
+      mesure a trouvé, et pourquoi émettre la commande quand même serait **pire** qu'inutile.
+- [ ] `supabase/migrations/0061_reordonnancement_paliers.sql` — `public.reordonner_paliers_sequence`,
+      `security invoker`, ses trois refus, ses privilèges.
+- [ ] Suite pgTAP dédiée, contrat d'API du §13.10, tests unitaires, parcours E2E, harnais dédié.
+- [ ] Écran `/reglages/sequences-relance`, bloc d'armement de la fiche d'affaire, révision de la
+      confirmation de suppression d'un modèle (§13.9).
+- [ ] `docs/SCHEMA.md`, `docs/PROD_MIGRATIONS.md`, `docs/manual.md` chapitre **7 ter**, `README.md`,
+      `CHANGELOG.md`, compteurs de `scripts/verify-harness.sh`.
 
 **Sous-tranche 4b livrée, 2026-08-25 — l'armement et l'exécution**
 (`docs/SPEC-modeles-emails.md` §12, `docs/SCHEMA.md` §7) :
