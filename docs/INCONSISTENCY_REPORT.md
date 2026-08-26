@@ -5498,11 +5498,38 @@ l'état de `origin/main` au démarrage de la session, puis restauration.
 **Le même échec, le même scénario, le même compte.** L'anomalie est donc **préexistante**, et le
 comportement est laissé **inchangé** (`CLAUDE.md` §3.1).
 
-**Ce qui n'est pas su, et qui est dit plutôt que supposé.** La cause du dépassement n'a pas été
-recherchée : le scénario mène une grille champ × étape au clavier seul sur la vraie base, et il est
-le plus long du fichier — cinq minutes cinquante pour l'ensemble. Il peut s'agir d'un scénario
-devenu trop lourd pour le délai par défaut, ou d'une attente qui ne se résout jamais. Le distinguer
-demande de lire sa trace, ce qui dépasse le périmètre autorisé de la session qui l'a constaté.
+**Ce qui n'était pas su le 2026-08-26 au matin est MESURÉ le même jour au soir**, par la session
+`CRM-064` sous-tranche 3a, qui l'a rencontrée à son tour. L'entrée annonçait deux hypothèses — « un
+scénario devenu trop lourd pour le délai par défaut, ou une attente qui ne se résout jamais ». **La
+première est la bonne, et le fichier lui-même en porte la preuve** :
+
+- ce scénario est passé **VERT en 29,0 s** lors d'une campagne, et **ROUGE au-delà de 30 s** lors de
+  la suivante, sur le **même code**. Il court donc à **une seconde** du plafond, et son issue dépend
+  de la charge de la machine, jamais du produit ;
+- les **trois autres** parcours clavier du même fichier portent `test.setTimeout(120_000)` — lignes
+  305, 550 et 886 —, et sont mesurés à 39, 43 et 48 s. **Celui-ci n'en porte aucun**, et il est de
+  la même famille : c'est un **oubli**, pas un choix.
+
+**La seconde hypothèse est écartée** : une attente qui ne se résout jamais ne passerait jamais, or
+ce scénario passe une fois sur deux.
+
+**LA LIGNE DE BASE A ÉTÉ REFAITE, ET PAR UN AUTRE CHEMIN QUE CELUI D'INC-223.** La session
+`CRM-064` ayant déjà committé son travail, `git stash -u` n'aurait rien retiré. Elle a donc
+**neutralisé sa propre livraison** — la cloche de notifications, retirée de l'en-tête le temps d'une
+exécution — et rejoué **ce seul scénario** :
+
+| Arbre | Verdict du scénario §7 bis.11 |
+|---|---|
+| avec la cloche de `CRM-064` 3a | **échec**, dépassement de 30 s |
+| cloche **neutralisée** | **échec**, dépassement de 30 s |
+
+**Le même échec des deux côtés.** L'anomalie est confirmée **préexistante**, et étrangère à cette
+unité comme à la précédente.
+
+*Second constat de la même session, et il tient à l'ENCHAÎNEMENT, non au délai* : le scénario
+« la clôture d'un budget portant des réels non saisis les COMPTE » (`budgets.spec.ts:249`) a échoué
+**dans la campagne** et **passe isolément**, avec les treize scénarios de son fichier. C'est la
+famille d'INC-219 et d'INC-225, et il s'y ajoute sans ouvrir d'entrée propre.
 
 **Ce que la session suivante doit savoir.** Un verdict rouge de `e2e:ui` sur ce SEUL scénario n'est
 ni une régression, ni une preuve, tant que cette entrée reste ouverte. Le reste de la campagne, lui,
@@ -5512,6 +5539,13 @@ est probant.
 bout en bout dans un seul test —, soit son délai est relevé NOMMÉMENT par `test.setTimeout`, avec le
 motif écrit. Relever le délai global de la configuration serait le contournement que
 `docs/SPEC-test-harness.md` proscrit : il masquerait toute lenteur future.
+
+**La mesure du 2026-08-26 au soir RESSERRE cet arbitrage sans le rendre.** Le remède le plus étroit
+— poser `test.setTimeout(120_000)` sur ce scénario comme sur ses trois voisins — est désormais
+**mesuré** comme le bon, et non plus supposé. Il n'a **pas** été appliqué : ce fichier est étranger
+à `CRM-064`, et `CLAUDE.md` §3.1 demande de laisser le comportement inchangé plutôt que de corriger
+au passage un défaut qui n'appartient pas à l'unité. Le geste tient en une ligne le jour où le
+responsable le demande.
 
 ---
 
