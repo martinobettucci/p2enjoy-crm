@@ -25297,3 +25297,101 @@ non lu, et l'absence de toute notification pour la lectrice.
 **Où reprendre.** La spécification est écrite et poussée ; la tranche 2 est en cours. Reste dû : la
 migration `0064`, sa suite pgTAP, les seize lignes de contrat d'API du §17, la garde de seed du §19
 et le harnais dédié.
+
+## décision 524 — `CRM-064` tranche 2 livrée : la notification, un trigger qui ne peut PAS être discret, et un seed convergent qui annulait sa propre production
+
+**2026-08-26, session planifiée de 12:51 UTC, suite de la décision 523.** La spécification écrite et
+poussée d'abord, la tranche 2 est **livrée et prouvée**. Ce qui suit ne répète pas la 523 : il dit ce
+que la mise en œuvre a appris.
+
+**LE DÉFAUT QUE LA MISE EN ŒUVRE A TROUVÉ EST DANS LE SEED, ET IL ANNULAIT LA TRANCHE ENTIÈRE.** Le
+§19 annonçait que les deux notifications naîtraient « sans qu'une seule ligne ne soit ajoutée au
+seed » : le trigger étant `AFTER INSERT`, les deux `POST` de mention déjà présents devaient les
+produire. **MESURÉ sur la base où les mentions préexistaient : zéro notification**, et un second
+passage n'en produit aucune. La cause est **la convergence elle-même** —
+`resolution=ignore-duplicates` fait rendre à PostgREST un `on conflict do nothing`, si bien
+qu'**aucune ligne n'est insérée et que le trigger ne s'exécute pas**. La prédiction n'était vraie
+que sur une base neuve, c'est-à-dire dans le seul cas que je n'avais pas mesuré — et une pile de
+développement existante est justement dans l'autre.
+
+**Le geste retenu reste le vrai chemin, et il est CONDITIONNEL** : quand la notification manque,
+l'auteur **retire** sa mention et la **repose** avec son propre jeton, les deux gestes lui étant
+ouverts par le même prédicat ; quand elle est déjà là, rien n'est touché. Convergence vérifiée sur
+deux passages consécutifs. **Ce que cet épisode apprend dépasse le seed** : une production par
+trigger `AFTER INSERT` et un seed convergent sont en **tension** — le premier a besoin qu'une ligne
+soit réellement insérée, le second existe pour éviter de la réinsérer. Toute tranche ultérieure qui
+produira par trigger rencontrera la même tension, et devra la traiter **par l'état** plutôt que par
+le geste. Le §19 est **révisé sur place** avec la mesure qui l'a corrigé, jamais réécrit.
+
+**LE TRIGGER PRODUCTEUR DIVERGE DE CELUI DE LA TRANCHE 1, ET C'EST UNE MESURE QUI L'IMPOSE.** Deux
+sondes symétriques en transaction annulée : en `SECURITY INVOKER`, l'insertion dans une table fermée
+à `authenticated` est refusée par `42501` ; en `SECURITY DEFINER`, elle passe. Le trigger de la
+tranche 1 est `INVOKER` par **discrétion** — un commentaire fermé et un commentaire inexistant
+doivent rendre le même refus. Celui-ci doit être `DEFINER` : le premier **lit pour juger**, le second
+**écrit pour le compte d'un tiers**. Sans ce choix, la production échouerait et **la pose de la
+mention échouerait avec elle**, les deux étant dans la même transaction.
+
+**LA CONTRE-ÉPREUVE DE L'AUTO-MENTION N'EST ÉCRIVABLE QUE DEPUIS pgTAP, ET C'EST LA PREMIÈRE FOIS DE
+LA SÉRIE QUE LE RAPPORT S'INVERSE.** Depuis `CRM-062`, le dépôt répète qu'une règle prouvée en base
+n'est pas une règle rendue par la pile, et que seul le contrat d'API voit certains défauts. Ici,
+l'inverse : la comparaison de l'auto-mention porte sur `author_id` et **jamais sur `auth.uid()`**,
+parce que la clé de service contourne la RLS et y rend `auth.uid()` nul. **Par la vraie route, les
+deux coïncident** — la politique d'insertion exige déjà que l'appelant soit l'auteur —, si bien
+qu'aucun appel d'API ne peut distinguer les deux écritures. La suite pgTAP, qui s'exécute sous le
+propriétaire où `auth.uid()` est nul, est **le seul chemin** qui rougisse ; le harnais dégrade
+exactement cette ligne pour le prouver. Les deux niveaux de preuve ne se subordonnent donc pas : ils
+voient des choses différentes.
+
+**LE POINT OUVERT N° 3 DU §10 EST TRANCHÉ, ET LA RÈGLE D'ACCÈS N'A TOUJOURS QU'UNE SEULE ÉCRITURE.**
+Retirer une mention n'efface pas la notification : aucune clé étrangère vers
+`card_comment_mentions`, aucun `CASCADE`. Une notification est un message **déjà délivré**, et
+l'effacer réécrirait le passé du destinataire — le dépôt tranche déjà ainsi pour le propos d'un
+compte supprimé (`CRM-022`). Mais elle n'échappe pas à la règle d'accès : sa politique de lecture
+**délègue** à `app.can_read_card(subject_card_id)`, la fonction que la tranche 1 a généralisée. Un
+droit retombé à `none` **masque** la notification sans détruire aucune ligne. Écrire ici un prédicat
+qui relirait `channel_members` aurait été exactement la seconde écriture que le §5.3 avait refusée.
+
+**LA CHARGE UTILE NE PORTE AUCUN CONTENU, ET UNE MESURE L'IMPOSE.** Une mention **survit** à la
+pierre tombale de son commentaire, dont le corps est réellement vidé (décision 193). Un instantané
+du texte survivrait donc à son effacement, et **la suppression d'un commentaire cesserait d'être une
+suppression**. Le coût est nommé : une lecture par notification affichée en tranche 3.
+
+**UNE DE MES PROPRES PREUVES ÉTAIT FAUSSE, ET ELLE A ROUGI POUR CETTE RAISON.** L'assertion 16
+testait `tgtype & 1` en croyant lire `BEFORE` ; c'est le bit `ROW`. Le produit était juste. Elle
+porte désormais sur `pg_get_triggerdef` et couvre `AFTER` et `FOR EACH ROW` d'un coup — une
+assertion illisible est une assertion qu'on corrige mal.
+
+**TROIS GARDE-FOUS FIGÉS ONT ROUGI COMME PRÉVU, ET ONT ÉTÉ RÉVISÉS PLUTÔT QUE RETIRÉS**
+(mécanisme de la décision 51) : le compteur de politiques de `0016_preuves_refus.test.sql`
+(119 → **121**), l'assertion de `0017_commentaires.test.sql` qui exigeait que `notifications`
+n'existe pas — retournée, **et dotée d'une seconde moitié** : la table seule ne suffit pas, il faut
+que la production existe —, et le témoin de types. **Celui-ci a vu la table dès sa naissance pour la
+deuxième fois consécutive**, la tranche régénérant alors qu'elle ne touche aucun écran ; la règle
+que le témoin lui-même formule est désormais appliquée deux fois de suite.
+
+**CAMPAGNE.** `typecheck`, `types:check` et `build` verts ; `test:sql` **62 fichiers / 2939
+assertions** ; `test:unit` **78 fichiers / 2646 tests** ; `e2e:api` **967 passés** (958 avant, plus
+les 9 de la tranche) ; `e2e:mail` **42 passés** ; `pytest` **244 passés** ;
+`scripts/verify-notifications.sh` **43 contrôles, aucune anomalie**, huit dégradations toutes
+mordantes et restauration constatée. `e2e:ui` lancée en fin de campagne — son bilan est consigné
+au compte rendu.
+
+**Où reprendre.** `CRM-064` **tranche 2 close**. La session suivante prend la **tranche 3 — la
+surface et le temps réel** : le composeur qui pose une mention, la liste des notifications, le
+compteur de non-lues, et l'abonnement `Realtime`. Elle est à **spécifier avant son code**
+(`docs/SPEC-notifications.md` §1.2 la nomme, aucun chapitre ne la décrit). **Elle publiera la table
+au temps réel dans le même changement que l'écran qui l'écoute** — l'absence de publication est
+aujourd'hui figée par deux assertions, qui devront être révisées à ce moment-là et non avant. Elle
+sera aussi la **première surface** de `CRM-064` : `docs/manual.md` gagnera son chapitre avec elle.
+Reste également dû sur la tranche 2, et nommé au backlog : la série des `scripts/verify-*.sh`, dont
+**deux sur soixante-treize** ont été rejoués.
+
+**Les points ouverts que la tranche 2 lègue** (§18) : la **rétention** — aucune notification ne se
+supprime ni n'expire, et la tranche 3 sera la première à en souffrir —, le **regroupement** de
+plusieurs mentions sur une même affaire, et le fait que les **préférences ne sont pas lues**, la
+tranche 4 devant décider si une préférence filtre **à la production** ou **à la lecture** : la
+première perd l'information, la seconde la garde.
+
+**La question posée au responsable reste la même, et une seule** : les unités **`CRM-072`**
+(`audit_log`) et **`CRM-073`** (`api_tokens`) n'existent pas, onze unités leur renvoient, et leur
+périmètre est un choix produit qu'aucune mesure ne donne.

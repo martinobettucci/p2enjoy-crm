@@ -9159,7 +9159,7 @@ avant la suivante :
 | Tranche | Objet | État |
 |---|---|---|
 | 1 | La mention en base — relation, intégrité, règle d'éligibilité, RLS, contrat d'API, seed, harnais. Aucune surface | en cours |
-| 2 | La notification — table `public.notifications`, production à partir d'une mention, état lu / non lu | en cours |
+| 2 | La notification — table `public.notifications`, production à partir d'une mention, état lu / non lu | **livrée** |
 | 3 | La surface et le temps réel — composeur, liste, compteur, abonnement | `[ ]` |
 | 4 | Les préférences — ce que chacun reçoit, et par quel canal | `[ ]` |
 
@@ -9259,14 +9259,106 @@ avant la suivante :
 - [x] **Documentation dans le même changement** : `docs/SPEC-notifications.md` (le document
       n'existait pas), `docs/SCHEMA.md` §5, `docs/PROD_MIGRATIONS.md` migration 63, `README.md`
       (ligne du harnais), `CHANGELOG.md` sous `[Non publié]`, registre INC-226.
-- [~] **CE QUI RETIENT L'UNITÉ EN `[~]`, ET C'EST NOMMÉ PLUTÔT QUE MASQUÉ.** La **tranche 1 est
-      close** ; les tranches **2, 3 et 4** — la notification, la surface et le temps réel, les
-      préférences — ne sont pas commencées. `docs/manual.md` ne gagne **aucun chapitre** : la
-      tranche 1 ne livre aucune surface, et un chapitre sur une fonctionnalité invisible
-      décrirait un geste que personne ne peut faire. Il naîtra avec la tranche 3.
-- [ ] **La série des `scripts/verify-*.sh` n'a PAS été rejouée derrière ce changement**, et l'écart
-      est nommé (`docs/CloudWorker.md` §4.3, budget) : le dépôt en porte **soixante-douze**, et
-      **un** l'a été — `verify-mentions.sh`. `verify-harness.sh --rapide` n'a pas été lancé non
+#### Tranche 2 — la notification `[x]`
+
+- [x] **Spécification écrite et committée AVANT la première ligne de code** —
+      `docs/SPEC-notifications.md` §12 à §20, fondés sur **douze mesures** prises le 2026-08-26 sur
+      la pile réelle, seed appliqué : sondes créées puis **annulées** ou **détruites**, et l'état du
+      seed **relu après** (M12). Le §1.2 nommait cette tranche ; aucun chapitre ne la décrivait.
+- [x] **LA MESURE QUI DÉCIDE LA FORME DU TRIGGER CONTREDIT LE PRÉCÉDENT DE LA TRANCHE 1** (§12, M9
+      et M10). Deux sondes symétriques en transaction annulée, une table fermée à `authenticated`,
+      un trigger `AFTER INSERT` qui y écrit sous `set local role authenticated` : en
+      `SECURITY INVOKER` l'insertion est **refusée** — `42501 permission denied for table` —, en
+      `SECURITY DEFINER` elle passe. Le trigger de la tranche 1 est `INVOKER` par **discrétion** ;
+      celui-ci doit être `DEFINER`, et ce n'est pas une inconstance : le premier **lit pour juger**,
+      le second **écrit pour le compte d'un tiers**. Sans ce choix, **la pose de la mention
+      échouerait avec la production**, les deux étant dans la même transaction.
+- [x] **L'AUTO-MENTION EST ACCEPTÉE PAR LA TRANCHE 1, ET C'EST MESURÉ** (M5) : `201`, jeton réel de
+      l'administratrice, sur son propre commentaire. Ce n'est pas un défaut. Le §14.3 décide que le
+      trigger **n'en produit aucune notification**, la mention restant posée — et **la comparaison
+      porte sur `author_id`, jamais sur `auth.uid()`** : la clé de service, qu'empruntent le seed et
+      les harnais, contourne la RLS et y rend `auth.uid()` nul.
+- [x] **LE POINT OUVERT N° 3 DU §10 EST TRANCHÉ, EN DEUX TEMPS** (§14.4). Retirer une mention
+      **n'efface pas** la notification : aucune clé étrangère vers `card_comment_mentions`, aucun
+      `CASCADE`. Le retrait d'une mention est « la correction d'une erreur de frappe » (§7.1) ; une
+      notification est un message **déjà délivré**, possiblement déjà lu, et l'effacer réécrirait le
+      passé du destinataire — le dépôt tranche déjà ainsi pour le propos d'un compte supprimé
+      (`CRM-022`). Mais elle n'échappe pas à la règle d'accès : sa politique de lecture porte
+      `app.can_read_card(subject_card_id)`, **déléguée** à la fonction que la tranche 1 a
+      généralisée. Un droit retombé à `none` **masque** la notification sans détruire aucune ligne.
+      **La règle d'accès n'a toujours qu'une seule écriture.**
+- [x] **LA CHARGE UTILE NE PORTE AUCUN CONTENU, ET UNE MESURE L'IMPOSE** (M7) : une mention
+      **survit** à la pierre tombale de son commentaire, dont le corps est réellement vidé
+      (décision 193). Un instantané du texte survivrait donc à son effacement, et **la suppression
+      d'un commentaire cesserait d'être une suppression**. Le coût est nommé : une lecture par
+      notification affichée en tranche 3, payée pour que la notification ne devienne jamais une
+      copie divergente du produit.
+- [x] **Migration `0064` LIVRÉE** : `public.notifications` — clé primaire **technique** (une
+      notification est un **message**, non un lien : l'inverse de la mention), trois clés étrangères
+      dont une composite vers `cards (id, workspace_id)`, un `check` **fermé** sur `type`, deux index
+      dont un **partiel** pour le compteur de non-lues —, le trigger producteur, le trigger qui
+      impose la date de lecture, deux politiques et ses privilèges. Appliquée sur la pile réelle :
+      **64 fichiers, code 0**.
+- [x] **DEUX REFUS DOUBLES** (§15.3, §15.4) : ni privilège ni politique pour l'insertion — une
+      notification se **produit**, elle ne se demande pas —, ni pour la suppression, la rétention
+      étant une décision de produit qu'aucune mesure ne donne. La mise à jour est bornée à la seule
+      colonne `read_at` par un **privilège de colonne**, et sa date est imposée par la base.
+- [x] **Suite pgTAP dédiée** : `supabase/tests/0062_notifications.test.sql`, **42 assertions**. Elle
+      ne reprouve pas la règle d'éligibilité — `0061` la tient —, et prouve ce que rien d'autre ne
+      prouve, dont **la contre-épreuve de l'auto-mention** : cette suite s'exécute sous le
+      propriétaire, où `auth.uid()` est **nul**, si bien qu'un trigger comparant à l'appelant
+      produirait ici une notification que la vraie route ne produit pas. **L'API ne peut pas écrire
+      cette assertion.**
+- [x] **UNE PREMIÈRE ÉCRITURE DE L'ASSERTION 16 A ROUGI, ET C'ÉTAIT LA PREUVE QUI ÉTAIT FAUSSE.**
+      Elle testait `tgtype & 1`, qui est le bit `ROW` et non `BEFORE`. Elle porte désormais sur
+      `pg_get_triggerdef`, dit ce qu'elle vérifie, et couvre `AFTER` et `FOR EACH ROW` d'un coup —
+      une assertion illisible est une assertion qu'on corrige mal.
+- [x] **Contrat d'API dédié** : `e2e/api/notifications.spec.ts`, **16 lignes en 9 scénarios verts**
+      avec les jetons réels des trois profils, chaque refus **relu en base** avec la clé de service,
+      et le fichier rend le produit dans l'état où il le trouve — une dernière lecture le
+      **constate**. Les lignes *n*, *o* et *p* sont le cœur : elles éprouvent la **production**.
+- [x] **LE SEED PROVOQUE SES DEUX NOTIFICATIONS, ET LE §19 A ÉTÉ RÉVISÉ PAR LA MESURE.** Il
+      annonçait qu'elles naîtraient sans qu'une ligne ne soit ajoutée, le trigger étant
+      `AFTER INSERT` sur les deux `POST` déjà présents. **Mesuré sur la base où les mentions
+      préexistaient : zéro notification.** La cause est la convergence elle-même —
+      `resolution=ignore-duplicates` rend un `on conflict do nothing`, donc **aucune ligne n'est
+      insérée et le trigger ne s'exécute pas**. La prédiction n'était vraie que sur une base neuve,
+      c'est-à-dire dans le seul cas non mesuré. Le geste retenu reste le **vrai chemin** et il est
+      **conditionnel** : quand la notification manque, l'auteur retire sa mention et la repose avec
+      son propre jeton, les deux gestes lui étant ouverts par le même prédicat ; quand elle est là,
+      rien n'est touché. **Convergence vérifiée sur deux passages consécutifs.**
+- [x] **Harnais dédié `scripts/verify-notifications.sh`** : **43 contrôles, aucune anomalie**,
+      **huit dégradations** qui mordent toutes. La première fait **produire une notification à
+      l'auteur lui-même** en laissant table, clés, politiques, privilèges et trigger debout — une
+      suite qui resterait verte prouverait qu'elle ne mesure que de la forme. La deuxième rejoue le
+      défaut subtil du §14.3 — la comparaison portée sur `auth.uid()` au lieu d'`author_id`. La
+      huitième retire la **seconde condition** de la politique de lecture, c'est-à-dire le
+      rattrapage du §14.4. Le harnais **rejoue aussi la suite de la tranche 1** pour constater
+      qu'elle reste verte sans modification (la preuve de non-régression nommée d'avance au §20).
+- [x] **Trois garde-fous figés RÉVISÉS, jamais retirés** (mécanisme de la décision 51) : le
+      compteur de politiques de `0016_preuves_refus.test.sql` (119 → **121**), l'assertion de
+      `0017_commentaires.test.sql` qui exigeait que `notifications` **n'existe pas** — elle mesure
+      désormais le nouvel état et gagne une **seconde moitié**, la table seule ne suffisant pas, il
+      faut que la production existe —, et le témoin de types, qui **a vu la table dès sa naissance**
+      pour la deuxième fois consécutive.
+- [x] **Documentation dans le même changement** : `docs/SPEC-notifications.md` §12 à §20,
+      `docs/SCHEMA.md` §8 (la table y était annoncée en une ligne, elle y est désormais décrite),
+      `docs/PROD_MIGRATIONS.md` migration 64 avec son point de vigilance et son retour arrière,
+      `README.md` (ligne du harnais), `CHANGELOG.md` sous `[Non publié]`.
+- [ ] **`docs/manual.md` ne gagne AUCUN chapitre**, et l'écart est nommé : la tranche 2 ne livre
+      **aucune surface**. Un chapitre sur une notification que personne ne peut voir décrirait un
+      geste que personne ne peut faire. Il naîtra avec la **tranche 3**.
+
+- [~] **CE QUI RETIENT L'UNITÉ EN `[~]`, ET C'EST NOMMÉ PLUTÔT QUE MASQUÉ.** Les tranches **1 et
+      2 sont closes** ; les tranches **3 et 4** — la surface et le temps réel, les préférences —
+      ne sont pas commencées. `docs/manual.md` ne gagne toujours **aucun chapitre** : ni la
+      tranche 1 ni la tranche 2 ne livrent de surface, et un chapitre sur une fonctionnalité
+      invisible décrirait un geste que personne ne peut faire. Il naîtra avec la tranche 3.
+- [ ] **La série des `scripts/verify-*.sh` n'a PAS été rejouée derrière ces changements**, et
+      l'écart est nommé (`docs/CloudWorker.md` §4.3, budget) : le dépôt en porte **soixante-treize**
+      depuis la tranche 2, et **deux** l'ont été — `verify-mentions.sh` à la tranche 1,
+      `verify-notifications.sh` à la tranche 2, ce dernier rejouant `verify-mentions`' propre suite
+      pgTAP au passage. `verify-harness.sh --rapide` n'a pas été lancé non
       plus : il dépasse le plafond de 1500 s depuis qu'`e2e:ui` compte plus de 590 scénarios
       (mesuré à la décision 509), et ses deux compteurs révisés ici l'ont été **par comptage
       direct** — `npm run test:sql` rend « 61 fichiers, 2896 assertions », et
