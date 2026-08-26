@@ -68,6 +68,10 @@ type Journal = {
 	cible?: string
 	/** Rappel enregistré par `on('postgres_changes', …)`, pour simuler un événement. */
 	notifier?: () => void
+	/** Nombre d'appels à `rpc('mentionnables')` — la liste n'est lue qu'à l'ouverture (§36.3). */
+	nbLecturesMentionnables: number
+	/** Les charges de mention posées, DANS L'ORDRE : une par requête, jamais un tableau (§35.2). */
+	readonly mentionsPosees: Record<string, unknown>[]
 }
 
 /**
@@ -91,6 +95,12 @@ function clientFactice({
 	},
 	lecturesRetenues = [] as readonly number[],
 	lignesParRang = {} as Readonly<Record<number, readonly CommentaireLu[]>>,
+	mentionnables = {
+		data: [] as readonly { profile_id: string; full_name: string; avatar_url: string | null }[],
+		error: null as { message: string } | null,
+		status: 200,
+	},
+	mentionsRefusees = new Set<string>(),
 }: {
 	lignes?: readonly CommentaireLu[]
 	evenements?: readonly EvenementLu[]
@@ -113,6 +123,14 @@ function clientFactice({
 	lecturesRetenues?: readonly number[]
 	/** Réponse propre à une lecture donnée, pour distinguer deux lectures qui se croisent. */
 	lignesParRang?: Readonly<Record<number, readonly CommentaireLu[]>>
+	/** Ce que `rpc('mentionnables')` rend — `CRM-064` sous-tranche 3b, §34.2. */
+	mentionnables?: {
+		data?: readonly { profile_id: string; full_name: string; avatar_url: string | null }[]
+		error: { message: string } | null
+		status: number
+	}
+	/** Les profils dont la mention est REFUSÉE par le trigger, pour éprouver le résultat partiel. */
+	mentionsRefusees?: ReadonlySet<string>
 } = {}): { client: ClientCrm; journal: Journal } {
 	const journal: Journal = {
 		evenements: [],
@@ -120,6 +138,8 @@ function clientFactice({
 		nbAbonnements: 0,
 		nbRetraits: 0,
 		liberer: new Map(),
+		nbLecturesMentionnables: 0,
+		mentionsPosees: [],
 	}
 
 	// LE CLIENT DISTINGUE LES TABLES, et il le doit : le panneau lit désormais TROIS sources —
@@ -164,7 +184,28 @@ function clientFactice({
 	}
 
 	const client = {
-		from: (table: string) => ({
+		// LA POSE D'UNE MENTION EST UNE TABLE À PART, ET LE DOUBLE LA DISTINGUE : confondre son
+		// insertion avec celle d'un commentaire rendrait vert un produit qui poserait des mentions
+		// dans la mauvaise table (`CRM-064` sous-tranche 3b, §35.2).
+		from: (table: string) =>
+			table === 'card_comment_mentions'
+				? {
+						insert: (charge: Record<string, unknown>) => {
+							journal.mentionsPosees.push(charge)
+							return Promise.resolve(
+								mentionsRefusees.has(String(charge['profile_id']))
+									? {
+											error: {
+												code: 'P0001',
+												message: 'mention_destinataire_sans_acces',
+											},
+											status: 400,
+										}
+									: { error: null, status: 201 },
+							)
+						},
+					}
+				: ({
 			select: () =>
 				table === 'card_comments'
 					? chaineDe(lignes, true)
@@ -207,7 +248,15 @@ function clientFactice({
 				}
 				return chaine
 			},
-		}),
+		} as unknown as ReturnType<ClientCrm['from']>),
+		rpc: (_nom: string, _arguments: Record<string, unknown>) => {
+			journal.nbLecturesMentionnables += 1
+			return Promise.resolve({
+				data: mentionnables.error === null ? [...(mentionnables.data ?? [])] : null,
+				error: mentionnables.error,
+				status: mentionnables.status,
+			})
+		},
 		channel: () => canal,
 		removeChannel: () => {
 			journal.nbRetraits += 1
@@ -1047,5 +1096,197 @@ describe('la modération (docs/SPEC-cards.md §13.6, INC-072)', () => {
 
 		expect(await screen.findByText(fr['comments.refus.moderation'])).not.toBeNull()
 		expect(screen.queryByText(fr['comments.refus.supprime'])).toBeNull()
+	})
+})
+
+// @verifies CRM-064 (docs/BACKLOG.md) — sous-tranche 3b : le sélecteur de mentions du composeur
+// @verifies docs/SPEC-notifications.md §36 (ce que l'écran rend, règle par règle),
+//           §36.3 (la liste n'est lue qu'à l'ouverture), §36.4 (les quatre états),
+//           §36.5 (le compte porté par la commande), §36.6 (ce que le sélecteur ne fait pas),
+//           §35.2 (une requête par personne), §35.3 (le commentaire publié n'est jamais retiré),
+//           §35.4 (les trois issues)
+// @verifies docs/DESIGN_SYSTEM.md §5.44 (le sélecteur de mentions)
+describe('le sélecteur de mentions du composeur (§5.44)', () => {
+	const camille = { profile_id: 'p1', full_name: 'Camille Aubert', avatar_url: null }
+	const driss = { profile_id: 'p2', full_name: 'Driss Lemoine', avatar_url: null }
+
+	// LA LISTE N'EST PAS LUE AU CHARGEMENT DE LA FICHE (§36.3), et c'est mesurable : la plupart des
+	// visites d'une affaire ne mentionnent personne. Une requête émise sur chaque ouverture d'écran
+	// serait gratuite sur les neuf dixièmes.
+	it('N’ÉMET AUCUNE lecture tant que le sélecteur n’a pas été ouvert', async () => {
+		const journal = monter({ lignes: [], mentionnables: { data: [driss], error: null, status: 200 } })
+		await screen.findByLabelText(fr['comments.compose.label'])
+
+		expect(journal.nbLecturesMentionnables).toBe(0)
+		expect(screen.queryByText(driss.full_name)).toBeNull()
+	})
+
+	it('lit la liste à l’ouverture, et rend une case par personne', async () => {
+		const journal = monter({
+			lignes: [],
+			mentionnables: { data: [camille, driss], error: null, status: 200 },
+		})
+		await userEvent.click(
+			await screen.findByRole('button', { name: fr['comments.mentions.toggle'] }),
+		)
+
+		expect(await screen.findByRole('checkbox', { name: camille.full_name })).not.toBeNull()
+		expect(screen.getByRole('checkbox', { name: driss.full_name })).not.toBeNull()
+		expect(journal.nbLecturesMentionnables).toBe(1)
+	})
+
+	// ELLE N'EST PAS RELUE À CHAQUE REPLI-DÉPLI : la liste ne change pas entre deux clics, et la
+	// relire ferait payer une requête à un geste d'interface.
+	it('ne RELIT PAS la liste au repli puis au dépli', async () => {
+		const journal = monter({
+			lignes: [],
+			mentionnables: { data: [driss], error: null, status: 200 },
+		})
+		const commande = await screen.findByRole('button', { name: fr['comments.mentions.toggle'] })
+		await userEvent.click(commande)
+		await screen.findByRole('checkbox', { name: driss.full_name })
+		await userEvent.click(commande)
+		await userEvent.click(screen.getByRole('button', { name: fr['comments.mentions.toggle'] }))
+
+		expect(journal.nbLecturesMentionnables).toBe(1)
+	})
+
+	// LE COMPTE VIT SUR LA COMMANDE (§36.5) : un auteur qui replie le sélecteur ne saurait plus,
+	// sinon, qui son commentaire mentionne.
+	it('porte le compte des personnes cochées sur sa commande, MÊME repliée', async () => {
+		monter({ lignes: [], mentionnables: { data: [camille, driss], error: null, status: 200 } })
+		const commande = await screen.findByRole('button', { name: fr['comments.mentions.toggle'] })
+		await userEvent.click(commande)
+		await userEvent.click(await screen.findByRole('checkbox', { name: driss.full_name }))
+
+		const avecCompte = screen.getByRole('button', {
+			name: fr['comments.mentions.toggle.count'].replace('{compte}', '1'),
+		})
+		await userEvent.click(avecCompte)
+		expect(screen.queryByRole('checkbox', { name: driss.full_name })).toBeNull()
+		expect(
+			screen.getByRole('button', {
+				name: fr['comments.mentions.toggle.count'].replace('{compte}', '1'),
+			}),
+		).not.toBeNull()
+	})
+
+	// L'ÉTAT VIDE DIT QUE L'ÉTAT EST SAIN, et n'offre AUCUNE action (§36.4) : être seul à lire une
+	// affaire n'est pas un manque, et aucun écran du produit ne donne accès à une affaire.
+	it('rend l’état vide sans aucune action quand personne d’autre ne lit l’affaire', async () => {
+		monter({ lignes: [], mentionnables: { data: [], error: null, status: 200 } })
+		await userEvent.click(
+			await screen.findByRole('button', { name: fr['comments.mentions.toggle'] }),
+		)
+
+		expect(await screen.findByText(fr['comments.mentions.empty'])).not.toBeNull()
+		expect(screen.queryByRole('button', { name: fr['comments.mentions.retry'] })).toBeNull()
+	})
+
+	// L'ERREUR PORTE SON ACTION DE REPRISE (§5.8) : une liste absente sans moyen de la redemander
+	// est une impasse.
+	it('rend l’erreur AVEC son action de reprise, qui relit la liste', async () => {
+		const journal = monter({
+			lignes: [],
+			mentionnables: { error: { message: 'refusé' }, status: 401 },
+		})
+		await userEvent.click(
+			await screen.findByRole('button', { name: fr['comments.mentions.toggle'] }),
+		)
+		expect(await screen.findByText(fr['comments.mentions.error'])).not.toBeNull()
+
+		await userEvent.click(screen.getByRole('button', { name: fr['comments.mentions.retry'] }))
+		await waitFor(() => expect(journal.nbLecturesMentionnables).toBe(2))
+	})
+
+	// UNE REQUÊTE PAR PERSONNE (§35.2), et la mesure M5 dit pourquoi : un `POST` groupé est tout ou
+	// rien et ne nomme pas la mention en cause.
+	it('pose UNE mention PAR PERSONNE cochée, après la publication du commentaire', async () => {
+		const journal = monter({
+			lignes: [],
+			mentionnables: { data: [camille, driss], error: null, status: 200 },
+		})
+		await userEvent.type(
+			await screen.findByLabelText(fr['comments.compose.label']),
+			'Regardez ceci.',
+		)
+		await userEvent.click(screen.getByRole('button', { name: fr['comments.mentions.toggle'] }))
+		await userEvent.click(await screen.findByRole('checkbox', { name: camille.full_name }))
+		await userEvent.click(screen.getByRole('checkbox', { name: driss.full_name }))
+		await userEvent.click(screen.getByRole('button', { name: fr['comments.compose.submit'] }))
+
+		await waitFor(() => expect(journal.mentionsPosees).toHaveLength(2))
+		expect(journal.mentionsPosees.map((charge) => charge['profile_id'])).toEqual(['p1', 'p2'])
+		// L'identifiant est celui que `insert(...).select('id')` a rendu : sans lui, aucune mention
+		// ne peut être posée, la clé primaire étant `(comment_id, profile_id)`.
+		expect(journal.mentionsPosees[0]?.['comment_id']).toBe('commentaire-neuf')
+	})
+
+	// LE COMMENTAIRE PUBLIÉ N'EST JAMAIS RETIRÉ (§35.3), et le refus partiel NOMME la personne.
+	// C'est la troisième issue du §35.4 : ni un succès, ni un échec.
+	it('nomme la personne non mentionnée, VIDE le brouillon, et ne garde qu’elle de cochée', async () => {
+		const journal = monter({
+			lignes: [],
+			mentionnables: { data: [camille, driss], error: null, status: 200 },
+			mentionsRefusees: new Set(['p2']),
+		})
+		const champ = await screen.findByLabelText(fr['comments.compose.label'])
+		await userEvent.type(champ, 'Regardez ceci.')
+		await userEvent.click(screen.getByRole('button', { name: fr['comments.mentions.toggle'] }))
+		await userEvent.click(await screen.findByRole('checkbox', { name: camille.full_name }))
+		await userEvent.click(screen.getByRole('checkbox', { name: driss.full_name }))
+		await userEvent.click(screen.getByRole('button', { name: fr['comments.compose.submit'] }))
+
+		const alerte = await screen.findByTestId('mentions-refusees')
+		expect(alerte.textContent).toContain(driss.full_name)
+		expect(alerte.textContent).not.toContain(camille.full_name)
+		expect(alerte.textContent).toContain(fr['comments.mentions.refus.destinataire-sans-acces'])
+		// LE BROUILLON EST VIDÉ : le commentaire EXISTE, et le reproposer ferait publier deux fois
+		// le même propos. C'est l'écart assumé avec le refus de publication, qui le conserve.
+		expect((champ as HTMLTextAreaElement).value).toBe('')
+		// La mention refusée reste cochée, la posée ne l'est plus : ce qui reste coché est
+		// exactement ce qu'il reste à faire.
+		expect((screen.getByRole('checkbox', { name: driss.full_name }) as HTMLInputElement).checked).toBe(
+			true,
+		)
+		expect(
+			(screen.getByRole('checkbox', { name: camille.full_name }) as HTMLInputElement).checked,
+		).toBe(false)
+		expect(journal.charge?.['body']).toBe('Regardez ceci.')
+	})
+
+	// UN REFUS DE PUBLICATION NE TENTE AUCUNE MENTION (§35.4, troisième ligne) : il n'y a pas de
+	// commentaire à mentionner. Le sélecteur GARDE ses choix, comme le texte est conservé.
+	it('ne tente AUCUNE mention quand le commentaire lui-même est refusé', async () => {
+		const journal = monter({
+			lignes: [],
+			insertion: { error: { message: 'refusé', code: '42501' }, status: 403 },
+			mentionnables: { data: [driss], error: null, status: 200 },
+		})
+		await userEvent.type(await screen.findByLabelText(fr['comments.compose.label']), 'x')
+		await userEvent.click(screen.getByRole('button', { name: fr['comments.mentions.toggle'] }))
+		await userEvent.click(await screen.findByRole('checkbox', { name: driss.full_name }))
+		await userEvent.click(screen.getByRole('button', { name: fr['comments.compose.submit'] }))
+
+		await screen.findByText(fr['comments.refus.forbidden'])
+		expect(journal.mentionsPosees).toHaveLength(0)
+		expect((screen.getByRole('checkbox', { name: driss.full_name }) as HTMLInputElement).checked).toBe(
+			true,
+		)
+	})
+
+	// LE SÉLECTEUR N'EXIGE RIEN (§36.6) : mentionner est facultatif, et le composeur reste ce que
+	// `CRM-043` a livré.
+	it('publie sans aucune mention, et n’émet alors AUCUNE insertion de mention', async () => {
+		const journal = monter({
+			lignes: [],
+			mentionnables: { data: [driss], error: null, status: 200 },
+		})
+		await userEvent.type(await screen.findByLabelText(fr['comments.compose.label']), 'Sans mention.')
+		await userEvent.click(screen.getByRole('button', { name: fr['comments.compose.submit'] }))
+
+		await waitFor(() => expect(journal.charge?.['body']).toBe('Sans mention.'))
+		expect(journal.mentionsPosees).toHaveLength(0)
+		expect(screen.queryByTestId('mentions-refusees')).toBeNull()
 	})
 })
