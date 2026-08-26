@@ -1070,12 +1070,49 @@ prédicat que les deux gardes**, pour que la ligne visible et le fil visible ne 
 
 | Table | Contenu |
 |---|---|
-| `notifications` | Destinataire, type, charge utile, date de lecture |
+| `notifications` | **Livrée** par `CRM-064` tranche 2 (migration `0064`, `docs/SPEC-notifications.md` §13) — voir ci-dessous |
 | `notification_preferences` | Canal souhaité par type : in-app, email immédiat, digest |
 | `audit_log` | Acteur, action, entité, charge utile, date — append-only |
 | `api_tokens` | Jetons à portée limitée : empreinte stockée, jamais le jeton en clair |
 | `webhook_endpoints`, `webhook_deliveries` | Points de sortie signés et historique des remises |
 | `saved_views` | Filtres nommés, personnels ou partagés |
+
+### `notifications`
+
+**Livrée par `CRM-064` tranche 2** (migration `0064`, `docs/SPEC-notifications.md` §13 à §16).
+
+| Colonne | Type | Contraintes |
+|---|---|---|
+| `id` | `uuid` | clé primaire **technique** — une notification est un **message**, non un lien : c'est l'inverse de `card_comment_mentions` (§13.2) |
+| `workspace_id` | `uuid` | non nul, **dérivé** de la mention par le trigger |
+| `recipient_id` | `uuid` | non nul, `profiles (id)` en `CASCADE` |
+| `type` | `text` | non nul, `check` **fermé** sur `'mention'` — la garde qui empêche d'écrire un type inventé (§13.3) |
+| `subject_card_id` | `uuid` | **nullable**, clé composite `(subject_card_id, workspace_id)` vers `cards (id, workspace_id)`. Elle porte la politique de lecture (§13.5) |
+| `payload` | `jsonb` | non nul. **De quoi désigner, jamais de quoi lire** : ni corps, ni titre, ni nom |
+| `read_at` | `timestamptz` | nullable, **la seule colonne modifiable**, et sa date est posée par la base |
+| `created_at` | `timestamptz` | non nul |
+
+**Aucune colonne `updated_at`** : `read_at` est la seule mutation ouverte et porte sa propre date
+(même écart assumé que `card_comments`, INC-025).
+
+**Elle est PRODUITE, jamais écrite par un client.** Un trigger `AFTER INSERT` sur
+`card_comment_mentions`, **`SECURITY DEFINER`** — et c'est mesuré, non choisi : en `SECURITY
+INVOKER`, l'insertion est refusée par `42501` sous `authenticated`, et **la pose de la mention
+échouerait avec elle**. Une **auto-mention ne produit rien**, la comparaison portant sur
+`author_id` et jamais sur `auth.uid()`, nul sous la clé de service.
+
+**Deux refus doubles** : ni privilège ni politique pour l'insertion, ni pour la suppression. La
+mise à jour est bornée à `read_at` par un **privilège de colonne**.
+
+**Aucune clé étrangère vers `card_comment_mentions`** : retirer une mention **n'efface pas** un
+message déjà délivré (§14.4). La règle d'accès le rattrape autrement — la politique de lecture
+**délègue** à `app.can_read_card(subject_card_id)`, si bien qu'une perte d'accès masque la
+notification sans détruire aucune ligne, et que la règle d'accès n'a **toujours qu'une seule
+écriture**.
+
+**Pas publiée au temps réel** : la tranche 3 la publiera dans le même changement que l'écran qui
+l'écoute.
+
 
 ### Objets privés d'ordonnancement
 

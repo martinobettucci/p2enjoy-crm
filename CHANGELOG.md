@@ -13,6 +13,35 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-064` tranche 2 — la notification
+
+- **`public.notifications` est livrée** (migration `0064`). Mentionner quelqu'un dans un
+  commentaire lui adresse désormais un message : la personne désignée porte une notification, non
+  lue à sa naissance, qui nomme l'affaire concernée et le commentaire qui l'a produite.
+- **Elle est PRODUITE, jamais écrite par un client.** Un trigger `AFTER INSERT` sur la mention en
+  est le seul chemin ; aucun rôle applicatif n'a de privilège `INSERT` ni de politique pour en
+  poser une. Sans ce refus, un client s'écrirait des messages — ou en écrirait à quelqu'un d'autre.
+- **Une auto-mention ne prévient personne.** Se mentionner soi-même reste accepté — c'est un fait,
+  et la tranche 1 ne l'a jamais interdit —, mais ne produit aucun message : se prévenir de ce qu'on
+  vient d'écrire n'est pas une information.
+- **Le destinataire marque lu, et non lu.** Les deux sens sont ouverts ; la date est celle du geste,
+  imposée par la base, jamais celle que le client envoie. Toutes les autres colonnes sont fermées
+  par un privilège de **colonne**.
+- **Retirer une mention n'efface pas le message qu'elle a produit** : une notification est un
+  message déjà délivré, possiblement déjà lu, et l'effacer réécrirait le passé du destinataire.
+  Elle n'échappe pas pour autant à la règle d'accès — sa lecture **délègue** à
+  `app.can_read_card`, si bien qu'une perte d'accès la masque sans détruire aucune ligne.
+- **La charge utile ne porte aucun contenu**, seulement de quoi désigner : un instantané du texte
+  survivrait à l'effacement de ce texte, et la suppression d'un commentaire cesserait d'être une
+  suppression.
+- **Aucune surface, aucun temps réel, aucune préférence** — tranches 3 et 4. La table n'est pas
+  publiée : elle le sera dans le même changement que l'écran qui l'écoute.
+- **Le seed provoque ses deux notifications** au lieu de les fabriquer : ce sont ses deux mentions
+  existantes, posées par le vrai chemin, qui les produisent. Trois gardes le mesurent.
+- Preuves : `supabase/tests/0062_notifications.test.sql` (**42 assertions**),
+  `e2e/api/notifications.spec.ts` (**16 lignes de contrat, 9 scénarios**),
+  `scripts/verify-notifications.sh` (**43 contrôles, huit dégradations**).
+
 ### Ajouté
 
 - **UNE MENTION EST DÉSORMAIS UNE RELATION, ET NON PLUS UN TABLEAU D'IDENTIFIANTS SANS RÈGLE**
