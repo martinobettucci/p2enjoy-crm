@@ -227,9 +227,14 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Vingt-huit ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+**Trente ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-173, INC-174,
-INC-182, INC-183, INC-185, INC-186, INC-188, INC-189, INC-190, INC-191, INC-192 et INC-193.**
+INC-182, INC-183, INC-185, INC-186, INC-188, INC-189, INC-190, INC-191, INC-192, INC-193, INC-224
+et INC-225.** — **INC-224 et INC-225** consignées le 2026-08-26 par la session `CRM-063`
+sous-tranche 4c, toutes deux rencontrées en rejouant la campagne d'interface, toutes deux étrangères
+à son unité. **INC-224** est mesurée sur l'**arbre pré-session** — la seule ligne de base valable
+pour du travail déjà committé, leçon d'INC-223 — et rend le **même bilan des deux côtés**.
+**INC-225** est de la famille d'INC-219 : elle n'échoue que dans la série, jamais isolée.
 
 **INC-223 a été ouverte puis CLOSE le même jour, et à tort dans les deux sens.** La session
 `CRM-063` sous-tranche 4c l'a consignée comme préexistante sur une **ligne de base invalide** — le
@@ -5425,3 +5430,82 @@ la main.
 
 **Rien n'est attendu du responsable** : le défaut est corrigé, et la leçon est écrite ici.
 
+
+
+### INC-224 — `administration-workflows.spec.ts` §7 bis.11 dépasse les 30 s du délai de test, et la ligne de base est établie SUR L'ARBRE PRÉ-SESSION
+
+**Consignée le 2026-08-26** par la session `CRM-063` sous-tranche 4c, rencontrée en rejouant la
+campagne d'interface.
+
+**Ce qui est mesuré.** Le scénario « la grille champ × étape sur la vraie base (§7 bis.11) — les
+deux gestes se mènent au clavier seul » dépasse le **délai de test de 30 000 ms**, et son nettoyage
+échoue ensuite en cascade :
+
+```
+Test timeout of 30000ms exceeded.
+Error: apiRequestContext.get: Target page, context or browser has been closed
+  at purgerChamps (e2e/ui/administration-workflows.spec.ts:683:32)
+```
+
+Les **soixante-dix** autres scénarios du fichier sont verts.
+
+**LA LIGNE DE BASE EST ÉTABLIE, ET ELLE EST VALIDE — CE QUI N'ALLAIT PAS DE SOI.** INC-223, plus
+haut, rapporte qu'une ligne de base par `git stash -u` ne vaut RIEN sur du travail déjà committé.
+Celle-ci compare donc à l'**arbre pré-session** : `git checkout 79a501d -- webapp/src`, c'est-à-dire
+l'état de `origin/main` au démarrage de la session, puis restauration.
+
+| Arbre | Bilan de `administration-workflows.spec.ts` |
+|---|---|
+| pré-session (`79a501d`) | **1 échec**, 70 passés |
+| avec la sous-tranche 4c | **1 échec**, 70 passés |
+
+**Le même échec, le même scénario, le même compte.** L'anomalie est donc **préexistante**, et le
+comportement est laissé **inchangé** (`CLAUDE.md` §3.1).
+
+**Ce qui n'est pas su, et qui est dit plutôt que supposé.** La cause du dépassement n'a pas été
+recherchée : le scénario mène une grille champ × étape au clavier seul sur la vraie base, et il est
+le plus long du fichier — cinq minutes cinquante pour l'ensemble. Il peut s'agir d'un scénario
+devenu trop lourd pour le délai par défaut, ou d'une attente qui ne se résout jamais. Le distinguer
+demande de lire sa trace, ce qui dépasse le périmètre autorisé de la session qui l'a constaté.
+
+**Ce que la session suivante doit savoir.** Un verdict rouge de `e2e:ui` sur ce SEUL scénario n'est
+ni une régression, ni une preuve, tant que cette entrée reste ouverte. Le reste de la campagne, lui,
+est probant.
+
+**Arbitrage attendu du responsable** : soit le scénario est allégé — il mène plusieurs gestes de
+bout en bout dans un seul test —, soit son délai est relevé NOMMÉMENT par `test.setTimeout`, avec le
+motif écrit. Relever le délai global de la configuration serait le contournement que
+`docs/SPEC-test-harness.md` proscrit : il masquerait toute lenteur future.
+
+---
+
+### INC-225 — deux scénarios de `commentaires-gestes.spec.ts` échouent dans la SÉRIE et jamais isolés
+
+**Consignée le 2026-08-26** par la session `CRM-063` sous-tranche 4c. **Même famille qu'INC-219**,
+sur un autre fichier.
+
+**Ce qui est mesuré, trois fois.** Le fichier rend **8 passés** lorsqu'il est exécuté SEUL, et un
+scénario différent échoue à chaque passage de la campagne complète :
+
+```
+campagne 1 : aucun échec dans ce fichier
+campagne 2 : §280 « les deux actions sont atteignables AU CLAVIER » — relecture rend l'ancien corps
+campagne 3 : §149 « Camille corrige son commentaire »        — même signature
+isolé, trois fois : 8 passés
+```
+
+La signature est toujours la même : l'écran affiche le corps corrigé, et la **relecture par l'API**
+rend le corps d'AVANT.
+
+**Ce que cela dit, et ce que cela ne dit pas.** L'écran écrit bien — sans quoi il n'afficherait pas
+le nouveau corps. C'est la **relecture** qui voit un état antérieur, ce qui est le symptôme d'une
+course entre l'écriture et la lecture, non d'un défaut de la règle. Le scénario ne l'attend pas :
+il relit immédiatement.
+
+**Le comportement est laissé inchangé** : l'anomalie vit dans les fichiers d'une autre unité
+(`CRM-043`), et la corriger au passage élargirait cette session.
+
+**Arbitrage attendu du responsable** : la relecture doit **attendre** la valeur attendue plutôt que
+de la constater une fois — c'est le patron `expect.poll` que d'autres suites du dépôt emploient
+déjà. Ce n'est pas une temporisation arbitraire (`CLAUDE.md` §18) : c'est une attente **sur la
+condition mesurée**, qui échoue si elle ne vient jamais.

@@ -25066,6 +25066,17 @@ contrôles, aucune anomalie** ; `verify-manual.sh` **129 contrôles, aucune anom
 que seul « 579 passed » restait. Une campagne dont on ne lit que la queue n'est pas une campagne
 lue. Le second passage écrit dans un fichier complet.
 
+**`e2e:ui` APRÈS CORRECTION : 627 passés, 2 échecs** — contre cinquante. Le compte total, 629,
+concorde exactement avec le compteur `SCENARIOS_UI` révisé. Les deux échecs restants sont
+**étrangers à l'unité**, et chacun est mesuré plutôt que supposé :
+
+- **INC-224**, `administration-workflows.spec.ts` §7 bis.11 : dépassement du délai de 30 s. **Ligne
+  de base établie sur l'ARBRE PRÉ-SESSION** — `git checkout 79a501d -- webapp/src`, puis
+  restauration —, et elle rend **le même bilan des deux côtés** : 1 échec, 70 passés. C'est la
+  méthode qu'INC-223 vient d'enseigner, appliquée immédiatement.
+- **INC-225**, `commentaires-gestes.spec.ts` : un scénario **différent à chaque campagne**, et
+  **8 passés isolément, trois fois**. Famille d'INC-219 — une relecture qui voit l'état d'avant.
+
 **Où reprendre.** `CRM-063` est **close** : ses trois objets — le modèle, la signature, la séquence —
 existent en base, sont prouvés, et ont chacun leur écran. La session suivante prend la **première
 unité `[~]` du backlog dans l'ordre du plan dont il reste du comportement à livrer**, sinon la
