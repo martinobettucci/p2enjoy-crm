@@ -367,8 +367,14 @@ select ok(
 
 -- La sonde vise `…0d5` × l'administratrice : un couple que le seed ne pose PAS (§9), et qui est
 -- éligible — Camille lit `…0c5`. Viser un couple seedé ferait rougir l'insertion sur le doublon.
-insert into public.card_comment_mentions (comment_id, profile_id, workspace_id)
-values (pg_temp.c_ouvert(), pg_temp.p_admin(), '00000000-0000-4000-8000-000000000000');
+--
+-- ELLE ENVOIE DEUX VALEURS FAUSSES, ET C'EST INDISPENSABLE : un `workspace_id` qui n'est pas celui
+-- du commentaire, et un `created_at` d'il y a dix ans. Sans elles, les deux assertions qui suivent
+-- resteraient vertes sur un trigger qui se contenterait d'un `coalesce` — MESURÉ par la dégradation
+-- D-D de `scripts/verify-mentions.sh`, qui a trouvé cette suite COMPLAISANTE sur `created_at`.
+insert into public.card_comment_mentions (comment_id, profile_id, workspace_id, created_at)
+values (pg_temp.c_ouvert(), pg_temp.p_admin(), '00000000-0000-4000-8000-000000000000',
+        now() - interval '10 years');
 
 select is(
 	(select workspace_id from public.card_comment_mentions
@@ -382,8 +388,9 @@ select ok(
 	(select created_at from public.card_comment_mentions
 	  where comment_id = pg_temp.c_ouvert() and profile_id = pg_temp.p_admin())
 	  > now() - interval '1 minute',
-	'CRM-064 §4.1 — `created_at` est posé par le trigger, jamais par le client : une mention '
-	'antidatée fausserait l''ordre de la lecture « qu''est-ce qui me mentionne »');
+	'CRM-064 §4.1 — `created_at` est RÉÉCRIT par le trigger : l''insertion ci-dessus en envoyait '
+	'un vieux de DIX ANS, et il ne survit pas. Une mention antidatée fausserait l''ordre de la '
+	'lecture « qu''est-ce qui me mentionne », qui est LA lecture de la tranche 2');
 
 select throws_ok(
 	format($$insert into public.card_comment_mentions (comment_id, profile_id, workspace_id)

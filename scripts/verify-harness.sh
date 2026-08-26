@@ -503,13 +503,26 @@ PORT_RAPPORT=9323
 # la commande dans le commentaire qui explique pourquoi elle est absente, et rougissait sur une
 # fonction conforme. C'est le FAUX ROUGE du §9.10 bis, rencontré une seconde fois.
 #
-# Aucun garde-fou global n'est révisé : la sous-tranche n'ajoute ni table ni politique, et
-# `0016_preuves_refus.test.sql` reste à 116.
+# Aucun garde-fou global n'est révisé PAR CETTE SOUS-TRANCHE : elle n'ajoute ni table ni politique,
+# et `0016_preuves_refus.test.sql` restait à 116. `CRM-064` tranche 1 l'a depuis porté à 119.
 #
 # 2826 + 24 = **2850**. LA VALEUR EST COMPTÉE PAR LES DEUX CHEMINS : `select plan()` sommé sur les
 # soixante fichiers rend **2850**, et le fichier seul en déclare **24**.
-FICHIERS_SQL_ATTENDUS=60
-ASSERTIONS_ATTENDUES=2850
+#
+# **`CRM-064` TRANCHE 1, le 2026-08-26** : `supabase/tests/0061_mentions_commentaires.test.sql`
+# ajoute **46 assertions**, et le fichier porte le compte à **61**. La suite `0017_commentaires`
+# est INCHANGÉE en NOMBRE — six de ses assertions sont RETOURNÉES ou REPORTÉES, jamais retirées :
+# celle qui exigeait la présence de `card_comments.mentions` mesure désormais son ABSENCE, et les
+# cinq autres suivent le fait vers ce qui le porte (`docs/SPEC-notifications.md` §7.4).
+#
+# `0016_preuves_refus.test.sql` PASSE DE 116 À **119** politiques : les trois de
+# `card_comment_mentions`. Il en manque une quatrième, et c'est une propriété — aucune politique
+# `UPDATE`, doublée par l'absence du privilège (§7.1).
+#
+# 2850 + 46 = **2896**. LA VALEUR EST COMPTÉE PAR LES DEUX CHEMINS : `npm run test:sql` rend
+# « 61 fichiers, 2896 assertions », et le fichier seul en déclare **46**.
+FICHIERS_SQL_ATTENDUS=61
+ASSERTIONS_ATTENDUES=2896
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -715,7 +728,12 @@ ASSERTIONS_ATTENDUES=2850
 # **10 scénarios** — les dix lignes du §13.10, dont la contre-épreuve du §11.6 bis rejouée juste
 # avant la RPC qui la lève. 933 + 10 = **943**, valeur COMPTÉE par `playwright test --list`, qui
 # rend « 943 tests in 57 files ».
-SCENARIOS_API=943
+#
+# **`CRM-064` TRANCHE 1, le 2026-08-26** : `e2e/api/mentions.spec.ts` ajoute **15 scénarios** — les
+# quinze lignes du §8 de `docs/SPEC-notifications.md`, dont les deux que la mesure a CORRIGÉES
+# (§8.1) et la contre-épreuve du retrait de la colonne. 943 + 15 = **958**, valeur COMPTÉE par
+# l'exécution complète, qui rend « 958 passed ».
+SCENARIOS_API=958
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -984,6 +1002,11 @@ SCENARIOS_API=943
 # **`CRM-063` SOUS-TRANCHE 4c, le 2026-08-26** : `e2e/ui/reglages-sequences-relance.spec.ts` ajoute
 # **10 scénarios** et `e2e/ui/armement-sequence.spec.ts` **6**. 613 + 16 = **629**, valeur COMPTÉE
 # par `playwright test --list`, qui rend « 629 tests in 51 files ».
+#
+# **`CRM-064` TRANCHE 1 NE LE TOUCHE PAS, et c'est écrit plutôt que sous-entendu** : la tranche ne
+# livre AUCUNE surface (`docs/SPEC-notifications.md` §1.3). Le composeur qui posera une mention est
+# la tranche 3. Un compteur inchangé sans motif écrit est indiscernable d'un compteur oublié — c'est
+# la leçon des trois occurrences relevées par le témoin de types.
 SCENARIOS_UI=629
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
