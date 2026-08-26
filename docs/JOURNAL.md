@@ -25405,3 +25405,114 @@ première perd l'information, la seconde la garde.
 **La question posée au responsable reste la même, et une seule** : les unités **`CRM-072`**
 (`audit_log`) et **`CRM-073`** (`api_tokens`) n'existent pas, onze unités leur renvoient, et leur
 périmètre est un choix produit qu'aucune mesure ne donne.
+
+## décision 525 — `CRM-064` sous-tranche 3a livrée : la première surface de l'unité, deux défauts que seule la vue a trouvés, et un harnais dont le nettoyage était devenu destructeur
+
+**2026-08-26, session planifiée de 16:16 UTC, suite de la décision 524.** La spécification écrite et
+poussée d'abord, la sous-tranche 3a est **livrée et prouvée**. Ce qui suit ne répète pas la 524 : il
+dit ce que la mise en œuvre a appris.
+
+**LA TRANCHE 3 EST DÉCOUPÉE EN DEUX, ET LE MOTIF EST MESURÉ.** Elle porte deux surfaces qui ne
+dépendent pas l'une de l'autre : celle qui **reçoit** et celle qui **envoie**. Le seed livrant déjà
+deux notifications, la réception se prouve **immédiatement et de bout en bout**, sans attendre
+l'émission — deux destinataires différents, deux auteurs différents, et une lectrice dont la boîte
+est vide, ce qui exerce l'état vide sans qu'aucune donnée ne soit fabriquée. C'est le découpage des
+dix sous-tranches de `CRM-060`, et il obéit au §0 de `docs/CloudWorker.md` : une session interrompue
+doit laisser derrière elle une surface **entière**, pas deux moitiés.
+
+**UNE PRÉDICTION DU §13.4 EST CORRIGÉE PAR LA MESURE, ET EN FAVEUR DE LA DÉCISION QU'ELLE FONDAIT.**
+Il annonçait « une lecture par notification affichée » comme le prix à payer pour que la charge
+utile ne porte aucun contenu. **MESURÉ** : `id=in.(…)` groupe **toute la page** en une requête, et la
+relation `card_comments → profiles` y embarque l'auteur au passage. Le coût réel est de **deux
+requêtes pour la liste entière**, non de `N + 1`. Ce que le §13.4 décidait est inchangé ; seule son
+estimation de coût était fausse, et elle l'était **en défaveur** de la décision prise. La conclusion
+qu'il tirait n'en est que plus solide. Le §26.3 le révise sur place, jamais en le réécrivant.
+
+**LA LIGNE DONT L'AFFAIRE EST ILLISIBLE N'EXISTE PAS, ET C'EST UNE PROPRIÉTÉ DE LA POLITIQUE.** Le
+prédicat du §16.1 exige `app.can_read_card(subject_card_id)` : une notification dont l'affaire se
+ferme **sort de la liste entière**. L'écran ne prévoit donc **aucun** rendu pour ce cas — écrire un
+repli pour un état que la base rend impossible enseignerait qu'il peut arriver. La ligne dont le
+**commentaire** est illisible, elle, arrive réellement (§14.4), et elle ne dit **ni** que le propos a
+été supprimé **ni** qu'il est illisible : les deux causes sont indistinguables, et les nommer
+divulguerait ce que la seconde cache.
+
+**DEUX DÉFAUTS RÉELS TROUVÉS EN REGARDANT LES CAPTURES, ET AUCUN N'ÉTAIT VISIBLE DANS UN TEST**
+(`CLAUDE.md` §16). Le premier est le plus grave : à 390 px, le panneau **sortait de l'écran par la
+gauche**. Ancré sur la cloche, il alignait son bord **droit** sous elle, et sa largeur le poussait
+hors cadre ; la moitié de la ligne n'était pas lisible. Il s'ancre désormais à l'**en-tête**, qui
+occupe toute la largeur et le borne des deux côtés. La règle vaut au-delà de ce composant : le
+repère de positionnement d'une surface flottante est le conteneur **pleine largeur**, jamais le
+contrôle qui l'ouvre.
+
+**MA PROPRE PREUVE NE LE VOYAIT PAS, ET C'EST LA MOITIÉ LA PLUS UTILE DE LA LEÇON.**
+`scrollWidth > clientWidth` ne mesure qu'un débordement à **droite** : une coordonnée négative
+n'engendre **aucun** défilement, si bien que la preuve était verte sur un écran faux. Toute preuve de
+palier portant sur une surface flottante mesure désormais son **cadre** — bord gauche ≥ 0, bord droit
+≤ largeur de la fenêtre. Une assertion qui ne peut pas voir le défaut qu'elle est censée interdire
+est une assertion qui rassure sans rien garantir.
+
+**LE SECOND DÉFAUT EST UNE DONNÉE ÉCRASÉE PAR SON DÉCOR.** Le titre de l'affaire se rendait
+« Refonte d… » : posé sur la même ligne que sa pilule « Track › Channel », laquelle est `shrink-0`,
+il perdait toute la place dans une colonne de `40ch`. Le lien ne nommait plus l'affaire qu'il ouvre.
+La phrase de mention, elle, coupait le **nom de la personne qui écrit**. Le titre occupe donc sa
+propre ligne, et la phrase **se replie** : la réponse d'une liste plate au manque de place est de
+gagner de la hauteur, jamais de tronquer une donnée. L'ellipse du §5.9 est la règle d'un **tableau**,
+qui se balaye en diagonale ; un panneau de `40ch` n'en est pas un.
+
+**UNE TROISIÈME CORRECTION PORTAIT SUR LA PREUVE, JAMAIS SUR LE PRODUIT.** Le scénario de l'anonyme
+visait `/connexion` pour y constater l'absence de cloche ; or l'écran de connexion est une surface
+**autonome**, sans coquille ni en-tête (§5.12), si bien que l'assertion ne prouvait rien — rien n'y
+est rendu. Il vise la racine, où l'en-tête rend « Se connecter » : ce **témoin** est ce qui rend
+l'absence de cloche probante, exactement comme le témoin de la décision 50 rend probant un silence.
+
+**TROIS CONTRÔLES DE `verify-notifications.sh` ÉTAIENT DEVENUS FAUX, ET SON NETTOYAGE ÉTAIT DEVENU
+DESTRUCTEUR.** Il exigeait l'**absence** de publication et, pour défaire sa propre dégradation,
+retirait la table de `supabase_realtime`. Depuis la migration `0065`, cela laisserait le produit
+**cassé** — la cloche cesserait de se mettre à jour sans qu'aucun écran ne le dise, ce qui est
+précisément le défaut de la décision 108, dans l'autre sens. Les deux mesures suivent le fait, la
+dégradation **s'inverse** — elle retire la publication au lieu de l'ajouter —, et la restauration
+rejoue les **deux** migrations. **Ce que la dégradation éprouve n'a pas changé** : que la suite pgTAP
+sait dire si l'état de publication n'est pas celui que le produit exige. Seul le sens de l'écart a
+changé, parce que la livraison a changé l'exigence. **La leçon dépasse ce harnais** : un harnais qui
+fige une absence doit être relu par la tranche qui lève cette absence, sans quoi son nettoyage
+devient une dégradation permanente.
+
+**LE CONTRÔLE DE CLÉS MORTES DU DICTIONNAIRE A PRIS UNE CLÉ EN DÉFAUT AVANT QU'ELLE NE SOIT RENDUE.**
+« Non lue » n'était employée nulle part : l'état de lecture est porté par le liseré et par le nom
+accessible des deux commandes de marquage. Elle est retirée plutôt que dotée d'un emploi inventé —
+une troisième formulation du même fait aurait divergé au premier ajustement.
+
+**LES TROIS ABONNEMENTS TIENNENT EN UN SEUL SCÉNARIO, ET C'EST NÉCESSAIRE.** Le silence de la
+lectrice et celui de l'anonyme ne sont probants que si un **témoin** a reçu le même événement au même
+instant. Trois scénarios séparés mesureraient trois silences dont aucun ne dirait si le canal était
+seulement mort (décision 50). La notification de la preuve naît du **trigger**, jamais d'une
+insertion directe, et l'attente porte sur un **fait** — l'arrivée de l'événement — et non sur une
+durée devinée.
+
+**CAMPAGNE.** `typecheck`, `types:check` et `build` verts ; `test:sql` **62 fichiers / 2939
+assertions** ; `test:unit` **80 fichiers / 2706 tests** ; `e2e:api` **974 passés** (967 avant, plus
+les 7 de la tranche) ; `e2e:mail` **42 passés** ; `pytest` **244 passés** ;
+`scripts/verify-notifications.sh` **43 contrôles, aucune anomalie**, huit dégradations toutes
+mordantes et restauration constatée ; `e2e:ui` — verdict consigné au compte rendu.
+
+**Où reprendre.** `CRM-064` **sous-tranche 3a livrée**, et l'unité reste `[~]` pour une seule raison
+nommée au backlog : **le harnais dédié `scripts/verify-notifications-surface.sh` n'est pas écrit**.
+Les preuves qu'il rejouerait existent et sont vertes, mais aucune **dégradation réelle** n'a éprouvé
+qu'elles savent rougir sur la surface — `verify-notifications.sh` n'en éprouve qu'**une** au passage.
+C'est le premier travail de la session suivante, et il est court.
+
+Vient ensuite la **sous-tranche 3b — le composeur qui pose une mention**, dont le contrat est énoncé
+au §30 et qui est à **spécifier avant son code**. Le point qu'elle devra trancher est nommé : la
+mention se pose **après** le commentaire, les deux écritures ne sont pas atomiques, et 3b devra dire
+ce que l'écran fait quand la seconde échoue — un commentaire publié sans sa mention est le cas à
+traiter, pas à taire.
+
+**Les points ouverts que la sous-tranche 3a lègue** (§29) : la **rétention** est **rencontrée** mais
+non tranchée — la borne de vingt lignes rend l'écran sûr sans décider quoi que ce soit —, le
+**regroupement** reste ouvert, **« tout marquer comme lu » n'est pas livré** faute de savoir rendre
+compte d'un `PATCH` de masse que la clause `USING` filtre en silence, et le compteur **ne se partage
+pas entre onglets** du même navigateur.
+
+**La question posée au responsable reste la même, et une seule** : les unités **`CRM-072`**
+(`audit_log`) et **`CRM-073`** (`api_tokens`) n'existent pas, onze unités leur renvoient, et leur
+périmètre est un choix produit qu'aucune mesure ne donne.

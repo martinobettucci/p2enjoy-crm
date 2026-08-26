@@ -9160,7 +9160,7 @@ avant la suivante :
 |---|---|---|
 | 1 | La mention en base — relation, intégrité, règle d'éligibilité, RLS, contrat d'API, seed, harnais. Aucune surface | en cours |
 | 2 | La notification — table `public.notifications`, production à partir d'une mention, état lu / non lu | **livrée** |
-| 3 | La surface et le temps réel — composeur, liste, compteur, abonnement. **Découpée en deux sous-tranches** (spécification §22.1) : `3a` la réception, `3b` l'émission | `3a` en cours, `3b` `[ ]` |
+| 3 | La surface et le temps réel — composeur, liste, compteur, abonnement. **Découpée en deux sous-tranches** (spécification §22.1) : `3a` la réception, `3b` l'émission | `3a` **livrée**, `[~]` (harnais dédié non écrit) ; `3b` `[ ]` |
 | 4 | Les préférences — ce que chacun reçoit, et par quel canal | `[ ]` |
 
 - [x] **Spécification écrite et committée AVANT la première ligne de code** —
@@ -9372,19 +9372,67 @@ avant la suivante :
       pour ce cas — écrire un repli pour un état que la base rend impossible enseignerait qu'il peut
       arriver. La ligne dont le **commentaire** est illisible, elle, arrive réellement (§14.4) et a
       son rendu dégradé.
-- [ ] **Migration `0065`** : publication de `public.notifications` au temps réel, idempotente.
-- [ ] **Module de lecture, de marquage et d'abonnement** — deux requêtes (§24.1), le canal nommé par
-      le destinataire (§25.3), les trois issues du marquage (§26.4).
-- [ ] **La cloche, son compteur et le panneau** — `docs/DESIGN_SYSTEM.md` §5.43.
-- [ ] **Suite unitaire, contrat d'API (§27), E2E d'interface, captures observées, harnais dédié.**
-- [ ] **`docs/manual.md` gagne son chapitre AVEC cette sous-tranche** (§30) : c'est elle qui livre
-      la surface.
+- [x] **Migration `0065` LIVRÉE** : publication de `public.notifications` au temps réel, dans un
+      bloc idempotent — le `migrations-runner` ne tient aucun registre et rejoue le répertoire à
+      chaque démarrage. Elle ne fait QUE cela : aucune colonne, aucune politique, aucun privilège ne
+      bouge. Appliquée et rejouée sur la pile réelle : **65 fichiers, code 0**, et la publication
+      porte désormais `card_comments` **et** `notifications`.
+- [x] **L'ASSERTION QUI FIGEAIT L'ABSENCE DE PUBLICATION EST RÉVISÉE, JAMAIS RETIRÉE** (mécanisme de
+      la décision 51). Elle exigeait `0` et écrivait elle-même la condition de sa levée ; la
+      condition est remplie. Elle garde son office : une publication **retirée** par mégarde ferait
+      cesser toute délivrance sans qu'aucun écran ne le dise.
+- [x] **Module `notifications.ts` et `colonnes-notifications.ts` LIVRÉS** — deux requêtes (§24.1),
+      le canal nommé par le **destinataire** et non par un nom fixe, les deux règles d'abonnement de
+      `CRM-043` reprises **sans changement**, et les trois issues du marquage. Le compteur vaut
+      `null` en cas d'échec, jamais zéro.
+- [x] **La cloche, son compteur et le panneau LIVRÉS** — `docs/DESIGN_SYSTEM.md` §5.43.
+- [x] **Suite unitaire** : `notifications.test.ts` **33 tests**, `Notifications.test.tsx`
+      **21 tests**, tous verts.
+- [x] **Contrat d'API dédié** : `e2e/api/notifications-surface.spec.ts`, **7 scénarios verts**. Les
+      trois abonnements tiennent en **un seul** scénario, et c'est nécessaire : le silence de la
+      lectrice et celui de l'anonyme ne sont probants que si un **témoin** a reçu le même événement
+      au même instant (décision 50).
+- [x] **E2E d'interface** : `e2e/ui/notifications.spec.ts`, **12 scénarios verts**, console vierge,
+      **six captures observées** aux quatre paliers.
+- [x] **DEUX DÉFAUTS RÉELS TROUVÉS EN REGARDANT LES CAPTURES** (`CLAUDE.md` §16), et aucun n'était
+      visible dans un test. À 390 px, le panneau **sortait de l'écran par la gauche** — ancré sur la
+      cloche, il alignait son bord droit sous elle ; il s'ancre désormais à l'**en-tête**, qui le
+      borne des deux côtés. Et le titre de l'affaire se rendait « Refonte d… », écrasé par sa pilule
+      `shrink-0` dans une colonne de `40ch` : il occupe désormais sa propre ligne, et la phrase de
+      mention **se replie** au lieu de couper le nom de qui écrit.
+- [x] **MA PROPRE PREUVE DE DÉBORDEMENT NE VOYAIT PAS LE PREMIER**, et c'est la moitié la plus utile
+      de la leçon : `scrollWidth > clientWidth` ne mesure qu'un débordement à **droite**, une
+      coordonnée négative n'engendrant aucun défilement. Toute preuve de palier portant sur une
+      surface flottante mesure désormais son **cadre**, des deux côtés.
+- [x] **UNE TROISIÈME CORRECTION PORTAIT SUR LA PREUVE, JAMAIS SUR LE PRODUIT** : le scénario de
+      l'anonyme visait `/connexion`, qui est une surface **autonome** sans coquille ni en-tête
+      (§5.12). Il vise la racine, où l'en-tête rend « Se connecter » — ce témoin est ce qui rend
+      l'absence de cloche probante.
+- [x] **`docs/manual.md` GAGNE SON CHAPITRE 8**, le premier de `CRM-064` (§30).
+- [x] **TROIS CONTRÔLES DE `verify-notifications.sh` ÉTAIENT DEVENUS FAUX, ET SON NETTOYAGE ÉTAIT
+      DEVENU DESTRUCTEUR.** Il retirait la table de la publication pour défaire sa propre
+      dégradation ; depuis `0065`, cela laisserait le produit **cassé**. Les deux mesures suivent le
+      fait, la dégradation D-G **s'inverse** — elle retire la publication au lieu de l'ajouter —, et
+      la restauration rejoue les **deux** migrations. Rejoué : **43 contrôles, aucune anomalie**,
+      huit dégradations toutes mordantes.
+- [x] **UNE CLÉ DE TRADUCTION MORTE DÉNONCÉE AVANT D'ÊTRE RENDUE** : « Non lue » n'était employée
+      nulle part, l'état de lecture étant porté par le liseré et par le nom accessible des deux
+      commandes de marquage. Retirée plutôt que dotée d'un emploi inventé.
+- [x] **Documentation dans le même changement** : `docs/SPEC-notifications.md` §21 à §31,
+      `docs/DESIGN_SYSTEM.md` §5.43, `docs/manual.md` §8, `docs/SCHEMA.md` §8,
+      `docs/PROD_MIGRATIONS.md` migration 65, `README.md`, `CHANGELOG.md` sous `[Non publié]`.
+- [ ] **HARNAIS DÉDIÉ `scripts/verify-notifications-surface.sh` NON ÉCRIT**, et l'écart est nommé :
+      le §31 le demande. Les preuves qu'il rejouerait existent et sont vertes — suite unitaire,
+      contrat d'API, E2E d'interface, captures —, mais aucune **dégradation réelle** n'a éprouvé
+      qu'elles savent rougir sur la surface. `verify-notifications.sh` en éprouve **une** au
+      passage : sa dégradation D-G retire la publication, et la suite pgTAP la dénonce.
 
 - [~] **CE QUI RETIENT L'UNITÉ EN `[~]`, ET C'EST NOMMÉ PLUTÔT QUE MASQUÉ.** Les tranches **1 et
-      2 sont closes** ; la sous-tranche **3a est en cours**, et **3b** — le composeur qui pose une
-      mention — n'est pas commencée, son contrat étant énoncé au §30 et restant à spécifier avant
-      son code. La **tranche 4** — les préférences — n'est pas commencée. `docs/manual.md` ne gagne
-      son chapitre qu'avec la sous-tranche 3a, première surface de l'unité.
+      2 sont closes**, et la sous-tranche **3a est livrée et prouvée** — elle reste `[~]` pour une
+      seule raison, nommée ci-dessus : son **harnais dédié n'est pas écrit**. La sous-tranche **3b**
+      — le composeur qui pose une mention — n'est pas commencée, son contrat étant énoncé au §30 et
+      restant à spécifier avant son code. La **tranche 4** — les préférences — n'est pas commencée.
+      `docs/manual.md` porte désormais son chapitre 8, et son §8.5 nomme les six absences.
 - [ ] **La série des `scripts/verify-*.sh` n'a PAS été rejouée derrière ces changements**, et
       l'écart est nommé (`docs/CloudWorker.md` §4.3, budget) : le dépôt en porte **soixante-treize**
       depuis la tranche 2, et **deux** l'ont été — `verify-mentions.sh` à la tranche 1,
