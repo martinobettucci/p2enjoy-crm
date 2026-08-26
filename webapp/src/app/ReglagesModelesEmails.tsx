@@ -3,6 +3,8 @@
 //       §9.3 (la palette des douze variables et son insertion), §9.4 (la liste), §9.5 (les trois
 //       sources de la prévisualisation), §9.6 (ce que `variables_nulles` rend), §9.7 (la
 //       confirmation de suppression), §9.8 (le dictionnaire fermé des refus)
+// @spec docs/SPEC-modeles-emails.md §13.9 (la confirmation de suppression RÉVISÉE : la migration
+//       0059 a posé le `on delete restrict` que le §9.7 annonçait absent)
 // @spec docs/DESIGN_SYSTEM.md §5.39 (cette surface, en écarts du §5.34), §5.8 (états
 //       systématiques), §5.18 (la liste plate), §5.23 (formulaire replié, dans le flux), §5.29
 //       (le patron de suppression confirmée)
@@ -57,6 +59,8 @@ const REFUS: Readonly<Record<Exclude<IssueEcritureModele, 'enregistre'>, CleTrad
 	'objet-borne': 'admin.mailTemplates.refusal.subject',
 	'corps-borne': 'admin.mailTemplates.refusal.body',
 	'nom-pris': 'admin.mailTemplates.refusal.nameTaken',
+	// §13.9 — le `on delete restrict` de la migration 0059, TRADUIT plutôt que rangé dans `inconnu`.
+	'modele-employe': 'admin.mailTemplates.refusal.templateUsed',
 	'session-expiree': 'admin.mailTemplates.refusal.session',
 	reseau: 'admin.mailTemplates.refusal.network',
 	inconnu: 'admin.mailTemplates.refusal.unknown',
@@ -681,12 +685,22 @@ function PaletteVariables({
 }
 
 /**
- * La confirmation de suppression — §9.7, patron du §5.29.
+ * La confirmation de suppression — §9.7, RÉVISÉE par le §13.9, patron du §5.29.
  *
- * ELLE NOMME LE MODÈLE ET N'ANNONCE AUCUNE CASCADE, et c'est une MESURE : `pg_constraint` ne porte
- * aucune clé étrangère vers `mail_templates` au 2026-08-25. Annoncer une rupture de séquence
- * décrirait un objet que la tranche 4 n'a pas posé, et promettre le refus de son futur
- * `on delete restrict` mentirait dans l'autre sens.
+ * ELLE NOMMAIT LE MODÈLE ET N'ANNONÇAIT AUCUNE CASCADE : au 2026-08-25, `pg_constraint` ne portait
+ * aucune clé étrangère vers `mail_templates`. LA MIGRATION `0059` A POSÉ CETTE CLÉ, et la phrase
+ * est devenue fausse — le §11.4 l'avait annoncé quatre tranches à l'avance.
+ *
+ * ELLE ANNONCE DONC LA RÈGLE, SANS COMPTER, et c'est une décision plutôt qu'une prudence (§13.9) :
+ * dire combien de paliers emploient le modèle obligerait cet écran à lire `mail_sequence_steps`,
+ * une table qu'il ne lit pas, pour un nombre qui peut changer entre la lecture et le geste. Le §20
+ * de `docs/SPEC-contacts.md` a pu annoncer un nombre d'affaires parce qu'il était DÉJÀ LU ; ici il
+ * ne l'est pas.
+ *
+ * ET LE REFUS, QUAND IL TOMBE, EST TRADUIT — `modele-employe`, classé sur
+ * `mail_sequence_steps_template_id_fkey`. La suppression d'un modèle qu'AUCUN palier n'emploie
+ * reste inconditionnelle (§11.5 point l) : la confirmation nomme une règle qui peut ou non
+ * s'appliquer, ce qui est exactement ce que l'écran sait.
  */
 function ConfirmationSuppression({
 	nom,
@@ -709,6 +723,12 @@ function ConfirmationSuppression({
 		>
 			<p className="font-medium">{t('admin.mailTemplates.delete.confirm.title', { modele: nom })}</p>
 			<p className="text-sm text-text-2">{t('admin.mailTemplates.delete.confirm.body')}</p>
+			<p
+				data-testid="confirmation-regle-sequence"
+				className="text-sm text-text-2 max-w-[72ch]"
+			>
+				{t('admin.mailTemplates.delete.confirm.sequenceRule')}
+			</p>
 			<div className="flex flex-wrap gap-2">
 				<Button
 					ref={action}

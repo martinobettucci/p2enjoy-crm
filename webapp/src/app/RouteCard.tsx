@@ -3,6 +3,9 @@
 // @spec docs/SPEC-cards.md §15.2 (où l'en-tête vit, et pourquoi au-dessus du formulaire)
 // @spec CRM-060 (docs/BACKLOG.md) — tranche 4 sous-tranche 4c : le bloc des contacts de l'affaire
 // @spec CRM-085 (docs/BACKLOG.md) — tranche 2 : la section « Coûts » de la fiche d'affaire
+// @spec CRM-063 (docs/BACKLOG.md) — tranche 4 sous-tranche 4c : armer une relance depuis l'affaire
+// @spec docs/SPEC-modeles-emails.md §13.8 (le bloc vit dans la colonne gauche, entre les coûts et
+//       le geste de corbeille) ; docs/DESIGN_SYSTEM.md §5.42
 // @spec docs/SPEC-costs.md §4.6 (la section vit dans la fiche, ce qu'elle liste et ce qu'elle
 //       écrit), §4.7 (les états) ; docs/DESIGN_SYSTEM.md §5.3
 // @spec docs/SPEC-contacts.md §12.2 (le bloc vit dans la colonne gauche, entre le formulaire et le
@@ -75,6 +78,7 @@ import { useAuthentification } from './Authentification'
 import { AppShell } from './AppShell'
 import { BlocContactsCard } from './BlocContactsCard'
 import { BlocCoutsCard } from './BlocCoutsCard'
+import { BlocSequenceCard } from './BlocSequenceCard'
 import { EnTeteCard } from './EnTeteCard'
 import { FormulaireCard } from './FormulaireCard'
 import { FormulaireEnvoi } from './FormulaireEnvoi'
@@ -269,6 +273,15 @@ function ContenuCard({
 					idCard={etat.donnees.card.id}
 					titreCard={etat.donnees.card.title}
 				/>
+				{/* ARMER UNE RELANCE — CRM-063 sous-tranche 4c, docs/SPEC-modeles-emails.md §13.8.
+				    Le bloc vit ENTRE les coûts et le bloc de corbeille, pour la raison qui a déjà placé
+				    les contacts et les coûts là : la colonne DROITE raconte et n'accueille aucun geste,
+				    et le retrait reste EN BAS. Armer une cadence est un geste SUR l'affaire, non un
+				    réglage — `armer_sequence_relance` prend `p_card_id` et exige que l'affaire soit
+				    figée (§13.1 question 3).
+				    L'ÉCRAN NE CALCULE PAS SI L'AFFAIRE EST FIGÉE : `public.cards_figees()` porte cette
+				    définition une seule fois, et le refus `card_not_stalled` est TRADUIT. */}
+				<BlocSequenceCard idCard={etat.donnees.card.id} />
 				{/* LE GESTE EST EN BAS DE LA COLONNE GAUCHE (docs/DESIGN_SYSTEM.md §5.3) : la colonne
 				    droite RACONTE ce qui est arrivé à l'affaire, et un geste qui agit n'appartient pas
 				    au récit. En bas, parce qu'un retrait n'est pas ce qu'on vient faire sur une fiche. */}

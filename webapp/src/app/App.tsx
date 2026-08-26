@@ -33,6 +33,7 @@ import {
 	CHEMIN_ADMIN_COMPTES_MAIL,
 	CHEMIN_ADMIN_IDENTITES_MAIL,
 	CHEMIN_ADMIN_MODELES_MAIL,
+	CHEMIN_ADMIN_SEQUENCES_MAIL,
 	CHEMIN_ETAT_MESSAGERIE,
 	CHEMIN_LISTE,
 	CHEMIN_CONTACT,
@@ -47,6 +48,7 @@ import {
 	CLE_TITRE_COMPTES_MAIL,
 	CLE_TITRE_IDENTITES_MAIL,
 	CLE_TITRE_MODELES_MAIL,
+	CLE_TITRE_SEQUENCES_MAIL,
 	CLE_TITRE_ETAT_MESSAGERIE,
 	CLE_TITRE_INTROUVABLE,
 	CLE_TITRE_OBJECTIFS,
@@ -107,6 +109,14 @@ const ReglagesIdentitesMail = lazy(async () => ({
  */
 const ReglagesModelesEmails = lazy(async () => ({
 	default: (await import('./ReglagesModelesEmails')).ReglagesModelesEmails,
+}))
+/**
+ * L'écran des séquences de relance de `CRM-063` sous-tranche 4c, chargé à la demande pour la même
+ * raison que ses trois jumeaux : il porte une fiche, une liste ordonnée et son réordonnancement,
+ * dont la seule supervision n'a pas besoin.
+ */
+const ReglagesSequencesRelance = lazy(async () => ({
+	default: (await import('./ReglagesSequencesRelance')).ReglagesSequencesRelance,
 }))
 /** La corbeille de `CRM-077`, chargée à la demande pour la même raison que les trois autres. */
 const Corbeille = lazy(async () => ({ default: (await import('./Corbeille')).Corbeille }))
@@ -303,6 +313,17 @@ function RoutesApplication() {
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_MODELES_MAIL}>
 							<ReglagesModelesEmails />
+						</AppShell>
+					}
+				/>
+				{/* Les séquences de relance — `CRM-063` sous-tranche 4c. Déclarée APRÈS les modèles
+				    et AVANT l'état de la messagerie, comme dans l'index des réglages
+				    (docs/SPEC-modeles-emails.md §13.4). */}
+				<Route
+					path={CHEMIN_ADMIN_SEQUENCES_MAIL}
+					element={
+						<AppShell cleTitreRoute={CLE_TITRE_SEQUENCES_MAIL}>
+							<ReglagesSequencesRelance />
 						</AppShell>
 					}
 				/>

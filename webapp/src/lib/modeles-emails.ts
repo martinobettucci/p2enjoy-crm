@@ -4,6 +4,8 @@
 //       `variables_nulles` rend), §9.8 (le dictionnaire fermé des refus)
 // @spec docs/SPEC-modeles-emails.md §2.5 (ce que la base refuse), §2.7 (contrat d'API de la
 //       table), §8.3 (contrat de `public.rendre_modele_email`), §8.8 (contrat d'API du rendu)
+// @spec docs/SPEC-modeles-emails.md §13.9 (le refus `modele-employe`, ajouté par la sous-tranche
+//       4c : la migration 0059 a posé le `on delete restrict` que le §9.7 annonçait absent)
 // @spec docs/DESIGN_SYSTEM.md §5.39 (la surface) ; docs/SPEC-permissions-rls.md §7 (le refus est
 //       zéro ligne, jamais une erreur)
 //
@@ -148,6 +150,17 @@ export type IssueEcritureModele =
 	| 'corps-borne'
 	/** `409`, `23505`, `mail_templates_workspace_name_key` (§2.5 i). */
 	| 'nom-pris'
+	/**
+	 * `409`, `23503`, `mail_sequence_steps_template_id_fkey` — §13.9.
+	 *
+	 * AJOUTÉE PAR LA SOUS-TRANCHE 4c, ET LE §9.7 EST DEVENU FAUX LE JOUR OÙ LA MIGRATION `0059` A
+	 * POSÉ CETTE CLÉ. Le §11.4 l'avait annoncé quatre tranches à l'avance — « c'est un travail de
+	 * 4c ». MESURÉ le 2026-08-26 par la route, avec le jeton réel de l'administratrice.
+	 *
+	 * Sans elle, ce refus retomberait sur `inconnu` : l'écran dirait « l'enregistrement a échoué »
+	 * là où la cause est connue, nommée par la base, et réparable par le rédacteur.
+	 */
+	| 'modele-employe'
 	/** `401` : la session n'existe plus. */
 	| 'session-expiree'
 	/** Aucune réponse : la requête n'a jamais abouti. */
@@ -185,6 +198,10 @@ export function classerEcritureModele(
 	if (message.includes('mail_templates_subject_borne')) return 'objet-borne'
 	if (message.includes('mail_templates_body_borne')) return 'corps-borne'
 	if (message.includes('mail_templates_workspace_name_key')) return 'nom-pris'
+	// LE `on delete restrict` DE LA MIGRATION `0059`, VU PAR LA ROUTE — §13.9. Il est testé APRÈS les
+	// contraintes de `mail_templates` et cela n'a aucune conséquence : `mail_sequence_steps_…` ne
+	// partage aucun préfixe avec elles.
+	if (message.includes('mail_sequence_steps_template_id_fkey')) return 'modele-employe'
 	if (statutHttp === 401) return 'session-expiree'
 	if (statutHttp === 403) return 'refus'
 	return 'inconnu'
@@ -258,6 +275,8 @@ export async function enregistrerModeleEmail(
 export type IssueSuppressionModele =
 	| 'supprime'
 	| 'zero-ligne'
+	/** Le `on delete restrict` de la migration `0059`, vu par la route — §13.9. */
+	| 'modele-employe'
 	| 'refus'
 	| 'session-expiree'
 	| 'reseau'
@@ -282,7 +301,14 @@ export async function supprimerModeleEmail(
 			.select('id')
 		if (reponse.error !== null) {
 			const issue = classerEcritureModele(reponse.status, reponse.error.message)
-			if (issue === 'refus' || issue === 'session-expiree' || issue === 'reseau') return issue
+			if (
+				issue === 'modele-employe' ||
+				issue === 'refus' ||
+				issue === 'session-expiree' ||
+				issue === 'reseau'
+			) {
+				return issue
+			}
 			return 'inconnu'
 		}
 		return (reponse.data ?? []).length === 0 ? 'zero-ligne' : 'supprime'

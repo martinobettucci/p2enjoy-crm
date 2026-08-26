@@ -2592,6 +2592,156 @@ export const fr = {
 	'admin.mailTemplates.previewPane.nulls.many': '{compte} variables sans valeur',
 	'admin.mailTemplates.previewPane.nulls.body':
 		'Ces variables sont rendues vides dans le message ci-dessus.',
+	// LA CONFIRMATION DE SUPPRESSION, RÉVISÉE PAR LA SOUS-TRANCHE 4c — §13.9. Elle annonce la RÈGLE
+	// sans compter : l'écran des modèles ne lit pas `mail_sequence_steps`, et un nombre lu pour
+	// l'occasion pourrait changer entre la lecture et le geste.
+	'admin.mailTemplates.delete.confirm.sequenceRule':
+		'Un modèle employé par une séquence de relance ne peut pas être supprimé.',
+	'admin.mailTemplates.refusal.templateUsed':
+		'Ce modèle est employé par une séquence de relance et ne peut pas être supprimé. Retirez-le de ses paliers, puis réessayez.',
+
+	// --- CRM-063 sous-tranche 4c : l'écran des séquences de relance -----------------------------
+	// docs/SPEC-modeles-emails.md §13, docs/DESIGN_SYSTEM.md §5.41.
+	'admin.sequences.title': 'Séquences de relance',
+	'admin.settings.index.sequences': 'Séquences de relance',
+	'admin.settings.index.sequences.body':
+		'Enchaîner plusieurs modèles à des délais choisis, pour relancer une affaire qui ne répond plus.',
+	'admin.sequences.aria': 'Administration des séquences de relance',
+	'admin.sequences.live.aria': 'Séquences de relance',
+	'admin.sequences.noWorkspace.title': 'Aucun espace de travail',
+	'admin.sequences.noWorkspace.body':
+		'Les séquences de relance appartiennent à un espace de travail, et aucun n’est accessible.',
+	'admin.sequences.error.title': 'Les séquences n’ont pas pu être chargées',
+	'admin.sequences.error.body':
+		'La liste des séquences de relance n’a pas pu être lue. Réessayez ; si le problème persiste, la pile est peut-être arrêtée.',
+	'admin.sequences.error.retry': 'Réessayer',
+	'admin.sequences.empty.title': 'Aucune séquence de relance',
+	'admin.sequences.empty.body':
+		'Une séquence enchaîne plusieurs modèles à des délais choisis. Elle s’arme depuis une affaire qui ne répond plus.',
+	'admin.sequences.open': 'Nouvelle séquence',
+	'admin.sequences.edit': 'Modifier',
+	'admin.sequences.edit.aria': 'Modifier la séquence {sequence}',
+	'admin.sequences.saved': 'Séquence enregistrée.',
+	'admin.sequences.deleted': 'Séquence supprimée.',
+	'admin.sequences.reordered': 'Ordre des paliers enregistré.',
+	// LE COMPTE EST EN TOUTES LETTRES, ET L'ACCORD SE FAIT PAR CLÉ (§10) : « 1 paliers » serait faux.
+	'admin.sequences.steps.none': 'aucun palier',
+	'admin.sequences.steps.one': '1 palier',
+	'admin.sequences.steps.many': '{compte} paliers',
+	// La fiche — §13.6.
+	'admin.sequences.form.title.new': 'Nouvelle séquence',
+	'admin.sequences.form.title.edit': 'Modifier la séquence',
+	'admin.sequences.field.name': 'Nom',
+	'admin.sequences.save': 'Enregistrer',
+	'admin.sequences.saving': 'Enregistrement…',
+	'admin.sequences.cancel': 'Annuler',
+	// La zone des paliers — §13.6.
+	'admin.sequences.steps.title': 'Paliers',
+	'admin.sequences.steps.help':
+		'Chaque palier envoie un modèle après un délai compté depuis le palier précédent — le premier depuis l’armement.',
+	'admin.sequences.steps.deferred': 'Enregistrez la séquence pour lui ajouter des paliers.',
+	'admin.sequences.steps.empty':
+		'Aucun palier. Une séquence sans palier n’envoie rien et ne peut pas être armée.',
+	'admin.sequences.steps.error':
+		'Les paliers n’ont pas pu être lus. Fermez la fiche et rouvrez-la pour réessayer.',
+	'admin.sequences.steps.field.template': 'Modèle',
+	'admin.sequences.steps.field.template.none': 'Choisissez un modèle',
+	'admin.sequences.steps.field.delay': 'Délai (jours)',
+	'admin.sequences.steps.add': 'Ajouter le palier',
+	'admin.sequences.steps.added': 'Palier ajouté.',
+	'admin.sequences.steps.removed': 'Palier retiré.',
+	// Les noms accessibles NOMMENT le palier : deux flèches identiques répétées sur trois lignes ne
+	// diraient pas ce que chacune déplace (§5.41).
+	'admin.sequences.steps.up.aria': 'Monter le palier {palier}',
+	'admin.sequences.steps.down.aria': 'Descendre le palier {palier}',
+	'admin.sequences.steps.remove.aria': 'Retirer le palier {palier}',
+	// Les refus — §13.7, dictionnaire fermé. Aucune phrase du serveur n'atteint l'écran.
+	'admin.sequences.refusal.forbidden':
+		'Vous ne pouvez pas écrire de séquence : cette action est réservée à l’administration et au développement commercial.',
+	'admin.sequences.refusal.zeroLigne':
+		'Aucune séquence n’a été enregistrée. Vos droits ont peut-être changé depuis l’ouverture : rechargez l’onglet.',
+	'admin.sequences.refusal.name': 'Le nom doit faire de 1 à 120 caractères.',
+	'admin.sequences.refusal.nameTaken': 'Ce nom est déjà employé par une autre séquence.',
+	'admin.sequences.refusal.delay': 'Le délai doit faire de 1 à 365 jours.',
+	'admin.sequences.refusal.position': 'Une séquence porte au plus 50 paliers.',
+	'admin.sequences.refusal.positionTaken':
+		'Un palier occupe déjà ce rang. Rechargez l’onglet pour repartir de l’état réel.',
+	'admin.sequences.refusal.order':
+		'L’ordre envoyé ne décrit plus cette séquence. Rechargez l’onglet pour repartir de l’état réel.',
+	'admin.sequences.refusal.armed':
+		'Cette séquence relance actuellement une affaire et ne peut pas être supprimée. Interrompez la relance depuis l’affaire, puis réessayez.',
+	'admin.sequences.refusal.templateGone':
+		'Ce modèle n’existe plus. Rechargez l’onglet pour repartir de l’état réel.',
+	'admin.sequences.refusal.session': 'Votre session a expiré. Reconnectez-vous, puis réessayez.',
+	'admin.sequences.refusal.network': 'La requête n’a pas abouti. Réessayez.',
+	'admin.sequences.refusal.unknown': 'L’enregistrement a échoué.',
+	'admin.sequences.reorder.refusal.zeroLigne':
+		'Aucun palier n’a été réordonné. Vos droits ont peut-être changé depuis l’ouverture : rechargez l’onglet.',
+	'admin.sequences.steps.refusal.zeroLigne':
+		'Aucun palier n’a été ajouté. Vos droits ont peut-être changé depuis l’ouverture : rechargez l’onglet.',
+	'admin.sequences.steps.remove.refusal.zeroLigne':
+		'Aucun palier n’a été retiré. Vos droits ont peut-être changé depuis l’ouverture : rechargez l’onglet.',
+	// La suppression — §13.6. La confirmation NOMME la séquence, ANNONCE la cascade comptée depuis
+	// la donnée déjà lue, et dit la règle qu'elle ne peut pas promettre — sans chiffre.
+	'admin.sequences.delete': 'Supprimer cette séquence',
+	'admin.sequences.delete.confirm.title': 'Supprimer « {sequence} » ?',
+	'admin.sequences.delete.confirm.noSteps': 'Cette séquence ne porte aucun palier.',
+	'admin.sequences.delete.confirm.oneStep': 'Son palier sera supprimé avec elle.',
+	'admin.sequences.delete.confirm.manySteps': 'Ses {compte} paliers seront supprimés avec elle.',
+	'admin.sequences.delete.confirm.armedRule':
+		'Une séquence qui relance actuellement une affaire ne peut pas être supprimée.',
+	'admin.sequences.delete.confirm.action': 'Supprimer définitivement',
+	'admin.sequences.delete.cancel': 'Annuler',
+	'admin.sequences.delete.refusal.zeroLigne':
+		'Aucune séquence n’a été supprimée. Vos droits ont peut-être changé depuis l’ouverture : rechargez l’onglet.',
+
+	// --- CRM-063 sous-tranche 4c : armer une relance depuis l'affaire ---------------------------
+	// docs/SPEC-modeles-emails.md §13.8, docs/DESIGN_SYSTEM.md §5.42.
+	'card.sequence.title': 'Relance automatique',
+	'card.sequence.help':
+		'Une séquence enchaîne plusieurs modèles à des délais choisis. Elle s’arrête dès qu’une réponse arrive.',
+	'card.sequence.field.sequence': 'Séquence',
+	'card.sequence.field.sequence.none': 'Choisissez une séquence',
+	'card.sequence.field.identity': 'Adresse d’expédition',
+	'card.sequence.field.identity.none': 'Choisissez une adresse',
+	'card.sequence.arm': 'Armer la relance',
+	'card.sequence.arming': 'Armement…',
+	'card.sequence.armed': 'Relance armée.',
+	'card.sequence.stop': 'Interrompre la relance',
+	'card.sequence.stopping': 'Interruption…',
+	'card.sequence.stopped': 'Relance interrompue.',
+	'card.sequence.empty':
+		'Aucune relance n’est armée sur cette affaire.',
+	'card.sequence.noSequences':
+		'Aucune séquence de relance n’est définie. Créez-en une dans les réglages.',
+	'card.sequence.noIdentities':
+		'Aucune adresse d’expédition ne vous est ouverte. Déclarez-en une dans les réglages.',
+	'card.sequence.error':
+		'L’état de la relance n’a pas pu être lu. Rechargez la page pour réessayer.',
+	// L'état d'une inscription active — §13.8. AUCUNE DATE DE PROCHAIN ENVOI : la cadence glisse sur
+	// l'envoi réel, et une échéance affichée serait fausse dès qu'un passage manquerait.
+	'card.sequence.active.sequence': 'Séquence : {sequence}',
+	'card.sequence.active.identity': 'Expédiée depuis {adresse}',
+	'card.sequence.active.noStepSent': 'Aucun palier envoyé pour l’instant.',
+	'card.sequence.active.lastStep': 'Palier {position} envoyé le {date}.',
+	// Les refus de l'armement — §13.8, dictionnaire fermé et MESURÉ.
+	'card.sequence.refusal.alreadyArmed':
+		'Une relance est déjà armée sur cette affaire. Interrompez-la avant d’en armer une autre.',
+	'card.sequence.refusal.notStalled':
+		'Cette affaire n’a pas dépassé le seuil d’inactivité de son étape. Une relance ne s’arme que sur une affaire qui n’avance plus.',
+	'card.sequence.refusal.emptySequence':
+		'Cette séquence ne porte aucun palier et n’enverrait rien.',
+	'card.sequence.refusal.unavailableSequence': 'Cette séquence n’est pas disponible.',
+	'card.sequence.refusal.noAddress':
+		'L’adresse de réponse de cette affaire ne se compose pas. Les réponses ne reviendraient nulle part.',
+	'card.sequence.refusal.identity':
+		'Vous ne pouvez pas expédier depuis cette adresse. Choisissez-en une autre.',
+	'card.sequence.refusal.forbidden': 'Vous ne pouvez pas écrire au nom de cette affaire.',
+	'card.sequence.refusal.session': 'Votre session a expiré. Reconnectez-vous, puis réessayez.',
+	'card.sequence.refusal.network': 'La requête n’a pas abouti. Réessayez.',
+	'card.sequence.refusal.unknown': 'L’armement a échoué.',
+	'card.sequence.stop.refusal.stillActive':
+		'La relance n’a pas été interrompue. Vos droits ont peut-être changé depuis l’ouverture : rechargez la page.',
 } as const
 
 export type CleTraduction = keyof typeof fr

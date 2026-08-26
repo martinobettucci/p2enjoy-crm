@@ -120,6 +120,16 @@ export const CHEMIN_ADMIN_IDENTITES_MAIL = '/reglages/identites-mail' as const
  */
 export const CHEMIN_ADMIN_MODELES_MAIL = '/reglages/modeles-emails' as const
 
+/**
+ * Administration des séquences de relance — `CRM-063`, `docs/SPEC-modeles-emails.md` §13.4.
+ *
+ * Une NEUVIÈME section de réglages, et la quatrième de la famille « messagerie » qui écrive. Elle
+ * vient après `CHEMIN_ADMIN_MODELES_MAIL` — le texte — et avant `CHEMIN_ETAT_MESSAGERIE`, et
+ * l'ordre suit celui que le §9.1 a posé : on déclare l'expéditeur, puis le texte, puis la CADENCE
+ * qui enchaîne les textes ; et on configure avant de superviser.
+ */
+export const CHEMIN_ADMIN_SEQUENCES_MAIL = '/reglages/sequences-relance' as const
+
 /** État de la messagerie — `CRM-059`. */
 export const CHEMIN_ETAT_MESSAGERIE = '/reglages/messagerie' as const
 

@@ -697,8 +697,20 @@ export async function armerSequence(
 	}
 }
 
-/** Ce que l'interruption rend — `interrompue` n'est conclu qu'APRÈS relecture (§13.8). */
-export type IssueInterruption = 'interrompue' | 'sans-effet' | 'refus' | 'session-expiree' | 'reseau' | 'inconnu'
+/**
+ * Ce que l'interruption rend — §13.8.
+ *
+ * IL N'Y A PAS D'ISSUE « SANS EFFET » ICI, ET SON ABSENCE EST LA DÉCISION : l'appel étant
+ * idempotent, la base ne distingue pas « j'ai fermé » de « c'était déjà fermé », et une issue qui
+ * l'affirmerait mentirait. C'est la RELECTURE de l'appelant qui tranche, et elle seule.
+ */
+export type IssueInterruption =
+	/** L'appel n'a RIEN LEVÉ. Ce n'est pas encore un succès — voir la relecture du §13.8. */
+	| 'interrompue'
+	| 'refus'
+	| 'session-expiree'
+	| 'reseau'
+	| 'inconnu'
 
 /**
  * Interrompt une inscription — §13.8.
