@@ -7361,8 +7361,10 @@ migration `0046`) :
 - [x] Tranche 3 — Résolution des champs `contact` **et** `user` dans la validation des valeurs,
       **livrée et prouvée le 2026-08-18** (`docs/SPEC-contacts.md` §9, migration `0047`). Voir le
       détail ci-dessous.
-- [~] Tranche 4 — Écrans. **Sous-découpée en quatre le 2026-08-18** (`docs/SPEC-contacts.md`
-      §10.1), chaque sous-tranche committée et prouvée avant la suivante :
+- [x] Tranche 4 — Écrans. **Sous-découpée le 2026-08-18** (`docs/SPEC-contacts.md` §10.1), chaque
+      sous-tranche committée et prouvée avant la suivante. **CLOSE le 2026-08-26** : les DIX
+      sous-tranches sont livrées et prouvées, et les cinq dernières cases sont posées ici —
+      l'annonce « en quatre » a été dépassée par la livraison, et la liste ne l'avait pas suivie :
       - [x] **4a — Le carnet de contacts**, en lecture. **Livrée et prouvée le 2026-08-18** ; voir
             le détail ci-dessous.
       - [x] **4b — La fiche d'organisation** : les contacts d'une organisation, et ce qui la
@@ -7384,6 +7386,25 @@ migration `0046`) :
             prouvée le 2026-08-19** — les preuves qui manquaient à sa livraison (unitaires,
             API, parcours clavier) sont écrites et vertes, et elles ont trouvé un défaut du
             produit, corrigé à sa cause. Voir le détail plus bas.
+      - [x] **4f — La fiche d'un contact**, et l'HISTORIQUE TRANSVERSE que la Definition of Done
+            nomme (`docs/SPEC-contacts.md` §15). **Livrée et prouvée le 2026-08-19** ; voir le
+            détail plus bas.
+      - [x] **4g — La modification d'un contact** depuis sa fiche (§16). **Livrée et prouvée le
+            2026-08-19** ; voir le détail plus bas.
+      - [x] **4h — Le rattachement d'une affaire** depuis la fiche d'un contact (§17). **Livrée et
+            prouvée le 2026-08-19** ; voir le détail plus bas.
+      - [x] **4i — Le détachement d'une affaire** depuis la fiche d'un contact (§18). **Livrée et
+            prouvée le 2026-08-19** ; voir le détail plus bas.
+      - [x] **4j — La modification du rôle d'un rattachement**, depuis la fiche d'un contact
+            (§19). **Livrée et prouvée le 2026-08-19** ; voir le détail plus bas.
+
+            *(**LES CINQ CASES 4f À 4j ONT ÉTÉ AJOUTÉES LE 2026-08-26**, par la session de la
+            tranche 6. Elles n'existaient PAS dans cette liste, alors que le corps de l'unité
+            documente chacune comme livrée et prouvée depuis le 2026-08-19 et que `docs/JOURNAL.md`
+            en rend compte. La liste s'était arrêtée à 4e — le sous-découpage annoncé « en quatre »
+            en a finalement porté DIX —, et « Tranche 4 » restait donc `[~]` d'un défaut de tenue
+            de liste, non d'un reste à livrer. C'est le même oubli qu'en 4b et en 4d, cette fois à
+            l'échelle de cinq lignes.)*
 
 
 **Quatrième tranche, sous-tranche 4a livrée le 2026-08-18 — le carnet de contacts**
