@@ -25871,3 +25871,101 @@ rejouer, soit passer à une unité de construction : le registre et le backlog f
 (`audit_log`) et **`CRM-073`** (`api_tokens`) n'existent pas, onze unités leur renvoient, et leur
 périmètre est un choix produit qu'aucune mesure ne donne. **INC-229** s'ajoute aux arbitrages en
 attente.
+
+---
+
+## décision 529 — la recherche globale existe, et `french` seule aurait menti une fois sur deux
+
+*2026-08-27, session planifiée `CloudWorker`, ouverte à 08:14:39 UTC. Unité : **`CRM-065` tranche 1**,
+la recherche en base. Unité choisie par `docs/CloudWorker.md` §4.2 **règle 3** — aucune unité `[~]`
+antérieure dans l'ordre du plan ne porte de comportement à livrer qui ne soit ni un écart de preuve,
+ni une dépendance absente, ni un arbitrage en attente ; `CRM-065` est la première `[ ]` de la table
+du chunk 5. Spécification écrite et **committée avant la première ligne de code** (`CLAUDE.md` §5) :
+`docs/SPEC-recherche.md`, neuf chapitres fondés sur **onze mesures** prises sur la pile debout et
+seedée, sondes créées en transaction puis **annulées**, état de la base relu après chacune.*
+
+**LE PRODUIT N'AVAIT AUCUNE RECHERCHE TRANSVERSE.** Plus de trente écrans, une arborescence à trois
+niveaux, un carnet de contacts et une messagerie — et rien pour retrouver un objet dont on ne sait
+plus où il vit. Chaque écran portait au mieux un filtre local, aveugle à tout ce qui n'est pas sa
+propre liste. `public.recherche_globale(p_terme, p_limite)` cherche désormais dans **cinq familles**
+à la fois : affaires, contacts, organisations, commentaires et messages.
+
+**LA MESURE QUI COMMANDE TOUTE LA TRANCHE EST M2, ET ELLE CONTREDIT L'INTUITION.** La configuration
+`french` livrée avec PostgreSQL **n'est pas insensible aux accents** : son radicaliseur en retire
+dans certains mots et les conserve dans d'autres, sans règle qu'un utilisateur puisse deviner —
+`to_tsvector('french','Amélie Dupont créance échéance')` rend `'amel' 'dupont' 'créanc' 'échéanc'`.
+« amelie » trouve « Amélie », « societe » trouve « société », mais « creance » **ne trouve pas**
+« créance », ni « echeance » « échéance », ni « proces » « procès ». Un comportement juste une fois
+sur deux est **pire** qu'un comportement uniformément strict : il apprend une règle fausse. D'où
+`app.francais_sans_accent`, `french` avec `unaccent` placé **devant** le radicaliseur, qui rend les
+cinq cas justes **dans les deux sens** — et qui reste indexable, `to_tsvector(regconfig, text)` étant
+`IMMUTABLE` là où la forme à un argument est `STABLE`.
+
+**LA FONCTION N'OUVRE RIEN, ET C'EST SON POINT.** `SECURITY INVOKER` : chacune des cinq tables
+applique la politique de lecture écrite par l'unité qui la porte, et le refus est **zéro ligne,
+jamais une erreur**. En `DEFINER`, elle aurait répondu pour `postgres` et rendu à chacun les
+affaires, les contacts et les messages de **tous**. Aucune politique n'est créée ni modifiée, aucun
+privilège de table n'est accordé, **aucune colonne n'est ajoutée** — une colonne générée `tsvector`
+serait exposée par PostgREST et changerait la forme publique de cinq tables pour un besoin interne au
+moteur de recherche. Cinq **index GIN d'expression** à la place, l'expression étant recopiée à
+l'identique dans l'index et dans la requête : la duplication est assumée et son motif écrit, une
+fonction enveloppante pouvant être « inlinée » à la planification et pas dans la définition de
+l'index, ce qui ferait perdre l'index **sans le moindre signal**.
+
+**DEUX ASSERTIONS ÉCRITES AVANT LE CODE ONT ROUGI, ET CHACUNE A CORRIGÉ LE PRODUIT OU LA
+SPÉCIFICATION plutôt que d'être ajustée à ce qu'elle trouvait.** (1) **Un commentaire ne suivait pas
+son affaire à la corbeille** — `card_comments` porte son propre `deleted_at` —, si bien que la
+palette de la tranche 2 aurait offert une **destination morte**, ce que le §5.10 du design system
+interdit. La fonction porte désormais la clause qui l'exclut, écrite en `not exists` pour qu'une
+affaire illisible ne fasse pas disparaître la ligne. (2) **`public.cards` portait DÉJÀ une
+recherche, et elle est VIVANTE** : `search_tsv`, colonne générée de la migration `0011` (`CRM-040`),
+indexée, employée par la vue liste. Le garde-fou qui figeait « aucune colonne `tsvector` » est
+**révisé** pour nommer l'unique colonne attendue, jamais retiré, et un second vérifie que `cards`
+porte bien **deux** index GIN distincts. Mesures **M12** et **M13**, écrites après coup parce que ce
+sont les assertions qui les ont imposées.
+
+**UN DÉFAUT RÉEL, ANTÉRIEUR ET ÉTRANGER, TROUVÉ EN MESURANT — INC-230.** La recherche **locale** de
+la vue liste (`liste-cards.ts`, `textSearch('search_tsv', …, { config: 'french' })`) est sujette à
+l'écart de M2 : elle rend juste une fois sur deux sur un mot accentué. Deux recherches du produit ont
+désormais deux vocabulaires. **Comportement laissé inchangé** : la correction demande de régénérer la
+colonne et son index et de reprendre deux suites qui figent `french` explicitement, ce qui dépasse la
+tranche. Trois issues sont proposées, **aucune n'est tranchée**.
+
+**LE HARNAIS DÉDIÉ A TROUVÉ QUE SA PROPRE DÉGRADATION ÉTAIT INERTE.** `scripts/verify-recherche.sh`
+rend **56 contrôles, aucune anomalie**, ses **sept dégradations mordent**. La troisième — remettre
+`french` à la place du vocabulaire — a d'abord rendu « COMPLAISANT » : elle ne remplaçait qu'un terme
+sur trois de la clause, les deux autres gardaient le bon vocabulaire, « elise » continuait de trouver
+« Élise Fabre » et la suite pgTAP restait **légitimement** verte. La bonne alerte sur la mauvaise
+cible : ce n'était pas la preuve qui était complaisante, c'était la dégradation qui était fausse. Deux
+autres attentes du harnais ont été corrigées de la même façon — « vitrine » est porté par **deux
+familles** et non par deux affaires, et le compte d'affaires du seed relevé **pendant** qu'une autre
+série de harnais tournait fige un état transitoire (42) et non le seed (41).
+
+**CAMPAGNE COMPLÈTE, ET ELLE EST VERTE.** `typecheck`, `types:check` et `build` verts ; `test:sql`
+**65 fichiers / 3006 assertions** ; `test:unit` **83 fichiers / 2769 tests** ; `e2e:api` **1007
+passés** (997 avant, plus les 10 de la tranche) ; `e2e:ui` **664 passés, AUCUN échec** ; `e2e:mail`
+**42 passés** ; `pytest` **244 passés** ; `scripts/verify-recherche.sh` **56 contrôles, aucune
+anomalie**. Les 206 captures réécrites par le rejeu d'interface ont été **regardées puis restaurées**
+— la tranche ne touche aucun composant —, et deux d'entre elles ont été observées aux paliers 1440 et
+390 avant restauration.
+
+**CE QUI N'A PAS ÉTÉ EXÉCUTÉ, ET C'EST NOMMÉ.** La série des soixante-quatorze `scripts/verify-*.sh`
+n'a **pas** été rejouée en entier (`docs/CloudWorker.md` §4.3, budget) : seul `verify-recherche.sh`
+l'a été. `scripts/verify-harness.sh --rapide` a été lancé puis **interrompu** au profit du harnais de
+l'unité, comme le §4.3 le demande — ses compteurs sont révisés sur des valeurs **comptées**
+(`SCENARIOS_API` 997 → 1007, `FICHIERS_SQL` 61 → 65, `ASSERTIONS` 2896 → 3006), mais **son verdict
+n'a pas été relevé**. Une part de l'écart SQL est antérieure et étrangère — trois fichiers,
+soixante-dix-neuf assertions livrés par des tranches qui n'ont pas déplacé ce garde-fou — et le
+fichier le **nomme** plutôt que de le lisser.
+
+**Où reprendre.** `CRM-065` **tranche 1 livrée et prouvée**, harnais dédié compris. Deux chemins pour
+la session suivante, et le backlog fait foi : soit **rejouer `verify-harness.sh` et la série** pour
+clore la tranche 1 sur sa dernière preuve, soit attaquer la **tranche 2 — la palette `Cmd+K`**, dont
+la spécification reste **à écrire avant sa première ligne de code**. Le discriminant `objet` de la
+fonction est stable par contrat : la palette y trouvera de quoi router vers l'écran.
+
+**Les questions posées au responsable.** Les deux anciennes tiennent : les unités **`CRM-072`**
+(`audit_log`) et **`CRM-073`** (`api_tokens`) n'existent pas, onze unités leur renvoient, et leur
+périmètre est un choix produit qu'aucune mesure ne donne. **INC-230** s'ajoute : faut-il aligner la
+recherche locale de la vue liste sur le nouveau vocabulaire, la faire passer par la RPC, ou laisser
+l'écart et l'écrire au manuel ?

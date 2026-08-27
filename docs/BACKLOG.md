@@ -9806,14 +9806,34 @@ clavier et mène à l'objet ; captures produites **et observées**.
       vocabulaires. Le défaut appartient à `CRM-042` ; trois issues sont proposées, aucune n'est
       tranchée.
 
+- [x] **Harnais dédié `scripts/verify-recherche.sh`, non complaisant et éprouvé** : **56 contrôles,
+      aucune anomalie**, et ses **sept dégradations mordent toutes**. La plus utile rend la
+      fonction `SECURITY DEFINER` en laissant son corps, ses index et ses privilèges intacts — la
+      recherche continue de rendre des lignes, mais pour `postgres`, qui traverse toute la RLS. Les
+      six autres retirent le privilège révoqué à `anon`, le vocabulaire sans accent, le préfixe, la
+      conjonction, le plafond de cinquante, et la clause qui écarte le commentaire d'une affaire à
+      la corbeille. **La base est rendue sans condition** par le `trap` de sortie, et la
+      restauration est **constatée** : une fonction laissée `definer` par un harnais interrompu
+      serait une fuite persistante, invisible à `git diff`. Documenté dans `README.md` §12.
+- [x] **TROIS ATTENTES FAUSSES DU HARNAIS ONT ÉTÉ CORRIGÉES PAR LEUR PROPRE MESURE, et la
+      troisième est la plus instructive.** « vitrine » est porté par **deux familles** — l'affaire
+      et le message dont le corps la nomme — et non par deux affaires ; le compte d'affaires du
+      seed, relevé pendant qu'une autre série de harnais tournait, fige un **état transitoire**
+      (42) et non le seed (41) ; et **la dégradation du vocabulaire était INERTE** — elle ne
+      remplaçait qu'un terme sur trois, laissait le bon vocabulaire aux deux autres, si bien que le
+      harnais a rendu « COMPLAISANT » sur la bonne alerte et la **mauvaise cible** : ce n'était pas
+      la preuve qui était complaisante, c'était la dégradation qui était fausse.
+
 *Ce qui reste dû sur la tranche 1, et ce qui ne l'est pas.* **Aucun comportement de la Definition
 of Done de la tranche ne reste dû** : les quinze lignes du §6.7 sont mesurées, quatorze par le
 contrat d'API et la quinzième — le plafond de cinquante — par l'assertion 26 de la suite pgTAP, qui
-pose les soixante lignes nécessaires dans sa propre transaction et les emporte. Ce qui reste est
-**de la preuve**, et c'est nommé : la série des `scripts/verify-*.sh` n'a pas été rejouée en entier
-derrière ce changement, et **aucun harnais `scripts/verify-recherche.sh` n'existe** — le dépôt en
-porte un par unité livrée, et celui-ci est le premier travail dû avant que `CRM-065` puisse
-prétendre à `[x]`.
+pose les soixante lignes nécessaires dans sa propre transaction et les emporte. **Le harnais dédié
+est livré.** Ce qui reste est **de la preuve, et une seule** : la série des soixante-quatorze
+`scripts/verify-*.sh` du dépôt n'a pas été rejouée en entier derrière ce changement
+(`docs/CloudWorker.md` §4.3, budget) — seul `verify-recherche.sh` l'a été. `scripts/verify-harness.sh`
+a été lancé puis **interrompu** faute de temps : ses compteurs sont révisés et comptés, mais son
+verdict n'a pas été relevé. C'est le dernier travail dû avant que la **tranche 1** puisse prétendre
+à close ; l'unité, elle, reste `[~]` tant que la tranche 2 — la palette — n'est pas livrée.
 
 #### Tranche 2 — non commencée
 
