@@ -379,9 +379,17 @@ La normalisation est **entièrement écrite ici**, et elle ne dépend d'aucune s
 3. Chaque fragment restant reçoit le suffixe `:*` et les fragments sont joints par ` & ` — donc
    **conjonction** : tous les mots saisis doivent être présents. Une palette qui rendrait l'union
    noierait la ligne cherchée dès le deuxième mot.
-4. Si la chaîne obtenue est **vide**, la fonction rend zéro ligne **sans appeler `to_tsquery`**
-   (M8).
-5. Sinon `to_tsquery('app.francais_sans_accent', <chaîne>)` produit la requête. Le dictionnaire
+4. **Premier garde-fou** : si la chaîne obtenue est **vide**, la fonction rend zéro ligne **sans
+   appeler `to_tsquery`** (M8). C'est le cas des lignes *d* et *e* du §6.7 — terme nul, vide, ou
+   fait de blancs et de ponctuation.
+5. **Second garde-fou** : si `to_tsvector('app.francais_sans_accent', p_terme)` est le vecteur
+   **vide**, la fonction rend zéro ligne, toujours sans appeler `to_tsquery`. C'est le cas de la
+   ligne *f* — un terme fait uniquement de mots vides français produit bien une chaîne
+   `'le:* & la:*'` non vide, que l'étape 4 laisserait donc passer. Le contrôle passe par
+   `to_tsvector` et non par `to_tsquery` parce que ce dernier **émet un `NOTICE`** dès que sa
+   requête ne porte aucun lexème (M8) : ce serait une ligne de journal du serveur à **chaque
+   frappe** d'une palette. `to_tsvector` emploie exactement les mêmes dictionnaires et n'émet rien.
+6. Sinon `to_tsquery('app.francais_sans_accent', <chaîne>)` produit la requête. Le dictionnaire
    s'applique à chaque fragment — désaccentuation puis radicalisation — avant la pose du préfixe
    (M7).
 
