@@ -13,6 +13,19 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-042` — la recherche comprend les accents de la même façon partout
+
+- **Chercher « securite » trouve désormais « sécurité »**, et inversement, dans la vue liste comme
+  dans la palette `Cmd+K`. Le produit n'a plus qu'une seule façon de comprendre un accent.
+- **Ce que cela corrige** : la vue liste trouvait « Amélie » en tapant `amelie`, mais ne trouvait
+  **pas** « créance » en tapant `creance` — un comportement juste une fois sur deux, qui apprenait
+  une règle fausse. Mesuré sur les données de démonstration : `securite` ne rendait aucune affaire
+  là où « Audit sécurité applicative » existait bel et bien.
+- Aucune donnée n'est touchée, et rien ne change dans ce que la recherche a le droit de montrer.
+- **Opération de déploiement** : migration 69, qui réécrit la table des affaires — voir
+  `docs/PROD_MIGRATIONS.md`. La variable d'environnement `PGRST_DB_EXTRA_SEARCH_PATH` doit porter
+  `app` en fin de liste.
+
 ### `CRM-065` sous-tranche 2c — la boîte de réception s'ouvre sur le bon message
 
 - **Un résultat de recherche de la famille « message » ouvre désormais le message lui-même**, et

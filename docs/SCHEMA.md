@@ -1473,9 +1473,26 @@ appelant les affaires, les contacts et les messages de tous.
   PostgREST et changerait la forme publique de cinq tables.
 
 **`public.cards` porte donc deux index GIN**, et c'est voulu : `cards_search_tsv_idx` de `CRM-040`
-sert la recherche **locale** de la vue liste, en `french`, sur la colonne générée `search_tsv`
-(§4 ci-dessus) ; `cards_recherche_idx` sert la recherche **transverse**. L'écart de vocabulaire
-entre les deux est consigné à `docs/INCONSISTENCY_REPORT.md`, **INC-230**, et laissé inchangé.
+sert la recherche **locale** de la vue liste, sur la colonne générée `search_tsv`
+(§4 ci-dessus) ; `cards_recherche_idx` sert la recherche **transverse**.
+
+**LES DEUX EMPLOIENT LE MÊME VOCABULAIRE DEPUIS LA MIGRATION 69** (`CRM-042`, décision 532 §2,
+arbitrage du responsable fermant INC-230). La colonne `search_tsv` était générée en `french` par la
+migration 11, et `french` n'est PAS insensible aux accents : mesuré sur ce seed, `securite` ne
+rendait **aucune** ligne là où `sécurité` en rendait deux, alors que `amelie` trouvait bien
+« Amélie ». Le produit avait donc deux façons de comprendre un accent, et un comportement juste une
+fois sur deux apprend à l'utilisateur une règle fausse. La colonne est désormais générée en
+`app.francais_sans_accent`, comme la fonction transverse.
+
+**Deux index restent nécessaires, et le motif n'a pas changé** : ils portent sur des expressions
+différentes — l'une est une colonne stockée sur `title` et `description`, l'autre une expression
+pondérée — et non sur des vocabulaires différents.
+
+**Point d'appel, mesuré et à connaître** : PostgREST **refuse un nom de configuration qualifié par
+un schéma** dans son filtre `plfts` — `plfts(app.francais_sans_accent)` rend `PGRST100`, le point
+étant son séparateur d'opérateur. La vue liste emploie donc le nom **non qualifié**, résolu par
+`PGRST_DB_EXTRA_SEARCH_PATH`, auquel `app` est ajouté **en queue** : `public` doit continuer de
+l'emporter sur l'homonyme `app.mail_template_variables`.
 
 **Le terme n'est jamais interpolé** : il est découpé sur toute suite de caractères non
 alphanumériques, chaque fragment reçoit `:*` — recherche par **préfixe** — et les fragments sont

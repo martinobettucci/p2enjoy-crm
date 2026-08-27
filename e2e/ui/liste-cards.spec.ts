@@ -615,6 +615,43 @@ test.describe('les données longues et la seconde page, contre la pile réelle',
 		await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
 	}
 
+	// LE PARCOURS QUE L'ARBITRAGE DE LA DÉCISION 532 §2 A RENDU POSSIBLE — INC-230 fermée.
+	//
+	// C'est la SEULE preuve qui éprouve l'écart de bout en bout, comme un utilisateur le vit :
+	// l'écran, sur la pile réelle, sans aucune substitution. Les preuves d'API mesurent la requête ;
+	// celle-ci mesure ce que la personne voit après avoir tapé un mot sans son accent.
+	//
+	// MESURÉ AVANT LA MIGRATION 0069 : cette recherche rendait l'état vide FILTRÉ, alors que
+	// « Audit sécurité applicative » était bien là, à l'écran, une ligne plus haut. C'est l'écart
+	// qu'INC-230 consignait — un utilisateur ne pouvait ni le prévoir, ni le comprendre.
+	test('un mot ACCENTUÉ se cherche SANS son accent, et la ligne apparaît (INC-230)', async ({
+		page,
+	}) => {
+		await page.setViewportSize({ width: 1440, height: 900 })
+		await connecter(page)
+		await page.goto('/tracks/conseil-ia/grands-comptes/liste')
+		await expect(page.getByTestId('tableau-liste')).toBeVisible()
+
+		// La frappe et la soumission sont celles d'un utilisateur : aucun paramètre posé dans
+		// l'adresse à la main, aucune requête fabriquée.
+		await page.getByTestId('filtre-recherche').fill('securite')
+		await page.getByTestId('valider-recherche').click()
+		await expect(page).toHaveURL(/q=securite/)
+
+		const lignes = page.getByTestId('ligne-card')
+		await expect(lignes).toHaveCount(1)
+		await expect(lignes.first()).toContainText('Audit sécurité applicative')
+
+		await capturer(page, 'liste-recherche-sans-accent-1440', 'CRM-042')
+
+		// L'AUTRE SENS DANS LE MÊME SCÉNARIO : une configuration qui trouverait le terme désaccentué
+		// mais plus le terme accentué aurait seulement déplacé le défaut (docs/SPEC-recherche.md §3.2).
+		await page.getByTestId('filtre-recherche').fill('sécurité')
+		await page.getByTestId('valider-recherche').click()
+		await expect(page.getByTestId('ligne-card')).toHaveCount(1)
+		await expect(page.getByTestId('ligne-card').first()).toContainText('Audit sécurité applicative')
+	})
+
 	test('une affaire au titre très long tient sur une ligne et ne fait pas défiler la page', async ({
 		page,
 	}) => {
