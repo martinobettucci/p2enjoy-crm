@@ -44,8 +44,12 @@ async function idDuMessage(page: Page, rfc822: string): Promise<string> {
 		{ headers: enTetesService() },
 	)
 	const [ligne] = (await reponse.json()) as { id: string }[]
+	// `expect` NE RÉTRÉCIT PAS LE TYPE, et le compilateur a raison de le dire : l'assertion garantit
+	// le message d'échec, jamais la forme de la valeur. Le repli est donc écrit — et il est une
+	// chaîne vide, qui fait échouer le scénario sur ce qu'il éprouve plutôt que sur un `undefined`
+	// glissé dans une adresse.
 	expect(ligne?.id, `le seed porte ${rfc822}`).toBeTruthy()
-	return ligne.id
+	return ligne?.id ?? ''
 }
 
 async function connecter(page: Page): Promise<void> {
