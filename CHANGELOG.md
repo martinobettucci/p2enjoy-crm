@@ -13,6 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-064` sous-tranche 3b — l'état vide du sélecteur de mentions est désormais éprouvé
+
+- **Aucun changement de comportement.** Le message « personne d'autre ne peut lire cette affaire »
+  existe depuis la livraison de la sous-tranche 3b ; ce qui manquait était la preuve qu'il paraît
+  vraiment à l'écran d'un utilisateur réel. Il n'était éprouvé que par la suite unitaire, aucune
+  affaire du jeu de démonstration ne laissant son lecteur seul.
+- **Le parcours l'éprouve maintenant sur une affaire réelle**, dans un espace de travail jetable
+  créé puis détruit par la preuve elle-même : le jeu de démonstration n'est ni étendu ni modifié.
+- Contrat écrit avant le code — `docs/SPEC-notifications.md` §50 —, et le point ouvert n° 4 du §39
+  est refermé.
+
 ### `CRM-064` tranche 4 — les préférences de notification (en cours)
 
 - **Chacun décide désormais de ce qu'il reçoit.** Une nouvelle section personnelle des réglages —

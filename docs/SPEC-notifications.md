@@ -2075,6 +2075,12 @@ personne, et une requête émise sur chaque ouverture d'écran serait gratuite s
   > elle, et elle a toujours au moins le `business_developer`. L'état vide est donc éprouvé par la
   > **suite unitaire** et non par le parcours d'interface. L'écart est nommé au point ouvert n° 5 du
   > §39 plutôt que comblé par une donnée fabriquée ;
+  >
+  > **RÉVISÉ LE 2026-08-27 — LA PREMIÈRE PHRASE RESTE VRAIE, LA CONCLUSION NE L'EST PLUS.** Aucune
+  > affaire du seed n'exerce cet état, et le seed n'est toujours pas étendu. Mais il n'était pas
+  > mesuré qu'un chemin déterministe **hors seed** puisse l'exercer : il le peut, et le §50 en écrit
+  > le contrat. Le parcours d'interface éprouve donc désormais l'état vide sur une affaire réelle,
+  > par la vraie API et la vraie session, sans qu'aucune donnée soit fabriquée dans le seed ;
 - **peuplé** : les cases, dans l'ordre rendu par la fonction.
 
 **Aucun rendu n'est prévu pour « la liste contient l'appelant »** : le §34.3 le rend impossible en
@@ -2140,11 +2146,14 @@ fabriquée.
 3. **Le fil ne montre pas qui un commentaire mentionne.** Les mentions sont lisibles par qui lit
    l'affaire (§7.1), mais la ligne du fil ne les rend pas. C'est la contrepartie du §33 : 3b livre
    l'émission, pas l'affichage rétrospectif.
-4. **L'état vide du sélecteur n'est pas exerçable sur le seed.** Aucun couple (affaire, lecteur)
-   n'y laisse l'appelant seul (§36.4, mesuré). Le rendre exerçable demanderait soit une affaire
-   dont même l'administratrice serait exclue — ce que son rôle interdit —, soit un quatrième profil
-   sans droits, c'est-à-dire une décision sur le jeu de démonstration qui dépasse cette
-   sous-tranche.
+4. **~~L'état vide du sélecteur n'est pas exerçable sur le seed.~~ TRANCHÉ LE 2026-08-27, ET LE
+   CONTRAT EST AU §50.** Le constat de départ tenait : aucun couple (affaire, lecteur) du seed ne
+   laisse l'appelant seul (§36.4, mesuré). Mais les deux issues envisagées ici — une affaire dont
+   l'administratrice serait exclue, ou un quatrième profil — n'étaient pas les seules : **une
+   troisième voie existe, et elle ne touche pas au jeu de démonstration.** Un second espace de
+   travail **jetable**, posé et détruit par la clé de service, laisse son unique membre seul lecteur
+   de sa propre affaire. Le seed n'est ni étendu ni modifié, et l'état vide est éprouvé par le
+   parcours d'interface sur une affaire réelle.
 5. **Les points ouverts du §29 restent ouverts sans changement** : rétention, regroupement, « tout
    marquer comme lu », préférences, notifications du navigateur, partage entre onglets.
 
@@ -2584,3 +2593,152 @@ seedée, puisque le geste éprouvé est celui de l'utilisateur.
 | E2E d'interface | Le parcours complet : couper depuis l'écran, **voir le compteur de la cloche tomber**, rétablir, **le voir revenir** ; le clavier de bout en bout ; console **vierge** |
 | Visuel | Captures aux quatre paliers, case cochée et décochée, cloche avant et après, **observées** conformément à `CLAUDE.md` §16 |
 | Harnais | `scripts/verify-preferences-notifications.sh`, non complaisant, éprouvé par dégradations réelles **des deux niveaux** — base et surface — et restauration constatée, la base **rendue** comme au §34.4 |
+
+---
+
+## 50. L'ÉTAT VIDE DU SÉLECTEUR EST EXERÇABLE — le point ouvert n° 4 du §39 est tranché
+
+*Écrit le 2026-08-27, **après mesure** sur la pile debout et seedée, avec les jetons réels obtenus
+par la véritable route de connexion. Toutes les sondes ont été **détruites**, et l'état du seed relu
+après : un espace de travail, cinq commentaires, deux mentions, deux notifications, aucune
+préférence — l'état exact du §48 bis.*
+
+Le §40 promettait « l'état vide » parmi les preuves d'interface de la sous-tranche 3b, et le §39
+point 4 l'a différé faute d'issue mesurée. Cette section livre l'issue et son contrat. Elle
+n'ajoute **aucune règle** au produit : `public.mentionnables`, sa politique et l'écran du §36 sont
+inchangés. Ce qui change est qu'une promesse de preuve, jusqu'ici tenue par la seule suite unitaire,
+devient un parcours réel.
+
+### 50.1 Les huit mesures, prises avant d'écrire
+
+| # | Ce qui a été mesuré | Résultat |
+|---|---|---|
+| **MA1** | Ligne de base — `rpc/mentionnables` sur `…0c5` avec le jeton de Driss | **Deux** lignes : Camille Aubert, Farida Nowak |
+| **MA2** | Combien d'espaces de travail, et combien d'appartenances pour Driss | **Un** espace (`p2enjoy`) ; **une** appartenance, `business_developer` |
+| **MA3** | Poser par la clé de service un SECOND espace et la chaîne complète d'une card — `workspaces`, `workspace_members`, `tracks`, `workflows`, `workflow_nodes_catalog`, `workflow_steps`, `channels`, `cards` | **Huit `201`**. Aucune politique n'est contournée : la clé de service est déjà le seul chemin de création d'un espace (`CRM-012`), et `e2e/api/preuves-refus.spec.ts` fait de même depuis `CRM-014` |
+| **MA4** | Driss, unique membre de ce second espace, lit-il sa card, et que rend `rpc/mentionnables` dessus ? | La card : **`200`, une ligne**. La liste : **`200 []`** |
+| **MA5** | L'administratrice du seed — **non** membre — lit-elle cette card ? | **`200 []`**. La sonde est invisible aux profils des autres suites |
+| **MA6** | L'écran, session réelle de Driss, sélecteur ouvert sur cette card | La liste rend « Personne d'autre ne peut lire cette affaire. », **zéro case à cocher**, **zéro bouton** dans le `fieldset` |
+| **MA7** | La sonde **laissée en base**, campagne `e2e:ui` complète | `e2e/ui/demarrage.spec.ts` § « un ESPACE DE TRAVAIL NEUF … » devient **ROUGE** : « la base doit être rendue à son unique workspace seedé (CRM-005) », deux espaces au lieu d'un |
+| **MA8** | L'état du dépôt après destruction de la sonde | Un espace, cinq commentaires, deux mentions, deux notifications, zéro préférence — identique à MA1 du §41 |
+
+### 50.2 La troisième voie, et pourquoi le §39 point 4 ne l'avait pas vue
+
+Le point 4 raisonnait **à l'intérieur du seed** : y créer l'état vide demandait soit d'exclure
+l'administratrice d'une affaire — ce que son rôle interdit —, soit d'ajouter un quatrième profil,
+donc de trancher le jeu de démonstration. Les deux conclusions sont justes.
+
+Ce qu'il ne considérait pas est qu'**une preuve n'est pas obligée de vivre dans le seed**.
+`CLAUDE.md` §15 le dit en toutes lettres : lorsqu'un comportement n'est pas directement observable,
+on crée un **chemin déterministe** — une donnée seedée, mais aussi un conteneur jetable ou un
+événement contrôlé. Le dépôt pratique déjà ce chemin : `CRM-014` fabrique et détruit un second
+espace pour la preuve de refus n° 3, `CRM-083` pose et détruit son propre tableau. La sous-tranche
+3b n'avait pas à inventer une convention, seulement à employer la sienne.
+
+**MA4 établit que l'état vide n'est pas un cas de repli mais une conséquence de la règle** : un
+espace à un seul membre laisse ce membre seul lecteur de ses affaires, et `app.can_read_card_pour`
+n'a plus personne à rendre. C'est l'état d'un compte réel le jour de son premier espace de travail —
+donc l'état que le §36.4 décrit depuis l'origine.
+
+### 50.3 Ce que la fixture pose, ligne à ligne
+
+Sept lignes et une appartenance, dans cet ordre — c'est celui des dépendances, et l'inverse pour la
+destruction :
+
+| Ordre | Table | Ce que la ligne porte |
+|---|---|---|
+| 1 | `workspaces` | l'espace jetable, `slug` préfixé, jamais celui du seed |
+| 2 | `workspace_members` | **Driss**, et lui seul, en `admin` de cet espace |
+| 3 | `tracks` | un track, `position` 1 |
+| 4 | `workflows` | un workflow vide de transitions : la card ne bouge pas |
+| 5 | `workflow_nodes_catalog` | le nœud que l'étape exige |
+| 6 | `workflow_steps` | l'étape initiale, `is_initial` |
+| 7 | `channels` | le channel, qui porte le workflow |
+| 8 | `cards` | l'affaire, dont Driss sera le seul lecteur |
+
+**Aucune ligne n'est posée dans l'espace du seed**, et c'est la propriété qui rend la fixture sûre :
+MA5 mesure que les profils des autres suites ne voient rien de cet espace. Une fixture qui poserait
+une card dans `p2enjoy` changerait les comptes que douze suites figent.
+
+### 50.4 LE MEMBRE UNIQUE EST DRISS, ET CE N'EST PAS INDIFFÉRENT
+
+Trois raisons, dont deux mesurées.
+
+1. **Un profil du seed, jamais un quatrième compte.** Créer un compte demanderait `auth.users`,
+   donc l'API d'administration, donc un mot de passe et une identité qui survivraient à l'échec du
+   scénario. Réemployer un profil existant ne laisse rien derrière lui qu'un `DELETE` ne défasse.
+2. **Pas l'administratrice, et c'est MA5 qui le dit.** Camille est déjà l'appelante de tous les
+   autres scénarios du fichier ; lui ajouter une seconde appartenance ferait varier ce que sa barre
+   latérale rend pendant que d'autres scénarios l'observent.
+3. **`admin` de l'espace jetable, et non `viewer`.** Le rôle décide de ce que Driss peut faire, pas
+   de ce qu'il peut **lire** : l'état vide vient de l'absence d'autres membres, jamais du rôle. Le
+   rôle `admin` est retenu parce qu'un espace sans administrateur est un état que
+   `last_workspace_admin` (`CRM-022`) refuse, et fabriquer une donnée que la base refuserait par
+   ailleurs serait fabriquer un cas impossible.
+
+### 50.5 LA DESTRUCTION EST UN CONTRAT, ET MA7 LE MESURE
+
+Elle n'est pas de l'hygiène : laissée en place, la sonde rend **une preuve d'une autre unité
+rouge**. `e2e/ui/demarrage.spec.ts` (`CRM-079`) assère que la base ne porte qu'un espace, et cette
+assertion est juste — elle protège l'écran du premier lancement, dont tout le sens est de n'avoir
+rien à montrer.
+
+Conséquences, et elles sont opposables :
+
+- la chaîne est détruite dans un `finally`, **même si le scénario échoue** ;
+- la destruction suit l'ordre inverse des dépendances, `workspace_members` partant en cascade avec
+  l'espace ;
+- le scénario **constate** l'état rendu au lieu de le supposer : un seul espace en base après son
+  passage, relu par la clé de service. Une restauration supposée n'est pas une restauration
+  (`docs/SPEC-test-harness.md` §7.2) ;
+- les identifiants sont **fixes et préfixés** — `e0640000-…` —, de sorte qu'une exécution
+  interrompue au pire moment laisse une trace reconnaissable, que l'exécution suivante écrase au
+  lieu de dupliquer.
+
+### 50.6 Ce que le parcours d'interface éprouve, et ce qu'il ne suppose pas
+
+Sur session réelle de Driss, obtenue par le formulaire de connexion :
+
+| # | Ce qui est éprouvé | Pourquoi ce n'est pas redondant |
+|---|---|---|
+| a | La fiche de l'affaire jetable s'ouvre, titre rendu | Sans elle, un échec de route se lirait comme un état vide |
+| b | Le sélecteur, une fois ouvert, rend le message de l'état vide | C'est la promesse du §36.4, jusqu'ici jamais rendue à l'écran |
+| c | **Zéro case à cocher** dans le `fieldset` | Un message rendu au-dessus d'une liste peuplée passerait `b` |
+| d | **Zéro bouton** dans le `fieldset` | Le §36.4 exige « sans action » : l'état vide n'est pas une erreur, il n'offre donc **pas** la reprise du §5.8 |
+| e | La commande porte « Mentionner », **sans compte** | Le §36.5 dérive le compte des cases cochées ; à zéro case, il n'y a rien à compter |
+| f | Le composeur reste publiable | Le §36.6 : mentionner est facultatif, et l'être seul ne ferme pas le fil |
+| g | Console **vierge** | `200 []` est un état normal, pas un refus : rien ne doit atteindre la console |
+| h | Une capture, **observée** | `CLAUDE.md` §16 ; le §40 promet « liste peuplée et liste vide » |
+
+**Ce que le parcours ne fait pas** : il n'écrit aucun commentaire, ne pose aucune mention et ne
+touche à aucune notification. L'état vide est un état de **lecture** ; y publier n'éprouverait rien
+de plus et rendrait la restauration plus fragile.
+
+### 50.7 La ligne de contrat d'API que cette section ajoute
+
+Une seule, et elle **fige MA4** — la mesure sans laquelle le parcours d'interface ne prouverait pas
+d'où vient le vide :
+
+| Ligne | Appelant | Requête | Attendu |
+|---|---|---|---|
+| *ag* | Driss, unique membre d'un espace jetable | `POST /rest/v1/rpc/mentionnables` sur la card de cet espace | **`200`** et **`[]`** — jamais une erreur, jamais un refus. Le §34.2 le disait ; aucune donnée ne l'avait encore montré |
+
+Elle vit dans `e2e/api/mentions-composeur.spec.ts`, à côté des dix lignes du §37, et emploie la même
+fixture jetable que le parcours d'interface.
+
+### 50.8 Ce que cette section ne fait PAS
+
+- **Elle n'étend pas le seed**, et le §38 reste vrai mot pour mot : rien de neuf n'y est posé.
+- **Elle ne crée aucun profil**, ni compte, ni identité : le §50.4 en donne le motif.
+- **Elle n'ouvre aucune politique et n'écrit aucune migration.** Le contrat backend de la
+  sous-tranche 3b est inchangé.
+- **Elle ne referme pas les points 1, 2, 3 et 5 du §39**, qui restent ouverts sans changement.
+
+### 50.9 Preuves attendues
+
+| Niveau | Preuves |
+|---|---|
+| API | La ligne *ag* du §50.7, sur la fixture jetable, avec la ligne de base MA1 rejouée dans le même scénario — sans quoi `[]` ne distinguerait pas « personne n'est éligible » de « la fonction ne rend jamais rien » |
+| E2E d'interface | Les huit points *a* à *h* du §50.6, sur session réelle, sans aucune substitution réseau |
+| Visuel | Une capture de la liste **vide**, produite **et observée** (`CLAUDE.md` §16), qui complète les captures de liste peuplée du §40 |
+| Non-régression | `e2e/ui/demarrage.spec.ts` vert **après** le passage — c'est MA7 retournée en preuve —, et l'état du seed relu par la clé de service |
