@@ -10019,10 +10019,16 @@ familles** — l'écart du message, dernier de la liste, est comblé.
 la série ne tient pas dans une session). C'est le motif, et le seul, pour lequel l'unité reste
 `[~]` : le §3.1 l'exige plutôt que de laisser passer un `[x]` complaisant.
 
-Ont été rejoués et sont **verts** : `verify-recherche.sh` (**56 contrôles, aucune anomalie**, rejoué
-SEUL — voir la note de contention ci-dessous), `verify-harness.sh --rapide` (**31 contrôles, aucune
-anomalie**, verdict RELEVÉ, compteur `SCENARIOS_UI` à 690 validé), et les trois harnais que la
-sous-tranche 2c touche. **Restent à exécuter : les autres harnais de la série.**
+Ont été rejoués et sont **verts**, verdicts RELEVÉS : `verify-recherche.sh` (**56 contrôles, aucune
+anomalie**, rejoué SEUL — voir la note de contention ci-dessous), `verify-harness.sh --rapide`
+(**31 contrôles, aucune anomalie**, compteur `SCENARIOS_UI` à 690 validé) et `verify-mail-inbox.sh`
+(**45 contrôles, aucune anomalie**).
+
+**`verify-webapp.sh` ET `verify-manual.sh` ONT ÉTÉ LANCÉS PUIS INTERROMPUS** par un redémarrage du
+conteneur de la session planifiée : **leur verdict n'a pas été relevé**, et il n'est donc ni vert ni
+rouge. Les captures qu'ils avaient commencé à réécrire ont été restaurées — une capture d'exécution
+partielle ne représente aucun état exécuté complet. **Restent à exécuter : ces deux harnais, et les
+soixante-douze autres de la série.**
 
 **UNE LEÇON DE MÉTHODE, MESURÉE LE 2026-08-27 ET QUI VAUT POUR LA SÉRIE ENTIÈRE.**
 `verify-recherche.sh` lancé **pendant** la campagne d'interface rend **2 anomalies**, dont une

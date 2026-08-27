@@ -26196,3 +26196,10 @@ première unité du plan portant du **comportement** à livrer, ce qui prime (§
 son arbitrage — la recherche locale de la vue liste emploie toujours `french` et garde un second
 vocabulaire. **INC-231**, **INC-232** et **INC-233** restent au registre sans demander d'arbitrage.
 Aucune entrée nouvelle n'est ouverte par cette session.
+
+**TROIS HARNAIS DE PLUS ONT ÉTÉ LANCÉS, ET DEUX ONT ÉTÉ INTERROMPUS — DIT PLUTÔT QUE TU.**
+`verify-mail-inbox.sh` rend **45 contrôles, aucune anomalie**, verdict relevé. `verify-webapp.sh` et
+`verify-manual.sh`, lancés derrière lui, ont été coupés par un **redémarrage du conteneur** de la
+session : leur verdict n'a pas été relevé, et il n'est donc **ni vert ni rouge**. Les 94 captures
+qu'ils avaient commencé à réécrire sont restaurées — une capture d'exécution partielle ne représente
+aucun état exécuté complet, et la garder ferait passer un instantané tronqué pour une preuve.
