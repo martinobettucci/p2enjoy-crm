@@ -9161,7 +9161,7 @@ avant la suivante :
 | 1 | La mention en base — relation, intégrité, règle d'éligibilité, RLS, contrat d'API, seed, harnais. Aucune surface | en cours |
 | 2 | La notification — table `public.notifications`, production à partir d'une mention, état lu / non lu | **livrée** |
 | 3 | La surface et le temps réel — composeur, liste, compteur, abonnement. **Découpée en deux sous-tranches** (spécification §22.1) : `3a` la réception, `3b` l'émission | `3a` **close** ; `3b` `[~]` |
-| 4 | Les préférences — ce que chacun reçoit, et par quel canal | `[ ]` |
+| 4 | Les préférences — ce que chacun reçoit, et par quel canal | **livrée**, `[~]` |
 
 - [x] **Spécification écrite et committée AVANT la première ligne de code** —
       `docs/SPEC-notifications.md`, onze chapitres, fondés sur **neuf mesures** prises le
@@ -9452,10 +9452,11 @@ avant la suivante :
       (43 contrôles, sept dégradations mordantes).
 
 - [~] **CE QUI RETIENT L'UNITÉ EN `[~]`, ET C'EST NOMMÉ PLUTÔT QUE MASQUÉ.** Les tranches **1 et
-      2 sont closes**, et la sous-tranche **3a l'est aussi**. Ce qui reste : la sous-tranche **3b**
-      — le composeur qui pose une mention — est **en cours** (voir sa section ci-dessous) ; et la
-      **tranche 4** — les préférences — n'est pas commencée. `docs/manual.md` porte désormais son chapitre 8, et son §8.5 nomme les six
-      absences.
+      2 sont closes**, la sous-tranche **3a l'est aussi**, et depuis le 2026-08-27 les **quatre
+      tranches sont codées** : `3b` (l'émission) et `4` (les préférences) sont **livrées** et
+      restent `[~]` pour des écarts de PREUVE, non de comportement — voir leurs sections
+      ci-dessous. `docs/manual.md` porte son chapitre 8, dont le §8.6 sur les préférences, et son
+      §8.7 nomme ce qui manque encore.
 - [ ] **La série des `scripts/verify-*.sh` n'a PAS été rejouée derrière ces changements**, et
       l'écart est nommé (`docs/CloudWorker.md` §4.3, budget) : le dépôt en porte **soixante-treize**
       depuis la tranche 2, et **deux** l'ont été — `verify-mentions.sh` à la tranche 1,
@@ -9553,6 +9554,118 @@ avant la suivante :
       du sélecteur n'est pas exerçable sur le seed** (§36.4, mesuré — aucun couple affaire/lecteur
       n'y laisse l'appelant seul). Il est éprouvé par la suite unitaire, jamais par le parcours
       d'interface, et l'écart est porté par le point ouvert n° 4 du §39.
+
+#### Tranche 4 — les préférences `[~]`
+
+- [x] **Spécification écrite et committée AVANT la première ligne de code** —
+      `docs/SPEC-notifications.md` §41 à §49 et `docs/DESIGN_SYSTEM.md` §5.45, fondés sur **treize
+      mesures** prises le 2026-08-27 sur la pile réelle, seed appliqué, avec les jetons des trois
+      profils. Toutes les sondes qui écrivent ont été **détruites**, et l'état du seed **relu
+      après** : cinq commentaires, deux mentions, deux notifications, aucun objet `sonde_*`
+      résiduel.
+- [x] **LE POINT OUVERT N° 3 DU §18 EST TRANCHÉ : LE FILTRAGE EST À LA LECTURE, PAS À LA
+      PRODUCTION** (§44). Trois des quatre raisons sont mesurées. La production « ne juge rien » et
+      le §14.6 en fait une propriété — lui faire lire une préférence en ferait un juge
+      `SECURITY DEFINER` qui décide en silence de ne pas écrire une ligne, la forme la plus
+      difficile à diagnostiquer. Une décision **révocable ne doit pas détruire** : M8 mesure la
+      liste vide, le compteur nul, **et la ligne toujours en base**. Et la règle n'a qu'**une seule
+      écriture pour trois surfaces** — liste, compteur et temps réel lisent la même politique.
+- [x] **UNE TABLE, ET NON UNE COLONNE DE `profiles`, ET M7 LE DÉCIDE** (§43.1). Mesuré par la vraie
+      route : Driss lit **les trois** profils, `locale` comprise. `profiles_lecture_equipe` ouvre la
+      ligne entière à toute l'équipe ; une colonne posée là **publierait** qu'une personne a coupé
+      ses notifications. La table séparée rend son **existence même** inobservable par un tiers.
+- [x] **« ET PAR QUEL CANAL » : IL N'Y EN A QU'UN, ET C'EST MESURÉ** (§42.1). Le §8 de
+      `docs/SCHEMA.md` promettait « in-app, email immédiat, digest » ; deux de ces trois n'existent
+      pas, et le §13.1 l'écrivait déjà. Une case « par email » serait une **commande morte** et une
+      promesse fausse ; une colonne `channel` à une seule valeur ne garderait rien — l'argument du
+      §13.3 ne vaut que pour `type`. **La ligne du §8 est RÉVISÉE** pour dire ce que la table fait.
+- [x] **L'ABSENCE DE LIGNE VAUT CONSENTEMENT** (§43.4). Le défaut est « je reçois », porté par un
+      `coalesce` **explicite**. La tranche est donc déployable sur une base existante **sans
+      migration de rattrapage**, et un compte créé demain reçoit sans qu'aucun code n'agisse. Le
+      seed ne pose **aucune** préférence, et c'est une décision (§48 bis) : trois lignes à vrai
+      seraient trois lignes qui ne changent rien.
+- [x] **Migration `0067` LIVRÉE** : `public.notification_preferences` — clé primaire **naturelle**
+      `(profile_id, type)`, `check` fermé sur `'mention'`, clé étrangère `CASCADE`, trigger de date,
+      **unique** politique de lecture, aucun privilège d'écriture ; `app.notification_consentie`
+      (`stable`, `security invoker`) ; `public.definir_preference_notification` (`security
+      definer`), et la **troisième condition** de `notifications_lecture`. Appliquée et **rejouée**
+      sur la pile réelle : **67 fichiers, code 0**.
+- [x] **LA CONTRAINTE EST ÉCRITE SOUS SA FORME NORMALISÉE, et c'est mesuré.** Écrite
+      `type in ('mention')`, le moteur la réécrit `type = 'mention'::text` : la convergence
+      comparerait deux textes différents et **détruirait puis reposerait la contrainte à chaque
+      rejeu**, en prenant un verrou `ACCESS EXCLUSIVE` pour ne rien changer.
+- [x] **LA FORME DE L'ÉCRITURE EST DÉCIDÉE PAR UNE MESURE, ET ELLE CONTREDIT LE RÉFLEXE** (§46.3,
+      M10). L'`upsert` PostgREST rend **`403` / `42501`** dès que les colonnes sont figées par un
+      privilège de colonne — PostgREST exige l'`UPDATE` **de table** pour un `on conflict do
+      update`. Ouvrir cet `UPDATE` défairait ce que le privilège protégeait ; deux appels coûtent
+      un `409` à interpréter comme un succès conditionnel. La **RPC** `SECURITY DEFINER` est la
+      troisième voie, précédent de `snooze_thread`, et M11 la mesure : `200` deux fois de suite sur
+      la même clé, en un seul aller-retour.
+- [x] **LE DESTINATAIRE N'EST PAS UN PARAMÈTRE**, si bien qu'écrire pour autrui est **impossible**
+      plutôt que **refusé** : il n'y a pas de champ pour le dire. La barrière est celle d'avant la
+      politique, et elle ne dépend d'aucune politique.
+- [x] **Module `preferences-notifications.ts` et écran `/reglages/notifications` LIVRÉS** —
+      `docs/DESIGN_SYSTEM.md` §5.45. **Première section PERSONNELLE de `/reglages`**, placée en
+      dernier parce que toutes les autres administrent l'instance ; ouverte aux **trois** profils,
+      et aucun rôle n'est lu. Le libellé dit ce qu'on **reçoit**, jamais ce qu'on coupe. Écriture
+      immédiate sans bouton « Enregistrer » (§5.7 ter), contrôle **jamais désactivé**, case cochée
+      seulement **après** la réponse, avec la ligne que la RPC rend.
+- [x] **Suite pgTAP dédiée** : `supabase/tests/0064_preferences_notifications.test.sql`, **24
+      assertions**. La plus importante est la 11, et elle est la **seule** qui puisse voir ce
+      défaut : sans le `coalesce` explicite, une préférence absente rendrait `NULL`, qui se
+      comporte comme **faux** dans une politique — l'absence de décision **couperait tout**, et le
+      seed ne posant aucune préférence, aucune preuve d'API ne le verrait.
+- [x] **Contrat d'API dédié** : `e2e/api/preferences-notifications.spec.ts`, **12 scénarios verts**
+      avec les jetons réels, chaque refus **relu en base** avec la clé de service, et l'état du
+      seed **constaté** après. L'assertion centrale est celle qui distingue cette tranche de celle
+      qu'on n'a pas écrite : après une coupure, la liste est vide, le compteur rend `*/0`, **et la
+      ligne est toujours là**.
+- [x] **E2E d'interface** : `e2e/ui/preferences-notifications.spec.ts`, **11 scénarios verts**,
+      console vierge. Il ferme la chaîne que ni la suite unitaire ni le contrat ne ferment :
+      décocher dans les réglages, puis **voir le compteur de l'en-tête disparaître**.
+- [x] **LE PARCOURS D'INTERFACE A TROUVÉ UN DÉFAUT DU PRODUIT, ET IL EST CORRIGÉ À LA CAUSE.** La
+      cloche ne se mettait pas à jour : elle n'écoute que les `postgres_changes` de
+      `notifications`, or une préférence ne touche **aucune ligne** de cette table. Le §44
+      promettait que couper masque la liste, le compteur et le temps réel « d'un coup » : c'était
+      vrai en base et **faux à l'écran**. `relireBoiteNotifications()` porte le fait qu'un
+      changement d'**ensemble lisible** n'a pas d'autre porteur — ni temporisation, ni publication
+      de la table au temps réel, que le §46.4 refuse.
+- [x] **LA SUITE E2E ÉTAIT VERTE SCÉNARIO PAR SCÉNARIO ET ROUGE EN SÉRIE.** Un premier échec
+      laissait la préférence à faux, et les suivants mesuraient une cloche vide sans cause visible.
+      Un `beforeEach` rend la table à l'état d'un compte neuf **par la clé de service** — le
+      `DELETE` étant refusé à tout client, un navigateur ne **peut pas** rendre cet état.
+      Contre-épreuve faite : la série part verte d'un état délibérément empoisonné.
+- [x] **DEUX DÉFAUTS TROUVÉS EN REGARDANT L'IMAGE** (`CLAUDE.md` §16), qu'aucun test ne pouvait
+      voir. La capture au palier `xl` montrait la barre latérale **à mi-chemin** de son dépliage et
+      celle à 390 px du texte coupé : la boucle redimensionnait une page **déjà rendue**. La fenêtre
+      est posée **avant** la navigation — la transition est supprimée, pas attendue. Et l'écran ne
+      rendait que **deux des trois mentions** du §5.7 ter, la confirmation « Enregistré » ne vivant
+      que dans la région vive. **Huit captures observées** aux quatre paliers, dans les deux états,
+      sous `docs/captures/CRM-064/`.
+- [x] **Harnais dédié `scripts/verify-preferences-notifications.sh`** : **62 contrôles, aucune
+      anomalie**, **neuf dégradations** qui mordent toutes. La première est sans équivalent : elle
+      retire le `coalesce` sans rien casser en apparence — fonction, politique, table et privilèges
+      restent debout — et le produit cesse de notifier qui que ce soit. La seconde retire la
+      troisième condition de la politique : la case se coche et se décoche, et la préférence ne
+      fait plus **rien**.
+- [x] **LE HARNAIS A DÉNONCÉ MES PROPRES PREUVES, ET IL AVAIT RAISON, TROIS FOIS.** Sa dégradation
+      de l'appel qui prévient la cloche laissait les suites unitaires **vertes** — le défaut serait
+      revenu sans qu'aucune suite rapide ne le prenne. Il s'est pris lui-même au **piège de la
+      sous-tranche 3b**, un contrôle écrit sur le mot `channel` nu rougissant sur le commentaire
+      qui explique précisément qu'une telle colonne ne garderait rien. Et il laissait une
+      notification **lue** derrière lui : **une preuve n'est self-restauratrice que tant que le
+      produit est juste**, et c'est au harnais, qui le casse exprès, de rendre l'état.
+- [x] **UNE ASSERTION FIGÉE DU DÉPÔT RÉVISÉE, JAMAIS RETIRÉE** (mécanisme de la décision 51) : le
+      compteur de politiques de `public` de `0016_preuves_refus.test.sql` passe de 121 à **122**,
+      avec son motif écrit dans le fichier.
+- [x] **Documentation dans le même changement** : `docs/SPEC-notifications.md` §41 à §49,
+      `docs/DESIGN_SYSTEM.md` §5.45, `docs/manual.md` §8.6 et §8.7, `docs/SCHEMA.md` §8 — dont la
+      ligne des trois canaux, révisée —, `docs/PROD_MIGRATIONS.md` migration 67, `CHANGELOG.md`
+      sous `[Non publié]`.
+- [~] **CE QUI RETIENT LA TRANCHE EN `[~]`, ET C'EST NOMMÉ PLUTÔT QUE MASQUÉ** : la série des
+      `scripts/verify-*.sh` n'a **pas** été rejouée en entier derrière ces changements — seul
+      `verify-preferences-notifications.sh` l'a été (`docs/CloudWorker.md` §4.3, budget). Le dépôt
+      en porte plus de soixante-dix, et la série entière ne tient pas dans une session.
 
 ---
 ### CRM-070 — précision d'arbitrage : l'invitation d'un membre

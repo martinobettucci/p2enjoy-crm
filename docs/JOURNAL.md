@@ -25671,3 +25671,110 @@ périmètre.
 **La question posée au responsable reste la même, et une seule** : les unités **`CRM-072`**
 (`audit_log`) et **`CRM-073`** (`api_tokens`) n'existent pas, onze unités leur renvoient, et leur
 périmètre est un choix produit qu'aucune mesure ne donne.
+
+---
+
+## décision 527 — `CRM-064` tranche 4 livrée : la préférence filtre À LA LECTURE, et quatre preuves ont trouvé quatre défauts réels
+
+*2026-08-27, session planifiée `CloudWorker`. Unité : `CRM-064`, tranche 4 — les préférences. La
+spécification a été écrite et **committée avant la première ligne de code** (`CLAUDE.md` §5) :
+`docs/SPEC-notifications.md` §41 à §49 et `docs/DESIGN_SYSTEM.md` §5.45, fondés sur **treize
+mesures** prises sur la pile debout et seedée, sondes détruites et état du seed relu après.*
+
+**LE §18, POINT 3, POSAIT LA QUESTION SANS LA TRANCHER** : une préférence filtre-t-elle **à la
+production** ou **à la lecture** ? La réponse est **à la lecture**, et trois des quatre raisons sont
+mesurées. La production « ne juge rien », et le §14.6 en fait une propriété : lui faire lire une
+préférence en ferait un juge `SECURITY DEFINER` qui décide en silence de ne pas écrire une ligne —
+la forme la plus difficile à diagnostiquer, rien ne distinguant « la préférence a filtré » de « le
+trigger a échoué ». Surtout, **une décision révocable ne doit pas détruire** : M8 mesure des deux
+côtés que la liste de Driss est vide, son compteur nul, **et sa ligne toujours en base**. Enfin la
+règle n'a qu'**une seule écriture pour trois surfaces** — liste, compteur et temps réel lisent tous
+`notifications` sous la même politique.
+
+**LA FORME DE L'ÉCRITURE A ÉTÉ DÉCIDÉE PAR UNE MESURE, ET ELLE CONTREDIT LE RÉFLEXE** (M10). Une
+préférence se pose sans savoir si elle existe déjà : l'`upsert` PostgREST est la forme évidente.
+Elle rend **`403` / `42501`** dès que les colonnes sont figées par un privilège de colonne —
+PostgREST exige l'`UPDATE` **de table** pour un `on conflict do update`. Ouvrir cet `UPDATE`
+défairait exactement ce que le privilège protégeait ; écrire en deux appels coûte un `409` à
+interpréter comme un succès conditionnel. La RPC `SECURITY DEFINER` est la troisième voie, et le
+dépôt la pratique déjà (`snooze_thread`). **Le destinataire n'y est pas un paramètre** : écrire pour
+autrui est *impossible* plutôt que *refusé*.
+
+**UNE TABLE, ET NON UNE COLONNE DE `profiles`, ET C'EST M7 QUI L'A DÉCIDÉ.** Le réflexe est de poser
+un booléen à côté de `profiles.locale`, qui est déjà une préférence personnelle. Mesuré par la vraie
+route : Driss lit **les trois** profils, `locale` comprise — `profiles_lecture_equipe` ouvre la ligne
+entière à toute l'équipe. Une colonne posée là **publierait à tout le monde** qu'une personne a coupé
+ses notifications.
+
+**« ET PAR QUEL CANAL » : IL N'Y EN A QU'UN, ET LE §8 DE `docs/SCHEMA.md` EST RÉVISÉ.** Il promettait
+« in-app, email immédiat, digest » ; deux de ces trois n'existent pas, et le §13.1 l'écrivait déjà.
+Une case « recevoir par email » serait une **commande morte** et une promesse fausse. Une colonne
+`channel` à une seule valeur ne garderait rien non plus — l'argument du §13.3 ne vaut que pour
+`type`, qui est une garde contre un type inventé.
+
+**QUATRE PREUVES ONT TROUVÉ QUATRE DÉFAUTS RÉELS, ET C'EST LE FAIT LE PLUS UTILE DE LA SESSION.**
+
+**1. Le parcours d'interface a trouvé un défaut du PRODUIT.** La cloche ne se mettait pas à jour :
+elle n'écoute que les `postgres_changes` de `notifications`, or une préférence ne touche **aucune
+ligne** de cette table — elle change ce que la **politique** laisse voir. Le §44 promettait que
+couper masque la liste, le compteur et le temps réel « d'un coup » : c'était vrai en base et **faux à
+l'écran**, jusqu'au rechargement de la page. Corrigé **à la cause** : `relireBoiteNotifications()`
+porte le fait qu'un changement d'**ensemble lisible** n'a pas d'autre porteur. Ni temporisation, ni
+publication de `notification_preferences` au temps réel — que le §46.4 refuse. L'écran des réglages
+ne connaît pas la cloche : il dit que l'ensemble a changé, qui écoute relit.
+
+**2. La suite E2E était verte scénario par scénario et ROUGE en série.** Un premier échec laissait la
+préférence à faux, et les scénarios suivants mesuraient une cloche vide sans que rien ne dise
+pourquoi. Une preuve dont l'état de départ dépend de l'issue de la précédente ne part pas d'un état
+déterministe. Un `beforeEach` rend la table à l'état d'un compte neuf **par la clé de service** — le
+`DELETE` étant refusé à tout client, un navigateur ne **peut pas** rendre cet état. Contre-épreuve
+faite : la série part verte d'un état délibérément empoisonné.
+
+**3. DEUX DÉFAUTS TROUVÉS EN REGARDANT L'IMAGE** (`CLAUDE.md` §16), et aucun test ne pouvait les
+voir. La capture au palier `xl` montrait la barre latérale **à mi-chemin** de son dépliage, celle à
+390 px du texte coupé : la boucle redimensionnait une page **déjà rendue**. La fenêtre est désormais
+posée **avant** la navigation — la transition est supprimée, pas attendue. Et l'écran ne rendait que
+**deux des trois mentions** du §5.7 ter : la confirmation « Enregistré » ne vivait que dans la région
+vive, donc invisible. Aucun test de comportement ne l'aurait vue, la case changeant d'état de toute
+façon.
+
+**4. LE HARNAIS A DÉNONCÉ MES PROPRES PREUVES, ET IL AVAIT RAISON.** Sa dégradation qui retire
+l'appel prévenant la cloche laissait les suites unitaires **vertes** : seul le parcours E2E le
+voyait, et le défaut serait revenu sans qu'aucune suite rapide ne le prenne. Une assertion espionne
+désormais l'appel, et vérifie qu'il n'a **pas** lieu après un refus. Le harnais s'est aussi pris
+lui-même au **piège de la sous-tranche 3b** — un contrôle écrit sur le mot `channel` nu rougissait
+sur le commentaire expliquant précisément qu'une telle colonne ne garderait rien. Et il laissait une
+notification **lue** derrière lui : le contrat d'API éprouve qu'une notification masquée ne peut pas
+être marquée lue, or sous une politique dégradée ce `PATCH` aboutit pour de bon. **Une preuve n'est
+self-restauratrice que tant que le produit est juste** — c'est au harnais, qui casse le produit
+exprès, de rendre l'état, et à la preuve de ne pas supposer ce qu'elle mesure.
+
+**LA CONSÉQUENCE QUE M9 MESURE EST FIGÉE PLUTÔT QUE DÉCOUVERTE PLUS TARD** : une notification masquée
+**ne peut plus être marquée lue** — `204` et zéro ligne touchée, PostgREST écrivant son `UPDATE` avec
+`RETURNING` que la politique `SELECT` filtre. Ce n'est pas une anomalie : c'est la forme de refus que
+la Definition of Done de `CRM-064` exige, « zéro ligne et non une erreur ».
+
+**UNE ASSERTION FIGÉE DU DÉPÔT A ÉTÉ RÉVISÉE PAR LA LIVRAISON, jamais retirée** (mécanisme de la
+décision 51) : le compteur de politiques de `public` de `0016_preuves_refus.test.sql` passe de 121 à
+**122**, et son motif est écrit dans le fichier — l'unique politique de `notification_preferences` est
+le refus double le plus complet de la série.
+
+**CAMPAGNE.** `typecheck`, `types:check` et `build` verts ; `test:sql` **64 fichiers / 2975
+assertions** ; `test:unit` **83 fichiers / 2769 tests** ; `e2e:api` **996 passés** (984 avant, plus
+les 12 de la tranche) ; `e2e:mail` **42 passés** ; `pytest` **244 passés** ;
+`scripts/verify-preferences-notifications.sh` **62 contrôles, aucune anomalie**, neuf dégradations
+toutes mordantes. `e2e:ui` : voir le compte rendu de session.
+
+**Où reprendre.** `CRM-064` **tranche 4 livrée**. Les quatre tranches de l'unité sont désormais
+codées ; ce qui la retient en `[~]` est nommé au backlog, et se réduit à des écarts de preuve, non
+de comportement : l'état vide du sélecteur de mentions (§39, point 4) n'est pas exerçable sur le
+seed, et la série des `verify-*.sh` n'a pas été rejouée en entier.
+
+**Les points ouverts que la tranche 4 lègue** (§48) : la **rétention** devient pressante — les
+notifications d'une personne qui a coupé s'accumulent sans être lues —, il n'y a **aucune préférence
+par espace de travail**, et le **regroupement**, « tout marquer comme lu », les notifications du
+navigateur et le partage entre onglets restent ouverts sans changement.
+
+**La question posée au responsable reste la même, et une seule** : les unités **`CRM-072`**
+(`audit_log`) et **`CRM-073`** (`api_tokens`) n'existent pas, onze unités leur renvoient, et leur
+périmètre est un choix produit qu'aucune mesure ne donne.
