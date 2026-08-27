@@ -4,6 +4,8 @@
 //           n'est lue qu'à l'ouverture), §36.4 (les quatre états), §36.5 (le compte),
 //           §35.2 (une requête par personne), §35.3 (le commentaire publié n'est jamais retiré),
 //           §35.4 (les trois issues), §5.1 (l'éligibilité), §40
+// @verifies docs/SPEC-notifications.md §50 (l'état vide du sélecteur, tranché), §50.5 (la
+//           destruction est un contrat), §50.6 (les huit points du parcours)
 // @verifies docs/DESIGN_SYSTEM.md §5.44 (cette surface), §7 (les quatre paliers), §8 (clavier) ;
 //           CLAUDE.md §16 (vérification visuelle)
 //
@@ -28,6 +30,12 @@ import {
 	type Page,
 } from './fixtures'
 import { CLE_SERVICE, MOT_DE_PASSE_SEED, URL_API } from '../api/jetons'
+import {
+	ADRESSE_CARD_SOLITAIRE,
+	ESPACE_SOLITAIRE,
+	demonterEspaceSolitaire,
+	monterEspaceSolitaire,
+} from '../api/espace-solitaire'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-064'
@@ -103,6 +111,75 @@ test.describe('Le sélecteur n’offre que des personnes éligibles (§5.1, §36
 		// sinon, qui son commentaire mentionne.
 		await expect(page.getByRole('checkbox', { name: FARIDA_NOM })).toHaveCount(0)
 		await expect(page.getByRole('button', { name: 'Mentionner (1)' })).toBeVisible()
+	})
+})
+
+test.describe('L’ÉTAT VIDE : seul lecteur de son affaire (§36.4, §50)', () => {
+	// CE QUE CE BLOC AJOUTE, ET POURQUOI IL N'EXISTAIT PAS. Le §36.4 décrit quatre états du
+	// sélecteur ; trois étaient éprouvés à l'écran, le quatrième ne l'était que par la suite
+	// unitaire — aucune affaire du seed ne laisse son lecteur seul, l'administratrice les lisant
+	// toutes. Le §39 point 4 nommait l'écart ; le §50 le referme par un chemin déterministe
+	// (`CLAUDE.md` §15) plutôt qu'en étendant le jeu de démonstration.
+	//
+	// LE MONTAGE ET LE DÉMONTAGE ENCADRENT CHAQUE SCÉNARIO, et ce n'est pas de l'hygiène : laissé
+	// en base, l'espace jetable rend ROUGE `e2e/ui/demarrage.spec.ts`, qui assère à juste titre que
+	// la base ne porte qu'un espace (§50.5, mesuré). Le démontage constate l'état rendu.
+	test.beforeEach(async ({ page }) => {
+		await monterEspaceSolitaire(page.request)
+	})
+
+	test.afterEach(async ({ page }) => {
+		await demonterEspaceSolitaire(page.request)
+	})
+
+	test('le sélecteur dit que personne d’autre ne lit l’affaire, et n’offre AUCUNE action', async ({
+		page,
+	}) => {
+		await connecter(page, BIZDEV)
+		await page.goto(ADRESSE_CARD_SOLITAIRE)
+
+		// *a* — LA FICHE S'OUVRE VRAIMENT. Sans ce point, un échec de route se lirait comme un état
+		// vide : une page qui n'affiche rien n'affiche pas non plus de cases à cocher.
+		await expect(page.getByTestId('entete-card').getByRole('heading')).toHaveText(
+			ESPACE_SOLITAIRE.titreCard,
+		)
+
+		// *e* — LA COMMANDE PORTE « Mentionner », SANS COMPTE (§36.5) : à zéro case cochée, il n'y
+		// a rien à compter, et un « (0) » ferait croire à une liste dont on aurait tout décoché.
+		await expect(page.getByRole('button', { name: COMMANDE, exact: true })).toBeVisible()
+		await page.getByRole('button', { name: COMMANDE }).click()
+
+		const liste = page.locator('#mentions-liste')
+		await expect(liste).toBeVisible()
+
+		// *b* — LE MESSAGE DE L'ÉTAT VIDE, celui que le §36.4 et le §5.44 du design system
+		// promettent depuis la livraison de la sous-tranche.
+		await expect(liste).toContainText('Personne d’autre ne peut lire cette affaire.')
+
+		// *c* — ZÉRO CASE. Sans ce point, un message rendu AU-DESSUS d'une liste peuplée passerait
+		// le précédent : c'est la différence entre « l'écran dit qu'il n'y a personne » et « il n'y
+		// a personne ».
+		await expect(liste.getByRole('checkbox')).toHaveCount(0)
+
+		// *d* — ZÉRO BOUTON. Le §36.4 exige « sans action » : l'état vide n'est pas une erreur, il
+		// n'offre donc PAS l'action de reprise du §5.8. Un bouton « Réessayer » ici enseignerait
+		// qu'être seul est une panne dont on pourrait revenir.
+		await expect(liste.getByRole('button')).toHaveCount(0)
+
+		// *f* — LE COMPOSEUR RESTE PUBLIABLE (§36.6) : mentionner est facultatif, et l'être seul ne
+		// ferme pas le fil de l'affaire.
+		await page.getByLabel('Votre commentaire').fill('Seul à bord.')
+		await expect(page.getByRole('button', { name: 'Publier' })).toBeEnabled()
+
+		// *h* — LA CAPTURE, produite ET observée (`CLAUDE.md` §16). Le §40 promet « liste peuplée
+		// et liste vide » ; la seconde manquait. La liste est amenée dans le cadre avant la prise,
+		// leçon de la capture du refus partiel qui montrait le bas de la fiche.
+		await liste.scrollIntoViewIfNeeded()
+		await capturer(page, 'mentions-liste-vide-1440', UNITE)
+
+		// *g* — LA CONSOLE EST VIERGE, et c'est la fixture du projet qui le juge à la fermeture de
+		// la page : `200 []` est un état NORMAL du produit, pas un refus. Rien n'est donc consommé
+		// par `autoriserErreursConsole` ici, à la différence du scénario de refus partiel.
 	})
 })
 

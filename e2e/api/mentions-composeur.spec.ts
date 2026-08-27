@@ -4,6 +4,8 @@
 //           à zéro ligne), §34.3 (l'appelant absent de sa propre liste), §34.4 (le refus d'`anon`
 //           par le PRIVILÈGE), §35.1 (le POST groupé est tout ou rien), §35.2 (un POST par
 //           mention, séquentiel), §5.1 (la règle d'éligibilité), §7.1 (la politique juge l'auteur)
+// @verifies docs/SPEC-notifications.md §50 (l'état vide du sélecteur, tranché), §50.7 (la ligne
+//           *ah* du contrat), §36.4 (les quatre états de la liste)
 // @verifies docs/SPEC-permissions-rls.md §7 (le refus est ZÉRO LIGNE, jamais une erreur)
 // @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface, avec le jeton réel)
 //
@@ -24,6 +26,11 @@
 
 import { expect, test } from '@playwright/test'
 import { CLE_SERVICE, URL_API, enTetesAnonymes, enTetesAuthentifies, jetonDe } from './jetons'
+import {
+	ESPACE_SOLITAIRE,
+	demonterEspaceSolitaire,
+	monterEspaceSolitaire,
+} from './espace-solitaire'
 
 const RPC = '/rest/v1/rpc/mentionnables'
 const MENTIONS = '/rest/v1/card_comment_mentions'
@@ -123,14 +130,18 @@ async function detruireSonde(
 test.describe('CRM-064 sous-tranche 3b — le contrat d’API de l’émission', () => {
 	let camille: string
 	let farida: string
+	let driss: string
 
-	// LE JETON DE DRISS N'EST PAS OBTENU, ET C'EST DÉLIBÉRÉ : aucune ligne de ce contrat n'appelle
-	// sous lui. Il est le DESTINATAIRE des mentions, jamais leur auteur — obtenir un jeton dont
-	// aucune assertion ne se sert laisserait croire qu'un profil est éprouvé alors qu'il ne l'est
-	// pas (docs/JOURNAL.md décision 50).
+	// ~~LE JETON DE DRISS N'EST PAS OBTENU, ET C'EST DÉLIBÉRÉ~~ — RÉVISÉ le 2026-08-27, et le motif
+	// d'origine est conservé parce qu'il reste juste pour les onze premières lignes : Driss y est le
+	// DESTINATAIRE des mentions, jamais leur auteur, et obtenir un jeton dont aucune assertion ne se
+	// sert laisserait croire qu'un profil est éprouvé alors qu'il ne l'est pas (décision 50).
+	// La ligne *ah* du §50.7 change cela : elle APPELLE sous Driss, seul membre d'un espace jetable.
+	// Le jeton est donc obtenu, et il sert.
 	test.beforeAll(async () => {
 		camille = await jetonDe('admin@p2enjoy.test')
 		farida = await jetonDe('viewer@p2enjoy.test')
+		driss = await jetonDe('bizdev@p2enjoy.test')
 	})
 
 	test('x — l’appelant anonyme est refusé PAR LE PRIVILÈGE, pas par une liste vide', async ({
@@ -306,6 +317,52 @@ test.describe('CRM-064 sous-tranche 3b — le contrat d’API de l’émission',
 
 		expect(refus.status()).toBe(403)
 		expect((await refus.json()).code).toBe('42501')
+	})
+
+	test('ah — SEUL LECTEUR de son affaire, l’appelant reçoit `200 []` : l’état vide existe', async ({
+		request,
+	}) => {
+		// LA LIGNE *ah* DU §50.7, ET ELLE FIGE LA MESURE MA4. Le §34.2 annonce depuis l'origine que
+		// le refus de lecture est zéro ligne, et le §36.4 décrit un état vide « réel, pas un
+		// repli ». Aucune donnée ne l'avait encore montré : dans le seed, l'administratrice lit
+		// toutes les affaires, si bien qu'un non-administrateur a toujours au moins elle (§36.4).
+		//
+		// LA FIXTURE NE TOUCHE PAS AU SEED (§50.2) : elle pose un SECOND espace jetable dont Driss
+		// est l'unique membre, et le détruit. C'est le chemin déterministe de `CLAUDE.md` §15, déjà
+		// emprunté par `preuves-refus.spec.ts` et `demarrage.spec.ts`.
+		await monterEspaceSolitaire(request)
+		try {
+			// LA LIGNE DE BASE EST REJOUÉE DANS LE MÊME SCÉNARIO, et le §50.9 l'exige : sans elle,
+			// `[]` ne distinguerait pas « personne n'est éligible » de « la fonction ne rend jamais
+			// rien sous ce jeton ». MA1 mesure deux lignes ici.
+			const surLeSeed = await mentionnables(request, enTetesAuthentifies(driss), CARD_OUVERTE_A_TOUS)
+			expect(surLeSeed.statut).toBe(200)
+			expect(surLeSeed.lignes.map((ligne) => ligne.profile_id).sort()).toEqual(
+				[CAMILLE, FARIDA].sort(),
+			)
+
+			// LA MESURE : sur l'affaire de son espace solitaire, la MÊME fonction, le MÊME jeton et
+			// la même route rendent une liste vide. `200`, jamais une erreur, jamais un refus.
+			const solitaire = await mentionnables(
+				request,
+				enTetesAuthentifies(driss),
+				ESPACE_SOLITAIRE.card,
+			)
+			expect(solitaire.statut).toBe(200)
+			expect(solitaire.lignes, 'l’appelant est seul lecteur : la liste est vide').toEqual([])
+
+			// ET IL LIT BIEN L'AFFAIRE. Sans cette relecture, une card devenue illisible — donc une
+			// fixture cassée — rendrait le même `[]` et le scénario passerait pour de mauvaises
+			// raisons : c'est précisément ce que la ligne *ac* mesure de l'affaire inexistante.
+			const carte = await request.get(
+				`${URL_API}/rest/v1/cards?id=eq.${ESPACE_SOLITAIRE.card}&select=id`,
+				{ headers: enTetesAuthentifies(driss) },
+			)
+			expect(carte.status()).toBe(200)
+			expect((await carte.json()) as unknown[]).toHaveLength(1)
+		} finally {
+			await demonterEspaceSolitaire(request)
+		}
 	})
 
 	test('le produit est rendu DANS L’ÉTAT OÙ IL A ÉTÉ TROUVÉ', async ({ request }) => {

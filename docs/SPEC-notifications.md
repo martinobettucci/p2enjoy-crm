@@ -2721,7 +2721,10 @@ d'où vient le vide :
 
 | Ligne | Appelant | Requête | Attendu |
 |---|---|---|---|
-| *ag* | Driss, unique membre d'un espace jetable | `POST /rest/v1/rpc/mentionnables` sur la card de cet espace | **`200`** et **`[]`** — jamais une erreur, jamais un refus. Le §34.2 le disait ; aucune donnée ne l'avait encore montré |
+| *ah* | Driss, unique membre d'un espace jetable | `POST /rest/v1/rpc/mentionnables` sur la card de cet espace | **`200`** et **`[]`** — jamais une erreur, jamais un refus. Le §34.2 le disait ; aucune donnée ne l'avait encore montré |
+
+*La lettre suit celle du §37, dont la dernière ligne est* ag *: les onze lignes du contrat d'API de
+la sous-tranche 3b se lisent d'une seule suite.*
 
 Elle vit dans `e2e/api/mentions-composeur.spec.ts`, à côté des dix lignes du §37, et emploie la même
 fixture jetable que le parcours d'interface.

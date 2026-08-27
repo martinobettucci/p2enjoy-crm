@@ -733,7 +733,20 @@ ASSERTIONS_ATTENDUES=2896
 # quinze lignes du §8 de `docs/SPEC-notifications.md`, dont les deux que la mesure a CORRIGÉES
 # (§8.1) et la contre-épreuve du retrait de la colonne. 943 + 15 = **958**, valeur COMPTÉE par
 # l'exécution complète, qui rend « 958 passed ».
-SCENARIOS_API=958
+#
+# **RÉVISÉ À 997 LE 2026-08-27, ET LA DÉRIVE EST CELLE DE `CRM-064` ELLE-MÊME.** Trois tranches de
+# cette unité ont ajouté des scénarios d'API sans reprendre ce compteur, et `docs/JOURNAL.md` le
+# rapporte tranche par tranche : la sous-tranche 3b porte 958 à **984**, la tranche 4 à **996** —
+# « `e2e:api` 996 passés (984 avant, plus les 12 de la tranche) », décision 527 —, et la ligne *ah*
+# du §50.7, livrée ici, à **997**. Valeur COMPTÉE par `playwright test --list`, qui rend
+# « Total: 997 tests in 62 files ».
+#
+# ELLE EST REPRISE ICI PARCE QU'ELLE APPARTIENT À LA MÊME UNITÉ, exactement comme la reprise de
+# `CRM-060` ci-dessus : ce n'est pas la correction au passage d'un défaut étranger (`CLAUDE.md` §1),
+# c'est la reprise d'un compteur que les tranches précédentes de `CRM-064` auraient dû déplacer dans
+# leur propre changement. Le laisser faux ferait rougir ce harnais sur une base saine, et la cause
+# n'y serait plus lisible.
+SCENARIOS_API=997
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -1007,7 +1020,14 @@ SCENARIOS_API=958
 # livre AUCUNE surface (`docs/SPEC-notifications.md` §1.3). Le composeur qui posera une mention est
 # la tranche 3. Un compteur inchangé sans motif écrit est indiscernable d'un compteur oublié — c'est
 # la leçon des trois occurrences relevées par le témoin de types.
-SCENARIOS_UI=629
+#
+# **RÉVISÉ À 664 LE 2026-08-27, MÊME DÉRIVE ET MÊME MOTIF QUE `SCENARIOS_API` CI-DESSUS.** Les
+# tranches d'interface de `CRM-064` ont livré leurs scénarios sans reprendre ce compteur : la
+# sous-tranche 3a, la 3b et la tranche 4 portent 629 à **663** — « `e2e:ui` : 662 passés et un échec
+# au premier passage, 663 passés et aucun échec au second », décision 527 —, et le scénario de
+# l'état vide du §50.6, livré ici, à **664**. Valeur COMPTÉE par `playwright test --list`, qui rend
+# « Total: 664 tests in 54 files ».
+SCENARIOS_UI=664
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,
