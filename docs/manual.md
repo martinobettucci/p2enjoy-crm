@@ -3191,14 +3191,45 @@ sachiez ce qu'il reste à faire.
 
 **Mentionner est facultatif.** Un commentaire sans mention se publie exactement comme avant.
 
-### 8.6 Ce qui n'est pas encore là
+### 8.6 Choisir ce que vous recevez
+
+*Réglages → Notifications, ou directement `/reglages/notifications`.*
+
+C'est **votre** réglage : personne d'autre ne le voit, pas même l'administratrice de l'espace de
+travail. C'est aussi la seule section des réglages qui règle votre compte plutôt que l'instance, et
+c'est pourquoi elle vient en dernier dans la liste.
+
+**Une case par type de notification**, cochée par défaut. Aujourd'hui il n'y en a qu'une :
+« Recevoir les mentions ». Décochez-la, et les mentions cessent d'arriver dans votre cloche — le
+compteur tombe, le panneau se vide, et rien ne s'affiche plus en direct.
+
+**Rien n'est supprimé.** Les notifications continuent d'être produites et conservées : elles sont
+simplement **masquées** tant que la case est décochée. Recochez-la, et tout revient — non lu, dans
+l'ordre, exactement comme avant. C'est la différence entre couper le son et jeter le courrier.
+
+**Il n'y a pas de bouton « Enregistrer ».** La case écrit dès que vous la basculez, et affiche
+« Enregistré » sous elle. Elle ne se coche qu'**après** la confirmation du serveur : ce que vous
+voyez est ce que le produit a réellement retenu, jamais ce qu'il a cru envoyer.
+
+**Une chose à savoir**, parce qu'elle surprend : tant qu'un type est décoché, vous ne pouvez pas
+marquer lues les notifications de ce type. Vous ne les voyez pas, donc vous ne les marquez pas ;
+elles vous attendront, non lues, si vous recochez.
+
+**Il n'y a qu'un seul canal, et l'écran n'en promet pas d'autre.** Le produit n'envoie aucune
+notification par email, ni de résumé quotidien. Vous ne trouverez donc aucune case pour cela :
+une case qui ne commande rien serait une promesse que le produit ne tiendrait pas.
+
+### 8.7 Ce qui n'est pas encore là
 
 - **Les mentions d'un commentaire déjà publié ne se corrigent pas.** On choisit avant de publier,
   pas après ; ni la liste des personnes nommées, ni leur retrait ne sont offerts par l'écran.
 - **Le fil ne montre pas qui un commentaire mentionne.** La personne prévenue le voit dans sa
   cloche ; le commentaire, lui, ne l'affiche pas.
 - **La liste des personnes n'a ni recherche ni pagination.**
-- **Aucune préférence** : vous ne pouvez pas encore choisir ce que vous recevez, ni par quel canal.
+- **Aucun canal en dehors de l'application** : ni email, ni résumé quotidien. Le §8.6 dit ce que
+  vous pouvez régler, et ce qui n'existe pas.
+- **La préférence vaut pour tous vos espaces de travail** : elle porte sur vous, pas sur un
+  contexte. Vous ne pouvez pas couper les mentions d'un espace en les gardant dans un autre.
 - **Aucune suppression, et aucune expiration.** Une notification ne s'efface pas. Le panneau montre
   les **vingt plus récentes**, et le dit en toutes lettres quand il en manque ; le compteur, lui,
   les compte toutes.

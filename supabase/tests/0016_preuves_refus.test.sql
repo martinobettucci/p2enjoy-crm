@@ -208,8 +208,17 @@ select is(pg_temp.politiques('card_sequence_enrollments'),
 
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	121,
-	'CENT VINGT ET UNE politiques dans `public`, et pas une de plus — 119 avant `CRM-064` '
+	122,
+	'CENT VINGT-DEUX politiques dans `public`, et pas une de plus — 121 avant `CRM-064` '
+	'TRANCHE 4, plus l''UNIQUE politique de `notification_preferences` : la LECTURE, et elle '
+	'seule (docs/SPEC-notifications.md §46.1). ELLE EST UNE, ET NON QUATRE, ET C''EST LE REFUS '
+	'DOUBLE LE PLUS COMPLET DE LA SÉRIE : la table est fermée aux TROIS écritures, par l''absence '
+	'de politique ET par l''absence de privilège, la RPC `definir_preference_notification` étant '
+	'le seul chemin — et le destinataire n''y est pas un paramètre, si bien qu''écrire pour autrui '
+	'est IMPOSSIBLE plutôt que refusé (§46.3). Le `DELETE` est refusé même pour sa propre ligne : '
+	'revenir au défaut se fait en recochant, pas en effaçant, pour qu''un seul chemin mène à un '
+	'même état. Cette ligne est RÉVISÉE par la livraison, jamais retirée — mécanisme de la '
+	'décision 51. Avant elle : 119 avant `CRM-064` '
 	'tranche 2, plus les DEUX de `notifications` : lecture et marquage lu/non lu '
 	'(docs/SPEC-notifications.md §16.1). ELLES SONT DEUX, ET NON QUATRE, ET C''EST DEUX REFUS '
 	'DOUBLES : une notification se PRODUIT — le seul chemin est un trigger, aucun client n''en '
