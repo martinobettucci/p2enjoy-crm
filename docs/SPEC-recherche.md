@@ -1043,6 +1043,25 @@ Le paramètre est **retiré de l'adresse** une fois honoré, par un remplacement
 laisser ferait rouvrir le même message au rechargement de la page, longtemps après que l'utilisateur
 soit passé à autre chose.
 
+### 15.1 LE PARAMÈTRE EST RETIRÉ MÊME QUAND IL N'EST PAS HONORÉ
+
+*Point complété le 2026-08-27, avant la première ligne de code de 2c (`CLAUDE.md` §5) : le §15 disait
+le retrait « une fois honoré » et laissait le cas du refus sans réponse. Les deux issues ont été
+pesées, et c'est le RETRAIT INCONDITIONNEL qui est retenu.*
+
+Un identifiant inconnu, mal formé ou fermé par la RLS laisse l'écran **exactement** dans l'état d'une
+arrivée sans paramètre — c'est ce que le §15 exige — et **l'adresse fait partie de cet état**. La
+barre d'adresse est visible : y laisser `?message=<id>` après un refus dirait à l'utilisateur qu'il
+s'est passé là quelque chose que l'écran ne montre pas, ce qui est précisément ce que la règle de
+discrétion évite. Le retrait est donc décidé par le **traitement** du paramètre, jamais par son
+succès, et l'écran est indiscernable dans les deux cas.
+
+Le retrait a une seconde conséquence, utile : un rechargement ne rejoue pas la lecture infructueuse.
+
+**Ce que cette règle n'autorise pas** : elle ne rend aucun autre paramètre de l'adresse. Le retrait
+est écrit comme le `sommeil` du board (`docs/SPEC-cards.md` §16.12.4) — une copie de
+`URLSearchParams`, la seule clé concernée supprimée, les autres conservées.
+
 ## 16. Ce que la tranche 2 ne fait pas
 
 ### 16.1 Elle n'ajoute aucune famille
