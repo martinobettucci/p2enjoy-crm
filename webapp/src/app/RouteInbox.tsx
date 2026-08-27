@@ -1337,39 +1337,51 @@ export function RouteInbox() {
 	// vrai : le filtre de sommeil n'entre toujours pas dans l'adresse. Ce paramètre-ci n'est pas un
 	// contrôle de l'écran, c'est une DESTINATION — la palette du §13.5 y mène, et l'inbox l'honore.
 	const [parametresUrl, setParametresUrl] = useSearchParams()
-	// LU AU MONTAGE ET UNE SEULE FOIS (§15). Ce drapeau n'est pas une précaution de style : sans
-	// lui, l'effet rejouerait au prochain rendu — `setParametresUrl` change l'objet qu'il lit — et
-	// ramènerait l'utilisateur au message de départ à chaque clic. Un `ref` plutôt qu'un état : il
-	// ne décide d'aucun rendu, et le muter n'en déclenche aucun.
-	const amorceFaite = useRef(false)
+
+	// LU AU MONTAGE ET UNE SEULE FOIS (§15) — PAR CONSTRUCTION, ET NON PAR UN DRAPEAU. L'initialiseur
+	// paresseux de `useState` n'est évalué qu'au premier rendu : la valeur ne peut plus changer
+	// ensuite, quoi qu'il advienne de l'adresse.
+	//
+	// LA PREMIÈRE RÉDACTION EMPLOYAIT UN `ref` GARDE-FOU DANS UN EFFET DÉPENDANT DE `parametresUrl`,
+	// ET ELLE ÉTAIT FAUSSE — mesuré par la preuve, pas deviné : retirer le paramètre change
+	// `parametresUrl`, l'effet se rejoue, et son NETTOYAGE tue la lecture encore en vol. Le drapeau
+	// empêchait bien un second départ, mais rien n'empêchait l'annulation du premier : l'écran
+	// retirait le paramètre et n'ouvrait jamais le message. La dépendance stable supprime la cause
+	// au lieu d'ajouter une garde de plus.
+	const [demandeInitiale] = useState(() => parametresUrl.get(PARAMETRE_MESSAGE))
 
 	useEffect(() => {
-		if (amorceFaite.current) return
-		amorceFaite.current = true
-
-		const demande = parametresUrl.get(PARAMETRE_MESSAGE)
-		if (demande === null || demande === '') return
+		if (demandeInitiale === null || demandeInitiale === '') return
 
 		// LE PARAMÈTRE EST RETIRÉ MÊME QUAND IL N'EST PAS HONORÉ (§15.1) — décidé par le TRAITEMENT,
 		// jamais par le succès —, et il l'est TOUT DE SUITE, avant même de savoir si le message se
 		// lit : l'écran doit être indiscernable d'une arrivée sans paramètre, et l'adresse fait
 		// partie de cet état. `replace` : un remplacement d'historique, sans quoi le bouton
 		// « Précédent » ramènerait à l'adresse porteuse et rouvrirait le message.
-		const suivants = new URLSearchParams(parametresUrl)
-		suivants.delete(PARAMETRE_MESSAGE)
-		setParametresUrl(suivants, { replace: true })
+		//
+		// LA FORME FONCTIONNELLE N'EST PAS UN STYLE : elle évite de faire dépendre cet effet de
+		// `parametresUrl`, dont le changement le rejouerait. Les autres paramètres sont conservés,
+		// comme le `sommeil` du board (docs/SPEC-cards.md §16.12.4).
+		setParametresUrl(
+			(precedents) => {
+				const suivants = new URLSearchParams(precedents)
+				suivants.delete(PARAMETRE_MESSAGE)
+				return suivants
+			},
+			{ replace: true },
+		)
 
 		let vivant = true
 		void (async () => {
 			// LE DOSSIER SE DÉDUIT DU MESSAGE, il ne se devine pas : `card_id` décide (M16), et le
 			// message non classé va aux « Non classés » plutôt que de rester sans dossier.
-			const dossier = await lireDossierDuMessage(clientCrm, demande)
+			const dossier = await lireDossierDuMessage(clientCrm, demandeInitiale)
 			if (!vivant) return
 			// UN IDENTIFIANT INCONNU N'EST PAS UNE ERREUR (§15) : la boîte s'ouvre sans sélection, et
 			// aucun bandeau ne signale l'échec — un refus ne se distingue pas d'une absence.
 			if (dossier === null) return
 			setSelection(dossier)
-			setIdOuvert(demande)
+			setIdOuvert(demandeInitiale)
 			// SOUS 1024 PX, ON ARRIVE SUR LE MESSAGE, pas sur les dossiers : l'utilisateur a demandé
 			// un message précis, et lui rendre la pile au premier étage lui ferait refaire à la main
 			// les deux pas que l'adresse venait de lui épargner.
@@ -1378,7 +1390,7 @@ export function RouteInbox() {
 		return () => {
 			vivant = false
 		}
-	}, [parametresUrl, setParametresUrl])
+	}, [demandeInitiale, setParametresUrl])
 
 	const arbre = useArborescence(clientCrm)
 	const liste = useMessages(clientCrm, selection)

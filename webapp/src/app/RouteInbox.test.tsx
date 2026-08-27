@@ -4,6 +4,10 @@
 //           au-delà d'un message et pas en deçà, `aria-current` porté par le FIL du message
 //           ouvert), §16.16.6 (le compteur du dossier compte toujours des messages)
 // @verifies docs/DESIGN_SYSTEM.md §5.4 bis (de quoi le fil a l'air), §10 (la sélection s'annonce)
+// @verifies CRM-065 (docs/BACKLOG.md) — sous-tranche 2c : l'inbox adressable
+// @verifies docs/SPEC-recherche.md §15 (le paramètre est lu au montage et une seule fois, le
+//           `card_id` décide du dossier, l'identifiant inconnu ne rend AUCUNE erreur), §15.1 (le
+//           paramètre est retiré même quand il n'est pas honoré), M16 (les deux cas de classement)
 //
 // Ces preuves montent le VRAI écran avec un client factice, comme `EtatMessagerie.test.tsx`. Le
 // parcours connecté complet relève de `e2e/ui/groupement-fils.spec.ts`, qui ne peut pas être
@@ -17,7 +21,7 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { MemoryRouter } from 'react-router'
+import { MemoryRouter, useLocation } from 'react-router'
 
 const WORKSPACE = '5eed0000-0000-4000-8000-000000000001'
 const CARD = '5eed0000-0000-4000-8000-0000000000c1'
@@ -61,6 +65,18 @@ const REPONSE = ligne(
 	['<racine@client.test>'],
 	'<reponse@client.test>',
 )
+
+/**
+ * Un message NON CLASSÉ — l'autre moitié de M16, et le seed porte réellement les deux cas.
+ *
+ * Une amorce qui ne vaudrait que pour les messages classés laisserait la moitié de la famille
+ * `message` de la palette sans dossier ; c'est cette ligne qui l'éprouve.
+ */
+const NON_CLASSE = {
+	...ligne('msg-libre', 'Prise de contact', '2026-08-19T10:00:00.000Z', [], '<libre@client.test>'),
+	card_id: null,
+	classification: 'unclassified',
+}
 
 /**
  * Le client factice — il rend ce que la base rendrait, dans l'ORDRE où elle le rendrait.
@@ -215,5 +231,121 @@ describe('RouteInbox — le groupement en fils (§16.16)', () => {
 		expect(screen.getAllByTestId('inbox-message')[0]?.getAttribute('aria-current')).toBe('true')
 		// ET LA LIGNE NE BOUGE PAS : elle montre toujours le dernier message du fil.
 		expect(screen.getAllByTestId('inbox-message')[0]?.textContent ?? '').toContain('Re: Demande de devis')
+	})
+})
+
+// =================================================================================================
+// CRM-065 sous-tranche 2c — l'inbox adressable, docs/SPEC-recherche.md §15 et §15.1
+// =================================================================================================
+
+/**
+ * Le témoin d'adresse — il rend la chaîne de requête pour que la preuve la LISE.
+ *
+ * Sans lui, le retrait du paramètre ne se vérifierait que par son effet indirect, c'est-à-dire pas
+ * du tout : un écran qui ouvre le bon message ET garde le paramètre passerait toutes les autres
+ * assertions de ce fichier. Or c'est ce paramètre resté qui rouvrirait le message au rechargement.
+ */
+function TemoinAdresse() {
+	return <span data-testid="temoin-adresse">{useLocation().search}</span>
+}
+
+function ouvrirParAdresse(adresse: string) {
+	render(
+		<MemoryRouter initialEntries={[adresse]}>
+			<RouteInbox />
+			<TemoinAdresse />
+		</MemoryRouter>,
+	)
+}
+
+const adresse = () => screen.getByTestId('temoin-adresse').textContent
+
+describe('RouteInbox — le paramètre `message` de l’adresse (§15)', () => {
+	it('OUVRE LE MESSAGE DÉSIGNÉ et sélectionne le dossier de son affaire', async () => {
+		messagesRendus = [REPONSE, RACINE]
+		ouvrirParAdresse('/inbox?message=msg-racine')
+
+		// LE MESSAGE DEMANDÉ EST OUVERT, et c'est bien celui de l'adresse — non le dernier du fil :
+		// l'utilisateur a cherché CE message dans la palette, ouvrir sa réponse lui montrerait autre
+		// chose que ce qu'il a choisi.
+		await waitFor(() =>
+			expect(screen.getByRole('heading', { level: 3 }).textContent).toBe('Demande de devis'),
+		)
+
+		// LE DOSSIER SUIT LE `card_id` DU MESSAGE (M16) : on arrive dans l'affaire, pas ailleurs.
+		const dossier = screen.getByRole('button', { name: /Refonte du site vitrine/ })
+		expect(dossier.getAttribute('aria-current')).toBe('true')
+	})
+
+	it('MÈNE AUX « NON CLASSÉS » quand le message n’a pas d’affaire — l’autre moitié de M16', async () => {
+		messagesRendus = [NON_CLASSE]
+		ouvrirParAdresse('/inbox?message=msg-libre')
+
+		await waitFor(() =>
+			expect(screen.getByRole('heading', { level: 3 }).textContent).toBe('Prise de contact'),
+		)
+		expect(
+			screen.getByRole('button', { name: /Non classés/ }).getAttribute('aria-current'),
+		).toBe('true')
+	})
+
+	it('RETIRE LE PARAMÈTRE DE L’ADRESSE une fois honoré', async () => {
+		messagesRendus = [REPONSE, RACINE]
+		ouvrirParAdresse('/inbox?message=msg-racine')
+
+		await waitFor(() => expect(adresse()).toBe(''))
+	})
+
+	it('UN IDENTIFIANT INCONNU N’EST PAS UNE ERREUR : la boîte s’ouvre sans sélection', async () => {
+		messagesRendus = [REPONSE, RACINE]
+		ouvrirParAdresse('/inbox?message=msg-inexistant')
+
+		// L'ÉTAT EST CELUI D'UNE ARRIVÉE SANS PARAMÈTRE : aucun message ouvert, aucun dossier
+		// choisi, et surtout AUCUN bandeau d'erreur — un refus ne se distingue pas d'une absence.
+		await waitFor(() => expect(adresse()).toBe(''))
+		expect(screen.queryByTestId('inbox-message-ouvert')).toBeNull()
+		expect(screen.queryByRole('alert')).toBeNull()
+		expect(
+			screen.getByRole('button', { name: /Refonte du site vitrine/ }).getAttribute('aria-current'),
+		).toBeNull()
+	})
+
+	it('RETIRE LE PARAMÈTRE MÊME QUAND IL N’EST PAS HONORÉ (§15.1)', async () => {
+		messagesRendus = [REPONSE, RACINE]
+		ouvrirParAdresse('/inbox?message=msg-inexistant')
+
+		// LE RETRAIT EST DÉCIDÉ PAR LE TRAITEMENT, JAMAIS PAR LE SUCCÈS : un paramètre laissé après
+		// un refus dirait qu'il s'est passé là quelque chose que l'écran ne montre pas.
+		await waitFor(() => expect(adresse()).toBe(''))
+	})
+
+	it('CONSERVE LES AUTRES PARAMÈTRES de l’adresse, et ne retire que le sien', async () => {
+		messagesRendus = [REPONSE, RACINE]
+		ouvrirParAdresse('/inbox?vue=large&message=msg-racine')
+
+		await waitFor(() => expect(adresse()).toBe('?vue=large'))
+	})
+
+	it('NE LIT LE PARAMÈTRE QU’UNE SEULE FOIS : naviguer dans le fil ne ramène pas au départ', async () => {
+		messagesRendus = [REPONSE, RACINE]
+		ouvrirParAdresse('/inbox?message=msg-racine')
+
+		await waitFor(() =>
+			expect(screen.getByRole('heading', { level: 3 }).textContent).toBe('Demande de devis'),
+		)
+		await waitFor(() => expect(screen.queryByTestId('inbox-fil-selecteur')).not.toBeNull())
+
+		// LE PREMIER MESSAGE DU SÉLECTEUR, dans l'ordre de la liste : la réponse, la plus récente.
+		await userEvent.click(screen.getAllByTestId('inbox-fil-message')[0] as HTMLElement)
+		await waitFor(() =>
+			expect(screen.getByRole('heading', { level: 3 }).textContent).toBe('Re: Demande de devis'),
+		)
+
+		// C'EST LE DÉFAUT QUE CE TEST EXISTE POUR ÉCARTER (§15) : un paramètre relu à chaque rendu
+		// ramènerait l'utilisateur au message de départ à chaque clic, et l'écran deviendrait
+		// impossible à quitter. L'assertion tient parce qu'elle attend APRÈS le clic — un retour au
+		// message d'origine se produirait au rendu suivant.
+		await new Promise((resoudre) => setTimeout(resoudre, 50))
+		expect(screen.getByRole('heading', { level: 3 }).textContent).toBe('Re: Demande de devis')
 	})
 })
