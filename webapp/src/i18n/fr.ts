@@ -1213,6 +1213,7 @@ export const fr = {
 		"Quand quelqu'un vous nomme dans le commentaire d'une affaire.",
 
 	'settings.notifications.saving': 'Enregistrement…',
+	'settings.notifications.saved': 'Enregistré',
 	'settings.notifications.saved.on': 'Vous recevrez ces notifications.',
 	'settings.notifications.saved.off': 'Ces notifications ne vous seront plus montrées.',
 

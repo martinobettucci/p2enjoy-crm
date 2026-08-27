@@ -133,6 +133,27 @@ describe('l’écran des préférences de notification (§5.45)', () => {
 		expect((case_ as HTMLInputElement).checked).toBe(true)
 	})
 
+	// LA CONFIRMATION EST VISIBLE, ET ELLE REMPLACE L'ENVOI (§5.7 ter). Le défaut a été trouvé EN
+	// REGARDANT UNE CAPTURE : l'écran ne rendait que deux mentions sur trois, la confirmation ne
+	// vivant que dans la région vive. Aucun test de comportement ne l'aurait vu — la case changeait
+	// d'état, ce qui suffisait à tous les autres scénarios.
+	it('rend la confirmation « Enregistré » SOUS la case, et une seule mention à la fois', async () => {
+		const { client } = clientFactice(LECTURE_VIDE, {
+			data: { type: 'mention', in_app: false },
+			error: null,
+			status: 200,
+		})
+		render(<ReglagesNotifications client={client} />)
+
+		const case_ = await screen.findByRole('checkbox', { name: /Recevoir les mentions/ })
+		await userEvent.click(case_)
+
+		await waitFor(() => expect(screen.getByText('Enregistré')).toBeTruthy())
+		// LA CONFIRMATION REMPLACE L'ENVOI, elle ne s'y ajoute pas : deux mentions superposées
+		// feraient croire à deux écritures.
+		expect(screen.queryByText('Enregistrement…')).toBeNull()
+	})
+
 	// LA CASE N'EST JAMAIS DÉSACTIVÉE (§5.7 ter) : un contrôle désactivé perd le focus du clavier.
 	it('ne DÉSACTIVE JAMAIS la case, ni pendant l’écriture ni après', async () => {
 		const { client } = clientFactice(LECTURE_VIDE, {

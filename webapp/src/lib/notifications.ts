@@ -380,6 +380,32 @@ export function fermerAbonnementNotifications(): void {
 }
 
 /**
+ * Redemande à toute cloche montée de RELIRE sa boîte.
+ *
+ * **ELLE EXISTE PARCE QU'UNE PREUVE A TROUVÉ LE DÉFAUT** (`CRM-064` tranche 4). La cloche ne se
+ * met à jour que sur un événement `postgres_changes` de `public.notifications` — c'est-à-dire
+ * quand une LIGNE change. Or une préférence de notification ne touche aucune ligne de cette table :
+ * elle change ce que la POLITIQUE laisse voir. Le compteur restait donc à sa valeur d'avant, et
+ * seul un rechargement de page révélait la coupure.
+ *
+ * **LE REMÈDE EST À LA CAUSE** (`CLAUDE.md` §18). Il aurait été tentant de faire relire la cloche
+ * par une temporisation, ou de publier `notification_preferences` au temps réel pour provoquer un
+ * événement — ce que le §46.4 refuse, une table que personne n'écoute étant une surface
+ * d'autorisation sans preuve. La cause est qu'un changement d'ENSEMBLE LISIBLE n'a pas de porteur ;
+ * cette fonction est ce porteur, et elle reprend la doctrine du module sans la modifier : « le flux
+ * DÉCLENCHE la lecture, il ne la remplace pas » (décision 201). Elle ne porte aucune donnée, elle
+ * dit que la boîte a pu changer.
+ *
+ * Elle ne touche PAS au canal : recréer l'abonnement à chaque écriture ferait payer une reconnexion
+ * pour une relecture. Sans cloche montée, elle ne fait rien — un écran de réglages ouvert sans
+ * en-tête n'existe pas, mais la fonction ne le suppose pas.
+ */
+export function relireBoiteNotifications(): void {
+	if (inscriptionCourante === null) return
+	for (const ecouteur of inscriptionCourante.ecouteurs) ecouteur()
+}
+
+/**
  * Rend l'abonnement du profil, en le créant si nécessaire.
  *
  * `recreer` force un canal neuf : c'est la reprise explicite du §5.8, qui doit refaire l'abonnement

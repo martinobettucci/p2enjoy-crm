@@ -28,6 +28,7 @@ import {
 	type PreferenceNotification,
 	type TypePreference,
 } from '../lib/preferences-notifications'
+import { relireBoiteNotifications } from '../lib/notifications'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 
 /**
@@ -62,10 +63,19 @@ const REFUS: Readonly<Record<NatureRefusPreference, CleTraduction>> = {
 	unknown: 'settings.notifications.refusal.unknown',
 }
 
-/** Ce que l'écran sait d'une case en cours d'écriture, ou dont l'écriture a échoué. */
+/**
+ * Ce que l'écran sait d'une case en cours d'écriture, écrite, ou dont l'écriture a échoué.
+ *
+ * **`ecrite` A ÉTÉ AJOUTÉE APRÈS AVOIR REGARDÉ UNE CAPTURE** (`CLAUDE.md` §16). L'écran ne rendait
+ * que deux mentions — l'envoi et le refus —, la confirmation ne vivant que dans la région vive,
+ * donc invisible. Le §5.7 ter en exige **trois** : « Enregistrement… », « Enregistré » en
+ * `--color-success`, et le refus. La case qui change d'état ne remplace pas la confirmation : elle
+ * dit ce que l'écran affiche, pas ce que la base a retenu.
+ */
 type EtatEcriture =
 	| { readonly phase: 'repos' }
 	| { readonly phase: 'envoi' }
+	| { readonly phase: 'ecrite' }
 	| { readonly phase: 'refus'; readonly cle: CleTraduction }
 
 /**
@@ -140,7 +150,17 @@ export function ReglagesNotifications({
 						)
 					: precedent,
 			)
-			setEcritures((precedent) => ({ ...precedent, [type]: { phase: 'repos' } }))
+			// LA CLOCHE EST PRÉVENUE, ET C'EST UN DÉFAUT TROUVÉ PAR LA PREUVE E2E. Une préférence ne
+			// touche AUCUNE ligne de `public.notifications` : elle change ce que la POLITIQUE laisse
+			// voir. Aucun événement `postgres_changes` n'est donc émis, et le compteur de l'en-tête
+			// restait à sa valeur d'avant jusqu'au rechargement de la page — le §44 promettait que
+			// couper masque la liste, le compteur ET le temps réel « d'un coup », ce qui est vrai en
+			// base et ne l'était pas à l'écran.
+			//
+			// L'écran des réglages ne connaît PAS la cloche : il dit que l'ensemble lisible a changé,
+			// et qui écoute relit. C'est la doctrine du module, inchangée (décision 201).
+			relireBoiteNotifications()
+			setEcritures((precedent) => ({ ...precedent, [type]: { phase: 'ecrite' } }))
 			setAnnonce(
 				issue.preference.recevoirDansApplication
 					? t('settings.notifications.saved.on')
@@ -209,6 +229,13 @@ export function ReglagesNotifications({
 							{ecriture.phase === 'envoi' ? (
 								<p id={idMention} className="text-sm text-text-3 pl-7">
 									{t('settings.notifications.saving')}
+								</p>
+							) : null}
+							{/* LA CONFIRMATION REMPLACE L'ENVOI, elle ne s'y ajoute pas (§5.7 ter) : deux
+							    mentions superposées feraient croire à deux écritures. */}
+							{ecriture.phase === 'ecrite' ? (
+								<p id={idMention} className="text-sm text-success pl-7">
+									{t('settings.notifications.saved')}
 								</p>
 							) : null}
 							{ecriture.phase === 'refus' ? (
