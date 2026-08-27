@@ -334,10 +334,29 @@ export async function lirePageCards(
 		if (parametres.recherche !== '') {
 			// `plfts` et non `ilike` : `search_tsv` est une colonne générée `STORED` indexée en GIN
 			// (docs/SPEC-cards.md §2.7), qu'un `ilike '%…%'` ne peut pas employer. La configuration
-			// `french` est **explicite**, comme dans la définition de la colonne : implicite, elle
+			// est **explicite**, comme dans la définition de la colonne : implicite, elle
 			// dépendrait de `default_text_search_config`, paramètre de session.
+			//
+			// `francais_sans_accent` ET NON `french` DEPUIS LA DÉCISION 532 (arbitrage du
+			// responsable fermant INC-230). `french` n'est PAS insensible aux accents, et son
+			// inconstance est mesurée sur le seed lui-même : « sécurité » trouvait deux affaires,
+			// `securite` n'en trouvait aucune, alors que `amelie` trouvait bien « Amélie ». Un
+			// comportement juste une fois sur deux apprend à l'utilisateur une règle fausse.
+			//
+			// ELLE DOIT RESTER ÉGALE À CELLE DE LA COLONNE (migration 0069) : `plainto_tsquery` et
+			// `to_tsvector` désaccordés ne produiraient aucune erreur — seulement des recherches
+			// qui ne trouvent rien, en silence.
+			//
+			// LE NOM EST NON QUALIFIÉ, ET CE N'EST PAS UN OUBLI : **PostgREST refuse un nom de
+			// configuration portant un schéma**, MESURÉ le 2026-08-27 —
+			// `plfts(app.francais_sans_accent)` rend `PGRST100 — unexpected "." expecting operator`,
+			// le point étant le séparateur d'opérateur de sa grammaire de filtre. La configuration
+			// est donc résolue par le `search_path` de PostgREST, auquel `app` a été ajouté **en
+			// queue** (`PGRST_DB_EXTRA_SEARCH_PATH`, gabarit `.env.example`). En queue parce que
+			// `mail_template_variables` existe dans `app` ET dans `public` : `app` en tête aurait
+			// changé la fonction résolue par un appel non qualifié.
 			requete = requete.textSearch('search_tsv', parametres.recherche, {
-				config: 'french',
+				config: 'francais_sans_accent',
 				type: 'plain',
 			})
 		}

@@ -33,7 +33,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(92);
+select plan(94);
 
 -- Raccourcis vers les objets du seed, seule source de données de cette suite. Les identifiants
 -- sont stables par contrat (docs/SPEC-seed.md, docs/SPEC-cards.md §9).
@@ -265,10 +265,39 @@ select is(
 update public.cards set description = 'Client historique du studio'
  where title = 'Cohérente';
 
+-- ASSERTION RÉVISÉE LE 2026-08-27, JAMAIS RETIRÉE (mécanisme de la décision 51), et le motif est
+-- l'arbitrage de la décision 532 §2 fermant INC-230 : la colonne n'est plus définie en `french`
+-- mais en `app.francais_sans_accent`, le MÊME vocabulaire que `public.recherche_globale`. La
+-- configuration de la requête suit celle de la colonne — désaccordées, elles ne produiraient
+-- aucune erreur, seulement des recherches qui ne trouvent rien, en silence.
 select is(
-	(select search_tsv @@ to_tsquery('french', 'histor') from public.cards where title = 'Cohérente'),
+	(select search_tsv @@ to_tsquery('app.francais_sans_accent', 'histor')
+	   from public.cards where title = 'Cohérente'),
 	true,
 	'`search_tsv` indexe la DESCRIPTION autant que le titre, et racinise en français');
+
+-- LES DEUX ASSERTIONS SUIVANTES SONT NOUVELLES, ET SANS ELLES LA RÉVISION CI-DESSUS SERAIT
+-- COMPLAISANTE : « historique » ne porte aucun accent, si bien que `french` et
+-- `app.francais_sans_accent` rendent le même lexème « histor ». L'assertion révisée passerait donc
+-- **à l'identique sur l'ancienne colonne**, et ne prouverait rien du changement.
+--
+-- Ce qui distingue les deux vocabulaires est le mot ACCENTUÉ, cherché SANS son accent — l'écart
+-- exact qu'INC-230 avait mesuré, et que la décision 532 corrige. Sous `french`, la première de ces
+-- deux assertions est FAUSSE : c'est elle qui mord.
+update public.cards set description = 'Audit de sécurité applicative'
+ where title = 'Cohérente';
+
+select is(
+	(select search_tsv @@ plainto_tsquery('app.francais_sans_accent', 'securite')
+	   from public.cards where title = 'Cohérente'),
+	true,
+	'un mot ACCENTUÉ du document se trouve SANS son accent — ce que `french` ne faisait pas');
+
+select is(
+	(select search_tsv @@ plainto_tsquery('app.francais_sans_accent', 'sécurité')
+	   from public.cards where title = 'Cohérente'),
+	true,
+	'et il se trouve AVEC son accent : la symétrie vaut dans les DEUX sens (docs/SPEC-recherche.md §3.2)');
 
 select has_index('public', 'cards', 'cards_channel_step_position_idx',
 	'index d''une colonne de board, docs/SCHEMA.md §10');

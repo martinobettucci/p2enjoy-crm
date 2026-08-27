@@ -450,14 +450,23 @@ describe('la lecture d’une page (§12.3)', () => {
 
 	// `plfts` et non `ilike` : `search_tsv` est une colonne générée indexée en GIN (§2.7), qu'un
 	// `ilike '%…%'` ne peut pas employer.
-	it('cherche dans `search_tsv`, en configuration `french` EXPLICITE', async () => {
+	//
+	// ASSERTION RÉVISÉE LE 2026-08-27, JAMAIS RETIRÉE (mécanisme de la décision 51). Motif :
+	// l'arbitrage de la décision 532 §2, qui ferme INC-230 — le produit n'a plus qu'UN vocabulaire
+	// de recherche, `francais_sans_accent`, et la vue liste l'emploie comme la palette.
+	//
+	// CE QU'ELLE PROTÈGE EST L'ACCORD ENTRE LA REQUÊTE ET LA COLONNE (migration 0069). Désaccordées,
+	// elles ne produisent AUCUNE erreur — ni au typage, ni à l'exécution : seulement une recherche
+	// qui ne trouve plus rien, en silence. C'est le mode de défaillance que ce test existe pour
+	// rendre bruyant.
+	it('cherche dans `search_tsv`, en configuration `francais_sans_accent` EXPLICITE', async () => {
 		const { client, appel } = clientEspion(OK)
 		await lirePageCards(client, {
 			channelId: CHANNEL,
 			parametres: parametres({ recherche: 'refonte' }),
 		})
 		expect(appel.recherches).toEqual([
-			['search_tsv', 'refonte', { config: 'french', type: 'plain' }],
+			['search_tsv', 'refonte', { config: 'francais_sans_accent', type: 'plain' }],
 		])
 	})
 

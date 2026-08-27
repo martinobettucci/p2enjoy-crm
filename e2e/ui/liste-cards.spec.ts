@@ -431,7 +431,11 @@ test.describe('les filtres (§12.5)', () => {
 		await expect.poll(() => journal[journal.length - 1]?.etape).toBe(`eq.${RELANCE}`)
 	})
 
-	test('la recherche part en `plfts(french)` à la soumission, pas à la frappe', async ({ page }) => {
+	// TITRE ET ATTENTE RÉVISÉS LE 2026-08-27, JAMAIS RETIRÉS (mécanisme de la décision 51) : la
+	// décision 532 §2 ferme INC-230 et donne au produit UN seul vocabulaire de recherche. Ce que la
+	// preuve établit ne change pas — la requête part à la SOUMISSION, jamais à la frappe —, mais la
+	// configuration qu'elle fige est désormais celle de la colonne (migration 0069).
+	test('la recherche part en `plfts(francais_sans_accent)` à la soumission, pas à la frappe', async ({ page }) => {
 		const journal: Demande[] = []
 		await ouvrir(page, ADRESSE, { journal })
 		await expect(page.getByTestId('tableau-liste')).toBeVisible()
@@ -442,7 +446,9 @@ test.describe('les filtres (§12.5)', () => {
 
 		await page.getByTestId('valider-recherche').click()
 		await expect(page).toHaveURL(/q=refonte/)
-		await expect.poll(() => journal[journal.length - 1]?.recherche).toBe('plfts(french).refonte')
+		await expect
+			.poll(() => journal[journal.length - 1]?.recherche)
+			.toBe('plfts(francais_sans_accent).refonte')
 	})
 
 	// Deux états vides distincts : un filtre trop étroit appelle son retrait (§12.9).

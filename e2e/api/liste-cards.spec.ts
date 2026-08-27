@@ -305,7 +305,7 @@ test.describe('les filtres (§12.5)', () => {
 	test('la recherche plein texte trouve une affaire par un mot de son titre', async ({ request }) => {
 		const reponse = await request.get(
 			`${CARDS}?select=title&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&${FILTRES_ACTIVES}` +
-				`&search_tsv=plfts(french).refonte`,
+				`&search_tsv=plfts(francais_sans_accent).refonte`,
 			{ headers: enTetesAuthentifies(jetonAdmin) },
 		)
 		expect(reponse.status()).toBe(200)
@@ -313,16 +313,46 @@ test.describe('les filtres (§12.5)', () => {
 		expect(lignes.map((ligne) => ligne.title)).toEqual(['Refonte du site vitrine'])
 	})
 
-	// La racinisation française est le motif du `french` explicite : « sécurité » trouve
-	// « sécurité », et un terme absent ne trouve rien.
+	// La racinisation française est le motif de la configuration EXPLICITE ; depuis la décision 532
+	// §2 (arbitrage fermant INC-230) c'est `francais_sans_accent`, la même que la palette. Le nom est NON
+	// QUALIFIÉ parce que PostgREST refuse un schéma dans `plfts` — mesuré, `PGRST100`.
 	test('la recherche ne rend rien pour un terme absent', async ({ request }) => {
 		const reponse = await request.get(
 			`${CARDS}?select=title&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&${FILTRES_ACTIVES}` +
-				`&search_tsv=plfts(french).zzzintrouvable`,
+				`&search_tsv=plfts(francais_sans_accent).zzzintrouvable`,
 			{ headers: enTetesAuthentifies(jetonAdmin) },
 		)
 		expect(reponse.status()).toBe(200)
 		expect(await reponse.json()).toEqual([])
+	})
+
+	// C'EST LE SCÉNARIO QUI MORD, ET SANS LUI LA RÉVISION CI-DESSUS SERAIT MÉCANIQUE. « refonte » et
+	// « audit » ne portent aucun accent : les deux vocabulaires les racinisent à l'identique, et les
+	// scénarios qui les emploient passeraient **avec ou sans** la migration 0069. Ce qui distingue
+	// les deux configurations est le mot ACCENTUÉ du document, cherché SANS son accent.
+	//
+	// MESURÉ sur ce seed le 2026-08-27, avant la migration : `plfts(french).securite` rendait
+	// **zéro ligne** là où `plfts(french).sécurité` en rendait deux — l'écart exact qu'INC-230
+	// consignait, et qu'un utilisateur ne pouvait pas deviner.
+	//
+	// LES DEUX SENS SONT ÉPROUVÉS DANS LE MÊME SCÉNARIO (docs/SPEC-recherche.md §3.2) : une
+	// configuration qui trouverait le terme désaccentué mais plus le terme accentué aurait
+	// simplement déplacé le défaut.
+	test('un mot ACCENTUÉ se trouve avec ET sans son accent — l’écart d’INC-230 est fermé', async ({
+		request,
+	}) => {
+		for (const terme of ['securite', 'sécurité']) {
+			const reponse = await request.get(
+				`${CARDS}?select=title&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&${FILTRES_ACTIVES}` +
+					`&search_tsv=plfts(francais_sans_accent).${encodeURIComponent(terme)}`,
+				{ headers: enTetesAuthentifies(jetonAdmin) },
+			)
+			expect(reponse.status(), `terme « ${terme} »`).toBe(200)
+			const lignes = (await reponse.json()) as CardLue[]
+			expect(lignes.map((ligne) => ligne.title), `terme « ${terme} »`).toEqual([
+				'Audit sécurité applicative',
+			])
+		}
 	})
 
 	test('les deux filtres se combinent, et le total porte sur les lignes filtrées', async ({
@@ -330,7 +360,7 @@ test.describe('les filtres (§12.5)', () => {
 	}) => {
 		const reponse = await request.get(
 			`${CARDS}?select=id&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&${FILTRES_ACTIVES}` +
-				`&current_step_id=eq.${ETAPE_PROSPECTION}&search_tsv=plfts(french).audit&${ORDRE_TITRE}`,
+				`&current_step_id=eq.${ETAPE_PROSPECTION}&search_tsv=plfts(francais_sans_accent).audit&${ORDRE_TITRE}`,
 			{ headers: { ...enTetesAuthentifies(jetonAdmin), Prefer: 'count=exact', Range: '0-24' } },
 		)
 		expect(reponse.status()).toBe(200)
@@ -471,7 +501,7 @@ test.describe('ce que la liste consent à un anonyme', () => {
 	}) => {
 		for (const supplement of [
 			`&current_step_id=eq.${ETAPE_RELANCE}`,
-			'&search_tsv=plfts(french).refonte',
+			'&search_tsv=plfts(francais_sans_accent).refonte',
 		]) {
 			const reponse = await request.get(
 				`${CARDS}?select=id&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&${FILTRES_ACTIVES}${supplement}`,
