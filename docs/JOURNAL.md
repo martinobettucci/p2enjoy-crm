@@ -26057,6 +26057,34 @@ successives ont rencontrée sans qu'aucune n'en soit la cause.
 faisais alors tourner `test:sql` et la campagne d'interface **sur la même base**. Rejoué seul :
 vert. La contention était la mienne, et elle est nommée plutôt que passée sous silence.*
 
+**LE SEUIL DU CHAMP A ÉTÉ CORRIGÉ APRÈS COUP, ET C'EST LA CAMPAGNE QUI L'A IMPOSÉ.** La campagne
+d'interface réécrit les captures de **toutes** les unités — l'en-tête est commun à tous les écrans
+—, et c'est en les regardant que deux défauts de plus sont apparus, chacun établi **par comparaison
+à la ligne de base** d'avant la session (`docs/CloudWorker.md` §2.4) :
+
+| Capture | Avant la session | Seuil `md` | Seuil `lg` |
+|---|---|---|---|
+| `CRM-076/workflows-md-900.jpg` | « Éditeur de workflows » | « **Édit…** » | « Éditeur de workflows » |
+| `CRM-030/catalogue-liste-sm-390.jpg` | « **Ca…** » | « **(** » | — |
+
+Le champ n'apparaît donc qu'à partir de **`lg`**, et le nom du produit cède au même seuil. **La
+cause du second n'est pas le champ mais la COMMANDE À ICÔNE**, quarante pixels de plus sur une ligne
+qui n'en avait plus : la révision du §12.2 avait d'abord été attribuée au champ, et la ligne de base
+a corrigé le motif. **La règle générale qui en sort** : le seuil auquel un occupant de l'en-tête
+doit céder se mesure sur le **titre de route le plus long du produit**, jamais sur celui de l'écran
+qu'on a sous les yeux.
+
+**LE SECOND DÉFAUT EST PRÉEXISTANT ET RESTE INCHANGÉ — INC-233.** À 390 px, « Ca… » était déjà
+illisible **avant** la livraison ; la sous-tranche l'aggrave d'un caractère. La cause probable est
+une règle du §5.12 **non appliquée** — l'identité de session devrait passer en `sr-only` sous
+768 px et occupe une centaine de pixels. La corriger demanderait de reprendre et d'**observer** les
+captures de toutes les unités à 390 px, ce qui dépasse la sous-tranche.
+
+**LES CAPTURES DES AUTRES UNITÉS SONT GARDÉES, ET NON RESTAURÉES** — c'est l'écart avec la décision
+529, qui les avait restaurées. Le motif y était écrit : « la tranche ne touche aucun composant ».
+Ici la sous-tranche modifie l'en-tête de **tous** les écrans, et les nouvelles captures sont l'état
+réellement exécuté du produit.
+
 **Où reprendre.** `CRM-065` **2a est close**, **2b est `[~]`** — tout son comportement est livré et
 prouvé, il ne lui manque que le verdict de `scripts/verify-harness.sh`, lancé en fin de session. La
 sous-tranche **2c** — `RouteInbox` honorant `?message=<id>` — reste **à livrer**, et son contrat est

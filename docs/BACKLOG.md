@@ -9923,9 +9923,27 @@ chaque morceau prouvable seul :
 - [x] `docs/DESIGN_SYSTEM.md` §5.46 complété et **§12.2 RÉVISÉ dans le même changement** : le seuil
       de sacrifice du nom du produit descend sous `lg`, l'ordre restant inchangé.
 
-*Ce qui reste dû sur 2b, et ce n'est pas du comportement* : la campagne d'interface complète doit
-être rejouée derrière ce changement — l'en-tête est commun à **tous** les écrans, et la révision du
-§12.2 les touche tous. Tant qu'elle n'est pas relevée, la sous-tranche reste `[~]`.
+- [x] **DEUX DÉFAUTS DE PLUS TROUVÉS EN REGARDANT LES CAPTURES DES AUTRES UNITÉS**, chacun établi
+      **par comparaison à la ligne de base** d'avant la session (`docs/CloudWorker.md` §2.4) : à
+      900 px un champ de `28ch` réduisait « Éditeur de workflows » à « **Édit…** » — le champ
+      n'apparaît donc qu'à partir de **`lg`** ; et la **commande à icône** coûte à elle seule
+      quarante pixels, assez pour faire tomber le même titre à « Éditeur de wor… » — le seuil du
+      nom du produit descend donc lui aussi sous `lg`. **La règle générale** : le seuil auquel un
+      occupant de l'en-tête doit céder se mesure sur le **titre de route le plus long du produit**,
+      jamais sur celui de l'écran qu'on a sous les yeux.
+- [x] **Les captures des autres unités sont GARDÉES, et non restaurées** — écart avec la décision
+      529, dont le motif était « la tranche ne touche aucun composant ». Ici l'en-tête change sur
+      **tous** les écrans, et les nouvelles captures sont l'état réellement exécuté.
+- [x] **INC-233 consignée**, préexistante et laissée inchangée : à 390 px le titre de route d'un
+      écran au nom long rendait déjà « Ca… » **avant** la livraison.
+- [x] **Compteur `SCENARIOS_UI` révisé de 664 à 686**, valeur **comptée** par
+      `playwright --project=ui --list` (« Total: 686 tests in 55 files »).
+
+*Ce qui reste dû sur 2b, et ce n'est pas du comportement* : le **verdict** de
+`scripts/verify-harness.sh`. Son passage a établi que les **trois compteurs sont conformes** —
+`api : 1015`, `ui : 686`, `mail : 42` énumérés et conformes —, mais sa section 5 rejoue `e2e:ui`,
+qu'INC-232 fait rougir de façon intermittente. Tant que ce verdict n'est pas relevé, la sous-tranche
+reste `[~]`.
 
 ##### Sous-tranche 2c — l'inbox adressable `[ ]`
 
