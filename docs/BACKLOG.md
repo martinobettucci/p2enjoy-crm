@@ -9949,16 +9949,60 @@ chaque morceau prouvable seul :
 *Rien ne reste dû sur 2b* : tout son comportement est livré, toutes ses preuves sont exécutées et
 vertes, et ses captures sont produites et observées.
 
-##### Sous-tranche 2c — l'inbox adressable `[ ]` — **c'est l'unité de la session suivante**
+##### Sous-tranche 2c — l'inbox adressable `[x]`
 
-- [ ] `RouteInbox` honore `?message=<id>` (`docs/SPEC-recherche.md` §15) : lu **au montage** et une
+- [x] `RouteInbox` honore `?message=<id>` (`docs/SPEC-recherche.md` §15) : lu **au montage** et une
       seule fois, dossier déduit du `card_id` (M16), identifiant inconnu **sans erreur**, paramètre
-      retiré de l'adresse une fois honoré.
+      retiré de l'adresse. **L'écart de 2b est comblé** : un résultat de la famille `message` ouvre
+      désormais le message, et non plus la boîte sans sélection.
+- [x] **Point de spécification complété AVANT la première ligne de code** (`CLAUDE.md` §5) :
+      `docs/SPEC-recherche.md` **§15.1**. Le §15 disait le retrait « une fois honoré » et laissait
+      le cas du refus sans réponse. Le **retrait inconditionnel** est retenu, motif écrit : le §15
+      exige un écran indiscernable d'une arrivée sans paramètre, et **l'adresse fait partie de cet
+      état** — un paramètre resté dans la barre dirait qu'il s'est passé là quelque chose que
+      l'écran ne montre pas. Commit documentaire dédié et poussé avant le code.
+- [x] **`webapp/src/lib/inbox.ts` — `lireDossierDuMessage`** : deux colonnes lues (`id`, `card_id`),
+      jamais le message entier, que `useMessage` relira de toute façon. Les **quatre** issues
+      négatives — client absent, identifiant absent, ligne fermée par la RLS, erreur de transport —
+      rendent la MÊME valeur, `null`, parce que la conséquence est la même : on arrive sur sa
+      boîte. Ce n'est pas un `catch` vide, c'est la règle de discrétion du §7 de
+      `docs/SPEC-permissions-rls.md`.
+- [x] **UN DÉFAUT TROUVÉ PAR LA PREUVE, ET CORRIGÉ DANS SA CAUSE.** La première rédaction lisait le
+      paramètre dans un effet dépendant de `parametresUrl`, avec un `ref` garde-fou. Elle
+      **retirait le paramètre et n'ouvrait jamais le message** : le retrait change `parametresUrl`,
+      l'effet se rejoue, et son **nettoyage** tue la lecture encore en vol. Le drapeau empêchait un
+      second départ, rien n'empêchait l'annulation du premier. La correction supprime la cause —
+      le paramètre est lu **une fois par construction**, par l'initialiseur paresseux de
+      `useState`, et l'effet ne dépend plus que de cette valeur stable — au lieu d'ajouter une
+      garde de plus. La forme fonctionnelle de `setSearchParams` évite la dépendance restante.
+- [x] `webapp/src/app/RouteInbox.test.tsx` : **7 scénarios ajoutés, 12 verts au total**. Ils
+      éprouvent les deux moitiés de M16, le retrait du paramètre **des deux côtés** — honoré et
+      refusé —, la conservation des autres paramètres de l'adresse, l'absence de toute alerte sur
+      un identifiant inconnu, et la **lecture unique** : naviguer dans le fil ne ramène pas au
+      message de départ. Un **témoin d'adresse** rend la chaîne de requête lisible par la preuve —
+      sans lui, un écran qui ouvre le bon message ET garde le paramètre passerait tout le reste.
+- [x] `e2e/ui/inbox.spec.ts` : **4 scénarios ajoutés, 10 verts au total** sur la pile réelle. Le
+      plus utile est **le parcours entier de la palette au message** : prouver les deux bouts
+      séparément laisserait passer un désaccord sur le nom du paramètre, qui est exactement ce que
+      le §13.5 appelle « stable par contrat ». L'identifiant du message est **lu** par le
+      `rfc822_message_id` du seed et jamais codé en dur — mesuré : `mail_messages.id` est engendré
+      à l'insertion et n'est pas figé par le seed, contrairement aux cards.
+- [x] **Capture produite et OBSERVÉE** : `docs/captures/CRM-065/inbox-adressable-1440.jpg`
+      (`CLAUDE.md` §16) — le dossier de l'affaire porte bien son repère de sélection, le message
+      désigné est ouvert, et la pilule d'affaire est rendue.
+- [x] **Les captures de `CRM-057` sont RESTAURÉES** — écart avec la sous-tranche 2b, dont l'en-tête
+      changeait sur tous les écrans. Ici aucun composant n'est modifié : le rendu de l'inbox sans
+      paramètre est identique, et seul l'horodatage du seed faisait différer les fichiers. C'est le
+      motif de la décision 529.
+- [x] **Compteur `SCENARIOS_UI` révisé de 686 à 690** dans le même changement, valeur **comptée**
+      par `playwright --project=ui --list` (« Total: 690 tests in 55 files »).
+- [x] **Documentation dans le même changement** : `docs/manual.md` §9.4 — la destination de la
+      famille `message` est réécrite et l'écart du §9.6 **retiré** plutôt que laissé à traîner —,
+      et `CHANGELOG.md` sous `[Non publié]`.
 
-*Écart nommé, non masqué* : tant que 2c n'est pas livrée, le paramètre est **inerte** et un résultat
-de la famille `message` mène à l'inbox **sans sélection**. Ce n'est pas une destination morte —
-l'écran existe et porte ce qu'on cherche — c'est une destination **imprécise**, et le §13.5 écrit
-pourquoi les deux autres issues étaient pires.
+*Aucune migration, aucune ligne de `supabase/`* (§16.2) : la tranche 2 ne touche ni la fonction, ni
+sa suite pgTAP. **INC-230 reste ouverte** (§16.3) : la recherche locale de la vue liste emploie
+toujours `french`, et cette sous-tranche laisse ce comportement inchangé.
 
 ---
 ### CRM-070 — précision d'arbitrage : l'invitation d'un membre

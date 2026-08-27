@@ -13,6 +13,22 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-065` sous-tranche 2c — la boîte de réception s'ouvre sur le bon message
+
+- **Un résultat de recherche de la famille « message » ouvre désormais le message lui-même**, et
+  plus seulement la boîte de réception. C'est l'écart que la sous-tranche précédente avait annoncé
+  et laissé ouvert ; il est comblé.
+- **Le dossier suit le message** : celui de son affaire quand il est classé, « Non classés » quand
+  il ne l'est pas. On arrive donc là où le message se trouve réellement, sans avoir à le retrouver
+  dans une liste.
+- **L'adresse qui y a mené ne reste pas dans la barre du navigateur.** Recharger la page laisse
+  dans la boîte, sans rouvrir un message quitté depuis longtemps — et le bouton « Précédent » ne le
+  rouvre pas non plus.
+- **Un message effacé, ou qu'on n'a pas le droit de lire, n'affiche aucune erreur** : la boîte
+  s'ouvre simplement sans sélection, exactement comme si l'on y était venu directement. Un refus ne
+  se distingue pas d'une absence.
+- Documentation utilisateur : `docs/manual.md` §9.4 et §9.6.
+
 ### `CRM-065` sous-tranche 2b — la recherche, enfin à l'écran
 
 - **Un champ de recherche apparaît en haut de chaque écran, et `Cmd+K` / `Ctrl+K` l'ouvre de
@@ -31,8 +47,8 @@ d'exécuter le code attendu.
 - **Ce que l'on cherche n'est jamais enregistré** : ni le terme, ni le moment. Aucun historique.
 - **La liste s'arrête à vingt résultats et le dit en toutes lettres** plutôt que de laisser croire
   qu'elle est complète.
-- **Un écart connu et écrit** : un résultat de la famille « message » mène à la boîte de réception,
-  mais pas encore au message lui-même. Il reste à le retrouver dans la liste.
+- **Un écart connu et écrit** : un résultat de la famille « message » menait à la boîte de
+  réception, mais pas encore au message lui-même. **Comblé par la sous-tranche 2c ci-dessus.**
 - **En corrigeant l'en-tête pour lui faire place, un défaut ancien a été trouvé** : à partir de
   1024 px et en dessous, le nom du produit occupait une place qu'il ne cédait jamais, au point de
   faire disparaître le titre de l'écran courant. Il s'efface désormais plus tôt.

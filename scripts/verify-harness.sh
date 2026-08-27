@@ -1076,7 +1076,17 @@ SCENARIOS_API=1015
 # in 55 files » —, jamais déduite d'une exécution. La campagne rend **685 passés et 1 échec**, et
 # cet échec est **INC-232**, préexistant, étranger et à contre-épreuve interne : le compteur
 # compte des scénarios DÉCLARÉS, jamais des scénarios verts.
-SCENARIOS_UI=686
+#
+# **`CRM-065` SOUS-TRANCHE 2c, le 2026-08-27 : 690.** `e2e/ui/inbox.spec.ts` ajoute **4 scénarios**
+# — le message désigné par l'adresse et le dossier de son affaire, le message sans affaire qui mène
+# aux « Non classés » (les deux moitiés de M16), l'identifiant inconnu qui ne rend aucune erreur et
+# dont le paramètre est retiré quand même (§15.1), et **le parcours entier de la palette au
+# message**, seul scénario qui éprouve les deux bouts du contrat du §13.5 ensemble.
+#
+# 686 + 4 = **690**, valeur COMPTÉE par `playwright test --project=ui --list` — « Total: 690 tests
+# in 55 files » —, jamais déduite d'une exécution. AUCUN FICHIER NOUVEAU : la sous-tranche complète
+# la preuve de l'écran qu'elle modifie, plutôt que d'en ouvrir une seconde sur le même écran.
+SCENARIOS_UI=690
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

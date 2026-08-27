@@ -3310,7 +3310,16 @@ Un clic sur une ligne fait la même chose que `Entrée`.
 | Commentaire | **la fiche de l'affaire commentée**, où le propos se lit dans le fil |
 | Contact | sa fiche |
 | Organisation | sa fiche |
-| Message | votre boîte de réception |
+| Message | **votre boîte, le message ouvert**, dans le dossier où il est classé |
+
+**Un message vous mène au message, pas seulement à votre boîte.** Le dossier est celui de son
+affaire quand il est classé, et **« Non classés »** quand il ne l'est pas — vous arrivez donc là où
+le message se trouve réellement, sans avoir à le retrouver dans la liste.
+
+L'adresse qui vous y a mené **ne reste pas dans la barre du navigateur** : recharger la page vous
+laisse dans votre boîte, sans rouvrir un message que vous aviez peut-être quitté depuis longtemps.
+Et si le message n'existe plus, ou s'il ne vous est pas lisible, **votre boîte s'ouvre simplement
+sans sélection** — aucune erreur ne s'affiche.
 
 ### 9.5 Vous ne trouvez que ce que vous avez le droit de lire
 
@@ -3333,8 +3342,6 @@ nécessairement la même liste, et c'est voulu.
   liste tous à l'écran.
 - **Un résultat dont l'écran n'est pas atteignable reste affiché**, marqué « Objet non
   atteignable » et non cliquable — plutôt que de disparaître ou de mener à un écran cassé.
-- **Un message vous mène à votre boîte, mais pas encore au message lui-même.** Il vous reste à le
-  retrouver dans la liste ; l'écart est connu et sera comblé.
 - **Sans être connecté, la recherche n'existe pas** : ni champ, ni raccourci.
 
 ## Annexe A — Ce que contient l'espace de démonstration
