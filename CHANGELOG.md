@@ -13,6 +13,28 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-064` tranche 4 — les préférences de notification (en cours)
+
+- **Chacun décide désormais de ce qu'il reçoit.** Une nouvelle section personnelle des réglages —
+  « Notifications » — porte une case par type de notification, cochée par défaut. La décocher coupe
+  la cloche, le compteur **et** l'arrivée en temps réel ; la recocher les rend.
+- **Couper ne détruit rien.** Les notifications continuent d'être produites et conservées : elles
+  sont simplement **masquées** tant que la case est décochée. Rétablir la case rend l'historique
+  complet, non lu, tel qu'il était.
+- **La décision est privée.** Personne d'autre — pas même l'administratrice de l'espace — ne peut
+  lire, ni même constater l'existence de la préférence de quelqu'un. C'est la raison pour laquelle
+  elle ne vit pas sur la fiche de profil, que toute l'équipe lit.
+- **Il n'y a qu'un canal, et l'écran ne promet rien d'autre.** Ni email, ni résumé quotidien : le
+  produit n'envoie aucune notification hors de l'application, et une case qui le laisserait croire
+  serait une promesse fausse. Le jour où un canal sortant existera, il amènera son réglage.
+- **Un seul réglage écrit, sans bouton « Enregistrer ».** Basculer la case écrit immédiatement, et
+  la case ne se coche qu'**après** la confirmation de la base — jamais par anticipation.
+- **Migration `0067`**, sans destruction : la table `notification_preferences`, sa règle de lecture,
+  et la troisième condition ajoutée à la lecture des notifications. Sur une base existante, rien ne
+  change tant que personne n'a rien décidé : l'absence de décision vaut « je reçois ».
+- **Conséquence nommée** : une notification masquée par une préférence ne peut plus être marquée
+  lue tant qu'elle l'est. On ne la voit pas, donc on ne la marque pas.
+
 ### `CRM-064` sous-tranche 3b — l'émission d'une mention
 
 - **Le composeur d'un commentaire porte désormais un sélecteur de personnes.** Sous la zone de

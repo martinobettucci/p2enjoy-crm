@@ -1072,7 +1072,7 @@ prédicat que les deux gardes**, pour que la ligne visible et le fil visible ne 
 | Table | Contenu |
 |---|---|
 | `notifications` | **Livrée** par `CRM-064` tranche 2 (migration `0064`, `docs/SPEC-notifications.md` §13) — voir ci-dessous |
-| `notification_preferences` | Canal souhaité par type : in-app, email immédiat, digest |
+| `notification_preferences` | **Livrée** par `CRM-064` tranche 4 (migration `0067`, `docs/SPEC-notifications.md` §43 à §46) — voir ci-dessous. **Il n'y a qu'un canal**, et le §42.1 le mesure : ni email, ni digest n'existent (§13.1, « aucun canal sortant »). La ligne précédente en promettait trois ; elle est révisée plutôt que laissée à dériver |
 | `audit_log` | Acteur, action, entité, charge utile, date — append-only |
 | `api_tokens` | Jetons à portée limitée : empreinte stockée, jamais le jeton en clair |
 | `webhook_endpoints`, `webhook_deliveries` | Points de sortie signés et historique des remises |
@@ -1111,6 +1111,11 @@ message déjà délivré (§14.4). La règle d'accès le rattrape autrement — 
 notification sans détruire aucune ligne, et que la règle d'accès n'a **toujours qu'une seule
 écriture**.
 
+**LA POLITIQUE DE LECTURE PORTE UNE TROISIÈME CONDITION DEPUIS LA MIGRATION `0067`** (tranche 4,
+§45.2) : elle délègue aussi à `app.notification_consentie(recipient_id, type)`. C'est là que la
+préférence agit, et nulle part ailleurs — liste, compteur et temps réel la subissent tous les trois
+d'un coup, puisque tous les trois lisent cette table sous cette politique.
+
 **PUBLIÉE AU TEMPS RÉEL depuis la migration `0065`** (`CRM-064` sous-tranche 3a,
 `docs/SPEC-notifications.md` §25.1). Cette ligne écrivait « pas publiée : la tranche 3 la publiera
 dans le même changement que l'écran qui l'écoute » ; la condition est remplie, et elle est
@@ -1118,6 +1123,39 @@ dans le même changement que l'écran qui l'écoute » ; la condition est rempli
 un membre qui n'est pas le destinataire ne reçoit **rien**, et un destinataire dont le droit sur
 l'affaire retombe cesse de recevoir. La table est donc, au flux comme à la lecture, une **surface
 d'autorisation** — deuxième du produit après `card_comments`.
+
+### `notification_preferences`
+
+**Livrée par `CRM-064` tranche 4** (migration `0067`, `docs/SPEC-notifications.md` §43 à §46).
+
+| Colonne | Type | Contraintes |
+|---|---|---|
+| `profile_id` | `uuid` | non nul, `profiles (id)` en `CASCADE` |
+| `type` | `text` | non nul, `check` **fermé** sur `'mention'` — la même garde qu'au §13.3 |
+| `in_app` | `boolean` | non nul, `default true` |
+| `updated_at` | `timestamptz` | non nul, **posé par la base** (trigger `BEFORE`, décision 95) |
+
+**Clé primaire `(profile_id, type)`, NATURELLE**, et c'est l'inverse de `notifications` : une
+préférence n'a pas d'existence propre, elle **est** le fait qu'une personne a décidé quelque chose
+au sujet d'un type (§43.2).
+
+**UNE TABLE, ET NON UNE COLONNE DE `profiles`**, parce que `profiles_lecture_equipe` ouvre la ligne
+entière à toute l'équipe — mesuré par la vraie route (§43.1). Une décision personnelle ne se publie
+pas.
+
+**L'ABSENCE DE LIGNE VAUT CONSENTEMENT** : le défaut est « je reçois », posé par le `coalesce`
+explicite de `app.notification_consentie` et non par une ligne fabriquée (§43.4). Le seed n'en pose
+donc aucune.
+
+**FERMÉE EN ÉCRITURE PAR LE PRIVILÈGE ET PAR L'ABSENCE DE POLITIQUE** — le refus double du §15.3.
+La RPC `public.definir_preference_notification(text, boolean)`, `security definer`, est le **seul**
+chemin ; le destinataire n'y est pas un paramètre, si bien qu'écrire pour autrui est *impossible*
+plutôt que refusé (§46.3). Même forme que `snooze_thread` / `wake_thread` au §7.
+
+**LE FILTRAGE EST À LA LECTURE, jamais à la production** (§44) : la troisième condition de
+`notifications_lecture` délègue à `app.notification_consentie`. Couper **masque** — liste, compteur
+et temps réel d'un coup — sans détruire, et rétablir rend l'état d'avant. Conséquence mesurée et
+figée : une notification masquée ne peut plus être marquée lue (§44.1).
 
 
 ### Objets privés d'ordonnancement
