@@ -25791,3 +25791,69 @@ navigateur et le partage entre onglets restent ouverts sans changement.
 **La question posée au responsable reste la même, et une seule** : les unités **`CRM-072`**
 (`audit_log`) et **`CRM-073`** (`api_tokens`) n'existent pas, onze unités leur renvoient, et leur
 périmètre est un choix produit qu'aucune mesure ne donne.
+
+---
+
+## décision 528 — l'état vide du sélecteur de mentions n'était pas dans le seed ; il n'avait pas besoin d'y être
+
+*2026-08-27, session planifiée `CloudWorker`. Unité : `CRM-064`, sous-tranche 3b — son dernier écart.
+Spécification écrite et **committée avant la première ligne de code** (`CLAUDE.md` §5) :
+`docs/SPEC-notifications.md` §50, neuf sous-chapitres fondés sur **huit mesures** prises sur la pile
+debout et seedée, sondes détruites et état du seed relu après.*
+
+**LE POINT OUVERT N° 4 DU §39 RAISONNAIT À L'INTÉRIEUR DU SEED, ET C'EST LÀ QU'IL SE BLOQUAIT.** Il
+notait justement que l'état vide — « personne d'autre ne peut lire cette affaire » — n'est exerçable
+sur aucune affaire du jeu de démonstration : l'administratrice les lit toutes, si bien qu'un
+non-administrateur a toujours au moins elle. Les deux issues qu'il envisageait — exclure
+l'administratrice, ou ajouter un quatrième profil — étaient effectivement l'une impossible et l'autre
+un arbitrage sur le jeu de démonstration. **Une troisième voie existait, et elle ne touche pas au
+seed** : `CLAUDE.md` §15 autorise expressément un chemin déterministe hors donnée seedée, et le dépôt
+le pratique déjà — `CRM-014` fabrique et détruit un second espace, `CRM-083` son propre tableau. Un
+espace de travail jetable à **un seul membre** laisse ce membre seul lecteur de ses affaires ; mesuré,
+`mentionnables` y rend `200 []` et l'écran rend le message, **zéro case et zéro bouton**.
+
+**LA DESTRUCTION DE LA FIXTURE EST UN CONTRAT, ET LA MESURE MA7 EST CE QUI L'ÉTABLIT.** Laissé en
+base, l'espace jetable rend **rouge** `e2e/ui/demarrage.spec.ts` — « la base doit être rendue à son
+unique workspace seedé (CRM-005) » —, et cette assertion est juste : elle protège l'écran du premier
+lancement, dont tout le sens est de n'avoir rien à montrer. Le démontage vit donc dans un `finally`
+et **constate** l'état rendu au lieu de le supposer. La non-régression a été rejouée derrière : les
+**11 scénarios** de `demarrage.spec.ts` sont verts.
+
+**UN DÉFAUT DE PREUVE ÉTRANGER A ÉTÉ CORRIGÉ À SA CAUSE, ET « INTERMITTENT » N'A PAS SERVI DE
+DIAGNOSTIC.** Le scénario clavier de la sous-tranche échouait **en série** et passait **seul** —
+constaté deux fois, dont une sur la ligne de base d'avant le §50, ce qui l'écarte de cette livraison.
+La cause est établie et elle n'est pas un aléa : le §36.3 fait lire la liste **à l'ouverture** du
+sélecteur, et le §36.4 donne à cet instant un état de chargement **sans aucune case** ; tabuler avant
+l'arrivée de la réponse porte donc le focus au bouton de publication — **comportement correct de
+l'écran**, qui n'a rien d'autre à focaliser. Le scénario attend désormais l'état peuplé qu'il
+s'apprête précisément à exercer, comme un utilisateur qui voit la liste paraître avant d'y entrer.
+Attente **sur la condition mesurée**, jamais une temporisation (`CLAUDE.md` §18) ; aucun test
+désactivé.
+
+**UNE ANOMALIE RÉELLE TROUVÉE EN REGARDANT L'IMAGE, ET AUCUN TEST NE POUVAIT LA VOIR — INC-229.** La
+capture de l'état vide montre Driss sur une affaire de son espace jetable, et **l'en-tête affiche
+toujours « P2Enjoy SAS »**, le nom de l'espace *seedé* ; la barre latérale liste « Sonde 3b — track »
+à côté des trois tracks du seed, dans une liste plate qui ne nomme l'espace d'aucun. L'écran montre
+donc l'affaire d'un espace sous le nom d'un autre, et aucun sélecteur d'espace n'existe. Le cas était
+**inatteignable** jusqu'ici — le seed pose un seul espace et une seule appartenance par profil (M12
+du §41) —, et c'est ce chemin déterministe qui l'a rendu observable. Comportement **laissé
+inchangé** : l'anomalie relève de la coquille (`CRM-007`), et ce que celle-ci doit rendre à un compte
+multi-espaces est un choix produit.
+
+**LES COMPTEURS DE `verify-harness.sh` ÉTAIENT EN RETARD, ET LA DÉRIVE ÉTAIT CELLE DE `CRM-064`
+ELLE-MÊME.** `SCENARIOS_API` était figé à 958 — la valeur d'avant la sous-tranche 3b — alors que 3b
+l'a porté à 984 et la tranche 4 à 996 ; `SCENARIOS_UI` à 629, contre 663 après la tranche 4. Trois
+tranches de cette unité avaient livré leurs scénarios sans reprendre ces compteurs. Ils sont donc
+repris **ici**, parce qu'ils appartiennent à la même unité et non par correction au passage d'un
+défaut étranger : **997** et **664**, valeurs comptées par `playwright test --list`, motif écrit dans
+le fichier. Garde-fous révisés, jamais retirés.
+
+**Où reprendre.** La sous-tranche **3b est CLOSE** : son dernier écart est soldé par exécution. Seule
+la **tranche 4** retient encore `CRM-064` en `[~]`, et pour un écart de preuve et non de comportement
+— la série des `scripts/verify-*.sh` n'a pas été rejouée en entier. La session suivante peut soit la
+rejouer, soit passer à une unité de construction : le registre et le backlog font foi.
+
+**La question posée au responsable reste la même, et une seule** : les unités **`CRM-072`**
+(`audit_log`) et **`CRM-073`** (`api_tokens`) n'existent pas, onze unités leur renvoient, et leur
+périmètre est un choix produit qu'aucune mesure ne donne. **INC-229** s'ajoute aux arbitrages en
+attente.

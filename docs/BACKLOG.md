@@ -9453,10 +9453,12 @@ avant la suivante :
 
 - [~] **CE QUI RETIENT L'UNITÉ EN `[~]`, ET C'EST NOMMÉ PLUTÔT QUE MASQUÉ.** Les tranches **1 et
       2 sont closes**, la sous-tranche **3a l'est aussi**, et depuis le 2026-08-27 les **quatre
-      tranches sont codées** : `3b` (l'émission) et `4` (les préférences) sont **livrées** et
-      restent `[~]` pour des écarts de PREUVE, non de comportement — voir leurs sections
-      ci-dessous. `docs/manual.md` porte son chapitre 8, dont le §8.6 sur les préférences, et son
-      §8.7 nomme ce qui manque encore.
+      tranches sont codées**. **RÉVISÉ le 2026-08-27 en fin de journée : la sous-tranche `3b` est
+      CLOSE**, son dernier écart — l'état vide du sélecteur — ayant été soldé par exécution
+      (`docs/SPEC-notifications.md` §50). Seule la **tranche 4** reste `[~]`, et pour un écart de
+      PREUVE et non de comportement : la série des `verify-*.sh` n'a pas été rejouée en entier.
+      `docs/manual.md` porte son chapitre 8, dont le §8.6 sur les préférences, et son §8.7 nomme ce
+      qui manque encore.
 - [ ] **La série des `scripts/verify-*.sh` n'a PAS été rejouée derrière ces changements**, et
       l'écart est nommé (`docs/CloudWorker.md` §4.3, budget) : le dépôt en porte **soixante-treize**
       depuis la tranche 2, et **deux** l'ont été — `verify-mentions.sh` à la tranche 1,
@@ -9466,8 +9468,12 @@ avant la suivante :
       (mesuré à la décision 509), et ses deux compteurs révisés ici l'ont été **par comptage
       direct** — `npm run test:sql` rend « 61 fichiers, 2896 assertions », et
       `playwright test --list` rend « 958 tests in 58 files ».
+      **Révisé le 2026-08-27 en fin de journée** : `verify-mentions-composeur.sh` a été rejoué
+      (**53 contrôles, aucune anomalie**) et les deux compteurs de `verify-harness.sh` sont portés à
+      **997** et **664**, valeurs comptées. Le reste de la série n'a toujours pas été rejoué, et
+      c'est le seul écart qui retient encore l'unité.
 
-#### Sous-tranche 3b — l'émission `[~]`
+#### Sous-tranche 3b — l'émission `[x]`
 
 - [x] **Spécification écrite et committée AVANT la première ligne de code** —
       `docs/SPEC-notifications.md` §32 à §40 et `docs/DESIGN_SYSTEM.md` §5.44, fondés sur **neuf
@@ -9550,10 +9556,53 @@ avant la suivante :
 - [x] **Documentation dans le même changement** : `docs/SPEC-notifications.md` §32 à §40,
       `docs/DESIGN_SYSTEM.md` §5.44, `docs/manual.md` §8.5 et §8.6, `docs/SCHEMA.md` §9 bis.9 bis,
       `docs/PROD_MIGRATIONS.md` migration 66, `README.md`, `CHANGELOG.md` sous `[Non publié]`.
-- [~] **CE QUI RETIENT LA SOUS-TRANCHE EN `[~]`, ET C'EST NOMMÉ PLUTÔT QUE MASQUÉ** : **l'état vide
-      du sélecteur n'est pas exerçable sur le seed** (§36.4, mesuré — aucun couple affaire/lecteur
-      n'y laisse l'appelant seul). Il est éprouvé par la suite unitaire, jamais par le parcours
-      d'interface, et l'écart est porté par le point ouvert n° 4 du §39.
+- [x] **~~CE QUI RETIENT LA SOUS-TRANCHE EN `[~]`~~ — SOLDÉ LE 2026-08-27, PAR EXÉCUTION.** Le
+      constat tenait : aucun couple (affaire, lecteur) du seed ne laisse l'appelant seul (§36.4,
+      mesuré), et l'état vide n'était éprouvé que par la suite unitaire. Ce qui n'avait pas été vu
+      est qu'**une preuve n'est pas obligée de vivre dans le seed** (`CLAUDE.md` §15) : un second
+      espace de travail **jetable**, posé et détruit par la clé de service, laisse son unique membre
+      seul lecteur de sa propre affaire. Le seed n'est ni étendu ni modifié.
+      **Contrat écrit et committé AVANT la première ligne de code** — `docs/SPEC-notifications.md`
+      §50, neuf sous-chapitres et **huit mesures** prises sur la pile debout et seedée, sondes
+      détruites, seed relu après. Le §36.4 et le point ouvert n° 4 du §39 sont **révisés sur place**,
+      jamais réécrits.
+- [x] **`e2e/api/espace-solitaire.ts` — la fixture partagée**, sept lignes et une appartenance
+      (§50.3), Driss unique membre en `admin` (§50.4). **La destruction est un CONTRAT, et MA7 le
+      mesure** : laissé en base, l'espace jetable rend **rouge** `e2e/ui/demarrage.spec.ts`, qui
+      assère à juste titre que la base ne porte qu'un espace. Le démontage **constate** l'état rendu.
+- [x] **Ligne *ah* du contrat d'API** (§50.7), dans `e2e/api/mentions-composeur.spec.ts` : sous le
+      jeton réel de Driss, la même fonction rend **deux lignes** sur une affaire du seed et **`200
+      []`** sur celle de son espace solitaire. **La ligne de base est rejouée dans le même
+      scénario**, sans quoi `[]` ne distinguerait pas « personne n'est éligible » de « la fonction
+      ne rend rien », et la card est **relue** pour écarter une fixture cassée. Suite : **11
+      scénarios verts** (10 avant).
+- [x] **Parcours d'interface dédié** (§50.6), les huit points *a* à *h* sur session réelle : la
+      fiche s'ouvre, le message paraît, **zéro case**, **zéro bouton** — le §36.4 exige « sans
+      action », donc pas la reprise du §5.8 —, la commande sans compte, le composeur resté
+      publiable, console **vierge**. Suite : **12 scénarios verts** (11 avant).
+- [x] **Une capture produite ET OBSERVÉE** — `docs/captures/CRM-064/mentions-liste-vide-1440.jpg`.
+      Le §40 promettait « liste peuplée et liste vide » ; la seconde manquait.
+- [x] **UN DÉFAUT DE PREUVE TROUVÉ ET CORRIGÉ À SA CAUSE, ÉTRANGER À CETTE LIVRAISON.** Le scénario
+      clavier échouait **en série** et passait **seul** — mesuré deux fois, dont une sur la ligne de
+      base d'avant le §50. « Intermittent » n'est pas un diagnostic, et la cause est établie : le
+      §36.3 fait lire la liste **à l'ouverture** du sélecteur, et le §36.4 donne à cet instant un
+      état de chargement **sans aucune case** ; tabuler avant l'arrivée de la réponse porte le focus
+      au bouton de publication, ce qui est le comportement **correct** de l'écran. Le scénario
+      attend désormais l'état peuplé qu'il s'apprête à exercer — attente sur la condition mesurée,
+      **jamais une temporisation** (`CLAUDE.md` §18), aucun test désactivé.
+- [x] **UNE ANOMALIE ÉTRANGÈRE TROUVÉE EN REGARDANT LA CAPTURE** (`CLAUDE.md` §16), consignée sans
+      être corrigée : **INC-229** — dès qu'un compte appartient à plus d'un espace de travail,
+      l'en-tête nomme le **mauvais** (`P2Enjoy SAS`, l'espace seedé) et la barre latérale mélange
+      les tracks des deux espaces en une liste plate. Le cas était **inatteignable** jusqu'ici, le
+      seed ne posant qu'un espace ; c'est ce chemin déterministe qui l'a rendu observable. Relève de
+      `CRM-007`, et attend l'arbitrage du responsable.
+- [x] **`scripts/verify-mentions-composeur.sh` rejoué** : **53 contrôles, aucune anomalie**, ses
+      dégradations toutes mordantes et la restauration constatée.
+- [x] **Compteurs de `scripts/verify-harness.sh` révisés dans le MÊME changement, et la dérive
+      était CELLE DE `CRM-064`** : `SCENARIOS_API` 958 → **997** et `SCENARIOS_UI` 629 → **664**,
+      valeurs **comptées** par `playwright test --list`. Les trois tranches précédentes de cette
+      unité avaient livré leurs scénarios sans reprendre ces compteurs ; le détail tranche par
+      tranche est écrit dans le fichier. Garde-fous RÉVISÉS, jamais retirés.
 
 #### Tranche 4 — les préférences `[~]`
 
