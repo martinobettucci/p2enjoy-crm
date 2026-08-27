@@ -10,6 +10,9 @@
 //       docs/SPEC-contacts.md §8.8.2 (où le bloc s'ancre), §8.8.4 (les quatre états),
 //       §8.8.5 (ce que le bloc écrit et ce qu'il tait), §8.8.6 (le geste et ses refus) ;
 //       docs/DESIGN_SYSTEM.md §5.4 ter
+// @spec CRM-065 (docs/BACKLOG.md) — sous-tranche 2c : l'inbox adressable,
+//       docs/SPEC-recherche.md §15 (ce que 2c livre), §13.5 (le message mène à l'inbox, et son
+//       adresse porte le message), M16 (le classement décide du dossier)
 // @spec CRM-081 (docs/BACKLOG.md) — tranche 2 f : LE GROUPEMENT en fils,
 //       docs/SPEC-cards.md §16.16.3 (ce que la liste énumère), §16.16.4 (ce que la sélection
 //       désigne et ce que le panneau de lecture ouvre), §16.16.5 (le sommeil transposé au fil),
@@ -26,7 +29,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, ChevronRight, Inbox, Moon, Paperclip, Download, Sparkles, Sun } from 'lucide-react'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { Button } from '../components/ui/Button'
 import { LiveRegion } from '../components/ui/LiveRegion'
 import { SkeletonListe } from '../components/ui/Skeleton'
@@ -38,6 +41,7 @@ import {
 	classerMessage,
 	lireCardsClassables,
 	lireCheminCard,
+	lireDossierDuMessage,
 	urlPieceJointe,
 	useArborescence,
 	useFilsEndormis,
@@ -63,6 +67,11 @@ import {
 	type ModeFils,
 } from '../lib/sommeil-fil'
 import { composerFils, filDuMessage, grouperEnFils } from '../lib/fil-inbox'
+// LA CLÉ VIENT DU MODULE QUI L'A ARRÊTÉE (docs/SPEC-recherche.md §13.5), jamais d'un littéral
+// recopié ici : une chaîne écrite deux fois se désaccorde au premier ajustement, et la palette
+// composerait alors une adresse que l'inbox n'honorerait plus. `colonnes-recherche` n'importe rien,
+// ce qui le rend atteignable depuis n'importe où (décision 177).
+import { PARAMETRE_MESSAGE } from '../lib/colonnes-recherche'
 import { objetDeReponse } from '../lib/envoi'
 import { clientCrm } from '../lib/supabase'
 import { FormulaireEnvoi } from './FormulaireEnvoi'
@@ -1319,6 +1328,57 @@ export function RouteInbox() {
 	// ouvrirait une question — quelle est l'adresse d'un dossier ? — que cette tranche ne tranche
 	// pas. Le mode ne survit donc pas à un rechargement, et l'écart est nommé.
 	const [mode, setMode] = useState<ModeFils>('masquees')
+
+	// =============================================================================================
+	// L'AMORCE PAR L'ADRESSE — CRM-065 sous-tranche 2c, docs/SPEC-recherche.md §15 et §15.1
+	// =============================================================================================
+	//
+	// C'EST LE SEUL PARAMÈTRE QUE CET ÉCRAN LIT, et le commentaire du `mode` juste au-dessus reste
+	// vrai : le filtre de sommeil n'entre toujours pas dans l'adresse. Ce paramètre-ci n'est pas un
+	// contrôle de l'écran, c'est une DESTINATION — la palette du §13.5 y mène, et l'inbox l'honore.
+	const [parametresUrl, setParametresUrl] = useSearchParams()
+	// LU AU MONTAGE ET UNE SEULE FOIS (§15). Ce drapeau n'est pas une précaution de style : sans
+	// lui, l'effet rejouerait au prochain rendu — `setParametresUrl` change l'objet qu'il lit — et
+	// ramènerait l'utilisateur au message de départ à chaque clic. Un `ref` plutôt qu'un état : il
+	// ne décide d'aucun rendu, et le muter n'en déclenche aucun.
+	const amorceFaite = useRef(false)
+
+	useEffect(() => {
+		if (amorceFaite.current) return
+		amorceFaite.current = true
+
+		const demande = parametresUrl.get(PARAMETRE_MESSAGE)
+		if (demande === null || demande === '') return
+
+		// LE PARAMÈTRE EST RETIRÉ MÊME QUAND IL N'EST PAS HONORÉ (§15.1) — décidé par le TRAITEMENT,
+		// jamais par le succès —, et il l'est TOUT DE SUITE, avant même de savoir si le message se
+		// lit : l'écran doit être indiscernable d'une arrivée sans paramètre, et l'adresse fait
+		// partie de cet état. `replace` : un remplacement d'historique, sans quoi le bouton
+		// « Précédent » ramènerait à l'adresse porteuse et rouvrirait le message.
+		const suivants = new URLSearchParams(parametresUrl)
+		suivants.delete(PARAMETRE_MESSAGE)
+		setParametresUrl(suivants, { replace: true })
+
+		let vivant = true
+		void (async () => {
+			// LE DOSSIER SE DÉDUIT DU MESSAGE, il ne se devine pas : `card_id` décide (M16), et le
+			// message non classé va aux « Non classés » plutôt que de rester sans dossier.
+			const dossier = await lireDossierDuMessage(clientCrm, demande)
+			if (!vivant) return
+			// UN IDENTIFIANT INCONNU N'EST PAS UNE ERREUR (§15) : la boîte s'ouvre sans sélection, et
+			// aucun bandeau ne signale l'échec — un refus ne se distingue pas d'une absence.
+			if (dossier === null) return
+			setSelection(dossier)
+			setIdOuvert(demande)
+			// SOUS 1024 PX, ON ARRIVE SUR LE MESSAGE, pas sur les dossiers : l'utilisateur a demandé
+			// un message précis, et lui rendre la pile au premier étage lui ferait refaire à la main
+			// les deux pas que l'adresse venait de lui épargner.
+			setEtage('message')
+		})()
+		return () => {
+			vivant = false
+		}
+	}, [parametresUrl, setParametresUrl])
 
 	const arbre = useArborescence(clientCrm)
 	const liste = useMessages(clientCrm, selection)

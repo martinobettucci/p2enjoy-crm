@@ -306,6 +306,49 @@ export type PageMessages = {
 	readonly tronquee: boolean
 }
 
+/**
+ * Le dossier où un message se trouve — l'amorce du paramètre `?message=` (§15).
+ *
+ * @spec CRM-065 (docs/BACKLOG.md) — sous-tranche 2c : l'inbox adressable
+ * @spec docs/SPEC-recherche.md §15 (ce que 2c livre), M16 (un message porte son affaire quand il
+ *       est classé, et rien quand il ne l'est pas)
+ *
+ * ELLE NE LIT QUE DEUX COLONNES, et jamais le message entier : l'écran le relira de toute façon par
+ * `useMessage` une fois la sélection posée. Demander ici le corps et les adresses ferait rapporter
+ * deux fois le même courrier pour n'en employer qu'un identifiant.
+ *
+ * UN IDENTIFIANT INCONNU, UN IDENTIFIANT MAL FORMÉ ET UN MESSAGE QUE LA RLS FERME RENDENT TOUS
+ * `null`, ET C'EST LA RÈGLE DE DISCRÉTION (docs/SPEC-permissions-rls.md §7) : un refus ne se
+ * distingue pas d'une absence. L'appelant ouvre alors l'inbox sans sélection, comme si le paramètre
+ * n'avait pas été écrit — jamais une erreur, qui apprendrait à l'utilisateur qu'un message existe
+ * là où il n'a pas le droit de le savoir.
+ *
+ * L'ERREUR DE TRANSPORT REND `null` ELLE AUSSI, et ce n'est pas un `catch` vide : la valeur est la
+ * même que celle d'une absence parce que la CONSÉQUENCE est la même — on arrive sur sa boîte. Un
+ * bandeau d'erreur pour une amorce que l'utilisateur n'a pas demandée serait un bruit, et l'écran
+ * porte déjà les siens pour l'arbre, la liste et le message.
+ */
+export async function lireDossierDuMessage(
+	client: ClientCrm | null,
+	id: string,
+): Promise<Selection | null> {
+	if (client === null) return null
+	try {
+		const reponse = await client.from('mail_messages').select('id, card_id').eq('id', id).limit(1)
+		if (reponse.error !== null) return null
+		const ligne = reponse.data[0]
+		if (ligne === undefined) return null
+		// M16 : `card_id` est nul tant que le message n'est pas classé, et le seed porte les deux cas.
+		// Une amorce qui ne vaudrait que pour les messages classés laisserait la moitié de la famille
+		// `message` de la palette sans dossier.
+		return ligne.card_id === null
+			? { genre: 'non-classes' }
+			: { genre: 'card', cardId: ligne.card_id }
+	} catch {
+		return null
+	}
+}
+
 /** Lit l'arborescence des dossiers, avec les compteurs de l'appelant. */
 export async function lireArborescence(client: ClientCrm | null): Promise<EtatAsync<ArbreInbox>> {
 	if (client === null) return enErreur(CONFIGURATION_ABSENTE)
