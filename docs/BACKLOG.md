@@ -9850,16 +9850,34 @@ exigent donc une **seconde lecture**, groupée par `id=in.(…)` — jamais `N +
 **Découpage en trois sous-tranches** (`docs/SPEC-recherche.md` §10.2), sur la frontière qui rend
 chaque morceau prouvable seul :
 
-##### Sous-tranche 2a — le moteur d'appel `[ ]`
+##### Sous-tranche 2a — le moteur d'appel `[x]`
 
-- [ ] `webapp/src/lib/recherche.ts` : l'appel à la RPC, la **garde d'ordre** du §13.2, le délai de
-      frappe du §13.3, la résolution groupée du §13.1, et la destination des cinq familles du §13.4.
-      **Aucune surface.**
-- [ ] `webapp/src/lib/recherche.test.ts` : la garde d'ordre éprouvée par deux réponses revenant
-      dans l'ordre **inverse** de leur émission, le délai, les cinq destinations, la ligne **sans
-      lien**, et les trois colonnes que le générateur déclare non nulles à tort (M18).
-- [ ] `e2e/api/recherche-palette.spec.ts` : les deux lectures de résolution **hors interface**, avec
-      les jetons réels — dont l'ambiguïté d'embarquement de M15, qu'un test unitaire ne voit pas.
+- [x] `webapp/src/lib/recherche.ts` et `webapp/src/lib/colonnes-recherche.ts` : l'appel à la RPC, la
+      **garde d'ordre** du §13.2, le délai de frappe du §13.3, la résolution groupée du §13.1, et la
+      destination des cinq familles du §13.4. **Aucune surface.** Le module de colonnes n'importe
+      rien, pour être atteignable depuis `e2e/` comme depuis la webapp — procédé de
+      `colonnes-notifications.ts` (décision 177), repris plutôt que réinventé.
+- [x] **LE MODULE NE NORMALISE PAS LE TERME**, et ce n'est pas un oubli : le §6.2 pose que la
+      normalisation est « entièrement écrite [en base] et ne dépend d'aucune saisie du client ». En
+      poser une seconde à l'écran ferait deux définitions du même découpage, qui divergeraient au
+      premier ajustement.
+- [x] **UN ÉCHEC DE RÉSOLUTION NE FAIT PAS ÉCHOUER LA RECHERCHE** : la ligne reste rendue, **sans
+      lien**. La masquer retrancherait un résultat de la liste qui existe pour les montrer ; lui
+      donner une adresse incomplète mènerait à un écran que l'utilisateur croirait cassé — la règle
+      du §5.37 et du §5.32 du design system.
+- [x] `webapp/src/lib/recherche.test.ts` : **19 tests, aucun échec**. La garde d'ordre est éprouvée
+      par le cas RÉEL — deux réponses revenant dans l'ordre **inverse** de leur émission, et c'est
+      la dernière **émise** qui gagne. Les cinq destinations, la ligne sans lien, la famille inconnue
+      qui n'atteint jamais l'écran sous sa forme brute, les trois colonnes que le générateur déclare
+      non nulles à tort (M18), et la troncature écrite.
+- [x] `e2e/api/recherche-palette.spec.ts` : **8 scénarios verts** sur la pile réelle, avec les jetons
+      réels. **La plus utile est la CONTRE-ÉPREUVE de M15** — l'embarquement nu rend `PGRST201` —,
+      sans laquelle la relation nommée passerait pour une précaution de style au lieu d'une
+      nécessité mesurée. La chaîne `select` y est **importée** du module que la webapp emploie,
+      jamais recopiée : une chaîne recopiée éprouverait la copie, pas le produit.
+- [x] **Compteur de `scripts/verify-harness.sh` révisé dans le même changement**, valeur **comptée**
+      et jamais déduite : `SCENARIOS_API` 1007 → **1015** (`playwright test --project=api --list` :
+      « Total: 1015 tests in 64 files »).
 
 ##### Sous-tranche 2b — la surface `[ ]`
 

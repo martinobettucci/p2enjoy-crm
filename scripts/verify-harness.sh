@@ -771,7 +771,20 @@ ASSERTIONS_ATTENDUES=3006
 #
 # 997 + 10 = **1007**, valeur COMPTÉE par `playwright test --project=api --list` — « Total: 1007
 # tests in 63 files » —, jamais déduite d'une exécution.
-SCENARIOS_API=1007
+# --- CRM-065 sous-tranche 2a, le 2026-08-27 : **1015** --------------------------------------------
+#
+# `e2e/api/recherche-palette.spec.ts` ajoute **huit** scénarios, tous portant sur ce qu'un test
+# unitaire ne peut PAS voir : que la pile RÉSOUT les colonnes que le module demande. La plus utile
+# est la contre-épreuve de M15 — l'embarquement NU de `channels` rend `PGRST201`, `cards` portant
+# deux clés étrangères vers cette table —, sans laquelle la relation nommée passerait pour une
+# précaution de style au lieu d'une nécessité mesurée. Les sept autres : l'absence d'adresse dans
+# les sept colonnes de la RPC (M14), les deux résolutions nommées, la résolution groupée qui n'est
+# pas `N + 1`, l'asymétrie du seed mesurée sur les DEUX comptes (M19), les deux cas de message du
+# seed (M16), et les deux familles qui n'exigent aucune résolution.
+#
+# 1007 + 8 = **1015**, valeur COMPTÉE par `playwright test --project=api --list` — « Total: 1015
+# tests in 64 files » —, jamais déduite d'une exécution.
+SCENARIOS_API=1015
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la

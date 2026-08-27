@@ -13,6 +13,26 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-065` sous-tranche 2a — de quoi mener à l'objet trouvé (aucun écran encore)
+
+- **La recherche sait désormais où mènent ses résultats.** La base rend ce qu'elle a trouvé, mais
+  jamais l'adresse où l'on va le lire : une affaire vit sous son track et son channel, et un
+  commentaire n'a pas d'adresse à lui. Le produit compose donc l'adresse de chaque résultat, en
+  **une seule requête** pour toute une page de résultats — jamais une par ligne.
+- **Un commentaire mène à l'affaire commentée**, là où il se lit. C'était l'objet de la précaution
+  prise à la tranche 1 : un commentaire dont l'affaire est à la corbeille ne se cherche plus, sans
+  quoi la recherche aurait proposé une porte qui ne s'ouvre pas.
+- **Un résultat dont l'adresse ne se retrouve pas reste affiché, simplement sans lien.** Le faire
+  disparaître retirerait un résultat de la liste qui existe pour les montrer ; l'envoyer vers une
+  adresse incomplète mènerait à un écran qu'on croirait cassé.
+- **Ce que l'on cherche n'est ni enregistré, ni conservé** : ni le terme, ni le moment, ni le
+  nombre de résultats.
+- **Aucun écran encore** : le champ de recherche et son raccourci sont la sous-tranche 2b. Cette
+  sous-tranche se prouve entièrement hors interface — 19 tests de logique et 8 scénarios sur la
+  pile réelle avec les comptes du jeu de démonstration.
+- Aucune migration. Contrat écrit et publié **avant la première ligne de code** —
+  `docs/SPEC-recherche.md` §10 à §17, `docs/DESIGN_SYSTEM.md` §5.46.
+
 ### `CRM-065` tranche 1 — la recherche globale, en base (aucun écran encore)
 
 - **Le produit sait désormais chercher un objet par son texte, où qu'il vive.** Une seule requête
