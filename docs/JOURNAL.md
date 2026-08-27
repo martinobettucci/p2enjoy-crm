@@ -26264,3 +26264,68 @@ son index GIN, et la **révision** — jamais le retrait — des cinq preuves qu
 explicitement. Le point de vigilance de production (réécriture de la table `cards`) n'a pas demandé
 d'arbitrage : c'est une opération d'exploitation ordinaire, à passer en fenêtre comme les cinq index
 de `CRM-065`.
+
+---
+
+## décision 533 — INC-230 fermée et livrée, et deux leçons de méthode payées comptant
+
+*2026-08-27, séance avec le responsable, suite de la décision 532. Celle-ci consigne la LIVRAISON de
+l'arbitrage et ce que la campagne a coûté à apprendre.*
+
+**LA LIVRAISON.** Migration `0069_vocabulaire_unique_recherche.sql` : `cards.search_tsv`, générée en
+`french` depuis la migration 11, est redéfinie en `app.francais_sans_accent`. Aucune table, aucune
+colonne, aucune politique, aucun privilège ne bouge — la forme publique de `public.cards` est
+inchangée. La migration porte une garde qui rend le rejeu **instantané** au lieu de réécrire la
+table, ce qui n'est pas un confort : sur une base peuplée, c'est la différence entre un rejeu et un
+verrou exclusif.
+
+**L'ÉCART EST MESURÉ SUR LES DONNÉES RÉELLES, jamais sur un exemple théorique.** Avant : `securite`
+rendait **zéro** affaire quand `sécurité` en rendait **deux** ; `adherents` zéro contre une ;
+`evolutive` zéro contre une. Après : **2 et 2, 1 et 1, 1 et 1**.
+
+**UN OBSTACLE NON PRÉVU, ET SA SOLUTION EST UNE RÈGLE À RETENIR.** **PostgREST refuse un nom de
+configuration qualifié par un schéma** dans `plfts` : `plfts(app.francais_sans_accent)` rend
+`PGRST100 — unexpected "." expecting operator`, le point étant son séparateur d'opérateur. Aucune
+citation ne passe, éprouvé sur trois formes. La configuration est donc résolue par
+`PGRST_DB_EXTRA_SEARCH_PATH`, auquel `app` est ajouté **EN QUEUE et jamais en tête** :
+`mail_template_variables` existe dans `app` COMME dans `public`, et la priorité inversée aurait
+changé silencieusement la fonction résolue par tout appel non qualifié. Vérifié après changement :
+la résolution rend toujours `public`. Ceci n'expose rien de neuf à l'API, que `PGRST_DB_SCHEMAS`
+seule gouverne.
+
+**TROIS ASSERTIONS AJOUTÉES PARCE QUE LA RÉVISION SEULE AURAIT ÉTÉ COMPLAISANTE, et c'est la leçon
+la plus utile de la séance.** « refonte », « audit » et « historique » ne portent aucun accent : les
+deux vocabulaires les racinisent à l'identique, si bien que **tous les scénarios existants passaient
+avec ou sans la migration**. Une révision purement mécanique aurait donc livré un changement que
+rien n'éprouvait. Ce qui distingue les deux configurations est le mot ACCENTUÉ cherché SANS son
+accent, et la contre-épreuve est relevée : `to_tsvector('french', …) @@ plainto_tsquery('french',
+'securite')` rend **false**, la même en `app.francais_sans_accent` rend **true**.
+
+**LA CAMPAGNE A COÛTÉ TROIS HEURES POUR UNE LEÇON QUI TIENT EN UNE LIGNE : ne rien lancer d'autre
+pendant une campagne d'interface.** Un premier passage a rendu **517 échecs**, dont un échec de
+CONNEXION sur presque tous les scénarios. La cause n'était ni le produit ni la migration : j'avais
+lancé `npm run build` pendant que `vite preview` servait `webapp/dist`, et réécrit le bundle sous
+les pieds du serveur. Relancée **seule**, la campagne rend **689 passés et 2 échecs** ; ces deux-là
+tombent en fin de série sur `ERR_CONNECTION_REFUSED`, le **démon Docker s'étant arrêté** — pile
+remontée, seed réappliqué, les deux scénarios rejoués rendent **10 passés** et **2 passés**. Le même
+mécanisme explique les deux anomalies de `verify-recherche.sh` mesurées deux fois dans la journée :
+rejoué seul, il rend **56 contrôles, aucune anomalie**.
+
+**CAMPAGNE, ÉTAT FINAL.** `typecheck` et `build` verts ; `test:sql` **65 fichiers / 3008
+assertions** ; `test:unit` **84 fichiers / 2800 tests** ; `e2e:api` **1016 passés** ; `e2e:mail`
+**42 passés** ; `pytest` **244 passés** ; `e2e:ui` **689 passés**, les 2 échecs d'environnement
+rejoués verts ; `verify-recherche.sh` **56 contrôles, aucune anomalie**.
+
+**`e2e:mail` a rougi une fois, et le §2.2 bis l'avait écrit d'avance** : `mail-sync.spec.ts` §S3 lit
+`docker logs`, dont le tampon conservait les erreurs de la fenêtre où la pile était cassée. Le
+conteneur **recréé** — jamais simplement redémarré —, la suite rend **42 passés**.
+
+**Un défaut de PREUVE consigné, INC-234.** Réécrire `cards` remet `reltuples` à zéro, et le scénario
+`count=planned` tombe tant qu'`ANALYZE` n'a pas repassé. Ce n'est pas un flake : la cause est nommée
+et reproductible. Aucun test désactivé, aucune tolérance ajoutée ; l'issue proposée est un `ANALYZE`
+en fin de seed, et elle relève de `CRM-042`.
+
+**Où reprendre.** **INC-230 est close et livrée.** `CRM-042` reste `[x]` — la reprise n'a rien
+laissé dû. `CRM-065` reste `[~]` pour la seule raison écrite au backlog : la série des
+soixante-dix-sept `verify-*.sh` n'a pas été rejouée en entier. **Et la règle du §4.1 bis vaut pour
+la suite** : une entrée du registre marquée « arbitrage attendu » est un travail à faire, pas un mur.
