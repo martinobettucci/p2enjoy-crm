@@ -7171,7 +7171,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-062 | Relances automatiques des cards figées | `[~]` |
 | CRM-063 | Templates d'emails, signatures, séquences de relance | `[x]` |
 | CRM-064 | @mentions, notifications temps réel et préférences | `[~]` |
-| CRM-065 | Recherche globale plein texte et palette Cmd+K | `[ ]` |
+| CRM-065 | Recherche globale plein texte et palette Cmd+K | `[~]` |
 | CRM-066 | Analytique de conversion et prévisionnel pondéré | `[ ]` |
 | CRM-067 | Activités typées : appels, réunions, visios | `[ ]` |
 | CRM-068 | Checklists et modèles de cards | `[ ]` |
@@ -9715,6 +9715,48 @@ avant la suivante :
       `scripts/verify-*.sh` n'a **pas** été rejouée en entier derrière ces changements — seul
       `verify-preferences-notifications.sh` l'a été (`docs/CloudWorker.md` §4.3, budget). Le dépôt
       en porte plus de soixante-dix, et la série entière ne tient pas dans une session.
+
+---
+
+### CRM-065 — Recherche globale plein texte et palette Cmd+K `[~]`
+*Unité ouverte le 2026-08-27, session planifiée `CloudWorker`. Choisie par `docs/CloudWorker.md`
+§4.2, règle 3 : aucune unité `[~]` antérieure dans l'ordre du plan ne porte de comportement à livrer
+qui ne soit ni un écart de preuve, ni une dépendance absente, ni un arbitrage en attente. C'est la
+première unité `[ ]` de la table du chunk 5.*
+
+Retrouver un objet métier par son texte, quel que soit son emplacement dans l'arborescence, et
+l'atteindre depuis n'importe quel écran. **DoD** : la recherche est une lecture qui **n'ouvre rien**
+— la RLS de chaque table décide seule et le refus est zéro ligne ; le contrat est mesuré hors
+interface avec les jetons réels des trois profils ; la palette s'ouvre au clavier, se parcourt au
+clavier et mène à l'objet ; captures produites **et observées**.
+
+**Découpage en deux tranches**, écrit avant la première ligne de code
+(`docs/SPEC-recherche.md` §1.2) :
+
+- **tranche 1 — la recherche en base** : le vocabulaire `app.francais_sans_accent`, les cinq index
+  GIN, la fonction `public.recherche_globale`, sa suite pgTAP et son contrat d'API. Aucune
+  surface ;
+- **tranche 2 — la palette** : `Cmd+K` / `Ctrl+K`, la liste, la navigation clavier, les états, et
+  la navigation vers l'objet choisi.
+
+#### Tranche 1
+
+- [x] **Spécification écrite et committée AVANT la première ligne de code** —
+      `docs/SPEC-recherche.md`, neuf chapitres opposables, fondés sur **onze mesures** relevées le
+      2026-08-27 sur la pile montée et seedée, sondes créées en transaction puis **annulées** et
+      état de la base relu après.
+- [ ] **La migration `0068_recherche_globale.sql`** : extension `unaccent`, configuration
+      `app.francais_sans_accent`, cinq index GIN d'expression, `public.recherche_globale`.
+- [ ] **Suite pgTAP dédiée** : `supabase/tests/0065_recherche_globale.test.sql`.
+- [ ] **Contrat d'API dédié, hors interface** : `e2e/api/recherche-globale.spec.ts`, les quinze
+      lignes du §6.7 avec les jetons réels des trois profils et la clé anonyme.
+- [ ] **Documentation dans le même changement** : `docs/SCHEMA.md`, `docs/PROD_MIGRATIONS.md`,
+      `CHANGELOG.md`.
+
+#### Tranche 2 — non commencée
+
+- [ ] La palette, son raccourci, sa navigation clavier, ses états, ses captures, sa suite E2E
+      d'interface et son chapitre de `docs/manual.md`.
 
 ---
 ### CRM-070 — précision d'arbitrage : l'invitation d'un membre
