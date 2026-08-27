@@ -9745,13 +9745,75 @@ clavier et mène à l'objet ; captures produites **et observées**.
       `docs/SPEC-recherche.md`, neuf chapitres opposables, fondés sur **onze mesures** relevées le
       2026-08-27 sur la pile montée et seedée, sondes créées en transaction puis **annulées** et
       état de la base relu après.
-- [ ] **La migration `0068_recherche_globale.sql`** : extension `unaccent`, configuration
-      `app.francais_sans_accent`, cinq index GIN d'expression, `public.recherche_globale`.
-- [ ] **Suite pgTAP dédiée** : `supabase/tests/0065_recherche_globale.test.sql`.
-- [ ] **Contrat d'API dédié, hors interface** : `e2e/api/recherche-globale.spec.ts`, les quinze
-      lignes du §6.7 avec les jetons réels des trois profils et la clé anonyme.
-- [ ] **Documentation dans le même changement** : `docs/SCHEMA.md`, `docs/PROD_MIGRATIONS.md`,
-      `CHANGELOG.md`.
+- [x] **La migration `0068_recherche_globale.sql` est livrée et appliquée** : l'extension
+      `unaccent` dans `extensions`, la configuration `app.francais_sans_accent`, **cinq index GIN
+      d'expression** pondérés, et `public.recherche_globale(text, integer)`. Appliquée par le
+      `migrations-runner` — « 68 fichier(s) appliqué(s) avec succès » —, rejouée sans erreur.
+- [x] **ELLE N'OUVRE RIEN, ET C'EST LE POINT DE L'UNITÉ.** `security invoker` : les cinq politiques
+      de lecture existantes décident seules, et le refus est **zéro ligne, jamais une erreur**. En
+      `definer`, la fonction aurait rendu à chaque appelant les affaires, les contacts et les
+      messages de **tous**. Aucune politique n'est créée ni modifiée, aucun privilège de table
+      n'est accordé, aucune table et aucune colonne ne bougent.
+- [x] **LA CONFIGURATION `french` N'EST PAS INSENSIBLE AUX ACCENTS, ET C'EST MESURÉ, pas supposé**
+      (`docs/SPEC-recherche.md` §2 M2) : elle trouve « Amélie » sur « amelie » mais **pas**
+      « créance » sur « creance », « échéance » sur « echeance », ni « procès » sur « proces ». Un
+      comportement juste une fois sur deux apprend à l'utilisateur une règle fausse. D'où la
+      configuration dérivée, qui rend les cinq cas justes **dans les deux sens**.
+- [x] **Aucune colonne n'est ajoutée aux cinq tables** : une colonne générée `tsvector` serait
+      exposée par PostgREST, rendue par tout `select=*` existant, et changerait la **forme
+      publique** de cinq tables pour un besoin interne au moteur de recherche.
+- [x] **L'échappement du terme est STRUCTUREL** : la découpe sur `[^[:alnum:]]+` ne laisse passer
+      que des caractères alphanumériques, donc aucun métacaractère de `tsquery` n'atteint
+      `to_tsquery` — qui **lève** sur une syntaxe invalide. Une erreur serveur à chaque frappe
+      d'une palette serait un défaut visible ; le scénario *e* du contrat d'API la mesure absente.
+- [x] **Suite pgTAP dédiée** : `supabase/tests/0065_recherche_globale.test.sql`, **31 assertions,
+      aucune anomalie**. Elle porte la **contre-épreuve du vocabulaire** — sans elle, on pourrait
+      croire la configuration superflue et la retirer « pour simplifier ».
+- [x] **DEUX ASSERTIONS ÉCRITES AVANT LE CODE ONT ROUGI, ET CHACUNE A CORRIGÉ LE PRODUIT OU LA
+      SPÉCIFICATION plutôt que d'être ajustée à ce qu'elle trouvait.** (1) Un commentaire ne suivait
+      **pas** son affaire à la corbeille — `card_comments` porte son propre `deleted_at` —, si bien
+      que la palette de la tranche 2 aurait offert une **destination morte**. La fonction porte
+      désormais la clause qui l'exclut, écrite en `not exists` pour qu'une affaire illisible ne
+      fasse pas disparaître la ligne. (2) `public.cards` portait **déjà** une recherche, et elle est
+      **vivante** : `search_tsv` depuis la migration 11, employée par la vue liste. Mesures M12 et
+      M13 du §2, écrites après coup parce que c'est l'assertion qui les a imposées.
+- [x] **Garde-fou figé RÉVISÉ, jamais retiré** (mécanisme de la décision 51), motif écrit dans le
+      fichier : l'assertion qui figeait « aucune colonne `tsvector` » nomme désormais l'unique
+      colonne attendue, `cards.search_tsv`, et une seconde vérifie que `cards` porte bien **deux**
+      index GIN distincts.
+- [x] **Contrat d'API dédié, hors interface** : `e2e/api/recherche-globale.spec.ts`, **10 scénarios
+      verts** sur la pile réelle, sans aucune substitution. Le refus de l'anonyme y est un
+      **`401 / 42501` rendu par le PRIVILÈGE**, que seule une preuve d'API peut voir. Les trois
+      familles asymétriques du seed sont mesurées **des deux côtés** dans le même scénario, avec
+      leur contre-épreuve — sans elle, trois refus seraient également verts sur une fonction
+      cassée. Le fichier **n'écrit rien** : le seed sort intact par construction.
+- [x] **Types régénérés dans le même changement**, alors même que la tranche ne livre **aucun
+      écran** : quarante-cinq fonctions deviennent **quarante-six**, témoin figé révisé et motif
+      écrit. C'est la cinquième fois consécutive, et la première où la régénération suit l'arrivée
+      de la **fonction** plutôt que celle de son appelant.
+- [x] **Compteurs de `scripts/verify-harness.sh` révisés DANS LE MÊME CHANGEMENT**, valeurs
+      **comptées** et jamais déduites : `SCENARIOS_API` 997 → **1007**
+      (`playwright test --list` : « Total: 1007 tests in 63 files »), `FICHIERS_SQL_ATTENDUS`
+      61 → **65** et `ASSERTIONS_ATTENDUES` 2896 → **3006** (`npm run test:sql`). Une part de
+      l'écart SQL est **antérieure et étrangère** — trois fichiers, soixante-dix-neuf assertions —
+      et le fichier la **nomme** au lieu de la lisser.
+- [x] **Documentation dans le même changement** : `docs/SCHEMA.md` §9 bis.9 ter,
+      `docs/PROD_MIGRATIONS.md` ligne 68 avec son retour arrière et le point de vigilance sur le
+      verrou des cinq index en production peuplée, `CHANGELOG.md` sous `[Non publié]`.
+- [x] **Un défaut ÉTRANGER trouvé en mesurant, consigné et laissé inchangé — INC-230.** La
+      recherche **locale** de la vue liste (`liste-cards.ts`, `cards.search_tsv`) emploie `french`
+      et reste donc sujette à l'écart de M2 : deux recherches du produit ont désormais deux
+      vocabulaires. Le défaut appartient à `CRM-042` ; trois issues sont proposées, aucune n'est
+      tranchée.
+
+*Ce qui reste dû sur la tranche 1, et ce qui ne l'est pas.* **Aucun comportement de la Definition
+of Done de la tranche ne reste dû** : les quinze lignes du §6.7 sont mesurées, quatorze par le
+contrat d'API et la quinzième — le plafond de cinquante — par l'assertion 26 de la suite pgTAP, qui
+pose les soixante lignes nécessaires dans sa propre transaction et les emporte. Ce qui reste est
+**de la preuve**, et c'est nommé : la série des `scripts/verify-*.sh` n'a pas été rejouée en entier
+derrière ce changement, et **aucun harnais `scripts/verify-recherche.sh` n'existe** — le dépôt en
+porte un par unité livrée, et celui-ci est le premier travail dû avant que `CRM-065` puisse
+prétendre à `[x]`.
 
 #### Tranche 2 — non commencée
 
