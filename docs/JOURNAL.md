@@ -26154,3 +26154,37 @@ contrat ». Second point mesuré : **`mail_messages.id` n'est pas figé par le s
 engendré à l'insertion, contrairement aux cards en `5eed0000`. La preuve lit donc l'identifiant par
 le `rfc822_message_id`, qui l'est ; l'écrire en clair aurait donné une preuve verte sur la base qui
 l'a vue naître et rouge partout ailleurs.
+
+**CAMPAGNE COMPLÈTE, ET ELLE EST VERTE.** `typecheck` et `build` verts ; `test:unit` **84 fichiers
+/ 2800 tests** (2793 avant, plus les 7 de la sous-tranche) ; `test:sql` **65 fichiers / 3006
+assertions, aucune anomalie** ; `e2e:api` **1015 passés** ; `e2e:mail` **42 passés** ; `pytest`
+**244 passés** ; `e2e:ui` **690 passés, AUCUN échec** (20,3 min), valeur exactement égale au
+compteur révisé. **INC-232 ne s'est pas reproduite** — deuxième campagne consécutive sans elle, ce
+qui confirme son caractère intermittent.
+
+**DEUX ANOMALIES DU HARNAIS DÉDIÉ ÉTAIENT UNE CONTENTION, ET LA CONTRE-ÉPREUVE LE DIT.**
+`scripts/verify-recherche.sh`, lancé **pendant** que la campagne d'interface tournait sur la même
+base, a rendu **2 anomalies** — toutes deux sur le contrat d'API, dont l'une **avant toute
+dégradation**, c'est-à-dire en ligne de base. Rejoué **seul**, le même harnais rend **56 contrôles,
+aucune anomalie**. C'est la même leçon que le `deadlock` de la décision 530 : deux séries de preuves
+sur une seule base se mesurent l'une l'autre. Un harnais rouge dont la ligne de base est rouge n'est
+pas un verdict sur le produit.
+
+**LES CAPTURES DES AUTRES UNITÉS SONT RESTAURÉES** — écart avec la décision 530, dont le motif était
+que l'en-tête changeait sur tous les écrans. Ici **aucun composant n'est modifié** : la sous-tranche
+ajoute un effet dans `RouteInbox`, et le rendu de l'inbox sans paramètre est identique. Les 245
+fichiers réécrits ne différaient que par l'horodatage du seed. Deux d'entre elles ont été
+**regardées avant restauration** — `CRM-065/inbox-adressable-1440.jpg`, qui est la capture de la
+sous-tranche et qui est **gardée**, et `CRM-076/workflows-md-900.jpg`, où « Éditeur de workflows »
+reste lisible en entier à 900 px : la révision du §12.2 tient.
+
+**Où reprendre.** **`CRM-065` est CLOSE** : ses deux tranches sont livrées et prouvées, et la
+sous-tranche 2c ferme le dernier écart que la 2b avait nommé. L'unité passe `[x]`. La session
+suivante prend **la première unité `[~]` ou `[ ]` du plan** portant du comportement à livrer
+(`docs/CloudWorker.md` §4.2, règles 2 puis 3) ; le backlog fait foi.
+
+**Les questions posées au responsable, inchangées.** **`CRM-072`** (`audit_log`) et **`CRM-073`**
+(`api_tokens`) n'existent toujours pas alors que onze unités leur renvoient, et **INC-230** attend
+son arbitrage — la recherche locale de la vue liste emploie toujours `french` et garde un second
+vocabulaire. **INC-231**, **INC-232** et **INC-233** restent au registre sans demander d'arbitrage.
+Aucune entrée nouvelle n'est ouverte par cette session.
