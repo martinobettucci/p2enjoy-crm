@@ -26105,3 +26105,52 @@ attend son arbitrage — la recherche locale de la vue liste emploie toujours `f
 un second vocabulaire. **INC-231** et **INC-232** s'ajoutent au registre, mais aucune des deux ne
 demande d'arbitrage : la première est un défaut à corriger par l'unité qui reprendra ses deux
 écrans, la seconde mérite une unité qui en ait le mandat.
+
+---
+
+## décision 531 — l'inbox honore enfin son adresse, et la preuve a corrigé le code deux fois
+
+*2026-08-27, session planifiée `CloudWorker`, ouverte à 16:13:12 UTC. Unité : **`CRM-065`
+sous-tranche 2c**, l'inbox adressable. Unité choisie par `docs/CloudWorker.md` §4.2 **règle 1** — la
+dernière entrée du journal la désignait nommément. Sa spécification EXISTAIT (§15) : l'exception du
+§3.2 s'applique, et la session est allée au code sans la réécrire.*
+
+**UN SEUL POINT DE SPÉCIFICATION MANQUAIT, ET IL A ÉTÉ COMPLÉTÉ AVANT LA PREMIÈRE LIGNE DE CODE.**
+Le §15 posait le retrait du paramètre « une fois honoré » et laissait sans réponse le cas du refus.
+Le §15.1 tranche : **retrait inconditionnel**, décidé par le TRAITEMENT et jamais par le succès. Le
+motif n'est pas la commodité — le §15 exige un écran indiscernable d'une arrivée sans paramètre, et
+**l'adresse fait partie de cet état**. Un `?message=<id>` resté dans la barre après un refus dirait
+à l'utilisateur qu'il s'est passé là quelque chose que l'écran ne lui montre pas, ce qui est
+exactement ce que la règle de discrétion évite. Commit documentaire dédié, poussé avant le code.
+
+**LE DÉFAUT QUE LA PREUVE A TROUVÉ EST LE PLUS INSTRUCTIF DE LA SESSION, et il n'était pas visible à
+la lecture.** La première rédaction lisait le paramètre dans un effet dépendant de `parametresUrl`,
+protégé par un `ref` garde-fou « une seule fois ». Elle **retirait le paramètre et n'ouvrait jamais
+le message** : retirer le paramètre change `parametresUrl`, l'effet se rejoue, et son **nettoyage**
+pose `vivant = false` sur la lecture encore en vol. Le drapeau empêchait bien un second départ ;
+rien n'empêchait l'**annulation du premier**. Trois des douze scénarios unitaires sont tombés
+là-dessus, et les trois qui vérifiaient le retrait passaient — un écran qui nettoie l'adresse et
+n'ouvre rien passe toutes les assertions d'adresse.
+
+La correction ne pose pas une garde de plus : elle **supprime la cause**. Le paramètre est lu **une
+fois par construction**, par l'initialiseur paresseux de `useState`, dont la valeur ne peut plus
+changer ; l'effet ne dépend que d'elle, ne se rejoue donc jamais, et son nettoyage n'a plus lieu
+qu'au démontage réel. La forme fonctionnelle de `setSearchParams` supprime la dernière dépendance.
+**La règle générale qui en sort** : un effet « au montage » gardé par un drapeau reste rejouable, et
+c'est son NETTOYAGE, non son corps, qui casse le travail en cours. La dépendance stable est la
+seule garde qui tienne.
+
+**LA LECTURE D'AMORCE NE LIT QUE DEUX COLONNES**, `id` et `card_id`, et jamais le message entier :
+`useMessage` le relira de toute façon une fois la sélection posée. Ses **quatre** issues négatives —
+client absent, identifiant absent, ligne fermée par la RLS, erreur de transport — rendent la MÊME
+valeur, `null`. Ce n'est pas un `catch` vide : la valeur est la même parce que la **conséquence**
+l'est, on arrive sur sa boîte, et le §7 de `docs/SPEC-permissions-rls.md` demande précisément qu'un
+refus ne se distingue pas d'une absence.
+
+**LE SCÉNARIO E2E LE PLUS UTILE EST CELUI QUI VA D'UN BOUT À L'AUTRE** : `Ctrl+K`, le terme frappé,
+le résultat cliqué, le message ouvert. Prouver les deux bouts séparément laisserait passer un
+désaccord sur le NOM du paramètre, qui est exactement ce que le §13.5 appelle « stable par
+contrat ». Second point mesuré : **`mail_messages.id` n'est pas figé par le seed** — c'est un `uuid`
+engendré à l'insertion, contrairement aux cards en `5eed0000`. La preuve lit donc l'identifiant par
+le `rfc822_message_id`, qui l'est ; l'écrire en clair aurait donné une preuve verte sur la base qui
+l'a vue naître et rouge partout ailleurs.
