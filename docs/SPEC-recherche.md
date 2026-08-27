@@ -618,3 +618,464 @@ Une preuve d'interface n'est **pas** due par cette tranche (§8.2).
 **Definition of Done de la tranche 1** : les objets sont créés et rejouables ; les quinze lignes du
 §6.7 sont mesurées et vertes ; aucune suite pgTAP existante n'a été modifiée ; `docs/SCHEMA.md`,
 `docs/PROD_MIGRATIONS.md`, `docs/BACKLOG.md` et `CHANGELOG.md` sont à jour dans le même changement.
+
+---
+
+# TRANCHE 2 — LA PALETTE
+
+*Chapitres §10 à §17, écrits le **2026-08-27** par la session planifiée `CloudWorker`, **avant la
+première ligne de code** de la tranche (`CLAUDE.md` §5, `docs/CloudWorker.md` §3.2 point 3). Le §1.2
+annonçait qu'elle serait « spécifiée dans son propre chapitre, après mesure » : les mesures sont au
+§11, relevées sur la pile montée par `./runDev.sh` et seedée par `supabase/seed/apply-seed.sh`.*
+
+## 10. Objet de la tranche 2, et son découpage
+
+### 10.1 Ce qu'elle livre
+
+La tranche 1 a livré un moteur que **rien n'appelle**. Le §8.2 le nomme sans détour : « aucun écran,
+aucune capture, aucun test E2E d'interface ». La tranche 2 pose la surface qui manque : un champ de
+recherche dans l'en-tête, ouvert par `Cmd+K` / `Ctrl+K`, une liste de résultats parcourue au clavier,
+et **la navigation vers l'objet choisi**.
+
+Le §4 du design system annonce cette surface **depuis `CRM-000`** — « En-tête : fil d'Ariane ·
+recherche · Cmd+K · profil » —, et `webapp/src/app/Header.tsx` porte depuis `CRM-007` le commentaire
+qui dit pourquoi elle n'existe pas : « aucun moteur ne la porte ». Ce motif est **tombé par
+livraison**.
+
+### 10.2 Le découpage en trois sous-tranches, écrit avant la première ligne de code
+
+La tranche 2 est découpée, et le découpage suit la frontière qui rend chaque morceau **prouvable
+seul** :
+
+- **2a — le moteur d'appel.** Un module qui ne rend rien : il appelle la RPC, garde l'ordre des
+  réponses, résout l'**adresse** de chaque résultat, et produit une destination par famille. Il se
+  prouve **sans navigateur**, par des tests unitaires et par un contrat d'API. **Aucune surface.**
+- **2b — la surface.** Le champ dans l'en-tête, le raccourci, la liste, la navigation clavier, les
+  états, les captures, la suite E2E d'interface et le chapitre de `docs/manual.md`.
+- **2c — l'inbox adressable.** `RouteInbox` honore le paramètre `?message=<id>` que le §13.5 arrête,
+  de sorte qu'un résultat de la famille `message` mène **au message** et non à la racine de la boîte.
+
+La frontière entre 2a et 2b est celle que `webapp/src/lib/mentions.ts` et
+`webapp/src/lib/notifications.ts` tiennent déjà : « ce module ne rend rien : il lit et écrit. La
+séparation est ce qui rend [le contrat] vérifiable **sans navigateur** ».
+
+La frontière entre 2b et 2c est nommée et **non masquée** : tant que 2c n'est pas livrée, la
+destination d'un message est l'inbox, **son paramètre inerte**, et le §13.5 l'écrit.
+
+## 11. Mesures fondatrices de la tranche 2
+
+Relevées le **2026-08-27**, pile montée et seedée, PostgreSQL **17.6**, PostgREST derrière Kong sur
+`http://localhost:8000`, jetons obtenus par la **véritable route de connexion** de GoTrue. Aucune
+ligne n'a été créée ni modifiée : toutes les mesures sont des **lectures**.
+
+### M14 — LA RPC NE REND AUCUNE ADRESSE, ET C'EST LA MESURE QUI COMMANDE TOUTE LA TRANCHE
+
+Le §6.1 donne sept colonnes : `objet`, `id`, `workspace_id`, `titre`, `sous_titre`, `extrait`,
+`rang`. **Aucune n'est une adresse.** Relevé sur le terme `vitrine`, jeton de l'administratrice :
+
+```json
+[{"objet":"affaire","id":"5eed0000-…-0000000000c1","titre":"Refonte du site vitrine",
+  "sous_titre":"Grands comptes","extrait":null,"rang":1},
+ {"objet":"message","id":"4673c699-…","titre":"Demande de devis — refonte",
+  "sous_titre":"bizdev@p2enjoy.test","extrait":"devis pour la refonte de notre site vitrine…","rang":0.2}]
+```
+
+Or `CHEMIN_CARD` vaut `/tracks/:slugTrack/:slugChannel/cards/:idCard` : **trois** segments variables
+dont la RPC n'en donne qu'un. Et le terme `gabarit` rend un `commentaire` dont l'`id` est celui du
+**commentaire**, jamais celui de l'affaire commentée :
+
+```json
+[{"objet":"commentaire","id":"5eed0000-…-0000000000d1","titre":"Refonte du site vitrine",
+  "sous_titre":"Camille Aubert","extrait":"confirmé le périmètre de la refonte : trois gabarits, pas cinq"}]
+```
+
+Deux familles sur cinq — `affaire` et `commentaire` — exigent donc une **seconde lecture** pour être
+atteignables. C'est le §13 qui l'écrit.
+
+**Cette mesure n'ouvre PAS la tranche 1.** Ajouter une colonne d'adresse à la fonction changerait sa
+signature, sa suite pgTAP, son contrat d'API et son témoin de types — pour porter dans le moteur de
+recherche une composition d'URL qui est une affaire de **webapp**, et qui varierait le jour où une
+route changerait. La base rend des identifiants ; l'adresse se compose là où les routes sont écrites.
+
+### M15 — LA SECONDE LECTURE EST GROUPÉE, ET SON EMBARQUEMENT EST AMBIGU
+
+`cards` porte **deux** clés étrangères vers `channels`, et PostgREST refuse l'embarquement nu :
+
+```
+GET /rest/v1/cards?id=in.(…)&select=id,channels(slug,tracks(slug))
+=> 300 {"code":"PGRST201","message":"Could not embed because more than one relationship was found
+        for 'cards' and 'channels'",
+        "hint":"Try changing 'channels' to one of the following:
+                'channels!cards_channel_id_workflow_id_fkey',
+                'channels!cards_channel_id_workspace_id_fkey'"}
+```
+
+La relation est donc **nommée**, exactement comme `COLONNES_NOTIFICATION` le fait déjà depuis
+`CRM-064` (`webapp/src/lib/colonnes-notifications.ts` ligne 45). Nommée, la lecture rend en **une
+seule requête** l'adresse de toutes les affaires citées :
+
+```
+GET /rest/v1/cards?id=in.(…c1,…d022)
+    &select=id,channels!cards_channel_id_workspace_id_fkey(slug,tracks(slug))
+=> 200 [{"id":"…d022","channels":{"slug":"maintenance","tracks":{"slug":"studio-web"}}},
+        {"id":"…c1","channels":{"slug":"grands-comptes","tracks":{"slug":"conseil-ia"}}}]
+```
+
+Et pour les commentaires, la même forme, à un niveau de plus :
+
+```
+GET /rest/v1/card_comments?id=in.(…d1)
+    &select=id,card_id,cards(id,channels!cards_channel_id_workspace_id_fkey(slug,tracks(slug)))
+=> 200 [{"id":"…d1","card_id":"…c1",
+         "cards":{"id":"…c1","channels":{"slug":"grands-comptes","tracks":{"slug":"conseil-ia"}}}}]
+```
+
+**Ce n'est PAS `N + 1`.** C'est la mesure M8 de `docs/SPEC-notifications.md` §21, retrouvée ici : une
+lecture groupée par `id=in.(…)` rapporte tous les objets cités d'une page en **une** requête. Le coût
+d'une frappe est donc de **une à trois** requêtes — la RPC, plus au plus deux résolutions —, et non
+d'une par résultat.
+
+**`lireCheminCard` (`webapp/src/lib/inbox.ts`) n'est pas réemployée.** Elle fait **trois** lectures
+séquentielles — `cards`, puis `channels`, puis `tracks` — pour **une seule** affaire : appliquée à
+vingt résultats elle en ferait soixante. Elle reste juste pour son appelant, qui résout une affaire
+à la fois ; elle ne l'est pas pour une palette.
+
+### M16 — UN MESSAGE PORTE SON AFFAIRE QUAND IL EST CLASSÉ, ET RIEN QUAND IL NE L'EST PAS
+
+```
+GET /rest/v1/mail_messages?id=in.(6e5705de-…,4673c699-…)&select=id,card_id,classification
+=> 200 [{"id":"4673c699-…","card_id":"5eed0000-…-0000000000c1","classification":"auto"},
+        {"id":"6e5705de-…","card_id":null,"classification":"unclassified"}]
+```
+
+Les deux cas existent **dans le seed**, et ce n'est pas une chance : `docs/SPEC-seed.md` pose un
+message non classé pour exercer le classement assisté. Une destination qui ne vaudrait que pour les
+messages classés laisserait donc la moitié du seed sans issue. Le §13.5 en tire sa décision.
+
+### M17 — UN TERME D'UNE SEULE LETTRE NE MET PAS LA BASE EN DIFFICULTÉ, ET LA BORNE SERVEUR SUFFIT
+
+Quatre termes, jeton de l'administratrice, `p_limite=50` :
+
+| Terme | Lignes rendues | Temps total de la requête HTTP |
+|---|---|---|
+| `a` | 33 | 0,027 s |
+| `re` | 21 | 0,022 s |
+| `ref` | 6 | 0,020 s |
+| `refo` | 6 | 0,021 s |
+
+**Aucune longueur minimale n'est donc posée à l'écran.** Une garde de saisie qui refuserait un terme
+d'une lettre doublerait une contrainte que la base ne pose pas — ce que le §5.3 ter du design system
+interdit sans exception — et interdirait de chercher une affaire nommée d'une seule lettre. Le §6.6
+borne déjà le résultat à cinquante lignes **côté serveur**, et c'est la seule borne qui tienne.
+
+*Portée de la mesure, et elle est nommée* : trente-trois lignes sur le seed ne disent rien d'une base
+peuplée. Ce qui est mesuré est que le **produit local** ne souffre pas ; ce qui protège une base
+peuplée est la borne du §6.6 et l'index GIN du §5, pas cette table.
+
+### M18 — LE GÉNÉRATEUR DE TYPES DÉCLARE `titre`, `sous_titre` ET `extrait` NON NULS, ET IL A TORT
+
+`webapp/src/lib/database.types.ts` ligne 2971 :
+
+```ts
+recherche_globale: {
+  Args: { p_limite?: number; p_terme: string }
+  Returns: { extrait: string; id: string; objet: string; rang: number
+             sous_titre: string; titre: string; workspace_id: string }[]
+}
+```
+
+Or le §6.1 rend `sous_titre` et `extrait` **nullables par contrat**, et `titre` peut être nul pour un
+commentaire dont l'affaire n'est pas lisible (§6.4). La mesure M1 ci-dessus le confirme :
+`"extrait": null` sur les trois familles courtes. **Un type ne garantit jamais une valeur**
+(`docs/SPEC-types.md`), et le module de 2a lit donc ces trois colonnes comme **potentiellement
+nulles**, sans se fier à la déclaration.
+
+### M19 — L'ASYMÉTRIE DU SEED EST VISIBLE SUR UN SEUL TERME, ET C'EST CE QUI REND LA SURFACE PROUVABLE
+
+Terme `sogexia`, `p_limite=20`, **deux jetons réels** :
+
+| Appelante | Lignes | Objets rendus |
+|---|---|---|
+| `admin@p2enjoy.test` | **4** | organisation `Sogexia`, puis trois affaires |
+| `viewer@p2enjoy.test` | **3** | organisation `Sogexia`, puis **deux** affaires |
+
+L'affaire manquante est `Migration ERP Sogexia`, du track `Grands comptes`, fermé à la lectrice
+(M6). Un **seul** terme exerce donc les cinq familles côté lecture et la RLS côté refus, dans la même
+frappe — c'est le terme que la preuve E2E de 2b emploie, et la contre-épreuve est le compte, jamais
+la seule présence : sans elle, un écran qui n'afficherait **rien** passerait le refus.
+
+## 12. Où la surface vit, et pourquoi
+
+### 12.1 Dans l'en-tête, jamais dans la barre latérale
+
+Le §4 du design system range dans la barre latérale les **destinations** — les surfaces où l'on va
+travailler. Une recherche n'en est pas une : on l'ouvre, on suit un résultat, et on est ailleurs.
+C'est exactement le raisonnement que `CRM-064` a tenu pour la cloche (§5.43), et il est ici plus fort
+encore : la palette **n'a pas d'écran à elle**, elle n'est qu'un chemin.
+
+Elle vit donc dans l'en-tête, **entre le fil d'Ariane et le contexte d'espace de travail**, à la
+place que le §4 lui donne depuis `CRM-000`. L'ordre de la ligne devient : fil d'Ariane, recherche,
+contexte, cloche, identité. Le §5.43 a posé le sens de la fin de cette ligne — « ce que le produit a
+à me dire précède qui je suis, et le geste qui sort du produit ferme la ligne » ; la recherche vient
+**avant** parce qu'elle porte sur le produit entier et non sur l'utilisateur.
+
+### 12.2 Aucune modale, et le §5 du design system n'en déclare toujours aucune
+
+`CRM-043`, `CRM-075`, `CRM-079`, `CRM-060` et `CRM-064` l'ont tranché **cinq** fois : une surface qui
+recouvre l'écran demanderait un piège de focus, une gestion d'`Échap` et le voile `--color-veil` —
+trois mécanismes qu'aucune unité n'a spécifiés.
+
+**Une palette de commandes est le cas où l'on est le plus tenté d'y déroger**, l'usage du marché
+étant une fenêtre centrée sur un voile. La tranche n'y déroge pas, et le motif n'est pas la
+conformité : c'est que **le voile cacherait l'écran d'où l'on cherche**. Le §5.23 l'a écrit pour le
+carnet — « une modale recouvrirait la liste que l'on vient de lire, or cette liste est précisément ce
+qui dit si le contact existe déjà » —, et la palette est le cas général de ce raisonnement : on
+cherche **depuis** quelque part, et ce quelque part est le contexte de ce qu'on cherche.
+
+La palette est donc un **panneau ancré à l'en-tête**, dans le flux du document, sur le patron exact
+du §5.43. Elle ne piège aucun focus, `Échap` la referme, un clic hors d'elle la referme, et le champ
+reste rendu dessous.
+
+### 12.3 Ancré à l'EN-TÊTE, jamais au champ
+
+C'est la règle que le §5.43 a payée par un défaut trouvé en regardant une capture : « le repère de
+positionnement est le conteneur pleine largeur, jamais le contrôle ». Elle est reprise **sans
+mesure nouvelle**, parce qu'elle est déjà mesurée : ancré sur le champ, un panneau proche d'un bord
+sort de l'écran par le côté opposé, et `scrollWidth > clientWidth` ne le voit pas.
+
+## 13. Ce que le moteur de 2a produit — le contrat
+
+### 13.1 Une lecture, puis au plus deux résolutions
+
+```
+1. rpc('recherche_globale', { p_terme, p_limite })          → les lignes du §6.1
+2. si au moins un objet 'affaire'     : GET cards?id=in.(…) → l'adresse de chacune
+3. si au moins un objet 'commentaire' : GET card_comments?id=in.(…) → l'adresse de son affaire
+```
+
+Les étapes 2 et 3 sont **omises** quand leur famille est absente du résultat : une frappe qui ne rend
+que des contacts n'émet **qu'une** requête. Elles sont émises **en parallèle** l'une de l'autre —
+elles ne se conditionnent pas —, et jamais avant que l'étape 1 ait rendu : on ne sait pas quoi
+résoudre avant de savoir ce qui a été trouvé.
+
+### 13.2 L'ORDRE DES RÉPONSES EST GARDÉ PAR UN RANG, ET C'EST LA RÈGLE LA PLUS IMPORTANTE DU MODULE
+
+Une palette émet une requête par frappe utile. Rien ne garantit que la réponse à `refonte` arrive
+après celle de `refont` : deux requêtes concurrentes sur le réseau reviennent dans l'ordre que le
+réseau décide. Sans garde, la liste afficherait le résultat d'un terme que l'utilisateur a déjà
+dépassé — un état qu'il a vu et qui n'existe plus, exactement ce que le §5.45 du design system
+proscrit pour une case cochée par anticipation.
+
+**Chaque recherche porte donc un rang croissant, et une réponse dont le rang n'est pas le dernier
+émis est JETÉE.** Elle n'est ni affichée, ni comptée, ni journalisée. C'est une propriété du module,
+donc prouvable **sans navigateur** : le test unitaire fait revenir deux réponses dans l'ordre inverse
+de leur émission et vérifie que c'est la **dernière émise** qui gagne.
+
+### 13.3 UN DÉLAI DE FRAPPE, SA VALEUR, ET CE QU'IL N'EST PAS
+
+Le module attend **200 ms** de silence au clavier avant d'émettre. Ce n'est **pas** la temporisation
+arbitraire que `CLAUDE.md` §18 interdit : celle-là masque une erreur ou simule un succès, celle-ci ne
+masque rien et n'affirme rien. Elle réduit un nombre de requêtes — sept pour `refonte` frappé lettre
+à lettre, une avec le délai — et sa valeur est écrite ici pour qu'elle soit **un contrat**, pas un
+réglage caché.
+
+**Le délai ne remplace pas la garde du §13.2**, et l'ordre des deux règles est délibéré : deux
+frappes séparées de plus de 200 ms émettent bien deux requêtes concurrentes, et c'est le rang qui les
+départage. Une session qui retirerait le rang « puisqu'il y a un délai » rouvrirait le défaut.
+
+### 13.4 La destination, famille par famille
+
+| `objet` | Destination | Comment l'adresse est obtenue |
+|---|---|---|
+| `affaire` | la fiche de l'affaire — `CHEMIN_CARD` | résolution du §13.1 étape 2 |
+| `commentaire` | la fiche de l'affaire **commentée** | résolution du §13.1 étape 3 |
+| `contact` | `cheminContact(id)` | l'`id` rendu par la RPC **suffit** |
+| `organisation` | `cheminOrganisation(id)` | l'`id` rendu par la RPC **suffit** |
+| `message` | `/inbox?message=<id>` | l'`id` rendu par la RPC **suffit** — voir §13.5 |
+
+**Un commentaire mène à son affaire, jamais à lui-même** : aucune adresse du produit ne désigne un
+commentaire, et le fil de l'affaire est l'endroit où il se lit (§5.10, §5.11 du design system). La
+tranche 1 a préparé exactement cela en excluant de la recherche le commentaire d'une affaire à la
+corbeille (§6.7 ligne *i*, mesure M13) : sans cette clause, la palette aurait offert une
+**destination morte**.
+
+**Une famille dont l'adresse ne se résout pas rend une ligne SANS LIEN, jamais rien.** La ligne garde
+son titre, son sous-titre et son extrait ; elle perd sa destination. C'est la règle du §5.37 du
+design system pour une affaire figée que la seconde lecture n'a pas rapportée — « la masquer
+retrancherait une affaire de la liste qui existe pour les montrer ; lui donner un lien vers une
+adresse incomplète mènerait à un écran que l'utilisateur croirait cassé ». Le cas n'est pas
+théorique : les deux lectures ne sont pas atomiques.
+
+### 13.5 LE MESSAGE MÈNE À L'INBOX, ET SON ADRESSE PORTE LE MESSAGE
+
+`/inbox` ne prend aujourd'hui **aucun paramètre** : la sélection d'un dossier et d'un message est un
+état interne de `RouteInbox`, que rien dans l'URL ne porte. Trois issues ont été pesées :
+
+1. **mener à l'affaire du message.** Écartée par M16 : un message sur deux du seed n'a **pas**
+   d'affaire, et cette destination laisserait la moitié de la famille sans issue. Elle serait en
+   outre fausse dans son principe — on a cherché un **message**, pas une affaire ;
+2. **mener à `/inbox` sans rien désigner.** Écartée : l'utilisateur arriverait sur une boîte où il
+   devrait retrouver **à la main** ce que la palette venait de lui montrer. C'est la commande morte
+   du §5.10, sous sa forme la plus frustrante — elle a bien mené quelque part, mais pas à l'objet ;
+3. **mener à `/inbox?message=<id>`**, l'inbox honorant le paramètre. **Retenue.**
+
+Le paramètre est arrêté **ici**, dans la tranche 2a, et il est **stable par contrat** : `message`,
+la valeur étant l'identifiant du message. La sous-tranche **2c** le fait honorer par `RouteInbox`.
+
+**Tant que 2c n'est pas livrée, le paramètre est INERTE, et l'écart est nommé** (`docs/BACKLOG.md`,
+`docs/manual.md`) : l'utilisateur arrive sur l'inbox, sans sélection. Ce n'est pas une destination
+morte — l'écran existe et il porte ce qu'il cherche — c'est une destination **imprécise**, et le dire
+vaut mieux que de choisir l'issue 1, qui serait fausse pour la moitié des messages.
+
+### 13.6 Le module ne bifurque JAMAIS sur un rôle
+
+`CLAUDE.md` §10. La RPC est `SECURITY INVOKER` (§6.3) et le refus est **zéro ligne** (§1.3) : le
+module n'a aucun droit à calculer, aucune famille à masquer et aucun message de refus à mettre en
+scène. Une liste vide est l'état vide **ordinaire** du §5.8, jamais un refus.
+
+La seule erreur qu'il classe est celle du transport, par `classerErreur` (`webapp/src/lib/async.ts`),
+comme tout module de lecture du dépôt.
+
+## 14. Ce que la surface de 2b rend
+
+Ce que la surface a l'air est écrit dans **`docs/DESIGN_SYSTEM.md` §5.46**, spécifié avant code dans
+le même changement que ce chapitre. Ce qui suit ne dit que ce que la surface **fait**.
+
+### 14.1 Le raccourci
+
+`Cmd+K` sur macOS, `Ctrl+K` ailleurs — la même touche, le modificateur de la plateforme. Le
+gestionnaire est posé sur le document et **annule l'événement** : `Ctrl+K` est, dans certains
+navigateurs, un raccourci de la barre d'adresse, et ne pas l'annuler ferait ouvrir deux choses à la
+fois.
+
+Il est **actif partout dans l'application connectée**, y compris quand le focus est dans un champ de
+saisie : c'est la convention de toutes les palettes, et un raccourci qui cesserait de fonctionner
+pendant qu'on écrit un commentaire serait inutilisable là où l'on en a le plus besoin.
+
+Il est **inactif sans session** : l'en-tête ne rend alors pas le champ (§14.5), et un raccourci qui
+ouvrirait une surface absente serait la commande morte du §5.10.
+
+`Échap` referme et rend le focus au champ ; le champ vidé et refermé, le focus revient à l'élément
+qui l'avait avant l'ouverture — c'est ce que le §5.13 exige de toute surface qui s'ouvre.
+
+### 14.2 Ce que le champ envoie, et quand
+
+Le champ est un `input` de type `search` avec son libellé, jamais un `div` piloté au clavier. Il
+envoie selon le §13.3 : 200 ms après la dernière frappe. Le terme est envoyé **tel quel**, sans
+nettoyage à l'écran : le §6.2 pose que la normalisation est « entièrement écrite [en base] et ne
+dépend d'aucune saisie du client », et en poser une seconde à l'écran ferait deux définitions du même
+découpage.
+
+`p_limite` vaut **20**, le défaut de la fonction (§6.1). Ce n'est pas la borne — celle-ci vaut 50 et
+vit au serveur (§6.6) — c'est ce qu'une liste ancrée à un en-tête peut montrer sans devenir un écran.
+La **troncature est écrite** quand la liste est pleine, jamais laissée à deviner : c'est la règle du
+§5.43 pour « les 20 plus récentes » et du §5.15 pour « 3 affaires listées sur 13 ».
+
+### 14.3 La navigation clavier
+
+| Touche | Effet |
+|---|---|
+| `Cmd+K` / `Ctrl+K` | ouvre la palette et porte le focus dans le champ ; **rouvre-la si elle est ouverte** en resélectionnant le texte, jamais ne la referme |
+| `Flèche bas` | descend d'un résultat ; depuis le dernier, revient au premier |
+| `Flèche haut` | monte d'un résultat ; depuis le premier, va au dernier |
+| `Entrée` | suit le résultat **actif** ; sans résultat actif, ne fait rien |
+| `Échap` | referme et rend le focus (§14.1) |
+
+**Le focus ne quitte JAMAIS le champ**, et c'est la règle qui décide la forme : les flèches déplacent
+un **résultat actif**, pas le focus. Un focus qui descendrait dans la liste ferait perdre la frappe
+suivante — l'utilisateur corrige son terme en permanence, c'est le geste même d'une palette. La liste
+est donc reliée au champ par `aria-activedescendant`, le patron ARIA d'une `combobox` à liste, et
+chaque résultat porte son `id`.
+
+**Aucune boucle silencieuse** : le passage du dernier au premier est un **choix écrit**, motivé par
+le nombre borné de résultats (§14.2) ; sur vingt lignes au plus, revenir en haut est plus court que
+de remonter.
+
+### 14.4 Les quatre états du §5.8, et le vide qui n'est pas une panne
+
+| État | Ce que la palette rend |
+|---|---|
+| terme vide | **aucune liste**, et une phrase qui dit ce que la recherche cherche — ce n'est pas un vide, c'est l'état d'arrivée |
+| chargement | `aria-busy`, et **la liste précédente reste affichée** — voir ci-dessous |
+| erreur | la mention et son **action de reprise**, qui rejoue la même recherche |
+| vide | « aucun résultat pour ce terme », **sans action** — l'écart au §5.8 que le §5.16, le §5.19 et le §5.43 prennent déjà |
+| peuplé | les lignes, dans l'ordre du serveur (§6.6), **jamais retriées** |
+
+**LA LISTE PRÉCÉDENTE RESTE AFFICHÉE PENDANT LA RECHERCHE SUIVANTE, et c'est un écart au §5.8 qui est
+motivé.** Le §5.8 demande des squelettes ; ils sont justes au **premier** chargement, seul moment où
+il n'y a rien à montrer — c'est exactement la règle que le §5.29 tranche 2c a écrite pour la liste des
+tableaux d'objectifs : « le squelette reste réservé au premier chargement ». Ici la frappe suivante
+arrive 200 ms après la précédente : remplacer la liste par un squelette à chaque lettre la ferait
+**clignoter** à chaque frappe, ce que le §6 du design system interdit.
+
+### 14.5 Sans session, rien n'est rendu
+
+Comme la cloche (§5.43, mesuré au §26.7 de `docs/SPEC-notifications.md`) : la RPC refuse l'anonyme
+par le **privilège** — `401` / `42501`, ligne *a* du §6.7 —, et un champ offert à un anonyme
+promettrait une recherche que la base refuse. L'en-tête rend « Se connecter » à sa place (§5.12).
+
+### 14.6 Ce que la surface ne fait pas
+
+- **aucun historique de recherche**, ni en session, ni persistant. Le §8.3 l'a déjà tranché pour la
+  base, et le motif vaut à l'écran : un terme de recherche dit ce qu'une personne cherche, et le §11
+  de `CLAUDE.md` borne le stockage sur l'appareil au strictement nécessaire ;
+- **aucune suggestion, aucune complétion, aucune correction de frappe** — le §8.4 ;
+- **aucun filtre par famille.** Cinq bascules pour cinq familles surmonteraient une liste qui en
+  compte souvent une seule : c'est le contrôle sans objet que le §5.11 du design system refuse pour
+  la barre de filtres d'un fil vide ;
+- **aucune action sur un résultat.** La palette mène, elle n'agit pas. C'est la règle du §5.14 et du
+  §5.36 : un second chemin d'écriture serait une seconde définition du même geste.
+
+## 15. Ce que 2c livre
+
+`RouteInbox` lit le paramètre `message` de la chaîne de requête **au montage**, et **une seule
+fois** : la sélection est ensuite un état de l'écran, et relire le paramètre à chaque rendu
+ramènerait l'utilisateur au message de départ à chaque clic.
+
+Le message désigné est lu ; son `card_id` décide du dossier retenu — l'affaire quand il est classé,
+« Non classés » sinon (M16) —, et le message est ouvert. **Un identifiant inconnu, ou un message que
+l'appelant ne peut pas lire, ne rend AUCUNE erreur** : l'inbox s'ouvre sans sélection, comme si le
+paramètre était absent. C'est la règle de discrétion du §7 de `docs/SPEC-permissions-rls.md` — un
+refus ne se distingue pas d'une absence — et c'est aussi le comportement le moins surprenant : on
+arrive sur sa boîte.
+
+Le paramètre est **retiré de l'adresse** une fois honoré, par un remplacement d'historique : le
+laisser ferait rouvrir le même message au rechargement de la page, longtemps après que l'utilisateur
+soit passé à autre chose.
+
+## 16. Ce que la tranche 2 ne fait pas
+
+### 16.1 Elle n'ajoute aucune famille
+
+Le §8.1 tient sans changement : ni tracks, ni channels, ni objectifs, ni budgets, ni modèles
+d'emails. La palette existant enfin, l'élargissement pourra se décider **sur constat** plutôt que sur
+supposition — c'est ce que le §8.1 annonçait.
+
+### 16.2 Elle ne touche NI la migration, NI la fonction, NI sa suite pgTAP
+
+Aucune ligne de `supabase/` n'est modifiée. La tranche 1 est close sur son comportement, et M14 dit
+pourquoi l'adresse ne remonte pas en base.
+
+### 16.3 Elle ne referme pas INC-230
+
+La recherche **locale** de la vue liste emploie toujours `french` et reste sujette à l'écart de M2.
+Deux recherches du produit ont deux vocabulaires, l'arbitrage est en attente, et cette tranche
+**laisse le comportement inchangé** (`CLAUDE.md` §18, `docs/CloudWorker.md` §3.1).
+
+## 17. Preuves dues par la tranche 2
+
+| Preuve | Sous-tranche | Ce qu'elle établit |
+|---|---|---|
+| `webapp/src/lib/recherche.test.ts` | 2a | la garde d'ordre du §13.2, le délai du §13.3, la destination des cinq familles du §13.4, la ligne sans lien du §13.4, et les colonnes nulles de M18 |
+| `e2e/api/recherche-palette.spec.ts` | 2a | les deux lectures de résolution du §13.1 **hors interface**, avec les jetons réels — dont l'ambiguïté d'embarquement de M15, qu'un test unitaire ne peut pas voir |
+| `e2e/ui/recherche.spec.ts` | 2b | l'ouverture au raccourci, la navigation clavier du §14.3, les quatre états du §14.4, la navigation vers l'objet, et **l'asymétrie de M19 par son COMPTE** |
+| captures sous `docs/captures/CRM-065/` | 2b | l'apparence réelle aux paliers 1440 et 390, **observées** (`CLAUDE.md` §16) |
+| `e2e/ui/inbox.spec.ts` (complétée) | 2c | le paramètre honoré, et l'identifiant inconnu qui n'est pas une erreur |
+| `npm run test:unit`, `typecheck`, `build`, `test:sql`, `e2e:api` | toutes | l'absence de régression |
+
+**Definition of Done de la tranche 2** : les trois sous-tranches sont livrées ; la palette s'ouvre au
+clavier, se parcourt au clavier et **mène à l'objet** pour les cinq familles ; les captures sont
+produites **et observées** ; `docs/DESIGN_SYSTEM.md`, `docs/manual.md`, `docs/BACKLOG.md` et
+`CHANGELOG.md` sont à jour dans le même changement.
+
+Une sous-tranche livrée sans ses preuves laisse l'unité en `[~]`, et l'écart est **nommé**.

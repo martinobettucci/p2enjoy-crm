@@ -9835,10 +9835,52 @@ a été lancé puis **interrompu** faute de temps : ses compteurs sont révisés
 verdict n'a pas été relevé. C'est le dernier travail dû avant que la **tranche 1** puisse prétendre
 à close ; l'unité, elle, reste `[~]` tant que la tranche 2 — la palette — n'est pas livrée.
 
-#### Tranche 2 — non commencée
+#### Tranche 2 — la palette
 
-- [ ] La palette, son raccourci, sa navigation clavier, ses états, ses captures, sa suite E2E
-      d'interface et son chapitre de `docs/manual.md`.
+*Spécifiée le 2026-08-27 **avant la première ligne de code** (`CLAUDE.md` §5) :
+`docs/SPEC-recherche.md` §10 à §17, fondés sur **six mesures** (M14 à M19) relevées sur la pile
+montée et seedée, toutes en lecture, aucune ligne créée ni modifiée ; et
+`docs/DESIGN_SYSTEM.md` §5.46 pour la surface.*
+
+**La mesure qui commande la tranche est M14** : la RPC ne rend **aucune adresse**. Ses sept colonnes
+donnent un `objet` et un `id` ; or `CHEMIN_CARD` demande trois segments variables, et l'`id` d'un
+`commentaire` est celui du commentaire, jamais de l'affaire commentée. Deux familles sur cinq
+exigent donc une **seconde lecture**, groupée par `id=in.(…)` — jamais `N + 1` (M15).
+
+**Découpage en trois sous-tranches** (`docs/SPEC-recherche.md` §10.2), sur la frontière qui rend
+chaque morceau prouvable seul :
+
+##### Sous-tranche 2a — le moteur d'appel `[ ]`
+
+- [ ] `webapp/src/lib/recherche.ts` : l'appel à la RPC, la **garde d'ordre** du §13.2, le délai de
+      frappe du §13.3, la résolution groupée du §13.1, et la destination des cinq familles du §13.4.
+      **Aucune surface.**
+- [ ] `webapp/src/lib/recherche.test.ts` : la garde d'ordre éprouvée par deux réponses revenant
+      dans l'ordre **inverse** de leur émission, le délai, les cinq destinations, la ligne **sans
+      lien**, et les trois colonnes que le générateur déclare non nulles à tort (M18).
+- [ ] `e2e/api/recherche-palette.spec.ts` : les deux lectures de résolution **hors interface**, avec
+      les jetons réels — dont l'ambiguïté d'embarquement de M15, qu'un test unitaire ne voit pas.
+
+##### Sous-tranche 2b — la surface `[ ]`
+
+- [ ] Le champ dans l'en-tête, `Cmd+K` / `Ctrl+K`, la navigation clavier du §14.3, les quatre états
+      du §14.4, la troncature écrite, et `docs/DESIGN_SYSTEM.md` §5.46 tenu.
+- [ ] `e2e/ui/recherche.spec.ts`, et **l'asymétrie de M19 éprouvée par son COMPTE** — quatre lignes
+      pour l'administratrice, trois pour la lectrice, sur le même terme `sogexia`. Sans le compte,
+      un écran qui n'afficherait rien passerait le refus.
+- [ ] Captures sous `docs/captures/CRM-065/`, aux paliers 1440 et 390, **produites et observées**
+      (`CLAUDE.md` §16), et le chapitre de `docs/manual.md`.
+
+##### Sous-tranche 2c — l'inbox adressable `[ ]`
+
+- [ ] `RouteInbox` honore `?message=<id>` (`docs/SPEC-recherche.md` §15) : lu **au montage** et une
+      seule fois, dossier déduit du `card_id` (M16), identifiant inconnu **sans erreur**, paramètre
+      retiré de l'adresse une fois honoré.
+
+*Écart nommé, non masqué* : tant que 2c n'est pas livrée, le paramètre est **inerte** et un résultat
+de la famille `message` mène à l'inbox **sans sélection**. Ce n'est pas une destination morte —
+l'écran existe et porte ce qu'on cherche — c'est une destination **imprécise**, et le §13.5 écrit
+pourquoi les deux autres issues étaient pires.
 
 ---
 ### CRM-070 — précision d'arbitrage : l'invitation d'un membre

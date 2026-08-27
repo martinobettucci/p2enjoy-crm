@@ -3945,3 +3945,125 @@ l'ouvrent, et c'est la première entrée de `/reglages` dont ce soit le cas.
   bascule, et le focus **reste sur elle** pendant et après l'écriture. C'est la conséquence directe
   de la règle du §5.7 ter qui refuse de désactiver le contrôle : une case qui perdrait le focus en
   se réactivant obligerait à retabuler pour se corriger.
+
+### 5.46 Palette de recherche de l'en-tête — `CRM-065`
+
+**La surface que le §4 annonce depuis `CRM-000`** — « En-tête : fil d'Ariane · **recherche · Cmd+K** ·
+profil » — et que rien ne rendait, faute de moteur. Le moteur est livré par la tranche 1 de
+`CRM-065` ; cette entrée dit de quoi sa surface a l'air. Spécifiée avant code,
+`docs/SPEC-recherche.md` §12 à §14.
+
+**Elle vit dans l'en-tête, entre le fil d'Ariane et le contexte d'espace de travail**, à la place
+exacte que le §4 lui donne. L'ordre de la ligne devient : fil d'Ariane, **recherche**, contexte,
+cloche, identité. Le §5.43 a posé le sens de la fin de cette ligne ; la recherche vient **avant**
+parce qu'elle porte sur le produit entier, et non sur l'utilisateur.
+
+- **AUCUNE MODALE, ET C'EST LE CAS OÙ L'ON EST LE PLUS TENTÉ D'Y DÉROGER.** Le §5 n'en déclare
+  aucune, et `CRM-043`, `CRM-075`, `CRM-079`, `CRM-060` puis `CRM-064` l'ont tranché **cinq** fois.
+  L'usage du marché veut une fenêtre centrée sur un voile ; la palette n'en est pas une, et le motif
+  n'est pas la conformité : **le voile cacherait l'écran d'où l'on cherche**. C'est le raisonnement
+  du §5.23 — « une modale recouvrirait la liste que l'on vient de lire, or cette liste est
+  précisément ce qui dit si le contact existe déjà » — dans son cas le plus général : on cherche
+  **depuis** quelque part, et ce quelque part est le contexte de ce qu'on cherche. Le panneau est
+  donc ancré, dans le flux, sur le patron entier du §5.43 — surface `--color-surface`,
+  `--radius-lg`, bordure `--color-border`, `--shadow-card-hover`.
+
+- **ANCRÉ À L'EN-TÊTE, JAMAIS AU CHAMP**, et la règle est déjà payée : le §5.43 l'a apprise en
+  regardant une capture — « le repère de positionnement est le conteneur pleine largeur, jamais le
+  contrôle ». Sous `md` le panneau s'étend d'un bord à l'autre moins 16 px de marge ; à partir de
+  `md` il retrouve une colonne bornée. `md` et jamais `sm`, qui est un variant inconnu que Tailwind
+  supprime en silence (§11, §5.20).
+
+- **LE CHAMP EST UN `input type="search"` AVEC SON LIBELLÉ, jamais un bouton qui ouvre un champ.** Un
+  champ visible dit ce qu'on peut faire ; un bouton demanderait d'apprendre qu'il en cache un. Il
+  suit le §5.7 — 40 px de haut, bordure `--color-border`, focus `--color-brand` — et porte l'icône
+  `Search` en `aria-hidden`, la seule icône nouvelle de cette surface (§9), qui ne sert nulle part
+  ailleurs. **Son libellé est visuellement masqué, jamais retiré** (§12.3) : l'icône et la place
+  disent déjà ce qu'il est, et un libellé visible dans une ligne d'en-tête déjà dense pousserait le
+  titre de route hors du cadre (§12.2).
+
+- **LE RACCOURCI EST ÉCRIT DANS LE CHAMP, EN PASTILLE `kbd`**, à droite, `--color-hover` /
+  `--color-text-3`, `--text-xs`, `--radius-sm`. Un raccourci qu'aucun écran n'enseigne n'existe que
+  pour qui le connaît déjà. Elle est `aria-hidden` — le nom accessible du champ le dit en toutes
+  lettres —, et **elle disparaît dès que le champ porte du texte** : elle occuperait la place de ce
+  qu'on écrit. Sous `md` elle n'est **pas rendue** : il n'y a pas de clavier à qui l'enseigner, et
+  la place manque.
+
+- **LE FOCUS NE QUITTE JAMAIS LE CHAMP, ET C'EST CETTE RÈGLE QUI DÉCIDE LA FORME.** Les flèches
+  déplacent un **résultat actif**, pas le focus : l'utilisateur corrige son terme en permanence,
+  c'est le geste même d'une palette, et un focus descendu dans la liste ferait perdre la frappe
+  suivante. Le champ est donc une `combobox` — `role="combobox"`, `aria-expanded`, `aria-controls`,
+  et `aria-activedescendant` désignant la ligne active —, la liste une `listbox`, et chaque ligne
+  une `option` portant son `id`. **C'est le premier `aria-activedescendant` du produit**, et il est
+  employé parce qu'aucun autre patron ne tient les deux exigences à la fois.
+
+  *Écart assumé avec le §5.44*, qui refuse un patron ARIA composite pour un `fieldset` de cases : là
+  le choix est **multiple** et sans urgence de frappe ; ici il est **unique** et se fait en tapant.
+
+- **LE RÉSULTAT ACTIF SE MARQUE PAR UN FOND `--color-brand-soft` ET UN LISERÉ GAUCHE DE 3 px
+  `--color-brand`** — le liseré de la carte de board (§5.1) tourné d'un quart de tour, celui du
+  §5.7 quater et de la ligne non lue du §5.43. **Aucun jeton n'est ajouté.** Le §1 est tenu par
+  `aria-activedescendant`, qui porte l'information indépendamment du visuel, et par le survol, qui
+  emploie `--color-hover` et ne se confond donc pas avec l'état actif.
+
+- **UNE LIGNE EST UNE LIGNE, PAS UNE CARTE** — la distinction du §5.11 et du §5.43. Elle porte,
+  dans cet ordre : la **pilule de famille**, le **titre**, le **sous-titre**, puis l'**extrait**
+  quand il existe. Hauteur libre, bordure basse `--color-border`, survol `--color-hover`, aucune
+  zébrure : la liste plate du §5.18.
+
+- **LA FAMILLE EST UNE PILULE NEUTRE PORTANT UN MOT, jamais une icône seule ni une teinte** (§1,
+  §9). « Affaire », « Contact », « Organisation », « Commentaire », « Message » —
+  `--color-hover` / `--color-text-2`, `rounded-full`, `--text-xs` (§5.6). Cinq icônes muettes
+  demanderaient une légende ; cinq couleurs feraient porter par la teinte une information que le mot
+  donne. **Elle est en TÊTE de ligne** et non en fin, contrairement à la pilule de channel du
+  §5.36 : elle dit **de quoi il s'agit** avant de dire lequel, et une liste qui mélange cinq natures
+  se lit dans cet ordre-là.
+
+- **L'EXTRAIT EST DU TEXTE PUR, ET IL TIENT SUR UNE LIGNE.** Le §6.5 de la spécification le rend
+  déjà replié et sans balise, mesuré ; l'écran l'affiche en `--text-sm` `--color-text-2` avec une
+  ellipse. C'est le seul endroit de cette surface où l'ellipse du §5.9 s'applique plutôt que le
+  repli du §5.21 : l'extrait est un **échantillon**, pas une donnée dont la troncature perdrait
+  quelque chose. **Le titre et le sous-titre, eux, se replient** — ils nomment l'objet, et le §5.43
+  a déjà payé ce défaut en regardant une capture : « le lien ne nommait plus l'affaire qu'il ouvre ».
+
+- **UNE LIGNE SANS DESTINATION RESTE RENDUE, SANS LIEN.** Elle garde son titre, son sous-titre et
+  son extrait ; elle n'est ni cliquable, ni atteignable par `Entrée`, et une mention en `--text-xs`
+  `--color-text-3` dit que l'objet n'est pas atteignable. C'est la règle du §5.37 pour une affaire
+  figée que la seconde lecture n'a pas rapportée, et du §5.32 pour une affaire sans slug : la
+  masquer retrancherait un résultat de la liste qui existe pour les montrer ; lui donner un lien
+  vers une adresse incomplète mènerait à un écran que l'utilisateur croirait cassé.
+
+- **LES QUATRE ÉTATS DU §5.8 SONT TRAITÉS, PLUS L'ÉTAT D'ARRIVÉE, QUI N'EST PAS UN VIDE.** Terme
+  vide : **aucune liste**, et une phrase qui dit ce que la recherche cherche — cinq familles nommées.
+  Erreur : la mention et son **action de reprise**, qui rejoue la même recherche. Vide :
+  « aucun résultat pour ce terme », **sans action** — l'écart au §5.8 que le §5.16, le §5.19, le
+  §5.37 et le §5.43 prennent déjà, et le message dit que la recherche a **abouti**, pas qu'elle a
+  échoué.
+
+- **LA LISTE PRÉCÉDENTE RESTE AFFICHÉE PENDANT LA RECHERCHE SUIVANTE**, sous `aria-busy`, et c'est
+  un second écart au §5.8 **motivé**. Le squelette reste réservé au **premier** chargement — la
+  règle exacte du §5.29 tranche 2 c —, seul moment où il n'y a rien à montrer. Une frappe arrivant
+  200 ms après la précédente (`docs/SPEC-recherche.md` §13.3), remplacer la liste par un squelette à
+  chaque lettre la ferait **clignoter**, ce que le §6 interdit.
+
+- **LA TRONCATURE EST ÉCRITE, jamais laissée à deviner** : « 20 résultats affichés » sous la liste
+  quand elle est pleine, en `--text-xs` `--color-text-3`. C'est la règle du §5.43 pour « les 20 plus
+  récentes » et du §5.15 pour « 3 affaires listées sur 13 ».
+
+- **SANS SESSION, LE CHAMP N'EST PAS RENDU**, et le raccourci est inactif. C'est la règle du §5.43
+  pour la cloche : la RPC refuse l'anonyme par le **privilège**, et un champ offert à un anonyme
+  promettrait une recherche que la base refuse — la commande morte du §5.10.
+
+- **`ÉCHAP` REFERME ET REND LE FOCUS**, un clic hors du panneau le referme sans rendre le focus — la
+  distinction que le §5.43 fait entre fermer et annuler, reprise sans changement.
+
+- **SOUS `md`, LE CHAMP CÈDE LA PLACE AU TITRE DE ROUTE ET DEVIENT UNE COMMANDE À ICÔNE**, cible
+  `--size-target`, nom accessible complet (§12.3). C'est le §12.2 appliqué : l'ordre de sacrifice
+  de l'en-tête ne touche jamais le titre de la route, et un champ de saisie à 390 px le pousserait
+  hors du cadre. La commande ouvre le **même** panneau, qui occupe alors la largeur disponible moins
+  la marge. **La page ne défile jamais horizontalement** (§7).
+
+- **Aucune couleur, aucun jeton nouveau** : la surface emprunte au §5.43 son panneau ancré et sa
+  mécanique de fermeture, au §5.18 sa liste plate, au §5.6 sa pilule neutre, au §5.1 son liseré, au
+  §5.7 son champ et au §5.8 ses états. **Une seule icône Lucide nouvelle — `Search` —**, qui ne sert
+  aucun autre objet (§9).
