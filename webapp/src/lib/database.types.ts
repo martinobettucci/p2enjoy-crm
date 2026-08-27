@@ -1889,6 +1889,35 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          in_app: boolean
+          profile_id: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          in_app?: boolean
+          profile_id: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          in_app?: boolean
+          profile_id?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string
@@ -2681,6 +2710,21 @@ export type Database = {
       copy_workflow_to_track: {
         Args: { new_name?: string; track_id: string; workflow_id: string }
         Returns: string
+      }
+      definir_preference_notification: {
+        Args: { p_in_app: boolean; p_type: string }
+        Returns: {
+          in_app: boolean
+          profile_id: string
+          type: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "notification_preferences"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       dossiers_a_renommer: {
         Args: { p_account_id: string }

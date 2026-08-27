@@ -57,6 +57,7 @@ import {
 	cheminTableauObjectifs,
 	CHEMIN_ORGANISATION,
 	cheminOrganisation,
+	CHEMIN_REGLAGES_NOTIFICATIONS,
 } from './chemins'
 
 export {
@@ -86,6 +87,7 @@ export {
 	cheminTableauObjectifs,
 	CHEMIN_ORGANISATION,
 	cheminOrganisation,
+	CHEMIN_REGLAGES_NOTIFICATIONS,
 }
 
 /**
@@ -184,6 +186,9 @@ export const CLE_TITRE_SEQUENCES_MAIL: CleTraduction = 'admin.sequences.title'
  * n'a plus de place dans les listes où il vivait.
  */
 export const CLE_TITRE_CORBEILLE: CleTraduction = 'admin.trash.title'
+
+/** `CRM-064` tranche 4 — `docs/DESIGN_SYSTEM.md` §5.45. */
+export const CLE_TITRE_REGLAGES_NOTIFICATIONS: CleTraduction = 'settings.notifications.title'
 
 /**
  * Titre du guide de démarrage — `CRM-079`, `docs/SPEC-onboarding.md` §4.1.
@@ -403,6 +408,22 @@ export function IndexReglages() {
 					>
 						<span className="font-medium">{t('admin.settings.index.trash')}</span>
 						<span className="text-sm text-text-2">{t('admin.settings.index.trash.body')}</span>
+					</Link>
+				</li>
+				{/* LES PRÉFÉRENCES VIENNENT EN DERNIER, ET C'EST UNE RÈGLE, PAS UN RESTE —
+				    `CRM-064` tranche 4, `docs/DESIGN_SYSTEM.md` §5.45. Toutes les entrées
+				    au-dessus administrent l'INSTANCE ; celle-ci règle le COMPTE de qui la
+				    regarde, et c'est la première de cet index dans ce cas. La placer entre deux
+				    sections d'administration mélangerait deux natures d'écran. */}
+				<li>
+					<Link
+						to={CHEMIN_REGLAGES_NOTIFICATIONS}
+						className="flex flex-col gap-1 px-4 py-3 min-h-[var(--size-target)] hover:bg-hover rounded-lg"
+					>
+						<span className="font-medium">{t('admin.settings.index.notifications')}</span>
+						<span className="text-sm text-text-2">
+							{t('admin.settings.index.notifications.body')}
+						</span>
 					</Link>
 				</li>
 			</ul>

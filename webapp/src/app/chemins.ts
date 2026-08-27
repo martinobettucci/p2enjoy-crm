@@ -137,6 +137,17 @@ export const CHEMIN_ETAT_MESSAGERIE = '/reglages/messagerie' as const
 export const CHEMIN_CORBEILLE = '/reglages/corbeille' as const
 
 /**
+ * Préférences de notification — `CRM-064` tranche 4, `docs/DESIGN_SYSTEM.md` §5.45.
+ *
+ * **La PREMIÈRE section PERSONNELLE de `/reglages`.** Les autres administrent l'instance ; celle-ci
+ * règle le compte de qui la regarde, et les trois profils l'ouvrent. Elle reste sous `/reglages`
+ * plutôt qu'au premier niveau : c'est bien un réglage, et le raisonnement qui a sorti le carnet et
+ * les objectifs des réglages — « ils n'administrent rien, ils portent le travail » — ne s'applique
+ * pas ici, une préférence ne portant aucun travail.
+ */
+export const CHEMIN_REGLAGES_NOTIFICATIONS = '/reglages/notifications' as const
+
+/**
  * Objectifs — `CRM-083`, `docs/SPEC-goals.md` §5.1.
  *
  * Une route de PREMIER NIVEAU, « au même niveau que la messagerie » comme la spécification

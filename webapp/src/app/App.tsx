@@ -27,6 +27,7 @@ import {
 	CHEMIN_ADMIN_WORKFLOWS,
 	CHEMIN_CARD,
 	CHEMIN_CORBEILLE,
+	CHEMIN_REGLAGES_NOTIFICATIONS,
 	CHEMIN_COUTS_BUDGET,
 	CHEMIN_COUTS_TRACK,
 	CHEMIN_DEMARRAGE,
@@ -44,6 +45,7 @@ import {
 	CLE_TITRE_ADMIN_CATALOGUE,
 	CLE_TITRE_ADMIN_WORKFLOWS,
 	CLE_TITRE_CORBEILLE,
+	CLE_TITRE_REGLAGES_NOTIFICATIONS,
 	CLE_TITRE_DEMARRAGE,
 	CLE_TITRE_COMPTES_MAIL,
 	CLE_TITRE_IDENTITES_MAIL,
@@ -120,6 +122,9 @@ const ReglagesSequencesRelance = lazy(async () => ({
 }))
 /** La corbeille de `CRM-077`, chargée à la demande pour la même raison que les trois autres. */
 const Corbeille = lazy(async () => ({ default: (await import('./Corbeille')).Corbeille }))
+const ReglagesNotifications = lazy(async () => ({
+	default: (await import('./ReglagesNotifications')).ReglagesNotifications,
+}))
 /**
  * Le guide de démarrage de `CRM-079`. Il n'est PAS chargé à la demande, contrairement aux quatre
  * surfaces d'administration : `AccueilDemarrage` le rend déjà sur `/`, la toute première route
@@ -346,6 +351,18 @@ function RoutesApplication() {
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_CORBEILLE}>
 							<Corbeille />
+						</AppShell>
+					}
+				/>
+				{/* Les préférences de notification — `CRM-064` tranche 4,
+				    docs/DESIGN_SYSTEM.md §5.45. PREMIÈRE section PERSONNELLE de `/reglages`, et
+				    la seule que les trois profils ouvrent : aucun rôle n'est lu ici, la politique
+				    `notification_preferences_lecture` rendant à chacun sa propre ligne. */}
+				<Route
+					path={CHEMIN_REGLAGES_NOTIFICATIONS}
+					element={
+						<AppShell cleTitreRoute={CLE_TITRE_REGLAGES_NOTIFICATIONS}>
+							<ReglagesNotifications />
 						</AppShell>
 					}
 				/>

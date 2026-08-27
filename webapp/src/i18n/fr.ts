@@ -1195,6 +1195,42 @@ export const fr = {
 	'admin.settings.index.tree': "Arborescence : tracks et channels",
 	'admin.settings.index.tree.body':
 		"Créer, renommer, réordonner et archiver les tracks et les channels de l'espace de travail.",
+	'admin.settings.index.notifications': 'Notifications : ce que vous recevez',
+	'admin.settings.index.notifications.body':
+		"Choisir les notifications qui vous parviennent dans l'application. Ce réglage est le vôtre, et personne d'autre ne le voit.",
+
+	// --- Préférences de notification — CRM-064 tranche 4 -----------------------------------
+	// docs/SPEC-notifications.md §42 à §46, docs/DESIGN_SYSTEM.md §5.45.
+	'settings.notifications.title': 'Notifications',
+	'settings.notifications.intro':
+		"Décochez ce que vous ne voulez plus voir arriver dans la cloche. Rien n'est supprimé : les notifications continuent d'être conservées, elles sont simplement masquées, et recocher les rend.",
+	'settings.notifications.legend': 'Ce que vous recevez dans l\'application',
+	'settings.notifications.live': 'État des préférences de notification',
+	'settings.notifications.loading': 'Chargement de vos préférences',
+
+	'settings.notifications.type.mention': 'Recevoir les mentions',
+	'settings.notifications.type.mention.body':
+		"Quand quelqu'un vous nomme dans le commentaire d'une affaire.",
+
+	'settings.notifications.saving': 'Enregistrement…',
+	'settings.notifications.saved.on': 'Vous recevrez ces notifications.',
+	'settings.notifications.saved.off': 'Ces notifications ne vous seront plus montrées.',
+
+	'settings.notifications.error.title': "Vos préférences n'ont pas pu être chargées",
+	'settings.notifications.error.body': "La requête n'a pas abouti. Réessayer relance le chargement.",
+	'settings.notifications.error.retry': 'Réessayer',
+
+	'settings.notifications.refusal.unknownType':
+		"Ce réglage n'existe pas encore sur ce serveur. Rechargez la page ; s'il persiste, l'application est en avance sur sa base.",
+	'settings.notifications.refusal.session':
+		'Votre session a expiré. Reconnectez-vous pour enregistrer ce réglage.',
+	'settings.notifications.refusal.forbidden':
+		"Ce réglage n'a pas été accepté. Reconnectez-vous, puis réessayez.",
+	'settings.notifications.refusal.network':
+		"Le serveur n'a pas répondu. Le réglage n'a pas été enregistré ; réessayez.",
+	'settings.notifications.refusal.unknown':
+		"Le réglage n'a pas été enregistré, et la cause n'est pas connue. Réessayez.",
+
 	'admin.settings.instance':
 		"La configuration de l'instance elle-même reste tenue par le fichier d'environnement du serveur.",
 

@@ -180,6 +180,24 @@ type _tables = Expect<
     // `_fonctions` : elles vivent dans le schéma `app`, que PostgREST n'expose pas. Le compte de
     // fonctions appelables en RPC reste inchangé.
     | 'notifications'
+    // `0067` de `CRM-064` TRANCHE 4 ajoute `notification_preferences`, et le témoin l'a vue dans
+    // le même changement — la chaîne tient pour la quatrième fois consécutive, l'écran des
+    // préférences étant livré par la même tranche que la table qu'il lit.
+    //
+    // CE QUE LE TYPE PORTE, ET CE QU'IL NE PORTERA JAMAIS. `Insert` et `Update` sont EXPOSÉS par
+    // le générateur alors que les deux sont IMPOSSIBLES par la vraie route : la table n'accorde
+    // à `authenticated` ni `insert`, ni `update`, ni `delete` (§46.2), et n'a aucune politique
+    // d'écriture. Le seul chemin est la RPC `definir_preference_notification` ci-dessous. Un
+    // générateur ne lit ni les privilèges, ni les politiques : c'est exactement la même frontière
+    // que pour `notifications`, et elle se prouve par le contrat d'API, jamais par un type.
+    //
+    // De même, `updated_at` apparaît facultatif à l'insertion parce qu'il a un défaut — mais une
+    // valeur envoyée ne survit PAS : le trigger `app.preferences_notifications_avant_ecriture` la
+    // remplace par `now()` (§43.2). Aucun type ne dit cela.
+    //
+    // `app.notification_consentie` n'apparaît pas dans `_fonctions` : elle vit dans le schéma
+    // `app`, que PostgREST n'expose pas.
+    | 'notification_preferences'
     | 'organizations'
     | 'profiles'
     | 'track_members'
@@ -851,12 +869,18 @@ type _vueDerivationColonnes = Expect<
 // migration et la régénération des types sont dans le même commit, parce que l'écran qui appelle
 // `client.rpc('mentionnables')` est livré par la même sous-tranche : la chaîne tient quand la
 // fonction naît AVEC son appelant. Quarante-trois devient QUARANTE-QUATRE.
-type _lesQuaranteQuatreFonctions = Expect<
+// `0067` de `CRM-064` TRANCHE 4 ajoute `definir_preference_notification`, et le témoin la voit
+// dans le même changement, pour la QUATRIÈME fois consécutive. Elle est le seul chemin d'écriture
+// d'une préférence, et la mesure l'a décidé plutôt que le goût : l'upsert PostgREST est refusé par
+// `403 / 42501` dès que les colonnes sont figées par un privilège de colonne (§46.3, M10).
+// Quarante-quatre devient QUARANTE-CINQ.
+type _lesQuaranteCinqFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
     | 'armer_sequence_relance'
     | 'cards_figees'
     | 'mentionnables'
+    | 'definir_preference_notification'
     | 'interrompre_sequence_relance'
     | 'reordonner_paliers_sequence'
     | 'mail_template_variables'
@@ -1087,7 +1111,7 @@ export type AssertionsDuContratDeTypes = [
   _relationsWorkspaceMembers,
   _laSeuleVue,
   _vueDerivationColonnes,
-  _lesQuaranteQuatreFonctions,
+  _lesQuaranteCinqFonctions,
   _signatureReelSaisissable,
   _retourReelSaisissable,
   _signatureArborescence,
