@@ -93,6 +93,16 @@ comment on text search configuration app.francais_sans_accent is
 -- tables du produit pour un besoin interne au moteur de recherche. L'index d'expression obtient le
 -- même service sans rien changer de ce que l'API rend.
 --
+-- `public.cards` PORTE DÉJÀ UNE COLONNE ET UN INDEX DE RECHERCHE, ET ILS RESTENT INTACTS (§5.4,
+-- mesure M12). `cards.search_tsv`, colonne générée de la migration 11 (`CRM-040`), et
+-- `cards_search_tsv_idx` servent la recherche LOCALE de la vue liste, que `liste-cards.ts` appelle
+-- par `textSearch('search_tsv', …, { config: 'french' })`. `cards_recherche_idx` ci-dessous est
+-- donc un SECOND index GIN sur la même table, et c'est voulu : les deux servent des requêtes
+-- différentes — l'une sans poids, en `french`, sur deux colonnes ; l'autre pondérée, en
+-- `app.francais_sans_accent`, sur trois. Cette migration ne touche NI la colonne, NI son index, NI
+-- l'écran qui les emploie. L'écart de vocabulaire entre les deux recherches est consigné à
+-- `docs/INCONSISTENCY_REPORT.md`, INC-230, et laissé inchangé : il appartient à `CRM-042`.
+--
 -- L'EXPRESSION DE CHAQUE INDEX EST RECOPIÉE À L'IDENTIQUE DANS LA FONCTION DU BLOC 4, ET LA
 -- DUPLICATION EST ASSUMÉE (§5.2). L'optimiseur ne retient un index d'expression que si la clause
 -- `where` lui est STRUCTURELLEMENT identique. Interposer une fonction enveloppante — plus propre à
@@ -353,6 +363,22 @@ begin
 		  left join public.cards c2 on c2.id = cc.card_id
 		  left join public.profiles p on p.id = cc.author_id
 		 where cc.deleted_at is null
+		   -- UN COMMENTAIRE D'AFFAIRE MISE À LA CORBEILLE SORT AUSSI (§6.7, ligne *i*), et le
+		   -- besoin a été trouvé par une assertion de la suite pgTAP, pas supposé : `card_comments`
+		   -- porte son propre `deleted_at`, que mettre l'affaire à la corbeille ne touche pas. Sans
+		   -- cette clause, la palette de la tranche 2 offrirait une destination morte — ce que le
+		   -- §5.10 du design system interdit.
+		   --
+		   -- `not exists` et non une condition sur la jointure externe : si l'affaire n'est PAS
+		   -- lisible, la sous-requête ne la voit pas non plus et le commentaire reste — le contexte
+		   -- manquant se dit par `null`, il ne fait pas disparaître la ligne (§6.4). En pratique le
+		   -- cas ne se produit pas, `card_comments_lecture` exigeant déjà de lire l'affaire.
+		   and not exists (
+				select 1
+				  from public.cards cx
+				 where cx.id = cc.card_id
+				   and cx.deleted_at is not null
+		   )
 		   and (
 				setweight(to_tsvector('app.francais_sans_accent', coalesce(cc.body, '')), 'C')
 		   ) @@ v_requete

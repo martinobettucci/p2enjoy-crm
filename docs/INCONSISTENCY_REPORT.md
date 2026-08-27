@@ -5630,3 +5630,59 @@ il relit immédiatement.
 de la constater une fois — c'est le patron `expect.poll` que d'autres suites du dépôt emploient
 déjà. Ce n'est pas une temporisation arbitraire (`CLAUDE.md` §18) : c'est une attente **sur la
 condition mesurée**, qui échoue si elle ne vient jamais.
+
+---
+
+## Consignée le 2026-08-27 — la recherche de la vue liste ignore la moitié des accents
+
+### INC-230 — `liste-cards.ts` cherche en `french`, qui n'est PAS insensible aux accents
+
+**Trouvée en spécifiant `CRM-065` tranche 1**, en mesurant le vocabulaire de recherche à employer.
+Le défaut est **antérieur** et **étranger** à cette unité : il vit dans `CRM-042` (vue liste) et dans
+la colonne `cards.search_tsv` de `CRM-040`.
+
+**Ce qui est mesuré.** La configuration `french` livrée avec PostgreSQL retire l'accent de certains
+mots et le conserve dans d'autres, sans règle qu'un utilisateur puisse deviner :
+
+```
+to_tsvector('french','Amélie Dupont créance échéance')
+  =>  'amel':1 'dupont':2 'créanc':3 'échéanc':4
+```
+
+| Saisie | Document | `french` |
+|---|---|---|
+| `amelie` | `Amélie` | **trouve** |
+| `societe` | `société` | **trouve** |
+| `creance` | `créance` | **NE TROUVE PAS** |
+| `echeance` | `échéance` | **NE TROUVE PAS** |
+| `proces` | `procès` | **NE TROUVE PAS** |
+
+**Où le produit en dépend.** `webapp/src/lib/liste-cards.ts` filtre la vue liste par
+`textSearch('search_tsv', parametres.recherche, { config: 'french', type: 'plain' })`, et
+`cards.search_tsv` est elle-même définie en `to_tsvector('french', …)` par la migration `0011`.
+La recherche locale de la vue liste rend donc **juste une fois sur deux** sur un mot accentué — et un
+comportement juste une fois sur deux est pire qu'un comportement uniformément strict : il apprend à
+l'utilisateur une règle fausse.
+
+**Ce que cela ne dit pas.** Ce n'est **pas** un défaut de `CRM-065`. La migration `0068` crée une
+configuration `app.francais_sans_accent` qui corrige l'écart **pour la recherche transverse
+uniquement**, et ne touche **ni** `cards.search_tsv`, **ni** `cards_search_tsv_idx`, **ni**
+`liste-cards.ts`. Deux recherches du produit emploient donc désormais deux vocabulaires différents,
+et c'est ce que cette entrée consigne.
+
+**Le comportement est laissé inchangé** (`docs/CloudWorker.md` §3.1) : corriger la colonne demande
+de la régénérer — `alter table … alter column … set expression`, donc une réécriture de la table et
+de son index — et de reprendre les assertions de `0012_cards.test.sql` §6 et de
+`liste-cards.test.ts`, qui figent l'une et l'autre la configuration `french` **explicitement**. Cela
+dépasse la tranche autorisée.
+
+**Arbitrage attendu du responsable.** Trois issues, et une seule est à choisir :
+
+1. **Aligner `CRM-042` sur le nouveau vocabulaire** : redéfinir `search_tsv` en
+   `app.francais_sans_accent` et reprendre les deux suites. Les deux recherches du produit se
+   comporteraient alors pareil.
+2. **Faire passer la vue liste par `public.recherche_globale`**, ce qui retirerait la colonne de
+   l'usage sans la détruire — mais la vue liste filtre, trie et pagine, ce que la RPC ne fait pas.
+3. **Laisser l'écart**, et l'écrire dans le manuel.
+
+Rien n'est tranché ici.

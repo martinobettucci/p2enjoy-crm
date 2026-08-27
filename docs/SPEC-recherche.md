@@ -216,6 +216,59 @@ contrainte de conception, pas un accident : voir §5.2.
 `previsualiser_exigence`, `rendre_modele_email` —, six sont `DEFINER`. Les plus récentes préfixent
 leurs paramètres par `p_`. `public.recherche_globale` suit les premières sur les deux points.
 
+### M12 — `public.cards` PORTE DÉJÀ UNE RECHERCHE, ET ELLE EST VIVANTE
+
+*Mesure ajoutée le 2026-08-27, trouvée par une assertion de la suite pgTAP qui figeait « aucune
+colonne `tsvector` sur les cinq tables » et qui a rougi. Elle n'était pas au programme : c'est
+l'assertion qui l'a imposée.*
+
+```
+information_schema.columns, data_type = 'tsvector', schéma public
+  =>  cards.search_tsv   (GENERATED ALWAYS)
+pg_indexes, table cards, GIN
+  =>  cards_search_tsv_idx
+```
+
+`cards.search_tsv` est née avec la table, à la migration `0011` (`CRM-040`) :
+
+```sql
+search_tsv tsvector generated always as (
+    to_tsvector('french', coalesce(title,'') || ' ' || coalesce(description,''))) stored
+```
+
+Et elle est **employée** : `webapp/src/lib/liste-cards.ts` filtre la vue liste par
+`textSearch('search_tsv', …, { config: 'french' })`. Ce n'est donc pas une colonne morte.
+
+**Trois conséquences, toutes écrites plutôt que découvertes plus tard.**
+
+1. Le §5.1 ne peut pas dire « aucune colonne `tsvector` n'existe » — il dit « la tranche 1 n'en
+   **ajoute** aucune », ce qui est la propriété qu'elle doit tenir. L'assertion a été **révisée** en
+   ce sens, jamais retirée, motif écrit dans le fichier (mécanisme de la décision 51).
+2. `public.cards` porte désormais **deux** index GIN, et c'est voulu : voir §5.4.
+3. **La recherche de la vue liste est sujette à l'écart mesuré en M2** — elle emploie `french`, donc
+   « creance » n'y trouve pas « créance ». Le défaut est **réel, mesuré, et ÉTRANGER à cette
+   unité** : il appartient à `CRM-042`. Il est consigné à `docs/INCONSISTENCY_REPORT.md`, **INC-230**,
+   et le comportement est **laissé inchangé** (`CLAUDE.md` §18, `docs/CloudWorker.md` §3.1).
+
+### M13 — un commentaire ne suit PAS son affaire à la corbeille
+
+*Mesure ajoutée le 2026-08-27, trouvée elle aussi par une assertion écrite avant le code qu'elle a
+rendu nécessaire.*
+
+`update public.cards set deleted_at = now()` sur `…0c1` — « Refonte du site vitrine » — puis
+recherche sous l'administratrice :
+
+```
+'vitrine'   =>  2 lignes avant, 1 après   -- l'affaire sort, comme attendu
+'gabarit'   =>  1 ligne  avant, 1 après   -- SON COMMENTAIRE RESTE
+```
+
+`public.card_comments` porte son **propre** `deleted_at`, que la mise à la corbeille de l'affaire ne
+touche pas, et sa politique de lecture continue de le rendre. Une recherche qui rendrait ce
+commentaire offrirait à la palette de la tranche 2 une **destination morte** — ce que le §5.10 de
+`docs/DESIGN_SYSTEM.md` interdit. La ligne *i* du §6.7 est donc étendue au commentaire, et la
+fonction porte la clause qui la tient.
+
 ### M11 — l'extrait se prélève proprement, sans balise
 
 `ts_headline` avec `StartSel` et `StopSel` **vides** rend un extrait de texte pur, sans balisage à
@@ -319,6 +372,9 @@ apparaîtrait dans `webapp/src/lib/database.types.ts`. Elle changerait la forme 
 tables du produit pour un besoin interne au moteur de recherche. L'index d'expression obtient le même
 service sans rien changer de ce que l'API rend.
 
+La propriété que la tranche tient est donc « **elle n'en ajoute aucune** », et non « il n'en existe
+aucune » : `public.cards` en porte une depuis `CRM-040` (M12).
+
 Nommage, aligné sur le dépôt : `<table>_recherche_idx`.
 
 ### 5.2 L'expression est écrite à l'identique dans l'index et dans la requête
@@ -337,6 +393,19 @@ Les index ne portent **pas** la condition `deleted_at is null`. Un index partiel
 mais la corbeille (`CRM-077`) restaure des lignes : un index partiel les réintégrerait par une
 écriture d'index au moment de la restauration, là où l'index complet les a déjà. Le filtre reste dans
 la requête.
+
+### 5.4 `public.cards` porte deux index GIN, et c'est voulu
+
+`cards_search_tsv_idx`, de `CRM-040`, sert la recherche **locale** de la vue liste — sans poids, en
+`french`, sur `title` et `description` (M12). `cards_recherche_idx`, de cette tranche, sert la
+recherche **transverse** — pondérée, en `app.francais_sans_accent`, sur `title`, `next_action` et
+`description`.
+
+Les deux répondent à des requêtes différentes et aucune ne peut servir l'autre : un index n'est
+retenu que sur l'expression exacte qu'il porte (§5.2). Cette tranche ne touche **ni** la colonne
+`search_tsv`, **ni** son index, **ni** l'écran qui les emploie. L'écart de vocabulaire entre les deux
+recherches — la vue liste reste sujette à l'écart de M2 — est **consigné à INC-230** et **laissé
+inchangé** : il appartient à `CRM-042`.
 
 ---
 
@@ -464,7 +533,7 @@ Chaque ligne est une assertion, et chacune est éprouvée par le §9.
 | *f* | `p_terme` **fait uniquement de mots vides** (`le la de`) | `200 []` |
 | *g* | `p_limite` **nul, zéro ou négatif** | `200 []` |
 | *h* | `p_limite` **supérieur à 50** | `200`, **au plus 50 lignes** |
-| *i* | terme trouvé dans une ligne **effacée doucement** (`deleted_at` non nul) | `200 []` — la corbeille ne se cherche pas |
+| *i* | terme trouvé dans une ligne **effacée doucement** (`deleted_at` non nul), **ou dans un commentaire dont l'affaire l'est** | `200 []` — la corbeille ne se cherche pas |
 | *j* | terme trouvé dans **plusieurs familles** | `200`, les lignes des deux familles, **classées entre elles** |
 | *k* | terme saisi **sans accent**, écrit **avec** | trouvé (§3.2) |
 | *l* | terme saisi **avec accent**, écrit **sans** | trouvé (§3.2) |
@@ -475,6 +544,13 @@ Chaque ligne est une assertion, et chacune est éprouvée par le §9.
 La ligne *i* mérite son motif : une affaire à la corbeille reste en base et reste lisible par la RLS
 — c'est ce qui permet de la restaurer (`CRM-077`). L'exclure est donc une décision de la recherche,
 pas une conséquence de la sécurité. Elle est écrite dans la requête, jamais dans l'index (§5.3).
+
+Sa **seconde moitié** vient de la mesure M13 : `card_comments` porte son propre `deleted_at`, que la
+corbeille de l'affaire ne touche pas. Un commentaire d'affaire supprimée resterait donc trouvable et
+mènerait, dans la palette de la tranche 2, à une destination morte. La condition est écrite en
+`not exists` plutôt que sur la jointure externe du §6.4 : si l'affaire n'est pas lisible, la
+sous-requête ne la voit pas non plus et le commentaire **reste** — le contexte manquant ne fait
+jamais disparaître la ligne.
 
 ---
 
