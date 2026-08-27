@@ -9879,7 +9879,7 @@ chaque morceau prouvable seul :
       et jamais déduite : `SCENARIOS_API` 1007 → **1015** (`playwright test --project=api --list` :
       « Total: 1015 tests in 64 files »).
 
-##### Sous-tranche 2b — la surface `[~]`
+##### Sous-tranche 2b — la surface `[x]`
 
 - [x] `webapp/src/app/PaletteRecherche.tsx` : le champ dans l'en-tête, `Cmd+K` / `Ctrl+K`, la
       navigation clavier du §14.3, les quatre états du §14.4 **plus l'état d'arrivée qui n'est pas
@@ -9939,13 +9939,17 @@ chaque morceau prouvable seul :
 - [x] **Compteur `SCENARIOS_UI` révisé de 664 à 686**, valeur **comptée** par
       `playwright --project=ui --list` (« Total: 686 tests in 55 files »).
 
-*Ce qui reste dû sur 2b, et ce n'est pas du comportement* : le **verdict** de
-`scripts/verify-harness.sh`. Son passage a établi que les **trois compteurs sont conformes** —
-`api : 1015`, `ui : 686`, `mail : 42` énumérés et conformes —, mais sa section 5 rejoue `e2e:ui`,
-qu'INC-232 fait rougir de façon intermittente. Tant que ce verdict n'est pas relevé, la sous-tranche
-reste `[~]`.
+- [x] **Campagne d'interface complète rejouée derrière le dernier changement d'en-tête : 686
+      passés, AUCUN échec** (24,1 min). **INC-232 ne s'est pas reproduite**, ce qui confirme son
+      caractère intermittent plutôt que de l'infirmer — le fichier qu'elle touche est resté vert.
+- [x] **`scripts/verify-harness.sh --rapide` : 31 contrôles, aucune anomalie**, verdict RELEVÉ et
+      non déduit. Ses trois dénombrements sont conformes — `api : 1015`, `ui : 686`, `mail : 42` —,
+      ses six dégradations mordent, et il constate sa propre restauration.
 
-##### Sous-tranche 2c — l'inbox adressable `[ ]`
+*Rien ne reste dû sur 2b* : tout son comportement est livré, toutes ses preuves sont exécutées et
+vertes, et ses captures sont produites et observées.
+
+##### Sous-tranche 2c — l'inbox adressable `[ ]` — **c'est l'unité de la session suivante**
 
 - [ ] `RouteInbox` honore `?message=<id>` (`docs/SPEC-recherche.md` §15) : lu **au montage** et une
       seule fois, dossier déduit du `card_id` (M16), identifiant inconnu **sans erreur**, paramètre

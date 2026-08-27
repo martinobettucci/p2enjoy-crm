@@ -26085,8 +26085,15 @@ captures de toutes les unités à 390 px, ce qui dépasse la sous-tranche.
 Ici la sous-tranche modifie l'en-tête de **tous** les écrans, et les nouvelles captures sont l'état
 réellement exécuté du produit.
 
-**Où reprendre.** `CRM-065` **2a est close**, **2b est `[~]`** — tout son comportement est livré et
-prouvé, il ne lui manque que le verdict de `scripts/verify-harness.sh`, lancé en fin de session. La
+**LES DEUX DERNIÈRES PREUVES SONT VERTES.** La campagne d'interface, rejouée derrière le dernier
+changement d'en-tête, rend **686 passés, aucun échec** (24,1 min) : **INC-232 ne s'est pas
+reproduite**, ce qui confirme son caractère intermittent. Et `scripts/verify-harness.sh --rapide`
+rend **31 contrôles, aucune anomalie** — verdict RELEVÉ, ses trois dénombrements conformes
+(`api : 1015`, `ui : 686`, `mail : 42`), ses six dégradations mordantes, et sa propre restauration
+constatée. Un premier passage avait rendu **2 anomalies** : `SCENARIOS_UI` non déplacé, corrigé et
+compté ; et sa section 5, rouge d'INC-232.
+
+**Où reprendre.** `CRM-065` **2a et 2b sont CLOSES**. La
 sous-tranche **2c** — `RouteInbox` honorant `?message=<id>` — reste **à livrer**, et son contrat est
 déjà écrit (`docs/SPEC-recherche.md` §15) : lu au montage et une seule fois, dossier déduit du
 `card_id`, identifiant inconnu **sans erreur**, paramètre retiré de l'adresse une fois honoré. C'est
