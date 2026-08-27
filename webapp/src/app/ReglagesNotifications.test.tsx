@@ -15,9 +15,26 @@
 
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ReglagesNotifications } from './ReglagesNotifications'
+import { relireBoiteNotifications } from '../lib/notifications'
 import type { ClientCrm } from '../lib/supabase'
+
+/**
+ * LA CLOCHE EST ESPIONNÉE, ET C'EST LE HARNAIS QUI L'A EXIGÉ.
+ *
+ * `scripts/verify-preferences-notifications.sh` dégrade l'appel à `relireBoiteNotifications` et
+ * attend que ces suites rougissent. Sans cet espion, elles restaient VERTES : le harnais a donc
+ * dénoncé sa propre preuve comme COMPLAISANTE, et il avait raison — le défaut que le parcours E2E
+ * avait trouvé serait revenu sans qu'aucune suite rapide ne le voie.
+ *
+ * Le module est mocké PARTIELLEMENT : lui substituer entièrement casserait l'abonnement partagé,
+ * qui n'a rien à voir avec ce qu'on mesure ici.
+ */
+vi.mock('../lib/notifications', async (importOriginal) => ({
+	...(await importOriginal<typeof import('../lib/notifications')>()),
+	relireBoiteNotifications: vi.fn(),
+}))
 
 afterEach(cleanup)
 
@@ -152,6 +169,43 @@ describe('l’écran des préférences de notification (§5.45)', () => {
 		// LA CONFIRMATION REMPLACE L'ENVOI, elle ne s'y ajoute pas : deux mentions superposées
 		// feraient croire à deux écritures.
 		expect(screen.queryByText('Enregistrement…')).toBeNull()
+	})
+
+	// LA CLOCHE EST PRÉVENUE APRÈS CHAQUE ÉCRITURE RÉUSSIE, ET JAMAIS APRÈS UN REFUS. Une
+	// préférence ne touche AUCUNE ligne de `public.notifications` : aucun événement du temps réel
+	// n'est émis, et sans cet appel le compteur de l'en-tête reste à sa valeur d'avant jusqu'au
+	// rechargement de la page. Le défaut a été trouvé par le parcours E2E ; cette assertion
+	// l'empêche de revenir sans qu'une suite rapide le voie.
+	it('prévient la cloche après une écriture réussie, et JAMAIS après un refus', async () => {
+		vi.mocked(relireBoiteNotifications).mockClear()
+		const { client } = clientFactice(LECTURE_VIDE, {
+			data: { type: 'mention', in_app: false },
+			error: null,
+			status: 200,
+		})
+		render(<ReglagesNotifications client={client} />)
+
+		const case_ = await screen.findByRole('checkbox', { name: /Recevoir les mentions/ })
+		await userEvent.click(case_)
+		await waitFor(() => expect(relireBoiteNotifications).toHaveBeenCalledTimes(1))
+
+		cleanup()
+		vi.mocked(relireBoiteNotifications).mockClear()
+		const refus = clientFactice(LECTURE_VIDE, {
+			data: null,
+			error: { message: 'preference_sans_session', code: 'P0001' },
+			status: 400,
+		})
+		render(<ReglagesNotifications client={refus.client} />)
+		const seconde = await screen.findByRole('checkbox', { name: /Recevoir les mentions/ })
+		await userEvent.click(seconde)
+
+		// UN REFUS NE CHANGE RIEN À CE QUI EST LISIBLE : faire relire la cloche pour rien lui
+		// coûterait une requête et laisserait croire qu'un état a bougé.
+		// Deux nœuds portent le message — la mention sous la case et la région vive —, et c'est
+		// voulu (§5.7 ter, §8).
+		await waitFor(() => expect(screen.getAllByText(/session a expiré/).length).toBe(2))
+		expect(relireBoiteNotifications).not.toHaveBeenCalled()
 	})
 
 	// LA CASE N'EST JAMAIS DÉSACTIVÉE (§5.7 ter) : un contrôle désactivé perd le focus du clavier.

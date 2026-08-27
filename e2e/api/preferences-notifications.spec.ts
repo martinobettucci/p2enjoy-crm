@@ -60,6 +60,18 @@ async function remettreEnEtat(
 		headers: enTetesService(),
 	})
 	expect([200, 204]).toContain(reponse.status())
+
+	// LES NOTIFICATIONS SONT RENDUES NON LUES, ET CE N'EST PAS UNE PRÉCAUTION SUPERFLUE. La ligne
+	// *f* éprouve qu'une notification masquée NE PEUT PAS être marquée lue — un `204` sans effet.
+	// Ce fait est ce qu'elle MESURE, donc ce qu'elle ne peut pas supposer : le jour où la politique
+	// est dégradée, par un harnais ou par un défaut, le `PATCH` aboutit pour de bon et la suite
+	// laisse une notification lue derrière elle. Tout ce qui suit mesurerait alors « 1 non lue »
+	// au lieu de deux, sans que la cause soit visible depuis le fichier qui rougit.
+	const relecture = await requete.patch(`${URL_API}${NOTIFICATIONS}?read_at=not.is.null`, {
+		headers: { ...enTetesService(), 'Content-Type': 'application/json' },
+		data: { read_at: null },
+	})
+	expect([200, 204]).toContain(relecture.status())
 }
 
 test.describe('CRM-064 tranche 4 — les préférences de notification, contrat d’API', () => {
