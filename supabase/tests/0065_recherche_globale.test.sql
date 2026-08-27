@@ -262,7 +262,9 @@ select is(
 		(select count(*)::integer from public.recherche_globale('candidature', 20))
 	],
 	array[2, 1, 1],
-	'CRM-065 §2 M6 — sous l''administratrice : deux affaires « vitrine », le commentaire aux '
+	'CRM-065 §2 M6 — sous l''administratrice : DEUX LIGNES sur « vitrine » — l''affaire et le '
+	'message dont le corps la nomme, ce qui en fait un meilleur témoin qu''une famille unique —, le '
+	'commentaire aux '
 	'« gabarits », le message « Candidature spontanée »');
 
 set local request.jwt.claims to '{"sub":"5eed0000-0000-4000-8000-000000000013","role":"authenticated"}';
@@ -287,7 +289,7 @@ select is(
 		(select count(*)::integer from public.recherche_globale('vitrine', 20))
 	],
 	array[0, 2],
-	'CRM-065 §2 M6 — le business developer LIT les deux affaires « vitrine » mais NE LIT PAS le '
+	'CRM-065 §2 M6 — le business developer LIT les deux lignes de « vitrine » mais NE LIT PAS le '
 	'message non classé : le filtrage est bien celui de chaque table, jamais un filtrage global');
 
 -- ---------------------------------------------------------------------------------------------
