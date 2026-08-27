@@ -1438,6 +1438,50 @@ sans effet. **Sous la clé de service, `auth.uid()` est nul et personne n'est re
 plutôt que masquée, et rendue explicite par le `coalesce` sur l'UUID nul, sans lequel la comparaison
 vaudrait `NULL` et la fonction rendrait zéro ligne au service.
 
+### 9 bis.9 ter `public.recherche_globale(p_terme, p_limite)` — la recherche transverse, migration 68
+
+Ajoutée le 2026-08-27 par `CRM-065` tranche 1 (`docs/SPEC-recherche.md` §6).
+
+| | |
+|---|---|
+| Signature | `public.recherche_globale(p_terme text, p_limite integer default 20) returns table (objet, id, workspace_id, titre, sous_titre, extrait, rang)` |
+| Volatilité | `stable`, `set search_path to ''`, **`security invoker`** — jamais `definer` |
+| Privilèges | `execute` à `authenticated` et `service_role` ; **`anon` révoqué nommément** |
+| Ordre | `rang desc`, `titre collate "fr-FR-x-icu"`, `id` |
+| Borne | `p_limite` plafonnée à **50** côté serveur |
+
+Elle cherche dans **cinq familles** d'objets métier, chacune désignée par une valeur stable de la
+colonne `objet` : `affaire` (`cards`), `contact` (`contacts`), `organisation` (`organizations`),
+`commentaire` (`card_comments`), `message` (`mail_messages`).
+
+**Elle n'ouvre rien** : aucune politique n'est créée ni modifiée, aucun privilège de table n'est
+accordé. `security invoker` fait que chacune des cinq tables applique **sa propre** politique de
+lecture, et le refus est **zéro ligne**, jamais une erreur. En `definer`, elle rendrait à chaque
+appelant les affaires, les contacts et les messages de tous.
+
+**Objets d'appui créés par la même migration**, tous **hors de l'API** :
+
+- l'extension `unaccent`, dans le schéma `extensions` ;
+- la configuration de recherche **`app.francais_sans_accent`** — `french` avec `unaccent` placé
+  **devant** le radicaliseur. La configuration `french` seule n'est pas insensible aux accents :
+  elle trouve « Amélie » sur « amelie » mais **pas** « créance » sur « creance »
+  (`docs/SPEC-recherche.md` §2 M2). Elle n'est jamais substituée à `default_text_search_config`,
+  et elle est nommée explicitement partout ;
+- **cinq index GIN d'expression** — `cards_recherche_idx`, `contacts_recherche_idx`,
+  `organizations_recherche_idx`, `card_comments_recherche_idx`, `mail_messages_recherche_idx` —
+  pondérés `A`/`B`/`C`. **Aucune colonne n'est ajoutée** : une colonne générée serait exposée par
+  PostgREST et changerait la forme publique de cinq tables.
+
+**`public.cards` porte donc deux index GIN**, et c'est voulu : `cards_search_tsv_idx` de `CRM-040`
+sert la recherche **locale** de la vue liste, en `french`, sur la colonne générée `search_tsv`
+(§4 ci-dessus) ; `cards_recherche_idx` sert la recherche **transverse**. L'écart de vocabulaire
+entre les deux est consigné à `docs/INCONSISTENCY_REPORT.md`, **INC-230**, et laissé inchangé.
+
+**Le terme n'est jamais interpolé** : il est découpé sur toute suite de caractères non
+alphanumériques, chaque fragment reçoit `:*` — recherche par **préfixe** — et les fragments sont
+joints par `&` — **conjonction**. Aucun métacaractère de `tsquery` ne peut donc atteindre
+`to_tsquery`, qui lève sur une syntaxe invalide.
+
 ### 9 bis.10 `app.relancer_cards_figees()` et le job quotidien — migration 54
 
 Ajoutée le 2026-08-24 par `CRM-062` tranche 2 (`docs/SPEC-relances.md` §9). **Aucune table, aucune

@@ -521,8 +521,23 @@ PORT_RAPPORT=9323
 #
 # 2850 + 46 = **2896**. LA VALEUR EST COMPTÉE PAR LES DEUX CHEMINS : `npm run test:sql` rend
 # « 61 fichiers, 2896 assertions », et le fichier seul en déclare **46**.
-FICHIERS_SQL_ATTENDUS=61
-ASSERTIONS_ATTENDUES=2896
+# --- CRM-065 tranche 1, le 2026-08-27 : **65 fichiers, 3006 assertions** -------------------------
+#
+# `supabase/tests/0065_recherche_globale.test.sql` ajoute **31 assertions** : le vocabulaire
+# `app.francais_sans_accent` et sa contre-épreuve, les cinq index GIN, la forme de
+# `public.recherche_globale`, ses privilèges, et les quinze lignes de son contrat sous les trois
+# profils du seed.
+#
+# **UNE PARTIE DE L'ÉCART EST ANTÉRIEURE ET ÉTRANGÈRE À CETTE UNITÉ, ET ELLE EST NOMMÉE PLUTÔT QUE
+# LISSÉE.** Le compteur était à `61 / 2896`, la base saine rendait déjà **64 fichiers / 2975
+# assertions** AVANT cette tranche (`docs/JOURNAL.md`, décisions de `CRM-064`) : trois fichiers et
+# soixante-dix-neuf assertions livrés par des tranches qui n'ont pas déplacé ce garde-fou. Le
+# laisser faux ferait rougir ce harnais sur une base saine et rendrait la cause illisible ; le
+# corriger sans le dire reviendrait à effacer la dérive. La valeur est donc portée à celle que
+# `npm run test:sql` COMPTE — « 65 fichiers, 3006 assertions » —, et la part antérieure est écrite
+# ici. Garde-fou RÉVISÉ, jamais retiré (mécanisme de la décision 51).
+FICHIERS_SQL_ATTENDUS=65
+ASSERTIONS_ATTENDUES=3006
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -746,7 +761,17 @@ ASSERTIONS_ATTENDUES=2896
 # c'est la reprise d'un compteur que les tranches précédentes de `CRM-064` auraient dû déplacer dans
 # leur propre changement. Le laisser faux ferait rougir ce harnais sur une base saine, et la cause
 # n'y serait plus lisible.
-SCENARIOS_API=997
+# --- CRM-065 tranche 1, le 2026-08-27 : **1007** --------------------------------------------------
+#
+# `e2e/api/recherche-globale.spec.ts` ajoute **dix** scénarios : le refus de l'anonyme par le
+# PRIVILÈGE — `401 / 42501`, que seule une preuve d'API peut voir —, la forme des sept colonnes, les
+# trois familles asymétriques du seed mesurées des deux côtés, les accents dans les deux sens, les
+# silences légitimes, la borne, la clé de service, et l'accès en `GET` que la volatilité `stable`
+# rend possible.
+#
+# 997 + 10 = **1007**, valeur COMPTÉE par `playwright test --project=api --list` — « Total: 1007
+# tests in 63 files » —, jamais déduite d'une exécution.
+SCENARIOS_API=1007
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la

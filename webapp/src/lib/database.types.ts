@@ -2968,6 +2968,18 @@ export type Database = {
         }
         Returns: string
       }
+      recherche_globale: {
+        Args: { p_limite?: number; p_terme: string }
+        Returns: {
+          extrait: string
+          id: string
+          objet: string
+          rang: number
+          sous_titre: string
+          titre: string
+          workspace_id: string
+        }[]
+      }
       reel_saisissable: {
         Args: { ligne: Database["public"]["Tables"]["card_costs"]["Row"] }
         Returns: boolean

@@ -13,6 +13,31 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-065` tranche 1 — la recherche globale, en base (aucun écran encore)
+
+- **Le produit sait désormais chercher un objet par son texte, où qu'il vive.** Une seule requête
+  cherche à la fois dans les **affaires**, les **contacts**, les **organisations**, les
+  **commentaires** et les **messages** de la messagerie, et rend chaque résultat avec son contexte
+  et un extrait du passage trouvé.
+- **La recherche n'ouvre rien.** Chacun ne trouve que ce qu'il avait déjà le droit de lire : une
+  affaire fermée, son commentaire ou un message non classé restent invisibles, et ils se taisent
+  au lieu de refuser — un objet qu'on ne peut pas lire ne se distingue pas d'un objet qui n'existe
+  pas.
+- **Les accents ne trompent plus.** « creance » trouve « créance », « Élise » se trouve saisie
+  « elise », et l'inverse. La configuration française livrée avec la base ne le faisait qu'une
+  fois sur deux — mesuré —, ce qui apprenait à l'utilisateur une règle fausse.
+- **Il suffit de commencer un mot** : « audi » trouve déjà « Audit sécurité applicative ». Deux
+  mots saisis doivent être présents tous les deux.
+- **Ce qui est à la corbeille ne se cherche pas**, y compris les commentaires d'une affaire mise à
+  la corbeille.
+- **Aucun écran encore** : le raccourci et la palette sont la tranche 2. Cette tranche se prouve
+  entièrement hors interface, avec les comptes réels du jeu de démonstration.
+- Migration `0068`. Contrat écrit et publié avant la première ligne de code —
+  `docs/SPEC-recherche.md`.
+- **Un écart connu est consigné sans être corrigé** (`INC-230`) : la recherche **locale** de la vue
+  liste des affaires continue d'employer l'ancienne configuration, et reste donc sensible aux
+  accents. Les deux recherches du produit n'ont pas le même vocabulaire ; l'arbitrage est demandé.
+
 ### `CRM-064` sous-tranche 3b — l'état vide du sélecteur de mentions est désormais éprouvé
 
 - **Aucun changement de comportement.** Le message « personne d'autre ne peut lire cette affaire »

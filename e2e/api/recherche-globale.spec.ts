@@ -226,8 +226,8 @@ test.describe('CRM-065 tranche 1 — la recherche globale, hors interface', () =
 			expect(reponse.status()).toBe(200)
 			const lignes = (await reponse.json()) as Ligne[]
 			expect(lignes.length).toBe(1)
-			expect(lignes[0].objet).toBe('contact')
-			expect(lignes[0].titre).toBe('Élise Fabre')
+			expect(lignes[0]?.objet).toBe('contact')
+			expect(lignes[0]?.titre).toBe('Élise Fabre')
 		}
 	})
 
@@ -286,7 +286,7 @@ test.describe('CRM-065 tranche 1 — la recherche globale, hors interface', () =
 		expect(reponse.status()).toBe(200)
 		const lignes = (await reponse.json()) as Ligne[]
 		expect(lignes.length).toBe(1)
-		expect(lignes[0].objet).toBe('message')
+		expect(lignes[0]?.objet).toBe('message')
 	})
 
 	/**

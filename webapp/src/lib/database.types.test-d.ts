@@ -874,12 +874,19 @@ type _vueDerivationColonnes = Expect<
 // d'une préférence, et la mesure l'a décidé plutôt que le goût : l'upsert PostgREST est refusé par
 // `403 / 42501` dès que les colonnes sont figées par un privilège de colonne (§46.3, M10).
 // Quarante-quatre devient QUARANTE-CINQ.
-type _lesQuaranteCinqFonctions = Expect<
+//
+// `0068` de `CRM-065` TRANCHE 1 ajoute `recherche_globale`, et le témoin la voit dans le même
+// changement, pour la CINQUIÈME fois consécutive — cette fois SANS que la tranche livre le moindre
+// écran. C'est ce que les cinq entrées ci-dessus réclamaient : la régénération ne suit plus
+// l'arrivée d'un appelant, elle suit l'arrivée de la FONCTION. La palette qui l'appellera est la
+// tranche 2, et elle trouvera son type déjà là. Quarante-cinq devient QUARANTE-SIX.
+type _lesQuaranteSixFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
     | 'armer_sequence_relance'
     | 'cards_figees'
     | 'mentionnables'
+    | 'recherche_globale'
     | 'definir_preference_notification'
     | 'interrompre_sequence_relance'
     | 'reordonner_paliers_sequence'
@@ -1111,7 +1118,7 @@ export type AssertionsDuContratDeTypes = [
   _relationsWorkspaceMembers,
   _laSeuleVue,
   _vueDerivationColonnes,
-  _lesQuaranteCinqFonctions,
+  _lesQuaranteSixFonctions,
   _signatureReelSaisissable,
   _retourReelSaisissable,
   _signatureArborescence,
