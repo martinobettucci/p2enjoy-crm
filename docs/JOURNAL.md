@@ -25763,7 +25763,20 @@ le refus double le plus complet de la série.
 assertions** ; `test:unit` **83 fichiers / 2769 tests** ; `e2e:api` **996 passés** (984 avant, plus
 les 12 de la tranche) ; `e2e:mail` **42 passés** ; `pytest` **244 passés** ;
 `scripts/verify-preferences-notifications.sh` **62 contrôles, aucune anomalie**, neuf dégradations
-toutes mordantes. `e2e:ui` : voir le compte rendu de session.
+toutes mordantes.
+
+**`e2e:ui` : 662 PASSÉS ET UN ÉCHEC AU PREMIER PASSAGE, 663 PASSÉS ET AUCUN ÉCHEC AU SECOND, SUR LE
+MÊME COMMIT.** L'échec est **INC-228**, consignée. La contre-épreuve est **interne**, et c'est ce
+qui la rend concluante sans ligne de base : le même scénario —
+`formulaire-selecteurs.spec.ts` §134, le parcours clavier — a rendu la console porteuse d'un
+`console.warning: WebSocket is closed before the connection is established` dans la série, puis rien
+du tout à la campagne suivante, et passe **seul** en 1,9 s, console vierge. Un changement de code ne
+rend pas un verdict un coup sur deux. Cinquième entrée de la famille d'INC-219. Le symptôme est
+celui que la sous-tranche 3a avait corrigé **à la cause** sur `ma-journee.spec.ts` (décision 525) :
+il reste donc une fenêtre où la socket se ferme avant la fin de sa poignée de main, que cette
+correction n'a pas fermée. Le comportement est laissé inchangé, aucun délai n'est relevé, aucun test
+n'est désactivé — l'anomalie est étrangère à la tranche 4, dont aucun chemin ne touche cette
+surface.
 
 **Où reprendre.** `CRM-064` **tranche 4 livrée**. Les quatre tranches de l'unité sont désormais
 codées ; ce qui la retient en `[~]` est nommé au backlog, et se réduit à des écarts de preuve, non
