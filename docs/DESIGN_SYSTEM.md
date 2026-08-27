@@ -3888,3 +3888,60 @@ l'en-tête du panneau le ferait passer pour un filtre du fil (§5.11).
 
 - **Aucune couleur, aucun jeton nouveau.** Le contrôle emprunte entièrement au §5.7, au §5.10 et au
   §5.13.
+
+### 5.45 Écran des préférences de notification — `CRM-064`
+
+L'écran par lequel une personne décide de ce qu'elle reçoit. Spécifié avant code,
+`docs/SPEC-notifications.md` §41 à §49 ; les règles ci-dessous ne disent que de quoi il a l'air.
+
+**Il vit sous `/reglages/notifications`, et c'est la PREMIÈRE section PERSONNELLE de `/reglages`.**
+Les sections existantes administrent l'instance — arborescence, workflows, catalogue, comptes et
+identités de messagerie, modèles, séquences, corbeille, état de la messagerie. Celle-ci n'administre
+rien : elle règle **le compte de qui la regarde**. L'index de `/reglages` la place donc **en
+dernier**, et son texte secondaire dit ce qu'elle règle — « ce que vous recevez » — là où les autres
+disent ce qu'elles configurent. Elle n'est **pas** réservée à l'administratrice : les trois profils
+l'ouvrent, et c'est la première entrée de `/reglages` dont ce soit le cas.
+
+- **UNE LIGNE PAR TYPE DE NOTIFICATION, ET IL N'Y EN A QU'UN.** Une case à cocher par type, son
+  libellé, et une phrase secondaire disant ce que le type recouvre. Le patron est celui du §5.13
+  pour l'étiquette et le focus, et la case emprunte au `fieldset` du §5.44 sans en reprendre le
+  repli : il n'y a rien à replier.
+
+- **LA CASE DIT CE QU'ON REÇOIT, JAMAIS CE QU'ON COUPE.** « Recevoir les mentions », cochée par
+  défaut. Une case « Couper les mentions » demanderait de cocher pour obtenir moins, et une case
+  cochée voudrait dire une notification en moins : la double négation est une faute de lisibilité
+  que le §10 interdit. L'état par défaut du produit — recevoir — est donc l'état **coché**, ce que
+  le §43.4 de la spécification pose en base par l'absence de ligne.
+
+- **AUCUNE CASE POUR UN CANAL QUI N'EXISTE PAS.** Ni « par email », ni « résumé quotidien » : le
+  §42.1 de la spécification le mesure, aucun canal sortant n'existe. Une case qui ne commande rien
+  est la **commande morte** du §5.10, et ici elle serait pire qu'inerte — elle promettrait un email.
+
+- **L'ÉCRAN ÉCRIT IMMÉDIATEMENT, SANS BOUTON « ENREGISTRER », ET C'EST LE MODE DU §5.7 ter.** Un
+  réglage à une seule valeur n'a rien à valider, et un bouton d'enregistrement y ajouterait un état
+  intermédiaire — « modifié, non enregistré » — que rien ne justifie. Les six règles du §5.7 ter
+  s'appliquent **telles quelles**, et deux méritent d'être redites ici parce qu'on les enfreint par
+  réflexe : la mention d'état vit **sous la case**, jamais en tête d'écran ; et **la case n'est
+  jamais désactivée pendant l'envoi** — un contrôle désactivé perd le focus du clavier, ce que le
+  §5.13 interdit.
+
+- **LA CASE NE SE COCHE QU'APRÈS LA RÉPONSE, jamais par anticipation optimiste.** Le §46.3 de la
+  spécification rend cela possible en faisant rendre la **ligne retenue** par la RPC : l'écran
+  affiche ce que la base porte, jamais ce qu'il croyait envoyer. Une case cochée par anticipation
+  puis décochée par un refus serait un état que l'utilisateur a vu et qui n'a jamais existé.
+
+- **LES QUATRE ÉTATS SONT TRAITÉS (§5.8), ET IL N'Y A PAS D'ÉTAT VIDE.** Chargement : `aria-busy`
+  et **aucune case rendue** — l'état d'une case n'est pas connu avant la lecture, et en rendre une
+  cochée « en attendant » afficherait un état que la base n'a pas confirmé. Désactiver une case déjà
+  rendue serait pire encore : le §5.7 ter l'interdit. Erreur de lecture : la mention et son
+  **action de reprise**. Erreur
+  d'écriture : la mention de refus du §5.7 ter, sous la case, qui **ne l'efface pas** et laisse la
+  case à l'état que la base porte. Peuplé : les cases. L'état vide n'existe pas : la liste des types
+  est **fixe**, elle ne vient pas du serveur.
+
+- **AUCUNE COULEUR, AUCUN JETON NOUVEAU.** L'écran emprunte au §5.7 ter, au §5.8 et au §5.13.
+
+- **CLAVIER DE BOUT EN BOUT (§8).** La navigation atteint chaque case par tabulation, l'espace la
+  bascule, et le focus **reste sur elle** pendant et après l'écriture. C'est la conséquence directe
+  de la règle du §5.7 ter qui refuse de désactiver le contrôle : une case qui perdrait le focus en
+  se réactivant obligerait à retabuler pour se corriger.

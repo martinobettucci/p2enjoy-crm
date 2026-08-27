@@ -2161,3 +2161,426 @@ fabriquée.
 | E2E d'interface | Le parcours complet : ouvrir le sélecteur sur `…0c1` et n'y trouver que Driss, l'ouvrir sur `…0c5` et y trouver Farida, cocher, publier, et **voir la notification arriver dans la cloche du destinataire** ; le refus nommé ; l'état vide ; le clavier de bout en bout |
 | Visuel | Captures aux quatre paliers, sélecteur replié et déplié, liste peuplée et liste vide, alerte de refus, **observées** conformément à `CLAUDE.md` §16. Console **vierge** |
 | Harnais | `scripts/verify-mentions-composeur.sh`, non complaisant, éprouvé par dégradations réelles et restauration constatée |
+
+---
+
+## 41. Les treize mesures de la tranche 4, prises avant d'écrire
+
+*Prises le 2026-08-27 sur la pile debout et seedée, avec les jetons réels des trois profils obtenus
+par la véritable route de connexion. Toutes les sondes qui écrivent ont été **détruites**, et l'état
+du seed **relu après** : cinq commentaires, deux mentions, deux notifications, aucune table ni
+fonction `sonde_*` résiduelle. Les identifiants sont ceux du seed (`docs/SPEC-seed.md` §4).*
+
+| # | Ce qui a été mesuré | Résultat |
+|---|---|---|
+| **M1** | Ce que le seed livre — `GET /rest/v1/notifications` sous la clé de service | **Deux** notifications, toutes deux `read_at is null`, toutes deux sur `…0c1` |
+| **M2** | Le compteur de non-lues par la vraie route, jeton par jeton | Camille **1**, Driss **1**, Farida **0** (`Content-Range: */0`) |
+| **M3** | `public.notification_preferences` existe-t-elle ? | **Non** — `404` / `PGRST205`, « Could not find the table … in the schema cache » |
+| **M4** | `app.notifications_apres_mention()` lit-elle une préférence ? | **Non** — aucune occurrence de `pref` dans sa définition. Le §14.6 est donc exact et reste exact |
+| **M5** | Les privilèges par défaut de l'image Supabase sur `public` | `anon` **et** `authenticated` reçoivent `arwdDxtm` sur toute table neuve — la décision 134 tient toujours |
+| **M6** | Où vit aujourd'hui une préférence personnelle | `profiles.locale`, sur une table dont la politique `profiles_lecture_equipe` ouvre la lecture à **toute l'équipe** |
+| **M7** | Driss lit-il le profil de Camille ? | **Oui** — `200`, la ligne entière, `locale` comprise. Et il lit **les trois** profils |
+| **M8** | Filtrage **à la lecture** : une politique de `notifications` qui délègue à une fonction lisant une table de préférences | Driss, qui a coupé `'mention'` : liste **`[]`**, compteur **`*/0`**. Camille, qui ne l'a pas coupée : sa ligne, compteur **`0-0/1`**. **La ligne coupée existe toujours en base** (clé de service) |
+| **M9** | Sous cette même politique dégradée, le `PATCH read_at` du destinataire coupé | **`204`, et `read_at` reste `null`** — zéro ligne touchée. Le même `PATCH` par Camille, **non** coupée, rend `204` et une date **posée par la base**. La cause est que PostgREST écrit son `UPDATE` avec `RETURNING`, que la politique `SELECT` filtre |
+| **M10** | L'**upsert** PostgREST (`Prefer: resolution=merge-duplicates`) sur une table dont `authenticated` n'a que `insert (…)` et `update (in_app)` | **`403` / `42501`** — « permission denied for table ». Un second `POST` **sans** `merge-duplicates` rend **`409` / `23505`**. Le `PATCH` de `in_app` rend `204` ; celui d'`updated_at`, **`403`** ; le `POST` pour **autrui**, `403` / `42501` **RLS** ; un `type` inventé, **`400` / `23514`** ; le `DELETE`, `403` |
+| **M11** | Une **RPC** `security definer` faisant le même upsert, la table étant fermée en écriture | **`200`** deux fois de suite sur la même clé, **un seul aller-retour** ; l'**anonyme** reçoit `401` / `42501` ; le `PATCH` direct reçoit alors `403` |
+| **M12** | Combien d'espaces de travail, et combien d'appartenances par profil | **Un** espace ; **une** appartenance pour chacun des trois profils. La mesure ne donne donc pas la réponse du §43.3, qui doit être motivée |
+| **M13** | Les tables publiées au temps réel | `public.card_comments` et `public.notifications`, et elles seules — la ligne de base du §46.4 |
+
+---
+
+## 42. Ce que la tranche 4 est, et ce qu'elle n'est pas
+
+Elle livre **la décision de chacun sur ce qu'il reçoit**, opposable côté backend, et l'écran qui la
+porte. Chaque absence est figée par une assertion, jamais compensée :
+
+- **aucun canal sortant, et le §42.1 en fait une décision** plutôt qu'une omission ;
+- **aucune préférence d'autrui** : ni lue, ni écrite, ni même dont l'existence soit observable ;
+- **aucune préférence par espace de travail** — §43.3 ;
+- **aucune rétention, aucun regroupement** : les points ouverts n° 1 et n° 2 du §18 restent ouverts,
+  et cette tranche ne les tranche pas ;
+- **aucune notification produite pour une source autre que la mention.** Le `check` de `type` reste
+  fermé sur `'mention'` (§13.3), des deux côtés.
+
+### 42.1 « ET PAR QUEL CANAL » : IL N'Y EN A QU'UN, ET C'EST MESURÉ
+
+Le §8 de `docs/SCHEMA.md` annonçait `notification_preferences` comme « canal souhaité par type :
+in-app, email immédiat, digest ». **Deux de ces trois canaux n'existent pas**, et le §13.1 l'écrit
+déjà : « aucun canal sortant. Ni email, ni digest, ni webhook. La notification vit en base et rien
+ne l'en fait sortir. » M4 le confirme du côté du producteur : le trigger n'envoie rien.
+
+Livrer une case « recevoir par email » que rien ne lirait serait une **commande morte** — ce que le
+§5.10 du design system interdit —, et une promesse fausse faite à l'utilisateur : il croirait avoir
+demandé un email qui n'arrivera jamais. Livrer une colonne `channel` à une seule valeur serait
+l'anticipation que `CLAUDE.md` §1 interdit, et l'argument du §13.3 ne la sauve pas : `type` est une
+**garde** contre un type inventé, alors qu'un canal à une valeur ne garde rien — la seule valeur
+possible est déjà la seule qui existe.
+
+**La préférence porte donc sur ce qui existe** : recevoir, ou ne pas recevoir, en application. La
+ligne du §8 de `docs/SCHEMA.md` est **révisée** dans le même changement pour dire ce que la table
+fait réellement, et le jour où un canal sortant existera, il amènera sa colonne avec la migration
+qui le livre — pas avant.
+
+---
+
+## 43. Modèle : `public.notification_preferences`
+
+### 43.1 UNE TABLE, ET NON UNE COLONNE DE `profiles` — M6 ET M7 LE DÉCIDENT
+
+Le réflexe est de poser un booléen à côté de `profiles.locale`, qui est déjà une préférence
+personnelle. **M7 l'interdit** : `profiles_lecture_equipe` ouvre la lecture de la ligne entière à
+tout membre du workspace, et la mesure le confirme par la vraie route — Driss lit les trois profils.
+Une colonne posée là **publierait à toute l'équipe** que quelqu'un a coupé ses notifications.
+
+Ce n'est pas une donnée d'équipe. C'est une décision personnelle, du même ordre que la boîte
+elle-même, dont le §16.1 dit qu'elle n'est « pas une donnée d'exploitation ». Une table séparée,
+dont la politique de lecture exige `profile_id = auth.uid()`, la garde privée — et rend son
+**existence même** inobservable par un tiers.
+
+### 43.2 Colonnes
+
+| Colonne | Type | Contrainte |
+|---|---|---|
+| `profile_id` | `uuid` | non nul, `profiles (id)` en `CASCADE` |
+| `type` | `text` | non nul, `check (type in ('mention'))` — **la même garde fermée qu'au §13.3** |
+| `in_app` | `boolean` | non nul, `default true` |
+| `updated_at` | `timestamptz` | non nul, **posé par la base**, jamais par le client |
+
+**CLÉ PRIMAIRE `(profile_id, type)`, NATURELLE, ET C'EST L'INVERSE DE `notifications`.** Le §13.2
+donne une clé technique à la notification parce qu'un message *a sa propre existence*. Une
+préférence n'en a aucune : elle **est** le fait qu'une personne a décidé quelque chose au sujet
+d'un type. Deux décisions de la même personne sur le même type ne sont pas deux préférences, c'est
+la seconde qui vaut. La clé naturelle dit cela ; une clé technique autoriserait deux lignes
+contradictoires que rien ne départagerait. C'est exactement le raisonnement du §4.1 pour la mention.
+
+**Aucune colonne `created_at`.** La date qui compte est celle de la **dernière** décision, et
+`updated_at` la porte. Savoir quand quelqu'un a exprimé sa première préférence n'éclaire aucune
+règle et n'est demandé par aucun écran. Même écart assumé aux conventions de `docs/SCHEMA.md` que
+`card_comments` (INC-025), et il est nommé plutôt que subi.
+
+**`updated_at` est posé par un trigger `BEFORE`**, mécanisme de la décision 95, déjà employé pour
+le `created_at` de la mention (§6) et le `read_at` de la notification (§15.1). M10 mesure que le
+privilège de colonne refuse déjà le `PATCH` d'`updated_at` par `403` ; le trigger est la **seconde**
+barrière, celle qui tient aussi pour la clé de service, qui contourne la RLS mais pas les triggers.
+
+### 43.3 AUCUN `workspace_id`, et c'est une décision
+
+M12 mesure un seul espace de travail dans le seed, et chacun des trois profils n'y a qu'une
+appartenance : la mesure ne **donne** donc pas la réponse, et il faut la motiver.
+
+Une préférence de notification est une décision sur **soi** — « je ne veux pas être dérangé » —, non
+sur un contexte de travail. La découper par espace créerait, pour chaque personne, autant de
+décisions que d'espaces, dont aucune n'aurait de valeur par défaut évidente, et poserait
+immédiatement la question de ce qu'un nouvel espace hérite. Rien dans le produit ne demande cette
+finesse aujourd'hui.
+
+**Le coût est nommé** : le jour où une personne appartiendra à deux espaces et voudra couper l'un
+sans l'autre, la table devra gagner une colonne et sa clé primaire changer. C'est une migration
+franche, pas une impasse — et elle sera écrite quand le besoin sera mesuré, pas avant.
+
+### 43.4 L'ABSENCE DE LIGNE VAUT CONSENTEMENT, ET LE DÉFAUT EST « JE REÇOIS »
+
+Il n'y a **aucune ligne** pour personne tant que personne n'a rien décidé. Une préférence absente se
+lit `true`, par un `coalesce` explicite écrit dans la fonction du §45.1.
+
+C'est ce qui rend la tranche **non destructrice** : elle est déployable sur une base existante sans
+qu'aucune notification cesse d'arriver, et un compte créé demain reçoit sans qu'aucun code ait à
+lui fabriquer une ligne. L'alternative — une ligne par personne et par type, posée par un trigger
+sur `profiles` — multiplierait les lignes, exigerait une migration de rattrapage, et ferait dépendre
+le fonctionnement du produit de la réussite de ce rattrapage.
+
+**Ce n'est pas un consentement au sens du RGPD** (`CLAUDE.md` §11) : une notification interne
+adressée à un membre de l'équipe qui a été nommément mentionné est **strictement nécessaire au
+fonctionnement demandé**, catégorie 1 du §11. La préférence est un **confort**, et son défaut est
+donc légitimement « actif ». Aucune donnée n'est stockée sur l'appareil : la décision vit en base.
+
+---
+
+## 44. LA DÉCISION QUE LE §18, POINT 3, LAISSAIT OUVERTE : À LA LECTURE, PAS À LA PRODUCTION
+
+Le §18 posait la question sans la trancher : « la tranche 4 devra décider si une préférence filtre
+**à la production** ou **à la lecture** — et les deux ne se valent pas : la première perd
+l'information, la seconde la garde. »
+
+**La réponse est : à la lecture.** Quatre raisons, dont trois sont mesurées.
+
+**1. La production ne juge rien, et le §14.6 en fait une propriété.** Le trigger « ne juge rien.
+L'éligibilité a été jugée par le trigger `BEFORE` de la tranche 1 ; la rejuger serait la seconde
+écriture que le §5.3 refuse. » Lui faire lire une préférence en ferait un juge, et un juge
+`SECURITY DEFINER` qui décide en silence de ne pas écrire une ligne — la forme la plus difficile à
+diagnostiquer qui soit : rien ne distingue « la préférence a filtré » de « le trigger a échoué ».
+
+**2. Une décision révocable ne doit pas détruire.** Couper les mentions puis les rétablir doit
+rendre l'état d'avant. Filtrée à la production, la coupure **efface** définitivement ce qui s'est
+passé pendant ; filtrée à la lecture, elle le **masque**, et M8 le mesure des deux côtés : la liste
+de Driss est vide et son compteur nul, **et sa ligne est toujours en base** sous la clé de service.
+Une préférence est un réglage d'affichage, pas une politique de rétention — c'est le point ouvert
+n° 1, et il reste ouvert.
+
+**3. La règle n'a qu'une seule écriture, et elle couvre TROIS surfaces d'un coup.** La liste, le
+compteur et le **temps réel** lisent tous `public.notifications` sous la politique
+`notifications_lecture`. Étendre cette politique les couvre les trois : M8 mesure la liste et le
+compteur, et le §16.3 établit déjà que « le temps réel évalue la politique `SELECT` de chaque
+abonné ». Filtrer à la production aurait couvert les trois aussi, mais filtrer **dans l'écran** —
+la troisième voie, jamais retenue — en aurait couvert une et demie, et aurait été la seconde
+écriture en TypeScript que le §34.1 a déjà refusée pour le sélecteur.
+
+**4. Le coût est nommé, et il est réel.** Les lignes d'une personne qui a coupé **s'accumulent sans
+être lues**. C'est le point ouvert n° 1 — la rétention — rendu plus pressant, non résolu. Il est
+consigné comme tel au §48 plutôt que traité par une décision que rien ne fonde.
+
+### 44.1 LA CONSÉQUENCE QUE M9 MESURE, ET ELLE N'EST PAS UNE ANOMALIE
+
+Une notification masquée par la préférence **ne peut plus être marquée lue** : M9 mesure `204` et
+`read_at` inchangé, là où la même route rend `204` et une date pour un destinataire non coupé. La
+cause est mécanique et vaut pour toute la pile : PostgREST écrit son `UPDATE` avec `RETURNING`, que
+la politique `SELECT` filtre.
+
+**C'est la forme de refus que ce dépôt emploie partout** : la Definition of Done de `CRM-064`
+demande que « le refus de lecture se mesure comme **zéro ligne** et non comme une erreur ». Une
+ligne qu'on ne voit pas est une ligne qu'on ne marque pas, et l'écran ne propose jamais ce geste
+puisqu'il ne rend jamais la ligne. Le comportement est **figé par une assertion** du §47 plutôt que
+laissé à la surprise d'une session future.
+
+---
+
+## 45. La lecture de la préférence, et l'unique écriture de la règle
+
+### 45.1 `app.notification_consentie(uuid, text)`
+
+```sql
+create or replace function app.notification_consentie(p_destinataire uuid, p_type text)
+returns boolean
+language sql
+stable
+security invoker
+set search_path = ''
+as $$
+	select coalesce(
+		(select np.in_app
+		   from public.notification_preferences np
+		  where np.profile_id = p_destinataire
+		    and np.type       = p_type),
+		true);
+$$;
+```
+
+**`SECURITY INVOKER`, et c'est l'écart avec le §14.1 comme c'était celui du §34.2.** La fonction est
+appelée depuis la politique de `notifications`, dont la première condition exige déjà
+`recipient_id = auth.uid()` : la seule ligne de préférence qu'elle lit est donc **celle de
+l'appelant**, que la politique du §46.1 lui ouvre. En `DEFINER`, elle deviendrait un **oracle** —
+appelable directement avec n'importe quel `uuid`, elle dirait si un tiers a coupé ses notifications.
+C'est précisément la « refus de discrétion » que le §5.5 avait pesée, et ici rien ne l'impose.
+
+**`stable`, jamais `immutable`** : elle lit une table.
+
+**`search_path` vide et noms pleinement qualifiés**, comme les onze fonctions du schéma `app`.
+
+**Le `coalesce` porte le §43.4**, et il est **explicite** plutôt que laissé au moteur : sans lui, la
+sous-requête rendrait `NULL` pour une préférence absente, et `NULL and …` se comporte comme faux
+dans une politique — c'est-à-dire que **l'absence de décision couperait tout**, exactement l'inverse
+du défaut voulu. C'est le piège que le §16.1 avait déjà désamorcé pour `subject_card_id is null`.
+
+### 45.2 La politique du §16.1 gagne une TROISIÈME condition
+
+```
+recipient_id = (select auth.uid())
+and (subject_card_id is null or app.can_read_card(subject_card_id))
+and app.notification_consentie(recipient_id, type)
+```
+
+La politique `notifications_marquage` (`UPDATE`) **n'est pas touchée**, et le §44.1 dit pourquoi
+elle n'a pas besoin de l'être : le filtre du `SELECT` la couvre déjà, par `RETURNING`. L'y recopier
+serait une seconde écriture de la même règle, sans effet observable.
+
+**Le privilège d'exécution est accordé à `authenticated`**, et c'est la leçon de la décision 522 :
+la politique s'évalue **sous le rôle de l'appelant**, et une fonction sans `EXECUTE` ferait rendre
+`403 / 42501` là où le contrat attend des lignes — sans qu'aucune suite pgTAP, qui s'exécute sous le
+propriétaire, ne le voie.
+
+---
+
+## 46. Autorisations, privilèges, et l'unique chemin d'écriture
+
+### 46.1 Politiques
+
+| Politique | Commande | Rôles | Prédicat |
+|---|---|---|---|
+| `notification_preferences_lecture` | `SELECT` | `anon`, `authenticated` | `profile_id = (select auth.uid())` |
+
+**Une seule politique, et c'est la conséquence du §46.3.** Aucune politique `INSERT`, `UPDATE` ou
+`DELETE` : la table est fermée en écriture à tout client, et la RPC du §46.3 est le seul chemin.
+Leur **absence** est figée par une assertion qui compte les politiques et les nomme.
+
+**`anon` reçoit la lecture**, pour la raison du §15.2 : sans le privilège, un anonyme recevrait une
+**erreur** là où le comportement exigé est **zéro ligne**. `auth.uid()` étant nul, le prédicat est
+faux.
+
+### 46.2 Privilèges
+
+```sql
+revoke all on public.notification_preferences from anon, authenticated;
+
+grant select         on public.notification_preferences to anon;
+grant select         on public.notification_preferences to authenticated;
+grant all privileges on public.notification_preferences to service_role;
+```
+
+Le `revoke` est écrit **avant** les `grant`, décision 134, et M5 le remesure : l'image accorde
+`arwdDxtm` à `anon` et `authenticated` sur toute table neuve. Sans lui, il n'y aurait ni refus
+d'insertion, ni refus de suppression, ni chemin d'écriture unique.
+
+**Aucun privilège d'écriture, d'aucune sorte.** Le refus est **double** — ni privilège, ni politique
+—, comme au §15.3 : sans les deux, on ne saurait pas lequel refuse, et la dégradation du harnais ne
+pourrait pas éprouver la seconde barrière en relâchant la première.
+
+### 46.3 `public.definir_preference_notification(text, boolean)` — LE SEUL CHEMIN, ET M10 LE DÉCIDE
+
+**L'écriture directe a été mesurée, et sa forme naturelle est refusée.** Une préférence est un
+réglage qu'on pose sans savoir s'il existe déjà : l'`upsert` PostgREST est la forme évidente. M10
+mesure qu'elle rend **`403` / `42501`** dès lors que `authenticated` n'a que `insert (…)` et
+`update (in_app)` — PostgREST exige l'`UPDATE` **de table** pour un `ON CONFLICT DO UPDATE`. Il ne
+reste alors que deux voies :
+
+- **ouvrir l'`UPDATE` de table** — ce qui rendrait `profile_id`, `type` et `updated_at` modifiables
+  par le client, c'est-à-dire défaire exactement ce que le privilège de colonne protégeait ;
+- **écrire en deux appels** — un `PATCH`, puis un `POST` s'il n'a touché aucune ligne. M10 mesure la
+  seconde forme : un `POST` répété rend **`409` / `23505`**. Deux allers-retours, un code d'erreur
+  à interpréter comme un succès conditionnel, et une fenêtre entre les deux.
+
+**La troisième voie est la bonne, et le dépôt la pratique déjà** : une RPC `SECURITY DEFINER`, seul
+chemin d'écriture d'une table fermée. C'est exactement la forme de `public.snooze_thread` et
+`public.wake_thread` pour `mail_thread_snoozes` (`docs/SCHEMA.md` §7). M11 la mesure : **`200` deux
+fois de suite sur la même clé, en un seul aller-retour**, l'anonyme refusé par `401` / `42501`, et
+le `PATCH` direct refusé par `403`.
+
+```sql
+create or replace function public.definir_preference_notification(
+	p_type   text,
+	p_in_app boolean
+)
+returns public.notification_preferences
+language plpgsql
+security definer
+set search_path = ''
+as $$ … $$;
+```
+
+| Propriété | Valeur | Motif |
+|---|---|---|
+| Schéma | `public` | PostgREST n'expose que `public`, `storage`, `graphql_public` (§5.5) |
+| Sécurité | `SECURITY DEFINER`, propriétaire `postgres` | La table est fermée en écriture à `authenticated` ; en `INVOKER`, l'insertion rendrait `42501`, exactement M9/M10 de la tranche 2 |
+| `search_path` | vide | Comme les onze fonctions du schéma `app` |
+| ACL | `revoke all from public, anon` **nommément**, puis `grant execute to authenticated, service_role` | Le §34.4 l'a établi : une propriété de sécurité qui n'existe que par omission ne se relit pas |
+
+**LE DESTINATAIRE N'EST PAS UN PARAMÈTRE**, et c'est ce qui rend l'écriture d'autrui *impossible*
+plutôt que *refusée*. La fonction lit `auth.uid()` elle-même. Aucun appelant ne peut désigner
+quelqu'un d'autre : il n'y a pas de champ pour le dire. M10 mesure que la politique aurait refusé
+un `profile_id` étranger par `403` / `42501` ; ne pas offrir le paramètre est la barrière d'avant,
+celle qui ne dépend d'aucune politique.
+
+**SANS SESSION, UN REFUS NOMMÉ.** `auth.uid()` nul — l'anonyme, ou la clé de service, qui contourne
+la RLS mais n'a pas d'identité — lève `preference_sans_session` (`P0001`). Écrire une ligne pour
+`null` serait refusé par la contrainte de non-nullité, mais avec un message qui ne dit rien ; et la
+clé de service **doit** être refusée ici, car elle est le chemin du seed et des harnais.
+
+**UN TYPE INCONNU EST REFUSÉ NOMMÉMENT, ET LA CONTRAINTE RESTE.** La fonction lève
+`preference_type_inconnu` (`P0001`) avant d'écrire. M10 et M11 mesurent que, sans elle, le refus
+vient du `check` avec `23514` et un message qui **recopie la ligne fautive** — illisible pour un
+écran. Le `check` du §43.2 n'est pas retiré pour autant : c'est le **refus double** du §46.2, et
+c'est lui qui tient pour la clé de service.
+
+**IDEMPOTENTE PAR CONSTRUCTION** : `on conflict (profile_id, type) do update`. Poser deux fois la
+même décision rend deux fois la même ligne, et `updated_at` avance — ce qui est exact : c'est bien
+une seconde décision, au même sens que le §14.5 dit d'une mention reposée qu'elle est un second
+geste.
+
+**Elle rend la LIGNE**, jamais `void` : l'écran affiche l'état que la base a réellement retenu, et
+non celui qu'il croyait envoyer. C'est ce qui empêche une case de rester cochée sur un écran alors
+que la base dit l'inverse.
+
+### 46.4 La table n'est PAS publiée au temps réel
+
+Même motif qu'aux §7.3 et §16.3, et il tient : rien ne s'y abonne. Une préférence change là où on la
+change, et l'écran qui la change connaît déjà sa réponse — la RPC la lui rend (§46.3). L'absence est
+**figée** par une assertion, la ligne de base étant `public.card_comments` et `public.notifications`
+(M13).
+
+---
+
+## 47. Contrat d'API de la tranche 4, ligne à ligne
+
+`A` = Camille (`admin`), `B` = Driss (`business_developer`), `V` = Farida (`viewer`). Le seed livre
+**deux** notifications, `N1` adressée à Driss et `N2` à Camille, toutes deux non lues et toutes deux
+sur `…0c1` (M1, M2). **Le seed ne livre aucune préférence** (§48 bis).
+
+| # | Appelant | Requête | Attendu |
+|---|---|---|---|
+| *a* | `B` | `POST /rest/v1/rpc/definir_preference_notification {"p_type":"mention","p_in_app":false}` | `200`, la ligne : `profile_id` = Driss, `type` = `mention`, `in_app` = `false`, `updated_at` posé par la base |
+| *b* | `B` | `GET /rest/v1/notifications?select=id` | `200`, **`[]`** — sa notification est masquée (M8) |
+| *c* | `B` | `GET /rest/v1/notifications?select=id&read_at=is.null` avec `count=exact` | `Content-Range: */0` — le compteur suit |
+| *d* | service | `GET /rest/v1/notifications?recipient_id=eq.<Driss>` | **La ligne est toujours là.** Le filtrage masque, il ne détruit pas (§44, raison 2) |
+| *e* | `A` | `GET /rest/v1/notifications?select=id` | `200`, **une** ligne — la préférence de Driss ne touche pas Camille |
+| *f* | `B` | `PATCH /rest/v1/notifications?id=eq.<N1> {"read_at":"…"}` | `204`, **et `read_at` reste `null`** en base — le comportement de M9, figé |
+| *g* | `B` | `POST … {"p_type":"mention","p_in_app":true}` | `200`, `in_app` = `true` ; puis `GET /notifications` rend **de nouveau** sa ligne, non lue |
+| *h* | `B` | `GET /rest/v1/notification_preferences?select=*` | `200`, **une** ligne, la sienne |
+| *i* | `A` | `GET /rest/v1/notification_preferences?select=*` | `200`, **`[]`** — l'existence même de la préférence de Driss est inobservable (§43.1) |
+| *j* | anonyme | `GET /rest/v1/notification_preferences?select=*` | `200`, **`[]`** — zéro ligne, jamais une erreur |
+| *k* | anonyme | `POST /rest/v1/rpc/definir_preference_notification` | `401` / `42501` — refus de **privilège** (M11) |
+| *l* | `B` | `PATCH /rest/v1/notification_preferences?… {"in_app":true}` | `403` / `42501` — l'écriture directe est fermée (M11) |
+| *m* | `B` | `POST /rest/v1/notification_preferences {…}` | `403` / `42501` — refus de privilège, et **aucune politique `INSERT`** derrière (§46.2) |
+| *n* | `B` | `DELETE /rest/v1/notification_preferences?…` | `403` / `42501` |
+| *o* | `B` | `POST … {"p_type":"echeance","p_in_app":false}` | `400` / `P0001` `preference_type_inconnu` — nommé, et **non** le `23514` brut de M10 |
+| *p* | service | `POST /rest/v1/rpc/definir_preference_notification` | `400` / `P0001` `preference_sans_session` — la clé de service n'a pas d'identité (§46.3) |
+| *q* | `V` | `POST … {"p_type":"mention","p_in_app":false}` puis `GET /notifications` | `200` puis `[]` — Farida n'a **aucune** notification, coupée ou non : la préférence ne fabrique pas d'erreur sur une boîte vide |
+
+**Chaque ligne posée par ce contrat est retirée**, et une dernière lecture le **constate** — décision
+501 : une preuve qui laisse ses sondes en base fait rougir la suivante. Ici la remise en état est
+la **suppression** des lignes de préférence par la clé de service, qui seule en a le privilège, et
+le §43.4 la rend exacte : sans ligne, le défaut est « je reçois », c'est-à-dire l'état d'avant.
+
+---
+
+## 48. Points ouverts, nommés et non tranchés ici
+
+1. **La rétention devient pressante, et reste ouverte** (§44, raison 4). Les notifications d'une
+   personne qui a coupé s'accumulent sans être lues. C'est le point ouvert n° 1 du §18, aggravé par
+   cette tranche et non résolu par elle.
+2. **Aucune préférence par espace de travail** (§43.3). Le jour où quelqu'un appartiendra à deux
+   espaces, la table devra gagner une colonne et sa clé primaire changer.
+3. **Aucun canal sortant, donc aucune préférence de canal** (§42.1). Le §8 de `docs/SCHEMA.md` est
+   révisé pour cesser d'en promettre trois.
+4. **Une notification masquée ne peut pas être marquée lue** (§44.1, M9). Le comportement est figé
+   par la ligne *f* du contrat plutôt que découvert par surprise.
+5. **Le regroupement, « tout marquer comme lu », les notifications du navigateur et le partage entre
+   onglets** restent ouverts sans changement (§29, §39).
+6. **`audit_log` (`CRM-072`) et `api_tokens` (`CRM-073`) n'existent toujours pas**, et onze unités
+   leur renvoient. Le périmètre reste un choix produit qu'aucune mesure ne donne.
+
+### 48 bis. Ce que le seed livre, et ce qu'il ne change pas
+
+**Le seed ne pose AUCUNE préférence**, et c'est une décision plutôt qu'un oubli. Le §43.4 fait de
+l'absence de ligne le défaut « je reçois » : poser trois lignes `in_app = true` serait poser trois
+lignes qui ne changent rien, et un écran qui les rendrait ne montrerait pas l'état par défaut réel
+d'un compte neuf — c'est-à-dire l'état que **tout le monde** a en production.
+
+**M1 et M2 restent donc vrais après cette tranche** : deux notifications, non lues, Camille 1,
+Driss 1, Farida 0. Aucune preuve existante n'a à changer, et c'est la non-régression attendue.
+
+**L'écart est nommé** : l'état « j'ai coupé » n'est pas exerçable depuis le seed seul. Il l'est par
+le parcours d'interface, qui le **pose lui-même** et le remet — ce qui est plus probant qu'une donnée
+seedée, puisque le geste éprouvé est celui de l'utilisateur.
+
+---
+
+## 49. Preuves attendues de la tranche 4
+
+| Niveau | Preuves |
+|---|---|
+| pgTAP | La table, ses colonnes, sa clé primaire naturelle, sa clé étrangère `CASCADE`, le `check` fermé ; l'**unique** politique et l'absence nommée des trois autres ; l'ACL de la table et celle des **deux** fonctions — `anon` révoqué nommément ; le `stable`, le `security invoker` et le `search_path` vide de `app.notification_consentie` ; le `security definer` de la RPC ; que la politique de `notifications` **délègue** à la fonction au lieu de recopier son prédicat ; le trigger de date ; et la non-régression de `0061`, `0062` et `0063` **sans une modification** |
+| Unitaire | Le défaut « absente = je reçois », les deux refus nommés, la bascule de la case et l'état que l'écran retient de la ligne rendue |
+| API | Les dix-sept lignes du §47, chaque refus **relu en base** avec la clé de service, et l'état du seed **constaté** après |
+| Non-régression | `e2e/api/notifications.spec.ts` et `e2e/api/notifications-surface.spec.ts` verts **sans aucune modification** — c'est ce que le §48 bis rend attendu |
+| E2E d'interface | Le parcours complet : couper depuis l'écran, **voir le compteur de la cloche tomber**, rétablir, **le voir revenir** ; le clavier de bout en bout ; console **vierge** |
+| Visuel | Captures aux quatre paliers, case cochée et décochée, cloche avant et après, **observées** conformément à `CLAUDE.md` §16 |
+| Harnais | `scripts/verify-preferences-notifications.sh`, non complaisant, éprouvé par dégradations réelles **des deux niveaux** — base et surface — et restauration constatée, la base **rendue** comme au §34.4 |
