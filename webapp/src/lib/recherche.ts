@@ -158,8 +158,10 @@ function adresseDepuisLigne(ligne: LigneAdresseAffaire | null | undefined): stri
  * écarté par M16 — un message sur deux du seed n'en a pas, et on a cherché un **message** ; mener à
  * `/inbox` sans rien désigner ferait retrouver à la main ce que la palette venait de montrer.
  *
- * Le paramètre est **stable par contrat** et la sous-tranche 2c le fait honorer ; tant qu'elle
- * n'est pas livrée il est **inerte**, et l'écart est nommé plutôt que masqué.
+ * Le paramètre est **stable par contrat**, et `RouteInbox` l'honore depuis la sous-tranche 2c
+ * (§15) : le message désigné s'ouvre, dans le dossier que son classement décide. Le nom de la clé
+ * ne se recopie donc nulle part — l'écran l'importe d'ici, et le parcours entier est éprouvé d'un
+ * bout à l'autre par `e2e/ui/inbox.spec.ts`.
  */
 function adresseMessage(idMessage: string): string {
 	return `${CHEMIN_INBOX}?${PARAMETRE_MESSAGE}=${encodeURIComponent(idMessage)}`

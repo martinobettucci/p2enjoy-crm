@@ -659,8 +659,9 @@ La frontière entre 2a et 2b est celle que `webapp/src/lib/mentions.ts` et
 `webapp/src/lib/notifications.ts` tiennent déjà : « ce module ne rend rien : il lit et écrit. La
 séparation est ce qui rend [le contrat] vérifiable **sans navigateur** ».
 
-La frontière entre 2b et 2c est nommée et **non masquée** : tant que 2c n'est pas livrée, la
-destination d'un message est l'inbox, **son paramètre inerte**, et le §13.5 l'écrit.
+La frontière entre 2b et 2c a été nommée et **non masquée** pendant qu'elle tenait : entre les deux
+livraisons, la destination d'un message était l'inbox, **son paramètre inerte**, et le §13.5
+l'écrivait. **2c est livrée le 2026-08-27** — le paramètre est honoré, et l'écart est clos.
 
 ## 11. Mesures fondatrices de la tranche 2
 
@@ -922,10 +923,12 @@ théorique : les deux lectures ne sont pas atomiques.
 Le paramètre est arrêté **ici**, dans la tranche 2a, et il est **stable par contrat** : `message`,
 la valeur étant l'identifiant du message. La sous-tranche **2c** le fait honorer par `RouteInbox`.
 
-**Tant que 2c n'est pas livrée, le paramètre est INERTE, et l'écart est nommé** (`docs/BACKLOG.md`,
-`docs/manual.md`) : l'utilisateur arrive sur l'inbox, sans sélection. Ce n'est pas une destination
-morte — l'écran existe et il porte ce qu'il cherche — c'est une destination **imprécise**, et le dire
-vaut mieux que de choisir l'issue 1, qui serait fausse pour la moitié des messages.
+**LE PARAMÈTRE EST HONORÉ DEPUIS LE 2026-08-27** (sous-tranche 2c, §15) : le message désigné
+s'ouvre, dans le dossier que son classement décide. Entre les deux livraisons il fut **INERTE**, et
+l'écart était nommé plutôt que masqué (`docs/BACKLOG.md`, `docs/manual.md`) : l'utilisateur arrivait
+sur l'inbox sans sélection — une destination non pas morte, l'écran existant et portant ce qu'il
+cherchait, mais **imprécise**. Le dire valait mieux que de choisir l'issue 1, fausse pour la moitié
+des messages.
 
 ### 13.6 Le module ne bifurque JAMAIS sur un rôle
 

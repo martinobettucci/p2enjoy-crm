@@ -27,9 +27,14 @@ export const BORNE_PALETTE = 20
 /**
  * Le nom du paramètre d'adresse qui désigne un message dans l'inbox (§13.5).
  *
- * ARRÊTÉ ICI, DANS LA SOUS-TRANCHE 2a, ET STABLE PAR CONTRAT. La sous-tranche 2c le fait honorer
- * par `RouteInbox` ; tant qu'elle n'est pas livrée il est **inerte**, et l'écart est nommé plutôt
- * que masqué (`docs/BACKLOG.md`).
+ * ARRÊTÉ ICI, DANS LA SOUS-TRANCHE 2a, ET STABLE PAR CONTRAT. `RouteInbox` l'honore depuis la
+ * sous-tranche 2c (docs/SPEC-recherche.md §15).
+ *
+ * LES DEUX BOUTS L'IMPORTENT D'ICI, ET AUCUN NE LE RECOPIE : `recherche.ts` compose l'adresse,
+ * `RouteInbox.tsx` la lit. Une chaîne écrite deux fois se désaccorderait au premier ajustement, et
+ * la palette mènerait alors à une adresse que l'inbox n'honorerait plus — c'est précisément ce que
+ * « stable par contrat » doit empêcher. Ce module n'importe rien, ce qui le rend atteignable
+ * depuis `e2e/` comme depuis la webapp (décision 177).
  */
 export const PARAMETRE_MESSAGE = 'message'
 
