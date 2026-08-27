@@ -4630,6 +4630,60 @@ déjà couverte par la suite de `CRM-034`, et ce que cette unité ajoute est un 
 Tri, filtres, densité maîtrisée, pagination.
 **DoD** : E2E ; comportement avec données longues vérifié en capture.
 
+#### Reprise du 2026-08-27 — le vocabulaire unique de recherche (INC-230 fermée)
+
+*Arbitrage du responsable, `docs/JOURNAL.md` décision 532 §2, dans ses termes : « on veut le même
+comportement et le plus simple le mieux, donc on cherche en ignorant les diacritiques ». Décision et
+motifs persistés ET POUSSÉS avant la première ligne de code (`CLAUDE.md` §5).*
+
+- [x] **Migration `0069_vocabulaire_unique_recherche.sql`** : `cards.search_tsv`, générée en
+      `french` depuis la migration 11, est redéfinie en `app.francais_sans_accent` — la
+      configuration livrée par `CRM-065`. **Aucune table, aucune colonne, aucune politique, aucun
+      privilège ne bouge** : la colonne garde son nom, son type et sa nature, et la forme publique
+      de `public.cards` est inchangée. Appliquée — « 69 fichier(s) appliqué(s) avec succès ».
+- [x] **REJOUABLE SANS RÉÉCRIRE LA TABLE, et ce n'est pas un confort** : une garde constate
+      l'expression déjà en place et n'émet qu'un `NOTICE` — vérifié au rejeu. Sur une base peuplée,
+      c'est la différence entre un rejeu instantané et un verrou exclusif.
+- [x] **L'ÉCART EST MESURÉ SUR LES DONNÉES RÉELLES, jamais sur un exemple théorique.** Avant :
+      `securite` rendait **zéro** affaire, `sécurité` en rendait **deux** ; `adherents` zéro,
+      `adhérents` une ; `evolutive` zéro, `évolutive` une. Après : **2, 2 / 1, 1 / 1, 1**. La
+      symétrie vaut dans les deux sens.
+- [x] **UN OBSTACLE NON PRÉVU, MESURÉ ET CONTOURNÉ SANS COMPROMIS** : **PostgREST refuse un nom de
+      configuration qualifié par un schéma** — `plfts(app.francais_sans_accent)` rend
+      `PGRST100 — unexpected "." expecting operator`, le point étant son séparateur d'opérateur ;
+      aucune syntaxe de citation ne passe, éprouvé. La configuration est donc résolue par
+      `PGRST_DB_EXTRA_SEARCH_PATH`, auquel `app` est ajouté **EN QUEUE** — jamais en tête :
+      `mail_template_variables` existe dans `app` ET dans `public`, et `app` prioritaire aurait
+      changé silencieusement la fonction résolue. Vérifié après changement : la résolution non
+      qualifiée rend toujours `public`. **Ceci n'expose rien de neuf à l'API**, que `PGRST_DB_SCHEMAS`
+      seule gouverne.
+- [x] `webapp/src/lib/liste-cards.ts` : la `config` du `textSearch` suit la colonne, et le
+      commentaire dit pourquoi le nom est non qualifié.
+- [x] **CINQ PREUVES RÉVISÉES, JAMAIS RETIRÉES** (mécanisme de la décision 51), motif écrit dans
+      chaque fichier : `supabase/tests/0012_cards.test.sql`, `webapp/src/lib/liste-cards.test.ts`,
+      `e2e/ui/liste-cards.spec.ts`, `e2e/api/liste-cards.spec.ts`.
+- [x] **TROIS ASSERTIONS AJOUTÉES PARCE QUE LA RÉVISION SEULE AURAIT ÉTÉ COMPLAISANTE.** « refonte »,
+      « audit » et « historique » ne portent aucun accent : les deux vocabulaires les racinisent à
+      l'identique, et **tous les scénarios existants passaient avec ou sans la migration**. Ce qui
+      distingue les deux configurations est le mot ACCENTUÉ cherché SANS son accent. Contre-épreuve
+      relevée : `to_tsvector('french', …) @@ plainto_tsquery('french','securite')` rend **false**,
+      la même en `app.francais_sans_accent` rend **true**.
+- [x] **Le parcours utilisateur complet est éprouvé à l'écran**, sur la pile réelle et sans aucune
+      substitution : `e2e/ui/liste-cards.spec.ts` frappe `securite` dans le champ, soumet, et la
+      ligne « Audit sécurité applicative » apparaît — puis le terme accentué dans le même scénario.
+- [x] **Capture produite et OBSERVÉE** (`CLAUDE.md` §16) :
+      `docs/captures/CRM-042/liste-recherche-sans-accent-1440.jpg`.
+- [x] **Documentation dans le même changement** : `docs/SCHEMA.md` §9 bis.9 ter (les deux index et
+      leur vocabulaire désormais commun, plus le point d'appel de PostgREST),
+      `docs/PROD_MIGRATIONS.md` ligne 69 avec son retour arrière et ses trois points de vigilance,
+      `.env.example` (la variable et la raison de la position de `app`), et `CHANGELOG.md` sous
+      `[Non publié]`.
+- [x] **Un défaut de PREUVE trouvé en mesurant, consigné et laissé inchangé — INC-234.** Réécrire
+      `cards` remet `reltuples` à zéro, et le scénario `count=planned` tombe tant qu'`ANALYZE` n'a
+      pas repassé. Ce n'est pas un flake : la cause est nommée. Le scénario rejoué seul passe, et la
+      série API entière rend ensuite **1016 passés, aucun échec**. Aucun test désactivé, aucune
+      tolérance ajoutée.
+
 - [x] **Spécification écrite avant tout code**, `docs/SPEC-cards.md` §12 : l'unité tenait en **deux
       lignes** au backlog, et quatre documents la nommaient sans la décrire — le §1.2 et le §4 de
       ce même document, le §7.1 de `docs/SPEC-workflow-engine.md`, le §12.6 de
