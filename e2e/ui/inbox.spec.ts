@@ -3,6 +3,11 @@
 //           affiché), §18.6 (le message dans la card), §18.8 (preuves exigées)
 // @verifies docs/DESIGN_SYSTEM.md §5.4 (inbox), §5.8 (états), §7 (paliers), §10 (clavier)
 // @verifies docs/JOURNAL.md décision 327 ; CLAUDE.md §16 (vérification visuelle)
+// @verifies CRM-065 (docs/BACKLOG.md) — sous-tranche 2c : l'inbox adressable
+// @verifies docs/SPEC-recherche.md §15 (le paramètre `message` honoré au montage, le `card_id` qui
+//           décide du dossier, l'identifiant inconnu qui ne rend AUCUNE erreur), §15.1 (le
+//           paramètre retiré même quand il n'est pas honoré), §13.5 (l'adresse que la palette
+//           compose)
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, comme un utilisateur réel : aucune fonction
 // interne n'est appelée, aucune réponse n'est substituée. Le courrier vient du seed (§2.19) : deux
@@ -21,7 +26,27 @@ const ADMIN = 'admin@p2enjoy.test'
 const OBJET_NON_CLASSE = 'Candidature spontanée'
 const OBJET_CLASSE = 'Demande de devis — refonte'
 const MSGID_NON_CLASSE = '<seed-inbox-non-classe@p2enjoy.test>'
+const MSGID_CLASSE = '<seed-inbox-classe@p2enjoy.test>'
 const CARD_COURRIER = '5eed0000-0000-4000-8000-0000000000c1'
+const TITRE_CARD_COURRIER = 'Refonte du site vitrine'
+
+/**
+ * L'identifiant d'un message du seed, LU et jamais codé en dur.
+ *
+ * MESURÉ : `mail_messages.id` est un `uuid` engendré à l'insertion, et le seed ne le fige pas —
+ * contrairement aux cards, dont les identifiants commencent par `5eed0000`. Une preuve qui
+ * écrirait l'identifiant en clair passerait sur la base qui l'a vu naître et échouerait sur toute
+ * autre. C'est le `rfc822_message_id`, lui, qui est stable : le seed le pose.
+ */
+async function idDuMessage(page: Page, rfc822: string): Promise<string> {
+	const reponse = await page.request.get(
+		`${URL_API}/rest/v1/mail_messages?select=id&rfc822_message_id=eq.${encodeURIComponent(rfc822)}`,
+		{ headers: enTetesService() },
+	)
+	const [ligne] = (await reponse.json()) as { id: string }[]
+	expect(ligne?.id, `le seed porte ${rfc822}`).toBeTruthy()
+	return ligne.id
+}
 
 async function connecter(page: Page): Promise<void> {
 	await page.goto('/connexion')
@@ -250,5 +275,106 @@ test.describe('inbox globale (docs/SPEC-mail-subsystem.md §18)', () => {
 			.click()
 		await expect(page.getByTestId('inbox-panneau-dossiers')).toBeVisible()
 		await expect(page.getByTestId('inbox-panneau-liste')).toBeHidden()
+	})
+})
+
+// =================================================================================================
+// CRM-065 sous-tranche 2c — l'inbox adressable, docs/SPEC-recherche.md §15 et §15.1
+// =================================================================================================
+//
+// CES SCÉNARIOS ÉPROUVENT L'ADRESSE QUE LA PALETTE COMPOSE (§13.5), sur la pile réelle et avec le
+// courrier du seed. Ce que `webapp/src/app/RouteInbox.test.tsx` ne peut pas voir et qu'ils voient :
+// la RLS réellement appliquée à la lecture d'amorce, et l'adresse réellement réécrite dans la barre
+// du navigateur — un `MemoryRouter` n'a pas de barre d'adresse.
+//
+// AUCUN SCÉNARIO N'ÉCRIT : ils lisent le seed, qui sort intact par construction.
+test.describe('l’inbox adressable (docs/SPEC-recherche.md §15)', () => {
+	test('OUVRE LE MESSAGE DÉSIGNÉ par l’adresse, et choisit le dossier de son affaire', async ({
+		page,
+	}) => {
+		await connecter(page)
+		const id = await idDuMessage(page, MSGID_CLASSE)
+		await page.goto(`/inbox?message=${id}`)
+
+		// LE MESSAGE EST OUVERT SANS AUCUN GESTE : c'est tout l'objet de la sous-tranche. Avant
+		// elle, cette même adresse menait à l'inbox sans sélection, et l'utilisateur devait
+		// retrouver à la main ce que la palette venait de lui montrer.
+		const message = page.getByTestId('inbox-message-ouvert')
+		await expect(message.getByRole('heading', { name: OBJET_CLASSE })).toBeVisible()
+
+		// LE DOSSIER SUIT LE `card_id` (M16) : on arrive DANS l'affaire, et la liste montre son
+		// courrier — non les « Non classés », ni un panneau vide.
+		await expect(
+			page.getByTestId('inbox-panneau-dossiers').getByRole('button', { name: TITRE_CARD_COURRIER }),
+		).toHaveAttribute('aria-current', 'true')
+
+		// L'ADRESSE NE PORTE PLUS LE PARAMÈTRE (§15) : le laisser rouvrirait ce message à chaque
+		// rechargement, longtemps après que l'utilisateur soit passé à autre chose.
+		await expect.poll(() => new URL(page.url()).search).toBe('')
+
+		await capturer(page, 'inbox-adressable-1440', 'CRM-065')
+	})
+
+	test('MÈNE AUX « NON CLASSÉS » quand le message désigné n’a pas d’affaire', async ({ page }) => {
+		await connecter(page)
+		const id = await idDuMessage(page, MSGID_NON_CLASSE)
+		await page.goto(`/inbox?message=${id}`)
+
+		// L'AUTRE MOITIÉ DE M16, et le seed porte réellement les deux cas : une amorce qui ne
+		// vaudrait que pour les messages classés laisserait la moitié de la famille `message` de la
+		// palette sans dossier.
+		await expect(
+			page.getByTestId('inbox-message-ouvert').getByRole('heading', { name: OBJET_NON_CLASSE }),
+		).toBeVisible()
+		await expect(
+			page.getByTestId('inbox-panneau-dossiers').getByRole('button', { name: /Non classés/ }),
+		).toHaveAttribute('aria-current', 'true')
+	})
+
+	test('UN IDENTIFIANT INCONNU N’EST PAS UNE ERREUR : la boîte s’ouvre sans sélection', async ({
+		page,
+	}) => {
+		await connecter(page)
+		// UN `uuid` BIEN FORMÉ MAIS ABSENT : la colonne est typée, et un identifiant mal formé
+		// ferait échouer la requête sur sa SYNTAXE plutôt que sur son absence — ce n'est pas le cas
+		// que le §15 décrit. La lecture rend donc zéro ligne, ce qu'un refus de la RLS rend aussi.
+		await page.goto('/inbox?message=00000000-0000-4000-8000-000000000000')
+
+		// AUCUN MESSAGE, AUCUN DOSSIER CHOISI, ET SURTOUT AUCUNE ALERTE : un refus ne se distingue
+		// pas d'une absence (docs/SPEC-permissions-rls.md §7). L'écran est celui d'une arrivée sans
+		// paramètre, et la liste porte sa mention d'attente ordinaire.
+		await expect(page.getByTestId('inbox-panneau-liste')).toBeVisible()
+		await expect(page.getByTestId('inbox-message-ouvert')).toHaveCount(0)
+		await expect(page.getByRole('alert')).toHaveCount(0)
+		await expect(
+			page.getByTestId('inbox-panneau-dossiers').getByRole('button', { name: TITRE_CARD_COURRIER }),
+		).not.toHaveAttribute('aria-current', 'true')
+
+		// ET LE PARAMÈTRE EST RETIRÉ MALGRÉ LE REFUS (§15.1) : le retrait est décidé par le
+		// TRAITEMENT, jamais par le succès. Un paramètre resté dans la barre d'adresse dirait qu'il
+		// s'est passé là quelque chose que l'écran ne montre pas.
+		await expect.poll(() => new URL(page.url()).search).toBe('')
+	})
+
+	test('LA PALETTE Y MÈNE RÉELLEMENT — le parcours entier, du terme au message', async ({ page }) => {
+		await connecter(page)
+		await page.goto('/board')
+
+		// C'EST LE SEUL SCÉNARIO QUI ÉPROUVE LA CHAÎNE COMPLÈTE : la palette compose l'adresse
+		// (§13.5), l'inbox l'honore (§15). Prouver les deux bouts séparément laisserait passer un
+		// désaccord sur le nom du paramètre, qui est exactement ce que le §13.5 appelle « stable
+		// par contrat ».
+		await page.keyboard.press('ControlOrMeta+k')
+		await expect(page.getByTestId('champ-recherche')).toBeFocused()
+		await page.keyboard.type('devis')
+
+		const resultat = page.getByTestId('resultat-recherche').filter({ hasText: OBJET_CLASSE }).first()
+		await expect(resultat).toBeVisible()
+		await resultat.click()
+
+		await expect(
+			page.getByTestId('inbox-message-ouvert').getByRole('heading', { name: OBJET_CLASSE }),
+		).toBeVisible()
+		await expect.poll(() => new URL(page.url()).search).toBe('')
 	})
 })
