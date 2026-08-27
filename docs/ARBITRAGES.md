@@ -225,3 +225,29 @@ coûte le moins à défaire.
 - **INC-173 (aucune surface de gestion des occurrences, `CRM-084`)** est tranchée sur le principe —
   la surface est due — mais elle est du **travail**, pas une question : elle vaut une sous-tranche
   à part entière, spécifiée avant son code comme toutes les autres.
+
+---
+
+## 6. Arbitrage du 2026-08-27 — INC-230, et la règle qui l'avait laissée ouverte
+
+**Instruction du responsable, en séance, dans ses termes** : « on veut le même comportement et le
+plus simple le mieux, donc on cherche en ignorant les diacritiques ». Assortie d'un rappel qui porte
+bien au-delà de cette entrée : une session ne doit pas s'arrêter sur un arbitrage évident, le mandat
+d'autonomie de la **décision 292** étant toujours en vigueur.
+
+| Décision | Entrée | Ce qui est tranché | Porteur |
+|---|---|---|---|
+| **532 §2** | INC-230 | **Un seul vocabulaire de recherche dans tout le produit, sans diacritiques.** `cards.search_tsv` est redéfinie en `app.francais_sans_accent`, la configuration livrée par `CRM-065`. Motif, déjà écrit dans l'entrée : un comportement juste une fois sur deux apprend à l'utilisateur une règle fausse. Écartées — passer la vue liste par `recherche_globale` (elle filtre, trie et pagine, ce que la RPC ne fait pas : plus de code pour un résultat identique) ; laisser l'écart au manuel (on documenterait l'incohérence au lieu de la corriger) | `CRM-042` |
+| **532 §1** | *la règle elle-même* | **`docs/CloudWorker.md` §4.1 disait « ne se tranche JAMAIS toi-même » et contredisait la décision 292.** La phrase est RETIRÉE, remplacée par le **§4.1 bis** : trancher est la règle par défaut, et la demande d'arbitrage est bornée à quatre cas — irréversible ou coûteux à défaire, dépense engagée au nom du responsable, choix de produit indéductible du dépôt, autorité externe indispensable. Le §4.2 est précisé : il règle la PRIORITÉ, jamais l'AUTORISATION | `docs/CloudWorker.md` |
+
+**Travail restant dû sur INC-230, porté par `CRM-042`** :
+
+1. une migration qui redéfinit `cards.search_tsv` en `app.francais_sans_accent` et reconstruit
+   `cards_search_tsv_idx` ;
+2. `webapp/src/lib/liste-cards.ts` — la `config` passée à `textSearch` suit la colonne ;
+3. la **révision**, jamais le retrait, des preuves qui figent `french` explicitement :
+   `supabase/tests/0012_cards.test.sql`, `webapp/src/lib/liste-cards.test.ts`,
+   `e2e/ui/liste-cards.spec.ts`, `e2e/api/liste-cards.spec.ts` — mécanisme de la décision 51, motif
+   écrit dans chaque fichier ;
+4. `docs/SCHEMA.md`, `docs/PROD_MIGRATIONS.md` (réécriture de la table `cards` en fenêtre) et
+   `CHANGELOG.md`, dans le même changement.

@@ -26203,3 +26203,64 @@ Aucune entrée nouvelle n'est ouverte par cette session.
 session : leur verdict n'a pas été relevé, et il n'est donc **ni vert ni rouge**. Les 94 captures
 qu'ils avaient commencé à réécrire sont restaurées — une capture d'exécution partielle ne représente
 aucun état exécuté complet, et la garder ferait passer un instantané tronqué pour une preuve.
+
+---
+
+## décision 532 — le produit cherche en ignorant les diacritiques, partout ; et une session ne bloque plus sur un arbitrage
+
+*2026-08-27, en séance avec le responsable, à la suite du compte rendu de la décision 531. Deux
+décisions sont rendues : l'une ferme **INC-230**, l'autre corrige la RÈGLE qui avait laissé INC-230
+ouverte. La seconde est la plus importante des deux.*
+
+### 1. La règle : `docs/CloudWorker.md` disait le contraire du mandat de la décision 292
+
+**Le responsable a demandé pourquoi une session s'arrête sur un arbitrage « aussi idiot », alors
+qu'il a déjà instruit de décider en autonomie sauf quand c'est vraiment important.** Il a raison, et
+la cause n'est pas un excès de prudence isolé : c'est une **contradiction écrite** dans le dépôt.
+
+- la **décision 292** (2026-08-08) donne un mandat général : trancher tous les points suspendus à la
+  place du responsable, en prenant le journal comme expression de son style ;
+- le **§4.1 de `docs/CloudWorker.md`** disait, en majuscules : « Une entrée qui attend un arbitrage
+  du responsable ne se tranche JAMAIS toi-même ».
+
+`CloudWorker.md` étant la source de vérité de la tâche planifiée, c'est lui qui l'emportait à chaque
+exécution. **Des entrées tranchables sont ainsi restées ouvertes des semaines**, et chaque compte
+rendu reposait la même question.
+
+**La phrase est RETIRÉE et remplacée par le §4.1 bis**, qui pose l'inverse : trancher est la règle
+par défaut, la ligne du responsable telle que le journal l'exprime suffit à décider, et la demande
+d'arbitrage est bornée à une **liste fermée de quatre cas** — irréversible ou coûteux à défaire,
+dépense engagée en son nom, choix de produit que rien dans le dépôt ne permet de déduire, autorité
+externe indispensable. Le §4.2 est précisé dans le même geste : il règle la **priorité** — le
+registre n'est pas une file de travail — et **jamais l'autorisation** de trancher ; les deux se
+confondaient.
+
+**La liste de ce qui n'est PAS un motif d'arbitrage est écrite, et elle est fermée** : un défaut
+dont la correction est évidente mais longue, un choix entre deux implémentations dont l'une est plus
+simple, une incohérence entre deux écrans, le coût d'une migration, et — explicitement — le fait
+que le registre porte déjà la mention « arbitrage attendu ». **Cette mention est le constat d'un
+travail non fait, jamais une instruction d'attendre.**
+
+### 2. L'arbitrage : un seul vocabulaire de recherche, sans diacritiques
+
+**Décision du responsable, dans ses termes** : « on veut le même comportement et le plus simple le
+mieux, donc on cherche en ignorant les diacritiques ». **Issue 1 d'INC-230 retenue.**
+
+`cards.search_tsv` est redéfinie en `app.francais_sans_accent`, la configuration que `CRM-065` a
+livrée. Les deux recherches du produit — la palette transverse et le filtre de la vue liste — ont
+alors **un seul vocabulaire**, et les accents sont ignorés dans les deux sens, partout.
+
+**Le motif était déjà écrit dans l'entrée du registre** : un comportement juste une fois sur deux est
+pire qu'un comportement uniformément strict, parce qu'il apprend à l'utilisateur une règle fausse.
+Qui constate que `amelie` trouve « Amélie » conclura que `creance` trouve « créance ».
+
+**Les deux autres issues sont écartées, motifs consignés.** Faire passer la vue liste par
+`public.recherche_globale` mêlerait un moteur transverse aux besoins propres d'un écran qui filtre,
+trie et pagine — plus de code pour un résultat identique. Laisser l'écart et l'écrire au manuel
+documenterait une incohérence au lieu de la corriger.
+
+**Mise en œuvre due, portée par `CRM-042`** : la migration qui redéfinit la colonne et reconstruit
+son index GIN, et la **révision** — jamais le retrait — des cinq preuves qui figent `french`
+explicitement. Le point de vigilance de production (réécriture de la table `cards`) n'a pas demandé
+d'arbitrage : c'est une opération d'exploitation ordinaire, à passer en fenêtre comme les cinq index
+de `CRM-065`.

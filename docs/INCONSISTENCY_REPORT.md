@@ -60,7 +60,7 @@ restante est une dette de mise en œuvre, suivie dans `docs/ARBITRAGES.md` et da
 
 ## Retirées — index
 
-**Cent vingt-deux** entrées retirées, texte intégral dans l'historique Git. Colonnes : ce que l'entrée
+**Cent vingt-trois** entrées retirées, texte intégral dans l'historique Git. Colonnes : ce que l'entrée
 constatait, la date de l'arbitrage, qui en porte (ou en a porté) la mise en œuvre, et la ou les
 décisions de `docs/JOURNAL.md` à lire. Une mention « close » dans la colonne « Porteur » signale
 que l'implémentation est en outre livrée et prouvée ; son absence signifie que seul l'arbitrage est
@@ -216,6 +216,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-211 | `scripts/verify-move-card.sh` rend « la restauration n'a pas rétabli l'état initial » EN SÉRIE et **57 contrôles, aucune anomalie** rejoué seul, seed reposé — la dégradation `b`, qui emploie la MÊME restauration, est verte dans le même passage | 2026-08-25 | *ouverte* — cause non établie, comportement inchangé, relève de `CRM-034` | 507 |
 | INC-212 | `scripts/verify-mail-infra.sh` laisse en base son message « Preuve journal Stalwart propre », NON classé : l'inbox porte dès lors un troisième fil non classé, et l'état vide de `e2e/ui/sommeil-fil.spec.ts` ne peut plus être atteint. Troisième fichier de la famille d'INC-209 | 2026-08-25 | **close** — le harnais reprend son message des DEUX côtés, décision 508 | 507, 508 |
 | INC-220 | `mail_sent` est écrit en base depuis la migration `0030` (`CRM-058`) et n'a JAMAIS figuré dans le vocabulaire de l'écran : neuf lignes du fil se lisent « Événement ». Deux preuves du repli s'en servaient comme témoin de type « inconnu », ce qui a rendu le manque invisible cinq unités durant | 2026-08-25 | **close** — type nommé, rangé en `discussion`, traduit et présenté ; les deux témoins révisés (décision 408) | 518 |
+| INC-230 | La recherche LOCALE de la vue liste (`webapp/src/lib/liste-cards.ts`, colonne `cards.search_tsv` de la migration `0011`) employait la configuration `french`, qui n'est PAS insensible aux accents : MESURE, elle trouve Amelie sur `amelie` et societe sur `societe`, mais NE trouve ni creance sur `creance`, ni echeance sur `echeance`, ni proces sur `proces`. `CRM-065` ayant livre `app.francais_sans_accent` pour la recherche transverse, deux recherches du produit avaient deux vocabulaires | 2026-08-27 | `CRM-042` - mise en oeuvre DUE : redefinir `search_tsv` en `app.francais_sans_accent`, et REVISER (jamais retirer) les cinq preuves qui figent `french` explicitement | 532 |
 | INC-227 | `e2e/ui/armement-sequence.spec.ts` §224 « UN SECOND ARMEMENT SUR LA MÊME AFFAIRE EST REFUSÉ » dépasse les 30 000 ms du délai de test **dans la série complète**, et passe SEUL en **2,0 s**. MESURÉ le 2026-08-26 par la session `CRM-064` 3b : la **même campagne, sur le même code**, l'a rendu VERT au premier passage et ROUGE au second — le changement de la session ne peut donc pas en être la cause déterministe. Même famille qu'INC-219, INC-224 et INC-225 | 2026-08-26 | *ouverte* — cause NON établie, et « intermittent » n'est pas un diagnostic. Comportement inchangé, aucun test désactivé, aucune temporisation. Relève de `CRM-063` | 526 |
 | INC-228 | `e2e/ui/formulaire-selecteurs.spec.ts` §134 « le parcours tient au CLAVIER, sans souris » rend la console porteuse de `console.warning: WebSocket connection … failed: WebSocket is closed before the connection is established` **dans la série complète**, et passe SEUL en **1,9 s**, console vierge. MESURÉ le 2026-08-27 par la session `CRM-064` tranche 4 : la **même campagne, sur le même commit**, a rendu **662 passés / 1 échec** au premier passage et **663 passés, aucun échec** au second — la contre-épreuve est INTERNE, et un changement de code ne rend pas un verdict un coup sur deux. Le symptôme est celui que la sous-tranche 3a a corrigé À LA CAUSE sur `ma-journee.spec.ts` (décision 525, abonnement de niveau module survivant au démontage) : il reste donc une fenêtre où la socket se ferme avant la fin de sa poignée de main, que la correction n'a pas fermée. Cinquième entrée de la famille d'INC-219 | 2026-08-27 | *ouverte* — cause NON établie, et « intermittent » n'est pas un diagnostic. Comportement inchangé, aucun test désactivé, aucune temporisation ajoutée. Étrangère à la tranche 4, dont aucun chemin ne touche cette surface. Relève de `CRM-043` | 527 |
 | INC-229 | LA COQUILLE NE DIT PAS DANS QUEL ESPACE DE TRAVAIL ON SE TROUVE dès qu'un compte en a plus d'un. MESURÉ le 2026-08-27 par la session `CRM-064` §50, sur une capture observée (`docs/captures/CRM-064/mentions-liste-vide-1440.jpg`) : Driss, rendu membre d'un SECOND espace le temps d'une preuve, ouvre une affaire de cet espace ; l'en-tête continue d'afficher **« P2Enjoy SAS »**, `workspaces.name` de l'espace **seedé**, et la barre latérale liste « Sonde 3b — track » à côté des trois tracks du seed, dans une **liste plate**, sans jamais nommer l'espace de chacun. L'écran affiche donc une affaire d'un espace sous le nom d'un autre. Aucun sélecteur d'espace n'existe | 2026-08-27 | *ouverte* — **comportement inchangé**, étrangère à `CRM-064`, dont aucune règle ne touche la coquille. Invisible jusqu'ici parce que le seed pose **un seul** espace et une seule appartenance par profil (M12 du §41) : aucune preuve du dépôt n'exerçait le cas multi-espaces. **Arbitrage attendu** : ce que la coquille doit rendre quand un compte appartient à plusieurs espaces — un sélecteur, un groupement des tracks par espace, ou la restriction explicite à un espace courant. Relève de `CRM-007` / `docs/SPEC-webapp.md` | 528 |
@@ -230,10 +231,10 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Trente-sept ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+**Trente-six ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-173, INC-174,
 INC-182, INC-183, INC-185, INC-186, INC-188, INC-189, INC-190, INC-191, INC-192, INC-193, INC-224,
-INC-225, INC-226, INC-227, INC-228, INC-229, INC-230, INC-231, INC-232 et INC-233.** —
+INC-225, INC-226, INC-227, INC-228, INC-229, INC-231, INC-232 et INC-233.** —
 **INC-233** consignée le 2026-08-27 par la session `CRM-065` sous-tranche 2b, établie **par
 comparaison à la ligne de base** : à 390 px, le titre de route d'un écran au nom long est réduit à
 deux caractères et une ellipse — « Ca… » **avant** cette livraison —, ce que le §12.2 range parmi ce
@@ -5792,55 +5793,3 @@ appartient à `CRM-063` et à `CRM-064`, pas à celle-ci.
 
 **Ce que le responsable doit trancher** : rien. C'est un défaut à corriger, non un arbitrage — il
 est consigné pour que la session qui reprendra l'un de ces deux écrans le trouve.
-
-### INC-230 — `liste-cards.ts` cherche en `french`, qui n'est PAS insensible aux accents
-
-**Trouvée en spécifiant `CRM-065` tranche 1**, en mesurant le vocabulaire de recherche à employer.
-Le défaut est **antérieur** et **étranger** à cette unité : il vit dans `CRM-042` (vue liste) et dans
-la colonne `cards.search_tsv` de `CRM-040`.
-
-**Ce qui est mesuré.** La configuration `french` livrée avec PostgreSQL retire l'accent de certains
-mots et le conserve dans d'autres, sans règle qu'un utilisateur puisse deviner :
-
-```
-to_tsvector('french','Amélie Dupont créance échéance')
-  =>  'amel':1 'dupont':2 'créanc':3 'échéanc':4
-```
-
-| Saisie | Document | `french` |
-|---|---|---|
-| `amelie` | `Amélie` | **trouve** |
-| `societe` | `société` | **trouve** |
-| `creance` | `créance` | **NE TROUVE PAS** |
-| `echeance` | `échéance` | **NE TROUVE PAS** |
-| `proces` | `procès` | **NE TROUVE PAS** |
-
-**Où le produit en dépend.** `webapp/src/lib/liste-cards.ts` filtre la vue liste par
-`textSearch('search_tsv', parametres.recherche, { config: 'french', type: 'plain' })`, et
-`cards.search_tsv` est elle-même définie en `to_tsvector('french', …)` par la migration `0011`.
-La recherche locale de la vue liste rend donc **juste une fois sur deux** sur un mot accentué — et un
-comportement juste une fois sur deux est pire qu'un comportement uniformément strict : il apprend à
-l'utilisateur une règle fausse.
-
-**Ce que cela ne dit pas.** Ce n'est **pas** un défaut de `CRM-065`. La migration `0068` crée une
-configuration `app.francais_sans_accent` qui corrige l'écart **pour la recherche transverse
-uniquement**, et ne touche **ni** `cards.search_tsv`, **ni** `cards_search_tsv_idx`, **ni**
-`liste-cards.ts`. Deux recherches du produit emploient donc désormais deux vocabulaires différents,
-et c'est ce que cette entrée consigne.
-
-**Le comportement est laissé inchangé** (`docs/CloudWorker.md` §3.1) : corriger la colonne demande
-de la régénérer — `alter table … alter column … set expression`, donc une réécriture de la table et
-de son index — et de reprendre les assertions de `0012_cards.test.sql` §6 et de
-`liste-cards.test.ts`, qui figent l'une et l'autre la configuration `french` **explicitement**. Cela
-dépasse la tranche autorisée.
-
-**Arbitrage attendu du responsable.** Trois issues, et une seule est à choisir :
-
-1. **Aligner `CRM-042` sur le nouveau vocabulaire** : redéfinir `search_tsv` en
-   `app.francais_sans_accent` et reprendre les deux suites. Les deux recherches du produit se
-   comporteraient alors pareil.
-2. **Faire passer la vue liste par `public.recherche_globale`**, ce qui retirerait la colonne de
-   l'usage sans la détruire — mais la vue liste filtre, trie et pagine, ce que la RPC ne fait pas.
-3. **Laisser l'écart**, et l'écrire dans le manuel.
-
-Rien n'est tranché ici.

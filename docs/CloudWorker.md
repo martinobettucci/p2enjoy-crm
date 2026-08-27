@@ -943,7 +943,53 @@ Ce registre sert à DEUX choses, et à deux choses uniquement :
 - vérifier si un défaut connu bloque l'unité que tu as choisie ;
 - y consigner ce que tu observes en travaillant.
 
-Une entrée qui attend un arbitrage du responsable ne se tranche JAMAIS toi-même.
+#### 4.1 bis. TU TRANCHES TOI-MÊME, ET C'EST LA RÈGLE PAR DÉFAUT
+
+**RÈGLE DU RESPONSABLE, 2026-08-27, non négociable. Elle REMPLACE la phrase « une entrée qui attend
+un arbitrage du responsable ne se tranche JAMAIS toi-même », qui a été retirée d'ici : elle
+contredisait le mandat d'autonomie de la décision 292 du 2026-08-08, et c'est la contradiction, pas
+la difficulté du sujet, qui a laissé des entrées en attente pendant des semaines.**
+
+Le mandat de la décision 292 tient et il est GÉNÉRAL : tu tranches les points suspendus à la place
+du responsable, en prenant le journal comme expression de son style, et tu poursuis. Une entrée du
+registre marquée « arbitrage attendu » n'est donc **pas** un mur : c'est un travail que personne
+n'a encore fait, et il est à toi.
+
+**La ligne du responsable, telle que le journal l'exprime**, et qui suffit à trancher la quasi-
+totalité des cas :
+
+- **le comportement le plus simple, et le même partout.** Deux écrans qui font la même chose la font
+  de la même façon ; un comportement juste une fois sur deux est pire qu'un comportement
+  uniformément strict, parce qu'il apprend à l'utilisateur une règle fausse ;
+- la base porte les invariants, et une autorisation se prouve hors interface ;
+- aucune perte n'est silencieuse, et un écart se nomme plutôt qu'il ne se masque ;
+- un compteur vert n'est pas une preuve s'il peut être complaisant.
+
+**TU NE DEMANDES UN ARBITRAGE QUE DANS CES CAS, ET LA LISTE EST FERMÉE :**
+
+1. **une décision irréversible ou coûteuse à défaire** : une perte de données, un changement de
+   forme publique déjà consommée par un tiers, un engagement contractuel ;
+2. **une dépense ou un service payant** engagés au nom du responsable ;
+3. **un choix de PRODUIT que rien dans le dépôt ne permet de déduire** — une fonctionnalité dont ni
+   le journal, ni les spécifications, ni le manuel ne disent ce qu'elle doit faire, et où deux
+   réponses raisonnables mènent à deux produits différents ;
+4. **une autorité externe réellement indispensable** : un accès de production, un secret, la
+   réparation de l'hôte (décision 292, dernière phrase).
+
+**CE QUI N'EST PAS UN MOTIF D'ARBITRAGE**, et la liste est fermée elle aussi : un défaut dont la
+correction est évidente mais longue ; un choix technique entre deux implémentations dont l'une est
+plus simple ; une incohérence entre deux écrans du produit ; le coût d'une migration ; le fait que
+le registre porte déjà la mention « arbitrage attendu » — cette mention est le constat d'un travail
+non fait, jamais une instruction d'attendre.
+
+**Quand tu tranches, tu le fais comme le responsable le ferait** : tu persistes la décision et son
+motif AVANT la première ligne de code (`CLAUDE.md` §5), tu fermes l'entrée du registre en nommant
+l'issue retenue et pourquoi les autres sont écartées, et tu livres. Une décision prise puis non
+persistée est une décision perdue.
+
+**En cas de doute réel sur l'appartenance d'un cas à la liste fermée ci-dessus** : tu tranches quand
+même, tu écris que tu as tranché et sur quel motif, et tu laisses au responsable la possibilité de
+te contredire. Une session bloquée coûte plus cher qu'une décision qu'il faut réviser.
 
 ### 4.2. COMMENT CHOISIR L'UNITÉ DE LA SESSION — LE PRODUIT D'ABORD
 
@@ -966,6 +1012,13 @@ Une entrée du registre ne devient l'objet d'une session QUE dans deux cas :
 - elle bloque concrètement l'unité produit choisie — alors tu la traites
   comme un préalable, dans la même session, et tu reviens à l'unité ;
 - le responsable a explicitement ordonné son traitement.
+
+**Ceci règle la PRIORITÉ, jamais l'AUTORISATION de trancher, et les deux ne se confondent pas
+(§4.1 bis).** Le registre n'est pas une file de travail : une entrée n'y devient pas l'unité d'une
+session parce qu'elle existe. Mais quand tu en rencontres une sur le chemin de ton unité, ou quand
+tu la consignes en travaillant, **tu écris l'issue que tu retiens** au lieu de la laisser en
+attente. Trancher coûte un paragraphe ; laisser en attente coûte une question qui revient à chaque
+compte rendu et un défaut qui reste dans le produit.
 
 « Solder » une unité "[~]" dont le code est livré mais dont il ne manque que
 des preuves reste utile, mais ne prime plus sur la construction : une session
