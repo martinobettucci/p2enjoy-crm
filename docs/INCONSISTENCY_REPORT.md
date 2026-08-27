@@ -233,7 +233,12 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 **Trente-sept ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-173, INC-174,
 INC-182, INC-183, INC-185, INC-186, INC-188, INC-189, INC-190, INC-191, INC-192, INC-193, INC-224,
-INC-225, INC-226, INC-227, INC-228, INC-229, INC-230, INC-231 et INC-232.** — **INC-232** consignée
+INC-225, INC-226, INC-227, INC-228, INC-229, INC-230, INC-231, INC-232 et INC-233.** —
+**INC-233** consignée le 2026-08-27 par la session `CRM-065` sous-tranche 2b, établie **par
+comparaison à la ligne de base** : à 390 px, le titre de route d'un écran au nom long est réduit à
+deux caractères et une ellipse — « Ca… » **avant** cette livraison —, ce que le §12.2 range parmi ce
+qui ne se sacrifie pas. La cause probable est une règle du §5.12 **non appliquée** : l'identité de
+session devrait passer en `sr-only` sous 768 px, et elle occupe une centaine de pixels. — **INC-232** consignée
 le 2026-08-27 par la session `CRM-065` sous-tranche 2b : **sixième entrée de la famille d'INC-219**,
 et la troisième dont la contre-épreuve est **interne** — un avertissement de console WebSocket fait
 rougir `demarrage.spec.ts` dans la série, et le même fichier rend **11 passés** rejoué seul sur le
@@ -5643,6 +5648,49 @@ condition mesurée**, qui échoue si elle ne vient jamais.
 ---
 
 ## Consignée le 2026-08-27 — la recherche de la vue liste ignore la moitié des accents
+
+### INC-233 — à 390 px, le titre de route d'un écran au nom long est illisible, et le §5.12 n'est pas appliqué
+
+**Consignée le 2026-08-27** par la session planifiée `CloudWorker`, unité `CRM-065` sous-tranche 2b,
+trouvée **en regardant les captures d'autres unités** réécrites par la campagne d'interface
+(`CLAUDE.md` §16). **Étrangère à l'unité de la session**, et laissée inchangée (`CLAUDE.md` §1,
+`docs/CloudWorker.md` §3.1).
+
+**LE DÉFAUT EST PRÉEXISTANT, ET LA LIGNE DE BASE L'ÉTABLIT** (`docs/CloudWorker.md` §2.4). La
+capture `docs/captures/CRM-030/catalogue-liste-sm-390.jpg` a été relevée **des deux côtés**, sur le
+commit d'avant la livraison et sur celui d'après :
+
+| État | Titre de route rendu à 390 px |
+|---|---|
+| avant `CRM-065` (commit `9b17eee`) | **« Ca… »** |
+| avec la commande de recherche | **« ( »** |
+
+L'écran s'appelle « Catalogue de nœuds ». **Aucune des deux valeurs n'est lisible**, et le §12.2
+pose que « le titre de la route ne se déduit de rien » — c'est le contenu que l'ordre de sacrifice
+de l'en-tête protège en dernier. La sous-tranche 2b **aggrave** le défaut de quarante pixels, la
+largeur de sa commande à icône ; elle ne le crée pas.
+
+**LA CAUSE PROBABLE EST UNE RÈGLE DU §5.12 QUI N'EST PAS APPLIQUÉE.** Ce paragraphe écrit, depuis
+`CRM-009` : « Sous 768 px, l'adresse passe en `sr-only` avant le titre de route ». Or
+`webapp/src/app/Header.tsx` rend le nom du profil à **tous** les paliers —
+`max-w-[96px] md:max-w-[var(--size-placeholder)] truncate` — et ne le passe jamais en `sr-only`.
+L'identité de session occupe donc à 390 px une centaine de pixels que le §5.12 lui refuse, et ces
+pixels sont exactement ceux qui manquent au titre.
+
+**MESURE DE L'EN-TÊTE À 390 px**, avec session : marge `px-4` (32 px), quatre écarts `gap-3`
+(48 px), bouton de tiroir (40 px), commande de recherche (40 px), cloche (40 px), et identité de
+session — avatar 32 px, nom jusqu'à 96 px, « Se déconnecter » 40 px, plus deux écarts. Il ne reste
+au fil d'Ariane qu'une poignée de pixels.
+
+**Le comportement est laissé inchangé.** L'écran fautif est celui de `CRM-009` et `CRM-022` ; le
+corriger demanderait de reprendre les captures de **toutes** les unités à 390 px et de les
+**observer**, ce qui dépasse largement la sous-tranche. Aucune ligne de `Header.tsx` touchant
+l'identité n'est modifiée par cette session.
+
+**Ce que le responsable doit trancher** : rien — c'est un défaut à corriger, non un arbitrage. Deux
+remèdes se présentent, et la mesure ci-dessus suffit à les départager : appliquer le §5.12 tel qu'il
+est écrit (le nom en `sr-only` sous `md`) rend une centaine de pixels ; le §12.2 en désigne
+d'ailleurs le contexte d'espace de travail comme premier sacrifié, ce qui est **déjà** le cas.
 
 ### INC-232 — un avertissement WebSocket fait rougir `demarrage.spec.ts` dans la série, jamais isolé
 

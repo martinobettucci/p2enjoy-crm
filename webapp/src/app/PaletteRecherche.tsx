@@ -265,7 +265,7 @@ export function PaletteRecherche({
 				// de son enfant : l'identité de session sortait alors du cadre de trente-six pixels
 				// à 390 px, et la page défilait horizontalement contre le §7. Une preuve qui dit
 				// « ça déborde » sans nommer le coupable fait chercher au mauvais endroit.
-				ouvert ? 'flex-1 md:flex-none md:shrink-0' : 'shrink-0',
+				ouvert ? 'flex-1 lg:flex-none lg:shrink-0' : 'shrink-0',
 				// `md:relative` : À PARTIR DE `md`, LE PANNEAU S'ANCRE SUR LE CHAMP ; en dessous, il
 				// s'ancre sur l'en-tête, qui reste le seul ancêtre positionné. Défaut trouvé EN
 				// REGARDANT UNE CAPTURE (`CLAUDE.md` §16) : ancré sur l'en-tête à 1440 px, le
@@ -276,12 +276,18 @@ export function PaletteRecherche({
 				// panneau des DEUX côtés près d'un bord. Le champ n'est PAS près d'un bord à partir
 				// de `md` — c'est le cas de la cloche, pas le sien —, et sous `md`, là où la place
 				// manque, le panneau garde l'ancrage à l'en-tête.
-				'md:relative',
+				'lg:relative',
 			].join(' ')}
 		>
-			{/* SOUS `md`, LE CHAMP CÈDE LA PLACE AU TITRE DE ROUTE ET DEVIENT UNE COMMANDE À ICÔNE
+			{/* SOUS `lg`, LE CHAMP CÈDE LA PLACE AU TITRE DE ROUTE ET DEVIENT UNE COMMANDE À ICÔNE
 			    (§5.46, §12.2) : l'ordre de sacrifice de l'en-tête ne touche jamais le titre de la
 			    route, et un champ de saisie à 390 px le pousserait hors du cadre.
+
+			    `lg` ET NON `md`, ET C'EST UN DÉFAUT TROUVÉ EN REGARDANT UNE CAPTURE D'UNE AUTRE
+			    UNITÉ (`CLAUDE.md` §16, docs/captures/CRM-076/workflows-md-900.jpg) : à 900 px, un
+			    champ de `28ch` laissait au titre « Éditeur de workflows » de quoi rendre
+			    « Édit… ». Le titre était présent et illisible, ce qui n'est pas mieux qu'absent.
+			    C'est le même seuil et la même mesure que le nom du produit du §12.2.
 
 			    LA COMMANDE DISPARAÎT PENDANT QUE LE CHAMP EST OUVERT, et le champ prend sa place
 			    — défaut trouvé EN EXÉCUTANT LA PREUVE, jamais à la lecture. Écrite d'abord avec un
@@ -296,7 +302,7 @@ export function PaletteRecherche({
 					onClick={ouvrir}
 					aria-label={t('search.open')}
 					className={[
-						'inline-flex md:hidden items-center justify-center shrink-0',
+						'inline-flex lg:hidden items-center justify-center shrink-0',
 						'size-[var(--size-target)] rounded-sm text-text-2 hover:bg-hover',
 						'transition-colors duration-[var(--transition-duration-fast)]',
 					].join(' ')}
@@ -312,7 +318,7 @@ export function PaletteRecherche({
 					// de le chasser : le §12.2 pose que le titre ne se sacrifie jamais, et il porte
 					// déjà son ellipse. À partir de `md`, le champ retrouve sa colonne fixe.
 					ouvert ? 'block flex-1 min-w-0' : 'hidden',
-					'md:block md:flex-none md:w-[28ch]',
+					'lg:block lg:flex-none lg:w-[28ch]',
 				].join(' ')}
 			>
 				<Search
@@ -360,7 +366,7 @@ export function PaletteRecherche({
 						// disponibles : le rembourrage ne se comprime pas, et la page défilait
 						// horizontalement, contre le §7. C'était un écart à la spécification
 						// écrite, trouvé EN EXÉCUTANT la preuve de palier.
-						'w-full min-h-[var(--size-target)] pl-[36px] pr-3 md:pr-[72px] rounded-sm',
+						'w-full min-h-[var(--size-target)] pl-[36px] pr-3 lg:pr-[72px] rounded-sm',
 						'bg-surface border border-border text-base',
 						'placeholder:text-text-3',
 						'focus:outline-none focus:border-brand',
@@ -376,7 +382,7 @@ export function PaletteRecherche({
 						data-testid="raccourci-recherche"
 						// `hidden md:block` : SOUS `md` LA PASTILLE N'EST PAS RENDUE (§5.46) — il
 						// n'y a pas de clavier à qui l'enseigner, et la place manque.
-						className="hidden md:block absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded-sm bg-hover text-text-3 text-xs"
+						className="hidden lg:block absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded-sm bg-hover text-text-3 text-xs"
 					>
 						{t('search.field.shortcut')}
 					</kbd>
@@ -398,7 +404,7 @@ export function PaletteRecherche({
 						// Sous `md` : d'un bord à l'autre de l'en-tête, moins la marge. À partir de
 						// `md` : aligné sur le bord GAUCHE du champ, borné par `max-w` pour ne
 						// jamais sortir de la fenêtre — le cadre est mesuré aux quatre paliers.
-						'left-4 right-4 md:left-0 md:right-auto md:w-[52ch] md:max-w-[80vw]',
+						'left-4 right-4 lg:left-0 lg:right-auto lg:w-[52ch] lg:max-w-[80vw]',
 						'max-h-[70vh] overflow-y-auto',
 						'bg-surface border border-border rounded-lg shadow-[var(--shadow-card-hover)]',
 					].join(' ')}

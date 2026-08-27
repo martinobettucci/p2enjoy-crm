@@ -36,7 +36,7 @@ export type ProprietesHeader = {
 }
 
 export function Header({ titreRoute, onOuvrirTiroir, etatWorkspaces }: ProprietesHeader) {
-	// LE FIL D'ARIANE CÈDE SOUS `md` PENDANT QUE LA RECHERCHE EST OUVERTE (docs/DESIGN_SYSTEM.md
+	// LE FIL D'ARIANE CÈDE SOUS `lg` PENDANT QUE LA RECHERCHE EST OUVERTE (docs/DESIGN_SYSTEM.md
 	// §5.46 et §12.2), et c'est un DÉBORDEMENT MESURÉ à 390 px, non une préférence : avec le champ
 	// ouvert, l'identité de session sortait du cadre et la page défilait horizontalement (§7).
 	//
@@ -78,17 +78,22 @@ export function Header({ titreRoute, onOuvrirTiroir, etatWorkspaces }: Propriete
 			    au profit du contexte, ce que la capture a montré. */}
 			<nav
 				aria-label={t('header.breadcrumb.aria')}
-				className={[rechercheOuverte ? 'hidden md:block' : 'block', 'min-w-0 flex-1'].join(' ')}
+				className={[rechercheOuverte ? 'hidden lg:block' : 'block', 'min-w-0 flex-1'].join(' ')}
 			>
 				<ol className="flex items-center gap-2 min-w-0">
-					{/* `lg` ET NON `md` DEPUIS `CRM-065`, ET C'EST UN DÉFAUT TROUVÉ EN REGARDANT UNE
-					    CAPTURE (`CLAUDE.md` §16, docs/captures/CRM-065/recherche-palette-md-900.jpg).
-					    Le nom du produit est `shrink-0` : il ne cède pas, et il mangeait toute la
-					    place laissée par le champ de recherche à 900 px, si bien que le titre de la
-					    route se réduisait à RIEN. C'est exactement ce que le §12.2 interdit — « le
-					    titre de la route ne se déduit de rien » —, et c'est le même défaut qu'il
-					    avait déjà mesuré à 390 px avant `CRM-007`. L'ordre de sacrifice est
-					    inchangé, seul son SEUIL descend d'un palier. */}
+					{/* `lg` ET NON `md` DEPUIS `CRM-065`, ET LE MOTIF EST ÉTABLI PAR COMPARAISON À LA
+					    LIGNE DE BASE (`CLAUDE.md` §16, `docs/CloudWorker.md` §2.4). La capture
+					    `docs/captures/CRM-076/workflows-md-900.jpg` du commit d'avant la session rend
+					    « Éditeur de workflows » ENTIER ; la même capture, avec la commande de
+					    recherche en place, rend « Éditeur de wor… ».
+
+					    LA CAUSE N'EST PAS LE CHAMP — il n'apparaît qu'à partir de `lg` —, C'EST LA
+					    COMMANDE À ICÔNE, quarante pixels de plus sur une ligne qui n'en avait plus.
+					    Le nom du produit est `shrink-0` : il ne cède pas, et c'est donc le titre qui
+					    paie. Le §12.2 l'interdit — « le titre de la route ne se déduit de rien » — et
+					    l'ordre de sacrifice qu'il pose désigne le nom du produit en premier. L'ordre
+					    est inchangé ; seul son SEUIL descend d'un palier, parce que la ligne a gagné
+					    un occupant. */}
 					<li className="hidden lg:inline shrink-0 text-text-3 text-sm">{t('app.name')}</li>
 					<li aria-hidden="true" className="hidden lg:inline shrink-0 text-text-3">
 						/
@@ -134,7 +139,7 @@ export function Header({ titreRoute, onOuvrirTiroir, etatWorkspaces }: Propriete
 			<div
 				data-testid="entete-fin"
 				className={[
-					rechercheOuverte ? 'hidden md:flex' : 'flex',
+					rechercheOuverte ? 'hidden lg:flex' : 'flex',
 					'items-center gap-3 min-w-0',
 				].join(' ')}
 			>

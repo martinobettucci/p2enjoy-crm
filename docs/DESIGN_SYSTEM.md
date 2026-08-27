@@ -2566,12 +2566,20 @@ profit du contexte, contre le §7 (« aucun contenu n'est masqué sans point d'a
 
 **RÉVISION DU 2026-08-27 — `CRM-065`. LE NOM DU PRODUIT CÈDE DÉSORMAIS SOUS `lg`, ET NON SOUS
 `md`.** L'ordre de sacrifice est **inchangé** ; seul son **seuil** descend d'un palier, et c'est une
-mesure qui l'impose. Défaut trouvé **en regardant une capture** (`CLAUDE.md` §16,
-`docs/captures/CRM-065/recherche-palette-md-900.jpg`) : le nom du produit est `shrink-0` — il ne
-cède pas —, et depuis que l'en-tête porte un champ de recherche de `28ch` (§5.46), il mangeait à
-900 px toute la place restante, si bien que **le titre de la route se réduisait à rien**. C'est
-exactement le défaut que ce paragraphe avait déjà mesuré à 390 px avant `CRM-007`, reparu un palier
-plus haut par l'arrivée d'un nouvel occupant de la ligne.
+mesure qui l'impose — établie par **comparaison à la ligne de base** (`docs/CloudWorker.md` §2.4),
+la capture `docs/captures/CRM-076/workflows-md-900.jpg` du commit d'avant la livraison :
+
+| État | Ce que l'en-tête rend à 900 px |
+|---|---|
+| avant `CRM-065` | `P2Enjoy CRM / ` **Éditeur de workflows** |
+| avec la commande de recherche, seuil `md` | `P2Enjoy CRM / ` **Éditeur de wor…** |
+| avec la commande de recherche, seuil `lg` | **Éditeur de workflows** |
+
+**La cause n'est pas le CHAMP — il n'apparaît qu'à partir de `lg` (§5.46) — c'est la COMMANDE À
+ICÔNE**, quarante pixels de plus sur une ligne qui n'en avait plus. Le nom du produit est `shrink-0`
+et ne cède pas : c'est donc le titre qui paie. C'est exactement le défaut que ce paragraphe avait
+déjà mesuré à 390 px avant `CRM-007`, reparu un palier plus haut par l'arrivée d'un nouvel occupant
+de la ligne.
 
 La règle générale qui en sort, et qui vaut au-delà de cet en-tête : **un élément `shrink-0` posé
 dans une ligne partagée déplace le manque de place sur ses voisins élastiques**, et le seuil auquel
@@ -4078,11 +4086,19 @@ parce qu'elle porte sur le produit entier, et non sur l'utilisateur.
   `Échap` et le clic hors du panneau à l'endroit exact où l'on veut continuer à taper. Un titre
   serait pire encore — il répéterait le libellé du champ, à trois lignes de lui.
 
-- **SOUS `md`, LE CHAMP CÈDE LA PLACE AU TITRE DE ROUTE ET DEVIENT UNE COMMANDE À ICÔNE**, cible
+- **SOUS `lg`, LE CHAMP CÈDE LA PLACE AU TITRE DE ROUTE ET DEVIENT UNE COMMANDE À ICÔNE**, cible
   `--size-target`, nom accessible complet (§12.3). C'est le §12.2 appliqué : l'ordre de sacrifice
   de l'en-tête ne touche jamais le titre de la route, et un champ de saisie à 390 px le pousserait
   hors du cadre. La commande ouvre le **même** panneau, qui occupe alors la largeur disponible moins
   la marge. **La page ne défile jamais horizontalement** (§7).
+
+  **`lg` ET NON `md`, ET C'EST UN DÉFAUT TROUVÉ EN REGARDANT LA CAPTURE D'UNE AUTRE UNITÉ**
+  (`CLAUDE.md` §16, `docs/captures/CRM-076/workflows-md-900.jpg`) : à 900 px, un champ de `28ch`
+  laissait au titre « Éditeur de workflows » de quoi rendre **« Édit… »**. Un titre présent et
+  illisible ne vaut pas mieux qu'un titre absent, et le §12.2 le range parmi ce qui ne se sacrifie
+  pas. **La règle vaut au-delà de ce champ** : le seuil auquel un occupant de l'en-tête doit céder
+  se mesure sur le **titre de route le plus long du produit**, jamais sur celui de l'écran qu'on a
+  sous les yeux.
 
 - **LA COMMANDE DISPARAÎT PENDANT QUE LE CHAMP EST OUVERT, ET CE PARAGRAPHE ÉTAIT INCOMPLET.** Il
   écrivait « la commande ouvre le **même** panneau » sans dire d'où le champ viendrait : rendu
@@ -4090,7 +4106,7 @@ parce qu'elle porte sur le produit entier, et non sur l'utilisateur.
   commande morte du §5.10, dans sa forme la plus complète. Défaut trouvé **en exécutant la preuve
   de palier**, jamais à la lecture. La commande et le champ **s'excluent**, patron du §5.3 quater.
 
-- **OUVERT SOUS `md`, LE CHAMP PREND LA LIGNE, ET LA FIN DE L'EN-TÊTE CÈDE — contexte, cloche et
+- **OUVERT SOUS `lg`, LE CHAMP PREND LA LIGNE, ET LA FIN DE L'EN-TÊTE CÈDE — contexte, cloche et
   identité comprises.** Défaut trouvé **en regardant une capture** (`CLAUDE.md` §16,
   `docs/captures/CRM-065/recherche-palette-sm-390.jpg`) : à 390 px, ces trois-là laissaient au champ
   **soixante pixels**, où l'on ne lisait plus ce que l'on venait de taper. Un champ de recherche
@@ -4099,7 +4115,7 @@ parce qu'elle porte sur le produit entier, et non sur l'utilisateur.
   la restaure. **Le §12.2 n'est pas contredit** : il régit l'en-tête **au repos**, et la fermeture
   est le point d'accès que le §7 exige.
 
-- **À PARTIR DE `md`, LE PANNEAU S'ALIGNE SUR LE BORD GAUCHE DU CHAMP ; en dessous, il garde
+- **À PARTIR DE `lg`, LE PANNEAU S'ALIGNE SUR LE BORD GAUCHE DU CHAMP ; en dessous, il garde
   l'ancrage à l'en-tête.** Troisième défaut trouvé **en regardant une capture** : ancré à l'en-tête
   à 1440 px, le panneau se collait au bord **droit** alors que le champ vit au milieu-gauche, et le
   lien visuel entre la saisie et ses résultats était rompu. **Ce n'est pas une entorse à la leçon du
