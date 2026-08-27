@@ -230,10 +230,14 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Trente-six ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+**Trente-sept ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-173, INC-174,
 INC-182, INC-183, INC-185, INC-186, INC-188, INC-189, INC-190, INC-191, INC-192, INC-193, INC-224,
-INC-225, INC-226, INC-227, INC-228, INC-229, INC-230 et INC-231.** — **INC-231** consignée le
+INC-225, INC-226, INC-227, INC-228, INC-229, INC-230, INC-231 et INC-232.** — **INC-232** consignée
+le 2026-08-27 par la session `CRM-065` sous-tranche 2b : **sixième entrée de la famille d'INC-219**,
+et la troisième dont la contre-épreuve est **interne** — un avertissement de console WebSocket fait
+rougir `demarrage.spec.ts` dans la série, et le même fichier rend **11 passés** rejoué seul sur le
+même commit. — **INC-231** consignée le
 2026-08-27 par la session `CRM-065` sous-tranche 2b, **mesurée par le contrôle de classes avant
 commit** : trois classes citées par deux écrans livrés ne sont **pas engendrées** par le CSS produit,
 et leur effet visuel est donc silencieusement absent. C'est la faute exacte que le §11 du design
@@ -5639,6 +5643,54 @@ condition mesurée**, qui échoue si elle ne vient jamais.
 ---
 
 ## Consignée le 2026-08-27 — la recherche de la vue liste ignore la moitié des accents
+
+### INC-232 — un avertissement WebSocket fait rougir `demarrage.spec.ts` dans la série, jamais isolé
+
+**Consignée le 2026-08-27** par la session planifiée `CloudWorker`, unité `CRM-065` sous-tranche 2b,
+rencontrée en rejouant la campagne d'interface complète derrière le changement d'en-tête. **Même
+famille qu'INC-219, INC-224, INC-225, INC-227 et INC-228 — la sixième.**
+
+**Ce qui est mesuré, et la contre-épreuve est INTERNE.** Le scénario « masquer le guide le retire de
+l'accueil, et le laisse à son adresse » a été exécuté **deux fois sur le même commit**, à quelques
+minutes d'intervalle :
+
+```
+campagne complète (22,6 min) : ROUGE — 685 passés, 1 échec, celui-ci
+demarrage.spec.ts isolé       : VERT  — 11 passés, ce scénario en 1,3 s
+```
+
+L'anomalie relevée n'est **pas** une assertion du produit : c'est la garde de console de
+`e2e/ui/fixtures.ts` §62, « aucun warning, error ou pageerror ne reste dans le navigateur », qui
+attrape un avertissement du **transport temps réel** :
+
+```
+console.warning: WebSocket connection to 'ws://127.0.0.1:8000/realtime/v1/websocket?apikey=…'
+failed: WebSocket is closed before the connection is established.
+```
+
+**Ce que la mesure établit.** L'avertissement dit qu'une socket a été fermée **avant** d'être
+ouverte, ce qui arrive quand la page est démontée pendant l'établissement de la connexion — une
+course entre la navigation et l'abonnement temps réel de `CRM-064`. Elle ne se produit que sous la
+charge d'une série de six cent quatre-vingt-six scénarios ; isolée, la connexion a le temps de
+s'établir. Un changement de code ne produit pas un verdict un coup sur deux : l'anomalie n'est donc
+pas imputable à cette sous-tranche, et **aucune ligne de base par `git stash` ne l'établirait mieux**
+(INC-223).
+
+**Elle est étrangère à l'unité de la session** : `CRM-065` ne touche ni au guide de démarrage, ni au
+transport temps réel, ni à l'abonnement de `CRM-064`. Le seul lien est que l'en-tête, modifié par
+cette sous-tranche, est rendu par tous les écrans — mais l'avertissement porte sur une **socket**,
+qu'aucune ligne de l'en-tête n'ouvre ni ne ferme.
+
+**Le comportement est laissé inchangé** (`CLAUDE.md` §3.1, `docs/CloudWorker.md` §3.1). Aucun test
+n'est désactivé, aucune temporisation n'est ajoutée, et **la garde de console n'est pas assouplie** :
+la relâcher pour laisser passer cet avertissement retirerait au dépôt le seul contrôle qui tient la
+console vierge, pour un défaut qui n'est pas le sien.
+
+**Ce que le responsable doit trancher** : rien pour l'instant. Cette famille compte désormais six
+entrées, toutes de même signature — un scénario qui ne rougit **jamais** seul —, et c'est ce compte
+qui devient l'information : le harnais d'interface porte une instabilité de série que six unités
+successives ont rencontrée sans qu'aucune n'en soit la cause. Elle mérite d'être traitée **pour
+elle-même**, par une unité qui en ait le mandat.
 
 ### INC-231 — trois classes de deux écrans livrés ne sont PAS engendrées par le CSS produit
 
