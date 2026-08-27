@@ -10004,6 +10004,33 @@ vertes, et ses captures sont produites et observées.
 sa suite pgTAP. **INC-230 reste ouverte** (§16.3) : la recherche locale de la vue liste emploie
 toujours `french`, et cette sous-tranche laisse ce comportement inchangé.
 
+*Rien ne reste dû sur 2c* : tout son comportement est livré, toutes ses preuves sont exécutées et
+vertes, et sa capture est produite et observée.
+
+#### Ce qui reste dû sur l'unité entière, et ce n'est PAS du comportement
+
+**AUCUN COMPORTEMENT DE LA DEFINITION OF DONE NE RESTE DÛ.** Les trois sous-tranches de la tranche 2
+sont livrées, la tranche 1 l'était déjà, et la palette mène désormais à l'objet pour **les cinq
+familles** — l'écart du message, dernier de la liste, est comblé.
+
+**CE QUI RESTE EST DE LA PREUVE, ET UNE SEULE** : la série des **soixante-dix-sept**
+`scripts/verify-*.sh` du dépôt n'a jamais été rejouée en entier derrière `CRM-065`
+(`docs/CloudWorker.md` §4.3, budget — plusieurs de ces harnais dépassent quatre minutes chacun, et
+la série ne tient pas dans une session). C'est le motif, et le seul, pour lequel l'unité reste
+`[~]` : le §3.1 l'exige plutôt que de laisser passer un `[x]` complaisant.
+
+Ont été rejoués et sont **verts** : `verify-recherche.sh` (**56 contrôles, aucune anomalie**, rejoué
+SEUL — voir la note de contention ci-dessous), `verify-harness.sh --rapide` (**31 contrôles, aucune
+anomalie**, verdict RELEVÉ, compteur `SCENARIOS_UI` à 690 validé), et les trois harnais que la
+sous-tranche 2c touche. **Restent à exécuter : les autres harnais de la série.**
+
+**UNE LEÇON DE MÉTHODE, MESURÉE LE 2026-08-27 ET QUI VAUT POUR LA SÉRIE ENTIÈRE.**
+`verify-recherche.sh` lancé **pendant** la campagne d'interface rend **2 anomalies**, dont une
+**avant toute dégradation**, c'est-à-dire en ligne de base ; rejoué **seul**, il rend **56 contrôles,
+aucune anomalie**. Deux séries de preuves sur une seule base se mesurent l'une l'autre. La session
+qui rejouera la série ne doit donc **rien lancer d'autre en parallèle** — c'est la même leçon que le
+`deadlock` de la décision 530.
+
 ---
 ### CRM-070 — précision d'arbitrage : l'invitation d'un membre
 

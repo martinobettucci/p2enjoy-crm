@@ -26178,10 +26178,18 @@ fichiers réécrits ne différaient que par l'horodatage du seed. Deux d'entre e
 sous-tranche et qui est **gardée**, et `CRM-076/workflows-md-900.jpg`, où « Éditeur de workflows »
 reste lisible en entier à 900 px : la révision du §12.2 tient.
 
-**Où reprendre.** **`CRM-065` est CLOSE** : ses deux tranches sont livrées et prouvées, et la
-sous-tranche 2c ferme le dernier écart que la 2b avait nommé. L'unité passe `[x]`. La session
-suivante prend **la première unité `[~]` ou `[ ]` du plan** portant du comportement à livrer
-(`docs/CloudWorker.md` §4.2, règles 2 puis 3) ; le backlog fait foi.
+**Où reprendre. `CRM-065` N'A PLUS AUCUN COMPORTEMENT DÛ, ET ELLE RESTE POURTANT `[~]`.** Ses trois
+sous-tranches sont livrées, toutes ses preuves propres sont vertes, et la 2c ferme le dernier écart
+que la 2b avait nommé. Ce qui reste est **de la preuve, et une seule** : la série des
+**soixante-dix-sept** `scripts/verify-*.sh` du dépôt n'a pas été rejouée en entier
+(`docs/CloudWorker.md` §4.3, budget) — la tranche 1 l'avait nommée comme son dernier travail dû, et
+elle ne l'est toujours pas. Ont été rejoués : `verify-recherche.sh` (le harnais dédié), et les trois
+que ce changement touche. **Ne pas passer l'unité `[x]` pour cette seule raison est la règle du
+§3.1**, et c'est un écart de preuve, non un manque de produit.
+
+La session suivante a donc deux chemins, et le backlog fait foi : soit **rejouer la série** pour
+solder `CRM-065` — travail de preuve, sans réécriture documentaire autour (§4.2) —, soit prendre la
+première unité du plan portant du **comportement** à livrer, ce qui prime (§4.2, règles 2 puis 3).
 
 **Les questions posées au responsable, inchangées.** **`CRM-072`** (`audit_log`) et **`CRM-073`**
 (`api_tokens`) n'existent toujours pas alors que onze unités leur renvoient, et **INC-230** attend
