@@ -231,10 +231,10 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Trente-six ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+**Trente-sept ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-173, INC-174,
 INC-182, INC-183, INC-185, INC-186, INC-188, INC-189, INC-190, INC-191, INC-192, INC-193, INC-224,
-INC-225, INC-226, INC-227, INC-228, INC-229, INC-231, INC-232 et INC-233.** —
+INC-225, INC-226, INC-227, INC-228, INC-229, INC-231, INC-232, INC-233 et INC-234.** —
 **INC-233** consignée le 2026-08-27 par la session `CRM-065` sous-tranche 2b, établie **par
 comparaison à la ligne de base** : à 390 px, le titre de route d'un écran au nom long est réduit à
 deux caractères et une ellipse — « Ca… » **avant** cette livraison —, ce que le §12.2 range parmi ce
@@ -5793,3 +5793,40 @@ appartient à `CRM-063` et à `CRM-064`, pas à celle-ci.
 
 **Ce que le responsable doit trancher** : rien. C'est un défaut à corriger, non un arbitrage — il
 est consigné pour que la session qui reprendra l'un de ces deux écrans le trouve.
+
+---
+
+### INC-234 — une réécriture de `cards` remet les statistiques à zéro, et le scénario `count=planned` tombe
+
+**Consignée le 2026-08-27 par la session qui a livré l'arbitrage d'INC-230** (migration 69,
+décision 532 §2). Le défaut n'est pas dans le produit : il est dans une **preuve**, et sa cause est
+un effet de bord mesuré de toute migration qui réécrit une table.
+
+**Ce qui est mesuré.** `e2e/api/liste-cards.spec.ts` §« `count=planned` est FAUX sur ce channel »
+assure que l'estimation du planificateur diffère du compte exact — c'est ce qui justifie que la
+pagination emploie `count=exact` (décision 187). Or `alter column … set expression` **réécrit la
+table et remet `reltuples` à zéro** : tant qu'`ANALYZE` ou l'autovacuum n'a pas repassé, l'estimation
+peut coïncider avec le compte exact, et l'assertion tombe.
+
+```
+juste après la migration 69, en série  => le scénario ÉCHOUE
+le même scénario rejoué seul            => 1 passé
+la série API entière rejouée ensuite    => 1016 passés, aucun échec
+pg_class : reltuples=41  relpages=4  last_analyze=jamais
+count=planned => 6        count=exact => 4
+```
+
+**Ce que cela ne dit pas.** Ce n'est **pas** un flake, et « intermittent » n'est pas le diagnostic :
+la cause est nommée et reproductible — réécrire `cards`, puis lancer la série avant qu'`ANALYZE`
+n'ait tourné. Ce n'est pas non plus un défaut du produit : `count=exact`, que la pagination emploie
+réellement, reste juste dans tous les cas, et c'est la seule propriété dont l'écran dépend.
+
+**Le comportement est laissé inchangé** (`docs/CloudWorker.md` §3.1) : ni le test désactivé, ni une
+temporisation, ni une tolérance ajoutée à l'assertion — chacune affaiblirait une preuve qui dit
+quelque chose de vrai.
+
+**Ce qui est à faire, et ce n'est PAS un arbitrage** (§4.1 bis) : rendre le scénario déterministe
+en lui faisant établir sa propre condition, plutôt qu'en la supposant. La voie la plus simple est
+un `ANALYZE public.cards` en fin de `supabase/seed/apply-seed.sh` — le seed est déjà le contrat qui
+pose l'état de départ des preuves, et des statistiques à jour y ont leur place au même titre que
+les données. **Relève de `CRM-042`**, avec le reste du travail d'INC-230.
