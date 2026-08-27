@@ -46,7 +46,7 @@ select is(
 
 select is(
 	(select name from public.workspaces where id = '5eed0000-0000-4000-8000-000000000001'::uuid),
-	'P2Enjoy SAS',
+	'P2Enjoy SARL',
 	'workspaces.name vaut « P2Enjoy SAS »');
 
 select is(

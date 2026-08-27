@@ -25969,3 +25969,104 @@ fonction est stable par contrat : la palette y trouvera de quoi router vers l'é
 périmètre est un choix produit qu'aucune mesure ne donne. **INC-230** s'ajoute : faut-il aligner la
 recherche locale de la vue liste sur le nouveau vocabulaire, la faire passer par la RPC, ou laisser
 l'écart et l'écrire au manuel ?
+
+---
+
+## décision 530 — la palette existe, et cinq de ses règles ont été trouvées en la regardant
+
+*2026-08-27, session planifiée `CloudWorker`, ouverte à 12:44:03 UTC. Unité : **`CRM-065`
+tranche 2**, la palette. Unité choisie par `docs/CloudWorker.md` §4.2 **règle 1** — la dernière
+entrée du journal désignait cette reprise. Spécification écrite et **committée avant la première
+ligne de code** (`CLAUDE.md` §5) : `docs/SPEC-recherche.md` §10 à §17 et `docs/DESIGN_SYSTEM.md`
+§5.46, fondés sur **six mesures** prises sur la pile debout et seedée, toutes en lecture.*
+
+**LA MESURE QUI COMMANDE TOUTE LA TRANCHE EST M14, ET ELLE EST UNE ABSENCE.** `recherche_globale`
+rend sept colonnes, et **aucune n'est une adresse**. Or `CHEMIN_CARD` demande trois segments
+variables, et l'`id` d'un `commentaire` est celui du **commentaire**, jamais de l'affaire commentée.
+Deux familles sur cinq exigent donc une **seconde lecture**. Elle ne remonte pas en base : ajouter
+une colonne d'adresse à la fonction porterait dans le moteur de recherche une composition d'URL qui
+est une affaire de webapp, et qui varierait au premier changement de route. **La base rend des
+identifiants ; l'adresse se compose là où les routes sont écrites.**
+
+**Le découpage en trois sous-tranches** suit la frontière qui rend chaque morceau prouvable seul :
+**2a** le moteur d'appel, sans surface, prouvé sans navigateur ; **2b** la surface ; **2c** l'inbox
+adressable. Les deux premières sont **livrées** ; la troisième ne l'est pas, et l'écart est nommé —
+un résultat de la famille `message` mène à l'inbox **sans sélection**, ce qui n'est pas une
+destination morte mais une destination imprécise. Les deux autres issues étaient pires : mener à
+l'affaire du message laisserait **la moitié du seed** sans issue (M16), et mener à `/inbox` nu
+ferait retrouver à la main ce que la palette venait de montrer.
+
+**LA GARDE D'ORDRE EST LA RÈGLE LA PLUS IMPORTANTE DU MOTEUR, et le délai de frappe ne la remplace
+pas.** Deux requêtes concurrentes reviennent dans l'ordre que le réseau décide ; sans rang, la liste
+afficherait le résultat d'un terme déjà dépassé. Le test unitaire l'éprouve par le **cas réel** —
+deux réponses revenant dans l'ordre inverse de leur émission —, et c'est la dernière **émise** qui
+gagne. Une session qui retirerait le rang « puisqu'il y a un délai » rouvrirait le défaut.
+
+**AUCUNE MODALE, ET C'EST LE CAS OÙ L'ON EST LE PLUS TENTÉ D'Y DÉROGER.** L'usage du marché veut une
+fenêtre centrée sur un voile ; le motif du refus n'est pas la conformité aux cinq arbitrages
+antérieurs, c'est que **le voile cacherait l'écran d'où l'on cherche**. Le §5.23 l'avait écrit pour
+le carnet — « une modale recouvrirait la liste que l'on vient de lire, or cette liste est
+précisément ce qui dit si le contact existe déjà » — et la palette en est le **cas général**.
+
+**LE FOCUS NE QUITTE JAMAIS LE CHAMP, et c'est cette règle qui décide la forme.** Les flèches
+déplacent un **résultat actif**, pas le focus : l'utilisateur corrige son terme en permanence. D'où
+`role="combobox"` et le **premier `aria-activedescendant` du produit**, employé parce qu'aucun autre
+patron ne tient les deux exigences à la fois.
+
+**CINQ DÉFAUTS DU PRODUIT TROUVÉS EN EXÉCUTANT ET EN REGARDANT, AUCUN À LA LECTURE.** (1) Sous `md`,
+la commande à icône ouvrait un panneau **sans aucun champ** — une palette où l'on ne peut pas taper.
+(2) Le conteneur du champ portait `shrink-0` : il empêchait toute compression **quelle que soit la
+classe de son enfant**, et l'identité de session sortait du cadre de 36 px à 390 px. (3) À 390 px,
+contexte, cloche et identité laissaient au champ **soixante pixels**, où l'on ne lisait plus sa
+propre saisie. (4) Le panneau se collait au bord **droit** alors que le champ vit au milieu-gauche,
+rompant le lien visuel entre la saisie et ses résultats. (5) À 900 px, le nom du produit —
+`shrink-0`, donc incompressible — réduisait le **titre de route à rien** : le défaut exact que le
+§12.2 avait mesuré à 390 px avant `CRM-007`, **reparu un palier plus haut** par l'arrivée d'un
+nouvel occupant de la ligne. Le §12.2 est révisé : son ordre ne change pas, son **seuil** descend
+sous `lg`. La règle générale qui en sort vaut au-delà de cet en-tête — **un élément `shrink-0` posé
+dans une ligne partagée déplace le manque de place sur ses voisins élastiques**, et le seuil auquel
+il doit céder se recalcule à chaque nouvel occupant.
+
+**DEUX DÉFAUTS DE LA PREUVE ELLE-MÊME, corrigés comme tels.** Elle lisait `aria-activedescendant`
+**avant** l'arrivée des résultats — mesurant son propre empressement, le gestionnaire sortant
+légitimement sur une liste vide —, et elle **supposait l'ordre du serveur** : mesuré, « Migration
+ERP » rend d'abord un message (rang 1,0303) puis l'affaire (rang 1). C'était l'attente qui était
+fausse, jamais le produit. La preuve de palier **nomme** désormais l'élément qui déborde et sa
+coordonnée : une preuve qui dit « ça déborde » sans dire quoi fait chercher au mauvais endroit.
+
+**LE CONTRÔLE DE CLASSES A MORDU AVANT LE COMMIT.** `pl-9` et `pr-16` n'étaient **pas engendrées du
+tout**, l'échelle étant close — la faute exacte du §11, déjà payée par la jauge `h-1.5` du §5.29.
+Elles s'écrivent en valeur arbitraire assumée. Le même contrôle dénonce **trois classes étrangères**
+de deux écrans livrés par `CRM-063` et `CRM-064`, dont l'effet visuel est silencieusement absent :
+**INC-231**, comportement laissé inchangé.
+
+**CAMPAGNE COMPLÈTE.** `typecheck` et `build` verts ; `test:unit` **84 fichiers / 2793 tests** ;
+`test:sql` **65 fichiers / 3006 assertions, aucune anomalie** ; `e2e:api` **1015 passés**, valeur
+exactement égale au compteur révisé ; `e2e:mail` **42 passés** ; `pytest` **244 passés** ;
+`scripts/verify-recherche.sh` **56 contrôles, aucune anomalie** ; `e2e:ui` **685 passés, 1 échec**.
+
+**L'ÉCHEC D'INTERFACE EST PRÉEXISTANT ET ÉTRANGER — INC-232.** Ce n'est pas une assertion du
+produit : c'est la garde de console qui attrape un avertissement du **transport temps réel**, une
+socket fermée avant d'être ouverte. `demarrage.spec.ts` rejoué **seul sur le même commit** rend
+**11 passés** — contre-épreuve interne, qui vaut mieux qu'une ligne de base par `git stash` sur du
+travail déjà committé (INC-223). C'est la **sixième** entrée de la famille d'INC-219, et ce compte
+devient l'information : le harnais d'interface porte une instabilité de série que six unités
+successives ont rencontrée sans qu'aucune n'en soit la cause.
+
+*Un `deadlock` a fait rougir `0002_fonctions_autorisation.test.sql` lors d'un premier passage — je
+faisais alors tourner `test:sql` et la campagne d'interface **sur la même base**. Rejoué seul :
+vert. La contention était la mienne, et elle est nommée plutôt que passée sous silence.*
+
+**Où reprendre.** `CRM-065` **2a est close**, **2b est `[~]`** — tout son comportement est livré et
+prouvé, il ne lui manque que le verdict de `scripts/verify-harness.sh`, lancé en fin de session. La
+sous-tranche **2c** — `RouteInbox` honorant `?message=<id>` — reste **à livrer**, et son contrat est
+déjà écrit (`docs/SPEC-recherche.md` §15) : lu au montage et une seule fois, dossier déduit du
+`card_id`, identifiant inconnu **sans erreur**, paramètre retiré de l'adresse une fois honoré. C'est
+l'unité de la session suivante.
+
+**Les questions posées au responsable.** Les trois anciennes tiennent : **`CRM-072`** (`audit_log`)
+et **`CRM-073`** (`api_tokens`) n'existent pas alors que onze unités leur renvoient, et **INC-230**
+attend son arbitrage — la recherche locale de la vue liste emploie toujours `french` et garde donc
+un second vocabulaire. **INC-231** et **INC-232** s'ajoutent au registre, mais aucune des deux ne
+demande d'arbitrage : la première est un défaut à corriger par l'unité qui reprendra ses deux
+écrans, la seconde mérite une unité qui en ait le mandat.
