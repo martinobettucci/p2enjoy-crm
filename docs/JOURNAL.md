@@ -25848,6 +25848,20 @@ repris **ici**, parce qu'ils appartiennent à la même unité et non par correct
 défaut étranger : **997** et **664**, valeurs comptées par `playwright test --list`, motif écrit dans
 le fichier. Garde-fous révisés, jamais retirés.
 
+**CAMPAGNE COMPLÈTE.** `typecheck`, `types:check` et `build` verts ; `test:sql` **64 fichiers /
+2975 assertions** ; `test:unit` **83 fichiers / 2769 tests** ; `e2e:api` **997 passés** (996 avant,
+plus la ligne *ah*) ; `e2e:ui` **664 passés, AUCUN échec** — valeur exactement égale au compteur
+révisé, et **INC-228 ne s'est pas reproduite** ; `pytest` **244 passés** ;
+`scripts/verify-mentions-composeur.sh` **53 contrôles, aucune anomalie** ;
+`e2e/ui/demarrage.spec.ts` **11 passés**, la non-régression que MA7 rendait attendue.
+
+**`e2e:mail` rend « 1 failed, 41 passed », et l'anomalie est PRÉEXISTANTE ET ÉTRANGÈRE.**
+`dossiers.spec.ts` §276 « renommer un TRACK renomme son dossier et emporte ses enfants » échoue dans
+la série et rend **1 passed en 4,9 s** rejoué SEUL, sur le même commit — contre-épreuve interne. La
+session ne touche **aucun** fichier du sous-système mail. C'est **INC-205**, ouverte depuis le
+2026-08-24 et de la famille d'INC-128 et INC-172 ; la reproduction y est consignée, comportement
+inchangé, aucun test désactivé, aucune temporisation ajoutée.
+
 **Où reprendre.** La sous-tranche **3b est CLOSE** : son dernier écart est soldé par exécution. Seule
 la **tranche 4** retient encore `CRM-064` en `[~]`, et pour un écart de preuve et non de comportement
 — la série des `scripts/verify-*.sh` n'a pas été rejouée en entier. La session suivante peut soit la
