@@ -1065,7 +1065,18 @@ SCENARIOS_API=1015
 # au premier passage, 663 passés et aucun échec au second », décision 527 —, et le scénario de
 # l'état vide du §50.6, livré ici, à **664**. Valeur COMPTÉE par `playwright test --list`, qui rend
 # « Total: 664 tests in 54 files ».
-SCENARIOS_UI=664
+#
+# **`CRM-065` SOUS-TRANCHE 2b, le 2026-08-27 : 686.** `e2e/ui/recherche.spec.ts` ajoute **22
+# scénarios** — le raccourci et son absence sans session, les cinq états de la palette, la
+# navigation clavier et son `aria-activedescendant`, la navigation vers les quatre familles
+# atteignables, l'asymétrie du seed mesurée sur les DEUX comptes, et les captures aux quatre
+# paliers avec le **cadre** du panneau flottant mesuré des deux côtés.
+#
+# 664 + 22 = **686**, valeur COMPTÉE par `playwright test --project=ui --list` — « Total: 686 tests
+# in 55 files » —, jamais déduite d'une exécution. La campagne rend **685 passés et 1 échec**, et
+# cet échec est **INC-232**, préexistant, étranger et à contre-épreuve interne : le compteur
+# compte des scénarios DÉCLARÉS, jamais des scénarios verts.
+SCENARIOS_UI=686
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,
