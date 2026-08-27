@@ -9879,15 +9879,53 @@ chaque morceau prouvable seul :
       et jamais déduite : `SCENARIOS_API` 1007 → **1015** (`playwright test --project=api --list` :
       « Total: 1015 tests in 64 files »).
 
-##### Sous-tranche 2b — la surface `[ ]`
+##### Sous-tranche 2b — la surface `[~]`
 
-- [ ] Le champ dans l'en-tête, `Cmd+K` / `Ctrl+K`, la navigation clavier du §14.3, les quatre états
-      du §14.4, la troncature écrite, et `docs/DESIGN_SYSTEM.md` §5.46 tenu.
-- [ ] `e2e/ui/recherche.spec.ts`, et **l'asymétrie de M19 éprouvée par son COMPTE** — quatre lignes
-      pour l'administratrice, trois pour la lectrice, sur le même terme `sogexia`. Sans le compte,
-      un écran qui n'afficherait rien passerait le refus.
-- [ ] Captures sous `docs/captures/CRM-065/`, aux paliers 1440 et 390, **produites et observées**
-      (`CLAUDE.md` §16), et le chapitre de `docs/manual.md`.
+- [x] `webapp/src/app/PaletteRecherche.tsx` : le champ dans l'en-tête, `Cmd+K` / `Ctrl+K`, la
+      navigation clavier du §14.3, les quatre états du §14.4 **plus l'état d'arrivée qui n'est pas
+      un vide**, et la troncature écrite. `docs/DESIGN_SYSTEM.md` §5.46 tenu.
+- [x] **AUCUNE MODALE, ET C'EST LE CAS OÙ L'ON EST LE PLUS TENTÉ D'Y DÉROGER.** L'usage du marché
+      veut une fenêtre centrée sur un voile ; le motif du refus n'est pas la conformité, c'est que
+      **le voile cacherait l'écran d'où l'on cherche**. Le §5.23 avait déjà tenu ce raisonnement
+      pour le carnet ; la palette en est le cas général.
+- [x] **LE FOCUS NE QUITTE JAMAIS LE CHAMP**, et c'est la règle qui décide la forme : les flèches
+      déplacent un **résultat actif**, pas le focus. D'où `role="combobox"` et le **premier
+      `aria-activedescendant` du produit**, employé parce qu'aucun autre patron ne tient les deux
+      exigences à la fois.
+- [x] `e2e/ui/recherche.spec.ts` : **22 scénarios verts**, parcours entièrement au clavier, aucune
+      réponse substituée. **L'asymétrie de M19 est éprouvée par son COMPTE** — quatre lignes pour
+      l'administratrice, trois pour la lectrice, sur le même terme `sogexia`. Sans le compte des
+      deux côtés, un écran qui n'afficherait rien passerait le refus.
+- [x] **CINQ DÉFAUTS TROUVÉS EN EXÉCUTANT ET EN REGARDANT, AUCUN À LA LECTURE**, et chacun a
+      corrigé le produit : (1) sous `md`, la commande à icône ouvrait un panneau **sans aucun
+      champ** — la commande morte du §5.10 ; (2) le conteneur du champ portait `shrink-0` et
+      empêchait toute compression, l'identité de session sortant du cadre de 36 px à 390 px ;
+      (3) à 390 px, contexte, cloche et identité laissaient au champ **soixante pixels**, où l'on
+      ne lisait plus sa propre saisie ; (4) le panneau se collait au bord **droit** alors que le
+      champ vit au milieu-gauche, rompant le lien visuel entre la saisie et ses résultats ; (5) à
+      900 px, le nom du produit — `shrink-0`, donc incompressible — réduisait le **titre de route à
+      rien**, défaut que le §12.2 avait déjà mesuré à 390 px et qui reparaît un palier plus haut à
+      chaque nouvel occupant de la ligne.
+- [x] **DEUX DÉFAUTS DE LA PREUVE ELLE-MÊME, corrigés comme tels** : elle lisait
+      `aria-activedescendant` **avant** l'arrivée des résultats — mesurant son propre empressement
+      —, et elle **supposait l'ordre du serveur**, que la mesure contredit : « Migration ERP » rend
+      d'abord un message (rang 1,0303) puis l'affaire (rang 1). C'était l'attente qui était fausse,
+      jamais le produit.
+- [x] **DEUX CLASSES HORS ÉCHELLE ATTRAPÉES AVANT COMMIT** par `scripts/lib/classes-css.mjs` :
+      `pl-9` et `pr-16` n'étaient **pas engendrées du tout**, l'échelle étant close (§3, §11). Elles
+      s'écrivent en valeur arbitraire assumée, comme le §5.29 l'exige.
+- [x] **Six captures produites et OBSERVÉES** sous `docs/captures/CRM-065/` (`CLAUDE.md` §16), aux
+      quatre paliers plus les deux états — c'est en les regardant que trois des cinq défauts
+      ci-dessus ont été trouvés.
+- [x] **Chapitre §9 de `docs/manual.md`** : ce que la recherche cherche, ce qu'elle comprend, les
+      touches, où chaque famille mène, la discrétion, et **ce qu'elle ne fait pas** — dont l'écart
+      du message, écrit plutôt que tu.
+- [x] `docs/DESIGN_SYSTEM.md` §5.46 complété et **§12.2 RÉVISÉ dans le même changement** : le seuil
+      de sacrifice du nom du produit descend sous `lg`, l'ordre restant inchangé.
+
+*Ce qui reste dû sur 2b, et ce n'est pas du comportement* : la campagne d'interface complète doit
+être rejouée derrière ce changement — l'en-tête est commun à **tous** les écrans, et la révision du
+§12.2 les touche tous. Tant qu'elle n'est pas relevée, la sous-tranche reste `[~]`.
 
 ##### Sous-tranche 2c — l'inbox adressable `[ ]`
 

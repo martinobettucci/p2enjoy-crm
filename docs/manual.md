@@ -3237,6 +3237,106 @@ une case qui ne commande rien serait une promesse que le produit ne tiendrait pa
 - **Aucun « tout marquer comme lu »** : un geste de masse ne saurait pas dire *lesquelles* n'ont pas
   bougé si vos droits ont changé, et le produit ne montre jamais une issue qu'il n'a pas mesurée.
 
+## 9. Retrouver n'importe quoi : la recherche
+
+*Livrée par `CRM-065`. Le contrat est écrit dans `docs/SPEC-recherche.md`.*
+
+Le produit compte plus de trente écrans et une arborescence à trois niveaux. Jusqu'ici, retrouver
+un objet dont on ne savait plus où il vivait demandait de le chercher écran par écran : chaque
+liste portait au mieux un filtre local, aveugle à tout ce qui n'était pas elle.
+
+**La recherche cherche partout à la fois**, depuis n'importe quel écran, sans le quitter.
+
+### 9.1 L'ouvrir
+
+Trois chemins, et ils mènent au même endroit :
+
+- le raccourci **`Cmd + K`** sur Mac, **`Ctrl + K`** ailleurs. Il fonctionne **partout**, y compris
+  pendant que vous écrivez un commentaire ;
+- un clic dans le champ **« Rechercher… »**, en haut de l'écran ;
+- sur un écran étroit, le bouton en forme de loupe, à la même place.
+
+Le raccourci est rappelé **dans le champ lui-même** : il n'y a rien à apprendre par cœur.
+
+**Appuyer une seconde fois ne referme pas la recherche** : le texte déjà tapé est simplement
+sélectionné, prêt à être remplacé. Pour refermer, appuyez sur **`Échap`**, ou cliquez ailleurs.
+
+### 9.2 Ce qu'elle cherche
+
+Cinq familles d'objets, dans la même frappe :
+
+| Famille | Ce qui est cherché |
+|---|---|
+| **Affaire** | son titre |
+| **Contact** | son nom, sa fonction, son adresse email |
+| **Organisation** | son nom, son domaine |
+| **Commentaire** | le texte du propos |
+| **Message** | l'objet, le corps, l'expéditeur |
+
+Chaque résultat porte **le nom de sa famille en toutes lettres**, puis ce qui l'identifie et le
+contexte où il vit — le channel d'une affaire, l'organisation d'un contact, l'auteur d'un
+commentaire. Pour un commentaire et un message, un **extrait du passage trouvé** est affiché.
+
+### 9.3 Ce qu'elle comprend, et ce qu'elle ne comprend pas
+
+- **Il suffit de commencer un mot** : « audi » trouve déjà « Audit sécurité applicative ».
+- **Les accents ne comptent pas, dans les deux sens** : « creance » trouve « créance », et
+  « créance » trouve « creance ».
+- **Deux mots saisis doivent être présents tous les deux.** « audit sécurité » ne rend pas tout ce
+  qui contient « audit ».
+- **Aucune tolérance à la faute de frappe.** « audti » ne trouve rien. La recherche cherche des
+  mots, elle ne les devine pas.
+- **Ce qui est à la corbeille ne se cherche pas**, y compris les commentaires d'une affaire mise à
+  la corbeille.
+
+### 9.4 La parcourir au clavier, et y aller
+
+La main ne quitte pas le clavier :
+
+| Touche | Effet |
+|---|---|
+| **`↓`** | descend d'un résultat ; du dernier, revient au premier |
+| **`↑`** | monte d'un résultat ; du premier, va au dernier |
+| **`Entrée`** | ouvre le résultat en surbrillance |
+| **`Échap`** | referme la recherche |
+
+Un clic sur une ligne fait la même chose que `Entrée`.
+
+**Où chaque famille vous mène** :
+
+| Famille | Destination |
+|---|---|
+| Affaire | sa fiche |
+| Commentaire | **la fiche de l'affaire commentée**, où le propos se lit dans le fil |
+| Contact | sa fiche |
+| Organisation | sa fiche |
+| Message | votre boîte de réception |
+
+### 9.5 Vous ne trouvez que ce que vous avez le droit de lire
+
+**La recherche n'ouvre rien.** Une affaire d'un track qui ne vous est pas ouvert, son commentaire,
+un message que vous ne pouvez pas lire : rien de tout cela n'apparaît, et **rien ne signale que
+quelque chose vous est caché**. Deux personnes cherchant le même mot ne voient donc pas
+nécessairement la même liste, et c'est voulu.
+
+### 9.6 Ce que la recherche affiche, et ce qu'elle ne fait pas
+
+- **Au plus vingt résultats**, et quand la liste est pleine elle l'écrit : « 20 résultats
+  affichés ». Précisez votre terme pour en voir d'autres.
+- **L'ordre est celui de la pertinence**, familles mêlées : un message peut passer devant une
+  affaire s'il correspond mieux.
+- **Rien n'est enregistré** : ni ce que vous cherchez, ni quand, ni combien de résultats. Il n'y a
+  pas d'historique de recherche, et il n'y en aura pas sans qu'on vous le demande.
+- **Aucun filtre par famille**, aucune suggestion, aucune correction de frappe.
+- **Aucune action sur un résultat** : la recherche mène, elle n'agit pas.
+- **Les tracks et les channels ne sont pas cherchés.** On les trouve par la navigation, qui les
+  liste tous à l'écran.
+- **Un résultat dont l'écran n'est pas atteignable reste affiché**, marqué « Objet non
+  atteignable » et non cliquable — plutôt que de disparaître ou de mener à un écran cassé.
+- **Un message vous mène à votre boîte, mais pas encore au message lui-même.** Il vous reste à le
+  retrouver dans la liste ; l'écart est connu et sera comblé.
+- **Sans être connecté, la recherche n'existe pas** : ni champ, ni raccourci.
+
 ## Annexe A — Ce que contient l'espace de démonstration
 
 *Livrée par `CRM-047` ; le jeu lui-même est livré par `CRM-046` (`docs/SPEC-seed.md` §9).*

@@ -13,6 +13,31 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-065` sous-tranche 2b — la recherche, enfin à l'écran
+
+- **Un champ de recherche apparaît en haut de chaque écran, et `Cmd+K` / `Ctrl+K` l'ouvre de
+  partout** — y compris pendant qu'on écrit un commentaire. Le raccourci est rappelé dans le champ
+  lui-même : il n'y a rien à apprendre par cœur.
+- **Une seule frappe cherche dans les affaires, les contacts, les organisations, les commentaires
+  et les messages à la fois.** Chaque résultat dit à quelle famille il appartient, où il vit, et
+  montre un extrait du passage trouvé quand il en a un.
+- **Tout se fait au clavier** : les flèches parcourent la liste, `Entrée` ouvre, `Échap` referme.
+  **La main ne quitte jamais le champ** — on corrige son terme sans avoir à y revenir.
+- **Chaque résultat mène à son écran.** Un commentaire mène à l'affaire commentée, là où il se lit.
+- **La recherche n'ouvre rien** : on ne trouve que ce qu'on a déjà le droit de lire, et rien ne
+  signale qu'on cache quelque chose.
+- **Aucune fenêtre par-dessus l'écran.** La liste se déroule sous le champ et laisse voir l'écran
+  d'où l'on cherche — c'est précisément lui qui donne son contexte à ce que l'on cherche.
+- **Ce que l'on cherche n'est jamais enregistré** : ni le terme, ni le moment. Aucun historique.
+- **La liste s'arrête à vingt résultats et le dit en toutes lettres** plutôt que de laisser croire
+  qu'elle est complète.
+- **Un écart connu et écrit** : un résultat de la famille « message » mène à la boîte de réception,
+  mais pas encore au message lui-même. Il reste à le retrouver dans la liste.
+- **En corrigeant l'en-tête pour lui faire place, un défaut ancien a été trouvé** : à partir de
+  1024 px et en dessous, le nom du produit occupait une place qu'il ne cédait jamais, au point de
+  faire disparaître le titre de l'écran courant. Il s'efface désormais plus tôt.
+- Documentation utilisateur : `docs/manual.md` §9.
+
 ### `CRM-065` sous-tranche 2a — de quoi mener à l'objet trouvé (aucun écran encore)
 
 - **La recherche sait désormais où mènent ses résultats.** La base rend ce qu'elle a trouvé, mais
