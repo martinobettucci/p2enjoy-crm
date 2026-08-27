@@ -2556,13 +2556,26 @@ parce que ce n'est pas le même objet. Deux conséquences que la révision assum
 
 L'icône `ChartColumn` **accompagne** le libellé et ne le remplace pas (§9).
 
-### 12.2 Ordre de sacrifice dans l'en-tête sous 768 px — `CRM-007`
+### 12.2 Ordre de sacrifice dans l'en-tête sous 768 px — `CRM-007`, révisé par `CRM-065`
 
 Sous le palier `md`, l'en-tête abandonne d'abord le **nom du produit** et le **contexte
 d'espace de travail**, jamais le **titre de la route**. Motif : les deux premiers sont portés
 ailleurs — barre latérale, onglet du navigateur —, le titre de la route ne se déduit de rien.
 Défaut réellement observé sur une capture avant correction : à 390 px, le titre disparaissait au
 profit du contexte, contre le §7 (« aucun contenu n'est masqué sans point d'accès »).
+
+**RÉVISION DU 2026-08-27 — `CRM-065`. LE NOM DU PRODUIT CÈDE DÉSORMAIS SOUS `lg`, ET NON SOUS
+`md`.** L'ordre de sacrifice est **inchangé** ; seul son **seuil** descend d'un palier, et c'est une
+mesure qui l'impose. Défaut trouvé **en regardant une capture** (`CLAUDE.md` §16,
+`docs/captures/CRM-065/recherche-palette-md-900.jpg`) : le nom du produit est `shrink-0` — il ne
+cède pas —, et depuis que l'en-tête porte un champ de recherche de `28ch` (§5.46), il mangeait à
+900 px toute la place restante, si bien que **le titre de la route se réduisait à rien**. C'est
+exactement le défaut que ce paragraphe avait déjà mesuré à 390 px avant `CRM-007`, reparu un palier
+plus haut par l'arrivée d'un nouvel occupant de la ligne.
+
+La règle générale qui en sort, et qui vaut au-delà de cet en-tête : **un élément `shrink-0` posé
+dans une ligne partagée déplace le manque de place sur ses voisins élastiques**, et le seuil auquel
+il doit céder se recalcule à chaque nouvel occupant de la ligne.
 
 ### 12.3 Libellés masqués visuellement, jamais retirés — `CRM-007`
 
@@ -4070,6 +4083,39 @@ parce qu'elle porte sur le produit entier, et non sur l'utilisateur.
   de l'en-tête ne touche jamais le titre de la route, et un champ de saisie à 390 px le pousserait
   hors du cadre. La commande ouvre le **même** panneau, qui occupe alors la largeur disponible moins
   la marge. **La page ne défile jamais horizontalement** (§7).
+
+- **LA COMMANDE DISPARAÎT PENDANT QUE LE CHAMP EST OUVERT, ET CE PARAGRAPHE ÉTAIT INCOMPLET.** Il
+  écrivait « la commande ouvre le **même** panneau » sans dire d'où le champ viendrait : rendu
+  `hidden` sous `md` sans condition, il ouvrait **un panneau où l'on ne peut pas taper** — la
+  commande morte du §5.10, dans sa forme la plus complète. Défaut trouvé **en exécutant la preuve
+  de palier**, jamais à la lecture. La commande et le champ **s'excluent**, patron du §5.3 quater.
+
+- **OUVERT SOUS `md`, LE CHAMP PREND LA LIGNE, ET LA FIN DE L'EN-TÊTE CÈDE — contexte, cloche et
+  identité comprises.** Défaut trouvé **en regardant une capture** (`CLAUDE.md` §16,
+  `docs/captures/CRM-065/recherche-palette-sm-390.jpg`) : à 390 px, ces trois-là laissaient au champ
+  **soixante pixels**, où l'on ne lisait plus ce que l'on venait de taper. Un champ de recherche
+  dont la saisie est invisible n'est pas un champ de recherche. C'est encore le §5.3 quater — le
+  panneau remplace la commande, il ne s'y ajoute pas — appliqué à une **ligne entière**, et `Échap`
+  la restaure. **Le §12.2 n'est pas contredit** : il régit l'en-tête **au repos**, et la fermeture
+  est le point d'accès que le §7 exige.
+
+- **À PARTIR DE `md`, LE PANNEAU S'ALIGNE SUR LE BORD GAUCHE DU CHAMP ; en dessous, il garde
+  l'ancrage à l'en-tête.** Troisième défaut trouvé **en regardant une capture** : ancré à l'en-tête
+  à 1440 px, le panneau se collait au bord **droit** alors que le champ vit au milieu-gauche, et le
+  lien visuel entre la saisie et ses résultats était rompu. **Ce n'est pas une entorse à la leçon du
+  §5.43** — « le repère de positionnement est le conteneur pleine largeur, jamais le contrôle » : ce
+  qu'elle protège est le **bornage des deux côtés** d'une surface ancrée à un contrôle **proche d'un
+  bord**, ce qu'est la cloche et ce que le champ n'est pas. Sous `md`, là où la place manque
+  réellement, l'ancrage à l'en-tête est conservé. Le cadre est **mesuré aux quatre paliers**, bord
+  gauche ≥ 0 et bord droit ≤ largeur de la fenêtre.
+
+- **LE CONTENEUR DU CHAMP EST L'ÉLÉMENT FLEX DE L'EN-TÊTE, ET C'EST LUI QUI DOIT CÉDER.** Écrit
+  `shrink-0`, il empêchait le champ de se comprimer **quelle que soit la classe de son enfant**, et
+  l'identité de session sortait du cadre de trente-six pixels à 390 px. La règle vaut pour **toute**
+  surface élastique posée dans une ligne flex : la classe qui décide est celle de l'élément flex,
+  jamais celle de son contenu. **Une preuve de palier nomme le coupable** — l'élément et sa
+  coordonnée droite — plutôt que de dire « ça déborde » : sans cela, elle fait chercher au mauvais
+  endroit.
 
 - **Aucune couleur, aucun jeton nouveau** : la surface emprunte au §5.43 son panneau ancré et sa
   mécanique de fermeture, au §5.18 sa liste plate, au §5.6 sa pilule neutre, au §5.1 son liseré, au

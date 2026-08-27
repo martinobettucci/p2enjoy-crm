@@ -18,7 +18,7 @@
 // L'identité de session, elle, vient de GoTrue depuis CRM-009 et offre toujours son action réelle.
 
 import { LogIn, LogOut, Menu } from 'lucide-react'
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { t } from '../i18n'
 import { Avatar } from '../components/ui/Avatar'
@@ -36,6 +36,16 @@ export type ProprietesHeader = {
 }
 
 export function Header({ titreRoute, onOuvrirTiroir, etatWorkspaces }: ProprietesHeader) {
+	// LE FIL D'ARIANE CÈDE SOUS `md` PENDANT QUE LA RECHERCHE EST OUVERTE (docs/DESIGN_SYSTEM.md
+	// §5.46 et §12.2), et c'est un DÉBORDEMENT MESURÉ à 390 px, non une préférence : avec le champ
+	// ouvert, l'identité de session sortait du cadre et la page défilait horizontalement (§7).
+	//
+	// CE N'EST PAS UNE ENTORSE À L'ORDRE DE SACRIFICE DU §12.2, qui régit l'en-tête AU REPOS : le
+	// titre y reste inconditionnel. Ici la recherche est une surface que l'utilisateur vient
+	// D'OUVRIR et qu'`Échap` referme — la fermeture EST le point d'accès que le §7 exige.
+	const [rechercheOuverte, setRechercheOuverte] = useState(false)
+	const surOuvertureRecherche = useCallback((ouvert: boolean) => setRechercheOuverte(ouvert), [])
+
 	return (
 		<header
 			aria-label={t('header.aria')}
@@ -66,10 +76,21 @@ export function Header({ titreRoute, onOuvrirTiroir, etatWorkspaces }: Propriete
 			    il reste donc visible partout (docs/DESIGN_SYSTEM.md §7 : aucun contenu masqué
 			    sans point d'accès). Mesuré à 390 px avant correction : le titre disparaissait
 			    au profit du contexte, ce que la capture a montré. */}
-			<nav aria-label={t('header.breadcrumb.aria')} className="min-w-0 flex-1">
+			<nav
+				aria-label={t('header.breadcrumb.aria')}
+				className={[rechercheOuverte ? 'hidden md:block' : 'block', 'min-w-0 flex-1'].join(' ')}
+			>
 				<ol className="flex items-center gap-2 min-w-0">
-					<li className="hidden md:inline shrink-0 text-text-3 text-sm">{t('app.name')}</li>
-					<li aria-hidden="true" className="hidden md:inline shrink-0 text-text-3">
+					{/* `lg` ET NON `md` DEPUIS `CRM-065`, ET C'EST UN DÉFAUT TROUVÉ EN REGARDANT UNE
+					    CAPTURE (`CLAUDE.md` §16, docs/captures/CRM-065/recherche-palette-md-900.jpg).
+					    Le nom du produit est `shrink-0` : il ne cède pas, et il mangeait toute la
+					    place laissée par le champ de recherche à 900 px, si bien que le titre de la
+					    route se réduisait à RIEN. C'est exactement ce que le §12.2 interdit — « le
+					    titre de la route ne se déduit de rien » —, et c'est le même défaut qu'il
+					    avait déjà mesuré à 390 px avant `CRM-007`. L'ordre de sacrifice est
+					    inchangé, seul son SEUIL descend d'un palier. */}
+					<li className="hidden lg:inline shrink-0 text-text-3 text-sm">{t('app.name')}</li>
+					<li aria-hidden="true" className="hidden lg:inline shrink-0 text-text-3">
 						/
 					</li>
 					<li className="min-w-0">
@@ -92,18 +113,38 @@ export function Header({ titreRoute, onOuvrirTiroir, etatWorkspaces }: Propriete
 			  Elle ne rend rien sans session (§14.5) : la RPC refuse l'anonyme par le PRIVILÈGE, et
 			  un champ offert à un anonyme promettrait une recherche que la base refuse.
 			*/}
-			<PaletteRecherche />
-			<ContexteWorkspace etat={etatWorkspaces} />
-			{/*
-			  LA CLOCHE VIT ENTRE LE CONTEXTE ET L'IDENTITÉ, et l'ordre porte un sens (`CRM-064`,
-			  docs/SPEC-notifications.md §23.1, docs/DESIGN_SYSTEM.md §5.43) : ce que le produit a à
-			  me dire précède qui je suis, et le geste qui SORT du produit ferme la ligne.
+			<PaletteRecherche onOuvertureChange={surOuvertureRecherche} />
 
-			  Elle ne rend rien sans session — l'en-tête rend « Se connecter » à sa place (§5.12), et
-			  une cloche offerte à un anonyme annoncerait une boîte qu'aucune session ne peut remplir.
+			{/*
+			  SOUS `md`, LA FIN DE LA LIGNE CÈDE PENDANT QUE LA RECHERCHE EST OUVERTE, et c'est un
+			  défaut trouvé EN REGARDANT UNE CAPTURE (`CLAUDE.md` §16,
+			  docs/captures/CRM-065/recherche-palette-sm-390.jpg). Le fil d'Ariane seul ne suffisait
+			  pas : à 390 px, le contexte, la cloche et l'identité laissaient au champ SOIXANTE
+			  pixels, où l'on ne lisait plus ce que l'on venait de taper. Un champ de recherche dont
+			  la saisie est invisible n'est pas un champ de recherche.
+
+			  C'est le patron du §5.3 quater — « le panneau remplace la commande, il ne s'y ajoute
+			  pas » — appliqué à une ligne entière, et `Échap` la restaure. Le §12.2 régit l'en-tête
+			  AU REPOS ; il n'est pas contredit.
+
+			  L'ORDRE, LUI, NE CHANGE PAS (`CRM-064`, docs/SPEC-notifications.md §23.1,
+			  docs/DESIGN_SYSTEM.md §5.43) : ce que le produit a à me dire précède qui je suis, et le
+			  geste qui SORT du produit ferme la ligne.
 			*/}
-			<ClocheNotifications />
-			<ControleSession />
+			<div
+				data-testid="entete-fin"
+				className={[
+					rechercheOuverte ? 'hidden md:flex' : 'flex',
+					'items-center gap-3 min-w-0',
+				].join(' ')}
+			>
+				<ContexteWorkspace etat={etatWorkspaces} />
+				{/* La cloche ne rend rien sans session — l'en-tête rend « Se connecter » à sa place
+				    (§5.12), et une cloche offerte à un anonyme annoncerait une boîte qu'aucune
+				    session ne peut remplir. */}
+				<ClocheNotifications />
+				<ControleSession />
+			</div>
 		</header>
 	)
 }

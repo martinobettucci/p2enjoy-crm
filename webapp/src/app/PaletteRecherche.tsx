@@ -62,7 +62,21 @@ type EtatRecherche = EtatAsync<ResultatsRecherche> | null
  * l'anonyme par le PRIVILÈGE — `401` / `42501` —, et un champ offert à un anonyme promettrait une
  * recherche que la base refuse, la commande morte du §5.10.
  */
-export function PaletteRecherche() {
+export function PaletteRecherche({
+	onOuvertureChange,
+}: {
+	/**
+	 * Prévient l'en-tête que la palette s'ouvre ou se ferme.
+	 *
+	 * L'ÉTAT EST REMONTÉ PARCE QUE LE FIL D'ARIANE DOIT CÉDER SOUS `md` (§5.46, §12.2), et c'est un
+	 * DÉBORDEMENT MESURÉ à 390 px : avec le champ ouvert, l'identité de session sortait du cadre de
+	 * trente à quarante-huit pixels — l'avatar, le nom et « Se déconnecter » —, et la page défilait
+	 * horizontalement contre le §7. Aucune autre disposition ne tenait : le rembourrage d'un champ
+	 * ne se comprime pas, et les deux éléments élastiques de la ligne n'avaient que soixante-deux
+	 * pixels à se partager.
+	 */
+	readonly onOuvertureChange?: (ouvert: boolean) => void
+}) {
 	const { etat: etatSession } = useAuthentification()
 	const connecte = etatSession.statut === 'authentifie'
 	const navigate = useNavigate()
@@ -83,6 +97,12 @@ export function PaletteRecherche() {
 	const sequenceur = useMemo(() => creerSequenceur(), [])
 
 	const resultats = etat?.statut === 'pret' ? etat.donnees.resultats : []
+
+	// L'en-tête est prévenu dans un effet, jamais depuis un gestionnaire : deux chemins d'appel
+	// divergeraient, et une fermeture par clic extérieur oublierait de prévenir.
+	useEffect(() => {
+		onOuvertureChange?.(ouvert)
+	}, [ouvert, onOuvertureChange])
 
 	const fermer = useCallback((rendreFocus: boolean) => {
 		setOuvert(false)
@@ -235,25 +255,66 @@ export function PaletteRecherche() {
 		// largeur (§5.46, §5.43). Ancré sur le champ, il sortirait de l'écran par le côté opposé au
 		// bord dont il s'approche — défaut trouvé en regardant une capture à `CRM-064`.
 		// `ancre` ne sert qu'à reconnaître un clic intérieur.
-		<div ref={ancre} className="shrink-0 min-w-0">
+		<div
+			ref={ancre}
+			className={[
+				'min-w-0',
+				// LE CONTENEUR EXTÉRIEUR EST L'ÉLÉMENT FLEX DE L'EN-TÊTE, ET C'EST LUI QUI DOIT
+				// CÉDER — défaut trouvé en instrumentant la preuve de palier, jamais à la lecture.
+				// Écrit `shrink-0`, il empêchait le champ de se comprimer QUELLE QUE SOIT la classe
+				// de son enfant : l'identité de session sortait alors du cadre de trente-six pixels
+				// à 390 px, et la page défilait horizontalement contre le §7. Une preuve qui dit
+				// « ça déborde » sans nommer le coupable fait chercher au mauvais endroit.
+				ouvert ? 'flex-1 md:flex-none md:shrink-0' : 'shrink-0',
+				// `md:relative` : À PARTIR DE `md`, LE PANNEAU S'ANCRE SUR LE CHAMP ; en dessous, il
+				// s'ancre sur l'en-tête, qui reste le seul ancêtre positionné. Défaut trouvé EN
+				// REGARDANT UNE CAPTURE (`CLAUDE.md` §16) : ancré sur l'en-tête à 1440 px, le
+				// panneau se collait au bord DROIT alors que le champ vit au milieu-gauche, et le
+				// lien visuel entre la saisie et ses résultats était rompu.
+				//
+				// CE N'EST PAS UNE ENTORSE À LA LEÇON DU §5.43, qui dit que le repère doit borner le
+				// panneau des DEUX côtés près d'un bord. Le champ n'est PAS près d'un bord à partir
+				// de `md` — c'est le cas de la cloche, pas le sien —, et sous `md`, là où la place
+				// manque, le panneau garde l'ancrage à l'en-tête.
+				'md:relative',
+			].join(' ')}
+		>
 			{/* SOUS `md`, LE CHAMP CÈDE LA PLACE AU TITRE DE ROUTE ET DEVIENT UNE COMMANDE À ICÔNE
 			    (§5.46, §12.2) : l'ordre de sacrifice de l'en-tête ne touche jamais le titre de la
-			    route, et un champ de saisie à 390 px le pousserait hors du cadre. */}
-			<button
-				type="button"
-				data-testid="ouvrir-recherche"
-				onClick={ouvrir}
-				aria-label={t('search.open')}
+			    route, et un champ de saisie à 390 px le pousserait hors du cadre.
+
+			    LA COMMANDE DISPARAÎT PENDANT QUE LE CHAMP EST OUVERT, et le champ prend sa place
+			    — défaut trouvé EN EXÉCUTANT LA PREUVE, jamais à la lecture. Écrite d'abord avec un
+			    champ `hidden md:block` inconditionnel, la commande ouvrait sous `md` un panneau
+			    SANS AUCUN CHAMP : une palette où l'on ne peut pas taper, c'est-à-dire la commande
+			    morte que le §5.10 proscrit. C'est le patron du §5.3 quater — le panneau remplace la
+			    commande, il ne s'y ajoute pas. */}
+			{ouvert ? null : (
+				<button
+					type="button"
+					data-testid="ouvrir-recherche"
+					onClick={ouvrir}
+					aria-label={t('search.open')}
+					className={[
+						'inline-flex md:hidden items-center justify-center shrink-0',
+						'size-[var(--size-target)] rounded-sm text-text-2 hover:bg-hover',
+						'transition-colors duration-[var(--transition-duration-fast)]',
+					].join(' ')}
+				>
+					<Search aria-hidden="true" size={20} />
+				</button>
+			)}
+
+			<div
 				className={[
-					'inline-flex md:hidden items-center justify-center shrink-0',
-					'size-[var(--size-target)] rounded-sm text-text-2 hover:bg-hover',
-					'transition-colors duration-[var(--transition-duration-fast)]',
+					'relative',
+					// Ouvert sous `md`, le champ PARTAGE la ligne avec le titre de route plutôt que
+					// de le chasser : le §12.2 pose que le titre ne se sacrifie jamais, et il porte
+					// déjà son ellipse. À partir de `md`, le champ retrouve sa colonne fixe.
+					ouvert ? 'block flex-1 min-w-0' : 'hidden',
+					'md:block md:flex-none md:w-[28ch]',
 				].join(' ')}
 			>
-				<Search aria-hidden="true" size={20} />
-			</button>
-
-			<div className="hidden md:block relative w-[28ch]">
 				<Search
 					aria-hidden="true"
 					size={16}
@@ -291,7 +352,15 @@ export function PaletteRecherche() {
 						// mesuré par `scripts/lib/classes-css.mjs` avant commit, exactement comme
 						// la jauge `h-1.5` du §5.29. Les deux mesures sont la place de l'icône
 						// (12 px de bord + 16 px + 8 px) et celle de la pastille de raccourci.
-						'w-full min-h-[var(--size-target)] pl-[36px] pr-[72px] rounded-sm',
+						//
+						// LA RÉSERVE DE DROITE N'EXISTE QU'À PARTIR DE `md`, ET C'EST UN DÉBORDEMENT
+						// MESURÉ À 390 px. Le §5.46 pose que la pastille n'est PAS rendue sous `md`
+						// — il n'y a pas de clavier à qui l'enseigner —, et lui réserver 72 px
+						// quand même donnait au champ un rembourrage de 108 px pour 101 px
+						// disponibles : le rembourrage ne se comprime pas, et la page défilait
+						// horizontalement, contre le §7. C'était un écart à la spécification
+						// écrite, trouvé EN EXÉCUTANT la preuve de palier.
+						'w-full min-h-[var(--size-target)] pl-[36px] pr-3 md:pr-[72px] rounded-sm',
 						'bg-surface border border-border text-base',
 						'placeholder:text-text-3',
 						'focus:outline-none focus:border-brand',
@@ -305,7 +374,9 @@ export function PaletteRecherche() {
 					<kbd
 						aria-hidden="true"
 						data-testid="raccourci-recherche"
-						className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded-sm bg-hover text-text-3 text-xs"
+						// `hidden md:block` : SOUS `md` LA PASTILLE N'EST PAS RENDUE (§5.46) — il
+						// n'y a pas de clavier à qui l'enseigner, et la place manque.
+						className="hidden md:block absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded-sm bg-hover text-text-3 text-xs"
 					>
 						{t('search.field.shortcut')}
 					</kbd>
@@ -324,7 +395,10 @@ export function PaletteRecherche() {
 						// sa colonne. `md` et jamais `sm`, variant inconnu que Tailwind supprime en
 						// silence (§11).
 						'absolute top-full z-40 mt-2',
-						'left-4 right-4 md:left-auto md:right-4 md:w-[52ch]',
+						// Sous `md` : d'un bord à l'autre de l'en-tête, moins la marge. À partir de
+						// `md` : aligné sur le bord GAUCHE du champ, borné par `max-w` pour ne
+						// jamais sortir de la fenêtre — le cadre est mesuré aux quatre paliers.
+						'left-4 right-4 md:left-0 md:right-auto md:w-[52ch] md:max-w-[80vw]',
 						'max-h-[70vh] overflow-y-auto',
 						'bg-surface border border-border rounded-lg shadow-[var(--shadow-card-hover)]',
 					].join(' ')}
