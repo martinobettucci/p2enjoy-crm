@@ -4057,6 +4057,14 @@ parce qu'elle porte sur le produit entier, et non sur l'utilisateur.
 - **`ÉCHAP` REFERME ET REND LE FOCUS**, un clic hors du panneau le referme sans rendre le focus — la
   distinction que le §5.43 fait entre fermer et annuler, reprise sans changement.
 
+- **LE PANNEAU N'A NI BARRE DE TITRE, NI COMMANDE DE FERMETURE, et c'est l'écart au §5.43 qu'il faut
+  écrire pour qu'on ne le recopie pas sans son motif.** Le panneau de notifications en porte une
+  parce que sa cloche est une icône : sans elle, rien à l'écran ne dirait comment refermer ce qui
+  vient de s'ouvrir. Ici **le champ reste rendu au-dessus du panneau**, il porte son
+  `aria-expanded`, et il est le geste même qui l'a ouvert : une commande « Fermer » dupliquerait
+  `Échap` et le clic hors du panneau à l'endroit exact où l'on veut continuer à taper. Un titre
+  serait pire encore — il répéterait le libellé du champ, à trois lignes de lui.
+
 - **SOUS `md`, LE CHAMP CÈDE LA PLACE AU TITRE DE ROUTE ET DEVIENT UNE COMMANDE À ICÔNE**, cible
   `--size-target`, nom accessible complet (§12.3). C'est le §12.2 appliqué : l'ordre de sacrifice
   de l'en-tête ne touche jamais le titre de la route, et un champ de saisie à 390 px le pousserait

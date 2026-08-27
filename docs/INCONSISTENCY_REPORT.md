@@ -230,10 +230,15 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Trente-quatre ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+**Trente-six ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-173, INC-174,
 INC-182, INC-183, INC-185, INC-186, INC-188, INC-189, INC-190, INC-191, INC-192, INC-193, INC-224,
-INC-225, INC-226, INC-227, INC-228 et INC-229.** — **INC-229** consignée le 2026-08-27 par la
+INC-225, INC-226, INC-227, INC-228, INC-229, INC-230 et INC-231.** — **INC-231** consignée le
+2026-08-27 par la session `CRM-065` sous-tranche 2b, **mesurée par le contrôle de classes avant
+commit** : trois classes citées par deux écrans livrés ne sont **pas engendrées** par le CSS produit,
+et leur effet visuel est donc silencieusement absent. C'est la faute exacte que le §11 du design
+system décrit et qu'INC-158 a déjà consignée pour d'autres classes ; celles-ci sont **étrangères à
+l'unité de la session**, et le comportement est laissé inchangé (`CLAUDE.md` §1). — **INC-229** consignée le 2026-08-27 par la
 session `CRM-064` §50, **en regardant une capture** (`CLAUDE.md` §16) et non par un test : dès qu'un
 compte appartient à plus d'un espace de travail, l'en-tête nomme le mauvais et la barre latérale
 mélange les tracks des deux. Le cas était **inatteignable** jusqu'ici, le seed ne posant qu'un seul
@@ -5634,6 +5639,59 @@ condition mesurée**, qui échoue si elle ne vient jamais.
 ---
 
 ## Consignée le 2026-08-27 — la recherche de la vue liste ignore la moitié des accents
+
+### INC-231 — trois classes de deux écrans livrés ne sont PAS engendrées par le CSS produit
+
+*Consignée le 2026-08-27 par la session planifiée `CloudWorker`, unité `CRM-065` sous-tranche 2b.
+**Étrangère à l'unité de la session**, et laissée inchangée (`CLAUDE.md` §1, `docs/CloudWorker.md`
+§3.1).*
+
+**Ce qui est mesuré.** `node scripts/lib/classes-css.mjs webapp/src webapp/dist`, après
+`npm run build`, sur le commit de la sous-tranche 2b :
+
+```
+classes citées : 342
+classes absentes du CSS produit : leading-relaxed ml-7 pl-7
+```
+
+Les trois sont citées par deux écrans **livrés et prouvés** :
+
+| Classe | Où | Ce que l'effet devait faire |
+|---|---|---|
+| `leading-relaxed` | `webapp/src/app/ReglagesModelesEmails.tsx` ligne 570 | l'interligne du champ de corps d'un modèle |
+| `pl-7` | `webapp/src/app/ReglagesNotifications.tsx` lignes 230 et 237 | l'alignement des trois mentions du §5.7 ter sous leur case |
+| `ml-7` | `webapp/src/app/ReglagesNotifications.tsx` ligne 244 | l'alignement de l'alerte de refus sous la même case |
+
+**Pourquoi elles n'existent pas.** Le §11 du design system remet à zéro les espaces de noms de
+Tailwind : l'échelle d'espacement est **close** et ne porte que `0, 1, 2, 3, 4, 6, 8, 12`. `7`
+n'en fait pas partie, et `--leading-relaxed` n'est pas déclaré — `tokens.css` ne déclare que
+`--leading-normal` et `--leading-tight`. **Une classe dont le jeton n'est pas déclaré n'est pas
+engendrée du tout, et en silence** : c'est le corollaire mesuré du §11, et la faute exacte qu'INC-158
+a déjà consignée pour `h-1.5` et `py-0.5`.
+
+**Ce que cela coûte, et ce que cela ne coûte pas.** Les trois mentions de
+`ReglagesNotifications.tsx` se rendent **collées au bord gauche** au lieu d'être alignées sous le
+libellé de leur case : le §5.7 ter demande que la mention vive « sous le champ », ce qui reste vrai
+— elle y est —, mais son alignement ne l'est pas. Aucun contraste, aucune cible interactive et
+aucune règle d'accessibilité n'est en cause. Le corps d'un modèle d'email perd son interligne
+détendu et prend celui du corps ordinaire.
+
+**Comment le défaut a survécu.** `scripts/lib/classes-css.mjs` n'est appelé que par trois harnais —
+`verify-board.sh`, `verify-formulaire.sh`, `verify-liste.sh` —, dont aucun ne porte sur ces deux
+écrans. Le contrôle est **global** par construction : il lit tout `webapp/src`. Ces trois classes
+auraient donc été dénoncées par n'importe laquelle de ces trois exécutions, et c'est la **rareté de
+leur exécution**, non un trou du contrôle, qui explique la survie. **INC-184** décrit une autre
+limite du même outil ; celle-ci n'en est pas une.
+
+**Le remède, non appliqué.** Les trois s'écrivent en valeur arbitraire assumée — `pl-[28px]`,
+`ml-[28px]`, `leading-[1.7]` — exactement comme le §5.29 l'exige d'une mesure hors de l'échelle,
+et comme la sous-tranche 2b vient de le faire pour ses propres `pl-[36px]` et `pr-[72px]`, que ce
+même contrôle a dénoncés **avant commit**. La correction touche deux écrans que la session ne
+livre pas, et dont les captures devraient être reprises et **observées** (`CLAUDE.md` §16) : elle
+appartient à `CRM-063` et à `CRM-064`, pas à celle-ci.
+
+**Ce que le responsable doit trancher** : rien. C'est un défaut à corriger, non un arbitrage — il
+est consigné pour que la session qui reprendra l'un de ces deux écrans le trouve.
 
 ### INC-230 — `liste-cards.ts` cherche en `french`, qui n'est PAS insensible aux accents
 

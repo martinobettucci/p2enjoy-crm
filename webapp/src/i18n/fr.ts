@@ -2851,6 +2851,44 @@ export const fr = {
 	'card.sequence.refusal.unknown': 'L’armement a échoué.',
 	'card.sequence.stop.refusal.stillActive':
 		'La relance n’a pas été interrompue. Vos droits ont peut-être changé depuis l’ouverture : rechargez la page.',
+
+	// --- Palette de recherche de l'en-tête — CRM-065 sous-tranche 2b ---------------------------
+	// docs/SPEC-recherche.md §14 ; docs/DESIGN_SYSTEM.md §5.46.
+	//
+	// LE LIBELLÉ DU CHAMP EST VISUELLEMENT MASQUÉ, JAMAIS RETIRÉ (§12.3) : l'icône et la place
+	// disent déjà ce qu'il est, et un libellé visible dans une ligne d'en-tête déjà dense
+	// pousserait le titre de route hors du cadre (§12.2).
+	'search.field.label': 'Rechercher dans le CRM',
+	'search.field.placeholder': 'Rechercher…',
+	'search.field.shortcut': 'Ctrl+K',
+	'search.open': 'Ouvrir la recherche',
+	'search.panel.aria': 'Résultats de la recherche',
+	// AUCUNE CLÉ « Fermer » : le panneau n'a ni barre de titre ni commande de fermeture, et c'est
+	// l'écart au §5.43 que le §5.46 motive — le champ reste rendu au-dessus de lui et EST son
+	// ancre, là où la cloche disparaîtrait derrière son propre panneau.
+	// L'ÉTAT D'ARRIVÉE N'EST PAS UN VIDE (§14.4) : la phrase dit ce que la recherche cherche,
+	// plutôt que d'annoncer une absence que personne n'a demandée.
+	'search.idle': 'Cherchez une affaire, un contact, une organisation, un commentaire ou un message.',
+	'search.loading': 'Recherche en cours',
+	'search.empty': 'Aucun résultat pour ce terme.',
+	'search.error.title': 'Recherche indisponible',
+	'search.error.body': 'La recherche n’a pas abouti.',
+	'search.error.retry': 'Réessayer',
+	// LA TRONCATURE EST ÉCRITE, jamais laissée à deviner (§14.2) — la règle du §5.43 et du §5.15.
+	'search.truncated': '{compte} résultats affichés.',
+	// LES CINQ FAMILLES SONT DES MOTS, jamais des icônes ni des teintes (§1, §9). Ce sont des
+	// libellés de PRODUIT et non des données : la base rend un discriminant technique — `affaire`,
+	// `commentaire` — que le §10 interdit de laisser atteindre l'écran.
+	'search.family.affaire': 'Affaire',
+	'search.family.contact': 'Contact',
+	'search.family.organisation': 'Organisation',
+	'search.family.commentaire': 'Commentaire',
+	'search.family.message': 'Message',
+	// UNE LIGNE SANS DESTINATION RESTE RENDUE, SANS LIEN (§13.4). La mention dit le fait, elle
+	// n'en nomme pas la cause : les trois causes possibles sont indistinguables, et les
+	// distinguer divulguerait ce que la RLS ferme.
+	'search.result.unreachable': 'Objet non atteignable',
+	'search.result.untitled': 'Sans titre',
 } as const
 
 export type CleTraduction = keyof typeof fr
