@@ -374,6 +374,18 @@ test.describe('Le refus partiel, et le clavier (§35.4, §8)', () => {
 			await page.keyboard.press('Tab')
 			await expect(page.getByRole('button', { name: COMMANDE })).toBeFocused()
 			await page.keyboard.press('Enter')
+
+			// LA LISTE EST ATTENDUE AVANT D'Y TABULER, ET CE N'EST PAS UNE TEMPORISATION — corrigé
+			// le 2026-08-27, à la cause. Ce scénario échouait EN SÉRIE et passait SEUL : mesuré
+			// deux fois, sur ce code et sur la ligne de base d'avant le §50, donc étranger à toute
+			// livraison. La cause n'est pas un aléa. Le §36.3 fait lire la liste À L'OUVERTURE du
+			// sélecteur, et le §36.4 donne à cet instant un état de CHARGEMENT sans aucune case :
+			// tabuler avant que la réponse n'arrive fait donc passer le focus au bouton de
+			// publication, ce qui est le comportement correct — il n'y a rien à focaliser. Un
+			// utilisateur réel voit la liste paraître avant d'y entrer ; le scénario fait de même,
+			// en attendant l'état PEUPLÉ qu'il s'apprête précisément à exercer.
+			await expect(page.getByRole('checkbox', { name: DRISS_NOM })).toBeVisible()
+
 			await page.keyboard.press('Tab')
 			await expect(page.getByRole('checkbox', { name: DRISS_NOM })).toBeFocused()
 			await page.keyboard.press('Space')
