@@ -10883,18 +10883,35 @@ budget appartient à un track, et l'écran qui administre le track est celui qui
       ni par son résultat : la clôture reste une décision de gestion. Le contrôle correspondant de
       `scripts/verify-budgets.sh` a été **révisé** — il exigeait que la confirmation PARLE du
       décompte, il exige désormais qu'elle le MESURE, et que les quatre états existent.
-- [ ] **CE QUI RETIENT ENCORE `CRM-084` EN `[~]`, ET CE N'EST PLUS UNE PREUVE MANQUANTE.** Le
-      décompte ci-dessus étant livré, il ne reste sous cette unité qu'un point de SPÉCIFICATION
-      ouvert — la surface de gestion des occurrences, ci-dessous, consignée à **INC-173** et en
-      attente d'arbitrage. Le trancher reviendrait à écrire une spécification à la place du
-      responsable ; passer l'unité à `[x]` en le laissant ouvert reviendrait à déclarer close une
-      unité dont une exigence n'a pas de réponse. L'unité attend donc l'arbitrage, et non du travail.
-- [ ] **AUCUNE SURFACE NE GÈRE LES OCCURRENCES, et ce n'est pas un oubli de cette tranche** : le
-      §4.1 décrit une COLONNE qui les compte, et aucun chapitre de `docs/SPEC-costs.md` ne spécifie
-      d'écran pour en ouvrir, libeller, doter ou clôturer une — alors que le §3.2 en nomme les
-      droits et que `CRM-085` exigera d'en choisir une. Le manque est consigné au registre
-      (**INC-173**) et attend l'arbitrage du responsable : le trancher ici reviendrait à inventer
-      une spécification.
+- [x] **~~CE QUI RETIENT ENCORE `CRM-084` EN `[~]` ... L'unité attend donc l'arbitrage, et non du
+      travail.~~ CADUC le 2026-08-28.** Le motif invoqué — « le trancher reviendrait à écrire une
+      spécification à la place du responsable » — citait une phrase de `docs/CloudWorker.md` §4.1
+      **retirée depuis**, et remplacée le 2026-08-27 par le §4.1 bis, qui dit l'inverse : une entrée
+      « arbitrage attendu » est un travail que personne n'a fait, et il est à la session. INC-173 est
+      donc **tranchée** (décision 539) et retirée du registre. Ce qui reste sous l'unité n'est plus
+      un arbitrage mais du CODE, décrit à la tranche 3 ci-dessous.
+- [~] **~~AUCUNE SURFACE NE GÈRE LES OCCURRENCES~~ TRANCHÉ ET SPÉCIFIÉ le 2026-08-28** —
+      `docs/SPEC-costs.md` §4.1 bis (cinq sous-chapitres, dictionnaire fermé des refus),
+      `docs/DESIGN_SYSTEM.md` §5.47, décision **539**, écrits et committés **avant la première ligne
+      de code** et fondés sur **onze mesures** relevées sur la pile seedée avec les jetons réels des
+      trois profils. **Ce que l'absence coûtait est mesuré, pas supposé** : un budget récurrent créé
+      à l'écran ne porte aucune occurrence, et le §4.7 l'écarte alors du sélecteur de la fiche
+      d'affaire — **aucune ligne de coût ne pouvait jamais lui être rattachée**. Cocher « récurrent »
+      fabriquait un budget inutilisable, et rien ne le disait.
+
+**Tranche 3 — la surface des occurrences.** Découpage écrit ici plutôt que laissé à la mémoire d'une
+session (`CLAUDE.md` §5), chaque sous-tranche livrable et prouvable seule :
+
+- **3a — l'arbitrage et la spécification.** INC-173 tranchée, `docs/SPEC-costs.md` §4.1 bis,
+  `docs/DESIGN_SYSTEM.md` §5.47, le registre et ce découpage. Commit documentaire dédié, poussé
+  avant tout code. **LIVRÉE** (décision 539).
+- **3b — le module.** `webapp/src/lib/occurrences.ts` : lecture des occurrences d'un budget, les
+  quatre écritures du §4.1 bis.3, le dictionnaire fermé de refus du §4.1 bis.4, et sa suite
+  unitaire.
+- **3c — la sous-surface et ses preuves.** Le dépliage de la cellule dans `BlocBudgetsTrack.tsx`, les
+  formulaires et la confirmation du §5.47, la suite de composant, la preuve d'API avec les jetons
+  réels des trois profils, le scénario d'interface aux quatre paliers, les captures observées, le
+  manuel et le harnais.
 - [x] **La campagne complète a été exécutée, et elle est verte** : `test:unit` **57 fichiers /
       1964 tests**, `test:sql` **48 fichiers / 2405 assertions**, `e2e:api` **801 passés**,
       `e2e:ui` **482 passés**, `e2e:mail` **42 passés**, `pytest` **244**, `typecheck`,

@@ -4218,3 +4218,63 @@ parce qu'elle porte sur le produit entier, et non sur l'utilisateur.
   mécanique de fermeture, au §5.18 sa liste plate, au §5.6 sa pilule neutre, au §5.1 son liseré, au
   §5.7 son champ et au §5.8 ses états. **Une seule icône Lucide nouvelle — `Search` —**, qui ne sert
   aucun autre objet (§9).
+
+### 5.47 Occurrences d'un budget récurrent — `CRM-084` tranche 3
+
+La sous-surface arbitrée par `docs/SPEC-costs.md` §4.1 bis (INC-173, tranchée le 2026-08-28). Ce
+qu'elle **fait** est spécifié là-bas ; les règles ci-dessous ne disent que de quoi elle a l'air.
+Elle vit **dans** le bloc des budgets d'un track (§5.13), et n'invente rien.
+
+- **Le dépliage est porté par la CELLULE qui compte les occurrences**, devenue un `button` avec
+  `aria-expanded` — patron du §5.13, où le dépliage est « un `button` portant `aria-expanded`,
+  distinct de tout autre élément interactif de la ligne ». La cellule reste alignée à droite et garde
+  la hauteur `--size-target` : le nombre ne bouge pas en devenant cliquable. Sur un budget **non
+  récurrent** elle reste un texte inerte, aucune occurrence n'y étant possible.
+
+- **Le contenu déplié est une ligne de table à part entière**, `<tr>` portant une `<td colSpan>` sous
+  la ligne du budget — jamais une surface flottante. C'est la règle du §5.13 : « les formulaires
+  vivent dans le flux du document. Aucune modale. » Une liste ancrée demanderait un piège de focus et
+  une gestion d'`Échap` qu'aucune unité n'a spécifiés.
+
+- **La liste des occurrences est une `ul` / `li`, pas un second tableau.** Le §5.9 régit un tableau de
+  données comparables ; imbriquer une table dans une cellule de table donnerait deux grilles de
+  colonnes désalignées, que l'œil lit comme un défaut de rendu. Hauteurs de ligne, séparateurs et
+  survol du §5.9 — `--size-target`, bordure basse `--color-border`, `--color-hover`, aucune zébrure.
+
+- **L'état d'une occurrence est un MOT** — « Ouverte », « Clôturée » —, jamais une teinte ni une
+  opacité seules (§1, et §5.13 pour « Archivé »). La ligne close garde la même hauteur et le même
+  contraste : une ligne grisée se lirait comme une panne d'affichage.
+
+- **Le groupe d'actions est la barre de boutons discrets compacts du §5.13**, toujours visible, avec
+  trois commandes et **trois icônes Lucide distinctes** : `Pencil` (renommer et doter), `Lock` /
+  `LockOpen` (clôturer, rouvrir) et `Trash2` (retirer). Clôturer et rouvrir sont **deux icônes**,
+  jamais la même retournée — le §5.13 a déjà tranché ce cas pour l'archivage. **Aucune icône
+  nouvelle** : les quatre servent déjà ailleurs (§9).
+
+- **Un seul élément ouvert à la fois dans le bloc**, occurrences comprises : déplier une ligne ferme
+  le formulaire de budget en cours, et ouvrir un formulaire d'occurrence ferme le précédent. C'est
+  l'union `Ouverture` du §5.13, étendue et non doublée — deux états concurrents laisseraient deux
+  formulaires ouverts sur une même ligne.
+
+- **Ouvrir un formulaire déplace le focus dans son premier champ ; le fermer le rend à la commande
+  qui l'a ouvert** (§5.13). Le retour de focus passe par un effet, jamais par le gestionnaire
+  d'annulation : au moment où celui-ci s'exécute, la commande qui a ouvert le formulaire n'existe pas
+  encore dans le document et la référence vaut `null` — défaut mesuré et corrigé à `CRM-055`
+  tranche 2 (décision 537, point 2).
+
+- **Le retrait porte une confirmation dans le flux, distincte du formulaire** (§5.13) : sa propre
+  question, son propre corps, et le nom de l'occurrence visé. La clôture et la réouverture n'en ont
+  **pas** — elles se défont d'un clic, et le §5.13 réserve la confirmation à ce qui ne se défait pas
+  ainsi.
+
+- **Le refus est une alerte `--color-danger-soft` / `--color-danger-on-soft` avec `role="alert"`,
+  placée DANS le formulaire concerné**, jamais en tête de bloc : le refus se lit près du champ qui
+  l'a causé (§5.13). Le dictionnaire est fermé, `docs/SPEC-costs.md` §4.1 bis.4.
+
+- **Les quatre états du §5.8 sont traités pour la liste elle-même** : en chargement, en erreur, la
+  liste, et **« aucune occurrence » — qui n'est pas un état vide en défaut** mais l'invitation au
+  seul geste qui vaille, la commande « Ouvrir une occurrence » restant offerte dans les quatre.
+
+- **Aucune couleur et aucun jeton nouveaux** : la sous-surface emprunte au §5.13 sa barre d'actions,
+  ses formulaires dans le flux et sa confirmation, au §5.9 ses hauteurs et ses séparateurs, au §5.7
+  ses champs et au §5.8 ses états.

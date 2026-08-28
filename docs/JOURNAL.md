@@ -26625,3 +26625,73 @@ en `[~]`, et il n'est pas du comportement.
 **Où reprendre.** `CRM-055` est livrée et prouvée, tranches 1 et 2. La prochaine unité `[~]` du
 plan portant du comportement est `CRM-057` — l'inbox globale — dont trois écarts restent nommés,
 ou `CRM-058` pour l'envoi.
+
+## décision 539 — INC-173 est tranchée : les occurrences ont enfin une surface, et la mesure la place
+
+*2026-08-28, exécution planifiée. Arbitrage rendu par la session elle-même, `docs/CloudWorker.md`
+§4.1 bis. Spécification écrite AVANT la première ligne de code (`CLAUDE.md` §5).*
+
+**LE POINT SUSPENDU, ET CE QU'IL COÛTAIT.** INC-173, consignée le 2026-08-19 par `CRM-084`
+tranche 2, tenait en une phrase : le §3.2 de `docs/SPEC-costs.md` nomme quatre gestes sur une
+occurrence — ouvrir, libeller, doter, clôturer —, le §4.1 en **compte** le résultat dans une
+colonne, et **aucun chapitre ne décrivait l'écran qui les porte**. L'entrée elle-même s'interdisait
+de trancher en citant « `docs/CloudWorker.md` §4.1 », phrase **retirée depuis** et remplacée le
+2026-08-27 par le §4.1 bis, qui dit l'inverse : une entrée « arbitrage attendu » est un travail que
+personne n'a fait, et il est à la session. Le travail est fait ici, neuf jours plus tard.
+
+**Ce n'est pas une commodité manquante, c'est un trou dans le produit.** Les deux occurrences de
+« Publicité 2026 » existent parce que le seed les pose en SQL. Un budget récurrent **créé à
+l'écran** n'en porte aucune, et le §4.7 écarte alors ce budget du sélecteur de la fiche d'affaire :
+**aucune ligne de coût ne peut jamais lui être rattachée**. À l'écran, cocher « récurrent »
+fabriquait un budget inutilisable, et rien ne le disait.
+
+**ONZE MESURES, RELEVÉES AVANT D'ÉCRIRE UNE RÈGLE**, sur la pile seedée, avec les jetons réels des
+trois profils. Les cinq qui décident :
+
+1. **M2 — le cloisonnement tient** : le business developer qui insère une occurrence reçoit
+   `403 / 42501`, la politique de la migration 50 réservant l'écriture à l'administrateur.
+2. **M3 — la lectrice LIT les deux occurrences**, son track lui étant ouvert. La sous-surface lui
+   est donc visible et en lecture seule ; la masquer mentirait sur ce que l'API rend déjà.
+3. **M5 — l'unicité du libellé n'est PAS insensible à la casse** : `  janvier 2026  ` est accepté
+   (`201`) à côté de « Janvier 2026 ». L'index porte sur `app.btrim_blancs(label)`, qui retire les
+   blancs et **ne replie pas la casse** — et c'est **exactement** la normalisation que l'index des
+   budgets applique au nom. Ce n'est donc pas un défaut de cette surface mais la règle uniforme du
+   produit : elle est **nommée** au §4.1 bis.5 plutôt que laissée à redécouvrir.
+4. **M8 — une occurrence CLOSE reste modifiable** (`200` sur `planned_amount`). Aucun trigger ne
+   s'y oppose, à la différence du rattachement d'une ligne de coût. Le produit ne rejoue donc
+   aucune garde : renommer et doter restent offerts après la clôture, ce qui s'accorde avec le
+   §4.8, où les factures arrivent après.
+5. **M9 et M11 — le retrait est DÉJÀ ouvert par la base**, et borné par elle : `DELETE` rend `204`
+   sur une occurrence sans ligne de coût, et `409 / 23503` sur « Janvier 2026 », que `card_costs`
+   référence.
+
+**CE QUI EST TRANCHÉ, ET POURQUOI CES ISSUES-LÀ.**
+
+- **L'issue n° 1 de l'entrée est retenue : une sous-surface de la table des budgets du §4.1**,
+  dépliée sous la ligne du budget récurrent, sur le patron du §5.13. C'est là que le nombre
+  d'occurrences est **déjà** rendu, et le geste le plus court part de la cellule qui les compte.
+- **L'issue n° 2 — l'écran de détail du §4.3 — est écartée** parce qu'elle **inverse l'ordre du
+  plan** : `CRM-085` dépendrait de `CRM-086`. Une dépendance créée par un choix de placement
+  d'écran est un mauvais échange.
+- **L'issue n° 3 — les occurrences hors interface — est écartée** parce qu'elle laisse la
+  récurrence définitivement inutilisable et le §4.6 à amender : c'est la perte silencieuse que le
+  §4.1 bis interdit, déguisée en limite nommée.
+- **Un CINQUIÈME geste est offert — retirer —, et ce n'est pas une extension de périmètre** : la
+  mesure 5 établit qu'il passe déjà par un `DELETE` direct. Le refuser dans l'écran n'aurait rien
+  fermé. La doctrine « un budget ne se supprime pas, il se clôture » vise ce qu'on **effacerait**,
+  et la clé étrangère protège déjà ce cas ; une occurrence ouverte par erreur, elle, ne référence
+  rien.
+- **La clôture et la réouverture n'ont AUCUNE confirmation**, le retrait en porte une : la mesure 4
+  établit qu'elles se défont d'un clic, et le §5.13 réserve la confirmation à ce qui ne se défait
+  pas ainsi.
+- **Les trois attributs facultatifs sont TOUJOURS envoyés par la modification**, y compris nuls.
+  C'est l'inverse exact du choix fait pour `p_daily_quota` au §22.1 de `SPEC-mail-subsystem.md`, et
+  pour la même raison retournée : là-bas un `coalesce` rendait l'omission irréversible, ici l'envoi
+  rend l'effacement possible.
+
+**Persisté avant tout code** : `docs/SPEC-costs.md` §4.1 bis (cinq sous-chapitres, dictionnaire
+fermé des refus), `docs/DESIGN_SYSTEM.md` §5.47, `docs/INCONSISTENCY_REPORT.md` (INC-173 retirée et
+indexée), `docs/BACKLOG.md` (`CRM-084` tranche 3 et son découpage).
+
+**Où reprendre.** La spécification est écrite et committée ; le code de la tranche 3 la suit —
+module de lecture et d'écriture, sa suite unitaire, la sous-surface, puis les preuves.

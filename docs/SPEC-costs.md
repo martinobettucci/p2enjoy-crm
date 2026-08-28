@@ -182,6 +182,139 @@ sans coût réel ; elles resteront saisissables après la clôture ». La clôtu
 c'est une décision de gestion —, mais elle n'est pas silencieuse : clôturer sans le savoir fige une
 comparaison prévisionnel/réel fausse, et personne ne le verrait ensuite.
 
+### 4.1 bis Les occurrences d'un budget récurrent — arbitrage rendu le 2026-08-28, INC-173
+
+Le §3.2 nomme depuis `CRM-000` quatre gestes — « **ouvrir, libeller, doter, clôturer** une
+occurrence » — et le §4.1 en compte le résultat dans une colonne. **Entre les deux, aucun chapitre ne
+décrivait l'écran qui les porte** : c'est INC-173, consignée le 2026-08-19 et restée sans réponse
+neuf jours. Elle est tranchée ici par la session, `docs/CloudWorker.md` §4.1 bis — la règle du
+2026-08-27 qui remplace l'interdiction que l'entrée invoquait.
+
+**Ce que l'absence coûte, et c'est mesuré, pas supposé.** Les deux occurrences de « Publicité 2026 »
+existent parce que le seed les pose en SQL. Un budget récurrent **créé à l'écran** n'en porte aucune,
+et le §4.7 écarte alors ce budget du sélecteur de la fiche d'affaire : **aucune ligne de coût ne peut
+jamais lui être rattachée**. La récurrence est donc, à l'écran, une case à cocher qui rend un budget
+inutilisable.
+
+**L'issue retenue est la n° 1 de l'entrée : une sous-surface de la table des budgets du §4.1**,
+dépliée sous la ligne du budget récurrent concerné. Trois motifs, et les deux autres issues sont
+écartées par eux :
+
+- **c'est là que le nombre d'occurrences est déjà rendu.** Ouvrir une occurrence depuis la cellule
+  qui les compte est le geste le plus court, et il ne crée aucune notion nouvelle ;
+- **l'issue n° 2 — l'écran de détail du §4.3 — inverserait l'ordre du plan** : `CRM-085` dépendrait
+  de `CRM-086`, alors que le plan pose l'inverse. Une dépendance introduite par un choix de placement
+  d'écran est un mauvais échange ;
+- **l'issue n° 3 — les occurrences hors interface — laisserait le §4.6 à amender et la récurrence
+  définitivement inutilisable.** C'est la perte silencieuse que `docs/CloudWorker.md` §4.1 bis
+  interdit, déguisée en limite nommée.
+
+#### 4.1 bis.1 Ce que la sous-surface montre
+
+La cellule « occurrences » d'un budget **récurrent** devient un `button` de dépliage portant
+`aria-expanded` (`docs/DESIGN_SYSTEM.md` §5.47). Sur un budget **non récurrent** elle reste un texte :
+le trigger de la migration 50 refuse toute occurrence sur un tel budget, et offrir la commande
+mènerait à un refus garanti.
+
+Dépliée, elle rend la liste des occurrences du budget, **de la plus récente à la plus ancienne** —
+`period_start` décroissante, `label` croissant à égalité, les périodes étant facultatives (§2.2) :
+
+| Colonne | Contenu |
+|---|---|
+| Libellé | le `label` |
+| Période | `period_start` → `period_end`, **cellule vide** si aucune n'est posée |
+| Enveloppe | `planned_amount`, **cellule vide** s'il n'y en a pas — un « 0 » y serait une décision que personne n'a prise (§4.1) |
+| État | le mot « Ouverte » ou « Clôturée », jamais une teinte seule (§1) |
+| Actions | renommer/doter, clôturer ou rouvrir, retirer |
+
+**Les occurrences clôturées ne sont pas masquées**, contrairement aux budgets du §4.1. Le motif est
+mesuré : le seed porte deux occurrences dont **une close**, et l'onglet « À saisir » du §4.8 liste
+précisément les lignes des occurrences closes — « c'est après la clôture que les factures arrivent ».
+Une liste qui cacherait par défaut la moitié de son objet ferait chercher ailleurs ce qui est là. La
+liste est courte par construction : le §2.2 interdit toute génération automatique.
+
+#### 4.1 bis.2 Les quatre gestes, et le cinquième que la mesure a imposé
+
+Les quatre gestes du §3.2 sont **ouvrir**, **libeller**, **doter** et **clôturer**. Libeller et doter
+partagent un seul formulaire — ce sont deux attributs d'une même ligne, et les séparer aurait donné
+deux commandes pour un seul aller-retour.
+
+**Un cinquième geste est offert, et il n'est pas une extension de périmètre : il est déjà ouvert par
+la base.** MESURÉ le 2026-08-28 avec le jeton réel de l'administratrice :
+
+| Envoi | Réponse mesurée |
+|---|---|
+| `DELETE` d'une occurrence sans ligne de coût | `204`, la ligne disparaît |
+| `DELETE` de « Janvier 2026 », qui porte une ligne de coût | `409` / `23503`, `card_costs_occurrence_id_fkey` |
+
+Le retrait est donc **déjà possible**, et le refuser dans l'interface n'aurait rien fermé : la
+politique de la migration 50 l'accorde à l'administratrice, et un `DELETE` direct passe. La doctrine
+du §3.2 — « un budget ne se supprime pas : il se clôture » — vise ce qu'on **effacerait** : une
+occurrence référencée par une dépense est protégée par la clé étrangère, et le produit n'a rien à
+ajouter. Une occurrence ouverte par erreur, elle, ne référence rien et n'a aucune raison de rester.
+
+**Le retrait est donc offert, sa confirmation dit ce qu'il fait, et son refus est traduit** : `23503`
+se dit « cette occurrence porte des lignes de coût : clôturez-la plutôt que de la retirer », qui
+nomme le geste de remplacement au lieu de recopier le corps du serveur.
+
+#### 4.1 bis.3 Ce que l'écriture envoie
+
+Trois appels, tous en écriture directe sur `budget_occurrences` — la migration 50 n'expose **aucune**
+fonction, et en inventer une pour ces gestes aurait posé un second chemin devant une politique qui
+suffit déjà :
+
+| Geste | Envoi |
+|---|---|
+| Ouvrir | `POST` `{ budget_id, label, period_start?, period_end?, planned_amount? }` |
+| Libeller et doter | `PATCH` `{ label, period_start, period_end, planned_amount }` |
+| Clôturer / rouvrir | `PATCH` `{ closed_at }` — l'instant courant, ou `null` |
+| Retirer | `DELETE` |
+
+**Les trois attributs facultatifs sont TOUJOURS envoyés par la modification**, y compris nuls : ils
+sont effaçables par nature (§2.2, « facultatives »), et les omettre au motif qu'ils sont vides rendrait
+une enveloppe posée par erreur ineffaçable. C'est l'inverse exact du choix du §22.1 de
+`docs/SPEC-mail-subsystem.md` pour `p_daily_quota`, et pour la même raison retournée : là-bas un
+`coalesce` rendait l'omission irréversible, ici l'envoi rend l'effacement possible.
+
+**La clôture et la réouverture n'ont pas de confirmation.** Elles sont réversibles d'un clic — c'est
+la mesure M7/M8 ci-dessous —, et le §5.13 réserve la confirmation dans le flux à ce qui ne se défait
+pas ainsi. Le retrait, lui, en porte une.
+
+#### 4.1 bis.4 Dictionnaire fermé des refus
+
+Traduits par leur code et le nom de leur contrainte, jamais par le texte du serveur
+(`docs/DESIGN_SYSTEM.md` §5.13, dernier point) :
+
+| Mesure | Code | Ce que l'écran dit |
+|---|---|---|
+| M4 — occurrence sur un budget non récurrent | `23514`, message du trigger | « ce budget n'est pas récurrent : rendez-le récurrent avant d'y ouvrir une occurrence » |
+| M10 — libellé vide | `23514`, `budget_occurrences_label_check` | « le libellé ne peut pas être vide » |
+| M5 — libellé déjà pris | `23505`, `budget_occurrences_budget_label_key` | « ce budget porte déjà une occurrence de ce libellé » |
+| M2 — appelant non administrateur | `42501` | « seul un administrateur du workspace gère les occurrences » |
+| M11 — retrait d'une occurrence référencée | `23503` | « cette occurrence porte des lignes de coût : clôturez-la plutôt que de la retirer » |
+| tout autre | — | repli nommé, sans recopier le corps du serveur |
+
+#### 4.1 bis.5 Ce que la mesure a établi, et qui ne se devine pas
+
+Relevé le 2026-08-28 sur la pile seedée, avec les jetons réels des trois profils.
+
+- **M3 — la lectrice LIT les deux occurrences** de « Publicité 2026 », son track lui étant ouvert.
+  La sous-surface lui est donc **visible et entièrement en lecture seule**, comme le §4.8 le pose
+  pour l'onglet « À saisir » : masquer la liste à qui la lit déjà par l'API mentirait sur l'écran.
+  La table des budgets ne s'affiche toutefois que dans l'administration de l'arborescence, dont
+  l'accès est déjà celui d'un administrateur ; l'état lecture seule est donc **une garantie, pas un
+  parcours** — il est figé par une preuve d'API, pas par un scénario d'écran.
+- **M8 — une occurrence CLOSE reste modifiable** : `PATCH planned_amount` sur une occurrence close
+  rend `200`. Aucun trigger ne s'y oppose, contrairement au rattachement d'une ligne de coût (§2.3).
+  Le produit ne rejoue donc **aucune** garde ici : renommer et doter restent offerts sur une
+  occurrence close, et c'est cohérent avec le §4.8, qui fait arriver des factures après la clôture.
+- **M5 — l'unicité du libellé n'est PAS insensible à la casse.** `  janvier 2026  ` a été accepté
+  à côté de « Janvier 2026 » (`201`) : l'index unique porte sur `app.btrim_blancs(label)`, qui retire
+  les blancs de tête et de queue et **ne replie pas la casse**. C'est **exactement** la normalisation
+  que l'index des budgets applique au nom (`budgets_track_name_ouvert_key`). L'écart n'est donc pas
+  une incohérence de cette surface : c'est la règle uniforme du produit, et cette section la nomme
+  plutôt que de laisser une session future la redécouvrir comme un défaut.
+
 ### 4.2 Écran de coûts du track
 
 **Histogramme, deux barres adjacentes par budget** : le **prévisionnel** — somme des
