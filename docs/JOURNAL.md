@@ -27118,3 +27118,57 @@ toujours aucun chapitre sur les objectifs (**INC-214**), et INC-237 vient s'ajou
 reste de forme. La prochaine unité se choisit en relisant le backlog dans l'ordre du plan :
 `CRM-084` (budgets, occurrences et clôture) porte encore du comportement, et **INC-183** — le seuil
 d'ancienneté d'une ligne de coût — reste l'arbitrage suivant sur ce chemin.
+
+## décision 548 — la campagne de la tranche 3, et quatre preuves révisées par l'arbitrage
+
+*2026-08-28, même exécution que les décisions 546 et 547. Consigne le bilan de fin de session.*
+
+**LA CAMPAGNE COMPLÈTE A ÉTÉ EXÉCUTÉE, ET ELLE EST VERTE.**
+
+| Preuve | Verdict |
+|---|---|
+| `npm run typecheck` / `npm run types:check` / `npm run build` | verts |
+| `npm run test:unit` | **86 fichiers, 2914 tests**, aucun échec |
+| `npm run test:sql` | **67 fichiers, 3042 assertions**, aucune anomalie |
+| `npm run e2e:api` | **1036 passés** |
+| `npm run e2e:ui` | **724 passés, AUCUN échec**, en 16,7 min |
+| `npm run e2e:mail` | **42 passés** |
+| `pytest` (`mail-sync`) | **244 passés** |
+| `scripts/verify-objectifs-canevas.sh` | **55 contrôles, aucune anomalie**, ses HUIT dégradations comprises |
+
+**LE PREMIER PASSAGE DE `e2e:ui` A RENDU QUATRE ÉCHECS, ET LES QUATRE ÉTAIENT LES MIENS.** Ils
+portaient tous le même nom : « la LECTRICE tente le geste et lit le refus ». Ces preuves FIGEAIENT
+la règle que l'arbitrage de la décision 546 vient de changer — l'écran envoyait, la base refusait,
+l'écran traduisait —, et elles renvoyaient à INC-170 comme à une question ouverte. Elles ont donc
+été **RÉVISÉES, avec leur motif écrit dans le fichier** (`docs/CloudWorker.md` §3.1), jamais
+supprimées ni contournées : elles mesurent désormais que le geste est **inatteignable** et que
+l'écran **dit pourquoi**. La règle elle-même n'est pas moins prouvée qu'avant — elle l'est HORS
+INTERFACE par `e2e/api/objectifs.spec.ts`, avec le jeton réel de la lectrice —, et la voie du
+§5.7.4 ligne d y reste éprouvée : un appelant dont la capacité vaut `true` envoie encore, et lit
+encore son refus. Second passage : **724 verts, aucun échec**.
+
+**UNE ASSERTION FAUSSE DANS MES PROPRES PREUVES, corrigée à sa cause.** « Aucune mention d'écriture »
+était écrit `toHaveCount(0)`. Or l'écran rend TOUJOURS sa région `status` et n'y met un texte que
+lorsqu'il a quelque chose à dire : une région vivante démontée puis remontée n'est pas annoncée par
+les lecteurs d'écran. L'absence de mention se mesure donc par un texte **vide**, jamais par une
+absence de nœud.
+
+**TROIS COMPTEURS FIGÉS ONT ÉCHOUÉ COMME PRÉVU, ET DEUX PORTAIENT UNE DÉRIVE ANTÉRIEURE.**
+`FICHIERS_SQL_ATTENDUS` 66 → **67**, `ASSERTIONS_ATTENDUES` 3027 → **3042**, `SCENARIOS_API`
+1032 → **1036**, `SCENARIOS_UI` 715 → **724**. Les deux exacts sont les fichiers SQL et l'API. Pour
+les deux autres, la part étrangère est MESURÉE plutôt que supposée : `objectifs.spec.ts` remis dans
+sa version du début de session, `--list` compte **717** et non 715 — deux scénarios d'écart
+antérieurs —, et les assertions pgTAP en portent **trois**. Les compteurs sont portés à la valeur
+comptée et la part antérieure est écrite à côté, jamais absorbée en silence.
+
+**CENT QUATRE-VINGT-HUIT CAPTURES D'AUTRES UNITÉS, RÉÉCRITES PAR LA CAMPAGNE, ONT ÉTÉ RESTAURÉES.**
+Les seules conservées sont celles de cette tranche : `lecture-seule-{canevas-1440, fiche-1440,
+xl-1440, lg-1152, md-900, sm-390}` et les quatre des scénarios révisés. Les deux premières ont été
+**regardées**, et c'est l'observation qui a trouvé les deux défauts de la décision 547.
+
+**Où reprendre.** Inchangé depuis la décision 547 : `CRM-084` porte encore du comportement, et
+**INC-183** reste l'arbitrage suivant sur ce chemin. `scripts/verify-harness.sh --rapide` a été
+lancé derrière ce changement et **n'a pas rendu son verdict dans la fenêtre de la session** — il
+dépasse le plafond depuis que `e2e:ui` compte plus de six cents scénarios (constat déjà porté au
+backlog par la tranche 2 g) ; ses quatre compteurs ont en revanche été révisés sur des valeurs
+COMPTÉES par `--list` et par `npm run test:sql`.
