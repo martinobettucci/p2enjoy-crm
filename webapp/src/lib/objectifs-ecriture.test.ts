@@ -60,6 +60,7 @@ import {
 	supprimerFleche,
 	tracerFleche,
 	archiverTableau,
+	desarchiverTableau,
 	classerRefusTableau,
 	creerTableau,
 	deplacerTableau,
@@ -1145,6 +1146,67 @@ describe('archiverTableau', () => {
 		expect(resultat.statut).toBe('refus')
 		if (resultat.statut !== 'refus') return
 		expect(resultat.refus.nature).toBe('interdit')
+	})
+})
+
+// @verifies CRM-083 (docs/BACKLOG.md) — tranche 2 h, la reprise d'un tableau archivé
+// @verifies docs/SPEC-goals.md §5.6.1 mesures 4, 5 et 6 ; §5.6.2 lignes g et h
+describe('desarchiverTableau', () => {
+	it('REND `archived_at` À NULL, et n’envoie rien d’autre', async () => {
+		// LA CHARGE EXACTE EST LE CONTRAT, pas seulement l'issue rendue : c'est la seule façon de
+		// voir que le geste ne touche NI la position NI le nom. La mesure 5 du §5.6.1 établit que la
+		// position est conservée par le désarchivage ; un `position: 0` glissé ici la perdrait sans
+		// qu'aucune assertion d'issue ne s'en aperçoive.
+		const { client, appel } = espion({
+			data: [
+				{ id: ID_TABLEAU, name: 'Trimestre', description: null, position: 2, archived_at: null },
+			],
+			error: null,
+			status: 200,
+		})
+		const resultat = await desarchiverTableau(client, ID_TABLEAU)
+		expect(appel.table).toBe('goal_boards')
+		expect(appel.operation).toBe('update')
+		expect(appel.charge).toEqual({ archived_at: null })
+		expect(resultat.statut).toBe('enregistree')
+	})
+
+	it('rend « sans-effet » sur zéro ligne — c’est le refus MESURÉ de la lectrice, jamais un 403', async () => {
+		// §5.6.1, mesure 4 : `goal_boards_maj_membre_ecrivant` refuse par sa clause `using`, donc
+		// PostgREST rend `200` et un corps VIDE. Attendre un `403` ici figerait un comportement que
+		// la pile ne produit pas, et la preuve serait verte sans rien prouver.
+		const { client } = espion({ data: [], error: null, status: 200 })
+		expect((await desarchiverTableau(client, ID_TABLEAU)).statut).toBe('sans-effet')
+	})
+
+	it('traduit le refus d’une politique en `interdit`', async () => {
+		const { client } = espion({
+			data: null,
+			error: { message: 'row-level security', code: CODE_INTERDIT },
+			status: 403,
+		})
+		const resultat = await desarchiverTableau(client, ID_TABLEAU)
+		expect(resultat.statut).toBe('refus')
+		if (resultat.statut !== 'refus') return
+		expect(resultat.refus.nature).toBe('interdit')
+	})
+
+	it('est l’INVERSE EXACT d’archiverTableau — même table, même opération, colonne rendue', async () => {
+		// Ce que cette assertion attrape et qu'aucune autre n'attraperait : une divergence entre les
+		// deux gestes. Si l'un passait un jour par une RPC et l'autre par un `update`, ou si l'un
+		// visait une autre table, les deux blocs ci-dessus resteraient verts séparément.
+		const pose = espion({ data: [{ id: ID_TABLEAU }], error: null, status: 200 })
+		await archiverTableau(pose.client, ID_TABLEAU, () => '2026-08-28T00:00:00.000Z')
+		const reprise = espion({ data: [{ id: ID_TABLEAU }], error: null, status: 200 })
+		await desarchiverTableau(reprise.client, ID_TABLEAU)
+
+		expect(reprise.appel.table).toBe(pose.appel.table)
+		expect(reprise.appel.operation).toBe(pose.appel.operation)
+		expect(Object.keys(reprise.appel.charge as object)).toEqual(
+			Object.keys(pose.appel.charge as object),
+		)
+		expect((pose.appel.charge as { archived_at: string | null }).archived_at).not.toBeNull()
+		expect((reprise.appel.charge as { archived_at: string | null }).archived_at).toBeNull()
 	})
 })
 

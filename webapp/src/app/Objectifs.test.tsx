@@ -49,6 +49,10 @@ const TABLEAU = {
 	name: 'Objectifs du trimestre',
 	description: 'Tableau blanc des objectifs de l’équipe.',
 	position: 1,
+	// `archived_at` FAIT PARTIE DE LA LIGNE depuis CRM-083 tranche 2 h : `COLONNES_TABLEAU` la
+	// demande, et une ligne rendue par PostgREST la porte toujours. Une fixture qui l'omettrait
+	// décrirait une réponse que le backend ne produit pas, et l'écran y lirait « archivé ».
+	archived_at: null,
 }
 
 const CHANNEL_VIVANT = {
@@ -1317,8 +1321,8 @@ function clientListe(
 	return { from: (table: string) => construire(table) } as unknown as ClientCrm
 }
 
-const TABLEAU_SECOND = { id: 'b2', name: 'Objectifs 2027', description: null, position: 2 }
-const TABLEAU_TIERS = { id: 'b3', name: 'Chantiers internes', description: null, position: 3 }
+const TABLEAU_SECOND = { id: 'b2', name: 'Objectifs 2027', description: null, position: 2, archived_at: null }
+const TABLEAU_TIERS = { id: 'b3', name: 'Chantiers internes', description: null, position: 3, archived_at: null }
 
 function rendreListe(client: ClientCrm) {
 	return render(
@@ -1362,7 +1366,7 @@ describe('administration des tableaux — §3, §5.1, DESIGN_SYSTEM §5.13', () 
 		rendreListe(
 			clientListe([TABLEAU], [], {
 				journal,
-				reponse: ok({ id: 'b9', name: 'Trimestre', description: null, position: 2 }),
+				reponse: ok({ id: 'b9', name: 'Trimestre', description: null, position: 2, archived_at: null }),
 			}),
 		)
 		fireEvent.click(await screen.findByTestId('creer-tableau'))
@@ -1401,7 +1405,7 @@ describe('administration des tableaux — §3, §5.1, DESIGN_SYSTEM §5.13', () 
 		rendreListe(
 			clientListe([TABLEAU, TABLEAU_SECOND, TABLEAU_TIERS], [], {
 				journal,
-				reponse: ok([{ id: 'b3', name: 'Chantiers internes', description: null, position: 1.5 }]),
+				reponse: ok([{ id: 'b3', name: 'Chantiers internes', description: null, position: 1.5, archived_at: null }]),
 			}),
 		)
 		await screen.findAllByTestId('tableau-objectifs')
@@ -1419,7 +1423,7 @@ describe('administration des tableaux — §3, §5.1, DESIGN_SYSTEM §5.13', () 
 		rendreListe(
 			clientListe([TABLEAU], [], {
 				journal,
-				reponse: ok([{ id: 'b1', name: 'Trimestre en cours', description: null, position: 1 }]),
+				reponse: ok([{ id: 'b1', name: 'Trimestre en cours', description: null, position: 1, archived_at: null }]),
 			}),
 		)
 		fireEvent.click((await screen.findAllByTestId('renommer-tableau'))[0] as HTMLElement)
@@ -1456,7 +1460,7 @@ describe('administration des tableaux — §3, §5.1, DESIGN_SYSTEM §5.13', () 
 		rendreListe(
 			clientListe([TABLEAU], [], {
 				journal,
-				reponse: ok([{ id: 'b1', name: TABLEAU.name, description: null, position: 1 }]),
+				reponse: ok([{ id: 'b1', name: TABLEAU.name, description: null, position: 1, archived_at: null }]),
 			}),
 		)
 		fireEvent.click((await screen.findAllByTestId('archiver-tableau'))[0] as HTMLElement)
@@ -1662,7 +1666,7 @@ describe('la mention appartient au geste qui l’a causée — SPEC-goals §5.5 
 		rendreListe(
 			clientListe([TABLEAU], [], {
 				journal,
-				reponse: ok([{ id: 'b9', name: 'Tableau neuf', description: null, position: 9 }]),
+				reponse: ok([{ id: 'b9', name: 'Tableau neuf', description: null, position: 9, archived_at: null }]),
 			}),
 		)
 		fireEvent.click(await screen.findByTestId('creer-tableau'))
@@ -1678,5 +1682,178 @@ describe('la mention appartient au geste qui l’a causée — SPEC-goals §5.5 
 		const confirmation = screen.getByTestId('confirmation-archivage-tableau')
 		expect(confirmation.textContent).not.toContain(fr['goals.board.created'])
 		expect(screen.getByTestId('mention-formulaire-tableau').textContent).toBe('')
+	})
+})
+
+// @verifies CRM-083 (docs/BACKLOG.md) — tranche 2 h, la reprise d'un tableau archivé
+// @verifies docs/SPEC-goals.md §5.6.2 lignes a à j ; docs/DESIGN_SYSTEM.md §5.3 quinquies (la case
+//           à cocher étiquetée), §5.13 (mention textuelle, jamais une teinte seule), §5.26 (aucune
+//           commande éteinte d'avance selon le rôle)
+//
+// CE BLOC ÉPROUVE LA REQUÊTE ÉMISE autant que le rendu, et c'est nécessaire : « la case relit »
+// (§5.6.2, ligne b) et « la case filtre localement » produisent EXACTEMENT le même écran sur ce
+// jeu. Seul le filtre réellement posé les distingue, et un filtre local ferait mentir le compte de
+// blocs lisibles du §5.1 dès qu'un appelant n'aurait pas les mêmes droits que l'auteur du test.
+describe('reprise d’un tableau archivé — §5.6', () => {
+	const TABLEAU_ARCHIVE = {
+		id: 'b7',
+		name: 'Objectifs 2025 (clos)',
+		description: null,
+		position: 2,
+		archived_at: '2026-01-15T09:00:00Z',
+	}
+
+	/** Un client qui JOURNALISE les filtres posés sur `goal_boards`, pour éprouver la requête émise. */
+	function clientJournalisant(
+		tableaux: readonly unknown[],
+		filtres: string[],
+		ecriture?: { reponse: Reponse; journal: Record<string, unknown>[] },
+	): ClientCrm {
+		const construire = (table: string) => {
+			const chaine: Record<string, unknown> = {}
+			const reponses: Record<string, Reponse> = {
+				workspaces: ok([{ id: 'w1', name: 'P2Enjoy', slug: 'p2enjoy' }]),
+				goal_boards: ok(tableaux),
+				goal_blocks: ok([]),
+			}
+			const lecture = reponses[table] ?? ok([])
+			for (const methode of ['select', 'eq', 'in', 'order']) {
+				chaine[methode] = () => chaine
+			}
+			chaine.is = (colonne: string, valeur: unknown) => {
+				if (table === 'goal_boards') filtres.push(`is(${colonne},${String(valeur)})`)
+				return chaine
+			}
+			for (const operation of ['insert', 'update']) {
+				chaine[operation] = (charge: Record<string, unknown>) => {
+					ecriture?.journal.push({ table, operation, ...charge })
+					const apres: Record<string, unknown> = {}
+					for (const methode of ['select', 'eq', 'is', 'in', 'order']) {
+						apres[methode] = () => apres
+					}
+					apres.single = () => Promise.resolve(ecriture?.reponse ?? ok([]))
+					apres.then = (resoudre: (valeur: Reponse) => unknown) =>
+						Promise.resolve(ecriture?.reponse ?? ok([])).then(resoudre)
+					return apres
+				}
+			}
+			chaine.maybeSingle = () => Promise.resolve(lecture)
+			chaine.single = () => Promise.resolve(lecture)
+			chaine.then = (resoudre: (valeur: Reponse) => unknown) =>
+				Promise.resolve(lecture).then(resoudre)
+			return chaine
+		}
+		return { from: (table: string) => construire(table) } as unknown as ClientCrm
+	}
+
+	it('LIGNE a — décochée par défaut, la liste POSE le filtre `archived_at is null`', async () => {
+		const filtres: string[] = []
+		rendreListe(clientJournalisant([TABLEAU], filtres))
+		await screen.findAllByTestId('tableau-objectifs')
+		expect((screen.getByTestId('afficher-archives-tableaux') as HTMLInputElement).checked).toBe(false)
+		expect(filtres).toContain('is(archived_at,null)')
+	})
+
+	it('LIGNE b — cochée, la liste RELIT SANS le filtre : elle élargit, elle ne filtre pas ici', async () => {
+		// L'assertion qui compte est la SECONDE lecture sans `is(archived_at,…)`. Une implémentation
+		// qui garderait le filtre et masquerait côté client rendrait le même écran et passerait
+		// toutes les assertions de rendu de ce bloc.
+		const filtres: string[] = []
+		rendreListe(clientJournalisant([TABLEAU, TABLEAU_ARCHIVE], filtres))
+		await screen.findAllByTestId('tableau-objectifs')
+		const avant = filtres.filter((filtre) => filtre === 'is(archived_at,null)').length
+
+		await act(async () => {
+			fireEvent.click(screen.getByTestId('afficher-archives-tableaux'))
+		})
+		await waitFor(() => expect(screen.getByTestId('tableau-objectifs-archive')).toBeTruthy())
+		expect(filtres.filter((filtre) => filtre === 'is(archived_at,null)').length).toBe(avant)
+	})
+
+	it('LIGNE c — la ligne archivée porte une mention TEXTUELLE, jamais une teinte seule', async () => {
+		const filtres: string[] = []
+		rendreListe(clientJournalisant([TABLEAU_ARCHIVE], filtres))
+		const ligne = await screen.findByTestId('tableau-objectifs-archive')
+		expect(ligne.textContent).toContain(fr['goals.board.archived.mention'])
+	})
+
+	it('LIGNE d — elle ne garde QUE « Désarchiver » : les quatre autres gestes en sont retirés', async () => {
+		// Ce n'est PAS une extinction par rôle — `docs/DESIGN_SYSTEM.md` §5.26 l'interdit neuf fois.
+		// C'est le retrait de gestes que l'ÉTAT de l'objet rend sans effet observable : renommer ou
+		// réordonner un tableau que la liste ne montre pas par défaut ne se verrait nulle part.
+		const filtres: string[] = []
+		rendreListe(clientJournalisant([TABLEAU_ARCHIVE], filtres))
+		expect(await screen.findByTestId('desarchiver-tableau')).toBeTruthy()
+		expect(screen.queryByTestId('archiver-tableau')).toBeNull()
+		expect(screen.queryByTestId('renommer-tableau')).toBeNull()
+		expect(screen.queryByTestId('monter-tableau')).toBeNull()
+		expect(screen.queryByTestId('descendre-tableau')).toBeNull()
+	})
+
+	it('LIGNE e — elle n’est PAS un lien : le canevas d’un tableau archivé est introuvable', async () => {
+		// `lireContenuTableau` filtre `archived_at is null`. Un lien mènerait donc à « tableau
+		// introuvable », c'est-à-dire à un mur que l'écran ne saurait pas nommer.
+		const filtres: string[] = []
+		rendreListe(clientJournalisant([TABLEAU_ARCHIVE], filtres))
+		await screen.findByTestId('tableau-objectifs-archive')
+		expect(screen.queryByTestId('tableau-objectifs')).toBeNull()
+	})
+
+	it('LIGNE f et g — le geste envoie `archived_at: null`, SANS confirmation et SANS toucher la position', async () => {
+		const journal: Record<string, unknown>[] = []
+		const filtres: string[] = []
+		rendreListe(
+			clientJournalisant([TABLEAU_ARCHIVE], filtres, {
+				journal,
+				reponse: ok([{ ...TABLEAU_ARCHIVE, archived_at: null }]),
+			}),
+		)
+		const commande = await screen.findByTestId('desarchiver-tableau')
+		await act(async () => {
+			fireEvent.click(commande)
+		})
+		// AUCUNE confirmation n'est ouverte : le geste part au premier clic (ligne f).
+		expect(screen.queryByTestId('confirmation-archivage-tableau')).toBeNull()
+		expect(journal).toEqual([{ table: 'goal_boards', operation: 'update', archived_at: null }])
+		await waitFor(() =>
+			expect(screen.getByTestId('mention-ecriture').textContent).toContain(
+				fr['goals.board.unarchived'],
+			),
+		)
+	})
+
+	it('LIGNE h — le refus de la lectrice est un « sans-effet », et l’écran le DIT sans corps de serveur', async () => {
+		const journal: Record<string, unknown>[] = []
+		const filtres: string[] = []
+		rendreListe(
+			clientJournalisant([TABLEAU_ARCHIVE], filtres, { journal, reponse: ok([]) }),
+		)
+		const commande = await screen.findByTestId('desarchiver-tableau')
+		await act(async () => {
+			fireEvent.click(commande)
+		})
+		await waitFor(() =>
+			expect(screen.getByTestId('mention-ecriture').textContent).toContain(
+				fr['goals.board.write.noeffect'],
+			),
+		)
+		// La ligne reste archivée : rien n'a été enregistré, et l'écran ne fait pas semblant.
+		expect(screen.getByTestId('tableau-objectifs-archive')).toBeTruthy()
+	})
+
+	it('LIGNE i — la ligne archivée rend son compte de blocs comme toute autre', async () => {
+		const filtres: string[] = []
+		rendreListe(clientJournalisant([TABLEAU_ARCHIVE], filtres))
+		const ligne = await screen.findByTestId('tableau-objectifs-archive')
+		expect(ligne.textContent).toContain(libelleCompteBlocs(0))
+	})
+
+	it('LIGNE j — la case est rendue MÊME sur une liste vide : elle est la cause possible de ce vide', async () => {
+		// Règle du §5.3 quinquies : masquer la bascule sur un écran vide priverait l'utilisateur du
+		// seul geste qui l'en sort. C'est exactement le cas où quelqu'un cherche un tableau archivé.
+		const filtres: string[] = []
+		rendreListe(clientJournalisant([], filtres))
+		expect(await screen.findByTestId('etat-vide')).toBeTruthy()
+		expect(screen.getByTestId('afficher-archives-tableaux')).toBeTruthy()
 	})
 })
