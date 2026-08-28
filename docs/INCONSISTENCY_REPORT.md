@@ -5830,3 +5830,58 @@ en lui faisant établir sa propre condition, plutôt qu'en la supposant. La voie
 un `ANALYZE public.cards` en fin de `supabase/seed/apply-seed.sh` — le seed est déjà le contrat qui
 pose l'état de départ des preuves, et des statistiques à jour y ont leur place au même titre que
 les données. **Relève de `CRM-042`**, avec le reste du travail d'INC-230.
+
+## Consigné le 2026-08-28 — un raccourci clavier qui ne prend pas dans la série complète, et prend seul
+
+### INC-235 — `inbox.spec.ts` §« LA PALETTE Y MÈNE RÉELLEMENT » échoue dans la campagne d'interface complète, jamais isolé
+
+**Ouverte le 2026-08-28 par `CRM-055` tranche 2, comportement inchangé** — constat **étranger à la
+tranche** de la session, consigné sans être corrigé au passage (`CLAUDE.md` §18,
+`docs/CloudWorker.md` §3.1).
+
+**Ce qui est mesuré**, sur la pile debout et seedée, campagne lancée SEULE et sans qu'aucune autre
+commande ne touche `webapp/dist` pendant son exécution :
+
+```
+npm run e2e:ui                       => 700 passés, 1 ÉCHEC, 23,5 min
+npm run e2e:ui -- e2e/ui/inbox.spec.ts => 10 passés, aucun échec, 23,3 s
+```
+
+L'assertion qui tombe est `e2e/ui/inbox.spec.ts:372` :
+
+```
+await page.keyboard.press('ControlOrMeta+k')
+await expect(page.getByTestId('champ-recherche')).toBeFocused()
+
+  Expected: focused
+  Received: inactive
+  14 × locator resolved to <input value="" type="search" role="combobox" …>
+```
+
+**LE CHAMP EXISTE ET N'EST JAMAIS FOCALISÉ.** Playwright le résout quatorze fois en cinq secondes :
+ce n'est donc ni un rendu manquant, ni une navigation ratée. Le raccourci `Ctrl+K` n'a pas produit
+son effet, sur `/board`, au rang **456** de la série.
+
+**Pourquoi ce constat est ÉTRANGER à la tranche 2 de `CRM-055`**, et c'est mesuré et non supposé :
+
+- l'assertion porte sur `/board` et sur le champ de la palette de recherche (`CRM-065`), deux
+  surfaces que le changement ne touche pas ;
+- le diff de la tranche porte sur `public.unclassify_message`, le pied du panneau de LECTURE d'un
+  message de l'inbox, le registre de types du fil, et des clés de traduction. Aucun gestionnaire de
+  touche global, aucun composant de `/board`, aucune route ;
+- le même fichier, joué seul, rend ses **dix** scénarios verts, celui-ci compris.
+
+**Ce que la LIGNE DE BASE du `docs/CloudWorker.md` §2.4 n'a PAS été exécutée, et pourquoi c'est dit
+plutôt que tu.** Le `git stash -u` qu'elle prescrit ne retirerait rien : le changement est
+**committé**, et sa migration `0070` est **appliquée à la base**, qu'un `stash` ne défait pas. Une
+ligne de base honnête exigerait de repartir du commit d'avant la session ET de reconstruire la
+pile, soit bien plus que le budget d'une session. Le raisonnement ci-dessus le remplace, et il est
+donné comme tel : **un raisonnement, pas une mesure de comparaison**.
+
+**Ce qui reste à établir, et ce n'est PAS un arbitrage** (§4.1 bis) : la CAUSE de la non-prise du
+raccourci au rang 456. Deux pistes, et aucune n'est tranchée ici faute d'appartenir à cette tranche —
+un gestionnaire posé sur un nœud que la navigation précédente n'a pas encore remplacé, ou une page
+qui n'a pas rendu le focus au document après un scénario voisin (INC-192 décrit un défaut de cette
+famille). C'est le **deuxième** constat du dépôt de la forme « échoue en série, passe seul » après
+INC-219, et la répétition dit que le sujet mérite d'être traité pour lui-même : **relève de
+`CRM-065`**, qui porte la palette.

@@ -26581,3 +26581,47 @@ message, donc aucune carte de libellés ne peut plus le nommer.
 lui préexiste et n'est pas du comportement : la série des `scripts/verify-*.sh` n'a pas été rejouée
 en entier derrière ce changement — le dépôt en porte plus de soixante, et seuls
 `verify-mail-classement.sh` et `verify-harness.sh` l'ont été.
+
+## décision 538 — la campagne, et une leçon de méthode qui a coûté une campagne entière
+
+*2026-08-28, même exécution que les décisions 536 et 537. Consigne le bilan de fin de session et
+un défaut de MÉTHODE, pas de produit.*
+
+**UNE CAMPAGNE D'INTERFACE A ÉTÉ JETÉE, ET C'EST MA FAUTE.** La première exécution a rendu **182
+échecs** répartis sur toute la seconde moitié de la série. Ce n'était ni une régression, ni un
+verdict : `npm run build` a été lancé **pendant** que le `vite preview` du harnais servait
+`webapp/dist`, à 05:06 pour une campagne démarrée à 04:58. Les empreintes des modules servis ont
+changé sous le navigateur, et tout ce qui a suivi est mort au chargement. Le fichier `dist` porte
+l'horodatage qui le prouve.
+
+**LA RÈGLE EST DONC PLUS LARGE QUE CELLE DE LA DÉCISION 533**, qui disait « lancer `e2e:ui` SEULE ».
+Seule ne suffit pas : **rien ne doit réécrire `webapp/dist` pendant qu'elle tourne**, `typecheck` et
+`build` compris, qui paraissent pourtant inoffensifs. La campagne a été **relancée proprement**,
+après reconstruction, sans qu'aucune autre commande ne soit exécutée.
+
+**LA CAMPAGNE, DEUXIÈME EXÉCUTION, ET C'EST CELLE QUI COMPTE.** `typecheck` et `build` verts ;
+`test:sql` **66 fichiers / 3027 assertions** ; `test:unit` **84 fichiers / 2820 tests** ;
+`e2e:api` **1023 passés** ; `e2e:mail` **42 passés** ; `pytest` **244 passés** ; `e2e:ui`
+**700 passés, 1 échec** en 23,5 min. Le harnais de l'unité, `verify-mail-classement.sh`, rend
+**55 contrôles, aucune anomalie**, ses cinq dégradations vues.
+
+**L'UNIQUE ÉCHEC EST ÉTRANGER, ET IL EST CONSIGNÉ EN INC-235.** `inbox.spec.ts` §« LA PALETTE Y
+MÈNE RÉELLEMENT » : `Ctrl+K` ne focalise pas le champ de recherche sur `/board`, au rang 456 de la
+série. **Le même fichier joué seul rend ses dix scénarios verts.** L'assertion porte sur la palette
+et sur `/board`, deux surfaces que la tranche ne touche pas. La ligne de base du §2.4 n'a **pas**
+été exécutée, et l'entrée le dit : le changement est committé et sa migration appliquée, qu'un
+`git stash` ne défait pas. C'est le **deuxième** constat « échoue en série, passe seul » du dépôt
+après INC-219, et la répétition est nommée.
+
+**LES CAPTURES DES 35 AUTRES UNITÉS, RÉÉCRITES PAR LA CAMPAGNE, ONT ÉTÉ REGARDÉES PUIS RESTAURÉES**
+— 238 fichiers ; les écarts observés sont de la donnée, pas du rendu. Celle de `CRM-055` est
+conservée : la confirmation y paraît légitimement.
+
+**Ce qui n'a PAS été exécuté, et il faut le dire** : la série des `scripts/verify-*.sh` en entier.
+Le dépôt en porte plus de soixante, chacun rejouant des suites complètes ; deux l'ont été,
+`verify-mail-classement.sh` et `verify-harness.sh`. C'est le seul écart qui retient `CRM-055`
+en `[~]`, et il n'est pas du comportement.
+
+**Où reprendre.** `CRM-055` est livrée et prouvée, tranches 1 et 2. La prochaine unité `[~]` du
+plan portant du comportement est `CRM-057` — l'inbox globale — dont trois écarts restent nommés,
+ou `CRM-058` pour l'envoi.
