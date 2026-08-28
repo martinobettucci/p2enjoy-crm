@@ -429,8 +429,15 @@ faux — est rendue **en lecture seule**, avec le motif, jamais masquée. Un tab
 silencieusement des lignes se lirait comme complet alors qu'il ne l'est pas ; c'est la même règle
 qu'au §4.4 sur les réels manquants, appliquée aux droits.
 
-**Compteur.** L'onglet porte un badge : le nombre de lignes en attente dans la portée de l'écran. Il
-est le même nombre que celui de la mention du §4.4 — s'ils divergeaient, l'un des deux mentirait.
+**Compteur.** L'onglet porte un badge : le nombre de lignes en attente dans la portée de l'écran,
+c'est-à-dire **exactement le nombre de lignes que son tableau liste**.
+
+> **RÉVISÉ LE 2026-08-28 PAR L'ARBITRAGE D'INC-182 (§4.8.3).** Ce paragraphe ajoutait : « Il est le
+> même nombre que celui de la mention du §4.4 — s'ils divergeaient, l'un des deux mentirait. »
+> **Cette exigence est RETIRÉE**, parce qu'elle est structurellement intenable : la clôture et la
+> devise séparent les deux populations (§4.8.2). Ce que la phrase voulait empêcher est tenu
+> autrement, et plus strictement — chacun des deux nombres compte exactement ce que son écran
+> montre, et la portée du badge est ÉCRITE à l'écran dès qu'il paraît (§4.8.3).
 
 **États.**
 
@@ -536,6 +543,71 @@ l'onglet LISTE**, dans la portée de l'écran. Un badge qui annoncerait un autre
 lignes rendues juste en dessous mentirait sur l'écran même où il est posé, ce qui est le défaut que
 le §4.8 cherchait à prévenir. La phrase du §4.8 garde sa raison — deux nombres qui parlent de la même
 chose ne doivent pas diverger — mais elle désigne deux nombres qui ne parlent pas de la même chose.
+
+### 4.8.3 L'arbitrage d'INC-182 — RENDU le 2026-08-28, décision 544
+
+Le §4.8.2 constatait l'écart et le laissait suspendu. Il est tranché ici, sur le mandat du
+`docs/CloudWorker.md` §4.1 bis, et la Definition of Done de `CRM-086` est révisée dans le même
+geste. **La mesure d'abord**, refaite le 2026-08-28 sur la pile seedée avec le jeton réel du
+business developer, par la vraie route REST — jamais d'après le souvenir de la mesure du 2026-08-20 :
+
+| Portée | Lignes en attente lisibles | Dont sur un budget OUVERT |
+|---|---|---|
+| Track « Studio web » (§4.2) | **2** — « Publicité » et « Impression plaquettes » | **1** — « Publicité », sur `Publicité 2026` |
+| Workspace, même appelant (§4.5) | **3** — la précédente et « Prospection terrain » | **2** |
+
+La seconde colonne est celle que les mentions du §4.4 totalisent, l'histogramme excluant les
+budgets clôturés ; la première est celle du badge. L'écart est donc **reproduit**, et il ne tient à
+aucun défaut de code. La devise en est la seconde cause, latente sur ce jeu : `Suisse romande` est
+libellé en **CHF**, de sorte qu'une ligne en attente sur ce budget rendrait un second histogramme,
+donc une **seconde** mention du §4.4, quand le badge resterait un nombre unique.
+
+**ISSUE RETENUE : la n° 1 du registre — les deux nombres n'ont jamais eu à être égaux, et le §4.8
+est révisé.** Le badge compte la portée de l'ONGLET ; la mention du §4.4 compte la portée de SON
+histogramme. Aucune migration, aucun changement de lecture, aucun filtre ajouté ou retiré : la
+décision retient le comportement livré au §4.8.2, et lui donne son texte.
+
+**CE QUE LA DÉCISION AJOUTE, ET SANS QUOI ELLE NE SERAIT QU'UNE PHRASE RAYÉE.** Deux nombres
+légitimement différents sur un même écran s'y lisent comme une erreur de calcul tant que rien ne dit
+ce que chacun compte. La règle est donc celle que le §4.5 a déjà posée pour le cumul du workspace —
+*la portée d'un nombre est écrite à l'écran* —, appliquée ici :
+
+- **le nom accessible du badge nomme sa population** : « n ligne(s) en attente de leur coût réel,
+  budgets clôturés compris, toutes devises confondues ». Un badge est un chiffre nu, et le §5.4 bis
+  du design system veut qu'un compte porte un nom accessible entier ; ce nom doit dire *ce qui est
+  compté*, pas seulement *qu'on compte* ;
+- **l'onglet « Vue d'ensemble » écrit la portée du badge sous la barre d'onglets**, dès lors que le
+  badge est rendu — donc dès que le compte est connu et non nul. C'est l'onglet qui porte les
+  mentions du §4.4 ; c'est donc là, et là seulement, que les deux nombres se rencontrent.
+
+**POURQUOI CETTE PHRASE N'EST PAS CONDITIONNÉE À UNE DIVERGENCE RÉELLE**, alors que le §4.5
+conditionne bien le titre d'un histogramme à la présence de plusieurs devises. Pour savoir si les
+deux nombres diffèrent, l'onglet devrait recalculer la population de l'histogramme — c'est-à-dire
+tenir une **seconde source** pour un nombre que la vue d'ensemble possède déjà, exactement la
+divergence que le §4.8.2 ferme. Et la condition serait fausse au premier motif d'écart ajouté : un
+track archivé au niveau du workspace en est déjà un troisième. La phrase est donc rendue avec le
+badge, toujours, dans la formulation la plus courte qui reste vraie dans les trois cas.
+
+**LES DEUX AUTRES ISSUES SONT ÉCARTÉES, ET VOICI POURQUOI.**
+
+- **Issue n° 2 — l'onglet cesserait de lister les budgets clos.** Elle contredit la raison d'être de
+  l'onglet, que le §4.8 énonce en toutes lettres : « c'est précisément après la clôture que les
+  factures arrivent, et les exclure viderait l'onglet de son usage. » Elle rendrait en outre la
+  Definition of Done de `CRM-086` inapplicable, celle-ci exigeant qu'une ligne de budget clos soit
+  présente et **saisissable**. Elle achèterait l'égalité de deux nombres au prix d'une
+  fonctionnalité.
+- **Issue n° 3 — la mention du §4.4 gagnerait « dont n sur un budget clôturé ».** Elle ne referme pas
+  l'écart, elle le déplace : une ligne clôturée n'appartient à AUCUN histogramme, et sur un écran à
+  deux devises il faudrait choisir sous lequel des deux la compter — ou la compter deux fois. Elle
+  écrirait de surcroît, sous un graphique dont le §4.2 exclut les budgets clos, un nombre qui les
+  inclut : un chiffre placé là où le lecteur ne peut pas le retrouver.
+
+**CE QUE LA PREUVE DOIT TENIR APRÈS CET ARBITRAGE**, en remplacement du point devenu impossible :
+le badge porte **exactement** le nombre de lignes que le tableau de l'onglet rend, la divergence
+avec la mention du §4.4 est **mesurée** sur le seed plutôt que supposée, et la phrase de portée est
+**présente à l'écran** là où les deux nombres se croisent. C'est plus fort que l'égalité retirée :
+une régression qui ajouterait un filtre de clôture à la lecture de l'onglet — le mimétisme que le
+§4.8.1 redoute — ferait tomber la mesure, là où l'égalité l'aurait au contraire accueillie.
 
 ## 5. Ce qui n'est pas au périmètre
 

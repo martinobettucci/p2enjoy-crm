@@ -227,6 +227,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-219 | `e2e/mail/backfill.spec.ts` §« un premier contact ne descend jamais l'historique » échoue dans la SÉRIE complète et passe SEUL. Ouverte par `CRM-063` 4a le 2026-08-25 ; **REPRODUITE À L'IDENTIQUE le même jour par la sous-tranche 4b** — `e2e:mail` rend « 1 failed, 41 passed », le scénario seul rend « 1 passed » en **5,6 s** contre 5,1 s à l'ouverture. Deux sous-tranches sans aucun chemin vers l'ingestion IMAP produisent le même échec : la cause n'est donc imputable ni à l'une ni à l'autre | 2026-08-25 | *ouverte* — cause NON établie, et « intermittent » n'est pas un diagnostic. Comportement inchangé, aucun test désactivé, aucune temporisation. Relève de `CRM-056` | 517, 518 |
 | INC-220 | `public.queue_outbound_email` (migration `0030`, `CRM-058`) garde son adresse de réponse par `where c.id = p_card_id and c.email_local_part is not null`. MESURÉ le 2026-08-25 : `cards.email_local_part` porte une contrainte **`not null`**, et une sonde qui tente de l'effacer est refusée par la base avant d'atteindre la fonction — ce prédicat ne peut JAMAIS être faux. Ce qui fait réellement tomber la garde est la concaténation `email_local_part || '@' || inbound_domain`, qui rend `NULL` quand `workspaces.inbound_domain` est nul, cette colonne-là étant nullable. La garde est **atteignable et utile** ; c'est la moitié explicite de sa condition qui est morte, et le code dit donc autre chose que ce qu'il fait | 2026-08-25 | *ouverte* — **comportement inchangé**, étranger à `CRM-063` 4b : `armer_sequence_relance` reprend la forme À L'IDENTIQUE plutôt que de faire diverger deux gardes sur le même fait. Relève de `CRM-058`. Le §12.4 bis de `docs/SPEC-modeles-emails.md` porte la mesure | 518 |
 | INC-168 | L'unicité du nom d'un tableau d'objectifs porte AUSSI sur les tableaux archivés — `goal_boards_workspace_name_key` est TOTAL, là où l'index des budgets est partiel (`where closed_at is null`). La spécification ne disait pas si les archivés comptaient, et l'entrée présentait cet écart comme l'oubli probable de l'un des deux | 2026-08-28 | `CRM-082` — issue retenue : **le comportement en place est CONFIRMÉ**, aucune migration ; la règle vit dans `docs/SPEC-goals.md` §2.1 bis et `docs/SCHEMA.md` §9 bis.1 | 542 |
+| INC-182 | Le badge de l'onglet « À saisir » ne PEUT PAS porter le même nombre que la mention du §4.4, que `docs/SPEC-costs.md` §4.8 exigeait pourtant égal : l'onglet liste les budgets **clôturés** que l'histogramme exclut, et la mention est rendue **par devise** quand un badge est un nombre unique. MESURÉ le 2026-08-20, et REMESURÉ le 2026-08-28 sur la pile seedée avec le jeton réel du business developer : **2 contre 1** sur le track « Studio web », **3 contre 2** au niveau du workspace | 2026-08-28 | `CRM-086` — issue retenue : la **n° 1**, l'égalité est RETIRÉE du §4.8 ; le badge compte la portée de l'onglet, la mention celle de son histogramme, et l'écran NOMME la portée du badge dès qu'il paraît (`docs/SPEC-costs.md` §4.8.3, `docs/DESIGN_SYSTEM.md` §5.31) | 544 |
 | INC-173 | Aucune surface ne gère les occurrences d'un budget récurrent : le §3.2 de `docs/SPEC-costs.md` nomme quatre gestes — ouvrir, libeller, doter, clôturer —, le §4.1 en COMPTE le résultat, et aucun chapitre ne décrivait l'écran qui les porte. Un budget récurrent créé à l'écran ne pouvait donc recevoir AUCUNE ligne de coût, le §4.7 l'écartant du sélecteur faute d'occurrence | 2026-08-28 | `CRM-084` tranche 3 — mise en œuvre DUE : la sous-surface de la table des budgets, `docs/SPEC-costs.md` §4.1 bis et `docs/DESIGN_SYSTEM.md` §5.47 | 539 |
 
 ---
@@ -236,14 +237,24 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 **Énumération PARTIELLE, et elle est signalée comme telle depuis le 2026-08-28 : INC-123, INC-124,
 INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-174,
-INC-182, INC-183, INC-185, INC-186, INC-188, INC-189, INC-190, INC-191, INC-192, INC-193, INC-224,
+INC-183, INC-185, INC-186, INC-188, INC-189, INC-190, INC-191, INC-192, INC-193, INC-224,
 INC-225, INC-226, INC-227, INC-228, INC-229, INC-231, INC-232, INC-233, INC-234 et
 INC-236.**
 
 > **CETTE LISTE N'EST PAS LE COMPTE DES ENTRÉES OUVERTES, ET LE CHIFFRE QUI LA PRÉCÉDAIT ÉTAIT
 > FAUX.** Mesuré le 2026-08-28 par la session `CRM-082`, en comptant les titres `### INC-…` du
 > document : **cent sept** entrées portent encore leur texte complet dans cette section, quand
-> l'énumération n'en nomme que **trente-huit**. Elle omet notamment INC-127 à INC-135, INC-142 à
+> l'énumération n'en nomme que **trente-huit**.
+>
+> *Remesuré le 2026-08-28 par la session `CRM-086`, après le retrait d'INC-182 : le document porte
+> **cent huit** titres `### INC-…` pour **cent six** entrées distinctes, et l'énumération en nomme
+> **trente-sept**. L'écart entre les deux comptes de titres n'est pas une dérive du document : deux
+> entrées, **INC-179 et INC-209**, portent chacune **deux** sections de même titre. Le constat est
+> laissé tel quel — le dédoublonner n'appartient pas à une session dont l'unité est ailleurs
+> (`docs/CloudWorker.md` §4.2) — mais il explique pourquoi « cent sept » et « cent huit » ne se
+> déduisent pas l'un de l'autre par le seul retrait d'une entrée.*
+>
+> Elle omet notamment INC-127 à INC-135, INC-142 à
 > INC-151, INC-161 à INC-172, INC-194 à INC-223 et INC-235 ; elle nomme à l'inverse INC-228 et
 > INC-229, qui n'ont plus de section. Elle omettait aussi INC-168, retirée ce jour.
 >
@@ -260,6 +271,13 @@ que la mesure 2 du §2.1 bis.1 relève sur la vraie route REST. Le budget est l'
 `docs/SCHEMA.md` §9 bis.1 ; la décision est la **542**. *L'énumération ci-dessus ne la comptait
 d'ailleurs pas — elle disait « trente-six » et n'en nommait pas INC-168, dont le texte vivait
 pourtant dans cette section ; le retrait referme aussi cet écart de comptage.* —
+**INC-182 est RETIRÉE le 2026-08-28** par la session `CRM-086`, qui l'a tranchée elle-même
+(`docs/CloudWorker.md` §4.1 bis). Issue retenue : la **n° 1** — l'égalité que le §4.8 exigeait entre
+le badge et la mention du §4.4 est **retirée**, les deux nombres ne comptant pas la même population,
+et l'écart est **nommé à l'écran** plutôt que masqué : le nom accessible du badge dit ce qu'il
+compte, et l'onglet « Vue d'ensemble » écrit la portée du badge dès qu'il paraît. Les issues 2 et 3
+sont écartées avec leur motif au §4.8.3. La règle vit dans `docs/SPEC-costs.md` §4.8 et §4.8.3 et
+dans `docs/DESIGN_SYSTEM.md` §5.31 ; la décision est la **544**. —
 **INC-173 est RETIRÉE le 2026-08-28** par la session `CRM-084` tranche 3, qui l'a tranchée
 elle-même comme `docs/CloudWorker.md` §4.1 bis l'exige depuis le 2026-08-27 — la règle qui
 **remplace** l'interdiction que l'entrée invoquait pour ne rien décider. Issue retenue : la n° 1,
@@ -3516,53 +3534,6 @@ même que la tranche livre. Ils sont consignés ici plutôt que tranchés sur pl
 poserait une règle de produit que personne n'a prise — `CLAUDE.md` §5, dernier alinéa de la
 traçabilité. Le comportement livré est celui que la spécification complétée (§4.8.1, §4.8.2) nomme,
 et il est nommé pour être révisé sans surprise dès l'arbitrage rendu.
-
-### INC-182 — le badge de l'onglet « À saisir » ne PEUT PAS porter le même nombre que la mention du §4.4
-
-`docs/SPEC-costs.md` §4.8 écrit : « L'onglet porte un badge : le nombre de lignes en attente dans la
-portée de l'écran. Il est le même nombre que celui de la mention du §4.4 — s'ils divergeaient, l'un
-des deux mentirait. » La Definition of Done de `CRM-086` reprend l'exigence mot pour mot.
-
-**Les deux nombres ne comptent pas la même population, et c'est structurel — deux causes
-indépendantes.**
-
-1. **La clôture.** Le §4.8 liste explicitement les lignes des budgets et occurrences **clôturés** —
-   « c'est précisément après la clôture que les factures arrivent, et les exclure viderait l'onglet
-   de son usage ». Le §4.2, lui, pose qu'« un budget clôturé n'y figure pas » dans l'histogramme, et
-   la mention du §4.4 est rendue **sous cet histogramme**. Une ligne sans réel sur un budget clos est
-   donc comptée par le badge et pas par la mention.
-
-2. **La devise.** La mention du §4.4 est rendue par histogramme, donc **par devise** (§4.5, « un
-   histogramme par devise présente »). Un badge d'onglet est un nombre **unique**. Sur un écran à
-   deux devises, il n'existe aucune mention unique à laquelle le badge pourrait être égal.
-
-**MESURÉ sur le seed, le 2026-08-20**, écran de coûts du track « Studio web », après que cette
-tranche a posé la ligne « Impression plaquettes » sans réel sur le budget clôturé « Salon du web
-2025 » — la ligne que la Definition of Done exige d'être « présente et **saisissable** » :
-
-| Nombre | Valeur | Population |
-|---|---|---|
-| Mention du §4.4 sous l'histogramme | **1** | budgets OUVERTS du track — « Publicité » seule |
-| Badge de l'onglet « À saisir » | **2** | + « Impression plaquettes », budget clos |
-
-La divergence n'est donc pas hypothétique : elle naît du jeu de données que la Definition of Done
-demande elle-même de poser.
-
-**Ce que la tranche fait, et pourquoi.** Le badge compte les lignes que le tableau de l'onglet
-**liste** (§4.8.2). Un badge qui annoncerait un autre nombre que celui des lignes rendues juste en
-dessous mentirait sur l'écran même où il est posé — précisément le défaut que la phrase du §4.8
-cherchait à prévenir. **Rien n'est corrigé dans la spécification hors le §4.8.2, qui nomme l'écart.**
-
-**Arbitrage attendu.** Trois issues, et le responsable tranche :
-
-1. la phrase du §4.8 et la Definition of Done sont **révisées** : le badge compte la portée de
-   l'onglet, la mention compte la portée de son histogramme, et les deux nombres n'ont jamais eu à
-   être égaux ;
-2. l'onglet **cesse** de lister les budgets clos — ce qui contredirait sa raison d'être telle que le
-   §4.8 l'écrit, et rendrait la Definition of Done inapplicable ;
-3. la **mention du §4.4** gagne un second nombre, « dont n sur un budget clôturé », de sorte que la
-   somme des deux égale le badge. C'est l'issue qui conserve les deux textes, au prix d'une phrase
-   plus longue sous chaque histogramme.
 
 ### INC-183 — le SEUIL d'ancienneté d'une ligne de coût n'existe pas, et `docs/DESIGN_SYSTEM.md` §5.31 le suppose
 

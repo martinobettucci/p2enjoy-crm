@@ -26915,3 +26915,60 @@ règle est gardée par trois assertions pgTAP, deux contrôles de catalogue et u
 L'arbitrage suivant nommé par la décision 541 reste **INC-182** (`CRM-086`, la portée du badge de
 l'onglet « À saisir »), tenable par une session comme celui-ci vient de l'être. **INC-236** est neuve
 et attend `CRM-076`.
+
+## décision 544 — INC-182 est tranchée : deux nombres qui ne comptent pas la même chose n'ont jamais eu à être égaux
+
+*2026-08-28, session planifiée ouverte à 16:10:17 UTC. Tranche INC-182, ouverte depuis le
+2026-08-20, sur le mandat du `docs/CloudWorker.md` §4.1 bis. Persistée AVANT toute ligne de code.*
+
+**LA QUESTION.** `docs/SPEC-costs.md` §4.8 exigeait que le badge de l'onglet « À saisir » porte
+« le même nombre que celui de la mention du §4.4 — s'ils divergeaient, l'un des deux mentirait ». La
+tranche 6b a mesuré que cette égalité est **structurellement fausse**, et la Definition of Done de
+`CRM-086` reprenait l'exigence mot pour mot : l'unité restait `[~]` sur un point qu'aucune livraison
+ne pouvait atteindre.
+
+**LA MESURE, REFAITE ET NON RECOPIÉE.** Pile seedée de cette session, vraie route REST, jeton réel du
+business developer :
+
+| Portée | Lignes en attente (badge) | Dont sur un budget ouvert (mention §4.4) |
+|---|---|---|
+| Track « Studio web » | **2** — « Publicité », « Impression plaquettes » | **1** |
+| Workspace, même appelant | **3** | **2** |
+
+La clôture est la cause visible ; la devise est la seconde, latente sur ce jeu — `Suisse romande` est
+libellé en **CHF**, et une ligne en attente sur ce budget rendrait un second histogramme, donc une
+**seconde** mention, quand le badge reste un nombre unique.
+
+**LA DÉCISION : issue n° 1 du registre.** L'égalité est **retirée** du §4.8. Le badge compte la
+portée de l'onglet — budgets clôturés compris, toutes devises confondues —, la mention compte la
+portée de son histogramme. Aucune migration, aucun filtre ajouté ni retiré : la décision retient le
+comportement livré au §4.8.2 et lui donne son texte (`docs/SPEC-costs.md` §4.8.3).
+
+**LE MOTIF, ET IL TIENT À CE QUE L'ÉGALITÉ AURAIT COÛTÉ UNE FONCTIONNALITÉ.** L'issue n° 2 —
+l'onglet cesserait de lister les budgets clos — achèterait la coïncidence de deux nombres au prix de
+la raison d'être de l'onglet, que le §4.8 énonce en toutes lettres : « c'est précisément après la
+clôture que les factures arrivent ». L'issue n° 3 — « dont n sur un budget clôturé » sous chaque
+histogramme — ne referme pas l'écart, elle le déplace : une ligne clôturée n'appartient à **aucun**
+histogramme, et sur un écran à deux devises il faudrait choisir sous lequel la compter.
+
+**CE QUE LA DÉCISION AJOUTE, ET SANS QUOI ELLE NE SERAIT QU'UNE PHRASE RAYÉE.** Deux nombres
+légitimement différents se lisent comme une erreur de calcul tant que rien ne dit ce que chacun
+compte — la perte silencieuse que `CLAUDE.md` §18 proscrit. La règle appliquée est celle que le §4.5
+tient déjà pour le cumul du workspace, *la portée d'un nombre est écrite à l'écran* : le nom
+accessible du badge nomme sa population, et l'onglet « Vue d'ensemble » écrit la portée du badge dès
+qu'il paraît. La phrase n'est **pas** conditionnée à une divergence observée : la mesurer
+demanderait à l'onglet de recompter la population de l'histogramme, c'est-à-dire de tenir une
+seconde source pour un même nombre — exactement la divergence que le §4.8.2 ferme.
+
+**CE QUE LA DÉCISION APPELLE EN CODE**, et qui est dû dans la même session — tranche 7, écrite au
+backlog : la clé de portée et le nom accessible du badge, la phrase rendue sous la barre d'onglets,
+ses preuves unitaires, une preuve d'interface qui MESURE la divergence sur le seed plutôt que de la
+supposer, et le contrôle du harnais qui refusait d'exiger l'égalité, remplacé par celui qui exige la
+phrase, avec sa dégradation.
+
+**UN CONSTAT DE REGISTRE, CONSIGNÉ AU PASSAGE ET NON CORRIGÉ.** Le document porte **cent huit**
+titres `### INC-…` pour **cent six** entrées distinctes : **INC-179** et **INC-209** portent chacune
+deux sections de même titre. C'est ce qui explique l'écart avec le « cent sept » mesuré par la
+décision 543. Le dédoublonnage n'appartient pas à cette session (`docs/CloudWorker.md` §4.2).
+
+**Où reprendre.** L'arbitrage et la spécification sont committés ; le code les suit.

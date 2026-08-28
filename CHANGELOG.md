@@ -13,6 +13,20 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-086` — l'onglet « À saisir » dit ce que son compteur compte
+
+- **Le badge de l'onglet « À saisir » et la mention « n lignes sans coût réel saisi » affichent deux
+  nombres différents, et l'écran l'explique désormais** au lieu de laisser l'écart passer pour une
+  erreur de calcul. Le badge compte toutes les lignes en attente de l'écran, budgets clôturés
+  compris et toutes devises confondues ; la mention ne compte que les budgets de l'histogramme
+  au-dessus d'elle, qui exclut les budgets clos et sépare les devises.
+- **Ce que cela change à l'écran** : le nom accessible du badge nomme ce qu'il compte, et une phrase
+  de portée est rendue sous la barre d'onglets dès que le badge paraît.
+- **Aucun nombre ne change, aucune ligne n'apparaît ni ne disparaît** : la lecture de l'onglet est
+  inchangée, comme la lecture des histogrammes.
+- Documentation : `docs/SPEC-costs.md` §4.8 et §4.8.3, `docs/DESIGN_SYSTEM.md` §5.31 ;
+  arbitrage rendu, **INC-182** close.
+
 ### `CRM-082` — le nom d'un tableau d'objectifs archivé reste pris, et le refus dit où le retrouver
 
 - **Rien ne change dans le comportement du produit** : un tableau archivé retenait déjà son nom, et

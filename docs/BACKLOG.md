@@ -11215,10 +11215,14 @@ et **le harnais dédié `scripts/verify-couts-ecrans.sh` existe** — 76 contrô
 La preuve d'écran de la clôture qui avertit et **compte** (§4.1) est livrée avec, dans
 `e2e/ui/budgets.spec.ts`.
 
-Il ne reste **qu'une** chose, et **aucune session ne peut la lever** : **l'arbitrage d'INC-182**,
-qui décide ce que le badge doit annoncer. Tant qu'il n'est pas rendu, le premier point de la
-Definition of Done ci-dessous est **inatteignable**, et ce n'est pas un défaut de livraison.
-`CRM-086` reste donc `[~]`.
+~~Il ne reste **qu'une** chose, et **aucune session ne peut la lever** : **l'arbitrage d'INC-182**,
+qui décide ce que le badge doit annoncer.~~ **RÉVISÉ LE 2026-08-28, décision 544.** La phrase
+ci-dessus était fausse depuis le 2026-08-27 : le `docs/CloudWorker.md` §4.1 bis retire l'idée qu'une
+entrée « en attente d'arbitrage » soit un mur, et fait de l'arbitrage le travail de la session.
+**INC-182 est TRANCHÉE** — issue n° 1, l'égalité entre le badge et la mention du §4.4 est retirée du
+§4.8, chacun des deux nombres compte exactement ce que son écran montre, et la portée du badge est
+**écrite à l'écran** (`docs/SPEC-costs.md` §4.8.3). La Definition of Done ci-dessous est révisée sur
+ce point, et la **tranche 7** ci-après porte la surface et les preuves que l'arbitrage appelle.
 
 **DoD** : E2E des trois écrans ; captures aux quatre paliers ; **la mention « n lignes sans coût
 réel saisi » est prouvée présente** quand des réels manquent, et absente sinon — c'est la principale
@@ -11321,11 +11325,15 @@ seul endroit du produit où deux liens de navigation ne se distinguent pas par l
       rechargement, donc réellement en base ; une ligne d'un budget **clôturé** est présente et
       **saisissable** ; une ligne lisible mais non écrivable est **désactivée avec son motif**,
       jamais masquée ; l'état « tous les coûts réels sont saisis » est capturé.
-      **UN POINT DE CETTE LIGNE RESTE HORS D'ATTEINTE, ET IL EST NOMMÉ** : « le badge porte le même
-      nombre que la mention du §4.4 » est structurellement faux — la clôture et la devise séparent
-      les deux populations —, l'écart est consigné à **INC-182** et le comportement livré est celui
-      du §4.8.2 : le badge compte ce que le tableau LISTE. C'est mesuré à l'écran, 2 contre 1 sur le
-      seed. Ce point tombera par arbitrage, jamais par livraison.
+      ~~**UN POINT DE CETTE LIGNE RESTE HORS D'ATTEINTE, ET IL EST NOMMÉ** : « le badge porte le
+      même nombre que la mention du §4.4 » est structurellement faux~~ — **TRANCHÉ LE 2026-08-28,
+      décision 544, INC-182 close.** L'exigence d'égalité est **retirée** du §4.8 : elle demandait à
+      deux nombres qui comptent deux populations de coïncider. Elle est **remplacée** par une
+      exigence plus forte, portée par la tranche 7 : le badge porte **exactement** le nombre de
+      lignes que le tableau rend, la divergence avec la mention du §4.4 est **mesurée** sur le seed
+      — 2 contre 1 sur « Studio web », 3 contre 2 au workspace, remesuré le 2026-08-28 avec le jeton
+      réel du business developer — et la **portée du badge est écrite à l'écran** là où les deux
+      nombres se croisent.
 - [x] **La mise à jour d'`actual_cost` sur un budget clos est prouvée en pgTAP**, avec sa
       contre-épreuve : le changement de `budget_id` ou d'`occurrence_id` sur ce même budget clos
       reste **refusé**. C'est la frontière exacte posée par le §2.3, et elle ne se devine pas.
@@ -11351,6 +11359,24 @@ seul endroit du produit où deux liens de navigation ne se distinguent pas par l
       Le scénario voisin clôture un budget qu'il vient de créer, donc SANS ligne de coût, et lit la
       phrase du cas NUL — l'autre cas, le seul où l'avertissement a un objet, n'était exercé nulle
       part.
+
+**Tranche 7 — la portée du badge, écrite à l'écran — POSÉE AVANT LE CODE, décision 544.**
+L'arbitrage d'INC-182 ne se solde pas par une phrase rayée : il appelle une surface, sans laquelle
+deux nombres légitimement différents continueraient de se lire comme une erreur de calcul. Ce que la
+tranche livre, et rien de plus :
+
+- `webapp/src/i18n/fr.ts` — le nom accessible du badge NOMME sa population (« budgets clôturés
+  compris, toutes devises confondues ») et une clé neuve porte la phrase de portée ;
+- `webapp/src/app/CoutsASaisir.tsx` — la phrase de portée, rendue sous la barre d'onglets, sur le
+  seul onglet « Vue d'ensemble », **dès que le badge paraît** : c'est cet onglet qui porte les
+  mentions du §4.4, donc le seul endroit où les deux nombres se rencontrent ;
+- `CoutsASaisir.test.tsx` — la phrase présente avec le badge, absente sans lui, absente sur l'onglet
+  « À saisir », et le nom accessible du badge ;
+- `e2e/ui/couts-a-saisir.spec.ts` — la preuve que l'égalité retirée ne pouvait pas porter : sur la
+  pile seedée, badge **2** et mention **1** sur le même écran, badge égal au **compte des lignes
+  rendues** par le tableau, et phrase de portée lue à l'écran ;
+- `scripts/verify-couts-ecrans.sh` — le contrôle qui refusait d'exiger l'égalité est remplacé par
+  celui qui exige la phrase de portée, avec sa **dégradation**.
 
 - [x] **Ne jamais rendre un total qui inclurait un budget interdit.** Le cumul se calcule sur les
       lignes que la RLS consent, jamais avec la clé de service : un total juste au centime près qui

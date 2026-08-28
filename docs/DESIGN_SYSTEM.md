@@ -2381,6 +2381,20 @@ quatre corrigent ce que la rédaction d'avant-code supposait.
   du champ qu'elle concerne, et la rejeter hors de la ligne ferait chercher à quelle ligne elle
   appartient. Les 44 px restent la hauteur d'une ligne **au repos**, cellules alignées en haut.
 
+- **LE BADGE DIT CE QU'IL COMPTE, ET L'ONGLET « Vue d'ensemble » ÉCRIT SA PORTÉE — ajouté le
+  2026-08-28 par l'arbitrage d'INC-182** (`docs/SPEC-costs.md` §4.8.3). Le badge et la mention
+  « n lignes sans coût réel saisi » du §4.4 comptent deux populations différentes — la première
+  inclut les budgets clôturés et confond les devises, la seconde est rendue sous un histogramme qui
+  exclut les uns et sépare les autres. Deux nombres différents sur un même écran se lisent comme une
+  erreur de calcul tant que rien ne dit ce que chacun compte. Donc : le **nom accessible** du badge
+  nomme sa population entière — « n ligne(s) en attente de leur coût réel, budgets clôturés compris,
+  toutes devises confondues » —, et une phrase de portée en 13 px `--color-text-2` est rendue **sous
+  la barre d'onglets**, sur le seul onglet « Vue d'ensemble », **dès que le badge paraît**. C'est la
+  règle du §5.33 pour le cumul du workspace — *la portée d'un nombre est écrite à l'écran* —,
+  appliquée à un compte plutôt qu'à un total. Elle n'est **pas** conditionnée à une divergence
+  observée : la mesurer demanderait à l'onglet de recompter la population de l'histogramme, donc de
+  tenir une seconde source pour un même nombre.
+
 - **La tabulation traverse UNE cible par ligne, et non aucune.** Ce paragraphe écrivait que « la
   tabulation ne quitte pas la colonne de saisie tant qu'il reste des lignes » ; la colonne
   « Affaire » porte un **lien**, seule autre cible de la ligne, et l'ôter du parcours de tabulation
