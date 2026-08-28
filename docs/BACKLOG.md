@@ -10687,19 +10687,49 @@ la 2b-1 l'ont été : **2b-2a livre le LIEN**, 2b-2b livrera les **flèches** et
       d'une **capacité que la base consent**, et `public.reel_saisissable(card_costs)` le sert en
       production depuis `CRM-086`. Le §5.4 est révisé sur son seul déclencheur ; la règle générale
       n'est **pas** amendée.
-- [ ] **Migration 71** `supabase/migrations/0071_objectifs_ecriture_permise.sql` :
+- [x] **Migration 71** `supabase/migrations/0071_objectifs_ecriture_permise.sql` :
       `public.ecriture_permise(public.goal_boards)`, `stable`, **`security invoker`**, corps
       `select app.can_write_goal_board(tableau.id)`, `revoke` puis `grant` nominatifs à `anon`,
       `authenticated` et `service_role`, et `notify pgrst, 'reload schema'`. Aucune table, aucune
       politique, aucun droit élargi.
-- [ ] **Les sept lignes du contrat du §5.7.4 rendues** : mention de lecture seule, commandes
+- [x] **Les sept lignes du contrat du §5.7.4 rendues** : mention de lecture seule, commandes
       désactivées ET lisibles, fiche ouverte aux champs désactivés, la valeur absente ou nulle
       traitée comme un refus, le refus traduit **quand même** lorsque la capacité vaut `true`
       (mesure D), la lecture et l'équivalent textuel inchangés, la liste des tableaux inchangée.
-- [ ] **Preuves de la tranche** : pgTAP dédié (la fonction est `invoker`, rend `f` à la lectrice et
-      `t` aux deux autres, `anon` l'exécute sans erreur de privilège), unitaires du module et du
-      composant, `e2e/api/objectifs.spec.ts` avec les trois jetons réels, `e2e/ui/objectifs.spec.ts`
-      avec celui de la lectrice, captures produites ET observées, console vierge.
+- [x] **Preuves de la tranche, TOUTES EXÉCUTÉES ET VERTES** :
+      `supabase/tests/0067_objectifs_ecriture_permise.test.sql` **12 assertions** — la suite passe de
+      66 à **67 fichiers / 3042 assertions** ; `webapp/src/lib/objectifs.test.ts` **+6 scénarios** ;
+      `webapp/src/app/Objectifs.test.tsx` **+10 scénarios**, la paire rendant **128 verts** ;
+      `e2e/api/objectifs.spec.ts` **+4 scénarios**, **22 passés** ; `e2e/ui/objectifs.spec.ts`
+      **+7 scénarios**, **11 passés** avec le jeton réel de la lectrice, console vierge.
+- [x] **NON COMPLAISANTES, ÉPROUVÉES PAR QUATRE DÉGRADATIONS RÉELLES**, chacune sur une règle
+      distincte. (1) La fonction passée en `security definer` en base fait rougir l'assertion pgTAP
+      de sa forme — ET le contrôle transverse du dépôt sur le `search_path` des fonctions
+      `definer` ; (2) `ecritureConsentie` relâchée en `!== false` fait rougir **cinq** scénarios, dont
+      celui du canevas ; (3) la commande de pose masquée au lieu d'être éteinte en fait rougir deux ;
+      (4) `Entrée` éteinte comme `Espace` en fait rougir un — c'est la seule assertion qui SÉPARE les
+      deux touches. Restauration vérifiée verte après chacune.
+- [x] **DEUX DÉFAUTS TROUVÉS EN REGARDANT LES CAPTURES, ET AUCUN PAR UNE ASSERTION**
+      (`CLAUDE.md` §16). (1) **La poignée de redimensionnement restait DESSINÉE**, avec son curseur
+      `se-resize` : le garde d'`armer` la rendait inopérante, mais elle promettait un geste que rien
+      n'exécute — la commande morte du §5.21. Elle n'est plus rendue, et le §5.29 ter du design
+      system écrit la frontière en règle réemployable : *ce qui ENSEIGNE un geste reste rendu et
+      éteint ; ce qui ne fait que l'OFFRIR à la souris disparaît.* (2) **La fiche d'un bloc ne disait
+      pas pourquoi ses champs étaient gris** : la mention vit au-dessus du canevas, la fiche vit
+      dessous, et sur un tableau haut elle est hors de vue. La consigne d'édition est REMPLACÉE par
+      la sienne — « chaque champ s'enregistre » y serait faux. Les deux portent leur assertion.
+- [x] **Témoin de types RÉVISÉ dans le même changement**, jamais retiré (mécanisme de la décision
+      51) : `database.types.test-d.ts` compte **quarante-huit** fonctions au lieu de quarante-sept,
+      et la signature de la colonne calculée y est éprouvée comme celle de sa jumelle
+      `reel_saisissable`. Les types générés sont régénérés dans le même commit, et leur diff ne
+      porte QUE la fonction neuve — quatre lignes.
+- [ ] **INC-237 CONSIGNÉE, comportement inchangé** : les captures du palier `sm-390` sont prises sur
+      une page **décalée** — le titre y est amputé de huit pixels —, parce que la boucle de paliers
+      navigue à 1440 px puis redimensionne, laissant le tiroir dans l'état de la largeur précédente.
+      **Défaut préexistant et étranger** : la même amputation est présente sur
+      `canevas-sm-390.jpg`, produite par la tranche 1. Aucune assertion ne le voit — le débordement
+      ET le défilement résiduel sont conformes, et la tranche 3 a ajouté la seconde mesure. La
+      corriger réécrirait les **soixante-six** captures `sm-390` d'une dizaine d'unités.
 
 **CE QUI RESTE — LE HARNAIS.**
 - [x] **Refus du `viewer` mesuré HORS interface**, exigé par la DoD. `e2e/api/objectifs.spec.ts`
