@@ -6774,9 +6774,21 @@ désactivée et documentée comme telle.
       être classé. Prouvée en base — pgTAP `0044` (21), API `classement.spec.ts` (5),
       `verify-mail-classement.sh` (25, la garde de désactivation révisée en preuve de la règle
       active). La **preuve visible** de la suggestion attend l'écran de l'inbox (`CRM-057`).
-- [ ] **Aucun écran** (`CRM-057`), et **aucun déclassement** : rien dans le §4.4 ne le décrit, et
-      l'inventer obligerait à décider ce que devient l'événement déjà écrit — une question qui
-      appartient à l'unité livrant l'écran.
+- [x] **~~Aucun écran~~** (`CRM-057`) — **livré le 2026-08-11**, et la suggestion de la règle 3 est
+      montrée depuis le 2026-08-20 (`CRM-060` sous-tranche 2 bis).
+- [~] **TRANCHE 2 — LE DÉCLASSEMENT. ARBITRÉ ET SPÉCIFIÉ le 2026-08-28**
+      (`docs/JOURNAL.md` décision 536, `docs/SPEC-mail-subsystem.md` §16.5), après **trois mesures**
+      sur la pile seedée. *~~Aucun déclassement : rien dans le §4.4 ne le décrit, et l'inventer
+      obligerait à décider ce que devient l'événement déjà écrit — une question qui appartient à
+      l'unité livrant l'écran.~~ Le renvoi est **caduc** : cette unité est `CRM-057`, livrée depuis
+      dix-sept jours sans avoir tranché ; l'écart n'était imputable à personne.*
+      **DoD de la tranche** : `unclassify_message` livrée avec ses cinq lignes de contrat (§16.5.2) ;
+      le `mail_received` déjà écrit **conservé** et un `mail_unclassified` écrit sur la card quittée ;
+      `suggested_card_id` inchangé ; pgTAP dédiée ; preuve d'API mesurant le refus de la `viewer`
+      avec son jeton réel ET la perte de visibilité du `bizdev` relue derrière le geste ; surface du
+      §16.5.5 avec sa confirmation ; E2E d'interface, console vierge ; captures observées ;
+      `docs/SCHEMA.md`, `docs/manual.md`, `CHANGELOG.md`, `docs/PROD_MIGRATIONS.md` dans le même
+      changement.
 
 *DoD adaptée, écarts explicites.* La Definition of Done demandait « pytest par règle ; E2E de
 classement manuel ; si `CRM-060` n'est pas livré, règle 3 désactivée et documentée comme telle ».

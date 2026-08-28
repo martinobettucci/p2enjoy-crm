@@ -26481,3 +26481,53 @@ trancher — et le §4.1 bis dit que c'est un travail, pas un mur), INC-214 (`do
 AUCUN chapitre sur les objectifs depuis la livraison de l'écran), et la série des soixante-dix-sept
 `verify-*.sh` non rejouée en entier — `verify-harness.sh --rapide` a été lancé mais n'avait pas
 rendu son bilan dans le budget de la session.
+
+## décision 536 — déclasser un message : l'arbitrage est rendu, et une mesure le décide
+
+*2026-08-28, exécution planifiée. Arbitrage rendu par la session elle-même, `docs/CloudWorker.md`
+§4.1 bis. Spécification écrite AVANT la première ligne de code (`CLAUDE.md` §5).*
+
+**LE POINT SUSPENDU, ET DEPUIS QUAND.** `docs/SPEC-mail-subsystem.md` §16.3 écrivait « Déclasser
+n'est pas prévu », et renvoyait la question — « ce que devient l'événement de timeline déjà écrit »
+— « à l'unité qui livrera l'écran ». Cette unité est `CRM-057`, **livrée le 2026-08-11**, et elle
+n'a pas tranché : son backlog nomme trois écarts, dont aucun n'est celui-ci. L'écart est donc resté
+imputable à personne pendant dix-sept jours. Le §4.1 bis dit qu'une telle entrée est un travail, pas
+un mur ; il est fait ici.
+
+**TROIS MESURES, RELEVÉES AVANT D'ÉCRIRE UNE RÈGLE**, sur la pile seedée.
+
+1. `app.peut_voir_message` (migration `0028`) rend vrai par DEUX chemins : lire la card du message,
+   ou voir la boîte où il est arrivé.
+2. Endossés tour à tour sur le message classé `Demande de devis — refonte` : l'`admin` voit la card
+   ET la boîte ; le `bizdev` écrit la card mais **ne voit pas la boîte** ; la `viewer` ne voit rien.
+   **Conséquence mesurée, et c'est elle qui décide** : si le `bizdev` déclasse, le message
+   **disparaît de sa vue** et il ne peut plus le reclasser.
+3. `card_events_type_check` porte déjà **dix-huit** types, dont `contact_linked` ET
+   `contact_unlinked` : écrire un événement quand un rattachement est défait est un précédent du
+   produit, pas une invention.
+
+**CE QUI EST TRANCHÉ, ET POURQUOI CES ISSUES-LÀ.**
+
+- **Les droits du déclassement sont EXACTEMENT ceux du classement** — voir le message et écrire la
+  card —, évalués avant le geste. *On ne retire que ce qu'on aurait pu poser.* L'issue écartée
+  était d'exiger en plus de voir la boîte, pour qu'aucun appelant ne perde de vue ce qu'il déclasse :
+  elle interdit au `bizdev` de **défaire son propre geste** (mesure 2), et un geste qu'on ne peut pas
+  défaire est pire que le geste lui-même.
+- **L'historique n'est pas réécrit** : le `mail_received` déjà écrit est conservé — le courrier EST
+  arrivé dans cette card, et `card_events` n'accorde aucune écriture de correction, `service_role`
+  compris (`CRM-044`).
+- **Le départ s'écrit tout de même**, par un dix-neuvième type `mail_unclassified`. L'issue écartée
+  — ne rien écrire — laisserait la timeline dire « courrier reçu » en désignant un message qui n'y
+  est plus : la **perte silencieuse** que le §4.1 bis interdit.
+- **La suggestion n'est pas ressuscitée** : `suggested_card_id` n'est pas recalculé. La règle 3 est
+  un constat de la relève, jamais d'un geste humain ; la rejouer ferait réapparaître une proposition
+  automatique derrière une décision explicite de l'utilisateur.
+- **La perte de visibilité de la mesure 2 n'est PAS un refus** : c'est une conséquence, et elle se
+  **dit** à l'écran avant le geste. L'inscrire en refus dans la base ferait passer une décision
+  d'écran pour une décision de base (`CLAUDE.md` §10).
+
+**Persisté avant tout code** : `docs/SPEC-mail-subsystem.md` §16.5 (six sous-chapitres, contrat
+opposable de cinq lignes), §16.3 révisé et non effacé, `docs/BACKLOG.md` (`CRM-055` tranche 2).
+
+**Où reprendre.** La spécification est écrite et committée ; le code de la tranche 2 la suit —
+migration, pgTAP, preuve d'API, puis la surface du §16.5.5.

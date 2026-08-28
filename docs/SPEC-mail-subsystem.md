@@ -1171,9 +1171,15 @@ c'est un état, pas une erreur.
 - elle est **idempotente** : reclasser un message dans la même card ne produit pas un second
   événement. Un utilisateur qui clique deux fois ne raconte pas deux histoires.
 
-**Déclasser n'est pas prévu**, et l'absence est nommée : rien dans le §4.4 ne le décrit, et
+**~~Déclasser n'est pas prévu~~, et l'absence est nommée** : rien dans le §4.4 ne le décrit, et
 l'inventer ici obligerait à décider ce que devient l'événement de timeline déjà écrit — une
-question qui appartient à l'unité qui livrera l'écran.
+question qui appartient à l'unité qui livrera l'écran. **RÉVISÉ le 2026-08-28, et le renvoi est
+caduc** : l'écran est livré depuis `CRM-057`, le 2026-08-11, et il n'a pas tranché la question ;
+l'écart est donc resté imputable à personne pendant dix-sept jours. Le déclassement est
+**spécifié au §16.5 et livré par la tranche 2 de cette unité** — la question laissée ouverte, « ce
+que devient l'événement de timeline déjà écrit », y reçoit sa réponse mesurée
+(`docs/JOURNAL.md` décision 536). Ce paragraphe est conservé plutôt qu'effacé : il dit pourquoi
+l'absence a duré.
 
 ### 16.4 Preuves exigées
 
@@ -1184,6 +1190,120 @@ question qui appartient à l'unité qui livrera l'écran.
 | API | `classify_message` refusée sans droit d'écriture ; le message classé devient lisible par qui lit la card |
 | E2E `mail` | Un email **réellement envoyé à l'adresse d'une card** est ingéré puis classé **automatiquement** ; un second, adressé à personne, reste non classé et est classé **à la main** |
 | Harnais | `scripts/verify-mail-classement.sh`, non complaisant, avec son témoin |
+
+### 16.5 Le déclassement d'un message — `CRM-055` tranche 2
+
+*Écrit le 2026-08-28, **après mesure sur la pile réelle** et avant la première ligne de code
+(`CLAUDE.md` §5). L'arbitrage et ses motifs sont au `docs/JOURNAL.md`, décision 536 ; il est rendu
+par la session elle-même en application du `docs/CloudWorker.md` §4.1 bis.*
+
+#### 16.5.1 Les trois mesures qui fondent le contrat
+
+Rien de ce chapitre n'est déduit d'un souvenir. Les trois mesures ci-dessous sont relevées sur la
+pile de développement seedée, le 2026-08-28.
+
+**Mesure 1 — un message classé est visible par DEUX chemins, et ils ne se valent pas.**
+`app.peut_voir_message` (migration `0028`) rend vrai si l'appelant lit la card du message **ou**
+s'il voit la boîte où le message est arrivé. Endossés tour à tour, les trois profils du seed
+rendent, sur le message classé `Demande de devis — refonte` et sa card `…0c1` :
+
+| Profil | `can_write_card` | `boite_du_message_lisible` | `peut_voir_message` |
+|---|---|---|---|
+| `admin@p2enjoy.test` | vrai | **vrai** | vrai |
+| `bizdev@p2enjoy.test` | vrai | **faux** | vrai |
+| `viewer@p2enjoy.test` | faux | faux | faux |
+
+**Mesure 2 — déclasser peut rendre le message invisible à qui vient de le déclasser.** La ligne du
+`bizdev` est la mesure qui décide ce chapitre : Driss voit ce message **par la card seule**. Le
+`card_id` remis à nul, `peut_voir_message` devient faux pour lui, et il ne peut ni le relire ni le
+reclasser. Ce n'est pas une hypothèse : c'est la lecture directe des deux fonctions ci-dessus.
+
+**Mesure 3 — le vocabulaire de la timeline porte déjà le précédent exact.**
+`card_events_type_check` énumère **dix-huit** types, dont `contact_linked` et `contact_unlinked` :
+le produit écrit déjà un événement quand un rattachement est **défait**. Le déclassement d'un
+message est le même geste sur un autre objet, et il n'appelle donc aucune règle nouvelle.
+
+#### 16.5.2 Contrat opposable de `unclassify_message`
+
+`unclassify_message(p_message_id uuid) returns uuid` — `SECURITY DEFINER`, `search_path = ''`,
+exécutable par `authenticated` et `service_role`, refusée à `public` et `anon`. Elle rend
+**l'identifiant de la card quittée**, ou `null` si le message n'était pas classé.
+
+| # | Règle | Refus |
+|---|---|---|
+| a | Appelant anonyme | `not_authenticated`, `42501` |
+| b | Message inconnu | `message_not_found`, `P0002` |
+| c | L'appelant ne **voit** pas le message | `forbidden`, `42501` |
+| d | L'appelant ne peut pas **écrire** la card où le message est classé | `forbidden`, `42501` |
+| e | Le message n'est **pas** classé | aucun refus : rend `null`, n'écrit rien |
+
+**Les deux droits sont ceux du classement, et pas d'autres.** `classify_message` exige de voir le
+message **et** d'écrire la card ; `unclassify_message` exige exactement les mêmes, évalués
+**avant** le geste. La symétrie est le contrat : *on ne retire que ce qu'on aurait pu poser*. Exiger
+en plus de voir la BOÎTE aurait interdit au `bizdev` de défaire son propre geste (mesure 1), et un
+geste qu'on ne peut pas défaire est pire que le geste lui-même.
+
+**Ce que l'écriture fait, et c'est l'exact inverse du classement :** `card_id` à nul,
+`classification` à `'unclassified'`, `classified_by` à nul, `classified_at` à nul, et les
+`mail_attachments` du message repassent à `card_id` nul. Rien d'autre n'est touché.
+
+**Idempotente** (ligne e) : déclasser un message déjà non classé ne produit **aucun** événement et
+rend `null`. Un utilisateur qui clique deux fois ne raconte pas deux histoires — c'est la règle que
+le §16.3 pose déjà pour le classement.
+
+#### 16.5.3 L'historique n'est pas réécrit, et le départ s'écrit
+
+C'est la question que le §16.3 laissait ouverte, et voici la réponse.
+
+**Le `card_event` `mail_received` déjà écrit est CONSERVÉ.** Le courrier *est* arrivé dans cette
+card : l'effacer réécrirait une histoire vraie, et `card_events` n'accorde d'ailleurs aucune
+écriture de correction, `service_role` compris (`CRM-044`, mesuré par `CRM-055`).
+
+**Un DIX-NEUVIÈME type est ajouté, `mail_unclassified`**, écrit sur la card
+quittée avec `{message_id, subject}`. Sans lui, la timeline garderait « courrier reçu » pointant
+vers un message qui n'y est plus : une **perte silencieuse**, que le §4.1 bis du
+`docs/CloudWorker.md` interdit en toutes lettres. Il rejoint la famille **discussion**, comme
+`mail_received`, pour la même raison : un message est une parole, et son départ aussi.
+
+**Les assertions qui figent le vocabulaire sont RÉVISÉES, jamais retirées** — mécanisme de la
+décision 51. Elles passent de dix-huit à **dix-neuf** types, et le fichier dit pourquoi.
+
+#### 16.5.4 Ce que ce chapitre ne fait pas, et les motifs
+
+- **La suggestion n'est pas ressuscitée.** `suggested_card_id` n'est pas recalculé au déclassement.
+  La règle 3 (§16.2) est un **constat de la relève**, jamais d'un geste humain : la rejouer ici
+  ferait réapparaître une proposition automatique derrière une décision explicite de l'utilisateur.
+  La colonne garde donc la valeur que la relève y avait posée, ou reste nulle.
+- **Aucun classement automatique ne se rejoue.** Un message déclassé reste non classé jusqu'à ce
+  qu'un humain en décide autrement ; la chaîne du §4.4 ne s'applique qu'à l'ingestion.
+- **Aucune politique n'est ouverte, aucune table n'est créée.** Tout le contrat de lecture existe
+  depuis `CRM-054` et `CRM-057` ; cette tranche n'ajoute qu'une fonction et un type d'événement.
+- **La conséquence de la mesure 2 n'est pas un refus, c'est une conséquence** : elle se **dit**, à
+  l'écran, avant le geste (§16.5.5). L'inscrire en refus dans la base interdirait au `bizdev` un
+  geste que la règle d'accès lui accorde, et ferait passer une décision d'écran pour une décision de
+  base (`CLAUDE.md` §10).
+
+#### 16.5.5 La surface — tranche 2 b
+
+Le panneau de lecture d'un message **classé** de l'inbox (`§18.3`) porte la commande
+« Retirer de l'affaire ». Elle suit la grammaire déjà posée par le produit pour un geste réversible
+mais conséquent :
+
+- **la commande n'est jamais éteinte d'avance, quel que soit le rôle** (`docs/DESIGN_SYSTEM.md`
+  §5.3, §5.13, §5.16, §5.21, §5.23, §5.25, §5.27, §5.28) : l'écran offre, envoie, et **traduit** le
+  refus par un dictionnaire fermé ;
+- **une confirmation nomme la conséquence de la mesure 2** lorsqu'elle s'applique — « vous ne verrez
+  plus ce message » — plutôt que de laisser l'utilisateur la découvrir après coup ;
+- **aucun corps d'erreur du serveur n'est affiché**, règle constante du sous-système (§13.7).
+
+#### 16.5.6 Preuves exigées de la tranche 2
+
+| Niveau | Preuve |
+|---|---|
+| pgTAP | Les cinq lignes du §16.5.2, le vocabulaire à **dix-neuf** types, le `mail_received` **conservé**, le `mail_unclassified` écrit, `suggested_card_id` inchangé |
+| API | Le refus opposé au `viewer` avec son **jeton réel** ; le `bizdev` déclasse et **perd** la visibilité du message, mesuré par une relecture derrière le geste ; l'`admin` déclasse et la garde |
+| E2E d'interface | La commande, sa confirmation, son annulation, le message repassant en « Non classés » ; console vierge |
+| Harnais | `scripts/verify-mail-classement.sh` étendu, avec ses dégradations réelles |
 
 ---
 
