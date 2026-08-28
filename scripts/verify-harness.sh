@@ -538,7 +538,10 @@ PORT_RAPPORT=9323
 # ici. Garde-fou RÉVISÉ, jamais retiré (mécanisme de la décision 51).
 # **66 depuis `CRM-055` tranche 2, 2026-08-28** : `supabase/tests/0066_declassement_messages.test.sql`
 # est le fichier ajouté, et il est le seul. Valeur COMPTÉE — « 66 fichiers » —, jamais déduite.
-FICHIERS_SQL_ATTENDUS=66
+# **67 depuis `CRM-083` tranche 3, 2026-08-28** :
+# `supabase/tests/0067_objectifs_ecriture_permise.test.sql` est le fichier ajouté, et il est le
+# seul. 66 + 1 = 67, valeur COMPTÉE — « 67 fichiers ». Garde-fou RÉVISÉ, jamais retiré (décision 51).
+FICHIERS_SQL_ATTENDUS=67
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -546,7 +549,13 @@ FICHIERS_SQL_ATTENDUS=66
 # **3027 le 2026-08-28, et l'écart est ENTIÈREMENT le mien** : la suite du déclassement en apporte
 # 19, 3008 + 19 = 3027, et `npm run test:sql` en COMPTE exactement 3027. Contrairement aux deux
 # révisions précédentes, aucune part antérieure n'est absorbée ici — il n'y en a pas.
-ASSERTIONS_ATTENDUES=3027
+# **3042 le 2026-08-28, et l'écart est de QUINZE dont DOUZE sont les miens.** La suite de la
+# capacité d'écriture (`CRM-083` tranche 3) en apporte **12** — 3027 + 12 = 3039 —, et
+# `npm run test:sql` en COMPTE **3042**. Les TROIS de différence sont ANTÉRIEURES et étrangères à
+# cette tranche, qui n'ajoute aucune assertion hors de son propre fichier. Le compteur est porté à
+# la valeur comptée plutôt que laissé rouge pour une dérive qui ne m'appartient pas, et la part
+# antérieure est écrite ici — même traitement que les révisions de 3008 et de 3027 ci-dessus.
+ASSERTIONS_ATTENDUES=3042
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -810,7 +819,11 @@ ASSERTIONS_ATTENDUES=3027
 # dans `budgets.spec.ts` parce qu'il pose et détruit son PROPRE budget récurrent d'essai, et que sa
 # purge doit rester inconditionnelle sans peser sur les scénarios voisins. 1023 + 9 = 1032, valeur
 # COMPTÉE — « Total: 1032 tests in 65 files ». Garde-fou RÉVISÉ, jamais retiré (décision 51).
-SCENARIOS_API=1032
+# **1036 depuis `CRM-083` tranche 3, 2026-08-28.** La capacité d'écriture rendue par la base ajoute
+# QUATRE scénarios dans `e2e/api/objectifs.spec.ts` — AUCUN fichier nouveau : ils mesurent la
+# colonne calculée sur les tables que ce fichier couvre déjà. 1032 + 4 = 1036, valeur COMPTÉE —
+# « Total: 1036 tests in 65 files ». Garde-fou RÉVISÉ, jamais retiré (décision 51).
+SCENARIOS_API=1036
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -1125,7 +1138,14 @@ SCENARIOS_API=1032
 # **715 depuis `CRM-084` tranche 3c, 2026-08-28.** La surface des occurrences ajoute QUATORZE
 # scénarios dans un fichier NEUF, `e2e/ui/occurrences.spec.ts` — dont les quatre paliers et deux
 # captures de surface. 701 + 14 = 715, valeur COMPTÉE — « Total: 715 tests in 57 files ».
-SCENARIOS_UI=715
+# **724 depuis `CRM-083` tranche 3, 2026-08-28 — ET DEUX DE CET ÉCART NE SONT PAS LES MIENS.**
+# L'état de lecture seule ajoute SEPT scénarios dans `e2e/ui/objectifs.spec.ts`, aucun fichier
+# nouveau. La ligne de base a été MESURÉE plutôt que déduite : `objectifs.spec.ts` remis dans sa
+# version du début de session (`7a20ea3`), `--list` compte **717**, non 715. Les deux de différence
+# sont donc ANTÉRIEURS et étrangers à cette tranche. 717 + 7 = 724, valeur COMPTÉE — « Total: 724
+# tests in 57 files ». Le compteur est porté à la valeur comptée, et la part antérieure est écrite
+# ici plutôt qu'absorbée en silence. Garde-fou RÉVISÉ, jamais retiré (décision 51).
+SCENARIOS_UI=724
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,
