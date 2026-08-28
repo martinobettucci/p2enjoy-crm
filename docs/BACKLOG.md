@@ -11360,7 +11360,25 @@ seul endroit du produit où deux liens de navigation ne se distinguent pas par l
       phrase du cas NUL — l'autre cas, le seul où l'avertissement a un objet, n'était exercé nulle
       part.
 
-**Tranche 7 — la portée du badge, écrite à l'écran — POSÉE AVANT LE CODE, décision 544.**
+**Tranche 7 — LIVRÉE ET PROUVÉE** (décision 544). Le nom accessible du badge nomme sa population —
+« n ligne(s) en attente de leur coût réel, budgets clôturés compris, toutes devises confondues » —,
+et l'onglet « Vue d'ensemble » écrit la portée du compteur sous la barre d'onglets **dès que le
+badge paraît**, sur les deux écrans à onglets. Preuves vertes : `CoutsASaisir.test.tsx` **25 tests**
+(3 neufs, une assertion révisée avec son motif dans le fichier), `i18n.test.ts` **291 tests**,
+`e2e/ui/couts-a-saisir.spec.ts` **6 scénarios** dont **S6**, `scripts/verify-couts-ecrans.sh`
+**81 contrôles, aucune anomalie** (76 auparavant), sa **quatrième dégradation** comprise. Deux
+captures OBSERVÉES : `docs/captures/CRM-086/couts-a-saisir-portee-compteur-1440.jpg` et `-390.jpg`.
+
+**LA MESURE QUE CETTE TRANCHE APPORTE À LA DoD, et qui REMPLACE l'égalité retirée** : `S6` met les
+deux nombres sous les yeux sur le même écran et le même jeu de données — badge **2**, mention **1**
+sur « Studio web » —, vérifie que le badge vaut le compte des lignes que le tableau rend, et lit la
+phrase de portée à l'écran. Une régression qui ajouterait un filtre de clôture à la lecture de
+l'onglet — le mimétisme que le §4.8.1 redoute — rendrait les deux nombres ÉGAUX et ferait tomber ce
+scénario, là où l'ancienne exigence l'aurait accueillie. La capture du cumul du workspace
+(`couts-workspace-xl-1440.jpg`) porte le cas complet : badge **3**, mention **2**, et **deux**
+devises sur le même écran.
+
+**Le découpage tel qu'il avait été posé avant le code, conservé pour mémoire :**
 L'arbitrage d'INC-182 ne se solde pas par une phrase rayée : il appelle une surface, sans laquelle
 deux nombres légitimement différents continueraient de se lire comme une erreur de calcul. Ce que la
 tranche livre, et rien de plus :
