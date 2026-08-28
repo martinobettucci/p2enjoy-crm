@@ -518,4 +518,111 @@ test.describe('CRM-082 — objectifs : le contrat d’API, hors interface', () =
 		})
 		expect(await flechesSeed.json()).toHaveLength(4)
 	})
+	// -------------------------------------------------------------------------------------------
+	// 6. La reprise d'un tableau archivé — CRM-083 tranche 2 h, docs/SPEC-goals.md §5.6
+	// -------------------------------------------------------------------------------------------
+	//
+	// @verifies CRM-083 (docs/BACKLOG.md) — tranche 2 h, la reprise d'un tableau archivé
+	// @verifies docs/SPEC-goals.md §5.6.1 mesures 2 à 6 ; §5.6.2 lignes b, g et h
+	//
+	// CES SCÉNARIOS ÉCRIVENT SUR LE TABLEAU D'ESSAI, jamais sur celui du seed : archiver le tableau
+	// seedé le retirerait des captures de la tranche 2 a, et une preuve qui déplace le décor d'une
+	// autre unité est une preuve qui coûte plus qu'elle ne rapporte.
+
+	test('MESURE 3 — la LECTRICE lit un tableau archivé : le masquage est un choix du CLIENT', async ({
+		request,
+	}) => {
+		// C'est la mesure qui fonde toute la tranche : `goal_boards_lecture_membre` ne regarde que
+		// l'appartenance au workspace et IGNORE `archived_at`. Si elle rougissait un jour, la case
+		// « Afficher les archivés » deviendrait une fuite au lieu d'un confort, et il faudrait
+		// reprendre le §5.6 avant l'écran.
+		const archivage = await request.patch(`${BOARDS}?id=eq.${TABLEAU_ESSAI}`, {
+			headers: { ...enTetesService(), Prefer: 'return=representation' },
+			data: { archived_at: '2026-01-15T09:00:00Z' },
+		})
+		expect(archivage.status()).toBe(200)
+
+		const lecture = await request.get(
+			`${BOARDS}?id=eq.${TABLEAU_ESSAI}&select=id,name,archived_at`,
+			{ headers: enTetesAuthentifies(jetonViewer) },
+		)
+		expect(lecture.status()).toBe(200)
+		const lignes = (await lecture.json()) as { archived_at: string | null }[]
+		expect(lignes).toHaveLength(1)
+		expect(lignes[0]?.archived_at).not.toBeNull()
+	})
+
+	test('MESURE 2 — le nom d’un tableau ARCHIVÉ reste PRIS : l’unicité est totale', async ({
+		request,
+	}) => {
+		// Conséquence directe, et c'est elle qui décide du contrat : l'archivage n'ayant jamais
+		// libéré le nom, le DÉSARCHIVAGE ne peut rien heurter. Le dictionnaire fermé des refus n'a
+		// donc aucun cas `doublon` à gagner sur ce geste, et cette assertion le fige.
+		const reponse = await request.post(BOARDS, {
+			headers: enTetesAuthentifies(jetonAdmin),
+			data: {
+				workspace_id: WORKSPACE,
+				name: 'Tableau d’essai objectifs.spec',
+				position: 95,
+			},
+		})
+		expect(reponse.status()).toBe(409)
+		expect(await reponse.text()).toContain('goal_boards_workspace_name_key')
+	})
+
+	test('LIGNE h — la LECTRICE ne désarchive pas, et le refus est 200 + ZÉRO LIGNE', async ({
+		request,
+	}) => {
+		// Le refus de `goal_boards_maj_membre_ecrivant` passe par sa clause `using` : PostgREST rend
+		// donc `200` et un corps vide, jamais `403`. Attendre un `403` figerait un comportement que
+		// la pile ne produit pas (docs/SPEC-permissions-rls.md §7).
+		const reponse = await request.patch(`${BOARDS}?id=eq.${TABLEAU_ESSAI}`, {
+			headers: { ...enTetesAuthentifies(jetonViewer), Prefer: 'return=representation' },
+			data: { archived_at: null },
+		})
+		expect(reponse.status()).toBe(200)
+		expect(await reponse.json()).toHaveLength(0)
+
+		// LA LIGNE EST RELUE, et constatée TOUJOURS archivée : un refus qu'on ne vérifie pas est
+		// indistinguable d'un succès silencieux (décision 70).
+		const relecture = await request.get(`${BOARDS}?id=eq.${TABLEAU_ESSAI}&select=archived_at`, {
+			headers: enTetesService(),
+		})
+		expect(((await relecture.json()) as { archived_at: string | null }[])[0]?.archived_at).not.toBeNull()
+	})
+
+	test('LIGNE g — le business developer reprend le tableau, et sa POSITION est conservée', async ({
+		request,
+	}) => {
+		const avant = await request.get(`${BOARDS}?id=eq.${TABLEAU_ESSAI}&select=position`, {
+			headers: enTetesService(),
+		})
+		const position = ((await avant.json()) as { position: number }[])[0]?.position
+
+		const reponse = await request.patch(`${BOARDS}?id=eq.${TABLEAU_ESSAI}`, {
+			headers: { ...enTetesAuthentifies(jetonBizdev), Prefer: 'return=representation' },
+			data: { archived_at: null },
+		})
+		expect(reponse.status()).toBe(200)
+		const lignes = (await reponse.json()) as { archived_at: string | null; position: number }[]
+		expect(lignes).toHaveLength(1)
+		expect(lignes[0]?.archived_at).toBeNull()
+		// La position n'est NI remise à zéro NI repoussée en fin de liste : le tableau revient là
+		// où il était. C'est ce que le §5.6.2 ligne g promet à l'utilisateur.
+		expect(lignes[0]?.position).toBe(position)
+	})
+
+	test('LE SEED PORTE UN TABLEAU ARCHIVÉ, sinon la case cochée ne montrerait rien', async ({
+		request,
+	}) => {
+		// `CLAUDE.md` §8 : une fonctionnalité livrée doit être démontrable sur le jeu de
+		// démonstration. Ce contrôle est le pendant, hors interface, de celui que le seed pose
+		// lui-même — et il rougirait si un rejeu du seed cessait de poser la ligne.
+		const reponse = await request.get(
+			`${BOARDS}?workspace_id=eq.${WORKSPACE}&archived_at=not.is.null&position=lt.90&select=id,name`,
+			{ headers: enTetesAuthentifies(jetonAdmin) },
+		)
+		expect(reponse.status()).toBe(200)
+		expect(((await reponse.json()) as unknown[]).length).toBeGreaterThanOrEqual(1)
+	})
 })
