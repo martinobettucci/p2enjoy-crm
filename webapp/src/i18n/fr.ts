@@ -695,11 +695,20 @@ export const fr = {
 	'goals.board.archive': 'Archiver',
 	'goals.board.archive.aria': 'Archiver le tableau {nom}',
 	'goals.board.archive.confirm.title': 'Archiver « {nom} » ?',
+	// RÉVISÉ le 2026-08-28 (CRM-083 tranche 2 h, docs/SPEC-goals.md §5.6) : « aucun écran ne le rend
+	// plus » est devenu FAUX le jour où la case « Afficher les archivés » a été posée. Le texte est
+	// corrigé plutôt que conservé — une confirmation qui décrit un produit qui n'existe plus est la
+	// valeur trompeuse que CLAUDE.md §18 proscrit, et elle dissuaderait d'un geste réversible.
 	'goals.board.archive.confirm.body':
-		'Le tableau et son travail sont conservés, mais il quitte cette liste et aucun écran ne le rend plus. Son nom, lui, reste pris : un tableau archivé le retient.',
+		'Le tableau et son travail sont conservés, mais il quitte cette liste. Vous le retrouverez en cochant « Afficher les archivés », et vous pourrez le reprendre. Son nom, lui, reste pris : un tableau archivé le retient.',
 	'goals.board.archive.confirm.action': 'Archiver le tableau',
 	'goals.board.archive.cancel': 'Annuler',
 	'goals.board.archived': 'Tableau archivé',
+	'goals.board.showArchived': 'Afficher les archivés',
+	'goals.board.archived.mention': 'Archivé',
+	'goals.board.unarchive': 'Désarchiver',
+	'goals.board.unarchive.aria': 'Désarchiver le tableau {nom}',
+	'goals.board.unarchived': 'Tableau désarchivé',
 	'goals.board.write.noeffect':
 		'Rien n’a été enregistré. Le tableau a peut-être été archivé entre-temps, ou vous ne pouvez pas l’écrire. Rechargez la liste.',
 	'goals.board.refused.duplicate':

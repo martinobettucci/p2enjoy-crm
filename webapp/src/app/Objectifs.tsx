@@ -74,6 +74,7 @@ import type { PointerEvent as EvenementPointeur } from 'react'
 import { Link, useParams } from 'react-router'
 import {
 	Archive,
+	ArchiveRestore,
 	ArrowDown,
 	ArrowLeft,
 	ArrowUp,
@@ -126,6 +127,7 @@ import {
 	REMPLISSAGE_MAXIMAL,
 	REMPLISSAGE_MINIMAL,
 	archiverTableau,
+	desarchiverTableau,
 	changerDirectionFleche,
 	creerTableau,
 	deplacerTableau,
@@ -214,7 +216,17 @@ export function Objectifs({ client = clientCrm }: ProprietesObjectifs = {}) {
 
 	const idWorkspace =
 		etatWorkspaces.statut === 'pret' ? (etatWorkspaces.donnees[0]?.id ?? null) : null
-	const { etat, recharger } = useTableaux(client, idWorkspace)
+
+	// @spec CRM-083 (docs/BACKLOG.md) — tranche 2 h, la reprise d'un tableau archivé
+	// @spec docs/SPEC-goals.md §5.6.2 lignes a et b ; docs/DESIGN_SYSTEM.md §5.29 bis
+	//
+	// L'ÉTAT VIT ICI, ET NON DANS LA LISTE, parce que c'est ici que la lecture part : la case est un
+	// geste qui RELIT (§5.6.2, ligne b), pas un filtre appliqué après coup à des lignes déjà en
+	// mémoire. Le poser dans `ListeTableaux` obligerait à remonter la valeur jusqu'au hook, ou à
+	// filtrer localement — et un filtre local montrerait des archivés que le serveur n'a jamais
+	// rendus, ce que le compte de blocs LISIBLES du §5.1 ne pardonne pas.
+	const [inclureArchives, setInclureArchives] = useState(false)
+	const { etat, recharger } = useTableaux(client, idWorkspace, inclureArchives)
 
 	// PAS DE CLIENT — l'application est montée sans configuration Supabase, cas ordinaire des
 	// preuves de routage. Même patron et même texte que le carnet : sans cette sortie, les deux
@@ -260,6 +272,8 @@ export function Objectifs({ client = clientCrm }: ProprietesObjectifs = {}) {
 			idWorkspace={idWorkspace as string}
 			tableaux={etat.donnees}
 			recharger={recharger}
+			inclureArchives={inclureArchives}
+			onBasculerArchives={setInclureArchives}
 		/>
 	)
 }
@@ -283,11 +297,15 @@ function ListeTableaux({
 	idWorkspace,
 	tableaux,
 	recharger,
+	inclureArchives,
+	onBasculerArchives,
 }: {
 	readonly client: ClientCrm
 	readonly idWorkspace: string
 	readonly tableaux: readonly TableauListe[]
 	readonly recharger: () => void
+	readonly inclureArchives: boolean
+	readonly onBasculerArchives: (inclure: boolean) => void
 }) {
 	const [formulaire, setFormulaire] = useState<FormulaireTableau>(null)
 	const [message, setMessage] = useState<MessageEcriture | null>(null)
@@ -399,6 +417,25 @@ function ListeTableaux({
 		[client, traiter, fermer],
 	)
 
+	// @spec CRM-083 (docs/BACKLOG.md) — tranche 2 h, la reprise d'un tableau archivé
+	// @spec docs/SPEC-goals.md §5.6.2 lignes f, g et h
+	//
+	// AUCUNE CONFIRMATION, ET C'EST LA RÈGLE ET NON UNE ÉCONOMIE (ligne f) : la confirmation est
+	// réservée à ce qui coûte (§5.13). Désarchiver ne détruit rien, il REND — et la demander ici
+	// apprendrait à l'utilisateur que les deux gestes pèsent pareil, alors que l'un défait l'autre.
+	//
+	// LE FOCUS RESTE SUR LA COMMANDE, sans l'ancre `creer` que l'archivage doit emprunter : la ligne
+	// SURVIT au désarchivage — elle change d'apparence, elle ne disparaît pas — puisque la case est
+	// cochée pour qu'on ait pu voir le tableau. Aucun bouton n'est démonté, donc rien à réancrer.
+	const desarchiver = useCallback(
+		async (id: string) => {
+			setMessage({ ton: 'attente', texte: t('goals.write.saving') })
+			const resultat = await desarchiverTableau(client, id)
+			traiter(resultat, t('goals.board.unarchived'))
+		},
+		[client, traiter],
+	)
+
 	const ordonnables = tableaux.map(ordonnableDe)
 
 	return (
@@ -421,6 +458,29 @@ function ListeTableaux({
 					{formulaire?.mode === 'creation' ? t('goals.board.create.cancel') : t('goals.board.create')}
 				</Button>
 			</div>
+
+			{/*
+			 * LA CASE EST UNE CASE À COCHER ÉTIQUETÉE, jamais un bouton à deux états
+			 * (`docs/DESIGN_SYSTEM.md` §5.3 quinquies) : « Afficher les archivés » se lit sans avoir à
+			 * deviner ce que l'état courant signifie. Elle reprend, à l'identique, celle de
+			 * l'administration de l'arborescence (§5.6, arbitrage de la décision 534) — même libellé,
+			 * même ligne de hauteur `--size-target`, même case de 24 px, le libellé servant de cible
+			 * étendue par l'imbrication (§5.7 bis).
+			 *
+			 * ELLE EST RENDUE EN TOUTE CIRCONSTANCE, liste vide comprise : elle est la cause possible
+			 * de ce vide, et la masquer priverait l'utilisateur du seul geste qui l'en sort — c'est la
+			 * règle du §5.3 quinquies pour la barre de filtres, et elle vaut ici pour la même raison.
+			 */}
+			<label className="inline-flex w-fit items-center gap-2 min-h-[var(--size-target)] text-sm">
+				<input
+					type="checkbox"
+					data-testid="afficher-archives-tableaux"
+					checked={inclureArchives}
+					onChange={(evenement) => onBasculerArchives(evenement.target.checked)}
+					className="size-6 rounded-sm border border-border"
+				/>
+				{t('goals.board.showArchived')}
+			</label>
 
 			{/* Le formulaire vit DANS LE FLUX du document, sous l'en-tête, jamais dans une modale
 			    (§5.13, tranché trois fois). */}
@@ -467,6 +527,7 @@ function ListeTableaux({
 									ordonnables={ordonnables}
 									onRenommer={() => ouvrir({ mode: 'renommage', id: tableau.id })}
 									onArchiver={() => ouvrir({ mode: 'archivage', id: tableau.id })}
+									onDesarchiver={() => desarchiver(tableau.id)}
 									onDeplacer={(sens) => deplacer(tableau.id, sens)}
 								/>
 							)}
@@ -526,33 +587,86 @@ function LigneTableau({
 	ordonnables,
 	onRenommer,
 	onArchiver,
+	onDesarchiver,
 	onDeplacer,
 }: {
 	readonly tableau: TableauListe
 	readonly ordonnables: readonly Ordonnable[]
 	readonly onRenommer: () => void
 	readonly onArchiver: () => void
+	readonly onDesarchiver: () => void
 	readonly onDeplacer: (sens: Sens) => void
 }) {
 	const peutMonter = deplacementPossible(ordonnables, tableau.id, 'monter')
 	const peutDescendre = deplacementPossible(ordonnables, tableau.id, 'descendre')
+	const archive = tableau.archived_at !== null
+
+	// @spec CRM-083 (docs/BACKLOG.md) — tranche 2 h, la reprise d'un tableau archivé
+	// @spec docs/SPEC-goals.md §5.6.2 lignes c, d et e ; docs/DESIGN_SYSTEM.md §5.29 bis
+	//
+	// UNE LIGNE ARCHIVÉE N'EST PAS UN LIEN (ligne e), et ce n'est pas un choix de forme :
+	// `lireContenuTableau` filtre `archived_at is null`, si bien que suivre le lien rendrait
+	// « tableau introuvable » — l'écran enverrait l'utilisateur dans un mur qu'il ne saurait pas
+	// nommer. Le nom reste rendu, dans un bloc de même géométrie, pour que la colonne ne saute pas.
+	//
+	// LA MENTION EST TEXTUELLE, jamais une teinte seule (`docs/DESIGN_SYSTEM.md` §5.13) : une ligne
+	// grisée ne dit pas POURQUOI elle l'est, et un lecteur d'écran n'en lit rien du tout.
+	const entete = (
+		<>
+			<span className="font-medium">{tableau.name}</span>
+			{tableau.description === null ? null : (
+				<span className="text-sm text-text-2">{tableau.description}</span>
+			)}
+			{/* Le compte est celui des blocs LISIBLES par l'appelant (§5.1) : deux
+			    personnes du même workspace n'y lisent pas le même nombre, et c'est
+			    la conséquence assumée du §4.1. Il est rendu sur une ligne archivée COMME sur
+			    les autres (§5.6.2, ligne i) : la ligne est masquée, elle n'est pas amputée. */}
+			<span className="text-sm text-text-3">{libelleCompteBlocs(tableau.blocsLisibles)}</span>
+		</>
+	)
+
 	return (
 		<div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
-			<Link
-				to={cheminTableauObjectifs(tableau.id)}
-				data-testid="tableau-objectifs"
-				className="flex flex-1 flex-col gap-1 min-h-[var(--size-target)] justify-center rounded-sm hover:underline"
-			>
-				<span className="font-medium">{tableau.name}</span>
-				{tableau.description === null ? null : (
-					<span className="text-sm text-text-2">{tableau.description}</span>
-				)}
-				{/* Le compte est celui des blocs LISIBLES par l'appelant (§5.1) : deux
-				    personnes du même workspace n'y lisent pas le même nombre, et c'est
-				    la conséquence assumée du §4.1. */}
-				<span className="text-sm text-text-3">{libelleCompteBlocs(tableau.blocsLisibles)}</span>
-			</Link>
+			{archive ? (
+				<div
+					data-testid="tableau-objectifs-archive"
+					className="flex flex-1 flex-col gap-1 min-h-[var(--size-target)] justify-center"
+				>
+					{entete}
+					<span className="text-sm text-text-2">{t('goals.board.archived.mention')}</span>
+				</div>
+			) : (
+				<Link
+					to={cheminTableauObjectifs(tableau.id)}
+					data-testid="tableau-objectifs"
+					className="flex flex-1 flex-col gap-1 min-h-[var(--size-target)] justify-center rounded-sm hover:underline"
+				>
+					{entete}
+				</Link>
+			)}
+			{/*
+			 * UNE LIGNE ARCHIVÉE NE GARDE QUE « DÉSARCHIVER » (ligne d), et le motif est celui de
+			 * l'arborescence dont cette forme est reprise : renommer ou réordonner un objet que la
+			 * liste ne montre pas par défaut n'a aucun effet observable, et offrir ces gestes ferait
+			 * croire à un travail qui ne se verrait nulle part. Ce n'est PAS une extinction par
+			 * rôle — le §5.26 l'interdit neuf fois —, c'est le retrait de gestes que l'état de
+			 * l'objet, et non le droit de l'appelant, rend sans objet.
+			 */}
 			<div className="flex flex-wrap items-center gap-1">
+				{archive ? (
+					<Button
+						variante="discret"
+						taille="compacte"
+						data-testid="desarchiver-tableau"
+						data-focus={`desarchiver-${tableau.id}`}
+						aria-label={t('goals.board.unarchive.aria', { nom: tableau.name })}
+						title={t('goals.board.unarchive')}
+						onClick={onDesarchiver}
+					>
+						<ArchiveRestore aria-hidden="true" size={16} strokeWidth={2} />
+					</Button>
+				) : (
+					<>
 				{/* LES COMMANDES D'ORDRE SONT DÉSACTIVÉES AUX EXTRÉMITÉS, JAMAIS MASQUÉES (§5.13, §8) :
 				    une commande qui disparaît en tête de liste fait sauter le groupe d'une ligne à
 				    l'autre, et l'œil perd la colonne. Leur nom accessible NOMME le tableau — « Monter »
@@ -601,6 +715,8 @@ function LigneTableau({
 				>
 					<Archive aria-hidden="true" size={16} strokeWidth={2} />
 				</Button>
+					</>
+				)}
 			</div>
 		</div>
 	)
