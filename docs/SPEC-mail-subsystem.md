@@ -1235,7 +1235,7 @@ exécutable par `authenticated` et `service_role`, refusée à `public` et `anon
 | b | Message inconnu | `message_not_found`, `P0002` |
 | c | L'appelant ne **voit** pas le message | `forbidden`, `42501` |
 | d | L'appelant ne peut pas **écrire** la card où le message est classé | `forbidden`, `42501` |
-| e | Le message n'est **pas** classé | aucun refus : rend `null`, n'écrit rien |
+| e | Le message n'est **pas** classé, et l'appelant le voit encore | aucun refus : rend `null`, n'écrit rien |
 
 **Les deux droits sont ceux du classement, et pas d'autres.** `classify_message` exige de voir le
 message **et** d'écrire la card ; `unclassify_message` exige exactement les mêmes, évalués
@@ -1250,6 +1250,30 @@ geste qu'on ne peut pas défaire est pire que le geste lui-même.
 **Idempotente** (ligne e) : déclasser un message déjà non classé ne produit **aucun** événement et
 rend `null`. Un utilisateur qui clique deux fois ne raconte pas deux histoires — c'est la règle que
 le §16.3 pose déjà pour le classement.
+
+**MAIS L'IDEMPOTENCE A UNE BORNE, ET ELLE EST MESURÉE, NON SUPPOSÉE.** Écrite d'abord sans borne,
+cette ligne était **fausse pour l'appelant qui en a le plus besoin**, et c'est le premier appel réel
+sur la pile qui l'a montré, non la relecture :
+
+```
+bizdev voit AVANT = t
+bizdev déclasse -> card rendue = 5eed0000-…-0000000000c1
+bizdev voit APRÈS = f
+second appel      => ERREUR forbidden (42501), et non « null »
+```
+
+Le geste retire au `bizdev` le seul chemin par lequel il voyait ce message (mesure 2). Son second
+appel bute donc sur la ligne **c**, en amont de la ligne e. **Ce refus est JUSTE**, et l'ordre des
+gardes n'est pas révisé pour le contourner : l'appelant n'a effectivement plus le droit d'agir sur
+ce message, et déplacer la ligne e devant la ligne c ferait de la fonction une sonde — un
+`authenticated` quelconque distinguerait « message inconnu », « message non classé » et « message
+classé que vous n'avez pas le droit de voir » par le seul code de retour.
+
+**La borne s'énonce donc ainsi, et elle est figée par une assertion** : l'idempotence est garantie à
+l'appelant qui **conserve** la visibilité du message — celui qui voit la boîte d'arrivée. À celui
+qui la perd dans le geste, un second appel oppose `forbidden`. Ce n'est pas une dégradation à
+corriger : c'est la conséquence, nommée, de l'arbitrage du §16.5.2 ; et l'écran ne l'expose pas,
+puisque le message quitte son panneau au premier geste (§16.5.5).
 
 #### 16.5.3 L'historique n'est pas réécrit, et le départ s'écrit
 
@@ -1300,7 +1324,7 @@ mais conséquent :
 
 | Niveau | Preuve |
 |---|---|
-| pgTAP | Les cinq lignes du §16.5.2, le vocabulaire à **dix-neuf** types, le `mail_received` **conservé**, le `mail_unclassified` écrit, `suggested_card_id` inchangé |
+| pgTAP | Les cinq lignes du §16.5.2, la **borne de l'idempotence** figée dans les deux sens, le vocabulaire à **dix-neuf** types, le `mail_received` **conservé**, le `mail_unclassified` écrit, `suggested_card_id` inchangé |
 | API | Le refus opposé au `viewer` avec son **jeton réel** ; le `bizdev` déclasse et **perd** la visibilité du message, mesuré par une relecture derrière le geste ; l'`admin` déclasse et la garde |
 | E2E d'interface | La commande, sa confirmation, son annulation, le message repassant en « Non classés » ; console vierge |
 | Harnais | `scripts/verify-mail-classement.sh` étendu, avec ses dégradations réelles |
