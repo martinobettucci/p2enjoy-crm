@@ -2850,6 +2850,21 @@ réel saisi »), et ce n'est pas une erreur : le graphique **exclut les budgets 
 **par devise**, là où le badge est un nombre unique. Les deux chiffres ne comptent pas la même
 chose.
 
+**L'écran le dit lui-même, et vous n'avez donc rien à deviner.** Dès que le badge paraît, l'onglet
+« Vue d'ensemble » écrit sous la barre d'onglets :
+
+> « Le compteur de l'onglet "À saisir" porte sur tout cet écran, budgets clôturés compris et toutes
+> devises confondues ; les mentions sous les histogrammes ne comptent que les budgets qu'ils
+> montrent. »
+
+Un exemple, sur le jeu de démonstration : le track « Studio web » porte **deux** lignes en attente —
+l'une sur un budget ouvert, l'autre sur le budget clôturé « Salon du web 2025 ». Le badge affiche
+donc **2**, et la mention sous le graphique **1**. Au niveau de l'espace de travail, avec deux
+devises à l'écran, le badge affiche **3** quand les mentions totalisent **2**.
+
+C'est la même règle que celle du cumul du workspace (§5 septies.3) : quand deux nombres d'un même
+écran ne comptent pas la même chose, l'écran écrit lequel compte quoi.
+
 ### 5 octies.5 Ce que cet onglet ne fait pas
 
 - **Il ne crée aucune ligne de coût** : une dépense se crée depuis la fiche de son affaire, section
