@@ -26418,3 +26418,66 @@ tableau archivé**, sans quoi la case cochée ne montrerait rien et la fonctionn
 sans être démontrable (`CLAUDE.md` §8).
 
 **Aucune migration n'est due.** Tout le contrat backend existe depuis `CRM-082`, migration `0049`.
+
+---
+
+## décision 535 — la tranche 2 h est livrée, et deux défauts de méthode payés au passage
+
+*2026-08-28, exécution planifiée, suite de la décision 534 qui portait l'arbitrage et la
+spécification. Celle-ci consigne la LIVRAISON et ce que les preuves ont coûté à écrire.*
+
+**LA LIVRAISON.** `CRM-083` tranche 2 h : un tableau d'objectifs archivé se reprend. Une case
+« Afficher les archivés » élargit la liste, la ligne archivée porte sa mention et sa seule commande,
+et « Désarchiver » la remet à sa position d'origine. **Aucune migration, aucune politique, aucun
+privilège** — le contrat backend existait depuis la migration `0049`, et c'est la mesure 3 qui l'a
+établi : `goal_boards_lecture_membre` ignore `archived_at`, si bien que le masquage était un choix
+du client et non une règle d'accès.
+
+**LA FORME N'A PAS ÉTÉ INVENTÉE, ET C'EST TOUT LE POINT DE L'ARBITRAGE.** `CRM-075` porte la même
+solution pour les tracks et les channels depuis sa livraison. La reprendre sans écart coûte moins
+qu'un écran neuf et apprend à l'utilisateur une grammaire au lieu de deux.
+
+**UN DÉFAUT DE PRODUIT TROUVÉ EN REGARDANT, ET QU'AUCUNE ASSERTION N'ATTRAPAIT** (`CLAUDE.md` §16).
+Le refus opposé à la lectrice affichait « Rien n'a été enregistré. Le tableau a peut-être été
+**archivé** entre-temps » — juste pour un renommage, absurde pour une reprise, où le tableau EST
+archivé et où c'est exactement ce qu'on tente de défaire. Le scénario de la ligne h était vert : il
+ne vérifiait que l'absence du texte de succès. Le geste reçoit son propre texte, et les deux preuves
+l'exigent désormais nommément. **La confirmation d'ARCHIVAGE est révisée dans le même geste** : elle
+disait « aucun écran ne le rend plus », devenu faux, et une confirmation qui décrit un produit
+disparu dissuade d'un geste réversible.
+
+**DEUX DÉFAUTS DANS MES PROPRES PREUVES, corrigés à leur cause.**
+
+1. **La remise en état écrite en fin de corps n'a pas lieu quand le scénario échoue.** Le scénario de
+   reprise désarchivait le tableau du seed ; il a échoué, ne l'a pas remis, et les DEUX suivants ont
+   échoué sur un décor qu'ils n'avaient pas cassé — diagnostiquer trois échecs quand un seul est réel
+   coûte cher. La remise passe en `afterEach` **inconditionnel**, dans un describe dédié. Et
+   `afterAll` n'aurait pas suffi : le scénario de la ligne g désarchive le tableau que celui de la
+   ligne h attend. C'est la règle de la décision 501, appliquée un cran plus fin.
+2. **`new RegExp('Objectifs 2025 (clos)')` prend les parenthèses pour un groupe de capture.** Le
+   motif cherchait « Objectifs 2025 clos », que rien ne rend : **une preuve rouge sur un produit
+   correct**. Le nom est échappé, et le motif est écrit dans le fichier pour que la prochaine
+   occurrence se reconnaisse.
+
+**CAMPAGNE COMPLÈTE, ÉTAT FINAL, et elle est verte.** `typecheck` et `build` verts ; `test:sql`
+**65 fichiers / 3008 assertions** ; `test:unit` **84 fichiers / 2813 tests** ; `e2e:api`
+**1021 passés** ; `e2e:ui` **696 passés, aucun échec** (23,1 min, lancée SEULE — leçon de la
+décision 533, tenue) ; `e2e:mail` **42 passés** ; `pytest` **244 passés**. Les quatre harnais que la
+tranche touche sont verts : `verify-objectifs` **46**, `verify-objectifs-canevas` **44**,
+`verify-seed` **55**, `verify-seed-demo` **69**, aucune anomalie.
+
+**LES COMPTEURS DE `verify-harness.sh` SONT RÉVISÉS DANS LE MÊME CHANGEMENT** — 1015 → **1021**,
+690 → **696**, 3006 → **3008** —, valeurs **comptées** par `playwright test --list` et par
+`npm run test:sql`, jamais déduites. Cinq points de chaque écart de scénarios sont miens ; le
+sixième, et les deux d'assertions, sont **antérieurs et étrangers**, et ils sont nommés dans le
+fichier plutôt qu'absorbés en silence.
+
+**Les captures des 37 autres unités, réécrites par la campagne, ont été REGARDÉES puis RESTAURÉES**
+— 244 fichiers. Celles de `CRM-083` sont conservées : la case y paraît légitimement.
+
+**Où reprendre.** La tranche 2 h est livrée et prouvée. `CRM-083` reste `[~]` pour trois écarts qui
+lui **préexistent**, et **aucun n'est du comportement** : INC-170 (l'extinction par rôle, à
+trancher — et le §4.1 bis dit que c'est un travail, pas un mur), INC-214 (`docs/manual.md` ne porte
+AUCUN chapitre sur les objectifs depuis la livraison de l'écran), et la série des soixante-dix-sept
+`verify-*.sh` non rejouée en entier — `verify-harness.sh --rapide` a été lancé mais n'avait pas
+rendu son bilan dans le budget de la session.
