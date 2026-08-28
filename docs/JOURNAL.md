@@ -27064,3 +27064,57 @@ d'index. Le registre passe à **cent vingt-six** entrées retirées.
 
 **Où reprendre.** L'arbitrage, la spécification, le schéma, le design system, le contrat de
 déploiement, le backlog et le changelog sont committés ; le code les suit dans la même session.
+
+## décision 547 — la tranche 3 de `CRM-083` est livrée, et deux défauts ont été trouvés en regardant
+
+*2026-08-28, même exécution que la décision 546. Consigne ce qui a été codé, mesuré et corrigé.*
+
+**CE QUI EST LIVRÉ.** La migration **71** ajoute `public.ecriture_permise(goal_boards)`, colonne
+calculée `security invoker` de corps `app.can_write_goal_board(id)` — un seul objet, aucune table,
+aucune politique, aucun droit élargi. Le canevas la lit avec le tableau (`COLONNES_TABLEAU_CANEVAS`,
+distincte de celle de la liste, qui n'en a que faire) et en tire son état de lecture seule : mention
+neutre en tête, commandes de pose et de tracé **désactivées mais lisibles**, champs de la fiche
+désactivés, glissement et flèches du clavier inertes, corrections et suppressions de flèches
+éteintes dans l'équivalent textuel. `Entrée` ouvre **quand même** la fiche : c'est la seule surface
+où le corps complet d'un bloc se lit.
+
+**LE SENS DU DÉFAUT EST CHOISI, ET C'EST LA DÉCISION LA PLUS FACILE À DÉFAIRE PAR MÉGARDE.**
+`ecritureConsentie` compare STRICTEMENT à `true` : la colonne absente, nulle, ou rendue comme la
+chaîne `'true'` par une lecture mal typée FERME l'écriture. Un `!!valeur` l'ouvrirait — et
+`Boolean('false')` vaut `true`. Six assertions unitaires tiennent ce point, et la dégradation
+`!== false` en fait rougir cinq.
+
+**DEUX DÉFAUTS TROUVÉS EN REGARDANT, ET AUCUN PAR UNE ASSERTION** (`CLAUDE.md` §16). (1) La
+**poignée de redimensionnement** restait dessinée, curseur `se-resize` compris, alors que le geste
+était déjà inopérant : une affordance qui ment. Elle n'est plus rendue, et le §5.29 ter du design
+system en tire une règle réemployable — *ce qui ENSEIGNE un geste reste rendu et éteint ; ce qui ne
+fait que l'OFFRIR à la souris disparaît* —, qui distingue proprement le « rien n'est masqué » (les
+blocs, les flèches, les valeurs) de l'affordance muette. (2) La **fiche d'un bloc** ne disait pas
+pourquoi ses champs étaient gris : la mention vit au-dessus du canevas, la fiche vit dessous, et sur
+un tableau haut elle est hors de vue. Sa consigne d'édition est REMPLACÉE par la sienne — « chaque
+champ s'enregistre » y serait faux.
+
+**LA MESURE D BORNE L'ARBITRAGE, ET ELLE EST REPRISE DANS TROIS PREUVES.** Le business developer,
+pour qui la colonne vaut `true`, reçoit `403` / `42501` en posant un lien vers « Maintenance » —
+channel qu'il lit sans l'écrire. La capacité est donc une condition **suffisante** de refus, jamais
+**nécessaire** : l'écran éteint sur elle et continue d'envoyer puis de traduire partout ailleurs.
+Sans cette borne, la tranche aurait fait rejouer à l'interface une règle qui vit dans la politique.
+
+**UN TÉMOIN FIGÉ A ÉCHOUÉ COMME PRÉVU, ET A ÉTÉ RÉVISÉ** (mécanisme de la décision 51) :
+`database.types.test-d.ts` compte désormais **quarante-huit** fonctions. La colonne calculée y est
+rangée par `supabase gen types` comme sa jumelle `reel_saisissable`, et le commentaire dit pourquoi
+sa présence dans cette liste ne signifie PAS qu'un `client.rpc` existe. Les types générés sont
+régénérés dans le même commit ; leur diff ne porte que la fonction neuve, quatre lignes.
+
+**INC-237 CONSIGNÉE, COMPORTEMENT INCHANGÉ.** Les captures du palier `sm-390` sont prises sur une
+page **décalée de huit pixels** — la boucle navigue à 1440 px puis redimensionne, laissant le tiroir
+dans l'état de la largeur précédente. **Préexistant et étranger** : la même amputation est présente
+sur `canevas-sm-390.jpg`, produite par la tranche 1. Aucune assertion ne la voit — débordement et
+défilement résiduel sont tous deux conformes, la seconde mesure ayant été ajoutée par cette tranche.
+La corriger réécrirait les soixante-six captures `sm-390` d'une dizaine d'unités.
+
+**Où reprendre.** La tranche 3 est livrée et prouvée ; `CRM-083` reste `[~]` — le manuel n'a
+toujours aucun chapitre sur les objectifs (**INC-214**), et INC-237 vient s'ajouter à ce qui lui
+reste de forme. La prochaine unité se choisit en relisant le backlog dans l'ordre du plan :
+`CRM-084` (budgets, occurrences et clôture) porte encore du comportement, et **INC-183** — le seuil
+d'ancienneté d'une ligne de coût — reste l'arbitrage suivant sur ce chemin.
