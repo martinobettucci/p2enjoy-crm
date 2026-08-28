@@ -1555,6 +1555,90 @@ test.describe('reprise d’un tableau archivé — CRM-083 tranche 2 h', () => {
 		await expect(page.getByTestId('tableau-objectifs-archive')).toBeVisible()
 	})
 
+	// --- DÉCISION 542 : LE NOM D'UN TABLEAU ARCHIVÉ RESTE PRIS, ET LE REFUS DIT OÙ LE TROUVER ----
+	// @verifies CRM-082 (docs/BACKLOG.md) — l'arbitrage de l'unicité totale du nom
+	// @verifies docs/SPEC-goals.md §2.1 bis (la règle et ses trois mesures), §2.1 bis.3 (le recours)
+	// @verifies docs/DESIGN_SYSTEM.md §5.29 bis (un refus nomme le geste que l'écran porte)
+	//
+	// LE SCÉNARIO SUIVANT EST LE SEUL QUI ÉPROUVE LA DÉCISION DE BOUT EN BOUT, ET IL LE FAIT PAR
+	// L'ENCHAÎNEMENT, PAS PAR UNE ASSERTION DE TEXTE : le refus est lu, puis SA PHRASE EST SUIVIE.
+	// Une preuve qui se contenterait de comparer le message à sa clé serait verte sur un texte qui
+	// désigne un geste inexistant — c'est précisément le défaut que la décision corrige.
+	//
+	// IL SE DISTINGUE DU REFUS DE DOUBLON DE LA TRANCHE 2 c, plus haut : là-bas le tableau qui
+	// bloque est VIVANT et visible dans la liste, ici il est ARCHIVÉ et n'y paraît pas. Sans la
+	// case, l'utilisateur cherche dans la liste un tableau qui n'y est pas — la situation qui a
+	// tenu l'arbitrage ouvert six sessions (§2.1 bis.3).
+	test('DÉCISION 542 — le nom d’un tableau ARCHIVÉ reste pris, et le refus mène à la case', async ({
+		page,
+	}) => {
+		await connecter(page, ADMIN)
+		await page.getByRole('link', { name: 'Objectifs', exact: true }).first().click()
+
+		// Le tableau archivé du seed n'est PAS dans la liste par défaut, et son nom est pourtant pris.
+		await expect(page.getByTestId('tableau-objectifs-archive')).toHaveCount(0)
+
+		await page.getByTestId('creer-tableau').click()
+		await page.keyboard.type(TABLEAU_ARCHIVE)
+		await page.getByTestId('valider-tableau').click()
+
+		// LE REFUS NOMME LE GESTE PAR SON ÉTIQUETTE EXACTE, celle de la case elle-même. Un texte qui
+		// dirait « retrouvez-le dans la liste » serait insuivable : la liste ne le rend pas.
+		const formulaire = page.getByTestId('formulaire-creation-tableau')
+		await expect(formulaire).toContainText('porte déjà ce nom')
+		await expect(formulaire).toContainText('Afficher les archivés')
+		await capturer(page, 'tableau-doublon-archive-1440', UNITE)
+
+		// LE TEXTE A ÉTÉ ALLONGÉ PAR LA DÉCISION 542, ET UN REFUS QUI DÉBORDE NE SE LIT PAS. Le
+		// palier le plus étroit est donc éprouvé sur CE message précis.
+		//
+		// LE PALIER EST REJOINT PAR UN RECHARGEMENT, JAMAIS PAR UN SEUL `setViewportSize`, ET C'EST
+		// MESURÉ : redimensionner de 1440 à 390 laisse la barre latérale dans son état ÉTENDU, où
+		// elle se rend en tiroir superposé et masque les 65 premiers pixels du contenu — la première
+		// capture de ce scénario montrait « aux d'objectifs » et « her les archivés ». Ce n'est ni
+		// le rendu mobile du produit ni un défaut de cette tranche : un téléphone charge la page à
+		// 390, il ne l'y rétrécit pas. Mesurer sur cet état aurait fait chercher un défaut de
+		// repliement là où il n'y en a pas.
+		await page.setViewportSize({ width: 390, height: 844 })
+		await page.reload()
+		await page.getByTestId('creer-tableau').click()
+		await page.keyboard.type(TABLEAU_ARCHIVE)
+		await page.getByTestId('valider-tableau').click()
+		const formulaireSm = page.getByTestId('formulaire-creation-tableau')
+		await expect(formulaireSm).toContainText('Afficher les archivés')
+		expect(
+			await page.evaluate(
+				() => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+			),
+			'débordement horizontal du refus au palier 390',
+		).toBe(false)
+		await capturer(page, 'tableau-doublon-archive-sm-390', UNITE)
+		await page.setViewportSize({ width: 1440, height: 900 })
+
+		// LA PHRASE EST SUIVIE : la case cochée, le tableau qui bloquait paraît enfin, et il porte
+		// le nom refusé. C'est l'assertion qui prouve que le recours EXISTE, et pas seulement qu'il
+		// est écrit.
+		await page.getByTestId('afficher-archives-tableaux').check()
+		const archive = page.getByTestId('tableau-objectifs-archive')
+		await expect(archive).toBeVisible()
+		await expect(archive).toContainText(TABLEAU_ARCHIVE)
+		await capturer(page, 'tableau-doublon-archive-recours-1440', UNITE)
+
+		// AUCUN TABLEAU N'A ÉTÉ CRÉÉ, et c'est la moitié du contrat : le refus vient de la BASE, pas
+		// d'une garde d'écran, et l'écran n'a pas fait semblant d'écrire.
+		expect(await tableauEnBase(TABLEAU_ARCHIVE)).not.toBeNull()
+		const lignes = await fetch(
+			`${URL_API}/rest/v1/goal_boards?select=id&name=eq.${encodeURIComponent(TABLEAU_ARCHIVE)}`,
+			{ headers: enTetesService() },
+		).then((r) => r.json() as Promise<{ id: string }[]>)
+		expect(lignes).toHaveLength(1)
+
+		// LES ERREURS DE CONSOLE SONT LES DEUX `409` QUE CE SCÉNARIO PROVOQUE ET LIT — un par palier
+		// éprouvé —, consommées par leur liste EXACTE comme celle du doublon de la tranche 2 c. Deux
+		// et non une : le palier étroit rejoue délibérément le refus après rechargement.
+		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[409], ERREUR_RESSOURCE_HTTP[409]])
+	})
+
 	test('LIGNE j — les quatre paliers rendent la liste élargie sans débordement horizontal', async ({
 		page,
 	}) => {

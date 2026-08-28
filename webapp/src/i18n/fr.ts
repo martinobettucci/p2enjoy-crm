@@ -737,7 +737,7 @@ export const fr = {
 	'goals.board.write.noeffect':
 		'Rien n’a été enregistré. Le tableau a peut-être été archivé entre-temps, ou vous ne pouvez pas l’écrire. Rechargez la liste.',
 	'goals.board.refused.duplicate':
-		'Un tableau de cet espace de travail porte déjà ce nom. Un tableau archivé retient le sien : choisissez-en un autre.',
+		'Un tableau de cet espace de travail porte déjà ce nom. Un tableau archivé retient le sien : cochez « Afficher les archivés » pour le retrouver, ou choisissez un autre nom.',
 	'goals.board.refused.forbidden': 'Vous ne pouvez pas administrer les tableaux de cet espace de travail.',
 	'goals.board.refused.invalid': 'Le nom est exigé : un tableau sans nom ne se retrouve pas.',
 

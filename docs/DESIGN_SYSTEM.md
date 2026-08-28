@@ -2237,6 +2237,19 @@ l'utilisateur apprend deux grammaires pour une notion.
   rend plus », devenu faux : elle nomme désormais la case et la reprise. Une confirmation qui décrit
   un produit disparu dissuade d'un geste réversible.
 
+- **LE REFUS DE DOUBLON NOMME LA CASE, ajouté le 2026-08-28 avec la décision 542.** Un tableau
+  archivé retient son nom (`docs/SPEC-goals.md` §2.1 bis) : créer ou renommer sous ce nom est
+  refusé, et le refus disait « choisissez-en un autre » — la seule issue qui restait tant que
+  l'objet bloquant n'était rendu par aucun écran. Cette case l'a rendu atteignable, et le refus
+  nomme donc la voie de recours avant le contournement.
+
+  **La règle générale, applicable partout ailleurs :** quand un refus est causé par un objet que
+  l'écran courant sait montrer, le texte du refus nomme le geste qui le montre. Il ne le décrit pas,
+  il le NOMME par son étiquette exacte — ici « Afficher les archivés » —, pour que la phrase soit
+  suivable sans traduction. Un refus qui tait un recours présent à l'écran enseigne le contournement
+  d'un défaut qui n'existe plus, et c'est une forme discrète de l'écart que le `CLAUDE.md` §18
+  proscrit : le produit se décrit alors moins capable qu'il n'est.
+
 ### 5.30 Histogramme prévisionnel / réel — `CRM-086`
 
 Spécifié avant code, `docs/SPEC-costs.md` §4.2.

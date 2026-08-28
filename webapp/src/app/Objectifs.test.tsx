@@ -1505,6 +1505,12 @@ describe('administration des tableaux — §3, §5.1, DESIGN_SYSTEM §5.13', () 
 		})
 		const formulaire = screen.getByTestId('formulaire-creation-tableau')
 		expect(formulaire.textContent).toContain(fr['goals.board.refused.duplicate'])
+		// LE REFUS NOMME LA VOIE DE RECOURS PAR SON ÉTIQUETTE EXACTE — décision 542,
+		// `docs/DESIGN_SYSTEM.md` §5.29 bis. L'assertion compare le texte du refus à la clé de la
+		// CASE elle-même, jamais à une chaîne recopiée : renommer la case sans réviser le refus
+		// enverrait l'utilisateur chercher un geste qui ne porte plus ce nom, et c'est exactement
+		// cette dérive-là qui doit rougir ici.
+		expect(fr['goals.board.refused.duplicate']).toContain(fr['goals.board.showArchived'])
 		// LA MENTION DU FORMULAIRE PORTE SA PROPRE IDENTITÉ, distincte de celle de la section : deux
 		// régions `status` indiscernables ne se désignent ni par une preuve, ni par un lecteur
 		// d'écran (défaut trouvé par la preuve d'interface de cette tranche).

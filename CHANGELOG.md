@@ -13,6 +13,25 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-082` — le nom d'un tableau d'objectifs archivé reste pris, et le refus dit où le retrouver
+
+- **Rien ne change dans le comportement du produit** : un tableau archivé retenait déjà son nom, et
+  il le retient toujours. Ce qui change est que cette règle est désormais **tranchée, écrite et
+  gardée** au lieu d'être un état de fait que personne n'assumait — l'écart était consigné au
+  registre depuis le 2026-08-19.
+- **Le refus de doublon nomme la voie de recours.** Il disait « choisissez-en un autre » ; il dit
+  maintenant de cocher « Afficher les archivés » pour retrouver le tableau qui bloque. Cette case
+  n'existait pas quand le texte a été écrit : le tableau bloquant n'était alors rendu par aucun
+  écran, et le seul conseil possible était de contourner.
+- **Pourquoi ce n'est pas l'inverse qui a été décidé.** Un track et un channel archivés retiennent
+  eux aussi leur identifiant, et un tableau archivé se **désarchive** : libérer son nom rendrait
+  cette reprise faillible sur un doublon que rien n'annoncerait, sur un geste qui ne détruit rien.
+  Un budget clôturé, lui, libère le sien — clôturer une période comptable n'est pas archiver.
+- **Aucune migration, aucune politique, aucun privilège.**
+- Documentation : `docs/SPEC-goals.md` §2.1 bis, `docs/SCHEMA.md` §9 bis.1,
+  `docs/DESIGN_SYSTEM.md` §5.29 bis.
+
+
 ### `CRM-084` — un budget récurrent peut enfin recevoir des occurrences
 
 - **Un budget récurrent est utilisable.** Sous « Réglages ▸ Arborescence », le nombre d'occurrences

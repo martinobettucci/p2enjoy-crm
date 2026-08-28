@@ -579,6 +579,13 @@ const ordonnableDe = (tableau: TableauListe): Ordonnable => ({
  * précision que seule cette table impose : l'index unique de `goal_boards` est TOTAL, si bien qu'un
  * tableau ARCHIVÉ retient encore son nom. Taire ce point ferait chercher indéfiniment, dans une
  * liste où il ne paraît plus, le tableau qui bloque.
+ *
+ * IL NOMME EN OUTRE LA VOIE DE RECOURS, ET C'EST LA DÉCISION 542 QUI LE RENDAIT DÛ : la règle est
+ * désormais tranchée et écrite (`docs/SPEC-goals.md` §2.1 bis), et ce qui l'a rendue tenable est
+ * précisément que le tableau bloquant est ATTEIGNABLE depuis la tranche 2 h — « Afficher les
+ * archivés » le montre, « Désarchiver » le rend administrable. Un refus qui s'arrêtait à
+ * « choisissez-en un autre » taisait le seul geste qui résout la situation au lieu de la contourner,
+ * alors même que l'écran le porte à deux lignes de là.
  */
 export function texteRefusTableau(refus: RefusTableau): string {
 	if (refus.nature === 'doublon') return t('goals.board.refused.duplicate')
