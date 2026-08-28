@@ -7,7 +7,8 @@
 #           barres par occurrence), §4.4 (« n lignes sans coût réel saisi »), §4.5 (cumul calculé
 #           APRÈS la RLS, regroupement par devise), §4.7 (les états), §4.8 (l'onglet, ce qu'il
 #           liste, sa saisie, sa lecture seule, son compteur), §4.8.1 (le droit rendu par la base,
-#           l'ancienneté sur `created_at`, ce que la saisie envoie), §4.8.2 (la portée du badge)
+#           l'ancienneté sur `created_at`, ce que la saisie envoie), §4.8.2 (la portée du badge),
+#           §4.8.3 (l'arbitrage d'INC-182 : la portée du compteur écrite à l'écran)
 # @verifies docs/SCHEMA.md §9 bis.8 (`public.reel_saisissable`)
 # @verifies docs/DESIGN_SYSTEM.md §1 (les couleurs sont des JETONS), §5.30 (l'histogramme),
 #           §5.31 (la table de saisie en série), §5.32 (l'écran d'un budget), §5.33 (le cumul),
@@ -28,7 +29,7 @@
 #   5. Vitest — les deux modules et les quatre écrans ;
 #   6. la suite pgTAP de l'onglet ;
 #   7. les preuves d'interface des quatre surfaces, sur la pile seedée, au clavier ;
-#   8. le harnais est NON COMPLAISANT : trois dégradations réelles, portant chacune sur une règle
+#   8. le harnais est NON COMPLAISANT : quatre dégradations réelles, portant chacune sur une règle
 #      que `docs/SPEC-costs.md` énonce, doivent faire ÉCHOUER une preuve — et la restauration est
 #      constatée.
 #
@@ -42,10 +43,13 @@
 # IL NE PEUT PAS OBSERVER UNE CAPTURE — c'est l'humain qui le fait (`CLAUDE.md` §16). Il refuse en
 # revanche qu'une Definition of Done prétende à des captures absentes ou tronquées.
 #
-# LE BADGE N'EST PAS EXIGÉ ÉGAL À LA MENTION DU §4.4, et c'est délibéré : l'égalité que le §4.8
-# écrit est structurellement fausse — la clôture et la devise séparent les deux populations —, elle
-# est consignée à INC-182 et n'est pas tranchée. Un contrôle qui l'exigerait rendrait rouge une
-# livraison conforme au §4.8.2.
+# LE BADGE N'EST PAS EXIGÉ ÉGAL À LA MENTION DU §4.4, et c'est désormais une RÈGLE ÉCRITE et non
+# une réserve : l'égalité que le §4.8 exigeait est structurellement fausse — la clôture et la devise
+# séparent les deux populations —, et l'arbitrage d'INC-182 l'a RETIRÉE le 2026-08-28 (décision 544,
+# `docs/SPEC-costs.md` §4.8.3). Un contrôle qui l'exigerait rendrait rouge une livraison conforme.
+# Ce que ce harnais exige à la place est vérifiable et plus fort : que l'écran NOMME la portée de son
+# compteur, là où les deux nombres se croisent. La divergence elle-même est MESURÉE par S6 de
+# `e2e/ui/couts-a-saisir.spec.ts`, sur le seed, et non affirmée ici.
 #
 # Le script ne démarre ni n'arrête rien : la pile de développement doit déjà tourner
 # (`./runDev.sh`) et le seed être appliqué (`supabase/seed/apply-seed.sh`).
@@ -250,6 +254,45 @@ else
 	ok "la lecture de l'onglet ne pose AUCUN filtre de clôture (§4.8)"
 fi
 
+# LA PORTÉE DU COMPTEUR EST ÉCRITE À L'ÉCRAN (§4.8.3, arbitrage d'INC-182 rendu le 2026-08-28).
+# Le badge et la mention du §4.4 affichent deux nombres différents sur le même écran — la clôture et
+# la devise séparent leurs populations. Sans cette phrase, l'écart se lit comme une erreur de calcul.
+#
+# CE CONTRÔLE REMPLACE L'ABSENCE DE CONTRÔLE, ET NON UNE ÉGALITÉ : l'en-tête de ce harnais disait
+# que le badge « n'est pas exigé égal à la mention du §4.4 » parce que l'arbitrage n'était pas rendu.
+# Il l'est ; l'exigence est désormais que l'écran NOMME la portée du compteur, ce qui est vérifiable.
+if grep -q "costs.tabs.pending.scope" "$ECRAN_SAISIR"; then
+	ok "l'onglet « Vue d'ensemble » écrit la PORTÉE du compteur (§4.8.3)"
+else
+	fail "$ECRAN_SAISIR ne rend plus la phrase de portée : deux nombres divergents restent inexpliqués (§4.8.3)"
+fi
+
+# ELLE EST RENDUE AVEC LE BADGE, ET SUR LE SEUL ONGLET « Vue d'ensemble » : c'est cet onglet qui
+# porte les mentions du §4.4, donc le seul endroit où deux nombres qui comptent deux populations se
+# rencontrent. Rendue partout, elle deviendrait un avertissement permanent que l'œil cesse de lire.
+if grep -qF "onglet === 'ensemble' && nombreEnAttente !== null && nombreEnAttente > 0" "$ECRAN_SAISIR"; then
+	ok "la phrase de portée accompagne le BADGE, sur le seul onglet « Vue d'ensemble » (§4.8.3)"
+else
+	fail "la condition de rendu de la phrase de portée a changé : elle ne suit plus le badge (§4.8.3)"
+fi
+
+# LE NOM ACCESSIBLE DU BADGE NOMME SA POPULATION (§4.8.3, `docs/DESIGN_SYSTEM.md` §5.4 bis). Un
+# nombre nu dit qu'on compte, jamais ce qu'on compte — et c'est précisément la question que pose un
+# écran portant deux comptes différents.
+if grep -qF "budgets clôturés compris, toutes devises confondues" webapp/src/i18n/fr.ts; then
+	ok "le nom accessible du badge NOMME sa population (§4.8.3)"
+else
+	fail "\`costs.tabs.pending.count\` ne nomme plus sa population : le badge redevient un nombre nu (§4.8.3)"
+fi
+
+# LA DIVERGENCE EST MESURÉE PAR UNE PREUVE D'INTERFACE, jamais seulement affirmée ici : S6 met les
+# deux nombres sous les yeux sur le même jeu de données.
+if grep -q "S6 — LE BADGE ET LA MENTION DU §4.4" e2e/ui/couts-a-saisir.spec.ts; then
+	ok "le scénario S6 MESURE la divergence sur le seed (§4.8.3)"
+else
+	fail "e2e/ui/couts-a-saisir.spec.ts ne porte plus S6 : la divergence n'est plus mesurée (§4.8.3)"
+fi
+
 # LA SAISIE N'ENVOIE QU'`actual_cost` (§4.8.1) : tout autre attribut ferait dépendre l'écriture
 # d'un rattachement que l'onglet n'a aucune raison de connaître.
 if grep -q "update({ actual_cost: reel })" "$MODULE_SAISIR"; then
@@ -411,12 +454,24 @@ else
 		"false" \
 		'lib\/couts-a-saisir.test'
 
+	# 4. La phrase de portée du §4.8.3 cesse d'être rendue : les deux nombres de l'écran redeviennent
+	#    inexpliqués, et l'écart se lit comme une erreur de calcul. La dégradation porte sur la
+	#    CONDITION, et non sur la clé : effacer la clé rendrait rouge `i18n.test.ts` pour une autre
+	#    raison — une clé morte —, ce qui ne dirait rien de l'écran.
+	degradation "l'écran n'écrit plus la portée du compteur (§4.8.3)" \
+		"$ECRAN_SAISIR" "onglet === 'ensemble' && nombreEnAttente !== null && nombreEnAttente > 0" \
+		"false" \
+		'app\/CoutsASaisir.test'
+
 	# La restauration est CONSTATÉE, pas supposée : un `perl -pi` interrompu laisserait le module
-	# affaibli, ce qui serait pire que l'absence de harnais.
-	if npm run test:unit -- --run 'lib/couts-a-saisir.test' >"$TRAVAIL/restauration.log" 2>&1; then
-		ok "le module est RESTAURÉ : la preuve redevient verte après les dégradations"
+	# affaibli, ce qui serait pire que l'absence de harnais. LES DEUX FICHIERS DÉGRADÉS SONT
+	# CONTRÔLÉS — le module et l'écran —, faute de quoi une interruption pendant la quatrième
+	# dégradation laisserait la phrase de portée éteinte sans que rien ne le dise.
+	if npm run test:unit -- --run 'lib/couts-a-saisir.test' 'app/CoutsASaisir.test' \
+		>"$TRAVAIL/restauration.log" 2>&1; then
+		ok "le module ET l'écran sont RESTAURÉS : les preuves redeviennent vertes après les dégradations"
 	else
-		fail_journal "le module n'a PAS été restauré — le dépôt est affaibli, rendez $MODULE_SAISIR" \
+		fail_journal "la restauration a ÉCHOUÉ — le dépôt est affaibli, rendez $MODULE_SAISIR et $ECRAN_SAISIR" \
 			"$TRAVAIL/restauration.log"
 	fi
 fi
