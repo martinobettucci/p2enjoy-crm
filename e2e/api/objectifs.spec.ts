@@ -5,6 +5,13 @@
 //           zéro ligne, les lignes relues intactes derrière. La citation est écrite ici plutôt que
 //           laissée implicite : sans elle, la trace de cette exigence ne mène plus à l'unité de
 //           l'écran, et `scripts/verify-objectifs-canevas.sh` la refuse
+// @verifies CRM-083 TRANCHE 3 — la capacité d'écriture rendue par la base
+//           (`public.ecriture_permise`, migration 71). C'est ici que le §5.7.4 se mesure hors
+//           interface : la MÊME ligne rend deux valeurs différentes à deux appelants, ce qui est
+//           la seule preuve que la colonne s'exécute sous l'identité de l'appelant, et la mesure D
+//           du §5.7.2 y reconduit son cas — capacité vraie, geste refusé
+// @verifies docs/SPEC-goals.md §5.7 (l'arbitrage d'INC-170), §5.7.2 (les quatre mesures),
+//           §5.7.4 (contrat opposable, lignes a, b, d et e)
 // @verifies docs/SPEC-goals.md §2 (objets et contraintes), §4.1 (lecture, et le bloc invisible),
 //           §4.2 (écriture, et le lien qui engage la destination)
 // @verifies docs/SCHEMA.md §9 bis.1 à §9 bis.3 (colonnes), §9 bis.7 (politiques)
@@ -29,7 +36,7 @@
 // inconditionnellement en fin de fichier pour qu'un scénario interrompu ne laisse rien derrière.
 
 import { expect, test } from '@playwright/test'
-import { URL_API, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
+import { CLE_ANONYME, URL_API, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
 
 const BOARDS = '/rest/v1/goal_boards'
 const BLOCKS = '/rest/v1/goal_blocks'
@@ -624,5 +631,135 @@ test.describe('CRM-082 — objectifs : le contrat d’API, hors interface', () =
 		)
 		expect(reponse.status()).toBe(200)
 		expect(((await reponse.json()) as unknown[]).length).toBeGreaterThanOrEqual(1)
+	})
+})
+
+/**
+ * La CAPACITÉ D'ÉCRITURE rendue par la base — `CRM-083` tranche 3, `docs/SPEC-goals.md` §5.7.
+ *
+ * CE QUE CE BLOC PROUVE, ET QUE RIEN D'AUTRE NE PROUVE. La suite pgTAP
+ * `0067_objectifs_ecriture_permise.test.sql` mesure la fonction DANS la base, avec `set local
+ * role` : elle ne traverse ni Kong, ni PostgREST, ni GoTrue. Or la colonne est CALCULÉE au sens de
+ * PostgREST — elle n'existe qu'à travers lui —, et c'est son exposition dans un `select`, sous un
+ * vrai jeton, que l'écran consomme. Un cache de schéma non rechargé rendrait `PGRST202` sans
+ * qu'aucune assertion pgTAP ne bouge.
+ *
+ * IL N'ÉCRIT RIEN, et ne pose donc aucune fixture : la colonne se lit.
+ */
+test.describe('CRM-083 tranche 3 — `ecriture_permise`, la capacité que la base consent', () => {
+	let jetonAdmin = ''
+	let jetonBizdev = ''
+	let jetonViewer = ''
+
+	test.beforeAll(async () => {
+		jetonAdmin = await jetonDe('admin@p2enjoy.test')
+		jetonBizdev = await jetonDe('bizdev@p2enjoy.test')
+		jetonViewer = await jetonDe('viewer@p2enjoy.test')
+	})
+
+	const capacite = async (
+		request: import('@playwright/test').APIRequestContext,
+		jeton: string,
+	) => {
+		const reponse = await request.get(`${BOARDS}?id=eq.${TABLEAU_SEED}&select=id,ecriture_permise`, {
+			headers: enTetesAuthentifies(jeton),
+		})
+		expect(reponse.status()).toBe(200)
+		return (await reponse.json()) as { id: string; ecriture_permise: boolean }[]
+	}
+
+	test('LA MÊME LIGNE rend « true » à qui écrit et « false » à qui lit — mesure B du §5.7.2', async ({
+		request,
+	}) => {
+		// DEUX VALEURS SUR UNE SEULE LIGNE, et c'est l'assertion centrale de ce bloc : elle serait
+		// impossible si la fonction était `security definer`, où elle répondrait pour son
+		// propriétaire et rendrait « true » à tout le monde. Mesurer un seul profil resterait vert
+		// sur cette régression exacte.
+		const [admin] = await capacite(request, jetonAdmin)
+		const [bizdev] = await capacite(request, jetonBizdev)
+		const [viewer] = await capacite(request, jetonViewer)
+		expect(admin?.ecriture_permise).toBe(true)
+		// Le §4.2 ouvre l'écriture à TOUT membre, pas aux seuls administrateurs : un business
+		// developer écrit le tableau.
+		expect(bizdev?.ecriture_permise).toBe(true)
+		expect(viewer?.ecriture_permise).toBe(false)
+	})
+
+	test('LA COLONNE N’OUVRE NI NE FERME AUCUNE LIGNE — §5.7.4, ligne e', async ({ request }) => {
+		// La lectrice lit exactement ce qu'elle lisait : la colonne n'est qu'un booléen de plus sur
+		// une ligne que la RLS a déjà consentie. Une régression qui la ferait FILTRER — un `inner
+		// join` malencontreux, une politique touchée — se verrait ici et nulle part ailleurs.
+		const sansColonne = await request.get(`${BOARDS}?workspace_id=eq.${WORKSPACE}&select=id`, {
+			headers: enTetesAuthentifies(jetonViewer),
+		})
+		const avecColonne = await request.get(
+			`${BOARDS}?workspace_id=eq.${WORKSPACE}&select=id,ecriture_permise`,
+			{ headers: enTetesAuthentifies(jetonViewer) },
+		)
+		expect(((await sansColonne.json()) as unknown[]).length).toBe(
+			((await avecColonne.json()) as unknown[]).length,
+		)
+	})
+
+	test('L’APPELANT ANONYME rend ZÉRO LIGNE, jamais une erreur de PRIVILÈGE — §7', async ({
+		request,
+	}) => {
+		// C'est le motif exact pour lequel `anon` reçoit `execute` (migration 71). Sans ce droit, la
+		// requête rendrait `42501` — une PANNE là où le §7 de `docs/SPEC-permissions-rls.md` exige
+		// un refus silencieux, et l'écran de connexion afficherait une erreur technique.
+		const reponse = await request.get(`${BOARDS}?select=id,ecriture_permise`, {
+			headers: { apikey: CLE_ANONYME },
+		})
+		expect(reponse.status()).toBe(200)
+		expect(await reponse.json()).toHaveLength(0)
+	})
+
+	test('LA CAPACITÉ VRAIE N’ENTRAÎNE PAS QUE TOUT PASSE — mesure D du §5.7.2, ligne d', async ({
+		request,
+	}) => {
+		// LE BUSINESS DEVELOPER ÉCRIT LE TABLEAU — l'assertion ci-dessus le mesure — et ne peut
+		// pourtant PAS poser un lien vers « Maintenance », channel qu'il LIT sans l'ÉCRIRE (§4.2).
+		// C'est ce qui borne l'arbitrage d'INC-170 : la colonne est une condition SUFFISANTE de
+		// refus, jamais NÉCESSAIRE. Sans cette preuve, rien n'empêcherait une session ultérieure de
+		// la lire comme « tout passe » et de faire rejouer à l'écran une règle de la base.
+		const pose = await request.post(BLOCKS, {
+			headers: { ...enTetesService(), Prefer: 'return=representation' },
+			// LES CINQ COLONNES SANS DÉFAUT SONT ÉCRITES, et c'est MESURÉ, pas supposé : omettre
+			// `width`, `height`, `color` ou `fill_percent` rend `400` / `23502`. Le seed les écrit
+			// de même.
+			data: {
+				board_id: TABLEAU_SEED,
+				title: 'essai capacité suffisante',
+				pos_x: 900,
+				pos_y: 900,
+				width: 260,
+				height: 140,
+				color: 'brand',
+				fill_percent: 0,
+				created_by: ADMIN,
+			},
+		})
+		expect(pose.status()).toBe(201)
+		const idBloc = ((await pose.json()) as { id: string }[])[0]?.id ?? ''
+
+		try {
+			const refus = await request.patch(`${BLOCKS}?id=eq.${idBloc}`, {
+				headers: { ...enTetesAuthentifies(jetonBizdev), Prefer: 'return=representation' },
+				data: { channel_id: CH_MAINTENANCE },
+			})
+			// `403` et non `200 []` : le refus vient du `with check` de la politique, qui LÈVE.
+			expect(refus.status()).toBe(403)
+			expect(await refus.text()).toContain('42501')
+
+			// LA LIGNE EST RELUE, et son lien constaté toujours nul.
+			const relecture = await request.get(`${BLOCKS}?id=eq.${idBloc}&select=channel_id`, {
+				headers: enTetesService(),
+			})
+			expect(((await relecture.json()) as { channel_id: string | null }[])[0]?.channel_id).toBeNull()
+		} finally {
+			// LE SEED EST RENDU INTACT, quoi qu'il arrive au scénario : ses six blocs sont un contrat
+			// que les captures de `CRM-083` mesurent.
+			await request.delete(`${BLOCKS}?id=eq.${idBloc}`, { headers: enTetesService() })
+		}
 	})
 })
