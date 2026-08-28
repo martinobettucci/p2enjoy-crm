@@ -4,7 +4,9 @@
 //           §4.8 (ce que l'onglet liste — budgets clôturés COMPRIS —, la saisie en série, la ligne
 //           enregistrée qui reste en place, zéro qui n'est pas un vide, la lecture seule avec son
 //           motif, le compteur, les trois états), §4.8.1 (le droit d'écriture rendu par la base),
-//           §4.8.2 (le badge compte ce que le tableau liste)
+//           §4.8.2 (le badge compte ce que le tableau liste), §4.8.3 (l'arbitrage d'INC-182 : le
+//           badge et la mention du §4.4 comptent deux populations, mesuré sur le seed, et l'écran
+//           écrit la portée du compteur)
 // @verifies docs/DESIGN_SYSTEM.md §5.31 (table de saisie en série : onglets, badge, clavier,
 //           pilule « clôturé », lecture seule), §5.9 (tableau de données), §5.8 (états),
 //           §7 (les quatre paliers), §8 (clavier), §12.1 (navigation par liens)
@@ -227,6 +229,60 @@ test.describe('CRM-086 — onglet « À saisir » (docs/SPEC-costs.md §4.8)', (
 		// L'écran de la lectrice est OBSERVÉ : un champ désactivé doit rester LISIBLE (§8), et c'est
 		// une capture qui le dit, jamais une assertion.
 		await capturer(page, 'couts-a-saisir-lecture-seule-1440', UNITE)
+	})
+
+	test('S6 — LE BADGE ET LA MENTION DU §4.4 COMPTENT DEUX POPULATIONS, et l’écran le dit (§4.8.3)', async ({
+		page,
+	}) => {
+		// C'EST LA PREUVE QUE L'ÉGALITÉ RETIRÉE NE POUVAIT PAS PORTER, et elle la MESURE plutôt que
+		// de la supposer : l'arbitrage d'INC-182 (décision 544) a retiré du §4.8 l'exigence que le
+		// badge porte « le même nombre que la mention du §4.4 ». Ce scénario met les deux nombres
+		// sous les yeux, sur le même écran et le même jeu de données. Une régression qui ajouterait
+		// un filtre de clôture à la lecture de l'onglet — le mimétisme que le §4.8.1 redoute — les
+		// rendrait égaux, et ferait tomber cette assertion.
+		await connecter(page)
+		await page.goto('/tracks/studio-web/couts')
+
+		// La mention du §4.4 est rendue SOUS l'histogramme, qui exclut les budgets clôturés (§4.2) :
+		// elle ne compte donc que « Publicité », sur `Publicité 2026`.
+		await expect(page.getByText(/^1 ligne\(s\) sans coût réel saisi/)).toBeVisible()
+		// Le badge compte ce que le tableau de l'onglet LISTE, budget clos compris : deux lignes.
+		const badge = page.getByTestId('onglet-couts-saisir').getByTestId('onglet-couts-badge')
+		await expect(badge).toHaveText('2')
+		// L'ÉCART EST NOMMÉ À L'ÉCRAN, et c'est ce que l'arbitrage ajoute : sans cette phrase, deux
+		// nombres légitimement différents se lisent comme une erreur de calcul.
+		await expect(page.getByTestId('couts-portee-compteur')).toBeVisible()
+		// Le nom accessible du badge nomme sa population, et pas seulement le fait de compter.
+		await expect(badge).toHaveAttribute(
+			'aria-label',
+			'2 ligne(s) en attente de leur coût réel, budgets clôturés compris, toutes devises confondues',
+		)
+		// L'écran est OBSERVÉ (`CLAUDE.md` §16) : c'est la capture qui dit si les deux nombres et la
+		// phrase qui les sépare se lisent ensemble, sans se contredire à l'œil.
+		await capturer(page, 'couts-a-saisir-portee-compteur-1440', UNITE)
+
+		// LA MÊME SCÈNE AU PALIER LE PLUS ÉTROIT, et ce n'est pas un doublon de capture : cette
+		// phrase est la plus longue des deux écrans de coûts, et c'est à 390 px qu'elle décide si
+		// elle informe ou si elle noie la barre d'onglets qu'elle suit (`CLAUDE.md` §16).
+		// LE PALIER EST POSÉ AVANT LA NAVIGATION, comme en S5 : redimensionner une page déjà rendue
+		// en 1440 laisse la barre latérale dépliée par-dessus le contenu, et la capture montrerait
+		// alors l'artefact du redimensionnement plutôt que l'écran qu'un visiteur reçoit.
+		await page.setViewportSize({ width: 390, height: 780 })
+		await page.goto('/tracks/studio-web/couts')
+		await expect(page.getByTestId('couts-portee-compteur')).toBeVisible()
+		const debordement = await page.evaluate(
+			() => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+		)
+		expect(debordement, 'aucun défilement horizontal de page à sm-390').toBeLessThanOrEqual(0)
+		await capturer(page, 'couts-a-saisir-portee-compteur-390', UNITE)
+		await page.setViewportSize({ width: 1440, height: 900 })
+
+		// LE BADGE EST BIEN LE COMPTE DES LIGNES RENDUES — l'exigence qui REMPLACE l'égalité retirée.
+		await page.goto(TRACK_A_SAISIR)
+		await expect(page.getByTestId('couts-a-saisir-ligne')).toHaveCount(2)
+		// Et la phrase de portée n'est PAS rendue ici : le tableau visible EST la population du
+		// badge, elle n'aurait rien à expliquer.
+		await expect(page.getByTestId('couts-portee-compteur')).toHaveCount(0)
 	})
 
 	test('S5 — captures aux quatre paliers, page jamais défilante horizontalement (§7)', async ({
