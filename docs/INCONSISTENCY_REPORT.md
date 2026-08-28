@@ -5854,3 +5854,15 @@ qui n'a pas rendu le focus au document après un scénario voisin (INC-192 décr
 famille). C'est le **deuxième** constat du dépôt de la forme « échoue en série, passe seul » après
 INC-219, et la répétition dit que le sujet mérite d'être traité pour lui-même : **relève de
 `CRM-065`**, qui porte la palette.
+
+**SECONDE MESURE, 2026-08-28, session `CRM-084` tranche 3.** La campagne complète de cette session
+rend **715 passés, AUCUN échec**, sur un dépôt qui porte quatorze scénarios d'interface de plus que
+celui où l'entrée a été ouverte. Le scénario incriminé — `inbox.spec.ts` § « LA PALETTE Y MÈNE
+RÉELLEMENT » — est passé **en série**, au rang où il échouait.
+
+**L'entrée RESTE OUVERTE, et le constat ne la ferme pas.** Une occurrence non reproduite n'établit
+aucune cause, et « ça ne s'est pas reproduit » n'est pas un diagnostic — c'est exactement le
+raisonnement que la famille d'INC-219 interdit. Ce qui est acquis est que l'échec n'est **pas
+déterministe** sur ce code : il l'était déjà dans l'entrée d'origine, qui notait que le fichier joué
+seul rend ses dix scénarios verts. Cette seconde mesure ajoute qu'il ne l'est pas non plus **en
+série**. Comportement inchangé, aucun test désactivé, aucune temporisation ajoutée.

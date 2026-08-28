@@ -26755,3 +26755,51 @@ n'est pas du comportement : la série des `scripts/verify-*.sh` n'a pas été re
 derrière ce changement — le dépôt en porte plus de soixante, et seul `verify-harness.sh --rapide` l'a
 été. `docs/manual.md` chapitre 5.6 nomme en outre un écart HÉRITÉ de la tranche 2, non comblé ici :
 l'administration des budgets eux-mêmes n'a toujours aucun chapitre.
+
+## décision 541 — la campagne de fin de session, et elle est INTÉGRALEMENT verte
+
+*2026-08-28, même exécution que les décisions 539 et 540. Consigne le bilan de fin de session.*
+
+**LA CAMPAGNE, ET IL N'Y A PAS EU DE SECONDE EXÉCUTION À FAIRE.** La leçon de méthode de la décision
+538 a été appliquée à la lettre : `npm run e2e:ui` a été lancée **seule**, après reconstruction, et
+**rien n'a réécrit `webapp/dist` pendant qu'elle tournait** — ni `typecheck`, ni `build`, ni une
+autre suite. Les seules commandes exécutées en parallèle l'ont été **avant** son démarrage, et
+`npm run test:unit`, la seule jouée pendant une campagne d'interface concurrente, ne touche ni la
+pile ni `dist`.
+
+| Preuve | Verdict |
+|---|---|
+| `npm run typecheck` / `npm run build` | verts |
+| `npm run test:sql` | **66 fichiers, 3027 assertions**, aucune anomalie |
+| `npm run test:unit` | **86 fichiers, 2896 tests** |
+| `npm run e2e:api` | **1032 passés** |
+| `npm run e2e:ui` | **715 passés, AUCUN échec**, en 20,7 min |
+| `npm run e2e:mail` | **42 passés** |
+| `pytest` (`mail-sync`) | **244 passés** |
+| `scripts/verify-harness.sh --rapide` | **31 contrôles, aucune anomalie**, après révision de ses deux compteurs |
+| `scripts/verify-budgets.sh` | **44 contrôles, aucune anomalie**, ses trois dégradations vues |
+
+**INC-235 NE S'EST PAS REPRODUITE, ET C'EST UN FAIT À CONSIGNER.** La campagne de la décision 538
+rendait **700 passés, 1 échec** — `inbox.spec.ts` § « LA PALETTE Y MÈNE RÉELLEMENT », `Ctrl+K` sur
+`/board`, au rang 456. La même série, sur un dépôt qui porte une surface de plus, rend **715 passés,
+aucun échec**. L'entrée reste **ouverte** : une occurrence non reproduite n'établit pas une cause, et
+« ça ne s'est pas reproduit » n'est pas un diagnostic. Le constat y est ajouté parce qu'il est la
+donnée la plus utile pour la session qui la traitera — c'est la seconde mesure de la même série.
+
+**LES 194 CAPTURES DES AUTRES UNITÉS, RÉÉCRITES PAR LA CAMPAGNE, ONT ÉTÉ REGARDÉES PUIS RESTAURÉES.**
+Les écarts observés sont de la donnée et de l'encodage, pas du rendu. Celle de `CRM-084` est
+**conservée** : la cellule qui compte les occurrences y paraît légitimement comme la commande de
+dépliage qu'elle est devenue.
+
+**Ce qui n'a PAS été exécuté, et il faut le dire** : la série des `scripts/verify-*.sh` en entier. Le
+dépôt en porte plus de soixante, chacun rejouant des suites complètes ; deux l'ont été,
+`verify-harness.sh --rapide` et `verify-budgets.sh` — celui qui couvre l'unité. C'est le seul écart
+qui retient `CRM-084` en `[~]`, et il n'est pas du comportement.
+
+**Où reprendre.** `CRM-084` est livrée et prouvée, tranches 1 à 3, et il ne lui reste que la série
+des harnais. La prochaine unité `[~]` du plan portant du comportement est à choisir en relisant le
+backlog : les unités de la messagerie et du chunk 5 ne portent plus que des absences nommées, des
+arbitrages — que le §4.1 bis dit être du travail, non un mur — et des rejeux de forme. **Les deux
+premiers arbitrages sur le chemin sont INC-182** (`CRM-086`, la portée du badge de l'onglet « À
+saisir ») **et l'unicité du nom d'un tableau d'objectifs archivé** (`CRM-082`) : tous deux tenables
+par une session, comme INC-173 vient de l'être.
