@@ -885,9 +885,18 @@ type _vueDerivationColonnes = Expect<
 // changement, pour la SIXIÈME fois consécutive. Elle est l'exact inverse de `classify_message`,
 // déclarée quelques lignes plus bas depuis `CRM-055` : les deux gestes d'un même couple sont
 // désormais tous deux dans le contrat de types. Quarante-six devient QUARANTE-SEPT.
-type _lesQuaranteSeptFonctions = Expect<
+//
+// `0071` de `CRM-083` TRANCHE 3 ajoute `ecriture_permise`, et le témoin la voit dans le même
+// changement, pour la SEPTIÈME fois consécutive. **Ce n'est pas une RPC** : c'est la seconde
+// COLONNE CALCULÉE du dépôt, jumelle de `reel_saisissable` déclarée quelques lignes plus haut, et
+// `supabase gen types` les range toutes deux ici — une fonction dont l'unique argument est le type
+// composite d'une table reste une fonction pour le générateur. Sa présence dans cette liste ne dit
+// donc PAS qu'un `client.rpc('ecriture_permise')` existe : elle se demande dans un `select`
+// (`docs/SCHEMA.md` §9 bis.8 bis). Quarante-sept devient QUARANTE-HUIT.
+type _lesQuaranteHuitFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
+    | 'ecriture_permise'
     | 'unclassify_message'
     | 'armer_sequence_relance'
     | 'cards_figees'
@@ -954,6 +963,22 @@ type _signatureReelSaisissable = Expect<
 
 type _retourReelSaisissable = Expect<
   Equal<Database['public']['Functions']['reel_saisissable']['Returns'], boolean>
+>
+
+// LA JUMELLE DE LA COLONNE CI-DESSUS — `CRM-083` tranche 3, `docs/SCHEMA.md` §9 bis.8 bis. Elle
+// prend une ligne de `goal_boards` et rend un booléen. Comme sa jumelle, `webapp/src/lib/objectifs.ts`
+// la déclare pourtant `boolean | null` et replie vers le REFUS : un type ne garantit jamais une
+// valeur rendue, et un cache de schéma PostgREST périmé rend la colonne absente. Le SENS du repli
+// n'est pas indifférent ici — il FERME l'écriture, il ne l'ouvre pas (`docs/SPEC-goals.md` §5.7.4,
+// ligne c).
+type _ecriturePermisePrendUneLigneDeTableau = Expect<
+  Equal<
+    Database['public']['Functions']['ecriture_permise']['Args'],
+    { tableau: Database['public']['Tables']['goal_boards']['Row'] }
+  >
+>
+type _ecriturePermiseRendUnBooleen = Expect<
+  Equal<Database['public']['Functions']['ecriture_permise']['Returns'], boolean>
 >
 
 // L'arborescence de l'inbox ne prend AUCUN argument, et c'est le contrat : elle rend ce que
@@ -1124,9 +1149,11 @@ export type AssertionsDuContratDeTypes = [
   _relationsWorkspaceMembers,
   _laSeuleVue,
   _vueDerivationColonnes,
-  _lesQuaranteSeptFonctions,
+  _lesQuaranteHuitFonctions,
   _signatureReelSaisissable,
   _retourReelSaisissable,
+  _ecriturePermisePrendUneLigneDeTableau,
+  _ecriturePermiseRendUnBooleen,
   _signatureArborescence,
   _signatureCopie,
   _retourCopie,
