@@ -344,6 +344,38 @@ export function PanneauOccurrences({
 	// réponse périmée écraser une réponse plus récente.
 	const courant = useRef(0)
 
+	/**
+	 * LA SOUS-SURFACE SE RAMÈNE DANS LE CADRE À SON OUVERTURE, ET C'EST UN DÉFAUT TROUVÉ PAR L'ŒIL.
+	 *
+	 * MESURÉ à 390 px : la commande de dépliage vit dans la cellule des occurrences, tout à droite
+	 * d'une table plus large que la fenêtre. La cliquer fait défiler horizontalement le conteneur de
+	 * l'écran pour l'amener sous le doigt — comportement normal du navigateur —, et la sous-surface,
+	 * rendue SOUS la table dans ce même conteneur, naissait donc décalée à gauche hors du cadre : la
+	 * capture montrait période, montant et état SANS le libellé, c'est-à-dire tout sauf la donnée qui
+	 * nomme la ligne.
+	 *
+	 * `inline: 'start'` ramène le BORD GAUCHE du panneau au bord gauche du conteneur, sans déplacer
+	 * verticalement ce que l'utilisateur regarde. C'est le pendant de la règle du §5.13 sur le focus :
+	 * ouvrir une surface, c'est la rendre atteignable, pas seulement la monter dans le document.
+	 *
+	 * `'nearest'` NE SUFFISAIT PAS, et la mesure le dit : le conteneur qui défile est celui de
+	 * l'arborescence, dont la boîte de contenu vaut 846 px là où la fenêtre en montre 358. Le panneau
+	 * y est donc PLUS LARGE que la zone visible, et `'nearest'` juge alors qu'il est déjà en vue —
+	 * il couvre tout le cadre. Il restait décalé de 266 px vers la gauche, libellés hors champ.
+	 */
+	const racine = useRef<HTMLElement>(null)
+	useEffect(() => {
+		const element = racine.current
+		// GARDE DE CAPACITÉ, ET NON MASQUAGE D'ERREUR (`CLAUDE.md` §18), même geste et même motif
+		// qu'à `FormulaireCard.tsx` : `scrollIntoView` n'est pas implémentée par jsdom, où les
+		// preuves de composant s'exécutent — MESURÉ, son appel y lève. Ce que cette ligne ajoute est
+		// le CADRAGE, et son absence en test ne cache aucun défaut du produit ; le défilement réel
+		// est éprouvé par `e2e/ui/occurrences.spec.ts` sur Chromium, aux quatre paliers.
+		if (element !== null && typeof element.scrollIntoView === 'function') {
+			element.scrollIntoView({ block: 'nearest', inline: 'start' })
+		}
+	}, [])
+
 	useEffect(() => {
 		const rang = ++courant.current
 		setOccurrences(enChargement())
@@ -397,6 +429,7 @@ export function PanneauOccurrences({
 
 	return (
 		<section
+			ref={racine}
 			data-testid="panneau-occurrences"
 			aria-label={t('admin.occurrences.aria', { budget: nomBudget })}
 			className="flex flex-col gap-2 rounded-lg border border-border bg-bg p-3"
@@ -441,25 +474,48 @@ export function PanneauOccurrences({
 						const close = occurrence.closed_at !== null
 						const periode = rendrePeriode(occurrence)
 						return (
+							/*
+							 * LE LIBELLÉ OCCUPE SA PROPRE LIGNE SOUS `md`, ET C'EST UN DÉFAUT TROUVÉ PAR
+							 * L'ŒIL, PAS PAR UNE ASSERTION. À 390 px, la ligne — libellé, période,
+							 * enveloppe, état, trois commandes — dépassait la largeur de la fenêtre et
+							 * poussait le conteneur de l'écran à défiler horizontalement : la capture
+							 * montrait « du 2026-02-01 au 2026-02-28 2500 Ouverte » SANS le libellé,
+							 * c'est-à-dire tout sauf la donnée qui nomme la ligne. La ligne de base du
+							 * §2.4 l'établit comme NÔTRE : la capture des budgets au même palier, prise
+							 * avant cette tranche, ne défile pas. Aucune assertion ne l'attrapait — celle
+							 * du palier porte sur la PAGE, et c'est un conteneur interne qui défilait.
+							 */
 							<li
 								key={occurrence.id}
 								data-testid="ligne-occurrence"
-								className="flex flex-wrap items-center gap-2 border-b border-border last:border-b-0 hover:bg-hover min-h-[var(--size-target)] px-2"
+								className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-border last:border-b-0 hover:bg-hover min-h-[var(--size-target)] px-2 py-1"
 							>
-								<span className="font-normal min-w-0 grow">{occurrence.label}</span>
+								<span className="font-normal min-w-0 basis-full md:basis-auto md:grow">
+									{occurrence.label}
+								</span>
 								{/* Cellule VIDE quand aucune borne n'est posée : les deux sont facultatives
 								    (§2.2), et un tiret y serait une donnée que personne n'a saisie. */}
-								<span
-									data-testid="occurrence-periode"
-									className="text-sm text-text-2 whitespace-nowrap"
-								>
+								<span data-testid="occurrence-periode" className="text-sm text-text-2 min-w-0">
 									{periode}
 								</span>
+								{/*
+								 * L'ENVELOPPE PORTE UN LIBELLÉ ACCESSIBLE, second constat de la même
+								 * observation : dans une `ul` sans en-têtes de colonne, « 2500 » nu ne dit
+								 * pas de quoi il est le nombre — là où la table des budgets a une colonne
+								 * « Enveloppe » pour le dire. Le texte reste visuellement le seul montant.
+								 */}
 								<span
 									data-testid="occurrence-enveloppe"
 									className="text-sm text-text-2 whitespace-nowrap"
 								>
-									{occurrence.planned_amount === null ? null : String(occurrence.planned_amount)}
+									{occurrence.planned_amount === null ? null : (
+										<>
+											<span className="sr-only">
+												{t('admin.occurrences.form.planned')}
+											</span>
+											{String(occurrence.planned_amount)}
+										</>
+									)}
 								</span>
 								{/* L'état est un MOT, pas une teinte (§1, §5.47) : une ligne close grisée se
 								    lirait comme une panne d'affichage. */}

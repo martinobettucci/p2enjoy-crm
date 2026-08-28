@@ -4287,6 +4287,30 @@ Elle vit **dans** le bloc des budgets d'un track (§5.13), et n'invente rien.
   liste, et **« aucune occurrence » — qui n'est pas un état vide en défaut** mais l'invitation au
   seul geste qui vaille, la commande « Ouvrir une occurrence » restant offerte dans les quatre.
 
+- **DEUX DÉFAUTS TROUVÉS PAR L'ŒIL À 390 px, ET AUCUNE ASSERTION NE LES ATTRAPAIT** (`CLAUDE.md`
+  §16). Ils sont consignés ici parce qu'ils tiennent à la FORME, et que la règle qui en sort vaut
+  au-delà de cette sous-surface.
+
+  - **Le libellé — la donnée qui NOMME la ligne — sortait du cadre par la GAUCHE.** La commande de
+    dépliage vit dans la cellule des occurrences, tout à droite d'une table plus large que la
+    fenêtre ; la cliquer fait défiler horizontalement le conteneur de l'arborescence, et la
+    sous-surface, rendue sous la table dans ce même conteneur, naissait décalée de **266 px**. La
+    capture montrait « du 2026-02-01 au 2026-02-28 2500 Ouverte » **sans** « Février 2026 ». La
+    ligne de base du §2.4 l'établit comme nôtre : la capture des budgets au même palier, prise avant
+    cette tranche, ne défile pas. **Deux corrections, pas une** : le libellé occupe sa propre ligne
+    sous `md`, et la sous-surface se ramène dans le cadre à son ouverture. **`scrollIntoView` doit
+    employer `inline: 'start'` et non `'nearest'`** — mesuré : la boîte de contenu du conteneur vaut
+    846 px là où la fenêtre en montre 358, la surface est donc plus large que la zone visible, et
+    `'nearest'` juge qu'elle est déjà en vue puisqu'elle couvre tout le cadre.
+  - **Un montant nu dans une `ul` ne dit pas de quoi il est le nombre.** La table des budgets a une
+    colonne « Enveloppe » pour le dire ; une liste sans en-têtes n'a rien. Le montant porte donc un
+    libellé `sr-only`, et reste visuellement le seul texte.
+
+  **La règle qui en sort, et qui vaut pour toute surface rendue sous une table plus large que la
+  fenêtre** : l'assertion de palier qui porte sur la PAGE ne voit pas un conteneur INTERNE qui
+  défile. Une preuve de palier doit mesurer le cadre de la surface elle-même et **nommer le
+  coupable par sa coordonnée**, faute de quoi elle est verte sur un écran illisible.
+
 - **Aucune couleur et aucun jeton nouveaux** : la sous-surface emprunte au §5.13 sa barre d'actions,
   ses formulaires dans le flux et sa confirmation, au §5.9 ses hauteurs et ses séparateurs, au §5.7
   ses champs et au §5.8 ses états.
