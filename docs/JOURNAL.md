@@ -26859,3 +26859,59 @@ libère pas le nom, le désarchivage qui n'échoue pas —, un contrôle non com
 enfin la voie de recours au lieu de s'arrêter à « choisissez-en un autre ».
 
 **Où reprendre.** La spécification et l'arbitrage sont committés ; le code les suit.
+
+## décision 543 — la campagne de fin de session, et l'échec qu'elle isole n'est pas le nôtre
+
+*2026-08-28, même exécution que la décision 542. Consigne le bilan de fin de session.*
+
+**LA CAMPAGNE.**
+
+| Preuve | Verdict |
+|---|---|
+| `npm run typecheck` / `npm run types:check` / `npm run build` | verts |
+| `npm run test:sql` | **66 fichiers, 3030 assertions**, aucune anomalie |
+| `npm run test:unit` | **86 fichiers, 2895 tests**, aucun échec |
+| `npm run e2e:api` | **1032 passés** |
+| `npm run e2e:ui` | **715 passés, 1 échec**, en 26,2 min |
+| `npm run e2e:mail` | **42 passés** |
+| `pytest` (`mail-sync`) | **244 passés** |
+| `scripts/verify-objectifs.sh` | **49 contrôles, aucune anomalie**, dégradation de la décision 542 comprise |
+| `scripts/verify-budgets.sh --rapide` | **37 contrôles, aucune anomalie** |
+
+**L'ÉCHEC UNIQUE EST PRÉEXISTANT, ET LA LIGNE DE BASE A ÉTÉ EXÉCUTÉE, PAS SUPPOSÉE.**
+`administration-workflows.spec.ts:1118` § « les deux gestes se mènent au clavier seul » expire à
+trente secondes. **Il n'est pas un aléa de série** : rejoué seul, il échoue à l'identique — ce qui le
+distingue d'INC-219 et d'INC-235, verts isolément. Les six fichiers de la session ont été ramenés au
+commit `426162f`, la webapp reconstruite, le scénario rejoué : **il échoue des deux côtés**. Consigné
+en **INC-236**, relève de `CRM-076`, comportement inchangé.
+
+**DEUX ÉCARTS DE COMPTAGE, DITS PLUTÔT QUE TUS.**
+
+1. `test:unit` rend **2895** là où la décision 541 notait **2896**, sur un diff qui n'ajoute qu'une
+   assertion DANS un test existant — `Objectifs.test.tsx` porte 87 `it` avant comme après. La cause
+   n'est pas établie et n'est pas supposée ; rien n'est rouge.
+2. **L'énumération des entrées « ouvertes » du registre est fausse, et le chiffre qui la précédait
+   l'était aussi.** Mesuré en comptant les titres `### INC-…` : **cent sept** entrées portent leur
+   texte complet, l'énumération n'en nomme que **trente-huit**, et elle cite INC-228 et INC-229 qui
+   n'ont plus de section. La phrase est corrigée pour ne plus annoncer un compte faux ; l'énumération
+   elle-même n'est PAS réécrite — vérifier cent sept entrées n'appartient pas à une session dont
+   l'unité est ailleurs (§4.2).
+
+**CE QUI N'A PAS ÉTÉ EXÉCUTÉ, ET IL FAUT LE DIRE** : la série des `scripts/verify-*.sh` en entier. Le
+dépôt en porte désormais **77**. Deux l'ont été — celui qui couvre l'unité et celui du budget, dont
+la décision 542 garde l'écart. `scripts/verify-harness.sh --rapide` a été lancé et **n'a pas rendu
+son bilan en dix minutes** ; il a été interrompu, et son verdict n'est donc pas connu.
+
+**UNE OBSERVATION DE CAPTURE, ET LE CHOIX QU'ELLE A CONFIRMÉ.** La capture du doublon de la
+tranche 2 c montre le refus révisé alors que le tableau qui bloque est **vivant et visible** deux
+lignes plus bas : la phrase y nomme un recours dont ce cas-là n'a pas besoin. Le texte reste **unique**,
+et c'est délibéré — le distinguer supposerait que l'écran sache LEQUEL des tableaux entre en
+collision, donc une lecture de plus pour une nuance de formulation, quand le dictionnaire de refus
+est fermé et que la ligne du responsable veut « le même comportement partout ». La phrase énonce un
+fait vrai dans les deux cas et n'égare personne : le blocage visible se voit.
+
+**Où reprendre.** `CRM-082` est close : sa dernière case est cochée, l'arbitrage est rendu, et la
+règle est gardée par trois assertions pgTAP, deux contrôles de catalogue et une dégradation.
+L'arbitrage suivant nommé par la décision 541 reste **INC-182** (`CRM-086`, la portée du badge de
+l'onglet « À saisir »), tenable par une session comme celui-ci vient de l'être. **INC-236** est neuve
+et attend `CRM-076`.

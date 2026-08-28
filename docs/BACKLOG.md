@@ -10197,7 +10197,7 @@ sont indépendantes l'une de l'autre et suivent la Definition of Done commune.
 
 | Unité | Objet | État |
 |---|---|---|
-| CRM-082 | Objectifs : modèle, RLS et API | `[~]` |
+| CRM-082 | Objectifs : modèle, RLS et API | `[x]` |
 | CRM-083 | Canevas d'objectifs : blocs, flèches, ouverture du channel | `[~]` |
 | CRM-084 | Budgets, occurrences et clôture : modèle, RLS et API | `[~]` |
 | CRM-085 | Lignes de coût d'une affaire : modèle et section de la fiche | `[x]` |
@@ -10206,10 +10206,17 @@ sont indépendantes l'une de l'autre et suivent la Definition of Done commune.
 **Contrainte d'ordre :** `CRM-082` précède `CRM-083`, `CRM-084` précède `CRM-085` qui précède
 `CRM-086`. Les deux chaînes sont indépendantes et peuvent s'intercaler.
 
-### CRM-082 — Objectifs : modèle, RLS et API `[~]`
+### CRM-082 — Objectifs : modèle, RLS et API `[x]`
 
 `goal_boards`, `goal_blocks`, `goal_links` (`docs/SCHEMA.md` §9 bis.1 à §9 bis.3), leurs triggers
 et leurs politiques (§9 bis.7). **Aucun écran.**
+
+**CLOSE le 2026-08-28** (décisions 542 et 543). La dernière case ouverte n'était pas du code
+manquant mais un **arbitrage non rendu** — l'unicité du nom d'un tableau archivé —, tranché,
+persisté, puis GARDÉ par trois assertions pgTAP et deux contrôles de catalogue non complaisants. Ce
+qui retenait par ailleurs l'unité — la série entière des `scripts/verify-*.sh` — avait déjà été
+déclaré caduc le 2026-08-20 : la série a été rejouée en `--rapide`, et le harnais de l'unité,
+`scripts/verify-objectifs.sh`, est vert à chaque exécution depuis.
 
 **DoD** : migration versionnée et convergente ; pgTAP sur les triggers — lien inter-tableaux refusé,
 `fill_percent` hors bornes refusé, boucle sur soi refusée, cycle **accepté** — et sur les six
@@ -10285,7 +10292,7 @@ dégradations réelles.
       jamais imputables à `CRM-082`. `scripts/verify-objectifs.sh` reste vert — 46 contrôles,
       aucune anomalie. Ce qui retient encore `CRM-082` en `[~]` est le seul écart de spécification
       nommé ci-dessous (unicité du nom des tableaux archivés).
-- [~] **Écart TRANCHÉ le 2026-08-28, décision 542 — l'unicité du nom porte sur TOUS les tableaux,
+- [x] **Écart TRANCHÉ le 2026-08-28, décision 542 — l'unicité du nom porte sur TOUS les tableaux,
       archivés compris, et c'est désormais une règle ÉCRITE.** L'entrée INC-168 est retirée du
       registre. Le comportement en place est **confirmé, sans migration** : la mesure qui décide
       n'avait jamais été faite, et elle porte sur un TROISIÈME objet que le registre ne versait pas
@@ -10300,6 +10307,17 @@ dégradations réelles.
       figent la règle au catalogue et par le comportement, le contrôle non complaisant de
       `scripts/verify-objectifs.sh` avec sa dégradation, et le texte de refus qui nomme la voie de
       recours (« Afficher les archivés ») au lieu de s'arrêter à « choisissez-en un autre ».
+      **LIVRÉ ET PROUVÉ le 2026-08-28, décision 543** : `supabase/tests/0047_objectifs.test.sql`
+      passe de 45 à **48 assertions** — l'index sans prédicat au catalogue, l'archivage qui ne libère
+      pas le nom, le désarchivage qui ne peut heurter aucun doublon —, et la non-complaisance est
+      MESURÉE : l'index refait partiel rend 4 rouges, rétabli il rend 48 vertes.
+      `scripts/verify-objectifs.sh` passe de 46 à **49 contrôles, aucune anomalie**, avec sa
+      dégradation ; son second contrôle garde l'écart EN SENS INVERSE — rendre total l'index des
+      budgets serait vu. Le refus nomme la case, éprouvé par une assertion unitaire qui compare le
+      texte à la clé de la case et par un scénario d'interface qui **suit la phrase** : le refus lu,
+      la case cochée, le tableau bloquant paraît. Captures observées —
+      `docs/captures/CRM-083/tableau-doublon-archive-1440.jpg`,
+      `tableau-doublon-archive-recours-1440.jpg`, `tableau-doublon-archive-sm-390.jpg`.
 
 ### CRM-083 — Canevas d'objectifs `[~]`
 

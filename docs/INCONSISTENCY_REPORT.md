@@ -233,10 +233,25 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 
 ## Ouverts
 
-**Trente-six ouvertes à ce jour : INC-123, INC-124, INC-125, INC-126, INC-136, INC-137, INC-138,
+**Énumération PARTIELLE, et elle est signalée comme telle depuis le 2026-08-28 : INC-123, INC-124,
+INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-174,
 INC-182, INC-183, INC-185, INC-186, INC-188, INC-189, INC-190, INC-191, INC-192, INC-193, INC-224,
-INC-225, INC-226, INC-227, INC-228, INC-229, INC-231, INC-232, INC-233 et INC-234.** —
+INC-225, INC-226, INC-227, INC-228, INC-229, INC-231, INC-232, INC-233, INC-234 et
+INC-236.**
+
+> **CETTE LISTE N'EST PAS LE COMPTE DES ENTRÉES OUVERTES, ET LE CHIFFRE QUI LA PRÉCÉDAIT ÉTAIT
+> FAUX.** Mesuré le 2026-08-28 par la session `CRM-082`, en comptant les titres `### INC-…` du
+> document : **cent sept** entrées portent encore leur texte complet dans cette section, quand
+> l'énumération n'en nomme que **trente-huit**. Elle omet notamment INC-127 à INC-135, INC-142 à
+> INC-151, INC-161 à INC-172, INC-194 à INC-223 et INC-235 ; elle nomme à l'inverse INC-228 et
+> INC-229, qui n'ont plus de section. Elle omettait aussi INC-168, retirée ce jour.
+>
+> **La phrase est corrigée plutôt que le chiffre**, et c'est délibéré : réécrire l'énumération
+> demande de vérifier cent sept entrées une par une, ce qui n'appartient pas à une session dont
+> l'unité est ailleurs (`docs/CloudWorker.md` §4.2). Annoncer « trente-sept ouvertes » alors que le
+> document en porte cent sept serait en revanche un chiffre complaisant, et le §4.2 bis les
+> proscrit. **Les titres `### INC-…` font foi ; cette énumération ne fait pas foi.** —
 **INC-168 est RETIRÉE le 2026-08-28** par la session `CRM-082`, qui l'a tranchée elle-même
 (`docs/CloudWorker.md` §4.1 bis). Issue retenue : **le comportement en place est confirmé** — un
 tableau archivé retient son nom, comme un track et un channel archivés retiennent leur `slug`, ce
@@ -5836,3 +5851,56 @@ raisonnement que la famille d'INC-219 interdit. Ce qui est acquis est que l'éch
 déterministe** sur ce code : il l'était déjà dans l'entrée d'origine, qui notait que le fichier joué
 seul rend ses dix scénarios verts. Cette seconde mesure ajoute qu'il ne l'est pas non plus **en
 série**. Comportement inchangé, aucun test désactivé, aucune temporisation ajoutée.
+
+### INC-236 — `administration-workflows.spec.ts` § « les deux gestes se mènent au clavier seul » expire, en série COMME isolé
+
+**Consignée le 2026-08-28** par la session `CRM-082` (décision 542), constat **étranger à son
+changement** et laissé **inchangé** conformément au `CLAUDE.md` §13.
+
+**Ce qui est mesuré.** La campagne d'interface de fin de session rend **715 passés, 1 échec** :
+
+```
+[ui] e2e/ui/administration-workflows.spec.ts:1118
+     « la grille champ × étape sur la vraie base (§7 bis.11) »
+     › « les deux gestes se mènent au clavier seul »
+
+Test timeout of 30000ms exceeded.
+Error: apiRequestContext.get: Target page, context or browser has been closed
+   at purgerChamps (e2e/ui/administration-workflows.spec.ts:683:32)
+   at e2e/ui/administration-workflows.spec.ts:1139:10
+```
+
+La seconde ligne est une **conséquence**, non la cause : le corps du scénario expire d'abord, puis
+le `finally` tente sa purge sur un contexte déjà fermé. C'est l'expiration des trente secondes qu'il
+faut expliquer, pas la purge.
+
+**CE N'EST PAS UN ALÉA DE SÉRIE, et c'est la différence avec INC-219 et INC-235.** Rejoué **seul**,
+le scénario échoue de la même façon, au même endroit :
+
+```
+npx playwright test --project=ui administration-workflows -g "les deux gestes se mènent au clavier seul"
+  => 1 failed, 1 passed
+```
+
+Les deux entrées citées décrivent des scénarios verts isolément et rouges en série ; celui-ci est
+rouge des deux façons. Il est donc **déterministe**, et une session qui le traitera n'aura pas à
+reproduire une condition de course.
+
+**LA LIGNE DE BASE A ÉTÉ ÉTABLIE** (`docs/CloudWorker.md` §2.4), sur cette preuve seule et non sur la
+campagne : les six fichiers modifiés par la session ont été ramenés au commit `426162f`, la webapp
+reconstruite, et le scénario rejoué. **Il échoue à l'identique**, `1 failed, 1 passed`. L'anomalie
+est présente des deux côtés : elle est **préexistante**. Le diff de la session ne touche d'ailleurs
+ni l'éditeur de workflows, ni la grille champ × étape, ni aucun de leurs modules — il est confiné aux
+tableaux d'objectifs, à leur suite pgTAP, à leur harnais et à la documentation.
+
+**Ce qui n'est PAS établi, et n'est pas supposé :** la cause. Le scénario a été livré vert par la
+sixième tranche de `CRM-076`, et sa révision d'alors — « la confirmation reçoit le focus, donc
+*Entrée* suffit » — indique que le parcours dépend d'un placement de focus. Deux pistes non
+départagées : la confirmation ne reçoit plus le focus qu'attend
+`expect(page.getByRole('button', { name: 'Exiger ce champ' })).toBeFocused()`, ou la cellule n'est
+plus atteinte par `tabVers`. Aucune n'est vérifiée ici : établir laquelle demande de rejouer le
+parcours à l'écran, ce qui appartient à l'unité qui porte cet éditeur.
+
+**Relève de `CRM-076`** (éditeur administrateur de workflows), qui porte la grille champ × étape.
+
+**Statut :** ouvert. Comportement inchangé, aucun test désactivé, aucune temporisation ajoutée.
