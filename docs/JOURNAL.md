@@ -26803,3 +26803,59 @@ arbitrages — que le §4.1 bis dit être du travail, non un mur — et des reje
 premiers arbitrages sur le chemin sont INC-182** (`CRM-086`, la portée du badge de l'onglet « À
 saisir ») **et l'unicité du nom d'un tableau d'objectifs archivé** (`CRM-082`) : tous deux tenables
 par une session, comme INC-173 vient de l'être.
+
+## décision 542 — le nom d'un tableau d'objectifs archivé RESTE PRIS, et c'est la règle des tracks
+
+*2026-08-28, session planifiée ouverte à 12:32:22 UTC. Tranche INC-168, ouverte depuis le
+2026-08-19, sur le mandat du `docs/CloudWorker.md` §4.1 bis. Persistée AVANT toute ligne de code.*
+
+**LA QUESTION.** `goal_boards_workspace_name_key` est un index TOTAL : un tableau archivé retient
+son nom, et le nom n'est donc jamais libéré par l'archivage. Le registre présentait ce point comme
+un écart douteux, parce que la spécification-sœur des budgets, écrite le même jour, tranche
+l'inverse — index partiel `where closed_at is null`. « L'un des deux est probablement un oubli de
+rédaction ; décider lequel n'appartient pas à l'agent. »
+
+**LA MESURE QUI RETOURNE LA QUESTION, ET ELLE N'AVAIT JAMAIS ÉTÉ FAITE.** Le dépôt porte un
+TROISIÈME cas, plus ancien que les deux autres et jamais versé au débat : les tracks et les
+channels. Relevé sur la pile seedée, par la vraie route REST, avec le jeton réel de
+l'administratrice :
+
+| Geste | Relevé |
+|---|---|
+| Archiver un tableau, puis reprendre son nom | `409` / `23505`, `goal_boards_workspace_name_key` |
+| **Archiver un track, puis reprendre son `slug`** | `409` / `23505`, `tracks_workspace_id_slug_key` |
+| `pg_index` sur les quatre tables | `indpred` **nul** pour `goal_boards`, `tracks`, `channels` ; **`(closed_at IS NULL)`** pour `budgets` seul |
+
+Le tableau d'objectifs n'est donc pas l'exception : **le budget l'est**, et il est seul de son
+espèce sur quatre objets.
+
+**LA DÉCISION.** Le comportement en place est **confirmé**, et écrit plutôt que subi :
+`docs/SPEC-goals.md` §2.1 bis (quatre sous-chapitres, ses trois mesures) et `docs/SCHEMA.md`
+§9 bis.1. **Aucune migration, aucune politique, aucun privilège** — la décision retient ce qui est
+là.
+
+**LE MOTIF, ET IL TIENT À CE QUE L'ARCHIVAGE N'EST PAS UNE CLÔTURE.** Archiver est un masquage
+**réversible** qui tient lieu de suppression ; clôturer est l'état terminal d'une période comptable
+qu'un budget récurrent rouvre sous le même nom d'une période à l'autre. La conséquence décide :
+depuis la tranche 2 h livrée ce matin, un tableau archivé se **désarchive**, sans confirmation
+(§5.6.2, ligne f). Libérer son nom rendrait ce retour faillible — le nom repris entre-temps,
+« Désarchiver » se heurterait à un doublon que rien n'aurait annoncé sur un geste qui ne détruit
+rien. C'est la perte silencieuse que `CLAUDE.md` §18 proscrit. L'unicité totale l'interdit **par
+construction** : c'est exactement pourquoi le §5.6.1, mesure 6, a pu écrire que le désarchivage n'a
+aucun cas `doublon` à porter.
+
+**CE QUI A RENDU LA DÉCISION TENABLE AUJOURD'HUI ET NE L'ÉTAIT PAS HIER.** Le coût de la règle —
+un nom qu'on croit libre ne l'est pas — était inacceptable tant que le nom était retenu par un objet
+**qu'aucun écran ne rendait**. La tranche 2 h a refermé ce point le matin même : la case « Afficher
+les archivés » montre le tableau qui bloque, et « Désarchiver » le rend administrable. Un refus qui
+désigne un objet atteignable est ordinaire ; c'est l'inatteignabilité, non la règle, qui en faisait
+un défaut. L'arbitrage change donc de réponse **parce que le produit a changé**, pas parce qu'on a
+mieux lu la spécification.
+
+**CE QUE LA DÉCISION APPELLE EN CODE**, et qui est dû dans la même session : trois assertions pgTAP
+figeant la règle au CATALOGUE et par le comportement — l'index sans prédicat, l'archivage qui ne
+libère pas le nom, le désarchivage qui n'échoue pas —, un contrôle non complaisant dans
+`scripts/verify-objectifs.sh` éprouvé par une dégradation réelle, et le texte de refus qui nomme
+enfin la voie de recours au lieu de s'arrêter à « choisissez-en un autre ».
+
+**Où reprendre.** La spécification et l'arbitrage sont committés ; le code les suit.

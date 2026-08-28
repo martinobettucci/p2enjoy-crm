@@ -37,10 +37,88 @@ possible. Arbitrage du responsable du 2026-08-19.
 
 | Attribut | Règle |
 |---|---|
-| `name` | non vide, unique par workspace après normalisation des espaces |
+| `name` | non vide, unique par workspace après normalisation des espaces, **archivés compris** (§2.1 bis) |
 | `description` | facultative |
 | `position` | ordre d'affichage dans la liste, attribuée par trigger si omise, comme `tracks.position` |
 | `archived_at` | l'archivage tient lieu de suppression, comme pour les tracks et les channels |
+
+### 2.1 bis L'unicité du nom porte AUSSI sur les tableaux archivés — arbitrage rendu
+
+**Tranché le 2026-08-28** (`docs/JOURNAL.md`, décision 542), sur le mandat d'autonomie du
+`docs/CloudWorker.md` §4.1 bis. Cette section REMPLACE le silence de la première rédaction, qui
+écrivait « unique par workspace sur la forme normalisée » sans dire si les tableaux archivés
+comptaient. Ce silence était l'entrée **INC-168** du registre, ouverte depuis le 2026-08-19 ; elle
+est close ici.
+
+**La règle, en une phrase :** un tableau archivé **retient son nom**. L'index
+`goal_boards_workspace_name_key` est TOTAL, sans clause `where archived_at is null`, et un nom
+libéré par l'archivage reste donc pris.
+
+#### 2.1 bis.1 Les trois mesures qui fondent l'arbitrage
+
+Relevées le **2026-08-28** sur la pile de développement seedée, par la **vraie route REST** avec le
+jeton réel de l'administratrice, et au catalogue pour la troisième. Aucune n'est déduite.
+
+| # | Mesure | Relevé |
+|---|---|---|
+| 1 | `POST goal_boards` reprenant le nom d'un tableau que l'on vient d'archiver | `409` / `23505`, `goal_boards_workspace_name_key` |
+| 2 | **Le même geste sur un TRACK** : archiver, puis reprendre son `slug` | `409` / `23505`, `tracks_workspace_id_slug_key` — **le produit se comporte déjà ainsi** |
+| 3 | `pg_index` sur `goal_boards`, `tracks`, `channels` et `budgets` | `indpred` **nul** pour les trois premiers ; **`(closed_at IS NULL)`** pour `budgets_track_name_ouvert_key`, seul index partiel des quatre |
+
+**La mesure 2 décide, et c'est elle qui retourne la question.** Le registre présentait l'écart comme
+« deux objets voisins, spécifiés le même jour, reçoivent deux règles opposées », et invitait à croire
+que l'un des deux était un oubli. Le dépôt en porte un **troisième**, plus ancien et jamais discuté :
+les tracks et les channels, dont l'archivage tient lieu de suppression **exactement comme celui d'un
+tableau**, retiennent leur identifiant. Le tableau d'objectifs n'est donc pas l'exception — le budget
+l'est.
+
+#### 2.1 bis.2 Pourquoi la règle des tracks, et non celle des budgets
+
+C'est la ligne du responsable, « le comportement le plus simple, et le même partout » : deux objets
+qui font la même chose la font de la même façon. Or **archiver** et **clôturer** ne sont pas la même
+chose, et c'est ce qui sépare proprement les deux règles.
+
+| | Tracks, channels, tableaux d'objectifs | Budgets |
+|---|---|---|
+| Le geste | **archiver** — un masquage réversible qui tient lieu de suppression | **clôturer** — un état terminal d'une période comptable |
+| L'objet après le geste | il est encore là, et se **reprend** (`Désarchiver`, §5.6) | il est **soldé** ; sa réouverture est un geste exceptionnel |
+| Le nom | **retenu** | **libéré**, parce qu'un budget récurrent reprend le même nom d'une période à l'autre |
+| Reprendre l'objet peut-il échouer sur un doublon ? | **jamais** (§5.6.1, mesure 6) | **oui**, et `docs/SCHEMA.md` §9 bis.4 l'assume explicitement |
+
+**La dernière ligne est le vrai motif.** Depuis la tranche 2 h, un tableau archivé se **désarchive**
+(§5.6). Libérer son nom rendrait ce retour faillible : le nom repris entre-temps par un tableau
+neuf, « Désarchiver » se heurterait à un doublon **que rien dans l'écran n'aurait annoncé**, sur un
+geste qui ne détruit rien et s'exécute sans confirmation (§5.6.2, ligne f). Ce serait exactement la
+perte silencieuse que `CLAUDE.md` §18 proscrit. L'unicité totale l'interdit **par construction**, et
+c'est pourquoi le dictionnaire de refus du désarchivage n'a aucun cas `doublon` à porter.
+
+#### 2.1 bis.3 Ce que cette règle coûte, et ce qui l'a rendue tenable
+
+Elle coûte ceci, et le coût est nommé plutôt que tu : **un nom que l'on croit libre ne l'est pas
+toujours**. Archiver « Objectifs du trimestre » puis vouloir en ouvrir un neuf sous le même nom
+échoue.
+
+Ce coût était **inacceptable jusqu'au 2026-08-28 au matin**, et c'est ce qui a tenu l'arbitrage
+ouvert six sessions : le nom était alors retenu par un objet **qu'aucun écran ne rendait**. On
+cherchait dans la liste un tableau qui n'y paraissait pas. La tranche 2 h a refermé ce point
+(§5.6) : la case « Afficher les archivés » rend le tableau qui bloque, et « Désarchiver » le rend
+administrable. Le nom est encore pris, mais il est désormais **pris par quelque chose que l'on
+voit et que l'on peut reprendre ou renommer**. Un refus qui désigne un objet atteignable est un
+refus ordinaire ; c'est l'inatteignabilité, et non la règle, qui en faisait un défaut.
+
+Le refus le dit donc, et il dit le geste : le texte de `goals.board.refused.duplicate` nomme la
+case « Afficher les archivés » comme la voie de recours (§5.6.2), au lieu de s'arrêter à « choisissez
+un autre nom ».
+
+#### 2.1 bis.4 Ce que l'arbitrage NE change pas
+
+- **Aucune migration.** L'index `0049` est déjà celui que cette section décrit ; la décision retient
+  le comportement en place et l'ÉCRIT, elle ne le modifie pas.
+- **Aucune politique, aucun privilège, aucune route.**
+- **La règle des budgets est inchangée** (`docs/SCHEMA.md` §9 bis.4) : l'écart entre les deux index
+  est désormais **voulu et motivé**, non plus un oubli de rédaction supposé.
+- **Aucun renommage automatique, aucun suffixe suggéré.** Proposer « Objectifs du trimestre (2) »
+  écrirait à la place de l'utilisateur un nom qu'il n'a pas choisi.
 
 ### 2.2 `goal_blocks` — le bloc
 

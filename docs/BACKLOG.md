@@ -10285,13 +10285,21 @@ dégradations réelles.
       jamais imputables à `CRM-082`. `scripts/verify-objectifs.sh` reste vert — 46 contrôles,
       aucune anomalie. Ce qui retient encore `CRM-082` en `[~]` est le seul écart de spécification
       nommé ci-dessous (unicité du nom des tableaux archivés).
-- [ ] **Écart nommé, à trancher par le responsable : l'unicité du nom d'un tableau porte sur TOUS
-      les tableaux, archivés compris.** La spécification (§2.1) et `docs/SCHEMA.md` §9 bis.1
-      écrivent « unique par workspace sur la forme normalisée », sans la restreindre aux tableaux
-      vivants — là où celle des budgets le sera explicitement (§9 bis.4, index partiel
-      `where closed_at is null`). Conséquence : **un nom libéré par l'archivage reste pris**. Le
-      comportement suit ici la spécification à la lettre, et l'écart est consigné plutôt que
-      tranché seul.
+- [~] **Écart TRANCHÉ le 2026-08-28, décision 542 — l'unicité du nom porte sur TOUS les tableaux,
+      archivés compris, et c'est désormais une règle ÉCRITE.** L'entrée INC-168 est retirée du
+      registre. Le comportement en place est **confirmé, sans migration** : la mesure qui décide
+      n'avait jamais été faite, et elle porte sur un TROISIÈME objet que le registre ne versait pas
+      au débat — un **track** archivé retient son `slug` (`409` / `23505` sur
+      `tracks_workspace_id_slug_key`, relevé par la vraie route REST), exactement comme un tableau
+      archivé retient son nom. Le budget est l'exception des quatre, et son écart est motivé :
+      clôturer un budget récurrent n'est pas archiver. Le motif décisif est la tranche 2 h livrée le
+      matin même — un tableau archivé se **désarchive** sans confirmation, et libérer son nom
+      rendrait ce retour faillible sur un doublon que rien n'annonce (`CLAUDE.md` §18). La règle
+      vit dans `docs/SPEC-goals.md` §2.1 bis et `docs/SCHEMA.md` §9 bis.1.
+      **Reste dû pour clore, et c'est ce que la session livre :** les trois assertions pgTAP qui
+      figent la règle au catalogue et par le comportement, le contrôle non complaisant de
+      `scripts/verify-objectifs.sh` avec sa dégradation, et le texte de refus qui nomme la voie de
+      recours (« Afficher les archivés ») au lieu de s'arrêter à « choisissez-en un autre ».
 
 ### CRM-083 — Canevas d'objectifs `[~]`
 

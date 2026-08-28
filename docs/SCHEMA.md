@@ -1232,7 +1232,7 @@ du §2, et sont en refus par défaut (`enable row level security`, aucune politi
 | Colonne | Type | Règle |
 |---|---|---|
 | `workspace_id` | `uuid` | non nul, `on delete cascade` |
-| `name` | `text` | non vide ; unique par workspace sur la forme normalisée |
+| `name` | `text` | non vide ; unique par workspace sur la forme normalisée, **archivés compris** — index TOTAL, sans clause `where` (décision 542, `docs/SPEC-goals.md` §2.1 bis) |
 | `description` | `text` | |
 | `position` | `numeric` | non nul, attribuée par trigger si omise — convention `tracks` |
 | `archived_at` | `timestamptz` | l'archivage tient lieu de suppression |
@@ -1270,7 +1270,7 @@ nourrit un autre en retour est une intention légitime.
 | Colonne | Type | Règle |
 |---|---|---|
 | `track_id` | `uuid` | non nul, `on delete cascade` |
-| `name` | `text` | non vide ; unique par track **parmi les budgets non clôturés** (index partiel `where closed_at is null`) |
+| `name` | `text` | non vide ; unique par track **parmi les budgets non clôturés** (index partiel `where closed_at is null`) — l'écart avec §9 bis.1 est VOULU et motivé par la décision 542 |
 | `currency` | `text` | non nul, défaut `'EUR'`, `CHECK (~ '^[A-Z]{3}$')` — convention `cards.currency` |
 | `planned_amount` | `numeric(14,2)` | facultatif ; **aucune contrainte de signe**, comme `cards.amount` |
 | `is_recurrent` | `boolean` | non nul, défaut faux |

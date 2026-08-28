@@ -60,7 +60,7 @@ restante est une dette de mise en œuvre, suivie dans `docs/ARBITRAGES.md` et da
 
 ## Retirées — index
 
-**Cent vingt-quatre** entrées retirées, texte intégral dans l'historique Git. Colonnes : ce que l'entrée
+**Cent vingt-cinq** entrées retirées, texte intégral dans l'historique Git. Colonnes : ce que l'entrée
 constatait, la date de l'arbitrage, qui en porte (ou en a porté) la mise en œuvre, et la ou les
 décisions de `docs/JOURNAL.md` à lire. Une mention « close » dans la colonne « Porteur » signale
 que l'implémentation est en outre livrée et prouvée ; son absence signifie que seul l'arbitrage est
@@ -226,6 +226,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-218 | `scripts/verify-modeles-emails.sh` extrayait la liste des variables du §2.4 par un motif appliqué à TOUT le document : le tableau du §8.6 commence deux de ses lignes par `card.amount` et `card.next_action_at`, et le harnais rendait « la base et le §2.4 divergent » — quatorze noms contre douze — alors que la base et le §2.4 étaient d'accord. **Faux verdict rouge**, ligne de base établie | 2026-08-25 | **CLOSE le 2026-08-25** par `CRM-063` tranche 3 : l'extraction est bornée au seul §2.4 par `sed`. Le harnais rend de nouveau **44 contrôles, aucune anomalie** | 515, 516 |
 | INC-219 | `e2e/mail/backfill.spec.ts` §« un premier contact ne descend jamais l'historique » échoue dans la SÉRIE complète et passe SEUL. Ouverte par `CRM-063` 4a le 2026-08-25 ; **REPRODUITE À L'IDENTIQUE le même jour par la sous-tranche 4b** — `e2e:mail` rend « 1 failed, 41 passed », le scénario seul rend « 1 passed » en **5,6 s** contre 5,1 s à l'ouverture. Deux sous-tranches sans aucun chemin vers l'ingestion IMAP produisent le même échec : la cause n'est donc imputable ni à l'une ni à l'autre | 2026-08-25 | *ouverte* — cause NON établie, et « intermittent » n'est pas un diagnostic. Comportement inchangé, aucun test désactivé, aucune temporisation. Relève de `CRM-056` | 517, 518 |
 | INC-220 | `public.queue_outbound_email` (migration `0030`, `CRM-058`) garde son adresse de réponse par `where c.id = p_card_id and c.email_local_part is not null`. MESURÉ le 2026-08-25 : `cards.email_local_part` porte une contrainte **`not null`**, et une sonde qui tente de l'effacer est refusée par la base avant d'atteindre la fonction — ce prédicat ne peut JAMAIS être faux. Ce qui fait réellement tomber la garde est la concaténation `email_local_part || '@' || inbound_domain`, qui rend `NULL` quand `workspaces.inbound_domain` est nul, cette colonne-là étant nullable. La garde est **atteignable et utile** ; c'est la moitié explicite de sa condition qui est morte, et le code dit donc autre chose que ce qu'il fait | 2026-08-25 | *ouverte* — **comportement inchangé**, étranger à `CRM-063` 4b : `armer_sequence_relance` reprend la forme À L'IDENTIQUE plutôt que de faire diverger deux gardes sur le même fait. Relève de `CRM-058`. Le §12.4 bis de `docs/SPEC-modeles-emails.md` porte la mesure | 518 |
+| INC-168 | L'unicité du nom d'un tableau d'objectifs porte AUSSI sur les tableaux archivés — `goal_boards_workspace_name_key` est TOTAL, là où l'index des budgets est partiel (`where closed_at is null`). La spécification ne disait pas si les archivés comptaient, et l'entrée présentait cet écart comme l'oubli probable de l'un des deux | 2026-08-28 | `CRM-082` — issue retenue : **le comportement en place est CONFIRMÉ**, aucune migration ; la règle vit dans `docs/SPEC-goals.md` §2.1 bis et `docs/SCHEMA.md` §9 bis.1 | 542 |
 | INC-173 | Aucune surface ne gère les occurrences d'un budget récurrent : le §3.2 de `docs/SPEC-costs.md` nomme quatre gestes — ouvrir, libeller, doter, clôturer —, le §4.1 en COMPTE le résultat, et aucun chapitre ne décrivait l'écran qui les porte. Un budget récurrent créé à l'écran ne pouvait donc recevoir AUCUNE ligne de coût, le §4.7 l'écartant du sélecteur faute d'occurrence | 2026-08-28 | `CRM-084` tranche 3 — mise en œuvre DUE : la sous-surface de la table des budgets, `docs/SPEC-costs.md` §4.1 bis et `docs/DESIGN_SYSTEM.md` §5.47 | 539 |
 
 ---
@@ -236,6 +237,14 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-174,
 INC-182, INC-183, INC-185, INC-186, INC-188, INC-189, INC-190, INC-191, INC-192, INC-193, INC-224,
 INC-225, INC-226, INC-227, INC-228, INC-229, INC-231, INC-232, INC-233 et INC-234.** —
+**INC-168 est RETIRÉE le 2026-08-28** par la session `CRM-082`, qui l'a tranchée elle-même
+(`docs/CloudWorker.md` §4.1 bis). Issue retenue : **le comportement en place est confirmé** — un
+tableau archivé retient son nom, comme un track et un channel archivés retiennent leur `slug`, ce
+que la mesure 2 du §2.1 bis.1 relève sur la vraie route REST. Le budget est l'exception, et son
+écart est motivé : clôturer n'est pas archiver. La règle vit dans `docs/SPEC-goals.md` §2.1 bis et
+`docs/SCHEMA.md` §9 bis.1 ; la décision est la **542**. *L'énumération ci-dessus ne la comptait
+d'ailleurs pas — elle disait « trente-six » et n'en nommait pas INC-168, dont le texte vivait
+pourtant dans cette section ; le retrait referme aussi cet écart de comptage.* —
 **INC-173 est RETIRÉE le 2026-08-28** par la session `CRM-084` tranche 3, qui l'a tranchée
 elle-même comme `docs/CloudWorker.md` §4.1 bis l'exige depuis le 2026-08-27 — la règle qui
 **remplace** l'interdiction que l'entrée invoquait pour ne rien décider. Issue retenue : la n° 1,
@@ -2822,45 +2831,6 @@ que la relève distingue un échec d'écriture de PIÈCE d'un échec d'écriture
 qu'un stockage indisponible ne fasse plus perdre le message lui-même. La seconde est un changement
 de comportement du sous-système de messagerie, étranger à `CRM-081` (`CLAUDE.md` §13). Le
 comportement est laissé **inchangé**, et l'arbitrage revient au responsable.
-
-### INC-168 — l'unicité du nom d'un tableau d'objectifs porte AUSSI sur les tableaux archivés
-
-**Nature :** point de spécification **incomplet**, relevé en écrivant `CRM-082` et laissé
-**inchangé** conformément au `CLAUDE.md` §5 — la correction dépasse la tâche autorisée, l'arbitrage
-revient au responsable.
-
-**Ce que la spécification dit.** `docs/SPEC-goals.md` §2.1 et `docs/SCHEMA.md` §9 bis.1 écrivent,
-pour `goal_boards.name` : « non vide, unique par workspace **sur la forme normalisée** ». La
-restriction n'est assortie d'aucune condition, et la migration 49 l'implémente donc telle quelle :
-
-```
-create unique index goal_boards_workspace_name_key
-	on public.goal_boards (workspace_id, app.btrim_blancs(name));
-```
-
-**Ce qui rend ce point douteux, et pourquoi il n'est pas tranché ici.** Le même document impose que
-« l'archivage tient lieu de suppression » (§2.1). Un tableau archivé continue donc d'occuper son nom,
-et **un nom libéré par l'archivage reste pris** : archiver « Objectifs du trimestre » puis vouloir
-en ouvrir un nouveau pour le trimestre suivant, sous le même nom, échoue avec
-`duplicate key value violates unique constraint "goal_boards_workspace_name_key"`.
-
-**La comparaison qui rend l'écart visible.** La spécification-sœur écrite le même jour tranche
-l'exact contraire pour les budgets — `docs/SCHEMA.md` §9 bis.4 : « unique par track **parmi les
-budgets non clôturés** (index partiel `where closed_at is null`) ». Deux objets voisins, spécifiés
-dans la même journée, reçoivent donc deux règles opposées sur la même question. L'un des deux est
-probablement un oubli de rédaction ; décider lequel n'appartient pas à l'agent.
-
-**Mesure, 2026-08-19.** Le comportement est celui qui est écrit, et il est éprouvé : l'assertion 20
-de `supabase/tests/0047_objectifs.test.sql` établit que `'  Tableau d'essai de la suite 0047  '`
-entre en collision avec `'Tableau d'essai de la suite 0047'`. Aucune assertion ne porte sur le cas
-archivé, précisément parce que la règle attendue n'est pas tranchée.
-
-**Ce qu'il faudrait pour le corriger, si le responsable le décide :** remplacer l'index par sa forme
-partielle `where archived_at is null`, dans une migration convergente, et réviser les deux documents
-dans le même changement. Le coût est faible **aujourd'hui**, aucun écran ne créant encore de
-tableau ; il croîtra dès que `CRM-083` sera livrée.
-
-**Statut :** ouvert, en attente d'arbitrage. Le comportement reste celui de la spécification.
 
 ### INC-169 — un lien d'objectif détruit pour de bon ne se distingue pas d'un bloc jamais lié
 
