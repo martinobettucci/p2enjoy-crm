@@ -221,7 +221,13 @@ describe('depasse — docs/DESIGN_SYSTEM.md §5.30', () => {
 describe('cumuler — §4.5', () => {
 	it('additionne les montants ET les comptes de lignes en attente', () => {
 		// `sansReel` est un COMPTE, pas un montant : le cumuler doit préserver le nombre de lignes,
-		// puisque le §4.8 exige que le badge de l'onglet porte le même nombre que la mention du §4.4.
+		// sans quoi la mention du §4.4 rendue sous un histogramme cumulé annoncerait un nombre de
+		// lignes faux.
+		//
+		// LE MOTIF EST RÉVISÉ, PAS L'ASSERTION : il invoquait l'égalité entre ce compte et le badge
+		// de l'onglet, que le §4.8 exigeait. L'arbitrage d'INC-182 (décision 544, §4.8.3) a retiré
+		// cette égalité — les deux nombres ne comptent pas la même population. La propriété éprouvée
+		// ici reste due, pour la raison qui lui est propre.
 		expect(
 			cumuler([
 				{ estime: 450, reel: 375, sansReel: 1, estimeSansReel: 100, lignes: 2 },

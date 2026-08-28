@@ -11072,7 +11072,7 @@ E2E de la section, y compris **le second sélecteur d'occurrence qui apparaît e
 pour un budget récurrent ; seed portant une affaire à **deux lignes de nature différente**, l'une
 sans réel — le cas « publicité 100 / production 350-375 » du responsable ; captures ; harnais dédié.
 
-### CRM-086 — Écrans de coûts `[~]`
+### CRM-086 — Écrans de coûts `[x]`
 
 Histogramme du track, détail par budget avec une paire de barres **par occurrence**, et cumul du
 workspace par track (`docs/SPEC-costs.md` §4.2, §4.3, §4.5).
@@ -11224,6 +11224,15 @@ entrée « en attente d'arbitrage » soit un mur, et fait de l'arbitrage le trav
 **écrite à l'écran** (`docs/SPEC-costs.md` §4.8.3). La Definition of Done ci-dessous est révisée sur
 ce point, et la **tranche 7** ci-après porte la surface et les preuves que l'arbitrage appelle.
 
+**L'UNITÉ PASSE À `[x]` LE 2026-08-28, décision 545.** Le seul point qui la retenait était l'arbitrage
+d'INC-182 ; il est rendu (décision 544), sa surface est livrée et prouvée (tranche 7), et la
+Definition of Done ci-dessous est révisée sur ce point puis **intégralement vérifiée par exécution**
+dans la même session : `typecheck`, `types:check`, `build`, `test:unit` **2898 tests**, `test:sql`
+**3030 assertions**, `e2e:api` **1032**, `e2e:ui` **717 passés, AUCUN échec**, `e2e:mail` **42**,
+`pytest` **244**, et le harnais dédié `scripts/verify-couts-ecrans.sh` **81 contrôles, aucune
+anomalie**. **INC-183 reste ouverte** et n'empêche aucun point de la Definition of Done : la colonne
+« Ancienneté » est livrée sans variante de danger, écart nommé au §4.8.1.
+
 **DoD** : E2E des trois écrans ; captures aux quatre paliers ; **la mention « n lignes sans coût
 réel saisi » est prouvée présente** quand des réels manquent, et absente sinon — c'est la principale
 façon dont cet écran pourrait mentir ; un budget récurrent est **agrégé** dans la vue du track et
@@ -11253,14 +11262,16 @@ que laissé à la mémoire d'une session (`CLAUDE.md` §5).
   saisie en série du §5.31, le geste clavier, les captures et le harnais
   `scripts/verify-couts-ecrans.sh`.
 
-**DEUX MANQUES DE SPÉCIFICATION ONT ÉTÉ RELEVÉS AVANT LE CODE, ET NE SONT PAS TRANCHÉS.**
-**INC-182** : le badge ne peut pas porter le même nombre que la mention du §4.4 — la clôture et la
-devise séparent structurellement les deux populations, mesuré 2 contre 1 sur le seed dès que la ligne
-exigée ci-dessous est posée. **INC-183** : le seuil d'ancienneté que `docs/DESIGN_SYSTEM.md` §5.31
-suppose n'existe nulle part pour une ligne de coût. Le comportement livré est nommé aux §4.8.1 et
-§4.8.2 de la spécification ; **la Definition of Done ci-dessous est donc inatteignable sur son
-premier point tant que l'arbitrage d'INC-182 n'est pas rendu**, et ce n'est pas un défaut de
-livraison.
+**DEUX MANQUES DE SPÉCIFICATION ONT ÉTÉ RELEVÉS AVANT LE CODE.** **INC-182** : le badge ne peut pas
+porter le même nombre que la mention du §4.4 — la clôture et la devise séparent structurellement les
+deux populations, mesuré 2 contre 1 sur le seed dès que la ligne exigée ci-dessous est posée.
+**INC-183** : le seuil d'ancienneté que `docs/DESIGN_SYSTEM.md` §5.31 suppose n'existe nulle part
+pour une ligne de coût. Le comportement livré est nommé aux §4.8.1 et §4.8.2 de la spécification.
+
+**INC-182 EST TRANCHÉE le 2026-08-28** (décision 544, §4.8.3, tranche 7 ci-dessous) : l'égalité est
+retirée, et la Definition of Done révisée en conséquence. **INC-183 reste ouverte** — la colonne
+« Ancienneté » est livrée sans variante de danger, et cet écart n'empêche aucun point de la
+Definition of Done.
 
 **Tranche 6a — LIVRÉE ET PROUVÉE** (décision 479).
 `supabase/migrations/0052_couts_a_saisir.sql` : la colonne calculée

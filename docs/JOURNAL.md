@@ -26972,3 +26972,50 @@ deux sections de même titre. C'est ce qui explique l'écart avec le « cent sep
 décision 543. Le dédoublonnage n'appartient pas à cette session (`docs/CloudWorker.md` §4.2).
 
 **Où reprendre.** L'arbitrage et la spécification sont committés ; le code les suit.
+
+## décision 545 — la campagne de fin de session, et `CRM-086` est close
+
+*2026-08-28, même exécution que la décision 544. Consigne le bilan de fin de session.*
+
+**LA CAMPAGNE, ET ELLE EST INTÉGRALEMENT VERTE.** La leçon de méthode de la décision 538 a été
+tenue : `npm run e2e:ui` a été lancée **seule**, après que `build` et `typecheck` avaient rendu leur
+verdict, et rien n'a réécrit `webapp/dist` pendant qu'elle tournait.
+
+| Preuve | Verdict |
+|---|---|
+| `npm run typecheck` / `npm run types:check` / `npm run build` | verts |
+| `npm run test:unit` | **86 fichiers, 2898 tests**, aucun échec |
+| `npm run test:sql` | **66 fichiers, 3030 assertions**, aucune anomalie |
+| `npm run e2e:api` | **1032 passés** |
+| `npm run e2e:ui` | **717 passés, AUCUN échec**, en 18,8 min |
+| `npm run e2e:mail` | **42 passés** |
+| `pytest` (`mail-sync`) | **244 passés** |
+| `scripts/verify-couts-ecrans.sh` | **81 contrôles, aucune anomalie**, ses quatre dégradations comprises |
+
+**INC-236 NE S'EST PAS REPRODUITE, ET LE FAIT EST CONSIGNÉ SANS ÊTRE INTERPRÉTÉ.**
+`administration-workflows.spec.ts:1118` § « les deux gestes se mènent au clavier seul » — que la
+décision 543 a mesuré rouge des DEUX côtés d'un `git stash`, donc préexistant — passe ici en
+**15,5 s** sur un seuil de trente. L'entrée reste **ouverte** : une exécution verte n'établit pas
+plus une cause qu'une exécution rouge, et la donnée utile pour la session qui la traitera est que ce
+scénario tient à moitié de son budget de temps sur une pile fraîchement montée.
+
+**`CRM-086` PASSE À `[x]`.** Le seul point qui la retenait était l'arbitrage d'INC-182, rendu par la
+décision 544 ; sa surface est livrée, prouvée et gardée par un contrôle non complaisant et une
+dégradation. Toutes ses preuves ont été **exécutées dans cette session**, pas déclarées.
+
+**CE QUI N'A PAS ÉTÉ EXÉCUTÉ, ET IL FAUT LE DIRE** : la série des `scripts/verify-*.sh` en entier.
+Le dépôt en porte **77**, chacun rejouant des suites complètes ; **un** l'a été,
+`scripts/verify-couts-ecrans.sh`, celui qui couvre l'unité. Ce n'est pas un écart de comportement :
+la Definition of Done de `CRM-086` demande « un harnais dédié », et c'est lui.
+
+**LES CAPTURES DES AUTRES UNITÉS, RÉÉCRITES PAR LA CAMPAGNE, ONT ÉTÉ RESTAURÉES.** Cent dix environ,
+sur des écrans que ce changement ne touche pas ; les seules qu'il touche — les deux écrans de coûts —
+ont été **regardées** et sont committées : `couts-a-saisir-portee-compteur-1440.jpg` et `-390.jpg`,
+`couts-track-*.jpg`, `couts-workspace-xl-1440.jpg`. Cette dernière porte le cas complet que le seed
+rend visible : badge **3**, mention **2**, et **deux** devises sur le même écran.
+
+**Où reprendre.** `CRM-086` est close ; le chunk 6 l'est donc en entier, `CRM-082` et `CRM-085`
+l'étant déjà et `CRM-083` et `CRM-084` restant `[~]`. La prochaine unité se choisit en relisant le
+backlog dans l'ordre du plan : `CRM-083` (canevas d'objectifs) et `CRM-084` portent encore du
+comportement ou des preuves manquantes, et **INC-183** — le seuil d'ancienneté d'une ligne de coût —
+est l'arbitrage suivant sur ce chemin, tenable par une session comme INC-182 vient de l'être.
