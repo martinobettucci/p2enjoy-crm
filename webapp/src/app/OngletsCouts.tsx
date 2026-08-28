@@ -2,6 +2,7 @@
 //       écrans à onglets, et le badge de l'onglet « À saisir »
 // @spec docs/SPEC-costs.md §4.8 (les écrans de coûts sont à onglets ; le compteur),
 //       §4.8.2 (la portée du badge, et ce qu'elle ne peut pas être — INC-182),
+//       §4.8.3 (l'arbitrage d'INC-182 : le nom accessible du badge NOMME sa population),
 //       §4.0 (« l'onglet vit dans la CHAÎNE DE REQUÊTE, `?onglet=saisir` »)
 // @spec docs/DESIGN_SYSTEM.md §5.31 (onglets et badge), §12.1 (navigation par liens, non
 //       `tablist`), §5.4 bis (un compte est un badge neutre au nom accessible entier),

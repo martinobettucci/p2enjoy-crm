@@ -2654,8 +2654,23 @@ export const fr = {
 	'costs.tabs.pending': 'À saisir',
 	// Le badge porte un CHIFFRE, et son nom accessible une phrase entière : un nombre nu ne dit pas
 	// ce qu'il compte (docs/DESIGN_SYSTEM.md §5.4 bis). Il compte les lignes que le tableau LISTE,
-	// budgets clôturés compris — l'écart avec la mention du §4.4 est consigné à INC-182 (§4.8.2).
-	'costs.tabs.pending.count': '{n} ligne(s) en attente de leur coût réel',
+	// budgets clôturés compris.
+	//
+	// LE NOM ACCESSIBLE NOMME LA POPULATION, ET PAS SEULEMENT LE FAIT DE COMPTER — arbitrage
+	// d'INC-182, docs/SPEC-costs.md §4.8.3. Ce badge et la mention du §4.4 affichent deux nombres
+	// différents sur le même écran ; sans dire ce que chacun compte, l'écart se lit comme une
+	// erreur de calcul.
+	'costs.tabs.pending.count':
+		'{n} ligne(s) en attente de leur coût réel, budgets clôturés compris, toutes devises confondues',
+	// La phrase de PORTÉE du §4.8.3, rendue sous la barre d'onglets sur le seul onglet « Vue
+	// d'ensemble », dès que le badge paraît. Elle nomme l'écart avec la mention du §4.4 plutôt que
+	// de le masquer — la règle que le §4.5 tient déjà pour le cumul du workspace.
+	//
+	// ELLE NE RÉPÈTE PAS LE NOMBRE DU BADGE. Le répéter en ferait une seconde source pour un même
+	// compte, et les deux divergeraient au premier écart de lecture ; la phrase dit ce que le badge
+	// compte, le badge dit combien.
+	'costs.tabs.pending.scope':
+		'Le compteur de l’onglet « À saisir » porte sur tout cet écran, budgets clôturés compris et toutes devises confondues ; les mentions sous les histogrammes ne comptent que les budgets qu’ils montrent.',
 	'costs.pending.caption':
 		'Lignes de coût en attente de leur coût réel, de la plus ancienne à la plus récente : ancienneté, budget, occurrence, affaire, nature, coût estimé et saisie du coût réel.',
 	'costs.pending.column.age': 'Ancienneté',

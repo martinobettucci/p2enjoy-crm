@@ -4,7 +4,9 @@
 // @spec docs/SPEC-costs.md §4.8 (ce que l'onglet liste, la saisie qui s'enregistre pour elle-même,
 //       la ligne enregistrée qui reste en place, zéro qui n'est pas un vide, la lecture seule, le
 //       compteur, les trois états), §4.8.1 (le droit d'écriture rendu par la base, l'ancienneté sur
-//       `created_at`, les trois issues), §4.8.2 (la portée du badge), §4.0 (`?onglet=saisir`)
+//       `created_at`, les trois issues), §4.8.2 (la portée du badge), §4.8.3 (l'arbitrage d'INC-182 :
+//       la phrase de portée du compteur, rendue avec le badge sur le seul onglet « Vue
+//       d'ensemble »), §4.0 (`?onglet=saisir`)
 // @spec docs/DESIGN_SYSTEM.md §5.31 (table de saisie en série des coûts réels), §5.9 (tableau de
 //       données), §5.7 ter (champ qui s'enregistre pour lui-même), §5.6 (pilule), §5.8 (états),
 //       §8 (accessibilité), §10 (aucun texte en dur), §12.6 (débordement signalé)
@@ -24,6 +26,13 @@
 // onglets et non dans le panneau. Le §4.8 exige que le badge soit rendu sur les DEUX onglets ; le
 // faire dépendre d'une seconde source — un compte demandé à part — ouvrirait la divergence que le
 // §4.8.2 cherche précisément à fermer.
+//
+// LA PHRASE DE PORTÉE EST RENDUE AVEC LE BADGE, ET SUR LE SEUL ONGLET « Vue d'ensemble » (§4.8.3).
+// C'est cet onglet qui porte les mentions du §4.4, donc le seul endroit où deux nombres qui comptent
+// deux populations se rencontrent ; sur l'onglet « À saisir », le tableau rendu EST la population du
+// badge, et la phrase n'aurait rien à expliquer. Elle n'est pas conditionnée à une divergence
+// observée : la mesurer obligerait cette zone à recompter la population de l'histogramme, c'est-à-
+// dire à tenir une seconde source pour un nombre que la vue d'ensemble possède déjà.
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router'
@@ -69,12 +78,18 @@ export function ZoneCoutsAOnglets({
 	const onglet = lireOngletCouts(parametres.get('onglet'))
 	const { etat, recharger } = useLignesASaisir(client, portee)
 
+	const nombreEnAttente = etat.statut === 'pret' ? compterEnAttente(etat.donnees) : null
+
 	return (
 		<div className="flex flex-col gap-6">
-			<OngletsCouts
-				onglet={onglet}
-				nombreEnAttente={etat.statut === 'pret' ? compterEnAttente(etat.donnees) : null}
-			/>
+			<div className="flex flex-col gap-2">
+				<OngletsCouts onglet={onglet} nombreEnAttente={nombreEnAttente} />
+				{onglet === 'ensemble' && nombreEnAttente !== null && nombreEnAttente > 0 ? (
+					<p data-testid="couts-portee-compteur" className="text-[13px] text-text-2">
+						{t('costs.tabs.pending.scope')}
+					</p>
+				) : null}
+			</div>
 			{onglet === 'ensemble' ? (
 				ensemble
 			) : (

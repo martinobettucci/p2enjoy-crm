@@ -4,7 +4,9 @@
 //           en place, zéro qui n'est pas un vide, une ligne de budget clôturé présente ET
 //           saisissable, une ligne lisible mais non écrivable rendue avec son motif et jamais
 //           masquée, les trois états), §4.8.1 (le droit lu et non calculé, les trois issues),
-//           §4.8.2 (le badge compte ce que le tableau liste), §4.0 (`?onglet=saisir`)
+//           §4.8.2 (le badge compte ce que le tableau liste), §4.8.3 (l'arbitrage d'INC-182 : le nom
+//           accessible du badge nomme sa population, et l'onglet « Vue d'ensemble » écrit la portée
+//           du compteur dès que le badge paraît), §4.0 (`?onglet=saisir`)
 // @verifies docs/DESIGN_SYSTEM.md §5.31 (table de saisie en série : onglets, badge, clavier,
 //           pilule « clôturé », lecture seule), §5.7 ter (les trois mentions), §5.8 (les états),
 //           §12.1 (navigation par liens, `aria-current`)
@@ -185,7 +187,51 @@ describe('La barre d’onglets (§4.0, §4.8, §5.31, §12.1)', () => {
 		// Le badge et le tableau ne peuvent pas répondre à deux sources : le nombre annoncé est celui
 		// des lignes rendues juste en dessous, y compris celles que l'appelant ne peut pas écrire.
 		expect(screen.getAllByTestId('couts-a-saisir-ligne')).toHaveLength(3)
-		expect(badge.getAttribute('aria-label')).toBe('3 ligne(s) en attente de leur coût réel')
+		// LE NOM ACCESSIBLE NOMME LA POPULATION, ET CETTE ASSERTION EST RÉVISÉE, non contournée :
+		// elle attendait « 3 ligne(s) en attente de leur coût réel », phrase qui disait qu'on compte
+		// sans dire ce qu'on compte. L'arbitrage d'INC-182 (décision 544, §4.8.3) la complète, parce
+		// que ce badge et la mention du §4.4 affichent deux nombres différents sur le même écran.
+		expect(badge.getAttribute('aria-label')).toBe(
+			'3 ligne(s) en attente de leur coût réel, budgets clôturés compris, toutes devises confondues',
+		)
+	})
+
+	it('ÉCRIT LA PORTÉE DU COMPTEUR sur la vue d’ensemble, dès que le badge paraît (§4.8.3)', async () => {
+		// La preuve de l'arbitrage d'INC-182 : deux nombres qui comptent deux populations se lisent
+		// comme une erreur de calcul tant que rien ne dit ce que chacun compte.
+		const { client } = clientFactice([
+			ligneEnAttente('l1', 'Publicité'),
+			ligneEnAttente('l2', 'Production', { budgetClos: true }),
+		])
+		monter(client, '/couts')
+		const portee = await screen.findByTestId('couts-portee-compteur')
+		expect(portee.textContent).toBe(fr['costs.tabs.pending.scope'])
+		// Elle accompagne le badge : c'est lui qu'elle explique.
+		expect(screen.getByTestId('onglet-couts-badge').textContent).toBe('2')
+	})
+
+	it('n’écrit AUCUNE portée sans badge, ni sur l’onglet « À saisir » (§4.8.3)', async () => {
+		// Sans badge, il n'y a aucun second nombre à expliquer : la phrase serait un avertissement
+		// permanent, que l'œil cesserait de lire — la règle de la mention du §4.4.
+		monter(clientFactice([]).client, '/couts')
+		await screen.findByText('vue d’ensemble')
+		expect(screen.queryByTestId('couts-portee-compteur')).toBeNull()
+		cleanup()
+		// Sur l'onglet « À saisir », le tableau rendu EST la population du badge : la phrase n'aurait
+		// rien à expliquer, et les mentions du §4.4 ne sont pas là.
+		monter(clientFactice([ligneEnAttente('l1', 'Publicité')]).client, '/couts?onglet=saisir')
+		await screen.findByTestId('couts-a-saisir')
+		expect(screen.getByTestId('onglet-couts-badge').textContent).toBe('1')
+		expect(screen.queryByTestId('couts-portee-compteur')).toBeNull()
+	})
+
+	it('n’écrit aucune portée PENDANT la lecture, comme le badge (§4.8.3)', async () => {
+		// Le compte n'est pas connu : annoncer sa portée avant lui laisserait une phrase orpheline.
+		const { client } = clientFactice([ligneEnAttente('l1', 'Publicité')])
+		monter(client, '/couts')
+		expect(screen.queryByTestId('couts-portee-compteur')).toBeNull()
+		expect(screen.queryByTestId('onglet-couts-badge')).toBeNull()
+		await screen.findByTestId('couts-portee-compteur')
 	})
 
 	it('ne rend AUCUN badge à zéro, ni pendant la lecture', async () => {
