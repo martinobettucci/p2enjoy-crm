@@ -6789,6 +6789,64 @@ désactivée et documentée comme telle.
       §16.5.5 avec sa confirmation ; E2E d'interface, console vierge ; captures observées ;
       `docs/SCHEMA.md`, `docs/manual.md`, `CHANGELOG.md`, `docs/PROD_MIGRATIONS.md` dans le même
       changement.
+- [x] **Spécification écrite et committée AVANT la première ligne de code** —
+      `docs/SPEC-mail-subsystem.md` §16.5, six sous-chapitres, contrat opposable de cinq lignes,
+      rédigé **après TROIS MESURES** sur la pile seedée (§16.5.1) ; §16.3 révisé et non effacé ;
+      `docs/JOURNAL.md` décision 536. Commit documentaire dédié, poussé avant tout code.
+- [x] **`unclassify_message(uuid)` livrée** — migration `0070`. Elle exige LES DEUX MÊMES droits que
+      `classify_message`, évalués AVANT le geste, et rend **la card quittée** : c'est la seule trace
+      qui reste à un appelant que le geste prive de la visibilité du message.
+- [x] **LA BORNE DE L'IDEMPOTENCE EST MESURÉE, ET LE PREMIER APPEL RÉEL L'A TROUVÉE.** La ligne e du
+      contrat, écrite sans borne, était **fausse pour l'appelant qui en a le plus besoin** : le
+      `bizdev` voit le message classé par sa CARD SEULE, et son second appel bute sur la garde de
+      visibilité au lieu de rendre `null`. **Ce refus est juste, et l'ordre des gardes n'est PAS
+      révisé pour le contourner** — déplacer la ligne e devant la ligne c ferait de la fonction une
+      sonde à messages. La borne est écrite dans la spécification et **figée par quatre assertions**.
+- [x] **Le vocabulaire de la timeline passe à DIX-NEUF types**, `mail_unclassified` écrit sur la card
+      quittée avec `{message_id, subject}`. L'`objet` y est parce qu'il ne peut plus être résolu à la
+      lecture : le geste vient de détacher le message. **Le `mail_received` d'origine est conservé** —
+      l'histoire ne se réécrit pas.
+- [x] **Suite pgTAP dédiée** : `supabase/tests/0066_declassement_messages.test.sql`, **19 assertions**.
+- [x] **Preuve d'API dédiée** : deux scénarios ajoutés à `e2e/api/classement.spec.ts`, la suite
+      rendant **9 verts**. Le refus opposé à la lectrice avec son **jeton réel**, et la perte de
+      visibilité du `bizdev` **relue par la vraie route derrière son propre geste** — zéro ligne
+      rendue à qui vient pourtant d'agir.
+- [x] **Surface livrée** : `RouteInbox.tsx`, commande « Retirer de l'affaire » avec sa confirmation
+      dans le flux, jamais en modale. Aucune commande éteinte d'avance selon le rôle. La confirmation
+      **nomme la conséquence** de la mesure 2, en énonçant la CONDITION plutôt qu'en devinant un rôle.
+- [x] **Le retrait a son PROPRE dictionnaire de refus** — leçon de la décision 535, payée sur les
+      objectifs : réemployer celui du classement aurait affiché « Vous ne pouvez pas **classer** ce
+      message dans cette affaire » sur un retrait, c'est-à-dire le geste inverse.
+- [x] **Test unitaire dédié** : cinq scénarios ajoutés à `RouteInbox.test.tsx`, **17 verts**, plus
+      deux à `timeline.test.ts` pour le détail lu dans le `payload`. **UN DÉFAUT TROUVÉ PAR EUX** :
+      le retour du focus était écrit dans le gestionnaire d'annulation, où la commande n'existe pas
+      encore — le focus retombait sur `body`. Il passe par un effet.
+- [x] **Test E2E d'interface dédié** : `e2e/ui/declassement.spec.ts`, **5 scénarios verts, console
+      vierge**, remise en état du seed en `afterEach` **inconditionnel**. **DEUX DÉFAUTS DE MES
+      PROPRES PREUVES** : le message était ouvert par un filtre d'objet, que « Re: Demande de devis —
+      refonte » attrapait aussi — le geste portait sur la réponse ; et `/cards/<id>` rend « Page
+      introuvable », l'adresse d'une card exigeant son track et son channel.
+- [x] **Vérification visuelle** : quatre captures sous `docs/captures/CRM-055/`, produites **et
+      observées** — la confirmation à 1440 px et à 390 px, l'écran après le retrait, et le fil de
+      l'affaire portant ses deux lignes.
+- [x] **Harnais étendu** : `scripts/verify-mail-classement.sh`, **55 contrôles, aucune anomalie**,
+      **cinq** dégradations réelles dont deux neuves — la symétrie des droits rompue, le départ non
+      écrit. **TROIS DÉFAUTS TROUVÉS PAR LE HARNAIS** : la suite pgTAP comptait les événements en
+      ABSOLU et ne survivait pas à un second passage (`card_events` n'accorde aucune suppression) ;
+      `degradation_sql` codait en dur la suite qui doit rougir ; et le garde-fou de `0019` a dénoncé
+      l'extension pour la **huitième** fois — révisé, jamais retiré.
+- [x] **Compteurs de `scripts/verify-harness.sh` révisés dans le MÊME changement** : 65 → **66**
+      fichiers SQL, 3008 → **3027** assertions, 1021 → **1023** scénarios d'API, 696 → **701**
+      scénarios d'interface. Valeurs **comptées**, jamais déduites.
+- [x] **Documentation dans le même changement** : `docs/manual.md` §4.15, `docs/DESIGN_SYSTEM.md`
+      §5.4 quater, `docs/SCHEMA.md`, `docs/PROD_MIGRATIONS.md` migration 70, `CHANGELOG.md` sous
+      `[Non publié]`.
+
+*Ce que la tranche ne fait pas, et les motifs sont au §16.5.4.* Elle n'ouvre **aucune** politique et
+ne crée **aucune** table : tout le contrat de lecture existe depuis `CRM-054` et `CRM-057`. Elle ne
+recalcule pas `suggested_card_id` — la règle 3 est un constat de la relève, jamais d'un geste
+humain. Et la perte de visibilité de la mesure 2 n'est **pas** un refus : c'est une conséquence,
+dite à l'écran avant le geste.
 
 *DoD adaptée, écarts explicites.* La Definition of Done demandait « pytest par règle ; E2E de
 classement manuel ; si `CRM-060` n'est pas livré, règle 3 désactivée et documentée comme telle ».

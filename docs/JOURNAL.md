@@ -26531,3 +26531,53 @@ opposable de cinq lignes), §16.3 révisé et non effacé, `docs/BACKLOG.md` (`C
 
 **Où reprendre.** La spécification est écrite et committée ; le code de la tranche 2 la suit —
 migration, pgTAP, preuve d'API, puis la surface du §16.5.5.
+
+## décision 537 — le déclassement est livré, et cinq défauts trouvés par les preuves
+
+*2026-08-28, exécution planifiée, suite de la décision 536 qui portait l'arbitrage et la
+spécification. Celle-ci consigne la LIVRAISON et ce que les preuves ont coûté à écrire.*
+
+**LA LIVRAISON.** `CRM-055` tranche 2 : un message rangé dans la mauvaise affaire peut en être
+retiré. `unclassify_message` (migration `0070`) exige LES DEUX MÊMES droits que le classement,
+rend la card quittée, conserve le `mail_received` d'origine et écrit un **dix-neuvième** type
+`mail_unclassified`. L'inbox porte la commande « Retirer de l'affaire » avec sa confirmation dans
+le flux. **Aucune politique ouverte, aucune table créée** : tout le contrat de lecture existait
+depuis `CRM-054` et `CRM-057`.
+
+**CINQ DÉFAUTS, ET AUCUN N'A ÉTÉ TROUVÉ À LA LECTURE.**
+
+1. **La ligne e du contrat était fausse, et c'est le PREMIER APPEL RÉEL qui l'a montré.**
+   L'idempotence sans borne ne vaut pas pour le `bizdev` : le geste lui retire le seul chemin par
+   lequel il voyait le message, et son second appel bute sur la garde de visibilité. Le refus est
+   JUSTE, et l'ordre des gardes n'est pas révisé pour le contourner — déplacer la ligne e devant la
+   ligne c ferait de la fonction une **sonde à messages**. La borne est spécifiée et figée.
+2. **Le retour du focus était écrit dans le gestionnaire d'annulation**, où la commande n'existe pas
+   encore : la confirmation la remplace, la référence vaut `null`, et le focus retombait sur `body`.
+   Annuler au clavier renvoyait au début du document. Il passe par un effet.
+3. **La preuve d'interface ouvrait le message par un filtre d'objet.** La liste énumère des FILS, et
+   « Re: Demande de devis — refonte » contient l'objet de la demande : le geste portait sur la
+   réponse. Les assertions échouaient sur un produit correct, et la remise en état ne visait pas la
+   ligne abîmée. Le message s'ouvre par le paramètre `message` de l'adresse, et la remise porte sur
+   **les deux** membres du fil.
+4. **La suite pgTAP ne survivait pas à un second passage.** Trois assertions comptaient les
+   événements en ABSOLU — or `card_events` n'accorde aucune suppression, et ceux des preuves
+   s'accumulent pour de bon. Une quatrième mourait sur « more than one row ». Les comptes sont
+   relevés avant le geste, et les assertions mesurent un **delta**. Le harnais l'a trouvé en
+   rejouant la suite APRÈS les preuves : c'est exactement à cela qu'il sert.
+5. **`degradation_sql` codait en dur la suite qui doit rougir.** Les dégradations du déclassement
+   portent sur une fonction que `0027` n'exerce pas : elles auraient été déclarées « NON VUES »
+   alors qu'elles mordent. La suite est un paramètre, et la restauration rejoue les DEUX suites.
+
+**LE GARDE-FOU DE `0019` A DÉNONCÉ L'EXTENSION POUR LA HUITIÈME FOIS**, et il est révisé, jamais
+retiré. La place de `mail_unclassified` — après `mail_sent`, avec les gestes de courrier — fait
+partie de ce que l'assertion fige : le vocabulaire se lit par familles.
+
+**LE FIL A ÉTÉ ENSEIGNÉ DANS LE MÊME CHANGEMENT QUE LA MIGRATION**, ce qu'INC-207 et INC-220 ont
+coûté deux fois : un type écrit en base et absent du registre de l'écran se lit « Événement ». Son
+détail est lu dans le `payload`, troisième et dernier cas motivé — le geste vient de détacher le
+message, donc aucune carte de libellés ne peut plus le nommer.
+
+**Où reprendre.** La tranche 2 est livrée et prouvée. `CRM-055` reste `[~]` pour **un** écart, qui
+lui préexiste et n'est pas du comportement : la série des `scripts/verify-*.sh` n'a pas été rejouée
+en entier derrière ce changement — le dépôt en porte plus de soixante, et seuls
+`verify-mail-classement.sh` et `verify-harness.sh` l'ont été.
