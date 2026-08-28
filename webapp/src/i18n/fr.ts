@@ -1069,6 +1069,11 @@ export const fr = {
 	// `CRM-058` §19.5 — INC-220. Le type existait en base depuis la migration `0030` et n'avait
 	// jamais eu de libellé : neuf lignes du fil se lisaient « Événement ».
 	'timeline.event.mail_sent': 'Message envoyé',
+	// `CRM-055` tranche 2 §16.5.3 — le libellé nomme le GESTE du point de vue de l'affaire, non
+	// celui du message : « Message déclassé » emploierait le vocabulaire de la base, que l'écran
+	// n'expose jamais. Le détail porte l'objet du message, lu dans le payload faute de pouvoir
+	// être résolu — le geste vient précisément de le détacher de cette affaire.
+	'timeline.event.mail_unclassified': 'Message retiré de l’affaire',
 	'timeline.event.snoozed': 'Affaire mise en sommeil',
 	'timeline.event.woken': 'Affaire réveillée',
 	// `CRM-062` tranche 3b — docs/SPEC-relances.md §10.3.1. Le libellé nomme le FAIT, pas la

@@ -49,6 +49,7 @@ import {
 	PencilLine,
 	RotateCcw,
 	Mail,
+	MailX,
 	Moon,
 	Send,
 	Sparkles,
@@ -126,6 +127,11 @@ const PRESENTATION: Readonly<
 	// `CRM-058` §19.5 — INC-220. `Send` et non `Mail` : le §9 interdit qu'une icône serve deux
 	// objets, et la direction du courrier est précisément ce qui distingue ces deux lignes.
 	mail_sent: { cle: 'timeline.event.mail_sent', icone: Send, pastille: 'bg-brand-soft text-brand' },
+	// `CRM-055` tranche 2 §16.5.3 — le départ d'un message. `MailX` et non `Mail` : le §9 interdit
+	// qu'une icône serve deux objets, et c'est ce qui distingue cette ligne de son `mail_received`,
+	// qui reste juste au-dessus d'elle dans le fil. La pastille est NEUTRE et non `danger` : rien
+	// n'est détruit, le message existe toujours — il n'appartient plus à cette affaire.
+	mail_unclassified: { cle: 'timeline.event.mail_unclassified', icone: MailX, pastille: 'bg-hover text-text-3' },
 	// `CRM-081` §16.11.5 — les deux gestes du sommeil. Leur détail est l'échéance en date courte,
 	// résolue par `resoudreDetail` : le fil nomme jusqu'à quand l'affaire a dormi.
 	snoozed: { cle: 'timeline.event.snoozed', icone: Moon, pastille: 'bg-brand-soft text-brand' },

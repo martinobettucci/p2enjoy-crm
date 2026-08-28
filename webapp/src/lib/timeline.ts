@@ -77,6 +77,11 @@ export const TYPES_EVENEMENT = [
 	// `CRM-060` tranche 5 a exigé de compter les types un à un. Même défaut qu'INC-207, même
 	// correction — le type est nommé, rangé, traduit et présenté.
 	'mail_sent',
+	// `CRM-055` tranche 2 §16.5.3 — le DÉPART d'un message, écrit par `public.unclassify_message`
+	// depuis la migration `0070`. Il est inscrit ICI, dans le même changement que la migration :
+	// c'est l'oubli exact d'INC-207 et d'INC-220, où un type a vécu en base sans que le fil sache
+	// le nommer, et rendait « Événement ».
+	'mail_unclassified',
 	'snoozed',
 	'woken',
 	// `CRM-062` tranche 3b, docs/SPEC-relances.md §10.3.1 — la relance automatique, écrite par le
@@ -132,6 +137,11 @@ export const FAMILLE_PAR_TYPE: Readonly<Record<TypeEvenement, Famille>> = {
 	// (§18.6). Les ranger différemment ferait disparaître la moitié d'une conversation quand
 	// l'utilisateur filtre sur « Discussion ».
 	mail_sent: 'discussion',
+	// LE DÉPART D'UN COURRIER EST UNE PAROLE AUTANT QUE SON ARRIVÉE (§16.5.3). Le ranger ailleurs
+	// que son `mail_received` ferait disparaître la moitié de l'histoire d'un message quand
+	// l'utilisateur filtre sur « Discussion » — et ces deux lignes ne se lisent que l'une avec
+	// l'autre : l'une dit que le courrier est arrivé, l'autre qu'il est parti.
+	mail_unclassified: 'discussion',
 	// « Qu'est devenue cette affaire ? » est exactement la question à laquelle le sommeil et le
 	// réveil répondent. Une sixième bascule pour deux types contredirait le §5.11 (§16.11.5).
 	snoozed: 'cycle',
@@ -322,6 +332,15 @@ export function resoudreDetail(ligne: LigneEvenement, libelles: LibellesFil): De
 		const resume = message === null ? undefined : libelles.messages?.get(message)
 		return { detail: resume ?? null }
 	}
+	// `mail_unclassified` NE PEUT PAS résoudre son libellé, et c'est structurel : le geste a
+	// justement détaché le message de la card, si bien que `lireMessagesDeCard` ne le rend plus.
+	// Résoudre à la lecture, ici, donnerait « Événement » sur toutes les lignes de départ.
+	//
+	// C'EST DONC LE TROISIÈME CAS OÙ LE FIL LIT UNE VALEUR DU `payload`, et il est motivé comme les
+	// deux autres (§14.6, §16.5.3) : l'objet du message au moment du départ n'est plus lisible
+	// nulle part depuis cette card — ce n'est pas un libellé qui pourrait changer de sens demain,
+	// c'est la valeur même du fait, exactement comme la date du sommeil ou le retard d'une relance.
+	if (ligne.type === 'mail_unclassified') return { detail: texte(ligne.payload['subject']) }
 	// LE SEUL CAS OÙ LE FIL LIT UNE VALEUR DU `payload` plutôt qu'un libellé résolu, et l'écart est
 	// motivé (§16.11.5) : une DATE n'est pas un libellé qui pourrait changer de sens demain — c'est
 	// la valeur même du fait. `until` pour la mise en sommeil, `from` pour l'échéance abandonnée.

@@ -86,8 +86,11 @@ describe('les familles (docs/DESIGN_SYSTEM.md §5.11)', () => {
 	// ici : la migration `0061`, la table de familles, les libellés et la présentation sont du même
 	// changement, et c'est l'assertion ci-dessous qui a exigé qu'ils le soient. Septième évolution
 	// du vocabulaire, aucune valeur jamais retirée, et les cinq familles restent cinq.
-	it('range les dix-huit types livrés dans exactement cinq familles d’événements', () => {
-		expect(TYPES_EVENEMENT).toHaveLength(18)
+	it('range les dix-neuf types livrés dans exactement cinq familles d’événements', () => {
+		// RÉVISÉE, NON RETIRÉE (mécanisme de la décision 51) — DIX-NEUVIÈME type, `mail_unclassified`,
+		// livré par `CRM-055` tranche 2 (§16.5.3). Le compte est le garde-fou : il rougit à chaque
+		// extension et force à ranger le type neuf plutôt qu'à le laisser tomber sur le repli.
+		expect(TYPES_EVENEMENT).toHaveLength(19)
 		const familles = new Set(TYPES_EVENEMENT.map((type) => familleDe(type)))
 		expect([...familles].sort()).toEqual(['champs', 'cycle', 'discussion', 'etapes', 'organisation'])
 		expect(TYPES_EVENEMENT).toContain('channel_changed')
@@ -126,7 +129,13 @@ describe('les familles (docs/DESIGN_SYSTEM.md §5.11)', () => {
 		expect(TYPES_EVENEMENT).toContain('mail_sent')
 		expect(Object.hasOwn(FAMILLE_PAR_TYPE, 'mail_sent')).toBe(true)
 		expect(FAMILLE_PAR_TYPE.mail_sent).toBe('discussion')
-		// LA TABLE COUVRE LES DIX-HUIT TYPES, sans exception : un type ajouté demain sans y être
+		// `mail_unclassified` EST ASSÉRÉ SUR LA TABLE, pour la même raison : il est écrit en base par
+		// la migration `0070`, et le repli l'aurait rangé en `cycle` alors qu'il ne se lit qu'avec
+		// le `mail_received` qui le précède dans le fil.
+		expect(TYPES_EVENEMENT).toContain('mail_unclassified')
+		expect(Object.hasOwn(FAMILLE_PAR_TYPE, 'mail_unclassified')).toBe(true)
+		expect(FAMILLE_PAR_TYPE.mail_unclassified).toBe('discussion')
+		// LA TABLE COUVRE LES DIX-NEUF TYPES, sans exception : un type ajouté demain sans y être
 		// rangé retomberait sur le repli, et c'est précisément l'oubli d'INC-207 qui se répéterait.
 		for (const type of TYPES_EVENEMENT) {
 			expect(Object.hasOwn(FAMILLE_PAR_TYPE, type), `${type} n'est rangé nulle part`).toBe(true)
@@ -139,11 +148,16 @@ describe('les familles (docs/DESIGN_SYSTEM.md §5.11)', () => {
 	// RÉVISÉE : la discussion porte les DEUX sens du courrier depuis INC-220. `mail_sent` existait
 	// en base depuis la migration `0030` et n'était nommé nulle part côté écran ; les ranger
 	// différemment ferait disparaître la moitié d'une conversation quand l'utilisateur filtre.
-	it('déclare cinq familles, dont la discussion que le courrier des DEUX SENS porte', () => {
+	// RÉVISÉE UNE TROISIÈME FOIS, et toujours pas retirée : `CRM-055` tranche 2 y range le DÉPART
+	// d'un message (§16.5.3). L'arrivée, l'envoi et le départ répondent à la même question — « que
+	// s'est-il dit sur cette affaire ? » —, et séparer le départ de l'arrivée couperait en deux
+	// l'histoire d'un même message dès que l'utilisateur filtre sur « Discussion ».
+	it('déclare cinq familles, dont la discussion que les TROIS gestes de courrier portent', () => {
 		expect([...FAMILLES]).toEqual(['discussion', 'etapes', 'champs', 'organisation', 'cycle'])
 		expect(TYPES_EVENEMENT.filter((type) => familleDe(type) === 'discussion')).toEqual([
 			'mail_received',
 			'mail_sent',
+			'mail_unclassified',
 		])
 	})
 
@@ -272,6 +286,38 @@ describe('la résolution des libellés (§14.6)', () => {
 	it('ne rend AUCUN détail si une seule des deux étapes est connue', () => {
 		const detail = resoudreDetail(
 			ligne({ id: 'e1', type: 'moved', payload: { from_step_id: 's1', to_step_id: 's9' } }),
+			libelles,
+		)
+		expect(detail.detail).toBeNull()
+	})
+
+	// ------------------------------------------------------------------------------------------
+	// `CRM-055` tranche 2 — le détail d'un DÉPART de message (docs/SPEC-mail-subsystem.md §16.5.3)
+	// ------------------------------------------------------------------------------------------
+	// CE DÉTAIL EST LU DANS LE `payload`, ET C'EST LA SEULE VOIE POSSIBLE. Le geste a détaché le
+	// message de la card : `lireMessagesDeCard` ne le rend plus, donc la carte de libellés ne peut
+	// pas le nommer. Le résoudre à la lecture rendrait « Événement » sur toutes les lignes de
+	// départ — exactement le symptôme d'INC-207 et d'INC-220, obtenu cette fois par le chemin
+	// inverse.
+
+	it('nomme le DÉPART d’un message par l’objet porté dans son payload', () => {
+		const detail = resoudreDetail(
+			ligne({
+				id: 'e1',
+				type: 'mail_unclassified',
+				payload: { message_id: 'm1', subject: 'Demande de devis — refonte' },
+			}),
+			libelles,
+		)
+		expect(detail.detail).toBe('Demande de devis — refonte')
+	})
+
+	// UN MESSAGE SANS OBJET EST UN CAS RÉEL — la colonne est nullable, et le seed en porte. La
+	// ligne reste alors VISIBLE et sans détail : un événement qui disparaîtrait du fil serait une
+	// mémoire perdue, ce que le repli documenté de `familleDe` interdit déjà.
+	it('rend le départ SANS détail quand le message n’avait pas d’objet', () => {
+		const detail = resoudreDetail(
+			ligne({ id: 'e2', type: 'mail_unclassified', payload: { message_id: 'm1' } }),
 			libelles,
 		)
 		expect(detail.detail).toBeNull()
