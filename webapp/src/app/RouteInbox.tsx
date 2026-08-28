@@ -765,12 +765,25 @@ function CommandeRetrait({
 		if (ouverte) confirmer.current?.focus()
 	}, [ouverte])
 
+	// ET IL REVIENT À LA COMMANDE QUI L'AVAIT OUVERTE : annuler au clavier ne doit pas perdre la
+	// place de l'utilisateur dans le document.
+	//
+	// LE RETOUR PASSE PAR UN EFFET, ET NON PAR LE GESTIONNAIRE DE CLIC, parce que la commande
+	// N'EXISTE PAS ENCORE au moment où l'on referme : la confirmation la remplace tant qu'elle est
+	// ouverte, et `commande.current` vaut donc `null` dans le gestionnaire. MESURÉ : écrit dans le
+	// gestionnaire, le focus retombait sur `body`, et l'assertion l'a montré avant l'œil.
+	const [rendreFocus, setRendreFocus] = useState(false)
+	useEffect(() => {
+		if (!ouverte && rendreFocus) {
+			commande.current?.focus()
+			setRendreFocus(false)
+		}
+	}, [ouverte, rendreFocus])
+
 	const fermer = useCallback(() => {
 		setOuverte(false)
 		setRefus(null)
-		// ET IL REVIENT À LA COMMANDE QUI L'AVAIT OUVERTE : annuler au clavier ne doit pas perdre
-		// la place de l'utilisateur dans le document.
-		commande.current?.focus()
+		setRendreFocus(true)
 	}, [])
 
 	const retirer = useCallback(async () => {

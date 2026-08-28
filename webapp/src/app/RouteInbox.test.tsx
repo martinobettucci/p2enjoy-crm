@@ -89,8 +89,17 @@ const NON_CLASSE = {
 function clientFactice(lireMessages: () => readonly unknown[]) {
 	const reponse = (data: unknown) => Promise.resolve({ data, error: null, status: 200 })
 	return {
-		rpc: (nom: string) =>
-			nom === 'inbox_arborescence'
+		rpc: (nom: string) => {
+			// `CRM-055` tranche 2 §16.5.5 — le RETRAIT. Le double rend ce que PostgREST rendrait :
+			// `data` porte la card quittée en cas de succès, et `error` porte le code de refus.
+			// C'est la seule voie par laquelle ces preuves peuvent éprouver la TRADUCTION du refus,
+			// qui est précisément ce que la décision 535 a montré fautif ailleurs.
+			if (nom === 'unclassify_message') {
+				return refusRetrait === null
+					? reponse(CARD)
+					: Promise.resolve({ data: null, error: { code: undefined, message: 'refus' }, status: refusRetrait })
+			}
+			return nom === 'inbox_arborescence'
 				? reponse([
 						{
 							track_id: 'track-1',
@@ -102,7 +111,8 @@ function clientFactice(lireMessages: () => readonly unknown[]) {
 							nombre: lireMessages().length,
 						},
 					])
-				: reponse(null),
+				: reponse(null)
+		},
 		from: (table: string) => {
 			if (table === 'mail_messages') {
 				const chaine = {
@@ -138,6 +148,9 @@ function clientFactice(lireMessages: () => readonly unknown[]) {
 }
 
 let messagesRendus: readonly unknown[] = [REPONSE, RACINE]
+
+/** `null` = le retrait réussit ; un nombre = le statut HTTP que le serveur oppose. */
+let refusRetrait: number | null = null
 
 // LE CLIENT EST UN SINGLETON, ET C'EST UNE CONTRAINTE DU PRODUIT, NON UNE COMMODITÉ DE TEST.
 // `useLecture` prend `client` dans ses dépendances d'effet (`webapp/src/lib/inbox.ts`) : un double
@@ -347,5 +360,96 @@ describe('RouteInbox — le paramètre `message` de l’adresse (§15)', () => {
 		// message d'origine se produirait au rendu suivant.
 		await new Promise((resoudre) => setTimeout(resoudre, 50))
 		expect(screen.getByRole('heading', { level: 3 }).textContent).toBe('Re: Demande de devis')
+	})
+})
+
+// @verifies CRM-055 tranche 2 (docs/BACKLOG.md) — le RETRAIT d'un message de son affaire
+// @verifies docs/SPEC-mail-subsystem.md §16.5.5 (la commande, sa confirmation dans le flux, la
+//           conséquence nommée, le dictionnaire fermé) ; docs/DESIGN_SYSTEM.md §5.3 quater
+//
+// CE QUE CES PREUVES ÉPRAUVENT ET QUE L'E2E NE MONTRERAIT PAS AUSSI FINEMENT : la TRADUCTION du
+// refus. Un écran qui envoie et reçoit `403` peut afficher n'importe quelle phrase, et c'est
+// exactement le défaut que la décision 535 a trouvé sur les objectifs — une confirmation qui
+// décrivait le geste inverse. Ici l'assertion porte sur le TEXTE RENDU, jamais sur la clé.
+describe('RouteInbox — retirer un message de son affaire (§16.5.5)', () => {
+	afterEach(() => {
+		refusRetrait = null
+		messagesRendus = [REPONSE, RACINE]
+	})
+
+	/** Le dossier, puis le message : le panneau de lecture n'existe qu'une fois un message ouvert. */
+	async function ouvrirLeMessage() {
+		await ouvrirLeDossier()
+		await userEvent.click((await screen.findAllByTestId('inbox-message'))[0] as HTMLElement)
+		await waitFor(() => expect(screen.queryByTestId('inbox-message-ouvert')).not.toBeNull())
+	}
+
+	it('offre la commande sur un message CLASSÉ, sans rien envoyer avant confirmation', async () => {
+		await ouvrirLeMessage()
+		await waitFor(() => expect(screen.queryByTestId('inbox-retirer')).not.toBeNull())
+
+		// AUCUNE COMMANDE N'EST ÉTEINTE D'AVANCE : le bouton est offert, et actif.
+		const commande = screen.getByTestId('inbox-retirer') as HTMLButtonElement
+		expect(commande.disabled).toBe(false)
+
+		await userEvent.click(commande)
+		// LE PREMIER CLIC N'AGIT PAS : il ouvre la confirmation, et rien d'autre.
+		expect(screen.queryByTestId('inbox-retrait-confirmation')).not.toBeNull()
+		expect(screen.queryByTestId('inbox-retirer')).toBeNull()
+	})
+
+	it('N’OFFRE PAS la commande sur un message NON CLASSÉ : il n’a aucune affaire à quitter', async () => {
+		messagesRendus = [NON_CLASSE]
+		render(
+			<MemoryRouter>
+				<RouteInbox />
+			</MemoryRouter>,
+		)
+		const dossiers = await screen.findAllByRole('button', { name: /Non classés/ })
+		await userEvent.click(dossiers[0] as HTMLElement)
+		await userEvent.click((await screen.findAllByTestId('inbox-message'))[0] as HTMLElement)
+		await waitFor(() => expect(screen.queryByTestId('inbox-classer')).not.toBeNull())
+		expect(screen.queryByTestId('inbox-retirer')).toBeNull()
+	})
+
+	it('nomme la CONSÉQUENCE du geste, et pas seulement le geste', async () => {
+		await ouvrirLeMessage()
+		await waitFor(() => expect(screen.queryByTestId('inbox-retirer')).not.toBeNull())
+		await userEvent.click(screen.getByTestId('inbox-retirer'))
+
+		const bloc = screen.getByTestId('inbox-retrait-confirmation')
+		// La phrase dit que rien n'est supprimé — un retrait n'est pas une destruction…
+		expect(bloc.textContent).toContain('Rien n’est supprimé')
+		// …et elle énonce la CONDITION de la perte de visibilité (§16.5.2, mesure 2), sans deviner
+		// un rôle que l'écran n'a pas le droit de déduire.
+		expect(bloc.textContent).toContain('vous ne le verrez plus')
+	})
+
+	it('ANNULER referme sans rien envoyer et rend le focus à la commande', async () => {
+		await ouvrirLeMessage()
+		await waitFor(() => expect(screen.queryByTestId('inbox-retirer')).not.toBeNull())
+		await userEvent.click(screen.getByTestId('inbox-retirer'))
+		await userEvent.click(screen.getByTestId('inbox-retirer-annuler'))
+
+		await waitFor(() => expect(screen.queryByTestId('inbox-retrait-confirmation')).toBeNull())
+		// LE FOCUS NE RESTE PAS SUR UN BOUTON DISPARU : annuler au clavier ne perd pas la place de
+		// l'utilisateur dans le document (§5.13).
+		expect(document.activeElement).toBe(screen.getByTestId('inbox-retirer'))
+	})
+
+	it('TRADUIT le refus par le dictionnaire DU RETRAIT, jamais par celui du classement', async () => {
+		refusRetrait = 403
+		await ouvrirLeMessage()
+		await waitFor(() => expect(screen.queryByTestId('inbox-retirer')).not.toBeNull())
+		await userEvent.click(screen.getByTestId('inbox-retirer'))
+		await userEvent.click(screen.getByTestId('inbox-retirer-valider'))
+
+		const alerte = await screen.findByRole('alert')
+		expect(alerte.textContent).toBe('Vous ne pouvez pas retirer ce message de cette affaire.')
+		// C'EST LA MOITIÉ QUI COMPTE : le texte du classement décrirait le geste INVERSE de celui
+		// qui vient d'être tenté, et enverrait l'utilisateur corriger ce qui n'est pas en cause.
+		expect(alerte.textContent).not.toContain('classer')
+		// ET LA CONFIRMATION RESTE OUVERTE : un refus n'est pas un succès, l'écran ne referme pas.
+		expect(screen.queryByTestId('inbox-retrait-confirmation')).not.toBeNull()
 	})
 })
