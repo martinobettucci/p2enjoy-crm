@@ -167,6 +167,38 @@ else
 	fail "goal_blocks porte « $triggers_blocs » : un trigger de plus est la forme sous laquelle un calcul automatique s'introduit"
 fi
 
+# L'UNICITÉ DU NOM D'UN TABLEAU EST TOTALE, ET C'EST UNE RÈGLE TRANCHÉE, PAS UN ÉTAT DE FAIT.
+# `docs/SPEC-goals.md` §2.1 bis, décision 542 : un tableau archivé RETIENT son nom, comme un track
+# archivé retient son `slug`. Le contrôle porte sur le PRÉDICAT de l'index, seul endroit où la règle
+# est observable au catalogue : un index refait `where archived_at is null` resterait unique, et un
+# contrôle qui ne regarderait que `indisunique` le laisserait passer.
+#
+# Ce que ce contrôle protège CONCRÈTEMENT : le désarchivage (§5.6) s'exécute sans confirmation et
+# n'a aucun cas `doublon` dans son dictionnaire fermé. Il ne peut s'en passer que parce que le nom
+# n'a jamais été libéré. Rendre cet index partiel rendrait donc « Désarchiver » faillible sur un
+# refus que rien n'annonce — la perte silencieuse du `CLAUDE.md` §18.
+predicat_nom=$(psql_db -c "select coalesce(pg_get_expr(ix.indpred, ix.indrelid), 'AUCUN')
+	from pg_index ix join pg_class i on i.oid = ix.indexrelid
+	where i.relname = 'goal_boards_workspace_name_key'")
+if [ "$predicat_nom" = 'AUCUN' ]; then
+	ok "goal_boards_workspace_name_key est TOTAL — un tableau archivé retient son nom (§2.1 bis)"
+else
+	fail "goal_boards_workspace_name_key porte le prédicat « $predicat_nom » : l'archivage libérerait le nom, et « Désarchiver » deviendrait faillible sur un doublon"
+fi
+
+# LE PENDANT, ET IL EST INDISPENSABLE : l'écart avec les budgets est VOULU (§2.1 bis.2). Sans ce
+# contrôle, une session qui « harmoniserait » les deux index dans l'autre sens — en rendant celui
+# des budgets total — passerait inaperçue ici, et un budget récurrent ne pourrait plus reprendre son
+# nom d'une période à l'autre.
+predicat_budget=$(psql_db -c "select coalesce(pg_get_expr(ix.indpred, ix.indrelid), 'AUCUN')
+	from pg_index ix join pg_class i on i.oid = ix.indexrelid
+	where i.relname = 'budgets_track_name_ouvert_key'")
+if [ "$predicat_budget" = '(closed_at IS NULL)' ]; then
+	ok "budgets_track_name_ouvert_key reste PARTIEL — clôturer n'est pas archiver, et l'écart est voulu (§2.1 bis.2)"
+else
+	fail "budgets_track_name_ouvert_key porte « $predicat_budget », attendu « (closed_at IS NULL) » : l'écart motivé entre les deux règles a été effacé"
+fi
+
 # `on delete set null` et non `cascade` : un channel mis à la corbeille ne fait pas disparaître un
 # objectif (§2.2).
 if [ "$(psql_db -c "select confdeltype from pg_constraint
@@ -370,6 +402,19 @@ else
 		"alter table public.goal_blocks drop constraint goal_blocks_fill_percent_check;
 		 alter table public.goal_blocks add constraint goal_blocks_fill_percent_check
 		   check (fill_percent between 0 and 100)"
+
+	# LA DÉGRADATION DE LA DÉCISION 542, et c'est celle qui ressemble le plus à une amélioration :
+	# rendre l'index du nom partiel « comme celui des budgets » paraît une harmonisation, et c'est
+	# une régression — le nom libéré par l'archivage rendrait « Désarchiver » faillible sur un
+	# doublon que rien n'annonce (§2.1 bis.2).
+	degrader_et_verifier \
+		"l'unicité du nom ne porterait plus que sur les tableaux VIVANTS — l'archivage libérerait le nom" \
+		"drop index public.goal_boards_workspace_name_key;
+		 create unique index goal_boards_workspace_name_key
+		   on public.goal_boards (workspace_id, app.btrim_blancs(name)) where archived_at is null" \
+		"drop index public.goal_boards_workspace_name_key;
+		 create unique index goal_boards_workspace_name_key
+		   on public.goal_boards (workspace_id, app.btrim_blancs(name))"
 
 	# LA DÉGRADATION QUI PROTÈGE LA RÈGLE LA PLUS FACILE À « AMÉLIORER » : refuser les cycles
 	# paraîtrait un durcissement, et détruirait une intention légitime (§2.3). Elle doit rendre la
