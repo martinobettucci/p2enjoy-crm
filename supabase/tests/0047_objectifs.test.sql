@@ -44,7 +44,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(45);
+select plan(48);
 
 create or replace function pg_temp.endosser(utilisateur uuid)
 returns void language plpgsql as $$
@@ -285,6 +285,60 @@ select throws_ok(
 	null,
 	'CRM-082 : le même nom entouré de blancs entre en collision — l''unicité porte sur la forme '
 	'normalisée (docs/SPEC-goals.md §2.1)');
+
+-- --- 2.6 bis L'unicité NE S'ARRÊTE PAS aux tableaux vivants — décision 542 --------------------
+--
+-- Trois assertions pour une seule règle, et aucune n'est redondante : la première la mesure au
+-- CATALOGUE, la deuxième par le COMPORTEMENT, la troisième par sa CONSÉQUENCE. La première seule
+-- serait verte sur un index correct que rien n'appliquerait ; la deuxième seule serait verte sur
+-- une collision due à toute autre cause ; la troisième seule ne dirait rien de l'unicité.
+--
+-- La règle est écrite dans `docs/SPEC-goals.md` §2.1 bis, tranchée le 2026-08-28 : un tableau
+-- archivé RETIENT son nom, comme un track et un channel archivés retiennent leur `slug`. Elle est
+-- figée ici parce qu'un commentaire de migration ne résiste pas à une session qui « harmoniserait »
+-- cet index sur celui des budgets — `budgets_track_name_ouvert_key`, lui, est partiel, et cet écart
+-- est VOULU (§2.1 bis.2).
+--
+-- LA NON-COMPLAISANCE EST MESURÉE, PAS SUPPOSÉE. Le 2026-08-28, l'index a été refait `where
+-- archived_at is null` sur la base de développement, et la suite est passée de 48 vertes à
+-- **4 rouges** : les trois assertions ci-dessous, plus la 24 du §2.7 — l'insertion qui aurait dû
+-- être refusée ayant abouti en position 8, le trigger attribue 9 au lieu de 3. Cette quatrième
+-- rougeur est une CONSÉQUENCE de la même dégradation, pas un second défaut ; elle est nommée ici
+-- pour qu'une session future ne la cherche pas ailleurs. L'index a ensuite été rétabli, et la suite
+-- rend de nouveau 48 vertes.
+
+select is(
+	(select pg_get_expr(ix.indpred, ix.indrelid)
+	   from pg_index ix
+	   join pg_class i on i.oid = ix.indexrelid
+	  where i.relname = 'goal_boards_workspace_name_key'),
+	null,
+	'CRM-082 : l''index d''unicité du nom est TOTAL — aucun prédicat ne le restreint aux tableaux '
+	'vivants (docs/SPEC-goals.md §2.1 bis)');
+
+-- LE COMPORTEMENT, ET IL PASSE PAR L'ARCHIVAGE RÉEL : la fixture est archivée, puis son nom est
+-- repris. Sans l'archivage, cette assertion doublerait celle du §2.6 et serait verte quel que soit
+-- le prédicat de l'index.
+update public.goal_boards set archived_at = now()
+ where id = 'a0000000-0000-4000-8000-0000000000b1';
+
+select throws_ok(
+	$$insert into public.goal_boards (workspace_id, name, position)
+	  values ('5eed0000-0000-4000-8000-000000000001',
+	          'Tableau d''essai de la suite 0047', 8)$$,
+	'23505',
+	null,
+	'CRM-082 : ARCHIVER un tableau ne LIBÈRE PAS son nom — la reprise est refusée, comme celle du '
+	'`slug` d''un track archivé (décision 542)');
+
+-- LA CONSÉQUENCE, qui est le motif de la règle : le nom n'ayant jamais été libéré, le désarchivage
+-- ne peut heurter aucun doublon. C'est ce que `docs/SPEC-goals.md` §5.6.1 mesure 6 affirme, et une
+-- assertion le FIGE plutôt qu'un commentaire l'affirme.
+select lives_ok(
+	$$update public.goal_boards set archived_at = null
+	   where id = 'a0000000-0000-4000-8000-0000000000b1'$$,
+	'CRM-082 : DÉSARCHIVER ne peut jamais échouer sur un doublon — le nom n''avait pas été libéré '
+	'(docs/SPEC-goals.md §5.6.1, mesure 6)');
 
 -- --- 2.7 `position` attribuée par trigger lorsqu'elle est omise -------------------------------
 
