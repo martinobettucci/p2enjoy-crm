@@ -13,6 +13,21 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-083` — un tableau d'objectifs archivé peut être repris
+
+- **L'archivage d'un tableau n'est plus sans retour.** Une case « Afficher les archivés » dans la
+  liste des tableaux ramène ceux qui l'ont été, et une commande « Désarchiver » les remet en place —
+  à leur position d'origine, avec tout leur contenu.
+- **Ce que cela corrige** : un tableau d'objectifs s'archive **au lieu** de se supprimer. Archivé par
+  erreur, il était donc perdu pour l'utilisateur alors que rien n'avait bougé en base, et aucun écran
+  ne permettait de le retrouver. La confirmation d'archivage disait même « aucun écran ne le rend
+  plus » ; elle nomme désormais la case et la reprise.
+- **Une ligne archivée est marquée « Archivé », n'ouvre aucun canevas et ne porte que la commande de
+  reprise** — la même présentation que les tracks et les channels archivés en administration.
+- **Aucune migration, aucun changement de droits** : la base autorisait déjà ce geste, seul l'écran
+  manquait. Un membre en lecture seule ne peut pas reprendre un tableau, et l'écran le lui dit.
+- Le jeu de démonstration porte désormais un tableau archivé, « Objectifs 2025 (clos) ».
+
 ### `CRM-042` — la recherche comprend les accents de la même façon partout
 
 - **Chercher « securite » trouve désormais « sécurité »**, et inversement, dans la vue liste comme

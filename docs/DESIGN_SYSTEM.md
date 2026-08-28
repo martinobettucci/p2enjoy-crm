@@ -2156,6 +2156,53 @@ défaut. Les deux compléments viennent d'une **mesure** (§5.5 bis.1), pas d'un
   fermeture étant précisément ce qui la fait paraître dans la mention de section. La règle vaut
   pour **toute** surface partageant un état de mention avec ses voisines.
 
+### 5.29 bis Les tableaux d'objectifs ARCHIVÉS dans la liste — `CRM-083` tranche 2 h
+
+`docs/SPEC-goals.md` §5.6 dit ce que la liste montre et ce que la reprise fait ; ce paragraphe ne
+dit que de quoi cela a l'air. **Il n'introduit aucune forme nouvelle** : tout ce qui suit est repris
+sans écart du §5.13 et de l'administration de l'arborescence, où l'archivage pose le même problème.
+C'est le point : deux écrans qui traitent le même état le traitent de la même façon, faute de quoi
+l'utilisateur apprend deux grammaires pour une notion.
+
+- **La bascule est une case à cocher étiquetée**, « Afficher les archivés », dans l'en-tête de la
+  liste — même règle et même motif qu'au §5.3 quinquies : un bouton unique laisse toujours
+  l'ambiguïté entre « ce que je fais » et « ce qui est ». Elle occupe une ligne de hauteur
+  `--size-target`, sa case reste à **24 px** et son libellé lui sert de cible étendue (§5.7 bis).
+
+- **Elle est rendue en toute circonstance, liste vide comprise.** Elle est la cause possible de ce
+  vide — quelqu'un qui cherche un tableau archivé tombe précisément sur un écran vide —, et la
+  masquer priverait l'utilisateur du seul geste qui l'en sort.
+
+- **La mention « Archivé » est TEXTUELLE, jamais une teinte seule** (§5.13). Une ligne grisée ne dit
+  pas pourquoi elle l'est, et un lecteur d'écran n'en lit rien. Elle se pose sous le compte de blocs,
+  en `text-sm text-text-2`, comme la mention d'un track archivé.
+
+- **Une ligne archivée n'est pas un lien.** Le canevas d'un tableau archivé n'est pas atteignable
+  (`docs/SPEC-goals.md` §5.6.2, ligne e) : le rendre cliquable enverrait l'utilisateur sur un
+  « tableau introuvable » que rien n'expliquerait. Le bloc de nom garde la même géométrie qu'un lien
+  — `min-h-[var(--size-target)]`, même pile de lignes — pour que la colonne ne saute pas d'une ligne
+  à l'autre.
+
+- **Elle ne garde qu'une commande, « Désarchiver »**, icône `ArchiveRestore`. Les quatre autres sont
+  **retirées**, et c'est le seul endroit du produit où une commande disparaît d'une ligne : ce n'est
+  **pas** une extinction par rôle — le §5.26 l'interdit neuf fois, et la lectrice voit bien la
+  commande, l'exerce et lit le refus — mais le retrait de gestes que l'**état de l'objet** rend sans
+  effet observable. Renommer ou réordonner un tableau que la liste ne montre pas par défaut ne se
+  verrait nulle part.
+
+- **La reprise n'ouvre aucune confirmation.** La confirmation est réservée à ce qui coûte (§5.13) ;
+  ce geste défait au lieu de détruire, et la demander apprendrait que les deux pèsent pareil.
+
+- **Le refus d'écriture a son propre texte**, et ce n'est pas un doublon : celui de l'écriture
+  ordinaire invoque « le tableau a peut-être été archivé entre-temps », ce qui est absurde sur une
+  reprise — il l'est, et c'est ce qu'on défait. **Défaut trouvé en regardant une capture**
+  (`CLAUDE.md` §16) : aucune assertion ne l'attrapait, le scénario ne vérifiant que l'absence du
+  texte de succès.
+
+- **La confirmation d'ARCHIVAGE est révisée dans le même geste.** Elle disait « aucun écran ne le
+  rend plus », devenu faux : elle nomme désormais la case et la reprise. Une confirmation qui décrit
+  un produit disparu dissuade d'un geste réversible.
+
 ### 5.30 Histogramme prévisionnel / réel — `CRM-086`
 
 Spécifié avant code, `docs/SPEC-costs.md` §4.2.

@@ -10530,8 +10530,53 @@ la 2b-1 l'ont été : **2b-2a livre le LIEN**, 2b-2b livrera les **flèches** et
       heurter un doublon, l'index d'unicité étant **total** — reprendre le nom d'un tableau archivé
       rend `409 / 23505`, le nom n'a donc jamais été libéré.
       **Aucune migration, aucune politique, aucun privilège** : tout le contrat backend existe
-      depuis la migration `0049` de `CRM-082`. *Reste dû : le code, ses preuves et le seed enrichi
-      d'un tableau archivé (Definition of Done au §5.6.4).*
+      depuis la migration `0049` de `CRM-082`.
+      **LIVRÉE ET PROUVÉE le 2026-08-28.** Definition of Done du §5.6.4 tenue point par point :
+      - `webapp/src/lib/objectifs-ecriture.ts` : `desarchiverTableau`, l'inverse exact
+        d'`archiverTableau` — et la note de ce dernier est **révisée sur place**, jamais recopiée ;
+      - `webapp/src/lib/objectifs.ts` : `lireTableaux` et `useTableaux` prennent un
+        `inclureArchives` qui vaut **`false` par défaut**, de sorte que le §5.1 est inchangé pour
+        tout appelant qui ne demande rien. Le paramètre **élargit**, il ne filtre pas, et il entre
+        dans les dépendances de l'effet : basculer la case **relit** au lieu de filtrer côté client,
+        sans quoi le compte de blocs LISIBLES perdrait son sens ;
+      - `webapp/src/app/Objectifs.tsx` : la case, la mention textuelle, la commande unique de la
+        ligne archivée, et l'absence de lien vers un canevas que `lireContenuTableau` ne rendrait
+        pas ;
+      - **Unitaire** : `Objectifs.test.tsx` **+10 scénarios**, un par ligne du contrat, et
+        `objectifs-ecriture.test.ts` **+4 assertions** dont une qui compare les DEUX gestes entre
+        eux — une divergence future laisserait les autres blocs verts séparément. **112 tests
+        verts**, **non complaisants, éprouvés par deux dégradations** : filtrer localement au lieu
+        de relire fait rougir la ligne b, tenir toute ligne pour vivante en fait rougir sept ;
+      - **API** : `e2e/api/objectifs.spec.ts` porté à **18 scénarios**, les cinq neufs avec les
+        jetons réels des trois profils, chaque refus **relisant la ligne** ;
+      - **E2E d'interface** : `e2e/ui/objectifs.spec.ts` **+5 scénarios**, **41 verts**, console
+        vierge, quatre paliers sans débordement, **seed relu INTACT** après exécution ;
+      - **Captures produites ET OBSERVÉES** sous `docs/captures/CRM-083/` :
+        `tableaux-{liste-sans-archives-1440, liste-avec-archives-1440, reprise-1440,
+        reprise-refus-lectrice-1440}` et `tableaux-archives-{xl-1440, lg-1152, md-900, sm-390}` ;
+      - **Seed** : section 8 terdecies, « Objectifs 2025 (clos) », position 2, un bloc, `archived_at`
+        **fixe** et **vérifié après écriture** ;
+      - **Documentation dans le même changement** : `docs/SPEC-goals.md` §5.6 (et §5.1, §5.4 révisés
+        par livraison), `docs/DESIGN_SYSTEM.md` **§5.29 bis**, `docs/SPEC-seed.md` **§2.20**,
+        `CHANGELOG.md`.
+- [x] **UN DÉFAUT TROUVÉ EN REGARDANT, ET QU'AUCUNE ASSERTION N'ATTRAPAIT** (`CLAUDE.md` §16). Le
+      refus opposé à la lectrice affichait « Rien n'a été enregistré. Le tableau a peut-être été
+      **archivé** entre-temps » — texte juste pour un renommage, **absurde** pour une reprise, où le
+      tableau EST archivé et où c'est précisément ce qu'on tente de défaire. Le scénario ne
+      vérifiait que l'absence du texte de succès, et restait vert. Le « sans-effet » du geste reçoit
+      son propre texte, et les **deux** preuves l'exigent désormais nommément.
+- [x] **DEUX DÉFAUTS DANS MES PROPRES PREUVES, corrigés à leur cause et non contournés.** La remise
+      en état, d'abord écrite en fin de corps du scénario de reprise, **n'avait pas lieu quand il
+      échouait** : les deux scénarios suivants échouaient alors sur un décor qu'ils n'avaient pas
+      cassé. Elle passe en `afterEach` **inconditionnel**, dans un describe dédié — `afterAll` ne
+      suffisait pas, le scénario de la ligne g désarchivant le tableau que celui de la ligne h
+      attend. Et `new RegExp('Objectifs 2025 (clos)')` prenait les parenthèses pour un **groupe de
+      capture**, faisant rougir un produit correct ; le nom est échappé.
+- [ ] **CE QUI RESTE SUR LA TRANCHE 2 h, ET CE N'EST PAS DU COMPORTEMENT** : la série des
+      `scripts/verify-*.sh` n'a pas été rejouée en entier derrière ce changement, et
+      `docs/manual.md` ne gagne aucun chapitre — mais pour une cause **antérieure et étrangère**,
+      déjà consignée en **INC-214** : le manuel ne porte AUCUN chapitre sur les objectifs depuis la
+      livraison de l'écran, et en ouvrir un ici dépasserait la tranche.
 
 **CE QUI RESTE — LE HARNAIS.**
 - [ ] **État LECTURE SEULE du `viewer`** : tous les gestes d'écriture indisponibles ET lisibles,

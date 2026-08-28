@@ -86,6 +86,31 @@ Toutes les adresses du seed sont sous `p2enjoy.test`. Le TLD `.test` est réserv
 il ne peut **pas** être enregistré ni routé. Un email envoyé par erreur à un compte du seed ne peut
 donc atteindre personne de réel.
 
+### 2.20 Un second tableau d'objectifs, ARCHIVÉ — ajouté par `CRM-083` tranche 2 h
+
+**Ce qu'il ferme, et le manque est réel.** Depuis la tranche 2 h, la liste des tableaux porte une
+case « Afficher les archivés » et une commande de reprise (`docs/SPEC-goals.md` §5.6). Le seed ne
+posant **aucun** tableau archivé, cocher la case ne montrait rien : une fonctionnalité livrée serait
+restée indémontrable sur le jeu de démonstration, ce que `CLAUDE.md` §8 refuse. C'est le motif exact
+qui a fait poser une card **archivée** et une card **en corbeille** à la section 8 ter — un état du
+cycle de vie que le seed ne porte pas est un état que personne ne peut regarder.
+
+| Attribut | Valeur | Pourquoi celle-là |
+|---|---|---|
+| Nom | « Objectifs 2025 (clos) » | Un exercice précédent, la raison la plus ordinaire d'archiver un tableau |
+| `position` | `2` | Il se range **après** le tableau vivant, et la reprise **conserve** cette position — une preuve peut donc le constater |
+| `archived_at` | `2026-01-15T09:00:00Z`, **fixe** | Un horodatage tiré à l'exécution rendrait la ligne différente à chaque rejeu ; la colonne sert à masquer, jamais à ordonner |
+| Blocs | **un**, « Clôturer l'exercice 2025 » | À zéro bloc, « Aucun objectif » et « 1 objectif » seraient indistinguables, et la ligne ne prouverait pas que le compte de blocs **lisibles** suit (§5.6.2, ligne i) |
+
+**L'état est VÉRIFIÉ après écriture, pas supposé.** Un rejeu qui aurait rendu `archived_at` à nul —
+par exemple parce qu'une preuve a désarchivé le tableau sans le remettre — laisserait le seed vert
+et la case vide, sans que rien ne le dise. Le contrôle compte les tableaux archivés du workspace et
+échoue s'il n'en trouve aucun.
+
+**Les preuves d'interface le remettent archivé après CHAQUE scénario**, et non à la fin de la série :
+mesuré, une remise en fin de série laissait le scénario suivant échouer sur un décor qu'il n'avait
+pas cassé (`e2e/ui/objectifs.spec.ts`, tranche 2 h).
+
 ## 3. Mécanismes employés, et ce qui a été mesuré
 
 ### 3.1 Les comptes naissent de l'API d'administration GoTrue
