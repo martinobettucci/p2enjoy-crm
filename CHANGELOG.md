@@ -13,6 +13,26 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-084` — un budget récurrent peut enfin recevoir des occurrences
+
+- **Un budget récurrent est utilisable.** Sous « Réglages ▸ Arborescence », le nombre d'occurrences
+  d'un budget récurrent est devenu cliquable : il déplie la liste de ses occurrences et laisse en
+  ouvrir, libeller, doter, clôturer, rouvrir et retirer.
+- **Ce que cela corrige** : cocher « récurrent » produisait un budget auquel **aucune ligne de coût
+  ne pouvait jamais être rattachée**. Le sélecteur de la fiche d'affaire écarte un budget récurrent
+  sans occurrence, et aucun écran n'en créait — les deux occurrences visibles jusqu'ici existaient
+  parce que les données de démonstration les posaient directement en base.
+- **Les occurrences clôturées restent affichées**, contrairement aux budgets : les factures arrivent
+  souvent après la clôture, et l'onglet « À saisir » liste précisément leurs lignes.
+- **Clôturer et rouvrir ne demandent pas de confirmation** — ces gestes se défont d'un clic. Le
+  retrait, lui, en demande une, et il est refusé quand des lignes de coût sont rattachées :
+  l'écran propose alors la clôture, qui n'efface aucune dépense constatée.
+- **Vider un champ facultatif l'efface réellement** : une enveloppe ou une période posée par erreur
+  se retire en laissant le champ vide.
+- Documentation : `docs/manual.md` chapitre 5.5, `docs/SPEC-costs.md` §4.1 bis,
+  `docs/DESIGN_SYSTEM.md` §5.47.
+
+
 ### `CRM-055` — un message rangé dans la mauvaise affaire peut en être retiré
 
 - **Un message classé n'y est plus enfermé.** Sous le message ouvert de l'inbox, « Retirer de

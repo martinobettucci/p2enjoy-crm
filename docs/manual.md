@@ -2042,6 +2042,68 @@ telle liste d'aplomb demande une renumérotation, qui n'est pas encore livrée.
   étape n'a, elle, toujours pas d'écran.
 - Les **droits fins** par track et par channel relèvent du chapitre 24 bis.
 
+### 5.5 Les occurrences d'un budget récurrent
+
+*Livré par `CRM-084` tranche 3. Captures dans `docs/captures/CRM-084/occurrences-*.jpg`.*
+
+**Où.** Sous un track déplié, dans le tableau « Budgets ». Un budget déclaré **récurrent** affiche
+dans la colonne « Occurrences ouvertes » un nombre **cliquable** : il déplie la liste de ses
+occurrences sous le tableau. Un budget non récurrent affiche une cellule vide, et n'offre pas ce
+geste — il ne peut porter aucune occurrence.
+
+**Pourquoi c'est nécessaire.** Un budget récurrent ne peut recevoir aucune ligne de coût tant qu'il
+ne porte pas au moins une occurrence : le sélecteur de la fiche d'affaire ne le propose pas. Avant
+cet écran, cocher « récurrent » produisait donc un budget inutilisable.
+
+**Ce que la liste montre**, de la plus récente à la plus ancienne : le libellé, la période si elle
+est renseignée, l'enveloppe si elle est décidée, et l'état — « Ouverte » ou « Clôturée ».
+
+**Les occurrences clôturées ne sont pas masquées**, contrairement aux budgets. C'est voulu : les
+factures arrivent souvent après la clôture, et l'onglet « À saisir » des écrans de coûts liste
+précisément leurs lignes.
+
+**Les cinq gestes**, tous réservés à un **administrateur de l'espace de travail** :
+
+| Geste | Ce qu'il fait |
+|---|---|
+| Ouvrir une occurrence | Déclare une instance — « Janvier 2026 ». Le libellé est obligatoire ; la période et l'enveloppe ne le sont pas |
+| Modifier | Change le libellé, la période et l'enveloppe. Reste offert sur une occurrence **clôturée** |
+| Clôturer | La retire des choix proposés à une nouvelle ligne de coût. **Sans confirmation** : elle se rouvre d'un clic |
+| Rouvrir | L'inverse, également sans confirmation |
+| Retirer | La supprime. **Avec confirmation**, et refusé si des lignes de coût y sont rattachées |
+
+**Aucune occurrence n'est engendrée automatiquement.** On crée « janvier », puis « février », à la
+main. Un mois sans occurrence est une information — il ne s'est rien passé — qu'une génération
+automatique détruirait en fabriquant une occurrence vide.
+
+**Vider un champ facultatif l'efface réellement.** Une enveloppe posée par erreur se retire en
+laissant le champ vide, de même que les deux bornes de période.
+
+**Les périodes ne contraignent rien.** Elles servent à ordonner et à libeller : aucune ligne de coût
+n'est refusée parce que sa date sortirait de la période, et rien n'exige que la fin suive le début.
+
+**Deux libellés qui ne diffèrent que par la casse coexistent.** « Janvier 2026 » et « janvier 2026 »
+sont deux occurrences distinctes ; seuls les espaces de début et de fin sont ignorés. C'est la même
+règle que pour le nom d'un budget.
+
+**Ce que vous pouvez lire sans pouvoir l'écrire.** La liste est visible à qui lit le budget. Si vous
+n'êtes pas administrateur, vos gestes sont refusés par le serveur et l'écran vous le dit — il ne les
+masque pas, parce que vos droits peuvent avoir changé depuis l'ouverture de la page.
+
+| Message | Ce qu'il signifie |
+|---|---|
+| « Ce budget porte déjà une occurrence de ce libellé » | Choisissez un autre libellé |
+| « Ce budget n'est pas récurrent » | Rendez-le récurrent avant d'y ouvrir une occurrence |
+| « Cette occurrence porte des lignes de coût » | Clôturez-la plutôt que de la retirer : la dépense constatée n'est pas effacée |
+| « Seul un administrateur… » | Le geste demande un droit que votre compte n'a pas |
+| « Rien n'a été modifié » | Vos droits sur ce budget ont changé depuis l'ouverture de l'écran |
+
+### 5.6 Ce qui n'est pas encore là, côté budgets
+
+- **L'administration des budgets eux-mêmes n'a pas de chapitre dans ce manuel.** Le tableau existe
+  depuis `CRM-084` tranche 2 ; sa documentation n'a jamais été écrite, et cette tranche ne l'écrit
+  pas à sa place — l'écart est consigné au registre plutôt que comblé au passage.
+
 ## 5 bis. Composer un workflow : ses étapes, ses transitions et son formulaire
 
 *Livré par `CRM-076` ; les règles d'accès sont celles de `CRM-031`, inchangées. Captures dans

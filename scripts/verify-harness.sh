@@ -805,7 +805,12 @@ ASSERTIONS_ATTENDUES=3027
 # `bizdev` relue derrière son propre geste. 1021 + 2 = 1023, et la valeur est COMPTÉE —
 # « Total: 1023 tests in 64 files ». AUCUN FICHIER NOUVEAU : la tranche complète la preuve d'API du
 # classement, dont elle est l'exact inverse. Garde-fou RÉVISÉ, jamais retiré (décision 51).
-SCENARIOS_API=1023
+# **1032 depuis `CRM-084` tranche 3c, 2026-08-28.** La surface des occurrences ajoute NEUF scénarios
+# dans un fichier NEUF, `e2e/api/occurrences.spec.ts` — un fichier neuf plutôt qu'un describe de plus
+# dans `budgets.spec.ts` parce qu'il pose et détruit son PROPRE budget récurrent d'essai, et que sa
+# purge doit rester inconditionnelle sans peser sur les scénarios voisins. 1023 + 9 = 1032, valeur
+# COMPTÉE — « Total: 1032 tests in 65 files ». Garde-fou RÉVISÉ, jamais retiré (décision 51).
+SCENARIOS_API=1032
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -1117,7 +1122,10 @@ SCENARIOS_API=1023
 # dans `inbox.spec.ts` parce que la remise en état du seed lui est propre et doit rester
 # inconditionnelle sans peser sur les onze scénarios voisins. 696 + 5 = 701, valeur COMPTÉE —
 # « Total: 701 tests in 56 files ».
-SCENARIOS_UI=701
+# **715 depuis `CRM-084` tranche 3c, 2026-08-28.** La surface des occurrences ajoute QUATORZE
+# scénarios dans un fichier NEUF, `e2e/ui/occurrences.spec.ts` — dont les quatre paliers et deux
+# captures de surface. 701 + 14 = 715, valeur COMPTÉE — « Total: 715 tests in 57 files ».
+SCENARIOS_UI=715
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,
