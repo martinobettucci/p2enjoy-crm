@@ -536,12 +536,17 @@ PORT_RAPPORT=9323
 # corriger sans le dire reviendrait à effacer la dérive. La valeur est donc portée à celle que
 # `npm run test:sql` COMPTE — « 65 fichiers, 3006 assertions » —, et la part antérieure est écrite
 # ici. Garde-fou RÉVISÉ, jamais retiré (mécanisme de la décision 51).
-FICHIERS_SQL_ATTENDUS=65
+# **66 depuis `CRM-055` tranche 2, 2026-08-28** : `supabase/tests/0066_declassement_messages.test.sql`
+# est le fichier ajouté, et il est le seul. Valeur COMPTÉE — « 66 fichiers » —, jamais déduite.
+FICHIERS_SQL_ATTENDUS=66
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
 # une dérive qui n'appartient pas à cette tranche, et la part antérieure est écrite ici.
-ASSERTIONS_ATTENDUES=3008
+# **3027 le 2026-08-28, et l'écart est ENTIÈREMENT le mien** : la suite du déclassement en apporte
+# 19, 3008 + 19 = 3027, et `npm run test:sql` en COMPTE exactement 3027. Contrairement aux deux
+# révisions précédentes, aucune part antérieure n'est absorbée ici — il n'y en a pas.
+ASSERTIONS_ATTENDUES=3027
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -795,7 +800,12 @@ ASSERTIONS_ATTENDUES=3008
 # compteur était déjà en retard d'une unité, et corriger sans le dire effacerait la dérive. Valeur
 # COMPTÉE — « Total: 1021 tests in 64 files » —, jamais déduite. AUCUN FICHIER NOUVEAU : la tranche
 # complète la preuve de l'écran qu'elle modifie. Garde-fou RÉVISÉ, jamais retiré (décision 51).
-SCENARIOS_API=1021
+# **1023 depuis `CRM-055` tranche 2, 2026-08-28.** Le déclassement ajoute DEUX scénarios à
+# `e2e/api/classement.spec.ts` — le refus opposé à la lectrice, et la perte de visibilité du
+# `bizdev` relue derrière son propre geste. 1021 + 2 = 1023, et la valeur est COMPTÉE —
+# « Total: 1023 tests in 64 files ». AUCUN FICHIER NOUVEAU : la tranche complète la preuve d'API du
+# classement, dont elle est l'exact inverse. Garde-fou RÉVISÉ, jamais retiré (décision 51).
+SCENARIOS_API=1023
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -1102,7 +1112,12 @@ SCENARIOS_API=1021
 # scénarios à `e2e/ui/objectifs.spec.ts`, dans un describe à part — voir `docs/SPEC-goals.md` §5.6.
 # Le sixième point d'écart est ANTÉRIEUR et étranger, comme celui du compteur d'API ci-dessus, et il
 # est nommé plutôt qu'absorbé. Valeur COMPTÉE — « Total: 696 tests in 55 files ».
-SCENARIOS_UI=696
+# **701 depuis `CRM-055` tranche 2, 2026-08-28.** Le déclassement ajoute CINQ scénarios dans un
+# fichier NEUF, `e2e/ui/declassement.spec.ts` — et un fichier neuf plutôt qu'un describe de plus
+# dans `inbox.spec.ts` parce que la remise en état du seed lui est propre et doit rester
+# inconditionnelle sans peser sur les onze scénarios voisins. 696 + 5 = 701, valeur COMPTÉE —
+# « Total: 701 tests in 56 files ».
+SCENARIOS_UI=701
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

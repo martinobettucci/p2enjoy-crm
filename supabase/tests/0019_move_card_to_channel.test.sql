@@ -217,6 +217,13 @@ select ok(
 -- rattachement d'un contact portent l'énumération à DIX-HUIT (docs/SPEC-contacts.md §19.3), dans la
 -- même migration que le trigger qui les écrit — exactement ce que ce garde-fou exige de toute unité
 -- qui étend le vocabulaire. Aucune valeur retirée, la septième fois comme les six précédentes.
+--
+-- RÉVISÉE LE 2026-08-28 PAR `CRM-055` TRANCHE 2 — HUITIÈME ÉVOLUTION. `mail_unclassified` porte
+-- l'énumération à DIX-NEUF (docs/SPEC-mail-subsystem.md §16.5.3), et sa place n'est pas indifférente :
+-- il suit `mail_sent`, avec les deux autres gestes de courrier, plutôt que d'être ajouté en queue.
+-- L'ORDRE FAIT PARTIE DE CE QUE CETTE ASSERTION FIGE, `pg_get_constraintdef` le rendant tel quel :
+-- une valeur glissée ailleurs la ferait rougir, et c'est voulu — le vocabulaire se lit par familles.
+-- Aucune valeur retirée, la huitième fois comme les sept précédentes.
 
 select is(
 	(select pg_get_constraintdef(c.oid) from pg_constraint c
@@ -224,12 +231,13 @@ select is(
 	'CHECK ((type = ANY (ARRAY[''created''::text, ''moved''::text, ''assigned''::text, '
 	'''channel_changed''::text, ''workflow_changed''::text, ''archived''::text, '
 	'''unarchived''::text, ''trashed''::text, ''restored''::text, ''field_changed''::text, '
-	'''mail_received''::text, ''mail_sent''::text, ''snoozed''::text, ''woken''::text, '
+	'''mail_received''::text, ''mail_sent''::text, ''mail_unclassified''::text, '
+	'''snoozed''::text, ''woken''::text, '
 	'''stalled''::text, ''contact_linked''::text, ''contact_unlinked''::text, '
 	'''contact_role_changed''::text])))',
-	'Le `CHECK` compte DIX-HUIT valeurs : `CRM-060` tranche 5 ajoute les trois gestes de '
-	'rattachement sans retirer aucune des quinze précédentes. Le garde-fou historique ÉVOLUE avec '
-	'le vocabulaire au lieu de figer un état périmé — et c''est la SEPTIÈME fois qu''il le fait');
+	'Le `CHECK` compte DIX-NEUF valeurs : `CRM-055` tranche 2 ajoute le DÉPART d''un message sans '
+	'retirer aucune des dix-huit précédentes. Le garde-fou historique ÉVOLUE avec '
+	'le vocabulaire au lieu de figer un état périmé — et c''est la HUITIÈME fois qu''il le fait');
 
 -- LE MÉCANISME A JOUÉ UNE FOIS DE PLUS. `CRM-058` a étendu l'énumération dans la même migration
 -- que son écriture, exactement comme l'assertion le lui demandait. Elle est donc RETOURNÉE : le

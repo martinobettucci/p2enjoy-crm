@@ -55,13 +55,29 @@ insert into pg_temp_ref
 select 'suggestion_avant', coalesce(suggested_card_id::text, 'aucune')
   from public.mail_messages where rfc822_message_id = '<seed-inbox-classe@p2enjoy.test>';
 
+-- LES COMPTES D'ÉVÉNEMENTS SONT RELEVÉS AVANT LE GESTE, ET LES ASSERTIONS MESURENT UN DELTA.
+--
+-- ÉCRITES EN ABSOLU — « zéro `mail_unclassified` », « exactement un » —, elles étaient VRAIES sur
+-- une base neuve et FAUSSES au second passage : `card_events` n'accorde AUCUNE suppression, à
+-- personne (`CRM-044`), si bien que les événements laissés par les preuves d'API et d'interface
+-- s'accumulent pour de bon. C'est le harnais qui l'a montré, en rejouant cette suite APRÈS elles.
+-- Une preuve qui ne survit pas à son propre produit n'est pas une preuve.
+insert into pg_temp_ref
+select 'departs_avant', count(*)::text from public.card_events where type = 'mail_unclassified';
+insert into pg_temp_ref
+select 'departs_du_message_avant', count(*)::text from public.card_events
+ where type = 'mail_unclassified'
+   and payload->>'message_id' = (select valeur from pg_temp_ref where nom = 'classe');
+
 -- TÉMOIN AVANT TOUTE ASSERTION DE REFUS (décision 50) : sans lui, « le geste a échoué » serait vrai
 -- que la garde refuse ou que le message manque.
 select is(
-	(select count(*) from pg_temp_ref where nom in ('classe', 'card', 'non_classe', 'suggestion_avant')),
-	4::bigint,
-	'1 — TÉMOIN : le seed porte bien un message CLASSÉ, sa card, un message NON CLASSÉ, et l''état '
-	'de sa suggestion relevé AVANT le geste');
+	(select count(*) from pg_temp_ref
+	  where nom in ('classe', 'card', 'non_classe', 'suggestion_avant',
+	                'departs_avant', 'departs_du_message_avant')),
+	6::bigint,
+	'1 — TÉMOIN : le seed porte bien un message CLASSÉ, sa card, un message NON CLASSÉ, l''état de '
+	'sa suggestion et les deux comptes d''événements, tous relevés AVANT le geste');
 
 -- =============================================================================================
 -- 1. Ce que la migration livre — §16.5.2, §16.5.3
@@ -120,8 +136,9 @@ select is(
 
 select is(
 	(select count(*) from public.card_events where type = 'mail_unclassified'),
-	0::bigint,
-	'9 — et il n''a écrit AUCUN événement : deux clics ne racontent pas deux histoires');
+	(select valeur::bigint from pg_temp_ref where nom = 'departs_avant'),
+	'9 — et il n''a écrit AUCUN événement : le compte des départs est celui d''avant l''appel, et '
+	'deux clics ne racontent pas deux histoires');
 
 -- =============================================================================================
 -- 3. Le geste, par l'administratrice qui CONSERVE la visibilité — §16.5.2, §16.5.3
@@ -193,14 +210,19 @@ select is(
 	  where card_id = (select valeur::uuid from pg_temp_ref where nom = 'card')
 	    and type = 'mail_unclassified'
 	    and payload->>'message_id' = (select valeur from pg_temp_ref where nom = 'classe')),
-	1::bigint,
-	'17 — le départ est écrit, UNE fois : sans lui la timeline dirait « courrier reçu » en '
+	(select valeur::bigint + 1 from pg_temp_ref where nom = 'departs_du_message_avant'),
+	'17 — le départ est écrit, UNE seule fois de plus qu''avant l''appel : sans lui la timeline dirait « courrier reçu » en '
 	'désignant un message qui n''y est plus — la perte silencieuse');
 
+-- LE DERNIER, ET NON « LE » : la sous-requête sans ordre ni borne rendait plusieurs lignes dès
+-- qu'une preuve antérieure avait laissé son propre départ, et la suite mourait sur
+-- « more than one row returned by a subquery ». C'est celui que CE geste vient d'écrire qui est
+-- mesuré.
 select is(
 	(select payload->>'subject' from public.card_events
 	  where type = 'mail_unclassified'
-	    and payload->>'message_id' = (select valeur from pg_temp_ref where nom = 'classe')),
+	    and payload->>'message_id' = (select valeur from pg_temp_ref where nom = 'classe')
+	  order by created_at desc, id desc limit 1),
 	(select subject from public.mail_messages
 	  where id = (select valeur::uuid from pg_temp_ref where nom = 'classe')),
 	'18 — et il porte l''OBJET du message : la ligne doit rester lisible à qui ne peut plus ouvrir '

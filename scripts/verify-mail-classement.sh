@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
-# @verifies CRM-055 (docs/BACKLOG.md) — Definition of Done du classement assisté
+# @verifies CRM-055 (docs/BACKLOG.md) — Definition of Done du classement assisté, tranches 1 et 2
 # @verifies CRM-060 tranche 2 (docs/BACKLOG.md) — activation de la règle 3 du classement
 # @verifies docs/SPEC-mail-subsystem.md §4.4 (les quatre règles), §16.2 (forme ET domaine, card
 #           fermée, la règle 3), §16.3 (classement manuel), §16.4 (preuves)
+# @verifies docs/SPEC-mail-subsystem.md §16.5 (le DÉCLASSEMENT : contrat, borne de l'idempotence,
+#           historique conservé, départ écrit, surface)
 # @verifies docs/SPEC-contacts.md §8 (la suggestion par expéditeur connu)
 # @verifies docs/JOURNAL.md décision 322 ; CLAUDE.md §10
 #
@@ -10,12 +12,16 @@
 # Ce que ce harnais prouve.
 # ---------------------------------------------------------------------------------------------
 #   1. les fichiers livrés portent leur traçabilité ;
-#   2. le vocabulaire de la timeline compte ONZE types, et `mail_received` en fait partie ;
+#   2. le vocabulaire de la timeline compte DIX-NEUF types, dont `mail_received` ET
+#      `mail_unclassified` — l'arrivée d'un message et son départ sont deux faits ;
 #   3. le classement automatique n'est PAS offert au client, le manuel l'est ;
 #   4. la règle 3 est ACTIVE : un expéditeur contact à exactement une card active reçoit une
 #      SUGGESTION, sans être classé — avec son témoin (un inconnu ne suggère rien) ;
 #   5. les preuves dédiées sont vertes : pgTAP (0027 et 0044), API, `mail` ;
-#   6. le harnais est NON COMPLAISANT, témoin compris.
+#   6. le DÉCLASSEMENT est livré et fermé : la fonction existe, elle est offerte à un membre
+#      connecté et refusée à l'anonyme, aucun événement de départ n'est orphelin, et l'écran
+#      porte sa commande avec son dictionnaire de refus PROPRE ;
+#   7. le harnais est NON COMPLAISANT, témoin compris.
 #
 # ---------------------------------------------------------------------------------------------
 # Ce que ce harnais NE prouve PAS, et le dit.
@@ -26,7 +32,12 @@
 # surface et sa donnée de démonstration existent ; le PARCOURS, lui, reste l'objet de
 # `e2e/ui/suggestion-classement.spec.ts`, qu'un harnais ne remplace pas.
 #
-# AUCUN DÉCLASSEMENT : rien dans le §4.4 ne le décrit.
+# ~~AUCUN DÉCLASSEMENT : rien dans le §4.4 ne le décrit.~~ **RÉVISÉ le 2026-08-28 par LIVRAISON** —
+# tranche 2, `docs/SPEC-mail-subsystem.md` §16.5, `docs/JOURNAL.md` décision 536. Le renvoi « à
+# l'unité qui livrera l'écran » était caduc : cette unité, `CRM-057`, est livrée depuis le
+# 2026-08-11 sans avoir tranché. Ce harnais vérifie donc en plus le contrat de base et la présence
+# de la surface ; le PARCOURS reste l'objet de `e2e/ui/declassement.spec.ts`, qu'un harnais ne
+# remplace pas.
 #
 # Usage :
 #   scripts/verify-mail-classement.sh
@@ -39,7 +50,10 @@ source scripts/lib/node.sh
 node_toolchain_prepare "$PWD/.nvmrc" || exit 1
 
 MIGRATION=supabase/migrations/0025_classement_messages.sql
+MIGRATION_T2=supabase/migrations/0070_declassement_messages.sql
 TEST_SQL=supabase/tests/0027_classement_messages.test.sql
+TEST_SQL_T2=supabase/tests/0066_declassement_messages.test.sql
+SPEC_UI_T2=e2e/ui/declassement.spec.ts
 TEST_SQL_R3=supabase/tests/0044_regle3_suggestion.test.sql
 SPEC_API=e2e/api/classement.spec.ts
 SPEC_MAIL=e2e/mail/ingestion.spec.ts
@@ -76,15 +90,17 @@ printf '\033[1mPreuves de CRM-055 — classement assisté\033[0m\n'
 
 titre "1. Fichiers livrés et traçabilité"
 
-for fichier in "$MIGRATION" "$TEST_SQL" "$SPEC_API"; do
+for fichier in "$MIGRATION" "$MIGRATION_T2" "$TEST_SQL" "$TEST_SQL_T2" "$SPEC_API" "$SPEC_UI_T2"; do
 	if [ -f "$fichier" ]; then ok "$fichier est livré"; else fail "$fichier est ABSENT"; fi
 done
-if head -3 "$MIGRATION" | grep -q '@spec CRM-055'; then
-	ok "$(basename "$MIGRATION") porte son commentaire @spec"
-else
-	fail "$(basename "$MIGRATION") ne cite pas son unité"
-fi
-for fichier in "$TEST_SQL" "$SPEC_API"; do
+for fichier in "$MIGRATION" "$MIGRATION_T2"; do
+	if head -3 "$fichier" | grep -q '@spec CRM-055'; then
+		ok "$(basename "$fichier") porte son commentaire @spec"
+	else
+		fail "$(basename "$fichier") ne cite pas son unité"
+	fi
+done
+for fichier in "$TEST_SQL" "$TEST_SQL_T2" "$SPEC_API" "$SPEC_UI_T2"; do
 	if head -3 "$fichier" | grep -q '@verifies CRM-055'; then
 		ok "$(basename "$fichier") porte son commentaire @verifies"
 	else
@@ -97,12 +113,20 @@ titre "2. Les règles réellement en base"
 if psql_db -c "select pg_get_constraintdef(oid) from pg_constraint
 	where conrelid='public.card_events'::regclass and conname='card_events_type_check'" \
 	| grep -q mail_received; then
-	ok "le vocabulaire de la timeline compte ONZE types, dont mail_received"
+	ok "le vocabulaire de la timeline porte mail_received : un message entrant est un fait"
 else
 	fail "mail_received n'est pas dans le vocabulaire : un message entrant serait muet"
 fi
 
-for fonction in classify_message classer_message_automatiquement; do
+if psql_db -c "select pg_get_constraintdef(oid) from pg_constraint
+	where conrelid='public.card_events'::regclass and conname='card_events_type_check'" \
+	| grep -q mail_unclassified; then
+	ok "le vocabulaire porte AUSSI mail_unclassified : le DÉPART d'un message est un fait (§16.5.3)"
+else
+	fail "mail_unclassified manque : la timeline dirait « courrier reçu » sur un message parti"
+fi
+
+for fonction in classify_message unclassify_message classer_message_automatiquement; do
 	if [ "$(psql_db -c "select count(*) from pg_proc where pronamespace='public'::regnamespace
 		and proname='$fonction'")" = 1 ]; then
 		ok "$fonction est livrée"
@@ -268,6 +292,78 @@ else
 	fail "un classement automatique porte un auteur : un geste est attribué à quelqu'un à tort"
 fi
 
+titre "3 bis. Le DÉCLASSEMENT est fermé, et sa surface existe — §16.5"
+
+if [ "$(psql_db -c "select has_function_privilege('authenticated','public.unclassify_message(uuid)','execute')")" = t ]; then
+	ok "le retrait est offert à un membre connecté, comme le classement manuel"
+else
+	fail "le retrait est fermé à un membre connecté : le geste n'existerait pour personne"
+fi
+
+if [ "$(psql_db -c "select has_function_privilege('anon','public.unclassify_message(uuid)','execute')")" = f ]; then
+	ok "et refusé à l'anonyme — révoqué NOMMÉMENT, `revoke from public` ne suffisant pas"
+else
+	fail "un anonyme peut retirer un message de son affaire"
+fi
+
+# LA SYMÉTRIE DES DROITS EST LE CONTRAT DU §16.5.2, et elle se LIT dans le corps de la fonction :
+# les deux gardes du classement — voir le message, écrire la card — doivent s'y retrouver toutes
+# les deux. Une seule des deux ferait du retrait un geste plus permissif que la pose.
+corps_retrait=$(psql_db -c "select prosrc from pg_proc where pronamespace='public'::regnamespace
+	and proname='unclassify_message'")
+if grep -q 'peut_voir_message' <<<"$corps_retrait" && grep -q 'can_write_card' <<<"$corps_retrait"; then
+	ok "le retrait exige LES DEUX droits du classement : on ne retire que ce qu'on aurait pu poser"
+else
+	fail "le retrait n'exige pas les deux droits du classement — la symétrie du §16.5.2 est rompue"
+fi
+
+# L'HISTOIRE N'EST PAS RÉÉCRITE : tout départ écrit doit avoir son arrivée sur la MÊME card. Un
+# `mail_unclassified` orphelin dirait qu'un message est parti d'une affaire où il n'est jamais
+# entré — et il signalerait que la fonction a effacé le `mail_received`, ce qu'elle ne doit
+# jamais faire.
+if [ "$(psql_db -c "select count(*) from public.card_events d
+	where d.type = 'mail_unclassified'
+	  and not exists (select 1 from public.card_events a
+	                   where a.card_id = d.card_id and a.type = 'mail_received'
+	                     and a.payload->>'message_id' = d.payload->>'message_id')")" = 0 ]; then
+	ok "aucun départ orphelin : le mail_received d'origine est conservé, l'histoire ne se réécrit pas"
+else
+	fail "un mail_unclassified n'a pas son mail_received : l'historique a été réécrit"
+fi
+
+# LE DÉPART PORTE L'OBJET, et ce n'est pas un ornement : le geste détache le message de la card,
+# si bien qu'aucun libellé ne peut plus être résolu à la lecture (§16.5.3).
+if [ "$(psql_db -c "select count(*) from public.card_events
+	where type = 'mail_unclassified' and payload->>'subject' is null
+	  and exists (select 1 from public.mail_messages m
+	               where m.id::text = payload->>'message_id' and m.subject is not null)")" = 0 ]; then
+	ok "chaque départ porte l'OBJET du message : la ligne reste lisible sans le message"
+else
+	fail "un départ ne porte pas l'objet : la ligne du fil serait un identifiant illisible"
+fi
+
+# LA SURFACE EXISTE, ET SON DICTIONNAIRE DE REFUS EST PROPRE. Réemployer celui du classement
+# afficherait « Vous ne pouvez pas classer… » sur un retrait — le défaut de la décision 535.
+if grep -q "data-testid=\"inbox-retirer\"" webapp/src/app/RouteInbox.tsx; then
+	ok "l'inbox porte la commande de retrait (§16.5.5)"
+else
+	fail "aucune commande de retrait dans l'inbox : le geste n'existe que par l'API"
+fi
+
+if grep -q 'inbox.unclassify.refus.forbidden' webapp/src/i18n/fr.ts &&
+	grep -q 'LIBELLE_REFUS_RETRAIT' webapp/src/app/RouteInbox.tsx; then
+	ok "le retrait a son PROPRE dictionnaire de refus — leçon de la décision 535"
+else
+	fail "le retrait réemploie le dictionnaire du classement : un refus nommerait le geste inverse"
+fi
+
+if grep -q "'mail_unclassified'" webapp/src/lib/timeline.ts &&
+	grep -q 'timeline.event.mail_unclassified' webapp/src/i18n/fr.ts; then
+	ok "le fil sait NOMMER le départ : il ne rendra pas « Événement » (INC-207, INC-220)"
+else
+	fail "le type est écrit en base et absent du registre de l'écran : le fil rendrait « Événement »"
+fi
+
 if [ "$RAPIDE" = false ]; then
 	titre "4. Preuves exécutables"
 
@@ -293,6 +389,17 @@ if [ "$RAPIDE" = false ]; then
 		fail_journal "la suite pgTAP de la règle 3 ÉCHOUE" "$TRAVAIL/pgtap-r3.log"
 	fi
 
+	if npm run test:sql -- "$TEST_SQL_T2" >"$TRAVAIL/pgtap-t2.log" 2>&1; then
+		assertions=$(grep -oE '[0-9]+ assertions' "$TRAVAIL/pgtap-t2.log" | head -1 | grep -oE '[0-9]+')
+		if [ "${assertions:-0}" -eq 19 ]; then
+			ok "suite pgTAP du déclassement (0066) — 19 assertions, borne de l'idempotence comprise"
+		else
+			fail "suite pgTAP du déclassement verte mais ${assertions:-0} assertions au lieu de 19"
+		fi
+	else
+		fail_journal "la suite pgTAP du déclassement ÉCHOUE" "$TRAVAIL/pgtap-t2.log"
+	fi
+
 	if E2E_PROJETS=api npx playwright test --config e2e/playwright.config.ts --project=api \
 		"$SPEC_API" >"$TRAVAIL/api.log" 2>&1; then
 		passes=$(grep -oE '[0-9]+ passed' "$TRAVAIL/api.log" | tail -1 | grep -oE '[0-9]+')
@@ -301,10 +408,14 @@ if [ "$RAPIDE" = false ]; then
 		# pas : ceux-là appellent la chaîne avec la CLÉ DE SERVICE, qui ne prouve rien de ce qu'un
 		# membre voit. Les deux nouveaux lisent la suggestion du seed sous les JETONS RÉELS —
 		# l'administratrice la voit, le `business_developer` et la `viewer` reçoivent zéro ligne.
-		if [ "${passes:-0}" -eq 7 ]; then
-			ok "preuve d'API dédiée — 7 scénarios, dont le refus au viewer et la suggestion règle 3"
+		# **9 DEPUIS LE 2026-08-28** — tranche 2, §16.5.6. Deux scénarios ajoutés, et ils disent
+		# ce que les sept précédents ne disaient pas : le refus opposé à la lectrice sur un
+		# RETRAIT, et la perte de visibilité du `bizdev` relue par la vraie route derrière son
+		# propre geste. Compteur RÉVISÉ, jamais retiré (décision 51).
+		if [ "${passes:-0}" -eq 9 ]; then
+			ok "preuve d'API dédiée — 9 scénarios, dont le refus au viewer et la perte de visibilité"
 		else
-			fail "preuve d'API verte mais ${passes:-0} scénarios au lieu de 7"
+			fail "preuve d'API verte mais ${passes:-0} scénarios au lieu de 9"
 		fi
 	else
 		fail_journal "la preuve d'API ÉCHOUE" "$TRAVAIL/api.log"
@@ -322,6 +433,18 @@ if [ "$RAPIDE" = false ]; then
 		fail_journal "la preuve mail ÉCHOUE" "$TRAVAIL/mail.log"
 	fi
 
+	if E2E_PROJETS=ui npx playwright test --config e2e/playwright.config.ts --project=ui \
+		"$SPEC_UI_T2" >"$TRAVAIL/ui-t2.log" 2>&1; then
+		passes=$(grep -oE '[0-9]+ passed' "$TRAVAIL/ui-t2.log" | tail -1 | grep -oE '[0-9]+')
+		if [ "${passes:-0}" -eq 5 ]; then
+			ok "parcours d'interface du retrait — 5 scénarios, clavier et palier 390 px compris"
+		else
+			fail "parcours d'interface vert mais ${passes:-0} scénarios au lieu de 5"
+		fi
+	else
+		fail_journal "le parcours d'interface du retrait ÉCHOUE" "$TRAVAIL/ui-t2.log"
+	fi
+
 	titre "5. Non-complaisance"
 
 	if npm run test:sql -- "$TEST_SQL" >"$TRAVAIL/temoin.log" 2>&1; then
@@ -333,13 +456,17 @@ if [ "$RAPIDE" = false ]; then
 	# UNE DÉGRADATION QUI NE S'APPLIQUE PAS DOIT ÊTRE DITE, NON SUBIE. Sans ce garde-fou, un
 	# `ALTER` refusé par une donnée existante faisait mourir le script sous `set -e`, et le
 	# harnais s'arrêtait au milieu de sa section la plus importante — sans rien signaler.
+	# LA SUITE QUI DOIT ROUGIR EST UN PARAMÈTRE, et c'est la tranche 2 qui l'a exigé : ses
+	# dégradations portent sur `unclassify_message`, que la suite `0027` n'exerce pas. Codée en
+	# dur, la suite aurait rendu ces dégradations « NON VUES » alors qu'elles mordent — un harnais
+	# complaisant sur le geste le plus récent.
 	degradation_sql() {
-		local libelle=$1 casser=$2 reparer=$3
+		local libelle=$1 casser=$2 reparer=$3 suite=${4:-$TEST_SQL}
 		if ! psql_db -c "$casser" >"$TRAVAIL/degradation.log" 2>&1; then
 			fail_journal "dégradation IMPOSSIBLE À APPLIQUER : $libelle" "$TRAVAIL/degradation.log"
 			return
 		fi
-		if npm run test:sql -- "$TEST_SQL" >"$TRAVAIL/degrade.log" 2>&1; then
+		if npm run test:sql -- "$suite" >"$TRAVAIL/degrade.log" 2>&1; then
 			fail "dégradation NON VUE : $libelle"
 		else
 			ok "dégradation vue : $libelle"
@@ -389,11 +516,84 @@ if [ "$RAPIDE" = false ]; then
 		"$(sed -n '/^create or replace function public.classify_message/,/^\\$\\$;$/p' \
 		   supabase/migrations/0028_inbox_visibilite.sql)"
 
+	# ------------------------------------------------------------------------------------------
+	# LES DÉGRADATIONS DE LA TRANCHE 2, et chacune porte sur une règle du §16.5.
+	# ------------------------------------------------------------------------------------------
+	# CELLE QUI MANQUE, ET LE MOTIF EST LE MÊME QU'AU CLASSEMENT : retirer `mail_unclassified` du
+	# `CHECK` échoue dès qu'une ligne le porte, et `card_events` n'accorde AUCUNE suppression, à
+	# personne (`CRM-044`). Une dégradation impossible à appliquer ne prouve rien. Les deux
+	# ci-dessous portent donc sur le CORPS de la fonction, où la suite `0066` mesure au même endroit.
+
+	degradation_sql "la symétrie des droits rompue — on retirerait ce qu'on n'aurait pas pu poser" \
+		"create or replace function public.unclassify_message(p_message_id uuid)
+		 returns uuid language plpgsql security definer set search_path = '' as \$fn\$
+		 declare v_message public.mail_messages%rowtype;
+		 begin
+		   if (select auth.uid()) is null then
+		     raise exception 'not_authenticated' using errcode = '42501';
+		   end if;
+		   select * into v_message from public.mail_messages m where m.id = p_message_id;
+		   if v_message.id is null then
+		     raise exception 'message_not_found' using errcode = 'P0002';
+		   end if;
+		   if v_message.card_id is null then return null; end if;
+		   if not app.can_write_card(v_message.card_id) then
+		     raise exception 'forbidden' using errcode = '42501';
+		   end if;
+		   update public.mail_messages m set card_id = null, classification = 'unclassified',
+		          classified_by = null, classified_at = null where m.id = p_message_id;
+		   update public.mail_attachments a set card_id = null where a.message_id = p_message_id;
+		   perform app.card_event_ecrire(v_message.card_id, v_message.workspace_id,
+		     'mail_unclassified',
+		     jsonb_build_object('message_id', p_message_id, 'subject', v_message.subject));
+		   return v_message.card_id;
+		 end \$fn\$" \
+		"$(sed -n '/^create or replace function public.unclassify_message/,/^\\$\\$;$/p' \
+		   supabase/migrations/0070_declassement_messages.sql)" \
+		"$TEST_SQL_T2"
+
+	degradation_sql "le départ non écrit — la timeline désignerait un message qui n'y est plus" \
+		"create or replace function public.unclassify_message(p_message_id uuid)
+		 returns uuid language plpgsql security definer set search_path = '' as \$fn\$
+		 declare v_message public.mail_messages%rowtype;
+		 begin
+		   if (select auth.uid()) is null then
+		     raise exception 'not_authenticated' using errcode = '42501';
+		   end if;
+		   select * into v_message from public.mail_messages m where m.id = p_message_id;
+		   if v_message.id is null then
+		     raise exception 'message_not_found' using errcode = 'P0002';
+		   end if;
+		   if not app.peut_voir_message(p_message_id) then
+		     raise exception 'forbidden' using errcode = '42501';
+		   end if;
+		   if v_message.card_id is null then return null; end if;
+		   if not app.can_write_card(v_message.card_id) then
+		     raise exception 'forbidden' using errcode = '42501';
+		   end if;
+		   update public.mail_messages m set card_id = null, classification = 'unclassified',
+		          classified_by = null, classified_at = null where m.id = p_message_id;
+		   update public.mail_attachments a set card_id = null where a.message_id = p_message_id;
+		   return v_message.card_id;
+		 end \$fn\$" \
+		"$(sed -n '/^create or replace function public.unclassify_message/,/^\\$\\$;$/p' \
+		   supabase/migrations/0070_declassement_messages.sql)" \
+		"$TEST_SQL_T2"
+
 	titre "6. Restauration"
 	if npm run test:sql -- "$TEST_SQL" >"$TRAVAIL/restaure.log" 2>&1; then
-		ok "la suite pgTAP redevient verte après restauration"
+		ok "la suite pgTAP du classement redevient verte après restauration"
 	else
-		fail_journal "la suite pgTAP reste ROUGE après restauration" "$TRAVAIL/restaure.log"
+		fail_journal "la suite pgTAP du classement reste ROUGE après restauration" "$TRAVAIL/restaure.log"
+	fi
+	# LES DEUX SUITES SONT REJOUÉES, et pas seulement celle de la tranche 1 : les dégradations du
+	# déclassement remplacent une fonction que `0027` n'exerce pas, si bien qu'une restauration
+	# fautive y serait passée inaperçue et aurait laissé le dépôt affaibli en sortant — le défaut
+	# exact de la décision 108, dont ce fichier porte déjà une occurrence.
+	if npm run test:sql -- "$TEST_SQL_T2" >"$TRAVAIL/restaure-t2.log" 2>&1; then
+		ok "la suite pgTAP du déclassement redevient verte après restauration"
+	else
+		fail_journal "la suite pgTAP du déclassement reste ROUGE après restauration" "$TRAVAIL/restaure-t2.log"
 	fi
 fi
 
