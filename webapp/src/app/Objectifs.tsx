@@ -2068,8 +2068,20 @@ function FicheEditionBloc({
 			<header className="flex items-start justify-between gap-3">
 				<div className="flex flex-col gap-1">
 					<h3 className="text-sm font-medium text-ink">{t('goals.edit.title', { titre: bloc.title })}</h3>
+					{/* LA FICHE PORTE SA PROPRE MENTION EN LECTURE SEULE — DÉFAUT TROUVÉ EN REGARDANT
+					    LA CAPTURE `lecture-seule-fiche-1440.jpg` (`CLAUDE.md` §16). La mention du
+					    canevas vit au-dessus de lui, et la fiche vit SOUS lui : sur un tableau haut,
+					    elle est hors de vue quand la fiche paraît, et un formulaire entièrement gris
+					    sans raison visible se lit comme une panne. C'est le §5.13 — « l'état se lit
+					    près de ce qu'il concerne » —, celui-là même qui décide que la fiche vit sous
+					    le canevas plutôt qu'en surimpression.
+
+					    CE N'EST PAS LA RÉPÉTITION QUE LE §5.29 ter INTERDIT : celui-ci interdit de
+					    répéter le motif sur chaque COMMANDE — six fois dans la même vue —, pas de le
+					    poser une fois par SURFACE. La consigne d'édition, elle, est remplacée plutôt
+					    que doublée : « chaque champ s'enregistre » serait faux ici. */}
 					<p id="fiche-bloc-consigne" className="text-sm text-text-3">
-						{t('goals.edit.hint')}
+						{lectureSeule ? t('goals.edit.hint.readonly') : t('goals.edit.hint')}
 					</p>
 				</div>
 				<Button variante="secondaire" taille="compacte" data-testid="fermer-fiche" onClick={onFermer} className="gap-2">
@@ -2893,24 +2905,35 @@ function BlocCanevas({
 			    Elle est `aria-hidden` et hors du parcours de tabulation parce que le clavier
 			    dispose du geste complet (`Alt` et flèches, annoncé par la consigne du canevas) :
 			    un bouton qui ne ferait rien sur `Entrée` serait la commande morte que le §5.10
-			    proscrit. L'écart de taille avec le §8 est nommé au §5.29 du design system. */}
-			<span
-				data-testid="poignee-taille"
-				aria-hidden="true"
-				className="absolute right-0 bottom-0 flex items-end justify-end size-6 p-1 cursor-se-resize"
-				onPointerDown={armer('taille')}
-				onPointerMove={suivre}
-				onPointerUp={relacher}
-				onPointerCancel={() => {
-					ancre.current = null
-				}}
-			>
-				{/* La MARQUE est plus petite que la zone qui la reçoit — écart trouvé en regardant
-				    une capture (`CLAUDE.md` §16) : dessinée à même les 24 px et suivant le rayon de
-				    la carte, l'équerre se lisait comme une languette accrochée au coin de chaque
-				    bloc. Elle mesure donc 10 px, la zone sensible gardant les 24 px du §5.29. */}
-				<span className="block size-3 border-r-2 border-b-2 border-text-3" />
-			</span>
+			    proscrit. L'écart de taille avec le §8 est nommé au §5.29 du design system.
+
+			    EN LECTURE SEULE, ELLE N'EST PAS RENDUE — DÉFAUT TROUVÉ EN REGARDANT UNE CAPTURE
+			    (`CLAUDE.md` §16). Le garde d'`armer` la rendait inopérante, mais elle restait
+			    DESSINÉE, avec son `cursor-se-resize` : une affordance qui promet un geste que rien
+			    n'exécute, c'est-à-dire la commande morte du §5.21. Et ce retrait ne contredit PAS le
+			    « rien n'est masqué » du §5.29 ter : celui-ci porte sur ce qui se LIT — blocs,
+			    flèches, valeurs —, là où la poignée ne porte aucune information. Elle est
+			    `aria-hidden` et hors tabulation : personne ne perd rien à ne plus la voir, et les
+			    commandes qui ENSEIGNENT un geste, elles, restent rendues et éteintes. */}
+			{lectureSeule ? null : (
+				<span
+					data-testid="poignee-taille"
+					aria-hidden="true"
+					className="absolute right-0 bottom-0 flex items-end justify-end size-6 p-1 cursor-se-resize"
+					onPointerDown={armer('taille')}
+					onPointerMove={suivre}
+					onPointerUp={relacher}
+					onPointerCancel={() => {
+						ancre.current = null
+					}}
+				>
+					{/* La MARQUE est plus petite que la zone qui la reçoit — écart trouvé en regardant
+					    une capture (`CLAUDE.md` §16) : dessinée à même les 24 px et suivant le rayon de
+					    la carte, l'équerre se lisait comme une languette accrochée au coin de chaque
+					    bloc. Elle mesure donc 10 px, la zone sensible gardant les 24 px du §5.29. */}
+					<span className="block size-3 border-r-2 border-b-2 border-text-3" />
+				</span>
+			)}
 		</article>
 	)
 }

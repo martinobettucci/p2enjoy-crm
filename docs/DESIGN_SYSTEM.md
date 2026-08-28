@@ -2286,6 +2286,18 @@ lecteur d'un droit qu'il n'a pas demandé.
 **Aucune ligne, aucun bloc, aucune flèche n'est masqué.** Comme au §5.31 : une surface qui cache ce
 qu'elle ne peut pas écrire se lit comme complète alors qu'elle ne l'est pas.
 
+**MAIS LA POIGNÉE DE REDIMENSIONNEMENT, ELLE, N'EST PLUS DESSINÉE — et la frontière est nette.**
+Défaut trouvé en REGARDANT la première capture de la tranche 3 (`CLAUDE.md` §16) : le geste était
+déjà inopérant, et la poignée restait visible avec son curseur `se-resize`, promettant un
+redimensionnement que rien n'exécute — la commande morte du §5.21.
+
+*Ce qui reste rendu, et ce qui part, en une règle réemployable :* **ce qui ENSEIGNE un geste reste
+rendu et éteint ; ce qui ne fait que l'OFFRIR à la souris disparaît.** Une commande étiquetée
+apprend au lecteur ce qu'il pourrait faire ailleurs, et l'éteindre suffit. Une poignée n'a ni
+étiquette, ni nom accessible — elle est `aria-hidden` et hors tabulation —, elle n'apprend donc
+rien : la garder ne fait que mentir au curseur. Le « rien n'est masqué » ci-dessus porte sur ce qui
+se LIT — blocs, flèches, valeurs, libellés —, jamais sur une affordance muette.
+
 ### 5.30 Histogramme prévisionnel / réel — `CRM-086`
 
 Spécifié avant code, `docs/SPEC-costs.md` §4.2.

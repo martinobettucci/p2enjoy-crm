@@ -1,6 +1,9 @@
 // @verifies CRM-083 (docs/BACKLOG.md) — canevas d'objectifs, tranche 1 : la SURFACE ;
 //           tranche 2a : la GÉOMÉTRIE — poser, déplacer, redimensionner ;
-//           tranche 2c : les TABLEAUX — créer, renommer, réordonner, archiver
+//           tranche 2c : les TABLEAUX — créer, renommer, réordonner, archiver ;
+//           TRANCHE 3 : l'état de LECTURE SEULE, déclenché par la capacité que la BASE consent
+// @verifies docs/SPEC-goals.md §5.7 (l'arbitrage d'INC-170), §5.7.4 (contrat opposable),
+//           docs/DESIGN_SYSTEM.md §5.29 ter (mention neutre, commandes éteintes ET lisibles)
 // @verifies docs/SPEC-goals.md §2.1 (nom unique par workspace, `position` attribuée par trigger,
 //           l'archivage tient lieu de suppression)
 // @verifies docs/DESIGN_SYSTEM.md §5.13 (formulaires dans le flux, focus au premier champ)
@@ -1655,6 +1658,153 @@ test.describe('reprise d’un tableau archivé — CRM-083 tranche 2 h', () => {
 			)
 			expect(debordement, `débordement horizontal au palier ${palier.nom}`).toBe(false)
 			await capturer(page, `tableaux-archives-${palier.nom}`, UNITE)
+		}
+	})
+})
+
+/**
+ * L'ÉTAT DE LECTURE SEULE DU CANEVAS — `CRM-083` tranche 3, `docs/SPEC-goals.md` §5.7.
+ *
+ * CE QUE CE BLOC PROUVE, ET QUE NI L'UNITAIRE NI L'API NE PROUVENT. L'unitaire monte le composant
+ * avec une réponse ÉCRITE À LA MAIN ; l'API mesure la colonne sans écran. Ici, la lectrice se
+ * connecte réellement, la capacité vient de la BASE à travers Kong et PostgREST, et c'est le
+ * rendu qui est mesuré. Une régression qui casserait la chaîne — cache de schéma, colonne retirée
+ * du `select`, conversion de type — resterait verte des deux autres côtés.
+ *
+ * IL N'ÉCRIT RIEN et ne touche pas au seed : la lecture seule est, par construction, un état qui
+ * n'écrit pas.
+ */
+test.describe('canevas d’objectifs — l’état de LECTURE SEULE, CRM-083 tranche 3', () => {
+	test('LA LECTRICE voit la mention, les commandes ÉTEINTES ET LISIBLES, et tous les blocs', async ({
+		page,
+	}) => {
+		await connecter(page, LECTRICE)
+		await ouvrirLeTableau(page)
+
+		// LA MENTION EST LÀ, et elle porte le texte du §5.29 ter.
+		const mention = page.getByTestId('canevas-lecture-seule')
+		await expect(mention).toBeVisible()
+		await expect(mention).toContainText('Vous consultez ce tableau')
+
+		// LES COMMANDES SONT RENDUES — la moitié de la règle —, et désactivées — l'autre moitié.
+		const poser = page.getByTestId('poser-bloc')
+		await expect(poser).toBeVisible()
+		await expect(poser).toBeDisabled()
+		await expect(poser).toHaveAttribute('aria-describedby', 'objectifs-lecture-seule')
+
+		// LE DESSIN N'EST PAS AMPUTÉ : la lectrice voit ses CINQ blocs, le sixième étant masqué par
+		// la RLS depuis la tranche 1 — cause étrangère à celle-ci, et qui ne doit pas bouger.
+		await expect(page.getByTestId('bloc-objectif')).toHaveCount(5)
+		// LE TITRE EST CHERCHÉ DANS LE CANEVAS, et non dans la page : l'équivalent textuel du §5.5
+		// le porte AUSSI, et une recherche non bornée rendrait deux nœuds — que Playwright refuse.
+		await expect(
+			page.getByTestId('bloc-objectif').filter({ hasText: BLOC_LIBRE }),
+		).toHaveCount(1)
+
+		// LA POIGNÉE DE REDIMENSIONNEMENT N'EST PLUS DESSINÉE — défaut trouvé en regardant la
+		// première capture de cette tranche : inopérante mais visible, avec son curseur, elle
+		// promettait un geste que rien n'exécute (§5.21).
+		await expect(page.getByTestId('poignee-taille')).toHaveCount(0)
+
+		await capturer(page, 'lecture-seule-canevas-1440', UNITE)
+	})
+
+	test('L’ADMINISTRATRICE ne voit AUCUNE mention, et ses commandes sont actives', async ({ page }) => {
+		// LE PENDANT EST INDISPENSABLE : sans lui, une mention rendue à TOUT LE MONDE — le défaut
+		// exact qu'une fonction `security definer` produirait à l'envers — passerait le scénario
+		// ci-dessus sans être vue.
+		await connecter(page, ADMIN)
+		await ouvrirLeTableau(page)
+		await expect(page.getByTestId('canevas-lecture-seule')).toHaveCount(0)
+		await expect(page.getByTestId('poser-bloc')).toBeEnabled()
+		// Le PENDANT de la poignée : elle est bien dessinée pour qui écrit, sans quoi la retirer
+		// partout resterait vert.
+		expect(await page.getByTestId('poignee-taille').count()).toBeGreaterThan(0)
+	})
+
+	test('LES FLÈCHES DU CLAVIER NE DÉPLACENT RIEN, et la base le confirme', async ({ page }) => {
+		// LE GESTE EST MESURÉ SUR LA BASE, pas sur l'écran : un bloc qui ne bougerait pas à l'écran
+		// tout en émettant son `PATCH` serait le pire des deux mondes. La lecture d'après est faite
+		// par la clé de service, qui traverse la RLS.
+		await connecter(page, LECTRICE)
+		await ouvrirLeTableau(page)
+
+		const bloc = page.getByTestId('bloc-objectif').first()
+		await bloc.focus()
+		const avant = await positionGauche(bloc)
+		await page.keyboard.press('ArrowRight')
+		await page.keyboard.press('ArrowRight')
+		await expect(bloc).toHaveAttribute('data-lecture-seule', 'oui')
+		expect(await positionGauche(bloc)).toBe(avant)
+
+		const idTableau = await identifiantDuTableau()
+		const reponse = await fetch(
+			`${URL_API}/rest/v1/goal_blocks?select=pos_x&board_id=eq.${idTableau}&order=pos_y,pos_x&limit=1`,
+			{ headers: enTetesService() },
+		)
+		expect(((await reponse.json()) as { pos_x: number }[])[0]?.pos_x).toBe(avant)
+	})
+
+	test('LA FICHE S’OUVRE QUAND MÊME par `Entrée`, ses champs désactivés et LISIBLES', async ({
+		page,
+	}) => {
+		// La fiche est la SEULE surface où le corps complet d'un bloc se lit. La refuser rendrait la
+		// lecture plus pauvre pour empêcher une écriture (§5.29 ter).
+		await connecter(page, LECTRICE)
+		await ouvrirLeTableau(page)
+
+		await page.getByTestId('bloc-objectif').filter({ hasText: BLOC_LIE }).first().focus()
+		await page.keyboard.press('Enter')
+		await expect(page.getByTestId('fiche-bloc')).toBeVisible()
+
+		const titre = page.getByTestId('champ-titre')
+		await expect(titre).toBeDisabled()
+		await expect(titre).toHaveValue(BLOC_LIE)
+		await expect(page.getByTestId('champ-corps')).toBeDisabled()
+		await expect(page.getByTestId('champ-remplissage')).toBeDisabled()
+		await expect(page.getByTestId('supprimer-bloc')).toBeVisible()
+		await expect(page.getByTestId('supprimer-bloc')).toBeDisabled()
+
+		await page.getByTestId('fiche-bloc').scrollIntoViewIfNeeded()
+		await capturer(page, 'lecture-seule-fiche-1440', UNITE)
+	})
+
+	test('`ESPACE` N’ARME AUCUN TRACÉ, là où `Entrée` ouvre la fiche', async ({ page }) => {
+		await connecter(page, LECTRICE)
+		await ouvrirLeTableau(page)
+		await page.getByTestId('bloc-objectif').first().focus()
+		await page.keyboard.press(' ')
+		await expect(page.getByTestId('trace-consigne')).toHaveCount(0)
+		await expect(page.getByTestId('fiche-bloc')).toHaveCount(0)
+	})
+
+	test('L’ÉQUIVALENT TEXTUEL reste ENTIER, ses commandes d’écriture éteintes', async ({ page }) => {
+		// §5.7.4, ligne g : la lecture seule ne retranche rien de LISIBLE.
+		await connecter(page, LECTRICE)
+		await ouvrirLeTableau(page)
+		await expect(page.getByTestId('ligne-diagramme')).toHaveCount(4)
+		await expect(page.getByTestId('direction-fleche').first()).toBeDisabled()
+		await expect(page.getByTestId('supprimer-fleche').first()).toBeDisabled()
+	})
+
+	test('LES QUATRE PALIERS rendent la mention sans débordement horizontal', async ({ page }) => {
+		await connecter(page, LECTRICE)
+		await ouvrirLeTableau(page)
+		for (const palier of PALIERS) {
+			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
+			await expect(page.getByTestId('canevas-lecture-seule')).toBeVisible()
+			const mesures = await page.evaluate(() => ({
+				deborde: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+				// LE DÉFILEMENT HORIZONTAL RÉSIDUEL EST MESURÉ, ET C'EST UNE LEÇON DE CAPTURE : la
+				// capture au palier `sm-390` montrait le titre AMPUTÉ à gauche, alors que la seule
+				// assertion de débordement passait. Les deux disent des choses différentes — la
+				// largeur du document, et l'endroit où il est regardé —, et une capture prise sur
+				// une page laissée défilée par le palier précédent ne prouve pas ce qu'elle montre.
+				defile: document.documentElement.scrollLeft,
+			}))
+			expect(mesures.deborde).toBe(false)
+			expect(mesures.defile).toBe(0)
+			await capturer(page, `lecture-seule-${palier.nom}`, UNITE)
 		}
 	})
 })

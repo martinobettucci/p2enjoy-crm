@@ -1965,6 +1965,12 @@ describe('canevas — l’état de LECTURE SEULE, §5.7', () => {
 		expect((screen.getByTestId('champ-remplissage') as HTMLInputElement).disabled).toBe(true)
 		expect((screen.getByTestId('curseur-remplissage') as HTMLInputElement).disabled).toBe(true)
 		expect((screen.getByTestId('champ-lien') as HTMLSelectElement).disabled).toBe(true)
+		// LA FICHE DIT POURQUOI, PRÈS DE CE QU'ELLE CONCERNE (§5.13) : la mention du canevas vit
+		// au-dessus de lui et sort du champ de vision quand la fiche paraît. La consigne d'édition
+		// est REMPLACÉE, non doublée — « chaque champ s'enregistre » serait faux ici.
+		const consigne = document.getElementById('fiche-bloc-consigne')
+		expect(consigne?.textContent).toBe(fr['goals.edit.hint.readonly'])
+		expect(consigne?.textContent).not.toBe(fr['goals.edit.hint'])
 		// La commande destructrice reste MONTÉE et éteinte : la masquer priverait le lecteur de
 		// savoir que ce geste existe.
 		const supprimer = screen.getByTestId('supprimer-bloc') as HTMLButtonElement
@@ -1990,6 +1996,23 @@ describe('canevas — l’état de LECTURE SEULE, §5.7', () => {
 		expect(lignes).toHaveLength(1)
 		expect((screen.getByTestId('direction-fleche') as HTMLSelectElement).disabled).toBe(true)
 		expect((screen.getByTestId('supprimer-fleche') as HTMLButtonElement).disabled).toBe(true)
+	})
+
+	it('NE DESSINE PLUS LA POIGNÉE DE REDIMENSIONNEMENT — une affordance qui ment', async () => {
+		// DÉFAUT TROUVÉ EN REGARDANT UNE CAPTURE (`CLAUDE.md` §16), et qu'aucune assertion
+		// n'attrapait : le garde d'`armer` rendait la poignée inopérante, mais elle restait
+		// DESSINÉE avec son curseur de redimensionnement — la commande morte du §5.21. Le scénario
+		// éprouve les DEUX états, faute de quoi la retirer partout resterait vert.
+		rendreCanevas(clientLectureSeule([BLOC_LIBRE, BLOC_LIE]))
+		await screen.findAllByTestId('bloc-objectif')
+		expect(screen.queryAllByTestId('poignee-taille')).toHaveLength(0)
+
+		cleanup()
+		rendreCanevas(
+			clientParTable({ goal_boards: ok(TABLEAU), goal_blocks: ok([BLOC_LIBRE]), goal_links: ok([]) }),
+		)
+		await screen.findAllByTestId('bloc-objectif')
+		expect(screen.queryAllByTestId('poignee-taille')).toHaveLength(1)
 	})
 
 	it('NE MASQUE NI BLOC NI FLÈCHE — une surface qui cache se lit comme complète', async () => {

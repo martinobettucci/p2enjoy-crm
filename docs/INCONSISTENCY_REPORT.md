@@ -5842,3 +5842,47 @@ parcours à l'écran, ce qui appartient à l'unité qui porte cet éditeur.
 **Relève de `CRM-076`** (éditeur administrateur de workflows), qui porte la grille champ × étape.
 
 **Statut :** ouvert. Comportement inchangé, aucun test désactivé, aucune temporisation ajoutée.
+
+### INC-237 — les captures du palier `sm-390` sont prises sur une page DÉCALÉE, et aucune assertion ne le voit
+
+**Nature :** défaut de PREUVE — non du produit —, **préexistant** à la tranche 3 de `CRM-083`,
+relevé en observant une capture (`CLAUDE.md` §16) et laissé **inchangé**, sa correction touchant le
+harnais de captures de tout le dépôt.
+
+**Ce qui est mesuré, le 2026-08-28.** `docs/captures/CRM-083/lecture-seule-sm-390.jpg`, produite par
+la tranche 3, montre le titre de l'écran **amputé d'environ huit pixels à gauche** — « bjectifs du
+trimestre » —, ainsi que la mention et le sous-titre. Trois pastilles de track de la barre latérale
+**dépassent** sur le bord gauche. La même amputation est présente à l'identique sur
+`docs/captures/CRM-083/canevas-sm-390.jpg`, produite par la **tranche 1**, semaines avant ce
+changement : le défaut lui est donc antérieur et étranger.
+
+**Pourquoi aucune preuve ne rougit, et c'est le point.** Les scénarios de palier mesurent le
+**débordement** — `scrollWidth > clientWidth` — et la tranche 3 y a ajouté le **défilement**
+résiduel — `documentElement.scrollLeft`. Les deux sont **conformes** : zéro débordement, zéro
+défilement. Le décalage ne vient donc ni de l'un ni de l'autre.
+
+**La cause, telle que la mesure la désigne.** Les scénarios de palier naviguent à **1440 px**, où la
+barre latérale est déployée, puis appellent `setViewportSize` en boucle jusqu'à 390 px. La barre
+passe alors en tiroir, mais l'état ouvert hérité de la largeur précédente reste posé, et la surface
+de contenu demeure translatée. Mesuré indirectement : un scénario qui NAVIGUE directement à 390 px
+ne trouve pas le lien « Objectifs » cliquable — « element is outside of the viewport » —, ce qui
+établit que le tiroir y est bien fermé quand la page est ouverte à cette largeur.
+
+**Ce que cela coûte.** Toutes les captures `sm-390` du dépôt — le document en porte
+**soixante-six** — montrent un rendu que le produit ne produit PAS pour un utilisateur arrivant sur
+un téléphone. La vérification visuelle du `CLAUDE.md` §16 s'exerce donc, à ce palier, sur une image
+qui n'est pas l'écran.
+
+**L'issue retenue, et elle n'est pas un arbitrage** (`docs/CloudWorker.md` §4.1 bis, liste fermée) :
+la boucle de paliers doit **recharger la page après le changement de largeur**, ou naviguer à la
+largeur cible, de sorte que le tiroir prenne l'état que cette largeur commande. Le contrôle qui la
+garde est une mesure de la position gauche du titre, comparée à celle du conteneur — jamais une
+inspection visuelle.
+
+**Pourquoi elle n'est pas exécutée ici.** Elle touche `e2e/ui/captures.ts` ou la boucle de chaque
+suite, et **réécrit les soixante-six captures** du palier dans une dizaine d'unités, dont aucune
+n'est celle de cette session. La corriger au passage serait solder d'autres unités sous couvert de
+celle-ci (`CLAUDE.md` §13, `docs/CloudWorker.md` §3.1).
+
+**Statut :** ouvert, issue RETENUE et écrite, mise en œuvre due — elle appartient à la prochaine
+session qui touche au harnais de captures.

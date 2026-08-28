@@ -593,6 +593,11 @@ export const fr = {
 	// workspace, et l'écran l'ignore.
 	'goals.readonly.notice':
 		'Vous consultez ce tableau. Vous n’avez pas le droit d’y écrire : les commandes de modification restent visibles mais sont inactives.',
+	// LA FICHE A SA PROPRE PHRASE, plus courte : elle REMPLACE la consigne d'édition, qui serait
+	// fausse ici — aucun champ ne s'enregistre. Elle ne redit pas le motif complet de la mention du
+	// canevas, qui reste la source ; elle dit ce que CETTE surface fait.
+	'goals.edit.hint.readonly':
+		'Vous consultez ce bloc. Ce tableau est en lecture seule : les champs sont inactifs. Échap ferme la fiche.',
 
 	// --- Objectifs, tranche 2b-1 : le contenu — CRM-083, docs/SPEC-goals.md §3 et §5.5 --------
 	// Chaque champ s'enregistre POUR LUI-MÊME (docs/DESIGN_SYSTEM.md §5.7 ter) : la fiche n'a donc
