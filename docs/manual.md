@@ -1872,6 +1872,27 @@ d'être réveillé à la main — une échéance passée n'est plus un sommeil, 
 Une échéance déjà passée est refusée, avec son motif écrit sous le champ. Cette case n'est pas
 mémorisée d'une visite à l'autre : elle repart masquée à chaque ouverture de l'écran.
 
+**Retirer un message d'une affaire.** Un message rangé dans la mauvaise affaire n'y reste pas.
+Sous le message ouvert, en bas et séparée du reste, la commande « **Retirer de l'affaire** »
+demande d'abord confirmation. La confirmation dit deux choses, et elles comptent toutes les deux :
+
+- **rien n'est supprimé.** Le message quitte l'affaire et repasse dans les messages non classés,
+  d'où vous pouvez le ranger ailleurs. Aucun courrier n'est détruit par ce geste ;
+- **vous pourriez cesser de le voir.** Un message est visible soit parce que vous lisez l'affaire
+  où il est rangé, soit parce qu'il est arrivé dans une boîte que vous suivez. Si seule la première
+  raison s'applique à vous, le retrait vous en prive : le message existe toujours, mais il ne vous
+  est plus ouvert, et c'est à une personne qui suit la boîte de le ranger de nouveau. La phrase
+  vous le dit **avant** le geste, jamais après.
+
+« Annuler » referme sans rien envoyer. La commande est proposée à tout le monde : c'est le serveur
+qui décide, et s'il refuse, l'écran vous l'écrit sous la confirmation plutôt que de vous priver
+d'essayer.
+
+**L'affaire garde la mémoire des deux faits.** Dans l'historique de l'affaire, la ligne
+« Message reçu » **reste** — le courrier y est bien arrivé, et le produit ne réécrit pas ce qui a
+eu lieu — et une ligne « **Message retiré de l'affaire** » vient s'ajouter, avec l'objet du message
+et le nom de la personne qui l'a retiré. Le geste se fait entièrement au clavier.
+
 **Ce qui n'est pas encore là.** Il n'existe pas de notion de « lu / non lu », ni de recherche : la
 liste montre les cinquante messages les plus récents d'un dossier, et le dit lorsqu'elle en laisse
 de côté. **Ce sont bien cinquante messages, pas cinquante conversations** : une conversation dont

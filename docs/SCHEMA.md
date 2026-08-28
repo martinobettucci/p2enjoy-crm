@@ -1530,10 +1530,18 @@ n'écrit rien, et tout `move_card` réarme la relance sans qu'aucune ligne ne le
 repose `entered_step_at`. Aucune colonne d'état n'est ajoutée à `cards` : la timeline, déjà
 immuable, tient l'ancre.
 
-**`card_events.type` porte désormais DIX-HUIT valeurs** — les quatorze de la migration 44, plus
+**`card_events.type` porte désormais DIX-NEUF valeurs** — les quatorze de la migration 44, plus
 `stalled` (migration 54), plus les trois gestes de rattachement d'un contact posés par la
 migration 61 : `contact_linked`, `contact_unlinked` et `contact_role_changed`
-(`docs/SPEC-contacts.md` §19.3). `stalled` reste la seule que nul geste humain ne produit.
+(`docs/SPEC-contacts.md` §19.3), plus `mail_unclassified` posée par la migration 70
+(`docs/SPEC-mail-subsystem.md` §16.5.3). `stalled` reste la seule que nul geste humain ne produit.
+
+**`mail_unclassified` EST LE PENDANT DE `mail_received`, ET IL EXISTE POUR LA MÊME RAISON QUE
+`contact_unlinked`.** Retirer un message de son affaire ne réécrit pas l'arrivée — le courrier EST
+arrivé, et `card_events` n'accorde aucune écriture de correction, `service_role` compris. Sans
+trace du départ, la timeline dirait « courrier reçu » en désignant un message qui n'y est plus.
+Son `payload` porte `message_id` ET `subject` : c'est le seul événement dont le libellé ne peut pas
+être résolu à la lecture, le geste ayant justement détaché le message de la card.
 
 **LES TROIS DERNIÈRES SONT ÉCRITES PAR UN TRIGGER DE TABLE**, `app.card_events_apres_maj_contacts()`
 sur `card_contacts`, et non par les écrans : trois surfaces écrivent déjà dans cette table, et une

@@ -635,6 +635,40 @@ il a l'air.
 - **Aucune couleur, aucun jeton, aucune icône nouvelle** : le bloc emprunte au §5.10 sa carte, au
   §5.4 sa pilule, au §5.11 son icône et au §5.5 ses variantes.
 
+### 5.4 quater RETIRER un message de son affaire — `CRM-055` tranche 2
+
+*`docs/SPEC-mail-subsystem.md` §16.5.5. La commande vit dans le pied du message ouvert, et
+uniquement quand ce message est CLASSÉ : un message non classé n'a aucune affaire à quitter.*
+
+- **En bas du pied, dans un bloc séparé par une bordure haute `--color-border`**, sous la pilule de
+  l'affaire et sous le formulaire de réponse. Même place et même motif qu'au §5.3 quater : un
+  retrait n'est pas ce qu'on vient faire sur un message.
+
+- **La commande qui OUVRE la confirmation est secondaire, pas destructive**, et porte l'icône
+  `MailX`. `Mail` dirait l'arrivée, `Trash2` dirait une destruction qui n'a pas lieu : le message
+  survit au geste, il change seulement d'appartenance. Le §9 interdit qu'une icône serve deux
+  objets, et c'est `MailX` qui distingue ce geste de la ligne « Message reçu » du §5.11.
+
+- **La confirmation vit dans le flux, jamais en modale** — le §5 n'en déclare aucune, et le
+  §5.3 quater a déjà tranché ce cas. Le focus y entre, et **revient à la commande** si l'on annule.
+
+- **Elle porte DEUX phrases, et la seconde est le tout de ce chapitre.** La première dit ce qui
+  n'arrive pas — rien n'est supprimé, le message repasse en non classé. La seconde nomme une
+  CONSÉQUENCE possible : l'appelant qui ne voyait ce message que par son affaire cesse de le voir.
+  **Elle énonce la condition, elle ne devine pas un rôle** : l'écran ne sait pas de quelles boîtes
+  l'appelant répond, et le déduire ferait passer une décision de la base pour une décision d'écran.
+
+- **Aucune commande n'est éteinte d'avance selon le rôle** — §5.3, §5.13, §5.16, §5.21, §5.23,
+  §5.25, §5.27, §5.28, sans exception ici non plus. L'écran offre, envoie, et traduit le refus.
+
+- **Le refus a son PROPRE dictionnaire**, distinct de celui du classement. Réemployer « Vous ne
+  pouvez pas classer ce message dans cette affaire » sur un retrait décrirait le geste inverse de
+  celui qui vient d'être tenté — c'est le défaut trouvé sur les objectifs et corrigé par la
+  décision 535, et il ne se répète pas ici.
+
+- **Aucune couleur, aucun jeton et aucune règle nouvelle** : le bloc emprunte au §5.3 quater sa
+  grammaire de confirmation, au §5.5 ses variantes, et au §5.4 son pied de message.
+
 ### 5.5 Boutons
 
 | Variante | Style |

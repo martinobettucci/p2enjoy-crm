@@ -13,6 +13,25 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-055` — un message rangé dans la mauvaise affaire peut en être retiré
+
+- **Un message classé n'y est plus enfermé.** Sous le message ouvert de l'inbox, « Retirer de
+  l'affaire » le renvoie dans les messages non classés, d'où il peut être rangé ailleurs. Le geste
+  demande confirmation et se fait entièrement au clavier.
+- **Ce que cela corrige** : un classement — automatique ou manuel — était définitif. Un message
+  rangé dans la mauvaise affaire y restait, et la seule issue était d'écrire en base. La
+  spécification nommait cette absence depuis `CRM-055` et la renvoyait « à l'unité qui livrera
+  l'écran » ; cette unité est livrée depuis le 2026-08-11 sans avoir tranché.
+- **Rien n'est supprimé, et l'historique n'est pas réécrit.** L'affaire garde sa ligne « Message
+  reçu » — le courrier y est bien arrivé — et reçoit une ligne « Message retiré de l'affaire » qui
+  porte l'objet du message et son auteur. Le vocabulaire de l'historique passe de dix-huit à
+  dix-neuf types.
+- **La confirmation nomme une conséquence mesurée** : un membre qui ne voyait ce message que par
+  son affaire cesse de le voir une fois le retrait fait. La phrase le dit avant le geste, jamais
+  après.
+- **Aucun droit nouveau** : le retrait exige exactement les deux droits du classement — voir le
+  message, et écrire l'affaire. Migration `0070`, aucune table, aucune politique, aucun trigger.
+
 ### `CRM-083` — un tableau d'objectifs archivé peut être repris
 
 - **L'archivage d'un tableau n'est plus sans retour.** Une case « Afficher les archivés » dans la
