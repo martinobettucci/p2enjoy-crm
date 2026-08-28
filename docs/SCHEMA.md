@@ -1369,6 +1369,33 @@ ligne que l'appelant ne lit pas n'est pas rendue, et sa colonne calculée ne l'e
 `security invoker` est **obligatoire** — en `definer`, elle répondrait pour le propriétaire de la
 fonction et rendrait `true` à tout le monde.
 
+### 9 bis.8 bis `public.ecriture_permise(goal_boards)` — colonne calculée, migration 71
+
+Ajoutée le 2026-08-28 par `CRM-083` tranche 3 (`docs/SPEC-goals.md` §5.7).
+
+| | |
+|---|---|
+| Signature | `public.ecriture_permise(tableau public.goal_boards) returns boolean` |
+| Corps | `select app.can_write_goal_board(tableau.id)` |
+| Volatilité | `stable`, **`security invoker`** — jamais `definer` |
+| Privilèges | `execute` à `anon`, `authenticated`, `service_role` |
+
+**Même mécanisme que le §9 bis.8, et pour la même raison**, transposé au canevas d'objectifs : le
+§5.4 de `docs/SPEC-goals.md` demande un état de lecture seule, donc de connaître la capacité
+**avant** de rendre les commandes. Le déclencheur de cet état était rédigé comme un RÔLE — ce que
+`docs/DESIGN_SYSTEM.md` interdit neuf fois —, et c'est la contradiction qu'INC-170 portait depuis le
+2026-08-19 ; la colonne la ferme en faisant dire à la base ce que l'écran déduisait.
+
+**Elle n'ouvre rien, et elle ne referme rien.** `app.can_write_goal_board` est exécutable par `anon`
+et `authenticated` depuis la migration 49, et la colonne n'est rendue que sur un tableau que la RLS
+a **déjà** consenti. `security invoker` est **obligatoire** : en `definer`, elle rendrait `true` à
+tout appelant, lectrice comprise, et l'état de lecture seule ne paraîtrait jamais.
+
+**Sa vérité n'est pas la vérité de tous les gestes**, et c'est mesuré (`docs/SPEC-goals.md` §5.7.2,
+mesure D) : poser un lien exige en outre `app.can_write_channel` sur la destination. La colonne est
+donc une condition **suffisante** de refus, jamais **nécessaire** — l'écran continue d'envoyer et de
+traduire quand elle vaut `true`.
+
 ### 9 bis.9 `public.cards_figees()` — les affaires figées de l'appelant, migration 53
 
 Ajoutée le 2026-08-24 par `CRM-062` tranche 1 (`docs/SPEC-relances.md` §2 et §3).

@@ -13,6 +13,26 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-083` — un tableau d'objectifs qu'on ne peut pas modifier le dit d'emblée
+
+- **Le canevas d'objectifs porte un état de lecture seule.** Quelqu'un qui ne peut pas écrire dans
+  un tableau voit désormais, en tête du canevas, une mention disant qu'il le consulte sans pouvoir
+  le modifier ; les commandes de pose et de tracé sont éteintes mais restent **lisibles**, et la
+  fiche d'un bloc s'ouvre toujours, ses champs désactivés — le corps complet d'un bloc ne se lit
+  nulle part ailleurs.
+- **Avant, chaque geste partait et revenait sans rien dire** : deux refus sur trois se traduisent
+  côté base par « aucune ligne modifiée », c'est-à-dire ni un succès ni une erreur. Le canevas
+  enseignait donc la règle après l'avoir fait transgresser.
+- **Aucun bloc, aucune flèche n'est masqué**, et la lecture est inchangée : l'état ne retranche
+  rien de lisible.
+- **L'écran ne déduit aucun droit d'un rôle** : c'est la base qui rend la capacité, sur la ligne du
+  tableau, comme elle le fait déjà pour la table de saisie des coûts réels.
+- Migration **71** — une seule fonction, `public.ecriture_permise(goal_boards)` ; aucune table,
+  aucune politique, aucun droit élargi.
+- Documentation : `docs/SPEC-goals.md` §5.4 et §5.7, `docs/SCHEMA.md` §9 bis.8 bis,
+  `docs/DESIGN_SYSTEM.md` §5.29 ter, `docs/PROD_MIGRATIONS.md` §3.2 ; arbitrage rendu,
+  **INC-170** close.
+
 ### `CRM-086` — l'onglet « À saisir » dit ce que son compteur compte
 
 - **Le badge de l'onglet « À saisir » et la mention « n lignes sans coût réel saisi » affichent deux

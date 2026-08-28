@@ -275,7 +275,7 @@ Le libellé, s'il existe, se pose au milieu sur un fond `--color-surface`.
 | Aucun tableau | « Aucun tableau d'objectifs », et l'action d'en créer un |
 | Bloc lié à un channel **devenu illisible** | le bloc n'est pas rendu ; ses flèches sont rendues **en pointillés vers le vide**, sans libellé et sans infobulle — l'écran ne nomme jamais ce qu'il cache |
 | Bloc lié à un channel **supprimé** (`channel_id` devenu nul) | le bloc est rendu sans pilule, et une mention « lien perdu » invite à en reposer un |
-| Lecture seule (`viewer`) | tous les gestes d'écriture sont **indisponibles et lisibles**, et l'écran dit pourquoi — `docs/DESIGN_SYSTEM.md` §8 |
+| Lecture seule | tous les gestes d'écriture du canevas sont **indisponibles et lisibles**, et l'écran dit pourquoi — `docs/DESIGN_SYSTEM.md` §8. **RÉVISÉ le 2026-08-28, tranche 3** : l'état ne se déduit plus du RÔLE `viewer` mais de la **capacité que la base consent**, `public.ecriture_permise(goal_boards)`. Le §5.7 porte le contrat, ses quatre mesures et ce qu'il ne recouvre pas |
 | Tableau **archivé**, case « Afficher les archivés » cochée | la ligne porte la mention « Archivé » et **la seule** commande « Désarchiver » ; elle n'ouvre aucun canevas (§5.6.2, lignes c à e) |
 
 ### 5.5 Accessibilité
@@ -504,6 +504,97 @@ commentaire l'affirme.
 - **captures produites ET observées** (`CLAUDE.md` §16) ;
 - `docs/DESIGN_SYSTEM.md`, `docs/manual.md`, `docs/SPEC-seed.md` et `CHANGELOG.md` dans le même
   changement.
+
+### 5.7 L'état de LECTURE SEULE du canevas — tranche 3, arbitrage d'INC-170 rendu
+
+**Ce chapitre ferme INC-170**, ouverte le 2026-08-19 en livrant la tranche 2a, et laissée sans issue
+depuis. Il est écrit et committé **avant** la première ligne de code, comme le §5.6 l'a été
+(`CLAUDE.md` §5), et fondé sur **quatre mesures** prises le 2026-08-28 sur la pile seedée avec les
+jetons réels des trois profils, jamais sur un souvenir.
+
+#### 5.7.1 Ce qui était contradictoire, et ce qui ne l'était pas
+
+Le §5.4 demandait, dans sa rédaction d'origine, que « tous les gestes d'écriture soient
+indisponibles et lisibles » pour le **`viewer`**. `docs/DESIGN_SYSTEM.md` pose neuf fois l'inverse —
+§5.3, §5.13, §5.16, §5.21, §5.23, §5.25, §5.26, §5.27, §5.28 — et toujours avec le même motif :
+**« aucune commande n'est éteinte d'avance SELON LE RÔLE »**, parce que la règle réelle vit dans les
+politiques et qu'un rôle ne la résume pas.
+
+**La contradiction ne portait pas sur l'état de lecture seule : elle portait sur son DÉCLENCHEUR.**
+Ce que le design system interdit est une **déduction d'écran à partir d'un rôle**. Ce qu'il n'a
+jamais interdit — et qu'il décrit lui-même au §5.31, pour la table de saisie des coûts réels — est
+un état de lecture seule **dérivé d'une capacité que la BASE consent**, rendue comme une colonne
+calculée. `public.reel_saisissable(card_costs)` (migration 52, `docs/SCHEMA.md` §9 bis.8) est
+exactement ce mécanisme, et il est en production depuis `CRM-086`.
+
+#### 5.7.2 Les quatre mesures qui fondent le contrat
+
+Prises le 2026-08-28, pile seedée, par la vraie route REST et par `psql` sous l'identité réelle de
+chaque profil.
+
+| # | Mesure | Résultat |
+|---|---|---|
+| **A** | `GET /rest/v1/goal_boards` avec les jetons de l'administratrice, du business developer et de la lectrice | les **trois** rendent `200` et les **deux** tableaux du seed. La lecture ne sépare rien |
+| **B** | `app.can_write_goal_board('…e1')` sous `set local role authenticated` et les `sub` réels | `t` pour l'administratrice, `t` pour le business developer, `f` pour la lectrice, `f` pour `anon` |
+| **C** | La lectrice écrit sur un bloc du tableau | `PATCH` → `200` et `[]` ; `DELETE` → `200` et `[]` ; `POST` → `403` / `42501`. Les deux formes de refus du §7 de `docs/SPEC-permissions-rls.md`, et non une seule |
+| **D** | Le business developer, dont la mesure B dit `t`, pose un lien vers « Maintenance » — channel qu'il **lit** sans l'**écrire** | `403` / `42501`. La capacité vraie au niveau du TABLEAU n'entraîne donc pas que tout geste passe |
+
+#### 5.7.3 L'issue retenue, et pourquoi les deux autres sont écartées
+
+**RETENUE.** Le §5.4 est révisé : l'état de lecture seule reste dû, et son déclencheur devient la
+**capacité consentie par la base** — une colonne calculée `public.ecriture_permise(goal_boards)`,
+`security invoker`, dont le corps est `app.can_write_goal_board(id)`. L'écran ne lit **aucun rôle**
+et n'en déduit rien : il rend ce que la base lui dit d'elle-même.
+
+*Écartée n° 1 — retirer la ligne du §5.4 et laisser le canevas envoyer puis traduire.* C'est ce que
+la tranche 2a fait par défaut, et la mesure C dit ce qu'il en coûte : **deux** des trois gestes de
+la lectrice rendent `200` et zéro ligne, c'est-à-dire ni un succès ni une erreur. Un canevas entier
+dont chaque geste se solde par « rien n'a été enregistré » enseigne la règle **après** l'avoir fait
+transgresser, et `CLAUDE.md` §18 proscrit précisément la perte silencieuse.
+
+*Écartée n° 2 — poser au canevas un écart nommé au design system.* Un écart isolerait cet écran
+alors que le produit possède déjà le patron : ce serait le « comportement juste une fois sur deux »
+que `docs/CloudWorker.md` §4.1 bis nomme comme pire qu'une règle uniformément stricte.
+
+**La règle générale du design system n'est pas amendée**, et c'est le point : elle vise le rôle, et
+la capacité n'est pas un rôle. Le §5.29 ter la reformule sans la relâcher.
+
+#### 5.7.4 Contrat opposable
+
+| | Situation | Rendu |
+|---|---|---|
+| **a** | `ecriture_permise` vaut `true` | canevas inchangé — toutes les commandes offertes, tous les refus traduits comme aujourd'hui |
+| **b** | `ecriture_permise` vaut `false` | une **mention de lecture seule** en tête du canevas, du ton neutre du `docs/DESIGN_SYSTEM.md` §8, disant que ce tableau est consultable et non modifiable ; les commandes de pose et de tracé **désactivées et lisibles** ; la fiche d'édition d'un bloc **ouverte** et ses champs **désactivés** ; aucune commande de suppression |
+| **c** | `ecriture_permise` absente, nulle ou d'un type inattendu | traité comme `false` — un type ne garantit jamais une valeur, c'est la règle qu'`estSaisissable` applique déjà au §4.8.1 de `docs/SPEC-costs.md` |
+| **d** | `ecriture_permise` vaut `true` et un geste est **quand même** refusé (mesure D) | le refus est traduit comme aujourd'hui, avec son texte propre. La capacité est une condition **suffisante** de refus, jamais **nécessaire** : l'écran ne rejoue aucune règle de la base |
+| **e** | Lecture du **contenu** | inchangée. La colonne n'ouvre ni ne ferme aucune ligne : elle n'est rendue que sur un tableau que la RLS a déjà consenti |
+| **f** | Liste des tableaux (§5.1) | **inchangée**, et c'est délibéré : créer un tableau relève du workspace et non d'un tableau, `app.can_write_goal_board` n'a donc rien à en dire. La liste continue d'envoyer et de traduire |
+| **g** | Équivalent textuel du diagramme (§5.5) | inchangé. Il décrit ce qui est **lu**, et la lecture seule ne retranche rien de lisible |
+
+**Aucune migration de données, aucune politique, aucun privilège de table.** La migration n'ajoute
+qu'une fonction et ses `grant`, `anon` compris — pour la raison exacte de la migration 52 : sans
+lui, un appelant anonyme atteignant `goal_boards` recevrait une erreur de privilège là où
+`docs/SPEC-permissions-rls.md` §7 exige zéro ligne.
+
+**`security invoker` est une exigence, pas un défaut accepté.** En `definer`, la fonction répondrait
+pour son propriétaire, qui traverse la RLS, et rendrait `true` à **tout** appelant — la lectrice
+comprise. Le §5.4 se lirait alors exactement à l'envers.
+
+#### 5.7.5 Definition of Done de la tranche 3
+
+- les sept lignes du contrat du §5.7.4 exercées ;
+- migration dédiée, **rejouable**, et `notify pgrst, 'reload schema'` : une colonne calculée neuve
+  reste invisible au cache de PostgREST jusqu'à son rechargement (leçon de la migration 52) ;
+- **pgTAP dédié** : la fonction existe, est `invoker`, rend `f` à la lectrice et `t` aux deux
+  autres, et `anon` la exécute sans erreur de privilège ;
+- **test unitaire dédié** du module et du composant, la ligne **c** éprouvée sur `null` et sur
+  `undefined` ;
+- **test d'API dédié** : la colonne demandée dans le `select` avec les jetons réels des trois
+  profils, et la mesure D reconduite — capacité vraie, geste refusé ;
+- **test E2E d'interface dédié**, console vierge, avec le jeton réel de la lectrice ;
+- **captures produites ET observées** (`CLAUDE.md` §16) ;
+- `docs/SCHEMA.md`, `docs/DESIGN_SYSTEM.md`, `docs/PROD_MIGRATIONS.md`, `docs/INCONSISTENCY_REPORT.md`
+  et `CHANGELOG.md` dans le même changement.
 
 ## 6. Ce qui n'est pas au périmètre
 

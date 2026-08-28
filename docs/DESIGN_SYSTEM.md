@@ -2250,6 +2250,42 @@ l'utilisateur apprend deux grammaires pour une notion.
   d'un défaut qui n'existe plus, et c'est une forme discrète de l'écart que le `CLAUDE.md` §18
   proscrit : le produit se décrit alors moins capable qu'il n'est.
 
+### 5.29 ter Le canevas d'objectifs en LECTURE SEULE — `CRM-083` tranche 3
+
+`docs/SPEC-goals.md` §5.7 porte le contrat et ses quatre mesures ; ce paragraphe ne dit que de quoi
+cela a l'air, et **surtout ce que cela ne relâche pas**.
+
+**LA RÈGLE « AUCUNE COMMANDE N'EST ÉTEINTE D'AVANCE » N'EST PAS AMENDÉE.** Elle vise, aux §5.3,
+§5.13, §5.16, §5.21, §5.23, §5.25, §5.26, §5.27 et §5.28, une extinction **selon le RÔLE** — une
+déduction que l'écran fait à partir du jeton. Une **capacité que la base consent**, rendue comme une
+colonne calculée, n'est pas un rôle : c'est une donnée de la ligne, au même titre que son nom. Le
+§5.31 le fait déjà pour la table de saisie des coûts réels, avec `reel_saisissable` ; ce paragraphe
+transpose la même forme au canevas, il n'en invente aucune.
+
+**La frontière, en une phrase, et elle est la seule à retenir :** si l'écran doit LIRE UN RÔLE pour
+éteindre, c'est interdit ; si la BASE lui dit sur la ligne qu'il ne peut pas écrire, l'éteindre est
+la forme juste, et la taire serait une perte silencieuse.
+
+**Mention de lecture seule.** En tête du canevas, sous la barre de titre, dans le bandeau
+d'information neutre du §8 — `--color-surface-2`, texte `--color-text-1`, icône `Eye` de Lucide,
+jamais `--color-danger` : ne pas pouvoir écrire n'est pas une erreur. Elle porte `role="status"`.
+Elle dit ce que le tableau permet — le consulter — avant de dire ce qu'il refuse ; l'ordre inverse
+se lit comme un reproche.
+
+**Commandes désactivées et LISIBLES.** `disabled`, contraste conservé — jamais `opacity-50`, qui
+ferait tomber le texte sous le seuil du §2 —, et chacune conserve son étiquette : une commande
+éteinte qu'on ne peut plus lire n'apprend rien de ce qu'on pourrait faire ailleurs. Le motif n'est
+**pas** répété sur chaque commande : il est dans la mention, une fois, et le `aria-describedby` de
+chaque commande y renvoie.
+
+**La fiche d'édition d'un bloc S'OUVRE quand même**, et ses champs sont désactivés. La refuser
+retirerait la seule surface où le corps complet d'un bloc se lit — le canevas n'en montre qu'un
+extrait (§5.29). Un écran qui rend la lecture plus pauvre pour empêcher une écriture punit le
+lecteur d'un droit qu'il n'a pas demandé.
+
+**Aucune ligne, aucun bloc, aucune flèche n'est masqué.** Comme au §5.31 : une surface qui cache ce
+qu'elle ne peut pas écrire se lit comme complète alors qu'elle ne l'est pas.
+
 ### 5.30 Histogramme prévisionnel / réel — `CRM-086`
 
 Spécifié avant code, `docs/SPEC-costs.md` §4.2.

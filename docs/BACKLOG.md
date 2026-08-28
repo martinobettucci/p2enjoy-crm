@@ -10674,12 +10674,34 @@ la 2b-1 l'ont été : **2b-2a livre le LIEN**, 2b-2b livrera les **flèches** et
       déjà consignée en **INC-214** : le manuel ne porte AUCUN chapitre sur les objectifs depuis la
       livraison de l'écran, et en ouvrir un ici dépasserait la tranche.
 
+**TRANCHE 3 — L'ÉTAT DE LECTURE SEULE DU CANEVAS, arbitrage d'INC-170 rendu le 2026-08-28.**
+
+- [x] **Spécification écrite et committée AVANT la première ligne de code** — `docs/SPEC-goals.md`
+      §5.7 en cinq sous-chapitres, fondée sur **quatre mesures** prises le jour même sur la pile
+      seedée : par la vraie route REST avec les jetons réels des trois profils, et par `psql` sous
+      l'identité réelle de chacun. `docs/SCHEMA.md` §9 bis.8 bis, `docs/DESIGN_SYSTEM.md` §5.29 ter,
+      `docs/PROD_MIGRATIONS.md` §3.2 (migration 71) et `CHANGELOG.md` dans le même commit.
+- [x] **L'ARBITRAGE, ET IL NE TRANCHE PAS LA QUESTION POSÉE** : la contradiction portait sur le
+      DÉCLENCHEUR de l'état, pas sur l'état. Le design system interdit une extinction **selon le
+      RÔLE** — une déduction d'écran ; il décrit lui-même, au §5.31, un état de lecture seule dérivé
+      d'une **capacité que la base consent**, et `public.reel_saisissable(card_costs)` le sert en
+      production depuis `CRM-086`. Le §5.4 est révisé sur son seul déclencheur ; la règle générale
+      n'est **pas** amendée.
+- [ ] **Migration 71** `supabase/migrations/0071_objectifs_ecriture_permise.sql` :
+      `public.ecriture_permise(public.goal_boards)`, `stable`, **`security invoker`**, corps
+      `select app.can_write_goal_board(tableau.id)`, `revoke` puis `grant` nominatifs à `anon`,
+      `authenticated` et `service_role`, et `notify pgrst, 'reload schema'`. Aucune table, aucune
+      politique, aucun droit élargi.
+- [ ] **Les sept lignes du contrat du §5.7.4 rendues** : mention de lecture seule, commandes
+      désactivées ET lisibles, fiche ouverte aux champs désactivés, la valeur absente ou nulle
+      traitée comme un refus, le refus traduit **quand même** lorsque la capacité vaut `true`
+      (mesure D), la lecture et l'équivalent textuel inchangés, la liste des tableaux inchangée.
+- [ ] **Preuves de la tranche** : pgTAP dédié (la fonction est `invoker`, rend `f` à la lectrice et
+      `t` aux deux autres, `anon` l'exécute sans erreur de privilège), unitaires du module et du
+      composant, `e2e/api/objectifs.spec.ts` avec les trois jetons réels, `e2e/ui/objectifs.spec.ts`
+      avec celui de la lectrice, captures produites ET observées, console vierge.
+
 **CE QUI RESTE — LE HARNAIS.**
-- [ ] **État LECTURE SEULE du `viewer`** : tous les gestes d'écriture indisponibles ET lisibles,
-      l'écran disant pourquoi (§5.4). **BLOQUÉ PAR UN ARBITRAGE, ET C'EST INC-170** : cet énoncé
-      est le seul du dépôt à demander une extinction par rôle, là où `docs/DESIGN_SYSTEM.md` pose
-      neuf fois qu'aucune commande n'est éteinte d'avance. La tranche 2a suit le design system —
-      elle envoie et traduit le refus, mesuré — et laisse la règle générale au responsable.
 - [x] **Refus du `viewer` mesuré HORS interface**, exigé par la DoD. `e2e/api/objectifs.spec.ts`
       le mesure déjà pour `CRM-082` — `403` / `42501` en insertion sur les trois tables, `200` et
       zéro ligne en modification. **Les tranches 2b-1 et 2b-2a n'ouvrent AUCUNE table nouvelle à

@@ -27019,3 +27019,48 @@ l'étant déjà et `CRM-083` et `CRM-084` restant `[~]`. La prochaine unité se 
 backlog dans l'ordre du plan : `CRM-083` (canevas d'objectifs) et `CRM-084` portent encore du
 comportement ou des preuves manquantes, et **INC-183** — le seuil d'ancienneté d'une ligne de coût —
 est l'arbitrage suivant sur ce chemin, tenable par une session comme INC-182 vient de l'être.
+
+## décision 546 — INC-170 tranchée : la lecture seule du canevas vient de la BASE, pas d'un rôle
+
+*2026-08-28, session planifiée ouverte à 20:12:07 UTC. Arbitrage rendu et spécifié AVANT toute ligne
+de code (`CLAUDE.md` §5), comme la décision 534 l'avait fait pour le désarchivage.*
+
+**L'UNITÉ DE LA SESSION.** La décision 545 clôt `CRM-086` et renvoie au backlog dans l'ordre du
+plan : `CRM-083` y porte encore du COMPORTEMENT, et un seul point — « état LECTURE SEULE du
+`viewer` » — y était à `[ ]` depuis le 2026-08-19, marqué « bloqué par un arbitrage ». Le §4.1 bis de
+`docs/CloudWorker.md` (2026-08-27) range « une incohérence entre deux écrans du produit » **hors**
+des quatre cas réservés au responsable : ce point n'était pas bloqué, il était non fait.
+
+**CE QUE LA CONTRADICTION ÉTAIT VRAIMENT, ET C'EST CE QUI LA REND TRANCHABLE.** `docs/SPEC-goals.md`
+§5.4 demandait une extinction pour le rôle `viewer` ; `docs/DESIGN_SYSTEM.md` la refuse neuf fois.
+Mais les neuf occurrences interdisent une extinction **SELON LE RÔLE** — une déduction que l'écran
+fait à partir du jeton —, et le même document décrit au §5.31 un état de lecture seule dérivé d'une
+**capacité que la base consent** : `public.reel_saisissable(card_costs)`, migration 52, en
+production depuis `CRM-086`. La contradiction portait sur le DÉCLENCHEUR, jamais sur l'état.
+
+**QUATRE MESURES, PRISES AVANT D'ÉCRIRE LA RÈGLE** (`docs/SPEC-goals.md` §5.7.2). **A** : les trois
+profils lisent les deux tableaux du seed — la lecture ne sépare rien. **B** : `app.can_write_goal_board`
+rend `t` à l'administratrice et au business developer, `f` à la lectrice et à `anon`. **C** : la
+lectrice reçoit `200` et `[]` en `PATCH` **et** en `DELETE`, `403` / `42501` en `POST` — deux de ses
+trois gestes ne rendent donc ni un succès ni une erreur. **D**, et c'est elle qui borne l'arbitrage :
+le business developer, pour qui B vaut `t`, reçoit `403` / `42501` en posant un lien vers
+« Maintenance », channel qu'il lit sans l'écrire.
+
+**LA DÉCISION.** Le §5.4 est révisé sur son seul déclencheur : l'état de lecture seule devient celui
+de `public.ecriture_permise(goal_boards)`, colonne calculée `security invoker` de corps
+`app.can_write_goal_board(id)` (migration 71). L'écran ne lit aucun rôle. **La règle générale du
+design system n'est pas amendée** : le §5.29 ter la reformule en nommant sa frontière — un rôle lu
+par l'écran, jamais une capacité rendue par la base.
+
+**POURQUOI LA MESURE C ÉCARTE L'ISSUE « RETIRER LA LIGNE DU §5.4 ».** Un canevas qui envoie tout se
+solde, pour la lectrice, par « rien n'a été enregistré » sur deux gestes sur trois : il enseigne la
+règle **après** l'avoir fait transgresser, ce qui est la perte silencieuse du `CLAUDE.md` §18. Et la
+mesure D interdit l'excès inverse : la capacité est une condition **suffisante** de refus, jamais
+nécessaire, si bien que l'écran continue d'envoyer et de traduire partout où elle vaut `true`. Sans
+cette borne, l'écran se serait mis à rejouer une règle qui vit dans la politique.
+
+**INC-170 est CLOSE** et retirée du registre selon sa propre doctrine du 2026-08-15, avec sa ligne
+d'index. Le registre passe à **cent vingt-six** entrées retirées.
+
+**Où reprendre.** L'arbitrage, la spécification, le schéma, le design system, le contrat de
+déploiement, le backlog et le changelog sont committés ; le code les suit dans la même session.

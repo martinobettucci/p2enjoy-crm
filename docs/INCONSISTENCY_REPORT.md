@@ -60,7 +60,7 @@ restante est une dette de mise en œuvre, suivie dans `docs/ARBITRAGES.md` et da
 
 ## Retirées — index
 
-**Cent vingt-cinq** entrées retirées, texte intégral dans l'historique Git. Colonnes : ce que l'entrée
+**Cent vingt-six** entrées retirées, texte intégral dans l'historique Git. Colonnes : ce que l'entrée
 constatait, la date de l'arbitrage, qui en porte (ou en a porté) la mise en œuvre, et la ou les
 décisions de `docs/JOURNAL.md` à lire. Une mention « close » dans la colonne « Porteur » signale
 que l'implémentation est en outre livrée et prouvée ; son absence signifie que seul l'arbitrage est
@@ -228,6 +228,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-220 | `public.queue_outbound_email` (migration `0030`, `CRM-058`) garde son adresse de réponse par `where c.id = p_card_id and c.email_local_part is not null`. MESURÉ le 2026-08-25 : `cards.email_local_part` porte une contrainte **`not null`**, et une sonde qui tente de l'effacer est refusée par la base avant d'atteindre la fonction — ce prédicat ne peut JAMAIS être faux. Ce qui fait réellement tomber la garde est la concaténation `email_local_part || '@' || inbound_domain`, qui rend `NULL` quand `workspaces.inbound_domain` est nul, cette colonne-là étant nullable. La garde est **atteignable et utile** ; c'est la moitié explicite de sa condition qui est morte, et le code dit donc autre chose que ce qu'il fait | 2026-08-25 | *ouverte* — **comportement inchangé**, étranger à `CRM-063` 4b : `armer_sequence_relance` reprend la forme À L'IDENTIQUE plutôt que de faire diverger deux gardes sur le même fait. Relève de `CRM-058`. Le §12.4 bis de `docs/SPEC-modeles-emails.md` porte la mesure | 518 |
 | INC-168 | L'unicité du nom d'un tableau d'objectifs porte AUSSI sur les tableaux archivés — `goal_boards_workspace_name_key` est TOTAL, là où l'index des budgets est partiel (`where closed_at is null`). La spécification ne disait pas si les archivés comptaient, et l'entrée présentait cet écart comme l'oubli probable de l'un des deux | 2026-08-28 | `CRM-082` — issue retenue : **le comportement en place est CONFIRMÉ**, aucune migration ; la règle vit dans `docs/SPEC-goals.md` §2.1 bis et `docs/SCHEMA.md` §9 bis.1 | 542 |
 | INC-182 | Le badge de l'onglet « À saisir » ne PEUT PAS porter le même nombre que la mention du §4.4, que `docs/SPEC-costs.md` §4.8 exigeait pourtant égal : l'onglet liste les budgets **clôturés** que l'histogramme exclut, et la mention est rendue **par devise** quand un badge est un nombre unique. MESURÉ le 2026-08-20, et REMESURÉ le 2026-08-28 sur la pile seedée avec le jeton réel du business developer : **2 contre 1** sur le track « Studio web », **3 contre 2** au niveau du workspace | 2026-08-28 | `CRM-086` — issue retenue : la **n° 1**, l'égalité est RETIRÉE du §4.8 ; le badge compte la portée de l'onglet, la mention celle de son histogramme, et l'écran NOMME la portée du badge dès qu'il paraît (`docs/SPEC-costs.md` §4.8.3, `docs/DESIGN_SYSTEM.md` §5.31) | 544 |
+| INC-170 | L'état « lecture seule » du canevas d'objectifs contredisait la règle « aucune commande éteinte d'avance » : `docs/SPEC-goals.md` §5.4 demandait une extinction pour le rôle `viewer`, là où `docs/DESIGN_SYSTEM.md` la refuse neuf fois | 2026-08-28 | `CRM-083` tranche 3 — **close** : la contradiction portait sur le DÉCLENCHEUR et non sur l'état. Le §5.4 est révisé sur ce seul point — la capacité consentie par la base (`public.ecriture_permise(goal_boards)`, migration 71) remplace le rôle —, la règle générale du design system n'est PAS amendée (§5.29 ter). `docs/SPEC-goals.md` §5.7, `docs/SCHEMA.md` §9 bis.8 bis | 546 |
 | INC-173 | Aucune surface ne gère les occurrences d'un budget récurrent : le §3.2 de `docs/SPEC-costs.md` nomme quatre gestes — ouvrir, libeller, doter, clôturer —, le §4.1 en COMPTE le résultat, et aucun chapitre ne décrivait l'écran qui les porte. Un budget récurrent créé à l'écran ne pouvait donc recevoir AUCUNE ligne de coût, le §4.7 l'écartant du sélecteur faute d'occurrence | 2026-08-28 | `CRM-084` tranche 3 — mise en œuvre DUE : la sous-surface de la table des budgets, `docs/SPEC-costs.md` §4.1 bis et `docs/DESIGN_SYSTEM.md` §5.47 | 539 |
 
 ---
@@ -2897,40 +2898,6 @@ trace du lien rompu — une colonne `channel_lost_at`, ou un `channel_id` conser
 dans `webapp/src/lib/objectifs.ts` et éprouvé par `objectifs.test.ts`.
 
 ## Consigné le 2026-08-19 — une contradiction entre deux documents, relevée par `CRM-083` tranche 2a
-
-### INC-170 — l'état « lecture seule » d'un canevas d'objectifs contredit la règle « aucune commande éteinte d'avance »
-
-**Nature :** contradiction entre deux documents du dépôt, relevée en livrant les premiers gestes
-d'écriture du canevas et laissée **non tranchée** conformément au `CLAUDE.md` §5.
-
-**Ce que la spécification de l'unité demande.** `docs/SPEC-goals.md` §5.4 :
-
-| État | Rendu |
-|---|---|
-| Lecture seule (`viewer`) | tous les gestes d'écriture sont **indisponibles et lisibles**, et l'écran dit pourquoi |
-
-Rendre un geste « indisponible » suppose que l'écran **sache d'avance** que l'appelant est un
-`viewer`, donc qu'il lise son rôle et en déduise un droit.
-
-**Ce que le design system pose, six fois et avec son motif.** `docs/DESIGN_SYSTEM.md` §5.3, §5.13,
-§5.16, §5.21, §5.23, §5.25, §5.26, §5.27 et §5.28 écrivent tous la même règle : « aucune commande
-n'est éteinte d'avance selon le rôle ». Le motif est constant et il est mesuré à chaque fois : la
-règle réelle vit dans les politiques, un rôle ne la résume pas — le §5.27 rapporte même une lectrice
-qui **réussit** un geste que son rôle laisserait croire interdit —, et une commande grisée fait
-passer une décision de la base pour une décision d'écran (`CLAUDE.md` §10).
-
-**Ce que la tranche 2a fait, et pourquoi.** Elle suit le design system : les commandes de pose et
-les gestes de géométrie sont **offerts à tous**, l'écran envoie, et il **traduit** le refus du
-backend — `403` / `42501` pour une insertion, « aucune ligne » pour une mise à jour filtrée par la
-clause `using`. Aucune règle nouvelle n'est donc posée dans l'interface, et le comportement reste
-celui que les politiques `goal_blocks_*` décident.
-
-**Ce qui reste à arbitrer :** faut-il réviser le §5.4 de `docs/SPEC-goals.md` — qui est le seul
-document du dépôt à demander une extinction par rôle —, ou bien poser au canevas un écart nommé au
-design system ? La question n'est pas tranchée ici : elle porte sur une règle générale du produit,
-et l'unité `CRM-083` garde en conséquence son point « état LECTURE SEULE du `viewer` » à `[ ]`.
-
-**Statut :** ouvert, en attente d'arbitrage du responsable.
 
 ### INC-171 — `goals.block.resize` est une clé morte, et `i18n.test.ts` est rouge
 
