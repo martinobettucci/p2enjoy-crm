@@ -3230,6 +3230,61 @@ for ligne in "${GOAL_FLECHES[@]}"; do
 	attendu "$code" "création de la flèche $direction" 200 201
 done
 
+# --- UN SECOND TABLEAU, ARCHIVÉ — docs/SPEC-goals.md §5.6, CRM-083 tranche 2 h ----------------
+# @spec CRM-083 (docs/BACKLOG.md) — tranche 2 h, la reprise d'un tableau archivé
+# @spec docs/SPEC-goals.md §5.6.2 lignes b, c, d et i ; docs/SPEC-seed.md §2.20
+#
+# SANS CE TABLEAU, LA CASE « AFFICHER LES ARCHIVÉS » COCHÉE NE MONTRERAIT RIEN, et une
+# fonctionnalité livrée serait indémontrable sur le jeu de démonstration — ce que `CLAUDE.md` §8
+# refuse. C'est le même motif qui a fait poser une card archivée et une card en corbeille à la
+# section 8 ter : un état du cycle de vie que le seed ne porte pas est un état que personne ne peut
+# regarder.
+#
+# IL PORTE UN BLOC, ET CE N'EST PAS DÉCORATIF : la ligne d'un tableau archivé rend son compte de
+# blocs LISIBLES comme toute autre ligne (§5.6.2, ligne i). À zéro bloc, « Aucun objectif » et
+# « 1 objectif » seraient indistinguables, et la ligne ne prouverait pas que le compte suit.
+#
+# `archived_at` EST UNE VALEUR FIXE, jamais `now()` : un seed doit être reproductible (`CLAUDE.md`
+# §8), et un horodatage tiré à l'exécution rendrait la ligne différente à chaque rejeu. La colonne
+# sert à masquer, jamais à ordonner ni à mesurer une durée — seule sa nullité compte
+# (`webapp/src/lib/objectifs-ecriture.ts`, `archiverTableau`).
+#
+# SA POSITION EST 2, ET ELLE EST CONSERVÉE PAR LA REPRISE (§5.6.1, mesure 5) : désarchivé, il se
+# range APRÈS « Objectifs du trimestre » plutôt qu'en tête, et une preuve peut le constater.
+GOAL_BOARD_ARCHIVE_ID='5eed0000-0000-4000-8000-0000000000e2'
+
+charge=$(jq -nc --arg id "$GOAL_BOARD_ARCHIVE_ID" --arg ws "$WS_ID" \
+                --arg auteur '5eed0000-0000-4000-8000-000000000011' \
+     '{id: $id, workspace_id: $ws, name: "Objectifs 2025 (clos)",
+       description: "Tableau de l’exercice précédent, archivé. Il quitte la liste sans rien perdre.",
+       position: 2, archived_at: "2026-01-15T09:00:00Z", created_by: $auteur}')
+code=$(api POST /rest/v1/goal_boards \
+	-H 'Prefer: return=representation,resolution=merge-duplicates' \
+	-d "$charge")
+attendu "$code" "création du tableau d'objectifs ARCHIVÉ" 200 201
+
+charge=$(jq -nc --arg id '5eed0000-0000-4000-8000-0000000000e7' \
+                --arg board "$GOAL_BOARD_ARCHIVE_ID" \
+                --arg auteur '5eed0000-0000-4000-8000-000000000011' \
+     '{id: $id, board_id: $board, title: "Clôturer l’exercice 2025", fill_percent: 100,
+       channel_id: null, pos_x: 40, pos_y: 40, width: 260, height: 140, color: "neutral",
+       created_by: $auteur}')
+code=$(api POST /rest/v1/goal_blocks \
+	-H 'Prefer: return=representation,resolution=merge-duplicates' \
+	-d "$charge")
+attendu "$code" "création du bloc du tableau archivé" 200 201
+
+# L'ÉTAT EST VÉRIFIÉ, ET NON SUPPOSÉ. Un rejeu convergent qui aurait rendu `archived_at` à null
+# — par exemple parce qu'une preuve a désarchivé le tableau sans le remettre — laisserait le seed
+# vert et la case « Afficher les archivés » vide, sans que rien ne le dise.
+archives=$(curl -s "$API/rest/v1/goal_boards?workspace_id=eq.$WS_ID&archived_at=not.is.null&select=id" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+	| jq -r 'length')
+[ "${archives:-0}" -ge 1 ] || die "le jeu de démonstration doit porter au moins UN tableau
+        d'objectifs archivé (docs/SPEC-goals.md §5.6), sinon la case « Afficher les archivés »
+        reste vide et la reprise d'un tableau n'est démontrable sur aucun écran."
+printf '  %-34s %s\n' 'Objectifs 2025 (clos)' 'archivé, 1 bloc'
+
 # LES TROIS DIRECTIONS SONT VÉRIFIÉES, ET NON SUPPOSÉES. Sans ce contrôle, une flèche recopiée
 # avec la mauvaise direction rendrait un seed vert et un canevas qui ne montre jamais sa pointe
 # double — et `CRM-083` n'aurait rien à capturer pour deux de ses trois cas.
