@@ -2737,6 +2737,10 @@ export type Database = {
           requested_path: string
         }[]
       }
+      ecriture_permise: {
+        Args: { tableau: Database["public"]["Tables"]["goal_boards"]["Row"] }
+        Returns: boolean
+      }
       etat_messagerie: {
         Args: never
         Returns: {
