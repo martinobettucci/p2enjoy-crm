@@ -464,21 +464,46 @@ test.describe('canevas d’objectifs — CRM-083', () => {
 		expect(remise.status).toBe(204)
 	})
 
-	test('la LECTRICE voit les gestes, les tente, et lit le refus du backend — §4.2', async ({ page }) => {
-		// AUCUNE COMMANDE N'EST ÉTEINTE D'AVANCE SELON LE RÔLE (docs/DESIGN_SYSTEM.md §5.26) :
-		// l'écran envoie, et la politique décide. Le refus mesuré ici est celui de la base, pas
-		// une règle que l'interface aurait inventée — et c'est exactement ce que INC-170 laisse à
-		// l'arbitrage du responsable.
+	test('la LECTRICE voit les gestes, ne peut pas les envoyer, et l’écran DIT POURQUOI — §5.7', async ({
+		page,
+	}) => {
+		// PREUVE RÉVISÉE LE 2026-08-28, ET SON MOTIF EST ÉCRIT ICI (`docs/CloudWorker.md` §3.1).
+		// Elle figeait la règle « l'écran envoie, la politique décide » POUR LA LECTRICE, en
+		// renvoyant à INC-170 comme à une question ouverte. L'arbitrage de la décision 546 l'a
+		// rendue : l'état de lecture seule du §5.4 est DÛ, et son déclencheur est la capacité que
+		// la base consent (`public.ecriture_permise`), jamais le rôle que le §5.26 du design system
+		// interdit de lire. La lectrice ne peut donc plus ENVOYER depuis cet écran.
+		//
+		// CE QUE CETTE PREUVE MESURE DÉSORMAIS, ET POURQUOI C'EST PLUS FORT : que le geste est
+		// **inatteignable** et que l'écran **dit pourquoi**. La règle elle-même n'est pas moins
+		// prouvée qu'avant — elle l'est HORS INTERFACE, par `e2e/api/objectifs.spec.ts`, qui
+		// mesure les deux formes du refus avec le jeton réel de la lectrice (`CLAUDE.md` §10) —, et
+		// la voie du §5.7.4 ligne d y reste éprouvée : un appelant dont la capacité vaut « true »
+		// envoie encore, et lit encore le refus.
 		await connecter(page, LECTRICE)
 		await ouvrirLeTableau(page)
 
+		// L'ÉCRAN DIT POURQUOI — c'est la seconde moitié du §5.4, et elle manquait.
+		await expect(page.getByTestId('canevas-lecture-seule')).toBeVisible()
+
+		// LES GESTES SONT VUS — « tous les gestes d'écriture INDISPONIBLES ET LISIBLES » : la
+		// commande porte encore son étiquette, elle n'est pas retirée.
+		const poser = page.getByTestId('poser-bloc')
+		await expect(poser).toBeVisible()
+		await expect(poser).toBeDisabled()
+
+		// ET ILS N'ENVOIENT RIEN : la flèche du clavier ne déplace pas, et AUCUNE mention
+		// d'écriture ne paraît — il n'y a plus de refus à traduire, faute d'envoi.
 		const bloc = page.getByTestId('bloc-objectif').first()
 		await bloc.focus()
+		const avant = await positionGauche(bloc)
 		await page.keyboard.press('ArrowRight')
-
-		const mention = page.getByTestId('mention-ecriture')
-		await expect(mention).not.toHaveText('Enregistré')
-		await expect(mention).toBeVisible()
+		expect(await positionGauche(bloc)).toBe(avant)
+		// LA RÉGION VIVANTE RESTE MONTÉE ET RESTE MUETTE, et c'est bien ce qu'il faut mesurer : une
+		// région `status` démontée puis remontée n'est pas annoncée par les lecteurs d'écran, si
+		// bien que l'écran la rend TOUJOURS et n'y met un texte que lorsqu'il a quelque chose à
+		// dire. « Aucune mention » se mesure donc par un texte VIDE, jamais par une absence de nœud.
+		await expect(page.getByTestId('mention-ecriture')).toHaveText('')
 		await capturer(page, 'refus-lectrice-1440', UNITE)
 	})
 
@@ -611,10 +636,24 @@ test.describe('canevas d’objectifs — CRM-083', () => {
 		expect(remise.status).toBe(204)
 	})
 
-	test('la LECTRICE ouvre la fiche, saisit, et lit le refus SOUS le champ — §4.2', async ({ page }) => {
-		// Même règle que la tranche 2a : aucune commande n'est éteinte d'avance selon le rôle
-		// (docs/DESIGN_SYSTEM.md §5.26). L'écran envoie, la politique décide, l'écran traduit —
-		// et la contradiction avec le §5.4 de la spécification reste consignée en INC-170.
+	test('la LECTRICE ouvre la fiche, la LIT ENTIÈREMENT, et n’y saisit rien — §5.7', async ({ page }) => {
+		// PREUVE RÉVISÉE LE 2026-08-28, ET SON MOTIF EST ÉCRIT ICI (`docs/CloudWorker.md` §3.1).
+		// Elle figeait la règle « l'écran envoie, la politique décide » POUR LA LECTRICE, en
+		// renvoyant à INC-170 comme à une question ouverte. L'arbitrage de la décision 546 l'a
+		// rendue : l'état de lecture seule du §5.4 est DÛ, et son déclencheur est la capacité que
+		// la base consent (`public.ecriture_permise`), jamais le rôle que le §5.26 du design system
+		// interdit de lire. La lectrice ne peut donc plus ENVOYER depuis cet écran.
+		//
+		// CE QUE CETTE PREUVE MESURE DÉSORMAIS, ET POURQUOI C'EST PLUS FORT : que le geste est
+		// **inatteignable** et que l'écran **dit pourquoi**. La règle elle-même n'est pas moins
+		// prouvée qu'avant — elle l'est HORS INTERFACE, par `e2e/api/objectifs.spec.ts`, qui
+		// mesure les deux formes du refus avec le jeton réel de la lectrice (`CLAUDE.md` §10) —, et
+		// la voie du §5.7.4 ligne d y reste éprouvée : un appelant dont la capacité vaut « true »
+		// envoie encore, et lit encore le refus.
+		//
+		// LE POINT PROPRE À CETTE FICHE : elle S'OUVRE quand même. C'est la seule surface où le
+		// corps complet d'un bloc se lit — le canevas n'en montre qu'un extrait —, et la refuser
+		// rendrait la lecture plus pauvre pour empêcher une écriture.
 		await connecter(page, LECTRICE)
 		await ouvrirLeTableau(page)
 
@@ -623,14 +662,16 @@ test.describe('canevas d’objectifs — CRM-083', () => {
 		await page.keyboard.press('Enter')
 		await expect(page.getByTestId('fiche-bloc')).toBeVisible()
 
-		await page.getByTestId('champ-titre').fill('Titre écrit par une lectrice')
-		await page.keyboard.press('Enter')
-
-		const mention = page.getByTestId('etat-titre')
-		await expect(mention).toBeVisible()
-		await expect(mention).not.toHaveText('Enregistré')
-		// LA SAISIE RESTE : un refus n'efface pas ce qui a été tapé (§5.7 ter).
-		await expect(page.getByTestId('champ-titre')).toHaveValue('Titre écrit par une lectrice')
+		// LA VALEUR RESTE LISIBLE : un champ vidé pour empêcher d'écrire perdrait la donnée.
+		const champ = page.getByTestId('champ-titre')
+		await expect(champ).toBeDisabled()
+		await expect(champ).not.toHaveValue('')
+		// LA FICHE DIT POURQUOI, PRÈS DE CE QU'ELLE CONCERNE : la mention du canevas vit au-dessus
+		// de lui, et la fiche vit dessous — sur un tableau haut, elle est hors de vue.
+		await expect(page.locator('#fiche-bloc-consigne')).toContainText('lecture seule')
+		// AUCUNE MENTION D'ÉCRITURE : il n'y a plus d'envoi, donc plus de refus à traduire. La
+		// région vivante reste montée et MUETTE — voir le scénario du canevas, même motif.
+		await expect(page.getByTestId('etat-titre')).toHaveText('')
 		await capturer(page, 'fiche-refus-lectrice-1440', UNITE)
 	})
 
@@ -757,10 +798,18 @@ test.describe('canevas d’objectifs — le lien vers un channel, CRM-083 tranch
 		await remettreLien(BLOC_LIE, await identifiantDuChannel('Refonte de site'))
 	})
 
-	test('la LECTRICE envoie le lien et lit le refus SOUS le champ — §4.2', async ({ page }) => {
-		// Aucune commande n'est éteinte d'avance selon le rôle (docs/DESIGN_SYSTEM.md §5.26) :
-		// l'écran envoie, la politique décide, l'écran traduit. La contradiction avec le §5.4 de la
-		// spécification reste consignée en INC-170.
+	test('la LECTRICE voit le sélecteur de destination, éteint, et n’envoie aucun lien — §5.7', async ({
+		page,
+	}) => {
+		// PREUVE RÉVISÉE LE 2026-08-28, MÊME MOTIF QUE LES DEUX PRÉCÉDENTES et il n'est pas
+		// recopié : la décision 546 a rendu l'arbitrage d'INC-170, l'état de lecture seule du §5.4
+		// est dû, et son déclencheur est la capacité que la base consent — jamais le rôle. La
+		// lectrice ne peut plus envoyer depuis cet écran. La RÈGLE reste prouvée hors interface par
+		// `e2e/api/objectifs.spec.ts`, avec son jeton réel (`CLAUDE.md` §10).
+		//
+		// LE POINT PROPRE AU LIEN : le sélecteur reste RENDU avec sa destination courante. Le
+		// retirer priverait la lectrice de LIRE sur quel dossier porte l'objectif — l'information
+		// que la pilule du canevas abrège.
 		await connecter(page, LECTRICE)
 		await ouvrirLeTableau(page)
 
@@ -771,12 +820,9 @@ test.describe('canevas d’objectifs — le lien vers un channel, CRM-083 tranch
 
 		const selecteur = page.getByTestId('champ-lien')
 		await expect(selecteur).toBeVisible()
-		await selecteur.selectOption({ label: 'Refonte de site' })
-
-		const mention = page.getByTestId('etat-lien')
-		await expect(mention).toBeVisible()
-		await expect(mention).not.toHaveText('Enregistré')
-		await mention.scrollIntoViewIfNeeded()
+		await expect(selecteur).toBeDisabled()
+		await expect(page.getByTestId('etat-lien')).toHaveText('')
+		await selecteur.scrollIntoViewIfNeeded()
 		await capturer(page, 'lien-refus-lectrice-1440', UNITE)
 
 		// LE REFUS EST MESURÉ HORS INTERFACE, sur la même ligne et avec le jeton de la lectrice :
@@ -953,9 +999,16 @@ test.describe('canevas d’objectifs — les suppressions, CRM-083 tranche 2b-2c
 	test('la LECTRICE supprime, et lit « aucun bloc n’a été supprimé » — le silence du `using`', async ({
 		page,
 	}) => {
-		// Aucune commande n'est éteinte d'avance selon le rôle (docs/DESIGN_SYSTEM.md §5.26) :
-		// l'écran envoie, la politique décide, l'écran traduit. Le refus est ensuite MESURÉ HORS
-		// INTERFACE — la ligne est toujours là.
+		// PREUVE RÉVISÉE LE 2026-08-28, MÊME MOTIF QUE LES DEUX PRÉCÉDENTES et il n'est pas
+		// recopié : la décision 546 a rendu l'arbitrage d'INC-170, l'état de lecture seule du §5.4
+		// est dû, et son déclencheur est la capacité que la base consent — jamais le rôle. La
+		// lectrice ne peut plus envoyer depuis cet écran. La RÈGLE reste prouvée hors interface par
+		// `e2e/api/objectifs.spec.ts`, avec son jeton réel (`CLAUDE.md` §10).
+		//
+		// LE POINT PROPRE À LA SUPPRESSION : la commande reste MONTÉE et éteinte, jamais masquée.
+		// La retirer priverait le lecteur de savoir que ce geste existe (`docs/DESIGN_SYSTEM.md`
+		// §5.29 ter). Et la ligne est relue EN BASE derrière : une confirmation inatteignable ne
+		// vaut preuve que si l'on constate qu'aucune suppression n'a eu lieu.
 		const idJetable = await poserBlocJetable(BLOC_JETABLE)
 		expect(idJetable).not.toBe('')
 
@@ -969,17 +1022,13 @@ test.describe('canevas d’objectifs — les suppressions, CRM-083 tranche 2b-2c
 
 		const commande = page.getByTestId('supprimer-bloc')
 		await commande.scrollIntoViewIfNeeded()
-		await commande.click()
-		await page.getByTestId('confirmer-suppression-bloc').click()
-
-		const mention = page.getByTestId('mention-ecriture')
-		await expect(mention).toHaveAttribute('role', 'alert')
-		await expect(mention).not.toHaveText('Bloc supprimé')
-		await mention.scrollIntoViewIfNeeded()
+		await expect(commande).toBeVisible()
+		await expect(commande).toBeDisabled()
+		// LA CONFIRMATION NE S'OUVRE PAS : la commande éteinte n'a rien déclenché.
+		await expect(page.getByTestId('confirmer-suppression-bloc')).toHaveCount(0)
 		await capturer(page, 'suppression-refus-lectrice-1440', UNITE)
 
-		// LE BLOC EST TOUJOURS RENDU, et la BASE le porte toujours : faire disparaître le bloc sur
-		// ce silence annoncerait une suppression qui n'a pas eu lieu.
+		// LE BLOC EST TOUJOURS RENDU, et la BASE le porte toujours.
 		await expect(page.getByTestId('bloc-objectif').filter({ hasText: BLOC_JETABLE })).toHaveCount(1)
 		expect(await identifiantDuBloc(BLOC_JETABLE)).toBe(idJetable)
 	})
