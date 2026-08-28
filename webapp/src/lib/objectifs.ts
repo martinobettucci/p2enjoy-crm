@@ -67,14 +67,52 @@ export type FlecheObjectif = Pick<
 	'id' | 'source_block_id' | 'target_block_id' | 'label'
 > & { readonly direction: DirectionFleche }
 
+/**
+ * Le tableau tel que le CANEVAS le charge : ses attributs, et la capacité que la base consent.
+ *
+ * `ecriture_permise` EST UNE COLONNE DE LA RÉPONSE, pas un champ calculé ici. C'est la colonne
+ * calculée de la migration 71 (`docs/SCHEMA.md` §9 bis.8 bis), évaluée par la base sous l'identité
+ * de l'appelant. Elle est déclarée `boolean | null` et non `boolean` parce qu'un type ne garantit
+ * jamais une valeur : `ecritureConsentie` ci-dessous traite `null` et `undefined` comme un refus,
+ * ce qui est la ligne **c** du contrat du §5.7.4 — la même règle qu'`estSaisissable` applique au
+ * §4.8.1 de `docs/SPEC-costs.md`.
+ *
+ * ELLE NE PARAÎT QUE SUR LE CANEVAS, jamais sur la liste, et c'est délibéré (§5.7.4, ligne f) :
+ * créer un tableau relève du workspace et non d'un tableau, si bien qu'`app.can_write_goal_board`
+ * n'a rien à en dire. La liste continue d'envoyer et de traduire.
+ */
+export type TableauCanevas = TableauObjectifs & { readonly ecriture_permise: boolean | null }
+
 /** Ce qu'une ouverture de tableau charge : ses blocs et ses flèches, tels que consentis. */
 export type ContenuTableau = {
-	readonly tableau: TableauObjectifs | null
+	readonly tableau: TableauCanevas | null
 	readonly blocs: readonly BlocObjectif[]
 	readonly fleches: readonly FlecheObjectif[]
 }
 
 export const COLONNES_TABLEAU = 'id, name, description, position, archived_at'
+
+/**
+ * Colonnes du tableau vues par le CANEVAS : celles de la liste, plus la capacité.
+ *
+ * Une constante distincte plutôt qu'un ajout à `COLONNES_TABLEAU` : la liste du §5.1 n'a que faire
+ * de cette capacité (§5.7.4, ligne f), et la lui demander ferait payer un appel de fonction par
+ * ligne pour une valeur qu'elle n'emploierait pas.
+ */
+export const COLONNES_TABLEAU_CANEVAS = `${COLONNES_TABLEAU}, ecriture_permise`
+
+/**
+ * La capacité d'écriture du tableau, telle que le canevas doit la lire.
+ *
+ * ABSENTE, NULLE OU D'UN TYPE INATTENDU ⇒ REFUS (§5.7.4, ligne c). Un type ne garantit jamais une
+ * valeur : une réponse tronquée, un cache de schéma non rechargé ou une migration non appliquée
+ * rendraient `undefined`, et lire cela comme « oui » offrirait des commandes dont chaque envoi
+ * serait refusé — exactement l'état que cette tranche supprime. Le sens du défaut est donc choisi :
+ * il ferme, il n'ouvre pas.
+ */
+export function ecritureConsentie(tableau: TableauCanevas | null): boolean {
+	return tableau?.ecriture_permise === true
+}
 
 /**
  * Colonnes du bloc, avec la destination EMBARQUÉE plutôt que relue.
@@ -222,7 +260,7 @@ export async function lireContenuTableau(
 	try {
 		const tableau = await client
 			.from('goal_boards')
-			.select(COLONNES_TABLEAU)
+			.select(COLONNES_TABLEAU_CANEVAS)
 			.eq('id', idTableau)
 			.is('archived_at', null)
 			.maybeSingle()
@@ -239,7 +277,13 @@ export async function lireContenuTableau(
 		if (fleches.error !== null) return enErreur(classerErreur(fleches.status, fleches.error.message))
 
 		return pret({
-			tableau: tableau.data,
+			// LA CONVERSION EST EXPLICITE, ET ELLE EST DUE À LA COLONNE CALCULÉE. `database.types.ts`
+			// est généré depuis les TABLES : il ignore `ecriture_permise`, qui est une fonction
+			// (`docs/SCHEMA.md` §9 bis.8 bis), et `supabase-js` refuse alors la requête entière à la
+			// compilation. C'est la conversion exacte que `couts-a-saisir.ts` emploie pour
+			// `reel_saisissable` depuis `CRM-086`, et le type visé porte la colonne en
+			// `boolean | null` : la conversion n'affirme donc AUCUNE valeur, seulement une forme.
+			tableau: tableau.data as unknown as TableauCanevas | null,
 			// L'imbrication est RETIRÉE de la ligne et traduite en destination : le reste du
 			// produit ne doit jamais avoir à connaître la forme que PostgREST donne à un embed.
 			blocs: (blocs.data ?? []).map((brut) => {

@@ -78,6 +78,7 @@ import {
 	ArrowDown,
 	ArrowLeft,
 	ArrowUp,
+	Eye,
 	Minus,
 	MoveRight,
 	Pencil,
@@ -94,6 +95,7 @@ import { SkeletonListe } from '../components/ui/Skeleton'
 import { t } from '../i18n'
 import {
 	composerDiagramme,
+	ecritureConsentie,
 	etendueCanevas,
 	lienOuvrable,
 	lienPerdu,
@@ -1452,6 +1454,18 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 	// de laisser une échelle `undefined` produire un canevas invisible.
 	const zoom = ZOOMS[rangZoom] ?? 1
 
+	// L'ÉTAT DE LECTURE SEULE VIENT DE LA BASE, JAMAIS D'UN RÔLE (§5.7, INC-170 close par la
+	// décision 546). `ecriture_permise` est une colonne calculée de `goal_boards` (migration 71),
+	// évaluée sous l'identité de l'appelant : l'écran ne lit aucun rôle et n'en déduit rien. Absente
+	// ou nulle, elle FERME — un type ne garantit jamais une valeur (§5.7.4, ligne c).
+	//
+	// ELLE EST UNE CONDITION SUFFISANTE DE REFUS, JAMAIS NÉCESSAIRE, et c'est MESURÉ (§5.7.2,
+	// mesure D) : poser un lien exige EN OUTRE `app.can_write_channel` sur la destination, si bien
+	// qu'un appelant pour qui elle vaut `true` reçoit quand même `403` sur ce geste-là. Tout ce qui
+	// suit éteint donc sur `false` et ne change RIEN sur `true` : les refus continuent d'être
+	// envoyés puis traduits, ce qui est la règle générale du `docs/DESIGN_SYSTEM.md`.
+	const lectureSeule = !ecritureConsentie(contenu.tableau)
+
 	// LE CANEVAS EST RENDU DÈS QU'UNE POSE EST ARMÉE, MÊME SUR UN TABLEAU VIDE : c'est la surface
 	// sur laquelle le geste se fait, et l'état vide qui la remplacerait n'aurait aucun endroit où
 	// recevoir le clic. L'état vide porte donc le geste qui le comble
@@ -1486,6 +1500,7 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 					<RetourListe />
 					<CommandePose
 						armee={pose !== null}
+						lectureSeule={lectureSeule}
 						onBasculer={() => {
 							setTrace(null)
 							setPose(pose === null ? { x: PAS_CLAVIER * 3, y: PAS_CLAVIER * 3 } : null)
@@ -1499,6 +1514,7 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 					{blocsRendus.length < 2 ? null : (
 						<CommandeTrace
 							armee={trace !== null}
+							lectureSeule={lectureSeule}
 							onBasculer={() => {
 								setPose(null)
 								setTrace(trace === null ? { idSource: null, direction: 'forward' } : null)
@@ -1508,6 +1524,23 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 					<CommandesZoom rang={rangZoom} onChanger={setRangZoom} />
 				</div>
 			</header>
+
+			{/* LA MENTION DIT CE QUE LE TABLEAU PERMET AVANT CE QU'IL REFUSE (`docs/DESIGN_SYSTEM.md`
+			    §5.29 ter) : l'ordre inverse se lit comme un reproche. Elle est neutre — jamais
+			    `--color-danger` —, ne pas pouvoir écrire n'étant pas une erreur. Chaque commande
+			    éteinte la CITE en `aria-describedby` plutôt que de répéter le motif : dit une fois,
+			    il se lit ; répété sur six commandes, il se saute. */}
+			{lectureSeule ? (
+				<p
+					data-testid="canevas-lecture-seule"
+					id="objectifs-lecture-seule"
+					role="status"
+					className="flex items-start gap-2 rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink max-w-[70ch]"
+				>
+					<Eye aria-hidden="true" size={16} strokeWidth={2} className="mt-0.5 shrink-0" />
+					{t('goals.readonly.notice')}
+				</p>
+			) : null}
 
 			{pose === null ? null : (
 				<p data-testid="pose-consigne" className="text-sm text-text-2">
@@ -1608,6 +1641,7 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 								bloc={bloc}
 								zoom={zoom}
 								edite={bloc.id === edite}
+								lectureSeule={lectureSeule}
 								traceArmee={trace !== null}
 								departDuTrace={trace?.idSource === bloc.id}
 								onEbauche={(geometrie) => setEbauche({ id: bloc.id, geometrie })}
@@ -1631,7 +1665,11 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 					titre={t('goals.board.empty.title')}
 					corps={t('goals.board.empty.body')}
 					action={
-						<CommandePose armee={false} onBasculer={() => setPose({ x: PAS_CLAVIER * 3, y: PAS_CLAVIER * 3 })} />
+						<CommandePose
+							armee={false}
+							lectureSeule={lectureSeule}
+							onBasculer={() => setPose({ x: PAS_CLAVIER * 3, y: PAS_CLAVIER * 3 })}
+						/>
 					}
 				/>
 			)}
@@ -1646,6 +1684,7 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 				<FicheEditionBloc
 					key={blocEdite.id}
 					bloc={blocEdite}
+					lectureSeule={lectureSeule}
 					etatChannels={etatChannels}
 					flechesDuBloc={flechesDuBlocEdite}
 					onSupprimer={() => void supprimerLeBloc(blocEdite.id)}
@@ -1664,6 +1703,7 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 
 			<EquivalentTextuel
 				lignes={lignes}
+				lectureSeule={lectureSeule}
 				onChangerDirection={corrigerDirection}
 				onSupprimerFleche={(idFleche) => void supprimerLaFleche(idFleche)}
 			/>
@@ -1684,16 +1724,31 @@ function titreDe(blocs: readonly BlocObjectif[], idBloc: string): string {
 
 /**
  * La commande qui arme la pose, et l'annule — DEUX VISAGES, UN SEUL RENDU À LA FOIS, patron du
- * §5.3 quater. Elle n'est jamais éteinte selon le rôle (`docs/DESIGN_SYSTEM.md` §5.26) : la
- * lectrice l'ouvre, pose, et lit le refus du backend.
+ * §5.3 quater.
+ *
+ * ELLE N'EST TOUJOURS PAS ÉTEINTE SELON LE RÔLE (`docs/DESIGN_SYSTEM.md` §5.26), et la nuance est
+ * tout le sujet d'INC-170 : ce qui l'éteint est la CAPACITÉ que la base rend sur la ligne du
+ * tableau (§5.7), jamais un rôle que l'écran déduirait du jeton. Elle reste RENDUE et LISIBLE —
+ * `disabled`, pas masquée, contraste conservé (§5.29 ter) —, et le motif est dans la mention qu'elle
+ * cite, une fois pour toutes les commandes.
  */
-function CommandePose({ armee, onBasculer }: { readonly armee: boolean; readonly onBasculer: () => void }) {
+function CommandePose({
+	armee,
+	lectureSeule,
+	onBasculer,
+}: {
+	readonly armee: boolean
+	readonly lectureSeule: boolean
+	readonly onBasculer: () => void
+}) {
 	return (
 		<Button
 			variante={armee ? 'secondaire' : 'primaire'}
 			taille="compacte"
 			data-testid="poser-bloc"
 			aria-pressed={armee}
+			disabled={lectureSeule}
+			aria-describedby={lectureSeule ? 'objectifs-lecture-seule' : undefined}
 			onClick={onBasculer}
 			className="gap-2"
 		>
@@ -1711,13 +1766,23 @@ function CommandePose({ armee, onBasculer }: { readonly armee: boolean; readonly
  * deux clics. Sans elle, tracer une flèche serait un geste de clavier, et la parité des deux
  * entrées (`docs/DESIGN_SYSTEM.md` §8) serait tenue en apparence seulement.
  */
-function CommandeTrace({ armee, onBasculer }: { readonly armee: boolean; readonly onBasculer: () => void }) {
+function CommandeTrace({
+	armee,
+	lectureSeule,
+	onBasculer,
+}: {
+	readonly armee: boolean
+	readonly lectureSeule: boolean
+	readonly onBasculer: () => void
+}) {
 	return (
 		<Button
 			variante="secondaire"
 			taille="compacte"
 			data-testid="tracer-fleche"
 			aria-pressed={armee}
+			disabled={lectureSeule}
+			aria-describedby={lectureSeule ? 'objectifs-lecture-seule' : undefined}
 			onClick={onBasculer}
 			className="gap-2"
 		>
@@ -1870,6 +1935,7 @@ const CLASSES_CONTROLE = [
  */
 function FicheEditionBloc({
 	bloc,
+	lectureSeule,
 	etatChannels,
 	flechesDuBloc,
 	onSupprimer,
@@ -1879,6 +1945,7 @@ function FicheEditionBloc({
 	onFermer,
 }: {
 	readonly bloc: BlocObjectif
+	readonly lectureSeule: boolean
 	readonly etatChannels: EtatAsync<readonly ChannelLiable[]>
 	readonly flechesDuBloc: number
 	readonly onSupprimer: () => void
@@ -2022,7 +2089,12 @@ function FicheEditionBloc({
 					data-testid="champ-titre"
 					value={titre}
 					required
-					aria-describedby="fiche-bloc-titre-aide fiche-bloc-titre-etat"
+					disabled={lectureSeule}
+					aria-describedby={
+						lectureSeule
+							? 'fiche-bloc-titre-aide fiche-bloc-titre-etat objectifs-lecture-seule'
+							: 'fiche-bloc-titre-aide fiche-bloc-titre-etat'
+					}
 					className={[CLASSES_CONTROLE, 'w-full'].join(' ')}
 					onChange={(evenement) => setTitre(evenement.target.value)}
 					/* LA VALEUR EST ARRÊTÉE À LA SORTIE DU CHAMP OU SUR `Entrée`, jamais à la frappe :
@@ -2057,7 +2129,12 @@ function FicheEditionBloc({
 					data-testid="champ-corps"
 					rows={3}
 					value={corps}
-					aria-describedby="fiche-bloc-corps-aide fiche-bloc-corps-etat"
+					disabled={lectureSeule}
+					aria-describedby={
+						lectureSeule
+							? 'fiche-bloc-corps-aide fiche-bloc-corps-etat objectifs-lecture-seule'
+							: 'fiche-bloc-corps-aide fiche-bloc-corps-etat'
+					}
 					className={[CLASSES_CONTROLE, 'w-full'].join(' ')}
 					onChange={(evenement) => setCorps(evenement.target.value)}
 					onBlur={() => {
@@ -2091,6 +2168,7 @@ function FicheEditionBloc({
 								name="fiche-bloc-couleur"
 								value={option}
 								checked={couleur === option}
+								disabled={lectureSeule}
 								className="size-4 accent-brand"
 								onChange={() => {
 									if (couleur === option) return
@@ -2122,6 +2200,7 @@ function FicheEditionBloc({
 						max={REMPLISSAGE_MAXIMAL}
 						step={1}
 						value={remplissage}
+						disabled={lectureSeule}
 						aria-label={t('goals.edit.fill.slider')}
 						aria-describedby="fiche-bloc-remplissage-aide fiche-bloc-remplissage-etat"
 						className="grow accent-brand"
@@ -2138,6 +2217,7 @@ function FicheEditionBloc({
 						max={REMPLISSAGE_MAXIMAL}
 						step={1}
 						value={remplissage}
+						disabled={lectureSeule}
 						aria-label={t('goals.edit.fill.number')}
 						aria-describedby="fiche-bloc-remplissage-aide fiche-bloc-remplissage-etat"
 						className={[CLASSES_CONTROLE, 'w-[10ch] tabular-nums'].join(' ')}
@@ -2178,7 +2258,12 @@ function FicheEditionBloc({
 						id="fiche-bloc-lien"
 						data-testid="champ-lien"
 						value={bloc.channel_id ?? ''}
-						disabled={etatChannels.statut !== 'pret'}
+						/* DEUX CAUSES D'EXTINCTION, ET ELLES NE SE CONFONDENT PAS : la liste en cours
+						   de lecture (§5.22, il n'y a alors rien à choisir) et la lecture seule du
+						   tableau (§5.7.4, ligne b). La seconde s'AJOUTE à la première plutôt que de
+						   la remplacer — un `select` réactivé par l'arrivée de sa liste sur un tableau
+						   qu'on ne peut pas écrire annulerait l'état. */
+						disabled={etatChannels.statut !== 'pret' || lectureSeule}
 						aria-busy={etatChannels.statut === 'chargement'}
 						aria-describedby="fiche-bloc-lien-aide fiche-bloc-lien-etat"
 						className={[CLASSES_CONTROLE, 'grow min-w-[24ch] disabled:text-text-3'].join(' ')}
@@ -2229,6 +2314,8 @@ function FicheEditionBloc({
 							variante="secondaire"
 							taille="compacte"
 							data-testid="retirer-lien"
+							disabled={lectureSeule}
+							aria-describedby={lectureSeule ? 'objectifs-lecture-seule' : undefined}
 							onClick={() => void ecrireLien(null)}
 							className="gap-2"
 						>
@@ -2270,7 +2357,13 @@ function FicheEditionBloc({
 					variante="secondaire"
 					taille="compacte"
 					data-testid="supprimer-bloc"
-					disabled={confirmeSuppression}
+					/* DEUX CAUSES D'EXTINCTION QUI NE SE CONFONDENT PAS : la confirmation ouverte
+					   (§5.27, la commande reste montée pour ne pas faire sauter la hauteur du bloc)
+					   et la lecture seule du tableau (§5.7.4, ligne b). La commande RESTE RENDUE ET
+					   LISIBLE dans les deux cas — la masquer priverait le lecteur de savoir que ce
+					   geste existe (§5.29 ter). */
+					disabled={confirmeSuppression || lectureSeule}
+					aria-describedby={lectureSeule ? 'objectifs-lecture-seule' : undefined}
 					onClick={() => setConfirmeSuppression(true)}
 					className="gap-2 self-start"
 				>
@@ -2549,6 +2642,7 @@ function BlocCanevas({
 	bloc,
 	zoom,
 	edite,
+	lectureSeule,
 	traceArmee,
 	departDuTrace,
 	onEbauche,
@@ -2559,6 +2653,7 @@ function BlocCanevas({
 	readonly bloc: BlocObjectif
 	readonly zoom: number
 	readonly edite: boolean
+	readonly lectureSeule: boolean
 	readonly traceArmee: boolean
 	readonly departDuTrace: boolean
 	readonly onEbauche: (geometrie: Geometrie) => void
@@ -2611,6 +2706,10 @@ function BlocCanevas({
 
 	const armer = (mode: ModeGeste) => (evenement: EvenementPointeur<HTMLElement>) => {
 		if (evenement.button !== 0) return
+		// EN LECTURE SEULE, LE GLISSEMENT N'EST PAS ARMÉ (§5.7.4, ligne b). Le laisser courir
+		// donnerait à voir un bloc qui suit le doigt puis REVIENT à sa place au relâchement — un
+		// mouvement qui promet une écriture que la base refusera.
+		if (lectureSeule) return
 		if (mode === 'deplacement' && (evenement.target as HTMLElement).closest('a, button') !== null) return
 		evenement.preventDefault()
 		evenement.stopPropagation()
@@ -2651,6 +2750,10 @@ function BlocCanevas({
 		<article
 			data-testid="bloc-objectif"
 			data-bloc={bloc.id}
+			/* L'ATTRIBUT EST RENDU POUR QUE LA PREUVE MESURE L'ÉTAT plutôt que de le déduire de
+			   l'absence d'un effet : « rien ne bouge » est vrai aussi quand le geste a échoué pour
+			   une autre cause. */
+			data-lecture-seule={lectureSeule ? 'oui' : undefined}
 			tabIndex={0}
 			aria-label={etiquette}
 			/* LA CONSIGNE DU TRACÉ EST CITÉE PAR CHAQUE BLOC TANT QU'IL EST ARMÉ : un utilisateur au
@@ -2709,6 +2812,12 @@ function BlocCanevas({
 				// le channel, geste de la tranche 1 que ni la fiche ni le tracé ne doivent avaler.
 				if (evenement.key === 'Enter' || evenement.key === ' ') {
 					if ((evenement.target as HTMLElement).closest('a, button') !== null) return
+					// EN LECTURE SEULE, `ENTRÉE` OUVRE QUAND MÊME LA FICHE et `Espace` n'arme rien
+					// (§5.7.4, ligne b, `docs/DESIGN_SYSTEM.md` §5.29 ter). La fiche est la SEULE
+					// surface où le corps complet d'un bloc se lit — le canevas n'en montre qu'un
+					// extrait —, et la refuser rendrait la lecture plus pauvre pour empêcher une
+					// écriture : ce serait punir le lecteur d'un droit qu'il n'a pas demandé.
+					if (lectureSeule && evenement.key === ' ') return
 					// `Espace` fait défiler la région par défaut : sans ce `preventDefault`, armer un
 					// tracé emporterait le canevas d'un écran vers le bas.
 					evenement.preventDefault()
@@ -2717,6 +2826,11 @@ function BlocCanevas({
 				}
 				const direction = DIRECTIONS_CLAVIER[evenement.key]
 				if (direction === undefined) return
+				// EN LECTURE SEULE, LES FLÈCHES NE DÉPLACENT NI NE REDIMENSIONNENT (§5.7.4, ligne b).
+				// La touche n'est PAS avalée pour autant : sans `preventDefault`, elle retourne au
+				// navigateur, qui fait défiler la région — le seul usage clavier qui reste, et celui
+				// dont un lecteur a besoin.
+				if (lectureSeule) return
 				evenement.preventDefault()
 				const pas = evenement.shiftKey ? PAS_CLAVIER_FIN : PAS_CLAVIER
 				clavierEnCours.current = evenement.altKey ? 'taille' : 'deplacement'
@@ -2883,10 +2997,12 @@ function ConfirmationSuppressionFleche({
 
 function EquivalentTextuel({
 	lignes,
+	lectureSeule,
 	onChangerDirection,
 	onSupprimerFleche,
 }: {
 	readonly lignes: readonly LigneDiagramme[]
+	readonly lectureSeule: boolean
 	readonly onChangerDirection: (idFleche: string, direction: DirectionFleche) => void
 	readonly onSupprimerFleche: (idFleche: string) => void
 }) {
@@ -2952,7 +3068,14 @@ function EquivalentTextuel({
 									id={`direction-fleche-${ligne.id}`}
 									data-testid="direction-fleche"
 									value={ligne.direction}
-									className="min-h-[var(--size-target)] px-2 rounded-sm border border-border bg-surface text-sm text-ink"
+									/* LA LECTURE SEULE ÉTEINT, L'EXTRÉMITÉ MASQUÉE NON, et l'alinéa
+									   ci-dessus dit pourquoi : la première est une capacité que la
+									   base REND sur la ligne du tableau, la seconde serait une règle
+									   d'écriture rejouée à l'écran. Les deux se ressemblent et ne se
+									   confondent pas (§5.7, `docs/DESIGN_SYSTEM.md` §5.29 ter). */
+									disabled={lectureSeule}
+									aria-describedby={lectureSeule ? 'objectifs-lecture-seule' : undefined}
+									className="min-h-[var(--size-target)] px-2 rounded-sm border border-border bg-surface text-sm text-ink disabled:text-text-3"
 									onChange={(evenement) =>
 										onChangerDirection(ligne.id, evenement.target.value as DirectionFleche)
 									}
@@ -2975,7 +3098,8 @@ function EquivalentTextuel({
 									taille="compacte"
 									data-testid="supprimer-fleche"
 									aria-label={t('goals.link.delete.aria', parametres)}
-									disabled={confirme === ligne.id}
+									disabled={confirme === ligne.id || lectureSeule}
+									aria-describedby={lectureSeule ? 'objectifs-lecture-seule' : undefined}
 									onClick={() => setConfirme(ligne.id)}
 									className="gap-2"
 								>

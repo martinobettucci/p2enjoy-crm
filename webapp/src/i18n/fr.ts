@@ -585,6 +585,15 @@ export const fr = {
 	'goals.write.refused.invalid': 'La valeur envoyée a été refusée.',
 	'goals.write.refused.unavailable': 'L’enregistrement n’a pas abouti. Réessayez.',
 
+	// --- Objectifs, tranche 3 : l'état de LECTURE SEULE — CRM-083, docs/SPEC-goals.md §5.7 -----
+	// LA PHRASE DIT CE QUE LE TABLEAU PERMET AVANT CE QU'IL REFUSE (docs/DESIGN_SYSTEM.md
+	// §5.29 ter) : l'ordre inverse se lit comme un reproche. Elle ne nomme AUCUN rôle — ce n'est
+	// pas un rôle qui produit cet état, mais la capacité que la base rend sur la ligne du tableau
+	// (INC-170, décision 546) —, et elle ne promet aucune démarche : qui accorde ce droit dépend du
+	// workspace, et l'écran l'ignore.
+	'goals.readonly.notice':
+		'Vous consultez ce tableau. Vous n’avez pas le droit d’y écrire : les commandes de modification restent visibles mais sont inactives.',
+
 	// --- Objectifs, tranche 2b-1 : le contenu — CRM-083, docs/SPEC-goals.md §3 et §5.5 --------
 	// Chaque champ s'enregistre POUR LUI-MÊME (docs/DESIGN_SYSTEM.md §5.7 ter) : la fiche n'a donc
 	// aucun libellé de bouton « Enregistrer », et il ne faut pas en ajouter un.
