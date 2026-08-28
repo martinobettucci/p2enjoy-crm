@@ -27166,9 +27166,16 @@ Les seules conservées sont celles de cette tranche : `lecture-seule-{canevas-14
 xl-1440, lg-1152, md-900, sm-390}` et les quatre des scénarios révisés. Les deux premières ont été
 **regardées**, et c'est l'observation qui a trouvé les deux défauts de la décision 547.
 
+**TROIS AUTRES HARNAIS ONT ÉTÉ REJOUÉS DERRIÈRE CE CHANGEMENT, ET LES TROIS SONT VERTS.**
+`scripts/verify-harness.sh --rapide` rend **31 contrôles, aucune anomalie** — il CERTIFIE les quatre
+compteurs révisés ci-dessus, et il a bien rendu son verdict cette fois, en un peu moins d'une heure ;
+`scripts/verify-objectifs.sh --rapide` (le modèle et les politiques de `CRM-082`, que la migration 71
+approche sans y toucher) rend **38 contrôles, aucune anomalie** ; `scripts/verify-migrations.sh` rend
+**25 contrôles, aucune anomalie**.
+
+**CE QUI N'A PAS ÉTÉ EXÉCUTÉ, ET IL FAUT LE DIRE** : la série des `scripts/verify-*.sh` en entier. Le
+dépôt en porte **soixante-dix-huit** ; **quatre** l'ont été — celui de l'unité, celui des compteurs,
+celui du modèle des objectifs et celui des migrations —, c'est-à-dire ceux que ce changement touche.
+
 **Où reprendre.** Inchangé depuis la décision 547 : `CRM-084` porte encore du comportement, et
-**INC-183** reste l'arbitrage suivant sur ce chemin. `scripts/verify-harness.sh --rapide` a été
-lancé derrière ce changement et **n'a pas rendu son verdict dans la fenêtre de la session** — il
-dépasse le plafond depuis que `e2e:ui` compte plus de six cents scénarios (constat déjà porté au
-backlog par la tranche 2 g) ; ses quatre compteurs ont en revanche été révisés sur des valeurs
-COMPTÉES par `--list` et par `npm run test:sql`.
+**INC-183** reste l'arbitrage suivant sur ce chemin.
