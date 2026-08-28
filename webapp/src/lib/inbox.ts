@@ -499,6 +499,61 @@ export async function classerMessage(
 	}
 }
 
+// =================================================================================================
+// Le déclassement — `CRM-055` tranche 2, docs/SPEC-mail-subsystem.md §16.5
+// =================================================================================================
+
+/**
+ * Retire un message de l'affaire où il était classé.
+ *
+ * CE MODULE N'ANTICIPE AUCUN DROIT (`CLAUDE.md` §10). Il envoie, puis TRADUIT ce qu'il reçoit : la
+ * règle vit dans `public.unclassify_message`, qui exige LES DEUX MÊMES droits que le classement —
+ * voir le message, écrire la card —, jamais ici. Aucune commande n'est éteinte d'avance selon le
+ * rôle (`docs/DESIGN_SYSTEM.md` §5.3, §5.13, §5.16, §5.21, §5.23, §5.25, §5.27, §5.28).
+ *
+ * LE DICTIONNAIRE DES REFUS EST CELUI DU CLASSEMENT, ET C'EST VOULU : les deux gestes opposent les
+ * deux mêmes refus de droit, indistinguables à dessein (§7 des permissions). `card_indisponible`
+ * n'y est simplement jamais rendu — le déclassement ne vise aucune card, il quitte celle où le
+ * message se trouve —, et le nommer dans un second dictionnaire aurait inventé un refus que la
+ * fonction ne lève pas.
+ *
+ * ELLE REND `{ refus: null, cardQuittee }` EN CAS DE SUCCÈS, et `cardQuittee` peut valoir `null` :
+ * c'est la ligne e du §16.5.2, un message déjà non classé. L'appelant a besoin de cette valeur
+ * parce que le geste peut lui retirer la visibilité du message dans le même mouvement (§16.5.2,
+ * mesure 2) : une relecture derrière l'appel ne lui apprendrait plus rien.
+ */
+export type ResultatDeclassement =
+	| { readonly refus: null; readonly cardQuittee: string | null }
+	| { readonly refus: RefusClassement; readonly cardQuittee: null }
+
+export async function declasserMessage(
+	client: ClientCrm | null,
+	idMessage: string,
+): Promise<ResultatDeclassement> {
+	if (client === null) {
+		return { refus: { nature: 'unknown', detail: 'configuration_absente' }, cardQuittee: null }
+	}
+	try {
+		const reponse = await client.rpc('unclassify_message', { p_message_id: idMessage })
+		if (reponse.error !== null) {
+			return {
+				refus: classerRefusClassement(reponse.status, reponse.error.code, reponse.error.message),
+				cardQuittee: null,
+			}
+		}
+		return { refus: null, cardQuittee: reponse.data ?? null }
+	} catch (cause) {
+		return {
+			refus: classerRefusClassement(
+				undefined,
+				undefined,
+				cause instanceof Error ? cause.message : String(cause),
+			),
+			cardQuittee: null,
+		}
+	}
+}
+
 /**
  * Une URL de téléchargement, valable quelques minutes.
  *

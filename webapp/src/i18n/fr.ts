@@ -194,6 +194,26 @@ export const fr = {
 	'inbox.classify.refus.card_indisponible': 'Cette affaire est archivée ou en corbeille : elle ne reçoit pas de courrier.',
 	'inbox.classify.refus.network': "Le classement n'a pas pu être envoyé. Vérifiez votre connexion, puis réessayez.",
 	'inbox.classify.refus.unknown': "Le classement n'a pas abouti.",
+	// --- Le RETRAIT d'un message de son affaire — CRM-055 tranche 2 -------------------------
+	// docs/SPEC-mail-subsystem.md §16.5.5, docs/DESIGN_SYSTEM.md §5.3 quater.
+	//
+	// UN DICTIONNAIRE DISTINCT DE CELUI DU CLASSEMENT, ET C'EST LA LEÇON DE LA DÉCISION 535 :
+	// réemployer « Vous ne pouvez pas classer ce message dans cette affaire » sur un RETRAIT
+	// décrirait le geste inverse de celui qui vient d'être tenté. Un refus qui nomme mal le geste
+	// est pire qu'un refus muet — il envoie l'utilisateur corriger ce qui n'est pas en cause.
+	//
+	// `card_indisponible` N'EST PAS TRADUIT ICI, ET C'EST VOULU : `unclassify_message` ne vise
+	// aucune card — elle quitte celle où le message se trouve — et ne lève donc jamais `23514`.
+	// Écrire une phrase pour un refus que la fonction ne rend pas inventerait un comportement.
+	'inbox.unclassify.open': 'Retirer de l’affaire',
+	'inbox.unclassify.confirm': 'Ce message quittera l’affaire ci-dessus. Rien n’est supprimé : il repassera dans les messages non classés.',
+	'inbox.unclassify.consequence': 'S’il n’est arrivé dans aucune boîte que vous suivez, vous ne le verrez plus après ce retrait.',
+	'inbox.unclassify.submit': 'Retirer',
+	'inbox.unclassify.cancel': 'Annuler',
+	'inbox.unclassify.working': 'Retrait…',
+	'inbox.unclassify.refus.forbidden': 'Vous ne pouvez pas retirer ce message de cette affaire.',
+	'inbox.unclassify.refus.network': "Le retrait n'a pas pu être envoyé. Vérifiez votre connexion, puis réessayez.",
+	'inbox.unclassify.refus.unknown': "Le retrait n'a pas abouti.",
 	// --- La SUGGESTION de classement — CRM-060 sous-tranche 2 bis --------------------------
 	// docs/SPEC-contacts.md §8.8.5, docs/DESIGN_SYSTEM.md §5.4 ter.
 	// LA RÈGLE EST ÉCRITE EN TOUTES LETTRES : la colonne `suggested_card_id` n'est écrite que par

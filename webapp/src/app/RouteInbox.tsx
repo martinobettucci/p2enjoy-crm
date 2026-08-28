@@ -18,7 +18,11 @@
 //       désigne et ce que le panneau de lecture ouvre), §16.16.5 (le sommeil transposé au fil),
 //       §16.16.6 (les compteurs de l'arborescence ne changent pas) ;
 //       docs/DESIGN_SYSTEM.md §5.4 bis
-// @spec docs/JOURNAL.md décision 327
+// @spec CRM-055 (docs/BACKLOG.md) — tranche 2 : le DÉCLASSEMENT, c'est-à-dire retirer un message
+//       de l'affaire où il était classé, docs/SPEC-mail-subsystem.md §16.5.5 (la surface, sa
+//       confirmation dans le flux et la conséquence nommée), §16.5.2 (le contrat traduit) ;
+//       docs/DESIGN_SYSTEM.md §5.3 quater (confirmation dans le flux, jamais en modale)
+// @spec docs/JOURNAL.md décision 327, décision 536
 //
 // TROIS PANNEAUX SUR GRAND ÉCRAN, UNE PILE EN DESSOUS DE 1024 PX — et la pile est une vraie pile,
 // non trois colonnes rétrécies : à cette largeur, trois colonnes ne montreraient ni un objet, ni un
@@ -28,7 +32,7 @@
 // passer (§18.1) ; l'écran ne filtre rien et ne devine rien.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronDown, ChevronRight, Inbox, Moon, Paperclip, Download, Sparkles, Sun } from 'lucide-react'
+import { ChevronDown, ChevronRight, Inbox, MailX, Moon, Paperclip, Download, Sparkles, Sun } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router'
 import { Button } from '../components/ui/Button'
 import { LiveRegion } from '../components/ui/LiveRegion'
@@ -39,6 +43,7 @@ import type { EtatAsync } from '../lib/async'
 import {
 	MEME_SELECTION,
 	classerMessage,
+	declasserMessage,
 	lireCardsClassables,
 	lireCheminCard,
 	lireDossierDuMessage,
@@ -595,6 +600,24 @@ const LIBELLE_REFUS: Readonly<Record<NatureRefusClassement, CleTraduction>> = {
 	unknown: 'inbox.classify.refus.unknown',
 }
 
+/**
+ * Les refus d'un RETRAIT, et leur dictionnaire est DISTINCT de celui du classement.
+ *
+ * C'est la leçon de la décision 535, payée sur les objectifs : réemployer le texte du geste inverse
+ * décrit à l'utilisateur ce qu'il n'a pas tenté, et l'envoie corriger ce qui n'est pas en cause.
+ *
+ * `card_indisponible` N'EST PAS LEVÉ PAR `unclassify_message` — elle ne vise aucune card, elle
+ * quitte celle où le message se trouve. Il est néanmoins traduit, parce que la table est totale sur
+ * `NatureRefusClassement` : un repli silencieux sur une clé manquante serait pire qu'une phrase
+ * générique, et le classificateur est partagé par les deux gestes.
+ */
+const LIBELLE_REFUS_RETRAIT: Readonly<Record<NatureRefusClassement, CleTraduction>> = {
+	forbidden: 'inbox.unclassify.refus.forbidden',
+	card_indisponible: 'inbox.unclassify.refus.unknown',
+	network: 'inbox.unclassify.refus.network',
+	unknown: 'inbox.unclassify.refus.unknown',
+}
+
 function FormulaireClassement({
 	message,
 	onClasse,
@@ -699,6 +722,111 @@ function FormulaireClassement({
 				</Button>
 				<Button variante="secondaire" onClick={() => setOuvert(false)}>
 					{t('inbox.classify.cancel')}
+				</Button>
+			</div>
+		</div>
+	)
+}
+
+/**
+ * Retirer un message de l'affaire où il est classé — `CRM-055` tranche 2, §16.5.5.
+ *
+ * AUCUNE COMMANDE N'EST ÉTEINTE D'AVANCE SELON LE RÔLE (`docs/DESIGN_SYSTEM.md` §5.3, §5.13,
+ * §5.16, §5.21, §5.23, §5.25, §5.27, §5.28). L'écran offre, envoie, et TRADUIT le refus : la règle
+ * vit dans `public.unclassify_message`, jamais ici.
+ *
+ * LA CONFIRMATION VIT DANS LE FLUX, JAMAIS EN MODALE — le §5 n'en déclare aucune, et le §5.3 quater
+ * a déjà tranché ce cas pour la mise à la corbeille. La commande qui l'ouvre est SECONDAIRE ; c'est
+ * le bouton de la confirmation qui porte la teinte de danger : elle annonce le geste qu'on est sur
+ * le point de commettre, pas celui qu'on envisage.
+ *
+ * ELLE NOMME UNE CONSÉQUENCE, ET C'EST TOUT SON OBJET (§16.5.2, mesure 2). Le geste peut retirer à
+ * son auteur le seul chemin par lequel il voyait ce message — mesuré sur la pile : le `bizdev` le
+ * voit par sa CARD SEULE, et déclassé il ne le voit plus. La phrase énonce la CONDITION plutôt que
+ * de deviner un rôle : l'écran ne sait pas de quelles boîtes l'appelant répond, et l'inventer
+ * ferait passer une décision de la base pour une décision d'écran (`CLAUDE.md` §10).
+ */
+function CommandeRetrait({
+	message,
+	onRetire,
+}: {
+	readonly message: MessageComplet
+	readonly onRetire: () => void
+}) {
+	const [ouverte, setOuverte] = useState(false)
+	const [envoi, setEnvoi] = useState(false)
+	const [refus, setRefus] = useState<string | null>(null)
+	const commande = useRef<HTMLButtonElement | null>(null)
+	const confirmer = useRef<HTMLButtonElement | null>(null)
+
+	// LE FOCUS ENTRE DANS LA CONFIRMATION (§5.13) : sans cela le clavier resterait sur un bouton
+	// qui vient de disparaître et repartirait du début du document.
+	useEffect(() => {
+		if (ouverte) confirmer.current?.focus()
+	}, [ouverte])
+
+	const fermer = useCallback(() => {
+		setOuverte(false)
+		setRefus(null)
+		// ET IL REVIENT À LA COMMANDE QUI L'AVAIT OUVERTE : annuler au clavier ne doit pas perdre
+		// la place de l'utilisateur dans le document.
+		commande.current?.focus()
+	}, [])
+
+	const retirer = useCallback(async () => {
+		setEnvoi(true)
+		const resultat = await declasserMessage(clientCrm, message.id)
+		setEnvoi(false)
+		if (resultat.refus !== null) {
+			setRefus(t(LIBELLE_REFUS_RETRAIT[resultat.refus.nature]))
+			return
+		}
+		setRefus(null)
+		setOuverte(false)
+		onRetire()
+	}, [message.id, onRetire])
+
+	if (!ouverte) {
+		return (
+			<div className="border-t border-border pt-3">
+				<Button
+					ref={commande}
+					variante="secondaire"
+					onClick={() => setOuverte(true)}
+					data-testid="inbox-retirer"
+				>
+					<MailX aria-hidden="true" className="size-4" />
+					{t('inbox.unclassify.open')}
+				</Button>
+			</div>
+		)
+	}
+
+	return (
+		<div className="flex flex-col gap-2 border-t border-border pt-3" data-testid="inbox-retrait-confirmation">
+			{/* LE LIBELLÉ DE LA COMMANDE NOMMAIT LE GESTE ; C'EST LA CONFIRMATION QUI NOMME L'OBJET
+			    (§6). L'objet du message est celui qui est ouvert, donc déjà sous les yeux : c'est
+			    l'AFFAIRE quittée que cette phrase doit nommer, et elle le fait par la pilule
+			    au-dessus. */}
+			<p className="text-sm text-ink">{t('inbox.unclassify.confirm')}</p>
+			<p className="text-sm text-text-2">{t('inbox.unclassify.consequence')}</p>
+			{refus !== null ? (
+				<p role="alert" className="text-sm text-danger">
+					{refus}
+				</p>
+			) : null}
+			<div className="flex gap-2">
+				<Button
+					ref={confirmer}
+					variante="destructif"
+					disabled={envoi}
+					onClick={() => void retirer()}
+					data-testid="inbox-retirer-valider"
+				>
+					{envoi ? t('inbox.unclassify.working') : t('inbox.unclassify.submit')}
+				</Button>
+				<Button variante="secondaire" onClick={fermer} data-testid="inbox-retirer-annuler">
+					{t('inbox.unclassify.cancel')}
 				</Button>
 			</div>
 		</div>
@@ -1302,6 +1430,12 @@ function PanneauMessage({
 									repondA={etat.donnees.id}
 									onEnvoye={onRepondu}
 								/>
+								{/* LE RETRAIT EST EN BAS, ET SÉPARÉ (§5.3 quater) : ce n'est pas ce qu'on
+								    vient faire sur un message. Il réemploie `onClasse` parce que les deux
+								    gestes demandent la MÊME chose à l'écran — relire l'arborescence, la
+								    liste et le message —, et qu'un second rappel identique n'aurait fait
+								    que doubler le chemin. */}
+								<CommandeRetrait message={etat.donnees} onRetire={onClasse} />
 							</div>
 						) : (
 							<PiedNonClasse message={etat.donnees} onClasse={onClasse} />

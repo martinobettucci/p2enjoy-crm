@@ -3091,6 +3091,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      unclassify_message: { Args: { p_message_id: string }; Returns: string }
       upsert_mail_inbound_account: {
         Args: {
           p_backfill_months?: number

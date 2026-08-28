@@ -880,9 +880,15 @@ type _vueDerivationColonnes = Expect<
 // écran. C'est ce que les cinq entrées ci-dessus réclamaient : la régénération ne suit plus
 // l'arrivée d'un appelant, elle suit l'arrivée de la FONCTION. La palette qui l'appellera est la
 // tranche 2, et elle trouvera son type déjà là. Quarante-cinq devient QUARANTE-SIX.
-type _lesQuaranteSixFonctions = Expect<
+//
+// `0070` de `CRM-055` TRANCHE 2 ajoute `unclassify_message`, et le témoin la voit dans le même
+// changement, pour la SIXIÈME fois consécutive. Elle est l'exact inverse de `classify_message`,
+// déclarée quelques lignes plus bas depuis `CRM-055` : les deux gestes d'un même couple sont
+// désormais tous deux dans le contrat de types. Quarante-six devient QUARANTE-SEPT.
+type _lesQuaranteSeptFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
+    | 'unclassify_message'
     | 'armer_sequence_relance'
     | 'cards_figees'
     | 'mentionnables'
@@ -1118,7 +1124,7 @@ export type AssertionsDuContratDeTypes = [
   _relationsWorkspaceMembers,
   _laSeuleVue,
   _vueDerivationColonnes,
-  _lesQuaranteSixFonctions,
+  _lesQuaranteSeptFonctions,
   _signatureReelSaisissable,
   _retourReelSaisissable,
   _signatureArborescence,
