@@ -983,11 +983,13 @@ export async function deplacerTableau(
  * `archived_at` sert à masquer, jamais à ordonner ni à mesurer une durée — aucune règle du produit
  * ne dépend de sa valeur exacte, seule sa nullité compte.
  *
- * LE DÉSARCHIVAGE N'EST PAS OFFERT, ET C'EST UNE LIMITE NOMMÉE plutôt qu'un oubli : le §5.1 ne
+ * ~~LE DÉSARCHIVAGE N'EST PAS OFFERT, ET C'EST UNE LIMITE NOMMÉE plutôt qu'un oubli : le §5.1 ne
  * décrit qu'une liste des tableaux NON archivés, et le §3 ne nomme que « archiver ». Ajouter ici un
  * paramètre qui rendrait la colonne à `null` poserait une capacité qu'aucun écran n'atteint — du
- * code mort dès sa première ligne. La confirmation de l'écran dit donc en toutes lettres que le
- * tableau quitte la liste.
+ * code mort dès sa première ligne.~~ **RÉVISÉ le 2026-08-28, tranche 2 h** : l'écran existe
+ * désormais, et le motif tombe avec sa prémisse. Voir `desarchiverTableau` ci-dessous. La
+ * confirmation de l'écran dit toujours que le tableau quitte la liste — mais elle n'a plus à
+ * laisser croire que c'est sans retour.
  *
  * Ne lève jamais.
  */
@@ -997,6 +999,39 @@ export async function archiverTableau(
 	maintenant: () => string = () => new Date().toISOString(),
 ): Promise<ResultatEcritureTableau> {
 	return modifierTableau(client, idTableau, { archived_at: maintenant() })
+}
+
+/**
+ * Reprend un tableau archivé — l'inverse exact d'`archiverTableau`.
+ *
+ * @spec CRM-083 (docs/BACKLOG.md) — tranche 2 h, la reprise d'un tableau archivé
+ * @spec docs/SPEC-goals.md §5.6.1 mesures 4, 5 et 6 ; §5.6.2 lignes f, g et h
+ *
+ * UN TABLEAU S'ARCHIVE AU LIEU DE SE SUPPRIMER (§2.1) : sans ce geste, l'archivage était SANS
+ * RETOUR, c'est-à-dire une perte silencieuse au sens de `CLAUDE.md` §18, sur une donnée que la base
+ * n'a jamais cessé de porter.
+ *
+ * AUCUN CAS `doublon` N'EST POSSIBLE ICI, ET C'EST MESURÉ DES DEUX CÔTÉS (§5.6.1, mesures 2 et 6) :
+ * `goal_boards_workspace_name_key` est un index TOTAL, sans clause `where archived_at is null`.
+ * L'archivage n'a donc jamais libéré le nom — reprendre celui d'un tableau archivé rend
+ * `409 / 23505` —, et le rendre ne peut rien heurter. Le dictionnaire fermé des refus n'a pas à
+ * gagner de cas sur ce geste, et une assertion le FIGE plutôt que ce commentaire ne l'affirme.
+ *
+ * LE REFUS DE LA LECTRICE N'EST PAS UN `403`, et le contrat le dit parce que la mesure l'a établi
+ * (mesure 4) : `goal_boards_maj_membre_ecrivant` refuse par sa clause `using`, donc PostgREST rend
+ * `200` et zéro ligne. C'est l'issue `sans-effet` que `modifierTableau` distingue déjà, et que
+ * l'écran traduit en `interdit` — jamais en recopiant un corps de serveur.
+ *
+ * LA POSITION EST CONSERVÉE (mesure 5) : le tableau revient là où il était, et rien n'est à
+ * recalculer. `position` n'est pas rendue à zéro ni repoussée en fin de liste.
+ *
+ * Ne lève jamais.
+ */
+export async function desarchiverTableau(
+	client: ClientCrm,
+	idTableau: string,
+): Promise<ResultatEcritureTableau> {
+	return modifierTableau(client, idTableau, { archived_at: null })
 }
 
 /**

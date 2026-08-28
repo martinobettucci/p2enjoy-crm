@@ -21,10 +21,16 @@ import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './a
 import type { Database } from './database.types'
 import type { ClientCrm } from './supabase'
 
-/** Ce que la liste des tableaux a besoin de savoir, et rien de plus (§5.1). */
+/**
+ * Ce que la liste des tableaux a besoin de savoir, et rien de plus (§5.1).
+ *
+ * `archived_at` est LU depuis la tranche 2 h (§5.6.2, ligne c) : la liste ne peut pas porter la
+ * mention « Archivé » ni retirer les commandes d'une ligne masquée si elle ignore laquelle l'est.
+ * La colonne était déjà écrite par `archiverTableau` ; elle est désormais aussi relue.
+ */
 export type TableauObjectifs = Pick<
 	Database['public']['Tables']['goal_boards']['Row'],
-	'id' | 'name' | 'description' | 'position'
+	'id' | 'name' | 'description' | 'position' | 'archived_at'
 >
 
 /** Un tableau tel que la liste le rend : ses attributs, et le nombre de blocs LISIBLES (§5.1). */
@@ -68,7 +74,7 @@ export type ContenuTableau = {
 	readonly fleches: readonly FlecheObjectif[]
 }
 
-export const COLONNES_TABLEAU = 'id, name, description, position'
+export const COLONNES_TABLEAU = 'id, name, description, position, archived_at'
 
 /**
  * Colonnes du bloc, avec la destination EMBARQUÉE plutôt que relue.
@@ -144,17 +150,34 @@ export function lienPerdu(bloc: BlocObjectif): boolean {
 	return bloc.channel_id !== null && !lienOuvrable(bloc)
 }
 
-/** Lit les tableaux non archivés du workspace, dans l'ordre d'affichage du §2.1. */
+/**
+ * Lit les tableaux du workspace, dans l'ordre d'affichage du §2.1.
+ *
+ * @spec CRM-083 (docs/BACKLOG.md) — tranche 2 h, la reprise d'un tableau archivé
+ * @spec docs/SPEC-goals.md §5.1, §5.6.2 lignes a, b et i
+ *
+ * `inclureArchives` VAUT `false` PAR DÉFAUT, et ce défaut est le contrat : le §5.1 décrit une liste
+ * des tableaux non archivés, et tout appelant qui ne demande rien doit continuer à l'obtenir. Le
+ * paramètre ÉLARGIT la liste, il ne la filtre pas — cocher la case ne montre pas « les archivés »,
+ * elle montre « aussi les archivés ». C'est la forme de `lireTracksAdministrables` (`CRM-075`), et
+ * deux listes qui font la même chose la font de la même façon.
+ *
+ * ÉLARGIR N'OUVRE RIEN, ET C'EST MESURÉ (§5.6.1, mesure 3) : `goal_boards_lecture_membre` ne regarde
+ * que l'appartenance au workspace et IGNORE `archived_at`. La lectrice lit déjà les tableaux
+ * archivés par la vraie route. Le masquage est donc un choix de CE client, jamais une règle d'accès,
+ * et le lever ne demande ni migration, ni politique, ni privilège.
+ */
 export async function lireTableaux(
 	client: ClientCrm,
 	idWorkspace: string,
+	inclureArchives = false,
 ): Promise<EtatAsync<readonly TableauListe[]>> {
 	try {
-		const reponse = await client
+		const filtre = client
 			.from('goal_boards')
 			.select(COLONNES_TABLEAU)
 			.eq('workspace_id', idWorkspace)
-			.is('archived_at', null)
+		const reponse = await (inclureArchives ? filtre : filtre.is('archived_at', null))
 			.order('position')
 			.order('name')
 		if (reponse.error !== null) {
@@ -448,21 +471,26 @@ export function ordreTabulation(blocs: readonly BlocObjectif[]): readonly BlocOb
 export function useTableaux(
 	client: ClientCrm | null,
 	idWorkspace: string | null,
+	inclureArchives = false,
 ): { readonly etat: EtatAsync<readonly TableauListe[]>; readonly recharger: () => void } {
 	const [etat, setEtat] = useState<EtatAsync<readonly TableauListe[]>>(enChargement)
 	const [tentative, setTentative] = useState(0)
 	const courant = useRef(0)
 
+	// `inclureArchives` ENTRE DANS LES DÉPENDANCES, et c'est ce qui fait de la case un geste : basculer
+	// la case relit la liste, elle ne filtre pas côté client une liste déjà lue. Filtrer localement
+	// aurait montré les archivés sans jamais les avoir demandés au serveur — la liste rendue ne serait
+	// plus celle que le backend consent, et le compte de blocs LISIBLES du §5.1 perdrait son sens.
 	useEffect(() => {
 		if (client === null || idWorkspace === null) return
 		const rang = ++courant.current
 		setEtat((precedent) =>
 			precedent.statut === 'pret' ? precedent : enChargement<readonly TableauListe[]>(),
 		)
-		void lireTableaux(client, idWorkspace).then((resultat) => {
+		void lireTableaux(client, idWorkspace, inclureArchives).then((resultat) => {
 			if (rang === courant.current) setEtat(resultat)
 		})
-	}, [client, idWorkspace, tentative])
+	}, [client, idWorkspace, inclureArchives, tentative])
 
 	const recharger = useCallback(() => setTentative((precedente) => precedente + 1), [])
 	return { etat, recharger }
