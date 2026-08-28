@@ -343,15 +343,28 @@ function ListeTableaux({
 		setFocusARendre(null)
 	}, [focusARendre])
 
-	/** Traduit une issue d'écriture en mention, et recharge la liste quand elle a mordu. */
+	/**
+	 * Traduit une issue d'écriture en mention, et recharge la liste quand elle a mordu.
+	 *
+	 * LE TEXTE DU « SANS-EFFET » EST PARAMÉTRABLE DEPUIS LA TRANCHE 2 h, ET C'EST UN DÉFAUT TROUVÉ
+	 * EN REGARDANT UNE CAPTURE (`CLAUDE.md` §16). Le texte unique disait « le tableau a peut-être
+	 * été ARCHIVÉ entre-temps », ce qui explique correctement un zéro-ligne sur un renommage ou un
+	 * archivage — mais devient absurde sur une REPRISE, où le tableau est archivé par définition :
+	 * c'est même ce que l'utilisateur tente de défaire. Aucune assertion ne l'attrapait, le scénario
+	 * de la ligne h ne vérifiant que l'absence du texte de succès.
+	 */
 	const traiter = useCallback(
-		(resultat: ResultatEcritureTableau | ResultatCreationTableau, succes: string) => {
+		(
+			resultat: ResultatEcritureTableau | ResultatCreationTableau,
+			succes: string,
+			sansEffet: string = t('goals.board.write.noeffect'),
+		) => {
 			if (resultat.statut === 'refus') {
 				setMessage({ ton: 'refus', texte: texteRefusTableau(resultat.refus) })
 				return false
 			}
 			if (resultat.statut === 'sans-effet') {
-				setMessage({ ton: 'refus', texte: t('goals.board.write.noeffect') })
+				setMessage({ ton: 'refus', texte: sansEffet })
 				return false
 			}
 			setMessage({ ton: 'succes', texte: succes })
@@ -431,7 +444,7 @@ function ListeTableaux({
 		async (id: string) => {
 			setMessage({ ton: 'attente', texte: t('goals.write.saving') })
 			const resultat = await desarchiverTableau(client, id)
-			traiter(resultat, t('goals.board.unarchived'))
+			traiter(resultat, t('goals.board.unarchived'), t('goals.board.unarchive.noeffect'))
 		},
 		[client, traiter],
 	)

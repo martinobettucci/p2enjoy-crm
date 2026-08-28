@@ -1832,10 +1832,16 @@ describe('reprise d’un tableau archivé — §5.6', () => {
 		await act(async () => {
 			fireEvent.click(commande)
 		})
+		// LE TEXTE EST CELUI DE LA REPRISE, et l'assertion l'exige nommément : le texte générique
+		// invoquait « le tableau a peut-être été ARCHIVÉ entre-temps », absurde sur un geste dont
+		// tout l'objet est de défaire cet archivage. Défaut vu à la capture, pas à la lecture.
 		await waitFor(() =>
 			expect(screen.getByTestId('mention-ecriture').textContent).toContain(
-				fr['goals.board.write.noeffect'],
+				fr['goals.board.unarchive.noeffect'],
 			),
+		)
+		expect(screen.getByTestId('mention-ecriture').textContent).not.toContain(
+			fr['goals.board.write.noeffect'],
 		)
 		// La ligne reste archivée : rien n'a été enregistré, et l'écran ne fait pas semblant.
 		expect(screen.getByTestId('tableau-objectifs-archive')).toBeTruthy()

@@ -32,6 +32,26 @@ const TABLEAU = 'Objectifs du trimestre'
 const BLOC_MASQUE = 'Gagner un grand compte'
 const BLOC_LIBRE = 'Doubler le pipeline commercial'
 const BLOC_LIE = 'Livrer la refonte du site vitrine'
+/** Le tableau ARCHIVÉ du seed — section 8 terdecies, `docs/SPEC-goals.md` §5.6. */
+const TABLEAU_ARCHIVE = 'Objectifs 2025 (clos)'
+
+/**
+ * Remet le tableau du seed ARCHIVÉ, par la clé de service.
+ *
+ * Sans cette remise, un scénario qui reprend le tableau laisserait la case « Afficher les
+ * archivés » vide pour l'exécution suivante, et les scénarios de lecture de cette tranche
+ * dériveraient d'un passage à l'autre. Le seed sort donc INTACT, comme aux tranches précédentes.
+ */
+async function remettreArchive(): Promise<void> {
+	await fetch(
+		`${URL_API}/rest/v1/goal_boards?name=eq.${encodeURIComponent(TABLEAU_ARCHIVE)}`,
+		{
+			method: 'PATCH',
+			headers: { ...enTetesService(), 'Content-Type': 'application/json' },
+			body: JSON.stringify({ archived_at: '2026-01-15T09:00:00Z' }),
+		},
+	)
+}
 
 async function connecter(page: Page, email: string): Promise<void> {
 	await page.goto('/connexion')
@@ -1405,5 +1425,152 @@ test.describe('clavier des gestes d’administration — CRM-083 tranche 2g', ()
 
 		// Rien n'a été écrit : quatre ouvertures, quatre renoncements.
 		expect((await tableauEnBase(TABLEAU_JETABLE))?.archived_at).toBeNull()
+	})
+})
+
+/**
+ * La reprise d'un tableau archivé — CRM-083 tranche 2 h, `docs/SPEC-goals.md` §5.6.
+ *
+ * DESCRIBE À PART, ET C'EST LA REMISE EN ÉTAT QUI L'EXIGE. Ces scénarios désarchivent le tableau
+ * du seed ; sans une remise INCONDITIONNELLE, un scénario interrompu le laisserait vivant, la case
+ * « Afficher les archivés » ne montrerait plus rien à l'exécution suivante, et les scénarios de
+ * lecture de cette tranche dériveraient d'un passage à l'autre.
+ *
+ * CE DÉFAUT A ÉTÉ MESURÉ, PAS PRÉVU : la remise, d'abord écrite en FIN DE CORPS du scénario de
+ * reprise, n'a pas eu lieu quand ce scénario a échoué — et les deux suivants ont échoué à leur tour
+ * sur un décor qu'ils n'avaient pas cassé. C'est le motif même pour lequel `e2e/api/objectifs.spec.ts`
+ * détruit ses fixtures « inconditionnellement ».
+ */
+test.describe('reprise d’un tableau archivé — CRM-083 tranche 2 h', () => {
+	// `afterEach` ET NON `afterAll`, ET LA DIFFÉRENCE A ÉTÉ MESURÉE : avec `afterAll`, le scénario
+	// de la ligne g désarchivait le tableau et le scénario de la ligne h, joué ensuite, ne trouvait
+	// plus rien à reprendre — il échouait sur un décor qu'il n'avait pas cassé. Chaque scénario rend
+	// donc le produit dans l'état où il l'a trouvé, quel que soit son ordre de passage et quelle que
+	// soit son issue (`docs/JOURNAL.md`, décision 501).
+	test.afterEach(async () => {
+		await remettreArchive()
+	})
+
+	// --- TRANCHE 2 h : LA REPRISE D'UN TABLEAU ARCHIVÉ ------------------------------------------
+	// @verifies CRM-083 (docs/BACKLOG.md) — tranche 2 h, la reprise d'un tableau archivé
+	// @verifies docs/SPEC-goals.md §5.6.2 lignes a à j ; docs/DESIGN_SYSTEM.md §5.3 quinquies
+	//
+	// CES SCÉNARIOS ÉCRIVENT RÉELLEMENT, et ils rendent le seed à son état de départ : le tableau
+	// « Objectifs 2025 (clos) » est REMIS ARCHIVÉ après chaque reprise, par la clé de service. Sans
+	// cette remise, la case cochée d'une exécution suivante ne montrerait plus rien et les
+	// scénarios de lecture ci-dessus dériveraient d'un passage à l'autre.
+
+	test('LIGNES a et b — la case élargit la liste, et par défaut le tableau archivé n’y est pas', async ({
+		page,
+	}) => {
+		await connecter(page, ADMIN)
+		await page.getByRole('link', { name: 'Objectifs', exact: true }).first().click()
+		await expect(page.getByTestId('tableau-objectifs').first()).toBeVisible()
+
+		// LIGNE a : décochée par défaut, et le tableau archivé du seed est absent.
+		const case_ = page.getByTestId('afficher-archives-tableaux')
+		await expect(case_).not.toBeChecked()
+		await expect(page.getByTestId('tableau-objectifs-archive')).toHaveCount(0)
+		await capturer(page, 'tableaux-liste-sans-archives-1440', UNITE)
+
+		// LIGNE b : cochée, il paraît — et il paraît APRÈS le tableau vivant, sa position valant 2.
+		await case_.check()
+		const archive = page.getByTestId('tableau-objectifs-archive')
+		await expect(archive).toBeVisible()
+		await expect(archive).toContainText(TABLEAU_ARCHIVE)
+		await capturer(page, 'tableaux-liste-avec-archives-1440', UNITE)
+	})
+
+	test('LIGNES c, d et e — la ligne archivée est marquée, n’ouvre rien, et ne garde que la reprise', async ({
+		page,
+	}) => {
+		await connecter(page, ADMIN)
+		await page.getByRole('link', { name: 'Objectifs', exact: true }).first().click()
+		await page.getByTestId('afficher-archives-tableaux').check()
+
+		const archive = page.getByTestId('tableau-objectifs-archive')
+		await expect(archive).toBeVisible()
+		// LIGNE c : la mention est TEXTUELLE, pas une teinte.
+		await expect(archive).toContainText('Archivé')
+		// LIGNE e : ce n'est pas un lien — le canevas d'un tableau archivé est introuvable.
+		await expect(archive.locator('a')).toHaveCount(0)
+
+		// LIGNE d : une seule commande sur cette ligne, et c'est la reprise.
+		const ligne = page.locator('li', { has: page.getByTestId('tableau-objectifs-archive') })
+		await expect(ligne.getByTestId('desarchiver-tableau')).toBeVisible()
+		await expect(ligne.getByTestId('archiver-tableau')).toHaveCount(0)
+		await expect(ligne.getByTestId('renommer-tableau')).toHaveCount(0)
+		await expect(ligne.getByTestId('monter-tableau')).toHaveCount(0)
+		await expect(ligne.getByTestId('descendre-tableau')).toHaveCount(0)
+	})
+
+	test('LIGNE g — la reprise ramène le tableau dans la liste, et son CANEVAS s’ouvre à nouveau', async ({
+		page,
+	}) => {
+		await connecter(page, ADMIN)
+		await page.getByRole('link', { name: 'Objectifs', exact: true }).first().click()
+		await page.getByTestId('afficher-archives-tableaux').check()
+		await expect(page.getByTestId('tableau-objectifs-archive')).toBeVisible()
+
+		await page.getByTestId('desarchiver-tableau').click()
+		await expect(page.getByTestId('mention-ecriture')).toContainText('Tableau désarchivé')
+		await capturer(page, 'tableaux-reprise-1440', UNITE)
+
+		// LA PREUVE N'EST PAS LA MENTION, C'EST L'ÉTAT : la case décochée, le tableau repris est
+		// dans la liste ORDINAIRE, et son canevas — inatteignable une minute plus tôt — s'ouvre.
+		await page.getByTestId('afficher-archives-tableaux').uncheck()
+		// LE NOM PORTE DES PARENTHÈSES, ET `new RegExp` LES AURAIT PRISES POUR UN GROUPE — mesuré :
+		// `new RegExp('Objectifs 2025 (clos)')` cherche « Objectifs 2025 clos », que rien ne rend, et
+		// la preuve rougissait sur un produit correct. Le nom est échappé plutôt que réécrit.
+		const repris = page.getByRole('link', {
+			name: new RegExp(TABLEAU_ARCHIVE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
+		})
+		await expect(repris).toBeVisible()
+		await repris.click()
+		await expect(page.getByRole('heading', { name: TABLEAU_ARCHIVE })).toBeVisible()
+	})
+
+	test('LIGNE h — la LECTRICE tente la reprise, et lit le refus du backend', async ({ page }) => {
+		// AUCUNE COMMANDE N'EST ÉTEINTE D'AVANCE (`docs/DESIGN_SYSTEM.md` §5.26) : la lectrice voit
+		// la commande, l'exerce, et c'est la BASE qui refuse. C'est le même parcours que celui du
+		// refus de la tranche 2 a, et pour la même raison.
+		await connecter(page, LECTRICE)
+		await page.getByRole('link', { name: 'Objectifs', exact: true }).first().click()
+		await page.getByTestId('afficher-archives-tableaux').check()
+
+		const commande = page.getByTestId('desarchiver-tableau')
+		await expect(commande).toBeVisible()
+		await commande.click()
+
+		const mention = page.getByTestId('mention-ecriture')
+		await expect(mention).toBeVisible()
+		await expect(mention).not.toHaveText('Tableau désarchivé')
+		// LE TEXTE EST CELUI DE LA REPRISE, jamais le générique — défaut vu à la CAPTURE de ce
+		// scénario même : « le tableau a peut-être été archivé entre-temps » n'explique rien à qui
+		// tente précisément de le désarchiver.
+		await expect(mention).toContainText('Le tableau n’a pas été repris')
+		await capturer(page, 'tableaux-reprise-refus-lectrice-1440', UNITE)
+
+		// La ligne est TOUJOURS archivée : le refus n'a rien changé, et l'écran ne fait pas semblant.
+		await expect(page.getByTestId('tableau-objectifs-archive')).toBeVisible()
+	})
+
+	test('LIGNE j — les quatre paliers rendent la liste élargie sans débordement horizontal', async ({
+		page,
+	}) => {
+		await connecter(page, ADMIN)
+		await page.getByRole('link', { name: 'Objectifs', exact: true }).first().click()
+		await page.getByTestId('afficher-archives-tableaux').check()
+		await expect(page.getByTestId('tableau-objectifs-archive')).toBeVisible()
+
+		for (const palier of PALIERS) {
+			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
+			await expect(page.getByTestId('afficher-archives-tableaux')).toBeVisible()
+			const debordement = await page.evaluate(
+				() => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+			)
+			expect(debordement, `débordement horizontal au palier ${palier.nom}`).toBe(false)
+			await capturer(page, `tableaux-archives-${palier.nom}`, UNITE)
+		}
 	})
 })

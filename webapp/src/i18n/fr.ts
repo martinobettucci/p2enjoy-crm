@@ -709,6 +709,11 @@ export const fr = {
 	'goals.board.unarchive': 'Désarchiver',
 	'goals.board.unarchive.aria': 'Désarchiver le tableau {nom}',
 	'goals.board.unarchived': 'Tableau désarchivé',
+	// LE TEXTE DU SANS-EFFET LUI EST PROPRE, et ce n'est pas un doublon : celui de l'écriture
+	// ordinaire invoque « le tableau a peut-être été archivé entre-temps », ce qui est absurde ici —
+	// il l'EST, et c'est ce qu'on tente de défaire. Défaut vu à la capture (CLAUDE.md §16).
+	'goals.board.unarchive.noeffect':
+		'Le tableau n’a pas été repris. Vous ne pouvez pas l’écrire, ou quelqu’un vient de le reprendre avant vous. Rechargez la liste.',
 	'goals.board.write.noeffect':
 		'Rien n’a été enregistré. Le tableau a peut-être été archivé entre-temps, ou vous ne pouvez pas l’écrire. Rechargez la liste.',
 	'goals.board.refused.duplicate':
