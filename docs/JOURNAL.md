@@ -26695,3 +26695,63 @@ indexée), `docs/BACKLOG.md` (`CRM-084` tranche 3 et son découpage).
 
 **Où reprendre.** La spécification est écrite et committée ; le code de la tranche 3 la suit —
 module de lecture et d'écriture, sa suite unitaire, la sous-surface, puis les preuves.
+
+## décision 540 — la surface des occurrences est livrée, et l'œil a trouvé ce que les preuves ne voyaient pas
+
+*2026-08-28, même exécution que la décision 539, qui portait l'arbitrage et la spécification.
+Celle-ci consigne la LIVRAISON et ce que les preuves ont coûté à écrire.*
+
+**LA LIVRAISON.** `CRM-084` tranche 3 : un budget récurrent créé à l'écran peut enfin recevoir une
+occurrence, donc une ligne de coût. La cellule qui COMPTE les occurrences est devenue celle qui les
+ouvre ; la sous-surface porte les quatre gestes du §3.2 — ouvrir, libeller, doter, clôturer — plus
+le retrait, et traduit cinq refus par un dictionnaire fermé. **Aucune migration, aucune politique,
+aucune fonction** : tout le contrat backend existait depuis `CRM-084` tranche 1, et la tranche ne
+livre que la surface qui lui manquait.
+
+**QUATRE DÉFAUTS, ET DEUX D'ENTRE EUX N'ONT ÉTÉ TROUVÉS QUE PAR L'ŒIL.**
+
+1. **LE LIBELLÉ SORTAIT DU CADRE PAR LA GAUCHE, DE 266 px, À 390 px** — trouvé en regardant une
+   capture, jamais par une assertion. La commande de dépliage vit dans la cellule des occurrences,
+   tout à droite d'une table plus large que la fenêtre ; la cliquer fait défiler horizontalement le
+   conteneur de l'arborescence, et la sous-surface, rendue sous la table dans ce même conteneur,
+   naissait décalée. La capture montrait « du 2026-02-01 au 2026-02-28 2500 Ouverte » **sans**
+   « Février 2026 » : tout sauf la donnée qui nomme la ligne. **La ligne de base du §2.4 a été
+   établie** — la capture des budgets au même palier, prise avant cette tranche, ne défile pas : le
+   défaut est nôtre. **Deux corrections, et la première ne suffisait pas** : le libellé prend sa
+   propre ligne sous `md`, et la sous-surface se ramène dans le cadre à son ouverture avec
+   `inline: 'start'`. **`'nearest'` ne faisait RIEN, et c'est mesuré** : la boîte de contenu du
+   conteneur vaut 846 px là où la fenêtre en montre 358, la surface est donc plus large que la zone
+   visible, et `'nearest'` la juge déjà en vue puisqu'elle couvre tout le cadre.
+2. **UN MONTANT NU DANS UNE LISTE SANS EN-TÊTES NE DIT PAS DE QUOI IL EST LE NOMBRE.** La table des
+   budgets a une colonne « Enveloppe » pour le dire ; une `ul` n'a rien. Libellé `sr-only` ajouté.
+3. **LE RAFRAÎCHISSEMENT DU COMPTE DÉMONTAIT LA SOUS-SURFACE**, trouvé à la relecture du code hôte
+   avant de committer. Passer par `tentative` remettait la table des budgets en chargement, et la
+   sous-surface — rendue seulement quand la table est prête — disparaissait à chaque écriture : la
+   liste repartait de zéro et le formulaire ouvert s'évanouissait sous les doigts. Le compte se
+   relit désormais seul.
+4. **UNE ASSERTION DE PREUVE ÉTAIT FAUSSE, PAS LE PRODUIT.** `getByText('Janvier 2026')` portait sur
+   le panneau entier ; la confirmation de retrait reste ouverte après un refus — ce qui est voulu,
+   un refus n'efface pas le geste — et sa question porte elle aussi le libellé. Violation de mode
+   strict. L'assertion est bornée à la LISTE. **Le diagnostic a d'abord été faux** : un message de
+   console arrivé en retard avait été supposé, et une attente a été écrite sur cette supposition
+   avant d'être retirée. La cause réelle a été établie en lisant le contexte d'échec.
+
+**LE §5.47 DU DESIGN SYSTEM A ÉTÉ RÉVISÉ DANS LE MÊME CHANGEMENT QUE LE CODE, JAMAIS CONTOURNÉ.** Sa
+première rédaction plaçait la sous-surface dans une ligne de la table, sans avoir relu
+`BlocBudgetsTrack.tsx`, qui porte depuis la tranche 2 une décision contraire et motivée — « un
+`td` étendu sur sept colonnes ferait sauter l'alignement que le §5.9 existe pour tenir ». Les trois
+surfaces déjà rendues par ce bloc vivent sous la table ; faire autrement pour la quatrième aurait
+donné **deux placements** pour un même type de surface dans un même bloc. Le chapitre est corrigé,
+son motif écrit dans le fichier, et la sous-surface nomme donc le budget dont elle parle.
+
+**LA RÈGLE GÉNÉRALE QUE LE PREMIER DÉFAUT LAISSE**, écrite au §5.47 : une preuve de palier qui porte
+sur la PAGE ne voit pas un conteneur INTERNE qui défile. Elle doit mesurer le cadre de la surface
+elle-même et **nommer le coupable par sa coordonnée**, faute de quoi elle est verte sur un écran
+illisible. La preuve de cette tranche le fait, et ne borne délibérément pas le bord droit : ce
+débordement-là est celui, indiqué, que l'écran hôte présente déjà.
+
+**Où reprendre.** La tranche 3 est livrée et prouvée. `CRM-084` reste `[~]` pour **un** écart, qui
+n'est pas du comportement : la série des `scripts/verify-*.sh` n'a pas été rejouée en entier
+derrière ce changement — le dépôt en porte plus de soixante, et seul `verify-harness.sh --rapide` l'a
+été. `docs/manual.md` chapitre 5.6 nomme en outre un écart HÉRITÉ de la tranche 2, non comblé ici :
+l'administration des budgets eux-mêmes n'a toujours aucun chapitre.

@@ -10908,10 +10908,64 @@ session (`CLAUDE.md` §5), chaque sous-tranche livrable et prouvable seule :
 - **3b — le module.** `webapp/src/lib/occurrences.ts` : lecture des occurrences d'un budget, les
   quatre écritures du §4.1 bis.3, le dictionnaire fermé de refus du §4.1 bis.4, et sa suite
   unitaire.
-- **3c — la sous-surface et ses preuves.** Le dépliage de la cellule dans `BlocBudgetsTrack.tsx`, les
-  formulaires et la confirmation du §5.47, la suite de composant, la preuve d'API avec les jetons
-  réels des trois profils, le scénario d'interface aux quatre paliers, les captures observées, le
-  manuel et le harnais.
+- **3c — la sous-surface et ses preuves. LIVRÉE ET PROUVÉE** (décision 540).
+
+**Tranches 3b et 3c — LIVRÉES ET PROUVÉES** (décision 540).
+`webapp/src/lib/occurrences.ts` : la lecture des occurrences d'un budget **sans aucun filtre de
+clôture** — l'onglet « À saisir » du §4.8 liste précisément les lignes des occurrences closes —, les
+quatre écritures du §4.1 bis.3 et le dictionnaire fermé de refus du §4.1 bis.4.
+`webapp/src/app/PanneauOccurrences.tsx` et le dépliage de la cellule dans `BlocBudgetsTrack.tsx` :
+cinq gestes, un seul élément ouvert à la fois, formulaires et confirmation dans le flux.
+**Aucune migration, aucune politique, aucune fonction** : tout le contrat backend existait depuis la
+tranche 1.
+
+- [x] **LE TROU EST BOUCHÉ, ET IL EST MESURÉ** : un budget récurrent créé à l'écran naît sans
+      occurrence, le DIT, en reçoit une, et le compte de la table suit. Avant cette tranche, cocher
+      « récurrent » produisait un budget auquel aucune ligne de coût ne pouvait jamais être
+      rattachée, et rien ne le signalait.
+- [x] **UN CINQUIÈME GESTE EST OFFERT, ET IL N'ÉTEND AUCUN PÉRIMÈTRE** : la mesure M9 établit qu'un
+      `DELETE` direct passe déjà pour une administratrice. Sa borne est celle de la base — M11,
+      `card_costs_occurrence_id_fkey` —, et l'écran nomme la clôture comme geste de remplacement.
+- [x] **LES TROIS ATTRIBUTS FACULTATIFS SONT TOUJOURS ENVOYÉS, MÊME NULS** : les omettre parce
+      qu'ils sont vides rendrait ineffaçable une enveloppe posée par erreur. Inverse exact du choix
+      fait pour `p_daily_quota` au §22.1 de `docs/SPEC-mail-subsystem.md`, et pour la raison
+      retournée. Une preuve d'API mesure que la base accepte le nul, sans quoi la règle n'aurait
+      aucun sens.
+- [x] **DEUX DÉFAUTS TROUVÉS PAR L'ŒIL, ET AUCUNE ASSERTION NE LES ATTRAPAIT** (décision 540) : à
+      390 px le libellé sortait du cadre par la GAUCHE de 266 px, et un montant nu dans une liste
+      sans en-têtes ne disait pas de quoi il était le nombre. **La ligne de base du §2.4 a été
+      établie** avant de conclure : la capture des budgets au même palier ne défile pas. Corrigés à
+      leur cause, et la règle générale qui en sort est écrite au §5.47.
+- [x] **UN TROISIÈME DÉFAUT TROUVÉ À LA RELECTURE DU CODE HÔTE** : le rafraîchissement du compte
+      passait par la relecture de la table, ce qui DÉMONTAIT la sous-surface à chaque écriture. Le
+      compte se relit seul.
+- [x] **`docs/DESIGN_SYSTEM.md` §5.47 RÉVISÉ, jamais contourné**, motif écrit dans le fichier : sa
+      première rédaction plaçait la sous-surface dans une ligne de table, contre une décision
+      motivée que `BlocBudgetsTrack.tsx` porte depuis la tranche 2.
+- [x] **Test unitaire dédié** : `webapp/src/lib/occurrences.test.ts`, **44 tests**. Il éprouve la
+      REQUÊTE ÉMISE autant que la valeur rendue — seule façon de voir qu'un paramètre est envoyé
+      plutôt qu'omis —, et confronte le module au texte réel de la migration 50 plutôt qu'à une
+      paraphrase.
+- [x] **Test de composant dédié** : `webapp/src/app/PanneauOccurrences.test.tsx`, **26 scénarios**.
+- [x] **Contrat d'API hors interface** : `e2e/api/occurrences.spec.ts`, **9 scénarios verts** avec
+      les jetons réels des trois profils, chaque refus éprouvé CONTRE son succès correspondant. Une
+      assertion FIGE le fait que l'unicité du libellé n'est pas insensible à la casse — c'est la
+      normalisation uniforme du produit, nommée plutôt que redécouverte comme un défaut.
+- [x] **Test E2E d'interface dédié** : `e2e/ui/occurrences.spec.ts`, **14 scénarios verts, console
+      vierge**, dont le parcours clavier seul et les quatre paliers.
+- [x] **Vérification visuelle** : six captures sous `docs/captures/CRM-084/occurrences-*.jpg`,
+      produites **et observées**. C'est cette observation qui a trouvé les deux défauts ci-dessus.
+- [x] **Documentation dans le même changement** : `docs/manual.md` chapitres 5.5 et 5.6,
+      `CHANGELOG.md` sous `[Non publié]`.
+- [x] **Compteurs de `scripts/verify-harness.sh` révisés dans le MÊME changement** : `SCENARIOS_API`
+      1023 → **1032**, `SCENARIOS_UI` 701 → **715**. Valeurs COMPTÉES, jamais déduites. Le harnais
+      rend **31 contrôles, aucune anomalie** derrière la révision.
+- [ ] **CE QUI RETIENT LA TRANCHE, ET CE N'EST PAS DU COMPORTEMENT** : la série des
+      `scripts/verify-*.sh` n'a pas été rejouée en entier — le dépôt en porte plus de soixante, et
+      seul `verify-harness.sh --rapide` l'a été.
+- [ ] **Écart HÉRITÉ, nommé et non comblé** : l'administration des budgets eux-mêmes n'a toujours
+      aucun chapitre de `docs/manual.md`. Il manque depuis la tranche 2 ; le combler ici reviendrait
+      à solder une autre tranche (`CLAUDE.md` §13). `docs/manual.md` chapitre 5.6 le porte.
 - [x] **La campagne complète a été exécutée, et elle est verte** : `test:unit` **57 fichiers /
       1964 tests**, `test:sql` **48 fichiers / 2405 assertions**, `e2e:api` **801 passés**,
       `e2e:ui` **482 passés**, `e2e:mail` **42 passés**, `pytest` **244**, `typecheck`,
