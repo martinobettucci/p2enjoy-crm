@@ -1,4 +1,6 @@
-// @verifies CRM-083 (docs/BACKLOG.md) — canevas d'objectifs, tranche 1
+// @verifies CRM-083 (docs/BACKLOG.md) — canevas d'objectifs, tranche 1 ; et TRANCHE 3 pour
+//           `ecritureConsentie`, la lecture de la capacité que la base consent
+// @verifies docs/SPEC-goals.md §5.7.4 (contrat de l'état de lecture seule, lignes b, c et e)
 // @verifies docs/SPEC-goals.md §4.1 (le bloc masqué n'arrive pas, ses flèches restent),
 //           §5.3 (flèches tracées entre les BORDS), §5.4 (états), §5.5 (équivalent textuel),
 //           §2.3 (les TROIS directions, jamais normalisées en deux)
@@ -13,6 +15,7 @@ import { describe, expect, it } from 'vitest'
 import {
 	composerDiagramme,
 	destinationDepuisEmbarque,
+	ecritureConsentie,
 	etendueCanevas,
 	lienOuvrable,
 	lienPerdu,
@@ -269,5 +272,52 @@ describe('etendueCanevas', () => {
 		const etendue = etendueCanevas([])
 		expect(etendue.largeur).toBeGreaterThan(0)
 		expect(etendue.hauteur).toBeGreaterThan(0)
+	})
+})
+
+describe('ecritureConsentie — la capacité vient de la BASE, et son absence FERME', () => {
+	// @verifies docs/SPEC-goals.md §5.7.4, lignes b et c ; docs/SCHEMA.md §9 bis.8 bis.
+	//
+	// CE QUE CES SCÉNARIOS PROTÈGENT. La colonne `ecriture_permise` est calculée par la base
+	// (migration 71), et l'écran s'en sert pour ÉTEINDRE des commandes. Le sens du défaut n'est donc
+	// pas indifférent : lire une valeur manquante comme « oui » rendrait des commandes dont chaque
+	// envoi serait refusé — exactement l'état que la tranche 3 supprime —, et le ferait
+	// silencieusement, sur une pile dont le cache de schéma n'aurait pas été rechargé ou dont la
+	// migration ne serait pas appliquée.
+	const tableau = (valeur: boolean | null | undefined) =>
+		({
+			id: 'b1',
+			name: 'Objectifs',
+			description: null,
+			position: 1,
+			archived_at: null,
+			ecriture_permise: valeur,
+		}) as unknown as Parameters<typeof ecritureConsentie>[0]
+
+	it('rend vrai quand la base consent l’écriture', () => {
+		expect(ecritureConsentie(tableau(true))).toBe(true)
+	})
+
+	it('rend faux quand la base la refuse', () => {
+		expect(ecritureConsentie(tableau(false))).toBe(false)
+	})
+
+	it('rend faux sur `null` — un type ne garantit jamais une valeur (§5.7.4, ligne c)', () => {
+		expect(ecritureConsentie(tableau(null))).toBe(false)
+	})
+
+	it('rend faux sur une colonne ABSENTE — cache de schéma non rechargé, migration non appliquée', () => {
+		expect(ecritureConsentie(tableau(undefined))).toBe(false)
+	})
+
+	it('rend faux sur `null` de tableau — aucun tableau n’est écrivable', () => {
+		expect(ecritureConsentie(null)).toBe(false)
+	})
+
+	it('n’accepte AUCUNE valeur véridique autre que `true`', () => {
+		// La comparaison est stricte, et ce scénario est ce qui l'empêche de redevenir un
+		// `!!valeur` : PostgREST rendrait la chaîne « true » sur une lecture mal typée, et
+		// `Boolean('false')` vaut `true` — un défaut qui ouvrirait l'écriture à qui ne l'a pas.
+		expect(ecritureConsentie(tableau('true' as unknown as boolean))).toBe(false)
 	})
 })

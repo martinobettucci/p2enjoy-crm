@@ -1,5 +1,8 @@
 // @verifies CRM-083 (docs/BACKLOG.md) — canevas d'objectifs, tranche 1 : ce que l'écran rend ;
-//           tranche 2a : les gestes de géométrie, à la souris et au clavier
+//           tranche 2a : les gestes de géométrie, à la souris et au clavier ;
+//           TRANCHE 3 : l'état de LECTURE SEULE, déclenché par la capacité que la BASE consent
+// @verifies docs/SPEC-goals.md §5.7.4 (contrat opposable, lignes b à g),
+//           docs/DESIGN_SYSTEM.md §5.29 ter (mention neutre, commandes éteintes ET lisibles)
 // @verifies docs/SPEC-goals.md §5.2 (bloc, jauge, pilule), §5.3 (flèches), §5.4 (états),
 //           §5.5 (équivalent textuel, ordre de tabulation, gestes clavier), §3 (ouvrir le
 //           channel d'un bloc, poser, déplacer, redimensionner), §4.2 (l'écriture est décidée
@@ -53,7 +56,17 @@ const TABLEAU = {
 	// demande, et une ligne rendue par PostgREST la porte toujours. Une fixture qui l'omettrait
 	// décrirait une réponse que le backend ne produit pas, et l'écran y lirait « archivé ».
 	archived_at: null,
+	// `ecriture_permise` FAIT PARTIE DE LA LIGNE depuis la tranche 3 : c'est la colonne calculée de
+	// la migration 71, que `COLONNES_TABLEAU_CANEVAS` demande et que PostgREST rend toujours. Même
+	// raison qu'`archived_at` ci-dessus, et une conséquence VOULUE : une fixture qui l'omettrait
+	// ferait rendre le canevas en LECTURE SEULE, `ecritureConsentie` traitant l'absence comme un
+	// refus (§5.7.4, ligne c). C'est exactement ce que le scénario « une réponse sans la colonne »
+	// éprouve plus bas, et ce n'est vert par accident nulle part ailleurs.
+	ecriture_permise: true,
 }
+
+/** Le même tableau, tel que la base le rend à qui ne peut pas y écrire (§5.7.4, ligne b). */
+const TABLEAU_LECTURE_SEULE = { ...TABLEAU, ecriture_permise: false }
 
 const CHANNEL_VIVANT = {
 	id: 'c1',
@@ -1867,5 +1880,138 @@ describe('reprise d’un tableau archivé — §5.6', () => {
 		rendreListe(clientJournalisant([], filtres))
 		expect(await screen.findByTestId('etat-vide')).toBeTruthy()
 		expect(screen.getByTestId('afficher-archives-tableaux')).toBeTruthy()
+	})
+})
+
+describe('canevas — l’état de LECTURE SEULE, §5.7', () => {
+	// @verifies docs/SPEC-goals.md §5.7.4 ; docs/DESIGN_SYSTEM.md §5.29 ter.
+	//
+	// CHACUN DE CES SCÉNARIOS MORD SUR UNE LIGNE DU CONTRAT, et aucun ne se contente de constater
+	// qu'« il ne se passe rien » : une commande retirée, un gestionnaire absent ou un composant qui
+	// planterait produiraient le même silence. Ils mesurent donc la PRÉSENCE de la commande ET son
+	// état, la position RELUE après le geste, et le texte de la mention.
+
+	const clientLectureSeule = (blocs: readonly unknown[], fleches: readonly unknown[] = []) =>
+		clientParTable({
+			goal_boards: ok(TABLEAU_LECTURE_SEULE),
+			goal_blocks: ok(blocs),
+			goal_links: ok(fleches),
+		})
+
+	it('rend la mention, une seule fois, et elle dit ce que le tableau PERMET avant ce qu’il refuse', async () => {
+		rendreCanevas(clientLectureSeule([BLOC_LIBRE, BLOC_LIE]))
+		const mention = await screen.findByTestId('canevas-lecture-seule')
+		expect(mention.textContent).toContain(fr['goals.readonly.notice'])
+		expect(mention.getAttribute('role')).toBe('status')
+		// La phrase ouvre sur la consultation : l'ordre inverse se lirait comme un reproche.
+		expect(fr['goals.readonly.notice'].startsWith('Vous consultez')).toBe(true)
+		// LE MOTIF EST DIT UNE FOIS : répété sur chaque commande, il se saute (§5.29 ter).
+		expect(screen.getAllByTestId('canevas-lecture-seule')).toHaveLength(1)
+	})
+
+	it('N’AFFICHE AUCUNE MENTION quand la base consent l’écriture — l’état est un état, pas un décor', async () => {
+		rendreCanevas(
+			clientParTable({ goal_boards: ok(TABLEAU), goal_blocks: ok([BLOC_LIBRE]), goal_links: ok([]) }),
+		)
+		await screen.findAllByTestId('bloc-objectif')
+		expect(screen.queryByTestId('canevas-lecture-seule')).toBeNull()
+	})
+
+	it('éteint les deux commandes du bandeau SANS LES MASQUER, et chacune cite la mention', async () => {
+		// LA LISIBILITÉ EST LA MOITIÉ DE LA RÈGLE (§5.29 ter) : une commande retirée ne dirait pas
+		// qu'elle existe ailleurs, et ce scénario échouerait sur un `null` conditionnel autant que
+		// sur un `disabled` oublié.
+		rendreCanevas(clientLectureSeule([BLOC_LIBRE, BLOC_LIE]))
+		const poser = await screen.findByTestId('poser-bloc')
+		expect(poser.hasAttribute('disabled')).toBe(true)
+		expect(poser.getAttribute('aria-describedby')).toBe('objectifs-lecture-seule')
+		expect(poser.textContent).toContain(fr['goals.place.start'])
+		const tracer = screen.getByTestId('tracer-fleche')
+		expect(tracer.hasAttribute('disabled')).toBe(true)
+		expect(tracer.getAttribute('aria-describedby')).toBe('objectifs-lecture-seule')
+	})
+
+	it('N’ÉCRIT RIEN quand les flèches du clavier sont frappées sur un bloc', async () => {
+		// Le geste de la tranche 2a est ici mesuré par son EFFET SUR LA REQUÊTE, jamais par un
+		// rendu : un bloc qui ne bougerait pas à l'écran tout en émettant son `PATCH` serait le
+		// pire des deux mondes.
+		const { client, ecritures } = clientEcrivant(
+			{ goal_boards: ok(TABLEAU_LECTURE_SEULE), goal_blocks: ok([BLOC_LIBRE]), goal_links: ok([]) },
+			ok([BLOC_LIBRE]),
+		)
+		rendreCanevas(client)
+		const bloc = (await screen.findAllByTestId('bloc-objectif'))[0]!
+		fireEvent.keyDown(bloc, { key: 'ArrowRight' })
+		fireEvent.keyUp(bloc, { key: 'ArrowRight' })
+		await waitFor(() => expect(screen.getByTestId('canevas-lecture-seule')).toBeTruthy())
+		expect(ecritures).toHaveLength(0)
+		expect(bloc.getAttribute('data-lecture-seule')).toBe('oui')
+	})
+
+	it('OUVRE QUAND MÊME la fiche par `Entrée`, et ses champs sont désactivés ET lisibles', async () => {
+		// La fiche est la SEULE surface où le corps complet d'un bloc se lit — le canevas n'en montre
+		// qu'un extrait. La refuser rendrait la lecture plus pauvre pour empêcher une écriture.
+		rendreCanevas(clientLectureSeule([BLOC_LIE]))
+		const bloc = (await screen.findAllByTestId('bloc-objectif'))[0]!
+		fireEvent.keyDown(bloc, { key: 'Enter' })
+		const fiche = await screen.findByTestId('fiche-bloc')
+		expect(fiche).toBeTruthy()
+		const titre = screen.getByTestId('champ-titre') as HTMLInputElement
+		expect(titre.disabled).toBe(true)
+		// LA VALEUR RESTE LISIBLE : un champ vidé pour empêcher d'écrire perdrait la donnée.
+		expect(titre.value).toBe(BLOC_LIE.title)
+		expect((screen.getByTestId('champ-corps') as HTMLTextAreaElement).disabled).toBe(true)
+		expect((screen.getByTestId('champ-corps') as HTMLTextAreaElement).value).toBe(BLOC_LIE.body)
+		expect((screen.getByTestId('champ-remplissage') as HTMLInputElement).disabled).toBe(true)
+		expect((screen.getByTestId('curseur-remplissage') as HTMLInputElement).disabled).toBe(true)
+		expect((screen.getByTestId('champ-lien') as HTMLSelectElement).disabled).toBe(true)
+		// La commande destructrice reste MONTÉE et éteinte : la masquer priverait le lecteur de
+		// savoir que ce geste existe.
+		const supprimer = screen.getByTestId('supprimer-bloc') as HTMLButtonElement
+		expect(supprimer.disabled).toBe(true)
+		expect(supprimer.getAttribute('aria-describedby')).toBe('objectifs-lecture-seule')
+	})
+
+	it('N’ARME AUCUN TRACÉ sur `Espace`, là où `Entrée` ouvre — les deux touches divergent', async () => {
+		// Sans ce scénario, éteindre `Entrée` en même temps qu'`Espace` resterait vert sur les
+		// autres : c'est la seule assertion qui les SÉPARE.
+		rendreCanevas(clientLectureSeule([BLOC_LIBRE, BLOC_LIE]))
+		const bloc = (await screen.findAllByTestId('bloc-objectif'))[0]!
+		fireEvent.keyDown(bloc, { key: ' ' })
+		expect(screen.queryByTestId('trace-consigne')).toBeNull()
+		expect(screen.queryByTestId('fiche-bloc')).toBeNull()
+	})
+
+	it('éteint la correction de direction et la suppression d’une flèche, sans retirer la LISTE', async () => {
+		// L'équivalent textuel décrit ce qui est LU : la lecture seule ne retranche rien de lisible
+		// (§5.7.4, ligne g).
+		rendreCanevas(clientLectureSeule([BLOC_LIBRE, BLOC_LIE], [FLECHE_PLEINE]))
+		const lignes = await screen.findAllByTestId('ligne-diagramme')
+		expect(lignes).toHaveLength(1)
+		expect((screen.getByTestId('direction-fleche') as HTMLSelectElement).disabled).toBe(true)
+		expect((screen.getByTestId('supprimer-fleche') as HTMLButtonElement).disabled).toBe(true)
+	})
+
+	it('NE MASQUE NI BLOC NI FLÈCHE — une surface qui cache se lit comme complète', async () => {
+		rendreCanevas(clientLectureSeule([BLOC_LIBRE, BLOC_LIE], [FLECHE_PLEINE]))
+		expect(await screen.findAllByTestId('bloc-objectif')).toHaveLength(2)
+		expect(screen.getByText(BLOC_LIE.title)).toBeTruthy()
+	})
+
+	it('rend le canevas en LECTURE SEULE quand la réponse ne porte PAS la colonne', async () => {
+		// La migration non appliquée, le cache de schéma non rechargé, une réponse tronquée : le
+		// défaut FERME (§5.7.4, ligne c). Lire l'absence comme « oui » offrirait des commandes dont
+		// chaque envoi serait refusé — l'état exact que cette tranche supprime.
+		const { archived_at, ...sansColonne } = { ...TABLEAU, ecriture_permise: undefined }
+		void archived_at
+		rendreCanevas(
+			clientParTable({
+				goal_boards: ok({ ...sansColonne, archived_at: null }),
+				goal_blocks: ok([BLOC_LIBRE]),
+				goal_links: ok([]),
+			}),
+		)
+		expect(await screen.findByTestId('canevas-lecture-seule')).toBeTruthy()
+		expect((await screen.findByTestId('poser-bloc')).hasAttribute('disabled')).toBe(true)
 	})
 })
