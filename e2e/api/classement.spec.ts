@@ -341,3 +341,157 @@ test.describe('règle 3 — la suggestion par expéditeur connu', () => {
 		}
 	})
 })
+
+// @verifies CRM-055 tranche 2 (docs/BACKLOG.md) — le DÉCLASSEMENT d'un message
+// @verifies docs/SPEC-mail-subsystem.md §16.5.2 (les cinq lignes du contrat, la borne mesurée de
+//           l'idempotence), §16.5.3 (l'historique conservé, le départ écrit)
+// @verifies docs/SPEC-permissions-rls.md §7 ; CLAUDE.md §10
+//
+// CE QUE CES SCÉNARIOS MESURENT ET QUE LA pgTAP NE PEUT PAS MESURER : la garde vue depuis la VRAIE
+// ROUTE, avec les jetons réels des profils du seed. La suite `0066` endosse un utilisateur par
+// `set_config`, ce qui prouve la fonction ; ici c'est PostgREST qui répond, et le statut HTTP fait
+// partie du contrat que l'écran traduira.
+//
+// LES ÉVÉNEMENTS DE TIMELINE NE SONT PAS RETIRÉS EN SORTIE, ET ILS NE PEUVENT PAS L'ÊTRE :
+// `card_events` n'accorde aucun privilège d'écriture, `service_role` compris (`CRM-044`).
+// C'est le même constat que le scénario de classement ci-dessus, et pour la même cause.
+test.describe('déclassement — ce que la pile consent', () => {
+	test('la lectrice ne déclasse pas, et son refus ne laisse RIEN derrière lui', async ({
+		request,
+	}) => {
+		const message = await creerMessage(request, `<declasse-refus-${Date.now()}@preuves.test>`)
+		await poserOccurrence(request, message)
+		const jetonAdmin = await jetonDe('admin@p2enjoy.test')
+
+		try {
+			const classement = await request.post(`${URL_API}/rest/v1/rpc/classify_message`, {
+				headers: enTetesAuthentifies(jetonAdmin),
+				data: { p_message_id: message, p_card_id: CARD },
+			})
+			expect(classement.status(), await classement.text()).toBe(200)
+
+			const jetonViewer = await jetonDe('viewer@p2enjoy.test')
+			const refus = await request.post(`${URL_API}/rest/v1/rpc/unclassify_message`, {
+				headers: enTetesAuthentifies(jetonViewer),
+				data: { p_message_id: message },
+			})
+			expect(refus.status()).toBe(403)
+			expect(await refus.text()).toContain('forbidden')
+
+			const anonyme = await request.post(`${URL_API}/rest/v1/rpc/unclassify_message`, {
+				headers: enTetesAnonymes(),
+				data: { p_message_id: message },
+			})
+			expect([401, 403]).toContain(anonyme.status())
+
+			// LA LIGNE EST RELUE : un refus ne doit rien avoir défait.
+			const apres = await request.get(
+				`${URL_API}/rest/v1/mail_messages?id=eq.${message}&select=classification,card_id`,
+				{ headers: enTetesService() },
+			)
+			const [ligne] = (await apres.json()) as { classification: string; card_id: string }[]
+			expect(ligne?.classification).toBe('manual')
+			expect(ligne?.card_id).toBe(CARD)
+		} finally {
+			await request.delete(`${URL_API}/rest/v1/mail_messages?id=eq.${message}`, {
+				headers: enTetesService(),
+			})
+		}
+	})
+
+	// LE SCÉNARIO QUI PORTE L'ARBITRAGE DE LA DÉCISION 536, ET IL EST MESURÉ DES DEUX CÔTÉS.
+	// Le `bizdev` ne répond d'aucune boîte : il voit ce message par sa CARD SEULE. Le déclasser
+	// l'en prive — c'est la conséquence que le §16.5.2 a choisi d'assumer plutôt que d'interdire,
+	// pour ne pas lui refuser de défaire son propre geste.
+	test('le membre déclasse et PERD la visibilité ; l’administratrice la garde', async ({
+		request,
+	}) => {
+		const message = await creerMessage(request, `<declasse-perte-${Date.now()}@preuves.test>`)
+		await poserOccurrence(request, message)
+		const jetonAdmin = await jetonDe('admin@p2enjoy.test')
+		const jetonMembre = await jetonDe('bizdev@p2enjoy.test')
+
+		try {
+			const classement = await request.post(`${URL_API}/rest/v1/rpc/classify_message`, {
+				headers: enTetesAuthentifies(jetonAdmin),
+				data: { p_message_id: message, p_card_id: CARD },
+			})
+			expect(classement.status(), await classement.text()).toBe(200)
+
+			// TÉMOIN : classé, le membre le voit — par la card, et seulement par elle.
+			const avant = await request.get(
+				`${URL_API}/rest/v1/mail_messages?id=eq.${message}&select=id`,
+				{ headers: enTetesAuthentifies(jetonMembre) },
+			)
+			expect((await avant.json()) as unknown[]).toHaveLength(1)
+
+			const geste = await request.post(`${URL_API}/rest/v1/rpc/unclassify_message`, {
+				headers: enTetesAuthentifies(jetonMembre),
+				data: { p_message_id: message },
+			})
+			expect(geste.status(), await geste.text()).toBe(200)
+			// LA FONCTION REND LA CARD QUITTÉE : c'est la seule trace qui reste à un appelant que
+			// le geste prive de la visibilité du message.
+			expect(await geste.json()).toBe(CARD)
+
+			// LA PERTE, RELUE DERRIÈRE LE GESTE. Ce n'est pas une déduction : PostgREST rend zéro
+			// ligne au membre qui vient pourtant d'agir sur ce message.
+			const apresMembre = await request.get(
+				`${URL_API}/rest/v1/mail_messages?id=eq.${message}&select=id`,
+				{ headers: enTetesAuthentifies(jetonMembre) },
+			)
+			expect((await apresMembre.json()) as unknown[]).toHaveLength(0)
+
+			// LA BORNE DE L'IDEMPOTENCE, PAR LA VRAIE ROUTE : son second appel est refusé, et ce
+			// refus est juste — il n'a plus le droit d'agir sur ce message.
+			const second = await request.post(`${URL_API}/rest/v1/rpc/unclassify_message`, {
+				headers: enTetesAuthentifies(jetonMembre),
+				data: { p_message_id: message },
+			})
+			expect(second.status()).toBe(403)
+
+			// L'ADMINISTRATRICE, ELLE, VOIT LA BOÎTE : le geste ne lui retire rien, et son propre
+			// second appel rend `null` au lieu de refuser.
+			const apresAdmin = await request.get(
+				`${URL_API}/rest/v1/mail_messages?id=eq.${message}&select=classification,card_id,classified_by`,
+				{ headers: enTetesAuthentifies(jetonAdmin) },
+			)
+			const lues = (await apresAdmin.json()) as {
+				classification: string
+				card_id: string | null
+				classified_by: string | null
+			}[]
+			expect(lues).toHaveLength(1)
+			expect(lues[0]?.classification).toBe('unclassified')
+			expect(lues[0]?.card_id).toBeNull()
+			expect(lues[0]?.classified_by).toBeNull()
+
+			const idempotent = await request.post(`${URL_API}/rest/v1/rpc/unclassify_message`, {
+				headers: enTetesAuthentifies(jetonAdmin),
+				data: { p_message_id: message },
+			})
+			expect(idempotent.status(), await idempotent.text()).toBe(200)
+			expect(await idempotent.json()).toBeNull()
+
+			// L'HISTOIRE N'EST PAS RÉÉCRITE, ET LE DÉPART EST ÉCRIT. Les deux événements portent le
+			// même `message_id` : le courrier est arrivé, puis il est parti.
+			const arrivee = await request.get(
+				`${URL_API}/rest/v1/card_events?card_id=eq.${CARD}&type=eq.mail_received` +
+					`&payload->>message_id=eq.${message}&select=id`,
+				{ headers: enTetesService() },
+			)
+			expect((await arrivee.json()) as unknown[]).toHaveLength(1)
+
+			const depart = await request.get(
+				`${URL_API}/rest/v1/card_events?card_id=eq.${CARD}&type=eq.mail_unclassified` +
+					`&payload->>message_id=eq.${message}&select=id`,
+				{ headers: enTetesService() },
+			)
+			expect((await depart.json()) as unknown[]).toHaveLength(1)
+		} finally {
+			await request.delete(`${URL_API}/rest/v1/mail_messages?id=eq.${message}`, {
+				headers: enTetesService(),
+			})
+		}
+	})
+})
