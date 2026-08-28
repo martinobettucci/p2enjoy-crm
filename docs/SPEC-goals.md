@@ -170,6 +170,10 @@ Détail visuel : `docs/DESIGN_SYSTEM.md` §5.29.
 Entrée de navigation **« Objectifs »**, au même niveau que la messagerie. Liste des tableaux non
 archivés, avec leur nom, leur description et le nombre de blocs **lisibles par l'appelant**.
 
+**RÉVISÉ le 2026-08-28, tranche 2 h.** « Non archivés » reste le comportement **par défaut**, mais il
+n'est plus le seul : une case **« Afficher les archivés »** élargit la liste à ceux qui le sont, et
+leur rend la commande **« Désarchiver »**. Le §5.6 porte le contrat, ses mesures et ses écarts.
+
 ### 5.2 Canevas
 
 Zone pannable et zoomable. Chaque bloc est une carte à coins arrondis portant son titre, un extrait
@@ -194,6 +198,7 @@ Le libellé, s'il existe, se pose au milieu sur un fond `--color-surface`.
 | Bloc lié à un channel **devenu illisible** | le bloc n'est pas rendu ; ses flèches sont rendues **en pointillés vers le vide**, sans libellé et sans infobulle — l'écran ne nomme jamais ce qu'il cache |
 | Bloc lié à un channel **supprimé** (`channel_id` devenu nul) | le bloc est rendu sans pilule, et une mention « lien perdu » invite à en reposer un |
 | Lecture seule (`viewer`) | tous les gestes d'écriture sont **indisponibles et lisibles**, et l'écran dit pourquoi — `docs/DESIGN_SYSTEM.md` §8 |
+| Tableau **archivé**, case « Afficher les archivés » cochée | la ligne porte la mention « Archivé » et **la seule** commande « Désarchiver » ; elle n'ouvre aucun canevas (§5.6.2, lignes c à e) |
 
 ### 5.5 Accessibilité
 
@@ -333,6 +338,94 @@ Ce défaut est **antérieur à cette tranche** — il vit dans la liste depuis l
 produit aussi à la souris —, mais il n'est pas étranger à elle : c'est le parcours clavier de cette
 tranche qui enchaîne les surfaces assez vite pour le rendre visible, et c'est sa capture qui l'a
 montré.
+
+### 5.6 Reprendre un tableau archivé — tranche 2 h
+
+**Pourquoi cette section existe.** L'archivage d'un tableau **tient lieu de suppression** (§2.1), et
+jusqu'au 2026-08-28 il était **sans retour** : aucun écran ne rendait un tableau archivé, aucune
+commande ne le ramenait. Un tableau archivé par erreur était donc perdu pour l'utilisateur alors que
+sa donnée était **intacte en base** et que la politique `goal_boards_maj_membre_ecrivant` autorise
+sans réserve de rendre `archived_at` à `null`. C'est une **perte silencieuse**, que `CLAUDE.md` §18
+proscrit, et c'est ce que cette section referme.
+
+**Ce qui a tenu la commande hors du produit, et pourquoi ce n'est plus un motif.** Le §5.1 ne
+décrivait qu'une liste des tableaux **non** archivés ; poser la commande supposait donc d'abord
+« une surface où le retrouver, qu'aucune unité ne spécifie ». **L'arbitrage est rendu**
+(`docs/JOURNAL.md`, décision 534) : cette surface n'est pas à inventer, **le produit la porte
+déjà**. L'administration des tracks et des channels (`CRM-075`,
+`webapp/src/app/AdministrationArborescence.tsx`) résout exactement le même problème sur exactement
+le même geste, et sa forme est reprise **sans écart** — c'est la ligne du responsable, « le
+comportement le plus simple, et le même partout » : deux écrans qui font la même chose la font de la
+même façon.
+
+#### 5.6.1 Les six mesures qui fondent le contrat
+
+Relevées le **2026-08-28** sur la pile de développement seedée, par la **vraie route REST** et avec
+les **jetons réels** des trois profils du seed. Aucune n'est déduite.
+
+| # | Mesure | Relevé |
+|---|---|---|
+| 1 | `PATCH goal_boards` posant `archived_at`, jeton de l'administratrice | `200`, colonne posée |
+| 2 | `POST goal_boards` reprenant le nom d'un tableau **archivé** | `409` / `23505`, `goal_boards_workspace_name_key` |
+| 3 | `GET goal_boards?archived_at=not.is.null`, jeton de la **lectrice** | `200`, la ligne archivée est **rendue** |
+| 4 | `PATCH archived_at=null`, jeton de la **lectrice** | `200` et **`[]`** — refus silencieux de la clause `using`, jamais un `403` |
+| 5 | `PATCH archived_at=null`, jeton du **business developer** | `200`, `archived_at` nul, **`position` conservée** |
+| 6 | `pg_indexes` sur `goal_boards` | l'unicité de nom est **totale**, l'index d'**ordre** seul est partiel |
+
+**La mesure 3 décide de la lecture** : `goal_boards_lecture_membre` ne regarde que
+`app.is_workspace_member(workspace_id)` et **ignore `archived_at`**. Tout membre, lectrice comprise,
+peut donc lire un tableau archivé. Le masquage du §5.1 est **un choix du client**, jamais une règle
+d'accès — et l'étendre ne demande **aucune migration, aucune politique, aucun privilège**.
+
+**La mesure 4 décide du refus** : la lectrice n'obtient pas un `403` mais l'issue **`sans-effet`**
+que `modifierTableau` sait déjà distinguer depuis la tranche 2 c. Elle se traduit par le refus
+`interdit` du dictionnaire fermé existant ; **aucun corps d'erreur du serveur n'est affiché**.
+
+**La mesure 6 ferme une question qu'on aurait pu croire ouverte** : le désarchivage ne peut **jamais**
+heurter un doublon de nom. L'index d'unicité étant total, l'archivage n'a jamais libéré le nom —
+la mesure 2 le montre en refusant `409` — et le rendre ne peut donc rien heurter. Le dictionnaire de
+refus n'a **pas** à gagner de cas `doublon` sur ce geste, et une assertion le fige plutôt qu'un
+commentaire l'affirme.
+
+#### 5.6.2 Contrat opposable de la liste
+
+| Ligne | Situation | Comportement attendu |
+|---|---|---|
+| a | Case « Afficher les archivés » **décochée** — l'état par défaut | La liste est exactement celle du §5.1, inchangée |
+| b | Case **cochée** | La liste rend **aussi** les tableaux archivés, dans le même ordre (`position`, puis `name`) |
+| c | Ligne archivée | Porte la mention **« Archivé »**, comme une ligne de l'arborescence |
+| d | Ligne archivée | Ne porte **que** « Désarchiver » : monter, descendre, renommer et archiver en sont **retirés** — réordonner ou renommer un objet masqué n'a pas d'effet observable |
+| e | Ligne archivée | N'est **pas** un lien vers son canevas : `lireContenuTableau` filtre `archived_at is null`, et le lien mènerait à un « tableau introuvable » que rien n'expliquerait |
+| f | « Désarchiver » | S'exécute **sans confirmation** — le geste ne détruit rien, il rend ; la confirmation est réservée à ce qui coûte (§5.13) |
+| g | Administratrice ou business developer | Le tableau revient dans la liste **à sa position d'origine** (mesure 5), et le message vivant le dit |
+| h | Lectrice | Refus `interdit` du dictionnaire fermé ; la ligne est **relue** et constatée toujours archivée |
+| i | Ligne archivée | Son compte de blocs est celui de ses blocs **lisibles par l'appelant**, comme toute ligne (§5.1) |
+| j | Case cochée, **aucun** tableau du tout | L'état vide du §5.4, inchangé |
+
+#### 5.6.3 Ce que cette section ne fait pas
+
+- **Aucune migration, aucune politique, aucun privilège** : tout le contrat backend existe depuis
+  `CRM-082` (migration `0049`). La tranche **exerce** ce qui est déjà là.
+- **Aucun écran nouveau, aucune route nouvelle** : la case vit dans la liste existante.
+- **Aucune purge, aucune corbeille de tableau** : l'archivage et la mise à la corbeille restent deux
+  notions distinctes (`docs/SPEC-corbeille.md` §3.1), et un tableau n'entre pas en corbeille.
+- **Aucun tri, aucun filtre supplémentaire** : la case est un **élargissement** de la liste, pas un
+  filtre qui n'en montrerait que les archivés.
+
+#### 5.6.4 Definition of Done de la tranche 2 h
+
+- les dix lignes du contrat du §5.6.2 exercées ;
+- `desarchiverTableau` dans `webapp/src/lib/objectifs-ecriture.ts`, et `lireTableaux` capable
+  d'inclure les archivés — **le paramètre par défaut préserve le comportement du §5.1** ;
+- **test unitaire dédié** du module et du composant, éprouvant la **requête émise** et non la seule
+  valeur rendue ;
+- **test d'API dédié** avec les jetons réels des trois profils, chaque refus **relisant la ligne** ;
+- **test E2E d'interface dédié**, console vierge, aux quatre paliers ;
+- **seed enrichi d'un tableau archivé** (`CLAUDE.md` §8) : sans lui, la case cochée ne montrerait
+  rien en démonstration et la fonctionnalité serait livrée sans être démontrable ;
+- **captures produites ET observées** (`CLAUDE.md` §16) ;
+- `docs/DESIGN_SYSTEM.md`, `docs/manual.md`, `docs/SPEC-seed.md` et `CHANGELOG.md` dans le même
+  changement.
 
 ## 6. Ce qui n'est pas au périmètre
 

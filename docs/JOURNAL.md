@@ -26329,3 +26329,92 @@ en fin de seed, et elle relève de `CRM-042`.
 laissé dû. `CRM-065` reste `[~]` pour la seule raison écrite au backlog : la série des
 soixante-dix-sept `verify-*.sh` n'a pas été rejouée en entier. **Et la règle du §4.1 bis vaut pour
 la suite** : une entrée du registre marquée « arbitrage attendu » est un travail à faire, pas un mur.
+
+---
+
+## décision 534 — un tableau d'objectifs archivé se reprend, et la surface n'était pas à inventer
+
+*2026-08-28, exécution planifiée. Cette entrée tranche l'écart que `CRM-083` nommait depuis sa
+tranche 2 a et livre la spécification de ce qui le referme. Elle est écrite et committée AVANT la
+première ligne de code (`CLAUDE.md` §5).*
+
+### 1. Le constat : une perte silencieuse, et un arbitrage qui n'en était pas un
+
+`CRM-083` porte depuis sa livraison une case non cochée : « **DÉSARCHIVER un tableau n'est PAS
+livré, et c'est une limite nommée** ». Le motif écrit était que « poser la commande supposerait
+d'abord une surface où le retrouver, qu'aucune unité ne spécifie », et le même motif est recopié
+dans le commentaire d'en-tête de `archiverTableau` : « ajouter ici un paramètre qui rendrait la
+colonne à `null` poserait une capacité qu'aucun écran n'atteint — du code mort dès sa première
+ligne ».
+
+Le raisonnement était juste **au moment où il a été écrit**. Sa conséquence ne l'est pas : un
+tableau d'objectifs **s'archive au lieu de se supprimer** (§2.1), l'archivage tient donc lieu de
+suppression, et il était **sans retour**. Une administratrice qui archivait par erreur perdait le
+tableau pour de bon du point de vue du produit, alors que sa donnée n'a jamais bougé et que la
+politique `goal_boards_maj_membre_ecrivant` autorise sans réserve de rendre la colonne. C'est
+exactement la **perte silencieuse** que `CLAUDE.md` §18 interdit, et l'un des quatre points de la
+ligne du responsable rappelés au §4.1 bis de `docs/CloudWorker.md` : « aucune perte n'est
+silencieuse ».
+
+**Pourquoi je tranche au lieu d'attendre.** Le §4.1 bis, posé le 2026-08-27 par la décision 532,
+règle précisément ce cas : une limite nommée « aucune unité ne le spécifie » est **un travail que
+personne n'a fait**, pas un mur, et la liste des motifs d'arbitrage est fermée. Le désarchivage n'y
+entre par aucun de ses quatre cas : il n'est ni irréversible — c'est l'inverse, il **défait** —, ni
+coûteux, ni une dépense, ni une autorité externe. Reste le cas 3, « un choix de produit que rien
+dans le dépôt ne permet de déduire ». Il ne s'applique pas non plus, et c'est le point suivant qui
+l'établit.
+
+### 2. L'arbitrage : la surface existe déjà, ailleurs, et elle est reprise sans écart
+
+Le dépôt **répond déjà** à la question posée. `CRM-075` a livré l'administration des tracks et des
+channels, où l'archivage pose exactement le même problème, et la réponse y est dans le code depuis
+(`webapp/src/app/AdministrationArborescence.tsx`) :
+
+- une case **« Afficher les archivés »** élargit la liste — `inclureArchives`, passé jusqu'à la
+  lecture ;
+- une ligne archivée porte la mention **« Archivé »** (`admin.tree.archived`) ;
+- elle ne garde **qu'une** commande d'écriture, **« Désarchiver »** (`admin.action.unarchive`), les
+  autres étant retirées parce que renommer ou réordonner un objet masqué n'a pas d'effet
+  observable ;
+- le désarchivage est le **même appel** que l'archivage, avec un booléen inversé.
+
+La ligne du responsable — « le comportement le plus simple, et le même partout ; deux écrans qui
+font la même chose la font de la même façon » — désigne donc une seule issue, et elle n'invente
+rien. **Issue retenue : reprendre la forme de `CRM-075` sans écart.** Les autres sont écartées et
+leurs motifs consignés : un **écran dédié** aux tableaux archivés ferait une troisième surface pour
+un geste que deux portent déjà, et le produit apprendrait à l'utilisateur trois grammaires pour une
+seule notion ; une **corbeille de tableau** confondrait deux notions que `docs/SPEC-corbeille.md`
+§3.1 tient explicitement séparées ; ne rien faire laisserait la perte silencieuse en place.
+
+### 3. Ce que la mesure a appris, et qui n'était pas prévisible
+
+La spécification (`docs/SPEC-goals.md` §5.6) est écrite **après six mesures** prises le jour même
+sur la pile seedée, par la vraie route REST et avec les jetons réels des trois profils. Trois
+d'entre elles ont changé le contrat plutôt que de le confirmer :
+
+- **la lectrice LIT un tableau archivé** (`200`, la ligne est rendue). `goal_boards_lecture_membre`
+  ne regarde que l'appartenance au workspace et **ignore `archived_at`**. Le masquage du §5.1 est
+  donc un choix du **client**, jamais une règle d'accès : l'élargir n'ouvre rien et ne demande **ni
+  migration, ni politique, ni privilège** ;
+- **la lectrice ne désarchive pas, mais elle n'obtient pas `403`** : `200` et `[]` — le refus
+  silencieux de la clause `using`, c'est-à-dire l'issue `sans-effet` que `modifierTableau` distingue
+  déjà. Le contrat dit donc `interdit` par cette voie, et non par un code HTTP qu'on n'aura jamais ;
+- **le désarchivage ne peut jamais heurter un doublon de nom**, et c'est mesuré des deux côtés :
+  l'index `goal_boards_workspace_name_key` est **total**, si bien que reprendre le nom d'un tableau
+  archivé rend `409 / 23505` — le nom n'a donc jamais été libéré, et le rendre ne peut rien
+  heurter. Le dictionnaire fermé des refus n'a pas à gagner de cas sur ce geste, et une assertion le
+  figera plutôt qu'un commentaire l'affirme.
+
+La position, elle, **est conservée** par le désarchivage : le tableau revient là où il était, ce que
+le message vivant doit dire.
+
+### 4. Ce que la tranche 2 h livrera, et où reprendre
+
+Definition of Done au §5.6.4 : `desarchiverTableau`, l'élargissement de `lireTableaux` **à
+comportement par défaut inchangé**, la case, la mention, la commande, puis les preuves — unitaire du
+module et du composant sur la **requête émise**, API avec les trois jetons et relecture de la ligne
+après chaque refus, E2E d'interface à console vierge aux quatre paliers — et un **seed enrichi d'un
+tableau archivé**, sans quoi la case cochée ne montrerait rien et la fonctionnalité serait livrée
+sans être démontrable (`CLAUDE.md` §8).
+
+**Aucune migration n'est due.** Tout le contrat backend existe depuis `CRM-082`, migration `0049`.

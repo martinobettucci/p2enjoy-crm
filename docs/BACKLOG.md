@@ -10509,10 +10509,29 @@ la 2b-1 l'ont été : **2b-2a livre le LIEN**, 2b-2b livrera les **flèches** et
       `tableau-creation-1440.jpg`, `tableau-liste-1440.jpg`, `tableau-doublon-1440.jpg`,
       `tableau-renommage-1440.jpg`, `tableau-archivage-confirmation-1440.jpg`,
       `tableau-refus-lectrice-1440.jpg`.
-- [ ] **DÉSARCHIVER un tableau n'est PAS livré, et c'est une limite nommée** : le §5.1 ne décrit
-      qu'une liste des tableaux non archivés, et aucun écran ne rend un tableau archivé. Poser la
-      commande supposerait d'abord une surface où le retrouver, qu'aucune unité ne spécifie. La
-      confirmation dit donc en toutes lettres ce que l'archivage coûte.
+- [~] **~~DÉSARCHIVER un tableau n'est PAS livré, et c'est une limite nommée.~~ TRANCHÉ ET SPÉCIFIÉ
+      le 2026-08-28 — tranche 2 h** (`docs/JOURNAL.md`, décision 534 ; `docs/SPEC-goals.md` §5.6,
+      quatre sous-chapitres écrits et committés **avant** la première ligne de code, sur **six
+      mesures** prises le jour même par la vraie route REST avec les jetons réels des trois
+      profils). *Relevé d'origine, conservé :* « le §5.1 ne décrit qu'une liste des tableaux non
+      archivés, et aucun écran ne rend un tableau archivé. Poser la commande supposerait d'abord une
+      surface où le retrouver, qu'aucune unité ne spécifie. »
+      **Le motif est CADUC, et il l'était déjà** : la surface n'est pas à inventer, `CRM-075` la
+      porte depuis sa livraison pour les tracks et les channels — case « Afficher les archivés »,
+      mention « Archivé », commande « Désarchiver » seule sur la ligne. Le §4.1 bis de
+      `docs/CloudWorker.md` (2026-08-27) interdit d'y voir un arbitrage : le désarchivage n'entre
+      dans aucun des quatre cas de la liste fermée, et laisser l'archivage **sans retour** sur un
+      objet qui s'archive AU LIEU de se supprimer est la « perte silencieuse » que `CLAUDE.md` §18
+      proscrit.
+      **Trois mesures ont changé le contrat plutôt que de le confirmer** : la lectrice **LIT** un
+      tableau archivé — `goal_boards_lecture_membre` ignore `archived_at`, donc le masquage du §5.1
+      est un choix du client et l'élargir n'ouvre **rien** ; son refus d'écriture est un
+      **`sans-effet`** (`200` et `[]`) et non un `403` ; et le désarchivage ne peut **jamais**
+      heurter un doublon, l'index d'unicité étant **total** — reprendre le nom d'un tableau archivé
+      rend `409 / 23505`, le nom n'a donc jamais été libéré.
+      **Aucune migration, aucune politique, aucun privilège** : tout le contrat backend existe
+      depuis la migration `0049` de `CRM-082`. *Reste dû : le code, ses preuves et le seed enrichi
+      d'un tableau archivé (Definition of Done au §5.6.4).*
 
 **CE QUI RESTE — LE HARNAIS.**
 - [ ] **État LECTURE SEULE du `viewer`** : tous les gestes d'écriture indisponibles ET lisibles,
