@@ -38,11 +38,12 @@
 # `docs/SPEC-goals.md` §5.1 ne décrit qu'une liste des tableaux NON archivés, et le backlog nomme
 # cette limite. Un contrôle qui l'exigerait ici rendrait rouge une unité correctement livrée.
 #
-# L'ÉTAT LECTURE SEULE DU `viewer` (§5.4, dernière ligne) N'EST PAS CONTRÔLÉ, et c'est délibéré :
-# il est BLOQUÉ PAR L'ARBITRAGE INC-170 — cet énoncé est le seul du dépôt à demander une extinction
-# par rôle, là où `docs/DESIGN_SYSTEM.md` §5.26 pose qu'aucune commande n'est éteinte d'avance.
-# Le harnais mesure ce que l'écran fait aujourd'hui — il envoie et TRADUIT le refus — et laisse la
-# règle générale au responsable.
+# L'ÉTAT LECTURE SEULE EST DÉSORMAIS CONTRÔLÉ — révision du 2026-08-28, tranche 3. Le texte
+# d'origine disait ce point « bloqué par l'arbitrage INC-170 » ; l'arbitrage est RENDU (décision
+# 546, `docs/SPEC-goals.md` §5.7) et la tranche 3 l'a livré. Le contrôle porte sur ce que le §5.7.4
+# rend vérifiable hors d'une suite : que l'écran lise la CAPACITÉ que la base consent et non un
+# rôle, et que la migration qui la rend soit `security invoker`. Ce que l'écran FAIT de cette
+# capacité est mesuré par les preuves, unitaires et d'interface, que ce harnais rejoue.
 #
 # Le script ne démarre ni n'arrête rien : la pile de développement doit déjà tourner
 # (`./runDev.sh`) et le seed être appliqué (`supabase/seed/apply-seed.sh`).
@@ -67,6 +68,10 @@ ECRAN=webapp/src/app/Objectifs.tsx
 TEST_ECRAN=webapp/src/app/Objectifs.test.tsx
 SPEC_API=e2e/api/objectifs.spec.ts
 SPEC_UI=e2e/ui/objectifs.spec.ts
+# La migration de la TRANCHE 3 : elle n'ajoute qu'une fonction, et la propriété qui compte est
+# `security invoker` (`docs/SCHEMA.md` §9 bis.8 bis).
+MIGRATION_CAPACITE=supabase/migrations/0071_objectifs_ecriture_permise.sql
+TEST_CAPACITE=supabase/tests/0067_objectifs_ecriture_permise.test.sql
 CAPTURES=docs/captures/CRM-083
 DB_CONTAINER=p2enjoy-db
 
@@ -126,9 +131,23 @@ printf '\033[1mPreuves de CRM-083 — le canevas d’objectifs\033[0m\n'
 titre "1. Fichiers livrés et traçabilité"
 
 for fichier in "$LECTURE" "$TEST_LECTURE" "$ECRITURE" "$TEST_ECRITURE" "$ECRAN" "$TEST_ECRAN" \
-	"$SPEC_API" "$SPEC_UI"; do
+	"$SPEC_API" "$SPEC_UI" "$MIGRATION_CAPACITE" "$TEST_CAPACITE"; do
 	if [ -f "$fichier" ]; then ok "$fichier est livré"; else fail "$fichier est ABSENT"; fi
 done
+
+# La migration et sa suite pgTAP appartiennent à la TRANCHE 3, et leur traçabilité est contrôlée
+# comme celle des huit autres fichiers : sans elle, la colonne calculée ne mènerait plus à l'unité
+# de l'écran qui la consomme.
+if head -3 "$MIGRATION_CAPACITE" | grep -q '@spec CRM-083'; then
+	ok "$(basename "$MIGRATION_CAPACITE") porte son commentaire @spec"
+else
+	fail "$(basename "$MIGRATION_CAPACITE") ne cite pas son unité de backlog en tête de fichier"
+fi
+if head -3 "$TEST_CAPACITE" | grep -q '@verifies CRM-083'; then
+	ok "$(basename "$TEST_CAPACITE") porte son commentaire @verifies"
+else
+	fail "$(basename "$TEST_CAPACITE") ne cite pas son unité de backlog"
+fi
 
 for fichier in "$LECTURE" "$ECRITURE" "$ECRAN"; do
 	if head -3 "$fichier" | grep -q '@spec CRM-083'; then
@@ -172,7 +191,11 @@ done
 
 # `canevas-lectrice-bloc-masque` EST la capture de l'état le plus important du §5.4 : elle rend le
 # tableau tel que la lectrice le voit, sans le bloc que la RLS lui masque.
-for etat in canevas-lectrice-bloc-masque canevas-focus-clavier refus-lectrice-1440; do
+# `lecture-seule-canevas-1440` et `lecture-seule-fiche-1440` sont les captures de la tranche 3 —
+# celles où l'observation a trouvé DEUX défauts qu'aucune assertion n'attrapait : la poignée de
+# redimensionnement encore dessinée, et la fiche qui ne disait pas pourquoi ses champs étaient gris.
+for etat in canevas-lectrice-bloc-masque canevas-focus-clavier refus-lectrice-1440 \
+	lecture-seule-canevas-1440 lecture-seule-fiche-1440 lecture-seule-sm-390; do
 	if [ -f "$CAPTURES/$etat.jpg" ]; then
 		ok "capture de l'état « $etat » livrée"
 	else
@@ -224,6 +247,40 @@ if [ -z "$jugement" ]; then
 	ok "la jauge ne porte aucune couleur de jugement — ni vert ni rouge selon la valeur (§5.2)"
 else
 	fail "la jauge semble juger la valeur : $(printf '%s' "$jugement" | head -3 | tr '\n' ' ')"
+fi
+
+# `docs/SPEC-goals.md` §5.7 : L'ÉCRAN NE DÉDUIT AUCUN DROIT D'UN RÔLE. C'est le cœur de l'arbitrage
+# d'INC-170, et c'est la règle qu'aucune suite ne rendrait rouge : un écran qui lirait le rôle du
+# workspace et en tirerait la même extinction passerait TOUTES les preuves de la tranche 3, la
+# lectrice du seed étant précisément un `viewer`. La forme sous laquelle ce défaut arriverait est
+# une lecture de `workspace_members.role`, de `workspace_role` ou une comparaison à la chaîne
+# « viewer » dans l'écran ou ses modules.
+role=$(grep -nE "workspace_role|workspace_members|'viewer'|\"viewer\"" "$ECRAN" "$LECTURE" "$ECRITURE" || true)
+if [ -z "$role" ]; then
+	ok "l'écran ne lit AUCUN rôle : l'état de lecture seule vient de la capacité que la base consent (§5.7)"
+else
+	fail "l'écran semble déduire un droit d'un RÔLE : $(printf '%s' "$role" | head -3 | tr '\n' ' ')"
+fi
+
+# `docs/SPEC-goals.md` §5.7.4, ligne c : le repli FERME. La comparaison est STRICTE à `true`, et un
+# `!!` ou un `!== false` l'ouvrirait — `Boolean('true')` comme `Boolean('false')` valent `true`. Le
+# scénario unitaire le tient, mais il est ici doublé parce que le SENS de ce repli est la seule
+# décision de la tranche qu'une réécriture de confort peut inverser sans en avoir l'air.
+if grep -qE "ecriture_permise === true" "$LECTURE"; then
+	ok "la capacité se lit par une comparaison STRICTE à « true » — l'absence FERME (§5.7.4, ligne c)"
+else
+	fail "« ecritureConsentie » ne compare plus strictement à « true » : une colonne absente ouvrirait l'écriture"
+fi
+
+# `docs/SCHEMA.md` §9 bis.8 bis : la colonne calculée est `security invoker`. En `definer`, elle
+# répondrait pour son propriétaire — qui traverse la RLS — et rendrait « true » à TOUT LE MONDE :
+# l'état de lecture seule ne paraîtrait jamais, et toutes les preuves de l'écran resteraient vertes
+# côté administratrice. La suite pgTAP le tient en base ; ce contrôle-ci tient le FICHIER, de sorte
+# qu'une migration réécrite se voie avant d'être appliquée.
+if grep -qE "security[[:space:]]+definer" "$MIGRATION_CAPACITE"; then
+	fail "$(basename "$MIGRATION_CAPACITE") déclare « security definer » : la colonne rendrait « true » à tout appelant"
+else
+	ok "la migration de la capacité n'est pas « security definer » — l'état de lecture seule peut paraître"
 fi
 
 # `docs/SPEC-goals.md` §5.1 : le nombre de blocs de la liste est celui que le BACKEND consent à
@@ -396,6 +453,16 @@ else
 		"$ECRITURE" "	if (geometrie.largeur !== undefined) {" \
 		"	if (true) {" \
 		'lib/objectifs-ecriture.test'
+
+	# TRANCHE 3, §5.7.4 ligne c : le repli de la capacité FERME. `!== false` l'ouvrirait dès que la
+	# colonne est absente — cache de schéma PostgREST périmé, migration non appliquée —, et l'écran
+	# rendrait alors des commandes dont chaque envoi serait refusé : l'état exact que cette tranche
+	# supprime. C'est la décision de la tranche la plus facile à inverser par une réécriture de
+	# confort, et la dégradation est ce qui l'empêche.
+	degrader "l'absence de la capacité OUVRE l'écriture — la commande promettrait un envoi refusé (§5.7.4, ligne c)" \
+		"$LECTURE" "return tableau?.ecriture_permise === true" \
+		"return tableau?.ecriture_permise !== false" \
+		'lib/objectifs.test'
 
 	titre "8. Restauration"
 
