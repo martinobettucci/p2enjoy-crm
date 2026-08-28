@@ -43,6 +43,7 @@ import {
 	type RefusBudget,
 	type ResultatBudget,
 } from '../lib/budgets'
+import { PanneauOccurrences } from './PanneauOccurrences'
 import type { ClientCrm } from '../lib/supabase'
 
 const CLASSES_ENTETE = 'bg-bg text-sm text-text-2 font-medium h-[var(--size-target)] px-3 text-left'
@@ -334,6 +335,15 @@ type OuvertureBudget =
 	| { readonly type: 'creation' }
 	| { readonly type: 'edition'; readonly id: string }
 	| { readonly type: 'cloture'; readonly id: string }
+	/**
+	 * La sous-surface des occurrences du budget déplié (`docs/SPEC-costs.md` §4.1 bis).
+	 *
+	 * C'est un CINQUIÈME MEMBRE de cette union, et non un second état concurrent : le §5.47 exige
+	 * qu'un seul élément soit ouvert à la fois dans ce bloc, occurrences comprises. Deux états
+	 * parallèles laisseraient un formulaire de budget et une liste d'occurrences ouverts sur la même
+	 * ligne, et le focus sauterait de l'un à l'autre sans que rien ne le dise.
+	 */
+	| { readonly type: 'occurrences'; readonly id: string }
 
 const AUCUNE: OuvertureBudget = { type: 'aucune' }
 
@@ -369,6 +379,34 @@ export function BlocBudgetsTrack({ client, idTrack, nomTrack, onAnnonce }: Propr
 	// réponse périmée écraser une réponse plus récente — l'interrupteur des clôturés change la
 	// requête.
 	const courant = useRef(0)
+
+	/**
+	 * Rafraîchissement du SEUL compte d'occurrences, sans relire la table des budgets.
+	 *
+	 * IL EST DISTINCT DE `tentative`, ET C'EST UN DÉFAUT ÉVITÉ PLUTÔT QU'UNE OPTIMISATION. Passer
+	 * par `tentative` remettrait `budgets` en chargement, et la sous-surface des occurrences — qui
+	 * n'est rendue que lorsque la table est prête — serait DÉMONTÉE à chaque écriture : la liste
+	 * repartirait de zéro et le formulaire ouvert disparaîtrait sous les doigts. Le compte se relit
+	 * donc seul.
+	 */
+	const [tentativeComptes, setTentativeComptes] = useState(0)
+	const courantComptes = useRef(0)
+	const budgetsCourants = useRef<readonly BudgetAdministrable[]>([])
+	if (budgets.statut === 'pret') budgetsCourants.current = budgets.donnees
+
+	useEffect(() => {
+		// Le premier comptage appartient à l'effet principal, qui connaît déjà la liste qu'il vient
+		// de lire ; celui-ci ne sert qu'aux rafraîchissements demandés par la sous-surface.
+		if (tentativeComptes === 0) return
+		const rang = ++courantComptes.current
+		void (async () => {
+			const recurrents = budgetsCourants.current
+				.filter((budget) => budget.is_recurrent)
+				.map((budget) => budget.id)
+			const comptes = await compterOccurrencesOuvertes(client, recurrents)
+			if (rang === courantComptes.current) setOccurrences(comptes)
+		})()
+	}, [client, tentativeComptes])
 
 	useEffect(() => {
 		const rang = ++courant.current
@@ -552,11 +590,45 @@ export function BlocBudgetsTrack({ client, idTrack, nomTrack, onAnnonce }: Propr
 												? t('admin.budgets.recurrent.yes')
 												: t('admin.budgets.recurrent.no')}
 										</td>
+										{/*
+										 * La cellule qui COMPTE les occurrences est aussi celle qui les
+										 * ouvre (§5.47) : c'est le geste le plus court, et il ne crée
+										 * aucune notion nouvelle. Sur un budget NON RÉCURRENT elle reste
+										 * un texte inerte — le trigger de `0050` refuse toute occurrence
+										 * sur un tel budget, et offrir la commande mènerait à un refus
+										 * garanti.
+										 */}
 										<td
 											data-testid="cellule-occurrences"
 											className={`${CLASSES_CELLULE} text-right`}
 										>
-											{rendreOccurrences(budget)}
+											{budget.is_recurrent ? (
+												<button
+													type="button"
+													data-testid="deplier-occurrences"
+													aria-expanded={
+														ouverture.type === 'occurrences' && ouverture.id === budget.id
+													}
+													aria-label={t('admin.occurrences.toggle', {
+														nom: budget.name,
+														nombre: rendreOccurrences(budget) ?? '',
+													})}
+													onClick={() => {
+														setRefus(null)
+														setOuverture((precedente) =>
+															precedente.type === 'occurrences' &&
+															precedente.id === budget.id
+																? AUCUNE
+																: { type: 'occurrences', id: budget.id },
+														)
+													}}
+													className="min-h-[var(--size-target)] w-full text-right underline underline-offset-2 rounded-sm"
+												>
+													{rendreOccurrences(budget)}
+												</button>
+											) : (
+												rendreOccurrences(budget)
+											)}
 										</td>
 										{/* L'état est un MOT, pas une teinte (§1) : un budget clôturé grisé se
 										    lirait comme une panne d'affichage. */}
@@ -664,6 +736,30 @@ export function BlocBudgetsTrack({ client, idTrack, nomTrack, onAnnonce }: Propr
 					</table>
 				</div>
 			) : null}
+
+			{/*
+			 * La sous-surface des occurrences vit SOUS la table, comme les trois autres surfaces de ce
+			 * bloc (`docs/DESIGN_SYSTEM.md` §5.47) : deux placements pour un même type de surface
+			 * dans un même bloc feraient chercher au mauvais endroit. Elle nomme donc le budget dont
+			 * elle parle, étant détachée de la ligne qui l'a ouverte.
+			 */}
+			{ouverture.type === 'occurrences' && budgets.statut === 'pret'
+				? budgets.donnees
+						.filter((budget) => budget.id === ouverture.id)
+						.map((budget) => (
+							<PanneauOccurrences
+								key={budget.id}
+								client={client}
+								idBudget={budget.id}
+								nomBudget={budget.name}
+								onAnnonce={onAnnonce}
+								// Ouvrir ou clôturer une occurrence change le nombre que la colonne du
+								// §4.1 affiche. Sans cette relecture, l'écran dirait deux choses
+								// contradictoires au même instant.
+								onComptesPerimes={() => setTentativeComptes((precedente) => precedente + 1)}
+							/>
+						))
+				: null}
 
 			{/*
 			 * Les formulaires vivent SOUS la table et non dans une cellule : un `form` inséré dans un

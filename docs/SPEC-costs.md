@@ -216,6 +216,10 @@ La cellule « occurrences » d'un budget **récurrent** devient un `button` de d
 le trigger de la migration 50 refuse toute occurrence sur un tel budget, et offrir la commande
 mènerait à un refus garanti.
 
+**La sous-surface est rendue SOUS la table**, comme les trois autres surfaces du bloc, et elle nomme
+le budget dont elle parle — point révisé le 2026-08-28 dans le même changement que le code, motif
+écrit au §5.47 du design system.
+
 Dépliée, elle rend la liste des occurrences du budget, **de la plus récente à la plus ancienne** —
 `period_start` décroissante, `label` croissant à égalité, les périodes étant facultatives (§2.2) :
 

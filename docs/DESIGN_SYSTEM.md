@@ -4231,10 +4231,22 @@ Elle vit **dans** le bloc des budgets d'un track (§5.13), et n'invente rien.
   la hauteur `--size-target` : le nombre ne bouge pas en devenant cliquable. Sur un budget **non
   récurrent** elle reste un texte inerte, aucune occurrence n'y étant possible.
 
-- **Le contenu déplié est une ligne de table à part entière**, `<tr>` portant une `<td colSpan>` sous
-  la ligne du budget — jamais une surface flottante. C'est la règle du §5.13 : « les formulaires
-  vivent dans le flux du document. Aucune modale. » Une liste ancrée demanderait un piège de focus et
-  une gestion d'`Échap` qu'aucune unité n'a spécifiés.
+- **Le contenu déplié vit SOUS la table, jamais dans une ligne de celle-ci.** ~~Le contenu déplié est
+  une ligne de table à part entière, `<tr>` portant une `<td colSpan>` sous la ligne du budget.~~
+  **RÉVISÉ le 2026-08-28, dans le même changement que le code, et le motif est écrit ici plutôt que
+  tu :** la première rédaction de ce point a été faite avant relecture de `BlocBudgetsTrack.tsx`, qui
+  porte depuis `CRM-084` tranche 2 une décision contraire et motivée — « un `form` inséré dans un
+  `tr` casserait le modèle de tableau, et un `td` qui s'étend sur sept colonnes ferait sauter
+  l'alignement que le §5.9 existe pour tenir ». Les trois surfaces déjà rendues par ce bloc — création,
+  édition, confirmation de clôture — vivent donc sous la table, et faire autrement pour la quatrième
+  aurait donné **deux placements** pour un même type de surface dans un même bloc. La sous-surface
+  suit la règle du bloc qui l'accueille. Reste inchangé ce que cette règle protégeait : elle vit
+  **dans le flux du document**, jamais en surface flottante (§5.13, « aucune modale »), une liste
+  ancrée demandant un piège de focus et une gestion d'`Échap` qu'aucune unité n'a spécifiés.
+
+- **Le budget concerné est NOMMÉ en tête de la sous-surface**, conséquence directe du point
+  ci-dessus : détachée de la ligne qui l'a ouverte, elle doit dire de quel budget elle parle. Un
+  panneau anonyme sous une table de dix budgets ferait remonter l'œil chercher lequel est déplié.
 
 - **La liste des occurrences est une `ul` / `li`, pas un second tableau.** Le §5.9 régit un tableau de
   données comparables ; imbriquer une table dans une cellule de table donnerait deux grilles de

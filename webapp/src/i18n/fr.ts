@@ -1425,6 +1425,61 @@ export const fr = {
 	'admin.budgets.close.pending.failed':
 		'Les lignes sans coût réel n’ont pas pu être comptées. La clôture reste possible.',
 	'admin.budgets.close.action': 'Clôturer',
+
+	// --- Occurrences d'un budget récurrent — CRM-084 tranche 3c, docs/SPEC-costs.md §4.1 bis ---
+	// La sous-surface a son PROPRE jeu de refus : ils appellent des gestes différents de ceux des
+	// budgets — rendre le budget récurrent, clôturer plutôt que retirer —, et les ranger sous les
+	// phrases des budgets dirait « vérifiez la devise » là où aucune devise n'existe ici.
+	'admin.occurrences.title': 'Occurrences de « {budget} »',
+	'admin.occurrences.aria': 'Occurrences du budget {budget}',
+	'admin.occurrences.toggle': 'Occurrences du budget {nom} : {nombre} ouverte(s)',
+	'admin.occurrences.error': 'Les occurrences n’ont pas pu être chargées.',
+	// « Aucune occurrence » n'est pas un état vide en défaut : c'est l'invitation au seul geste qui
+	// vaille, et le §2.2 rappelle qu'aucune occurrence n'est jamais générée automatiquement.
+	'admin.occurrences.empty':
+		'Ce budget ne porte aucune occurrence. Tant qu’il n’en porte pas, aucune ligne de coût ne peut lui être rattachée.',
+	'admin.occurrences.state.open': 'Ouverte',
+	'admin.occurrences.state.closed': 'Clôturée',
+	'admin.occurrences.period.range': 'du {debut} au {fin}',
+	'admin.occurrences.period.from': 'à partir du {debut}',
+	'admin.occurrences.period.until': 'jusqu’au {fin}',
+	'admin.occurrences.action.new': 'Ouvrir une occurrence',
+	'admin.occurrences.action.edit': 'Modifier l’occurrence {nom}',
+	'admin.occurrences.action.close': 'Clôturer l’occurrence {nom}',
+	'admin.occurrences.action.reopen': 'Rouvrir l’occurrence {nom}',
+	'admin.occurrences.action.remove': 'Retirer l’occurrence {nom}',
+	'admin.occurrences.form.create': 'Ouvrir une occurrence',
+	'admin.occurrences.form.edit': 'Modifier l’occurrence',
+	'admin.occurrences.form.label': 'Libellé',
+	'admin.occurrences.form.label.help':
+		'Par exemple « Janvier 2026 ». Deux occurrences du même budget ne peuvent pas porter le même libellé.',
+	'admin.occurrences.form.start': 'Début de période (facultatif)',
+	'admin.occurrences.form.end': 'Fin de période (facultative)',
+	'admin.occurrences.form.planned': 'Enveloppe (facultative)',
+	'admin.occurrences.form.planned.help':
+		'Laissez vide si l’enveloppe n’est pas décidée. Un montant négatif est accepté. Les périodes servent à ordonner et à libeller : elles ne refusent aucune ligne de coût.',
+	'admin.occurrences.form.planned.invalid': 'Ce montant n’est pas un nombre.',
+	// Le retrait est le seul geste confirmé : la clôture et la réouverture se défont d'un clic.
+	'admin.occurrences.remove.confirm': 'Retirer l’occurrence « {nom} » ?',
+	'admin.occurrences.remove.body':
+		'Elle sera supprimée. Si des lignes de coût y sont rattachées, le retrait sera refusé : clôturez-la plutôt, ce qui la retire des choix sans effacer la dépense.',
+	'admin.occurrences.remove.action': 'Retirer',
+	'admin.occurrences.refus.forbidden':
+		'Seul un administrateur de cet espace de travail peut gérer les occurrences.',
+	'admin.occurrences.refus.libelle-pris':
+		'Ce budget porte déjà une occurrence de ce libellé.',
+	'admin.occurrences.refus.libelle-vide': 'Le libellé ne peut pas être vide.',
+	'admin.occurrences.refus.budget-non-recurrent':
+		'Ce budget n’est pas récurrent : rendez-le récurrent avant d’y ouvrir une occurrence.',
+	'admin.occurrences.refus.occurrence-referencee':
+		'Cette occurrence porte des lignes de coût : clôturez-la plutôt que de la retirer.',
+	'admin.occurrences.refus.reference-absente':
+		'Le budget visé n’existe plus. Rechargez la page.',
+	'admin.occurrences.refus.network':
+		'La demande n’a pas abouti. Vérifiez votre connexion, puis réessayez.',
+	'admin.occurrences.refus.unknown': 'Cette demande a été refusée.',
+	'admin.occurrences.refus.sans-effet':
+		'Rien n’a été modifié : vos droits sur ce budget ont peut-être changé depuis l’ouverture de l’écran.',
 	// Refus propres aux budgets — ils appellent des gestes différents de ceux de l'arborescence, et
 	// les ranger sous les mêmes phrases dirait « vérifiez le slug » là où aucun slug n'existe.
 	'admin.budgets.refus.forbidden':
@@ -1528,6 +1583,11 @@ export const fr = {
 	'live.admin.budget.updated': 'Budget modifié',
 	'live.admin.budget.closed': 'Budget clôturé',
 	'live.admin.budget.reopened': 'Budget rouvert',
+	'live.admin.occurrence.created': 'Occurrence ouverte',
+	'live.admin.occurrence.updated': 'Occurrence modifiée',
+	'live.admin.occurrence.closed': 'Occurrence clôturée',
+	'live.admin.occurrence.reopened': 'Occurrence rouverte',
+	'live.admin.occurrence.removed': 'Occurrence retirée',
 
 	'live.admin.aria': "Annonces de l'administration",
 	'live.admin.created': 'Créé',
