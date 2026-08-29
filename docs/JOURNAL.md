@@ -27889,3 +27889,53 @@ dettes nommées restent, prêtes à être prises comme unité : **INC-241** (`CR
 strict que sa propre règle) et **INC-242** (`CRM-043`, un compteur d'assertions à réviser à 99 —
 travail court). **INC-244**, consignée ici, s'y ajoute. Les deux chapitres de manuel d'INC-214 et de
 `CRM-084` restent dus.
+
+## décision 560 — INC-241 : une règle de ROUTE ne s'éprouve pas en comptant des fichiers
+
+*2026-08-29, session planifiée ouverte à 20:08:25 UTC. Spécification écrite et committée avant la
+première ligne de code (`CLAUDE.md` §5, `docs/CloudWorker.md` §3.2 point 3).*
+
+**L'UNITÉ DE LA SESSION EST INC-241**, imputée à `CRM-041`, choisie parce que la dernière entrée du
+journal la désigne — « deux dettes nommées restent, prêtes à être prises comme unité : **INC-241**
+(`CRM-041`, un contrôle plus strict que sa propre règle) et INC-242 ». Le backlog ne porte aucune
+unité `[ ]`, et INC-241 est la première des deux dans l'ordre où le journal les nomme.
+
+**CE QUE LA MESURE ÉTABLIT, ET QUE JE NE REDÉCOUVRE PAS.** `scripts/verify-board.sh` ligne 167 exige
+`grep -rl "from('channels')" webapp/src | wc -l` égal à **1** ; le dépôt en compte **cinq**. Le
+contrôle rougit depuis que `CRM-075`, `CRM-077`, `CRM-057` et `CRM-083` ont livré.
+
+**LA LECTURE DU ROUTEUR DONNE L'AUTRE MOITIÉ DU DÉFAUT, ET ELLE EST PLUS INSTRUCTIVE QUE LA
+PREMIÈRE.** Le §5.4 de `docs/SPEC-channels.md` énonce une règle **de route** — « toute route dont
+l'adresse porte un `slugTrack` alimente la barre d'onglets par le chargeur de ce chapitre, et aucune
+ne réécrit sa propre lecture des channels ». Quatre routes portent aujourd'hui ce segment —
+`/tracks/:slugTrack`, `/tracks/:slugTrack/:slugChannel`, `/tracks/:slugTrack/:slugChannel/liste` et
+`/tracks/:slugTrack/:slugChannel/cards/:idCard`, plus `/tracks/:slugTrack/couts` et
+`/tracks/:slugTrack/couts/:idBudget` livrées par `CRM-086`. **Toutes** passent par
+`useContenuTrack` : la règle est TENUE, et le comptage qui la prétend violée ne la mesurait pas.
+Le comptage serait au contraire resté **vert** si une route avait réécrit sa lecture *dans*
+`webapp/src/lib/channels.ts` — le fichier serait resté unique. Un contrôle à la fois trop strict et
+trop faible.
+
+**CE QUE JE TRANCHE, ET SUR QUEL MOTIF** (`docs/CloudWorker.md` §4.1 bis). L'entrée INC-241 exigeait
+de « trancher pour chacune des quatre autres lectures ». Je retiens : **aucune des quatre n'entre
+dans le périmètre du §5.4**, parce qu'aucune n'alimente une barre d'onglets et que le §5.4 prévoit
+nommément des routes transverses. Elles sont **nommées une par une** au §5.4.1, avec la surface
+qu'elles servent — et écrites comme **observation, jamais comme assertion** : un inventaire figé de
+cinq modules rougirait à la sixième surface, ce qui est exactement le mécanisme d'INC-175, d'INC-191
+et d'INC-242. Motif de fond : le comportement le plus simple et le même partout (ligne du
+responsable) — la règle porte sur les routes, le contrôle porte donc sur les routes.
+
+**CE QUE JE CODE, ET RIEN DE PLUS.** Le contrôle du §1 de `scripts/verify-board.sh` remplacé par un
+recensement du **routeur**, mesuré sur le dépôt à chaque exécution et jamais codé en dur :
+constantes de chemin, table `ROUTES`, déclarations `<Route>` de `App.tsx` — `.map(…)` compris. Les
+quatre exigences *a* à *d* du §5.4.1, dont la *d* — une seule occurrence de `from('channels')` dans
+le chargeur partagé — que le comptage de fichiers ne pouvait pas rendre. Et le retournement du
+recensement sur une **arborescence de routeur mutée**, jetable, dans les trois sens que *b*, *c* et
+*d* refusent.
+
+Aucun fichier de la webapp n'est modifié : la règle est tenue par le produit, c'est sa preuve qui ne
+l'exprimait pas. Aucune migration, aucune opération manuelle de déploiement n'est due.
+
+**Où reprendre.** Le code suit immédiatement, dans un commit distinct. Preuves attendues :
+`scripts/verify-board.sh` (contrôle remplacé, rouge avant correction), `npm run typecheck`,
+`npm run build`.

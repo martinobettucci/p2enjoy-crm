@@ -330,6 +330,72 @@ Réglages — n'en portent pas et gardent l'état vide, qui n'est pas un cas d'e
 Le détail de ce que la coquille montre autour du formulaire d'une card, et de ce qu'elle fait d'un
 échec de chargement, est écrit là où vit cet écran : `docs/SPEC-form-composer.md` §4.6 bis.
 
+### 5.4.1 La règle du §5.4, rendue exécutable — révisée le 2026-08-29 (INC-241)
+
+Le §5.4 énonce une règle **de route**. Sa première mise en forme exécutable, dans
+`scripts/verify-board.sh`, était un **comptage de fichiers** :
+
+```
+[ "$(grep -rl "from('channels')" webapp/src | wc -l)" -eq 1 ]
+```
+
+Cette forme est **abandonnée ici**, et le motif est mesuré (INC-241) : elle est plus stricte que la
+règle qu'elle cite, et elle l'est dans le mauvais sens.
+
+- **Trop stricte** : elle interdit toute lecture de `channels` où qu'elle soit, alors que le §5.4
+  ci-dessus prévoit explicitement des routes transverses. Cinq modules lisent aujourd'hui
+  `channels` ; quatre servent des surfaces qui n'ont aucune barre d'onglets, et le contrôle rougit
+  depuis qu'elles ont livré, sans rien dire du produit.
+- **Trop faible en même temps** : le comptage serait resté **vert** si `RouteTrack.tsx` avait
+  réécrit sa propre lecture *à l'intérieur* de `webapp/src/lib/channels.ts` — le fichier serait
+  resté unique, et les deux définitions de « channel non archivé » que les décisions 167 et 169
+  redoutaient auraient bien divergé.
+
+**La forme retenue éprouve la règle réelle, et elle se mesure sur le dépôt à chaque exécution.**
+Aucune liste de routes, de composants ou de fichiers n'est écrite en dur dans le harnais : un
+compteur figé finit rouge de son propre succès (INC-175, INC-191, INC-242).
+
+Le harnais recense, **en lisant le routeur** :
+
+1. les constantes de chemin `export const CHEMIN… = '…' as const` (ou un tableau de littéraux) de
+   `webapp/src/app/` ;
+2. les entrées de la table `ROUTES` de `webapp/src/app/routes.tsx`, chacune associant un chemin à
+   son rendu ;
+3. les déclarations `<Route path={…} element={<Composant …/>} />` de `webapp/src/app/App.tsx`, y
+   compris celles engendrées par `<tableau>.map(…)`.
+
+De ce recensement il retient les routes dont le chemin porte le segment `:slugTrack`, et exige :
+
+| N° | Contrôle | Ce qu'il refuse |
+|---|---|---|
+| a | Le recensement rend **au moins une** route porteuse de `:slugTrack`, et chaque composant de route désigné existe sur le disque | Un contrôle devenu vert parce qu'il ne mesure plus rien |
+| b | Chaque composant de route porteuse de `:slugTrack` importe `useContenuTrack` depuis `../lib/channels` | Une coquille qui résout son track sans le chargeur du chapitre |
+| c | Aucun composant de route porteuse de `:slugTrack` ne contient `from('channels')` | Une route qui réécrit sa propre lecture des channels |
+| d | `webapp/src/lib/channels.ts` ne contient **qu'une seule** occurrence de `from('channels')` | Une seconde lecture glissée dans le chargeur partagé lui-même |
+
+Le contrôle *d* est celui que le comptage de fichiers ne pouvait pas rendre, et c'est lui qui porte
+désormais la crainte des décisions 167 et 169 : **une** requête, donc **une** définition de
+« channel non archivé » pour la barre d'onglets.
+
+**Ce que la règle ne vise pas, nommé lecture par lecture** — état mesuré le 2026-08-29, écrit ici
+comme observation et **non** repris en assertion, pour qu'aucun inventaire figé ne rougisse quand
+une sixième surface arrivera :
+
+| Module | Surface servie | Pourquoi le §5.4 ne la vise pas |
+|---|---|---|
+| `webapp/src/lib/channels.ts` | La barre d'onglets d'une route de track | C'est **le** chargeur du chapitre, celui que la règle impose |
+| `webapp/src/lib/administration-arborescence.ts` (`CRM-075`) | Réglages ▸ Arborescence | Route transverse, sans barre d'onglets ; elle montre au contraire les channels **archivés** sur demande |
+| `webapp/src/lib/corbeille.ts` (`CRM-077`) | Réglages ▸ Corbeille | Route transverse ; elle lit les channels **supprimés**, que la barre d'onglets exclut par définition |
+| `webapp/src/lib/inbox.ts` (`CRM-057`) | Inbox globale | Route transverse, nommée comme telle par le §5.4 ; elle résout un nom de channel par card, tous tracks confondus |
+| `webapp/src/lib/objectifs-ecriture.ts` (`CRM-083`) | Écriture d'un objectif | Route transverse ; elle liste les channels **du workspace**, pas ceux d'un track |
+
+**Non-complaisance.** Le recensement est éprouvé **sur une arborescence de routeur mutée**, jetable
+et minimale, dans les trois sens que les contrôles *b*, *c* et *d* refusent : un composant de route
+porteuse de `:slugTrack` privé de son `useContenuTrack`, le même doté d'un `from('channels')`
+propre, et un chargeur partagé porteur d'une seconde lecture. Chacune des trois mutations doit
+rendre le recensement fautif ; l'arborescence intacte doit le rendre conforme. Un contrôle de
+structure qui n'est pas retourné ne prouve rien de plus qu'un `true`.
+
 ## 6. Autorisations
 
 ### 6.1 Règle
@@ -473,6 +539,7 @@ Ils sont créés par **l'API REST avec la clé de service**, comme le reste du s
 | Lecture, états, requête émise | `webapp/src/lib/channels.test.ts` |
 | Barre d'onglets, route de track, pilules cliquables | `webapp/src/app/TabBar.test.tsx`, `e2e/ui/channels.spec.ts` |
 | Rejeu complet et non-complaisance | `scripts/verify-channels.sh` |
+| La règle de route du §5.4, rendue exécutable et retournée sur un routeur muté (§5.4.1) | `scripts/verify-board.sh` §1 |
 
 Le harnais est **non complaisant** : il dégrade réellement le produit — politique d'écriture
 relâchée, clé composite retirée, seed faussé — et exige que les preuves échouent, puis restaure et
