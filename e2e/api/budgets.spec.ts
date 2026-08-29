@@ -1,7 +1,8 @@
 // @verifies CRM-084 (docs/BACKLOG.md) — budgets, occurrences et clôture, hors interface
-// @verifies docs/SPEC-costs.md §2.1 (budgets), §2.2 (occurrences, aucune génération),
-//           §3.1 (lecture par le track), §3.2 (écriture réservée à l'administrateur),
-//           §4.1 (l'administration masque les budgets clôturés), §4.7 (états)
+// @verifies docs/SPEC-costs.md §2.1 (budgets), §2.1 bis (le seuil d'ancienneté, arbitrage
+//           d'INC-183), §2.2 (occurrences, aucune génération), §3.1 (lecture par le track),
+//           §3.2 (écriture réservée à l'administrateur), §4.1 (l'administration masque les
+//           budgets clôturés et porte le champ du seuil), §4.7 (états)
 // @verifies docs/SCHEMA.md §9 bis.4, §9 bis.5 (colonnes), §9 bis.7 (politiques)
 // @verifies docs/SPEC-permissions-rls.md §2.1 (un viewer n'écrit rien), §7 (preuves de refus)
 // @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface, avec le jeton réel)
@@ -416,5 +417,138 @@ test.describe('CRM-084 — budgets : le contrat d’API, hors interface', () => 
 		})
 		expect(reponse.status()).toBe(400)
 		expect((await reponse.json()).code).toBe('23514')
+	})
+	// -------------------------------------------------------------------------------------------
+	// 10. LE SEUIL D'ANCIENNETÉ D'UNE LIGNE DE COÛT (§2.1 bis, arbitrage d'INC-183)
+	// -------------------------------------------------------------------------------------------
+	// CE QUE CES SCÉNARIOS AJOUTENT À LA SUITE pgTAP, QUI MESURE DÉJÀ LA CONTRAINTE. Trois choses
+	// qu'aucun `set local role` ne peut voir :
+	//
+	//   * le CODE HTTP du refus de la contrainte — `400` / `23514` —, que l'écran doit distinguer
+	//     des refus de politique pour choisir son message (§4.1, dictionnaire du §4.1 bis.4) ;
+	//   * la forme exacte du refus d'un non-administrateur sur CETTE colonne : `200 []`, un filtre
+	//     et non une exception, donc « rien n'a changé » et jamais « c'est interdit » ;
+	//   * que la colonne est bien EXPOSÉE par PostgREST, en lecture directe comme dans l'embed que
+	//     l'onglet « À saisir » emploie. Elle ne l'était pas avant la migration 72 — mesuré
+	//     `PGRST204` le 2026-08-29 —, et un cache de schéma non rechargé la ferait disparaître
+	//     sans rien casser d'autre.
+
+	test('le seuil d’ancienneté est LU par PostgREST, et le seed porte ses trois états', async ({
+		request,
+	}) => {
+		// Les valeurs viennent du contrat de `docs/SPEC-seed.md` §12.1 : deux budgets portent un
+		// seuil, deux n'en portent aucun. Sans cette assertion, la migration pourrait avoir posé la
+		// colonne sans que PostgREST la rende, et tout l'écran lirait `undefined`.
+		const reponse = await request.get(
+			`${BUDGETS}?select=name,stale_after_days&order=name.asc`,
+			{ headers: enTetesAuthentifies(jetonAdmin) },
+		)
+		expect(reponse.status()).toBe(200)
+
+		const seuils = new Map(
+			((await reponse.json()) as { name: string; stale_after_days: number | null }[]).map(
+				(budget) => [budget.name, budget.stale_after_days],
+			),
+		)
+		expect(seuils.get('Prospection sortante')).toBe(30)
+		expect(seuils.get('Publicité 2026')).toBe(90)
+		expect(seuils.get('Salon du web 2025')).toBeNull()
+	})
+
+	test('l’onglet « À saisir » reçoit le seuil DANS SON EMBED, sans aller-retour de plus', async ({
+		request,
+	}) => {
+		// C'est la lecture que `couts-a-saisir.ts` émet, et la raison pour laquelle la variante de
+		// danger ne coûte aucune requête supplémentaire (§4.8.1, révision du 2026-08-29). Le jeton
+		// est celui du business developer : il écrit les trois lignes en attente, donc il les lit
+		// toutes, ce que la lectrice ne fait pas.
+		const reponse = await request.get(
+			`/rest/v1/card_costs?select=label,created_at,budgets!inner(name,stale_after_days)` +
+				`&actual_cost=is.null&order=created_at.asc`,
+			{ headers: enTetesAuthentifies(jetonBizdev) },
+		)
+		expect(reponse.status()).toBe(200)
+
+		const lignes = (await reponse.json()) as {
+			label: string
+			created_at: string
+			budgets: { name: string; stale_after_days: number | null }
+		}[]
+		expect(lignes).toHaveLength(3)
+
+		// LA LIGNE EN RETARD EST MESURÉE, JAMAIS SUPPOSÉE. Le seed l'antidate de 120 jours sur un
+		// budget de seuil 30 (`docs/SPEC-seed.md` §12.1 bis) ; l'assertion recalcule l'ancienneté
+		// plutôt que de croire la date, de sorte qu'un antidatage retiré la ferait rougir.
+		const enRetard = lignes.filter((ligne) => {
+			const seuil = ligne.budgets.stale_after_days
+			if (seuil === null) return false
+			const jours = Math.floor((Date.now() - Date.parse(ligne.created_at)) / 86_400_000)
+			return jours > seuil
+		})
+		expect(enRetard.map((ligne) => ligne.label)).toEqual(['Prospection terrain'])
+
+		// ET LE TROISIÈME ÉTAT EXISTE. Sans lui, « aucun seuil » et « seuil non franchi » seraient
+		// indistinguables et une régression qui les confondrait passerait inaperçue.
+		expect(
+			lignes.filter((ligne) => ligne.budgets.stale_after_days === null),
+		).toHaveLength(1)
+	})
+
+	test('un seuil de ZÉRO jour est refusé par la base, et le code est 23514', async ({
+		request,
+	}) => {
+		// Le code compte : l'écran le range parmi les refus de FORME (§4.1 bis.4) et nomme le champ,
+		// là où un `42501` appellerait « vous n'avez pas le droit ». Un seuil de zéro rendrait toute
+		// ligne en retard dès sa création, c'est-à-dire un signal qui ne distingue plus rien.
+		const reponse = await request.patch(`${BUDGETS}?id=eq.${BUDGET_ESSAI}`, {
+			headers: enTetesAuthentifies(jetonAdmin),
+			data: { stale_after_days: 0 },
+		})
+		expect(reponse.status()).toBe(400)
+		expect((await reponse.json()).code).toBe('23514')
+	})
+
+	test('l’administratrice pose un seuil, puis l’EFFACE — et le nul est réellement écrit', async ({
+		request,
+	}) => {
+		// LE SUCCÈS CORRESPONDANT DU REFUS CI-DESSUS, sans quoi il serait vert sur une contrainte
+		// qui refuserait tout. Et surtout l'EFFACEMENT : un écran qui omettrait la colonne quand le
+		// champ est vide rendrait un seuil posé par erreur INEFFAÇABLE — le même piège que les trois
+		// attributs facultatifs d'une occurrence (§4.1 bis.3), et la raison pour laquelle l'envoi
+		// porte toujours la colonne, même nulle.
+		const pose = await request.patch(`${BUDGETS}?id=eq.${BUDGET_ESSAI}`, {
+			headers: { ...enTetesAuthentifies(jetonAdmin), Prefer: 'return=representation' },
+			data: { stale_after_days: 45 },
+		})
+		expect(pose.status()).toBe(200)
+		expect((await pose.json())[0].stale_after_days).toBe(45)
+
+		const efface = await request.patch(`${BUDGETS}?id=eq.${BUDGET_ESSAI}`, {
+			headers: { ...enTetesAuthentifies(jetonAdmin), Prefer: 'return=representation' },
+			data: { stale_after_days: null },
+		})
+		expect(efface.status()).toBe(200)
+		expect((await efface.json())[0].stale_after_days).toBeNull()
+	})
+
+	test('un membre non administrateur ne pose AUCUN seuil, et le refus est un FILTRE', async ({
+		request,
+	}) => {
+		// `200 []`, jamais `403` : la clause `USING` de la politique de mise à jour filtre la ligne
+		// au lieu de lever (mesure M8 du 2026-08-29, décision 549). La distinction n'existe qu'au
+		// niveau HTTP, et l'écran en tire deux messages différents. La ligne est RELUE après coup —
+		// une réponse vide seule ne prouverait pas que rien n'a été écrit (décision 70).
+		const refus = await request.patch(`${BUDGETS}?id=eq.${BUDGET_ESSAI}`, {
+			headers: { ...enTetesAuthentifies(jetonBizdev), Prefer: 'return=representation' },
+			data: { stale_after_days: 7 },
+		})
+		expect(refus.status()).toBe(200)
+		expect(await refus.json()).toEqual([])
+
+		const relecture = await request.get(
+			`${BUDGETS}?id=eq.${BUDGET_ESSAI}&select=stale_after_days`,
+			{ headers: enTetesAuthentifies(jetonAdmin) },
+		)
+		expect((await relecture.json())[0].stale_after_days).toBeNull()
 	})
 })
