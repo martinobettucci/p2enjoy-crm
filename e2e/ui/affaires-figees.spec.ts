@@ -170,11 +170,19 @@ test.describe('« Affaires figées » (docs/SPEC-relances.md §10)', () => {
 		// LE DÉTAIL COMPOSE LES DEUX CLÉS DU `payload`, par une clé de traduction et jamais par
 		// concaténation (§10.3.1). Les deux nombres sont ceux de la première affaire du jeu.
 		await expect(relance).toContainText('Relance automatique')
-		// LA LIGNE EST AMENÉE DANS LE CHAMP AVANT LA CAPTURE. La capture est prise sans `fullPage`,
-		// et le fil d'une affaire déjà riche pousse la relance sous la ligne de flottaison : l'image
-		// montrerait l'écran, pas ce qu'elle prétend prouver. Une capture qui ne porte pas son sujet
-		// n'est pas une vérification visuelle.
-		await relance.scrollIntoViewIfNeeded()
+		// LA LIGNE EST AMENÉE DANS LE CHAMP AVANT LA CAPTURE, ET LA CAPTURE LE VÉRIFIE — RÉVISÉ le
+		// 2026-08-29. La capture est prise sans `fullPage`, et le fil d'une affaire déjà riche pousse
+		// la relance sous la ligne de flottaison : l'image montrerait l'écran, pas ce qu'elle prétend
+		// prouver. Une capture qui ne porte pas son sujet n'est pas une vérification visuelle.
+		//
+		// `scrollIntoViewIfNeeded()` NE SUFFIT PAS, et c'est MESURÉ : il défile le plus proche
+		// ancêtre défilable — ici la colonne du fil — sans garantir que l'élément entre dans la
+		// FENÊTRE. La capture régénérée montrait encore le bas du fil, la relance restée au-dessus.
+		// Le défilement est donc demandé explicitement, centré, ET le résultat est ASSERTÉ : si
+		// l'image ne devait pas porter son sujet, le scénario échoue au lieu de produire une capture
+		// muette.
+		await relance.evaluate((element) => element.scrollIntoView({ block: 'center' }))
+		await expect(relance).toBeInViewport()
 		await capturer(page, 'relance-dans-le-fil-1440', UNITE)
 	})
 
