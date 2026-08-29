@@ -2398,6 +2398,17 @@ budget (§5.9, `docs/SPEC-costs.md` §4.1), et la variante obéit à **trois** �
   de la pastille d'une card sur une étape sans seuil, et deux signaux de même forme ne peuvent pas
   suivre deux doctrines contraires.
 
+**LA TEINTE EST PORTÉE PAR LA VALEUR, JAMAIS PAR LA CELLULE — défaut TROUVÉ EN REGARDANT LA CAPTURE
+le 2026-08-29** (`CLAUDE.md` §16, `docs/captures/CRM-084/anciennete-seuil-1440.jpg`), et la règle
+générale qui en sort vaut pour tout signal chromatique posé dans un tableau du §5.9. Posée sur la
+cellule, la teinte peignait **toute la largeur de la colonne** — cent quinze pixels de fond rouge
+derrière quatre caractères —, et la ligne entière se lisait comme une ligne en erreur, ce qu'elle
+n'est pas : c'est une valeur qui est signalée, pas un enregistrement qui est fautif. Une pastille se
+moule sur sa valeur. La forme retenue est donc celle de la pilule « clôturé » de la colonne d'à côté
+— `inline-flex`, `rounded-full`, `px-2` —, qui vit déjà dans cette table : **deux pastilles d'un même
+tableau qui ne se ressembleraient pas se liraient comme deux natures de chose.** Une assertion mesure
+que la pastille est plus étroite que sa cellule, faute de quoi le défaut reviendrait sans bruit.
+
 Les deux derniers états sont **visuellement identiques et sémantiquement distincts** ; c'est assumé,
 et c'est pourquoi la teinte n'est pas la seule chose qui parle. Le **nom accessible** de la cellule
 porte la distinction — « 120 jours, au delà du seuil de 30 jours fixé pour ce budget » contre

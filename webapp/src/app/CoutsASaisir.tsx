@@ -425,13 +425,29 @@ function LigneSaisie({
 			<td
 				data-testid="couts-a-saisir-anciennete"
 				data-retard={enRetard ? 'oui' : 'non'}
-				className={[
-					'py-2 pr-4 text-[13px] whitespace-nowrap',
-					enRetard ? 'bg-danger-soft text-danger-on-soft px-2 rounded-sm' : 'text-text-2',
-				].join(' ')}
+				className="py-2 pr-4 text-[13px] whitespace-nowrap"
 			>
 				{anciennete === null ? null : (
-					<span title={titreAnciennete ?? undefined}>
+					<span
+						data-testid="couts-a-saisir-anciennete-valeur"
+						title={titreAnciennete ?? undefined}
+						/* LA TEINTE EST PORTÉE PAR LA VALEUR, JAMAIS PAR LA CELLULE, et c'est un défaut
+						   TROUVÉ EN REGARDANT LA CAPTURE (`CLAUDE.md` §16, capture
+						   `docs/captures/CRM-084/anciennete-seuil-1440.jpg`) : posée sur le `td`, elle
+						   peignait toute la largeur de la colonne — cent quinze pixels de fond rouge
+						   derrière quatre caractères —, et la ligne entière se lisait comme une ligne
+						   en erreur. Le §5.31 dit « comme la pastille d'ancienneté d'une card (§5.1) :
+						   c'est le même signal, il doit avoir la même forme » ; une pastille se moule
+						   sur sa valeur. La forme retenue est donc celle de la pilule « clôturé » de la
+						   colonne d'à côté — `inline-flex`, `rounded-full`, `px-2` —, qui vit déjà dans
+						   cette table : deux pastilles d'un même tableau qui ne se ressembleraient pas
+						   se liraient comme deux natures de chose. */
+						className={
+							enRetard
+								? 'inline-flex items-center rounded-full bg-danger-soft text-danger-on-soft px-2'
+								: 'text-text-2'
+						}
+					>
 						{t('costs.pending.age.days', { n: String(anciennete) })}
 					</span>
 				)}

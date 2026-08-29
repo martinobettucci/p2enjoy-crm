@@ -263,7 +263,14 @@ comparaison prévisionnel/réel fausse, et personne ne le verrait ensuite.
 
 **Le seuil d'ancienneté s'administre ICI, et nulle part ailleurs — ajouté le 2026-08-29, §2.1 bis.**
 Le formulaire de création et celui de modification portent un champ facultatif « Seuil d'ancienneté
-(jours) », `type="number"`, `min="1"`, `step="1"`, dont le vide vaut `null`. Il n'entre **pas** dans
+(jours) », en `inputMode="numeric"`, dont le vide vaut `null`.
+
+> **RÉVISÉ PAR LIVRAISON le 2026-08-29.** Cette phrase demandait d'abord `type="number" min="1"
+> step="1"`. C'est faux ici, et le motif vit déjà dans le champ d'à côté : un champ numérique natif
+> laisse le navigateur juger la saisie et **l'avale silencieusement** quand il la refuse, si bien que
+> `lireSeuilAnciennete` ne verrait jamais ni « 0 » ni « 2,5 » — les deux cas qu'elle existe pour
+> nommer. `BlocBudgetsTrack.tsx` avait pris cette décision pour l'enveloppe dès la tranche 2 ; deux
+> champs voisins d'un même formulaire ne peuvent pas suivre deux conventions contraires. Il n'entre **pas** dans
 les colonnes de la table : le §5.9 réserve les colonnes à ce qu'on **compare** d'une ligne à
 l'autre, et un seuil se règle une fois puis s'oublie — la table en porterait une septième colonne
 vide neuf fois sur dix. C'est le même traitement que `period_start` et `period_end` d'une

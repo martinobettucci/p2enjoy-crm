@@ -362,6 +362,84 @@ test.describe("les gestes d'administration (docs/SPEC-costs.md §3.2, §4.1)", (
 		}
 	})
 
+	test('LE SEUIL D’ANCIENNETÉ se pose, se relit, et s’EFFACE (§2.1 bis, arbitrage d’INC-183)', async ({
+		page,
+		request,
+	}) => {
+		// LE GESTE QUE LA TRANCHE 4 AJOUTE, éprouvé de bout en bout sur un budget créé par l'écran.
+		// L'effacement est la moitié qui compte : un formulaire qui rouvrirait vide, ou un envoi qui
+		// omettrait la colonne quand le champ l'est, rendrait INEFFAÇABLE un seuil posé par erreur —
+		// l'écran n'offre aucun autre geste pour l'ôter.
+		const nom = 'E2E Budget Seuil'
+		await supprimerParNom(request, nom)
+
+		try {
+			await connecter(page)
+			const bloc = await ouvrirBudgetsDuTrack(page)
+
+			await bloc.getByRole('button', { name: 'Nouveau budget' }).click()
+			const creation = bloc.getByTestId('formulaire-budget')
+			await creation.getByLabel('Nom').fill(nom)
+			await creation.getByLabel('Seuil d’ancienneté (facultatif)').fill('45')
+			await creation.getByRole('button', { name: 'Créer' }).click()
+			await expect(creation).toBeHidden()
+
+			// LE SEUIL N'EST DANS AUCUNE COLONNE DE LA TABLE, et c'est écrit au §4.1 : le §5.9
+			// réserve les colonnes à ce qu'on compare d'une ligne à l'autre, et un seuil se règle une
+			// fois puis s'oublie. Il se relit donc au formulaire, qui est le seul endroit qui le
+			// porte — et c'est aussi ce qui rend la relecture ci-dessous nécessaire.
+			await bloc.getByRole('button', { name: `Modifier le budget ${nom}` }).click()
+			const edition = bloc.getByTestId('formulaire-budget')
+			await expect(edition.getByLabel('Seuil d’ancienneté (facultatif)')).toHaveValue('45')
+
+			// --- L'EFFACEMENT, contre la base et non contre le formulaire -------------------------
+			await edition.getByLabel('Seuil d’ancienneté (facultatif)').fill('')
+			await edition.getByRole('button', { name: 'Enregistrer' }).click()
+			await expect(edition).toBeHidden()
+
+			await bloc.getByRole('button', { name: `Modifier le budget ${nom}` }).click()
+			await expect(
+				bloc.getByTestId('formulaire-budget').getByLabel('Seuil d’ancienneté (facultatif)'),
+			).toHaveValue('')
+
+			// ET LA BASE LE DIT AUSSI. Le formulaire pourrait rendre un champ vide sur une colonne
+			// restée à 45 : seule la relecture par l'API établit que le nul a bien été écrit.
+			const relecture = await request.get(
+				`${URL_API}/rest/v1/budgets?name=eq.${encodeURIComponent(nom)}&select=stale_after_days`,
+				{ headers: enTetesService() },
+			)
+			expect((await relecture.json())[0].stale_after_days).toBeNull()
+		} finally {
+			await supprimerParNom(request, nom)
+		}
+	})
+
+	test('un seuil de ZÉRO est NOMMÉ sur son champ, et retient l’envoi', async ({ page }) => {
+		// La base l'oppose aussi — `budgets_stale_check`, mesuré `400`/`23514` par
+		// `e2e/api/budgets.spec.ts` —, et ce contrôle d'interface ne la remplace pas
+		// (`CLAUDE.md` §10) : il évite l'aller-retour, il ne tient pas la règle.
+		await connecter(page)
+		const bloc = await ouvrirBudgetsDuTrack(page)
+		await bloc.getByRole('button', { name: 'Nouveau budget' }).click()
+		const creation = bloc.getByTestId('formulaire-budget')
+		await creation.getByLabel('Nom').fill('E2E Budget Seuil Zéro')
+		await creation.getByLabel('Seuil d’ancienneté (facultatif)').fill('0')
+
+		await expect(
+			creation.getByText('Le seuil s’écrit en jours entiers, à partir de 1.'),
+		).toBeVisible()
+		await expect(creation.getByRole('button', { name: 'Créer' })).toBeDisabled()
+
+		// UN FRACTIONNAIRE EST REFUSÉ AUSSI, plutôt qu'arrondi en silence : l'ancienneté se compte en
+		// jours révolus, et un arrondi changerait la décision sans le dire (`CLAUDE.md` §18).
+		await creation.getByLabel('Seuil d’ancienneté (facultatif)').fill('2.5')
+		await expect(creation.getByRole('button', { name: 'Créer' })).toBeDisabled()
+
+		// Et le champ VIDE n'est pas une erreur : c'est « aucun seuil décidé ».
+		await creation.getByLabel('Seuil d’ancienneté (facultatif)').fill('')
+		await expect(creation.getByRole('button', { name: 'Créer' })).toBeEnabled()
+	})
+
 	test('une saisie non numérique dans l’enveloppe est NOMMÉE, et retient l’envoi', async ({
 		page,
 	}) => {

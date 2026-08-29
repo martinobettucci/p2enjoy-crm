@@ -7,8 +7,12 @@
 //           §4.8.2 (le badge compte ce que le tableau liste), §4.8.3 (l'arbitrage d'INC-182 : le
 //           badge et la mention du §4.4 comptent deux populations, mesuré sur le seed, et l'écran
 //           écrit la portée du compteur)
+// @verifies CRM-084 (docs/BACKLOG.md) tranche 4c — la variante de danger de la colonne
+//           « Ancienneté », et docs/SPEC-costs.md §2.1 bis (le seuil est une donnée du budget,
+//           arbitrage d'INC-183, décision 549)
 // @verifies docs/DESIGN_SYSTEM.md §5.31 (table de saisie en série : onglets, badge, clavier,
-//           pilule « clôturé », lecture seule), §5.9 (tableau de données), §5.8 (états),
+//           pilule « clôturé », lecture seule, et les TROIS états de l'ancienneté),
+//           §5.9 (tableau de données), §5.8 (états),
 //           §7 (les quatre paliers), §8 (clavier), §12.1 (navigation par liens)
 // @verifies CLAUDE.md §16 (vérification visuelle), §22 (accessibilité clavier)
 //
@@ -100,6 +104,10 @@ const ligneDe = (page: Page, nature: string) =>
 /** Le champ « Réel » de cette ligne — la seule cible de saisie de la table (§5.31). */
 const champDe = (page: Page, nature: string) =>
 	ligneDe(page, nature).getByTestId('couts-a-saisir-champ')
+
+/** La cellule « Ancienneté » de cette ligne — première colonne du §5.31. */
+const ancienneteDe = (page: Page, nature: string) =>
+	ligneDe(page, nature).getByTestId('couts-a-saisir-anciennete')
 
 test.describe('CRM-086 — onglet « À saisir » (docs/SPEC-costs.md §4.8)', () => {
 	test('S1 — l’onglet vit dans l’ADRESSE, et son badge compte ce que le tableau liste', async ({
@@ -283,6 +291,75 @@ test.describe('CRM-086 — onglet « À saisir » (docs/SPEC-costs.md §4.8)', (
 		// Et la phrase de portée n'est PAS rendue ici : le tableau visible EST la population du
 		// badge, elle n'aurait rien à expliquer.
 		await expect(page.getByTestId('couts-portee-compteur')).toHaveCount(0)
+	})
+
+	test('S7 — LES TROIS ÉTATS DE L’ANCIENNETÉ, sur le jeu de démonstration (§2.1 bis)', async ({
+		page,
+	}) => {
+		// LE SEUL SCÉNARIO QUI VOIT L'ARBITRAGE D'INC-183, et il ne substitue rien : les trois états
+		// viennent du seed, qui pose un seuil de 30 sur « Prospection sortante », de 90 sur
+		// « Publicité 2026 », aucun sur « Salon du web 2025 », et ANTIDATE « Prospection terrain » de
+		// 120 jours (`docs/SPEC-seed.md` §12.1 et §12.1 bis).
+		await connecter(page)
+		await page.goto(CUMUL_A_SAISIR)
+		await expect(page.getByTestId('couts-a-saisir-ligne')).toHaveCount(3)
+
+		// 1. EN RETARD — 120 jours sur un seuil de 30. C'est le seul cas où la teinte s'allume.
+		await expect(ancienneteDe(page, LIGNE_AUTRE_TRACK)).toHaveAttribute('data-retard', 'oui')
+
+		// 2. DANS LES TEMPS — le jour même sur un seuil de 90.
+		await expect(ancienneteDe(page, LIGNE_OUVERTE)).toHaveAttribute('data-retard', 'non')
+
+		// 3. AUCUN SEUIL — et c'est le troisième état, celui sans lequel une régression qui
+		// confondrait « pas de seuil » et « seuil non franchi » passerait inaperçue : les deux
+		// rendent la même chose à l'œil.
+		await expect(ancienneteDe(page, LIGNE_BUDGET_CLOS)).toHaveAttribute('data-retard', 'non')
+
+		// LE SIGNAL NE REPOSE PAS SUR LA SEULE COULEUR (§8, §5.31). Le nom accessible dit le seuil et
+		// le franchissement en toutes lettres, et il DISTINGUE les deux états neutres que la teinte
+		// confond : la ligne sans seuil n'en porte aucun, parce qu'il n'y a rien à dire d'un seuil
+		// que personne n'a décidé.
+		const valeur = (nature: string) =>
+			ancienneteDe(page, nature).getByTestId('couts-a-saisir-anciennete-valeur')
+
+		await expect(valeur(LIGNE_AUTRE_TRACK)).toHaveAttribute('title', /au delà du seuil de 30/)
+		await expect(valeur(LIGNE_OUVERTE)).toHaveAttribute('title', /en deçà du seuil de 90/)
+		await expect(valeur(LIGNE_BUDGET_CLOS)).not.toHaveAttribute('title', /seuil/)
+
+		// LA TEINTE EST CELLE DU §5.31, mesurée sur le rendu et non sur le nom de la classe : une
+		// classe absente du CSS produit laisserait la valeur transparente sans qu'aucune assertion
+		// ne le voie (INC-184 a déjà payé ce mode de défaillance une fois).
+		const fond = await valeur(LIGNE_AUTRE_TRACK).evaluate(
+			(pastille) => getComputedStyle(pastille).backgroundColor,
+		)
+		expect(fond, 'la pastille en retard porte un fond, jamais transparent').not.toBe(
+			'rgba(0, 0, 0, 0)',
+		)
+
+		// ET ELLE SE MOULE SUR SA VALEUR, elle ne peint pas la colonne. C'est le défaut trouvé en
+		// regardant la capture du 2026-08-29, et l'assertion qui l'empêche de revenir : la pastille
+		// est plus étroite que la cellule qui la porte.
+		const largeurs = await ancienneteDe(page, LIGNE_AUTRE_TRACK).evaluate((cellule) => ({
+			cellule: cellule.getBoundingClientRect().width,
+			pastille:
+				cellule
+					.querySelector('[data-testid="couts-a-saisir-anciennete-valeur"]')
+					?.getBoundingClientRect().width ?? 0,
+		}))
+		expect(largeurs.pastille).toBeGreaterThan(0)
+		expect(
+			largeurs.pastille,
+			'la pastille se moule sur sa valeur, elle ne peint pas toute la colonne',
+		).toBeLessThan(largeurs.cellule)
+
+		await page.setViewportSize({ width: 1440, height: 900 })
+		await capturer(page, 'anciennete-seuil-1440', 'CRM-084')
+		await page.setViewportSize({ width: 390, height: 844 })
+		await page.goto(CUMUL_A_SAISIR)
+		await expect(page.getByTestId('couts-a-saisir-ligne')).toHaveCount(3)
+		await capturer(page, 'anciennete-seuil-sm-390', 'CRM-084')
+
+		autoriserErreursConsole(page, [])
 	})
 
 	test('S5 — captures aux quatre paliers, page jamais défilante horizontalement (§7)', async ({
