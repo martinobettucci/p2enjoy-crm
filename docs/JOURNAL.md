@@ -27340,3 +27340,59 @@ unité de CONSTRUCTION se choisit en relisant le backlog dans l'ordre du plan : 
 deux écarts nommés qui appellent du code — le mode d'affichage de l'inbox qui n'entre pas dans
 l'adresse, et le §16.12.6 qu'aucun channel du seed ne rend éprouvable —, et le §4.1 bis de
 `docs/CloudWorker.md` dit que ces deux-là se tranchent en session.
+
+## décision 551 — les DEUX écarts de `CRM-081` tranchés en session, et la spécification écrite d'abord
+
+*2026-08-29, session planifiée « CloudWorker » démarrée à 04:08:42 UTC. Consigne l'arbitrage rendu
+AVANT la première ligne de code (`CLAUDE.md` §5), au titre du §4.1 bis de `docs/CloudWorker.md`.*
+
+**LE POINT DE DÉPART.** `CRM-081` ne portait plus de comportement dû depuis la tranche 2 f. Ce qui
+la retenait en `[~]` était **deux écarts nommés** que le backlog déclarait « en attente d'arbitrage
+du responsable » et dont il disait « aucune session ne peut les lever seule ». Le §4.1 bis de
+`docs/CloudWorker.md`, posé le 2026-08-27, dit exactement l'inverse : une mention « arbitrage
+attendu » est **le constat d'un travail non fait, jamais une instruction d'attendre**. Ni l'un ni
+l'autre n'appartient à la liste fermée des quatre motifs — rien d'irréversible, rien de payant, rien
+d'indéductible du dépôt, aucune autorité externe. Les deux sont donc tranchés ici.
+
+**ÉCART 1 — LE MODE D'AFFICHAGE DE L'INBOX ENTRE DANS L'ADRESSE, et l'écart reposait sur DEUX
+prémisses fausses.** Le §16.15.5 point 3 le refusait au motif que « l'inbox n'a pas de paramètres
+d'adresse » et que le filtre « ne survit pas au changement de dossier ». Les deux ont été
+**mesurées dans le code, pas supposées** : `RouteInbox.tsx` appelle `useSearchParams` depuis la
+sous-tranche 2 c de `CRM-065` et honore déjà `PARAMETRE_MESSAGE` en conservant les autres
+paramètres ; et `mode` y est un `useState` que **rien** ne réinitialise quand `selection` change —
+le filtre survivait donc déjà au changement de dossier. Un écart écrit sur une prémisse fausse
+n'est pas un écart, c'est une règle non écrite.
+
+La ligne du responsable suffit alors à trancher sans hésitation : *« le comportement le plus simple,
+et le même partout ; deux écrans qui font la même chose la font de la même façon »*. Trois écrans
+portent la même bascule de sommeil, deux la mettent dans l'adresse. L'issue retenue est
+l'uniformité, par **réemploi** des constantes de `filtre-sommeil.ts` — clé `sommeil`, valeur
+`visibles` seule, défaut jamais écrit, valeur inconnue repliée. Les issues écartées : garder l'état
+de composant (elle laisse trois écrans divergents pour un gain nul) ; inventer une clé propre à
+l'inbox (une seconde déclaration de la même chaîne est la première divergence).
+
+**ÉCART 2 — LE §16.12.6 SANS AUTRE FILTRE : NI L'UNE NI L'AUTRE DES DEUX BRANCHES DU BACKLOG.** Il
+posait « soit le seed pose un channel n'ayant que des affaires endormies, soit l'écart reste
+nommé ». Une troisième voie existe et prouve davantage : **provoquer l'état par le vrai geste du
+produit** dans le scénario qui l'éprouve, puis remettre le seed en état — c'est le patron des
+tranches 2 a et 2 e, déjà en place et déjà rejoué.
+
+Les trois motifs d'écarter la branche « seed », mesurés : un channel dont toutes les affaires
+dorment est un channel **vide en démonstration**, ce que `CLAUDE.md` §8 refuse ; il coûterait un
+**neuvième** channel à trois harnais de comptage et aux captures de `CRM-041` et `CRM-075` ; et
+endormir l'affaire éveillée de `prospection` **détruirait** la démonstration « 1 ligne sur 2 » dont
+dépendent la preuve d'API et cinq scénarios d'interface du §16.12.9. Un état vide est un état
+**transitoire d'un écran**, pas une donnée de démonstration.
+
+**CE QUE LA TRANCHE 3 NE FAIT PAS**, et c'est ce qui la rend sûre : aucune migration, aucun
+changement de `supabase/seed/apply-seed.sh`, aucun chemin serveur neuf, aucun compteur de harnais
+révisé. Le mode change de **support** — un état de composant devient un paramètre d'adresse —, pas
+de sens.
+
+**Spécification écrite et committée avant tout code** : `docs/SPEC-cards.md` §16.17 en quatre
+sous-chapitres — les deux décisions et leurs motifs, le contrat ligne à ligne de chacune, les
+preuves exigées, la Definition of Done —, et le §16.15.5 point 3 corrigé sur place plutôt que
+contourné (`CLAUDE.md` §18).
+
+**Où reprendre.** Le code de la tranche 3 suit immédiatement : le paramètre d'adresse de l'inbox,
+puis le scénario du §16.12.6 non filtré.

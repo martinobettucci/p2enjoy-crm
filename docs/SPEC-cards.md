@@ -3436,10 +3436,19 @@ vide** : elle est la cause possible de ce vide.
 2. **L'écran connaît le nombre de messages masqués**, puisqu'il les a lus. Un état vide dû au
    sommeil le dit — « Tous les messages de ce dossier sont dans des fils en sommeil » — et porte la
    bascule qui l'en sort, selon le patron du §5.8. Aucune requête supplémentaire.
-3. **Le filtre ne survit pas au changement de dossier**, et il n'entre pas dans l'adresse. L'inbox
-   n'a pas de paramètres d'adresse (`webapp/src/app/RouteInbox.tsx` ne lit aucun `searchParams`), et
-   lui en inventer un pour ce seul contrôle ouvrirait une question — quelle est l'adresse d'un
-   dossier ? — que cette tranche n'a pas à trancher. L'écart est nommé, non masqué.
+3. **Le mode d'affichage ENTRE dans l'adresse, sous la même clé `sommeil` que le board et la vue
+   liste**, et il vaut pour tous les dossiers de l'écran.
+
+   > **RÉVISÉ LE 2026-08-29 PAR LA TRANCHE 3 (§16.17.1), ET LES DEUX PHRASES REMPLACÉES ÉTAIENT
+   > FAUSSES.** La première rédaction disait « le filtre ne survit pas au changement de dossier, et
+   > il n'entre pas dans l'adresse ; l'inbox n'a pas de paramètres d'adresse ». MESURÉ : l'inbox lit
+   > `useSearchParams` depuis `CRM-065`, et `mode` était un `useState` que **rien** ne
+   > réinitialisait au changement de dossier — le filtre y survivait donc déjà. Un écart écrit sur
+   > une prémisse fausse n'est pas un écart : c'est une règle non écrite. Le §16.17.1 la tranche et
+   > la livre.
+
+   La clé, la valeur, le repli et la règle du défaut jamais écrit sont ceux du §16.12.4, importés de
+   `filtre-sommeil.ts` et non redéclarés.
 
 **Le message OUVERT n'est jamais masqué par le filtre — SA LIGNE COMPRISE.**
 
@@ -3750,6 +3759,144 @@ cas que le §16.16.6 rend lisible : compteur `2`, une ligne, un compte `2` sur c
 subsistant est celui du §16.15.5 point 3 — le mode d'affichage n'entre pas dans l'adresse —, qui
 attend un arbitrage du responsable et ne relève pas du sommeil.
 
+> **RÉVISÉ LE 2026-08-29, TRANCHE 3.** Cette phrase n'est plus vraie : l'arbitrage a été rendu en
+> session, comme le §4.1 bis de `docs/CloudWorker.md` l'ordonne, et l'écart est **livré** plutôt
+> qu'attendu. Voir le §16.17 ci-dessous.
+
+---
+
+## 16.17 Tranche 3 — les DEUX écarts nommés, tranchés et livrés
+
+*Chapitre écrit et committé AVANT la première ligne de code (`CLAUDE.md` §5, `docs/CloudWorker.md`
+§3.2 point 3). Les deux décisions qu'il porte sont prises en session au titre du §4.1 bis de
+`docs/CloudWorker.md` : « une entrée marquée arbitrage attendu n'est pas un mur, c'est un travail
+que personne n'a encore fait ». Aucune ne relève de la liste fermée des quatre motifs d'arbitrage —
+ni irréversible, ni payante, ni indéductible du dépôt, ni suspendue à une autorité externe.*
+
+`CRM-081` ne portait plus de comportement dû, mais **deux écarts nommés** que six tranches
+successives avaient laissés ouverts. Ils sont l'objet de cette tranche, et rien d'autre : aucune
+migration, aucune règle d'autorisation, aucun chemin serveur neuf.
+
+### 16.17.1 Écart 1 — LE MODE D'AFFICHAGE DE L'INBOX ENTRE DANS L'ADRESSE
+
+**La décision, et son motif.** Le §16.15.5 point 3 refusait le paramètre d'adresse au motif que
+« l'inbox n'a pas de paramètres d'adresse » et que lui en inventer un ouvrirait la question de
+**l'adresse d'un dossier**. Les deux prémisses sont fausses aujourd'hui, et c'est mesuré :
+
+1. **L'inbox LIT déjà l'adresse.** `webapp/src/app/RouteInbox.tsx` appelle `useSearchParams` depuis
+   la sous-tranche 2 c de `CRM-065` et honore `PARAMETRE_MESSAGE`, qu'il retire ensuite en
+   `replace` **en conservant les autres paramètres**. Le commentaire posé au-dessus de `mode`
+   — « l'inbox ne lit aucun paramètre d'adresse » — a cessé d'être vrai dans le fichier même qui le
+   porte.
+2. **La question de l'adresse d'un dossier n'a pas à être tranchée pour cela.** Le mode n'est pas
+   une désignation de ce qui est montré, c'est un **contrôle de l'écran** — exactement ce que le
+   `sommeil` du board et de la vue liste est déjà (§16.12.4). Adresser le contrôle n'oblige pas à
+   adresser le dossier, pas plus que `?sommeil=visibles` n'oblige le board à adresser sa colonne.
+
+**La ligne du responsable tranche seule** (§4.1 bis de `docs/CloudWorker.md`) : *« le comportement
+le plus simple, et le même partout ; deux écrans qui font la même chose la font de la même façon ».*
+Trois écrans du produit portent la même bascule de sommeil ; deux la mettent dans l'adresse, un ne
+l'y met pas. C'est la situation que cette règle nomme, et l'issue retenue est l'uniformité.
+
+**Le contrat, ligne à ligne. Rien n'est inventé : tout est réemployé de `filtre-sommeil.ts`.**
+
+| Point | Règle |
+|---|---|
+| Clé | `CLE_URL_SOMMEIL`, c'est-à-dire `sommeil`. **Importée**, jamais réécrite : une seconde déclaration de la même chaîne serait la première divergence |
+| Valeur écrite | `VALEUR_URL_SOMMEIL_VISIBLES` seule, c'est-à-dire `visibles` |
+| Défaut | `masquees`, **jamais écrit dans l'adresse** (§12.2) : la vue par défaut reste l'adresse la plus courte |
+| Lecture | `lireModeSommeil`, qui **replie tout ce qui n'est pas reconnu** sur le défaut. Une faute de frappe dans une adresse partagée ne fait donc jamais apparaître des fils qu'on croyait rangés |
+| Autres paramètres | conservés à chaque écriture, comme le board le fait déjà |
+| Historique | une entrée ordinaire, **sans** `replace` : la bascule est un geste de l'utilisateur, et « Précédent » doit défaire ce geste. C'est le comportement du board, et le `replace` est réservé au retrait de `PARAMETRE_MESSAGE`, qui n'est le geste de personne |
+
+**CE QUI NE CHANGE PAS**, et il faut l'écrire pour que la tranche reste petite : la bascule, son
+libellé, sa place dans l'en-tête du panneau de liste, sa présence sur liste vide, l'état vide du
+§16.15.5 point 2, le fait que le message ouvert n'est jamais masqué, et les deux RPC. Le mode
+change de **support** — un état de composant devient un paramètre d'adresse —, pas de sens.
+
+**UNE PHRASE DU §16.15.5 POINT 3 ÉTAIT FAUSSE, ET LA TRANCHE LA CORRIGE PLUTÔT QUE DE LA
+CONTOURNER** (`CLAUDE.md` §18, `docs/CloudWorker.md` §3.1). Elle affirmait que « le filtre ne
+survit pas au changement de dossier ». MESURÉ dans le code : `mode` est un `useState` du composant
+de route, que **rien** ne réinitialise quand `selection` change — le filtre survivait déjà au
+changement de dossier depuis la tranche 2 e. La règle retenue est le comportement réel, et c'est
+aussi le plus simple et le même que celui du board, dont le paramètre survit au passage board ↔
+liste : **le mode est une préférence d'affichage de l'écran, il vaut pour tous ses dossiers.**
+
+**Ce que cela donne à l'utilisateur** : une adresse d'inbox montrant les fils en sommeil se
+recharge, se met en favori et se partage sans perdre ce qu'elle montrait ; et le bouton
+« Précédent » ramène à l'état d'avant la bascule.
+
+#### 16.17.2 Écart 2 — LE §16.12.6 ÉPROUVÉ SANS AUCUN AUTRE FILTRE
+
+**La décision, et son motif.** Le backlog posait l'alternative en deux branches : « soit le seed
+pose un channel n'ayant **que** des affaires endormies, soit l'écart reste nommé ». **Aucune des
+deux n'est retenue**, et une troisième l'est — provoquer l'état par le **vrai geste** du produit,
+dans le scénario même qui l'éprouve, puis remettre le seed en état.
+
+Pourquoi pas la première branche, et les motifs sont mesurés :
+
+- **un channel dont toutes les affaires dorment est un channel VIDE en démonstration.** `CLAUDE.md`
+  §8 demande au seed d'« éviter les écrans vides » : ce serait le seul channel du seed qu'aucune
+  capture de board ne pourrait montrer peuplé ;
+- **il coûterait un NEUVIÈME channel à tout le dépôt.** Les huit channels du seed sont comptés par
+  `scripts/verify-channels.sh`, `scripts/verify-seed.sh` et l'arborescence de l'administration, et
+  ils peuplent des captures de `CRM-041` et de `CRM-075`. Le journal a déjà mesuré le prix de ce
+  genre d'ajout (décision du 2026-08-16 sur `maintenance` plutôt que `grands-comptes`) ;
+- **rendre endormie l'affaire éveillée de `prospection` détruirait une démonstration EXISTANTE** :
+  c'est elle qui fait rendre « 1 ligne sur 2 » au mode masqué, mesure sur laquelle reposent la
+  preuve d'API et cinq scénarios d'interface du §16.12.9.
+
+Pourquoi la troisième, et c'est le motif principal : **un état vide est un état TRANSITOIRE d'un
+écran, pas une donnée de démonstration.** Le dépôt éprouve déjà ses états transitoires par le geste
+réel — la tranche 2 a réveille puis rendort `…00ca`, la tranche 2 e endort les deux fils d'un
+dossier pour atteindre son propre état vide, et toutes deux remettent le seed en état. Le geste
+prouve en outre **davantage** : que l'état vide apparaît immédiatement après le geste qui le cause,
+ce qu'un seed figé ne dirait jamais.
+
+**Le contrat du scénario, ligne à ligne.**
+
+| Étape | Ce qui est éprouvé |
+|---|---|
+| 1 | `prospection` en vue liste, adresse **nue** : « Affaires : 1 », aucun état vide — la contre-épreuve, déjà en place |
+| 2 | La seule affaire éveillée, `Assistant IA support — Nordis`, est endormie **par le geste du produit** — la commande de sa fiche, échéance usuelle —, jamais par une écriture directe |
+| 3 | Vue liste, adresse **nue**, **aucun autre filtre** : le total tombe à `Affaires : 0`, le titre est « Aucune affaire éveillée dans ce channel », et l'action `afficher-sommeil-vide` est rendue. C'est la ligne 1 du tableau du §16.12.6, jamais éprouvée jusqu'ici |
+| 4 | L'action est **actionnée** : l'adresse porte alors `?sommeil=visibles`, les deux affaires reviennent, et le total remonte à 2 |
+| 5 | Board du même channel, adresse **nue** : le titre est « Toutes les affaires de ce channel sont en sommeil », et la même action est rendue. C'est la ligne 4 du tableau, jamais éprouvée non plus |
+| 6 | **Deux captures**, liste et board, produites et observées (`CLAUDE.md` §16) |
+| 7 | **LE SEED SORT INTACT** : l'affaire est réveillée par le geste inverse, et le scénario constate `Affaires : 1` sur l'adresse nue avant de rendre la main |
+
+**La remise en état est INCONDITIONNELLE**, patron de la tranche 2 e : elle s'exécute même si une
+assertion a échoué, faute de quoi un seul échec laisserait un channel endormi derrière lui et
+rendrait rouges les cinq scénarios voisins qui comptent « 1 sur 2 ». C'est le mode de défaillance
+que le §16 bis.4 du harnais nomme déjà.
+
+**Aucune donnée du seed n'est modifiée par cette tranche**, et c'est la propriété qui la rend sûre :
+`supabase/seed/apply-seed.sh` n'est pas touché, donc aucun compteur de harnais ne bouge.
+
+#### 16.17.3 Preuves exigées de la tranche 3
+
+| Niveau | Preuves |
+|---|---|
+| Unitaire | La lecture et l'écriture du paramètre par l'inbox : le défaut lu d'une adresse nue, `visibles` lu, une valeur inconnue **repliée**, le défaut **jamais écrit**, `visibles` écrit, et les autres paramètres conservés. Ces six propriétés portent sur `lireModeSommeil` et sur la composition de l'adresse, déjà couvertes côté module par `filtre-sommeil.test.ts` : ce qui manque, et que cette tranche ajoute, est la preuve que **l'inbox** les emploie |
+| Composant | `RouteInbox.test.tsx` : la case reflète l'adresse au montage, et la basculer écrit l'adresse — ce qu'aucun test de module ne peut voir |
+| E2E d'interface | Le mode **survit à un rechargement** de l'inbox ; le §16.12.6 éprouvé sans aucun autre filtre, liste et board, selon les sept étapes du §16.17.2 |
+| Visuel | Deux captures des états vides non filtrés, plus la capture de l'inbox rechargée en mode `visibles`, observées conformément à `CLAUDE.md` §16 |
+| API | **Aucune preuve d'API n'est due, et c'est écrit plutôt que sous-entendu** : la tranche n'ajoute aucun chemin serveur. Le contrat des deux RPC est inchangé |
+
+#### 16.17.4 Definition of Done de la tranche 3
+
+- `webapp/src/app/RouteInbox.tsx` : le mode lu et écrit dans l'adresse, par les constantes
+  importées de `filtre-sommeil.ts` ;
+- `docs/SPEC-cards.md` §16.15.5 point 3 corrigé — il ne décrit plus un écart, il décrit la règle ;
+- `e2e/ui/filtre-sommeil.spec.ts` : le §16.12.6 éprouvé sans autre filtre, liste et board, avec sa
+  remise en état inconditionnelle ;
+- `e2e/ui/sommeil-fil.spec.ts` : le mode qui survit au rechargement ;
+- `webapp/src/app/RouteInbox.test.tsx` : les deux assertions de composant ;
+- captures produites **et observées**, `CHANGELOG.md`, `docs/BACKLOG.md` et `docs/JOURNAL.md` dans
+  le même changement ;
+- commentaires `@spec` / `@verifies` sur chaque fichier touché ;
+- **aucune migration, aucun changement de seed, aucun compteur de harnais révisé.**
+
 ---
 
 ## 16 bis. Le harnais dédié — `scripts/verify-snooze.sh`
@@ -3875,9 +4022,9 @@ doit ni la déclarer résiduelle, ni la remplacer.
 - **Aucune vérification visuelle n'y est refaite.** Le harnais constate que les captures **existent**
   et les compte ; les observer est un geste humain que `CLAUDE.md` §16 confie à la session qui les
   produit, et qu'aucun script ne remplace.
-- **Le mode d'affichage n'entre pas dans l'adresse de l'inbox** (§16.15.5, point 3). L'écart attend
-  un arbitrage du responsable ; le harnais ne le fige pas, parce qu'il ne relève pas du sommeil et
-  qu'une assertion l'aurait transformé en règle par la bande.
+- **Le mode d'affichage de l'inbox n'est pas figé par ce harnais** (§16.15.5, point 3, et §16.17.1
+  depuis le 2026-08-29). Il entre désormais dans l'adresse, mais le harnais ne l'assure pas
+  lui-même : il rejoue les suites qui le prouvent, comme il rejoue les autres.
 - **Aucun réveil planifié n'est vérifié**, et il n'y en a pas à vérifier : le §16.2 rend la question
   sans objet.
 
