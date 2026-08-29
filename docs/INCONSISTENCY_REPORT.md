@@ -243,14 +243,16 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 ## Ouverts
 
 **Énumération PARTIELLE, et elle est signalée comme telle depuis le 2026-08-28 : INC-123, INC-124,
-INC-125, INC-126, INC-136, INC-137, INC-138,
+INC-125, INC-126, INC-136, INC-137,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-174,
 INC-185, INC-186, INC-188, INC-189, INC-190, INC-191, INC-192, INC-193, INC-224,
 INC-225, INC-226, INC-227, INC-228, INC-229, INC-231, INC-232, INC-233, INC-234, INC-236,
 INC-238, INC-241, **INC-242**, **INC-244** et INC-243.**
 
-*Mise à jour du 2026-08-29 : **INC-241** est CLOSE — mise en œuvre par la décision 560, qui remplace
-un comptage de fichiers par un recensement du routeur et le retourne sur une arborescence mutée.*
+*Mise à jour du 2026-08-29 : **INC-241** et son DOUBLON **INC-138** sont CLOSES — mises en œuvre par
+la décision 560, qui remplace un comptage de fichiers par un recensement du routeur et le retourne
+sur une arborescence mutée. **INC-139** est remesurée dans le même geste : deux de ses quatre
+anomalies sont tombées, deux restent, dues à `CRM-041`.*
 
 *Mise à jour du 2026-08-29 : **INC-239** est CLOSE — mise en œuvre par la décision 558, qui
 corrige la garde de `0054` ET fournit à `CRM-087` la preuve mesurée de sa prémisse de
@@ -2525,6 +2527,29 @@ corriger reviendrait à solder une autre unité que celle de la session (`CLAUDE
 troisième mérite d'être instruite en priorité, une preuve complaisante valant moins que pas de
 preuve du tout.
 
+**REMESURÉE LE 2026-08-29 — décision 560. DEUX DES QUATRE SONT TOMBÉES, DEUX RESTENT.**
+`scripts/verify-board.sh` **complet**, sur la pile seedée : **71 contrôles, 2 en échec**.
+
+```
+ECHEC  des classes citées n'existent pas dans le CSS produit
+       classes citées : 356 ; absentes : bg-surface-2 leading-relaxed ml-7 mt-0.5 pl-7
+ECHEC  dégradation « un refus inconnu est absorbé (CLAUDE.md §18 nié) » impossible :
+       motif introuvable dans webapp/src/lib/board.ts
+```
+
+Le contrôle des channels est **clos** par la décision 560 (INC-138, INC-241). Le contrôle
+« COMPLAISANT : le retour arrière disparaît après un refus » **rougit désormais comme il le doit** :
+la dégradation fait bien échouer les tests unitaires. Les deux restants sont inchangés depuis le
+2026-08-17, et **étrangers à la décision 560** : `git diff 00d8ede..HEAD -- webapp/` est **vide**,
+aucun fichier de la webapp n'ayant été modifié par cette session ; le motif de la dégradation D4 est
+absent de `webapp/src/lib/board.ts` **des deux côtés** du changement (mesuré à `00d8ede` comme dans
+l'arbre courant). La ligne de base est donc directe, sans `git stash` (`docs/CloudWorker.md` §2.4).
+
+Le premier restant est de la famille signalée ci-dessus : le fichier de détail est écrit dans un
+répertoire temporaire effacé en fin d'exécution, ce qui rend l'anomalie difficile à instruire. Le
+second reste le plus sérieux des deux : un contrôle qui ne s'exécute pas ne prouve rien. Les deux
+appartiennent à `CRM-041` et restent dus.
+
 ### INC-138 — `verify-board.sh` exige que les channels ne soient lus qu'à UN endroit ; ils le sont à quatre
 
 **Mesuré le 2026-08-17**, `scripts/verify-board.sh --rapide` : **31 contrôles, 1 en échec**.
@@ -2566,6 +2591,17 @@ déjà consigné pour `verify-harness.sh` et `verify-preuves-refus.sh` ; remplac
 contrôle de la **définition** — que les quatre lecteurs partagent le même prédicat d'archivage, ce
 qui est la règle réellement voulue ; ou reconnaître que le §5.4 a été dépassé par
 `CRM-060`/`CRM-070`/`CRM-080` et le réviser. Le responsable tranche.
+
+**CLOSE LE 2026-08-29 — décision 560. INC-241 était le DOUBLON de cette entrée**, ouverte douze
+jours plus tard par une session qui a remesuré le même contrôle, sur cinq fichiers au lieu de
+quatre. Les deux se referment par le même changement, et sur **la deuxième** des trois lectures que
+cette entrée-ci proposait : le comptage de fichiers est remplacé par un contrôle de la règle réelle,
+qui porte sur les **routes** (`docs/SPEC-channels.md` §5.4.1). La première lecture — porter le compte
+à quatre — est écartée pour le motif que cette entrée nommait elle-même : c'est le défaut des
+compteurs figés. La troisième — réviser le §5.4 — est écartée parce que la mesure du routeur montre
+que **le §5.4 est TENU par le produit** : les quatre composants de route porteuse d'un `slugTrack`
+passent tous par `useContenuTrack`. Il n'y avait donc rien à réviser dans la règle, seulement dans
+la preuve. Mesuré : `verify-board --rapide` **43 contrôles, aucune anomalie**.
 
 ### INC-163 — deux suites pgTAP comptent un seed qui a grandi depuis qu'elles ont été écrites
 
