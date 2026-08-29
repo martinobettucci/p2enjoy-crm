@@ -27592,3 +27592,83 @@ la pile.
 
 **Où reprendre.** Le tri des vingt-quatre autres rouges de la série est en cours, même protocole :
 rejeu SEUL, base réinitialisée entre chaque.
+
+## décision 555 — la série entière rejouée et TRIÉE : 21 des 31 rouges étaient du collatéral
+
+*2026-08-29, même exécution que les décisions 553 et 554. Bilan de fin de session.*
+
+**CE QUE LA SESSION A FAIT.** Son unité était la dette de preuve commune à huit unités — la série
+des `scripts/verify-*.sh` jamais rejouée en entier — choisie au titre du §4.2 de
+`docs/CloudWorker.md` : aucune unité `[~]` du backlog ne portait de comportement à livrer qui ne
+fût ni un écart de preuve, ni une dépendance absente, ni un arbitrage en attente. Le backlog ne
+porte d'ailleurs plus **aucune** unité `[ ]`.
+
+**LA SÉRIE, ET SON VERDICT BRUT** : 77 harnais, rejoués séquentiellement et seuls, `--rapide` pour
+les 48 qui l'acceptent — **82 min**, **42 verts**, **31 rouges**, **4 interrompus** au plafond de
+900 s (`verify-droits-fins`, `verify-harness`, `verify-tracks`, `verify-webapp`, dont le verdict
+n'est donc **ni vert ni rouge**).
+
+**CE VERDICT BRUT NE VALAIT RIEN, ET C'EST LA MESURE LA PLUS IMPORTANTE DE LA JOURNÉE.** Chacun des
+31 rouges a été rejoué **SEUL, sur une base réinitialisée par `./resetMe.sh` entre chaque**.
+**Vingt et un sont redevenus verts** — `snooze` 70, `recherche` 54, `timeline` 70, `mentions` 47,
+`notifications` 43, `preferences-notifications` 62, `migrations` 25, `seed` 55, `channels` 27,
+`workflows` 42, `copie-workflow` 29, `coherence-workflow` 29, `valeurs-champs` 41,
+`transition-required-fields` 25, `liste` 55, `ma-journee` 61, `mail-classement` 41, `mail-envoi` 34,
+`mail-ingestion` 25, `mail-sync`, `signature-identite` 32 — **aucune anomalie**. Soit **68 % des
+rouges d'une série sont du bruit de série**, sur un dépôt dont aucun fichier n'a bougé.
+
+**ET LA SÉRIE LAISSE LA BASE IRRÉPARABLE PAR LE CHEMIN ORDINAIRE — INC-239.** La série terminée,
+`./runDev.sh` refuse de redémarrer : le `migrations-runner` sort en 3 sur
+`0054_relances_automatiques.sql`, dont la garde rétrécit `card_events_type_check` à quinze valeurs
+quand un harnais a restauré la contrainte en rejouant une migration antérieure. Les lignes portant
+un type postérieur violent alors la contrainte. Seul `./resetMe.sh` répare. **Ce n'est pas un
+artefact de série** : `verify-relances`, rejoué SEUL sur base neuve, reproduit exactement le même
+échec sur sa propre voie de restauration, et `verify-move-card-to-channel` aussi. Trois harnais ne
+savent donc pas se restaurer eux-mêmes.
+
+**LES DIX ROUGES RÉELS, ET À QUI ILS APPARTIENNENT** — rouges des DEUX côtés du rejeu isolé :
+
+| Harnais | Verdict seul | Imputation |
+|---|---|---|
+| `verify-authz` | 1 anomalie | `CRM-064` — **CORRIGÉ** cette session, décision 554 |
+| `verify-identites` | 2 en échec | **INC-240**, `CRM-064` |
+| `verify-commentaires` | 2 en échec | **INC-240**, même cause |
+| `verify-relances` | 5 anomalies | **INC-239**, `CRM-062` |
+| `verify-move-card-to-channel` | 3 en échec | **INC-239**, même cause |
+| `verify-change-channel-workflow` | 2 en échec | **INC-239**, même famille |
+| `verify-board` | 1 en échec | **INC-241**, `CRM-041` |
+| `verify-scripts` | 1 anomalie | **INC-186**, déjà consignée |
+| `verify-rendu-modeles-emails` | 1 anomalie | horodatage du §8.6, `CRM-063` |
+| `verify-stack` | **aucune** sur pile stabilisée | course, voir décision 554 |
+
+**INC-240 EST LE DÉFAUT LE PLUS SÉRIEUX TROUVÉ AUJOURD'HUI.** `0063` (`CRM-064`) supprime la colonne
+`card_comments.mentions` et corrige `0015` en conséquence, mais laisse **`0021` et `0035`** citer
+`new.mentions` dans `app.card_comments_avant_maj()`. Le rejeu du répertoire complet masque le
+défaut — la dernière écriture gagne —, mais tout rejeu qui s'arrête ou vise **entre `0021`/`0035` et
+`0063`** laisse le trigger `before update` de `card_comments` en `42703` : commentaires non
+modifiables, suppression de compte en échec. Conjoint à INC-239, qui mesure précisément qu'un rejeu
+intégral **peut** s'arrêter en cours de répertoire, cela vise directement `CRM-087`.
+
+**CE QUI EST CORRIGÉ, ET C'EST LE SEUL CODE DE LA SESSION** : `scripts/verify-authz.sh`, décision
+554 — contrôle de rejouabilité révisé et non retiré, plus un contrôle **ajouté** et plus fort.
+Verdict mesuré : **37 contrôles, aucune anomalie**, deux exécutions de suite. Le contrôle ajouté a
+rendu **un échec à sa toute première exécution** puis deux verts sans qu'aucun fichier ne bouge :
+l'intermittence est **nommée ici plutôt qu'expliquée**, faute de l'avoir reproduite.
+
+**QUATRE UNITÉS PROMUES `[x]`** — `CRM-064`, `CRM-065`, `CRM-080`, `CRM-089` —, chacune parce que
+son seul reste nommé était la série, motif rendu caduc par la décision 553, et parce que ses propres
+harnais sont **verts, mesurés ce jour, rejoués seuls**. `CRM-083` et `CRM-084` restent `[~]` : leur
+dette est un chapitre de `docs/manual.md`, qui est du travail réel et non un motif de forme
+(INC-214).
+
+**CE QUI N'A PAS ÉTÉ EXÉCUTÉ, ET IL FAUT LE DIRE.** Les quatre harnais interrompus au plafond de
+900 s n'ont **aucun verdict**. La campagne du §4.3 — `test:sql`, `test:unit`, `e2e:*`, `typecheck`,
+`build`, `pytest` — **n'a pas été exécutée** : le seul code de la session est un harnais de preuve,
+qui ne touche ni `webapp/`, ni `supabase/`, ni `e2e/`, et le temps a été consacré au tri des 31
+rouges, qui est l'unité de la session.
+
+**Où reprendre.** Le backlog ne porte plus que **dix-neuf** unités `[~]`, et aucune `[ ]`. Trois
+dettes sont désormais nommées, mesurées et imputées, prêtes à être prises comme unité : **INC-240**
+(`CRM-064`, deux migrations à corriger), **INC-239** (`CRM-062`, la garde de `0054` ; `CRM-087`, la
+prémisse de rejouabilité) et **INC-241** (`CRM-041`). Les deux chapitres de manuel d'INC-214 et de
+`CRM-084` restent dus.

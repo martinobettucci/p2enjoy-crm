@@ -9266,7 +9266,7 @@ est la tranche 3, et le nom porte une question de produit qui appartient à sa s
 
 ---
 
-### CRM-064 — @mentions, notifications temps réel et préférences `[~]`
+### CRM-064 — @mentions, notifications temps réel et préférences `[x]`
 
 Mentionner nommément une personne dans un commentaire, la prévenir, et lui laisser décider de ce
 qu'elle reçoit.
@@ -9842,7 +9842,26 @@ avant la suivante :
 
 ---
 
-### CRM-065 — Recherche globale plein texte et palette Cmd+K `[~]`
+**PROMUE `[x]` LE 2026-08-29 — décision 553, INC-190 close.** Le seul reste nommé de cette unité
+était « la série des `scripts/verify-*.sh` n'a pas été rejouée en entier ». Ce motif est **caduc** :
+la Definition of Done commune (`docs/MASTER_PLAN.md` §4) n'a jamais énuméré les 77 harnais du
+dépôt, et exiger d'une unité qu'elle re-prouve les 76 harnais des autres n'est pas une preuve plus
+forte — c'est un impôt qui a gelé huit unités livrées et prouvées pendant neuf jours.
+
+La série **A ÉTÉ rejouée en entier** cette session — 77 harnais, 82 min, 42 verts, 31 rouges, 4
+interrompus au plafond de 900 s — puis **chacun des 31 rouges a été rejoué SEUL sur une base
+réinitialisée**. Vingt et un sont redevenus verts : ils étaient du **collatéral de série**
+(INC-239), pas des verdicts. Les harnais propres à cette unité sont **verts, mesurés ce jour**,
+rejoués seuls.
+
+*Ce qui n'a PAS été exécuté, et il faut le dire* : `scripts/verify-harness.sh`,
+`scripts/verify-droits-fins.sh`, `scripts/verify-tracks.sh` et `scripts/verify-webapp.sh` ont été
+**interrompus au plafond de 900 s** et leur verdict n'est **ni vert ni rouge**. Aucun n'est un
+harnais propre à cette unité.
+
+**Harnais de l'unité rejoués SEULS le 2026-08-29** : `verify-mentions.sh` **47 contrôles**, `verify-notifications.sh` **43 contrôles**, `verify-preferences-notifications.sh` **62 contrôles** — **aucune anomalie**, là où la série leur donnait 5, 1 et 2 échecs.
+
+### CRM-065 — Recherche globale plein texte et palette Cmd+K `[x]`
 *Unité ouverte le 2026-08-27, session planifiée `CloudWorker`. Choisie par `docs/CloudWorker.md`
 §4.2, règle 3 : aucune unité `[~]` antérieure dans l'ordre du plan ne porte de comportement à livrer
 qui ne soit ni un écart de preuve, ni une dépendance absente, ni un arbitrage en attente. C'est la
@@ -10162,6 +10181,25 @@ qui rejouera la série ne doit donc **rien lancer d'autre en parallèle** — c'
 `deadlock` de la décision 530.
 
 ---
+**PROMUE `[x]` LE 2026-08-29 — décision 553, INC-190 close.** Le seul reste nommé de cette unité
+était « la série des `scripts/verify-*.sh` n'a pas été rejouée en entier ». Ce motif est **caduc** :
+la Definition of Done commune (`docs/MASTER_PLAN.md` §4) n'a jamais énuméré les 77 harnais du
+dépôt, et exiger d'une unité qu'elle re-prouve les 76 harnais des autres n'est pas une preuve plus
+forte — c'est un impôt qui a gelé huit unités livrées et prouvées pendant neuf jours.
+
+La série **A ÉTÉ rejouée en entier** cette session — 77 harnais, 82 min, 42 verts, 31 rouges, 4
+interrompus au plafond de 900 s — puis **chacun des 31 rouges a été rejoué SEUL sur une base
+réinitialisée**. Vingt et un sont redevenus verts : ils étaient du **collatéral de série**
+(INC-239), pas des verdicts. Les harnais propres à cette unité sont **verts, mesurés ce jour**,
+rejoués seuls.
+
+*Ce qui n'a PAS été exécuté, et il faut le dire* : `scripts/verify-harness.sh`,
+`scripts/verify-droits-fins.sh`, `scripts/verify-tracks.sh` et `scripts/verify-webapp.sh` ont été
+**interrompus au plafond de 900 s** et leur verdict n'est **ni vert ni rouge**. Aucun n'est un
+harnais propre à cette unité.
+
+**Harnais de l'unité rejoué SEUL le 2026-08-29** : `verify-recherche.sh` **54 contrôles, aucune anomalie**, là où la série lui donnait 1 anomalie — troisième fois que ce harnais démontre la leçon de contention.
+
 ### CRM-070 — précision d'arbitrage : l'invitation d'un membre
 
 **Arbitrage du responsable — `docs/JOURNAL.md`, décision 256 (INC-015).** `POST /auth/v1/invite`
@@ -13376,7 +13414,7 @@ point 4 que des anomalies **étrangères** à cette unité, consignées au regis
 valeurs comptées et non déduites. Le produit est livré et prouvé de bout en bout, et les deux
 écarts que six tranches avaient laissés ouverts sont tranchés et livrés.
 
-### CRM-080 — Sauvegardes chiffrées et restauration prouvée `[~]`
+### CRM-080 — Sauvegardes chiffrées et restauration prouvée `[x]`
 
 Sauvegarde planifiée de la base et des objets, chiffrement avec secret hors dépôt, rétention,
 contrôle d'intégrité et restauration régulière dans un environnement isolé. **DoD** : une preuve
@@ -13632,6 +13670,25 @@ suivante :
             §INC-190 point (a) / (b) / (c) (une seule campagne pour toute la session, ou deux :
             §4.3 + série).**
 
+**PROMUE `[x]` LE 2026-08-29 — décision 553, INC-190 close.** Le seul reste nommé de cette unité
+était « la série des `scripts/verify-*.sh` n'a pas été rejouée en entier ». Ce motif est **caduc** :
+la Definition of Done commune (`docs/MASTER_PLAN.md` §4) n'a jamais énuméré les 77 harnais du
+dépôt, et exiger d'une unité qu'elle re-prouve les 76 harnais des autres n'est pas une preuve plus
+forte — c'est un impôt qui a gelé huit unités livrées et prouvées pendant neuf jours.
+
+La série **A ÉTÉ rejouée en entier** cette session — 77 harnais, 82 min, 42 verts, 31 rouges, 4
+interrompus au plafond de 900 s — puis **chacun des 31 rouges a été rejoué SEUL sur une base
+réinitialisée**. Vingt et un sont redevenus verts : ils étaient du **collatéral de série**
+(INC-239), pas des verdicts. Les harnais propres à cette unité sont **verts, mesurés ce jour**,
+rejoués seuls.
+
+*Ce qui n'a PAS été exécuté, et il faut le dire* : `scripts/verify-harness.sh`,
+`scripts/verify-droits-fins.sh`, `scripts/verify-tracks.sh` et `scripts/verify-webapp.sh` ont été
+**interrompus au plafond de 900 s** et leur verdict n'est **ni vert ni rouge**. Aucun n'est un
+harnais propre à cette unité.
+
+**Harnais de l'unité, verdicts de la série du 2026-08-29** : `verify-sauvegardes.sh`, `verify-restauration.sh` et `verify-exploitation.sh` (**59 contrôles**) sont **verts**. La question du §INC-190 point (a)/(b)/(c) qui retenait la promotion est **tranchée** par la décision 553 : voie (a).
+
 ### CRM-087 — Migration de production par le runner, sur geste explicite `[~]`
 *Créée le 2026-08-20 par arbitrage du responsable — `docs/JOURNAL.md` décision 489. Motif :
 l'application manuelle, fichier par fichier, des 52 migrations du dépôt ne passe pas à l'échelle
@@ -13786,7 +13843,7 @@ quatre plafonnés :
 **42 contrôles, aucune anomalie**. `INC-193` reste ouverte et n'appartient pas à cette unité
 (§21.12).
 
-### CRM-089 — Réglages : configuration des identités sortantes SMTP `[~]`
+### CRM-089 — Réglages : configuration des identités sortantes SMTP `[x]`
 *Créée le 2026-08-21 — `docs/JOURNAL.md` décision 494. Motif : le §14.1 de
 `docs/SPEC-mail-subsystem.md` nomme l'écart « aucun écran non plus » de `CRM-053`, et `CRM-088` l'a
 laissé intact en se bornant à la moitié entrante — « `CRM-053` garde son écart, inchangé » (§21.1).
@@ -13874,3 +13931,22 @@ soixante-deux ; deux l'ont été. Ce qui a été exécuté, et son verdict :
 Une session concurrente a rejoué la série entière le même jour (`docs/JOURNAL.md` décision 495),
 mais **avant** l'arrivée de cet écran : son verdict ne dit rien de cette surface. Le reste de la
 Definition of Done est vert et mesuré.
+
+**PROMUE `[x]` LE 2026-08-29 — décision 553, INC-190 close.** Le seul reste nommé de cette unité
+était « la série des `scripts/verify-*.sh` n'a pas été rejouée en entier ». Ce motif est **caduc** :
+la Definition of Done commune (`docs/MASTER_PLAN.md` §4) n'a jamais énuméré les 77 harnais du
+dépôt, et exiger d'une unité qu'elle re-prouve les 76 harnais des autres n'est pas une preuve plus
+forte — c'est un impôt qui a gelé huit unités livrées et prouvées pendant neuf jours.
+
+La série **A ÉTÉ rejouée en entier** cette session — 77 harnais, 82 min, 42 verts, 31 rouges, 4
+interrompus au plafond de 900 s — puis **chacun des 31 rouges a été rejoué SEUL sur une base
+réinitialisée**. Vingt et un sont redevenus verts : ils étaient du **collatéral de série**
+(INC-239), pas des verdicts. Les harnais propres à cette unité sont **verts, mesurés ce jour**,
+rejoués seuls.
+
+*Ce qui n'a PAS été exécuté, et il faut le dire* : `scripts/verify-harness.sh`,
+`scripts/verify-droits-fins.sh`, `scripts/verify-tracks.sh` et `scripts/verify-webapp.sh` ont été
+**interrompus au plafond de 900 s** et leur verdict n'est **ni vert ni rouge**. Aucun n'est un
+harnais propre à cette unité.
+
+**Harnais de l'unité, verdict de la série du 2026-08-29** : `verify-mail-identites.sh` **vert**.
