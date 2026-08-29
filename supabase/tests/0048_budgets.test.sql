@@ -53,7 +53,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(52);
+select plan(62);
 
 create or replace function pg_temp.endosser(utilisateur uuid)
 returns void language plpgsql as $$
@@ -616,6 +616,86 @@ select is(
 	pg_temp.lignes_touchees($$update public.budget_occurrences set closed_at = now() where id = 'b0000000-0000-4000-8000-0000000000a1'$$),
 	1::bigint,
 	'CRM-084 : l''administratrice clôture une occurrence');
+
+select pg_temp.redevenir_proprietaire();
+
+-- =============================================================================================
+-- 10. LE SEUIL D'ANCIENNETÉ DES LIGNES DE COÛT — tranche 4b, arbitrage d'INC-183
+-- =============================================================================================
+-- @verifies docs/SPEC-costs.md §2.1 bis (le contrat ligne à ligne), docs/SCHEMA.md §9 bis.4,
+--           docs/JOURNAL.md décision 549
+--
+-- CE QUE CETTE SECTION PROUVE, ET CE QU'ELLE NE PEUT PAS PROUVER. Elle mesure la FORME de la
+-- colonne, le refus de sa contrainte contre son succès correspondant, l'ABSENCE de tout repli, et
+-- le fait que l'écriture du seuil suit la politique d'écriture des budgets — donc qu'ajouter une
+-- colonne n'a ouvert aucune porte. Elle ne mesure PAS la comparaison « ancienneté > seuil » : elle
+-- vit dans l'interface (`webapp/src/lib/couts-a-saisir.ts`), la base ne portant aucune fonction qui
+-- la rejouerait, et c'est la suite unitaire qui l'éprouve.
+
+select col_type_is('public', 'budgets', 'stale_after_days', 'integer',
+	'CRM-084 : `budgets.stale_after_days` est un `integer`, comme les deux autres seuils du dépôt');
+
+select col_is_null('public', 'budgets', 'stale_after_days',
+	'CRM-084 : `stale_after_days` est NULLABLE — « aucun seuil décidé » doit être représentable');
+
+-- UN DÉFAUT SERAIT LA RÈGLE DE GESTION QUE PERSONNE N'A PRISE, et il allumerait le signal
+-- rétroactivement sur des budgets dont personne n'a décidé le rythme (§2.1 bis).
+select col_hasnt_default('public', 'budgets', 'stale_after_days',
+	'CRM-084 : `stale_after_days` n''a AUCUN défaut — un seuil absent ne devient jamais un seuil');
+
+-- L'ABSENCE DE REPLI SE PROUVE STRUCTURELLEMENT, et c'est la seule façon de la prouver : une
+-- assertion de comportement ne pourrait pas distinguer « pas de repli » de « repli qui rend nul ».
+-- Le jour où quelqu'un ajouterait un seuil sur l'occurrence, cette assertion se retournerait et
+-- dirait pourquoi c'est un changement de doctrine (§2.1 bis, décision 549).
+select hasnt_column('public', 'budget_occurrences', 'stale_after_days',
+	'CRM-084 : une occurrence NE PORTE AUCUN seuil — la résolution se fait en un seul temps');
+
+select throws_ok(
+	$$insert into public.budgets (track_id, name, stale_after_days)
+	  values ('5eed0000-0000-4000-8000-000000000022', 'Seuil nul 0048', 0)$$,
+	'23514',
+	null,
+	'CRM-084 : un seuil de ZÉRO jour est refusé — il rendrait toute ligne en retard dès sa création');
+
+select throws_ok(
+	$$insert into public.budgets (track_id, name, stale_after_days)
+	  values ('5eed0000-0000-4000-8000-000000000022', 'Seuil négatif 0048', -1)$$,
+	'23514',
+	null,
+	'CRM-084 : un seuil NÉGATIF est refusé');
+
+-- LES DEUX SUCCÈS CORRESPONDANTS. Sans eux, les deux refus ci-dessus seraient verts sur une
+-- contrainte qui refuserait TOUT — le mode de défaillance que l'en-tête de ce fichier nomme.
+select lives_ok(
+	$$insert into public.budgets (id, track_id, name, stale_after_days)
+	  values ('b0000000-0000-4000-8000-0000000000f1',
+	          '5eed0000-0000-4000-8000-000000000022', 'Seuil posé 0048', 30)$$,
+	'CRM-084 : un seuil strictement positif est accepté');
+
+select lives_ok(
+	$$insert into public.budgets (id, track_id, name, stale_after_days)
+	  values ('b0000000-0000-4000-8000-0000000000f2',
+	          '5eed0000-0000-4000-8000-000000000022', 'Seuil absent 0048', null)$$,
+	'CRM-084 : un seuil explicitement NUL est accepté — c''est « aucun seuil décidé »');
+
+-- L'ÉCRITURE DU SEUIL SUIT LA POLITIQUE DES BUDGETS, ET RIEN D'AUTRE. C'est la seule chose qu'une
+-- colonne neuve pouvait casser : la migration 72 ne pose aucune politique, et ces deux assertions
+-- mesurent qu'elle n'en avait pas besoin. Le refus se mesure en LIGNES TOUCHÉES et non par un
+-- `throws_ok` : la clause `using` filtre, elle ne lève pas (mesure M8 de la décision 549).
+select pg_temp.endosser('5eed0000-0000-4000-8000-000000000012');
+
+select is(
+	pg_temp.lignes_touchees($$update public.budgets set stale_after_days = 45 where id = 'b0000000-0000-4000-8000-0000000000f1'$$),
+	0::bigint,
+	'CRM-084 : un business developer NE POSE PAS de seuil — zéro ligne, jamais une exception');
+
+select pg_temp.redevenir_proprietaire();
+select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
+
+select is(
+	pg_temp.lignes_touchees($$update public.budgets set stale_after_days = 45 where id = 'b0000000-0000-4000-8000-0000000000f1'$$),
+	1::bigint,
+	'CRM-084 : l''administratrice pose le seuil — le refus ci-dessus porte bien sur le RÔLE');
 
 select pg_temp.redevenir_proprietaire();
 
