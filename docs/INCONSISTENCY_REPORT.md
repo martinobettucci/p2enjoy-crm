@@ -195,6 +195,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-189 | « Alt et flèche REDIMENSIONNENT » d'`Objectifs.test.tsx` échoue par INTERMITTENCE en campagne, et passe seul | 2026-08-20 | *ouverte* — relève de `CRM-081` | 485 |
 | INC-190 | La série complète des `scripts/verify-*.sh` TIENT dans une session en mode `--rapide` — cinq restes de forme du backlog en sont caducs | 2026-08-20 | **close** — TRANCHÉE par la décision 553 : voie (a) retenue, et la série complète n'est la Definition of Done d'AUCUNE unité | 487, 553 |
 | INC-191 | Sept harnais figent des ABSENCES qu'une unité ultérieure a comblées, et sont rouges de leur propre succès | 2026-08-20 | **close** — les dix harnais retournés par la décision 498 | 487, 497, 498 |
+| INC-239 | La série des 77 harnais, rejouée d'affilée, laisse la base dans un état que `./runDev.sh` NE RÉPARE PAS : `0054` rétrécit `card_events_type_check` derrière sa propre garde et le `migrations-runner` sort en 3. Les 31 rouges de la série ne sont donc pas des verdicts avant rejeu SEUL sur base réinitialisée. Conséquence sérieuse pour `CRM-087`, dont le rejeu intégral suppose la rejouabilité sur base PEUPLÉE | 2026-08-29 | *ouverte* — issue retenue et écrite, mise en œuvre due : `CRM-062` pour la garde de `0054`, `CRM-087` pour la prémisse | 553 |
 | INC-192 | `scripts/verify-corbeille.sh` cherche `@spec CRM-077` dans les TROIS premières lignes de `webapp/src/app/RouteCard.tsx`, qui en cumule dix | 2026-08-20 | **close** — fenêtre de lecture portée à l'en-tête entier (commit `752d3b4`), verdict vérifié le 2026-08-25 : 38 contrôles, aucune anomalie | 487, 508 |
 | INC-193 | Le `details` d'un refus de contrainte rend la ligne entière, `secret_id` compris — la colonne révoquée à `authenticated` ressort par un second chemin | 2026-08-20 | *ouverte* — arbitrage attendu, sécurité des données | 492 |
 | INC-195 | `scripts/verify-copie-workflow.sh` rejoue la migration 19 et laissait `move_card` AMPUTÉE du lot G — quatrième occurrence d'INC-154 | 2026-08-21 | **close** — corrigée par la décision 497 | 497 |
@@ -240,8 +241,8 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-174,
 INC-185, INC-186, INC-188, INC-189, INC-190, INC-191, INC-192, INC-193, INC-224,
-INC-225, INC-226, INC-227, INC-228, INC-229, INC-231, INC-232, INC-233, INC-234, INC-236 et
-INC-238.**
+INC-225, INC-226, INC-227, INC-228, INC-229, INC-231, INC-232, INC-233, INC-234, INC-236,
+INC-238 et **INC-239**.**
 
 *Mise à jour du 2026-08-29 : **INC-183** est tranchée (décision 549) et retirée ; **INC-238** est
 consignée par la même session.*
@@ -5953,3 +5954,66 @@ comme à la mise à jour pour `authenticated`, et laissée à la clé de service
 perdrait le seul chemin qui rend la variante démontrable.
 
 **Statut :** ouvert, issue retenue et écrite, mise en œuvre due — elle appartient à `CRM-013`.
+
+### INC-239 — la série des 77 harnais, rejouée d'affilée, laisse la base dans un état que `./runDev.sh` NE RÉPARE PAS
+
+**Ouverte le 2026-08-29 par la session qui a rejoué la série entière** — décision 553. Comportement
+inchangé : l'entrée mesure, elle ne corrige pas.
+
+**Ce qui a été mesuré, et c'est une mesure, pas une hypothèse.** Les 77 `scripts/verify-*.sh` ont été
+rejoués séquentiellement, seuls, sur une pile montée et seedée le matin même — 82 min, 42 verts,
+31 rouges, 4 interrompus au plafond de 900 s. La série terminée, `./runDev.sh` **refuse de
+redémarrer la pile** :
+
+```
+Container p2enjoy-migrations Error service "migrations-runner" didn't complete successfully: exit 3
+
+psql:/migrations/0054_relances_automatiques.sql:77:
+  ERROR:  check constraint "card_events_type_check" of relation "card_events"
+          is violated by some row
+```
+
+**Le mécanisme, et il est exact.** `0054_relances_automatiques.sql` réécrit
+`card_events_type_check` sous une garde : elle ne réécrit **que si** la contrainte courante ne cite
+pas déjà `stalled`. La garde protège le cas normal — sur une base à jour, `0070` a porté le
+vocabulaire à **dix-neuf** valeurs, `stalled` y figure, et `0054` passe son tour. Mais un harnais de
+la série dégrade cette contrainte et la restaure en rejouant une migration ANTÉRIEURE : la contrainte
+revient alors à un vocabulaire d'où `stalled` est absent, la garde de `0054` devient vraie, `0054`
+réécrit les **quinze** valeurs de son époque — et les lignes que le seed et les preuves ont écrites
+depuis avec un type postérieur (`mail_unclassified` de `CRM-055` tranche 2, entre autres) violent la
+contrainte qu'on vient de rétrécir.
+
+**Ce que cela dit de la série, et c'est le fait le plus important de la journée.** La leçon du
+2026-08-27 disait que deux séries de preuves sur une seule base **se mesurent l'une l'autre**. La
+mesure d'aujourd'hui est plus forte : la série n'est pas seulement bruyante, elle est **non
+idempotente sur la base**, et son état final n'est pas rattrapable par le chemin ordinaire. Seul
+`./resetMe.sh` — destruction des volumes et redémarrage à froid — la répare ; il a été exécuté et
+rend la pile saine.
+
+**En conséquence, les 31 rouges de la série NE SONT PAS des verdicts** tant que chacun n'a pas été
+rejoué SEUL sur une base réinitialisée. La preuve en est faite sur un cas : `verify-snooze` rendait
+« 71 contrôles, aucune anomalie » le 2026-08-28, et rend « 70 contrôles, 4 en échec » en série, sur
+un dépôt dont aucun fichier n'a bougé entre les deux.
+
+**LA CONSÉQUENCE POUR `CRM-087`, ET ELLE EST SÉRIEUSE.** L'unité fait reposer `./runProd.sh
+--migrate` sur une prémisse écrite dans son backlog : « les 52 migrations sont écrites pour être
+rejouables, la pile de développement le prouve à chaque démarrage ». Cette preuve-là ne vaut que sur
+une base dont les **données** ne contiennent aucun type d'événement postérieur à `0054`. Le rejeu
+intégral sur une production **peuplée** rencontre exactement la situation mesurée ici dès que la
+garde de `0054` s'évalue à vrai — et il échoue **au milieu du répertoire**, une transaction par
+fichier, laissant les migrations suivantes non appliquées.
+
+Ce n'est pas hypothétique : c'est le scénario observé, à ceci près que ce qui a rétréci la contrainte
+était un harnais et non un incident. Toute cause qui ramène `card_events_type_check` à un état sans
+`stalled` produit le même échec.
+
+**Issue retenue, et elle n'est PAS mise en œuvre ici** (`CLAUDE.md` §18 : la cause se corrige dans
+l'unité qui la porte, pas au passage). La garde de `0054` juge sur la présence de `stalled`,
+c'est-à-dire sur **le vocabulaire de son époque** ; elle devrait juger sur le fait que la contrainte
+courante est **au moins aussi large** que celle qu'elle poserait — ou, plus simplement et dans la
+ligne du responsable, ne jamais RÉTRÉCIR un vocabulaire déjà élargi. La mise en œuvre appartient à
+`CRM-062`, qui porte `0054`, et la vérification de la prémisse de rejouabilité appartient à
+`CRM-087`, dont la preuve sur pile réelle reste due.
+
+**Statut :** ouverte, comportement inchangé, issue retenue et écrite, mise en œuvre due —
+`CRM-062` pour la garde de `0054`, `CRM-087` pour la prémisse de rejouabilité.
