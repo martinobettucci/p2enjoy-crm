@@ -27396,3 +27396,74 @@ contourné (`CLAUDE.md` §18).
 
 **Où reprendre.** Le code de la tranche 3 suit immédiatement : le paramètre d'adresse de l'inbox,
 puis le scénario du §16.12.6 non filtré.
+
+## décision 552 — la tranche 3 de `CRM-081`, la campagne, et un motif faux trouvé en relisant le design system
+
+*2026-08-29, même exécution que la décision 551. Consigne le bilan de fin de session.*
+
+**CE QUI EST LIVRÉ, EN QUATRE COMMITS POUSSÉS AU FIL DE L'EAU.** L'arbitrage et la spécification
+**avant la première ligne de code** (décision 551, `docs/SPEC-cards.md` §16.17) ; le paramètre
+d'adresse de l'inbox et ses six preuves de composant ; les deux scénarios E2E — le §16.12.6 éprouvé
+sans aucun autre filtre et le mode qui survit au rechargement ; la documentation, le manuel et le
+changelog ; enfin les compteurs de harnais révisés et le backlog mis à l'état réel.
+
+**LA CAMPAGNE COMPLÈTE A ÉTÉ EXÉCUTÉE.**
+
+| Preuve | Verdict |
+|---|---|
+| `npm run typecheck` / `npm run build` | verts |
+| `npm run test:unit` | **86 fichiers, 2934 tests**, aucun échec — 2928 + les six de la tranche |
+| `npm run test:sql` | **67 fichiers, 3052 assertions**, aucune anomalie |
+| `npm run e2e:api` | **1041 passés** |
+| `npm run e2e:ui` | **729 passés, AUCUN échec**, en 19,2 min — 727 + les deux de la tranche |
+| `npm run e2e:mail` | **42 passés** |
+| `pytest` (`mail-sync`) | **244 passés** |
+| `scripts/verify-snooze.sh` | **71 contrôles, aucune anomalie**, ses cinq dégradations et sa restauration octet à octet comprises |
+| `scripts/verify-harness.sh --rapide` | les trois dénombrements **conformes aux compteurs révisés** : api 1041, ui **729**, mail 42 |
+
+**AUCUN ÉCHEC, ET C'EST LA PREMIÈRE CAMPAGNE SANS OCCURRENCE D'INC-205 DEPUIS LE 2026-08-24.** Rien
+n'a été corrigé pour l'obtenir : la tranche ne touche ni `mail-sync`, ni un dossier IMAP. L'entrée
+reste ouverte — une intermittence qui ne se manifeste pas une fois n'est pas close.
+
+**UN MOTIF FAUX TROUVÉ EN RELISANT LE DESIGN SYSTEM, ET C'EST LA LECTURE QUI L'A TROUVÉ, PAS UNE
+ASSERTION** (`CLAUDE.md` §4, qui impose la lecture INTÉGRALE avant tout commit touchant l'UI). Le
+§5.36 justifiait que la portée de « Ma journée » soit une paire de liens plutôt qu'une case en
+écrivant que « la bascule de sommeil ne change pas d'adresse dans le board ». Elle la change depuis
+le 2026-08-17. Un motif faux coûte plus qu'un motif absent : il enseigne une distinction qui
+n'existe pas, et la prochaine surface qui devra choisir s'y fierait. Le **vrai** critère est écrit à
+sa place et il décide les deux cas — *un choix entre deux vues nommées se fait par deux liens ; un
+raffinement binaire de la vue courante se fait par une case* —, avec la contre-épreuve : que
+l'adresse porte l'un et l'autre ne les distingue pas, elle porte déjà le tri et la pagination sans
+en faire des liens.
+
+**LES DEUX PRÉMISSES DE L'ÉCART 1 ÉTAIENT FAUSSES, ET ELLES ONT ÉTÉ MESURÉES AVANT D'ÊTRE
+CORRIGÉES** — pas déduites d'une relecture du texte qui les portait. L'inbox lisait `useSearchParams`
+depuis `CRM-065`, dans le fichier même dont un commentaire affirmait qu'elle ne lisait aucun
+paramètre ; et son `mode` était un `useState` que rien ne réinitialisait au changement de dossier,
+là où le §16.15.5 point 3 écrivait que le filtre n'y survivait pas. Un écart écrit sur une prémisse
+fausse n'est pas un écart, c'est une règle non écrite.
+
+**CE QUE LA TRANCHE N'A PAS FAIT, ET C'EST CE QUI LA REND SÛRE** : aucune migration, aucun
+changement de `supabase/seed/apply-seed.sh`, aucun chemin serveur neuf. Les deux seuls compteurs
+révisés sont ceux que les deux scénarios ajoutés font bouger, valeurs **comptées** —
+`SCENARIOS_UI` 727 → 729, `ATTENDU_UI_SCENARIOS` 37 → 39, `ATTENDU_CAPTURES` 47 → 50.
+
+**TROIS CAPTURES PRODUITES ET REGARDÉES**, et c'est cette observation qui a confirmé les deux états
+vides : `filtre-sommeil-liste-vide-sommeil-1440` — « Aucune affaire éveillée dans ce channel »,
+total à 0, l'action rendue —, `filtre-sommeil-board-vide-sommeil-1440` — « Toutes les affaires de ce
+channel sont en sommeil », les colonnes du board conservées à zéro en dessous — et
+`sommeil-fil-adresse-rechargee` — après `F5`, la case cochée, le fil endormi de retour avec sa
+pastille au 05/09/2026. **Les captures des autres unités, réécrites par la campagne, ont été
+restaurées** ; seules les trois de la tranche sont conservées.
+
+**CE QUI N'A PAS ÉTÉ EXÉCUTÉ, ET IL FAUT LE DIRE** : la série des `scripts/verify-*.sh` en entier.
+Le dépôt en porte soixante-dix-sept ; **deux** l'ont été — celui de l'unité, et `verify-harness.sh`
+qui certifie les compteurs révisés.
+
+**Où reprendre.** `CRM-081` passe à **`[x]`** : les deux écarts que six tranches avaient laissés
+ouverts sont tranchés et livrés, et il ne reste au point 4 que INC-140, **étrangère** à l'unité. Le
+backlog ne porte donc plus, en `[~]`, que des unités dont la dette est de la **documentation
+utilisateur** — `CRM-084` (chapitre de `docs/manual.md` sur l'administration des budgets, hérité de
+la tranche 2) et `CRM-083` (manuel des objectifs, INC-214) — plus `CRM-080`, `CRM-087`, `CRM-089`,
+et les unités de la tranche 5 restées `[~]`. La prochaine session choisit dans l'ordre du plan
+(`docs/CloudWorker.md` §4.2) : la première `[~]` dont il reste du **comportement** à livrer.
