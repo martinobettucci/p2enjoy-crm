@@ -27,6 +27,7 @@ import { describe, expect, it } from 'vitest'
 import {
 	COLONNES_LIGNE_A_SAISIR,
 	ancienneteEnJours,
+	ancienneteEnRetard,
 	classerRefusSaisie,
 	compterEnAttente,
 	enregistrerReel,
@@ -116,6 +117,10 @@ const ligne = (reste: Partial<LigneASaisir> = {}): LigneASaisir => ({
 		currency: 'EUR',
 		is_recurrent: true,
 		closed_at: null,
+		// LE DÉFAUT DE LA FIXTURE EST « AUCUN SEUIL », et c'est le choix qui rend les autres tests
+		// insensibles à l'arbitrage d'INC-183 : sans seuil, aucune ligne n'est en retard, et rien de
+		// ce qu'ils mesurent ne dépend d'une teinte. Les tests du seuil le posent explicitement.
+		stale_after_days: null,
 	},
 	budget_occurrences: { id: 'o1', label: 'Février 2026', closed_at: null },
 	cards: {
@@ -316,6 +321,84 @@ describe('ancienneteEnJours — mesurée sur `created_at`', () => {
 	})
 })
 
+describe('ancienneteEnRetard — le seuil est une DONNÉE du budget (§2.1 bis, INC-183)', () => {
+	const maintenant = new Date('2026-08-20T10:00:00Z')
+
+	/** Une ligne née il y a `jours` jours, sur un budget dont le seuil est `seuil`. */
+	const avecSeuil = (jours: number, seuil: number | null) =>
+		ligne({
+			created_at: new Date(maintenant.getTime() - jours * 86_400_000).toISOString(),
+			budgets: {
+				id: 'b1',
+				name: 'Publicité 2026',
+				currency: 'EUR',
+				is_recurrent: true,
+				closed_at: null,
+				stale_after_days: seuil,
+			},
+		})
+
+	it('AUCUN SEUIL ne devient jamais un seuil par défaut, fût-ce à mille jours', () => {
+		// C'est la règle de `seuilEffectif` de `carte-figee.ts` (`docs/SPEC-relances.md` §2.2),
+		// transposée : l'étape `Livré` du seed n'a pas de seuil et ses affaires ne sont jamais
+		// figées. Colorer par précaution ferait crier l'écran sur une décision que personne n'a
+		// prise, et c'est précisément l'issue n° 1 qu'INC-183 a écartée.
+		expect(ancienneteEnRetard(avecSeuil(1000, null), maintenant)).toBe(false)
+	})
+
+	it('un budget ABSENT de la réponse n’est pas en retard non plus', () => {
+		// Une réponse amputée ne doit pas teindre la table : le repli d'un fait inconnu est de ne
+		// rien affirmer, comme pour la pilule « clôturé ».
+		expect(ancienneteEnRetard(ligne({ budgets: null }), maintenant)).toBe(false)
+	})
+
+	it('LA COMPARAISON EST STRICTE : trente jours sur un seuil de trente n’est PAS en retard', () => {
+		// « Au delà d'un seuil » (§5.31), et la borne large de la pastille d'une card
+		// (`docs/SPEC-relances.md` §2.5). Deux signaux de même forme ne peuvent pas se lire à deux
+		// bornes différentes. Un `>=` ici ferait rougir cette assertion, et c'est le point.
+		expect(ancienneteEnRetard(avecSeuil(30, 30), maintenant)).toBe(false)
+		expect(ancienneteEnRetard(avecSeuil(31, 30), maintenant)).toBe(true)
+	})
+
+	it('une ligne du jour n’est pas en retard, même sur un seuil de 1', () => {
+		expect(ancienneteEnRetard(avecSeuil(0, 1), maintenant)).toBe(false)
+	})
+
+	it('une ANCIENNETÉ ILLISIBLE n’est jamais en retard — la cellule sera vide, pas rouge', () => {
+		// Colorer une cellule vide affirmerait un retard sur une durée qu'on n'a pas su calculer.
+		expect(
+			ancienneteEnRetard(
+				ligne({
+					created_at: 'pas une date',
+					budgets: {
+						id: 'b1',
+						name: 'Publicité 2026',
+						currency: 'EUR',
+						is_recurrent: true,
+						closed_at: null,
+						stale_after_days: 1,
+					},
+				}),
+				maintenant,
+			),
+		).toBe(false)
+	})
+
+	it('un seuil NUL ou NÉGATIF rendu par la base est ignoré, pas appliqué', () => {
+		// `budgets_stale_check` les refuse, mais une réponse amputée ou un contournement de la
+		// contrainte ne doit pas transformer toute la table en rouge. La garde ne coûte rien.
+		expect(ancienneteEnRetard(avecSeuil(5, 0), maintenant)).toBe(false)
+		expect(ancienneteEnRetard(avecSeuil(5, -3), maintenant)).toBe(false)
+	})
+
+	it('LE SEUIL EST DEMANDÉ DANS LA LECTURE, sans quoi il vaudrait toujours `undefined`', () => {
+		// Une preuve de comportement seule ne verrait pas ce défaut : le module rendrait `false`
+		// partout, ce qui est exactement le comportement d'avant la tranche. C'est la REQUÊTE ÉMISE
+		// qui le trahit.
+		expect(COLONNES_LIGNE_A_SAISIR).toContain('stale_after_days')
+	})
+})
+
 describe('compterEnAttente — le badge compte ce que le tableau liste', () => {
 	it('compte toutes les lignes rendues, saisissables ou non', () => {
 		// Les exclure ferait diverger le badge du tableau, et écrirait « 0 » à une lectrice qui a
@@ -341,6 +424,7 @@ describe('compterEnAttente — le badge compte ce que le tableau liste', () => {
 					currency: 'EUR',
 					is_recurrent: false,
 					closed_at: '2026-06-30T17:00:00Z',
+					stale_after_days: null,
 				},
 				budget_occurrences: null,
 			}),

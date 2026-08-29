@@ -32,12 +32,28 @@ import type { ClientCrm } from './supabase'
  */
 export type BudgetAdministrable = Pick<
 	Database['public']['Tables']['budgets']['Row'],
-	'id' | 'track_id' | 'name' | 'currency' | 'planned_amount' | 'is_recurrent' | 'closed_at' | 'position'
+	| 'id'
+	| 'track_id'
+	| 'name'
+	| 'currency'
+	| 'planned_amount'
+	| 'is_recurrent'
+	| 'closed_at'
+	| 'position'
+	| 'stale_after_days'
 >
 
-/** Colonnes réellement demandées. Exportées pour que les preuves vérifient la requête émise. */
+/**
+ * Colonnes réellement demandées. Exportées pour que les preuves vérifient la requête émise.
+ *
+ * `stale_after_days` y entre depuis la tranche 4 alors qu'AUCUNE COLONNE DE LA TABLE NE L'AFFICHE
+ * (`docs/SPEC-costs.md` §4.1) : le formulaire de modification doit pré-remplir le champ avec la
+ * valeur courante, et le lire à l'ouverture du formulaire coûterait un aller-retour pour une valeur
+ * déjà rapportée par la lecture de la ligne. C'est l'unique écart au « une requête ne rapporte que
+ * ce qui est affiché » ci-dessus, et il est écrit ici plutôt que découvert en comparant.
+ */
 export const COLONNES_BUDGET_ADMIN =
-	'id, track_id, name, currency, planned_amount, is_recurrent, closed_at, position'
+	'id, track_id, name, currency, planned_amount, is_recurrent, closed_at, position, stale_after_days'
 
 /**
  * Les budgets d'un **seul** track, dans l'ordre d'affichage.
@@ -157,6 +173,42 @@ export function lireEnveloppe(saisie: string): Enveloppe {
 	const montant = Number(nettoyee)
 	if (!Number.isFinite(montant)) return { statut: 'invalide' }
 	return { statut: 'lue', montant }
+}
+
+/**
+ * Le seuil d'ancienneté saisi au formulaire — `docs/SPEC-costs.md` §2.1 bis et §4.1.
+ *
+ * MÊME TYPE SOMME À TROIS MEMBRES QUE L'ENVELOPPE, ET POUR LA MÊME RAISON : « aucun seuil décidé »
+ * et « seuil invalide » ne sont pas la même chose, et les confondre enverrait une valeur là où
+ * l'utilisateur n'a rien décidé. Mais les valeurs acceptées, elles, DIVERGENT — et l'écart est
+ * voulu :
+ *
+ *   * l'enveloppe accepte tout nombre fini, **négatif compris** (§2.1, un avoir est légitime) ;
+ *   * le seuil n'accepte qu'un **entier strictement positif**, parce que c'est exactement ce que
+ *     `budgets_stale_check` laisse passer. Zéro rendrait toute ligne en retard dès sa création, et
+ *     un seuil fractionnaire n'a pas de sens : l'ancienneté se compte en jours RÉVOLUS
+ *     (`ancienneteEnJours` de `couts-a-saisir.ts`), donc en entiers.
+ *
+ * LA VALIDATION EST FAITE ICI **EN PLUS** DE LA BASE, JAMAIS À SA PLACE : `CLAUDE.md` §10 pose
+ * qu'un contrôle d'interface n'est qu'une aide, et la preuve d'API mesure le `23514` que la base
+ * oppose de son côté. Ce que ce contrôle apporte est le message immédiat, sur le champ concerné,
+ * plutôt qu'un aller-retour pour apprendre qu'on a écrit `0`.
+ */
+export type SeuilAnciennete =
+	| { readonly statut: 'absent' }
+	| { readonly statut: 'lu'; readonly jours: number }
+	| { readonly statut: 'invalide' }
+
+export function lireSeuilAnciennete(saisie: string): SeuilAnciennete {
+	const nettoyee = saisie.trim()
+	if (nettoyee === '') return { statut: 'absent' }
+	const jours = Number(nettoyee)
+	if (!Number.isFinite(jours)) return { statut: 'invalide' }
+	// `Number.isInteger` ET la borne : `2.5` jours et `0` jour sont refusés séparément, et le champ
+	// dira lequel des deux. Un `Math.round` silencieux serait la valeur par défaut trompeuse de
+	// `CLAUDE.md` §18 — il changerait la décision de l'utilisateur sans le lui dire.
+	if (!Number.isInteger(jours) || jours < 1) return { statut: 'invalide' }
+	return { statut: 'lu', jours }
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -294,6 +346,7 @@ export type CreationBudget = {
 	readonly devise: string
 	readonly enveloppe: number | null
 	readonly recurrent: boolean
+	readonly seuilAnciennete: number | null
 }
 
 /**
@@ -324,6 +377,7 @@ export async function creerBudget(
 				currency: creation.devise,
 				planned_amount: creation.enveloppe,
 				is_recurrent: creation.recurrent,
+				stale_after_days: creation.seuilAnciennete,
 				position: null,
 			} as unknown as Database['public']['Tables']['budgets']['Insert'])
 			.select('id'),
@@ -335,6 +389,7 @@ export type ModificationBudget = {
 	readonly devise: string
 	readonly enveloppe: number | null
 	readonly recurrent: boolean
+	readonly seuilAnciennete: number | null
 }
 
 /**
@@ -358,6 +413,12 @@ export async function modifierBudget(
 				currency: modification.devise,
 				planned_amount: modification.enveloppe,
 				is_recurrent: modification.recurrent,
+				// TOUJOURS ENVOYÉ, MÊME NUL. L'omettre parce que le champ est vide rendrait
+				// INEFFAÇABLE un seuil posé par erreur — c'est la règle déjà retenue pour les trois
+				// attributs facultatifs d'une occurrence (`docs/SPEC-costs.md` §4.1 bis.3), et
+				// l'inverse exact du choix fait pour `p_daily_quota` au §22.1 de
+				// `docs/SPEC-mail-subsystem.md`, où l'omission signifie « ne touche pas ».
+				stale_after_days: modification.seuilAnciennete,
 			})
 			.eq('id', id)
 			.select('id'),

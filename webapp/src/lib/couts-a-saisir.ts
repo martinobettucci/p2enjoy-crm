@@ -7,7 +7,10 @@
 //       §3.1 (double condition de lecture), §3.2 (écriture)
 // @spec docs/SCHEMA.md §9 bis.6 (card_costs), §9 bis.7 (politiques),
 //       §9 bis.8 (`public.reel_saisissable`)
-// @spec docs/DESIGN_SYSTEM.md §5.31 (table de saisie en série des coûts réels)
+// @spec docs/DESIGN_SYSTEM.md §5.31 (table de saisie en série des coûts réels, et les TROIS états
+//       de sa colonne « Ancienneté » depuis le 2026-08-29)
+// @spec docs/SPEC-costs.md §2.1 bis (le seuil d'ancienneté est une donnée du budget, arbitrage
+//       d'INC-183, décision 549) — d'où `ancienneteEnRetard` plus bas
 // @spec docs/SPEC-permissions-rls.md §3.7 (`app.can_write_card`), §7 (formes du refus)
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone)
 //
@@ -48,7 +51,7 @@ import type { ClientCrm } from './supabase'
  */
 export type BudgetDeLaLigne = Pick<
 	Database['public']['Tables']['budgets']['Row'],
-	'id' | 'name' | 'currency' | 'is_recurrent' | 'closed_at'
+	'id' | 'name' | 'currency' | 'is_recurrent' | 'closed_at' | 'stale_after_days'
 >
 
 /**
@@ -130,7 +133,7 @@ export type LigneASaisir = Pick<
  * par le workspace, seule dont la présence est structurellement garantie sur toute card.
  */
 export const COLONNES_LIGNE_A_SAISIR =
-	'id, label, estimated_cost, created_at, reel_saisissable, budgets!inner(id, name, currency, is_recurrent, closed_at), budget_occurrences(id, label, closed_at), cards!inner(id, title, archived_at, channels!cards_channel_id_workspace_id_fkey(slug, tracks(id, slug, name)))'
+	'id, label, estimated_cost, created_at, reel_saisissable, budgets!inner(id, name, currency, is_recurrent, closed_at, stale_after_days), budget_occurrences(id, label, closed_at), cards!inner(id, title, archived_at, channels!cards_channel_id_workspace_id_fkey(slug, tracks(id, slug, name)))'
 
 /**
  * La portée d'un onglet « À saisir ».
@@ -254,6 +257,43 @@ export function ancienneteEnJours(ligne: LigneASaisir, maintenant: Date): number
 	if (!Number.isFinite(ecoule)) return null
 	if (ecoule <= 0) return 0
 	return Math.floor(ecoule / 86_400_000)
+}
+
+/**
+ * La ligne est-elle **en retard** — c'est-à-dire le seuil de son budget est-il dépassé ?
+ * `docs/SPEC-costs.md` §2.1 bis, `docs/DESIGN_SYSTEM.md` §5.31, arbitrage d'INC-183.
+ *
+ * **TROIS ÉTATS SE RÉDUISENT ICI À UN BOOLÉEN, ET C'EST LÉGITIME PARCE QUE DEUX D'ENTRE EUX
+ * APPELLENT LE MÊME RENDU.** « Aucun seuil décidé » et « seuil non franchi » sont sémantiquement
+ * distincts — le §5.31 le dit — mais tous deux rendent la cellule neutre. Ce que l'écran doit
+ * distinguer, il le distingue par le TEXTE du nom accessible, qui a le seuil sous la main ; ce que
+ * cette fonction décide, c'est la seule teinte.
+ *
+ * **UN SEUIL ABSENT NE DEVIENT JAMAIS UN SEUIL PAR DÉFAUT.** `null`, `undefined`, un budget absent
+ * de la réponse : tous rendent `false`. C'est la règle de `seuilEffectif` de `carte-figee.ts`
+ * (`docs/SPEC-relances.md` §2.2), et l'inverse — colorer par précaution — ferait crier l'écran sur
+ * une décision que personne n'a prise.
+ *
+ * **LA COMPARAISON EST STRICTE**, et c'est le contrat écrit : « au delà d'un seuil ». Une ligne de
+ * trente jours sur un seuil de trente n'est pas en retard ; elle le devient le lendemain. C'est la
+ * borne large déjà retenue pour la pastille d'une card (`docs/SPEC-relances.md` §2.5), et deux
+ * signaux de même forme ne peuvent pas se lire à deux bornes différentes.
+ *
+ * **UNE ANCIENNETÉ ILLISIBLE N'EST PAS EN RETARD.** `ancienneteEnJours` rend `null` sur une date
+ * que `Date` ne sait pas lire, et l'écran laisse alors la cellule VIDE (§4.8.1). Colorer une
+ * cellule vide affirmerait un retard sur une durée qu'on n'a pas su calculer — la valeur par
+ * défaut trompeuse de `CLAUDE.md` §18.
+ *
+ * **UN SEUIL NUL OU NÉGATIF RENDU PAR LA BASE EST IGNORÉ**, bien que `budgets_stale_check` le
+ * refuse : la garde ne coûte rien, et une réponse amputée ou un contournement de la contrainte ne
+ * doit pas transformer toute la table en rouge.
+ */
+export function ancienneteEnRetard(ligne: LigneASaisir, maintenant: Date): boolean {
+	const seuil = ligne.budgets?.stale_after_days ?? null
+	if (seuil === null || !Number.isFinite(seuil) || seuil < 1) return false
+	const jours = ancienneteEnJours(ligne, maintenant)
+	if (jours === null) return false
+	return jours > seuil
 }
 
 /**

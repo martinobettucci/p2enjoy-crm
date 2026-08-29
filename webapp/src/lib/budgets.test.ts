@@ -25,6 +25,7 @@ import {
 	deviseConforme,
 	lireBudgetsAdministrables,
 	lireEnveloppe,
+	lireSeuilAnciennete,
 	modifierBudget,
 	nomBudgetConforme,
 } from './budgets'
@@ -236,6 +237,43 @@ describe('validation de forme', () => {
 	})
 })
 
+describe('lireSeuilAnciennete — §2.1 bis, arbitrage d’INC-183', () => {
+	it('distingue « aucun seuil décidé » de « seuil invalide », comme l’enveloppe', () => {
+		// Les confondre enverrait une valeur là où l'utilisateur n'a rien décidé, ou tairait une
+		// saisie fautive. Trois membres, jamais deux.
+		expect(lireSeuilAnciennete('')).toEqual({ statut: 'absent' })
+		expect(lireSeuilAnciennete('   ')).toEqual({ statut: 'absent' })
+		expect(lireSeuilAnciennete('30')).toEqual({ statut: 'lu', jours: 30 })
+	})
+
+	it('REFUSE ZÉRO, là où l’enveloppe l’accepte — et l’écart est le contrat de la base', () => {
+		// `budgets_stale_check` n'accepte que le strictement positif. Un seuil de zéro rendrait
+		// toute ligne en retard dès sa création, c'est-à-dire un signal qui ne distingue plus rien.
+		// L'enveloppe, elle, accepte `0` : « enveloppe nulle décidée » est une décision de gestion.
+		expect(lireSeuilAnciennete('0')).toEqual({ statut: 'invalide' })
+		expect(lireEnveloppe('0')).toEqual({ statut: 'lue', montant: 0 })
+	})
+
+	it('REFUSE LE NÉGATIF, là encore contrairement à l’enveloppe', () => {
+		// Un avoir est un coût négatif légitime (§2.1) ; une durée négative n'est rien.
+		expect(lireSeuilAnciennete('-5')).toEqual({ statut: 'invalide' })
+		expect(lireEnveloppe('-5')).toEqual({ statut: 'lue', montant: -5 })
+	})
+
+	it('REFUSE UN NOMBRE FRACTIONNAIRE plutôt que de l’arrondir en silence', () => {
+		// L'ancienneté se compte en jours RÉVOLUS, donc en entiers. Un `Math.round` silencieux
+		// changerait la décision de l'utilisateur sans le lui dire — `CLAUDE.md` §18.
+		expect(lireSeuilAnciennete('2.5')).toEqual({ statut: 'invalide' })
+	})
+
+	it('refuse une saisie qui n’est pas un nombre, sans en garder la tête', () => {
+		// `Number` et non `parseInt` : `parseInt('30jours')` rendrait 30 en ignorant la queue, ce
+		// qui accepterait une saisie que personne n'a voulue.
+		expect(lireSeuilAnciennete('trente')).toEqual({ statut: 'invalide' })
+		expect(lireSeuilAnciennete('30jours')).toEqual({ statut: 'invalide' })
+	})
+})
+
 describe('lireEnveloppe', () => {
 	it('distingue « pas décidée » de « zéro décidé » — la valeur par défaut trompeuse de CLAUDE.md §18', () => {
 		expect(lireEnveloppe('')).toEqual({ statut: 'absente' })
@@ -303,6 +341,7 @@ describe('creerBudget', () => {
 			devise: 'EUR',
 			enveloppe: 8000,
 			recurrent: false,
+			seuilAnciennete: null,
 		})
 		expect(appel.table).toBe('budgets')
 		expect(appel.verbe).toBe('insert')
@@ -312,6 +351,7 @@ describe('creerBudget', () => {
 			currency: 'EUR',
 			planned_amount: 8000,
 			is_recurrent: false,
+			stale_after_days: null,
 			position: null,
 		})
 	})
@@ -324,6 +364,7 @@ describe('creerBudget', () => {
 			devise: 'EUR',
 			enveloppe: null,
 			recurrent: true,
+			seuilAnciennete: null,
 		})
 		expect(appel.charge).not.toHaveProperty('closed_at')
 		expect(appel.charge).not.toHaveProperty('created_by')
@@ -339,6 +380,7 @@ describe('creerBudget', () => {
 			devise: 'EUR',
 			enveloppe: null,
 			recurrent: false,
+			seuilAnciennete: null,
 		})
 		expect(appel.colonnesRendues).toBe('id')
 	})
@@ -352,6 +394,7 @@ describe('modifierBudget', () => {
 			devise: 'CHF',
 			enveloppe: null,
 			recurrent: true,
+			seuilAnciennete: null,
 		})
 		expect(appel.verbe).toBe('update')
 		expect(appel.charge).toEqual({
@@ -359,8 +402,44 @@ describe('modifierBudget', () => {
 			currency: 'CHF',
 			planned_amount: null,
 			is_recurrent: true,
+			stale_after_days: null,
 		})
 		expect(appel.filtres).toContainEqual(['id', 'b1'])
+	})
+})
+
+describe('le seuil d’ancienneté est TOUJOURS envoyé, même nul — §2.1 bis', () => {
+	it('à la création', async () => {
+		const { client, appel } = espionEcriture(applique)
+		await creerBudget(client, {
+			idTrack: 't1',
+			nom: 'Salon 2026',
+			devise: 'EUR',
+			enveloppe: null,
+			recurrent: false,
+			seuilAnciennete: 45,
+		})
+		expect(appel.charge?.stale_after_days).toBe(45)
+	})
+
+	it('À LA MODIFICATION, ET SURTOUT QUAND IL EST NUL', async () => {
+		// C'EST L'ASSERTION QUI COMPTE. Omettre la colonne parce que le champ est vide rendrait
+		// INEFFAÇABLE un seuil posé par erreur : l'écran n'offre aucun autre geste pour l'ôter.
+		// C'est la règle des trois attributs facultatifs d'une occurrence (§4.1 bis.3), et
+		// l'inverse exact du choix fait pour `p_daily_quota` (§22.1 de `SPEC-mail-subsystem`), où
+		// l'omission signifie « ne touche pas ». `toHaveProperty` et non une comparaison de valeur :
+		// une clé absente et une clé à `null` se lisent pareil avec `?.`, et c'est précisément la
+		// confusion à écarter.
+		const { client, appel } = espionEcriture(applique)
+		await modifierBudget(client, 'b1', {
+			nom: 'Salon 2026',
+			devise: 'EUR',
+			enveloppe: null,
+			recurrent: false,
+			seuilAnciennete: null,
+		})
+		expect(appel.charge).toHaveProperty('stale_after_days')
+		expect(appel.charge?.stale_after_days).toBeNull()
 	})
 })
 
@@ -411,6 +490,7 @@ describe('les écritures ne lèvent jamais', () => {
 			devise: 'EUR',
 			enveloppe: null,
 			recurrent: false,
+			seuilAnciennete: null,
 		})
 		expect(resultat.statut).toBe('refus')
 		expect(resultat.statut === 'refus' ? resultat.refus.nature : null).toBe('network')

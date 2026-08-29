@@ -43,6 +43,7 @@ import { enChargement, type EtatAsync } from '../lib/async'
 import { lireMontant } from '../lib/card-costs'
 import {
 	ancienneteEnJours,
+	ancienneteEnRetard,
 	compterEnAttente,
 	enregistrerReel,
 	estClos,
@@ -340,6 +341,19 @@ function LigneSaisie({
 	const invalide = etat.statut === 'invalide'
 	const devise = ligne.budgets?.currency ?? ''
 	const anciennete = ancienneteEnJours(ligne, maintenant)
+	const enRetard = ancienneteEnRetard(ligne, maintenant)
+	// LE NOM ACCESSIBLE EST CALCULÉ HORS DU JSX, et pas seulement pour la lisibilité : une
+	// comparaison écrite dans un `className` ou un attribut est lue par `scripts/lib/classes-css.mjs`
+	// comme une classe absente du CSS (INC-184, mesuré sur ce fichier même). Le motif est le même que
+	// pour `enregistre` plus haut.
+	const seuilDuBudget = ligne.budgets?.stale_after_days ?? null
+	const titreAnciennete =
+		anciennete === null || seuilDuBudget === null
+			? null
+			: t(enRetard ? 'costs.pending.age.late' : 'costs.pending.age.ontime', {
+					n: String(anciennete),
+					seuil: String(seuilDuBudget),
+				})
 	const adresse = adresseAffaireLigne(ligne)
 	const titreAffaire = ligne.cards?.title ?? null
 	const identifiantMention = `couts-saisir-${ligne.id}-mention`
@@ -395,12 +409,32 @@ function LigneSaisie({
 				enregistre ? 'bg-success-soft' : 'hover:bg-hover',
 			].join(' ')}
 		>
-			{/* L'ancienneté est en 13 px `--color-text-2`, SANS variante de danger : le seuil que le
-			    §5.31 suppose n'existe pour aucune ligne de coût, et l'inventer poserait une règle de
-			    gestion que personne n'a prise (§4.8.1, INC-183). Une date illisible laisse la cellule
-			    VIDE (§5.9), jamais « 0 jour ». */}
-			<td className="py-2 pr-4 text-[13px] text-text-2 whitespace-nowrap">
-				{anciennete === null ? null : t('costs.pending.age.days', { n: String(anciennete) })}
+			{/* L'ancienneté est en 13 px `--color-text-2`, et passe en `--color-danger-on-soft` sur
+			    `--color-danger-soft` au delà du seuil du budget — la forme exacte de la pastille
+			    d'ancienneté d'une card (§5.1), et la seconde phrase du §5.31, tenue depuis
+			    l'arbitrage d'INC-183 (§2.1 bis, décision 549).
+
+			    TROIS ÉTATS, ET DEUX RENDUS. « Seuil non franchi » et « aucun seuil décidé » sont
+			    tous deux neutres ; ce que la teinte ne distingue pas, le NOM ACCESSIBLE le dit, sans
+			    quoi le signal n'existerait pas pour qui ne voit pas la couleur (§8). Un budget sans
+			    seuil ne reçoit aucun nom accessible particulier : il n'y a rien à dire d'un seuil que
+			    personne n'a décidé, et l'annoncer chaque ligne serait du bruit.
+
+			    Une date illisible laisse la cellule VIDE (§5.9), jamais « 0 jour » — et une cellule
+			    vide n'est jamais en retard : `ancienneteEnRetard` rend `false`. */}
+			<td
+				data-testid="couts-a-saisir-anciennete"
+				data-retard={enRetard ? 'oui' : 'non'}
+				className={[
+					'py-2 pr-4 text-[13px] whitespace-nowrap',
+					enRetard ? 'bg-danger-soft text-danger-on-soft px-2 rounded-sm' : 'text-text-2',
+				].join(' ')}
+			>
+				{anciennete === null ? null : (
+					<span title={titreAnciennete ?? undefined}>
+						{t('costs.pending.age.days', { n: String(anciennete) })}
+					</span>
+				)}
 			</td>
 			<td className="py-2 px-4 max-w-[22ch]">
 				<span className="block truncate" title={ligne.budgets?.name ?? ''}>

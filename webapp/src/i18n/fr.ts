@@ -1421,6 +1421,13 @@ export const fr = {
 	'admin.budgets.form.planned.help':
 		'Laissez vide si l’enveloppe n’est pas décidée. Un montant négatif est accepté.',
 	'admin.budgets.form.planned.invalid': 'Ce montant n’est pas un nombre.',
+	// Le seuil d'ancienneté — §2.1 bis, arbitrage d'INC-183. L'aide dit ce que le VIDE signifie,
+	// parce que c'est exactement ce que l'utilisateur ne peut pas deviner : un champ laissé vide
+	// n'éteint pas un signal « par défaut », il déclare qu'aucun rythme n'a été décidé.
+	'admin.budgets.form.stale': 'Seuil d’ancienneté (facultatif)',
+	'admin.budgets.form.stale.help':
+		'Nombre de jours au delà duquel une dépense sans coût réel est signalée en retard dans l’onglet « À saisir ». Laissez vide pour ne rien signaler.',
+	'admin.budgets.form.stale.invalid': 'Le seuil s’écrit en jours entiers, à partir de 1.',
 	'admin.budgets.form.recurrent': 'Budget récurrent (porte des occurrences)',
 	// Clôture — §4.1. La clôture n'est PAS empêchée, c'est une décision de gestion ; elle n'est pas
 	// silencieuse pour autant.
@@ -2694,9 +2701,15 @@ export const fr = {
 	'costs.pending.column.label': 'Nature',
 	'costs.pending.column.actual': 'Réel',
 	// L'ancienneté est « formulée en durée » (§5.31), et se compose par une CLÉ : « 12 jours » ne se
-	// construit pas en collant un nombre à un mot (§10). Aucune variante de danger — le seuil que le
-	// §5.31 suppose n'existe pour aucune ligne de coût, écart consigné à INC-183 (§4.8.1).
+	// construit pas en collant un nombre à un mot (§10).
 	'costs.pending.age.days': '{n} jour(s)',
+	// LE SIGNAL DE RETARD NE REPOSE PAS SUR LA SEULE COULEUR, et ces deux clés sont ce qui l'évite
+	// (§5.31, §8). Le §5.31 rend « seuil non franchi » et « aucun seuil » de la MÊME façon — les
+	// deux cellules sont neutres — ; le nom accessible, lui, les distingue, et dit en toutes lettres
+	// pourquoi une cellule est rouge. Sans lui, l'information n'existerait pas pour qui ne voit pas
+	// la teinte. Composé par une clé, jamais par concaténation (§10).
+	'costs.pending.age.late': '{n} jour(s), au delà du seuil de {seuil} jour(s) fixé pour ce budget',
+	'costs.pending.age.ontime': '{n} jour(s), en deçà du seuil de {seuil} jour(s) fixé pour ce budget',
 	// La pilule du §5.31 : jetons NEUTRES, jamais `--color-danger`. Un budget clos n'est pas une
 	// erreur, et sa ligne reste saisissable — c'est même la raison d'être de cet onglet.
 	'costs.pending.closed': 'clôturé',

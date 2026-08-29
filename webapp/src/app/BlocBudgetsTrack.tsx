@@ -37,6 +37,7 @@ import {
 	deviseConforme,
 	lireBudgetsAdministrables,
 	lireEnveloppe,
+	lireSeuilAnciennete,
 	modifierBudget,
 	nomBudgetConforme,
 	type BudgetAdministrable,
@@ -93,6 +94,8 @@ export type SaisieBudget = {
 	/** Saisie BRUTE de l'enveloppe : un champ texte, lu par `lireEnveloppe`. */
 	readonly enveloppe: string
 	readonly recurrent: boolean
+	/** Saisie BRUTE du seuil d'ancienneté, lue par `lireSeuilAnciennete` (§2.1 bis). */
+	readonly seuil: string
 }
 
 function FormulaireBudget({
@@ -123,8 +126,12 @@ function FormulaireBudget({
 
 	const deviseMalformee = saisie.devise !== '' && !deviseConforme(saisie.devise)
 	const enveloppe = lireEnveloppe(saisie.enveloppe)
+	const seuil = lireSeuilAnciennete(saisie.seuil)
 	const complet =
-		nomBudgetConforme(saisie.nom) && deviseConforme(saisie.devise) && enveloppe.statut !== 'invalide'
+		nomBudgetConforme(saisie.nom) &&
+		deviseConforme(saisie.devise) &&
+		enveloppe.statut !== 'invalide' &&
+		seuil.statut !== 'invalide'
 
 	return (
 		<form
@@ -209,6 +216,38 @@ function FormulaireBudget({
 						className="text-sm text-danger-on-soft"
 					>
 						{t('admin.budgets.form.planned.invalid')}
+					</span>
+				) : null}
+			</div>
+			<div className="flex flex-col gap-1">
+				<label htmlFor={`${prefixe}-seuil`} className="text-sm text-text-2">
+					{t('admin.budgets.form.stale')}
+				</label>
+				<input
+					id={`${prefixe}-seuil`}
+					value={saisie.seuil}
+					// `inputMode` ET NON `type="number"`, POUR LA RAISON DÉJÀ MESURÉE SUR L'ENVELOPPE
+					// juste au-dessus : un champ numérique natif avale silencieusement une saisie qu'il
+					// juge invalide, si bien que `lireSeuilAnciennete` ne verrait jamais le cas
+					// `invalide` qu'elle existe pour nommer — ni « 0 », ni « 2,5 ». La spécification
+					// écrite avant le code annonçait `type="number" min="1"` ; elle est RÉVISÉE PAR
+					// LIVRAISON sur ce point (§4.1), et le motif est celui de la ligne d'à côté.
+					inputMode="numeric"
+					aria-describedby={
+						seuil.statut === 'invalide' ? `${prefixe}-seuil-erreur` : `${prefixe}-seuil-aide`
+					}
+					aria-invalid={seuil.statut === 'invalide' ? true : undefined}
+					onChange={(evenement) =>
+						setSaisie((precedente) => ({ ...precedente, seuil: evenement.target.value }))
+					}
+					className="min-h-[var(--size-target)] rounded-sm border border-border bg-surface px-3"
+				/>
+				<span id={`${prefixe}-seuil-aide`} className="text-sm text-text-3">
+					{t('admin.budgets.form.stale.help')}
+				</span>
+				{seuil.statut === 'invalide' ? (
+					<span id={`${prefixe}-seuil-erreur`} role="alert" className="text-sm text-danger-on-soft">
+						{t('admin.budgets.form.stale.invalid')}
 					</span>
 				) : null}
 			</div>
@@ -781,6 +820,12 @@ export function BlocBudgetsTrack({ client, idTrack, nomTrack, onAnnonce }: Propr
 										enveloppe:
 											budget.planned_amount === null ? '' : String(budget.planned_amount),
 										recurrent: budget.is_recurrent,
+										// LE CHAMP EST PRÉ-REMPLI AVEC LA VALEUR COURANTE, et le vide y
+										// signifie « aucun seuil décidé » — jamais « ne touche pas ». Un
+										// formulaire qui rouvrirait vide sur un seuil posé l'effacerait au
+										// premier enregistrement, l'envoi portant TOUJOURS la colonne.
+										seuil:
+											budget.stale_after_days === null ? '' : String(budget.stale_after_days),
 									}}
 									refus={refus}
 									enCours={enCours}
@@ -790,7 +835,8 @@ export function BlocBudgetsTrack({ client, idTrack, nomTrack, onAnnonce }: Propr
 									}}
 									onValider={(saisie) => {
 										const enveloppe = lireEnveloppe(saisie.enveloppe)
-										if (enveloppe.statut === 'invalide') return
+										const seuil = lireSeuilAnciennete(saisie.seuil)
+										if (enveloppe.statut === 'invalide' || seuil.statut === 'invalide') return
 										void executer(
 											() =>
 												modifierBudget(client, budget.id, {
@@ -799,6 +845,7 @@ export function BlocBudgetsTrack({ client, idTrack, nomTrack, onAnnonce }: Propr
 													enveloppe:
 														enveloppe.statut === 'absente' ? null : enveloppe.montant,
 													recurrent: saisie.recurrent,
+													seuilAnciennete: seuil.statut === 'absent' ? null : seuil.jours,
 												}),
 											t('live.admin.budget.updated'),
 										)
@@ -837,7 +884,7 @@ export function BlocBudgetsTrack({ client, idTrack, nomTrack, onAnnonce }: Propr
 				<FormulaireBudget
 					titre={t('admin.budgets.form.create')}
 					creation
-					initial={{ nom: '', devise: 'EUR', enveloppe: '', recurrent: false }}
+					initial={{ nom: '', devise: 'EUR', enveloppe: '', recurrent: false, seuil: '' }}
 					refus={refus}
 					enCours={enCours}
 					onAnnuler={() => {
@@ -846,7 +893,8 @@ export function BlocBudgetsTrack({ client, idTrack, nomTrack, onAnnonce }: Propr
 					}}
 					onValider={(saisie) => {
 						const enveloppe = lireEnveloppe(saisie.enveloppe)
-						if (enveloppe.statut === 'invalide') return
+						const seuil = lireSeuilAnciennete(saisie.seuil)
+						if (enveloppe.statut === 'invalide' || seuil.statut === 'invalide') return
 						void executer(
 							() =>
 								creerBudget(client, {
@@ -855,6 +903,7 @@ export function BlocBudgetsTrack({ client, idTrack, nomTrack, onAnnonce }: Propr
 									devise: saisie.devise,
 									enveloppe: enveloppe.statut === 'absente' ? null : enveloppe.montant,
 									recurrent: saisie.recurrent,
+									seuilAnciennete: seuil.statut === 'absent' ? null : seuil.jours,
 								}),
 							t('live.admin.budget.created'),
 						)
