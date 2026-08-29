@@ -2,6 +2,9 @@
 // @verifies docs/SPEC-cards.md §16.15.4 (la pastille et son instant), §16.15.5 (le filtre de
 //           composition, l'état vide qui ne ment pas, le message ouvert jamais masqué),
 //           §16.15.6 (le geste à deux visages, l'échéance passée ENVOYÉE et refusée)
+// @verifies CRM-081 (docs/BACKLOG.md) — tranche 3 : le mode d'affichage entre dans l'adresse,
+//           docs/SPEC-cards.md §16.17.1 (la clé, la valeur, le défaut jamais écrit, le mode qui
+//           vaut pour tous les dossiers), §16.17.3 (ligne « E2E d'interface »)
 // @verifies docs/DESIGN_SYSTEM.md §5.3 septies (de quoi tout cela a l'air), §7 (paliers),
 //           §5.8 (états) ; CLAUDE.md §16 (vérification visuelle)
 //
@@ -286,5 +289,50 @@ test.describe('CRM-081 tranche 2 e — le sommeil d’un fil dans l’inbox', ()
 			expect(debordement, `débordement horizontal au palier ${palier.nom}`).toBe(false)
 			await capturer(page, `sommeil-fil-${palier.nom}`, UNITE)
 		}
+	})
+
+	// =============================================================================================
+	// TRANCHE 3 — LE MODE D'AFFICHAGE ENTRE DANS L'ADRESSE, docs/SPEC-cards.md §16.17.1
+	// =============================================================================================
+	//
+	// C'EST LE DÉFAUT QUE LA TRANCHE 3 CORRIGE, et il n'était visible qu'ici : le mode vivait dans un
+	// `useState`, si bien qu'un rechargement — un `F5`, un lien partagé, un favori — ramenait
+	// l'utilisateur à une liste dont les fils endormis avaient de nouveau disparu, sans qu'il ait
+	// rien demandé. Une preuve de composant voit l'adresse ; seule celle-ci voit le RECHARGEMENT.
+	test('le mode d’affichage survit au rechargement, parce qu’il vit dans l’adresse', async ({
+		page,
+	}) => {
+		await connecter(page)
+		await endormirLeFilDe(page, OBJET_NON_CLASSE)
+
+		await page.goto('/inbox')
+		const dossiers = page.getByTestId('inbox-panneau-dossiers')
+		await dossiers.getByRole('button', { name: /Non classés/ }).click()
+		const liste = page.getByTestId('inbox-panneau-liste')
+		// LE DÉFAUT MASQUE, et l'adresse ne porte rien : la vue par défaut reste la plus courte.
+		await expect(liste.getByText(OBJET_NON_CLASSE)).toHaveCount(0)
+		expect(new URL(page.url()).searchParams.get('sommeil')).toBeNull()
+
+		// LA BASCULE ÉCRIT L'ADRESSE, sous la même clé et la même valeur que le board (§16.12.4).
+		await liste.getByTestId('bascule-sommeil-case').click()
+		await expect(liste.getByText(OBJET_NON_CLASSE)).toBeVisible()
+		expect(new URL(page.url()).searchParams.get('sommeil')).toBe('visibles')
+
+		// LE RECHARGEMENT EST L'ASSERTION : ce qui suit ne peut plus venir d'un état de composant.
+		// Le dossier est rechoisi — il n'entre pas dans l'adresse, et c'est la décision du §16.17.1 —,
+		// mais le MODE, lui, est retrouvé coché.
+		await page.reload()
+		await dossiers.getByRole('button', { name: /Non classés/ }).click()
+		await expect(liste.getByTestId('bascule-sommeil-case')).toBeChecked()
+		await expect(liste.getByText(OBJET_NON_CLASSE)).toBeVisible()
+		await expect(
+			liste.getByTestId('inbox-message').filter({ hasText: OBJET_NON_CLASSE }).getByTestId('pastille-sommeil'),
+		).toBeVisible()
+		await capturer(page, 'sommeil-fil-adresse-rechargee', UNITE)
+
+		// LE MODE VAUT POUR TOUS LES DOSSIERS DE L'ÉCRAN (§16.17.1) : c'est une préférence
+		// d'affichage, pas une désignation de ce qui est montré, et le board se comporte de même.
+		await dossiers.getByRole('button', { name: new RegExp(CARD_COURRIER) }).click()
+		await expect(liste.getByTestId('bascule-sommeil-case')).toBeChecked()
 	})
 })

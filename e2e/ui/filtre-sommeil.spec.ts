@@ -5,6 +5,10 @@
 //           filtres » efface celui-ci aussi), §16.12.6 (les états vides cessent de mentir),
 //           §16.12.7 (la marque), §16.12.8 (le compteur), §16.12.9 (ligne « E2E d'interface » et
 //           ligne « Visuel »)
+// @verifies CRM-081 (docs/BACKLOG.md) — tranche 3 : le §16.12.6 éprouvé SANS aucun autre filtre,
+//           docs/SPEC-cards.md §16.17.2 (l'état provoqué par le vrai geste, les trois motifs
+//           d'écarter la branche « seed », les sept étapes du contrat), §16.17.3 (ligne « E2E
+//           d'interface » et ligne « Visuel »)
 // @verifies docs/DESIGN_SYSTEM.md §5.3 quinquies (la bascule, la pastille compacte, la densité du
 //           tableau, l'état vide qui porte son action), §7 (paliers), §8 (accessibilité)
 // @verifies CLAUDE.md §16 (vérification visuelle)
@@ -18,8 +22,11 @@
 // une échéance ÉCHUE, qui ne doit ni la masquer ni la marquer. Sans la seconde, rien ne
 // distinguerait « masquer les endormies » de « masquer toute affaire portant une échéance ».
 //
-// LE SEED SORT INTACT : aucun scénario n'endort ni ne réveille quoi que ce soit. Le filtre ne
-// s'écrit que dans l'adresse, et l'adresse n'est pas une écriture.
+// LE SEED SORT INTACT. Les scénarios de la tranche 2 b n'écrivent rien — le filtre ne s'écrit que
+// dans l'adresse, et l'adresse n'est pas une écriture. Celui de la TRANCHE 3, lui, endort par le
+// geste du produit l'unique affaire éveillée de `prospection` pour atteindre l'état vide non filtré
+// du §16.12.6, puis la réveille dans un `finally` : la remise en état est INCONDITIONNELLE, faute
+// de quoi un seul échec rendrait rouges les cinq scénarios voisins qui comptent « 1 sur 2 ».
 
 import { autoriserErreursConsole, expect, test, type Page } from './fixtures'
 import { MOT_DE_PASSE_SEED } from '../api/jetons'
@@ -40,6 +47,13 @@ const PROSPECTION = {
 	liste: '/tracks/conseil-ia/prospection/liste',
 	endormie: 'Cadrage data — Groupe Vallier',
 	eveillee: 'Assistant IA support — Nordis',
+	/**
+	 * La fiche de la SEULE affaire éveillée du channel — `…00cb`, MESURÉE dans le seed le
+	 * 2026-08-29. Le scénario du §16.17.2 l'endort par le geste du produit pour atteindre l'état
+	 * vide non filtré du §16.12.6, puis la réveille : `wake_card` remet la colonne à `null`, qui est
+	 * exactement l'état du seed.
+	 */
+	ficheEveillee: '/tracks/conseil-ia/prospection/cards/5eed0000-0000-4000-8000-0000000000cb',
 }
 
 /** `grands-comptes` porte l'affaire au sommeil ÉCHU : 4 affaires actives dans les deux modes. */
@@ -284,19 +298,95 @@ test.describe('l’état vide cesse de mentir (§16.12.6)', () => {
 		}
 	})
 
-	// LE CAS SANS AUCUN AUTRE FILTRE : l'état vide dû au seul sommeil. Il est éprouvé sur le channel
-	// dont TOUTES les affaires actives dorment — s'il n'en existe pas dans le seed, le scénario le
-	// dit plutôt que de faire semblant : c'est le §16.12.6 qui reste alors non éprouvé en E2E, et le
-	// backlog le nomme.
-	test('la vue liste nue d’un channel sans affaire éveillée nomme le sommeil', async ({ page }) => {
+	// LA CONTRE-ÉPREUVE, ET ELLE COMPTE AUTANT QUE LE CAS POSITIF : tant qu'une affaire éveillée
+	// existe, l'état vide de sommeil ne doit PAS apparaître. Un état vide qui mentirait dans l'autre
+	// sens — « tout dort » sur un channel qui montre une affaire — serait le même défaut retourné.
+	test('la vue liste nue NE NOMME PAS le sommeil tant qu’une affaire est éveillée', async ({
+		page,
+	}) => {
 		await connecter(page)
 		await page.goto(PROSPECTION.liste)
-		// `prospection` porte une affaire éveillée : l'état vide par sommeil n'y est pas atteignable
-		// sans écrire dans la base, ce que cette preuve ne fait pas. La propriété éprouvable ici est
-		// que l'état vide de sommeil n'apparaît PAS quand une affaire éveillée existe — l'inverse
-		// serait un état vide qui mentirait dans l'autre sens.
 		await expect(page.getByTestId('total-liste')).toHaveText('Affaires : 1')
 		await expect(page.getByTestId('afficher-sommeil-vide')).toHaveCount(0)
+	})
+
+	// =============================================================================================
+	// LE CAS SANS AUCUN AUTRE FILTRE — CRM-081 tranche 3, docs/SPEC-cards.md §16.17.2
+	// =============================================================================================
+	//
+	// C'EST LA LIGNE 1 ET LA LIGNE 4 DU TABLEAU DU §16.12.6, que six tranches ont laissées non
+	// éprouvées. L'état est PROVOQUÉ PAR LE VRAI GESTE DU PRODUIT — la commande de la fiche, échéance
+	// usuelle —, jamais par une écriture directe ni par un seed complaisant.
+	//
+	// POURQUOI PAS UN CHANNEL DU SEED DONT TOUT DORMIRAIT, et les trois motifs sont mesurés
+	// (§16.17.2) : un tel channel serait VIDE en démonstration, ce que `CLAUDE.md` §8 refuse ; il
+	// coûterait un neuvième channel à trois harnais de comptage et aux captures de `CRM-041` et
+	// `CRM-075` ; et endormir dans le seed l'affaire éveillée de `prospection` détruirait la mesure
+	// « 1 ligne sur 2 » dont dépendent la preuve d'API et cinq scénarios de ce fichier.
+	//
+	// UN ÉTAT VIDE EST UN ÉTAT TRANSITOIRE D'UN ÉCRAN, pas une donnée de démonstration. Le geste
+	// prouve d'ailleurs davantage qu'un seed figé : que l'état vide apparaît DÈS le geste qui le
+	// cause. C'est le patron des tranches 2 a et 2 e, repris tel quel.
+	test('un channel dont TOUTES les affaires dorment le dit, en liste comme au board', async ({
+		page,
+	}) => {
+		await connecter(page)
+
+		try {
+			// --- Le geste qui provoque l'état, par le produit et non par la base ------------------
+			await page.goto(PROSPECTION.ficheEveillee)
+			await expect(page.getByTestId('entete-card')).toBeVisible()
+			await page.getByTestId('entete-card-endormir').click()
+			await expect(page.getByTestId('entete-card-panneau-sommeil')).toBeVisible()
+			await page.getByTestId('entete-card-sommeil-semaine').click()
+			await expect(page.getByTestId('entete-card-sommeil')).toBeVisible()
+
+			// --- Ligne 1 du tableau : la vue liste, adresse NUE, aucun autre filtre ---------------
+			await page.goto(PROSPECTION.liste)
+			await expect(page.getByTestId('total-liste')).toHaveText('Affaires : 0')
+			// LE TITRE NE PRÉTEND PAS QUE LE CHANNEL EST VIDE : il dit qu'aucune affaire n'y est
+			// ÉVEILLÉE, ce qui est vrai dans les deux cas (§16.12.6).
+			await expect(page.getByText('Aucune affaire éveillée dans ce channel')).toBeVisible()
+			// AUCUN ÉTAT VIDE FILTRÉ : c'est bien le cas « sans aucun autre filtre », et l'action est
+			// celle qui lève le sommeil, non celle qui efface des filtres.
+			await expect(page.getByTestId('effacer-filtres-vide')).toHaveCount(0)
+			const action = page.getByTestId('afficher-sommeil-vide')
+			await expect(action).toBeVisible()
+			await capturer(page, 'filtre-sommeil-liste-vide-sommeil-1440', UNITE)
+
+			// --- L'action est ACTIONNÉE, et elle mène bien quelque part ---------------------------
+			await action.click()
+			expect(new URL(page.url()).searchParams.get('sommeil')).toBe('visibles')
+			await expect(page.getByTestId('total-liste')).toHaveText('Affaires : 2')
+			await expect(page.getByTestId('pastille-sommeil')).toHaveCount(2)
+
+			// --- Ligne 4 du tableau : le board, adresse NUE ---------------------------------------
+			await page.goto(PROSPECTION.board)
+			await expect(page.getByText('Toutes les affaires de ce channel sont en sommeil')).toBeVisible()
+			const actionBoard = page.getByTestId('afficher-sommeil-vide')
+			await expect(actionBoard).toBeVisible()
+			await capturer(page, 'filtre-sommeil-board-vide-sommeil-1440', UNITE)
+
+			// LE BOARD SAIT COMBIEN IL MASQUE (§16.12.6) : son message n'est rendu que parce qu'il a lu
+			// les deux cards. L'action le prouve en les ramenant toutes les deux.
+			await actionBoard.click()
+			await expect(page.getByRole('link', { name: PROSPECTION.endormie })).toBeVisible()
+			await expect(page.getByRole('link', { name: PROSPECTION.eveillee })).toBeVisible()
+		} finally {
+			// LA REMISE EN ÉTAT EST INCONDITIONNELLE, et c'est le `finally` qui la rend telle : sans
+			// lui, un seul échec ci-dessus laisserait `prospection` entièrement endormie, et les cinq
+			// scénarios voisins qui comptent « 1 sur 2 » deviendraient rouges pour une cause qui n'est
+			// pas la leur. Le réveil passe par le geste inverse du produit, et `wake_card` remet la
+			// colonne à `null` — l'état exact du seed.
+			await page.goto(PROSPECTION.ficheEveillee)
+			await page.getByTestId('entete-card-reveiller').click()
+			await expect(page.getByTestId('entete-card-sommeil')).toHaveCount(0)
+
+			// LE SEED SORT INTACT, ET C'EST CONSTATÉ, non supposé : la vue liste nue retrouve son
+			// unique affaire éveillée.
+			await page.goto(PROSPECTION.liste)
+			await expect(page.getByTestId('total-liste')).toHaveText('Affaires : 1')
+		}
 	})
 })
 
