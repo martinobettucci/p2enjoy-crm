@@ -1869,8 +1869,14 @@ votre choix. Une fois le fil endormi :
 
 Le sommeil est **partagé** : un fil endormi l'est pour toute personne qui le voit. Il n'a pas besoin
 d'être réveillé à la main — une échéance passée n'est plus un sommeil, et le fil revient tout seul.
-Une échéance déjà passée est refusée, avec son motif écrit sous le champ. Cette case n'est pas
-mémorisée d'une visite à l'autre : elle repart masquée à chaque ouverture de l'écran.
+Une échéance déjà passée est refusée, avec son motif écrit sous le champ.
+
+**La case se retient dans l'adresse.** Une fois cochée, l'adresse de la page se termine par
+`?sommeil=visibles` : vous pouvez recharger la page, la mettre en favori ou en envoyer le lien à un
+collègue sans que la case se décoche. Elle vaut pour **tous les dossiers** de la boîte tant qu'elle
+est cochée, et le bouton « Précédent » du navigateur la décoche comme il défait n'importe quel autre
+geste. C'est exactement ce que fait déjà la case « Afficher les affaires en sommeil » du tableau et
+de la vue liste d'un channel.
 
 **Retirer un message d'une affaire.** Un message rangé dans la mauvaise affaire n'y reste pas.
 Sous le message ouvert, en bas et séparée du reste, la commande « **Retirer de l'affaire** »

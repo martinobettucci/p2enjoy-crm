@@ -13,6 +13,28 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-081` — la boîte se souvient de ce qu'elle montrait, et un channel entièrement endormi le dit
+
+- **La case « Afficher les fils en sommeil » de la boîte de réception se retient dans l'adresse.**
+  Elle repartait décochée à chaque rechargement : celui qui voulait voir ses conversations endormies
+  devait la recocher après un `F5`, après un lien partagé, après un retour au produit. L'adresse
+  porte désormais `?sommeil=visibles`, la page se met en favori et se partage telle qu'on la
+  regardait, et le bouton « Précédent » défait la bascule comme n'importe quel autre geste.
+- **C'est le même mécanisme que les deux autres écrans qui portent cette case** — le tableau et la
+  vue liste d'un channel — : même clé, même valeur, même règle du défaut jamais écrit dans
+  l'adresse. Trois écrans faisaient la même chose de deux façons ; ils n'en font plus qu'une.
+- **Un channel dont toutes les affaires dorment ne prétend plus être vide.** Le message qui le dit
+  existait depuis la tranche 2 b ; rien ne l'avait jamais éprouvé sans qu'un autre filtre soit posé.
+  Il l'est désormais dans les deux vues, l'état étant provoqué par le vrai geste du produit puis
+  défait, sans qu'aucune donnée de démonstration ne change.
+- Arbitrages rendus : les **deux** écarts que l'unité portait depuis la tranche 2 f sont tranchés et
+  livrés. Le premier reposait sur deux prémisses fausses, mesurées avant d'être corrigées.
+- **Aucune migration, aucun changement de jeu de démonstration, aucun chemin serveur nouveau.**
+- Documentation : `docs/SPEC-cards.md` §16.17 et §16.15.5, `docs/DESIGN_SYSTEM.md` §5.3 septies et
+  §5.36 — dont un motif **faux** est corrigé : la case de sommeil change l'adresse depuis le
+  2026-08-17, et ce n'est donc pas ce qui la distingue d'une paire de liens —, `docs/manual.md`
+  §4.15.
+
 ### `CRM-084` — une ligne de coût oubliée finit par se voir
 
 - **Un budget peut désormais déclarer au bout de combien de jours une dépense sans coût réel est

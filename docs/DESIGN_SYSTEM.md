@@ -489,6 +489,15 @@ ci-dessous ne disent que de quoi il a l'air.
   du panneau de liste. Elle **reste rendue sur une liste vide** — elle est la cause possible de ce
   vide —, porte l'icône `Moon` et respecte la cible de 40 px du §8.
 
+- **SON ÉTAT VIT DANS L'ADRESSE, sous la même clé `sommeil` que le board et la vue liste — ajouté le
+  2026-08-29 par la tranche 3** (`docs/SPEC-cards.md` §16.17.1). Les trois écrans du produit qui
+  portent cette bascule l'écrivent désormais de la même façon : valeur `visibles`, défaut jamais
+  écrit, valeur inconnue repliée. L'inbox était le seul à la tenir dans un état de composant, si
+  bien qu'un rechargement y perdait ce qu'on regardait — et deux écrans qui font la même chose ne
+  peuvent pas la faire de deux façons. **Le mode vaut pour tous les dossiers de l'écran** : c'est
+  une préférence d'affichage, non une désignation de ce qui est montré, et le §12.1 ne s'y applique
+  pas (voir le critère écrit au §5.36).
+
 - **Le geste vit dans le message ouvert, jamais dans la ligne de liste.** Une liste dont chaque
   ligne porte un bouton n'est plus une liste, et le §5.4 tient une densité que cette tranche ne
   défait pas. Deux visages, un seul rendu à la fois : « Mettre le fil en sommeil » (`Moon`) et
@@ -3478,8 +3487,24 @@ le rangement est le **temps**. Ce que l'écran lit, découpe et refuse de devine
   bordure basse de même épaisseur dans les deux états empêche le texte de se décaler — le patron
   exact de la barre d'onglets.
 
-  *C'est l'écart avec la bascule de sommeil du §5.3 quinquies, qui est une case à cocher : celle-là
-  ne change pas d'adresse dans le board, celle-ci en change.*
+  *C'est l'écart avec la bascule de sommeil du §5.3 quinquies, qui est une case à cocher.*
+
+  > **CORRIGÉ LE 2026-08-29 — `CRM-081` tranche 3, et le motif écrit ici était FAUX.** Cette phrase
+  > disait « celle-là ne change pas d'adresse dans le board, celle-ci en change ». La bascule de
+  > sommeil **change l'adresse** dans le board et dans la vue liste depuis la tranche 2 b du
+  > 2026-08-17 (`docs/SPEC-cards.md` §16.12.4), et dans l'inbox depuis la tranche 3 (§16.17.1) : les
+  > trois écrans écrivent `?sommeil=visibles`. Un motif faux est plus coûteux qu'un motif absent —
+  > il enseigne une distinction qui n'existe pas, et la prochaine surface qui devra choisir entre
+  > une case et deux liens s'y fiera.
+  >
+  > **LE VRAI CRITÈRE, ET IL DÉCIDE LES DEUX CAS SANS EXCEPTION : est-ce un CHOIX ENTRE DEUX VUES,
+  > ou un RAFFINEMENT BINAIRE de la vue courante ?** « Mes affaires » et « Tout l'espace de
+  > travail » sont deux vues nommées, également légitimes, dont chacune est une destination : deux
+  > liens, et le §12.1 s'applique. « Afficher les affaires en sommeil » n'est pas une seconde vue,
+  > c'est une option de celle qu'on regarde — une case la rend, et son état « coché / décoché »
+  > s'annonce nativement là où deux liens obligeraient à nommer deux vues que le produit n'a pas.
+  > **Que l'adresse porte l'un et l'autre ne les distingue pas** : elle porte le tri et la
+  > pagination de la vue liste sans en faire des liens non plus (§12.2 de `docs/SPEC-cards.md`).
 
 - **ELLE RESTE RENDUE SUR UN ÉCRAN VIDE**, comme la barre de filtres du §5.3 quinquies et les
   onglets du §5.31 : elle est la cause possible de ce vide, et la masquer priverait l'utilisateur du
