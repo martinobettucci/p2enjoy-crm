@@ -197,6 +197,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-191 | Sept harnais figent des ABSENCES qu'une unité ultérieure a comblées, et sont rouges de leur propre succès | 2026-08-20 | **close** — les dix harnais retournés par la décision 498 | 487, 497, 498 |
 | INC-239 | La série des 77 harnais, rejouée d'affilée, laisse la base dans un état que `./runDev.sh` NE RÉPARE PAS : `0054` rétrécit `card_events_type_check` derrière sa propre garde et le `migrations-runner` sort en 3. Les 31 rouges de la série ne sont donc pas des verdicts avant rejeu SEUL sur base réinitialisée. Conséquence sérieuse pour `CRM-087`, dont le rejeu intégral suppose la rejouabilité sur base PEUPLÉE | 2026-08-29 | *ouverte* — issue retenue et écrite, mise en œuvre due : `CRM-062` pour la garde de `0054`, `CRM-087` pour la prémisse | 553 |
 | INC-240 | `0021` et `0035` référencent encore `card_comments.mentions`, colonne que `0063` (`CRM-064`) a SUPPRIMÉE ; `0015` a été corrigé, elles non. Le rejeu complet masque le défaut — la dernière écriture gagne —, mais tout rejeu qui s'arrête ou vise entre `0021`/`0035` et `0063` laisse un trigger `before update` en `42703` : commentaires non modifiables, suppression de compte en échec. Trouvée par `verify-identites.sh` rejoué SEUL, 2 assertions rouges sur 84 | 2026-08-29 | *ouverte* — issue retenue et écrite, mise en œuvre due : `CRM-064` | 553 |
+| INC-241 | `verify-board.sh` exige que `from('channels')` n'apparaisse que dans UN fichier de `webapp/src` ; il y en a cinq, et `docs/SPEC-channels.md` §5.4 — la règle qu'il cite — ne parle que de la lecture alimentant la barre d'onglets, en prévoyant explicitement des routes transverses. Contrôle plus strict que sa propre règle, rouge depuis que `CRM-075`, `CRM-077`, `CRM-057` et `CRM-083` ont livré | 2026-08-29 | *ouverte* — issue retenue et écrite, mise en œuvre due : `CRM-041` | 553 |
 | INC-192 | `scripts/verify-corbeille.sh` cherche `@spec CRM-077` dans les TROIS premières lignes de `webapp/src/app/RouteCard.tsx`, qui en cumule dix | 2026-08-20 | **close** — fenêtre de lecture portée à l'en-tête entier (commit `752d3b4`), verdict vérifié le 2026-08-25 : 38 contrôles, aucune anomalie | 487, 508 |
 | INC-193 | Le `details` d'un refus de contrainte rend la ligne entière, `secret_id` compris — la colonne révoquée à `authenticated` ressort par un second chemin | 2026-08-20 | *ouverte* — arbitrage attendu, sécurité des données | 492 |
 | INC-195 | `scripts/verify-copie-workflow.sh` rejoue la migration 19 et laissait `move_card` AMPUTÉE du lot G — quatrième occurrence d'INC-154 | 2026-08-21 | **close** — corrigée par la décision 497 | 497 |
@@ -243,7 +244,7 @@ INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-174,
 INC-185, INC-186, INC-188, INC-189, INC-190, INC-191, INC-192, INC-193, INC-224,
 INC-225, INC-226, INC-227, INC-228, INC-229, INC-231, INC-232, INC-233, INC-234, INC-236,
-INC-238, **INC-239** et **INC-240**.**
+INC-238, **INC-239**, **INC-240** et **INC-241**.**
 
 *Mise à jour du 2026-08-29 : **INC-183** est tranchée (décision 549) et retirée ; **INC-238** est
 consignée par la même session.*
@@ -6083,3 +6084,49 @@ une unité de travail, pas un paragraphe ajouté au passage (`CLAUDE.md` §13, �
 `CRM-064`, qui a livré `0063` et corrigé `0015` sans corriger ses deux jumelles.
 
 **Statut :** ouverte, comportement inchangé, issue retenue et écrite, mise en œuvre due — `CRM-064`.
+
+### INC-241 — `verify-board.sh` exige UNE seule lecture des channels, là où son propre §5.4 en admet plusieurs
+
+**Ouverte le 2026-08-29 par la session qui a rejoué la série entière** — décision 553. Comportement
+**inchangé** : le contrôle appartient à `CRM-041`, il est consigné et mesuré, pas corrigé au passage.
+
+**Ce qui a été mesuré**, `scripts/verify-board.sh` rejoué **SEUL sur une base réinitialisée** —
+donc hors collatéral de série (INC-239) : **35 contrôles, 1 en échec**.
+
+```
+ECHEC les channels sont lus à plusieurs endroits : les lectures divergeront
+```
+
+Le contrôle, ligne 167, est littéral :
+
+```
+[ "$(grep -rl "from('channels')" webapp/src | wc -l)" -eq 1 ]
+```
+
+et le dépôt en compte **cinq** : `lib/channels.ts`, `lib/administration-arborescence.ts`
+(`CRM-075`), `lib/corbeille.ts` (`CRM-077`), `lib/inbox.ts` (`CRM-057`) et
+`lib/objectifs-ecriture.ts` (`CRM-083`).
+
+**LE CONTRÔLE EST PLUS STRICT QUE LA RÈGLE QU'IL CITE, et c'est là le défaut.** Il invoque
+`docs/SPEC-channels.md` §5.4, qui ne dit pas « une seule lecture dans toute la webapp ». Il dit :
+*« toute route dont l'adresse porte un `slugTrack` alimente la barre d'onglets par le chargeur de ce
+chapitre, et aucune ne réécrit sa propre lecture des channels. Les routes transverses — Inbox, Ma
+journée, Réglages — n'en portent pas et gardent l'état vide »*. La règle porte donc sur **la lecture
+qui alimente la barre d'onglets**, pas sur toute requête `channels` du produit — et elle prévoit
+explicitement des routes transverses, dont l'inbox est une.
+
+Quatre des cinq lectures relèvent de surfaces que la règle n'a jamais visées : administration de
+l'arborescence, corbeille, inbox, écriture des objectifs. Aucune n'alimente une barre d'onglets.
+
+**Ce n'est donc ni une régression du produit, ni un écart de la spécification : c'est un contrôle
+qui a cessé d'exprimer la règle qu'il cite**, et qui rougit depuis que ces unités ont livré. Sa
+formulation par comptage de fichiers ne pouvait pas survivre à la croissance du produit.
+
+**Issue retenue, NON mise en œuvre ici.** Le contrôle doit éprouver la règle réelle — qu'aucune
+route porteuse d'un `slugTrack` ne réécrive sa propre lecture des channels pour la barre d'onglets —
+plutôt que compter les fichiers du dossier. Il en sortira plus fort : le comptage actuel serait
+resté vert si `RouteTrack.tsx` avait réécrit sa lecture dans `lib/channels.ts` lui-même. La mise en
+œuvre appartient à `CRM-041`, qui porte ce harnais, et suppose de trancher pour chacune des quatre
+autres lectures — travail d'unité, pas paragraphe ajouté au passage (`CLAUDE.md` §1).
+
+**Statut :** ouverte, comportement inchangé, issue retenue et écrite, mise en œuvre due — `CRM-041`.
