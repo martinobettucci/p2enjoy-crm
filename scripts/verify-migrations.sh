@@ -2,8 +2,11 @@
 # @verifies CRM-003 (docs/BACKLOG.md) — Definition of Done des migrations d'amorçage
 # @verifies CRM-022 (docs/BACKLOG.md) — retour du contrat d'identité après l'amorçage
 # @verifies CRM-064 (docs/BACKLOG.md) — INC-240, convergence du répertoire de migrations
+# @verifies CRM-062 (docs/BACKLOG.md) — INC-239, les deux gardes de convergence du vocabulaire
 # @verifies docs/SPEC-notifications.md §7.4.1 (le retrait d'une colonne porte sur le répertoire
 #           entier, pas sur la seule dernière autorité de la fonction)
+# @verifies docs/SPEC-relances.md §9.8.1 (toute migration qui converge `card_events_type_check`
+#           porte les DEUX gardes d'INC-144, y compris la plus large de son époque)
 # @verifies docs/SCHEMA.md §1 (identité et cloisonnement)
 # @verifies docs/SPEC-permissions-rls.md §4 (politiques), §7 (preuves de refus n° 3 et 11)
 # @verifies docs/PROD_MIGRATIONS.md §3 (migrations en attente)
@@ -493,6 +496,132 @@ if [ -z "$(references_colonnes_supprimees "$repertoire_mute")" ]; then
 	ok "le mot en commentaire ne fait pas rougir — le motif du retrait reste écrivable"
 else
 	fail "une occurrence en commentaire fait rougir : le contrôle interdirait d'expliquer le retrait"
+fi
+
+rm -rf "$repertoire_mute"
+
+echo
+echo "7. Convergence du répertoire : toute migration qui converge le vocabulaire porte les DEUX gardes"
+
+# POURQUOI CE CONTRÔLE EXISTE, ET POURQUOI IL LIT LES FICHIERS — INC-239, docs/SPEC-relances.md
+# §9.8.1.
+#
+# Neuf migrations réécrivent `card_events_type_check`. Chacune porte DEUX gardes (INC-144) : la
+# première regarde la CONTRAINTE et ne fait rien si elle cite déjà la valeur ajoutée ; la seconde
+# regarde les LIGNES et interdit de converger si l'une d'elles porte un type que cette migration ne
+# connaît pas. Sans la seconde, une migration RÉTRÉCIT le vocabulaire dès que la contrainte a été
+# ramenée à un état antérieur — ce que produit tout harnais qui la dégrade puis la restaure en
+# rejouant une migration antérieure —, les lignes postérieures la violent, et le
+# `migrations-runner` s'arrête au milieu du répertoire.
+#
+# L'omission a coûté DEUX incidents, sur deux migrations différentes : INC-210 sur la `0044` le
+# 2026-08-25, INC-239 sur la `0054` le 2026-08-29. Les deux fois, la migration fautive était celle
+# qui posait « le vocabulaire le plus large du dépôt » et se croyait dispensée. *Être la plus large*
+# est un état DATÉ, que la migration suivante défait.
+#
+# AUCUNE PREUVE LISANT LA BASE NE PEUT TROUVER CE DÉFAUT sur un rejeu complet : la dernière autorité
+# gagne, et le schéma final est correct des deux côtés de la correction. Le contrôle lit donc les
+# FICHIERS. La liste des migrations concernées est MESURÉE sur le répertoire à chaque exécution et
+# jamais codée en dur, de sorte qu'une migration future qui oublierait la garde rougisse d'elle-même.
+
+# Rend les migrations du répertoire qui convergent le vocabulaire SANS porter la garde sur les
+# lignes, ou rien. Prend le répertoire en argument afin d'être éprouvé plus bas sur un répertoire
+# minimal volontairement muté.
+#
+# « Converger le vocabulaire » se reconnaît, commentaires retirés, à la citation du nom de la
+# contrainte accompagnée d'une pose — `add constraint` — ou d'un appel à l'une des fonctions
+# `converger_contrainte` des migrations 17 et 20. Une simple mention en commentaire ne compte donc
+# pas : la `0059` en porte une, et elle DOIT pouvoir la porter.
+#
+# La garde sur les lignes se reconnaît à sa forme, la même dans les neuf migrations : une lecture de
+# `public.card_events` filtrée par `type <> all (array[…])`.
+migrations_sans_garde_lignes() {
+	local repertoire=$1 fichier texte
+	for fichier in "$repertoire"/*.sql; do
+		texte=$(sans_commentaires "$fichier")
+		printf '%s' "$texte" | grep -q 'card_events_type_check' || continue
+		printf '%s' "$texte" | grep -qE 'add constraint|converger_contrainte' || continue
+		printf '%s' "$texte" | grep -q 'public.card_events' \
+			&& printf '%s' "$texte" | grep -q 'type <> all' && continue
+		printf '%s\n' "$fichier"
+	done
+	return 0
+}
+
+convergentes=$(
+	for f in "$MIGRATIONS_DIR"/*.sql; do
+		t=$(sans_commentaires "$f")
+		printf '%s' "$t" | grep -q 'card_events_type_check' || continue
+		printf '%s' "$t" | grep -qE 'add constraint|converger_contrainte' || continue
+		basename "$f"
+	done | tr '\n' ' '
+)
+sans_garde=$(migrations_sans_garde_lignes "$MIGRATIONS_DIR")
+
+if [ -z "$convergentes" ]; then
+	fail "aucune migration convergente recensée : le contrôle ne mesure rien"
+elif [ -z "$sans_garde" ]; then
+	ok "les migrations convergentes portent toutes la garde sur les lignes (${convergentes% })"
+else
+	fail "des migrations convergent le vocabulaire sans garder les lignes — INC-239"
+	printf '%s\n' "$sans_garde" | sed 's/^/        /'
+fi
+
+# NON-COMPLAISANCE, ÉPROUVÉE DANS LES DEUX SENS, sur un répertoire MINIMAL : une copie du vrai
+# hériterait de ses gardes, et le premier sens ne mesurerait plus rien.
+repertoire_mute=$(mktemp -d)
+
+# Sens 1 : la forme EXACTE du défaut d'INC-239 — une convergence gardée sur la seule contrainte. Le
+# contrôle doit la trouver.
+{
+	printf 'do $$\nbegin\n\tif not exists (\n'
+	printf '\t\tselect 1 from pg_constraint\n'
+	printf "\t\t where conname = 'card_events_type_check'\n"
+	printf "\t\t   and pg_get_constraintdef(oid) like '%%sonde%%'\n"
+	printf '\t) then\n'
+	printf '\t\talter table public.card_events add constraint card_events_type_check\n'
+	printf "\t\t\tcheck (type = any (array['created', 'sonde']));\n"
+	printf '\tend if;\nend;\n$$;\n'
+} > "$repertoire_mute/0001_sonde_inc_239.sql"
+
+if [ -n "$(migrations_sans_garde_lignes "$repertoire_mute")" ]; then
+	ok "le contrôle rougit sur une convergence non gardée — il n'est pas complaisant"
+else
+	fail "le contrôle reste vert sur une convergence non gardée — il ne prouve rien"
+fi
+
+# Sens 2 : la même migration MUNIE de sa seconde garde ne doit pas rougir, sans quoi le contrôle
+# condamnerait la forme même qu'il exige.
+{
+	printf 'do $$\nbegin\n\tif not exists (\n'
+	printf '\t\tselect 1 from pg_constraint\n'
+	printf "\t\t where conname = 'card_events_type_check'\n"
+	printf "\t\t   and pg_get_constraintdef(oid) like '%%sonde%%'\n"
+	printf '\t) and not exists (\n'
+	printf '\t\tselect 1 from public.card_events\n'
+	printf "\t\t where type <> all (array['created', 'sonde'])\n"
+	printf '\t) then\n'
+	printf '\t\talter table public.card_events add constraint card_events_type_check\n'
+	printf "\t\t\tcheck (type = any (array['created', 'sonde']));\n"
+	printf '\tend if;\nend;\n$$;\n'
+} > "$repertoire_mute/0001_sonde_inc_239.sql"
+
+if [ -z "$(migrations_sans_garde_lignes "$repertoire_mute")" ]; then
+	ok "la convergence munie de sa seconde garde ne fait pas rougir — la forme exigée est acceptée"
+else
+	fail "la forme exigée fait rougir : le contrôle se contredit lui-même"
+fi
+
+# Sens 3 : une simple MENTION du nom de la contrainte en commentaire ne doit pas suffire à ranger un
+# fichier parmi les convergentes, sans quoi la `0059` — qui explique le mécanisme sans y toucher —
+# rougirait pour avoir été documentée.
+printf -- '-- card_events_type_check est reecrite par la migration 70, pas ici.\n' \
+	> "$repertoire_mute/0001_sonde_inc_239.sql"
+
+if [ -z "$(migrations_sans_garde_lignes "$repertoire_mute")" ]; then
+	ok "une mention en commentaire ne compte pas — le mécanisme reste explicable"
+else
+	fail "une mention en commentaire fait rougir : le contrôle interdirait d'expliquer le mécanisme"
 fi
 
 rm -rf "$repertoire_mute"

@@ -65,10 +65,10 @@ begin
 		   and conname  = 'card_events_type_check'
 		   and pg_get_constraintdef(oid) like '%stalled%'
 	) and not exists (
-		-- INC-144 — SECONDE GARDE, celle des migrations 17, 20, 25, 30, 44 et 70, qui manquait
-		-- ici. La première ne regarde que la contrainte et ne voit rien lorsqu'elle a été déposée
-		-- ou réduite ; les lignes, elles, peuvent déjà porter un type qu'une migration
-		-- POSTÉRIEURE a livré.
+		-- INC-144 — SECONDE GARDE, celle des migrations 16, 17, 20, 25, 30, 44, 61 et 70,
+		-- qui manquait ici. La première ne regarde que la contrainte et ne voit rien lorsqu'elle
+		-- a été déposée ou réduite ; les lignes, elles, peuvent déjà porter un type qu'une
+		-- migration POSTÉRIEURE a livré.
 		--
 		-- CETTE MIGRATION EN AVAIT ÉTÉ DISPENSÉE, ET LE MOTIF ÉCRIT ÉTAIT QU'ELLE POSAIT « LE
 		-- VOCABULAIRE LE PLUS LARGE DU DÉPÔT ». Il l'était le 2026-08-25 ; la migration 70

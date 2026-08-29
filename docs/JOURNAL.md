@@ -27788,8 +27788,9 @@ hors série : `verify-relances` et `verify-move-card-to-channel`, rejoués SEULS
 butent sur la même voie de restauration.
 
 **LA LECTURE DU RÉPERTOIRE DONNE LA CAUSE EXACTE, ET ELLE EST PLUS SIMPLE QUE L'ENTRÉE NE LE
-SUPPOSAIT.** Huit migrations réécrivent `card_events_type_check` — `0016`, `0017`, `0020`, `0025`,
-`0030`, `0044`, `0054`, `0070`. **Sept portent les deux gardes d'INC-144** ; la `0054` est la
+SUPPOSAIT.** **Neuf** migrations réécrivent `card_events_type_check` — `0016`, `0017`, `0020`,
+`0025`, `0030`, `0044`, `0054`, `0061`, `0070`, liste **comptée sur le répertoire**. **Huit portent
+les deux gardes d'INC-144** ; la `0054` est la
 **seule** à n'avoir que la première, celle qui regarde la contrainte. C'est mot pour mot le défaut
 d'INC-210, qui avait frappé la `0044` le 2026-08-25 et pour lequel le même remède avait été retenu :
 la `0054` en avait été dispensée au motif écrit qu'elle posait « le vocabulaire le plus large du
