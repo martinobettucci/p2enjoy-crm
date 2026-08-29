@@ -4,6 +4,8 @@
 //           au-delà d'un message et pas en deçà, `aria-current` porté par le FIL du message
 //           ouvert), §16.16.6 (le compteur du dossier compte toujours des messages)
 // @verifies docs/DESIGN_SYSTEM.md §5.4 bis (de quoi le fil a l'air), §10 (la sélection s'annonce)
+// @verifies CRM-081 (docs/BACKLOG.md) — tranche 3 : le mode d'affichage entre dans l'adresse,
+//           docs/SPEC-cards.md §16.17.1 (le contrat ligne à ligne), §16.17.3 (ligne « Composant »)
 // @verifies CRM-065 (docs/BACKLOG.md) — sous-tranche 2c : l'inbox adressable
 // @verifies docs/SPEC-recherche.md §15 (le paramètre est lu au montage et une seule fois, le
 //           `card_id` décide du dossier, l'identifiant inconnu ne rend AUCUNE erreur), §15.1 (le
@@ -360,6 +362,83 @@ describe('RouteInbox — le paramètre `message` de l’adresse (§15)', () => {
 		// message d'origine se produirait au rendu suivant.
 		await new Promise((resoudre) => setTimeout(resoudre, 50))
 		expect(screen.getByRole('heading', { level: 3 }).textContent).toBe('Re: Demande de devis')
+	})
+})
+
+// =================================================================================================
+// CRM-081 tranche 3 — LE MODE D'AFFICHAGE ENTRE DANS L'ADRESSE, docs/SPEC-cards.md §16.17.1
+// =================================================================================================
+//
+// @verifies CRM-081 (docs/BACKLOG.md) — tranche 3
+// @verifies docs/SPEC-cards.md §16.17.1 (la clé, la valeur, le défaut jamais écrit, le repli, les
+//           autres paramètres conservés), §16.17.3 (ligne « Composant »), §16.12.4 (les constantes
+//           réemployées)
+//
+// CE QUE CES PREUVES ÉPROUVENT ET QUE `filtre-sommeil.test.ts` NE PEUT PAS VOIR. Le module peut
+// être parfaitement juste et l'écran ne pas s'en servir : c'est exactement l'état d'avant cette
+// tranche, où `lireModeSommeil` existait et où l'inbox tenait son mode dans un `useState`. Les
+// assertions portent donc sur le COUPLE écran ↔ adresse, jamais sur la fonction seule.
+describe('RouteInbox — le mode d’affichage dans l’adresse (§16.17.1)', () => {
+	/** Le libellé de la bascule, écrit une fois : c'est le nom accessible que la case porte. */
+	const AFFICHER = 'Afficher les fils en sommeil'
+
+	async function ouvrirLeDossierDepuis(adresseInitiale: string) {
+		ouvrirParAdresse(adresseInitiale)
+		await userEvent.click(await screen.findByRole('button', { name: /Refonte du site vitrine/ }))
+	}
+
+	it('UNE ADRESSE NUE OUVRE LE MODE PAR DÉFAUT : la case est décochée', async () => {
+		messagesRendus = [REPONSE, RACINE]
+		await ouvrirLeDossierDepuis('/inbox')
+
+		expect((await screen.findByLabelText(AFFICHER)).getAttribute('checked')).toBeNull()
+		expect((screen.getByLabelText(AFFICHER) as HTMLInputElement).checked).toBe(false)
+	})
+
+	it('`?sommeil=visibles` OUVRE L’ÉCRAN COCHÉ — le mode survit donc au rechargement', async () => {
+		messagesRendus = [REPONSE, RACINE]
+		await ouvrirLeDossierDepuis('/inbox?sommeil=visibles')
+
+		// C'EST LE DÉFAUT QUE CETTE TRANCHE CORRIGE : avec un `useState`, cette adresse ouvrait une
+		// case décochée et l'utilisateur perdait ce qu'il regardait à chaque rechargement.
+		expect((await screen.findByLabelText(AFFICHER)) as HTMLInputElement).toBeTruthy()
+		expect((screen.getByLabelText(AFFICHER) as HTMLInputElement).checked).toBe(true)
+	})
+
+	it('UNE VALEUR INCONNUE EST REPLIÉE sur le défaut, et n’atteint jamais l’écran', async () => {
+		messagesRendus = [REPONSE, RACINE]
+		await ouvrirLeDossierDepuis('/inbox?sommeil=nimportequoi')
+
+		// La clôture n'est pas décorative : une faute de frappe dans une adresse partagée ne doit
+		// jamais faire apparaître des fils qu'on croyait rangés.
+		expect((await screen.findByLabelText(AFFICHER)) as HTMLInputElement).toBeTruthy()
+		expect((screen.getByLabelText(AFFICHER) as HTMLInputElement).checked).toBe(false)
+	})
+
+	it('COCHER LA CASE ÉCRIT `?sommeil=visibles` DANS L’ADRESSE', async () => {
+		messagesRendus = [REPONSE, RACINE]
+		await ouvrirLeDossierDepuis('/inbox')
+
+		await userEvent.click(await screen.findByLabelText(AFFICHER))
+		await waitFor(() => expect(adresse()).toBe('?sommeil=visibles'))
+	})
+
+	it('DÉCOCHER RETIRE LE PARAMÈTRE : le défaut ne s’écrit JAMAIS dans l’adresse', async () => {
+		messagesRendus = [REPONSE, RACINE]
+		await ouvrirLeDossierDepuis('/inbox?sommeil=visibles')
+
+		await userEvent.click(await screen.findByLabelText(AFFICHER))
+		// `?sommeil=masquees` ne dirait rien de plus que l'adresse nue (§12.2), et la vue par défaut
+		// doit rester l'adresse la plus courte — c'est la règle du board, réemployée telle quelle.
+		await waitFor(() => expect(adresse()).toBe(''))
+	})
+
+	it('CONSERVE LES AUTRES PARAMÈTRES de l’adresse en basculant', async () => {
+		messagesRendus = [REPONSE, RACINE]
+		await ouvrirLeDossierDepuis('/inbox?vue=large')
+
+		await userEvent.click(await screen.findByLabelText(AFFICHER))
+		await waitFor(() => expect(adresse()).toBe('?vue=large&sommeil=visibles'))
 	})
 })
 

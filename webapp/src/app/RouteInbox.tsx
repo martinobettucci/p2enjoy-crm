@@ -22,7 +22,10 @@
 //       de l'affaire où il était classé, docs/SPEC-mail-subsystem.md §16.5.5 (la surface, sa
 //       confirmation dans le flux et la conséquence nommée), §16.5.2 (le contrat traduit) ;
 //       docs/DESIGN_SYSTEM.md §5.3 quater (confirmation dans le flux, jamais en modale)
-// @spec docs/JOURNAL.md décision 327, décision 536
+// @spec CRM-081 (docs/BACKLOG.md) — tranche 3 : le MODE D'AFFICHAGE entre dans l'adresse,
+//       docs/SPEC-cards.md §16.17.1 (la décision, son motif et le contrat ligne à ligne),
+//       §16.15.5 point 3 (révisé le 2026-08-29), §16.12.4 (la clé, la valeur et le repli, réemployés)
+// @spec docs/JOURNAL.md décision 327, décision 536, décision 551
 //
 // TROIS PANNEAUX SUR GRAND ÉCRAN, UNE PILE EN DESSOUS DE 1024 PX — et la pile est une vraie pile,
 // non trois colonnes rétrécies : à cette largeur, trois colonnes ne montreraient ni un objet, ni un
@@ -63,6 +66,14 @@ import {
 } from '../lib/inbox'
 import { BasculeSommeil, CLE_PRESET_SOMMEIL, PastilleSommeil } from '../components/ui/Sommeil'
 import { ECHEANCES_USUELLES, echeanceSaisie, echeanceUsuelle } from '../lib/sommeil-card'
+// LA CLÉ, LA VALEUR ET LE REPLI VIENNENT DU MODULE QUI LES A ARRÊTÉS (§16.12.4), comme
+// `PARAMETRE_MESSAGE` plus bas et pour le même motif : une chaîne écrite deux fois se désaccorde au
+// premier ajustement, et les trois écrans qui portent cette bascule cesseraient de s'entendre.
+import {
+	CLE_URL_SOMMEIL,
+	VALEUR_URL_SOMMEIL_VISIBLES,
+	lireModeSommeil,
+} from '../lib/filtre-sommeil'
 import {
 	echeanceFil,
 	endormirFil,
@@ -1470,19 +1481,14 @@ export function RouteInbox() {
 	const [etage, setEtage] = useState<Etage>('dossiers')
 	const [annonce, setAnnonce] = useState('')
 
-	// LE MODE N'ENTRE PAS DANS L'ADRESSE, et c'est écrit plutôt que subi (§16.15.5 point 3) :
-	// l'inbox ne lit aucun paramètre d'adresse, et lui en inventer un pour ce seul contrôle
-	// ouvrirait une question — quelle est l'adresse d'un dossier ? — que cette tranche ne tranche
-	// pas. Le mode ne survit donc pas à un rechargement, et l'écart est nommé.
-	const [mode, setMode] = useState<ModeFils>('masquees')
-
 	// =============================================================================================
-	// L'AMORCE PAR L'ADRESSE — CRM-065 sous-tranche 2c, docs/SPEC-recherche.md §15 et §15.1
+	// LES PARAMÈTRES D'ADRESSE DE L'INBOX — ils sont DEUX, et de deux natures différentes
 	// =============================================================================================
 	//
-	// C'EST LE SEUL PARAMÈTRE QUE CET ÉCRAN LIT, et le commentaire du `mode` juste au-dessus reste
-	// vrai : le filtre de sommeil n'entre toujours pas dans l'adresse. Ce paramètre-ci n'est pas un
-	// contrôle de l'écran, c'est une DESTINATION — la palette du §13.5 y mène, et l'inbox l'honore.
+	// `message` (CRM-065 sous-tranche 2c, docs/SPEC-recherche.md §15 et §15.1) est une DESTINATION :
+	// la palette du §13.5 y mène, l'inbox l'honore puis le retire.
+	//
+	// `sommeil` (§16.17.1, tranche 3) est un CONTRÔLE de l'écran, et il reste dans l'adresse.
 	const [parametresUrl, setParametresUrl] = useSearchParams()
 
 	// LU AU MONTAGE ET UNE SEULE FOIS (§15) — PAR CONSTRUCTION, ET NON PAR UN DRAPEAU. L'initialiseur
@@ -1496,6 +1502,42 @@ export function RouteInbox() {
 	// retirait le paramètre et n'ouvrait jamais le message. La dépendance stable supprime la cause
 	// au lieu d'ajouter une garde de plus.
 	const [demandeInitiale] = useState(() => parametresUrl.get(PARAMETRE_MESSAGE))
+
+	// LE MODE D'AFFICHAGE ENTRE DANS L'ADRESSE — §16.17.1, tranche 3, arbitrage du 2026-08-29.
+	//
+	// LES CONSTANTES SONT IMPORTÉES DE `filtre-sommeil.ts`, JAMAIS RÉÉCRITES ICI : le board et la vue
+	// liste portent la même bascule sous la même clé depuis la tranche 2 b (§16.12.4), et une
+	// seconde déclaration de la chaîne `sommeil` serait la première divergence entre les trois
+	// écrans. `lireModeSommeil` replie de surcroît toute valeur inconnue sur le défaut, de sorte
+	// qu'une faute de frappe dans une adresse partagée ne fasse jamais apparaître des fils qu'on
+	// croyait rangés.
+	//
+	// LA RÉDACTION PRÉCÉDENTE — UN `useState` — REPOSAIT SUR DEUX PRÉMISSES FAUSSES, mesurées avant
+	// d'être corrigées : « l'inbox ne lit aucun paramètre d'adresse » (elle lit `message` depuis
+	// `CRM-065`, six lignes plus haut) et « le filtre ne survit pas au changement de dossier » (rien
+	// ne réinitialisait cet état quand `selection` changeait). Le mode est une préférence
+	// d'affichage de l'écran : il vaut pour tous ses dossiers, et il survit désormais aussi au
+	// rechargement.
+	const mode: ModeFils = lireModeSommeil(parametresUrl.get(CLE_URL_SOMMEIL))
+	const changerMode = useCallback(
+		(suivant: ModeFils) => {
+			// PAS DE `replace` ICI, contrairement au retrait de `message` : la bascule est un geste de
+			// l'utilisateur, et « Précédent » doit pouvoir le défaire. Le retrait de `message`, lui,
+			// n'est le geste de personne.
+			//
+			// La forme fonctionnelle conserve les autres paramètres sans faire dépendre ce rappel de
+			// `parametresUrl`, dont le changement le recréerait à chaque navigation.
+			setParametresUrl((precedents) => {
+				const suivants = new URLSearchParams(precedents)
+				// Le défaut ne s'écrit JAMAIS dans l'adresse (§12.2) : la vue par défaut reste l'adresse
+				// la plus courte, ici comme sur le board.
+				if (suivant === 'visibles') suivants.set(CLE_URL_SOMMEIL, VALEUR_URL_SOMMEIL_VISIBLES)
+				else suivants.delete(CLE_URL_SOMMEIL)
+				return suivants
+			})
+		},
+		[setParametresUrl],
+	)
 
 	useEffect(() => {
 		if (demandeInitiale === null || demandeInitiale === '') return
@@ -1631,7 +1673,7 @@ export function RouteInbox() {
 					visible={etage === 'liste'}
 					fils={filsEndormis}
 					mode={mode}
-					onMode={setMode}
+					onMode={changerMode}
 					maintenant={maintenant}
 				/>
 				<PanneauMessage
