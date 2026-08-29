@@ -196,6 +196,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-190 | La série complète des `scripts/verify-*.sh` TIENT dans une session en mode `--rapide` — cinq restes de forme du backlog en sont caducs | 2026-08-20 | **close** — TRANCHÉE par la décision 553 : voie (a) retenue, et la série complète n'est la Definition of Done d'AUCUNE unité | 487, 553 |
 | INC-191 | Sept harnais figent des ABSENCES qu'une unité ultérieure a comblées, et sont rouges de leur propre succès | 2026-08-20 | **close** — les dix harnais retournés par la décision 498 | 487, 497, 498 |
 | INC-239 | La série des 77 harnais, rejouée d'affilée, laisse la base dans un état que `./runDev.sh` NE RÉPARE PAS : `0054` rétrécit `card_events_type_check` derrière sa propre garde et le `migrations-runner` sort en 3. Les 31 rouges de la série ne sont donc pas des verdicts avant rejeu SEUL sur base réinitialisée. Conséquence sérieuse pour `CRM-087`, dont le rejeu intégral suppose la rejouabilité sur base PEUPLÉE | 2026-08-29 | *ouverte* — issue retenue et écrite, mise en œuvre due : `CRM-062` pour la garde de `0054`, `CRM-087` pour la prémisse | 553 |
+| INC-240 | `0021` et `0035` référencent encore `card_comments.mentions`, colonne que `0063` (`CRM-064`) a SUPPRIMÉE ; `0015` a été corrigé, elles non. Le rejeu complet masque le défaut — la dernière écriture gagne —, mais tout rejeu qui s'arrête ou vise entre `0021`/`0035` et `0063` laisse un trigger `before update` en `42703` : commentaires non modifiables, suppression de compte en échec. Trouvée par `verify-identites.sh` rejoué SEUL, 2 assertions rouges sur 84 | 2026-08-29 | *ouverte* — issue retenue et écrite, mise en œuvre due : `CRM-064` | 553 |
 | INC-192 | `scripts/verify-corbeille.sh` cherche `@spec CRM-077` dans les TROIS premières lignes de `webapp/src/app/RouteCard.tsx`, qui en cumule dix | 2026-08-20 | **close** — fenêtre de lecture portée à l'en-tête entier (commit `752d3b4`), verdict vérifié le 2026-08-25 : 38 contrôles, aucune anomalie | 487, 508 |
 | INC-193 | Le `details` d'un refus de contrainte rend la ligne entière, `secret_id` compris — la colonne révoquée à `authenticated` ressort par un second chemin | 2026-08-20 | *ouverte* — arbitrage attendu, sécurité des données | 492 |
 | INC-195 | `scripts/verify-copie-workflow.sh` rejoue la migration 19 et laissait `move_card` AMPUTÉE du lot G — quatrième occurrence d'INC-154 | 2026-08-21 | **close** — corrigée par la décision 497 | 497 |
@@ -242,7 +243,7 @@ INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-174,
 INC-185, INC-186, INC-188, INC-189, INC-190, INC-191, INC-192, INC-193, INC-224,
 INC-225, INC-226, INC-227, INC-228, INC-229, INC-231, INC-232, INC-233, INC-234, INC-236,
-INC-238 et **INC-239**.**
+INC-238, **INC-239** et **INC-240**.**
 
 *Mise à jour du 2026-08-29 : **INC-183** est tranchée (décision 549) et retirée ; **INC-238** est
 consignée par la même session.*
@@ -6017,3 +6018,68 @@ ligne du responsable, ne jamais RÉTRÉCIR un vocabulaire déjà élargi. La mis
 
 **Statut :** ouverte, comportement inchangé, issue retenue et écrite, mise en œuvre due —
 `CRM-062` pour la garde de `0054`, `CRM-087` pour la prémisse de rejouabilité.
+
+### INC-240 — `0021` et `0035` référencent encore `card_comments.mentions`, colonne que `0063` a SUPPRIMÉE
+
+**Ouverte le 2026-08-29 par la session qui a rejoué la série entière** — décision 553. Comportement
+**inchangé** : le défaut appartient à `CRM-064`, il est consigné et mesuré, pas corrigé au passage
+(`docs/CloudWorker.md` §3.1).
+
+**COMMENT IL A ÉTÉ TROUVÉ.** `scripts/verify-identites.sh`, rejoué **SEUL sur une base
+réinitialisée** — donc hors de tout collatéral de série (INC-239) —, rend **23 contrôles, 2 en
+échec** :
+
+```
+ECHEC supabase/tests/0023_identites_et_memberships_surs.test.sql — 2 assertion(s) en échec sur 84
+      not ok 82 - 82 — supprimer le compte auteur n'est pas bloqué par sa parole
+      #     died: 42703: record "new" has no field "mentions"
+```
+
+**LA CAUSE, MESURÉE SUR LES FICHIERS.** `0063_mentions_commentaires.sql` (`CRM-064`) remplace la
+colonne `card_comments.mentions` par la table `public.card_comment_mentions`, et la supprime pour de
+bon à sa ligne 753 :
+
+```
+alter table public.card_comments drop column if exists mentions;
+```
+
+Quatre migrations définissent `app.card_comments_avant_maj()`. `0015` **a été corrigé** pour cette
+suppression, `0063` est le nouvel état — mais **`0021` et `0035` ne l'ont pas été** et citent
+toujours la colonne disparue dans leur porte étroite de détachement référentiel :
+
+```
+supabase/migrations/0021_identites_et_memberships_surs.sql:252
+supabase/migrations/0035_commentaires_lot_g.sql:236 et :252
+        and new.mentions     is not distinct from old.mentions
+```
+
+**POURQUOI LA PILE DE DÉVELOPPEMENT NE LE VOIT PAS**, et c'est ce qui rend le défaut durable : le
+rejeu du répertoire **complet** applique `0021`, puis `0035`, puis `0063` — la dernière écriture
+gagne, l'état final est sain, et rien ne rougit. Le défaut n'apparaît qu'au moment où une exécution
+s'arrête, ou vise, **entre `0021`/`0035` et `0063`**. C'est précisément ce que fait
+`verify-identites.sh`, qui rejoue `0021` pour éprouver sa convergence — et ce que fait
+`verify-commentaires.sh`, qui rejoue le lot G : **sa seconde anomalie, « une suite
+commentaires/identités reste rouge après restauration », a la MÊME cause**, et n'est donc pas un
+second défaut.
+
+**CE QUE COÛTE LE DÉFAUT QUAND IL SE MANIFESTE.** La fonction est le trigger `before update` de
+`public.card_comments`. Tant qu'elle porte le corps de `0021` ou de `0035` sur une base où la colonne
+n'existe plus, **toute mise à jour d'un commentaire échoue** en `42703` : modifier un commentaire,
+le supprimer en douceur, et le détachement référentiel qui anonymise ses commentaires quand un
+compte est supprimé — le geste même que l'assertion 82 éprouve.
+
+**LA CONJONCTION AVEC INC-239, ET C'EST LÀ QUE C'EST SÉRIEUX.** `CRM-087` fait rejouer le répertoire
+INTÉGRAL en production, une transaction par fichier. INC-239 mesure que ce rejeu peut **échouer en
+cours de répertoire** — sur `0054`, garde de `card_events_type_check`. Si l'échec tombe entre `0021`
+et `0063`, la production reste avec un `app.card_comments_avant_maj()` qui référence une colonne
+supprimée : les commentaires deviennent **non modifiables** et la suppression d'un compte échoue,
+sans qu'aucune migration ultérieure ne vienne réparer puisque le rejeu s'est arrêté.
+
+**Issue retenue, NON mise en œuvre ici.** Les deux fichiers doivent cesser de citer une colonne
+disparue — la ligne du responsable dit qu'un écart se nomme plutôt qu'il ne se masque, et une
+migration qui décrit un schéma qui n'existe plus est un écart. La correction touche des migrations
+déjà appliquées, donc `docs/PROD_MIGRATIONS.md` et les preuves de convergence de `CRM-022` : c'est
+une unité de travail, pas un paragraphe ajouté au passage (`CLAUDE.md` §13, §24). Elle appartient à
+`CRM-064`, qui a livré `0063` et corrigé `0015` sans corriger ses deux jumelles.
+
+**Statut :** ouverte, comportement inchangé, issue retenue et écrite, mise en œuvre due — `CRM-064`.
