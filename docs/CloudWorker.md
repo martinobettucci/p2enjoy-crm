@@ -591,9 +591,25 @@ non protégé meurt sans rien dire : ce n'est ni un verdict rouge, ni une preuve
 harnais ne doit être lu ni comme une régression, ni comme une preuve.
 
 **Budget, mesuré aussi.** Ces harnais rejouent des suites E2E complètes : plusieurs dépassent
-quatre minutes chacun, et il y en a **cinquante**. La série entière ne tient pas dans une session
-d'une heure. Exécute d'abord ceux que ton changement touche, puis autant du reste que le temps le
-permet, et dis exactement ce que tu n'as pas exécuté (§4.3).
+quatre minutes chacun, et il y en a **soixante-dix-sept**. Exécute d'abord ceux que ton changement
+touche, puis autant du reste que le temps le permet, et dis exactement ce que tu n'as pas exécuté
+(§4.3).
+
+**RÉVISÉ le 2026-08-29 — décision 553, INC-190 close.** La phrase « la série entière ne tient pas
+dans une session d'une heure » figurait ici et elle a été **mesurée fausse** le 2026-08-20 : en
+`--rapide`, cinquante-sept des soixante harnais d'alors tenaient en moins d'une heure. Elle est
+corrigée sur place plutôt que contournée (`CLAUDE.md` §18). Le budget qu'elle portait n'est pas
+affaibli : ce qui est exécuté est dit, ce qui ne l'est pas aussi.
+
+**ET SURTOUT : la série complète n'est la Definition of Done d'AUCUNE unité.** La Definition of Done
+commune est celle du §4 de `docs/MASTER_PLAN.md` — test unitaire dédié, test API dédié, test E2E
+dédié, build, vérification visuelle, seed, documentation. Une unité ne reste donc **jamais** `[~]`
+au seul motif que « la série des `verify-*.sh` n'a pas été rejouée en entier » : ce motif avait gelé
+huit unités livrées et prouvées pendant neuf jours. Un harnais d'une AUTRE unité qui rougit est un
+défaut de **cette autre unité** ou une anomalie préexistante — il se consigne au registre (§3.1) et
+s'impute à qui de droit, jamais comme preuve manquante de la tienne. La série entière reste due,
+mais comme **objet d'une session dédiée** au sens du §4.2, lancée **seule** : deux séries de preuves
+sur une seule base se mesurent l'une l'autre.
 
 ### 2.2. DÉMARRAGE DE LA PILE
 

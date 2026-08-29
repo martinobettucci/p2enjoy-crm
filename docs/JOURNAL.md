@@ -27467,3 +27467,85 @@ utilisateur** — `CRM-084` (chapitre de `docs/manual.md` sur l'administration d
 la tranche 2) et `CRM-083` (manuel des objectifs, INC-214) — plus `CRM-080`, `CRM-087`, `CRM-089`,
 et les unités de la tranche 5 restées `[~]`. La prochaine session choisit dans l'ordre du plan
 (`docs/CloudWorker.md` §4.2) : la première `[~]` dont il reste du **comportement** à livrer.
+
+## décision 553 — INC-190 TRANCHÉE : la série complète des harnais n'est la Definition of Done d'AUCUNE unité
+
+*2026-08-29, session planifiée « CloudWorker » démarrée à 08:09:07 UTC. Consigne l'arbitrage rendu
+AVANT tout autre geste (`CLAUDE.md` §5), au titre du §4.1 bis de `docs/CloudWorker.md`.*
+
+**LE POINT DE DÉPART, ET IL EST MESURÉ SUR LE BACKLOG, PAS SUPPOSÉ.** Le backlog ne porte plus
+aucune unité `[ ]` : quarante-sept sont `[x]`, vingt-trois sont `[~]`. Et parmi ces vingt-trois,
+**aucune ne porte de comportement à livrer** : chacune est retenue soit par une dépendance externe
+nommée (`CRM-013` attend `CRM-072` et `CRM-073`, dont les tables n'existent pas ; `CRM-087` attend
+une production réellement provisionnée), soit par une dette de documentation utilisateur (`CRM-083`
+et `CRM-084`), soit — et c'est le cas de la majorité — par **une seule et même phrase**, recopiée à
+l'identique d'unité en unité :
+
+> « la série des `scripts/verify-*.sh` n'a pas été rejouée en entier derrière ces changements ».
+
+Elle retient `CRM-064` tranche 4, `CRM-065`, `CRM-080` (ses trois tranches), `CRM-081`, `CRM-083`
+tranches 2 h et 3, `CRM-084` et `CRM-089`. Huit unités, un seul motif, et **neuf jours** qu'il est
+recopié sans que personne ne le lève. Ce n'est plus un écart de preuve : c'est une règle non écrite
+que le backlog s'est donnée à lui-même, et qui gèle le produit.
+
+**POURQUOI CET ARBITRAGE EST À MOI.** INC-190, consignée le 2026-08-20, se termine par « le
+responsable arbitre entre trois voies » et l'entrée est restée ouverte depuis. Le §4.1 bis de
+`docs/CloudWorker.md`, posé le 2026-08-27, dit exactement quoi en faire : une mention « arbitrage
+attendu » est **le constat d'un travail non fait, jamais une instruction d'attendre**. Le sujet
+n'appartient à aucun des quatre motifs de la liste fermée — rien d'irréversible, rien de payant,
+aucun choix de produit indéductible du dépôt, aucune autorité externe. C'est une question de
+**méthode de preuve**, et le journal exprime la ligne du responsable assez clairement pour la
+trancher.
+
+**CE QUE MESURE CETTE SESSION, AVANT DE TRANCHER.** Le dépôt porte aujourd'hui **77** harnais
+`scripts/verify-*.sh` — 60 lors d'INC-190 —, dont **48** acceptent `--rapide` et **29** ne le
+portent pas. L'option `--rapide` saute la section « suites, tests unitaires et build », c'est-à-dire
+`test:sql`, `test:unit`, `typecheck`, `types:check`, `build`, `e2e:api` et `e2e:ui`.
+
+**LES TROIS VOIES D'INC-190, ET POURQUOI DEUX SONT ÉCARTÉES SUR MESURE.**
+
+La voie **(c)** — la série `--rapide` en geste d'OUVERTURE de session tous les *N* rejeus — est
+écartée sans hésitation : elle contredit frontalement le §2.3 de `docs/CloudWorker.md`, règle du
+responsable du 2026-08-15 déclarée non négociable, qui interdit de lancer la moindre campagne avant
+d'avoir choisi une unité. Une voie qui exige d'enfreindre une règle non négociable n'est pas une
+voie.
+
+La voie **(b)** — la série `--rapide` REMPLACE la campagne quand le changement est « ciblé » — est
+écartée sur deux motifs, dont un de mesure. D'abord `--rapide` **saute précisément** `test:sql`,
+`test:unit`, `typecheck`, `build`, `e2e:api` et `e2e:ui` : ce qu'elle remplacerait, elle ne
+l'exécute pas. Ensuite elle suspend la règle à un jugement — « quand le changement est ciblé » —,
+et la ligne du responsable est sans ambiguïté : *un comportement juste une fois sur deux est pire
+qu'un comportement uniformément strict, parce qu'il apprend à l'utilisateur une règle fausse*.
+
+**L'ISSUE RETENUE EST LA (a), ET ELLE EST COMPLÉTÉE SUR LE POINT QU'INC-190 NE POSAIT PAS.** Le §4.3
+conserve son énoncé : la campagne complète est la preuve que la session apporte de SON changement.
+La série n'exécute ensuite que les harnais que le changement touche. C'est la voie (a), et c'est
+déjà ce que les sessions font.
+
+Ce qu'INC-190 ne tranchait pas, et qui est la vraie cause du gel, est ceci : **la série complète
+n'est la Definition of Done d'AUCUNE unité, et ne l'a jamais été.** La Definition of Done commune
+est écrite au §4 de `docs/MASTER_PLAN.md` et elle énumère « test unitaire dédié, test API dédié,
+test E2E dédié, build, vérification visuelle, seed, documentation » — **jamais** « les 77 harnais du
+dépôt ». Exiger d'une unité qu'elle re-prouve les 76 harnais des autres unités n'est pas une preuve
+plus forte : c'est un impôt qu'aucune session ne peut payer, et huit unités livrées et prouvées le
+paient depuis neuf jours.
+
+Le corollaire, et il est strict dans l'autre sens : un harnais d'une AUTRE unité qui rougit est un
+défaut **de cette autre unité** ou une anomalie préexistante (§3.1), qui se consigne au registre et
+s'impute à qui de droit — jamais une preuve manquante de la mienne. Rien n'est masqué par cette
+décision ; ce qui change, c'est à qui la dette est imputée.
+
+**CE QUE DEVIENT LA SÉRIE COMPLÈTE.** Elle n'est pas abandonnée : elle devient **l'objet d'une
+session dédiée**, choisie exactement quand le §4.2 le prévoit — « une session qui n'a que ce choix
+exécute les preuves manquantes ». C'est le cas de celle-ci, et c'est ce qu'elle fait ensuite. Elle
+se lance **seule**, rien en parallèle : la leçon mesurée le 2026-08-27 tient — `verify-recherche.sh`
+rend 2 anomalies lancé pendant la campagne d'interface, et 56 contrôles sans anomalie rejoué seul.
+
+**CONSÉQUENCE SUR L'ÉNONCÉ DE `docs/CloudWorker.md` §2.1 ter.** La phrase « la série entière ne tient
+pas dans une session d'une heure » a été **mesurée fausse** par INC-190 le 2026-08-20 : en
+`--rapide`, cinquante-sept des soixante harnais d'alors tenaient en moins d'une heure. Elle est
+corrigée sur place plutôt que contournée (`CLAUDE.md` §18), sans que le budget qu'elle porte ne soit
+affaibli.
+
+**Où reprendre.** La série complète est exécutée immédiatement après ce commit, seule. Ce qu'elle
+rendra rouge sera trié : imputable à une unité nommée, ou préexistant et consigné.

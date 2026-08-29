@@ -193,7 +193,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-130 | `text-text-1` n'existe pas dans le CSS produit : le document de comparaison de l'éditeur de workflows HÉRITE la teinte de la mention qui le porte, et rend donc deux couleurs selon un état qu'il ne décrit pas | 2026-08-25 | **close** — `text-text` retenu par la décision 511 après relevé des deux héritages sur la pile réelle ; règle au §5.15 de `docs/DESIGN_SYSTEM.md`, relevé du CSS produit désormais **vide** | 511 |
 | INC-185 | `e2e/ui/inbox.spec.ts` affirme retirer un `card_event` que personne ne peut retirer (403 mesuré) | 2026-08-20 | *ouverte* — arbitrage attendu | 481 |
 | INC-189 | « Alt et flèche REDIMENSIONNENT » d'`Objectifs.test.tsx` échoue par INTERMITTENCE en campagne, et passe seul | 2026-08-20 | *ouverte* — relève de `CRM-081` | 485 |
-| INC-190 | La série complète des `scripts/verify-*.sh` TIENT dans une session en mode `--rapide` — cinq restes de forme du backlog en sont caducs | 2026-08-20 | *ouverte* — constat de méthode | 487 |
+| INC-190 | La série complète des `scripts/verify-*.sh` TIENT dans une session en mode `--rapide` — cinq restes de forme du backlog en sont caducs | 2026-08-20 | **close** — TRANCHÉE par la décision 553 : voie (a) retenue, et la série complète n'est la Definition of Done d'AUCUNE unité | 487, 553 |
 | INC-191 | Sept harnais figent des ABSENCES qu'une unité ultérieure a comblées, et sont rouges de leur propre succès | 2026-08-20 | **close** — les dix harnais retournés par la décision 498 | 487, 497, 498 |
 | INC-192 | `scripts/verify-corbeille.sh` cherche `@spec CRM-077` dans les TROIS premières lignes de `webapp/src/app/RouteCard.tsx`, qui en cumule dix | 2026-08-20 | **close** — fenêtre de lecture portée à l'en-tête entier (commit `752d3b4`), verdict vérifié le 2026-08-25 : 38 contrôles, aucune anomalie | 487, 508 |
 | INC-193 | Le `details` d'un refus de contrainte rend la ligne entière, `secret_id` compris — la colonne révoquée à `authenticated` ressort par un second chemin | 2026-08-20 | *ouverte* — arbitrage attendu, sécurité des données | 492 |
@@ -3921,6 +3921,39 @@ naïvement double le coût. Le responsable arbitre entre trois voies : (a) le §
 campagne, la série n'exécute ensuite que les harnais que le changement touche ; (b) la série
 `--rapide` remplace la campagne quand le changement est ciblé ; (c) le §4.3 conserve son énoncé, et
 la série `--rapide` s'ajoute comme geste d'ouverture de session tous les *N* rejeus.
+
+**TRANCHÉE LE 2026-08-29 — `docs/JOURNAL.md` décision 553, au titre du §4.1 bis de
+`docs/CloudWorker.md`.** L'entrée est **close**.
+
+**Issue retenue : la voie (a)**, complétée sur le point que l'entrée ne posait pas. Le §4.3 conserve
+son énoncé : la campagne complète est la preuve que la session apporte de SON changement ; la série
+n'exécute ensuite que les harnais que le changement touche.
+
+**Et le point complémentaire, qui est la vraie cause du gel : la série complète n'est la Definition
+of Done d'AUCUNE unité, et ne l'a jamais été.** La Definition of Done commune est écrite au §4 de
+`docs/MASTER_PLAN.md` — test unitaire dédié, test API dédié, test E2E dédié, build, vérification
+visuelle, seed, documentation. Elle ne dit nulle part « les 77 harnais du dépôt ». Huit unités
+livrées et prouvées — `CRM-064` tranche 4, `CRM-065`, `CRM-080`, `CRM-081`, `CRM-083`, `CRM-084`,
+`CRM-089` — étaient retenues en `[~]` par cette seule phrase recopiée d'unité en unité, depuis neuf
+jours. Corollaire strict, et il ne masque rien : un harnais d'une AUTRE unité qui rougit est un
+défaut de **cette autre unité** ou une anomalie préexistante (§3.1) ; il se consigne et s'impute à
+qui de droit, jamais comme preuve manquante de la mienne.
+
+**Ce que devient la série complète** : l'objet d'une **session dédiée**, choisie quand le §4.2 le
+prévoit — « une session qui n'a que ce choix exécute les preuves manquantes ». Elle se lance
+**seule**, rien en parallèle, par la leçon mesurée le 2026-08-27 : `verify-recherche.sh` rend 2
+anomalies lancé pendant la campagne d'interface, et 56 contrôles sans anomalie rejoué seul.
+
+**Les deux voies écartées, et sur quel motif.** La voie **(c)** contredit frontalement le §2.3 de
+`docs/CloudWorker.md`, règle non négociable du 2026-08-15 qui interdit toute campagne avant le choix
+de l'unité — une voie qui exige d'enfreindre une règle non négociable n'est pas une voie. La voie
+**(b)** est écartée sur mesure : `--rapide` **saute** `test:sql`, `test:unit`, `typecheck`, `build`,
+`e2e:api` et `e2e:ui`, c'est-à-dire exactement ce qu'elle prétendrait remplacer ; et elle suspendrait
+la règle à un jugement — « quand le changement est ciblé » —, là où la ligne du responsable dit
+qu'un comportement juste une fois sur deux est pire qu'un comportement uniformément strict.
+
+**Mesure du 2026-08-29** : le dépôt porte désormais **77** harnais, dont **48** acceptent `--rapide`
+et **29** ne le portent pas.
 
 ### INC-191 — sept harnais figent une absence qu'une unité ultérieure a comblée, et sont rouges de leur propre succès
 
