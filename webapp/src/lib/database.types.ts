@@ -75,6 +75,7 @@ export type Database = {
           name: string
           planned_amount: number | null
           position: number
+          stale_after_days: number | null
           track_id: string
           updated_at: string
         }
@@ -88,6 +89,7 @@ export type Database = {
           name: string
           planned_amount?: number | null
           position: number
+          stale_after_days?: number | null
           track_id: string
           updated_at?: string
         }
@@ -101,6 +103,7 @@ export type Database = {
           name?: string
           planned_amount?: number | null
           position?: number
+          stale_after_days?: number | null
           track_id?: string
           updated_at?: string
         }

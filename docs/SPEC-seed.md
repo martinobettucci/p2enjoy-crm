@@ -1695,12 +1695,12 @@ captures.
 
 ### 12.1 Ce que le seed pose
 
-| Identifiant | Track | Nom | Devise | Enveloppe | Récurrent | Clôturé |
-|---|---|---|---|---|---|---|
-| `…0000c1` | Conseil & IA | Prospection sortante | `EUR` | 12 000,00 | non | non |
-| `…0000c2` | Studio web | Publicité 2026 | `EUR` | 24 000,00 | **oui** | non |
-| `…0000c3` | Studio web | Salon du web 2025 | `EUR` | 8 000,00 | non | **oui** |
-| `…0000c4` | Formation | Suisse romande | **`CHF`** | 15 000,00 | non | non |
+| Identifiant | Track | Nom | Devise | Enveloppe | Récurrent | Clôturé | Seuil d'ancienneté |
+|---|---|---|---|---|---|---|---|
+| `…0000c1` | Conseil & IA | Prospection sortante | `EUR` | 12 000,00 | non | non | **30** |
+| `…0000c2` | Studio web | Publicité 2026 | `EUR` | 24 000,00 | **oui** | non | **90** |
+| `…0000c3` | Studio web | Salon du web 2025 | `EUR` | 8 000,00 | non | **oui** | *aucun* |
+| `…0000c4` | Formation | Suisse romande | **`CHF`** | 15 000,00 | non | non | *aucun* |
 
 | Identifiant | Budget | Libellé | Période | Enveloppe | Clôturée |
 |---|---|---|---|---|---|
@@ -1725,6 +1725,34 @@ captures.
 - **`Suisse romande` est en `CHF`.** Le §4.5 impose un histogramme **par devise présente** ; un
   jeu entièrement en euros rendrait cette règle indémontrable et laisserait la contrainte
   `^[A-Z]{3}$` de la migration purement décorative.
+- **LES TROIS ÉTATS DU SEUIL D'ANCIENNETÉ SONT PORTÉS, ET LES TROIS SONT NÉCESSAIRES — ajouté le
+  2026-08-29, `docs/SPEC-costs.md` §2.1 bis.** Le seuil décide si la colonne « Ancienneté » de
+  l'onglet « À saisir » passe en danger (`docs/DESIGN_SYSTEM.md` §5.31). « Prospection sortante »
+  porte **30** et sa ligne sans réel est antidatée de 120 jours : c'est le seul cas où le signal
+  s'allume. « Publicité 2026 » porte **90**, jamais franchi. « Salon du web 2025 » n'en porte
+  **aucun** : sa ligne ne sera jamais signalée, fût-elle vieille de mille jours. Sans le troisième
+  état, « aucun seuil » et « seuil non franchi » rendraient la même chose à l'écran, et une
+  régression qui les confondrait passerait inaperçue.
+
+### 12.1 bis L'antidatage d'une ligne de coût, et pourquoi ce n'est pas une trace fabriquée
+
+**MESURÉ le 2026-08-29 : les trois lignes sans réel du seed ont ZÉRO jour d'ancienneté**, puisque
+la section 8 *quindecies* les crée à l'exécution. Aucune ne franchirait donc jamais aucun seuil, et
+la variante de danger serait livrée **indémontrable** — ce que `CLAUDE.md` §8 refuse.
+
+« Prospection terrain » (`…0000e4`) naît donc à **J-120**, par un `created_at` explicite au `POST`,
+accepté et **conservé tel quel** (mesuré le même jour). Le §8 de `CLAUDE.md` interdit de fabriquer
+la trace d'un processus au lieu de l'exécuter ; ce n'est pas le cas ici : la ligne est réellement
+créée par le vrai mécanisme d'insertion, et seule sa **date de naissance** est choisie — exactement
+comme les deux clôtures du §12.2 choisissent la leur.
+
+**La date est calculée à chaque exécution, jamais figée dans une constante.** Une date en dur
+vieillirait toute seule et finirait par franchir les seuils que le jeu veut voir NON franchis : le
+jeu de démonstration se dégraderait silencieusement avec le temps.
+
+**Que cette date soit posable par son auteur est en soi une garantie d'intégrité absente**,
+consignée en **INC-238** et due à `CRM-013` — mesuré `201` avec le jeton réel de l'administratrice,
+et non seulement avec la clé de service. Le comportement reste inchangé, et le seed s'en sert.
 
 **Il n'y a PAS de « Mars 2026 », et c'est le contrat.** `docs/SPEC-costs.md` §2.2 interdit toute
 génération automatique d'occurrences. Un mois sans occurrence est une information — il ne s'est
@@ -1762,6 +1790,13 @@ traversant la RLS.
 | 6 | `select count(*) from public.budget_occurrences where closed_at is not null` | `1` |
 | 7 | `select count(distinct currency) from public.budgets` | `2` — `EUR` et `CHF` |
 | 8 | Second rejeu du seed | Aucune erreur, mêmes comptes, clôtures conservées |
+| 9 | `GET /rest/v1/card_costs?actual_cost=is.null` avec le jeton réel du business developer, seuil et `created_at` embarqués | Les **trois** états exactement : `en-retard`, `dans-les-temps`, `sans-seuil` — exécutée **par le script lui-même** |
+
+La preuve 9 est écrite dans le script plutôt que laissée à une preuve d'interface parce que ce
+qu'elle garde est le **contrat du jeu de données** : si les trois états cessaient d'être portés,
+l'onglet continuerait de s'afficher sans erreur et la variante de danger cesserait simplement d'être
+démontrable. **Éprouvée par dégradation le 2026-08-29** : le seuil de « Prospection sortante » remis
+à nul, le script s'arrête sur cette preuve (`rc=1`) et nomme les trois états attendus.
 
 ---
 

@@ -3379,12 +3379,23 @@ info "Objectifs : 1 tableau, 6 blocs dont 3 liés et 1 fermé à la lectrice, 4 
 # `resolution=merge-duplicates` sur la clé primaire : l'écriture est CONVERGENTE. Un budget doté à
 # la main pendant une session de développement est rétabli au contrat, pas dupliqué.
 
-# id | track | nom | devise | enveloppe | récurrent | position
+# LES TROIS ÉTATS DU SEUIL D'ANCIENNETÉ SONT PORTÉS ICI, ET LES TROIS SONT NÉCESSAIRES
+# (`docs/SPEC-costs.md` §2.1 bis, arbitrage d'INC-183). Le seuil décide si la colonne
+# « Ancienneté » de l'onglet « À saisir » passe en danger ; sans les trois, une régression qui
+# confondrait « aucun seuil » et « seuil non franchi » passerait inaperçue, les deux rendant la
+# même chose à l'écran :
+#   * « Prospection sortante » — seuil 30, et sa ligne sans réel est ANTIDATÉE de 120 jours plus
+#     bas : c'est le seul cas OÙ LE SIGNAL S'ALLUME ;
+#   * « Publicité 2026 » — seuil 90, jamais franchi par une ligne née à l'exécution du seed ;
+#   * « Salon du web 2025 » et « Suisse romande » — AUCUN seuil : leurs lignes ne seront jamais
+#     signalées, fussent-elles vieilles de mille jours.
+
+# id | track | nom | devise | enveloppe | récurrent | position | seuil d'ancienneté
 BUDGETS_SEED=(
-	"5eed0000-0000-4000-8000-0000000000c1|5eed0000-0000-4000-8000-000000000021|Prospection sortante|EUR|12000.00|false|1"
-	"5eed0000-0000-4000-8000-0000000000c2|5eed0000-0000-4000-8000-000000000022|Publicité 2026|EUR|24000.00|true|1"
-	"5eed0000-0000-4000-8000-0000000000c3|5eed0000-0000-4000-8000-000000000022|Salon du web 2025|EUR|8000.00|false|2"
-	"5eed0000-0000-4000-8000-0000000000c4|5eed0000-0000-4000-8000-000000000023|Suisse romande|CHF|15000.00|false|1"
+	"5eed0000-0000-4000-8000-0000000000c1|5eed0000-0000-4000-8000-000000000021|Prospection sortante|EUR|12000.00|false|1|30"
+	"5eed0000-0000-4000-8000-0000000000c2|5eed0000-0000-4000-8000-000000000022|Publicité 2026|EUR|24000.00|true|1|90"
+	"5eed0000-0000-4000-8000-0000000000c3|5eed0000-0000-4000-8000-000000000022|Salon du web 2025|EUR|8000.00|false|2|"
+	"5eed0000-0000-4000-8000-0000000000c4|5eed0000-0000-4000-8000-000000000023|Suisse romande|CHF|15000.00|false|1|"
 )
 
 # id | budget | libellé | début | fin | enveloppe
@@ -3400,15 +3411,18 @@ echo
 say "8 quaterdecies. Budgets de démonstration"
 
 for ligne in "${BUDGETS_SEED[@]}"; do
-	IFS='|' read -r id track nom devise enveloppe recurrent position <<< "$ligne"
+	IFS='|' read -r id track nom devise enveloppe recurrent position seuil <<< "$ligne"
 
+	# `null` EXPLICITE ET NON CHAÎNE VIDE pour un seuil non décidé, exactement comme le réel d'une
+	# ligne de coût plus bas : un `0` y dirait « toute ligne est en retard dès sa naissance », et la
+	# contrainte `budgets_stale_check` le refuserait de toute façon (§2.1 bis).
 	charge=$(jq -nc --arg id "$id" --arg track "$track" --arg nom "$nom" --arg devise "$devise" \
 	                --argjson enveloppe "$enveloppe" --argjson recurrent "$recurrent" \
-	                --argjson position "$position" \
+	                --argjson position "$position" --argjson seuil "${seuil:-null}" \
 	                --arg auteur '5eed0000-0000-4000-8000-000000000011' \
 	     '{id: $id, track_id: $track, name: $nom, currency: $devise,
 	       planned_amount: $enveloppe, is_recurrent: $recurrent, closed_at: null,
-	       position: $position, created_by: $auteur}')
+	       position: $position, stale_after_days: $seuil, created_by: $auteur}')
 
 	code=$(api POST /rest/v1/budgets \
 		-H 'Prefer: return=representation,resolution=merge-duplicates' \
@@ -3416,7 +3430,8 @@ for ligne in "${BUDGETS_SEED[@]}"; do
 	attendu "$code" "création du budget « $nom »" 200 201
 
 	if [ "$recurrent" = 'true' ]; then nature='récurrent'; else nature='simple'; fi
-	printf '  %-24s %-4s %10s  %s\n' "${nom:0:24}" "$devise" "$enveloppe" "$nature"
+	printf '  %-24s %-4s %10s  %-10s seuil %s\n' \
+	       "${nom:0:24}" "$devise" "$enveloppe" "$nature" "${seuil:-aucun}"
 done
 
 for ligne in "${OCCURRENCES_SEED[@]}"; do
@@ -3506,6 +3521,24 @@ done
 # `resolution=merge-duplicates` sur la clé primaire : l'écriture est CONVERGENTE. Une ligne dont le
 # réel a été saisi à la main pendant une session de développement est rétablie au contrat.
 
+# UNE LIGNE EST ANTIDATÉE, ET C'EST UNE MESURE QUI L'IMPOSE (`docs/SPEC-costs.md` §2.1 bis).
+# Toutes les lignes de ce tableau naissent à l'exécution du seed : leur ancienneté est de ZÉRO
+# jour, mesuré le 2026-08-29. Aucune ne franchirait donc jamais aucun seuil, et la variante de
+# danger de la colonne « Ancienneté » (§5.31 du design system) serait livrée INDÉMONTRABLE —
+# `CLAUDE.md` §8 exige que le seed démontre chaque fonctionnalité livrée.
+#
+# « Prospection terrain » naît donc à J-120 sur un budget dont le seuil est 30 : c'est la seule
+# ligne du jeu qui s'allume. L'antidatage passe par le MÊME chemin d'API que le reste — un
+# `created_at` explicite au `POST`, accepté et conservé tel quel, MESURÉ le même jour (mesure M5).
+# Ce n'est pas une trace fabriquée au sens de `CLAUDE.md` §8 : la ligne est réellement créée par le
+# vrai mécanisme, seule sa date de naissance est choisie, comme les deux clôtures plus bas
+# choisissent la leur.
+#
+# Que cette date soit posable par son auteur est en soi une garantie d'intégrité absente, consignée
+# en INC-238 et due à `CRM-013` ; le comportement reste inchangé ici.
+ANTIDATAGE_JOURS=120
+COUT_ANTIDATE='5eed0000-0000-4000-8000-0000000000e4'
+
 # id | card | budget | occurrence | libellé | estimé | réel
 COUTS_SEED=(
 	"5eed0000-0000-4000-8000-0000000000e1|5eed0000-0000-4000-8000-0000000000c4|5eed0000-0000-4000-8000-0000000000c2|5eed0000-0000-4000-8000-0000000000d2|Publicité|100.00|"
@@ -3525,14 +3558,25 @@ for ligne in "${COUTS_SEED[@]}"; do
 	# (§2.3), et une coercition qui écrirait `0` détruirait la seule distinction que cette
 	# spécification défend. Même traitement pour `occurrence_id`, exigée si et seulement si le
 	# budget est récurrent.
+	# LA NAISSANCE EST CALCULÉE À CHAQUE EXÉCUTION, jamais figée dans une constante : une date en
+	# dur vieillirait toute seule et finirait par franchir n'importe quel seuil, y compris ceux que
+	# le jeu veut voir NON franchis. Les autres lignes n'envoient rien et naissent à `now()`.
+	if [ "$id" = "$COUT_ANTIDATE" ]; then
+		naissance=$(date -u -d "-${ANTIDATAGE_JOURS} days" '+%Y-%m-%dT%H:%M:%SZ')
+	else
+		naissance=''
+	fi
+
 	charge=$(jq -nc --arg id "$id" --arg card "$card" --arg budget "$budget" \
 	                --arg occurrence "$occurrence" --arg l "$libelle" \
 	                --argjson estime "$estime" \
 	                --argjson reel "${reel:-null}" \
+	                --arg naissance "$naissance" \
 	                --arg auteur '5eed0000-0000-4000-8000-000000000011' \
 	     '{id: $id, card_id: $card, budget_id: $budget,
 	       occurrence_id: (if $occurrence == "" then null else $occurrence end),
-	       label: $l, estimated_cost: $estime, actual_cost: $reel, created_by: $auteur}')
+	       label: $l, estimated_cost: $estime, actual_cost: $reel, created_by: $auteur}
+	      + (if $naissance == "" then {} else {created_at: $naissance} end)')
 
 	code=$(api POST /rest/v1/card_costs \
 		-H 'Prefer: return=representation,resolution=merge-duplicates' \
@@ -3543,7 +3587,9 @@ for ligne in "${COUTS_SEED[@]}"; do
 done
 
 info "Lignes de coût : ${#COUTS_SEED[@]} dont 3 sans réel, 2 sur un budget récurrent, 1 sans réel sur
-      un budget clôturé — docs/SPEC-costs.md §2.3 et §4.8"
+      un budget clôturé — docs/SPEC-costs.md §2.3 et §4.8
+      « Prospection terrain » naît à J-${ANTIDATAGE_JOURS} sur un budget de seuil 30 : c'est la
+      SEULE ligne en retard du jeu, et la seule qui allume la variante de danger du §5.31"
 
 # LES DEUX CLÔTURES, PAR LE VRAI GESTE. Un `PATCH` qui pose `closed_at`, exactement ce que
 # l'administration des budgets enverra (§4.1). Convergent : rejouer le seed sur une base déjà
@@ -3685,7 +3731,7 @@ maj_clos=$(curl -s -o /dev/null -w '%{http_code}' -X PATCH \
 #      developer écrit ces affaires et reçoit « true » ; la lectrice reçoit « false » sur la seule
 #      ligne qu'elle lit. Une fonction posée par erreur en `SECURITY DEFINER` rendrait « true » aux
 #      deux — c'est le seul défaut que la migration 52 peut introduire, et il se voit ici.
-A_SAISIR_SELECT='id,reel_saisissable,budgets!inner(name,closed_at)'
+A_SAISIR_SELECT='id,created_at,reel_saisissable,budgets!inner(name,closed_at,stale_after_days)'
 
 a_saisir_bizdev=$(curl -s -G "$API/rest/v1/card_costs" \
 	--data-urlencode "select=$A_SAISIR_SELECT" --data-urlencode 'actual_cost=is.null' \
@@ -3728,10 +3774,32 @@ lignes_viewer=$(printf '%s' "$a_saisir_viewer" | jq -r 'length')
         quoi le contrôle ci-dessus serait satisfait par une réponse vide et ne prouverait rien de la
         colonne calculée."
 
+# LES TROIS ÉTATS DU SEUIL D'ANCIENNETÉ, VÉRIFIÉS SUR LA RÉPONSE RÉELLE DE L'API — §2.1 bis.
+# Le contrôle est écrit ici plutôt que laissé à une preuve d'interface parce que ce qu'il garde est
+# le CONTRAT DU JEU DE DONNÉES : si un jour les trois états ne sont plus portés, l'onglet
+# continuera de s'afficher sans erreur et la variante de danger cessera simplement d'être
+# démontrable. C'est exactement ce qui a manqué pendant les neuf jours d'INC-183.
+etats_seuil=$(printf '%s' "$a_saisir_bizdev" | jq -r '
+	[ .[]
+	  | { seuil: .budgets.stale_after_days,
+	      jours: (((now - (.created_at
+	                       | sub("\\.[0-9]+"; "")
+	                       | sub("\\+00:00$"; "Z")
+	                       | fromdateiso8601)) / 86400) | floor) }
+	  | if .seuil == null then "sans-seuil"
+	    elif .jours > .seuil then "en-retard"
+	    else "dans-les-temps" end ]
+	| sort | join(",")')
+[ "$etats_seuil" = 'dans-les-temps,en-retard,sans-seuil' ] || die "le jeu de démonstration doit
+        porter les TROIS états du seuil d'ancienneté — une ligne en retard, une dans les temps, une
+        sur un budget sans seuil (docs/SPEC-costs.md §2.1 bis). Sans les trois, « aucun seuil » et
+        « seuil non franchi » rendent la même chose à l'écran et une régression qui les confondrait
+        passerait inaperçue. L'API rend « ${etats_seuil:-aucun} »."
+
 info "Vérifié avec les jetons réels : 0 ligne pour la lectrice sur une affaire qu'elle LIT,
       400/23514 à l'insertion sur un budget clos, 200 à la saisie du réel sur ce même budget,
-      3 lignes en attente pour le bizdev dont 1 sur un budget clos, et « reel_saisissable » vrai
-      pour lui et faux pour la lectrice"
+      3 lignes en attente pour le bizdev dont 1 sur un budget clos, « reel_saisissable » vrai
+      pour lui et faux pour la lectrice, et les TROIS états du seuil d'ancienneté présents"
 
 info "Budgets : ${#BUDGETS_SEED[@]} dont 1 récurrent à ${#OCCURRENCES_SEED[@]} occurrences, 1 clôturé,
       1 fermé à la lectrice et 1 en CHF — docs/SPEC-costs.md §2 et §4.7"
