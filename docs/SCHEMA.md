@@ -1539,6 +1539,15 @@ joints par `&` — **conjonction**. Aucun métacaractère de `tsquery` ne peut d
 Ajoutée le 2026-08-24 par `CRM-062` tranche 2 (`docs/SPEC-relances.md` §9). **Aucune table, aucune
 colonne** : une fonction privée, un job, et la quinzième valeur du vocabulaire du fil.
 
+**RÉVISION du 2026-08-29 — INC-239, décision 558, `docs/SPEC-relances.md` §9.8.1.** La convergence
+du `card_events_type_check` que porte cette migration reçoit la **seconde garde d'INC-144** : elle ne
+repose son vocabulaire que si les événements déjà écrits en sont tous membres. Sans elle, sur une
+base peuplée dont la contrainte a régressé sous `stalled`, la migration **rétrécissait** aux quinze
+valeurs de son époque — la `0070` en porte dix-neuf depuis `CRM-085` —, et le rejeu du répertoire
+s'arrêtait ici. Les **neuf** migrations qui réécrivent cette contrainte portent désormais les deux
+gardes, sans exception ; *être la plus large du dépôt* est un état daté. **L'état final du schéma est
+inchangé** : la `0070` reste la dernière autorité.
+
 | | |
 |---|---|
 | Signature | `app.relancer_cards_figees() returns integer` — le nombre d'événements réellement inscrits |
