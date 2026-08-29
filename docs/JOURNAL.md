@@ -27710,3 +27710,63 @@ défaut.
 **Où reprendre.** Le code suit immédiatement, dans un commit distinct. Les preuves attendues :
 `scripts/verify-identites.sh` (assertion 82, rouge avant correction), `scripts/verify-commentaires.sh`
 (même cause), `scripts/verify-migrations.sh` (contrôle ajouté), `npm run test:sql`.
+
+## décision 557 — INC-240 livrée, INC-243 expliquée : deux dettes de `CRM-064` soldées, campagne verte
+
+*2026-08-29, session planifiée ouverte à 12:14:19 UTC. Bilan de fin de session ; la décision 556
+en porte la spécification, écrite et committée avant la première ligne de code.*
+
+**CE QUE LA SESSION A CODÉ.** Trois lignes retirées de `0021` et de `0035` — la comparaison
+`new.mentions is not distinct from old.mentions` des portes étroites de détachement référentiel —,
+un contrôle de répertoire ajouté à `scripts/verify-migrations.sh`, et l'empreinte de fonctions de
+`scripts/verify-authz.sh` rendue indépendante de l'ordre des `aclitem`. Le reste du corps de chaque
+fonction est repris mot pour mot : aucune règle n'est rejugée, aucune porte n'est élargie, et l'état
+final du schéma est **inchangé** puisque `0063` reste la dernière autorité.
+
+**INC-240 — REPRODUITE, PUIS CORRIGÉE, PUIS PROTÉGÉE.** Le défaut a été reproduit avant d'être
+corrigé (`CLAUDE.md` §18) : `verify-identites.sh` rendait **23 contrôles, 2 en échec** sur
+`42703: record "new" has no field "mentions"`, et rend après correction **23 contrôles, aucune
+anomalie**. `verify-commentaires.sh` passe de **2 en échec à 1**. La preuve durable est un contrôle
+qui lit les **fichiers** du répertoire, parce qu'aucune preuve lisant `pg_proc` ne pouvait trouver ce
+défaut : après le rejeu complet, la dernière écriture a déjà gagné. `verify-migrations.sh` rend
+**28 contrôles, aucune anomalie**, contre 25 avant, et le contrôle est éprouvé dans les deux sens sur
+un répertoire minimal muté.
+
+**INC-243 — L'« INTERMITTENCE » DE LA DÉCISION 554 N'EN ÉTAIT PAS UNE.** Le contrôle d'empreinte
+ajouté la veille rougissait une fois sur deux sans qu'aucun fichier ne bouge, et la décision 554
+l'avait honnêtement **nommé sans l'expliquer**. Elle est reproductible : rouge lancé juste après
+`./resetMe.sh`, vert sur une base stabilisée, deux fois de suite dans chaque sens. La cause est lue
+dans le diff — l'unique ligne divergente porte **les mêmes droits dans un autre ordre** : `proacl`
+est un `aclitem[]` que l'empreinte concaténait tel quel, et le rejeu du répertoire réémet les
+`GRANT` en permutant l'ordre. Un rouge qui ne dit rien du produit coûte aussi cher qu'un vert qui ne
+prouve rien. Les `aclitem` sont désormais triés : **37 contrôles, aucune anomalie** dans la condition
+qui rendait rouge, et le contrôle rougit toujours sur un `EXECUTE` réellement révoqué.
+
+**INC-242 CONSIGNÉE, NON CORRIGÉE** (`docs/CloudWorker.md` §3.1). `verify-commentaires.sh` exige
+exactement 98 assertions d'une suite qui en déclare et en rend **99, toutes vertes** : compteur figé
+dépassé, famille d'INC-191 et d'INC-175. **Ligne de base établie** contre `dc09f87` : rouge des deux
+côtés, donc préexistant et étranger. Issue retenue écrite — réviser le compteur à 99, jamais le
+relâcher en `-ge` —, mise en œuvre due à `CRM-043`.
+
+**CAMPAGNE DE FIN, ET ELLE EST VERTE** : `test:sql` **67 fichiers / 3052 assertions**, `test:unit`
+**2934**, `typecheck`, `build`, `pytest` **244**, `e2e:api` **1041**, `e2e:ui` **729**, `e2e:mail`
+**42** — aucun échec. Harnais du changement rejoués seuls sur base réinitialisée :
+`verify-migrations` **28**, `verify-identites` **23**, `verify-authz` **37**, `verify-mentions`
+**47** — aucune anomalie ; `verify-commentaires` **79 contrôles, 1 en échec**, celui d'INC-242.
+
+**CE QUI N'A PAS ÉTÉ EXÉCUTÉ, ET IL FAUT LE DIRE.** La série entière des 77 `verify-*.sh` n'a pas
+été rejouée : elle n'est la Definition of Done d'aucune unité (décision 553) et reste l'objet d'une
+session dédiée, lancée seule. Aucune capture nouvelle n'était due — le changement ne touche aucune
+interface —, et les 158 captures régénérées par `e2e:ui` ont été **regardées** puis restaurées : le
+rendu est intact, et `docs/captures/CRM-043/commentaire-modifie-1440.jpg` montre le geste même
+qu'INC-240 cassait, « modifié » et corps réécrit.
+
+**UNE INCOHÉRENCE INTERNE DU BACKLOG CORRIGÉE AU PASSAGE** : son tableau récapitulatif donnait
+`CRM-064`, `CRM-065` et `CRM-080` en `[~]` ou `[ ]` là où leurs sections les donnent `[x]` depuis la
+décision 553. Le fichier qui fait foi se contredisait lui-même.
+
+**Où reprendre.** Deux des trois dettes nommées par la décision 555 restent : **INC-239**
+(`CRM-062`, la garde de `0054` ; `CRM-087`, la prémisse de rejouabilité) et **INC-241**
+(`CRM-041`). **INC-242** s'y ajoute (`CRM-043`, un compteur à réviser — travail court). INC-239 est
+la plus sérieuse et la plus proche du produit : trois harnais ne savent pas se restaurer eux-mêmes,
+et `CRM-087` en dépend.
