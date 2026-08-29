@@ -541,6 +541,8 @@ PORT_RAPPORT=9323
 # **67 depuis `CRM-083` tranche 3, 2026-08-28** :
 # `supabase/tests/0067_objectifs_ecriture_permise.test.sql` est le fichier ajouté, et il est le
 # seul. 66 + 1 = 67, valeur COMPTÉE — « 67 fichiers ». Garde-fou RÉVISÉ, jamais retiré (décision 51).
+# **INCHANGÉ le 2026-08-29** : `CRM-084` tranche 4 étend `0048_budgets.test.sql` plutôt que d'ouvrir
+# un fichier — la colonne qu'elle livre vit sur une table déjà couverte par cette suite.
 FICHIERS_SQL_ATTENDUS=67
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
@@ -555,7 +557,10 @@ FICHIERS_SQL_ATTENDUS=67
 # cette tranche, qui n'ajoute aucune assertion hors de son propre fichier. Le compteur est porté à
 # la valeur comptée plutôt que laissé rouge pour une dérive qui ne m'appartient pas, et la part
 # antérieure est écrite ici — même traitement que les révisions de 3008 et de 3027 ci-dessus.
-ASSERTIONS_ATTENDUES=3042
+# **3052 le 2026-08-29, et l'écart est ENTIÈREMENT le mien** : la tranche 4 de `CRM-084` porte
+# `0048_budgets.test.sql` de 52 à 62 assertions — 3042 + 10 = 3052 —, et `npm run test:sql` en
+# COMPTE exactement **3052**. Aucune part antérieure n'est absorbée ici : il n'y en a pas.
+ASSERTIONS_ATTENDUES=3052
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -823,7 +828,12 @@ ASSERTIONS_ATTENDUES=3042
 # QUATRE scénarios dans `e2e/api/objectifs.spec.ts` — AUCUN fichier nouveau : ils mesurent la
 # colonne calculée sur les tables que ce fichier couvre déjà. 1032 + 4 = 1036, valeur COMPTÉE —
 # « Total: 1036 tests in 65 files ». Garde-fou RÉVISÉ, jamais retiré (décision 51).
-SCENARIOS_API=1036
+# **1041 depuis `CRM-084` tranche 4b, 2026-08-29.** Le seuil d'ancienneté ajoute CINQ scénarios dans
+# `e2e/api/budgets.spec.ts` — AUCUN fichier nouveau : la colonne vit sur `budgets`, table que ce
+# fichier couvre déjà, et c'est l'inverse du choix de la tranche 3c, où les occurrences posaient
+# leur propre budget d'essai. 1036 + 5 = 1041, valeur COMPTÉE — « 1041 passed ». Garde-fou RÉVISÉ,
+# jamais retiré (décision 51).
+SCENARIOS_API=1041
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -1145,7 +1155,14 @@ SCENARIOS_API=1036
 # sont donc ANTÉRIEURS et étrangers à cette tranche. 717 + 7 = 724, valeur COMPTÉE — « Total: 724
 # tests in 57 files ». Le compteur est porté à la valeur comptée, et la part antérieure est écrite
 # ici plutôt qu'absorbée en silence. Garde-fou RÉVISÉ, jamais retiré (décision 51).
-SCENARIOS_UI=724
+# **727 depuis `CRM-084` tranche 4c, 2026-08-29, et l'écart est ENTIÈREMENT le mien.** Le seuil
+# d'ancienneté ajoute TROIS scénarios, dans deux fichiers existants et AUCUN fichier neuf : deux
+# dans `e2e/ui/budgets.spec.ts` — le seuil posé, relu puis effacé, et le refus nommé sur son champ —
+# et un dans `e2e/ui/couts-a-saisir.spec.ts`, S7, qui mesure les trois états sur le jeu de
+# démonstration. 724 + 3 = 727, valeur COMPTÉE — « Total: 727 tests in 57 files », jamais déduite.
+# Le nombre de FICHIERS est inchangé, ce qui est la contre-épreuve de « aucun fichier neuf ».
+# Garde-fou RÉVISÉ, jamais retiré (mécanisme de la décision 51).
+SCENARIOS_UI=727
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

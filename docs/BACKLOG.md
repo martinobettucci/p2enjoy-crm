@@ -11083,7 +11083,7 @@ seconde phrase promettait la variante depuis le premier jour.
   variante de danger de la colonne « Ancienneté » et son nom accessible (§5.31), leurs suites
   unitaires, leurs scénarios E2E et leurs captures.
 
-- [~] **4a — LIVRÉE le 2026-08-29** (décision 549). L'arbitrage retient l'issue n° 2 — le seuil est
+- [x] **4a — LIVRÉE le 2026-08-29** (décision 549). L'arbitrage retient l'issue n° 2 — le seuil est
       une donnée du budget — contre les deux autres, et le motif est écrit plutôt que sous-entendu :
       une constante de produit (issue n° 1) ferait suivre à un même signal **deux doctrines
       contraires**, la pastille d'une card se taisant sur une étape sans seuil ; retirer la seconde
@@ -11091,8 +11091,40 @@ seconde phrase promettait la variante depuis le premier jour.
       **rang** et jamais un **franchissement**. Le repli au niveau du workspace que l'entrée nommait
       n'est **pas** retenu : le repli d'une card existe parce qu'une étape est la copie d'un nœud du
       catalogue, et un budget n'est la copie de rien.
-- [ ] **4b et 4c restent dues.** Tant qu'elles ne sont pas livrées, la colonne « Ancienneté » reste
-      rendue **sans** variante de danger : la spécification a changé, pas encore le produit.
+- [x] **4b — LIVRÉE ET PROUVÉE le 2026-08-29.** `supabase/migrations/0072_budgets_seuil_anciennete.sql`
+      : la colonne `stale_after_days` et `budgets_stale_check`, **aucune politique, aucun privilège,
+      aucun trigger, aucune fonction, aucun index**. Types régénérés — le diff ne porte que la
+      colonne, trois lignes. `supabase/tests/0048_budgets.test.sql` passe de **52 à 62 assertions**,
+      dont l'**absence structurelle de tout repli** : `hasnt_column` sur `budget_occurrences`, la
+      seule façon de prouver « pas de repli » plutôt que « repli qui rend nul ».
+      `e2e/api/budgets.spec.ts` passe de **14 à 19 scénarios** avec les jetons réels — que PostgREST
+      expose la colonne (elle rendait `PGRST204` avant la migration), qu'elle arrive dans l'embed de
+      l'onglet sans aller-retour de plus, que la contrainte rend `400`/`23514` et non un refus de
+      politique, et que le refus d'un non-administrateur est `200` et **zéro ligne**, relu sur la
+      ligne.
+- [x] **4c — LIVRÉE ET PROUVÉE le 2026-08-29.** Le champ facultatif du formulaire d'administration,
+      `lireSeuilAnciennete` (entier strictement positif, là où l'enveloppe accepte zéro et le
+      négatif), l'envoi **toujours** porteur de la colonne, et la variante de danger de la colonne
+      « Ancienneté » avec son nom accessible. Unitaires : `budgets.test.ts` **36**,
+      `couts-a-saisir.test.ts` **40**. E2E : `budgets.spec.ts` **15 scénarios**,
+      `couts-a-saisir.spec.ts` **7 scénarios**, console vierge.
+- [x] **UN DÉFAUT TROUVÉ EN REGARDANT, ET AUCUNE ASSERTION NE L'ATTRAPAIT** (`CLAUDE.md` §16). La
+      teinte de danger était portée par la CELLULE : elle peignait toute la largeur de la colonne —
+      cent quinze pixels de fond rouge derrière quatre caractères —, et la ligne entière se lisait
+      comme une ligne en erreur, alors que c'est une **valeur** qui est signalée. Elle est désormais
+      portée par la valeur, dans la forme exacte de la pilule « clôturé » de la colonne d'à côté.
+      `docs/DESIGN_SYSTEM.md` §5.31 en tire une règle réemployable, et une assertion mesure que la
+      pastille est plus étroite que sa cellule.
+- [x] **`docs/SPEC-costs.md` §4.1 RÉVISÉ PAR LIVRAISON, motif écrit** : la spécification écrite avant
+      le code demandait `type="number" min="1"` ; c'est faux ici, et `BlocBudgetsTrack.tsx` avait
+      déjà pris la décision inverse pour l'enveloppe dès la tranche 2 — un champ numérique natif
+      avale la saisie qu'il refuse, et `lireSeuilAnciennete` ne verrait jamais « 0 » ni « 2,5 ».
+- [x] **Harnais dédié étendu** : `scripts/verify-budgets.sh` passe de **43 à 53 contrôles, aucune
+      anomalie**, avec **cinq** dégradations mordantes au lieu de trois — la comparaison rendue
+      large et le seuil absent ouvrant le retard s'ajoutent aux trois de la tranche 2. **Un de ses
+      contrôles a rougi sur du code correct avant d'être corrigé à sa cause** — le mode de
+      défaillance d'INC-184 : il lisait `type="number"` dans les COMMENTAIRES qui expliquent
+      pourquoi les deux champs ne l'emploient pas.
 - [x] **Le seed devra ANTIDATER une ligne, et c'est une mesure qui l'impose** (§2.1 bis) : les trois
       lignes sans réel du seed ont **zéro jour** d'ancienneté, puisqu'elles naissent à l'exécution du
       seed. Sans antidatage, la variante serait livrée indémontrable (`CLAUDE.md` §8). Mesuré le même
