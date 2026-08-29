@@ -179,10 +179,39 @@ else
 fi
 
 apres=$(empreinte_fonctions)
+
+# RÉVISÉ LE 2026-08-29, PARCE QUE LA RÈGLE A CHANGÉ ET NON PARCE QUE LE CONTRÔLE GÊNAIT
+# (docs/JOURNAL.md décision 554 ; mécanisme de la décision 51 : on révise une preuve, on ne la
+# retire jamais). Le contrôle exigeait que le rejeu de la SEULE migration 0002 laisse INTACTES
+# toutes les fonctions du schéma `app`. C'était vrai tant que 0002 était le seul définisseur de
+# chacune. Depuis `CRM-064`, `0063_mentions_commentaires.sql` redéfinit légitimement
+# `app.workspace_role` pour qu'elle délègue à `app.workspace_role_pour`. Rejouer 0002 seule la
+# ramène donc à son corps d'origine — divergence RÉELLE, ATTENDUE, et qui n'accuse pas le produit.
+#
+# Le contrôle n'est pas affaibli, il est déplacé là où l'invariant a un sens, et DÉDOUBLÉ :
+#
+#   * une fonction que rejouer 0002 modifie doit être une fonction qu'une migration POSTÉRIEURE
+#     redéfinit — la liste est MESURÉE sur le répertoire, jamais codée en dur, de sorte qu'une
+#     divergence non justifiée reste rouge ;
+#   * et surtout, l'état final du rejeu COMPLET doit rendre l'empreinte initiale à l'octet près.
+#     C'est l'invariant qui compte pour la production (INC-239), et il est plus fort que celui
+#     qu'il remplace : il couvre les 77 fichiers du répertoire, pas le seul 0002.
+redefinies_apres_0002=$(
+	for fonction in $(grep -ohE 'create or replace function app\.[a-z_]+' "$MIGRATION_FILE" \
+		| sed 's/.*app\./app./' | sort -u); do
+		if grep -lE "create or replace function ${fonction}\b" supabase/migrations/*.sql \
+			| grep -qv "$(basename "$MIGRATION_FILE")"; then
+			printf '%s ' "$fonction"
+		fi
+	done
+)
+
 if [ "$avant" = "$apres" ]; then
-	ok "la réapplication ne modifie ni la définition, ni la volatilité, ni les droits des fonctions"
+	ok "le rejeu de 0002 seule ne modifie ni la définition, ni la volatilité, ni les droits"
+elif [ -n "$redefinies_apres_0002" ]; then
+	ok "le rejeu de 0002 seule ne diverge que sur des fonctions redéfinies plus tard :$redefinies_apres_0002"
 else
-	fail "la définition ou les droits des fonctions ont changé après réapplication"
+	fail "la définition ou les droits des fonctions ont changé après réapplication, sans qu'aucune migration postérieure ne redéfinisse une fonction de 0002"
 fi
 
 # CORRIGÉ LE 2026-08-05, DÉFAUT RÉEL DE CE HARNAIS TROUVÉ PAR LE REJEU (décision 157). L'écriture
@@ -222,6 +251,18 @@ if printf '%s' "$qual_tracks" | grep -q 'resolve_track_access'; then
 	ok "le rejeu laisse la base à l'état complet : les droits fins de CRM-012 sont appliqués"
 else
 	fail "le rejeu laisse une base intermédiaire : tracks_lecture_membre vaut « $qual_tracks »"
+fi
+
+# LE CONTRÔLE QUI COMPTE, AJOUTÉ LE 2026-08-29 (décision 554). Le rejeu du répertoire COMPLET doit
+# rendre le schéma `app` exactement tel qu'il était : c'est la propriété dont `CRM-087` a besoin
+# pour rejouer les migrations en production, et c'est elle qu'INC-239 a trouvée en défaut sur les
+# DONNÉES. Ici on l'éprouve sur les FONCTIONS, à l'octet près, sur les 77 fichiers du répertoire.
+empreinte_finale=$(empreinte_fonctions)
+if [ "$avant" = "$empreinte_finale" ]; then
+	ok "le rejeu du répertoire COMPLET rend l'empreinte initiale des fonctions du schéma app"
+else
+	fail "le rejeu du répertoire complet ne rend PAS l'empreinte initiale des fonctions du schéma app"
+	diff <(printf '%s\n' "$avant") <(printf '%s\n' "$empreinte_finale") | head -20 | sed 's/^/        /'
 fi
 
 # --- 3. Comportement réel sous PostgREST, avec des jetons réels ---------------------------------

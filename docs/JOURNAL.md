@@ -27549,3 +27549,46 @@ affaibli.
 
 **Où reprendre.** La série complète est exécutée immédiatement après ce commit, seule. Ce qu'elle
 rendra rouge sera trié : imputable à une unité nommée, ou préexistant et consigné.
+
+## décision 554 — `verify-authz.sh` révisé : la seule anomalie RÉELLE de la série, et elle datait de `CRM-064`
+
+*2026-08-29, même exécution que la décision 553.*
+
+**LE TRI A DÉSIGNÉ UNE SEULE ANOMALIE RÉELLE SUR LES SEPT PREMIÈRES REJOUÉES**, et c'est celle-ci.
+Rejoués SEULS sur une base réinitialisée, `verify-snooze` (70 contrôles), `verify-recherche` (54),
+`verify-migrations` (25), `verify-timeline` (70), `verify-mentions` (47) et `verify-notifications`
+(43) rendent **aucune anomalie**, là où la série leur donnait respectivement 4, 1, 1, 3, 5 et 1
+échecs. `verify-authz` rend **1 anomalie des DEUX côtés** : elle est réelle, et elle est
+préexistante.
+
+**LA CAUSE, MESURÉE SUR LE RÉPERTOIRE ET NON DEVINÉE.** Le contrôle exige que le rejeu de la seule
+`0002_fonctions_autorisation.sql` laisse INTACTES toutes les fonctions du schéma `app` — empreinte
+de `pg_get_functiondef`, `prosecdef`, `provolatile`, `proconfig` et `proacl`. Des quatre fonctions
+que `0002` définit, **une** est redéfinie plus tard : `app.workspace_role`, par
+`0063_mentions_commentaires.sql` (`CRM-064`), pour qu'elle délègue à `app.workspace_role_pour`.
+Rejouer `0002` seule la ramène donc à son corps d'origine. La divergence est **réelle, attendue, et
+n'accuse pas le produit** : c'est le contrôle qui figeait un état que `CRM-064` a légitimement
+changé — la famille exacte d'INC-191.
+
+**LA PREUVE EST DONC RÉVISÉE, JAMAIS RETIRÉE** (`docs/CloudWorker.md` §3.1, mécanisme de la
+décision 51), avec son motif écrit dans le fichier lui-même, et elle en ressort **plus forte** :
+
+1. une fonction que le rejeu de `0002` modifie doit être une fonction qu'une migration
+   **postérieure** redéfinit — et la liste est **mesurée sur le répertoire** à chaque exécution,
+   jamais codée en dur : une divergence non justifiée reste rouge, le contrôle n'est pas complaisant ;
+2. **contrôle AJOUTÉ, et c'est celui qui compte** : après le rejeu du répertoire **complet**,
+   l'empreinte des fonctions du schéma `app` doit être identique à l'initiale, **à l'octet près**.
+   Il couvre les 77 fichiers du répertoire là où l'ancien ne couvrait que `0002`, et il éprouve sur
+   les FONCTIONS la propriété qu'INC-239 vient de trouver en défaut sur les DONNÉES — celle-là même
+   dont `CRM-087` a besoin pour rejouer les migrations en production.
+
+**UNE SECONDE OBSERVATION, MINEURE ET CONSIGNÉE PLUTÔT QUE CORRIGÉE.** `scripts/verify-stack.sh`
+rejoué immédiatement derrière `./resetMe.sh` rend « p2enjoy-webapp : health=starting ». MESURÉ :
+le conteneur `webapp` **redémarre une fois** après le démarrage à froid (`RestartCount=1`) et
+repasse `starting` une quinzaine de secondes. Une attente de santé posée avant le harnais ne suffit
+donc pas : elle voit la pile saine, puis `webapp` redémarre derrière. Ce n'est ni une régression, ni
+un défaut du produit — c'est une course entre le harnais et un redémarrage, et elle ne dit rien de
+la pile.
+
+**Où reprendre.** Le tri des vingt-quatre autres rouges de la série est en cours, même protocole :
+rejeu SEUL, base réinitialisée entre chaque.
