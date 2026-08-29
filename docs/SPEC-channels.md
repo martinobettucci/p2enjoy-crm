@@ -390,11 +390,17 @@ une sixième surface arrivera :
 | `webapp/src/lib/objectifs-ecriture.ts` (`CRM-083`) | Écriture d'un objectif | Route transverse ; elle liste les channels **du workspace**, pas ceux d'un track |
 
 **Non-complaisance.** Le recensement est éprouvé **sur une arborescence de routeur mutée**, jetable
-et minimale, dans les trois sens que les contrôles *b*, *c* et *d* refusent : un composant de route
-porteuse de `:slugTrack` privé de son `useContenuTrack`, le même doté d'un `from('channels')`
-propre, et un chargeur partagé porteur d'une seconde lecture. Chacune des trois mutations doit
-rendre le recensement fautif ; l'arborescence intacte doit le rendre conforme. Un contrôle de
-structure qui n'est pas retourné ne prouve rien de plus qu'un `true`.
+et minimale, dans les **quatre** sens que les contrôles *a* à *d* refusent : un composant de route
+porteuse de `:slugTrack` privé de son `useContenuTrack` (*b*), le même doté d'un `from('channels')`
+propre (*c*), un chargeur partagé porteur d'une seconde lecture (*d*), et un routeur d'où le segment
+`:slugTrack` a disparu (*a*). Chacune des quatre mutations doit rendre le recensement fautif ;
+l'arborescence rendue intacte doit le rendre conforme, sans quoi les quatre refus ne prouveraient
+qu'un contrôle rouge en permanence. Un contrôle de structure qui n'est pas retourné ne prouve rien
+de plus qu'un `true`.
+
+Ce retournement ne lance ni npm, ni Playwright, ni la moindre requête, et il ne dégrade aucun
+fichier du dépôt : il s'exécute donc **aussi en `--rapide`**, contrairement aux dégradations de la
+section 6 du harnais.
 
 ## 6. Autorisations
 

@@ -4,11 +4,13 @@
 #           colonnes), §7.4 (carte de card), §7.5 (transitions atteignables), §7.6 (glisser-
 #           déposer), §7.7 (clavier), §7.8 (motif exigé), §7.9 (optimisme et retour arrière),
 #           §7.10 (les sept refus), §7.11 (états et responsive), §7.14 (preuves attendues)
-# @verifies docs/SPEC-channels.md §5 (la lecture partagée porte `workflow_id`)
+# @verifies docs/SPEC-channels.md §5 (la lecture partagée porte `workflow_id`), §5.4 (la règle de
+#           route), §5.4.1 (cette règle rendue exécutable et retournée sur un routeur muté)
 # @verifies docs/DESIGN_SYSTEM.md §5.1 (carte de card), §5.2 (colonne), §7 (paliers),
 #           §8 (accessibilité), §11 (classes réellement engendrées), §12.6 (débordement signalé)
 # @verifies docs/INCONSISTENCY_REPORT.md INC-021 (webapp anonyme), INC-048 (le motif n'est
-#           conservé nulle part), INC-066 (aucun éditeur de workflow) ; CRM-022 ferme INC-014
+#           conservé nulle part), INC-066 (aucun éditeur de workflow), INC-241 (le contrôle des
+#           lectures de channels était plus strict que la règle qu'il cite) ; CRM-022 ferme INC-014
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-041` :
 #
@@ -162,12 +164,215 @@ for fichier in "$TEST_UNITAIRE" "$TEST_COMPOSANT" "$SPEC_API" "$SPEC_UI"; do
 	fi
 done
 
-# La règle du §5.4 de docs/SPEC-channels.md, rendue exécutable : une seule lecture des channels.
-# Deux définitions de « channel non archivé » finiraient par diverger (décisions 167 et 169).
-if [ "$(grep -rl "from('channels')" webapp/src | wc -l)" -eq 1 ]; then
-	ok "les channels ne sont lus qu'à un seul endroit (docs/SPEC-channels.md §5.4)"
+# La règle du §5.4 de docs/SPEC-channels.md, rendue exécutable — RÉVISÉE le 2026-08-29, INC-241.
+#
+# La forme d'origine comptait les fichiers : `grep -rl "from('channels')" webapp/src | wc -l` devait
+# valoir 1. Elle était à la fois trop stricte et trop faible, et le §5.4.1 de la spécification écrit
+# les deux mesures. Trop stricte : le §5.4 prévoit des routes transverses, et quatre modules servent
+# aujourd'hui des surfaces sans barre d'onglets — administration de l'arborescence, corbeille,
+# inbox, écriture des objectifs. Trop faible : le comptage serait resté VERT si une route avait
+# réécrit sa lecture À L'INTÉRIEUR de `webapp/src/lib/channels.ts`, ce qui est exactement la
+# divergence que les décisions 167 et 169 redoutaient.
+#
+# La forme retenue éprouve la règle réelle — une règle DE ROUTE — et se mesure sur le routeur à
+# chaque exécution : constantes de chemin, table `ROUTES`, déclarations `<Route>` de `App.tsx`,
+# `.map(…)` compris. Aucune liste de routes, de composants ni de fichiers n'est écrite en dur ici :
+# un compteur figé finit rouge de son propre succès (INC-175, INC-191, INC-242).
+auditer_routeur() {
+	python3 - "$1" <<'PY'
+import pathlib
+import re
+import sys
+
+racine = pathlib.Path(sys.argv[1])
+app = racine / 'app'
+chargeur = racine / 'lib' / 'channels.ts'
+
+
+def litteraux(expression):
+    return re.findall(r"'([^']*)'", expression)
+
+
+# --- 1. Les constantes de chemin, mesurées sur `<racine>/app/` -----------------------------------
+
+constantes = {}
+for fichier in sorted(app.glob('*.ts')) + sorted(app.glob('*.tsx')):
+    for nom, valeur in re.findall(
+        r"export const ([A-Za-z0-9_]+)\s*=\s*(\[[^\]]*\]|'[^']*')\s*as const",
+        fichier.read_text(encoding='utf-8'),
+    ):
+        constantes[nom] = litteraux(valeur)
+
+# --- 2. La table `ROUTES`, qui associe un chemin à son rendu -------------------------------------
+
+table = {}
+source_routes = app / 'routes.tsx'
+if source_routes.exists():
+    bloc = re.search(
+        r"export const ROUTES[^=]*=\s*\[(.*?)\n\]",
+        source_routes.read_text(encoding='utf-8'),
+        re.S,
+    )
+    if bloc is not None:
+        for entree in re.finditer(
+            r"chemin:\s*(\[[^\]]*\]|'[^']*'|[A-Za-z0-9_]+)"
+            r".*?rendu:\s*\(\)\s*=>\s*<([A-Za-z0-9_]+)",
+            bloc.group(1),
+            re.S,
+        ):
+            expression, composant = entree.group(1), entree.group(2)
+            for chemin in litteraux(expression) or constantes.get(expression, []):
+                table[chemin] = composant
+
+# --- 3. Les déclarations `<Route>` de `App.tsx` --------------------------------------------------
+
+source = (app / 'App.tsx').read_text(encoding='utf-8')
+tableaux = [
+    (m.start(), m.group(1), m.group(2))
+    for m in re.finditer(r"\{([A-Za-z0-9_]+)\.map\(\(([A-Za-z0-9_]+)\)", source)
+]
+
+
+def balise(texte, depart):
+    """Rend le texte de la balise ouverte en `depart`, accolades appariées."""
+    profondeur, indice = 0, depart
+    while indice < len(texte):
+        caractere = texte[indice]
+        if caractere == '{':
+            profondeur += 1
+        elif caractere == '}':
+            profondeur -= 1
+        elif profondeur == 0 and texte.startswith('/>', indice):
+            return texte[depart:indice]
+        indice += 1
+    return texte[depart:]
+
+
+def attribut(tag, nom):
+    """Rend la valeur brute de l'attribut, accolades appariées, ou None."""
+    marque = re.search(nom + r'=', tag)
+    if marque is None:
+        return None
+    reste = tag[marque.end():]
+    if reste.startswith('"'):
+        return "'" + reste[1:reste.find('"', 1)] + "'"
+    if not reste.startswith('{'):
+        return None
+    profondeur, indice = 0, 0
+    while indice < len(reste):
+        if reste[indice] == '{':
+            profondeur += 1
+        elif reste[indice] == '}':
+            profondeur -= 1
+            if profondeur == 0:
+                return reste[1:indice]
+        indice += 1
+    return None
+
+
+routes = []
+irresolus = []
+for declaration in re.finditer(r"<Route\b", source):
+    tag = balise(source, declaration.end())
+    expression = attribut(tag, 'path')
+    rendu = attribut(tag, 'element')
+    composants = [] if rendu is None else re.findall(r"<([A-Z][A-Za-z0-9_]*)", rendu)
+    if expression is None or not composants:
+        irresolus.append(' '.join(tag.split())[:60])
+        continue
+    # Le composant d'écran est le plus interne : `<AppShell …><Corbeille /></AppShell>`.
+    composant = composants[-1]
+    expression = expression.strip()
+    if expression.startswith("'"):
+        routes.append((litteraux(expression)[0], composant))
+        continue
+    if expression in constantes:
+        routes.extend((chemin, composant) for chemin in constantes[expression])
+        continue
+    englobants = [entree for entree in tableaux if entree[0] < declaration.start()]
+    englobant = englobants[-1] if englobants else None
+    if englobant is not None and (
+        expression == englobant[2] or expression.startswith(englobant[2] + '.')
+    ):
+        tableau = englobant[1]
+        if tableau in constantes:
+            routes.extend((chemin, composant) for chemin in constantes[tableau])
+            continue
+        if tableau == 'ROUTES' and table:
+            routes.extend(table.items())
+            continue
+    irresolus.append(expression)
+
+# --- 4. Les quatre verdicts du §5.4.1 ------------------------------------------------------------
+
+
+def verdict(code, conforme, message):
+    print('%s %s %s' % (code, 'OK' if conforme else 'ANOMALIE', message))
+
+
+porteuses = sorted({(chemin, composant) for chemin, composant in routes if ':slugTrack' in chemin})
+fichiers, absents = {}, []
+for chemin, composant in porteuses:
+    fichier = app / (composant + '.tsx')
+    if fichier.exists():
+        fichiers[composant] = fichier
+    else:
+        absents.append('%s → %s' % (chemin, composant))
+
+if irresolus:
+    verdict('A', False, 'chemin de route non résolu : ' + ' | '.join(sorted(set(irresolus))))
+elif not porteuses:
+    verdict('A', False, 'aucune route porteuse de « :slugTrack » : le contrôle ne mesure plus rien')
+elif absents:
+    verdict('A', False, 'composant de route introuvable : ' + ', '.join(absents))
+else:
+    for chemin, composant in porteuses:
+        print('# %s → %s' % (chemin, composant))
+    verdict('A', True, '%d routes porteuses de « :slugTrack », sur %d composants, toutes résolues'
+            % (len(porteuses), len(fichiers)))
+
+sources = {composant: fichier.read_text(encoding='utf-8') for composant, fichier in fichiers.items()}
+IMPORT_CHARGEUR = re.compile(
+    r"import\s*\{[^}]*\buseContenuTrack\b[^}]*\}\s*from\s*'\.\./lib/channels'", re.S
+)
+
+sans_chargeur = sorted(c for c, texte in sources.items() if IMPORT_CHARGEUR.search(texte) is None)
+if sans_chargeur:
+    verdict('B', False, 'route sans le chargeur du chapitre : ' + ', '.join(sans_chargeur))
+else:
+    verdict('B', True, 'chaque route porteuse de « :slugTrack » alimente la barre par useContenuTrack')
+
+proprietaires = sorted(c for c, texte in sources.items() if "from('channels')" in texte)
+if proprietaires:
+    verdict('C', False, 'route qui réécrit sa lecture des channels : ' + ', '.join(proprietaires))
+else:
+    verdict('C', True, 'aucune route porteuse de « :slugTrack » ne réécrit sa lecture des channels')
+
+if not chargeur.exists():
+    verdict('D', False, 'le chargeur partagé %s est ABSENT' % chargeur)
+else:
+    lectures = chargeur.read_text(encoding='utf-8').count("from('channels')")
+    verdict('D', lectures == 1,
+            'le chargeur partagé émet %d lecture(s) des channels' % lectures)
+PY
+}
+
+if auditer_routeur webapp/src > "$TRAVAIL/routeur.txt" 2>&1; then
+	while IFS= read -r ligne; do
+		code=${ligne%% *}
+		reste=${ligne#* }
+		if [ "$code" = '#' ]; then
+			printf '        %s\n' "$reste"
+			continue
+		fi
+		if [ "${reste%% *}" = OK ]; then
+			ok "§5.4.1 $code — ${reste#* }"
+		else
+			fail "§5.4.1 $code — ${reste#* }"
+		fi
+	done < "$TRAVAIL/routeur.txt"
 else
-	fail "les channels sont lus à plusieurs endroits : les lectures divergeront"
+	fail "le recensement du routeur n'a pas pu s'exécuter : $(tr '\n' ' ' < "$TRAVAIL/routeur.txt")"
 fi
 
 # `workflow_id` est lue dans la lecture PARTAGÉE, et non par une seconde requête (décision 169).
@@ -411,6 +616,118 @@ fi
 # --- 6. Dégradations : le harnais est-il complaisant ? --------------------------------------------
 
 titre "6. Dégradations volontaires — le harnais échoue-t-il vraiment ?"
+
+# LE RETOURNEMENT DU RECENSEMENT DU ROUTEUR (§1) EST ICI, MAIS HORS DU GARDE `--rapide` : il ne
+# lance ni npm, ni Playwright, ni la moindre requête, et il ne dégrade RIEN du dépôt — il mute une
+# arborescence de routeur JETABLE, écrite ici même. Le soustraire au mode rapide reviendrait à ne
+# jamais l'exécuter dans le mode qui sert justement à rejouer les contrôles de structure.
+#
+# Un contrôle de structure qui n'est pas retourné ne prouve rien de plus qu'un `true`
+# (docs/SPEC-channels.md §5.4.1, dernier paragraphe).
+ROUTEUR_FACTICE="$TRAVAIL/routeur"
+mkdir -p "$ROUTEUR_FACTICE/app" "$ROUTEUR_FACTICE/lib"
+
+cat > "$ROUTEUR_FACTICE/app/chemins.ts" <<'FACTICE'
+export const CHEMIN_FACTICE_TRACK = '/tracks/:slugTrack/factice' as const
+export const CHEMINS_FACTICE = ['/tracks/:slugTrack'] as const
+export const CHEMIN_FACTICE_TRANSVERSE = '/factice' as const
+FACTICE
+
+cat > "$ROUTEUR_FACTICE/app/routes.tsx" <<'FACTICE'
+export const ROUTES: readonly DescriptionRoute[] = [
+	{
+		chemin: CHEMIN_FACTICE_TRANSVERSE,
+		cleTitre: 'route.factice.title',
+		rendu: () => <EcranTransverseFactice />,
+	},
+]
+FACTICE
+
+cat > "$ROUTEUR_FACTICE/app/App.tsx" <<'FACTICE'
+export function RoutesApplication() {
+	return (
+		<Routes>
+			{ROUTES.map((route) => (
+				<Route
+					key={route.chemin}
+					path={route.chemin}
+					element={
+						<AppShell cleTitreRoute={route.cleTitre}>{route.rendu()}</AppShell>
+					}
+				/>
+			))}
+			{CHEMINS_FACTICE.map((chemin) => (
+				<Route key={chemin} path={chemin} element={<EcranTrackFactice />} />
+			))}
+			<Route path={CHEMIN_FACTICE_TRACK} element={<EcranTrackFactice />} />
+		</Routes>
+	)
+}
+FACTICE
+
+cat > "$ROUTEUR_FACTICE/app/EcranTrackFactice.tsx" <<'FACTICE'
+import { useContenuTrack } from '../lib/channels'
+export function EcranTrackFactice() {
+	return useContenuTrack()
+}
+FACTICE
+
+cat > "$ROUTEUR_FACTICE/app/EcranTransverseFactice.tsx" <<'FACTICE'
+export function EcranTransverseFactice() {
+	return null
+}
+FACTICE
+
+cat > "$ROUTEUR_FACTICE/lib/channels.ts" <<'FACTICE'
+export function useContenuTrack() {
+	return client.from('channels').select('id')
+}
+FACTICE
+
+cp -r "$ROUTEUR_FACTICE" "$TRAVAIL/routeur-intact"
+
+muter_routeur() {
+	local libelle=$1 attendu=$2
+	auditer_routeur "$ROUTEUR_FACTICE" > "$TRAVAIL/routeur-mute.txt" 2>&1 || true
+	if grep -q "^$attendu ANOMALIE" "$TRAVAIL/routeur-mute.txt"; then
+		ok "routeur muté — « $libelle » est refusé par le contrôle $attendu"
+	else
+		fail "COMPLAISANT : « $libelle » et le contrôle $attendu reste vert"
+	fi
+	rm -rf "$ROUTEUR_FACTICE"
+	cp -r "$TRAVAIL/routeur-intact" "$ROUTEUR_FACTICE"
+}
+
+# M1 — la route porteuse d'un `slugTrack` résout son track sans le chargeur du chapitre.
+sed -i "s|import { useContenuTrack } from '../lib/channels'|import { chargerChannels } from '../lib/propre'|" \
+	"$ROUTEUR_FACTICE/app/EcranTrackFactice.tsx"
+muter_routeur "une route de track sans useContenuTrack (§5.4 nié)" B
+
+# M2 — la même route réécrit sa propre lecture des channels : le défaut nommé par le §5.4.
+printf "const propre = client.from('channels').select('id')\n" \
+	>> "$ROUTEUR_FACTICE/app/EcranTrackFactice.tsx"
+muter_routeur "une route de track qui relit les channels (§5.4 nié)" C
+
+# M3 — LA MUTATION QUE LE COMPTAGE DE FICHIERS NE POUVAIT PAS VOIR (INC-241) : la seconde lecture
+# est glissée DANS le chargeur partagé, le fichier reste unique, et les deux définitions de
+# « channel non archivé » divergent quand même (décisions 167 et 169).
+printf "const seconde = client.from('channels').select('id, name')\n" \
+	>> "$ROUTEUR_FACTICE/lib/channels.ts"
+muter_routeur "une seconde lecture dans le chargeur partagé (§5.4.1 d nié)" D
+
+# M4 — le recensement ne trouve plus aucune route porteuse : un contrôle qui ne mesure plus rien
+# doit se déclarer fautif, jamais rendre un vert vide.
+sed -i 's|:slugTrack|:idAutre|g' "$ROUTEUR_FACTICE/app/chemins.ts"
+muter_routeur "un routeur sans route porteuse de « :slugTrack »" A
+
+# L'arborescence jetable est rendue intacte : le recensement doit la déclarer conforme, sans quoi
+# les quatre refus ci-dessus ne prouveraient qu'un contrôle rouge en permanence.
+auditer_routeur "$ROUTEUR_FACTICE" > "$TRAVAIL/routeur-rendu.txt" 2>&1 || true
+if grep -q 'ANOMALIE' "$TRAVAIL/routeur-rendu.txt"; then
+	fail "le routeur factice rendu intact reste fautif : le contrôle est rouge en permanence"
+else
+	ok "routeur factice rendu intact — les quatre contrôles redeviennent verts"
+fi
 
 degradation() {
 	local libelle=$1 fichier=$2 avant=$3 apres=$4 cible=$5
