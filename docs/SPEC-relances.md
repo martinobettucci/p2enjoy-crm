@@ -540,9 +540,61 @@ bloquante : sur une base dont la contrainte a été réduite, la `0044` tentait 
 vocabulaire que les quatre lignes `stalled` du seed violent, le `migrations-runner` s'arrêtait en
 `23514` avec le code 3, et **les migrations `0045` à `0054` ne s'appliquaient plus du tout**.
 
-La seconde garde est donc posée sur la `0044`, dans la forme exacte des trois autres. La `0054`
+La seconde garde est donc posée sur la `0044`, dans la forme exacte des trois autres. ~~La `0054`
 reste seule responsable d'installer les quinze valeurs, ce que sa propre garde — qui ne regarde que
-`stalled` — sait faire sur une base réduite comme sur une base à jour.
+`stalled` — sait faire sur une base réduite comme sur une base à jour.~~ **Cette dernière phrase est
+FAUSSE depuis la migration `0070`, et elle est révisée sur place plutôt que contournée
+(`CLAUDE.md` §18) : voir le §9.8.1.**
+
+### 9.8.1 La seconde garde vaut AUSSI pour la migration la plus large de son époque — INC-239
+
+**RÉVISION du 2026-08-29, décision 558, après mesure.** Le §9.8 ci-dessus dispensait la `0054` de la
+seconde garde d'INC-144 au motif qu'elle pose le vocabulaire le plus large du dépôt. C'était vrai le
+2026-08-25. Ce ne l'est plus : la migration `0070` (`CRM-085`) a porté le vocabulaire à **dix-neuf**
+valeurs — `mail_unclassified`, `contact_linked`, `contact_unlinked`, `contact_role_changed` —, et le
+seed comme les preuves en écrivent des lignes.
+
+**LA `0054` A DONC HÉRITÉ, MOT POUR MOT, DU DÉFAUT D'INC-210 QUI AVAIT FRAPPÉ LA `0044`.** Sur une
+base dont la contrainte a été ramenée à un vocabulaire d'avant `stalled` — ce que produit tout
+harnais qui la dégrade puis la restaure en rejouant une migration antérieure —, la première garde de
+la `0054` devient vraie, la migration **rétrécit** aux quinze valeurs de son époque, et les lignes
+portant un type postérieur violent la contrainte qu'on vient de poser :
+
+```
+psql:/migrations/0054_relances_automatiques.sql:77:
+  ERROR:  check constraint "card_events_type_check" of relation "card_events"
+          is violated by some row
+```
+
+Le `migrations-runner` sort alors en `3`, `./runDev.sh` refuse de remonter la pile, et **les
+migrations `0055` à `0070` ne s'appliquent plus du tout** — exactement le mécanisme mesuré le
+2026-08-25 sur la `0044`, un cran plus loin dans le répertoire.
+
+**LA RÈGLE EST DONC GÉNÉRALE, et elle n'admet plus l'exception « la plus large de son époque ».**
+Toute migration qui converge `card_events_type_check` porte les **deux** gardes d'INC-144 :
+
+1. la première regarde la **contrainte** — ne rien faire si elle cite déjà la valeur que cette
+   migration ajoute ;
+2. la seconde regarde les **lignes** — ne pas converger si l'une d'elles porte un type que cette
+   migration ne connaît pas.
+
+La seconde n'est jamais inutile, même sur la migration la plus large du dépôt : *être la plus large*
+est un état daté, que la migration suivante défait. C'est précisément ce qu'a coûté l'omission deux
+fois de suite. Une migration à laquelle la seconde garde interdit de converger ne perd rien : la
+migration **postérieure** qui connaît le vocabulaire des lignes le pose, et c'est ce qu'elle fait.
+
+**CE QUE LA RÈGLE NE CHANGE PAS.** L'état final du schéma est **inchangé** : sur une base neuve, les
+lignes sont absentes, la seconde garde est vraie, et chaque migration pose son vocabulaire dans
+l'ordre — la `0070` reste la dernière autorité, à dix-neuf valeurs. Aucune opération manuelle de
+déploiement n'est due.
+
+**LA PREUVE EST UN CONTRÔLE DE RÉPERTOIRE, et elle ne peut pas être autre chose.** Aucune preuve
+lisant `pg_proc` ou `pg_constraint` après un rejeu complet ne peut trouver ce défaut : la dernière
+écriture a déjà gagné, et le schéma final est correct des deux côtés de la correction. Le contrôle
+appartient donc à `scripts/verify-migrations.sh` et lit les **fichiers** : toute migration qui
+réécrit `card_events_type_check` doit porter une garde sur `public.card_events` — la liste des
+migrations concernées étant **mesurée sur le répertoire à chaque exécution**, jamais codée en dur,
+de sorte qu'une migration future qui oublierait la garde rougisse d'elle-même.
 
 ### 9.9 Ce que le seed démontre, par le VRAI mécanisme
 

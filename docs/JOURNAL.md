@@ -27770,3 +27770,49 @@ décision 553. Le fichier qui fait foi se contredisait lui-même.
 (`CRM-041`). **INC-242** s'y ajoute (`CRM-043`, un compteur à réviser — travail court). INC-239 est
 la plus sérieuse et la plus proche du produit : trois harnais ne savent pas se restaurer eux-mêmes,
 et `CRM-087` en dépend.
+
+## décision 558 — INC-239 : la seconde garde d'INC-144 vaut aussi pour la migration la plus large de son époque
+
+*2026-08-29, session planifiée ouverte à 16:09:33 UTC. Spécification écrite et committée avant la
+première ligne de code (`CLAUDE.md` §5, `docs/CloudWorker.md` §3.2 point 3).*
+
+**L'UNITÉ DE LA SESSION EST INC-239**, imputée à `CRM-062`, choisie parce que la dernière entrée du
+journal la désigne — « INC-239 est la plus sérieuse et la plus proche du produit : trois harnais ne
+savent pas se restaurer eux-mêmes, et `CRM-087` en dépend ».
+
+**CE QUE LA MESURE DE LA SESSION PRÉCÉDENTE ÉTABLIT, ET QUE JE NE REDÉCOUVRE PAS.** La série des 77
+harnais laisse la base dans un état que `./runDev.sh` ne répare pas : le `migrations-runner` sort en
+`3` sur `0054_relances_automatiques.sql`, `card_events_type_check` étant violée par des lignes dont
+le type est postérieur à la migration `0054`. Seul `./resetMe.sh` répare. Le défaut se reproduit
+hors série : `verify-relances` et `verify-move-card-to-channel`, rejoués SEULS sur base neuve,
+butent sur la même voie de restauration.
+
+**LA LECTURE DU RÉPERTOIRE DONNE LA CAUSE EXACTE, ET ELLE EST PLUS SIMPLE QUE L'ENTRÉE NE LE
+SUPPOSAIT.** Huit migrations réécrivent `card_events_type_check` — `0016`, `0017`, `0020`, `0025`,
+`0030`, `0044`, `0054`, `0070`. **Sept portent les deux gardes d'INC-144** ; la `0054` est la
+**seule** à n'avoir que la première, celle qui regarde la contrainte. C'est mot pour mot le défaut
+d'INC-210, qui avait frappé la `0044` le 2026-08-25 et pour lequel le même remède avait été retenu :
+la `0054` en avait été dispensée au motif écrit qu'elle posait « le vocabulaire le plus large du
+dépôt ». La migration `0070` (`CRM-085`) a porté ce vocabulaire à dix-neuf valeurs, et la dispense
+est devenue un défaut.
+
+**CE QUE JE TRANCHE, ET SUR QUEL MOTIF** (`docs/CloudWorker.md` §4.1 bis). L'entrée INC-239 laissait
+deux formulations ouvertes — juger sur « au moins aussi large », ou « ne jamais rétrécir ». Je
+retiens **ni l'une ni l'autre telle quelle** : je pose sur la `0054` la seconde garde d'INC-144
+**dans la forme exacte des sept autres migrations**. Motif : c'est le comportement le plus simple et
+**le même partout** (ligne du responsable, §4.1 bis) ; inventer une troisième forme de garde pour la
+seule `0054` recréerait précisément l'exception qui a coûté deux incidents. La règle générale — la
+seconde garde n'est jamais dispensable, *être la plus large* étant un état daté — est écrite au
+**§9.8.1** de `docs/SPEC-relances.md`, et la phrase du §9.8 qui portait la dispense est **révisée sur
+place, jamais retirée** (`CLAUDE.md` §18).
+
+**CE QUE JE CODE, ET RIEN DE PLUS.** La seconde garde sur `0054`, motif écrit sur place. Un contrôle
+de RÉPERTOIRE dans `scripts/verify-migrations.sh` qui exige la garde de toute migration réécrivant
+`card_events_type_check`, la liste étant mesurée sur le répertoire et jamais codée en dur. L'état
+final du schéma est **inchangé** — `0070` reste la dernière autorité, dix-neuf valeurs —, donc
+aucune opération manuelle de déploiement n'est due.
+
+**Où reprendre.** Le code suit immédiatement, dans un commit distinct. Preuves attendues :
+`scripts/verify-relances.sh` §7 ter (rouge avant correction), `scripts/verify-move-card-to-channel.sh`,
+`scripts/verify-change-channel-workflow.sh`, `scripts/verify-migrations.sh` (contrôle ajouté),
+`npm run test:sql`.
