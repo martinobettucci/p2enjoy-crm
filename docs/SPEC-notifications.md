@@ -463,6 +463,54 @@ qui constatait qu'elle n'était alimentée par rien, devient rouge à ce changem
 quoi elle a été écrite. Chacune est réécrite pour mesurer le **nouvel** état, avec son motif dans
 le fichier.
 
+#### 7.4.1 LE RETRAIT PORTE SUR LE RÉPERTOIRE ENTIER, PAS SUR LA SEULE DERNIÈRE AUTORITÉ — INC-240
+
+*Complété le 2026-08-29. Le §7.4 ci-dessus ne nommait que la « dernière autorité », `0035`, et
+c'était une lacune : elle a laissé deux migrations antérieures citer une colonne supprimée pendant
+trois jours. La règle qui suit est ce que le §7.4 aurait dû dire.*
+
+`app.card_comments_avant_maj()` est définie **quatre fois** dans `supabase/migrations/` — par
+`0015`, `0021`, `0035` et `0063`. Retirer la comparaison de la seule dernière définition ne suffit
+pas, et le motif est **mesuré**, pas supposé : `scripts/verify-identites.sh` rejoue `0021` pour
+éprouver sa convergence, `scripts/verify-commentaires.sh` rejoue le lot G, et l'un et l'autre
+reposent alors la définition ANCIENNE sur une base où la colonne n'existe plus. Le trigger
+`before update` de `public.card_comments` sort dès lors en `42703`, et le coût est celui du §7.4 :
+**aucun commentaire n'est plus modifiable, aucune suppression en douceur n'aboutit, et le
+détachement référentiel qui anonymise la parole d'un compte supprimé échoue** — le geste même que
+l'assertion 82 de `supabase/tests/0023_identites_et_memberships_surs.test.sql` éprouve.
+
+**LA RÈGLE, ET ELLE EST GÉNÉRALE.** Une migration du répertoire ne référence jamais une colonne
+qu'une migration ultérieure supprime. Le rejeu du répertoire complet masque l'écart — la dernière
+écriture gagne —, mais le répertoire n'est pas rejoué que complet :
+
+- un harnais rejoue une migration isolée pour éprouver sa convergence (décision 57 : *un rejeu
+  répare*), et une migration qui ne converge plus n'éprouve plus rien ;
+- `CRM-087` fait rejouer le répertoire **intégral en production**, une transaction par fichier, et
+  INC-239 mesure que ce rejeu **peut s'arrêter en cours de répertoire**. Un arrêt entre `0021` et
+  `0063` laisse la production avec un trigger qui cite une colonne absente, et **aucune migration
+  ultérieure ne vient réparer** puisque le rejeu s'est arrêté.
+
+**CE QUI EST CORRIGÉ, ET RIEN DE PLUS.** Les trois lignes `and new.mentions is not distinct from
+old.mentions` de `0021` (une porte étroite) et de `0035` (deux portes étroites) sont retirées, avec
+le motif écrit sur place comme `0063` le fait déjà. **Le reste du corps de chaque fonction est repris
+mot pour mot** : cette correction retire une comparaison sur une colonne disparue, elle ne rejuge
+aucune règle et n'élargit aucune porte. Chaque porte reste exactement aussi étroite — elle exige
+toujours que RIEN d'autre que la clé détachée ne change.
+
+**L'ÉTAT FINAL DU SCHÉMA EST INCHANGÉ**, et c'est ce qui rend la correction sûre sur une base déjà
+migrée : `0063` reste la dernière autorité et écrit déjà le corps sans la comparaison. La correction
+ne change donc rien à ce que le rejeu complet produit ; elle change ce que produit un rejeu qui
+s'arrête, ou qui vise, avant `0063`. `docs/PROD_MIGRATIONS.md` le dit dans les mêmes termes : aucune
+opération manuelle n'est due, le rejeu ordinaire suffit.
+
+**LA PREUVE DURABLE EST UN CONTRÔLE DE RÉPERTOIRE, ET ELLE EST NON COMPLAISANTE.** Vérifier que le
+trigger final ne cite plus la colonne — ce que `supabase/tests/0061_mentions_commentaires.test.sql`
+fait déjà — ne pouvait pas trouver ce défaut : ce test lit `pg_proc` après le rejeu complet, où la
+dernière écriture a déjà gagné. Le contrôle ajouté lit les **fichiers** du répertoire et exige
+qu'**aucun** ne référence `new.mentions` ni `old.mentions`, la migration `0063` étant seule admise à
+porter le mot dans le commentaire qui explique le retrait. Il vit dans
+`scripts/verify-migrations.sh`, qui est le harnais du répertoire lui-même.
+
 ---
 
 ## 8. Contrat d'API, ligne à ligne

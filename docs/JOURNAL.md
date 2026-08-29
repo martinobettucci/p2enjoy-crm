@@ -27672,3 +27672,41 @@ dettes sont désormais nommées, mesurées et imputées, prêtes à être prises
 (`CRM-064`, deux migrations à corriger), **INC-239** (`CRM-062`, la garde de `0054` ; `CRM-087`, la
 prémisse de rejouabilité) et **INC-241** (`CRM-041`). Les deux chapitres de manuel d'INC-214 et de
 `CRM-084` restent dus.
+
+## décision 556 — INC-240 mise en œuvre : le retrait de `card_comments.mentions` porte sur le RÉPERTOIRE, pas sur sa dernière autorité
+
+*2026-08-29, session planifiée ouverte à 12:14:19 UTC. Spécification écrite et committée avant la
+première ligne de code (`CLAUDE.md` §5).*
+
+**L'UNITÉ DE LA SESSION EST INC-240**, imputée à `CRM-064`, choisie parce que la dernière entrée du
+journal la désigne — « trois dettes nommées, mesurées et imputées, prêtes à être prises comme
+unité » — et parce qu'elle est la plus sérieuse des trois : elle vise directement `CRM-087`, qui
+fait rejouer le répertoire intégral en production.
+
+**CE QUE LA MESURE DE LA SESSION PRÉCÉDENTE ÉTABLIT, ET QUE JE NE REDÉCOUVRE PAS.**
+`app.card_comments_avant_maj()` est définie quatre fois — `0015`, `0021`, `0035`, `0063`. `0063`
+(`CRM-064`) supprime `public.card_comments.mentions` et réécrit la fonction sans la comparaison ;
+`0015` a été corrigé dans le même geste ; `0021` (une porte étroite) et `0035` (deux portes) ne
+l'ont pas été et citent toujours `new.mentions`. Le rejeu complet masque l'écart, la dernière
+écriture gagnant ; un rejeu qui s'arrête ou qui vise entre `0021`/`0035` et `0063` laisse le trigger
+`before update` de `card_comments` en `42703`.
+
+**LA LACUNE ÉTAIT DANS LA SPÉCIFICATION, ET C'EST ELLE QUE JE CORRIGE D'ABORD.** Le §7.4 de
+`docs/SPEC-notifications.md` ne nommait que « la dernière autorité, `0035` ». Une spécification qui
+ne parle que de la dernière définition d'une fonction définie quatre fois autorise exactement ce
+défaut. Le §7.4.1 ajouté énonce la règle générale : **une migration ne référence jamais une colonne
+qu'une migration ultérieure supprime**, avec les deux motifs mesurés — un harnais qui rejoue une
+migration isolée pour éprouver sa convergence, et le rejeu intégral de `CRM-087` qui peut s'arrêter
+en cours de répertoire (INC-239).
+
+**CE QUE JE CODE, ET RIEN DE PLUS.** Les trois lignes `and new.mentions is not distinct from
+old.mentions` de `0021` et `0035` sont retirées, motif écrit sur place comme `0063` le fait déjà ; le
+reste de chaque corps est repris mot pour mot. L'état final du schéma est **inchangé** — `0063`
+reste la dernière autorité —, donc aucune opération manuelle de déploiement n'est due. La preuve
+durable est un contrôle de RÉPERTOIRE dans `scripts/verify-migrations.sh` : le test pgTAP existant
+(`0061` §7.4) lit `pg_proc` après le rejeu complet et ne pouvait, par construction, pas trouver ce
+défaut.
+
+**Où reprendre.** Le code suit immédiatement, dans un commit distinct. Les preuves attendues :
+`scripts/verify-identites.sh` (assertion 82, rouge avant correction), `scripts/verify-commentaires.sh`
+(même cause), `scripts/verify-migrations.sh` (contrôle ajouté), `npm run test:sql`.

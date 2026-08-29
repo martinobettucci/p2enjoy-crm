@@ -13,6 +13,23 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-064` — un commentaire reste modifiable même si le rejeu des migrations s'arrête en chemin (INC-240)
+
+- **Deux migrations décrivaient encore une colonne qui n'existe plus.** `0021` et `0035`
+  comparaient `card_comments.mentions`, que `0063` a supprimée en même temps qu'elle a remplacé
+  cette colonne par une vraie table de mentions. Tant que le répertoire est rejoué en entier, la
+  dernière écriture gagne et rien ne se voit ; mais tout rejeu qui s'arrête, ou qui vise une
+  migration antérieure, reposait la définition périmée du garde-fou de mise à jour des
+  commentaires.
+- **Ce que cela coûtait quand cela se produisait** : plus aucun commentaire ne pouvait être modifié
+  ni supprimé, et la suppression d'un compte échouait — le mécanisme qui anonymise la parole d'une
+  personne partie passe précisément par ce garde-fou.
+- **La correction retire les trois comparaisons devenues sans objet, et rien d'autre.** Aucune règle
+  n'est rejugée, aucune porte n'est élargie, l'état final du schéma est identique : seul le
+  comportement d'un rejeu interrompu change. Aucune opération manuelle de déploiement n'est due.
+- **Une preuve durable est ajoutée au harnais du répertoire de migrations** : aucune migration ne
+  peut désormais référencer cette colonne disparue sans que le harnais ne le dise.
+
 ### `CRM-081` — la boîte se souvient de ce qu'elle montrait, et un channel entièrement endormi le dit
 
 - **La case « Afficher les fils en sommeil » de la boîte de réception se retient dans l'adresse.**
