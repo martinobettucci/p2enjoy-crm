@@ -87,12 +87,20 @@ TESTS_GARDIENS=(webapp/src/lib/liste-cards.test.ts)
 # seules assertions ne détecte pas la disparition d'une suite entière, et vérifier les seuls
 # fichiers ne détecte pas la disparition de leur contenu. Un compte qui MONTE est aussi un écart :
 # il se constate ici, et le chiffre se met à jour dans le même changement que la preuve ajoutée.
+# **RÉVISÉ LE 2026-08-29 PAR LA TRANCHE 3, et l'écart est ENTIÈREMENT le mien.** Deux scénarios
+# d'interface sont ajoutés — le §16.12.6 éprouvé SANS aucun autre filtre dans `filtre-sommeil`, et
+# le mode d'affichage qui survit au rechargement dans `sommeil-fil` — et trois captures avec eux.
+# 37 + 2 = 39 et 47 + 3 = 50, valeurs COMPTÉES et non déduites. `ATTENDU_UNIT_TESTS` est INCHANGÉ :
+# les six preuves de composant de la tranche vivent dans `RouteInbox.test.tsx`, qui appartient à
+# `CRM-057` et n'est pas une suite de cette unité. `ATTENDU_SQL_ASSERTIONS` et
+# `ATTENDU_API_SCENARIOS` sont inchangés eux aussi : la tranche ne livre ni migration, ni chemin
+# serveur.
 ATTENDU_SQL_ASSERTIONS=67
 ATTENDU_UNIT_TESTS=67
 ATTENDU_API_SCENARIOS=30
-ATTENDU_UI_SCENARIOS=37
+ATTENDU_UI_SCENARIOS=39
 CAPTURES=docs/captures/CRM-081
-ATTENDU_CAPTURES=47
+ATTENDU_CAPTURES=50
 
 RAPIDE=false
 while [ $# -gt 0 ]; do
@@ -284,7 +292,9 @@ fi
 # Une capture nommée par tranche, pour qu'un dossier au bon COMPTE mais au mauvais CONTENU ne
 # passe pas : le total seul ne dirait rien de ce qui a été montré.
 for capture in sommeil-fiche-endormie-1440.jpg filtre-sommeil-board-masquees-1440.jpg \
-	menu-sommeil-board-endormie-1440.jpg groupement-fil-liste.jpg; do
+	menu-sommeil-board-endormie-1440.jpg groupement-fil-liste.jpg \
+	filtre-sommeil-liste-vide-sommeil-1440.jpg filtre-sommeil-board-vide-sommeil-1440.jpg \
+	sommeil-fil-adresse-rechargee.jpg; do
 	if [ -f "$CAPTURES/$capture" ]; then
 		ok "capture $capture présente"
 	else

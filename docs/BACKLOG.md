@@ -7311,7 +7311,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-078 | Versionnement des workflows et plans de remappage | `[x]` |
 | CRM-079 | Onboarding guidé au premier lancement | `[x]` |
 | CRM-080 | Sauvegardes chiffrées et restauration prouvée | `[ ]` |
-| CRM-081 | Snooze des fils et des cards | `[~]` |
+| CRM-081 | Snooze des fils et des cards | `[x]` |
 
 *`CRM-075` désignait « Snooze des fils et des cards » jusqu'au 2026-08-11. La décision 332 a créé
 l'administration de l'arborescence sous ce numéro sans voir qu'il était pris — même mode de
@@ -12942,7 +12942,7 @@ l'accompli, le masqué et le non mesurable, produites **et observées** sous `do
       toujours vues ; `e2e:ui` **286/286**, console vierge ; capture
       `docs/captures/CRM-079/guide-espace-neuf-1440.jpg` produite et **observée**.*
 
-### CRM-081 — Snooze des fils et des cards `[~]`
+### CRM-081 — Snooze des fils et des cards `[x]`
 *Unité inchangée, **renumérotée depuis `CRM-075`** le 2026-08-11 par la décision 335 pour lever la
 collision avec l'administration de l'arborescence.*
 
@@ -13323,10 +13323,14 @@ gestes ; refus mesurés avec les jetons réels ; captures observées.
       rendu** — que le module seul ne peut pas voir : un badge « 1 », un sélecteur sur un fil unique,
       un repère de sélection perdu —, `e2e/ui/groupement-fils.spec.ts`, et **dix captures** sous
       `docs/captures/CRM-081/` (`groupement-fil-*.jpg`), produites et observées.
-- [ ] **Le mode d'affichage n'entre pas dans l'adresse** : l'inbox ne lit aucun paramètre d'adresse,
-      et lui en inventer un pour ce seul contrôle ouvrirait une question — quelle est l'adresse d'un
-      dossier ? — que cette tranche ne tranche pas. La case repart donc masquée à chaque ouverture
-      de l'écran. Écart nommé, à trancher par le responsable.
+- [x] **Le mode d'affichage ENTRE dans l'adresse — TRANCHE 3, livrée le 2026-08-29.** L'écart posé
+      ici reposait sur deux prémisses **fausses**, mesurées avant d'être corrigées : l'inbox lit
+      `useSearchParams` depuis `CRM-065`, et son `mode` était un `useState` que rien ne
+      réinitialisait au changement de dossier. La case écrit désormais `?sommeil=visibles` sous la
+      **même clé** que le board et la vue liste, par les constantes importées de
+      `filtre-sommeil.ts` — défaut jamais écrit, valeur inconnue repliée, autres paramètres
+      conservés. Six preuves de composant dans `RouteInbox.test.tsx` et un scénario E2E qui éprouve
+      le **rechargement**, ce qu'aucune preuve de composant ne peut voir.
 
 *DoD adaptée, écarts explicites — révisée le 2026-08-19 après la tranche 2 f.* La Definition of
 Done demande cinq choses, et **les cinq sont désormais tenues** : le geste et son retour sont gardés
@@ -13345,18 +13349,32 @@ et une dette de forme.**
    contrat écrit avant son code, **68 contrôles, aucune anomalie**, deux exécutions, cinq
    dégradations vues et restauration constatée octet à octet (premier écart ci-dessus). C'était
    « le dernier travail dû avant `[x]` », et il est fait.
-2. **Le mode d'affichage n'entre toujours pas dans l'adresse**, écart mineur en attente d'arbitrage
-   (dernier point ci-dessus). Il ne relève pas de la Definition of Done de l'unité
-   (`docs/SPEC-cards.md` §16.16.11) : **aucune session ne peut le lever seule.**
-3. **Le §16.12.6 n'est éprouvé en E2E que par sa variante filtrée** (écart ci-dessus). Il attend le
-   même genre de décision : soit le seed pose un channel n'ayant **que** des affaires endormies,
-   soit l'écart reste nommé.
+2. ~~**Le mode d'affichage n'entre toujours pas dans l'adresse.**~~ **SOLDÉ le 2026-08-29 par la
+   TRANCHE 3** (`docs/SPEC-cards.md` §16.17.1). La phrase « aucune session ne peut le lever seule »
+   était fausse dès le 2026-08-27 : le §4.1 bis de `docs/CloudWorker.md` dit qu'une mention
+   « arbitrage attendu » est le constat d'un travail non fait, jamais une instruction d'attendre.
+   L'arbitrage a été rendu en session, persisté avant la première ligne de code (décision 551), et
+   livré.
+3. ~~**Le §16.12.6 n'est éprouvé en E2E que par sa variante filtrée.**~~ **SOLDÉ le 2026-08-29 par
+   la TRANCHE 3** (§16.17.2), et par **aucune** des deux branches que cette ligne proposait : ni le
+   seed ne gagne un channel entièrement endormi — il serait vide en démonstration (`CLAUDE.md` §8),
+   coûterait un neuvième channel à trois harnais de comptage, et endormir l'affaire éveillée de
+   `prospection` détruirait la mesure « 1 sur 2 » —, ni l'écart ne reste nommé. L'état est
+   **provoqué par le vrai geste du produit** dans le scénario qui l'éprouve, puis défait dans un
+   `finally` : c'est le patron des tranches 2 a et 2 e, et il prouve davantage qu'un seed figé —
+   que l'état vide paraît DÈS le geste qui le cause. Les lignes 1 et 4 du tableau du §16.12.6 sont
+   désormais éprouvées, liste et board, sans aucun autre filtre.
 4. **Les compteurs de `scripts/verify-harness.sh` ne sont pas révisés ici** (écart ci-dessus), et
    INC-140 tient toujours sur `scripts/verify-colonnes-protegees.sh` — anomalies **étrangères** à
    cette unité, consignées au registre.
 
-**Ce qu'il reste donc à faire pour clore `CRM-081` : un arbitrage du responsable sur les points 2
-et 3.** Le produit, lui, est livré et prouvé de bout en bout.
+**RÉVISÉ LE 2026-08-29 — LES POINTS 2 ET 3 SONT SOLDÉS, ET L'UNITÉ PASSE À `[x]`.** Il ne reste au
+point 4 que des anomalies **étrangères** à cette unité, consignées au registre : INC-140 sur
+`scripts/verify-colonnes-protegees.sh`. Les compteurs de `scripts/verify-harness.sh` et de
+`scripts/verify-snooze.sh` sont, eux, **révisés dans le même changement** que les preuves ajoutées
+— `SCENARIOS_UI` 727 → **729**, `ATTENDU_UI_SCENARIOS` 37 → **39**, `ATTENDU_CAPTURES` 47 → **50**,
+valeurs comptées et non déduites. Le produit est livré et prouvé de bout en bout, et les deux
+écarts que six tranches avaient laissés ouverts sont tranchés et livrés.
 
 ### CRM-080 — Sauvegardes chiffrées et restauration prouvée `[~]`
 

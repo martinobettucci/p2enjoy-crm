@@ -1162,7 +1162,14 @@ SCENARIOS_API=1041
 # démonstration. 724 + 3 = 727, valeur COMPTÉE — « Total: 727 tests in 57 files », jamais déduite.
 # Le nombre de FICHIERS est inchangé, ce qui est la contre-épreuve de « aucun fichier neuf ».
 # Garde-fou RÉVISÉ, jamais retiré (mécanisme de la décision 51).
-SCENARIOS_UI=727
+# **729 depuis `CRM-081` tranche 3, 2026-08-29, et l'écart est ENTIÈREMENT le mien.** Les deux
+# écarts nommés de l'unité ajoutent DEUX scénarios, dans deux fichiers existants et AUCUN fichier
+# neuf : `e2e/ui/filtre-sommeil.spec.ts` éprouve enfin le §16.12.6 SANS aucun autre filtre — liste
+# et board —, et `e2e/ui/sommeil-fil.spec.ts` éprouve le mode d'affichage qui survit au
+# rechargement, ce qu'aucune preuve de composant ne peut voir. 727 + 2 = 729, valeur COMPTÉE —
+# « Total: 729 tests in 57 files », jamais déduite. Le nombre de FICHIERS est inchangé, ce qui est
+# la contre-épreuve de « aucun fichier neuf ».
+SCENARIOS_UI=729
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,
