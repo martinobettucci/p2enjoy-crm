@@ -57,8 +57,15 @@ source scripts/lib/node.sh
 node_toolchain_prepare "$PWD/.nvmrc" || exit 1
 
 MIGRATION=supabase/migrations/0050_budgets.sql
+# La tranche 4 ajoute UNE colonne à `budgets`, dans sa propre migration : la 50 reste la migration
+# du modèle, la 72 celle du seuil (docs/SPEC-costs.md §2.1 bis).
+MIGRATION_SEUIL=supabase/migrations/0072_budgets_seuil_anciennete.sql
 TEST_SQL=supabase/tests/0048_budgets.test.sql
 MODULE=webapp/src/lib/budgets.ts
+# Le seuil est ADMINISTRÉ ici et CONSOMMÉ ailleurs : le harnais des budgets garde donc aussi la
+# règle de comparaison qui vit dans le module de l'onglet « À saisir », faute de quoi l'arbitrage
+# d'INC-183 ne serait tenu que d'un seul côté.
+MODULE_A_SAISIR=webapp/src/lib/couts-a-saisir.ts
 TEST_MODULE=webapp/src/lib/budgets.test.ts
 ECRAN=webapp/src/app/BlocBudgetsTrack.tsx
 HOTE=webapp/src/app/AdministrationArborescence.tsx
@@ -119,11 +126,12 @@ printf '\033[1mPreuves de CRM-084 — budgets, occurrences et clôture\033[0m\n'
 
 titre "1. Fichiers livrés et traçabilité"
 
-for fichier in "$MIGRATION" "$TEST_SQL" "$MODULE" "$TEST_MODULE" "$ECRAN" "$SPEC_API" "$SPEC_UI"; do
+for fichier in "$MIGRATION" "$MIGRATION_SEUIL" "$TEST_SQL" "$MODULE" "$TEST_MODULE" "$ECRAN" \
+               "$SPEC_API" "$SPEC_UI"; do
 	if [ -f "$fichier" ]; then ok "$fichier est livré"; else fail "$fichier est ABSENT"; fi
 done
 
-for fichier in "$MIGRATION" "$MODULE" "$ECRAN"; do
+for fichier in "$MIGRATION" "$MIGRATION_SEUIL" "$MODULE" "$ECRAN"; do
 	if head -3 "$fichier" | grep -q 'CRM-084'; then
 		ok "$(basename "$fichier") porte son commentaire @spec"
 	else
@@ -232,6 +240,32 @@ else
 	fail "états du décompte absents de la confirmation :$manquants"
 fi
 
+# LE SEUIL EST TOUJOURS ENVOYÉ, MÊME NUL — §2.1 bis. Un envoi conditionnel le rendrait ineffaçable,
+# et aucune suite d'interface ne le verrait : l'écran continuerait de POSER des seuils correctement.
+# La forme sous laquelle le défaut s'introduirait est un `...(x === null ? {} : { … })`.
+if grep -qE '^\s*stale_after_days: modification\.seuilAnciennete,' "$MODULE"; then
+	ok "le seuil est envoyé INCONDITIONNELLEMENT à la modification — un seuil posé par erreur reste effaçable (§2.1 bis)"
+else
+	fail "modifierBudget n'envoie plus « stale_after_days » inconditionnellement : un seuil posé par erreur deviendrait ineffaçable"
+fi
+
+# LE CHAMP DU SEUIL N'EST PAS UN `type="number"`, et c'est mesuré plutôt que stylistique : un champ
+# numérique natif avale la saisie qu'il juge invalide, si bien que « 0 » et « 2,5 » n'atteindraient
+# jamais `lireSeuilAnciennete` — les deux cas qu'elle existe pour nommer (§4.1, révision par
+# livraison du 2026-08-29). C'est déjà la règle du champ d'enveloppe, juste à côté.
+#
+# LE CONTRÔLE IGNORE LES COMMENTAIRES, et il l'a appris en rougissant sur du code correct — le
+# mode de défaillance exact d'INC-184. Les deux champs concernés EXPLIQUENT, en commentaire,
+# pourquoi ils n'emploient pas `type="number"` : un contrôle qui lirait le fichier entier
+# interdirait d'écrire la règle à côté du code qui la tient. Les lignes de commentaire — `//` ou
+# la continuation `*` d'un bloc — sont donc retirées avant la recherche.
+numerique=$(grep -vE '^\s*(//|\*|/\*)' "$ECRAN" | grep -E 'type="number"' || true)
+if [ -z "$numerique" ]; then
+	ok "aucun champ « type=number » dans l'écran — la saisie invalide reste visible du module (§4.1)"
+else
+	fail "un « type=number » est apparu dans $ECRAN : une saisie invalide y serait avalée par le navigateur"
+fi
+
 # Le fragment de message sur lequel `classerRefusBudget` sépare le trigger de récurrence des
 # `CHECK` de forme est la SEULE inspection de texte du module. Une dérive entre les deux fichiers
 # rangerait silencieusement le refus du trigger sous « vérifiez le nom et la devise ».
@@ -299,6 +333,48 @@ if docker exec "$DB_CONTAINER" true >/dev/null 2>&1; then
 		ok "« Publicité 2026 » porte DEUX occurrences dont UNE ouverte — le filtre de la colonne est démontrable"
 	else
 		fail "« Publicité 2026 » porte « $toutes » occurrence(s) dont « $ouvertes » ouverte(s), 2 et 1 attendues"
+	fi
+
+	# LE SEUIL D'ANCIENNETÉ — §2.1 bis, arbitrage d'INC-183. La contrainte est mesurée sur sa
+	# DÉFINITION et non sur son existence : un `check (true)` porterait le même nom.
+	contrainte=$(psql_db -c "select count(*) from pg_constraint con
+		join pg_class c on c.oid = con.conrelid
+		join pg_namespace n on n.oid = c.relnamespace
+		where n.nspname='public' and c.relname='budgets' and con.conname='budgets_stale_check'
+		  and pg_get_constraintdef(con.oid) ilike '%stale_after_days is null%or%stale_after_days > 0%'")
+	if [ "$contrainte" = '1' ]; then
+		ok "budgets_stale_check refuse zéro et le négatif, et accepte le nul (§2.1 bis)"
+	else
+		fail "budgets_stale_check est absente ou ne porte plus « is null or > 0 » : un seuil de zéro passerait, et toute ligne serait en retard dès sa naissance"
+	fi
+
+	# AUCUN REPLI, et cela se prouve STRUCTURELLEMENT : une assertion de comportement ne pourrait
+	# pas distinguer « pas de repli » de « repli qui rend nul ». Le jour où quelqu'un poserait un
+	# seuil sur l'occurrence, ce contrôle le dirait — c'est un changement de doctrine, pas un ajout.
+	repli=$(psql_db -c "select count(*) from information_schema.columns
+		where table_schema='public' and table_name in ('budget_occurrences','tracks','workspaces')
+		  and column_name = 'stale_after_days'")
+	if [ "$repli" = '0' ]; then
+		ok "aucune colonne de seuil ailleurs que sur budgets — la résolution se fait en un seul temps (§2.1 bis)"
+	else
+		fail "« $repli » colonne(s) « stale_after_days » hors de budgets : un repli est apparu, contre l'arbitrage d'INC-183"
+	fi
+
+	# LES TROIS ÉTATS DU JEU DE DÉMONSTRATION. Sans les trois, la variante de danger est livrée
+	# indémontrable, et « aucun seuil » se confond avec « seuil non franchi » (docs/SPEC-seed.md
+	# §12.1 et §12.1 bis). Le contrôle recalcule l'ancienneté plutôt que de croire une date.
+	etats=$(psql_db -c "select count(distinct etat) from (
+		select case
+		         when b.stale_after_days is null then 'sans-seuil'
+		         when floor(extract(epoch from now() - cc.created_at)/86400) > b.stale_after_days
+		           then 'en-retard'
+		         else 'dans-les-temps' end as etat
+		  from public.card_costs cc join public.budgets b on b.id = cc.budget_id
+		 where cc.actual_cost is null) e")
+	if [ "$etats" = '3' ]; then
+		ok "le seed porte les TROIS états du seuil — en retard, dans les temps, sans seuil (§12.1 bis)"
+	else
+		fail "le seed ne porte que « $etats » état(s) du seuil sur trois : la variante de danger du §5.31 devient indémontrable — réappliquez supabase/seed/apply-seed.sh"
 	fi
 
 	# `docs/SPEC-costs.md` §5 et l'en-tête de la migration : AUCUNE GÉNÉRATION AUTOMATIQUE
@@ -411,6 +487,21 @@ else
 		"$MODULE" "if (nettoyee === '') return { statut: 'absente' }" \
 		"if (nettoyee === '') return { statut: 'lue', montant: 0 }" \
 		'lib\/budgets.test'
+
+	# 4. LA COMPARAISON DU SEUIL DEVIENT LARGE : une ligne pile au seuil se dirait en retard, et le
+	#    signal cesserait d'avoir la même borne que la pastille d'une card (§2.1 bis, §5.31). Le
+	#    module dégradé est celui de l'ONGLET, et sa preuve n'est pas la même que les trois
+	#    ci-dessus — c'est pourquoi le motif diffère.
+	degradation "la comparaison du seuil devient large (§2.1 bis)" \
+		"$MODULE_A_SAISIR" "return jours > seuil" "return jours >= seuil" \
+		'lib\/couts-a-saisir.test'
+
+	# 5. UN SEUIL ABSENT DEVIENDRAIT UN SEUIL PAR DÉFAUT : l'écran crierait sur des budgets dont
+	#    personne n'a décidé le rythme. C'est exactement l'issue n° 1 qu'INC-183 a écartée.
+	degradation "un seuil absent ouvre le retard (§2.1 bis, SPEC-relances §2.2)" \
+		"$MODULE_A_SAISIR" "if (seuil === null || !Number.isFinite(seuil) || seuil < 1) return false" \
+		"if (seuil !== null \&\& (!Number.isFinite(seuil) || seuil < 1)) return false" \
+		'lib\/couts-a-saisir.test'
 
 	# La restauration est CONSTATÉE, pas supposée : un `perl -pi` interrompu laisserait le module
 	# affaibli, ce qui serait pire que l'absence de harnais.
