@@ -8724,6 +8724,29 @@ preuves, l'écran vérifié visuellement aux quatre paliers, console vierge.
       Deux écarts restent **nommés** plutôt que comblés (§11) : aucune portée « mes affaires » —
       elle demanderait un argument à `public.cards_figees()`, donc une révision du contrat de la
       tranche 1 — et aucune pagination, l'ordre venant du serveur et le volume n'étant pas mesuré.
+- [x] **LE DERNIER RESTE DE L'UNITÉ EST LEVÉ — INC-239, décision 558, 2026-08-29.** La migration
+      `0054` de la tranche 2 était la **seule** des neuf qui réécrivent `card_events_type_check` à
+      n'avoir qu'**une** des deux gardes d'INC-144 : elle regardait la contrainte, jamais les lignes.
+      Sur une base peuplée dont la contrainte a régressé — ce que produit tout harnais qui la dégrade
+      puis la restaure en rejouant une migration antérieure —, elle **rétrécissait** le vocabulaire
+      aux quinze valeurs de son époque, les lignes portant `mail_unclassified` ou `contact_linked`
+      la violaient, le `migrations-runner` sortait en `3` et **les migrations `0055` à `0070` ne
+      s'appliquaient plus du tout**. Le motif écrit de la dispense — « elle pose le vocabulaire le
+      plus large du dépôt » — était vrai le 2026-08-25 et faux depuis que la `0070` en a posé
+      dix-neuf : c'est mot pour mot le défaut d'INC-210, un cran plus loin dans le répertoire.
+      **REPRODUIT AVANT CORRECTION** (`CLAUDE.md` §18) sur la pile réelle : sortie `3` sur `0054:77`.
+      **APRÈS CORRECTION, MÊME BASE RESTÉE CASSÉE** : sortie `0`, vocabulaire rendu entier à
+      dix-neuf valeurs et `VALID`. Preuve durable : contrôle de **répertoire** en section 7 de
+      `scripts/verify-migrations.sh` — **32 contrôles, aucune anomalie** contre 28 —, la liste des
+      migrations convergentes étant mesurée sur le répertoire à chaque exécution et jamais codée en
+      dur. Les trois harnais qu'INC-239 nommait rouges sont verts, rejoués seuls :
+      `verify-relances` **93** (5 anomalies avant), `verify-move-card-to-channel` **49** (3 avant),
+      `verify-change-channel-workflow` **23** (2 avant). Le §7 ter de `verify-relances.sh` est
+      **révisé et non retiré** : sa référence de vocabulaire, constante de quinze valeurs périmée par
+      la `0070`, devient le vocabulaire **relevé dans la base avant dégradation** — plus forte, et
+      qui ne peut plus se périmer. La règle générale est écrite au **§9.8.1** de
+      `docs/SPEC-relances.md`, et la phrase du §9.8 qui portait la dispense est révisée sur place.
+      L'état final du schéma est **inchangé** : aucune opération manuelle de déploiement n'est due.
 
 ### CRM-063 — Modèles d'emails, signatures, séquences de relance `[x]`
 
