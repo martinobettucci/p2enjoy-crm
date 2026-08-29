@@ -27306,6 +27306,17 @@ tranché l'inverse pour l'enveloppe dès la tranche 2 — un champ numérique na
 refuse, si bien que `lireSeuilAnciennete` ne verrait jamais « 0 » ni « 2,5 », les deux cas qu'elle
 existe pour nommer.
 
+**`scripts/verify-harness.sh --rapide` CERTIFIE LES COMPTEURS RÉVISÉS : 31 contrôles, aucune
+anomalie** — et il a fallu le rejouer SEUL pour l'obtenir. Un premier passage rendait « 31
+contrôles, 1 anomalie », **parce que six autres harnais tournaient en même temps que lui** :
+`verify-migrations`, `verify-seed`, `verify-couts-ecrans`, `verify-card-costs` et
+`verify-administration-arborescence` appliquent chacun des dégradations, rejouent des suites et
+libèrent le port 4173. Ce n'est ni un verdict rouge, ni une preuve : les quatre compteurs ont été
+remesurés un par un à la main — `--list` rend « 1041 tests in 65 files » pour l'API, « 727 tests in
+57 files » pour l'interface, « 42 tests in 11 files » pour le courrier, et `test:sql` rend « 67
+fichiers, 3052 assertions » —, et le rejeu isolé du harnais est vert. **Un harnais de ce dépôt se
+lance SEUL**, et c'est une leçon d'exécution qui manquait à `docs/CloudWorker.md` §2.3.
+
 **TROIS COMPTEURS FIGÉS RÉVISÉS, VALEURS COMPTÉES** : `ASSERTIONS_ATTENDUES` 3042 → **3052**,
 `SCENARIOS_API` 1036 → **1041**, `SCENARIOS_UI` 724 → **727**. Aucune part antérieure n'est absorbée
 cette fois : les trois écarts sont entièrement ceux de la tranche. `FICHIERS_SQL_ATTENDUS` reste à

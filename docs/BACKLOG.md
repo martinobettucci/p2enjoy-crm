@@ -11125,7 +11125,10 @@ seconde phrase promettait la variante depuis le premier jour.
       échec** ; `pytest` **244** ; `e2e:mail` **42 passés au second passage**. Six harnais que le
       changement touche sont verts : `verify-budgets` **53**, `verify-couts-ecrans` **81**,
       `verify-card-costs` **52**, `verify-migrations` **25**, `verify-seed` **55**,
-      `verify-administration-arborescence` **27**.
+      `verify-administration-arborescence` **27**. `scripts/verify-harness.sh --rapide` rend
+      **31 contrôles, aucune anomalie** et CERTIFIE les quatre compteurs révisés — mais seulement
+      rejoué SEUL : un premier passage, mené en parallèle des cinq harnais ci-dessus, rendait une
+      anomalie qui ne disait rien du produit (décision 550).
 - [x] **L'unique échec de la campagne est une SEPTIÈME occurrence d'INC-205**, entrée déjà ouverte
       depuis le 2026-08-24 : `e2e/mail/dossiers.spec.ts` §276 échoue en série et passe SEUL, puis la
       campagne rejouée sur le même commit rend **42 passés**. Ligne de base par `git stash` NON
