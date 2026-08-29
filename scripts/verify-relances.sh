@@ -623,7 +623,21 @@ rejouer_repertoire() {
 	[ "$(docker inspect p2enjoy-migrations --format '{{.State.ExitCode}}')" = '0' ]
 }
 
-VOCABULAIRE_ATTENDU="created,moved,assigned,channel_changed,workflow_changed,archived,unarchived,trashed,restored,field_changed,mail_received,mail_sent,snoozed,woken,stalled"
+# LA RÉFÉRENCE N'EST PLUS CODÉE EN DUR, ET C'EST UNE RÉVISION DU 2026-08-29 — INC-239, décision 558.
+#
+# Elle valait « les quinze valeurs de la migration 54 ». La migration 70 (`CRM-085`) a porté le
+# vocabulaire à DIX-NEUF valeurs, et ce contrôle rougissait alors sur un rejeu PARFAITEMENT
+# correct : la constante disait l'époque de son écriture, pas le produit. C'est la famille d'INC-191,
+# d'INC-175 et d'INC-242 — un compteur figé que le produit dépasse.
+#
+# La preuve est RÉVISÉE et non retirée (`docs/CloudWorker.md` §3.1), et elle en ressort PLUS FORTE :
+# la référence est désormais le vocabulaire que la base porte AVANT la dégradation. Le contrôle
+# n'exige plus une liste datée, il exige que le rejeu RESTAURE EXACTEMENT ce qu'il a trouvé — ce qui
+# est la propriété réellement en cause, et qui ne peut plus se périmer.
+#
+# Elle reste non complaisante : un témoin refuse de déclarer la référence probante si elle ne cite
+# pas `stalled`, cas où la base serait déjà dégradée et où le contrôle comparerait deux états
+# également faux.
 
 # Le vocabulaire est LU dans la contrainte de la base, jamais dans le texte d'une migration : ce
 # qui garde les écritures est ce que PostgreSQL porte, pas ce qu'un fichier prétend poser.
@@ -644,6 +658,13 @@ else
 	fail "témoin ABSENT : aucune ligne « stalled », ce contrôle ne prouverait rien"
 fi
 
+VOCABULAIRE_ATTENDU=$(vocabulaire_courant)
+if printf '%s' "$VOCABULAIRE_ATTENDU" | grep -q '\bstalled\b'; then
+	ok "référence relevée AVANT dégradation : $(printf '%s' "$VOCABULAIRE_ATTENDU" | tr ',' '\n' | grep -c .) valeurs, « stalled » comprise"
+else
+	fail "référence NON PROBANTE : la base est déjà dégradée, la comparaison ne prouverait rien"
+fi
+
 # La réduction exacte que produit `scripts/verify-change-channel-workflow.sh` : les neuf valeurs
 # d'avant la migration 20, en `not valid` — la contrainte ne peut pas être posée `valid` sur des
 # lignes qui la violent déjà.
@@ -662,9 +683,9 @@ fi
 
 vocabulaire=$(vocabulaire_courant)
 if [ "$vocabulaire" = "$VOCABULAIRE_ATTENDU" ]; then
-	ok "le vocabulaire est rendu ENTIER par le rejeu : les quinze valeurs, « stalled » comprise"
+	ok "le vocabulaire est rendu ENTIER par le rejeu, à la valeur près de la référence relevée"
 else
-	fail "vocabulaire non rendu : « $vocabulaire »"
+	fail "vocabulaire non rendu — attendu « $VOCABULAIRE_ATTENDU », obtenu « $vocabulaire »"
 fi
 
 if [ "$(psql_db -c "select convalidated from pg_constraint
