@@ -224,6 +224,17 @@ as $$
 declare
 	-- Porte étroite de `CRM-022` (INC-076), étendue à `deleted_by` : l'action référentielle qui
 	-- détache une identité supprimée ne touche QUE `author_id`.
+	--
+	-- CRM-064, INC-240, 2026-08-29 : les DEUX portes comparaient aussi `new.mentions` à
+	-- `old.mentions`. La migration 0063 a SUPPRIMÉ `public.card_comments.mentions` au profit de la
+	-- table `public.card_comment_mentions`, et la comparaison a disparu de la définition finale —
+	-- mais elle subsistait ici. Le rejeu du répertoire complet le masquait, 0063 réécrivant la
+	-- fonction après ; tout rejeu qui s'arrête ou qui VISE le lot G reposait cette définition sur
+	-- une base sans la colonne, et le trigger `before update` de `card_comments` sortait en 42703 :
+	-- plus aucun commentaire modifiable ni supprimable, plus aucun compte supprimable. Les deux
+	-- comparaisons sont retirées comme elles l'ont été dans 0015 et 0063 ; le reste du corps est
+	-- repris MOT POUR MOT, et les deux portes restent exactement aussi étroites — elles exigent
+	-- toujours que RIEN d'autre que la clé détachée ne change. Voir docs/SPEC-notifications.md §7.4.1.
 	detachement_fk boolean :=
 		pg_catalog.pg_trigger_depth() > 1
 		and old.author_id is not null
@@ -233,7 +244,6 @@ declare
 		and new.workspace_id is not distinct from old.workspace_id
 		and new.created_at   is not distinct from old.created_at
 		and new.body         is not distinct from old.body
-		and new.mentions     is not distinct from old.mentions
 		and new.edited_at    is not distinct from old.edited_at
 		and new.deleted_at   is not distinct from old.deleted_at
 		and new.deleted_by   is not distinct from old.deleted_by;
@@ -249,7 +259,6 @@ declare
 		and new.author_id    is not distinct from old.author_id
 		and new.created_at   is not distinct from old.created_at
 		and new.body         is not distinct from old.body
-		and new.mentions     is not distinct from old.mentions
 		and new.edited_at    is not distinct from old.edited_at
 		and new.deleted_at   is not distinct from old.deleted_at;
 

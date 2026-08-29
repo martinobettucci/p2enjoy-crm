@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # @verifies CRM-003 (docs/BACKLOG.md) — Definition of Done des migrations d'amorçage
 # @verifies CRM-022 (docs/BACKLOG.md) — retour du contrat d'identité après l'amorçage
+# @verifies CRM-064 (docs/BACKLOG.md) — INC-240, convergence du répertoire de migrations
+# @verifies docs/SPEC-notifications.md §7.4.1 (le retrait d'une colonne porte sur le répertoire
+#           entier, pas sur la seule dernière autorité de la fonction)
 # @verifies docs/SCHEMA.md §1 (identité et cloisonnement)
 # @verifies docs/SPEC-permissions-rls.md §4 (politiques), §7 (preuves de refus n° 3 et 11)
 # @verifies docs/PROD_MIGRATIONS.md §3 (migrations en attente)
@@ -389,6 +392,110 @@ verifier_mutation "cascade de suppression du profil retirée" \
 	"alter table public.profiles drop constraint profiles_id_fkey;
 	 alter table public.profiles add constraint profiles_id_fkey
 	   foreign key (id) references auth.users (id);"
+
+# --- 6. Convergence du répertoire : aucune migration ne cite une colonne supprimée --------------
+# @verifies CRM-064 (docs/BACKLOG.md) — INC-240
+# @verifies docs/SPEC-notifications.md §7.4.1 (le retrait porte sur le répertoire entier)
+#
+# CE CONTRÔLE EXISTE PARCE QU'AUCUN AUTRE NE POUVAIT TROUVER LE DÉFAUT, et c'est le point.
+# `supabase/tests/0061_mentions_commentaires.test.sql` §7.4 vérifie déjà que le trigger final ne
+# LIT plus `new.mentions` — mais il lit `pg_proc` APRÈS le rejeu complet, là où la dernière
+# écriture a déjà gagné. Il est resté vert pendant que `0021` et `0035` citaient la colonne
+# supprimée (INC-240). Ce contrôle-ci lit les FICHIERS, et c'est la seule façon de le voir.
+#
+# LA RÈGLE MESURÉE, ET ELLE EST GÉNÉRALE : une migration ne référence jamais, dans le corps d'un
+# trigger, une colonne qu'une migration du répertoire supprime. Le répertoire n'est pas rejoué que
+# complet — un harnais rejoue une migration isolée pour éprouver sa convergence, et `CRM-087`
+# rejoue le répertoire intégral en production, une transaction par fichier, avec la possibilité
+# mesurée de s'arrêter en chemin (INC-239). Une définition périmée reposée sur une base à jour sort
+# alors en 42703.
+#
+# La liste des colonnes est MESURÉE sur le répertoire à chaque exécution, jamais codée en dur : une
+# suppression future est couverte le jour où elle est écrite. `new.<col>` et `old.<col>` désignent
+# sans ambiguïté une référence de colonne PL/pgSQL — le mot seul, lui, subsiste légitimement dans
+# les commentaires qui expliquent le retrait, et les lignes de commentaire sont donc écartées.
+
+echo
+echo "6. Convergence du répertoire : aucune migration ne cite une colonne supprimée"
+
+MIGRATIONS_DIR=supabase/migrations
+
+# Retire les commentaires de ligne SQL avant toute recherche : le motif du retrait est écrit en
+# commentaire dans 0015, 0021, 0035 et 0063, et il DOIT y rester.
+sans_commentaires() { sed -E 's/--.*$//' "$1"; }
+
+colonnes_supprimees() {
+	grep -rhoiE 'alter table[[:space:]]+[a-z_.]+[[:space:]]+drop column[[:space:]]+(if exists[[:space:]]+)?[a-z_]+' \
+		"$1"/*.sql 2>/dev/null \
+		| sed -E 's/.*[[:space:]]drop column[[:space:]]+(if exists[[:space:]]+)?//I' \
+		| sort -u
+}
+
+# Rend les occurrences `fichier:ligne:texte` fautives, ou rien. Prend le répertoire en argument
+# afin d'être éprouvé plus bas sur une copie volontairement mutée.
+references_colonnes_supprimees() {
+	local repertoire=$1 colonne fichier
+	for colonne in $(colonnes_supprimees "$repertoire"); do
+		for fichier in "$repertoire"/*.sql; do
+			# `|| true` : l'absence de correspondance est le cas NOMINAL, et `grep` la signale
+			# par un statut 1 que `set -e` prendrait pour une panne du harnais.
+			sans_commentaires "$fichier" \
+				| { grep -nE "\b(new|old)\.${colonne}\b" || true; } \
+				| sed "s|^|${fichier}:|"
+		done
+	done
+	return 0
+}
+
+colonnes=$(colonnes_supprimees "$MIGRATIONS_DIR" | tr '\n' ' ')
+fautives=$(references_colonnes_supprimees "$MIGRATIONS_DIR")
+
+if [ -z "$colonnes" ]; then
+	fail "aucune colonne supprimée recensée : le contrôle ne mesure rien"
+elif [ -z "$fautives" ]; then
+	ok "aucune migration ne référence une colonne supprimée (colonnes recensées : ${colonnes% })"
+else
+	fail "des migrations référencent une colonne supprimée par le répertoire"
+	printf '%s\n' "$fautives" | sed 's/^/        /'
+fi
+
+# NON-COMPLAISANCE, ÉPROUVÉE DANS LES DEUX SENS. Le contrôle ci-dessus est vert ; s'il l'était
+# aussi sur un répertoire fautif, il ne prouverait rien.
+#
+# Les deux éprouves portent sur un répertoire MINIMAL et non sur une copie du vrai : une copie
+# hériterait des occurrences réelles, et le second sens ne mesurerait alors plus rien. Ce
+# répertoire ne porte que la migration qui SUPPRIME la colonne — c'est elle qui alimente le
+# recensement — et une sonde dont on fait varier la seule forme.
+repertoire_mute=$(mktemp -d)
+printf 'alter table public.card_comments drop column if exists mentions;\n' \
+	> "$repertoire_mute/0001_sonde_drop.sql"
+
+# Sens 1 : la forme EXACTE du défaut d'INC-240 — une porte étroite qui compare la colonne
+# supprimée. Le contrôle doit la trouver.
+{
+	printf 'create or replace function app.sonde_inc_240()\nreturns trigger language plpgsql as $$\nbegin\n'
+	printf '\tif new.mentions is not distinct from old.mentions then\n\t\treturn new;\n\tend if;\n'
+	printf '\treturn new;\nend;\n$$;\n'
+} > "$repertoire_mute/9999_sonde_inc_240.sql"
+
+if [ -n "$(references_colonnes_supprimees "$repertoire_mute")" ]; then
+	ok "le contrôle rougit sur un répertoire fautif — il n'est pas complaisant"
+else
+	fail "le contrôle reste vert sur un répertoire fautif — il ne prouve rien"
+fi
+
+# Sens 2 : le mot en COMMENTAIRE ne doit pas suffire à faire rougir, sans quoi le motif du retrait
+# ne pourrait plus être écrit là où il DOIT l'être — 0015, 0021, 0035 et 0063 le portent tous.
+printf -- '-- and new.mentions is not distinct from old.mentions\n' \
+	> "$repertoire_mute/9999_sonde_inc_240.sql"
+
+if [ -z "$(references_colonnes_supprimees "$repertoire_mute")" ]; then
+	ok "le mot en commentaire ne fait pas rougir — le motif du retrait reste écrivable"
+else
+	fail "une occurrence en commentaire fait rougir : le contrôle interdirait d'expliquer le retrait"
+fi
+
+rm -rf "$repertoire_mute"
 
 # --- Bilan -------------------------------------------------------------------------------------
 

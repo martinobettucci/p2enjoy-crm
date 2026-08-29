@@ -233,6 +233,16 @@ comment on column public.card_comments.author_id is
 -- `pg_trigger_depth() > 1` distingue l'UPDATE émis par le trigger FK du PATCH direct. Les quatre
 -- autres colonnes immuables et toutes les données éditables doivent en outre rester identiques :
 -- aucun geste applicatif imbriqué ne peut employer cette porte pour réécrire le commentaire.
+--
+-- CRM-064, INC-240, 2026-08-29 : la porte comparait aussi `new.mentions` à `old.mentions`. La
+-- migration 0063 a SUPPRIMÉ `public.card_comments.mentions` et l'a remplacée par la table
+-- `public.card_comment_mentions` ; la comparaison a donc disparu de la définition finale, mais elle
+-- subsistait ICI. Le rejeu du répertoire complet le masquait — 0063 réécrit la fonction après —,
+-- mais tout rejeu qui s'arrête ou qui VISE cette migration reposait cette définition sur une base
+-- où la colonne n'existe plus : le trigger `before update` de `card_comments` sortait alors en
+-- 42703, et plus aucun commentaire n'était modifiable ni supprimable, ni aucun compte supprimable.
+-- La comparaison est retirée ici comme elle l'a été dans 0015 et 0063 ; le reste du corps est repris
+-- MOT POUR MOT, et la porte reste exactement aussi étroite — voir docs/SPEC-notifications.md §7.4.1.
 create or replace function app.card_comments_avant_maj()
 returns trigger
 language plpgsql
@@ -249,7 +259,6 @@ declare
 		and new.workspace_id is not distinct from old.workspace_id
 		and new.created_at   is not distinct from old.created_at
 		and new.body         is not distinct from old.body
-		and new.mentions     is not distinct from old.mentions
 		and new.edited_at    is not distinct from old.edited_at
 		and new.deleted_at   is not distinct from old.deleted_at;
 begin
