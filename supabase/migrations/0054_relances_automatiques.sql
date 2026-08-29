@@ -3,7 +3,8 @@
 -- @spec docs/SPEC-relances.md §9 (contrat exécutable de la tranche 2), §9.2 (le job appelle
 --       `public.cards_figees()` et ne recopie aucun prédicat), §9.3 (contrat de la fonction),
 --       §9.4 (idempotence ancrée sur `entered_step_at`), §9.5 (acteur nul), §9.6 (payload),
---       §9.7 (le job `pg_cron`), §9.8 (la quinzième valeur), §9.11 (retour arrière)
+--       §9.7 (le job `pg_cron`), §9.8 (la quinzième valeur), §9.8.1 (les DEUX gardes de
+--       convergence, INC-239), §9.11 (retour arrière)
 -- @spec docs/SPEC-scheduler.md §1 (chaque unité enregistre son job par migration), §3 (démarrage
 --       observable), §4 (fermeture des privilèges), §5 (convergence)
 -- @spec docs/SPEC-cards.md §14.4 (le vocabulaire du fil), §14.5 (seule voie d'écriture, acteur
