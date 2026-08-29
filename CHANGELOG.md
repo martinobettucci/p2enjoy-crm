@@ -13,6 +13,26 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-062` — le rejeu des migrations ne casse plus une base dont l'historique des affaires a régressé (INC-239)
+
+- **Une migration rétrécissait le vocabulaire de la timeline au lieu de le laisser s'élargir.** La
+  liste des types d'événements qu'une affaire peut porter s'est étoffée au fil des livraisons — de
+  huit valeurs à l'origine à dix-neuf aujourd'hui. La migration qui a ajouté la relance automatique
+  la reposait telle qu'elle était à son époque, quinze valeurs, dès qu'elle la trouvait plus courte
+  que prévu.
+- **Ce que cela coûtait quand cela se produisait** : les événements écrits depuis — un message
+  déclassé, un contact rattaché — devenaient interdits par la règle qu'on venait de reposer, le
+  rejeu s'arrêtait au milieu du répertoire, et **les quinze migrations suivantes ne s'appliquaient
+  plus du tout**. Relancer l'environnement de développement ne réparait rien ; il fallait le
+  détruire et le reconstruire.
+- **La correction aligne cette migration sur les huit autres qui touchent la même règle** : aucune
+  ne repose le vocabulaire si les événements déjà écrits en emploient un qu'elle ne connaît pas —
+  c'est alors à la migration plus récente, qui les connaît, de le faire. L'état final de la base est
+  **identique** ; seul le comportement d'un rejeu partant d'un état régressé change. Aucune
+  opération manuelle de déploiement n'est due.
+- **Une preuve durable est ajoutée au harnais du répertoire de migrations** : toute migration future
+  qui toucherait cette règle sans cette précaution est signalée d'elle-même.
+
 ### `CRM-064` — un commentaire reste modifiable même si le rejeu des migrations s'arrête en chemin (INC-240)
 
 - **Deux migrations décrivaient encore une colonne qui n'existe plus.** `0021` et `0035`

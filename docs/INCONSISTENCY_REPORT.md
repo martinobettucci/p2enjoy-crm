@@ -195,7 +195,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-189 | « Alt et flèche REDIMENSIONNENT » d'`Objectifs.test.tsx` échoue par INTERMITTENCE en campagne, et passe seul | 2026-08-20 | *ouverte* — relève de `CRM-081` | 485 |
 | INC-190 | La série complète des `scripts/verify-*.sh` TIENT dans une session en mode `--rapide` — cinq restes de forme du backlog en sont caducs | 2026-08-20 | **close** — TRANCHÉE par la décision 553 : voie (a) retenue, et la série complète n'est la Definition of Done d'AUCUNE unité | 487, 553 |
 | INC-191 | Sept harnais figent des ABSENCES qu'une unité ultérieure a comblées, et sont rouges de leur propre succès | 2026-08-20 | **close** — les dix harnais retournés par la décision 498 | 487, 497, 498 |
-| INC-239 | La série des 77 harnais, rejouée d'affilée, laisse la base dans un état que `./runDev.sh` NE RÉPARE PAS : `0054` rétrécit `card_events_type_check` derrière sa propre garde et le `migrations-runner` sort en 3. Les 31 rouges de la série ne sont donc pas des verdicts avant rejeu SEUL sur base réinitialisée. Conséquence sérieuse pour `CRM-087`, dont le rejeu intégral suppose la rejouabilité sur base PEUPLÉE | 2026-08-29 | *ouverte* — issue retenue et écrite, mise en œuvre due : `CRM-062` pour la garde de `0054`, `CRM-087` pour la prémisse | 553 |
+| INC-239 | La série des 77 harnais, rejouée d'affilée, laisse la base dans un état que `./runDev.sh` NE RÉPARE PAS : `0054` rétrécit `card_events_type_check` derrière sa propre garde et le `migrations-runner` sort en 3. Les 31 rouges de la série ne sont donc pas des verdicts avant rejeu SEUL sur base réinitialisée. Conséquence sérieuse pour `CRM-087`, dont le rejeu intégral suppose la rejouabilité sur base PEUPLÉE | 2026-08-29 | **close** — MISE EN ŒUVRE par la décision 558 : la seconde garde d'INC-144 posée sur `0054` dans la forme exacte des huit autres, `docs/SPEC-relances.md` §9.8.1 écrit, contrôle de répertoire ajouté à `verify-migrations.sh`. Mesuré : rejeu du répertoire sur base peuplée à contrainte réduite, conteneur sorti en **3** avant correction et en **0** après, vocabulaire rendu entier à dix-neuf valeurs et VALID ; `verify-relances` **93 contrôles aucune anomalie** (5 avant), `verify-move-card-to-channel` **49** (3 en échec avant), `verify-change-channel-workflow` **23** (2 en échec avant), `verify-migrations` **32** (28 avant) | 553, 558 |
 | INC-240 | `0021` et `0035` référencent encore `card_comments.mentions`, colonne que `0063` (`CRM-064`) a SUPPRIMÉE ; `0015` a été corrigé, elles non. Le rejeu complet masque le défaut — la dernière écriture gagne —, mais tout rejeu qui s'arrête ou vise entre `0021`/`0035` et `0063` laisse un trigger `before update` en `42703` : commentaires non modifiables, suppression de compte en échec. Trouvée par `verify-identites.sh` rejoué SEUL, 2 assertions rouges sur 84 | 2026-08-29 | **close** — MISE EN ŒUVRE par la décision 556 : les trois comparaisons retirées, `docs/SPEC-notifications.md` §7.4.1 écrit, contrôle de répertoire ajouté à `verify-migrations.sh`. Mesuré : `verify-identites` 23 contrôles aucune anomalie (2 en échec avant), `verify-commentaires` 2 en échec → 1, `verify-migrations` 28 contrôles aucune anomalie | 553, 556 |
 | INC-242 | `scripts/verify-commentaires.sh` §4 exige EXACTEMENT 98 assertions de `supabase/tests/0017_commentaires.test.sql`, qui en déclare et en rend **99**, toutes vertes. Compteur figé dépassé par le produit, famille d'INC-191 et d'INC-175. Ligne de base établie : rouge des DEUX côtés du changement de la décision 556, donc préexistant et étranger | 2026-08-29 | *ouverte* — issue retenue et écrite, mise en œuvre due : `CRM-043` | 556 |
 | INC-243 | L'empreinte de fonctions de `scripts/verify-authz.sh` §2 concatène `proacl` DANS SON ORDRE DE TABLEAU. Le rejeu du répertoire complet réémet les `GRANT` et permute l'ordre des `aclitem` sans changer un seul droit : le contrôle rougit sur une permutation qui ne signifie rien. C'est la CAUSE de l'intermittence que la décision 554 avait nommée sans l'expliquer — reproductible, et non aléatoire : rouge lancé juste après `./resetMe.sh`, vert sur une base déjà stabilisée | 2026-08-29 | **close** — RÉVISÉE par la décision 557 : les `aclitem` sont triés avant comparaison, l'ensemble des droits restant comparé à l'identique | 556, 557 |
@@ -246,7 +246,11 @@ INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-174,
 INC-185, INC-186, INC-188, INC-189, INC-190, INC-191, INC-192, INC-193, INC-224,
 INC-225, INC-226, INC-227, INC-228, INC-229, INC-231, INC-232, INC-233, INC-234, INC-236,
-INC-238, **INC-239**, **INC-241** **INC-242** et INC-243.**
+INC-238, **INC-241** **INC-242** et INC-243.**
+
+*Mise à jour du 2026-08-29 : **INC-239** est CLOSE — mise en œuvre par la décision 558, qui
+corrige la garde de `0054` ET fournit à `CRM-087` la preuve mesurée de sa prémisse de
+rejouabilité sur base peuplée.*
 
 *Mise à jour du 2026-08-29 : **INC-240** est CLOSE — mise en œuvre par la décision 556 ; **INC-242**
 est consignée par la même session.*
@@ -6022,8 +6026,58 @@ ligne du responsable, ne jamais RÉTRÉCIR un vocabulaire déjà élargi. La mis
 `CRM-062`, qui porte `0054`, et la vérification de la prémisse de rejouabilité appartient à
 `CRM-087`, dont la preuve sur pile réelle reste due.
 
-**Statut :** ouverte, comportement inchangé, issue retenue et écrite, mise en œuvre due —
-`CRM-062` pour la garde de `0054`, `CRM-087` pour la prémisse de rejouabilité.
+**MISE EN ŒUVRE le 2026-08-29 — décision 558, et l'issue retenue n'est NI l'une NI l'autre des deux
+formulations ci-dessus.** La lecture du répertoire donne une cause plus simple que l'entrée ne le
+supposait : **neuf** migrations réécrivent `card_events_type_check` — `0016`, `0017`, `0020`, `0025`,
+`0030`, `0044`, `0054`, `0061`, `0070` —, **huit portent les deux gardes d'INC-144**, et la `0054`
+est la **seule** à n'avoir que la première. C'est mot pour mot le défaut d'INC-210, qui avait frappé
+la `0044` le 2026-08-25 : les deux fois, la migration fautive était celle qui posait « le vocabulaire
+le plus large du dépôt » et s'en croyait dispensée. *Être la plus large* est un état **daté**, que la
+migration suivante défait.
+
+La seconde garde est donc posée sur la `0054` **dans la forme exacte des huit autres** — plutôt
+qu'une troisième forme de garde inventée pour elle seule, qui recréerait précisément l'exception
+ayant coûté deux incidents. Le comportement le plus simple, et le même partout.
+
+**REPRODUIT AVANT D'ÊTRE CORRIGÉ** (`CLAUDE.md` §18), sur la pile réelle et seedée : contrainte
+ramenée aux neuf valeurs d'avant la `0020`, répertoire rejoué, **conteneur sorti en `3`** sur
+`0054:77` — « check constraint "card_events_type_check" of relation "card_events" is violated by some
+row », les lignes du jeu portant `contact_linked`. Après correction, **sur la même base restée
+cassée** : sortie **`0`**, vocabulaire rendu **entier à dix-neuf valeurs** et **`VALID`**.
+
+**LA PREUVE DURABLE EST UN CONTRÔLE DE RÉPERTOIRE**, section 7 de `scripts/verify-migrations.sh` —
+**32 contrôles, aucune anomalie**, contre 28 avant. Aucune preuve lisant `pg_constraint` ne pouvait
+trouver ce défaut : après un rejeu complet, la dernière autorité a gagné et le schéma final est
+correct des deux côtés de la correction. Le contrôle lit donc les **fichiers**, recense les
+migrations convergentes **sur le répertoire** à chaque exécution — jamais en dur —, et exige de
+chacune la garde sur les lignes. Éprouvé dans **trois** sens sur un répertoire minimal muté, et
+vérifié sur le **vrai** `0054` d'avant correction, qu'il désigne comme fautif.
+
+**LES TROIS HARNAIS QUE L'ENTRÉE NOMMAIT SONT VERTS**, rejoués seuls : `verify-relances`
+**93 contrôles, aucune anomalie** (5 anomalies avant), `verify-move-card-to-channel` **49** (3 en
+échec avant), `verify-change-channel-workflow` **23** (2 en échec avant). Ils savent désormais se
+restaurer eux-mêmes : leur voie de restauration rejoue une migration antérieure, et c'est
+exactement ce que la garde manquante rendait destructeur.
+
+**UNE RÉVISION DE PREUVE, ET ELLE EST NOMMÉE** (`docs/CloudWorker.md` §3.1). Le contrôle §7 ter de
+`verify-relances.sh` comparait le vocabulaire restauré à une **constante de quinze valeurs**, celle
+de l'époque de la `0054` ; il rougissait donc sur un rejeu parfaitement correct depuis que la `0070`
+en a posé dix-neuf — famille d'INC-191, d'INC-175 et d'INC-242. La preuve est **révisée, jamais
+retirée**, et elle en ressort plus forte : la référence est le vocabulaire **relevé dans la base
+avant la dégradation**, si bien que le contrôle exige que le rejeu restaure exactement ce qu'il a
+trouvé — la propriété réellement en cause, et qui ne peut plus se périmer. Un témoin refuse la
+référence si elle ne cite pas `stalled`.
+
+**CE QUE CELA DONNE À `CRM-087`.** Sa prémisse écrite — « les migrations sont rejouables, la pile de
+développement le prouve à chaque démarrage » — était fausse sur une base **peuplée** dont la
+contrainte a régressé, et c'est ce que cette entrée mesurait. Elle a désormais une preuve : le
+contrôle §7 ter rejoue le répertoire **entier** sur une base peuplée dont la contrainte est réduite,
+et exige la sortie `0` avec restauration intégrale. La prémisse n'est plus supposée, elle est
+mesurée à chaque exécution du harnais.
+
+**Statut :** **close** — mise en œuvre par la décision 558, comportement corrigé, preuve durable
+posée, les trois harnais nommés verts. L'état final du schéma est **inchangé** : aucune opération
+manuelle de déploiement n'est due.
 
 ### INC-240 — `0021` et `0035` référencent encore `card_comments.mentions`, colonne que `0063` a SUPPRIMÉE
 
