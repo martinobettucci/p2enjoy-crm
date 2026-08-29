@@ -160,7 +160,18 @@ empreinte_fonctions() {
 			select pg_get_functiondef(p.oid) || '|' || p.prosecdef::text
 			       || '|' || p.provolatile::text
 			       || '|' || coalesce(array_to_string(p.proconfig, ','), '')
-			       || '|' || coalesce(array_to_string(p.proacl, ','), '') as d
+			       -- INC-243, décision 557 : les `aclitem` sont TRIÉS avant d'être concaténés.
+			       -- `proacl` est un tableau dont l'ordre est celui des `GRANT` exécutés, et le
+			       -- rejeu du répertoire les réémet en le permutant — sans changer un seul
+			       -- droit. Concaténé tel quel, le contrôle rougissait sur cette permutation :
+			       -- un rouge qui ne dit rien du produit, et la cause de l'« intermittence »
+			       -- nommée par la décision 554. L'ensemble des droits reste comparé à
+			       -- l'identique : un droit ajouté, retiré, ou accordé à un autre rôle fait
+			       -- toujours rougir. Seule la dépendance à un ordre sans signification tombe.
+			       || '|' || coalesce((
+			             select string_agg(a::text, ',' order by a::text)
+			               from unnest(p.proacl) as a
+			          ), '') as d
 			  from pg_proc p join pg_namespace n on n.oid = p.pronamespace
 			 where n.nspname = 'app'
 		) s;"
