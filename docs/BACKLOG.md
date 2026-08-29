@@ -7294,8 +7294,8 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-061 | Prochaine action, échéance, vue « Ma journée » | `[x]` |
 | CRM-062 | Relances automatiques des cards figées | `[~]` |
 | CRM-063 | Templates d'emails, signatures, séquences de relance | `[x]` |
-| CRM-064 | @mentions, notifications temps réel et préférences | `[~]` |
-| CRM-065 | Recherche globale plein texte et palette Cmd+K | `[~]` |
+| CRM-064 | @mentions, notifications temps réel et préférences | `[x]` |
+| CRM-065 | Recherche globale plein texte et palette Cmd+K | `[x]` |
 | CRM-066 | Analytique de conversion et prévisionnel pondéré | `[ ]` |
 | CRM-067 | Activités typées : appels, réunions, visios | `[ ]` |
 | CRM-068 | Checklists et modèles de cards | `[ ]` |
@@ -7310,7 +7310,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-077 | Corbeille et restauration des objets métier | `[~]` |
 | CRM-078 | Versionnement des workflows et plans de remappage | `[x]` |
 | CRM-079 | Onboarding guidé au premier lancement | `[x]` |
-| CRM-080 | Sauvegardes chiffrées et restauration prouvée | `[ ]` |
+| CRM-080 | Sauvegardes chiffrées et restauration prouvée | `[x]` |
 | CRM-081 | Snooze des fils et des cards | `[x]` |
 
 *`CRM-075` désignait « Snooze des fils et des cards » jusqu'au 2026-08-11. La décision 332 a créé
@@ -9860,6 +9860,44 @@ rejoués seuls.
 harnais propre à cette unité.
 
 **Harnais de l'unité rejoués SEULS le 2026-08-29** : `verify-mentions.sh` **47 contrôles**, `verify-notifications.sh` **43 contrôles**, `verify-preferences-notifications.sh` **62 contrôles** — **aucune anomalie**, là où la série leur donnait 5, 1 et 2 échecs.
+
+**INC-240 SOLDÉE LE 2026-08-29 — décision 556, et c'était une DETTE DE CODE, pas de forme.**
+
+- [x] **Deux migrations citaient une colonne que cette unité a supprimée.** `0063` retire
+      `card_comments.mentions` et corrige `0015` en conséquence ; `0021` et `0035`, qui définissent
+      elles aussi `app.card_comments_avant_maj()`, ne l'ont pas été. Le rejeu du répertoire complet
+      masquait l'écart — la dernière écriture gagne — mais tout rejeu qui s'arrête ou qui vise entre
+      elles et `0063` laissait le trigger `before update` de `card_comments` en `42703` : **aucun
+      commentaire modifiable ni supprimable, et la suppression d'un compte en échec**.
+- [x] **La lacune était D'ABORD dans la spécification**, et elle est comblée avant le code
+      (`CLAUDE.md` §5) : `docs/SPEC-notifications.md` **§7.4.1** énonce la règle générale — une
+      migration ne référence jamais une colonne qu'une migration ultérieure supprime — avec ses deux
+      motifs mesurés : la convergence d'une migration rejouée isolément, et le rejeu intégral de
+      `CRM-087` qui **peut s'arrêter en chemin** (INC-239).
+- [x] **Le défaut a été REPRODUIT avant d'être corrigé** (`CLAUDE.md` §18) :
+      `scripts/verify-identites.sh` rendait **23 contrôles, 2 en échec** sur
+      `42703: record "new" has no field "mentions"`. Après correction : **23 contrôles, aucune
+      anomalie**. `scripts/verify-commentaires.sh` passe de **2 en échec à 1**, la ligne de base
+      étant établie contre le commit d'avant le changement — l'anomalie restante est préexistante et
+      fait l'objet d'**INC-242**.
+- [x] **Preuve durable de RÉPERTOIRE**, section 6 de `scripts/verify-migrations.sh` — **28
+      contrôles, aucune anomalie**, contre 25 avant. Elle recense les colonnes supprimées **sur le
+      répertoire** à chaque exécution, jamais en dur. **Le test pgTAP `0061` §7.4 ne pouvait pas
+      trouver ce défaut** : il lit `pg_proc` après le rejeu complet, où la dernière écriture a déjà
+      gagné — d'où un contrôle qui lit les FICHIERS. Éprouvé dans les deux sens sur un répertoire
+      minimal muté : rouge sur la forme exacte du défaut, vert quand le mot n'est qu'en commentaire.
+- [x] **`docs/PROD_MIGRATIONS.md` corrigé dans le même changement** : le retour arrière de la
+      migration 63 annonçait que rejouer 15, 21 et 35 restaurait la fonction « dans sa version qui
+      compare `new.mentions` ». Ce n'est plus vrai, et la conséquence exacte est nommée. **Aucune
+      opération manuelle n'est due** : l'état final du schéma est inchangé, `0063` restant la
+      dernière autorité.
+- [x] **INC-243 close dans la même session — décision 557.** Le contrôle d'empreinte ajouté la
+      veille par la décision 554 rougissait « par intermittence ». Ce n'en était pas une : `proacl`
+      était concaténé **dans son ordre de tableau**, et le rejeu du répertoire réémet les `GRANT` en
+      le permutant sans changer un seul droit. Reproductible — rouge lancé juste après
+      `./resetMe.sh`, vert sur une base stabilisée. Les `aclitem` sont désormais **triés** avant
+      comparaison : **37 contrôles, aucune anomalie** dans la condition qui rendait rouge, et le
+      contrôle rougit toujours sur un `EXECUTE` réellement révoqué.
 
 ### CRM-065 — Recherche globale plein texte et palette Cmd+K `[x]`
 *Unité ouverte le 2026-08-27, session planifiée `CloudWorker`. Choisie par `docs/CloudWorker.md`
