@@ -196,7 +196,8 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-190 | La série complète des `scripts/verify-*.sh` TIENT dans une session en mode `--rapide` — cinq restes de forme du backlog en sont caducs | 2026-08-20 | **close** — TRANCHÉE par la décision 553 : voie (a) retenue, et la série complète n'est la Definition of Done d'AUCUNE unité | 487, 553 |
 | INC-191 | Sept harnais figent des ABSENCES qu'une unité ultérieure a comblées, et sont rouges de leur propre succès | 2026-08-20 | **close** — les dix harnais retournés par la décision 498 | 487, 497, 498 |
 | INC-239 | La série des 77 harnais, rejouée d'affilée, laisse la base dans un état que `./runDev.sh` NE RÉPARE PAS : `0054` rétrécit `card_events_type_check` derrière sa propre garde et le `migrations-runner` sort en 3. Les 31 rouges de la série ne sont donc pas des verdicts avant rejeu SEUL sur base réinitialisée. Conséquence sérieuse pour `CRM-087`, dont le rejeu intégral suppose la rejouabilité sur base PEUPLÉE | 2026-08-29 | *ouverte* — issue retenue et écrite, mise en œuvre due : `CRM-062` pour la garde de `0054`, `CRM-087` pour la prémisse | 553 |
-| INC-240 | `0021` et `0035` référencent encore `card_comments.mentions`, colonne que `0063` (`CRM-064`) a SUPPRIMÉE ; `0015` a été corrigé, elles non. Le rejeu complet masque le défaut — la dernière écriture gagne —, mais tout rejeu qui s'arrête ou vise entre `0021`/`0035` et `0063` laisse un trigger `before update` en `42703` : commentaires non modifiables, suppression de compte en échec. Trouvée par `verify-identites.sh` rejoué SEUL, 2 assertions rouges sur 84 | 2026-08-29 | *ouverte* — issue retenue et écrite, mise en œuvre due : `CRM-064` | 553 |
+| INC-240 | `0021` et `0035` référencent encore `card_comments.mentions`, colonne que `0063` (`CRM-064`) a SUPPRIMÉE ; `0015` a été corrigé, elles non. Le rejeu complet masque le défaut — la dernière écriture gagne —, mais tout rejeu qui s'arrête ou vise entre `0021`/`0035` et `0063` laisse un trigger `before update` en `42703` : commentaires non modifiables, suppression de compte en échec. Trouvée par `verify-identites.sh` rejoué SEUL, 2 assertions rouges sur 84 | 2026-08-29 | **close** — MISE EN ŒUVRE par la décision 556 : les trois comparaisons retirées, `docs/SPEC-notifications.md` §7.4.1 écrit, contrôle de répertoire ajouté à `verify-migrations.sh`. Mesuré : `verify-identites` 23 contrôles aucune anomalie (2 en échec avant), `verify-commentaires` 2 en échec → 1, `verify-migrations` 28 contrôles aucune anomalie | 553, 556 |
+| INC-242 | `scripts/verify-commentaires.sh` §4 exige EXACTEMENT 98 assertions de `supabase/tests/0017_commentaires.test.sql`, qui en déclare et en rend **99**, toutes vertes. Compteur figé dépassé par le produit, famille d'INC-191 et d'INC-175. Ligne de base établie : rouge des DEUX côtés du changement de la décision 556, donc préexistant et étranger | 2026-08-29 | *ouverte* — issue retenue et écrite, mise en œuvre due : `CRM-043` | 556 |
 | INC-241 | `verify-board.sh` exige que `from('channels')` n'apparaisse que dans UN fichier de `webapp/src` ; il y en a cinq, et `docs/SPEC-channels.md` §5.4 — la règle qu'il cite — ne parle que de la lecture alimentant la barre d'onglets, en prévoyant explicitement des routes transverses. Contrôle plus strict que sa propre règle, rouge depuis que `CRM-075`, `CRM-077`, `CRM-057` et `CRM-083` ont livré | 2026-08-29 | *ouverte* — issue retenue et écrite, mise en œuvre due : `CRM-041` | 553 |
 | INC-192 | `scripts/verify-corbeille.sh` cherche `@spec CRM-077` dans les TROIS premières lignes de `webapp/src/app/RouteCard.tsx`, qui en cumule dix | 2026-08-20 | **close** — fenêtre de lecture portée à l'en-tête entier (commit `752d3b4`), verdict vérifié le 2026-08-25 : 38 contrôles, aucune anomalie | 487, 508 |
 | INC-193 | Le `details` d'un refus de contrainte rend la ligne entière, `secret_id` compris — la colonne révoquée à `authenticated` ressort par un second chemin | 2026-08-20 | *ouverte* — arbitrage attendu, sécurité des données | 492 |
@@ -244,7 +245,10 @@ INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-174,
 INC-185, INC-186, INC-188, INC-189, INC-190, INC-191, INC-192, INC-193, INC-224,
 INC-225, INC-226, INC-227, INC-228, INC-229, INC-231, INC-232, INC-233, INC-234, INC-236,
-INC-238, **INC-239**, **INC-240** et **INC-241**.**
+INC-238, **INC-239**, **INC-241** et **INC-242**.**
+
+*Mise à jour du 2026-08-29 : **INC-240** est CLOSE — mise en œuvre par la décision 556 ; **INC-242**
+est consignée par la même session.*
 
 *Mise à jour du 2026-08-29 : **INC-183** est tranchée (décision 549) et retirée ; **INC-238** est
 consignée par la même session.*
@@ -6083,7 +6087,69 @@ déjà appliquées, donc `docs/PROD_MIGRATIONS.md` et les preuves de convergence
 une unité de travail, pas un paragraphe ajouté au passage (`CLAUDE.md` §13, §24). Elle appartient à
 `CRM-064`, qui a livré `0063` et corrigé `0015` sans corriger ses deux jumelles.
 
-**Statut :** ouverte, comportement inchangé, issue retenue et écrite, mise en œuvre due — `CRM-064`.
+**Statut : CLOSE le 2026-08-29 — mise en œuvre par la décision 556**, dans la session planifiée
+ouverte à 12:14:19 UTC.
+
+**CE QUI A ÉTÉ FAIT, ET DANS QUEL ORDRE.** La lacune était d'abord dans la spécification : le §7.4
+de `docs/SPEC-notifications.md` ne nommait que « la dernière autorité, `0035` », alors que
+`app.card_comments_avant_maj()` est définie quatre fois. Le §7.4.1 ajouté énonce la règle générale —
+*une migration ne référence jamais une colonne qu'une migration ultérieure supprime* — et il a été
+écrit et committé AVANT la première ligne de code (`CLAUDE.md` §5). Les trois comparaisons ont
+ensuite été retirées de `0021` (une porte) et de `0035` (deux portes), motif écrit sur place, le
+reste de chaque corps repris mot pour mot.
+
+**LE DÉFAUT A ÉTÉ REPRODUIT AVANT D'ÊTRE CORRIGÉ** (`CLAUDE.md` §18) : `scripts/verify-identites.sh`
+rendait **23 contrôles, 2 en échec**, sur `42703: record "new" has no field "mentions"` au rejeu de
+`0021` — exactement la mesure de la décision 553. Après correction, il rend **23 contrôles, aucune
+anomalie**. `scripts/verify-commentaires.sh` passe de **2 en échec à 1**, la ligne de base ayant été
+établie contre le commit d'avant le changement : l'anomalie restante y est présente des deux côtés
+et fait l'objet d'INC-242.
+
+**LA PREUVE DURABLE EST UN CONTRÔLE DE RÉPERTOIRE**, section 6 de `scripts/verify-migrations.sh` —
+**28 contrôles, aucune anomalie**, contre 25 avant. Il recense les colonnes supprimées **sur le
+répertoire** à chaque exécution, jamais en dur, et exige qu'aucune migration ne les référence en
+`new.<col>` / `old.<col>` hors commentaire. Il est éprouvé dans les deux sens sur un répertoire
+minimal muté : rouge sur la forme exacte du défaut, vert quand le mot n'est qu'en commentaire — sans
+quoi le motif du retrait ne pourrait plus être écrit là où il doit l'être.
+
+**CE QUE LA CORRECTION NE CHANGE PAS**, et c'est ce qui la rend sûre sur une base déjà migrée :
+l'état final du schéma est identique, `0063` restant la dernière autorité. Aucune opération manuelle
+de déploiement n'est due ; `docs/PROD_MIGRATIONS.md` le dit dans ces termes.
+
+### INC-242 — `verify-commentaires.sh` exige 98 assertions d'une suite qui en rend 99, toutes vertes
+
+**Ouverte le 2026-08-29 par la session qui a mis en œuvre INC-240** — décision 556. Comportement
+**inchangé** : le contrôle appartient à `CRM-043`, il est consigné et mesuré, pas corrigé au passage
+(`docs/CloudWorker.md` §3.1).
+
+**Ce qui a été mesuré.** `scripts/verify-commentaires.sh`, rejoué **SEUL sur une base réinitialisée
+par `./resetMe.sh`** — donc hors collatéral de série (INC-239) : **79 contrôles, 1 en échec**.
+
+```
+ECHEC suite pgTAP verte mais 99 assertions au lieu de 98
+```
+
+**LA SUITE EST VERTE.** `supabase/tests/0017_commentaires.test.sql` déclare `select plan(99);` et
+rend 99 assertions, aucune en échec. Le harnais, lui, exige l'égalité stricte à **98**, révisée pour
+la dernière fois le 2026-08-14 — son commentaire le dit : *« RÉVISÉ À 98 LE 2026-08-14, EN DEUX
+FOIS ET D'UN SEUL GESTE : le lot G a porté la suite de 84 à 96 sans rejouer ce harnais, et INC-072 y
+ajoute les deux assertions de l'audit du seed. »* Une unité ultérieure a porté la suite à 99 sans
+rejouer le harnais : c'est le **troisième** épisode du même mécanisme sur ce compteur.
+
+**LIGNE DE BASE ÉTABLIE** (`docs/CloudWorker.md` §2.4), et elle est sans ambiguïté : le harnais
+rejoué sur le commit `dc09f87` — avant tout changement de la décision 556 — rend **2 en échec**, dont
+celui-ci ; rejoué sur le changement, il rend **1 en échec**, celui-ci seul. L'anomalie est donc
+**préexistante et étrangère** à la décision 556, qui n'a modifié aucun fichier de test.
+
+**Issue retenue, NON mise en œuvre ici.** C'est la famille exacte d'INC-191 et d'INC-175 : un
+garde-fou qui fige un compteur et devient rouge de son propre succès. La ligne du responsable dit
+qu'*un compteur vert n'est pas une preuve s'il peut être complaisant* — l'égalité stricte est donc
+la bonne forme, et le remède n'est pas de la relâcher en `-ge`, qui laisserait passer une suite
+amputée. Le compteur est **révisé à 99**, avec dans le fichier le motif de la révision et l'unité qui
+a ajouté l'assertion, comme la décision 51 l'exige. Le travail appartient à `CRM-043`, qui porte ce
+harnais.
+
+**Statut :** ouverte, comportement inchangé, issue retenue et écrite, mise en œuvre due — `CRM-043`.
 
 ### INC-241 — `verify-board.sh` exige UNE seule lecture des channels, là où son propre §5.4 en admet plusieurs
 
