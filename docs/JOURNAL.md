@@ -27817,3 +27817,75 @@ aucune opération manuelle de déploiement n'est due.
 `scripts/verify-relances.sh` §7 ter (rouge avant correction), `scripts/verify-move-card-to-channel.sh`,
 `scripts/verify-change-channel-workflow.sh`, `scripts/verify-migrations.sh` (contrôle ajouté),
 `npm run test:sql`.
+
+## décision 559 — INC-239 livrée et close ; une capture de `CRM-062` montrait le panneau d'une AUTRE unité
+
+*2026-08-29, session planifiée ouverte à 16:09:33 UTC. Bilan de fin de session ; la décision 558 en
+porte la spécification, écrite et committée avant la première ligne de code.*
+
+**CE QUE LA SESSION A CODÉ.** La seconde garde d'INC-144 posée sur la migration `0054`, dans la
+forme exacte des huit autres migrations qui réécrivent `card_events_type_check`. Un contrôle de
+**répertoire** ajouté à `scripts/verify-migrations.sh`. La référence de vocabulaire du contrôle
+§7 ter de `scripts/verify-relances.sh` révisée. Et un scénario d'interface de `CRM-062` recentré sur
+la ligne qu'il prétend capturer.
+
+**INC-239 — REPRODUITE, PUIS CORRIGÉE, PUIS PROTÉGÉE.** Le défaut a été reproduit avant d'être
+corrigé (`CLAUDE.md` §18), sur la pile réelle et seedée : contrainte ramenée aux neuf valeurs
+d'avant la `0020`, répertoire rejoué, **conteneur sorti en `3`** sur `0054:77` — « check constraint
+"card_events_type_check" of relation "card_events" is violated by some row ». Après correction, **sur
+la même base restée cassée** : sortie **`0`**, vocabulaire rendu **entier à dix-neuf valeurs** et
+**`VALID`**. Le chemin nominal est prouvé lui aussi, en transaction annulée : sur une base sans
+aucun événement, la garde est vraie et la `0054` pose bien ses quinze valeurs.
+
+**LA CAUSE ÉTAIT PLUS SIMPLE QUE L'ENTRÉE NE LE SUPPOSAIT**, et c'est la lecture du répertoire qui
+l'a donnée : **neuf** migrations réécrivent cette contrainte, **huit** portent les deux gardes, la
+`0054` est la seule à n'avoir que la première. C'est mot pour mot le défaut d'INC-210, qui avait
+frappé la `0044` quatre jours plus tôt : les deux fois, la migration fautive était celle qui posait
+« le vocabulaire le plus large du dépôt » et s'en croyait dispensée. *Être la plus large* est un
+état **daté**. La règle générale est au §9.8.1 de `docs/SPEC-relances.md`, et la phrase du §9.8 qui
+portait la dispense est **révisée sur place, jamais retirée**.
+
+**LA PREUVE DURABLE LIT LES FICHIERS, ET ELLE NE POUVAIT PAS FAIRE AUTREMENT.** Aucune preuve lisant
+`pg_constraint` après un rejeu complet ne peut trouver ce défaut : la dernière autorité a gagné, et
+le schéma final est correct des deux côtés de la correction. La section 7 de `verify-migrations.sh`
+recense donc les migrations convergentes **sur le répertoire** à chaque exécution — jamais en dur —
+et exige de chacune la garde sur les lignes. Éprouvée dans trois sens sur un répertoire minimal
+muté, et vérifiée sur le **vrai** `0054` d'avant correction, qu'elle désigne comme fautif.
+
+**UNE CAPTURE MONTRAIT AUTRE CHOSE QUE CE QU'ELLE PROUVE, ET C'EST TROUVÉ EN LA REGARDANT**
+(`CLAUDE.md` §16). `docs/captures/CRM-062/relance-dans-le-fil-1440.jpg` montrait le panneau « Armer
+la relance » de `CRM-063`, pas l'événement du fil. Cause : le scénario visait
+`getByText('Relance automatique').first()`, et `CRM-063` a livré depuis, sur la même page, un
+panneau dont le titre est mot pour mot ce libellé et qui précède le fil dans le document. **Le
+scénario restait vert** — les deux textes existaient chacun quelque part, et `toBeVisible()` n'exige
+pas d'être dans le champ. La ligne est désormais désignée par son **détail**, qui n'appartient qu'au
+fil ; le contrôle exige que le libellé et le détail soient portés par la **même** ligne, ce que le
+§10.3.1 promet et que deux assertions indépendantes ne vérifiaient pas.
+
+**ET LA PREMIÈRE CORRECTION N'A PAS SUFFI, CE QUI EST LA MESURE LA PLUS UTILE DE CE POINT.**
+`scrollIntoViewIfNeeded()` défile le plus proche ancêtre défilable — ici la colonne du fil — sans
+garantir que l'élément entre dans la **fenêtre** : la capture régénérée montrait encore le bas du
+fil. Le défilement est désormais demandé explicitement et centré, **et le résultat est asserté** par
+`toBeInViewport()` : une image qui ne porterait pas son sujet fait maintenant échouer le scénario au
+lieu de produire une capture muette. Capture régénérée et **observée** : elle montre la ligne
+« Relance automatique · 35 jours de retard, pour un seuil de 5 jours ».
+
+**CAMPAGNE DE FIN.** `test:sql` **67 fichiers / 3052 assertions**, `test:unit` **2934**, `typecheck`,
+`build`, `pytest` **244**, `e2e:api` **1041** — aucun échec. `e2e:ui` **727 passés, 2 en échec** et
+`e2e:mail` **41 passés, 1 en échec** ; **les trois sont verts rejoués SEULS** — `inbox.spec.ts` et
+`recherche.spec.ts` rendent **32 passés**, `dossiers.spec.ts` **2 passés**. C'est du collatéral de
+campagne, au sens exact de la décision 555, et non une régression. Harnais du changement rejoués
+seuls : `verify-migrations` **32** (28 avant), `verify-relances` **93** (5 anomalies avant),
+`verify-move-card-to-channel` **49** (3 en échec avant), `verify-change-channel-workflow` **23**
+(2 en échec avant) — aucune anomalie.
+
+**CE QUI N'A PAS ÉTÉ EXÉCUTÉ, ET IL FAUT LE DIRE.** La série entière des 77 `verify-*.sh` n'a pas
+été rejouée : elle n'est la Definition of Done d'aucune unité (décision 553) et reste l'objet d'une
+session dédiée, lancée seule. Les 264 captures régénérées par `e2e:ui` et étrangères à l'unité ont
+été **regardées** — `CRM-030` et `CRM-085` inspectées, rendu intact — puis restaurées.
+
+**Où reprendre.** Le backlog ne porte plus **aucune** unité `[ ]`, et `CRM-062` passe `[x]`. Deux
+dettes nommées restent, prêtes à être prises comme unité : **INC-241** (`CRM-041`, un contrôle plus
+strict que sa propre règle) et **INC-242** (`CRM-043`, un compteur d'assertions à réviser à 99 —
+travail court). **INC-244**, consignée ici, s'y ajoute. Les deux chapitres de manuel d'INC-214 et de
+`CRM-084` restent dus.

@@ -7292,7 +7292,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 |---|---|---|
 | CRM-060 | Contacts et organisations, historique transverse | `[~]` |
 | CRM-061 | Prochaine action, échéance, vue « Ma journée » | `[x]` |
-| CRM-062 | Relances automatiques des cards figées | `[~]` |
+| CRM-062 | Relances automatiques des cards figées | `[x]` |
 | CRM-063 | Templates d'emails, signatures, séquences de relance | `[x]` |
 | CRM-064 | @mentions, notifications temps réel et préférences | `[x]` |
 | CRM-065 | Recherche globale plein texte et palette Cmd+K | `[x]` |
@@ -8493,7 +8493,7 @@ décidé de ne pas livrer, motifs écrits au §17.10 de `docs/SPEC-cards.md`. Le
 qu'une absence a été livrée.
 
 ---
-### CRM-062 — Relances automatiques des cards figées `[~]`
+### CRM-062 — Relances automatiques des cards figées `[x]`
 Une card **figée** est une affaire restée dans son étape au-delà du seuil de relance de cette
 étape. L'unité livre cette notion **en base**, là où l'ordonnanceur et l'API peuvent la lire, puis
 la relance automatique qui la fait remonter, puis la surface qui la montre.
@@ -8509,8 +8509,8 @@ preuves, l'écran vérifié visuellement aux quatre paliers, console vierge.
 | Tranche | Objet | État |
 |---|---|---|
 | 1 | La règle en base — `public.cards_figees()`, migration `0053`, pgTAP, contrat d'API, harnais | en cours |
-| 2 | La relance automatique — job `pg_cron` quotidien, événement `stalled` dans la timeline | livrée, `[~]` (série des `verify-*.sh` non rejouée) |
-| 3 | La surface — écran, navigation, manuel `3 quinquies`, captures, extension du seed | livrée, `[~]` (série des `verify-*.sh` non rejouée) |
+| 2 | La relance automatique — job `pg_cron` quotidien, événement `stalled` dans la timeline | **close**, 2026-08-29 (INC-239 levée, décision 559) |
+| 3 | La surface — écran, navigation, manuel `3 quinquies`, captures, extension du seed | **close**, 2026-08-29 (capture du fil corrigée, décision 559) |
 
 - [x] **Spécification écrite et committée AVANT la première ligne de code** — `docs/SPEC-relances.md`,
       huit chapitres, rédigés **après mesure** sur la pile de développement le 2026-08-24, seed
@@ -8747,6 +8747,19 @@ preuves, l'écran vérifié visuellement aux quatre paliers, console vierge.
       qui ne peut plus se périmer. La règle générale est écrite au **§9.8.1** de
       `docs/SPEC-relances.md`, et la phrase du §9.8 qui portait la dispense est révisée sur place.
       L'état final du schéma est **inchangé** : aucune opération manuelle de déploiement n'est due.
+- [x] **UNE CAPTURE DE LA TRANCHE 3 MONTRAIT LE PANNEAU D'UNE AUTRE UNITÉ — décision 559, défaut
+      trouvé EN LA REGARDANT** (`CLAUDE.md` §16). `relance-dans-le-fil-1440.jpg` montrait le
+      formulaire « Armer la relance » de `CRM-063`, livré depuis sur la même page avec un titre qui
+      est mot pour mot « Relance automatique » et qui précède le fil dans le document : le scénario
+      visait `getByText(...).first()`. **Il restait vert** — les deux textes existaient chacun
+      quelque part, et `toBeVisible()` n'exige pas d'être dans le champ. La ligne est désormais
+      désignée par son **détail**, qui n'appartient qu'au fil, le contrôle exige que libellé et
+      détail soient portés par la **même** ligne (§10.3.1), le défilement est demandé centré et
+      **asserté** par `toBeInViewport()` — une image qui ne porterait pas son sujet fait maintenant
+      échouer le scénario. **Neuf scénarios verts**, capture régénérée et **observée** : elle montre
+      « Relance automatique · 35 jours de retard, pour un seuil de 5 jours ». Reste nommé plutôt que
+      corrigé : le fichier s'appelle `-1440` mais est pris à la fenêtre par défaut, 1280 × 720 —
+      **INC-244**, issue retenue et écrite, mise en œuvre due ici.
 
 ### CRM-063 — Modèles d'emails, signatures, séquences de relance `[x]`
 
