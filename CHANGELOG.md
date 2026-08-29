@@ -13,6 +13,26 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-084` — une ligne de coût oubliée finit par se voir
+
+- **Un budget peut désormais déclarer au bout de combien de jours une dépense sans coût réel est
+  « en retard ».** Le champ est facultatif, se règle au formulaire d'administration du budget, et
+  s'exprime en jours.
+- **La colonne « Ancienneté » de l'onglet « À saisir » colore alors les lignes qui dépassent ce
+  seuil**, exactement comme la pastille d'ancienneté d'une affaire sur le tableau. Elle disait déjà
+  « 120 jours » ; elle ne disait pas que c'était trop.
+- **Un budget qui ne déclare aucun seuil ne colore rien, jamais**, et c'est délibéré : le produit
+  n'invente pas un rythme que personne n'a décidé. C'est déjà ce que fait une affaire sur une étape
+  sans seuil de relance.
+- **La distinction ne repose pas sur la seule couleur** : la cellule dit à voix haute « 120 jours,
+  au delà du seuil de 30 jours fixé pour ce budget ».
+- Arbitrage rendu, **INC-183** close après neuf jours : le seuil est une donnée du budget, et non une
+  constante que le produit se serait donnée à lui-même.
+- Migration **72** — une colonne et sa contrainte ; aucune politique, aucun privilège, aucun trigger.
+- Documentation : `docs/SPEC-costs.md` §2.1 bis, §4.1 et §4.8.1, `docs/SCHEMA.md` §9 bis.4,
+  `docs/DESIGN_SYSTEM.md` §5.31, `docs/PROD_MIGRATIONS.md`. **INC-238** consignée : la date de
+  création d'une ligne de coût est encore posable par son auteur, ce qui appartient à `CRM-013`.
+
 ### `CRM-083` — un tableau d'objectifs qu'on ne peut pas modifier le dit d'emblée
 
 - **Le canevas d'objectifs porte un état de lecture seule.** Quelqu'un qui ne peut pas écrire dans

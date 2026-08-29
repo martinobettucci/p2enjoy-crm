@@ -28,6 +28,7 @@ colonne.
 | `is_recurrent` | booléen, défaut faux |
 | `closed_at` | horodatage, nul tant que le budget est ouvert |
 | `position` | ordre d'affichage, attribuée par trigger si omise |
+| `stale_after_days` | `integer`, **facultatif**, `null` ou strictement positif — le seuil d'ancienneté d'une ligne de coût de ce budget (§2.1 bis) |
 
 **L'unicité du nom ne porte que sur les budgets ouverts.** Clôturer « Salon 2025 » puis ouvrir un
 nouveau « Salon 2025 » l'année suivante est un geste normal ; l'interdire forcerait des noms
@@ -35,6 +36,84 @@ artificiels.
 
 **Aucune contrainte de signe sur les montants**, comme pour `cards.amount` : un avoir, une remise
 ou un remboursement sont des coûts négatifs légitimes.
+
+### 2.1 bis Le seuil d'ancienneté d'une ligne de coût — arbitrage rendu le 2026-08-29, INC-183
+
+`docs/DESIGN_SYSTEM.md` §5.31 promet, de la colonne « Ancienneté » de la table de saisie en série :
+« au delà d'un seuil, elle passe en `--color-danger-on-soft` sur `--color-danger-soft`, comme la
+pastille d'ancienneté d'une card (§5.1) ». Le §4.8.1 point 2 a livré la colonne **sans** cette
+variante, faute de seuil, et a consigné l'écart à **INC-183** le 2026-08-20. L'entrée proposait
+trois issues ; elle est tranchée ici par la session (`docs/CloudWorker.md` §4.1 bis, règle du
+2026-08-27), et **l'issue retenue est la n° 2 : le seuil est une DONNÉE du budget.**
+
+**Le motif tient en une phrase déjà écrite ailleurs dans le produit** : *un seuil absent ne devient
+jamais un seuil par défaut* (`docs/SPEC-relances.md` §2.2, tenue par `seuilEffectif` de
+`webapp/src/lib/carte-figee.ts`). L'étape `Livré` du seed ne porte aucun seuil, et ses affaires ne
+sont donc **jamais** figées — le produit refuse déjà, une fois, d'inventer un rythme que personne
+n'a décidé. Un budget sans seuil se comporte exactement pareil : **aucune variante de danger, sur
+aucune de ses lignes**.
+
+**Pourquoi le BUDGET porte le seuil, et pas autre chose.** Le seuil d'une card vit sur son étape
+parce que l'étape est l'objet qui gouverne son rythme : une qualification et une signature ne
+vieillissent pas au même pas. Pour une ligne de coût, l'objet qui gouverne le rythme est son
+**budget** : un achat d'espace publicitaire se facture en quelques jours, un salon se solde après
+l'événement. Le parallèle du §5.31 — « c'est le même signal, il doit avoir la même forme » — est
+alors exact des deux côtés : même forme visuelle, et même doctrine de résolution.
+
+**Les deux autres issues sont écartées, et voici par quoi.**
+
+- **Issue n° 1, une constante de produit** — « soixante jours », posée une fois dans un module de
+  configuration. Écartée parce qu'elle ferait cohabiter **deux doctrines contraires pour un même
+  signal** : la pastille d'une card se tait quand personne n'a décidé, la cellule d'une ligne de
+  coût crierait sur une valeur que personne n'a décidée. C'est le « comportement juste une fois sur
+  deux » que `docs/CloudWorker.md` §4.1 bis proscrit, et la valeur métier codée en dur de
+  `CLAUDE.md` §3 — la centraliser dans un module ne la rend pas décidée, elle la rend seulement
+  décidée **une seule fois par nous**.
+- **Issue n° 3, retirer la seconde phrase du §5.31** — l'ordre du tableau porterait alors
+  l'information que la teinte devait porter. Écartée sur une mesure de l'écran lui-même : le §4.8
+  liste **toute** la population en attente, du plus ancien au plus récent, qu'elle soit en retard ou
+  non. La position dit donc un **rang**, jamais un **franchissement** ; la première ligne d'un
+  onglet où rien n'est en retard est au même endroit que la première ligne d'un onglet où tout l'est.
+  Retirer la teinte serait la perte silencieuse que `docs/CloudWorker.md` §4.1 bis interdit.
+
+**LE REPLI AU NIVEAU DU WORKSPACE, que l'issue n° 2 nommait, n'est PAS retenu.** Le repli d'une card
+existe parce qu'une étape est la **copie** d'un nœud du catalogue, et que le catalogue porte la
+valeur par défaut (`workflow_nodes_catalog.default_stale_after_days`, mesuré : 7 à 30 jours selon le
+nœud). Un budget n'est la copie de rien. Poser un défaut de workspace demanderait une seconde
+colonne, une seconde surface d'administration et un ordre de résolution, pour une valeur qu'aucune
+unité n'a demandée. `stale_after_days` est donc résolu **en un seul temps** : le sien, ou rien.
+
+**Contrat, ligne à ligne.**
+
+| Point | Règle |
+|---|---|
+| Colonne | `budgets.stale_after_days`, `integer`, nullable, sans défaut |
+| Contrainte | `stale_after_days is null or stale_after_days > 0` — même forme et même nom de suffixe que `workflow_steps_stale_check` |
+| Résolution | le seuil du budget, ou `null`. **Aucun repli**, ni sur l'occurrence, ni sur le track, ni sur le workspace |
+| Occurrence | `budget_occurrences` ne porte **aucun** seuil : une occurrence est une instance de son budget, pas une politique de rythme distincte |
+| Écriture | par la politique d'écriture des budgets déjà posée par la migration `0050` — `app.is_workspace_admin`. **Aucune politique, aucun privilège, aucune fonction neuve** |
+| Refus mesuré | un `PATCH` d'un non-administrateur rend **`200` et zéro ligne**, la clause `USING` filtrant la ligne — et non `403` / `42501` (mesure M8 du 2026-08-29) |
+| Comparaison | une ligne est **en retard** lorsque son ancienneté en jours révolus est **strictement supérieure** au seuil. Un seuil de 30 jours ne colore pas une ligne de 30 jours : la card emploie déjà la borne large du §2.5 de `docs/SPEC-relances.md`, et « au delà d'un seuil » se lit de la même façon |
+| Seuil absent | **aucune variante**, jamais une valeur de repli |
+| Ancienneté illisible | `ancienneteEnJours` rend `null`, la cellule reste vide (§4.8.1), et une cellule vide n'est **jamais** en retard |
+
+**CE QUE LE SEED DOIT PORTER, ET C'EST UNE MESURE QUI L'IMPOSE.** Le 2026-08-29, les trois lignes
+sans réel du seed ont **zéro jour** d'ancienneté — elles naissent à l'exécution du seed. Aucune
+d'elles ne franchirait donc jamais aucun seuil, et la variante serait livrée **indémontrable**
+(`CLAUDE.md` §8). Mesuré le même jour (M5) : un `POST /rest/v1/card_costs` portant `created_at`
+explicite est accepté (`201`) et la valeur est **conservée telle quelle**. Le seed antidate donc la
+ligne qu'il veut voir en retard, par le même chemin d'API que les autres.
+
+Le jeu de démonstration porte alors les **trois** états, et non un seul :
+
+| Budget | Seuil | Ligne sans réel | État attendu |
+|---|---|---|---|
+| « Prospection sortante » | **30** | « Prospection terrain », antidatée de **120 jours** | **en retard** — variante de danger |
+| « Publicité 2026 » | **90** | « Publicité », du jour | dans les temps — variante neutre |
+| « Salon du web 2025 » (clôturé) | **aucun** | « Impression plaquettes », du jour | **aucun seuil** — variante neutre, et elle le resterait à mille jours |
+
+Sans la troisième ligne, « pas de seuil » et « seuil non franchi » rendraient la même chose à
+l'écran et une régression qui confondrait les deux passerait inaperçue.
 
 ### 2.2 `budget_occurrences` — les instances d'un budget récurrent
 
@@ -181,6 +260,19 @@ clôturés » — ils ne disparaissent pas de l'historique, ils sortent du chemi
 sans coût réel ; elles resteront saisissables après la clôture ». La clôture n'est pas empêchée —
 c'est une décision de gestion —, mais elle n'est pas silencieuse : clôturer sans le savoir fige une
 comparaison prévisionnel/réel fausse, et personne ne le verrait ensuite.
+
+**Le seuil d'ancienneté s'administre ICI, et nulle part ailleurs — ajouté le 2026-08-29, §2.1 bis.**
+Le formulaire de création et celui de modification portent un champ facultatif « Seuil d'ancienneté
+(jours) », `type="number"`, `min="1"`, `step="1"`, dont le vide vaut `null`. Il n'entre **pas** dans
+les colonnes de la table : le §5.9 réserve les colonnes à ce qu'on **compare** d'une ligne à
+l'autre, et un seuil se règle une fois puis s'oublie — la table en porterait une septième colonne
+vide neuf fois sur dix. C'est le même traitement que `period_start` et `period_end` d'une
+occurrence, réglées au formulaire et absentes de la liste.
+
+**« Vide » et « zéro » sont DEUX choses ici aussi**, exactement comme l'enveloppe du §4.1 : un champ
+laissé vide envoie `null` — *aucun seuil décidé* —, et il n'existe aucune saisie qui envoie `0`,
+la contrainte de la base refusant les valeurs nulles ou négatives. Le refus correspondant est le
+`23514` du dictionnaire du §4.1 bis.4, et l'écran le nomme sur le champ plutôt qu'en tête d'écran.
 
 ### 4.1 bis Les occurrences d'un budget récurrent — arbitrage rendu le 2026-08-28, INC-173
 
@@ -502,6 +594,16 @@ ni nœud. En inventer un — trente jours, soixante — poserait une règle de g
 prise (`CLAUDE.md` §3, « éviter les valeurs métier codées en dur »). La colonne est donc rendue en
 13 px `--color-text-2` **sans variante de danger**, l'écart est consigné à **INC-183**, et il tombera
 par arbitrage, jamais par supposition.
+
+> **RÉVISÉ PAR LIVRAISON le 2026-08-29 — l'arbitrage est rendu, et le paragraphe ci-dessus reste
+> lisible parce qu'il dit encore le vrai de ce qui l'a motivé.** INC-183 est tranchée au **§2.1 bis**
+> : le seuil est une donnée du budget, `budgets.stale_after_days`, nullable et sans repli. Ce qui
+> change ici, et seulement cela : la colonne « Ancienneté » porte désormais la variante de danger
+> **lorsque le budget de la ligne déclare un seuil et que l'ancienneté le dépasse strictement**, et
+> conserve son rendu neutre dans les deux autres cas — seuil absent, seuil non franchi. La lecture
+> de l'onglet ramène donc `budgets.stale_after_days` dans son embed, comme elle ramène déjà
+> `budgets.name` et `budgets.closed_at` ; **aucun aller-retour supplémentaire**, et le droit
+> d'écriture du point 1 ci-dessus est inchangé.
 
 **3. CE QUE LA SAISIE ENVOIE, ET LA FRONTIÈRE EXACTE DU §2.3.** L'écriture est un `PATCH` sur
 `card_costs`, portant **`actual_cost` et rien d'autre**. Le §2.3 pose que « le trigger refuse

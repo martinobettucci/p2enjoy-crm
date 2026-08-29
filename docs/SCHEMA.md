@@ -1276,6 +1276,14 @@ nourrit un autre en retour est une intention légitime.
 | `is_recurrent` | `boolean` | non nul, défaut faux |
 | `closed_at` | `timestamptz` | nul tant que le budget est ouvert |
 | `position` | `numeric` | non nul, attribuée par trigger si omise |
+| `stale_after_days` | `integer` | facultatif, sans défaut ; `CHECK (is null or > 0)` — contrainte `budgets_stale_check`, même forme que `workflow_steps_stale_check` (migration 72) |
+
+**`stale_after_days` est le seuil d'ancienneté des LIGNES DE COÛT du budget** (`SPEC-costs`
+§2.1 bis, arbitrage d'INC-183). Il se résout **en un seul temps** : le sien, ou rien. Aucun repli
+sur l'occurrence, le track ou le workspace — contrairement au seuil d'une card, qui replie sur
+`workflow_nodes_catalog.default_stale_after_days` (§7) parce qu'une étape est la copie d'un nœud du
+catalogue. Un budget n'est la copie de rien, et *un seuil absent ne devient jamais un seuil par
+défaut* (`SPEC-relances` §2.2).
 
 ### 9 bis.5 `budget_occurrences`
 

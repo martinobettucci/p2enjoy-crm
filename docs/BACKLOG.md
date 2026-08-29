@@ -11064,6 +11064,45 @@ tranche 1.
       `scripts/verify-administration-arborescence.sh` **27 contrôles**, aucune anomalie de part ni
       d'autre — l'écran hôte n'a rien perdu à accueillir le bloc des budgets.
 
+**Tranche 4 — le seuil d'ancienneté d'une ligne de coût, INC-183 tranchée.** Découpage écrit ici
+plutôt que laissé à la mémoire d'une session (`CLAUDE.md` §5), chaque sous-tranche livrable et
+prouvable seule. L'unité qui la porte est `CRM-084` et non `CRM-086` : ce que la tranche ajoute est
+une **colonne de `budgets` et sa surface d'administration**, c'est-à-dire le modèle et l'écran que
+cette unité livre. `CRM-086` n'y reçoit qu'une **révision par livraison** de son §5.31, dont la
+seconde phrase promettait la variante depuis le premier jour.
+
+- **4a — l'arbitrage et la spécification.** INC-183 tranchée (décision 549, issue n° 2),
+  `docs/SPEC-costs.md` §2.1 bis, §4.1 et §4.8.1 point 2, `docs/SCHEMA.md` §9 bis.4,
+  `docs/DESIGN_SYSTEM.md` §5.31, `docs/PROD_MIGRATIONS.md`, le registre et ce découpage. Commit
+  documentaire dédié, poussé **avant tout code**.
+- **4b — le socle.** Migration `0072` : la colonne `budgets.stale_after_days` et sa contrainte
+  `budgets_stale_check`. **Aucune politique, aucun privilège, aucune fonction** — l'écriture est
+  celle que la migration `0050` a posée. Suite pgTAP, types régénérés, seed portant les **trois**
+  états du §2.1 bis, preuve d'API avec les jetons réels.
+- **4c — la surface.** Le champ facultatif du formulaire d'administration des budgets (§4.1), la
+  variante de danger de la colonne « Ancienneté » et son nom accessible (§5.31), leurs suites
+  unitaires, leurs scénarios E2E et leurs captures.
+
+- [~] **4a — LIVRÉE le 2026-08-29** (décision 549). L'arbitrage retient l'issue n° 2 — le seuil est
+      une donnée du budget — contre les deux autres, et le motif est écrit plutôt que sous-entendu :
+      une constante de produit (issue n° 1) ferait suivre à un même signal **deux doctrines
+      contraires**, la pastille d'une card se taisant sur une étape sans seuil ; retirer la seconde
+      phrase du §5.31 (issue n° 3) perdrait l'information en silence, l'ordre du tableau disant un
+      **rang** et jamais un **franchissement**. Le repli au niveau du workspace que l'entrée nommait
+      n'est **pas** retenu : le repli d'une card existe parce qu'une étape est la copie d'un nœud du
+      catalogue, et un budget n'est la copie de rien.
+- [ ] **4b et 4c restent dues.** Tant qu'elles ne sont pas livrées, la colonne « Ancienneté » reste
+      rendue **sans** variante de danger : la spécification a changé, pas encore le produit.
+- [x] **Le seed devra ANTIDATER une ligne, et c'est une mesure qui l'impose** (§2.1 bis) : les trois
+      lignes sans réel du seed ont **zéro jour** d'ancienneté, puisqu'elles naissent à l'exécution du
+      seed. Sans antidatage, la variante serait livrée indémontrable (`CLAUDE.md` §8). Mesuré le même
+      jour : un `POST` portant `created_at` explicite est accepté et la valeur conservée.
+- [x] **INC-238 consignée, comportement inchangé** : `card_costs.created_at` est acceptée telle
+      quelle par PostgREST **pour un appelant ordinaire** — mesuré `201` avec le jeton réel de
+      l'administratrice. L'ancienneté devient un signal, et un signal se falsifie en posant sa propre
+      date. L'issue est retenue et écrite ; sa mise en œuvre appartient à `CRM-013`, qui porte la
+      machinerie des colonnes protégées.
+
 ### CRM-085 — Lignes de coût d'une affaire `[x]`
 
 `card_costs` (`docs/SCHEMA.md` §9 bis.6), ses triggers, sa double politique de lecture, et la

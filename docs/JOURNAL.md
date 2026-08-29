@@ -27179,3 +27179,67 @@ celui du modèle des objectifs et celui des migrations —, c'est-à-dire ceux q
 
 **Où reprendre.** Inchangé depuis la décision 547 : `CRM-084` porte encore du comportement, et
 **INC-183** reste l'arbitrage suivant sur ce chemin.
+
+## décision 549 — INC-183 tranchée : le seuil d'ancienneté d'une ligne de coût est une DONNÉE du budget
+
+*2026-08-29. Arbitrage rendu, spécification écrite et committée AVANT la première ligne de code
+(`CLAUDE.md` §5, `docs/CloudWorker.md` §3.2 point 3). Unité de la session : `CRM-084` tranche 4.*
+
+**LE PROBLÈME, TEL QUE LE DÉPÔT LE PORTAIT DEPUIS NEUF JOURS.** `docs/DESIGN_SYSTEM.md` §5.31
+promet, de la colonne « Ancienneté » de la table de saisie en série, qu'« au delà d'un seuil elle
+passe en `--color-danger-on-soft` […] comme la pastille d'ancienneté d'une card ». Aucun seuil
+n'existait pour une ligne de coût : celui d'une card vit sur son étape de workflow. `CRM-086` a donc
+livré la colonne neutre, nommé l'écart au §4.8.1 point 2, et consigné INC-183 le 2026-08-20 avec
+trois issues. La décision 547 la désignait comme l'arbitrage suivant sur ce chemin.
+
+**HUIT MESURES, PRISES SUR LA PILE SEEDÉE, ET NON DE MÉMOIRE.** M1 : `public.budgets` porte onze
+colonnes, aucune ne concerne un seuil ; dans tout le schéma `public`, seules `workflow_steps` et
+`workflow_nodes_catalog` en portent une. M2 : `budgets` a deux `CHECK`, sur la devise et sur le nom.
+M3 : la convention du dépôt est `integer` nullable + `CHECK (is null or > 0)`, contrainte nommée
+`<table>_stale_check`. M4 : **les trois lignes sans réel du seed ont zéro jour d'ancienneté**, parce
+qu'elles naissent à l'exécution du seed. M5 : un `POST /rest/v1/card_costs` portant `created_at`
+explicite est accepté avec la clé de service et la valeur est conservée. M6 : **le même envoi passe
+avec le jeton réel de l'administratrice** — `201`, `created_at` conservée. M7 : `PATCH` de
+`stale_after_days` avant migration rend `PGRST204`, la colonne n'existant pas. M8 : un `PATCH` de
+`budgets` par le business developer rend **`200` et zéro ligne**, la valeur d'origine intacte — le
+refus est un filtre `USING`, jamais un `403`.
+
+**L'ISSUE RETENUE EST LA N° 2 : LE SEUIL EST UNE DONNÉE DU BUDGET**, `budgets.stale_after_days`,
+`integer` nullable, sans repli. Le motif est une phrase déjà écrite ailleurs dans ce produit : *un
+seuil absent ne devient jamais un seuil par défaut* (`docs/SPEC-relances.md` §2.2, tenue par
+`seuilEffectif`). L'étape `Livré` du seed n'a pas de seuil et ses affaires ne sont jamais figées ; un
+budget sans seuil ne colore aucune de ses lignes. Et l'objet qui gouverne le rythme d'une ligne de
+coût est bien son budget : un achat d'espace se facture en jours, un salon se solde après
+l'événement.
+
+**LES DEUX AUTRES ISSUES SONT ÉCARTÉES, ET PAR UN MOTIF CHACUNE.** L'issue n° 1 — une constante de
+produit, « soixante jours » — ferait suivre **deux doctrines contraires à un même signal** : la
+pastille d'une card se tait quand personne n'a décidé, la cellule d'une ligne crierait sur une valeur
+que personne n'a décidée. C'est le « comportement juste une fois sur deux » que `docs/CloudWorker.md`
+§4.1 bis proscrit ; la centraliser dans un module ne la rend pas décidée, seulement décidée par nous.
+L'issue n° 3 — retirer la seconde phrase du §5.31, l'ordre du tableau portant l'information — est
+écartée sur une mesure de l'écran : l'onglet liste **toute** la population du plus ancien au plus
+récent, en retard ou non. La position dit un **rang**, jamais un **franchissement** ; la première
+ligne d'un onglet où rien n'est en retard est au même endroit que celle d'un onglet où tout l'est.
+
+**LE REPLI AU NIVEAU DU WORKSPACE, que l'issue n° 2 nommait, N'EST PAS RETENU.** Le repli d'une card
+existe parce qu'une étape est la **copie** d'un nœud du catalogue, et que le catalogue porte le défaut
+(mesuré : 7 à 30 jours selon le nœud). Un budget n'est la copie de rien. Un défaut de workspace
+demanderait une seconde colonne, une seconde surface et un ordre de résolution, pour une valeur
+qu'aucune unité n'a demandée.
+
+**M4 COMMANDE LE SEED, ET C'EST LA CONSÉQUENCE QU'ON AURAIT MANQUÉE.** Toutes les lignes du seed ont
+zéro jour : la variante serait livrée **indémontrable** (`CLAUDE.md` §8). Le seed antidatera donc,
+par le même chemin d'API que le reste, la ligne qu'il veut voir en retard, et portera les **trois**
+états — seuil franchi, seuil non franchi, aucun seuil. Sans le troisième, « pas de seuil » et « seuil
+non franchi » rendraient la même chose et une régression qui les confondrait passerait inaperçue.
+
+**INC-238 CONSIGNÉE, COMPORTEMENT INCHANGÉ (M6).** L'ancienneté devient un signal, et `created_at`
+de `card_costs` est posable par tout appelant qui a le droit d'écrire la ligne. Ce n'est pas une
+brèche d'autorisation, c'est une garantie d'intégrité absente. La corriger appartient à `CRM-013`,
+qui porte la machinerie des colonnes protégées ; la faire ici serait solder une autre unité
+(`CLAUDE.md` §13). Le seed s'en sert d'ailleurs délibérément.
+
+**Où reprendre.** 4a est livrée et poussée. **4b** — migration 72, pgTAP, types, seed, preuve d'API —
+puis **4c** — le champ du formulaire, la variante de danger et son nom accessible, unitaires, E2E,
+captures — sont dues, et c'est la suite immédiate de cette session.

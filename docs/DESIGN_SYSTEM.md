@@ -2384,6 +2384,26 @@ remonteraient sous le curseur et la valeur suivante serait écrite au mauvais en
 delà d'un seuil, elle passe en `--color-danger-on-soft` sur `--color-danger-soft`, comme la pastille
 d'ancienneté d'une card (§5.1) : c'est le même signal, il doit avoir la même forme.
 
+**LE SEUIL EXISTE DEPUIS LE 2026-08-29, ET C'EST UNE DONNÉE — arbitrage d'INC-183,
+`docs/SPEC-costs.md` §2.1 bis.** Ce paragraphe a vécu neuf jours en promettant une variante que rien
+ne pouvait déclencher : `docs/SPEC-costs.md` §4.8.1 point 2 nommait l'écart et livrait la colonne
+neutre. Le seuil est désormais `budgets.stale_after_days`, réglé au formulaire d'administration du
+budget (§5.9, `docs/SPEC-costs.md` §4.1), et la variante obéit à **trois** états et non à deux :
+
+- **le budget déclare un seuil et l'ancienneté le dépasse STRICTEMENT** → `--color-danger-on-soft`
+  sur `--color-danger-soft`, la forme exacte de la pastille du §5.1 ;
+- **le budget déclare un seuil non franchi** → rendu neutre ;
+- **le budget ne déclare AUCUN seuil** → rendu neutre, et il le reste à mille jours. *Un seuil
+  absent ne devient jamais un seuil par défaut* (`docs/SPEC-relances.md` §2.2) : c'est déjà la règle
+  de la pastille d'une card sur une étape sans seuil, et deux signaux de même forme ne peuvent pas
+  suivre deux doctrines contraires.
+
+Les deux derniers états sont **visuellement identiques et sémantiquement distincts** ; c'est assumé,
+et c'est pourquoi la teinte n'est pas la seule chose qui parle. Le **nom accessible** de la cellule
+porte la distinction — « 120 jours, au delà du seuil de 30 jours fixé pour ce budget » contre
+« 12 jours » —, faute de quoi le signal ne serait lisible qu'à l'œil, ce que le §8 interdit : une
+information portée par la seule couleur n'existe pas pour qui ne la distingue pas.
+
 **Pilule « clôturé »** sur les lignes dont le budget ou l'occurrence est clos — badge neutre du
 §5.6, jamais `--color-danger` : un budget clos n'est pas une erreur, et sa ligne reste saisissable.
 

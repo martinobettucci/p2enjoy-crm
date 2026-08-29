@@ -60,7 +60,7 @@ restante est une dette de mise en œuvre, suivie dans `docs/ARBITRAGES.md` et da
 
 ## Retirées — index
 
-**Cent vingt-six** entrées retirées, texte intégral dans l'historique Git. Colonnes : ce que l'entrée
+**Cent vingt-sept** entrées retirées, texte intégral dans l'historique Git. Colonnes : ce que l'entrée
 constatait, la date de l'arbitrage, qui en porte (ou en a porté) la mise en œuvre, et la ou les
 décisions de `docs/JOURNAL.md` à lire. Une mention « close » dans la colonne « Porteur » signale
 que l'implémentation est en outre livrée et prouvée ; son absence signifie que seul l'arbitrage est
@@ -229,6 +229,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-168 | L'unicité du nom d'un tableau d'objectifs porte AUSSI sur les tableaux archivés — `goal_boards_workspace_name_key` est TOTAL, là où l'index des budgets est partiel (`where closed_at is null`). La spécification ne disait pas si les archivés comptaient, et l'entrée présentait cet écart comme l'oubli probable de l'un des deux | 2026-08-28 | `CRM-082` — issue retenue : **le comportement en place est CONFIRMÉ**, aucune migration ; la règle vit dans `docs/SPEC-goals.md` §2.1 bis et `docs/SCHEMA.md` §9 bis.1 | 542 |
 | INC-182 | Le badge de l'onglet « À saisir » ne PEUT PAS porter le même nombre que la mention du §4.4, que `docs/SPEC-costs.md` §4.8 exigeait pourtant égal : l'onglet liste les budgets **clôturés** que l'histogramme exclut, et la mention est rendue **par devise** quand un badge est un nombre unique. MESURÉ le 2026-08-20, et REMESURÉ le 2026-08-28 sur la pile seedée avec le jeton réel du business developer : **2 contre 1** sur le track « Studio web », **3 contre 2** au niveau du workspace | 2026-08-28 | `CRM-086` — issue retenue : la **n° 1**, l'égalité est RETIRÉE du §4.8 ; le badge compte la portée de l'onglet, la mention celle de son histogramme, et l'écran NOMME la portée du badge dès qu'il paraît (`docs/SPEC-costs.md` §4.8.3, `docs/DESIGN_SYSTEM.md` §5.31) | 544 |
 | INC-170 | L'état « lecture seule » du canevas d'objectifs contredisait la règle « aucune commande éteinte d'avance » : `docs/SPEC-goals.md` §5.4 demandait une extinction pour le rôle `viewer`, là où `docs/DESIGN_SYSTEM.md` la refuse neuf fois | 2026-08-28 | `CRM-083` tranche 3 — **close** : la contradiction portait sur le DÉCLENCHEUR et non sur l'état. Le §5.4 est révisé sur ce seul point — la capacité consentie par la base (`public.ecriture_permise(goal_boards)`, migration 71) remplace le rôle —, la règle générale du design system n'est PAS amendée (§5.29 ter). `docs/SPEC-goals.md` §5.7, `docs/SCHEMA.md` §9 bis.8 bis | 546 |
+| INC-183 | Le SEUIL d'ancienneté d'une ligne de coût n'existe nulle part, et `docs/DESIGN_SYSTEM.md` §5.31 promettait pourtant une variante `--color-danger-on-soft` « au delà d'un seuil ». Celui d'une card est une donnée de son étape de workflow (`workflow_steps.stale_after_days`, repli `workflow_nodes_catalog.default_stale_after_days`) ; une ligne de coût n'a ni étape ni nœud, et la colonne était livrée neutre depuis le 2026-08-20 | 2026-08-29 | `CRM-084` tranche 4 — issue retenue : la **n° 2**, le seuil est une DONNÉE du budget (`budgets.stale_after_days`, nullable, **sans repli**), `docs/SPEC-costs.md` §2.1 bis, `docs/SCHEMA.md` §9 bis.4, `docs/DESIGN_SYSTEM.md` §5.31 | 549 |
 | INC-173 | Aucune surface ne gère les occurrences d'un budget récurrent : le §3.2 de `docs/SPEC-costs.md` nomme quatre gestes — ouvrir, libeller, doter, clôturer —, le §4.1 en COMPTE le résultat, et aucun chapitre ne décrivait l'écran qui les porte. Un budget récurrent créé à l'écran ne pouvait donc recevoir AUCUNE ligne de coût, le §4.7 l'écartant du sélecteur faute d'occurrence | 2026-08-28 | `CRM-084` tranche 3 — mise en œuvre DUE : la sous-surface de la table des budgets, `docs/SPEC-costs.md` §4.1 bis et `docs/DESIGN_SYSTEM.md` §5.47 | 539 |
 
 ---
@@ -238,9 +239,12 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 **Énumération PARTIELLE, et elle est signalée comme telle depuis le 2026-08-28 : INC-123, INC-124,
 INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-174,
-INC-183, INC-185, INC-186, INC-188, INC-189, INC-190, INC-191, INC-192, INC-193, INC-224,
-INC-225, INC-226, INC-227, INC-228, INC-229, INC-231, INC-232, INC-233, INC-234 et
-INC-236.**
+INC-185, INC-186, INC-188, INC-189, INC-190, INC-191, INC-192, INC-193, INC-224,
+INC-225, INC-226, INC-227, INC-228, INC-229, INC-231, INC-232, INC-233, INC-234, INC-236 et
+INC-238.**
+
+*Mise à jour du 2026-08-29 : **INC-183** est tranchée (décision 549) et retirée ; **INC-238** est
+consignée par la même session.*
 
 > **CETTE LISTE N'EST PAS LE COMPTE DES ENTRÉES OUVERTES, ET LE CHIFFRE QUI LA PRÉCÉDAIT ÉTAIT
 > FAUX.** Mesuré le 2026-08-28 par la session `CRM-082`, en comptant les titres `### INC-…` du
@@ -3495,41 +3499,12 @@ départ reste, elle, à établir.
 
 ## Consignés le 2026-08-20 — deux manques de SPÉCIFICATION relevés par `CRM-086` tranche 6
 
-Relevés en lisant `docs/SPEC-costs.md` §4.8 **avant** de le coder, comme le §3.2 point 3 de
-`docs/CloudWorker.md` le demande. Ils ne sont **pas** étrangers à l'unité : ils portent sur l'onglet
-même que la tranche livre. Ils sont consignés ici plutôt que tranchés sur place parce que trancher
-poserait une règle de produit que personne n'a prise — `CLAUDE.md` §5, dernier alinéa de la
-traçabilité. Le comportement livré est celui que la spécification complétée (§4.8.1, §4.8.2) nomme,
-et il est nommé pour être révisé sans surprise dès l'arbitrage rendu.
-
-### INC-183 — le SEUIL d'ancienneté d'une ligne de coût n'existe pas, et `docs/DESIGN_SYSTEM.md` §5.31 le suppose
-
-`docs/DESIGN_SYSTEM.md` §5.31 écrit, de la colonne « Ancienneté » de la table de saisie : « Au delà
-d'un seuil, elle passe en `--color-danger-on-soft` sur `--color-danger-soft`, comme la pastille
-d'ancienneté d'une card (§5.1) : c'est le même signal, il doit avoir la même forme. »
-
-**Le seuil d'une card est une DONNÉE, et une ligne de coût n'a pas d'endroit où la porter.** Celui
-d'une card vit sur son étape de workflow — `workflow_steps.stale_after_days`, avec le repli
-`workflow_nodes_catalog.default_stale_after_days` (`docs/SPEC-workflow-engine.md` §2.5) —, et
-`resoudreEtape` de `webapp/src/lib/board.ts` le résout dans cet ordre. Une ligne de `card_costs` n'a
-ni étape, ni nœud, ni colonne de seuil : `docs/SCHEMA.md` §9 bis.6 n'en déclare aucune, et
-`docs/SPEC-costs.md` §2.3 n'en nomme aucune.
-
-**Rien n'est inventé.** Écrire « trente jours » dans le composant serait la valeur métier codée en
-dur que `CLAUDE.md` §3 proscrit, et la poser en colonne de `budgets` serait une évolution de schéma
-qu'aucune unité n'a demandée. La colonne « Ancienneté » est donc livrée **en 13 px
-`--color-text-2`, sans variante de danger** — c'est-à-dire la première phrase du §5.31, tenue, et sa
-seconde, non livrée et nommée.
-
-**Arbitrage attendu.** Trois issues :
-
-1. le seuil est une **constante de produit** documentée — par exemple soixante jours —, posée une
-   seule fois dans un module de configuration et citée par le §5.31 ;
-2. le seuil est une **donnée du budget** — une colonne `stale_after_days` sur `budgets`, avec son
-   repli au niveau du workspace —, ce qui demande une migration et une surface d'administration ;
-3. la seconde phrase du §5.31 est **retirée** : l'ancienneté est écrite en durée et ne porte aucun
-   signal chromatique, la colonne étant déjà triée du plus ancien au plus récent — l'ordre porte
-   alors l'information que la teinte devait porter.
+**Les deux sont désormais tranchés et retirés** : **INC-182** le 2026-08-28 (décision 544) et
+**INC-183** le 2026-08-29 (décision 549). Leurs lignes d'index sont ci-dessus, leur texte d'origine
+dans l'historique Git, et les règles qui en découlent aux §4.8.3 et §2.1 bis de `docs/SPEC-costs.md`.
+Ce bloc est conservé pour la seule chose qu'il dit encore : les deux avaient été relevés en lisant la
+spécification **avant** de la coder, comme le §3.2 point 3 de `docs/CloudWorker.md` le demande, et
+c'est ce qui a permis de livrer un comportement nommé plutôt qu'un comportement supposé.
 
 ## Consigné le 2026-08-20 — un contrôle du harnais qui prend une COMPARAISON pour une classe
 
@@ -5886,3 +5861,43 @@ celle-ci (`CLAUDE.md` §13, `docs/CloudWorker.md` §3.1).
 
 **Statut :** ouvert, issue RETENUE et écrite, mise en œuvre due — elle appartient à la prochaine
 session qui touche au harnais de captures.
+
+## Consigné le 2026-08-29 — l'ancienneté d'une ligne de coût repose sur une colonne que tout écrivain peut poser
+
+### INC-238 — `card_costs.created_at` est acceptée telle quelle par PostgREST, y compris pour un appelant ordinaire
+
+**MESURÉ le 2026-08-29, mesure M6 de la session `CRM-084` tranche 4**, avec le **jeton réel** de
+`admin@p2enjoy.test` — donc sans la clé de service, qui aurait rendu le constat sans portée :
+
+```
+POST /rest/v1/card_costs
+{ "card_id": …, "budget_id": …, "label": "Sonde M6", "estimated_cost": 1,
+  "created_at": "2026-05-01T09:00:00Z" }
+
+=> 201, et la réponse rend created_at = 2026-05-01T09:00:00+00:00
+```
+
+La valeur envoyée est **conservée telle quelle** : aucun trigger ne la réécrit, aucun privilège ne
+retire la colonne de l'insertion. La même mesure sur `updated_at` est sans objet — le trigger de
+mise à jour la repose.
+
+**Ce que cela coûte, et ce que cela ne coûte pas.** Rien n'est faux dans le produit livré : la
+colonne « Ancienneté » du §4.8 et la variante de danger que la tranche 4 lui ajoute
+(`docs/SPEC-costs.md` §2.1 bis) lisent fidèlement ce que la base porte. Mais l'ancienneté est
+désormais un **signal** et non plus seulement une information, et un signal se falsifie en posant sa
+propre date à l'insertion. Ce n'est pas une brèche d'autorisation — il faut déjà le droit d'écrire
+la ligne —, c'est une garantie d'intégrité absente : la ligne peut naître avec l'âge qu'on veut.
+
+**Pourquoi ce n'est pas corrigé ici.** La machinerie des colonnes protégées appartient à `CRM-013`,
+qui la pose table par table ; `card_costs` n'y a jamais été inscrite. L'y ajouter demande la
+migration de `CRM-013`, sa suite pgTAP et son harnais `verify-colonnes-protegees.sh` — c'est solder
+une autre unité sous couvert de celle-ci (`CLAUDE.md` §13, `docs/CloudWorker.md` §3.1). Le
+comportement reste donc **inchangé**, et le seed s'en sert d'ailleurs délibérément pour antidater sa
+ligne en retard (`docs/SPEC-costs.md` §2.1 bis, mesure M5).
+
+**Issue RETENUE, et ce n'est pas un arbitrage** (`docs/CloudWorker.md` §4.1 bis, liste fermée) :
+`created_at` de `card_costs` rejoint les colonnes protégées de `CRM-013`, refusée à l'insertion
+comme à la mise à jour pour `authenticated`, et laissée à la clé de service — sans quoi le seed
+perdrait le seul chemin qui rend la variante démontrable.
+
+**Statut :** ouvert, issue retenue et écrite, mise en œuvre due — elle appartient à `CRM-013`.
