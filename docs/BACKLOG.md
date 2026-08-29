@@ -11135,7 +11135,7 @@ seconde phrase promettait la variante depuis le premier jour.
       exécutée, et délibérément : une régression est déterministe, celle-ci disparaît sans qu'une
       ligne du dépôt ne bouge. Aucun chemin de `mail-sync` dans le diff.
 - [ ] **CE QUI RETIENT ENCORE `CRM-084` EN `[~]`, ET CE N'EST PLUS DU COMPORTEMENT** : (1) la série
-      des `scripts/verify-*.sh` n'a pas été rejouée en entier — le dépôt en porte **soixante-dix-neuf**,
+      des `scripts/verify-*.sh` n'a pas été rejouée en entier — le dépôt en porte **soixante-dix-sept**,
       **sept** l'ont été ; (2) l'écart HÉRITÉ de la tranche 2, nommé depuis : l'administration des
       budgets n'a toujours aucun chapitre de `docs/manual.md`.
 - [x] **Harnais dédié étendu** : `scripts/verify-budgets.sh` passe de **43 à 53 contrôles, aucune

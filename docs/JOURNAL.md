@@ -27328,7 +27328,7 @@ conservées sont les deux de cette tranche, `anciennete-seuil-{1440, sm-390}`, p
 regardées** — et c'est cette observation qui a trouvé le défaut ci-dessus.
 
 **CE QUI N'A PAS ÉTÉ EXÉCUTÉ, ET IL FAUT LE DIRE** : la série des `scripts/verify-*.sh` en entier.
-Le dépôt en porte **soixante-dix-neuf** ; **sept** l'ont été — ceux que ce changement touche, plus
+Le dépôt en porte **soixante-dix-sept** ; **sept** l'ont été — ceux que ce changement touche, plus
 `verify-harness.sh --rapide` qui certifie les compteurs révisés.
 
 **Où reprendre.** `CRM-084` n'a plus de comportement dû : ce qui la retient en `[~]` est la série
