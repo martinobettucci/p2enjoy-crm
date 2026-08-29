@@ -64,6 +64,35 @@ begin
 		 where conrelid = 'public.card_events'::regclass
 		   and conname  = 'card_events_type_check'
 		   and pg_get_constraintdef(oid) like '%stalled%'
+	) and not exists (
+		-- INC-144 — SECONDE GARDE, celle des migrations 17, 20, 25, 30, 44 et 70, qui manquait
+		-- ici. La première ne regarde que la contrainte et ne voit rien lorsqu'elle a été déposée
+		-- ou réduite ; les lignes, elles, peuvent déjà porter un type qu'une migration
+		-- POSTÉRIEURE a livré.
+		--
+		-- CETTE MIGRATION EN AVAIT ÉTÉ DISPENSÉE, ET LE MOTIF ÉCRIT ÉTAIT QU'ELLE POSAIT « LE
+		-- VOCABULAIRE LE PLUS LARGE DU DÉPÔT ». Il l'était le 2026-08-25 ; la migration 70
+		-- (`CRM-085`) l'a porté à DIX-NEUF valeurs, et la dispense est devenue le défaut
+		-- d'INC-210 un cran plus loin dans le répertoire. MESURÉ le 2026-08-29, INC-239 : sur une
+		-- base dont la contrainte est ramenée à un vocabulaire d'avant `stalled` — ce que produit
+		-- tout harnais qui la dégrade puis la restaure en rejouant une migration antérieure —,
+		-- cette migration RÉTRÉCISSAIT aux quinze valeurs de son époque, les lignes portant
+		-- `mail_unclassified` ou `contact_linked` violaient la contrainte, le `migrations-runner`
+		-- sortait en 3 sur `is violated by some row`, et les migrations 55 à 70 ne s'appliquaient
+		-- plus du tout. `./runDev.sh` ne réparait pas ; seul `./resetMe.sh` le faisait.
+		--
+		-- *Être la plus large* est un état DATÉ, que la migration suivante défait : la seconde
+		-- garde n'est donc jamais dispensable. Règle générale au §9.8.1 de
+		-- `docs/SPEC-relances.md`, contrôle de répertoire dans `scripts/verify-migrations.sh`.
+		--
+		-- On ne converge donc que si les lignes sont compatibles avec les quinze valeurs que CETTE
+		-- migration pose. Sinon la 70 reste seule responsable du vocabulaire complet, ce qu'elle
+		-- sait faire : elle porte ses deux gardes et connaît les dix-neuf valeurs.
+		select 1 from public.card_events
+		 where type <> all (array[
+			'created', 'moved', 'assigned', 'channel_changed', 'workflow_changed',
+			'archived', 'unarchived', 'trashed', 'restored', 'field_changed',
+			'mail_received', 'mail_sent', 'snoozed', 'woken', 'stalled'])
 	) then
 		alter table public.card_events drop constraint if exists card_events_type_check;
 		alter table public.card_events add constraint card_events_type_check
