@@ -27939,3 +27939,72 @@ l'exprimait pas. Aucune migration, aucune opération manuelle de déploiement n'
 **Où reprendre.** Le code suit immédiatement, dans un commit distinct. Preuves attendues :
 `scripts/verify-board.sh` (contrôle remplacé, rouge avant correction), `npm run typecheck`,
 `npm run build`.
+
+## décision 561 — INC-241 livrée et close, et elle était le doublon d'INC-138, ouverte douze jours plus tôt
+
+*2026-08-29, session planifiée ouverte à 20:08:25 UTC. Bilan de fin de session ; la décision 560 en
+porte la spécification, écrite et committée avant la première ligne de code.*
+
+**CE QUE LA SESSION A CODÉ.** Le contrôle du §1 de `scripts/verify-board.sh` qui prétendait éprouver
+le §5.4 de `docs/SPEC-channels.md` : le comptage de fichiers est remplacé par un **recensement du
+routeur**, mesuré sur le dépôt à chaque exécution — constantes de chemin, table `ROUTES`,
+déclarations `<Route>` de `App.tsx`, `.map(…)` compris —, et par les quatre exigences *a* à *d* du
+§5.4.1. Le recensement est **retourné sur une arborescence de routeur mutée**, jetable, dans ses
+quatre sens.
+
+**LE DÉFAUT A ÉTÉ REPRODUIT AVANT D'ÊTRE CORRIGÉ** (`CLAUDE.md` §18), sur la pile réelle et seedée :
+`verify-board --rapide` rendait **35 contrôles, 1 en échec**, celui-ci seul. Après correction :
+**43 contrôles, aucune anomalie**.
+
+**LA RÈGLE ÉTAIT TENUE PAR LE PRODUIT ; C'EST SA PREUVE QUI NE L'EXPRIMAIT PAS.** Six routes portent
+`:slugTrack` sur quatre composants — `RouteTrack`, `RouteCard`, `CoutsTrack`, `CoutsBudget` — et
+**les quatre** passent par `useContenuTrack`. **Aucun fichier de la webapp n'a été modifié** :
+`git diff 00d8ede..HEAD -- webapp/` est vide.
+
+**LE CONTRÔLE ÉTAIT À LA FOIS TROP STRICT ET TROP FAIBLE, ET C'EST LA SECONDE MOITIÉ QUI IMPORTE.**
+Trop strict, parce que le §5.4 prévoit des routes transverses et que quatre en sont arrivées depuis
+(`CRM-075`, `CRM-077`, `CRM-057`, `CRM-083`). Trop faible, parce qu'un comptage de FICHIERS serait
+resté **vert** si une route avait réécrit sa lecture *à l'intérieur* de `webapp/src/lib/channels.ts`
+— la divergence même que les décisions 167 et 169 redoutaient. L'exigence *d* — une seule occurrence
+de `from('channels')` dans le chargeur partagé — comble exactement ce trou, et la mutation M3 la
+retourne.
+
+**LES QUATRE AUTRES LECTURES SONT TRANCHÉES** (`docs/CloudWorker.md` §4.1 bis) : aucune n'entre dans
+le périmètre du §5.4, aucune n'alimente une barre d'onglets. Elles sont nommées une par une au
+§5.4.1 comme **observation datée, jamais comme assertion** — un inventaire figé de cinq modules
+rougirait à la sixième surface, ce qui est le mécanisme d'INC-175, d'INC-191 et d'INC-242.
+
+**INC-241 ÉTAIT LE DOUBLON D'INC-138, ET C'EST LA MESURE LA PLUS UTILE DE CETTE SESSION.** INC-138,
+ouverte le 2026-08-17, décrit le même contrôle sur **quatre** fichiers ; INC-241, ouverte le
+2026-08-29, le décrit sur **cinq**. Douze jours, deux entrées, un seul défaut — et INC-138 demandait
+un arbitrage en proposant trois issues, dont celle qui a fini par être retenue. Les deux sont closes
+par le même changement. **INC-139 est remesurée dans le même geste** : deux de ses quatre anomalies
+sont tombées — le contrôle des channels, et la dégradation du retour arrière qui rougit désormais
+comme elle le doit —, deux restent, dues à `CRM-041`.
+
+**CAMPAGNE DE FIN.** `test:sql` **67 fichiers / 3052 assertions**, `test:unit` **2934**, `typecheck`,
+`build`, `pytest` **244**, `e2e:api` **1041**, `e2e:ui` **729** — aucun échec. `e2e:mail` **41
+passés, 1 en échec** (`mail-sync.spec.ts` §S3) ; **vert rejoué seul** après recréation de
+`mail-sync` : **42 passés**. C'est le mécanisme exact du §2.2 bis de `docs/CloudWorker.md` et
+d'INC-107 — `docker logs` conserve son tampon, et un `veille_compte_echoue` écrit à 20:55:21, avant
+un redémarrage du conteneur à 20:56:24, restait lisible par une preuve qui lit le journal. Collatéral
+de campagne, pas régression.
+
+**Harnais du changement rejoué COMPLET** : `verify-board.sh` **71 contrôles, 2 en échec**, tous deux
+d'INC-139 et **étrangers** — ligne de base directe, sans `git stash`, puisque cette session n'a
+modifié aucun fichier de la webapp et que le motif de la dégradation D4 est absent de `board.ts` des
+deux côtés du changement. La boucle de correction du §4.3 n'a donc appliqué **aucune** correction :
+la campagne n'a pas été rejouée une seconde fois, faute d'objet.
+
+**CE QUI N'A PAS ÉTÉ EXÉCUTÉ, ET IL FAUT LE DIRE.** La série entière des 77 `verify-*.sh` n'a pas été
+rejouée : elle n'est la Definition of Done d'aucune unité (décision 553) et reste l'objet d'une
+session dédiée, lancée seule. Aucune capture nouvelle n'était due — le changement ne touche aucune
+interface —, et les captures régénérées par `e2e:ui` et par `verify-board` ont été **regardées** —
+`CRM-041/board-menu-ouvert-1440.jpg` et `CRM-021/channel-ouvert-1440.jpg`, rendu intact, la barre
+d'onglets portant bien ses channels — puis **restaurées**.
+
+**Où reprendre.** **INC-242** (`CRM-043`, un compteur d'assertions à réviser à 99 — travail court),
+**INC-244** (`CRM-062`, poser la fenêtre 1440 × 900 avant une capture) et les **deux restants
+d'INC-139** (`CRM-041` : les classes absentes du CSS produit, et la dégradation D4 dont le motif a
+disparu de `board.ts` — celle-ci est la plus sérieuse, un contrôle qui ne s'exécute pas ne prouve
+rien). Les deux chapitres de manuel d'INC-214 et de `CRM-084` restent dus.
