@@ -198,6 +198,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-239 | La série des 77 harnais, rejouée d'affilée, laisse la base dans un état que `./runDev.sh` NE RÉPARE PAS : `0054` rétrécit `card_events_type_check` derrière sa propre garde et le `migrations-runner` sort en 3. Les 31 rouges de la série ne sont donc pas des verdicts avant rejeu SEUL sur base réinitialisée. Conséquence sérieuse pour `CRM-087`, dont le rejeu intégral suppose la rejouabilité sur base PEUPLÉE | 2026-08-29 | *ouverte* — issue retenue et écrite, mise en œuvre due : `CRM-062` pour la garde de `0054`, `CRM-087` pour la prémisse | 553 |
 | INC-240 | `0021` et `0035` référencent encore `card_comments.mentions`, colonne que `0063` (`CRM-064`) a SUPPRIMÉE ; `0015` a été corrigé, elles non. Le rejeu complet masque le défaut — la dernière écriture gagne —, mais tout rejeu qui s'arrête ou vise entre `0021`/`0035` et `0063` laisse un trigger `before update` en `42703` : commentaires non modifiables, suppression de compte en échec. Trouvée par `verify-identites.sh` rejoué SEUL, 2 assertions rouges sur 84 | 2026-08-29 | **close** — MISE EN ŒUVRE par la décision 556 : les trois comparaisons retirées, `docs/SPEC-notifications.md` §7.4.1 écrit, contrôle de répertoire ajouté à `verify-migrations.sh`. Mesuré : `verify-identites` 23 contrôles aucune anomalie (2 en échec avant), `verify-commentaires` 2 en échec → 1, `verify-migrations` 28 contrôles aucune anomalie | 553, 556 |
 | INC-242 | `scripts/verify-commentaires.sh` §4 exige EXACTEMENT 98 assertions de `supabase/tests/0017_commentaires.test.sql`, qui en déclare et en rend **99**, toutes vertes. Compteur figé dépassé par le produit, famille d'INC-191 et d'INC-175. Ligne de base établie : rouge des DEUX côtés du changement de la décision 556, donc préexistant et étranger | 2026-08-29 | *ouverte* — issue retenue et écrite, mise en œuvre due : `CRM-043` | 556 |
+| INC-243 | L'empreinte de fonctions de `scripts/verify-authz.sh` §2 concatène `proacl` DANS SON ORDRE DE TABLEAU. Le rejeu du répertoire complet réémet les `GRANT` et permute l'ordre des `aclitem` sans changer un seul droit : le contrôle rougit sur une permutation qui ne signifie rien. C'est la CAUSE de l'intermittence que la décision 554 avait nommée sans l'expliquer — reproductible, et non aléatoire : rouge lancé juste après `./resetMe.sh`, vert sur une base déjà stabilisée | 2026-08-29 | **close** — RÉVISÉE par la décision 557 : les `aclitem` sont triés avant comparaison, l'ensemble des droits restant comparé à l'identique | 556, 557 |
 | INC-241 | `verify-board.sh` exige que `from('channels')` n'apparaisse que dans UN fichier de `webapp/src` ; il y en a cinq, et `docs/SPEC-channels.md` §5.4 — la règle qu'il cite — ne parle que de la lecture alimentant la barre d'onglets, en prévoyant explicitement des routes transverses. Contrôle plus strict que sa propre règle, rouge depuis que `CRM-075`, `CRM-077`, `CRM-057` et `CRM-083` ont livré | 2026-08-29 | *ouverte* — issue retenue et écrite, mise en œuvre due : `CRM-041` | 553 |
 | INC-192 | `scripts/verify-corbeille.sh` cherche `@spec CRM-077` dans les TROIS premières lignes de `webapp/src/app/RouteCard.tsx`, qui en cumule dix | 2026-08-20 | **close** — fenêtre de lecture portée à l'en-tête entier (commit `752d3b4`), verdict vérifié le 2026-08-25 : 38 contrôles, aucune anomalie | 487, 508 |
 | INC-193 | Le `details` d'un refus de contrainte rend la ligne entière, `secret_id` compris — la colonne révoquée à `authenticated` ressort par un second chemin | 2026-08-20 | *ouverte* — arbitrage attendu, sécurité des données | 492 |
@@ -245,7 +246,7 @@ INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-174,
 INC-185, INC-186, INC-188, INC-189, INC-190, INC-191, INC-192, INC-193, INC-224,
 INC-225, INC-226, INC-227, INC-228, INC-229, INC-231, INC-232, INC-233, INC-234, INC-236,
-INC-238, **INC-239**, **INC-241** et **INC-242**.**
+INC-238, **INC-239**, **INC-241** **INC-242** et INC-243.**
 
 *Mise à jour du 2026-08-29 : **INC-240** est CLOSE — mise en œuvre par la décision 556 ; **INC-242**
 est consignée par la même session.*
@@ -6115,6 +6116,49 @@ quoi le motif du retrait ne pourrait plus être écrit là où il doit l'être.
 **CE QUE LA CORRECTION NE CHANGE PAS**, et c'est ce qui la rend sûre sur une base déjà migrée :
 l'état final du schéma est identique, `0063` restant la dernière autorité. Aucune opération manuelle
 de déploiement n'est due ; `docs/PROD_MIGRATIONS.md` le dit dans ces termes.
+
+### INC-243 — l'empreinte de `verify-authz.sh` compare `proacl` DANS SON ORDRE, et rougit sur une permutation
+
+**Ouverte ET close le 2026-08-29 par la session de la décision 556** — révisée par la décision 557.
+Elle appartient à `CRM-064`, comme le contrôle qu'elle vise : c'est le contrôle ajouté la veille par
+la décision 554, et l'intermittence que cette décision avait **nommée plutôt qu'expliquée**, faute
+de l'avoir reproduite.
+
+**ELLE EST REPRODUCTIBLE, ET CE N'EST PAS UNE INTERMITTENCE.** Mesuré trois fois de suite, sans
+qu'aucun fichier ne bouge :
+
+```
+./resetMe.sh --yes  puis  scripts/verify-authz.sh   => 1 anomalie
+scripts/verify-authz.sh  rejoué immédiatement       => 37 contrôles, aucune anomalie
+scripts/verify-authz.sh  rejoué une fois de plus    => 37 contrôles, aucune anomalie
+./resetMe.sh --yes  puis  scripts/verify-authz.sh   => 1 anomalie
+```
+
+**LA CAUSE, LUE DANS LE DIFF ET NON SUPPOSÉE.** L'unique ligne qui diverge ne diverge que par
+l'ORDRE :
+
+```
+< |true|s|search_path=""|postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres
+> |true|s|search_path=""|postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres
+```
+
+Mêmes droits, mêmes bénéficiaires, même donneur. `proacl` est un `aclitem[]` dont l'ordre est celui
+des `GRANT` exécutés, et l'empreinte le concaténait tel quel — `array_to_string(p.proacl, ',')`. Le
+premier rejeu du répertoire réémet les `GRANT` et permute l'ordre ; les rejeux suivants partent d'un
+état déjà permuté, d'où le vert qui suit un rouge sur une base fraîche.
+
+**LE CONTRÔLE ÉTAIT DONC COMPLAISANT À L'ENVERS** : il rendait un rouge qui ne dit rien du produit,
+c'est-à-dire exactement ce que `docs/CloudWorker.md` §2.1 ter interdit de lire comme une preuve. Un
+rouge qui ne signifie rien coûte aussi cher qu'un vert qui ne prouve rien : il apprend à ignorer le
+harnais.
+
+**LA RÉVISION, ET CE QU'ELLE NE PERD PAS** (mécanisme de la décision 51). Les `aclitem` sont TRIÉS
+avant d'être concaténés. L'ensemble des droits reste comparé à l'identique : un droit ajouté, retiré,
+ou accordé à un autre rôle fait toujours rougir le contrôle, et l'invariant qu'il porte — le rejeu du
+répertoire complet rend l'empreinte initiale — n'est pas affaibli d'un pouce. Seule disparaît une
+dépendance à un ordre d'insertion qui n'a aucune signification en SQL.
+
+**Statut :** close, révisée dans la même session, motif écrit dans le fichier.
 
 ### INC-242 — `verify-commentaires.sh` exige 98 assertions d'une suite qui en rend 99, toutes vertes
 
