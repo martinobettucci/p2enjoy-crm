@@ -147,21 +147,34 @@ test.describe('« Affaires figées » (docs/SPEC-relances.md §10)', () => {
 		await page.goto('/affaires-figees')
 		await page.getByTestId('lien-affaire-figee').first().click()
 		await expect(page).toHaveURL(/\/cards\//)
-		const relance = page.getByText('Relance automatique').first()
+		// LA LIGNE VISÉE EST CELLE DU FIL, ET ELLE EST DÉSIGNÉE PAR SON DÉTAIL — RÉVISÉ le
+		// 2026-08-29, décision 558, DÉFAUT TROUVÉ EN REGARDANT LA CAPTURE (`CLAUDE.md` §16).
+		//
+		// Ce scénario visait `getByText('Relance automatique').first()`. `CRM-063` a livré depuis,
+		// sur la même page, un panneau d'armement des séquences dont le TITRE est mot pour mot
+		// « Relance automatique » et qui précède le fil dans le document : `.first()` désignait donc
+		// ce panneau, et `scrollIntoViewIfNeeded()` amenait dans le champ le formulaire de `CRM-063`
+		// au lieu de la ligne du fil. MESURÉ : `docs/captures/CRM-062/relance-dans-le-fil-1440.jpg`
+		// montrait le panneau « Armer la relance », pas l'événement que la capture prétend prouver.
+		//
+		// Le scénario RESTAIT VERT — les deux textes existaient chacun quelque part, et
+		// `toBeVisible()` n'exige pas d'être dans le champ. Un compteur vert qui ne prouve pas ce
+		// qu'il annonce coûte aussi cher qu'un rouge qui ne dit rien.
+		//
+		// La ligne est désormais désignée par son DÉTAIL, qui n'appartient qu'au fil, et le contrôle
+		// en ressort PLUS FORT : il exige que le libellé et le détail soient portés par la MÊME
+		// ligne — ce que le §10.3.1 promet et que deux assertions indépendantes ne vérifiaient pas.
+		const detail = `${AFFAIRES[0].retard} jours de retard, pour un seuil de ${AFFAIRES[0].seuil} jours`
+		const relance = page.locator('p', { hasText: detail }).last()
 		await expect(relance).toBeVisible()
-		// LA LIGNE EST AMENÉE DANS LE CHAMP AVANT LA CAPTURE, et c'est un défaut trouvé EN
-		// REGARDANT (`CLAUDE.md` §16). La capture est prise sans `fullPage`, et le fil d'une
-		// affaire déjà riche pousse la relance sous la ligne de flottaison : l'image montrait
-		// l'écran, pas ce qu'elle prétend prouver. Une capture qui ne porte pas son sujet n'est pas
-		// une vérification visuelle.
-		await relance.scrollIntoViewIfNeeded()
 		// LE DÉTAIL COMPOSE LES DEUX CLÉS DU `payload`, par une clé de traduction et jamais par
 		// concaténation (§10.3.1). Les deux nombres sont ceux de la première affaire du jeu.
-		await expect(
-			page.getByText(
-				`${AFFAIRES[0].retard} jours de retard, pour un seuil de ${AFFAIRES[0].seuil} jours`,
-			),
-		).toBeVisible()
+		await expect(relance).toContainText('Relance automatique')
+		// LA LIGNE EST AMENÉE DANS LE CHAMP AVANT LA CAPTURE. La capture est prise sans `fullPage`,
+		// et le fil d'une affaire déjà riche pousse la relance sous la ligne de flottaison : l'image
+		// montrerait l'écran, pas ce qu'elle prétend prouver. Une capture qui ne porte pas son sujet
+		// n'est pas une vérification visuelle.
+		await relance.scrollIntoViewIfNeeded()
 		await capturer(page, 'relance-dans-le-fil-1440', UNITE)
 	})
 
