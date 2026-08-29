@@ -2817,6 +2817,25 @@ l'échec se produit, aucune attente ne doit être relevée au jugé.
 
 **Non corrigé par cette session non plus** : l'unité était `CRM-062` tranche 2.
 
+**SEPTIÈME OCCURRENCE, LE 2026-08-29** — session `CRM-084` tranche 4. Le relevé est le même à la
+ligne près, et c'est ce qui en fait une occurrence et non un fait neuf :
+
+| Passage | Verdict |
+|---|---|
+| campagne 1 | **1 échec, 41 passés** — `dossiers.spec.ts:276` « renommer un TRACK renomme son dossier et emporte ses enfants » |
+| le scénario SEUL | **1 passé** en 3,7 s (son fichier entier : 3 passés en 10,8 s) |
+| campagne 2, même commit | **42 passés** |
+
+**La ligne de base par `git stash` n'a PAS été exécutée, et c'est délibéré** — le §2.4 de
+`docs/CloudWorker.md` demande d'établir une ligne de base avant de conclure à une régression, et le
+relevé ci-dessus est plus concluant qu'elle : une régression est **déterministe**, et celle-ci
+disparaît sur le même commit, sans qu'une ligne du dépôt ne bouge. Le diff de la session n'ajoute
+qu'une colonne à `public.budgets`, un champ de formulaire et une teinte de cellule ; **aucun chemin
+de `mail-sync`, aucun dossier IMAP, aucun renommage de track** n'y figure.
+
+**Non corrigé par cette session non plus** : l'unité était `CRM-084` tranche 4, et corriger
+l'ordonnancement de `e2e/mail/` reviendrait à solder une autre unité (`CLAUDE.md` §13).
+
 
 ## Consigné le 2026-08-19 — un constat d'environnement, étranger à `CRM-081` tranche 2 f
 

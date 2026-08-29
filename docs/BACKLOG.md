@@ -11119,6 +11119,22 @@ seconde phrase promettait la variante depuis le premier jour.
       le code demandait `type="number" min="1"` ; c'est faux ici, et `BlocBudgetsTrack.tsx` avait
       déjà pris la décision inverse pour l'enveloppe dès la tranche 2 — un champ numérique natif
       avale la saisie qu'il refuse, et `lireSeuilAnciennete` ne verrait jamais « 0 » ni « 2,5 ».
+- [x] **LA CAMPAGNE COMPLÈTE A ÉTÉ EXÉCUTÉE le 2026-08-29** (décision 550) : `typecheck`,
+      `types:check` et `build` verts ; `test:unit` **86 fichiers / 2928 tests** ; `test:sql`
+      **67 fichiers / 3052 assertions** ; `e2e:api` **1041 passés** ; `e2e:ui` **727 passés, AUCUN
+      échec** ; `pytest` **244** ; `e2e:mail` **42 passés au second passage**. Six harnais que le
+      changement touche sont verts : `verify-budgets` **53**, `verify-couts-ecrans` **81**,
+      `verify-card-costs` **52**, `verify-migrations` **25**, `verify-seed` **55**,
+      `verify-administration-arborescence` **27**.
+- [x] **L'unique échec de la campagne est une SEPTIÈME occurrence d'INC-205**, entrée déjà ouverte
+      depuis le 2026-08-24 : `e2e/mail/dossiers.spec.ts` §276 échoue en série et passe SEUL, puis la
+      campagne rejouée sur le même commit rend **42 passés**. Ligne de base par `git stash` NON
+      exécutée, et délibérément : une régression est déterministe, celle-ci disparaît sans qu'une
+      ligne du dépôt ne bouge. Aucun chemin de `mail-sync` dans le diff.
+- [ ] **CE QUI RETIENT ENCORE `CRM-084` EN `[~]`, ET CE N'EST PLUS DU COMPORTEMENT** : (1) la série
+      des `scripts/verify-*.sh` n'a pas été rejouée en entier — le dépôt en porte **soixante-dix-neuf**,
+      **sept** l'ont été ; (2) l'écart HÉRITÉ de la tranche 2, nommé depuis : l'administration des
+      budgets n'a toujours aucun chapitre de `docs/manual.md`.
 - [x] **Harnais dédié étendu** : `scripts/verify-budgets.sh` passe de **43 à 53 contrôles, aucune
       anomalie**, avec **cinq** dégradations mordantes au lieu de trois — la comparaison rendue
       large et le seuil absent ouvrant le retard s'ajoutent aux trois de la tranche 2. **Un de ses

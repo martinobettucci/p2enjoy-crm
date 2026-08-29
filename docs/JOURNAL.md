@@ -27243,3 +27243,89 @@ qui porte la machinerie des colonnes protégées ; la faire ici serait solder un
 **Où reprendre.** 4a est livrée et poussée. **4b** — migration 72, pgTAP, types, seed, preuve d'API —
 puis **4c** — le champ du formulaire, la variante de danger et son nom accessible, unitaires, E2E,
 captures — sont dues, et c'est la suite immédiate de cette session.
+
+## décision 550 — la campagne de la tranche 4, et un défaut que seule la capture a vu
+
+*2026-08-29, même exécution que la décision 549. Consigne le bilan de fin de session.*
+
+**CE QUI EST LIVRÉ, EN TROIS SOUS-TRANCHES POUSSÉES AU FIL DE L'EAU.** **4a** — l'arbitrage
+d'INC-183 et sa spécification, committés **avant la première ligne de code**. **4b** — la
+migration 72 (`budgets.stale_after_days` et `budgets_stale_check`, **aucune politique, aucun
+privilège, aucun trigger, aucune fonction**), les types régénérés, le seed portant les trois états,
+la suite pgTAP et la preuve d'API. **4c** — le champ du formulaire d'administration, la variante de
+danger de la colonne « Ancienneté » avec son nom accessible, leurs suites et leurs captures, et le
+harnais dédié étendu.
+
+**LA CAMPAGNE COMPLÈTE A ÉTÉ EXÉCUTÉE.**
+
+| Preuve | Verdict |
+|---|---|
+| `npm run typecheck` / `npm run types:check` / `npm run build` | verts — les types correspondent au schéma **octet à octet** |
+| `npm run test:unit` | **86 fichiers, 2928 tests**, aucun échec |
+| `npm run test:sql` | **67 fichiers, 3052 assertions**, aucune anomalie |
+| `npm run e2e:api` | **1041 passés** |
+| `npm run e2e:ui` | **727 passés, AUCUN échec**, en 17,6 min |
+| `npm run e2e:mail` | **1 échec puis 42 passés** — voir ci-dessous |
+| `pytest` (`mail-sync`) | **244 passés** |
+| `scripts/verify-budgets.sh` | **53 contrôles, aucune anomalie**, ses CINQ dégradations comprises |
+| `scripts/verify-couts-ecrans.sh` | **81 contrôles, aucune anomalie** |
+| `scripts/verify-card-costs.sh` | **52 contrôles, aucune anomalie** |
+| `scripts/verify-migrations.sh` | **25 contrôles, aucune anomalie** |
+| `scripts/verify-seed.sh` | **55 contrôles, aucune anomalie** |
+| `scripts/verify-administration-arborescence.sh` | **27 contrôles, aucune anomalie** |
+
+**L'UNIQUE ÉCHEC EST UNE SEPTIÈME OCCURRENCE D'INC-205, ET LE RELEVÉ EST PLUS CONCLUANT QU'UNE
+LIGNE DE BASE.** `e2e:mail` a rendu « 1 failed, 41 passed » sur `dossiers.spec.ts` §276 — « renommer
+un TRACK renomme son dossier et emporte ses enfants ». Le scénario rejoué **seul** passe en 3,7 s ;
+la campagne rejouée sur le **même commit** rend **42 passés**. Le §2.4 de `docs/CloudWorker.md`
+demande une ligne de base avant de conclure à une régression : elle n'a pas été exécutée, et c'est
+délibéré — une régression est **déterministe**, et celle-ci disparaît sans qu'une ligne du dépôt ne
+bouge. Le diff de la session n'ajoute qu'une colonne à `public.budgets`, un champ de formulaire et
+une teinte de cellule ; aucun chemin de `mail-sync`, aucun dossier IMAP. L'occurrence est **consignée
+dans INC-205**, entrée déjà ouverte depuis le 2026-08-24, plutôt qu'ouverte à neuf.
+
+**UN DÉFAUT TROUVÉ EN REGARDANT, ET AUCUNE ASSERTION NE L'ATTRAPAIT** (`CLAUDE.md` §16). La teinte
+de danger était portée par la **cellule** du tableau : elle peignait toute la largeur de la colonne
+— cent quinze pixels de fond rouge derrière quatre caractères — et la ligne entière se lisait comme
+une ligne en erreur, alors que c'est une **valeur** qui est signalée. Les assertions étaient vertes,
+l'image disait autre chose que le produit. Corrigé à sa cause : la teinte est portée par la valeur,
+dans la forme exacte de la pilule « clôturé » de la colonne d'à côté. Le §5.31 du design system en
+tire une règle réemployable — *une pastille se moule sur sa valeur ; deux pastilles d'un même
+tableau qui ne se ressembleraient pas se liraient comme deux natures de chose* — et une assertion
+mesure que la pastille est plus étroite que sa cellule.
+
+**UN CONTRÔLE DE HARNAIS A ROUGI SUR DU CODE CORRECT, corrigé à sa cause.** Le contrôle neuf qui
+interdit `type="number"` dans l'écran lisait la chaîne dans les **commentaires** qui expliquent
+pourquoi les deux champs ne l'emploient pas — le mode de défaillance exact d'INC-184. Un contrôle
+qui interdit d'écrire sa propre règle à côté du code est un mauvais contrôle : les lignes de
+commentaire sont retirées avant la recherche.
+
+**LA SPÉCIFICATION A ÉTÉ RÉVISÉE PAR LIVRAISON SUR UN POINT, motif écrit** : elle demandait
+`type="number" min="1"` pour le champ du seuil. C'est faux ici, et `BlocBudgetsTrack.tsx` avait déjà
+tranché l'inverse pour l'enveloppe dès la tranche 2 — un champ numérique natif avale la saisie qu'il
+refuse, si bien que `lireSeuilAnciennete` ne verrait jamais « 0 » ni « 2,5 », les deux cas qu'elle
+existe pour nommer.
+
+**TROIS COMPTEURS FIGÉS RÉVISÉS, VALEURS COMPTÉES** : `ASSERTIONS_ATTENDUES` 3042 → **3052**,
+`SCENARIOS_API` 1036 → **1041**, `SCENARIOS_UI` 724 → **727**. Aucune part antérieure n'est absorbée
+cette fois : les trois écarts sont entièrement ceux de la tranche. `FICHIERS_SQL_ATTENDUS` reste à
+**67**, et le nombre de fichiers de preuve d'interface est inchangé — la contre-épreuve de « aucun
+fichier neuf ».
+
+**CENT QUATRE CAPTURES D'AUTRES UNITÉS, RÉÉCRITES PAR LA CAMPAGNE, ONT ÉTÉ RESTAURÉES.** Les seules
+conservées sont les deux de cette tranche, `anciennete-seuil-{1440, sm-390}`, produites **et
+regardées** — et c'est cette observation qui a trouvé le défaut ci-dessus.
+
+**CE QUI N'A PAS ÉTÉ EXÉCUTÉ, ET IL FAUT LE DIRE** : la série des `scripts/verify-*.sh` en entier.
+Le dépôt en porte **soixante-dix-neuf** ; **sept** l'ont été — ceux que ce changement touche, plus
+`verify-harness.sh --rapide` qui certifie les compteurs révisés.
+
+**Où reprendre.** `CRM-084` n'a plus de comportement dû : ce qui la retient en `[~]` est la série
+complète des `verify-*.sh` et le chapitre de `docs/manual.md` sur l'administration des budgets, écart
+HÉRITÉ de la tranche 2 et nommé depuis. Le manuel des objectifs (**INC-214**) reste dû de même sur
+`CRM-083`. Les deux sont de la documentation utilisateur, et une session qui n'aurait qu'elles à
+faire les traiterait sans réécrire les documents autour (`docs/CloudWorker.md` §4.2). La prochaine
+unité de CONSTRUCTION se choisit en relisant le backlog dans l'ordre du plan : `CRM-081` porte encore
+deux écarts nommés qui appellent du code — le mode d'affichage de l'inbox qui n'entre pas dans
+l'adresse, et le §16.12.6 qu'aucun channel du seed ne rend éprouvable —, et le §4.1 bis de
+`docs/CloudWorker.md` dit que ces deux-là se tranchent en session.
