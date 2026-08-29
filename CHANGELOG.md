@@ -13,6 +13,27 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-041` — la preuve qui surveille la barre d'onglets vérifie enfin la règle qu'elle cite (INC-241)
+
+- **Aucun changement visible dans l'application** : c'est une preuve interne qui est corrigée, pas
+  un écran. La règle qu'elle protège, elle, est inchangée — tout écran ouvert sur un track affiche
+  ses onglets à partir d'une **seule** lecture partagée, pour qu'un channel archivé ne disparaisse
+  jamais d'un écran tout en restant visible sur un autre.
+- **Ce que le contrôle faisait de travers** : il comptait les fichiers du code qui interrogent la
+  liste des channels et exigeait qu'il n'y en ait qu'un. Or quatre écrans transverses — Réglages ▸
+  Arborescence, Corbeille, l'Inbox et l'écriture d'un objectif — ont besoin de cette liste pour
+  autre chose qu'une barre d'onglets. Le contrôle était donc rouge depuis leur livraison, sans que
+  rien ne soit cassé dans le produit.
+- **Il était aussi trop indulgent, ce qui est plus grave** : il serait resté vert si un écran de
+  track avait glissé une seconde lecture, différente, à l'intérieur du fichier partagé lui-même —
+  exactement la divergence qu'il était censé empêcher.
+- **La preuve lit désormais le routeur de l'application** : elle recense toute route qui affiche un
+  track, vérifie que chacune passe par la lecture partagée, qu'aucune ne réécrit la sienne, et que
+  la lecture partagée reste unique. Elle se mesure à chaque exécution et suit donc le produit
+  quand il grandit, au lieu de figer un décompte qui vieillit. Elle est elle-même éprouvée à
+  l'envers, sur un routeur factice délibérément fautif, dans les quatre cas qu'elle doit refuser.
+- Aucune migration et aucune opération manuelle de déploiement ne sont dues.
+
 ### `CRM-062` — le rejeu des migrations ne casse plus une base dont l'historique des affaires a régressé (INC-239)
 
 - **Une migration rétrécissait le vocabulaire de la timeline au lieu de le laisser s'élargir.** La

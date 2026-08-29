@@ -4626,6 +4626,31 @@ déjà couverte par la suite de `CRM-034`, et ce que cette unité ajoute est un 
   **neuvième** occurrence. `./runDev.sh` a de nouveau échoué à construire l'image `webapp` : la pile
   a été démarrée sans ce service, sans effet sur les preuves.
 
+**MISE À JOUR DU 2026-08-29 — INC-241 mise en œuvre, décision 560. L'unité reste `[x]`.** Le
+contrôle du §1 de `scripts/verify-board.sh` qui prétendait éprouver le §5.4 de
+`docs/SPEC-channels.md` comptait les fichiers lisant `channels` et exigeait qu'il n'y en ait qu'un.
+Il était **à la fois trop strict et trop faible** : trop strict, parce que le §5.4 prévoit des
+routes transverses et que quatre en sont arrivées depuis (`CRM-075`, `CRM-077`, `CRM-057`,
+`CRM-083`) ; trop faible, parce qu'il serait resté vert si une route avait réécrit sa lecture **dans**
+`webapp/src/lib/channels.ts`.
+
+- [x] **Le défaut a été reproduit avant d'être corrigé** (`CLAUDE.md` §18) : `verify-board --rapide`
+      rendait **35 contrôles, 1 en échec**, celui-ci seul.
+- [x] **La règle est TENUE par le produit, et c'est le routeur qui le montre** : six routes portent
+      `:slugTrack` sur quatre composants — `RouteTrack`, `RouteCard`, `CoutsTrack`, `CoutsBudget` —
+      et **les quatre** passent par `useContenuTrack`. Aucun fichier de la webapp n'a été modifié.
+- [x] **Le contrôle éprouve désormais la règle réelle**, recensée sur le routeur à chaque exécution
+      — constantes de chemin, table `ROUTES`, déclarations `<Route>` de `App.tsx`, `.map(…)` compris
+      —, **jamais codée en dur** : les quatre exigences *a* à *d* de `docs/SPEC-channels.md` §5.4.1,
+      dont la *d* — une seule lecture dans le chargeur partagé — que le comptage ne pouvait pas
+      rendre.
+- [x] **Retourné sur une arborescence de routeur mutée**, jetable, dans ses quatre sens : chargeur
+      retiré, lecture propre ajoutée, seconde lecture glissée dans le chargeur, segment `:slugTrack`
+      disparu. Chacune rend le recensement fautif ; l'arborescence rendue intacte le rend conforme.
+      Ce retournement ne lance ni npm ni Playwright : il s'exécute **aussi en `--rapide`**.
+- [x] **Verdict après correction** : `scripts/verify-board.sh --rapide` **43 contrôles, aucune
+      anomalie**.
+
 ### CRM-042 — Vue liste `[x]`
 Tri, filtres, densité maîtrisée, pagination.
 **DoD** : E2E ; comportement avec données longues vérifié en capture.

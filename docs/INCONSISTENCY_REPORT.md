@@ -200,7 +200,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-242 | `scripts/verify-commentaires.sh` §4 exige EXACTEMENT 98 assertions de `supabase/tests/0017_commentaires.test.sql`, qui en déclare et en rend **99**, toutes vertes. Compteur figé dépassé par le produit, famille d'INC-191 et d'INC-175. Ligne de base établie : rouge des DEUX côtés du changement de la décision 556, donc préexistant et étranger | 2026-08-29 | *ouverte* — issue retenue et écrite, mise en œuvre due : `CRM-043` | 556 |
 | INC-243 | L'empreinte de fonctions de `scripts/verify-authz.sh` §2 concatène `proacl` DANS SON ORDRE DE TABLEAU. Le rejeu du répertoire complet réémet les `GRANT` et permute l'ordre des `aclitem` sans changer un seul droit : le contrôle rougit sur une permutation qui ne signifie rien. C'est la CAUSE de l'intermittence que la décision 554 avait nommée sans l'expliquer — reproductible, et non aléatoire : rouge lancé juste après `./resetMe.sh`, vert sur une base déjà stabilisée | 2026-08-29 | **close** — RÉVISÉE par la décision 557 : les `aclitem` sont triés avant comparaison, l'ensemble des droits restant comparé à l'identique | 556, 557 |
 | INC-244 | `docs/captures/CRM-062/relance-dans-le-fil-1440.jpg` est nommée `-1440` mais est prise à la fenêtre PAR DÉFAUT du projet `ui`, soit **1280 × 720** : le nom annonce un palier que l'image ne porte pas. Les autres captures `-1440` du dépôt viennent de scénarios qui posent explicitement la fenêtre. Trouvée en régénérant la capture pour INC-239 | 2026-08-29 | *ouverte* — issue retenue et écrite : poser la fenêtre 1440 × 900 avant cette capture, jamais renommer le fichier, le backlog et le journal de `CRM-062` le citant par son nom actuel. Mise en œuvre due : `CRM-062` | 559 |
-| INC-241 | `verify-board.sh` exige que `from('channels')` n'apparaisse que dans UN fichier de `webapp/src` ; il y en a cinq, et `docs/SPEC-channels.md` §5.4 — la règle qu'il cite — ne parle que de la lecture alimentant la barre d'onglets, en prévoyant explicitement des routes transverses. Contrôle plus strict que sa propre règle, rouge depuis que `CRM-075`, `CRM-077`, `CRM-057` et `CRM-083` ont livré | 2026-08-29 | *ouverte* — issue retenue et écrite, mise en œuvre due : `CRM-041` | 553 |
+| INC-241 | `verify-board.sh` exige que `from('channels')` n'apparaisse que dans UN fichier de `webapp/src` ; il y en a cinq, et `docs/SPEC-channels.md` §5.4 — la règle qu'il cite — ne parle que de la lecture alimentant la barre d'onglets, en prévoyant explicitement des routes transverses. Contrôle plus strict que sa propre règle, rouge depuis que `CRM-075`, `CRM-077`, `CRM-057` et `CRM-083` ont livré | 2026-08-29 | **close** — MISE EN ŒUVRE par la décision 560 : le comptage de fichiers remplacé par un recensement du ROUTEUR, `docs/SPEC-channels.md` §5.4.1 écrit, les quatre lectures transverses tranchées et nommées comme observation et non comme assertion. Mesuré : `verify-board --rapide` **43 contrôles, aucune anomalie** (35 contrôles, 1 en échec avant), dont le retournement du recensement sur un routeur muté dans ses quatre sens | 553, 560 |
 | INC-192 | `scripts/verify-corbeille.sh` cherche `@spec CRM-077` dans les TROIS premières lignes de `webapp/src/app/RouteCard.tsx`, qui en cumule dix | 2026-08-20 | **close** — fenêtre de lecture portée à l'en-tête entier (commit `752d3b4`), verdict vérifié le 2026-08-25 : 38 contrôles, aucune anomalie | 487, 508 |
 | INC-193 | Le `details` d'un refus de contrainte rend la ligne entière, `secret_id` compris — la colonne révoquée à `authenticated` ressort par un second chemin | 2026-08-20 | *ouverte* — arbitrage attendu, sécurité des données | 492 |
 | INC-195 | `scripts/verify-copie-workflow.sh` rejoue la migration 19 et laissait `move_card` AMPUTÉE du lot G — quatrième occurrence d'INC-154 | 2026-08-21 | **close** — corrigée par la décision 497 | 497 |
@@ -247,7 +247,10 @@ INC-125, INC-126, INC-136, INC-137, INC-138,
 INC-139, INC-140, INC-141, INC-152, INC-155, INC-157, INC-158, INC-159, INC-160, INC-174,
 INC-185, INC-186, INC-188, INC-189, INC-190, INC-191, INC-192, INC-193, INC-224,
 INC-225, INC-226, INC-227, INC-228, INC-229, INC-231, INC-232, INC-233, INC-234, INC-236,
-INC-238, **INC-241**, **INC-242**, **INC-244** et INC-243.**
+INC-238, INC-241, **INC-242**, **INC-244** et INC-243.**
+
+*Mise à jour du 2026-08-29 : **INC-241** est CLOSE — mise en œuvre par la décision 560, qui remplace
+un comptage de fichiers par un recensement du routeur et le retourne sur une arborescence mutée.*
 
 *Mise à jour du 2026-08-29 : **INC-239** est CLOSE — mise en œuvre par la décision 558, qui
 corrige la garde de `0054` ET fournit à `CRM-087` la preuve mesurée de sa prémisse de
@@ -6294,4 +6297,30 @@ resté vert si `RouteTrack.tsx` avait réécrit sa lecture dans `lib/channels.ts
 œuvre appartient à `CRM-041`, qui porte ce harnais, et suppose de trancher pour chacune des quatre
 autres lectures — travail d'unité, pas paragraphe ajouté au passage (`CLAUDE.md` §1).
 
-**Statut :** ouverte, comportement inchangé, issue retenue et écrite, mise en œuvre due — `CRM-041`.
+**MISE EN ŒUVRE ET CLOSE LE 2026-08-29 — décision 560.** Le défaut a été reproduit avant d'être
+corrigé (`CLAUDE.md` §18), sur la pile réelle et seedée : `scripts/verify-board.sh --rapide` rendait
+**35 contrôles, 1 en échec**, celui-ci seul.
+
+**LE ROUTEUR DONNE LA MESURE QUI MANQUAIT, ET ELLE INNOCENTE LE PRODUIT.** Six routes portent
+aujourd'hui le segment `:slugTrack` — `/tracks/:slugTrack`, `/tracks/:slugTrack/:slugChannel`,
+`/tracks/:slugTrack/:slugChannel/liste`, `/tracks/:slugTrack/:slugChannel/cards/:idCard`,
+`/tracks/:slugTrack/couts` et `/tracks/:slugTrack/couts/:idBudget` —, sur quatre composants.
+**Les quatre passent par `useContenuTrack`** : la règle du §5.4 est TENUE, et le contrôle qui la
+prétendait violée ne la mesurait pas.
+
+**LES QUATRE AUTRES LECTURES SONT TRANCHÉES, ET NOMMÉES UNE PAR UNE.** Aucune n'entre dans le
+périmètre du §5.4 : administration de l'arborescence (`CRM-075`), corbeille (`CRM-077`), inbox
+(`CRM-057`) et écriture des objectifs (`CRM-083`) servent des surfaces transverses, sans barre
+d'onglets, que le §5.4 prévoit nommément. Elles sont écrites au §5.4.1 de `docs/SPEC-channels.md`
+comme **observation datée, jamais comme assertion** : un inventaire figé de cinq modules rougirait à
+la sixième surface, ce qui est le mécanisme même d'INC-175, d'INC-191 et d'INC-242.
+
+**LE CONTRÔLE EN SORT PLUS FORT, ET C'EST MESURÉ.** Le §5.4.1 ajoute l'exigence *d* — une seule
+occurrence de `from('channels')` dans le chargeur partagé —, que le comptage de fichiers ne pouvait
+pas rendre. Le recensement est **retourné sur une arborescence de routeur mutée**, jetable, dans ses
+quatre sens : chargeur retiré (*b*), lecture propre ajoutée (*c*), seconde lecture glissée dans le
+chargeur partagé (*d*), segment `:slugTrack` disparu (*a*). Chacune rend le recensement fautif, et
+l'arborescence rendue intacte le rend conforme. Verdict après correction :
+**43 contrôles, aucune anomalie**.
+
+**Statut :** **close** — mise en œuvre par la décision 560 (`CRM-041`).
