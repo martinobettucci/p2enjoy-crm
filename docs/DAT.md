@@ -730,6 +730,44 @@ divulguerait par soustraction un budget fermé est un défaut d'autorisation.
 borné par le nombre d'affaires du workspace, et la pagination reste due le jour où il croîtra —
 consigné ici plutôt que découvert en production.
 
+## 7 ter. Analytique de conversion — composants et flux
+
+Ajouté le 2026-08-30 par `CRM-066` (`docs/SPEC-analytique.md`, décisions 562, 565 et 566). **Lacune
+comblée par la tranche 3 b : les tranches 2 a à 3 a avaient livré la fonction, le module et l'écran
+sans les inscrire ici.**
+
+**Aucun service, aucun conteneur, aucune dépendance nouvelle**, et aucune table non plus : l'unité
+n'ajoute qu'une **fonction** et des lectures. Le choix de ne pas introduire de bibliothèque de
+graphique est celui déjà écrit au §7 bis, et il vaut ici aussi — l'entonnoir se rend en tableaux.
+
+| Composant | Rôle | Dépendances |
+|---|---|---|
+| `public.entonnoir_conversion()` (migration 73) | agrégat de l'entonnoir au grain `(channel, nœud, devise)`, avec la probabilité effective résolue à trois niveaux | `cards`, `workflow_steps`, `workflow_nodes_catalog`, `channels`, `tracks` — toutes lues **sous la RLS de l'appelant**, la fonction étant `security invoker`, `stable`, `search_path` vide, `anon` révoqué **nommément** |
+| `webapp/src/lib/analytique.ts` | replie l'agrégat par nœud et par devise, dérive le prévisionnel pondéré et le taux de conversion des affaires décidées, lit le catalogue pour **nommer** les nœuds vides | PostgREST ; **aucune règle recopiée** — un contrôle statique de `scripts/verify-analytique.sh` le refuse colonne par colonne |
+| `webapp/src/lib/pilotage-portee.ts` | lit les channels lisibles avec leur track, et traduit entre l'adresse, le sélecteur et la restriction | PostgREST ; **aucun droit filtré** — la liste est celle que la RLS de `channels` consent |
+| Écran `/pilotage` (webapp) | sélecteur de portée, deux grandeurs dérivées, un tableau par devise, les mentions | les deux modules ci-dessus ; **aucune commande d'écriture** |
+
+**Flux, et les deux points qui comptent.**
+
+1. **Le total est calculé APRÈS la RLS, jamais par la clé de service.** C'est le point même de
+   `security invoker` : deux appelants aux droits différents obtiennent deux totaux différents —
+   mesuré, 381 042,50 EUR contre 344 892,50. Un total « complet » divulguerait par soustraction
+   l'existence et le montant d'une affaire fermée. La règle est la même qu'au §7 bis pour les coûts.
+
+2. **La portée est repliée par le client, jamais demandée au serveur.** La fonction n'a **aucun
+   paramètre** : elle rend le grain le plus fin, et le track comme le channel s'en déduisent par
+   sommation (`docs/SPEC-analytique.md` §5.2, §8 bis.3). Changer de portée n'émet donc aucune
+   requête. Un paramètre `p_track_id` aurait posé une **seconde définition** de la restriction, à
+   côté de celle du module — le mode de défaillance qu'INC-138, INC-241 et la décision 560 ont déjà
+   coûté au dépôt.
+
+**Compromis assumé, et sa borne est différente de celle du §7 bis.** L'écran descend l'agrégat, non
+le portefeuille : le volume est borné par `channels × nœuds × devises présentes` — **seize** lignes
+mesurées sur le seed pour 39 affaires —, et non par le nombre d'affaires. C'est ce qui distingue
+cette lecture d'un téléchargement du portefeuille, que `CLAUDE.md` §21 interdit dès que le volume
+croît. La pagination n'est donc pas due ici ; elle le deviendrait si un espace de travail portait
+des centaines de channels.
+
 ## 8. Chiffrement des secrets
 
 Les mots de passe IMAP/SMTP sont chiffrés via **Supabase Vault** : l'application ne stocke
