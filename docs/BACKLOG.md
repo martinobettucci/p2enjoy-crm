@@ -10417,6 +10417,22 @@ de `CRM-P02`, subordonné à son arbitrage) restent dues. La série entière des
       333 715,00 à **381 042,50 EUR** et celui de la lectrice de 297 565,00 à **344 892,50** ;
       l'écart entre les deux — 36 150,00 — est INCHANGÉ, aucune des quatre affaires qu'elle ne voit
       pas n'étant à ce nœud. Le CHF (34 600,00) ne bouge pas non plus. M6, §5.3, §6 ligne *f*, §7.2.
+- [x] **Campagne de fin de session** : `test:sql` **68 fichiers / 3083 assertions**, `test:unit`
+      **2962 tests**, `e2e:api` **1058 passés**, `e2e:ui` **729 passés, aucun avertissement**,
+      `e2e:mail` **42 passés**, `pytest` **244**, `typecheck`, `types:check` et `build` verts ;
+      `verify-analytique.sh` **27 contrôles** et `verify-workflows.sh` **50 contrôles**, aucune
+      anomalie. `verify-harness.sh --rapide` rend **31 contrôles, 1 anomalie** — sa propre campagne
+      d'interface fait tomber `inbox.spec.ts` § « LA PALETTE Y MÈNE RÉELLEMENT », qui est
+      **INC-235** : le même scénario est vert dans la campagne lancée directement et vert joué seul,
+      sur le même arbre. Troisième mesure consignée au registre.
+- [x] **CAPTURES RENOUVELÉES ET OBSERVÉES — dix-sept, triées par comparaison pixel à pixel.**
+      L'éditeur de workflows affiche « Probabilité : 65 % » sur `Négociation`, dans le workflow par
+      défaut comme dans sa copie : `CRM-076/workflows-{xl-1440,lg-1152,md-900,sm-390}.jpg`,
+      `CRM-076/workflows-{selecteur,refus-occupee}-1440.jpg`,
+      `CRM-076/comparaison-source-divergence-encre-1440.jpg`, les quatre de
+      `CRM-031/workflows-creation-*` et les six de `CRM-032/`. Le libellé tient sur une ligne aux
+      quatre paliers, y compris à 390 px. Les **264** autres captures réécrites par le rejeu ont été
+      **restaurées** : leur écart tient aux dates relatives du seed.
 - [ ] **3 — l'écran `/pilotage`.** Sa spécification visuelle dans `docs/DESIGN_SYSTEM.md` écrite
       d'abord, ses tests de composant, son E2E d'interface à console vierge, ses captures observées,
       `docs/manual.md` chapitres 28 et 29.
