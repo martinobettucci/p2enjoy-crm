@@ -28340,3 +28340,88 @@ que le seed repose à chaque application : **restaurées**.
 complétion par le catalogue, dont la FORME est à trancher avant d'écrire la seconde lecture
 (`docs/SPEC-analytique.md` §8). Puis la **tranche 4**, le score de santé de `CRM-P02`, qui commence
 par son arbitrage : ce qu'un score « transparent » agrège n'est écrit nulle part (§11.4).
+
+## décision 566 — `CRM-066` tranches 3 b et 3 c : la portée choisie, et les nœuds vides nommés
+
+*2026-08-30, session planifiée ouverte à 12:14:36 UTC. Le §8 de `docs/SPEC-analytique.md` renvoyait
+DEUX arbitrages de forme à la tranche 3 b, qu'il refusait de trancher depuis une session ne livrant
+pas encore l'écran. Les deux sont tranchés ici, écrits et **committés avant la première ligne de
+code** — commit documentaire dédié, poussé (`docs/CloudWorker.md` §3.2 point 3).*
+
+**CE QUE LA SESSION A CODÉ.** Un **sélecteur de portée** en tête de l'écran `/pilotage` — tout
+l'espace de travail, un track, un channel —, porté par `webapp/src/lib/pilotage-portee.ts` : une
+seconde lecture des channels lisibles avec leur track, et la traduction entre l'adresse, le `select`
+et `restreindre`. Puis la **mention des nœuds vides** sous les tableaux, portée par
+`lireNoeudsCatalogue` et `noeudsSansAffaire` dans `analytique.ts`.
+
+**L'ADRESSE PORTE DEUX CLÉS, ET C'EST UNE MESURE QUI L'IMPOSE — M8.**
+`channels_track_id_slug_key` est `UNIQUE (track_id, slug)` : un slug de channel n'est unique que
+**dans son track**. `?channel=refonte` seul ne désigne donc rien de sûr, et le couple
+`(track, channel)` est exactement l'adressage que le produit emploie déjà —
+`/tracks/:slugTrack/:slugChannel`. Deux écrans qui désignent la même chose la désignent de la même
+façon.
+
+**CHANGER DE PORTÉE N'ÉMET AUCUNE REQUÊTE, ET LA PREUVE LE FIGE EN COMPTANT LES APPELS.** La
+fonction rend déjà le grain le plus fin (§5.2) et `restreindre` était éprouvé depuis la tranche 2 b :
+le sélecteur replie des lignes DÉJÀ lues. Un appel par portée en aurait fait un filtre serveur,
+c'est-à-dire une seconde définition de la restriction — le mode de défaillance qu'INC-138, INC-241 et
+la décision 560 ont déjà coûté.
+
+**LA FORME DES NŒUDS VIDES : UN NOM, JAMAIS UN ZÉRO.** Le §5.1 écrivait « affiche zéro là où la
+fonction se tait ». Écrit avant que la tranche 3 a ne retienne un tableau **par devise**, il ne se
+compose pas avec elle : un zéro posé dans le tableau d'une devise inventerait une devise à un nœud
+qu'aucune affaire n'y porte — ce que ce même §5.1 interdit à la fonction —, et compléter hors des
+devises mêlerait deux monnaies dans une colonne. Le §5.1 est **révisé sur place** (`CLAUDE.md` §18).
+Ce que l'écran sait d'un tel nœud est un **compte d'affaires**, grandeur qui traverse licitement les
+devises parce qu'elle n'additionne aucun argent.
+
+**DEUX DÉFAUTS RÉELS DU PRODUIT, TROUVÉS EN EXÉCUTANT LES PREUVES, CORRIGÉS DANS LEUR CAUSE.**
+
+`S9` a mesuré que `channels.position` est numérotée **par track** — quatre channels du seed portent
+`position = 1` —, si bien que le tri du serveur, juste **à l'intérieur** d'un groupe, entrelace les
+tracks **entre** les groupes. Le sélecteur rendait « Legacy 2023, Formation, Conseil & IA, Studio
+web » là où le produit range partout ailleurs « Conseil & IA, Studio web, Formation, Legacy 2023 ».
+Les groupes suivent désormais `tracks.position`, le nom départageant deux tracks de même position.
+
+Et **en REGARDANT la capture** (`CLAUDE.md` §16), le `select` **fermé** ne rendait que « Tout le
+track », sans dire lequel : l'intitulé d'un `optgroup` est **invisible** dans cet état, qui est celui
+que l'utilisateur voit en permanence. Chaque option nomme donc son track. **C'est la règle générale
+du §5.48 appliquée à un second cas : quand un titre de regroupement est conditionnel — ici invisible
+dès que la liste se referme —, ce qu'il qualifie doit être nommé ailleurs de façon
+INCONDITIONNELLE.**
+
+**UNE MESURE DE LA SPÉCIFICATION ÉTAIT FAUSSE, ET C'EST LA PREUVE `S15` QUI L'A DIT.** M10 donnait
+`qualification` pour « le cas de complétion réellement présent dans le jeu de démonstration ». Il est
+bien vide — mais il est **ARCHIVÉ** (`archived_at = 2026-03-01`), donc écarté par la règle « un nœud
+retiré du catalogue n'est plus une étape du chemin ; le nommer sans affaire inviterait à y en mettre
+une ». M10 est **corrigée sur place**. Conséquence assumée et écrite : à portée workspace, le seed ne
+porte **aucun** nœud actif vide, et l'absence de mention est la **contre-épreuve** de l'exclusion des
+archivés — `S15` l'éprouve comme telle. C'est la portée **restreinte** qui exerce la complétion, et
+c'est d'ailleurs la lecture qu'on vient faire : `studio-web` laisse « Signature et Perdu » vides,
+`dossiers-2023` en laisse six.
+
+**LE SEED N'EST PAS MODIFIÉ POUR RENDRE CE CAS MOINS RARE, ET LE MOTIF EST ÉCRIT** (§8 bis.5) :
+ajouter un neuvième nœud actif et vide changerait la donnée de démonstration de `CRM-030`,
+`CRM-031`, `CRM-076` et `CRM-078` — empreintes, compteurs et captures — au bénéfice d'un état que
+l'utilisateur ne rencontrera presque jamais.
+
+**TROIS DÉFAUTS DE MES PROPRES PREUVES**, révisés avec leur motif dans les fichiers :
+`toHaveAttribute` sur un locator de quatre éléments viole le mode strict de Playwright (**deuxième**
+occurrence de ce défaut sur cette unité) ; `S13` attendait un repli sur le workspace là où la règle
+du §8 bis.2 replie sur le **track** ; `queryByTestId` **lève** sur plusieurs correspondances.
+
+**DEUX GARDES FIGÉES PAR LA TRANCHE 3 a RÉVISÉES, JAMAIS RETIRÉES** (décision 51, douzième
+occurrence) : le double de client des 23 preuves de composant porte désormais les deux lectures
+neuves — et il **aiguille sur la table**, sans quoi il ferait passer des channels pour des nœuds de
+catalogue —, et l'écran s'y monte dans un `MemoryRouter`, la portée vivant dans la chaîne de requête.
+
+**UN DÉFAUT ÉTRANGER CONSIGNÉ, NON CORRIGÉ** (`docs/CloudWorker.md` §3.1) : **INC-247**,
+`administration-workflows.ts` porte deux octets NUL **littéraux**, ce qui en fait un fichier
+**binaire** pour `git diff` et pour `grep` — c'est ainsi qu'il a été rencontré, une recherche de
+symbole l'ayant sauté. L'intention est légitime, la forme source l'est moins : `\0` produit la même
+valeur d'exécution.
+
+**Où reprendre.** `CRM-066` **tranche 4** — le score de santé de `CRM-P02`, qui commence par son
+**arbitrage** : ce qu'un score « transparent » agrège n'est écrit nulle part (§11.4), et deux
+compositions raisonnables donnent deux produits différents. `docs/CloudWorker.md` §4.1 bis dit qu'il
+se tranche, se persiste et se livre plutôt qu'il n'attend.
