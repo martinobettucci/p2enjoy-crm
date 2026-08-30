@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # @verifies CRM-066 (docs/BACKLOG.md) — analytique de conversion et prévisionnel pondéré,
-#           TRANCHES 2 a et 2 b
-# @verifies docs/SPEC-analytique.md §3 (probabilité effective à trois niveaux, absence assumée),
+#           TRANCHES 2 a, 2 b et 2 c
+# @verifies docs/SPEC-analytique.md §9 (les deux surcharges que le seed porte, contrôle 8),
+#           §3 (probabilité effective à trois niveaux, absence assumée),
 #           §4 (les deux exclusions, et l'inclusion du sommeil), §5.1 (signature, grain, libellé du
 #           catalogue), §5.3 (`security invoker` obligatoire), §5.4 (`anon` révoqué nommément),
 #           §6 (contrat d'API), §7 (les deux grandeurs dérivées), §12 (preuves attendues)
@@ -39,6 +40,17 @@ SUITE_API=e2e/api/analytique.spec.ts
 MODULE_TS=webapp/src/lib/analytique.ts
 SUITE_TS=webapp/src/lib/analytique.test.ts
 SPEC=docs/SPEC-analytique.md
+SEED=supabase/seed/apply-seed.sh
+
+# LES TROIS NIVEAUX QUE LE SEED POSE — `docs/SPEC-analytique.md` §9, tranche 2 c. Ils sont déclarés
+# ici plutôt que relus dans le seed : le contrôle 8 doit pouvoir dire que la base s'écarte du
+# contrat, ce qu'une lecture du seed lui-même ne saurait faire.
+SEED_NOEUD=negociation
+SEED_PROBA_NOEUD=50.00
+SEED_ETAPE='5eed0000-0000-4000-8000-000000000063'
+SEED_PROBA_ETAPE=65.00
+SEED_CARD='5eed0000-0000-4000-8000-0000000000cf'
+SEED_PROBA_CARD=30.00
 
 node_toolchain_prepare "$PWD/.nvmrc" || exit 1
 
@@ -47,6 +59,7 @@ anomalies=0
 TRAVAIL=$(mktemp -d)
 restauration_due=false
 module_sauve=false
+surcharge_seed_due=false
 
 nettoyer() {
 	local statut=$?
@@ -55,6 +68,13 @@ nettoyer() {
 	if [ "$restauration_due" = true ]; then
 		if ! psql_db -f - < "$MIGRATION" >/dev/null 2>&1; then
 			printf 'ERREUR : la restauration de secours de %s a échoué.\n' "$MIGRATION" >&2
+			statut=1
+		fi
+	fi
+	if [ "$surcharge_seed_due" = true ]; then
+		if ! psql_db -c "update public.cards set probability_override = $SEED_PROBA_CARD
+			where id = '$SEED_CARD';" >/dev/null 2>&1; then
+			printf 'ERREUR : la restauration de secours de la surcharge seedée a échoué.\n' >&2
 			statut=1
 		fi
 	fi
@@ -317,7 +337,9 @@ eprouver_degradation_module "taux inconnu remplacé par zéro" \
 	'taux: decidees === 0 ? 0 : gagnees / decidees'
 
 # D-F — le prévisionnel cesse d'exclure les nœuds terminaux : une affaire gagnée redeviendrait une
-# prévision, et le total EUR passerait de 333 715,00 à 644 715,00 (§7.2).
+# prévision, et le total EUR passerait de 381 042,50 à 692 042,50 (§7.2). Les deux nombres ont été
+# révisés par la tranche 2 c : les surcharges du seed ont porté le pondéré de `negociation` de
+# 183 425,00 à 230 752,50.
 eprouver_degradation_module "nœuds terminaux réintégrés au prévisionnel" \
 	"		if (genreDe(ligne.node_kind) !== 'open') continue" \
 	'		if (false) continue'
@@ -351,6 +373,70 @@ if suite_sql_verte; then
 	ok "la suite pgTAP est de nouveau verte après toutes les dégradations"
 else
 	fail "la suite pgTAP reste ROUGE après restauration"
+fi
+
+# =================================================================================================
+echo
+echo "8. Le SEED exerce les trois niveaux de la résolution — tranche 2 c"
+# =================================================================================================
+# `docs/SPEC-analytique.md` §9. Les preuves des lignes *m* et *n* posent leurs surcharges puis les
+# retirent : elles éprouvent la RÈGLE. Rien n'y dit que les données de développement l'exercent, et
+# `CLAUDE.md` §8 l'exige d'une règle métier neuve. Ce contrôle lit la base, jamais le seed : un seed
+# qui déclarerait la surcharge sans que la base la porte passerait une relecture de fichier.
+
+niveaux=$(psql_db -F '|' -c "select
+	(select n.default_probability from public.workflow_nodes_catalog n where n.key = '$SEED_NOEUD'),
+	(select s.probability_override from public.workflow_steps s where s.id = '$SEED_ETAPE'),
+	(select c.probability_override from public.cards c where c.id = '$SEED_CARD');")
+if [ "$niveaux" = "$SEED_PROBA_NOEUD|$SEED_PROBA_ETAPE|$SEED_PROBA_CARD" ]; then
+	ok "le seed pose trois niveaux DISTINCTS : catalogue $SEED_PROBA_NOEUD, étape $SEED_PROBA_ETAPE, affaire $SEED_PROBA_CARD"
+else
+	fail "niveaux seedés inattendus : '$niveaux' au lieu de '$SEED_PROBA_NOEUD|$SEED_PROBA_ETAPE|$SEED_PROBA_CARD'"
+fi
+
+# L'ENCADREMENT 30 < 50 < 65 EST CE QUI REND LA RÈGLE OPPOSABLE, et il se vérifie plutôt qu'il ne
+# se suppose : trois valeurs seedées croissantes laisseraient un `greatest` indiscernable de « le
+# plus spécifique gagne », et deux valeurs égales laisseraient passer un `coalesce` à l'envers.
+if awk -v c="$SEED_PROBA_CARD" -v n="$SEED_PROBA_NOEUD" -v e="$SEED_PROBA_ETAPE" \
+	'BEGIN { exit !(c < n && n < e) }'; then
+	# LES ACCENTS GRAVES SONT PROSCRITS DANS CES MESSAGES, et c'est MESURÉ le 2026-08-30 : entre
+	# guillemets, bash y voit une substitution de commande et exécute le mot qu'ils entourent. Le
+	# message rendait « ni  ni  ne rend le résultat attendu » et le shell écrivait deux
+	# « command not found » sur la sortie d'erreur, au milieu d'un bilan par ailleurs vert.
+	ok "l'affaire est SOUS le catalogue, lui-même sous l'étape : ni un maximum ni un minimum ne rend le résultat attendu"
+else
+	fail "les trois valeurs seedées ne s'encadrent plus : un maximum deviendrait indiscernable de la règle"
+fi
+
+# D-H — LA DÉGRADATION DU SEED, et elle porte sur la DONNÉE, non sur le code. La surcharge d'affaire
+# retirée, la résolution n'est plus exercée qu'à ses deux niveaux supérieurs : la suite pgTAP doit
+# le dénoncer. Sans ce contrôle, un seed qui cesserait de poser la surcharge — au fil d'une
+# réécriture de son contrat de cards, par exemple — laisserait la tranche 2 c vide sans que rien
+# ne rougisse.
+surcharge_seed_due=true
+psql_db -c "update public.cards set probability_override = null where id = '$SEED_CARD';" >/dev/null 2>&1
+if suite_sql_verte; then
+	fail "COMPLAISANT — la surcharge d'affaire du seed retirée, la suite pgTAP reste VERTE"
+else
+	ok "dégradation « surcharge d'affaire du seed retirée » : la suite pgTAP rougit, comme elle doit"
+fi
+psql_db -c "update public.cards set probability_override = $SEED_PROBA_CARD where id = '$SEED_CARD';" >/dev/null 2>&1
+surcharge_seed_due=false
+
+# ET LA RESTAURATION EST CONSTATÉE, jamais supposée — même règle qu'au contrôle 7.
+retabli=$(psql_db -c "select probability_override from public.cards where id = '$SEED_CARD';")
+if [ "$retabli" = "$SEED_PROBA_CARD" ]; then
+	ok "la surcharge seedée est restaurée : la base porte de nouveau $SEED_PROBA_CARD"
+else
+	fail "la surcharge seedée n'a PAS été restaurée : '$retabli'"
+fi
+
+# Le seed DÉCLARE ce que la base porte : sans cette lecture, une surcharge posée à la main
+# passerait pour une donnée de développement, et un `resetMe.sh` la ferait disparaître.
+if grep -q "$SEED_CARD|${SEED_PROBA_CARD%.00}|" "$SEED" && grep -q "|${SEED_PROBA_ETAPE%.00}|5'" "$SEED"; then
+	ok "les deux surcharges sont DÉCLARÉES dans $SEED : un redémarrage à froid les repose"
+else
+	fail "les surcharges de la tranche 2 c ne sont pas déclarées dans $SEED : la base les porte sans contrat"
 fi
 
 echo
