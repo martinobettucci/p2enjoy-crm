@@ -28209,6 +28209,23 @@ retire — et a rendu trois échecs qui ne disent rien du produit. C'est exactem
 l'autre. Le verdict de ce harnais est donc à rejouer **seul**, et ses deux contrôles révisés, eux,
 étaient verts.
 
+**CAMPAGNE COMPLÈTE, ET SON UNIQUE ROUGE EST UNE ANOMALIE CONNUE.** `test:sql` **68 fichiers /
+3083 assertions**, `test:unit` **2962 tests**, `e2e:api` **1058 passés**, `e2e:ui` **729 passés,
+aucun avertissement, 15,8 min**, `e2e:mail` **42 passés**, `pytest` **244**, `typecheck`,
+`types:check` et `build` verts. `verify-analytique.sh` **27 contrôles**, `verify-workflows.sh`
+**50 contrôles**, aucune anomalie de part ni d'autre. `verify-harness.sh --rapide` rend **31
+contrôles, 1 anomalie** : sa propre campagne d'interface a fait tomber
+`inbox.spec.ts` § « LA PALETTE Y MÈNE RÉELLEMENT », qui est **INC-235**, ouverte le 2026-08-28. Le
+même scénario est vert dans la campagne lancée directement et vert joué seul, sur le MÊME arbre —
+troisième mesure consignée au registre, et elle contredit la description d'origine de l'entrée.
+
+**LES CAPTURES ONT ÉTÉ TRIÉES PAR COMPARAISON PIXEL À PIXEL, PAS À VUE.** Le rejeu d'interface en a
+réécrit **281** ; **dix-sept** portent un changement que ce travail explique — l'éditeur de
+workflows affiche « Probabilité : 65 % » sur `Négociation`, dans le workflow par défaut comme dans
+sa copie —, et elles sont renouvelées et **regardées** : le libellé tient sur une ligne aux quatre
+paliers, y compris à 390 px, sans repousser la bande d'actions. Les **264** autres, dont l'écart
+tient aux dates relatives que le seed repose à chaque application, sont **restaurées**.
+
 **Où reprendre.** `CRM-066` **tranche 3** — l'écran `/pilotage`, dont la spécification visuelle est
 à écrire dans `docs/DESIGN_SYSTEM.md` **avant** sa première ligne de code (`CLAUDE.md` §4 impose d'en
 lire l'intégralité), avec ses tests de composant, son E2E d'interface à console vierge, ses captures
