@@ -2713,6 +2713,21 @@ export const fr = {
 	// portée workspace de la tranche 3 a, qui ne livre aucun sélecteur (§8).
 	'pilotage.scope':
 		'Ces nombres portent sur toutes les affaires actives que vous pouvez lire, tous tracks et tous channels confondus. Un collègue dont les droits diffèrent des vôtres lit d’autres totaux sur les mêmes données.',
+	// TRANCHE 3 b — la phrase NOMME la portée courante (§5.48 bis), là où la tranche 3 a déclarait
+	// l'espace de travail en dur. Le nom du track ou du channel est une DONNÉE, jamais une
+	// traduction (§10).
+	'pilotage.scope.track':
+		'Ces nombres portent sur les affaires actives du track « {nom} » que vous pouvez lire. Un collègue dont les droits diffèrent des vôtres lit d’autres totaux sur les mêmes données.',
+	'pilotage.scope.channel':
+		'Ces nombres portent sur les affaires actives du channel « {nom} » que vous pouvez lire. Un collègue dont les droits diffèrent des vôtres lit d’autres totaux sur les mêmes données.',
+	// Le sélecteur de portée. Son `label` est VISIBLE (§8) : c'est un champ de formulaire, et la
+	// règle du §5.22 ne souffre pas d'exception ici.
+	'pilotage.scope.label': 'Portée',
+	'pilotage.scope.all': 'Tout l’espace de travail',
+	// L'option de tête d'un groupe porte un libellé traduit : le nom du track est déjà l'intitulé du
+	// groupe, et le répéter dans l'option ferait lire « Studio web / Studio web ».
+	'pilotage.scope.wholeTrack': 'Tout le track',
+	'pilotage.scope.loading': 'Chargement des portées…',
 	// Le refus n'est jamais déguisé en vide : la fonction est refusée à l'anonyme PAR LE PRIVILÈGE
 	// (§5.4), et masquer ce `401` en « aucune affaire » ferait lire une absence de droit comme un
 	// portefeuille vide.
@@ -2727,6 +2742,13 @@ export const fr = {
 	'pilotage.empty.title': 'Aucune affaire active',
 	'pilotage.empty.body':
 		'Les affaires actives que vous pouvez lire se répartissent ici par étape, avec leur montant et leur prévisionnel pondéré. Ouvrez une affaire depuis un board pour la voir apparaître.',
+	// TRANCHE 3 b — l'état vide d'une PORTÉE choisie n'est pas celui de l'espace de travail entier :
+	// « ouvrez une affaire depuis un board » serait faux là où l'espace en porte trente-neuf. Le
+	// sélecteur reste au-dessus, sans quoi le lecteur serait enfermé dans une portée qu'il ne
+	// pourrait plus quitter qu'en éditant l'adresse (§5.48 bis).
+	'pilotage.empty.scope.title': 'Aucune affaire active dans cette portée',
+	'pilotage.empty.scope.body':
+		'Le track ou le channel que vous avez choisi ne porte aucune affaire active que vous puissiez lire. Choisissez une autre portée, ou revenez à tout l’espace de travail.',
 	// Aucun client d'API : configuration absente, ou session perdue. C'est un ÉTAT, jamais une
 	// attente — laisser le squelette serait la page blanche déguisée que le §5.8 refuse.
 	'pilotage.noworkspace.title': 'Aucun espace de travail',

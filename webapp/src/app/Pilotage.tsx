@@ -27,11 +27,19 @@
 // workflows et dans la fiche d'affaire ; un second chemin d'écriture ici en ferait une seconde
 // définition du même geste.
 //
-// LA PORTÉE EST CELLE DU WORKSPACE, et le §8 nomme l'écart : le module porte déjà `restreindre`,
-// éprouvé, mais nommer un track ou un channel demande une SECONDE lecture que la tranche 3 a ne
-// fait pas. La phrase de portée le dit à l'écran plutôt que de le laisser deviner.
+// LA PORTÉE SE CHOISIT DEPUIS LA TRANCHE 3 b, ET ELLE NE RELIT RIEN (`docs/SPEC-analytique.md`
+// §8 bis.3). La fonction rend déjà le grain le plus fin (§5.2) et le module porte `restreindre`,
+// éprouvé : changer de portée replie des lignes DÉJÀ lues. Un appel par portée aurait fait de ce
+// sélecteur un filtre serveur, c'est-à-dire une seconde définition de la restriction.
+//
+// @spec CRM-066 — TRANCHE 3 b : le sélecteur de portée
+// @spec docs/SPEC-analytique.md §8 bis.2 (l'adresse porte DEUX clés, et M8 l'impose),
+//       §8 bis.3 (changer de portée ne relit rien ; les grandeurs et les mentions suivent la
+//       portée), §8 bis.4 (la seconde lecture, et son échec qui ne casse pas l'écran)
+// @spec docs/DESIGN_SYSTEM.md §5.48 bis (le sélecteur, sa place, ses états, la phrase de portée)
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router'
 import { EtatErreur, EtatRefus, EtatVide } from '../components/ui/States'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t } from '../i18n'
@@ -43,6 +51,7 @@ import {
 	lireEntonnoir,
 	previsionnel,
 	replier,
+	restreindre,
 	tauxConversion,
 	type GenreNoeud,
 	type GroupeDevise,
@@ -51,6 +60,20 @@ import {
 	type PrevisionnelDevise,
 	type TauxConversion,
 } from '../lib/analytique'
+import {
+	CLE_URL_CHANNEL,
+	CLE_URL_TRACK,
+	ecrirePorteeUrl,
+	lirePorteeUrl,
+	lirePorteesOffrables,
+	nommerPortee,
+	porteeAnalytique,
+	porteeDepuisOption,
+	resoudrePorteeUrl,
+	valeurOption,
+	type PorteeUrl,
+	type TrackPortee,
+} from '../lib/pilotage-portee'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 
 /** L'en-tête d'une colonne (§5.9) : 13 px, texte secondaire, hauteur de cible. */
@@ -133,6 +156,54 @@ export function Pilotage({ client = clientCrm }: ProprietesPilotage = {}) {
 
 	const reprendre = useCallback(() => setTentative((precedente) => precedente + 1), [])
 
+	// L'ESPACE DE TRAVAIL VIENT DE L'ENTONNOIR LUI-MÊME, ET NON D'UNE TROISIÈME LECTURE (§8 bis.4).
+	// `entonnoir_conversion()` rend `workspace_id` sur chaque ligne : la portée offerte est donc
+	// celle de ce qui est RÉELLEMENT mesuré, structurellement, plutôt que celle qu'une lecture
+	// séparée de `workspaces` aurait nommée — deux sources pour un même fait finissent par
+	// diverger, et c'est le mode de défaillance qu'INC-138 et la décision 560 ont déjà coûté.
+	// Aucune ligne ne rend aucun espace : il n'y a alors rien à découper, et l'écran rend son état
+	// vide sans sélecteur.
+	const idWorkspace = etat.statut === 'pret' ? (etat.donnees[0]?.workspace_id ?? null) : null
+
+	const [portees, setPortees] = useState<EtatAsync<readonly TrackPortee[]>>(enChargement)
+	const courantPortees = useRef(0)
+
+	useEffect(() => {
+		if (client === null || idWorkspace === null) return
+		const rang = ++courantPortees.current
+		setPortees(enChargement())
+		void (async () => {
+			const lu = await lirePorteesOffrables(client, idWorkspace)
+			if (rang !== courantPortees.current) return
+			setPortees(lu)
+		})()
+	}, [client, idWorkspace, tentative])
+
+	const arbre = useMemo(() => (portees.statut === 'pret' ? portees.donnees : []), [portees])
+
+	// LA PORTÉE APPLIQUÉE EST CELLE QUE L'ARBRE RÉSOUT, jamais celle que l'adresse demande
+	// (§8 bis.2). Un slug inconnu ou fermé replie sur l'espace de travail, sans aucune erreur — et
+	// le repli n'est pas silencieux à l'œil, puisque c'est cette valeur-ci que le sélecteur affiche
+	// et que la phrase de portée nomme.
+	const [parametres, setParametres] = useSearchParams()
+	const demandee = lirePorteeUrl(parametres.get(CLE_URL_TRACK), parametres.get(CLE_URL_CHANNEL))
+	const portee = resoudrePorteeUrl(demandee, arbre)
+
+	const choisirPortee = useCallback(
+		(choisie: PorteeUrl) => {
+			// `replace` ET NON `push` : douze essais de portée ne doivent pas coûter douze retours
+			// arrière pour quitter l'écran (§5.48 bis). L'adresse reste partageable — elle porte la
+			// portée choisie.
+			//
+			// Les paramètres sont RECONSTRUITS et non fusionnés : cette route n'en porte aucun autre
+			// (`docs/SPEC-analytique.md` §8), et fusionner laisserait derrière un `channel` orphelin
+			// au passage d'une portée de channel à une portée de track — c'est-à-dire l'adresse
+			// exacte que M8 rend inexploitable.
+			setParametres(ecrirePorteeUrl(choisie), { replace: true })
+		},
+		[setParametres],
+	)
+
 	// AUCUN CLIENT N'EST UN ÉTAT, PAS UNE ATTENTE (§5.33, §5.48). La configuration d'API absente ou
 	// la session perdue rendent `clientCrm` nul ; laisser l'écran sur son squelette ferait attendre
 	// indéfiniment une lecture que rien n'émettra — la page blanche déguisée que le §5.8 refuse.
@@ -178,12 +249,36 @@ export function Pilotage({ client = clientCrm }: ProprietesPilotage = {}) {
 		)
 	}
 
-	const lignes = etat.donnees
+	// LES QUATRE GRANDEURS SUIVENT LA PORTÉE, ET C'EST OPPOSABLE (§8 bis.3). Le prévisionnel, le
+	// taux et les deux compteurs d'absence sont calculés sur les lignes RESTREINTES, jamais sur les
+	// lignes lues : un prévisionnel d'espace de travail au-dessus d'un entonnoir de channel serait un
+	// écran qui ment sur ce qu'il montre.
+	const lignes = restreindre(etat.donnees, porteeAnalytique(portee, arbre))
 	const noeuds = replier(lignes)
 	const groupes = grouperParDevise(noeuds)
 	const previsions = previsionnel(lignes)
 	const taux = tauxConversion(lignes)
 	const manques = absences(lignes)
+	const nomPortee = nommerPortee(portee, arbre)
+
+	// LE SÉLECTEUR N'EST RENDU QUE S'IL Y A QUELQUE CHOSE À DÉCOUPER. Aucune ligne dans l'espace de
+	// travail entier ne laisse aucune portion à isoler — et aucune lecture d'arborescence n'a même
+	// pu partir, faute d'espace de travail à nommer.
+	const selecteur =
+		etat.donnees.length === 0 ? null : (
+			<SelecteurPortee
+				arbre={arbre}
+				portee={portee}
+				// LA DÉROGATION BORNÉE DU §5.22, tenue sans changement : pendant la lecture de sa
+				// liste et après son échec, le contrôle est DÉSACTIVÉ. Ce n'est pas une extinction
+				// selon le rôle — il n'y a alors rien à choisir, et un `select` vide mais actif serait
+				// une commande morte. L'entonnoir, lui, est rendu : la liste n'est pas la condition
+				// de la lecture (§8 bis.4).
+				actif={portees.statut === 'pret' && arbre.length > 0}
+				enChargement={portees.statut === 'chargement'}
+				onChoix={choisirPortee}
+			/>
+		)
 
 	// L'ÉTAT VIDE N'OFFRE AUCUNE ACTION (§5.48), et c'est l'écart au §5.8 que la corbeille, le
 	// carnet, les affaires figées et le panneau de notifications prennent déjà : une affaire se crée
@@ -194,10 +289,23 @@ export function Pilotage({ client = clientCrm }: ProprietesPilotage = {}) {
 	// active. Les distinguer renseignerait un appelant sans droit sur l'existence d'affaires qu'il
 	// ne lit pas (`docs/SPEC-permissions-rls.md` §7), et c'est la règle que le cumul des coûts, le
 	// canevas d'objectifs et les affaires figées tiennent déjà.
+	//
+	// LE SÉLECTEUR SURVIT À L'ÉTAT VIDE, ET C'EST L'ÉCART DÉLIBÉRÉ AU §5.8 QUE LE §5.48 bis ÉCRIT.
+	// Une portée sans affaire active rend l'état vide SOUS le sélecteur : le remplacer enfermerait
+	// le lecteur dans une portée qu'il ne pourrait plus quitter qu'en éditant l'adresse.
+	//
+	// ET LE TEXTE N'EST PAS LE MÊME SELON QUE LA PORTÉE OU L'ESPACE ENTIER EST VIDE : « ouvrez une
+	// affaire depuis un board » serait faux là où l'espace de travail en porte trente-neuf. Nommer
+	// la portée CHOISIE ne divulgue rien — c'est le lecteur qui vient de la choisir.
 	if (groupes.length === 0) {
+		const videDePortee = portee.type !== 'workspace'
 		return (
 			<section aria-label={t('pilotage.aria')} className="flex flex-col gap-6">
-				<EtatVide titre={t('pilotage.empty.title')} corps={t('pilotage.empty.body')} />
+				{selecteur}
+				<EtatVide
+					titre={t(videDePortee ? 'pilotage.empty.scope.title' : 'pilotage.empty.title')}
+					corps={t(videDePortee ? 'pilotage.empty.scope.body' : 'pilotage.empty.body')}
+				/>
 			</section>
 		)
 	}
@@ -210,6 +318,12 @@ export function Pilotage({ client = clientCrm }: ProprietesPilotage = {}) {
 
 	return (
 		<section aria-label={t('pilotage.aria')} className="flex flex-col gap-6 max-w-[960px]">
+			{/*
+			  LE SÉLECTEUR EST EN TÊTE, AU-DESSUS DES DEUX GRANDEURS (§5.48 bis) : il qualifie tout ce
+			  qui suit, et ce qui qualifie se lit avant ce qu'il qualifie — l'ordre que le §5.32 tient
+			  déjà pour l'identité d'un budget devant son histogramme.
+			*/}
+			{selecteur}
 			<Grandeurs previsions={previsions} taux={taux} />
 			{groupes.map((groupe) => (
 				<Entonnoir
@@ -218,8 +332,91 @@ export function Pilotage({ client = clientCrm }: ProprietesPilotage = {}) {
 					titreVisible={plusieursDevises}
 				/>
 			))}
-			<Mentions manques={manques} />
+			<Mentions manques={manques} portee={portee} nomPortee={nomPortee} />
 		</section>
+	)
+}
+
+/**
+ * Le sélecteur de portée — `docs/DESIGN_SYSTEM.md` §5.48 bis, `docs/SPEC-analytique.md` §8 bis.
+ *
+ * UN `select` NATIF ET NON UNE BARRE D'ONGLETS : le nombre de portées croît avec le nombre de
+ * channels — six dans le jeu de démonstration, des dizaines dans un espace réel —, et une barre
+ * d'onglets déborderait dès le troisième track. C'est le critère déjà écrit au §5.22 pour le champ
+ * « Channel visé », et les `optgroup` sont le seul moyen natif de grouper des options sans réécrire
+ * un sélecteur au clavier.
+ *
+ * IL AFFICHE LA PORTÉE RÉELLEMENT APPLIQUÉE, jamais celle que l'adresse demande : la valeur reçue
+ * ici est déjà passée par `resoudrePorteeUrl`.
+ */
+function SelecteurPortee({
+	arbre,
+	portee,
+	actif,
+	enChargement: chargement,
+	onChoix,
+}: {
+	readonly arbre: readonly TrackPortee[]
+	readonly portee: PorteeUrl
+	readonly actif: boolean
+	readonly enChargement: boolean
+	readonly onChoix: (portee: PorteeUrl) => void
+}) {
+	return (
+		<div className="flex flex-col gap-1">
+			{/*
+			  UN `label` VISIBLE, jamais un `aria-label` seul (§8) : c'est un champ de formulaire, et
+			  la règle du §5.22 ne souffre pas d'exception ici.
+			*/}
+			<label htmlFor="pilotage-portee" className="text-sm text-text-2">
+				{t('pilotage.scope.label')}
+			</label>
+			<select
+				id="pilotage-portee"
+				data-testid="pilotage-selecteur-portee"
+				className="h-[var(--size-target)] w-full max-w-[420px] rounded-md border border-border bg-surface px-3 text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
+				value={valeurOption(portee)}
+				disabled={!actif}
+				onChange={(evenement) => onChoix(porteeDepuisOption(evenement.target.value))}
+			>
+				{/*
+				  « Tout l'espace de travail » EST HORS DE TOUT GROUPE et vient en tête : c'est le
+				  défaut, et c'est la seule portée qui n'appartient à aucun track.
+				*/}
+				<option value="">{t('pilotage.scope.all')}</option>
+				{/*
+				  PENDANT LA LECTURE, UNE OPTION INERTE PLUTÔT QU'UNE LISTE VIDE — patron du §5.22 :
+				  un sélecteur qui n'offre rien sans dire pourquoi se lit comme un espace sans track.
+				*/}
+				{chargement ? (
+					<option value="chargement" disabled>
+						{t('pilotage.scope.loading')}
+					</option>
+				) : null}
+				{arbre.map((track) => (
+					// L'INTITULÉ DU GROUPE EST UNE DONNÉE — le nom du track —, jamais une traduction
+					// (§10). L'option de tête du groupe, elle, porte un libellé traduit : répéter le
+					// nom du track dedans ferait lire « Studio web / Studio web ».
+					<optgroup key={track.id} label={track.nom}>
+						<option value={valeurOption({ type: 'track', track: track.slug })}>
+							{t('pilotage.scope.wholeTrack')}
+						</option>
+						{track.channels.map((channel) => (
+							<option
+								key={channel.id}
+								value={valeurOption({
+									type: 'channel',
+									track: track.slug,
+									channel: channel.slug,
+								})}
+							>
+								{channel.nom}
+							</option>
+						))}
+					</optgroup>
+				))}
+			</select>
+		</div>
 	)
 }
 
@@ -437,8 +634,12 @@ function LigneNoeud({ noeud }: { readonly noeud: NoeudEntonnoir }) {
  */
 function Mentions({
 	manques,
+	portee,
+	nomPortee,
 }: {
 	readonly manques: { readonly sansMontant: number; readonly sansProbabilite: number }
+	readonly portee: PorteeUrl
+	readonly nomPortee: string | null
 }) {
 	return (
 		<div className="flex flex-col gap-1">
@@ -465,10 +666,20 @@ function Mentions({
 			  et même motif qu'au §5.33 : l'entonnoir est calculé APRÈS la RLS (§5.3), et deux
 			  profils lisent donc deux nombres différents sur les mêmes données. Sans cette phrase,
 			  l'écart se lirait comme une erreur de calcul, et quelqu'un finirait par « corriger » la
-			  lecture. Elle dit aussi la portée workspace de la tranche 3 a (§8).
+			  lecture.
+
+			  ELLE NOMME LA PORTÉE COURANTE depuis la tranche 3 b (§5.48 bis), là où la tranche 3 a
+			  déclarait l'espace de travail en dur — et le nom du track ou du channel y est une
+			  DONNÉE (§10). Un nom absent de l'arbre ramène à la phrase d'espace de travail, ce qui
+			  est exactement la portée que `resoudrePorteeUrl` a déjà appliquée : les deux ne peuvent
+			  pas diverger.
 			*/}
 			<p data-testid="pilotage-portee" className="text-[13px] text-text-2">
-				{t('pilotage.scope')}
+				{portee.type === 'workspace' || nomPortee === null
+					? t('pilotage.scope')
+					: t(portee.type === 'track' ? 'pilotage.scope.track' : 'pilotage.scope.channel', {
+							nom: nomPortee,
+						})}
 			</p>
 		</div>
 	)
