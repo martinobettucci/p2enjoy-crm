@@ -10480,6 +10480,33 @@ rejouée : elle n'est la Definition of Done d'aucune unité (décision 553).
       **134 contrôles, aucune anomalie**.
 - [x] **AUCUNE MIGRATION, AUCUNE ÉCRITURE, AUCUN SEED À TOUCHER** : la tranche ne livre qu'un écran
       de lecture. `docs/PROD_MIGRATIONS.md` est inchangé, et c'est exact.
+- [x] **UN GARDE-FOU FIGÉ PAR UNE UNITÉ ANTÉRIEURE A ÉTÉ RÉVISÉ, JAMAIS RETIRÉ** (décision 51,
+      onzième occurrence) : le parcours clavier de `e2e/ui/coquille.spec.ts` énumère les entrées de
+      la barre latérale dans l'ordre visuel, et la huitième l'a fait rougir pendant la campagne. Mis
+      à jour avec son ordre RÉEL et son motif écrit dans le fichier ; rejoué **13 scénarios verts**.
+- [x] **Compteur de `scripts/verify-harness.sh` révisé dans le MÊME changement, et CONFIRMÉ par son
+      propre dénombrement** : `SCENARIOS_UI` 729 → **737**. « projet ui : 737 scénarios énumérés,
+      conforme au compteur ». Les quatre autres sont INCHANGÉS : la tranche n'ouvre aucun fichier
+      SQL, n'ajoute aucun scénario d'API et n'envoie aucun protocole. Valeur COMPTÉE.
+- [x] **Campagne de fin de session** : `test:sql` **68 fichiers / 3083 assertions**, `test:unit`
+      **2993 tests**, `e2e:api` **1058 passés**, `e2e:ui` **736 passés / 1 échec** — le garde-fou
+      ci-dessus, corrigé —, `e2e:mail` **42 passés**, `pytest` **244**, `typecheck`, `types:check` et
+      `build` verts ; `verify-analytique.sh` **27 contrôles** et `verify-manual.sh` **134 contrôles**,
+      aucune anomalie de part ni d'autre.
+- [x] **`verify-harness.sh --rapide` rend « 31 contrôles, 1 anomalie », et c'est INC-246, ouverte
+      ici.** Sa campagne d'interface INTERNE rend 734/3 là où la campagne directe rend 736/1 ; les
+      trois scénarios rejoués ensemble sont verts, un quatrième tombe, lui-même vert au rejeu suivant
+      et rouge à un palier différent ensuite. **La cible du défaut se déplace** — mesure nouvelle par
+      rapport à INC-174, INC-235 et INC-239. Préexistant et étranger : aucune ligne de cette tranche
+      ne touche ces quatre fichiers.
+- [x] **CAPTURES TRIÉES PAR COMPARAISON PIXEL À PIXEL** : 460 réécrites par le rejeu, **419**
+      renouvelées — la barre latérale gagne son entrée « Pilotage », et elle est dans presque tous
+      les écrans — et **41** restaurées, leur écart ne tenant qu'aux dates relatives du seed.
+      **Observées** : `pilotage-*` aux quatre paliers, `CRM-007/palier-lg-1152.jpg` et
+      `CRM-062/affaires-figees-xl-1440.jpg`.
+- [x] **CE QUI N'A PAS ÉTÉ EXÉCUTÉ, ET IL FAUT LE DIRE** : la série entière des `verify-*.sh` n'a pas
+      été rejouée — elle n'est la Definition of Done d'aucune unité (décision 553) et reste l'objet
+      d'une session dédiée. Les trois harnais que ce changement touche l'ont été.
 
 ### CRM-070 — précision d'arbitrage : l'invitation d'un membre
 
