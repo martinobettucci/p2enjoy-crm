@@ -290,6 +290,11 @@ Mesuré hors interface, avec les jetons réels obtenus par
 `POST /auth/v1/token?grant_type=password`. Ce tableau est le contrat que
 `e2e/api/analytique.spec.ts` rejoue ligne à ligne.
 
+**Les appels sont émis en `POST /rest/v1/rpc/entonnoir_conversion`**, idiome de ce dépôt pour une
+RPC. La fonction étant `stable`, PostgREST l'expose **aussi** en `GET`, et le refus anonyme de la
+ligne *a* a été mesuré dans les **deux** formes : `401` et `42501` dans l'un comme dans l'autre —
+un privilège ne dépend pas du verbe.
+
 | Ligne | Appelant | Requête | Attendu |
 |---|---|---|---|
 | a | anonyme | `GET /rest/v1/rpc/entonnoir_conversion` | **`401`**, `42501` — refus par le privilège (§5.4), jamais un tableau vide |
