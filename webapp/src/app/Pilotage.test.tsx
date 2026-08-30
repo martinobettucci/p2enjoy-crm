@@ -156,25 +156,25 @@ const CHANNELS_SEED: readonly unknown[] = [
 		id: 'ch-prospection',
 		slug: 'prospection',
 		name: 'Prospection',
-		tracks: { id: 'tr1', slug: 'conseil-ia', name: 'Conseil & IA' },
+		tracks: { id: 'tr1', slug: 'conseil-ia', name: 'Conseil & IA', position: 1 },
 	},
 	{
 		id: 'ch-grands-comptes',
 		slug: 'grands-comptes',
 		name: 'Grands comptes',
-		tracks: { id: 'tr1', slug: 'conseil-ia', name: 'Conseil & IA' },
+		tracks: { id: 'tr1', slug: 'conseil-ia', name: 'Conseil & IA', position: 1 },
 	},
 	{
 		id: 'ch-refonte',
 		slug: 'refonte',
 		name: 'Refonte de site',
-		tracks: { id: 'tr2', slug: 'studio-web', name: 'Studio web' },
+		tracks: { id: 'tr2', slug: 'studio-web', name: 'Studio web', position: 2 },
 	},
 	{
 		id: 'ch-maintenance',
 		slug: 'maintenance',
 		name: 'Maintenance',
-		tracks: { id: 'tr2', slug: 'studio-web', name: 'Studio web' },
+		tracks: { id: 'tr2', slug: 'studio-web', name: 'Studio web', position: 2 },
 	},
 ]
 
@@ -563,15 +563,14 @@ describe('Pilotage — le sélecteur de portée (§8 bis, §5.48 bis)', () => {
 		await waitFor(() => expect(selecteur().disabled).toBe(false))
 		const groupes = [...selecteur().querySelectorAll('optgroup')]
 		expect(groupes.map((groupe) => groupe.label)).toEqual(['Conseil & IA', 'Studio web'])
-		// L'option de tête d'un groupe porte un libellé TRADUIT : répéter le nom du track dedans
-		// ferait lire « Studio web / Studio web ».
-		const premieres = groupes.map((groupe) => groupe.querySelector('option')?.textContent)
-		expect(premieres).toEqual([fr['pilotage.scope.wholeTrack'], fr['pilotage.scope.wholeTrack']])
-		// L'ordre des channels est celui du serveur, jamais retrié à l'écran.
+		// CHAQUE OPTION NOMME SON TRACK — défaut trouvé en regardant une capture : un `select`
+		// FERMÉ ne rend que le texte de l'option retenue, et l'intitulé du groupe y est invisible.
+		// « Tout le track » s'y lisait sans dire lequel. L'ordre des channels, lui, est celui du
+		// serveur, jamais retrié à l'écran.
 		expect([...groupes[1]!.querySelectorAll('option')].map((o) => o.textContent)).toEqual([
-			fr['pilotage.scope.wholeTrack'],
-			'Refonte de site',
-			'Maintenance',
+			'Studio web — tout le track',
+			'Studio web — Refonte de site',
+			'Studio web — Maintenance',
 		])
 	})
 

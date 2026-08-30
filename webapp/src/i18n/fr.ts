@@ -2724,9 +2724,15 @@ export const fr = {
 	// règle du §5.22 ne souffre pas d'exception ici.
 	'pilotage.scope.label': 'Portée',
 	'pilotage.scope.all': 'Tout l’espace de travail',
-	// L'option de tête d'un groupe porte un libellé traduit : le nom du track est déjà l'intitulé du
-	// groupe, et le répéter dans l'option ferait lire « Studio web / Studio web ».
-	'pilotage.scope.wholeTrack': 'Tout le track',
+	// CHAQUE OPTION NOMME SON TRACK, ET C'EST UN DÉFAUT TROUVÉ EN REGARDANT UNE CAPTURE
+	// (`CLAUDE.md` §16). Un `select` FERMÉ ne rend que le texte de l'option retenue : l'intitulé de
+	// son `optgroup` est invisible dans cet état, qui est celui que l'utilisateur voit en
+	// permanence. « Tout le track » s'y lisait donc sans dire LEQUEL, et « Refonte de site » sans
+	// dire de quel track — alors qu'un nom de channel n'est unique que dans son track (M8). C'est
+	// la règle générale du §5.48 : quand un titre de regroupement est conditionnel — ici invisible —,
+	// ce qu'il qualifie doit être nommé ailleurs de façon INCONDITIONNELLE.
+	'pilotage.scope.wholeTrack': '{track} — tout le track',
+	'pilotage.scope.channelOption': '{track} — {channel}',
 	'pilotage.scope.loading': 'Chargement des portées…',
 	// Le refus n'est jamais déguisé en vide : la fonction est refusée à l'anonyme PAR LE PRIVILÈGE
 	// (§5.4), et masquer ce `401` en « aucune affaire » ferait lire une absence de droit comme un

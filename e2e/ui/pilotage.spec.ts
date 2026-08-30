@@ -302,16 +302,38 @@ test.describe('CRM-066 — tableau de pilotage (docs/SPEC-analytique.md §8)', (
 		const selecteur = page.getByTestId('pilotage-selecteur-portee')
 		await expect(selecteur).toBeEnabled()
 
-		// M9, MESURÉ : quatre tracks et huit channels, dont DEUX sont hors sélecteur —
-		// `appels-offres` est archivé, `annexes-2023` est en corbeille. Restent six offrables.
 		const groupes = selecteur.locator('optgroup')
+		// QUATRE GROUPES POUR CINQ TRACKS : `pipeline-2024` n'a aucun channel, et un track sans
+		// channel n'a rien à mesurer (§5.48 bis).
 		await expect(groupes).toHaveCount(4)
-		await expect(groupes).toHaveAttribute('label', /.+/)
+		// L'ORDRE DES TRACKS EST `tracks.position`, ET C'EST CE QUE CETTE PREUVE A PAYÉ. Un tri
+		// global des channels par `position` — numérotée PAR TRACK — les entrelaçait, et rendait
+		// « Legacy 2023, Formation, Conseil & IA, Studio web ». L'intitulé est une DONNÉE (§10).
+		//
+		// L'ASSERTION PORTE SUR LA LISTE ENTIÈRE, ET NON SUR `toHaveAttribute` d'un locator
+		// multiple : ce dernier viole le mode strict de Playwright et rend un échec qui ne dit rien
+		// du produit — le défaut exact que la tranche 3 a avait déjà payé, ici pour la deuxième
+		// fois. Écrite ainsi, elle dit davantage : l'ordre, et pas seulement la présence.
+		expect(await groupes.evaluateAll((noeuds) => noeuds.map((n) => n.getAttribute('label')))).toEqual([
+			'Conseil & IA',
+			'Studio web',
+			'Formation',
+			'Legacy 2023',
+		])
+		// M9, MESURÉ : quatre tracks offrables, six channels, plus l'option de tête et les quatre
+		// « Tout le track » — onze options. `appels-offres` est archivé, `annexes-2023` en corbeille.
 		await expect(selecteur.locator('option')).toHaveCount(11)
-		await expect(selecteur.getByRole('option', { name: 'Appels d’offres' })).toHaveCount(0)
-		await expect(selecteur.getByRole('option', { name: 'Annexes 2023' })).toHaveCount(0)
-		// L'intitulé du groupe est une DONNÉE — le nom du track (§10).
-		await expect(groupes.nth(0)).toHaveAttribute('label', 'Conseil & IA')
+		await expect(selecteur.getByRole('option', { name: /Appels d’offres/ })).toHaveCount(0)
+		await expect(selecteur.getByRole('option', { name: /Annexes 2023/ })).toHaveCount(0)
+		// CHAQUE OPTION NOMME SON TRACK — défaut trouvé en regardant `pilotage-portee-xl-1440.jpg` :
+		// un `select` FERMÉ ne rend que le texte de l'option, et l'intitulé du groupe y est
+		// invisible. « Tout le track » s'y lisait sans dire lequel.
+		await expect(
+			selecteur.getByRole('option', { name: 'Studio web — tout le track' }),
+		).toHaveCount(1)
+		await expect(
+			selecteur.getByRole('option', { name: 'Studio web — Refonte de site' }),
+		).toHaveCount(1)
 		// Le défaut est l'espace de travail, et il ne s'écrit pas dans l'adresse.
 		await expect(selecteur).toHaveValue('')
 		await expect(page).toHaveURL(new RegExp(`${PILOTAGE}$`))
@@ -402,15 +424,24 @@ test.describe('CRM-066 — tableau de pilotage (docs/SPEC-analytique.md §8)', (
 		await page.goto(PILOTAGE)
 		const selecteur = page.getByTestId('pilotage-selecteur-portee')
 		await expect(selecteur).toBeEnabled()
-		await expect(selecteur.getByRole('option', { name: 'Grands comptes' })).toHaveCount(0)
+		await expect(selecteur.getByRole('option', { name: /Grands comptes/ })).toHaveCount(0)
 		// `prospection` lui est ROUVERT par `channel_members` (M7) : la liste suit la RLS, elle ne
 		// la rejoue pas.
-		await expect(selecteur.getByRole('option', { name: 'Prospection', exact: true })).toHaveCount(1)
+		await expect(
+			selecteur.getByRole('option', { name: 'Conseil & IA — Prospection' }),
+		).toHaveCount(1)
 
-		// L'adresse forcée ne lui rend RIEN de plus : la portée est vide pour elle, et l'état vide
-		// garde son sélecteur au-dessus (§5.48 bis).
+		// L'ADRESSE FORCÉE NE LUI REND RIEN DE PLUS, et le repli est celui du §8 bis.2 : le track
+		// `conseil-ia` lui est lisible, le channel `grands-comptes` ne l'est pas, donc la portée
+		// retombe sur SON TRACK — le repli garde ce qui a été compris et abandonne le reste.
+		//
+		// CE N'EST PAS UNE DIVULGATION : le repli ne dit pas si `grands-comptes` existe, seulement
+		// qu'il n'est pas dans la liste qu'elle peut choisir — ce que le sélecteur affichait déjà.
+		// Et l'entonnoir rendu reste celui que la RLS lui consent : `Livré`, que `grands-comptes`
+		// porte pour l'administratrice, n'y figure pas.
 		await page.goto(`${PILOTAGE}?track=conseil-ia&channel=grands-comptes`)
-		await expect(selecteur).toHaveValue('')
+		await expect(selecteur).toHaveValue('conseil-ia')
+		await expect(ligneNoeud(page, 'EUR', 'Livré')).toHaveCount(0)
 		autoriserErreursConsole(page, [])
 	})
 

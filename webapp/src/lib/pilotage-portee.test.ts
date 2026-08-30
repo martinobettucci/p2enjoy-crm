@@ -34,6 +34,7 @@ const ARBRE: readonly TrackPortee[] = [
 	{
 		id: 'tr-conseil',
 		slug: 'conseil-ia',
+		position: 1,
 		nom: 'Conseil & IA',
 		channels: [
 			{ id: 'ch-prospection', slug: 'prospection', nom: 'Prospection' },
@@ -43,6 +44,7 @@ const ARBRE: readonly TrackPortee[] = [
 	{
 		id: 'tr-studio',
 		slug: 'studio-web',
+		position: 2,
 		nom: 'Studio web',
 		channels: [
 			{ id: 'ch-refonte', slug: 'refonte', nom: 'Refonte de site' },
@@ -52,12 +54,14 @@ const ARBRE: readonly TrackPortee[] = [
 	{
 		id: 'tr-formation',
 		slug: 'formation',
+		position: 3,
 		nom: 'Formation',
 		channels: [{ id: 'ch-inter', slug: 'inter-entreprises', nom: 'Inter-entreprises' }],
 	},
 	{
 		id: 'tr-legacy',
 		slug: 'legacy-2023',
+		position: 5,
 		nom: 'Legacy 2023',
 		channels: [{ id: 'ch-dossiers', slug: 'dossiers-2023', nom: 'Dossiers 2023' }],
 	},
@@ -239,18 +243,18 @@ describe('grouperPortees — l’ordre du serveur, et la limite du track illisib
 		id: string,
 		slug: string,
 		name: string,
-		track: { id: string; slug: string; name: string } | null,
+		track: { id: string; slug: string; name: string; position?: number } | null,
 	) => ({ id, slug, name, tracks: track })
 
-	it('groupe par track, dans l’ordre de première apparition', () => {
+	const CONSEIL = { id: 't1', slug: 'conseil-ia', name: 'Conseil & IA', position: 1 }
+	const STUDIO = { id: 't2', slug: 'studio-web', name: 'Studio web', position: 2 }
+	const LEGACY = { id: 't5', slug: 'legacy-2023', name: 'Legacy 2023', position: 5 }
+
+	it('groupe par track, et conserve l’ordre du serveur DANS le groupe', () => {
 		const groupes = grouperPortees([
-			brut('c1', 'prospection', 'Prospection', { id: 't1', slug: 'conseil-ia', name: 'Conseil & IA' }),
-			brut('c2', 'refonte', 'Refonte de site', { id: 't2', slug: 'studio-web', name: 'Studio web' }),
-			brut('c3', 'grands-comptes', 'Grands comptes', {
-				id: 't1',
-				slug: 'conseil-ia',
-				name: 'Conseil & IA',
-			}),
+			brut('c1', 'prospection', 'Prospection', CONSEIL),
+			brut('c2', 'refonte', 'Refonte de site', STUDIO),
+			brut('c3', 'grands-comptes', 'Grands comptes', CONSEIL),
 		])
 		expect(groupes.map((groupe) => groupe.slug)).toEqual(['conseil-ia', 'studio-web'])
 		expect(groupes[0]?.channels.map((channel) => channel.slug)).toEqual([
@@ -259,13 +263,40 @@ describe('grouperPortees — l’ordre du serveur, et la limite du track illisib
 		])
 	})
 
+	it('L’ORDRE DES TRACKS EST `tracks.position`, PAS CELUI DU PREMIER CHANNEL', () => {
+		// DÉFAUT TROUVÉ EN EXÉCUTANT `S9`, corrigé dans sa CAUSE. `channels.position` est numérotée
+		// PAR TRACK : quatre channels du seed portent `position = 1`, si bien que le tri du serveur
+		// les entrelace et qu'un track apparaissait à la place de son premier channel. La ligne
+		// ci-dessous est cet ordre entrelacé ; le résultat attendu est celui du produit.
+		const groupes = grouperPortees([
+			brut('c1', 'dossiers-2023', 'Dossiers 2023', LEGACY),
+			brut('c2', 'prospection', 'Prospection', CONSEIL),
+			brut('c3', 'refonte', 'Refonte de site', STUDIO),
+		])
+		expect(groupes.map((groupe) => groupe.slug)).toEqual([
+			'conseil-ia',
+			'studio-web',
+			'legacy-2023',
+		])
+	})
+
+	it('le NOM départage deux tracks de même position', () => {
+		// Sans ce départage, deux tracks de même position s'échangeraient d'un chargement à
+		// l'autre — la garde que `lireChannels` pose déjà pour les channels.
+		const groupes = grouperPortees([
+			brut('c1', 'un', 'Un', { id: 'tb', slug: 'beta', name: 'Beta', position: 1 }),
+			brut('c2', 'deux', 'Deux', { id: 'ta', slug: 'alpha', name: 'Alpha', position: 1 }),
+		])
+		expect(groupes.map((groupe) => groupe.slug)).toEqual(['alpha', 'beta'])
+	})
+
 	it('accepte l’imbriqué en objet comme en tableau — les deux formes de PostgREST', () => {
 		const enTableau = grouperPortees([
 			{
 				id: 'c1',
 				slug: 'refonte',
 				name: 'Refonte de site',
-				tracks: [{ id: 't2', slug: 'studio-web', name: 'Studio web' }],
+				tracks: [STUDIO],
 			},
 		])
 		expect(enTableau).toHaveLength(1)
@@ -277,7 +308,7 @@ describe('grouperPortees — l’ordre du serveur, et la limite du track illisib
 		// n'y a pas d'adresse à écrire, et une option qu'aucune adresse ne peut porter serait une
 		// commande morte. L'écart est écrit au §8 bis.4 plutôt que tu.
 		const groupes = grouperPortees([
-			brut('c1', 'refonte', 'Refonte de site', { id: 't2', slug: 'studio-web', name: 'Studio web' }),
+			brut('c1', 'refonte', 'Refonte de site', STUDIO),
 			brut('c2', 'orphelin', 'Orphelin', null),
 		])
 		expect(groupes).toHaveLength(1)

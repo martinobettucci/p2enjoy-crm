@@ -395,11 +395,19 @@ function SelecteurPortee({
 				) : null}
 				{arbre.map((track) => (
 					// L'INTITULÉ DU GROUPE EST UNE DONNÉE — le nom du track —, jamais une traduction
-					// (§10). L'option de tête du groupe, elle, porte un libellé traduit : répéter le
-					// nom du track dedans ferait lire « Studio web / Studio web ».
+					// (§10).
+					//
+					// ET CHAQUE OPTION NOMME AUSSI SON TRACK, ce qui est un DÉFAUT TROUVÉ EN
+					// REGARDANT UNE CAPTURE (`CLAUDE.md` §16) : un `select` FERMÉ ne rend que le
+					// texte de l'option retenue, et l'intitulé de son groupe est invisible dans cet
+					// état — celui que l'utilisateur voit en permanence. « Tout le track » s'y lisait
+					// sans dire lequel, et un nom de channel sans dire de quel track, alors qu'il
+					// n'est unique que dans son track (M8). La redondance dans la liste OUVERTE est
+					// le prix de la justesse dans la liste FERMÉE, qui est le cas majoritaire : c'est
+					// exactement l'arbitrage que le §5.48 a déjà rendu pour les en-têtes de montant.
 					<optgroup key={track.id} label={track.nom}>
 						<option value={valeurOption({ type: 'track', track: track.slug })}>
-							{t('pilotage.scope.wholeTrack')}
+							{t('pilotage.scope.wholeTrack', { track: track.nom })}
 						</option>
 						{track.channels.map((channel) => (
 							<option
@@ -410,7 +418,10 @@ function SelecteurPortee({
 									channel: channel.slug,
 								})}
 							>
-								{channel.nom}
+								{t('pilotage.scope.channelOption', {
+									track: track.nom,
+									channel: channel.nom,
+								})}
 							</option>
 						))}
 					</optgroup>

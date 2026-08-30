@@ -4640,9 +4640,34 @@ d'onglets déborderait dès le troisième track. C'est le critère déjà écrit
 - **TROIS RANGS, ET UN SEUL ORDRE.** « Tout l'espace de travail » d'abord, hors de tout groupe ;
   puis, par track dans l'ordre du serveur, une option « Tout le track » **en tête de son propre
   groupe**, suivie de ses channels. L'option de track porte un libellé traduit — le nom du track est
-  déjà l'intitulé du groupe, et le répéter dans l'option ferait lire « Studio web / Studio web ».
-  **L'ordre est celui que le serveur rend**, jamais retrié à l'écran : la requête ordonne déjà par
-  `position` puis par nom, et rejouer ce tri le ferait diverger au premier changement de la requête.
+  déjà l'intitulé du groupe.
+
+- **CHAQUE OPTION NOMME SON TRACK, ET C'EST UN DÉFAUT TROUVÉ EN REGARDANT UNE CAPTURE**
+  (`CLAUDE.md` §16, 2026-08-30). Un `select` **fermé** ne rend que le texte de l'option retenue :
+  l'intitulé de son `optgroup` est **invisible** dans cet état, qui est celui que l'utilisateur voit
+  en permanence. MESURÉ sur `pilotage-portee-xl-1440.jpg` : le champ affichait « Tout le track »
+  sans dire **lequel**, et un nom de channel s'y lirait sans son track alors qu'il n'est unique que
+  dans son track (M8). Les options portent donc « *Track* — tout le track » et « *Track* — *Channel*
+  ». **C'est la règle générale du §5.48 appliquée à un second cas : quand un titre de regroupement
+  est conditionnel — ici invisible dès que la liste se referme —, ce qu'il qualifie doit être nommé
+  ailleurs de façon INCONDITIONNELLE.** La redondance dans la liste ouverte est le prix de la
+  justesse dans la liste fermée, qui est le cas majoritaire.
+
+- **L'ORDRE DES CHANNELS DANS UN GROUPE EST CELUI DU SERVEUR ; L'ORDRE DES TRACKS EST
+  `tracks.position`.** La distinction n'est pas un détail, et elle a été **payée en exécutant la
+  preuve `S9`** (`CLAUDE.md` §18) : `channels.position` est numérotée **par track** — quatre
+  channels du jeu de démonstration portent `position = 1` —, si bien que le tri du serveur est
+  exactement le bon **à l'intérieur** d'un groupe et **faux entre les groupes**, où il entrelace les
+  tracks. MESURÉ : grouper des channels triés globalement faisait apparaître chaque track à la place
+  de son premier channel, et rendait « Legacy 2023, Formation, Conseil & IA, Studio web » là où le
+  produit range partout ailleurs « Conseil & IA, Studio web, Formation, Legacy 2023 ». **Deux écrans
+  qui rangent la même chose la rangent de la même façon.** Le nom départage deux tracks de même
+  position, sans quoi ils s'échangeraient d'un chargement à l'autre.
+
+- **UN TRACK SANS AUCUN CHANNEL LISIBLE N'EST PAS OFFERT** — conséquence de la même lecture, et
+  MESURÉE : `pipeline-2024` n'a aucun channel, et le sélecteur en rend donc **quatre** groupes pour
+  **cinq** tracks. Il n'y a rien à mesurer dans un track sans channel : l'offrir rendrait une portée
+  vide par construction.
 
 - **LE SÉLECTEUR MONTRE TOUJOURS LA PORTÉE RÉELLEMENT APPLIQUÉE**, jamais celle que l'adresse
   demande. Une adresse qui nomme un track inconnu ou fermé replie sur l'espace de travail

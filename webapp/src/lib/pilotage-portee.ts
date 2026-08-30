@@ -35,6 +35,15 @@ export type TrackPortee = {
 	readonly id: string
 	readonly slug: string
 	readonly nom: string
+	/**
+	 * `tracks.position` — l'ordre PROPRE du track, et non celui de son premier channel.
+	 *
+	 * MESURÉ le 2026-08-30 en exécutant `S9` : `channels.position` est numérotée **par track** —
+	 * 1, 2, 3 dans chacun —, si bien qu'un tri global des channels par `position` puis `name` les
+	 * ENTRELACE, et que grouper ensuite rendait l'ordre `Legacy 2023, Formation, Conseil & IA,
+	 * Studio web`. Aucun autre écran du produit ne range les tracks ainsi.
+	 */
+	readonly position: number
 	readonly channels: readonly ChannelPortee[]
 }
 
@@ -177,10 +186,11 @@ export function porteeDepuisOption(valeur: string): PorteeUrl {
  * à la requête entière. Il est repris tel quel plutôt que redécouvert.
  *
  * `slug` s'ajoute des deux côtés, là où le sélecteur des objectifs n'avait besoin que des noms :
- * c'est le slug, et lui seul, qui s'écrit dans l'adresse (§8 bis.2).
+ * c'est le slug, et lui seul, qui s'écrit dans l'adresse (§8 bis.2). `position` s'ajoute côté track
+ * pour le motif MESURÉ écrit sur `TrackPortee.position`.
  */
 export const COLONNES_PORTEE =
-	'id, slug, name, tracks!channels_track_id_workspace_id_fkey(id, slug, name)'
+	'id, slug, name, tracks!channels_track_id_workspace_id_fkey(id, slug, name, position)'
 
 /**
  * Lit les portées offrables : les channels lisibles de l'espace de travail, avec leur track.
@@ -225,9 +235,20 @@ export async function lirePorteesOffrables(
  * §5.10 du design system. Le sélecteur de destination des objectifs range un tel channel hors de
  * tout groupe parce qu'il n'a besoin que de son identifiant ; ici, l'adresse est le contrat.
  *
- * L'ORDRE DES TRACKS EST CELUI DE LEUR PREMIÈRE APPARITION, ce qui rend le sélecteur stable d'un
- * chargement à l'autre : la requête ordonne les channels, et un track apparaît donc à la place de
- * son premier channel.
+ * L'ORDRE DES CHANNELS DANS UN GROUPE EST CELUI DU SERVEUR, jamais rejoué ici : la requête ordonne
+ * par `position` puis par `name`, et `channels.position` est numérotée PAR TRACK — le tri du serveur
+ * est donc exactement le bon à l'intérieur d'un groupe.
+ *
+ * L'ORDRE DES TRACKS, LUI, EST `tracks.position`, ET C'EST UN DÉFAUT TROUVÉ EN EXÉCUTANT `S9`
+ * (`CLAUDE.md` §18, correction de la CAUSE). La même numérotation par track qui rend le tri du
+ * serveur juste à l'intérieur d'un groupe le rend FAUX entre les groupes : quatre channels portent
+ * `position = 1`, si bien que le tri global les entrelace et qu'un track apparaissait à la place de
+ * son premier channel. MESURÉ : `Legacy 2023, Formation, Conseil & IA, Studio web`, là où le
+ * produit range partout ailleurs `Conseil & IA, Studio web, Formation, Legacy 2023`. Deux écrans
+ * qui rangent la même chose la rangent de la même façon (`docs/CloudWorker.md` §4.1 bis).
+ *
+ * Le nom départage deux tracks de même position — sans quoi ils s'échangeraient d'un chargement à
+ * l'autre, la garde que `lireChannels` pose déjà pour les channels.
  */
 export function grouperPortees(lignes: readonly unknown[]): readonly TrackPortee[] {
 	const groupes = new Map<string, { track: Omit<TrackPortee, 'channels'>; channels: ChannelPortee[] }>()
@@ -236,7 +257,7 @@ export function grouperPortees(lignes: readonly unknown[]): readonly TrackPortee
 		// PostgREST rend l'imbriqué tantôt en objet, tantôt en tableau selon la cardinalité déduite :
 		// les deux formes sont acceptées ici, comme dans `lireChannelsLiables`.
 		const track = (Array.isArray(ligne.tracks) ? ligne.tracks[0] : ligne.tracks) as
-			| { id: string; slug: string; name: string }
+			| { id: string; slug: string; name: string; position?: number }
 			| null
 			| undefined
 		if (track === null || track === undefined) continue
@@ -244,17 +265,24 @@ export function grouperPortees(lignes: readonly unknown[]): readonly TrackPortee
 		const channel: ChannelPortee = { id: ligne.id, slug: ligne.slug, nom: ligne.name }
 		if (groupe === undefined) {
 			groupes.set(track.id, {
-				track: { id: track.id, slug: track.slug, nom: track.name },
+				track: {
+					id: track.id,
+					slug: track.slug,
+					nom: track.name,
+					position: track.position ?? 0,
+				},
 				channels: [channel],
 			})
 		} else {
 			groupe.channels.push(channel)
 		}
 	}
-	return [...groupes.values()].map((groupe) => ({
-		...groupe.track,
-		channels: groupe.channels as readonly ChannelPortee[],
-	}))
+	return [...groupes.values()]
+		.map((groupe) => ({
+			...groupe.track,
+			channels: groupe.channels as readonly ChannelPortee[],
+		}))
+		.sort((a, b) => a.position - b.position || a.nom.localeCompare(b.nom))
 }
 
 /**
