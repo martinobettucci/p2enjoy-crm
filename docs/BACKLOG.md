@@ -10370,9 +10370,22 @@ session (`CLAUDE.md` §5) :
 - [x] **DEUX OCTETS NUL retirés de deux littéraux de gabarit**, à la place d'une espace : ils
       faisaient de `webapp/src/lib/analytique.ts` et de `e2e/api/analytique.spec.ts` des fichiers
       **binaires** pour git et pour `grep`, alors que le code compilait et que les preuves passaient.
-- [x] **Campagne de fin de session** : `test:sql` **68 fichiers / 3079 assertions**, `test:unit`
-      **86 fichiers / 2934 tests**, `e2e:api` **1057 passés**, `pytest` **244**, `typecheck`,
-      `types:check` et `build` verts.
+- [x] **Campagne de fin de session, ENTIÈREMENT VERTE** : `test:sql` **68 fichiers / 3079
+      assertions**, `test:unit` **2962 tests**, `e2e:api` **1057 passés**, `e2e:ui` **729 passés,
+      aucun avertissement**, `e2e:mail` **42 passés**, `pytest` **244**, `typecheck`, `types:check`
+      et `build` verts ; `verify-analytique.sh` **22 contrôles** et
+      `verify-harness.sh --rapide` **31 contrôles**, aucune anomalie de part ni d'autre.
+- [x] **Aucune capture n'était due** — l'unité ne livre aucun écran. Les captures réécrites par les
+      rejeux d'interface ont été **regardées** puis **restaurées** : `CRM-041/board-menu-ouvert-1440.jpg`
+      (colonnes, montants et menu de transitions intacts) et `CRM-085/couts-xl-1440.jpg`, dont la
+      mention « 1 ligne(s) sans coût réel saisi » est le patron que reprend le §7.3 de la
+      spécification.
+
+*Ce qui retient `CRM-066` en `[~]`, et c'est du COMPORTEMENT, pas une preuve manquante* : les
+tranches **2 c** (le seed ne pose aucune surcharge de probabilité, la résolution n'est donc démontrée
+qu'à son troisième niveau), **3** (l'écran `/pilotage` et les chapitres 28 et 29 du manuel) et **4**
+(le score de santé de `CRM-P02`, subordonné à son arbitrage) restent dues. La série entière des
+`verify-*.sh` n'a pas été rejouée : elle n'est la Definition of Done d'aucune unité (décision 553).
 - [ ] **2 c — le seed.** Les deux surcharges de probabilité du §9, sans lesquelles la résolution à
       trois niveaux n'est démontrée qu'à son troisième niveau ; compteurs et tableau M6 révisés dans
       le même changement.

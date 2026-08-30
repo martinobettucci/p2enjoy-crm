@@ -28104,13 +28104,32 @@ et pour `grep`. Le code compilait et les preuves passaient — un caractère NUL
 littéral —, ce qui est exactement pourquoi il fallait le chercher plutôt que l'attendre. Remplacés
 par une espace.
 
-**CAMPAGNE.** `test:sql` **68 fichiers / 3079 assertions**, `test:unit` **86 fichiers / 2934 tests**,
-`e2e:api` **1057 passés**, `pytest` **244**, `typecheck`, `types:check` et `build` verts.
-`scripts/verify-analytique.sh` **22 contrôles, aucune anomalie**. Les trois compteurs de
-`scripts/verify-harness.sh` ont été révisés dans le même changement et **confirmés par le
-dénombrement du harnais** : 67 → **68** fichiers SQL, 3052 → **3079** assertions, 1041 → **1057**
-scénarios d'API ; `SCENARIOS_UI` (729) et `SCENARIOS_MAIL` (42) sont inchangés, l'unité ne livrant
-aucun écran ni aucun protocole.
+**CAMPAGNE COMPLÈTE, ET ELLE EST ENTIÈREMENT VERTE.** `test:sql` **68 fichiers / 3079 assertions**,
+`test:unit` **2962 tests**, `e2e:api` **1057 passés**, `e2e:ui` **729 passés, aucun avertissement**,
+`e2e:mail` **42 passés**, `pytest` **244**, `typecheck`, `types:check` et `build` verts.
+`scripts/verify-analytique.sh` **22 contrôles, aucune anomalie** ;
+`scripts/verify-harness.sh --rapide` **31 contrôles, aucune anomalie**.
+
+Les trois compteurs de `scripts/verify-harness.sh` ont été révisés dans le même changement et
+**confirmés par son propre dénombrement** : 67 → **68** fichiers SQL, 3052 → **3079** assertions,
+1041 → **1057** scénarios d'API ; `SCENARIOS_UI` (729) et `SCENARIOS_MAIL` (42) sont inchangés,
+l'unité ne livrant aucun écran ni aucun protocole.
+
+**Une première exécution de `verify-harness` avait rendu « 31 contrôles, 1 anomalie », et son détail
+a été perdu** — la sortie était tronquée par un `tail` de commodité. Elle tournait sur un arbre où
+le témoin figé des fonctions n'avait pas encore été porté de quarante-huit à quarante-neuf, ce qui
+faisait échouer `typecheck` ; l'hypothèse est **vraisemblable mais non mesurée**, et elle est écrite
+comme telle. Le rejeu sur l'arbre corrigé rend **aucune anomalie**.
+
+**CE QUI N'A PAS ÉTÉ EXÉCUTÉ, ET IL FAUT LE DIRE.** La série entière des soixante-dix-sept
+`scripts/verify-*.sh` n'a pas été rejouée : elle n'est la Definition of Done d'aucune unité
+(décision 553) et reste l'objet d'une session dédiée, lancée seule. Les deux harnais que ce
+changement touche — celui de l'unité et celui des compteurs — l'ont été, verts.
+
+**AUCUNE CAPTURE N'ÉTAIT DUE**, l'unité ne livrant aucun écran. Les captures réécrites par les
+rejeux d'interface ont été **regardées** — `CRM-041/board-menu-ouvert-1440.jpg`, colonnes, montants
+et menu de transitions intacts ; `CRM-085/couts-xl-1440.jpg`, dont la mention « 1 ligne(s) sans coût
+réel saisi » est le patron que le §7.3 de la spécification reprend — puis **restaurées**.
 
 **Un garde-fou figé par une unité antérieure a été RÉVISÉ, jamais retiré** (décision 51, huitième
 occurrence consécutive) : le témoin des fonctions de `database.types.test-d.ts` passe de
