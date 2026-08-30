@@ -272,24 +272,26 @@ echo "5. Dégradations réelles de la fonction — la suite doit rougir sur chac
 
 # D-A — LA PLUS IMPORTANTE. En `definer`, la fonction répond pour `postgres` et rend à chacun le
 # portefeuille de tout le monde : la lectrice lirait 39 affaires au lieu de 35.
+# Le motif porte deux apostrophes SQL : `$'...'` (guillemets ANSI-C) est la seule écriture bash qui
+# les conserve — `'…''''…'` les fait DISPARAÎTRE par concaténation de chaînes vides, et le motif
+# devient introuvable. Défaut mesuré à la première exécution de ce harnais, le 2026-08-30.
 eprouver_degradation_sql "security definer au lieu d'invoker" \
-	'set search_path to ''''
-as $$' \
-	'security definer
-set search_path to ''''
-as $$'
+	$'set search_path to \'\'\nas $$' \
+	$'security definer\nset search_path to \'\'\nas $$'
 
 # D-B — le `coalesce` de la probabilité réordonné : le nœud l'emporterait sur l'affaire, c'est-à-dire
 # l'inverse de « le plus spécifique gagne » (§3).
+# LE MOTIF PORTE SUR L'ARITHMÉTIQUE, ET NON SUR LE `filter`. Réordonner le `coalesce` du `filter`
+# serait un NO-OP : `coalesce(a,b,c) is not null` a la même valeur quel que soit l'ordre, et la
+# suite resterait verte à juste titre. Le harnais aurait alors crié « COMPLAISANT » contre une
+# preuve qui ne l'est pas. Défaut mesuré à la première exécution de ce harnais, le 2026-08-30.
 eprouver_degradation_sql "coalesce de la probabilité réordonné" \
-	'	           where c.amount is not null
-	             and coalesce(c.probability_override,
-	                          s.probability_override,
-	                          n.default_probability) is not null' \
-	'	           where c.amount is not null
-	             and coalesce(n.default_probability,
-	                          s.probability_override,
-	                          c.probability_override) is not null'
+	'	           c.amount * coalesce(c.probability_override,
+	                               s.probability_override,
+	                               n.default_probability) / 100.0' \
+	'	           c.amount * coalesce(n.default_probability,
+	                               s.probability_override,
+	                               c.probability_override) / 100.0'
 
 # D-C — l'exclusion des affaires archivées retirée : le total passerait de 39 à 40 (§4).
 eprouver_degradation_sql "exclusion des affaires archivées retirée" \
