@@ -29,8 +29,15 @@
 --    dans le résultat et diffèrent dans la donnée ; une seule assertion les confondrait.
 --
 -- 4. LA RÉSOLUTION À TROIS NIVEAUX, dans ses trois sens, sur la MÊME affaire. Éprouver le seul
---    niveau du catalogue — le seul que le seed exerce aujourd'hui — laisserait passer un `coalesce`
---    écrit à l'envers.
+--    niveau du catalogue laisserait passer un `coalesce` écrit à l'envers.
+--
+-- 5. LA MÊME RÉSOLUTION, MAIS EXERCÉE PAR LE SEED SEUL — groupe 6 bis, ajouté par la TRANCHE 2 c.
+--    Le groupe 4 écrit ses propres surcharges puis les retire ; il prouve la règle, mais il ne
+--    prouve pas que les DONNÉES DE DÉVELOPPEMENT l'exercent. Depuis `CRM-066` tranche 2 c, le seed
+--    pose les deux surcharges manquantes — 65 % sur l'étape `negociation`, 30 % sur « Reprise du
+--    dossier Marchand » —, et le groupe 6 bis lit cet état SANS RIEN ÉCRIRE. L'encadrement
+--    30 < 50 < 65 est ce qui le rend opposable : une résolution écrite à l'envers rendrait 50, un
+--    `greatest` rendrait 65, un `least` rendrait 50 sur les huit autres affaires du nœud.
 --
 -- La suite pose ses fixtures DANS la transaction et fait `rollback` : le seed est rendu intact.
 
@@ -38,7 +45,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(27);
+select plan(31);
 
 create or replace function pg_temp.endosser(utilisateur uuid)
 returns void language plpgsql as $$
@@ -74,6 +81,12 @@ create or replace function pg_temp.ch_inter_entreprises() returns uuid language 
 	$$ select '5eed0000-0000-4000-8000-000000000036'::uuid $$;
 create or replace function pg_temp.ch_maintenance() returns uuid language sql immutable as
 	$$ select '5eed0000-0000-4000-8000-000000000035'::uuid $$;
+-- Les deux channels du groupe 6 bis : `dossiers-2023` porte l'affaire SURCHARGÉE et elle seule au
+-- nœud `negociation`, `refonte` en porte une autre, NON surchargée, à la MÊME étape.
+create or replace function pg_temp.ch_dossiers_2023() returns uuid language sql immutable as
+	$$ select '5eed0000-0000-4000-8000-000000000037'::uuid $$;
+create or replace function pg_temp.ch_refonte() returns uuid language sql immutable as
+	$$ select '5eed0000-0000-4000-8000-000000000034'::uuid $$;
 
 -- Cards témoins. « Cadrage data » est la SEULE affaire de `conseil-ia/prospection` au nœud
 -- `prospection`, et elle est ENCORE ENDORMIE : elle sert à la fois de témoin du sommeil (groupe 4)
@@ -87,6 +100,11 @@ create or replace function pg_temp.cadrage_data() returns uuid language sql immu
 -- écriture stable — coder l'identifiant en dur rendrait cette suite fausse au prochain seed.
 create or replace function pg_temp.etape_cadrage() returns uuid language sql stable as
 	$$ select current_step_id from public.cards where id = pg_temp.cadrage_data() $$;
+
+-- « Reprise du dossier Marchand » : 22 000,00 EUR, SEULE affaire active de `dossiers-2023` au nœud
+-- `negociation`, et la seule affaire du seed qui porte une `probability_override` (tranche 2 c).
+create or replace function pg_temp.reprise_marchand() returns uuid language sql immutable as
+	$$ select '5eed0000-0000-4000-8000-0000000000cf'::uuid $$;
 
 -- =============================================================================================
 -- 1. La FORME de la fonction — `invoker`, `stable`, `search_path` vide
@@ -251,8 +269,8 @@ select is(
 	(select e.montant_pondere from public.entonnoir_conversion() e
 	  where e.channel_id = pg_temp.ch_prospection() and e.node_key = 'prospection'),
 	3800.00::numeric,
-	'CRM-066 : NIVEAU 3, le catalogue seul — 38 000,00 × 10 %. C''est le seul niveau que le seed '
-	'exerce aujourd''hui, et l''éprouver seul laisserait passer un `coalesce` écrit à l''envers');
+	'CRM-066 : NIVEAU 3, le catalogue seul — 38 000,00 × 10 %. L''éprouver seul laisserait passer '
+	'un `coalesce` écrit à l''envers, d''où les deux niveaux qui suivent');
 
 select pg_temp.redevenir_proprietaire();
 
@@ -297,6 +315,48 @@ select is(
 	'CRM-066 : les TROIS niveaux nuls — l''affaire est comptée SANS PROBABILITÉ, son montant reste '
 	'entier, et son pondéré est absent du total. Substituer `0` dirait « cette affaire ne vaut '
 	'rien » là où la donnée dit « personne ne l''a estimée »');
+
+-- =============================================================================================
+-- 6 bis. La MÊME résolution, exercée par le SEED SEUL — CRM-066 tranche 2 c
+-- =============================================================================================
+-- docs/SPEC-analytique.md §9. Le groupe 6 écrit ses surcharges puis les retire : il prouve la
+-- RÈGLE. Ce groupe-ci n'écrit RIEN et lit l'état que le seed a posé : il prouve que les DONNÉES DE
+-- DÉVELOPPEMENT l'exercent, ce que `CLAUDE.md` §8 exige d'une règle métier neuve.
+
+select is(
+	(select array[
+		(select n.default_probability from public.workflow_nodes_catalog n where n.key = 'negociation'),
+		(select s.probability_override from public.workflow_steps s
+		  where s.id = '5eed0000-0000-4000-8000-000000000063'::uuid),
+		(select c.probability_override from public.cards c where c.id = pg_temp.reprise_marchand())
+	]),
+	array[50.00::numeric, 65.00::numeric, 30.00::numeric],
+	'CRM-066 : le seed pose les TROIS niveaux, et il pose trois nombres DISTINCTS — catalogue 50 %, '
+	'étape 65 %, affaire 30 %. Deux valeurs égales ne distingueraient pas une résolution correcte '
+	'd''une résolution qui s''arrête au mauvais niveau');
+
+select is(
+	(select e.montant_pondere from public.entonnoir_conversion() e
+	  where e.channel_id = pg_temp.ch_dossiers_2023() and e.node_key = 'negociation'),
+	6600.00::numeric,
+	'CRM-066 : l''AFFAIRE l''emporte sur son étape et sur le catalogue, sur la donnée seedée — '
+	'22 000,00 × 30 %. Une résolution écrite à l''envers rendrait 11 000,00, un `greatest` 14 300,00');
+
+select is(
+	(select e.montant_pondere from public.entonnoir_conversion() e
+	  where e.channel_id = pg_temp.ch_refonte() and e.node_key = 'negociation'),
+	46800.00::numeric,
+	'CRM-066 : à la MÊME étape, une affaire SANS surcharge propre prend celle de l''étape — '
+	'72 000,00 × 65 %. Sans cette ligne, « 30 % » pourrait aussi bien être une valeur appliquée à '
+	'toutes les affaires du nœud');
+
+select is(
+	(select sum(e.montant_pondere) from public.entonnoir_conversion() e
+	  where e.node_key = 'negociation'),
+	230752.50::numeric,
+	'CRM-066 : le nœud entier rend 230 752,50 — et non 183 425,00, qui serait le total si le '
+	'catalogue l''emportait partout. Un seul nombre, qui tombe dès qu''un niveau de la résolution '
+	'cesse d''être lu');
 
 -- =============================================================================================
 -- 7. Le libellé du CATALOGUE, jamais celui de l'étape
