@@ -10434,9 +10434,20 @@ rejouée : elle n'est la Definition of Done d'aucune unité (décision 553).
       `CRM-031/workflows-creation-*` et les six de `CRM-032/`. Le libellé tient sur une ligne aux
       quatre paliers, y compris à 390 px. Les **264** autres captures réécrites par le rejeu ont été
       **restaurées** : leur écart tient aux dates relatives du seed.
-- [ ] **3 — l'écran `/pilotage`.** Sa spécification visuelle dans `docs/DESIGN_SYSTEM.md` écrite
-      d'abord, ses tests de composant, son E2E d'interface à console vierge, ses captures observées,
-      `docs/manual.md` chapitres 28 et 29.
+- [x] **3 a — l'écran `/pilotage`. LIVRÉE le 2026-08-30**, à portée workspace : sa spécification
+      visuelle au §5.48 de `docs/DESIGN_SYSTEM.md` écrite d'abord, ses tests de composant, son E2E
+      d'interface à console vierge, ses captures observées, `docs/manual.md` chapitres 28 et 29.
+      `docs/JOURNAL.md` décision 565.
+- [ ] **3 b — le sélecteur de portée.** **ARBITRÉ le 2026-08-30**, avant toute ligne de code :
+      `docs/SPEC-analytique.md` §8 bis.1 à §8 bis.4 et `docs/DESIGN_SYSTEM.md` §5.48 bis. L'adresse
+      porte **deux** clés — `?track=…&channel=…` —, et c'est la mesure **M8** qui l'impose :
+      `channels_track_id_slug_key` ne rend un slug de channel unique que **dans son track**.
+      Changer de portée n'émet **aucune** requête (§8 bis.3).
+- [ ] **3 c — les nœuds vides.** **ARBITRÉ le 2026-08-30** : §8 bis.5. Les nœuds du catalogue sans
+      aucune affaire active dans la portée affichée sont **nommés** sous les tableaux, sans devise
+      ni montant. Le « affiche zéro » du §5.1 est **révisé sur place** (`CLAUDE.md` §18) : un zéro
+      posé dans le tableau d'une devise inventerait une devise à un nœud qu'aucune affaire n'y
+      porte. **MESURÉ (M10)** : `qualification` n'est porté par aucune affaire active du seed.
 - [ ] **4 — le score de santé (`CRM-P02`).** Il commence par son **arbitrage** : ce qu'un score
       « transparent » agrège n'est écrit dans aucun document, et deux compositions raisonnables
       donnent deux produits différents (`docs/SPEC-analytique.md` §11.4).

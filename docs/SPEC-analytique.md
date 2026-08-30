@@ -224,7 +224,14 @@ l'erreur d'arrondi dans le total ; arrondir le total une fois la laisse au centi
 produit **aucune** ligne : émettre des zéros pour tous les couples possibles multiplierait le
 résultat par le produit des cardinalités et **inventerait des devises** qu'aucune affaire ne porte.
 L'écran de la tranche 3 compose la liste complète des nœuds depuis `workflow_nodes_catalog`, qu'un
-membre lit déjà, et affiche zéro là où la fonction se tait.
+membre lit déjà, et **nomme** ceux là où la fonction se tait.
+
+> **RÉVISÉ le 2026-08-30 par la tranche 3 b, sur place plutôt que contourné** (`CLAUDE.md` §18).
+> Cette phrase disait « et **affiche zéro** là où la fonction se tait ». Elle a été écrite avant que
+> la tranche 3 a ne retienne un tableau **par devise**, et les deux ne se composent pas : un zéro
+> posé dans le tableau d'une devise inventerait à ce nœud une devise qu'aucune affaire n'y porte —
+> exactement ce que le paragraphe ci-dessus interdit à la fonction elle-même. Le §8 bis.5 tranche la
+> forme : les nœuds vides sont **nommés**, sans devise et sans montant.
 
 | | |
 |---|---|
@@ -421,6 +428,115 @@ monnaies dans une colonne, ce que le §11.2 interdit. La tranche 3 b tranche la 
 d'écrire la seconde lecture. Aujourd'hui, un nœud sans aucune affaire active est **absent** des
 tableaux, jamais rendu à zéro : un zéro affirmerait une mesure que l'écran n'a pas faite.
 
+## 8 bis. Tranche 3 b — le sélecteur de portée, et la complétion par le catalogue
+
+Le §8 renvoyait à cette tranche **deux** arbitrages de forme, qu'il refusait de trancher depuis une
+session qui ne livrait pas encore l'écran. Ils sont tranchés ici, **avant** la première ligne de
+code de la tranche (`docs/CloudWorker.md` §3.2 point 3, `docs/CloudWorker.md` §4.1 bis), et d'après
+des mesures relevées sur la pile seedée le 2026-08-30 — non de mémoire.
+
+### 8 bis.1 Quatre mesures, relevées avant l'arbitrage
+
+| | Mesure |
+|---|---|
+| **M8** | `channels_track_id_slug_key` — `UNIQUE (track_id, slug)`. **Un slug de channel n'est unique QUE dans son track**, jamais dans l'espace de travail, là où `tracks_workspace_id_slug_key` rend le slug d'un track unique dans le workspace |
+| **M9** | Le seed porte **quatre** tracks et **huit** channels, dont **deux** sont hors sélecteur : `appels-offres` est archivé, `annexes-2023` est en corbeille. Restent **six** channels offrables sur quatre tracks |
+| **M10** | L'entonnoir de l'administratrice rend **16 lignes** touchant **sept** des **huit** nœuds du catalogue. `qualification` (position 8) n'est porté par **aucune** affaire active : c'est le cas de complétion, réellement présent dans le jeu de démonstration |
+| **M11** | Restreint au track `studio-web`, l'entonnoir ne touche que cinq nœuds — `signature`, `perdu` et `qualification` en sont absents ; restreint au channel `legacy-2023 / dossiers-2023`, il n'en touche qu'**un**, `negociation`, pour **22 000,00 × 30 % = 6 600,00** |
+
+### 8 bis.2 L'adresse porte DEUX clés, et M8 l'impose
+
+```
+/pilotage                                  → portée workspace (le défaut)
+/pilotage?track=studio-web                 → portée track
+/pilotage?track=studio-web&channel=refonte → portée channel
+```
+
+**`channel` seul ne désigne rien, et ce n'est pas un oubli : c'est M8.** Un slug de channel n'étant
+unique que dans son track, `?channel=prospection` peut désigner deux channels de deux tracks
+différents. Une clé unique aurait donc exigé soit un identifiant technique dans l'adresse — que le
+produit n'écrit nulle part —, soit un slug composé, que rien dans le dépôt ne pose. Le couple
+`(track, channel)` est exactement l'adressage que le produit emploie déjà pour un channel :
+`/tracks/:slugTrack/:slugChannel` (`webapp/src/app/chemins.ts`). **Deux écrans qui désignent la même
+chose la désignent de la même façon.**
+
+**Le défaut ne s'écrit jamais dans l'adresse** — règle du §17.2 de `docs/SPEC-webapp.md`, déjà tenue
+par `?qui=tous` de `/ma-journee` : `/pilotage` nu EST la portée workspace, et la vue par défaut
+reste l'adresse la plus courte.
+
+**Une valeur que la lecture ne résout pas replie sur le workspace, SANS erreur.** Un slug inconnu,
+un track qui n'est pas lisible, un `channel` sans son `track` : l'écran rend l'espace de travail
+entier et le **sélecteur montre la portée réellement appliquée**. Une adresse tapée à la main n'est
+pas une panne (`docs/SPEC-webapp.md` §17.2), et le repli n'est pas silencieux **à l'œil** — c'est
+précisément ce que le sélecteur et la phrase de portée disent. Afficher « ce track n'existe pas »
+renseignerait par la bande sur ce que la RLS ferme, ce que le §5.48 du design system interdit déjà.
+
+### 8 bis.3 La portée ne relit RIEN, et c'est une propriété du §5.2
+
+Changer de portée **n'émet aucune requête**. La fonction rend déjà le grain le plus fin (§5.2), le
+module porte `restreindre` (tranche 2 b, éprouvé), et les trois portées se déduisent par sommation.
+Un appel par portée aurait fait de ce sélecteur un filtre serveur, c'est-à-dire une seconde
+définition de la restriction — le mode de défaillance qu'INC-138, INC-241 et la décision 560 ont
+déjà coûté au dépôt.
+
+**Conséquence opposable : les deux grandeurs dérivées et les deux mentions suivent la portée.** Le
+prévisionnel, le taux, les affaires sans montant et les affaires sans probabilité sont calculés sur
+les lignes **restreintes**, jamais sur les lignes lues. Un prévisionnel de workspace au-dessus d'un
+entonnoir de channel serait un écran qui ment sur ce qu'il montre.
+
+### 8 bis.4 Ce que la seconde lecture lit, et l'unique limite qu'elle porte
+
+Une requête, sur `channels`, avec son track imbriqué — la forme **mesurée** de
+`lireChannelsLiables` (`webapp/src/lib/objectifs-ecriture.ts`), dont le nom de contrainte
+`channels_track_id_workspace_id_fkey` a déjà été payé contre l'API. Les archivés et ceux de la
+corbeille sont écartés, convention de `lireChannels` — M9.
+
+**Ce n'est PAS un contrôle d'autorisation** (`CLAUDE.md` §10). La liste est celle que la RLS de
+`channels` consent ; le module n'y ajoute aucun droit. Un channel fermé à l'appelant n'est ni offert
+ni nommé, et une portée qu'il forcerait dans l'adresse ne lui rendrait rien de plus : l'entonnoir
+est déjà calculé **après** la RLS (§5.3).
+
+**LIMITE NOMMÉE : un channel dont le TRACK n'est pas lisible n'est pas offert.** L'adresse d'une
+portée channel exige le slug de son track (§8 bis.2, M8) ; sans track lisible, il n'y a pas
+d'adresse à écrire. Le sélecteur de destination des objectifs range un tel channel hors de tout
+groupe parce qu'il n'a besoin que de son identifiant ; ici, l'adresse est le contrat, et un choix
+qu'aucune adresse ne peut porter serait la commande morte du §5.10 du design system. L'écart est
+écrit plutôt que tu.
+
+**L'ÉCHEC DE CETTE LECTURE NE CASSE PAS L'ÉCRAN.** L'entonnoir est la lecture principale ; la liste
+des portées ne sert qu'au sélecteur. Si elle échoue, l'écran rend le workspace et **désactive** son
+sélecteur — la dérogation bornée du §5.22, déjà tenue par le champ « Channel visé » : il n'y a alors
+rien à choisir, et un `select` vide mais actif serait une commande morte.
+
+### 8 bis.5 La complétion par le catalogue — la forme tranchée, et pourquoi
+
+Le §5.1 écrit que l'écran « compose la liste complète des nœuds depuis `workflow_nodes_catalog` […]
+et affiche zéro là où la fonction se tait ». Cette phrase a été écrite **avant** que la tranche 3 a
+ne retienne un tableau **par devise**, et les deux ne se composent pas : compléter dans le tableau
+d'une devise rendrait `Qualification / CHF / 0`, c'est-à-dire **inventerait une devise à un nœud
+qu'aucune affaire n'y porte** — ce que ce même §5.1 interdit à la fonction ; compléter hors des
+devises mêlerait deux monnaies dans une colonne, ce que le §11.2 interdit.
+
+**LA FORME RETENUE : les nœuds sans aucune affaire active dans la portée affichée sont NOMMÉS sous
+les tableaux, sans devise et sans aucun montant, dans l'ordre du catalogue.** Ce que l'écran sait
+d'un tel nœud est exactement cela : *aucune affaire ne s'y trouve*. C'est un **compte d'affaires**,
+grandeur qui traverse licitement les devises parce qu'elle n'additionne aucun argent — le motif
+exact pour lequel le §7.1 fait déjà traverser les devises au compte des affaires décidées. Une
+colonne de montants, elle, ne le pourrait pas.
+
+**Ce n'est pas un renoncement à la phrase du §5.1, c'est sa RÉVISION** (`CLAUDE.md` §18) : le §5.1
+est corrigé sur place plutôt que contourné, et son « affiche zéro » devient « nomme les nœuds
+vides ». Le trou de l'entonnoir est ce qui devait être montré ; l'affirmer par un « 0,00 » dans une
+devise arbitraire aurait montré autre chose.
+
+**MESURÉ, et le jeu de démonstration l'exerce vraiment** — M10 : `qualification`, huitième nœud du
+catalogue, n'est porté par aucune affaire active de l'espace de travail. M11 : le track `studio-web`
+en laisse **trois** vides, le channel `dossiers-2023` **sept**.
+
+**Le catalogue est une TROISIÈME lecture, et elle est traitée comme la seconde** : son échec ne
+casse pas l'écran — les tableaux sont rendus, et la mention des nœuds vides n'est simplement pas
+écrite. Nommer un nœud vide est un enrichissement de la lecture, jamais sa condition.
+
 ## 9. Seed — ce que cette unité doit y ajouter
 
 **Mesuré le 2026-08-30 (M3, M4), AVANT cette tranche : aucune card et aucune étape du seed ne
@@ -472,7 +588,8 @@ et prouvable seule.
 | **2 b — le module** | `webapp/src/lib/analytique.ts` : lecture de la fonction, restriction de portée, repli par nœud et par devise, les deux grandeurs du §7, et sa suite unitaire (26 tests) | **LIVRÉE ET PROUVÉE** le 2026-08-30 |
 | **2 c — le seed** | Les deux surcharges du §9, les compteurs et le tableau M6 révisés dans le même changement | **LIVRÉE ET PROUVÉE** le 2026-08-30 |
 | **3 a — l'écran** | `/pilotage` à portée workspace, sa spécification visuelle au §5.48 de `docs/DESIGN_SYSTEM.md` écrite d'abord, ses tests de composant, son E2E d'interface à console vierge, ses captures **observées**, `docs/manual.md` chapitres 28 et 29 | **LIVRÉE** le 2026-08-30 |
-| **3 b — la portée et les nœuds vides** | Le sélecteur de portée en chaîne de requête (§8) et la complétion par le catalogue (§5.1), qui exigent tous deux une seconde lecture et un arbitrage de forme que le §8 nomme | — |
+| **3 b — la portée** | Le sélecteur de portée en chaîne de requête, sa seconde lecture et sa forme arrêtée au §8 bis.2 à §8 bis.4 | **ARBITRÉE** le 2026-08-30 (§8 bis) |
+| **3 c — les nœuds vides** | La complétion par le catalogue, dont la forme est arrêtée au §8 bis.5 : les nœuds vides sont **nommés**, sans devise ni montant | **ARBITRÉE** le 2026-08-30 (§8 bis.5) |
 | **4 — le score de santé** | `CRM-P02`. Il exige d'abord son arbitrage : ce qu'un score « transparent » agrège n'est écrit nulle part (§11.4) | — |
 
 **Ce que la tranche 2 b décide, et qui n'est pas une reformulation du §7.** Les deux grandeurs vivent

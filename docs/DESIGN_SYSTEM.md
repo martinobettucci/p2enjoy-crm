@@ -4618,3 +4618,85 @@ l'identité précède l'histogramme et le détail ligne à ligne.
   la forme avant de l'écrire. Un nœud sans aucune affaire active est donc, aujourd'hui, **absent**
   des tableaux — jamais rendu à zéro, ce qui serait pire : le zéro affirmerait une mesure que
   l'écran n'a pas faite.
+
+### 5.48 bis Tableau de pilotage — la portée et les nœuds vides, `CRM-066` tranche 3 b
+
+Les deux manques que le §5.48 nomme ci-dessus. `docs/SPEC-analytique.md` §8 bis dit **ce que** la
+tranche livre et **pourquoi** cette forme ; les règles ci-dessous ne disent que de quoi elle a l'air.
+Écrites **avant** la première ligne de code de la tranche.
+
+**LE SÉLECTEUR EST UN `select` NATIF, EN TÊTE D'ÉCRAN, AU-DESSUS DES DEUX GRANDEURS.** Il qualifie
+**tout** ce qui suit — les grandeurs, les tableaux et les mentions —, et ce qui qualifie se lit avant
+ce qu'il qualifie : c'est l'ordre que le §5.32 tient déjà pour l'identité d'un budget devant son
+histogramme. Un `select` et non un groupe d'onglets : le nombre de portées croît avec le nombre de
+channels — **six** dans le jeu de démonstration, des dizaines dans un espace réel —, et une barre
+d'onglets déborderait dès le troisième track. C'est le critère déjà écrit au §5.22 pour le champ
+« Channel visé ».
+
+- **LES OPTIONS SONT GROUPÉES PAR TRACK DANS DES `optgroup`**, comme au §5.22 et pour son motif
+  exact : c'est le seul moyen natif de grouper des options sans réécrire un sélecteur au clavier.
+  **L'intitulé du groupe est une donnée** — le nom du track —, jamais une traduction (§10).
+
+- **TROIS RANGS, ET UN SEUL ORDRE.** « Tout l'espace de travail » d'abord, hors de tout groupe ;
+  puis, par track dans l'ordre du serveur, une option « Tout le track » **en tête de son propre
+  groupe**, suivie de ses channels. L'option de track porte un libellé traduit — le nom du track est
+  déjà l'intitulé du groupe, et le répéter dans l'option ferait lire « Studio web / Studio web ».
+  **L'ordre est celui que le serveur rend**, jamais retrié à l'écran : la requête ordonne déjà par
+  `position` puis par nom, et rejouer ce tri le ferait diverger au premier changement de la requête.
+
+- **LE SÉLECTEUR MONTRE TOUJOURS LA PORTÉE RÉELLEMENT APPLIQUÉE**, jamais celle que l'adresse
+  demande. Une adresse qui nomme un track inconnu ou fermé replie sur l'espace de travail
+  (`docs/SPEC-analytique.md` §8 bis.2) et le sélecteur affiche « Tout l'espace de travail ». Le repli
+  n'est donc **pas silencieux à l'œil**, et l'écran n'écrit pour autant aucune erreur : « ce track
+  n'existe pas » renseignerait par la bande sur ce que la RLS ferme, ce que le §5.48 interdit déjà.
+
+- **IL PORTE UN `label` VISIBLE**, jamais un `aria-label` seul (§8) : c'est un champ de formulaire, et
+  la règle du §5.22 ne souffre pas d'exception ici. Hauteur de cible, anneau de focus
+  `--color-brand` (§5.5).
+
+- **PENDANT LA LECTURE DE SA LISTE ET APRÈS SON ÉCHEC, LE CONTRÔLE EST DÉSACTIVÉ** — la dérogation
+  bornée du §5.22, tenue sans changement. Ce n'est **pas** une extinction selon le rôle (§5.26) : il
+  n'y a alors rien à choisir, et un `select` vide mais actif serait la commande morte du §5.21.
+  L'entonnoir, lui, est rendu : la liste des portées n'est pas la condition de la lecture.
+
+- **CHANGER DE PORTÉE N'ÉMET AUCUNE REQUÊTE ET NE RECHARGE RIEN** (`docs/SPEC-analytique.md`
+  §8 bis.3). Ni squelette, ni clignotement : les lignes sont déjà là et l'écran les replie. C'est
+  une propriété visible, et une preuve la fige.
+
+- **LE CHOIX REMPLACE L'ENTRÉE D'HISTORIQUE, il n'en empile pas.** Douze essais de portée ne doivent
+  pas coûter douze retours arrière pour quitter l'écran. L'adresse reste partageable : elle porte la
+  portée choisie.
+
+- **LE SÉLECTEUR SURVIT À L'ÉTAT VIDE, ET C'EST UN ÉCART DÉLIBÉRÉ AU §5.8.** Une portée sans aucune
+  affaire active rend l'état vide **sous** le sélecteur, jamais à sa place : le remplacer
+  enfermerait le lecteur dans une portée qu'il ne pourrait plus quitter qu'en éditant l'adresse —
+  l'impasse que le §5.33 refuse. Le refus et l'erreur, eux, remplacent tout : ils ne disent rien
+  d'une portée.
+
+- **LA PHRASE DE PORTÉE NOMME LA PORTÉE COURANTE**, et remplace celle de la tranche 3 a qui
+  déclarait l'espace de travail en dur. Trois phrases, une par rang, et **le nom du track ou du
+  channel y est une donnée** (§10). Elle garde sa place, sa graduation et son motif : l'entonnoir
+  est calculé **après** la RLS, et deux profils lisent deux nombres différents.
+
+**LES NŒUDS VIDES SONT NOMMÉS SOUS LES TABLEAUX, SANS DEVISE ET SANS MONTANT**
+(`docs/SPEC-analytique.md` §8 bis.5).
+
+- **UNE PHRASE, PAS UN TABLEAU NI UNE COLONNE DE ZÉROS.** Ce que l'écran sait de ces nœuds est
+  qu'**aucune affaire ne s'y trouve** — un compte d'affaires, qui traverse licitement les devises
+  parce qu'il n'additionne aucun argent. Un « 0,00 » dans le tableau d'une devise aurait affirmé une
+  mesure que l'écran n'a pas faite.
+
+- **ELLE PREND LA PLACE ET LA GRADUATION DES DEUX MENTIONS DU §5.48** — 13 px, `--color-text-2`,
+  sous les tableaux — et les suit : elle est de la même nature, une réserve sur ce que les nombres
+  au-dessus ne disent pas. **Les nœuds y sont nommés dans l'ordre du catalogue**, séparés par des
+  virgules, jamais triés autrement : l'entonnoir est un chemin, et l'ordre dit *où* est le trou.
+
+- **ELLE N'EST RENDUE QUE S'IL Y EN A**, comme les deux mentions : « 0 nœud sans affaire » ne dit
+  rien (§5.31). **Et jamais sur l'état vide** : quand la portée entière est vide, dire que les huit
+  nœuds le sont répéterait l'état vide en le chiffrant.
+
+- **L'ACCORD SE FAIT PAR CLÉ** (§10), jamais par un gabarit paramétré — « 1 nœuds » est faux.
+
+- **AUCUNE COULEUR, AUCUN JETON, AUCUNE ICÔNE NOUVELLE.** La tranche emprunte au §5.22 son `select`
+  et sa dérogation, au §5.30 la graduation de sa mention, au §5.8 ses états. Le §5.48 tient sans
+  changement pour tout le reste.
