@@ -234,11 +234,23 @@ NOEUDS=(
 # catalogue : le nœud archivé `qualification` reste hors du workflow, un vocabulaire retiré ne
 # s'instanciant pas.
 #
-# Deux surcharges, sur deux colonnes différentes, sans quoi la faculté de surcharger serait
-# documentée sans être démontrable (`CLAUDE.md` §8) : `negociation` raccourcit son seuil de relance,
-# `realisation` change son libellé. Une surcharge absente vaut « prendre la valeur du catalogue »,
-# jamais zéro — elle est donc envoyée **null** et non omise, pour qu'un rejeu convergent efface une
-# valeur posée à la main.
+# Trois surcharges, sur les TROIS colonnes surchargeables, sans quoi la faculté de surcharger serait
+# documentée sans être démontrable (`CLAUDE.md` §8) : `negociation` raccourcit son seuil de relance
+# ET relève sa probabilité, `realisation` change son libellé. Une surcharge absente vaut « prendre
+# la valeur du catalogue », jamais zéro — elle est donc envoyée **null** et non omise, pour qu'un
+# rejeu convergent efface une valeur posée à la main.
+#
+# LA SURCHARGE DE PROBABILITÉ EST POSÉE PAR `CRM-066` TRANCHE 2 c (docs/SPEC-analytique.md §9), et
+# sa valeur n'est pas libre. Le catalogue donne 50 % à `negociation` ; l'étape porte **65 %** et
+# l'affaire « Reprise du dossier Marchand » **30 %** (section 8 terdecies). Les trois niveaux
+# rendent donc trois nombres DISTINCTS, et l'encadrement 30 < 50 < 65 est délibéré : une résolution
+# écrite à l'envers rendrait 50, un `greatest` rendrait 65, un `least` rendrait 50 sur les huit
+# autres affaires du nœud. Seul « le plus spécifique gagne » rend 30 ici et 65 ailleurs.
+#
+# ELLE EST POSÉE ICI, DANS LE CONTRAT DES ÉTAPES, ET NON PAR UN `PATCH` ULTÉRIEUR : la copie du
+# workflow vers le track (section 7) recopie `probability_override`, et la version publiée
+# (section 8 undecies) photographie la composition. Une surcharge écrite après elles ferait diverger
+# un seed rejoué d'un seed appliqué à froid — la copie et la version porteraient l'ancienne valeur.
 #
 # `position` est écrite explicitement, pour le même motif que les tracks, les channels et les
 # nœuds : un ordre attribué par effet de bord ne serait pas reproductible si l'ordre des insertions
@@ -265,7 +277,7 @@ WF_COPIE_CHANNEL=5eed0000-0000-4000-8000-000000000031
 ETAPES=(
 	'5eed0000-0000-4000-8000-000000000061|5eed0000-0000-4000-8000-000000000041|1|oui|-|-|-'
 	'5eed0000-0000-4000-8000-000000000062|5eed0000-0000-4000-8000-000000000042|2|non|-|-|-'
-	'5eed0000-0000-4000-8000-000000000063|5eed0000-0000-4000-8000-000000000043|3|non|-|-|5'
+	'5eed0000-0000-4000-8000-000000000063|5eed0000-0000-4000-8000-000000000043|3|non|-|65|5'
 	'5eed0000-0000-4000-8000-000000000064|5eed0000-0000-4000-8000-000000000044|4|non|-|-|-'
 	'5eed0000-0000-4000-8000-000000000065|5eed0000-0000-4000-8000-000000000045|5|non|Réalisation en cours|-|-'
 	'5eed0000-0000-4000-8000-000000000066|5eed0000-0000-4000-8000-000000000046|6|non|-|-|-'
@@ -1122,8 +1134,14 @@ for ligne in "${ETAPES[@]}"; do
 
 	cle=$(jq -r '.[0].node_id // empty' "$CORPS")
 	[ "$initiale" = 'oui' ] && marque='initiale' || marque='        '
-	[ "$libelle" = '-' ] && surcharge='' || surcharge="libellé « $libelle »"
-	[ "$seuil"   = '-' ] || surcharge="seuil $seuil j"
+	# Les trois surcharges sont CUMULÉES dans la trace, et non écrasées l'une par l'autre : le
+	# `=` de la ligne du seuil effaçait le libellé, et masquait entièrement la probabilité que
+	# `CRM-066` tranche 2 c pose sur `negociation`. Une trace qui tait ce que le seed écrit ne
+	# vaut rien pour la relecture.
+	surcharge=''
+	[ "$libelle" = '-' ] || surcharge="libellé « $libelle »"
+	[ "$proba"   = '-' ] || surcharge="${surcharge:+$surcharge, }probabilité $proba %"
+	[ "$seuil"   = '-' ] || surcharge="${surcharge:+$surcharge, }seuil $seuil j"
 	printf '  étape %s  %s  %s\n' "$position" "$marque" "$surcharge"
 done
 
@@ -3110,6 +3128,74 @@ info "Échéances : translatées de l'ancre 2026-08-21 vers le jour courant — 
   est préservée, et « Ma journée » se démontre quel que soit le jour"
 info "  Camille Aubert : $retard en retard, $aujourdhui aujourd'hui, $avenir à venir ;
   tout l'espace de travail : $tous lignes, dont $endormies endormie(s) écartée(s)"
+
+# --- 8 duodecies ter. Surcharge de probabilité d'une AFFAIRE — CRM-066 tranche 2 c -------------
+# @spec CRM-066 (docs/BACKLOG.md) — analytique de conversion, tranche 2 c : le seed
+# @spec docs/SPEC-analytique.md §9 (ce que le seed doit porter), §3 (la résolution à trois niveaux)
+#
+# LE TROISIÈME ET DERNIER NIVEAU DE LA RÉSOLUTION. Le catalogue (section 5) donne 50 % à
+# `negociation` ; l'étape du workflow par défaut (section 6) porte 65 % ; il manquait l'affaire.
+# Sans elle, `public.entonnoir_conversion()` n'exercerait jamais le niveau le plus spécifique sur
+# les données de développement, et `CLAUDE.md` §8 exige qu'une règle métier neuve soit démontrable
+# sur le seed, non sur des valeurs qu'une preuve écrit puis retire.
+#
+# « Reprise du dossier Marchand » ET PAS UNE AUTRE : elle est la SEULE affaire active du channel
+# `dossiers-2023` au nœud `negociation`, si bien que la ligne de l'entonnoir qui la porte est
+# exactement son montant et sa probabilité — 22 000,00 × 30 % = 6 600,00 —, sans qu'aucune autre
+# affaire ne s'y mêle. C'est le même isolement qui rend « Cadrage data » lisible pour les preuves
+# des lignes *k*, *m* et *n* du contrat d'API.
+#
+# TRENTE POUR CENT, EN DESSOUS DES DEUX AUTRES NIVEAUX, et le sens compte : un dossier repris se
+# renégocie depuis moins loin que la moyenne des négociations de l'équipe. L'encadrement
+# 30 < 50 < 65 est ce qui rend la règle du §3 OPPOSABLE : une résolution écrite à l'envers rendrait
+# 50, un `greatest` rendrait 65, et un `least` rendrait 50 sur les huit autres affaires du nœud.
+# Seul « le plus spécifique gagne » rend 30 ici et 65 ailleurs.
+#
+# CONVERGENCE PAR REMISE À L'ÉTAT DÉCLARÉ, comme le catalogue de la section 5 : le seed est un
+# contrat opposable, et il doit ramener la colonne à son état déclaré Y COMPRIS POUR EFFACER. La
+# seconde écriture ne vise donc que les affaires qui portent une surcharge sans être déclarées ici
+# — une valeur posée à la main par une preuve interrompue, par exemple —, et elle ne touche aucune
+# ligne quand il n'y en a pas. `probability_override` n'est pas une colonne surveillée par le
+# trigger de la migration 16 : réécrire la même valeur ne produit AUCUN événement de fil.
+#
+# L'ÉCRITURE PASSE PAR LE JETON RÉEL DE L'ADMINISTRATRICE, et non par la clé de service : la
+# migration 14 accorde `update (probability_override)` à `authenticated`, et le seed exerce donc le
+# privilège tel qu'un membre l'a. Une écriture de service ne dirait rien de ce droit.
+#
+# id | probabilité | libellé
+SURCHARGES_PROBABILITE=(
+	'5eed0000-0000-4000-8000-0000000000cf|30|« Reprise du dossier Marchand », négociation reprise'
+)
+
+echo
+say "8 duodecies ter. Surcharge de probabilité d'une affaire"
+
+declarees=''
+for ligne in "${SURCHARGES_PROBABILITE[@]}"; do
+	IFS='|' read -r id proba libelle <<< "$ligne"
+	declarees="${declarees:+$declarees,}$id"
+
+	code=$(api_admin PATCH "/rest/v1/cards?id=eq.$id" \
+		-H 'Prefer: return=representation' \
+		-d "$(jq -nc --argjson p "$proba" '{probability_override: $p}')")
+	attendu "$code" "surcharge de probabilité de $libelle" 200
+
+	pose=$(jq -r '.[0].probability_override // "null"' "$CORPS")
+	[ "$(printf '%s' "$pose" | cut -d. -f1)" = "$proba" ] || die "la surcharge de probabilité de
+        $libelle vaut « $pose » au lieu de « $proba ». Le niveau le plus spécifique de la résolution
+        de docs/SPEC-analytique.md §3 n'est alors exercé par AUCUNE donnée du seed."
+	info "$libelle : $proba % — l'affaire l'emporte sur son étape (65 %) et sur le catalogue (50 %)"
+done
+
+# LA REMISE À L'ÉTAT DÉCLARÉ, et le compte de ce qu'elle a effacé est DIT plutôt que supposé.
+code=$(api_admin PATCH "/rest/v1/cards?probability_override=not.is.null&id=not.in.($declarees)" \
+	-H 'Prefer: return=representation' \
+	-d '{"probability_override": null}')
+attendu "$code" 'remise à null des surcharges de probabilité non déclarées' 200
+effacees=$(jq -r 'length' "$CORPS")
+[ "${effacees:-0}" -eq 0 ] \
+	&& info "Aucune autre affaire ne portait de surcharge : l'état déclaré était déjà celui de la base" \
+	|| info "$effacees surcharge(s) non déclarée(s) effacée(s) — le seed ramène la colonne à son contrat"
 
 # --- 8 terdecies. Tableau d'objectifs de démonstration — docs/SPEC-goals.md §5, CRM-082 ---------
 # @spec CRM-082 (docs/BACKLOG.md) — objectifs : modèle, RLS et API
