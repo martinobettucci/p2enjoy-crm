@@ -22,6 +22,7 @@ import {
 	absences,
 	lireEntonnoir,
 	previsionnel,
+	grouperParDevise,
 	replier,
 	restreindre,
 	tauxConversion,
@@ -166,6 +167,46 @@ describe('replier — par nœud ET par devise (§5.1, §11.2)', () => {
 
 	it('rend le vide sur une entrée vide, et non une barre à zéro', () => {
 		expect(replier([])).toEqual([])
+	})
+})
+
+describe('grouperParDevise — un tableau par devise (§5.48 du design system)', () => {
+	it('sépare les deux devises du jeu de démonstration, et les classe par code', () => {
+		// Le seed porte huit lignes repliées sur DEUX devises : six en euros, deux en francs. Le
+		// groupement rend donc deux tableaux, `CHF` avant `EUR` — l'ordre du code, celui que
+		// `previsionnel` retient déjà.
+		const groupes = grouperParDevise(replier(SEED))
+		expect(groupes.map((g) => g.devise)).toEqual(['CHF', 'EUR'])
+		expect(groupes[0]?.noeuds).toHaveLength(2)
+		expect(groupes[1]?.noeuds).toHaveLength(6)
+	})
+
+	it('PRÉSERVE l’ordre du catalogue à l’intérieur d’un groupe, il ne le rejoue pas', () => {
+		// Un entonnoir est un CHEMIN (§5.48) : le reclasser par montant en ferait un palmarès, où
+		// « Perdu » remonterait au-dessus de « Prospection ». `replier` a déjà trié par
+		// `node_position` ; ce groupement ne fait que filtrer, et un second tri ici divergerait du
+		// premier au premier changement de l'un.
+		const euros = grouperParDevise(replier(SEED)).find((g) => g.devise === 'EUR')
+		expect(euros?.noeuds.map((n) => n.cle)).toEqual([
+			'prospection',
+			'relance',
+			'negociation',
+			'realisation',
+			'livre',
+			'perdu',
+		])
+	})
+
+	it('n’INVENTE aucun nœud dans une devise qui ne le peuple pas', () => {
+		// `Négociation` n'existe qu'en euros sur le seed. Rendre `Négociation / CHF / 0` inventerait
+		// une devise à un nœud qu'aucune affaire n'y porte — ce que le §5.1 interdit déjà à la
+		// fonction elle-même.
+		const francs = grouperParDevise(replier(SEED)).find((g) => g.devise === 'CHF')
+		expect(francs?.noeuds.map((n) => n.cle)).toEqual(['relance', 'signature'])
+	})
+
+	it('un entonnoir vide rend AUCUN groupe, jamais un groupe vide', () => {
+		expect(grouperParDevise([])).toEqual([])
 	})
 })
 

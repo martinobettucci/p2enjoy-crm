@@ -168,6 +168,43 @@ export function replier(lignes: readonly LigneEntonnoirLue[]): readonly NoeudEnt
 	)
 }
 
+/** Un tableau de l'entonnoir : les nœuds d'UNE devise, dans l'ordre du catalogue — §5.48. */
+export type GroupeDevise = {
+	readonly devise: string
+	readonly noeuds: readonly NoeudEntonnoir[]
+}
+
+/**
+ * Groupe les nœuds repliés par devise — `docs/DESIGN_SYSTEM.md` §5.48.
+ *
+ * UN TABLEAU PAR DEVISE, ET JAMAIS UNE COLONNE « devise » DANS UN TABLEAU UNIQUE. Le §11.2 de la
+ * spécification interdit d'additionner deux monnaies ; une colonne ne les additionnerait pas, mais
+ * elle les ferait se comparer ligne à ligne dans la MÊME colonne de montants, ce qui revient au
+ * même à l'œil. C'est la forme que le §5.33 a déjà retenue pour le cumul des coûts, et deux écrans
+ * qui font la même chose la font de la même façon.
+ *
+ * L'ORDRE DES GROUPES EST CELUI DE LA DEVISE, ET L'ORDRE INTERNE CELUI DU CATALOGUE. `replier` trie
+ * déjà par `position` puis par devise ; ce groupement PRÉSERVE cet ordre au lieu de le rejouer —
+ * retrier ici ferait diverger les deux tris au premier changement de l'un.
+ *
+ * AUCUN NŒUD N'EST INVENTÉ. Une devise ne reçoit que les nœuds qu'elle peuple réellement : rendre
+ * `Négociation / CHF / 0` inventerait une devise à un nœud qu'aucune affaire n'y porte, ce que le
+ * §5.1 interdit déjà à la fonction elle-même.
+ */
+export function grouperParDevise(
+	noeuds: readonly NoeudEntonnoir[],
+): readonly GroupeDevise[] {
+	const groupes = new Map<string, NoeudEntonnoir[]>()
+	for (const noeud of noeuds) {
+		const courant = groupes.get(noeud.devise)
+		if (courant === undefined) groupes.set(noeud.devise, [noeud])
+		else courant.push(noeud)
+	}
+	return [...groupes.entries()]
+		.map(([devise, liste]) => ({ devise, noeuds: liste as readonly NoeudEntonnoir[] }))
+		.sort((a, b) => a.devise.localeCompare(b.devise))
+}
+
 /**
  * Le prévisionnel pondéré, par devise — §7.2.
  *
