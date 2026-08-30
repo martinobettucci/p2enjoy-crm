@@ -45,6 +45,27 @@ d'exécuter le code attendu.
 - **Migration `0073_entonnoir_conversion.sql`** — addition pure, en lecture seule ; voir
   `docs/PROD_MIGRATIONS.md`.
 
+### `CRM-066` — l'espace de démonstration exerce enfin les trois niveaux de probabilité (tranche 2 c)
+
+- **Ce qui change pour qui découvre le produit** : l'espace de démonstration montrait une
+  probabilité posée à un seul endroit, le catalogue. Il en pose désormais **trois**, empilées sur la
+  même affaire — 50 % pour l'étape « Négociation » du catalogue, **65 %** pour cette même étape dans
+  le cycle commercial standard, et **30 %** pour l'affaire « Reprise du dossier Marchand ». La règle
+  du produit — la valeur la plus précise l'emporte — se voit donc sur les données livrées, au lieu
+  d'être seulement décrite.
+- **Les trois valeurs ne sont pas prises au hasard** : elles s'encadrent, la plus précise étant la
+  plus basse. Trois valeurs qui monteraient dans le même sens que la précision laisseraient passer
+  un produit qui prendrait simplement la plus grande des trois — et personne ne verrait la
+  différence.
+- **Le prévisionnel de démonstration change de valeur, et c'est la conséquence attendue** :
+  381 042,50 € pour l'administratrice, 344 892,50 € pour la lectrice. L'écart entre les deux ne
+  bouge pas, aucune des affaires qu'elle ne voit pas n'étant à ce stade du parcours. Les montants,
+  eux, sont inchangés : une probabilité ne change pas ce qu'une affaire vaut, seulement ce qu'on en
+  espère.
+- **Aucun écran, aucune migration, aucun email** : seules les données de démonstration bougent. Un
+  espace déjà installé les reçoit au prochain passage du seed ; personne n'a rien à appliquer en
+  production.
+
 ### `CRM-041` — la preuve qui surveille la barre d'onglets vérifie enfin la règle qu'elle cite (INC-241)
 
 - **Aucun changement visible dans l'application** : c'est une preuve interne qui est corrigée, pas

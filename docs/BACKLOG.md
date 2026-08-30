@@ -10382,13 +10382,41 @@ session (`CLAUDE.md` §5) :
       spécification.
 
 *Ce qui retient `CRM-066` en `[~]`, et c'est du COMPORTEMENT, pas une preuve manquante* : les
-tranches **2 c** (le seed ne pose aucune surcharge de probabilité, la résolution n'est donc démontrée
-qu'à son troisième niveau), **3** (l'écran `/pilotage` et les chapitres 28 et 29 du manuel) et **4**
-(le score de santé de `CRM-P02`, subordonné à son arbitrage) restent dues. La série entière des
-`verify-*.sh` n'a pas été rejouée : elle n'est la Definition of Done d'aucune unité (décision 553).
-- [ ] **2 c — le seed.** Les deux surcharges de probabilité du §9, sans lesquelles la résolution à
-      trois niveaux n'est démontrée qu'à son troisième niveau ; compteurs et tableau M6 révisés dans
-      le même changement.
+tranches **3** (l'écran `/pilotage` et les chapitres 28 et 29 du manuel) et **4** (le score de santé
+de `CRM-P02`, subordonné à son arbitrage) restent dues. La série entière des `verify-*.sh` n'a pas
+été rejouée : elle n'est la Definition of Done d'aucune unité (décision 553).
+- [x] **2 c — le seed. LIVRÉE ET PROUVÉE le 2026-08-30.** Le seed pose les deux surcharges du §9 :
+      l'étape `negociation` du workflow par défaut porte **65 %** — déclarée dans le contrat des
+      étapes, avant la copie du workflow et la version publiée —, et « Reprise du dossier
+      Marchand » **30 %**, par une section dédiée écrivant avec le **jeton réel de
+      l'administratrice**. `docs/SPEC-seed.md` §15 dans le même changement.
+- [x] **LES TROIS VALEURS S'ENCADRENT — 30 < 50 < 65 —, ET CE N'EST PAS UN GOÛT.** Trois nombres
+      distincts ne suffisent pas : croissants du moins spécifique au plus spécifique, un `greatest`
+      rendrait le même résultat que la règle. Avec cet encadrement, chaque résolution fausse rend un
+      nombre différent — 50 à l'envers, 65 pour un `greatest`, 50 sur les huit autres affaires du
+      nœud pour un `least`.
+- [x] **PREUVES DÉDIÉES, ET L'UNE ÉPROUVE LA DONNÉE PLUTÔT QUE LA RÈGLE** : groupe **6 bis** de la
+      suite pgTAP (**4 assertions**, aucune écriture) et ligne ***q*** du contrat d'API, en lecture
+      seule. Les lignes *m* et *n*, qui posent leurs surcharges puis les retirent, resteraient
+      vertes sur un seed qui n'exercerait aucun niveau au-delà du catalogue.
+- [x] **NON-COMPLAISANCE MESURÉE** : la surcharge d'affaire retirée EN BASE, trois des quatre
+      assertions du groupe 6 bis tombent ; restaurée, la suite rend **31 assertions** vertes. Le
+      contrôle **8** de `scripts/verify-analytique.sh` rejoue cette dégradation et constate la
+      restauration — le harnais rend **27 contrôles, aucune anomalie**.
+- [x] **UN GARDE-FOU FIGÉ PAR UNE UNITÉ ANTÉRIEURE A ÉTÉ RÉVISÉ, JAMAIS RETIRÉ** (décision 51,
+      neuvième occurrence consécutive) : l'empreinte de composition du workflow par défaut, dans
+      `0037_versionnement_workflows.test.sql`, a bougé parce que `probability_override` EST dans la
+      composition. Une empreinte inchangée aurait été le vrai défaut, et son propre commentaire le
+      prévoyait. Valeur mesurée sur la pile seedée à froid.
+- [x] **Compteurs de `scripts/verify-harness.sh` révisés dans le MÊME changement** : 3079 → **3083**
+      assertions, 1057 → **1058** scénarios d'API. `FICHIERS_SQL_ATTENDUS` (68), `SCENARIOS_UI`
+      (729) et `SCENARIOS_MAIL` (42) inchangés : la tranche n'ouvre aucun fichier SQL et ne livre ni
+      écran ni protocole. Valeurs COMPTÉES.
+- [x] **Les mesures de la spécification révisées avec la donnée qu'elles mesurent** : le pondéré de
+      `Négociation` passe de 183 425,00 à **230 752,50**, le prévisionnel de l'administratrice de
+      333 715,00 à **381 042,50 EUR** et celui de la lectrice de 297 565,00 à **344 892,50** ;
+      l'écart entre les deux — 36 150,00 — est INCHANGÉ, aucune des quatre affaires qu'elle ne voit
+      pas n'étant à ce nœud. Le CHF (34 600,00) ne bouge pas non plus. M6, §5.3, §6 ligne *f*, §7.2.
 - [ ] **3 — l'écran `/pilotage`.** Sa spécification visuelle dans `docs/DESIGN_SYSTEM.md` écrite
       d'abord, ses tests de composant, son E2E d'interface à console vierge, ses captures observées,
       `docs/manual.md` chapitres 28 et 29.
