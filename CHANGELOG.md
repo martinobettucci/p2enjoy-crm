@@ -33,6 +33,13 @@ d'exécuter le code attendu.
 - **Une affaire mise en sommeil reste au portefeuille.** Demander le silence sur une affaire ne la
   fait pas disparaître d'un total — c'est la différence avec la liste des affaires figées, qui,
   elle, l'écarte à bon droit.
+- **Deux chiffres de plus, calculés là où ils ne peuvent pas mentir** : le **prévisionnel pondéré**
+  par devise — les seules affaires ouvertes, une affaire gagnée n'étant plus une prévision — et le
+  **taux de conversion des affaires décidées**, la part gagnée parmi celles qui ont abouti. Quand
+  aucune affaire n'est encore décidée, le produit répond « inconnu » et non « 0 % » : les deux ne
+  veulent pas dire la même chose.
+- **Les devises ne sont jamais additionnées.** Chacune garde son total, faute de taux de change que
+  quiconque ait arrêté.
 - **Aucun écran encore** : l'adresse `/pilotage` et son entonnoir sont la tranche suivante, avec
   les chapitres 28 et 29 du manuel. Aucune donnée n'est modifiée, aucun email ne part.
 - **Migration `0073_entonnoir_conversion.sql`** — addition pure, en lecture seule ; voir

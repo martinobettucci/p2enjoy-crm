@@ -893,9 +893,15 @@ type _vueDerivationColonnes = Expect<
 // composite d'une table reste une fonction pour le générateur. Sa présence dans cette liste ne dit
 // donc PAS qu'un `client.rpc('ecriture_permise')` existe : elle se demande dans un `select`
 // (`docs/SCHEMA.md` §9 bis.8 bis). Quarante-sept devient QUARANTE-HUIT.
-type _lesQuaranteHuitFonctions = Expect<
+// `0073` de `CRM-066` TRANCHE 2 a ajoute `entonnoir_conversion`, et le témoin la voit dans le même
+// changement, pour la HUITIÈME fois consécutive. Comme `recherche_globale` avant elle, elle arrive
+// SANS écran : la régénération suit l'arrivée de la FONCTION, jamais celle de son appelant.
+// `webapp/src/lib/analytique.ts` l'appelle bien dès cette tranche, mais l'écran `/pilotage` est la
+// tranche 3 et trouvera son type déjà là. Quarante-huit devient QUARANTE-NEUF.
+type _lesQuaranteNeufFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
+    | 'entonnoir_conversion'
     | 'ecriture_permise'
     | 'unclassify_message'
     | 'armer_sequence_relance'
@@ -1149,7 +1155,7 @@ export type AssertionsDuContratDeTypes = [
   _relationsWorkspaceMembers,
   _laSeuleVue,
   _vueDerivationColonnes,
-  _lesQuaranteHuitFonctions,
+  _lesQuaranteNeufFonctions,
   _signatureReelSaisissable,
   _retourReelSaisissable,
   _ecriturePermisePrendUneLigneDeTableau,

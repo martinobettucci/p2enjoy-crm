@@ -2744,6 +2744,25 @@ export type Database = {
         Args: { tableau: Database["public"]["Tables"]["goal_boards"]["Row"] }
         Returns: boolean
       }
+      entonnoir_conversion: {
+        Args: never
+        Returns: {
+          affaires: number
+          affaires_sans_montant: number
+          affaires_sans_probabilite: number
+          channel_id: string
+          currency: string
+          montant: number
+          montant_pondere: number
+          node_id: string
+          node_key: string
+          node_kind: string
+          node_label: string
+          node_position: number
+          track_id: string
+          workspace_id: string
+        }[]
+      }
       etat_messagerie: {
         Args: never
         Returns: {

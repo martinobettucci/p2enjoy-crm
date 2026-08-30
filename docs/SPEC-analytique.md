@@ -393,12 +393,25 @@ et prouvable seule.
 
 | Tranche | Contenu | État |
 |---|---|---|
-| **1 — la spécification** | Ce document, l'entrée de backlog de `CRM-066` et sa Definition of Done, `docs/JOURNAL.md` décision 562. Commit documentaire dédié, poussé avant tout code | — |
-| **2 a — la fonction** | `supabase/migrations/0073_entonnoir_conversion.sql`, sa suite pgTAP dédiée, son contrat d'API du §6, `docs/SCHEMA.md` §9 bis.11, `docs/PROD_MIGRATIONS.md` migration 73 | — |
-| **2 b — le module** | `webapp/src/lib/analytique.ts` : lecture de la fonction, repli par track et par workspace, les deux grandeurs du §7, et sa suite unitaire | — |
+| **1 — la spécification** | Ce document, l'entrée de backlog de `CRM-066` et sa Definition of Done, `docs/JOURNAL.md` décision 562. Commit documentaire dédié, poussé avant tout code | **LIVRÉE** le 2026-08-30 |
+| **2 a — la fonction** | `supabase/migrations/0073_entonnoir_conversion.sql`, sa suite pgTAP dédiée (27 assertions), son contrat d'API du §6 (16 scénarios), `docs/SCHEMA.md` §9 bis.11, `docs/PROD_MIGRATIONS.md` migration 73 | **LIVRÉE ET PROUVÉE** le 2026-08-30 |
+| **2 b — le module** | `webapp/src/lib/analytique.ts` : lecture de la fonction, restriction de portée, repli par nœud et par devise, les deux grandeurs du §7, et sa suite unitaire (26 tests) | **LIVRÉE ET PROUVÉE** le 2026-08-30 |
 | **2 c — le seed** | Les deux surcharges du §9, les compteurs et le tableau M6 révisés dans le même changement | — |
 | **3 — l'écran** | `/pilotage`, sa spécification visuelle dans `docs/DESIGN_SYSTEM.md` écrite d'abord, ses tests de composant, son E2E d'interface à console vierge, ses captures **observées**, `docs/manual.md` chapitres 28 et 29 | — |
 | **4 — le score de santé** | `CRM-P02`. Il exige d'abord son arbitrage : ce qu'un score « transparent » agrège n'est écrit nulle part (§11.4) | — |
+
+**Ce que la tranche 2 b décide, et qui n'est pas une reformulation du §7.** Les deux grandeurs vivent
+dans le module et **non en base**, parce que ce sont des rapports entre des nombres que la fonction
+rend déjà : les calculer côté serveur imposerait une seconde définition à maintenir, et c'est
+exactement le mode de défaillance qu'INC-138, INC-241 et la décision 560 ont coûté au dépôt. Trois
+choix s'y ajoutent, chacun figé par un test :
+
+- **une devise dont toutes les affaires sont closes n'apparaît pas** dans le prévisionnel. « CHF :
+  0,00 » se lirait comme une prévision nulle au lieu d'une absence de prévision ;
+- **le taux porte `null` et jamais `0`** quand aucune affaire n'est décidée — le type le porte, de
+  sorte qu'un `?? 0` de l'écran ne puisse pas effacer la distinction ;
+- **le compte des affaires décidées traverse les devises**, et il est la seule grandeur du module à
+  le faire : il n'additionne aucun argent.
 
 ## 11. Limites nommées, non masquées
 

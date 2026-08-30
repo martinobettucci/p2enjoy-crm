@@ -10329,11 +10329,32 @@ précèdent déclarent chacune n'avoir plus de dette de construction, et leur re
 **Découpage en tranches** — `docs/SPEC-analytique.md` §10, écrit plutôt que laissé à la mémoire d'une
 session (`CLAUDE.md` §5) :
 
-- [ ] **2 a — la fonction.** `supabase/migrations/0073_entonnoir_conversion.sql`,
-      `public.entonnoir_conversion()` en `security invoker`, sa suite pgTAP dédiée, le contrat d'API
-      du §6, `docs/SCHEMA.md` §9 bis.11, `docs/PROD_MIGRATIONS.md` migration 73.
-- [ ] **2 b — le module.** `webapp/src/lib/analytique.ts` — repli par track et par workspace, taux de
-      conversion des affaires décidées, prévisionnel par devise — et sa suite unitaire.
+- [x] **2 a — la fonction. LIVRÉE ET PROUVÉE le 2026-08-30.**
+      `supabase/migrations/0073_entonnoir_conversion.sql` ajoute
+      `public.entonnoir_conversion()` en `security invoker`, `stable`, `search_path` vide, `anon`
+      révoqué nommément — et **aucune table, aucune colonne, aucune politique, aucun trigger**.
+      **Suite pgTAP dédiée** : `supabase/tests/0068_entonnoir_conversion.test.sql`, **27
+      assertions**. **Contrat d'API hors interface** : `e2e/api/analytique.spec.ts`, **16 scénarios
+      verts**, les quatorze lignes du §6 plus le libellé du catalogue et le grain par devise, avec
+      les jetons réels des trois profils. `docs/SCHEMA.md` §9 bis.11 et
+      `docs/PROD_MIGRATIONS.md` migration 73 dans le même changement.
+- [x] **DEUX APPELANTS N'OBTIENNENT PAS LE MÊME TOTAL, ET C'EST LA PREUVE QUE `invoker` TIENT.**
+      MESURÉ : l'administratrice et le business developer lisent 39 affaires sur 16 lignes, la
+      lectrice **35 sur 13**, et son prévisionnel vaut **297 565,00 EUR** contre **333 715,00**.
+      Une suite qui n'éprouverait qu'un seul profil resterait verte en `definer`.
+- [x] **NON-COMPLAISANCE MESURÉE, pas annoncée** : trois dégradations réelles du produit, trois
+      échecs ciblés — `security definer` (la lectrice voyait alors 39 affaires), le `coalesce` de la
+      probabilité réordonné, le compteur des affaires sans montant éteint. Produit restauré et
+      constaté.
+- [x] **2 b — le module. LIVRÉ ET PROUVÉ le 2026-08-30.** `webapp/src/lib/analytique.ts` : lecture
+      en **une** requête, restriction de portée, repli par nœud et par devise, prévisionnel par
+      devise, taux de conversion des affaires décidées et les deux compteurs d'absence.
+      **Suite unitaire dédiée** : `webapp/src/lib/analytique.test.ts`, **26 tests**, dont
+      `decidees = 0` rendant **`null`** et jamais `0 %`, et une devise entièrement close qui
+      **n'apparaît pas** au lieu d'afficher zéro.
+- [x] **UN GARDE-FOU FIGÉ PAR UNE UNITÉ ANTÉRIEURE A ÉTÉ RÉVISÉ, JAMAIS RETIRÉ** (décision 51,
+      huitième occurrence consécutive) : le témoin des fonctions de `database.types.test-d.ts`
+      passe de quarante-huit à **quarante-neuf**, dans le même changement que la migration.
 - [ ] **2 c — le seed.** Les deux surcharges de probabilité du §9, sans lesquelles la résolution à
       trois niveaux n'est démontrée qu'à son troisième niveau ; compteurs et tableau M6 révisés dans
       le même changement.

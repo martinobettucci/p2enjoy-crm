@@ -543,7 +543,10 @@ PORT_RAPPORT=9323
 # seul. 66 + 1 = 67, valeur COMPTÉE — « 67 fichiers ». Garde-fou RÉVISÉ, jamais retiré (décision 51).
 # **INCHANGÉ le 2026-08-29** : `CRM-084` tranche 4 étend `0048_budgets.test.sql` plutôt que d'ouvrir
 # un fichier — la colonne qu'elle livre vit sur une table déjà couverte par cette suite.
-FICHIERS_SQL_ATTENDUS=67
+# **68 depuis `CRM-066` tranche 2 a, 2026-08-30** :
+# `supabase/tests/0068_entonnoir_conversion.test.sql` est le fichier ajouté, et il est le seul.
+# 67 + 1 = 68, valeur COMPTÉE — « 68 fichiers ». Garde-fou RÉVISÉ, jamais retiré (décision 51).
+FICHIERS_SQL_ATTENDUS=68
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -560,7 +563,10 @@ FICHIERS_SQL_ATTENDUS=67
 # **3052 le 2026-08-29, et l'écart est ENTIÈREMENT le mien** : la tranche 4 de `CRM-084` porte
 # `0048_budgets.test.sql` de 52 à 62 assertions — 3042 + 10 = 3052 —, et `npm run test:sql` en
 # COMPTE exactement **3052**. Aucune part antérieure n'est absorbée ici : il n'y en a pas.
-ASSERTIONS_ATTENDUES=3052
+# **3079 le 2026-08-30, et l'écart est ENTIÈREMENT le mien** : la suite de l'entonnoir de
+# conversion en apporte **27** — 3052 + 27 = 3079 —, et `npm run test:sql` en COMPTE exactement
+# **3079**. Aucune part antérieure n'est absorbée ici : il n'y en a pas.
+ASSERTIONS_ATTENDUES=3079
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -833,7 +839,13 @@ ASSERTIONS_ATTENDUES=3052
 # fichier couvre déjà, et c'est l'inverse du choix de la tranche 3c, où les occurrences posaient
 # leur propre budget d'essai. 1036 + 5 = 1041, valeur COMPTÉE — « 1041 passed ». Garde-fou RÉVISÉ,
 # jamais retiré (décision 51).
-SCENARIOS_API=1041
+# **1057 depuis `CRM-066` tranche 2 a, 2026-08-30.** L'entonnoir de conversion ajoute SEIZE
+# scénarios dans un fichier NEUF, `e2e/api/analytique.spec.ts` — les quatorze lignes du contrat du
+# §6 de `docs/SPEC-analytique.md`, plus le libellé du catalogue et le grain par devise. La fonction
+# ne vit sur aucune table qu'un fichier existant couvre, à l'inverse des trois révisions
+# précédentes. 1041 + 16 = 1057, valeur COMPTÉE — « 1057 passed ». Garde-fou RÉVISÉ, jamais retiré
+# (décision 51).
+SCENARIOS_API=1057
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
