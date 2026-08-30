@@ -392,9 +392,13 @@ Quatre propriétés sont démontrées, et non une seule :
 
 - **une étape initiale, et une seule** — la base garantit « au plus une » (§3.5), le seed fournit
   l'autre moitié de l'exigence, que la base ne peut pas imposer ;
-- **deux surcharges, sur deux colonnes différentes** — `negociation` raccourcit son seuil de
-  relance à 5 jours, `realisation` prend le libellé « Réalisation en cours ». Sans elles, la
-  faculté de surcharger serait documentée sans être démontrable ;
+- **trois surcharges, sur les trois colonnes surchargeables** — `negociation` raccourcit son seuil
+  de relance à 5 jours **et relève sa probabilité à 65 %** (`CRM-066` tranche 2 c), `realisation`
+  prend le libellé « Réalisation en cours ». Sans elles, la faculté de surcharger serait documentée
+  sans être démontrable. La probabilité est déclarée **ici**, dans le contrat des étapes, et non
+  posée par un `PATCH` ultérieur : la copie de la §2.9 la recopie et la version publiée la
+  photographie, si bien qu'une écriture postérieure ferait diverger un seed appliqué à froid d'un
+  seed rejoué (`docs/SPEC-analytique.md` §9) ;
 - **cinq transitions exigent un commentaire**, celles qui mènent à « Perdu » — sans quoi
   `require_comment` ne serait jamais exercée. Ce choix est nommé au §3.9 et renversable ;
 - **`Réalisation → Perdu` EST déclarée depuis la décision 259** (INC-003, close). Son absence était
@@ -1948,3 +1952,61 @@ qui perdrait cette différence laisserait passer une validation posée sur une s
 - `e2e/api/modeles-emails.spec.ts` : les quatorze lignes du contrat d'API, et le seed constaté
   **intact** en fin de suite ;
 - `scripts/verify-modeles-emails.sh` : le verdict unique de la tranche.
+
+## 15. Les surcharges de probabilité — `CRM-066` tranche 2 c
+
+Le seed pose les **deux** surcharges sans lesquelles la résolution de la probabilité effective
+(`docs/SPEC-analytique.md` §3) n'est exercée qu'à son niveau le moins spécifique.
+
+### 15.1 Ce que le jeu porte
+
+| Niveau | Objet | Valeur | Section du script |
+|---|---|---|---|
+| 3 — le catalogue | nœud `negociation` | 50 % | 5, tableau `NOEUDS` |
+| 2 — l'étape | étape 3 du workflow par défaut, `…063` | **65 %** | 6, tableau `ETAPES` |
+| 1 — l'affaire | `…0cf` « Reprise du dossier Marchand » | **30 %** | 8 duodecies ter, tableau `SURCHARGES_PROBABILITE` |
+
+**Les trois valeurs s'encadrent — 30 < 50 < 65 —, et c'est une contrainte, pas un goût.** Trois
+nombres distincts ne suffisent pas : s'ils croissaient du moins spécifique au plus spécifique, un
+`greatest` rendrait exactement le même résultat que « le plus spécifique gagne ». Avec cet
+encadrement, chaque résolution fausse rend un nombre différent — 50 pour un `coalesce` écrit à
+l'envers, 65 pour un `greatest`, et 50 sur les huit autres affaires du nœud pour un `least`.
+
+**L'affaire est SEULE de son channel à ce nœud.** `dossiers-2023` ne porte qu'elle en négociation,
+si bien que la ligne de l'entonnoir qui la porte est exactement 22 000,00 × 30 % = 6 600,00. Le
+même isolement sert « Cadrage data » aux lignes *k*, *m* et *n* du contrat d'API.
+
+### 15.2 Deux chemins d'écriture, et le motif de chacun
+
+La surcharge d'étape est déclarée **dans le contrat des étapes** (§2.8), et non posée par un
+`PATCH` ultérieur : la copie du workflow (§2.9) recopie `probability_override` et la version publiée
+photographie la composition. Une écriture postérieure ferait diverger un seed appliqué à froid d'un
+seed rejoué — la copie et la version porteraient l'ancienne valeur. MESURÉ à froid : la copie de
+`conseil-ia` porte bien 65 %, et `workflow_derivations.source_modified_since_copy` reste **faux**.
+
+La surcharge d'affaire, elle, a sa propre section : la porter dans le contrat des cards obligerait à
+ajouter une treizième colonne aux **quarante et une** lignes des trois tableaux de cards pour une
+valeur qu'une seule d'entre elles porte, et à toucher deux chemins d'écriture étrangers à la tranche
+(`CLAUDE.md` §1). La section suit l'idiome du sommeil (§9.12 et suivantes) : un petit contrat, une
+écriture par le **jeton réel de l'administratrice** — la migration 14 accorde
+`update (probability_override)` à `authenticated`, et le seed exerce donc le privilège tel qu'un
+membre l'a.
+
+### 15.3 Convergence
+
+La valeur déclarée est fixe : la réécrire à chaque passage est idempotent, et `probability_override`
+n'est **pas** une colonne surveillée par le trigger de la migration 16 — aucun événement de fil
+n'est produit. Une seconde écriture ramène en outre la colonne à `null` sur toute affaire qui la
+porterait **sans être déclarée** : le seed est un contrat opposable, et il doit ramener la ligne à
+son état déclaré y compris pour effacer. Le compte de ce qu'elle efface est **dit**, jamais supposé.
+
+### 15.4 Preuves exigées
+
+- `supabase/tests/0068_entonnoir_conversion.test.sql`, groupe **6 bis** : les trois niveaux lus
+  **sans écriture**, l'affaire qui l'emporte, une autre affaire de la même étape qui prend celle de
+  l'étape, et le total du nœud ;
+- `e2e/api/analytique.spec.ts`, ligne ***q*** du contrat : les mêmes trois nombres par la vraie
+  route, en lecture seule ;
+- `scripts/verify-analytique.sh`, contrôle **8** : les valeurs lues **en base** et non dans le seed,
+  leur encadrement, la dégradation de la **donnée** — la surcharge retirée, la suite pgTAP doit
+  rougir —, la restauration constatée, et la déclaration des deux surcharges dans le script.
