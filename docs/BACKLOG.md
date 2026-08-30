@@ -10381,10 +10381,11 @@ session (`CLAUDE.md` §5) :
       mention « 1 ligne(s) sans coût réel saisi » est le patron que reprend le §7.3 de la
       spécification.
 
-*Ce qui retient `CRM-066` en `[~]`, et c'est du COMPORTEMENT, pas une preuve manquante* : les
-tranches **3** (l'écran `/pilotage` et les chapitres 28 et 29 du manuel) et **4** (le score de santé
-de `CRM-P02`, subordonné à son arbitrage) restent dues. La série entière des `verify-*.sh` n'a pas
-été rejouée : elle n'est la Definition of Done d'aucune unité (décision 553).
+*Ce qui retient `CRM-066` en `[~]`, et c'est du COMPORTEMENT, pas une preuve manquante* — RÉVISÉ le
+2026-08-30 par la livraison de la tranche 3 a : restent dues la tranche **3 b** (le sélecteur de
+portée et la complétion par le catalogue, `docs/SPEC-analytique.md` §8) et la tranche **4** (le score
+de santé de `CRM-P02`, subordonné à son arbitrage). La série entière des `verify-*.sh` n'a pas été
+rejouée : elle n'est la Definition of Done d'aucune unité (décision 553).
 - [x] **2 c — le seed. LIVRÉE ET PROUVÉE le 2026-08-30.** Le seed pose les deux surcharges du §9 :
       l'étape `negociation` du workflow par défaut porte **65 %** — déclarée dans le contrat des
       étapes, avant la copie du workflow et la version publiée —, et « Reprise du dossier
@@ -10451,6 +10452,34 @@ de `CRM-P02`, subordonné à son arbitrage) restent dues. La série entière des
 - **Le prévisionnel n'est confronté à aucun objectif**, alors que `docs/manual.md` chapitre 29
   s'intitule « Prévisionnel pondéré et objectifs » : `docs/SPEC-goals.md` ne décrit aucun objectif
   **chiffré**. L'unité restera `[~]` tant que cette confrontation n'aura pas été arbitrée.
+- [x] **3 a — l'écran. LIVRÉE ET PROUVÉE le 2026-08-30.** `/pilotage`, route de premier niveau dans
+      `ROUTES`, entrée de barre latérale `Gauge` entre « Coûts » et « Ma journée ». Trois blocs :
+      les deux grandeurs en liste de définitions, un **tableau du §5.9 par devise** dans l'ordre du
+      catalogue, puis les deux mentions du §7.3 et la phrase de portée. **Spécification visuelle
+      écrite et committée AVANT la première ligne de code** — `docs/DESIGN_SYSTEM.md` §5.48, commit
+      documentaire dédié, poussé avant tout code.
+- [x] **PREUVES DÉDIÉES, ET ELLES SE PARTAGENT LE TRAVAIL** : `webapp/src/lib/analytique.test.ts`
+      **30 tests** (quatre de plus pour `grouperParDevise`, dont celui qui refuse un
+      « Négociation / CHF / 0 ») ; `webapp/src/app/Pilotage.test.tsx` **23 tests** sur ce que le
+      MONTAGE ajoute ; `e2e/ui/pilotage.spec.ts` **8 scénarios**, console vierge, captures aux
+      quatre paliers.
+- [x] **DEUX APPELANTS NE LISENT PAS LE MÊME PRÉVISIONNEL, ET C'EST MESURÉ SUR L'ÉCRAN** — S5 et S6.
+      La lectrice lit **344 892,50 EUR**, l'administratrice **381 042,50**, et l'écart vaut
+      exactement **36 150,00** — les quatre affaires de `grands-comptes` qui lui sont fermées. Le
+      **34 600,00 CHF** est identique des deux côtés : aucune des affaires manquantes n'est en
+      francs. Rien à l'écran ne trahit ce qu'elle ne voit pas.
+- [x] **UN DÉFAUT TROUVÉ EN REGARDANT UNE CAPTURE** (`CLAUDE.md` §16). Le titre de devise est
+      CONDITIONNEL (§5.33) : sur une devise unique — le cas attendu — plus rien à l'œil ne disait de
+      quelle monnaie les nombres du tableau sont. Les deux en-têtes de montant nomment donc la
+      devise, inconditionnellement, et une assertion le fige. Règle générale écrite au §5.48.
+- [x] **UN DÉFAUT DE MA PROPRE PREUVE, trouvé en l'exécutant** : `toHaveAttribute` posé sur un
+      locator de six lignes viole le mode strict de Playwright. Retiré — l'assertion d'ordre qui
+      suit disait déjà tout ce qu'il visait.
+- [x] **`docs/manual.md` chapitres 28 et 29** — « L'entonnoir de conversion » (§5 nonies) et « Le
+      prévisionnel pondéré et le taux de conversion » (§5 decies). `scripts/verify-manual.sh` rend
+      **134 contrôles, aucune anomalie**.
+- [x] **AUCUNE MIGRATION, AUCUNE ÉCRITURE, AUCUN SEED À TOUCHER** : la tranche ne livre qu'un écran
+      de lecture. `docs/PROD_MIGRATIONS.md` est inchangé, et c'est exact.
 
 ### CRM-070 — précision d'arbitrage : l'invitation d'un membre
 

@@ -2881,6 +2881,184 @@ C'est la même règle que celle du cumul du workspace (§5 septies.3) : quand de
   et se corrige depuis la fiche de son affaire.
 - **Aucun import de fichier, aucun rapprochement automatique avec une facture.**
 
+## 5 nonies. L'entonnoir de conversion : où se tiennent vos affaires
+
+*Livré par `CRM-066` tranche 3 a. C'est le **chapitre 28** que `docs/SPEC-analytique.md` nomme.
+Captures dans `docs/captures/CRM-066/pilotage-*.jpg`.*
+
+**Où.** Barre latérale ▸ **« Pilotage »**, entre « Coûts » et « Ma journée ». L'adresse est
+`/pilotage` ; elle est partageable et rechargeable.
+
+**Qui.** Tout membre de l'espace de travail. Ce que l'écran montre dépend de ce que vous avez le
+droit de lire — voir le §5 nonies.4, qui est la partie la plus importante de cette page.
+
+### 5 nonies.1 Ce que l'écran montre
+
+Un **tableau par devise**, une **ligne par étape** de vos workflows, dans **l'ordre du catalogue** —
+celui-là même que suivent les colonnes de vos boards. Chaque ligne porte :
+
+| Colonne | Ce qu'elle dit |
+|---|---|
+| **Étape** | Le nom du nœud, tel que le catalogue le porte — jamais le nom qu'un workflow lui a donné localement. C'est ce qui permet de comparer deux workflows sur la même ligne |
+| **Genre** | « Ouvert », « Gagné » ou « Perdu ». C'est lui, et lui seul, qui dit pourquoi une étape entre ou n'entre pas dans le prévisionnel du §5 decies |
+| **Affaires** | Combien d'affaires actives se tiennent à cette étape |
+| **Montant (…)** | La somme de leurs montants, dans la devise que l'en-tête nomme |
+| **Pondéré (…)** | La même somme, chaque affaire multipliée par sa **probabilité** (§5 nonies.3) |
+
+**L'ordre ne se change pas, et aucune colonne ne se trie.** Un entonnoir est un **chemin** : le
+reclasser par montant en ferait un palmarès, où « Perdu » remonterait au-dessus de « Prospection ».
+
+**Une étape où aucune affaire ne se tient n'a pas de ligne.** Elle n'est pas rendue « à zéro » : un
+zéro affirmerait une mesure que l'écran n'a pas faite.
+
+### 5 nonies.2 Quelles affaires y entrent, et lesquelles n'y entrent pas
+
+**Y entrent** toutes vos affaires **actives** — celles qui ne sont ni archivées, ni à la corbeille.
+Cela comprend :
+
+- les affaires **gagnées** et **perdues**, qui ont leur propre ligne, marquée par la colonne
+  « Genre » ;
+- les affaires **en sommeil**. Mettre une affaire en sommeil dit « ne me réveille pas à son sujet »,
+  jamais « cette affaire n'est plus au portefeuille » : la retirer ferait **disparaître un montant**
+  d'un total du seul fait qu'on a demandé le silence.
+
+**N'y entrent pas** les affaires **archivées** et celles qui sont **à la corbeille**. Une affaire
+gagnée puis archivée ne compte donc ni dans l'entonnoir, ni dans le taux de conversion du
+§5 decies.2.
+
+### 5 nonies.3 La probabilité d'une affaire : trois niveaux, et le plus précis gagne
+
+Le montant **pondéré** est le montant de l'affaire multiplié par sa probabilité. Cette probabilité
+se résout à trois niveaux, du plus précis au plus général :
+
+1. **la probabilité de l'affaire elle-même**, saisie sur sa fiche ;
+2. sinon, **la probabilité de l'étape** du workflow, saisie dans l'éditeur de workflows (§5 bis) ;
+3. sinon, **la probabilité par défaut du nœud**, saisie au catalogue (§5 quater).
+
+**Une probabilité absente n'est jamais remplacée par un défaut.** Si aucun des trois niveaux n'est
+renseigné, la probabilité est **inconnue** : l'affaire est comptée dans la colonne « Affaires »,
+elle est comptée dans la mention « n affaire(s) sans probabilité renseignée », et elle ne contribue
+**pas** au montant pondéré. Écrire zéro à sa place transformerait « personne n'a dit ce que vaut
+cette affaire » en « cette affaire ne vaut rien ».
+
+**Un montant absent suit la même règle** : l'affaire est comptée, elle est signalée par la mention
+« n affaire(s) sans montant renseigné », et elle ne contribue ni au montant ni au pondéré.
+
+Ces deux mentions sont rendues **sous les tableaux**, et seulement lorsqu'elles ont un objet. Sans
+elles, un prévisionnel bas se lirait comme un portefeuille **pauvre** au lieu d'un portefeuille
+**mal renseigné**.
+
+### 5 nonies.4 Vos nombres sont les vôtres, et ils peuvent différer de ceux d'un collègue
+
+**C'est la règle la plus importante de cet écran**, et c'est exactement celle du cumul des coûts
+(§5 septies.3). L'entonnoir est calculé **à partir de ce que vos droits vous laissent lire**, jamais
+à partir de tout ce qui existe. Une affaire d'un channel qui vous est fermé :
+
+- n'apparaît dans aucune ligne ;
+- n'entre dans **aucun** total ;
+- et **n'est signalée par rien**.
+
+Deux collègues aux droits différents lisent donc deux nombres différents sur le même écran, au même
+instant. Ce n'est pas une erreur de calcul : afficher un total « complet » vous apprendrait, par
+simple soustraction, l'existence et le montant d'une affaire que vous n'avez pas le droit de voir.
+
+L'écran l'écrit sous les tableaux, pour que personne n'ait à le deviner :
+
+> « Ces nombres portent sur toutes les affaires actives que vous pouvez lire, tous tracks et tous
+> channels confondus. Un collègue dont les droits diffèrent des vôtres lit d'autres totaux sur les
+> mêmes données. »
+
+### 5 nonies.5 Les devises ne se mélangent jamais
+
+Si vos affaires sont libellées dans **plusieurs devises**, l'écran rend **un tableau par devise**,
+chacun avec son **titre** — « Entonnoir en EUR », « Entonnoir en CHF ». Si tout est libellé dans une
+seule devise — le cas courant —, vous ne voyez pas ce titre ; les en-têtes des deux colonnes de
+montant nomment la devise dans tous les cas.
+
+Aucun total « toutes devises confondues » n'est affiché : additionner des francs et des euros
+demanderait un taux de change que le produit ne connaît pas, et le nombre obtenu se lirait pourtant
+comme un chiffre d'affaires.
+
+### 5 nonies.6 Ce que l'écran écrit quand il n'y a rien à montrer
+
+| Ce que vous lisez | Ce que cela veut dire |
+|---|---|
+| « Aucune affaire active » | Aucune affaire active ne vous est lisible — **ou** il n'en existe aucune. Les deux cas se ressemblent volontairement : les distinguer vous apprendrait l'existence de ce que l'écran cache |
+| « Lecture refusée » | Votre session ne permet pas de lire l'entonnoir. Reconnectez-vous, puis revenez sur cet écran |
+| « L'entonnoir n'a pas pu être lu » | La lecture a échoué. Le bouton « Réessayer » relance réellement la requête |
+| « Aucun espace de travail » | Votre session a expiré, ou votre compte n'appartient à aucun espace de travail |
+
+### 5 nonies.7 Ce que cet écran ne fait pas
+
+- **On n'y saisit rien**, et aucune ligne n'est cliquable. Les probabilités se saisissent au
+  catalogue (§5 quater), dans l'éditeur de workflows (§5 bis) et sur la fiche d'une affaire (§4).
+- **Aucun filtre de portée** aujourd'hui : l'écran porte sur **tout** ce que vous lisez, tous tracks
+  et tous channels confondus. Un filtre par track ou par channel est prévu et n'est pas livré.
+- **Aucune lecture d'historique.** L'entonnoir est un **instantané** de l'état courant, jamais une
+  analyse par période : il dit où vos affaires se tiennent **aujourd'hui**, pas ce qu'elles sont
+  devenues depuis janvier.
+- **Aucun export, aucune période, aucune conversion de devise.**
+
+## 5 decies. Le prévisionnel pondéré et le taux de conversion
+
+*Livré par `CRM-066` tranche 3 a. C'est le **chapitre 29** que `docs/SPEC-analytique.md` nomme.
+Captures dans `docs/captures/CRM-066/pilotage-*.jpg`.*
+
+**Où.** En **tête** de l'écran « Pilotage » (§5 nonies), au-dessus des tableaux : deux nombres, et
+c'est la lecture que la plupart des visites viennent chercher.
+
+### 5 decies.1 Le prévisionnel pondéré
+
+C'est la somme des montants de vos affaires **ouvertes**, chacune multipliée par sa probabilité
+(§5 nonies.3), **par devise**.
+
+**Les étapes terminales en sont exclues**, et les deux motifs sont distincts : une affaire **gagnée**
+n'est plus une prévision, et une affaire **perdue** vaut zéro — l'inclure ne changerait aucun total
+tout en laissant croire qu'elle compte. C'est pourquoi la colonne « Genre » de l'entonnoir n'est pas
+décorative : elle vous dit quelles lignes du tableau alimentent ce nombre.
+
+**Une devise dont toutes les affaires sont closes n'apparaît pas.** « CHF : 0,00 » se lirait comme
+une prévision nulle au lieu d'une absence de prévision.
+
+**S'il n'y a aucune affaire ouverte**, l'écran écrit « Aucune affaire ouverte à ce jour. » plutôt
+qu'un zéro.
+
+### 5 decies.2 Le taux de conversion des affaires décidées
+
+**Son nom entier compte, et l'écran ne l'abrège jamais.** Ce nombre est la part **gagnée** parmi les
+affaires qui se tiennent **actuellement** à une étape terminale :
+
+> gagnées ÷ (gagnées + perdues)
+
+Il est accompagné de son numérateur et de son dénominateur en toutes lettres — « 7 gagnées sur
+8 décidées » —, parce qu'un pourcentage seul ne dit pas sur combien il porte.
+
+**Ce n'est pas « la part gagnée parmi les affaires ouvertes en janvier ».** Les deux lectures
+diffèrent dès qu'une affaire décidée est archivée : une affaire gagnée puis archivée ne compte dans
+**ni l'une ni l'autre** de ce que cet écran montre. L'analyse par période — dite par cohortes — n'est
+pas livrée, et appeler ce nombre du nom de l'autre serait un compteur complaisant.
+
+**Zéro affaire décidée rend « Aucune affaire décidée à ce jour. », jamais « 0 % ».** Un taux de 0 %
+dit « tout a été perdu » ; l'absence de toute décision ne dit rien.
+
+### 5 decies.3 Aucun objectif chiffré n'est confronté à ce prévisionnel
+
+Les **objectifs** existent dans le produit (§3 ter) sous forme de tableaux de blocs et de flèches,
+avec un **remplissage** que vous saisissez à la main. Rien n'y décrit un objectif **chiffré** qu'un
+prévisionnel viendrait remplir automatiquement.
+
+Cet écran livre donc le prévisionnel **seul**. La confrontation n'est pas oubliée : elle n'a pas
+encore été arbitrée, et l'inventer ici produirait une comparaison que personne n'a demandée.
+
+### 5 decies.4 Ce que ces deux nombres ne sont pas
+
+- **Ils ne sont pas un chiffre d'affaires.** Le prévisionnel est une espérance : il vaut ce que
+  valent les probabilités saisies.
+- **Ils ne sont pas comparables d'un collègue à l'autre** sans précaution : chacun lit les siens sur
+  son propre portefeuille (§5 nonies.4).
+- **Le taux ne traverse pas les devises par accident** : il compte des **affaires**, pas de l'argent,
+  et c'est la seule grandeur de cet écran qui le fasse légitimement.
+
 ## 6. Consulter l'état de la messagerie
 
 *Livré par `CRM-059` ; les règles d'accès sont celles de `CRM-052` (comptes entrants) et de

@@ -13,6 +13,36 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-066` — l'écran « Pilotage » : votre portefeuille en une page (tranche 3 a)
+
+- **Une nouvelle entrée dans la barre latérale, « Pilotage »**, entre « Coûts » et « Ma journée ».
+  Les deux premières lectures agrégées du produit sont désormais voisines : ce que l'espace de
+  travail a coûté, et ce qu'il peut rapporter.
+- **En tête d'écran, les deux nombres qu'on vient chercher** : le **prévisionnel pondéré**, par
+  devise, et le **taux de conversion des affaires décidées**, accompagné de son compte en toutes
+  lettres — « 7 gagnées sur 8 décidées ». Un pourcentage seul ne dit pas sur combien il porte.
+- **En dessous, l'entonnoir** : une ligne par étape, dans l'ordre de vos boards, avec le nombre
+  d'affaires qui s'y tiennent, leur montant et leur montant pondéré. Une colonne « Genre » dit si
+  l'étape est ouverte, gagnée ou perdue — c'est elle qui explique pourquoi « Livré » ne compte pas
+  dans le prévisionnel.
+- **Ce que l'écran dit et qu'un total tait** : « n affaire(s) sans montant renseigné » et
+  « n affaire(s) sans probabilité renseignée », dès qu'il y en a. Sans ces deux phrases, un
+  prévisionnel bas se lirait comme un portefeuille pauvre alors qu'il est mal renseigné.
+- **Vos nombres sont les vôtres.** L'écran écrit sous les tableaux que ses totaux ne portent que sur
+  ce que vous avez le droit de lire, et qu'un collègue aux droits différents en lit d'autres sur les
+  mêmes données. Mesuré : 381 042,50 € pour l'administratrice, 344 892,50 € pour la lectrice, un
+  écart de 36 150,00 € qui est exactement ce qui lui est fermé — et jamais signalé, car le signaler
+  le divulguerait.
+- **Les devises ne se mélangent pas** : un tableau par devise, jamais un total commun, faute d'un
+  taux de change que le produit ne connaît pas.
+- **On n'y écrit rien, et rien n'y est cliquable** : cet écran mesure. Les probabilités se saisissent
+  là où elles l'ont toujours été — au catalogue, dans l'éditeur de workflows, sur la fiche d'une
+  affaire.
+- **Deux chapitres de manuel** : « L'entonnoir de conversion » et « Le prévisionnel pondéré et le
+  taux de conversion ».
+- **Ce qui reste dû, et qui est écrit plutôt que tu** : le filtre par track ou par channel, et
+  l'affichage des étapes où aucune affaire ne se tient.
+
 ### `CRM-066` — le produit sait enfin ce que vaut son portefeuille (tranche 2 a)
 
 - **Une probabilité qu'on vous fait saisir depuis longtemps se met à servir.** Les écrans
