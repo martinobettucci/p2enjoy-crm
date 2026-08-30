@@ -28421,6 +28421,30 @@ catalogue —, et l'écran s'y monte dans un `MemoryRouter`, la portée vivant d
 symbole l'ayant sauté. L'intention est légitime, la forme source l'est moins : `\0` produit la même
 valeur d'exécution.
 
+**CAMPAGNE COMPLÈTE, ENTIÈREMENT VERTE.** `test:sql` **68 fichiers / 3083 assertions**, `test:unit`
+**3060 tests**, `e2e:api` **1058 passés**, `e2e:ui` **745 passés, aucun échec, 20,3 min**,
+`e2e:mail` **42 passés**, `pytest` **244**, `typecheck`, `types:check` et `build` verts ;
+`verify-analytique.sh` **29 contrôles, aucune anomalie**. La série entière des `verify-*.sh` n'a pas
+été rejouée : elle n'est la Definition of Done d'aucune unité (décision 553).
+
+**UNE ERREUR DE CONDUITE, CONSIGNÉE PLUTÔT QUE TUE, ET C'EST LA MÊME CLASSE QUE CELLE DE LA
+SESSION PRÉCÉDENTE.** `verify-analytique.sh` **dégrade la base** — `security definer` substitué,
+`coalesce` réordonné, surcharge du seed retirée — avant de la restaurer. Il a été lancé **pendant**
+qu'une première campagne d'interface tournait. Deux séries de preuves sur une seule base se mesurent
+l'une l'autre : cette campagne, arrivée à **517 scénarios sans aucun échec**, a été **abandonnée**
+plutôt que lue, le seed réappliqué, et la campagne rejouée **seule**. La leçon est la même que celle
+de la décision 565 sur `SCENARIOS_UI` révisé en cours d'exécution — un état partagé modifié sous une
+preuve rend son verdict ininterprétable, quelle que soit sa couleur.
+
+**250 CAPTURES RÉÉCRITES, TRIÉES PAR COMPARAISON PIXEL À PIXEL, PUIS RESTAURÉES.** **Aucune** ne
+porte d'écart que ce changement explique. Une seule de `CRM-066` diffère, sur un carré de 34 × 18 px
+qui est le **badge de notifications** ; les autres tiennent à la croissance du fil et aux dates
+relatives pendant la campagne — une capture « après » inspectée
+(`CRM-043/moderation-actions-1440.jpg`, 60 % de pixels changés) était simplement **défilée plus
+bas**, le fil ayant gagné des entrées pendant la série. Les **huit** captures de la portée, elles,
+ont été produites et **observées** dans le même changement que le code, et c'est en regardant l'une
+d'elles que le défaut du `select` fermé a été trouvé.
+
 **Où reprendre.** `CRM-066` **tranche 4** — le score de santé de `CRM-P02`, qui commence par son
 **arbitrage** : ce qu'un score « transparent » agrège n'est écrit nulle part (§11.4), et deux
 compositions raisonnables donnent deux produits différents. `docs/CloudWorker.md` §4.1 bis dit qu'il

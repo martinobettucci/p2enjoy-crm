@@ -10501,6 +10501,30 @@ rejouée : elle n'est la Definition of Done d'aucune unité (décision 553).
       `administration-workflows.ts` porte deux octets NUL littéraux, ce qui en fait un fichier
       **binaire** pour `git diff` et pour `grep`. L'intention est légitime (un séparateur de clé
       composite) ; c'est la forme source qui l'est moins, `\0` produisant la même valeur.
+- [x] **UN GARDE-FOU DU HARNAIS RÉVISÉ, ET RENDU PLUS STRICT** (décision 51, treizième occurrence).
+      Le contrôle statique de `verify-analytique.sh` refusait quatre colonnes de la règle dans TOUT
+      le module ; la tranche 3 c y ajoute une lecture d'une **autre** table, qui doit écarter les
+      nœuds archivés. Ce n'est pas une recopie — la fonction rend des lignes d'entonnoir, jamais le
+      catalogue. Hors de `lireNoeudsCatalogue` les quatre colonnes restent interdites ; **dans**
+      cette fonction `archived_at` est désormais **EXIGÉ**, et trois des quatre y sont interdites à
+      leur tour. Retirer l'exclusion fait maintenant rougir le harnais.
+- [x] **CAMPAGNE DE FIN DE SESSION, ENTIÈREMENT VERTE** : `test:sql` **68 fichiers / 3083
+      assertions**, `test:unit` **3060 tests**, `e2e:api` **1058 passés**, `e2e:ui` **745 passés,
+      aucun échec, 20,3 min**, `e2e:mail` **42 passés**, `pytest` **244**, `typecheck`,
+      `types:check` et `build` verts ; `verify-analytique.sh` **29 contrôles, aucune anomalie**.
+      La série entière des `verify-*.sh` n'a **pas** été rejouée : elle n'est la Definition of Done
+      d'aucune unité (décision 553) et relève d'une session dédiée.
+- [x] **UNE ERREUR DE CONDUITE, CONSIGNÉE PLUTÔT QUE TUE.** `verify-analytique.sh` — qui **dégrade
+      la base** puis la restaure — a été lancé pendant qu'une première campagne d'interface tournait.
+      Deux séries de preuves sur une seule base se mesurent l'une l'autre : cette campagne, arrivée à
+      517 scénarios sans échec, a été **abandonnée**, le seed réappliqué, et la campagne rejouée
+      seule — **745 passés**.
+- [x] **250 CAPTURES RÉÉCRITES PAR LA CAMPAGNE, TRIÉES PAR COMPARAISON PIXEL À PIXEL, PUIS
+      RESTAURÉES.** Aucune ne porte d'écart que ce changement explique : une seule de `CRM-066`
+      diffère, sur un carré de 34 × 18 px qui est le **badge de notifications** ; les autres tiennent
+      à la croissance du fil et aux dates relatives pendant la campagne — une capture « après »
+      inspectée était simplement **défilée plus bas**. Les huit captures de la portée, elles, ont été
+      produites et **observées** dans le même changement que le code.
 - [ ] **4 — le score de santé (`CRM-P02`).** Il commence par son **arbitrage** : ce qu'un score
       « transparent » agrège n'est écrit dans aucun document, et deux compositions raisonnables
       donnent deux produits différents (`docs/SPEC-analytique.md` §11.4).
