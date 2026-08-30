@@ -88,14 +88,23 @@ grain de la fonction, qui descend au channel (§5.1) et rend **seize** lignes su
 | Prospection | open | EUR | 11 | 1 | 294 200,00 | 29 420,00 |
 | Relance | open | CHF | 1 | 0 | 47 000,00 | 9 400,00 |
 | Relance | open | EUR | 8 | 0 | 284 350,00 | 56 870,00 |
-| Négociation | open | EUR | 9 | 0 | 366 850,00 | 183 425,00 |
+| Négociation | open | EUR | 9 | 0 | 366 850,00 | 230 752,50 |
 | Signature | open | CHF | 1 | 0 | 28 000,00 | 25 200,00 |
 | Réalisation | open | EUR | 1 | 0 | 64 000,00 | 64 000,00 |
 | Livré | **won** | EUR | 7 | 0 | 311 000,00 | 311 000,00 |
 | Perdu | **lost** | EUR | 1 | 0 | 31 000,00 | 0,00 |
 
 Somme des affaires : **39**, égale au décompte des cards actives. Prévisionnel des seules affaires
-ouvertes : **333 715,00 EUR** et **34 600,00 CHF**. Affaires décidées : 7 gagnées, 1 perdue.
+ouvertes : **381 042,50 EUR** et **34 600,00 CHF**. Affaires décidées : 7 gagnées, 1 perdue.
+
+**RÉVISÉ LE 2026-08-30 PAR LA TRANCHE 2 c, ET LE TABLEAU CI-DESSUS EST CELUI D'APRÈS.** Les deux
+surcharges du §9 sont posées : l'étape `negociation` du workflow par défaut porte **65 %**, et
+« Reprise du dossier Marchand » **30 %**. Le pondéré de `Négociation` passe donc de 183 425,00 —
+la valeur qu'il avait quand le catalogue l'emportait partout — à **230 752,50**, et le prévisionnel
+EUR de 333 715,00 à **381 042,50**. Le CHF est INCHANGÉ : aucune affaire en francs n'est à ce nœud.
+Le montant, lui, ne bouge pas : une probabilité ne change pas ce qu'une affaire vaut, seulement ce
+qu'on en espère. Un tableau de mesures qui survit à la donnée qu'il mesure est un tableau faux, et
+c'est le §9 lui-même qui exige cette révision dans le même changement.
 
 **M7 — la RLS fait déjà diverger les appelants, et la divergence est nommée à l'affaire près.** Avec
 les jetons réels obtenus par la véritable route de connexion,
@@ -260,9 +269,14 @@ Conséquence mesurable et exigée : sur le seed, l'administratrice et le busines
 un entonnoir totalisant **39** affaires sur 16 lignes, la lectrice **35** sur 13. Trois lignes
 repliées de son entonnoir diffèrent, et **elles sont nommées** — `prospection`/EUR passe de 11 à 10,
 `relance`/EUR de 8 à 6, `livre`/EUR de 7 à 6 —, tandis que `negociation`, `signature`, `realisation`
-et `perdu` sont **identiques**. Son prévisionnel vaut **297 565,00 EUR** là où celui de
-l'administratrice vaut **333 715,00 EUR**, les deux portant le même **34 600,00 CHF**. Deux appelants
+et `perdu` sont **identiques**. Son prévisionnel vaut **344 892,50 EUR** là où celui de
+l'administratrice vaut **381 042,50 EUR**, les deux portant le même **34 600,00 CHF**. Deux appelants
 n'obtiennent pas le même prévisionnel, et c'est correct.
+
+Les deux nombres ont été **révisés par la tranche 2 c**, qui a porté le pondéré de `negociation` à
+230 752,50 : ils valaient 297 565,00 et 333 715,00 quand le catalogue l'emportait partout. L'ÉCART
+ENTRE EUX, LUI, EST INCHANGÉ — 36 150,00 EUR —, et c'est ce qui devait l'être : les quatre affaires
+que la lectrice ne voit pas sont à `prospection`, `relance` et `livre`, aucune à `negociation`.
 
 ### 5.4 `anon` est révoqué nommément
 
@@ -302,7 +316,7 @@ un privilège ne dépend pas du verbe.
 | c | administratrice | idem | Repliées par `(node_key, currency)`, les 16 lignes rendent exactement les **huit** de M6, avec leurs montants |
 | d | administratrice | idem | Ordre rendu : `node_position` croissante, puis `currency` — deux appels successifs rendent la **même** suite |
 | e | business developer | idem | Somme des `affaires` = **39** — identique à *b*, le seed ne lui fermant aucun track |
-| f | **lectrice** | idem | **13 lignes**, somme des `affaires` = **35**. Aucune ligne du channel `grands-comptes` ; repliées, `prospection`/EUR 11 → **10**, `relance`/EUR 8 → **6**, `livre`/EUR 7 → **6** ; `negociation`, `signature`, `realisation` et `perdu` **identiques** à *b*. Son prévisionnel vaut **297 565,00 EUR** contre 333 715,00 à *b*, et **34 600,00 CHF** dans les deux cas |
+| f | **lectrice** | idem | **13 lignes**, somme des `affaires` = **35**. Aucune ligne du channel `grands-comptes` ; repliées, `prospection`/EUR 11 → **10**, `relance`/EUR 8 → **6**, `livre`/EUR 7 → **6** ; `negociation`, `signature`, `realisation` et `perdu` **identiques** à *b*. Son prévisionnel vaut **344 892,50 EUR** contre 381 042,50 à *b*, et **34 600,00 CHF** dans les deux cas |
 | g | lectrice | idem | `200` et non `403` : le refus est **zéro ligne**, jamais une erreur (`docs/SPEC-permissions-rls.md` §7) |
 | h | clé de service | idem | Somme des `affaires` = **39** — contre-épreuve établissant que les lignes que la lectrice ne voit pas **existent** (décision 50) |
 | i | administratrice | idem | La ligne `prospection`/`EUR` porte `affaires_sans_montant` = **1** et `montant` = **294 200,00** : le montant nul n'a pas été compté comme zéro |
@@ -311,9 +325,16 @@ un privilège ne dépend pas du verbe.
 | l | administratrice | idem | `montant_pondere` de `perdu` vaut **0,00** et non nul : la probabilité **est** connue et vaut zéro |
 | m | administratrice, après surcharge d'étape | idem | La surcharge de `workflow_steps` l'emporte sur `default_probability` — §3 |
 | n | administratrice, après surcharge de card | idem | La surcharge de `cards` l'emporte sur celle de l'étape — §3 |
+| q | administratrice, **sans rien écrire** | idem | Les trois niveaux tels que le SEED les pose (§9) : `dossiers-2023`/`negociation` rend **6 600,00** — 22 000,00 × 30 %, la surcharge d'affaire —, `refonte`/`negociation` rend **46 800,00** — 72 000,00 × 65 %, la surcharge d'étape, sur la MÊME étape —, et le nœud entier **230 752,50**, jamais 183 425,00 |
 
 Les lignes *m* et *n* écrivent puis **restaurent** l'état qu'elles ont trouvé : une preuve rend le
 produit dans l'état où elle l'a pris (décision 501).
+
+**LA LIGNE *q* EST AJOUTÉE PAR LA TRANCHE 2 c, ET ELLE N'ÉCRIT RIEN.** Les lignes *m* et *n* posent
+leurs surcharges puis les retirent : elles éprouvent la **règle**, et resteraient vertes sur un seed
+qui n'exercerait aucun niveau au-delà du catalogue. La ligne *q* lit ce que le seed porte : elle
+éprouve la **donnée**, ce que `CLAUDE.md` §8 exige d'une règle métier neuve. Les trois nombres sont
+mesurés sur une pile seedée à froid.
 
 ## 7. Les deux grandeurs dérivées
 
@@ -347,7 +368,8 @@ previsionnel[devise] = somme de `montant_pondere` sur les lignes de kind 'open' 
 
 Les nœuds terminaux en sont **exclus** : une affaire gagnée n'est plus une prévision, une affaire
 perdue vaut zéro et l'inclure ne changerait rien tout en laissant croire qu'elle compte. Sur le
-seed : **333 715,00 EUR** et **34 600,00 CHF**.
+seed, depuis la tranche 2 c : **381 042,50 EUR** et **34 600,00 CHF** — 333 715,00 EUR avant que les
+deux surcharges du §9 ne soient posées.
 
 ### 7.3 Ce que l'écran doit dire, et qu'un total ne dit pas
 
@@ -378,18 +400,42 @@ session qui livre la base produirait une règle visuelle qu'aucune preuve n'exer
 
 ## 9. Seed — ce que cette unité doit y ajouter
 
-**Mesuré (M3, M4) : aucune card et aucune étape du seed ne porte de `probability_override`.** La
-résolution à trois niveaux du §3 n'est donc démontrée qu'à son troisième niveau. `CLAUDE.md` §8
-exige qu'une règle métier neuve soit démontrable sur les données de développement : la **tranche 2 c**
-pose, dans `supabase/seed/` :
+**Mesuré le 2026-08-30 (M3, M4), AVANT cette tranche : aucune card et aucune étape du seed ne
+portait de `probability_override`.** La résolution à trois niveaux du §3 n'était donc démontrée qu'à
+son troisième niveau. `CLAUDE.md` §8 exige qu'une règle métier neuve soit démontrable sur les
+données de développement.
 
-- une **surcharge d'étape** sur une étape d'un workflow seedé, différente de la valeur du nœud ;
-- une **surcharge d'affaire** sur une card seedée, différente des deux précédentes.
+**LIVRÉ le 2026-08-30 par la tranche 2 c.** Le seed pose désormais les deux surcharges manquantes :
 
-Les deux valeurs sont choisies pour que les trois niveaux rendent trois nombres distincts, faute de
-quoi la preuve ne distinguerait pas une résolution correcte d'une résolution qui s'arrête au premier
-niveau non nul rencontré dans le mauvais ordre. Les totaux de M6 sont révisés dans le même
-changement — un tableau de mesures qui survit à la donnée qu'il mesure est un tableau faux.
+| Niveau | Objet | Valeur | Où elle est déclarée |
+|---|---|---|---|
+| 3 — le catalogue | nœud `negociation` | **50 %** | tableau `NOEUDS`, section 5 du seed |
+| 2 — l'étape | étape 3 du workflow par défaut, `5eed…063` | **65 %** | tableau `ETAPES`, section 6 |
+| 1 — l'affaire | « Reprise du dossier Marchand », `5eed…0cf` | **30 %** | tableau `SURCHARGES_PROBABILITE`, section 8 duodecies ter |
+
+**LES TROIS VALEURS S'ENCADRENT — 30 < 50 < 65 —, ET C'EST CE QUI REND LA RÈGLE OPPOSABLE.** Trois
+nombres distincts ne suffisent pas : s'ils croissaient du moins spécifique au plus spécifique, un
+`greatest` rendrait exactement le même résultat que « le plus spécifique gagne », et aucune preuve
+ne les distinguerait. Avec cet encadrement, chaque résolution fausse rend un nombre différent — un
+`coalesce` écrit à l'envers rend 50, un `greatest` rend 65, un `least` rend 50 sur les huit autres
+affaires du nœud.
+
+**« Reprise du dossier Marchand » et pas une autre** : elle est la SEULE affaire active de
+`dossiers-2023` au nœud `negociation`, si bien que la ligne de l'entonnoir qui la porte est
+exactement son montant par sa probabilité — 22 000,00 × 30 % = 6 600,00 —, sans qu'aucune autre
+affaire ne s'y mêle. C'est le même isolement qui rend « Cadrage data » lisible pour les lignes *k*,
+*m* et *n*.
+
+**LA SURCHARGE D'ÉTAPE EST POSÉE DANS LE CONTRAT DES ÉTAPES, ET NON PAR UN `PATCH` ULTÉRIEUR.** La
+copie du workflow vers le track (section 7 du seed) recopie `probability_override`, et la version
+publiée (section 8 undecies) photographie la composition : une surcharge écrite après elles ferait
+diverger un seed appliqué à froid d'un seed rejoué. MESURÉ : la copie de `conseil-ia` porte bien
+65 % elle aussi, `workflow_derivations.source_modified_since_copy` reste **faux**, et l'empreinte de
+composition du workflow par défaut a **changé** — garde-fou de `0037_versionnement_workflows.test.sql`
+révisé dans le même changement, jamais contourné.
+
+Les totaux de M6, du §5.3, du §6 et du §7.2 sont révisés dans ce même changement — un tableau de
+mesures qui survit à la donnée qu'il mesure est un tableau faux.
 
 ## 10. Découpage en tranches
 
@@ -401,7 +447,7 @@ et prouvable seule.
 | **1 — la spécification** | Ce document, l'entrée de backlog de `CRM-066` et sa Definition of Done, `docs/JOURNAL.md` décision 562. Commit documentaire dédié, poussé avant tout code | **LIVRÉE** le 2026-08-30 |
 | **2 a — la fonction** | `supabase/migrations/0073_entonnoir_conversion.sql`, sa suite pgTAP dédiée (27 assertions), son contrat d'API du §6 (16 scénarios), `docs/SCHEMA.md` §9 bis.11, `docs/PROD_MIGRATIONS.md` migration 73 | **LIVRÉE ET PROUVÉE** le 2026-08-30 |
 | **2 b — le module** | `webapp/src/lib/analytique.ts` : lecture de la fonction, restriction de portée, repli par nœud et par devise, les deux grandeurs du §7, et sa suite unitaire (26 tests) | **LIVRÉE ET PROUVÉE** le 2026-08-30 |
-| **2 c — le seed** | Les deux surcharges du §9, les compteurs et le tableau M6 révisés dans le même changement | — |
+| **2 c — le seed** | Les deux surcharges du §9, les compteurs et le tableau M6 révisés dans le même changement | **LIVRÉE ET PROUVÉE** le 2026-08-30 |
 | **3 — l'écran** | `/pilotage`, sa spécification visuelle dans `docs/DESIGN_SYSTEM.md` écrite d'abord, ses tests de composant, son E2E d'interface à console vierge, ses captures **observées**, `docs/manual.md` chapitres 28 et 29 | — |
 | **4 — le score de santé** | `CRM-P02`. Il exige d'abord son arbitrage : ce qu'un score « transparent » agrège n'est écrit nulle part (§11.4) | — |
 
@@ -470,13 +516,18 @@ par une assertion, et non laissé à la prose.
    la fonction, sa volatilité, sa sécurité `invoker`, l'ACL des quatre rôles, la résolution à trois
    niveaux dans ses trois sens, les deux exclusions et **l'inclusion** de la card en sommeil, le
    montant nul non compté comme zéro, la probabilité nulle non remplacée, et le grain par devise.
-2. **Contrat d'API** — `e2e/api/analytique.spec.ts` rejoue les quatorze lignes du §6 avec les jetons
-   réels des trois profils, chaque refus éprouvé **contre** son succès correspondant.
+   Son **groupe 6 bis**, ajouté par la tranche 2 c, éprouve la même résolution **sans rien écrire**,
+   sur les surcharges que le seed pose (§9) : le groupe qui écrit prouve la règle, celui-ci prouve
+   que la donnée l'exerce.
+2. **Contrat d'API** — `e2e/api/analytique.spec.ts` rejoue les quinze lignes du §6 avec les jetons
+   réels des trois profils, chaque refus éprouvé **contre** son succès correspondant. La ligne *q*
+   est celle de la tranche 2 c, et elle est en lecture seule.
 3. **Unitaires** — `webapp/src/lib/analytique.test.ts` : les deux grandeurs du §7, dont
    `decidees = 0` rendant **inconnu** et non `0 %`.
 4. **Non-complaisance** — le harnais dégrade réellement le produit et doit échouer dans chaque cas :
    la fonction passée en `security definer` (la lectrice verrait alors 39 affaires), le `coalesce`
    de la probabilité réordonné, l'exclusion des archivées retirée, et le `filter` du montant pondéré
-   remplacé par un `coalesce(amount, 0)`. Il **restaure** ensuite tout ce qu'il a altéré et le
-   constate en sortant.
+   remplacé par un `coalesce(amount, 0)`. Son **contrôle 8**, ajouté par la tranche 2 c, dégrade la
+   **donnée** et non le code : la surcharge d'affaire retirée en base, la suite pgTAP doit rougir.
+   Il **restaure** ensuite tout ce qu'il a altéré et le constate en sortant.
 5. **E2E d'interface et captures** — tranche 3, avec sa console vierge et ses quatre paliers.
