@@ -28445,6 +28445,18 @@ bas**, le fil ayant gagné des entrées pendant la série. Les **huit** captures
 ont été produites et **observées** dans le même changement que le code, et c'est en regardant l'une
 d'elles que le défaut du `select` fermé a été trouvé.
 
+**UNE SECONDE ERREUR DE CONDUITE, MESURÉE APRÈS COUP, ET DONT LE REMÈDE EST ÉCRIT DANS
+`docs/CloudWorker.md`.** Les attentes de fin de campagne étaient écrites
+`until ! pgrep -f "playwright test"; do sleep …; done` — **sans classe protectrice**. La ligne de
+commande du shell qui exécute la boucle porte le motif, `pgrep` se trouve donc lui-même et rend
+toujours vrai : aucune de ces boucles n'est sortie sur sa condition, toutes ont consommé leur
+plafond, et le contrôle de fin de session a rendu « playwright ENCORE ACTIF » alors qu'aucun runner
+ne tournait — `pgrep -f "[p]laywright test"` et `pgrep -c chrome` rendent zéro. C'est la classe
+`[v]ite` du §2.1 ter, mais appliquée à `pgrep` plutôt qu'à `pkill`, et son mode de défaillance est
+plus sournois : il ne tue rien, il **ment**. Le §2.1 ter est complété sur place avec cette mesure,
+et avec celle du même jour où `pkill -f "[v]ite"` a tué son propre appelant parce que la même ligne
+mentionnait `vitest` plus loin.
+
 **Où reprendre.** `CRM-066` **tranche 4** — le score de santé de `CRM-P02`, qui commence par son
 **arbitrage** : ce qu'un score « transparent » agrège n'est écrit nulle part (§11.4), et deux
 compositions raisonnables donnent deux produits différents. `docs/CloudWorker.md` §4.1 bis dit qu'il

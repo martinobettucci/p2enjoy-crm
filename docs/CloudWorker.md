@@ -586,6 +586,39 @@ La classe `[v]ite` désigne toujours le texte `vite`, mais la ligne de commande 
 `[v]ite` et ne correspond donc plus. Une campagne d'interface lancée derrière un `pkill -f vite`
 non protégé meurt sans rien dire : ce n'est ni un verdict rouge, ni une preuve.
 
+**LA MÊME AUTO-CORRESPONDANCE PIÈGE `pgrep`, ET PAS SEULEMENT `pkill` — MESURÉ le 2026-08-30.** La
+classe protectrice vaut pour **toute** recherche sur les lignes de commande, et le mode de
+défaillance y est plus sournois parce qu'il ne tue rien : il **ment**.
+
+```
+until ! pgrep -f "playwright test" >/dev/null; do sleep 120; done
+=> la boucle ne sort JAMAIS : la ligne de commande du shell qui l'exécute porte
+   « playwright test », si bien que pgrep se trouve LUI-MÊME et rend toujours vrai.
+   L'attente consomme son délai entier, puis rend « TOUJOURS EN COURS » sur une
+   campagne terminée depuis longtemps.
+
+pgrep -f "[p]laywright test"   => rend le vrai runner, et rien d'autre
+```
+
+**Deux conséquences pratiques.** Une boucle d'attente écrite ainsi ne se termine pas sur sa
+condition mais sur son plafond, ce qui donne l'illusion d'une campagne interminable ; et un contrôle
+de fin de session écrit ainsi rend « un processus de preuve tourne encore » alors qu'aucun ne
+tourne. **Toute recherche de processus dans ce dépôt s'écrit avec la classe** : `[p]laywright`,
+`[v]ite`, `[n]ode`. Vérifie de surcroît avec `pgrep -c chrome`, qui ne peut pas se trouver lui-même.
+
+**ET PIRE ENCORE POUR `pkill` : le motif attrape ce que la MÊME ligne mentionne plus loin.** MESURÉ
+le même jour :
+
+```
+bash -c '… pkill -f "[v]ite" ; npx vitest run …'
+=> le shell meurt, code 144, AUCUNE sortie : « vitest » contient « vite », et la
+   protection par classe ne sert à rien puisque le texte matché est ailleurs
+   dans la même ligne de commande.
+```
+
+Un `pkill` et une commande dont le nom contient le motif ne se mettent donc **jamais dans le même
+appel de shell**.
+
 **Avec ces deux conditions**, `scripts/verify-administration-arborescence.sh` rend
 `27 contrôles, aucune anomalie` là où il rendait `3 en échec`. Sans elles, un verdict rouge de ces
 harnais ne doit être lu ni comme une régression, ni comme une preuve.
