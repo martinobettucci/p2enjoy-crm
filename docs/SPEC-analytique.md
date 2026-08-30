@@ -80,7 +80,8 @@ seed ne la porte, aucun trigger ne l'écrit, aucun module de la webapp ne la lit
 **M6 — le portefeuille seedé est riche et à deux devises.** 41 cards, dont **39 actives** — une en
 corbeille (`Saisie erronée`) et une archivée (`Contrat cadre 2025`). Deux devises présentes, `EUR` et
 `CHF`. **Deux cards sans montant**, dont une active (`Piste entrante à qualifier`). L'entonnoir
-attendu, tous droits confondus :
+attendu, tous droits confondus, **replié par nœud** — c'est la vue que l'écran montre, et non le
+grain de la fonction, qui descend au channel (§5.1) et rend **seize** lignes sur ce même seed :
 
 | Nœud | `kind` | Devise | Affaires | Sans montant | Montant | Pondéré |
 |---|---|---|---|---|---|---|
@@ -126,14 +127,14 @@ seconde colonne.
 
 **Une probabilité absente n'est JAMAIS remplacée par un défaut.** Si les trois niveaux sont nuls, la
 probabilité est inconnue, et l'affaire ne contribue pas au montant pondéré : elle est **comptée à
-part**, dans `cards_sans_probabilite`. C'est mot pour mot la règle du seuil d'ancienneté
+part**, dans `affaires_sans_probabilite`. C'est mot pour mot la règle du seuil d'ancienneté
 (`docs/SPEC-relances.md` §2.2) et celle du coût réel (`docs/SPEC-costs.md` §2.3, « nul n'est pas
 zéro »). Substituer `0` transformerait « personne n'a dit ce que vaut cette affaire » en « cette
 affaire ne vaut rien », et un prévisionnel qui ment par défaut est pire qu'un prévisionnel
 incomplet.
 
 **Un montant absent suit la même règle.** `cards.amount` nul n'est pas `0` : l'affaire est comptée
-dans `cards`, comptée dans `cards_sans_montant`, et ne contribue ni au montant ni au pondéré. Le
+dans `affaires`, comptée dans `affaires_sans_montant`, et ne contribue ni au montant ni au pondéré. Le
 §7.3 impose que l'écran le **dise**, comme le §4.4 de `docs/SPEC-costs.md` l'impose déjà aux barres
 de coûts.
 
@@ -181,22 +182,40 @@ objet. Figé par une assertion.
 ```
 public.entonnoir_conversion()
 returns table (
-  workspace_id            uuid,
-  track_id                uuid,
-  channel_id              uuid,
-  node_id                 uuid,
-  node_key                text,
-  node_label              text,
-  node_kind               text,      -- open | won | lost
-  node_position           numeric,
-  currency                text,
-  cards                   integer,
-  cards_sans_montant      integer,
-  cards_sans_probabilite  integer,
-  montant                 numeric,
-  montant_pondere         numeric
+  workspace_id               uuid,
+  track_id                   uuid,
+  channel_id                 uuid,
+  node_id                    uuid,
+  node_key                   text,
+  node_label                 text,
+  node_kind                  text,      -- open | won | lost
+  node_position              numeric,
+  currency                   text,
+  affaires                   integer,
+  affaires_sans_montant      integer,
+  affaires_sans_probabilite  integer,
+  montant                    numeric,
+  montant_pondere            numeric
 )
 ```
+
+**`node_label` est celui du CATALOGUE, jamais le `label_override` de l'étape.** Une étape peut
+renommer son nœud **à l'intérieur d'un workflow** (`workflow_steps.label_override`) ; l'entonnoir,
+lui, compare des affaires **à travers** les workflows — c'est pourquoi `docs/MASTER_PLAN.md` §2 pose
+que cette unité exige le catalogue partagé de `CRM-030`. Rendre le libellé de l'étape ferait porter
+deux noms à une même colonne dès que deux workflows renomment différemment le même nœud. Figé par
+une assertion.
+
+**Les deux montants sont arrondis au centime**, une seule fois, sur la somme — jamais sur chaque
+terme. `cards.amount` est `numeric(14,2)` et une probabilité `numeric(5,2)` : le produit brut porte
+quatre décimales, qui ne sont pas de la monnaie. Sommer des valeurs déjà arrondies déplacerait
+l'erreur d'arrondi dans le total ; arrondir le total une fois la laisse au centime près.
+
+**Une ligne n'existe que si elle est peuplée.** Un nœud sans aucune affaire dans un channel donné ne
+produit **aucune** ligne : émettre des zéros pour tous les couples possibles multiplierait le
+résultat par le produit des cardinalités et **inventerait des devises** qu'aucune affaire ne porte.
+L'écran de la tranche 3 compose la liste complète des nœuds depuis `workflow_nodes_catalog`, qu'un
+membre lit déjà, et affiche zéro là où la fonction se tait.
 
 | | |
 |---|---|
@@ -217,9 +236,10 @@ histogramme par track.
 
 Le grain rendu est donc le plus fin dont l'écran a besoin, et les trois portées s'en déduisent par
 sommation : le channel est une ligne, le track la somme de ses channels, le workspace la somme de
-ses tracks. Le volume est borné par `channels × nœuds × devises présentes` — **huit** lignes sur le
-seed pour 39 affaires —, et non par le nombre d'affaires. C'est ce qui distingue cet agrégat d'un
-téléchargement du portefeuille, que `CLAUDE.md` §21 interdit dès que le volume croît.
+ses tracks. Le volume est borné par `channels × nœuds × devises présentes` — **seize** lignes
+mesurées sur le seed pour 39 affaires, qui se replient en les **huit** de M6 —, et non par le nombre
+d'affaires. C'est ce qui distingue cet agrégat d'un téléchargement du portefeuille, que `CLAUDE.md`
+§21 interdit dès que le volume croît.
 
 `inbox_arborescence()` (`CRM-057`) suit exactement cette forme : rendre l'arbre en un appel, et
 laisser l'écran le replier.
@@ -237,10 +257,12 @@ de `cards`, donc d'`app.can_read_card`. Le refus se mesure comme **zéro ligne**
 erreur — la forme exigée par les preuves de refus n° 3 et n° 4 de `docs/SPEC-permissions-rls.md` §7.
 
 Conséquence mesurable et exigée : sur le seed, l'administratrice et le business developer obtiennent
-un entonnoir totalisant **39** affaires, la lectrice **35**. Trois lignes de son entonnoir diffèrent,
-et **elles sont nommées** — `prospection`/EUR passe de 11 à 10, `relance`/EUR de 8 à 6, `livre`/EUR
-de 7 à 6 —, tandis que `negociation`, `signature`, `realisation` et `perdu` sont **identiques**. Deux
-appelants n'obtiennent pas le même prévisionnel, et c'est correct.
+un entonnoir totalisant **39** affaires sur 16 lignes, la lectrice **35** sur 13. Trois lignes
+repliées de son entonnoir diffèrent, et **elles sont nommées** — `prospection`/EUR passe de 11 à 10,
+`relance`/EUR de 8 à 6, `livre`/EUR de 7 à 6 —, tandis que `negociation`, `signature`, `realisation`
+et `perdu` sont **identiques**. Son prévisionnel vaut **297 565,00 EUR** là où celui de
+l'administratrice vaut **333 715,00 EUR**, les deux portant le même **34 600,00 CHF**. Deux appelants
+n'obtiennent pas le même prévisionnel, et c'est correct.
 
 ### 5.4 `anon` est révoqué nommément
 
@@ -271,15 +293,15 @@ Mesuré hors interface, avec les jetons réels obtenus par
 | Ligne | Appelant | Requête | Attendu |
 |---|---|---|---|
 | a | anonyme | `GET /rest/v1/rpc/entonnoir_conversion` | **`401`**, `42501` — refus par le privilège (§5.4), jamais un tableau vide |
-| b | administratrice | idem | `200`, **8 lignes**, somme des `cards` = **39** |
-| c | administratrice | idem | Les 8 lignes portent exactement les couples `(node_key, currency)` de M6, avec leurs montants |
+| b | administratrice | idem | `200`, **16 lignes**, somme des `affaires` = **39** |
+| c | administratrice | idem | Repliées par `(node_key, currency)`, les 16 lignes rendent exactement les **huit** de M6, avec leurs montants |
 | d | administratrice | idem | Ordre rendu : `node_position` croissante, puis `currency` — deux appels successifs rendent la **même** suite |
-| e | business developer | idem | Somme des `cards` = **39** — identique à *b*, le seed ne lui fermant aucun track |
-| f | **lectrice** | idem | Somme des `cards` = **35**. Aucune ligne du channel `grands-comptes` ; `prospection`/EUR 11 → **10**, `relance`/EUR 8 → **6**, `livre`/EUR 7 → **6** ; `negociation`, `signature`, `realisation` et `perdu` **identiques** à *b* |
+| e | business developer | idem | Somme des `affaires` = **39** — identique à *b*, le seed ne lui fermant aucun track |
+| f | **lectrice** | idem | **13 lignes**, somme des `affaires` = **35**. Aucune ligne du channel `grands-comptes` ; repliées, `prospection`/EUR 11 → **10**, `relance`/EUR 8 → **6**, `livre`/EUR 7 → **6** ; `negociation`, `signature`, `realisation` et `perdu` **identiques** à *b*. Son prévisionnel vaut **297 565,00 EUR** contre 333 715,00 à *b*, et **34 600,00 CHF** dans les deux cas |
 | g | lectrice | idem | `200` et non `403` : le refus est **zéro ligne**, jamais une erreur (`docs/SPEC-permissions-rls.md` §7) |
-| h | clé de service | idem | Somme des `cards` = **39** — contre-épreuve établissant que les lignes que la lectrice ne voit pas **existent** (décision 50) |
-| i | administratrice | idem | La ligne `prospection`/`EUR` porte `cards_sans_montant` = **1** et `montant` = **294 200,00** : le montant nul n'a pas été compté comme zéro |
-| j | administratrice | idem | Aucune ligne ne porte la card en corbeille ni l'archivée : la somme de `cards` vaut **39** et non 41 |
+| h | clé de service | idem | Somme des `affaires` = **39** — contre-épreuve établissant que les lignes que la lectrice ne voit pas **existent** (décision 50) |
+| i | administratrice | idem | La ligne `prospection`/`EUR` porte `affaires_sans_montant` = **1** et `montant` = **294 200,00** : le montant nul n'a pas été compté comme zéro |
+| j | administratrice | idem | Aucune ligne ne porte la card en corbeille ni l'archivée : la somme d'`affaires` vaut **39** et non 41 |
 | k | administratrice | idem | `Cadrage data — Groupe Vallier`, **encore endormie** (`snoozed_until` à dix jours), est comptée dans `prospection`/EUR — §4. La seconde card seedée avec un sommeil, `Refonte du site vitrine`, a une échéance **échue** : elle est éveillée de fait, et sa présence ne prouverait rien |
 | l | administratrice | idem | `montant_pondere` de `perdu` vaut **0,00** et non nul : la probabilité **est** connue et vaut zéro |
 | m | administratrice, après surcharge d'étape | idem | La surcharge de `workflow_steps` l'emporte sur `default_probability` — §3 |
@@ -297,7 +319,7 @@ calculer côté serveur imposerait une seconde définition à maintenir. Elles v
 ### 7.1 Taux de conversion des affaires décidées
 
 ```
-decidees = somme des `cards` sur les lignes de kind 'won' et 'lost'
+decidees = somme des `affaires` sur les lignes de kind 'won' et 'lost'
 taux     = si decidees > 0 : gagnees / decidees, sinon INCONNU
 ```
 
@@ -326,10 +348,10 @@ seed : **333 715,00 EUR** et **34 600,00 CHF**.
 
 Trois mentions sont **obligatoires**, sur le modèle de `docs/SPEC-costs.md` §4.4 :
 
-1. « *n* affaires sans montant » dès que `cards_sans_montant` est non nul dans la portée affichée —
+1. « *n* affaires sans montant » dès que `affaires_sans_montant` est non nul dans la portée affichée —
    sans quoi un prévisionnel bas se lit comme un portefeuille pauvre au lieu d'un portefeuille mal
    renseigné ;
-2. « *n* affaires sans probabilité » dès que `cards_sans_probabilite` est non nul ;
+2. « *n* affaires sans probabilité » dès que `affaires_sans_probabilite` est non nul ;
 3. le **nombre d'affaires** de chaque nœud, à côté du montant — un montant nu dans une liste sans
    en-têtes ne dit pas de quoi il est le nombre (défaut mesuré à la tranche 3 de `CRM-084`,
    décision 540).

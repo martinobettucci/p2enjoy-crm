@@ -13,6 +13,31 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-066` — le produit sait enfin ce que vaut son portefeuille (tranche 2 a)
+
+- **Une probabilité qu'on vous fait saisir depuis longtemps se met à servir.** Les écrans
+  d'administration permettent de poser une probabilité par défaut sur une étape du catalogue, de la
+  surcharger pour un workflow, puis pour une affaire précise. Jusqu'ici, **rien** ne relisait ces
+  trois valeurs : le produit les demandait sans jamais en faire un nombre.
+- **Ce que le serveur sait désormais rendre** : pour chaque étape du parcours, combien d'affaires
+  actives s'y tiennent, pour quel montant, et pour quel montant **pondéré** — le montant multiplié
+  par la probabilité de l'emporter. Le tout par channel et par devise, en une seule demande.
+- **Chacun voit son propre portefeuille, et pas celui des autres.** Le total est calculé sous
+  l'identité de la personne qui le demande : une affaire dont un channel vous est fermé n'entre pas
+  dans votre total. Un chiffre qui l'inclurait la révélerait par soustraction. Mesuré sur les
+  données de démonstration : l'administratrice voit 39 affaires et un prévisionnel de 333 715,00 €,
+  la lectrice 35 affaires et 297 565,00 € — la même demande, deux réponses justes.
+- **Une affaire sans montant ne compte pas pour zéro**, et une affaire dont personne n'a estimé les
+  chances non plus : les deux sont comptées **à part**, pour qu'un prévisionnel bas ne se lise pas
+  comme un portefeuille pauvre alors qu'il est simplement mal renseigné.
+- **Une affaire mise en sommeil reste au portefeuille.** Demander le silence sur une affaire ne la
+  fait pas disparaître d'un total — c'est la différence avec la liste des affaires figées, qui,
+  elle, l'écarte à bon droit.
+- **Aucun écran encore** : l'adresse `/pilotage` et son entonnoir sont la tranche suivante, avec
+  les chapitres 28 et 29 du manuel. Aucune donnée n'est modifiée, aucun email ne part.
+- **Migration `0073_entonnoir_conversion.sql`** — addition pure, en lecture seule ; voir
+  `docs/PROD_MIGRATIONS.md`.
+
 ### `CRM-041` — la preuve qui surveille la barre d'onglets vérifie enfin la règle qu'elle cite (INC-241)
 
 - **Aucun changement visible dans l'application** : c'est une preuve interne qui est corrigée, pas

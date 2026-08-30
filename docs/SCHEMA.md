@@ -1598,6 +1598,56 @@ référence `cards` en `on delete cascade` : sans cette garde, supprimer une aff
 dans le fil d'une affaire qui n'existe plus, la clé étrangère refusait, et **la suppression échouait
 entièrement**. Mesuré et corrigé le 2026-08-25.
 
+### 9 bis.11 `public.entonnoir_conversion()` — le portefeuille de l'appelant, migration 73
+
+Ajoutée le 2026-08-30 par `CRM-066` tranche 2 a (`docs/SPEC-analytique.md` §3 à §6).
+
+| | |
+|---|---|
+| Signature | `public.entonnoir_conversion() returns table (workspace_id, track_id, channel_id, node_id, node_key, node_label, node_kind, node_position, currency, affaires, affaires_sans_montant, affaires_sans_probabilite, montant, montant_pondere)` |
+| Volatilité | `stable`, `set search_path to ''`, **`security invoker`** — jamais `definer` |
+| Privilèges | `execute` à `authenticated` et `service_role` ; **`anon` révoqué nommément** |
+| Grain | une ligne par `(channel_id, node_id, currency)` **réellement peuplé** — 16 lignes sur le seed |
+| Ordre | `node_position`, puis `currency`, puis `channel_id` |
+
+**Ce qu'une ligne agrège** : les affaires **actives** du channel qui se tiennent au nœud, dans cette
+devise. La probabilité effective se résout à trois niveaux, le plus spécifique gagnant :
+
+```
+probabilite_effective = coalesce(cards.probability_override,
+                                 workflow_steps.probability_override,
+                                 workflow_nodes_catalog.default_probability)
+montant               = round(somme des amount connus, 2)
+montant_pondere       = round(somme de amount × probabilite_effective / 100
+                              sur les affaires portant LES DEUX, 2)
+```
+
+C'est, de forme, la résolution du seuil d'ancienneté que `public.cards_figees()` applique depuis
+`CRM-062`, appliquée à une seconde colonne. **Une absence n'est jamais remplacée par un défaut** :
+une affaire sans montant ou sans probabilité est comptée dans `affaires`, comptée à part dans
+`affaires_sans_montant` ou `affaires_sans_probabilite`, et ne contribue à aucun total.
+
+**Deux exclusions, et aucune troisième** : archivée, en corbeille. **Une affaire EN SOMMEIL compte**,
+à la différence de `public.cards_figees()` qui l'exclut — le sommeil dit « ne me réveille pas »,
+jamais « cette affaire n'est plus au portefeuille », et l'écarter ferait disparaître un montant d'un
+total du seul fait qu'on a demandé le silence. Les nœuds **archivés** du catalogue ne sont pas
+nommés : `workflow_steps` les référence en `ON DELETE RESTRICT` et un trigger refuse d'archiver un
+nœud occupé, si bien qu'un nœud archivé ne peut porter aucune affaire.
+
+**`node_label` est celui du CATALOGUE**, jamais le `label_override` de l'étape : l'entonnoir compare
+des affaires à travers les workflows, et rendre le libellé de l'étape ferait porter deux noms à une
+même ligne dès que deux workflows renomment le même nœud.
+
+**`security invoker` est obligatoire** : en `definer`, la fonction rendrait à chacun le portefeuille
+de tout le monde. Un total est une divulgation — un prévisionnel qui inclut une affaire interdite la
+divulgue par soustraction (`docs/SPEC-costs.md` §4.5). MESURÉ le 2026-08-30 sur le seed : 39 affaires
+sur 16 lignes pour l'administratrice et le business developer, **35 sur 13** pour la lectrice, dont
+le prévisionnel vaut 297 565,00 EUR contre 333 715,00.
+
+**`anon` doit être révoqué NOMMÉMENT**, même point de sûreté qu'au §9 bis.9 : `pg_default_acl` fait
+naître toute fonction neuve de `public` avec `anon=X`, et `revoke … from public` ne lui retire rien.
+Mesuré : `401` et `42501`, « permission denied for function entonnoir_conversion ».
+
 ## 10. Index principaux
 
 | Table | Index |
