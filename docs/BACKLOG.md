@@ -10472,11 +10472,35 @@ rejouée : elle n'est la Definition of Done d'aucune unité (décision 553).
 - [x] **Huit captures produites et OBSERVÉES** aux quatre paliers —
       `docs/captures/CRM-066/pilotage-portee-*.jpg` et les quatre `pilotage-*.jpg` réécrites.
       `docs/manual.md` §5 nonies.0 et `CHANGELOG.md` dans le même changement.
-- [ ] **3 c — les nœuds vides.** **ARBITRÉ le 2026-08-30** : §8 bis.5. Les nœuds du catalogue sans
-      aucune affaire active dans la portée affichée sont **nommés** sous les tableaux, sans devise
-      ni montant. Le « affiche zéro » du §5.1 est **révisé sur place** (`CLAUDE.md` §18) : un zéro
-      posé dans le tableau d'une devise inventerait une devise à un nœud qu'aucune affaire n'y
-      porte. **MESURÉ (M10)** : `qualification` n'est porté par aucune affaire active du seed.
+- [x] **3 c — les nœuds vides. LIVRÉE ET PROUVÉE le 2026-08-30.** Arbitrée d'abord (§8 bis.5) : les
+      nœuds du catalogue sans aucune affaire active **dans la portée affichée** sont **nommés** sous
+      les tableaux, sans devise ni montant, dans l'ordre du catalogue. Le « affiche zéro » du §5.1 est
+      **révisé sur place** (`CLAUDE.md` §18) : un zéro posé dans le tableau d'une devise inventerait
+      une devise à un nœud qu'aucune affaire n'y porte.
+- [x] **LA MESURE M10 ÉTAIT FAUSSE, ET C'EST LA PREUVE `S15` QUI L'A DIT.** Elle donnait
+      `qualification` pour « le cas de complétion réellement présent » ; il est bien vide, mais il
+      est **ARCHIVÉ** (`archived_at = 2026-03-01`), donc écarté par la règle « un nœud retiré du
+      catalogue n'est plus une étape du chemin ». M10 est **corrigée sur place**. À portée
+      workspace, le seed ne porte donc **aucun** nœud actif vide, et l'absence de mention est la
+      **contre-épreuve** de l'exclusion des archivés — `S15` l'éprouve comme telle.
+- [x] **C'EST LA PORTÉE RESTREINTE QUI EXERCE LA COMPLÉTION**, et c'est la lecture qu'on vient
+      faire : `studio-web` laisse **deux** nœuds actifs vides — « Signature et Perdu », vu sur la
+      capture —, `legacy-2023 / dossiers-2023` en laisse **six**, dans l'ordre du catalogue.
+- [x] **LE SEED N'EST PAS MODIFIÉ, ET LE CHOIX EST ÉCRIT** (§8 bis.5) : ajouter un neuvième nœud
+      actif et vide pour le seul confort de la portée workspace changerait la donnée de
+      démonstration de `CRM-030`, `CRM-031`, `CRM-076` et `CRM-078` — empreintes, compteurs et
+      captures — au bénéfice d'un état que l'utilisateur ne rencontrera presque jamais.
+- [x] **Preuves** : `analytique.test.ts` passe de 26 à **40 tests**, `Pilotage.test.tsx` de 37 à
+      **44**, `e2e/ui/pilotage.spec.ts` de 14 à **16 scénarios**, console vierge. `SCENARIOS_UI`
+      passe de 743 à **745**, valeur COMPTÉE. `docs/manual.md` §5 nonies.1 et `CHANGELOG.md` dans le
+      même changement.
+- [x] **UN DÉFAUT DE MA PROPRE PREUVE** : `queryByTestId` **lève** sur plusieurs correspondances, et
+      l'écran rend huit lignes. La forme plurielle est la seule qui dise ce que le contrôle veut
+      dire.
+- [x] **UN DÉFAUT ÉTRANGER CONSIGNÉ, NON CORRIGÉ** (`docs/CloudWorker.md` §3.1) : **INC-247** —
+      `administration-workflows.ts` porte deux octets NUL littéraux, ce qui en fait un fichier
+      **binaire** pour `git diff` et pour `grep`. L'intention est légitime (un séparateur de clé
+      composite) ; c'est la forme source qui l'est moins, `\0` produisant la même valeur.
 - [ ] **4 — le score de santé (`CRM-P02`).** Il commence par son **arbitrage** : ce qu'un score
       « transparent » agrège n'est écrit dans aucun document, et deux compositions raisonnables
       donnent deux produits différents (`docs/SPEC-analytique.md` §11.4).

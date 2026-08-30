@@ -2748,6 +2748,13 @@ export const fr = {
 	'pilotage.empty.title': 'Aucune affaire active',
 	'pilotage.empty.body':
 		'Les affaires actives que vous pouvez lire se répartissent ici par étape, avec leur montant et leur prévisionnel pondéré. Ouvrez une affaire depuis un board pour la voir apparaître.',
+	// TRANCHE 3 c — LES NŒUDS DU CATALOGUE QUE LA PORTÉE NE PEUPLE PAS SONT NOMMÉS, sans devise et
+	// sans montant (§8 bis.5). Ce que l'écran sait d'eux est un COMPTE d'affaires — zéro —, qui
+	// traverse licitement les devises parce qu'il n'additionne aucun argent. Un « 0,00 » dans le
+	// tableau d'une devise aurait inventé à ce nœud une devise qu'aucune affaire n'y porte.
+	// L'accord se fait par clé (§10), jamais par un gabarit paramétré.
+	'pilotage.empty.nodes': 'Aucune affaire active aux étapes {noeuds}.',
+	'pilotage.empty.nodes.one': 'Aucune affaire active à l’étape {noeuds}.',
 	// TRANCHE 3 b — l'état vide d'une PORTÉE choisie n'est pas celui de l'espace de travail entier :
 	// « ouvrez une affaire depuis un board » serait faux là où l'espace en porte trente-neuf. Le
 	// sélecteur reste au-dessus, sans quoi le lecteur serait enfermé dans une portée qu'il ne

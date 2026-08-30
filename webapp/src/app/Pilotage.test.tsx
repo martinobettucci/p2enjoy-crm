@@ -222,6 +222,27 @@ const PORTEES: readonly LigneEntonnoirLue[] = [
 ]
 
 /**
+ * Le catalogue de nœuds, tel que la TROISIÈME lecture le rend — `docs/SPEC-analytique.md` M10.
+ *
+ * SEPT NŒUDS, ET NON HUIT, parce que la requête écarte les archivés côté serveur : le seed en porte
+ * huit, dont `qualification` est ARCHIVÉ (`archived_at = 2026-03-01`, MESURÉ). Cette fixture est ce
+ * que la lecture REND, jamais ce que la table contient — mettre le huitième ici ferait éprouver une
+ * réponse que la base n'émet pas.
+ *
+ * Les identifiants sont ceux de `PORTEES` et de `SEED`, sans quoi aucun nœud ne serait reconnu comme
+ * peuplé.
+ */
+const CATALOGUE_SEED: readonly unknown[] = [
+	{ id: 'n1', key: 'prospection', label: 'Prospection', kind: 'open', position: 1 },
+	{ id: 'n2', key: 'relance', label: 'Relance', kind: 'open', position: 2 },
+	{ id: 'n3', key: 'negociation', label: 'Négociation', kind: 'open', position: 3 },
+	{ id: 'n4', key: 'signature', label: 'Signature', kind: 'open', position: 4 },
+	{ id: 'n5', key: 'realisation', label: 'Réalisation', kind: 'open', position: 5 },
+	{ id: 'n6', key: 'livre', label: 'Livré', kind: 'won', position: 6 },
+	{ id: 'n7', key: 'perdu', label: 'Perdu', kind: 'lost', position: 7 },
+]
+
+/**
  * Un client dont la RPC rend ce qu'on lui donne, et dont `from` rend l'arborescence des portées.
  *
  * **RÉVISÉ PAR LA TRANCHE 3 b, JAMAIS CONTOURNÉ.** Ce double ne portait que `rpc` : l'écran ne
@@ -236,21 +257,29 @@ function clientQuiRend(reponse: {
 	status?: number
 	channels?: readonly unknown[]
 	erreurChannels?: { message: string; status: number }
+	catalogue?: readonly unknown[]
+	erreurCatalogue?: { message: string; status: number }
 }): ClientCrm {
-	const requete = {
-		select: () => requete,
-		eq: () => requete,
-		is: () => requete,
-		order: () => requete,
-		then: (resoudre: (valeur: unknown) => unknown) =>
-			Promise.resolve({
-				data: reponse.erreurChannels === undefined ? (reponse.channels ?? CHANNELS_SEED) : null,
-				error:
-					reponse.erreurChannels === undefined
-						? null
-						: { message: reponse.erreurChannels.message },
-				status: reponse.erreurChannels?.status ?? 200,
-			}).then(resoudre),
+	// LE DOUBLE AIGUILLE SUR LA TABLE, et il le DOIT : l'écran lit deux tables différentes, et un
+	// double qui rendrait les mêmes lignes aux deux ferait passer des channels pour des nœuds de
+	// catalogue — une preuve verte sur une donnée que le produit ne rencontre jamais.
+	const requetePour = (table: string) => {
+		const echec = table === 'channels' ? reponse.erreurChannels : reponse.erreurCatalogue
+		const lignes =
+			table === 'channels' ? (reponse.channels ?? CHANNELS_SEED) : (reponse.catalogue ?? CATALOGUE_SEED)
+		const requete: Record<string, unknown> = {
+			select: () => requete,
+			eq: () => requete,
+			is: () => requete,
+			order: () => requete,
+			then: (resoudre: (valeur: unknown) => unknown) =>
+				Promise.resolve({
+					data: echec === undefined ? lignes : null,
+					error: echec === undefined ? null : { message: echec.message },
+					status: echec?.status ?? 200,
+				}).then(resoudre),
+		}
+		return requete
 	}
 	return {
 		rpc: vi.fn(() =>
@@ -260,7 +289,7 @@ function clientQuiRend(reponse: {
 				status: reponse.status ?? 200,
 			}),
 		),
-		from: vi.fn(() => requete),
+		from: vi.fn((table: string) => requetePour(table)),
 	} as unknown as ClientCrm
 }
 
@@ -669,8 +698,10 @@ describe('Pilotage — le sélecteur de portée (§8 bis, §5.48 bis)', () => {
 		const client = clientQuiRend({ data: PORTEES })
 		rendre(<Pilotage client={client} />)
 		await waitFor(() => expect(selecteur().disabled).toBe(false))
+		// TROIS lectures en tout, et une seule de chaque : l'entonnoir, l'arborescence des portées
+		// et le catalogue des nœuds.
 		expect(client.rpc).toHaveBeenCalledTimes(1)
-		expect(client.from).toHaveBeenCalledTimes(1)
+		expect(client.from).toHaveBeenCalledTimes(2)
 
 		await userEvent.selectOptions(selecteur(), 'studio-web')
 
@@ -679,7 +710,7 @@ describe('Pilotage — le sélecteur de portée (§8 bis, §5.48 bis)', () => {
 		// lues. Un appel par portée en ferait un filtre serveur, c'est-à-dire une seconde
 		// définition de la restriction.
 		expect(client.rpc).toHaveBeenCalledTimes(1)
-		expect(client.from).toHaveBeenCalledTimes(1)
+		expect(client.from).toHaveBeenCalledTimes(2)
 	})
 
 	it('une portée VIDE garde son sélecteur au-dessus, et porte son propre texte', async () => {
@@ -738,5 +769,109 @@ describe('Pilotage — le sélecteur de portée (§8 bis, §5.48 bis)', () => {
 		const lignes = await screen.findAllByTestId('pilotage-ligne')
 		expect(lignes).toHaveLength(3)
 		expect(screen.getByTestId('pilotage-portee').textContent).toBe(fr['pilotage.scope'])
+	})
+})
+
+// @verifies CRM-066 — TRANCHE 3 c : les nœuds du catalogue sans affaire, NOMMÉS
+// @verifies docs/SPEC-analytique.md §8 bis.5 (un nom, jamais un zéro ; l'échec de la lecture ne
+//           casse pas l'écran), §11.2 (aucune devise inventée)
+// @verifies docs/DESIGN_SYSTEM.md §5.48 bis (la place, la graduation, l'ordre, l'accord par clé)
+describe('Pilotage — les nœuds sans affaire (§8 bis.5, §5.48 bis)', () => {
+	const vides = () => screen.getByTestId('pilotage-noeuds-vides')
+	const portee = () => screen.getByTestId('pilotage-selecteur-portee') as HTMLSelectElement
+	const attendreResolution = () => waitFor(() => expect(portee().disabled).toBe(false))
+
+	it('NOMME le nœud vide, sans devise et SANS AUCUN MONTANT', async () => {
+		// Restreint au channel `refonte`, seul `Négociation` est peuplé.
+		rendre(
+			<Pilotage client={clientQuiRend({ data: PORTEES })} />,
+			'/pilotage?track=studio-web&channel=refonte',
+		)
+		await attendreResolution()
+		expect(vides().textContent).toMatch(/^Aucune affaire active aux étapes /)
+		// AUCUN MONTANT, AUCUNE DEVISE : un « 0,00 » aurait affirmé une mesure que l'écran n'a pas
+		// faite, et un « Qualification / CHF / 0 » aurait inventé une devise à ce nœud.
+		expect(vides().textContent).not.toMatch(/0,00/)
+		expect(vides().textContent).not.toMatch(/EUR|CHF/)
+		// Et aucune ligne de tableau n'est inventée pour un nœud vide.
+		const lignes = screen.queryAllByTestId('pilotage-ligne')
+		expect(lignes).toHaveLength(1)
+		expect(lignes[0]?.textContent).toMatch(/Négociation/)
+	})
+
+	it('LES NOMME DANS L’ORDRE DU CATALOGUE, et l’accord se fait par clé (§10)', async () => {
+		rendre(<Pilotage client={clientQuiRend({ data: PORTEES })} />, '/pilotage?track=studio-web')
+		await attendreResolution()
+		const texte = vides().textContent ?? ''
+		expect(texte.startsWith('Aucune affaire active aux étapes')).toBe(true)
+		const rangs = ['Prospection', 'Relance', 'Signature', 'Réalisation', 'Livré', 'Perdu']
+		const positions = rangs.map((libelle) => texte.indexOf(libelle))
+		expect(positions.every((position) => position >= 0)).toBe(true)
+		// L'entonnoir est un CHEMIN : l'ordre dit OÙ est le trou.
+		expect([...positions].sort((a, b) => a - b)).toEqual(positions)
+		// `Négociation` est peuplé dans cette portée : il n'est pas nommé.
+		expect(texte).not.toMatch(/Négociation/)
+	})
+
+	it('L’ACCORD AU SINGULIER EST UNE AUTRE CLÉ, jamais un gabarit paramétré', async () => {
+		// « 1 nœuds » est faux. Un catalogue d'un seul nœud, vide, rend la phrase singulière.
+		rendre(
+			<Pilotage
+				client={clientQuiRend({
+					data: PORTEES,
+					catalogue: [{ id: 'nX', key: 'x', label: 'Qualification', kind: 'open', position: 9 }],
+				})}
+			/>,
+		)
+		await attendreResolution()
+		expect(vides().textContent).toBe(
+			fr['pilotage.empty.nodes.one'].replace('{noeuds}', 'Qualification'),
+		)
+	})
+
+	it('LA MENTION SUIT LA PORTÉE : un nœud peuplé ailleurs y est vide', async () => {
+		// C'est la lecture que cet écran vient faire — voir de quelles étapes un channel est absent.
+		rendre(
+			<Pilotage client={clientQuiRend({ data: PORTEES })} />,
+			'/pilotage?track=conseil-ia&channel=prospection',
+		)
+		await attendreResolution()
+		// Seul `Prospection` est peuplé dans ce channel ; `Livré`, peuplé dans `grands-comptes`, y
+		// est vide.
+		expect(vides().textContent).toMatch(/Livré/)
+		expect(vides().textContent).not.toMatch(/Prospection/)
+	})
+
+	it('N’ÉCRIT RIEN quand tous les nœuds ACTIFS sont peuplés — et c’est le cas du seed', async () => {
+		// MESURÉ : à portée workspace, l'entonnoir de l'administratrice touche les SEPT nœuds non
+		// archivés du catalogue. Le huitième, `qualification`, est ARCHIVÉ et n'est donc pas rendu
+		// par la lecture — la contre-épreuve de son exclusion, et non un manque.
+		rendre(<Pilotage client={clientQuiRend({ data: SEED })} />)
+		await screen.findAllByTestId('pilotage-ligne')
+		expect(screen.queryByTestId('pilotage-noeuds-vides')).toBeNull()
+	})
+
+	it('N’EST JAMAIS RENDUE SUR L’ÉTAT VIDE — ce serait répéter l’état vide en le chiffrant', async () => {
+		rendre(<Pilotage client={clientQuiRend({ data: [] })} />)
+		await screen.findByTestId('etat-vide')
+		expect(screen.queryByTestId('pilotage-noeuds-vides')).toBeNull()
+	})
+
+	it('L’ÉCHEC DE LA LECTURE DU CATALOGUE NE CASSE PAS L’ÉCRAN (§8 bis.5)', async () => {
+		// Nommer un nœud vide ENRICHIT la lecture, il n'en est pas la condition : les tableaux sont
+		// rendus, et la mention n'est simplement pas écrite.
+		rendre(
+			<Pilotage
+				client={clientQuiRend({
+					data: PORTEES,
+					erreurCatalogue: { message: 'permission denied', status: 403 },
+				})}
+			/>,
+			'/pilotage?track=studio-web',
+		)
+		await attendreResolution()
+		expect(screen.getAllByTestId('pilotage-ligne').length).toBeGreaterThan(0)
+		expect(screen.queryByTestId('pilotage-noeuds-vides')).toBeNull()
+		expect(screen.queryByTestId('etat-erreur')).toBeNull()
 	})
 })

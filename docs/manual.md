@@ -2883,7 +2883,8 @@ C'est la même règle que celle du cumul du workspace (§5 septies.3) : quand de
 
 ## 5 nonies. L'entonnoir de conversion : où se tiennent vos affaires
 
-*Livré par `CRM-066` tranche 3 a, complété par la tranche 3 b (le sélecteur de portée, §5 nonies.0).
+*Livré par `CRM-066` tranche 3 a, complété par les tranches 3 b (le sélecteur de portée,
+§5 nonies.0) et 3 c (les étapes vides, nommées au §5 nonies.1).
 C'est le **chapitre 28** que `docs/SPEC-analytique.md` nomme. Captures dans
 `docs/captures/CRM-066/pilotage-*.jpg` et `pilotage-portee-*.jpg`.*
 
@@ -2943,8 +2944,15 @@ celui-là même que suivent les colonnes de vos boards. Chaque ligne porte :
 **L'ordre ne se change pas, et aucune colonne ne se trie.** Un entonnoir est un **chemin** : le
 reclasser par montant en ferait un palmarès, où « Perdu » remonterait au-dessus de « Prospection ».
 
-**Une étape où aucune affaire ne se tient n'a pas de ligne.** Elle n'est pas rendue « à zéro » : un
-zéro affirmerait une mesure que l'écran n'a pas faite.
+**Une étape où aucune affaire ne se tient n'a pas de ligne — elle est NOMMÉE sous les tableaux.**
+Elle n'est jamais rendue « à zéro » : un zéro affirmerait une mesure que l'écran n'a pas faite, et il
+faudrait de surcroît le poser dans une devise qu'aucune affaire n'y porte. L'écran écrit donc, sous
+les tableaux et dans l'ordre du catalogue : « Aucune affaire active aux étapes Signature et Perdu. »
+
+C'est la lecture la plus utile de cet écran sous une portée restreinte : elle dit **de quelles
+étapes** un track ou un channel est absent — où est le trou du chemin. Une étape **archivée** n'y
+figure pas : elle n'est plus une étape du chemin, et la nommer « sans affaire » inviterait à y en
+mettre une.
 
 ### 5 nonies.2 Quelles affaires y entrent, et lesquelles n'y entrent pas
 
@@ -3034,8 +3042,8 @@ comme un chiffre d'affaires.
 
 - **On n'y saisit rien**, et aucune ligne n'est cliquable. Les probabilités se saisissent au
   catalogue (§5 quater), dans l'éditeur de workflows (§5 bis) et sur la fiche d'une affaire (§4).
-- **Aucune étape vide n'est nommée** aujourd'hui : une étape où aucune affaire ne se tient n'a
-  simplement pas de ligne, et rien ne dit qu'elle est vide. Le nommer est prévu et n'est pas livré.
+- **Aucun score de santé** aujourd'hui : la colonne existe et rien ne l'alimente. Ce qu'un score
+  « transparent » devrait agréger n'est arbitré nulle part, et il n'est donc pas inventé ici.
 - **Aucune lecture d'historique.** L'entonnoir est un **instantané** de l'état courant, jamais une
   analyse par période : il dit où vos affaires se tiennent **aujourd'hui**, pas ce qu'elles sont
   devenues depuis janvier.

@@ -37,6 +37,11 @@
 //       §8 bis.3 (changer de portée ne relit rien ; les grandeurs et les mentions suivent la
 //       portée), §8 bis.4 (la seconde lecture, et son échec qui ne casse pas l'écran)
 // @spec docs/DESIGN_SYSTEM.md §5.48 bis (le sélecteur, sa place, ses états, la phrase de portée)
+//
+// @spec CRM-066 — TRANCHE 3 c : les nœuds du catalogue sans affaire, NOMMÉS
+// @spec docs/SPEC-analytique.md §8 bis.5 (la forme tranchée : un nom, jamais un zéro), §5.1 (révisé
+//       sur place par cette tranche), §11.2 (aucune addition de deux devises)
+// @spec docs/DESIGN_SYSTEM.md §5.48 bis (la mention des nœuds vides, sa place et sa graduation)
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router'
@@ -49,6 +54,8 @@ import {
 	absences,
 	grouperParDevise,
 	lireEntonnoir,
+	lireNoeudsCatalogue,
+	noeudsSansAffaire,
 	previsionnel,
 	replier,
 	restreindre,
@@ -56,6 +63,7 @@ import {
 	type GenreNoeud,
 	type GroupeDevise,
 	type LigneEntonnoirLue,
+	type NoeudCatalogue,
 	type NoeudEntonnoir,
 	type PrevisionnelDevise,
 	type TauxConversion,
@@ -156,7 +164,7 @@ export function Pilotage({ client = clientCrm }: ProprietesPilotage = {}) {
 
 	const reprendre = useCallback(() => setTentative((precedente) => precedente + 1), [])
 
-	// L'ESPACE DE TRAVAIL VIENT DE L'ENTONNOIR LUI-MÊME, ET NON D'UNE TROISIÈME LECTURE (§8 bis.4).
+	// L'ESPACE DE TRAVAIL VIENT DE L'ENTONNOIR LUI-MÊME, ET NON D'UNE LECTURE SÉPARÉE (§8 bis.4).
 	// `entonnoir_conversion()` rend `workspace_id` sur chaque ligne : la portée offerte est donc
 	// celle de ce qui est RÉELLEMENT mesuré, structurellement, plutôt que celle qu'une lecture
 	// séparée de `workspaces` aurait nommée — deux sources pour un même fait finissent par
@@ -180,6 +188,28 @@ export function Pilotage({ client = clientCrm }: ProprietesPilotage = {}) {
 	}, [client, idWorkspace, tentative])
 
 	const arbre = useMemo(() => (portees.statut === 'pret' ? portees.donnees : []), [portees])
+
+	// LA TROISIÈME LECTURE — le catalogue, pour NOMMER les nœuds vides (§8 bis.5). Elle est traitée
+	// comme la seconde : son échec ne casse pas l'écran, et la mention n'est simplement pas écrite.
+	// Nommer un nœud vide enrichit la lecture, il n'en est pas la condition.
+	const [catalogue, setCatalogue] = useState<EtatAsync<readonly NoeudCatalogue[]>>(enChargement)
+	const courantCatalogue = useRef(0)
+
+	useEffect(() => {
+		if (client === null || idWorkspace === null) return
+		const rang = ++courantCatalogue.current
+		setCatalogue(enChargement())
+		void (async () => {
+			const lu = await lireNoeudsCatalogue(client, idWorkspace)
+			if (rang !== courantCatalogue.current) return
+			setCatalogue(lu)
+		})()
+	}, [client, idWorkspace, tentative])
+
+	const noeudsCatalogue = useMemo(
+		() => (catalogue.statut === 'pret' ? catalogue.donnees : []),
+		[catalogue],
+	)
 
 	// LA PORTÉE APPLIQUÉE EST CELLE QUE L'ARBRE RÉSOUT, jamais celle que l'adresse demande
 	// (§8 bis.2). Un slug inconnu ou fermé replie sur l'espace de travail, sans aucune erreur — et
@@ -260,6 +290,7 @@ export function Pilotage({ client = clientCrm }: ProprietesPilotage = {}) {
 	const taux = tauxConversion(lignes)
 	const manques = absences(lignes)
 	const nomPortee = nommerPortee(portee, arbre)
+	const vides = noeudsSansAffaire(noeudsCatalogue, lignes)
 
 	// LE SÉLECTEUR N'EST RENDU QUE S'IL Y A QUELQUE CHOSE À DÉCOUPER. Aucune ligne dans l'espace de
 	// travail entier ne laisse aucune portion à isoler — et aucune lecture d'arborescence n'a même
@@ -332,7 +363,7 @@ export function Pilotage({ client = clientCrm }: ProprietesPilotage = {}) {
 					titreVisible={plusieursDevises}
 				/>
 			))}
-			<Mentions manques={manques} portee={portee} nomPortee={nomPortee} />
+			<Mentions manques={manques} portee={portee} nomPortee={nomPortee} vides={vides} />
 		</section>
 	)
 }
@@ -647,10 +678,12 @@ function Mentions({
 	manques,
 	portee,
 	nomPortee,
+	vides,
 }: {
 	readonly manques: { readonly sansMontant: number; readonly sansProbabilite: number }
 	readonly portee: PorteeUrl
 	readonly nomPortee: string | null
+	readonly vides: readonly NoeudCatalogue[]
 }) {
 	return (
 		<div className="flex flex-col gap-1">
@@ -670,6 +703,27 @@ function Mentions({
 							: 'pilotage.missing.probability.one',
 						{ compte: String(manques.sansProbabilite) },
 					)}
+				</p>
+			)}
+			{/*
+			  LES NŒUDS VIDES SONT NOMMÉS, SANS DEVISE ET SANS MONTANT (§8 bis.5, §5.48 bis). Ce que
+			  l'écran sait d'eux est exactement « aucune affaire ne s'y trouve » — un COMPTE
+			  d'affaires, qui traverse licitement les devises parce qu'il n'additionne aucun argent.
+			  Un « 0,00 » dans le tableau d'une devise aurait affirmé une mesure que l'écran n'a pas
+			  faite, et lui aurait inventé une devise qu'aucune affaire n'y porte.
+
+			  ILS SONT NOMMÉS DANS L'ORDRE DU CATALOGUE, jamais un autre : l'entonnoir est un CHEMIN,
+			  et l'ordre dit OÙ est le trou. La liste est composée par `Intl.ListFormat`, et non par
+			  une concaténation : « a, b et c » n'est pas la même phrase dans deux langues, et le
+			  §23 de `CLAUDE.md` interdit de construire une phrase par concaténation.
+			*/}
+			{vides.length > 0 && (
+				<p data-testid="pilotage-noeuds-vides" className="text-[13px] text-text-2">
+					{t(vides.length > 1 ? 'pilotage.empty.nodes' : 'pilotage.empty.nodes.one', {
+						noeuds: new Intl.ListFormat('fr-FR', { style: 'long', type: 'conjunction' }).format(
+							vides.map((noeud) => noeud.libelle),
+						),
+					})}
 				</p>
 			)}
 			{/*

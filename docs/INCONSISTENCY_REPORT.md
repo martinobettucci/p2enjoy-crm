@@ -6428,6 +6428,48 @@ et c'est aussi ce que la décision 560 a fait du recensement des routes.
 **Statut :** ouverte — porteur `CRM-060` pour l'état réel, `CRM-008` pour la garde du harnais.
 
 
+### INC-247 — `administration-workflows.ts` porte DEUX octets NUL, ce qui en fait un fichier BINAIRE pour git et pour `grep`
+
+**Ouverte le 2026-08-30 par `CRM-066` tranche 3 b, comportement inchangé** — constat **étranger à la
+tranche** de la session, consigné sans être corrigé au passage (`CLAUDE.md` §18,
+`docs/CloudWorker.md` §3.1).
+
+**Ce qui est mesuré**, sur `webapp/src/lib/administration-workflows.ts` :
+
+```
+python3 : taille 96166 octets, NUL = 2, utf-8 valide
+file    : « data »           (et non « Unicode text »)
+grep    : « binary file matches »  — la ligne n'est jamais affichée
+
+ligne 1184  /** La clé d'indexation d'un couple. Les identifiants sont des `uuid` : aucun ne contient `<NUL>`. */
+ligne 1185  const cleCouple = (idChamp: string, idEtape: string): string => `${idChamp}<NUL>${idEtape}`
+```
+
+**L'INTENTION EST LÉGITIME, ET CE N'EST PAS LE MÊME DÉFAUT QUE CELUI DE LA TRANCHE 2 b.** Le
+2026-08-30, deux octets NUL avaient été retirés de `analytique.ts` et de `analytique.spec.ts` où ils
+tenaient la place d'une **espace** — une faute de frappe, sans intention. Ici l'octet est **voulu** :
+c'est un séparateur de clé composite, choisi précisément parce qu'un `uuid` n'en contient jamais, et
+le commentaire de la ligne 1184 l'écrit. La valeur d'exécution est correcte.
+
+**CE QUI EST LE DÉFAUT EST LA FORME SOURCE, ET SON COÛT EST RÉEL.** Écrit comme un octet NUL
+littéral plutôt que comme l'échappement `\0`, il rend le FICHIER binaire pour l'outillage :
+
+- `git diff` rend « Binary files a/… and b/… differ » au lieu du diff — une revue de ce fichier est
+  aveugle ;
+- `grep` et `ripgrep` le SAUTENT : une recherche de symbole à travers le dépôt ne le trouve jamais,
+  ce qui est exactement comment ces deux octets ont été rencontrés ici, en cherchant
+  `workflow_nodes_catalog` ;
+- le second NUL est dans un COMMENTAIRE, où il n'a même pas de rôle d'exécution.
+
+**Le remède, qui n'est pas appliqué ici parce qu'il est étranger à cette tranche** : écrire
+`` `${idChamp}\0${idEtape}` `` et `` `\0` `` dans le commentaire. La valeur produite à l'exécution
+est **identique** — `\0` est l'échappement de U+0000 —, et le fichier redevient du texte. Un
+garde-fou refusant tout octet NUL dans un fichier source suivi relèverait de `verify-scripts.sh` ou
+d'un contrôle de traçabilité, et fermerait la classe entière plutôt que ce cas.
+
+**Imputation** : `CRM-031` / `CRM-076`, qui portent ce module. Aucune ligne de `CRM-066` tranche 3 b
+ne touche ce fichier.
+
 ### INC-246 — la campagne d'interface INTERNE du harnais rend des échecs que la campagne directe ne rend pas, et la CIBLE se déplace
 
 **Ouverte le 2026-08-30 par `CRM-066` tranche 3 a, comportement inchangé** — constat **étranger à la

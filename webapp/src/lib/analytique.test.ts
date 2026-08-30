@@ -19,8 +19,11 @@
 
 import { describe, expect, it, vi } from 'vitest'
 import {
+	COLONNES_CATALOGUE,
 	absences,
 	lireEntonnoir,
+	lireNoeudsCatalogue,
+	noeudsSansAffaire,
 	previsionnel,
 	grouperParDevise,
 	replier,
@@ -357,5 +360,136 @@ describe('lireEntonnoir — une seule requête, et un refus qui reste un refus',
 		const etat = await lireEntonnoir(clientDouble({ data: null }))
 		expect(etat.statut).toBe('pret')
 		if (etat.statut === 'pret') expect(etat.donnees).toEqual([])
+	})
+})
+
+// @verifies CRM-066 — TRANCHE 3 c : les nœuds du catalogue sans affaire, NOMMÉS
+// @verifies docs/SPEC-analytique.md §8 bis.5 (la forme tranchée : un nom, jamais un zéro),
+//           §5.1 (révisé sur place : « nomme » remplace « affiche zéro »), §11.2
+describe('noeudsSansAffaire — le trou de l’entonnoir, nommé et non chiffré (§8 bis.5)', () => {
+	const noeud = (id: string, cle: string, libelle: string, position: number) => ({
+		id,
+		cle,
+		libelle,
+		genre: 'open' as const,
+		position,
+	})
+
+	const CATALOGUE = [
+		noeud('n1', 'prospection', 'Prospection', 1),
+		noeud('n3', 'negociation', 'Négociation', 3),
+		noeud('n8', 'qualification', 'Qualification', 8),
+	]
+
+	it('rend les nœuds qu’aucune ligne ne peuple, dans l’ordre du CATALOGUE', () => {
+		// LA FIXTURE EST CE QUE LA LECTURE REND, jamais ce que la table contient : `lireNoeudsCatalogue`
+		// écarte les archivés côté serveur. Sur le seed, le seul nœud vide de l'espace de travail est
+		// précisément l'archivé — c'est la portée RESTREINTE qui exerce vraiment cette fonction
+		// (§8 bis.5), et `Pilotage.test.tsx` l'éprouve.
+		const vides = noeudsSansAffaire(CATALOGUE, [
+			ligne({ node_id: 'n1' }),
+			ligne({ node_id: 'n3' }),
+		])
+		expect(vides.map((n) => n.cle)).toEqual(['qualification'])
+	})
+
+	it('L’ORDRE EST CELUI DU CATALOGUE, et c’est lui qui dit OÙ est le trou', () => {
+		// L'entonnoir est un CHEMIN : reclasser ces nœuds autrement retirerait l'information même
+		// que la mention porte.
+		expect(noeudsSansAffaire(CATALOGUE, []).map((n) => n.position)).toEqual([1, 3, 8])
+	})
+
+	it('LA COMPARAISON SE FAIT SUR `node_id`, jamais sur la clé ni sur le libellé', () => {
+		// C'est l'identifiant que la fonction rend : comparer ce que la base a joint plutôt qu'un
+		// libellé recomposé est ce qui rend l'égalité STRUCTURELLE. Ici la clé coïncide mais
+		// l'identifiant non — la ligne ne peuple donc rien.
+		const vides = noeudsSansAffaire(CATALOGUE, [ligne({ node_id: 'autre', node_key: 'prospection' })])
+		expect(vides.map((n) => n.cle)).toEqual(['prospection', 'negociation', 'qualification'])
+	})
+
+	it('un catalogue entièrement peuplé ne rend AUCUN nœud', () => {
+		const vides = noeudsSansAffaire(CATALOGUE, [
+			ligne({ node_id: 'n1' }),
+			ligne({ node_id: 'n3' }),
+			ligne({ node_id: 'n8' }),
+		])
+		expect(vides).toEqual([])
+	})
+
+	it('LA MÊME DEVISE N’ENTRE PAS EN JEU, et c’est le point de l’arbitrage', () => {
+		// Un nœud peuplé en EUR seulement N'EST PAS vide : le rendre « vide en CHF » lui inventerait
+		// une devise qu'aucune affaire n'y porte, ce que le §5.1 interdit déjà à la fonction. Le
+		// compte porte sur des AFFAIRES, pas sur de l'argent.
+		const vides = noeudsSansAffaire(CATALOGUE, [
+			ligne({ node_id: 'n1', currency: 'EUR' }),
+			ligne({ node_id: 'n3', currency: 'CHF' }),
+		])
+		expect(vides.map((n) => n.cle)).toEqual(['qualification'])
+	})
+
+	it('un catalogue vide ne rend rien, et non une exception', () => {
+		expect(noeudsSansAffaire([], [ligne({})])).toEqual([])
+	})
+})
+
+describe('lireNoeudsCatalogue — la troisième lecture, et ce qu’elle écarte (§8 bis.5)', () => {
+	const clientDouble = (reponse: {
+		data?: unknown[]
+		error?: { message: string } | null
+		status?: number
+	}) => {
+		const requete = {
+			select: vi.fn(() => requete),
+			eq: vi.fn(() => requete),
+			is: vi.fn(() => requete),
+			order: vi.fn(() => requete),
+			then: (resoudre: (valeur: unknown) => unknown) =>
+				Promise.resolve({
+					data: reponse.data ?? [],
+					error: reponse.error ?? null,
+					status: reponse.status ?? 200,
+				}).then(resoudre),
+		}
+		const client = { from: vi.fn(() => requete) } as unknown as ClientCrm
+		return { client, requete }
+	}
+
+	it('interroge le catalogue de l’espace de travail, dans l’ordre de `position`', async () => {
+		const { client, requete } = clientDouble({ data: [] })
+		await lireNoeudsCatalogue(client, 'ws-1')
+		expect(client.from).toHaveBeenCalledWith('workflow_nodes_catalog')
+		expect(requete.select).toHaveBeenCalledWith(COLONNES_CATALOGUE)
+		expect(requete.eq).toHaveBeenCalledWith('workspace_id', 'ws-1')
+		expect(requete.order).toHaveBeenNthCalledWith(1, 'position')
+	})
+
+	it('ÉCARTE LES NŒUDS ARCHIVÉS — un nœud retiré n’est plus une étape du chemin', async () => {
+		// Le nommer « sans affaire » inviterait à y en mettre une.
+		const { client, requete } = clientDouble({ data: [] })
+		await lireNoeudsCatalogue(client, 'ws-1')
+		expect(requete.is).toHaveBeenCalledWith('archived_at', null)
+	})
+
+	it('projette les colonnes de la base sur les noms du module', async () => {
+		const { client } = clientDouble({
+			data: [{ id: 'n8', key: 'qualification', label: 'Qualification', kind: 'open', position: 8 }],
+		})
+		const etat = await lireNoeudsCatalogue(client, 'ws-1')
+		expect(etat.statut).toBe('pret')
+		if (etat.statut === 'pret') {
+			expect(etat.donnees[0]).toEqual({
+				id: 'n8',
+				cle: 'qualification',
+				libelle: 'Qualification',
+				genre: 'open',
+				position: 8,
+			})
+		}
+	})
+
+	it('une erreur est classée, jamais levée — son échec ne casse pas l’écran', async () => {
+		const { client } = clientDouble({ error: { message: 'boom' }, status: 500 })
+		const etat = await lireNoeudsCatalogue(client, 'ws-1')
+		expect(etat.statut).toBe('erreur')
 	})
 })

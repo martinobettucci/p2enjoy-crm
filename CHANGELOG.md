@@ -13,6 +13,16 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-066` — « Pilotage » : les étapes sans affaire, nommées (tranche 3 c)
+
+- **Sous les tableaux, l'écran nomme les étapes du catalogue où aucune affaire ne se tient** — « Aucune
+  affaire active aux étapes Signature et Perdu. », dans l'ordre du catalogue. C'est la lecture la
+  plus utile sous une portée restreinte : elle dit **où est le trou** du chemin.
+- **Jamais une ligne « à zéro ».** Un zéro aurait affirmé une mesure que l'écran n'a pas faite, et il
+  aurait fallu le poser dans une devise qu'aucune affaire ne porte à cette étape.
+- **Une étape archivée n'y figure pas** : elle n'est plus une étape du chemin, et la nommer « sans
+  affaire » inviterait à y en remettre une.
+
 ### `CRM-066` — « Pilotage » : choisir la portée mesurée (tranche 3 b)
 
 - **Un champ « Portée » en tête de l'écran** : tout l'espace de travail, un track entier, ou un

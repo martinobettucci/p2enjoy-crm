@@ -271,6 +271,100 @@ export function absences(lignes: readonly LigneEntonnoirLue[]): {
 }
 
 /**
+ * Un nœud du catalogue, tel que la complétion du §8 bis.5 en a besoin.
+ *
+ * @spec CRM-066 — TRANCHE 3 c : les nœuds sans affaire
+ * @spec docs/SPEC-analytique.md §5.1 (une ligne n'existe que si elle est peuplée), §8 bis.5 (les
+ *       nœuds vides sont NOMMÉS, sans devise ni montant)
+ */
+export type NoeudCatalogue = {
+	readonly id: string
+	readonly cle: string
+	readonly libelle: string
+	readonly genre: GenreNoeud
+	readonly position: number
+}
+
+/** Les colonnes du catalogue que la complétion lit — et rien d'autre. */
+export const COLONNES_CATALOGUE = 'id, key, label, kind, position'
+
+/**
+ * Lit les nœuds du catalogue de l'espace de travail — la TROISIÈME lecture de l'écran.
+ *
+ * ELLE EST TRAITÉE COMME LA SECONDE (§8 bis.5) : son échec ne casse pas l'écran. Nommer un nœud vide
+ * est un enrichissement de la lecture, jamais sa condition — les tableaux sont rendus dans tous les
+ * cas, et la mention n'est simplement pas écrite.
+ *
+ * LES NŒUDS ARCHIVÉS SONT ÉCARTÉS. Un nœud retiré du catalogue n'est plus une étape du chemin :
+ * le nommer « sans affaire » inviterait à y en mettre une.
+ *
+ * Ne lève jamais.
+ */
+export async function lireNoeudsCatalogue(
+	client: ClientCrm,
+	idWorkspace: string,
+): Promise<EtatAsync<readonly NoeudCatalogue[]>> {
+	try {
+		const reponse = await client
+			.from('workflow_nodes_catalog')
+			.select(COLONNES_CATALOGUE)
+			.eq('workspace_id', idWorkspace)
+			.is('archived_at', null)
+			.order('position')
+			.order('label')
+		if (reponse.error !== null) {
+			return enErreur(classerErreur(reponse.status, reponse.error.message))
+		}
+		return pret(
+			(reponse.data ?? []).map((brut) => {
+				const ligne = brut as unknown as {
+					id: string
+					key: string
+					label: string
+					kind: string
+					position: number
+				}
+				return {
+					id: ligne.id,
+					cle: ligne.key,
+					libelle: ligne.label,
+					genre: genreDe(ligne.kind),
+					position: ligne.position,
+				}
+			}),
+		)
+	} catch (cause) {
+		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
+}
+
+/**
+ * Les nœuds du catalogue qu'AUCUNE ligne de la portée affichée ne peuple — §8 bis.5.
+ *
+ * LA FORME EST UN NOM, JAMAIS UN ZÉRO, et l'arbitrage est écrit au §8 bis.5. Les tableaux sont **par
+ * devise** : y poser `Qualification / CHF / 0` inventerait à ce nœud une devise qu'aucune affaire
+ * n'y porte — ce que le §5.1 interdit déjà à la fonction elle-même —, et compléter hors des devises
+ * mêlerait deux monnaies dans une colonne, ce que le §11.2 interdit. Ce que l'écran sait d'un tel
+ * nœud est exactement ceci : *aucune affaire ne s'y trouve*. C'est un COMPTE D'AFFAIRES, grandeur
+ * qui traverse licitement les devises parce qu'elle n'additionne aucun argent — le motif exact pour
+ * lequel le §7.1 fait déjà traverser les devises au compte des affaires décidées.
+ *
+ * L'ORDRE EST CELUI DU CATALOGUE, jamais un autre : l'entonnoir est un CHEMIN, et l'ordre dit *où*
+ * est le trou.
+ *
+ * LA COMPARAISON SE FAIT SUR `node_id`, ET NON SUR LA CLÉ : la clé est unique par espace de travail,
+ * mais c'est l'identifiant que la fonction rend, et comparer ce que la base a joint plutôt qu'un
+ * libellé recomposé est ce qui rend l'égalité structurelle.
+ */
+export function noeudsSansAffaire(
+	catalogue: readonly NoeudCatalogue[],
+	lignes: readonly LigneEntonnoirLue[],
+): readonly NoeudCatalogue[] {
+	const peuples = new Set(lignes.map((ligne) => ligne.node_id))
+	return catalogue.filter((noeud) => !peuples.has(noeud.id))
+}
+
+/**
  * Lit l'entonnoir de l'appelant, en UNE requête.
  *
  * Sans session, la lecture rend `401` : la fonction est refusée à `anon` PAR LE PRIVILÈGE (§5.4), et

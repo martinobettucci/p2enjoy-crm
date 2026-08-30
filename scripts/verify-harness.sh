@@ -1206,7 +1206,11 @@ SCENARIOS_API=1058
 # captures aux quatre paliers. 737 + 6 = 743, valeur COMPTÉE — « Total: 743 tests in 58 files »,
 # jamais déduite. Le nombre de FICHIERS est INCHANGÉ, ce qui est la contre-épreuve de « aucun fichier
 # neuf » : la tranche complète un écran, elle n'en ouvre pas un second.
-SCENARIOS_UI=743
+# **RÉVISÉ À 745 PAR `CRM-066` tranche 3 c, 2026-08-30.** DEUX scénarios pour les nœuds vides : à
+# portée workspace AUCUNE mention n'est rendue — le seul nœud vide du seed est ARCHIVÉ, et son
+# exclusion se constate là —, et sous une portée restreinte les nœuds actifs vides sont NOMMÉS dans
+# l'ordre du catalogue. 743 + 2 = 745, valeur COMPTÉE — « Total: 745 tests in 58 files ».
+SCENARIOS_UI=745
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

@@ -441,7 +441,7 @@ des mesures relevées sur la pile seedée le 2026-08-30 — non de mémoire.
 |---|---|
 | **M8** | `channels_track_id_slug_key` — `UNIQUE (track_id, slug)`. **Un slug de channel n'est unique QUE dans son track**, jamais dans l'espace de travail, là où `tracks_workspace_id_slug_key` rend le slug d'un track unique dans le workspace |
 | **M9** | Le seed porte **quatre** tracks et **huit** channels, dont **deux** sont hors sélecteur : `appels-offres` est archivé, `annexes-2023` est en corbeille. Restent **six** channels offrables sur quatre tracks |
-| **M10** | L'entonnoir de l'administratrice rend **16 lignes** touchant **sept** des **huit** nœuds du catalogue. `qualification` (position 8) n'est porté par **aucune** affaire active : c'est le cas de complétion, réellement présent dans le jeu de démonstration |
+| **M10** | Le catalogue porte **huit** nœuds, dont **`qualification` (position 8) est ARCHIVÉ** — `archived_at = 2026-03-01`. L'entonnoir de l'administratrice rend **16 lignes** touchant les **sept** nœuds non archivés. À portée workspace, **aucun** nœud actif n'est donc vide |
 | **M11** | Restreint au track `studio-web`, l'entonnoir ne touche que cinq nœuds — `signature`, `perdu` et `qualification` en sont absents ; restreint au channel `legacy-2023 / dossiers-2023`, il n'en touche qu'**un**, `negociation`, pour **22 000,00 × 30 % = 6 600,00** |
 
 ### 8 bis.2 L'adresse porte DEUX clés, et M8 l'impose
@@ -529,9 +529,27 @@ est corrigé sur place plutôt que contourné, et son « affiche zéro » devien
 vides ». Le trou de l'entonnoir est ce qui devait être montré ; l'affirmer par un « 0,00 » dans une
 devise arbitraire aurait montré autre chose.
 
-**MESURÉ, et le jeu de démonstration l'exerce vraiment** — M10 : `qualification`, huitième nœud du
-catalogue, n'est porté par aucune affaire active de l'espace de travail. M11 : le track `studio-web`
-en laisse **trois** vides, le channel `dossiers-2023` **sept**.
+**LES NŒUDS ARCHIVÉS SONT ÉCARTÉS.** Un nœud retiré du catalogue n'est plus une étape du chemin :
+le nommer « sans affaire » inviterait à y en mettre une, alors que le produit vient de dire qu'on n'y
+va plus.
+
+**MESURÉ, ET LA MESURE A CORRIGÉ M10 EN L'EXÉCUTANT.** M10 disait d'abord que `qualification`, seul
+nœud vide de l'espace de travail, était « le cas de complétion réellement présent ». Il l'est bien —
+mais il est **ARCHIVÉ** (`archived_at = 2026-03-01`), donc écarté par la règle ci-dessus. **À portée
+workspace, le jeu de démonstration ne porte donc AUCUN nœud actif vide**, et l'écran n'écrit aucune
+mention : c'est la contre-épreuve de l'exclusion des archivés, et non un manque.
+
+**C'EST LA PORTÉE RESTREINTE QUI EXERCE LA COMPLÉTION, ET C'EST LA LECTURE QU'ON VIENT FAIRE.** M11 :
+le track `studio-web` laisse **deux** nœuds actifs vides, le channel `legacy-2023 / dossiers-2023`
+en laisse **six**. Voir de quelles étapes un channel est absent est précisément l'usage de cette
+mention ; un nœud vide dans TOUT l'espace de travail est, lui, un état rare.
+
+**LE SEED N'EST PAS MODIFIÉ POUR LE RENDRE MOINS RARE, ET C'EST UN CHOIX ÉCRIT.** `CLAUDE.md` §8
+exige que les données de démonstration exercent la fonctionnalité livrée : elles l'exercent, sous
+une portée restreinte, à un clic de l'ouverture. Ajouter au catalogue un neuvième nœud actif et vide
+pour le seul confort de la portée workspace changerait la donnée de démonstration de `CRM-030`,
+`CRM-031`, `CRM-076` et `CRM-078` — dont les empreintes, les compteurs et les captures reposent sur
+ces huit nœuds — au bénéfice d'un état que l'utilisateur ne rencontrera presque jamais.
 
 **Le catalogue est une TROISIÈME lecture, et elle est traitée comme la seconde** : son échec ne
 casse pas l'écran — les tableaux sont rendus, et la mention des nœuds vides n'est simplement pas
@@ -588,8 +606,8 @@ et prouvable seule.
 | **2 b — le module** | `webapp/src/lib/analytique.ts` : lecture de la fonction, restriction de portée, repli par nœud et par devise, les deux grandeurs du §7, et sa suite unitaire (26 tests) | **LIVRÉE ET PROUVÉE** le 2026-08-30 |
 | **2 c — le seed** | Les deux surcharges du §9, les compteurs et le tableau M6 révisés dans le même changement | **LIVRÉE ET PROUVÉE** le 2026-08-30 |
 | **3 a — l'écran** | `/pilotage` à portée workspace, sa spécification visuelle au §5.48 de `docs/DESIGN_SYSTEM.md` écrite d'abord, ses tests de composant, son E2E d'interface à console vierge, ses captures **observées**, `docs/manual.md` chapitres 28 et 29 | **LIVRÉE** le 2026-08-30 |
-| **3 b — la portée** | Le sélecteur de portée en chaîne de requête, sa seconde lecture et sa forme arrêtée au §8 bis.2 à §8 bis.4 | **ARBITRÉE** le 2026-08-30 (§8 bis) |
-| **3 c — les nœuds vides** | La complétion par le catalogue, dont la forme est arrêtée au §8 bis.5 : les nœuds vides sont **nommés**, sans devise ni montant | **ARBITRÉE** le 2026-08-30 (§8 bis.5) |
+| **3 b — la portée** | Le sélecteur de portée en chaîne de requête, sa seconde lecture et sa forme arrêtée au §8 bis.2 à §8 bis.4 | **LIVRÉE ET PROUVÉE** le 2026-08-30 |
+| **3 c — les nœuds vides** | La complétion par le catalogue, dont la forme est arrêtée au §8 bis.5 : les nœuds vides sont **nommés**, sans devise ni montant | **LIVRÉE ET PROUVÉE** le 2026-08-30 |
 | **4 — le score de santé** | `CRM-P02`. Il exige d'abord son arbitrage : ce qu'un score « transparent » agrège n'est écrit nulle part (§11.4) | — |
 
 **Ce que la tranche 2 b décide, et qui n'est pas une reformulation du §7.** Les deux grandeurs vivent

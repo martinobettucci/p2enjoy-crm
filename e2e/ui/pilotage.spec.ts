@@ -1,7 +1,9 @@
 // @verifies CRM-066 (docs/BACKLOG.md) — analytique de conversion et prévisionnel pondéré,
 //           TRANCHE 3 a : le parcours d'interface de l'écran `/pilotage` ;
-//           TRANCHE 3 b : le sélecteur de portée, sur la pile réelle
-// @verifies docs/SPEC-analytique.md §8 bis.2 (l'adresse porte DEUX clés, et M8 l'impose),
+//           TRANCHE 3 b : le sélecteur de portée, sur la pile réelle ;
+//           TRANCHE 3 c : les nœuds du catalogue sans affaire, nommés
+// @verifies docs/SPEC-analytique.md §8 bis.5 (les nœuds vides sont NOMMÉS, jamais rendus à zéro),
+//           §8 bis.2 (l'adresse porte DEUX clés, et M8 l'impose),
 //           §8 bis.3 (changer de portée ne relit rien), §8 bis.4 (l'échec de la seconde lecture),
 //           §8 (l'adresse `/pilotage`, route de premier niveau portée par
 //           une entrée de la barre latérale), §5.3 (l'entonnoir est calculé APRÈS la RLS : deux
@@ -451,9 +453,12 @@ test.describe('CRM-066 — tableau de pilotage (docs/SPEC-analytique.md §8)', (
 		await connecter(page)
 		for (const palier of PALIERS) {
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
+			// La portée `studio-web` est choisie pour que la capture porte AUSSI la mention des nœuds
+			// vides de la tranche 3 c : deux nœuds actifs y sont sans affaire.
 			await page.goto(`${PILOTAGE}?track=studio-web`)
 			await expect(page.getByTestId('pilotage-selecteur-portee')).toHaveValue('studio-web')
 			await expect(ligneNoeud(page, 'EUR', 'Négociation')).toHaveCount(1)
+			await expect(page.getByTestId('pilotage-noeuds-vides')).toHaveCount(1)
 			const debordement = await page.evaluate(
 				() => document.documentElement.scrollWidth - document.documentElement.clientWidth,
 			)
@@ -462,6 +467,51 @@ test.describe('CRM-066 — tableau de pilotage (docs/SPEC-analytique.md §8)', (
 			)
 			await capturer(page, `pilotage-portee-${palier.nom}`, UNITE)
 		}
+		autoriserErreursConsole(page, [])
+	})
+	// -------------------------------------------------------------------------------------------
+	// TRANCHE 3 c — les nœuds du catalogue sans affaire, NOMMÉS (§8 bis.5).
+	// -------------------------------------------------------------------------------------------
+
+	test('S15 — À PORTÉE WORKSPACE, AUCUNE MENTION : le nœud vide du seed est ARCHIVÉ', async ({
+		page,
+	}) => {
+		await connecter(page)
+		await page.goto(PILOTAGE)
+		await expect(ligneNoeud(page, 'EUR', 'Négociation')).toHaveCount(1)
+
+		// M10, MESURÉ, ET CETTE PREUVE L'A CORRIGÉ. Le catalogue porte HUIT nœuds ; l'entonnoir de
+		// l'administratrice touche les SEPT qui sont ACTIFS. Le huitième, `qualification`, n'est
+		// porté par aucune affaire — mais il est ARCHIVÉ (`archived_at = 2026-03-01`), et un nœud
+		// retiré du catalogue n'est plus une étape du chemin : le nommer « sans affaire »
+		// inviterait à y en mettre une. L'absence de mention est donc la CONTRE-ÉPREUVE de cette
+		// exclusion, et non un manque.
+		await expect(page.getByTestId('pilotage-noeuds-vides')).toHaveCount(0)
+		await expect(page.getByText('Qualification')).toHaveCount(0)
+		autoriserErreursConsole(page, [])
+	})
+
+	test('S16 — LES NŒUDS VIDES D’UNE PORTÉE SONT NOMMÉS, dans l’ordre du catalogue', async ({
+		page,
+	}) => {
+		await connecter(page)
+		// M11, MESURÉ : restreint au channel `dossiers-2023`, l'entonnoir ne touche qu'UN nœud —
+		// `negociation`. Les SIX autres nœuds ACTIFS y sont vides, et l'ordre du catalogue dit OÙ
+		// est le trou. C'est la lecture qu'on vient faire sur cet écran : de quelles étapes ce
+		// channel est-il absent ?
+		await page.goto(`${PILOTAGE}?track=legacy-2023&channel=dossiers-2023`)
+		const mention = page.getByTestId('pilotage-noeuds-vides')
+		await expect(mention).toHaveText(
+			'Aucune affaire active aux étapes Prospection, Relance, Signature, Réalisation, Livré et Perdu.',
+		)
+		// AUCUN MONTANT, AUCUNE DEVISE : un « 0,00 » aurait affirmé une mesure que l'écran n'a pas
+		// faite, et l'aurait posée dans une devise qu'aucune affaire n'y porte.
+		await expect(mention).not.toContainText('0,00')
+		await expect(mention).not.toContainText('EUR')
+		// `Négociation` est le seul nœud peuplé de cette portée : il n'est pas nommé, et il garde sa
+		// ligne — la seule du tableau.
+		await expect(mention).not.toContainText('Négociation')
+		await expect(entonnoirDe(page, 'EUR').getByRole('row')).toHaveCount(2)
 		autoriserErreursConsole(page, [])
 	})
 })
