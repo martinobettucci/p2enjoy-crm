@@ -28054,3 +28054,74 @@ spécification, pas laissés à la prose d'un compte rendu.
 **Où reprendre.** Le code suit immédiatement, dans un commit distinct : tranche 2 a,
 `supabase/migrations/0073_entonnoir_conversion.sql` et sa suite pgTAP, puis le contrat d'API des
 quatorze lignes du §6.
+
+## décision 563 — `CRM-066` tranches 2 a et 2 b livrées : le produit sait enfin ce que vaut son portefeuille
+
+*2026-08-30, session planifiée ouverte à 00:10:22 UTC. Bilan de fin de session ; la décision 562 en
+porte la spécification, écrite et committée avant la première ligne de code.*
+
+**CE QUE LA SESSION A CODÉ.** `supabase/migrations/0073_entonnoir_conversion.sql` ajoute
+`public.entonnoir_conversion()` — **une seule fonction, aucune table, aucune colonne, aucune
+politique, aucun trigger, aucune ligne écrite**. Elle rend le portefeuille d'affaires **actives** de
+l'appelant, agrégé par `(channel, nœud du catalogue, devise)` : nombre d'affaires, affaires sans
+montant, affaires sans probabilité, montant, montant pondéré. `webapp/src/lib/analytique.ts` la lit
+en **une** requête, restreint à une portée, replie par nœud et par devise, et dérive le prévisionnel
+par devise et le taux de conversion des affaires décidées.
+
+**LA PROPRIÉTÉ CENTRALE EST `security invoker`, ET ELLE EST MESURÉE, PAS ANNONCÉE.** En `definer`, la
+fonction répondrait pour `postgres` et rendrait à chacun le portefeuille de tout le monde : un total
+est une divulgation, et un prévisionnel incluant une affaire interdite la révèle par soustraction
+(`docs/SPEC-costs.md` §4.5). MESURÉ sur le seed avec les jetons réels : l'administratrice et le
+business developer lisent **39 affaires sur 16 lignes**, la lectrice **35 sur 13** — trois lignes
+repliées diffèrent, quatre sont identiques —, et son prévisionnel vaut **297 565,00 EUR** contre
+**333 715,00**. L'anonyme est refusé **par le privilège**, `401` et `42501`, `anon` étant révoqué
+nommément — le point de sûreté que la migration 53 avait payé.
+
+**TROIS RÈGLES TRANCHÉES PAR ALIGNEMENT SUR L'EXISTANT, ET AUCUNE INVENTÉE.** La probabilité
+effective se résout à trois niveaux — affaire, étape, nœud —, et une absence n'est **jamais**
+remplacée par un défaut : c'est mot pour mot la règle du seuil d'ancienneté et celle du coût réel.
+Une affaire **en sommeil compte**, à la différence de `cards_figees` : le sommeil dit « ne me
+réveille pas », jamais « cette affaire n'est plus au portefeuille ». Et les deux grandeurs dérivées
+vivent dans le module, non en base : ce sont des rapports entre des nombres que la fonction rend
+déjà, et les calculer deux fois est le mode de défaillance qu'INC-138, INC-241 et la décision 560 ont
+coûté au dépôt.
+
+**DEUX DÉFAUTS DE MES PROPRES PREUVES, TROUVÉS PAR LA PREMIÈRE EXÉCUTION DU HARNAIS DÉDIÉ.**
+`scripts/verify-analytique.sh` a rendu **22 contrôles, 2 anomalies**, et les deux étaient des défauts
+du HARNAIS. La première dégradation ne substituait rien : le motif portait deux apostrophes SQL
+écrites en bash sous la forme `'…''''…'`, qui les fait **disparaître** par concaténation de chaînes
+vides. La seconde substituait sans rien changer au sens — elle réordonnait le `coalesce` du `filter`,
+or `coalesce(a,b,c) is not null` a la même valeur quel que soit l'ordre : la suite restait verte **à
+juste titre**, et le harnais criait « COMPLAISANT » contre une preuve qui ne l'est pas. Les deux sont
+révisées **sur place, avec leur motif écrit dans le fichier**, jamais retirées. Verdict après
+correction : **22 contrôles, aucune anomalie**, sept dégradations réelles — quatre de la fonction,
+trois du module.
+
+**UN TROISIÈME DÉFAUT, ET IL NE SE VOYAIT PAS À LA LECTURE.** Deux octets **NUL** s'étaient glissés
+dans les séparateurs de deux littéraux de gabarit, à la place d'une espace, faisant de
+`webapp/src/lib/analytique.ts` et de `e2e/api/analytique.spec.ts` des fichiers **binaires** pour git
+et pour `grep`. Le code compilait et les preuves passaient — un caractère NUL est licite dans un
+littéral —, ce qui est exactement pourquoi il fallait le chercher plutôt que l'attendre. Remplacés
+par une espace.
+
+**CAMPAGNE.** `test:sql` **68 fichiers / 3079 assertions**, `test:unit` **86 fichiers / 2934 tests**,
+`e2e:api` **1057 passés**, `pytest` **244**, `typecheck`, `types:check` et `build` verts.
+`scripts/verify-analytique.sh` **22 contrôles, aucune anomalie**. Les trois compteurs de
+`scripts/verify-harness.sh` ont été révisés dans le même changement et **confirmés par le
+dénombrement du harnais** : 67 → **68** fichiers SQL, 3052 → **3079** assertions, 1041 → **1057**
+scénarios d'API ; `SCENARIOS_UI` (729) et `SCENARIOS_MAIL` (42) sont inchangés, l'unité ne livrant
+aucun écran ni aucun protocole.
+
+**Un garde-fou figé par une unité antérieure a été RÉVISÉ, jamais retiré** (décision 51, huitième
+occurrence consécutive) : le témoin des fonctions de `database.types.test-d.ts` passe de
+quarante-huit à quarante-neuf, dans le même changement que la migration.
+
+**INC-245 CONSIGNÉE** : la table du chunk 5 et les titres de section de `docs/BACKLOG.md` donnent
+deux états contradictoires pour `CRM-060`. Comportement laissé inchangé — corriger une table de
+suivi au passage, depuis une session qui traite une autre unité, est ce que `CLAUDE.md` §1 interdit.
+
+**Où reprendre.** `CRM-066` **tranche 2 c** — les deux surcharges de probabilité que le seed ne pose
+pas, sans lesquelles la résolution à trois niveaux n'est démontrée qu'à son troisième niveau
+(`docs/SPEC-analytique.md` §9) — puis la **tranche 3**, l'écran `/pilotage`, dont la spécification
+visuelle est à écrire dans `docs/DESIGN_SYSTEM.md` **avant** sa première ligne de code. La tranche 4,
+le score de santé de `CRM-P02`, commence par son arbitrage.

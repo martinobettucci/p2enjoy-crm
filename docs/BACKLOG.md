@@ -10355,6 +10355,24 @@ session (`CLAUDE.md` §5) :
 - [x] **UN GARDE-FOU FIGÉ PAR UNE UNITÉ ANTÉRIEURE A ÉTÉ RÉVISÉ, JAMAIS RETIRÉ** (décision 51,
       huitième occurrence consécutive) : le témoin des fonctions de `database.types.test-d.ts`
       passe de quarante-huit à **quarante-neuf**, dans le même changement que la migration.
+- [x] **Harnais dédié** `scripts/verify-analytique.sh` : **22 contrôles, aucune anomalie**,
+      traçabilité, forme et ACL mesurées dans le catalogue, un contrôle statique refusant au module
+      toute colonne de la règle, et **sept dégradations réelles** — quatre de la fonction, trois du
+      module —, la restauration étant **constatée** en sortant. **DEUX DÉFAUTS DE MES PROPRES
+      PREUVES trouvés par sa première exécution** : une dégradation qui ne substituait rien (deux
+      apostrophes SQL perdues par la concaténation bash `'…''''…'`) et une qui substituait sans rien
+      changer au sens (`coalesce(a,b,c) is not null` est insensible à l'ordre). Les deux **révisées
+      sur place avec leur motif**, jamais retirées.
+- [x] **Compteurs de `scripts/verify-harness.sh` révisés dans le MÊME changement, et CONFIRMÉS par
+      son dénombrement** : 67 → **68** fichiers SQL, 3052 → **3079** assertions, 1041 → **1057**
+      scénarios d'API. `SCENARIOS_UI` (729) et `SCENARIOS_MAIL` (42) inchangés : l'unité ne livre ni
+      écran ni protocole. Valeurs COMPTÉES, jamais déduites.
+- [x] **DEUX OCTETS NUL retirés de deux littéraux de gabarit**, à la place d'une espace : ils
+      faisaient de `webapp/src/lib/analytique.ts` et de `e2e/api/analytique.spec.ts` des fichiers
+      **binaires** pour git et pour `grep`, alors que le code compilait et que les preuves passaient.
+- [x] **Campagne de fin de session** : `test:sql` **68 fichiers / 3079 assertions**, `test:unit`
+      **86 fichiers / 2934 tests**, `e2e:api` **1057 passés**, `pytest` **244**, `typecheck`,
+      `types:check` et `build` verts.
 - [ ] **2 c — le seed.** Les deux surcharges de probabilité du §9, sans lesquelles la résolution à
       trois niveaux n'est démontrée qu'à son troisième niveau ; compteurs et tableau M6 révisés dans
       le même changement.
