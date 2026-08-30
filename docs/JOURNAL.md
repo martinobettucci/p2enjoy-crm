@@ -28231,3 +28231,69 @@ tient aux dates relatives que le seed repose à chaque application, sont **resta
 lire l'intégralité), avec ses tests de composant, son E2E d'interface à console vierge, ses captures
 observées et les chapitres 28 et 29 du manuel. La tranche 4, le score de santé de `CRM-P02`,
 commence par son arbitrage.
+
+## décision 565 — `CRM-066` tranche 3 a : l'écran `/pilotage`, et la forme de l'entonnoir arrêtée avant son code
+
+*2026-08-30, session planifiée ouverte à 08:08:38 UTC. La spécification de l'écran n'existait PAS :
+le §8 de `docs/SPEC-analytique.md` laissait délibérément « la forme de l'entonnoir, ses composants,
+ses paliers responsive, son parcours clavier et ses états » à cette tranche, « écrits dans
+`docs/DESIGN_SYSTEM.md` AVANT sa première ligne de code ». Elle a donc été écrite et committée
+d'abord, dans un commit documentaire dédié et poussé — `docs/CloudWorker.md` §3.2, point 3.*
+
+**CE QUE LA SESSION A CODÉ.** L'écran `/pilotage`, route de premier niveau dans `ROUTES`, portée par
+une entrée de barre latérale `Gauge` placée entre « Coûts » et « Ma journée ». Trois blocs : les deux
+grandeurs dérivées en liste de définitions, un **tableau du §5.9 par devise** dans l'ordre du
+catalogue, puis les deux mentions obligatoires du §7.3 et la phrase de portée. Le module gagne
+`grouperParDevise`, avec ses quatre tests.
+
+**LA FORME EST UN TABLEAU, ET CE N'EST PAS UN RENONCEMENT.** Le critère est celui que le §5.19
+applique au carnet : les colonnes — nœud, genre, affaires, montant, pondéré — sont les MÊMES pour
+chaque ligne et SE COMPARENT d'un nœud à l'autre. Le produit refuse depuis le §5.15 d'inventer un
+mécanisme visuel qu'aucune unité n'a spécifié — « le graphe se rend en listes groupées, pas en
+diagramme » —, et une barre proportionnelle aurait posé une question que rien ne tranche :
+proportionnelle au nombre d'affaires, ou au montant ? Choisir l'un rendrait l'autre invisible.
+
+**AUCUNE COLONNE N'EST TRIABLE, ET C'EST L'ÉCART ASSUMÉ AVEC LE §5.9.** Un entonnoir est un CHEMIN :
+reclassé par montant, « Livré » — 311 000,00 — remonterait au-dessus de « Prospection », et l'écran
+deviendrait un palmarès. L'ordre vient de `workflow_nodes_catalog.position`, donc de la même autorité
+que l'ordre du board.
+
+**UN TABLEAU PAR DEVISE, ET LA RÈGLE VIENT DU §5.33 PLUTÔT QUE D'ÊTRE RÉINVENTÉE.** Une colonne
+« devise » dans un tableau unique n'additionnerait rien, mais elle ferait se comparer deux monnaies
+dans la MÊME colonne de montants, ce qui revient au même à l'œil. Le titre `h2` de devise n'est rendu
+que s'il y en a plusieurs — la lettre du §5.33.
+
+**UN DÉFAUT TROUVÉ EN REGARDANT UNE CAPTURE** (`CLAUDE.md` §16), et il naît de cette règle même. Le
+titre étant CONDITIONNEL, sur une devise unique — le cas attendu, celui que l'utilisateur voit tous
+les jours — plus rien à l'œil ne disait de quelle monnaie les nombres du tableau sont, hors le
+prévisionnel d'un bloc plus haut. C'est le « montant nu dans une liste sans en-têtes » que le §7.3
+refuse, transposé au tableau. Les deux en-têtes de montant nomment donc la devise,
+INCONDITIONNELLEMENT, et une assertion le fige. **La règle générale est écrite au §5.48 : quand un
+titre de regroupement est conditionnel, ce qu'il qualifie doit être nommé ailleurs de façon
+inconditionnelle** — sans quoi le cas majoritaire est précisément celui qui perd l'information.
+
+**DEUX ÉCARTS SONT NOMMÉS PLUTÔT QUE TUS, ET LE DÉCOUPAGE 3 a / 3 b LES PORTE.** Le sélecteur de
+portée du §8 et la complétion par le catalogue du §5.1 exigent tous deux une SECONDE lecture — nommer
+un track, un channel ou un nœud vide —, que cette tranche ne fait pas. La complétion pose en outre
+une question que le §5.1 ne tranche pas : compléter dans le tableau d'une devise rendrait
+`Négociation / CHF / 0`, c'est-à-dire **inventerait une devise à un nœud qu'aucune affaire n'y
+porte**, ce que ce même §5.1 interdit à la fonction ; et compléter hors des devises demanderait de
+mêler deux monnaies dans une colonne, ce que le §11.2 interdit. La tranche 3 b tranchera la forme
+avant d'écrire le code. En attendant, un nœud vide est **absent**, jamais rendu à zéro : un zéro
+affirmerait une mesure que l'écran n'a pas faite.
+
+**UN DÉFAUT DE MA PROPRE PREUVE, TROUVÉ EN L'EXÉCUTANT.** `toHaveAttribute` posé sur un locator de
+six lignes viole le mode strict de Playwright et rend un échec qui ne dit rien du produit. Retiré :
+l'assertion d'ordre qui suit disait déjà tout ce qu'il visait, et la garder aurait fait deux preuves
+d'un même fait.
+
+**LA GARDE DE `routes.test.tsx` A ÉTÉ RÉVISÉE, JAMAIS CONTOURNÉE** (décision 51, onzième occurrence).
+La couverture exacte `ROUTES` ⇄ `ENTREES_TRANSVERSES` gagne une entrée **des deux côtés**, et
+`/pilotage` rejoint d'emblée les routes qui portent un écran chargé à la demande : l'adresse est
+CRÉÉE avec son écran, comme `/couts` et `/affaires-figees` avant elle, et n'a jamais porté d'état
+vide inconditionnel. Le motif est écrit dans le fichier.
+
+**Où reprendre.** `CRM-066` **tranche 3 b** — le sélecteur de portée en chaîne de requête et la
+complétion par le catalogue, dont la FORME est à trancher avant d'écrire la seconde lecture
+(`docs/SPEC-analytique.md` §8). Puis la **tranche 4**, le score de santé de `CRM-P02`, qui commence
+par son arbitrage : ce qu'un score « transparent » agrège n'est écrit nulle part (§11.4).
