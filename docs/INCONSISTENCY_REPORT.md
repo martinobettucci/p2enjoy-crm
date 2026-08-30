@@ -5873,6 +5873,29 @@ déterministe** sur ce code : il l'était déjà dans l'entrée d'origine, qui n
 seul rend ses dix scénarios verts. Cette seconde mesure ajoute qu'il ne l'est pas non plus **en
 série**. Comportement inchangé, aucun test désactivé, aucune temporisation ajoutée.
 
+**TROISIÈME MESURE, 2026-08-30, session `CRM-066` tranche 2 c, et elle apporte un fait NOUVEAU.**
+Sur un seul et même arbre de travail, le même scénario a été joué **trois fois** :
+
+```
+npm run e2e:ui                        => 729 passés, AUCUN échec, 15,8 min
+scripts/verify-harness.sh --rapide    => 728 passés, 1 ÉCHEC — celui-ci, à l'assertion 372
+npm run e2e:ui -- inbox.spec.ts       => 10 passés, aucun échec, 16,9 s
+```
+
+L'échec est donc survenu **dans la campagne lancée par le harnais**, et non dans la campagne lancée
+directement, sur le MÊME code et la MÊME base. Ce que cela retire de la description d'origine : « il
+échoue en série, il passe seul » est trop simple — il passe aussi **en série**, une série complète
+verte l'ayant précédé de vingt minutes. Ce que cela ajoute : l'occurrence du harnais suit ses
+contrôles 1 à 4, qui reconstruisent `webapp/dist` et rejouent `e2e:api`, de sorte que la campagne
+d'interface s'y exécute derrière d'autres commandes — une différence d'ENVIRONNEMENT d'exécution,
+non de code.
+
+**Ce qui reste vrai, et pourquoi l'entrée reste OUVERTE** : l'échec n'est pas déterministe, sa cause
+n'est pas établie, et « ça ne s'est pas reproduit deux fois sur trois » n'est toujours pas un
+diagnostic. Le constat est étranger à la tranche 2 c, dont le diff ne touche ni `/board`, ni la
+palette, ni aucun gestionnaire de touche : il porte sur des données de démonstration, une suite
+pgTAP, un contrat d'API et des harnais. Comportement inchangé.
+
 ### INC-236 — `administration-workflows.spec.ts` § « les deux gestes se mènent au clavier seul » expire, en série COMME isolé
 
 **Consignée le 2026-08-28** par la session `CRM-082` (décision 542), constat **étranger à son
