@@ -28144,3 +28144,73 @@ pas, sans lesquelles la résolution à trois niveaux n'est démontrée qu'à son
 (`docs/SPEC-analytique.md` §9) — puis la **tranche 3**, l'écran `/pilotage`, dont la spécification
 visuelle est à écrire dans `docs/DESIGN_SYSTEM.md` **avant** sa première ligne de code. La tranche 4,
 le score de santé de `CRM-P02`, commence par son arbitrage.
+
+## décision 564 — `CRM-066` tranche 2 c : le seed exerce enfin les trois niveaux, et l'encadrement n'est pas un goût
+
+*2026-08-30, session planifiée ouverte à 04:08:54 UTC. La spécification de l'unité existait déjà et
+couvrait ce qui restait à livrer — son §9 décrit la tranche —, si bien qu'elle n'a pas été réécrite :
+`docs/CloudWorker.md` §3.2, exception explicite. Le code a suivi immédiatement.*
+
+**CE QUE LA SESSION A CODÉ.** Le seed pose les deux surcharges de probabilité qui manquaient.
+L'étape `negociation` du workflow par défaut porte **65 %**, déclarée dans le tableau `ETAPES` ; et
+« Reprise du dossier Marchand » porte **30 %** au niveau de l'affaire, par une section dédiée
+`8 duodecies ter`. Avec les 50 % du catalogue, la résolution du §3 de `docs/SPEC-analytique.md` est
+désormais exercée à ses trois niveaux par les données de développement, là où seul le troisième
+l'était.
+
+**L'ENCADREMENT 30 < 50 < 65 EST LA DÉCISION DE FOND, ET IL SE JUSTIFIE.** Le §9 demandait « trois
+nombres distincts ». Distincts ne suffit pas : s'ils croissaient du moins spécifique au plus
+spécifique, un `greatest` rendrait exactement le résultat de « le plus spécifique gagne » et aucune
+preuve ne les distinguerait. Avec l'affaire SOUS le catalogue, lui-même sous l'étape, chaque
+résolution fausse rend un nombre différent — 50 pour un `coalesce` écrit à l'envers, 65 pour un
+`greatest`, 50 sur les huit autres affaires du nœud pour un `least`. Le sens métier suit :
+un dossier repris se renégocie depuis moins loin que la moyenne des négociations de l'équipe.
+
+**DEUX CHEMINS D'ÉCRITURE, ET LE MOTIF DE CHACUN EST MESURÉ.** La surcharge d'étape est déclarée
+dans le contrat des étapes et non posée par un `PATCH` ultérieur : la copie du workflow vers le
+track recopie `probability_override`, et la version publiée photographie la composition — une
+écriture postérieure ferait diverger un seed appliqué à froid d'un seed rejoué. MESURÉ après
+`./resetMe.sh` : la copie de `conseil-ia` porte bien 65 %, et `source_modified_since_copy` reste
+**faux**. La surcharge d'affaire a sa propre section : la porter dans le contrat des cards
+obligerait à ajouter une colonne aux **quarante et une** lignes des trois tableaux pour une valeur
+qu'une seule porte, et à toucher deux chemins d'écriture étrangers à la tranche (`CLAUDE.md` §1).
+Elle écrit avec le **jeton réel de l'administratrice** — la migration 14 accorde
+`update (probability_override)` à `authenticated` — et ramène la colonne à `null` sur toute affaire
+qui la porterait sans être déclarée.
+
+**UNE PREUVE QUI ÉPROUVE LA DONNÉE, ET NON PLUS SEULEMENT LA RÈGLE.** Les preuves existantes — le
+groupe 6 de la suite pgTAP, les lignes *m* et *n* du contrat d'API — posent leurs surcharges puis
+les retirent : elles seraient restées vertes sur un seed qui n'exerce aucun niveau au-delà du
+catalogue. Le **groupe 6 bis** (4 assertions) et la **ligne *q*** lisent l'état seedé sans rien
+écrire. NON-COMPLAISANCE MESURÉE : la surcharge retirée en base, trois des quatre assertions
+tombent ; restaurée, la suite rend 31 assertions vertes. Le **contrôle 8** de
+`scripts/verify-analytique.sh` rejoue cette dégradation de la DONNÉE et constate la restauration.
+
+**DEUX GARDE-FOUS FIGÉS PAR DES UNITÉS ANTÉRIEURES ONT ÉTÉ RÉVISÉS, JAMAIS RETIRÉS** (décision 51,
+neuvième et dixième occurrences). *Premier* : l'empreinte de composition du workflow par défaut,
+dans `0037_versionnement_workflows.test.sql`, a bougé — `probability_override` EST dans la
+composition, et une empreinte inchangée aurait été le vrai défaut ; son propre commentaire le
+prévoyait. *Second*, et c'est un **compteur complaisant trouvé en travaillant** : le contrôle des
+surcharges de `scripts/verify-workflows.sh` comptait les ÉTAPES portant un libellé ou un seuil et
+annonçait « deux surcharges, sur deux colonnes différentes ». La troisième surcharge posée sur une
+étape qui portait déjà un seuil, il serait resté VERT en affirmant une chose devenue fausse. Il
+compte désormais les trois colonnes séparément, et vérifie que chacune est exercée.
+
+**UN DÉFAUT DE MON PROPRE HARNAIS, TROUVÉ PAR SA PREMIÈRE EXÉCUTION.** Des accents graves dans une
+chaîne entre guillemets font exécuter par bash les mots qu'ils entourent : le message rendait
+« ni  ni  ne rend le résultat attendu » et deux `command not found` s'écrivaient au milieu d'un
+bilan par ailleurs vert. Corrigé, avec son motif écrit dans le fichier.
+
+**UNE ERREUR DE CONDUITE, CONSIGNÉE PLUTÔT QUE TUE.** `scripts/verify-workflows.sh` a été lancé
+pendant que `npm run e2e:ui` tournait : le harnais a réappliqué le seed sous une campagne en cours,
+a compté **12** transitions au lieu de onze — une arête qu'un scénario d'interface crée puis
+retire — et a rendu trois échecs qui ne disent rien du produit. C'est exactement ce que
+`docs/CloudWorker.md` §2.1 ter décrit : deux séries de preuves sur une seule base se mesurent l'une
+l'autre. Le verdict de ce harnais est donc à rejouer **seul**, et ses deux contrôles révisés, eux,
+étaient verts.
+
+**Où reprendre.** `CRM-066` **tranche 3** — l'écran `/pilotage`, dont la spécification visuelle est
+à écrire dans `docs/DESIGN_SYSTEM.md` **avant** sa première ligne de code (`CLAUDE.md` §4 impose d'en
+lire l'intégralité), avec ses tests de composant, son E2E d'interface à console vierge, ses captures
+observées et les chapitres 28 et 29 du manuel. La tranche 4, le score de santé de `CRM-P02`,
+commence par son arbitrage.
