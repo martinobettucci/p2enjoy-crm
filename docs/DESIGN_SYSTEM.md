@@ -4517,6 +4517,16 @@ l'identité précède l'histogramme et le détail ligne à ligne.
   chiffres tabulaires. C'est la seule raison d'avoir des chiffres tabulaires — se comparer colonne
   par colonne.
 
+- **LES DEUX EN-TÊTES DE MONTANT NOMMENT LA DEVISE — « Montant (EUR) » —, ET C'EST UN DÉFAUT TROUVÉ
+  EN REGARDANT UNE CAPTURE** (`CLAUDE.md` §16, 2026-08-30). Le titre `h2` ci-dessus n'est rendu que
+  s'il y a **plusieurs** devises ; sur une devise unique — le cas attendu, celui que l'utilisateur
+  voit tous les jours — plus rien à l'œil ne disait de quelle monnaie ces nombres sont, hors le
+  prévisionnel d'un bloc plus haut. C'est exactement le « montant nu dans une liste sans en-têtes »
+  que `docs/SPEC-analytique.md` §7.3 refuse, transposé au tableau. **La règle générale, réemployable :
+  quand un titre de regroupement est conditionnel, ce qu'il qualifie doit être nommé ailleurs de
+  façon INCONDITIONNELLE** — sans quoi le cas majoritaire est précisément celui qui perd
+  l'information.
+
 - **AUCUN LIEN, ET L'ABSENCE EST ASSUMÉE.** C'est l'écart avec le §5.33, dont chaque libellé de
   track mène à ses coûts : un **nœud** n'est pas adressable — aucun écran du produit ne liste « les
   affaires de ce nœud », toutes portées confondues —, et un lien vers une adresse qui n'existe pas

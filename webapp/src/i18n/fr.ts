@@ -2695,8 +2695,12 @@ export const fr = {
 	'pilotage.funnel.node': 'Étape',
 	'pilotage.funnel.kind': 'Genre',
 	'pilotage.funnel.deals': 'Affaires',
-	'pilotage.funnel.amount': 'Montant',
-	'pilotage.funnel.weighted': 'Pondéré',
+	// LES DEUX EN-TÊTES DE MONTANT NOMMENT LA DEVISE — défaut trouvé en regardant une capture
+	// (`CLAUDE.md` §16, 2026-08-30). Le titre `h2` de la devise n'est rendu que s'il y en a
+	// PLUSIEURS (§5.33) : sur une devise unique — le cas attendu — rien à l'œil ne disait de quelle
+	// monnaie ces nombres sont. Le code est une DONNÉE, passée en paramètre et jamais concaténée.
+	'pilotage.funnel.amount': 'Montant ({devise})',
+	'pilotage.funnel.weighted': 'Pondéré ({devise})',
 	// Les deux mentions OBLIGATOIRES du §7.3. Sans la première, un prévisionnel bas se lit comme un
 	// portefeuille PAUVRE au lieu d'un portefeuille MAL RENSEIGNÉ. Elles TRAVERSENT les devises :
 	// ce sont des affaires, pas de l'argent.

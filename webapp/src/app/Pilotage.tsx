@@ -362,11 +362,19 @@ function Entonnoir({
 							<th scope="col" className={`${CLASSES_ENTETE} text-right`}>
 								{t('pilotage.funnel.deals')}
 							</th>
+							{/*
+							  LES DEUX EN-TÊTES DE MONTANT NOMMENT LA DEVISE, ET C'EST UN DÉFAUT
+							  TROUVÉ EN REGARDANT UNE CAPTURE (`CLAUDE.md` §16). Le titre `h2` n'est
+							  rendu que s'il y a PLUSIEURS devises (§5.33) : sur une devise unique —
+							  le cas attendu — plus rien à l'œil ne disait de quelle monnaie ces
+							  nombres sont, hors le prévisionnel d'un bloc plus haut. C'est
+							  exactement le « montant nu » que le §7.3 refuse, transposé au tableau.
+							*/}
 							<th scope="col" className={`${CLASSES_ENTETE} text-right`}>
-								{t('pilotage.funnel.amount')}
+								{t('pilotage.funnel.amount', { devise: groupe.devise })}
 							</th>
 							<th scope="col" className={`${CLASSES_ENTETE} text-right`}>
-								{t('pilotage.funnel.weighted')}
+								{t('pilotage.funnel.weighted', { devise: groupe.devise })}
 							</th>
 						</tr>
 					</thead>
