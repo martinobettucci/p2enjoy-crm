@@ -311,9 +311,24 @@ avec_commentaire=$(psql_db -c "select count(*) from public.workflow_transitions
                                 where workflow_id = '$WF_SEED' and require_comment;")
 initiales=$(psql_db -c "select count(*) from public.workflow_steps
                          where workflow_id = '$WF_SEED' and is_initial;")
-surcharges=$(psql_db -c "select count(*) from public.workflow_steps
-                          where workflow_id = '$WF_SEED'
-                            and (label_override is not null or stale_after_days is not null);")
+# LES TROIS COLONNES SURCHARGEABLES SONT COMPTÉES SÉPARÉMENT, ET NON LES ÉTAPES QUI EN PORTENT UNE.
+# Jusqu'au 2026-08-30, ce contrôle comptait les ÉTAPES portant `label_override` ou
+# `stale_after_days`, et il annonçait « deux surcharges, sur deux colonnes différentes ». La
+# tranche 2 c de `CRM-066` en a posé une TROISIÈME — `probability_override` à 65 % sur
+# `negociation` (`docs/SPEC-analytique.md` §9) — sans que ce compte bouge, la même étape portant
+# déjà un seuil : le contrôle serait resté VERT en affirmant une chose devenue fausse. C'est le
+# compteur complaisant que `docs/CloudWorker.md` §4.1 bis proscrit, et il est révisé plutôt que
+# contourné (mécanisme de la décision 51).
+surcharges=$(psql_db -c "select
+	count(*) filter (where label_override is not null)
+	+ count(*) filter (where stale_after_days is not null)
+	+ count(*) filter (where probability_override is not null)
+	from public.workflow_steps where workflow_id = '$WF_SEED';")
+colonnes_surchargees=$(psql_db -c "select
+	(count(*) filter (where label_override is not null) > 0)::int
+	+ (count(*) filter (where stale_after_days is not null) > 0)::int
+	+ (count(*) filter (where probability_override is not null) > 0)::int
+	from public.workflow_steps where workflow_id = '$WF_SEED';")
 channels_rattaches=$(psql_db -c "select count(*) from public.channels
                                   where workspace_id = '$WS_SEED' and workflow_id = '$WF_SEED';")
 defaut=$(psql_db -c "select count(*) from public.workflows
@@ -330,8 +345,11 @@ exigences=$(psql_db -c "select count(*) from public.workflow_transition_required
 	|| fail "étapes : $etapes, attendu 7"
 [ "$initiales" = "1" ] && ok "exactement une étape initiale : le seed fournit ce que la base ne "\
 "peut pas exiger" || fail "étapes initiales : $initiales, attendu 1"
-[ "$surcharges" = "2" ] && ok "deux surcharges, sur deux colonnes différentes : la faculté est "\
-"démontrable et non seulement documentée" || fail "surcharges : $surcharges, attendu 2"
+[ "$surcharges" = "3" ] && ok "trois surcharges : la faculté est démontrable et non seulement "\
+"documentée" || fail "surcharges : $surcharges, attendu 3"
+[ "$colonnes_surchargees" = "3" ] && ok "et elles portent sur les TROIS colonnes surchargeables — "\
+"libellé, seuil de relance, probabilité : aucune n'est documentée sans être exercée" \
+	|| fail "colonnes surchargées : $colonnes_surchargees, attendu 3"
 [ "$transitions" = "11" ] && ok "onze transitions, exactement celles du graphe du §3.9" \
 	|| fail "transitions : $transitions, attendu 11"
 [ "$avec_commentaire" = "5" ] \
