@@ -68,9 +68,16 @@ select has_function('app', 'workflow_composition_document', array['uuid'],
 -- l'empreinte. Ici ce n'est pas l'extraction qui a bougé, c'est la COMPOSITION elle-même — le seed
 -- pose deux champs de plus —, et une empreinte qui n'aurait pas bougé serait alors le vrai défaut.
 -- Nouvelle valeur MESURÉE sur la pile seedée, jamais recopiée d'une exécution de test.
+--
+-- RÉVISÉE UNE SECONDE FOIS PAR LA TRANCHE 2 c DE `CRM-066`, LE 2026-08-30, ET POUR LE MÊME MOTIF :
+-- le seed pose désormais une `probability_override` de 65 % sur l'étape `negociation` du workflow
+-- par défaut (`docs/SPEC-analytique.md` §9), et cette colonne EST dans la composition. L'empreinte
+-- devait donc bouger ; celle qui n'aurait pas bougé aurait dit que la composition ne photographie
+-- pas la surcharge, et c'est cela que cette assertion garde. Garde-fou RÉVISÉ, jamais retiré ni
+-- contourné (mécanisme de la décision 51). Valeur MESURÉE sur la pile seedée à froid.
 select is(
 	app.workflow_composition_fingerprint('5eed0000-0000-4000-8000-000000000051'),
-	'5ae889f8427111c0faf96a64edffaf98210deda1a37d5e1ec79b16fa1bb42725',
+	'e77d7b7c580e03b7ee0ada4ca8e830a2528a5243490853e66b06d6bbac518e30',
 	'2 — empreinte du workflow par défaut, révisée par la composition et non par l''extraction');
 
 -- RÉVISÉE PAR L'ARBITRAGE DE LA DÉCISION 430, ET NON CONTOURNÉE (INC-122). Cette assertion citait

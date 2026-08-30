@@ -566,7 +566,11 @@ FICHIERS_SQL_ATTENDUS=68
 # **3079 le 2026-08-30, et l'écart est ENTIÈREMENT le mien** : la suite de l'entonnoir de
 # conversion en apporte **27** — 3052 + 27 = 3079 —, et `npm run test:sql` en COMPTE exactement
 # **3079**. Aucune part antérieure n'est absorbée ici : il n'y en a pas.
-ASSERTIONS_ATTENDUES=3079
+# **3083 le 2026-08-30, et l'écart est ENTIÈREMENT le mien** : la tranche 2 c de `CRM-066` ajoute
+# QUATRE assertions au groupe 6 bis de `0068_entonnoir_conversion.test.sql` — les trois niveaux que
+# le seed pose désormais, lus SANS écriture — 3079 + 4 = 3083, et `npm run test:sql` en COMPTE
+# exactement **3083**. Aucun fichier n'est ouvert : `FICHIERS_SQL_ATTENDUS` reste à 68.
+ASSERTIONS_ATTENDUES=3083
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -845,7 +849,12 @@ ASSERTIONS_ATTENDUES=3079
 # ne vit sur aucune table qu'un fichier existant couvre, à l'inverse des trois révisions
 # précédentes. 1041 + 16 = 1057, valeur COMPTÉE — « 1057 passed ». Garde-fou RÉVISÉ, jamais retiré
 # (décision 51).
-SCENARIOS_API=1057
+# **1058 depuis `CRM-066` tranche 2 c, 2026-08-30.** UN seul scénario s'ajoute, la ligne *q* du §6 :
+# les trois niveaux de la résolution exercés par le SEED, sans qu'aucune preuve n'écrive. Les
+# lignes *m* et *n*, qui posent leurs surcharges puis les retirent, sont conservées telles quelles —
+# elles éprouvent la règle, celle-ci éprouve la donnée. 1057 + 1 = 1058, valeur COMPTÉE —
+# « 1058 passed ». Garde-fou RÉVISÉ, jamais retiré (décision 51).
+SCENARIOS_API=1058
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
