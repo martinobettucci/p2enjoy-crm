@@ -28293,6 +28293,49 @@ La couverture exacte `ROUTES` ⇄ `ENTREES_TRANSVERSES` gagne une entrée **des 
 CRÉÉE avec son écran, comme `/couts` et `/affaires-figees` avant elle, et n'a jamais porté d'état
 vide inconditionnel. Le motif est écrit dans le fichier.
 
+**CAMPAGNE COMPLÈTE, ET SON UNIQUE ÉCHEC RÉEL A ÉTÉ CORRIGÉ.** `test:sql` **68 fichiers /
+3083 assertions**, `test:unit` **2993 tests**, `e2e:api` **1058 passés**, `e2e:ui` **736 passés,
+1 échec, 21,5 min**, `e2e:mail` **42 passés**, `pytest` **244**, `typecheck`, `types:check` et
+`build` verts. `verify-analytique.sh` **27 contrôles** et `verify-manual.sh` **134 contrôles**,
+aucune anomalie de part ni d'autre.
+
+**L'échec d'interface était le mien, et c'est exactement le travail de cette preuve.** Le parcours
+clavier de `coquille.spec.ts` énumère les entrées de la barre latérale dans l'ordre visuel ; la
+huitième entrée l'a fait rougir. Garde-fou **RÉVISÉ avec son ordre réel et son motif écrit dans le
+fichier**, jamais contourné — quatrième révision par livraison de cette même liste (décision 51).
+Rejoué : **13 scénarios verts**.
+
+**`e2e:mail` A RENDU UN FAUX ROUGE, ET LA LIGNE DE BASE L'A ÉTABLI.** `mail-sync.spec.ts` §S3 exige
+qu'aucune ligne du journal du service ne porte `WARNING` ; le tampon de `docker logs` en portait un,
+`veille_compte_echoue`, horodaté **08:57:02** — un échec de relève IMAP du démon, pendant la campagne
+d'interface, sans aucun rapport avec un changement qui ne touche pas une ligne de `mail-sync`. C'est
+le cas que le §2.2 bis de `docs/CloudWorker.md` décrit et **INC-107** enregistre depuis le 2026-08-15.
+Conteneur **recréé** — le remède que ce même §2.2 bis nomme, un redémarrage ne suffisant pas —, suite
+rejouée : **42 passés**.
+
+**`verify-harness.sh` REND « 31 CONTRÔLES, 1 ANOMALIE », ET C'EST INC-246, OUVERTE ICI.** Sa campagne
+d'interface INTERNE rend **734 passés / 3 échecs** là où la même campagne lancée directement rend
+736 / 1. Les trois scénarios rejoués ensemble sont **verts** — et un QUATRIÈME tombe, que ni l'une ni
+l'autre campagne n'avait dénoncé, lui-même vert au rejeu suivant et rouge à un **palier différent**
+à l'exécution d'après. **La cible du défaut se déplace**, ce qui est la mesure nouvelle : elle exclut
+« ce scénario-là est mal écrit » et désigne l'état partagé. Préexistant et étranger — aucune ligne de
+cette tranche ne touche ces quatre fichiers. Consigné, non corrigé.
+
+**Une erreur de conduite, consignée plutôt que tue.** Le compteur `SCENARIOS_UI` a été révisé de 729
+à **737** PENDANT que `verify-harness.sh` tournait : bash relit un script en cours d'exécution, et
+décaler ses octets rend son verdict ininterprétable. Le run a été **abandonné**, son `trap` a bien
+tout restauré — mesuré, `git status` ne portait que des captures —, et le harnais a été rejoué
+proprement. Son §2 bis confirme la valeur COMPTÉE : « projet ui : 737 scénarios énumérés, conforme
+au compteur ».
+
+**LES CAPTURES ONT ÉTÉ TRIÉES PAR COMPARAISON PIXEL À PIXEL, PAS À VUE.** Le rejeu d'interface en a
+réécrit **460** ; **419** portent un changement que ce travail explique — la barre latérale gagne son
+entrée « Pilotage », et elle est dans presque tous les écrans —, et elles sont renouvelées et
+**regardées** : `CRM-007/palier-lg-1152.jpg`, où les huit icônes de la barre repliée restent
+distinctes, et `CRM-062/affaires-figees-xl-1440.jpg`, où l'entrée prend sa place sans rien pousser.
+Les **41** autres ne diffèrent QUE hors de la barre latérale, leur écart tenant aux dates relatives
+que le seed repose à chaque application : **restaurées**.
+
 **Où reprendre.** `CRM-066` **tranche 3 b** — le sélecteur de portée en chaîne de requête et la
 complétion par le catalogue, dont la FORME est à trancher avant d'écrire la seconde lecture
 (`docs/SPEC-analytique.md` §8). Puis la **tranche 4**, le score de santé de `CRM-P02`, qui commence

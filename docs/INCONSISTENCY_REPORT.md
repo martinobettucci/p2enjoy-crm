@@ -201,6 +201,7 @@ rendu et que la mise en œuvre reste due (`docs/ARBITRAGES.md`, `docs/BACKLOG.md
 | INC-243 | L'empreinte de fonctions de `scripts/verify-authz.sh` §2 concatène `proacl` DANS SON ORDRE DE TABLEAU. Le rejeu du répertoire complet réémet les `GRANT` et permute l'ordre des `aclitem` sans changer un seul droit : le contrôle rougit sur une permutation qui ne signifie rien. C'est la CAUSE de l'intermittence que la décision 554 avait nommée sans l'expliquer — reproductible, et non aléatoire : rouge lancé juste après `./resetMe.sh`, vert sur une base déjà stabilisée | 2026-08-29 | **close** — RÉVISÉE par la décision 557 : les `aclitem` sont triés avant comparaison, l'ensemble des droits restant comparé à l'identique | 556, 557 |
 | INC-244 | `docs/captures/CRM-062/relance-dans-le-fil-1440.jpg` est nommée `-1440` mais est prise à la fenêtre PAR DÉFAUT du projet `ui`, soit **1280 × 720** : le nom annonce un palier que l'image ne porte pas. Les autres captures `-1440` du dépôt viennent de scénarios qui posent explicitement la fenêtre. Trouvée en régénérant la capture pour INC-239 | 2026-08-29 | *ouverte* — issue retenue et écrite : poser la fenêtre 1440 × 900 avant cette capture, jamais renommer le fichier, le backlog et le journal de `CRM-062` le citant par son nom actuel. Mise en œuvre due : `CRM-062` | 559 |
 | INC-241 | `verify-board.sh` exige que `from('channels')` n'apparaisse que dans UN fichier de `webapp/src` ; il y en a cinq, et `docs/SPEC-channels.md` §5.4 — la règle qu'il cite — ne parle que de la lecture alimentant la barre d'onglets, en prévoyant explicitement des routes transverses. Contrôle plus strict que sa propre règle, rouge depuis que `CRM-075`, `CRM-077`, `CRM-057` et `CRM-083` ont livré | 2026-08-29 | **close** — MISE EN ŒUVRE par la décision 560 : le comptage de fichiers remplacé par un recensement du ROUTEUR, `docs/SPEC-channels.md` §5.4.1 écrit, les quatre lectures transverses tranchées et nommées comme observation et non comme assertion. Mesuré : `verify-board --rapide` **43 contrôles, aucune anomalie** (35 contrôles, 1 en échec avant), dont le retournement du recensement sur un routeur muté dans ses quatre sens | 553, 560 |
+| INC-246 | La campagne d'interface INTERNE de `scripts/verify-harness.sh` §5 rend des échecs que la même campagne lancée DIRECTEMENT ne rend pas, et **le scénario qui tombe change d'une exécution à l'autre**. Mesuré le 2026-08-30 sur le MÊME arbre : campagne directe **736 passés / 1 échec** (`coquille.spec.ts`, réel et corrigé) ; campagne interne du harnais **734 passés / 3 échecs**, dans `administration-workflows`, `armement-sequence` et `contacts-affaire` — les trois VERTS rejoués ensemble, où un QUATRIÈME tombe (`administration-workflows` § « le bloc des champs reste lisible », palier `md-900`), lui-même vert au rejeu suivant, et rouge au palier `lg-1152` à l'exécution d'après. Famille d'INC-174, d'INC-235 et d'INC-239, dont c'est la première mesure à montrer que la cible du défaut **se déplace** | 2026-08-30 | *ouverte* — préexistant et étranger à `CRM-066` tranche 3 a, qui ne touche aucun de ces quatre fichiers. Issue retenue et écrite ci-dessous ; mise en œuvre due : `CRM-008` | 565 |
 | INC-192 | `scripts/verify-corbeille.sh` cherche `@spec CRM-077` dans les TROIS premières lignes de `webapp/src/app/RouteCard.tsx`, qui en cumule dix | 2026-08-20 | **close** — fenêtre de lecture portée à l'en-tête entier (commit `752d3b4`), verdict vérifié le 2026-08-25 : 38 contrôles, aucune anomalie | 487, 508 |
 | INC-193 | Le `details` d'un refus de contrainte rend la ligne entière, `secret_id` compris — la colonne révoquée à `authenticated` ressort par un second chemin | 2026-08-20 | *ouverte* — arbitrage attendu, sécurité des données | 492 |
 | INC-195 | `scripts/verify-copie-workflow.sh` rejoue la migration 19 et laissait `move_card` AMPUTÉE du lot G — quatrième occurrence d'INC-154 | 2026-08-21 | **close** — corrigée par la décision 497 | 497 |
@@ -6425,3 +6426,66 @@ main dérive, un inventaire mesuré ne dérive pas. C'est la leçon d'INC-175, d
 et c'est aussi ce que la décision 560 a fait du recensement des routes.
 
 **Statut :** ouverte — porteur `CRM-060` pour l'état réel, `CRM-008` pour la garde du harnais.
+
+
+### INC-246 — la campagne d'interface INTERNE du harnais rend des échecs que la campagne directe ne rend pas, et la CIBLE se déplace
+
+**Ouverte le 2026-08-30 par `CRM-066` tranche 3 a, comportement inchangé** — constat **étranger à la
+tranche** de la session, consigné sans être corrigé au passage (`CLAUDE.md` §18,
+`docs/CloudWorker.md` §3.1).
+
+**Ce qui est mesuré, sur le MÊME arbre de travail, la pile debout et seedée**, quatre exécutions
+successives :
+
+```
+npm run e2e:ui                                            => 736 passés, 1 ÉCHEC (coquille), 21,5 min
+   → l'échec est RÉEL et imputable à la session : le garde-fou du parcours clavier, révisé.
+
+scripts/verify-harness.sh --rapide, sa campagne §5        => 734 passés, 3 ÉCHECS, 25,6 min
+   [ui] administration-workflows.spec.ts:1118 « les deux gestes se mènent au clavier seul »
+   [ui] armement-sequence.spec.ts:224        « UN SECOND ARMEMENT … EST REFUSÉ »
+   [ui] contacts-affaire.spec.ts:208         « la lectrice qui détache lit “sans effet” »
+
+les trois fichiers rejoués ENSEMBLE, seuls                => 84 passés, 1 ÉCHEC
+   → les TROIS scénarios ci-dessus sont VERTS ; un QUATRIÈME tombe, qu'aucune des deux campagnes
+     n'avait dénoncé : administration-workflows.spec.ts:958 « le bloc des champs reste lisible »,
+     palier md-900.
+
+ce seul scénario rejoué seul (4 paliers)                  => 3 passés, 1 ÉCHEC, palier lg-1152
+le même, rejoué immédiatement après                       => 4 passés, aucun échec
+```
+
+**Ce que cette mesure ajoute à INC-174, INC-235 et INC-239.** Les trois entrées existantes décrivent
+un scénario NOMMÉ qui rougit en campagne et passe seul. Ici, **la cible se déplace** : quatre
+scénarios différents dans quatre fichiers différents, et pour le dernier, **un palier différent à
+chaque exécution**, sans qu'une seule ligne du dépôt ait changé entre les rejeux. Une intermittence
+qui change de cible n'est pas la même chose qu'un scénario fragile : elle exclut l'hypothèse « ce
+scénario-là est mal écrit » et désigne l'ÉTAT PARTAGÉ — la base, `webapp/dist`, le serveur de
+prévisualisation — comme la cause.
+
+**Ce qui n'est PAS la cause, et qui est écarté par la mesure.** Ce n'est pas la session : les quatre
+fichiers concernés ne sont touchés par aucune ligne de `CRM-066` tranche 3 a, qui n'ajoute qu'un
+écran, une entrée de navigation et un fichier de preuve neuf. Ce n'est pas non plus la concurrence de
+deux séries — aucune autre commande ne tournait pendant ces exécutions, et le §2.1 ter de
+`docs/CloudWorker.md` a été respecté à la lettre.
+
+**Pourquoi cela COÛTE, et pourquoi la nommer plutôt que la subir.** Le harnais des harnais est ce qui
+dit si les compteurs du dépôt sont justes. Quand son verdict porte « 31 contrôles, 1 anomalie » pour
+une campagne dont l'échec n'est ni reproductible ni imputable, **il apprend à ses lecteurs à ignorer
+son propre rouge** — exactement ce que le §3.1 de `docs/CloudWorker.md` interdit de faire d'une
+preuve. Deux sessions consécutives ont déjà consigné ce même verdict sans pouvoir le trancher
+(décisions 564 et 565).
+
+**Issue retenue, non mise en œuvre.** Trois voies, et la troisième est préférable :
+
+- *(a)* déclarer la campagne interne du §5 **non concluante** et retirer son verdict du bilan. Écarté :
+  cela retirerait au harnais la seule preuve qu'il a de la non-régression d'interface ;
+- *(b)* rejouer une fois le scénario tombé avant de conclure. Écarté : c'est le « re-run jusqu'au
+  vert » que le §4.3 de `docs/CloudWorker.md` réserve à un cas précis, et l'appliquer par défaut
+  masquerait un jour un défaut réel ;
+- *(c)* **isoler l'état partagé entre les suites**, ce qui suppose d'abord de le NOMMER — la base
+  seedée à froid entre les projets, ou le `vite preview` réutilisé. C'est le travail d'une session
+  dédiée de `CRM-008`, lancée seule, dont le premier geste est de reproduire la mesure ci-dessus en
+  faisant varier UNE condition à la fois.
+
+**Mise en œuvre due : `CRM-008`.** Aucune ligne du produit n'est modifiée ici.
