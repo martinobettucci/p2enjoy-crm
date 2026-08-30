@@ -251,15 +251,58 @@ echo "3. Le module ne redéclare AUCUNE règle que la base porte"
 # dépôt. Le contrôle porte sur le CODE, commentaires exclus : la règle y est nommée à dessein.
 
 code_module=$(grep -v '^\s*\(//\|\*\|/\*\)' "$MODULE_TS" || true)
+
+# **RÉVISÉ PAR LA TRANCHE 3 c, JAMAIS AFFAIBLI NI CONTOURNÉ** (`CLAUDE.md` §18, décision 51).
+#
+# Ce contrôle refusait les quatre colonnes dans TOUT le module, et il avait raison tant que le module
+# ne lisait qu'`entonnoir_conversion()`. La tranche 3 c lui ajoute une lecture d'une AUTRE table —
+# `workflow_nodes_catalog`, pour NOMMER les nœuds vides (`docs/SPEC-analytique.md` §8 bis.5) —, et
+# cette lecture doit écarter les nœuds ARCHIVÉS : un nœud retiré du catalogue n'est plus une étape du
+# chemin, et le nommer « sans affaire » inviterait à y en mettre une.
+#
+# CETTE RÈGLE N'EST PAS UNE RECOPIE : `entonnoir_conversion()` rend des lignes d'ENTONNOIR, jamais le
+# catalogue, et elle ne porte donc aucun filtre sur les nœuds archivés. Il n'existe aucune seconde
+# définition à faire diverger — le mode de défaillance que ce contrôle protège n'est pas en jeu.
+#
+# LE CONTRÔLE EST DONC PLUS STRICT QU'AVANT, ET NON PLUS LÂCHE : hors de `lireNoeudsCatalogue`, les
+# quatre colonnes restent interdites ; DANS cette fonction, `archived_at` est désormais EXIGÉ. Retirer
+# l'exclusion des nœuds archivés fait maintenant rougir ce harnais, là où elle passait inaperçue.
+corps_catalogue=$(printf '%s\n' "$code_module" | awk '
+	/^export async function lireNoeudsCatalogue\(/ { d = 1 }
+	d { print }
+	d && /^}$/ { d = 0 }')
+hors_catalogue=$(printf '%s\n' "$code_module" | awk '
+	/^export async function lireNoeudsCatalogue\(/ { d = 1 }
+	!d { print }
+	d && /^}$/ { d = 0 }')
+
+if [ -z "$corps_catalogue" ]; then
+	fail "lireNoeudsCatalogue est introuvable : le découpage de ce contrôle ne mesure plus rien"
+else
+	ok "lireNoeudsCatalogue est isolée du reste du module ($(printf '%s\n' "$corps_catalogue" | wc -l) lignes)"
+fi
+
 regle_recopiee=false
 for motif in 'probability_override' 'archived_at' 'deleted_at' 'default_probability'; do
-	if printf '%s' "$code_module" | grep -q "$motif"; then
-		fail "le module recopie la règle de la base : « $motif » apparaît dans son code"
+	if printf '%s' "$hors_catalogue" | grep -q "$motif"; then
+		fail "le module recopie la règle de la base : « $motif » apparaît hors de lireNoeudsCatalogue"
 		regle_recopiee=true
 	fi
 done
 if [ "$regle_recopiee" = false ]; then
-	ok "le module n'emploie aucune colonne de la règle : il replie ce que la base a agrégé"
+	ok "hors du catalogue, le module n'emploie aucune colonne de la règle : il replie ce que la base a agrégé"
+fi
+
+for motif in 'probability_override' 'deleted_at' 'default_probability'; do
+	if printf '%s' "$corps_catalogue" | grep -q "$motif"; then
+		fail "lireNoeudsCatalogue emploie « $motif », qui n'est pas de son ressort"
+	fi
+done
+
+if printf '%s' "$corps_catalogue" | grep -q "archived_at"; then
+	ok "lireNoeudsCatalogue ÉCARTE les nœuds archivés — §8 bis.5, règle qu'aucune fonction ne porte"
+else
+	fail "lireNoeudsCatalogue n'écarte plus les nœuds archivés : un nœud retiré serait nommé « sans affaire »"
 fi
 
 # =================================================================================================
