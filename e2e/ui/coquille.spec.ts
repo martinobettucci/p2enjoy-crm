@@ -206,7 +206,7 @@ test.describe('navigation au clavier (docs/DESIGN_SYSTEM.md §8)', () => {
 		await page.keyboard.press('Enter')
 		expect(new URL(page.url()).hash).toBe('#contenu-principal')
 
-		// 3. Depuis le début, la tabulation atteint la bascule de repli puis les SEPT
+		// 3. Depuis le début, la tabulation atteint la bascule de repli puis les HUIT
 		//    entrées de navigation, dans l'ordre visuel.
 		//
 		// RÉVISÉE le 2026-08-18 par `CRM-060`, ET LA RÈGLE A CHANGÉ PAR LIVRAISON, non par
@@ -235,6 +235,16 @@ test.describe('navigation au clavier (docs/DESIGN_SYSTEM.md §8)', () => {
 		// tabulation doit suivre cet ordre visuel. La preuve est mise à jour AVEC son ordre réel,
 		// jamais contournée : elle est devenue rouge pendant la campagne de cette tranche, ce qui
 		// est exactement son travail.
+		//
+		// RÉVISÉE UNE QUATRIÈME FOIS le 2026-08-30 par `CRM-066` tranche 3 a, ET POUR LE MOTIF ÉCRIT
+		// TROIS FOIS AU-DESSUS : le tableau de pilotage ajoute une huitième entrée transverse,
+		// « Pilotage », entre « Coûts » et « Ma journée » (`docs/SPEC-analytique.md` §8,
+		// `docs/DESIGN_SYSTEM.md` §4 et §5.48). La place n'est pas arbitraire — « Coûts » et
+		// « Pilotage » sont les deux lectures AGRÉGÉES du portefeuille, ce qu'il a coûté et ce qu'il
+		// peut rapporter, là où « Ma journée » et « Affaires figées » répondent à « qu'est-ce qui me
+		// réclame ? ». La preuve est mise à jour AVEC son ordre réel, jamais contournée : elle est
+		// devenue rouge pendant la campagne de cette tranche, ce qui est exactement son travail.
+
 		await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
 		await page.keyboard.press('Tab')
 		await page.keyboard.press('Tab')
@@ -246,6 +256,7 @@ test.describe('navigation au clavier (docs/DESIGN_SYSTEM.md §8)', () => {
 			'Contacts',
 			'Objectifs',
 			'Coûts',
+			'Pilotage',
 			'Ma journée',
 			'Affaires figées',
 			'Réglages',
