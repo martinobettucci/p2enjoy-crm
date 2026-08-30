@@ -1198,7 +1198,15 @@ SCENARIOS_API=1058
 # les captures aux quatre paliers. 729 + 8 = 737, valeur COMPTÉE — « Total: 737 tests in 58 files »,
 # jamais déduite. Le nombre de FICHIERS passe de 57 à 58, ce qui est la contre-épreuve de « un
 # fichier neuf ».
-SCENARIOS_UI=737
+# **RÉVISÉ À 743 PAR `CRM-066` tranche 3 b, 2026-08-30, et l'écart est ENTIÈREMENT le mien.**
+# `e2e/ui/pilotage.spec.ts` gagne SIX scénarios pour le sélecteur de portée : la liste offerte et son
+# ordre, le choix d'un channel qui écrit les deux clés de l'adresse et restreint les nombres,
+# l'adresse partagée qui ouvre sa portée sans empiler l'historique, les trois adresses inexploitables
+# qui replient sans erreur, la lectrice à qui `grands-comptes` n'est ni offert ni rendu, et les
+# captures aux quatre paliers. 737 + 6 = 743, valeur COMPTÉE — « Total: 743 tests in 58 files »,
+# jamais déduite. Le nombre de FICHIERS est INCHANGÉ, ce qui est la contre-épreuve de « aucun fichier
+# neuf » : la tranche complète un écran, elle n'en ouvre pas un second.
+SCENARIOS_UI=743
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

@@ -2883,14 +2883,49 @@ C'est la même règle que celle du cumul du workspace (§5 septies.3) : quand de
 
 ## 5 nonies. L'entonnoir de conversion : où se tiennent vos affaires
 
-*Livré par `CRM-066` tranche 3 a. C'est le **chapitre 28** que `docs/SPEC-analytique.md` nomme.
-Captures dans `docs/captures/CRM-066/pilotage-*.jpg`.*
+*Livré par `CRM-066` tranche 3 a, complété par la tranche 3 b (le sélecteur de portée, §5 nonies.0).
+C'est le **chapitre 28** que `docs/SPEC-analytique.md` nomme. Captures dans
+`docs/captures/CRM-066/pilotage-*.jpg` et `pilotage-portee-*.jpg`.*
 
 **Où.** Barre latérale ▸ **« Pilotage »**, entre « Coûts » et « Ma journée ». L'adresse est
 `/pilotage` ; elle est partageable et rechargeable.
 
 **Qui.** Tout membre de l'espace de travail. Ce que l'écran montre dépend de ce que vous avez le
 droit de lire — voir le §5 nonies.4, qui est la partie la plus importante de cette page.
+
+### 5 nonies.0 Choisir la portée : tout l'espace, un track, un channel
+
+*Livré par la tranche 3 b.*
+
+En **tête** de l'écran, au-dessus des deux nombres, un champ **« Portée »** choisit ce que tout le
+reste de la page mesure : **tout l'espace de travail** — le défaut —, **un track entier**, ou **un
+channel**. Les options sont groupées par track, et chacune nomme son track : « Studio web — tout le
+track », « Studio web — Refonte de site ». Vous ne voyez que les tracks et les channels que vous
+avez le droit de lire.
+
+**Changer de portée ne recharge rien.** Les nombres se replient instantanément : l'écran a lu une
+seule fois, et la portée ne fait que choisir ce qu'il additionne. Les **deux nombres du §5 decies**
+et les **mentions** suivent la portée, comme les tableaux — un prévisionnel de tout l'espace
+au-dessus d'un entonnoir d'un seul channel dirait le contraire de ce qu'il montre.
+
+**L'adresse porte votre choix, et se partage.** `/pilotage?track=studio-web` ouvre le track ;
+`/pilotage?track=studio-web&channel=refonte` ouvre le channel. Les **deux** clés sont nécessaires
+pour un channel : un nom court de channel n'est unique qu'à l'intérieur de son track, si bien que
+`?channel=refonte` seul ne désignerait rien de sûr. `/pilotage` sans rien est tout l'espace de
+travail.
+
+**Une adresse que l'écran ne sait pas résoudre ne provoque aucune erreur.** Un track que vous ne
+lisez pas, un nom mal recopié, un channel nommé sous un track qui ne le porte pas : l'écran retombe
+sur la portée la plus large qu'il a comprise — le track, ou tout l'espace de travail — et **le champ
+« Portée » affiche alors la portée réellement appliquée**. Rien ne vous dit si le nom que vous aviez
+tapé existe ailleurs : ce serait vous renseigner sur ce que vos droits ferment.
+
+**Une portée sans affaire garde son champ.** Si le track ou le channel choisi ne porte aucune
+affaire active lisible, l'écran l'écrit — « Aucune affaire active dans cette portée » — **sans**
+retirer le champ, pour que vous puissiez en choisir une autre sans repasser par l'adresse.
+
+**Un track sans channel n'est pas proposé**, et un channel **archivé** ou **à la corbeille** non
+plus : il n'y a rien d'actif à y mesurer.
 
 ### 5 nonies.1 Ce que l'écran montre
 
@@ -2962,11 +2997,18 @@ Deux collègues aux droits différents lisent donc deux nombres différents sur 
 instant. Ce n'est pas une erreur de calcul : afficher un total « complet » vous apprendrait, par
 simple soustraction, l'existence et le montant d'une affaire que vous n'avez pas le droit de voir.
 
-L'écran l'écrit sous les tableaux, pour que personne n'ait à le deviner :
+L'écran l'écrit sous les tableaux, pour que personne n'ait à le deviner — et la phrase **nomme la
+portée courante** :
 
 > « Ces nombres portent sur toutes les affaires actives que vous pouvez lire, tous tracks et tous
 > channels confondus. Un collègue dont les droits diffèrent des vôtres lit d'autres totaux sur les
 > mêmes données. »
+
+> « Ces nombres portent sur les affaires actives du track « Studio web » que vous pouvez lire. […] »
+
+**Le sélecteur de portée n'ouvre aucun droit.** Choisir un channel, ou l'écrire dans l'adresse, ne
+montre rien de plus que ce que vos droits consentent déjà : la restriction s'applique **après** vos
+droits, jamais à leur place.
 
 ### 5 nonies.5 Les devises ne se mélangent jamais
 
@@ -2992,8 +3034,8 @@ comme un chiffre d'affaires.
 
 - **On n'y saisit rien**, et aucune ligne n'est cliquable. Les probabilités se saisissent au
   catalogue (§5 quater), dans l'éditeur de workflows (§5 bis) et sur la fiche d'une affaire (§4).
-- **Aucun filtre de portée** aujourd'hui : l'écran porte sur **tout** ce que vous lisez, tous tracks
-  et tous channels confondus. Un filtre par track ou par channel est prévu et n'est pas livré.
+- **Aucune étape vide n'est nommée** aujourd'hui : une étape où aucune affaire ne se tient n'a
+  simplement pas de ligne, et rien ne dit qu'elle est vide. Le nommer est prévu et n'est pas livré.
 - **Aucune lecture d'historique.** L'entonnoir est un **instantané** de l'état courant, jamais une
   analyse par période : il dit où vos affaires se tiennent **aujourd'hui**, pas ce qu'elles sont
   devenues depuis janvier.

@@ -13,6 +13,25 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-066` — « Pilotage » : choisir la portée mesurée (tranche 3 b)
+
+- **Un champ « Portée » en tête de l'écran** : tout l'espace de travail, un track entier, ou un
+  channel. Les options sont groupées par track, et chacune nomme le sien — « Studio web — tout le
+  track », « Studio web — Refonte de site ».
+- **Changer de portée ne recharge rien.** Les tableaux, les deux nombres de tête et les mentions se
+  replient instantanément : l'écran a lu une seule fois, et la portée ne fait que choisir ce qu'il
+  additionne.
+- **L'adresse porte le choix et se partage** — `/pilotage?track=studio-web&channel=refonte`. Les
+  deux clés sont nécessaires pour un channel : un nom court de channel n'est unique qu'à
+  l'intérieur de son track.
+- **Une adresse que l'écran ne sait pas résoudre ne provoque aucune erreur** : il retombe sur la
+  portée la plus large qu'il a comprise, et le champ affiche celle qui est réellement appliquée.
+  Rien ne dit si le nom tapé existe ailleurs — ce serait renseigner sur ce que les droits ferment.
+- **Une portée sans affaire garde son champ**, pour qu'on puisse en choisir une autre sans repasser
+  par l'adresse.
+- **Le sélecteur n'ouvre aucun droit** : on ne s'y voit offrir que ce qu'on lit déjà, et forcer une
+  portée dans l'adresse ne rend rien de plus.
+
 ### `CRM-066` — l'écran « Pilotage » : votre portefeuille en une page (tranche 3 a)
 
 - **Une nouvelle entrée dans la barre latérale, « Pilotage »**, entre « Coûts » et « Ma journée ».

@@ -10438,11 +10438,40 @@ rejouée : elle n'est la Definition of Done d'aucune unité (décision 553).
       visuelle au §5.48 de `docs/DESIGN_SYSTEM.md` écrite d'abord, ses tests de composant, son E2E
       d'interface à console vierge, ses captures observées, `docs/manual.md` chapitres 28 et 29.
       `docs/JOURNAL.md` décision 565.
-- [ ] **3 b — le sélecteur de portée.** **ARBITRÉ le 2026-08-30**, avant toute ligne de code :
-      `docs/SPEC-analytique.md` §8 bis.1 à §8 bis.4 et `docs/DESIGN_SYSTEM.md` §5.48 bis. L'adresse
-      porte **deux** clés — `?track=…&channel=…` —, et c'est la mesure **M8** qui l'impose :
-      `channels_track_id_slug_key` ne rend un slug de channel unique que **dans son track**.
-      Changer de portée n'émet **aucune** requête (§8 bis.3).
+- [x] **3 b — le sélecteur de portée. LIVRÉE ET PROUVÉE le 2026-08-30.** Arbitrée d'abord, dans un
+      commit documentaire dédié poussé avant tout code : `docs/SPEC-analytique.md` §8 bis.1 à
+      §8 bis.4 et `docs/DESIGN_SYSTEM.md` §5.48 bis. `webapp/src/lib/pilotage-portee.ts` porte la
+      seconde lecture — les channels lisibles avec leur track, en **une** requête — et la traduction
+      entre l'adresse, le `select` et `restreindre`. L'écran gagne son champ « Portée » en tête.
+- [x] **L'ADRESSE PORTE DEUX CLÉS, ET C'EST LA MESURE M8 QUI L'IMPOSE** :
+      `channels_track_id_slug_key` est `UNIQUE (track_id, slug)`, un slug de channel n'est donc
+      unique que **dans son track**. `?channel=` seul ne désigne rien, et un channel cherché dans le
+      mauvais track n'est pas trouvé — deux preuves figent ces deux cas plutôt que de deviner.
+- [x] **CHANGER DE PORTÉE N'ÉMET AUCUNE REQUÊTE**, et la preuve le fige **en comptant les appels** :
+      `rpc` et `from` restent à un appel chacun après un changement de portée. Les deux grandeurs
+      dérivées et les deux mentions sont calculées sur les lignes **restreintes**.
+- [x] **Suite unitaire dédiée** : `webapp/src/lib/pilotage-portee.test.ts`, **34 tests**.
+      **Preuves de composant** : `Pilotage.test.tsx` passe de 23 à **37**. **Preuve d'interface** :
+      `e2e/ui/pilotage.spec.ts` passe de 8 à **14 scénarios**, console vierge.
+- [x] **DEUX DÉFAUTS RÉELS TROUVÉS EN EXÉCUTANT LES PREUVES, CORRIGÉS DANS LEUR CAUSE.**
+      `S9` a mesuré que `channels.position` est numérotée **par track** — quatre channels du seed
+      portent `position = 1` —, si bien que le tri du serveur, juste **dans** un groupe, entrelace
+      les tracks **entre** les groupes : le sélecteur rendait « Legacy 2023, Formation, Conseil & IA,
+      Studio web ». Les groupes suivent désormais `tracks.position`. Et **en REGARDANT la capture**
+      (`CLAUDE.md` §16), le `select` **fermé** ne rendait que « Tout le track », sans dire lequel :
+      l'intitulé d'un `optgroup` est invisible dans cet état. Chaque option nomme donc son track —
+      **la règle générale du §5.48 appliquée à un second cas**.
+- [x] **DEUX DÉFAUTS DE MES PROPRES PREUVES**, révisés avec leur motif : `toHaveAttribute` sur un
+      locator de quatre éléments viole le mode strict (deuxième occurrence sur cette unité), et
+      `S13` attendait un repli sur le workspace là où la règle du §8 bis.2 replie sur le **track**.
+- [x] **DEUX GARDES FIGÉES PAR LA TRANCHE 3 a RÉVISÉES, JAMAIS RETIRÉES** (décision 51, douzième
+      occurrence) : le double de client des 23 preuves de composant porte désormais la seconde
+      lecture, et l'écran s'y monte dans un `MemoryRouter` — la portée vit dans la chaîne de
+      requête, ce n'est pas une commodité de preuve mais le contrat de l'écran qui a changé.
+      `SCENARIOS_UI` de `verify-harness.sh` passe de 737 à **743**, valeur **COMPTÉE**.
+- [x] **Huit captures produites et OBSERVÉES** aux quatre paliers —
+      `docs/captures/CRM-066/pilotage-portee-*.jpg` et les quatre `pilotage-*.jpg` réécrites.
+      `docs/manual.md` §5 nonies.0 et `CHANGELOG.md` dans le même changement.
 - [ ] **3 c — les nœuds vides.** **ARBITRÉ le 2026-08-30** : §8 bis.5. Les nœuds du catalogue sans
       aucune affaire active dans la portée affichée sont **nommés** sous les tableaux, sans devise
       ni montant. Le « affiche zéro » du §5.1 est **révisé sur place** (`CLAUDE.md` §18) : un zéro
