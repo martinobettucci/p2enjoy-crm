@@ -398,6 +398,29 @@ responsive, son parcours clavier et ses états. Ils sont écrits par la **tranch
 qu'impose `CLAUDE.md` §4 appartient à la session qui livre l'écran, et l'anticiper depuis une
 session qui livre la base produirait une règle visuelle qu'aucune preuve n'exercerait.
 
+**ARRÊTÉ LE 2026-08-30 PAR LA TRANCHE 3 a, ET LA RÈGLE VIT AU §5.48 DU DESIGN SYSTEM.** Trois blocs
+— les deux grandeurs en liste de définitions, l'entonnoir en **tableau du §5.9 par devise** dans
+l'ordre du catalogue, puis les deux mentions du §7.3 et la phrase de portée. Le titre de devise est
+celui du §5.33, rendu **seulement** s'il y en a plusieurs. Aucun lien, aucune commande d'écriture,
+aucune colonne triable, et un refus jamais déguisé en vide. L'entrée de barre latérale porte `Gauge`
+et suit « Coûts ».
+
+**LA PORTÉE EST CELLE DU WORKSPACE, ET LA TRANCHE 3 a NE LIVRE AUCUN SÉLECTEUR.** La phrase
+ci-dessus — « la portée éventuelle vit dans la chaîne de requête » — reste vraie et **reste due** :
+le module porte déjà `restreindre`, éprouvé par sa suite unitaire, mais nommer un track ou un
+channel demande une **seconde lecture** que cette tranche ne fait pas. L'écart est écrit à l'écran,
+dans la phrase de portée, plutôt que laissé à deviner.
+
+**LA COMPLÉTION PAR LE CATALOGUE ANNONCÉE AU §5.1 N'EST PAS LIVRÉE NON PLUS, ET ELLE POSE UNE
+QUESTION QUE LE §5.1 NE TRANCHE PAS.** Ce paragraphe écrit que l'écran « compose la liste complète
+des nœuds depuis `workflow_nodes_catalog` […] et affiche zéro là où la fonction se tait ». Or les
+tableaux sont **par devise** : compléter à l'intérieur de l'un d'eux rendrait `Négociation / CHF /
+0` — c'est-à-dire **inventerait une devise à un nœud qu'aucune affaire n'y porte**, exactement ce
+que le même §5.1 interdit à la fonction ; et compléter hors des devises demanderait de mêler deux
+monnaies dans une colonne, ce que le §11.2 interdit. La tranche 3 b tranche la forme **avant**
+d'écrire la seconde lecture. Aujourd'hui, un nœud sans aucune affaire active est **absent** des
+tableaux, jamais rendu à zéro : un zéro affirmerait une mesure que l'écran n'a pas faite.
+
 ## 9. Seed — ce que cette unité doit y ajouter
 
 **Mesuré le 2026-08-30 (M3, M4), AVANT cette tranche : aucune card et aucune étape du seed ne
@@ -448,7 +471,8 @@ et prouvable seule.
 | **2 a — la fonction** | `supabase/migrations/0073_entonnoir_conversion.sql`, sa suite pgTAP dédiée (27 assertions), son contrat d'API du §6 (16 scénarios), `docs/SCHEMA.md` §9 bis.11, `docs/PROD_MIGRATIONS.md` migration 73 | **LIVRÉE ET PROUVÉE** le 2026-08-30 |
 | **2 b — le module** | `webapp/src/lib/analytique.ts` : lecture de la fonction, restriction de portée, repli par nœud et par devise, les deux grandeurs du §7, et sa suite unitaire (26 tests) | **LIVRÉE ET PROUVÉE** le 2026-08-30 |
 | **2 c — le seed** | Les deux surcharges du §9, les compteurs et le tableau M6 révisés dans le même changement | **LIVRÉE ET PROUVÉE** le 2026-08-30 |
-| **3 — l'écran** | `/pilotage`, sa spécification visuelle dans `docs/DESIGN_SYSTEM.md` écrite d'abord, ses tests de composant, son E2E d'interface à console vierge, ses captures **observées**, `docs/manual.md` chapitres 28 et 29 | — |
+| **3 a — l'écran** | `/pilotage` à portée workspace, sa spécification visuelle au §5.48 de `docs/DESIGN_SYSTEM.md` écrite d'abord, ses tests de composant, son E2E d'interface à console vierge, ses captures **observées**, `docs/manual.md` chapitres 28 et 29 | **LIVRÉE** le 2026-08-30 |
+| **3 b — la portée et les nœuds vides** | Le sélecteur de portée en chaîne de requête (§8) et la complétion par le catalogue (§5.1), qui exigent tous deux une seconde lecture et un arbitrage de forme que le §8 nomme | — |
 | **4 — le score de santé** | `CRM-P02`. Il exige d'abord son arbitrage : ce qu'un score « transparent » agrège n'est écrit nulle part (§11.4) | — |
 
 **Ce que la tranche 2 b décide, et qui n'est pas une reformulation du §7.** Les deux grandeurs vivent

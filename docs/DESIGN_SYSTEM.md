@@ -4445,3 +4445,166 @@ Elle vit **dans** le bloc des budgets d'un track (§5.13), et n'invente rien.
 - **Aucune couleur et aucun jeton nouveaux** : la sous-surface emprunte au §5.13 sa barre d'actions,
   ses formulaires dans le flux et sa confirmation, au §5.9 ses hauteurs et ses séparateurs, au §5.7
   ses champs et au §5.8 ses états.
+
+### 5.48 Tableau de pilotage — `CRM-066` tranche 3
+
+`docs/SPEC-analytique.md` §7 et §8 disent ce que l'écran **lit** et ce qu'il **calcule** ; les règles
+ci-dessous ne disent que de quoi il a l'air. Le §8 laissait **délibérément** la forme de l'entonnoir,
+ses composants, ses paliers, son parcours clavier et ses états à cette tranche, « écrits dans
+`docs/DESIGN_SYSTEM.md` **avant** sa première ligne de code ». Les voici.
+
+**TROIS BLOCS, DANS CET ORDRE : les deux grandeurs, l'entonnoir, les mentions.** On lit ce qu'on
+**espère** avant de lire **d'où** cela vient — le même ordre que la fiche de budget (§5.32), dont
+l'identité précède l'histogramme et le détail ligne à ligne.
+
+- **LES DEUX GRANDEURS SONT UNE LISTE DE DÉFINITIONS (`dl`), PAS UN TABLEAU** (§5.20, §5.32). Le
+  prévisionnel pondéré et le taux de conversion sont deux couples terme / valeur qui **ne se
+  comparent pas entre eux** : l'un est de l'argent, l'autre une proportion. Deux colonnes à partir
+  de `md`, empilées en dessous — `md` et **jamais `sm`**, qui est un variant inconnu que Tailwind
+  supprime en silence (§11, §5.20).
+
+- **LE PRÉVISIONNEL REND UNE VALEUR PAR DEVISE, ET AUCUN TOTAL** (`docs/SPEC-analytique.md` §11.2).
+  Chaque montant est une **donnée technique** (§2) — monospace, chiffres tabulaires — et son code
+  devise occupe **son propre élément**, jamais un nœud de texte accolé au nombre : c'est le défaut
+  « Discussion1 » du §5.11, dont le remède est écrit une fois pour tout le produit. **Une devise dont
+  toutes les affaires sont closes n'apparaît pas** : « CHF : 0,00 » se lirait comme une prévision
+  nulle au lieu d'une absence de prévision, et le module le garantit déjà.
+
+- **LE TAUX PORTE SON NOM ENTIER — « Taux de conversion des affaires décidées » —, jamais « taux de
+  conversion » tout court.** Le nom est la moitié de la règle : ce nombre mesure la part gagnée parmi
+  les affaires **actuellement** à un nœud terminal, et non parmi les affaires entrées dans une
+  période (`docs/SPEC-analytique.md` §7.1, §11.1). L'abréger à l'écran ferait dire au produit ce
+  qu'il ne mesure pas.
+
+- **ZÉRO AFFAIRE DÉCIDÉE REND UNE PHRASE, JAMAIS « 0 % ».** Un taux de 0 % dit « tout a été perdu » ;
+  l'absence de toute décision ne dit rien. C'est la distinction « ne se prononce pas » / « vaut
+  zéro » que le §5.18 tient pour un attribut de nœud et le §5.32 pour une enveloppe non renseignée.
+
+- **LE TAUX EST ACCOMPAGNÉ DE SON NUMÉRATEUR ET DE SON DÉNOMINATEUR, EN TOUTES LETTRES** — « 7
+  gagnées sur 8 décidées », en 13 px `--color-text-2` sous la valeur. Un pourcentage nu ne dit pas
+  sur combien il porte : c'est le « chiffre qui ne dit pas ce qu'il compte » que le §5.36 refuse
+  pour un badge, et **l'accord se fait par clé** (§10).
+
+- **L'ENTONNOIR EST UN TABLEAU DU §5.9, ET NON LA LISTE PLATE DU §5.18.** Le critère est celui que le
+  §5.19 applique déjà au carnet : les colonnes — nœud, genre, affaires, montant, pondéré — sont les
+  **mêmes** pour chaque ligne et **se comparent** d'un nœud à l'autre, ce qui est exactement la
+  lecture qu'on vient faire ici. En-tête collant, séparateurs de lignes, aucune zébrure, survol
+  `--color-hover` : le §5.9 sans écart.
+
+- **UN TABLEAU PAR DEVISE, ET SON TITRE `h2` N'EST RENDU QUE S'IL Y EN A PLUSIEURS** — la règle du
+  §5.33, reprise sans changement et pour son motif exact. Deux tableaux empilés avec les mêmes
+  en-têtes de colonne ne diraient pas à l'œil que le second compte des francs : la devise ne se
+  lirait que dans les montants, c'est-à-dire là où on ne la cherche pas. Sur une seule devise — le
+  cas attendu — le titre serait du bruit à chaque ouverture.
+
+- **L'ORDRE DES LIGNES EST CELUI DU CATALOGUE, ET AUCUNE COLONNE N'EST TRIABLE.** C'est l'écart
+  assumé avec le §5.9, qui déclare le tri d'une colonne triable : **un entonnoir est un chemin**, et
+  le reclasser par montant en ferait un palmarès, où « Perdu » remonterait au-dessus de
+  « Prospection ». L'ordre vient de `workflow_nodes_catalog.position`, donc de la même autorité que
+  l'ordre du board (§5.2).
+
+- **LE GENRE DU NŒUD EST UN MOT, JAMAIS UNE TEINTE** (§1) — « Ouvert », « Gagné », « Perdu » —, et ce
+  sont **les mots exacts du §5.18** : c'est la même donnée, `workflow_nodes_catalog.kind`, et deux
+  écrans qui la rendent ne peuvent pas la nommer de deux façons. Il n'est pas décoratif : c'est lui,
+  et lui seul, qui dit pourquoi la ligne « Livré » ne figure **pas** dans le prévisionnel de la tête
+  d'écran.
+
+- **LE LIBELLÉ DU NŒUD EST UN `th scope="row"` ALIGNÉ À GAUCHE EXPLICITEMENT.** C'est la règle
+  générale que le §5.30 a payée en regardant une capture : un `th` est **centré par défaut**, et
+  l'alignement s'écrit sur la cellule, il ne s'hérite pas de la ligne d'en-tête.
+
+- **LES TROIS NOMBRES SONT DES DONNÉES TECHNIQUES ALIGNÉES À DROITE** (§2, §5.9) : monospace,
+  chiffres tabulaires. C'est la seule raison d'avoir des chiffres tabulaires — se comparer colonne
+  par colonne.
+
+- **AUCUN LIEN, ET L'ABSENCE EST ASSUMÉE.** C'est l'écart avec le §5.33, dont chaque libellé de
+  track mène à ses coûts : un **nœud** n'est pas adressable — aucun écran du produit ne liste « les
+  affaires de ce nœud », toutes portées confondues —, et un lien vers une adresse qui n'existe pas
+  serait la commande morte du §5.10. Le §5.33 posait ce lien parce que sans lui son écran était une
+  impasse ; ici il n'y a pas d'issue à offrir, et en inventer une serait pire.
+
+- **LES DEUX MENTIONS OBLIGATOIRES VIVENT SOUS LES TABLEAUX**, en 13 px `--color-text-2`, à la place
+  et dans la graduation de la mention du §5.30 — « *n* lignes sans coût réel saisi » —, qui est de la
+  même nature. `docs/SPEC-analytique.md` §7.3 les impose : « *n* affaires sans montant » et « *n*
+  affaires sans probabilité ». Sans elles, un prévisionnel bas se lit comme un portefeuille **pauvre**
+  au lieu d'un portefeuille **mal renseigné**.
+
+  - **Chacune n'est rendue que si son compte est non nul.** « 0 affaire sans montant » est une
+    phrase qui ne dit rien, et le §5.31 a déjà tranché ce cas pour son badge.
+  - **Elles TRAVERSENT LES DEVISES, et c'est licite** : ce sont des **affaires**, pas de l'argent.
+    C'est exactement le motif pour lequel le module fait traverser les devises au seul compte des
+    affaires décidées — il n'additionne aucune monnaie.
+  - **L'accord se fait par clé** (§10), jamais par un gabarit paramétré : « les 1 affaires » est
+    faux.
+
+- **LA PORTÉE DU CALCUL EST ÉCRITE SOUS LES MENTIONS**, même place, même graduation et même motif
+  qu'au §5.33 : l'entonnoir est calculé **après** la RLS (`docs/SPEC-analytique.md` §5.3), et deux
+  profils lisent donc deux nombres différents sur les mêmes données — mesuré, 381 042,50 EUR contre
+  344 892,50. Sans cette phrase, l'écart se lirait comme une erreur de calcul, et quelqu'un finirait
+  par « corriger » la lecture. **Elle n'est pas rendue sur l'état vide**, où il n'y a aucun nombre à
+  qualifier.
+
+- **L'ÉCRAN NE NOMME JAMAIS CE QU'IL NE MONTRE PAS.** Aucune phrase ne dit « une affaire vous est
+  masquée », et l'état vide ne distingue pas « aucune affaire lisible » de « aucune affaire active » :
+  les deux divulgueraient par la bande ce que la RLS ferme (`docs/SPEC-permissions-rls.md` §7). C'est
+  la règle que le cumul des coûts (§5.33), le canevas d'objectifs (§5.29) et les affaires figées
+  (§5.37) tiennent déjà.
+
+- **LES ÉTATS DU §5.8, ET LE REFUS N'EST PAS DÉGUISÉ EN VIDE.** Chargement : squelette à la forme du
+  tableau attendu, jamais un spinner. Erreur : la mention et son **action de reprise**, qui relit
+  réellement. **Refus** : la fonction est refusée à l'anonyme **par le privilège**
+  (`docs/SPEC-analytique.md` §5.4), donc `401` et non zéro ligne ; l'écran l'écrit, et masquer un
+  `401` en « aucune affaire » ferait lire une absence de **droit** comme un portefeuille vide.
+  **Vide** : « aucune affaire active », **sans action** — l'écart au §5.8 que la corbeille (§5.16),
+  le carnet (§5.19), les affaires figées (§5.37) et le panneau de notifications (§5.43) prennent
+  déjà : une affaire se crée depuis un board, que cet écran ne connaît pas, et y renvoyer
+  conditionnellement au rôle ferait calculer un droit à l'interface (`CLAUDE.md` §10). **Aucun espace
+  de travail** : l'état que le §5.33 nomme déjà, et pour son motif — laisser le squelette serait la
+  page blanche déguisée que le §5.8 refuse.
+
+- **AUCUNE COMMANDE D'ÉCRITURE, ET L'ABSENCE EST ASSUMÉE** — la règle du §5.36 et du §5.37, tenue
+  sans changement. Cet écran **mesure**, il n'agit pas (§5.14). Les trois colonnes de probabilité se
+  saisissent au catalogue (§5.18), dans l'éditeur de workflows (§5.15) et dans la fiche d'affaire
+  (§5.3 ter) ; un second chemin d'écriture ici en ferait une seconde définition du même geste.
+
+- **LE PARCOURS CLAVIER EST CELUI D'UNE LECTURE, ET C'EST UNE PROPRIÉTÉ, PAS UN MANQUE.** La seule
+  cible interactive de l'écran est l'**action de reprise** de l'état d'erreur, qui suit le §5.5 —
+  40 px, anneau de focus `--color-brand`. Un tableau sans tri, sans lien et sans commande n'a aucun
+  autre point d'entrée à offrir, et lui en inventer un violerait la règle ci-dessus. Les deux
+  tableaux restent atteignables par les points de repère sémantiques du §8.
+
+- **SOUS LES PALIERS ÉTROITS, LES TABLEAUX DÉFILENT DANS LEUR CONTENEUR**, qui porte
+  `.indique-debordement-x` (§12.6) — la règle du §5.19, du §5.20 et du §5.24. Aucun `scroll-snap`,
+  faute de colonne sur laquelle s'ancrer (§5.9). **La page ne défile jamais horizontalement** (§7),
+  et c'est mesuré aux quatre paliers.
+
+- **L'ENTRÉE DE BARRE LATÉRALE PORTE `Gauge`, ET ELLE SUIT IMMÉDIATEMENT « Coûts ».** Les deux
+  écrans sont les deux lectures **agrégées** du portefeuille — ce qu'il a coûté, ce qu'il peut
+  rapporter — et se lisent dans cet ordre ; « Ma journée » et « Affaires figées », qui les suivent,
+  répondent à une autre question, « qu'est-ce qui me réclame ? ». Ce n'est pas une commodité de
+  rangement, c'est le même raisonnement que le §5.37 a écrit pour sa propre place. `Gauge` ne sert
+  nulle part ailleurs (§9) : elle dit l'**instrument qui mesure**, là où `ChartColumn` dit la
+  comparaison de deux séries et `Goal` le but atteint. Comme le carnet, les objectifs, les coûts,
+  « Ma journée » et les affaires figées, c'est une route de **premier niveau** et non une section de
+  `/reglages` : un tableau de pilotage n'administre rien, il porte le travail.
+
+- **AUCUNE COULEUR, AUCUN JETON NOUVEAU** : l'écran emprunte au §5.9 son tableau, au §5.20 sa liste
+  de définitions, au §5.33 son titre de devise et sa phrase de portée, au §5.30 la graduation de ses
+  mentions, au §5.5 son bouton de reprise et au §5.8 ses états. **Une seule icône Lucide nouvelle —
+  `Gauge`.**
+
+**CE QUE LA TRANCHE 3 a NE LIVRE PAS, ET QUI EST NOMMÉ PLUTÔT QUE TU** (`docs/SPEC-analytique.md`
+§10) :
+
+- **le sélecteur de portée** — track, channel — que le §8 annonce dans la chaîne de requête. Le
+  module le porte déjà (`restreindre`, éprouvé), mais l'offrir demande de **nommer** les tracks et
+  les channels, donc une seconde lecture que cette tranche ne fait pas. L'écran rend donc la portée
+  **workspace**, et sa phrase de portée le dit en toutes lettres ;
+- **la complétion par le catalogue** — le §5.1 de la spécification écrit que l'écran « compose la
+  liste complète des nœuds depuis `workflow_nodes_catalog` […] et affiche zéro là où la fonction se
+  tait ». Elle demande la même seconde lecture, et elle pose en outre une question que le §5.1 ne
+  tranche pas : compléter **dans le tableau d'une devise** inventerait une devise à un nœud
+  qu'aucune affaire n'y porte, ce que ce même §5.1 interdit à la fonction. La tranche 3 b tranchera
+  la forme avant de l'écrire. Un nœud sans aucune affaire active est donc, aujourd'hui, **absent**
+  des tableaux — jamais rendu à zéro, ce qui serait pire : le zéro affirmerait une mesure que
+  l'écran n'a pas faite.
