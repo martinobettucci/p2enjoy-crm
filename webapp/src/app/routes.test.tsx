@@ -16,6 +16,7 @@ import {
 	CHEMIN_CONTACTS,
 	CHEMIN_COUTS_WORKSPACE,
 	CHEMIN_AFFAIRES_FIGEES,
+	CHEMIN_PILOTAGE,
 	CHEMIN_MA_JOURNEE,
 	CHEMIN_OBJECTIFS,
 	CHEMIN_DEMARRAGE,
@@ -79,6 +80,12 @@ describe('table des routes', () => {
 	// bien un état explicite sans session — l'état vide « rien pour moi » du §17.8, jamais une page
 	// blanche.
 	//
+	// RÉVISÉE UNE HUITIÈME FOIS PAR `CRM-066` tranche 3 a, ET LA RÈGLE CHANGE PAR LIVRAISON :
+	// `/pilotage` n'a jamais porté d'état vide inconditionnel — l'adresse est CRÉÉE avec son écran
+	// (`docs/SPEC-analytique.md` §8), comme `/couts` et `/affaires-figees` avant elle. Elle rejoint
+	// donc d'emblée les routes qui portent un écran chargé à la demande, et son assertion propre est
+	// plus bas.
+	//
 	// RÉVISÉE UNE SEPTIÈME FOIS PAR `CRM-062` tranche 3c, ET LA RÈGLE CHANGE PAR LIVRAISON :
 	// `/affaires-figees` n'a jamais porté d'état vide inconditionnel — l'entrée est CRÉÉE avec son
 	// écran (`docs/SPEC-relances.md` §10.4), comme `/couts` avant elle. Elle rejoint donc d'emblée
@@ -91,6 +98,7 @@ describe('table des routes', () => {
 			route.chemin !== CHEMIN_COUTS_WORKSPACE &&
 			route.chemin !== CHEMIN_MA_JOURNEE &&
 			route.chemin !== CHEMIN_AFFAIRES_FIGEES &&
+			route.chemin !== CHEMIN_PILOTAGE &&
 			route.chemin !== '/reglages' &&
 			route.chemin !== '/',
 	)
@@ -230,6 +238,27 @@ describe('table des routes', () => {
 		expect(screen.getByLabelText(fr['state.loading.aria'])).toBeTruthy()
 		expect(await screen.findByTestId('etat-vide')).toBeTruthy()
 		expect(screen.getByRole('heading').textContent).toBe(fr['stalled.noWorkspace.title'])
+	})
+
+	it('la route /pilotage rend son écran, chargé à la demande derrière un repli — CRM-066', async () => {
+		// Même patron que `/affaires-figees` juste au-dessus, et pour son motif exact. Montée sans
+		// configuration d'API, la route rend l'état vide « aucun espace de travail » du §5.48 —
+		// jamais une page blanche, et jamais un squelette perpétuel qui attendrait une lecture que
+		// rien n'émettra.
+		//
+		// Les trois autres états — le refus qui n'est pas déguisé en vide, l'erreur avec sa reprise,
+		// et « aucune affaire active » — sont éprouvés par `Pilotage.test.tsx` avec un client
+		// substitué : ils demandent une réponse du backend, que cette preuve-ci n'a pas.
+		const route = ROUTES.find((candidate) => candidate.chemin === CHEMIN_PILOTAGE)
+		expect(route).toBeDefined()
+		render(
+			<MemoryRouter>
+				<Suspense fallback={<ChargementRoute />}>{route!.rendu()}</Suspense>
+			</MemoryRouter>,
+		)
+		expect(screen.getByLabelText(fr['state.loading.aria'])).toBeTruthy()
+		expect(await screen.findByTestId('etat-vide')).toBeTruthy()
+		expect(screen.getByRole('heading').textContent).toBe(fr['pilotage.noworkspace.title'])
 	})
 
 	it('la route /contacts rend son écran, chargé à la demande derrière un repli — CRM-060', async () => {

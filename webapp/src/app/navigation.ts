@@ -4,6 +4,8 @@
 // @spec CRM-086 (docs/BACKLOG.md) — l'entrée « Coûts » (docs/SPEC-costs.md §4.0 et §4.5)
 // @spec CRM-061 (docs/BACKLOG.md) — l'entrée « Ma journée » mène enfin à un écran (docs/SPEC-cards.md §17.2)
 // @spec CRM-062 (docs/BACKLOG.md) — l'entrée « Affaires figées » (docs/SPEC-relances.md §10.4)
+// @spec CRM-066 (docs/BACKLOG.md) — l'entrée « Pilotage » (docs/SPEC-analytique.md §8,
+//       docs/DESIGN_SYSTEM.md §5.48)
 // @spec docs/DESIGN_SYSTEM.md §4 (barre latérale : tracks, Inbox, Contacts, Ma journée, Réglages)
 // @spec docs/SPEC-contacts.md §10.2 (pourquoi le carnet est une route de premier niveau)
 // @spec docs/SPEC-webapp.md §5.2 (routes)
@@ -19,12 +21,13 @@ import {
 	Contact,
 	Goal,
 	Hourglass,
+	Gauge,
 	Inbox,
 	LayoutGrid,
 	Settings,
 } from 'lucide-react'
 import type { CleTraduction } from '../i18n'
-import { CHEMIN_AFFAIRES_FIGEES, CHEMIN_MA_JOURNEE } from './chemins'
+import { CHEMIN_AFFAIRES_FIGEES, CHEMIN_MA_JOURNEE, CHEMIN_PILOTAGE } from './chemins'
 
 export type EntreeNavigation = {
 	readonly chemin: string
@@ -49,6 +52,14 @@ export const ENTREES_TRANSVERSES: readonly EntreeNavigation[] = [
 	// entrées désignent le MÊME objet, les coûts, à deux portées différentes. Leur donner deux
 	// icônes ferait chercher deux choses là où il n'y en a qu'une.
 	{ chemin: '/couts', cleLibelle: 'nav.item.costs', icone: ChartColumn },
+	// IMMÉDIATEMENT APRÈS « Coûts », ET CE N'EST PAS UNE COMMODITÉ (`docs/DESIGN_SYSTEM.md` §5.48).
+	// Les deux écrans sont les deux lectures AGRÉGÉES du portefeuille — ce qu'il a coûté, ce qu'il
+	// peut rapporter — et se lisent dans cet ordre ; « Ma journée » et « Affaires figées », qui les
+	// suivent, répondent à une autre question : « qu'est-ce qui me réclame ? ».
+	//
+	// L'icône est `Gauge` : elle dit l'INSTRUMENT QUI MESURE, là où `ChartColumn` dit la comparaison
+	// de deux séries et `Goal` le but atteint. Aucune autre entrée ne la porte (§9).
+	{ chemin: CHEMIN_PILOTAGE, cleLibelle: 'nav.item.pilotage', icone: Gauge },
 	{ chemin: CHEMIN_MA_JOURNEE, cleLibelle: 'nav.item.today', icone: CalendarCheck },
 	// IMMÉDIATEMENT APRÈS « Ma journée », ET CE N'EST PAS UNE COMMODITÉ (`docs/SPEC-relances.md`
 	// §10.4). Les deux écrans répondent à la même question — « qu'est-ce qui me réclame ? » — et se

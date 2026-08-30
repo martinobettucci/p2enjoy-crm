@@ -28,6 +28,7 @@ export const fr = {
 	'nav.item.contacts': 'Contacts',
 	'nav.item.goals': 'Objectifs',
 	'nav.item.costs': 'Coûts',
+	'nav.item.pilotage': 'Pilotage',
 	'nav.item.today': 'Ma journée',
 	'nav.item.stalled': 'Affaires figées',
 	'nav.item.settings': 'Réglages',
@@ -2663,6 +2664,70 @@ export const fr = {
 	// sur les mêmes données. Sans cette phrase, l'écart se lirait comme une erreur de calcul.
 	'costs.workspace.scope':
 		'Ce cumul ne porte que sur les budgets ouverts des tracks que vous pouvez lire. Un track archivé ou mis à la corbeille n’y figure pas ; ses budgets restent lisibles depuis son propre écran de coûts.',
+
+	// -------------------------------------------------------------------------------------------
+	// Tableau de pilotage — `CRM-066` tranche 3 a, docs/SPEC-analytique.md §7 et §8,
+	// docs/DESIGN_SYSTEM.md §5.48.
+	// -------------------------------------------------------------------------------------------
+	'route.pilotage.title': 'Pilotage',
+	'pilotage.aria': 'Tableau de pilotage',
+	// Le terme de la première paire de la liste de définitions. La valeur est rendue PAR DEVISE, et
+	// jamais totalisée : aucun taux de change n'existe dans le dépôt (§11.2).
+	'pilotage.forecast.term': 'Prévisionnel pondéré',
+	// Aucune affaire ouverte ne rend AUCUN montant, jamais « 0,00 » : un zéro se lirait comme une
+	// prévision nulle au lieu d'une absence de prévision.
+	'pilotage.forecast.none': 'Aucune affaire ouverte à ce jour.',
+	// LE NOM ENTIER, et jamais « taux de conversion » tout court (§7.1) : ce nombre mesure la part
+	// gagnée parmi les affaires ACTUELLEMENT à un nœud terminal, non parmi les affaires entrées dans
+	// une période. L'abréger ferait dire au produit ce qu'il ne mesure pas.
+	'pilotage.rate.term': 'Taux de conversion des affaires décidées',
+	// Zéro affaire décidée rend une PHRASE, jamais « 0 % » : un taux de 0 % dit « tout a été perdu »,
+	// l'absence de toute décision ne dit rien.
+	'pilotage.rate.unknown': 'Aucune affaire décidée à ce jour.',
+	// Le numérateur et le dénominateur, en toutes lettres : un pourcentage nu ne dit pas sur combien
+	// il porte. L'accord se fait par CLÉ (§10), jamais par un gabarit paramétré.
+	'pilotage.rate.detail': '{gagnees} gagnées sur {decidees} décidées',
+	'pilotage.rate.detail.one': '{gagnees} gagnée sur {decidees} décidées',
+	// Le titre d'un tableau de devise, rendu VISIBLEMENT seulement quand plusieurs devises sont
+	// présentes (§5.33, §5.48) — il reste le nom accessible de la région dans tous les cas. Le code
+	// de devise est une DONNÉE, passée en paramètre et jamais concaténée (§10).
+	'pilotage.funnel.currency': 'Entonnoir en {devise}',
+	'pilotage.funnel.node': 'Étape',
+	'pilotage.funnel.kind': 'Genre',
+	'pilotage.funnel.deals': 'Affaires',
+	'pilotage.funnel.amount': 'Montant',
+	'pilotage.funnel.weighted': 'Pondéré',
+	// Les deux mentions OBLIGATOIRES du §7.3. Sans la première, un prévisionnel bas se lit comme un
+	// portefeuille PAUVRE au lieu d'un portefeuille MAL RENSEIGNÉ. Elles TRAVERSENT les devises :
+	// ce sont des affaires, pas de l'argent.
+	'pilotage.missing.amount': '{compte} affaires sans montant renseigné.',
+	'pilotage.missing.amount.one': '{compte} affaire sans montant renseigné.',
+	'pilotage.missing.probability': '{compte} affaires sans probabilité renseignée.',
+	'pilotage.missing.probability.one': '{compte} affaire sans probabilité renseignée.',
+	// La portée est ÉCRITE, jamais supposée comprise : l'entonnoir est calculé APRÈS la RLS (§5.3),
+	// et deux profils lisent donc deux nombres différents sur les mêmes données. Elle dit aussi la
+	// portée workspace de la tranche 3 a, qui ne livre aucun sélecteur (§8).
+	'pilotage.scope':
+		'Ces nombres portent sur toutes les affaires actives que vous pouvez lire, tous tracks et tous channels confondus. Un collègue dont les droits diffèrent des vôtres lit d’autres totaux sur les mêmes données.',
+	// Le refus n'est jamais déguisé en vide : la fonction est refusée à l'anonyme PAR LE PRIVILÈGE
+	// (§5.4), et masquer ce `401` en « aucune affaire » ferait lire une absence de droit comme un
+	// portefeuille vide.
+	'pilotage.forbidden.title': 'Lecture refusée',
+	'pilotage.forbidden.body':
+		'Votre session ne permet pas de lire l’entonnoir de conversion. Reconnectez-vous, puis revenez sur cet écran.',
+	'pilotage.error.title': 'L’entonnoir n’a pas pu être lu',
+	// L'état vide n'offre AUCUNE action : une affaire se crée depuis un board, que cet écran ne
+	// connaît pas, et y renvoyer conditionnellement au rôle ferait calculer un droit à l'interface.
+	// Il recouvre DEUX situations sans les distinguer — aucune affaire lisible, aucune affaire
+	// active — parce que les distinguer divulguerait ce que la RLS ferme.
+	'pilotage.empty.title': 'Aucune affaire active',
+	'pilotage.empty.body':
+		'Les affaires actives que vous pouvez lire se répartissent ici par étape, avec leur montant et leur prévisionnel pondéré. Ouvrez une affaire depuis un board pour la voir apparaître.',
+	// Aucun client d'API : configuration absente, ou session perdue. C'est un ÉTAT, jamais une
+	// attente — laisser le squelette serait la page blanche déguisée que le §5.8 refuse.
+	'pilotage.noworkspace.title': 'Aucun espace de travail',
+	'pilotage.noworkspace.body':
+		'Votre compte n’appartient à aucun espace de travail, ou votre session a expiré. Reconnectez-vous pour retrouver le tableau de pilotage.',
 
 	// -------------------------------------------------------------------------------------------
 	// Onglet « À saisir » — `CRM-086` tranche 6b, docs/SPEC-costs.md §4.8, §4.8.1 et §4.8.2,

@@ -46,6 +46,7 @@ import {
 	CHEMIN_COUTS_TRACK,
 	cheminCoutsTrack,
 	CHEMIN_COUTS_WORKSPACE,
+	CHEMIN_PILOTAGE,
 	CHEMIN_DEMARRAGE,
 	CHEMIN_ETAT_MESSAGERIE,
 	CHEMIN_INBOX,
@@ -76,6 +77,7 @@ export {
 	CHEMIN_COUTS_TRACK,
 	cheminCoutsTrack,
 	CHEMIN_COUTS_WORKSPACE,
+	CHEMIN_PILOTAGE,
 	CHEMIN_DEMARRAGE,
 	CHEMIN_ETAT_MESSAGERIE,
 	CHEMIN_INBOX,
@@ -141,6 +143,17 @@ const Objectifs = lazy(async () => ({ default: (await import('./Objectifs')).Obj
 const CoutsWorkspace = lazy(async () => ({
 	default: (await import('./CoutsWorkspace')).CoutsWorkspace,
 }))
+
+/**
+ * Le tableau de pilotage — `CRM-066` tranche 3 a, `docs/SPEC-analytique.md` §8. Chargé à la demande
+ * pour le motif exact du cumul des coûts : un écran que la plupart des sessions n'ouvrent pas n'a
+ * pas à peser sur le premier rendu de toutes les autres (`CLAUDE.md` §21).
+ *
+ * Il ne porte PAS sa propre coquille : son titre est une clé de traduction — « Pilotage » — et son
+ * contenu ne dépend d'aucun paramètre d'adresse, si bien que la coquille commune de `ROUTES` suffit.
+ * C'est précisément le critère qui range cette adresse ici (§8).
+ */
+const Pilotage = lazy(async () => ({ default: (await import('./Pilotage')).Pilotage }))
 
 /**
  * Titre de la route d'administration — `CRM-075`.
@@ -252,6 +265,17 @@ export const ROUTES: readonly DescriptionRoute[] = [
 		chemin: CHEMIN_COUTS_WORKSPACE,
 		cleTitre: 'route.costs.workspace.title',
 		rendu: () => <CoutsWorkspace />,
+	},
+	{
+		// Le tableau de pilotage — `CRM-066` tranche 3 a, `docs/SPEC-analytique.md` §8. Une entrée
+		// TRANSVERSE et non une section des réglages, pour la raison qui a déjà placé le carnet, les
+		// objectifs et les coûts hors des réglages : un tableau de pilotage n'administre rien, il
+		// porte le travail. Elle vient IMMÉDIATEMENT après « Coûts » — les deux écrans sont les deux
+		// lectures agrégées du portefeuille, ce qu'il a coûté et ce qu'il peut rapporter
+		// (`docs/DESIGN_SYSTEM.md` §5.48).
+		chemin: CHEMIN_PILOTAGE,
+		cleTitre: 'route.pilotage.title',
+		rendu: () => <Pilotage />,
 	},
 	{
 		// Ma journée — `CRM-061`, `docs/SPEC-cards.md` §17. L'adresse rendait un état vide

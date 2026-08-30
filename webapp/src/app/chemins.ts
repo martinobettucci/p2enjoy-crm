@@ -251,3 +251,22 @@ export const cheminCoutsBudget = (slugTrack: string, idBudget: string) =>
  * exacte `ROUTES` ⇄ `ENTREES_TRANSVERSES` est tenue par une assertion de `routes.test.tsx`.
  */
 export const CHEMIN_COUTS_WORKSPACE = '/couts' as const
+
+/**
+ * Tableau de pilotage — `CRM-066` tranche 3 a, `docs/SPEC-analytique.md` §8.
+ *
+ * Une route de PREMIER NIVEAU, et non une section de `/reglages` : c'est le raisonnement qui a déjà
+ * placé le carnet, les objectifs, les coûts, « Ma journée » et les affaires figées hors des
+ * réglages — **un tableau de pilotage n'administre rien, il porte le travail**.
+ *
+ * Elle FIGURE dans `ROUTES` : son titre est une clé de traduction et son contenu ne dépend d'aucun
+ * paramètre d'adresse. La couverture exacte `ROUTES` ⇄ `ENTREES_TRANSVERSES` que `routes.test.tsx`
+ * tient reste donc vraie, avec une entrée de plus **des deux côtés**.
+ *
+ * **AUCUNE PORTÉE DANS LA CHAÎNE DE REQUÊTE AUJOURD'HUI**, contrairement à `/ma-journee`. Le §8
+ * l'annonce — « la portée éventuelle vit dans la chaîne de requête » — et la tranche 3 a ne la
+ * livre pas : `restreindre` existe et est éprouvé, mais NOMMER un track ou un channel demande une
+ * seconde lecture. L'écart est écrit à l'écran, dans la phrase de portée, plutôt que laissé à
+ * deviner.
+ */
+export const CHEMIN_PILOTAGE = '/pilotage' as const
