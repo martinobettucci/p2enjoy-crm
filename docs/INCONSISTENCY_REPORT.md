@@ -249,6 +249,10 @@ INC-185, INC-186, INC-188, INC-189, INC-190, INC-191, INC-192, INC-193, INC-224,
 INC-225, INC-226, INC-227, INC-228, INC-229, INC-231, INC-232, INC-233, INC-234, INC-236,
 INC-238, INC-241, **INC-242**, **INC-244** et INC-243.**
 
+*Mise à jour du 2026-08-30 : **INC-245** est consignée par la session qui ouvre `CRM-066` — la table
+du chunk 5 et les titres de section de `docs/BACKLOG.md` donnent deux états contradictoires pour
+`CRM-060`.*
+
 *Mise à jour du 2026-08-29 : **INC-241** et son DOUBLON **INC-138** sont CLOSES — mises en œuvre par
 la décision 560, qui remplace un comptage de fichiers par un recensement du routeur et le retourne
 sur une arborescence mutée. **INC-139** est remesurée dans le même geste : deux de ses quatre
@@ -6360,3 +6364,41 @@ l'arborescence rendue intacte le rend conforme. Verdict après correction :
 **43 contrôles, aucune anomalie**.
 
 **Statut :** **close** — mise en œuvre par la décision 560 (`CRM-041`).
+
+---
+
+## Consigné le 2026-08-30 — une dérive interne à `docs/BACKLOG.md`, étrangère à `CRM-066`
+
+### INC-245 — la table du chunk 5 donne `CRM-060` pour `[~]`, son propre titre de section la donne `[x]`
+
+**Mesuré le 2026-08-30**, en ouvrant `CRM-066` : `docs/BACKLOG.md` porte deux états contradictoires
+pour la **même** unité, dans le **même** fichier.
+
+- la table « Chunk 5 — Extensions » : `| CRM-060 | Contacts et organisations, historique transverse | `[~]` |` ;
+- le titre de sa section : `### CRM-060 — Contacts et organisations `[x]``.
+
+**Ce n'est pas un détail de présentation.** Le §4.2 de `docs/CloudWorker.md` fait choisir l'unité
+d'une session « dans l'ordre du plan » à partir de ces états. Une session qui lit la table conclut
+qu'il reste du travail sur `CRM-060` ; une session qui lit les titres conclut l'inverse. La
+divergence a été **traversée** par la présente session, qui a dû ouvrir la section pour trancher.
+
+**C'est le troisième mode de défaillance de cette table**, après la collision de numéros que la
+décision 335 a corrigée (`CRM-075` attribué deux fois) et la note qui en découle — « un numéro
+d'unité s'attribue désormais en lisant **cette table**, jamais le dernier numéro cité dans le corps
+du document ». Cette note fait précisément de la table une **autorité**, ce qui rend sa dérive plus
+coûteuse qu'avant elle.
+
+**Comportement laissé inchangé** (`CLAUDE.md` §18, `docs/CloudWorker.md` §3.1) : aucune des deux
+valeurs n'est corrigée ici. Corriger une table de suivi au passage, depuis une session qui traite une
+autre unité, est exactement ce que `CLAUDE.md` §1 interdit — et il faudrait d'abord établir **laquelle
+des deux est vraie**, ce qui suppose de relire la Definition of Done de `CRM-060`, travail de son
+unité.
+
+**Issue proposée, non mise en œuvre.** Deux voies, et la seconde est préférable : *(a)* aligner la
+table sur les titres, une fois pour toutes ; *(b)* faire de la table une **dérivée** — un contrôle de
+`scripts/verify-harness.sh` qui lit les titres `### CRM-…` et échoue si un état de la table en
+diffère. La voie *(b)* est celle que ce dépôt applique partout ailleurs : un inventaire recopié à la
+main dérive, un inventaire mesuré ne dérive pas. C'est la leçon d'INC-175, d'INC-191 et d'INC-242,
+et c'est aussi ce que la décision 560 a fait du recensement des routes.
+
+**Statut :** ouverte — porteur `CRM-060` pour l'état réel, `CRM-008` pour la garde du harnais.

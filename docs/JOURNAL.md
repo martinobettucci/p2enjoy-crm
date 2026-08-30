@@ -28008,3 +28008,49 @@ d'onglets portant bien ses channels — puis **restaurées**.
 d'INC-139** (`CRM-041` : les classes absentes du CSS produit, et la dégradation D4 dont le motif a
 disparu de `board.ts` — celle-ci est la plus sérieuse, un contrôle qui ne s'exécute pas ne prouve
 rien). Les deux chapitres de manuel d'INC-214 et de `CRM-084` restent dus.
+
+## décision 562 — `CRM-066` ouverte : le produit demande une probabilité depuis quatre unités et n'en fait rien
+
+*2026-08-30, session planifiée ouverte à 00:10:22 UTC. Spécification écrite et committée AVANT la
+première ligne de code (`CLAUDE.md` §5, `docs/CloudWorker.md` §3.2).*
+
+**POURQUOI CETTE UNITÉ, ET PAS UNE AUTRE.** Les seize unités `[~]` du backlog ont été relues une par
+une : chacune déclare, dans son propre texte, que ce qui la retient n'est **pas** du comportement —
+une dépendance non née (`CRM-013`, `CRM-014` attendent `audit_log` et `api_tokens`), un hôte sans
+interception TLS (`CRM-001`), une capture ou une preuve d'interface (`CRM-034` à `CRM-040`), une
+absence figée portée par une autre unité (`CRM-052` à `CRM-058`), la série complète des harnais ou un
+chapitre de manuel (`CRM-083`, `CRM-084`). La règle 2 du §4.2 de `docs/CloudWorker.md` ne trouve donc
+aucune preneuse, et la règle 3 désigne **`CRM-066`**, première `[ ]` dans l'ordre du plan.
+
+**CE QUE LA MESURE A TROUVÉ, ET QUI DÉCIDE DE LA FORME DE L'UNITÉ.** Trois colonnes de probabilité
+existent en base — `cards.probability_override`, `workflow_steps.probability_override`,
+`workflow_nodes_catalog.default_probability` — et les écrans d'administration de `CRM-030` et de
+`CRM-076` les **font saisir** depuis quatre unités. Aucune ligne de `webapp/src` ne les relit : les
+seules occurrences hors administration sont des commentaires disant que la colonne est hors
+périmètre. Le produit demande une information dont il ne fait rien. `CRM-066` est ce qui la fait
+servir, et elle n'exige **aucune migration de schéma** : tout le modèle est là depuis `CRM-030`.
+
+**TROIS RÈGLES SONT TRANCHÉES, ET TOUTES TROIS PAR ALIGNEMENT SUR L'EXISTANT** (`docs/CloudWorker.md`
+§4.1 bis : le comportement le plus simple, et le même partout).
+
+1. **La probabilité effective se résout à trois niveaux, le plus spécifique gagnant, et une absence
+   n'est jamais remplacée par un défaut.** C'est mot pour mot la règle du seuil d'ancienneté
+   (`docs/SPEC-relances.md` §2.2) et celle du coût réel (`docs/SPEC-costs.md` §2.3). Substituer `0`
+   dirait « cette affaire ne vaut rien » là où la donnée dit « personne ne l'a estimée ».
+2. **`security invoker`, jamais `definer`.** Un total est une divulgation : un prévisionnel incluant
+   une affaire interdite la divulgue par soustraction. C'est le §4.5 de `docs/SPEC-costs.md`, et la
+   mesure M7 le rend opposable — la lectrice lit 35 affaires actives là où l'administratrice en lit
+   39, et **trois lignes nommées** de son entonnoir diffèrent.
+3. **Une affaire en sommeil COMPTE**, à la différence de `public.cards_figees()` qui l'exclut. Le
+   sommeil dit « ne me réveille pas », jamais « cette affaire n'est plus au portefeuille » ;
+   l'écarter ferait disparaître un montant d'un total du seul fait qu'on a demandé le silence.
+
+**CE QUI N'EST PAS TRANCHÉ, ET NE LE SERA PAS PAR PRÉTÉRITION.** Aucune analyse de cohortes — le nom
+du nombre affiché dira donc « affaires **décidées** » ; aucune conversion de devises ; aucune
+confrontation à un objectif chiffré, `docs/SPEC-goals.md` n'en décrivant aucun ; et le score de santé
+de `CRM-P02` commence par son arbitrage, la tranche 4. Les quatre écarts sont écrits au §11 de la
+spécification, pas laissés à la prose d'un compte rendu.
+
+**Où reprendre.** Le code suit immédiatement, dans un commit distinct : tranche 2 a,
+`supabase/migrations/0073_entonnoir_conversion.sql` et sa suite pgTAP, puis le contrat d'API des
+quatorze lignes du §6.

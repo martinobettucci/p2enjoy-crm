@@ -7321,7 +7321,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-063 | Templates d'emails, signatures, séquences de relance | `[x]` |
 | CRM-064 | @mentions, notifications temps réel et préférences | `[x]` |
 | CRM-065 | Recherche globale plein texte et palette Cmd+K | `[x]` |
-| CRM-066 | Analytique de conversion et prévisionnel pondéré | `[ ]` |
+| CRM-066 | Analytique de conversion et prévisionnel pondéré | `[~]` |
 | CRM-067 | Activités typées : appels, réunions, visios | `[ ]` |
 | CRM-068 | Checklists et modèles de cards | `[ ]` |
 | CRM-069 | Étiquettes et digest quotidien | `[ ]` |
@@ -10298,6 +10298,63 @@ rejoués seuls.
 harnais propre à cette unité.
 
 **Harnais de l'unité rejoué SEUL le 2026-08-29** : `verify-recherche.sh` **54 contrôles, aucune anomalie**, là où la série lui donnait 1 anomalie — troisième fois que ce harnais démontre la leçon de contention.
+
+### CRM-066 — Analytique de conversion et prévisionnel pondéré `[~]`
+
+Entonnoir des affaires actives par nœud, par channel et par track ; prévisionnel pondéré par devise ;
+taux de conversion des affaires décidées. Porte aussi `CRM-P02`, le score de santé transparent
+(décision 299).
+**DoD** : suite pgTAP dédiée ; contrat d'API hors interface avec les jetons réels des trois profils,
+prouvant que deux appelants n'obtiennent **pas** le même total ; test unitaire dédié des deux
+grandeurs dérivées ; test E2E d'interface dédié à console vierge ; captures produites **et
+observées** ; seed démontrant la résolution de probabilité à ses trois niveaux ; `docs/manual.md`
+chapitres 28 et 29 ; harnais dédié non complaisant.
+
+**Ouverte le 2026-08-30**, première unité `[ ]` dans l'ordre du plan — les unités `[~]` qui la
+précèdent déclarent chacune n'avoir plus de dette de construction, et leur reste est nommé chez elles
+(`docs/CloudWorker.md` §4.2, règle 3).
+
+- [x] **Spécification écrite et committée AVANT la première ligne de code** —
+      `docs/SPEC-analytique.md`, douze chapitres, contrat d'API opposable de **quatorze lignes**,
+      rédigée après **sept mesures** relevées sur la pile seedée avec les jetons réels des trois
+      profils et la clé de service. `docs/JOURNAL.md` décision 562. Commit documentaire dédié, poussé
+      avant tout code.
+- [x] **LE PRODUIT PORTE DÉJÀ TOUTE LA DONNÉE, ET AUCUNE SURFACE NE LA LIT** — mesure M4. Les trois
+      colonnes de probabilité — `cards.probability_override`, `workflow_steps.probability_override`,
+      `workflow_nodes_catalog.default_probability` — sont **saisissables** par les écrans
+      d'administration depuis `CRM-030` et `CRM-076`, et **rien** ne les relit pour en faire un
+      nombre. Le produit demande donc depuis quatre unités une information dont il ne fait rien.
+      Cette unité est ce qui la fait servir ; aucune migration de schéma n'est nécessaire.
+
+**Découpage en tranches** — `docs/SPEC-analytique.md` §10, écrit plutôt que laissé à la mémoire d'une
+session (`CLAUDE.md` §5) :
+
+- [ ] **2 a — la fonction.** `supabase/migrations/0073_entonnoir_conversion.sql`,
+      `public.entonnoir_conversion()` en `security invoker`, sa suite pgTAP dédiée, le contrat d'API
+      du §6, `docs/SCHEMA.md` §9 bis.11, `docs/PROD_MIGRATIONS.md` migration 73.
+- [ ] **2 b — le module.** `webapp/src/lib/analytique.ts` — repli par track et par workspace, taux de
+      conversion des affaires décidées, prévisionnel par devise — et sa suite unitaire.
+- [ ] **2 c — le seed.** Les deux surcharges de probabilité du §9, sans lesquelles la résolution à
+      trois niveaux n'est démontrée qu'à son troisième niveau ; compteurs et tableau M6 révisés dans
+      le même changement.
+- [ ] **3 — l'écran `/pilotage`.** Sa spécification visuelle dans `docs/DESIGN_SYSTEM.md` écrite
+      d'abord, ses tests de composant, son E2E d'interface à console vierge, ses captures observées,
+      `docs/manual.md` chapitres 28 et 29.
+- [ ] **4 — le score de santé (`CRM-P02`).** Il commence par son **arbitrage** : ce qu'un score
+      « transparent » agrège n'est écrit dans aucun document, et deux compositions raisonnables
+      donnent deux produits différents (`docs/SPEC-analytique.md` §11.4).
+
+*Limites nommées dès l'ouverture, non masquées* — `docs/SPEC-analytique.md` §11 :
+
+- **Aucune analyse de cohortes.** L'entonnoir est un instantané ; `card_events` porte bien les
+  transitions mais le seed n'en compte que **deux**, et trois arbitrages manquent pour la lecture
+  d'histoire. Le nombre affiché s'appelle donc « taux de conversion des affaires **décidées** », et
+  jamais « taux de conversion » tout court.
+- **Aucune conversion de devises.** `EUR` et `CHF` cohabitent dans le seed ; aucun taux de change
+  n'existe dans le dépôt, et un total « toutes devises » serait un nombre que personne n'a arbitré.
+- **Le prévisionnel n'est confronté à aucun objectif**, alors que `docs/manual.md` chapitre 29
+  s'intitule « Prévisionnel pondéré et objectifs » : `docs/SPEC-goals.md` ne décrit aucun objectif
+  **chiffré**. L'unité restera `[~]` tant que cette confrontation n'aura pas été arbitrée.
 
 ### CRM-070 — précision d'arbitrage : l'invitation d'un membre
 
