@@ -1,11 +1,15 @@
 // @verifies CRM-066 (docs/BACKLOG.md) — analytique de conversion et prévisionnel pondéré,
-//           TRANCHE 3 a : le parcours d'interface de l'écran `/pilotage`
-// @verifies docs/SPEC-analytique.md §8 (l'adresse `/pilotage`, route de premier niveau portée par
+//           TRANCHE 3 a : le parcours d'interface de l'écran `/pilotage` ;
+//           TRANCHE 3 b : le sélecteur de portée, sur la pile réelle
+// @verifies docs/SPEC-analytique.md §8 bis.2 (l'adresse porte DEUX clés, et M8 l'impose),
+//           §8 bis.3 (changer de portée ne relit rien), §8 bis.4 (l'échec de la seconde lecture),
+//           §8 (l'adresse `/pilotage`, route de premier niveau portée par
 //           une entrée de la barre latérale), §5.3 (l'entonnoir est calculé APRÈS la RLS : deux
 //           appelants n'obtiennent pas le même prévisionnel), §7.1 (le taux porte son nom entier),
 //           §7.2 (prévisionnel par devise), §7.3 (les trois mentions obligatoires),
 //           §11.2 (aucune addition de deux devises), M6 (les nombres du jeu de démonstration)
-// @verifies docs/DESIGN_SYSTEM.md §4 (l'entrée transverse de la barre latérale), §5.48 (cet
+// @verifies docs/DESIGN_SYSTEM.md §5.48 bis (le sélecteur de portée et ses états), §4 (l'entrée
+//           transverse de la barre latérale), §5.48 (cet
 //           écran), §5.9 (le tableau), §5.33 (le titre de devise conditionnel), §5.8 (les états),
 //           §7 (les quatre paliers), §8 (clavier)
 // @verifies CLAUDE.md §16 (vérification visuelle), §22 (accessibilité clavier)
@@ -283,6 +287,150 @@ test.describe('CRM-066 — tableau de pilotage (docs/SPEC-analytique.md §8)', (
 			await capturer(page, `pilotage-${palier.nom}`, UNITE)
 		}
 		// LA CONSOLE DOIT RESTER VIERGE (`docs/CloudWorker.md` §3) : la liste vide est le verdict.
+		autoriserErreursConsole(page, [])
+	})
+	// -------------------------------------------------------------------------------------------
+	// TRANCHE 3 b — le sélecteur de portée. Ces scénarios exercent ce qu'aucune preuve unitaire ne
+	// peut poser : la SECONDE lecture contre la vraie RLS, et l'adresse contre le vrai routeur.
+	// -------------------------------------------------------------------------------------------
+
+	test('S9 — le sélecteur offre les six channels du seed, groupés par track (§5.48 bis)', async ({
+		page,
+	}) => {
+		await connecter(page)
+		await page.goto(PILOTAGE)
+		const selecteur = page.getByTestId('pilotage-selecteur-portee')
+		await expect(selecteur).toBeEnabled()
+
+		// M9, MESURÉ : quatre tracks et huit channels, dont DEUX sont hors sélecteur —
+		// `appels-offres` est archivé, `annexes-2023` est en corbeille. Restent six offrables.
+		const groupes = selecteur.locator('optgroup')
+		await expect(groupes).toHaveCount(4)
+		await expect(groupes).toHaveAttribute('label', /.+/)
+		await expect(selecteur.locator('option')).toHaveCount(11)
+		await expect(selecteur.getByRole('option', { name: 'Appels d’offres' })).toHaveCount(0)
+		await expect(selecteur.getByRole('option', { name: 'Annexes 2023' })).toHaveCount(0)
+		// L'intitulé du groupe est une DONNÉE — le nom du track (§10).
+		await expect(groupes.nth(0)).toHaveAttribute('label', 'Conseil & IA')
+		// Le défaut est l'espace de travail, et il ne s'écrit pas dans l'adresse.
+		await expect(selecteur).toHaveValue('')
+		await expect(page).toHaveURL(new RegExp(`${PILOTAGE}$`))
+		autoriserErreursConsole(page, [])
+	})
+
+	test('S10 — CHOISIR UN CHANNEL ÉCRIT LES DEUX CLÉS ET RESTREINT LES NOMBRES', async ({
+		page,
+	}) => {
+		await connecter(page)
+		await page.goto(PILOTAGE)
+		const selecteur = page.getByTestId('pilotage-selecteur-portee')
+		await expect(selecteur).toBeEnabled()
+
+		await selecteur.selectOption('legacy-2023/dossiers-2023')
+
+		// M11, MESURÉ : `dossiers-2023` ne porte qu'UNE affaire active, « Reprise du dossier
+		// Marchand », seule affaire du track à `negociation`. Son pondéré vaut donc exactement
+		// 22 000,00 × 30 % = 6 600,00 — la surcharge de probabilité que le seed pose au niveau de
+		// l'affaire (§9). Un `coalesce` écrit à l'envers rendrait 11 000,00.
+		await expect(ligneNoeud(page, 'EUR', 'Négociation')).toHaveCount(1)
+		await expect(entonnoirDe(page, 'EUR').getByRole('row')).toHaveCount(2)
+		expect(chiffresDe((await previsionnelDe(page, 'EUR').innerText()) ?? '')).toBe(660000)
+
+		// L'ADRESSE PORTE LES DEUX CLÉS, ET C'EST M8 : un slug de channel n'est unique que dans son
+		// track, et `?channel=` seul ne désignerait rien.
+		await expect(page).toHaveURL(/\?track=legacy-2023&channel=dossiers-2023$/)
+		// La phrase de portée NOMME la portée, et le nom est une donnée.
+		await expect(page.getByTestId('pilotage-portee')).toContainText('Dossiers 2023')
+		autoriserErreursConsole(page, [])
+	})
+
+	test('S11 — L’ADRESSE SEULE SUFFIT, et le choix ne s’empile pas dans l’historique', async ({
+		page,
+	}) => {
+		await connecter(page)
+		// UNE ADRESSE PARTAGÉE OUVRE DIRECTEMENT SA PORTÉE : c'est le point d'une portée qui vit
+		// dans la chaîne de requête plutôt que dans un état d'écran.
+		await page.goto(`${PILOTAGE}?track=legacy-2023&channel=dossiers-2023`)
+		const selecteur = page.getByTestId('pilotage-selecteur-portee')
+		await expect(selecteur).toHaveValue('legacy-2023/dossiers-2023')
+		await expect(entonnoirDe(page, 'EUR').getByRole('row')).toHaveCount(2)
+
+		// LE CHOIX REMPLACE L'ENTRÉE D'HISTORIQUE (§5.48 bis) : trois essais de portée ne doivent
+		// pas coûter trois retours arrière pour quitter l'écran.
+		await selecteur.selectOption('studio-web')
+		await expect(page).toHaveURL(/\?track=studio-web$/)
+		await selecteur.selectOption('')
+		await expect(page).toHaveURL(new RegExp(`${PILOTAGE}$`))
+		await page.goBack()
+		// Le retour arrière quitte l'écran plutôt que de rejouer les portées essayées.
+		await expect(page).not.toHaveURL(new RegExp(PILOTAGE))
+		autoriserErreursConsole(page, [])
+	})
+
+	test('S12 — UNE ADRESSE INEXPLOITABLE REPLIE SANS ERREUR, et le sélecteur le dit', async ({
+		page,
+	}) => {
+		await connecter(page)
+
+		// `?channel=` SEUL ne désigne rien — M8. L'écran rend l'espace de travail entier, et le
+		// sélecteur affiche la portée RÉELLEMENT appliquée.
+		await page.goto(`${PILOTAGE}?channel=dossiers-2023`)
+		const selecteur = page.getByTestId('pilotage-selecteur-portee')
+		await expect(selecteur).toHaveValue('')
+		await expect(ligneNoeud(page, 'EUR', 'Livré')).toHaveCount(1)
+
+		// Un track inconnu replie de même, et l'écran n'écrit AUCUNE erreur : « ce track n'existe
+		// pas » renseignerait par la bande sur ce que la RLS ferme (§5.48).
+		await page.goto(`${PILOTAGE}?track=inexistant-2026`)
+		await expect(selecteur).toHaveValue('')
+		await expect(page.getByTestId('etat-erreur')).toHaveCount(0)
+
+		// Un channel cherché dans le MAUVAIS track replie sur ce track, jamais sur l'homonyme d'un
+		// autre : `prospection` existe, mais dans `conseil-ia`.
+		await page.goto(`${PILOTAGE}?track=studio-web&channel=prospection`)
+		await expect(selecteur).toHaveValue('studio-web')
+		autoriserErreursConsole(page, [])
+	})
+
+	test('S13 — LA PORTÉE NE DIVULGUE RIEN : la lectrice ne se voit pas offrir « Grands comptes »', async ({
+		page,
+	}) => {
+		// LE SÉLECTEUR N'EST PAS UN CONTRÔLE D'AUTORISATION (`CLAUDE.md` §10) : la liste est celle
+		// que la RLS de `channels` consent, et forcer la portée dans l'adresse ne rend rien de plus
+		// — l'entonnoir est calculé APRÈS la RLS (§5.3). Les deux moitiés sont éprouvées ici.
+		await connecter(page, VIEWER)
+		await page.goto(PILOTAGE)
+		const selecteur = page.getByTestId('pilotage-selecteur-portee')
+		await expect(selecteur).toBeEnabled()
+		await expect(selecteur.getByRole('option', { name: 'Grands comptes' })).toHaveCount(0)
+		// `prospection` lui est ROUVERT par `channel_members` (M7) : la liste suit la RLS, elle ne
+		// la rejoue pas.
+		await expect(selecteur.getByRole('option', { name: 'Prospection', exact: true })).toHaveCount(1)
+
+		// L'adresse forcée ne lui rend RIEN de plus : la portée est vide pour elle, et l'état vide
+		// garde son sélecteur au-dessus (§5.48 bis).
+		await page.goto(`${PILOTAGE}?track=conseil-ia&channel=grands-comptes`)
+		await expect(selecteur).toHaveValue('')
+		autoriserErreursConsole(page, [])
+	})
+
+	test('S14 — captures du sélecteur aux quatre paliers, page jamais défilante (§7)', async ({
+		page,
+	}) => {
+		await connecter(page)
+		for (const palier of PALIERS) {
+			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
+			await page.goto(`${PILOTAGE}?track=studio-web`)
+			await expect(page.getByTestId('pilotage-selecteur-portee')).toHaveValue('studio-web')
+			await expect(ligneNoeud(page, 'EUR', 'Négociation')).toHaveCount(1)
+			const debordement = await page.evaluate(
+				() => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+			)
+			expect(debordement, `aucun défilement horizontal de page à ${palier.nom}`).toBeLessThanOrEqual(
+				0,
+			)
+			await capturer(page, `pilotage-portee-${palier.nom}`, UNITE)
+		}
 		autoriserErreursConsole(page, [])
 	})
 })
