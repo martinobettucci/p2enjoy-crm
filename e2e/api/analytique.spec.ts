@@ -1,9 +1,10 @@
 // @verifies CRM-066 (docs/BACKLOG.md) — analytique de conversion et prévisionnel pondéré,
-//           TRANCHE 2 a : l'agrégat descend en base
-// @verifies docs/SPEC-analytique.md §6 (les quatorze lignes du contrat d'API), §5.1 (les quatorze
-//           colonnes rendues, le libellé du catalogue, l'arrondi), §5.3 (`security invoker` : deux
-//           appelants, deux totaux), §5.4 (`anon` refusé par le PRIVILÈGE), §3 (résolution à trois
-//           niveaux), §4 (les deux exclusions, et l'inclusion du sommeil), §7.2 (le prévisionnel)
+//           TRANCHE 2 a : l'agrégat descend en base ; TRANCHE 2 c : le seed exerce la résolution
+// @verifies docs/SPEC-analytique.md §6 (les quinze lignes du contrat d'API), §9 (les deux
+//           surcharges que le seed porte, ligne *q*), §5.1 (les quatorze colonnes rendues, le
+//           libellé du catalogue, l'arrondi), §5.3 (`security invoker` : deux appelants, deux
+//           totaux), §5.4 (`anon` refusé par le PRIVILÈGE), §3 (résolution à trois niveaux),
+//           §4 (les deux exclusions, et l'inclusion du sommeil), §7.2 (le prévisionnel)
 // @verifies docs/SCHEMA.md §9 bis.11 (contrat de `public.entonnoir_conversion`)
 // @verifies docs/SPEC-permissions-rls.md §7 (le refus est ZÉRO LIGNE, jamais une erreur ;
 //           preuves n° 4 et n° 11)
@@ -34,6 +35,9 @@ const CH_GRANDS_COMPTES = '5eed0000-0000-4000-8000-000000000032'
 const CH_PROSPECTION = '5eed0000-0000-4000-8000-000000000031'
 const CH_INTER_ENTREPRISES = '5eed0000-0000-4000-8000-000000000036'
 const CH_MAINTENANCE = '5eed0000-0000-4000-8000-000000000035'
+/** Les deux channels de la ligne *q* : le premier porte l'affaire SURCHARGÉE, le second non. */
+const CH_DOSSIERS_2023 = '5eed0000-0000-4000-8000-000000000037'
+const CH_REFONTE = '5eed0000-0000-4000-8000-000000000034'
 
 /**
  * « Cadrage data — Groupe Vallier » : 38 000,00 EUR, SEULE affaire de `conseil-ia/prospection` au
@@ -54,7 +58,7 @@ const ENTONNOIR_REPLIE = [
 	{ cle: 'prospection', devise: 'EUR', affaires: 11, sansMontant: 1, montant: 294200, pondere: 29420 },
 	{ cle: 'relance', devise: 'CHF', affaires: 1, sansMontant: 0, montant: 47000, pondere: 9400 },
 	{ cle: 'relance', devise: 'EUR', affaires: 8, sansMontant: 0, montant: 284350, pondere: 56870 },
-	{ cle: 'negociation', devise: 'EUR', affaires: 9, sansMontant: 0, montant: 366850, pondere: 183425 },
+	{ cle: 'negociation', devise: 'EUR', affaires: 9, sansMontant: 0, montant: 366850, pondere: 230752.5 },
 	{ cle: 'signature', devise: 'CHF', affaires: 1, sansMontant: 0, montant: 28000, pondere: 25200 },
 	{ cle: 'realisation', devise: 'EUR', affaires: 1, sansMontant: 0, montant: 64000, pondere: 64000 },
 	{ cle: 'livre', devise: 'EUR', affaires: 7, sansMontant: 0, montant: 311000, pondere: 311000 },
@@ -189,7 +193,7 @@ test.describe("l'entonnoir de conversion, par la vraie route (docs/SPEC-analytiq
 		}
 		// Le prévisionnel du §7.2 — les seules lignes `open`. Une affaire gagnée n'est plus une
 		// prévision, une affaire perdue vaut zéro.
-		expect(previsionnel(lignes).EUR).toBeCloseTo(333715, 2)
+		expect(previsionnel(lignes).EUR).toBeCloseTo(381042.5, 2)
 		expect(previsionnel(lignes).CHF).toBeCloseTo(34600, 2)
 	})
 
@@ -244,7 +248,7 @@ test.describe("l'entonnoir de conversion, par la vraie route (docs/SPEC-analytiq
 		expect(replie.get('perdu/EUR')?.affaires).toBe(1)
 		// LE PRÉVISIONNEL N'EST PAS LE MÊME, ET C'EST CORRECT. Un total est une divulgation : celui
 		// qui inclurait les affaires de `grands-comptes` les révélerait par soustraction.
-		expect(previsionnel(lignes).EUR).toBeCloseTo(297565, 2)
+		expect(previsionnel(lignes).EUR).toBeCloseTo(344892.5, 2)
 		expect(previsionnel(lignes).CHF).toBeCloseTo(34600, 2)
 	})
 
@@ -445,5 +449,37 @@ test.describe("l'entonnoir de conversion, par la vraie route (docs/SPEC-analytiq
 		expect(relanceMaintenance).toEqual(['CHF', 'EUR'])
 		// Aucune ligne vide n'est émise : un nœud sans affaire se tait.
 		expect(lignes.filter((l) => l.affaires === 0)).toHaveLength(0)
+	})
+
+	test('q — les TROIS niveaux sont exercés par le SEED, sans qu’aucune preuve n’écrive', async ({
+		request,
+	}) => {
+		// LIGNE *q*, AJOUTÉE PAR LA TRANCHE 2 c — `docs/SPEC-analytique.md` §9. Les lignes *m* et *n*
+		// posent leurs surcharges puis les retirent : elles prouvent la RÈGLE. Celle-ci ne touche
+		// à rien et lit ce que le seed a posé — la preuve que les données de développement
+		// exercent la résolution, ce que `CLAUDE.md` §8 exige d'une règle métier neuve.
+		const reponse = await request.post(RPC, { headers: enTetesAuthentifies(jetonAdmin), data: {} })
+		const lignes = (await reponse.json()) as LigneEntonnoir[]
+
+		// NIVEAU 1, l'affaire : « Reprise du dossier Marchand », SEULE de son channel à ce nœud —
+		// 22 000,00 × 30 %. Le catalogue rendrait 11 000,00, l'étape 14 300,00.
+		const marchand = lignes.find(
+			(l) => l.channel_id === CH_DOSSIERS_2023 && l.node_key === 'negociation',
+		)
+		expect(marchand?.affaires).toBe(1)
+		expect(marchand?.montant_pondere).toBeCloseTo(6600, 2)
+
+		// NIVEAU 2, l'étape : une affaire de la MÊME étape, SANS surcharge propre — 72 000,00 × 65 %.
+		// Sans elle, « 30 % » pourrait aussi bien être une valeur appliquée à tout le nœud.
+		const lyon = lignes.find((l) => l.channel_id === CH_REFONTE && l.node_key === 'negociation')
+		expect(lyon?.affaires).toBe(1)
+		expect(lyon?.montant_pondere).toBeCloseTo(46800, 2)
+
+		// Et le nœud entier : 230 752,50, et non 183 425,00 — le total qu'il vaudrait si le
+		// catalogue l'emportait partout.
+		const negociation = lignes
+			.filter((l) => l.node_key === 'negociation')
+			.reduce((somme, l) => somme + Number(l.montant_pondere), 0)
+		expect(negociation).toBeCloseTo(230752.5, 2)
 	})
 })
