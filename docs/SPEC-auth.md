@@ -1,7 +1,8 @@
 # Spécification — Authentification, sessions et cycle de vie des comptes
 
-Unités de backlog : `CRM-009` (interface, session d'onglet et gabarits) et `CRM-011`
-(mécanisme GoTrue ; voir `docs/BACKLOG.md`).
+Unités de backlog : `CRM-009` (interface, session d'onglet et gabarits), `CRM-011`
+(mécanisme GoTrue) et `CRM-091` (connexion unique par `oauth.lelabs.tech`, §10) ; voir
+`docs/BACKLOG.md`.
 Documents liés : `docs/DAT.md` §4.1 et §7, `docs/SCHEMA.md` §1, `docs/SPEC-permissions-rls.md` §1
 et §7, `docs/manual.md` chapitres 1 et 17.
 
@@ -240,7 +241,9 @@ reconstruit comme une partie MIME d'origine.
 - **Aucun rattachement d'un compte invité à un workspace.** L'invitation crée un compte et son
   profil ; elle ne crée aucune ligne `workspace_members`. Le lien entre invitation et appartenance
   fait partie de ce qu'INC-015 laisse à arbitrer.
-- **Aucune authentification à facteurs multiples, aucun fournisseur externe, aucun SSO.**
+- **Aucune authentification à facteurs multiples, aucun fournisseur externe, aucun SSO.** Ce
+  hors-périmètre était celui de `CRM-009` et de `CRM-011`. Le SSO est livré par `CRM-091`, au §10 :
+  il s'ajoute à ce qui précède et n'en réécrit rien (`docs/JOURNAL.md`, décision 568).
 
 ## 7. Preuves exigées
 
@@ -397,3 +400,207 @@ contient ni avertissement, ni erreur, ni `pageerror`.
   passe.
 - Les politiques de `profiles`, `workspaces` et `workspace_members` sont livrées par `CRM-022`.
   L'invitation et l'écran d'administration des membres restent distincts, à `CRM-070`.
+
+---
+
+## 10. Connexion unique par `oauth.lelabs.tech` — `CRM-091`
+
+Contrat écrit le 2026-09-23 **avant la première ligne de code**, après les mesures M1 à M11 de
+`docs/JOURNAL.md`, décision 568. Il met en œuvre `docs/SSO.md`, contrat publié par le fournisseur,
+versé au dépôt.
+
+### 10.1 Principe
+
+GoTrue reste **l'unique émetteur** des jetons du produit (§1). Le SSO ne fait que **prouver une
+identité** à GoTrue, qui décide seul d'ouvrir une session.
+
+La voie `GET /auth/v1/authorize?provider=keycloak` est **inutilisable** : GoTrue 2.189.0 n'envoie
+aucun `code_challenge` (M1), et le realm `lelabs` refuse toute demande sans PKCE (M2). Le client OIDC
+est donc la **webapp** :
+
+1. la webapp mène le **code d'autorisation avec PKCE `S256`** et un `nonce`, en client **public** ;
+2. elle échange le code chez Keycloak, garde l'`id_token` **en mémoire** le temps d'un appel ;
+3. elle le remet à GoTrue par `POST /auth/v1/token?grant_type=id_token`, fournisseur `keycloak`,
+   avec le nonce **brut** ;
+4. **GoTrue** vérifie signature, émetteur, audience et nonce, puis applique la règle d'accès du
+   §10.6 et ouvre — ou refuse — la session.
+
+Le navigateur ne décide d'aucune autorisation : il transporte une preuve que le serveur vérifie.
+
+### 10.2 Configuration
+
+| Variable | Consommateur | Rôle |
+|---|---|---|
+| `SSO_OIDC_ISSUER` | `auth` (`GOTRUE_EXTERNAL_KEYCLOAK_URL`) et webapp (`VITE_SSO_ISSUER`, au build) | Émetteur **exact** attendu dans les jetons. `https://oauth.lelabs.tech/realms/lelabs` en production |
+| `SSO_OIDC_CLIENT_ID` | `auth` (`GOTRUE_EXTERNAL_KEYCLOAK_CLIENT_ID`) et webapp (`VITE_SSO_CLIENT_ID`, au build) | Identifiant du client **réellement créé** par le realm (§10.8) ; seule audience acceptée (M8) |
+
+`GOTRUE_EXTERNAL_KEYCLOAK_ENABLED` vaut `true`. **Aucun secret client ni aucune URL de retour
+GoTrue n'est configuré** : le client est public, et leur absence ferme d'elle-même la voie sans PKCE
+(M9, `400 missing OAuth secret`). `DISABLE_SIGNUP` reste `true` (§2), et c'est lui qui porte le refus
+du §10.6.
+
+Côté webapp, les deux `VITE_SSO_*` sont figées au build comme les `VITE_SUPABASE_*`. Absentes, le
+bouton du §10.3 **n'est pas rendu** : l'écran de connexion reste celui du §9, sans action morte.
+
+### 10.3 Parcours
+
+1. **`/connexion`** porte, sous le formulaire, un séparateur « ou » et l'action secondaire
+   **« Se connecter avec LeLabs »**. Le formulaire par mot de passe est conservé (décision 568).
+2. **Au clic**, la webapp lit la découverte `${issuer}/.well-known/openid-configuration`, exige que
+   son `issuer` soit **égal** à celui configuré, et en prend `authorization_endpoint` et
+   `token_endpoint` — jamais d'URL recopiée à la main, comme `docs/SSO.md` le demande.
+3. Elle tire, par `crypto.getRandomValues` : un **vérificateur** PKCE (32 octets, base64url), un
+   **`state`** (16 octets) et un **nonce brut** (16 octets). Le défi est
+   `base64url(SHA-256(vérificateur))` ; le nonce **envoyé** à Keycloak est `hex(SHA-256(nonce brut))`,
+   le nonce **remis** à GoTrue est le brut (M7).
+4. Elle enregistre la **transaction** — `state`, vérificateur, nonce brut, adresse de retour interne,
+   échéance à dix minutes — puis navigue vers
+   `authorization_endpoint?client_id&response_type=code&scope=openid email profile&redirect_uri&state&nonce&code_challenge&code_challenge_method=S256`.
+5. Keycloak revient sur **`/auth/retour`**, route publique hors de la coquille, comme `/connexion`.
+   La transaction est **retirée du stockage dès sa lecture** : elle ne sert qu'une fois, succès ou
+   échec.
+6. La webapp exige une transaction présente et non échue, un `state` identique, un `code` ; elle
+   poste alors au `token_endpoint`, en formulaire, `grant_type=authorization_code`, `client_id`,
+   `code`, `redirect_uri` et `code_verifier`. De la réponse, **seul l'`id_token` est lu** : le jeton
+   d'accès et le jeton de rafraîchissement de Keycloak ne sont ni conservés ni réutilisés.
+7. Elle appelle `signInWithIdToken({ provider: 'keycloak', token, nonce })`. En cas de succès, la
+   session GoTrue est écrite dans le stockage d'onglet du §9.2 et l'utilisateur rejoint l'adresse de
+   retour, passée par `cheminRetour` (§9.1) — jamais une adresse externe.
+8. **L'URL de retour est remplacée**, jamais empilée : le `code` ne reste pas dans l'historique.
+9. En cas d'échec, l'utilisateur revient sur `/connexion`, où le refus est rendu par le même
+   emplacement `role="alert"` que les erreurs du §9.3.
+
+### 10.4 Refus et erreurs — dictionnaire fermé
+
+Aucun message du serveur n'est affiché (§9.3).
+
+| Nature | Cause | Message |
+|---|---|---|
+| `sso_annule` | Keycloak rend `error=access_denied` | La connexion LeLabs a été annulée. |
+| `sso_sans_compte` | GoTrue rend `422 signup_disabled` (M3, M5) | Aucun compte du CRM ne correspond à ce compte LeLabs. L'accès exige une invitation à la même adresse, vérifiée auprès de LeLabs. |
+| `reseau` | découverte, jeton ou GoTrue injoignables, ou réponse `5xx` | Le message réseau du §9.3 |
+| `sso_echec` | tout le reste : transaction absente ou échue, `state` différent, `code` absent, autre `error` de Keycloak, émetteur de la découverte différent, refus `4xx` du jeton ou de GoTrue (nonce, audience, signature) | La connexion LeLabs n'a pas abouti. Recommencez depuis cet écran. |
+
+`sso_sans_compte` ne distingue **pas** « aucun compte » de « adresse non vérifiée » : GoTrue rend le
+même refus aux deux (M3, M5), et le message nomme les deux conditions plutôt que d'en deviner une.
+
+### 10.5 Stockage sur l'appareil
+
+- La **transaction** vit dans `sessionStorage`, sous `p2enjoy-crm.sso.transaction` : catégorie 1 de
+  `CLAUDE.md` §11, strictement nécessaire à l'aller-retour, bornée à l'onglet, retirée au retour et
+  échue en dix minutes. Aucun `localStorage`, aucun cookie.
+- Si `sessionStorage` est indisponible, le repli mémoire du §9.2 ne survit pas à la navigation vers
+  Keycloak : le retour rend `sso_echec`, et la connexion par mot de passe reste possible. Aucune
+  persistance de substitution n'est inventée.
+- Les jetons Keycloak ne sont **jamais** écrits.
+
+### 10.6 Règle d'accès — appliquée par GoTrue, côté serveur
+
+Une connexion SSO ouvre une session **si et seulement si** :
+
+- un compte CRM existe **à la même adresse**, invité ou actif ;
+- **et** l'`id_token` atteste `email_verified = true`.
+
+C'est ce que GoTrue fait sous `DISABLE_SIGNUP=true`, mesuré : aucun compte → `422` (M3) ; compte
+confirmé → rattachement de l'identité `keycloak`, **sans second compte** (M4) ; adresse non vérifiée
+→ `422`, **aucun rattachement** (M5) ; invitation non acceptée → session et compte confirmé (M6),
+ce que prouvait déjà l'acceptation par le lien du courriel (§3.3).
+
+**Aucun rôle du realm n'est lu** — ni `verified`, ni `admin` (décision 568). Les droits restent ceux
+des tables d'appartenance (§1, règle 2) : un porteur d'`admin` du realm reste lecteur dans un espace
+où il est lecteur.
+
+**La déconnexion reste celle de GoTrue** (§3.6). Elle ferme la session du CRM, pas celle du SSO :
+c'est l'objet d'un SSO (`docs/SSO.md`, « Fermer une session »). Le manuel le dit à l'utilisateur.
+
+### 10.7 Ce que GoTrue conserve
+
+GoTrue recopie les revendications de l'`id_token` dans `auth.users.raw_user_meta_data` et
+`auth.identities.identity_data`. Mesuré (M10) : nom, prénom, nom de famille, identifiant, adresse,
+`email_verified`, émetteur, sujet — **ni téléphone, ni profil déclaré, ni rôle**. `docs/SSO.md`
+interdit de recopier les deux premiers ; la conformité tient à la configuration du realm, et non à
+ce dépôt. Elle est donc **prouvée** (§10.10) plutôt que supposée, et revérifiée en production après
+la première connexion (`docs/PROD_MIGRATIONS.md`).
+
+Le profil CRM (`public.profiles`) naît à la création du compte, par invitation : une connexion SSO
+ultérieure ne le modifie pas.
+
+### 10.8 Déclarer le client
+
+Déclaration à remettre à un administrateur du realm, qui la colle dans
+`https://oauth.lelabs.tech/verification/`, onglet **Intégrations** :
+
+```
+CLIENTID=lelabs-crm
+NOM=P2Enjoy CRM
+TYPE=navigateur
+REDIRECT=https://crm.lelabs.tech/auth/retour
+```
+
+- `TYPE=navigateur` : client public, **sans secret** — il n'y a donc rien à poser comme secret.
+- `ORIGINE` est omise : son défaut, l'origine des `REDIRECT`, est exactement l'origine qui appelle
+  le `token_endpoint`.
+- `DECONNEXION` est omise : le CRM ne déconnecte pas du SSO (§10.6).
+- `ROLE` est omis : aucun rôle n'est lu (§10.6).
+- Un seul domaine, sans `www` : la route de la cellule ne porte que `crm.lelabs.tech`.
+
+**L'identifiant retenu par le service fait foi.** Le précédent de l'application « devis » montre qu'il
+peut différer de celui déclaré. Il est reporté tel quel dans `SSO_OIDC_CLIENT_ID`.
+
+**Sonde publique**, sans rien modifier :
+
+```bash
+curl -s -o /dev/null -w '%{http_code} %{redirect_url}\n' \
+  'https://oauth.lelabs.tech/realms/lelabs/protocol/openid-connect/auth?client_id=lelabs-crm&response_type=code&scope=openid&redirect_uri=https%3A%2F%2Fcrm.lelabs.tech%2Fauth%2Fretour'
+```
+
+Attendu : `302` vers l'URL de retour avec `error_description=Missing+parameter%3A+code_challenge_method`.
+Un `400` signifie que le client n'existe pas, ou que l'URL n'est pas celle enregistrée.
+
+### 10.9 Développement
+
+Le développement reste autonome (`CLAUDE.md` §3) : un service **`keycloak`** dans
+`docker-compose.dev.yml`, image `quay.io/keycloak/keycloak:26.7.3` — la version du SSO réel —, realm
+importé depuis **`keycloak/realm-lelabs.json`**.
+
+- **L'émetteur est le même vu du navigateur et vu de GoTrue** (M11) : alias réseau `sso.localhost`,
+  port `SSO_DEV_PORT` identique dedans et dehors, publié sur `127.0.0.1`. L'émetteur de développement
+  est `http://sso.localhost:${SSO_DEV_PORT}/realms/lelabs`, et `./runDev.sh` refuse de démarrer si
+  `SSO_OIDC_ISSUER` en diffère.
+- Le realm reproduit ce qui se paierait au premier déploiement : chemin `/realms/lelabs`, rôles
+  `verified` et `admin`, **PKCE `S256` imposé**, URL de retour **exactes**, vérification d'adresse
+  exigée.
+- Le client `lelabs-crm` a pour seule URL de retour `SITE_URL` + `/auth/retour`, injectée à
+  l'import : l'origine de la webapp varie d'un poste à l'autre.
+- Un second client public, `crm-audience-etrangere`, n'existe qu'ici : il sert à prouver le refus
+  d'audience (M8).
+
+| Compte du realm | État SSO | Compte CRM | Ce qu'il démontre |
+|---|---|---|---|
+| `admin@p2enjoy.test` | `verified` | administratrice du seed | le parcours nominal |
+| `bizdev@p2enjoy.test` | **aucun rôle** | membre du seed | qu'aucun rôle n'est exigé |
+| `viewer@p2enjoy.test` | `verified` + `admin` du realm | lectrice du seed | que l'`admin` du realm n'ouvre aucun droit du CRM |
+| `inconnu@p2enjoy.test` | `verified` | **aucun** | le refus `sso_sans_compte` |
+| `adresse-non-verifiee@p2enjoy.test` | aucun rôle, adresse **non vérifiée** | créé par la preuve | le refus de M5 |
+
+Mot de passe commun des comptes du realm : `SsoDev2026Local`, publié comme celui des boîtes de
+développement. L'administration de l'instance de développement emploie `SSO_DEV_ADMIN_PASSWORD`,
+tiré au hasard par `./runDev.sh`.
+
+### 10.10 Preuves exigées
+
+| Niveau | Preuve |
+|---|---|
+| Unitaire | `webapp/src/lib/sso.test.ts` : défi PKCE contre le vecteur de la RFC 7636, annexe B ; nonce haché ; URL d'autorisation exacte ; transaction à usage unique, échue, `state` différent ; découverte d'un autre émetteur ; dictionnaire fermé du §10.4 ; configuration absente. Composants : bouton rendu seulement si configuré ; route de retour dans chacun de ses états |
+| API, pile réelle | `e2e/api/sso.spec.ts`, Keycloak de développement et GoTrue derrière Kong : M2, M3, M4 (et **un seul** compte après deux connexions), M5, M6, M7, M8, M9, et M10 relu dans `auth.identities` |
+| E2E | `e2e/ui/sso.spec.ts` : clic, **vraie page de connexion Keycloak**, retour, session dans `sessionStorage`, `localStorage` vide, transaction retirée, URL sans `code` ; `inconnu@` refusé avec son message ; annulation ; aucune erreur de console |
+| Visuel | écran de connexion avec l'action SSO, et chacun des refus, aux quatre paliers |
+| Production | sonde du §10.8, puis une connexion réelle et la relecture de `auth.identities` du §10.7 |
+
+### 10.11 Hors périmètre
+
+- La **déconnexion du SSO** depuis le CRM (§10.6).
+- La lecture des **rôles** du realm (§10.6).
+- `offline_access` : le CRM n'emploie pas le jeton de rafraîchissement de Keycloak.
+- Un écran de **rattachement** manuel d'identités : GoTrue rattache à la première connexion (M4).
+- Le retrait de la connexion par mot de passe : non demandé.

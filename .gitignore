@@ -30,6 +30,11 @@ mail-sync/dist/
 !.env.dev.example
 !.env.prod.example
 supabase/.env
+
+# Dossier de la cellule Spark (CRM-090, docs/JOURNAL.md décision 567) : il porte les adresses de
+# l'hôte de rebond et de la cellule, et l'empreinte de la clé autorisée. Le plan de contrôle le
+# réécrit dans la cellule (/etc/spark/BRIEFING.md) ; il n'a pas à voyager avec le code.
+docs/PROD-SERVER.md
 supabase/.env.compose
 
 # --- Volumes et données locales -----------------------------------------

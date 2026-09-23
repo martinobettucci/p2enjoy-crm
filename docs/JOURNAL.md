@@ -28461,3 +28461,164 @@ mentionnait `vitest` plus loin.
 **arbitrage** : ce qu'un score « transparent » agrège n'est écrit nulle part (§11.4), et deux
 compositions raisonnables donnent deux produits différents. `docs/CloudWorker.md` §4.1 bis dit qu'il
 se tranche, se persiste et se livre plutôt qu'il n'attend.
+
+## décision 567 — la production a enfin une cible : la cellule Spark « crm », et elle contredit l'assemblage de production sur cinq points
+
+*2026-09-23, session interactive ouverte à 12:25 UTC sur instruction du responsable : « intègre la
+prod avec la cible `docs/PROD-SERVER.md` et intègre en prod le SSO `docs/SSO.md` ». `docs/SSO.md`,
+contrat public du fournisseur, est versé au dépôt avec cette décision. `docs/PROD-SERVER.md` **ne
+l'est pas, et c'est voulu** : il porte les adresses de l'hôte de rebond et de la cellule et
+l'empreinte de la clé autorisée, qui n'ont pas à voyager avec le code. Il est réécrit par le plan de
+contrôle dans la cellule même (`/etc/spark/BRIEFING.md`), et `.gitignore` l'écarte. Ce journal n'en
+recopie que les faits utiles, sans aucune adresse.*
+
+**Problème.** `docs/PROD_MIGRATIONS.md` §1 dit « aucune production » et décrit un hôte générique :
+ports `80` et `443` libres, Caddy qui obtient ses certificats par ACME, stockage S3 externe, `.env`
+produit à la main sur l'hôte. La cible réelle est une cellule d'une Forge, dont le plan de contrôle
+impose d'autres règles.
+
+**Observations — MESURÉES le 2026-09-23 dans la cellule, en lecture seule, par le compte `root` puis
+`spark-docker`, et non déduites du dossier.**
+
+| # | Fait | Relevé |
+|---|---|---|
+| S1 | Accès | rebond obligatoire par l'hôte de la Forge, puis l'adresse privée de la cellule ; la clé de ce poste est celle que le dossier autorise. Les scripts ne connaissent qu'un **alias `ssh`**, défini sur le poste qui livre |
+| S2 | Moteur | Docker **rootless**, compte `spark-docker` (`uid=1001`), pilote `overlayfs`, cgroup v2 `systemd`, `MemoryLimit=true` |
+| S3 | Ports | `ip_unprivileged_port_start=1024` : aucun port sous 1024 ne se publie |
+| S4 | Quotas | `memory.max` = **2 147 483 648** octets ; disque **11 G, 9,7 G libres** ; `ulimit -Hn` = 1 048 576 |
+| S5 | Outils | `git`, `python3`, `openssl` présents ; **ni Node, ni `jq`, ni `age`** |
+| S6 | Injection | `/etc/spark/env` ne porte **aucune** variable, `/run/spark/secrets` **n'existe pas**, `/etc/spark/routes` **aucune route** ; les quatre fichiers `.?` ne portent que leur gabarit |
+| S7 | `/srv` | vide, `root:root` : le répertoire de l'application doit être créé par `root` puis confié à `spark-docker` |
+| S8 | DNS | `oauth.lelabs.tech` résout vers la Forge ; `crm.lelabs.tech` **ne résout pas**, et aucun joker `*.lelabs.tech` n'existe |
+| S9 | Images | `docker pull` fonctionne depuis ce poste ; les images de la pile pèsent **5,9 Go** décompressées (PostgreSQL 1,69 Go, Storage 1,41 Go, Edge Runtime 1,12 Go, Realtime 528 Mo, Kong 496 Mo, `postgres:17-alpine` 424 Mo, le reste sous 100 Mo) |
+
+**Les cinq contradictions, et ce qui est retenu pour chacune.**
+
+1. **TLS et ports.** L'assemblage publie `80` et `443` et laisse Caddy obtenir ses certificats ; la
+   cellule interdit ces ports (S3) et la Forge termine TLS elle-même. **Retenu** : un TROISIÈME
+   fichier, `docker-compose.spark.yml`, appliqué par-dessus les deux autres, où Caddy sert **en
+   clair** sur un port unique `SPARK_HTTP_PORT` (`8080`), `auto_https off`. Les routes de Caddy sont
+   extraites dans un fragment partagé, `caddy/routes.caddy`, importé par les deux Caddyfile : deux
+   copies des mêmes routes auraient divergé au premier ajout.
+2. **Stockage.** L'assemblage vise un S3 externe ; la cellule n'en fournit aucun. **Retenu : un
+   MinIO INTERNE à la cellule**, sans port publié, plutôt qu'un stockage `file` de Storage. Motif
+   mesuré dans `scripts/backup.sh` : la sauvegarde n'emporte les objets **que** lorsqu'un conteneur
+   `p2enjoy-minio` tourne dans la pile ; un S3 externe relève du fournisseur, et un stockage `file`
+   ne serait couvert par RIEN. Le mode S3 de la décision 13 est conservé, et aucun identifiant
+   externe n'est exigé.
+3. **Variables.** L'assemblage lit un `.env` écrit à la main sur l'hôte ; la cellule dit qu'une
+   variable ou un secret **n'entrent que par la console** (`docs/PROD-SERVER.md` §1, §5, §7).
+   **Retenu** : `./runProd.sh --spark` fusionne `/etc/spark/env` puis `/run/spark/secrets` par-dessus
+   le gabarit, dans un fichier d'exécution en `tmpfs`, mode `600`, et c'est CE fichier que les gardes
+   existantes valident — profil `prod`, `APPLY_MIGRATIONS=false`, aucun `CHANGE_ME_*`. Rien n'est
+   écrit sur disque, rien n'est inventé.
+4. **Mémoire.** Les services de Kong démarrent autant de processus nginx que la machine compte de
+   cœurs, et `nproc` décrit la **Forge**, pas la cellule (`docs/PROD-SERVER.md` §3). **Retenu** :
+   `KONG_NGINX_WORKER_PROCESSES=1` et une limite mémoire par service, chiffrées après mesure
+   (`docs/SPEC-deploiement-spark.md` §8).
+5. **Webapp.** `npm run build` s'exécute « sur l'hôte » ; la cellule n'a pas Node (S5), et un build
+   Vite y consommerait la mémoire de la pile. **Retenu** : le build a lieu sur le poste qui livre,
+   avec les variables publiques **relues dans la cellule**, puis `webapp/dist` voyage avec l'archive.
+
+**UN ÉCART ASSUMÉ AU CONTRAT DE LA CELLULE, ET SON MOTIF.** `docs/PROD-SERVER.md` §6 demande
+`env_file: [/etc/spark/env, /run/spark/secrets]` sur chaque service. Appliqué tel quel, il remettrait
+**TOUS** les secrets à **TOUS** les conteneurs — `SERVICE_ROLE_KEY` à Caddy, `POSTGRES_PASSWORD` à
+MinIO. Le but de cette ligne est énoncé par le dossier lui-même : « sans ces deux lignes, aucune
+variable injectée n'atteint le conteneur ». L'interpolation de Compose depuis ces deux mêmes
+fichiers atteint ce but, et remet à chaque conteneur les seules variables qu'il consomme. Le
+comportement au redémarrage est identique — `env_file` comme l'interpolation sont lus à la
+**création** du conteneur, et le démon rootless recrée les conteneurs avec leur configuration
+enregistrée.
+
+**Le premier déploiement sur une base VIERGE.** La fenêtre de migration exige la confirmation d'un
+instantané de VM (décision 489). Sur une base vide, il n'y a rien à protéger, mais affirmer
+« l'instantané est pris » serait faux. **Retenu** : `--premier-deploiement`, qui **mesure** que le
+schéma `public` ne porte aucune table avant de migrer sans instantané, et refuse sinon. Une
+affirmation remplacée par une mesure est une garde plus forte, pas plus faible.
+
+**Ce qui ne dépend pas de ce dépôt, et qui est demandé plutôt que supposé** : la route
+`crm.lelabs.tech 8080 clair` et l'enregistrement DNS qui la rend joignable (S8), l'import des
+variables et des secrets en console (S6), les identifiants SMTP d'envoi. Le domaine
+`crm.lelabs.tech` est une **proposition** : le Spark s'appelle `crm`, le SSO et l'application
+« devis » de la même Forge suivent la forme `<application>.lelabs.tech`. Il vit dans une seule
+variable, `APP_DOMAIN`, pour que le changer ne coûte qu'une relivraison.
+
+**Conséquences.** Unité `CRM-090`, spécification `docs/SPEC-deploiement-spark.md`, écrite et
+committée avant la première ligne de code.
+
+## décision 568 — le SSO `oauth.lelabs.tech` : GoTrue ne sait pas lui parler seul, et c'est une mesure qui l'établit
+
+*2026-09-23, même session. Mesures exécutées contre `supabase/gotrue:v2.189.0` — la version épinglée
+— et un Keycloak 26.7.3 jetable reproduisant les deux règles publiées par `docs/SSO.md` : PKCE `S256`
+imposé, URL de retour exactes. Base, GoTrue et Keycloak jetables sur un réseau Docker isolé, détruits
+après mesure.*
+
+**Problème.** GoTrue est l'**unique** émetteur de jetons du produit (`docs/SPEC-auth.md` §1) et
+connaît un fournisseur `keycloak`. La voie évidente — `GET /auth/v1/authorize?provider=keycloak` —
+suppose que GoTrue parle PKCE à Keycloak.
+
+**Mesures.**
+
+| # | Mesure | Résultat |
+|---|---|---|
+| M1 | URL d'autorisation émise par GoTrue, fournisseur `keycloak` | `…/auth?client_id=…&redirect_uri=…&response_type=code&scope=profile+email+openid&state=…` — **aucun `code_challenge`**, même quand le client en passe un à GoTrue |
+| M2 | Même demande, sans PKCE, au Keycloak de mesure | `302` vers l'URL de retour, `error=invalid_request`, `error_description=Missing parameter: code_challenge_method` — **exactement** le refus que `docs/SSO.md` annonce |
+| M3 | `POST /token?grant_type=id_token`, `provider=keycloak`, jeton signé par le realm, nonce juste, **aucun compte** CRM à cette adresse | `422`, `signup_disabled` |
+| M4 | Même échange, compte CRM **confirmé** à la même adresse | `200`, session ; l'identité `keycloak` est **rattachée** au compte existant, aucun second compte |
+| M5 | Jeton `email_verified=false`, compte CRM confirmé à la même adresse | `422`, `signup_disabled` — **aucun rattachement** : une adresse non prouvée n'ouvre pas le compte d'autrui |
+| M6 | Compte CRM **invité, non accepté** | `200`, session, compte **confirmé** par l'échange |
+| M7 | Nonce faux ; nonce absent alors que le jeton en porte un | `400` `Nonces mismatch` ; `400` « Passed nonce and nonce in id_token should either both exist or not » |
+| M8 | Jeton émis pour un **autre** client du realm | `400` « Unacceptable audience in id_token » |
+| M9 | GoTrue sans secret client configuré | démarre ; l'échange de M4 aboutit ; `/authorize?provider=keycloak` rend `400` « missing OAuth secret » — la voie sans PKCE est **fermée d'elle-même** |
+| M10 | Revendications de l'`id_token`, portées `openid email profile` | `sub`, `email`, `email_verified`, `name`, `given_name`, `family_name`, `preferred_username`, `nonce`, `aud`, `azp`, `iss` et les dates — **ni rôle, ni téléphone, ni profil déclaré**. L'export du realm réel (`lelabs/sso`, `config/realms/lelabs.json`) le confirme : `telephone` et `profilVerification` sont des attributs sans mappeur |
+| M11 | Keycloak joint par GoTrue **dans** un conteneur, par un alias réseau `sso.localhost` | l'émetteur `http://sso.localhost:18480/realms/lelabs` est le même vu du poste — les navigateurs résolvent `*.localhost` en boucle locale — et vu du réseau Compose |
+
+**Décision.** M1 et M2 ferment la voie évidente : **le client OIDC est la webapp**, client
+**public** (`TYPE=navigateur`), code d'autorisation **avec PKCE `S256`** et `nonce`. Le navigateur
+échange le code chez Keycloak, puis remet l'`id_token` à GoTrue par `grant_type=id_token` — et c'est
+**GoTrue, côté serveur**, qui vérifie la signature contre les clés publiées, l'émetteur, l'audience
+et le nonce (M7, M8), puis décide de la session (M3 à M6). Aucune autorisation n'est calculée dans
+le navigateur, comme `docs/SSO.md` l'exige.
+
+Un client confidentiel servi par une fonction edge a été écarté : il ajoute un secret à poser, un
+état de transaction côté serveur et une remise de session au navigateur, pour une propriété — ne pas
+exposer le secret — qui n'existe pas pour un client public, et PKCE couvre l'interception du code.
+Le gabarit `lelabs-spa` du realm montre précisément cette forme.
+
+**La politique d'accès, tranchée.** Le CRM **ne lit aucun rôle du realm**. Une connexion SSO ouvre
+une session **si et seulement si** un compte CRM existe à la même adresse — invité ou actif — **et**
+que le SSO atteste `email_verified` : c'est la règle que GoTrue applique lui-même (M3 à M6), sous
+`DISABLE_SIGNUP=true`, conservée. L'état « aucun rôle » de `docs/SSO.md` suffit donc, puisqu'il
+atteste la détention de l'adresse — ce qu'une invitation par courriel attestait déjà. `verified`
+n'ajoute rien à un accès nominatif accordé par un administrateur d'espace qui sait qui il invite,
+et l'exiger bloquerait l'invité en attente d'un geste humain « ni automatique, ni immédiat ».
+`admin` n'est pas un administrateur du CRM. C'est la position de l'application « devis » de la même
+Forge. **M6 est une conséquence voulue** : accepter une invitation par le SSO prouve la même chose
+qu'accepter par le lien du courriel.
+
+**Ce qui est conservé.** La connexion par mot de passe reste : la demande est d'intégrer le SSO,
+pas de retirer un parcours. La déconnexion reste celle de GoTrue seule : `docs/SSO.md` rappelle que
+fermer la session d'une application ne déconnecte pas du SSO, et c'est l'objet d'un SSO.
+
+**Le développement reste autonome** (`CLAUDE.md` §3) : un Keycloak de développement, realm `lelabs`
+reproduisant PKCE imposé, les deux rôles et des comptes alignés sur le seed, joint par l'émetteur
+unique de M11.
+
+**Conséquences.** Unité `CRM-091`, spécification `docs/SPEC-auth.md` §10. `docs/SPEC-auth.md` §6
+écrivait « aucun SSO » : ce hors-périmètre était celui de `CRM-009` et de `CRM-011`, il est levé
+par cette unité et non réécrit en silence.
+
+## décision 569 — `minio/minio` a disparu de Docker Hub : la pile de développement ne démarrait plus sur un poste neuf
+
+*2026-09-23, même session, constat fait en tirant les images de la mesure de capacité.*
+
+**Observation, mesurée.** `docker pull minio/minio:RELEASE.2025-04-22T22-12-26Z` rend « pull access
+denied for minio/minio, repository does not exist » ; de même pour `minio/mc`. Les **mêmes
+étiquettes** se tirent de `quay.io/minio/minio` et `quay.io/minio/mc`. Aucun de ces conteneurs
+n'était en cache sur ce poste : `./runDev.sh` y aurait échoué avant tout service, sur une cause
+étrangère au code.
+
+**Décision.** Remplacer le seul **registre** dans `docker-compose.dev.yml`, étiquettes inchangées,
+et employer la même image dans l'assemblage de la cellule (décision 567, point 2). Tranché ici selon
+la doctrine du registre (`docs/INCONSISTENCY_REPORT.md`, 2026-08-15) : la mesure suffit, aucun
+arbitrage n'est nécessaire, et aucune entrée n'est donc ouverte.

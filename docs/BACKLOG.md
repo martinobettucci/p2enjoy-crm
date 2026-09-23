@@ -14346,3 +14346,60 @@ rejoués seuls.
 harnais propre à cette unité.
 
 **Harnais de l'unité, verdict de la série du 2026-08-29** : `verify-mail-identites.sh` **vert**.
+
+---
+
+## Chunk 7 — Mise en production
+
+*Ouvert le 2026-09-23 sur instruction du responsable : « intègre la prod avec la cible
+`docs/PROD-SERVER.md` et intègre en prod le SSO `docs/SSO.md` » — `docs/JOURNAL.md` décisions 567 à
+569. Les deux unités se livrent dans cet ordre : le SSO de production suppose une production.*
+
+### CRM-090 — Production sur la cellule Spark « crm » `[ ]`
+*Créée le 2026-09-23 — décision 567. Motif : la production n'a jamais été déployée, et sa cible réelle
+contredit l'assemblage de production sur cinq points mesurés — ports, TLS, stockage, variables,
+mémoire.*
+
+Adapter l'assemblage de production à la cellule, outiller la proposition des variables et la
+livraison, puis mener le premier déploiement jusqu'à ses vérifications.
+**Spécification** : `docs/SPEC-deploiement-spark.md`, committée avant tout code.
+**DoD** : l'assemblage de la cellule démarre sain sous ses limites mémoire ; `./runProd.sh --spark`
+refuse chaque configuration non conforme en la nommant ; `--premier-deploiement` migre une base
+vierge et refuse une base peuplée ; `scripts/verify-spark.sh` est vert et non complaisant ; la
+révision livrée tourne dans la cellule et passe le §7 de la spécification ; `docs/PROD_MIGRATIONS.md`
+décrit la baseline réelle.
+
+- [ ] `docker-compose.spark.yml` : Caddy en clair sur `SPARK_HTTP_PORT`, MinIO interne, Kong à un
+      processus, une limite mémoire par service (§3).
+- [ ] `caddy/routes.caddy` partagé, `caddy/Caddyfile.spark`, relais de `/functions/v1/*` (§3.2).
+- [ ] `./runProd.sh --spark` : fusion des fichiers injectés, gardes existantes sur le résultat (§4.1).
+- [ ] `--premier-deploiement` (§5.2).
+- [ ] `scripts/spark/proposer.sh` et `scripts/spark/livrer.sh` (§4.4, §5.1).
+- [ ] Mesures de capacité (§8).
+- [ ] Harnais `scripts/verify-spark.sh` (§9).
+- [ ] Premier déploiement dans la cellule et vérifications (§7).
+- [ ] Documentation : `README.md`, `docs/DAT.md` §9, `docs/PROD_MIGRATIONS.md`, `.env.example`,
+      `CHANGELOG.md`.
+- [ ] Registre MinIO de développement corrigé (décision 569).
+
+### CRM-091 — Connexion unique par `oauth.lelabs.tech` `[ ]`
+*Créée le 2026-09-23 — décision 568. Motif : GoTrue 2.189.0 ne parle pas PKCE à Keycloak (M1), que le
+realm impose (M2) ; le client OIDC est donc la webapp, et GoTrue vérifie l'`id_token`.*
+
+Ajouter à `/connexion` l'action « Se connecter avec LeLabs », mener le code d'autorisation avec
+PKCE depuis la webapp, et ouvrir la session GoTrue par l'échange d'`id_token`, sous la règle d'accès
+du §10.6.
+**Spécification** : `docs/SPEC-auth.md` §10, committée avant tout code.
+**DoD** : le parcours complet aboutit avec la vraie page de Keycloak en développement ; chaque refus
+du §10.4 est rendu ; M2 à M10 sont prouvées hors interface contre la pile réelle ; le Keycloak de
+développement démarre avec `./runDev.sh` ; captures produites **et observées** ; en production, le
+client est déclaré, la sonde du §10.8 rend `302` et une connexion réelle aboutit.
+
+- [ ] Configuration : `SSO_OIDC_ISSUER`, `SSO_OIDC_CLIENT_ID`, service `auth` (§10.2).
+- [ ] Keycloak de développement, `keycloak/realm-lelabs.json`, garde de `./runDev.sh` (§10.9).
+- [ ] Module `webapp/src/lib/sso.ts` et route `/auth/retour` (§10.3 à §10.5).
+- [ ] Action sur `/connexion` et refus rendus (§10.3, §10.4) ; `docs/DESIGN_SYSTEM.md` §5.12.
+- [ ] Tests unitaires, `e2e/api/sso.spec.ts`, `e2e/ui/sso.spec.ts` (§10.10).
+- [ ] Captures observées.
+- [ ] Documentation : `docs/manual.md` chapitre 1, `README.md`, `docs/DAT.md`, `CHANGELOG.md`.
+- [ ] Déclaration remise, client créé, sonde et connexion réelle en production (§10.8).
