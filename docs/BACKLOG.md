@@ -14355,7 +14355,7 @@ harnais propre à cette unité.
 `docs/PROD-SERVER.md` et intègre en prod le SSO `docs/SSO.md` » — `docs/JOURNAL.md` décisions 567 à
 569. Les deux unités se livrent dans cet ordre : le SSO de production suppose une production.*
 
-### CRM-090 — Production sur la cellule Spark « crm » `[ ]`
+### CRM-090 — Production sur la cellule Spark « crm » `[~]`
 *Créée le 2026-09-23 — décision 567. Motif : la production n'a jamais été déployée, et sa cible réelle
 contredit l'assemblage de production sur cinq points mesurés — ports, TLS, stockage, variables,
 mémoire.*
@@ -14369,18 +14369,29 @@ vierge et refuse une base peuplée ; `scripts/verify-spark.sh` est vert et non c
 révision livrée tourne dans la cellule et passe le §7 de la spécification ; `docs/PROD_MIGRATIONS.md`
 décrit la baseline réelle.
 
-- [ ] `docker-compose.spark.yml` : Caddy en clair sur `SPARK_HTTP_PORT`, MinIO interne, Kong à un
-      processus, une limite mémoire par service (§3).
-- [ ] `caddy/routes.caddy` partagé, `caddy/Caddyfile.spark`, relais de `/functions/v1/*` (§3.2).
-- [ ] `./runProd.sh --spark` : fusion des fichiers injectés, gardes existantes sur le résultat (§4.1).
-- [ ] `--premier-deploiement` (§5.2).
-- [ ] `scripts/spark/proposer.sh` et `scripts/spark/livrer.sh` (§4.4, §5.1).
-- [ ] Mesures de capacité (§8).
-- [ ] Harnais `scripts/verify-spark.sh` (§9).
-- [ ] Premier déploiement dans la cellule et vérifications (§7).
-- [ ] Documentation : `README.md`, `docs/DAT.md` §9, `docs/PROD_MIGRATIONS.md`, `.env.example`,
-      `CHANGELOG.md`.
-- [ ] Registre MinIO de développement corrigé (décision 569).
+- [x] `docker-compose.spark.yml` : Caddy en clair sur `SPARK_HTTP_PORT`, MinIO interne, Kong à un
+      processus, une limite mémoire par service (§3), environnement de Caddy vidé.
+- [x] `caddy/routes.caddy` partagé, `caddy/Caddyfile.spark`, relais de `/functions/v1/*` (§3.2) —
+      les deux Caddyfile validés par `caddy validate`, et la route edge **mesurée** à travers Caddy
+      (`POST /functions/v1/example` → `200`).
+- [x] `./runProd.sh --spark` : fusion des fichiers injectés, gardes existantes sur le résultat (§4.1).
+- [x] `--premier-deploiement` (§5.2), **révisé par la mesure** : la pile entière ne démarre pas sur
+      une base vierge (décision 570). Mesuré : code `0` en 65 s, onze services sains ; refus sur la
+      base alors peuplée (« 43 table(s) ») et sans `--migrate`.
+- [x] `scripts/spark/proposer.sh` et `scripts/spark/livrer.sh` (§4.4, §5.1), avec `--archive-seule`
+      pour amorcer une cellule dont les variables ne sont pas encore importées.
+- [x] Mesures de capacité (§8) : ≈ 1 060 Mio au repos, ≈ 940 Mio après 240 requêtes et un objet de
+      5 Mo, aucun arrêt par manque de mémoire ; ≈ 6,5 Go d'images sur 9,7 Go libres.
+- [x] Harnais `scripts/verify-spark.sh` (§9) : **57 vérifications, aucune anomalie**, dont la
+      répartition exacte des secrets entre services et cinq dégradations détectées avec leur
+      témoin vert ; `scripts/verify-scripts.sh` couvre l'overlay (88 variables Compose documentées).
+- [ ] **Premier déploiement dans la cellule et vérifications (§7).** Dépend de gestes que ce dépôt
+      ne peut pas faire : l'import des variables et des secrets en console, la route et le DNS
+      (`docs/PROD_MIGRATIONS.md` §2.4, étapes 3 et 4).
+- [x] Documentation : `README.md` §5, §9, §10, §11 ; `docs/DAT.md` §3.5, §9, §13 ;
+      `docs/PROD_MIGRATIONS.md` §2.3, §2.4, §3.1, §4 ; `.env.example` ; `CHANGELOG.md`.
+- [x] Registre MinIO de développement corrigé (décision 569) : overlay, `scripts/verify-stack.sh`,
+      `docs/DAT.md` §3.7.
 
 ### CRM-091 — Connexion unique par `oauth.lelabs.tech` `[ ]`
 *Créée le 2026-09-23 — décision 568. Motif : GoTrue 2.189.0 ne parle pas PKCE à Keycloak (M1), que le

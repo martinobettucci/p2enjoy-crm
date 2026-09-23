@@ -264,7 +264,7 @@ fi
 # L'octet doit exister côté MinIO, sous le préfixe du tenant de stockage. Le filtrage se fait
 # ici et non dans le conteneur : l'image du client MinIO ne contient que `mc`, pas `grep`.
 minio_listing=$(docker run --rm --network "${COMPOSE_NETWORK:-p2enjoy-crm_default}" \
-	--entrypoint sh minio/mc:RELEASE.2025-04-16T18-13-26Z -ec \
+	--entrypoint sh quay.io/minio/mc:RELEASE.2025-04-16T18-13-26Z -ec \
 	"mc alias set probe http://minio:9000 '$MINIO_ROOT_USER' '$MINIO_ROOT_PASSWORD' >/dev/null \
 	 && mc ls --recursive probe/$GLOBAL_S3_BUCKET/" 2>/dev/null || true)
 if printf '%s' "$minio_listing" | grep -q "$probe_bucket/sonde.txt"; then

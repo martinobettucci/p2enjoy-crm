@@ -29,6 +29,8 @@ ENV_EXAMPLE="$REPO_ROOT/.env.example"
 
 DEV_COMPOSE=(-f "$REPO_ROOT/docker-compose.yml" -f "$REPO_ROOT/docker-compose.dev.yml")
 PROD_COMPOSE=(-f "$REPO_ROOT/docker-compose.yml" -f "$REPO_ROOT/docker-compose.prod.yml")
+# Cellule Spark (CRM-090) : l'assemblage de production, plus ce que la cellule impose.
+SPARK_COMPOSE=("${PROD_COMPOSE[@]}" -f "$REPO_ROOT/docker-compose.spark.yml")
 
 # --- Affichage ---------------------------------------------------------------------------------
 
@@ -569,6 +571,101 @@ require_docker() {
 
 compose_dev()  { docker compose --env-file "$ENV_FILE" "${DEV_COMPOSE[@]}" "$@"; }
 compose_prod() { docker compose --env-file "$ENV_FILE" "${PROD_COMPOSE[@]}" "$@"; }
+
+# --- Cellule Spark -------------------------------------------------------------------------------
+#
+# @spec CRM-090 (docs/BACKLOG.md) — environnement de la pile construit depuis les fichiers injectés
+# @spec docs/SPEC-deploiement-spark.md §4.1 (sources et ordre), §4.2 (variables sans objet)
+# @spec docs/JOURNAL.md décision 567
+#
+# Dans la cellule, une variable ou un secret n'entrent que par la console du plan de contrôle, qui
+# les pose dans deux fichiers qu'il réécrit en entier. Aucun `.env` n'est donc écrit sur l'hôte :
+# l'environnement de la pile est reconstruit à chaque invocation, dans un `tmpfs` propre au compte,
+# puis soumis aux MÊMES gardes que tout fichier de production (`env_validate`, profil, migrations).
+
+SPARK_ENV_FILE="${SPARK_ENV_FILE:-/etc/spark/env}"
+SPARK_SECRETS_FILE="${SPARK_SECRETS_FILE:-/run/spark/secrets}"
+
+# Variables du gabarit qui portent `CHANGE_ME_*` mais qu'aucun service de l'assemblage de la cellule
+# ne consomme (§4.2). La liste est explicite : `scripts/verify-spark.sh` prouve que la valeur de
+# remplissage n'apparaît nulle part dans la configuration résolue, et rougirait si l'une d'elles
+# devenait consommée.
+SPARK_SANS_OBJET="PG_META_CRYPTO_KEY STALWART_ADMIN_PASSWORD AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY CADDY_ACME_EMAIL"
+SPARK_SANS_OBJET_VALEUR="sans-objet-cellule-spark"
+
+# Répertoire d'exécution : `tmpfs` du compte, jamais le disque. Surchargeable pour le harnais.
+spark_runtime_dir() {
+	printf '%s' "${P2ENJOY_SPARK_RUNTIME_DIR:-${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/p2enjoy-crm}"
+}
+
+# Fusionne gabarit, variables puis secrets — la dernière source l'emporte — et écrit le résultat,
+# chaque valeur entre apostrophes pour que `$` y reste littéral, comme la cellule l'énonce
+# (docs/PROD-SERVER.md §5). Rend le chemin produit sur la sortie standard.
+#   spark_env_merge
+spark_env_merge() {
+	local fichier dir sortie
+	for fichier in "$SPARK_ENV_FILE" "$SPARK_SECRETS_FILE"; do
+		[ -f "$fichier" ] || die "fichier injecté $fichier absent.
+        Dans la cellule, les variables et les secrets sont posés par le plan de contrôle, depuis la
+        console. Juste après un redémarrage, /run/spark/secrets n'existe pas tant qu'il ne l'a pas
+        reposé : attendre, puis relancer. S'il n'a jamais été posé, voir
+        docs/SPEC-deploiement-spark.md §4.4 (proposer les variables)."
+		[ -r "$fichier" ] || die "fichier injecté $fichier illisible par le compte $(id -un)."
+	done
+
+	dir=$(spark_runtime_dir)
+	mkdir -p "$dir"
+	chmod 700 "$dir"
+	sortie="$dir/spark.env"
+
+	# awk plutôt que le shell : un fichier d'environnement n'est jamais interprété (voir env_get).
+	# Le code de sortie 3 signale une ligne hors grammaire, 4 une apostrophe dans une valeur ; le
+	# message nomme le fichier, la ligne ou la variable, jamais la valeur. En awk, `exit` dans une
+	# règle exécute ENCORE le bloc END : l'erreur y est donc relue depuis une variable plutôt que
+	# confiée à un `exit` que END écraserait. Aucune apostrophe dans le programme, qui en est bordé.
+	local code=0
+	( umask 077
+	  awk -v sans_objet="$SPARK_SANS_OBJET" -v remplissage="$SPARK_SANS_OBJET_VALEUR" \
+	      -v gabarit="$ENV_EXAMPLE" '
+		erreur { next }
+		/^[[:space:]]*$/ || /^#/ { next }
+		{
+			if (match($0, /^[A-Za-z_][A-Za-z0-9_]*=/) == 0) {
+				printf "ERREUR ligne %d de %s hors grammaire NOM=valeur.\n", FNR, FILENAME > "/dev/stderr"
+				erreur = 3
+				next
+			}
+			nom = substr($0, 1, RLENGTH - 1)
+			valeur = substr($0, RLENGTH + 1)
+			if (valeur ~ /^".*"$/ || valeur ~ /^\047.*\047$/) valeur = substr(valeur, 2, length(valeur) - 2)
+			if (!(nom in valeurs)) ordre[++n] = nom
+			valeurs[nom] = valeur
+			if (FILENAME != gabarit) injectee[nom] = 1
+		}
+		END {
+			if (erreur) exit erreur
+			if (n == 0) exit 0
+			k = split(sans_objet, liste, " ")
+			for (i = 1; i <= k; i++) if (!(liste[i] in injectee)) valeurs[liste[i]] = remplissage
+			for (i = 1; i <= n; i++) {
+				if (index(valeurs[ordre[i]], "\047") > 0) {
+					printf "ERREUR la valeur de %s contient une apostrophe : elle ne peut pas être transmise littéralement.\n", ordre[i] > "/dev/stderr"
+					exit 4
+				}
+				printf "%s=\047%s\047\n", ordre[i], valeurs[ordre[i]]
+			}
+		}' "$ENV_EXAMPLE" "$SPARK_ENV_FILE" "$SPARK_SECRETS_FILE" > "$sortie.tmp"
+	) || code=$?
+	if [ "$code" -ne 0 ]; then
+		# Un environnement fusionné par une invocation précédente ne doit pas survivre au refus :
+		# il décrirait un état que les fichiers injectés ne portent plus.
+		rm -f "$sortie.tmp" "$sortie"
+		die "fusion des fichiers injectés refusée (code $code) : voir le message ci-dessus."
+	fi
+	mv "$sortie.tmp" "$sortie"
+	chmod 600 "$sortie"
+	printf '%s' "$sortie"
+}
 
 # Points de montage que l'hôte doit posséder avant que Compose ne démarre.
 # Le service `webapp` monte un volume nommé sur `/app/node_modules`, chemin situé à l'intérieur du

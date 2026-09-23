@@ -96,6 +96,7 @@ positionner `P2ENJOY_ENV_PROFILE=prod`.
 | `CADDY_ACME_EMAIL` | Adresse de contact pour l'émission des certificats | Oui |
 | `APPLY_MIGRATIONS` | Doit valoir `false`, **et le rester** : c'est ce qui garantit qu'un lancement ordinaire, un redémarrage d'hôte ou le redéploiement d'un service ne migrent rien. La fenêtre de migration surcharge la valeur pour sa seule invocation et ne réécrit jamais le fichier (§3.1, `CRM-087`) | Oui |
 | `STACK_RLIMIT_NOFILE` | Descripteurs de fichiers réclamés par Realtime ; défaut `10000`, à abaisser si la limite dure de l'hôte est inférieure | Non |
+| `SPARK_HTTP_PORT` | **Nouvelle variable (`CRM-090`).** Port de la cellule Spark servi en clair par Caddy, égal au port de la route ; défaut `8080`. Sans effet hors de la cellule | Oui dans la cellule |
 
 **Deux variables du service `mail-sync` deviennent obligatoires avec `CRM-052`.** Le conteneur ne
 recevait pas `SERVICE_ROLE_KEY` tant qu'il ne consommait aucune table ; il la reçoit désormais, et
@@ -118,6 +119,41 @@ construit sur l'hôte et `docker-compose.prod.yml` ne consomme ni `NPM_CA_FILE`,
 
 Aucune clé de production n'est utilisée pour les tests. Aucun environnement local n'est relié en
 écriture à la base de production.
+
+### 2.4 Cellule Spark `crm` — la production réelle (`CRM-090`)
+
+`docs/SPEC-deploiement-spark.md` décrit l'assemblage ; cette section dit **ce qu'un humain applique,
+dans l'ordre**. Dans la cellule, aucun `.env` n'existe : les variables et les secrets sont posés par
+la **console** du plan de contrôle dans `/etc/spark/env` et `/run/spark/secrets`, que
+`./runProd.sh --spark` fusionne à chaque invocation. Le poste qui livre joint la cellule par un
+alias `ssh`, `crm` par défaut (`SPARK_SSH_HOTE`), défini selon le fragment `ssh_config` du dossier
+de cellule — aucune adresse n'est écrite dans ce dépôt.
+
+| # | Geste | Qui | Commande ou lieu |
+|---|---|---|---|
+| 0 | Créer le répertoire de l'application et le confier au compte de la pile | `root` de la cellule | `install -d -o spark-docker -g spark-docker /srv/crm` |
+| 1 | Déposer le dépôt, sans build ni lancement | poste qui livre | `scripts/spark/livrer.sh --archive-seule` |
+| 2 | Déposer les propositions de variables, de secrets et de route | `spark-docker`, dans la cellule | `cd /srv/crm && scripts/spark/proposer.sh` |
+| 3 | Enregistrement DNS `crm.lelabs.tech` vers la Forge ; accepter la route `crm.lelabs.tech 8080 clair` | propriétaire du Spark | console |
+| 4 | Importer variables et secrets proposés, **en saisissant** `SMTP_HOST`, `SMTP_PORT`, `SMTP_ADMIN_EMAIL`, `SMTP_USER`, `SMTP_PASS` | propriétaire du Spark | console ; les fichiers `.?` redeviennent vides une fois tranchés |
+| 5 | Premier déploiement | poste qui livre | `scripts/spark/livrer.sh -- --migrate --premier-deploiement` |
+| 6 | Vérifications | poste et cellule | §5 ci-dessous et §7 de la spécification |
+| 7 | Déclarer le client OIDC, puis corriger `SSO_OIDC_CLIENT_ID` si le realm l'a renommé et relivrer | administrateur du realm, puis propriétaire du Spark | `docs/SPEC-auth.md` §10.8 (`CRM-091`) |
+| 8 | Créer le premier compte et le premier espace | opérateur disposant de la clé de service | §7 ci-dessous, opération encadrée |
+
+**Le relais d'envoi.** La Forge ferme `25`, `465` et `587` en sortie (relevé du dépôt du SSO de la
+même Forge) : `SMTP_PORT` doit être un port de repli, `2587` en STARTTLS chez Scaleway TEM. GoTrue ne
+parle TLS implicite que sur `465` : `2465` ne convient pas. L'expéditeur doit appartenir à un
+domaine vérifié chez le relais.
+
+**Après un redémarrage de la cellule.** Le démon rootless repart seul et recrée les conteneurs avec
+leur configuration enregistrée : la pile revient **sans** attendre `/run/spark/secrets`. Une
+commande `./runProd.sh --spark` lancée avant que le plan de contrôle ait reposé ce fichier est
+refusée, en le nommant : attendre, puis relancer.
+
+**Ce que la cellule ne porte pas, et c'est écrit plutôt que tu** : ClamAV (mémoire) — une pièce
+jointe reçue y reste `pending`, non téléchargeable ; les sauvegardes hors site — `age` n'y est pas
+installé, et `scripts/backup.sh` le refuse sans repli (`CRM-080`).
 
 ## 3. Migrations en attente
 
@@ -151,6 +187,14 @@ La contrepartie est que la migration est une **fenêtre de maintenance**, dans c
 Un `./runProd.sh` sans `--migrate` **n'applique rien** : `APPLY_MIGRATIONS=false` reste l'invariant
 du fichier d'environnement de production, et la garde qui l'exige est conservée. Un redémarrage
 d'hôte ou le redéploiement d'un service unique ne migrent jamais.
+
+**Le premier déploiement ne suit pas cette procédure, et c'est mesuré** (`docs/JOURNAL.md`,
+décision 570). Sur une base vierge, la pile entière ne démarre pas — PostgREST attend le schéma
+`app` de la migration 1 —, si bien que « démarrer, puis `--migrate` » échoue à sa première étape. Le
+premier déploiement est `./runProd.sh [--spark] --migrate --premier-deploiement` : il démarre les
+seules dépendances du runner, **mesure** que le schéma `public` ne porte aucune table — mesure qui
+remplace la confirmation d'instantané, sans objet sur une base vide —, migre, recrée PostgREST et
+démarre tout. Sur une base peuplée, il refuse et renvoie ici.
 
 ### 3.2 Le tableau ci-dessous n'est plus une liste de gestes
 
@@ -603,7 +647,8 @@ attendue à ce stade : `select count(*) from pg_policies where schemaname = 'pub
 | Pile Supabase | À chaque changement de version épinglée d'un composant (tableau dans `docs/DAT.md` §3.7) |
 | `functions` | À chaque changement sous `supabase/functions/` ou de l'image Edge Runtime ; `CRM-016` impose un premier déploiement conjoint avec Kong |
 | `kong` | À chaque changement de `supabase/docker/volumes/api/kong.yml` |
-| `caddy` | À chaque changement de `caddy/Caddyfile` |
+| `caddy` | À chaque changement de `caddy/Caddyfile`, de `caddy/Caddyfile.spark` ou de `caddy/routes.caddy` — **`CRM-090` les modifie : routes extraites et `/functions/v1/*` relayé** |
+| `minio`, `minio-createbucket` | Cellule Spark seulement (`CRM-090`) : stockage objet interne, sans port publié |
 | `auth` | À chaque changement d'une variable `GOTRUE_*`, dont `PASSWORD_MIN_LENGTH` livrée par `CRM-011` |
 
 **Opération en attente du prochain déploiement de production — redéployer `mail-sync` pour que le

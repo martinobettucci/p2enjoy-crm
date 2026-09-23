@@ -1,0 +1,36 @@
+# @spec CRM-001 (docs/BACKLOG.md) — routes servies par Caddy en production
+# @spec CRM-090 (docs/BACKLOG.md) — fragment partagé par les deux Caddyfile
+# @spec docs/SPEC-deploiement-spark.md §3.2 ; docs/DAT.md §3.5 (passerelle et périphérie), §9
+# @spec docs/PROD_MIGRATIONS.md §5.10 (route edge traversant Kong)
+#
+# Importé par `caddy/Caddyfile` (hôte disposant de 80 et 443, TLS par ACME) et par
+# `caddy/Caddyfile.spark` (cellule dont la Forge termine TLS). Une seule copie des routes : deux
+# auraient divergé au premier ajout (docs/JOURNAL.md décision 567).
+
+encode zstd gzip
+
+# API Supabase : les chemins sont conservés tels quels, car Kong route sur les préfixes
+# versionnés (`/auth/v1/`, `/rest/v1/`, …). Aucune réécriture ici, sous peine de rendre la
+# configuration déclarative de Kong inopérante. `/functions/v1/` est la route edge déclarée par
+# Kong depuis CRM-016 : sans elle, la vérification §5.10 du contrat de déploiement échouait.
+@supabase path /auth/v1/* /rest/v1/* /graphql/v1/* /realtime/v1/* /storage/v1/* /functions/v1/* /.well-known/oauth-authorization-server
+handle @supabase {
+	reverse_proxy kong:8000 {
+		header_up X-Forwarded-Path {uri}
+	}
+}
+
+# Webapp : application monopage, toute route inconnue retombe sur `index.html`.
+handle {
+	root * /srv/www
+	try_files {path} /index.html
+	file_server
+}
+
+header {
+	Strict-Transport-Security "max-age=31536000; includeSubDomains"
+	X-Content-Type-Options "nosniff"
+	X-Frame-Options "DENY"
+	Referrer-Policy "strict-origin-when-cross-origin"
+	-Server
+}

@@ -63,6 +63,8 @@ services:
       - "443:443/udp"
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro,z
+      # Routes partagées avec le Caddyfile de la cellule Spark (CRM-090, décision 567).
+      - ./caddy/routes.caddy:/etc/caddy/routes.caddy:ro,z
       - ./webapp/dist:/srv/www:ro,z
       - caddy-data:/data
       - caddy-config:/config

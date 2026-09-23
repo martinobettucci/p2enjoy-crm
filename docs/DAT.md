@@ -373,7 +373,12 @@ la base vieillit avec l'image : la production devra prévoir son rafraîchisseme
   Le contrat de `CRM-016`, spécifié avant code dans `docs/SPEC-edge-functions.md`, borne chaque
   worker à 128 Mio / 10 s, emploie la politique silencieuse `oneshot`, ne publie aucun port
   hôte et réserve les connexions longues à `mail-sync`.
-- **Caddy** (production uniquement) termine TLS et sert la webapp buildée.
+- **Caddy** (production uniquement) termine TLS et sert la webapp buildée. Ses routes vivent dans
+  **`caddy/routes.caddy`**, fragment importé par les deux Caddyfile : `caddy/Caddyfile` sur un hôte
+  qui dispose de `80` et `443` (certificat par ACME), `caddy/Caddyfile.spark` dans la cellule Spark,
+  où la Forge termine TLS et où Caddy sert **en clair** sur `SPARK_HTTP_PORT` (`CRM-090`,
+  `docs/SPEC-deploiement-spark.md` §3.2). `/functions/v1/*` fait partie des préfixes relayés vers
+  Kong depuis `CRM-090` : la vérification §5.10 du contrat de déploiement l'exigeait.
 - **`auth-templates`** emploie également `caddy:2.9-alpine`, mais comme serveur statique interne
   commun aux deux assemblages. Il sert en lecture seule les quatre gabarits français de GoTrue sur
   `:8080`, sans publier de port hôte ; `auth` attend sa sonde saine (`CRM-009`).
@@ -422,8 +427,8 @@ impose de rejouer `scripts/verify-stack.sh` et de mettre à jour `docs/PROD_MIGR
 | `kong` | `kong/kong:3.9.1` | dev, prod |
 | `studio` | `supabase/studio:2026.07.07-sha-a6a04f2` | dev |
 | `meta` | `supabase/postgres-meta:v0.96.6` | dev |
-| `minio` | `minio/minio:RELEASE.2025-04-22T22-12-26Z` | dev |
-| `minio-createbucket` | `minio/mc:RELEASE.2025-04-16T18-13-26Z` | dev |
+| `minio` | `quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z` | dev ; cellule Spark (`CRM-090`) |
+| `minio-createbucket` | `quay.io/minio/mc:RELEASE.2025-04-16T18-13-26Z` | dev ; cellule Spark (`CRM-090`) |
 | `inbucket` | `inbucket/inbucket:stable` | dev |
 | `stalwart` | `stalwartlabs/stalwart:v0.13.4` | dev |
 | `stalwart-init` | `curlimages/curl:8.16.0` | dev |
@@ -803,6 +808,7 @@ Les preuves sont rejouables : `scripts/verify-vault.sh`.
 |---|---|---|
 | Développement | `docker-compose.yml` + `docker-compose.dev.yml` | Studio, Inbucket, Stalwart, Roundcube, MinIO, Vite en HMR, seed complet |
 | Production | `docker-compose.yml` + `docker-compose.prod.yml` | Caddy et TLS, images buildées, aucun outillage de développement, aucun seed |
+| Production — cellule Spark `crm` | les deux précédents + `docker-compose.spark.yml` | Caddy en clair sur `SPARK_HTTP_PORT`, TLS porté par la Forge ; MinIO **interne** sans port publié ; Kong à un processus ; une limite mémoire par service ; environnement fusionné depuis `/etc/spark/env` et `/run/spark/secrets` (`CRM-090`) |
 
 En production, **seul Caddy publie des ports** (`80` et `443`) : Kong n'est atteint que par le
 réseau interne de la pile, et aucun accès PostgreSQL n'est publié. En développement, tous les ports sont publiés
@@ -811,6 +817,23 @@ sur `DEV_BIND_ADDRESS` (`127.0.0.1` par défaut).
 Le stockage vise **S3 dans les deux environnements** — MinIO en développement, fournisseur réel en
 production. Le repli sur système de fichiers n'est pas utilisé, afin que les deux environnements
 empruntent le même chemin de code (`docs/JOURNAL.md`, décision 13).
+
+**La cellule Spark `crm` est la production réelle** (`docs/SPEC-deploiement-spark.md`, décision
+567). Elle impose ce qu'un hôte générique n'impose pas : Docker rootless, aucun port sous 1024, TLS
+terminé par la Forge, 2 Gio de mémoire et 10 Gio de disque, variables et secrets posés par la seule
+console du plan de contrôle. Le troisième fichier Compose n'en porte que les différences. Faute de
+S3 fourni, le stockage y vise un **MinIO interne** : c'est le seul mode où `scripts/backup.sh`
+emporte les objets. Faute de mémoire, **ClamAV n'y est pas déclaré** — une pièce jointe reçue y
+reste `pending`, donc non téléchargeable : le produit échoue fermé. Les chiffres de capacité
+mesurés sont au §8 de la spécification.
+
+Dans la cellule, **aucun `.env` n'est écrit** : `./runProd.sh --spark` fusionne le gabarit,
+`/etc/spark/env` puis `/run/spark/secrets` dans un `tmpfs` du compte, en `600`, et soumet le
+résultat aux mêmes gardes. `env_file` n'est **pas** posé sur chaque service, contrairement au
+gabarit du dossier de cellule : il remettrait tous les secrets à tous les conteneurs, quand
+l'interpolation remet à chacun ce qu'il consomme — répartition figée par `scripts/verify-spark.sh`.
+La webapp est construite **sur le poste qui livre** (`scripts/spark/livrer.sh`), la cellule n'ayant
+pas Node.
 
 Les migrations de production ne s'appliquent **jamais** d'elles-mêmes : `APPLY_MIGRATIONS=false` est
 l'invariant du fichier d'environnement de production, et `runProd.sh` refuse de démarrer sans lui.
@@ -823,6 +846,13 @@ instantané, avec la perte assumée de ce qui a été écrit pendant (`docs/JOUR
 confirmation d'instantané (« oui » demandé au terminal, `--instantane-verifie` hors terminal). La
 voie manuelle fichier par fichier reste décrite au §3.3 du contrat, pour appliquer une migration
 isolée hors fenêtre.
+
+**Le premier déploiement est un cas à part, et il est mesuré** (décision 570). Sur une base vierge,
+la pile entière ne démarre pas : PostgREST ne charge pas son cache de schéma tant que le schéma
+`app` de la migration 1 n'existe pas, et `mail-sync` dépend de lui. `--migrate --premier-deploiement`
+ne démarre donc que les services dont le runner dépend, **mesure** que le schéma `public` ne porte
+aucune table — ce qui remplace la confirmation d'instantané, sans objet sur une base vide —, migre,
+recrée PostgREST sur le schéma migré, puis démarre la pile entière. Sur une base peuplée, il refuse.
 
 ## 10. Reprise et continuité
 
@@ -978,6 +1008,10 @@ désigne `P2ENJOY_ENV_FILE`.
 |---|---|---|
 | `runDev.sh` | Amorce `.env` au premier lancement — chaque secret tiré au hasard, `ANON_KEY` et `SERVICE_ROLE_KEY` dérivées du `JWT_SECRET` produit — puis démarre l'assemblage de développement | Environnement complet ; profil `dev` ; `CRM_INBOUND_DOMAIN=crm.p2enjoy.test`, comme le seed |
 | `runProd.sh` | Démarre l'assemblage de production | Environnement complet ; profil `prod` ; `APPLY_MIGRATIONS=false` ; **aucun amorçage**, aucun secret inventé |
+| `runProd.sh --spark` | Démarre l'assemblage de la **cellule Spark** ; se combine avec chacune des options de ce tableau. **Livré — `CRM-090`** | Fichiers injectés présents et lisibles ; fusion sans ligne hors grammaire ni apostrophe ; puis les gardes de `runProd.sh` sur le résultat fusionné |
+| `runProd.sh [--spark] --migrate --premier-deploiement` | Premier déploiement : services du runner seuls, mesure, migration, PostgREST recréé, pile entière. **Livré — `CRM-090`** | Refusé sans `--migrate` ; refusé si le schéma `public` porte une seule table |
+| `scripts/spark/proposer.sh` | Dans la cellule : dépose sous le bloc du plan de contrôle les propositions de variables, de secrets — tirés sur place, jamais affichés — et de route | Refus si `JWT_SECRET` est déjà en service, si une proposition attend encore une décision, ou si le port est inférieur à 1024 |
+| `scripts/spark/livrer.sh` | Depuis le poste : build de la webapp avec les variables publiques relues dans la cellule, `git archive` par-dessus `/srv/crm`, contenu de `webapp/dist` remplacé, `REVISION`, puis `./runProd.sh --spark` | Arbre propre ; `HEAD` dans `origin/main` ; répertoire de l'application préparé par `root` ; variables publiques importées ; fichiers supprimés par Git retirés dans la cellule |
 | `runProd.sh --migrate` | Ouvre la fenêtre de migration : force la recréation du `migrations-runner` qui applique le répertoire et émet `notify pgrst, 'reload schema'` une seule fois en fin de passage réussi. **Livré — `CRM-087`** | Les gardes de `runProd.sh`, plus la **confirmation que l'instantané de VM est pris** (« oui » demandé au terminal, `--instantane-verifie` hors terminal) ; la surcharge de `APPLY_MIGRATIONS` vaut pour la seule invocation et n'écrit jamais dans `.env` |
 | `resetMe.sh` | Détruit la base et les volumes locaux, redémarre à froid, rejoue migrations et seed | Environnement complet ; profil `dev` ; confirmation explicite (`--yes` hors terminal interactif) |
 | `supabase/seed/apply-seed.sh` | Applique le seed socle par les API réelles ; convergent, ne détruit rien | Environnement complet ; profil `dev` ; pile démarrée |
@@ -988,7 +1022,9 @@ désigne `P2ENJOY_ENV_FILE`.
 L'arrêt propre passe par `./runDev.sh --stop` et `./runProd.sh --stop`, qui conservent les
 volumes. Seul `resetMe.sh` détruit des données, et uniquement en profil `dev`.
 
-Les preuves de ce dispositif sont rejouables : `scripts/verify-scripts.sh`.
+Les preuves de ce dispositif sont rejouables : `scripts/verify-scripts.sh`, et pour la cellule
+Spark `scripts/verify-spark.sh` — fusion, gardes, assemblage résolu, Caddyfile, propositions et
+livraison contre une cellule simulée, avec leurs dégradations.
 
 ## 14. Observabilité
 

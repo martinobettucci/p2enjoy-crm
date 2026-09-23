@@ -1,0 +1,126 @@
+# @spec CRM-090 (docs/BACKLOG.md) — overlay de la cellule Spark « crm »
+# @spec docs/SPEC-deploiement-spark.md §3 (assemblage), §4.2 (variables sans objet), §8 (capacité)
+# @spec docs/DAT.md §3.5 (passerelle et périphérie), §9 (déploiement)
+# @spec docs/JOURNAL.md décisions 567 (la cellule) et 569 (registre MinIO)
+#
+#   ./runProd.sh --spark      — jamais à la main : le script fusionne d'abord les variables
+#                               injectées par le plan de contrôle (§4.1) et compose les trois
+#                               fichiers dans l'ordre.
+#
+# Troisième fichier, appliqué par-dessus `docker-compose.yml` et `docker-compose.prod.yml`. Il ne
+# porte que ce que la cellule impose :
+#   - aucun port sous 1024, et TLS terminé par la Forge : Caddy sert en clair sur SPARK_HTTP_PORT ;
+#   - aucun stockage objet fourni : un MinIO interne, sans port publié, que les sauvegardes savent
+#     lire (scripts/backup.sh) ;
+#   - 2 Gio pour toute la pile : Kong à un seul processus nginx.
+#
+# `env_file` n'est PAS posé sur chaque service, contrairement au gabarit du dossier de cellule :
+# il remettrait tous les secrets à tous les conteneurs. L'interpolation depuis les deux mêmes
+# fichiers atteint le même but, service par service (décision 567).
+
+services:
+
+  # --- Périphérie ----------------------------------------------------------------------------
+
+  caddy:
+    mem_limit: 128m
+    # `caddy/Caddyfile.spark` ne lit aucune variable : ni domaine, ni adresse ACME. L'environnement
+    # hérité de l'overlay de production est donc vidé, et `CADDY_ACME_EMAIL` n'atteint rien
+    # (docs/SPEC-deploiement-spark.md §4.2).
+    environment: !reset {}
+    ports: !override
+      - "${SPARK_HTTP_PORT}:8080"
+    volumes: !override
+      - ./caddy/Caddyfile.spark:/etc/caddy/Caddyfile:ro,z
+      - ./caddy/routes.caddy:/etc/caddy/routes.caddy:ro,z
+      - ./webapp/dist:/srv/www:ro,z
+      - caddy-data:/data
+      - caddy-config:/config
+
+  # nginx démarre autant de processus que `nproc` compte de cœurs, et `nproc` décrit la Forge,
+  # pas la cellule (docs/SPEC-deploiement-spark.md §2).
+  kong:
+    mem_limit: 256m
+    environment:
+      KONG_NGINX_WORKER_PROCESSES: "1"
+
+  # --- Stockage objet interne ------------------------------------------------------------------
+
+  minio:
+    container_name: p2enjoy-minio
+    image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
+    restart: always
+    mem_limit: 448m
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    command: server /data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+      start_period: 10s
+    volumes:
+      - minio-data:/data
+
+  # Création idempotente du bucket, par le vrai client S3 — comme en développement.
+  minio-createbucket:
+    container_name: p2enjoy-minio-createbucket
+    image: quay.io/minio/mc:RELEASE.2025-04-16T18-13-26Z
+    restart: "no"
+    mem_limit: 64m
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        mc alias set p2enjoy http://minio:9000 "${MINIO_ROOT_USER}" "${MINIO_ROOT_PASSWORD}"
+        mc mb --ignore-existing "p2enjoy/${GLOBAL_S3_BUCKET}"
+
+  storage:
+    mem_limit: 512m
+    depends_on:
+      db:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      minio-createbucket:
+        condition: service_completed_successfully
+    environment:
+      GLOBAL_S3_ENDPOINT: http://minio:9000
+      GLOBAL_S3_PROTOCOL: http
+      GLOBAL_S3_FORCE_PATH_STYLE: "true"
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+
+  # --- Limites mémoire ------------------------------------------------------------------------
+  #
+  # Mesurées le 2026-09-23 sur l'assemblage de la cellule démarré à vide, migrations appliquées
+  # (docs/SPEC-deploiement-spark.md §8) : environ 1 060 Mio pour la pile entière au repos. Chaque
+  # limite vaut à peu près le double de l'empreinte mesurée, arrondie. Ce sont des PLAFONDS, pas des
+  # réservations : leur somme dépasse les 2 Gio de la cellule, et c'est voulu. Leur rôle est de
+  # rendre une défaillance LOCALISÉE et NOMMÉE — le service qui déborde est tué, pas un voisin
+  # quelconque choisi par le noyau.
+
+  db:
+    mem_limit: 512m
+  auth:
+    mem_limit: 128m
+  auth-templates:
+    mem_limit: 64m
+  migrations-runner:
+    mem_limit: 128m
+  rest:
+    mem_limit: 128m
+  realtime:
+    mem_limit: 448m
+  functions:
+    mem_limit: 256m
+  mail-sync:
+    mem_limit: 256m
+
+volumes:
+  minio-data:

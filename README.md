@@ -158,6 +158,11 @@ la question d'une façade `npm` par-dessus `runDev.sh` et consorts reste ouverte
 | `./runProd.sh` | Démarre l'assemblage de production (sans outillage de développement, TLS via Caddy) | **disponible** |
 | `./runProd.sh --migrate` | Ouvre la **fenêtre de migration** : applique `supabase/migrations/` par le `migrations-runner`, puis recharge le cache de schéma de PostgREST. Exige la confirmation que l'instantané de VM est pris — « oui » demandé au terminal, ou `--instantane-verifie` hors terminal — et ne réécrit jamais `.env` | **disponible** — `CRM-087`, `docs/JOURNAL.md` décision 489 |
 | `./runProd.sh --stop` | Arrêt propre de l'assemblage de production | **disponible** |
+| `./runProd.sh --spark` | Démarre l'assemblage de la **cellule Spark** `crm` : l'environnement est fusionné depuis `/etc/spark/env` et `/run/spark/secrets`, posés par le plan de contrôle, et Caddy sert en clair derrière la Forge. Se combine avec chaque option de `runProd.sh` | **disponible** — `CRM-090` |
+| `./runProd.sh [--spark] --migrate --premier-deploiement` | **Premier déploiement** : démarre les seules dépendances du runner, **mesure** une base vierge, migre, puis démarre tout. Refuse une base peuplée | **disponible** — `CRM-090`, décision 570 |
+| `scripts/spark/livrer.sh` | Depuis le poste : build de la webapp pour la cellule, archive Git par-dessus `/srv/crm`, `REVISION`, puis `./runProd.sh --spark` ; `--archive-seule` pour amorcer une cellule, `-- <options>` pour `runProd.sh` | **disponible** — `CRM-090` |
+| `scripts/spark/proposer.sh` | Dans la cellule : propose au propriétaire du Spark les variables, les secrets — tirés sur place, jamais affichés — et la route | **disponible** — `CRM-090` |
+| `scripts/verify-spark.sh` | Rejoue les preuves de la cellule : fusion, gardes, assemblage résolu, répartition des secrets, Caddyfile, propositions, livraison contre une cellule simulée, cinq dégradations | **disponible** — `CRM-090` |
 | `./resetMe.sh` | Détruit la base et les volumes locaux, redémarre à froid, rejoue migrations et seed | **disponible** |
 | `scripts/verify-stack.sh` | Rejoue les preuves de la pile : santé des services, passerelle, Studio, absence d'outillage en production, chaîne de stockage | **disponible** |
 | `scripts/backup.sh` | Produit une **sauvegarde chiffrée** de la base, de la clé racine de Vault et du dépôt objet local, dans un répertoire hors du dépôt | **disponible** |
@@ -596,10 +601,10 @@ fichiers statiques.
 
 ## 9. Variables d'environnement
 
-Les **98** variables sont documentées une à une dans `.env.example` : rôle, format attendu,
+Les **99** variables sont documentées une à une dans `.env.example` : rôle, format attendu,
 caractère obligatoire, valeur d'exemple non sensible. Ce gabarit est le contrat de référence, et
 `scripts/verify-scripts.sh` vérifie qu'il couvre exactement les variables interpolées par les
-trois fichiers Compose — une variable ajoutée à un service sans être documentée fait échouer les
+quatre fichiers Compose — une variable ajoutée à un service sans être documentée fait échouer les
 preuves.
 
 | Famille | Exemples | Remarque |
@@ -616,7 +621,8 @@ preuves.
 | Authentification | `DISABLE_SIGNUP`, `PASSWORD_MIN_LENGTH`, `JWT_EXPIRY` | Obligatoires. `DISABLE_SIGNUP` vaut **toujours** `true` (`docs/SPEC-auth.md` §2) |
 | SMTP transactionnel | `SMTP_HOST`, `SMTP_PORT`, `SMTP_ADMIN_EMAIL` | Obligatoires |
 | Pile | `STACK_RLIMIT_NOFILE`, `APPLY_MIGRATIONS` | Facultatives, avec défauts. `APPLY_MIGRATIONS=false` est imposé en production **et doit y rester** : c'est ce qui empêche une migration non décidée. Les migrations de production s'appliquent dans une fenêtre de maintenance ouverte par `./runProd.sh --migrate`, qui surcharge la variable pour sa seule invocation sans réécrire `.env`, et dont le retour arrière est la restauration de l'instantané de VM (décision 489, `CRM-087`) |
-| Production | `APP_DOMAIN`, `CADDY_ACME_EMAIL` | Obligatoires en production uniquement |
+| Production | `APP_DOMAIN`, `CADDY_ACME_EMAIL` | Obligatoires en production uniquement. `CADDY_ACME_EMAIL` est **sans objet dans la cellule Spark**, où la Forge porte le certificat |
+| Cellule Spark | `SPARK_HTTP_PORT` | Port de la cellule servi en clair par Caddy, égal au port de la route, défaut `8080` (`CRM-090`). Dans la cellule, **aucune variable ne vit dans un `.env`** : toutes sont posées par la console dans `/etc/spark/env` et `/run/spark/secrets` (`docs/SPEC-deploiement-spark.md` §4) |
 | Sauvegardes | `BACKUP_AGE_RECIPIENTS_FILE`, `BACKUP_OUTPUT_DIR`, `BACKUP_RETENTION_DAYS`, `RESTORE_AGE_IDENTITY_FILE` | Lues par `scripts/backup.sh` et `scripts/restore-drill.sh` **depuis `CRM-080`**, jamais par un service. `RESTORE_AGE_IDENTITY_FILE` désigne la **clé privée** et n'a rien à faire sur l'hôte qui sauvegarde : l'y poser annulerait la propriété que le chiffrement par destinataires publics apporte. Toutes quatre à exemple **vide** : la pile de développement ne sauvegarde rien, et une valeur d'exemple non vide ferait exiger par les gardes un fichier de clés que `./runDev.sh` n'a aucune raison de réclamer. `BACKUP_AGE_RECIPIENTS_FILE` ne porte que des clés **publiques** ; la clé privée vit hors de l'hôte qui sauvegarde, et le script ne la lit jamais |
 | Exploitation des sauvegardes | `BACKUP_MAX_AGE_HOURS`, `BACKUP_MIN_RECIPIENTS`, `BACKUP_OFFSITE_DIR`, `BACKUP_DRILL_STAMP_FILE`, `BACKUP_DRILL_MAX_AGE_DAYS` | Lues par `scripts/backup-supervision.sh` **depuis `CRM-080` tranche 3**, jamais par un service. Toutes facultatives, à exemple **vide** : les trois entières prennent leur défaut — 26 heures, 1 destinataire, 30 jours —, et les deux qui désignent un chemin rendent leur contrôle **non applicable** plutôt que vert, la supervision ne verdissant jamais un contrôle qu'elle n'a pas fait. `BACKUP_MAX_AGE_HOURS` vaut 26 et non 24 : une sauvegarde quotidienne décalée par une charge de l'hôte dépasserait `24` sans qu'il se soit rien passé, et une alerte qui se déclenche seule apprend à être ignorée |
 
@@ -636,13 +642,19 @@ Livré à ce jour :
 ├── docker-compose.yml          Assemblage commun des services
 ├── docker-compose.dev.yml      Outillage de développement (Studio, meta, MinIO, Inbucket, webapp)
 ├── docker-compose.prod.yml     Production (Caddy, aucun outillage de développement)
-├── caddy/Caddyfile             Terminaison TLS et service des fichiers statiques
+├── docker-compose.spark.yml    Cellule Spark : Caddy en clair, MinIO interne, limites mémoire
+├── caddy/Caddyfile             Terminaison TLS (ACME) sur un hôte qui dispose de 80 et 443
+├── caddy/Caddyfile.spark       Caddy en clair derrière la Forge qui termine TLS
+├── caddy/routes.caddy          Routes partagées par les deux Caddyfile
 ├── package.json                Projet npm unique : types, webapp, E2E et modules edge purs
 ├── tsconfig.json               Compilation stricte des types générés et de leurs assertions
 ├── tsconfig.tools.json         Compilation des configurations et des scénarios E2E
 ├── docs/                       Documentation de référence (voir ci-dessous)
 ├── scripts/
 │   ├── lib/env.sh              Socle commun des scripts : lecture, amorçage, validation, gardes
+│   ├── spark/livrer.sh         Livraison d'une révision poussée dans la cellule Spark
+│   ├── spark/proposer.sh       Propositions de variables, de secrets et de route à la cellule
+│   ├── verify-spark.sh         Preuves rejouables de la cellule, livraison simulée comprise
 │   ├── verify-stack.sh         Preuves rejouables de la pile
 │   ├── verify-functions.sh     Preuves rejouables du runtime edge, de Kong et de ses journaux
 │   ├── verify-scheduler.sh     Preuves rejouables de pg_cron, de son job et de ses ACL
@@ -752,6 +764,15 @@ Documentation de référence :
 
 ## 11. Limites connues
 
+- **La cellule Spark `crm` est une production à 2 Gio de mémoire et 10 Gio de disque, et elle a
+  deux manques assumés** (`CRM-090`, `docs/SPEC-deploiement-spark.md`). **ClamAV n'y est pas
+  déclaré** — ses signatures exigent à elles seules plus de 1 Gio — : une pièce jointe reçue y reste
+  `pending`, donc **non téléchargeable** ; le produit échoue fermé plutôt que de servir un fichier
+  non analysé. Et **les sauvegardes hors site n'y sont pas en place** : `age` n'y est pas installé,
+  et `scripts/backup.sh` le refuse sans repli. Le disque est la ressource la plus rare : les images
+  occupent environ 6,5 Go des 9,7 Go libres mesurés.
+- **Le premier déploiement ne se fait pas par « démarrer, puis migrer »** : sur une base vierge, la
+  pile entière ne démarre pas (décision 570). Il se fait par `--migrate --premier-deploiement`.
 - **La production applique ses migrations par un geste de maintenance, jamais par accident.**
   `./runProd.sh --migrate` (livré par `CRM-087`, `docs/JOURNAL.md` décision 489) ouvre la fenêtre
   décrite au §3.1 de `docs/PROD_MIGRATIONS.md` : le geste surcharge `APPLY_MIGRATIONS` pour la

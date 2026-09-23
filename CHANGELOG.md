@@ -13,6 +13,26 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-090` — La production sur la cellule Spark « crm »
+
+- **Un troisième assemblage, pour la cellule qui accueillera la production** : Caddy y sert en
+  clair derrière la Forge, qui porte le certificat ; un stockage objet interne remplace le S3
+  externe, pour que les sauvegardes emportent les pièces jointes ; chaque service a une limite
+  mémoire, la pile entière tenant dans environ 1 Gio mesuré.
+- **Aucun fichier de configuration écrit sur la cellule** : `./runProd.sh --spark` reconstruit
+  l'environnement depuis les variables et les secrets posés par la console du plan de contrôle, et
+  le soumet aux mêmes gardes que toute production.
+- **Le premier déploiement fonctionne enfin** : sur une base vierge, la pile ne démarrait pas avant
+  ses migrations, et les migrations supposaient la pile démarrée. `--premier-deploiement` démarre ce
+  qu'il faut, mesure que la base est vierge, migre, puis démarre tout — et refuse une base peuplée.
+- **`scripts/spark/livrer.sh` livre depuis un poste** une révision poussée, webapp construite pour la
+  cellule ; **`scripts/spark/proposer.sh`** propose au propriétaire du Spark les variables, les
+  secrets — tirés dans la cellule, jamais affichés — et la route.
+- **Les routes de Caddy relaient désormais `/functions/v1/`**, comme Kong le déclare depuis
+  `CRM-016` ; elles vivent dans un fragment partagé par les deux Caddyfile.
+- **MinIO se tire de `quay.io`** : son dépôt Docker Hub n'existe plus, et la pile de développement
+  ne démarrait plus sur un poste neuf.
+
 ### `CRM-066` — « Pilotage » : les étapes sans affaire, nommées (tranche 3 c)
 
 - **Sous les tableaux, l'écran nomme les étapes du catalogue où aucune affaire ne se tient** — « Aucune

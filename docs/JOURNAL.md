@@ -28622,3 +28622,40 @@ n'était en cache sur ce poste : `./runDev.sh` y aurait échoué avant tout serv
 et employer la même image dans l'assemblage de la cellule (décision 567, point 2). Tranché ici selon
 la doctrine du registre (`docs/INCONSISTENCY_REPORT.md`, 2026-08-15) : la mesure suffit, aucun
 arbitrage n'est nécessaire, et aucune entrée n'est donc ouverte.
+
+## décision 570 — sur une base vierge, la production ne démarrait pas : le premier déploiement se mesure au lieu de s'affirmer
+
+*2026-09-23, même session, `CRM-090`. Constat fait en démarrant l'assemblage de la cellule sur ce
+poste, depuis une copie jetable du dépôt, sous le projet Compose isolé `mesure-spark` et avec des
+secrets jetables — la pile et ses volumes ont été détruits après mesure.*
+
+**Observation.** `./runProd.sh --spark` sur une base vierge, `APPLY_MIGRATIONS=false` : dix services
+sains, **PostgREST `unhealthy`** — « Failed to load the schema cache … schema "app" does not
+exist » —, et `up --wait` échoue en « dependency failed to start ». `mail-sync`, qui dépend de lui,
+ne démarre jamais. La séquence que `docs/PROD_MIGRATIONS.md` §3.1 et la sortie de `runProd.sh`
+décrivaient — démarrer, puis `--migrate` — **ne pouvait pas aboutir à un premier déploiement**, sur
+la cellule comme sur tout hôte : ce défaut est celui de l'assemblage de production générique,
+invisible tant que la production n'avait jamais été déployée.
+
+Seconde mesure, après migration : PostgREST reçoit bien le `notify pgrst, 'reload schema'` du
+runner, mais reste dans sa boucle de reconnexion à intervalle croissant (16 s, puis 32 s…), et
+Compose refuse **aussitôt** une dépendance déjà marquée malsaine.
+
+**Décision.** `--premier-deploiement` démarre les seules dépendances du runner (`db`, `auth`,
+`storage`), **mesure** la virginité du schéma `public` — ce qui remplace honnêtement la confirmation
+d'instantané —, migre, **recrée** PostgREST, puis démarre tout. Sur une base peuplée, refus.
+
+**Vérifications.** Sur base vierge : code `0` en **65 s**, onze services sains, 43 tables dans
+`public`. Rejoué sur la base alors peuplée : refus « la base porte 43 table(s) ». Sans `--migrate` :
+refus. Mesures de capacité consignées au §8 de `docs/SPEC-deploiement-spark.md` : ≈ 1 060 Mio au
+repos, ≈ 940 Mio après 240 requêtes et un objet de 5 Mo, aucun arrêt par manque de mémoire.
+
+**Défauts de mes propres preuves, révisés dans le harnais** : un filtre `^[A-Z_]+=` ignorait les
+noms à chiffre (`S3_PROTOCOL_ACCESS_KEY_ID`) et faisait passer des propositions complètes pour
+incomplètes ; le répertoire de la cellule simulée était créé avant d'éprouver son absence ; et
+chercher la clé `env_file` dans la configuration **résolue** ne voyait rien, Compose la fondant
+dans `environment`. Ce dernier contrôle est remplacé par une propriété plus forte : **la répartition
+exacte de chaque secret entre services**, mesurée — `JWT_SECRET` à cinq services, `SERVICE_ROLE_KEY`
+à quatre, Caddy à aucun —, et la dégradation « `env_file` des secrets posé sur Caddy » la fait
+rougir. `scripts/verify-spark.sh` : **56 vérifications, aucune anomalie**, dont cinq dégradations
+détectées et leur témoin vert.

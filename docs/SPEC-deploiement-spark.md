@@ -185,15 +185,27 @@ par-dessus ne retire pas un fichier supprimé. Le script le vérifie et refuse s
 ### 5.2 Le premier déploiement : `--premier-deploiement`
 
 La fenêtre de migration exige la confirmation d'un instantané de VM (décision 489). Sur une base
-vierge, rien n'est à protéger, mais **affirmer** l'instantané serait faux. `./runProd.sh --spark
---migrate --premier-deploiement` :
+vierge, rien n'est à protéger, mais **affirmer** l'instantané serait faux.
 
-- exige que la pile soit démarrée ;
-- **mesure** `select count(*) from pg_tables where schemaname = 'public'` dans `p2enjoy-db` ;
-- migre sans confirmation d'instantané **si et seulement si** le compte vaut `0` ;
-- refuse sinon, en rendant le compte et en renvoyant vers `--migrate --instantane-verifie`.
+**RÉVISÉ par la mesure avant livraison (décision 570).** La première rédaction exigeait « que la pile
+soit démarrée ». Mesuré sur l'assemblage de la cellule : sur une base vierge, la pile entière **ne
+démarre pas** — PostgREST ne charge pas son cache de schéma tant que le schéma `app` de la
+migration 1 n'existe pas, reste `unhealthy`, et `mail-sync` qui en dépend ne démarre jamais. La
+séquence documentée jusqu'ici, `./runProd.sh` puis `./runProd.sh --migrate`, échouait donc à sa
+première étape. `./runProd.sh [--spark] --migrate --premier-deploiement` :
 
-L'option n'est acceptée qu'avec `--migrate`, et elle ne relâche aucune autre garde.
+1. ne démarre que `db`, `auth` et `storage` — les dépendances du runner — et ce qu'eux exigent ;
+2. **mesure** `select count(*) from pg_tables where schemaname = 'public'` dans `p2enjoy-db` ;
+3. refuse si le compte n'est pas `0`, en le rendant et en renvoyant vers `--migrate
+   --instantane-verifie` ;
+4. applique les migrations sans confirmation d'instantané ;
+5. **recrée PostgREST** : démarré sans schéma, il reste dans une boucle de reconnexion à intervalle
+   croissant et n'entend pas le `notify` du runner — mesuré —, et Compose refuse aussitôt une
+   dépendance déjà marquée malsaine ;
+6. démarre la pile entière.
+
+L'option n'est acceptée qu'avec `--migrate`, et elle ne relâche aucune autre garde. Elle vaut aussi
+hors de la cellule : le défaut qu'elle corrige est celui de l'assemblage de production générique.
 
 ## 6. Ce qui n'appartient pas au dépôt
 
@@ -220,9 +232,36 @@ En plus du §5 de `docs/PROD_MIGRATIONS.md` :
 
 ## 8. Capacité — mesures
 
-*À mesurer dans le même changement que le code (règle : la spécification précède le code, la mesure
-précède les chiffres).* Le tableau rendra, par service, la mémoire au repos puis sous le parcours de
-connexion, la limite retenue et sa marge, ainsi que l'occupation disque des images et des volumes.
+Mesuré le 2026-09-23 sur ce poste, l'assemblage de la cellule démarré par
+`--migrate --premier-deploiement` sur une base vierge (65 s, onze services sains), puis exercé par
+Caddy : un compte créé, 40 connexions et 200 lectures REST — **240 réponses `200`** —, un objet de
+5 Mo déposé puis relu par Storage. Aucun arrêt par manque de mémoire, aucun redémarrage.
+
+| Service | Au repos | Après exercice | Limite retenue |
+|---|---|---|---|
+| `db` | 137 Mio | 102 Mio | 512 Mio |
+| `storage` | 244 Mio | 163 Mio | 512 Mio |
+| `realtime` | 237 Mio | 213 Mio | 448 Mio |
+| `minio` | 219 Mio | 225 Mio | 448 Mio |
+| `kong` (un processus) | 81 Mio | 84 Mio | 256 Mio |
+| `rest` | 45 Mio | 45 Mio | 128 Mio |
+| `mail-sync` | 43 Mio | 42 Mio | 256 Mio |
+| `functions` | 23 Mio | 23 Mio | 256 Mio |
+| `caddy` | 13 Mio | 15 Mio | 128 Mio |
+| `auth-templates` | 12 Mio | 12 Mio | 64 Mio |
+| `auth` | 10 Mio | 13 Mio | 128 Mio |
+| **Pile** | **≈ 1 060 Mio** | **≈ 940 Mio** | — |
+
+`migrations-runner` (128 Mio) et `minio-createbucket` (64 Mio) ne vivent que le temps de leur
+passage. Les limites valent environ le double de l'empreinte, arrondi : ce sont des **plafonds**, et
+leur somme dépasse volontairement les 2 Gio (§3.4). La marge réelle est celle qui reste au démon
+rootless et au système de la cellule — environ 900 Mio —, **à relever dans la cellule** au premier
+déploiement, `nproc` et `free` y décrivant la Forge.
+
+**Disque.** Images de la pile : 5,9 Go (décision 567, S9), plus `mail-sync` construit (207 Mo),
+MinIO (250 Mo) et son client (116 Mo), soit **≈ 6,5 Go** sur les 9,7 Go libres. L'archive livrée
+pèse 64 Mo. Il reste de l'ordre de 3 Go pour la base, les objets et les journaux : c'est la
+ressource la plus rare de la cellule, et `df -h /` fait partie des vérifications (§7).
 
 ## 9. Preuves exigées
 

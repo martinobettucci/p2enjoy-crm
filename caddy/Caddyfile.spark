@@ -1,0 +1,18 @@
+# @spec CRM-090 (docs/BACKLOG.md) — Caddy de la cellule Spark, en clair derrière la Forge
+# @spec docs/SPEC-deploiement-spark.md §3.2 ; docs/DAT.md §3.5, §9
+#
+# La Forge termine TLS et fait suivre la route publique vers le port 8080 de la cellule
+# (docs/JOURNAL.md décision 567). Caddy n'obtient donc aucun certificat et sert en clair. Il fait
+# confiance aux en-têtes `X-Forwarded-*` des seules adresses privées, par lesquelles la Forge joint
+# la cellule : `X-Forwarded-Proto: https` atteint ainsi Kong tel que la Forge l'a posé.
+
+{
+	auto_https off
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+:8080 {
+	import /etc/caddy/routes.caddy
+}

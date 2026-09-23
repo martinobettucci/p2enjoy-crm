@@ -2,6 +2,7 @@
 # @verifies CRM-002 (docs/BACKLOG.md) — Definition of Done des scripts de lancement et du gabarit
 # @verifies CRM-015 (docs/BACKLOG.md) — secret BuildKit npm_ca facultatif et sans fuite
 # @verifies CRM-017 (docs/BACKLOG.md) — rôle propriétaire explicite des migrations d'extension
+# @verifies CRM-090 (docs/BACKLOG.md) — le gabarit couvre aussi l'overlay de la cellule Spark
 # @verifies CRM-087 (docs/BACKLOG.md) — garde et progression de « ./runProd.sh --migrate » au
 #           terminal, éprouvées par un vrai PTY (scripts/lib/spawn-pty.py)
 # @verifies docs/JOURNAL.md décision 15 (liste exhaustive des variables), décision 16 (gardes),
@@ -97,8 +98,10 @@ BACKUP_DRILL_MAX_AGE_DAYS   lue par scripts/backup-supervision.sh depuis CRM-080
 
 echo "1. .env.example contre les fichiers Compose"
 
+# `docker-compose.spark.yml` (CRM-090) appartient au contrat au même titre que les trois autres :
+# `SPARK_HTTP_PORT` n'est consommée que par lui.
 compose_vars=$(grep -ohE '\$\{[A-Z0-9_]+' docker-compose.yml docker-compose.dev.yml \
-	docker-compose.prod.yml | sed 's/^\${//' | sort -u)
+	docker-compose.prod.yml docker-compose.spark.yml | sed 's/^\${//' | sort -u)
 example_vars=$(env_names "$ENV_EXAMPLE" | sort -u)
 
 missing=$(comm -23 <(printf '%s\n' "$compose_vars") <(printf '%s\n' "$example_vars"))
