@@ -29164,3 +29164,22 @@ l'appartenance puis de `verified`, et la rotation des clés suivie sans redémar
 sont rendus intacts (relus). `scripts/verify-session-sso.sh` : **36, aucune anomalie**, dont cinq
 mutations détectées. `verify-functions.sh` : **14** ; `verify-spark.sh` : **78** ; compteur
 `SCENARIOS_API` porté à 1081, valeur comptée.
+
+## décision 585 — l'ordre des tranches T4 et T5 est inversé : la webapp passe au SSO avant le seed
+
+*2026-09-23, même session, avant la première ligne de la tranche suivante.*
+
+**Problème.** Le §14 de la spécification plaçait T4 (seed et outillage des preuves par le SSO) avant
+T5 (webapp). Or T4 retire du seed la création des comptes GoTrue. Entre les deux commits, une base
+recréée par `./resetMe.sh` n'aurait plus aucun compte GoTrue, et la webapp — encore à mot de passe —
+n'aurait plus aucune connexion possible : la pile n'aurait pas été utilisable à chaque étape, ce que
+le §14 exige.
+
+**Observation.** L'inverse tient à chaque commit. Depuis T2, le `sub` de chaque compte du realm est
+l'identifiant stable du seed ; depuis T3, l'échangeur admet toute personne déjà membre. Une webapp
+passée au SSO ouvre donc une session sur la base actuelle **comme** sur une base recréée par le seed
+d'aujourd'hui, dont le trigger de GoTrue crée encore les profils.
+
+**Décision.** T5 (webapp, écran d'attente, portage des specs d'interface) précède T4 (seed, jetons des
+preuves, scripts). Rien d'autre ne change dans le découpage ; T6 retire GoTrue une fois les deux
+livrées.

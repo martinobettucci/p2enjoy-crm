@@ -14484,8 +14484,9 @@ connexion réelle de `martino@p2enjoy.studio` aboutie après les opérations du 
 - [x] **T3** — échangeur `session` et ses preuves (§5, §13) : 75 tests unitaires, `session.spec.ts`
       **14/14** (Realtime, Storage, rotation compris), `verify-session-sso.sh` **36/36** dont cinq
       mutations détectées ; environnement par fonction (décision 584).
-- [ ] **T4** — jetons des preuves et seed par la vraie connexion SSO (§11, §13).
 - [ ] **T5** — webapp sans mot de passe, écran d'attente, portage des specs d'interface (§8, §9).
+      Livrée AVANT T4 (décision 585).
+- [ ] **T4** — jetons des preuves et seed par la vraie connexion SSO (§11, §13).
 - [ ] **T6** — retrait de GoTrue, migration `0076`, retrait de `verify-auth.sh` (§2).
 - [ ] **T7** — documentation transverse, contrat de production (§12), campagne.
 - [ ] Production : opérations du §12, connexion réelle relue. **Instruction reçue le 2026-09-23** :

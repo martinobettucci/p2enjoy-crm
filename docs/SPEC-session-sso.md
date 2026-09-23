@@ -466,15 +466,17 @@ désactivées : chaque retrait est nommé dans le journal avec ce qui le remplac
 ## 14. Découpage en tranches
 
 Chaque tranche est un commit cohérent, vert sur son périmètre, poussé, avec sa documentation. L'ordre
-garde la pile utilisable à chaque étape : GoTrue ne part qu'en T6, quand plus rien n'en dépend.
+garde la pile utilisable à chaque étape : GoTrue ne part qu'en T6, quand plus rien n'en dépend. **T5
+précède T4** (décision 585) : le seed ne cesse de créer des comptes GoTrue qu'une fois la webapp
+passée au SSO.
 
 | Tranche | Contenu | Dépend de |
 |---|---|---|
 | **T1** | Migrations `0074` et `0075`, pgTAP, preuve de base neuve, `scripts/verify-session-sso.sh`, `docs/SCHEMA.md` §1 | — |
 | **T2** | Keycloak préchargé (§10), `keycloak/README.md`, révision des preuves `CRM-091` qui en dépendent | — |
 | **T3** | Fonction `session`, environnement par fonction dans `main`, variables vers `functions`, tests Deno, `e2e/api/session.spec.ts`, `docs/SPEC-edge-functions.md` | T1, T2 |
-| **T4** | `e2e/api/jetons.ts` et `scripts/lib/sso.sh` par la vraie connexion, comptes jetables par l'API de développement, seed (§11), portage des 18 scripts et des specs d'API qui créaient des comptes GoTrue, `docs/SPEC-seed.md`, `docs/SPEC-test-harness.md` | T3 |
-| **T5** | Webapp (§8, §9), tests unitaires, `e2e/ui/connexion.spec.ts`, fixture et portage des 50 specs d'interface, `docs/DESIGN_SYSTEM.md` §5.12, captures, `docs/manual.md` chapitre 1 | T3, T4 |
+| **T5** | Webapp (§8, §9), tests unitaires, `e2e/ui/connexion.spec.ts`, fixture et portage des 50 specs d'interface, `docs/DESIGN_SYSTEM.md` §5.12, captures, `docs/manual.md` chapitre 1 — **livrée AVANT T4** (décision 585) | T3 |
+| **T4** | `e2e/api/jetons.ts` et `scripts/lib/sso.sh` par la vraie connexion, comptes jetables par l'API de développement, seed (§11), portage des 18 scripts et des specs d'API qui créaient des comptes GoTrue, `docs/SPEC-seed.md`, `docs/SPEC-test-harness.md` | T3, T5 |
 | **T6** | Retrait de GoTrue (§2), migration `0076`, retrait de `verify-auth.sh`, scripts d'environnement et de cellule, `docs/SPEC-auth.md` réduit à un renvoi | T4, T5 |
 | **T7** | `README.md`, `docs/DAT.md`, `docs/SPEC-deploiement-spark.md`, `docs/manual.md` chapitre 17, `docs/PROD_MIGRATIONS.md` (§12), `CHANGELOG.md` ; campagne des harnais touchés | T6 |
 
