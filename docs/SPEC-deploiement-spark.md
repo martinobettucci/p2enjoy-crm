@@ -151,8 +151,8 @@ le reste : une variable qui deviendrait consommée ferait rougir la preuve.
 | `ANON_KEY` | jeton `anon` signé par `JWT_SECRET` | dérivée ; **publique par construction**, elle entre dans le bundle |
 | `SSO_OIDC_ISSUER` | `https://oauth.lelabs.tech/realms/lelabs` | `docs/SSO.md` |
 | `SSO_OIDC_CLIENT_ID` | l'identifiant **réellement créé** par le realm | réponse à la déclaration, `docs/SPEC-auth.md` §10.8 |
-| `SMTP_HOST`, `SMTP_PORT` | relais d'envoi, port de repli ouvert | à fournir ; la Forge ferme `25`, `465` et `587` en sortie |
-| `SMTP_ADMIN_EMAIL` | expéditeur sur un domaine vérifié chez le relais | à fournir |
+| `SMTP_HOST`, `SMTP_PORT` | relais d'envoi, port de repli ouvert | proposés par `proposer.sh --smtp-hote --smtp-port`, sinon demandés ; la Forge ferme `25`, `465` et `587` en sortie, et le script refuse de les proposer |
+| `SMTP_ADMIN_EMAIL` | expéditeur sur un domaine vérifié chez le relais | proposé par `--smtp-expediteur`, sinon demandé |
 
 **Secrets** — `/run/spark/secrets` :
 
@@ -160,7 +160,7 @@ le reste : une variable qui deviendrait consommée ferait rougir la preuve.
 |---|---|
 | `POSTGRES_PASSWORD`, `JWT_SECRET`, `SECRET_KEY_BASE`, `REALTIME_DB_ENC_KEY`, `MAIL_SYNC_INTERNAL_TOKEN`, `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD`, `S3_PROTOCOL_ACCESS_KEY_ID`, `S3_PROTOCOL_ACCESS_KEY_SECRET` | **tirés dans la cellule** par `scripts/spark/proposer.sh`, aux longueurs de `env_bootstrap_dev` |
 | `SERVICE_ROLE_KEY` | dérivé de `JWT_SECRET` par le même script |
-| `SMTP_USER`, `SMTP_PASS` | **demandés vides** : seul le titulaire du relais les connaît |
+| `SMTP_USER`, `SMTP_PASS` | **demandés vides** : seul le titulaire du relais les connaît. Facultatifs au regard des gardes : sans eux, la pile démarre et seuls les courriels transactionnels échouent |
 
 ### 4.4 Proposer, sans jamais appliquer
 

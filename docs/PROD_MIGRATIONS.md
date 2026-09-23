@@ -137,7 +137,7 @@ de cellule — aucune adresse n'est écrite dans ce dépôt.
 | 1 | Déposer le dépôt, sans build ni lancement | poste qui livre | `scripts/spark/livrer.sh --archive-seule` |
 | 2 | Déposer les propositions de variables, de secrets et de route | `spark-docker`, dans la cellule | `cd /srv/crm && scripts/spark/proposer.sh` |
 | 3 | Enregistrement DNS `crm.lelabs.tech` vers la Forge ; accepter la route `crm.lelabs.tech 8080 clair` | propriétaire du Spark | console |
-| 4 | Importer variables et secrets proposés, **en saisissant** `SMTP_HOST`, `SMTP_PORT`, `SMTP_ADMIN_EMAIL`, `SMTP_USER`, `SMTP_PASS` | propriétaire du Spark | console ; les fichiers `.?` redeviennent vides une fois tranchés |
+| 4 | Importer variables et secrets proposés ; **saisir `SMTP_USER` et `SMTP_PASS`** du relais — les seules valeurs laissées en demande. Le relais lui-même est proposé (`smtp.tem.scaleway.com`, `2587`, `no-reply@noreply.lelabs.tech`, le domaine d'envoi vérifié du SSO) et reste modifiable. Sans les identifiants, la pile démarre et seuls les courriels transactionnels échouent : la connexion par le SSO n'en dépend pas | propriétaire du Spark | console ; les fichiers `.?` redeviennent vides une fois tranchés. **Propositions renouvelées le 2026-09-23** : les secrets ont été retirés au même moment, avant tout import |
 | 5 | Premier déploiement | poste qui livre | `scripts/spark/livrer.sh -- --migrate --premier-deploiement` |
 | 6 | Vérifications | poste et cellule | §5 ci-dessous et §7 de la spécification |
 | 7 | Déclarer le client OIDC, puis corriger `SSO_OIDC_CLIENT_ID` si le realm l'a renommé et relivrer | administrateur du realm, puis propriétaire du Spark | `docs/SPEC-auth.md` §10.8 (`CRM-091`) |

@@ -402,6 +402,25 @@ if proposer "$P" >/dev/null; then fail "secrets en service remplacés"
 else [ "$(empreintes "$P")" = "$avant" ] && ok "JWT_SECRET déjà en service : refus, fichiers inchangés" || fail "refus, mais fichiers modifiés"; fi
 cellule_vierge "$P"
 proposer "$P" --port 443 >/dev/null && fail "port 443 proposé" || ok "port inférieur à 1024 refusé"
+cellule_vierge "$P"
+proposer "$P" --smtp-port 587 >/dev/null && fail "port SMTP 587 proposé" || ok "port SMTP fermé par la Forge refusé"
+cellule_vierge "$P"
+if proposer "$P" --smtp-hote smtp.exemple.tld --smtp-port 2587 --smtp-expediteur no-reply@exemple.tld >/dev/null; then
+	[ "$(env_get "$P/env.?" SMTP_HOST)|$(env_get "$P/env.?" SMTP_PORT)|$(env_get "$P/env.?" SMTP_ADMIN_EMAIL)" = "smtp.exemple.tld|2587|no-reply@exemple.tld" ] \
+		&& [ -z "$(env_get "$P/secrets.?" SMTP_USER)" ] && [ -z "$(env_get "$P/secrets.?" SMTP_PASS)" ] \
+		&& ok "relais proposé par option ; identifiants toujours laissés en demande" \
+		|| fail "options SMTP mal reportées"
+	# Propositions importées telles quelles, identifiants du relais ABSENTS : la pile doit démarrer,
+	# car la connexion par le SSO ne dépend d'aucun courriel.
+	I2="$WORK/importe-smtp"; mkdir -p "$I2"
+	sed -n "/^$MARQUE\$/,\$p" "$P/env.?" | grep -E '^[A-Z0-9_]+=' > "$I2/env"
+	sed -n "/^$MARQUE\$/,\$p" "$P/secrets.?" | grep -E '^[A-Z0-9_]+=' | grep -v '^SMTP_' > "$I2/secrets"
+	out=$(prod_spark "$I2/env" "$I2/secrets" "$I2/run")
+	case "$out" in *"démon Docker ne répond pas"*) ok "sans identifiants SMTP, toutes les gardes sont franchies" ;;
+		*) fail "identifiants SMTP exigés : $(printf '%s' "$out" | grep -E 'manquante|vide|définir' | head -n 2 | tr '\n' ' ')" ;; esac
+else
+	fail "proposer.sh refuse les options SMTP"
+fi
 
 # --- 6. livrer.sh contre une cellule simulée --------------------------------------------------------
 

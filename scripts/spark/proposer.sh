@@ -16,7 +16,13 @@
 #
 # Usage :
 #   scripts/spark/proposer.sh [--domaine crm.lelabs.tech] [--port 8080] [--client-sso lelabs-crm]
+#                             [--smtp-hote <hôte>] [--smtp-port <port>] [--smtp-expediteur <adresse>]
 #   scripts/spark/proposer.sh --help
+#
+# Les trois options SMTP proposent un relais que le poste connaît ; absentes, les valeurs restent des
+# DEMANDES vides. Les identifiants du relais (SMTP_USER, SMTP_PASS) restent toujours des demandes :
+# aucun script ne peut les connaître. Sans eux, la pile démarre, et seuls les courriels
+# transactionnels échouent — la connexion par le SSO n'en dépend pas.
 #
 # Refus :
 #   - /run/spark/secrets porte déjà JWT_SECRET : proposer d'autres secrets à une pile qui tourne
@@ -31,6 +37,9 @@ source "$(dirname "${BASH_SOURCE[0]}")/../lib/env.sh"
 DOMAINE=crm.lelabs.tech
 PORT=8080
 CLIENT_SSO=lelabs-crm
+SMTP_HOTE=""
+SMTP_PORT=""
+SMTP_EXPEDITEUR=""
 
 usage() { print_header_help "${BASH_SOURCE[0]}"; }
 
@@ -39,6 +48,9 @@ while [ $# -gt 0 ]; do
 		--domaine)    DOMAINE=${2:?--domaine exige une valeur}; shift ;;
 		--port)       PORT=${2:?--port exige une valeur}; shift ;;
 		--client-sso) CLIENT_SSO=${2:?--client-sso exige une valeur}; shift ;;
+		--smtp-hote)  SMTP_HOTE=${2:?--smtp-hote exige une valeur}; shift ;;
+		--smtp-port)  SMTP_PORT=${2:?--smtp-port exige une valeur}; shift ;;
+		--smtp-expediteur) SMTP_EXPEDITEUR=${2:?--smtp-expediteur exige une valeur}; shift ;;
 		--help|-h)    usage; exit 0 ;;
 		*)            die "option inconnue « $1 ». Voir scripts/spark/proposer.sh --help." ;;
 	esac
@@ -55,6 +67,13 @@ esac
 case "$CLIENT_SSO" in
 	*[!A-Za-z0-9_.-]* | "") die "identifiant de client « $CLIENT_SSO » hors forme." ;;
 esac
+case "$SMTP_HOTE" in *[!a-z0-9.-]*) die "hôte SMTP « $SMTP_HOTE » hors forme." ;; esac
+case "$SMTP_PORT" in
+	"") ;;
+	*[!0-9]*) die "port SMTP « $SMTP_PORT » : un entier est attendu." ;;
+	25|465|587) die "port SMTP $SMTP_PORT : la Forge le ferme en sortie ; proposer un port de repli." ;;
+esac
+case "$SMTP_EXPEDITEUR" in "" | *@*.*) ;; *) die "expéditeur « $SMTP_EXPEDITEUR » hors forme." ;; esac
 
 PROPOSITION_ENV="${SPARK_ENV_PROPOSAL:-${SPARK_ENV_FILE}.?}"
 PROPOSITION_SECRETS="${SPARK_SECRETS_PROPOSAL:-${SPARK_SECRETS_FILE}.?}"
@@ -109,9 +128,9 @@ ligne() { printf '# %s\n%s=%s\n' "$2" "$1" "$3"; }
 	ligne ANON_KEY "Clé anonyme Supabase, publique par construction, dérivée du JWT_SECRET proposé." "$(jwt_hs256 "$jwt_secret" anon)"
 	ligne SSO_OIDC_ISSUER "Émetteur OIDC du SSO lelabs (docs/SSO.md)." "https://oauth.lelabs.tech/realms/lelabs"
 	ligne SSO_OIDC_CLIENT_ID "Client OIDC RÉELLEMENT créé par le realm ; corriger si la déclaration a été renommée." "$CLIENT_SSO"
-	ligne SMTP_HOST "Relais d'envoi. La Forge ferme 25, 465 et 587 en sortie : port de repli exigé." ""
-	ligne SMTP_PORT "Port de repli du relais, en STARTTLS (2587 chez Scaleway TEM)." ""
-	ligne SMTP_ADMIN_EMAIL "Expéditeur des courriels du CRM, sur un domaine vérifié chez le relais." ""
+	ligne SMTP_HOST "Relais d'envoi. La Forge ferme 25, 465 et 587 en sortie : port de repli exigé." "$SMTP_HOTE"
+	ligne SMTP_PORT "Port de repli du relais, en STARTTLS (2587 chez Scaleway TEM)." "$SMTP_PORT"
+	ligne SMTP_ADMIN_EMAIL "Expéditeur des courriels du CRM, sur un domaine vérifié chez le relais." "$SMTP_EXPEDITEUR"
 } >> "$PROPOSITION_ENV"
 
 {
@@ -139,7 +158,11 @@ say "Propositions déposées — rien n'est appliqué"
 info "Variables : $PROPOSITION_ENV"
 info "Secrets   : $PROPOSITION_SECRETS (tirés ici ; aucune valeur n'est affichée)"
 info "Route     : $PROPOSITION_ROUTES — $DOMAINE $PORT clair"
-info "Demandes laissées vides : SMTP_HOST, SMTP_PORT, SMTP_ADMIN_EMAIL, SMTP_USER, SMTP_PASS."
+demandes="SMTP_USER, SMTP_PASS"
+[ -n "$SMTP_HOTE" ] || demandes="SMTP_HOST, $demandes"
+[ -n "$SMTP_PORT" ] || demandes="SMTP_PORT, $demandes"
+[ -n "$SMTP_EXPEDITEUR" ] || demandes="SMTP_ADMIN_EMAIL, $demandes"
+info "Demandes laissées vides : $demandes."
 warn "$PROPOSITION_SECRETS vit dans un tmpfs : un redémarrage de la cellule l'efface sans qu'il ait été lu."
 info "Le propriétaire du Spark les relit et les importe depuis la console. Suite :"
 info "docs/SPEC-deploiement-spark.md §5 et docs/PROD_MIGRATIONS.md."
