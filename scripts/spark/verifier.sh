@@ -3,6 +3,7 @@
 # @spec CRM-091 (docs/BACKLOG.md) — sonde du client OIDC et configuration de GoTrue en production
 # @spec docs/SPEC-deploiement-spark.md §7 (vérifications) ; docs/SPEC-auth.md §10.8 (sonde)
 # @spec docs/PROD_MIGRATIONS.md §2.4 (étape 6), §5 (vérifications après déploiement)
+# @spec docs/JOURNAL.md décision 576 (une route `clair` n'est publiée qu'en http://)
 #
 # S'exécute sur le POSTE, en LECTURE SEULE : aucune commande n'écrit, ni dans la cellule, ni dans la
 # base, ni au SSO. Chaque contrôle rend OK ou ECHEC ; ce qui ne peut pas encore être vérifié — route
@@ -14,7 +15,8 @@
 #   4. depuis la cellule, par Caddy : webapp, santé de GoTrue, PostgREST, fonction edge ;
 #   5. GoTrue annonce le fournisseur `keycloak` ;
 #   6. il reste au moins 2 Gio de disque ;
-#   7. depuis Internet, si le domaine résout : webapp et API par la route publique ;
+#   7. la route active est en `tls` ; depuis Internet, si le domaine résout : webapp et API en
+#      https:// par la route publique ;
 #   8. au SSO réel : le client existe, l'URL de retour est acceptée et PKCE est exigé.
 #
 # Usage :
@@ -104,8 +106,20 @@ printf '%s' "$reglages" | python3 -c 'import json,sys; d=json.load(sys.stdin); s
 libre=$(distant "df -BG --output=avail / | tail -n 1 | tr -dc 0-9")
 [ "${libre:-0}" -ge 2 ] && ok "disque : ${libre} Gio libres" || echec "disque : ${libre:-?} Gio libres, moins de 2"
 
-# --- 7. Depuis Internet ----------------------------------------------------------------------------
-if getent ahostsv4 "$DOMAINE" >/dev/null; then
+# --- 7. Route et accès depuis Internet -------------------------------------------------------------
+# Le mode d'une route dit ce que la Forge PUBLIE : `clair` ne sert que http://, que le SSO refuse.
+mode=$(distant "awk -v d='$DOMAINE' '\$1 == d { print \$3 }' /etc/spark/routes")
+propose=$(distant "awk -v d='$DOMAINE' '/^#/ { next } \$1 == d { print \$3 }' '/etc/spark/routes.?'")
+if [ "$mode" = tls ]; then
+	ok "route $DOMAINE active en tls"
+elif [ "$propose" = tls ]; then
+	attente "route $DOMAINE active en « ${mode:-aucune} » ; la route tls est proposée, à accepter par le propriétaire du Spark"
+else
+	echec "route $DOMAINE active en « ${mode:-aucune} » : https:// non publié — scripts/spark/proposer.sh --route-seule"
+fi
+if [ "$mode" != tls ]; then
+	attente "https://$DOMAINE/ non vérifiable tant que la route n'est pas en tls"
+elif getent ahostsv4 "$DOMAINE" >/dev/null; then
 	page=$(curl -s -m 20 "https://$DOMAINE/")
 	printf '%s' "$page" | grep -q 'id="root"' && ok "https://$DOMAINE/ sert la webapp" || echec "https://$DOMAINE/ ne sert pas la webapp"
 	code=$(curl -s -m 20 -o /dev/null -w '%{http_code}' -H "apikey: $ANON" "https://$DOMAINE/auth/v1/health")

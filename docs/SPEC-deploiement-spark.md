@@ -254,8 +254,9 @@ exécutés, en lecture seule, par `scripts/spark/verifier.sh`, qui distingue un 
 3. Depuis la cellule : `curl -fsS http://127.0.0.1:8080/auth/v1/health -H "apikey: $ANON_KEY"` rend
    `200`, et `http://127.0.0.1:8080/` rend l'`index.html` de la webapp.
 4. Aucun port n'est publié hors `SPARK_HTTP_PORT` : `docker ps --format '{{.Ports}}'`.
-5. Depuis Internet, une fois la route posée : `https://crm.lelabs.tech/` charge l'application,
-   **sans** l'écran « Configuration incomplète ».
+5. La route active de `/etc/spark/routes` est en **`tls`** (décision 576) — une route `clair` n'est
+   publiée qu'en `http://` ; puis, depuis Internet : `https://crm.lelabs.tech/` charge
+   l'application, **sans** l'écran « Configuration incomplète ».
 6. `df -h /` laisse au moins 2 Gio libres après le premier déploiement.
 
 ## 8. Capacité — mesures
