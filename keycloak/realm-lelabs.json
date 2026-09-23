@@ -13,11 +13,19 @@
   "bruteForceProtected": false,
   "defaultLocale": "fr",
   "internationalizationEnabled": true,
-  "supportedLocales": ["fr"],
+  "supportedLocales": [
+    "fr"
+  ],
   "roles": {
     "realm": [
-      { "name": "verified", "description": "Personne réelle constatée par un administrateur du realm" },
-      { "name": "admin", "description": "Exploitation du SSO : vérifier les autres comptes" }
+      {
+        "name": "verified",
+        "description": "Personne réelle constatée par un administrateur du realm"
+      },
+      {
+        "name": "admin",
+        "description": "Exploitation du SSO : vérifier les autres comptes"
+      }
     ]
   },
   "clients": [
@@ -30,9 +38,17 @@
       "implicitFlowEnabled": false,
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": false,
-      "redirectUris": ["${SSO_DEV_REDIRECT_URI}", "http://127.0.0.1:4173/auth/retour"],
-      "webOrigins": ["${SSO_DEV_WEB_ORIGIN}", "http://127.0.0.1:4173"],
-      "attributes": { "pkce.code.challenge.method": "S256" }
+      "redirectUris": [
+        "${SSO_DEV_REDIRECT_URI}",
+        "http://127.0.0.1:4173/auth/retour"
+      ],
+      "webOrigins": [
+        "${SSO_DEV_WEB_ORIGIN}",
+        "http://127.0.0.1:4173"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
     },
     {
       "clientId": "crm-audience-etrangere",
@@ -43,59 +59,136 @@
       "implicitFlowEnabled": false,
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": false,
-      "redirectUris": ["${SSO_DEV_REDIRECT_URI}"],
-      "webOrigins": ["${SSO_DEV_WEB_ORIGIN}"],
-      "attributes": { "pkce.code.challenge.method": "S256" }
+      "redirectUris": [
+        "${SSO_DEV_REDIRECT_URI}"
+      ],
+      "webOrigins": [
+        "${SSO_DEV_WEB_ORIGIN}"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
     }
   ],
   "users": [
     {
+      "id": "5eed0000-0000-4000-8000-000000000011",
       "username": "admin@${SSO_DEV_DOMAINE}",
       "email": "admin@${SSO_DEV_DOMAINE}",
       "emailVerified": true,
       "enabled": true,
       "firstName": "Camille",
       "lastName": "Aubert",
-      "realmRoles": ["verified"],
-      "credentials": [{ "type": "password", "value": "SsoDev2026Local", "temporary": false }]
+      "realmRoles": [
+        "default-roles-lelabs",
+        "verified"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "SeedDev2026Local",
+          "temporary": false
+        }
+      ]
     },
     {
+      "id": "5eed0000-0000-4000-8000-000000000012",
       "username": "bizdev@${SSO_DEV_DOMAINE}",
       "email": "bizdev@${SSO_DEV_DOMAINE}",
       "emailVerified": true,
       "enabled": true,
       "firstName": "Driss",
       "lastName": "Lemoine",
-      "credentials": [{ "type": "password", "value": "SsoDev2026Local", "temporary": false }]
+      "realmRoles": [
+        "default-roles-lelabs",
+        "verified"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "SeedDev2026Local",
+          "temporary": false
+        }
+      ]
     },
     {
+      "id": "5eed0000-0000-4000-8000-000000000013",
       "username": "viewer@${SSO_DEV_DOMAINE}",
       "email": "viewer@${SSO_DEV_DOMAINE}",
       "emailVerified": true,
       "enabled": true,
       "firstName": "Farida",
       "lastName": "Nowak",
-      "realmRoles": ["verified", "admin"],
-      "credentials": [{ "type": "password", "value": "SsoDev2026Local", "temporary": false }]
+      "realmRoles": [
+        "default-roles-lelabs",
+        "verified",
+        "admin"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "SeedDev2026Local",
+          "temporary": false
+        }
+      ]
     },
     {
+      "id": "5eed0000-0000-4000-8000-000000000014",
       "username": "inconnu@${SSO_DEV_DOMAINE}",
       "email": "inconnu@${SSO_DEV_DOMAINE}",
       "emailVerified": true,
       "enabled": true,
       "firstName": "Inès",
       "lastName": "Connue",
-      "realmRoles": ["verified"],
-      "credentials": [{ "type": "password", "value": "SsoDev2026Local", "temporary": false }]
+      "realmRoles": [
+        "default-roles-lelabs",
+        "verified"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "SeedDev2026Local",
+          "temporary": false
+        }
+      ]
     },
     {
+      "id": "5eed0000-0000-4000-8000-000000000015",
+      "username": "attendu@${SSO_DEV_DOMAINE}",
+      "email": "attendu@${SSO_DEV_DOMAINE}",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Anatole",
+      "lastName": "Attendu",
+      "realmRoles": [
+        "default-roles-lelabs"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "SeedDev2026Local",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "id": "5eed0000-0000-4000-8000-000000000016",
       "username": "adresse-non-verifiee@${SSO_DEV_DOMAINE}",
       "email": "adresse-non-verifiee@${SSO_DEV_DOMAINE}",
       "emailVerified": false,
       "enabled": true,
       "firstName": "Adèle",
       "lastName": "Nonvérifiée",
-      "credentials": [{ "type": "password", "value": "SsoDev2026Local", "temporary": false }]
+      "realmRoles": [
+        "default-roles-lelabs"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "SeedDev2026Local",
+          "temporary": false
+        }
+      ]
     }
   ]
 }

@@ -593,9 +593,10 @@ importé depuis **`keycloak/realm-lelabs.json`**.
 | `inconnu@p2enjoy.test` | `verified` | **aucun** | le refus `sso_sans_compte` |
 | `adresse-non-verifiee@p2enjoy.test` | aucun rôle, adresse **non vérifiée** | créé par la preuve | le refus de M5 |
 
-Mot de passe commun des comptes du realm : `SsoDev2026Local`, publié comme celui des boîtes de
-développement. L'administration de l'instance de développement emploie `SSO_DEV_ADMIN_PASSWORD`,
-tiré au hasard par `./runDev.sh`.
+> **Remplacé par `CRM-092` T2** (`docs/SPEC-session-sso.md` §10, `keycloak/README.md`) : le realm est
+> désormais préchargé — `sub` égaux aux identifiants stables du seed, rôles par défaut du realm réel,
+> `bizdev@` vérifié, comptes `attendu@` et `adresse-non-verifiee@` —, et son mot de passe unique est
+> celui du seed, `SeedDev2026Local`. Le tableau ci-dessus décrit le realm de `CRM-091`.
 
 ### 10.10 Preuves exigées
 

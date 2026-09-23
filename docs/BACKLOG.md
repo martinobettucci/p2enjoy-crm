@@ -14478,7 +14478,9 @@ connexion réelle de `martino@p2enjoy.studio` aboutie après les opérations du 
 - [x] **T1** — migrations `0074` (élevée) et `0075`, pgTAP, preuve de base neuve (§7, §13).
       `0069_identite_sso.test.sql` **58/58** ; `verify-session-sso.sh` **16/16** ; série pgTAP
       **69 fichiers, 3142 assertions** ; trois suites révisées (décision 582).
-- [ ] **T2** — Keycloak de développement préchargé (§10).
+- [x] **T2** — Keycloak de développement préchargé (§10) : `sub` stables, rôles par défaut, mot de
+      passe unique ; `scripts/lib/sso.sh` ; `verify-session-sso.sh` **28/28** ; preuves `CRM-091`
+      révisées et vertes (décision 583).
 - [ ] **T3** — échangeur `session` et ses preuves (§5, §13).
 - [ ] **T4** — jetons des preuves et seed par la vraie connexion SSO (§11, §13).
 - [ ] **T5** — webapp sans mot de passe, écran d'attente, portage des specs d'interface (§8, §9).

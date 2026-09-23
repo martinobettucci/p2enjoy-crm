@@ -29082,3 +29082,39 @@ supprime le profil. `0016` compte **125** politiques au lieu de 122 et nomme les
   - `sso.spec.ts` M4 trouve deux identités `keycloak` au compte seedé : elles datent de 13:46 et
     13:48 UTC, et leurs `provider_id` diffèrent — le Keycloak de développement a été recréé entre
     deux exécutions et a tiré un nouveau `sub`. C'est exactement K4, que la tranche T2 ferme.
+
+## décision 583 — `CRM-092` tranche T2 livrée : le Keycloak de développement est préchargé, et trois faits appris en l'éprouvant
+
+*2026-09-23, même session. Spécification `docs/SPEC-session-sso.md` §10.*
+
+**Livré.** `keycloak/realm-lelabs.json` : six comptes à `sub` imposés (`5eed…0011` à `…0016`), rôles
+par défaut du realm réel sur chacun, `verified` sur les trois comptes du seed et `inconnu@`, `admin` du
+realm sur `viewer@`, `attendu@` non vérifié par LeLabs, `adresse-non-verifiee@` sans adresse prouvée ;
+un seul mot de passe, `SeedDev2026Local`. `scripts/lib/sso.sh` mène la connexion PKCE réelle pour les
+harnais et, en T4, pour le seed. `keycloak/README.md` réécrit.
+
+**Trois faits, trouvés en exécutant.**
+
+1. **Tenter de connecter une adresse non prouvée pose sur le compte l'action requise
+   `VERIFY_EMAIL`, qui persiste** — même quand le realm cesse ensuite d'exiger la vérification. Ma
+   propre vérification du harnais l'a posée, et M5 de `CRM-091` a échoué juste après : « connexion »
+   au lieu de « jeton ». Les deux sont corrigés à leur cause : le harnais efface ce qu'il cause, et M5
+   pose l'état dont elle a besoin au lieu de le supposer. Rejoués dans cet ordre : verts.
+2. **L'API d'administration de GoTrue rend le `provider_id` d'une identité sous la clé `id`**, et
+   `provider_id` y vaut `null`. M4 révisée l'a trouvé en échouant sur une identité pourtant présente en
+   base.
+3. **Les identités accumulées de M4 venaient bien de K4** : trois identités `keycloak` au compte
+   seedé, trois `sub` différents, deux d'avant cette tranche, un égal à `5eed…0011`. Désormais stable.
+   M4 est **révisée** pour juger ce qu'elle prétend — un seul COMPTE, une identité pour le `sub`
+   émis — au lieu de compter des identités qu'un realm éphémère multipliait.
+
+**Une fuite transitoire, due à T1, consignée.** Les preuves qui suppriment un compte GoTrue en
+comptant sur la cascade vers le profil laissent désormais le profil derrière elles : « Élodie
+Espace B » de `e2e/api/identites.spec.ts` a été trouvée ainsi, sans appartenance, et retirée de la
+base de développement. Ces preuves sont portées sur le SSO en T4 ; d'ici là, chaque exécution peut
+laisser un profil de preuve orphelin, invisible des autres personnes.
+
+**Vérifications.** `scripts/verify-session-sso.sh` : **28 vérifications, aucune anomalie** — T1 (17)
+et T2 (11), dont `verified` retiré à `bizdev@` et vu. `e2e/api/sso.spec.ts` : **9/9** rejouée APRÈS le
+harnais ; `e2e/ui/sso.spec.ts` et `e2e/ui/authentification.spec.ts` : **12/12**.
+`scripts/verify-scripts.sh` : **112, aucune anomalie**. `npm run typecheck` vert.

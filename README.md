@@ -347,8 +347,11 @@ c'est l'adresse que les navigateurs résolvent en boucle locale **et** que le r�
 vers Keycloak, si bien que l'émetteur des jetons est le même pour le navigateur et pour GoTrue. Son
 port, `SSO_DEV_PORT`, est le même dedans et dehors ; `./runDev.sh` refuse de démarrer si
 `SSO_OIDC_ISSUER` ne vaut pas `http://sso.localhost:<SSO_DEV_PORT>/realms/lelabs`. Les comptes du
-realm portent les adresses du seed, mot de passe commun `SsoDev2026Local` ; `inconnu@p2enjoy.test`
-n'a volontairement aucun compte CRM. Le realm est réimporté à chaque recréation du conteneur.
+realm sont **préchargés** (`CRM-092` T2, `docs/SPEC-session-sso.md` §10) : mêmes adresses et même mot
+de passe que le seed, `SeedDev2026Local`, et leur `sub` est l'identifiant stable du seed.
+`inconnu@p2enjoy.test` n'est attendu par aucun espace, `attendu@p2enjoy.test` n'est pas vérifié par
+LeLabs, `adresse-non-verifiee@p2enjoy.test` n'a pas prouvé son adresse. Le realm est réimporté à
+chaque recréation du conteneur.
 
 **Pourquoi deux serveurs mail en développement ?** Inbucket est un puits SMTP : il capture les
 emails que l'application *envoie* (GoTrue, notifications) et n'expose pas d'IMAP. Or le produit

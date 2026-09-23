@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # @verifies CRM-092 (docs/BACKLOG.md) — le SSO, seule source d'identité : harnais de l'unité
-# @verifies docs/SPEC-session-sso.md §7.1 (fonctions auth.*), §7.2 (modèle), §13 (preuves), §14 (T1)
+# @verifies docs/SPEC-session-sso.md §7.1 (fonctions auth.*), §7.2 (modèle), §10 (realm préchargé),
+#           §13 (preuves), §14 (T1, T2)
 # @verifies docs/JOURNAL.md décisions 580 (K11, K12) et 581 (migration élevée, harnais de l'unité)
 # @verifies CLAUDE.md §15 (tests non complaisants), §18 (un défaut se reproduit avant sa correction)
 #
@@ -13,10 +14,32 @@
 #   3. la suite pgTAP de l'unité, verte à son nombre exact d'assertions ;
 #   4. NON-COMPLAISANCE : quatre dégradations, chacune doit rendre la suite rouge. Le `trap`
 #      réapplique toujours les deux migrations, qui restaurent tout ce qui a été dégradé.
+#
+# Tranche T2 — le Keycloak de développement préchargé (§10), éprouvé par de VRAIES connexions PKCE
+# (`scripts/lib/sso.sh`) et non par la lecture du JSON importé :
+#
+#   5. chaque compte : `sub` stable, rôles par défaut du realm réel, `verified` et `admin` là où le §10
+#      les place, jeton d'accès `RS256` émis pour `lelabs-crm` ; l'adresse non prouvée n'entre pas ;
+#   6. ce que le realm refuse comme le réel : une demande sans PKCE, l'octroi direct par mot de passe,
+#      l'ancien mot de passe de `CRM-091` ;
+#   7. NON-COMPLAISANCE : `verified` retiré à `bizdev` par l'API d'administration de développement
+#      doit être vu ; le rôle est rendu par le `trap` quoi qu'il arrive.
 
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+
+# shellcheck source=scripts/lib/env.sh
+source scripts/lib/env.sh
+# shellcheck source=scripts/lib/sso.sh
+source scripts/lib/sso.sh
+SSO_OIDC_ISSUER=$(env_get "$ENV_FILE" SSO_OIDC_ISSUER)
+SSO_OIDC_CLIENT_ID=$(env_get "$ENV_FILE" SSO_OIDC_CLIENT_ID)
+SITE_URL=$(env_get "$ENV_FILE" SITE_URL)
+SSO_DEV_ADMIN_PASSWORD=$(env_get "$ENV_FILE" SSO_DEV_ADMIN_PASSWORD)
+DOMAINE=$(env_get "$ENV_FILE" MAIL_DEV_PERSONAL_DOMAIN)
+export SSO_OIDC_ISSUER SSO_OIDC_CLIENT_ID SITE_URL
+KEYCLOAK_BASE=${SSO_OIDC_ISSUER%/realms/lelabs}
 
 DB_CONTAINER=p2enjoy-db
 IMAGE_DB=$(sed -n 's/^[[:space:]]*image: \(supabase\/postgres:[^[:space:]]*\)$/\1/p' docker-compose.yml | head -n 1)
@@ -43,9 +66,14 @@ appliquer_migrations_dev() {
 		&& psql_dev --single-transaction -f - < "$MIGRATION_MODELE" >/dev/null 2>&1
 }
 
+role_a_rendre=false
+
 cleanup() {
 	local status=$?
 	trap - EXIT
+	if [ "$role_a_rendre" = true ]; then
+		attribuer_verified bizdev || { echo "RESTAURATION IMPOSSIBLE : rendre « verified » à bizdev@$DOMAINE" >&2; status=1; }
+	fi
 	if [ "$restore_needed" = true ]; then
 		appliquer_migrations_dev || { echo "RESTAURATION IMPOSSIBLE : rejouer $MIGRATION_CLAIMS et $MIGRATION_MODELE" >&2; status=1; }
 	fi
@@ -54,6 +82,40 @@ cleanup() {
 	exit "$status"
 }
 trap cleanup EXIT
+
+jeton_admin_keycloak() {
+	curl -sf --max-time 10 "$KEYCLOAK_BASE/realms/master/protocol/openid-connect/token" \
+		--data-urlencode client_id=admin-cli --data-urlencode username=admin \
+		--data-urlencode "password=$SSO_DEV_ADMIN_PASSWORD" --data-urlencode grant_type=password \
+		| jq -r .access_token
+}
+
+# Ajoute ou retire le rôle de realm `verified` du compte LOCAL@DOMAINE, par l'API d'administration du
+# Keycloak de DÉVELOPPEMENT (docs/SPEC-session-sso.md §10 : réservée aux harnais).
+_role_verified() {
+	local methode=$1 local_part=$2 jeton id role
+	jeton=$(jeton_admin_keycloak) || return 1
+	id=$(curl -sf -H "Authorization: Bearer $jeton" \
+		"$KEYCLOAK_BASE/admin/realms/lelabs/users?exact=true&email=$local_part@$DOMAINE" | jq -r '.[0].id')
+	role=$(curl -sf -H "Authorization: Bearer $jeton" "$KEYCLOAK_BASE/admin/realms/lelabs/roles/verified")
+	[ -n "$id" ] && [ "$id" != null ] && [ -n "$role" ] || return 1
+	curl -sf -o /dev/null -X "$methode" -H "Authorization: Bearer $jeton" -H 'Content-Type: application/json' \
+		-d "[$role]" "$KEYCLOAK_BASE/admin/realms/lelabs/users/$id/role-mappings/realm"
+}
+attribuer_verified() { _role_verified POST "$1"; }
+retirer_verified()   { _role_verified DELETE "$1"; }
+
+# Une tentative de connexion d'une adresse non prouvée, realm exigeant la vérification, ajoute au
+# compte l'action requise `VERIFY_EMAIL`, qui PERSISTE (mesuré) : le harnais efface ce qu'il cause.
+effacer_actions_requises() {
+	local local_part=$1 jeton id
+	jeton=$(jeton_admin_keycloak) || return 1
+	id=$(curl -sf -H "Authorization: Bearer $jeton" \
+		"$KEYCLOAK_BASE/admin/realms/lelabs/users?exact=true&email=$local_part@$DOMAINE" | jq -r '.[0].id')
+	[ -n "$id" ] && [ "$id" != null ] || return 1
+	curl -sf -o /dev/null -X PUT -H "Authorization: Bearer $jeton" -H 'Content-Type: application/json' \
+		-d '{"requiredActions":[]}' "$KEYCLOAK_BASE/admin/realms/lelabs/users/$id"
+}
 
 suite_verte() {
 	scripts/run-sql-tests.sh "$TEST_SQL" > "$WORK/tap.log" 2>&1 \
@@ -215,14 +277,122 @@ degrader "inscription d'une attente permise au nom d'un autre administrateur" po
 degrader "ouverture de session exécutable par authenticated" postgres \
 	"grant execute on function public.ouvrir_session_sso(uuid, text, text) to authenticated;"
 
+# `not valid` : un profil né d'un `sub` LeLabs n'a pas de ligne dans `auth.users`, et la contrainte
+# ne doit pas échouer sur lui — c'est sa PRÉSENCE que la suite doit voir, pas les lignes existantes.
 degrader "profiles.id rattaché de nouveau à auth.users" postgres \
 	"alter table public.profiles add constraint profiles_id_fkey
-	 foreign key (id) references auth.users (id) on delete cascade;"
+	 foreign key (id) references auth.users (id) on delete cascade not valid;"
 
 if suite_verte; then
 	ok "après restauration, la suite est de nouveau verte"
 else
 	fail "après restauration, la suite n'est pas verte : $(tail -n 3 "$WORK/tap.log")"
+fi
+
+# =================================================================================================
+# 5. Le realm de développement préchargé — par de vraies connexions PKCE
+# =================================================================================================
+echo
+echo "5. Keycloak de développement préchargé ($SSO_OIDC_ISSUER)"
+
+# local|sub attendu|verified attendu|admin du realm attendu
+COMPTES_REALM=(
+	'admin|5eed0000-0000-4000-8000-000000000011|oui|non'
+	'bizdev|5eed0000-0000-4000-8000-000000000012|oui|non'
+	'viewer|5eed0000-0000-4000-8000-000000000013|oui|oui'
+	'inconnu|5eed0000-0000-4000-8000-000000000014|oui|non'
+	'attendu|5eed0000-0000-4000-8000-000000000015|non|non'
+)
+
+# Juge le jeton d'accès d'un compte ; rend 0 si tout ce que le §10 promet est vrai.
+juger_compte() {
+	local local_part=$1 sub_attendu=$2 verified_attendu=$3 admin_attendu=$4 reponse jeton entete charge
+	reponse=$(sso_connexion_pkce "$local_part@$DOMAINE" 2>"$WORK/sso-$local_part.err") || return 1
+	jeton=$(jq -r .access_token <<<"$reponse")
+	# `sso_revendications` décode le DEUXIÈME segment : l'en-tête y est placé.
+	entete=$(sso_revendications "x.$(cut -d. -f1 <<<"$jeton")")
+	charge=$(sso_revendications "$jeton")
+	jq -e --arg sub "$sub_attendu" --arg client "$SSO_OIDC_CLIENT_ID" --arg v "$verified_attendu" --arg a "$admin_attendu" '
+		.sub == $sub and .azp == $client and .typ == "Bearer" and .email_verified == true
+		and (.realm_access.roles | index("default-roles-lelabs") != null)
+		and (.realm_access.roles | index("offline_access") != null)
+		and (.realm_access.roles | index("uma_authorization") != null)
+		and ((.realm_access.roles | index("verified") != null) == ($v == "oui"))
+		and ((.realm_access.roles | index("admin") != null) == ($a == "oui"))
+	' <<<"$charge" >/dev/null && jq -e '.alg == "RS256"' <<<"$entete" >/dev/null
+}
+
+for ligne in "${COMPTES_REALM[@]}"; do
+	IFS='|' read -r local_part sub_attendu verified_attendu admin_attendu <<<"$ligne"
+	if juger_compte "$local_part" "$sub_attendu" "$verified_attendu" "$admin_attendu"; then
+		ok "$local_part@ : sub ${sub_attendu: -4}, rôles par défaut, verified=$verified_attendu, admin=$admin_attendu, RS256"
+	else
+		fail "$local_part@ : jeton non conforme au §10 ($(cat "$WORK/sso-$local_part.err" 2>/dev/null))"
+	fi
+done
+
+if sso_connexion_pkce "adresse-non-verifiee@$DOMAINE" >/dev/null 2>"$WORK/sso-nv.err"; then
+	fail "adresse-non-verifiee@ entre sans avoir prouvé son adresse"
+else
+	ok "adresse-non-verifiee@ n'entre pas : le realm exige la vérification d'adresse, comme le réel"
+fi
+if effacer_actions_requises adresse-non-verifiee; then
+	ok "l'action requise que cette tentative a posée sur le compte est effacée : le realm est rendu intact"
+else
+	fail "l'action requise VERIFY_EMAIL n'a pas pu être effacée d'adresse-non-verifiee@"
+fi
+
+# =================================================================================================
+# 6. Ce que le realm refuse, comme le réel
+# =================================================================================================
+echo
+echo "6. Refus du realm"
+
+sans_pkce=$(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' -G "$SSO_OIDC_ISSUER/protocol/openid-connect/auth" \
+	--data-urlencode "client_id=$SSO_OIDC_CLIENT_ID" --data-urlencode response_type=code \
+	--data-urlencode scope=openid --data-urlencode "redirect_uri=$SITE_URL/auth/retour")
+case $sans_pkce in
+	"302 $SITE_URL/auth/retour?"*"Missing+parameter%3A+code_challenge_method"*)
+		ok "une demande sans PKCE est renvoyée avec « Missing parameter: code_challenge_method »" ;;
+	*) fail "une demande sans PKCE n'est pas refusée comme par le realm réel : $sans_pkce" ;;
+esac
+
+direct=$(curl -s -o "$WORK/direct.json" -w '%{http_code}' "$SSO_OIDC_ISSUER/protocol/openid-connect/token" \
+	--data-urlencode grant_type=password --data-urlencode "client_id=$SSO_OIDC_CLIENT_ID" \
+	--data-urlencode "username=admin@$DOMAINE" --data-urlencode "password=$SSO_MOT_DE_PASSE_DEFAUT")
+if [ "$direct" != 200 ] && [ "$(jq -r .error "$WORK/direct.json")" = unauthorized_client ]; then
+	ok "l'octroi direct par mot de passe est refusé ($direct unauthorized_client)"
+else
+	fail "l'octroi direct par mot de passe n'est pas refusé : $direct $(head -c 120 "$WORK/direct.json")"
+fi
+
+if sso_connexion_pkce "admin@$DOMAINE" SsoDev2026Local >/dev/null 2>&1; then
+	fail "l'ancien mot de passe de CRM-091 ouvre encore une session"
+else
+	ok "l'ancien mot de passe de CRM-091 est refusé : un seul mot de passe, celui du seed"
+fi
+
+# =================================================================================================
+# 7. Non-complaisance du contrôle du realm
+# =================================================================================================
+echo
+echo "7. Non-complaisance (le rôle est rendu par le trap quoi qu'il arrive)"
+
+role_a_rendre=true
+if retirer_verified bizdev; then
+	if juger_compte bizdev 5eed0000-0000-4000-8000-000000000012 oui non; then
+		fail "verified retiré à bizdev@, et le contrôle ne l'a PAS vu"
+	else
+		ok "verified retiré à bizdev@ : le contrôle le voit"
+	fi
+else
+	fail "impossible de retirer verified à bizdev@ par l'API d'administration de développement"
+fi
+if attribuer_verified bizdev && juger_compte bizdev 5eed0000-0000-4000-8000-000000000012 oui non; then
+	role_a_rendre=false
+	ok "verified rendu à bizdev@ : le contrôle est de nouveau vert"
+else
+	fail "verified n'a pas pu être rendu à bizdev@"
 fi
 
 echo

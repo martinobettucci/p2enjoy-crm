@@ -2,6 +2,8 @@
 // @verifies docs/SPEC-auth.md §10.1 (GoTrue seul juge), §10.6 (règle d'accès côté serveur),
 //           §10.7 (revendications conservées), §10.9 (realm de développement), §10.10 (preuves)
 // @verifies docs/JOURNAL.md décision 568 — mesures M2 à M10, rejouées contre la pile réelle
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §10 — realm préchargé : `sub` stables,
+//           mot de passe unique ; M4 et M10 RÉVISÉES en conséquence (tranche T2)
 //
 // Aucune de ces preuves ne passe par l'interface. Le parcours PKCE est mené ici comme un navigateur
 // le mènerait — page de connexion de Keycloak comprise —, puis l'`id_token` est remis à GoTrue par
@@ -10,7 +12,7 @@
 import { createHash, randomBytes } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 import { lireEnv } from '../env'
-import { CLE_ANONYME, COMPTES_SEED, URL_API, enTetesAuthentifies, enTetesService } from './jetons'
+import { CLE_ANONYME, COMPTES_SEED, MOT_DE_PASSE_SEED, URL_API, enTetesAuthentifies, enTetesService } from './jetons'
 
 const EMETTEUR = lireEnv('SSO_OIDC_ISSUER')
 const CLIENT = lireEnv('SSO_OIDC_CLIENT_ID')
@@ -18,7 +20,9 @@ const DOMAINE = lireEnv('MAIL_DEV_PERSONAL_DOMAIN')
 const SITE = lireEnv('SITE_URL')
 const RETOUR = `${SITE}/auth/retour`
 const BASE_KEYCLOAK = EMETTEUR.replace(/\/realms\/lelabs$/, '')
-const MOT_DE_PASSE_SSO = 'SsoDev2026Local'
+// Depuis `CRM-092` T2, le realm de développement n'a plus qu'un mot de passe, celui du seed :
+// une seule identité, un seul mot de passe (docs/SPEC-session-sso.md §10).
+const MOT_DE_PASSE_SSO = MOT_DE_PASSE_SEED
 
 test.describe.configure({ mode: 'serial' })
 
@@ -186,8 +190,16 @@ test('M4 — un compte CRM existant est rattaché, sans second compte, et sa ses
 
 	const apres = await utilisateursGoTrue(adresse)
 	expect(apres).toHaveLength(1)
-	const identites = (apres[0]?.identities as Array<{ provider: string }>).map((i) => i.provider).sort()
-	expect(identites).toEqual(['email', 'keycloak'])
+	// RÉVISÉE par `CRM-092` T2. L'assertion comptait TOUTES les identités `keycloak` du compte ; or le
+	// Keycloak de développement est éphémère, et chacune de ses recréations tirait jadis un `sub` au
+	// hasard, que GoTrue rattachait comme une identité de plus (décision 582 : deux identités, 13:46
+	// et 13:48). La propriété de M4 est « rattaché, sans second COMPTE » : un seul compte (ci-dessus),
+	// et UNE identité `keycloak` pour le `sub` que le realm émet — désormais stable, égal à l'identifiant
+	// du seed (docs/SPEC-session-sso.md §10).
+	// GoTrue rend le `provider_id` d'une identité sous la clé `id` — mesuré, `provider_id` y vaut `null`.
+	const identites = apres[0]?.identities as Array<{ provider: string; id: string }>
+	expect(identites.filter((i) => i.provider === 'email')).toHaveLength(1)
+	expect(identites.filter((i) => i.provider === 'keycloak' && i.id === avant?.id)).toHaveLength(1)
 })
 
 test('M5 — une adresse non vérifiée auprès du SSO n’ouvre JAMAIS le compte CRM de même adresse', async () => {
@@ -207,6 +219,23 @@ test('M5 — une adresse non vérifiée auprès du SSO n’ouvre JAMAIS le compt
 			headers: { authorization: `Bearer ${admin}`, 'content-type': 'application/json' },
 			body: JSON.stringify({ verifyEmail }),
 		})
+	// Une tentative antérieure de connexion, realm exigeant la vérification, a pu poser sur le compte
+	// l'action requise `VERIFY_EMAIL`, qui persiste (mesuré, `CRM-092` T2) : la preuve pose l'état dont
+	// elle a besoin au lieu de le supposer.
+	const compteSso = (await (
+		await fetch(`${realm}/users?exact=true&email=${encodeURIComponent(adresse)}`, {
+			headers: { authorization: `Bearer ${admin}` },
+		})
+	).json()) as Array<{ id: string }>
+	const idSso = compteSso[0]?.id
+	expect(idSso, 'compte adresse-non-verifiee@ préchargé dans le realm').toBeDefined()
+	const effacerActions = () =>
+		fetch(`${realm}/users/${idSso}`, {
+			method: 'PUT',
+			headers: { authorization: `Bearer ${admin}`, 'content-type': 'application/json' },
+			body: JSON.stringify({ requiredActions: [] }),
+		})
+	expect((await effacerActions()).status).toBe(204)
 	try {
 		// Le realm exige la vérification d'adresse : il faut la lever le temps d'émettre un jeton
 		// `email_verified=false`, cas que docs/SSO.md décrit (un administrateur vérifie une personne
@@ -301,9 +330,10 @@ test('M9 — la voie /authorize sans PKCE de GoTrue est fermée d’elle-même',
 
 test('M10 — GoTrue ne conserve ni téléphone, ni profil déclaré, ni rôle du realm', async () => {
 	const [compte] = await utilisateursGoTrue(COMPTES_SEED[0].adresse)
-	const identite = (compte?.identities as Array<{ provider: string; identity_data: Record<string, unknown> }>).find(
-		(i) => i.provider === 'keycloak',
-	)
+	// L'identité du `sub` courant, rattachée par M4 — pas une identité d'un realm antérieur (M4 révisée).
+	const identite = (
+		compte?.identities as Array<{ provider: string; id: string; identity_data: Record<string, unknown> }>
+	).find((i) => i.provider === 'keycloak' && i.id === compte?.id)
 	expect(identite, 'identité keycloak rattachée par M4').toBeDefined()
 	const cles = Object.keys(identite?.identity_data ?? {})
 	for (const interdite of ['phone', 'phone_number', 'telephone', 'profile', 'profilVerification', 'realm_access', 'roles']) {

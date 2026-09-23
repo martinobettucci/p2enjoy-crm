@@ -148,8 +148,8 @@ Sur un ordinateur partagé, fermez aussi votre session LeLabs, depuis votre espa
 Rien n'est conservé sur votre appareil au-delà de l'onglet : la connexion en cours ne vit que le
 temps de l'aller-retour vers LeLabs, et la session du CRM suit la règle ci-dessus.
 
-Dans l'environnement de développement, un LeLabs local porte les mêmes adresses que les comptes de
-démonstration, avec le mot de passe commun `SsoDev2026Local`.
+Dans l'environnement de développement, un LeLabs local porte les mêmes adresses et le même mot de
+passe que les comptes de démonstration, `SeedDev2026Local`.
 
 ## 1 bis. Le guide de démarrage : par où commencer
 

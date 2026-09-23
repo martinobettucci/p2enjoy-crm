@@ -1,6 +1,7 @@
 // @verifies CRM-091 (docs/BACKLOG.md) — connexion unique vécue dans le navigateur, Keycloak réel
 // @verifies docs/SPEC-auth.md §10.3 (parcours), §10.4 (refus rendus), §10.5 (stockage d'onglet),
 //           §10.10 (preuves exigées) ; docs/DESIGN_SYSTEM.md §5.12, §7, §8 ; CLAUDE.md §11, §16
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §10 — mot de passe unique du realm (T2)
 //
 // Le navigateur quitte réellement le CRM pour la page de connexion du Keycloak de développement,
 // y saisit les identifiants d'un compte du realm, et revient. Aucune réponse n'est substituée, sauf
@@ -11,10 +12,12 @@
 import { autoriserErreursConsole, expect, test, type Page } from './fixtures'
 import { PALIERS, capturer } from './captures'
 import { lireEnv } from '../env'
+import { MOT_DE_PASSE_SEED } from '../api/jetons'
 
 const DOMAINE = lireEnv('MAIL_DEV_PERSONAL_DOMAIN')
 const EMETTEUR = lireEnv('SSO_OIDC_ISSUER')
-const MOT_DE_PASSE_SSO = 'SsoDev2026Local'
+// Le realm de développement n'a plus qu'un mot de passe, celui du seed (CRM-092 T2, §10).
+const MOT_DE_PASSE_SSO = MOT_DE_PASSE_SEED
 const CLE_TRANSACTION = 'p2enjoy-crm.sso.transaction'
 const ERREUR_422 =
 	'console.error: Failed to load resource: the server responded with a status of 422 (Unprocessable Entity)'

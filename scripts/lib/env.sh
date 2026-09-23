@@ -326,11 +326,15 @@ env_print_dev_credentials() {
 	info "  Farida Nowak n'a pas de boîte : un lecteur ne correspond pas (décision 239)."
 
 	echo
-	info "LeLabs de développement (SSO) — mot de passe commun « SsoDev2026Local »"
-	env_credential_line "admin@${domaine_perso}"  "verified — ouvre le compte de Camille Aubert"
-	env_credential_line "bizdev@${domaine_perso}" "aucun rôle — ouvre le compte de Driss Lemoine"
+	# Realm préchargé de `CRM-092` T2 (docs/SPEC-session-sso.md §10) : mêmes adresses et même mot de
+	# passe que le seed, `sub` égaux à ses identifiants stables.
+	info "LeLabs de développement (SSO) — mot de passe commun « ${mdp_seed:-<seed introuvable>} »"
+	env_credential_line "admin@${domaine_perso}"  "verified — Camille Aubert, administratrice"
+	env_credential_line "bizdev@${domaine_perso}" "verified — Driss Lemoine, business developer"
 	env_credential_line "viewer@${domaine_perso}" "verified + admin du realm — reste lectrice dans le CRM"
-	env_credential_line "inconnu@${domaine_perso}" "aucun compte CRM — refusé (docs/SPEC-auth.md §10.6)"
+	env_credential_line "inconnu@${domaine_perso}" "verified, attendu par aucun espace — refusé"
+	env_credential_line "attendu@${domaine_perso}" "non vérifié par LeLabs — accès en attente"
+	env_credential_line "adresse-non-verifiee@${domaine_perso}" "adresse non vérifiée — refusée"
 	info "  Émetteur : $(env_get "$ENV_FILE" SSO_OIDC_ISSUER)"
 
 	echo

@@ -13,7 +13,7 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-092` — Le SSO, seule source d'identité (en cours : tranche T1 livrée)
+### `CRM-092` — Le SSO, seule source d'identité (en cours : tranches T1 et T2 livrées)
 
 Décision du responsable (décisions 578 et 579) : le SSO LeLabs devient la **seule** source d'identité
 du CRM, en développement comme en production ; GoTrue et la connexion par mot de passe quitteront la
@@ -32,6 +32,11 @@ pile. Contrat : `docs/SPEC-session-sso.md`. Rien ne change encore pour la person
   dégradations détectées) ; trois suites historiques révisées, jamais retirées.
 - **Production** : migrations 74 et 75 en attente, à n'appliquer qu'avec la reprise complète de
   `CRM-092` (`docs/PROD_MIGRATIONS.md` §3).
+- **Le LeLabs de développement est préchargé** (tranche T2) : les comptes de démonstration y ont leur
+  identifiant stable comme identité SSO, les rôles par défaut du LeLabs réel, et **le même mot de passe
+  que le reste du développement, `SeedDev2026Local`** — `SsoDev2026Local` disparaît. Deux comptes
+  s'ajoutent pour démontrer les attentes : `attendu@` (pas encore vérifié par LeLabs) et
+  `adresse-non-verifiee@`.
 
 ### `CRM-091` — Se connecter avec LeLabs
 
