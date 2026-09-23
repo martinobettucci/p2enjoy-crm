@@ -14385,9 +14385,12 @@ décrit la baseline réelle.
 - [x] Harnais `scripts/verify-spark.sh` (§9) : **57 vérifications, aucune anomalie**, dont la
       répartition exacte des secrets entre services et cinq dégradations détectées avec leur
       témoin vert ; `scripts/verify-scripts.sh` couvre l'overlay (88 variables Compose documentées).
-- [ ] **Premier déploiement dans la cellule et vérifications (§7).** Dépend de gestes que ce dépôt
-      ne peut pas faire : l'import des variables et des secrets en console, la route et le DNS
-      (`docs/PROD_MIGRATIONS.md` §2.4, étapes 3 et 4).
+- [~] **Premier déploiement dans la cellule et vérifications (§7).** Fait le 2026-09-23 : base
+      mesurée vierge, **73 migrations appliquées**, treize conteneurs sains, aucun redémarrage ni
+      arrêt par manque de mémoire (≈ 1 090 Mio utilisés sur 2 048) ; `scripts/spark/verifier.sh` :
+      **23 contrôles, aucun échec**. Premier espace amorcé (décision 574). Reste, hors dépôt :
+      l'acceptation de la route `tls` (décision 576), puis `https://` vérifié depuis Internet
+      (`docs/PROD_MIGRATIONS.md` §8).
 - [x] Documentation : `README.md` §5, §9, §10, §11 ; `docs/DAT.md` §3.5, §9, §13 ;
       `docs/PROD_MIGRATIONS.md` §2.3, §2.4, §3.1, §4 ; `.env.example` ; `CHANGELOG.md`.
 - [x] Registre MinIO de développement corrigé (décision 569) : overlay, `scripts/verify-stack.sh`,
@@ -14405,11 +14408,12 @@ décrit la baseline réelle.
       `--archive-seule` ; propositions de variables, de secrets et de route déposées par
       `proposer.sh` ; dix images tirées et l'image Realtime dérivée chargée (4,7 Go utilisés,
       5,8 Go libres).
-- [~] **Realtime au premier déploiement réel** (décision 575) : il redémarrait en boucle, son
+- [x] **Realtime au premier déploiement réel** (décision 575) : il redémarrait en boucle, son
       `run.sh` basculant par `sudo` vers `nobody` (65534), hors de la plage de la cellule. Image
       dérivée corrigée — `nobody` renuméroté en 64000 — et harnais porté à **74 vérifications,
-      aucune anomalie**, dont deux qui rougissaient avant la correction. Reste la preuve dans la
-      cellule.
+      aucune anomalie**, dont deux qui rougissaient avant la correction. **Prouvé dans la
+      cellule** : ses migrations passent sous `nobody`, 31 lignes dans `_realtime.schema_migrations`,
+      conteneur sain, aucun redémarrage.
 - [~] **Route publique en `tls`** (décision 576) : la route acceptée `clair` publiait le CRM en
       `http://` seul, que le SSO refuse. `proposer.sh` propose `tls`, et `--route-seule` la
       repropose sans toucher aux secrets en service ; harnais porté à **76 vérifications, aucune

@@ -26,14 +26,19 @@ isolée hors fenêtre.
 
 ## 1. Baseline de production
 
-**Aucune.** Le produit n'a jamais été déployé.
+**Cellule Spark `crm`, premier déploiement du 2026-09-23** (§8). La pile tourne ; elle n'est pas
+encore publiée en `https://`, et la connexion par le SSO n'y est pas encore possible.
 
 | Élément | État |
 |---|---|
-| Environnement de production | Non provisionné |
-| Schéma appliqué | Aucun |
-| Dernière migration appliquée | Aucune |
-| Version déployée | Aucune |
+| Environnement de production | Cellule Spark `crm` (`docs/SPEC-deploiement-spark.md`), assemblage à trois fichiers, treize conteneurs sains |
+| Schéma appliqué | Les **73 migrations** du dépôt, par `--migrate --premier-deploiement` sur une base mesurée vierge |
+| Dernière migration appliquée | `0073_entonnoir_conversion.sql` |
+| Version déployée | La révision inscrite dans `/srv/crm/REVISION` — celle que `scripts/spark/verifier.sh` compare au `HEAD` du poste |
+| Données | Un compte invité et un espace, « P2Enjoy CRM » (`crm`), posés par `scripts/spark/amorcer-espace.sh` (§8) ; aucune autre donnée, aucun seed |
+| Route publique | `crm.lelabs.tech` acceptée en **`clair`** : servie en `http://` seul. Route **`tls`** proposée, en attente du propriétaire du Spark (décision 576) |
+| Client OIDC `lelabs-crm` | **Non déclaré** au realm : sonde `400` (`docs/SPEC-auth.md` §10.8) |
+| Relais SMTP | Hôte, port et expéditeur importés ; identifiants non fournis — les courriels transactionnels échouent, la connexion par le SSO n'en dépend pas |
 
 ## 2. Prérequis à provisionner avant le premier déploiement
 
@@ -167,8 +172,10 @@ installé, et `scripts/backup.sh` le refuse sans repli (`CRM-080`).
 
 ## 3. Migrations en attente
 
-Ces migrations existent dans le dépôt et **n'ont jamais été appliquées en production**, celle-ci
-n'étant pas provisionnée.
+**Aucune au 2026-09-23.** Les 73 migrations du dépôt, `0001` à `0073`, ont été appliquées en
+production par le premier déploiement (§8). Une migration ajoutée après `0073_entonnoir_conversion.sql`
+est en attente jusqu'à la prochaine fenêtre de maintenance (§3.1) : l'inscrire ici. Le tableau du
+§3.2 reste la référence de l'objectif, des dépendances et du retour arrière de chaque migration.
 
 ### 3.1 Procédure nominale — la fenêtre de maintenance (`CRM-087`, livrée)
 
@@ -895,4 +902,27 @@ sauvegarde couvre la perte de l'hôte.
 
 ## 8. Historique des déploiements
 
-Aucun déploiement à ce jour.
+### 2026-09-23 — premier déploiement, cellule Spark `crm`
+
+- **Révision `591472a2`**, `scripts/spark/livrer.sh -- --migrate --premier-deploiement` : base
+  mesurée vierge, **73 migrations appliquées avec succès**, PostgREST recréé sur le schéma migré.
+  Code `1` : Realtime redémarrait en boucle, son `sudo -u nobody` étant impossible dans la cellule
+  (décision 575).
+- **Révision `c180891b`**, image Realtime corrigée, `scripts/spark/livrer.sh` : code `0`, **treize
+  conteneurs sains** ; Realtime applique ses propres migrations sous `nobody` (UID 64000).
+  `scripts/spark/verifier.sh` : révision, santé, aucun redémarrage ni arrêt par manque de mémoire,
+  seul le port `8080` publié, webapp, GoTrue, PostgREST et fonction edge par Caddy, fournisseur
+  `keycloak` actif et inscription libre fermée, disque — **aucun échec**. Mémoire : ≈ 1 090 Mio
+  utilisés sur 2 048 ; disque : 5,2 Go utilisés, 5,3 Go libres.
+- **Amorçage du premier espace** (§7, décisions 573 et 574) — motif : premier espace de production,
+  arbitré par le responsable. `scripts/spark/amorcer-espace.sh --email martino@p2enjoy.studio
+  --espace "P2Enjoy CRM" --slug crm`, dans la cellule : compte **invité**, sans mot de passe ni
+  courriel ; espace `crm` créé ; appartenance `admin` posée. Relevé en lecture : 1 compte, invité
+  et non confirmé, 1 espace, 1 administrateur. L'invitation s'acceptera à la première connexion
+  avec LeLabs, adresse vérifiée.
+- **Route** : acceptée en `clair`, elle publie le CRM en `http://` seul — webapp et API y
+  répondent. Route `tls` reproposée par `proposer.sh --route-seule` (décision 576) : **en attente**.
+- **Client OIDC** : sonde `400`, **non déclaré** — déclaration de `docs/SPEC-auth.md` §10.8 à coller
+  par un administrateur du realm.
+- `CHANGELOG.md` : rien n'est déplacé sous « Publié » — ni `https://` ni la connexion réelle ne
+  sont vérifiés en production.
