@@ -242,6 +242,11 @@ if s.get("kong", {}).get("environment", {}).get("KONG_NGINX_WORKER_PROCESSES") !
     e.append("Kong sans KONG_NGINX_WORKER_PROCESSES=1")
 if not s.get("minio", {}).get("image", "").startswith("quay.io/minio/minio:"):
     e.append("image MinIO hors quay.io")
+rt = s.get("realtime", {})
+image_rt = rt.get("image")
+tirage_rt = rt.get("pull_policy")
+if image_rt != "p2enjoy/realtime-spark:v2.102.3" or tirage_rt != "never":
+    e.append(f"realtime : image {image_rt}, pull_policy {tirage_rt} ; attendu : image dérivée, jamais tirée")
 st = s.get("storage", {}).get("environment", {})
 if st.get("GLOBAL_S3_ENDPOINT") != "http://minio:9000" or st.get("AWS_ACCESS_KEY_ID") != os.environ["MINIO_USER"]:
     e.append("storage ne vise pas le MinIO interne avec ses identifiants")
@@ -309,6 +314,19 @@ grep -q 'import /etc/caddy/routes.caddy' caddy/Caddyfile && grep -q 'import /etc
 	&& ok "les deux Caddyfile importent le même fragment de routes" || fail "un Caddyfile n'importe pas routes.caddy"
 grep -q '/functions/v1/\*' caddy/routes.caddy && ok "/functions/v1/* relayé vers Kong" || fail "/functions/v1/* non relayé"
 grep -q 'auto_https off' caddy/Caddyfile.spark && ok "Caddyfile.spark sans ACME" || fail "Caddyfile.spark tente ACME"
+
+# L'image Realtime dérivée (décision 571) : sa source suit l'assemblage commun, et son étiquette est
+# la même dans l'overlay et dans le script qui la transfère — trois endroits, une seule valeur.
+source_commune=$(sed -n 's/^    image: \(supabase\/realtime:.*\)$/\1/p' docker-compose.yml)
+source_derivee=$(sed -n 's/^FROM \(supabase\/realtime:[^ ]*\) AS source$/\1/p' supabase/docker/realtime-spark/Dockerfile)
+etiquette_livrer=$(sed -n 's/^IMAGE_REALTIME_SPARK=//p' scripts/spark/livrer.sh)
+etiquette_overlay=$(sed -n '/^  realtime:/,/^  [a-z]/s/^    image: //p' docker-compose.spark.yml)
+[ -n "$source_commune" ] && [ "$source_commune" = "$source_derivee" ] \
+	&& ok "l'image Realtime dérivée part de la version de l'assemblage commun ($source_commune)" \
+	|| fail "image Realtime : assemblage commun « $source_commune », image dérivée « $source_derivee »"
+[ -n "$etiquette_overlay" ] && [ "$etiquette_overlay" = "$etiquette_livrer" ] \
+	&& ok "même étiquette dérivée dans l'overlay et dans livrer.sh ($etiquette_overlay)" \
+	|| fail "étiquette dérivée : overlay « $etiquette_overlay », livrer.sh « $etiquette_livrer »"
 
 # --- 5. proposer.sh ----------------------------------------------------------------------------------
 

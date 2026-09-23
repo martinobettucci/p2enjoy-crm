@@ -1,7 +1,7 @@
 # @spec CRM-090 (docs/BACKLOG.md) — overlay de la cellule Spark « crm »
 # @spec docs/SPEC-deploiement-spark.md §3 (assemblage), §4.2 (variables sans objet), §8 (capacité)
 # @spec docs/DAT.md §3.5 (passerelle et périphérie), §9 (déploiement)
-# @spec docs/JOURNAL.md décisions 567 (la cellule) et 569 (registre MinIO)
+# @spec docs/JOURNAL.md décisions 567 (la cellule), 569 (registre MinIO), 571 (image Realtime)
 #
 #   ./runProd.sh --spark      — jamais à la main : le script fusionne d'abord les variables
 #                               injectées par le plan de contrôle (§4.1) et compose les trois
@@ -43,6 +43,18 @@ services:
     mem_limit: 256m
     environment:
       KONG_NGINX_WORKER_PROCESSES: "1"
+
+  # --- Realtime : image dérivée ---------------------------------------------------------------
+  #
+  # La cellule n'accorde à `spark-docker` que les UID subordonnés 1002 à 65535 : les 3 774 fichiers
+  # de `/app` que l'image d'origine attribue à `nobody` (65534) n'y sont pas extractibles, et son
+  # tirage échoue (docs/JOURNAL.md décision 571). L'image dérivée, en une couche possédée par
+  # `root`, est construite sur le poste et chargée dans la cellule par `scripts/spark/livrer.sh` :
+  # elle n'existe dans aucun registre, et Compose ne doit donc jamais tenter de la tirer.
+  realtime:
+    image: p2enjoy/realtime-spark:v2.102.3
+    pull_policy: never
+    mem_limit: 448m
 
   # --- Stockage objet interne ------------------------------------------------------------------
 
@@ -115,8 +127,6 @@ services:
     mem_limit: 128m
   rest:
     mem_limit: 128m
-  realtime:
-    mem_limit: 448m
   functions:
     mem_limit: 256m
   mail-sync:

@@ -85,6 +85,21 @@ tableau `SPARK_COMPOSE` ; aucun appel ne compose ces fichiers à la main.
   ClamAV le dit (`docs/SPEC-mail-subsystem.md` §15.5) ; sans lui, aucune pièce jointe reçue n'est
   téléchargeable. C'est une limite de la cellule, écrite dans `README.md` §11.
 
+### 3.5 Realtime : une image dérivée, construite sur le poste
+
+**Ajouté par la mesure dans la cellule (décision 571).** La cellule ne dispose que de 65 536 UID, et
+`spark-docker` n'en reçoit que 64 534 comme subordonnés : un fichier d'image possédé par un UID
+supérieur à 64534 n'y est pas extractible. `supabase/realtime:v2.102.3` en porte 3 774, attribués à
+`nobody`, et son tirage échoue.
+
+- `supabase/docker/realtime-spark/Dockerfile` recopie le système de fichiers de l'image d'origine
+  dans **une seule couche possédée par `root`**, et redéclare sa configuration d'exécution. Le
+  processus de Realtime s'exécute déjà en `root` : rien ne change pour lui.
+- L'image est **construite sur le poste** et chargée dans la cellule par `scripts/spark/livrer.sh`,
+  seulement si son identifiant y diffère. L'overlay la déclare `pull_policy: never`.
+- Une montée de version de Realtime dans l'assemblage commun impose la même montée dans la
+  dérivée ; `scripts/verify-spark.sh` rougit sinon.
+
 ## 4. Les variables
 
 ### 4.1 D'où elles viennent
@@ -258,16 +273,18 @@ leur somme dépasse volontairement les 2 Gio (§3.4). La marge réelle est celle
 rootless et au système de la cellule — environ 900 Mio —, **à relever dans la cellule** au premier
 déploiement, `nproc` et `free` y décrivant la Forge.
 
-**Disque.** Images de la pile : 5,9 Go (décision 567, S9), plus `mail-sync` construit (207 Mo),
-MinIO (250 Mo) et son client (116 Mo), soit **≈ 6,5 Go** sur les 9,7 Go libres. L'archive livrée
-pèse 64 Mo. Il reste de l'ordre de 3 Go pour la base, les objets et les journaux : c'est la
-ressource la plus rare de la cellule, et `df -h /` fait partie des vérifications (§7).
+**Disque — mesuré DANS la cellule le 2026-09-23.** Les tailles relevées sur le poste (5,9 Go pour
+les images) surestimaient : dans la cellule, les onze images tirées ou chargées occupent **≈ 3,9 Go**
+— `df -h /` passe de 827 Mo à **4,7 Go** utilisés, **5,8 Go libres**. Restent à y ajouter l'image
+`mail-sync` construite sur place (≈ 207 Mo), l'archive livrée (64 Mo), puis la base, les objets et
+les journaux. Le disque reste la ressource la plus rare de la cellule, et `df -h /` fait partie des
+vérifications (§7).
 
 ## 9. Preuves exigées
 
 | Niveau | Preuve |
 |---|---|
-| Harnais dédié `scripts/verify-spark.sh` | fusion (ordre des sources, apostrophes, `$` littéral, grammaire, fichiers absents, `tmpfs` en `600`) ; gardes (profil, `APPLY_MIGRATIONS`, `CHANGE_ME_*`) ; `--premier-deploiement` refusé sans `--migrate` ; assemblage résolu : seul `SPARK_HTTP_PORT` publié, ni `80` ni `443`, aucun port pour `minio`, `sans-objet-cellule-spark` absent, `KONG_NGINX_WORKER_PROCESSES=1`, une limite mémoire sur chaque service ; `proposer.sh` sur des fichiers jetables — refus si `JWT_SECRET` existe, refus sur proposition pendante, aucune valeur de secret sur sa sortie ; témoin de non-complaisance par dégradation |
+| Harnais dédié `scripts/verify-spark.sh` | image Realtime dérivée cohérente avec l'assemblage commun et avec `livrer.sh` ; fusion (ordre des sources, apostrophes, `$` littéral, grammaire, fichiers absents, `tmpfs` en `600`) ; gardes (profil, `APPLY_MIGRATIONS`, `CHANGE_ME_*`) ; `--premier-deploiement` refusé sans `--migrate` ; assemblage résolu : seul `SPARK_HTTP_PORT` publié, ni `80` ni `443`, aucun port pour `minio`, `sans-objet-cellule-spark` absent, `KONG_NGINX_WORKER_PROCESSES=1`, une limite mémoire sur chaque service ; `proposer.sh` sur des fichiers jetables — refus si `JWT_SECRET` existe, refus sur proposition pendante, aucune valeur de secret sur sa sortie ; témoin de non-complaisance par dégradation |
 | Intégration réelle | l'assemblage de la cellule démarré sur ce poste avec des secrets jetables, sous le même projet Compose isolé : tous les services sains, `--premier-deploiement` appliquant les migrations sur base vierge puis refusant sur base peuplée |
 | Déploiement | §7, exécuté dans la cellule et relevé dans `docs/PROD_MIGRATIONS.md` |
 

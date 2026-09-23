@@ -14392,6 +14392,14 @@ décrit la baseline réelle.
       `docs/PROD_MIGRATIONS.md` §2.3, §2.4, §3.1, §4 ; `.env.example` ; `CHANGELOG.md`.
 - [x] Registre MinIO de développement corrigé (décision 569) : overlay, `scripts/verify-stack.sh`,
       `docs/DAT.md` §3.7.
+- [x] **Image Realtime dérivée** (décision 571, §3.5) : la cellule ne dispose que de 65 536 UID et
+      l'image d'origine n'y est pas extractible. Couches vérifiées sans UID au-delà de 64534,
+      contenu identique octet pour octet, chargée dans la cellule, Realtime **sain** au premier
+      déploiement rejoué ; harnais porté à **59 vérifications, aucune anomalie**.
+- [x] **Gestes de cellule faits le 2026-09-23** : `/srv/crm` créé par `root` ; dépôt déposé par
+      `--archive-seule` ; propositions de variables, de secrets et de route déposées par
+      `proposer.sh` ; dix images tirées et l'image Realtime dérivée chargée (4,7 Go utilisés,
+      5,8 Go libres).
 
 ### CRM-091 — Connexion unique par `oauth.lelabs.tech` `[ ]`
 *Créée le 2026-09-23 — décision 568. Motif : GoTrue 2.189.0 ne parle pas PKCE à Keycloak (M1), que le

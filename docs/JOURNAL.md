@@ -28659,3 +28659,46 @@ exacte de chaque secret entre services**, mesurée — `JWT_SECRET` à cinq serv
 à quatre, Caddy à aucun —, et la dégradation « `env_file` des secrets posé sur Caddy » la fait
 rougir. `scripts/verify-spark.sh` : **56 vérifications, aucune anomalie**, dont cinq dégradations
 détectées et leur témoin vert.
+
+## décision 571 — la cellule ne dispose que de 65 536 UID : Realtime n'y est pas extractible, et une image dérivée le règle sans toucher à la Forge
+
+*2026-09-23, même session, `CRM-090`. Constat fait en tirant les images de la pile DANS la cellule,
+sous `spark-docker`.*
+
+**Observation.** Dix images sur onze se tirent. `supabase/realtime:v2.102.3` échoue : « failed to
+Lchown …/app for UID 65534, GID 0 : invalid argument (Hint : try increasing the number of subordinate
+IDs) ».
+
+**Cause, mesurée et non déduite.** La cellule est elle-même un conteneur non privilégié :
+`/proc/self/uid_map` y vaut `0 1196608 65536` — soixante-cinq mille cinq cent trente-six UID en tout.
+`/etc/subuid` accorde à `spark-docker` la plage `1002:64534`. Docker rootless mappe l'UID 0 du
+conteneur sur le compte lui-même et les UID 1 à 64534 sur 1002 à 65535 : **un fichier d'image possédé
+par un UID supérieur à 64534 n'a aucune représentation possible**. L'image Realtime attribue à
+`nobody` (65534) **3 774 fichiers** de `/app`. Ce n'est pas réparable depuis la cellule : agrandir la
+plage de `spark-docker` demanderait à la Forge un `uid_map` plus large.
+
+**Ce qui n'a pas été fait, et pourquoi.** Modifier `/etc/subuid` en `root` : il n'y a pas d'UID
+au-delà de 65535 à accorder. Retirer Realtime de la pile : le fil des commentaires et les
+notifications s'y abonnent, et un produit dégradé en silence est la valeur par défaut trompeuse que
+`CLAUDE.md` §18 interdit.
+
+**Décision.** Le processus de Realtime s'exécute en `root` (l'image ne déclare aucun `USER`) : la
+propriété de `nobody` ne lui sert à rien. `supabase/docker/realtime-spark/Dockerfile` recopie le
+système de fichiers de l'image d'origine dans **une seule couche possédée par `root`** et redéclare
+sa configuration d'exécution à l'identique. Construite **sur le poste** — dans la cellule,
+l'extraction de la source échouerait pareil —, chargée par `docker save | docker load` depuis
+`scripts/spark/livrer.sh` quand son identifiant diffère, et déclarée `pull_policy: never` dans
+l'overlay : elle n'existe dans aucun registre.
+
+**Vérifications.** Couches de l'image dérivée : **20 811 entrées, aucune au-delà de l'UID 64534**.
+`/app` et `/etc/ssl` **identiques octet pour octet** à l'image d'origine (empreintes des sommes de
+fichiers égales). Chargée dans la cellule en 189 s, identifiant égal à celui du poste. Premier
+déploiement rejoué localement avec elle : code `0`, Realtime **sain**. Le message « Failed to load
+OTP-trusted CAs » de son journal vient de l'image d'origine, qui ne porte aucun magasin de
+certificats — même contenu de `/etc/ssl` dans les deux. `scripts/verify-spark.sh` fige l'étiquette
+dérivée dans l'overlay et dans `livrer.sh`, et que l'image dérivée part de la version de Realtime
+de l'assemblage commun : une montée de version qui oublierait la dérivée rougit.
+
+**Une limite à connaître au-delà de Realtime.** Toute image future dont un fichier appartient à un
+UID supérieur à 64534 butera au même endroit, dans la cellule seulement. Le harnais ne peut pas le
+voir d'avance : c'est le tirage dans la cellule qui le dit, et le remède est celui-ci.

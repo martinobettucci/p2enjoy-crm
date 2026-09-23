@@ -32,6 +32,9 @@ d'exécuter le code attendu.
   `CRM-016` ; elles vivent dans un fragment partagé par les deux Caddyfile.
 - **MinIO se tire de `quay.io`** : son dépôt Docker Hub n'existe plus, et la pile de développement
   ne démarrait plus sur un poste neuf.
+- **Realtime tourne dans la cellule sur une image dérivée**, construite sur le poste qui livre :
+  l'image d'origine attribue des fichiers à un identifiant d'utilisateur que la cellule ne sait pas
+  représenter, et ne pouvait pas y être installée.
 
 ### `CRM-066` — « Pilotage » : les étapes sans affaire, nommées (tranche 3 c)
 

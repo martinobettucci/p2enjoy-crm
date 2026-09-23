@@ -141,6 +141,13 @@ de cellule — aucune adresse n'est écrite dans ce dépôt.
 | 7 | Déclarer le client OIDC, puis corriger `SSO_OIDC_CLIENT_ID` si le realm l'a renommé et relivrer | administrateur du realm, puis propriétaire du Spark | `docs/SPEC-auth.md` §10.8 (`CRM-091`) |
 | 8 | Créer le premier compte et le premier espace | opérateur disposant de la clé de service | §7 ci-dessous, opération encadrée |
 
+**Realtime ne se tire pas dans la cellule, et c'est mesuré** (décision 571) : la cellule ne dispose
+que de 65 536 UID, et l'image d'origine attribue des fichiers à l'UID 65534. `scripts/spark/livrer.sh`
+construit sur le poste l'image dérivée `p2enjoy/realtime-spark:v2.102.3` et la charge dans la cellule
+quand son identifiant y diffère ; ne jamais lancer `docker pull supabase/realtime` dans la cellule
+pour « réparer » : il échouera toujours. **Chargée le 2026-09-23**, identifiant
+`sha256:575b294d…eb8751`.
+
 **Le relais d'envoi.** La Forge ferme `25`, `465` et `587` en sortie (relevé du dépôt du SSO de la
 même Forge) : `SMTP_PORT` doit être un port de repli, `2587` en STARTTLS chez Scaleway TEM. GoTrue ne
 parle TLS implicite que sur `465` : `2465` ne convient pas. L'expéditeur doit appartenir à un
@@ -649,6 +656,7 @@ attendue à ce stade : `select count(*) from pg_policies where schemaname = 'pub
 | `kong` | À chaque changement de `supabase/docker/volumes/api/kong.yml` |
 | `caddy` | À chaque changement de `caddy/Caddyfile`, de `caddy/Caddyfile.spark` ou de `caddy/routes.caddy` — **`CRM-090` les modifie : routes extraites et `/functions/v1/*` relayé** |
 | `minio`, `minio-createbucket` | Cellule Spark seulement (`CRM-090`) : stockage objet interne, sans port publié |
+| `realtime` dans la cellule | À chaque montée de version de Realtime : reconstruire l'image dérivée, que `scripts/spark/livrer.sh` recharge (décision 571) |
 | `auth` | À chaque changement d'une variable `GOTRUE_*`, dont `PASSWORD_MIN_LENGTH` livrée par `CRM-011` |
 
 **Opération en attente du prochain déploiement de production — redéployer `mail-sync` pour que le

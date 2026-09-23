@@ -17,7 +17,9 @@
 #   5. extrait `git archive HEAD` par-dessus /srv/crm, remplace le CONTENU de webapp/dist (Caddy
 #      en monte le répertoire : le remplacer par un autre laisserait Caddy sur l'ancien), et écrit
 #      REVISION ;
-#   6. lance `./runProd.sh --spark` dans la cellule, avec les options passées après `--`.
+#   6. construit l'image Realtime dérivée et la charge dans la cellule si son identifiant y diffère
+#      (décision 571 : l'image d'origine n'y est pas extractible) ;
+#   7. lance `./runProd.sh --spark` dans la cellule, avec les options passées après `--`.
 #
 # La cellule est jointe par un ALIAS ssh — aucune adresse n'entre au dépôt. Le poste le définit
 # selon le fragment `ssh_config` du dossier de cellule (rebond compris).
@@ -151,7 +153,27 @@ git -C "$REPO_ROOT" archive --format=tar HEAD | distant "tar -x -C '$SPARK_REPER
 printf '%s\n' "$REVISION" | distant "cat > '$SPARK_REPERTOIRE/REVISION'"
 info "REVISION = $REVISION"
 
-# --- 6. Lancement ----------------------------------------------------------------------------------------
+# --- 6. Image Realtime dérivée ------------------------------------------------------------------------
+#
+# @spec docs/SPEC-deploiement-spark.md §3.5, docs/JOURNAL.md décision 571
+# L'étiquette est celle que `docker-compose.spark.yml` déclare avec `pull_policy: never` ;
+# `scripts/verify-spark.sh` prouve que les deux ne divergent pas.
+
+IMAGE_REALTIME_SPARK=p2enjoy/realtime-spark:v2.102.3
+if [ "$ARCHIVE_SEULE" = 0 ]; then
+	say "Image Realtime dérivée"
+	docker build -q -t "$IMAGE_REALTIME_SPARK" "$REPO_ROOT/supabase/docker/realtime-spark" >/dev/null
+	id_local=$(docker image inspect --format '{{.Id}}' "$IMAGE_REALTIME_SPARK")
+	id_cellule=$(distant "docker image inspect --format '{{.Id}}' '$IMAGE_REALTIME_SPARK' 2>/dev/null" || true)
+	if [ "$id_local" = "$id_cellule" ]; then
+		info "déjà présente dans la cellule ($id_local)."
+	else
+		info "transfert de $IMAGE_REALTIME_SPARK ($id_local)"
+		docker save "$IMAGE_REALTIME_SPARK" | gzip -1 | distant "gunzip | docker load >/dev/null"
+	fi
+fi
+
+# --- 7. Lancement ----------------------------------------------------------------------------------------
 
 if [ "$ARCHIVE_SEULE" = 1 ]; then
 	info "Archive seule : ni build, ni webapp, ni démarrage. Suite, dans la cellule :"

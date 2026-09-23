@@ -422,7 +422,7 @@ impose de rejouer `scripts/verify-stack.sh` et de mettre à jour `docs/PROD_MIGR
 | `functions` | `public.ecr.aws/supabase/edge-runtime:v1.74.2` | dev, prod |
 | `auth` | `supabase/gotrue:v2.189.0` | dev, prod |
 | `rest` | `postgrest/postgrest:v14.12` | dev, prod |
-| `realtime` | `supabase/realtime:v2.102.3` | dev, prod |
+| `realtime` | `supabase/realtime:v2.102.3` | dev, prod — dans la cellule Spark, image **dérivée** `p2enjoy/realtime-spark:v2.102.3`, construite sur le poste (décision 571) |
 | `storage` | `supabase/storage-api:v1.60.4` | dev, prod |
 | `kong` | `kong/kong:3.9.1` | dev, prod |
 | `studio` | `supabase/studio:2026.07.07-sha-a6a04f2` | dev |
@@ -833,7 +833,10 @@ résultat aux mêmes gardes. `env_file` n'est **pas** posé sur chaque service, 
 gabarit du dossier de cellule : il remettrait tous les secrets à tous les conteneurs, quand
 l'interpolation remet à chacun ce qu'il consomme — répartition figée par `scripts/verify-spark.sh`.
 La webapp est construite **sur le poste qui livre** (`scripts/spark/livrer.sh`), la cellule n'ayant
-pas Node.
+pas Node. **Realtime y tourne sur une image dérivée** : la cellule ne dispose que de 65 536 UID, et
+les fichiers que l'image d'origine attribue à `nobody` (65534) n'y sont pas extractibles. L'image
+dérivée, en une couche possédée par `root`, est construite sur le poste et chargée dans la cellule
+(décision 571).
 
 Les migrations de production ne s'appliquent **jamais** d'elles-mêmes : `APPLY_MIGRATIONS=false` est
 l'invariant du fichier d'environnement de production, et `runProd.sh` refuse de démarrer sans lui.
