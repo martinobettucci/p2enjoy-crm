@@ -3,7 +3,7 @@
 #           propositions et livraison
 # @verifies docs/SPEC-deploiement-spark.md §3 (assemblage), §4.1 (fusion), §4.2 (variables sans
 #           objet), §4.4 (proposer), §5.1 (livrer), §5.2 (premier déploiement), §9 (preuves)
-# @verifies docs/JOURNAL.md décisions 567, 570, 571 et 575 (image Realtime dérivée)
+# @verifies docs/JOURNAL.md décisions 567, 570, 571, 575 et 577 (image Realtime dérivée)
 #
 # Rejoue les preuves de `CRM-090` qui ne demandent PAS la cellule :
 #
@@ -503,12 +503,19 @@ git clone -q --no-hardlinks "$REPO_ROOT" "$L/clone" 2>/dev/null
 fichiers_conformes "$L/injecte"
 cp "$L/injecte/env" "$L/cellule/etc/env"
 # Faux ssh : exécute localement la commande distante, /etc/spark/env étant redirigé vers la cellule
-# simulée. Il journalise chaque commande reçue.
+# simulée. Il journalise chaque commande reçue. L'image Realtime de la cellule est celle qu'étiquette
+# $L/image-cellule, quand il existe ; un `docker load` n'est pas exécuté mais consigné.
 cat > "$L/bin/ssh" <<EOF
 #!/usr/bin/env bash
 commande="\${@: -1}"
 printf '%s\n' "\$commande" >> "$L/ssh.log"
-exec bash -c "\${commande//\/etc\/spark\/env/$L/cellule/etc/env}"
+commande="\${commande//\/etc\/spark\/env/$L/cellule/etc/env}"
+case "\$commande" in
+	*"docker image inspect"*) motif='$etiquette_livrer'
+		[ -f "$L/image-cellule" ] && commande="\${commande//"\$motif"/\$(cat "$L/image-cellule")}" ;;
+	*"docker load"*) commande="cat >/dev/null; echo chargement >> '$L/charges.log'" ;;
+esac
+exec bash -c "\$commande"
 EOF
 # Faux npm : consigne les variables reçues par le build et produit un index.html.
 cat > "$L/bin/npm" <<EOF
@@ -548,6 +555,28 @@ if out=$(livrer); then
 	grep -q 'JWT_SECRET\|SERVICE_ROLE_KEY' "$L/build.env" && fail "un secret a atteint le build" || ok "aucun secret dans le build"
 else
 	fail "première livraison refusée : $(printf '%s' "$out" | tail -n 3 | tr '\n' ' ')"
+fi
+# L'image Realtime n'est transférée que si son CONTENU diffère de celui de la cellule (décision 577) :
+# une reconstruction change l'identifiant, jamais les couches ni la configuration.
+if docker info >/dev/null 2>&1; then
+	docker build -q -t "$etiquette_livrer" supabase/docker/realtime-spark >/dev/null
+	docker tag "$etiquette_livrer" verify-spark/realtime-cellule:simulee
+	echo verify-spark/realtime-cellule:simulee > "$L/image-cellule"
+	id_cellule=$(docker image inspect --format '{{.Id}}' verify-spark/realtime-cellule:simulee)
+	rm -f "$L/charges.log"
+	out=$(livrer)
+	id_livre=$(docker image inspect --format '{{.Id}}' "$etiquette_livrer")
+	[ "$id_livre" != "$id_cellule" ] && [ ! -e "$L/charges.log" ] && case "$out" in *"déjà présente"*) true ;; *) false ;; esac \
+		&& ok "image reconstruite, identifiant nouveau, contenu égal : aucun transfert" \
+		|| fail "image au contenu égal : $( [ -e "$L/charges.log" ] && echo transférée || echo 'non transférée') (identifiants $( [ "$id_livre" = "$id_cellule" ] && echo égaux || echo différents))"
+	docker tag "$source_derivee" verify-spark/realtime-cellule:simulee
+	rm -f "$L/charges.log"
+	out=$(livrer)
+	[ -s "$L/charges.log" ] && ok "image au contenu différent dans la cellule : transférée" || fail "image au contenu différent non transférée"
+	docker rmi -f verify-spark/realtime-cellule:simulee >/dev/null 2>&1
+	rm -f "$L/image-cellule" "$L/charges.log"
+else
+	skip "démon Docker indisponible : comparaison de l'image Realtime non éprouvée"
 fi
 ( cd "$L/clone" && git rm -q docs/SSO.md && git commit -q -m "retrait" )
 if out=$(livrer); then

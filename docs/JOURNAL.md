@@ -28860,3 +28860,27 @@ vérifications, aucune anomalie**.
 **Ce qui reste, et qui n'appartient pas au dépôt.** Le propriétaire du Spark accepte la nouvelle
 route ; la Forge obtient alors le certificat. `scripts/spark/verifier.sh` le constatera par
 `https://`.
+
+## décision 577 — `livrer.sh` retransférait l'image Realtime à chaque livraison : il compare désormais son contenu, pas son identifiant
+
+*2026-09-23, même session, `CRM-090`.*
+
+**Observation.** La livraison de `04392651`, qui ne touchait qu'un script, a retransféré l'image
+Realtime dérivée alors que son Dockerfile n'avait pas changé depuis la livraison précédente.
+
+**Mesure.** Deux `docker build -q` successifs du même Dockerfile, tout en cache, rendent deux
+identifiants différents — même avec `SOURCE_DATE_EPOCH=0`. Couches (`RootFS.Layers`) et
+configuration (`Config`) sont identiques octet pour octet ; seules diffèrent les métadonnées de
+construction (`Metadata`, référence de construction), qui entrent dans l'identifiant du magasin
+d'images du poste. Dans la cellule, après `docker load`, l'empreinte « couches + configuration » est
+**égale** à celle du poste, quand l'identifiant diffère.
+
+**Décision.** `livrer.sh` compare `{{json .RootFS.Layers}} {{json .Config}}` des deux côtés, et ne
+transfère que si ce contenu diffère. C'est la propriété voulue — « la cellule exécute ce que le poste
+a construit » —, là où l'identifiant mesurait aussi la date de construction.
+
+**Test ajouté AVANT la correction.** Dans la cellule simulée de `scripts/verify-spark.sh`, le faux
+`ssh` sert l'image d'une construction précédente et consigne un `docker load` au lieu de
+l'exécuter : une reconstruction au contenu égal ne doit rien transférer ; une image au contenu
+différent — l'image d'origine — doit l'être. Contre l'ancienne comparaison : **1 anomalie**
+(« transférée, identifiants différents ») ; après : **78 vérifications, aucune anomalie**.

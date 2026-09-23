@@ -99,7 +99,9 @@ supérieur à 64534 n'y est pas extractible. `supabase/realtime:v2.102.3` en por
   **une seule couche** et redéclare la configuration d'exécution à l'identique. Rien d'autre ne
   change : mêmes comptes, mêmes droits, même démarrage.
 - L'image est **construite sur le poste** et chargée dans la cellule par `scripts/spark/livrer.sh`,
-  seulement si son identifiant y diffère. L'overlay la déclare `pull_policy: never`.
+  seulement si son **contenu** y diffère — couches et configuration d'exécution. Pas son
+  identifiant : deux constructions au contenu égal en rendent deux différents (décision 577).
+  L'overlay la déclare `pull_policy: never`.
 - Une montée de version de Realtime dans l'assemblage commun impose la même montée dans la
   dérivée ; `scripts/verify-spark.sh` rougit sinon.
 

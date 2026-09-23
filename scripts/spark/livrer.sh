@@ -155,18 +155,24 @@ info "REVISION = $REVISION"
 
 # --- 6. Image Realtime dérivée ------------------------------------------------------------------------
 #
-# @spec docs/SPEC-deploiement-spark.md §3.5, docs/JOURNAL.md décision 571
+# @spec docs/SPEC-deploiement-spark.md §3.5, docs/JOURNAL.md décisions 571 et 577
 # L'étiquette est celle que `docker-compose.spark.yml` déclare avec `pull_policy: never` ;
 # `scripts/verify-spark.sh` prouve que les deux ne divergent pas.
+#
+# La comparaison porte sur le CONTENU — couches et configuration d'exécution —, jamais sur
+# l'identifiant : mesuré, deux constructions au contenu égal rendent deux identifiants différents,
+# les métadonnées de construction y entrant (décision 577). Le contenu, lui, survit à `docker load`.
 
 IMAGE_REALTIME_SPARK=p2enjoy/realtime-spark:v2.102.3
+CONTENU_IMAGE='{{json .RootFS.Layers}} {{json .Config}}'
 if [ "$ARCHIVE_SEULE" = 0 ]; then
 	say "Image Realtime dérivée"
 	docker build -q -t "$IMAGE_REALTIME_SPARK" "$REPO_ROOT/supabase/docker/realtime-spark" >/dev/null
 	id_local=$(docker image inspect --format '{{.Id}}' "$IMAGE_REALTIME_SPARK")
-	id_cellule=$(distant "docker image inspect --format '{{.Id}}' '$IMAGE_REALTIME_SPARK' 2>/dev/null" || true)
-	if [ "$id_local" = "$id_cellule" ]; then
-		info "déjà présente dans la cellule ($id_local)."
+	contenu_local=$(docker image inspect --format "$CONTENU_IMAGE" "$IMAGE_REALTIME_SPARK")
+	contenu_cellule=$(distant "docker image inspect --format '$CONTENU_IMAGE' '$IMAGE_REALTIME_SPARK' 2>/dev/null" || true)
+	if [ "$contenu_local" = "$contenu_cellule" ]; then
+		info "déjà présente dans la cellule, contenu identique."
 	else
 		info "transfert de $IMAGE_REALTIME_SPARK ($id_local)"
 		docker save "$IMAGE_REALTIME_SPARK" | gzip -1 | distant "gunzip | docker load >/dev/null"

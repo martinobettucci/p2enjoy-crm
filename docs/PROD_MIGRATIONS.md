@@ -144,12 +144,12 @@ de cellule — aucune adresse n'est écrite dans ce dépôt.
 | 8 | Créer le premier compte et le premier espace — **arbitré (décision 574)** : `--email martino@p2enjoy.studio --espace "P2Enjoy CRM" --slug crm` | opérateur, dans la cellule, sur instruction explicite | `scripts/spark/amorcer-espace.sh --email <adresse> --espace "<nom>" --slug <identifiant>` : compte **invité sans mot de passe ni courriel**, espace, appartenance `admin` ; idempotent. La personne accepte en se connectant avec LeLabs à la même adresse vérifiée. Consigner l'opération au §8 |
 | 9 | Accepter les trois notes du Spark (README, CONTRIBUTORS, INSTALL) | propriétaire du Spark | console ; déposées le 2026-09-23 depuis `docs/spark-notes/` par `ssh … 'cat > /etc/spark/notes/<NOM>.md.?' < docs/spark-notes/<NOM>.md` |
 
-**Realtime ne se tire pas dans la cellule, et c'est mesuré** (décision 571) : la cellule ne dispose
-que de 65 536 UID, et l'image d'origine attribue des fichiers à l'UID 65534. `scripts/spark/livrer.sh`
-construit sur le poste l'image dérivée `p2enjoy/realtime-spark:v2.102.3` et la charge dans la cellule
-quand son identifiant y diffère ; ne jamais lancer `docker pull supabase/realtime` dans la cellule
-pour « réparer » : il échouera toujours. **Chargée le 2026-09-23**, identifiant
-`sha256:575b294d…eb8751`.
+**Realtime ne se tire pas dans la cellule, et c'est mesuré** (décisions 571 et 575) : la cellule ne
+dispose que de 65 536 UID, et l'image d'origine attribue des fichiers à l'UID 65534 — et y bascule
+ses migrations par `sudo`. `scripts/spark/livrer.sh` construit sur le poste l'image dérivée
+`p2enjoy/realtime-spark:v2.102.3`, où `nobody` porte l'UID 64000, et la charge dans la cellule quand
+son **contenu** y diffère (décision 577) ; ne jamais lancer `docker pull supabase/realtime` dans la
+cellule pour « réparer » : il échouera toujours.
 
 **Le relais d'envoi.** La Forge ferme `25`, `465` et `587` en sortie (relevé du dépôt du SSO de la
 même Forge) : `SMTP_PORT` doit être un port de repli, `2587` en STARTTLS chez Scaleway TEM. GoTrue ne

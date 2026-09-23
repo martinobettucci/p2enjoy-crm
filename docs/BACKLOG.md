@@ -14415,6 +14415,9 @@ décrit la baseline réelle.
       repropose sans toucher aux secrets en service ; harnais porté à **76 vérifications, aucune
       anomalie**, dont deux qui rougissaient avant la correction. Reste l'acceptation de la route
       par le propriétaire du Spark, puis la preuve en `https://`.
+- [x] **Image Realtime transférée seulement si son contenu change** (décision 577) : l'identifiant
+      changeait à chaque construction. Harnais porté à **78 vérifications, aucune anomalie**, dont
+      une qui rougissait avant la correction.
 
 ### CRM-091 — Connexion unique par `oauth.lelabs.tech` `[~]`
 *Créée le 2026-09-23 — décision 568. Motif : GoTrue 2.189.0 ne parle pas PKCE à Keycloak (M1), que le
