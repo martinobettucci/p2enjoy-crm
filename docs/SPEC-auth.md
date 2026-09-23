@@ -6,6 +6,13 @@ Unités de backlog : `CRM-009` (interface, session d'onglet et gabarits), `CRM-0
 Documents liés : `docs/DAT.md` §4.1 et §7, `docs/SCHEMA.md` §1, `docs/SPEC-permissions-rls.md` §1
 et §7, `docs/manual.md` chapitres 1 et 17.
 
+> **Remise en cause par le responsable — `docs/JOURNAL.md`, décision 578 (2026-09-23), unité
+> `CRM-092`.** Le SSO `oauth.lelabs.tech` devient la **seule** source d'identité, en développement
+> comme en production : GoTrue, la connexion par mot de passe, l'invitation, la récupération et les
+> gabarits transactionnels quittent la pile. Les §1 à §10 ci-dessous décrivent l'état **encore en
+> service** tant que `CRM-092` n'est pas livrée ; ils seront réécrits par sa spécification, committée
+> avant tout code.
+
 Ce document a été écrit **après mesure** du comportement réel de `supabase/gotrue:v2.189.0`, la
 version épinglée par `docker-compose.yml`. Chaque comportement décrit ici est soit mesuré et
 consigné dans `docs/JOURNAL.md`, soit explicitement signalé comme non mesuré.

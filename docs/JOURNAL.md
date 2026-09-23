@@ -28884,3 +28884,82 @@ a construit » —, là où l'identifiant mesurait aussi la date de construction
 l'exécuter : une reconstruction au contenu égal ne doit rien transférer ; une image au contenu
 différent — l'image d'origine — doit l'être. Contre l'ancienne comparaison : **1 anomalie**
 (« transférée, identifiants différents ») ; après : **78 vérifications, aucune anomalie**.
+
+## décision 578 — arbitrage du responsable : le SSO est la SEULE source d'identité, et GoTrue quitte la pile, en développement comme en production
+
+*2026-09-23, nouvelle session, ouverte à réception du bloc d'intégration du client `lelabs-crm`
+(créé le 2026-09-23 à 16:08:44, versé au dépôt : `docs/SSO-client-lelabs-crm.md`).*
+
+**Instruction du responsable, textuelle.** « On s'est pas compris du coup… le SSO est LE SEUL et
+UNIQUE source d'identité dans notre autorisation. Il faut arrêter d'utiliser celui embarqué en
+Supabase, même en dev tu remplaces par un Keycloak préchargé de comptes et rôles. En production seul
+le SSO de lelabs existe et doit être utilisé. »
+
+**Ce que la décision 568 avait mal compris.** Elle a lu « intégrer le SSO » comme l'**ajout** d'un
+parcours : GoTrue restait « l'unique émetteur » et le SSO ne faisait que « prouver une identité à
+GoTrue » (`docs/SPEC-auth.md` §10.1) ; « la connexion par mot de passe reste : la demande est d'intégrer
+le SSO, pas de retirer un parcours » ; le §10.11 écrivait même « le retrait de la connexion par mot de
+passe : non demandé ». C'était une hypothèse traitée comme un fait. La demande était de **remplacer**
+l'identité embarquée par le SSO.
+
+**Ce que l'arbitrage renverse.** Tout ce qui fait naître, prouver ou conserver une identité **dans**
+le CRM :
+
+- GoTrue comme émetteur de jetons (`docs/SPEC-auth.md` §1, §3.5, §10.1) ;
+- la connexion par mot de passe, sa politique de longueur, la récupération (§3.4, §3.7, §4, §9.1) ;
+- l'invitation, l'acceptation et leurs courriels, donc les gabarits et le service `auth-templates`
+  (§3.2, §3.3, §5, `CRM-009` et `CRM-011`) ;
+- la création des comptes du seed par l'API d'administration de GoTrue (`docs/SPEC-seed.md` §2.3,
+  décision 265) ;
+- l'amorçage du premier espace par un compte GoTrue invité (décision 573, `amorcer-espace.sh`) ;
+- l'échange d'`id_token` de `CRM-091` (§10.1, étape 7). Le module PKCE de la webapp
+  (`webapp/src/lib/sso.ts`), lui, reste la bonne forme : client public, PKCE `S256`, découverte.
+
+**Mesures — 2026-09-23, pile de développement en service, en lecture seule.**
+
+| # | Mesure | Résultat |
+|---|---|---|
+| K1 | Sonde publique du §10.8 contre le realm réel, après création du client | `302` vers `https://crm.lelabs.tech/auth/retour`, `Missing parameter: code_challenge_method` : client existant, URL exacte, PKCE exigé |
+| K2 | Connexion PKCE complète menée **sans navigateur** (`curl`) contre le Keycloak de développement | aboutit, pour les trois comptes du seed. Keycloak pose ses cookies `Secure; SameSite=None` même en `http` : un navigateur les garde sur `*.localhost`, `curl` non — un outillage de test doit les reporter lui-même |
+| K3 | Jeton d'**accès** Keycloak | `RS256`, `kid` publié ; `sub` (UUID), `azp=lelabs-crm`, `typ=Bearer`, `email`, `email_verified`, `name`, `given_name`, `family_name` ; `realm_access.roles` **seulement si un rôle est attribué**. **Aucune revendication `role`, aucune `aud`.** Durée `300 s`, rafraîchissement `1800 s` |
+| K4 | Fidélité du realm de développement | le compte sans rôle n'y porte **aucun** `realm_access`, quand le realm réel porte les rôles par défaut (`docs/SSO-client-lelabs-crm.md`) ; les `sub` y sont tirés au hasard à l'import, sans rapport avec les identifiants stables du seed (`5eed…0011` à `…0013`) |
+| K5 | PostgREST 14.12 | clé JWT **statique** (secret, JWK ou jeu de clés en fichier), aucune lecture d'un `jwks_uri` ; rôle lu à `.role`. Consommer le jeton Keycloak tel quel exigerait d'épingler les clés — contraire à « suivre la rotation » — et une revendication `role` que la déclaration ne sait pas demander au realm réel |
+| K6 | `@supabase/supabase-js` 2.112.0 | option `accessToken: () => Promise<string \| null>` : le jeton est fourni par l'application et le module `auth` n'est plus sollicité |
+| K7 | SQL applicatif | seule `auth.uid()` est employée (114 occurrences dans les migrations) et elle ne lit que `sub` ; `auth.users` n'est référencée que par la clé étrangère et le trigger de `profiles` (`0001`) |
+| K8 | Emprise de GoTrue dans le dépôt | webapp (`Authentification.tsx`, 5 appels) ; seed (3 comptes créés, 3 connexions) ; `e2e/api/jetons.ts`, importé par 79 fichiers ; 50 specs d'interface qui se connectent par le formulaire à mot de passe ; 18 scripts (28 connexions par mot de passe) ; 10 fichiers qui créent des comptes par l'API d'administration ; `scripts/verify-auth.sh` (62 contrôles) ; `amorcer-espace.sh` ; services `auth` et `auth-templates` ; route Kong `/auth/v1` ; `migrations-runner` qui attend `auth` |
+| K9 | Production (état consigné au 2026-09-23, décision 574) | un seul compte, `martino@p2enjoy.studio`, **invité par GoTrue et jamais connecté** ; son profil et son appartenance `admin` à l'espace `crm` portent l'identifiant GoTrue, **pas** le `sub` LeLabs |
+
+**Conséquences arrêtées dès maintenant**, parce qu'elles découlent de l'instruction sans choix
+possible :
+
+1. Aucun mot de passe, aucune invitation par courriel, aucune récupération, aucun gabarit
+   transactionnel. Les services `auth` et `auth-templates` quittent les assemblages de
+   développement, de production et de la cellule ; la route `/auth/v1` quitte Kong.
+2. L'identifiant d'une personne dans le CRM est le **`sub` du SSO**. `profiles.id` le porte.
+3. Développement : le Keycloak **préchargé** porte les comptes du seed avec leurs identifiants
+   stables comme `sub`, les rôles du realm, et les rôles par défaut comme le realm réel (K4).
+4. Preuves : un jeton d'utilisateur s'obtient par la **vraie** connexion Keycloak avec PKCE (K2),
+   jamais par un mot de passe GoTrue, jamais fabriqué à la main.
+5. Production : le compte de K9 doit être repris sous son `sub` LeLabs. C'est une écriture en
+   production : elle sera décrite dans `docs/PROD_MIGRATIONS.md` et n'aura lieu que sur instruction
+   explicite.
+
+**Points soumis à l'arbitrage du responsable avant la spécification.**
+
+- **A1 — ce qui remplace GoTrue devant l'API.** (a) Un **échangeur de session** minimal, fonction
+  edge du runtime existant : il vérifie le jeton d'accès Keycloak (algorithme asymétrique seul, clés
+  lues par la découverte et suivies en rotation, `iss`, `azp`, `exp`), puis remet un jeton interne
+  court que PostgREST, Realtime et Storage acceptent sans changement ; aucune identité, aucun mot de
+  passe, aucun stockage de session. (b) Le jeton Keycloak consommé directement par les trois
+  services : écarté par K5, sauf changement du realm réel.
+- **A2 — admission.** Qui entre dans le CRM après une connexion LeLabs réussie : une personne
+  **attendue** par un administrateur d'espace à son adresse vérifiée, les autres voyant un écran
+  d'attente ; ou toute personne authentifiée, l'accès aux données restant porté par les
+  appartenances.
+- **A3 — rôles.** Les rôles d'espace (`admin`, `business_developer`, `viewer`) et les droits fins
+  restent-ils dans les tables du CRM, le SSO ne fournissant que l'identité, ou doivent-ils venir de
+  rôles portés par le SSO ?
+
+**Unité créée** : `CRM-092`, `[ ]`. Sa spécification sera écrite et committée après l'arbitrage, et
+avant tout code. `CRM-091` reste `[~]` : son module PKCE est repris, son échange d'`id_token` est
+remplacé.

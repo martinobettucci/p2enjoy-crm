@@ -14453,4 +14453,22 @@ client est déclaré, la sonde du §10.8 rend `302` et une connexion réelle abo
       de preuve y a été vue et corrigée (capture « annulée » rendue hors palier).
 - [x] Documentation : `docs/manual.md` §1.1, `README.md` §6 et §9, `docs/DAT.md` §3.6, §3.7 et §4.1,
       `docs/PROD_MIGRATIONS.md` §2.3 et §4, `CHANGELOG.md`.
-- [ ] Déclaration remise, client créé, sonde et connexion réelle en production (§10.8).
+- [~] Déclaration remise, client `lelabs-crm` créé le 2026-09-23 à 16:08:44
+      (`docs/SSO-client-lelabs-crm.md`), sonde `302` rejouée (décision 578, K1). La connexion réelle
+      en production n'emploiera **pas** l'échange d'`id_token` de GoTrue : elle revient à `CRM-092`.
+
+### CRM-092 — Le SSO, seule source d'identité : GoTrue quitte la pile `[ ]`
+*Créée le 2026-09-23 — décision 578, arbitrage du responsable. Motif : la décision 568 avait gardé
+GoTrue comme émetteur et la connexion par mot de passe ; le responsable exige que le SSO soit la seule
+source d'identité, en développement (Keycloak préchargé de comptes et de rôles) comme en production
+(seul `oauth.lelabs.tech`).*
+
+Retirer GoTrue et tout ce qui fait naître une identité dans le CRM ; ouvrir la session du produit à
+partir du seul jeton LeLabs ; précharger le Keycloak de développement ; porter seed, harnais et
+scripts sur la vraie connexion SSO ; reprendre le compte de production sous son `sub`.
+**Spécification** : à écrire après l'arbitrage des points A1 à A3 de la décision 578, et à committer
+avant tout code.
+**DoD** : à fixer par la spécification.
+
+- [ ] Arbitrage des points A1, A2 et A3 (décision 578).
+- [ ] Spécification committée et poussée avant tout code.
