@@ -3,6 +3,8 @@
 -- @verifies docs/SCHEMA.md §1 et §5
 -- @verifies docs/SPEC-permissions-rls.md §4.1 bis et §7
 -- @verifies docs/JOURNAL.md décisions 294 et 307
+-- @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §7.2 — la suppression d'une personne
+--           passe par son profil, plus par `auth.users` (assertion 82 RÉVISÉE)
 
 begin;
 
@@ -481,10 +483,14 @@ select lives_ok(
 	      '02200000-0000-4000-8000-000000000003',
 	      'Parole conservée CRM022') $$,
 	'81 — un commentaire peut référencer son auteur');
+-- RÉVISÉE par `CRM-092` : retirer une personne passait par sa ligne `auth.users`, dont la cascade
+-- emportait le profil ; `profiles.id` est désormais le `sub` du SSO, sans clé vers `auth.users`
+-- (docs/SPEC-session-sso.md §7.2). Le geste est donc la suppression du profil lui-même, et la
+-- propriété prouvée par 83 est inchangée.
 select lives_ok(
-	$$ delete from auth.users
+	$$ delete from public.profiles
 	    where id = '02200000-0000-4000-8000-000000000003' $$,
-	'82 — supprimer le compte auteur n''est pas bloqué par sa parole');
+	'82 — supprimer le profil auteur n''est pas bloqué par sa parole');
 select results_eq(
 	$$ select author_id, body from public.card_comments
 	    where id = '02200000-0000-4000-8000-0000000000d1' $$,

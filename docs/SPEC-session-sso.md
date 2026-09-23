@@ -2,7 +2,7 @@
 
 Unité de backlog : `CRM-092` (`docs/BACKLOG.md`).
 Décisions : `docs/JOURNAL.md` 578 (instruction du responsable, mesures K1 à K9), 579 (arbitrage A1 à
-A3), 580 (mesures K10 à K17).
+A3), 580 (mesures K10 à K17), 581 (correction de K12 : migration élevée, harnais de l'unité).
 Contrats du fournisseur : `docs/SSO.md` (général), `docs/SSO-client-lelabs-crm.md` (client du CRM).
 Documents liés : `docs/SPEC-auth.md` (état remplacé), `docs/SPEC-identite.md` §3 à §6,
 `docs/SPEC-permissions-rls.md` §1 à §3, `docs/SPEC-edge-functions.md` §2 à §5, `docs/SPEC-seed.md`
@@ -44,8 +44,8 @@ transporte des preuves ; il ne décide d'aucun accès.
 | Variables propres à GoTrue : `DISABLE_SIGNUP`, `ENABLE_EMAIL_SIGNUP`, `ENABLE_EMAIL_AUTOCONFIRM`, `ENABLE_PHONE_*`, `ENABLE_ANONYMOUS_USERS`, `PASSWORD_MIN_LENGTH`, `ADDITIONAL_REDIRECT_URLS`, `MAILER_*`, `SMTP_*` | `.env.example`, `scripts/lib/env.sh`, `runDev.sh`, `scripts/spark/proposer.sh` | T6 |
 | Formulaire à mot de passe de `/connexion` et module `webapp/src/lib/auth.ts` en ce qu'il classe les refus de GoTrue | webapp | T5 |
 | Échange d'`id_token` de `CRM-091` et son nonce | `webapp/src/lib/sso.ts`, `Authentification.tsx` | T5 |
-| Trigger `on_auth_user_created` et `app.handle_new_user()` | migration `0075` | T6 |
-| Clé étrangère `profiles.id → auth.users` | migration `0074` | T1 |
+| Trigger `on_auth_user_created` et `app.handle_new_user()` | migration `0076` | T6 |
+| Clé étrangère `profiles.id → auth.users` | migration `0075` | T1 |
 | Création de comptes par l'API d'administration GoTrue, connexions par mot de passe GoTrue | seed, `e2e/api/jetons.ts`, 18 scripts, 50 specs d'interface | T4, T5 |
 
 Une variable qu'un autre service consomme encore (`SITE_URL` pour le realm de développement,
@@ -54,7 +54,7 @@ tranche T6 le mesure par recherche exhaustive avant de retirer quoi que ce soit.
 
 **Ce qui reste, inerte.** Les tables du schéma `auth` ne sont pas supprimées : la base neuve les
 reçoit de l'image (K10), la production porte celles de GoTrue et le compte de K9. Plus rien n'y
-écrit. Les supprimer est une opération destructive distincte, hors de cette unité (§13).
+écrit. Les supprimer est une opération destructive distincte, hors de cette unité (§15).
 
 ## 3. Faits qui fondent le contrat
 
@@ -66,7 +66,7 @@ Résumé ; le détail est dans `docs/JOURNAL.md`, décisions 578 et 580.
 | K5 | PostgREST n'accepte qu'une clé statique et lit le rôle dans `.role` | Le jeton LeLabs n'est pas présenté à la pile de données ; le jeton interne l'est |
 | K6 | `supabase-js` 2.112 accepte `accessToken` | Le client de la webapp reçoit le jeton interne sans module `auth` |
 | K7 | La RLS n'emploie que `auth.uid()`, qui ne lit que `sub` | Le jeton interne porte `sub` = `sub` LeLabs ; aucune politique ne change |
-| K11, K12 | Sans GoTrue, `auth.uid()` d'une base neuve rend `NULL`, et une migration ne peut pas la redéfinir | Script d'initialisation du cluster (§7.1) |
+| K11, K12 | Sans GoTrue, `auth.uid()` d'une base neuve rend `NULL` ; ses fonctions appartiennent à un rôle dont `postgres` n'est pas membre | Migration élevée `0074` (§7.1, décision 581) |
 | K13 | Un `id` imposé à l'import devient le `sub` | Les comptes du seed gardent leurs identifiants stables (§10) |
 | K15 | Le client public rafraîchit son jeton sans secret | La webapp rafraîchit chez LeLabs puis rééchange (§8.4) |
 | K16 | Révoquer le jeton de rafraîchissement ferme la session LeLabs | La déconnexion du CRM ne révoque rien (§8.5) |
@@ -241,17 +241,18 @@ plus une création de compte : c'est l'inscription d'une adresse, que le SSO seu
 
 ## 7. Modèle de données
 
-### 7.1 Les fonctions `auth.*` d'une base neuve — script d'initialisation
+### 7.1 Les fonctions `auth.*` — migration élevée `0074_revendications_du_jeton.sql`
 
-`supabase/docker/volumes/db/auth-claims.sql`, monté comme `jwt.sql` et joué **une fois**, par le
-superutilisateur, à la création du cluster. Il redéfinit `auth.uid()`, `auth.role()` et
-`auth.email()` sous la forme exacte que GoTrue installait — lecture de `request.jwt.claim.<x>`, puis
-de `request.jwt.claims ->> '<x>'` — en conservant leur propriétaire. Une base déjà initialisée,
-développement existant comme production, porte déjà cette forme (K11) : rien ne change pour elle. Une
-migration ne le peut pas (K12), et c'est pourquoi le script vit à côté de `jwt.sql` et non dans
-`supabase/migrations/`.
+Déclare `-- @migration-role: supabase_admin` avec son motif mesuré (K12), selon la décision 363, et
+**ne crée rien d'autre**. Elle pose `auth.uid()`, `auth.role()`, `auth.email()` et `auth.jwt()` sous
+la forme exacte que GoTrue installait — lecture de `request.jwt.claim.<x>`, puis de
+`request.jwt.claims ->> '<x>'` —, fonctions SQL sans `SECURITY DEFINER`, propriétaire
+`supabase_auth_admin` comme sous GoTrue. Rejouée à chaque passage du runner, elle s'applique à toute
+base : sur une base neuve elle lève K11 ; sur une base où GoTrue a tourné, développement existant
+comme production, elle réécrit une définition identique (décision 581). `scripts/verify-scripts.sh`
+ajoute ce fichier à la liste nommée des élévations.
 
-### 7.2 Migration `0074_identite_sso.sql` — tranche T1
+### 7.2 Migration `0075_identite_sso.sql` — tranche T1
 
 - **Retire** la clé étrangère `profiles.id → auth.users` : un profil naît désormais d'un `sub` LeLabs,
   qui n'a pas de ligne dans `auth.users`. Le commentaire de `profiles.id` devient « `sub` du SSO ».
@@ -275,7 +276,7 @@ migration ne le peut pas (K12), et c'est pourquoi le script vit à côté de `jw
 - **Crée `public.ouvrir_session_sso`** (§6.2).
 
 Le trigger `on_auth_user_created` **reste** jusqu'à T6 : tant que GoTrue tourne encore, il ne gêne
-rien, et le retirer avant que le seed ne passe par le SSO (T4) casserait le seed. La migration `0075`
+rien, et le retirer avant que le seed ne passe par le SSO (T4) casserait le seed. La migration `0076`
 le retire avec GoTrue.
 
 ### 7.3 Données de production
@@ -425,7 +426,7 @@ explicite du responsable** :
 
 1. Lecture seule d'abord : l'espace `crm` ne porte rien d'autre que l'appartenance de K9 — aucune
    card, aucun commentaire, aucune donnée — et le compte n'a jamais été connecté.
-2. Appliquer `0074` puis `0075`.
+2. Appliquer `0074`, `0075` et `0076`.
 3. Livrer la fonction `session` ; remettre `JWT_SECRET` et les `SSO_*` au seul service `functions`.
 4. Arrêter et retirer `auth` et `auth-templates` ; retirer les variables du §2, dont les `SMTP_*` que
    `proposer.sh` proposait pour les seuls courriels de GoTrue.
@@ -445,11 +446,11 @@ explicite du responsable** :
 |---|---|
 | Unitaire, Deno | `supabase/functions/session/*.test.ts` : jeton mal formé ; `alg` `none`, `HS256`, `HS512`, `RS384` refusés **sans** lecture de clé ; `kid` inconnu ; signature altérée d'un octet ; `iss`, `azp`, `typ` différents ; `exp` passé d'une seconde ; `iat` futur ; `sub` non UUID ; adresse non vérifiée ; `verified` absent, puis présent parmi d'autres rôles dans un autre ordre ; découverte d'un autre émetteur ; délai dépassé ; jeton interne : revendications exactes, signature vérifiable par `JWT_SECRET`, `exp` = min des deux ; dictionnaire du §5.4 complet. Clés RSA et EC tirées par WebCrypto dans le test, jamais versées |
 | pgTAP | `workspace_invitations` : contraintes, clé, trois politiques et privilèges ; `ouvrir_session_sso` : attente consommée en appartenance au bon rôle, profil créé une fois, profil existant non réécrit, appartenance existante non rétrogradée, aucune trace sans attente, rejeu stable, `EXECUTE` refusé à `anon` et `authenticated` ; `profiles` sans clé vers `auth.users` |
-| Base neuve | un cluster jetable **sans GoTrue**, migrations rejouées : `auth.uid()` rend le `sub` de `request.jwt.claims` (K11 levée), et une lecture RLS réelle aboutit |
+| Base neuve | T1 : un cluster jetable **sans GoTrue**, `0074` appliquée deux fois : `auth.uid()` rend le `sub` de `request.jwt.claims` (K11 levée), propriétaire inchangé. T6 : la pile entière recréée sans GoTrue par `./resetMe.sh`, seed et preuves d'API rejoués — une lecture RLS réelle aboutit |
 | API, pile réelle | `e2e/api/session.spec.ts`, Keycloak de développement et échangeur derrière Kong : les trois comptes seedés ouvrent une session et lisent leurs données sous RLS ; `inconnu@`, `attendu@`, adresse non vérifiée rendent leur `403` et leur code ; jeton du client étranger, `id_token`, jeton interne présenté à l'échangeur : `401` ; jeton interne accepté par PostgREST, **Realtime** et **Storage** ; `verified` retiré par l'API d'administration de développement → échange suivant refusé ; appartenance retirée → échange suivant refusé ; **rotation** : nouvelle clé prioritaire créée, nouveau jeton accepté sans redémarrer, ancienne clé désactivée → ancien jeton refusé ; `/auth/v1/*` → `404` après T6 |
 | E2E | `e2e/ui/connexion.spec.ts` : vraie page Keycloak pour chacun des trois rôles ; session dans `sessionStorage`, `localStorage` vide, transaction retirée, URL sans `code` ; rechargement conservant la session ; **rafraîchissement** franchi par l'horloge de Playwright sans perte de session ; déconnexion ramenant à `/connexion` et reconnexion sans formulaire tant que LeLabs vit ; `inconnu@` et `attendu@` voyant leur attente ; annulation ; configuration absente ; console vierge. Les 50 specs d'interface se connectent par la fixture `connecterAvecLeLabs` |
 | Visuel | carte de connexion, redirection, retour, chacun des refus et chacune des attentes, textes longs, aux quatre paliers ; captures observées |
-| Harnais | `scripts/verify-auth.sh` réécrit sur ce contrat et **non complaisant** : il rougit si `alg=HS256` est accepté, si `azp` n'est plus contrôlé, si l'admission cesse d'exiger `verified`, si `/auth/v1` répond, si `JWT_SECRET` atteint une autre fonction que `session` |
+| Harnais | **`scripts/verify-session-sso.sh`**, grandi à chaque tranche et **non complaisant** : il rougit si `alg=HS256` est accepté, si `azp` n'est plus contrôlé, si l'admission cesse d'exiger `verified`, si `/auth/v1` répond, si `JWT_SECRET` atteint une autre fonction que `session`. `scripts/verify-auth.sh` est retiré avec GoTrue en T6 (décision 581) |
 
 Les suites existantes qui prouvaient GoTrue sont **révisées ou retirées avec leur objet**, jamais
 désactivées : chaque retrait est nommé dans le journal avec ce qui le remplace.
@@ -461,12 +462,12 @@ garde la pile utilisable à chaque étape : GoTrue ne part qu'en T6, quand plus 
 
 | Tranche | Contenu | Dépend de |
 |---|---|---|
-| **T1** | `auth-claims.sql`, migration `0074`, pgTAP, preuve de base neuve, `docs/SCHEMA.md` §1 | — |
+| **T1** | Migrations `0074` et `0075`, pgTAP, preuve de base neuve, `scripts/verify-session-sso.sh`, `docs/SCHEMA.md` §1 | — |
 | **T2** | Keycloak préchargé (§10), `keycloak/README.md`, révision des preuves `CRM-091` qui en dépendent | — |
 | **T3** | Fonction `session`, environnement par fonction dans `main`, variables vers `functions`, tests Deno, `e2e/api/session.spec.ts`, `docs/SPEC-edge-functions.md` | T1, T2 |
 | **T4** | `e2e/api/jetons.ts` et `scripts/lib/sso.sh` par la vraie connexion, comptes jetables par l'API de développement, seed (§11), portage des 18 scripts et des specs d'API qui créaient des comptes GoTrue, `docs/SPEC-seed.md`, `docs/SPEC-test-harness.md` | T3 |
 | **T5** | Webapp (§8, §9), tests unitaires, `e2e/ui/connexion.spec.ts`, fixture et portage des 50 specs d'interface, `docs/DESIGN_SYSTEM.md` §5.12, captures, `docs/manual.md` chapitre 1 | T3, T4 |
-| **T6** | Retrait de GoTrue (§2), migration `0075`, `verify-auth.sh` réécrit, scripts d'environnement et de cellule, `docs/SPEC-auth.md` réduit à un renvoi | T4, T5 |
+| **T6** | Retrait de GoTrue (§2), migration `0076`, retrait de `verify-auth.sh`, scripts d'environnement et de cellule, `docs/SPEC-auth.md` réduit à un renvoi | T4, T5 |
 | **T7** | `README.md`, `docs/DAT.md`, `docs/SPEC-deploiement-spark.md`, `docs/manual.md` chapitre 17, `docs/PROD_MIGRATIONS.md` (§12), `CHANGELOG.md` ; campagne des harnais touchés | T6 |
 
 ## 15. Hors périmètre

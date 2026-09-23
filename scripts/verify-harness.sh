@@ -547,7 +547,10 @@ PORT_RAPPORT=9323
 # **68 depuis `CRM-066` tranche 2 a, 2026-08-30** :
 # `supabase/tests/0068_entonnoir_conversion.test.sql` est le fichier ajouté, et il est le seul.
 # 67 + 1 = 68, valeur COMPTÉE — « 68 fichiers ». Garde-fou RÉVISÉ, jamais retiré (décision 51).
-FICHIERS_SQL_ATTENDUS=68
+# **69 depuis `CRM-092` tranche T1, 2026-09-23** : `supabase/tests/0069_identite_sso.test.sql` est le
+# fichier ajouté, et il est le seul. 68 + 1 = 69, valeur COMPTÉE — « 69 fichiers ». Garde-fou RÉVISÉ,
+# jamais retiré (décision 51).
+FICHIERS_SQL_ATTENDUS=69
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -571,7 +574,12 @@ FICHIERS_SQL_ATTENDUS=68
 # QUATRE assertions au groupe 6 bis de `0068_entonnoir_conversion.test.sql` — les trois niveaux que
 # le seed pose désormais, lus SANS écriture — 3079 + 4 = 3083, et `npm run test:sql` en COMPTE
 # exactement **3083**. Aucun fichier n'est ouvert : `FICHIERS_SQL_ATTENDUS` reste à 68.
-ASSERTIONS_ATTENDUES=3083
+# **3142 le 2026-09-23, et l'écart est ENTIÈREMENT le mien** : `CRM-092` tranche T1 ouvre
+# `0069_identite_sso.test.sql` (**58** assertions) et ajoute à `0016_preuves_refus.test.sql` l'inventaire
+# nommé des trois politiques de `workspace_invitations` (**1**) — 3083 + 58 + 1 = 3142 —, et
+# `npm run test:sql` en COMPTE exactement **3142**. Trois assertions de `0001` et une de `0023`, qui
+# prouvaient la clé vers `auth.users`, sont RÉVISÉES sans changer leur nombre (décision 51).
+ASSERTIONS_ATTENDUES=3142
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS

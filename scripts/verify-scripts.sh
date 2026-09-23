@@ -790,14 +790,18 @@ fi
 # appartient à `supabase_admin`, et `postgres` n'y crée aucune politique. Le contrôle est RÉVISÉ et
 # non relâché — il continue d'énumérer NOMMÉMENT les fichiers autorisés, et refuse toute élévation
 # qui apparaîtrait ailleurs. Une liste close reste une liste close, même à deux entrées.
+# TROIS depuis `CRM-092` tranche T1 (décision 581) : `0074_revendications_du_jeton.sql` redéfinit
+# `auth.uid()` et ses trois sœurs, que GoTrue posait et dont `postgres` n'est pas membre du
+# propriétaire (K12). Motif mesuré en en-tête, rien d'autre créé — la liste reste NOMMÉE.
 MARQUEURS_ATTENDUS='supabase/migrations/0018_pg_cron.sql
-supabase/migrations/0029_pieces_jointes_telechargeables.sql'
+supabase/migrations/0029_pieces_jointes_telechargeables.sql
+supabase/migrations/0074_revendications_du_jeton.sql'
 role_markers=$(grep -l '^-- @migration-role:' supabase/migrations/*.sql 2>/dev/null || true)
 role_valeurs=$(grep -h '^-- @migration-role:' supabase/migrations/*.sql 2>/dev/null |
 	sort -u || true)
 if [ "$role_markers" = "$MARQUEURS_ATTENDUS" ] \
 	&& [ "$role_valeurs" = '-- @migration-role: supabase_admin' ]; then
-	ok "seules pg_cron et la politique de Storage exigent le rôle propriétaire supabase_admin"
+	ok "seules pg_cron, la politique de Storage et les fonctions auth.* exigent supabase_admin"
 else
 	fail "marqueurs de rôle de migration inattendus : ${role_markers:-aucun}"
 fi

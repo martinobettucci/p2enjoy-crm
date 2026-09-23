@@ -1,6 +1,8 @@
 // @verifies CRM-006 (docs/BACKLOG.md) — contrat des types générés depuis le schéma
 // @verifies docs/SPEC-types.md §5 (fichier produit), §7 (ce que les types n'expriment pas)
 // @verifies docs/SCHEMA.md §1 (socle d'identité) ; docs/INCONSISTENCY_REPORT.md INC-010
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §7.2 — `workspace_invitations` et
+//           `ouvrir_session_sso` dans le contrat de types (tranche T1)
 //
 // Test **unitaire** du contrat de types. Il ne s'exécute pas : il se compile. Chaque assertion
 // ci-dessous est une contrainte que `tsc --noEmit` vérifie, et qui fait échouer la compilation
@@ -208,6 +210,9 @@ type _tables = Expect<
     | 'workflow_transitions'
     | 'workflow_versions'
     | 'workflows'
+    // `0075` de `CRM-092` tranche T1 ajoute `workspace_invitations`, les attentes d'un espace
+    // (docs/SPEC-session-sso.md §7.2), et le témoin la voit dans le même changement.
+    | 'workspace_invitations'
     | 'workspace_members'
     | 'workspaces'
   >
@@ -898,7 +903,12 @@ type _vueDerivationColonnes = Expect<
 // SANS écran : la régénération suit l'arrivée de la FONCTION, jamais celle de son appelant.
 // `webapp/src/lib/analytique.ts` l'appelle bien dès cette tranche, mais l'écran `/pilotage` est la
 // tranche 3 et trouvera son type déjà là. Quarante-huit devient QUARANTE-NEUF.
-type _lesQuaranteNeufFonctions = Expect<
+// `0075` de `CRM-092` TRANCHE T1 ajoute `ouvrir_session_sso`, et le témoin la voit dans le même
+// changement, pour la NEUVIÈME fois consécutive. **Le type n'est pas une permission** : la fonction
+// n'est exécutable que par la clé de service, que la webapp ne détient jamais ; un
+// `client.rpc('ouvrir_session_sso')` de la webapp compile, et le serveur le refuse en `42501`
+// (docs/SPEC-session-sso.md §6.2). Quarante-neuf devient CINQUANTE.
+type _lesCinquanteFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
     | 'entonnoir_conversion'
@@ -941,6 +951,7 @@ type _lesQuaranteNeufFonctions = Expect<
     | 'restore_workflow_version'
     | 'snooze_card'
     | 'previsualiser_exigence'
+    | 'ouvrir_session_sso'
     | 'queue_outbound_email'
     | 'reprendre_envois_orphelins'
     | 'reprogrammer_envoi'
@@ -1155,7 +1166,7 @@ export type AssertionsDuContratDeTypes = [
   _relationsWorkspaceMembers,
   _laSeuleVue,
   _vueDerivationColonnes,
-  _lesQuaranteNeufFonctions,
+  _lesCinquanteFonctions,
   _signatureReelSaisissable,
   _retourReelSaisissable,
   _ecriturePermisePrendUneLigneDeTableau,

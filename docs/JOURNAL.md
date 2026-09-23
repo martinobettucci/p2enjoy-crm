@@ -29017,3 +29017,68 @@ développement. Elles complètent K1 à K9 (décision 578).*
 - **K16** : la déconnexion du CRM **oublie** la session locale et ne révoque rien chez LeLabs. Le
   jeton de rafraîchissement effacé du navigateur reste valide chez le fournisseur jusqu'à son
   échéance d'inactivité ; c'est le prix de la règle du SSO, et il est écrit dans la spécification.
+
+## décision 581 — K12 corrigée : une migration PEUT redéfinir `auth.uid()`, par l'élévation encadrée de la décision 363
+
+*2026-09-23, même session, au début de la tranche T1 de `CRM-092`.*
+
+**Erreur de la décision 580.** Elle concluait de K12 qu'« une migration ne le peut pas » et plaçait
+la redéfinition des fonctions `auth.*` dans un script d'initialisation du cluster. C'est faux pour
+ce dépôt : le runner (`supabase/docker/migrations-runner/apply-migrations.sh`) exécute sous
+`supabase_admin` toute migration qui déclare `-- @migration-role: supabase_admin`, élévation encadrée
+par la décision 363 — motif mesuré en en-tête, liste nommée dans `scripts/verify-scripts.sh`. C'est
+le chemin de `0018_pg_cron.sql` et de `0029_pieces_jointes_telechargeables.sql`, qui administrent
+elles aussi des objets dont `postgres` n'est pas membre.
+
+**Décision.** Les quatre fonctions `auth.uid()`, `auth.role()`, `auth.email()` et `auth.jwt()` sont
+posées par **`0074_revendications_du_jeton.sql`**, élevée, qui ne crée rien d'autre. C'est préférable
+au script d'initialisation sur les trois points que `CLAUDE.md` §24 demande : versionnée, rejouée à
+chaque passage du runner, et appliquée à **toute** base — neuve, de développement existante et de
+production — au lieu des seules bases neuves. Sur une base où GoTrue a tourné, elle réécrit une
+définition identique : aucun effet. La suite de la numérotation se décale : `0075_identite_sso.sql`
+porte le modèle (§7.2 de la spécification), `0076` retirera le trigger de GoTrue en T6.
+
+**Et le harnais de l'unité.** `scripts/verify-auth.sh` prouve GoTrue tant qu'il tourne ; il ne peut
+pas accueillir les preuves de `CRM-092` avant T6 sans mêler deux contrats. Les preuves de l'unité
+vivent dans **`scripts/verify-session-sso.sh`**, qui grandit à chaque tranche ; `verify-auth.sh` est
+retiré avec son objet en T6, ce qui en survit y étant reporté et nommé.
+
+## décision 582 — `CRM-092` tranche T1 livrée : la base sait lire un jeton sans GoTrue et accueille un profil né d'un `sub`
+
+*2026-09-23, même session. Spécification `docs/SPEC-session-sso.md` §7, committée avant le code.*
+
+**Livré.** `0074_revendications_du_jeton.sql` (élevée, décision 581) et `0075_identite_sso.sql` ;
+suite pgTAP `0069_identite_sso.test.sql` ; harnais de l'unité `scripts/verify-session-sso.sh`.
+
+**Un défaut de ma migration, trouvé en exécutant.** La forme `unnest(tableau, tableau)` à plusieurs
+arguments n'est reconnue par l'analyseur que **non qualifiée** : écrite `pg_catalog.unnest(a, b)`, elle
+cherche une fonction à deux arguments qui n'existe pas. Corrigé par la forme explicite
+`rows from (pg_catalog.unnest(a), pg_catalog.unnest(b))`, qualifiée comme tout le dépôt. La suite
+pgTAP, écrite avant l'exécution de la fonction, l'a trouvé.
+
+**Suites révisées, jamais retirées (décision 51).** `0001` (assertions 18, 19, 43) prouvait la clé
+vers `auth.users` et sa cascade : elle prouve désormais leur absence, et qu'une ligne d'`auth.users`
+supprimée n'emporte plus le profil. `0023` (assertion 82) supprimait l'auteur par `auth.users` : elle
+supprime le profil. `0016` compte **125** politiques au lieu de 122 et nomme les trois nouvelles.
+
+**Vérifications.**
+
+- `npm run test:sql` : **69 fichiers, 3142 assertions, aucune anomalie** — compteurs de
+  `scripts/verify-harness.sh` révisés sur ces valeurs comptées.
+- `scripts/verify-session-sso.sh` : **16 vérifications, aucune anomalie**. Le témoin reproduit K11 sur
+  une base neuve sans GoTrue avant `0074`, puis la voit levée ; quatre dégradations — `auth.uid()`
+  ramenée à la forme de l'image, inscription au nom d'autrui, fonction ouverte à `authenticated`, clé
+  vers `auth.users` rétablie — rougissent chacune la suite.
+- `scripts/verify-scripts.sh` : **112 vérifications, aucune anomalie**, la liste nommée des élévations
+  portée à trois.
+- Les 75 migrations rejouées par le **vrai** runner : `0074` sous `supabase_admin`, `0075` sous
+  `postgres`, succès.
+- Projet Playwright `api` : **1055 réussis, 6 échecs, aucun imputable à T1** :
+  - cinq scénarios de `liste-cards.spec.ts` rendent `400` « text search configuration
+    "francais_sans_accent" does not exist » : le `.env` **de ce poste** porte
+    `PGRST_DB_EXTRA_SEARCH_PATH=public,extensions` quand `.env.example` exige `public,extensions,app`.
+    Dérive locale antérieure, sans lien avec `CRM-092` ; `.env` n'est pas réécrit par cette session,
+    le responsable en est informé ;
+  - `sso.spec.ts` M4 trouve deux identités `keycloak` au compte seedé : elles datent de 13:46 et
+    13:48 UTC, et leurs `provider_id` diffèrent — le Keycloak de développement a été recréé entre
+    deux exécutions et a tiré un nouveau `sub`. C'est exactement K4, que la tranche T2 ferme.

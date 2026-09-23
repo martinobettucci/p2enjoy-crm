@@ -31,11 +31,16 @@ Documents liés : `docs/DAT.md`, `docs/SPEC-permissions-rls.md`, `docs/SPEC-work
 ## 1. Identité et cloisonnement
 
 ### `profiles`
-Prolonge `auth.users`. Créée par trigger à l'inscription.
+La personne du CRM. **Son identifiant est le `sub` du SSO LeLabs** (`CRM-092`,
+`docs/SPEC-session-sso.md` §1) : le profil naît à la première connexion admise, par
+`public.ouvrir_session_sso` (§6.2 de cette spécification). Il ne prolonge plus `auth.users` : la clé
+étrangère est retirée par la migration 75. Tant que GoTrue tourne encore (tranches T1 à T5), le
+trigger historique sur `auth.users` continue de créer un profil pour un compte GoTrue ; il part avec
+GoTrue (migration 76).
 
 | Colonne | Type | Contraintes |
 |---|---|---|
-| `id` | `uuid` | PK, FK `auth.users(id)` `ON DELETE CASCADE` |
+| `id` | `uuid` | PK — `sub` du SSO ; aucune clé étrangère |
 | `full_name` | `text` | non nul |
 | `avatar_url` | `text` | |
 | `locale` | `text` | défaut `'fr'` |
@@ -71,6 +76,25 @@ Cloisonnement de premier niveau.
 modifie. La mise à jour cliente ne porte que sur `role`. Après chaque mutation de membership, un
 constraint trigger différable exige un admin dans chaque workspace affecté qui existe encore,
 même si l'admin retiré était l'unique membre ; la cascade du workspace lui-même reste possible.
+
+### `workspace_invitations` — `CRM-092`
+Les **attentes** d'un espace : une adresse et un rôle, inscrits par un administrateur, qu'une
+connexion LeLabs **vérifiée** consomme et change en appartenance (`docs/SPEC-session-sso.md` §6).
+Une attente n'est pas un compte : aucune identité ne naît dans le CRM.
+
+| Colonne | Type | Contraintes |
+|---|---|---|
+| `workspace_id` | `uuid` | PK composite, FK `workspaces` `ON DELETE CASCADE` |
+| `email` | `text` | PK composite ; en minuscules, sans espace de bord, 3 à 320 caractères, un `@` entouré de caractères non blancs ; indexée |
+| `role` | `text` | `CHECK (role IN ('admin','business_developer','viewer'))` |
+| `invited_by` | `uuid` | FK `profiles` `ON DELETE SET NULL`, défaut `auth.uid()` |
+| `created_at` | `timestamptz` | défaut `now()` |
+
+**Contrat :** un administrateur de l'espace lit, inscrit — en son propre nom — et retire les
+attentes de son espace ; **aucune mise à jour** n'est ouverte, ni par politique ni par privilège.
+L'anonyme et les autres membres lisent zéro ligne. La consommation n'est faite que par
+`public.ouvrir_session_sso(p_sub, p_email, p_nom)`, `SECURITY DEFINER`, exécutable par la seule clé
+de service, qu'appelle l'échangeur de session après avoir vérifié le jeton LeLabs.
 
 ### `track_members`, `channel_members`
 Droits fins facultatifs. **Absence de ligne = accès hérité du rôle de workspace.** Une ligne

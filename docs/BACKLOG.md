@@ -14475,11 +14475,13 @@ connexion réelle de `martino@p2enjoy.studio` aboutie après les opérations du 
 - [x] Arbitrage des points A1, A2 et A3 (décision 579) : échangeur de session, personne attendue
       **et** `verified`, rôles dans les tables du CRM.
 - [x] Spécification committée et poussée avant tout code : `docs/SPEC-session-sso.md`.
-- [ ] **T1** — `auth-claims.sql`, migration `0074`, pgTAP, preuve de base neuve (§7, §13).
+- [x] **T1** — migrations `0074` (élevée) et `0075`, pgTAP, preuve de base neuve (§7, §13).
+      `0069_identite_sso.test.sql` **58/58** ; `verify-session-sso.sh` **16/16** ; série pgTAP
+      **69 fichiers, 3142 assertions** ; trois suites révisées (décision 582).
 - [ ] **T2** — Keycloak de développement préchargé (§10).
 - [ ] **T3** — échangeur `session` et ses preuves (§5, §13).
 - [ ] **T4** — jetons des preuves et seed par la vraie connexion SSO (§11, §13).
 - [ ] **T5** — webapp sans mot de passe, écran d'attente, portage des specs d'interface (§8, §9).
-- [ ] **T6** — retrait de GoTrue, migration `0075`, `verify-auth.sh` réécrit (§2).
+- [ ] **T6** — retrait de GoTrue, migration `0076`, retrait de `verify-auth.sh` (§2).
 - [ ] **T7** — documentation transverse, contrat de production (§12), campagne.
 - [ ] Production, sur instruction : opérations du §12, connexion réelle relue.

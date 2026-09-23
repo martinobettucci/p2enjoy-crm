@@ -8,6 +8,8 @@
 --           INC-057 (un `@verifies` annonçait la preuve n° 3 sans la porter)
 -- @verifies docs/SCHEMA.md §1 (tables du socle), §5 (cards)
 -- @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface)
+-- @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §7.2 — trois politiques des
+--           attentes d'espace, nommées ; total RÉVISÉ de 122 à 125
 --
 -- Suite pgTAP de l'unité `CRM-014`. Le fichier de scénarios `e2e/api/preuves-refus.spec.ts` prouve
 -- que le produit **refuse** ; cette suite prouve que le produit **est en état d'être interrogé**,
@@ -37,7 +39,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(62);
+select plan(63);
 
 -- =============================================================================================
 -- 1. Inventaire des politiques — ce qui rend le harnais capable d'échouer (§7.4)
@@ -208,8 +210,11 @@ select is(pg_temp.politiques('card_sequence_enrollments'),
 
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	122,
-	'CENT VINGT-DEUX politiques dans `public`, et pas une de plus — 121 avant `CRM-064` '
+	125,
+	'CENT VINGT-CINQ politiques dans `public`, et pas une de plus — 122 avant `CRM-092` tranche 1, '
+	'plus les TROIS de `workspace_invitations` : lecture, inscription et retrait d''une attente par '
+	'un administrateur de l''espace (docs/SPEC-session-sso.md §7.2). ELLES SONT TROIS, ET NON QUATRE : '
+	'une attente ne se modifie pas, elle se retire et se réinscrit. Avant elles : 122, soit 121 avant `CRM-064` '
 	'TRANCHE 4, plus l''UNIQUE politique de `notification_preferences` : la LECTURE, et elle '
 	'seule (docs/SPEC-notifications.md §46.1). ELLE EST UNE, ET NON QUATRE, ET C''EST LE REFUS '
 	'DOUBLE LE PLUS COMPLET DE LA SÉRIE : la table est fermée aux TROIS écritures, par l''absence '
@@ -372,6 +377,15 @@ select is(pg_temp.politiques('workspace_members'),
 	array['workspace_members_insertion_admin','workspace_members_lecture_membre',
 	      'workspace_members_maj_admin','workspace_members_suppression_admin']::text[],
 	'PREUVE N° 10 : quatre politiques consentent lecture d''équipe et mutations administrateur');
+
+-- Ajoutée par `CRM-092` T1 (docs/SPEC-session-sso.md §7.2) : une attente se lit, s'inscrit et se
+-- retire par un administrateur de l'espace ; elle ne se MODIFIE pas — changer son rôle, c'est la
+-- retirer puis la réinscrire, comme une appartenance. L'absence de la quatrième est une propriété,
+-- et le PRIVILÈGE la double : aucun `UPDATE` accordé.
+select is(pg_temp.politiques('workspace_invitations'),
+	array['workspace_invitations_insertion_admin','workspace_invitations_lecture_admin',
+	      'workspace_invitations_suppression_admin']::text[],
+	'`workspace_invitations` porte exactement ses trois politiques administrateur, sans mise à jour');
 
 select is(pg_temp.politiques('workspaces'), array['workspaces_lecture_membre']::text[],
 	'`workspaces` porte exactement sa politique de lecture membre');

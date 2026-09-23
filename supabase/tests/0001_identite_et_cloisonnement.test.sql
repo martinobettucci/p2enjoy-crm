@@ -1,5 +1,7 @@
 -- @verifies CRM-003 (docs/BACKLOG.md) — migrations d'amorçage : identité et cloisonnement
 -- @verifies CRM-022 (docs/BACKLOG.md) — politiques d'identité qui ferment le refus transitoire
+-- @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §7.2 — `profiles.id` est le `sub`
+--           du SSO et ne référence plus `auth.users` (assertions 18, 19 et 43 RÉVISÉES)
 -- @verifies docs/SCHEMA.md §1 (identité et cloisonnement), « Conventions générales »
 -- @verifies docs/SPEC-permissions-rls.md §2 (rôles), §4 (politiques), §7 (preuves de refus)
 --
@@ -68,17 +70,22 @@ select col_default_is('public', 'profiles', 'locale', 'fr', 'la langue par défa
 select col_type_is('public', 'workspaces', 'settings', 'jsonb', '`workspaces.settings` est jsonb');
 select col_is_unique('public', 'workspaces', 'slug', '`workspaces.slug` est unique');
 
--- Le prolongement de `auth.users` est une clé étrangère réelle, pas une convention de nommage.
-select fk_ok('public', 'profiles', 'id', 'auth', 'users', 'id',
-	'`profiles.id` référence `auth.users.id`');
-
--- La cascade n'est pas un détail d'écriture : sans elle, la suppression d'un compte échouerait
--- et laisserait un profil orphelin (docs/SCHEMA.md §1, « ON DELETE CASCADE »).
+-- RÉVISÉES par `CRM-092` (docs/SPEC-session-sso.md §7.2, décision 578) : `profiles.id` était le
+-- prolongement de `auth.users` ; il est désormais le `sub` du SSO, qui n'a aucune ligne dans
+-- `auth.users`. La clé est retirée par la migration 0075, et ces deux assertions prouvent son
+-- ABSENCE au lieu de sa présence — elles ne sont pas retirées (décision 51).
 select is(
-	(select confdeltype::text from pg_constraint
+	(select count(*)::integer from pg_constraint
+	  where conrelid = 'public.profiles'::regclass and contype = 'f'
+	    and confrelid = 'auth.users'::regclass),
+	0,
+	'`profiles.id` ne référence plus `auth.users.id` : c''est le `sub` du SSO (CRM-092)');
+
+select is(
+	(select count(*)::integer from pg_constraint
 	  where conrelid = 'public.profiles'::regclass and contype = 'f'),
-	'c',
-	'la suppression d''un compte supprime le profil en cascade'
+	0,
+	'`profiles` ne porte aucune clé étrangère : aucune suppression ailleurs ne l''emporte (CRM-092)'
 );
 select fk_ok('public', 'workspace_members', 'workspace_id', 'public', 'workspaces', 'id',
 	'`workspace_members.workspace_id` référence `workspaces.id`');
@@ -248,12 +255,14 @@ select is(
 
 drop trigger tst_rejoue_handle_new_user on auth.users;
 
--- 3.7 Suppression du compte : le profil suit
+-- 3.7 Suppression d'une ligne `auth.users` : le profil DEMEURE. RÉVISÉE par `CRM-092` : le profil
+-- n'est plus le prolongement d'un compte GoTrue (docs/SPEC-session-sso.md §7.2) ; supprimer une
+-- ligne inerte d'`auth.users` n'emporte plus rien. Retirer une personne, c'est retirer son profil.
 delete from auth.users where id = '00000000-0000-4000-8000-000000000004';
 
-select is_empty(
+select isnt_empty(
 	$$ select 1 from public.profiles where id = '00000000-0000-4000-8000-000000000004' $$,
-	'la suppression du compte supprime le profil (cascade)'
+	'supprimer une ligne d''`auth.users` n''emporte plus le profil (CRM-092)'
 );
 
 -- =============================================================================================

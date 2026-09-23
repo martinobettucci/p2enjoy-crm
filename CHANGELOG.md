@@ -13,6 +13,26 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-092` — Le SSO, seule source d'identité (en cours : tranche T1 livrée)
+
+Décision du responsable (décisions 578 et 579) : le SSO LeLabs devient la **seule** source d'identité
+du CRM, en développement comme en production ; GoTrue et la connexion par mot de passe quitteront la
+pile. Contrat : `docs/SPEC-session-sso.md`. Rien ne change encore pour la personne qui se connecte.
+
+- **La base sait lire un jeton sans GoTrue** : `0074_revendications_du_jeton.sql`, exécutée sous
+  `supabase_admin`, pose `auth.uid()` et ses trois sœurs sous la forme que GoTrue installait. Mesuré :
+  sur une base neuve sans GoTrue, `auth.uid()` rendait `NULL` et toute la RLS aurait tout refusé.
+- **Un profil peut naître d'un `sub` LeLabs** : `0075_identite_sso.sql` retire la clé
+  `profiles.id → auth.users`, crée les **attentes d'un espace** (`workspace_invitations` : une adresse
+  et un rôle, gérés par les administrateurs de l'espace, sans mise à jour) et la fonction
+  `ouvrir_session_sso`, réservée à la clé de service, qui changera une attente en appartenance à la
+  première connexion LeLabs vérifiée.
+- **Preuves** : suite pgTAP `0069_identite_sso.test.sql` (58 assertions) ; harnais de l'unité
+  `scripts/verify-session-sso.sh` (16 vérifications, dont la base neuve sans GoTrue et quatre
+  dégradations détectées) ; trois suites historiques révisées, jamais retirées.
+- **Production** : migrations 74 et 75 en attente, à n'appliquer qu'avec la reprise complète de
+  `CRM-092` (`docs/PROD_MIGRATIONS.md` §3).
+
 ### `CRM-091` — Se connecter avec LeLabs
 
 - **Une seconde façon d'entrer**, sous le formulaire de connexion : « Se connecter avec LeLabs »
