@@ -141,7 +141,7 @@ de cellule — aucune adresse n'est écrite dans ce dépôt.
 | 5 | Premier déploiement | poste qui livre | `scripts/spark/livrer.sh -- --migrate --premier-deploiement` |
 | 6 | Vérifications | poste et cellule | §5 ci-dessous et §7 de la spécification |
 | 7 | Déclarer le client OIDC, puis corriger `SSO_OIDC_CLIENT_ID` si le realm l'a renommé et relivrer | administrateur du realm, puis propriétaire du Spark | `docs/SPEC-auth.md` §10.8 (`CRM-091`) |
-| 8 | Créer le premier compte et le premier espace | opérateur, dans la cellule, sur instruction explicite | `scripts/spark/amorcer-espace.sh --email <adresse> --espace "<nom>" --slug <identifiant>` : compte **invité sans mot de passe ni courriel**, espace, appartenance `admin` ; idempotent. La personne accepte en se connectant avec LeLabs à la même adresse vérifiée. Consigner l'opération au §8 |
+| 8 | Créer le premier compte et le premier espace — **arbitré (décision 574)** : `--email martino@p2enjoy.studio --espace "P2Enjoy CRM" --slug crm` | opérateur, dans la cellule, sur instruction explicite | `scripts/spark/amorcer-espace.sh --email <adresse> --espace "<nom>" --slug <identifiant>` : compte **invité sans mot de passe ni courriel**, espace, appartenance `admin` ; idempotent. La personne accepte en se connectant avec LeLabs à la même adresse vérifiée. Consigner l'opération au §8 |
 | 9 | Accepter les trois notes du Spark (README, CONTRIBUTORS, INSTALL) | propriétaire du Spark | console ; déposées le 2026-09-23 depuis `docs/spark-notes/` par `ssh … 'cat > /etc/spark/notes/<NOM>.md.?' < docs/spark-notes/<NOM>.md` |
 
 **Realtime ne se tire pas dans la cellule, et c'est mesuré** (décision 571) : la cellule ne dispose

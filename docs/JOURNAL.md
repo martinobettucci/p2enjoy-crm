@@ -28758,3 +28758,19 @@ du responsable, non écrits ici.
 compte invité non confirmé, espace et appartenance créés, second passage sans rien recréer, une
 seule appartenance, aucun lien dans la sortie, profil `dev` refusé, lignes de preuve retirées.
 `scripts/verify-spark.sh` : **67 vérifications, aucune anomalie**.
+
+## décision 574 — arbitrage du responsable : le premier espace de production et son administrateur
+
+*2026-09-23, même session, réponse du responsable à la question posée en fin de `CRM-090`.*
+
+**Décision du responsable.** Le premier espace de production s'appelle **« P2Enjoy CRM »**,
+identifiant court **`crm`**, et son premier administrateur est **`martino@p2enjoy.studio`** — compte
+déjà inscrit au SSO `lelabs`. L'amorçage se fera par
+`scripts/spark/amorcer-espace.sh --email martino@p2enjoy.studio --espace "P2Enjoy CRM" --slug crm`,
+dans la cellule, une fois la pile démarrée ; la personne acceptera l'invitation en se connectant avec
+LeLabs, adresse vérifiée (décision 573).
+
+**Condition à connaître.** Au relevé du dépôt du SSO (2026-09-16), ce compte était inscrit **sans
+aucun rôle** — ce qui suffit, le CRM n'en lit aucun (décision 568) —, mais rien ne dit ici que son
+adresse y est vérifiée. Si elle ne l'est pas, GoTrue refusera le rattachement (M5) : la vérifier chez
+LeLabs est alors un préalable.
