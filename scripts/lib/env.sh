@@ -202,6 +202,10 @@ env_bootstrap_dev() {
 	# service ne parle pas à PostgreSQL, et un secret partagé étendrait sa portée sans besoin.
 	env_set "$ENV_FILE" MAIL_SYNC_INTERNAL_TOKEN "$(gen_hex 32)"
 
+	# Administrateur de l'instance Keycloak de développement (CRM-091). Il ne sert qu'aux preuves
+	# qui règlent le realm ; les comptes du realm, eux, ont un mot de passe stable et publié.
+	env_set "$ENV_FILE" SSO_DEV_ADMIN_PASSWORD "$(gen_hex 20)"
+
 	local wanted hard
 	wanted=$(env_get "$ENV_FILE" STACK_RLIMIT_NOFILE)
 	hard=$(host_nofile_limit)
@@ -231,6 +235,11 @@ MAIL_SYNC_LOG_LEVEL:gabarit
 MAIL_SYNC_IMAP_TIMEOUT_SECONDS:gabarit
 MAIL_SYNC_SMTP_TIMEOUT_SECONDS:gabarit
 MAIL_DEV_CORRESPONDENT_ADDRESS:gabarit
+SSO_OIDC_ISSUER:gabarit
+SSO_OIDC_CLIENT_ID:gabarit
+SSO_DEV_PORT:gabarit
+SSO_DEV_ADMIN_PASSWORD:alea:20
+SPARK_HTTP_PORT:gabarit
 "
 
 # Complète un `.env` amorcé **avant** l'unité qui a introduit une variable. Sans cela, toute unité
@@ -317,6 +326,14 @@ env_print_dev_credentials() {
 	info "  Farida Nowak n'a pas de boîte : un lecteur ne correspond pas (décision 239)."
 
 	echo
+	info "LeLabs de développement (SSO) — mot de passe commun « SsoDev2026Local »"
+	env_credential_line "admin@${domaine_perso}"  "verified — ouvre le compte de Camille Aubert"
+	env_credential_line "bizdev@${domaine_perso}" "aucun rôle — ouvre le compte de Driss Lemoine"
+	env_credential_line "viewer@${domaine_perso}" "verified + admin du realm — reste lectrice dans le CRM"
+	env_credential_line "inconnu@${domaine_perso}" "aucun compte CRM — refusé (docs/SPEC-auth.md §10.6)"
+	info "  Émetteur : $(env_get "$ENV_FILE" SSO_OIDC_ISSUER)"
+
+	echo
 	info "Administration des services"
 	env_credential_line "PostgreSQL" "postgres / $(env_get "$ENV_FILE" POSTGRES_PASSWORD)"
 	env_credential_line "Stalwart (gestion)" \
@@ -325,6 +342,7 @@ env_print_dev_credentials() {
 		"$(env_get "$ENV_FILE" MINIO_ROOT_USER) / $(env_get "$ENV_FILE" MINIO_ROOT_PASSWORD)"
 	env_credential_line "mail-sync (API interne)" \
 		"Authorization: Bearer $(env_get "$ENV_FILE" MAIL_SYNC_INTERNAL_TOKEN)"
+	env_credential_line "Keycloak (admin)" "admin / $(env_get "$ENV_FILE" SSO_DEV_ADMIN_PASSWORD)"
 	env_credential_line "Supabase Studio" "sans authentification en développement"
 	env_credential_line "Inbucket" "sans authentification : puits des emails transactionnels"
 }
@@ -418,6 +436,22 @@ env_require_dev_inbound_domain() {
 	if [ "$actual" != "$expected" ]; then
 		die "CRM_INBOUND_DOMAIN vaut « ${actual:-<vide>} », or le seed de développement porte « $expected ».
         Corrigez $ENV_FILE explicitement : le catch-all Stalwart viserait sinon le mauvais domaine."
+	fi
+}
+
+# @spec CRM-091 (docs/BACKLOG.md), docs/SPEC-auth.md §10.9
+# L'émetteur du SSO de développement doit être le MÊME vu du navigateur et vu de GoTrue : c'est
+# l'alias `sso.localhost`, que les navigateurs résolvent en boucle locale et que le réseau Compose
+# résout vers Keycloak, sur un port identique dedans et dehors (décision 568, M11). Toute autre
+# valeur produirait des jetons que GoTrue refuserait, sans que rien ne dise pourquoi.
+env_require_dev_sso_issuer() {
+	local port expected actual
+	port=$(env_get "$ENV_FILE" SSO_DEV_PORT)
+	expected="http://sso.localhost:${port}/realms/lelabs"
+	actual=$(env_get "$ENV_FILE" SSO_OIDC_ISSUER)
+	if [ "$actual" != "$expected" ]; then
+		die "SSO_OIDC_ISSUER vaut « ${actual:-<vide>} », or le Keycloak de développement émet « $expected ».
+        Alignez SSO_OIDC_ISSUER sur SSO_DEV_PORT dans $ENV_FILE avant de démarrer (docs/SPEC-auth.md §10.9)."
 	fi
 }
 
@@ -590,7 +624,7 @@ SPARK_SECRETS_FILE="${SPARK_SECRETS_FILE:-/run/spark/secrets}"
 # ne consomme (§4.2). La liste est explicite : `scripts/verify-spark.sh` prouve que la valeur de
 # remplissage n'apparaît nulle part dans la configuration résolue, et rougirait si l'une d'elles
 # devenait consommée.
-SPARK_SANS_OBJET="PG_META_CRYPTO_KEY STALWART_ADMIN_PASSWORD AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY CADDY_ACME_EMAIL"
+SPARK_SANS_OBJET="PG_META_CRYPTO_KEY STALWART_ADMIN_PASSWORD SSO_DEV_ADMIN_PASSWORD AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY CADDY_ACME_EMAIL"
 SPARK_SANS_OBJET_VALEUR="sans-objet-cellule-spark"
 
 # Répertoire d'exécution : `tmpfs` du compte, jamais le disque. Surchargeable pour le harnais.

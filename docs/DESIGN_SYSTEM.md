@@ -1071,6 +1071,31 @@ session n'existe, ces repères ne contiennent que le refus anonyme et détournen
 La couleur n'indique jamais seule un refus, tous les champs portent leur libellé visible, et
 l'ordre de tabulation suit l'ordre visuel : email, mot de passe, action.
 
+**La connexion unique — `CRM-091`, `docs/SPEC-auth.md` §10.3 et §10.4.** Une seconde voie s'ajoute
+sous le formulaire ; ce qui suit ne dit que de quoi elle a l'air.
+
+- **Un séparateur « ou », puis une action SECONDAIRE pleine largeur**, « Se connecter avec
+  LeLabs ». Le bouton primaire reste celui du formulaire (§5.5) : deux primaires dans une même
+  carte ne diraient plus lequel est le chemin attendu, et le formulaire par mot de passe n'est pas
+  retiré. Le séparateur est deux filets `--color-border` encadrant le mot en `text-sm`
+  `--color-text-3`, `aria-hidden` : il sépare à l'œil, et l'ordre du document suffit à la voix.
+- **L'icône est `KeyRound`**, jamais `LogIn` : `LogIn` porte déjà le lien « Se connecter » de
+  l'en-tête, et le §9 interdit qu'une icône serve deux gestes. Elle accompagne le libellé.
+- **L'action n'est pas rendue sans configuration** (`VITE_SSO_*` absentes au build) : une commande
+  qui mènerait nulle part serait la commande morte du §5.10.
+- **Le refus du SSO vit SOUS le séparateur, juste au-dessus de l'action qui l'a causé** — et non
+  entre les champs et le bouton du formulaire, place du refus d'identifiants. C'est la règle du
+  §5.13 : un refus se lit près de ce qui l'a causé. Même surface, même icône `TriangleAlert`, même
+  `role="alert"`, et l'action le cite par `aria-describedby`. Les deux refus ne coexistent jamais :
+  engager une voie efface le refus de l'autre.
+- **Pendant la redirection, les deux actions sont désactivées** et le libellé devient
+  « Redirection vers LeLabs… » ; aucune double demande ne peut partir.
+- **Le retour de LeLabs rend la carte squelette de la restauration de session**, avec le libellé
+  annoncé « Connexion LeLabs en cours » : même forme, aucun spinner (§5.8), aucun contenu trompeur
+  pendant l'échange.
+- **Aucune couleur, aucun jeton nouveau** ; une seule icône Lucide nouvelle, `KeyRound`, qui ne sert
+  aucun autre objet.
+
 ### 5.13 Administration de l'arborescence — `CRM-075`
 
 Première surface d'administration du produit. Ce que l'écran **fait** — gestes, requêtes, refus — est

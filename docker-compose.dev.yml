@@ -1,5 +1,6 @@
 # @spec CRM-001 (docs/BACKLOG.md) — overlay de développement de la pile Supabase self-hosted
 # @spec CRM-015 (docs/BACKLOG.md) — secret BuildKit facultatif du registre npm
+# @spec CRM-091 (docs/BACKLOG.md), docs/SPEC-auth.md §10.9 — Keycloak de développement, realm `lelabs`
 # @spec docs/DAT.md §3.6 (composants de développement uniquement), §9 (déploiement)
 # @spec README.md §6 (lancement en développement)
 #
@@ -143,6 +144,55 @@ services:
     volumes:
       - minio-data:/data
 
+  # Fournisseur d'identité de développement (CRM-091, docs/SPEC-auth.md §10.9) : la version du SSO
+  # réel, un realm `lelabs` qui en reproduit ce qui se paierait au premier déploiement — PKCE `S256`
+  # imposé, URL de retour exactes, rôles `verified` et `admin`, vérification d'adresse exigée.
+  #
+  # L'émetteur est le MÊME vu du navigateur et vu de GoTrue (décision 568, M11) : l'alias réseau
+  # `sso.localhost`, que les navigateurs résolvent en boucle locale et que Docker résout vers ce
+  # conteneur, sur un port identique dedans et dehors. D'où la publication sur 127.0.0.1 : c'est là
+  # que `sso.localhost` mène un navigateur, quelle que soit `DEV_BIND_ADDRESS`.
+  #
+  # Mode `start-dev` : base interne éphémère, realm réimporté à chaque recréation du conteneur. Le
+  # realm est une donnée de démonstration versionnée, pas un état à conserver.
+  keycloak:
+    container_name: p2enjoy-keycloak
+    image: quay.io/keycloak/keycloak:26.7.3
+    restart: unless-stopped
+    command: ["start-dev", "--import-realm"]
+    mem_limit: 1g
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${SSO_DEV_ADMIN_PASSWORD}
+      KC_HTTP_PORT: ${SSO_DEV_PORT}
+      KC_HOSTNAME: http://sso.localhost:${SSO_DEV_PORT}
+      KC_HEALTH_ENABLED: "true"
+      # Substituées à l'import dans keycloak/realm-lelabs.json : l'origine de la webapp varie d'un
+      # poste à l'autre, et l'URL de retour doit lui être égale au caractère près.
+      SSO_DEV_REDIRECT_URI: ${SITE_URL}/auth/retour
+      SSO_DEV_WEB_ORIGIN: ${SITE_URL}
+      SSO_DEV_DOMAINE: ${MAIL_DEV_PERSONAL_DOMAIN}
+    volumes:
+      - ./keycloak/realm-lelabs.json:/opt/keycloak/data/import/realm-lelabs.json:ro,z
+    ports:
+      - 127.0.0.1:${SSO_DEV_PORT}:${SSO_DEV_PORT}
+    networks:
+      default:
+        aliases:
+          - sso.localhost
+    # L'image ne contient aucun client HTTP : la sonde est écrite en bash sur /dev/tcp, contre le
+    # port de gestion qui porte /health (même forme que le dépôt du SSO).
+    healthcheck:
+      test:
+        - CMD
+        - /bin/bash
+        - -c
+        - 'exec 3<>/dev/tcp/127.0.0.1/9000 && printf "GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n" >&3 && grep -q "\"status\": \"UP\"" <&3'
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
   # Création idempotente du bucket des pièces jointes, par le vrai client S3.
   minio-createbucket:
     container_name: p2enjoy-minio-createbucket
@@ -200,6 +250,9 @@ services:
       # `http://kong:8000` ne serait résoluble que depuis le réseau Docker.
       VITE_SUPABASE_URL: http://localhost:${KONG_HTTP_PORT}
       VITE_SUPABASE_ANON_KEY: ${ANON_KEY}
+      # Connexion unique (CRM-091) : le Keycloak de développement ci-dessous.
+      VITE_SSO_ISSUER: ${SSO_OIDC_ISSUER}
+      VITE_SSO_CLIENT_ID: ${SSO_OIDC_CLIENT_ID}
     volumes:
       - ./:/app:z
       # `node_modules` reste celui de l'image : les binaires installés dans le conteneur ne

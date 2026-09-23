@@ -1,5 +1,6 @@
 # @spec CRM-001 (docs/BACKLOG.md) — pile Supabase self-hosted, assemblage commun des services
 # @spec CRM-016 (docs/BACKLOG.md), docs/SPEC-edge-functions.md §2 — runtime Deno commun
+# @spec CRM-091 (docs/BACKLOG.md), docs/SPEC-auth.md §10.2 — fournisseur `keycloak` de GoTrue
 # @spec docs/JOURNAL.md décision 100 (un contrôle de santé nomme une famille d'adresses)
 # @spec docs/DAT.md §3 (composants), §3.8 (contraintes d'exécution de l'hôte), §9 (déploiement),
 #       §15 (dépendances structurantes)
@@ -141,6 +142,14 @@ services:
       GOTRUE_JWT_ISSUER: ${API_EXTERNAL_URL}
 
       GOTRUE_EXTERNAL_EMAIL_ENABLED: ${ENABLE_EMAIL_SIGNUP}
+      # Connexion unique (CRM-091, docs/SPEC-auth.md §10.2). GoTrue ne sert QUE l'échange
+      # d'`id_token` : il n'envoie aucun `code_challenge` à Keycloak (décision 568, M1), et l'absence
+      # de secret client et d'URL de retour ferme d'elle-même sa voie `/authorize` sans PKCE (M9).
+      # L'émetteur doit être celui des jetons au caractère près ; le client est la seule audience
+      # acceptée (M8).
+      GOTRUE_EXTERNAL_KEYCLOAK_ENABLED: "true"
+      GOTRUE_EXTERNAL_KEYCLOAK_URL: ${SSO_OIDC_ISSUER}
+      GOTRUE_EXTERNAL_KEYCLOAK_CLIENT_ID: ${SSO_OIDC_CLIENT_ID}
       GOTRUE_EXTERNAL_ANONYMOUS_USERS_ENABLED: ${ENABLE_ANONYMOUS_USERS}
       GOTRUE_MAILER_AUTOCONFIRM: ${ENABLE_EMAIL_AUTOCONFIRM}
       GOTRUE_EXTERNAL_PHONE_ENABLED: ${ENABLE_PHONE_SIGNUP}

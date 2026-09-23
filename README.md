@@ -333,10 +333,20 @@ la pile de développement n'est pas destinée à être exposée sur le réseau.
 | Stalwart | IMAP 1143 · SMTP 1025 (remise) · 1587 (soumission) | Vrai serveur mail local (boîte système + deux boîtes personnelles) | **disponible** |
 | Stalwart — API de gestion | http://localhost:8081/api/ | Provisionnement des réglages, domaines et boîtes ; la racine explique pourquoi aucune console n'est servie | **disponible** |
 | ClamAV (`clamd`) | localhost:3310 | Analyse antivirale des pièces jointes ; son consommateur arrive avec `CRM-054` | **disponible** |
+| LeLabs de développement (Keycloak) | http://sso.localhost:18480 | Fournisseur de la **connexion unique** : realm `lelabs`, PKCE imposé, comptes alignés sur le seed (`keycloak/README.md`) ; administration sur `/admin` | **disponible** — `CRM-091` |
 
 Studio n'est **pas** joignable au travers de la passerelle : celle-ci ne connaît aucun service de
 développement, ce qui rend sa configuration identique en développement et en production
 (voir [`docs/JOURNAL.md`](docs/JOURNAL.md), décision 11).
+
+**La connexion unique en développement** (`CRM-091`, `docs/SPEC-auth.md` §10.9). L'action « Se
+connecter avec LeLabs » de l'écran de connexion mène au Keycloak local, **`sso.localhost`** :
+c'est l'adresse que les navigateurs résolvent en boucle locale **et** que le réseau Compose résout
+vers Keycloak, si bien que l'émetteur des jetons est le même pour le navigateur et pour GoTrue. Son
+port, `SSO_DEV_PORT`, est le même dedans et dehors ; `./runDev.sh` refuse de démarrer si
+`SSO_OIDC_ISSUER` ne vaut pas `http://sso.localhost:<SSO_DEV_PORT>/realms/lelabs`. Les comptes du
+realm portent les adresses du seed, mot de passe commun `SsoDev2026Local` ; `inconnu@p2enjoy.test`
+n'a volontairement aucun compte CRM. Le realm est réimporté à chaque recréation du conteneur.
 
 **Pourquoi deux serveurs mail en développement ?** Inbucket est un puits SMTP : il capture les
 emails que l'application *envoie* (GoTrue, notifications) et n'expose pas d'IMAP. Or le produit
@@ -619,6 +629,7 @@ preuves.
 | Messagerie de développement | `STALWART_IMAP_PORT`, `STALWART_SMTP_PORT`, `STALWART_SUBMISSION_PORT`, `STALWART_ADMIN_PORT`, `STALWART_ADMIN_USER`, `STALWART_ADMIN_PASSWORD`, `STALWART_MAILBOX_PASSWORD`, `MAIL_DEV_PERSONAL_DOMAIN`, `MAIL_DEV_CORRESPONDENT_ADDRESS`, `ROUNDCUBE_PORT`, `CLAMAV_PORT` | Obligatoires **en développement uniquement** : aucun de ces services n'existe en production. `STALWART_ADMIN_PASSWORD` est tiré au hasard à l'amorçage |
 | Chiffrement | `PG_META_CRYPTO_KEY`, `REALTIME_DB_ENC_KEY` | Obligatoires. Longueurs imposées : 32 et 16 caractères. Les secrets de messagerie ne sont pas ici : ils vivent dans le Vault de la base, chiffrés par sa clé racine (décision 366, INC-098) |
 | Authentification | `DISABLE_SIGNUP`, `PASSWORD_MIN_LENGTH`, `JWT_EXPIRY` | Obligatoires. `DISABLE_SIGNUP` vaut **toujours** `true` (`docs/SPEC-auth.md` §2) |
+| Connexion unique | `SSO_OIDC_ISSUER`, `SSO_OIDC_CLIENT_ID`, `SSO_DEV_PORT`, `SSO_DEV_ADMIN_PASSWORD` | `CRM-091`. Les deux premières sont obligatoires partout : émetteur exact et client OIDC, lus par GoTrue et figés au build de la webapp. Les deux dernières ne servent qu'au Keycloak de développement ; le mot de passe d'administration est tiré au hasard par `./runDev.sh` et **sans objet** dans la cellule Spark |
 | SMTP transactionnel | `SMTP_HOST`, `SMTP_PORT`, `SMTP_ADMIN_EMAIL` | Obligatoires |
 | Pile | `STACK_RLIMIT_NOFILE`, `APPLY_MIGRATIONS` | Facultatives, avec défauts. `APPLY_MIGRATIONS=false` est imposé en production **et doit y rester** : c'est ce qui empêche une migration non décidée. Les migrations de production s'appliquent dans une fenêtre de maintenance ouverte par `./runProd.sh --migrate`, qui surcharge la variable pour sa seule invocation sans réécrire `.env`, et dont le retour arrière est la restauration de l'instantané de VM (décision 489, `CRM-087`) |
 | Production | `APP_DOMAIN`, `CADDY_ACME_EMAIL` | Obligatoires en production uniquement. `CADDY_ACME_EMAIL` est **sans objet dans la cellule Spark**, où la Forge porte le certificat |
@@ -646,6 +657,7 @@ Livré à ce jour :
 ├── caddy/Caddyfile             Terminaison TLS (ACME) sur un hôte qui dispose de 80 et 443
 ├── caddy/Caddyfile.spark       Caddy en clair derrière la Forge qui termine TLS
 ├── caddy/routes.caddy          Routes partagées par les deux Caddyfile
+├── keycloak/                   Realm `lelabs` du SSO de développement et sa documentation
 ├── package.json                Projet npm unique : types, webapp, E2E et modules edge purs
 ├── tsconfig.json               Compilation stricte des types générés et de leurs assertions
 ├── tsconfig.tools.json         Compilation des configurations et des scénarios E2E

@@ -1,5 +1,6 @@
 // @spec CRM-007 (docs/BACKLOG.md) — dictionnaire des textes visibles
 // @spec CRM-009 (docs/BACKLOG.md) — textes de connexion, session et déconnexion
+// @spec CRM-091 (docs/BACKLOG.md) — textes de la connexion unique (docs/SPEC-auth.md §10.4)
 // @spec CRM-022 (docs/BACKLOG.md) — noms, avatars, responsables, auteurs et acteurs
 // @spec CRM-075 (docs/BACKLOG.md) — textes de l'administration de l'arborescence
 // @spec docs/DESIGN_SYSTEM.md §5.12, §5.13, §10 ; docs/SPEC-auth.md §9 ; docs/SPEC-webapp.md §10
@@ -95,6 +96,15 @@ export const fr = {
 	'auth.error.network': "Le serveur n'a pas répondu. Vérifiez votre connexion, puis réessayez.",
 	'auth.error.configuration': "L'application n'est pas configurée pour joindre le serveur.",
 	'auth.loading': 'Restauration de votre session',
+	// `CRM-091` — connexion unique par oauth.lelabs.tech (docs/SPEC-auth.md §10.3, §10.4)
+	'auth.sso.separator': 'ou',
+	'auth.sso.submit': 'Se connecter avec LeLabs',
+	'auth.sso.submitting': 'Redirection vers LeLabs…',
+	'auth.sso.returning': 'Connexion LeLabs en cours',
+	'auth.sso.error.cancelled': 'La connexion LeLabs a été annulée.',
+	'auth.sso.error.noAccount':
+		"Aucun compte du CRM ne correspond à ce compte LeLabs. L'accès exige une invitation à la même adresse, vérifiée auprès de LeLabs.",
+	'auth.sso.error.failed': "La connexion LeLabs n'a pas abouti. Recommencez depuis cet écran.",
 
 	// --- Onglets ------------------------------------------------------------------------
 	'tabs.aria': 'Channels du track courant',

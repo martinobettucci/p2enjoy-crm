@@ -28702,3 +28702,33 @@ de l'assemblage commun : une montée de version qui oublierait la dérivée roug
 **Une limite à connaître au-delà de Realtime.** Toute image future dont un fichier appartient à un
 UID supérieur à 64534 butera au même endroit, dans la cellule seulement. Le harnais ne peut pas le
 voir d'avance : c'est le tirage dans la cellule qui le dit, et le remède est celui-ci.
+
+## décision 572 — `CRM-091` livré en développement : ce que l'exécution a appris que la spécification ne disait pas
+
+*2026-09-23, même session. Spécification `docs/SPEC-auth.md` §10, committée avant le code.*
+
+**Quatre faits, trouvés en exécutant, et chacun traité à sa cause.**
+
+1. **Un `.env` de développement antérieur à `CRM-090` était refusé.** `SPARK_HTTP_PORT` porte un
+   exemple non vide, donc la validation l'exige partout. La complétion automatique de `runDev.sh`
+   ne connaissait que les variables de la liste explicite : la variable y est ajoutée, avec les
+   quatre du SSO. Mesuré : `./runDev.sh --bootstrap` complète les cinq, puis `./resetMe.sh` démarre.
+   `resetMe.sh`, lui, ne complète jamais — c'est voulu, il ne réécrit pas `.env`.
+2. **Le harnais d'interface sert la webapp sur une AUTRE origine que le Vite de développement** —
+   `vite preview`, `http://127.0.0.1:4173`. Le realm de développement compare l'URL de retour au
+   caractère près, comme le réel : il autorise donc les deux origines, et `e2e/playwright.config.ts`
+   transmet `VITE_SSO_*` au build de preuve. Sans cela, aucune preuve d'interface du SSO ne pouvait
+   passer, et le motif aurait été Keycloak, pas le produit.
+3. **La liste d'administration de GoTrue rend `identities: null`** ; seule la lecture d'un compte les
+   porte. Défaut de MA preuve (M4), corrigé dans la preuve.
+4. **StrictMode rejoue l'effet de la route de retour**, et la transaction ne sert qu'une fois. Un
+   drapeau `useRef`, que React conserve au double montage simulé, empêche le second passage ; le
+   test de composant monte la route SOUS `StrictMode` et exige UN seul appel au point d'échange.
+
+**La politique d'accès de la décision 568 est prouvée de bout en bout** : `inconnu@` refusé par le
+serveur (`422`), `admin@` rattaché sans second compte et lisant ses données sous RLS, adresse non
+vérifiée jamais rattachée, invitation acceptée par le SSO, nonce et audience refusés, voie
+`/authorize` fermée, et aucune revendication de téléphone, de profil déclaré ni de rôle conservée.
+
+**Ce qui reste, et qui ne dépend pas du dépôt** : la déclaration du client au realm réel
+(`docs/SPEC-auth.md` §10.8), puis la sonde et une connexion en production.

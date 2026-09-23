@@ -1,0 +1,101 @@
+{
+  "realm": "lelabs",
+  "displayName": "LeLabs — développement",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "registrationEmailAsUsername": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "verifyEmail": true,
+  "resetPasswordAllowed": false,
+  "rememberMe": false,
+  "bruteForceProtected": false,
+  "defaultLocale": "fr",
+  "internationalizationEnabled": true,
+  "supportedLocales": ["fr"],
+  "roles": {
+    "realm": [
+      { "name": "verified", "description": "Personne réelle constatée par un administrateur du realm" },
+      { "name": "admin", "description": "Exploitation du SSO : vérifier les autres comptes" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "lelabs-crm",
+      "name": "P2Enjoy CRM",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": ["${SSO_DEV_REDIRECT_URI}", "http://127.0.0.1:4173/auth/retour"],
+      "webOrigins": ["${SSO_DEV_WEB_ORIGIN}", "http://127.0.0.1:4173"],
+      "attributes": { "pkce.code.challenge.method": "S256" }
+    },
+    {
+      "clientId": "crm-audience-etrangere",
+      "name": "Client de preuve : une autre audience",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": ["${SSO_DEV_REDIRECT_URI}"],
+      "webOrigins": ["${SSO_DEV_WEB_ORIGIN}"],
+      "attributes": { "pkce.code.challenge.method": "S256" }
+    }
+  ],
+  "users": [
+    {
+      "username": "admin@${SSO_DEV_DOMAINE}",
+      "email": "admin@${SSO_DEV_DOMAINE}",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Camille",
+      "lastName": "Aubert",
+      "realmRoles": ["verified"],
+      "credentials": [{ "type": "password", "value": "SsoDev2026Local", "temporary": false }]
+    },
+    {
+      "username": "bizdev@${SSO_DEV_DOMAINE}",
+      "email": "bizdev@${SSO_DEV_DOMAINE}",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Driss",
+      "lastName": "Lemoine",
+      "credentials": [{ "type": "password", "value": "SsoDev2026Local", "temporary": false }]
+    },
+    {
+      "username": "viewer@${SSO_DEV_DOMAINE}",
+      "email": "viewer@${SSO_DEV_DOMAINE}",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Farida",
+      "lastName": "Nowak",
+      "realmRoles": ["verified", "admin"],
+      "credentials": [{ "type": "password", "value": "SsoDev2026Local", "temporary": false }]
+    },
+    {
+      "username": "inconnu@${SSO_DEV_DOMAINE}",
+      "email": "inconnu@${SSO_DEV_DOMAINE}",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Inès",
+      "lastName": "Connue",
+      "realmRoles": ["verified"],
+      "credentials": [{ "type": "password", "value": "SsoDev2026Local", "temporary": false }]
+    },
+    {
+      "username": "adresse-non-verifiee@${SSO_DEV_DOMAINE}",
+      "email": "adresse-non-verifiee@${SSO_DEV_DOMAINE}",
+      "emailVerified": false,
+      "enabled": true,
+      "firstName": "Adèle",
+      "lastName": "Nonvérifiée",
+      "credentials": [{ "type": "password", "value": "SsoDev2026Local", "temporary": false }]
+    }
+  ]
+}

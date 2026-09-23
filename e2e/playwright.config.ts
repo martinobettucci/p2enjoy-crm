@@ -1,5 +1,6 @@
 // @spec CRM-007 (docs/BACKLOG.md) — harnais E2E de la coquille et des captures
 // @spec CRM-008 (docs/BACKLOG.md) — projets Playwright, déclaration du webServer, rapport HTML
+// @spec CRM-091 (docs/BACKLOG.md) — build de preuve configuré pour le Keycloak de développement
 // @spec docs/SPEC-test-harness.md §4 (projets), §4.2 (webServer), §5 (rapport)
 // @spec docs/SPEC-webapp.md §13 (commandes), §14 (preuves) ; docs/DESIGN_SYSTEM.md §11 (captures)
 // @spec README.md §7 (tests)
@@ -19,7 +20,7 @@
 
 import { defineConfig, devices } from '@playwright/test'
 import { join } from 'node:path'
-import { RACINE, cleAnonyme, urlApi } from './env'
+import { RACINE, cleAnonyme, lireEnv, urlApi } from './env'
 
 // @spec CRM-008 (docs/BACKLOG.md) — INC-084, décision 282
 // Playwright force la couleur de ses sous-processus. L'environnement de l'appelant peut demander
@@ -84,6 +85,10 @@ const serveur = {
 	env: {
 		VITE_SUPABASE_URL: URL_API,
 		VITE_SUPABASE_ANON_KEY: CLE_ANONYME,
+		// Connexion unique (CRM-091, docs/SPEC-auth.md §10.9) : le Keycloak de développement, dont le
+		// realm autorise exactement l'origine de ce `vite preview` (keycloak/README.md).
+		VITE_SSO_ISSUER: process.env['VITE_SSO_ISSUER'] ?? lireEnv('SSO_OIDC_ISSUER'),
+		VITE_SSO_CLIENT_ID: process.env['VITE_SSO_CLIENT_ID'] ?? lireEnv('SSO_OIDC_CLIENT_ID'),
 		WEBAPP_PREVIEW_PORT: String(PORT),
 	},
 }

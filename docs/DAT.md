@@ -393,7 +393,8 @@ la base vieillit avec l'image : la production devra prévoir son rafraîchisseme
 | Stalwart | Vrai serveur IMAP/SMTP local | La production utilise les serveurs des utilisateurs |
 | `stalwart-init` | Provisionne les domaines et les boîtes de développement par la vraie API de gestion, puis s'arrête | Il ne provisionne que des boîtes de démonstration |
 | Roundcube | Webmail de vérification visuelle | Outil de contrôle du développement |
-| MinIO | S3 local | La production utilise son propre stockage objet |
+| MinIO | S3 local | La production générique utilise son propre stockage objet ; la cellule Spark en déclare un, interne (`CRM-090`) |
+| Keycloak (`keycloak`) | SSO de développement : realm `lelabs` importé depuis `keycloak/realm-lelabs.json`, émetteur `http://sso.localhost:<SSO_DEV_PORT>` identique pour le navigateur et pour GoTrue (`CRM-091`) | La production vise le SSO réel, `oauth.lelabs.tech`, qu'elle n'héberge pas |
 
 Ces composants vivent exclusivement dans `docker-compose.dev.yml`. La passerelle **ne connaît
 aucun d'entre eux** : Studio est joint directement sur son port, et il joint `postgres-meta` par
@@ -430,6 +431,7 @@ impose de rejouer `scripts/verify-stack.sh` et de mettre à jour `docs/PROD_MIGR
 | `minio` | `quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z` | dev ; cellule Spark (`CRM-090`) |
 | `minio-createbucket` | `quay.io/minio/mc:RELEASE.2025-04-16T18-13-26Z` | dev ; cellule Spark (`CRM-090`) |
 | `inbucket` | `inbucket/inbucket:stable` | dev |
+| `keycloak` | `quay.io/keycloak/keycloak:26.7.3` | dev — la version du SSO réel (`CRM-091`) |
 | `stalwart` | `stalwartlabs/stalwart:v0.13.4` | dev |
 | `stalwart-init` | `curlimages/curl:8.16.0` | dev |
 | `roundcube` | `roundcube/roundcubemail:1.6.11-apache` | dev |
@@ -497,6 +499,23 @@ donc aujourd'hui une opération d'**exploitation** et non un parcours produit. L
 porterait ce parcours n'existe pas et n'est rattaché à aucune unité (INC-015). Le détail complet
 du cycle de vie d'un compte — invitation, acceptation, connexion, session, déconnexion,
 réinitialisation — est spécifié dans `docs/SPEC-auth.md`.
+
+**La connexion unique (`CRM-091`, `docs/SPEC-auth.md` §10).** Le SSO `oauth.lelabs.tech` (Keycloak,
+realm `lelabs`) impose PKCE `S256`, que GoTrue 2.189.0 n'envoie pas à son fournisseur (décision
+568, M1). Le flux est donc :
+
+1. la webapp lit la découverte OIDC, tire vérificateur, `state` et nonce, écrit la transaction dans
+   le `sessionStorage` de l'onglet, et navigue vers Keycloak en **client public** avec PKCE ;
+2. Keycloak authentifie la personne et revient sur `/auth/retour` avec un code ;
+3. la webapp échange ce code au point de jeton de Keycloak, en ne lisant que l'`id_token` ;
+4. elle le remet à GoTrue par `POST /auth/v1/token?grant_type=id_token` (fournisseur `keycloak`),
+   avec le nonce brut ;
+5. **GoTrue vérifie** signature, émetteur, audience et nonce, puis applique `DISABLE_SIGNUP` :
+   un compte CRM à la même adresse, adresse attestée vérifiée, reçoit une session ordinaire — la
+   suite est celle des points 2 à 4 ci-dessus. Aucun rôle du realm n'est lu.
+
+GoTrue ne reçoit **aucun secret client** : sans lui, sa propre voie `/authorize` sans PKCE est
+fermée d'elle-même (M9). En développement, un Keycloak local reproduit le realm (§3.6).
 
 ### 4.2 Déplacement d'une card dans son workflow
 

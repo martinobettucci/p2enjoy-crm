@@ -96,6 +96,8 @@ positionner `P2ENJOY_ENV_PROFILE=prod`.
 | `CADDY_ACME_EMAIL` | Adresse de contact pour l'émission des certificats | Oui |
 | `APPLY_MIGRATIONS` | Doit valoir `false`, **et le rester** : c'est ce qui garantit qu'un lancement ordinaire, un redémarrage d'hôte ou le redéploiement d'un service ne migrent rien. La fenêtre de migration surcharge la valeur pour sa seule invocation et ne réécrit jamais le fichier (§3.1, `CRM-087`) | Oui |
 | `STACK_RLIMIT_NOFILE` | Descripteurs de fichiers réclamés par Realtime ; défaut `10000`, à abaisser si la limite dure de l'hôte est inférieure | Non |
+| `SSO_OIDC_ISSUER` | **Nouvelle variable (`CRM-091`).** Émetteur exact du SSO, `https://oauth.lelabs.tech/realms/lelabs` ; lu par GoTrue et figé au build de la webapp | Oui |
+| `SSO_OIDC_CLIENT_ID` | **Nouvelle variable (`CRM-091`).** Identifiant du client OIDC **réellement créé** par le realm (`docs/SPEC-auth.md` §10.8) ; lu par GoTrue et figé au build | Oui |
 | `SPARK_HTTP_PORT` | **Nouvelle variable (`CRM-090`).** Port de la cellule Spark servi en clair par Caddy, égal au port de la route ; défaut `8080`. Sans effet hors de la cellule | Oui dans la cellule |
 
 **Deux variables du service `mail-sync` deviennent obligatoires avec `CRM-052`.** Le conteneur ne
@@ -657,7 +659,7 @@ attendue à ce stade : `select count(*) from pg_policies where schemaname = 'pub
 | `caddy` | À chaque changement de `caddy/Caddyfile`, de `caddy/Caddyfile.spark` ou de `caddy/routes.caddy` — **`CRM-090` les modifie : routes extraites et `/functions/v1/*` relayé** |
 | `minio`, `minio-createbucket` | Cellule Spark seulement (`CRM-090`) : stockage objet interne, sans port publié |
 | `realtime` dans la cellule | À chaque montée de version de Realtime : reconstruire l'image dérivée, que `scripts/spark/livrer.sh` recharge (décision 571) |
-| `auth` | À chaque changement d'une variable `GOTRUE_*`, dont `PASSWORD_MIN_LENGTH` livrée par `CRM-011` |
+| `auth` | À chaque changement d'une variable `GOTRUE_*`, dont `PASSWORD_MIN_LENGTH` livrée par `CRM-011` — **et `CRM-091` en ajoute trois** : `GOTRUE_EXTERNAL_KEYCLOAK_ENABLED`, `_URL` et `_CLIENT_ID`, alimentées par `SSO_OIDC_*`. Changer l'une des deux variables impose de recréer `auth` **et** de reconstruire la webapp, où elles sont figées |
 
 **Opération en attente du prochain déploiement de production — redéployer `mail-sync` pour que le
 courrier reçu se groupe en fils (`CRM-081` tranche 2 f).** Le service persiste désormais la chaîne

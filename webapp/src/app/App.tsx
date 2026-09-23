@@ -1,5 +1,6 @@
 // @spec CRM-007 (docs/BACKLOG.md) — racine applicative et routage
 // @spec CRM-009 (docs/BACKLOG.md) — route de connexion et restauration de session
+// @spec CRM-091 (docs/BACKLOG.md) — route publique de retour du SSO (docs/SPEC-auth.md §10.3)
 // @spec CRM-075 (docs/BACKLOG.md) — route de l'administration de l'arborescence
 // @spec CRM-076 (docs/BACKLOG.md) — route de l'éditeur de workflows
 // @spec CRM-059 (docs/BACKLOG.md) — route de l'écran d'état de la messagerie
@@ -20,6 +21,8 @@ import { t } from '../i18n'
 import { AppShell } from './AppShell'
 import { FournisseurAuthentification, useAuthentification } from './Authentification'
 import { ChargementAuthentification, EcranConnexion } from './EcranConnexion'
+import { RetourSso } from './RetourSso'
+import { CHEMIN_RETOUR_SSO } from '../lib/sso'
 import { GuideDemarrage } from './GuideDemarrage'
 import {
 	CHEMIN_ADMIN_ARBORESCENCE,
@@ -199,6 +202,9 @@ function RoutesApplication() {
 		<Suspense fallback={<ChargementRoute />}>
 			<Routes>
 				<Route path="/connexion" element={<EcranConnexion />} />
+				{/* Retour du SSO (`CRM-091`, docs/SPEC-auth.md §10.3) : publique, hors coquille,
+				    comme `/connexion`. Son adresse est celle déclarée au fournisseur. */}
+				<Route path={CHEMIN_RETOUR_SSO} element={<RetourSso />} />
 				{ROUTES.map((route) => (
 					<Route
 						key={route.chemin}

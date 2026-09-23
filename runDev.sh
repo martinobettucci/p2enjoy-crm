@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # @spec CRM-002 (docs/BACKLOG.md) — script de lancement de l'environnement de développement
+# @spec CRM-091 (docs/BACKLOG.md) — garde de l'émetteur du Keycloak de développement (docs/SPEC-auth.md §10.9)
 # @spec CRM-015 (docs/BACKLOG.md) — CA facultative validée avant le build de la webapp
 # @spec docs/JOURNAL.md décision 16 (amorçage automatique des secrets, gardes de profil)
 # @spec docs/JOURNAL.md décision 99 (contrôle des ports avant démarrage), décision 101 (points de
@@ -70,6 +71,7 @@ env_require_dev_ca_file NPM_CA_FILE
 env_require_dev_ca_file PIP_CA_FILE
 env_require_dev_inbound_domain
 env_require_dev_webapp_origin
+env_require_dev_sso_issuer
 
 if [ "$MODE" = bootstrap ]; then
 	say "Environnement prêt. Rien n'a été démarré (--bootstrap)."

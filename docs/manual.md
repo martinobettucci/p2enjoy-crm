@@ -112,6 +112,45 @@ Dans l'environnement de développement seedé, les trois comptes de démonstrati
 serveur, mais aucun écran ne la porte encore. L'invitation demeure une opération d'exploitation :
 la webapp ne détient jamais la clé de service nécessaire (INC-015).
 
+### 1.1 Se connecter avec LeLabs
+
+*Livré par `CRM-091`. Captures dans `docs/captures/CRM-091/`.*
+
+Sous le formulaire, après la mention **ou**, l'action **Se connecter avec LeLabs** vous connecte
+avec votre compte LeLabs, sans saisir de mot de passe dans le CRM. Le produit vous envoie sur la
+page de connexion de LeLabs ; une fois connecté là-bas, vous revenez au CRM — à l'adresse d'où vous
+étiez parti, si vous aviez commencé depuis une fiche ou un board.
+
+**Qui peut entrer ainsi.** Un compte LeLabs n'ouvre le CRM que si deux conditions sont réunies :
+
+- un compte du CRM existe **à la même adresse** — vous y avez été invité ;
+- cette adresse est **vérifiée** auprès de LeLabs.
+
+Le rôle que LeLabs vous attribue — personne vérifiée ou administrateur du SSO — ne change rien à
+vos droits dans le CRM : ils restent ceux que l'administrateur de votre espace vous a donnés. Si
+vous aviez reçu une invitation que vous n'aviez pas encore acceptée, vous connecter avec LeLabs
+l'accepte : c'est la même preuve que le lien du courriel.
+
+**Les messages que vous pouvez lire**, sous le séparateur :
+
+| Message | Ce qu'il veut dire |
+|---|---|
+| Aucun compte du CRM ne correspond à ce compte LeLabs… | Personne ne vous a invité à cette adresse, ou votre adresse n'est pas encore vérifiée auprès de LeLabs. Demandez une invitation à un administrateur de votre espace, ou terminez la vérification de votre adresse chez LeLabs. |
+| La connexion LeLabs a été annulée. | Vous avez refusé ou interrompu la connexion chez LeLabs. Rien n'a changé ; vous pouvez recommencer. |
+| La connexion LeLabs n'a pas abouti. Recommencez depuis cet écran. | Le retour de LeLabs n'a pas pu être vérifié — par exemple si vous avez mis plus de dix minutes, ou ouvert le retour dans un autre onglet. Recommencez simplement. |
+| Le serveur n'a pas répondu… | LeLabs ou le CRM est momentanément injoignable. Réessayez. |
+
+**La déconnexion.** **Se déconnecter** ferme votre session du CRM, pas celle de LeLabs : c'est le
+principe même d'une connexion unique. Tant que votre session LeLabs reste ouverte dans ce
+navigateur, **Se connecter avec LeLabs** vous reconnecte sans vous redemander votre mot de passe.
+Sur un ordinateur partagé, fermez aussi votre session LeLabs, depuis votre espace de compte LeLabs.
+
+Rien n'est conservé sur votre appareil au-delà de l'onglet : la connexion en cours ne vit que le
+temps de l'aller-retour vers LeLabs, et la session du CRM suit la règle ci-dessus.
+
+Dans l'environnement de développement, un LeLabs local porte les mêmes adresses que les comptes de
+démonstration, avec le mot de passe commun `SsoDev2026Local`.
+
 ## 1 bis. Le guide de démarrage : par où commencer
 
 *Livré par `CRM-079`. Décrit l'application réellement exécutée ; captures dans

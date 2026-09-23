@@ -11,6 +11,9 @@
 interface ImportMetaEnv {
 	readonly VITE_SUPABASE_URL?: string
 	readonly VITE_SUPABASE_ANON_KEY?: string
+	// `CRM-091`, docs/SPEC-auth.md §10.2 : absentes, l'action SSO n'est pas rendue.
+	readonly VITE_SSO_ISSUER?: string
+	readonly VITE_SSO_CLIENT_ID?: string
 }
 
 interface ImportMeta {

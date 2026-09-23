@@ -13,6 +13,22 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-091` — Se connecter avec LeLabs
+
+- **Une seconde façon d'entrer**, sous le formulaire de connexion : « Se connecter avec LeLabs »
+  mène à la page de connexion du SSO `oauth.lelabs.tech` et revient dans le CRM, à l'adresse d'où
+  l'on était parti. Le mot de passe reste possible.
+- **Le SSO prouve une identité, le CRM décide de l'accès.** Un compte LeLabs n'ouvre le CRM que si
+  un compte y existe à la même adresse et que cette adresse est vérifiée ; c'est le serveur qui en
+  juge. Les rôles du SSO ne donnent aucun droit dans le CRM.
+- **Une invitation peut s'accepter par le SSO**, comme par le lien du courriel.
+- **Chaque refus a son message** : aucun compte correspondant, connexion annulée, retour non
+  vérifiable, serveur injoignable.
+- **Rien n'est conservé sur l'appareil** au-delà de l'onglet, et les jetons du SSO ne sont jamais
+  gardés.
+- **En développement, un LeLabs local** reproduit le SSO réel — mêmes règles, comptes alignés sur la
+  démonstration.
+
 ### `CRM-090` — La production sur la cellule Spark « crm »
 
 - **Un troisième assemblage, pour la cellule qui accueillera la production** : Caddy y sert en

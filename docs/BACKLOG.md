@@ -14401,7 +14401,7 @@ décrit la baseline réelle.
       `proposer.sh` ; dix images tirées et l'image Realtime dérivée chargée (4,7 Go utilisés,
       5,8 Go libres).
 
-### CRM-091 — Connexion unique par `oauth.lelabs.tech` `[ ]`
+### CRM-091 — Connexion unique par `oauth.lelabs.tech` `[~]`
 *Créée le 2026-09-23 — décision 568. Motif : GoTrue 2.189.0 ne parle pas PKCE à Keycloak (M1), que le
 realm impose (M2) ; le client OIDC est donc la webapp, et GoTrue vérifie l'`id_token`.*
 
@@ -14414,11 +14414,20 @@ du §10.4 est rendu ; M2 à M10 sont prouvées hors interface contre la pile ré
 développement démarre avec `./runDev.sh` ; captures produites **et observées** ; en production, le
 client est déclaré, la sonde du §10.8 rend `302` et une connexion réelle aboutit.
 
-- [ ] Configuration : `SSO_OIDC_ISSUER`, `SSO_OIDC_CLIENT_ID`, service `auth` (§10.2).
-- [ ] Keycloak de développement, `keycloak/realm-lelabs.json`, garde de `./runDev.sh` (§10.9).
-- [ ] Module `webapp/src/lib/sso.ts` et route `/auth/retour` (§10.3 à §10.5).
-- [ ] Action sur `/connexion` et refus rendus (§10.3, §10.4) ; `docs/DESIGN_SYSTEM.md` §5.12.
-- [ ] Tests unitaires, `e2e/api/sso.spec.ts`, `e2e/ui/sso.spec.ts` (§10.10).
-- [ ] Captures observées.
-- [ ] Documentation : `docs/manual.md` chapitre 1, `README.md`, `docs/DAT.md`, `CHANGELOG.md`.
+- [x] Configuration : `SSO_OIDC_ISSUER`, `SSO_OIDC_CLIENT_ID`, service `auth` (§10.2) ; complétion
+      des `.env` existants, `SPARK_HTTP_PORT` compris — un `.env` d'avant `CRM-090` était sinon
+      refusé, trouvé en l'exécutant (décision 572).
+- [x] Keycloak de développement, `keycloak/realm-lelabs.json` et son compagnon, garde de
+      `./runDev.sh` sur l'émetteur (§10.9). Démarré sain par `./resetMe.sh`, realm importé avec ses
+      substitutions.
+- [x] Module `webapp/src/lib/sso.ts` et route `/auth/retour` (§10.3 à §10.5).
+- [x] Action sur `/connexion` et refus rendus (§10.3, §10.4) ; `docs/DESIGN_SYSTEM.md` §5.12.
+- [x] Tests : `webapp/src/lib/sso.test.ts` **23**, `webapp/src/app/ConnexionSso.test.tsx` **9** ;
+      `e2e/api/sso.spec.ts` **9/9** contre la pile réelle — M2 à M10 ; `e2e/ui/sso.spec.ts` **4/4**
+      par la vraie page de Keycloak, console vierge ; `e2e/ui/authentification.spec.ts` rejouée
+      **8/8** ; compteurs de `scripts/verify-harness.sh` révisés (1067 et 749).
+- [x] Captures observées : `docs/captures/CRM-091/`, quatre paliers et les deux refus. Une anomalie
+      de preuve y a été vue et corrigée (capture « annulée » rendue hors palier).
+- [x] Documentation : `docs/manual.md` §1.1, `README.md` §6 et §9, `docs/DAT.md` §3.6, §3.7 et §4.1,
+      `docs/PROD_MIGRATIONS.md` §2.3 et §4, `CHANGELOG.md`.
 - [ ] Déclaration remise, client créé, sonde et connexion réelle en production (§10.8).

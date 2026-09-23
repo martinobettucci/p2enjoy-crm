@@ -454,7 +454,8 @@ bouton du §10.3 **n'est pas rendu** : l'écran de connexion reste celui du §9,
    `base64url(SHA-256(vérificateur))` ; le nonce **envoyé** à Keycloak est `hex(SHA-256(nonce brut))`,
    le nonce **remis** à GoTrue est le brut (M7).
 4. Elle enregistre la **transaction** — `state`, vérificateur, nonce brut, adresse de retour interne,
-   échéance à dix minutes — puis navigue vers
+   URL de retour déclarée, point d'échange lu dans la découverte, échéance à dix minutes — puis
+   navigue vers
    `authorization_endpoint?client_id&response_type=code&scope=openid email profile&redirect_uri&state&nonce&code_challenge&code_challenge_method=S256`.
 5. Keycloak revient sur **`/auth/retour`**, route publique hors de la coquille, comme `/connexion`.
    La transaction est **retirée du stockage dès sa lecture** : elle ne sert qu'une fois, succès ou
@@ -570,8 +571,10 @@ importé depuis **`keycloak/realm-lelabs.json`**.
 - Le realm reproduit ce qui se paierait au premier déploiement : chemin `/realms/lelabs`, rôles
   `verified` et `admin`, **PKCE `S256` imposé**, URL de retour **exactes**, vérification d'adresse
   exigée.
-- Le client `lelabs-crm` a pour seule URL de retour `SITE_URL` + `/auth/retour`, injectée à
-  l'import : l'origine de la webapp varie d'un poste à l'autre.
+- Le client `lelabs-crm` a deux URL de retour exactes : `SITE_URL` + `/auth/retour`, injectée à
+  l'import parce que l'origine du Vite de développement varie d'un poste à l'autre, et
+  `http://127.0.0.1:4173/auth/retour`, l'origine du `vite preview` que le harnais Playwright sert
+  (`keycloak/README.md`).
 - Un second client public, `crm-audience-etrangere`, n'existe qu'ici : il sert à prouver le refus
   d'audience (M8).
 

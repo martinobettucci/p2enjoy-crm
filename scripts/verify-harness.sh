@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# @verifies CRM-091 (docs/BACKLOG.md) — compteurs révisés pour les preuves du SSO
 # @verifies CRM-008 (docs/BACKLOG.md) — Definition of Done du harnais de tests
 # @verifies docs/SPEC-test-harness.md §3 (exécuteur pgTAP), §4 (projets Playwright),
 #           §5 (rapport), §7 (preuves attendues)
@@ -854,7 +855,13 @@ ASSERTIONS_ATTENDUES=3083
 # lignes *m* et *n*, qui posent leurs surcharges puis les retirent, sont conservées telles quelles —
 # elles éprouvent la règle, celle-ci éprouve la donnée. 1057 + 1 = 1058, valeur COMPTÉE —
 # « 1058 passed ». Garde-fou RÉVISÉ, jamais retiré (décision 51).
-SCENARIOS_API=1058
+# **1067 depuis `CRM-091`, 2026-09-23.** NEUF scénarios dans un fichier NEUF, `e2e/api/sso.spec.ts` :
+# les mesures M2 à M10 de la décision 568 rejouées contre le Keycloak de développement et GoTrue
+# derrière Kong — refus sans PKCE, compte inconnu, rattachement sans second compte, adresse non
+# vérifiée, invitation acceptée par le SSO, nonce, audience, voie `/authorize` fermée, revendications
+# conservées. 1058 + 9 = 1067, valeur COMPTÉE — « Total: 1067 tests in 67 files ». Garde-fou RÉVISÉ,
+# jamais retiré (décision 51).
+SCENARIOS_API=1067
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -1210,7 +1217,11 @@ SCENARIOS_API=1058
 # portée workspace AUCUNE mention n'est rendue — le seul nœud vide du seed est ARCHIVÉ, et son
 # exclusion se constate là —, et sous une portée restreinte les nœuds actifs vides sont NOMMÉS dans
 # l'ordre du catalogue. 743 + 2 = 745, valeur COMPTÉE — « Total: 745 tests in 58 files ».
-SCENARIOS_UI=745
+# **RÉVISÉ À 749 PAR `CRM-091`, 2026-09-23.** QUATRE scénarios dans un fichier NEUF,
+# `e2e/ui/sso.spec.ts` : le parcours par la vraie page de connexion de Keycloak avec retour à
+# l'adresse demandée, le compte du realm sans compte CRM, l'annulation chez le fournisseur, et
+# l'action aux quatre paliers. 745 + 4 = 749, valeur COMPTÉE — « Total: 749 tests in 59 files ».
+SCENARIOS_UI=749
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,
