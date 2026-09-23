@@ -234,7 +234,9 @@ hors de la cellule : le défaut qu'elle corrige est celui de l'assemblage de pro
 
 ## 7. Vérifications
 
-En plus du §5 de `docs/PROD_MIGRATIONS.md` :
+En plus du §5 de `docs/PROD_MIGRATIONS.md`. Les points 1 à 6 et la sonde du client OIDC sont
+exécutés, en lecture seule, par `scripts/spark/verifier.sh`, qui distingue un échec d'un contrôle
+« en attente » d'un geste extérieur :
 
 1. `cat /srv/crm/REVISION` rend le commit livré.
 2. Tous les conteneurs sont `healthy` ; `docker stats --no-stream` reste sous les limites du §8.
