@@ -14385,12 +14385,13 @@ décrit la baseline réelle.
 - [x] Harnais `scripts/verify-spark.sh` (§9) : **57 vérifications, aucune anomalie**, dont la
       répartition exacte des secrets entre services et cinq dégradations détectées avec leur
       témoin vert ; `scripts/verify-scripts.sh` couvre l'overlay (88 variables Compose documentées).
-- [~] **Premier déploiement dans la cellule et vérifications (§7).** Fait le 2026-09-23 : base
+- [x] **Premier déploiement dans la cellule et vérifications (§7).** Fait le 2026-09-23 : base
       mesurée vierge, **73 migrations appliquées**, treize conteneurs sains, aucun redémarrage ni
-      arrêt par manque de mémoire (≈ 1 090 Mio utilisés sur 2 048) ; `scripts/spark/verifier.sh` :
-      **23 contrôles, aucun échec**. Premier espace amorcé (décision 574). Reste, hors dépôt :
-      l'acceptation de la route `tls` (décision 576), puis `https://` vérifié depuis Internet
-      (`docs/PROD_MIGRATIONS.md` §8).
+      arrêt par manque de mémoire (≈ 1 090 Mio utilisés sur 2 048). Premier espace amorcé
+      (décision 574). Route `tls` acceptée : `scripts/spark/verifier.sh`, **26 contrôles, aucun
+      échec**, webapp et API servies en `https://crm.lelabs.tech` ; écran de connexion observé en
+      production (`docs/PROD_MIGRATIONS.md` §8). Reste pour le DoD de l'unité, au §5 du contrat :
+      une connexion réelle, qui attend `CRM-091`.
 - [x] Documentation : `README.md` §5, §9, §10, §11 ; `docs/DAT.md` §3.5, §9, §13 ;
       `docs/PROD_MIGRATIONS.md` §2.3, §2.4, §3.1, §4 ; `.env.example` ; `CHANGELOG.md`.
 - [x] Registre MinIO de développement corrigé (décision 569) : overlay, `scripts/verify-stack.sh`,
@@ -14414,11 +14415,11 @@ décrit la baseline réelle.
       aucune anomalie**, dont deux qui rougissaient avant la correction. **Prouvé dans la
       cellule** : ses migrations passent sous `nobody`, 31 lignes dans `_realtime.schema_migrations`,
       conteneur sain, aucun redémarrage.
-- [~] **Route publique en `tls`** (décision 576) : la route acceptée `clair` publiait le CRM en
+- [x] **Route publique en `tls`** (décision 576) : la route acceptée `clair` publiait le CRM en
       `http://` seul, que le SSO refuse. `proposer.sh` propose `tls`, et `--route-seule` la
       repropose sans toucher aux secrets en service ; harnais porté à **76 vérifications, aucune
-      anomalie**, dont deux qui rougissaient avant la correction. Reste l'acceptation de la route
-      par le propriétaire du Spark, puis la preuve en `https://`.
+      anomalie**, dont deux qui rougissaient avant la correction. Route acceptée le 2026-09-23 :
+      `https://crm.lelabs.tech` sert la webapp et l'API, certificat Let's Encrypt valide.
 - [x] **Image Realtime transférée seulement si son contenu change** (décision 577) : l'identifiant
       changeait à chaque construction. Harnais porté à **78 vérifications, aucune anomalie**, dont
       une qui rougissait avant la correction.

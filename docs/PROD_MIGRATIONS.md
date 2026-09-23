@@ -26,8 +26,8 @@ isolée hors fenêtre.
 
 ## 1. Baseline de production
 
-**Cellule Spark `crm`, premier déploiement du 2026-09-23** (§8). La pile tourne ; elle n'est pas
-encore publiée en `https://`, et la connexion par le SSO n'y est pas encore possible.
+**Cellule Spark `crm`, premier déploiement du 2026-09-23** (§8). La pile tourne et est publiée en
+`https://crm.lelabs.tech` ; la connexion par le SSO n'y est pas encore possible.
 
 | Élément | État |
 |---|---|
@@ -36,7 +36,7 @@ encore publiée en `https://`, et la connexion par le SSO n'y est pas encore pos
 | Dernière migration appliquée | `0073_entonnoir_conversion.sql` |
 | Version déployée | La révision inscrite dans `/srv/crm/REVISION` — celle que `scripts/spark/verifier.sh` compare au `HEAD` du poste |
 | Données | Un compte invité et un espace, « P2Enjoy CRM » (`crm`), posés par `scripts/spark/amorcer-espace.sh` (§8) ; aucune autre donnée, aucun seed |
-| Route publique | `crm.lelabs.tech` acceptée en **`clair`** : servie en `http://` seul. Route **`tls`** proposée, en attente du propriétaire du Spark (décision 576) |
+| Route publique | `crm.lelabs.tech 8080 tls`, active : `https://crm.lelabs.tech`, certificat Let's Encrypt présenté par la Forge (décision 576) |
 | Client OIDC `lelabs-crm` | **Non déclaré** au realm : sonde `400` (`docs/SPEC-auth.md` §10.8) |
 | Relais SMTP | Hôte, port et expéditeur importés ; identifiants non fournis — les courriels transactionnels échouent, la connexion par le SSO n'en dépend pas |
 
@@ -920,8 +920,13 @@ sauvegarde couvre la perte de l'hôte.
   courriel ; espace `crm` créé ; appartenance `admin` posée. Relevé en lecture : 1 compte, invité
   et non confirmé, 1 espace, 1 administrateur. L'invitation s'acceptera à la première connexion
   avec LeLabs, adresse vérifiée.
-- **Route** : acceptée en `clair`, elle publie le CRM en `http://` seul — webapp et API y
-  répondent. Route `tls` reproposée par `proposer.sh --route-seule` (décision 576) : **en attente**.
+- **Route** : acceptée d'abord en `clair`, elle publiait le CRM en `http://` seul. Route `tls`
+  reproposée par `proposer.sh --route-seule` (décision 576), **acceptée** : `https://crm.lelabs.tech`
+  présente un certificat Let's Encrypt valide. `scripts/spark/verifier.sh` : route active en `tls`,
+  webapp et API servies en `https://` — **26 contrôles, aucun échec**, la sonde du client seule en
+  attente. Par la route publique : GoTrue annonce `keycloak` et l'inscription libre fermée,
+  PostgREST rend `200` à la clé anonyme ; l'écran de connexion s'affiche, sans « Configuration
+  incomplète », avec « Se connecter avec LeLabs », sans erreur console, en 1280 × 800 et 390 × 844.
 - **Client OIDC** : sonde `400`, **non déclaré** — déclaration de `docs/SPEC-auth.md` §10.8 à coller
   par un administrateur du realm.
 - `CHANGELOG.md` : rien n'est déplacé sous « Publié » — ni `https://` ni la connexion réelle ne
