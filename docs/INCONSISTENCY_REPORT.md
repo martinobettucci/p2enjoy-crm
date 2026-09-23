@@ -6531,3 +6531,27 @@ preuve. Deux sessions consécutives ont déjà consigné ce même verdict sans p
   faisant varier UNE condition à la fois.
 
 **Mise en œuvre due : `CRM-008`.** Aucune ligne du produit n'est modifiée ici.
+
+### INC-248 — le seed ancre les échéances de « Ma journée » sur le jour UTC, l'écran les range par jour LOCAL : deux preuves rougissent chaque nuit
+
+*Constatée le 2026-09-24 à 00:43 CEST (22:43 UTC le 23), pendant la campagne d'interface de `CRM-092`
+T5. Étrangère à `CRM-092` : aucun fichier de « Ma journée », du seed ou de ses preuves n'est touché
+par cette tranche.*
+
+**Mesure.** `supabase/seed/apply-seed.sh`, section « 8 duodecies bis. Échéances », translate les
+échéances de l'ancre `2026-08-21` vers `date_trunc('day', now())` — le jour **UTC** de la base,
+mesuré `2026-09-23 00:00:00+00`. L'écran de `CRM-061` range « En retard », « Aujourd'hui » et « À venir »
+selon le jour **local** du navigateur, `2026-09-24`. Seed rejoué, les deux scénarios
+`e2e/ui/ma-journee.spec.ts:41` (« les trois sections du seed sont rendues » : **2** sections au lieu de
+3) et `:107` (la bascule de portée) restent rouges ; les 745 autres scénarios de la campagne ne sont
+pas concernés. Côté API, `e2e/api/ma-journee.spec.ts:345` (« les trois sections de l'administratrice
+sont peuplées, quel que soit le jour ») rougit de même, à la même heure. Chaque nuit, entre minuit local et minuit UTC — deux heures en heure d'été française —,
+la section « Aujourd'hui » du jeu de démonstration est vide.
+
+**Ce que ce n'est pas.** Ni la session, ni la restauration, ni la connexion : les deux scénarios se
+connectent, lisent l'écran et comptent ses sections ; c'est le compte qui diffère.
+
+**Issue à arbitrer, non mise en œuvre** (`CLAUDE.md` §5, « ne pas la résoudre implicitement ») : ancrer
+la translation sur le jour du fuseau que l'écran emploie, ou faire rendre à l'écran le jour que la base
+emploie. Les deux touchent une règle de `docs/SPEC-cards.md` §17 et du seed, hors de la tâche en cours.
+**Unité due : `CRM-061`.**

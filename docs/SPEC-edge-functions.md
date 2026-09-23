@@ -59,9 +59,11 @@ Le service reçoit seulement les variables nécessaires aux fonctions de confian
 `SUPABASE_URL=http://kong:8000`, `SUPABASE_ANON_KEY` et `SUPABASE_SERVICE_ROLE_KEY`. Aucune valeur
 n'est journalisée, retournée par `example` ou inscrite dans les sources.
 
-**Révisé par `CRM-092` (décision 584) : l'environnement est remis PAR FONCTION.** Le conteneur reçoit
-en plus `JWT_SECRET`, `SSO_OIDC_ISSUER` et `SSO_OIDC_CLIENT_ID`, parce que l'échangeur de session
-(`docs/SPEC-session-sso.md` §5) signe le jeton interne que PostgREST, Realtime et Storage acceptent.
+**Révisé par `CRM-092` (décisions 584, 586) : l'environnement est remis PAR FONCTION.** Le conteneur
+reçoit en plus `JWT_SECRET`, `SSO_OIDC_ISSUER`, `SSO_OIDC_CLIENT_ID` et `SSO_OIDC_CLIENT_SECRET`,
+parce que l'échangeur de session (`docs/SPEC-session-sso.md` §5), client **confidentiel** de LeLabs,
+échange le code avec le secret du client et signe le jeton interne que PostgREST, Realtime et Storage
+acceptent.
 Le service principal ne les remet qu'au **seul** worker `session` (`main/environnement.ts`) : toute
 autre fonction, présente ou future, ne reçoit que les trois variables ci-dessus et ne peut frapper
 aucun jeton. La règle d'origine — « le secret de signature n'est pas propagé » — défendait cette
@@ -84,10 +86,14 @@ supabase/functions/
 │   └── index.ts              adaptation Deno.serve
 └── session/                  échangeur de session, CRM-092 (docs/SPEC-session-sso.md §5)
     ├── jws.ts                lecture, vérification RS256/ES256 et signature HS256, WebCrypto seul
-    ├── handler.ts            vérifications ordonnées, admission, jeton interne, refus
+    ├── verification.ts       vérification ordonnée du jeton d'accès LeLabs et admission du jeton
+    ├── chiffrement.ts        poignée, empreinte SHA-256, AES-GCM du jeton de rafraîchissement
+    ├── cookie.ts             cookie `httpOnly` de la poignée
+    ├── refus.ts              dictionnaire fermé des refus
+    ├── handler.ts            trois gestes — ouvrir, prolonger, fermer —, jeton interne
     ├── dependances.ts        entrées-sorties réelles : LeLabs sous délai, base par PostgREST
     ├── index.ts              adaptation Deno.serve
-    └── *.test.ts             preuves unitaires des trois modules
+    └── *.test.ts             preuves unitaires des modules
 ```
 
 Chaque fichier d'exécution porte `@spec CRM-016` et les sections exactes de ce document. Les tests

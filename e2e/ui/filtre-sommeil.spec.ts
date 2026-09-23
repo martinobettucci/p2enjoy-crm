@@ -12,6 +12,8 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.3 quinquies (la bascule, la pastille compacte, la densité du
 //           tableau, l'état vide qui porte son action), §7 (paliers), §8 (accessibilité)
 // @verifies CLAUDE.md §16 (vérification visuelle)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // AUCUNE RÉPONSE N'EST SUBSTITUÉE : ces scénarios se connectent réellement et lisent les affaires
 // **du seed** par la vraie route. C'est l'objet même de la preuve — la tranche 2 a avait livré la
@@ -28,8 +30,7 @@
 // du §16.12.6, puis la réveille dans un `finally` : la remise en état est INCONDITIONNELLE, faute
 // de quoi un seul échec rendrait rouges les cinq scénarios voisins qui comptent « 1 sur 2 ».
 
-import { autoriserErreursConsole, expect, test, type Page } from './fixtures'
-import { MOT_DE_PASSE_SEED } from '../api/jetons'
+import { autoriserErreursConsole, connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-081'
@@ -84,13 +85,7 @@ async function basculer(page: Page, veutVisibles: boolean): Promise<void> {
 }
 
 async function connecter(page: Page): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(ADMIN)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, ADMIN)
 }
 
 test.describe('le board masque, ramène et marque (docs/SPEC-cards.md §16.12.3, §16.12.7)', () => {

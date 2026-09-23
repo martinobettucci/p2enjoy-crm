@@ -1045,56 +1045,70 @@ s'ajoutent, elles ne les remplacent pas.
   sort du cadre est un contrôle qui **cache** une option, ce que le §7 admet pour un tableau ou un
   board — dont on sait qu'ils défilent — mais pas pour cinq bascules.
 
-### 5.12 Connexion et identité de session — `CRM-009`
+### 5.12 Connexion et identité de session — `CRM-009`, révisé par `CRM-092`
 
 L'écran de connexion est une surface autonome, sans barre latérale ni onglets : tant qu'aucune
 session n'existe, ces repères ne contiennent que le refus anonyme et détournent de l'action utile.
 
+**RÉVISÉ le 2026-09-24 par `CRM-092` T5** (`docs/SPEC-session-sso.md` §9, décisions 578, 586, 587). Le
+SSO de LeLabs est la seule source d'identité : le formulaire par adresse et mot de passe de `CRM-009`
+et la seconde voie « ou » de `CRM-091` quittent l'écran, qui ne porte plus qu'**une** action.
+
 - Fond `--color-bg`, carte `--color-surface` de largeur maximale correspondant à un formulaire
   court, `--radius-lg`, bordure `--color-border` et ombre de carte existante. Aucun nouveau jeton.
-- Nom du produit, titre H1 « Se connecter », phrase courte expliquant que l'accès est réservé aux
-  comptes invités, puis les deux champs du §5.7 et un bouton primaire sur toute la largeur.
-- Aucun lien « créer un compte » : l'inscription libre est refusée par le serveur. Aucun bouton
-  inerte « mot de passe oublié » tant que son parcours d'interface n'est pas livré.
-- L'erreur se place entre les champs et l'action, dans une surface `--color-danger-soft`, texte
-  `--color-danger-on-soft`, avec l'icône Lucide `TriangleAlert` et `role="alert"`. Elle ne déplace
-  pas le titre et reste lisible quand le texte gagne 40 %.
-- À partir de 768 px, la carte reste centrée dans les deux axes ; sous ce palier, elle occupe la
-  largeur disponible avec 16 px de marge et reste alignée en haut pour que le clavier virtuel ne
-  masque pas l'action.
-- L'en-tête connecté place l'adresse de session en texte secondaire puis l'action discrète
-  « Se déconnecter ». Sous 768 px, l'adresse passe en `sr-only` avant le titre de route ; l'action
-  reste une cible d'au moins 40 px avec un libellé accessible complet.
-- La restauration initiale de session emploie une carte squelette de même forme que l'écran de
-  connexion. Aucun spinner plein écran (§5.8).
-
-La couleur n'indique jamais seule un refus, tous les champs portent leur libellé visible, et
-l'ordre de tabulation suit l'ordre visuel : email, mot de passe, action.
-
-**La connexion unique — `CRM-091`, `docs/SPEC-auth.md` §10.3 et §10.4.** Une seconde voie s'ajoute
-sous le formulaire ; ce qui suit ne dit que de quoi elle a l'air.
-
-- **Un séparateur « ou », puis une action SECONDAIRE pleine largeur**, « Se connecter avec
-  LeLabs ». Le bouton primaire reste celui du formulaire (§5.5) : deux primaires dans une même
-  carte ne diraient plus lequel est le chemin attendu, et le formulaire par mot de passe n'est pas
-  retiré. Le séparateur est deux filets `--color-border` encadrant le mot en `text-sm`
-  `--color-text-3`, `aria-hidden` : il sépare à l'œil, et l'ordre du document suffit à la voix.
-- **L'icône est `KeyRound`**, jamais `LogIn` : `LogIn` porte déjà le lien « Se connecter » de
-  l'en-tête, et le §9 interdit qu'une icône serve deux gestes. Elle accompagne le libellé.
-- **L'action n'est pas rendue sans configuration** (`VITE_SSO_*` absentes au build) : une commande
-  qui mènerait nulle part serait la commande morte du §5.10.
-- **Le refus du SSO vit SOUS le séparateur, juste au-dessus de l'action qui l'a causé** — et non
-  entre les champs et le bouton du formulaire, place du refus d'identifiants. C'est la règle du
-  §5.13 : un refus se lit près de ce qui l'a causé. Même surface, même icône `TriangleAlert`, même
-  `role="alert"`, et l'action le cite par `aria-describedby`. Les deux refus ne coexistent jamais :
-  engager une voie efface le refus de l'autre.
-- **Pendant la redirection, les deux actions sont désactivées** et le libellé devient
-  « Redirection vers LeLabs… » ; aucune double demande ne peut partir.
+- Nom du produit, titre H1 « Se connecter », phrase courte disant que l'accès est réservé aux
+  personnes inscrites par un administrateur de leur espace, avec un compte LeLabs vérifié.
+- **Une seule action, PRIMAIRE, pleine largeur** : « Se connecter avec LeLabs », icône `KeyRound`.
+  Plus de champ, plus de séparateur « ou » : il n'y a plus de second chemin dont la distinguer, et
+  une action primaire unique dit sans ambiguïté le chemin attendu (§5.5). `KeyRound`, jamais `LogIn`
+  : `LogIn` porte déjà le lien « Se connecter » de l'en-tête, et le §9 interdit qu'une icône serve
+  deux gestes.
+- Aucun lien « créer un compte », aucun « mot de passe oublié » : le CRM ne connaît aucun mot de
+  passe. Ces gestes appartiennent à LeLabs.
+- **Pendant la redirection, l'action est désactivée** et son libellé devient « Redirection vers
+  LeLabs… » ; aucune double demande ne peut partir.
+- **Sans configuration** (`VITE_SSO_*` ou `VITE_SUPABASE_*` absentes au build), **aucune action n'est
+  rendue**, et l'emplacement d'erreur dit que la connexion n'est pas configurée sur ce déploiement :
+  une commande qui mènerait nulle part serait la commande morte du §5.10.
+- **Un REFUS et une ATTENTE sont deux surfaces distinctes**, placées au-dessus de l'action, que
+  l'action cite par `aria-describedby`. L'action reste disponible dans les deux cas : se reconnecter
+  est le seul geste utile, une fois la cause levée. Une seule surface à la fois.
+  - **Refus** — une tentative a échoué (annulation, échec, réseau, session terminée, configuration
+    absente) : surface `--color-danger-soft`, texte `--color-danger-on-soft`, icône `TriangleAlert`,
+    `role="alert"`. Elle ne déplace pas le titre et reste lisible quand le texte gagne 40 %.
+  - **Attente** — la personne n'a rien fait de faux, un geste d'autrui manque (adresse à vérifier
+    chez LeLabs, compte à vérifier par un administrateur de LeLabs, inscription par un administrateur
+    d'espace) : surface `--color-accent-soft`, texte `--color-accent-on-soft` (4,72:1, §12.5), icône
+    Lucide **`CircleDashed`**, `role="status"`, titre court « Accès en attente » en graisse moyenne,
+    puis la phrase qui **nomme l'adresse** concernée — interpolée par une clé de traduction, jamais
+    concaténée (§10), et repliée sur les mots longs plutôt que de déborder. Teinter une attente de
+    danger ferait lire une faute là où il n'y en a pas. `CircleDashed` ne sert aucun autre objet :
+    `Hourglass`, d'abord retenue, porte déjà l'entrée « Affaires figées » (§5.37), et le §9
+    l'interdit. Une attente sans adresse n'est pas rendue : la réponse n'est alors pas conforme, et
+    l'écran rend le refus d'échec.
 - **Le retour de LeLabs rend la carte squelette de la restauration de session**, avec le libellé
   annoncé « Connexion LeLabs en cours » : même forme, aucun spinner (§5.8), aucun contenu trompeur
   pendant l'échange.
-- **Aucune couleur, aucun jeton nouveau** ; une seule icône Lucide nouvelle, `KeyRound`, qui ne sert
-  aucun autre objet.
+- **Une session qui prend fin sans geste de la personne** — session LeLabs close, droit retiré,
+  panne prolongée — ramène à cet écran, qui dit pourquoi dans la surface qui convient, et retient
+  l'adresse quittée pour y revenir après reconnexion.
+- À partir de 768 px, la carte reste centrée dans les deux axes ; sous ce palier, elle occupe la
+  largeur disponible avec 16 px de marge et reste alignée en haut.
+- L'en-tête connecté place l'identité de session — nom et avatar du profil, l'adresse en infobulle
+  et en repli — puis l'action discrète « Se déconnecter ». Sous 768 px, l'adresse passe en `sr-only`
+  avant le titre de route ; l'action reste une cible d'au moins 40 px avec un libellé accessible
+  complet. Se déconnecter ferme la session du CRM, pas celle de LeLabs (`docs/SPEC-session-sso.md`
+  §8.5).
+- La restauration initiale de session emploie une carte squelette de même forme que l'écran de
+  connexion. Aucun spinner plein écran (§5.8).
+
+La couleur n'indique jamais seule un refus ni une attente : un mot, une icône et un rôle ARIA
+distincts les portent. **Aucune couleur, aucun jeton nouveau** ; une seule icône Lucide nouvelle,
+`CircleDashed`, qui ne sert aucun autre objet.
+
+*Captures de référence : `docs/captures/CRM-092/`, observées le 2026-09-24 — carte aux quatre
+paliers, page de connexion de LeLabs, retour, annulation, session terminée, et les trois attentes,
+adresses longues comprises.*
 
 ### 5.13 Administration de l'arborescence — `CRM-075`
 

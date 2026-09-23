@@ -6,6 +6,8 @@
 //           phrase du produit), §13.9 (la confirmation de suppression d'un modèle, révisée)
 // @verifies docs/DESIGN_SYSTEM.md §5.41 (cette surface), §5.39 (sa jumelle), §7 (paliers)
 // @verifies CLAUDE.md §16 (vérification visuelle) ; docs/SPEC-permissions-rls.md §7
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, comme un utilisateur réel : aucune fonction
 // interne n'est appelée, et l'écran est atteint depuis l'index des réglages.
@@ -16,8 +18,15 @@
 // ses trois paliers est reposé — une suite qui laisserait l'ordre inversé ferait rougir
 // `verify-seed-demo.sh` pour une raison sans rapport avec son objet.
 
-import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole, expect, test, type Page } from './fixtures'
-import { MOT_DE_PASSE_SEED, URL_API, enTetesAuthentifies, jetonDe } from '../api/jetons'
+import {
+	autoriserErreursConsole,
+	connecterAvecLeLabs,
+	ERREUR_RESSOURCE_HTTP,
+	expect,
+	test,
+	type Page,
+} from './fixtures'
+import { URL_API, enTetesAuthentifies, jetonDe } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-063'
@@ -43,13 +52,7 @@ const MODELE_CONTACT = 'Prise de contact'
 const PREFIXE = 'preuve-ui-4c'
 
 async function connecter(page: Page, email: string): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(email)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, email)
 }
 
 /**

@@ -172,6 +172,10 @@ services:
       SSO_DEV_REDIRECT_URI: ${SITE_URL}/auth/retour
       SSO_DEV_WEB_ORIGIN: ${SITE_URL}
       SSO_DEV_DOMAINE: ${MAIL_DEV_PERSONAL_DOMAIN}
+      # Client CONFIDENTIEL du CRM (`CRM-092`, décision 586) : identifiant et secret du `.env`, les mêmes
+      # noms qu'en production ; le secret est tiré au hasard par `./runDev.sh`, jamais versé.
+      SSO_OIDC_CLIENT_ID: ${SSO_OIDC_CLIENT_ID}
+      SSO_OIDC_CLIENT_SECRET: ${SSO_OIDC_CLIENT_SECRET}
     volumes:
       - ./keycloak/realm-lelabs.json:/opt/keycloak/data/import/realm-lelabs.json:ro,z
     ports:
@@ -253,6 +257,9 @@ services:
       # Connexion unique (CRM-091) : le Keycloak de développement ci-dessous.
       VITE_SSO_ISSUER: ${SSO_OIDC_ISSUER}
       VITE_SSO_CLIENT_ID: ${SSO_OIDC_CLIENT_ID}
+      # Relais de l'échangeur de session (CRM-092, docs/SPEC-session-sso.md §8.6) : joint depuis le
+      # conteneur, donc par le réseau Docker. Lu par `vite.config.ts`, jamais par le bundle.
+      API_RELAIS_SESSION: http://kong:8000
     volumes:
       - ./:/app:z
       # `node_modules` reste celui de l'image : les binaires installés dans le conteneur ne

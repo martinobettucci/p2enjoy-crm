@@ -132,12 +132,18 @@ compte_id() {
 		| jq -r --arg m "$1" '.users[]? | select(.email == $m) | .id' | head -n 1
 }
 
+# RÉVISÉ par `CRM-092` (décisions 583 et 587) : la migration 0075 retire la clé
+# `profiles.id → auth.users`, et supprimer un compte GoTrue n'emporte plus son profil. Le harnais
+# retire donc lui-même le profil de chaque compte qu'il supprime ; sans quoi chaque passage laissait
+# trois profils de preuve orphelins dans la base de développement. Ce harnais est retiré avec GoTrue
+# en T6 (docs/SPEC-session-sso.md §14).
 supprimer_compte() {
 	local id
 	id=$(compte_id "$1")
 	if [ -n "$id" ] && [ "$id" != "null" ]; then
 		curl -s -o /dev/null -X DELETE "$API/auth/v1/admin/users/$id" \
 			-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" || true
+		psql_db -c "delete from public.profiles where id = '$id';" >/dev/null || true
 	fi
 }
 
@@ -661,19 +667,23 @@ else
 	fail "n° 19 — l'ancien mot de passe fonctionne encore : $code"
 fi
 
-# --- 11. Suppression du compte (preuve n° 20) --------------------------------------------------
+# --- 11. Suppression du compte (preuve n° 20, révisée par CRM-092) --------------------------------------------------
 
 echo
 echo "11. Suppression du compte"
 
+# RÉVISÉE par `CRM-092` (décision 587). La preuve comptait les profils de TOUTE la base sans ligne
+# dans `auth.users`, et la cascade qui les emportait n'existe plus depuis 0075 : un profil né d'un
+# `sub` LeLabs n'a, par construction, aucune ligne GoTrue, et le compte serait faux dès la première
+# connexion SSO. Elle porte désormais sur le compte de SA preuve : supprimé, et son profil avec lui.
+id_invitee=$(compte_id "$MAIL_INVITEE")
 supprimer_compte "$MAIL_INVITEE"
 reste=$(psql_db -c "select count(*) from auth.users where email = '$MAIL_INVITEE';")
-profils=$(psql_db -c "select count(*) from public.profiles p
-	where not exists (select 1 from auth.users u where u.id = p.id);")
-if [ "$reste" = "0" ] && [ "$profils" = "0" ]; then
-	ok "n° 20 — compte supprimé, aucun profil orphelin (cascade)"
+profils=$(psql_db -c "select count(*) from public.profiles where id = '${id_invitee:-00000000-0000-0000-0000-000000000000}';")
+if [ -n "$id_invitee" ] && [ "$reste" = "0" ] && [ "$profils" = "0" ]; then
+	ok "n° 20 — compte supprimé, et le profil de la preuve retiré avec lui"
 else
-	fail "n° 20 — comptes restants=$reste, profils orphelins=$profils"
+	fail "n° 20 — compte=${id_invitee:-introuvable}, comptes restants=$reste, profil restant=$profils"
 fi
 
 # --- 12. Non-complaisance ----------------------------------------------------------------------

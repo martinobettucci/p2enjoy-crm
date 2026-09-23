@@ -8,6 +8,8 @@
 //           graphique est `aria-hidden`, le tableau est sa version accessible ; la légende nomme
 //           les séries), §5.8 (états), §7 (les quatre paliers), §8 (clavier), §12.1
 // @verifies CLAUDE.md §16 (vérification visuelle), §22 (accessibilité clavier)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // CE FICHIER NE MODIFIE RIEN, ET C'EST UNE CONTRAINTE DURE. `apply-seed.sh` compte les lignes de
 // `card_costs` — QUATRE — et `supabase/tests/0049_card_costs.test.sql` s'appuie sur ce compte.
@@ -30,8 +32,7 @@
 //      375 réel. Sa présence ferait passer le total du track de 1000/880 à 1350/1255 : l'absence
 //      se mesure donc sur le total, et pas seulement sur l'absence d'une ligne.
 
-import { autoriserErreursConsole, expect, test, type Page } from './fixtures'
-import { MOT_DE_PASSE_SEED } from '../api/jetons'
+import { autoriserErreursConsole, connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-086'
@@ -59,13 +60,7 @@ const BUDGET_CLOTURE = 'Salon du web 2025'
 const BUDGET_SANS_LIGNE = 'Suisse romande'
 
 async function connecter(page: Page, email = ADMIN): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(email)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, email)
 }
 
 /** La ligne du tableau équivalent d'un budget donné — §5.30. */

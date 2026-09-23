@@ -2,6 +2,8 @@
 # @spec CRM-090 (docs/BACKLOG.md) — propositions de variables, de secrets et de route à la cellule
 # @spec docs/SPEC-deploiement-spark.md §4.3 (répartition), §4.4 (proposer, sans jamais appliquer)
 # @spec docs/JOURNAL.md décisions 567 et 576 (mode de la route : `tls`, jamais `clair`)
+# @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §12 — client CONFIDENTIEL : son secret est
+#       une demande laissée vide, que seul l'administrateur du realm saisit (décision 586)
 #
 # S'exécute DANS la cellule, sous le compte `spark-docker`, depuis le dépôt livré (/srv/crm).
 #
@@ -11,11 +13,13 @@
 #
 # Les secrets sont tirés ICI, par openssl, et ne sortent de la cellule que par la console. Ils ne
 # traversent ni le dépôt, ni le poste qui livre, ni la sortie de ce script, qui n'affiche que des
-# noms. Une valeur que la cellule ne peut pas connaître — identifiants SMTP — est laissée VIDE :
-# c'est une DEMANDE, selon la grammaire des fichiers `.?`.
+# noms. Une valeur que la cellule ne peut pas connaître — identifiants SMTP, secret du client
+# confidentiel chez LeLabs — est laissée VIDE : c'est une DEMANDE, selon la grammaire des fichiers `.?`.
+# Le secret du client n'est jamais tiré ici : LeLabs l'émet, l'affiche une seule fois à
+# l'administrateur du realm, et c'est lui qui le saisit (`CRM-092`, décision 586).
 #
 # Usage :
-#   scripts/spark/proposer.sh [--domaine crm.lelabs.tech] [--port 8080] [--client-sso lelabs-crm]
+#   scripts/spark/proposer.sh [--domaine crm.lelabs.tech] [--port 8080] [--client-sso lelabs-crm-serveur]
 #                             [--smtp-hote <hôte>] [--smtp-port <port>] [--smtp-expediteur <adresse>]
 #   scripts/spark/proposer.sh --route-seule [--domaine crm.lelabs.tech] [--port 8080]
 #   scripts/spark/proposer.sh --help
@@ -45,7 +49,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/../lib/env.sh"
 
 DOMAINE=crm.lelabs.tech
 PORT=8080
-CLIENT_SSO=lelabs-crm
+CLIENT_SSO=lelabs-crm-serveur
 SMTP_HOTE=""
 SMTP_PORT=""
 SMTP_EXPEDITEUR=""
@@ -177,6 +181,7 @@ ligne() { printf '# %s\n%s=%s\n' "$2" "$1" "$3"; }
 	ligne S3_PROTOCOL_ACCESS_KEY_SECRET "Secret du protocole S3 exposé par Supabase Storage." "$(gen_hex 32)"
 	ligne SMTP_USER "Identifiant du relais d'envoi. Inconnu de la cellule : à saisir." ""
 	ligne SMTP_PASS "Mot de passe ou clé du relais d'envoi. Inconnu de la cellule : à saisir." ""
+	ligne SSO_OIDC_CLIENT_SECRET "Secret du client confidentiel chez LeLabs : l'administrateur du realm le saisit." ""
 } >> "$PROPOSITION_SECRETS"
 
 proposer_route
@@ -185,7 +190,7 @@ say "Propositions déposées — rien n'est appliqué"
 info "Variables : $PROPOSITION_ENV"
 info "Secrets   : $PROPOSITION_SECRETS (tirés ici ; aucune valeur n'est affichée)"
 info "Route     : $PROPOSITION_ROUTES — $DOMAINE $PORT tls"
-demandes="SMTP_USER, SMTP_PASS"
+demandes="SMTP_USER, SMTP_PASS, SSO_OIDC_CLIENT_SECRET"
 [ -n "$SMTP_HOTE" ] || demandes="SMTP_HOST, $demandes"
 [ -n "$SMTP_PORT" ] || demandes="SMTP_PORT, $demandes"
 [ -n "$SMTP_EXPEDITEUR" ] || demandes="SMTP_ADMIN_EMAIL, $demandes"

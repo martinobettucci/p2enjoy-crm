@@ -4,6 +4,8 @@
 //           sélecteurs sans présélection), §9.6 (ce que `variables_nulles` rend), §9.7 (la
 //           confirmation de suppression), §9.8 (le refus est une phrase du produit)
 // @verifies docs/DESIGN_SYSTEM.md §5.39 (cette surface), §7 (paliers) ; CLAUDE.md §16
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, comme un utilisateur réel : aucune fonction
 // interne n'est appelée, et l'écran est atteint depuis l'index des réglages, jamais par une
@@ -13,8 +15,15 @@
 // modèles PRÉFIXÉS, qu'ils retirent par le véritable chemin d'écriture et avec le jeton réel de
 // l'administratrice ; le compte des modèles du seed est relu à la fin de chacun.
 
-import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole, expect, test, type Page } from './fixtures'
-import { MOT_DE_PASSE_SEED, URL_API, enTetesAuthentifies, jetonDe } from '../api/jetons'
+import {
+	autoriserErreursConsole,
+	connecterAvecLeLabs,
+	ERREUR_RESSOURCE_HTTP,
+	expect,
+	test,
+	type Page,
+} from './fixtures'
+import { URL_API, enTetesAuthentifies, jetonDe } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-063'
@@ -40,13 +49,7 @@ const CONTACT_SOGEXIA = 'Léo Marchand'
 const PREFIXE = 'preuve-ui-0063'
 
 async function connecter(page: Page, email: string): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(email)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, email)
 }
 
 /**
@@ -81,6 +84,12 @@ test.describe('administration des modèles d’emails (docs/SPEC-modeles-emails.
 		// L'entrée vit APRÈS « Identités d'expédition » et AVANT « État de la messagerie » (§9.1) :
 		// on déclare l'expéditeur avant d'écrire le texte qu'il expédiera, et on configure avant de
 		// superviser. L'ordre est une règle, il se vérifie.
+		// `allInnerTexts()` ne s'attend pas lui-même : il lit l'écran tel qu'il est. Depuis `CRM-092`, un
+		// chargement de page restaure la session par l'échangeur — un aller-retour réseau — avant de
+		// rendre la route ; lire aussitôt lisait la carte de restauration. L'attente porte sur le
+		// signal que voit l'utilisateur, l'entrée « État de la messagerie », jamais sur un délai
+		// (`CLAUDE.md` §18, `docs/SPEC-test-harness.md` §7.2).
+		await expect(page.getByRole('link', { name: /État de la messagerie/ })).toBeVisible()
 		const libelles = await page.getByRole('link').allInnerTexts()
 		const rangIdentites = libelles.findIndex((libelle) => libelle.includes('Identités d’expédition'))
 		const rangModeles = libelles.findIndex((libelle) => libelle.includes('Modèles d’emails'))

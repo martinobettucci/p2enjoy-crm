@@ -11,6 +11,8 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.9 (le patron de tableau), §5.13 (commandes toujours visibles,
 //           confirmation dans le flux du document), §7 (paliers), §8 (accessibilité)
 // @verifies CLAUDE.md §16 (vérification visuelle), §22 (accessibilité clavier)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // LES GESTES SONT ÉPROUVÉS SUR DE VRAIS CLICS ET DE VRAIES FRAPPES, jamais par appel d'une fonction
 // interne, et le parcours clavier atteint son focus par `Tab` — Chromium ne pose `:focus-visible`
@@ -28,9 +30,16 @@
 // comme geste d'utilisateur. Clôturer ne suffirait pas ici : `supabase/tests/0048_budgets.test.sql`
 // compte les budgets du seed, et un résidu clôturé reste une ligne.
 
-import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole, expect, test, type Page } from './fixtures'
+import {
+	autoriserErreursConsole,
+	connecterAvecLeLabs,
+	ERREUR_RESSOURCE_HTTP,
+	expect,
+	test,
+	type Page,
+} from './fixtures'
 import type { Locator } from '@playwright/test'
-import { MOT_DE_PASSE_SEED, URL_API, enTetesService } from '../api/jetons'
+import { URL_API, enTetesService } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-084'
@@ -51,13 +60,7 @@ const BUDGET_CLOTURE = 'Salon du web 2025'
 const CHEMIN_BUDGETS = `${URL_API}/rest/v1/budgets`
 
 async function connecter(page: Page, email = ADMIN): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(email)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, email)
 }
 
 /** Ouvre l'administration de l'arborescence et déplie le track porteur des budgets. */

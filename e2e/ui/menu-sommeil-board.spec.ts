@@ -6,6 +6,8 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.3 sexies (les deux sections, la mention, le menu qui reste
 //           ouvert sur un refus), §8 (accessibilité)
 // @verifies CLAUDE.md §16 (vérification visuelle), §10 (le refus se mesure avec le vrai profil)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // AUCUNE RÉPONSE N'EST SUBSTITUÉE : ces scénarios se connectent réellement, appellent les vrais
 // `snooze_card` et `wake_card`, et lisent le résultat par la vraie route. C'est l'objet même de la
@@ -23,8 +25,14 @@
 // sortante. Son menu était donc éteint avant cette tranche, et elle n'avait aucun geste — alors
 // qu'une affaire livrée est précisément celle qu'on range.
 
-import { autoriserErreursConsole, ERREUR_RESSOURCE_HTTP, expect, test, type Page } from './fixtures'
-import { MOT_DE_PASSE_SEED } from '../api/jetons'
+import {
+	autoriserErreursConsole,
+	connecterAvecLeLabs,
+	ERREUR_RESSOURCE_HTTP,
+	expect,
+	test,
+	type Page,
+} from './fixtures'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-081'
@@ -59,13 +67,7 @@ const carteDe = (page: Page, titre: string) =>
 	page.locator('[data-testid="carte-card"]').filter({ hasText: titre })
 
 async function connecter(page: Page, adresse: string): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(adresse)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, adresse)
 }
 
 /**

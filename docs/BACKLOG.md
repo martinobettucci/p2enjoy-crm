@@ -14484,16 +14484,32 @@ connexion réelle de `martino@p2enjoy.studio` aboutie après les opérations du 
 - [x] **T3** — échangeur `session` et ses preuves (§5, §13) : 75 tests unitaires, `session.spec.ts`
       **14/14** (Realtime, Storage, rotation compris), `verify-session-sso.sh` **36/36** dont cinq
       mutations détectées ; environnement par fonction (décision 584).
-- [ ] **T3 bis** — client serveur (décision 586) : migration `0076` des sessions serveur, échangeur à
+- [x] **T3 bis** — client serveur (décision 586) : migration `0076` des sessions serveur, échangeur à
       trois gestes, jeton de rafraîchissement chiffré côté serveur, cookie `httpOnly`, realm de
-      développement confidentiel, relais Vite ; preuves révisées.
-- [ ] **T5** — webapp sans mot de passe, écran d'attente, portage des specs d'interface (§8, §9).
-      Livrée AVANT T4 (décision 585).
+      développement confidentiel, relais Vite ; preuves révisées. pgTAP `0070` **40/40** (série
+      **70 fichiers, 3182 assertions**) ; **120** tests unitaires de l'échangeur ; `session.spec.ts`
+      **21/21** ; `verify-session-sso.sh` **44/44**, dont huit mutations et six dégradations
+      détectées ; l'absence de session rend `204` (décision 587).
+- [x] **T5** — webapp sans mot de passe, écran d'attente, portage des specs d'interface (§8, §9).
+      Livrée AVANT T4 (décision 585), dans le même commit que T3 bis. Suite unitaire de la webapp
+      **3265** tests verts (99 fichiers) ; `connexion.spec.ts` **13/13** ; campagne d'interface **747/755**, les huit
+      rouges analysés — quatre courses de preuve révélées par la restauration réseau, corrigées et
+      rejouées vertes ; deux dues à la dérive connue du `.env` local (`PGRST_DB_EXTRA_SEARCH_PATH`) ;
+      deux dues à l'écart jour UTC / jour local du seed, étranger à l'unité (INC-248). Suite d'API
+      **1073/1079** : les six rouges sont les cinq recherches de `liste-cards` (même dérive du `.env`)
+      et `ma-journee` §13.5 (INC-248). Harnais : `verify-functions` **14**, `verify-scripts`
+      **112**, `verify-spark` **80**, `verify-auth` **62**, sans anomalie ; `verify-spark` et
+      `verify-auth` révisés pour la fuite de profils de la décision 583. Captures
+      `docs/captures/CRM-092/` observées ; design system §5.12 et manuel chapitre 1 révisés.
 - [ ] **T4** — jetons des preuves et seed par la vraie connexion SSO (§11, §13).
 - [ ] **T6** — retrait de GoTrue, migration `0077`, retrait de `verify-auth.sh` (§2).
 - [ ] **T7** — documentation transverse, contrat de production (§12), campagne.
 - [ ] **Préalable humain chez LeLabs** : déclaration du client serveur `lelabs-crm-serveur` et secret
       posé dans la cellule (décision 586, §12) ; `verified` sur `martino@p2enjoy.studio`.
 - [ ] Production : opérations du §12 — dont les demandes de variables manquantes reposées par
-      `proposer.sh` —, connexion réelle relue. **Instruction reçue le 2026-09-23** :
+      `proposer.sh` —, connexion réelle relue.
+- [ ] **Notes du Spark réécrites et reproposées** (`docs/spark-notes/`) : déposées le 2026-09-23 comme
+      propositions `.?`, elles attendent l'acceptation du propriétaire dans la console de la Forge
+      (`docs/PROD_MIGRATIONS.md` §2.4, étape 9), et `CRM-092` les rend périmées — GoTrue, client
+      public, relais SMTP. À réécrire en T7 et à reproposer au déploiement. **Instruction reçue le 2026-09-23** :
       « pense à déployer quand c'est tout bon » (décision 584) — une fois T1 à T7 vérifiées.

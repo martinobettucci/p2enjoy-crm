@@ -8,6 +8,8 @@
 //           destruction est un contrat), §50.6 (les huit points du parcours)
 // @verifies docs/DESIGN_SYSTEM.md §5.44 (cette surface), §7 (les quatre paliers), §8 (clavier) ;
 //           CLAUDE.md §16 (vérification visuelle)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, comme un utilisateur réel : aucune fonction
 // interne n'est appelée, le navigateur obtient son jeton par le formulaire réel puis parle à la
@@ -23,13 +25,14 @@
 // service. Une dernière assertion le constate.
 
 import {
-	ERREUR_RESSOURCE_HTTP,
 	autoriserErreursConsole,
+	connecterAvecLeLabs,
+	ERREUR_RESSOURCE_HTTP,
 	expect,
 	test,
 	type Page,
 } from './fixtures'
-import { CLE_SERVICE, MOT_DE_PASSE_SEED, URL_API } from '../api/jetons'
+import { CLE_SERVICE, URL_API } from '../api/jetons'
 import {
 	ADRESSE_CARD_SOLITAIRE,
 	ESPACE_SOLITAIRE,
@@ -58,13 +61,7 @@ const FARIDA_NOM = 'Farida Nowak'
 const ENTETES_SERVICE = { apikey: CLE_SERVICE, Authorization: `Bearer ${CLE_SERVICE}` }
 
 async function connecter(page: Page, email: string): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(email)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, email)
 }
 
 test.describe('Le sélecteur n’offre que des personnes éligibles (§5.1, §36)', () => {

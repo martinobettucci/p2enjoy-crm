@@ -9,6 +9,8 @@
 //           tableau équivalent est la version accessible du graphique), §5.8 (états), §7 (les
 //           quatre paliers), §8 (clavier)
 // @verifies CLAUDE.md §16 (vérification visuelle), §22 (accessibilité clavier)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // CE FICHIER NE MODIFIE RIEN. L'écran du §4.3 est en lecture seule ; aucun scénario ne pose ni ne
 // retire de ligne, et aucun épilogue de purge n'est donc nécessaire (décision 362 : la purge
@@ -26,8 +28,7 @@
 // LES ASSERTIONS PORTENT SUR LE TABLEAU ÉQUIVALENT, ET NON SUR LES BARRES — le §5.30 fait du
 // tableau la version accessible du graphique, lequel est `aria-hidden` à dessein.
 
-import { autoriserErreursConsole, expect, test, type Page } from './fixtures'
-import { MOT_DE_PASSE_SEED } from '../api/jetons'
+import { autoriserErreursConsole, connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-086'
@@ -54,13 +55,7 @@ const DETAIL_SANS_LIGNE = `/tracks/formation/couts/${ID_SANS_LIGNE}`
 const DETAIL_FERME = `/tracks/conseil-ia/couts/${ID_FERME_A_LA_LECTRICE}`
 
 async function connecter(page: Page, email = ADMIN): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(email)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, email)
 }
 
 /** Le tableau équivalent de l'histogramme — §5.30. */

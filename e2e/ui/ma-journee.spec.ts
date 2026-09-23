@@ -5,6 +5,8 @@
 // @verifies docs/SPEC-seed.md §13.5 (le contrat des échéances, lignes a à e)
 // @verifies docs/DESIGN_SYSTEM.md §5.36 (cette surface), §7 (les quatre paliers) ;
 //           CLAUDE.md §16 (vérification visuelle)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, comme un utilisateur réel : aucune fonction
 // interne n'est appelée, aucune réponse n'est substituée, et la navigation passe par la BARRE
@@ -17,8 +19,7 @@
 //
 // LE SEED SORT INTACT : cette suite ne fait que lire.
 
-import { expect, test, type Page } from './fixtures'
-import { MOT_DE_PASSE_SEED } from '../api/jetons'
+import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-061'
@@ -33,13 +34,7 @@ const A_VENIR = 'Hébergement infogéré — Éditions Bertrand'
 const ENDORMIE = 'Cadrage data — Groupe Vallier'
 
 async function connecter(page: Page, email: string): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(email)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, email)
 }
 
 test.describe('« Ma journée » (docs/SPEC-cards.md §17)', () => {

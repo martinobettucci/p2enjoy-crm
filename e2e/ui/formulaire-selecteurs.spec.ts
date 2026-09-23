@@ -5,6 +5,8 @@
 // @verifies docs/SPEC-form-composer.md §4 bis.3 (le moment de l'écriture), §4 bis.6 (les états),
 //           §4 bis.7 (dictionnaire fermé des refus)
 // @verifies docs/DESIGN_SYSTEM.md §5.22 (les deux sélecteurs), §7 (paliers) ; CLAUDE.md §16
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, comme un utilisateur réel : aucune fonction
 // interne n'est appelée, et l'écriture passe par le sélecteur de l'écran.
@@ -15,8 +17,15 @@
 // de test, c'est le même contrôle exercé une seconde fois. Un filet de sécurité en fin de fichier
 // remet la valeur seedée si un scénario s'est interrompu entre les deux.
 
-import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole, expect, test, type Page } from './fixtures'
-import { CLE_SERVICE, MOT_DE_PASSE_SEED, URL_API } from '../api/jetons'
+import {
+	autoriserErreursConsole,
+	connecterAvecLeLabs,
+	ERREUR_RESSOURCE_HTTP,
+	expect,
+	test,
+	type Page,
+} from './fixtures'
+import { CLE_SERVICE, URL_API } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-060'
@@ -42,13 +51,7 @@ const CONTACT_ELISE = '5eed0000-0000-4000-8000-000000000093'
 const MEMBRE_DRISS = '5eed0000-0000-4000-8000-000000000012'
 
 async function connecter(page: Page, email: string): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(email)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, email)
 }
 
 /**

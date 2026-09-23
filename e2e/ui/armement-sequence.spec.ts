@@ -5,6 +5,8 @@
 //           §12.4 (les huit refus), §12.7 (les quatre fins), §12.12 (le seed n'arme rien)
 // @verifies docs/DESIGN_SYSTEM.md §5.42 (ce bloc), §5.21 (sa place), §7 (paliers)
 // @verifies CLAUDE.md §16 (vérification visuelle)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // TOUTE INSCRIPTION ARMÉE EST REFERMÉE, ET C'EST UNE EXIGENCE DE SÛRETÉ, pas de style. Le §12.12
 // l'écrit : une inscription active est exécutée par le job DIX SECONDES après le démarrage de la
@@ -14,8 +16,15 @@
 // LE BLOC S'OUVRE SUR SON GESTE, ET NON SUR UN ÉTAT : le seed n'arme rien (§13.11), délibérément.
 // C'est cette suite qui produit l'autre état, en armant, en mesurant, et en refermant.
 
-import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole, expect, test, type Page } from './fixtures'
-import { MOT_DE_PASSE_SEED, URL_API, enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
+import {
+	autoriserErreursConsole,
+	connecterAvecLeLabs,
+	ERREUR_RESSOURCE_HTTP,
+	expect,
+	test,
+	type Page,
+} from './fixtures'
+import { URL_API, enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-063'
@@ -48,13 +57,7 @@ const SEQUENCE_SEED = 'Relance en trois temps'
 const IDENTITE_SERVICE = 'Identité de service'
 
 async function connecter(page: Page, email = ADMIN): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(email)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, email)
 }
 
 /**

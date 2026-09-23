@@ -6,6 +6,8 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.3 (les champs d'entête, l'adresse en monospace),
 //           §5.3 bis (les neuf règles visuelles), §7 (paliers), §8 (accessibilité)
 // @verifies CLAUDE.md §16 (vérification visuelle)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // AUCUNE RÉPONSE N'EST SUBSTITUÉE. Ces scénarios se connectent réellement — l'écran de connexion de
 // `CRM-009` —, ouvrent trois affaires **du seed** et lisent ce que le backend consent. C'est ce qui
@@ -19,8 +21,7 @@
 //
 // AUCUNE ÉCRITURE : l'en-tête est en lecture, et le seed sort intact.
 
-import { expect, test, type Page } from './fixtures'
-import { MOT_DE_PASSE_SEED } from '../api/jetons'
+import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-040'
@@ -46,13 +47,7 @@ const ARCHIVEE = {
 }
 
 async function connecter(page: Page): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(ADMIN)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, ADMIN)
 }
 
 test.describe("en-tête de la fiche d'affaire (docs/SPEC-cards.md §15)", () => {

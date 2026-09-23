@@ -3,6 +3,8 @@
 // @verifies docs/SPEC-permissions-rls.md §3.3 à §3.5 (« le plus spécifique gagne »), §4.1, §4.2
 // @verifies docs/SPEC-tracks.md §7 (ce que la barre latérale lit) ; docs/SPEC-channels.md §5
 // @verifies docs/DESIGN_SYSTEM.md §7 (paliers), §8 (clavier) ; CLAUDE.md §16 (vérification visuelle)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // CE QUE CES SCÉNARIOS PROUVENT.
 //
@@ -38,8 +40,7 @@
 // (15 scénarios), qui l'éprouvent hors interface, comme `CLAUDE.md` §10 l'exige. Ce fichier
 // prouve que l'écran **obéit** à cette matrice, pas qu'elle est complète.
 
-import { expect, test, type Page } from './fixtures'
-import { MOT_DE_PASSE_SEED } from '../api/jetons'
+import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { PALIERS, capturer } from './captures'
 
 const RESTREINT = 'Conseil & IA'
@@ -61,13 +62,7 @@ const VISIBLES_DE_TOUS = ['Studio web', 'Formation'] as const
 
 /** Connexion réelle, au clavier seul : aucune session n'est injectée. */
 async function connecter(page: Page, email: string): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(email)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, email)
 }
 
 function tracksDeLaBarre(page: Page) {

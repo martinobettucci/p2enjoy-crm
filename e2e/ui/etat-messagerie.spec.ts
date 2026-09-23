@@ -2,6 +2,8 @@
 // @verifies docs/SPEC-mail-subsystem.md §20.7 (les faits montrés), §20.8 (« l'écran d'état montre
 //           ce que la base porte, y compris un incident »), §20.11 (l'écran)
 // @verifies docs/DESIGN_SYSTEM.md §5.14 (cette surface), §7 (paliers) ; CLAUDE.md §16
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, comme un utilisateur réel : aucune fonction
 // interne n'est appelée. Le seed ne pose aucun compte en incident — les trois comptes sont
@@ -9,8 +11,8 @@
 // chemin qui le peut (`mail_inbound_accounts` n'accorde aucune écriture à `authenticated`), et
 // RENDU AU SEED DANS LE `finally` — même discipline que `e2e/mail/resilience.spec.ts`.
 
-import { expect, test, type Page } from './fixtures'
-import { MOT_DE_PASSE_SEED, URL_API, enTetesService } from '../api/jetons'
+import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
+import { URL_API, enTetesService } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-059'
@@ -31,13 +33,7 @@ const VIEWER = 'viewer@p2enjoy.test'
 const LABEL_DRISS = 'Boîte de Driss Lemoine'
 
 async function connecter(page: Page, email: string): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(email)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, email)
 }
 
 function cheminCompteDriss(): string {

@@ -11,6 +11,8 @@
 //           §5.15 (le document de comparaison pose SA surface ET SON encre — INC-130), §11 (une
 //           classe hors échelle n'est pas engendrée : la preuve mesure une couleur, pas une classe)
 // @verifies CLAUDE.md §16 (vérification visuelle), §22 (accessibilité clavier)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // LES GESTES SONT PROUVÉS SUR LA VRAIE BASE, ET CHACUN Y EST CONFIRMÉ APRÈS COUP par une lecture
 // de service — l'écran peut mentir, la table non. La discipline est celle
@@ -30,10 +32,10 @@
 // cards — parce qu'un refus ne modifie rien : c'est le seul geste de ces preuves autorisé à viser
 // une ligne seedée.
 
-import { expect, test, type Page } from './fixtures'
+import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole } from './fixtures'
 import type { APIRequestContext, Locator } from '@playwright/test'
-import { MOT_DE_PASSE_SEED, URL_API, enTetesService } from '../api/jetons'
+import { URL_API, enTetesService } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-076'
@@ -49,13 +51,7 @@ const CHEMIN_CATALOGUE = `${URL_API}/rest/v1/workflow_nodes_catalog`
 const CHEMIN_ETAPES = `${URL_API}/rest/v1/workflow_steps`
 
 async function connecter(page: Page): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(ADMIN)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, ADMIN)
 }
 
 /** Crée le nœud de catalogue PROPRE à la preuve, par la clé de service, et rend son identifiant. */

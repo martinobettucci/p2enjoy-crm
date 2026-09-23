@@ -5,6 +5,8 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.15 (bloc des versions), §7 (quatre paliers, aucun défilement
 //           horizontal de page), §5.9 (tableau sémantique)
 // @verifies CLAUDE.md §10 (une règle d'accès se prouve avec les droits réels du profil)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // AUCUN SCÉNARIO DE CE FICHIER N'ÉCRIT DANS LE SEED, et c'est une contrainte de forme, pas une
 // prudence : publier ajouterait une version au workflow par défaut à **chaque** exécution, et une
@@ -15,9 +17,8 @@
 // §7 ter.14.9 ne l'inscrit pas à la ligne « Interface », et son contrat est déjà éprouvé hors
 // interface par `e2e/api/restauration-version-workflow.spec.ts`.
 
-import { expect, test, type Page } from './fixtures'
+import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole } from './fixtures'
-import { MOT_DE_PASSE_SEED } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-078'
@@ -25,13 +26,7 @@ const ADMIN = 'admin@p2enjoy.test'
 const VIEWER = 'viewer@p2enjoy.test'
 
 async function connecter(page: Page, adresse: string): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(adresse)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, adresse)
 }
 
 async function ouvrirEditeur(page: Page): Promise<void> {

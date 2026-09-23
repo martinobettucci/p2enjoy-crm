@@ -341,10 +341,14 @@ Studio n'est **pas** joignable au travers de la passerelle : celle-ci ne connaî
 développement, ce qui rend sa configuration identique en développement et en production
 (voir [`docs/JOURNAL.md`](docs/JOURNAL.md), décision 11).
 
-**La connexion unique en développement** (`CRM-091`, `docs/SPEC-auth.md` §10.9). L'action « Se
-connecter avec LeLabs » de l'écran de connexion mène au Keycloak local, **`sso.localhost`** :
-c'est l'adresse que les navigateurs résolvent en boucle locale **et** que le réseau Compose résout
-vers Keycloak, si bien que l'émetteur des jetons est le même pour le navigateur et pour GoTrue. Son
+**La connexion en développement** (`CRM-092`, `docs/SPEC-session-sso.md` §4, §8.6, §10). Le CRM n'a
+plus de mot de passe : l'unique action de l'écran de connexion, « Se connecter avec LeLabs », mène au
+Keycloak local, **`sso.localhost`** — l'adresse que les navigateurs résolvent en boucle locale **et**
+que le réseau Compose résout vers Keycloak, si bien que l'émetteur des jetons est le même pour le
+navigateur et pour l'échangeur de session. Le client du CRM y est **confidentiel**, comme en
+production : son secret, `SSO_OIDC_CLIENT_SECRET`, est tiré au hasard par `./runDev.sh` et substitué
+dans le realm à l'import. La webapp appelle l'échangeur par un chemin relatif, que le serveur Vite
+relaie vers Kong (`API_RELAIS_SESSION`) : le cookie de session est ainsi de même origine. Son
 port, `SSO_DEV_PORT`, est le même dedans et dehors ; `./runDev.sh` refuse de démarrer si
 `SSO_OIDC_ISSUER` ne vaut pas `http://sso.localhost:<SSO_DEV_PORT>/realms/lelabs`. Les comptes du
 realm sont **préchargés** (`CRM-092` T2, `docs/SPEC-session-sso.md` §10) : mêmes adresses et même mot
@@ -634,7 +638,7 @@ preuves.
 | Messagerie de développement | `STALWART_IMAP_PORT`, `STALWART_SMTP_PORT`, `STALWART_SUBMISSION_PORT`, `STALWART_ADMIN_PORT`, `STALWART_ADMIN_USER`, `STALWART_ADMIN_PASSWORD`, `STALWART_MAILBOX_PASSWORD`, `MAIL_DEV_PERSONAL_DOMAIN`, `MAIL_DEV_CORRESPONDENT_ADDRESS`, `ROUNDCUBE_PORT`, `CLAMAV_PORT` | Obligatoires **en développement uniquement** : aucun de ces services n'existe en production. `STALWART_ADMIN_PASSWORD` est tiré au hasard à l'amorçage |
 | Chiffrement | `PG_META_CRYPTO_KEY`, `REALTIME_DB_ENC_KEY` | Obligatoires. Longueurs imposées : 32 et 16 caractères. Les secrets de messagerie ne sont pas ici : ils vivent dans le Vault de la base, chiffrés par sa clé racine (décision 366, INC-098) |
 | Authentification | `DISABLE_SIGNUP`, `PASSWORD_MIN_LENGTH`, `JWT_EXPIRY` | Obligatoires. `DISABLE_SIGNUP` vaut **toujours** `true` (`docs/SPEC-auth.md` §2) |
-| Connexion unique | `SSO_OIDC_ISSUER`, `SSO_OIDC_CLIENT_ID`, `SSO_DEV_PORT`, `SSO_DEV_ADMIN_PASSWORD` | `CRM-091`. Les deux premières sont obligatoires partout : émetteur exact et client OIDC, lus par GoTrue et figés au build de la webapp. Les deux dernières ne servent qu'au Keycloak de développement ; le mot de passe d'administration est tiré au hasard par `./runDev.sh` et **sans objet** dans la cellule Spark |
+| Connexion unique | `SSO_OIDC_ISSUER`, `SSO_OIDC_CLIENT_ID`, `SSO_OIDC_CLIENT_SECRET`, `SSO_DEV_PORT`, `SSO_DEV_ADMIN_PASSWORD` | `CRM-091`, révisé par `CRM-092`. Les trois premières sont obligatoires partout : émetteur exact, client OIDC **confidentiel** (`lelabs-crm-serveur`) et son secret, lus par l'échangeur de session — le secret n'atteint que lui, et jamais le bundle ; l'émetteur et le client sont en outre figés au build de la webapp. En production, le secret est posé par l'administrateur du realm LeLabs ; en développement, tiré au hasard par `./runDev.sh`. Les deux dernières ne servent qu'au Keycloak de développement ; le mot de passe d'administration est tiré au hasard par `./runDev.sh` et **sans objet** dans la cellule Spark |
 | SMTP transactionnel | `SMTP_HOST`, `SMTP_PORT`, `SMTP_ADMIN_EMAIL` | Obligatoires |
 | Pile | `STACK_RLIMIT_NOFILE`, `APPLY_MIGRATIONS` | Facultatives, avec défauts. `APPLY_MIGRATIONS=false` est imposé en production **et doit y rester** : c'est ce qui empêche une migration non décidée. Les migrations de production s'appliquent dans une fenêtre de maintenance ouverte par `./runProd.sh --migrate`, qui surcharge la variable pour sa seule invocation sans réécrire `.env`, et dont le retour arrière est la restauration de l'instantané de VM (décision 489, `CRM-087`) |
 | Production | `APP_DOMAIN`, `CADDY_ACME_EMAIL` | Obligatoires en production uniquement. `CADDY_ACME_EMAIL` est **sans objet dans la cellule Spark**, où la Forge porte le certificat |

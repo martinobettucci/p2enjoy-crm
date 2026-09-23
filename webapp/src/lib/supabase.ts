@@ -1,16 +1,20 @@
 // @spec CRM-007 (docs/BACKLOG.md) — client Supabase de la webapp
-// @spec CRM-009 (docs/BACKLOG.md) — session authentifiée limitée à l'onglet
-// @spec docs/SPEC-webapp.md §6.1 (client), §6.2 (session), §11 (stockage côté client)
-// @spec docs/SPEC-auth.md §9.2 (sessionStorage et repli mémoire)
+// @spec CRM-009 (docs/BACKLOG.md) — stockage d'onglet et repli mémoire
+// @spec CRM-092 (docs/BACKLOG.md) — le client reçoit le jeton interne de l'échangeur, sans module `auth`
+// @spec docs/SPEC-session-sso.md §8.3 (jeton en mémoire seulement), §8.4 (K6 `accessToken`, K18)
+// @spec docs/SPEC-webapp.md §6.1 (client), §11 (stockage côté client)
+// @spec docs/SPEC-auth.md §9.2 (sessionStorage et repli mémoire) ; docs/SPEC-auth.md §10.5
 // @spec docs/DAT.md §3.1 (webapp) ; CLAUDE.md §11 (stockage sur l'appareil)
 //
 // Le client est typé par le schéma généré (CRM-006) : une colonne inexistante ne compile pas.
 // Il ne porte **aucune** règle d'autorisation — l'interface ne déduit jamais un droit d'un
 // type, le refus fait toujours autorité côté backend (docs/DAT.md §3.1).
 //
-// CRM-009 conserve la session dans `sessionStorage`, jamais dans le `localStorage` choisi par
-// défaut par supabase-js. Le stockage est borné à l'onglet ; s'il est verrouillé par le
-// navigateur, le repli mémoire maintient la session courante sans inventer de persistance.
+// `CRM-092` : GoTrue n'émet plus rien. Le client est créé avec `accessToken` (K6), qui rend le jeton
+// interne tenu EN MÉMOIRE par le porteur ci-dessous — ou `null`, et `supabase-js` présente alors la
+// clé anonyme. Le module `auth` de la bibliothèque est désactivé par cette option : rien n'écrit plus
+// de session dans le navigateur. `creerStockageSession` ne sert plus qu'à la transaction PKCE
+// (`docs/SPEC-session-sso.md` §8.3), bornée à l'onglet avec son repli mémoire.
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from './database.types'
@@ -99,21 +103,38 @@ export function lireConfiguration(env: ImportMetaEnv): ConfigurationClient | nul
 	return { url: url.trim(), cleAnonyme: cleAnonyme.trim() }
 }
 
-export function creerClient(configuration: ConfigurationClient): ClientCrm {
-	return createClient<Database>(configuration.url, configuration.cleAnonyme, {
-		auth: {
-			persistSession: true,
-			autoRefreshToken: true,
-			// GoTrue renvoie les sessions d'invitation, confirmation, récupération et changement
-			// d'adresse dans le fragment. La bibliothèque valide l'utilisateur, efface les jetons de
-			// l'URL puis emploie le stockage d'onglet ci-dessous (décision 273).
-			detectSessionInUrl: true,
-			storage: creerStockageSession(),
+/**
+ * Le jeton interne courant, en mémoire et nulle part ailleurs (docs/SPEC-session-sso.md §8.3). Seul
+ * le fournisseur d'authentification le pose ; le client Supabase le lit à chaque requête.
+ */
+export type PorteurJeton = {
+	readonly lire: () => string | null
+	readonly poser: (jeton: string | null) => void
+}
+
+export function creerPorteurJeton(): PorteurJeton {
+	let jeton: string | null = null
+	return {
+		lire: () => jeton,
+		poser(valeur) {
+			jeton = valeur
 		},
+	}
+}
+
+export function creerClient(configuration: ConfigurationClient, porteur: PorteurJeton): ClientCrm {
+	return createClient<Database>(configuration.url, configuration.cleAnonyme, {
+		accessToken: async () => porteur.lire(),
 	})
 }
 
 const configuration = lireConfiguration(import.meta.env)
 
+/** Le porteur du jeton de l'application ; le fournisseur d'authentification le tient. */
+export const porteurJeton: PorteurJeton = creerPorteurJeton()
+
 /** `null` si la configuration est absente : l'interface le traite comme un état, pas comme un crash. */
-export const clientCrm: ClientCrm | null = configuration === null ? null : creerClient(configuration)
+export const clientCrm: ClientCrm | null = configuration === null ? null : creerClient(configuration, porteurJeton)
+
+/** La clé anonyme, que Kong exige aussi de l'échangeur de session (docs/SPEC-session-sso.md §5.1). */
+export const cleAnonymeCrm: string | null = configuration?.cleAnonyme ?? null

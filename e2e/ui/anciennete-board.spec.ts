@@ -6,6 +6,8 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.1 (pastille d'ancienneté dans l'étape)
 // @verifies CLAUDE.md §15 (E2E depuis un état déterministe, données seedées), §16 (capture
 //           produite et observée)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // LA PREUVE QUE `e2e/ui/board.spec.ts` NE POUVAIT PAS FAIRE. Ce fichier-là sert la card `…0c3`
 // vieillie de trente jours par une réponse réseau **substituée** — procédé endossé par
@@ -20,8 +22,7 @@
 // AUCUNE ÉCRITURE, AUCUNE FABRICATION. Le seed porte tout ce que ce fichier mesure ; il sort donc
 // intact, sans `finally` de nettoyage.
 
-import { expect, test, type Page } from './fixtures'
-import { MOT_DE_PASSE_SEED } from '../api/jetons'
+import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { capturer } from './captures'
 
 const ADMIN = 'admin@p2enjoy.test'
@@ -40,15 +41,7 @@ const ETAPE_LIVRE = '5eed0000-0000-4000-8000-000000000066'
 
 /** Connexion par le formulaire réel, au clavier — jamais un jeton posé à la main dans l'onglet. */
 async function connecter(page: Page): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.press('ControlOrMeta+A')
-	await page.keyboard.type(ADMIN)
-	await page.keyboard.press('Tab')
-	await page.keyboard.press('ControlOrMeta+A')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, ADMIN)
 }
 
 function carte(page: Page, idCard: string) {

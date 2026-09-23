@@ -8,6 +8,8 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.9 (tableau de données), §7 (paliers), §8 (accessibilité),
 //           §12.1 (navigation par liens), §12.5 (réponses substituées), §12.6 (débordement)
 // @verifies CLAUDE.md §16 (vérification visuelle)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // Ces scénarios s'exécutent contre le **build de production** servi par `vite preview`, et contre
 // la vraie API. Rien n'est simulé, sauf là où c'est explicitement dit — et alors c'est le
@@ -29,6 +31,7 @@
 
 import {
 	autoriserErreursConsole,
+	connecterAvecLeLabs,
 	ERREUR_RESSOURCE_HTTP,
 	expect,
 	test,
@@ -37,7 +40,6 @@ import {
 } from './fixtures'
 import { PALIERS, capturer } from './captures'
 /** Le mot de passe commun des comptes du seed : la connexion des scénarios réels est la vraie. */
-import { MOT_DE_PASSE_SEED } from '../api/jetons'
 
 const ROUTE_CARDS = '**/rest/v1/cards*'
 const ROUTE_ETAPES = '**/rest/v1/workflow_steps*'
@@ -604,15 +606,7 @@ test.describe('les données longues et la seconde page, contre la pile réelle',
 
 	/** Connexion par le formulaire réel — jamais un jeton posé à la main dans l'onglet. */
 	async function connecter(page: Page): Promise<void> {
-		await page.goto('/connexion')
-		await page.getByLabel('Adresse email').click()
-		await page.keyboard.press('ControlOrMeta+A')
-		await page.keyboard.type('admin@p2enjoy.test')
-		await page.keyboard.press('Tab')
-		await page.keyboard.press('ControlOrMeta+A')
-		await page.keyboard.type(MOT_DE_PASSE_SEED)
-		await page.keyboard.press('Enter')
-		await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
 	}
 
 	// LE PARCOURS QUE L'ARBITRAGE DE LA DÉCISION 532 §2 A RENDU POSSIBLE — INC-230 fermée.
@@ -773,15 +767,7 @@ test.describe('le parcours complet, à la souris et au clavier seuls', () => {
 	const ACTIVES = 27
 
 	async function connecter(page: Page): Promise<void> {
-		await page.goto('/connexion')
-		await page.getByLabel('Adresse email').click()
-		await page.keyboard.press('ControlOrMeta+A')
-		await page.keyboard.type('admin@p2enjoy.test')
-		await page.keyboard.press('Tab')
-		await page.keyboard.press('ControlOrMeta+A')
-		await page.keyboard.type(MOT_DE_PASSE_SEED)
-		await page.keyboard.press('Enter')
-		await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
 	}
 
 	test('de l’accueil à la seconde page : six gestes, aucune adresse saisie', async ({ page }) => {

@@ -3,6 +3,8 @@
 //           §4.12.3 (le trigger sur `channels`), §4.12.4 (un workflow `track` libre est déplaçable)
 // @verifies docs/SPEC-administration-arborescence.md §7.2 (le sélecteur), §9 (les refus)
 // @verifies CLAUDE.md §10 (la règle est tenue par la base, jamais par l'écran), §16 (captures)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // POURQUOI CE FICHIER EXISTE, ALORS QUE `e2e/api/coherence-workflow.spec.ts` COUVRE DÉJÀ LA RÈGLE.
 // Les treize lignes du §4.12.6 établissent que la BASE refuse. Elles ne peuvent rien dire des deux
@@ -19,9 +21,9 @@
 // INC-099 (règle de la décision 362). Le nettoyage est fait AUSSI à l'entrée : une exécution tuée
 // avant son `finally` ne doit pas faire échouer la suivante.
 
-import { expect, test, type Page } from './fixtures'
+import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole } from './fixtures'
-import { MOT_DE_PASSE_SEED, URL_API, enTetesService } from '../api/jetons'
+import { URL_API, enTetesService } from '../api/jetons'
 import { capturer } from './captures'
 
 const UNITE = 'CRM-033'
@@ -45,13 +47,7 @@ const CHEMIN_CHANNELS = `${URL_API}/rest/v1/channels`
 const CHEMIN_TRACKS = `${URL_API}/rest/v1/tracks`
 
 async function connecter(page: Page, email = ADMIN): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(email)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, email)
 }
 
 /** Les libellés du sélecteur de workflow, dans l'ordre du DOM — donc l'ordre affiché. */

@@ -5,6 +5,8 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.45 (cette surface), §5.7 ter (l'écriture immédiate, le
 //           contrôle jamais désactivé), §7 (les quatre paliers), §8 (clavier) ;
 //           CLAUDE.md §16 (vérification visuelle)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, comme un utilisateur réel : aucune fonction
 // interne n'est appelée, aucune réponse n'est substituée, et le navigateur obtient son jeton par
@@ -20,8 +22,8 @@
 // `e2e/ui/notifications.spec.ts`, qui mesure une cloche à « 1 non lue ».
 
 import { request as requetePlaywright } from '@playwright/test'
-import { expect, test, type Page } from './fixtures'
-import { CLE_SERVICE, MOT_DE_PASSE_SEED, URL_API } from '../api/jetons'
+import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
+import { CLE_SERVICE, URL_API } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-064'
@@ -30,13 +32,7 @@ const VIEWER = 'viewer@p2enjoy.test'
 const ADRESSE = '/reglages/notifications'
 
 async function connecter(page: Page, email: string): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(email)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, email)
 }
 
 const laCase = (page: Page) => page.getByRole('checkbox', { name: /Recevoir les mentions/ })

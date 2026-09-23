@@ -13,11 +13,28 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-092` — Le SSO, seule source d'identité (en cours : tranches T1 à T3 livrées)
+### `CRM-092` — Le SSO, seule source d'identité (en cours : tranches T1, T2, T3, T3 bis et T5 livrées)
 
 Décision du responsable (décisions 578 et 579) : le SSO LeLabs devient la **seule** source d'identité
-du CRM, en développement comme en production ; GoTrue et la connexion par mot de passe quitteront la
-pile. Contrat : `docs/SPEC-session-sso.md`. Rien ne change encore pour la personne qui se connecte.
+du CRM, en développement comme en production ; GoTrue et la connexion par mot de passe quittent la
+pile. Contrat : `docs/SPEC-session-sso.md`.
+
+- **On ne se connecte plus qu'avec LeLabs** (tranche T5). L'écran de connexion n'a plus qu'une
+  action, « Se connecter avec LeLabs » : plus de champ, plus de mot de passe dans le CRM.
+- **Un accès en attente se dit comme tel.** Une personne dont l'adresse n'est pas encore vérifiée chez
+  LeLabs, dont le compte LeLabs n'est pas encore vérifié par un administrateur, ou qu'aucun espace
+  n'attend voit un message « Accès en attente » qui nomme son adresse et dit quel geste manque — sur
+  une surface distincte d'un refus.
+- **La session tient au navigateur, pas à l'onglet.** Un rechargement ou un nouvel onglet retrouvent
+  la session ; elle se prolonge d'elle-même, et un droit retiré — rôle `verified` chez LeLabs,
+  appartenance à l'espace — ferme l'accès au plus tard cinq minutes après. Une session close chez
+  LeLabs ramène à l'écran de connexion, qui dit pourquoi. « Se déconnecter » ferme la session du CRM,
+  pas celle de LeLabs.
+- **Plus aucun jeton sur l'appareil** (tranche T3 bis, décision 586) : le CRM est un client
+  **confidentiel** de LeLabs. Le navigateur remet le code de connexion à l'échangeur de session, qui
+  l'échange avec le secret du client, garde le jeton de rafraîchissement **chiffré** en base
+  (`0076_sessions_serveur.sql`) et ne rend qu'un jeton interne, gardé en mémoire, et une poignée
+  opaque dans un cookie `httpOnly`, `SameSite=Strict`.
 
 - **La base sait lire un jeton sans GoTrue** : `0074_revendications_du_jeton.sql`, exécutée sous
   `supabase_admin`, pose `auth.uid()` et ses trois sœurs sous la forme que GoTrue installait. Mesuré :
@@ -30,8 +47,9 @@ pile. Contrat : `docs/SPEC-session-sso.md`. Rien ne change encore pour la person
 - **Preuves** : suite pgTAP `0069_identite_sso.test.sql` (58 assertions) ; harnais de l'unité
   `scripts/verify-session-sso.sh` (16 vérifications, dont la base neuve sans GoTrue et quatre
   dégradations détectées) ; trois suites historiques révisées, jamais retirées.
-- **Production** : migrations 74 et 75 en attente, à n'appliquer qu'avec la reprise complète de
-  `CRM-092` (`docs/PROD_MIGRATIONS.md` §3).
+- **Production** : migrations 74, 75 et 76 en attente, et un nouveau client confidentiel
+  `lelabs-crm-serveur` à déclarer chez LeLabs avec son secret `SSO_OIDC_CLIENT_SECRET`, à n'appliquer
+  qu'avec la reprise complète de `CRM-092` (`docs/PROD_MIGRATIONS.md` §2.3, §3).
 - **Le LeLabs de développement est préchargé** (tranche T2) : les comptes de démonstration y ont leur
   identifiant stable comme identité SSO, les rôles par défaut du LeLabs réel, et **le même mot de passe
   que le reste du développement, `SeedDev2026Local`** — `SsoDev2026Local` disparaît. Deux comptes
@@ -42,7 +60,8 @@ pile. Contrat : `docs/SPEC-session-sso.md`. Rien ne change encore pour la person
   en rotation, émetteur, application, échéance —, exige une adresse vérifiée et le rôle `verified`,
   rattache les attentes, et rend un jeton interne de 300 s au plus, jamais au-delà du jeton LeLabs,
   que PostgREST, Realtime et Storage acceptent. Refus nommés : `jeton_refuse`,
-  `adresse_non_verifiee`, `attente_verification`, `attente_espace`. La webapp ne l'emploie pas encore.
+  `adresse_non_verifiee`, `attente_verification`, `attente_espace`. Révisé par la tranche T3 bis : il
+  porte désormais trois gestes — ouvrir par le code, prolonger et fermer par la poignée.
 - **La clé de signature n'atteint que l'échangeur** : le conteneur des fonctions la reçoit, mais le
   service principal ne la remet qu'au worker `session`.
 

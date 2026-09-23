@@ -6,6 +6,8 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.3 ter (les règles visuelles de l'édition), §7 (paliers),
 //           §8 (accessibilité, parité clavier)
 // @verifies CLAUDE.md §16 (vérification visuelle)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // AUCUNE RÉPONSE N'EST SUBSTITUÉE. Ces scénarios se connectent réellement, ouvrent une affaire du
 // seed, écrivent par la vraie route et RELISENT l'effet — soit dans le fil de l'affaire, soit après
@@ -16,13 +18,14 @@
 // identifiant — jamais par prédicat métier, qui amputerait le seed.
 
 import {
-	ERREUR_RESSOURCE_HTTP,
 	autoriserErreursConsole,
+	connecterAvecLeLabs,
+	ERREUR_RESSOURCE_HTTP,
 	expect,
 	test,
 	type Page,
 } from './fixtures'
-import { MOT_DE_PASSE_SEED, URL_API, enTetesService } from '../api/jetons'
+import { URL_API, enTetesService } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-040'
@@ -47,13 +50,7 @@ const ETAT_SEEDE = {
 }
 
 async function connecter(page: Page, adresse = ADMIN): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(adresse)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, adresse)
 }
 
 test.afterEach(async ({ request }) => {

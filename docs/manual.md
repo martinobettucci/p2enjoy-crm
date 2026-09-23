@@ -22,7 +22,7 @@
 
 | Chapitre | Contenu | Unité | État |
 |---|---|---|---|
-| 1 | Se connecter, récupérer son mot de passe | `CRM-011` | **Partiellement livré** — connexion, session d'onglet et déconnexion sont disponibles ; la récupération du mot de passe reste hors interface |
+| 1 | Se connecter avec LeLabs, se déconnecter | `CRM-011`, `CRM-092` | **Livré et vérifié** — voir le chapitre 1. La connexion passe par le seul SSO LeLabs : aucun mot de passe n'existe dans le CRM, donc aucune récupération à y faire. Les attentes — adresse ou compte à vérifier chez LeLabs, inscription à demander — sont nommées à l'écran. La session vit dans le navigateur et se prolonge d'elle-même |
 | 1 bis | Le guide de démarrage : par où commencer | `CRM-079` | **Livré et vérifié** — voir le chapitre 1 *bis*. Cinq étapes mesurées à chaque affichage, chacune renvoyant vers l'écran qui la réalise. L'état est **mesuré**, jamais mémorisé : supprimer le dernier track décoche l'étape. Le guide se masque pour la session — rien n'est écrit durablement sur l'appareil — et reste toujours consultable depuis « Réglages ▸ Guide de démarrage ». Il **lit et renvoie** : il ne crée ni track, ni channel, ni affaire |
 | 2 | Comprendre l'organisation : espace, tracks, channels, cards | `CRM-020`, `CRM-021` | À livrer |
 | 3 | Naviguer : barre latérale, onglets, recherche | `CRM-007`, `CRM-065` | **Partiellement livré** — voir ci-dessous ; la recherche relève de `CRM-065` |
@@ -88,68 +88,88 @@
 
 ## 1. Se connecter et se déconnecter
 
-*Connexion livrée par `CRM-011`. Captures dans `docs/captures/CRM-011/`.*
+*Connexion par le seul SSO LeLabs, livrée par `CRM-092` (tranche T5) ; elle remplace le formulaire par
+mot de passe de `CRM-011` et la seconde voie de `CRM-091`. Captures dans `docs/captures/CRM-092/`.*
 
-Ouvrez `/connexion`, saisissez l'adresse email et le mot de passe du compte qui vous a été invité,
-puis choisissez **Se connecter**. Si vous aviez commencé depuis une fiche ou un board, le produit
-vous ramène à cette même adresse après le succès.
+Le CRM n'a **pas de mot de passe à lui** : vous vous connectez avec votre compte LeLabs. Ouvrez
+`/connexion` et choisissez **Se connecter avec LeLabs** — c'est la seule action de l'écran. Le
+produit vous envoie sur la page de connexion de LeLabs ; une fois connecté là-bas, vous revenez au
+CRM, à l'adresse d'où vous étiez parti si vous aviez commencé depuis une fiche ou un board. Pendant
+l'aller, le bouton affiche « Redirection vers LeLabs… » ; au retour, une carte grisée annonce
+« Connexion LeLabs en cours » le temps que le CRM vérifie votre connexion.
 
-Une adresse inconnue et un mot de passe erroné donnent volontairement le même message : le produit
-ne révèle pas si un compte existe. Une panne de serveur est distinguée d'un refus d'identifiants et
-invite à réessayer. Le formulaire fonctionne au clavier et replace le focus sur l'adresse après un
-refus.
+### 1.1 Qui peut entrer
 
-La session dure pendant l'onglet courant et survit à son rechargement. Elle n'est jamais écrite
-dans le stockage durable du navigateur : fermer l'onglet la fait disparaître. L'en-tête affiche
-l'adresse du compte connecté et l'action **Se déconnecter**, qui révoque la session puis revient à
-l'écran de connexion.
+Un compte LeLabs n'ouvre le CRM que si **trois** conditions sont réunies :
 
-Dans l'environnement de développement seedé, les trois comptes de démonstration sont
-`admin@p2enjoy.test`, `bizdev@p2enjoy.test` et `viewer@p2enjoy.test`, avec le mot de passe commun
-`SeedDev2026Local`. Ces identifiants `.test` ne sont jamais des comptes de production.
+- votre adresse est **vérifiée** auprès de LeLabs ;
+- votre compte LeLabs est **vérifié** par un administrateur de LeLabs — un geste humain, qui peut
+  prendre du temps ;
+- un administrateur d'un espace du CRM vous a **inscrit à cette adresse**, ou vous en êtes déjà
+  membre.
 
-**Ce qui reste hors interface.** La récupération du mot de passe est appliquée et prouvée côté
-serveur, mais aucun écran ne la porte encore. L'invitation demeure une opération d'exploitation :
-la webapp ne détient jamais la clé de service nécessaire (INC-015).
+À votre première connexion, votre inscription devient votre place dans l'espace, avec le rôle que
+l'administrateur a choisi pour vous. Le rôle que LeLabs vous attribue — personne vérifiée ou
+administrateur du SSO — ne change rien à vos droits dans le CRM : ils restent ceux de votre espace.
 
-### 1.1 Se connecter avec LeLabs
+### 1.2 Les messages de l'écran de connexion
 
-*Livré par `CRM-091`. Captures dans `docs/captures/CRM-091/`.*
+Deux sortes de messages existent, et ils ne se ressemblent pas.
 
-Sous le formulaire, après la mention **ou**, l'action **Se connecter avec LeLabs** vous connecte
-avec votre compte LeLabs, sans saisir de mot de passe dans le CRM. Le produit vous envoie sur la
-page de connexion de LeLabs ; une fois connecté là-bas, vous revenez au CRM — à l'adresse d'où vous
-étiez parti, si vous aviez commencé depuis une fiche ou un board.
+**« Accès en attente »** — sur fond jaune pâle, avec une icône de cercle en pointillés. Vous n'avez
+rien fait de faux : un geste manque, qui n'est pas le vôtre ou que vous faites ailleurs. Le message
+nomme votre adresse.
 
-**Qui peut entrer ainsi.** Un compte LeLabs n'ouvre le CRM que si deux conditions sont réunies :
+| Message | Ce qu'il faut faire |
+|---|---|
+| Votre adresse … n'est pas encore vérifiée auprès de LeLabs. | Vérifiez votre adresse depuis votre compte LeLabs, puis reconnectez-vous. |
+| Votre compte LeLabs … n'est pas encore vérifié. | Un administrateur de LeLabs doit confirmer votre identité. Rien à faire de votre côté, sinon patienter et vous reconnecter plus tard. |
+| Aucun espace du CRM ne vous attend à l'adresse … | Demandez à un administrateur de votre espace de vous inscrire **avec cette adresse exacte**, puis reconnectez-vous. |
 
-- un compte du CRM existe **à la même adresse** — vous y avez été invité ;
-- cette adresse est **vérifiée** auprès de LeLabs.
-
-Le rôle que LeLabs vous attribue — personne vérifiée ou administrateur du SSO — ne change rien à
-vos droits dans le CRM : ils restent ceux que l'administrateur de votre espace vous a donnés. Si
-vous aviez reçu une invitation que vous n'aviez pas encore acceptée, vous connecter avec LeLabs
-l'accepte : c'est la même preuve que le lien du courriel.
-
-**Les messages que vous pouvez lire**, sous le séparateur :
+**Un refus** — sur fond rouge pâle, avec un triangle d'alerte. Une tentative a échoué ; il suffit en
+général de recommencer.
 
 | Message | Ce qu'il veut dire |
 |---|---|
-| Aucun compte du CRM ne correspond à ce compte LeLabs… | Personne ne vous a invité à cette adresse, ou votre adresse n'est pas encore vérifiée auprès de LeLabs. Demandez une invitation à un administrateur de votre espace, ou terminez la vérification de votre adresse chez LeLabs. |
-| La connexion LeLabs a été annulée. | Vous avez refusé ou interrompu la connexion chez LeLabs. Rien n'a changé ; vous pouvez recommencer. |
-| La connexion LeLabs n'a pas abouti. Recommencez depuis cet écran. | Le retour de LeLabs n'a pas pu être vérifié — par exemple si vous avez mis plus de dix minutes, ou ouvert le retour dans un autre onglet. Recommencez simplement. |
+| La connexion LeLabs a été annulée. | Vous avez refusé ou interrompu la connexion chez LeLabs. Rien n'a changé. |
+| La connexion LeLabs n'a pas abouti. Recommencez depuis cet écran. | Le retour de LeLabs n'a pas pu être vérifié — par exemple si vous avez mis plus de dix minutes, ou ouvert le retour dans un autre onglet. |
 | Le serveur n'a pas répondu… | LeLabs ou le CRM est momentanément injoignable. Réessayez. |
+| Votre session a pris fin. Reconnectez-vous avec LeLabs. | Votre session LeLabs a été fermée, ou un droit vous a été retiré. |
+| La connexion n'est pas configurée sur ce déploiement. | Ce déploiement du CRM ne connaît pas LeLabs : prévenez son exploitant. Aucun bouton n'est alors proposé. |
 
-**La déconnexion.** **Se déconnecter** ferme votre session du CRM, pas celle de LeLabs : c'est le
-principe même d'une connexion unique. Tant que votre session LeLabs reste ouverte dans ce
-navigateur, **Se connecter avec LeLabs** vous reconnecte sans vous redemander votre mot de passe.
-Sur un ordinateur partagé, fermez aussi votre session LeLabs, depuis votre espace de compte LeLabs.
+Dans les deux cas, le bouton **Se connecter avec LeLabs** reste disponible.
 
-Rien n'est conservé sur votre appareil au-delà de l'onglet : la connexion en cours ne vit que le
-temps de l'aller-retour vers LeLabs, et la session du CRM suit la règle ci-dessus.
+### 1.3 La session
 
-Dans l'environnement de développement, un LeLabs local porte les mêmes adresses et le même mot de
-passe que les comptes de démonstration, `SeedDev2026Local`.
+**Votre session vit dans ce navigateur**, pas seulement dans l'onglet : recharger la page ou ouvrir
+un nouvel onglet vous retrouve connecté. Elle se prolonge d'elle-même tant que votre session LeLabs
+vit. Elle prend fin quand vous fermez le navigateur, quand vous vous déconnectez, ou quand LeLabs ou
+votre espace vous retire l'accès — au plus tard cinq minutes après ce retrait : l'écran de connexion
+vous dit alors pourquoi, et vous ramène à l'adresse que vous quittiez une fois reconnecté.
+
+**Rien d'identifiant n'est écrit sur votre appareil.** Aucun jeton LeLabs n'y est jamais conservé ;
+le CRM garde votre session de son côté et ne laisse au navigateur qu'un cookie technique, illisible
+par les pages, strictement nécessaire à la session et effacé à la fermeture du navigateur.
+
+### 1.4 Se déconnecter
+
+L'en-tête affiche votre nom et votre avatar — votre adresse en infobulle — et l'action **Se
+déconnecter**, qui ferme votre session du CRM et revient à l'écran de connexion. Elle **ne ferme
+pas votre session LeLabs** : c'est le principe même d'une connexion unique. Tant que celle-ci reste
+ouverte dans ce navigateur, **Se connecter avec LeLabs** vous reconnecte sans vous redemander votre
+mot de passe. Sur un ordinateur partagé, fermez aussi votre session LeLabs, depuis votre espace de
+compte LeLabs.
+
+### 1.5 En développement
+
+Un LeLabs local reproduit le SSO réel. Ses comptes portent les adresses de la démonstration et un
+mot de passe commun, `SeedDev2026Local` : `admin@p2enjoy.test`, `bizdev@p2enjoy.test` et
+`viewer@p2enjoy.test` entrent dans le CRM ; `inconnu@p2enjoy.test`, `attendu@p2enjoy.test` et
+`adresse-non-verifiee@p2enjoy.test` montrent chacun l'un des trois messages d'attente. Ces
+identifiants `.test` ne sont jamais des comptes de production.
+
+**Ce qui reste hors interface.** Inscrire une personne dans un espace est encore une opération
+d'exploitation : aucun écran du CRM ne la porte avant `CRM-070`.
 
 ## 1 bis. Le guide de démarrage : par où commencer
 

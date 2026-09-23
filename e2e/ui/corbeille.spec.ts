@@ -6,6 +6,8 @@
 // @verifies docs/SPEC-seed.md §10.1 (les trois objets), §10.4 bis (l'affaire `…0cf`)
 // @verifies docs/DESIGN_SYSTEM.md §5.16 (cette surface), §7 (paliers), §12.5 (réponse substituée)
 // @verifies CLAUDE.md §10 (une règle se prouve sur la vraie base), §16 (vérification visuelle)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, sur la VRAIE base : aucune fonction interne n'est
 // appelée, et chaque effet est CONSTATÉ EN BASE par une relecture, jamais déduit de l'écran. Un
@@ -17,9 +19,9 @@
 // `supabase/seed/apply-seed.sh` (docs/SPEC-seed.md §10.2) —, et le `finally` s'exécute même si une
 // assertion échoue. Sans cela, la deuxième exécution de cette suite partirait d'un seed différent.
 
-import { expect, test, type Page } from './fixtures'
+import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole } from './fixtures'
-import { MOT_DE_PASSE_SEED, URL_API, enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
+import { URL_API, enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-077'
@@ -34,13 +36,7 @@ const NOM_CHANNEL = 'Annexes 2023'
 const NOM_CARD = 'Saisie erronée'
 
 async function connecter(page: Page, email: string): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(email)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, email)
 }
 
 /** Relit `deleted_at` EN BASE, hors interface : c'est la seule preuve d'un effet (`CLAUDE.md` §10). */

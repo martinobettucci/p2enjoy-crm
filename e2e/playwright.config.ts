@@ -1,6 +1,7 @@
 // @spec CRM-007 (docs/BACKLOG.md) — harnais E2E de la coquille et des captures
 // @spec CRM-008 (docs/BACKLOG.md) — projets Playwright, déclaration du webServer, rapport HTML
 // @spec CRM-091 (docs/BACKLOG.md) — build de preuve configuré pour le Keycloak de développement
+// @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §8.6 — relais de l'échangeur au `vite preview`
 // @spec docs/SPEC-test-harness.md §4 (projets), §4.2 (webServer), §5 (rapport)
 // @spec docs/SPEC-webapp.md §13 (commandes), §14 (preuves) ; docs/DESIGN_SYSTEM.md §11 (captures)
 // @spec README.md §7 (tests)
@@ -85,11 +86,14 @@ const serveur = {
 	env: {
 		VITE_SUPABASE_URL: URL_API,
 		VITE_SUPABASE_ANON_KEY: CLE_ANONYME,
-		// Connexion unique (CRM-091, docs/SPEC-auth.md §10.9) : le Keycloak de développement, dont le
+		// Connexion unique (CRM-092, docs/SPEC-session-sso.md §10) : le Keycloak de développement, dont le
 		// realm autorise exactement l'origine de ce `vite preview` (keycloak/README.md).
 		VITE_SSO_ISSUER: process.env['VITE_SSO_ISSUER'] ?? lireEnv('SSO_OIDC_ISSUER'),
 		VITE_SSO_CLIENT_ID: process.env['VITE_SSO_CLIENT_ID'] ?? lireEnv('SSO_OIDC_CLIENT_ID'),
 		WEBAPP_PREVIEW_PORT: String(PORT),
+		// Le `vite preview` relaie l'échangeur de session vers Kong, sur l'origine de la webapp
+		// (docs/SPEC-session-sso.md §8.6) : le cookie de la poignée y est posé comme en production.
+		API_RELAIS_SESSION: URL_API,
 	},
 }
 

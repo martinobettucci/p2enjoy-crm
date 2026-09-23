@@ -3,7 +3,8 @@
 Unité de backlog : `CRM-092` (`docs/BACKLOG.md`).
 Décisions : `docs/JOURNAL.md` 578 (instruction du responsable, mesures K1 à K9), 579 (arbitrage A1 à
 A3), 580 (mesures K10 à K17), 581 (correction de K12 : migration élevée, harnais de l'unité),
-585 (T5 avant T4), 586 (**client serveur** : arbitrage du responsable, sessions serveur).
+585 (T5 avant T4), 586 (**client serveur** : arbitrage du responsable, sessions serveur), 587
+(l'absence de session n'est pas un refus ; échéance comptée sur la durée du jeton ; preuves révisées).
 Contrats du fournisseur : `docs/SSO.md` (général), `docs/SSO-client-lelabs-crm.md` (client du CRM).
 Documents liés : `docs/SPEC-auth.md` (état remplacé), `docs/SPEC-identite.md` §3 à §6,
 `docs/SPEC-permissions-rls.md` §1 à §3, `docs/SPEC-edge-functions.md` §2 à §5, `docs/SPEC-seed.md`
@@ -147,9 +148,13 @@ le point 5.
 
 **Prolonger** sert au rafraîchissement **et** à la restauration au chargement de la page.
 
-1. Sans cookie de poignée : `401 session_absente` — le cas normal d'un navigateur jamais connecté.
+1. Sans cookie de poignée : **`204`, sans corps** — le cas normal d'un navigateur jamais connecté, et
+   la restauration de chaque page anonyme. **Ce n'est pas un refus** (décision 587) : un navigateur
+   journalise toute réponse `4xx` en erreur de console, et en rendre une à chaque chargement ferait
+   d'un état normal une anomalie.
 2. `public.lire_session_serveur(hash(poignée))` rend le `sub` et le jeton de rafraîchissement chiffré
-   d'une session **non révoquée et non échue** ; sinon `401 session_absente`, et le cookie est effacé.
+   d'une session **non révoquée et non échue** ; sinon **`204`**, et le cookie est effacé. Un jeton gardé
+   indéchiffrable ferme la session et rend de même `204`, cookie effacé.
 3. Découverte, puis `grant_type=refresh_token` avec le secret. Un refus `4xx` de LeLabs — session LeLabs
    échue ou fermée — **supprime** la session serveur, efface le cookie et rend `401 session_expiree`.
 4. Vérification du nouveau jeton d'accès (§5.2, point 4). Son `sub` doit être celui de la session.
@@ -157,7 +162,8 @@ le point 5.
    si la personne est toujours admise, remplace le jeton de rafraîchissement — LeLabs en rend un
    nouveau à chaque fois — et son échéance. Sinon il **supprime** la session, et l'échangeur efface le
    cookie et rend le refus nommé : un `verified` retiré ou une appartenance retirée ferment l'accès au
-   prochain rafraîchissement, donc **au plus tard 300 s après**.
+   prochain rafraîchissement, donc **au plus tard 300 s après**. Une session supprimée entre la
+   lecture et le renouvellement rend `204`, cookie effacé.
 
 **Fermer** supprime la session serveur désignée par la poignée et efface le cookie ; `204` même sans
 cookie — fermer ce qui n'existe pas n'est pas une erreur. **Rien n'est révoqué chez LeLabs** : révoquer
@@ -200,7 +206,6 @@ puisse la nommer. Aucune autre information : ni motif technique, ni message du f
 |---|---|---|
 | `400` | `requete_invalide` | corps d'ouverture absent ou mal formé |
 | `401` | `jeton_refuse` | code refusé par LeLabs, ou jeton d'accès non conforme au §5.2, point 4 |
-| `401` | `session_absente` | aucun cookie, poignée inconnue, révoquée ou échue |
 | `401` | `session_expiree` | LeLabs refuse le rafraîchissement : la session LeLabs a pris fin |
 | `403` | `adresse_non_verifiee` | `email` absent ou `email_verified` différent de `true` |
 | `403` | `attente_verification` | `verified` absent des rôles du realm |
@@ -211,6 +216,10 @@ puisse la nommer. Aucune autre information : ni motif technique, ni message du f
 | `502` | `service_indisponible` | appel de la base en échec, ou configuration absente |
 
 Un `401 jeton_refuse` ne distingue pas ses causes : les distinguer n'aiderait que qui forge des jetons.
+
+**L'absence de session n'est pas au dictionnaire** (décision 587) : la prolongation la rend par un
+`204` sans corps (§5.3, points 1 et 2), que la webapp lit comme « aucune session ». Le code
+`session_absente`, qui la nommait en `401`, est retiré.
 
 ### 5.6 La poignée de session et son cookie
 
@@ -239,7 +248,7 @@ Un `401 jeton_refuse` ne distingue pas ses causes : les distinguer n'aiderait qu
   réponse parte toujours avant les 10 s de temps mur d'un worker (`docs/SPEC-edge-functions.md` §2).
   Un dépassement rend `sso_injoignable` ou `service_indisponible`, jamais un worker tué sans réponse.
 - **Journal** : un événement structuré par geste — `session_ouverte`, `session_prolongee`,
-  `session_fermee` ou `session_refusee` avec son code, et sa durée. **Jamais** de jeton, de poignée, de
+  `session_fermee`, `session_absente` (code `aucune`) ou `session_refusee` avec son code, et sa durée. **Jamais** de jeton, de poignée, de
   code, d'adresse, de nom ni de `sub`.
 - **Coût** : un geste d'ouverture lit la découverte, le point de jeton et les clés ; une prolongation
   en fait autant, toutes les cinq minutes environ par navigateur ouvert. Aucun cache : le service
@@ -392,10 +401,13 @@ selon le §5.5 vers le dictionnaire du §9.2. Ne rend rien, ne stocke rien.
 ### 8.4 Restauration et rafraîchissement
 
 - **Au chargement**, avant tout montage métier (`docs/SPEC-auth.md` §9.1), la webapp **prolonge** :
-  un cookie valide rend une session sans aucun geste de la personne ; `session_absente` rend l'état
-  anonyme, sans message.
+  un cookie valide rend une session sans aucun geste de la personne ; le `204` de l'absence de
+  session rend l'état anonyme, sans message.
 - **Le rafraîchissement part 60 s avant** l'échéance du jeton interne, par la même prolongation — qui
-  rejoue l'admission (§5.3). Un seul à la fois.
+  rejoue l'admission (§5.3). Un seul à la fois. **L'échéance est comptée sur la durée de vie du jeton
+  — `exp − iat`, lus dans le jeton interne —, à partir de sa réception** (décision 587) : l'horloge du
+  poste peut différer de celle du serveur, et une échéance absolue lue à une horloge en avance ferait
+  prolonger en boucle. Un plancher de 5 s sépare deux prolongations, quoi qu'il arrive.
 - `session_expiree` ou un refus de l'échangeur **mettent fin** à la session : état anonyme et retour
   à `/connexion`, qui dit pourquoi. Une panne réseau est réessayée jusqu'à l'échéance, puis met fin
   à la session avec le message réseau.
@@ -560,11 +572,11 @@ responsable a demandé une fois `CRM-092` entièrement vérifiée (décision 584
 
 | Niveau | Preuve |
 |---|---|
-| Unitaire, Deno | `supabase/functions/session/*.test.ts` — **révisés par la décision 586** : corps d'ouverture invalide ; code refusé par LeLabs ; échange avec le secret et le vérificateur exacts ; trois gestes, chemin inconnu, méthode ; poignée absente, inconnue, échue ; `session_expiree` qui supprime la session et efface le cookie ; admission rejouée à la prolongation ; cookie `HttpOnly`, `SameSite=Strict`, `Path`, `Secure` sur `https` seulement ; chiffrement AES-GCM : aller-retour, vecteur unique, altération refusée ; échéance globale ; et toujours : jeton mal formé ; `alg` `none`, `HS256`, `HS512`, `RS384` refusés **sans** lecture de clé ; `kid` inconnu ; signature altérée d'un octet ; `iss`, `azp`, `typ` différents ; `exp` passé d'une seconde ; `iat` futur ; `sub` non UUID ; adresse non vérifiée ; `verified` absent, puis présent parmi d'autres rôles dans un autre ordre ; découverte d'un autre émetteur ; délai dépassé ; jeton interne : revendications exactes, signature vérifiable par `JWT_SECRET`, `exp` = min des deux ; dictionnaire du §5.4 complet. Clés RSA et EC tirées par WebCrypto dans le test, jamais versées |
+| Unitaire, Deno | `supabase/functions/session/*.test.ts` — **révisés par la décision 586** : corps d'ouverture invalide ; code refusé par LeLabs ; échange avec le secret et le vérificateur exacts ; trois gestes, chemin inconnu, méthode ; poignée absente, inconnue, échue — `204`, jamais un refus (décision 587) ; `session_expiree` qui supprime la session et efface le cookie ; admission rejouée à la prolongation ; cookie `HttpOnly`, `SameSite=Strict`, `Path`, `Secure` sur `https` seulement ; chiffrement AES-GCM : aller-retour, vecteur unique, altération refusée ; échéance globale ; et toujours : jeton mal formé ; `alg` `none`, `HS256`, `HS512`, `RS384` refusés **sans** lecture de clé ; `kid` inconnu ; signature altérée d'un octet ; `iss`, `azp`, `typ` différents ; `exp` passé d'une seconde ; `iat` futur ; `sub` non UUID ; adresse non vérifiée ; `verified` absent, puis présent parmi d'autres rôles dans un autre ordre ; découverte d'un autre émetteur ; délai dépassé ; jeton interne : revendications exactes, signature vérifiable par `JWT_SECRET`, `exp` = min des deux ; dictionnaire du §5.4 complet. Clés RSA et EC tirées par WebCrypto dans le test, jamais versées |
 | pgTAP | `sessions_sso` : aucune politique, aucun privilège pour `anon` et `authenticated`, empreinte unique, cascade depuis `profiles` ; les quatre fonctions de session réservées à `service_role`, admission appliquée à l'ouverture et au renouvellement, suppression d'une session non admise ; `workspace_invitations` : contraintes, clé, trois politiques et privilèges ; `ouvrir_session_sso` : attente consommée en appartenance au bon rôle, profil créé une fois, profil existant non réécrit, appartenance existante non rétrogradée, aucune trace sans attente, rejeu stable, `EXECUTE` refusé à `anon` et `authenticated` ; `profiles` sans clé vers `auth.users` |
 | Base neuve | T1 : un cluster jetable **sans GoTrue**, `0074` appliquée deux fois : `auth.uid()` rend le `sub` de `request.jwt.claims` (K11 levée), propriétaire inchangé. T6 : la pile entière recréée sans GoTrue par `./resetMe.sh`, seed et preuves d'API rejoués — une lecture RLS réelle aboutit |
-| API, pile réelle | `e2e/api/session.spec.ts`, **révisé par la décision 586** — code et vérificateur remis à l'échangeur, jamais de jeton LeLabs côté client : ouverture, prolongation par le cookie, fermeture qui rend le cookie inopérant ; la table de sessions ne porte aucun jeton en clair ; un code émis pour le client étranger est refusé ; un code rejoué est refusé ; et toujours : les trois comptes seedés ouvrent une session et lisent leurs données sous RLS ; `inconnu@`, `attendu@`, adresse non vérifiée rendent leur `403` et leur code ; jeton du client étranger, `id_token`, jeton interne présenté à l'échangeur : `401` ; jeton interne accepté par PostgREST, **Realtime** et **Storage** ; `verified` retiré par l'API d'administration de développement → échange suivant refusé ; appartenance retirée → échange suivant refusé ; **rotation** : nouvelle clé prioritaire créée, nouveau jeton accepté sans redémarrer, ancienne clé désactivée → ancien jeton refusé ; `/auth/v1/*` → `404` après T6 |
-| E2E | `e2e/ui/connexion.spec.ts` : vraie page Keycloak pour chacun des trois rôles ; **aucun jeton dans `sessionStorage` ni `localStorage`**, cookie de poignée `HttpOnly` présent, transaction retirée, URL sans `code` ; rechargement conservant la session ; **rafraîchissement** franchi par l'horloge de Playwright sans perte de session ; déconnexion ramenant à `/connexion` et reconnexion sans formulaire tant que LeLabs vit ; `inconnu@` et `attendu@` voyant leur attente ; annulation ; configuration absente ; console vierge. Les 50 specs d'interface se connectent par la fixture `connecterAvecLeLabs` |
+| API, pile réelle | `e2e/api/session.spec.ts`, **révisé par la décision 586** — code et vérificateur remis à l'échangeur, jamais de jeton LeLabs côté client : ouverture, prolongation par le cookie, fermeture qui rend le cookie inopérant ; la table de sessions ne porte aucun jeton en clair ; un code émis pour le client étranger est refusé ; un code rejoué est refusé ; et toujours : les trois comptes seedés ouvrent une session et lisent leurs données sous RLS ; `inconnu@`, `attendu@`, adresse non vérifiée rendent leur `403` et leur code ; jeton d'accès LeLabs, `id_token` ou jeton interne présentés à l'échangeur en `Authorization` : **n'ouvrent rien** — il n'en lit aucun (`400` à l'ouverture, `204` à la prolongation) ; jeton interne accepté par PostgREST, **Realtime** et **Storage** ; `verified` retiré par l'API d'administration de développement → **prolongation suivante** refusée et session supprimée ; appartenance retirée → de même ; session LeLabs close → `session_expiree` ; **rotation** : nouvelle clé prioritaire créée, suivie sans redémarrer à l'ouverture comme à la prolongation, anciennes clés désactivées sans gêner aucune session. *Révisé par la décision 587* : « ancien jeton refusé » ne se prouve plus par l'API, l'échangeur ne recevant jamais qu'un jeton qu'il vient d'obtenir lui-même de LeLabs ; la preuve de `kid` inconnu reste unitaire. `/auth/v1/*` → `404` après T6 |
+| E2E | `e2e/ui/connexion.spec.ts` : vraie page Keycloak pour chacun des trois rôles ; **aucun jeton dans `sessionStorage` ni `localStorage`**, cookie de poignée `HttpOnly` présent, transaction retirée, URL sans `code` ; rechargement conservant la session ; **rafraîchissement** franchi par l'horloge de Playwright sans perte de session ; déconnexion ramenant à `/connexion` et reconnexion sans formulaire tant que LeLabs vit ; `inconnu@`, `attendu@` et l'adresse non prouvée voyant leur attente ; session close chez LeLabs ramenant à `/connexion` avec son message ; annulation ; console vierge. *La configuration absente est prouvée au niveau unitaire* (`EcranConnexion.test.tsx`) : le build sous test est configuré, et en produire un second pour ce seul état doublerait le temps du harnais sans rien prouver de plus (décision 587). Les 50 specs d'interface se connectent par la fixture `connecterAvecLeLabs` |
 | Visuel | carte de connexion, redirection, retour, chacun des refus et chacune des attentes, textes longs, aux quatre paliers ; captures observées |
 | Harnais | **`scripts/verify-session-sso.sh`**, grandi à chaque tranche et **non complaisant** : il rougit si `alg=HS256` est accepté, si `azp` n'est plus contrôlé, si l'admission cesse d'exiger `verified`, si `/auth/v1` répond, si `JWT_SECRET` atteint une autre fonction que `session`. `scripts/verify-auth.sh` est retiré avec GoTrue en T6 (décision 581) |
 

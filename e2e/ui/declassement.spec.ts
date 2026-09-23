@@ -6,6 +6,8 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.3 quater (confirmation dans le flux, jamais en modale),
 //           §5.4 (inbox), §7 (paliers), §10 (clavier)
 // @verifies docs/JOURNAL.md décision 536 ; CLAUDE.md §16 (vérification visuelle)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // LE PARCOURS EST FAIT À LA SOURIS ET AU CLAVIER, comme un utilisateur réel : aucune fonction
 // interne n'est appelée, aucune réponse n'est substituée. Le message vient du seed (§2.19) : il a
@@ -21,8 +23,8 @@
 // `service_role` compris (`CRM-044`) — l'historique ne se corrige pas. C'est exactement ce que le
 // scénario de classement de `inbox.spec.ts` constate déjà pour son `mail_received`.
 
-import { expect, test, type Page } from './fixtures'
-import { MOT_DE_PASSE_SEED, URL_API, enTetesService } from '../api/jetons'
+import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
+import { URL_API, enTetesService } from '../api/jetons'
 import { capturer } from './captures'
 
 const UNITE = 'CRM-055'
@@ -38,13 +40,7 @@ const SLUG_TRACK = 'conseil-ia'
 const SLUG_CHANNEL = 'grands-comptes'
 
 async function connecter(page: Page): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(ADMIN)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, ADMIN)
 }
 
 /**

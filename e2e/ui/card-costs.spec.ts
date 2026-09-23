@@ -9,6 +9,8 @@
 //           tableau), §5.13 (commandes désactivées jamais masquées, formulaire et confirmation dans
 //           le flux du document, focus entrant dans le premier champ), §7 (paliers), §8
 // @verifies CLAUDE.md §16 (vérification visuelle), §22 (accessibilité clavier)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // LES GESTES SONT ÉPROUVÉS SUR DE VRAIS CLICS ET DE VRAIES FRAPPES, jamais par appel d'une fonction
 // interne, et le parcours clavier atteint son focus par `Tab` — Chromium ne pose `:focus-visible`
@@ -27,9 +29,16 @@
 // lequel PostgreSQL n'offre aucun opérateur `LIKE` —, et PostgREST rend une erreur qu'un `afterAll`
 // silencieux ignorerait. Le filtre porte sur une colonne `text`, et l'épilogue échoue bruyamment.
 
-import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole, expect, test, type Page } from './fixtures'
+import {
+	autoriserErreursConsole,
+	connecterAvecLeLabs,
+	ERREUR_RESSOURCE_HTTP,
+	expect,
+	test,
+	type Page,
+} from './fixtures'
 import type { APIRequestContext, Locator } from '@playwright/test'
-import { MOT_DE_PASSE_SEED, URL_API, enTetesService } from '../api/jetons'
+import { URL_API, enTetesService } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-085'
@@ -70,13 +79,7 @@ const PREFIXE = 'E2E Cout'
 const CHEMIN_COUTS = `${URL_API}/rest/v1/card_costs`
 
 async function connecter(page: Page, email = ADMIN): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(email)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, email)
 }
 
 /** Ouvre la fiche et rend la section « Coûts ». */

@@ -15,6 +15,8 @@
 //           §5.9 (tableau de données), §5.8 (états),
 //           §7 (les quatre paliers), §8 (clavier), §12.1 (navigation par liens)
 // @verifies CLAUDE.md §16 (vérification visuelle), §22 (accessibilité clavier)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // CE FICHIER ÉCRIT, ET IL RESTAURE — l'écart avec `couts-track.spec.ts`, `couts-budget.spec.ts` et
 // `couts-workspace.spec.ts`, qui ne modifient rien. Il ne peut pas ne pas écrire : la saisie EST
@@ -44,8 +46,15 @@
 //   * la portée d'un track ne rend que ses budgets : DEUX lignes sur `studio-web`, UNE sur
 //     `conseil-ia`.
 
-import { autoriserErreursConsole, expect, test, type APIRequestContext, type Page } from './fixtures'
-import { MOT_DE_PASSE_SEED, URL_API, enTetesService } from '../api/jetons'
+import {
+	autoriserErreursConsole,
+	connecterAvecLeLabs,
+	expect,
+	test,
+	type APIRequestContext,
+	type Page,
+} from './fixtures'
+import { URL_API, enTetesService } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-086'
@@ -65,13 +74,7 @@ const LIGNE_AUTRE_TRACK = 'Prospection terrain'
 const ID_LIGNE_BUDGET_CLOS = '5eed0000-0000-4000-8000-0000000000e5'
 
 async function connecter(page: Page, email = ADMIN): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(email)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, email)
 }
 
 /**

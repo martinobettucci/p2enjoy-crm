@@ -13,6 +13,8 @@
 //           redimensionner), §4.1 (le bloc masqué n'est jamais nommé), §4.2 (l'écriture)
 // @verifies docs/DESIGN_SYSTEM.md §5.29 (bloc, jauge, flèche), §7 (paliers), §5.8 (états)
 // @verifies CLAUDE.md §16 (vérification visuelle), §22 (navigation clavier)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // LE PARCOURS EST FAIT À LA SOURIS ET AU CLAVIER, avec les jetons réels de DEUX profils du seed :
 // l'administratrice, qui lit les huit channels, et la lectrice, qui n'en lit que six. C'est cette
@@ -22,8 +24,15 @@
 // AUCUNE RÉPONSE N'EST SUBSTITUÉE et aucune fonction interne n'est appelée : ce que la preuve
 // mesure est ce que le backend a consenti.
 
-import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole, expect, test, type Page } from './fixtures'
-import { MOT_DE_PASSE_SEED, URL_API, enTetesService } from '../api/jetons'
+import {
+	autoriserErreursConsole,
+	connecterAvecLeLabs,
+	ERREUR_RESSOURCE_HTTP,
+	expect,
+	test,
+	type Page,
+} from './fixtures'
+import { URL_API, enTetesService } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-083'
@@ -57,13 +66,7 @@ async function remettreArchive(): Promise<void> {
 }
 
 async function connecter(page: Page, email: string): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(email)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, email)
 }
 
 /** Ouvre le tableau du seed depuis la LISTE, comme un utilisateur — jamais par son adresse. */

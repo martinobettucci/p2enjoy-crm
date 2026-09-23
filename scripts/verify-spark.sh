@@ -70,7 +70,7 @@ fichiers_conformes() {
 		SPARK_HTTP_PORT=8080
 		ANON_KEY=$(jwt_hs256 "$jwt" anon)
 		SSO_OIDC_ISSUER=https://oauth.exemple.tld/realms/lelabs
-		SSO_OIDC_CLIENT_ID=lelabs-crm
+		SSO_OIDC_CLIENT_ID=lelabs-crm-serveur
 		SMTP_HOST=smtp.exemple.tld
 		SMTP_PORT=2587
 		SMTP_ADMIN_EMAIL=no-reply@exemple.tld
@@ -86,6 +86,7 @@ fichiers_conformes() {
 		MINIO_ROOT_PASSWORD=$(gen_hex 20)
 		S3_PROTOCOL_ACCESS_KEY_ID=$(gen_hex 16)
 		S3_PROTOCOL_ACCESS_KEY_SECRET=$(gen_hex 32)
+		SSO_OIDC_CLIENT_SECRET=$(gen_hex 32)
 	EOF
 }
 
@@ -427,14 +428,27 @@ if out=$(proposer "$P"); then
 		&& ok "ANON_KEY et SERVICE_ROLE_KEY signées par le JWT_SECRET proposé, rôles justes" \
 		|| fail "jetons proposés incohérents avec JWT_SECRET"
 
-	# Les propositions, importées telles quelles et complétées des seules valeurs SMTP demandées,
-	# doivent franchir toutes les gardes : c'est la preuve qu'elles couvrent le contrat.
+	# Le secret du client confidentiel est une DEMANDE, jamais un tirage : LeLabs l'émet, et seul
+	# l'administrateur du realm le saisit (`CRM-092`, décision 586).
+	if grep -q '^SSO_OIDC_CLIENT_SECRET=$' "$P/secrets.?" && ! grep -q '^SSO_OIDC_CLIENT_SECRET=$' "$P/env.?"; then
+		ok "secret du client SSO laissé en demande, parmi les secrets, sans valeur tirée"
+	else
+		fail "secret du client SSO tiré, absent, ou proposé hors des secrets"
+	fi
+	[ "$(env_get "$P/env.?" SSO_OIDC_CLIENT_ID)" = lelabs-crm-serveur ] \
+		&& ok "client SSO proposé : le client confidentiel lelabs-crm-serveur" \
+		|| fail "client SSO proposé : « $(env_get "$P/env.?" SSO_OIDC_CLIENT_ID) »"
+
+	# Les propositions, importées telles quelles et complétées des seules valeurs demandées — relais
+	# SMTP et secret du client SSO —, doivent franchir toutes les gardes : c'est la preuve qu'elles
+	# couvrent le contrat.
 	I="$WORK/importe"
 	mkdir -p "$I"
 	sed -n "/^$MARQUE\$/,\$p" "$P/env.?" | grep -E '^[A-Z0-9_]+=' \
 		| sed -e 's/^SMTP_HOST=$/SMTP_HOST=smtp.exemple.tld/' -e 's/^SMTP_PORT=$/SMTP_PORT=2587/' \
 		      -e 's/^SMTP_ADMIN_EMAIL=$/SMTP_ADMIN_EMAIL=no-reply@exemple.tld/' > "$I/env"
-	sed -n "/^$MARQUE\$/,\$p" "$P/secrets.?" | grep -E '^[A-Z0-9_]+=' > "$I/secrets"
+	sed -n "/^$MARQUE\$/,\$p" "$P/secrets.?" | grep -E '^[A-Z0-9_]+=' \
+		| sed -e 's/^SSO_OIDC_CLIENT_SECRET=$/SSO_OIDC_CLIENT_SECRET=secret-saisi-par-le-realm/' > "$I/secrets"
 	out=$(prod_spark "$I/env" "$I/secrets" "$I/run")
 	case "$out" in *"démon Docker ne répond pas"*) ok "propositions importées : toutes les gardes franchies" ;;
 		*) fail "propositions incomplètes au regard du contrat : $(printf '%s' "$out" | grep -E 'manquante|vide|définir|ERREUR' | head -n 3 | tr '\n' ' ')" ;; esac
@@ -477,7 +491,8 @@ if proposer "$P" --smtp-hote smtp.exemple.tld --smtp-port 2587 --smtp-expediteur
 	# car la connexion par le SSO ne dépend d'aucun courriel.
 	I2="$WORK/importe-smtp"; mkdir -p "$I2"
 	sed -n "/^$MARQUE\$/,\$p" "$P/env.?" | grep -E '^[A-Z0-9_]+=' > "$I2/env"
-	sed -n "/^$MARQUE\$/,\$p" "$P/secrets.?" | grep -E '^[A-Z0-9_]+=' | grep -v '^SMTP_' > "$I2/secrets"
+	sed -n "/^$MARQUE\$/,\$p" "$P/secrets.?" | grep -E '^[A-Z0-9_]+=' | grep -v '^SMTP_' \
+		| sed -e 's/^SSO_OIDC_CLIENT_SECRET=$/SSO_OIDC_CLIENT_SECRET=secret-saisi-par-le-realm/' > "$I2/secrets"
 	out=$(prod_spark "$I2/env" "$I2/secrets" "$I2/run")
 	case "$out" in *"démon Docker ne répond pas"*) ok "sans identifiants SMTP, toutes les gardes sont franchies" ;;
 		*) fail "identifiants SMTP exigés : $(printf '%s' "$out" | grep -E 'manquante|vide|définir' | head -n 2 | tr '\n' ' ')" ;; esac
@@ -551,7 +566,7 @@ if out=$(livrer); then
 	grep -q "^VITE_SUPABASE_URL=https://crm.exemple.tld$" "$L/build.env" \
 		&& grep -q "^VITE_SUPABASE_ANON_KEY=$(env_get "$L/injecte/env" ANON_KEY)$" "$L/build.env" \
 		&& grep -q "^VITE_SSO_ISSUER=https://oauth.exemple.tld/realms/lelabs$" "$L/build.env" \
-		&& grep -q "^VITE_SSO_CLIENT_ID=lelabs-crm$" "$L/build.env" \
+		&& grep -q "^VITE_SSO_CLIENT_ID=lelabs-crm-serveur$" "$L/build.env" \
 		&& ok "le build a reçu les variables publiques relues dans la cellule" || fail "variables du build : $(tr '\n' ' ' < "$L/build.env")"
 	grep -q 'JWT_SECRET\|SERVICE_ROLE_KEY' "$L/build.env" && fail "un secret a atteint le build" || ok "aucun secret dans le build"
 else
@@ -664,6 +679,10 @@ if [ -f "$REPO_ROOT/.env" ] && curl -sf -o /dev/null "$API_DEV/auth/v1/health" -
 		curl -s -o /dev/null -X DELETE "$API_DEV/rest/v1/workspace_members?workspace_id=eq.$id_ws" -H "apikey: $SR" -H "Authorization: Bearer $SR"
 		curl -s -o /dev/null -X DELETE "$API_DEV/rest/v1/workspaces?id=eq.$id_ws" -H "apikey: $SR" -H "Authorization: Bearer $SR"
 		curl -s -o /dev/null -X DELETE "$API_DEV/auth/v1/admin/users/$id_u" -H "apikey: $SR" -H "Authorization: Bearer $SR"
+		# `CRM-092` (décisions 583 et 587) : sans la clé `profiles.id → auth.users`, retirée par 0075, le
+		# profil ne suit plus le compte. La preuve retire le sien, faute de quoi chaque passage en
+		# laissait un, orphelin, dans la base de développement. L'amorçage passe au SSO en T4.
+		curl -s -o /dev/null -X DELETE "$API_DEV/rest/v1/profiles?id=eq.$id_u" -H "apikey: $SR" -H "Authorization: Bearer $SR"
 	else
 		fail "premier passage refusé : $(printf '%s' "$out" | tail -n 3 | tr '\n' ' ')"
 	fi

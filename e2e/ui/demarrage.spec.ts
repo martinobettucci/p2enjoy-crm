@@ -7,6 +7,8 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.17 (cette surface), §7 (paliers)
 // @verifies CLAUDE.md §10 (une règle se prouve sur la vraie base), §11 (rien hors de la session),
 //           §16 (vérification visuelle)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, sur la VRAIE base et avec le VRAI seed : aucune
 // étape n'est accomplie par une réponse substituée. Les cinq étapes sont accomplies parce que le
@@ -21,9 +23,10 @@
 // AUCUNE ÉCRITURE : le guide lit et renvoie. La base est donc rendue intacte sans aucune remise en
 // état — il n'y a rien à défaire.
 
-import { expect, test, type APIRequestContext, type Page } from './fixtures'
+import { connecterAvecLeLabs, expect, test, type APIRequestContext, type Page } from './fixtures'
 import { ERREUR_CONNEXION_REFUSEE, autoriserErreursConsole } from './fixtures'
-import { MOT_DE_PASSE_SEED, URL_API, enTetesService } from '../api/jetons'
+import { URL_API, enTetesService } from '../api/jetons'
+import { creerCompteJetable, supprimerCompte } from '../api/keycloak-dev'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-079'
@@ -41,8 +44,10 @@ const VIEWER = 'viewer@p2enjoy.test'
 const ESPACE_NEUF = {
 	id: '5eed0000-0000-4000-8000-0000000000f1',
 	slug: 'espace-neuf',
-	adresse: 'neuf@p2enjoy.test',
 } as const
+
+/** Le compte LeLabs jetable de l'espace neuf : son adresse et son `sub`. */
+type CompteNeuf = { readonly adresse: string; readonly sub: string }
 
 /** L'identifiant du workspace du seed socle, celui qui doit rester SEUL après le démontage. */
 const WORKSPACE_SEED = '5eed0000-0000-4000-8000-000000000001'
@@ -51,31 +56,22 @@ const WORKSPACE_SEED = '5eed0000-0000-4000-8000-000000000001'
 const CLE_MASQUE = 'p2enjoy.demarrage.masque'
 
 async function connecter(page: Page, email: string): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(email)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, email)
 }
 
 /**
- * Monte l'espace vide et son compte, et rend l'identifiant du compte pour le démontage.
+ * Monte l'espace vide et son compte, et rend le compte pour le démontage.
  *
- * Les deux lignes sont écrites avec la CLÉ DE SERVICE, qui contourne la RLS : aucun écran ne crée
- * de workspace (`docs/SPEC-seed.md` §8, INC-015), et le montage est donc une opération
- * d'exploitation, nommée comme telle plutôt que déguisée en parcours utilisateur (§8 ter.3).
- * Les cinq comptages que la preuve observe ensuite sont, eux, émis par l'application avec le
- * JETON RÉEL du compte, sous les politiques inchangées.
+ * Le workspace et l'ATTENTE de son administrateur sont écrits avec la CLÉ DE SERVICE, qui contourne
+ * la RLS : aucun écran ne crée de workspace (`docs/SPEC-seed.md` §8, INC-015), et le montage est donc
+ * une opération d'exploitation, nommée comme telle plutôt que déguisée en parcours utilisateur
+ * (§8 ter.3). Le compte naît dans le Keycloak de développement, par son API d'administration
+ * (`CRM-092`, docs/SPEC-session-sso.md §10) ; l'appartenance, elle, naît de la VRAIE connexion SSO,
+ * qui consomme l'attente (§6). Les cinq comptages que la preuve observe ensuite sont émis par
+ * l'application avec le JETON RÉEL du compte, sous les politiques inchangées.
  */
-async function monterEspaceNeuf(requete: APIRequestContext): Promise<string> {
-	const compte = await requete.post(`${URL_API}/auth/v1/admin/users`, {
-		headers: enTetesService(),
-		data: { email: ESPACE_NEUF.adresse, password: MOT_DE_PASSE_SEED, email_confirm: true },
-	})
-	expect(compte.status(), 'le compte de l’espace neuf doit être créé').toBe(200)
-	const idCompte = ((await compte.json()) as { id: string }).id
+async function monterEspaceNeuf(requete: APIRequestContext): Promise<CompteNeuf> {
+	const compte = await creerCompteJetable('neuf', 'Espace', 'Neuf')
 
 	const workspace = await requete.post(`${URL_API}/rest/v1/workspaces`, {
 		headers: enTetesService(),
@@ -90,31 +86,31 @@ async function monterEspaceNeuf(requete: APIRequestContext): Promise<string> {
 	})
 	expect(workspace.status(), 'le workspace vide doit être créé').toBe(201)
 
-	const appartenance = await requete.post(`${URL_API}/rest/v1/workspace_members`, {
+	const attente = await requete.post(`${URL_API}/rest/v1/workspace_invitations`, {
 		headers: enTetesService(),
-		data: [{ workspace_id: ESPACE_NEUF.id, user_id: idCompte, role: 'admin' }],
+		data: [{ workspace_id: ESPACE_NEUF.id, email: compte.adresse, role: 'admin' }],
 	})
-	expect(appartenance.status(), 'le compte doit être admin de son espace').toBe(201)
+	expect(attente.status(), 'le compte doit être attendu comme admin de son espace').toBe(201)
 
-	return idCompte
+	return compte
 }
 
 /**
  * Démonte l'espace neuf, et CONSTATE que la base est rendue à son état seedé.
  *
- * Supprimer le workspace **cascade** sur son appartenance — mesuré le 2026-08-16 —, et supprimer
- * le compte cascade sur son profil. Le dernier contrôle n'est pas décoratif : sans lui, une preuve
+ * Supprimer le workspace **cascade** sur son appartenance et ses attentes — mesuré le 2026-08-16 —,
+ * puis le profil né de la connexion, puis le compte jetable du realm de développement. Le dernier contrôle n'est pas décoratif : sans lui, une preuve
  * qui laisserait son espace derrière elle ferait échouer le contrôle n° 1 de
  * `scripts/verify-seed.sh` dans une autre suite, à un endroit où plus rien ne dirait pourquoi.
  */
-async function demonterEspaceNeuf(requete: APIRequestContext, idCompte: string): Promise<void> {
+async function demonterEspaceNeuf(requete: APIRequestContext, compte: CompteNeuf | null): Promise<void> {
 	await requete.delete(`${URL_API}/rest/v1/workspaces?id=eq.${ESPACE_NEUF.id}`, {
 		headers: enTetesService(),
 	})
-	if (idCompte !== '') {
-		await requete.delete(`${URL_API}/auth/v1/admin/users/${idCompte}`, {
-			headers: enTetesService(),
-		})
+	if (compte !== null) {
+		// Le profil est né du `sub` à la connexion : il part avec ses sessions serveur (§7.4).
+		await requete.delete(`${URL_API}/rest/v1/profiles?id=eq.${compte.sub}`, { headers: enTetesService() })
+		await supprimerCompte(compte.sub)
 	}
 
 	const restants = await requete.get(`${URL_API}/rest/v1/workspaces?select=id`, {
@@ -367,10 +363,10 @@ test.describe('CRM-079 — guide de démarrage', () => {
 		//
 		// AUCUNE RÉPONSE N'EST SUBSTITUÉE : les quatre étapes sont à faire parce que l'espace ne
 		// porte réellement rien, ce que le §8 exige.
-		let idCompte = ''
+		let compte: CompteNeuf | null = null
 		try {
-			idCompte = await monterEspaceNeuf(request)
-			await connecter(page, ESPACE_NEUF.adresse)
+			compte = await monterEspaceNeuf(request)
+			await connecter(page, compte.adresse)
 
 			// L'ACCUEIL, et non `/demarrage` : c'est là qu'arrive un compte qui vient de se
 			// connecter, et le §4.2 veut le guide tant qu'il reste une étape à faire.
@@ -412,7 +408,7 @@ test.describe('CRM-079 — guide de démarrage', () => {
 			await page.goto('/demarrage')
 			await expect(page.getByTestId('progression-demarrage')).toHaveText('1 étape(s) sur 5')
 		} finally {
-			await demonterEspaceNeuf(request, idCompte)
+			await demonterEspaceNeuf(request, compte)
 		}
 	})
 

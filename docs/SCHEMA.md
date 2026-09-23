@@ -96,6 +96,29 @@ L'anonyme et les autres membres lisent zéro ligne. La consommation n'est faite 
 `public.ouvrir_session_sso(p_sub, p_email, p_nom)`, `SECURITY DEFINER`, exécutable par la seule clé
 de service, qu'appelle l'échangeur de session après avoir vérifié le jeton LeLabs.
 
+### `sessions_sso` — `CRM-092`, migration `0076`
+Les **sessions serveur** du client confidentiel (`docs/SPEC-session-sso.md` §5.6, §7.4 ; décision
+586). Une ligne par navigateur connecté : la poignée qu'il porte en cookie `httpOnly` la désigne, et
+elle garde le jeton de rafraîchissement LeLabs que le navigateur ne voit jamais.
+
+| Colonne | Type | Contraintes |
+|---|---|---|
+| `id` | `uuid` | PK, défaut `gen_random_uuid()` |
+| `sub` | `uuid` | FK `profiles` `ON DELETE CASCADE` — retirer une personne ferme ses sessions ; indexée |
+| `poignee_empreinte` | `bytea` | **SHA-256** de la poignée, 32 octets, **unique** — jamais la poignée elle-même |
+| `rafraichissement` | `text` | jeton de rafraîchissement **chiffré** AES-GCM, forme `v1.<vecteur>.<chiffré>` ; clé dérivée de `JWT_SECRET` par HKDF |
+| `expire_le` | `timestamptz` | échéance d'inactivité que LeLabs rend avec le jeton |
+| `cree_le`, `renouvele_le` | `timestamptz` | défaut `now()` |
+
+**Contrat :** **personne ne la lit par l'API.** RLS activée **sans aucune politique**, tous privilèges
+retirés à `anon` et `authenticated`. Seules quatre fonctions `SECURITY DEFINER`, `search_path` vide,
+propriétaire `postgres`, exécutables par **`service_role` seul**, y touchent :
+`ouvrir_session_serveur` (applique `ouvrir_session_sso`, puis enregistre la session si la personne
+est admise), `lire_session_serveur` (rend le `sub` et le jeton chiffré d'une session non échue, et
+purge au passage celles échues depuis plus d'un jour), `renouveler_session_serveur` (rejoue
+l'admission ; admise, remplace jeton et échéance ; sinon supprime la session) et
+`fermer_session_serveur`. Une fuite de la table ne livre ni poignée utilisable, ni jeton en clair.
+
 ### `track_members`, `channel_members`
 Droits fins facultatifs. **Absence de ligne = accès hérité du rôle de workspace.** Une ligne
 restreint ou étend explicitement l'accès à un sous-arbre (voir `docs/SPEC-permissions-rls.md`).

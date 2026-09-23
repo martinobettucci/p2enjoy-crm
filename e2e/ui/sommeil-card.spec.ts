@@ -7,6 +7,8 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.3 quater (de quoi le geste a l'air), §5.11 (famille du fil),
 //           §7 (paliers), §8 (accessibilité)
 // @verifies CLAUDE.md §16 (vérification visuelle)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // AUCUNE RÉPONSE N'EST SUBSTITUÉE : ces scénarios se connectent réellement, ouvrent des affaires
 // **du seed** et appellent les deux véritables RPC de la migration 44. C'est précisément l'objet de
@@ -21,13 +23,13 @@
 // c'est ce que le §16.5 promet, et le scénario du fil le constate.
 
 import {
-	ERREUR_RESSOURCE_HTTP,
 	autoriserErreursConsole,
+	connecterAvecLeLabs,
+	ERREUR_RESSOURCE_HTTP,
 	expect,
 	test,
 	type Page,
 } from './fixtures'
-import { MOT_DE_PASSE_SEED } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-081'
@@ -46,13 +48,7 @@ const ECHUE = {
 }
 
 async function connecter(page: Page): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(ADMIN)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, ADMIN)
 }
 
 test.describe('mise en sommeil depuis la fiche (docs/SPEC-cards.md §16.11)', () => {

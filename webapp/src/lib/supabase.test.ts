@@ -1,5 +1,6 @@
-// @verifies CRM-009 (docs/BACKLOG.md) — session limitée à l'onglet et repli mémoire
+// @verifies CRM-009 (docs/BACKLOG.md) — stockage limité à l'onglet et repli mémoire
 // @verifies docs/SPEC-auth.md §9.2 ; docs/SPEC-webapp.md §6.2 ; CLAUDE.md §11
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §8.3 (jeton en mémoire), §8.4 (K6)
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -9,7 +10,7 @@ const { creerClientSupabase } = vi.hoisted(() => ({
 
 vi.mock('@supabase/supabase-js', () => ({ createClient: creerClientSupabase }))
 
-import { creerClient, creerStockageSession, type StockageSession } from './supabase'
+import { creerClient, creerPorteurJeton, creerStockageSession, type StockageSession } from './supabase'
 
 beforeEach(() => {
 	globalThis.sessionStorage.clear()
@@ -68,24 +69,27 @@ describe('stockage de session Supabase', () => {
 		expect(stockage.getItem('session-crm')).toBe('jeton')
 	})
 
-	it('consomme le retour GoTrue dans le même stockage limité à l’onglet', () => {
-		creerClient({ url: 'https://api.exemple.test', cleAnonyme: 'cle-anonyme-de-test' })
+})
 
-		expect(creerClientSupabase).toHaveBeenCalledWith(
-			'https://api.exemple.test',
-			'cle-anonyme-de-test',
-			{
-				auth: {
-					persistSession: true,
-					autoRefreshToken: true,
-					detectSessionInUrl: true,
-					storage: expect.objectContaining({
-						getItem: expect.any(Function),
-						setItem: expect.any(Function),
-						removeItem: expect.any(Function),
-					}),
-				},
-			},
-		)
+describe('client Supabase sans module auth (CRM-092)', () => {
+	it('présente le jeton interne tenu en mémoire, et rien d’autre', async () => {
+		const porteur = creerPorteurJeton()
+		creerClient({ url: 'https://api.exemple.test', cleAnonyme: 'cle-anonyme-de-test' }, porteur)
+
+		expect(creerClientSupabase).toHaveBeenCalledWith('https://api.exemple.test', 'cle-anonyme-de-test', {
+			accessToken: expect.any(Function),
+		})
+		const options = (creerClientSupabase.mock.calls[0] as unknown as [string, string, { accessToken: () => Promise<string | null> }])[2]
+		expect(await options.accessToken()).toBeNull()
+		porteur.poser('jeton.interne')
+		expect(await options.accessToken()).toBe('jeton.interne')
+		porteur.poser(null)
+		expect(await options.accessToken()).toBeNull()
+	})
+
+	it('n’écrit rien sur l’appareil en tenant le jeton', () => {
+		creerPorteurJeton().poser('jeton.interne')
+		expect(globalThis.sessionStorage.length).toBe(0)
+		expect(globalThis.localStorage.length).toBe(0)
 	})
 })

@@ -4,14 +4,17 @@
 //            (l'écran ne calcule aucun droit : la lectrice reçoit un refus TRADUIT),
 //            §14.8 (preuves exigées)
 // @verifies docs/DESIGN_SYSTEM.md §5.23 (le formulaire dans le flux du carnet)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // LE SEED EST RENDU INTACT (§14.8) : le contact créé par le scénario est SUPPRIMÉ par l'API à la
 // fin, avec un filet de sécurité en `afterAll`. `apply-seed.sh` échoue si le carnet ne compte pas
 // exactement trois contacts, et la suite ne doit pas être ce qui casse cette garde.
 
 import { expect, test, type Page } from '@playwright/test'
-import { CLE_ANONYME, MOT_DE_PASSE_SEED, URL_API, jetonDe } from '../api/jetons'
+import { CLE_ANONYME, URL_API, jetonDe } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
+import { connecterAvecLeLabs } from './fixtures'
 
 const UNITE = 'CRM-060'
 const ADMIN = 'admin@p2enjoy.test'
@@ -19,13 +22,7 @@ const LECTRICE = 'viewer@p2enjoy.test'
 const NOM_CREE = 'Contact de preuve 4e'
 
 async function connecter(page: Page, email = ADMIN): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(email)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, email)
 }
 
 /** Rend le seed intact : supprime le contact de preuve s'il existe encore. */

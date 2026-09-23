@@ -83,17 +83,18 @@ if $environment_ok; then
 else
 	fail "une variable nécessaire manque au runtime"
 fi
-# RÉVISÉ par `CRM-092` (décision 584). CRM-016 exigeait que `JWT_SECRET` n'atteigne pas le runtime ;
+# RÉVISÉ par `CRM-092` (décisions 584, 586 : le secret du client confidentiel s'y ajoute). CRM-016 exigeait que `JWT_SECRET` n'atteigne pas le runtime ;
 # l'échangeur de session doit pourtant signer le jeton interne que PostgREST, Realtime et Storage
 # acceptent. La propriété défendue devient : le CONTENEUR reçoit la clé, le service principal ne la
 # remet QU'AU worker `session`. La preuve de la répartition est unitaire (`environnement.test.ts`,
 # ci-dessous) ; ici, la présence au conteneur et l'emploi effectif de la répartition par `main`.
 if printf '%s\n' "$environment" | grep -q '^JWT_SECRET=' \
 	&& printf '%s\n' "$environment" | grep -q '^SSO_OIDC_ISSUER=' \
-	&& printf '%s\n' "$environment" | grep -q '^SSO_OIDC_CLIENT_ID='; then
-	ok "le conteneur reçoit JWT_SECRET et la configuration SSO de l'échangeur"
+	&& printf '%s\n' "$environment" | grep -q '^SSO_OIDC_CLIENT_ID=' \
+	&& printf '%s\n' "$environment" | grep -q '^SSO_OIDC_CLIENT_SECRET=.'; then
+	ok "le conteneur reçoit JWT_SECRET et la configuration SSO de l'échangeur, secret du client compris"
 else
-	fail "JWT_SECRET ou SSO_OIDC_* absents du conteneur : l'échangeur de session ne peut rien signer"
+	fail "JWT_SECRET ou SSO_OIDC_* absents du conteneur : l'échangeur de session ne peut ni échanger ni signer"
 fi
 if grep -q 'envVars: workerEnvironment(route.functionName)' supabase/functions/main/index.ts \
 	&& grep -q 'return environnementDe(functionName' supabase/functions/main/index.ts \

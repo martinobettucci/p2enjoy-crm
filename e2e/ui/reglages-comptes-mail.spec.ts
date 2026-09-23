@@ -3,6 +3,8 @@
 //           trois lectures), §21.4 (le formulaire et son sélecteur), §21.5 (le mot de passe vide
 //           conserve le secret), §21.7 (le refus est une phrase du produit), §21.8 (les états)
 // @verifies docs/DESIGN_SYSTEM.md §5.34 (cette surface), §7 (paliers) ; CLAUDE.md §16
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, comme un utilisateur réel : aucune fonction
 // interne n'est appelée, et l'écran est atteint depuis l'index des réglages, jamais par une
@@ -13,8 +15,9 @@
 // même que l'écran emprunte, et non par un `PATCH` direct que la base refuse de toute façon.
 
 import {
-	ERREUR_RESSOURCE_HTTP,
 	autoriserErreursConsole,
+	connecterAvecLeLabs,
+	ERREUR_RESSOURCE_HTTP,
 	expect,
 	test,
 	type Page,
@@ -31,13 +34,7 @@ const WORKSPACE = '5eed0000-0000-4000-8000-000000000001'
 const LABEL_SYSTEME = 'Boîte système du workspace'
 
 async function connecter(page: Page, email: string): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(email)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, email)
 }
 
 /**
@@ -81,6 +78,12 @@ test.describe('configuration des comptes entrants (docs/SPEC-mail-subsystem.md �
 
 		// L'entrée vit AVANT « État de la messagerie » (§21.2) : on configure une boîte avant d'en
 		// superviser la relève. L'ordre est une règle, il se vérifie.
+		// `allInnerTexts()` ne s'attend pas lui-même : il lit l'écran tel qu'il est. Depuis `CRM-092`, un
+		// chargement de page restaure la session par l'échangeur — un aller-retour réseau — avant de
+		// rendre la route ; lire aussitôt lisait la carte de restauration. L'attente porte sur le
+		// signal que voit l'utilisateur, l'entrée « État de la messagerie », jamais sur un délai
+		// (`CLAUDE.md` §18, `docs/SPEC-test-harness.md` §7.2).
+		await expect(page.getByRole('link', { name: /État de la messagerie/ })).toBeVisible()
 		const entrees = page.getByRole('link')
 		const libelles = await entrees.allInnerTexts()
 		const rangConfiguration = libelles.findIndex((libelle) =>

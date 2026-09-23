@@ -7,6 +7,8 @@
 //           vaut pour tous les dossiers), §16.17.3 (ligne « E2E d'interface »)
 // @verifies docs/DESIGN_SYSTEM.md §5.3 septies (de quoi tout cela a l'air), §7 (paliers),
 //           §5.8 (états) ; CLAUDE.md §16 (vérification visuelle)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // LE PARCOURS EST FAIT À LA SOURIS ET AU CLAVIER, comme un utilisateur réel : aucune fonction
 // interne n'est appelée, aucune réponse n'est substituée, et le sommeil est posé par le VRAI geste
@@ -16,8 +18,15 @@
 // (docs/SPEC-cards.md §16.14.3), donc un nettoyage inconditionnel par la clé de service en fin de
 // fichier suffit — et il s'exécute même si un scénario s'interrompt en cours de route.
 
-import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole, expect, test, type Page } from './fixtures'
-import { MOT_DE_PASSE_SEED, URL_API, enTetesService } from '../api/jetons'
+import {
+	autoriserErreursConsole,
+	connecterAvecLeLabs,
+	ERREUR_RESSOURCE_HTTP,
+	expect,
+	test,
+	type Page,
+} from './fixtures'
+import { URL_API, enTetesService } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-081'
@@ -38,13 +47,7 @@ const FIL_CLASSE = '<seed-inbox-classe@p2enjoy.test>'
 const FIL_NON_CLASSE = '<seed-inbox-non-classe@p2enjoy.test>'
 
 async function connecter(page: Page): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(ADMIN)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, ADMIN)
 }
 
 /** Ouvre le dossier « Non classés » et son unique message. */

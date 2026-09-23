@@ -6,6 +6,8 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.4 ter (de quoi le bloc a l'air), §7 (les quatre paliers)
 // @verifies docs/SPEC-seed.md §2.19 (le quatrième message, réellement reçu)
 // @verifies CLAUDE.md §16 (vérification visuelle)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, comme un utilisateur réel : aucune fonction
 // interne n'est appelée, aucune réponse n'est substituée. Le courrier vient du seed — le quatrième
@@ -24,8 +26,8 @@
 // des `created` est exact. L'écart est écrit ici et au §8.8.10 plutôt que masqué par une
 // affirmation de restauration qui serait fausse.
 
-import { expect, test, type Page } from './fixtures'
-import { MOT_DE_PASSE_SEED, URL_API, enTetesService } from '../api/jetons'
+import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
+import { URL_API, enTetesService } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-060'
@@ -40,13 +42,7 @@ const CARD_SUGGEREE = '5eed0000-0000-4000-8000-0000000000c2'
 const TITRE_SUGGEREE = 'Migration ERP Sogexia'
 
 async function connecter(page: Page): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(ADMIN)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, ADMIN)
 }
 
 /** Ouvre le message suggéré du seed, par le chemin qu'un utilisateur emprunte. */

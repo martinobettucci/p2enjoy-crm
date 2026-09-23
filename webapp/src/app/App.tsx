@@ -1,6 +1,8 @@
 // @spec CRM-007 (docs/BACKLOG.md) — racine applicative et routage
 // @spec CRM-009 (docs/BACKLOG.md) — route de connexion et restauration de session
 // @spec CRM-091 (docs/BACKLOG.md) — route publique de retour du SSO (docs/SPEC-auth.md §10.3)
+// @spec CRM-092 (docs/BACKLOG.md) — une session qui prend fin ramène à `/connexion`, qui dit pourquoi
+//       (docs/SPEC-session-sso.md §8.4)
 // @spec CRM-075 (docs/BACKLOG.md) — route de l'administration de l'arborescence
 // @spec CRM-076 (docs/BACKLOG.md) — route de l'éditeur de workflows
 // @spec CRM-059 (docs/BACKLOG.md) — route de l'écran d'état de la messagerie
@@ -14,8 +16,8 @@
 // pas de toucher à ce fichier, et le titre affiché par l'en-tête ne peut pas diverger de la
 // route rendue, puisqu'ils viennent de la même description.
 
-import { lazy, Suspense } from 'react'
-import { BrowserRouter, Route, Routes } from 'react-router'
+import { lazy, Suspense, useEffect } from 'react'
+import { BrowserRouter, Route, Routes, useLocation, useNavigate } from 'react-router'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t } from '../i18n'
 import { AppShell } from './AppShell'
@@ -192,8 +194,31 @@ export function App() {
 	)
 }
 
+/**
+ * Une session qui prend fin sans geste de la personne — refus au rafraîchissement, session LeLabs
+ * échue, panne prolongée — mène à `/connexion`, qui dit pourquoi, en retenant l'adresse quittée
+ * (docs/SPEC-session-sso.md §8.4). La fin est acquittée aussitôt : elle n'est rendue qu'une fois.
+ */
+export function useRenvoiFinSession() {
+	const { fin, acquitterFin } = useAuthentification()
+	const navigate = useNavigate()
+	const location = useLocation()
+	useEffect(() => {
+		if (fin === null) return
+		const publique = location.pathname === '/connexion' || location.pathname === CHEMIN_RETOUR_SSO
+		const retour = publique ? undefined : `${location.pathname}${location.search}`
+		navigate('/connexion', {
+			replace: true,
+			state: { erreurSso: fin.nature, ...(fin.adresse === undefined ? {} : { adresse: fin.adresse }), retour },
+		})
+		acquitterFin()
+	}, [acquitterFin, fin, location.pathname, location.search, navigate])
+}
+
 function RoutesApplication() {
 	const { etat } = useAuthentification()
+	const location = useLocation()
+	useRenvoiFinSession()
 	if (etat.statut === 'chargement') {
 		return <ChargementAuthentification />
 	}
@@ -201,7 +226,9 @@ function RoutesApplication() {
 	return (
 		<Suspense fallback={<ChargementRoute />}>
 			<Routes>
-				<Route path="/connexion" element={<EcranConnexion />} />
+				{/* La clé suit l'état de l'adresse : une fin de session rendue pendant que l'écran est
+				    déjà monté le remonte, et l'écran lit son issue dans ce nouvel état. */}
+				<Route path="/connexion" element={<EcranConnexion key={location.key} />} />
 				{/* Retour du SSO (`CRM-091`, docs/SPEC-auth.md §10.3) : publique, hors coquille,
 				    comme `/connexion`. Son adresse est celle déclarée au fournisseur. */}
 				<Route path={CHEMIN_RETOUR_SSO} element={<RetourSso />} />

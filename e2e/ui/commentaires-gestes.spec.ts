@@ -4,6 +4,8 @@
 // @verifies docs/SPEC-cards.md §13.4 (la pierre tombale), §13.5 (`edited_at` par trigger),
 //           §13.8 lignes *i*, *k* et *l* (contrat d'API mesuré)
 // @verifies docs/INCONSISTENCY_REPORT.md INC-021 (close : c'est elle qui bloquait ces boutons)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // CE QUE CE FICHIER PROUVE, ET POURQUOI IL N'EXISTAIT PAS.
 //
@@ -26,15 +28,8 @@
 // outre ce qu'une exécution INTERROMPUE aurait laissé, dont aucun `finally` ne s'est chargé —
 // INC-209, et le motif complet est écrit à sa place plus bas.
 
-import { expect, test, type Page } from './fixtures'
-import {
-	CLE_SERVICE,
-	MOT_DE_PASSE_SEED,
-	URL_API,
-	enTetesAuthentifies,
-	enTetesService,
-	jetonDe,
-} from '../api/jetons'
+import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
+import { CLE_SERVICE, URL_API, enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
 import { capturer } from './captures'
 
 const CARD = '5eed0000-0000-4000-8000-0000000000c2'
@@ -62,13 +57,7 @@ type LigneCommentaire = {
 }
 
 async function connecter(page: Page, adresse = ADMIN): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(adresse)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, adresse)
 }
 
 /** Publie un commentaire par l'écran, et rend son texte — unique, pour être retrouvable. */

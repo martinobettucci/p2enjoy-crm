@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # @spec CRM-002 (docs/BACKLOG.md) — socle commun des scripts de lancement et d'environnement
 # @spec CRM-015 (docs/BACKLOG.md) — validation du CA facultatif avant Docker
+# @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §10 — secret du client confidentiel du
+#       realm de développement, tiré à l'amorçage et complété sur un `.env` antérieur (décision 586)
 # @spec docs/JOURNAL.md décision 16 (amorçage automatique des secrets, gardes de profil)
 # @spec docs/JOURNAL.md décision 98 (identifiants Docker), décision 99 (ports déjà pris),
 #       décision 101 (ce que la pile crée sur l'hôte appartient à l'hôte), décision 257
@@ -205,6 +207,9 @@ env_bootstrap_dev() {
 	# Administrateur de l'instance Keycloak de développement (CRM-091). Il ne sert qu'aux preuves
 	# qui règlent le realm ; les comptes du realm, eux, ont un mot de passe stable et publié.
 	env_set "$ENV_FILE" SSO_DEV_ADMIN_PASSWORD "$(gen_hex 20)"
+	# Secret du client confidentiel du realm local (`CRM-092`, décision 586) : même nom qu'en
+	# production, jamais une valeur versée.
+	env_set "$ENV_FILE" SSO_OIDC_CLIENT_SECRET "$(gen_hex 32)"
 
 	local wanted hard
 	wanted=$(env_get "$ENV_FILE" STACK_RLIMIT_NOFILE)
@@ -237,6 +242,7 @@ MAIL_SYNC_SMTP_TIMEOUT_SECONDS:gabarit
 MAIL_DEV_CORRESPONDENT_ADDRESS:gabarit
 SSO_OIDC_ISSUER:gabarit
 SSO_OIDC_CLIENT_ID:gabarit
+SSO_OIDC_CLIENT_SECRET:alea:32
 SSO_DEV_PORT:gabarit
 SSO_DEV_ADMIN_PASSWORD:alea:20
 SPARK_HTTP_PORT:gabarit

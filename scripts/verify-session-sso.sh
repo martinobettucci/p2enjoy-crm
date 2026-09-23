@@ -2,7 +2,8 @@
 # @verifies CRM-092 (docs/BACKLOG.md) — le SSO, seule source d'identité : harnais de l'unité
 # @verifies docs/SPEC-session-sso.md §7.1 (fonctions auth.*), §7.2 (modèle), §10 (realm préchargé),
 #           §13 (preuves), §14 (T1, T2)
-# @verifies docs/JOURNAL.md décisions 580 (K11, K12) et 581 (migration élevée, harnais de l'unité)
+# @verifies docs/JOURNAL.md décisions 580 (K11, K12), 581 (migration élevée, harnais de l'unité),
+#           586 (client serveur, T3 bis), 587 (aucune session : `204`)
 # @verifies CLAUDE.md §15 (tests non complaisants), §18 (un défaut se reproduit avant sa correction)
 #
 # Harnais de `CRM-092`, qui grandit à chaque tranche (décision 581). Tranche T1 :
@@ -29,10 +30,21 @@
 #
 #   8. ses tests unitaires, à leur nombre exact ;
 #   9. ses preuves d'API contre la pile réelle, à leur nombre exact ;
-#  10. NON-COMPLAISANCE PAR MUTATION : cinq défauts introduits un à un dans le code — algorithme
+#  10. NON-COMPLAISANCE PAR MUTATION : des défauts introduits un à un dans le code — algorithme
 #      symétrique accepté, `azp` ignoré, `verified` non exigé, durée non bornée par le jeton LeLabs,
 #      `JWT_SECRET` remis à une autre fonction — doivent chacun rougir les tests unitaires. Le fichier
 #      muté est restauré depuis sa copie par le `trap`, quoi qu'il arrive.
+#
+# Tranche T3 bis — le client CONFIDENTIEL (décision 586) :
+#
+#   2–4. la migration 0076 des sessions serveur rejouée deux fois, sa suite pgTAP `0070` verte à son
+#      nombre exact, et deux dégradations de plus — table lisible par `authenticated`, lecture d'une
+#      session exécutable par `authenticated` — qui doivent la rendre rouge ;
+#   6. le realm refuse l'échange d'un code SANS le secret du client, et l'octroi direct même AVEC lui ;
+#   8–9. les tests unitaires et les preuves d'API révisés : trois gestes, poignée en cookie `httpOnly`,
+#      jeton de rafraîchissement chiffré côté serveur, admission rejouée à la prolongation ;
+#  10. trois mutations de plus : le secret omis de l'échange, `HttpOnly` retiré du cookie, le jeton de
+#      rafraîchissement gardé en clair.
 
 set -euo pipefail
 
@@ -47,18 +59,23 @@ source scripts/lib/env.sh
 source scripts/lib/sso.sh
 SSO_OIDC_ISSUER=$(env_get "$ENV_FILE" SSO_OIDC_ISSUER)
 SSO_OIDC_CLIENT_ID=$(env_get "$ENV_FILE" SSO_OIDC_CLIENT_ID)
+SSO_OIDC_CLIENT_SECRET=$(env_get "$ENV_FILE" SSO_OIDC_CLIENT_SECRET)
 SITE_URL=$(env_get "$ENV_FILE" SITE_URL)
 SSO_DEV_ADMIN_PASSWORD=$(env_get "$ENV_FILE" SSO_DEV_ADMIN_PASSWORD)
 DOMAINE=$(env_get "$ENV_FILE" MAIL_DEV_PERSONAL_DOMAIN)
-export SSO_OIDC_ISSUER SSO_OIDC_CLIENT_ID SITE_URL
+export SSO_OIDC_ISSUER SSO_OIDC_CLIENT_ID SSO_OIDC_CLIENT_SECRET SITE_URL
 KEYCLOAK_BASE=${SSO_OIDC_ISSUER%/realms/lelabs}
 
 DB_CONTAINER=p2enjoy-db
 IMAGE_DB=$(sed -n 's/^[[:space:]]*image: \(supabase\/postgres:[^[:space:]]*\)$/\1/p' docker-compose.yml | head -n 1)
 MIGRATION_CLAIMS=supabase/migrations/0074_revendications_du_jeton.sql
 MIGRATION_MODELE=supabase/migrations/0075_identite_sso.sql
+MIGRATION_SESSIONS=supabase/migrations/0076_sessions_serveur.sql
 TEST_SQL=supabase/tests/0069_identite_sso.test.sql
+TEST_SQL_SESSIONS=supabase/tests/0070_sessions_serveur.test.sql
 ASSERTIONS_T1=58
+ASSERTIONS_T3BIS=40
+ASSERTIONS_UNITE=$((ASSERTIONS_T1 + ASSERTIONS_T3BIS))
 BASE_NEUVE=verify-session-sso-base-neuve
 SUB_PREUVE=0c920000-0000-4000-8000-0000000000bb
 
@@ -75,13 +92,14 @@ psql_admin() { docker exec -i "$DB_CONTAINER" psql -U supabase_admin -d postgres
 
 appliquer_migrations_dev() {
 	psql_admin --single-transaction -f - < "$MIGRATION_CLAIMS" >/dev/null 2>&1 \
-		&& psql_dev --single-transaction -f - < "$MIGRATION_MODELE" >/dev/null 2>&1
+		&& psql_dev --single-transaction -f - < "$MIGRATION_MODELE" >/dev/null 2>&1 \
+		&& psql_dev --single-transaction -f - < "$MIGRATION_SESSIONS" >/dev/null 2>&1
 }
 
 role_a_rendre=false
 fichier_mute=''
-UNITES_SESSION=75
-SCENARIOS_SESSION=14
+UNITES_SESSION=120
+SCENARIOS_SESSION=21
 
 cleanup() {
 	local status=$?
@@ -136,12 +154,12 @@ effacer_actions_requises() {
 }
 
 suite_verte() {
-	scripts/run-sql-tests.sh "$TEST_SQL" > "$WORK/tap.log" 2>&1 \
-		&& grep -q "1 fichiers, $ASSERTIONS_T1 assertions, aucune anomalie" "$WORK/tap.log"
+	scripts/run-sql-tests.sh "$TEST_SQL" "$TEST_SQL_SESSIONS" > "$WORK/tap.log" 2>&1 \
+		&& grep -q "2 fichiers, $ASSERTIONS_UNITE assertions, aucune anomalie" "$WORK/tap.log"
 }
 
 suite_rouge() {
-	if scripts/run-sql-tests.sh "$TEST_SQL" > "$WORK/tap-rouge.log" 2>&1; then
+	if scripts/run-sql-tests.sh "$TEST_SQL" "$TEST_SQL_SESSIONS" > "$WORK/tap-rouge.log" 2>&1; then
 		return 1
 	fi
 	grep -Eq 'ECHEC|not ok|psql a échoué' "$WORK/tap-rouge.log"
@@ -226,7 +244,7 @@ docker rm -f "$BASE_NEUVE" >/dev/null 2>&1 || true
 # 2. Base de développement — rejeu convergent sous le rôle de chaque migration
 # =================================================================================================
 echo
-echo "2. Base de développement : rejeu des migrations 0074 et 0075"
+echo "2. Base de développement : rejeu des migrations 0074, 0075 et 0076"
 
 for passage in premier second; do
 	if psql_admin --single-transaction -f - < "$MIGRATION_CLAIMS" >"$WORK/dev-claims-$passage.log" 2>&1; then
@@ -238,6 +256,11 @@ for passage in premier second; do
 		ok "0075 rejouée sous postgres ($passage passage)"
 	else
 		fail "0075 refusée ($passage passage) : $(tail -n 2 "$WORK/dev-modele-$passage.log")"
+	fi
+	if psql_dev --single-transaction -f - < "$MIGRATION_SESSIONS" >"$WORK/dev-sessions-$passage.log" 2>&1; then
+		ok "0076 rejouée sous postgres ($passage passage)"
+	else
+		fail "0076 refusée ($passage passage) : $(tail -n 2 "$WORK/dev-sessions-$passage.log")"
 	fi
 done
 
@@ -253,12 +276,12 @@ fi
 # 3. Suite pgTAP de l'unité
 # =================================================================================================
 echo
-echo "3. pgTAP : $TEST_SQL"
+echo "3. pgTAP : $TEST_SQL et $TEST_SQL_SESSIONS"
 
 if suite_verte; then
-	ok "suite verte, $ASSERTIONS_T1 assertions"
+	ok "deux suites vertes, $ASSERTIONS_T1 + $ASSERTIONS_T3BIS = $ASSERTIONS_UNITE assertions"
 else
-	fail "suite non verte ou nombre d'assertions différent de $ASSERTIONS_T1 : $(tail -n 3 "$WORK/tap.log")"
+	fail "suites non vertes ou nombre d'assertions différent de $ASSERTIONS_UNITE : $(tail -n 3 "$WORK/tap.log")"
 fi
 
 # =================================================================================================
@@ -300,6 +323,13 @@ degrader "ouverture de session exécutable par authenticated" postgres \
 degrader "profiles.id rattaché de nouveau à auth.users" postgres \
 	"alter table public.profiles add constraint profiles_id_fkey
 	 foreign key (id) references auth.users (id) on delete cascade not valid;"
+
+# T3 bis : la table des sessions et ses fonctions ne s'ouvrent à personne d'autre que la clé de service.
+degrader "table des sessions serveur lisible par authenticated" postgres \
+	"grant select on public.sessions_sso to authenticated;"
+
+degrader "lecture d'une session serveur exécutable par authenticated" postgres \
+	"grant execute on function public.lire_session_serveur(bytea) to authenticated;"
 
 if suite_verte; then
 	ok "après restauration, la suite est de nouveau verte"
@@ -375,13 +405,31 @@ case $sans_pkce in
 	*) fail "une demande sans PKCE n'est pas refusée comme par le realm réel : $sans_pkce" ;;
 esac
 
+# Avec le secret : le client est bien authentifié, et c'est l'octroi lui-même qui est refusé.
 direct=$(curl -s -o "$WORK/direct.json" -w '%{http_code}' "$SSO_OIDC_ISSUER/protocol/openid-connect/token" \
 	--data-urlencode grant_type=password --data-urlencode "client_id=$SSO_OIDC_CLIENT_ID" \
+	--data-urlencode "client_secret=$SSO_OIDC_CLIENT_SECRET" \
 	--data-urlencode "username=admin@$DOMAINE" --data-urlencode "password=$SSO_MOT_DE_PASSE_DEFAUT")
-if [ "$direct" != 200 ] && [ "$(jq -r .error "$WORK/direct.json")" = unauthorized_client ]; then
-	ok "l'octroi direct par mot de passe est refusé ($direct unauthorized_client)"
+if [ "$direct" != 200 ] && [ "$(jq -r .error "$WORK/direct.json")" = unauthorized_client ] \
+	&& jq -r .error_description "$WORK/direct.json" | grep -qi 'direct access grants'; then
+	ok "l'octroi direct par mot de passe est refusé au client authentifié ($direct unauthorized_client)"
 else
 	fail "l'octroi direct par mot de passe n'est pas refusé : $direct $(head -c 120 "$WORK/direct.json")"
+fi
+
+# Le client du CRM est confidentiel (décision 586) : un code n'est échangé qu'avec son secret.
+if obtenu=$(sso_code_pkce "admin@$DOMAINE" 2>"$WORK/code.err"); then
+	read -r code verificateur retour <<<"$obtenu"
+	sans_secret=$(curl -s -o "$WORK/sans-secret.json" -w '%{http_code}' "$SSO_OIDC_ISSUER/protocol/openid-connect/token" \
+		--data-urlencode grant_type=authorization_code --data-urlencode "client_id=$SSO_OIDC_CLIENT_ID" \
+		--data-urlencode "code=$code" --data-urlencode "redirect_uri=$retour" --data-urlencode "code_verifier=$verificateur")
+	if [ "$sans_secret" = 401 ] && [ "$(jq -r .error "$WORK/sans-secret.json")" = unauthorized_client ]; then
+		ok "un code présenté sans le secret du client n'est pas échangé ($sans_secret unauthorized_client) : le client est confidentiel"
+	else
+		fail "un code est échangé sans le secret du client : $sans_secret $(head -c 120 "$WORK/sans-secret.json")"
+	fi
+else
+	fail "aucun code obtenu pour admin@ : $(cat "$WORK/code.err")"
 fi
 
 if sso_connexion_pkce "admin@$DOMAINE" SsoDev2026Local >/dev/null 2>&1; then
@@ -437,7 +485,7 @@ echo "9. Preuves d'API : e2e/api/session.spec.ts"
 if E2E_PROJETS=api npx playwright test --config e2e/playwright.config.ts --project=api \
 	e2e/api/session.spec.ts --workers=1 >"$WORK/session-api.log" 2>&1 \
 	&& grep -qE "$SCENARIOS_SESSION passed" "$WORK/session-api.log"; then
-	ok "$SCENARIOS_SESSION scénarios verts : comptes du seed, attentes, refus, rattachement, Realtime, Storage, rotation"
+	ok "$SCENARIOS_SESSION scénarios verts : trois gestes, cookie, sessions chiffrées, attentes, refus, rattachement, Realtime, Storage, rotation"
 else
 	fail "preuves d'API en échec ou compte différent de $SCENARIOS_SESSION : $(grep -E 'passed|failed' "$WORK/session-api.log" | tail -n 2 | tr '\n' ' ')"
 fi
@@ -472,21 +520,30 @@ PY
 	fichier_mute=''
 }
 
-muter "un algorithme symétrique ou « none » accepté" supabase/functions/session/handler.ts \
+muter "un algorithme symétrique ou « none » accepté" supabase/functions/session/verification.ts \
 	"if (!algorithmeAccepte(alg)) throw new Refus('jeton_refuse')" \
 	"if (alg === undefined) throw new Refus('jeton_refuse')" ../supabase/functions/session
-muter "azp ignoré : le jeton d'une autre application accepté" supabase/functions/session/handler.ts \
-	"if (c.azp !== configuration.clientId) throw new Refus('jeton_refuse')" \
+muter "azp ignoré : le jeton d'une autre application accepté" supabase/functions/session/verification.ts \
+	"if (r.azp !== c.clientId) throw new Refus('jeton_refuse')" \
 	"" ../supabase/functions/session
-muter "verified non exigé" supabase/functions/session/handler.ts \
+muter "verified non exigé" supabase/functions/session/verification.ts \
 	"if (!Array.isArray(roles) || !roles.includes(ROLE_REQUIS)) throw new Refus('attente_verification', adresse)" \
 	"" ../supabase/functions/session
 muter "jeton interne non borné par l'échéance du jeton LeLabs" supabase/functions/session/handler.ts \
-	"Math.min(c.exp, maintenant + DUREE_MAX_JETON_INTERNE)" \
+	"Math.min(identite.exp, maintenant + DUREE_MAX_JETON_INTERNE)" \
 	"maintenant + DUREE_MAX_JETON_INTERNE" ../supabase/functions/session
 muter "JWT_SECRET remis à la fonction d'exemple" supabase/functions/main/environnement.ts \
-	"session: ['JWT_SECRET', 'SSO_OIDC_ISSUER', 'SSO_OIDC_CLIENT_ID']," \
-	"session: ['JWT_SECRET', 'SSO_OIDC_ISSUER', 'SSO_OIDC_CLIENT_ID'], example: ['JWT_SECRET']," ../supabase/functions/main
+	"session: ['JWT_SECRET', 'SSO_OIDC_ISSUER', 'SSO_OIDC_CLIENT_ID', 'SSO_OIDC_CLIENT_SECRET']," \
+	"session: ['JWT_SECRET', 'SSO_OIDC_ISSUER', 'SSO_OIDC_CLIENT_ID', 'SSO_OIDC_CLIENT_SECRET'], example: ['JWT_SECRET']," ../supabase/functions/main
+muter "le secret du client omis de l'échange du code" supabase/functions/session/handler.ts \
+	$'\t\t\tclient_secret: c.clientSecret,\n' \
+	"" ../supabase/functions/session
+muter "HttpOnly retiré du cookie de la poignée" supabase/functions/session/cookie.ts \
+	"; HttpOnly; SameSite=Strict" \
+	"; SameSite=Strict" ../supabase/functions/session
+muter "le jeton de rafraîchissement gardé en clair à l'ouverture" supabase/functions/session/handler.ts \
+	$'p_empreinte: await empreinteDe(poignee),\n\t\t\t\tp_rafraichissement: await chiffrer(jetons.rafraichissement, cle),' \
+	$'p_empreinte: await empreinteDe(poignee),\n\t\t\t\tp_rafraichissement: jetons.rafraichissement,' ../supabase/functions/session
 
 if unites_session && grep -qE "Tests +$UNITES_SESSION passed" "$WORK/unites.log"; then
 	ok "après restauration, les tests unitaires sont de nouveau verts"

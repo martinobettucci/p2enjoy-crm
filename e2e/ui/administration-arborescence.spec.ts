@@ -3,6 +3,8 @@
 //           archiver), §7 (les channels), §3 (adresse et composition)
 // @verifies docs/DESIGN_SYSTEM.md §5.13 (cette surface), §7 (paliers), §8 (accessibilité)
 // @verifies CLAUDE.md §16 (vérification visuelle), §22 (accessibilité clavier)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // LES CINQ GESTES — créer, renommer, réordonner, archiver, désarchiver — SONT PROUVÉS DEUX FOIS,
 // pour un track puis pour un channel : une fois à la souris, dans le geste le plus naturel qu'un
@@ -34,9 +36,9 @@
 // fichier ne l'exerce comme un geste d'utilisateur. C'est un geste d'exploitation de la preuve sur
 // ses PROPRES lignes, jamais sur une ligne seedée — les slugs sont préfixés pour cela.
 
-import { expect, test, type Page } from './fixtures'
+import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import type { Locator } from '@playwright/test'
-import { MOT_DE_PASSE_SEED, URL_API, enTetesService } from '../api/jetons'
+import { URL_API, enTetesService } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-075'
@@ -51,13 +53,7 @@ const CHEMIN_TRACKS = `${URL_API}/rest/v1/tracks`
 const CHEMIN_CHANNELS = `${URL_API}/rest/v1/channels`
 
 async function connecter(page: Page, email = ADMIN): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(email)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, email)
 }
 
 /**

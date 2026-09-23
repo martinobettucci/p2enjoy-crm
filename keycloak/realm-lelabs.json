@@ -30,10 +30,12 @@
   },
   "clients": [
     {
-      "clientId": "lelabs-crm",
+      "clientId": "${SSO_OIDC_CLIENT_ID}",
       "name": "P2Enjoy CRM",
       "enabled": true,
-      "publicClient": true,
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${SSO_OIDC_CLIENT_SECRET}",
       "standardFlowEnabled": true,
       "implicitFlowEnabled": false,
       "directAccessGrantsEnabled": false,
@@ -42,10 +44,7 @@
         "${SSO_DEV_REDIRECT_URI}",
         "http://127.0.0.1:4173/auth/retour"
       ],
-      "webOrigins": [
-        "${SSO_DEV_WEB_ORIGIN}",
-        "http://127.0.0.1:4173"
-      ],
+      "webOrigins": [],
       "attributes": {
         "pkce.code.challenge.method": "S256"
       }

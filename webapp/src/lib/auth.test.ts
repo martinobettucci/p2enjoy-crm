@@ -1,26 +1,11 @@
-// @verifies CRM-009 (docs/BACKLOG.md) — classification assainie et retour interne après connexion
-// @verifies docs/SPEC-auth.md §9.1 (adresse de retour), §9.3 (erreurs génériques)
-// @verifies docs/SPEC-permissions-rls.md §7 (un refus ne divulgue aucune existence)
+// @verifies CRM-009 (docs/BACKLOG.md) — retour interne après connexion
+// @verifies docs/SPEC-auth.md §9.1 (adresse de retour)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §2 — la classification des refus de
+//           GoTrue part avec le formulaire à mot de passe ; `lib/session.test.ts` prouve celle de
+//           l'échangeur
 
 import { describe, expect, it } from 'vitest'
-import { cheminRetour, classerEchecConnexion } from './auth'
-
-describe('classification des échecs de connexion', () => {
-	it('réunit un mauvais mot de passe et une adresse inconnue sous le même état', () => {
-		expect(classerEchecConnexion({ status: 400, code: 'invalid_credentials' })).toBe('identifiants')
-		expect(classerEchecConnexion({ status: 400, code: 'user_not_found' })).toBe('identifiants')
-	})
-
-	it('distingue une panne du serveur ou du réseau', () => {
-		expect(classerEchecConnexion({ status: 503 })).toBe('reseau')
-		expect(classerEchecConnexion({ status: 0 })).toBe('reseau')
-		expect(classerEchecConnexion({ message: 'Failed to fetch' })).toBe('reseau')
-	})
-
-	it('nomme séparément une configuration cliente absente', () => {
-		expect(classerEchecConnexion({ code: 'configuration_missing' })).toBe('configuration')
-	})
-})
+import { cheminRetour } from './auth'
 
 describe('adresse de retour', () => {
 	it('conserve une adresse interne, paramètres compris', () => {

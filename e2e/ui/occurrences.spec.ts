@@ -7,6 +7,8 @@
 //           visibles, formulaires et confirmation dans le flux du document), §7 (paliers),
 //           §8 (accessibilité)
 // @verifies CLAUDE.md §16 (vérification visuelle), §22 (accessibilité clavier)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // CE QUE CE FICHIER PROUVE, ET QUE RIEN D'AUTRE NE PROUVE. `occurrences.spec.ts` du projet `api`
 // mesure le contrat de la base ; `PanneauOccurrences.test.tsx` mesure le montage sur un client
@@ -24,14 +26,15 @@
 // écrites : elles sont le contrat que `CRM-085` et `CRM-086` mesurent.
 
 import {
-	ERREUR_RESSOURCE_HTTP,
 	autoriserErreursConsole,
+	connecterAvecLeLabs,
+	ERREUR_RESSOURCE_HTTP,
 	expect,
 	test,
 	type Page,
 } from './fixtures'
 import type { Locator } from '@playwright/test'
-import { MOT_DE_PASSE_SEED, URL_API, enTetesService } from '../api/jetons'
+import { URL_API, enTetesService } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-084'
@@ -47,13 +50,7 @@ const NOM_ESSAI = 'E2E Occurrences — budget récurrent'
 const CHEMIN_BUDGETS = `${URL_API}/rest/v1/budgets`
 
 async function connecter(page: Page, email = ADMIN): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(email)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, email)
 }
 
 /** Ouvre l'administration de l'arborescence et déplie le track porteur des budgets. */

@@ -550,7 +550,10 @@ PORT_RAPPORT=9323
 # **69 depuis `CRM-092` tranche T1, 2026-09-23** : `supabase/tests/0069_identite_sso.test.sql` est le
 # fichier ajouté, et il est le seul. 68 + 1 = 69, valeur COMPTÉE — « 69 fichiers ». Garde-fou RÉVISÉ,
 # jamais retiré (décision 51).
-FICHIERS_SQL_ATTENDUS=69
+# **70 depuis `CRM-092` tranche T3 bis, 2026-09-24** : `supabase/tests/0070_sessions_serveur.test.sql`
+# est le fichier ajouté, et il est le seul. 69 + 1 = 70, valeur COMPTÉE — « 70 fichiers ». Garde-fou
+# RÉVISÉ, jamais retiré (décision 51).
+FICHIERS_SQL_ATTENDUS=70
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -579,7 +582,11 @@ FICHIERS_SQL_ATTENDUS=69
 # nommé des trois politiques de `workspace_invitations` (**1**) — 3083 + 58 + 1 = 3142 —, et
 # `npm run test:sql` en COMPTE exactement **3142**. Trois assertions de `0001` et une de `0023`, qui
 # prouvaient la clé vers `auth.users`, sont RÉVISÉES sans changer leur nombre (décision 51).
-ASSERTIONS_ATTENDUES=3142
+# **3182 le 2026-09-24, et l'écart est ENTIÈREMENT le mien** : `CRM-092` tranche T3 bis ouvre
+# `0070_sessions_serveur.test.sql` (**40** assertions : table sans politique ni privilège, empreinte
+# unique, cascade, quatre fonctions réservées à `service_role`, admission à l'ouverture et au
+# renouvellement) — 3142 + 40 = 3182 —, et `npm run test:sql` en COMPTE exactement **3182**.
+ASSERTIONS_ATTENDUES=3182
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -875,7 +882,14 @@ ASSERTIONS_ATTENDUES=3142
 # attentes, les jetons refusés, la méthode, le rattachement d'une attente puis la fermeture d'accès,
 # la rotation des clés. 1067 + 14 = 1081, valeur COMPTÉE — « Total: 1081 tests in 68 files ».
 # Garde-fou RÉVISÉ, jamais retiré (décision 51).
-SCENARIOS_API=1081
+# **1079 depuis `CRM-092` tranches T3 bis et T5, 2026-09-24.** `e2e/api/session.spec.ts` est RÉVISÉ pour
+# le client confidentiel (décision 586) : 14 scénarios deviennent **21** — trois gestes, cookie,
+# sessions chiffrées, code étranger, code rejoué, jetons ignorés, session LeLabs close, admission
+# rejouée à la prolongation. `e2e/api/sso.spec.ts` (**9**) est RETIRÉ AVEC SON OBJET, l'échange
+# d'`id_token` par GoTrue, que la webapp n'emploie plus (décision 587) ; sa mesure M2 — le realm refuse
+# une autorisation sans PKCE — est reprise dans `session.spec.ts`. 1081 − 14 + 21 − 9 = 1079, valeur
+# COMPTÉE — « Total: 1079 tests in 67 files ».
+SCENARIOS_API=1079
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -1235,7 +1249,15 @@ SCENARIOS_API=1081
 # `e2e/ui/sso.spec.ts` : le parcours par la vraie page de connexion de Keycloak avec retour à
 # l'adresse demandée, le compte du realm sans compte CRM, l'annulation chez le fournisseur, et
 # l'action aux quatre paliers. 745 + 4 = 749, valeur COMPTÉE — « Total: 749 tests in 59 files ».
-SCENARIOS_UI=749
+# **RÉVISÉ À 755 PAR `CRM-092` tranche T5, 2026-09-24.** `e2e/ui/connexion.spec.ts`, fichier NEUF, porte
+# **13** scénarios : les trois rôles par la vraie page LeLabs, rechargement et nouvel onglet, le
+# rafraîchissement franchi par l'horloge, la déconnexion sans révocation, la session close chez
+# LeLabs, les trois attentes, l'annulation, la carte aux quatre paliers et le retour. Sont RETIRÉS
+# AVEC LEUR OBJET (décision 587) : `e2e/ui/sso.spec.ts` (**4**, la seconde voie de `CRM-091`) et trois
+# scénarios d'`e2e/ui/authentification.spec.ts` — le formulaire à mot de passe, la session d'onglet de
+# GoTrue et l'invitation GoTrue acceptée dans la webapp. 749 − 4 − 3 + 13 = 755, valeur COMPTÉE —
+# « Total: 755 tests in 59 files » : un fichier retiré, un fichier ouvert.
+SCENARIOS_UI=755
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

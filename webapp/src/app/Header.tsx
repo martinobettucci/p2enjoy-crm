@@ -8,6 +8,7 @@
 // @spec docs/DESIGN_SYSTEM.md §4 (en-tête), §5.12 (session), §7, §8
 // @spec docs/SPEC-webapp.md §5.1 ; docs/SPEC-auth.md §9.1, §9.4
 // @spec docs/SPEC-identite.md §7 (identité d'en-tête)
+// @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §8.5 (déconnexion), §9.3 (en-tête)
 //
 // L'en-tête porte le fil d'Ariane et, sous 1024 px, l'ouverture du tiroir de navigation.
 //
@@ -15,7 +16,8 @@
 // commentaire écrivait « n'est pas livrée : aucun moteur ne la porte », et le motif est tombé PAR
 // LIVRAISON : la tranche 1 a posé `public.recherche_globale`, la sous-tranche 2a le moteur d'appel.
 //
-// L'identité de session, elle, vient de GoTrue depuis CRM-009 et offre toujours son action réelle.
+// L'identité de session vient de l'échangeur de session depuis `CRM-092` — plus de GoTrue — et offre
+// toujours son action réelle : « Se déconnecter » ferme la session serveur (§8.5).
 
 import { LogIn, LogOut, Menu } from 'lucide-react'
 import { useCallback, useState } from 'react'
@@ -178,7 +180,7 @@ function ControleSession() {
 		profilCourant.statut === 'pret' && profilCourant.donnees !== null
 			? profilCourant.donnees
 			: null
-	const email = etat.utilisateur.email ?? ''
+	const email = etat.utilisateur.email
 
 	return (
 		<div className="flex items-center gap-2 min-w-0">

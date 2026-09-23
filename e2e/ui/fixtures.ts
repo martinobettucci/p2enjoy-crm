@@ -1,7 +1,11 @@
 // @verifies CRM-007 (docs/BACKLOG.md) — aucune erreur ou alerte navigateur silencieuse
 // @verifies docs/SPEC-webapp.md §12.3, §14 ; docs/JOURNAL.md décision 248
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §4 (parcours), §8.5, §13 — la fixture
+//           `connecterAvecLeLabs`, seule porte d'entrée des specs d'interface
 
 import { expect, test as base, type Page } from '@playwright/test'
+import { lireEnv } from '../env'
+import { MOT_DE_PASSE_SEED } from '../api/jetons'
 
 export { expect }
 export type { APIRequestContext, Page, Route } from '@playwright/test'
@@ -62,3 +66,31 @@ export const test = base.extend({
 		expect(anomalies, 'aucun warning, error ou pageerror ne reste dans le navigateur').toEqual([])
 	},
 })
+
+const EMETTEUR_SSO = lireEnv('SSO_OIDC_ISSUER')
+const HOTE_SSO = new URL(EMETTEUR_SSO).hostname
+
+/**
+ * Se connecte comme une personne : `/connexion`, « Se connecter avec LeLabs », la VRAIE page de
+ * connexion du Keycloak de développement, puis le retour et l'échangeur de session
+ * (docs/SPEC-session-sso.md §4). Aucune session n'est fabriquée.
+ *
+ * Les cookies du realm sont oubliés d'abord : une session LeLabs vivante reconnecterait sans
+ * formulaire la personne PRÉCÉDENTE — c'est voulu en production (§8.5), pas dans une preuve qui
+ * change de compte. Avec `naviguer: false`, la page est déjà sur `/connexion`, où une adresse de
+ * retour a été retenue.
+ */
+export async function connecterAvecLeLabs(
+	page: Page,
+	adresse: string,
+	options: { readonly naviguer?: boolean } = {},
+): Promise<void> {
+	await page.context().clearCookies({ domain: HOTE_SSO })
+	if (options.naviguer !== false) await page.goto('/connexion')
+	await page.getByRole('button', { name: 'Se connecter avec LeLabs' }).click()
+	await page.waitForURL((url) => url.href.startsWith(EMETTEUR_SSO))
+	await page.locator('#username').fill(adresse)
+	await page.locator('#password').fill(MOT_DE_PASSE_SEED)
+	await page.locator('#kc-login').click()
+	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+}

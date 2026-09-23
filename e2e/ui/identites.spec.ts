@@ -1,21 +1,17 @@
 // @verifies CRM-022 (docs/BACKLOG.md) — identités exhaustives vues par une utilisatrice réelle
 // @verifies docs/SPEC-identite.md §7 (surfaces UI), §10 (preuve souris/clavier et captures)
 // @verifies docs/DESIGN_SYSTEM.md §7, §8, §11 — responsive, accessibilité, console silencieuse
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 
-import { expect, test, type Page } from './fixtures'
-import { MOT_DE_PASSE_SEED } from '../api/jetons'
+import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { capturer } from './captures'
 
 const ADMIN = 'admin@p2enjoy.test'
 const CARD_SUPPORT = 'Support niveau 2 — Atelier Meunier'
 
 async function connecter(page: Page): Promise<void> {
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(ADMIN)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, ADMIN, { naviguer: false })
 }
 
 test('Camille parcourt le board, la liste et la fiche avec toutes les identités consenties', async ({

@@ -1,6 +1,6 @@
 // @spec CRM-092 (docs/BACKLOG.md) — administration du Keycloak de DÉVELOPPEMENT par les preuves
 // @spec docs/SPEC-session-sso.md §10 (« l'API d'administration du Keycloak de développement sert au
-//       seul harnais »), §13 (comptes jetables, rôle retiré, rotation de clés)
+//       seul harnais »), §13 (comptes jetables, rôle retiré, rotation de clés, session LeLabs fermée)
 // @spec docs/SSO.md (« N'appelez pas l'API d'administration de Keycloak depuis une application
 //       intégrée ») — le PRODUIT ne l'appelle jamais ; ce module n'est importé que par des preuves
 //
@@ -82,6 +82,14 @@ export async function attribuerRoles(sub: string, noms: readonly string[]): Prom
 export async function retirerRoles(sub: string, noms: readonly string[]): Promise<void> {
 	const reponse = await admin(`/users/${sub}/role-mappings/realm`, { method: 'DELETE', body: JSON.stringify(await roles(noms)) })
 	expect(reponse.status, `rôles ${noms.join(', ')} retirés`).toBe(204)
+}
+
+/**
+ * Ferme toutes les sessions LeLabs d'un compte, comme le ferait la personne depuis son espace de compte
+ * ou un administrateur du realm : ses jetons de rafraîchissement cessent de valoir (K16).
+ */
+export async function fermerSessionsLeLabs(sub: string): Promise<void> {
+	expect((await admin(`/users/${sub}/logout`, { method: 'POST' })).status, 'sessions LeLabs fermées').toBe(204)
 }
 
 /** Le realm exige-t-il la vérification d'adresse ? Levée le temps d'émettre un jeton `email_verified=false`. */

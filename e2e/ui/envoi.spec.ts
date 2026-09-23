@@ -1,6 +1,8 @@
 // @verifies CRM-058 (docs/BACKLOG.md) — composer depuis la card et répondre depuis l'inbox
 // @verifies docs/SPEC-mail-subsystem.md §19.6 (le même chemin de code), §19.7 (preuves exigées)
 // @verifies docs/DESIGN_SYSTEM.md §5.8 (états), §10 (clavier) ; CLAUDE.md §16
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, et l'effet est relu par l'API : un geste prouvé
 // sur l'écran seul ne prouverait que l'écran.
@@ -9,8 +11,8 @@
 // mesurent, c'est que la file reçoit la bonne ligne. L'aller-retour réel est prouvé par
 // `e2e/mail/envoi.spec.ts`, qui soumet pour de bon.
 
-import { expect, test, type Page } from './fixtures'
-import { MOT_DE_PASSE_SEED, URL_API, enTetesService } from '../api/jetons'
+import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
+import { URL_API, enTetesService } from '../api/jetons'
 import { capturer } from './captures'
 
 const UNITE = 'CRM-058'
@@ -27,13 +29,7 @@ type LigneFile = {
 }
 
 async function connecter(page: Page): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(ADMIN)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, ADMIN)
 }
 
 async function lireFile(page: Page, objet: string): Promise<LigneFile[]> {

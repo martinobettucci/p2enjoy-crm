@@ -24,14 +24,21 @@ d'adresse exigée. La version de l'image est celle du SSO réel, `26.7.3`.
   n'y a plus qu'un mot de passe. Publié, comme celui des boîtes de développement : ce n'est pas un
   secret, et le realm réel refuse ces comptes.
 - Pas d'inscription libre.
-- Le client `lelabs-crm` a **deux** URL de retour exactes : `SITE_URL` + `/auth/retour`, **substituée
+- **Le client du CRM est CONFIDENTIEL, comme en production** (décision 586). Son identifiant est
+  `SSO_OIDC_CLIENT_ID` (`lelabs-crm-serveur` par défaut) et son secret `SSO_OIDC_CLIENT_SECRET`, tous
+  deux **substitués à l'import** depuis le `.env` du poste, où `./runDev.sh` tire le secret au hasard :
+  le même nom de variable qu'en production, jamais une valeur versée. Un code n'est échangé qu'avec
+  lui ; seul l'échangeur de session le détient, et le harnais le lit dans le `.env` pour les preuves
+  qui ont besoin d'un jeton LeLabs brut. Le client public `lelabs-crm` de `CRM-091` est **retiré** : il
+  n'avait plus d'emploi.
+- Le client du CRM a **deux** URL de retour exactes : `SITE_URL` + `/auth/retour`, **substituée
   à l'import** (`${SSO_DEV_REDIRECT_URI}`) parce que l'origine du Vite de développement varie d'un
   poste à l'autre ; et `http://127.0.0.1:4173/auth/retour`, l'origine du `vite preview` que le
   harnais Playwright construit et sert (`e2e/playwright.config.ts`, `WEBAPP_PREVIEW_PORT` par
   défaut). Un harnais lancé sur un autre port verra Keycloak refuser l'URL — « Paramètre invalide :
   redirect_uri » —, et c'est voulu : le fournisseur réel compare au caractère près.
-- Le client `crm-audience-etrangere` n'existe qu'ici : il sert à prouver le refus d'un jeton émis
-  pour une autre application (`azp`).
+- Le client `crm-audience-etrangere` n'existe qu'ici, public : il sert à prouver le refus d'un code
+  émis pour une autre application.
 
 ## Les comptes, et ce que chacun démontre
 

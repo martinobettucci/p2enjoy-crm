@@ -1,6 +1,6 @@
 // @verifies CRM-092 (docs/BACKLOG.md) — la clé de signature n'atteint que l'échangeur de session
 // @verifies docs/SPEC-session-sso.md §5.5 (environnement par fonction) ; docs/SPEC-edge-functions.md §2
-// @verifies docs/JOURNAL.md décision 584
+// @verifies docs/JOURNAL.md décisions 584 et 586 (le secret du client confidentiel)
 
 import { describe, expect, it } from 'vitest'
 import { ENVIRONNEMENT_COMMUN, ENVIRONNEMENT_PROPRE, environnementDe } from './environnement.ts'
@@ -11,16 +11,17 @@ const CONTENEUR: Record<string, string> = {
 	SUPABASE_SERVICE_ROLE_KEY: 'cle-de-service',
 	JWT_SECRET: 'secret-de-signature',
 	SSO_OIDC_ISSUER: 'http://sso.localhost:18480/realms/lelabs',
-	SSO_OIDC_CLIENT_ID: 'lelabs-crm',
+	SSO_OIDC_CLIENT_ID: 'lelabs-crm-serveur',
+	SSO_OIDC_CLIENT_SECRET: 'secret-du-client',
 	POSTGRES_PASSWORD: 'jamais-transmis',
 }
 const lire = (nom: string) => CONTENEUR[nom]
 const noms = (valeurs: [string, string][]) => valeurs.map(([nom]) => nom).sort()
 
 describe('environnementDe', () => {
-	it('remet à `session` le commun, la clé de signature et la configuration SSO', () => {
+	it('remet à `session` le commun, la clé de signature, la configuration SSO et le secret du client', () => {
 		expect(noms(environnementDe('session', lire))).toEqual(
-			['JWT_SECRET', 'SSO_OIDC_CLIENT_ID', 'SSO_OIDC_ISSUER', 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_URL'],
+			['JWT_SECRET', 'SSO_OIDC_CLIENT_ID', 'SSO_OIDC_CLIENT_SECRET', 'SSO_OIDC_ISSUER', 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_URL'],
 		)
 	})
 
@@ -29,6 +30,7 @@ describe('environnementDe', () => {
 			const recu = noms(environnementDe(fonction, lire))
 			expect(recu, fonction).toEqual([...ENVIRONNEMENT_COMMUN].sort())
 			expect(recu, fonction).not.toContain('JWT_SECRET')
+			expect(recu, fonction).not.toContain('SSO_OIDC_CLIENT_SECRET')
 		}
 	})
 

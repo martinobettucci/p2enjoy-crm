@@ -4,6 +4,8 @@
 // @verifies docs/SPEC-workflow-engine.md §7.9, §7.10 (retour arrière et bandeau de refus)
 // @verifies docs/SPEC-permissions-rls.md §7 — la relecture se fait avec le jeton du même profil
 // @verifies CLAUDE.md §15 (E2E depuis un état déterministe), §16 (capture observée)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // LA PREUVE QUE LES AUTRES NE POUVAIENT PAS FAIRE. `e2e/ui/board.spec.ts` et
 // `e2e/ui/formulaire.spec.ts` éprouvent chacun leur geste contre des réponses réseau
@@ -22,6 +24,7 @@
 
 import {
 	autoriserErreursConsole,
+	connecterAvecLeLabs,
 	ERREUR_RESSOURCE_HTTP,
 	expect,
 	test,
@@ -29,7 +32,7 @@ import {
 	type Page,
 } from './fixtures'
 import { randomUUID } from 'node:crypto'
-import { URL_API, MOT_DE_PASSE_SEED, enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
+import { URL_API, enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
 import { capturer } from './captures'
 
 const ADMIN = 'admin@p2enjoy.test'
@@ -64,15 +67,7 @@ function urlRest(table: string, parametres: Readonly<Record<string, string>> = {
 
 /** Connexion par le formulaire réel, au clavier — jamais un jeton posé à la main dans l'onglet. */
 async function connecter(page: Page): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.press('ControlOrMeta+A')
-	await page.keyboard.type(ADMIN)
-	await page.keyboard.press('Tab')
-	await page.keyboard.press('ControlOrMeta+A')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, ADMIN)
 }
 
 /**

@@ -1,57 +1,65 @@
-// @spec CRM-009 (docs/BACKLOG.md) — écran de connexion et refus générique
-// @spec CRM-091 (docs/BACKLOG.md) — action « Se connecter avec LeLabs » et refus du SSO
-// @spec docs/SPEC-auth.md §9.1 (navigation), §9.3 (états et erreurs), §10.3 (parcours), §10.4
-// @spec docs/DESIGN_SYSTEM.md §5.7 (champs), §5.8 (états), §5.12 (connexion), §7, §8, §9
+// @spec CRM-009 (docs/BACKLOG.md) — écran de connexion
+// @spec CRM-091 (docs/BACKLOG.md) — action « Se connecter avec LeLabs »
+// @spec CRM-092 (docs/BACKLOG.md) — une seule action, refus et attentes rendus sur deux surfaces
+// @spec docs/SPEC-session-sso.md §4 (parcours), §9.1 (carte), §9.2 (refus et attentes)
+// @spec docs/SPEC-auth.md §9.1 (navigation), §10.3 (aller), §10.5 (transaction d'onglet)
+// @spec docs/DESIGN_SYSTEM.md §5.8 (états), §5.10 (commande morte interdite), §5.12 (connexion), §7, §8, §9
 // @spec docs/manual.md chapitre 1 (connexion)
 //
-// Le composant ne connaît aucun secret de service et ne traduit aucun droit. Il remet l'adresse
-// et le mot de passe à GoTrue par le provider, puis rend seulement la classe d'erreur assainie.
+// Le composant ne connaît aucun secret et ne traduit aucun droit. Il mène l'aller vers LeLabs, puis
+// rend ce que l'échangeur a décidé : un REFUS dit qu'une tentative a échoué, une ATTENTE qu'un geste
+// d'autrui manque. Plus de mot de passe : le SSO est la seule source d'identité (§1).
 
-import { KeyRound, TriangleAlert } from 'lucide-react'
-import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { Navigate, useLocation, useNavigate } from 'react-router'
+import { CircleDashed, KeyRound, TriangleAlert } from 'lucide-react'
+import { useState } from 'react'
+import { Navigate, useLocation } from 'react-router'
 import { Button } from '../components/ui/Button'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t } from '../i18n'
-import { cheminRetour, type NatureEchecConnexion } from '../lib/auth'
+import { cheminRetour } from '../lib/auth'
 import {
 	configurationSso,
+	estAttente,
 	lireDecouverte,
 	natureDe,
 	preparerRedirection,
 	type ConfigurationSso,
+	type NatureAttente,
 	type NatureEchecSso,
 } from '../lib/sso'
-import { creerStockageSession } from '../lib/supabase'
+import { clientCrm, creerStockageSession } from '../lib/supabase'
 import { useAuthentification } from './Authentification'
 
-const CLASSES_CHAMP = [
-	'w-full min-h-[var(--size-target)] rounded-sm border border-border bg-surface px-3',
-	'text-base text-text placeholder:text-text-3',
-	'focus:border-brand disabled:bg-hover disabled:text-text-2 disabled:cursor-not-allowed',
-].join(' ')
+type CleTraduction = Parameters<typeof t>[0]
 
-const CLE_ERREUR: Readonly<Record<NatureEchecConnexion, Parameters<typeof t>[0]>> = {
-	identifiants: 'auth.error.credentials',
+const CLE_REFUS: Readonly<Record<Exclude<NatureEchecSso, NatureAttente>, CleTraduction>> = {
+	sso_annule: 'auth.sso.error.cancelled',
+	sso_echec: 'auth.sso.error.failed',
 	reseau: 'auth.error.network',
+	session_expiree: 'auth.session.expired',
 	configuration: 'auth.error.configuration',
 }
 
-const CLE_ERREUR_SSO: Readonly<Record<NatureEchecSso, Parameters<typeof t>[0]>> = {
-	sso_annule: 'auth.sso.error.cancelled',
-	sso_sans_compte: 'auth.sso.error.noAccount',
-	reseau: 'auth.error.network',
-	sso_echec: 'auth.sso.error.failed',
+const CLE_ATTENTE: Readonly<Record<NatureAttente, CleTraduction>> = {
+	adresse_non_verifiee: 'auth.wait.unverifiedAddress',
+	attente_verification: 'auth.wait.verification',
+	attente_espace: 'auth.wait.workspace',
 }
 
-type SoumissionFormulaire = FormEvent<HTMLFormElement>
+const ID_ETAT = 'etat-connexion'
 
-type EtatRouteConnexion = { readonly retour?: unknown; readonly erreurSso?: unknown } | null
+type EtatRouteConnexion = { readonly retour?: unknown; readonly erreurSso?: unknown; readonly adresse?: unknown } | null
 
-/** Seule une nature du dictionnaire fermé est rendue ; toute autre valeur d'état est ignorée. */
-function erreurSsoDepuis(etat: EtatRouteConnexion): NatureEchecSso | null {
-	const valeur = etat?.erreurSso
-	return typeof valeur === 'string' && Object.hasOwn(CLE_ERREUR_SSO, valeur) ? (valeur as NatureEchecSso) : null
+type Issue = { readonly nature: NatureEchecSso; readonly adresse: string | null }
+
+/** Seule une nature du dictionnaire fermé est rendue ; une attente sans adresse ne l'est pas. */
+function issueDepuis(etat: EtatRouteConnexion): Issue | null {
+	const nature = etat?.erreurSso
+	if (typeof nature !== 'string') return null
+	const adresse = typeof etat?.adresse === 'string' && etat.adresse !== '' ? etat.adresse : null
+	if (Object.hasOwn(CLE_REFUS, nature)) return { nature: nature as NatureEchecSso, adresse: null }
+	if (Object.hasOwn(CLE_ATTENTE, nature) && adresse !== null) return { nature: nature as NatureEchecSso, adresse }
+	return null
 }
 
 /** La navigation hors de l'application ; injectable pour les preuves, jsdom ne la connaissant pas. */
@@ -61,73 +69,47 @@ function quitterVers(url: string) {
 
 export function EcranConnexion({
 	sso = configurationSso,
+	apiConfiguree = clientCrm !== null,
 	rediriger = quitterVers,
 }: {
 	readonly sso?: ConfigurationSso | null
+	readonly apiConfiguree?: boolean
 	readonly rediriger?: (url: string) => void
 }) {
-	const { etat, connecter } = useAuthentification()
+	const { etat } = useAuthentification()
 	const location = useLocation()
-	const navigate = useNavigate()
-	const emailRef = useRef<HTMLInputElement>(null)
-	const connexionLancee = useRef(false)
-	const [email, setEmail] = useState('')
-	const [motDePasse, setMotDePasse] = useState('')
+	const etatRoute = location.state as EtatRouteConnexion
 	const [enCours, setEnCours] = useState(false)
-	const [erreur, setErreur] = useState<NatureEchecConnexion | null>(null)
-	const [ssoEnCours, setSsoEnCours] = useState(false)
-	const [erreurSso, setErreurSso] = useState<NatureEchecSso | null>(() =>
-		erreurSsoDepuis(location.state as EtatRouteConnexion),
-	)
+	const [issue, setIssue] = useState<Issue | null>(() => issueDepuis(etatRoute))
 
-	useEffect(() => {
-		if (erreur === 'identifiants' && !enCours) emailRef.current?.focus()
-	}, [enCours, erreur])
+	if (etat.statut === 'authentifie') return <Navigate to={cheminRetour(etatRoute?.retour)} replace />
 
-	if (etat.statut === 'authentifie' && !connexionLancee.current) return <Navigate to="/" replace />
-
-	const soumettre = async (evenement: SoumissionFormulaire) => {
-		evenement.preventDefault()
-		if (enCours) return
-		connexionLancee.current = true
-		setEnCours(true)
-		setErreur(null)
-		setErreurSso(null)
-		const resultat = await connecter(email, motDePasse)
-		setEnCours(false)
-		if (!resultat.ok) {
-			connexionLancee.current = false
-			setErreur(resultat.nature)
-			return
-		}
-		const etatRoute = location.state as EtatRouteConnexion
-		navigate(cheminRetour(etatRoute?.retour), { replace: true })
-	}
+	const configuration = apiConfiguree ? sso : null
+	// Sans configuration, aucune action n'est offerte et l'emplacement d'erreur le dit (§9.1) : la
+	// commande morte reste interdite (docs/DESIGN_SYSTEM.md §5.10).
+	const affichee: Issue | null = configuration === null ? { nature: 'configuration', adresse: null } : issue
 
 	// Le navigateur quitte la page : la transaction doit être écrite AVANT, dans le stockage
 	// d'onglet (docs/SPEC-auth.md §10.5). Seul un échec avant la redirection revient ici.
-	const demarrerSso = async () => {
-		if (sso === null || ssoEnCours || enCours) return
-		setSsoEnCours(true)
-		setErreur(null)
-		setErreurSso(null)
+	const demarrer = async () => {
+		if (configuration === null || enCours) return
+		setEnCours(true)
+		setIssue(null)
 		try {
-			const decouverte = await lireDecouverte(sso)
+			const decouverte = await lireDecouverte(configuration)
 			const url = await preparerRedirection({
-				configuration: sso,
+				configuration,
 				decouverte,
 				origine: window.location.origin,
-				retour: cheminRetour((location.state as EtatRouteConnexion)?.retour),
+				retour: cheminRetour(etatRoute?.retour),
 				stockage: creerStockageSession(),
 			})
 			rediriger(url)
 		} catch (echec) {
-			setErreurSso(natureDe(echec))
-			setSsoEnCours(false)
+			setIssue({ nature: natureDe(echec), adresse: null })
+			setEnCours(false)
 		}
 	}
-
-	const idErreur = erreur === null ? undefined : 'erreur-connexion'
 
 	return (
 		<main className="min-h-dvh bg-bg px-4 py-6 flex items-start md:items-center justify-center">
@@ -143,91 +125,20 @@ export function EcranConnexion({
 					<p className="text-text-2">{t('auth.intro')}</p>
 				</header>
 
-				<form onSubmit={(evenement) => void soumettre(evenement)} className="flex flex-col gap-4">
-					<div className="flex flex-col gap-2">
-						<label htmlFor="email-connexion" className="text-sm text-text-2">
-							{t('auth.email.label')}
-						</label>
-						<input
-							ref={emailRef}
-							id="email-connexion"
-							type="email"
-							name="email"
-							autoComplete="email"
-							autoFocus
-							required
-							disabled={enCours}
-							aria-describedby={idErreur}
-							value={email}
-							onChange={(evenement) => setEmail(evenement.target.value)}
-							placeholder={t('auth.email.placeholder')}
-							className={CLASSES_CHAMP}
-						/>
-					</div>
+				{affichee === null ? null : <EtatConnexion issue={affichee} />}
 
-					<div className="flex flex-col gap-2">
-						<label htmlFor="mot-de-passe-connexion" className="text-sm text-text-2">
-							{t('auth.password.label')}
-						</label>
-						<input
-							id="mot-de-passe-connexion"
-							type="password"
-							name="password"
-							autoComplete="current-password"
-							required
-							disabled={enCours}
-							aria-describedby={idErreur}
-							value={motDePasse}
-							onChange={(evenement) => setMotDePasse(evenement.target.value)}
-							className={CLASSES_CHAMP}
-						/>
-					</div>
-
-					{erreur === null ? null : (
-						<p
-							id="erreur-connexion"
-							role="alert"
-							className="flex items-start gap-2 rounded-sm bg-danger-soft text-danger-on-soft p-3"
-						>
-							<TriangleAlert aria-hidden="true" size={20} className="shrink-0" />
-							<span>{t(CLE_ERREUR[erreur])}</span>
-						</p>
-					)}
-
-					<Button variante="primaire" type="submit" disabled={enCours || ssoEnCours} className="w-full">
-						{enCours ? t('auth.submitting') : t('auth.submit')}
+				{configuration === null ? null : (
+					<Button
+						variante="primaire"
+						type="button"
+						disabled={enCours}
+						aria-describedby={affichee === null ? undefined : ID_ETAT}
+						onClick={() => void demarrer()}
+						className="w-full"
+					>
+						<KeyRound aria-hidden="true" size={18} />
+						<span>{enCours ? t('auth.sso.submitting') : t('auth.sso.submit')}</span>
 					</Button>
-				</form>
-
-				{sso === null ? null : (
-					<div className="flex flex-col gap-4">
-						<p className="flex items-center gap-3 text-sm text-text-3" aria-hidden="true">
-							<span className="h-px grow bg-border" />
-							<span>{t('auth.sso.separator')}</span>
-							<span className="h-px grow bg-border" />
-						</p>
-						{erreurSso === null ? null : (
-							<p
-								id="erreur-connexion-sso"
-								role="alert"
-								className="flex items-start gap-2 rounded-sm bg-danger-soft text-danger-on-soft p-3"
-							>
-								<TriangleAlert aria-hidden="true" size={20} className="shrink-0" />
-								<span>{t(CLE_ERREUR_SSO[erreurSso])}</span>
-							</p>
-						)}
-						<Button
-							variante="secondaire"
-							type="button"
-							disabled={ssoEnCours || enCours}
-							aria-describedby={erreurSso === null ? undefined : 'erreur-connexion-sso'}
-							onClick={() => void demarrerSso()}
-							className="w-full"
-						>
-							<KeyRound aria-hidden="true" size={18} />
-							<span>{ssoEnCours ? t('auth.sso.submitting') : t('auth.sso.submit')}</span>
-						</Button>
-					</div>
 				)}
 			</section>
 		</main>
@@ -235,13 +146,38 @@ export function EcranConnexion({
 }
 
 /**
- * Forme exacte de la carte pendant la restauration de `sessionStorage`, et pendant l'échange du
- * retour SSO (`CRM-091`), qui en change seulement le libellé annoncé.
+ * Un refus (surface danger, `role="alert"`) ou une attente (surface accent, `role="status"`, titre
+ * court) : docs/SPEC-session-sso.md §9.2, docs/DESIGN_SYSTEM.md §5.12. Aucune couleur nouvelle.
+ */
+function EtatConnexion({ issue }: { readonly issue: Issue }) {
+	if (estAttente(issue.nature) && issue.adresse !== null) {
+		return (
+			<div id={ID_ETAT} role="status" className="flex items-start gap-2 rounded-sm bg-accent-soft text-accent-on-soft p-3">
+				<CircleDashed aria-hidden="true" size={20} className="shrink-0" />
+				<div className="flex flex-col gap-1 min-w-0">
+					<p className="font-medium">{t('auth.wait.title')}</p>
+					<p className="break-words">{t(CLE_ATTENTE[issue.nature], { adresse: issue.adresse })}</p>
+				</div>
+			</div>
+		)
+	}
+	const cle = estAttente(issue.nature) ? CLE_REFUS.sso_echec : CLE_REFUS[issue.nature]
+	return (
+		<p id={ID_ETAT} role="alert" className="flex items-start gap-2 rounded-sm bg-danger-soft text-danger-on-soft p-3">
+			<TriangleAlert aria-hidden="true" size={20} className="shrink-0" />
+			<span>{t(cle)}</span>
+		</p>
+	)
+}
+
+/**
+ * Forme exacte de la carte pendant la restauration de la session, et pendant l'échange du retour
+ * SSO, qui en change seulement le libellé annoncé.
  */
 export function ChargementAuthentification({
 	cleLibelle = 'auth.loading',
 }: {
-	readonly cleLibelle?: Parameters<typeof t>[0]
+	readonly cleLibelle?: CleTraduction
 }) {
 	return (
 		<main className="min-h-dvh bg-bg px-4 py-6 flex items-start md:items-center justify-center">

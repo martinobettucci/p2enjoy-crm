@@ -15,6 +15,8 @@
 //           écran), §5.9 (le tableau), §5.33 (le titre de devise conditionnel), §5.8 (les états),
 //           §7 (les quatre paliers), §8 (clavier)
 // @verifies CLAUDE.md §16 (vérification visuelle), §22 (accessibilité clavier)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // CE FICHIER NE MODIFIE RIEN, ET C'EST UNE CONTRAINTE DURE — la règle de `couts-workspace.spec.ts`,
 // reprise sans changement. L'écran du §8 est en lecture seule ; aucun scénario ne pose ni ne retire
@@ -35,8 +37,7 @@
 //   * l'écart vaut donc 36 150,00 EUR, et il est INCHANGÉ depuis la tranche 2 c : les quatre
 //     affaires manquantes sont à `prospection`, `relance` et `livre`, aucune à `negociation`.
 
-import { autoriserErreursConsole, expect, test, type Page } from './fixtures'
-import { MOT_DE_PASSE_SEED } from '../api/jetons'
+import { autoriserErreursConsole, connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-066'
@@ -47,13 +48,7 @@ const VIEWER = 'viewer@p2enjoy.test'
 const PILOTAGE = '/pilotage'
 
 async function connecter(page: Page, email = ADMIN): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(email)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, email)
 }
 
 /** Le tableau d'une devise, désigné par le nom accessible de sa région (§5.48). */

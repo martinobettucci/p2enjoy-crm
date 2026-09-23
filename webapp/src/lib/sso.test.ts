@@ -1,34 +1,34 @@
-// @verifies CRM-091 (docs/BACKLOG.md) — client OIDC public : PKCE, transaction, découverte, échange
-// @verifies docs/SPEC-auth.md §10.2 (configuration), §10.3 (parcours), §10.4 (dictionnaire fermé),
-//           §10.5 (transaction d'onglet à usage unique) ; docs/JOURNAL.md décision 568 (M7)
+// @verifies CRM-091 (docs/BACKLOG.md) — aller PKCE : transaction, découverte, jugement du retour
+// @verifies docs/SPEC-auth.md §10.2 (configuration), §10.3 (parcours), §10.5 (transaction d'onglet)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §4 (sans nonce), §8.1 (module révisé :
+//           plus d'échange de code dans le navigateur), §9.2 (dictionnaire fermé) ; décision 586
 
 import { describe, expect, it, vi } from 'vitest'
 import {
 	CLE_TRANSACTION_SSO,
 	DUREE_TRANSACTION_MS,
 	EchecSso,
+	NATURES_ATTENTE,
 	aleatoire,
 	base64url,
-	classerEchecGoTrue,
 	consommerTransaction,
 	defiPkce,
-	echangerCode,
+	estAttente,
 	jugerRetour,
 	lireConfigurationSso,
 	lireDecouverte,
 	natureDe,
-	nonceHache,
 	preparerRedirection,
 	type ConfigurationSso,
 	type StockageTransaction,
 	type TransactionSso,
 } from './sso'
 
-const CONFIG: ConfigurationSso = { emetteur: 'https://sso.exemple.tld/realms/lelabs', clientId: 'lelabs-crm' }
+const CONFIG: ConfigurationSso = { emetteur: 'https://sso.exemple.tld/realms/lelabs', clientId: 'lelabs-crm-serveur' }
 const DECOUVERTE = {
 	autorisation: 'https://sso.exemple.tld/realms/lelabs/protocol/openid-connect/auth',
-	jeton: 'https://sso.exemple.tld/realms/lelabs/protocol/openid-connect/token',
 }
+const POINT_JETON = 'https://sso.exemple.tld/realms/lelabs/protocol/openid-connect/token'
 
 /** Un `ImportMetaEnv` partiel : seules les deux variables du SSO comptent ici. */
 function env(valeurs: { VITE_SSO_ISSUER?: string; VITE_SSO_CLIENT_ID?: string }): ImportMetaEnv {
@@ -58,15 +58,11 @@ async function nature(promesse: Promise<unknown>): Promise<string> {
 	}
 }
 
-describe('primitives PKCE et nonce', () => {
+describe('primitives PKCE', () => {
 	it('rend le défi du vecteur de la RFC 7636, annexe B', async () => {
 		expect(await defiPkce('dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk')).toBe(
 			'E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM',
 		)
-	})
-
-	it('hache le nonce envoyé à Keycloak en hexadécimal SHA-256', async () => {
-		expect(await nonceHache('abc')).toBe('ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad')
 	})
 
 	it('encode en base64url sans remplissage', () => {
@@ -99,10 +95,10 @@ describe('découverte', () => {
 	const document = {
 		issuer: CONFIG.emetteur,
 		authorization_endpoint: DECOUVERTE.autorisation,
-		token_endpoint: DECOUVERTE.jeton,
+		token_endpoint: POINT_JETON,
 	}
 
-	it('lit les deux points d’entrée à l’adresse normalisée', async () => {
+	it('ne retient que le point d’autorisation : le navigateur ne parle jamais au point de jeton', async () => {
 		const requete = vi.fn(async () => reponse(200, document))
 		expect(await lireDecouverte(CONFIG, requete)).toEqual(DECOUVERTE)
 		expect(requete).toHaveBeenCalledWith(`${CONFIG.emetteur}/.well-known/openid-configuration`)
@@ -113,7 +109,7 @@ describe('découverte', () => {
 		expect(await nature(lireDecouverte(CONFIG, requete))).toBe('sso_echec')
 	})
 
-	it('refuse des points d’entrée absents ou hors http', async () => {
+	it('refuse un point d’autorisation absent ou hors http', async () => {
 		expect(await nature(lireDecouverte(CONFIG, async () => reponse(200, { issuer: CONFIG.emetteur })))).toBe('sso_echec')
 		const javascript = { ...document, authorization_endpoint: 'javascript:alert(1)' }
 		expect(await nature(lireDecouverte(CONFIG, async () => reponse(200, javascript)))).toBe('sso_echec')
@@ -145,25 +141,25 @@ describe('aller : redirection et transaction', () => {
 		const t = JSON.parse(stockage.valeurs.get(CLE_TRANSACTION_SSO) ?? 'null') as TransactionSso
 		expect(`${url.origin}${url.pathname}`).toBe(DECOUVERTE.autorisation)
 		expect(Object.fromEntries(url.searchParams)).toEqual({
-			client_id: 'lelabs-crm',
+			client_id: 'lelabs-crm-serveur',
 			response_type: 'code',
 			scope: 'openid email profile',
 			redirect_uri: 'https://crm.exemple.tld/auth/retour',
 			state: t.state,
-			nonce: await nonceHache(t.nonce),
 			code_challenge: await defiPkce(t.verificateur),
 			code_challenge_method: 'S256',
 		})
-		expect(t).toMatchObject({
+		expect(t).toEqual({
+			state: t.state,
+			verificateur: t.verificateur,
 			retour: '/tracks/conseil-ia',
 			redirectUri: 'https://crm.exemple.tld/auth/retour',
-			pointJeton: DECOUVERTE.jeton,
 			expireA: 1_000 + DUREE_TRANSACTION_MS,
 		})
 		expect(t.verificateur).toMatch(/^[A-Za-z0-9_-]{43}$/)
 	})
 
-	it('n’envoie jamais le nonce brut ni le vérificateur à Keycloak', async () => {
+	it('n’envoie jamais le vérificateur à Keycloak, et ne demande aucun nonce', async () => {
 		const stockage = stockageMemoire()
 		const url = await preparerRedirection({
 			configuration: CONFIG,
@@ -173,8 +169,8 @@ describe('aller : redirection et transaction', () => {
 			stockage,
 		})
 		const t = JSON.parse(stockage.valeurs.get(CLE_TRANSACTION_SSO) ?? 'null') as TransactionSso
-		expect(url).not.toContain(t.nonce)
 		expect(url).not.toContain(t.verificateur)
+		expect(new URL(url).searchParams.has('nonce')).toBe(false)
 	})
 })
 
@@ -182,10 +178,8 @@ describe('retour : transaction à usage unique', () => {
 	const valide: TransactionSso = {
 		state: 's1',
 		verificateur: 'v1',
-		nonce: 'n1',
 		retour: '/',
 		redirectUri: 'https://crm.exemple.tld/auth/retour',
-		pointJeton: DECOUVERTE.jeton,
 		expireA: 5_000,
 	}
 
@@ -220,53 +214,13 @@ describe('retour : transaction à usage unique', () => {
 	})
 })
 
-describe('échange du code', () => {
-	const t: TransactionSso = {
-		state: 's',
-		verificateur: 'le-verificateur',
-		nonce: 'n',
-		retour: '/',
-		redirectUri: 'https://crm.exemple.tld/auth/retour',
-		pointJeton: DECOUVERTE.jeton,
-		expireA: Number.MAX_SAFE_INTEGER,
-	}
-
-	it('poste exactement les cinq paramètres d’un client public et ne rend que l’id_token', async () => {
-		const requete = vi.fn(async (_url: string, _init?: RequestInit) =>
-			reponse(200, { id_token: 'jeton.id', access_token: 'jamais-rendu', refresh_token: 'jamais-rendu' }),
-		)
-		expect(await echangerCode(CONFIG, t, 'le-code', requete as unknown as typeof fetch)).toBe('jeton.id')
-		const [url, init] = requete.mock.calls[0] ?? []
-		expect(url).toBe(DECOUVERTE.jeton)
-		expect(init?.method).toBe('POST')
-		expect(Object.fromEntries(new URLSearchParams(String(init?.body)))).toEqual({
-			grant_type: 'authorization_code',
-			client_id: 'lelabs-crm',
-			code: 'le-code',
-			redirect_uri: 'https://crm.exemple.tld/auth/retour',
-			code_verifier: 'le-verificateur',
-		})
-	})
-
-	it('classe chaque échec sans rendre le corps du serveur', async () => {
-		expect(await nature(echangerCode(CONFIG, t, 'c', async () => reponse(400, { error: 'invalid_grant' })))).toBe('sso_echec')
-		expect(await nature(echangerCode(CONFIG, t, 'c', async () => reponse(502, 'x')))).toBe('reseau')
-		expect(await nature(echangerCode(CONFIG, t, 'c', async () => Promise.reject(new TypeError('x'))))).toBe('reseau')
-		expect(await nature(echangerCode(CONFIG, t, 'c', async () => reponse(200, { access_token: 'a' })))).toBe('sso_echec')
-	})
-})
-
-describe('refus de GoTrue', () => {
-	it('nomme « sans compte » le refus que GoTrue rend aux deux causes mesurées', () => {
-		expect(classerEchecGoTrue({ status: 422, code: 'signup_disabled' })).toBe('sso_sans_compte')
-	})
-
-	it('classe le reste sans jamais deviner', () => {
-		expect(classerEchecGoTrue({ status: 400, message: 'Nonces mismatch' })).toBe('sso_echec')
-		expect(classerEchecGoTrue({ status: 400, message: 'Unacceptable audience in id_token' })).toBe('sso_echec')
-		expect(classerEchecGoTrue({ status: 500 })).toBe('reseau')
-		expect(classerEchecGoTrue({ status: 0 })).toBe('reseau')
-		expect(classerEchecGoTrue({ message: 'Failed to fetch' })).toBe('reseau')
+describe('dictionnaire fermé', () => {
+	it('distingue les trois attentes des refus', () => {
+		expect(NATURES_ATTENTE).toEqual(['adresse_non_verifiee', 'attente_verification', 'attente_espace'])
+		for (const nature of NATURES_ATTENTE) expect(estAttente(nature)).toBe(true)
+		for (const nature of ['sso_annule', 'sso_echec', 'reseau', 'session_expiree', 'configuration'] as const) {
+			expect(estAttente(nature)).toBe(false)
+		}
 	})
 
 	it('rend « échec » pour toute erreur qui n’est pas une étape du parcours', () => {

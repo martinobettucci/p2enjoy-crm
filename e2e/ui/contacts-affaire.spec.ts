@@ -5,6 +5,8 @@
 //           §12.5 (le dictionnaire fermé), §12.7 (cas a, d, g, h, m, n, o, p)
 // @verifies docs/DESIGN_SYSTEM.md §5.21 (le bloc), §5.13 (formulaire et confirmation dans le
 //           flux), §7 (paliers) ; CLAUDE.md §16 (vérification visuelle)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, comme un utilisateur réel : aucune fonction
 // interne n'est appelée, et l'écriture passe par le formulaire de l'écran.
@@ -17,8 +19,15 @@
 // test : c'est le second geste que la sous-tranche livre, exercé par sa propre preuve. Un filet
 // de sécurité en fin de fichier retire le rattachement si un scénario s'est interrompu avant lui.
 
-import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole, expect, test, type Page } from './fixtures'
-import { CLE_SERVICE, MOT_DE_PASSE_SEED, URL_API } from '../api/jetons'
+import {
+	autoriserErreursConsole,
+	connecterAvecLeLabs,
+	ERREUR_RESSOURCE_HTTP,
+	expect,
+	test,
+	type Page,
+} from './fixtures'
+import { CLE_SERVICE, URL_API } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-060'
@@ -43,13 +52,7 @@ const AFFAIRE_LECTRICE = {
 const ELISE = '5eed0000-0000-4000-8000-000000000093'
 
 async function connecter(page: Page, email: string): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(email)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, email)
 }
 
 test.describe("contacts d'une affaire (docs/SPEC-contacts.md §12)", () => {

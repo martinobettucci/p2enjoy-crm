@@ -1,6 +1,8 @@
 // @spec CRM-007 (docs/BACKLOG.md) — dictionnaire des textes visibles
 // @spec CRM-009 (docs/BACKLOG.md) — textes de connexion, session et déconnexion
 // @spec CRM-091 (docs/BACKLOG.md) — textes de la connexion unique (docs/SPEC-auth.md §10.4)
+// @spec CRM-092 (docs/BACKLOG.md) — connexion par le seul SSO : refus et attentes nommés
+//       (docs/SPEC-session-sso.md §9.1, §9.2)
 // @spec CRM-022 (docs/BACKLOG.md) — noms, avatars, responsables, auteurs et acteurs
 // @spec CRM-075 (docs/BACKLOG.md) — textes de l'administration de l'arborescence
 // @spec docs/DESIGN_SYSTEM.md §5.12, §5.13, §10 ; docs/SPEC-auth.md §9 ; docs/SPEC-webapp.md §10
@@ -85,26 +87,27 @@ export const fr = {
 	'identity.owner.aria': 'Responsable : {nom}',
 
 	// --- Authentification ---------------------------------------------------------------
+	// `CRM-092` — le SSO seule source d'identité : une seule action, des refus et des attentes
+	// (docs/SPEC-session-sso.md §9.1, §9.2). L'adresse des attentes est interpolée, jamais concaténée.
 	'auth.route.title': 'Se connecter',
-	'auth.intro': "L'accès est réservé aux membres invités de votre espace de travail.",
-	'auth.email.label': 'Adresse email',
-	'auth.email.placeholder': 'prenom@entreprise.fr',
-	'auth.password.label': 'Mot de passe',
-	'auth.submit': 'Se connecter',
-	'auth.submitting': 'Connexion…',
-	'auth.error.credentials': "L'adresse email ou le mot de passe est incorrect.",
+	'auth.intro':
+		"L'accès est réservé aux personnes inscrites par un administrateur de leur espace, avec un compte LeLabs vérifié.",
 	'auth.error.network': "Le serveur n'a pas répondu. Vérifiez votre connexion, puis réessayez.",
-	'auth.error.configuration': "L'application n'est pas configurée pour joindre le serveur.",
+	'auth.error.configuration': "La connexion n'est pas configurée sur ce déploiement.",
 	'auth.loading': 'Restauration de votre session',
-	// `CRM-091` — connexion unique par oauth.lelabs.tech (docs/SPEC-auth.md §10.3, §10.4)
-	'auth.sso.separator': 'ou',
 	'auth.sso.submit': 'Se connecter avec LeLabs',
 	'auth.sso.submitting': 'Redirection vers LeLabs…',
 	'auth.sso.returning': 'Connexion LeLabs en cours',
 	'auth.sso.error.cancelled': 'La connexion LeLabs a été annulée.',
-	'auth.sso.error.noAccount':
-		"Aucun compte du CRM ne correspond à ce compte LeLabs. L'accès exige une invitation à la même adresse, vérifiée auprès de LeLabs.",
 	'auth.sso.error.failed': "La connexion LeLabs n'a pas abouti. Recommencez depuis cet écran.",
+	'auth.session.expired': 'Votre session a pris fin. Reconnectez-vous avec LeLabs.',
+	'auth.wait.title': 'Accès en attente',
+	'auth.wait.unverifiedAddress':
+		"Votre adresse {adresse} n'est pas encore vérifiée auprès de LeLabs. Vérifiez-la depuis votre compte LeLabs, puis reconnectez-vous.",
+	'auth.wait.verification':
+		"Votre compte LeLabs {adresse} n'est pas encore vérifié. Un administrateur de LeLabs doit confirmer votre identité avant que le CRM vous ouvre ses espaces ; ce geste est humain et peut prendre du temps.",
+	'auth.wait.workspace':
+		"Aucun espace du CRM ne vous attend à l'adresse {adresse}. Demandez à un administrateur de votre espace de vous inscrire avec cette adresse, puis reconnectez-vous.",
 
 	// --- Onglets ------------------------------------------------------------------------
 	'tabs.aria': 'Channels du track courant',

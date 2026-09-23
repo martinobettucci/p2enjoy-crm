@@ -10,6 +10,8 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.18 (cette surface), §7 (paliers), §8 (accessibilité)
 // @verifies CLAUDE.md §10 (la garde est backend, constatée et non simulée), §16 (vérification
 //           visuelle), §22 (accessibilité clavier)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // LES QUATRE GESTES SONT JOUÉS SUR LA VRAIE BASE, avec le vrai seed et le jeton réel de
 // l'administratrice : aucune réponse n'est substituée dans ce fichier, pas même celle du refus.
@@ -27,9 +29,9 @@
 // Le nœud `qualification`, seul archivé du seed, sert au rétablissement — puis il est RÉARCHIVÉ à
 // la même date, pour que `scripts/verify-catalogue.sh` retrouve son huitième nœud archivé.
 
-import { expect, test, type Page } from './fixtures'
+import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole } from './fixtures'
-import { MOT_DE_PASSE_SEED, URL_API, enTetesService } from '../api/jetons'
+import { URL_API, enTetesService } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-030'
@@ -47,13 +49,7 @@ const NOEUD_OCCUPE = 'Prospection'
 const NOEUD_ARCHIVE = { libelle: 'Qualification', cle: 'qualification', date: '2026-03-01T09:00:00+00:00' }
 
 async function connecter(page: Page, email = ADMIN): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(email)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, email)
 }
 
 /** Retire les nœuds de preuve. Filet de sécurité, indépendant du point où le scénario a échoué. */

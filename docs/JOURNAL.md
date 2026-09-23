@@ -29243,3 +29243,78 @@ utilisable tant que vit la session LeLabs.
 (§6), le jeton interne (§5.3), l'environnement par fonction — qui reçoit en plus
 `SSO_OIDC_CLIENT_SECRET`. Ce qui est **révisé** : l'échangeur reçoit un code et non plus un jeton, et
 porte trois gestes — ouvrir, prolonger, fermer.
+
+## décision 587 — `CRM-092` T3 bis et T5 livrées ensemble : l'absence de session n'est pas un refus, l'échéance se compte sur la durée du jeton, et ce que la bascule retire
+
+*2026-09-23 au 2026-09-24, même session. Tranches T3 bis (client serveur, décision 586) et T5 (webapp),
+livrées dans un seul commit parce qu'elles partagent l'identifiant du client : le realm de
+développement ne porte plus que le client confidentiel, que la webapp et l'échangeur emploient tous
+deux.*
+
+**1. Problème trouvé en écrivant la preuve d'interface : chaque page anonyme journalisait une erreur.**
+La webapp restaure la session au chargement par `prolonger` (§8.4). Un navigateur jamais connecté
+recevait `401 session_absente`, que Chromium journalise en `console.error` (« Failed to load resource:
+the server responded with a status of 401 ») — sur **chaque** chargement anonyme, donc sur chacune des
+755 preuves d'interface, dont la console fait partie du verdict (`e2e/ui/fixtures.ts`). La spécification
+nommait pourtant ce cas « le cas normal d'un navigateur jamais connecté ».
+- *Envisagé* : autoriser l'erreur dans chaque spec (cinquante exceptions, et une console qui ment en
+  production) ; ne restaurer qu'en présence d'un cookie (illisible : il est `httpOnly`, et un témoin
+  lisible serait une écriture de plus sur l'appareil, contre le §8.3).
+- **Décision** : l'absence de session n'est **pas un refus**. `prolonger` rend **`204`, sans corps** —
+  sans cookie, pour une poignée inconnue ou échue, pour un jeton gardé indéchiffrable, et pour une
+  session supprimée entre la lecture et le renouvellement —, en effaçant le cookie quand il y en avait
+  un. Le code `session_absente` quitte le dictionnaire du §5.5 ; le journal de l'échangeur trace
+  l'événement `session_absente` (code `aucune`). La webapp lit ce `204` comme « aucune session ».
+  Une session **close pendant qu'on l'utilise** reste un refus nommé (`session_expiree`, attentes).
+
+**2. Défaut de conception trouvé en écrivant la preuve du rafraîchissement : l'horloge du poste.** Le
+rafraîchissement était programmé 60 s avant `expire_a`, **échéance absolue du serveur lue à l'horloge du
+poste**. Un poste en avance de plus de quatre minutes aurait prolongé en boucle. **Décision** : la
+webapp lit `iat` dans le jeton interne (lecture, pas vérification) et compte l'échéance sur la durée
+`exp − iat` **à partir de la réception** ; un plancher de 5 s sépare deux prolongations quoi qu'il
+arrive. Prouvé par un test unitaire où le serveur vit dix minutes derrière le poste.
+
+**3. Défaut trouvé par un test unitaire : la restauration pouvait défaire une ouverture.** Les effets
+d'un enfant s'exécutent avant ceux de leur parent : la route de retour ouvrait la session **avant** que
+le fournisseur lance la restauration, dont le `204` rendait ensuite l'état anonyme. En production la
+route de retour n'est montée qu'après la restauration, mais le fournisseur ne doit pas en dépendre.
+**Décision** : la restauration ne s'applique que si aucune session n'a été installée ou close entre-temps.
+
+**4. Ce qui est retiré, avec son objet, et ce qui le remplace** (spécification §13 : « révisées ou
+retirées avec leur objet, jamais désactivées ») :
+- `e2e/api/sso.spec.ts` (9 scénarios, mesures M2 à M10 de la décision 568) : l'échange d'`id_token` par
+  GoTrue n'est plus employé par rien. M2 — le realm refuse une autorisation sans PKCE — est reprise dans
+  `e2e/api/session.spec.ts` ; M3 à M6 sont remplacées par les attentes et le rattachement prouvés contre
+  l'échangeur ; M7 (nonce) n'a plus d'objet ; M8 devient « un code émis pour une autre application est
+  refusé » ; M9 et M10 tombent avec GoTrue en T6.
+- `e2e/ui/sso.spec.ts` (4) : remplacé par `e2e/ui/connexion.spec.ts` (13).
+- Trois scénarios d'`e2e/ui/authentification.spec.ts` : le formulaire à mot de passe et son refus
+  générique, la session d'onglet de GoTrue, l'invitation GoTrue acceptée dans la webapp. Les cinq autres
+  — commentaire publié, refus d'un lecteur, déplacements, paliers — sont portés sur la fixture.
+- Dans la webapp : la classification des refus de GoTrue (`lib/auth.ts`, `classerEchecGoTrue`), l'échange
+  du code et le rafraîchissement dans le navigateur (`lib/sso.ts`), le nonce, la session GoTrue du
+  stockage d'onglet ; et leurs tests, remplacés par ceux de `lib/session.ts` et du fournisseur.
+- Le client public `lelabs-crm` du realm de développement.
+
+**5. Preuves révisées, et pourquoi deux lignes du §13 changent de niveau.**
+- *« Ancienne clé désactivée → ancien jeton refusé »* ne se prouve plus par l'API : l'échangeur ne reçoit
+  jamais qu'un jeton qu'il vient d'obtenir lui-même de LeLabs, signé de la clé active. La preuve d'API
+  établit que la rotation est suivie sans redémarrage, à l'ouverture comme à la prolongation, et que la
+  désactivation des anciennes clés ne gêne aucune session ; le refus d'un `kid` inconnu reste prouvé au
+  niveau unitaire.
+- *« Configuration absente »* est prouvée au niveau unitaire (`EcranConnexion.test.tsx`) : le build sous
+  test est configuré, et en construire un second pour cet état seul doublerait le temps du harnais.
+- `scripts/verify-session-sso.sh` : ses mutations visaient des lignes du `handler.ts` de T3 déplacées dans
+  `verification.ts` ; elles sont reportées sur le code actuel, et trois s'ajoutent — secret omis de
+  l'échange, `HttpOnly` retiré, jeton de rafraîchissement gardé en clair. Deux preuves du realm
+  s'ajoutent : un code n'est pas échangé sans le secret, et l'octroi direct est refusé **au client
+  authentifié**. `scripts/verify-functions.sh` exige le secret au conteneur.
+- `e2e/ui/demarrage.spec.ts` créait un compte GoTrue pour son espace neuf : il crée désormais un compte
+  jetable du realm de développement et **inscrit une attente**, que la vraie connexion consomme.
+
+**6. Observé, non modifié.** Le `.env` local garde `SSO_OIDC_CLIENT_ID=lelabs-crm` : une valeur déjà
+renseignée n'est jamais réécrite par la complétion, et le realm crée le client confidentiel sous la
+valeur qu'on lui donne — la preuve tourne donc sous cet identifiant sur ce poste. Le gabarit porte
+`lelabs-crm-serveur`.
+
+**Vérifications** : voir le compte rendu de livraison consigné au backlog (`CRM-092`, T3 bis et T5).

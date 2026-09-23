@@ -8,6 +8,8 @@
 //           décide du dossier, l'identifiant inconnu qui ne rend AUCUNE erreur), §15.1 (le
 //           paramètre retiré même quand il n'est pas honoré), §13.5 (l'adresse que la palette
 //           compose)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, comme un utilisateur réel : aucune fonction
 // interne n'est appelée, aucune réponse n'est substituée. Le courrier vient du seed (§2.19) : deux
@@ -17,8 +19,8 @@
 // par la clé de service dans son `finally` — le seul chemin qui le peut, `mail_messages`
 // n'accordant aucune écriture à `authenticated`.
 
-import { expect, test, type Page } from './fixtures'
-import { MOT_DE_PASSE_SEED, URL_API, enTetesService } from '../api/jetons'
+import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
+import { URL_API, enTetesService } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-057'
@@ -53,13 +55,7 @@ async function idDuMessage(page: Page, rfc822: string): Promise<string> {
 }
 
 async function connecter(page: Page): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(ADMIN)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, ADMIN)
 }
 
 test.describe('inbox globale (docs/SPEC-mail-subsystem.md §18)', () => {
@@ -363,6 +359,10 @@ test.describe('l’inbox adressable (docs/SPEC-recherche.md §15)', () => {
 	test('LA PALETTE Y MÈNE RÉELLEMENT — le parcours entier, du terme au message', async ({ page }) => {
 		await connecter(page)
 		await page.goto('/board')
+		// Le raccourci n'existe qu'une fois l'en-tête rendu, donc la session restaurée : depuis `CRM-092`
+		// un chargement de page la restaure par l'échangeur, un aller-retour réseau. Appuyer avant
+		// frappait la carte de restauration. L'attente porte sur un signal visible (`CLAUDE.md` §18).
+		await expect(page.getByTestId('champ-recherche')).toBeVisible()
 
 		// C'EST LE SEUL SCÉNARIO QUI ÉPROUVE LA CHAÎNE COMPLÈTE : la palette compose l'adresse
 		// (§13.5), l'inbox l'honore (§15). Prouver les deux bouts séparément laisserait passer un

@@ -8,6 +8,8 @@
 //           écran), §5.30 (le graphique est `aria-hidden`, le tableau est sa version accessible ;
 //           le lien vit dans le tableau), §5.8 (états), §7 (les quatre paliers), §8 (clavier)
 // @verifies CLAUDE.md §16 (vérification visuelle), §22 (accessibilité clavier)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
+//           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
 // CE FICHIER NE MODIFIE RIEN, ET C'EST UNE CONTRAINTE DURE — la règle de `couts-track.spec.ts` et
 // de `couts-budget.spec.ts`, reprise sans changement. `apply-seed.sh` compte les lignes de
@@ -36,8 +38,7 @@
 //     comportement VOULU : un total juste au centime près qui divulguerait par soustraction
 //     l'existence d'un budget fermé serait un défaut d'autorisation, pas un défaut d'affichage.
 
-import { autoriserErreursConsole, expect, test, type Page } from './fixtures'
-import { MOT_DE_PASSE_SEED } from '../api/jetons'
+import { autoriserErreursConsole, connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-086'
@@ -53,13 +54,7 @@ const TRACK_EN_FRANCS = 'Formation'
 const BUDGET_FERME_A_LA_LECTRICE = 'Prospection sortante'
 
 async function connecter(page: Page, email = ADMIN): Promise<void> {
-	await page.goto('/connexion')
-	await page.getByLabel('Adresse email').click()
-	await page.keyboard.type(email)
-	await page.keyboard.press('Tab')
-	await page.keyboard.type(MOT_DE_PASSE_SEED)
-	await page.keyboard.press('Enter')
-	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	await connecterAvecLeLabs(page, email)
 }
 
 /** La ligne du tableau équivalent d'un track donné — §5.30. */

@@ -1,88 +1,272 @@
-// @verifies CRM-009 (docs/BACKLOG.md) — restauration, connexion et déconnexion partagées
-// @verifies docs/SPEC-auth.md §9.1 (restauration avant lectures), §9.4 (déconnexion)
-// @verifies docs/SPEC-webapp.md §6.2 (état de session unique)
+// @verifies CRM-009 (docs/BACKLOG.md) — restauration avant les lectures, état de session unique
+// @verifies CRM-092 (docs/BACKLOG.md) — session ouverte, prolongée et fermée par l'échangeur
+// @verifies docs/SPEC-session-sso.md §8.3 (jeton en mémoire, rien sur l'appareil), §8.4 (restauration,
+//           rafraîchissement 60 s avant l'échéance, panne réessayée jusqu'à l'échéance, fin de session,
+//           K18 : Realtime attendu avant la session), §8.5 (déconnexion sans révocation)
+// @verifies docs/SPEC-auth.md §9.1 ; docs/SPEC-webapp.md §6.2
 
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { Session, User } from '@supabase/supabase-js'
-import type { ClientCrm } from '../lib/supabase'
-import { FournisseurAuthentification, useAuthentification } from './Authentification'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
+import type { Echangeur, IssueFermeture, IssueGeste, SessionInterne } from '../lib/session'
+import { creerPorteurJeton, type ClientCrm, type PorteurJeton } from '../lib/supabase'
+import { useRenvoiFinSession } from './App'
+import { AVANCE_RAFRAICHISSEMENT_MS, FournisseurAuthentification, useAuthentification } from './Authentification'
 
-afterEach(cleanup)
+const T0 = 1_790_000_000_000
 
-const UTILISATEUR = { id: 'u-1', email: 'admin@p2enjoy.test' } as User
+beforeEach(() => {
+	vi.useFakeTimers({ shouldAdvanceTime: true })
+	vi.setSystemTime(T0)
+	sessionStorage.clear()
+	localStorage.clear()
+})
+
+afterEach(() => {
+	cleanup()
+	vi.useRealTimers()
+})
+
+function session(jeton: string, dureeS = 300, decalageServeurS = 0): SessionInterne {
+	const expireA = Math.floor(Date.now() / 1000) + decalageServeurS + dureeS
+	return { jeton, expireA, dureeS, identite: { id: '5eed0000-0000-4000-8000-000000000011', email: 'admin@exemple.tld', nom: 'Admin' } }
+}
+
+type FauxClient = { readonly client: ClientCrm; readonly setAuth: ReturnType<typeof vi.fn>; readonly jetonsVusParRealtime: (string | null)[] }
+
+function fauxClient(porteur: PorteurJeton): FauxClient {
+	const jetonsVusParRealtime: (string | null)[] = []
+	const setAuth = vi.fn(async () => {
+		jetonsVusParRealtime.push(porteur.lire())
+	})
+	const requete = {
+		select: () => requete,
+		eq: () => requete,
+		maybeSingle: async () => ({ data: null, error: null, status: 200 }),
+	}
+	const client = { realtime: { setAuth }, from: () => requete } as unknown as ClientCrm
+	return { client, setAuth, jetonsVusParRealtime }
+}
+
+function fauxEchangeur(prolongations: (IssueGeste | Promise<IssueGeste>)[], ouverture?: IssueGeste): Echangeur & {
+	readonly prolonger: ReturnType<typeof vi.fn>
+	readonly fermer: ReturnType<typeof vi.fn>
+	readonly ouvrir: ReturnType<typeof vi.fn>
+} {
+	return {
+		prolonger: vi.fn(async () => {
+			const suivante = prolongations.shift()
+			if (suivante === undefined) throw new Error('prolongation inattendue')
+			return suivante
+		}),
+		ouvrir: vi.fn(async (): Promise<IssueGeste> => ouverture ?? { ok: false, nature: 'sso_echec' }),
+		fermer: vi.fn(async (): Promise<IssueFermeture> => ({ ok: true })),
+	}
+}
 
 function Observateur() {
-	const { etat, connecter, deconnecter } = useAuthentification()
+	const { etat, fin, ouvrirSession, deconnecter } = useAuthentification()
 	return (
 		<div>
 			<span data-testid="statut">{etat.statut}</span>
-			<button type="button" onClick={() => void connecter(' admin@p2enjoy.test ', 'secret')}>
-				connexion
+			<span data-testid="identite">{etat.statut === 'authentifie' ? etat.utilisateur.email : ''}</span>
+			<span data-testid="fin">{fin === null ? '' : `${fin.nature}${fin.adresse === undefined ? '' : `:${fin.adresse}`}`}</span>
+			<button type="button" onClick={() => void ouvrirSession('le-code', 'le-verificateur', 'https://crm.tld/auth/retour')}>
+				ouvrir
 			</button>
-			<button type="button" onClick={() => void deconnecter()}>
+			<button type="button" onClick={() => void deconnecter().then((r) => document.body.setAttribute('data-deconnexion', String(r.ok)))}>
 				déconnexion
 			</button>
 		</div>
 	)
 }
 
-function fauxClient(sessionInitiale: Session | null = null) {
-	let ecoute: ((evenement: string, session: Session | null) => void) | undefined
-	const signInWithPassword = vi.fn(async () => ({ data: { user: UTILISATEUR, session: {} }, error: null }))
-	const signOut = vi.fn(async () => ({ error: null }))
-	const client = {
-		auth: {
-			getSession: vi.fn(async () => ({ data: { session: sessionInitiale }, error: null })),
-		onAuthStateChange: vi.fn((rappel: (evenement: string, session: Session | null) => void) => {
-				ecoute = rappel
-				return { data: { subscription: { unsubscribe: vi.fn() } } }
-			}),
-			signInWithPassword,
-			signOut,
-		},
-	} as unknown as ClientCrm
-	return { client, signInWithPassword, signOut, emettre: (session: Session | null) => ecoute?.('SIGNED_IN', session) }
+function monter(echangeur: Echangeur, porteur = creerPorteurJeton()) {
+	const faux = fauxClient(porteur)
+	render(
+		<FournisseurAuthentification client={faux.client} porteur={porteur} echangeur={echangeur}>
+			<Observateur />
+		</FournisseurAuthentification>,
+	)
+	return { ...faux, porteur }
 }
 
-describe('fournisseur de session', () => {
-	it('ne rend pas un appelant anonyme pendant la restauration', async () => {
-		let resoudre!: (valeur: unknown) => void
-		const client = {
-			auth: {
-				getSession: () => new Promise((resolution) => (resoudre = resolution)),
-				onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } }),
-			},
-		} as unknown as ClientCrm
-		render(
-			<FournisseurAuthentification client={client}>
-				<Observateur />
-			</FournisseurAuthentification>,
-		)
-		expect(screen.getByTestId('statut').textContent).toBe('chargement')
+const statut = () => screen.getByTestId('statut').textContent
 
-		await act(async () => resoudre({ data: { session: null }, error: null }))
-		expect(screen.getByTestId('statut').textContent).toBe('anonyme')
+describe('restauration au chargement', () => {
+	it('reste en chargement tant que l’échangeur n’a pas répondu, puis rend la session du cookie', async () => {
+		let repondre!: (issue: IssueGeste) => void
+		const echangeur = fauxEchangeur([new Promise((r) => (repondre = r))])
+		const { porteur, jetonsVusParRealtime } = monter(echangeur)
+		expect(statut()).toBe('chargement')
+
+		await act(async () => repondre({ ok: true, session: session('jeton-1') }))
+		await waitFor(() => expect(statut()).toBe('authentifie'))
+		expect(screen.getByTestId('identite').textContent).toBe('admin@exemple.tld')
+		expect(porteur.lire()).toBe('jeton-1')
+		// K18 : Realtime a reçu le jeton AVANT que la session soit déclarée.
+		expect(jetonsVusParRealtime).toEqual(['jeton-1'])
 	})
 
-	it('connecte avec l’email normalisé puis ferme la vraie session', async () => {
-		const { client, signInWithPassword, signOut } = fauxClient()
+	it('rend l’état anonyme SANS message quand aucune session n’existe', async () => {
+		monter(fauxEchangeur([{ ok: false, nature: 'session_absente' }]))
+		await waitFor(() => expect(statut()).toBe('anonyme'))
+		expect(screen.getByTestId('fin').textContent).toBe('')
+	})
+
+	it('dit pourquoi une session restaurée est refusée', async () => {
+		monter(fauxEchangeur([{ ok: false, nature: 'attente_verification', adresse: 'attendu@exemple.tld' }]))
+		await waitFor(() => expect(screen.getByTestId('fin').textContent).toBe('attente_verification:attendu@exemple.tld'))
+		expect(statut()).toBe('anonyme')
+	})
+
+	it('reste anonyme sans configuration, sans jamais appeler l’échangeur', async () => {
+		const echangeur = fauxEchangeur([])
 		render(
-			<FournisseurAuthentification client={client}>
+			<FournisseurAuthentification client={null} echangeur={echangeur}>
 				<Observateur />
 			</FournisseurAuthentification>,
 		)
-		await waitFor(() => expect(screen.getByTestId('statut').textContent).toBe('anonyme'))
+		expect(statut()).toBe('anonyme')
+		expect(echangeur.prolonger).not.toHaveBeenCalled()
+	})
+})
 
-		screen.getByRole('button', { name: 'connexion' }).click()
-		await waitFor(() => expect(screen.getByTestId('statut').textContent).toBe('authentifie'))
-		expect(signInWithPassword).toHaveBeenCalledWith({
-			email: 'admin@p2enjoy.test',
-			password: 'secret',
-		})
+describe('rafraîchissement', () => {
+	it('part 60 s avant l’échéance du jeton interne, et remplace le jeton sans perdre la session', async () => {
+		const echangeur = fauxEchangeur([{ ok: true, session: session('jeton-1', 300) }, { ok: true, session: session('jeton-2', 300) }])
+		const { porteur, jetonsVusParRealtime } = monter(echangeur)
+		await waitFor(() => expect(statut()).toBe('authentifie'))
+		expect(echangeur.prolonger).toHaveBeenCalledTimes(1)
 
-		screen.getByRole('button', { name: 'déconnexion' }).click()
-		await waitFor(() => expect(screen.getByTestId('statut').textContent).toBe('anonyme'))
-		expect(signOut).toHaveBeenCalledOnce()
+		await act(async () => vi.advanceTimersByTime(300_000 - AVANCE_RAFRAICHISSEMENT_MS - 1_000))
+		expect(echangeur.prolonger).toHaveBeenCalledTimes(1)
+		await act(async () => vi.advanceTimersByTime(1_000))
+		await waitFor(() => expect(porteur.lire()).toBe('jeton-2'))
+		expect(echangeur.prolonger).toHaveBeenCalledTimes(2)
+		expect(statut()).toBe('authentifie')
+		expect(jetonsVusParRealtime).toEqual(['jeton-1', 'jeton-2'])
+	})
+
+	it('compte l’échéance sur la durée du jeton : une horloge du poste décalée ne fait pas boucler', async () => {
+		// Le serveur vit 10 min DERRIÈRE le poste : lue à l'horloge du poste, l'échéance absolue serait
+		// déjà passée, et la page prolongerait sans cesse. La durée, elle, est commune aux deux.
+		const echangeur = fauxEchangeur([{ ok: true, session: session('jeton-1', 300, -600) }, { ok: true, session: session('jeton-2', 300, -600) }])
+		const { porteur } = monter(echangeur)
+		await waitFor(() => expect(statut()).toBe('authentifie'))
+		await act(async () => vi.advanceTimersByTime(60_000))
+		expect(echangeur.prolonger).toHaveBeenCalledTimes(1)
+		await act(async () => vi.advanceTimersByTime(180_000))
+		await waitFor(() => expect(porteur.lire()).toBe('jeton-2'))
+		expect(echangeur.prolonger).toHaveBeenCalledTimes(2)
+	})
+
+	it('réessaie une panne réseau jusqu’à l’échéance, puis met fin à la session avec le message réseau', async () => {
+		const pannes: IssueGeste[] = Array.from({ length: 10 }, () => ({ ok: false, nature: 'reseau' }))
+		const echangeur = fauxEchangeur([{ ok: true, session: session('jeton-1', 300) }, ...pannes])
+		const { porteur, jetonsVusParRealtime } = monter(echangeur)
+		await waitFor(() => expect(statut()).toBe('authentifie'))
+
+		await act(async () => vi.advanceTimersByTime(240_000))
+		await waitFor(() => expect(echangeur.prolonger).toHaveBeenCalledTimes(2))
+		expect(statut()).toBe('authentifie')
+		await act(async () => vi.advanceTimersByTime(60_000))
+		await waitFor(() => expect(statut()).toBe('anonyme'))
+		expect(screen.getByTestId('fin').textContent).toBe('reseau')
+		expect(porteur.lire()).toBeNull()
+		expect(jetonsVusParRealtime.at(-1)).toBeNull()
+		// 240 s, puis toutes les 10 s jusqu'à 300 s : six nouveaux essais au plus, jamais au-delà.
+		expect(echangeur.prolonger.mock.calls.length).toBeLessThanOrEqual(8)
+	})
+
+	it.each([
+		[{ ok: false, nature: 'session_expiree' } as IssueGeste, 'session_expiree'],
+		[{ ok: false, nature: 'session_absente' } as IssueGeste, 'session_expiree'],
+		[{ ok: false, nature: 'attente_espace', adresse: 'admin@exemple.tld' } as IssueGeste, 'attente_espace:admin@exemple.tld'],
+	])('met fin à la session sur un refus au rafraîchissement (%j)', async (refus, fin) => {
+		const echangeur = fauxEchangeur([{ ok: true, session: session('jeton-1', 300) }, refus])
+		const { porteur } = monter(echangeur)
+		await waitFor(() => expect(statut()).toBe('authentifie'))
+		await act(async () => vi.advanceTimersByTime(240_000))
+		await waitFor(() => expect(statut()).toBe('anonyme'))
+		expect(screen.getByTestId('fin').textContent).toBe(fin)
+		expect(porteur.lire()).toBeNull()
+	})
+})
+
+describe('ouverture et déconnexion', () => {
+	it('ouvre par l’échangeur avec le code et le vérificateur, puis déconnecte sans rien garder', async () => {
+		const echangeur = fauxEchangeur([{ ok: false, nature: 'session_absente' }], { ok: true, session: session('jeton-ouvert') })
+		const { porteur } = monter(echangeur)
+		await waitFor(() => expect(statut()).toBe('anonyme'))
+
+		await act(async () => screen.getByRole('button', { name: 'ouvrir' }).click())
+		await waitFor(() => expect(statut()).toBe('authentifie'))
+		expect(echangeur.ouvrir).toHaveBeenCalledWith('le-code', 'le-verificateur', 'https://crm.tld/auth/retour')
+		expect(porteur.lire()).toBe('jeton-ouvert')
+		expect(sessionStorage.length).toBe(0)
+		expect(localStorage.length).toBe(0)
+
+		await act(async () => screen.getByRole('button', { name: 'déconnexion' }).click())
+		await waitFor(() => expect(statut()).toBe('anonyme'))
+		expect(echangeur.fermer).toHaveBeenCalledOnce()
+		expect(porteur.lire()).toBeNull()
+		expect(screen.getByTestId('fin').textContent).toBe('')
+	})
+
+	it('garde la session si la fermeture échoue, et le dit', async () => {
+		const echangeur = fauxEchangeur([{ ok: true, session: session('jeton-1') }])
+		echangeur.fermer.mockResolvedValueOnce({ ok: false, nature: 'reseau' })
+		const { porteur } = monter(echangeur)
+		await waitFor(() => expect(statut()).toBe('authentifie'))
+
+		await act(async () => screen.getByRole('button', { name: 'déconnexion' }).click())
+		await waitFor(() => expect(document.body.getAttribute('data-deconnexion')).toBe('false'))
+		expect(statut()).toBe('authentifie')
+		expect(porteur.lire()).toBe('jeton-1')
+	})
+
+	it('une déconnexion pendant un rafraîchissement en vol n’est jamais annulée par sa réponse', async () => {
+		let repondre!: (issue: IssueGeste) => void
+		const echangeur = fauxEchangeur([{ ok: true, session: session('jeton-1', 300) }, new Promise((r) => (repondre = r))])
+		const { porteur } = monter(echangeur)
+		await waitFor(() => expect(statut()).toBe('authentifie'))
+		await act(async () => vi.advanceTimersByTime(240_000))
+		await waitFor(() => expect(echangeur.prolonger).toHaveBeenCalledTimes(2))
+
+		await act(async () => screen.getByRole('button', { name: 'déconnexion' }).click())
+		await waitFor(() => expect(statut()).toBe('anonyme'))
+		await act(async () => repondre({ ok: true, session: session('jeton-ressuscite') }))
+		expect(statut()).toBe('anonyme')
+		expect(porteur.lire()).toBeNull()
+	})
+})
+
+describe('fin de session rendue par /connexion', () => {
+	function Lieu() {
+		const location = useLocation()
+		const etat = location.state as { erreurSso?: string; retour?: string } | null
+		return <p data-testid="lieu">{`${location.pathname}|${etat?.erreurSso ?? ''}|${etat?.retour ?? ''}`}</p>
+	}
+	function Renvoi() {
+		useRenvoiFinSession()
+		return <Lieu />
+	}
+
+	it('mène à /connexion avec la cause et l’adresse quittée, une seule fois', async () => {
+		const echangeur = fauxEchangeur([{ ok: true, session: session('jeton-1', 300) }, { ok: false, nature: 'session_expiree' }])
+		const porteur = creerPorteurJeton()
+		render(
+			<MemoryRouter initialEntries={['/tracks/conseil-ia']}>
+				<FournisseurAuthentification client={fauxClient(porteur).client} porteur={porteur} echangeur={echangeur}>
+					<Routes>
+						<Route path="*" element={<Renvoi />} />
+					</Routes>
+				</FournisseurAuthentification>
+			</MemoryRouter>,
+		)
+		await waitFor(() => expect(screen.getByTestId('lieu').textContent).toBe('/tracks/conseil-ia||'))
+		await act(async () => vi.advanceTimersByTime(240_000))
+		await waitFor(() => expect(screen.getByTestId('lieu').textContent).toBe('/connexion|session_expiree|/tracks/conseil-ia'))
 	})
 })
