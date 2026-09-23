@@ -14466,9 +14466,9 @@ source d'identité, en développement (Keycloak préchargé de comptes et de rô
 Retirer GoTrue et tout ce qui fait naître une identité dans le CRM ; ouvrir la session du produit à
 partir du seul jeton LeLabs ; précharger le Keycloak de développement ; porter seed, harnais et
 scripts sur la vraie connexion SSO ; reprendre le compte de production sous son `sub`.
-**Spécification** : à écrire après l'arbitrage des points A1 à A3 de la décision 578, et à committer
-avant tout code.
+**Spécification** : à écrire sur l'arbitrage de la décision 579, et à committer avant tout code.
 **DoD** : à fixer par la spécification.
 
-- [ ] Arbitrage des points A1, A2 et A3 (décision 578).
+- [x] Arbitrage des points A1, A2 et A3 (décision 579) : échangeur de session, personne attendue
+      **et** `verified`, rôles dans les tables du CRM.
 - [ ] Spécification committée et poussée avant tout code.

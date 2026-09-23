@@ -28963,3 +28963,27 @@ possible :
 **Unité créée** : `CRM-092`, `[ ]`. Sa spécification sera écrite et committée après l'arbitrage, et
 avant tout code. `CRM-091` reste `[~]` : son module PKCE est repris, son échange d'`id_token` est
 remplacé.
+
+## décision 579 — arbitrage du responsable sur A1, A2 et A3 : échangeur de session, personne attendue ET vérifiée, rôles du CRM
+
+*2026-09-23, même session, réponse du responsable aux trois points de la décision 578.*
+
+| Point | Choix du responsable | Ce qui est donc écarté |
+|---|---|---|
+| **A1** — ce qui ouvre la session | **Échangeur de session** : une fonction edge du runtime existant vérifie le jeton d'accès LeLabs — algorithme asymétrique seul, clés lues par la découverte et suivies en rotation, `iss`, `azp`, `exp` — et remet un jeton interne court que PostgREST, Realtime et Storage acceptent sans changement | le jeton LeLabs consommé directement par les trois services (K5) |
+| **A2** — admission | **Personne attendue ET `verified`** : un administrateur d'espace inscrit une adresse et un rôle ; la première connexion LeLabs à cette adresse, **vérifiée**, et portant le rôle de realm **`verified`**, rattache la personne. Toute autre personne voit un écran d'attente lisible, sans aucune donnée | l'admission de toute personne authentifiée ; l'admission sans `verified` |
+| **A3** — rôles | **Tables du CRM** : rôles d'espace (`admin`, `business_developer`, `viewer`) et droits fins inchangés ; le SSO ne fournit que l'identité et l'attestation `verified` | des rôles du CRM portés par le realm |
+
+**Ce que A2 change par rapport à la décision 568.** Celle-ci écrivait : « `verified` n'ajoute rien à
+un accès nominatif accordé par un administrateur d'espace qui sait qui il invite, et l'exiger
+bloquerait l'invité en attente d'un geste humain ». Le responsable **accepte** cette attente : une
+personne attendue mais pas encore vérifiée par LeLabs voit l'écran d'attente, qui doit le lui dire.
+Et comme `docs/SSO-client-lelabs-crm.md` l'exige, le rôle est relu **à chaque ouverture de session**
+et jamais gardé au-delà de la vie du jeton : un `verified` retiré ferme l'accès au plus tard à
+l'échéance du jeton interne.
+
+**Conséquence pour la production (K9).** `martino@p2enjoy.studio` était inscrit **sans aucun rôle**
+au relevé du 2026-09-16 (décision 574). Sous A2, sa première connexion n'aboutira que s'il porte
+`verified` chez LeLabs : c'est un préalable, humain, à la vérification en production.
+
+La spécification de `CRM-092` est écrite sur ces trois choix, committée avant tout code.
