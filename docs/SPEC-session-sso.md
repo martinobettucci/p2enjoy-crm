@@ -2,7 +2,8 @@
 
 Unité de backlog : `CRM-092` (`docs/BACKLOG.md`).
 Décisions : `docs/JOURNAL.md` 578 (instruction du responsable, mesures K1 à K9), 579 (arbitrage A1 à
-A3), 580 (mesures K10 à K17), 581 (correction de K12 : migration élevée, harnais de l'unité).
+A3), 580 (mesures K10 à K17), 581 (correction de K12 : migration élevée, harnais de l'unité),
+585 (T5 avant T4), 586 (**client serveur** : arbitrage du responsable, sessions serveur).
 Contrats du fournisseur : `docs/SSO.md` (général), `docs/SSO-client-lelabs-crm.md` (client du CRM).
 Documents liés : `docs/SPEC-auth.md` (état remplacé), `docs/SPEC-identite.md` §3 à §6,
 `docs/SPEC-permissions-rls.md` §1 à §3, `docs/SPEC-edge-functions.md` §2 à §5, `docs/SPEC-seed.md`
@@ -26,10 +27,12 @@ production (décision 578). Le CRM ne crée, ne prouve et ne conserve aucune ide
 Ce que le CRM garde, c'est **l'autorisation** : les appartenances aux espaces, leurs rôles et les
 droits fins restent dans ses tables et sont relus à chaque requête par la RLS (décision 579, A3).
 
-Entre les deux, un **échangeur de session** (décision 579, A1) : il reçoit le jeton d'accès LeLabs,
-le vérifie, applique la règle d'admission, et remet au navigateur un **jeton interne** court, que
-PostgREST, Realtime et Storage acceptent sans changement. L'échangeur ne stocke rien : il traduit une
-preuve vérifiée en un format que la pile de données sait lire.
+Entre les deux, un **échangeur de session** (décision 579, A1), **client confidentiel de LeLabs**
+(décision 586) : il reçoit le code d'autorisation, l'échange avec son secret, vérifie le jeton d'accès
+obtenu, applique la règle d'admission, garde **côté serveur** le jeton de rafraîchissement LeLabs, et
+remet au navigateur un **jeton interne** court — que PostgREST, Realtime et Storage acceptent sans
+changement — et une **poignée de session** opaque dans un cookie `httpOnly`. Aucun jeton LeLabs
+n'atteint le navigateur.
 
 Comme partout dans ce projet, « refusé » désigne une règle appliquée côté serveur. Le navigateur
 transporte des preuves ; il ne décide d'aucun accès.
@@ -43,8 +46,8 @@ transporte des preuves ; il ne décide d'aucun accès.
 | Routes Kong `/auth/v1/*` et `/.well-known/oauth-authorization-server` | `supabase/docker/volumes/api/kong.yml` | T6 |
 | Variables propres à GoTrue : `DISABLE_SIGNUP`, `ENABLE_EMAIL_SIGNUP`, `ENABLE_EMAIL_AUTOCONFIRM`, `ENABLE_PHONE_*`, `ENABLE_ANONYMOUS_USERS`, `PASSWORD_MIN_LENGTH`, `ADDITIONAL_REDIRECT_URLS`, `MAILER_*`, `SMTP_*` | `.env.example`, `scripts/lib/env.sh`, `runDev.sh`, `scripts/spark/proposer.sh` | T6 |
 | Formulaire à mot de passe de `/connexion` et module `webapp/src/lib/auth.ts` en ce qu'il classe les refus de GoTrue | webapp | T5 |
-| Échange d'`id_token` de `CRM-091` et son nonce | `webapp/src/lib/sso.ts`, `Authentification.tsx` | T5 |
-| Trigger `on_auth_user_created` et `app.handle_new_user()` | migration `0076` | T6 |
+| Échange d'`id_token` de `CRM-091` et son nonce ; client public `lelabs-crm` | `webapp/src/lib/sso.ts`, `Authentification.tsx` ; realm LeLabs (retrait par son administrateur, décision 586) | T5, production |
+| Trigger `on_auth_user_created` et `app.handle_new_user()` | migration `0077` | T6 |
 | Clé étrangère `profiles.id → auth.users` | migration `0075` | T1 |
 | Création de comptes par l'API d'administration GoTrue, connexions par mot de passe GoTrue | seed, `e2e/api/jetons.ts`, 18 scripts, 50 specs d'interface | T4, T5 |
 
@@ -68,7 +71,7 @@ Résumé ; le détail est dans `docs/JOURNAL.md`, décisions 578 et 580.
 | K7 | La RLS n'emploie que `auth.uid()`, qui ne lit que `sub` | Le jeton interne porte `sub` = `sub` LeLabs ; aucune politique ne change |
 | K11, K12 | Sans GoTrue, `auth.uid()` d'une base neuve rend `NULL` ; ses fonctions appartiennent à un rôle dont `postgres` n'est pas membre | Migration élevée `0074` (§7.1, décision 581) |
 | K13 | Un `id` imposé à l'import devient le `sub` | Les comptes du seed gardent leurs identifiants stables (§10) |
-| K15 | Le client public rafraîchit son jeton sans secret | La webapp rafraîchit chez LeLabs puis rééchange (§8.4) |
+| K15 | Le rafraîchissement rend un nouveau jeton, et l'**ancien reste accepté** : le realm ne révoque pas un jeton réutilisé | Le jeton de rafraîchissement ne quitte jamais le serveur (décision 586, §5.6) |
 | K16 | Révoquer le jeton de rafraîchissement ferme la session LeLabs | La déconnexion du CRM ne révoque rien (§8.5) |
 | K17 | La cellule sort vers `oauth.lelabs.tech` | L'échangeur lit la découverte et les clés en production |
 
@@ -76,53 +79,92 @@ Résumé ; le détail est dans `docs/JOURNAL.md`, décisions 578 et 580.
 
 1. **`/connexion`** offre **une seule action**, primaire : « Se connecter avec LeLabs » (§9).
 2. La webapp lit la découverte, tire un vérificateur PKCE et un `state`, enregistre la transaction et
-   navigue vers le point d'autorisation — **sans nonce** désormais : aucun `id_token` n'est plus lu,
-   et PKCE protège le code (§8.1).
-3. LeLabs revient sur **`/auth/retour`**. La transaction est retirée dès sa lecture ; `state` et `code`
-   sont jugés comme aujourd'hui (`docs/SPEC-auth.md` §10.3, points 5 et 6).
-4. La webapp échange le code au point de jeton de LeLabs et lit **le jeton d'accès et le jeton de
-   rafraîchissement**. L'`id_token` n'est plus lu.
-5. Elle présente le jeton d'accès à l'**échangeur** (§5). Celui-ci rend soit un jeton interne, soit un
-   refus nommé (§5.4).
-6. Succès : la session est écrite dans le stockage d'onglet (§8.3), l'adresse de retour est rejointe
-   par remplacement. Refus : retour à `/connexion`, qui rend le refus ou l'attente (§9).
+   navigue vers le point d'autorisation — **sans nonce** : aucun `id_token` n'est lu, et PKCE protège
+   le code (§8.1).
+3. LeLabs revient sur **`/auth/retour`**, route de la webapp. La transaction est retirée dès sa
+   lecture ; `state` et `code` sont jugés comme avant (`docs/SPEC-auth.md` §10.3, points 5 et 6).
+4. La webapp remet à l'échangeur le **code**, le **vérificateur** et l'URL de retour (§5.2). Elle ne
+   parle plus au point de jeton de LeLabs : c'est l'échangeur, client confidentiel, qui échange le code
+   **avec son secret** (décision 586).
+5. L'échangeur rend soit la session — jeton interne en corps, poignée en cookie `httpOnly` —, soit un
+   refus nommé (§5.5).
+6. Succès : le jeton interne est gardé **en mémoire** (§8.3), l'adresse de retour est rejointe par
+   remplacement. Refus : retour à `/connexion`, qui rend le refus ou l'attente (§9).
 
-## 5. L'échangeur de session — fonction edge `session`
+## 5. L'échangeur de session — fonction edge `session`, client confidentiel
 
-### 5.1 Requête
+### 5.1 Trois gestes, une seule origine
 
-`POST /functions/v1/session`, derrière Kong comme toute fonction (`docs/SPEC-edge-functions.md` §5) :
-en-tête `apikey` (clé anonyme) et `Authorization: Bearer <jeton d'accès LeLabs>`. La traduction Lua de
-Kong laisse passer un `Authorization` qui ne commence pas par `Bearer sb_` (mesuré dans
-`kong-entrypoint.sh`). Corps vide. Toute autre méthode : `405`.
+| Geste | Requête | Réponse de succès |
+|---|---|---|
+| **Ouvrir** | `POST /functions/v1/session/ouvrir`, corps JSON `{ "code", "verificateur", "redirect_uri" }` | `200`, corps du §5.4, `Set-Cookie` de la poignée |
+| **Prolonger** | `POST /functions/v1/session/prolonger`, cookie de la poignée, corps vide | `200`, corps du §5.4 |
+| **Fermer** | `POST /functions/v1/session/fermer`, cookie de la poignée, corps vide | `204`, cookie effacé |
 
-### 5.2 Vérifications, dans cet ordre
+Tous portent l'en-tête `apikey` (clé anonyme) que Kong exige (`docs/SPEC-edge-functions.md` §5). Toute
+autre méthode : `405` ; tout autre chemin : `404`.
 
-Toutes appliquées **avant** tout accès à la base. La première qui échoue arrête l'échange.
+**La webapp les appelle par un chemin RELATIF**, donc sur sa propre origine. En production, Caddy
+relaie déjà `/functions/v1/*` vers Kong (`caddy/routes.caddy`) ; en développement et sous le harnais,
+le proxy de Vite relaie `/functions/v1/session` vers Kong. Le cookie est ainsi **de même origine**
+partout, et aucune configuration CORS n'est nécessaire. Mesuré le 2026-09-23 : la webapp de
+développement est servie sur `127.0.0.1`, l'API sur `localhost` — deux sites où un cookie `SameSite`
+ne passerait pas (décision 586).
 
-1. Le jeton est un JWS compact à trois segments base64url, d'en-tête et de charge JSON.
-2. **`alg` ∈ { `RS256`, `ES256` }**. `none`, toute la famille `HS*` et tout autre algorithme sont
-   refusés **avant** de chercher une clé : aucune clé symétrique n'est jamais essayée, comme le
-   demande `docs/SSO-client-lelabs-crm.md`.
-3. **Découverte** : `GET ${SSO_OIDC_ISSUER}/.well-known/openid-configuration`, délai `3 s`. Son
-   `issuer` doit être **égal** à `SSO_OIDC_ISSUER` ; son `jwks_uri` doit être une URL `https:` — ou
-   `http:` sur un hôte de boucle locale ou `*.localhost`, pour le seul Keycloak de développement.
-4. **Clés** : `GET jwks_uri`, délai `3 s`. La clé retenue a le même `kid` que l'en-tête, un `kty`
-   conforme à `alg` (`RSA` ou `EC` `P-256`) et un `use` absent ou égal à `sig`. **Aucune clé n'est
-   épinglée ni gardée** : chaque échange relit la découverte et les clés, ce qui suit toute rotation
-   sans redémarrage. Un `kid` inconnu est un refus.
-5. **Signature** vérifiée par WebCrypto (`RSASSA-PKCS1-v1_5` SHA-256, ou `ECDSA` P-256 SHA-256).
-   Aucune bibliothèque tierce : le runtime fournit tout, et `CLAUDE.md` §19 demande de s'en contenter.
-6. **Revendications** : `iss` **égal** à `SSO_OIDC_ISSUER` ; `azp` **égal** à `SSO_OIDC_CLIENT_ID` ;
-   `typ` égal à `Bearer` — un `id_token` (`typ=ID`) n'est pas un jeton d'accès ; `exp` postérieur à
-   l'instant présent, sans tolérance ; `iat`, s'il est présent, pas plus de `60 s` dans le futur ;
-   `sub` est un UUID — `auth.uid()` le convertit en `uuid`, et un autre format ne pourrait désigner
-   aucun profil.
-7. **Admission** (§6), dans cet ordre : `email` présent et `email_verified` strictement `true`, puis
-   **présence** de `verified` dans `realm_access.roles` — jamais le nombre ni l'ordre des rôles (K14),
-   puis l'appel de `public.ouvrir_session_sso` (§6.2).
+### 5.2 Ouvrir
 
-### 5.3 Réponse de succès — `200`
+Dans cet ordre ; la première étape qui échoue arrête le geste, et **rien n'est écrit en base** avant
+le point 5.
+
+1. **Corps** : `code`, `verificateur` et `redirect_uri` sont des chaînes non vides ; `redirect_uri` est
+   une URL `http(s)` se terminant par `/auth/retour`. Sinon `400 requete_invalide`. LeLabs compare de
+   toute façon l'URL au caractère près à celles déclarées.
+2. **Découverte** : `GET ${SSO_OIDC_ISSUER}/.well-known/openid-configuration`. Son `issuer` doit être
+   **égal** à `SSO_OIDC_ISSUER` ; son `token_endpoint` et son `jwks_uri` sont des URL `https:` — ou
+   `http:` vers la boucle locale ou `*.localhost`, pour le seul Keycloak de développement.
+3. **Échange du code** au `token_endpoint` : `grant_type=authorization_code`, `client_id`,
+   **`client_secret`** (`SSO_OIDC_CLIENT_SECRET`), `code`, `code_verifier`, `redirect_uri`. Un refus
+   `4xx` de LeLabs — code déjà servi, échu, émis pour un autre client, vérificateur faux — rend
+   `401 jeton_refuse`. La réponse doit porter `access_token` et `refresh_token`.
+4. **Vérification du jeton d'accès** obtenu, même reçu directement de LeLabs par TLS : c'est la même
+   fonction qu'en T3, et elle ne coûte qu'une lecture de clés.
+   1. JWS compact à trois segments d'entête et de charge JSON ;
+   2. **`alg` ∈ { `RS256`, `ES256` }**, vérifié **avant** toute lecture de clé : `none`, `HS*` et tout
+      autre algorithme sont refusés sans qu'une clé soit jamais essayée
+      (`docs/SSO-client-lelabs-crm.md`) ;
+   3. **clés** lues au `jwks_uri` — même `kid`, `kty` conforme, `use` absent ou `sig` —, **relues à
+      chaque geste**, jamais épinglées : toute rotation est suivie sans redémarrage ;
+   4. **signature** par WebCrypto ;
+   5. **revendications** : `iss` égal à `SSO_OIDC_ISSUER`, `azp` égal à `SSO_OIDC_CLIENT_ID`, `typ` égal à
+      `Bearer`, `exp` futur sans tolérance, `iat` au plus 60 s dans le futur, `sub` UUID ; **jamais
+      `aud`** (K14).
+5. **Admission** (§6) : adresse vérifiée, puis **présence** de `verified`, puis
+   `public.ouvrir_session_serveur` (§7.4), qui applique `ouvrir_session_sso` (§6.2) **et**, si la
+   personne est admise, enregistre la session serveur — en un seul appel.
+6. **Réponse** : jeton interne (§5.4) et `Set-Cookie` de la poignée (§5.6).
+
+### 5.3 Prolonger et fermer
+
+**Prolonger** sert au rafraîchissement **et** à la restauration au chargement de la page.
+
+1. Sans cookie de poignée : `401 session_absente` — le cas normal d'un navigateur jamais connecté.
+2. `public.lire_session_serveur(hash(poignée))` rend le `sub` et le jeton de rafraîchissement chiffré
+   d'une session **non révoquée et non échue** ; sinon `401 session_absente`, et le cookie est effacé.
+3. Découverte, puis `grant_type=refresh_token` avec le secret. Un refus `4xx` de LeLabs — session LeLabs
+   échue ou fermée — **supprime** la session serveur, efface le cookie et rend `401 session_expiree`.
+4. Vérification du nouveau jeton d'accès (§5.2, point 4). Son `sub` doit être celui de la session.
+5. Admission rejouée **en entier** : `public.renouveler_session_serveur` réapplique la règle du §6 et,
+   si la personne est toujours admise, remplace le jeton de rafraîchissement — LeLabs en rend un
+   nouveau à chaque fois — et son échéance. Sinon il **supprime** la session, et l'échangeur efface le
+   cookie et rend le refus nommé : un `verified` retiré ou une appartenance retirée ferment l'accès au
+   prochain rafraîchissement, donc **au plus tard 300 s après**.
+
+**Fermer** supprime la session serveur désignée par la poignée et efface le cookie ; `204` même sans
+cookie — fermer ce qui n'existe pas n'est pas une erreur. **Rien n'est révoqué chez LeLabs** : révoquer
+le jeton de rafraîchissement fermerait la session LeLabs de la personne (K16), ce que `docs/SSO.md`
+exclut.
+
+### 5.4 Réponse de succès — `200`
 
 ```json
 { "jeton": "<jeton interne>", "expire_a": 1790180430,
@@ -138,56 +180,73 @@ Storage connaissent déjà :
 | `sub` | le `sub` LeLabs |
 | `role` | `authenticated` |
 | `aud` | `authenticated` |
-| `iat` | l'instant de l'échange |
-| `exp` | **le plus proche** de l'`exp` du jeton LeLabs et de `iat + 300` |
+| `iat` | l'instant du geste |
+| `exp` | **le plus proche** de l'`exp` du jeton d'accès LeLabs et de `iat + 300` |
 
 Il ne porte **ni rôle du realm, ni rôle d'espace, ni adresse** : les droits restent relus par la RLS
-(§1), et l'admission est rejouée à chaque échange (§8.4). Sa durée ne dépasse jamais celle du jeton
-LeLabs : un `verified` retiré, une appartenance retirée ou un compte LeLabs désactivé ferment l'accès
-**au plus tard 300 s après**. C'est la lecture, pour ce CRM, de « relisez le rôle à chaque requête et
-ne le gardez pas au-delà de la durée de vie du jeton ».
+(§1), et l'admission est rejouée à chaque prolongation (§5.3). C'est la lecture, pour ce CRM, de
+« relisez le rôle à chaque requête et ne le gardez pas au-delà de la durée de vie du jeton ».
 
 Ce jeton est symétrique, et la règle du fournisseur interdit d'**accepter** un jeton symétrique **comme
-preuve SSO** : l'échangeur n'en accepte aucun (§5.2, point 2). Le jeton interne ne prouve rien au
+preuve SSO** : l'échangeur n'en accepte aucun (§5.2, point 4.2). Le jeton interne ne prouve rien au
 SSO ; il ne sort pas du CRM.
 
-### 5.4 Refus — dictionnaire fermé
+### 5.5 Refus — dictionnaire fermé
 
 Corps `{"erreur": "<code>"}`, auquel s'ajoute `"adresse"` pour les trois attentes, afin que l'écran
 puisse la nommer. Aucune autre information : ni motif technique, ni message du fournisseur.
 
 | Code HTTP | `erreur` | Cause |
 |---|---|---|
-| `401` | `jeton_refuse` | en-tête absent ou mal formé, point 1, 2, 4, 5 ou 6 du §5.2 |
+| `400` | `requete_invalide` | corps d'ouverture absent ou mal formé |
+| `401` | `jeton_refuse` | code refusé par LeLabs, ou jeton d'accès non conforme au §5.2, point 4 |
+| `401` | `session_absente` | aucun cookie, poignée inconnue, révoquée ou échue |
+| `401` | `session_expiree` | LeLabs refuse le rafraîchissement : la session LeLabs a pris fin |
 | `403` | `adresse_non_verifiee` | `email` absent ou `email_verified` différent de `true` |
 | `403` | `attente_verification` | `verified` absent des rôles du realm |
 | `403` | `attente_espace` | personne vérifiée, mais aucune appartenance ni aucune attente à son adresse (§6) |
+| `404` | `geste_inconnu` | chemin autre que `ouvrir`, `prolonger`, `fermer` |
 | `405` | `methode` | méthode autre que `POST` |
-| `502` | `sso_injoignable` | découverte ou clés injoignables, délai dépassé, réponse non conforme, émetteur de la découverte différent |
-| `502` | `service_indisponible` | appel de `ouvrir_session_sso` en échec |
+| `502` | `sso_injoignable` | découverte, point de jeton ou clés injoignables, échéance dépassée, réponse non conforme |
+| `502` | `service_indisponible` | appel de la base en échec, ou configuration absente |
 
-Un `401` ne distingue pas ses causes : les distinguer n'aiderait que qui forge des jetons.
+Un `401 jeton_refuse` ne distingue pas ses causes : les distinguer n'aiderait que qui forge des jetons.
 
-### 5.5 Environnement, journalisation, limites
+### 5.6 La poignée de session et son cookie
 
-- **Variables** : `SSO_OIDC_ISSUER`, `SSO_OIDC_CLIENT_ID`, `JWT_SECRET`, `SUPABASE_URL`,
-  `SUPABASE_SERVICE_ROLE_KEY`. Le service principal (`supabase/functions/main`) transmet désormais
-  l'environnement **par fonction** : `JWT_SECRET` et les deux `SSO_*` ne sont remis **qu'à** `session`.
-  Une autre fonction ne peut pas frapper un jeton.
-- **Journal** : un événement structuré par échange — `session_ouverte` ou `session_refusee` avec son
-  code, identifiant de requête et durée. **Jamais** de jeton, d'adresse, de nom ni de `sub`.
-- **Délais** : `3 s` par appel — découverte, clés, puis la base —, pour que les trois restent sous
-  les 10 s de temps mur d'un worker (`docs/SPEC-edge-functions.md` §2) et qu'un fournisseur lent
-  rende `sso_injoignable` plutôt qu'un worker tué sans réponse (révisé en T3, décision 584).
-- **Configuration absente** : l'échangeur rend `service_indisponible` et journalise
-  `configuration_absente`, sans rien tenter.
-- **Coût** : deux lectures chez LeLabs par échange, soit une ouverture et un rafraîchissement toutes les
-  cinq minutes environ par onglet ouvert. Le service principal crée un worker par requête
-  (`--policy oneshot`) : aucune mémoire ne survit, et c'est ce qui rend la rotation gratuite. Le délai
-  mesuré d'un échange est consigné à la livraison ; un cache n'est ajouté que si une mesure le justifie
-  (`CLAUDE.md` §21).
-- **Mode dégradé** : LeLabs injoignable, aucune session ne s'ouvre ni ne se prolonge ; les sessions en
-  cours s'arrêtent au plus tard à leur échéance, avec le message réseau (§9). Aucun repli qui
+- **Poignée** : 32 octets tirés par `crypto.getRandomValues`, en base64url. Seule son empreinte
+  **SHA-256** est gardée en base : une fuite de la table ne livre aucune poignée utilisable.
+- **Cookie** : `p2enjoy_crm_session=<poignée>; Path=/functions/v1/session; HttpOnly; SameSite=Strict`,
+  plus **`Secure` quand l'origine appelante est `https`** (en-tête `Origin`), sans `Max-Age` : un
+  cookie **de session du navigateur**, effacé à sa fermeture. Aucun script de la page ne le lit, et il
+  n'est envoyé qu'à l'échangeur. `Set-Cookie` est accompagné de `Cache-Control: no-store`.
+- **Catégorie 1** de `CLAUDE.md` §11 : strictement nécessaire à la session, sans traçage.
+- **La posture change, et c'est voulu** (décision 586) : la session vivait dans l'onglet ; elle vit
+  désormais dans le navigateur, partagée par ses onglets, jusqu'à sa fermeture ou à la déconnexion.
+- **Contrefaçon de requête** : `SameSite=Strict` n'envoie pas le cookie depuis un autre site, et
+  l'`apikey` exigée en en-tête impose une requête de script, que la même politique d'origine borne.
+
+### 5.7 Environnement, chiffrement, journal, limites
+
+- **Variables remises au seul worker `session`** (`main/environnement.ts`) : `JWT_SECRET`,
+  `SSO_OIDC_ISSUER`, `SSO_OIDC_CLIENT_ID`, **`SSO_OIDC_CLIENT_SECRET`**, en plus du commun. Une autre
+  fonction ne peut ni frapper un jeton, ni parler à LeLabs au nom du CRM.
+- **Chiffrement au repos du jeton de rafraîchissement** : AES-GCM 256, vecteur de 12 octets tiré à
+  chaque écriture, clé dérivée de `JWT_SECRET` par HKDF-SHA-256 (sel fixe, information
+  `p2enjoy-crm/sessions-sso/v1`). Une sauvegarde de base seule ne livre aucun jeton utilisable. La clé
+  n'est pas un secret de plus : qui détient `JWT_SECRET` peut déjà frapper tout jeton interne.
+- **Échéance** : **8 s** par geste, et au plus **3 s** par appel dans ce qui en reste, pour que la
+  réponse parte toujours avant les 10 s de temps mur d'un worker (`docs/SPEC-edge-functions.md` §2).
+  Un dépassement rend `sso_injoignable` ou `service_indisponible`, jamais un worker tué sans réponse.
+- **Journal** : un événement structuré par geste — `session_ouverte`, `session_prolongee`,
+  `session_fermee` ou `session_refusee` avec son code, et sa durée. **Jamais** de jeton, de poignée, de
+  code, d'adresse, de nom ni de `sub`.
+- **Coût** : un geste d'ouverture lit la découverte, le point de jeton et les clés ; une prolongation
+  en fait autant, toutes les cinq minutes environ par navigateur ouvert. Aucun cache : le service
+  principal crée un worker par requête, et c'est ce qui rend la rotation gratuite. Le délai mesuré est
+  consigné à la livraison ; un cache n'est ajouté que si une mesure le justifie (`CLAUDE.md` §21).
+- **Mode dégradé** : LeLabs injoignable, aucune session ne s'ouvre ni ne se prolonge ; la session en
+  cours s'arrête à l'échéance de son jeton interne, avec le message réseau (§9). Aucun repli qui
   ouvrirait une session sans preuve.
 
 ## 6. Admission — personne attendue ET vérifiée
@@ -215,8 +274,8 @@ d'`admin` chez LeLabs reste lecteur dans un espace où il est lecteur.
 
 `SECURITY DEFINER`, propriétaire `postgres`, `search_path = ''`, `EXECUTE` retiré à `public`, `anon`
 et `authenticated`, accordé à **`service_role` seul** — le précédent est
-`public.chemin_dossier_card`. Seul l'échangeur l'appelle, après le §5.2 ; la fonction ne revérifie
-pas le jeton, qu'elle ne voit pas.
+`public.chemin_dossier_card`. Seul l'échangeur l'appelle, par les fonctions de session du §7.4, après
+le §5.2 ; la fonction ne revérifie pas le jeton, qu'elle ne voit pas.
 
 Dans une transaction :
 
@@ -281,7 +340,7 @@ ajoute ce fichier à la liste nommée des élévations.
 - **Crée `public.ouvrir_session_sso`** (§6.2).
 
 Le trigger `on_auth_user_created` **reste** jusqu'à T6 : tant que GoTrue tourne encore, il ne gêne
-rien, et le retirer avant que le seed ne passe par le SSO (T4) casserait le seed. La migration `0076`
+rien, et le retirer avant que le seed ne passe par le SSO (T4) casserait le seed. La migration `0077`
 le retire avec GoTrue.
 
 ### 7.3 Données de production
@@ -289,55 +348,76 @@ le retire avec GoTrue.
 La migration ne modifie **aucune ligne**. Le compte de K9 est repris par une opération décrite au §12,
 exécutée sur instruction explicite seulement.
 
+### 7.4 Migration `0076_sessions_serveur.sql` — sessions du client confidentiel (décision 586)
+
+- **Table `public.sessions_sso`** : `id` (`uuid`), `sub` (`uuid`, référence `profiles` en
+  **cascade** — retirer une personne ferme ses sessions), `poignee_empreinte` (`bytea`, 32 octets,
+  **unique**), `rafraichissement` (`text`, chiffré, jamais en clair), `expire_le` (`timestamptz`,
+  échéance d'inactivité que LeLabs rend avec le jeton), `cree_le`, `renouvele_le`.
+- **Personne ne la lit par l'API** : RLS activée **sans aucune politique**, tous privilèges retirés à
+  `anon` et `authenticated`. Seules quatre fonctions `SECURITY DEFINER`, `search_path` vide,
+  exécutables par **`service_role` seul**, y touchent :
+
+  | Fonction | Rôle |
+  |---|---|
+  | `ouvrir_session_serveur(p_sub, p_email, p_nom, p_empreinte, p_rafraichissement, p_expire_le)` | applique `ouvrir_session_sso` ; si admise, enregistre la session. Rend le même objet, plus rien d'autre |
+  | `lire_session_serveur(p_empreinte)` | rend `sub` et jeton chiffré d'une session non échue ; purge au passage les sessions échues depuis plus d'un jour |
+  | `renouveler_session_serveur(p_empreinte, p_sub, p_email, p_nom, p_rafraichissement, p_expire_le)` | réapplique l'admission ; admise, remplace jeton et échéance ; sinon supprime la session |
+  | `fermer_session_serveur(p_empreinte)` | supprime la session ; sans effet si elle n'existe pas |
+
+- Un profil supprimé emporte ses sessions ; une session ne survit jamais à la personne.
+
 ## 8. Webapp
 
 ### 8.1 `webapp/src/lib/sso.ts` — révisé
 
 Garde la découverte (émetteur exact), le PKCE `S256`, la transaction à usage unique de dix minutes et
-le jugement du retour. **Retire** le nonce et l'échange d'`id_token`. `echangerCode` rend
-`{ jetonAcces, jetonRafraichissement }` ; un corps sans l'un des deux est un `sso_echec`. Ajoute
-`rafraichir(pointJeton, clientId, jetonRafraichissement)`, `grant_type=refresh_token`.
+le jugement du retour. **Retire** le nonce, l'échange d'`id_token` et tout appel au point de jeton de
+LeLabs : le client confidentiel est l'échangeur (§5.2).
 
 ### 8.2 `webapp/src/lib/session.ts` — nouveau
 
-Porte la session du CRM et rien d'autre : échange auprès de l'échangeur, classement de ses refus
-(§5.4 vers §9.2), écriture et lecture du stockage, horloge de rafraîchissement, oubli. Il ne rend rien.
+Porte les trois gestes vers l'échangeur (§5.1) et rien d'autre : `ouvrir`, `prolonger`, `fermer`, par
+un chemin **relatif** et l'en-tête `apikey`, avec `credentials: 'same-origin'`. Classe les réponses
+selon le §5.5 vers le dictionnaire du §9.2. Ne rend rien, ne stocke rien.
 
 ### 8.3 Stockage sur l'appareil
 
-- **`p2enjoy-crm.session`**, dans `sessionStorage` par `creerStockageSession`, repli mémoire compris :
-  jeton interne, son échéance, jeton de rafraîchissement LeLabs, point de jeton lu dans la découverte,
-  identité affichable (`id`, `adresse`, `nom`). Catégorie 1 de `CLAUDE.md` §11 : strictement
-  nécessaire à la session, bornée à l'onglet. C'est la posture exacte de la session GoTrue qu'elle
-  remplace, qui portait elle aussi un jeton de rafraîchissement dans ce stockage.
-- **`p2enjoy-crm.sso.transaction`** inchangée.
-- Aucun `localStorage`, aucun cookie posé par le CRM.
+- **Aucun jeton, aucune identité n'est écrit** par la webapp. Le jeton interne vit **en mémoire** ;
+  la poignée vit dans le cookie `httpOnly` que le serveur pose et qu'aucun script ne lit (§5.6).
+- **`p2enjoy-crm.sso.transaction`**, dans `sessionStorage`, reste la seule écriture : `state`,
+  vérificateur, adresse de retour, dix minutes, retirée au retour (catégorie 1 de `CLAUDE.md` §11).
+- Aucun `localStorage`.
 
 ### 8.4 Restauration et rafraîchissement
 
-- Au chargement, la session stockée est relue avant tout montage métier (`docs/SPEC-auth.md` §9.1).
-  Échue ou à moins de 60 s de son échéance : elle est d'abord rafraîchie.
-- Le rafraîchissement part **60 s avant** l'échéance du jeton interne : jeton de rafraîchissement chez
-  LeLabs (K15), puis **nouvel échange** — l'admission est donc rejouée à chaque fois. Un seul
-  rafraîchissement à la fois.
-- Refus de LeLabs (`400`, session LeLabs échue ou fermée) : la session du CRM prend fin avec
-  `session_expiree`. Refus de l'échangeur : la session prend fin avec son code. Réseau : nouvel essai
-  jusqu'à l'échéance, puis fin avec `reseau`.
+- **Au chargement**, avant tout montage métier (`docs/SPEC-auth.md` §9.1), la webapp **prolonge** :
+  un cookie valide rend une session sans aucun geste de la personne ; `session_absente` rend l'état
+  anonyme, sans message.
+- **Le rafraîchissement part 60 s avant** l'échéance du jeton interne, par la même prolongation — qui
+  rejoue l'admission (§5.3). Un seul à la fois.
+- `session_expiree` ou un refus de l'échangeur **mettent fin** à la session : état anonyme et retour
+  à `/connexion`, qui dit pourquoi. Une panne réseau est réessayée jusqu'à l'échéance, puis met fin
+  à la session avec le message réseau.
 - Le client `supabase-js` est créé avec `accessToken`, qui rend le jeton interne courant (K6).
   **Mesuré en T3 (K18, décision 584)** : `supabase-js` pose ce jeton sur Realtime de façon
   asynchrone, sans l'attendre ; un abonnement lancé aussitôt rejoint le canal **en anonyme**. La
-  webapp pose donc le jeton sur Realtime (`realtime.setAuth`) et l'**attend** avant tout abonnement,
-  puis à chaque renouvellement. Un jeton refusé par Realtime ne rend aucun état : il n'entre pas.
-  La preuve de T5 est une souscription qui survit à un rafraîchissement.
+  webapp pose donc le jeton sur Realtime (`realtime.setAuth`) et l'**attend** avant de déclarer la
+  session ouverte, puis à chaque renouvellement.
 
 ### 8.5 Déconnexion
 
-« Se déconnecter » **oublie** la session du CRM — stockage d'onglet vidé, client remis à l'anonyme — et
-mène à `/connexion`. **Rien n'est révoqué chez LeLabs** : révoquer fermerait la session LeLabs de la
-personne (K16), ce que `docs/SSO.md` exclut. Conséquence assumée et documentée dans le manuel : se
-reconnecter depuis le même navigateur ne redemande pas le mot de passe LeLabs tant que la session
-LeLabs vit ; la fermer se fait depuis l'espace de compte LeLabs. Le jeton de rafraîchissement effacé
-reste valide chez LeLabs jusqu'à son échéance d'inactivité, et n'existe plus que là.
+« Se déconnecter » appelle **fermer** (§5.3), oublie le jeton en mémoire, remet Realtime à l'anonyme
+et mène à `/connexion`. **Rien n'est révoqué chez LeLabs** (K16). Conséquence assumée et documentée
+dans le manuel : se reconnecter depuis le même navigateur ne redemande pas le mot de passe LeLabs tant
+que la session LeLabs vit ; la fermer se fait depuis l'espace de compte LeLabs.
+
+### 8.6 Le relais de développement
+
+`webapp/vite.config.ts` relaie `/functions/v1/session` vers Kong — pour le serveur de développement
+comme pour `vite preview` du harnais —, la cible venant de l'environnement du processus
+(`API_RELAIS_SESSION`), jamais du bundle. En production, ce relais n'existe pas : Caddy sert la
+webapp et relaie `/functions/v1/*` sur la même origine.
 
 ## 9. Interface
 
@@ -372,8 +452,10 @@ et qu'un geste d'autrui manque. Elles ne se ressemblent pas.
 - **Refus** : surface `--color-danger-soft`, texte `--color-danger-on-soft`, icône `TriangleAlert`,
   `role="alert"` — la forme existante.
 - **Attente** : surface `--color-accent-soft`, texte `--color-accent-on-soft`, icône Lucide
-  **`Hourglass`**, `role="status"`, titre court « Accès en attente ». Aucune couleur ni aucun jeton
-  nouveau ; une icône nouvelle, qui ne sert aucun autre objet.
+  **`CircleDashed`**, `role="status"`, titre court « Accès en attente ». Aucune couleur ni aucun jeton
+  nouveau ; une icône nouvelle, qui ne sert aucun autre objet. `Hourglass`, d'abord retenue, porte
+  déjà l'entrée « Affaires figées » (`docs/DESIGN_SYSTEM.md` §5.37), et le §9 de ce document interdit
+  qu'une icône serve deux objets — trouvé à la lecture intégrale du design system avant T5.
 - L'une ou l'autre se place au-dessus de l'action, qui la cite par `aria-describedby`. L'action reste
   disponible : se reconnecter est le seul geste utile, une fois la cause levée.
 - Les textes sont centralisés dans `webapp/src/i18n`, clés stables ; l'adresse est interpolée, jamais
@@ -403,8 +485,15 @@ développement. Ce qui change :
 | `attendu@` | `5eed…0015` | oui | **non** | `viewer` | l'attente `attente_verification`, attente non consommée |
 | `adresse-non-verifiee@` | `5eed…0016` | **non** | non | non | l'attente `adresse_non_verifiee`, par la preuve qui l'y amène (§13) |
 
-Le domaine reste `MAIL_DEV_PERSONAL_DOMAIN`, substitué à l'import. Le client `lelabs-crm` garde ses
-deux URL de retour exactes ; le client `crm-audience-etrangere` reste, pour prouver le refus d'`azp`.
+Le domaine reste `MAIL_DEV_PERSONAL_DOMAIN`, substitué à l'import.
+
+**Le client devient confidentiel, comme en production (décision 586)** : `lelabs-crm-serveur`,
+`publicClient: false`, secret **substitué à l'import** depuis `SSO_OIDC_CLIENT_SECRET`, que
+`./runDev.sh` tire au hasard dans le `.env` du poste — le même nom de variable qu'en production, jamais
+une valeur versée. PKCE `S256` reste imposé, les deux URL de retour exactes sont conservées. Le client
+public `lelabs-crm` est **retiré** du realm de développement : il n'a plus d'emploi, et le garder
+laisserait éprouver un chemin que la production n'aura plus. Le client `crm-audience-etrangere`
+reste, pour prouver qu'un code émis pour une autre application est refusé.
 
 **L'API d'administration du Keycloak de développement** sert au seul harnais — comptes jetables d'une
 preuve, rotation de clés, retrait d'un rôle — avec `SSO_DEV_ADMIN_PASSWORD`. Le produit ne l'appelle
@@ -429,34 +518,53 @@ démontré.
 
 ## 12. Production
 
-Opérations à décrire dans `docs/PROD_MIGRATIONS.md` en T7, **chacune exécutée sur instruction
-explicite du responsable** :
+Opérations à décrire dans `docs/PROD_MIGRATIONS.md` en T7 et à mener au déploiement, que le
+responsable a demandé une fois `CRM-092` entièrement vérifiée (décision 584) :
 
-1. Lecture seule d'abord : l'espace `crm` ne porte rien d'autre que l'appartenance de K9 — aucune
+1. **Préalables humains chez LeLabs** :
+   - la **déclaration du client serveur** (décision 586) remise à un administrateur du realm :
+
+     ```
+     CLIENTID=lelabs-crm-serveur
+     NOM=P2Enjoy CRM
+     TYPE=serveur
+     REDIRECT=https://crm.lelabs.tech/auth/retour
+     SECRET_VAR=SSO_OIDC_CLIENT_SECRET
+     ```
+
+     L'identifiant **retenu par le service** fait foi ; le secret, affiché une seule fois à
+     l'administrateur, est posé par lui comme variable de la cellule, sans transiter par aucun dépôt
+     ni message ;
+   - `martino@p2enjoy.studio` porte `verified` et une adresse vérifiée (décision 579) ; sans cela, sa
+     connexion rend l'attente, et c'est le comportement voulu.
+2. **Variables** : les demandes de variables manquantes sont **reposées** par
+   `scripts/spark/proposer.sh` (décision 586) — `SSO_OIDC_CLIENT_ID` au nouvel identifiant,
+   `SSO_OIDC_CLIENT_SECRET` —, et les variables propres à GoTrue sont retirées, dont les `SMTP_*`.
+3. **Lecture seule d'abord** : l'espace `crm` ne porte rien d'autre que l'appartenance de K9 — aucune
    card, aucun commentaire, aucune donnée — et le compte n'a jamais été connecté.
-2. Appliquer `0074`, `0075` et `0076`.
-3. Livrer la fonction `session` ; remettre `JWT_SECRET` et les `SSO_*` au seul service `functions`.
-4. Arrêter et retirer `auth` et `auth-templates` ; retirer les variables du §2, dont les `SMTP_*` que
-   `proposer.sh` proposait pour les seuls courriels de GoTrue.
-5. **Reprise du compte de K9** : l'espace vide est supprimé puis réamorcé par
+4. Appliquer `0074` à `0077` en fenêtre de maintenance.
+5. Livrer la fonction `session` et recréer `functions` ; arrêter et retirer `auth` et `auth-templates` ;
+   reconstruire la webapp.
+6. **Reprise du compte de K9** : l'espace vide est supprimé puis réamorcé par
    `amorcer-espace.sh --email martino@p2enjoy.studio --espace "P2Enjoy CRM" --slug crm`, qui n'inscrit
    plus qu'une **attente** `admin`. Supprimer puis recréer est la seule voie : retirer l'unique
    administrateur d'un espace est refusé par l'invariant du dernier administrateur, même espace vidé
    (`docs/SPEC-identite.md` §5), et le `sub` LeLabs n'est connu qu'à la première connexion.
-6. **Préalable humain** chez LeLabs : `martino@p2enjoy.studio` doit porter `verified` et une adresse
-   vérifiée (décision 579). Sans cela, sa connexion rend l'attente, et c'est le comportement voulu.
-7. Vérifier : sonde `302` ; `/auth/v1/health` ne répond plus ; une connexion réelle aboutit ; l'attente
-   est consommée ; `profiles.id` vaut le `sub` LeLabs.
+7. Vérifier : sonde du nouveau client (`302` sans PKCE) ; `/auth/v1/health` ne répond plus ; une
+   connexion réelle aboutit ; l'attente est consommée ; `profiles.id` vaut le `sub` LeLabs ; une session
+   serveur existe, chiffrée ; le navigateur ne porte aucun jeton LeLabs.
+8. Après une connexion réelle réussie : demander à l'administrateur du realm de **retirer le client
+   public `lelabs-crm`**, désormais sans emploi.
 
 ## 13. Preuves exigées
 
 | Niveau | Preuve |
 |---|---|
-| Unitaire, Deno | `supabase/functions/session/*.test.ts` : jeton mal formé ; `alg` `none`, `HS256`, `HS512`, `RS384` refusés **sans** lecture de clé ; `kid` inconnu ; signature altérée d'un octet ; `iss`, `azp`, `typ` différents ; `exp` passé d'une seconde ; `iat` futur ; `sub` non UUID ; adresse non vérifiée ; `verified` absent, puis présent parmi d'autres rôles dans un autre ordre ; découverte d'un autre émetteur ; délai dépassé ; jeton interne : revendications exactes, signature vérifiable par `JWT_SECRET`, `exp` = min des deux ; dictionnaire du §5.4 complet. Clés RSA et EC tirées par WebCrypto dans le test, jamais versées |
-| pgTAP | `workspace_invitations` : contraintes, clé, trois politiques et privilèges ; `ouvrir_session_sso` : attente consommée en appartenance au bon rôle, profil créé une fois, profil existant non réécrit, appartenance existante non rétrogradée, aucune trace sans attente, rejeu stable, `EXECUTE` refusé à `anon` et `authenticated` ; `profiles` sans clé vers `auth.users` |
+| Unitaire, Deno | `supabase/functions/session/*.test.ts` — **révisés par la décision 586** : corps d'ouverture invalide ; code refusé par LeLabs ; échange avec le secret et le vérificateur exacts ; trois gestes, chemin inconnu, méthode ; poignée absente, inconnue, échue ; `session_expiree` qui supprime la session et efface le cookie ; admission rejouée à la prolongation ; cookie `HttpOnly`, `SameSite=Strict`, `Path`, `Secure` sur `https` seulement ; chiffrement AES-GCM : aller-retour, vecteur unique, altération refusée ; échéance globale ; et toujours : jeton mal formé ; `alg` `none`, `HS256`, `HS512`, `RS384` refusés **sans** lecture de clé ; `kid` inconnu ; signature altérée d'un octet ; `iss`, `azp`, `typ` différents ; `exp` passé d'une seconde ; `iat` futur ; `sub` non UUID ; adresse non vérifiée ; `verified` absent, puis présent parmi d'autres rôles dans un autre ordre ; découverte d'un autre émetteur ; délai dépassé ; jeton interne : revendications exactes, signature vérifiable par `JWT_SECRET`, `exp` = min des deux ; dictionnaire du §5.4 complet. Clés RSA et EC tirées par WebCrypto dans le test, jamais versées |
+| pgTAP | `sessions_sso` : aucune politique, aucun privilège pour `anon` et `authenticated`, empreinte unique, cascade depuis `profiles` ; les quatre fonctions de session réservées à `service_role`, admission appliquée à l'ouverture et au renouvellement, suppression d'une session non admise ; `workspace_invitations` : contraintes, clé, trois politiques et privilèges ; `ouvrir_session_sso` : attente consommée en appartenance au bon rôle, profil créé une fois, profil existant non réécrit, appartenance existante non rétrogradée, aucune trace sans attente, rejeu stable, `EXECUTE` refusé à `anon` et `authenticated` ; `profiles` sans clé vers `auth.users` |
 | Base neuve | T1 : un cluster jetable **sans GoTrue**, `0074` appliquée deux fois : `auth.uid()` rend le `sub` de `request.jwt.claims` (K11 levée), propriétaire inchangé. T6 : la pile entière recréée sans GoTrue par `./resetMe.sh`, seed et preuves d'API rejoués — une lecture RLS réelle aboutit |
-| API, pile réelle | `e2e/api/session.spec.ts`, Keycloak de développement et échangeur derrière Kong : les trois comptes seedés ouvrent une session et lisent leurs données sous RLS ; `inconnu@`, `attendu@`, adresse non vérifiée rendent leur `403` et leur code ; jeton du client étranger, `id_token`, jeton interne présenté à l'échangeur : `401` ; jeton interne accepté par PostgREST, **Realtime** et **Storage** ; `verified` retiré par l'API d'administration de développement → échange suivant refusé ; appartenance retirée → échange suivant refusé ; **rotation** : nouvelle clé prioritaire créée, nouveau jeton accepté sans redémarrer, ancienne clé désactivée → ancien jeton refusé ; `/auth/v1/*` → `404` après T6 |
-| E2E | `e2e/ui/connexion.spec.ts` : vraie page Keycloak pour chacun des trois rôles ; session dans `sessionStorage`, `localStorage` vide, transaction retirée, URL sans `code` ; rechargement conservant la session ; **rafraîchissement** franchi par l'horloge de Playwright sans perte de session ; déconnexion ramenant à `/connexion` et reconnexion sans formulaire tant que LeLabs vit ; `inconnu@` et `attendu@` voyant leur attente ; annulation ; configuration absente ; console vierge. Les 50 specs d'interface se connectent par la fixture `connecterAvecLeLabs` |
+| API, pile réelle | `e2e/api/session.spec.ts`, **révisé par la décision 586** — code et vérificateur remis à l'échangeur, jamais de jeton LeLabs côté client : ouverture, prolongation par le cookie, fermeture qui rend le cookie inopérant ; la table de sessions ne porte aucun jeton en clair ; un code émis pour le client étranger est refusé ; un code rejoué est refusé ; et toujours : les trois comptes seedés ouvrent une session et lisent leurs données sous RLS ; `inconnu@`, `attendu@`, adresse non vérifiée rendent leur `403` et leur code ; jeton du client étranger, `id_token`, jeton interne présenté à l'échangeur : `401` ; jeton interne accepté par PostgREST, **Realtime** et **Storage** ; `verified` retiré par l'API d'administration de développement → échange suivant refusé ; appartenance retirée → échange suivant refusé ; **rotation** : nouvelle clé prioritaire créée, nouveau jeton accepté sans redémarrer, ancienne clé désactivée → ancien jeton refusé ; `/auth/v1/*` → `404` après T6 |
+| E2E | `e2e/ui/connexion.spec.ts` : vraie page Keycloak pour chacun des trois rôles ; **aucun jeton dans `sessionStorage` ni `localStorage`**, cookie de poignée `HttpOnly` présent, transaction retirée, URL sans `code` ; rechargement conservant la session ; **rafraîchissement** franchi par l'horloge de Playwright sans perte de session ; déconnexion ramenant à `/connexion` et reconnexion sans formulaire tant que LeLabs vit ; `inconnu@` et `attendu@` voyant leur attente ; annulation ; configuration absente ; console vierge. Les 50 specs d'interface se connectent par la fixture `connecterAvecLeLabs` |
 | Visuel | carte de connexion, redirection, retour, chacun des refus et chacune des attentes, textes longs, aux quatre paliers ; captures observées |
 | Harnais | **`scripts/verify-session-sso.sh`**, grandi à chaque tranche et **non complaisant** : il rougit si `alg=HS256` est accepté, si `azp` n'est plus contrôlé, si l'admission cesse d'exiger `verified`, si `/auth/v1` répond, si `JWT_SECRET` atteint une autre fonction que `session`. `scripts/verify-auth.sh` est retiré avec GoTrue en T6 (décision 581) |
 
@@ -475,9 +583,10 @@ passée au SSO.
 | **T1** | Migrations `0074` et `0075`, pgTAP, preuve de base neuve, `scripts/verify-session-sso.sh`, `docs/SCHEMA.md` §1 | — |
 | **T2** | Keycloak préchargé (§10), `keycloak/README.md`, révision des preuves `CRM-091` qui en dépendent | — |
 | **T3** | Fonction `session`, environnement par fonction dans `main`, variables vers `functions`, tests Deno, `e2e/api/session.spec.ts`, `docs/SPEC-edge-functions.md` | T1, T2 |
-| **T5** | Webapp (§8, §9), tests unitaires, `e2e/ui/connexion.spec.ts`, fixture et portage des 50 specs d'interface, `docs/DESIGN_SYSTEM.md` §5.12, captures, `docs/manual.md` chapitre 1 — **livrée AVANT T4** (décision 585) | T3 |
+| **T3 bis** | Client serveur (décision 586) : migration `0076`, échangeur à trois gestes, chiffrement, cookie, realm de développement confidentiel, relais Vite, preuves unitaires, pgTAP et d'API révisées | T3 |
+| **T5** | Webapp (§8, §9), tests unitaires, `e2e/ui/connexion.spec.ts`, fixture et portage des 50 specs d'interface, `docs/DESIGN_SYSTEM.md` §5.12, captures, `docs/manual.md` chapitre 1 — **livrée AVANT T4** (décision 585) | T3 bis |
 | **T4** | `e2e/api/jetons.ts` et `scripts/lib/sso.sh` par la vraie connexion, comptes jetables par l'API de développement, seed (§11), portage des 18 scripts et des specs d'API qui créaient des comptes GoTrue, `docs/SPEC-seed.md`, `docs/SPEC-test-harness.md` | T3, T5 |
-| **T6** | Retrait de GoTrue (§2), migration `0076`, retrait de `verify-auth.sh`, scripts d'environnement et de cellule, `docs/SPEC-auth.md` réduit à un renvoi | T4, T5 |
+| **T6** | Retrait de GoTrue (§2), migration `0077`, retrait de `verify-auth.sh`, scripts d'environnement et de cellule, `docs/SPEC-auth.md` réduit à un renvoi | T4, T5 |
 | **T7** | `README.md`, `docs/DAT.md`, `docs/SPEC-deploiement-spark.md`, `docs/manual.md` chapitre 17, `docs/PROD_MIGRATIONS.md` (§12), `CHANGELOG.md` ; campagne des harnais touchés | T6 |
 
 ## 15. Hors périmètre

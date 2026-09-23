@@ -29183,3 +29183,63 @@ d'aujourd'hui, dont le trigger de GoTrue crée encore les profils.
 **Décision.** T5 (webapp, écran d'attente, portage des specs d'interface) précède T4 (seed, jetons des
 preuves, scripts). Rien d'autre ne change dans le découpage ; T6 retire GoTrue une fois les deux
 livrées.
+
+## décision 586 — arbitrage du responsable : le CRM devient un client SERVEUR de LeLabs ; et les variables manquantes seront redemandées au déploiement
+
+*2026-09-23, même session, pendant la tranche T5. Deux messages du responsable.*
+
+**1. Consigne.** « Pense aussi à reposer les demandes des variables manquantes dans l'environnement. »
+Au déploiement (§12 de la spécification), les demandes de variables manquantes sont reposées dans
+la cellule par `scripts/spark/proposer.sh` : celles que `CRM-092` ajoute, et celles restées en
+suspens — dont les identifiants du relais SMTP, que GoTrue seul consommait et qui deviendront sans
+objet avec lui (décision 578). Aucune variable n'est laissée à découvrir au démarrage.
+
+**2. Question du responsable, puis arbitrage.** « Pourquoi un client navigateur plutôt qu'un client
+serveur ? » La réponse honnête : le choix « navigateur » venait de la décision 568, où GoTrue ne savait
+pas mener PKCE et où aucun composant serveur ne pouvait garder un secret à moindre coût. **Ce motif a
+disparu en T3** : l'échangeur est précisément ce composant. Et un fait mesuré pèse contre le client
+public : **le realm ne révoque pas un jeton de rafraîchissement réutilisé** (K15). Gardé dans le
+`sessionStorage`, ce jeton serait lisible par tout script de la page, et un jeton volé resterait
+utilisable tant que vit la session LeLabs.
+
+**Décision du responsable : client serveur (confidentiel).** Conséquences, arrêtées avant le code :
+
+- **Nouvelle déclaration chez LeLabs** — `lelabs-crm` ne se réécrit pas (`docs/SSO.md`, « un
+  identifiant déjà pris ») :
+
+  ```
+  CLIENTID=lelabs-crm-serveur
+  NOM=P2Enjoy CRM
+  TYPE=serveur
+  REDIRECT=https://crm.lelabs.tech/auth/retour
+  SECRET_VAR=SSO_OIDC_CLIENT_SECRET
+  ```
+
+  Le secret, affiché une seule fois à l'administrateur du realm, est posé par lui comme variable de la
+  cellule ; il ne transite par aucun dépôt ni message. Le client public `lelabs-crm` pourra être retiré
+  une fois le nouveau en service.
+- **Le navigateur ne garde plus aucun jeton LeLabs.** Il mène toujours l'aller PKCE (vérificateur et
+  `state` dans la transaction d'onglet), mais remet le **code** et le **vérificateur** à l'échangeur,
+  qui échange le code **avec le secret**. Le retour reste la route `/auth/retour` de la webapp : une
+  redirection du navigateur ne peut pas porter l'`apikey` que Kong exige.
+- **Session serveur.** Le jeton de rafraîchissement LeLabs est gardé en base, **chiffré** (AES-GCM, clé
+  dérivée de `JWT_SECRET` par HKDF — une sauvegarde de base seule ne le livre pas), dans une table que
+  ni `anon` ni `authenticated` ne lisent. Le navigateur ne reçoit qu'une **poignée opaque** dans un
+  cookie `httpOnly`, `SameSite=Strict`, `Secure` sur une origine `https`, borné au chemin
+  `/functions/v1/session`, et le **jeton interne**, gardé **en mémoire** seulement.
+- **Même origine partout.** La webapp appelle l'échangeur par un chemin **relatif** : en production,
+  Caddy le relaie déjà (`caddy/routes.caddy`) ; en développement et sous le harnais, le proxy de Vite le
+  relaie vers Kong. Mesuré le 2026-09-23 : la webapp de développement est servie sur `127.0.0.1`,
+  l'API sur `localhost` — deux sites, où un cookie `SameSite` ne passerait pas.
+- **La posture de session change, et c'est écrit.** Une session vivait dans l'onglet (§9.2 de
+  `docs/SPEC-auth.md`) ; le cookie vit dans le **navigateur**, jusqu'à sa fermeture ou à la
+  déconnexion. C'est un cookie strictement nécessaire (`CLAUDE.md` §11, catégorie 1), sans durée
+  imposée, et plus aucune donnée d'identité n'est écrite dans le stockage du navigateur.
+- **Le rafraîchissement se fait côté serveur**, par la poignée, et rejoue l'admission à chaque fois ;
+  il sert aussi à la **restauration** au chargement de la page. La déconnexion supprime la session
+  serveur et le cookie ; elle ne révoque toujours rien chez LeLabs (K16).
+
+**Ce qui est repris de T3 sans changement** : la vérification du jeton d'accès (§5.2), l'admission
+(§6), le jeton interne (§5.3), l'environnement par fonction — qui reçoit en plus
+`SSO_OIDC_CLIENT_SECRET`. Ce qui est **révisé** : l'échangeur reçoit un code et non plus un jeton, et
+porte trois gestes — ouvrir, prolonger, fermer.
