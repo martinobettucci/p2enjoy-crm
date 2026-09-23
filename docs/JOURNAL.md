@@ -28732,3 +28732,29 @@ vérifiée jamais rattachée, invitation acceptée par le SSO, nonce et audience
 
 **Ce qui reste, et qui ne dépend pas du dépôt** : la déclaration du client au realm réel
 (`docs/SPEC-auth.md` §10.8), puis la sonde et une connexion en production.
+
+## décision 573 — le premier espace de production naît d'un compte INVITÉ, sans mot de passe et sans courriel
+
+*2026-09-23, même session, `CRM-090`.*
+
+**Problème.** Une production neuve n'a ni compte ni espace, et aucun écran n'en crée : le contrat
+nommait l'opération (« amorçage d'un espace », `docs/PROD_MIGRATIONS.md` §7) sans en fournir le
+moyen. Le seul chemin connu, `POST /auth/v1/admin/users` avec mot de passe, est interdit en
+production par la décision 265 : il contourne la politique de longueur.
+
+**Mesure.** `POST /auth/v1/admin/generate_link` de type `invite` crée le compte avec `invited_at`,
+**sans mot de passe** et **sans envoyer de courriel**, et rend un lien d'action. Aucun mot de passe
+n'existant, la brèche que vise la décision 265 n'est pas ouverte. Et la mesure M6 de la décision 568
+établit qu'une connexion SSO à la même adresse vérifiée ACCEPTE l'invitation.
+
+**Décision.** `scripts/spark/amorcer-espace.sh` : compte invité par cette route, espace créé s'il
+manque, appartenance `admin` posée par upsert. Idempotent. Le lien d'action est une crédentielle :
+le fichier de réponse est vidé avant toute autre lecture, et rien n'est affiché. Profil `prod`
+exigé. C'est une écriture en production : le script ne dispense pas de l'instruction humaine, il
+la rend exécutable proprement. L'adresse de l'administrateur et le nom de l'espace sont des choix
+du responsable, non écrits ici.
+
+**Vérifications**, contre la pile de développement avec un environnement de profil `prod` dérivé :
+compte invité non confirmé, espace et appartenance créés, second passage sans rien recréer, une
+seule appartenance, aucun lien dans la sortie, profil `dev` refusé, lignes de preuve retirées.
+`scripts/verify-spark.sh` : **67 vérifications, aucune anomalie**.

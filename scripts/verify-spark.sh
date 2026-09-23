@@ -516,6 +516,53 @@ else
 	skip "docker compose indisponible : dégradations d'assemblage non exécutées"
 fi
 
+# --- 8. amorcer-espace.sh contre la pile de développement ---------------------------------------------
+#
+# L'opération écrit en production ; elle s'éprouve donc ici, sur la pile locale, avec un fichier
+# d'environnement de profil `prod` dérivé du `.env` du poste. Les lignes créées sont retirées.
+
+echo
+echo "8. scripts/spark/amorcer-espace.sh contre la pile de développement"
+
+API_DEV="http://127.0.0.1:$(env_get "$REPO_ROOT/.env" KONG_HTTP_PORT 2>/dev/null)"
+if [ -f "$REPO_ROOT/.env" ] && curl -sf -o /dev/null "$API_DEV/auth/v1/health" -H "apikey: $(env_get "$REPO_ROOT/.env" ANON_KEY)"; then
+	E="$WORK/amorcage.env"
+	sed -e 's/^P2ENJOY_ENV_PROFILE=.*/P2ENJOY_ENV_PROFILE=prod/' "$REPO_ROOT/.env" > "$E"
+	SR=$(env_get "$E" SERVICE_ROLE_KEY)
+	ADRESSE="amorcage-$(gen_hex 4)@exemple.test"
+	SLUG_ESSAI="amorcage-$(gen_hex 4)"
+	amorcer() { P2ENJOY_ENV_FILE=$E P2ENJOY_AMORCAGE_API=$API_DEV "$REPO_ROOT/scripts/spark/amorcer-espace.sh" \
+		--email "$ADRESSE" --espace "Espace d'amorçage" --slug "$SLUG_ESSAI" --nom "Amorçage Preuve" 2>&1; }
+	lire() { curl -s "$API_DEV$1" -H "apikey: $SR" -H "Authorization: Bearer $SR"; }
+	if out=$(amorcer); then
+		ok "premier passage abouti"
+		case "$out" in *"compte invité créé"*"espace créé"*"administrateur"*) ok "compte invité, espace et appartenance créés" ;;
+			*) fail "premier passage incomplet : $(printf '%s' "$out" | tail -n 3 | tr '\n' ' ')" ;; esac
+		case "$out" in *verify*|*token=*|*action_link*) fail "le lien d'action apparaît dans la sortie" ;; *) ok "aucun lien d'action dans la sortie" ;; esac
+		id_ws=$(lire "/rest/v1/workspaces?slug=eq.$SLUG_ESSAI&select=id" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d[0]["id"] if d else "")')
+		id_u=$(lire "/auth/v1/admin/users?per_page=1000" | python3 -c 'import json,sys; print(next((u["id"] for u in json.load(sys.stdin)["users"] if u["email"]==sys.argv[1]), ""))' "$ADRESSE")
+		etat=$(lire "/auth/v1/admin/users/$id_u" | python3 -c 'import json,sys; u=json.load(sys.stdin); print(bool(u.get("invited_at")), u.get("email_confirmed_at") is None)')
+		[ "$etat" = "True True" ] && ok "le compte est INVITÉ, non confirmé : aucun mot de passe n'existe" || fail "état du compte : $etat"
+		role=$(lire "/rest/v1/workspace_members?workspace_id=eq.$id_ws&user_id=eq.$id_u&select=role" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d[0]["role"] if d else "")')
+		[ "$role" = admin ] && ok "appartenance administrateur posée" || fail "appartenance : « $role »"
+		out2=$(amorcer)
+		case "$out2" in *"compte déjà présent"*"espace déjà présent"*) ok "second passage idempotent : rien n'est créé deux fois" ;;
+			*) fail "second passage : $(printf '%s' "$out2" | tail -n 3 | tr '\n' ' ')" ;; esac
+		n=$(lire "/rest/v1/workspace_members?workspace_id=eq.$id_ws&select=user_id" | python3 -c 'import json,sys; print(len(json.load(sys.stdin)))')
+		[ "$n" = 1 ] && ok "une seule appartenance après deux passages" || fail "$n appartenances"
+		curl -s -o /dev/null -X DELETE "$API_DEV/rest/v1/workspace_members?workspace_id=eq.$id_ws" -H "apikey: $SR" -H "Authorization: Bearer $SR"
+		curl -s -o /dev/null -X DELETE "$API_DEV/rest/v1/workspaces?id=eq.$id_ws" -H "apikey: $SR" -H "Authorization: Bearer $SR"
+		curl -s -o /dev/null -X DELETE "$API_DEV/auth/v1/admin/users/$id_u" -H "apikey: $SR" -H "Authorization: Bearer $SR"
+	else
+		fail "premier passage refusé : $(printf '%s' "$out" | tail -n 3 | tr '\n' ' ')"
+	fi
+	sed -i 's/^P2ENJOY_ENV_PROFILE=.*/P2ENJOY_ENV_PROFILE=dev/' "$E"
+	out=$(P2ENJOY_ENV_FILE=$E P2ENJOY_AMORCAGE_API=$API_DEV "$REPO_ROOT/scripts/spark/amorcer-espace.sh" --email a@b.test --espace x --slug x 2>&1)
+	case "$out" in *"P2ENJOY_ENV_PROFILE"*) ok "profil dev refusé : l'amorçage n'agit que sur une production" ;; *) fail "profil dev accepté" ;; esac
+else
+	skip "pile de développement injoignable : amorçage non éprouvé"
+fi
+
 # --- Bilan -------------------------------------------------------------------------------------------
 
 echo

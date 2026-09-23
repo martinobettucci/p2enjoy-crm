@@ -14396,6 +14396,11 @@ décrit la baseline réelle.
       l'image d'origine n'y est pas extractible. Couches vérifiées sans UID au-delà de 64534,
       contenu identique octet pour octet, chargée dans la cellule, Realtime **sain** au premier
       déploiement rejoué ; harnais porté à **59 vérifications, aucune anomalie**.
+- [x] **`scripts/spark/amorcer-espace.sh`** (décision 573) : premier espace et son administrateur
+      invité, sans mot de passe ni courriel ; éprouvé contre la pile de développement — harnais
+      porté à **67 vérifications, aucune anomalie**.
+- [x] **Image `mail-sync` construite DANS la cellule** en 29 s (UID 10001, dans la plage) ; les trois
+      notes du Spark déposées depuis `docs/spark-notes/`, empreintes identiques des deux côtés.
 - [x] **Gestes de cellule faits le 2026-09-23** : `/srv/crm` créé par `root` ; dépôt déposé par
       `--archive-seule` ; propositions de variables, de secrets et de route déposées par
       `proposer.sh` ; dix images tirées et l'image Realtime dérivée chargée (4,7 Go utilisés,

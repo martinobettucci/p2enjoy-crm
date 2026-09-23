@@ -161,6 +161,7 @@ la question d'une façade `npm` par-dessus `runDev.sh` et consorts reste ouverte
 | `./runProd.sh --spark` | Démarre l'assemblage de la **cellule Spark** `crm` : l'environnement est fusionné depuis `/etc/spark/env` et `/run/spark/secrets`, posés par le plan de contrôle, et Caddy sert en clair derrière la Forge. Se combine avec chaque option de `runProd.sh` | **disponible** — `CRM-090` |
 | `./runProd.sh [--spark] --migrate --premier-deploiement` | **Premier déploiement** : démarre les seules dépendances du runner, **mesure** une base vierge, migre, puis démarre tout. Refuse une base peuplée | **disponible** — `CRM-090`, décision 570 |
 | `scripts/spark/livrer.sh` | Depuis le poste : build de la webapp pour la cellule, archive Git par-dessus `/srv/crm`, `REVISION`, puis `./runProd.sh --spark` ; `--archive-seule` pour amorcer une cellule, `-- <options>` pour `runProd.sh` | **disponible** — `CRM-090` |
+| `scripts/spark/amorcer-espace.sh` | Dans la cellule, sur instruction explicite : premier espace et son administrateur — compte **invité** sans mot de passe ni courriel, espace, appartenance `admin` ; idempotent | **disponible** — `CRM-090` |
 | `scripts/spark/proposer.sh` | Dans la cellule : propose au propriétaire du Spark les variables, les secrets — tirés sur place, jamais affichés — et la route | **disponible** — `CRM-090` |
 | `scripts/verify-spark.sh` | Rejoue les preuves de la cellule : fusion, gardes, assemblage résolu, répartition des secrets, Caddyfile, propositions, livraison contre une cellule simulée, cinq dégradations | **disponible** — `CRM-090` |
 | `./resetMe.sh` | Détruit la base et les volumes locaux, redémarre à froid, rejoue migrations et seed | **disponible** |
@@ -664,6 +665,7 @@ Livré à ce jour :
 ├── docs/                       Documentation de référence (voir ci-dessous)
 ├── scripts/
 │   ├── lib/env.sh              Socle commun des scripts : lecture, amorçage, validation, gardes
+│   ├── spark/amorcer-espace.sh Premier espace de production et son administrateur invité
 │   ├── spark/livrer.sh         Livraison d'une révision poussée dans la cellule Spark
 │   ├── spark/proposer.sh       Propositions de variables, de secrets et de route à la cellule
 │   ├── verify-spark.sh         Preuves rejouables de la cellule, livraison simulée comprise

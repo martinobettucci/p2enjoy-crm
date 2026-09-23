@@ -230,7 +230,7 @@ hors de la cellule : le défaut qu'elle corrige est celui de l'assemblage de pro
 | Enregistrement DNS `crm.lelabs.tech` vers la Forge, et route `crm.lelabs.tech 8080 clair` | propriétaire du Spark | S8 ; « rien ne s'expose depuis l'intérieur » |
 | Importer variables et secrets proposés, **puis fournir** les valeurs SMTP | propriétaire du Spark | S6 ; seule la console écrit |
 | Déclarer le client OIDC | administrateur du realm `lelabs` | `docs/SPEC-auth.md` §10.8 |
-| Créer le premier compte et le premier espace | opérateur disposant de la clé de service | `docs/PROD_MIGRATIONS.md` §7 : chemin d'exploitation encadré |
+| Créer le premier compte et le premier espace | opérateur, sur instruction explicite | `scripts/spark/amorcer-espace.sh` (décision 573) : compte invité par `generate_link` — sans mot de passe, donc hors du chemin que la décision 265 encadre —, espace, appartenance `admin` ; le lien d'action n'est jamais affiché |
 
 ## 7. Vérifications
 
@@ -284,7 +284,7 @@ vérifications (§7).
 
 | Niveau | Preuve |
 |---|---|
-| Harnais dédié `scripts/verify-spark.sh` | image Realtime dérivée cohérente avec l'assemblage commun et avec `livrer.sh` ; fusion (ordre des sources, apostrophes, `$` littéral, grammaire, fichiers absents, `tmpfs` en `600`) ; gardes (profil, `APPLY_MIGRATIONS`, `CHANGE_ME_*`) ; `--premier-deploiement` refusé sans `--migrate` ; assemblage résolu : seul `SPARK_HTTP_PORT` publié, ni `80` ni `443`, aucun port pour `minio`, `sans-objet-cellule-spark` absent, `KONG_NGINX_WORKER_PROCESSES=1`, une limite mémoire sur chaque service ; `proposer.sh` sur des fichiers jetables — refus si `JWT_SECRET` existe, refus sur proposition pendante, aucune valeur de secret sur sa sortie ; témoin de non-complaisance par dégradation |
+| Harnais dédié `scripts/verify-spark.sh` | amorçage d'un espace contre la pile de développement (création, idempotence, compte invité, lien jamais affiché, profil `dev` refusé) ; image Realtime dérivée cohérente avec l'assemblage commun et avec `livrer.sh` ; fusion (ordre des sources, apostrophes, `$` littéral, grammaire, fichiers absents, `tmpfs` en `600`) ; gardes (profil, `APPLY_MIGRATIONS`, `CHANGE_ME_*`) ; `--premier-deploiement` refusé sans `--migrate` ; assemblage résolu : seul `SPARK_HTTP_PORT` publié, ni `80` ni `443`, aucun port pour `minio`, `sans-objet-cellule-spark` absent, `KONG_NGINX_WORKER_PROCESSES=1`, une limite mémoire sur chaque service ; `proposer.sh` sur des fichiers jetables — refus si `JWT_SECRET` existe, refus sur proposition pendante, aucune valeur de secret sur sa sortie ; témoin de non-complaisance par dégradation |
 | Intégration réelle | l'assemblage de la cellule démarré sur ce poste avec des secrets jetables, sous le même projet Compose isolé : tous les services sains, `--premier-deploiement` appliquant les migrations sur base vierge puis refusant sur base peuplée |
 | Déploiement | §7, exécuté dans la cellule et relevé dans `docs/PROD_MIGRATIONS.md` |
 
