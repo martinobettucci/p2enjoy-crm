@@ -38,9 +38,10 @@ de Vault** — sans elle, les mots de passe de messagerie enregistrés sont perd
 ## Limites connues de cette cellule
 
 - **65 536 UID seulement** : une image dont un fichier appartient à un UID supérieur à 64534 ne s'y
-  extrait pas. Realtime tourne donc sur une image dérivée, construite sur le poste
-  (`supabase/docker/realtime-spark/Dockerfile`). Ne jamais « réparer » par un `docker pull` de
-  l'image d'origine.
+  extrait pas, et un processus ne peut pas y basculer vers un tel compte (`sudo -u nobody` rend
+  « unable to change to runas gid »). Realtime tourne donc sur une image dérivée, construite sur le
+  poste, où `nobody` porte l'identifiant 64000 (`supabase/docker/realtime-spark/Dockerfile`). Ne
+  jamais « réparer » par un `docker pull` de l'image d'origine.
 - **ClamAV absent** (mémoire) : une pièce jointe reçue reste non téléchargeable.
 - **Sauvegardes hors site non en place** : `age` n'est pas installé.
 - Sortie SMTP : `25`, `465` et `587` fermés par l'hébergeur ; employer un port de repli.

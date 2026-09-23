@@ -87,14 +87,17 @@ tableau `SPARK_COMPOSE` ; aucun appel ne compose ces fichiers à la main.
 
 ### 3.5 Realtime : une image dérivée, construite sur le poste
 
-**Ajouté par la mesure dans la cellule (décision 571).** La cellule ne dispose que de 65 536 UID, et
+**Ajouté par la mesure dans la cellule (décisions 571 et 575).** La cellule ne dispose que de 65 536 UID, et
 `spark-docker` n'en reçoit que 64 534 comme subordonnés : un fichier d'image possédé par un UID
 supérieur à 64534 n'y est pas extractible. `supabase/realtime:v2.102.3` en porte 3 774, attribués à
 `nobody`, et son tirage échoue.
 
-- `supabase/docker/realtime-spark/Dockerfile` recopie le système de fichiers de l'image d'origine
-  dans **une seule couche possédée par `root`**, et redéclare sa configuration d'exécution. Le
-  processus de Realtime s'exécute déjà en `root` : rien ne change pour lui.
+- Son `run.sh` lance aussi ses migrations par `sudo -E -u nobody` : même extraite, l'image
+  redémarrait en boucle, `setgid(65534)` étant refusé dans la cellule (décision 575).
+- `supabase/docker/realtime-spark/Dockerfile` renumérote `nobody` et `nogroup` de 65534 en
+  **64000**, rend à `nobody` les fichiers qu'il possédait, recopie le système de fichiers dans
+  **une seule couche** et redéclare la configuration d'exécution à l'identique. Rien d'autre ne
+  change : mêmes comptes, mêmes droits, même démarrage.
 - L'image est **construite sur le poste** et chargée dans la cellule par `scripts/spark/livrer.sh`,
   seulement si son identifiant y diffère. L'overlay la déclare `pull_policy: never`.
 - Une montée de version de Realtime dans l'assemblage commun impose la même montée dans la
@@ -286,7 +289,7 @@ vérifications (§7).
 
 | Niveau | Preuve |
 |---|---|
-| Harnais dédié `scripts/verify-spark.sh` | amorçage d'un espace contre la pile de développement (création, idempotence, compte invité, lien jamais affiché, profil `dev` refusé) ; image Realtime dérivée cohérente avec l'assemblage commun et avec `livrer.sh` ; fusion (ordre des sources, apostrophes, `$` littéral, grammaire, fichiers absents, `tmpfs` en `600`) ; gardes (profil, `APPLY_MIGRATIONS`, `CHANGE_ME_*`) ; `--premier-deploiement` refusé sans `--migrate` ; assemblage résolu : seul `SPARK_HTTP_PORT` publié, ni `80` ni `443`, aucun port pour `minio`, `sans-objet-cellule-spark` absent, `KONG_NGINX_WORKER_PROCESSES=1`, une limite mémoire sur chaque service ; `proposer.sh` sur des fichiers jetables — refus si `JWT_SECRET` existe, refus sur proposition pendante, aucune valeur de secret sur sa sortie ; témoin de non-complaisance par dégradation |
+| Harnais dédié `scripts/verify-spark.sh` | amorçage d'un espace contre la pile de développement (création, idempotence, compte invité, lien jamais affiché, profil `dev` refusé) ; image Realtime dérivée cohérente avec l'assemblage commun et avec `livrer.sh`, construite puis inspectée — aucune entrée de couche ni aucun compte cible du `sudo` de `run.sh` au-delà de l'identifiant 64534, `/app` à `nobody`, configuration d'exécution identique à l'origine ; fusion (ordre des sources, apostrophes, `$` littéral, grammaire, fichiers absents, `tmpfs` en `600`) ; gardes (profil, `APPLY_MIGRATIONS`, `CHANGE_ME_*`) ; `--premier-deploiement` refusé sans `--migrate` ; assemblage résolu : seul `SPARK_HTTP_PORT` publié, ni `80` ni `443`, aucun port pour `minio`, `sans-objet-cellule-spark` absent, `KONG_NGINX_WORKER_PROCESSES=1`, une limite mémoire sur chaque service ; `proposer.sh` sur des fichiers jetables — refus si `JWT_SECRET` existe, refus sur proposition pendante, aucune valeur de secret sur sa sortie ; témoin de non-complaisance par dégradation |
 | Intégration réelle | l'assemblage de la cellule démarré sur ce poste avec des secrets jetables, sous le même projet Compose isolé : tous les services sains, `--premier-deploiement` appliquant les migrations sur base vierge puis refusant sur base peuplée |
 | Déploiement | §7, exécuté dans la cellule et relevé dans `docs/PROD_MIGRATIONS.md` |
 

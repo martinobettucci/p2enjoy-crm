@@ -50,7 +50,8 @@ d'exécuter le code attendu.
   ne démarrait plus sur un poste neuf.
 - **Realtime tourne dans la cellule sur une image dérivée**, construite sur le poste qui livre :
   l'image d'origine attribue des fichiers à un identifiant d'utilisateur que la cellule ne sait pas
-  représenter, et ne pouvait pas y être installée.
+  représenter, ne pouvait pas y être installée, et lançait ses migrations sous ce même compte. La
+  dérivée renumérote ce compte, sans rien changer d'autre.
 
 ### `CRM-066` — « Pilotage » : les étapes sans affaire, nommées (tranche 3 c)
 

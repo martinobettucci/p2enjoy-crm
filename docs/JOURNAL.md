@@ -28774,3 +28774,50 @@ LeLabs, adresse vérifiée (décision 573).
 aucun rôle** — ce qui suffit, le CRM n'en lit aucun (décision 568) —, mais rien ne dit ici que son
 adresse y est vérifiée. Si elle ne l'est pas, GoTrue refusera le rattachement (M5) : la vérifier chez
 LeLabs est alors un préalable.
+
+## décision 575 — Realtime redémarrait en boucle dans la cellule : son `run.sh` bascule vers `nobody`, que la cellule ne sait pas représenter
+
+*2026-09-23, même session, `CRM-090`. Constat fait au premier déploiement réel dans la cellule,
+révision `591472a2`.*
+
+**Observation.** `scripts/spark/livrer.sh -- --migrate --premier-deploiement` : base mesurée vierge,
+migrations appliquées avec succès, PostgREST recréé, puis `realtime` **malsain**, code `1`. Tous les
+autres conteneurs sains. Realtime redémarre en boucle (`RestartCount` 9, `OOMKilled` faux) et son
+journal dit :
+
+    Running migrations
+    + sudo -E -u nobody /app/bin/migrate
+    sudo: unable to change to runas gid: Invalid argument
+
+**Cause, mesurée.** `/app/run.sh` de `supabase/realtime:v2.102.3` lance ses migrations, et le cas
+échéant ses semences, par `sudo -E -u nobody` ; `nobody` et `nogroup` y portent l'identifiant 65534.
+C'est la limite de la décision 571 sous une autre forme : aucun identifiant au-delà de 64534 n'existe
+dans la cellule, et `setgid(65534)` y rend `EINVAL`. La décision 571 n'avait traité que l'extraction
+des fichiers ; et sa preuve locale — « Realtime sain au premier déploiement rejoué » — ne pouvait
+pas le voir : le poste, lui, a tous ses UID. L'affirmation de la décision 571 selon laquelle « le
+processus s'exécute en `root`, la propriété de `nobody` ne lui sert à rien » était fausse pour les
+migrations : elles s'exécutent en `nobody`, et `/app` lui appartient (`65534:0`), sans doute pour
+que la release puisse y écrire.
+
+**Solutions envisagées.** Surcharger l'entrée de Realtime dans l'overlay pour sauter `run.sh` :
+c'est réécrire le démarrage de l'éditeur, et les migrations de Realtime ne s'appliqueraient plus —
+écarté. Lancer les migrations en `root` : même reproche, et l'image d'origine l'évite exprès.
+**Renuméroter `nobody`** dans l'image dérivée : l'image garde son démarrage, ses comptes et ses
+droits, seul le nombre change.
+
+**Décision.** `supabase/docker/realtime-spark/Dockerfile` renumérote `nobody` et `nogroup` de 65534
+en **64000** (`NOBODY_ID`), y compris le groupe primaire de `sync` et `_apt`, puis rend à `nobody`
+les fichiers qu'il possédait ; la couche unique conserve alors les propriétaires au lieu de tout
+attribuer à `root`. `/proc`, `/sys` et `/dev` du conteneur de construction sont écartés : ce sont
+des montages, que le noyau refuse de changer de propriétaire.
+
+**Test ajouté AVANT la correction.** `scripts/verify-spark.sh` construit l'image dérivée comme
+`livrer.sh` la construit et vérifie : aucune entrée de couche au-delà de l'UID/GID 64534 ; chaque
+compte vers lequel `run.sh` bascule par `sudo` a son UID et son GID dans la plage ; `nobody` possède
+`/app` et peut y écrire ; configuration d'exécution identique à l'image d'origine. Sur l'image de la
+décision 571, les deux vérifications du milieu **rougissent** (« nobody 65534 65534 hors de la
+plage ») ; après correction, **74 vérifications, aucune anomalie** — 20 811 entrées de couche,
+`nobody 64000 64000`.
+
+**Une limite qui demeure.** Le poste ne sait pas reproduire l'espace d'identifiants de la cellule :
+le harnais vérifie les nombres, la cellule seule prouve le démarrage.

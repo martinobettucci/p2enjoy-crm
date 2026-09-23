@@ -3,7 +3,7 @@
 #           propositions et livraison
 # @verifies docs/SPEC-deploiement-spark.md §3 (assemblage), §4.1 (fusion), §4.2 (variables sans
 #           objet), §4.4 (proposer), §5.1 (livrer), §5.2 (premier déploiement), §9 (preuves)
-# @verifies docs/JOURNAL.md décisions 567 et 570
+# @verifies docs/JOURNAL.md décisions 567, 570, 571 et 575 (image Realtime dérivée)
 #
 # Rejoue les preuves de `CRM-090` qui ne demandent PAS la cellule :
 #
@@ -12,7 +12,8 @@
 #   2. les gardes de `./runProd.sh --spark`, qui doivent toutes précéder Docker ;
 #   3. l'assemblage résolu par Compose — un seul port publié, aucun 80/443, aucune valeur de
 #      remplissage consommée, une limite mémoire partout ;
-#   4. les deux Caddyfile, validés par le binaire épinglé ;
+#   4. les deux Caddyfile, validés par le binaire épinglé ; l'image Realtime dérivée, construite
+#      puis inspectée — aucun identifiant hors de la plage de la cellule ;
 #   5. `scripts/spark/proposer.sh` sur des fichiers `.?` jetables — propositions complètes au regard
 #      du contrat, secrets jamais affichés, refus sans écriture ;
 #   6. `scripts/spark/livrer.sh` contre une cellule SIMULÉE — faux `ssh` qui exécute localement,
@@ -327,6 +328,53 @@ etiquette_overlay=$(sed -n '/^  realtime:/,/^  [a-z]/s/^    image: //p' docker-c
 [ -n "$etiquette_overlay" ] && [ "$etiquette_overlay" = "$etiquette_livrer" ] \
 	&& ok "même étiquette dérivée dans l'overlay et dans livrer.sh ($etiquette_overlay)" \
 	|| fail "étiquette dérivée : overlay « $etiquette_overlay », livrer.sh « $etiquette_livrer »"
+
+# L'image dérivée dans sa forme LIVRÉE (décisions 571 et 575), construite comme livrer.sh la
+# construit : aucun identifiant que la cellule ne sait pas représenter, ni dans ses couches, ni parmi
+# les comptes vers lesquels `run.sh` bascule par `sudo` — ce second point a fait redémarrer Realtime
+# en boucle dans la cellule, alors que le poste, qui a tous ses UID, le démarrait sain.
+BORNE_UID_CELLULE=64534
+if docker info >/dev/null 2>&1; then
+	if docker build -q -t "$etiquette_livrer" supabase/docker/realtime-spark >"$WORK/rt-build.out" 2>&1; then
+		docker save "$etiquette_livrer" > "$WORK/rt.tar"
+		releve=$(python3 - "$WORK/rt.tar" "$BORNE_UID_CELLULE" <<'PY'
+import json, sys, tarfile
+borne = int(sys.argv[2])
+entrees, hors = 0, []
+with tarfile.open(sys.argv[1]) as image:
+    for chemin in json.load(image.extractfile("manifest.json"))[0]["Layers"]:
+        with tarfile.open(fileobj=image.extractfile(chemin)) as couche:
+            for m in couche:
+                entrees += 1
+                if m.uid > borne or m.gid > borne:
+                    hors.append(f"{m.name}={m.uid}:{m.gid}")
+print(entrees, len(hors), " ".join(hors[:3]))
+PY
+)
+		read -r entrees hors exemples <<< "$releve"
+		[ "${entrees:-0}" -gt 0 ] && [ "$hors" = 0 ] \
+			&& ok "image dérivée : $entrees entrées de couche, aucune au-delà de l'UID/GID $BORNE_UID_CELLULE" \
+			|| fail "image dérivée : ${hors:-?} entrée(s) hors de la plage de la cellule — $exemples"
+		comptes=$(docker run --rm --entrypoint sh "$etiquette_livrer" -c \
+			'for u in $(sed -n "s/.*sudo -E -u \([a-z_]*\) .*/\1/p" /app/run.sh | sort -u); do echo "$u $(id -u "$u") $(id -g "$u")"; done')
+		hors_comptes=$(printf '%s\n' "$comptes" | awk -v b="$BORNE_UID_CELLULE" 'NF && ($2 > b || $3 > b)')
+		[ -n "$comptes" ] && [ -z "$hors_comptes" ] \
+			&& ok "comptes cibles du sudo de run.sh dans la plage : $(printf '%s' "$comptes" | tr '\n' ';')" \
+			|| fail "comptes cibles du sudo de run.sh : « $(printf '%s' "${hors_comptes:-aucun trouvé}" | tr '\n' ';') » hors de la plage"
+		docker run --rm --entrypoint sh "$etiquette_livrer" -c 'sudo -E -u nobody sh -c "test -O /app/bin/migrate && test -w /app && test -w /app/.pgdelta-cache"' \
+			&& ok "nobody possède /app et peut y écrire, comme dans l'image d'origine" \
+			|| fail "nobody ne possède pas /app ou ne peut pas y écrire"
+		config_rt() { docker image inspect --format '{{json .Config.Entrypoint}} {{json .Config.Cmd}} {{json .Config.WorkingDir}} {{json .Config.User}} {{json .Config.Env}}' "$1"; }
+		[ "$(config_rt "$etiquette_livrer")" = "$(config_rt "$source_derivee")" ] \
+			&& ok "configuration d'exécution identique à l'image d'origine" \
+			|| fail "configuration d'exécution : dérivée « $(config_rt "$etiquette_livrer") », origine « $(config_rt "$source_derivee") »"
+		rm -f "$WORK/rt.tar"
+	else
+		fail "construction de l'image dérivée : $(tail -n 1 "$WORK/rt-build.out")"
+	fi
+else
+	skip "démon Docker indisponible : image Realtime dérivée non inspectée"
+fi
 
 # --- 5. proposer.sh ----------------------------------------------------------------------------------
 

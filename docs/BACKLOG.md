@@ -14405,6 +14405,11 @@ décrit la baseline réelle.
       `--archive-seule` ; propositions de variables, de secrets et de route déposées par
       `proposer.sh` ; dix images tirées et l'image Realtime dérivée chargée (4,7 Go utilisés,
       5,8 Go libres).
+- [~] **Realtime au premier déploiement réel** (décision 575) : il redémarrait en boucle, son
+      `run.sh` basculant par `sudo` vers `nobody` (65534), hors de la plage de la cellule. Image
+      dérivée corrigée — `nobody` renuméroté en 64000 — et harnais porté à **74 vérifications,
+      aucune anomalie**, dont deux qui rougissaient avant la correction. Reste la preuve dans la
+      cellule.
 
 ### CRM-091 — Connexion unique par `oauth.lelabs.tech` `[~]`
 *Créée le 2026-09-23 — décision 568. Motif : GoTrue 2.189.0 ne parle pas PKCE à Keycloak (M1), que le
