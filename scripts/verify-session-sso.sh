@@ -24,11 +24,23 @@
 #      l'ancien mot de passe de `CRM-091` ;
 #   7. NON-COMPLAISANCE : `verified` retiré à `bizdev` par l'API d'administration de développement
 #      doit être vu ; le rôle est rendu par le `trap` quoi qu'il arrive.
+#
+# Tranche T3 — l'échangeur de session (§5), fonction edge `session` :
+#
+#   8. ses tests unitaires, à leur nombre exact ;
+#   9. ses preuves d'API contre la pile réelle, à leur nombre exact ;
+#  10. NON-COMPLAISANCE PAR MUTATION : cinq défauts introduits un à un dans le code — algorithme
+#      symétrique accepté, `azp` ignoré, `verified` non exigé, durée non bornée par le jeton LeLabs,
+#      `JWT_SECRET` remis à une autre fonction — doivent chacun rougir les tests unitaires. Le fichier
+#      muté est restauré depuis sa copie par le `trap`, quoi qu'il arrive.
 
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# shellcheck source=scripts/lib/node.sh
+source scripts/lib/node.sh
+node_toolchain_prepare "$PWD/.nvmrc" || exit 1
 # shellcheck source=scripts/lib/env.sh
 source scripts/lib/env.sh
 # shellcheck source=scripts/lib/sso.sh
@@ -67,10 +79,16 @@ appliquer_migrations_dev() {
 }
 
 role_a_rendre=false
+fichier_mute=''
+UNITES_SESSION=75
+SCENARIOS_SESSION=14
 
 cleanup() {
 	local status=$?
 	trap - EXIT
+	if [ -n "$fichier_mute" ] && [ -f "$WORK/original" ]; then
+		cp "$WORK/original" "$fichier_mute" || { echo "RESTAURATION IMPOSSIBLE : $fichier_mute" >&2; status=1; }
+	fi
 	if [ "$role_a_rendre" = true ]; then
 		attribuer_verified bizdev || { echo "RESTAURATION IMPOSSIBLE : rendre « verified » à bizdev@$DOMAINE" >&2; status=1; }
 	fi
@@ -393,6 +411,87 @@ if attribuer_verified bizdev && juger_compte bizdev 5eed0000-0000-4000-8000-0000
 	ok "verified rendu à bizdev@ : le contrôle est de nouveau vert"
 else
 	fail "verified n'a pas pu être rendu à bizdev@"
+fi
+
+# =================================================================================================
+# 8. Tests unitaires de l'échangeur
+# =================================================================================================
+echo
+echo "8. Tests unitaires de supabase/functions/session"
+
+unites_session() {
+	npm run --silent test:unit -- ../supabase/functions/session >"$WORK/unites.log" 2>&1
+}
+if unites_session && grep -qE "Tests +$UNITES_SESSION passed" "$WORK/unites.log"; then
+	ok "$UNITES_SESSION tests unitaires verts"
+else
+	fail "tests unitaires en échec ou compte différent de $UNITES_SESSION : $(grep -E 'Tests' "$WORK/unites.log" | tail -n 1)"
+fi
+
+# =================================================================================================
+# 9. Preuves d'API de l'échangeur, contre la pile réelle
+# =================================================================================================
+echo
+echo "9. Preuves d'API : e2e/api/session.spec.ts"
+
+if E2E_PROJETS=api npx playwright test --config e2e/playwright.config.ts --project=api \
+	e2e/api/session.spec.ts --workers=1 >"$WORK/session-api.log" 2>&1 \
+	&& grep -qE "$SCENARIOS_SESSION passed" "$WORK/session-api.log"; then
+	ok "$SCENARIOS_SESSION scénarios verts : comptes du seed, attentes, refus, rattachement, Realtime, Storage, rotation"
+else
+	fail "preuves d'API en échec ou compte différent de $SCENARIOS_SESSION : $(grep -E 'passed|failed' "$WORK/session-api.log" | tail -n 2 | tr '\n' ' ')"
+fi
+
+# =================================================================================================
+# 10. Non-complaisance par mutation
+# =================================================================================================
+echo
+echo "10. Non-complaisance par mutation (chaque fichier muté est restauré depuis sa copie)"
+
+muter() {
+	local libelle=$1 fichier=$2 motif=$3 remplacement=$4 cible=$5
+	cp "$fichier" "$WORK/original"
+	fichier_mute=$fichier
+	if ! MOTIF="$motif" REMPLACEMENT="$remplacement" python3 - "$fichier" <<'PY'
+import os, sys
+chemin = sys.argv[1]
+texte = open(chemin, encoding='utf-8').read()
+motif = os.environ['MOTIF']
+if texte.count(motif) != 1:
+    sys.exit(1)
+open(chemin, 'w', encoding='utf-8').write(texte.replace(motif, os.environ['REMPLACEMENT']))
+PY
+	then
+		fail "mutation impossible, motif introuvable ou ambigu : $libelle"
+	elif npm run --silent test:unit -- "$cible" >"$WORK/mutant.log" 2>&1; then
+		fail "mutation NON détectée : $libelle"
+	else
+		ok "mutation détectée : $libelle"
+	fi
+	cp "$WORK/original" "$fichier"
+	fichier_mute=''
+}
+
+muter "un algorithme symétrique ou « none » accepté" supabase/functions/session/handler.ts \
+	"if (!algorithmeAccepte(alg)) throw new Refus('jeton_refuse')" \
+	"if (alg === undefined) throw new Refus('jeton_refuse')" ../supabase/functions/session
+muter "azp ignoré : le jeton d'une autre application accepté" supabase/functions/session/handler.ts \
+	"if (c.azp !== configuration.clientId) throw new Refus('jeton_refuse')" \
+	"" ../supabase/functions/session
+muter "verified non exigé" supabase/functions/session/handler.ts \
+	"if (!Array.isArray(roles) || !roles.includes(ROLE_REQUIS)) throw new Refus('attente_verification', adresse)" \
+	"" ../supabase/functions/session
+muter "jeton interne non borné par l'échéance du jeton LeLabs" supabase/functions/session/handler.ts \
+	"Math.min(c.exp, maintenant + DUREE_MAX_JETON_INTERNE)" \
+	"maintenant + DUREE_MAX_JETON_INTERNE" ../supabase/functions/session
+muter "JWT_SECRET remis à la fonction d'exemple" supabase/functions/main/environnement.ts \
+	"session: ['JWT_SECRET', 'SSO_OIDC_ISSUER', 'SSO_OIDC_CLIENT_ID']," \
+	"session: ['JWT_SECRET', 'SSO_OIDC_ISSUER', 'SSO_OIDC_CLIENT_ID'], example: ['JWT_SECRET']," ../supabase/functions/main
+
+if unites_session && grep -qE "Tests +$UNITES_SESSION passed" "$WORK/unites.log"; then
+	ok "après restauration, les tests unitaires sont de nouveau verts"
+else
+	fail "après restauration, les tests unitaires ne sont pas verts"
 fi
 
 echo

@@ -29118,3 +29118,49 @@ laisser un profil de preuve orphelin, invisible des autres personnes.
 et T2 (11), dont `verified` retiré à `bizdev@` et vu. `e2e/api/sso.spec.ts` : **9/9** rejouée APRÈS le
 harnais ; `e2e/ui/sso.spec.ts` et `e2e/ui/authentification.spec.ts` : **12/12**.
 `scripts/verify-scripts.sh` : **112, aucune anomalie**. `npm run typecheck` vert.
+
+## décision 584 — `CRM-092` tranche T3 livrée : l'échangeur de session, une règle de `CRM-016` révisée, et Realtime mesuré
+
+*2026-09-23, même session. Spécification `docs/SPEC-session-sso.md` §5.*
+
+**Consigne du responsable, reçue pendant la tranche** : « pense à déployer quand c'est tout bon ».
+Elle vaut instruction de mener la reprise de production du §12 de la spécification une fois `CRM-092`
+entièrement vérifiée — et pas avant. Les opérations destructives du §12 (suppression de l'espace vide
+de l'amorçage) seront précédées de leur lecture préalable ; le préalable humain chez LeLabs
+(`verified` sur `martino@p2enjoy.studio`) reste hors de portée de ce dépôt.
+
+**Livré.** Fonction edge `session` : `jws.ts` (lecture, vérification RS256/ES256, signature HS256,
+WebCrypto seul, aucune dépendance), `handler.ts` (vérifications dans l'ordre du §5.2, dictionnaire
+fermé du §5.4, jeton interne du §5.3), `dependances.ts` (LeLabs sous délai, base par PostgREST).
+Service principal : environnement **par fonction** (`main/environnement.ts`). Preuves partagées
+`e2e/api/sso.ts` et `e2e/api/keycloak-dev.ts`.
+
+**Une règle de `CRM-016` révisée, et non contournée.** `docs/SPEC-edge-functions.md` §2 écrivait « le
+secret de signature JWT n'est pas propagé », et `scripts/verify-functions.sh` le vérifiait. L'échangeur
+doit pourtant signer le jeton interne avec la seule clé que PostgREST, Realtime et Storage connaissent.
+La propriété que la règle défendait — aucune fonction ne peut frapper un jeton — est désormais tenue au
+niveau du **worker** : le conteneur reçoit `JWT_SECRET`, le service principal ne le remet qu'à
+`session`. Prouvé par `environnement.test.ts`, par une mutation qui le remet à `example` et doit
+rougir, et par un contrôle que `main` passe bien par la répartition. `verify-spark.sh` compte
+désormais `functions` parmi les destinataires de `JWT_SECRET`.
+
+**Deux faits mesurés.**
+
+- **K18 — `supabase-js` 2.112 pose le jeton sur Realtime de façon asynchrone**, à la création du
+  client, sans l'attendre : un abonnement lancé aussitôt rejoint le canal **en anonyme** (mesuré :
+  `SUBSCRIBED` avec un jeton forgé). Jeton posé et attendu d'abord, le jeton forgé n'entre plus — aucun
+  état n'est rendu. La preuve pose donc le jeton avant de s'abonner, et la webapp devra le faire à
+  chaque ouverture et à chaque renouvellement (§8.4, révisé).
+- **Délais.** Le §5.2 prévoyait `5 s` par appel ; trois appels pouvaient donc dépasser les 10 s de
+  temps mur d'un worker, qui aurait été tué sans réponse. Ramené à `3 s`. Un échange mesuré en
+  développement prend **11 à 14 ms** : aucun cache n'est justifié (`CLAUDE.md` §21).
+
+**Vérifications.** Tests unitaires des fonctions : **86** (dont 75 de `session/`, 5 de l'environnement
+par fonction). `e2e/api/session.spec.ts` : **14/14** — les trois comptes du seed, le jeton LeLabs
+refusé par PostgREST, Storage et Realtime acceptant le jeton interne et refusant un jeton forgé (le
+destinataire reçoit la notification, le faussaire rien), le rafraîchissement, les trois attentes, les
+jetons refusés, une attente consommée en appartenance puis l'accès fermé par le retrait de
+l'appartenance puis de `verified`, et la rotation des clés suivie sans redémarrage. Le realm et la base
+sont rendus intacts (relus). `scripts/verify-session-sso.sh` : **36, aucune anomalie**, dont cinq
+mutations détectées. `verify-functions.sh` : **14** ; `verify-spark.sh` : **78** ; compteur
+`SCENARIOS_API` porté à 1081, valeur comptée.

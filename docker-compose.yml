@@ -344,10 +344,17 @@ services:
       timeout: 5s
       retries: 10
       start_period: 10s
+    # @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §5.5 — l'échangeur de session signe
+    # le jeton interne avec `JWT_SECRET` et vérifie le jeton LeLabs contre `SSO_OIDC_*`. Le conteneur
+    # les reçoit, mais le service principal ne les remet QU'AU worker `session`
+    # (`supabase/functions/main/environnement.ts`, décision 584).
     environment:
       SUPABASE_URL: http://kong:8000
       SUPABASE_ANON_KEY: ${ANON_KEY}
       SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
+      JWT_SECRET: ${JWT_SECRET}
+      SSO_OIDC_ISSUER: ${SSO_OIDC_ISSUER}
+      SSO_OIDC_CLIENT_ID: ${SSO_OIDC_CLIENT_ID}
 
   # --- Passerelle ----------------------------------------------------------------------------
   # Kong expose REST, Auth, Storage, Realtime et les fonctions edge sur un port unique

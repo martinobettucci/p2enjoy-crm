@@ -869,7 +869,13 @@ ASSERTIONS_ATTENDUES=3142
 # vérifiée, invitation acceptée par le SSO, nonce, audience, voie `/authorize` fermée, revendications
 # conservées. 1058 + 9 = 1067, valeur COMPTÉE — « Total: 1067 tests in 67 files ». Garde-fou RÉVISÉ,
 # jamais retiré (décision 51).
-SCENARIOS_API=1067
+# **1081 depuis `CRM-092` tranche T3, 2026-09-23.** QUATORZE scénarios dans un fichier NEUF,
+# `e2e/api/session.spec.ts` : l'échangeur de session contre la pile réelle — les trois comptes du
+# seed, le jeton LeLabs refusé par PostgREST, Storage, Realtime, le rafraîchissement, les trois
+# attentes, les jetons refusés, la méthode, le rattachement d'une attente puis la fermeture d'accès,
+# la rotation des clés. 1067 + 14 = 1081, valeur COMPTÉE — « Total: 1081 tests in 68 files ».
+# Garde-fou RÉVISÉ, jamais retiré (décision 51).
+SCENARIOS_API=1081
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la

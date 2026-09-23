@@ -56,9 +56,17 @@ HTTP 200 et encore zéro ligne après 12 secondes. Le service ne filtre aucun me
 pas en mode `--quiet` : il supprime la cause du bruit (décision 286).
 
 Le service reçoit seulement les variables nécessaires aux fonctions de confiance :
-`SUPABASE_URL=http://kong:8000`, `SUPABASE_ANON_KEY` et `SUPABASE_SERVICE_ROLE_KEY`. Le secret de
-signature JWT n'est pas propagé. Aucune valeur n'est journalisée, retournée par `example` ou
-inscrite dans les sources.
+`SUPABASE_URL=http://kong:8000`, `SUPABASE_ANON_KEY` et `SUPABASE_SERVICE_ROLE_KEY`. Aucune valeur
+n'est journalisée, retournée par `example` ou inscrite dans les sources.
+
+**Révisé par `CRM-092` (décision 584) : l'environnement est remis PAR FONCTION.** Le conteneur reçoit
+en plus `JWT_SECRET`, `SSO_OIDC_ISSUER` et `SSO_OIDC_CLIENT_ID`, parce que l'échangeur de session
+(`docs/SPEC-session-sso.md` §5) signe le jeton interne que PostgREST, Realtime et Storage acceptent.
+Le service principal ne les remet qu'au **seul** worker `session` (`main/environnement.ts`) : toute
+autre fonction, présente ou future, ne reçoit que les trois variables ci-dessus et ne peut frapper
+aucun jeton. La règle d'origine — « le secret de signature n'est pas propagé » — défendait cette
+propriété-là ; elle est tenue à l'échelle du worker plutôt qu'à celle du conteneur, prouvée par
+`environnement.test.ts` et par une mutation de `scripts/verify-session-sso.sh`.
 
 ## 3. Arborescence et traçabilité
 
@@ -67,11 +75,19 @@ supabase/functions/
 ├── main/
 │   ├── index.ts              service principal et création des workers
 │   ├── router.ts             parsing pur et validation du nom de fonction
-│   └── router.test.ts        preuve unitaire du routage
-└── example/
-    ├── handler.ts            contrat HTTP pur
-    ├── handler.test.ts       preuve unitaire de la fonction
-    └── index.ts              adaptation Deno.serve
+│   ├── router.test.ts        preuve unitaire du routage
+│   ├── environnement.ts      environnement remis à chaque worker, par fonction (CRM-092)
+│   └── environnement.test.ts preuve que JWT_SECRET n'atteint que `session`
+├── example/
+│   ├── handler.ts            contrat HTTP pur
+│   ├── handler.test.ts       preuve unitaire de la fonction
+│   └── index.ts              adaptation Deno.serve
+└── session/                  échangeur de session, CRM-092 (docs/SPEC-session-sso.md §5)
+    ├── jws.ts                lecture, vérification RS256/ES256 et signature HS256, WebCrypto seul
+    ├── handler.ts            vérifications ordonnées, admission, jeton interne, refus
+    ├── dependances.ts        entrées-sorties réelles : LeLabs sous délai, base par PostgREST
+    ├── index.ts              adaptation Deno.serve
+    └── *.test.ts             preuves unitaires des trois modules
 ```
 
 Chaque fichier d'exécution porte `@spec CRM-016` et les sections exactes de ce document. Les tests

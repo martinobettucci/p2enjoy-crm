@@ -13,7 +13,7 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-092` — Le SSO, seule source d'identité (en cours : tranches T1 et T2 livrées)
+### `CRM-092` — Le SSO, seule source d'identité (en cours : tranches T1 à T3 livrées)
 
 Décision du responsable (décisions 578 et 579) : le SSO LeLabs devient la **seule** source d'identité
 du CRM, en développement comme en production ; GoTrue et la connexion par mot de passe quitteront la
@@ -37,6 +37,14 @@ pile. Contrat : `docs/SPEC-session-sso.md`. Rien ne change encore pour la person
   que le reste du développement, `SeedDev2026Local`** — `SsoDev2026Local` disparaît. Deux comptes
   s'ajoutent pour démontrer les attentes : `attendu@` (pas encore vérifié par LeLabs) et
   `adresse-non-verifiee@`.
+- **L'échangeur de session existe** (tranche T3) : `POST /functions/v1/session` reçoit le jeton
+  d'accès LeLabs, le vérifie — algorithme asymétrique seul, clés relues à chaque échange et suivies
+  en rotation, émetteur, application, échéance —, exige une adresse vérifiée et le rôle `verified`,
+  rattache les attentes, et rend un jeton interne de 300 s au plus, jamais au-delà du jeton LeLabs,
+  que PostgREST, Realtime et Storage acceptent. Refus nommés : `jeton_refuse`,
+  `adresse_non_verifiee`, `attente_verification`, `attente_espace`. La webapp ne l'emploie pas encore.
+- **La clé de signature n'atteint que l'échangeur** : le conteneur des fonctions la reçoit, mais le
+  service principal ne la remet qu'au worker `session`.
 
 ### `CRM-091` — Se connecter avec LeLabs
 

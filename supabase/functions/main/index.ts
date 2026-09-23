@@ -1,6 +1,8 @@
 // @spec CRM-016 (docs/BACKLOG.md) — service principal des fonctions edge
 // @spec docs/SPEC-edge-functions.md §2 (bornes), §4 (dispatch), §4.1 (santé), §5 (sécurité)
+// @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §5.5 — environnement par fonction
 
+import { environnementDe } from './environnement.ts'
 import { resolveFunctionRoute, safeRequestId } from './router.ts'
 
 type Worker = { fetch(request: Request): Promise<Response> }
@@ -25,7 +27,6 @@ declare const EdgeRuntime: {
 }
 
 const FUNCTION_ROOT = '/home/deno/functions'
-const PASSED_ENVIRONMENT = ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY'] as const
 
 function json(body: Record<string, string>, status: number, requestId?: string): Response {
 	const headers = new Headers({ 'content-type': 'application/json; charset=utf-8' })
@@ -33,13 +34,9 @@ function json(body: Record<string, string>, status: number, requestId?: string):
 	return new Response(JSON.stringify(body), { status, headers })
 }
 
-function workerEnvironment(): [string, string][] {
-	const values: [string, string][] = []
-	for (const name of PASSED_ENVIRONMENT) {
-		const value = Deno.env.get(name)
-		if (value !== undefined) values.push([name, value])
-	}
-	return values
+// L'environnement d'un worker dépend de la fonction : `JWT_SECRET` n'atteint que `session`.
+function workerEnvironment(functionName: string): [string, string][] {
+	return environnementDe(functionName, (name) => Deno.env.get(name))
 }
 
 async function directoryExists(path: string): Promise<boolean> {
@@ -81,7 +78,7 @@ Deno.serve(async (request: Request) => {
 			workerTimeoutMs: 10_000,
 			noModuleCache: false,
 			importMapPath: null,
-			envVars: workerEnvironment(),
+			envVars: workerEnvironment(route.functionName),
 		})
 		const response = await worker.fetch(request)
 		console.info(JSON.stringify({

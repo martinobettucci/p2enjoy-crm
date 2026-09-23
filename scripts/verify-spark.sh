@@ -260,7 +260,8 @@ if s.get("caddy", {}).get("environment"):
 # chaque secret atteint SEULEMENT les services qui le consomment. Un env_file posé sur un service
 # le remettrait à tous ; Compose le résout dans environment, et cette comparaison le voit.
 attendus = {
-    "JWT_SECRET": ["auth", "db", "realtime", "rest", "storage"],
+    # functions depuis CRM-092 (décision 584) : son échangeur de session signe le jeton interne.
+    "JWT_SECRET": ["auth", "db", "functions", "realtime", "rest", "storage"],
     "POSTGRES_PASSWORD": ["auth", "db", "migrations-runner", "realtime", "rest", "storage"],
     "SERVICE_ROLE_KEY": ["functions", "kong", "mail-sync", "storage"],
     "MINIO_ROOT_PASSWORD": ["minio", "minio-createbucket", "storage"],

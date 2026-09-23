@@ -104,10 +104,10 @@ Toutes appliquées **avant** tout accès à la base. La première qui échoue ar
 2. **`alg` ∈ { `RS256`, `ES256` }**. `none`, toute la famille `HS*` et tout autre algorithme sont
    refusés **avant** de chercher une clé : aucune clé symétrique n'est jamais essayée, comme le
    demande `docs/SSO-client-lelabs-crm.md`.
-3. **Découverte** : `GET ${SSO_OIDC_ISSUER}/.well-known/openid-configuration`, délai `5 s`. Son
+3. **Découverte** : `GET ${SSO_OIDC_ISSUER}/.well-known/openid-configuration`, délai `3 s`. Son
    `issuer` doit être **égal** à `SSO_OIDC_ISSUER` ; son `jwks_uri` doit être une URL `https:` — ou
    `http:` sur un hôte de boucle locale ou `*.localhost`, pour le seul Keycloak de développement.
-4. **Clés** : `GET jwks_uri`, délai `5 s`. La clé retenue a le même `kid` que l'en-tête, un `kty`
+4. **Clés** : `GET jwks_uri`, délai `3 s`. La clé retenue a le même `kid` que l'en-tête, un `kty`
    conforme à `alg` (`RSA` ou `EC` `P-256`) et un `use` absent ou égal à `sig`. **Aucune clé n'est
    épinglée ni gardée** : chaque échange relit la découverte et les clés, ce qui suit toute rotation
    sans redémarrage. Un `kid` inconnu est un refus.
@@ -176,6 +176,11 @@ Un `401` ne distingue pas ses causes : les distinguer n'aiderait que qui forge d
   Une autre fonction ne peut pas frapper un jeton.
 - **Journal** : un événement structuré par échange — `session_ouverte` ou `session_refusee` avec son
   code, identifiant de requête et durée. **Jamais** de jeton, d'adresse, de nom ni de `sub`.
+- **Délais** : `3 s` par appel — découverte, clés, puis la base —, pour que les trois restent sous
+  les 10 s de temps mur d'un worker (`docs/SPEC-edge-functions.md` §2) et qu'un fournisseur lent
+  rende `sso_injoignable` plutôt qu'un worker tué sans réponse (révisé en T3, décision 584).
+- **Configuration absente** : l'échangeur rend `service_indisponible` et journalise
+  `configuration_absente`, sans rien tenter.
 - **Coût** : deux lectures chez LeLabs par échange, soit une ouverture et un rafraîchissement toutes les
   cinq minutes environ par onglet ouvert. Le service principal crée un worker par requête
   (`--policy oneshot`) : aucune mémoire ne survit, et c'est ce qui rend la rotation gratuite. Le délai
@@ -318,9 +323,12 @@ Porte la session du CRM et rien d'autre : échange auprès de l'échangeur, clas
 - Refus de LeLabs (`400`, session LeLabs échue ou fermée) : la session du CRM prend fin avec
   `session_expiree`. Refus de l'échangeur : la session prend fin avec son code. Réseau : nouvel essai
   jusqu'à l'échéance, puis fin avec `reseau`.
-- Le client `supabase-js` est créé avec `accessToken`, qui rend le jeton interne courant (K6). Realtime
-  doit suivre le jeton renouvelé : **à mesurer en T5**, et à prouver par une souscription qui survit
-  à un rafraîchissement.
+- Le client `supabase-js` est créé avec `accessToken`, qui rend le jeton interne courant (K6).
+  **Mesuré en T3 (K18, décision 584)** : `supabase-js` pose ce jeton sur Realtime de façon
+  asynchrone, sans l'attendre ; un abonnement lancé aussitôt rejoint le canal **en anonyme**. La
+  webapp pose donc le jeton sur Realtime (`realtime.setAuth`) et l'**attend** avant tout abonnement,
+  puis à chaque renouvellement. Un jeton refusé par Realtime ne rend aucun état : il n'entre pas.
+  La preuve de T5 est une souscription qui survit à un rafraîchissement.
 
 ### 8.5 Déconnexion
 
