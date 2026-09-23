@@ -14466,9 +14466,20 @@ source d'identité, en développement (Keycloak préchargé de comptes et de rô
 Retirer GoTrue et tout ce qui fait naître une identité dans le CRM ; ouvrir la session du produit à
 partir du seul jeton LeLabs ; précharger le Keycloak de développement ; porter seed, harnais et
 scripts sur la vraie connexion SSO ; reprendre le compte de production sous son `sub`.
-**Spécification** : à écrire sur l'arbitrage de la décision 579, et à committer avant tout code.
-**DoD** : à fixer par la spécification.
+**Spécification** : `docs/SPEC-session-sso.md`, committée avant tout code (mesures : décisions 578
+et 580 ; arbitrage : décision 579).
+**DoD** : `docs/SPEC-session-sso.md` §16 — aucune dépendance restante à GoTrue, preuves du §13 vertes
+et non complaisantes, seed rejouable par le seul SSO, captures observées, et en production une
+connexion réelle de `martino@p2enjoy.studio` aboutie après les opérations du §12.
 
 - [x] Arbitrage des points A1, A2 et A3 (décision 579) : échangeur de session, personne attendue
       **et** `verified`, rôles dans les tables du CRM.
-- [ ] Spécification committée et poussée avant tout code.
+- [x] Spécification committée et poussée avant tout code : `docs/SPEC-session-sso.md`.
+- [ ] **T1** — `auth-claims.sql`, migration `0074`, pgTAP, preuve de base neuve (§7, §13).
+- [ ] **T2** — Keycloak de développement préchargé (§10).
+- [ ] **T3** — échangeur `session` et ses preuves (§5, §13).
+- [ ] **T4** — jetons des preuves et seed par la vraie connexion SSO (§11, §13).
+- [ ] **T5** — webapp sans mot de passe, écran d'attente, portage des specs d'interface (§8, §9).
+- [ ] **T6** — retrait de GoTrue, migration `0075`, `verify-auth.sh` réécrit (§2).
+- [ ] **T7** — documentation transverse, contrat de production (§12), campagne.
+- [ ] Production, sur instruction : opérations du §12, connexion réelle relue.

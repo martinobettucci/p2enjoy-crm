@@ -10,8 +10,8 @@ et §7, `docs/manual.md` chapitres 1 et 17.
 > `CRM-092`.** Le SSO `oauth.lelabs.tech` devient la **seule** source d'identité, en développement
 > comme en production : GoTrue, la connexion par mot de passe, l'invitation, la récupération et les
 > gabarits transactionnels quittent la pile. Les §1 à §10 ci-dessous décrivent l'état **encore en
-> service** tant que `CRM-092` n'est pas livrée ; ils seront réécrits par sa spécification, committée
-> avant tout code.
+> service** tant que `CRM-092` n'est pas livrée. Le contrat qui les remplace est
+> **`docs/SPEC-session-sso.md`**.
 
 Ce document a été écrit **après mesure** du comportement réel de `supabase/gotrue:v2.189.0`, la
 version épinglée par `docker-compose.yml`. Chaque comportement décrit ici est soit mesuré et

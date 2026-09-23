@@ -28987,3 +28987,33 @@ au relevé du 2026-09-16 (décision 574). Sous A2, sa première connexion n'abou
 `verified` chez LeLabs : c'est un préalable, humain, à la vérification en production.
 
 La spécification de `CRM-092` est écrite sur ces trois choix, committée avant tout code.
+
+## décision 580 — `CRM-092` mesurée avant d'être écrite : sans GoTrue, `auth.uid()` rend `NULL`, et révoquer le jeton LeLabs déconnecte du SSO
+
+*2026-09-23, même session. Mesures sur une base `supabase/postgres:17.6.1.136` jetable, sans réseau,
+et un Keycloak `26.7.3` jetable, tous deux détruits après mesure ; lectures seules sur la pile de
+développement. Elles complètent K1 à K9 (décision 578).*
+
+| # | Mesure | Résultat |
+|---|---|---|
+| K10 | Base neuve, **sans que GoTrue ait jamais démarré** | le schéma `auth` existe (`users`, `refresh_tokens`, `instances`, `audit_log_entries`, `schema_migrations`), fourni par l'image : la migration `0001`, qui référence `auth.users`, rejoue donc sans GoTrue |
+| K11 | `auth.uid()` sur cette base neuve | **`select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid`** — l'ancienne forme, qui ne lit que la GUC héritée. PostgREST 14 ne pose que `request.jwt.claims` (`PGRST_DB_USE_LEGACY_GUCS=false`) : **`auth.uid()` rend `NULL`**, et toute la RLS refuserait tout. C'est GoTrue qui la réécrit à son démarrage ; `auth.role()` et `auth.email()` sont dans le même cas |
+| K12 | Propriétaire de ces fonctions | base neuve : `supabase_admin` ; base où GoTrue a tourné : `supabase_auth_admin`. Le rôle des migrations, `postgres`, n'est membre d'aucun des deux et **ne peut pas les remplacer** |
+| K13 | Import d'un realm dont les comptes portent un `id` imposé | respecté : `sub` = `5eed0000-0000-4000-8000-000000000011`. Les identifiants stables du seed peuvent donc être ceux du SSO |
+| K14 | Rôles par défaut à l'import | présents **seulement** si `default-roles-lelabs` est listé dans les rôles du compte ; ils ajoutent alors `offline_access`, `uma_authorization` et **`aud: account`**. Le CRM ne peut donc contrôler ni le nombre de rôles, ni `aud` |
+| K15 | Rafraîchissement, client public | `grant_type=refresh_token` rend `200`, un nouveau jeton d'accès de `300 s` et un nouveau jeton de rafraîchissement ; l'ancien reste accepté (réglage du realm, pas du CRM) |
+| K16 | Révocation du jeton de rafraîchissement (`revocation_endpoint`) | `200`, puis le rafraîchissement est refusé (`400`) — **et la session LeLabs de la personne est supprimée** (2 sessions → 1). Révoquer à la déconnexion du CRM déconnecterait donc du SSO, ce que `docs/SSO.md` exclut |
+| K17 | Sortie réseau de la cellule | ouverte, aucun filtre sortant du plan de contrôle (`docs/PROD-SERVER.md`, non versionné) : la cellule peut lire la découverte et les clés d'`oauth.lelabs.tech` |
+
+**Conséquences pour la spécification.**
+
+- **K11 et K12** : un script d'initialisation du cluster, joué par le superutilisateur comme
+  `jwt.sql`, pose les trois fonctions sous la forme qui lit `request.jwt.claims`. Une migration ne
+  le peut pas (K12). Les bases déjà initialisées — développement existant et production — portent
+  déjà la forme de GoTrue, identique : elles ne changent pas. Une preuve rejoue une base neuve et
+  exige `auth.uid()` non nul.
+- **K13 et K14** : le Keycloak préchargé donne aux comptes du seed leurs identifiants stables comme
+  `sub`, et les rôles par défaut du realm réel.
+- **K16** : la déconnexion du CRM **oublie** la session locale et ne révoque rien chez LeLabs. Le
+  jeton de rafraîchissement effacé du navigateur reste valide chez le fournisseur jusqu'à son
+  échéance d'inactivité ; c'est le prix de la règle du SSO, et il est écrit dans la spécification.
