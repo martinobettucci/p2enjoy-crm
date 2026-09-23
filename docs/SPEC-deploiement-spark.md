@@ -178,7 +178,13 @@ propositions **sous** le bloc posé par le plan de contrôle dans `/etc/spark/en
   pile qui tourne invaliderait ses jetons et sa base. Une rotation est une autre opération.
 - **Refus** si une proposition non tranchée existe déjà dans le fichier `.?` : écraser la demande
   d'autrui n'est pas proposer.
-- La route proposée est `crm.lelabs.tech 8080 clair`, dans la grammaire du fichier.
+- La route proposée est `crm.lelabs.tech 8080 tls`, dans la grammaire du fichier. **Le mode dit ce
+  que la Forge expose au public, non ce que la pile sert** — mesuré (décision 576) : une route
+  `clair` est publiée en `http://` seul, et le SSO refuse toute URL de retour hors `https://`. Dans
+  les deux modes, la Forge fait suivre en clair vers Caddy.
+- `--route-seule` ne propose que la route, sans toucher aux variables ni aux secrets : c'est la
+  seule proposition encore possible quand des secrets sont en service. Mêmes refus sur une
+  proposition de route pendante.
 
 ## 5. Livrer
 
@@ -230,7 +236,7 @@ hors de la cellule : le défaut qu'elle corrige est celui de l'assemblage de pro
 | Geste | Qui | Pourquoi |
 |---|---|---|
 | Créer `/srv/crm` et le confier à `spark-docker` | `root` de la cellule | S7 ; une seule fois |
-| Enregistrement DNS `crm.lelabs.tech` vers la Forge, et route `crm.lelabs.tech 8080 clair` | propriétaire du Spark | S8 ; « rien ne s'expose depuis l'intérieur » |
+| Enregistrement DNS `crm.lelabs.tech` vers la Forge, et route `crm.lelabs.tech 8080 tls` | propriétaire du Spark | S8 ; « rien ne s'expose depuis l'intérieur » |
 | Importer variables et secrets proposés, **puis fournir** les valeurs SMTP | propriétaire du Spark | S6 ; seule la console écrit |
 | Déclarer le client OIDC | administrateur du realm `lelabs` | `docs/SPEC-auth.md` §10.8 |
 | Créer le premier compte et le premier espace | opérateur, sur instruction explicite | `scripts/spark/amorcer-espace.sh` (décision 573) : compte invité par `generate_link` — sans mot de passe, donc hors du chemin que la décision 265 encadre —, espace, appartenance `admin` ; le lien d'action n'est jamais affiché |

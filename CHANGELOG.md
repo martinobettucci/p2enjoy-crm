@@ -43,7 +43,8 @@ d'exécuter le code attendu.
   qu'il faut, mesure que la base est vierge, migre, puis démarre tout — et refuse une base peuplée.
 - **`scripts/spark/livrer.sh` livre depuis un poste** une révision poussée, webapp construite pour la
   cellule ; **`scripts/spark/proposer.sh`** propose au propriétaire du Spark les variables, les
-  secrets — tirés dans la cellule, jamais affichés — et la route.
+  secrets — tirés dans la cellule, jamais affichés — et la route, **en `tls`** : une route `clair`
+  n'est publiée qu'en `http://`. `--route-seule` la repropose quand des secrets sont en service.
 - **Les routes de Caddy relaient désormais `/functions/v1/`**, comme Kong le déclare depuis
   `CRM-016` ; elles vivent dans un fragment partagé par les deux Caddyfile.
 - **MinIO se tire de `quay.io`** : son dépôt Docker Hub n'existe plus, et la pile de développement

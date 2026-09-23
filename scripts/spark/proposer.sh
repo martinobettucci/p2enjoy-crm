@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # @spec CRM-090 (docs/BACKLOG.md) — propositions de variables, de secrets et de route à la cellule
 # @spec docs/SPEC-deploiement-spark.md §4.3 (répartition), §4.4 (proposer, sans jamais appliquer)
-# @spec docs/JOURNAL.md décision 567
+# @spec docs/JOURNAL.md décisions 567 et 576 (mode de la route : `tls`, jamais `clair`)
 #
 # S'exécute DANS la cellule, sous le compte `spark-docker`, depuis le dépôt livré (/srv/crm).
 #
@@ -17,7 +17,16 @@
 # Usage :
 #   scripts/spark/proposer.sh [--domaine crm.lelabs.tech] [--port 8080] [--client-sso lelabs-crm]
 #                             [--smtp-hote <hôte>] [--smtp-port <port>] [--smtp-expediteur <adresse>]
+#   scripts/spark/proposer.sh --route-seule [--domaine crm.lelabs.tech] [--port 8080]
 #   scripts/spark/proposer.sh --help
+#
+# La route se propose en `tls` : c'est ce que la FORGE expose au public, et non ce que la pile sert.
+# Mesuré (décision 576) : une route `clair` est publiée en `http://` seul, la poignée de main TLS y
+# est refusée, et le SSO n'accepte aucune URL de retour hors `https://`. Dans les deux modes, la
+# Forge fait suivre en clair vers Caddy.
+#
+# `--route-seule` ne propose QUE la route, sans toucher aux fichiers de variables ni de secrets :
+# c'est la seule proposition qui reste possible quand des secrets sont déjà en service.
 #
 # Les trois options SMTP proposent un relais que le poste connaît ; absentes, les valeurs restent des
 # DEMANDES vides. Les identifiants du relais (SMTP_USER, SMTP_PASS) restent toujours des demandes :
@@ -40,6 +49,7 @@ CLIENT_SSO=lelabs-crm
 SMTP_HOTE=""
 SMTP_PORT=""
 SMTP_EXPEDITEUR=""
+ROUTE_SEULE=0
 
 usage() { print_header_help "${BASH_SOURCE[0]}"; }
 
@@ -51,6 +61,7 @@ while [ $# -gt 0 ]; do
 		--smtp-hote)  SMTP_HOTE=${2:?--smtp-hote exige une valeur}; shift ;;
 		--smtp-port)  SMTP_PORT=${2:?--smtp-port exige une valeur}; shift ;;
 		--smtp-expediteur) SMTP_EXPEDITEUR=${2:?--smtp-expediteur exige une valeur}; shift ;;
+		--route-seule) ROUTE_SEULE=1 ;;
 		--help|-h)    usage; exit 0 ;;
 		*)            die "option inconnue « $1 ». Voir scripts/spark/proposer.sh --help." ;;
 	esac
@@ -82,7 +93,7 @@ MARQUE="# --- fin du bloc posé par sparkd, écrivez ci-dessous ---"
 
 # --- Gardes --------------------------------------------------------------------------------------
 
-if [ -f "$SPARK_SECRETS_FILE" ] && grep -q '^JWT_SECRET=' "$SPARK_SECRETS_FILE"; then
+if [ "$ROUTE_SEULE" = 0 ] && [ -f "$SPARK_SECRETS_FILE" ] && grep -q '^JWT_SECRET=' "$SPARK_SECRETS_FILE"; then
 	die "$SPARK_SECRETS_FILE porte déjà JWT_SECRET : des secrets sont en service.
         Proposer d'autres secrets invaliderait les jetons émis et le mot de passe de la base.
         Une rotation est une opération distincte, qui n'est pas celle-ci."
@@ -94,7 +105,9 @@ proposition_pendante() {
 	awk '/^[[:space:]]*$/ || /^#/ { next } { trouve = 1 } END { exit trouve ? 0 : 1 }' "$1"
 }
 
-for fichier in "$PROPOSITION_ENV" "$PROPOSITION_SECRETS" "$PROPOSITION_ROUTES"; do
+FICHIERS=("$PROPOSITION_ENV" "$PROPOSITION_SECRETS" "$PROPOSITION_ROUTES")
+[ "$ROUTE_SEULE" = 0 ] || FICHIERS=("$PROPOSITION_ROUTES")
+for fichier in "${FICHIERS[@]}"; do
 	[ -e "$fichier" ] || die "$fichier absent : ce script s'exécute dans la cellule, où le plan de contrôle le pose."
 	[ -w "$fichier" ] || die "$fichier non inscriptible par le compte $(id -un)."
 	if proposition_pendante "$fichier"; then
@@ -103,6 +116,23 @@ for fichier in "$PROPOSITION_ENV" "$PROPOSITION_SECRETS" "$PROPOSITION_ROUTES"; 
         redevient vide), ou retirer la proposition à la main en connaissance de cause."
 	fi
 done
+
+# --- La route ------------------------------------------------------------------------------------
+
+proposer_route() {
+	{
+		printf '\n# Route publique du CRM : la Forge termine TLS et fait suivre vers Caddy, en clair (CRM-090).\n'
+		printf '%s %s tls\n' "$DOMAINE" "$PORT"
+	} >> "$PROPOSITION_ROUTES"
+}
+
+if [ "$ROUTE_SEULE" = 1 ]; then
+	proposer_route
+	say "Route proposée — rien n'est appliqué"
+	info "Route : $PROPOSITION_ROUTES — $DOMAINE $PORT tls"
+	info "Le propriétaire du Spark la relit et l'accepte depuis la console ; elle REMPLACE l'entrée du même domaine."
+	exit 0
+fi
 
 # --- Secrets tirés dans la cellule ---------------------------------------------------------------
 # Longueurs de `env_bootstrap_dev`, imposées par les composants : 64, 16 et 32 caractères pour
@@ -149,15 +179,12 @@ ligne() { printf '# %s\n%s=%s\n' "$2" "$1" "$3"; }
 	ligne SMTP_PASS "Mot de passe ou clé du relais d'envoi. Inconnu de la cellule : à saisir." ""
 } >> "$PROPOSITION_SECRETS"
 
-{
-	printf '\n# Route publique du CRM : la Forge termine TLS et fait suivre vers Caddy, en clair (CRM-090).\n'
-	printf '%s %s clair\n' "$DOMAINE" "$PORT"
-} >> "$PROPOSITION_ROUTES"
+proposer_route
 
 say "Propositions déposées — rien n'est appliqué"
 info "Variables : $PROPOSITION_ENV"
 info "Secrets   : $PROPOSITION_SECRETS (tirés ici ; aucune valeur n'est affichée)"
-info "Route     : $PROPOSITION_ROUTES — $DOMAINE $PORT clair"
+info "Route     : $PROPOSITION_ROUTES — $DOMAINE $PORT tls"
 demandes="SMTP_USER, SMTP_PASS"
 [ -n "$SMTP_HOTE" ] || demandes="SMTP_HOST, $demandes"
 [ -n "$SMTP_PORT" ] || demandes="SMTP_PORT, $demandes"

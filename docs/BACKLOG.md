@@ -14410,6 +14410,11 @@ décrit la baseline réelle.
       dérivée corrigée — `nobody` renuméroté en 64000 — et harnais porté à **74 vérifications,
       aucune anomalie**, dont deux qui rougissaient avant la correction. Reste la preuve dans la
       cellule.
+- [~] **Route publique en `tls`** (décision 576) : la route acceptée `clair` publiait le CRM en
+      `http://` seul, que le SSO refuse. `proposer.sh` propose `tls`, et `--route-seule` la
+      repropose sans toucher aux secrets en service ; harnais porté à **76 vérifications, aucune
+      anomalie**, dont deux qui rougissaient avant la correction. Reste l'acceptation de la route
+      par le propriétaire du Spark, puis la preuve en `https://`.
 
 ### CRM-091 — Connexion unique par `oauth.lelabs.tech` `[~]`
 *Créée le 2026-09-23 — décision 568. Motif : GoTrue 2.189.0 ne parle pas PKCE à Keycloak (M1), que le

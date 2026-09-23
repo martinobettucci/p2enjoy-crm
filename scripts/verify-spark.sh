@@ -410,8 +410,9 @@ if out=$(proposer "$P"); then
 	etiquettes=$(awk '/^[A-Z0-9_]+=/ { if (prec !~ /^# / || length(prec) > 120) print $0 } { prec = $0 }' "$P/env.?" "$P/secrets.?")
 	[ -z "$etiquettes" ] && ok "chaque déclaration porte une étiquette d'une ligne, 120 caractères au plus" \
 		|| fail "déclarations sans étiquette conforme : $(printf '%s' "$etiquettes" | cut -d= -f1 | tr '\n' ' ')"
-	[ "$(grep -vE '^#|^$' "$P/routes.?")" = "crm.lelabs.tech 8080 clair" ] \
-		&& ok "route proposée : crm.lelabs.tech 8080 clair" || fail "route : $(grep -vE '^#|^$' "$P/routes.?")"
+	# `tls` : ce que la Forge expose au public. Une route `clair` n'est servie qu'en http:// (décision 576).
+	[ "$(grep -vE '^#|^$' "$P/routes.?")" = "crm.lelabs.tech 8080 tls" ] \
+		&& ok "route proposée : crm.lelabs.tech 8080 tls" || fail "route : $(grep -vE '^#|^$' "$P/routes.?")"
 	demandes=$(grep -hE '^SMTP_(HOST|PORT|ADMIN_EMAIL|USER|PASS)=$' "$P/env.?" "$P/secrets.?" | wc -l)
 	[ "$demandes" = 5 ] && ok "les cinq valeurs SMTP inconnues sont des DEMANDES vides" || fail "demandes SMTP : $demandes sur 5"
 	jwt=$(env_get "$P/secrets.?" JWT_SECRET)
@@ -448,6 +449,19 @@ printf 'JWT_SECRET=en-service\n' > "$P/secrets"
 avant=$(empreintes "$P")
 if proposer "$P" >/dev/null; then fail "secrets en service remplacés"
 else [ "$(empreintes "$P")" = "$avant" ] && ok "JWT_SECRET déjà en service : refus, fichiers inchangés" || fail "refus, mais fichiers modifiés"; fi
+# La route seule reste proposable quand les secrets sont en service, sans toucher au reste.
+env_avant=$(sha256sum "$P/env.?" "$P/secrets.?" "$P/secrets")
+if out=$(proposer "$P" --route-seule); then
+	[ "$(grep -vE '^#|^$' "$P/routes.?")" = "crm.lelabs.tech 8080 tls" ] \
+		&& [ "$(sha256sum "$P/env.?" "$P/secrets.?" "$P/secrets")" = "$env_avant" ] \
+		&& ok "--route-seule avec des secrets en service : route tls proposée, variables et secrets intacts" \
+		|| fail "--route-seule : route « $(grep -vE '^#|^$' "$P/routes.?" | tr '\n' ';') » ou autres fichiers modifiés"
+	avant=$(empreintes "$P")
+	if proposer "$P" --route-seule >/dev/null; then fail "--route-seule : proposition de route pendante écrasée"
+	else [ "$(empreintes "$P")" = "$avant" ] && ok "--route-seule : route pendante, refus, fichiers inchangés" || fail "--route-seule : refus, mais fichiers modifiés"; fi
+else
+	fail "--route-seule refusé avec des secrets en service : $(printf '%s' "$out" | head -n 1)"
+fi
 cellule_vierge "$P"
 proposer "$P" --port 443 >/dev/null && fail "port 443 proposé" || ok "port inférieur à 1024 refusé"
 cellule_vierge "$P"

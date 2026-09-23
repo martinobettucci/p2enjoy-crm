@@ -28821,3 +28821,42 @@ plage ») ; après correction, **74 vérifications, aucune anomalie** — 20 811
 
 **Une limite qui demeure.** Le poste ne sait pas reproduire l'espace d'identifiants de la cellule :
 le harnais vérifie les nombres, la cellule seule prouve le démarrage.
+
+## décision 576 — la route `clair` publiait le CRM en `http://` seul : le mode d'une route dit ce que la Forge expose, pas ce que la pile sert
+
+*2026-09-23, même session, `CRM-090`. Constat fait après l'acceptation de la route et l'apparition
+de l'enregistrement DNS de `crm.lelabs.tech`.*
+
+**Observation.** `crm.lelabs.tech` résout vers la Forge. En `http://`, la route sert la webapp
+(`<title>P2Enjoy CRM</title>`) et l'API — réponses de notre Caddy. En `https://`, la Forge rompt la
+poignée de main par une alerte TLS « internal error », quand `oauth.lelabs.tech`, sur la même
+adresse, présente un certificat Let's Encrypt valide. Le briefing de la cellule le dit sans
+ambiguïté : `http://crm.lelabs.tech → 8080 (active)`, et `"tls": false` pour cette entrée ; il
+ajoute que `X-Forwarded-Proto` porte `https` « sur une route TLS ».
+
+**Cause.** Mon erreur de lecture de la grammaire `<domaine> <port> [tls|clair]` (décision 567) : j'y
+ai lu le protocole ENTRE la Forge et la cellule — que la Forge fasse suivre en clair vers Caddy est
+vrai dans les deux modes —, alors que le mode choisit ce que la Forge PUBLIE. `proposer.sh`
+proposait donc `crm.lelabs.tech 8080 clair`, que le propriétaire a accepté tel quel. Le harnais
+figeait la même erreur : il vérifiait la chaîne que j'avais écrite, pas l'effet de la route.
+
+**Conséquence.** Sans `https://`, le SSO ne peut pas fonctionner : `docs/SSO.md` refuse toute URL
+de retour hors `https://` hors `localhost`, et `docs/SPEC-auth.md` §10.8 déclare
+`https://crm.lelabs.tech/auth/retour`. Et le produit ne doit pas circuler en clair sur Internet.
+
+**Décision.** `scripts/spark/proposer.sh` propose `crm.lelabs.tech 8080 tls`. Une option
+`--route-seule` propose la route SANS toucher aux variables ni aux secrets — le script complet
+refuse, à raison, quand `JWT_SECRET` est en service —, avec le même refus sur une proposition de
+route pendante. La grammaire du fichier dit qu'une entrée du même domaine REMPLACE la précédente :
+aucun retrait n'est demandé. Rien ne change dans la pile : Caddy sert déjà en clair derrière la
+Forge, et `SITE_URL`/`API_EXTERNAL_URL` portent déjà `https://`.
+
+**Test ajouté AVANT la correction.** `scripts/verify-spark.sh` exige la route `tls`, et que
+`--route-seule`, secrets en service, dépose la seule route et laisse variables et secrets intacts,
+puis refuse une seconde proposition pendante. Contre l'ancien script : **2 anomalies** (« route :
+crm.lelabs.tech 8080 clair », « option inconnue --route-seule ») ; contre le nouveau : **76
+vérifications, aucune anomalie**.
+
+**Ce qui reste, et qui n'appartient pas au dépôt.** Le propriétaire du Spark accepte la nouvelle
+route ; la Forge obtient alors le certificat. `scripts/spark/verifier.sh` le constatera par
+`https://`.
