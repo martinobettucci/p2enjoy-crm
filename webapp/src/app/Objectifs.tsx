@@ -33,6 +33,8 @@
 // @spec docs/BACKLOG.md « Correctifs arbitrés », INC-189 a ; docs/JOURNAL.md décision 594 — l'état
 //       local du canevas se réinitialise pendant le rendu, et un geste posé juste après le
 //       chargement n'est plus effacé
+// @spec docs/BACKLOG.md « Correctifs arbitrés », INC-231 ; docs/JOURNAL.md décisions 592 et 594 —
+//       classes absentes du CSS produit remplacées (docs/DESIGN_SYSTEM.md §11, §5.29)
 //
 // CE QUE CES TRANCHES LIVRENT, ET CE QU'ELLES NE LIVRENT PAS — nommé ici plutôt que découvert à
 // l'usage (`CLAUDE.md` §25) :
@@ -1542,15 +1544,18 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 			    §5.29 ter) : l'ordre inverse se lit comme un reproche. Elle est neutre — jamais
 			    `--color-danger` —, ne pas pouvoir écrire n'étant pas une erreur. Chaque commande
 			    éteinte la CITE en `aria-describedby` plutôt que de répéter le motif : dit une fois,
-			    il se lit ; répété sur six commandes, il se saute. */}
+			    il se lit ; répété sur six commandes, il se saute.
+			    SON FOND EST `--color-hover`, et non `--color-surface-2` — INC-231 : ce jeton n'existe
+			    pas, la classe n'était pas engendrée et la mention rendait sans fond. L'icône descend
+			    de 2 px, valeur arbitraire assumée (§5.29) : `mt-0.5` n'existe pas non plus. */}
 			{lectureSeule ? (
 				<p
 					data-testid="canevas-lecture-seule"
 					id="objectifs-lecture-seule"
 					role="status"
-					className="flex items-start gap-2 rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink max-w-[70ch]"
+					className="flex items-start gap-2 rounded-lg border border-border bg-hover px-3 py-2 text-sm text-ink max-w-[70ch]"
 				>
-					<Eye aria-hidden="true" size={16} strokeWidth={2} className="mt-0.5 shrink-0" />
+					<Eye aria-hidden="true" size={16} strokeWidth={2} className="mt-[2px] shrink-0" />
 					{t('goals.readonly.notice')}
 				</p>
 			) : null}

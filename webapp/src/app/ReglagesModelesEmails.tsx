@@ -8,6 +8,8 @@
 // @spec docs/DESIGN_SYSTEM.md §5.39 (cette surface, en écarts du §5.34), §5.8 (états
 //       systématiques), §5.18 (la liste plate), §5.23 (formulaire replié, dans le flux), §5.29
 //       (le patron de suppression confirmée)
+// @spec docs/BACKLOG.md « Correctifs arbitrés », INC-231 ; docs/JOURNAL.md décisions 592 et 594 —
+//       classes absentes du CSS produit remplacées (docs/DESIGN_SYSTEM.md §11, §5.29)
 //
 // UN ÉCRAN QUI LIT ET QUI ÉCRIT, ET QUI N'OUVRE AUCUNE POLITIQUE. La lecture et l'écriture passent
 // par les routes REST de `mail_templates` sous la RLS de la migration `0055` ; la palette appelle
@@ -559,7 +561,9 @@ function FicheModele({
 			<label className={CLASSES_ETIQUETTE}>
 				{t('admin.mailTemplates.field.body')}
 				{/* UNE `textarea`, ET NON UN `input` : le corps est du texte multiligne, et le
-				    sous-système expédie du texte (`docs/SPEC-mail-subsystem.md` §18). */}
+				    sous-système expédie du texte (`docs/SPEC-mail-subsystem.md` §18). Son interligne
+				    est le jeton `--leading-normal`, celui du corps : `leading-relaxed` n'est pas
+				    déclaré, la classe n'était pas engendrée (INC-231). */}
 				<textarea
 					ref={champCorps}
 					data-testid="champ-corps-modele"
@@ -567,7 +571,7 @@ function FicheModele({
 					value={saisie.corps}
 					onFocus={() => setVise('corps')}
 					onChange={(evenement) => onChangement({ ...saisie, corps: evenement.target.value })}
-					className={[CLASSES_CHAMP, 'py-2 leading-relaxed'].join(' ')}
+					className={[CLASSES_CHAMP, 'py-2 leading-normal'].join(' ')}
 				/>
 			</label>
 

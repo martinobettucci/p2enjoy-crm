@@ -5770,6 +5770,13 @@ appartient à `CRM-063` et à `CRM-064`, pas à celle-ci.
 **Ce que le responsable doit trancher** : rien. C'est un défaut à corriger, non un arbitrage — il
 est consigné pour que la session qui reprendra l'un de ces deux écrans le trouve.
 
+**RÉSOLUE le 2026-09-24** (décisions 592 et 594). Le build rendait alors CINQ classes absentes — les
+trois d'origine, plus `bg-surface-2` et `mt-0.5` de la mention de lecture seule des objectifs. Les
+cinq sont remplacées : `bg-hover` et `leading-normal`, jetons du design system ; 28 px et 2 px en
+valeurs arbitraires assumées, faute de palier sur l'échelle. `classes-css.mjs` rend « aucune classe
+manquante », les captures des deux écrans changés sont renouvelées et relues. Trois écarts voisins
+que le contrôle ne voit pas sont consignés en INC-251.
+
 ---
 
 ### INC-234 — une réécriture de `cards` remet les statistiques à zéro, et le scénario `count=planned` tombe
@@ -6623,3 +6630,29 @@ concernées : `CRM-008` (harnais des droits fins) et `CRM-064` (auteur de `0063`
 
 **ARBITRÉE le 2026-09-24 — décision 592 : rejouer la chaîne `0010` → `0034` → `0063`.** Mise en
 œuvre : `CRM-008`.
+
+### INC-251 — trois écarts de jetons que le contrôle des classes ne voit pas : une classe dans une constante, une variable CSS inexistante, une case de 16 px
+
+*Constatée le 2026-09-24 en corrigeant INC-231 (décision 594). Comportement **inchangé** : ces écarts
+dépassent les cinq classes arbitrées, et deux d'entre eux changent l'apparence d'écrans livrés.*
+
+**Ce qui est mesuré.**
+
+1. **`text-text-1` dans une constante.** `webapp/src/app/ChampsContact.tsx` déclare
+   `CLASSES_CHAMP = '… text-text-1'`, employée par les champs des formulaires de création et de
+   modification d'un contact. `--color-text-1` n'est pas déclaré (§1 du design system) : la classe
+   n'est pas engendrée, et les champs héritent leur encre. `scripts/lib/classes-css.mjs` ne le signale
+   pas — il ne lit que les expressions `className`, jamais une constante —, et rend « aucune classe
+   manquante » sur le build du 2026-09-24.
+2. **`accent-[var(--color-primary)]`** sur la case des préférences de notification
+   (`ReglagesNotifications.tsx`). La classe arbitraire est engendrée, mais la variable n'existe pas —
+   le jeton est `--color-brand` : la case prend la couleur d'accent par défaut du navigateur. Aucun
+   contrôle ne lit les variables citées par une valeur arbitraire.
+3. **La même case mesure 16 px** (`size-4`), là où le §5.7 bis du design system fixe une case à
+   **24 px** sur une ligne de `--size-target`.
+
+**Issue proposée, non mise en œuvre** : remplacer `text-text-1` par `text-text` (l'encre du corps, §1),
+`--color-primary` par `--color-brand`, porter la case à 24 px en réalignant ses mentions ; étendre
+`classes-css.mjs` aux constantes de classes et aux variables des valeurs arbitraires. Les deux
+premiers changent l'apparence de trois surfaces et demandent leurs captures (`CLAUDE.md` §16).
+**Unités concernées : `CRM-060`, `CRM-064` (écrans), `CRM-007` (contrôle des classes).**

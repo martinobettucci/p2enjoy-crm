@@ -2323,9 +2323,16 @@ transpose la même forme au canevas, il n'en invente aucune.
 éteindre, c'est interdit ; si la BASE lui dit sur la ligne qu'il ne peut pas écrire, l'éteindre est
 la forme juste, et la taire serait une perte silencieuse.
 
-**Mention de lecture seule.** En tête du canevas, sous la barre de titre, dans le bandeau
-d'information neutre du §8 — `--color-surface-2`, texte `--color-text-1`, icône `Eye` de Lucide,
-jamais `--color-danger` : ne pas pouvoir écrire n'est pas une erreur. Elle porte `role="status"`.
+**Mention de lecture seule.** En tête du canevas, sous la barre de titre, dans un bandeau
+d'information neutre — fond `--color-hover`, bordure `--color-border`, texte `--color-ink`, icône
+`Eye` de Lucide, jamais `--color-danger` : ne pas pouvoir écrire n'est pas une erreur. Elle porte
+`role="status"`.
+
+*Corrigé le 2026-09-24 (INC-231, décision 592).* Ce paragraphe citait `--color-surface-2` et
+`--color-text-1`, deux jetons que le §1 ne déclare pas : la classe du fond n'était pas engendrée
+(§11), et la mention rendait sans fond. Le fond est le neutre du §1, `--color-hover` ; le texte
+restait celui que le code employait, `--color-ink`. L'icône s'abaisse de 2 px pour s'aligner sur la
+première ligne — valeur arbitraire assumée, `mt-0.5` n'existant pas sur l'échelle close.
 Elle dit ce que le tableau permet — le consulter — avant de dire ce qu'il refuse ; l'ordre inverse
 se lit comme un reproche.
 
@@ -4206,6 +4213,11 @@ l'ouvrent, et c'est la première entrée de `/reglages` dont ce soit le cas.
 - **AUCUNE CASE POUR UN CANAL QUI N'EXISTE PAS.** Ni « par email », ni « résumé quotidien » : le
   §42.1 de la spécification le mesure, aucun canal sortant n'existe. Une case qui ne commande rien
   est la **commande morte** du §5.10, et ici elle serait pire qu'inerte — elle promettrait un email.
+
+- **LA MENTION D'ÉTAT S'ALIGNE SUR LE LIBELLÉ DE LA CASE, À 28 px** — la case (16 px) plus son écart
+  (12 px). Valeur arbitraire assumée (§5.29) : écrite `pl-7` / `ml-7`, hors de l'échelle close, la
+  classe n'était pas engendrée et les trois mentions se collaient au bord gauche (INC-231, corrigé
+  le 2026-09-24).
 
 - **L'ÉCRAN ÉCRIT IMMÉDIATEMENT, SANS BOUTON « ENREGISTRER », ET C'EST LE MODE DU §5.7 ter.** Un
   réglage à une seule valeur n'a rien à valider, et un bouton d'enregistrement y ajouterait un état

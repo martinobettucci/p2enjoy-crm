@@ -14569,4 +14569,11 @@ décision 594.
 - [ ] **INC-250 — rejouer la chaîne des droits fins** (`CRM-008`) : `0010` → `0034` → `0063`.
 - [ ] **INC-248 — le jour local fait foi** (`CRM-061`) : seed et preuves de « Ma journée ».
 - [ ] **INC-242 — `verify-commentaires` à 99, et sa restauration complète** (`CRM-043`).
-- [ ] **INC-231 — cinq classes absentes du CSS produit** (`CRM-063`, `CRM-064`, `CRM-083`).
+- [x] **INC-231 — cinq classes absentes du CSS produit** (`CRM-063`, `CRM-064`, `CRM-083`).
+      `bg-surface-2` → `bg-hover`, `leading-relaxed` → `leading-normal` (jetons du design system) ;
+      `pl-7`/`ml-7` → 28 px et `mt-0.5` → 2 px, valeurs arbitraires assumées (§5.29), la mesure
+      voulue n'étant pas sur l'échelle close. `classes-css.mjs` sur le build : **aucune classe
+      manquante** (5 avant). Captures relues : la mention de lecture seule a retrouvé son fond, les
+      mentions des préférences s'alignent sur le libellé ; `objectifs`, `preferences-notifications`,
+      `reglages-modeles-emails` **37/37**. Trois écarts voisins, que le contrôle ne voit pas,
+      consignés en **INC-251**.

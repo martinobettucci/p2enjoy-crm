@@ -4,6 +4,8 @@
 //       §46.3 (la RPC, unique chemin d'écriture, et l'état qu'elle rend)
 // @spec docs/DESIGN_SYSTEM.md §5.45 (cette surface), §5.7 ter (l'écriture immédiate et ses six
 //       règles), §5.8 (états systématiques), §5.13 (étiquettes et focus)
+// @spec docs/BACKLOG.md « Correctifs arbitrés », INC-231 ; docs/JOURNAL.md décisions 592 et 594 —
+//       classes absentes du CSS produit remplacées (docs/DESIGN_SYSTEM.md §11, §5.29)
 //
 // UN ÉCRAN QUI LIT ET QUI ÉCRIT, ET QUI NE DÉCIDE RIEN DE CE QUI EST REÇU. La préférence agit en
 // base, dans la troisième condition de `notifications_lecture` (§45.2) ; cet écran ne masque
@@ -225,23 +227,26 @@ export function ReglagesNotifications({
 							</label>
 							{/* LA MENTION D'ÉTAT VIT SOUS LA CASE (§5.7 ter), jamais en tête d'écran, et
 							    une seule à la fois : deux mentions superposées feraient croire à deux
-							    écritures. */}
+							    écritures. Elle s'aligne sur le LIBELLÉ : 28 px, la case (16 px) plus
+							    l'écart `gap-3` (12 px). Valeur arbitraire assumée (§5.29) — `pl-7`,
+							    écrit d'abord, n'existe pas sur l'échelle close et n'était pas engendré
+							    (INC-231) : les mentions se collaient au bord gauche. */}
 							{ecriture.phase === 'envoi' ? (
-								<p id={idMention} className="text-sm text-text-3 pl-7">
+								<p id={idMention} className="text-sm text-text-3 pl-[28px]">
 									{t('settings.notifications.saving')}
 								</p>
 							) : null}
 							{/* LA CONFIRMATION REMPLACE L'ENVOI, elle ne s'y ajoute pas (§5.7 ter) : deux
 							    mentions superposées feraient croire à deux écritures. */}
 							{ecriture.phase === 'ecrite' ? (
-								<p id={idMention} className="text-sm text-success pl-7">
+								<p id={idMention} className="text-sm text-success pl-[28px]">
 									{t('settings.notifications.saved')}
 								</p>
 							) : null}
 							{ecriture.phase === 'refus' ? (
 								<p
 									id={idMention}
-									className="text-sm text-danger-on-soft bg-danger-soft rounded px-2 py-1 ml-7"
+									className="text-sm text-danger-on-soft bg-danger-soft rounded px-2 py-1 ml-[28px]"
 								>
 									{t(ecriture.cle)}
 								</p>
