@@ -623,7 +623,7 @@ passée au SSO.
 | **T3 bis** | Client serveur (décision 586) : migration `0076`, échangeur à trois gestes, chiffrement, cookie, realm de développement confidentiel, relais Vite, preuves unitaires, pgTAP et d'API révisées | T3 |
 | **T5** | Webapp (§8, §9), tests unitaires, `e2e/ui/connexion.spec.ts`, fixture et portage des 50 specs d'interface, `docs/DESIGN_SYSTEM.md` §5.12, captures, `docs/manual.md` chapitre 1 — **livrée AVANT T4** (décision 585) | T3 bis |
 | **T4** | `e2e/api/jetons.ts` et `scripts/lib/sso.sh` par la vraie connexion, comptes jetables par l'API de développement, seed (§11), portage des 18 scripts et des specs d'API qui créaient des comptes GoTrue, `docs/SPEC-seed.md`, `docs/SPEC-test-harness.md` | T3, T5 |
-| **T6** | Retrait de GoTrue, d'`auth-templates` et d'Inbucket (§2), migration élevée `0077` (§7.5) et suite `0071`, dix suites pgTAP portées, `404` de Caddy, retrait de `verify-auth.sh`, scripts d'environnement et de cellule (`proposer.sh` sans SMTP, `verifier.sh`, `verify-stack.sh`, `restore-drill.sh`), `docs/SPEC-auth.md` réduit à un renvoi | T4, T5 |
+| **T6** | Retrait de GoTrue, d'`auth-templates` et d'Inbucket (§2), migration `0077` (§7.5) et suite `0071`, dix suites pgTAP portées, `404` de Caddy, retrait de `verify-auth.sh`, scripts d'environnement et de cellule (`proposer.sh` sans SMTP, `verifier.sh`, `verify-stack.sh`, `restore-drill.sh`), `docs/SPEC-auth.md` réduit à un renvoi | T4, T5 |
 | **T7** | `README.md`, `docs/DAT.md`, `docs/SPEC-deploiement-spark.md`, `docs/manual.md` chapitre 17, `docs/PROD_MIGRATIONS.md` (§12), `CHANGELOG.md` ; campagne des harnais touchés | T6 |
 
 ## 15. Hors périmètre
