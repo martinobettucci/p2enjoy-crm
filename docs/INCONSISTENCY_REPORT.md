@@ -6678,6 +6678,8 @@ dépassent les cinq classes arbitrées, et deux d'entre eux changent l'apparence
 premiers changent l'apparence de trois surfaces et demandent leurs captures (`CLAUDE.md` §16).
 **Unités concernées : `CRM-060`, `CRM-064` (écrans), `CRM-007` (contrôle des classes).**
 
+**ARBITRÉE le 2026-09-24 — décision 596 : tout corriger**, contrôle des classes compris.
+
 ### INC-252 — `verify-copie-workflow.sh` et `verify-move-card.sh` restaurent en rejouant `0035` à la main : la base reste avec l'ancienne `app.card_comments_avant_maj()`
 
 *Mesurée le 2026-09-24 en rejouant `scripts/verify-droits-fins.sh` pour INC-250 (2579 s, 46 contrôles,
@@ -6696,3 +6698,6 @@ fichiers, 3196 assertions, aucune anomalie**.
 tranche déjà : une liste manuelle de « migrations suivantes » est interdite, la restauration appelle le
 runner complet et se fait suivre de la suite globale — exactement la correction faite pour INC-242.
 **Unités concernées : `CRM-032` (copie de workflow) et `CRM-041` (`move_card`).**
+
+**ARBITRÉE le 2026-09-24 — décision 596 : corriger maintenant**, par le runner complet suivi de la
+suite globale.

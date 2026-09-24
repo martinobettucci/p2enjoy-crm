@@ -14598,3 +14598,9 @@ décision 594.
       mentions des préférences s'alignent sur le libellé ; `objectifs`, `preferences-notifications`,
       `reglages-modeles-emails` **37/37**. Trois écarts voisins, que le contrôle ne voit pas,
       consignés en **INC-251**.
+- [ ] **INC-252 — deux harnais restaurés par le runner complet** (`CRM-032`, `CRM-041`) :
+      `verify-copie-workflow.sh` et `verify-move-card.sh` cessent de rejouer `0035` à la main
+      (décision 596).
+- [ ] **INC-251 — trois écarts de jetons, et le contrôle qui les voit** (`CRM-060`, `CRM-064`,
+      `CRM-007`) : `text-text`, `--color-brand`, case de 24 px ; `classes-css.mjs` lit les constantes
+      de classes et les variables citées (décision 596).

@@ -29796,3 +29796,21 @@ anomalie**, dont le journal d'une exécution rouge lancée sortie jetée ; `veri
 nouvelles, consignées sans être corrigées : **INC-251** (trois écarts de jetons que le contrôle des
 classes ne voit pas) et **INC-252** (deux harnais qui restaurent en rejouant `0035` à la main).
 
+
+## décision 596 — INC-251 et INC-252 arbitrées : tout corriger
+
+*2026-09-24. Arbitrages du responsable, consignés avant toute mise en œuvre.*
+
+- **INC-252 — corriger maintenant.** `verify-copie-workflow.sh` et `verify-move-card.sh` cessent de
+  rejouer `0035` à la main pour restaurer : la restauration appelle le runner complet
+  (`docker compose run --rm migrations-runner`, code de sortie attendu) et se fait suivre de la suite
+  pgTAP globale — la règle du §3.5 de `docs/SPEC-test-harness.md`, et le remède d'INC-242. Unités
+  `CRM-032` et `CRM-041`. Aucun changement du produit.
+- **INC-251 — tout corriger.** `text-text-1` → `text-text` dans les champs des formulaires de contact ;
+  `accent-[var(--color-primary)]` → `--color-brand` sur la case des préférences ; la case portée à
+  **24 px** comme le §5.7 bis l'impose, ses mentions réalignées sur le libellé ; captures refaites et
+  relues. Et `scripts/lib/classes-css.mjs` apprend à lire les **constantes de classes** et les
+  **variables CSS citées par une valeur arbitraire**, faute de quoi le même défaut reviendrait en
+  silence. Unités `CRM-060`, `CRM-064`, `CRM-007`.
+
+Deux commits, dans cet ordre : INC-252, puis INC-251.
