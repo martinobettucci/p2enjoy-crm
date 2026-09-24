@@ -14548,9 +14548,13 @@ connexion réelle de `martino@p2enjoy.studio` aboutie après les opérations du 
 Chaque ligne est un commit distinct ; l'unité porteuse est nommée. Le découpage est celui de la
 décision 594.
 
-- [ ] **INC-189 a — deux images périmées** (`CRM-061`, `CRM-083`) : « Ma journée » ne rend jamais la
+- [~] **INC-189 a — deux images périmées** (`CRM-061`, `CRM-083`) : « Ma journée » ne rend jamais la
       portée nouvelle avec les données de l'ancienne ; le canevas d'objectifs ne perd plus un geste
-      posé juste après le chargement. Preuves unitaires qui échouent avant correction.
+      posé juste après le chargement. Preuves unitaires qui échouent avant correction — mesuré : la
+      sonde relevait « Tout l'espace de travail : 0 affaire(s) », le geste rendait `width: 260`, trois
+      exécutions sur trois — puis vertes ; `MaJournee.test` **23**, `Objectifs.test` **98**, unitaires
+      **3271** ; `ma-journee.spec.ts` et `objectifs.spec.ts` **62/62**, captures relues, inchangées.
+      Reste la campagne complète, rejouée après INC-189 b et c.
 - [ ] **INC-189 b — deux preuves attendent un signal observable** (`CRM-064`, `CRM-007`) : brouillon
       vidé avant le nettoyage des mentions ; module importé avant le rendu d'une route chargée à la
       demande.

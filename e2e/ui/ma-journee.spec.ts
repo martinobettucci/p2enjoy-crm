@@ -7,6 +7,8 @@
 //           CLAUDE.md §16 (vérification visuelle)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
+// @verifies docs/BACKLOG.md « Correctifs arbitrés », INC-189 a ; docs/JOURNAL.md décision 594 — le
+//           compte est celui que la région live annonce, jamais une lecture instantanée
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, comme un utilisateur réel : aucune fonction
 // interne n'est appelée, aucune réponse n'est substituée, et la navigation passe par la BARRE
@@ -35,6 +37,22 @@ const ENDORMIE = 'Cadrage data — Groupe Vallier'
 
 async function connecter(page: Page, email: string): Promise<void> {
 	await connecterAvecLeLabs(page, email)
+}
+
+/**
+ * Attend que la région live du §17.9 annonce `libellePortee`, et rend le total qu'elle annonce.
+ *
+ * LE TOTAL ANNONCÉ EST LE SIGNAL, ET PAS UN `count()` INSTANTANÉ (INC-189, décision 594). La région
+ * n'est rendue que dans l'état « prêt », et elle nomme la portée de la liste affichée : c'est la
+ * preuve que CETTE liste est rendue. Le nombre de lignes s'attend ensuite par `toHaveCount`, qui se
+ * réessaie, au lieu d'être lu une fois à un instant que rien ne garantit.
+ */
+async function totalAnnonce(page: Page, libellePortee: string): Promise<number> {
+	const region = page.getByRole('status', { name: 'Contenu de la journée' })
+	const motif = new RegExp(`^${libellePortee} : (\\d+) affaire\\(s\\) à échéance\\.$`)
+	await expect(region).toHaveText(motif)
+	const texte = (await region.textContent()) ?? ''
+	return Number(motif.exec(texte)?.[1])
 }
 
 test.describe('« Ma journée » (docs/SPEC-cards.md §17)', () => {
@@ -113,8 +131,9 @@ test.describe('« Ma journée » (docs/SPEC-cards.md §17)', () => {
 		// une lecture émise à l'ouverture rendrait zéro sans rien dire du produit. Attendre la
 		// première section est l'assertion qui donne son sens au compte qui suit.
 		await expect(page.getByTestId('section-journee').first()).toBeVisible()
-		const miennes = await page.getByTestId('ligne-journee').count()
+		const miennes = await totalAnnonce(page, 'Mes affaires')
 		expect(miennes).toBeGreaterThan(0)
+		await expect(page.getByTestId('ligne-journee')).toHaveCount(miennes)
 
 		await page.getByTestId('lien-portee').filter({ hasText: 'Tout l’espace' }).click()
 		await expect(page).toHaveURL(/\/ma-journee\?qui=tous$/)
@@ -135,10 +154,17 @@ test.describe('« Ma journée » (docs/SPEC-cards.md §17)', () => {
 		// §17.9 : elle n'est rendue QUE dans l'état « prêt », et son message NOMME la portée
 		// affichée. La voir annoncer « Tout l'espace de travail » est la preuve que la nouvelle
 		// liste est rendue, et pas seulement que l'ancienne a disparu.
-		await expect(page.getByRole('status', { name: 'Contenu de la journée' })).toHaveText(
-			/^Tout l’espace de travail : \d+ affaire\(s\) à échéance\.$/,
-		)
-		const toutes = await page.getByTestId('ligne-journee').count()
+		//
+		// ET CETTE ATTENTE NE SUFFISAIT PAS, CE QUI A RÉVÉLÉ UN DÉFAUT DU PRODUIT — corrigé le
+		// 2026-09-24 (INC-189, décision 594). La trace d'une campagne a daté l'attente ci-dessous
+		// comme réussie AVANT le départ de la lecture de la nouvelle portée : l'écran rendait une
+		// image où la région live nommait « Tout l'espace de travail » avec le total de « Mes
+		// affaires », et le `count()` qui suivait lisait le zéro du chargement. Les données portent
+		// désormais leur portée (`MaJournee.tsx`), et la preuve unitaire de `MaJournee.test.tsx`
+		// enregistre chaque image validée. Ici, le compte est celui que la région ANNONCE, et le
+		// nombre de lignes s'attend jusqu'à lui.
+		const toutes = await totalAnnonce(page, 'Tout l’espace de travail')
+		await expect(page.getByTestId('ligne-journee')).toHaveCount(toutes)
 		// Le filtre par responsable RETRANCHE, il n'ajoute jamais (§17.7 ligne d).
 		expect(toutes).toBeGreaterThan(miennes)
 
@@ -164,7 +190,10 @@ test.describe('« Ma journée » (docs/SPEC-cards.md §17)', () => {
 		await connecter(page, ADMIN)
 		await page.goto('/ma-journee?qui=tous')
 		await expect(page.getByTestId('section-journee').first()).toBeVisible()
-		const vuesParAdmin = await page.getByTestId('ligne-journee').count()
+		// Même signal que la bascule ci-dessus : le total ANNONCÉ, puis le nombre de lignes attendu
+		// jusqu'à lui (INC-189, décision 594) — jamais un `count()` lu à un instant quelconque.
+		const vuesParAdmin = await totalAnnonce(page, 'Tout l’espace de travail')
+		await expect(page.getByTestId('ligne-journee')).toHaveCount(vuesParAdmin)
 
 		const contexte = await browser.newContext()
 		const pageLectrice = await contexte.newPage()
@@ -175,7 +204,8 @@ test.describe('« Ma journée » (docs/SPEC-cards.md §17)', () => {
 			// est fermé retire ses affaires SANS qu'aucune mention ne les nomme (§17.7 ligne b).
 			await expect(pageLectrice.getByTestId('portee-journee')).toBeVisible()
 			await expect(pageLectrice.getByTestId('section-journee').first()).toBeVisible()
-			const vuesParLectrice = await pageLectrice.getByTestId('ligne-journee').count()
+			const vuesParLectrice = await totalAnnonce(pageLectrice, 'Tout l’espace de travail')
+			await expect(pageLectrice.getByTestId('ligne-journee')).toHaveCount(vuesParLectrice)
 			expect(vuesParLectrice).toBeLessThan(vuesParAdmin)
 			await expect(
 				pageLectrice.getByTestId('ligne-journee').filter({ hasText: EN_RETARD }),

@@ -2007,6 +2007,13 @@ spécifié là-bas ; les règles ci-dessous ne disent que de quoi ils ont l'air.
   glisser-déposer d'une card, tenue sans changement. Le geste est **optimiste** à l'écran ; la
   réponse du serveur, succès, refus ou silence, l'efface toujours.
 
+- **UN GESTE POSÉ JUSTE APRÈS LE CHARGEMENT EST TENU, et c'est le défaut consigné en INC-189**
+  (`docs/JOURNAL.md` décision 594, 2026-09-24). La relecture vide l'état local du canevas ; faite
+  dans un effet, elle s'exécutait APRÈS l'image du contenu, si bien qu'une flèche pressée dans
+  l'intervalle — un poste chargé suffit — voyait son geste effacé et son relâchement envoyer la
+  géométrie d'origine. Elle se fait désormais pendant le rendu : **l'image qui montre un contenu
+  porte déjà l'état local qui lui correspond**, et aucun geste ne peut précéder sa réinitialisation.
+
 - **Les trois mentions du §5.7 ter vivent SOUS le canevas**, jamais en tête d'écran, et la région
   est **toujours rendue** — un refus porte `role="alert"`, une attente et une confirmation
   `role="status"`. Un geste de géométrie porte sur le canevas entier, et non sur une ligne : c'est
@@ -3550,6 +3557,15 @@ le rangement est le **temps**. Ce que l'écran lit, découpe et refuse de devine
 - **ELLE RESTE RENDUE SUR UN ÉCRAN VIDE**, comme la barre de filtres du §5.3 quinquies et les
   onglets du §5.31 : elle est la cause possible de ce vide, et la masquer priverait l'utilisateur du
   seul geste qui l'en sort.
+
+- **AUCUNE IMAGE NE REND LA PORTÉE NOUVELLE AVEC LES DONNÉES DE L'ANCIENNE, ET C'EST UN DÉFAUT TROUVÉ
+  PAR LA TRACE D'UNE CAMPAGNE** (INC-189, `docs/JOURNAL.md` décision 594, 2026-09-24). Au clic sur une
+  portée, l'écran rendait une image où la région live annonçait « Tout l'espace de travail » avec le
+  total de « Mes affaires » — le lien actif et l'annonce disaient une portée, la liste en montrait une
+  autre. Les données portent désormais leur portée, et des données d'une autre portée se rendent
+  comme le chargement du §5.8. **La règle vaut pour tout écran dont la vue vient de l'adresse et le
+  contenu d'une lecture** : ce qui décrit la vue et ce qu'elle montre viennent de la même lecture, ou
+  l'écran rend un chargement.
 
 - **DEUX VIDES DISTINCTS, ET AUCUN NE SE CONFOND AVEC L'AUTRE** (§5.11, §5.32). « Aucune échéance
   dans votre journée » **porte l'action** qui élargit la portée — le patron du §5.8 ; « aucune

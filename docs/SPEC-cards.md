@@ -4315,6 +4315,11 @@ contrat de `webapp/src/lib/async.ts`, inchangé.
 - **Le changement de portée est annoncé** par la région `aria-live` polie déjà livrée
   (`webapp/src/components/ui/LiveRegion.tsx`) : une liste qui se recompose sans un mot est un
   changement invisible pour qui ne voit pas l'écran.
+- **L'annonce ne nomme jamais une portée avec le total d'une autre** — précisé le 2026-09-24 (INC-189,
+  `docs/JOURNAL.md` décision 594). La portée affichée vient de l'adresse et les données de la
+  lecture : des données lues pour une autre portée que celle de l'adresse se rendent comme un
+  chargement, sans région live. Mesuré avant correction : au clic sur « Tout l'espace de travail »,
+  une image annonçait ce libellé avec le total de « Mes affaires ».
 - **La console du navigateur reste vierge**, garde de `fixtures.ts` (`CLAUDE.md` §16).
 
 ### 17.10 Ce que cette tranche ne livre pas, et pourquoi

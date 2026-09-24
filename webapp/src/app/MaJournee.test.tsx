@@ -5,14 +5,17 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.36 (cette surface : sections, compte dans son propre
 //           élément, section vide non rendue, teinte de retard sur l'ÉCHÉANCE, portée en liens),
 //           §5.8 (états systématiques), §5.9 (cellule sans valeur VIDE)
+// @verifies docs/BACKLOG.md « Correctifs arbitrés », INC-189 a ; docs/JOURNAL.md décision 594 —
+//           aucune image ne rend la portée nouvelle avec les données de l'ancienne (§17.9)
 //
 // Les données injectées sont celles du SEED, à l'identique — « Audit sécurité applicative » en
 // retard, « Formation Data & IA » aujourd'hui, « Hébergement infogéré » à venir. Ce n'est pas une
 // commodité : ce sont les trois lignes du contrat de `docs/SPEC-seed.md` §13.5, et les mêmes que
 // la preuve E2E exerce sur la pile réelle.
 
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
-import { MemoryRouter } from 'react-router'
+import { useLayoutEffect } from 'react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { MemoryRouter, useSearchParams } from 'react-router'
 import { afterEach, describe, expect, it } from 'vitest'
 import { MaJournee } from './MaJournee'
 import { FournisseurAuthentification } from './Authentification'
@@ -327,5 +330,59 @@ describe('MaJournee — accessibilité (§17.9)', () => {
 		expect(screen.getByTestId('portee-journee').getAttribute('aria-label')).toBe(
 			fr['today.scope.aria'],
 		)
+	})
+})
+
+describe('MaJournee — une portée n’est jamais annoncée avec les données d’une autre (INC-189 a)', () => {
+	/**
+	 * Relève le message de la région live à CHAQUE image validée où l'adresse change.
+	 *
+	 * La sonde lit l'adresse, donc elle se rend dans la même validation que l'écran quand la portée
+	 * change ; son `useLayoutEffect` s'exécute après l'écriture du DOM de cette validation et avant
+	 * tout effet différé. Elle voit donc l'image que l'utilisateur — et son lecteur d'écran — reçoit,
+	 * y compris celle qu'un effet corrigerait un instant plus tard. C'est cette image-là que la trace
+	 * de la campagne du 2026-09-24 a montrée (docs/JOURNAL.md décisions 593 et 594).
+	 */
+	function Sonde({ images }: { readonly images: string[] }) {
+		useSearchParams()
+		useLayoutEffect(() => {
+			// La région n'est rendue que dans l'état « prêt » (§17.9) : une image de chargement n'en a pas.
+			images.push(screen.queryByRole('status', { name: fr['today.live.aria'] })?.textContent ?? '')
+		})
+		return null
+	}
+
+	it('au clic sur « Tout l’espace de travail », aucune image n’annonce le total de « Mes affaires »', async () => {
+		const images: string[] = []
+		render(
+			<MemoryRouter initialEntries={['/ma-journee']}>
+				<FournisseurAuthentification client={null}>
+					<MaJournee
+						client={clientQuiRend({ data: [AUDIT, FORMATION, HEBERGEMENT], error: null, status: 200 })}
+						maintenant={MIDI}
+					/>
+					<Sonde images={images} />
+				</FournisseurAuthentification>
+			</MemoryRouter>,
+		)
+		// Sans session, « Mes affaires » n'a pas de sujet et rend zéro ligne (§17.3) : les deux
+		// portées ont donc deux totaux différents, 0 et 3.
+		const annonceMoi = `${fr['today.scope.mine']} : 0 affaire(s) à échéance.`
+		await waitFor(() =>
+			expect(screen.getByRole('status', { name: fr['today.live.aria'] }).textContent).toBe(annonceMoi),
+		)
+
+		const liens = screen.getAllByTestId('lien-portee')
+		fireEvent.click(liens.find((lien) => lien.getAttribute('data-portee') === 'tous') as HTMLElement)
+
+		const annonceTous = `${fr['today.scope.all']} : 3 affaire(s) à échéance.`
+		await waitFor(() =>
+			expect(screen.getByRole('status', { name: fr['today.live.aria'] }).textContent).toBe(annonceTous),
+		)
+		expect(screen.getAllByTestId('ligne-journee')).toHaveLength(3)
+		// LE CŒUR DE LA PREUVE : aucune image validée n'a nommé « Tout l'espace de travail » avec un
+		// autre total que le sien. Avant correction, l'image du clic annonçait « … : 0 affaire(s) ».
+		const annoncesTous = images.filter((image) => image.startsWith(fr['today.scope.all']))
+		expect(annoncesTous.filter((image) => image !== annonceTous)).toEqual([])
 	})
 })

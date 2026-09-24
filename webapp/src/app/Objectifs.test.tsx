@@ -8,6 +8,8 @@
 //           channel d'un bloc, poser, déplacer, redimensionner), §4.2 (l'écriture est décidée
 //           par la base : l'écran envoie puis traduit)
 // @verifies docs/DESIGN_SYSTEM.md §5.29 (jauge jamais colorée par la valeur, flèche pointillée)
+// @verifies docs/BACKLOG.md « Correctifs arbitrés », INC-189 a ; docs/JOURNAL.md décision 594 — un
+//           geste posé entre l'image du contenu et ses effets n'est pas perdu
 //
 // CE FICHIER ÉPROUVE LE RENDU, PAS LA REQUÊTE — celle-ci l'est par `lib/objectifs.test.ts`.
 //
@@ -496,6 +498,34 @@ describe('canevas — déplacer et redimensionner au clavier, §5.5', () => {
 			fireEvent.keyUp(screen.getAllByTestId('bloc-objectif')[0] as HTMLElement, { key: 'ArrowDown' })
 		})
 		expect(ecritures[0]?.charge).toEqual({ pos_x: BLOC_LIBRE.pos_x, pos_y: BLOC_LIBRE.pos_y + 1 })
+	})
+})
+
+describe('canevas — un geste posé juste après le chargement n’est pas perdu (INC-189 a)', () => {
+	it('Alt et flèche pressés AVANT les effets de l’image du contenu redimensionnent quand même', async () => {
+		// C'EST LA FORME DÉTERMINISTE DE L'ÉCHEC CONSIGNÉ EN INC-189 — « reçu 260 », la largeur de
+		// départ, une fois sur plusieurs et sous charge seulement. L'observateur s'exécute en
+		// microtâche juste après l'écriture du DOM de la validation qui rend le bloc, donc AVANT la
+		// tâche où React exécute les effets différés de cette validation : c'est l'intervalle où le
+		// geste tombait sous charge (docs/JOURNAL.md décision 594), et il y est posé ici à coup sûr.
+		// Avant correction, l'effet qui vide l'ébauche à chaque relecture s'exécutait APRÈS le geste
+		// et l'effaçait : le relâchement envoyait la géométrie d'origine.
+		const { client, ecritures } = clientEcrivant(LECTURES_UN_BLOC, ok([BLOC_LIBRE]))
+		const observateur = new MutationObserver(() => {
+			const bloc = document.querySelector('[data-testid="bloc-objectif"]')
+			if (bloc === null) return
+			observateur.disconnect()
+			fireEvent.keyDown(bloc, { key: 'ArrowRight', altKey: true })
+		})
+		observateur.observe(document.body, { childList: true, subtree: true })
+		rendreCanevas(client)
+		await screen.findAllByTestId('bloc-objectif')
+
+		await act(async () => {
+			fireEvent.keyUp(screen.getAllByTestId('bloc-objectif')[0] as HTMLElement, { key: 'ArrowRight' })
+		})
+		const ecrite = ecritures.find((ecriture) => ecriture.operation === 'update')
+		expect(ecrite?.charge).toEqual({ width: BLOC_LIBRE.width + 8, height: BLOC_LIBRE.height })
 	})
 })
 

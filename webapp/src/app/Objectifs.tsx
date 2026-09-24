@@ -30,6 +30,9 @@
 // @spec docs/SPEC-goals.md §5.5 bis (le clavier des gestes d'administration d'un tableau :
 //       §5.5 bis.2, l'ancre de retour du focus survit au geste ; §5.5 bis.3, `Échap` referme les
 //       trois surfaces de la liste)
+// @spec docs/BACKLOG.md « Correctifs arbitrés », INC-189 a ; docs/JOURNAL.md décision 594 — l'état
+//       local du canevas se réinitialise pendant le rendu, et un geste posé juste après le
+//       chargement n'est plus effacé
 //
 // CE QUE CES TRANCHES LIVRENT, ET CE QU'ELLES NE LIVRENT PAS — nommé ici plutôt que découvert à
 // l'usage (`CLAUDE.md` §25) :
@@ -1110,7 +1113,17 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 
 	// Une relecture rapporte l'état du serveur : ce qui était gardé localement devient alors
 	// périmé, et le conserver ferait rendre deux fois la même donnée.
-	useEffect(() => {
+	//
+	// LA RÉINITIALISATION SE FAIT PENDANT LE RENDU, AU CHANGEMENT DE CONTENU, ET PLUS DANS UN EFFET —
+	// défaut consigné en INC-189 et corrigé le 2026-09-24 (docs/JOURNAL.md décision 594). Un effet
+	// s'exécute APRÈS l'image du contenu chargé : un geste tombé dans cet intervalle — un poste
+	// chargé suffit — posait son ébauche, que l'effet effaçait ensuite, et le relâchement envoyait
+	// la géométrie d'origine. Ajusté pendant le rendu, l'état est déjà réinitialisé dans l'image qui
+	// montre le contenu, et aucun geste ne peut le précéder. C'est la forme que React prescrit pour
+	// ajuster un état quand une donnée change.
+	const [contenuVu, setContenuVu] = useState(contenu)
+	if (contenu !== contenuVu) {
+		setContenuVu(contenu)
 		setEcrits(new Map())
 		setAjoutes([])
 		setEbauche(null)
@@ -1122,7 +1135,7 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 		// départ peut ne plus être rendu, et une flèche partant d'un bloc disparu serait tracée vers
 		// une origine que l'écran ne montre plus.
 		setTrace(null)
-	}, [contenu])
+	}
 
 	// LA FICHE SE FERME SI SON BLOC N'EST PLUS RENDU. Une relecture peut le retirer — la RLS a
 	// changé, un collègue l'a supprimé —, et une fiche restée ouverte sur un bloc absent

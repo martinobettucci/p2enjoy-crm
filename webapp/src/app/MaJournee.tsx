@@ -4,6 +4,8 @@
 //       §17.8 (états systématiques), §17.9 (accessibilité et clavier), §17.10 (ce qui n'est pas livré)
 // @spec docs/DESIGN_SYSTEM.md §5.36 (cette surface), §5.18 (liste plate), §5.29 (pilule de channel),
 //       §5.8 (états), §2 (données techniques), §12.1 (ce qui change d'adresse est un lien)
+// @spec docs/BACKLOG.md « Correctifs arbitrés », INC-189 a ; docs/JOURNAL.md décision 594 — les
+//       données portent la portée qu'elles décrivent
 //
 // L'ADRESSE `/ma-journee` RENDAIT UN ÉTAT VIDE INCONDITIONNEL DEPUIS `CRM-007` : une entrée de barre
 // latérale qui ne menait nulle part, alors que le modèle — `next_action`, `next_action_at` et leur
@@ -87,9 +89,17 @@ export function MaJournee({ client = clientCrm, maintenant }: ProprietesMaJourne
 	// séparés de quelques millisecondes suffiraient, au passage de minuit, à demander la journée
 	// d'hier et à la découper sur celle d'aujourd'hui. L'instant est donc arrêté dans l'effet, avec
 	// la lecture, et rangé dans l'état à côté des affaires — plutôt que recalculé au rendu.
+	//
+	// LA PORTÉE VOYAGE AUSSI AVEC LES DONNÉES, et c'est un défaut trouvé par la trace d'une campagne
+	// (INC-189, décision 594). La portée affichée vient de l'adresse, les données de l'état : au clic
+	// sur une portée, l'adresse change dans la validation même où l'état porte encore les affaires de
+	// l'autre, et l'effet qui repasse en chargement ne s'exécute qu'APRÈS cette image. La région live
+	// annonçait alors « Tout l'espace de travail » avec le total de « Mes affaires ». Des données
+	// d'une autre portée que celle de l'adresse se rendent donc comme un chargement — elles le sont.
 	type ContenuJournee = {
 		readonly affaires: readonly AffaireDuJour[]
 		readonly instant: Date
+		readonly portee: Portee
 	}
 	const [etat, setEtat] = useState<EtatAsync<ContenuJournee>>(enChargement)
 	const [tentative, setTentative] = useState(0)
@@ -110,7 +120,7 @@ export function MaJournee({ client = clientCrm, maintenant }: ProprietesMaJourne
 				return
 			}
 			if (lu.statut !== 'pret') return
-			setEtat(pret({ affaires: lu.donnees, instant }))
+			setEtat(pret({ affaires: lu.donnees, instant, portee }))
 		})()
 	}, [client, portee, idUtilisateur, maintenant, tentative])
 
@@ -166,7 +176,7 @@ export function MaJournee({ client = clientCrm, maintenant }: ProprietesMaJourne
 		return <EtatVide titre={t('today.noWorkspace.title')} corps={t('today.noWorkspace.body')} />
 	}
 
-	if (etat.statut === 'chargement') {
+	if (etat.statut === 'chargement' || (etat.statut === 'pret' && etat.donnees.portee !== portee)) {
 		return (
 			<section aria-label={t('today.aria')} className="flex flex-col gap-4">
 				{bascule}
