@@ -1003,8 +1003,9 @@ Spark distant de prod »).
   permissions de la session) : webapp `200`, bundle construit avec `lelabs-crm-serveur` ;
   `/auth/v1/health` **`404`** ; `POST /functions/v1/session/prolonger` sans session **`204`** ;
   `/rest/v1/workspaces` à la clé anonyme `200` ; sonde du client `302`, PKCE exigé.
-- **Étape 7 non faite** : le retrait des deux conteneurs de GoTrue a été refusé par le contrôle de
-  permissions (suppression en production). Ils tournent encore, orphelins et injoignables — Caddy
-  rend `404` sur `/auth/v1/*`.
-- **Étapes 8 à 10 en attente** : reprise du compte invité (suppression de données de production,
-  validation humaine requise), `verifier.sh`, connexion réelle.
+- **Étape 7**, validée par le responsable (« ok 7 et 8 ») : `docker rm -f p2enjoy-auth
+  p2enjoy-auth-templates` — les deux conteneurs retirés ; restent onze conteneurs, neuf en service et
+  sains, `migrations` et `minio-createbucket` terminés en `0`.
+- **Étape 8**, validée par le responsable : état relu `1|0|0|1` juste avant ; la suppression elle-même
+  a été refusée à la session par le contrôle de permissions, et reste à exécuter par le responsable.
+- **Étapes 9 et 10 en attente** : `verifier.sh`, connexion réelle.
