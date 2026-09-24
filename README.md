@@ -465,6 +465,10 @@ pytest mail-sync/tests     # pytest, 40 tests du service mail-sync — aucune pi
 Les tests d'autorisation interrogent la base **directement**, avec les jetons réels de chaque
 profil, afin de prouver qu'une opération interdite est refusée même en contournant l'interface.
 
+Une exécution **rouge** de `npm run test:unit` laisse son journal — tests en échec, erreurs, commande
+et fuseau — dans `e2e/output/journaux-unitaires/`, même lancée par un harnais qui jette sa sortie ; les
+30 plus récents sont gardés (`docs/SPEC-test-harness.md` §6.1).
+
 Les huit commandes sont livrées et prouvées. `npm run e2e:mail` l'est **depuis `CRM-050`** : il
 exerce les protocoles — session IMAP sur les trois boîtes, soumission SMTP authentifiée, remise par
 le catch-all et relecture, détection réelle d'EICAR par ClamAV, et Roundcube à l'écran. Depuis

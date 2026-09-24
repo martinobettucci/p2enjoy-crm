@@ -14560,8 +14560,12 @@ décision 594.
       demande. Mesuré : `mentions-composeur.spec.ts` **12/12**, aucune notification restante hors des
       deux du seed ; `routes.test.tsx` **15/15**, le repli de `Suspense` toujours observé. Reste la
       campagne complète.
-- [ ] **INC-189 c — le journal d'une exécution unitaire rouge est conservé** (`CRM-008`) : rapporteur
-      Vitest vers `e2e/output/journaux-unitaires/`.
+- [~] **INC-189 c — le journal d'une exécution unitaire rouge est conservé** (`CRM-008`) : rapporteur
+      Vitest vers `e2e/output/journaux-unitaires/`. Mesuré : sa preuve **10/10** ; le test
+      volontairement faux du §9.5 de `verify-harness`, lancé sortie jetée, laisse un journal qui le
+      nomme — la première exécution a révélé que Vitest construit un rapporteur avec un objet
+      d'options, corrigé avant commit ; une exécution verte n'écrit rien ; unitaires **3281**.
+      Reste `verify-harness` complet, avec la campagne.
 - [ ] **INC-250 — rejouer la chaîne des droits fins** (`CRM-008`) : `0010` → `0034` → `0063`.
 - [ ] **INC-248 — le jour local fait foi** (`CRM-061`) : seed et preuves de « Ma journée ».
 - [ ] **INC-242 — `verify-commentaires` à 99, et sa restauration complète** (`CRM-043`).

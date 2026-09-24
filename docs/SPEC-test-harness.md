@@ -400,6 +400,22 @@ faire figurer dans le tableau des commandes et à vérifier, dans son harnais, q
 volontairement faux le fait bien échouer — ce que la Definition of Done exige de **chaque** famille
 de tests, pas seulement des nouvelles.
 
+### 6.1 Le journal d'une exécution rouge est conservé — INC-189, décision 594
+
+Trente harnais lancent `npm run test:unit` ; les uns jettent sa sortie, les autres l'écrivent dans un
+répertoire temporaire qu'ils effacent en sortant. Un rejeu rouge sous charge perdait donc sa cause.
+
+Le rapporteur `webapp/vitest.rapporteur-echecs.ts`, déclaré à côté du rapporteur de la console dans
+`webapp/vitest.config.ts`, écrit pour **toute exécution rouge** — un test en échec, une erreur hors
+test — un journal `e2e/output/journaux-unitaires/unitaires-<horodatage>-<pid>.log` : commande,
+répertoire, fuseau, puis chaque test en échec avec son fichier et ses erreurs. **Une exécution verte
+n'écrit rien.** Les **30** journaux les plus récents sont gardés : les harnais rendent des exécutions
+rouges attendues en dégradant le produit, qui ne doivent pas s'accumuler. Le répertoire n'est pas
+versionné (`e2e/output/`).
+
+Prouvé par `webapp/vitest.rapporteur-echecs.test.ts` et par le §9.5 de `scripts/verify-harness.sh` :
+le test volontairement faux, lancé sortie jetée, doit laisser un journal qui le nomme.
+
 ## 7. Preuves attendues
 
 `scripts/verify-harness.sh` rejoue, sur une pile de développement démarrée et seedée :

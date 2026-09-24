@@ -1645,12 +1645,25 @@ cat > "$TEST_FAUX" <<'FAUX'
 import { expect, test } from 'vitest'
 test('assertion volontairement fausse', () => { expect(1).toBe(2) })
 FAUX
+# LE JOURNAL DE CETTE EXÉCUTION ROUGE DOIT SURVIVRE, alors même que sa sortie part à `/dev/null` —
+# INC-189, docs/JOURNAL.md décision 594. C'est précisément la forme sous laquelle trente harnais
+# lançaient la suite et perdaient la cause de leurs rouges ; le rapporteur de
+# `webapp/vitest.rapporteur-echecs.ts` dépose donc les tests en échec dans
+# `e2e/output/journaux-unitaires/`. Le marqueur borne la recherche aux journaux de CETTE exécution.
+touch "$TRAVAIL/avant-test-faux"
 if npm run --silent test:unit >/dev/null 2>&1; then
 	fail "un test unitaire faux ne fait pas échouer npm run test:unit"
 else
 	ok "un test unitaire faux fait échouer npm run test:unit"
 fi
 rm -f "$TEST_FAUX"
+journal_rouge=$(find e2e/output/journaux-unitaires -name 'unitaires-*.log' -newer "$TRAVAIL/avant-test-faux" \
+	-exec grep -l 'assertion volontairement fausse' {} + 2>/dev/null | head -n 1)
+if [ -n "$journal_rouge" ]; then
+	ok "l'exécution rouge a laissé son journal, qui nomme le test en échec : $journal_rouge"
+else
+	fail "l'exécution rouge n'a laissé AUCUN journal nommant le test en échec (INC-189)"
+fi
 
 # 9.6 — plan tenu ligne pour ligne, mais dernières assertions dans un savepoint annulé.
 # C'EST LA RÉGRESSION D'UN FAUX VERT RÉEL DE CET EXÉCUTEUR (docs/JOURNAL.md, décision 79). pgTAP

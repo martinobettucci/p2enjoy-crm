@@ -13,6 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Correctifs arbitrés le 2026-09-24 (décisions 592 et 594)
+
+- **« Ma journée » n'annonce plus une portée avec le total d'une autre** (INC-189). Au clic sur « Tout
+  l'espace de travail », l'écran rendait un instant la nouvelle portée avec les affaires de l'ancienne,
+  et un lecteur d'écran pouvait entendre un total faux ; il rend désormais le chargement.
+- **Un geste posé sur le canevas d'objectifs juste après son chargement n'est plus perdu** (INC-189) :
+  un redimensionnement au clavier pouvait, sur un poste chargé, n'être jamais enregistré.
+- **Preuves** : deux preuves attendent un signal observable au lieu d'une lecture instantanée, et
+  toute exécution rouge de `npm run test:unit` laisse son journal dans `e2e/output/journaux-unitaires/`,
+  quel que soit le harnais qui l'a lancée.
+
 ### `CRM-092` — Le SSO, seule source d'identité (tranches T1 à T7 livrées ; déploiement en production en attente)
 
 Décision du responsable (décisions 578 et 579) : le SSO LeLabs devient la **seule** source d'identité

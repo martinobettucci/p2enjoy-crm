@@ -9,6 +9,9 @@
 //
 // Le harnais complet — pgTAP, pytest, projets Playwright `api` et `mail` — reste dû par
 // `CRM-008` : cette configuration ne couvre que Vitest.
+//
+// @spec docs/BACKLOG.md « Correctifs arbitrés », INC-189 c ; docs/JOURNAL.md décision 594 ;
+//       docs/SPEC-test-harness.md §6.1 — le journal d'une exécution rouge est conservé
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 
@@ -28,7 +31,15 @@ export default defineConfig({
 			'src/**/*.test.tsx',
 			'../stalwart/**/*.test.ts',
 			'../supabase/functions/**/*.test.ts',
+			// Le rapporteur ci-dessous vit à côté de cette configuration, hors de `src/` : c'est un
+			// outil Node, que la compilation de l'application refuserait (`node:fs`).
+			'vitest.rapporteur-echecs.test.ts',
 		],
+		// LE JOURNAL D'UNE EXÉCUTION ROUGE EST CONSERVÉ (INC-189, décision 594). Trente harnais
+		// lancent cette suite ; les uns jettent sa sortie, les autres l'effacent en sortant. Le
+		// rapporteur dépose les tests en échec dans `e2e/output/journaux-unitaires/`, quel que soit
+		// l'appelant. `default` reste le rapporteur de la console, inchangé.
+		reporters: ['default', './vitest.rapporteur-echecs.ts'],
 		restoreMocks: true,
 		// LE DÉLAI PAR DÉFAUT DE VITEST — 5 s — EST TROP COURT POUR CE HARNAIS, ET C'EST MESURÉ.
 		// `npm run test:unit` monte 28 fichiers de composants React sous jsdom, en parallèle, et

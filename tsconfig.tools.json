@@ -31,5 +31,5 @@
     "skipLibCheck": false,
     "noEmit": true
   },
-  "include": ["webapp/vite.config.ts", "webapp/vitest.config.ts", "e2e/**/*.ts", "stalwart/**/*.ts", "supabase/functions/**/*.ts"]
+  "include": ["webapp/vite.config.ts", "webapp/vitest.config.ts", "webapp/vitest.rapporteur-echecs.ts", "webapp/vitest.rapporteur-echecs.test.ts", "e2e/**/*.ts", "stalwart/**/*.ts", "supabase/functions/**/*.ts"]
 }
