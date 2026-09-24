@@ -53,6 +53,11 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   développement existe, lu dans son realm.
 - **L'amorçage d'un espace de production n'inscrit plus qu'une attente** administratrice : la personne
   devient administratrice à sa première connexion LeLabs.
+- **Les administrateurs de LeLabs administrent le CRM** (tranche T8, décision 597). C'est une règle de
+  tout le domaine `lelabs.tech` : qui porte le rôle d'administration de LeLabs entre sans être inscrit
+  et administre chaque espace ; retiré chez LeLabs, ce droit tombe dans les cinq minutes. Rien n'est
+  écrit dans les espaces : le droit est porté par la session. Aucune application n'est accessible
+  sans compte vérifié par LeLabs, ce que le CRM exigeait déjà. Migration 79.
 - **GoTrue a quitté la pile** (tranche T6, décisions 589 et 590). Plus de service d'authentification
   propre, ni ses gabarits de courriel, ni Inbucket, qui ne recevait que ses courriels ; plus aucune
   variable d'inscription, de mot de passe ou de relais SMTP. `/auth/v1/*` répond 404, y compris

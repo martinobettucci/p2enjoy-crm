@@ -4,6 +4,8 @@
 //           `card_comments_moderation` et non par ce module)
 // @verifies docs/SPEC-permissions-rls.md §2.1 (les trois rôles), §7 (un refus rend zéro ligne)
 // @verifies docs/JOURNAL.md décision 376
+// @verifies CRM-092 (docs/BACKLOG.md) — tranche T8 ; docs/SPEC-session-sso.md §6.1 bis, point 7 ;
+//           docs/JOURNAL.md décision 597 — le rôle vient de `public.mon_role_espace`
 //
 // Le client est remplacé par un double **fidèle au contrat de PostgREST** : `data`, `error` et
 // `status`. Le contrat réel est éprouvé hors interface par `e2e/ui/commentaires-gestes.spec.ts`,
@@ -18,16 +20,14 @@ import { estAdministrateur, lireRoleWorkspace, roleConnu, ROLES } from './roles'
 import type { ClientCrm } from './supabase'
 
 type ReponsePostgrest = {
-	data: { role: string } | null
+	data: string | null
 	error: { message: string } | null
 	status: number
 }
 
 function clientFactice(reponse: ReponsePostgrest | (() => Promise<never>)): ClientCrm {
-	const maybeSingle = typeof reponse === 'function' ? reponse : () => Promise.resolve(reponse)
-	return {
-		from: () => ({ select: () => ({ eq: () => ({ eq: () => ({ maybeSingle }) }) }) }),
-	} as unknown as ClientCrm
+	const rpc = typeof reponse === 'function' ? reponse : () => Promise.resolve(reponse)
+	return { rpc } as unknown as ClientCrm
 }
 
 describe('roleConnu', () => {
@@ -48,7 +48,7 @@ describe('roleConnu', () => {
 describe('lireRoleWorkspace', () => {
 	it('rend le rôle du membre', async () => {
 		const etat = await lireRoleWorkspace(
-			clientFactice({ data: { role: 'admin' }, error: null, status: 200 }),
+			clientFactice({ data: 'admin', error: null, status: 200 }),
 			'ws-1',
 			'profil-1',
 		)
@@ -68,7 +68,7 @@ describe('lireRoleWorkspace', () => {
 
 	it('rend l’état prêt et sans rôle quand la valeur lue n’est pas un rôle connu', async () => {
 		const etat = await lireRoleWorkspace(
-			clientFactice({ data: { role: 'super-admin' }, error: null, status: 200 }),
+			clientFactice({ data: 'super-admin', error: null, status: 200 }),
 			'ws-1',
 			'profil-1',
 		)
@@ -93,21 +93,16 @@ describe('lireRoleWorkspace', () => {
 		expect(etat.statut === 'erreur' && etat.erreur.nature).toBe('network')
 	})
 
-	// LA REQUÊTE PORTE LES DEUX FILTRES, ET C'EST LE POINT. Filtrer sur le seul workspace
-	// rapporterait les lignes de TOUS les membres — mesuré, un membre les lit — et le module
-	// choisirait alors une ligne parmi plusieurs, c'est-à-dire déciderait.
-	it('demande une seule ligne, filtrée sur le couple (workspace, utilisateur)', async () => {
-		const maybeSingle = vi.fn(() => Promise.resolve({ data: null, error: null, status: 200 }))
-		const eqUtilisateur = vi.fn(() => ({ maybeSingle }))
-		const eqWorkspace = vi.fn(() => ({ eq: eqUtilisateur }))
-		const select = vi.fn(() => ({ eq: eqWorkspace }))
-		const from = vi.fn(() => ({ select }))
-		await lireRoleWorkspace({ from } as unknown as ClientCrm, 'ws-1', 'profil-1')
-		expect(from).toHaveBeenCalledWith('workspace_members')
-		expect(select).toHaveBeenCalledWith('role')
-		expect(eqWorkspace).toHaveBeenCalledWith('workspace_id', 'ws-1')
-		expect(eqUtilisateur).toHaveBeenCalledWith('user_id', 'profil-1')
-		expect(maybeSingle).toHaveBeenCalledTimes(1)
+	// LE RÔLE VIENT DE LA FONCTION QUE LA BASE APPLIQUE, JAMAIS DE LA TABLE — décision 597. Lu dans
+	// `workspace_members`, le porteur du rôle de realm `admin` — administrateur par la revendication
+	// de son jeton, sans ligne — n'aurait aucun rôle à l'écran. Une seule requête, sur le workspace.
+	it('demande le rôle à `mon_role_espace`, pour le seul workspace, et à rien d’autre', async () => {
+		const rpc = vi.fn(() => Promise.resolve({ data: 'admin', error: null, status: 200 }))
+		const from = vi.fn()
+		await lireRoleWorkspace({ rpc, from } as unknown as ClientCrm, 'ws-1', 'profil-1')
+		expect(rpc).toHaveBeenCalledTimes(1)
+		expect(rpc).toHaveBeenCalledWith('mon_role_espace', { ws: 'ws-1' })
+		expect(from).not.toHaveBeenCalled()
 	})
 })
 

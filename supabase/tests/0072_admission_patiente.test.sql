@@ -2,6 +2,8 @@
 -- @verifies docs/SPEC-session-sso.md §6.2 (points 2 et 5), §7.6 (migration 0078), §13 (preuves INC-249)
 -- @verifies docs/SPEC-identite.md §5 (la garde du dernier administrateur n'est plus sollicitée)
 -- @verifies docs/JOURNAL.md décision 593 ; docs/INCONSISTENCY_REPORT.md INC-249
+-- @verifies CRM-092 (docs/BACKLOG.md) — tranche T8, décision 597 : signatures révisées à nombre constant
+--           (`p_admin_lelabs`, migration 0079 ; docs/SPEC-session-sso.md §7.7)
 --
 -- Avant `0078`, une personne attendue comme lectrice dans un espace vide faisait échouer TOUTE sa
 -- connexion : la garde refusait la première appartenance non administratrice, dans la transaction qui
@@ -133,7 +135,7 @@ select is(
 	(select pg_get_userbyid(proowner) || '|' || prosecdef::text || '|'
 	        || has_function_privilege('authenticated', p.oid, 'EXECUTE')::text || '|'
 	        || has_function_privilege('service_role', p.oid, 'EXECUTE')::text
-	   from pg_proc p where p.oid = 'public.ouvrir_session_sso(uuid, text, text)'::regprocedure),
+	   from pg_proc p where p.oid = 'public.ouvrir_session_sso(uuid, text, text, boolean)'::regprocedure),
 	'postgres|true|false|true',
 	'16 — toujours propriété de postgres, SECURITY DEFINER, exécutable par service_role seul');
 

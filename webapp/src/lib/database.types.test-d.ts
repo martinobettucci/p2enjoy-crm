@@ -922,7 +922,12 @@ type _vueDerivationColonnes = Expect<
 // chaîne que `sessions_sso`). Même limite que `ouvrir_session_sso` : elles ne sont exécutables que
 // par `service_role`, et le type ne dit rien de ce refus (docs/SPEC-session-sso.md §5.6).
 // Cinquante devient CINQUANTE-QUATRE.
-type _lesCinquanteQuatreFonctions = Expect<
+// `0079` de `CRM-092` TRANCHE T8 ajoute `mon_role_espace` — la seule fonction de la tranche que la
+// webapp appelle, par `webapp/src/lib/roles.ts` : elle rend le rôle que la base applique à l'appelant,
+// règle du domaine sur `admin` comprise (docs/SPEC-session-sso.md §6.1 bis, décision 597). Les trois
+// fonctions de session y gagnent `p_admin_lelabs`, facultatif. Cinquante-quatre devient
+// CINQUANTE-CINQ.
+type _lesCinquanteCinqFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
     | 'entonnoir_conversion'
@@ -966,6 +971,7 @@ type _lesCinquanteQuatreFonctions = Expect<
     | 'snooze_card'
     | 'previsualiser_exigence'
     | 'ouvrir_session_sso'
+    | 'mon_role_espace'
     | 'ouvrir_session_serveur'
     | 'lire_session_serveur'
     | 'renouveler_session_serveur'
@@ -1184,7 +1190,7 @@ export type AssertionsDuContratDeTypes = [
   _relationsWorkspaceMembers,
   _laSeuleVue,
   _vueDerivationColonnes,
-  _lesCinquanteQuatreFonctions,
+  _lesCinquanteCinqFonctions,
   _signatureReelSaisissable,
   _retourReelSaisissable,
   _ecriturePermisePrendUneLigneDeTableau,

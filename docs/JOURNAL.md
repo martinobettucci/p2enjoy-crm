@@ -29864,3 +29864,23 @@ corrigé dans `webapp/vitest.config.ts`, qui vide les quatre variables de config
 `e2e:ui`, parce que j'ai modifié `webapp/src/lib/roles.ts` (T8) pendant qu'il tournait — sa campagne a
 construit l'application avec un appel à une fonction pas encore migrée. Même leçon que le build
 concurrent : aucune édition de `webapp/` pendant une campagne d'interface.
+
+**T8 mise en œuvre (2026-09-24) — ce que les preuves ont appris avant d'être vertes.**
+- **La preuve d'interface a trouvé ce que la suite pgTAP ne voyait pas** : l'exploitante lisait l'espace
+  et ses tracks, et « Card introuvable » sur chaque fiche. Les droits fins de lecture d'un channel et
+  d'une affaire passent par `app.resolve_channel_access_pour(…, auth.uid())`, donc par
+  `app.workspace_role_pour`, que la spécification tenait pour « juge d'un tiers » intouché. Elle
+  applique désormais la revendication quand `p_user` est l'appelant, et elle seule pour un tiers ;
+  §6.1 bis et §7.7 précisés, trois assertions ajoutées (droits fins d'un channel, rôle de l'appelant).
+- **Le runner rejoue tout, et `0079` retire des signatures que `0075`, `0076` et `0078` recréent** :
+  `verify-session-sso` rejouait la chaîne sans elle et laissait deux `ouvrir_session_sso` côte à côte —
+  appels ambigus, quatre suites rouges. Sa section 2 rejoue désormais la 79 et vérifie qu'une seule
+  fonction subsiste ; sa restauration passe par le runner complet (§3.5), et sa dégradation
+  « admission impatiente » porte sur la fonction en service au lieu de rejouer `0075`.
+- **La capture attendait mal** : prise pendant le fondu, l'action de modération se lisait à peine ; la
+  preuve attend l'opacité pleine, comme celle de `commentaires-gestes`.
+
+Mesures : pgTAP **73 fichiers, 3225 assertions** (`0073` : 29) ; échangeur **126** unitaires ;
+`session.spec.ts` **24/24** ; `connexion.spec.ts` **15/15**, capture `admin-domaine-moderation-1440`
+relue ; `verify-session-sso` **66 vérifications, aucune anomalie**, dont trois dégradations et deux
+mutations neuves. Realm de développement réimporté : `viewer@` sans `admin`, `exploitante@` ajoutée.

@@ -2,6 +2,8 @@
 -- @verifies docs/SPEC-session-sso.md §5.3 (prolonger, fermer), §5.6 (poignée), §7.4 (table et fonctions),
 --           §13 (preuves pgTAP)
 -- @verifies docs/SPEC-permissions-rls.md §3.2 ; docs/JOURNAL.md décision 586
+-- @verifies CRM-092 (docs/BACKLOG.md) — tranche T8, décision 597 : signatures révisées à nombre constant
+--           (`p_admin_lelabs`, migration 0079 ; docs/SPEC-session-sso.md §7.7)
 
 begin;
 
@@ -69,9 +71,9 @@ select is(
 	'c', '7 — retirer une personne ferme ses sessions');
 select is(
 	(select count(*)::integer from pg_proc p
-	  where p.oid in ('public.ouvrir_session_serveur(uuid, text, text, bytea, text, timestamptz)'::regprocedure,
+	  where p.oid in ('public.ouvrir_session_serveur(uuid, text, text, bytea, text, timestamptz, boolean)'::regprocedure,
 	                  'public.lire_session_serveur(bytea)'::regprocedure,
-	                  'public.renouveler_session_serveur(bytea, uuid, text, text, text, timestamptz)'::regprocedure,
+	                  'public.renouveler_session_serveur(bytea, uuid, text, text, text, timestamptz, boolean)'::regprocedure,
 	                  'public.fermer_session_serveur(bytea)'::regprocedure)
 	    and p.prosecdef and pg_get_userbyid(p.proowner) = 'postgres'
 	    and p.proconfig = array['search_path=""']),
@@ -81,9 +83,9 @@ select ok(
 	                 and not has_function_privilege('anon', f, 'EXECUTE')
 	                 and not has_function_privilege('authenticated', f, 'EXECUTE'))
 	   from unnest(array[
-		'public.ouvrir_session_serveur(uuid, text, text, bytea, text, timestamptz)',
+		'public.ouvrir_session_serveur(uuid, text, text, bytea, text, timestamptz, boolean)',
 		'public.lire_session_serveur(bytea)',
-		'public.renouveler_session_serveur(bytea, uuid, text, text, text, timestamptz)',
+		'public.renouveler_session_serveur(bytea, uuid, text, text, text, timestamptz, boolean)',
 		'public.fermer_session_serveur(bytea)']) as f),
 	'9 — les quatre fonctions sont réservées à la clé de service');
 

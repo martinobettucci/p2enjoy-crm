@@ -3,6 +3,8 @@
 //       point 5 : adresse vérifiée, présence de `verified`), §6.1 (règle d'admission)
 // @spec docs/SSO-client-lelabs-crm.md (« À vérifier côté application ») ; docs/SSO.md (rôles)
 // @spec docs/JOURNAL.md décisions 578 (K3), 579 (A2), 580 (K14), 584 (T3), 586 (client serveur)
+// @spec CRM-092 (docs/BACKLOG.md) — tranche T8 ; docs/SPEC-session-sso.md §6.1 bis (point 1) ;
+//       docs/JOURNAL.md décision 597 — la PRÉSENCE d'`admin`, règle du domaine, est rapportée
 //
 // Module pur, repris de T3 sans changement de règle : le client serveur reçoit le jeton directement
 // de LeLabs, mais le vérifie quand même — c'est la même fonction, et elle ne coûte qu'une lecture de
@@ -13,6 +15,8 @@ import { algorithmeAccepte, cleCompatible, lireJws, verifierSignature } from './
 import { Refus } from './refus.ts'
 
 export const ROLE_REQUIS = 'verified'
+/** Le rôle de realm qui vaut administrateur du CRM d'office — règle du domaine, décision 597. */
+export const ROLE_ADMIN_DOMAINE = 'admin'
 /** Tolérance d'un `iat` dans le futur, pour une horloge de fournisseur légèrement en avance. */
 export const AVANCE_IAT_TOLEREE = 60
 
@@ -24,6 +28,11 @@ export type Identite = {
 	readonly nom: string
 	/** Échéance du jeton d'accès LeLabs, en secondes. */
 	readonly exp: number
+	/**
+	 * `admin` est présent dans les rôles du realm (§6.1 bis). Ce n'est PAS une admission : `verified`
+	 * reste exigé, et ce drapeau ne fait que suivre l'identité jusqu'à la base et au jeton interne.
+	 */
+	readonly adminLelabs: boolean
 }
 
 export type ContexteVerification = {
@@ -83,5 +92,13 @@ export async function verifierJetonAcces(jeton: string, c: ContexteVerification)
 	const roles = (r.realm_access as Record<string, unknown> | undefined)?.roles
 	if (!Array.isArray(roles) || !roles.includes(ROLE_REQUIS)) throw new Refus('attente_verification', adresse)
 
-	return { sub: r.sub.toLowerCase(), adresse, nom: nomDesRevendications(r), exp: r.exp }
+	// LA PRÉSENCE d'`admin`, jamais le nombre ni l'ordre : le tableau porte aussi les rôles techniques
+	// par défaut du realm (K14). Relue à chaque geste, depuis le jeton qui vient d'être vérifié.
+	return {
+		sub: r.sub.toLowerCase(),
+		adresse,
+		nom: nomDesRevendications(r),
+		exp: r.exp,
+		adminLelabs: roles.includes(ROLE_ADMIN_DOMAINE),
+	}
 }

@@ -491,7 +491,8 @@ comme en production. Le CRM en est un client **confidentiel**, `lelabs-crm-serve
    développement) fait suivre à Kong.
 3. L'échangeur échange le code **avec le secret du client**, vérifie le jeton LeLabs (signature,
    émetteur, `azp`, échéance), puis applique l'**admission** : adresse vérifiée, rôle de realm
-   `verified`, et personne **attendue** par un espace (`workspace_invitations`) ou déjà membre.
+   `verified`, et personne **attendue** par un espace (`workspace_invitations`), déjà membre, **ou
+   porteuse du rôle de realm `admin`** — règle du domaine `lelabs.tech` (décision 597).
    `public.ouvrir_session_serveur` consomme les attentes, crée le profil au `sub` LeLabs s'il manque
    et enregistre la session — jeton de rafraîchissement **chiffré** (AES-GCM), poignée désignée par
    son empreinte.
@@ -500,11 +501,15 @@ comme en production. Le CRM en est un client **confidentiel**, `lelabs-crm-serve
    `/functions/v1/session`. La webapp garde le jeton en mémoire ; `supabase-js` le joint à chaque
    requête, PostgREST le transmet à PostgreSQL, qui positionne `auth.uid()` (migration 74).
 5. Avant l'échéance, la webapp **prolonge** par la seule poignée : l'échangeur rafraîchit chez
-   LeLabs et **rejoue l'admission** — un rôle `verified` retiré ou une appartenance supprimée ferment
-   l'accès au plus tard à la prolongation suivante. Sans session, prolonger rend `204` (décision 587).
+   LeLabs et **rejoue l'admission** — un rôle `verified` ou `admin` retiré, ou une appartenance
+   supprimée, ferment l'accès au plus tard à la prolongation suivante. Sans session, prolonger rend `204` (décision 587).
    **Fermer** supprime la session serveur et efface le cookie.
-6. Les politiques RLS résolvent les droits **à partir des tables d'appartenance**, pas de
-   revendications portées par le jeton : un droit révoqué prend effet immédiatement.
+6. Les politiques RLS résolvent les droits **à partir des tables d'appartenance** : un droit
+   d'espace révoqué prend effet immédiatement. **Une seule exception, imposée par le domaine** : le
+   jeton interne porte `lelabs_admin: true` pour qui détient le rôle de realm `admin`, et les
+   fonctions d'appartenance (`app.est_admin_lelabs()`, migration 79) en font un administrateur de
+   **tout** espace, sans aucune ligne ; ce droit vit ce que vit le jeton, 300 s au plus
+   (`docs/SPEC-session-sso.md` §6.1 bis).
 
 Il n'existe ni inscription, ni mot de passe, ni courriel d'identité dans le CRM : ils appartiennent à
 LeLabs. Une personne n'entre que si un administrateur de l'espace l'**attend** — l'écran qui inscrit

@@ -14531,9 +14531,12 @@ connexion réelle de `martino@p2enjoy.studio` aboutie après les opérations du 
       l'échangeur ; `e2e:api` **1080/1080** ; `verify-session-sso` **57/57** ; `connexion.spec.ts`
       **14/14**, captures relues. Campagne d'interface **749/756** : sept rouges étrangers, relus dans
       leur trace et rattachés à INC-189 (journal, décision 593).
-- [ ] **T8** — règle du domaine sur `admin` (décision 597, §6.1 bis et §7.7) : revendication
+- [x] **T8** — règle du domaine sur `admin` (décision 597, §6.1 bis et §7.7) : revendication
       `lelabs_admin`, migration `0079`, `mon_role_espace`, `roles.ts`, realm de développement
-      (`viewer@` sans `admin`, `exploitante@`), preuves et harnais.
+      (`viewer@` sans `admin`, `exploitante@`), preuves et harnais. Mesuré : pgTAP **73 fichiers,
+      3225 assertions** ; unitaires **3285**, dont **126** pour l'échangeur ; `e2e:api` **1082/1082** ;
+      `e2e:ui` **757/757** (par `verify-webapp`, **44 contrôles, aucune anomalie**) ;
+      `verify-session-sso` **66, aucune anomalie** ; capture de l'exploitante relue.
 - [ ] **Préalable humain chez LeLabs** : déclaration du client serveur `lelabs-crm-serveur` et secret
       posé dans la cellule (décision 586, §12) ; `verified` sur `martino@p2enjoy.studio`.
 - [ ] Production : opérations du §12, écrites en `docs/PROD_MIGRATIONS.md` §2.5 — dont les demandes
@@ -14618,4 +14621,5 @@ décision 594.
       `contacts` et `preferences-notifications` **68/68**, captures relues. Ses deux autres rouges du
       jour sont étrangers : `test:unit` par la fuite de `VITE_*` (INC-189, commit suivant), `e2e:ui`
       par le travail en cours de T8 (`roles.ts` appelant une fonction pas encore migrée). Rejoué avec
-      T8. Case de 16 px de `Sommeil.tsx` relevée, hors arbitrage : consignée en INC-253.
+      T8 : **44 contrôles, aucune anomalie**. Case de 16 px de `Sommeil.tsx` relevée, hors arbitrage :
+      consignée en INC-253.

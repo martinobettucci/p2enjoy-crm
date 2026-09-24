@@ -6,6 +6,9 @@
 // @spec docs/SPEC-permissions-rls.md §2.1 (les trois rôles), §7 (un refus est zéro ligne)
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone) ; docs/SCHEMA.md §1 (socle d'identité)
 // @spec docs/JOURNAL.md décision 376 (ce que l'écran apprend, et ce qu'il ne décide pas)
+// @spec CRM-092 (docs/BACKLOG.md) — tranche T8 ; docs/SPEC-session-sso.md §6.1 bis, point 7 ;
+//       docs/JOURNAL.md décision 597 — le rôle est lu par `public.mon_role_espace`, qui applique la
+//       règle du domaine sur `admin`
 //
 // CE MODULE NE DÉCIDE AUCUN DROIT, ET C'EST SA PREMIÈRE PROPRIÉTÉ (`CLAUDE.md` §10).
 //
@@ -15,15 +18,17 @@
 // cette lecture se trompe — rôle retombé depuis le chargement de l'écran — est celui, déjà traité,
 // du `PATCH` rendant `200` et **zéro ligne** (docs/SPEC-cards.md §13.8, ligne *j*).
 //
-// LE RÔLE EST LU PAR WORKSPACE, JAMAIS « EN GÉNÉRAL ». `workspace_members` porte une ligne par
-// couple `(workspace_id, user_id)` : la même personne peut être administratrice ici et lectrice
-// ailleurs. La card porte son `workspace_id`, et c'est lui qui sert de clé.
+// LE RÔLE EST LU PAR WORKSPACE, JAMAIS « EN GÉNÉRAL » : la même personne peut être administratrice
+// ici et lectrice ailleurs. La card porte son `workspace_id`, et c'est lui qui sert de clé.
 //
-// MESURÉ avant d'être écrit (décision 376) : un membre lit les trois lignes de son workspace, un
-// appelant anonyme reçoit **`200` et `[]`** — jamais un `401`. La lecture est donc silencieuse dans
-// la console même hors session, ce que `CRM-007` exige de toute requête de la webapp. Elle n'est
-// pour autant **pas émise** sans identifiant d'utilisateur : une requête dont la réponse est connue
-// d'avance est un coût sans contrepartie.
+// IL EST LU PAR LE SERVEUR, ET NON PLUS DANS `workspace_members` — décision 597. Le domaine
+// `lelabs.tech` fait de tout porteur du rôle de realm `admin` un administrateur de l'application ; le
+// CRM l'applique par la revendication `lelabs_admin` de son jeton interne, SANS écrire
+// d'appartenance. Lu dans la table, ce rôle n'existait pas pour l'écran, et le geste de modération
+// manquait à qui la base l'accorde. `public.mon_role_espace(ws)` rend `app.workspace_role(ws)` : le
+// rôle que les politiques appliquent réellement à l'appelant. La lecture n'est **pas émise** sans
+// identifiant d'utilisateur : hors session, la réponse est connue d'avance, et la fonction est de
+// toute façon refusée à l'anonyme.
 
 import { useEffect, useState } from 'react'
 import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './async'
@@ -47,29 +52,25 @@ export function roleConnu(valeur: string | null | undefined): RoleWorkspace | nu
 }
 
 /**
- * Lit le rôle de l'utilisateur dans un workspace.
+ * Lit le rôle de l'appelant dans un workspace, tel que la base l'applique.
  *
- * `null` en état `pret` est une réponse pleine : l'utilisateur n'est pas membre, ou la RLS a refusé
- * — le §7 de `docs/SPEC-permissions-rls.md` rend les deux cas indiscernables, délibérément. Aucun
- * des deux ne justifie d'offrir un geste, et les distinguer ici renseignerait un appelant sans
- * droit.
+ * `null` en état `pret` est une réponse pleine : l'appelant n'y a aucun rôle — le §7 de
+ * `docs/SPEC-permissions-rls.md` ne distingue pas davantage, délibérément. Aucun cas ne justifie
+ * d'offrir un geste, et les distinguer ici renseignerait un appelant sans droit. `idUtilisateur`
+ * ne figure plus dans la requête — la fonction lit l'appelant dans son jeton — ; il dit seulement,
+ * au crochet, qu'une session existe.
  */
 export async function lireRoleWorkspace(
 	client: ClientCrm,
 	idWorkspace: string,
-	idUtilisateur: string,
+	_idUtilisateur: string,
 ): Promise<EtatAsync<RoleWorkspace | null>> {
 	try {
-		const reponse = await client
-			.from('workspace_members')
-			.select('role')
-			.eq('workspace_id', idWorkspace)
-			.eq('user_id', idUtilisateur)
-			.maybeSingle()
+		const reponse = await client.rpc('mon_role_espace', { ws: idWorkspace })
 		if (reponse.error !== null) {
 			return enErreur(classerErreur(reponse.status, reponse.error.message))
 		}
-		return pret(roleConnu(reponse.data?.role))
+		return pret(roleConnu(reponse.data))
 	} catch (cause) {
 		// `supabase-js` peut relancer une panne de transport plutôt que la rendre.
 		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))

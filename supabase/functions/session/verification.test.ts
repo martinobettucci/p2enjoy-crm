@@ -2,6 +2,8 @@
 // @verifies docs/SPEC-session-sso.md §5.2 (point 4 : forme, algorithme, clés, signature, revendications ;
 //           point 5 : adresse vérifiée, présence de `verified`), §6.1, §13 (preuves unitaires)
 // @verifies docs/SSO-client-lelabs-crm.md (« À vérifier côté application »)
+// @verifies CRM-092 (docs/BACKLOG.md) — tranche T8 ; docs/SPEC-session-sso.md §6.1 bis ; docs/JOURNAL.md
+//           décision 597 — présence d'`admin` rapportée, `verified` toujours exigé
 //
 // Les clés RSA et EC sont tirées par WebCrypto dans le test, jamais versées. Le faux jeu de clés
 // COMPTE ses lectures : un algorithme refusé ne déclenche aucune lecture de clé.
@@ -105,7 +107,29 @@ describe('verifierJetonAcces — succès', () => {
 			adresse: 'admin@p2enjoy.test',
 			nom: 'Camille Aubert',
 			exp: MAINTENANT + 300,
+			adminLelabs: false,
 		})
+	})
+
+	// RÈGLE DU DOMAINE, décision 597 : la PRÉSENCE d'`admin` est rapportée, jamais le nombre ni l'ordre.
+	it('rapporte la PRÉSENCE d’`admin`, quels que soient l’ordre et les autres rôles', async () => {
+		for (const [roles, attendu] of [
+			[['verified', 'admin'], true],
+			[['uma_authorization', 'admin', 'default-roles-lelabs', 'verified'], true],
+			[['verified'], false],
+			[['verified', 'administrateur', 'Admin'], false],
+		] as const) {
+			const { c } = contexte()
+			const identite = await verifierJetonAcces(await signer(revendications({ realm_access: { roles: [...roles] } })), c)
+			expect(identite.adminLelabs, JSON.stringify(roles)).toBe(attendu)
+		}
+	})
+
+	it('n’admet pas un `admin` sans `verified` : la règle du domaine est un plancher, pas une porte dérobée', async () => {
+		const { c } = contexte()
+		await expect(
+			verifierJetonAcces(await signer(revendications({ realm_access: { roles: ['default-roles-lelabs', 'admin'] } })), c),
+		).rejects.toMatchObject({ code: 'attente_verification' })
 	})
 
 	it('accepte un jeton ES256', async () => {

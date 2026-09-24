@@ -62,6 +62,15 @@ et indexables.
 Elles sont `STABLE` et s'appuient sur `auth.uid()`. **Les droits ne sont pas portés par le JWT** :
 une révocation prend effet immédiatement, sans attendre l'expiration du jeton.
 
+**Une exception, imposée par le domaine `lelabs.tech` (`CRM-092` T8, décision 597)** : qui porte le
+rôle de realm `admin` est administrateur de l'application d'office. Le jeton interne de l'échangeur
+porte alors `lelabs_admin: true` ; `app.est_admin_lelabs()` la lit, et `app.is_workspace_member`,
+`app.is_workspace_admin`, `app.workspace_role` et `app.workspace_role_pour` — pour l'appelant
+seulement — en font un administrateur de **tout** espace existant, droits fins compris, sans ligne
+d'appartenance. Ce droit-là vit ce que vit le jeton, **300 s au plus**, et se relit du jeton LeLabs à
+chaque prolongation (`docs/SPEC-session-sso.md` §6.1 bis, §7.7). Un tiers reste jugé sur ses seules
+appartenances.
+
 ### 3.1 Deux fonctions d'appui, livrées par `CRM-010`
 
 | Fonction | Retour |

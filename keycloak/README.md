@@ -2,7 +2,8 @@
 
 Compagnon de [`realm-lelabs.json`](realm-lelabs.json), importé par le service `keycloak` de
 `docker-compose.dev.yml`. Unités `CRM-091` puis **`CRM-092`** : spécification
-`docs/SPEC-session-sso.md` §10, où le SSO devient la seule source d'identité du CRM (décision 578).
+`docs/SPEC-session-sso.md` §10, où le SSO devient la seule source d'identité du CRM (décision 578), et
+§6.1 bis pour la règle du domaine sur `admin` (décision 597, tranche T8).
 
 Ce texte vit ici et non dans le JSON : Keycloak refuse d'importer un realm portant un champ qu'il ne
 connaît pas, commentaire compris.
@@ -46,7 +47,8 @@ d'adresse exigée. La version de l'image est celle du SSO réel, `26.7.3`.
 |---|---|---|---|---|---|
 | `admin@` | `5eed…0011` | oui | oui | `admin` | le parcours nominal |
 | `bizdev@` | `5eed…0012` | oui | oui | `business_developer` | un membre ordinaire |
-| `viewer@` | `5eed…0013` | oui | oui, et `admin` du realm | `viewer` | que l'`admin` du realm n'ouvre aucun droit du CRM |
+| `viewer@` | `5eed…0013` | oui | oui | `viewer` | la lectrice ; **n'est plus** `admin` du realm depuis la décision 597, qui ferait d'elle une administratrice |
+| `exploitante@` | `5eed…0017` | oui | oui, et `admin` du realm | non | la règle du domaine : admise sans attente, administratrice de tout espace, sans aucune appartenance (§6.1 bis) |
 | `inconnu@` | `5eed…0014` | oui | oui | non | l'attente « aucun espace ne vous attend » |
 | `attendu@` | `5eed…0015` | oui | **non** | `viewer` | l'attente « compte LeLabs pas encore vérifié » |
 | `adresse-non-verifiee@` | `5eed…0016` | **non** | non | non | le refus d'une adresse non prouvée ; la preuve lève le temps d'un jeton l'exigence de vérification du realm |

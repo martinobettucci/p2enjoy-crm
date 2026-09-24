@@ -310,18 +310,22 @@ valent pour **tous les espaces** du CRM, présents et à venir, et ils sont **po
    attendu. Son profil est créé à sa première connexion admise — il signe ce qu'il écrit —, et ses
    attentes éventuelles sont consommées comme celles de tout le monde.
 4. **La base lit la revendication, jamais une table.** `app.est_admin_lelabs()` rend vrai si et
-   seulement si `auth.jwt() ->> 'lelabs_admin'` vaut `true`. `app.is_workspace_member(ws)`,
-   `app.is_workspace_admin(ws)` et `app.workspace_role(ws)` la consultent : le porteur est membre et
-   administrateur de **tout espace existant**, avec le rôle `admin`, sans ligne dans
-   `workspace_members`. Toutes les politiques qui s'appuient sur ces fonctions suivent sans être
-   réécrites, droits fins compris — un administrateur d'espace les franchit déjà.
+   seulement si la revendication `lelabs_admin` vaut le booléen `true`. `app.is_workspace_member(ws)`,
+   `app.is_workspace_admin(ws)`, `app.workspace_role(ws)` et `app.workspace_role_pour(ws, p_user)`
+   **lorsque `p_user` est l'appelant** la consultent : le porteur est membre et administrateur de
+   **tout espace existant**, avec le rôle `admin`, sans ligne dans `workspace_members`. Toutes les
+   politiques qui s'appuient sur ces fonctions suivent sans être réécrites, droits fins compris — un
+   administrateur d'espace les franchit déjà. *Mesuré à la preuve d'interface* : les droits fins de
+   lecture d'un channel et d'une affaire passent par `app.resolve_channel_access_pour(…, auth.uid())`,
+   donc par `workspace_role_pour` ; sans elle, l'exploitante lisait l'espace, et « Card introuvable »
+   sur chaque fiche.
 5. **Le retrait agit au plus tard 300 s après** : à la prolongation suivante, le jeton LeLabs ne porte
    plus `admin`, le jeton interne ne porte plus la revendication, et l'admission est rejouée — la
    personne reste admise par ses appartenances, ou reçoit `attente_espace` et sa session est supprimée.
    Rien ne reste en base à défaire.
 6. **Ce que la revendication ne couvre pas**, et c'est voulu : les fonctions qui jugent les droits
-   d'une **autre** personne que l'appelant — `app.workspace_role_pour(ws, p_user)` pour un tiers,
-   `public.mentionnables` — ne voient que les appartenances enregistrées. Un administrateur du domaine
+   d'une **autre** personne que l'appelant — `app.workspace_role_pour(ws, p_user)` quand `p_user`
+   n'est pas l'appelant, `public.mentionnables` — ne voient que les appartenances enregistrées. Un administrateur du domaine
    sans appartenance n'est donc ni mentionnable ni proposé comme responsable : le SSO dit qui entre et
    qui administre ; qui figure dans les listes d'un espace reste l'affaire du CRM.
 7. **L'interface lit son propre rôle par le serveur** : `webapp/src/lib/roles.ts` cesse de lire
@@ -473,7 +477,9 @@ Ordinaire, idempotente (`create or replace`), aucune donnée modifiée :
   `coalesce((auth.jwt() ->> 'lelabs_admin')::boolean, false)`. Aucun privilège public.
 - **`app.is_workspace_member(ws)`, `app.is_workspace_admin(ws)`, `app.workspace_role(ws)`** redéfinies :
   appartenance enregistrée, **ou** `app.est_admin_lelabs()` et l'espace `ws` existe — rôle `admin` dans
-  ce cas. Signatures, propriétaires et privilèges inchangés.
+  ce cas. **`app.workspace_role_pour(ws, p_user)`** (auteur : `0063`) applique la même règle quand
+  `p_user` est l'appelant, et les seules appartenances pour un tiers. Signatures, propriétaires et
+  privilèges inchangés.
 - **`public.ouvrir_session_sso(p_sub, p_email, p_nom, p_admin_lelabs boolean default false)`** : un
   porteur d'`admin` est admis sans appartenance ni attente ; son profil est créé ; `espaces` compte
   alors les espaces qu'il administre. L'ancienne signature à trois arguments est retirée dans la même
@@ -691,6 +697,7 @@ responsable a demandé une fois `CRM-092` entièrement vérifiée (décision 584
 |---|---|
 | Unitaire, Deno | `supabase/functions/session/*.test.ts` — **révisés par la décision 586** : corps d'ouverture invalide ; code refusé par LeLabs ; échange avec le secret et le vérificateur exacts ; trois gestes, chemin inconnu, méthode ; poignée absente, inconnue, échue — `204`, jamais un refus (décision 587) ; `session_expiree` qui supprime la session et efface le cookie ; admission rejouée à la prolongation ; cookie `HttpOnly`, `SameSite=Strict`, `Path`, `Secure` sur `https` seulement ; chiffrement AES-GCM : aller-retour, vecteur unique, altération refusée ; échéance globale ; et toujours : jeton mal formé ; `alg` `none`, `HS256`, `HS512`, `RS384` refusés **sans** lecture de clé ; `kid` inconnu ; signature altérée d'un octet ; `iss`, `azp`, `typ` différents ; `exp` passé d'une seconde ; `iat` futur ; `sub` non UUID ; adresse non vérifiée ; `verified` absent, puis présent parmi d'autres rôles dans un autre ordre ; découverte d'un autre émetteur ; délai dépassé ; jeton interne : revendications exactes, signature vérifiable par `JWT_SECRET`, `exp` = min des deux ; dictionnaire du §5.4 complet. Clés RSA et EC tirées par WebCrypto dans le test, jamais versées |
 | pgTAP | `sessions_sso` : aucune politique, aucun privilège pour `anon` et `authenticated`, empreinte unique, cascade depuis `profiles` ; les quatre fonctions de session réservées à `service_role`, admission appliquée à l'ouverture et au renouvellement, suppression d'une session non admise ; `workspace_invitations` : contraintes, clé, trois politiques et privilèges ; `ouvrir_session_sso` : attente consommée en appartenance au bon rôle, profil créé une fois, profil existant non réécrit, appartenance existante non rétrogradée, aucune trace sans attente, rejeu stable, `EXECUTE` refusé à `anon` et `authenticated` ; `profiles` sans clé vers `auth.users` |
+| T8 (décision 597) | pgTAP `0073_admin_du_domaine.test.sql` (29) : revendication lue au seul booléen `true` ; membre et administrateur de tout espace sans ligne, lecture des espaces et écriture réservée à l'administrateur acceptées, refusées sans elle ; droits fins d'un channel ; un tiers jugé sur ses appartenances ; admission du porteur et profil créé ; contrats. Unitaire : présence d'`admin` rapportée quels que soient l'ordre et les autres rôles, `admin` sans `verified` refusé, revendication et drapeau à l'ouverture comme à la prolongation. API (`session.spec.ts`) : l'exploitante admise sans attente, administratrice sans appartenance, la lectrice refusée ; un compte jetable dont `admin` est retiré perd l'accès à la prolongation suivante. E2E : l'exploitante reçoit le geste de modération d'un propos d'autrui, capture. Harnais : `verify-session-sso` rougit si la revendication est ignorée, accordée sans le rôle, appliquée à un tiers, ou posée par l'échangeur sans le rôle |
 | INC-249 (décision 593) | pgTAP `0072_admission_patiente.test.sql` : attente non administratrice dans un espace vide laissée **en suspens**, `en_suspens` compté, aucun profil ni appartenance créés ; attente `admin` consommée dans le même espace vide ; l'attente en suspens consommée à une ouverture suivante, une fois l'administrateur entré ; une personne admise ailleurs entre malgré une attente en suspens. API (`session.spec.ts`) : compte jetable attendu comme lecteur dans un espace vide → `403 attente_administrateur` avec l'adresse, attente intacte, **jamais `502`** ; puis admis après l'administrateur. Unitaire : dictionnaire du §5.5 et message du §9.2. E2E : la surface d'attente et son message, avec un compte jetable. Visuel : capture de cette attente |
 | Base neuve | T1 : un cluster jetable **sans GoTrue**, `0074` appliquée deux fois : `auth.uid()` rend le `sub` de `request.jwt.claims` (K11 levée), propriétaire inchangé. T6 : la pile entière recréée sans GoTrue par `./resetMe.sh`, seed et preuves d'API rejoués — une lecture RLS réelle aboutit ; `0077` rejouée est sans effet ; aucun conteneur `auth`, `auth-templates` ni `inbucket` |
 | pgTAP, T6 | `0071_retrait_gotrue.test.sql` : aucun trigger utilisateur sur `auth.users`, `app.handle_new_user()` absente, un profil naît sans ligne `auth.users`. Les assertions de `0001` et `0023` qui éprouvaient le trigger sont **retirées avec leur objet**, et nommées au journal avec ce qui les remplace |

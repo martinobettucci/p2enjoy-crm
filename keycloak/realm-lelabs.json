@@ -120,8 +120,7 @@
       "lastName": "Nowak",
       "realmRoles": [
         "default-roles-lelabs",
-        "verified",
-        "admin"
+        "verified"
       ],
       "credentials": [
         {
@@ -180,6 +179,27 @@
       "lastName": "Nonvérifiée",
       "realmRoles": [
         "default-roles-lelabs"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "SeedDev2026Local",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "id": "5eed0000-0000-4000-8000-000000000017",
+      "username": "exploitante@${SSO_DEV_DOMAINE}",
+      "email": "exploitante@${SSO_DEV_DOMAINE}",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Inès",
+      "lastName": "Carvalho",
+      "realmRoles": [
+        "default-roles-lelabs",
+        "verified",
+        "admin"
       ],
       "credentials": [
         {

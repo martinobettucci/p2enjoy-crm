@@ -5,6 +5,8 @@
 -- @verifies docs/JOURNAL.md décisions 579, 580 (K11) et 581
 -- @verifies docs/JOURNAL.md décision 593 (INC-249) — les objets rendus portent `en_suspens` : assertions
 --           42, 46, 48 et 49 RÉVISÉES à nombre constant, la suspension elle-même est prouvée par `0072`
+-- @verifies CRM-092 (docs/BACKLOG.md) — tranche T8, décision 597 : signatures révisées à nombre constant
+--           (`p_admin_lelabs`, migration 0079 ; docs/SPEC-session-sso.md §7.7)
 
 begin;
 
@@ -232,19 +234,19 @@ select pg_temp.redevenir_proprietaire();
 -- =============================================================================================
 
 select ok((select p.prosecdef from pg_proc p
-	where p.oid = 'public.ouvrir_session_sso(uuid, text, text)'::regprocedure),
+	where p.oid = 'public.ouvrir_session_sso(uuid, text, text, boolean)'::regprocedure),
 	'37 — SECURITY DEFINER');
 select is(
 	(select pg_get_userbyid(p.proowner) from pg_proc p
-	  where p.oid = 'public.ouvrir_session_sso(uuid, text, text)'::regprocedure),
+	  where p.oid = 'public.ouvrir_session_sso(uuid, text, text, boolean)'::regprocedure),
 	'postgres', '38 — propriétaire postgres');
 select is(
 	(select p.proconfig from pg_proc p
-	  where p.oid = 'public.ouvrir_session_sso(uuid, text, text)'::regprocedure),
+	  where p.oid = 'public.ouvrir_session_sso(uuid, text, text, boolean)'::regprocedure),
 	array['search_path=""'], '39 — search_path vide');
-select ok(has_function_privilege('service_role', 'public.ouvrir_session_sso(uuid, text, text)', 'EXECUTE')
-	and not has_function_privilege('anon', 'public.ouvrir_session_sso(uuid, text, text)', 'EXECUTE')
-	and not has_function_privilege('authenticated', 'public.ouvrir_session_sso(uuid, text, text)', 'EXECUTE'),
+select ok(has_function_privilege('service_role', 'public.ouvrir_session_sso(uuid, text, text, boolean)', 'EXECUTE')
+	and not has_function_privilege('anon', 'public.ouvrir_session_sso(uuid, text, text, boolean)', 'EXECUTE')
+	and not has_function_privilege('authenticated', 'public.ouvrir_session_sso(uuid, text, text, boolean)', 'EXECUTE'),
 	'40 — exécutable par la seule clé de service');
 
 select pg_temp.endosser(pg_temp.id('MBR'));

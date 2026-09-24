@@ -2954,6 +2954,7 @@ export type Database = {
           uid: number
         }[]
       }
+      mon_role_espace: { Args: { ws: string }; Returns: string }
       move_card: {
         Args: { card_id: string; comment?: string; to_step_id: string }
         Returns: {
@@ -3033,6 +3034,7 @@ export type Database = {
       }
       ouvrir_session_serveur: {
         Args: {
+          p_admin_lelabs?: boolean
           p_email: string
           p_empreinte: string
           p_expire_le: string
@@ -3043,7 +3045,12 @@ export type Database = {
         Returns: Json
       }
       ouvrir_session_sso: {
-        Args: { p_email: string; p_nom: string; p_sub: string }
+        Args: {
+          p_admin_lelabs?: boolean
+          p_email: string
+          p_nom: string
+          p_sub: string
+        }
         Returns: Json
       }
       plan_card_remapping: {
@@ -3128,6 +3135,7 @@ export type Database = {
       }
       renouveler_session_serveur: {
         Args: {
+          p_admin_lelabs?: boolean
           p_email: string
           p_empreinte: string
           p_expire_le: string

@@ -6,6 +6,8 @@
 // @verifies docs/manual.md chapitre 1 (connexion) ; CLAUDE.md §10, §11, §16
 // @verifies docs/JOURNAL.md décision 593 (INC-249) — l'attente `attente_administrateur`, vécue avec un
 //           compte jetable dans un espace neuf
+// @verifies CRM-092 (docs/BACKLOG.md) — tranche T8 ; docs/SPEC-session-sso.md §6.1 bis ; docs/JOURNAL.md décision 597 —
+//           l'`admin` du realm entre sans attente, et l'écran lui offre le geste de l'administratrice
 //
 // Le navigateur quitte réellement le CRM pour la page de connexion du Keycloak de développement, y
 // saisit les identifiants d'un compte du realm, et revient ; l'échangeur de session, client
@@ -302,6 +304,36 @@ test.describe('Attentes et refus', () => {
 		expect(ouverture).toBe(false)
 		expect((await etatAppareil(page)).transaction).toBeNull()
 		await capturer(page, `connexion-annulee-${PALIERS[0].nom}`, UNITE)
+	})
+})
+
+test.describe('La règle du domaine sur `admin` (§6.1 bis, décision 597)', () => {
+	const EXPLOITANTE = '5eed0000-0000-4000-8000-000000000017'
+	// Le propos de Driss Lemoine sur « Refonte du site vitrine », posé par le seed : pour l'exploitante,
+	// un propos d'autrui, que seule une administratrice peut retirer (§13.6 de docs/SPEC-cards.md).
+	const FICHE = '/tracks/conseil-ia/grands-comptes/cards/5eed0000-0000-4000-8000-0000000000c1'
+
+	test('l’exploitante du realm entre sans attente, et l’écran lui offre le geste de l’administratrice', async ({ page }) => {
+		try {
+			await page.setViewportSize({ width: 1440, height: 900 })
+			// ELLE N'EST ATTENDUE PAR AUCUN ESPACE, ET ELLE ENTRE : c'est la règle, et elle ne passe pas
+			// par l'écran d'attente.
+			await connecterAvecLeLabs(page, `exploitante@${DOMAINE}`)
+			await page.goto(FICHE)
+			const carte = page.getByTestId('commentaire').filter({ hasText: 'Démo faite le 3 août' })
+			await expect(carte).toBeVisible()
+			// L'OFFRE VIENT DE `mon_role_espace` : lue dans `workspace_members`, où elle n'a aucune ligne,
+			// l'écran ne lui aurait rien offert alors que la base le lui accorde.
+			await expect(carte.getByTestId('actions-moderation')).toHaveCount(1)
+			await carte.hover()
+			// Le fondu d'apparition est attendu : capturé pendant la transition, le geste se lirait à
+			// peine — le défaut déjà payé par la preuve de modération de `commentaires-gestes.spec.ts`.
+			await expect(carte.getByTestId('actions-moderation')).toHaveCSS('opacity', '1')
+			await capturer(page, 'admin-domaine-moderation-1440', UNITE)
+		} finally {
+			// Le seed ne connecte pas l'exploitante (§10) : le profil né de cette preuve est retiré.
+			await fetch(`${URL_API}/rest/v1/profiles?id=eq.${EXPLOITANTE}`, { method: 'DELETE', headers: enTetesService() })
+		}
 	})
 })
 

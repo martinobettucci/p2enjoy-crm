@@ -4,6 +4,8 @@
 // @verifies docs/JOURNAL.md décision 586 (aucun jeton LeLabs n'atteint le navigateur)
 // @verifies docs/JOURNAL.md décision 593, docs/SPEC-session-sso.md §5.5, §6.2 — INC-249 : une attente
 //           en suspens se dit `attente_administrateur`, à l'ouverture comme à la prolongation
+// @verifies CRM-092 (docs/BACKLOG.md) — tranche T8 ; docs/SPEC-session-sso.md §5.4, §6.1 bis ; docs/JOURNAL.md
+//           décision 597 — revendication `lelabs_admin` et drapeau `p_admin_lelabs`, à l'ouverture et à la prolongation
 //
 // Un faux LeLabs sert la découverte, le point de jeton et les clés ; une fausse base reproduit les
 // quatre fonctions de session de `0076_sessions_serveur.sql`. Chacun enregistre ce qu'il reçoit, ce qui
@@ -218,6 +220,20 @@ describe('ouvrir — succès (§5.2)', () => {
 		expect(appel?.args.p_expire_le).toBe(new Date(MAINTENANT_MS + 1800 * 1000).toISOString())
 	})
 
+	// RÈGLE DU DOMAINE, décision 597 : `admin` présent → la revendication et le drapeau ; absent → ni
+	// l'un ni l'autre. La revendication n'est jamais `false` : absente, elle ne dit rien.
+	it('porte `lelabs_admin: true` et `p_admin_lelabs` pour un porteur d’`admin`, et rien sinon', async () => {
+		const admin = monde({ jeton: { realm_access: { roles: ['default-roles-lelabs', 'admin', 'verified'] } } })
+		const corpsAdmin = await json(await traiterSession(requete('ouvrir', { corps: CORPS_OUVERTURE }), admin.d))
+		expect(charge(corpsAdmin.jeton as string).lelabs_admin).toBe(true)
+		expect(admin.appelsBase.find((a) => a.fonction === 'ouvrir_session_serveur')?.args.p_admin_lelabs).toBe(true)
+
+		const ordinaire = monde()
+		const corps = await json(await traiterSession(requete('ouvrir', { corps: CORPS_OUVERTURE }), ordinaire.d))
+		expect('lelabs_admin' in charge(corps.jeton as string)).toBe(false)
+		expect(ordinaire.appelsBase.find((a) => a.fonction === 'ouvrir_session_serveur')?.args.p_admin_lelabs).toBe(false)
+	})
+
 	it('ne dépasse jamais l’échéance du jeton d’accès LeLabs', async () => {
 		const m = monde({ jeton: { exp: MAINTENANT + 42 } })
 		const corps = await json(await traiterSession(requete('ouvrir', { corps: CORPS_OUVERTURE }), m.d))
@@ -386,6 +402,21 @@ describe('prolonger (§5.3)', () => {
 		expect(await json(reponse)).toEqual({ erreur: 'attente_verification', adresse: 'admin@p2enjoy.test' })
 		expect(reponse.headers.get('set-cookie')).toMatch(/Max-Age=0/)
 		expect(sessions.size).toBe(0)
+	})
+
+	// UN RÔLE SE RETIRE : relu du jeton rafraîchi, le drapeau suit, et la revendication disparaît du
+	// jeton interne suivant (§6.1 bis, point 5).
+	it('relit `admin` à chaque prolongation : posé, puis retiré, la revendication suit le jeton LeLabs', async () => {
+		const sessions = await sessionOuverte()
+		const avec = monde({ sessions, jeton: { realm_access: { roles: ['verified', 'admin'] } } })
+		const corpsAvec = await json(await traiterSession(requete('prolonger', { cookie: COOKIE }), avec.d))
+		expect(charge(corpsAvec.jeton as string).lelabs_admin).toBe(true)
+		expect(avec.appelsBase.find((a) => a.fonction === 'renouveler_session_serveur')?.args.p_admin_lelabs).toBe(true)
+
+		const sans = monde({ sessions, jeton: { realm_access: { roles: ['verified'] } } })
+		const corpsSans = await json(await traiterSession(requete('prolonger', { cookie: COOKIE }), sans.d))
+		expect('lelabs_admin' in charge(corpsSans.jeton as string)).toBe(false)
+		expect(sans.appelsBase.find((a) => a.fonction === 'renouveler_session_serveur')?.args.p_admin_lelabs).toBe(false)
 	})
 
 	it('rend 403 attente_espace quand l’appartenance a été retirée, et la session est supprimée', async () => {

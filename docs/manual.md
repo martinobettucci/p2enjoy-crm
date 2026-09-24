@@ -106,11 +106,16 @@ Un compte LeLabs n'ouvre le CRM que si **trois** conditions sont réunies :
 - votre compte LeLabs est **vérifié** par un administrateur de LeLabs — un geste humain, qui peut
   prendre du temps ;
 - un administrateur d'un espace du CRM vous a **inscrit à cette adresse**, ou vous en êtes déjà
-  membre.
+  membre — **ou vous êtes administrateur de LeLabs**.
 
 À votre première connexion, votre inscription devient votre place dans l'espace, avec le rôle que
-l'administrateur a choisi pour vous. Le rôle que LeLabs vous attribue — personne vérifiée ou
-administrateur du SSO — ne change rien à vos droits dans le CRM : ils restent ceux de votre espace.
+l'administrateur a choisi pour vous.
+
+**Les administrateurs de LeLabs administrent le CRM.** C'est une règle de tout le domaine
+`lelabs.tech` : qui porte le rôle d'administration de LeLabs est administrateur de **chaque** espace
+du CRM, sans avoir à y être inscrit, et cesse de l'être dans les cinq minutes qui suivent le retrait
+de ce rôle chez LeLabs. Tout autre rôle LeLabs ne change rien à vos droits dans le CRM : ils restent
+ceux de votre espace.
 
 ### 1.2 Les messages de l'écran de connexion
 
@@ -165,8 +170,10 @@ compte LeLabs.
 
 Un LeLabs local reproduit le SSO réel. Ses comptes portent les adresses de la démonstration et un
 mot de passe commun, `SeedDev2026Local` : `admin@p2enjoy.test`, `bizdev@p2enjoy.test` et
-`viewer@p2enjoy.test` entrent dans le CRM ; `inconnu@p2enjoy.test`, `attendu@p2enjoy.test` et
-`adresse-non-verifiee@p2enjoy.test` montrent chacun l'un des trois messages d'attente. Ces
+`viewer@p2enjoy.test` entrent dans le CRM ; `exploitante@p2enjoy.test`, administratrice du LeLabs
+local, y entre sans être inscrite et administre chaque espace ; `inconnu@p2enjoy.test`,
+`attendu@p2enjoy.test` et `adresse-non-verifiee@p2enjoy.test` montrent chacun l'un des trois messages
+d'attente. Ces
 identifiants `.test` ne sont jamais des comptes de production.
 
 **Ce qui reste hors interface.** Inscrire une personne dans un espace est encore une opération

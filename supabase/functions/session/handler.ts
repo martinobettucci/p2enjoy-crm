@@ -6,6 +6,8 @@
 //       session : `204`, pas une erreur), 593 (INC-249 : une attente en suspens se dit
 //       `attente_administrateur`, jamais `attente_espace`)
 // @spec CLAUDE.md §10 (la règle d'accès est appliquée côté serveur), §20 (journal sans secret)
+// @spec CRM-092 (docs/BACKLOG.md) — tranche T8 ; docs/SPEC-session-sso.md §5.4 (revendication
+//       `lelabs_admin`), §6.1 bis ; docs/JOURNAL.md décision 597 — règle du domaine sur `admin`
 //
 // Module pur : toute entrée-sortie passe par `DependancesSession`, ce qui rend chaque refus prouvable
 // sans réseau. Le navigateur ne reçoit AUCUN jeton LeLabs : il remet un code et son vérificateur,
@@ -171,8 +173,19 @@ async function appelerBase(d: DependancesSession, fonction: string, args: Readon
 async function reponseSession(d: DependancesSession, c: ConfigurationSession, identite: Identite, nomProfil: unknown, cookie?: string): Promise<Response> {
 	const maintenant = Math.floor(d.maintenantMs() / 1000)
 	const expireA = Math.min(identite.exp, maintenant + DUREE_MAX_JETON_INTERNE)
+	// `lelabs_admin` n'est posée QUE si `admin` est présent dans le jeton LeLabs de ce geste : absente
+	// sinon, jamais `false` — la base ne lit que le booléen `true` (§6.1 bis, §7.7). Elle vit ce que vit
+	// ce jeton, 300 s au plus, et se relit à chaque prolongation.
 	const jeton = await signerHs256(
-		{ iss: EMETTEUR_INTERNE, sub: identite.sub, aud: 'authenticated', role: 'authenticated', iat: maintenant, exp: expireA },
+		{
+			iss: EMETTEUR_INTERNE,
+			sub: identite.sub,
+			aud: 'authenticated',
+			role: 'authenticated',
+			iat: maintenant,
+			exp: expireA,
+			...(identite.adminLelabs ? { lelabs_admin: true } : {}),
+		},
 		c.secretJwt,
 	)
 	const nom = typeof nomProfil === 'string' && nomProfil !== '' ? nomProfil : identite.nom
@@ -246,6 +259,7 @@ async function ouvrir(requete: Request, d: DependancesSession, c: ConfigurationS
 				p_sub: identite.sub,
 				p_email: identite.adresse,
 				p_nom: identite.nom,
+				p_admin_lelabs: identite.adminLelabs,
 				p_empreinte: await empreinteDe(poignee),
 				p_rafraichissement: await chiffrer(jetons.rafraichissement, cle),
 				p_expire_le: jetons.expireLe,
@@ -341,6 +355,7 @@ async function prolonger(requete: Request, d: DependancesSession, c: Configurati
 				p_sub: identite.sub,
 				p_email: identite.adresse,
 				p_nom: identite.nom,
+				p_admin_lelabs: identite.adminLelabs,
 				p_rafraichissement: await chiffrer(jetons.rafraichissement, cle),
 				p_expire_le: jetons.expireLe,
 			},

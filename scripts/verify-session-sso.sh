@@ -6,6 +6,8 @@
 #           586 (client serveur, T3 bis), 587 (aucune session : `204`), 589 (retrait de GoTrue, T6),
 #           593 (INC-249 : l'admission patiente, migration 0078)
 # @verifies CLAUDE.md §15 (tests non complaisants), §18 (un défaut se reproduit avant sa correction)
+# @verifies CRM-092 (docs/BACKLOG.md) — tranche T8 ; docs/SPEC-session-sso.md §6.1 bis, §7.7 ;
+#           docs/JOURNAL.md décision 597 — la règle du domaine sur `admin`, et sa non-complaisance
 #
 # Harnais de `CRM-092`, qui grandit à chaque tranche (décision 581). Tranche T1 :
 #
@@ -88,15 +90,18 @@ MIGRATION_MODELE=supabase/migrations/0075_identite_sso.sql
 MIGRATION_SESSIONS=supabase/migrations/0076_sessions_serveur.sql
 MIGRATION_RETRAIT=supabase/migrations/0077_retrait_gotrue.sql
 MIGRATION_ADMISSION=supabase/migrations/0078_admission_patiente.sql
+MIGRATION_ADMIN=supabase/migrations/0079_admin_du_domaine.sql
 TEST_SQL=supabase/tests/0069_identite_sso.test.sql
 TEST_SQL_SESSIONS=supabase/tests/0070_sessions_serveur.test.sql
 TEST_SQL_RETRAIT=supabase/tests/0071_retrait_gotrue.test.sql
 TEST_SQL_ADMISSION=supabase/tests/0072_admission_patiente.test.sql
+TEST_SQL_ADMIN=supabase/tests/0073_admin_du_domaine.test.sql
 ASSERTIONS_T1=58
 ASSERTIONS_T3BIS=40
 ASSERTIONS_T6=8
 ASSERTIONS_INC249=16
-ASSERTIONS_UNITE=$((ASSERTIONS_T1 + ASSERTIONS_T3BIS + ASSERTIONS_T6 + ASSERTIONS_INC249))
+ASSERTIONS_T8=29
+ASSERTIONS_UNITE=$((ASSERTIONS_T1 + ASSERTIONS_T3BIS + ASSERTIONS_T6 + ASSERTIONS_INC249 + ASSERTIONS_T8))
 BASE_NEUVE=verify-session-sso-base-neuve
 SUB_PREUVE=0c920000-0000-4000-8000-0000000000bb
 
@@ -111,18 +116,20 @@ fail() { checks=$((checks + 1)); failures=$((failures + 1)); printf '  \033[31mE
 psql_dev()   { docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -qtA -v ON_ERROR_STOP=1 "$@"; }
 psql_admin() { docker exec -i "$DB_CONTAINER" psql -U supabase_admin -d postgres -qtA -v ON_ERROR_STOP=1 "$@"; }
 
+# LA RESTAURATION PASSE PAR LE RUNNER COMPLET depuis la tranche T8 (docs/SPEC-test-harness.md §3.5,
+# décision 596). Elle rejouait ici `0074` à `0078` à la main ; or `0079` retire les signatures que
+# `0075`, `0076` et `0078` recréent, si bien qu'un rejeu partiel laissait deux versions de
+# `ouvrir_session_sso` côte à côte et rendait ses appels ambigus. Le runner rejoue tout, dans l'ordre,
+# chaque migration sous son rôle déclaré — `0074` comprise, élevée.
 appliquer_migrations_dev() {
-	psql_admin --single-transaction -f - < "$MIGRATION_CLAIMS" >/dev/null 2>&1 \
-		&& psql_dev --single-transaction -f - < "$MIGRATION_MODELE" >/dev/null 2>&1 \
-		&& psql_dev --single-transaction -f - < "$MIGRATION_SESSIONS" >/dev/null 2>&1 \
-		&& psql_dev --single-transaction -f - < "$MIGRATION_RETRAIT" >/dev/null 2>&1 \
-		&& psql_dev --single-transaction -f - < "$MIGRATION_ADMISSION" >/dev/null 2>&1
+	docker compose --env-file "$ENV_FILE" -f docker-compose.yml -f docker-compose.dev.yml \
+		run --rm migrations-runner >"$WORK/runner.log" 2>&1
 }
 
 role_a_rendre=false
 fichier_mute=''
-UNITES_SESSION=122
-SCENARIOS_SESSION=22
+UNITES_SESSION=126
+SCENARIOS_SESSION=24
 
 cleanup() {
 	local status=$?
@@ -134,7 +141,7 @@ cleanup() {
 		attribuer_verified bizdev || { echo "RESTAURATION IMPOSSIBLE : rendre « verified » à bizdev@$DOMAINE" >&2; status=1; }
 	fi
 	if [ "$restore_needed" = true ]; then
-		appliquer_migrations_dev || { echo "RESTAURATION IMPOSSIBLE : rejouer $MIGRATION_CLAIMS et $MIGRATION_MODELE" >&2; status=1; }
+		appliquer_migrations_dev || { echo "RESTAURATION IMPOSSIBLE : rejouer le runner complet (voir $WORK/runner.log)" >&2; status=1; }
 	fi
 	docker rm -f "$BASE_NEUVE" >/dev/null 2>&1 || true
 	rm -rf -- "$WORK"
@@ -177,12 +184,12 @@ effacer_actions_requises() {
 }
 
 suite_verte() {
-	scripts/run-sql-tests.sh "$TEST_SQL" "$TEST_SQL_SESSIONS" "$TEST_SQL_RETRAIT" "$TEST_SQL_ADMISSION" > "$WORK/tap.log" 2>&1 \
-		&& grep -q "4 fichiers, $ASSERTIONS_UNITE assertions, aucune anomalie" "$WORK/tap.log"
+	scripts/run-sql-tests.sh "$TEST_SQL" "$TEST_SQL_SESSIONS" "$TEST_SQL_RETRAIT" "$TEST_SQL_ADMISSION" "$TEST_SQL_ADMIN" > "$WORK/tap.log" 2>&1 \
+		&& grep -q "5 fichiers, $ASSERTIONS_UNITE assertions, aucune anomalie" "$WORK/tap.log"
 }
 
 suite_rouge() {
-	if scripts/run-sql-tests.sh "$TEST_SQL" "$TEST_SQL_SESSIONS" "$TEST_SQL_RETRAIT" "$TEST_SQL_ADMISSION" > "$WORK/tap-rouge.log" 2>&1; then
+	if scripts/run-sql-tests.sh "$TEST_SQL" "$TEST_SQL_SESSIONS" "$TEST_SQL_RETRAIT" "$TEST_SQL_ADMISSION" "$TEST_SQL_ADMIN" > "$WORK/tap-rouge.log" 2>&1; then
 		return 1
 	fi
 	grep -Eq 'ECHEC|not ok|psql a échoué' "$WORK/tap-rouge.log"
@@ -267,7 +274,7 @@ docker rm -f "$BASE_NEUVE" >/dev/null 2>&1 || true
 # 2. Base de développement — rejeu convergent sous le rôle de chaque migration
 # =================================================================================================
 echo
-echo "2. Base de développement : rejeu des migrations 0074 à 0078"
+echo "2. Base de développement : rejeu des migrations 0074 à 0079"
 
 for passage in premier second; do
 	if psql_admin --single-transaction -f - < "$MIGRATION_CLAIMS" >"$WORK/dev-claims-$passage.log" 2>&1; then
@@ -297,7 +304,21 @@ for passage in premier second; do
 	else
 		fail "0078 refusée ($passage passage) : $(tail -n 2 "$WORK/dev-admission-$passage.log")"
 	fi
+	# T8 (décision 597) : la 79 CLÔT la chaîne. La 75, la 76 et la 78 recréent les signatures qu'elle
+	# retire ; sans elle, les deux versions de `ouvrir_session_sso` coexistent, ses appels deviennent
+	# ambigus, et la suite du §3 rougit pour une raison que le produit n'a pas — MESURÉ au premier rejeu.
+	if psql_dev --single-transaction -f - < "$MIGRATION_ADMIN" >"$WORK/dev-admin-$passage.log" 2>&1; then
+		ok "0079 rejouée sous postgres, et retire les signatures que 75, 76 et 78 recréent ($passage passage)"
+	else
+		fail "0079 refusée ($passage passage) : $(tail -n 2 "$WORK/dev-admin-$passage.log")"
+	fi
 done
+if [ "$(psql_dev -c "select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                     where n.nspname = 'public' and p.proname = 'ouvrir_session_sso'")" = 1 ]; then
+	ok "une seule \`ouvrir_session_sso\` après le rejeu : aucun appel ambigu"
+else
+	fail "plusieurs \`ouvrir_session_sso\` coexistent après le rejeu : les appels à trois arguments sont ambigus"
+fi
 
 if psql_dev --single-transaction -f - < "$MIGRATION_CLAIMS" >"$WORK/dev-claims-postgres.log" 2>&1; then
 	fail "0074 acceptée sous postgres : sa garde de rôle ne refuse plus rien"
@@ -311,10 +332,10 @@ fi
 # 3. Suite pgTAP de l'unité
 # =================================================================================================
 echo
-echo "3. pgTAP : $TEST_SQL, $TEST_SQL_SESSIONS, $TEST_SQL_RETRAIT et $TEST_SQL_ADMISSION"
+echo "3. pgTAP : $TEST_SQL, $TEST_SQL_SESSIONS, $TEST_SQL_RETRAIT, $TEST_SQL_ADMISSION et $TEST_SQL_ADMIN"
 
 if suite_verte; then
-	ok "quatre suites vertes, $ASSERTIONS_T1 + $ASSERTIONS_T3BIS + $ASSERTIONS_T6 + $ASSERTIONS_INC249 = $ASSERTIONS_UNITE assertions"
+	ok "cinq suites vertes, $ASSERTIONS_T1 + $ASSERTIONS_T3BIS + $ASSERTIONS_T6 + $ASSERTIONS_INC249 + $ASSERTIONS_T8 = $ASSERTIONS_UNITE assertions"
 else
 	fail "suites non vertes ou nombre d'assertions différent de $ASSERTIONS_UNITE : $(tail -n 3 "$WORK/tap.log")"
 fi
@@ -323,7 +344,7 @@ fi
 # 4. Non-complaisance : chaque dégradation doit rendre la suite rouge
 # =================================================================================================
 echo
-echo "4. Non-complaisance (chaque dégradation est restaurée par le rejeu des migrations)"
+echo "4. Non-complaisance (chaque dégradation est restaurée par le runner complet)"
 
 degrader() {
 	local libelle=$1 role=$2 sql=$3
@@ -351,7 +372,7 @@ degrader "inscription d'une attente permise au nom d'un autre administrateur" po
 	 with check (app.is_workspace_admin(workspace_id));"
 
 degrader "ouverture de session exécutable par authenticated" postgres \
-	"grant execute on function public.ouvrir_session_sso(uuid, text, text) to authenticated;"
+	"grant execute on function public.ouvrir_session_sso(uuid, text, text, boolean) to authenticated;"
 
 # `not valid` : un profil né d'un `sub` LeLabs n'a pas de ligne dans `auth.users`, et la contrainte
 # ne doit pas échouer sur lui — c'est sa PRÉSENCE que la suite doit voir, pas les lignes existantes.
@@ -371,10 +392,31 @@ degrader "trigger de création de profil reposé sur auth.users" postgres \
 	"create trigger on_auth_user_created after insert on auth.users
 	 for each row execute function app.set_updated_at();"
 
-# INC-249 (décision 593) : l'admission de `0075`, qui consommait TOUTES les attentes et laissait la garde
-# du dernier administrateur faire échouer la connexion, doit rougir `0072` ; le rejeu de `0078` la rétablit.
-degrader "admission impatiente de 0075 : l'attente d'un espace sans administrateur consommée" postgres \
-	"$(cat "$MIGRATION_MODELE")"
+# INC-249 (décision 593) : une admission qui consomme TOUTES les attentes et laisse la garde du dernier
+# administrateur faire échouer la connexion doit rougir `0072`. RÉVISÉE PAR T8 : elle rejouait `0075`,
+# dont la signature à trois arguments côtoie désormais celle de `0079` — la suite aurait rougi sur un
+# appel ambigu, pas sur l'admission. La dégradation porte donc sur la fonction EN SERVICE : la garde
+# de consommation est neutralisée dans sa propre définition.
+degrader "admission impatiente : l'attente d'un espace sans administrateur consommée" postgres \
+	"do \$\$ declare d text; begin
+	   d := pg_get_functiondef('public.ouvrir_session_sso(uuid, text, text, boolean)'::regprocedure);
+	   d := replace(d, 'i.role = ''admin''', 'true');
+	   execute d;
+	 end \$\$;"
+
+# T8 (décision 597) : la revendication ignorée, puis accordée sans le rôle, doivent rougir `0073`.
+degrader "la revendication lelabs_admin ignorée par la base" postgres \
+	"create or replace function app.est_admin_lelabs() returns boolean language sql stable
+	 security definer set search_path = '' as \$\$ select false \$\$;"
+degrader "la revendication lelabs_admin accordée sans le rôle" postgres \
+	"create or replace function app.est_admin_lelabs() returns boolean language sql stable
+	 security definer set search_path = '' as \$\$ select true \$\$;"
+degrader "un tiers jugé par la revendication de l'appelant" postgres \
+	"do \$\$ declare d text; begin
+	   d := pg_get_functiondef('app.workspace_role_pour(uuid, uuid)'::regprocedure);
+	   d := replace(d, 'p_user = (select auth.uid())', 'true');
+	   execute d;
+	 end \$\$;"
 
 if suite_verte; then
 	ok "après restauration, la suite est de nouveau verte"
@@ -392,7 +434,8 @@ echo "5. Keycloak de développement préchargé ($SSO_OIDC_ISSUER)"
 COMPTES_REALM=(
 	'admin|5eed0000-0000-4000-8000-000000000011|oui|non'
 	'bizdev|5eed0000-0000-4000-8000-000000000012|oui|non'
-	'viewer|5eed0000-0000-4000-8000-000000000013|oui|oui'
+	'viewer|5eed0000-0000-4000-8000-000000000013|oui|non'
+	'exploitante|5eed0000-0000-4000-8000-000000000017|oui|oui'
 	'inconnu|5eed0000-0000-4000-8000-000000000014|oui|non'
 	'attendu|5eed0000-0000-4000-8000-000000000015|non|non'
 )
@@ -574,6 +617,13 @@ muter "azp ignoré : le jeton d'une autre application accepté" supabase/functio
 muter "verified non exigé" supabase/functions/session/verification.ts \
 	"if (!Array.isArray(roles) || !roles.includes(ROLE_REQUIS)) throw new Refus('attente_verification', adresse)" \
 	"" ../supabase/functions/session
+# T8 (décision 597) : la présence d'`admin` non lue, puis la revendication posée pour tous.
+muter "la présence d'admin non rapportée par la vérification" supabase/functions/session/verification.ts \
+	"adminLelabs: roles.includes(ROLE_ADMIN_DOMAINE)," \
+	"adminLelabs: false," ../supabase/functions/session
+muter "lelabs_admin posée dans tout jeton interne" supabase/functions/session/handler.ts \
+	"...(identite.adminLelabs ? { lelabs_admin: true } : {})," \
+	"lelabs_admin: true," ../supabase/functions/session
 muter "jeton interne non borné par l'échéance du jeton LeLabs" supabase/functions/session/handler.ts \
 	"Math.min(identite.exp, maintenant + DUREE_MAX_JETON_INTERNE)" \
 	"maintenant + DUREE_MAX_JETON_INTERNE" ../supabase/functions/session

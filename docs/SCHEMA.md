@@ -94,8 +94,11 @@ Une attente n'est pas un compte : aucune identité ne naît dans le CRM.
 **Contrat :** un administrateur de l'espace lit, inscrit — en son propre nom — et retire les
 attentes de son espace ; **aucune mise à jour** n'est ouverte, ni par politique ni par privilège.
 L'anonyme et les autres membres lisent zéro ligne. La consommation n'est faite que par
-`public.ouvrir_session_sso(p_sub, p_email, p_nom)`, `SECURITY DEFINER`, exécutable par la seule clé
-de service, qu'appelle l'échangeur de session après avoir vérifié le jeton LeLabs.
+`public.ouvrir_session_sso(p_sub, p_email, p_nom, p_admin_lelabs)`, `SECURITY DEFINER`, exécutable par
+la seule clé de service, qu'appelle l'échangeur de session après avoir vérifié le jeton LeLabs. Le
+drapeau `p_admin_lelabs` — rôle de realm `admin` présent — admet la personne sans attente et crée son
+profil ; ses droits d'administration ne s'écrivent nulle part : ils viennent de la revendication
+`lelabs_admin` du jeton, lue par `app.est_admin_lelabs()` (migration `0079`, décision 597).
 
 ### `sessions_sso` — `CRM-092`, migration `0076`
 Les **sessions serveur** du client confidentiel (`docs/SPEC-session-sso.md` §5.6, §7.4 ; décision

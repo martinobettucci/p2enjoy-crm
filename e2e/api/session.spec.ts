@@ -6,6 +6,8 @@
 // @verifies CLAUDE.md §10 (toute règle d'accès se prouve par une requête directe, vrais identifiants)
 // @verifies docs/SPEC-session-sso.md §6.2, §13 (INC-249) ; docs/JOURNAL.md décision 593 — une attente en
 //           suspens rend `attente_administrateur`, jamais `502`, et se consomme après l'administrateur
+// @verifies CRM-092 (docs/BACKLOG.md) — tranche T8 ; docs/SPEC-session-sso.md §6.1 bis ; docs/JOURNAL.md décision 597 —
+//           `admin` du realm : admis sans attente, administrateur par le jeton, retrait effectif à la prolongation
 //
 // Aucune de ces preuves ne passe par l'interface. Le code est émis par le Keycloak de développement au
 // terme d'une vraie connexion PKCE, puis remis à l'échangeur par la vraie passerelle, comme la webapp
@@ -493,6 +495,84 @@ test.describe('L’admission patiente : un espace sans administrateur n’empêc
 				await fetch(`${URL_API}/rest/v1/profiles?id=eq.${compte.sub}`, { method: 'DELETE', headers: enTetesService() })
 				await supprimerCompte(compte.sub)
 			}
+		}
+	})
+})
+
+test.describe('La règle du domaine : `admin` chez LeLabs vaut administrateur du CRM, porté par le jeton (§6.1 bis, décision 597)', () => {
+	const EXPLOITANTE = '5eed0000-0000-4000-8000-000000000017'
+
+	const avecJeton = (jeton: string) => ({ ...enTetesAuthentifies(jeton), 'content-type': 'application/json' })
+
+	/** Un track d'essai dans l'espace du seed : l'écriture que seule une administratrice obtient. */
+	const creerTrack = (jeton: string, slug: string) =>
+		fetch(`${URL_API}/rest/v1/tracks`, {
+			method: 'POST',
+			headers: avecJeton(jeton),
+			body: JSON.stringify({ workspace_id: WORKSPACE_SEED, name: `Preuve ${slug}`, slug, color: 'brand', position: 900 }),
+		})
+
+	const monRole = async (jeton: string) =>
+		(await (
+			await fetch(`${URL_API}/rest/v1/rpc/mon_role_espace`, {
+				method: 'POST',
+				headers: avecJeton(jeton),
+				body: JSON.stringify({ ws: WORKSPACE_SEED }),
+			})
+		).json()) as unknown
+
+	test('l’exploitante du realm entre sans attente, administre l’espace, et n’y a aucune ligne ; la lectrice reste lectrice', async () => {
+		const slug = `preuve-crm092-t8-${Math.random().toString(36).slice(2, 8)}`
+		try {
+			const jeton = await jetonInterne(`exploitante@${DOMAINE}`)
+			expect(revendications(jeton).lelabs_admin, 'la revendication posée par l’échangeur').toBe(true)
+
+			// Lecture : tous les espaces, sans appartenance.
+			const espaces = (await (await fetch(`${URL_API}/rest/v1/workspaces?select=id`, { headers: enTetesAuthentifies(jeton) })).json()) as unknown[]
+			expect(espaces).toHaveLength((await lireService('workspaces?select=id')).length)
+			expect(await monRole(jeton)).toBe('admin')
+
+			// Écriture réservée à l'administratrice, par l'API et ses politiques, hors de toute interface.
+			expect((await creerTrack(jeton, slug)).status).toBe(201)
+			expect(await lireService(`workspace_members?select=role&user_id=eq.${EXPLOITANTE}`)).toEqual([])
+			expect(await lireService(`profiles?select=full_name&id=eq.${EXPLOITANTE}`)).toEqual([{ full_name: 'Inès Carvalho' }])
+
+			// La lectrice du seed : aucune revendication, et la même écriture lui est refusée.
+			const jetonLectrice = await jetonInterne(COMPTES_SEED[2].adresse)
+			expect('lelabs_admin' in revendications(jetonLectrice)).toBe(false)
+			expect(await monRole(jetonLectrice)).toBe('viewer')
+			expect((await creerTrack(jetonLectrice, `${slug}-refuse`)).status).toBe(403)
+		} finally {
+			await fetch(`${URL_API}/rest/v1/tracks?slug=like.${slug}*`, { method: 'DELETE', headers: enTetesService() })
+			// Le profil né de cette preuve est retiré : le seed ne connecte pas l'exploitante (§10).
+			await fetch(`${URL_API}/rest/v1/profiles?id=eq.${EXPLOITANTE}`, { method: 'DELETE', headers: enTetesService() })
+		}
+	})
+
+	test('un rôle se retire : `admin` retiré, la prolongation suivante ferme l’accès ; `admin` sans `verified` n’entre pas', async () => {
+		const compte = await creerCompteJetable('preuve-crm092-admin', 'Ada', 'Domaine')
+		try {
+			await attribuerRoles(compte.sub, ['admin'])
+			const ouverte = await ouvrirSession(compte.adresse)
+			expect(ouverte.statut, 'admise sans aucune attente').toBe(200)
+			expect(revendications(ouverte.corps?.jeton as string).lelabs_admin).toBe(true)
+			expect(await lireService(`workspace_invitations?select=email&email=eq.${compte.adresse}`)).toEqual([])
+
+			// Le rôle retiré chez LeLabs : relu au renouvellement, il n'admet plus, et la base supprime la
+			// session — rien d'autre n'est à défaire, aucune appartenance n'ayant été écrite.
+			await retirerRoles(compte.sub, ['admin'])
+			const retire = await prolonger(ouverte.poignee)
+			expect(retire).toMatchObject({ statut: 403, corps: { erreur: 'attente_espace', adresse: compte.adresse } })
+			expect(retire.setCookie).toContain('Max-Age=0')
+			expect(await sessionsDePoignee(compte.sub, ouverte.poignee ?? '')).toEqual([])
+
+			// Le plancher du domaine : `admin` sans `verified` n'ouvre rien.
+			await attribuerRoles(compte.sub, ['admin'])
+			await retirerRoles(compte.sub, ['verified'])
+			expect(await ouvrirSession(compte.adresse)).toMatchObject({ statut: 403, corps: { erreur: 'attente_verification' } })
+		} finally {
+			await fetch(`${URL_API}/rest/v1/profiles?id=eq.${compte.sub}`, { method: 'DELETE', headers: enTetesService() })
+			await supprimerCompte(compte.sub)
 		}
 	})
 })
