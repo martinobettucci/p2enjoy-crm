@@ -556,7 +556,10 @@ PORT_RAPPORT=9323
 # **71 depuis `CRM-092` tranche T6, 2026-09-24** : `supabase/tests/0071_retrait_gotrue.test.sql` est le
 # fichier ajouté, et il est le seul. 70 + 1 = 71, valeur COMPTÉE sur la pile recréée sans GoTrue —
 # « 71 fichiers ». Garde-fou RÉVISÉ, jamais retiré (décision 51).
-FICHIERS_SQL_ATTENDUS=71
+# **72 depuis le correctif INC-249 de `CRM-092`, 2026-09-24** (décision 593) :
+# `supabase/tests/0072_admission_patiente.test.sql` est le fichier ajouté, et il est le seul. 71 + 1 = 72,
+# valeur COMPTÉE — « 72 fichiers ». Garde-fou RÉVISÉ, jamais retiré (décision 51).
+FICHIERS_SQL_ATTENDUS=72
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -595,7 +598,10 @@ FICHIERS_SQL_ATTENDUS=71
 # `0071_retrait_gotrue.test.sql` en apporte **8** : 3182 − 10 + 8 = 3180. `0003`, `0023` et huit
 # autres suites sont RÉVISÉES à nombre constant (décision 589). `npm run test:sql` en COMPTE
 # exactement **3180**, sur la pile recréée par `./resetMe.sh` sans GoTrue.
-ASSERTIONS_ATTENDUES=3180
+# **3196 le 2026-09-24, et l'écart est ENTIÈREMENT le mien** : le correctif INC-249 (décision 593) ouvre
+# `0072_admission_patiente.test.sql` (**16** assertions) — 3180 + 16 = 3196 — et révise quatre
+# assertions de `0069` à nombre constant. `npm run test:sql` en COMPTE exactement **3196**.
+ASSERTIONS_ATTENDUES=3196
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -898,7 +904,10 @@ ASSERTIONS_ATTENDUES=3180
 # d'`id_token` par GoTrue, que la webapp n'emploie plus (décision 587) ; sa mesure M2 — le realm refuse
 # une autorisation sans PKCE — est reprise dans `session.spec.ts`. 1081 − 14 + 21 − 9 = 1079, valeur
 # COMPTÉE — « Total: 1079 tests in 67 files ».
-SCENARIOS_API=1079
+# **1080 depuis le correctif INC-249, 2026-09-24** (décision 593) : `session.spec.ts` gagne le scénario de
+# l'admission patiente — attendue dans un espace sans administrateur, `403 attente_administrateur`, puis
+# admise après lui. 1079 + 1 = 1080, valeur COMPTÉE par `npm run e2e:api`.
+SCENARIOS_API=1080
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -1266,7 +1275,10 @@ SCENARIOS_API=1079
 # scénarios d'`e2e/ui/authentification.spec.ts` — le formulaire à mot de passe, la session d'onglet de
 # GoTrue et l'invitation GoTrue acceptée dans la webapp. 749 − 4 − 3 + 13 = 755, valeur COMPTÉE —
 # « Total: 755 tests in 59 files » : un fichier retiré, un fichier ouvert.
-SCENARIOS_UI=755
+# **RÉVISÉ À 756 PAR LE CORRECTIF INC-249 de `CRM-092`, 2026-09-24** (décision 593) :
+# `e2e/ui/connexion.spec.ts` gagne l'attente `attente_administrateur` rendue aux paliers xl et sm, sur
+# un compte jetable. 755 + 1 = 756, valeur COMPTÉE — « Total: 756 tests in 59 files ».
+SCENARIOS_UI=756
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

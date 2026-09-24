@@ -125,6 +125,7 @@ nomme votre adresse.
 | Votre adresse … n'est pas encore vérifiée auprès de LeLabs. | Vérifiez votre adresse depuis votre compte LeLabs, puis reconnectez-vous. |
 | Votre compte LeLabs … n'est pas encore vérifié. | Un administrateur de LeLabs doit confirmer votre identité. Rien à faire de votre côté, sinon patienter et vous reconnecter plus tard. |
 | Aucun espace du CRM ne vous attend à l'adresse … | Demandez à un administrateur de votre espace de vous inscrire **avec cette adresse exacte**, puis reconnectez-vous. |
+| Un espace du CRM vous attend à l'adresse …, mais son administrateur ne s'y est pas encore connecté. | L'espace est tout neuf : son administrateur doit s'y connecter une première fois avant que d'autres puissent entrer. Rien à faire de votre côté ; reconnectez-vous une fois qu'il l'aura fait. Si vous êtes aussi attendu dans un autre espace, vous y entrez déjà. |
 
 **Un refus** — sur fond rouge pâle, avec un triangle d'alerte. Une tentative a échoué ; il suffit en
 général de recommencer.

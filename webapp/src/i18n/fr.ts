@@ -7,6 +7,8 @@
 // @spec CRM-075 (docs/BACKLOG.md) — textes de l'administration de l'arborescence
 // @spec docs/DESIGN_SYSTEM.md §5.12, §5.13, §10 ; docs/SPEC-auth.md §9 ; docs/SPEC-webapp.md §10
 // @spec docs/SPEC-administration-arborescence.md §9 (chaque refus a son texte)
+// @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §5.5, §9.2 — INC-249, décision 593 :
+//       l'attente `attente_administrateur` (espace sans administrateur encore)
 //
 // **Toute** chaîne visible de l'application est ici, et nulle part ailleurs. Les libellés
 // métier — tracks, channels, nœuds, champs — sont des **données**, pas des traductions
@@ -108,6 +110,9 @@ export const fr = {
 		"Votre compte LeLabs {adresse} n'est pas encore vérifié. Un administrateur de LeLabs doit confirmer votre identité avant que le CRM vous ouvre ses espaces ; ce geste est humain et peut prendre du temps.",
 	'auth.wait.workspace':
 		"Aucun espace du CRM ne vous attend à l'adresse {adresse}. Demandez à un administrateur de votre espace de vous inscrire avec cette adresse, puis reconnectez-vous.",
+	// INC-249, décision 593 : l'espace attend la personne, mais n'a pas encore d'administrateur.
+	'auth.wait.administrator':
+		"Un espace du CRM vous attend à l'adresse {adresse}, mais son administrateur ne s'y est pas encore connecté. Votre accès s'ouvrira dès qu'il l'aura fait : reconnectez-vous alors.",
 
 	// --- Onglets ------------------------------------------------------------------------
 	'tabs.aria': 'Channels du track courant',

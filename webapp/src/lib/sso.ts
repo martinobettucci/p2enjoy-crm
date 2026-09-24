@@ -6,6 +6,8 @@
 // @spec docs/SSO.md (découverte, portées) ; docs/SSO-client-lelabs-crm.md (PKCE S256)
 // @spec docs/JOURNAL.md décision 586 (client serveur)
 // @spec CLAUDE.md §10 (aucune autorisation décidée dans le navigateur), §11 (stockage d'onglet)
+// @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §5.5, §9.2 — INC-249, décision 593 :
+//       l'attente `attente_administrateur` (espace sans administrateur encore)
 //
 // Ce module ne rend rien et ne décide d'aucun droit. Il mène la partie navigateur du code
 // d'autorisation avec PKCE jusqu'au code rendu par LeLabs. L'échangeur de session, côté serveur,
@@ -31,9 +33,12 @@ export type NatureEchecSso =
 	| 'adresse_non_verifiee'
 	| 'attente_verification'
 	| 'attente_espace'
+	| 'attente_administrateur'
 	| 'configuration'
 
-export const NATURES_ATTENTE = ['adresse_non_verifiee', 'attente_verification', 'attente_espace'] as const
+// `attente_administrateur` : une attente en suspens, faute d'administrateur dans l'espace (INC-249,
+// décision 593, docs/SPEC-session-sso.md §5.5).
+export const NATURES_ATTENTE = ['adresse_non_verifiee', 'attente_verification', 'attente_espace', 'attente_administrateur'] as const
 export type NatureAttente = (typeof NATURES_ATTENTE)[number]
 
 export function estAttente(nature: NatureEchecSso): nature is NatureAttente {

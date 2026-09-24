@@ -4,6 +4,8 @@
 //           §6 (admission rejouée), §7.4 (sessions serveur chiffrées), §10 (realm), §13 (preuves API)
 // @verifies docs/SSO-client-lelabs-crm.md (« À vérifier côté application ») ; décision 586
 // @verifies CLAUDE.md §10 (toute règle d'accès se prouve par une requête directe, vrais identifiants)
+// @verifies docs/SPEC-session-sso.md §6.2, §13 (INC-249) ; docs/JOURNAL.md décision 593 — une attente en
+//           suspens rend `attente_administrateur`, jamais `502`, et se consomme après l'administrateur
 //
 // Aucune de ces preuves ne passe par l'interface. Le code est émis par le Keycloak de développement au
 // terme d'une vraie connexion PKCE, puis remis à l'échangeur par la vraie passerelle, comme la webapp
@@ -431,6 +433,67 @@ test.describe('Une attente se consomme, et l’accès se ferme quand sa cause di
 		}
 		// Le profil supprimé emporte ses sessions (cascade, §7.4).
 		expect(await sessionsDe(compte.sub)).toEqual([])
+	})
+})
+
+test.describe('L’admission patiente : un espace sans administrateur n’empêche plus d’entrer (INC-249, décision 593)', () => {
+	test('attendue comme lectrice dans un espace neuf : 403 attente_administrateur, attente intacte ; admise après l’administrateur', async () => {
+		const lectrice = await creerCompteJetable('preuve-inc249-lectrice', 'Léa', 'Patiente')
+		const administratrice = await creerCompteJetable('preuve-inc249-admin', 'Anne', 'Première')
+		const slug = `preuve-inc249-${Math.random().toString(36).slice(2, 10)}`
+		let espace = ''
+		const inscrire = async (adresse: string, role: string) => {
+			const reponse = await fetch(`${URL_API}/rest/v1/workspace_invitations`, {
+				method: 'POST',
+				headers: { ...enTetesService(), 'content-type': 'application/json' },
+				body: JSON.stringify({ workspace_id: espace, email: adresse, role }),
+			})
+			expect(reponse.status, `attente de ${adresse}`).toBe(201)
+		}
+		try {
+			const creation = await fetch(`${URL_API}/rest/v1/workspaces`, {
+				method: 'POST',
+				headers: { ...enTetesService(), 'content-type': 'application/json', prefer: 'return=representation' },
+				body: JSON.stringify({ name: 'Espace neuf INC-249', slug }),
+			})
+			expect(creation.status).toBe(201)
+			espace = ((await creation.json()) as { id: string }[])[0]?.id ?? ''
+			await inscrire(lectrice.adresse, 'viewer')
+
+			// Avant `0078`, cette connexion échouait en 502 service_indisponible : la garde du dernier
+			// administrateur refusait une première appartenance non administratrice.
+			const enSuspens = await ouvrirSession(lectrice.adresse)
+			expect(enSuspens).toMatchObject({ statut: 403, corps: { erreur: 'attente_administrateur', adresse: lectrice.adresse } })
+			expect(enSuspens.setCookie).toBeNull()
+			expect(await lireService(`workspace_invitations?select=role&email=eq.${lectrice.adresse}`)).toEqual([{ role: 'viewer' }])
+			expect(await lireService(`profiles?select=id&id=eq.${lectrice.sub}`)).toEqual([])
+			expect(await sessionsDe(lectrice.sub)).toEqual([])
+
+			// L'administratrice attendue entre, elle, dans ce même espace vide.
+			await inscrire(administratrice.adresse, 'admin')
+			const admise = await ouvrirSession(administratrice.adresse)
+			expect(admise.statut).toBe(200)
+			expect(await lireService(`workspace_members?select=role&user_id=eq.${administratrice.sub}`)).toEqual([{ role: 'admin' }])
+			expect((await fermer(admise.poignee)).statut).toBe(204)
+
+			// La lectrice se reconnecte : son attente se consomme, au rôle choisi.
+			const ensuite = await ouvrirSession(lectrice.adresse)
+			expect(ensuite.statut).toBe(200)
+			expect(await lireService(`workspace_members?select=role&user_id=eq.${lectrice.sub}`)).toEqual([{ role: 'viewer' }])
+			expect(await lireService(`workspace_invitations?select=email&email=eq.${lectrice.adresse}`)).toEqual([])
+			expect((await fermer(ensuite.poignee)).statut).toBe(204)
+		} finally {
+			// L'espace d'abord — sa suppression emporte les appartenances, que la garde du dernier
+			// administrateur interdirait de retirer une à une —, puis les profils et les comptes.
+			if (espace !== '') {
+				await fetch(`${URL_API}/rest/v1/workspaces?id=eq.${espace}`, { method: 'DELETE', headers: enTetesService() })
+			}
+			for (const compte of [lectrice, administratrice]) {
+				await fetch(`${URL_API}/rest/v1/workspace_invitations?email=eq.${compte.adresse}`, { method: 'DELETE', headers: enTetesService() })
+				await fetch(`${URL_API}/rest/v1/profiles?id=eq.${compte.sub}`, { method: 'DELETE', headers: enTetesService() })
+				await supprimerCompte(compte.sub)
+			}
+		}
 	})
 })
 

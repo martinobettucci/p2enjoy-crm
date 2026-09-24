@@ -4,6 +4,8 @@
 //           danger, `role="alert"` ; attentes : accent, `CircleDashed`, `role="status"`, titre, adresse
 //           interpolée ; `aria-describedby`) ; docs/SPEC-auth.md §9.1 (adresse de retour), §10.5
 // @verifies docs/DESIGN_SYSTEM.md §5.10 (aucune commande morte), §5.12 (connexion), §8 (clavier)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §5.5, §9.2 — INC-249, décision 593 :
+//           l'attente `attente_administrateur` (espace sans administrateur encore)
 
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -146,6 +148,10 @@ describe('écran de connexion', () => {
 		[
 			'attente_espace',
 			"Aucun espace du CRM ne vous attend à l'adresse personne@exemple.tld. Demandez à un administrateur de votre espace de vous inscrire avec cette adresse, puis reconnectez-vous.",
+		],
+		[
+			'attente_administrateur',
+			"Un espace du CRM vous attend à l'adresse personne@exemple.tld, mais son administrateur ne s'y est pas encore connecté. Votre accès s'ouvrira dès qu'il l'aura fait : reconnectez-vous alors.",
 		],
 	])('rend l’attente %s sur la surface accent, avec son adresse', async (nature, message) => {
 		monter({ etat: { erreurSso: nature, adresse: 'personne@exemple.tld' } })

@@ -6588,6 +6588,10 @@ ignorer par l'admission l'attente qui violerait la garde en la laissant en place
 personne le premier membre non administrateur d'un espace sans administrateur restent en suspens, et
 un motif `attente_administrateur` le lui dit. Mise en œuvre : migration `0078`, `CRM-092`.
 
+**RÉSOLUE le 2026-09-24.** Migration `0078_admission_patiente.sql`, suite `0072` (16 assertions),
+motif `attente_administrateur` dans l'échangeur et la webapp, preuves d'API et d'interface sur un
+compte jetable. Mesures au journal, décision 593.
+
 ### INC-250 — `verify-droits-fins.sh` attend que le rejeu isolé de `0010` ne fasse dériver QUE `pol:tracks_lecture_membre` ; `0063` a depuis redéfini deux de ses fonctions
 
 *Mesurée le 2026-09-24 en rejouant `scripts/verify-droits-fins.sh` pour `CRM-092` T4 (1383 s, 38 contrôles,

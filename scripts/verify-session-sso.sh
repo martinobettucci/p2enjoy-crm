@@ -3,7 +3,8 @@
 # @verifies docs/SPEC-session-sso.md §7.1 (fonctions auth.*), §7.2 (modèle), §10 (realm préchargé),
 #           §13 (preuves), §14 (T1, T2, T6), §7.5 (migration 0077), §2 (ce qui est retiré)
 # @verifies docs/JOURNAL.md décisions 580 (K11, K12), 581 (migration élevée, harnais de l'unité),
-#           586 (client serveur, T3 bis), 587 (aucune session : `204`), 589 (retrait de GoTrue, T6)
+#           586 (client serveur, T3 bis), 587 (aucune session : `204`), 589 (retrait de GoTrue, T6),
+#           593 (INC-249 : l'admission patiente, migration 0078)
 # @verifies CLAUDE.md §15 (tests non complaisants), §18 (un défaut se reproduit avant sa correction)
 #
 # Harnais de `CRM-092`, qui grandit à chaque tranche (décision 581). Tranche T1 :
@@ -53,6 +54,12 @@
 #  11. la pile sans GoTrue : `/auth/v1/*` et `/.well-known/oauth-authorization-server` en 404 par
 #      Kong ; aucun service ni conteneur `auth`, `auth-templates`, `inbucket` ; aucune ligne de
 #      configuration ne nomme plus GoTrue — recherche éprouvée par une copie dégradée, qui doit rougir.
+#
+# Correctif INC-249 (décision 593) — l'admission patiente :
+#
+#   2–4. la migration 0078 rejouée deux fois sous `postgres`, sa suite `0072` verte à son nombre exact,
+#      et une dégradation — l'admission de `0075`, qui consommait tout et laissait la garde refuser —
+#      qui doit la rendre rouge ; 8–9. le motif `attente_administrateur`, unitaire et d'API.
 
 set -euo pipefail
 
@@ -80,13 +87,16 @@ MIGRATION_CLAIMS=supabase/migrations/0074_revendications_du_jeton.sql
 MIGRATION_MODELE=supabase/migrations/0075_identite_sso.sql
 MIGRATION_SESSIONS=supabase/migrations/0076_sessions_serveur.sql
 MIGRATION_RETRAIT=supabase/migrations/0077_retrait_gotrue.sql
+MIGRATION_ADMISSION=supabase/migrations/0078_admission_patiente.sql
 TEST_SQL=supabase/tests/0069_identite_sso.test.sql
 TEST_SQL_SESSIONS=supabase/tests/0070_sessions_serveur.test.sql
 TEST_SQL_RETRAIT=supabase/tests/0071_retrait_gotrue.test.sql
+TEST_SQL_ADMISSION=supabase/tests/0072_admission_patiente.test.sql
 ASSERTIONS_T1=58
 ASSERTIONS_T3BIS=40
 ASSERTIONS_T6=8
-ASSERTIONS_UNITE=$((ASSERTIONS_T1 + ASSERTIONS_T3BIS + ASSERTIONS_T6))
+ASSERTIONS_INC249=16
+ASSERTIONS_UNITE=$((ASSERTIONS_T1 + ASSERTIONS_T3BIS + ASSERTIONS_T6 + ASSERTIONS_INC249))
 BASE_NEUVE=verify-session-sso-base-neuve
 SUB_PREUVE=0c920000-0000-4000-8000-0000000000bb
 
@@ -105,13 +115,14 @@ appliquer_migrations_dev() {
 	psql_admin --single-transaction -f - < "$MIGRATION_CLAIMS" >/dev/null 2>&1 \
 		&& psql_dev --single-transaction -f - < "$MIGRATION_MODELE" >/dev/null 2>&1 \
 		&& psql_dev --single-transaction -f - < "$MIGRATION_SESSIONS" >/dev/null 2>&1 \
-		&& psql_dev --single-transaction -f - < "$MIGRATION_RETRAIT" >/dev/null 2>&1
+		&& psql_dev --single-transaction -f - < "$MIGRATION_RETRAIT" >/dev/null 2>&1 \
+		&& psql_dev --single-transaction -f - < "$MIGRATION_ADMISSION" >/dev/null 2>&1
 }
 
 role_a_rendre=false
 fichier_mute=''
-UNITES_SESSION=120
-SCENARIOS_SESSION=21
+UNITES_SESSION=122
+SCENARIOS_SESSION=22
 
 cleanup() {
 	local status=$?
@@ -166,12 +177,12 @@ effacer_actions_requises() {
 }
 
 suite_verte() {
-	scripts/run-sql-tests.sh "$TEST_SQL" "$TEST_SQL_SESSIONS" "$TEST_SQL_RETRAIT" > "$WORK/tap.log" 2>&1 \
-		&& grep -q "3 fichiers, $ASSERTIONS_UNITE assertions, aucune anomalie" "$WORK/tap.log"
+	scripts/run-sql-tests.sh "$TEST_SQL" "$TEST_SQL_SESSIONS" "$TEST_SQL_RETRAIT" "$TEST_SQL_ADMISSION" > "$WORK/tap.log" 2>&1 \
+		&& grep -q "4 fichiers, $ASSERTIONS_UNITE assertions, aucune anomalie" "$WORK/tap.log"
 }
 
 suite_rouge() {
-	if scripts/run-sql-tests.sh "$TEST_SQL" "$TEST_SQL_SESSIONS" "$TEST_SQL_RETRAIT" > "$WORK/tap-rouge.log" 2>&1; then
+	if scripts/run-sql-tests.sh "$TEST_SQL" "$TEST_SQL_SESSIONS" "$TEST_SQL_RETRAIT" "$TEST_SQL_ADMISSION" > "$WORK/tap-rouge.log" 2>&1; then
 		return 1
 	fi
 	grep -Eq 'ECHEC|not ok|psql a échoué' "$WORK/tap-rouge.log"
@@ -256,7 +267,7 @@ docker rm -f "$BASE_NEUVE" >/dev/null 2>&1 || true
 # 2. Base de développement — rejeu convergent sous le rôle de chaque migration
 # =================================================================================================
 echo
-echo "2. Base de développement : rejeu des migrations 0074, 0075, 0076 et 0077"
+echo "2. Base de développement : rejeu des migrations 0074 à 0078"
 
 for passage in premier second; do
 	if psql_admin --single-transaction -f - < "$MIGRATION_CLAIMS" >"$WORK/dev-claims-$passage.log" 2>&1; then
@@ -281,6 +292,11 @@ for passage in premier second; do
 	else
 		fail "0077 refusée ($passage passage) : $(tail -n 2 "$WORK/dev-retrait-$passage.log")"
 	fi
+	if psql_dev --single-transaction -f - < "$MIGRATION_ADMISSION" >"$WORK/dev-admission-$passage.log" 2>&1; then
+		ok "0078 rejouée sous postgres ($passage passage)"
+	else
+		fail "0078 refusée ($passage passage) : $(tail -n 2 "$WORK/dev-admission-$passage.log")"
+	fi
 done
 
 if psql_dev --single-transaction -f - < "$MIGRATION_CLAIMS" >"$WORK/dev-claims-postgres.log" 2>&1; then
@@ -295,10 +311,10 @@ fi
 # 3. Suite pgTAP de l'unité
 # =================================================================================================
 echo
-echo "3. pgTAP : $TEST_SQL, $TEST_SQL_SESSIONS et $TEST_SQL_RETRAIT"
+echo "3. pgTAP : $TEST_SQL, $TEST_SQL_SESSIONS, $TEST_SQL_RETRAIT et $TEST_SQL_ADMISSION"
 
 if suite_verte; then
-	ok "trois suites vertes, $ASSERTIONS_T1 + $ASSERTIONS_T3BIS + $ASSERTIONS_T6 = $ASSERTIONS_UNITE assertions"
+	ok "quatre suites vertes, $ASSERTIONS_T1 + $ASSERTIONS_T3BIS + $ASSERTIONS_T6 + $ASSERTIONS_INC249 = $ASSERTIONS_UNITE assertions"
 else
 	fail "suites non vertes ou nombre d'assertions différent de $ASSERTIONS_UNITE : $(tail -n 3 "$WORK/tap.log")"
 fi
@@ -354,6 +370,11 @@ degrader "lecture d'une session serveur exécutable par authenticated" postgres 
 degrader "trigger de création de profil reposé sur auth.users" postgres \
 	"create trigger on_auth_user_created after insert on auth.users
 	 for each row execute function app.set_updated_at();"
+
+# INC-249 (décision 593) : l'admission de `0075`, qui consommait TOUTES les attentes et laissait la garde
+# du dernier administrateur faire échouer la connexion, doit rougir `0072` ; le rejeu de `0078` la rétablit.
+degrader "admission impatiente de 0075 : l'attente d'un espace sans administrateur consommée" postgres \
+	"$(cat "$MIGRATION_MODELE")"
 
 if suite_verte; then
 	ok "après restauration, la suite est de nouveau verte"

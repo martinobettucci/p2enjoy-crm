@@ -4,6 +4,8 @@
 //           sans révocation), §9.1 (carte, action unique), §9.2 (refus et attentes), §13 (preuves E2E)
 // @verifies docs/DESIGN_SYSTEM.md §5.12 (connexion), §7 (paliers), §8 (clavier), §11 (captures)
 // @verifies docs/manual.md chapitre 1 (connexion) ; CLAUDE.md §10, §11, §16
+// @verifies docs/JOURNAL.md décision 593 (INC-249) — l'attente `attente_administrateur`, vécue avec un
+//           compte jetable dans un espace neuf
 //
 // Le navigateur quitte réellement le CRM pour la page de connexion du Keycloak de développement, y
 // saisit les identifiants d'un compte du realm, et revient ; l'échangeur de session, client
@@ -15,8 +17,15 @@
 import { autoriserErreursConsole, connecterAvecLeLabs, ERREUR_RESSOURCE_HTTP, expect, test, type Page } from './fixtures'
 import { PALIERS, capturer } from './captures'
 import { lireEnv } from '../env'
-import { COMPTES_SEED, MOT_DE_PASSE_SEED } from '../api/jetons'
-import { effacerActionsRequises, exigerVerificationAdresse, fermerSessionsLeLabs, idUtilisateur } from '../api/keycloak-dev'
+import { COMPTES_SEED, MOT_DE_PASSE_SEED, URL_API, enTetesService } from '../api/jetons'
+import {
+	creerCompteJetable,
+	effacerActionsRequises,
+	exigerVerificationAdresse,
+	fermerSessionsLeLabs,
+	idUtilisateur,
+	supprimerCompte,
+} from '../api/keycloak-dev'
 
 const UNITE = 'CRM-092'
 const DOMAINE = lireEnv('MAIL_DEV_PERSONAL_DOMAIN')
@@ -223,6 +232,49 @@ test.describe('Attentes et refus', () => {
 		} finally {
 			await exigerVerificationAdresse(true)
 			await effacerActionsRequises(sub)
+		}
+	})
+
+	// INC-249, décision 593 : l'espace attend la personne mais n'a pas encore d'administrateur. Le seed
+	// n'a qu'un espace, qui a le sien : l'état se construit ici, sur des données jetables, retirées.
+	test('une personne attendue dans un espace sans administrateur voit son attente (INC-249)', async ({ page }) => {
+		const compte = await creerCompteJetable('preuve-inc249-ui', 'Léa', 'Patiente')
+		const slug = `preuve-inc249-ui-${Math.random().toString(36).slice(2, 10)}`
+		let espace = ''
+		try {
+			const creation = await fetch(`${URL_API}/rest/v1/workspaces`, {
+				method: 'POST',
+				headers: { ...enTetesService(), 'content-type': 'application/json', prefer: 'return=representation' },
+				body: JSON.stringify({ name: 'Espace neuf INC-249', slug }),
+			})
+			expect(creation.status).toBe(201)
+			espace = ((await creation.json()) as { id: string }[])[0]?.id ?? ''
+			const attente = await fetch(`${URL_API}/rest/v1/workspace_invitations`, {
+				method: 'POST',
+				headers: { ...enTetesService(), 'content-type': 'application/json' },
+				body: JSON.stringify({ workspace_id: espace, email: compte.adresse, role: 'viewer' }),
+			})
+			expect(attente.status).toBe(201)
+
+			await tenter(page, compte.adresse)
+			const etat = page.getByRole('status').filter({ hasText: 'Accès en attente' })
+			await expect(etat).toHaveText(
+				`Accès en attenteUn espace du CRM vous attend à l'adresse ${compte.adresse}, mais son administrateur ne s'y est pas encore connecté. Votre accès s'ouvrira dès qu'il l'aura fait : reconnectez-vous alors.`,
+			)
+			await expect(page.getByRole('alert')).toHaveCount(0)
+			expect((await etatAppareil(page)).poignee).toBeNull()
+			autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[403]])
+			for (const palier of [PALIERS[0], PALIERS[3]]) {
+				await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
+				expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+				await capturer(page, `connexion-attente-administrateur-${palier.nom}`, UNITE)
+			}
+		} finally {
+			if (espace !== '') {
+				await fetch(`${URL_API}/rest/v1/workspaces?id=eq.${espace}`, { method: 'DELETE', headers: enTetesService() })
+			}
+			await fetch(`${URL_API}/rest/v1/workspace_invitations?email=eq.${compte.adresse}`, { method: 'DELETE', headers: enTetesService() })
+			await supprimerCompte(compte.sub)
 		}
 	})
 

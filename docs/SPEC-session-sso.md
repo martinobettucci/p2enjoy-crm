@@ -600,7 +600,7 @@ responsable a demandé une fois `CRM-092` entièrement vérifiée (décision 584
    console s'il le souhaite.
 3. **Lecture seule d'abord** : l'espace `crm` ne porte rien d'autre que l'appartenance de K9 — aucune
    card, aucun commentaire, aucune donnée — et le compte n'a jamais été connecté.
-4. Appliquer `0074` à `0077` en fenêtre de maintenance.
+4. Appliquer `0074` à `0078` en fenêtre de maintenance.
 5. Livrer la fonction `session` et recréer `functions` ; arrêter et retirer `auth` et `auth-templates` ;
    reconstruire la webapp.
 6. **Reprise du compte de K9** : l'espace vide est supprimé puis réamorcé par

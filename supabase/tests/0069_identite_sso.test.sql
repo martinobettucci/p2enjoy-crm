@@ -3,6 +3,8 @@
 --           §7.1 (fonctions auth.*), §7.2 (modèle, RLS, privilèges), §13 (preuves pgTAP)
 -- @verifies docs/SPEC-identite.md §4 (bornes du nom) ; docs/SPEC-permissions-rls.md §3.2
 -- @verifies docs/JOURNAL.md décisions 579, 580 (K11) et 581
+-- @verifies docs/JOURNAL.md décision 593 (INC-249) — les objets rendus portent `en_suspens` : assertions
+--           42, 46, 48 et 49 RÉVISÉES à nombre constant, la suspension elle-même est prouvée par `0072`
 
 begin;
 
@@ -267,7 +269,7 @@ select 'premiere', public.ouvrir_session_sso(pg_temp.id('NEUF'), '  Camille@Preu
 select pg_temp.redevenir_proprietaire();
 
 select is((select valeur from resultat where etape = 'premiere'),
-	'{"admis": true, "espaces": 2, "rattachees": 2, "nom": "Camille Aubert"}'::jsonb,
+	'{"admis": true, "espaces": 2, "rattachees": 2, "en_suspens": 0, "nom": "Camille Aubert"}'::jsonb,
 	'42 — deux attentes consommées : admise, deux espaces, nom épuré');
 select is(
 	(select array_agg(workspace_id::text || ':' || role order by workspace_id) from public.workspace_members
@@ -291,14 +293,14 @@ select 'rejeu', public.ouvrir_session_sso(pg_temp.id('NEUF'), 'camille@preuve.te
 select pg_temp.redevenir_proprietaire();
 
 select is((select valeur from resultat where etape = 'seconde'),
-	'{"admis": true, "espaces": 2, "rattachees": 1, "nom": "Camille A."}'::jsonb,
+	'{"admis": true, "espaces": 2, "rattachees": 1, "en_suspens": 0, "nom": "Camille A."}'::jsonb,
 	'46 — un profil existant n''est jamais réécrit par le SSO');
 select is(
 	(select role from public.workspace_members
 	  where user_id = pg_temp.id('NEUF') and workspace_id = pg_temp.id('W1')),
 	'viewer', '47 — une appartenance existante garde son rôle : une attente ne promeut pas');
 select is((select valeur from resultat where etape = 'rejeu'),
-	'{"admis": true, "espaces": 2, "rattachees": 0, "nom": "Camille A."}'::jsonb,
+	'{"admis": true, "espaces": 2, "rattachees": 0, "en_suspens": 0, "nom": "Camille A."}'::jsonb,
 	'48 — le rejeu ne crée rien');
 
 select pg_temp.endosser_role('service_role');
@@ -307,7 +309,7 @@ select 'inconnue', public.ouvrir_session_sso(pg_temp.id('ETRANGER'), 'personne@p
 select pg_temp.redevenir_proprietaire();
 
 select is((select valeur from resultat where etape = 'inconnue'),
-	'{"admis": false, "espaces": 0, "rattachees": 0, "nom": null}'::jsonb,
+	'{"admis": false, "espaces": 0, "rattachees": 0, "en_suspens": 0, "nom": null}'::jsonb,
 	'49 — ni membre ni attendue : refusée');
 select is((select count(*)::integer from public.profiles where id = pg_temp.id('ETRANGER')), 0,
 	'50 — une personne non attendue ne laisse aucune trace');

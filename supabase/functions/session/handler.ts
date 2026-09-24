@@ -3,7 +3,8 @@
 //       §5.4 (jeton interne), §5.5 (refus), §5.6 (poignée et cookie), §5.7 (échéance, journal), §6.1
 // @spec docs/SSO-client-lelabs-crm.md ; docs/SSO.md (« Fermer une session » : rien n'est révoqué)
 // @spec docs/JOURNAL.md décisions 584 (T3), 586 (arbitrage du responsable : client serveur), 587 (aucune
-//       session : `204`, pas une erreur)
+//       session : `204`, pas une erreur), 593 (INC-249 : une attente en suspens se dit
+//       `attente_administrateur`, jamais `attente_espace`)
 // @spec CLAUDE.md §10 (la règle d'accès est appliquée côté serveur), §20 (journal sans secret)
 //
 // Module pur : toute entrée-sortie passe par `DependancesSession`, ce qui rend chaque refus prouvable
@@ -190,6 +191,16 @@ function contexteVerification(d: DependancesSession, c: ConfigurationSession, de
 
 // --- Les trois gestes ----------------------------------------------------------------------------
 
+
+/**
+ * Le motif d'une personne vérifiée que la base n'admet pas (§5.5, §6.2). Une attente laissée en suspens
+ * — son espace n'a pas encore d'administrateur (INC-249, décision 593) — se dit
+ * `attente_administrateur` : lui répondre qu'aucun espace ne l'attend serait faux.
+ */
+function refusNonAdmise(admission: Record<string, unknown>, adresse: string): Refus {
+	const enSuspens = typeof admission.en_suspens === 'number' ? admission.en_suspens : 0
+	return new Refus(enSuspens > 0 ? 'attente_administrateur' : 'attente_espace', adresse)
+}
 async function ouvrir(requete: Request, d: DependancesSession, c: ConfigurationSession, echeance: number, securise: boolean): Promise<Response> {
 	// §5.2, point 1 — le corps.
 	let corps: Record<string, unknown> | null
@@ -243,7 +254,7 @@ async function ouvrir(requete: Request, d: DependancesSession, c: ConfigurationS
 		),
 	)
 	if (admission === null || typeof admission.admis !== 'boolean') throw new Refus('service_indisponible')
-	if (!admission.admis) throw new Refus('attente_espace', identite.adresse)
+	if (!admission.admis) throw refusNonAdmise(admission, identite.adresse)
 
 	return reponseSession(d, c, identite, admission.nom, cookieDePoignee(poignee, securise))
 }
@@ -338,7 +349,7 @@ async function prolonger(requete: Request, d: DependancesSession, c: Configurati
 	)
 	if (renouvellement === null || typeof renouvellement.admis !== 'boolean') throw new Refus('service_indisponible')
 	if (renouvellement.session === false) return aucuneSession(true, securise)
-	if (!renouvellement.admis) throw new RefusSession(new Refus('attente_espace', identite.adresse), true)
+	if (!renouvellement.admis) throw new RefusSession(refusNonAdmise(renouvellement, identite.adresse), true)
 
 	return reponseSession(d, c, identite, renouvellement.nom)
 }

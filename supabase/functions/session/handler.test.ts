@@ -2,6 +2,8 @@
 // @verifies docs/SPEC-session-sso.md §5.1 à §5.7 (trois gestes, ouvrir, prolonger, fermer, jeton interne,
 //           refus, poignée et cookie, échéance et journal), §6.1, §13 (preuves unitaires)
 // @verifies docs/JOURNAL.md décision 586 (aucun jeton LeLabs n'atteint le navigateur)
+// @verifies docs/JOURNAL.md décision 593, docs/SPEC-session-sso.md §5.5, §6.2 — INC-249 : une attente
+//           en suspens se dit `attente_administrateur`, à l'ouverture comme à la prolongation
 //
 // Un faux LeLabs sert la découverte, le point de jeton et les clés ; une fausse base reproduit les
 // quatre fonctions de session de `0076_sessions_serveur.sql`. Chacun enregistre ce qu'il reçoit, ce qui
@@ -65,6 +67,8 @@ type Monde = {
 	/** Surcharge du jeton d'accès rendu. */
 	jeton?: Record<string, unknown>
 	admis?: boolean
+	/** Attentes laissées en suspens par la base (INC-249, décision 593). */
+	enSuspens?: number
 	panneBase?: boolean
 	decouverte?: unknown
 	sessions?: Map<string, Session>
@@ -105,7 +109,7 @@ function monde(m: Monde = {}) {
 			const e = String(args.p_empreinte)
 			switch (fonction) {
 				case 'ouvrir_session_serveur':
-					if (m.admis === false) return { admis: false, espaces: 0, rattachees: 0, nom: null }
+					if (m.admis === false) return { admis: false, espaces: 0, rattachees: 0, en_suspens: m.enSuspens ?? 0, nom: null }
 					sessions.set(e, { sub: String(args.p_sub), rafraichissement: String(args.p_rafraichissement), expire_le: String(args.p_expire_le) })
 					return { admis: true, espaces: 1, rattachees: 0, nom: 'Camille A.' }
 				case 'lire_session_serveur': {
@@ -117,7 +121,7 @@ function monde(m: Monde = {}) {
 					if (s === undefined || s.sub !== args.p_sub) return { admis: false, session: false }
 					if (m.admis === false) {
 						sessions.delete(e)
-						return { admis: false, espaces: 0, rattachees: 0, nom: 'Camille A.', session: true }
+						return { admis: false, espaces: 0, rattachees: 0, en_suspens: m.enSuspens ?? 0, nom: 'Camille A.', session: true }
 					}
 					sessions.set(e, { sub: s.sub, rafraichissement: String(args.p_rafraichissement), expire_le: String(args.p_expire_le) })
 					return { admis: true, espaces: 1, rattachees: 0, nom: 'Camille A.', session: true }
@@ -295,6 +299,14 @@ describe('ouvrir — refus (§5.2, §5.5)', () => {
 		expect(reponse.headers.get('set-cookie')).toBeNull()
 	})
 
+	it('rend 403 attente_administrateur quand une attente reste en suspens, sans poser de cookie (INC-249)', async () => {
+		const m = monde({ admis: false, enSuspens: 1 })
+		const reponse = await traiterSession(requete('ouvrir', { corps: CORPS_OUVERTURE }), m.d)
+		expect(reponse.status).toBe(403)
+		expect(await json(reponse)).toEqual({ erreur: 'attente_administrateur', adresse: 'admin@p2enjoy.test' })
+		expect(reponse.headers.get('set-cookie')).toBeNull()
+	})
+
 	it('rend 502 service_indisponible quand la base ne répond pas', async () => {
 		const m = monde({ panneBase: true })
 		const reponse = await traiterSession(requete('ouvrir', { corps: CORPS_OUVERTURE }), m.d)
@@ -381,6 +393,16 @@ describe('prolonger (§5.3)', () => {
 		const m = monde({ sessions, admis: false })
 		const reponse = await traiterSession(requete('prolonger', { cookie: COOKIE }), m.d)
 		expect(reponse.status).toBe(403)
+		expect(reponse.headers.get('set-cookie')).toMatch(/Max-Age=0/)
+		expect(sessions.size).toBe(0)
+	})
+
+	it('rend 403 attente_administrateur à la prolongation quand la seule attente est en suspens (INC-249)', async () => {
+		const sessions = await sessionOuverte()
+		const m = monde({ sessions, admis: false, enSuspens: 2 })
+		const reponse = await traiterSession(requete('prolonger', { cookie: COOKIE }), m.d)
+		expect(reponse.status).toBe(403)
+		expect(await json(reponse)).toEqual({ erreur: 'attente_administrateur', adresse: 'admin@p2enjoy.test' })
 		expect(reponse.headers.get('set-cookie')).toMatch(/Max-Age=0/)
 		expect(sessions.size).toBe(0)
 	})

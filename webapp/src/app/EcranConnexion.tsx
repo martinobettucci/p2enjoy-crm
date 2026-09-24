@@ -5,6 +5,8 @@
 // @spec docs/SPEC-auth.md §9.1 (navigation), §10.3 (aller), §10.5 (transaction d'onglet)
 // @spec docs/DESIGN_SYSTEM.md §5.8 (états), §5.10 (commande morte interdite), §5.12 (connexion), §7, §8, §9
 // @spec docs/manual.md chapitre 1 (connexion)
+// @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §5.5, §9.2 — INC-249, décision 593 :
+//       l'attente `attente_administrateur` (espace sans administrateur encore)
 //
 // Le composant ne connaît aucun secret et ne traduit aucun droit. Il mène l'aller vers LeLabs, puis
 // rend ce que l'échangeur a décidé : un REFUS dit qu'une tentative a échoué, une ATTENTE qu'un geste
@@ -44,6 +46,7 @@ const CLE_ATTENTE: Readonly<Record<NatureAttente, CleTraduction>> = {
 	adresse_non_verifiee: 'auth.wait.unverifiedAddress',
 	attente_verification: 'auth.wait.verification',
 	attente_espace: 'auth.wait.workspace',
+	attente_administrateur: 'auth.wait.administrator',
 }
 
 const ID_ETAT = 'etat-connexion'

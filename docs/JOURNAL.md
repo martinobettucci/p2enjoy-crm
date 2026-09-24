@@ -29645,3 +29645,29 @@ jetable, capture. **Le seed n'est pas étendu** : démontrer cet état exigerait
 administrateur, alors que le contrat du seed est « un espace » (`docs/SPEC-seed.md` §2.1, assertion 1
 de `0003`) ; l'état est démontré par les preuves, sur des données jetables — même traitement que les
 autres refus d'admission hors des trois comptes du realm.
+
+**Vérifications (2026-09-24).** Sur la base restaurée par le coureur de migrations : `npm run test:sql`
+**72 fichiers, 3196 assertions** — `0072` **16/16**, `0069` révisée à nombre constant (`en_suspens: 0`
+dans ses quatre objets attendus) ; `npm run test:unit` **3269** verts, dont **122** pour l'échangeur
+(deux neufs : `403 attente_administrateur` à l'ouverture, puis au prolongement avec cookie effacé et
+session supprimée) ; `npm run e2e:api` **1080/1080** ; `verify-session-sso` **57/57**, dont la
+dégradation « admission impatiente de `0075` » qui rend le contrôle rouge ; `connexion.spec.ts`
+**14/14**, captures `connexion-attente-administrateur-xl-1440` et `-sm-390` relues ; typecheck, build
+et `types:check` verts.
+
+La campagne d'interface complète compte **749 verts sur 756** — le scénario neuf passe —, et ses
+**sept rouges sont étrangers à ce correctif**, chacun relu dans sa trace :
+
+1. **Six scénarios de notifications** échouent sur une notification de Driss qui n'aurait pas dû
+   exister. Elle est née pendant la campagne du scénario clavier de `mentions-composeur.spec.ts` :
+   l'insertion de la mention, asynchrone, arrive APRÈS le nettoyage qui supprimait les notifications.
+   La ligne restante a été supprimée par PostgREST (`200`).
+2. **`ma-journee.spec.ts`, la bascule de portée** lit zéro ligne alors que la région live annonce
+   « Tout l'espace de travail ». La trace le date : l'attente sur la région live a réussi **avant**
+   que la lecture de la nouvelle portée ne parte. L'écran rend UNE image où la région live nomme la
+   portée nouvelle avec le total de l'ancienne — la portée vient de l'adresse, les données de l'état,
+   et l'effet qui repasse en chargement ne court qu'après cette image. C'est un défaut du produit, pas
+   seulement du test : un lecteur d'écran peut annoncer un total faux.
+
+Les deux relèvent de l'arbitrage INC-189 (« attendre un signal observable ») et sont corrigés dans le
+changement suivant, avec leur test qui échoue d'abord ; la campagne complète y est rejouée.

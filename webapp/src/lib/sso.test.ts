@@ -2,6 +2,8 @@
 // @verifies docs/SPEC-auth.md §10.2 (configuration), §10.3 (parcours), §10.5 (transaction d'onglet)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §4 (sans nonce), §8.1 (module révisé :
 //           plus d'échange de code dans le navigateur), §9.2 (dictionnaire fermé) ; décision 586
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §5.5, §9.2 — INC-249, décision 593 :
+//           l'attente `attente_administrateur` (espace sans administrateur encore)
 
 import { describe, expect, it, vi } from 'vitest'
 import {
@@ -216,7 +218,7 @@ describe('retour : transaction à usage unique', () => {
 
 describe('dictionnaire fermé', () => {
 	it('distingue les trois attentes des refus', () => {
-		expect(NATURES_ATTENTE).toEqual(['adresse_non_verifiee', 'attente_verification', 'attente_espace'])
+		expect(NATURES_ATTENTE).toEqual(['adresse_non_verifiee', 'attente_verification', 'attente_espace', 'attente_administrateur'])
 		for (const nature of NATURES_ATTENTE) expect(estAttente(nature)).toBe(true)
 		for (const nature of ['sso_annule', 'sso_echec', 'reseau', 'session_expiree', 'configuration'] as const) {
 			expect(estAttente(nature)).toBe(false)

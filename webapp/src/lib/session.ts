@@ -4,6 +4,8 @@
 // @spec docs/JOURNAL.md décisions 586 (client serveur : le cookie de la poignée est de même origine),
 //       587 (aucune session : la prolongation rend `204`, jamais une erreur)
 // @spec CLAUDE.md §10 (aucune autorisation décidée dans le navigateur), §11 (aucun stockage)
+// @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §5.5, §9.2 — INC-249, décision 593 :
+//       l'attente `attente_administrateur` (espace sans administrateur encore)
 //
 // Ce module ne rend rien, ne stocke rien et ne décide d'aucun droit. Il porte `ouvrir`, `prolonger`
 // et `fermer` vers l'échangeur par un chemin RELATIF — la même origine que la webapp, où Caddy en
@@ -56,7 +58,7 @@ export type Echangeur = {
 
 type Fetch = typeof fetch
 
-const ATTENTES = ['adresse_non_verifiee', 'attente_verification', 'attente_espace'] as const
+const ATTENTES = ['adresse_non_verifiee', 'attente_verification', 'attente_espace', 'attente_administrateur'] as const
 
 function objet(valeur: unknown): Record<string, unknown> | null {
 	return valeur !== null && typeof valeur === 'object' && !Array.isArray(valeur) ? (valeur as Record<string, unknown>) : null

@@ -1078,7 +1078,8 @@ et la seconde voie « ou » de `CRM-091` quittent l'écran, qui ne porte plus qu
     `role="alert"`. Elle ne déplace pas le titre et reste lisible quand le texte gagne 40 %.
   - **Attente** — la personne n'a rien fait de faux, un geste d'autrui manque (adresse à vérifier
     chez LeLabs, compte à vérifier par un administrateur de LeLabs, inscription par un administrateur
-    d'espace) : surface `--color-accent-soft`, texte `--color-accent-on-soft` (4,72:1, §12.5), icône
+    d'espace, et — depuis la décision 593, INC-249 — première connexion de l'administrateur d'un
+    espace neuf qui l'attend) : surface `--color-accent-soft`, texte `--color-accent-on-soft` (4,72:1, §12.5), icône
     Lucide **`CircleDashed`**, `role="status"`, titre court « Accès en attente » en graisse moyenne,
     puis la phrase qui **nomme l'adresse** concernée — interpolée par une clé de traduction, jamais
     concaténée (§10), et repliée sur les mots longs plutôt que de déborder. Teinter une attente de
@@ -1107,8 +1108,9 @@ distincts les portent. **Aucune couleur, aucun jeton nouveau** ; une seule icôn
 `CircleDashed`, qui ne sert aucun autre objet.
 
 *Captures de référence : `docs/captures/CRM-092/`, observées le 2026-09-24 — carte aux quatre
-paliers, page de connexion de LeLabs, retour, annulation, session terminée, et les trois attentes,
-adresses longues comprises.*
+paliers, page de connexion de LeLabs, retour, annulation, session terminée, et les quatre attentes,
+adresses longues comprises (`connexion-attente-administrateur-*`, décision 593 : même surface, aucun
+jeton ni icône nouveaux).*
 
 ### 5.13 Administration de l'arborescence — `CRM-075`
 

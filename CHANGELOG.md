@@ -45,6 +45,11 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   chaque compte GoTrue : un profil ne naît plus que de la première connexion LeLabs admise. Les
   tables du schéma `auth` restent, inertes. `scripts/verify-auth.sh` est retiré avec son objet, et
   `docs/SPEC-auth.md` n'est plus qu'un renvoi vers `docs/SPEC-session-sso.md`.
+- **Un espace neuf n'empêche plus d'entrer** (correctif INC-249, décision 593). Une personne attendue
+  avec un autre rôle qu'administrateur dans un espace dont l'administrateur ne s'est pas encore
+  connecté faisait échouer toute sa connexion, autres espaces compris. Son attente reste désormais en
+  place, elle entre là où elle le peut, et l'écran lui dit « Un espace du CRM vous attend […], mais son
+  administrateur ne s'y est pas encore connecté ». Migration `0078_admission_patiente.sql`.
 - **La reprise en production est écrite** (tranche T7, `docs/PROD_MIGRATIONS.md` §2.5) : treize gestes
   ordonnés, du client confidentiel à la connexion réelle, avec retour arrière. Caddy porte désormais un
   label de révision de ses routes, comme Kong, pour être recréé quand elles changent — sans lui, la
@@ -69,7 +74,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
 - **Preuves** : suite pgTAP `0069_identite_sso.test.sql` (58 assertions) ; harnais de l'unité
   `scripts/verify-session-sso.sh` (16 vérifications, dont la base neuve sans GoTrue et quatre
   dégradations détectées) ; trois suites historiques révisées, jamais retirées.
-- **Production** : migrations 74 à 77 en attente, et un nouveau client confidentiel
+- **Production** : migrations 74 à 78 en attente, et un nouveau client confidentiel
   `lelabs-crm-serveur` à déclarer chez LeLabs avec son secret `SSO_OIDC_CLIENT_SECRET`, à n'appliquer
   qu'avec la reprise complète de `CRM-092` (`docs/PROD_MIGRATIONS.md` §2.3, §3).
 - **Le LeLabs de développement est préchargé** (tranche T2) : les comptes de démonstration y ont leur

@@ -1,6 +1,8 @@
 // @verifies CRM-092 (docs/BACKLOG.md) — les trois gestes de la webapp vers l'échangeur de session
 // @verifies docs/SPEC-session-sso.md §5.1 (chemin relatif, `apikey`, même origine), §5.4 (corps de
 //           succès), §5.5 (refus), §8.2 (ce module), §9.2 (dictionnaire de l'écran) ; décisions 586, 587
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §5.5, §9.2 — INC-249, décision 593 :
+//           l'attente `attente_administrateur` (espace sans administrateur encore)
 
 import { describe, expect, it, vi } from 'vitest'
 import { CHEMIN_ECHANGEUR, classerRefus, creerEchangeur, lireSession } from './session'
@@ -50,6 +52,7 @@ describe('classerRefus', () => {
 		['adresse_non_verifiee'],
 		['attente_verification'],
 		['attente_espace'],
+		['attente_administrateur'],
 	] as const)('rend l’attente %s avec son adresse', (code) => {
 		expect(classerRefus('ouvrir', 403, { erreur: code, adresse: 'a@b.tld' })).toEqual({ ok: false, nature: code, adresse: 'a@b.tld' })
 	})
