@@ -6641,6 +6641,9 @@ concernées : `CRM-008` (harnais des droits fins) et `CRM-064` (auteur de `0063`
 **ARBITRÉE le 2026-09-24 — décision 592 : rejouer la chaîne `0010` → `0034` → `0063`.** Mise en
 œuvre : `CRM-008`.
 
+**RÉSOLUE le 2026-09-24.** Le §2 rejoue la chaîne et exige aucune dérive : mesuré vert, « à l'octet
+près ». Le seul rouge du harnais est étranger et consigné en INC-252.
+
 ### INC-251 — trois écarts de jetons que le contrôle des classes ne voit pas : une classe dans une constante, une variable CSS inexistante, une case de 16 px
 
 *Constatée le 2026-09-24 en corrigeant INC-231 (décision 594). Comportement **inchangé** : ces écarts
@@ -6666,3 +6669,22 @@ dépassent les cinq classes arbitrées, et deux d'entre eux changent l'apparence
 `classes-css.mjs` aux constantes de classes et aux variables des valeurs arbitraires. Les deux
 premiers changent l'apparence de trois surfaces et demandent leurs captures (`CLAUDE.md` §16).
 **Unités concernées : `CRM-060`, `CRM-064` (écrans), `CRM-007` (contrôle des classes).**
+
+### INC-252 — `verify-copie-workflow.sh` et `verify-move-card.sh` restaurent en rejouant `0035` à la main : la base reste avec l'ancienne `app.card_comments_avant_maj()`
+
+*Mesurée le 2026-09-24 en rejouant `scripts/verify-droits-fins.sh` pour INC-250 (2579 s, 46 contrôles,
+1 en échec). Comportement **inchangé** : les deux harnais appartiennent à `CRM-032` et `CRM-041`.*
+
+**Ce qui est mesuré.** Le §8 de `verify-droits-fins.sh` lance onze harnais en `--rapide`, dont
+`verify-copie-workflow.sh`, puis `npm run test:sql` rougit : `0061_mentions_commentaires.test.sql`,
+assertion 14 — `app.card_comments_avant_maj()` porte encore le texte `new.mentions`. Relu :
+`verify-copie-workflow.sh` rejoue `0019` puis `0035` (décision 448, INC-154) à chaque rejeu et à sa
+restauration, sans appeler le runner ; or `0063` est la dernière autorité sur cette fonction, et le corps
+de `0035` porte le commentaire d'INC-240 qui cite `new.mentions`. `verify-move-card.sh` rejoue `0035` de
+la même façon. Base rétablie par `docker compose run --rm migrations-runner` : suite globale **72
+fichiers, 3196 assertions, aucune anomalie**.
+
+**Même famille qu'INC-142, INC-213, INC-242 et INC-250**, et le §3.5 de `docs/SPEC-test-harness.md`
+tranche déjà : une liste manuelle de « migrations suivantes » est interdite, la restauration appelle le
+runner complet et se fait suivre de la suite globale — exactement la correction faite pour INC-242.
+**Unités concernées : `CRM-032` (copie de workflow) et `CRM-041` (`move_card`).**

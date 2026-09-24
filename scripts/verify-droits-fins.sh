@@ -8,12 +8,15 @@
 # @verifies docs/JOURNAL.md décisions 103 à 108
 # @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — tranche T4 : jetons par la vraie
 #           connexion LeLabs et l'échangeur de session, plus par GoTrue
+# @verifies docs/BACKLOG.md « Correctifs arbitrés », INC-250 ; docs/JOURNAL.md décisions 592 et 594 —
+#           le §2 rejoue la chaîne 0010 → 0034 → 0063 ; docs/SPEC-test-harness.md §3.5
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-012` :
 #
 #   1. la suite pgTAP `supabase/tests/0011_droits_fins.test.sql` est verte ;
 #   2. la migration est **rejouable et convergente** : réappliquée sur une base déjà migrée, elle
-#      réussit sans rien modifier ; une fonction faussée ou une politique retirée sont réparées ;
+#      réussit ; suivie des migrations qui en ont depuis repris l'autorité — `0034`, `0063` —, elle
+#      rend l'empreinte à l'octet près (INC-250) ; une politique retirée est réparée ;
 #   3. le seed est convergent : rejoué, il laisse exactement quatre droits fins ;
 #   4. la matrice est mesurée **contre l'API**, avec les jetons réels des trois profils seedés ;
 #   5. les scénarios d'API, d'interface, les tests unitaires et le build sont verts ;
@@ -50,6 +53,11 @@ node_toolchain_prepare "$PWD/.nvmrc" || exit 1
 
 TEST_FILE=supabase/tests/0011_droits_fins.test.sql
 MIGRATION_FILE=supabase/migrations/0010_droits_fins.sql
+# Les deux migrations qui ont depuis repris l'autorité sur des éléments de l'empreinte du §2 : la
+# `0034` sur `tracks_lecture_membre`, la `0063` sur `app.can_read_channel` et
+# `app.resolve_channel_access` (INC-213, INC-250).
+MIGRATION_TRANSITIVE=supabase/migrations/0034_lecture_track_transitive.sql
+MIGRATION_MENTIONS=supabase/migrations/0063_mentions_commentaires.sql
 DB_CONTAINER=p2enjoy-db
 
 WS_SEED=5eed0000-0000-4000-8000-000000000001
@@ -207,30 +215,36 @@ else
 	fail "la migration échoue au rejeu — l'idempotence n'est pas acquise"
 fi
 
-# CE CONTRÔLE COMPTAIT UNE IDENTITÉ ; IL MESURE DÉSORMAIS L'INVARIANT QUI COMPTE — INC-213,
-# mesurée le 2026-08-25, sixième occurrence de la famille d'INC-142 après INC-153, INC-154,
-# INC-195, INC-199 et INC-200.
+# CE CONTRÔLE COMPTAIT UNE IDENTITÉ, PUIS UNE DÉRIVE ATTENDUE ; IL REJOUE DÉSORMAIS LA CHAÎNE DES
+# AUTORITÉS — INC-213 (2026-08-25), puis INC-250, arbitrée le 2026-09-24 (décision 592).
 #
-# `0010_droits_fins.sql` n'est plus la dernière autorité sur `tracks_lecture_membre` :
-# `0034_lecture_track_transitive.sql` a ajouté `app.track_has_readable_channel(id)` au prédicat,
-# sans quoi un channel rouvert par un droit fin serait joignable dans un track invisible. Rejouer
-# la 10 SEULE ramène donc réellement le prédicat d'avant la 34, et l'effet est USAGER, pas
-# cosmétique — MESURÉ sur le seed avec le rôle réel : la lectrice, à qui `conseil-ia` est fermé au
-# niveau du track et dont le seul channel `prospection` est rouvert, lit **4** tracks sur 5 après
-# le rejeu isolé, et **5** dans l'état que le runner produit. L'assertion accusait le produit d'une
-# dérive que le harnais venait de provoquer.
+# `0010_droits_fins.sql` n'est plus la dernière autorité sur tout ce que l'empreinte relève :
+# `0034_lecture_track_transitive.sql` a repris `tracks_lecture_membre` — sans la lecture
+# transitive, un channel rouvert par un droit fin serait joignable dans un track invisible, et la
+# lectrice du seed lit 4 tracks sur 5 au lieu de 5 —, et `0063_mentions_commentaires.sql` a repris
+# `app.can_read_channel` et `app.resolve_channel_access`, appuyées sur leurs variantes `_pour`.
+# Rejouer la 10 SEULE ramenait donc ces trois éléments à leur corps d'origine : le relevé de
+# dérive attendue écrit pour INC-213 ne nommait que le premier, et il est devenu faux le jour où
+# `0063` est arrivée (INC-250).
 #
-# Elle se mesure maintenant en deux temps, et le premier NOMME l'élément qui dérive : un rejeu
-# isolé qui ferait dériver autre chose que `pol:tracks_lecture_membre` serait un fait neuf, et le
-# contrôle le dirait au lieu de le confondre avec la dérive attendue.
-apres_rejeu_isole=$(empreinte)
-derives=$(elements_derives "$avant" "$apres_rejeu_isole")
-if [ "$derives" = "pol:tracks_lecture_membre" ]; then
-	ok "le rejeu ISOLÉ fait dériver le SEUL prédicat dont la migration 34 est devenue l'autorité"
-elif [ -z "$derives" ]; then
-	fail "le rejeu isolé ne fait plus rien dériver : la 10 serait redevenue la dernière autorité sur tracks_lecture_membre — relire ce harnais"
+# Le §2 rejoue donc la CHAÎNE, dans l'ordre de la livraison : la 10, puis chacune des migrations
+# qui ont depuis repris l'autorité sur un élément de l'empreinte. L'invariant mesuré est alors le
+# plus simple et le plus strict — **aucune dérive** —, et un élément qui dériverait encore dirait
+# qu'une QUATRIÈME migration a pris l'autorité : le contrôle la nommerait au lieu de la confondre
+# avec une dérive attendue. Les autorités sont relevées sur les fichiers : aucune autre migration
+# ne définit l'une des sept fonctions, ni ne crée de politique sur les quatre tables après la 10.
+if psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_TRANSITIVE" >/dev/null 2>&1 \
+	&& psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_MENTIONS" >/dev/null 2>&1; then
+	ok "la chaîne se rejoue sans erreur : la 10, puis la 34 et la 63, qui ont repris l'autorité"
 else
-	fail "le rejeu isolé fait dériver autre chose que le prédicat attendu : « $derives »"
+	fail "le rejeu de la 34 ou de la 63 échoue sur une base déjà migrée"
+fi
+apres_chaine=$(empreinte)
+derives=$(elements_derives "$avant" "$apres_chaine")
+if [ -z "$derives" ]; then
+	ok "la chaîne 0010 → 0034 → 0063 rend l'empreinte à l'octet près : chacune reprend ce qu'elle détient"
+else
+	fail "la chaîne 0010 → 0034 → 0063 laisse dériver « $derives » : une autre migration en détient l'autorité — relire ce harnais"
 fi
 
 # Convergence, et non simple idempotence (décision 57) : une politique **retirée** est rétablie.

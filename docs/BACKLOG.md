@@ -14570,7 +14570,13 @@ décision 594.
       nomme — la première exécution a révélé que Vitest construit un rapporteur avec un objet
       d'options, corrigé avant commit ; une exécution verte n'écrit rien ; unitaires **3281**.
       Reste `verify-harness` complet, avec la campagne.
-- [ ] **INC-250 — rejouer la chaîne des droits fins** (`CRM-008`) : `0010` → `0034` → `0063`.
+- [x] **INC-250 — rejouer la chaîne des droits fins** (`CRM-008`) : `0010` → `0034` → `0063`. Le §2
+      de `verify-droits-fins.sh` rejoue la chaîne des autorités — relevées sur les fichiers : aucune
+      autre migration ne redéfinit les sept fonctions ni les politiques des quatre tables — et exige
+      désormais AUCUNE dérive. Mesuré : « la chaîne 0010 → 0034 → 0063 rend l'empreinte à l'octet
+      près » ; harnais **46 contrôles, 1 en échec**, étranger — `npm run test:sql` après les onze
+      harnais du §8, rouge par la restauration manuelle de `verify-copie-workflow.sh`, consignée en
+      **INC-252** ; base rétablie par le runner, suite globale **72 fichiers, 3196 assertions**.
 - [x] **INC-248 — le jour local fait foi** (`CRM-061`) : seed et preuves de « Ma journée ». La
       translation part du début du jour local (fuseau de l'hôte, ou `TZ`) et rejoue l'écart de chaque
       littéral au minuit UTC de l'ancre ; `scripts/lib/fuseau.sh` partagé par le seed et le harnais.
