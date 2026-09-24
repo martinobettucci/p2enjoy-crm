@@ -13,13 +13,34 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### Déploiement
+_Rien à publier pour le moment._
+
+## [Publié]
+
+### Déployé en production, 2026-09-24
+
+Cellule Spark `crm`, révision `03dd22f0` (`docs/PROD_MIGRATIONS.md` §2.5 et §8). Aucune entrée n'avait
+encore été publiée : le premier déploiement du 2026-09-23 n'avait pas pu vérifier la connexion, que
+`CRM-092` apportait. Tout ce qui suit est actif et vérifié en production depuis la connexion réelle du
+responsable.
+
+- **Opérations de déploiement** : client confidentiel `lelabs-crm-serveur` déclaré chez LeLabs et son
+  secret saisi dans la cellule ; `SSO_OIDC_CLIENT_ID` importé en console ; instantané de VM ;
+  **migrations 74 à 79 appliquées** ; pile redémarrée, Kong, Caddy et `functions` recréés ; **GoTrue et
+  ses gabarits retirés** ; espace `crm` vide et profil du compte invité supprimés, puis attente
+  administratrice de `martino@p2enjoy.studio` réinscrite ; notes du Spark reproposées.
+- **Vérifié** : webapp `200` construite avec `lelabs-crm-serveur`, `/auth/v1/health` `404`, échangeur `204`
+  sans session, sonde du client `302` avec PKCE exigé ; connexion réelle par LeLabs — attente consommée,
+  profil et appartenance `admin` créés, une session serveur au jeton chiffré.
+- Le client public `lelabs-crm` a été supprimé du realm avant le déploiement (décision 598).
+
+#### Déploiement
 
 - **`proposer.sh --demandes-seules` lit les valeurs de la cellule entre guillemets**, comme le plan de
   contrôle les écrit : un émetteur déjà juste n'est plus redemandé, et un secret réduit à `""` est
   demandé au lieu d'être tenu pour posé (décision 599).
 
-### Correctifs arbitrés le 2026-09-24 (décisions 592 et 594)
+#### Correctifs arbitrés le 2026-09-24 (décisions 592 et 594)
 
 - **« Ma journée » n'annonce plus une portée avec le total d'une autre** (INC-189). Au clic sur « Tout
   l'espace de travail », l'écran rendait un instant la nouvelle portée avec les affaires de l'ancienne,
@@ -34,7 +55,7 @@ d'exécuter le code attendu.
   toute exécution rouge de `npm run test:unit` laisse son journal dans `e2e/output/journaux-unitaires/`,
   quel que soit le harnais qui l'a lancée.
 
-### `CRM-092` — Le SSO, seule source d'identité (tranches T1 à T7 livrées ; déploiement en production en attente)
+#### `CRM-092` — Le SSO, seule source d'identité (tranches T1 à T8)
 
 Décision du responsable (décisions 578 et 579) : le SSO LeLabs devient la **seule** source d'identité
 du CRM, en développement comme en production ; GoTrue et la connexion par mot de passe quittent la
@@ -118,7 +139,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
 - **La clé de signature n'atteint que l'échangeur** : le conteneur des fonctions la reçoit, mais le
   service principal ne la remet qu'au worker `session`.
 
-### `CRM-091` — Se connecter avec LeLabs
+#### `CRM-091` — Se connecter avec LeLabs
 
 - **Une seconde façon d'entrer**, sous le formulaire de connexion : « Se connecter avec LeLabs »
   mène à la page de connexion du SSO `oauth.lelabs.tech` et revient dans le CRM, à l'adresse d'où
@@ -134,7 +155,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
 - **En développement, un LeLabs local** reproduit le SSO réel — mêmes règles, comptes alignés sur la
   démonstration.
 
-### `CRM-090` — La production sur la cellule Spark « crm »
+#### `CRM-090` — La production sur la cellule Spark « crm »
 
 - **Un troisième assemblage, pour la cellule qui accueillera la production** : Caddy y sert en
   clair derrière la Forge, qui porte le certificat ; un stockage objet interne remplace le S3
@@ -159,7 +180,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   représenter, ne pouvait pas y être installée, et lançait ses migrations sous ce même compte. La
   dérivée renumérote ce compte, sans rien changer d'autre.
 
-### `CRM-066` — « Pilotage » : les étapes sans affaire, nommées (tranche 3 c)
+#### `CRM-066` — « Pilotage » : les étapes sans affaire, nommées (tranche 3 c)
 
 - **Sous les tableaux, l'écran nomme les étapes du catalogue où aucune affaire ne se tient** — « Aucune
   affaire active aux étapes Signature et Perdu. », dans l'ordre du catalogue. C'est la lecture la
@@ -169,7 +190,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
 - **Une étape archivée n'y figure pas** : elle n'est plus une étape du chemin, et la nommer « sans
   affaire » inviterait à y en remettre une.
 
-### `CRM-066` — « Pilotage » : choisir la portée mesurée (tranche 3 b)
+#### `CRM-066` — « Pilotage » : choisir la portée mesurée (tranche 3 b)
 
 - **Un champ « Portée » en tête de l'écran** : tout l'espace de travail, un track entier, ou un
   channel. Les options sont groupées par track, et chacune nomme le sien — « Studio web — tout le
@@ -188,7 +209,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
 - **Le sélecteur n'ouvre aucun droit** : on ne s'y voit offrir que ce qu'on lit déjà, et forcer une
   portée dans l'adresse ne rend rien de plus.
 
-### `CRM-066` — l'écran « Pilotage » : votre portefeuille en une page (tranche 3 a)
+#### `CRM-066` — l'écran « Pilotage » : votre portefeuille en une page (tranche 3 a)
 
 - **Une nouvelle entrée dans la barre latérale, « Pilotage »**, entre « Coûts » et « Ma journée ».
   Les deux premières lectures agrégées du produit sont désormais voisines : ce que l'espace de
@@ -218,7 +239,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
 - **Ce qui reste dû, et qui est écrit plutôt que tu** : le filtre par track ou par channel, et
   l'affichage des étapes où aucune affaire ne se tient.
 
-### `CRM-066` — le produit sait enfin ce que vaut son portefeuille (tranche 2 a)
+#### `CRM-066` — le produit sait enfin ce que vaut son portefeuille (tranche 2 a)
 
 - **Une probabilité qu'on vous fait saisir depuis longtemps se met à servir.** Les écrans
   d'administration permettent de poser une probabilité par défaut sur une étape du catalogue, de la
@@ -250,7 +271,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
 - **Migration `0073_entonnoir_conversion.sql`** — addition pure, en lecture seule ; voir
   `docs/PROD_MIGRATIONS.md`.
 
-### `CRM-066` — l'espace de démonstration exerce enfin les trois niveaux de probabilité (tranche 2 c)
+#### `CRM-066` — l'espace de démonstration exerce enfin les trois niveaux de probabilité (tranche 2 c)
 
 - **Ce qui change pour qui découvre le produit** : l'espace de démonstration montrait une
   probabilité posée à un seul endroit, le catalogue. Il en pose désormais **trois**, empilées sur la
@@ -271,7 +292,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   espace déjà installé les reçoit au prochain passage du seed ; personne n'a rien à appliquer en
   production.
 
-### `CRM-041` — la preuve qui surveille la barre d'onglets vérifie enfin la règle qu'elle cite (INC-241)
+#### `CRM-041` — la preuve qui surveille la barre d'onglets vérifie enfin la règle qu'elle cite (INC-241)
 
 - **Aucun changement visible dans l'application** : c'est une preuve interne qui est corrigée, pas
   un écran. La règle qu'elle protège, elle, est inchangée — tout écran ouvert sur un track affiche
@@ -292,7 +313,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   l'envers, sur un routeur factice délibérément fautif, dans les quatre cas qu'elle doit refuser.
 - Aucune migration et aucune opération manuelle de déploiement ne sont dues.
 
-### `CRM-062` — le rejeu des migrations ne casse plus une base dont l'historique des affaires a régressé (INC-239)
+#### `CRM-062` — le rejeu des migrations ne casse plus une base dont l'historique des affaires a régressé (INC-239)
 
 - **Une migration rétrécissait le vocabulaire de la timeline au lieu de le laisser s'élargir.** La
   liste des types d'événements qu'une affaire peut porter s'est étoffée au fil des livraisons — de
@@ -312,7 +333,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
 - **Une preuve durable est ajoutée au harnais du répertoire de migrations** : toute migration future
   qui toucherait cette règle sans cette précaution est signalée d'elle-même.
 
-### `CRM-064` — un commentaire reste modifiable même si le rejeu des migrations s'arrête en chemin (INC-240)
+#### `CRM-064` — un commentaire reste modifiable même si le rejeu des migrations s'arrête en chemin (INC-240)
 
 - **Deux migrations décrivaient encore une colonne qui n'existe plus.** `0021` et `0035`
   comparaient `card_comments.mentions`, que `0063` a supprimée en même temps qu'elle a remplacé
@@ -329,7 +350,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
 - **Une preuve durable est ajoutée au harnais du répertoire de migrations** : aucune migration ne
   peut désormais référencer cette colonne disparue sans que le harnais ne le dise.
 
-### `CRM-081` — la boîte se souvient de ce qu'elle montrait, et un channel entièrement endormi le dit
+#### `CRM-081` — la boîte se souvient de ce qu'elle montrait, et un channel entièrement endormi le dit
 
 - **La case « Afficher les fils en sommeil » de la boîte de réception se retient dans l'adresse.**
   Elle repartait décochée à chaque rechargement : celui qui voulait voir ses conversations endormies
@@ -351,7 +372,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   2026-08-17, et ce n'est donc pas ce qui la distingue d'une paire de liens —, `docs/manual.md`
   §4.15.
 
-### `CRM-084` — une ligne de coût oubliée finit par se voir
+#### `CRM-084` — une ligne de coût oubliée finit par se voir
 
 - **Un budget peut désormais déclarer au bout de combien de jours une dépense sans coût réel est
   « en retard ».** Le champ est facultatif, se règle au formulaire d'administration du budget, et
@@ -371,7 +392,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   `docs/DESIGN_SYSTEM.md` §5.31, `docs/PROD_MIGRATIONS.md`. **INC-238** consignée : la date de
   création d'une ligne de coût est encore posable par son auteur, ce qui appartient à `CRM-013`.
 
-### `CRM-083` — un tableau d'objectifs qu'on ne peut pas modifier le dit d'emblée
+#### `CRM-083` — un tableau d'objectifs qu'on ne peut pas modifier le dit d'emblée
 
 - **Le canevas d'objectifs porte un état de lecture seule.** Quelqu'un qui ne peut pas écrire dans
   un tableau voit désormais, en tête du canevas, une mention disant qu'il le consulte sans pouvoir
@@ -391,7 +412,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   `docs/DESIGN_SYSTEM.md` §5.29 ter, `docs/PROD_MIGRATIONS.md` §3.2 ; arbitrage rendu,
   **INC-170** close.
 
-### `CRM-086` — l'onglet « À saisir » dit ce que son compteur compte
+#### `CRM-086` — l'onglet « À saisir » dit ce que son compteur compte
 
 - **Le badge de l'onglet « À saisir » et la mention « n lignes sans coût réel saisi » affichent deux
   nombres différents, et l'écran l'explique désormais** au lieu de laisser l'écart passer pour une
@@ -405,7 +426,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
 - Documentation : `docs/SPEC-costs.md` §4.8 et §4.8.3, `docs/DESIGN_SYSTEM.md` §5.31 ;
   arbitrage rendu, **INC-182** close.
 
-### `CRM-082` — le nom d'un tableau d'objectifs archivé reste pris, et le refus dit où le retrouver
+#### `CRM-082` — le nom d'un tableau d'objectifs archivé reste pris, et le refus dit où le retrouver
 
 - **Rien ne change dans le comportement du produit** : un tableau archivé retenait déjà son nom, et
   il le retient toujours. Ce qui change est que cette règle est désormais **tranchée, écrite et
@@ -424,7 +445,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   `docs/DESIGN_SYSTEM.md` §5.29 bis.
 
 
-### `CRM-084` — un budget récurrent peut enfin recevoir des occurrences
+#### `CRM-084` — un budget récurrent peut enfin recevoir des occurrences
 
 - **Un budget récurrent est utilisable.** Sous « Réglages ▸ Arborescence », le nombre d'occurrences
   d'un budget récurrent est devenu cliquable : il déplie la liste de ses occurrences et laisse en
@@ -444,7 +465,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   `docs/DESIGN_SYSTEM.md` §5.47.
 
 
-### `CRM-055` — un message rangé dans la mauvaise affaire peut en être retiré
+#### `CRM-055` — un message rangé dans la mauvaise affaire peut en être retiré
 
 - **Un message classé n'y est plus enfermé.** Sous le message ouvert de l'inbox, « Retirer de
   l'affaire » le renvoie dans les messages non classés, d'où il peut être rangé ailleurs. Le geste
@@ -463,7 +484,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
 - **Aucun droit nouveau** : le retrait exige exactement les deux droits du classement — voir le
   message, et écrire l'affaire. Migration `0070`, aucune table, aucune politique, aucun trigger.
 
-### `CRM-083` — un tableau d'objectifs archivé peut être repris
+#### `CRM-083` — un tableau d'objectifs archivé peut être repris
 
 - **L'archivage d'un tableau n'est plus sans retour.** Une case « Afficher les archivés » dans la
   liste des tableaux ramène ceux qui l'ont été, et une commande « Désarchiver » les remet en place —
@@ -478,7 +499,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   manquait. Un membre en lecture seule ne peut pas reprendre un tableau, et l'écran le lui dit.
 - Le jeu de démonstration porte désormais un tableau archivé, « Objectifs 2025 (clos) ».
 
-### `CRM-042` — la recherche comprend les accents de la même façon partout
+#### `CRM-042` — la recherche comprend les accents de la même façon partout
 
 - **Chercher « securite » trouve désormais « sécurité »**, et inversement, dans la vue liste comme
   dans la palette `Cmd+K`. Le produit n'a plus qu'une seule façon de comprendre un accent.
@@ -491,7 +512,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   `docs/PROD_MIGRATIONS.md`. La variable d'environnement `PGRST_DB_EXTRA_SEARCH_PATH` doit porter
   `app` en fin de liste.
 
-### `CRM-065` sous-tranche 2c — la boîte de réception s'ouvre sur le bon message
+#### `CRM-065` sous-tranche 2c — la boîte de réception s'ouvre sur le bon message
 
 - **Un résultat de recherche de la famille « message » ouvre désormais le message lui-même**, et
   plus seulement la boîte de réception. C'est l'écart que la sous-tranche précédente avait annoncé
@@ -507,7 +528,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   se distingue pas d'une absence.
 - Documentation utilisateur : `docs/manual.md` §9.4 et §9.6.
 
-### `CRM-065` sous-tranche 2b — la recherche, enfin à l'écran
+#### `CRM-065` sous-tranche 2b — la recherche, enfin à l'écran
 
 - **Un champ de recherche apparaît en haut de chaque écran, et `Cmd+K` / `Ctrl+K` l'ouvre de
   partout** — y compris pendant qu'on écrit un commentaire. Le raccourci est rappelé dans le champ
@@ -532,7 +553,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   faire disparaître le titre de l'écran courant. Il s'efface désormais plus tôt.
 - Documentation utilisateur : `docs/manual.md` §9.
 
-### `CRM-065` sous-tranche 2a — de quoi mener à l'objet trouvé (aucun écran encore)
+#### `CRM-065` sous-tranche 2a — de quoi mener à l'objet trouvé (aucun écran encore)
 
 - **La recherche sait désormais où mènent ses résultats.** La base rend ce qu'elle a trouvé, mais
   jamais l'adresse où l'on va le lire : une affaire vit sous son track et son channel, et un
@@ -552,7 +573,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
 - Aucune migration. Contrat écrit et publié **avant la première ligne de code** —
   `docs/SPEC-recherche.md` §10 à §17, `docs/DESIGN_SYSTEM.md` §5.46.
 
-### `CRM-065` tranche 1 — la recherche globale, en base (aucun écran encore)
+#### `CRM-065` tranche 1 — la recherche globale, en base (aucun écran encore)
 
 - **Le produit sait désormais chercher un objet par son texte, où qu'il vive.** Une seule requête
   cherche à la fois dans les **affaires**, les **contacts**, les **organisations**, les
@@ -577,7 +598,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   liste des affaires continue d'employer l'ancienne configuration, et reste donc sensible aux
   accents. Les deux recherches du produit n'ont pas le même vocabulaire ; l'arbitrage est demandé.
 
-### `CRM-064` sous-tranche 3b — l'état vide du sélecteur de mentions est désormais éprouvé
+#### `CRM-064` sous-tranche 3b — l'état vide du sélecteur de mentions est désormais éprouvé
 
 - **Aucun changement de comportement.** Le message « personne d'autre ne peut lire cette affaire »
   existe depuis la livraison de la sous-tranche 3b ; ce qui manquait était la preuve qu'il paraît
@@ -588,7 +609,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
 - Contrat écrit avant le code — `docs/SPEC-notifications.md` §50 —, et le point ouvert n° 4 du §39
   est refermé.
 
-### `CRM-064` tranche 4 — les préférences de notification (en cours)
+#### `CRM-064` tranche 4 — les préférences de notification (en cours)
 
 - **Chacun décide désormais de ce qu'il reçoit.** Une nouvelle section personnelle des réglages —
   « Notifications » — porte une case par type de notification, cochée par défaut. La décocher coupe
@@ -610,7 +631,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
 - **Conséquence nommée** : une notification masquée par une préférence ne peut plus être marquée
   lue tant qu'elle l'est. On ne la voit pas, donc on ne la marque pas.
 
-### `CRM-064` sous-tranche 3b — l'émission d'une mention
+#### `CRM-064` sous-tranche 3b — l'émission d'une mention
 
 - **Le composeur d'un commentaire porte désormais un sélecteur de personnes.** Sous la zone de
   saisie, la commande « Mentionner » ouvre la liste de celles que ce commentaire peut prévenir ;
@@ -629,7 +650,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
 - **Migration `0066`** : `public.mentionnables(card_id)`, `security invoker`, `stable`, `anon`
   révoqué nommément. Voir `docs/PROD_MIGRATIONS.md`.
 
-### `CRM-064` sous-tranche 3a — la surface de réception
+#### `CRM-064` sous-tranche 3a — la surface de réception
 
 - **Une cloche apparaît dans l'en-tête, sur tous les écrans**, entre le nom de l'espace de travail
   et votre identité. Elle porte le nombre de vos notifications **non lues** — jamais le total —, et
@@ -664,7 +685,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
 - **`docs/manual.md` gagne son chapitre 8**, le premier de `CRM-064` : les deux tranches
   précédentes ne livraient aucune surface.
 
-### `CRM-064` tranche 2 — la notification
+#### `CRM-064` tranche 2 — la notification
 
 - **`public.notifications` est livrée** (migration `0064`). Mentionner quelqu'un dans un
   commentaire lui adresse désormais un message : la personne désignée porte une notification, non
@@ -693,7 +714,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   `e2e/api/notifications.spec.ts` (**16 lignes de contrat, 9 scénarios**),
   `scripts/verify-notifications.sh` (**43 contrôles, huit dégradations**).
 
-### Ajouté
+#### Ajouté
 
 - **UNE MENTION EST DÉSORMAIS UNE RELATION, ET NON PLUS UN TABLEAU D'IDENTIFIANTS SANS RÈGLE**
   (`CRM-064` tranche 1, migration 63, `docs/SPEC-notifications.md`). Depuis `CRM-043`, un
@@ -709,7 +730,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   Poser une mention **ne prévient encore personne** : c'est un fait, pas un message. La
   notification, la surface et les préférences sont les tranches 2 à 4.
 
-### Modifié
+#### Modifié
 
 - **La chaîne d'autorisation est généralisée, et la règle n'a toujours qu'une seule écriture**
   (`CRM-064`, migration 63). Les fonctions d'accès jugeaient toutes *l'appelant* ; l'éligibilité
@@ -718,7 +739,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   fonctions existantes deviennent des délégations d'une ligne. `app.resolve_access`, qui porte la
   règle elle-même, n'est pas touchée.
 
-### Retiré
+#### Retiré
 
 - **`card_comments.mentions`** (`CRM-064`, migration 63). Le retrait est protégé par une garde qui
   compte les lignes non vides et **refuse d'agir** s'il en reste une : la migration ne détruit pas
@@ -931,7 +952,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   Cette tranche ne livre **aucun écran** et **n'envoie aucun email** : ce sont les tranches 2 et 3,
   cadrées au §7 de la spécification.
 
-### Corrigé
+#### Corrigé
 
 - **NEUF LIGNES DE L'HISTORIQUE SE LISAIENT « ÉVÉNEMENT »** (`docs/INCONSISTENCY_REPORT.md`
   INC-220). Le produit inscrit un fait dans le fil chaque fois qu'un courrier PART d'une affaire, et
@@ -966,7 +987,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   pas causé, lue à l'endroit exact où l'on s'apprête à en commettre un autre. Défaut trouvé en
   regardant une capture.
 
-### Ajouté
+#### Ajouté
 
 - **« ÉCHAP » REFERME LES TROIS SURFACES DE LA LISTE DES TABLEAUX D'OBJECTIFS** (`CRM-083`
   tranche 2 g) : le formulaire de création, celui de renommage et la confirmation d'archivage, depuis
@@ -1101,7 +1122,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   sont plus démontrables. Mesuré à l'exécution : Camille Aubert porte une affaire en retard, une
   aujourd'hui, une à venir ; tout l'espace de travail en rend sept, dont une endormie écartée.
 
-### Corrigé — trouvés par les preuves de `CRM-061`
+#### Corrigé — trouvés par les preuves de `CRM-061`
 
 - **UNE PILULE PORTAIT L'ICÔNE DE SORTIE SANS MENER NULLE PART.** Trouvé **en regardant une
   capture** (`CLAUDE.md` §16) : la pilule « Track › Channel » de « Ma journée » était rendue en
@@ -1118,7 +1139,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   date, tantôt en dessous, selon sa longueur : quatre lignes voisines n'avaient pas la même forme
   sans qu'aucune donnée ne le justifie.
 
-### Spécifié
+#### Spécifié
 
 - **LA VUE « MA JOURNÉE » A ENFIN UN CONTRAT** (`CRM-061`, `docs/JOURNAL.md` décision 502).
   L'unité tenait en **une ligne de table** au backlog, et sept endroits du dépôt la nommaient sans
@@ -1158,7 +1179,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   révisées, chacune avec son motif.
 
 
-### Corrigé
+#### Corrigé
 
 - **DEUX MESURES QUE LE CODE ANNONÇAIT ET QUE L'ÉCRAN NE RENDAIT PAS** (`CRM-040`, `CRM-081`,
   `CRM-085`, `docs/INCONSISTENCY_REPORT.md` INC-204). Trois endroits de l'interface demandaient
@@ -1373,7 +1394,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   `InvalidAccessKeyId`, et `verify-preuves-refus.sh` annonçant « la preuve n° 9 n'est pas exercée »,
   un verdict qui ne parle pas du produit. Les deux appels portent désormais la commande complète.
 
-### Ajouté
+#### Ajouté
 
 - **Le jeu de démonstration montre enfin une affaire EN RETARD, et sa pastille rouge**
   (`CRM-046` tranche 3, `docs/SPEC-seed.md` §9.12, `docs/SPEC-workflow-engine.md` §7.4,
@@ -1466,7 +1487,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   sur son repli « refus inconnu » et toutes les preuves resteraient vertes, puisqu'elles simulent
   la réponse du serveur.
 
-### Décidé
+#### Décidé
 
 - **Une colonne révoquée ressort par le corps d'un refus de contrainte** (`INC-193`,
   `docs/INCONSISTENCY_REPORT.md`, `docs/JOURNAL.md` décision 492). MESURÉ en écrivant `CRM-088` : le
@@ -1508,7 +1529,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   La voie manuelle fichier par fichier reste disponible (`docs/PROD_MIGRATIONS.md` §3.3), utile pour
   appliquer une migration isolée hors fenêtre.
 
-### Ajouté
+#### Ajouté
 
 - **`./runProd.sh --migrate`** (`CRM-087`, `docs/JOURNAL.md` décision 489) — ouvre la fenêtre de
   maintenance décrite au §3.1 de `docs/PROD_MIGRATIONS.md`. Le script surcharge `APPLY_MIGRATIONS`
@@ -2003,7 +2024,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   aucune ligne, l'écran écrit « aucun bloc n'a été supprimé », garde le bloc et invite à recharger,
   plutôt que d'annoncer une suppression qui n'a pas eu lieu.
 
-### Corrigé
+#### Corrigé
 
 - **Un déplacement n'écrit plus la taille d'un bloc, ni un redimensionnement sa position.** Écrit
   d'abord avec les quatre colonnes à chaque geste, l'écran écrasait le redimensionnement d'un
@@ -2017,7 +2038,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
 - **La largeur du champ numérique du remplissage**, qui occupait toute la fiche : deux classes de
   largeur s'y disputaient sans arbitre. Défaut trouvé en **regardant une capture**.
 
-### Documentation
+#### Documentation
 
 - **Un onglet « À saisir » complète les écrans de coûts** (décision 433, demandée le 2026-08-19).
   Le §4.4 exigeait déjà que l'écran annonce « n lignes sans coût réel saisi » : il **comptait** le
@@ -2042,7 +2063,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
 - `docs/SPEC-costs.md` §2.3, §4.1, §4.8 ; `docs/DESIGN_SYSTEM.md` §5.31 ; Definition of Done de
   `CRM-086` étendue plutôt que scindée — c'est un onglet du même écran, pas un écran de plus.
 
-### Ajouté
+#### Ajouté
 
 - **`CRM-083` — le canevas d'objectifs, tranche 1 : on VOIT enfin ses tableaux.** Une entrée
   « Objectifs » dans la navigation, la liste des tableaux avec le nombre de blocs que l'appelant
@@ -2085,7 +2106,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   bornes**, 0 et 100 — une jauge n'est fausse qu'aux bords. Le seed vérifie lui-même la règle de
   visibilité avec le **vrai jeton** de la lectrice, jamais avec la clé de service.
 
-### Vérifié
+#### Vérifié
 
 - `supabase/tests/0047_objectifs.test.sql` — **45 assertions**, aucune anomalie.
 - `e2e/api/objectifs.spec.ts` — **12 scénarios** avec les jetons réels des trois profils seedés.
@@ -2094,7 +2115,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
 - `database.types.ts` régénéré et son témoin figé révisé **dans le même changement** que la
   migration : vingt-neuf tables deviennent trente-deux.
 
-### Documentation
+#### Documentation
 
 - **Deux fonctionnalités neuves sont spécifiées avant toute ligne de code** (décisions 431 et 432,
   demandées par le responsable le 2026-08-19) : le **tableau d'objectifs** et la **gestion des
@@ -2134,7 +2155,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
 - `docs/SCHEMA.md` §9 bis (six tables et leurs politiques), `docs/DAT.md` §7 bis (aucun service ni
   dépendance nouvelle), `docs/DESIGN_SYSTEM.md` §5.29 et §5.30, `docs/MASTER_PLAN.md` chunk 6 et
   `docs/BACKLOG.md` sont écrits dans le même changement.
-### `CRM-081` — l'inbox énumère des conversations, plus des messages isolés (tranche 2 f)
+#### `CRM-081` — l'inbox énumère des conversations, plus des messages isolés (tranche 2 f)
 
 - **La liste de l'inbox groupe les messages en fils.** Une conversation — un message et les réponses
   qui le citent — tient sur une seule ligne, qui porte l'expéditeur, l'objet et la date de son
@@ -2155,7 +2176,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
 - **Aucune migration, aucun chemin serveur nouveau.** Les compteurs de dossiers continuent de
   compter des messages, et le motif de ce choix est écrit plutôt que subi.
 
-### `CRM-081` — le sommeil d'un fil de messagerie se voit et se commande (tranche 2 e)
+#### `CRM-081` — le sommeil d'un fil de messagerie se voit et se commande (tranche 2 e)
 
 - **L'inbox montre l'état du fil de chaque message et laisse l'endormir.** Sous l'en-tête du message
   ouvert, « Mettre le fil en sommeil » offre quatre échéances usuelles ou une échéance choisie ;
@@ -2172,7 +2193,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
 - Reste dû sur `CRM-081` après la tranche 2 e : le **groupement** des messages en fils dans
   l'inbox — livré depuis par la tranche 2 f ci-dessus.
 
-### Ajouté
+#### Ajouté
 
 - **`CRM-081` — Snooze, tranche 2 c : le sommeil d'un FIL de messagerie, sa règle, sa garde et sa
   trace** (`docs/SPEC-cards.md` §16.14, migration `0048_snooze_fils.sql`). L'énoncé de l'unité
@@ -2393,7 +2414,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   Preuves : 27 tests unitaires (`contacts.test.ts`, `FicheOrganisation.test.tsx`), 20 scénarios
   E2E sur la pile seedée, captures observées sous `docs/captures/CRM-060/`.
 
-### Corrigé
+#### Corrigé
 
 - **`CRM-060` tranche 4e — fermer le formulaire du carnet perdait le focus.** Activer « Annuler »
   au clavier laissait le focus sur le document et renvoyait donc en tête de page, au lieu de le
@@ -2572,7 +2593,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   et aucune ligne n'étant écrite. Trois captures observées, dont
   `docs/captures/CRM-033/refus-workflow-hors-track.jpg`.
 
-### Corrigé
+#### Corrigé
 
 - **Trois harnais de vérification laissaient `move_card` amputée en sortant** (INC-154). Ils
   rejouent la migration `0013` pour poser leurs dégradations, puis restauraient la fonction depuis
@@ -2882,7 +2903,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   manœuvre à faire. Ce refus partage son `SQLSTATE` avec celui de la RLS ; les confondre aurait fait
   lire un refus **rattrapable** comme un refus de droit.
 
-### Corrigé
+#### Corrigé
 
 - **Le §2.6 de `docs/SPEC-workflow-engine.md` décrivait comme « non livrable » une garde livrée
   depuis `CRM-040`.** La garde d'archivage d'un nœud occupé est posée par la migration 11 depuis le
@@ -2955,7 +2976,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   placement et non la composition. Les restaurer aurait été un déménagement caché dans un
   rétablissement.
 
-### Corrigé
+#### Corrigé
 
 - **La concurrence optimiste de la restauration rend enfin le `409` qu'elle annonçait**
   (`CRM-078`, quatrième tranche). Lorsque `expected_live_fingerprint` est périmée, l'appel rendait
@@ -2966,7 +2987,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   un `400` dit « votre demande est mal formée », là où le `409` dit « votre demande était valide,
   mais la structure a bougé — redemandez le plan ». Le message et le `detail` sont inchangés.
 
-### Documentation
+#### Documentation
 
 - **Le registre repasse à zéro entrée ouverte** (décisions 428 à 430). Les trois entrées consignées
   par les sessions de `CRM-077` et `CRM-078` sont arbitrées ; l'index passe à **cent vingt-deux**.
@@ -2986,7 +3007,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   n'importe quelle base ; le workflow dérivé se désigne par son nom, ce qui répare la seconde
   assertion par le même geste.
 
-### Ajouté
+#### Ajouté
 
 - **Avant de restaurer une version, le produit dit card par card où l'affaire atterrit —
   `CRM-078`, troisième tranche** (`supabase/migrations/0041_plan_remappage_cards.sql`,
@@ -3136,7 +3157,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   - **Le manuel gagne le chapitre de la corbeille**, qui manquait depuis la livraison de l'écran, et
     celui de l'arborescence décrit le nouveau geste et ce qui le distingue de l'archivage.
 
-### Documentation
+#### Documentation
 
 - **`docs/CloudWorker.md` : la campagne de preuves quitte l'ouverture de session** (décision 420).
   Le §2.3 ordonnait « la pile debout, tu DOIS exécuter les vraies preuves applicables » — huit
@@ -3156,7 +3177,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
 - **Rien n'est relâché** : aucune preuve supprimée, aucune Definition of Done allégée. Ce qui change
   est **quand** la campagne s'exécute, pas **si**.
 
-### Documentation
+#### Documentation
 
 - **Le registre des contradictions est vide** (décisions 408 à 419). Les dix-neuf dernières entrées
   ouvertes sont arbitrées, sur instruction du responsable de trancher automatiquement tout ce qui
@@ -3187,7 +3208,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   avancer —, et INC-111, dont la vérification portera désormais sur le fond de la consigne et non
   sur le rang d'un appel d'outil.
 
-### Documentation
+#### Documentation
 
 - **`docs/INCONSISTENCY_REPORT.md` change de règle de retrait, et cinquante-deux entrées en
   sortent** (décision 407). Une entrée est désormais retirée dès que son arbitrage est consigné
@@ -3199,7 +3220,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   l'index ; dix-neuf restent ouvertes, trois de plus consignées entre-temps par une session
   concurrente (INC-117 à INC-119).
 
-### Ajouté
+#### Ajouté
 
 - **La corbeille énumère ce qu'un geste rendrait inaccessible — `CRM-077`**
   (`webapp/src/lib/corbeille.ts`, `docs/SPEC-corbeille.md` §3.5). Mettre un parent à la corbeille ne
@@ -3529,7 +3550,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   décrivent ce que la session du lot G a réellement mesuré et livré, et qu'une entrée de changelog
   n'est pas réécrite après coup ; le renvoi évite qu'ils se lisent comme l'état courant.
 
-### Corrigé
+#### Corrigé
 
 - **Lot I+J : les preuves d'arborescence rendent la table dans l'état où elles l'ont trouvée, et
   les cinq garde-fous globaux gardent de nouveau quelque chose** (ordre de reprise : décisions 377
@@ -3638,14 +3659,14 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   référence cassée. Contrairement aux précédentes, celle-ci ne vient pas d'une exécution concurrente
   mais d'une absence de relecture du compteur — le verrou du lot C ne l'aurait pas arrêtée.
 
-### Ajouté
+#### Ajouté
 
 - **`retirerDeLaBoite` dans `e2e/mail/protocoles.ts`** : purge IMAP d'une boîte réelle par sujet,
   écrite en `node:net` et **sans aucune bibliothèque** (décision 238). Elle balaie **tous** les
   dossiers de la boîte, et non le seul `INBOX` — entre le dépôt et la purge, la veille a pu ranger
   le message dans le dossier de sa card.
 
-### Documentation
+#### Documentation
 
 - **INC-096 reçoit une mesure contraire, et reste pourtant ouverte** (décision 369) : le tirage
   d'images réussit sur l'exécution du 2026-08-14, alors qu'il rendait `429` le 2026-08-12. L'entrée
@@ -3674,7 +3695,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   son écran depuis `CRM-075`, et la messagerie du produit n'est plus « rien ne la lit » mais
   « écrite, et aucune de ses unités intégralement prouvée ».
 
-### Documentation
+#### Documentation
 
 - **Les 61 entrées ouvertes du registre reçoivent chacune une disposition** (décision 367),
   présentées au responsable en treize lots et arbitrées une par une. Le filtre qui avait écarté
@@ -3690,7 +3711,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
 - **`docs/BACKLOG.md` porte le plan d'exécution** — quels lots sont faisables aujourd'hui, lesquels
   attendent la pile.
 
-### Supprimé
+#### Supprimé
 
 - **Le pooler de connexions Supavisor est retiré de la pile** (décision 366). Il était démarré,
   sondé et publié depuis `CRM-001` sans aucun consommateur : les quatre services qui parlent SQL
@@ -3705,7 +3726,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   la base (INC-098). Le contrôle n° 1 de `scripts/verify-scripts.sh`, qui refuse toute variable du
   gabarit que rien n'interpole, imposait de lui-même ce retrait dans le même changement.
 
-### Modifié
+#### Modifié
 
 - **`STACK_RLIMIT_NOFILE` passe de `100000` à `10000`.** La valeur haute était la demande de
   Supavisor ; Realtime en réclame 10 000. Un hôte dont la limite dure est plus basse continue d'être
@@ -3715,7 +3736,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   n'ont pas été rejoués, la preuve de l'unité est périmée. Non rejoués le 2026-08-13 : le démon
   Docker n'était pas joignable depuis la session.
 
-### Documentation
+#### Documentation
 
 - **Plus aucune décision n'est suspendue dans le registre** (décisions 362 à 365). Les six entrées
   ouvertes après le 2026-08-11 sont tranchées ; INC-096 n'appelait pas un choix mais une action hors
@@ -3740,7 +3761,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
 - **`docs/BACKLOG.md` nomme les porteurs** de ces quatre arbitrages dans une section dédiée. Aucune
   unité n'est créée : le travail rejoint des unités existantes ou la méthode de travail.
 
-### Documentation
+#### Documentation
 
 - **Le registre des contradictions ne conserve plus que ce qui est ouvert** (décision 361). Le texte
   intégral des **36 entrées closes** est retiré de `docs/INCONSISTENCY_REPORT.md` et remplacé par un
@@ -3761,7 +3782,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   qui n'était pas le cas, et aucune référence n'est cassée. **La cause n'est pas traitée** : rien
   n'empêche encore une écriture de reprendre un numéro déjà pris.
 
-### Corrigé
+#### Corrigé
 
 - **INC-085 et INC-075 closes, `CRM-012` passe `[x]` : un track est désormais lisible dès qu'un de
   ses channels l'est.** Un `channel_members.access = 'member'` posé sous un track fermé rouvrait
@@ -3801,7 +3822,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   reste strictement inerte. `docs/JOURNAL.md` décision 356 ; `README.md`, `.env.example` et
   `docs/DAT.md` documentent la nouvelle variable facultative.
 
-### Ajouté
+#### Ajouté
 
 - **Le travail hors de `main` est désormais refusé par Git, au commit comme au push** (décision
   358). `.githooks/lib/exige-main.sh` fournit un contrôle de branche appelé par `.githooks/pre-commit`
@@ -4059,7 +4080,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
     (`docs/SPEC-mail-subsystem.md` §20.6 bis.3), jamais exercée par une relève réelle faute d'un
     compte seedé avec `backfill_months > 0` — prouvée au niveau unitaire (pytest) seulement.
 
-### Corrigé
+#### Corrigé
 
 - **`CRM-053`/`CRM-058` — `upsert_mail_outbound_identity` réinstallait `daily_quota = 0` à chaque
   appel sans plafond précisé, bloquant tout envoi.** La migration `0030` avait posé `NULL` comme
@@ -4081,7 +4102,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   note aussi le remède durable manquant — un crochet `pre-commit` refusant une adresse non conforme,
   qui n'appartient à aucune unité.
 
-### Documentation
+#### Documentation
 
 - **`CRM-075` est spécifiée avant d'être écrite.** `docs/SPEC-administration-arborescence.md` décrit
   l'écran d'administration des tracks et des channels — adresses, gestes, requêtes émises, refus
@@ -4146,7 +4167,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   depuis `CRM-009`**. Le motif invoqué a disparu sans que la limite soit levée — un formulaire
   complet, validé et prouvé côté base, qu'aucun utilisateur ne peut remplir.
 
-### Documentation
+#### Documentation
 
 - **`CRM-059` est spécifiée avant d'être écrite** (`docs/SPEC-mail-subsystem.md` §20, décision 331),
   sur quatre mesures : `UID SEARCH SINCE` est honoré — le backfill est une sélection, pas un tri —,
@@ -4155,7 +4176,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
 - **La règle qui gouverne la reprise est écrite** : une panne se rejoue, un refus non. Le backoff —
   1, 4, 16, 64 minutes, puis échec définitif — ne s'applique qu'aux codes de transport.
 
-### Documentation
+#### Documentation
 
 - **`CRM-058` est spécifiée avant d'être écrite** (`docs/SPEC-mail-subsystem.md` §19, décision 330),
   sur quatre mesures faites contre le serveur réel : le `Message-ID` du produit est conservé, le
@@ -4165,7 +4186,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   provisionnement, ce qui rend applicable la divergence entrant/sortant que le seed promettait
   depuis `CRM-053`. Vérifié : la soumission depuis cette adresse est désormais acceptée.
 
-### Documentation
+#### Documentation
 
 - **`CRM-057` est spécifiée avant d'être écrite** (`docs/SPEC-mail-subsystem.md` §18, décision 327).
   La question laissée ouverte par `CRM-054` — qui voit un message que personne n'a encore classé —
@@ -4181,7 +4202,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
 - `docs/DESIGN_SYSTEM.md` §5.4, `docs/SPEC-permissions-rls.md` §5, `docs/SCHEMA.md` §7 et
   `docs/SPEC-seed.md` §2.19 sont mis en cohérence dans le même changement.
 
-### Ajouté
+#### Ajouté
 
 - **`CRM-059` — une coupure SMTP ne perd plus de message.** Le backoff est livré : 1, 4, 16, 64
   minutes, puis échec définitif. Il ne s'applique **qu'aux pannes de transport** — un mot de passe
@@ -4224,7 +4245,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
 - **La pièce jointe saine devient téléchargeable**, et elle seule : `infected`, `pending` et
   `skipped` restent refusées à tous, l'anonyme sur les quatre.
 
-### Sécurité
+#### Sécurité
 
 - **LA PREUVE DE REFUS N° 12 EST ACQUISE**, et l'inventaire de `docs/SPEC-permissions-rls.md` §7
   passe à « **onze acquises, une à moitié** ». Un membre n'emprunte pas l'identité de service du
@@ -4251,7 +4272,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   télécharger des objets **jamais déposés** — vrai aussi d'un bucket vide. Quatre objets sont
   désormais réellement déposés, et la pièce saine sert de témoin.
 
-### Corrigé
+#### Corrigé
 
 - **`daily_quota` valait zéro, donc interdisait tout envoi.** `CRM-053` l'avait créée
   `not null default 0` en écrivant qu'aucun consommateur n'existait ; dès qu'un consommateur a
@@ -4279,7 +4300,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   régénération. L'assertion qui fige la liste des fonctions exposées a joué — avec un chunk de
   retard, `scripts/verify-types.sh` n'appartenant pas au harnais global.
 
-### Documentation
+#### Documentation
 
 - `docs/manual.md` gagne le chapitre **4.15**, « L'inbox : lire et trier le courrier reçu ».
 - **INC-087 ouvert** : l'identité sortante seedée expédie depuis une adresse que le serveur de
@@ -4293,14 +4314,14 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   Preuves : `scripts/verify-mail-dossiers.sh` **37/37**, **18 assertions** pgTAP, 3 scénarios
   `mail`, 2 captures observées. Compteurs : 28 fichiers SQL, 1861 assertions, 38 `mail`.
 
-### Corrigé
+#### Corrigé
 
 - **Les dossiers créés étaient invisibles pour l'utilisateur.** Un client de messagerie n'affiche
   que les dossiers **souscrits** : l'arborescence existait côté serveur, l'API la voyait, et
   personne ne la voyait à l'écran. `SUBSCRIBE` suit désormais chaque création et chaque renommage.
   Défaut trouvé par l'observation visuelle, et par elle seule (décision 326).
 
-### Corrigé
+#### Corrigé
 
 - **Le redémarrage de la pile était cassé, et c'était bloquant.** Le `migrations-runner` rejoue tout
   le répertoire à chaque démarrage ; les migrations 17 et 20 rétrécissaient le vocabulaire de
@@ -4331,7 +4352,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   d'API, un vrai email classé automatiquement. Compteurs : 27 fichiers SQL, 1843 assertions,
   469 scénarios d'API, 35 `mail`.
 
-### Corrigé
+#### Corrigé
 
 - **Deux preuves se croyaient propres** : elles retiraient l'événement de timeline qu'elles avaient
   créé, alors que `card_events` n'accorde aucune écriture à personne. Le refus était silencieux, et
@@ -4352,7 +4373,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   pgTAP, **4 scénarios** d'API, **2 scénarios** `mail` dont un email réellement envoyé, `pytest`
   **114**. Compteurs globaux : 26 fichiers SQL, 1823 assertions, 466 scénarios d'API, 34 `mail`.
 
-### Corrigé
+#### Corrigé
 
 - **Une relève rejouée échouait** : `Prefer: resolution=ignore-duplicates` ne s'applique pas sans
   le paramètre `on_conflict`, et PostgREST rendait un `409`.
@@ -4382,7 +4403,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
 - **`docs/manual.md` chapitre 4.13** : recevoir et expédier sont deux choses distinctes, et le
   quota déclaré n'est appliqué par rien tant que l'envoi n'est pas livré.
 
-### Corrigé
+#### Corrigé
 
 - **Un invariant arrivait après son gardien** : le trigger qui rabat l'identité par défaut était
   `AFTER`, si bien que l'index unique refusait la seconde identité avant tout rabattement. Il est
@@ -4417,7 +4438,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   produit garantit sur un mot de passe, qui voit quelle boîte, les six causes d'échec en français,
   et le fait qu'aucun écran ne permet encore de déclarer une boîte.
 
-### Corrigé
+#### Corrigé
 
 - **Une borne de tableau ne bornait rien** : `array_length('{}', 1)` rend NULL, et un `check` qui
   vaut NULL est réputé satisfait — un compte pouvait donc ne surveiller aucun dossier.
@@ -4454,7 +4475,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   **5 scénarios sans aucune substitution** — session réelle, écriture par l'écran, relecture par
   l'API —, `npm run test:unit` **585**, et cinq captures nouvelles observées une à une.
 
-### Corrigé
+#### Corrigé
 
 - **Le fil se vidait entièrement le temps d'une relecture, et une capture seule le montrait.**
   Après une publication, une correction ou une suppression, `recharger()` rejouait tout l'effet :
@@ -4482,7 +4503,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   sous la charge de la pile Docker par un rendu qui coûte 0,1 s à vide. Le plafond passe à 20 s,
   sans qu'aucune assertion soit assouplie.
 
-### Ajouté
+#### Ajouté
 
 - **`CRM-051` est livrée : le service `mail-sync` existe, tourne et se prouve.** Le conteneur est
   déclaré dans l'assemblage **commun**, donc identique en développement et en production : image
@@ -4681,7 +4702,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   leur arbitrage et INC-005 est close. **Aucune ligne de code n'est modifiée** : les mises en œuvre
   décidées restent dues, chacune rattachée à son unité.
 
-### Corrigé
+#### Corrigé
 
 - **`scripts/verify-commentaires.sh` échouait sur tout hôte où Playwright résout son navigateur.**
   Il imposait `PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium` **par défaut**, un chemin propre
@@ -4719,7 +4740,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   corrigés, dans `docs/SPEC-auth.md`, `docs/DAT.md` §3.1 et `docs/BACKLOG.md`. Les commentaires
   `@spec` du code et les `@verifies` des preuves sont maintenant repris sous `CRM-009`.
 
-### Supprimé
+#### Supprimé
 
 - **Les quarante et une branches `claude/happy-goldberg-*` sont supprimées** d'`origin`, sur
   instruction du responsable : leur existence violait `CLAUDE.md` §13, qui impose de travailler sur
@@ -4846,7 +4867,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   du `README.md`. Corriger quatre lignes appartenant à quatre autres unités mêlerait quatre sujets à
   un commit qui n'en traite qu'un.
 
-### Corrigé
+#### Corrigé
 
 - **Le chargement initial de la webapp repasse sous le seuil Vite sans relever ce seuil.**
   `RouteTrack` et `RouteCard` sont chargées à la navigation avec un squelette accessible : le
@@ -4903,7 +4924,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   vraie route le font mordre. Sa restauration porte sur l'**état** ; la **mémoire** ne revient pas,
   et l'écart de la timeline est mesuré à la valeur près.
 
-### Corrigé
+#### Corrigé
 
 - **Deux défauts de `CRM-046` trouvés par son propre harnais, avant tout commit de code.**
   Conditionner toute la réparation de la section 7 à la conformité de la copie faisait perdre la
@@ -4975,7 +4996,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   profils) — `npm run e2e:api` passe de 391 à **409** ;
   `scripts/verify-move-card-to-channel.sh` (**43 contrôles**, cinq dégradations volontaires).
 
-### Corrigé
+#### Corrigé
 
 - **La pile ne redémarrait plus sur une base seedée** — `CRM-045`, décision 219, INC-074. La
   migration 16 ramenait le vocabulaire de `card_events` à huit valeurs à chaque rejeu du
@@ -5183,7 +5204,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   qui en étaient la cause, une action dupliquée, et une carcasse de tableau sous le message. Les
   trois sont corrigés et figés par des assertions.
 
-### Corrigé
+#### Corrigé
 
 - **Le repli du libellé d'une transition était construit par concaténation dans le composant**, ce
   que `docs/SPEC-workflow-engine.md` §7.5 interdit nommément au profit d'une **clé de traduction
@@ -5194,7 +5215,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   d'interface, avec un jeu de rechange ; elles vérifient aussi que le marqueur ne fuit jamais jusqu'à
   l'écran (décision 180).
 
-### Documentation
+#### Documentation
 
 - **Les neuf harnais laissés en attente par `CRM-042` ont été rejoués, et huit sont verts** —
   `verify-catalogue` 39, `verify-workflows` 49, `verify-copie-workflow` 34,
@@ -5218,14 +5239,14 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   sur la carte ; la **prescription** restait, elle, sans porteur. Distinct de l'avatar du
   responsable, qui manque faute de droit de lecture et non faute de modèle de données.
 
-### Modifié
+#### Modifié
 
 - **Le harnais E2E accepte un navigateur fourni par l'environnement**, par la variable facultative
   `PLAYWRIGHT_CHROMIUM_PATH` (`docs/SPEC-test-harness.md` §4.4 bis, décision 181). Sur une image qui
   préinstalle ses navigateurs et interdit `playwright install`, Playwright réclame la révision qu'il
   épingle et **tous** les scénarios `ui` du dépôt échouent au lancement. Absente, rien ne change ;
   elle ne désactive aucun contrôle et ne substitue aucune réponse, seul le binaire diffère.
-### Documentation
+#### Documentation
 
 - **La vue liste d'un channel est spécifiée avant d'être écrite** — `CRM-042`,
   `docs/SPEC-cards.md` §12, douze sous-chapitres. L'unité tenait en deux lignes au backlog, et
@@ -5244,7 +5265,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   Un basculement de représentation concaténerait donc **en silence**, sans qu'aucune preuve ne le
   voie. Comportement inchangé, trois options portées au responsable.
 
-### Ajouté
+#### Ajouté
 
 - **Le board kanban d'un channel** — `CRM-041`, `docs/SPEC-workflow-engine.md` §7. Ouvrir un onglet
   de channel affiche désormais **une colonne par étape de son workflow**, dans l'ordre de ces
@@ -5274,7 +5295,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   dégradations volontaires. Onze captures et la **vidéo `.webm` du glisser-déposer** ont été
   produites et observées.
 
-### Corrigé (relevé par les preuves de `CRM-041`)
+#### Corrigé (relevé par les preuves de `CRM-041`)
 
 - **Une preuve d'interface était complaisante, et c'est sa propre dégradation qui l'a dit** —
   décision 174. Le refus d'un dépôt sur une colonne non atteignable n'était constaté que par
@@ -5293,7 +5314,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   d'erreur. Les fixtures emploient désormais les identifiants du seed : une fixture n'a pas le droit
   de servir une ligne que la base ne pourrait pas produire.
 
-### Documentation
+#### Documentation
 
 - **Le chapitre « Interface » du moteur de workflow est réécrit en contrat vérifiable, avant toute
   ligne de code de `CRM-041`** — `docs/SPEC-workflow-engine.md` §7, décisions 168 à 173. Il tenait
@@ -5315,7 +5336,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   livré sa matière sans une ligne d'interface. La phrase est conservée intacte, explicitement hors
   du périmètre de `CRM-041`, et trois options d'arbitrage sont portées au responsable.
 
-### Corrigé
+#### Corrigé
 
 - **La barre d'onglets restait vide sur la route d'une card, contre le §4 du design system** —
   décision 167, `docs/SPEC-form-composer.md` §4.6 bis, `docs/SPEC-channels.md` §5.4. La route livrée
@@ -5375,7 +5396,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   ouverte (INC-052). `scripts/verify-formulaire.sh` gagne la dégradation **D2 bis**, qui remet
   `trim()` en place et confronte le résultat à la base — seule cette confrontation attrape ce
   défaut. Le mécanisme de comparaison était bon ; le tableau ne contenait pas le cas.
-### Ajouté
+#### Ajouté
 
 - **`CRM-037` — le formulaire conditionnel d'une card est rendu, et il a un écran.** Première unité
   du chunk 3 à livrer une route affichant une donnée métier :
@@ -5410,7 +5431,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
     que le plan ordonne après cette unité. **INC-062**, trois options, arbitrage attendu. L'unité
     reste `[~]`.
 
-### Corrigé
+#### Corrigé
 
 - **Une case à cocher de 20 px n'existait pas dans le CSS produit** — décision 162, trouvée par
   `scripts/lib/classes-css.mjs` et non à l'œil. L'échelle d'espacement de `docs/DESIGN_SYSTEM.md`
@@ -5451,7 +5472,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   `WITH CHECK` réellement exercé une fois le privilège rendu —, elle mesure désormais chaque
   barrière séparément. Le harnais passe de 37 à **38 contrôles hors suites** (44 à 45 au total).
 
-### Ajouté
+#### Ajouté
 
 - **L'identité Git de l'exécution a dû être corrigée, et le fait est consigné** — INC-034 point 2,
   troisième occurrence, décision 159. Le conteneur neuf rend `user.email` =
@@ -5609,7 +5630,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
     `e2e/api/valeurs-champs.spec.ts` : **22 scénarios**, jetons réels des trois profils.
     `scripts/verify-valeurs-champs.sh` : **33 contrôles**, éprouvé par trois dégradations réelles.
 
-### Corrigé
+#### Corrigé
 
 - **Trois garde-fous mesuraient l'âge de la base, non le produit — INC-056.** Sur une base créée de
   zéro, trois contrôles de `CRM-031`, `CRM-035` et `CRM-036` échouaient : ils comptaient à l'échelle
@@ -5646,7 +5667,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   violation de clé étrangère rend `409` et non `400` ; un `DELETE` refusé à un rôle **authentifié**
   rend `403` et non `401`.
 
-### Modifié
+#### Modifié
 
 - **Six garde-fous figés par des unités précédentes sont devenus rouges comme prévu, et ont été
   révisés — aucun n'a été retiré** (mécanisme de la décision 51, neuvième occurrence) : les deux
@@ -5663,7 +5684,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   `docs/DAT.md`, `docs/manual.md` chapitres 4.3, 5, 6, 23 et 24, `webapp/src/lib/database.types.ts`
   et son test de types mis à jour dans le même changement.
 
-### Ajouté (unités précédentes)
+#### Ajouté (unités précédentes)
 
 - **`CRM-034` — `move_card` : le graphe du workflow devient opposable.**
   `supabase/migrations/0012_move_card.sql`, `docs/SPEC-workflow-engine.md` §5.
@@ -5697,7 +5718,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
     outre la **convergence** : un `grant update on public.cards to authenticated` posé à la main est
     **refermé** par un rejeu de la migration.
 
-### Modifié
+#### Modifié
 
 - **Quatre assertions figées par des unités précédentes ont été retournées**, aucune retirée
   (mécanisme de la décision 51, onzième occurrence) : trois dans `supabase/tests/0012_cards.test.sql`
@@ -5709,7 +5730,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
 - `README.md` : `scripts/verify-cards.sh` et `scripts/verify-droits-fins.sh` manquaient à la liste
   des harnais, omission de leurs unités respectives ; ajoutés avec `scripts/verify-move-card.sh`.
 
-### Limites nommées
+#### Limites nommées
 
 - **La sixième vérification n'est pas écrite** — INC-047. « Les champs requis de l'étape cible sont
   renseignés » lit `card_field_values`, due par `CRM-036`. Refuser toute transition dont l'ensemble
@@ -5729,14 +5750,14 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   défaut ; INC-052, « un commentaire vide n'est pas un commentaire » ne refuse pas une tabulation,
   `btrim` à un argument ne retirant que des espaces.
 
-### Contrat de déploiement
+#### Contrat de déploiement
 
 - **Migration 12 — changement de contrat pour tout appelant existant.** `authenticated` perd
   l'`UPDATE` de table sur `cards` : toute intégration qui écrivait `current_step_id` par un `PATCH`
   direct recevra `403` et **doit passer par `move_card`**. `service_role` n'est pas touché.
   `docs/PROD_MIGRATIONS.md` §3 en porte le détail, le contrôle préalable et le retour arrière.
 
-### Ajouté
+#### Ajouté
 
 - **`CRM-040` — les cards : l'objet métier principal existe enfin.**
   `supabase/migrations/0011_cards.sql`, `docs/SPEC-cards.md`.
@@ -5771,7 +5792,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
     **24 scénarios** avec les jetons réels des trois profils seedés ; `scripts/verify-cards.sh`
     **44 contrôles**, éprouvé par trois dégradations réelles.
 
-### Corrigé
+#### Corrigé
 
 - **`docs/SPEC-cards.md` §6.1 rectifié avant d'être publié** : le `WITH CHECK` d'une politique
   `for update` y était présenté comme indispensable. MESURÉ sur une politique sonde, il ne l'est
@@ -5780,7 +5801,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   **permissive** plutôt que de la retirer : la retirer ne dégradait rien et rendait la preuve
   complaisante sans que rien ne le signale.
 
-### Modifié
+#### Modifié
 
 - **Sept assertions figées par des unités précédentes ont échoué comme prévu, et ont été révisées**
   (mécanisme de la décision 51, dixième occurrence) : dans `0002`, `0006`, `0007` et `0011`, ainsi
@@ -5822,7 +5843,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
     les jetons réels des trois profils), et `scripts/verify-droits-fins.sh`, non complaisant —
     éprouvé par trois dégradations réelles, chacune restaurée et la restauration **constatée**.
 
-### Corrigé
+#### Corrigé
 
 - **`CRM-012` — une politique qui relit sa propre table casse `insert … returning`.** Défaut réel,
   introduit puis corrigé dans le même changement, et trouvé par les preuves de `CRM-020`. Le
@@ -5898,7 +5919,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   - **Aucun écran** : affecter un workflow à un channel suppose un écran d'administration
     authentifié (INC-021). La règle est prouvée en base et par l'API.
 
-### Corrigé
+#### Corrigé
 
 - **`CRM-002` — `./runDev.sh` ne démarrait pas sur un poste WSL, pour quatre raisons d'hôte.**
   Aucune ne touche au métier ; toutes tenaient à ce que le dépôt supposait de l'hôte sans le
@@ -5944,7 +5965,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   - Troisième forme de la décision 57, et la **première sur un seed** — ce qui explique qu'aucun des
     garde-fous posés pour les deux précédentes ne l'ait vue.
 
-### Modifié
+#### Modifié
 
 - **Le seed crée le workflow par défaut avant les channels** (section 3 bis), que `NOT NULL` oblige à
   le désigner. Le `PATCH` de rattachement posé par `CRM-031` disparaît. `prospection` suit désormais
@@ -5955,7 +5976,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   compteurs de `scripts/verify-harness.sh` (622 / 110 / 37 → **653 / 125 / 37**). Décision 51,
   sixième occurrence.
 
-### Documentation
+#### Documentation
 
 - **`CRM-033` — spécification de la cohérence workflow ↔ channel, écrite après mesure et avant tout
   code.** `docs/SPEC-workflow-engine.md` §4.12 réécrit en huit sous-chapitres.
@@ -5977,7 +5998,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
     **et** son track, un déplacement de la copie fait naître une **seconde** copie au rejeu. Troisième
     forme de la décision 57, la première sur un seed. INC-041, correction rattachée à `CRM-033`.
 
-### Corrigé
+#### Corrigé
 
 - **`CRM-008` — un faux vert réel de l'exécuteur pgTAP, trouvé, reproduit et corrigé.**
   `scripts/run-sql-tests.sh` déclarait verte une suite que pgTAP déclarait tronquée.
@@ -6003,7 +6024,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
     plan tenu, aucun diagnostic.
 
 
-### Documenté
+#### Documenté
 
 - **`CRM-032` — spécification de la copie d'un workflow vers un track, écrite après mesure et avant
   tout code.** `docs/SPEC-workflow-engine.md` §4 est réécrit : le chapitre datait de `CRM-000`,
@@ -6057,7 +6078,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
     — mesuré, et propriété du type, non différé d'ordonnancement.
   - **`INC-029` et `INC-031` mises à jour**, sans être closes.
 
-### Ajouté
+#### Ajouté
 
 - **`CRM-032` — Copie d'un workflow vers un track (`[~]`).** La fonction
   `public.copy_workflow_to_track(workflow_id, track_id, new_name)` duplique un workflow global vers
@@ -6112,7 +6133,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
     doublement fautive est refusée par sa contrainte de valeur avant son unicité. Les deux ont été
     établies par un échec d'assertion, non par une lecture de documentation.
 
-### Corrigé
+#### Corrigé
 
 - **Décision 78 — les contraintes nommées d'une migration doivent être convergentes, pas seulement
   idempotentes.** Défaut réel trouvé par une exécution parallèle de la routine : une contrainte
@@ -6128,7 +6149,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   être poussé, et **seul le défaut ci-dessus** en est reporté. Toutes les preuves ont été rejouées
   sur ce socle après intégration.
 
-### Signalé
+#### Signalé
 
 - **`INC-035`** — les clés étrangères des migrations `0003`, `0004` et `0005` portent le défaut
   corrigé ci-dessus. Non corrigées : ce sont des livrables d'unités vérifiées, et les reprendre
@@ -6140,7 +6161,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   - **Reste dû, et nommé** : aucun éditeur d'administration, aucun E2E d'interface, aucune capture —
     la webapp est un appelant anonyme (INC-021). L'unité reste `[~]`.
 
-### Intégré
+#### Intégré
 
 - **`CRM-030` reportée sur `main`, puis intégralement revérifiée sur ce socle.** L'unité avait été
   poussée sur une branche parallèle, sur un état du dépôt qui ignorait le correctif d'idempotence
@@ -6162,7 +6183,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
     montrait deux entrées de navigation mises en valeur, artefact du survol laissé par le pilote
     Playwright. Ce passage ne touche aucun écran.
 
-### Ajouté
+#### Ajouté
 
 - **`CRM-030` — Catalogue de nœuds (`[~]`).** Le vocabulaire des états d'une affaire, et la
   **première preuve de refus n° 2** du projet.
@@ -6194,7 +6215,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
     table absente, et l'échec ne survient qu'au premier appel — un trigger écrit aujourd'hui ferait
     échouer toute mise à jour du catalogue sans rien protéger.
 
-### Corrigé
+#### Corrigé
 
 - **La spécification attribuait à PostgREST un comportement du moteur** (`CRM-030`). Le §2.8
   affirmait qu'une mise à jour refusée rend `200` et un tableau vide « sous PostgREST ». C'est faux
@@ -6242,7 +6263,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
     et sans clé étrangère, la table `workflows` n'arrivant qu'avec `CRM-031` (**INC-029**) ; et la
     lecture qui n'applique aucun droit fin, `app.can_read_channel` restant différée (**INC-030**).
 
-### Corrigé
+#### Corrigé
 
 - **La migration des channels était idempotente sans être réparatrice** (`CRM-021`). L'unicité
   `(track_id, slug)` était écrite **dans le `create table`**, qui porte `if not exists` : après
@@ -6325,7 +6346,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   - `docs/DESIGN_SYSTEM.md` §1, §5.6 et **§12.5** (nouvel écart), `docs/JOURNAL.md` mis à jour dans
     le même changement.
 
-### Ajouté
+#### Ajouté
 
 - **`CRM-020` — Tracks (`[~]`).** Premier objet métier du produit, et **premières politiques RLS**.
   - **`supabase/migrations/0003_tracks.sql`** : table `public.tracks` — nom, slug unique par
@@ -6753,7 +6774,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   - `docs/manual.md` — manuel utilisateur ;
   - `docs/INCONSISTENCY_REPORT.md` — registre des contradictions en attente d'arbitrage.
 
-### Corrigé
+#### Corrigé
 
 - **`CRM-002` passe `[x]`.** Sa dernière case ouverte — « `resetMe.sh` rejoue le seed » — est
   levée : `./resetMe.sh --yes` détruit le cluster, rejoue les migrations à blanc **puis applique
@@ -6767,7 +6788,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   sans migrations, dépassé depuis `CRM-003`. **Non corrigée ici** — elle relève de l'état global du
   dépôt, pas du périmètre de cette unité.
 
-### Notes
+#### Notes
 
 - La pile d'exécution et son outillage de lancement sont livrés et vérifiés, mais **aucun code
   applicatif ni aucune migration** ne l'est encore : `supabase/migrations/` est vide, il n'y a ni
@@ -6783,7 +6804,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   sont consignées dans `docs/INCONSISTENCY_REPORT.md`, INC-008. L'arrêt propre passe par
   `./runDev.sh --stop` et `./runProd.sh --stop`.
 
-### Modifié
+#### Modifié
 
 - **La forme canonique de la composition d'un workflow n'a plus qu'une seule définition —
   `CRM-078`.** `app.workflow_composition_fingerprint` construisait un document `jsonb` canonique et
@@ -6792,7 +6813,3 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   inchangée**, et deux assertions pgTAP figent les empreintes des deux workflows du seed pour qu'un
   écart futur rougisse avant que toutes les copies du produit ne se déclarent divergentes.
 
-
-## [Publié]
-
-_Rien à publier pour le moment._

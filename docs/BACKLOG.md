@@ -14457,7 +14457,7 @@ client est déclaré, la sonde du §10.8 rend `302` et une connexion réelle abo
       (`docs/SSO-client-lelabs-crm.md`), sonde `302` rejouée (décision 578, K1). La connexion réelle
       en production n'emploiera **pas** l'échange d'`id_token` de GoTrue : elle revient à `CRM-092`.
 
-### CRM-092 — Le SSO, seule source d'identité : GoTrue quitte la pile `[ ]`
+### CRM-092 — Le SSO, seule source d'identité : GoTrue quitte la pile `[~]`
 *Créée le 2026-09-23 — décision 578, arbitrage du responsable. Motif : la décision 568 avait gardé
 GoTrue comme émetteur et la connexion par mot de passe ; le responsable exige que le SSO soit la seule
 source d'identité, en développement (Keycloak préchargé de comptes et de rôles) comme en production
@@ -14537,17 +14537,21 @@ connexion réelle de `martino@p2enjoy.studio` aboutie après les opérations du 
       3225 assertions** ; unitaires **3285**, dont **126** pour l'échangeur ; `e2e:api` **1082/1082** ;
       `e2e:ui` **757/757** (par `verify-webapp`, **44 contrôles, aucune anomalie**) ;
       `verify-session-sso` **66, aucune anomalie** ; capture de l'exploitante relue.
-- [~] **Préalable humain chez LeLabs** : déclaration du client serveur `lelabs-crm-serveur` et secret
+- [x] **Préalable humain chez LeLabs** : déclaration du client serveur `lelabs-crm-serveur` et secret
       posé dans la cellule (décision 586, §12) ; `verified` sur `martino@p2enjoy.studio`. Client **créé**
       (sonde `302`, PKCE exigé, 2026-09-24, décision 598) ; `verified` à confirmer.
       Le client public `lelabs-crm` a été supprimé avant le déploiement (décision 598). Relu en
       cellule le même jour : **secret saisi** ; `proposer.sh --demandes-seules` corrigé pour les
-      valeurs entre guillemets (décision 599, `verify-spark` **86**, aucune anomalie).
-- [ ] Production : opérations du §12, écrites en `docs/PROD_MIGRATIONS.md` §2.5 — dont les demandes
+      valeurs entre guillemets (décision 599, `verify-spark` **86**, aucune anomalie). `verified` établi par la connexion réelle
+      du 2026-09-24.
+- [x] Production : opérations du §12, écrites en `docs/PROD_MIGRATIONS.md` §2.5 — dont les demandes
       de variables manquantes reposées par `proposer.sh --demandes-seules` (décision 590) —, connexion
-      réelle relue.
-- [~] **Notes du Spark réécrites et reproposées** (`docs/spark-notes/`) — **réécrites en T7** (état qui
-      suivra la reprise), **reproposition due** à l'étape 12 du §2.5 de `PROD_MIGRATIONS`. Déposées le 2026-09-23 comme
+      réelle relue. **Exécutée le 2026-09-24** (§8, décision 600) : révision `03dd22f0`, migrations 74 à 79,
+      GoTrue retiré, compte invité repris ; connexion réelle du responsable relue en base (profil,
+      appartenance `admin`, session chiffrée). `verifier.sh` refusé à la session : remplacé par les
+      contrôles publics et une lecture de la base, mémoire, ports et disque non relevés.
+- [~] **Notes du Spark réécrites et reproposées** (`docs/spark-notes/`) — **réécrites en T7**, **reproposées
+      le 2026-09-24** (identiques au dépôt), **acceptation en console attendue** ; étape 12 du §2.5 de `PROD_MIGRATIONS`. Déposées le 2026-09-23 comme
       propositions `.?`, elles attendent l'acceptation du propriétaire dans la console de la Forge
       (`docs/PROD_MIGRATIONS.md` §2.4, étape 9), et `CRM-092` les rend périmées — GoTrue, client
       public, relais SMTP. À réécrire en T7 et à reproposer au déploiement. **Instruction reçue le 2026-09-23** :

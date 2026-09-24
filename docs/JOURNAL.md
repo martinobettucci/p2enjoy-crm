@@ -29929,3 +29929,32 @@ ailleurs ; la présence du secret exige un premier caractère hors guillemets, `
 vides — toujours par `grep`, sans lire la valeur dans le shell. Deux preuves au format réel dans
 `verify-spark`, rouges avant la correction (86 vérifications, 2 anomalies), vertes après (86, aucune).
 
+## décision 600 — `CRM-092` en production
+
+*2026-09-24, soir. Reprise du §2.5 de `docs/PROD_MIGRATIONS.md`, sur autorisation explicite du responsable
+(« j'autorise cette session à exécuter des commandes dans le Spark distant de prod », puis « ok 7 et 8 »).
+Relevé détaillé : §8 du même document.*
+
+**Déroulé.** Archive seule et demandes reposées (étapes 1 et 2, après le correctif de la décision 599) ;
+import de `SSO_OIDC_CLIENT_ID` et instantané de VM par le responsable ; `livrer.sh -- --migrate
+--instantane-verifie` (révision `03dd22f0`, migrations 74 à 79) ; GoTrue retiré ; compte invité repris par
+le responsable ; connexion réelle du responsable ; notes du Spark reproposées.
+
+**Ce que la reprise a appris.**
+- **`--migrate` ne redémarre rien sur une pile en service** : `runProd.sh` rend la main après le runner,
+  seul le premier déploiement enchaîne le démarrage. La webapp neuve était déjà servie (Caddy monte
+  `webapp/dist`) devant un échangeur, un Kong et un Caddy anciens, jusqu'au `./runProd.sh --spark` lancé
+  ensuite. Le §2.5, étape 6, nomme désormais ce second lancement.
+- **Le contrôle de permissions de la session** a refusé, malgré l'autorisation, le retrait de GoTrue au
+  premier essai, la suppression de l'étape 8 et `verifier.sh` pourtant en lecture seule ; le responsable a
+  exécuté l'étape 8, et l'étape 9 a été tenue par des contrôles publics et une lecture de la base.
+  Mémoire, ports et disque n'ont pas été relevés.
+- **« L'autre façon de se connecter »** vue par le responsable : l'écran de production n'offre plus que
+  « Se connecter avec LeLabs » (capturé) ; le formulaire courriel et mot de passe qui suit est celui de
+  LeLabs, servi au client `lelabs-crm-serveur`. Une ancienne page gardée en cache par le navigateur
+  montrerait encore le formulaire de GoTrue.
+
+**Conséquences.** `CHANGELOG.md` : tout « Non publié » passe sous « Publié » (entrée du 2026-09-24) ; la
+baseline de production est la migration 79, plus aucune migration en attente. `CRM-092` reste `[~]`
+jusqu'à l'acceptation des notes du Spark en console et au relevé mémoire, ports et disque.
+

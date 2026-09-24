@@ -26,21 +26,22 @@ isolée hors fenêtre.
 
 ## 1. Baseline de production
 
-**Cellule Spark `crm`, premier déploiement du 2026-09-23** (§8). La pile tourne et est publiée en
-`https://crm.lelabs.tech` ; la connexion par le SSO n'y est pas encore possible.
+**Cellule Spark `crm`, premier déploiement du 2026-09-23, reprise `CRM-092` du 2026-09-24** (§8). La
+pile tourne et est publiée en `https://crm.lelabs.tech` ; on s'y connecte par le SSO LeLabs, seule
+source d'identité.
 
 | Élément | État |
 |---|---|
-| Environnement de production | Cellule Spark `crm` (`docs/SPEC-deploiement-spark.md`), assemblage à trois fichiers, treize conteneurs sains |
-| Schéma appliqué | Les **73 migrations** du dépôt, par `--migrate --premier-deploiement` sur une base mesurée vierge |
-| Dernière migration appliquée | `0073_entonnoir_conversion.sql` |
-| Version déployée | La révision inscrite dans `/srv/crm/REVISION` — celle que `scripts/spark/verifier.sh` compare au `HEAD` du poste |
-| Données | Un compte invité et un espace, « P2Enjoy CRM » (`crm`), posés par `scripts/spark/amorcer-espace.sh` (§8) ; aucune autre donnée, aucun seed |
+| Environnement de production | Cellule Spark `crm` (`docs/SPEC-deploiement-spark.md`), assemblage à trois fichiers : neuf services sains et deux conteneurs à usage unique (runner, bucket) ; GoTrue retiré le 2026-09-24 |
+| Schéma appliqué | Les **79 migrations** du dépôt : 1 à 73 par `--migrate --premier-deploiement` sur une base mesurée vierge (2026-09-23), 74 à 79 par la reprise `CRM-092` (2026-09-24) |
+| Dernière migration appliquée | `0079_admin_du_domaine.sql` — objets relus en base le 2026-09-24 |
+| Version déployée | La révision inscrite dans `/srv/crm/REVISION` — celle que `scripts/spark/verifier.sh` compare au `HEAD` du poste ; **`03dd22f0`** le 2026-09-24 |
+| Données | Un espace, « P2Enjoy CRM » (`crm`), réamorcé par la reprise `CRM-092` ; un profil, celui du responsable, administrateur depuis sa première connexion LeLabs ; aucune autre donnée, aucun seed. La ligne `auth.users` de l'ancien compte invité reste, inerte |
 | Route publique | `crm.lelabs.tech 8080 tls`, active : `https://crm.lelabs.tech`, certificat Let's Encrypt présenté par la Forge (décision 576) |
 | Client OIDC `lelabs-crm` | Déclaré et créé au realm le 2026-09-23 à 16:08:44 (`docs/SSO-client-lelabs-crm.md`), **supprimé du realm avant le déploiement de `CRM-092`** : sonde `400` « Client non trouvé » le 2026-09-24 à 18 h, retrait confirmé par l'instantané de reprise du dépôt du SSO (décision 598). Sans effet sur le service : aucune connexion n'avait encore été faite, elle attend `CRM-092` (§3) |
 | Client OIDC `lelabs-crm-serveur` | **Déclaré et créé** : sonde `302` vers `https://crm.lelabs.tech/auth/retour`, PKCE exigé, le 2026-09-24 (décision 598). Son secret est **saisi** dans la cellule (relu le 2026-09-24, présence seule, décision 599) ; `SSO_OIDC_CLIENT_ID` y vaut encore `lelabs-crm` (§2.5, étapes 2 et 3) |
-| Relais SMTP | Hôte, port et expéditeur importés ; identifiants non fournis — les courriels transactionnels de GoTrue échouent. **Sans objet après la reprise `CRM-092` (§2.5)** : GoTrue et ses variables quittent la pile |
-| Reprise `CRM-092` | **En attente** (§2.5) : migrations 74 à 79, client confidentiel `lelabs-crm-serveur`, retrait de GoTrue, attente administratrice de `martino@p2enjoy.studio` |
+| Relais SMTP | **Sans objet depuis la reprise `CRM-092`** : GoTrue a quitté la pile ; `SMTP_HOST`, `SMTP_PORT`, `SMTP_ADMIN_EMAIL` et `ADDITIONAL_REDIRECT_URLS` restent dans la cellule, inertes, à retirer en console si souhaité |
+| Reprise `CRM-092` | **Exécutée le 2026-09-24** (§2.5, §8) : migrations 74 à 79, client confidentiel `lelabs-crm-serveur`, GoTrue retiré, compte invité repris ; connexion réelle du responsable relue en base. Notes du Spark reproposées, en attente d'acceptation |
 
 ## 2. Prérequis à provisionner avant le premier déploiement
 
@@ -171,7 +172,7 @@ refusée, en le nommant : attendre, puis relancer.
 jointe reçue y reste `pending`, non téléchargeable ; les sauvegardes hors site — `age` n'y est pas
 installé, et `scripts/backup.sh` le refuse sans repli (`CRM-080`).
 
-### 2.5 Reprise `CRM-092` — le SSO LeLabs, seule identité (EN ATTENTE)
+### 2.5 Reprise `CRM-092` — le SSO LeLabs, seule identité (EXÉCUTÉE le 2026-09-24)
 
 **À n'exécuter que sur instruction explicite du responsable**, l'ensemble dans une même fenêtre. Spécifiée
 par `docs/SPEC-session-sso.md` §12 ; décisions 578, 579, 586, 589 et 590. Elle remplace GoTrue par le
@@ -208,19 +209,8 @@ session, sans autre effet : le corriger en console et recréer `functions`.
 
 ## 3. Migrations en attente
 
-**Six en attente depuis le 2026-09-23, `CRM-092`** : `0074_revendications_du_jeton.sql` et
-`0075_identite_sso.sql` (tranche T1), `0076_sessions_serveur.sql` (tranche T3 bis, décision 586),
-`0077_retrait_gotrue.sql` (tranche T6, décision 589), `0078_admission_patiente.sql` (correctif
-INC-249, décision 593), puis `0079_admin_du_domaine.sql` (tranche T8, décision 597) — lignes 74 à 79
-du tableau du §3.2. Les 73 premières ont été appliquées par le premier déploiement
-(§8). **Ne pas les appliquer isolément** : elles appartiennent à la reprise de `CRM-092` (§2.5), dont les
-autres opérations — déclaration du client confidentiel et pose de son secret, fonction `session`,
-retrait de GoTrue, reprise du compte invité — ne sont exécutées que sur instruction explicite du
-responsable. Appliquées seules, elles ne cassent rien : la 74 réécrit une définition identique à
-celle de GoTrue, la 75 et la 76 n'ajoutent que des tables vides et des fonctions que rien n'appelle
-encore. **La 77 ne s'applique qu'avec le retrait de GoTrue** : appliquée alors que GoTrue tourne, un
-compte qu'il créerait n'aurait plus de profil — sans conséquence tant que rien n'en crée, mais sans
-objet avant la reprise.
+**Aucune migration en attente.** Baseline de production : la migration **79**. Les six migrations de
+`CRM-092` (74 à 79) ont été appliquées le 2026-09-24 par la reprise (§2.5, §8).
 
 ### 3.1 Procédure nominale — la fenêtre de maintenance (`CRM-087`, livrée)
 
@@ -1006,6 +996,21 @@ Spark distant de prod »).
 - **Étape 7**, validée par le responsable (« ok 7 et 8 ») : `docker rm -f p2enjoy-auth
   p2enjoy-auth-templates` — les deux conteneurs retirés ; restent onze conteneurs, neuf en service et
   sains, `migrations` et `minio-createbucket` terminés en `0`.
-- **Étape 8**, validée par le responsable : état relu `1|0|0|1` juste avant ; la suppression elle-même
-  a été refusée à la session par le contrôle de permissions, et reste à exécuter par le responsable.
-- **Étapes 9 et 10 en attente** : `verifier.sh`, connexion réelle.
+- **Étape 8**, validée par le responsable : état relu `1|0|0|1` juste avant ; la suppression, refusée à
+  la session par le contrôle de permissions, a été **exécutée par le responsable** avec la commande du
+  §2.5, suivie de `amorcer-espace.sh` pour `martino@p2enjoy.studio`.
+- **Étape 9** : `verifier.sh`, pourtant en lecture seule, refusé à la session ; tenu par les contrôles
+  publics ci-dessus et par une lecture de la base — `public.mon_role_espace(uuid)`,
+  `ouvrir_session_sso(uuid, text, text, boolean)`, `app.est_admin_lelabs()` et `sessions_sso` présents,
+  ancienne signature à trois arguments absente ; `REVISION` = `03dd22f0`. Mémoire, ports et disque
+  n'ont pas été relevés.
+- **Étape 10** — connexion réelle du responsable par « Se connecter avec LeLabs » : relu en base, **un
+  espace, un profil « Martino Bettucci », une appartenance `admin`, aucune attente restante, une
+  session serveur dont le jeton est chiffré (`v1.…`)**. Écran de connexion de production capturé :
+  une seule entrée, « Se connecter avec LeLabs » ; la page qui suit est celle de LeLabs (courriel, mot
+  de passe, « Enregistrement »), servie au client `lelabs-crm-serveur`.
+- **Étape 11** : sans objet, `lelabs-crm` ayant été supprimé avant (décision 598).
+- **Étape 12** : les trois notes (`README`, `CONTRIBUTORS`, `INSTALL`) déposées en `.?` — les fichiers ne
+  portaient que le gabarit vide du plan de contrôle — et relues identiques au dépôt ; **acceptation en
+  console attendue**.
+- `CHANGELOG.md` : tout le contenu de « Non publié » déplacé sous « Publié », entrée du 2026-09-24.
