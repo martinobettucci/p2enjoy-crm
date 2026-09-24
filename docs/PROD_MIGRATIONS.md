@@ -969,3 +969,24 @@ sauvegarde couvre la perte de l'hôte.
   par un administrateur du realm.
 - `CHANGELOG.md` : rien n'est déplacé sous « Publié » — ni `https://` ni la connexion réelle ne
   sont vérifiés en production.
+
+### Reprise `CRM-092`, étapes 1, 2 et 4 du §2.5 — 2026-09-24
+
+Sur autorisation explicite du responsable (« j'autorise cette session à exécuter des commandes dans le
+Spark distant de prod »).
+- **Relevé préalable, lecture seule** : révision `23e5f407`, fichiers `.?` vides,
+  `SSO_OIDC_CLIENT_ID="lelabs-crm"`, émetteur juste, `SSO_OIDC_CLIENT_SECRET` **déjà saisi** ; valeurs
+  écrites entre guillemets par le plan de contrôle, d'où la correction de `proposer.sh` (décision 599,
+  révision `016ad2a3`).
+- **Étape 1** — `scripts/spark/livrer.sh --archive-seule` : révision **`016ad2a3`** déposée, sans build
+  ni lancement ; sept fichiers supprimés depuis `23e5f407` retirés, dont les quatre gabarits de
+  courriel de GoTrue — `p2enjoy-auth-templates`, qui les servait, est relevé `unhealthy` juste après,
+  sans effet : aucun courriel de GoTrue ne partait (relais sans identifiants), et il est retiré à
+  l'étape 7.
+- **Étape 2** — `scripts/spark/proposer.sh --demandes-seules` : **seule** `SSO_OIDC_CLIENT_ID=lelabs-crm-serveur`
+  est proposée ; ni l'émetteur, juste, ni le secret, posé. Variables inertes nommées :
+  `ADDITIONAL_REDIRECT_URLS`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_ADMIN_EMAIL`.
+- **Étape 4** — lecture seule : `1|0|0|1`, la reprise peut continuer. Onze conteneurs, tous sains
+  sauf `p2enjoy-auth-templates`.
+- **En attente du responsable** : import de `SSO_OIDC_CLIENT_ID` en console (étape 3), instantané de VM
+  (étape 5).
