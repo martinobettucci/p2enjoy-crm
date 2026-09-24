@@ -20,7 +20,11 @@ d'exécuter le code attendu.
   et un lecteur d'écran pouvait entendre un total faux ; il rend désormais le chargement.
 - **Un geste posé sur le canevas d'objectifs juste après son chargement n'est plus perdu** (INC-189) :
   un redimensionnement au clavier pouvait, sur un poste chargé, n'être jamais enregistré.
-- **Preuves** : deux preuves attendent un signal observable au lieu d'une lecture instantanée, et
+- **Le jeu de démonstration de « Ma journée » suit le jour local** (INC-248) : la section
+  « Aujourd'hui » n'est plus vide entre minuit local et minuit UTC ; le seed honore `TZ`.
+- **La mention de lecture seule des objectifs retrouve son fond, et les mentions des préférences de
+  notification s'alignent sous leur libellé** (INC-231).
+- **Preuves** : trois preuves attendent un signal observable au lieu d'une lecture instantanée, et
   toute exécution rouge de `npm run test:unit` laisse son journal dans `e2e/output/journaux-unitaires/`,
   quel que soit le harnais qui l'a lancée.
 

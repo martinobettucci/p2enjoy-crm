@@ -10,13 +10,18 @@
 # @verifies docs/DESIGN_SYSTEM.md §5.36 (cette surface), §5.29 (pilule de channel), §5.8 (états),
 #           §7 (les quatre paliers), §11 (classes réellement engendrées)
 # @verifies docs/SPEC-test-harness.md §7.1 (chaîne Node Linux prouvée), §7.2 (non-complaisance)
+# @verifies docs/BACKLOG.md « Correctifs arbitrés », INC-248 ; docs/SPEC-seed.md §13.2 bis ;
+#           docs/JOURNAL.md décisions 592 et 595 — le jour du seed est celui du lecteur, éprouvé sous
+#           un fuseau dont la date diffère de la date UTC au moment de l'exécution
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-061` :
 #
 #   1. les fichiers de l'unité sont livrés et portent leur traçabilité ;
 #   2. le seed tient le contrat du §13.5 **quel que soit le jour où il s'applique** : les trois
 #      sections de l'administratrice sont peuplées, la portée élargie rend strictement plus, et une
-#      affaire endormie porte une échéance dans l'horizon ;
+#      affaire endormie porte une échéance dans l'horizon — et **quel que soit le fuseau du lecteur**
+#      (INC-248) : appliqué sous un fuseau dont la date diffère de la date UTC, il rend encore les
+#      trois sections, en base comme à l'écran ;
 #   3. la vue ne fait que LIRE : aucun chemin d'écriture, aucun stockage côté client, aucune lecture
 #      qu'aucun pixel n'affiche ;
 #   4. les tests unitaires, la preuve d'API sur la pile réelle, la preuve d'interface sur session
@@ -59,6 +64,8 @@ cd "$(dirname "$0")/.."
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
 node_toolchain_prepare "$PWD/.nvmrc" || exit 1
+# shellcheck source=scripts/lib/fuseau.sh
+source scripts/lib/fuseau.sh
 
 COLONNES=webapp/src/lib/colonnes-ma-journee.ts
 MODULE=webapp/src/lib/ma-journee.ts
@@ -206,10 +213,19 @@ fi
 titre "2. Le contrat du seed, mesuré en base (docs/SPEC-seed.md §13.5)"
 
 # Les prédicats ci-dessous sont ceux de l'écran, écrits une fois : « active » (§5), non endormie
-# (§16.2), et les trois intervalles du §17.5 calculés depuis `date_trunc('day', now())`.
+# (§16.2), et les trois intervalles du §17.5 calculés depuis le début du jour LOCAL — le jour du
+# lecteur, comme l'écran et comme le seed (INC-248, docs/SPEC-seed.md §13.2 bis). Compter en jour
+# UTC, comme ce harnais le faisait, rendait ce contrôle vert la nuit où l'écran était vide.
 ACTIVE="archived_at is null and deleted_at is null and (snoozed_until is null or snoozed_until <= now())"
-JOUR="date_trunc('day', now())"
-HORIZON="date_trunc('day', now()) + interval '8 days'"
+bornes_locales() { # $1 = fuseau
+	JOUR_LOCAL="date_trunc('day', now() at time zone '$1')"
+	JOUR="($JOUR_LOCAL at time zone '$1')"
+	LENDEMAIN="(($JOUR_LOCAL + interval '1 day') at time zone '$1')"
+	HORIZON="(($JOUR_LOCAL + interval '8 days') at time zone '$1')"
+}
+FUSEAU_HOTE=$(fuseau_local)
+fuseau_forme_sure "$FUSEAU_HOTE" || { echo "fuseau de l'hôte illisible : « $FUSEAU_HOTE »" >&2; exit 1; }
+bornes_locales "$FUSEAU_HOTE"
 
 compte_journee() {
 	psql_db -c "select count(*) from public.cards where next_action_at is not null and $ACTIVE and $1"
@@ -222,14 +238,14 @@ else
 	fail "ligne a : aucune affaire en retard pour l'administratrice — le seed a reperdu son décalage (§13.2)"
 fi
 
-aujourdhui=$(compte_journee "owner_id = '$CAMILLE' and next_action_at >= $JOUR and next_action_at < $JOUR + interval '1 day'")
+aujourdhui=$(compte_journee "owner_id = '$CAMILLE' and next_action_at >= $JOUR and next_action_at < $LENDEMAIN")
 if [ "${aujourdhui:-0}" -ge 1 ]; then
 	ok "ligne b : $aujourdhui affaire(s) AUJOURD'HUI pour l'administratrice"
 else
 	fail "ligne b : aucune affaire dans le jour courant — la section « Aujourd'hui » ne se démontre plus"
 fi
 
-avenir=$(compte_journee "owner_id = '$CAMILLE' and next_action_at >= $JOUR + interval '1 day' and next_action_at < $HORIZON")
+avenir=$(compte_journee "owner_id = '$CAMILLE' and next_action_at >= $LENDEMAIN and next_action_at < $HORIZON")
 if [ "${avenir:-0}" -ge 1 ]; then
 	ok "ligne c : $avenir affaire(s) À VENIR dans les sept jours pour l'administratrice"
 else
@@ -266,6 +282,81 @@ if [ "${hors_horizon:-0}" -ge 1 ]; then
 	ok "$hors_horizon affaire(s) au-delà de l'horizon : la borne du §17.5 a de quoi retrancher"
 else
 	fail "aucune affaire au-delà de l'horizon : la borne de sept jours ne retranche plus rien"
+fi
+
+# --- 2 bis. Le jour est celui du lecteur — INC-248 -----------------------------------------------
+
+titre "2 bis. Le jour du seed est celui du lecteur, sous un fuseau éloigné (INC-248)"
+
+# LE DÉFAUT NE SE MONTRAIT QUE DEUX HEURES PAR NUIT EN FRANCE ; IL SE MONTRE ICI PRESQUE À TOUTE
+# HEURE. L'ancien seed gardait les heures UTC du contrat : l'échéance « aujourd'hui » de
+# l'administratrice tombe à 09:00 UTC, et le défaut se voit quand le jour LOCAL ne contient pas cet
+# instant. C'est le cas d'un fuseau EN AVANCE dont la date est déjà demain — `Pacific/Kiritimati`
+# (UTC+14) à partir de 10 h UTC, la forme exacte de la nuit française —, et d'un fuseau en retard DE
+# NEUF HEURES AU PLUS dont la date est encore hier — `Pacific/Gambier` (UTC−9) avant 9 h UTC. MESURÉ le
+# 2026-09-24 : `Pacific/Pago_Pago` (UTC−11), d'abord retenu, ne distingue rien — 09:00 UTC y tombe à
+# 22:00 la veille, dans le jour local. Entre 9 h et 10 h UTC, aucun fuseau ne discrimine, et la
+# section le dit au lieu de rendre un vert qui ne prouverait rien.
+#
+# Le seed est appliqué sous ce fuseau, ses bornes locales sont relues en base, puis les preuves de
+# l'écran et de l'API sont rejouées sous ce même fuseau — le navigateur et Node lisent `TZ`, et
+# l'ancien seed y rendait DEUX sections (mesuré). Le seed est enfin rétabli sous le fuseau de l'hôte,
+# et le §7 constate qu'il rend les mêmes sections qu'à l'entrée.
+heure_utc=$((10#$(date -u +%H)))
+if [ "$heure_utc" -ge 10 ]; then
+	FUSEAU_ELOIGNE=Pacific/Kiritimati
+elif [ "$heure_utc" -lt 9 ]; then
+	FUSEAU_ELOIGNE=Pacific/Gambier
+else
+	FUSEAU_ELOIGNE=
+fi
+if [ -z "$FUSEAU_ELOIGNE" ]; then
+	printf '  \033[33mIGNORÉ\033[0m %s\n' "entre 9 h et 10 h UTC, aucun fuseau ne place l'échéance de 09:00 UTC hors du jour local : rejouer hors de cette heure"
+elif [ "$(TZ="$FUSEAU_ELOIGNE" date +%F)" != "$(date -u +%F)" ]; then
+	ok "sous $FUSEAU_ELOIGNE, nous sommes le $(TZ="$FUSEAU_ELOIGNE" date +%F) quand l'UTC dit $(date -u +%F) : la preuve discrimine"
+else
+	fail "sous $FUSEAU_ELOIGNE, la date est celle de l'UTC : la preuve ne distinguerait rien"
+fi
+
+if [ -n "$FUSEAU_ELOIGNE" ]; then
+if TZ="$FUSEAU_ELOIGNE" supabase/seed/apply-seed.sh > "$TRAVAIL/seed-eloigne.log" 2>&1; then
+	ok "le seed s'applique sous $FUSEAU_ELOIGNE, et tient lui-même le §13.5 en jours de ce fuseau"
+else
+	fail "le seed échoue sous $FUSEAU_ELOIGNE — voir $TRAVAIL/seed-eloigne.log"
+fi
+bornes_locales "$FUSEAU_ELOIGNE"
+retard_loin=$(compte_journee "owner_id = '$CAMILLE' and next_action_at < $JOUR")
+aujourdhui_loin=$(compte_journee "owner_id = '$CAMILLE' and next_action_at >= $JOUR and next_action_at < $LENDEMAIN")
+avenir_loin=$(compte_journee "owner_id = '$CAMILLE' and next_action_at >= $LENDEMAIN and next_action_at < $HORIZON")
+if [ "${retard_loin:-0}" -ge 1 ] && [ "${aujourdhui_loin:-0}" -ge 1 ] && [ "${avenir_loin:-0}" -ge 1 ]; then
+	ok "en jours de $FUSEAU_ELOIGNE, les trois sections de l'administratrice sont peuplées : $retard_loin / $aujourdhui_loin / $avenir_loin"
+else
+	fail "en jours de $FUSEAU_ELOIGNE, les sections rendent $retard_loin / $aujourdhui_loin / $avenir_loin — le seed compte encore en jour UTC"
+fi
+
+if [ "$RAPIDE" = true ]; then
+	printf '  \033[33mIGNORÉ\033[0m preuves d'"'"'écran et d'"'"'API sous %s (--rapide)\n' "$FUSEAU_ELOIGNE"
+else
+	if TZ="$FUSEAU_ELOIGNE" E2E_PROJETS=ui npx playwright test --config e2e/playwright.config.ts --project=ui \
+		"$SPEC_UI" -g "les trois sections du seed sont rendues" > "$TRAVAIL/ui-eloigne.log" 2>&1; then
+		ok "sous $FUSEAU_ELOIGNE, l'écran rend les TROIS sections du seed"
+	else
+		fail "sous $FUSEAU_ELOIGNE, l'écran ne rend pas les trois sections du seed — voir $TRAVAIL/ui-eloigne.log"
+	fi
+	if TZ="$FUSEAU_ELOIGNE" E2E_PROJETS=api npx playwright test --config e2e/playwright.config.ts --project=api \
+		"$SPEC_API" -g "quel que soit le jour" > "$TRAVAIL/api-eloigne.log" 2>&1; then
+		ok "sous $FUSEAU_ELOIGNE, la vraie route rend les trois sections de l'administratrice"
+	else
+		fail "sous $FUSEAU_ELOIGNE, la vraie route ne rend pas les trois sections — voir $TRAVAIL/api-eloigne.log"
+	fi
+fi
+
+bornes_locales "$FUSEAU_HOTE"
+if supabase/seed/apply-seed.sh > "$TRAVAIL/seed-hote.log" 2>&1; then
+	ok "le seed est rétabli sous le fuseau de l'hôte, $FUSEAU_HOTE"
+else
+	fail "le seed ne se rétablit pas sous $FUSEAU_HOTE — voir $TRAVAIL/seed-hote.log"
+fi
 fi
 
 # --- 3. Ce que la vue NE fait PAS ----------------------------------------------------------------
@@ -595,8 +686,8 @@ done
 # la leçon de la décision 501 — une preuve qui dégrade le produit doit le rendre —, et elle se
 # constate ici plutôt qu'elle ne se croit.
 retard_final=$(compte_journee "owner_id = '$CAMILLE' and next_action_at < $JOUR")
-aujourdhui_final=$(compte_journee "owner_id = '$CAMILLE' and next_action_at >= $JOUR and next_action_at < $JOUR + interval '1 day'")
-avenir_final=$(compte_journee "owner_id = '$CAMILLE' and next_action_at >= $JOUR + interval '1 day' and next_action_at < $HORIZON")
+aujourdhui_final=$(compte_journee "owner_id = '$CAMILLE' and next_action_at >= $JOUR and next_action_at < $LENDEMAIN")
+avenir_final=$(compte_journee "owner_id = '$CAMILLE' and next_action_at >= $LENDEMAIN and next_action_at < $HORIZON")
 if [ "$retard_final" = "$retard" ] && [ "$aujourdhui_final" = "$aujourdhui" ] && [ "$avenir_final" = "$avenir" ]; then
 	ok "le seed rend les mêmes trois sections qu'à l'entrée : $retard_final / $aujourdhui_final / $avenir_final"
 else

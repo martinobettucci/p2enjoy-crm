@@ -988,6 +988,12 @@ refuse tout profil d'environnement autre que `dev`. Ses identifiants sont fixes 
 La production **n'applique jamais de seed** : `docker-compose.prod.yml` ne le monte pas, et le
 script refuserait de s'exécuter. Le jeu de démonstration complet est l'objet de `CRM-046`.
 
+**Le jour du seed est le jour local** (INC-248, décisions 592 et 595). Les échéances de démonstration
+sont translatées depuis le début du jour dans le fuseau de l'hôte — ou celui de `TZ` —, parce que
+l'écran range « Ma journée » selon le jour du navigateur ; le jour UTC de la base laissait la
+section « Aujourd'hui » vide deux heures par nuit. `scripts/lib/fuseau.sh` porte la détection du
+fuseau, partagée par le seed et `scripts/verify-ma-journee.sh`.
+
 ## 12. Choix techniques et compromis
 
 | Choix | Motif | Compromis assumé |

@@ -52,6 +52,8 @@ set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/scripts/lib/env.sh"
 # shellcheck source=scripts/lib/sso.sh
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/scripts/lib/sso.sh"
+# shellcheck source=scripts/lib/fuseau.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/scripts/lib/fuseau.sh"
 
 usage() { print_header_help "${BASH_SOURCE[0]}"; }
 
@@ -3062,6 +3064,8 @@ info "Sommeil : 2 affaires — une endormie, une dont l'échéance est échue �
 # @spec CRM-061 (docs/BACKLOG.md) — tranche 1 : la vue « Ma journée » doit être démontrable depuis
 #       le seed quel que soit le jour où il s'applique (docs/SPEC-seed.md §13, §13.1 à §13.6 ;
 #       docs/SPEC-cards.md §17.12 ; docs/DESIGN_SYSTEM.md §5.36)
+# @spec docs/BACKLOG.md « Correctifs arbitrés », INC-248 ; docs/SPEC-seed.md §13.2 bis ;
+#       docs/JOURNAL.md décisions 592 et 595 — le jour courant est le jour LOCAL du fuseau du seed
 #
 # MÊME DÉFAUT QUE LA SECTION 8 OCTIES BIS, SUR UNE AUTRE COLONNE. Le §9 pose les échéances en dates
 # LITTÉRALES ; elles étaient justes le jour où le contrat a été écrit, et le calendrier les défait
@@ -3085,13 +3089,36 @@ info "Sommeil : 2 affaires — une endormie, une dont l'échéance est échue �
 # L'ÉCRITURE PASSE PAR LA CLÉ DE SERVICE, comme la section 8 octies bis : `next_action_at` est bien
 # ouverte à `authenticated` (CRM-013), mais le seed n'a pas à se connecter pour poser un état de
 # démonstration.
+#
+# LE JOUR EST CELUI DU LECTEUR, PAS CELUI DE LA BASE — INC-248, décisions 592 et 595,
+# docs/SPEC-seed.md §13.2 bis. MESURÉ le 2026-09-24 à 00:43 CEST : la translation partait du jour UTC
+# de la base (`2026-09-23`) quand l'écran rangeait selon le jour local du navigateur (`2026-09-24`), et
+# « Aujourd'hui » restait vide deux heures par nuit. Elle part désormais du DÉBUT DU JOUR LOCAL dans
+# le fuseau du seed, et rejoue depuis lui l'écart de chaque littéral au minuit UTC de l'ancre : les
+# littéraux du §9 étant écrits en UTC, un simple nombre de jours laisserait « aujourd'hui 09:00 UTC »
+# tomber la veille dans un fuseau à onze heures de retard.
 echo
 say "8 duodecies bis. Échéances"
 
+# Le fuseau du seed : `TZ` si elle est posée, sinon celui de l'hôte — le seed tourne sur l'hôte, là
+# où tourne le navigateur des preuves —, sinon UTC (`scripts/lib/fuseau.sh`). PostgreSQL le valide :
+# un fuseau inconnu fait échouer le seed.
+FUSEAU_SEED=$(fuseau_local)
+fuseau_forme_sure "$FUSEAU_SEED" || die "échéances : le fuseau « $FUSEAU_SEED » n'a pas la forme d'un
+        nom IANA (Europe/Paris, UTC…) ; posez TZ explicitement."
+psql_seed -c "select now() at time zone '$FUSEAU_SEED';" >/dev/null 2>&1 \
+	|| die "échéances : PostgreSQL ne reconnaît pas le fuseau « $FUSEAU_SEED » ; posez TZ explicitement."
+
+# Les bornes du jour LOCAL, calculées en heure murale — `+ interval '1 day'` sur l'heure locale, et non
+# sur l'instant : un jour de changement d'heure dure 23 ou 25 heures, et l'écran compte en jours locaux.
+JOUR_LOCAL="date_trunc('day', now() at time zone '$FUSEAU_SEED')"
+DEBUT_JOUR="($JOUR_LOCAL at time zone '$FUSEAU_SEED')"
+DEBUT_LENDEMAIN="(($JOUR_LOCAL + interval '1 day') at time zone '$FUSEAU_SEED')"
+HORIZON_JOURNEE="(($JOUR_LOCAL + interval '8 days') at time zone '$FUSEAU_SEED')"
+
 ANCRE_ECHEANCES='2026-08-21 00:00:00+00'
 psql_seed -c "update public.cards
-              set next_action_at = next_action_at
-                  + (date_trunc('day', now()) - timestamptz '$ANCRE_ECHEANCES')
+              set next_action_at = $DEBUT_JOUR + (next_action_at - timestamptz '$ANCRE_ECHEANCES')
               where id::text like '5eed%' and next_action_at is not null;" >/dev/null
 
 # LE CONTRAT DU §13.5 EST VÉRIFIÉ, ET NON SUPPOSÉ. Un jeu de démonstration qui ne démontre plus est
@@ -3101,16 +3128,16 @@ psql_seed -c "update public.cards
 CAMILLE='5eed0000-0000-4000-8000-000000000011'
 lire_sections() { # $1 = clause de responsable, vide pour tout l'espace de travail
 	psql_seed -c "
-		select count(*) filter (where c.next_action_at < date_trunc('day', now()))
-		    || '|' || count(*) filter (where c.next_action_at >= date_trunc('day', now())
-		                                 and c.next_action_at <  date_trunc('day', now()) + interval '1 day')
-		    || '|' || count(*) filter (where c.next_action_at >= date_trunc('day', now()) + interval '1 day'
-		                                 and c.next_action_at <  date_trunc('day', now()) + interval '8 days')
+		select count(*) filter (where c.next_action_at < $DEBUT_JOUR)
+		    || '|' || count(*) filter (where c.next_action_at >= $DEBUT_JOUR
+		                                 and c.next_action_at <  $DEBUT_LENDEMAIN)
+		    || '|' || count(*) filter (where c.next_action_at >= $DEBUT_LENDEMAIN
+		                                 and c.next_action_at <  $HORIZON_JOURNEE)
 		from public.cards c
 		where c.archived_at is null and c.deleted_at is null
 		  and c.next_action_at is not null
 		  and (c.snoozed_until is null or c.snoozed_until <= now())
-		  and c.next_action_at < date_trunc('day', now()) + interval '8 days'
+		  and c.next_action_at < $HORIZON_JOURNEE
 		  $1;"
 }
 
@@ -3137,14 +3164,14 @@ endormies=$(psql_seed -c "
 	select count(*) from public.cards c
 	where c.archived_at is null and c.deleted_at is null
 	  and c.next_action_at is not null
-	  and c.next_action_at < date_trunc('day', now()) + interval '8 days'
+	  and c.next_action_at < $HORIZON_JOURNEE
 	  and c.snoozed_until is not null and c.snoozed_until > now();")
 [ "${endormies:-0}" -ge 1 ] || die "échéances : AUCUNE affaire endormie ne porte d'échéance dans
         l'horizon de sept jours — le contrat du §13.5 ligne e n'est pas tenu, et l'exclusion des
         affaires en sommeil ne serait démontrée par rien."
 
-info "Échéances : translatées de l'ancre 2026-08-21 vers le jour courant — la distribution du §9
-  est préservée, et « Ma journée » se démontre quel que soit le jour"
+info "Échéances : translatées de l'ancre 2026-08-21 vers le jour courant du fuseau $FUSEAU_SEED —
+  la distribution du §9 est préservée, et « Ma journée » se démontre quel que soit le jour"
 info "  Camille Aubert : $retard en retard, $aujourdhui aujourd'hui, $avenir à venir ;
   tout l'espace de travail : $tous lignes, dont $endormies endormie(s) écartée(s)"
 

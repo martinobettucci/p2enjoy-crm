@@ -29769,3 +29769,13 @@ les ont franchies. Troisième membre d'INC-189 ; le scénario attend désormais 
 objectifs saisissent le tiroir de navigation en cours de fermeture après le redimensionnement — c'était
 déjà le cas de la capture `md-900` versionnée le 2026-08-30. Le scénario mesure le débordement, que le
 tiroir n'affecte pas ; la capture, elle, montre moins bien la mention.
+
+**Correction de la décision 595, mesurée avant commit du code (2026-09-24, 08:25 UTC).** Le fuseau de la
+preuve était mal choisi. `Pacific/Pago_Pago` (UTC−11) a bien une date différente de l'UTC, mais l'ancien
+seed y rend quand même les trois sections : son échéance « aujourd'hui » tombe à 09:00 UTC, soit 22:00 la
+veille à Pago Pago — dans le jour local. Une date différente est nécessaire, pas suffisante : il faut que
+le jour local ne contienne pas 09:00 UTC. D'où `Pacific/Kiritimati` (UTC+14) à partir de 10 h UTC — la
+forme exacte de la nuit française —, `Pacific/Gambier` (UTC−9) avant 9 h UTC, et une preuve déclarée
+ignorée entre les deux. **Mesuré** : ancien seed sous `Pacific/Gambier`, l'écran rend **2** sections
+(`Expected: 3, Received: 2`) ; nouveau seed, **3**, et la route de l'API aussi. `docs/SPEC-seed.md`
+§13.2 bis est corrigé dans le même changement.

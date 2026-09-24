@@ -14571,7 +14571,13 @@ décision 594.
       d'options, corrigé avant commit ; une exécution verte n'écrit rien ; unitaires **3281**.
       Reste `verify-harness` complet, avec la campagne.
 - [ ] **INC-250 — rejouer la chaîne des droits fins** (`CRM-008`) : `0010` → `0034` → `0063`.
-- [ ] **INC-248 — le jour local fait foi** (`CRM-061`) : seed et preuves de « Ma journée ».
+- [x] **INC-248 — le jour local fait foi** (`CRM-061`) : seed et preuves de « Ma journée ». La
+      translation part du début du jour local (fuseau de l'hôte, ou `TZ`) et rejoue l'écart de chaque
+      littéral au minuit UTC de l'ancre ; `scripts/lib/fuseau.sh` partagé par le seed et le harnais.
+      Mesuré : ancien seed sous `Pacific/Gambier`, l'écran rend **2** sections ; nouveau seed, **3**,
+      et la route aussi ; `verify-ma-journee` **85 contrôles, aucune anomalie**, dont la section 2 bis
+      qui rejoue seed, écran et route sous un fuseau éloigné. Captures de « Ma journée » renouvelées :
+      mêmes sections, heures désormais locales (§13.2 bis).
 - [ ] **INC-242 — `verify-commentaires` à 99, et sa restauration complète** (`CRM-043`).
 - [x] **INC-231 — cinq classes absentes du CSS produit** (`CRM-063`, `CRM-064`, `CRM-083`).
       `bg-surface-2` → `bg-hover`, `leading-relaxed` → `leading-normal` (jetons du design system) ;

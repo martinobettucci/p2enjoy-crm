@@ -1902,10 +1902,14 @@ next_action_at      ← début_du_jour_local + (next_action_at − timestamptz '
   horaire — `09:00 UTC` devient `09:00` locale.
 - **Les contrôles du §13.5 emploient les mêmes bornes locales**, comme l'écran ; le seed et
   `scripts/verify-ma-journee.sh` cessent de compter en jour UTC.
-- **Preuve déterministe, sans attendre la nuit** : le seed appliqué sous un fuseau dont la date
-  diffère de la date UTC au moment de l'exécution — `Pacific/Pago_Pago` avant 11 h UTC,
-  `Pacific/Kiritimati` ensuite —, et les preuves de « Ma journée » rejouées sous ce même fuseau,
-  doivent rendre les trois sections. Avant correction, l'écran n'en rend que deux.
+- **Preuve, sans attendre la nuit** : le seed appliqué sous un fuseau dont le jour local ne contient
+  pas l'échéance « aujourd'hui » de l'ancien seed — 09:00 UTC —, et les preuves de « Ma journée »
+  rejouées sous ce même fuseau, doivent rendre les trois sections. `Pacific/Kiritimati` (UTC+14) à
+  partir de 10 h UTC, `Pacific/Gambier` (UTC−9) avant 9 h UTC ; entre les deux, aucun fuseau ne
+  discrimine et la preuve est déclarée ignorée. MESURÉ le 2026-09-24 à 08:25 UTC : ancien seed sous
+  `Pacific/Gambier`, l'écran rend **2** sections ; nouveau seed, **3**, et la route aussi.
+  `Pacific/Pago_Pago`, d'abord retenu, ne distingue rien : 09:00 UTC y tombe la veille à 22:00, dans
+  le jour local.
 
 ### 13.3 Convergence, et l'ordre qui la porte
 

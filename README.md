@@ -410,6 +410,11 @@ Le seed est **convergent** : le rejouer ne duplique rien et rattrape une valeur 
 main. Ses identifiants sont **stables** et commencent tous par `5eed`, ce qui rend une ligne
 seedée reconnaissable au premier coup d'œil.
 
+Les échéances de « Ma journée » sont calées sur le **jour local** — celui du navigateur qui les
+range : le fuseau de l'hôte, ou celui de `TZ` si la variable est posée (`TZ=Pacific/Kiritimati
+supabase/seed/apply-seed.sh`). Un fuseau que PostgreSQL ne reconnaît pas fait échouer le seed
+(`docs/SPEC-seed.md` §13.2 bis).
+
 Depuis `CRM-046`, il livre le **jeu de démonstration complet** : quatre tracks dont un archivé, six
 channels dont un archivé, deux workflows dont un **dérivé**, et **quatorze cards** — douze actives,
 une archivée, une en corbeille. Les **sept** étapes du workflow global portent chacune une card

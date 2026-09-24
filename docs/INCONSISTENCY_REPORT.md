@@ -6566,6 +6566,10 @@ emploie. Les deux touchent une règle de `docs/SPEC-cards.md` §17 et du seed, h
 **ARBITRÉE le 2026-09-24 — décision 592 : le jour local fait foi.** Le seed et les preuves calent
 les échéances sur le jour local, comme l'écran. Mise en œuvre : `CRM-061`.
 
+**RÉSOLUE le 2026-09-24** (décision 595). Le seed translate depuis le début du jour local ; les
+contrôles du §13.5 et `verify-ma-journee.sh` comptent en jours locaux ; la section 2 bis du harnais
+reproduit le défaut sous un fuseau éloigné (ancien seed : 2 sections) et prouve la correction (3).
+
 ### INC-249 — l'admission sollicite bien la garde du dernier administrateur : une attente non administratrice dans un espace VIDE rend `service_indisponible`
 
 *Mesurée le 2026-09-24 en portant `scripts/verify-migrations.sh` sur le SSO (`CRM-092` T4).*
