@@ -13,7 +13,7 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-092` — Le SSO, seule source d'identité (en cours : tranches T1, T2, T3, T3 bis, T5 et T4 livrées)
+### `CRM-092` — Le SSO, seule source d'identité (en cours : tranches T1, T2, T3, T3 bis, T5, T4 et T6 livrées)
 
 Décision du responsable (décisions 578 et 579) : le SSO LeLabs devient la **seule** source d'identité
 du CRM, en développement comme en production ; GoTrue et la connexion par mot de passe quittent la
@@ -38,6 +38,16 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   développement existe, lu dans son realm.
 - **L'amorçage d'un espace de production n'inscrit plus qu'une attente** administratrice : la personne
   devient administratrice à sa première connexion LeLabs.
+- **GoTrue a quitté la pile** (tranche T6, décisions 589 et 590). Plus de service d'authentification
+  propre, ni ses gabarits de courriel, ni Inbucket, qui ne recevait que ses courriels ; plus aucune
+  variable d'inscription, de mot de passe ou de relais SMTP. `/auth/v1/*` répond 404, y compris
+  derrière Caddy. La migration `0077_retrait_gotrue.sql` retire le trigger qui créait un profil pour
+  chaque compte GoTrue : un profil ne naît plus que de la première connexion LeLabs admise. Les
+  tables du schéma `auth` restent, inertes. `scripts/verify-auth.sh` est retiré avec son objet, et
+  `docs/SPEC-auth.md` n'est plus qu'un renvoi vers `docs/SPEC-session-sso.md`.
+- **Reposer les demandes à une cellule en service** : `scripts/spark/proposer.sh --demandes-seules`
+  propose le client serveur et la demande de son secret, sans tirer aucun secret, et nomme les
+  anciennes variables de GoTrue restées inertes dans la cellule.
 - **Plus aucun jeton sur l'appareil** (tranche T3 bis, décision 586) : le CRM est un client
   **confidentiel** de LeLabs. Le navigateur remet le code de connexion à l'échangeur de session, qui
   l'échange avec le secret du client, garde le jeton de rafraîchissement **chiffré** en base
@@ -55,7 +65,7 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
 - **Preuves** : suite pgTAP `0069_identite_sso.test.sql` (58 assertions) ; harnais de l'unité
   `scripts/verify-session-sso.sh` (16 vérifications, dont la base neuve sans GoTrue et quatre
   dégradations détectées) ; trois suites historiques révisées, jamais retirées.
-- **Production** : migrations 74, 75 et 76 en attente, et un nouveau client confidentiel
+- **Production** : migrations 74 à 77 en attente, et un nouveau client confidentiel
   `lelabs-crm-serveur` à déclarer chez LeLabs avec son secret `SSO_OIDC_CLIENT_SECRET`, à n'appliquer
   qu'avec la reprise complète de `CRM-092` (`docs/PROD_MIGRATIONS.md` §2.3, §3).
 - **Le LeLabs de développement est préchargé** (tranche T2) : les comptes de démonstration y ont leur

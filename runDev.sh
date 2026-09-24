@@ -112,7 +112,6 @@ fi
 
 KONG_HTTP_PORT=$(env_get "$ENV_FILE" KONG_HTTP_PORT)
 STUDIO_PORT=$(env_get "$ENV_FILE" STUDIO_PORT)
-INBUCKET_WEB_PORT=$(env_get "$ENV_FILE" INBUCKET_WEB_PORT)
 MINIO_CONSOLE_PORT=$(env_get "$ENV_FILE" MINIO_CONSOLE_PORT)
 POSTGRES_DIRECT_PORT=$(env_get "$ENV_FILE" POSTGRES_DIRECT_PORT)
 WEBAPP_DEV_PORT=$(env_get "$ENV_FILE" WEBAPP_DEV_PORT)
@@ -134,7 +133,6 @@ else
 	info "Webapp                écartée par --dev : lancez « npm run dev » sur l'hôte."
 fi
 info "Supabase Studio       http://${BIND}:${STUDIO_PORT}"
-info "Inbucket              http://${BIND}:${INBUCKET_WEB_PORT}"
 info "Console MinIO         http://${BIND}:${MINIO_CONSOLE_PORT}"
 info "PostgreSQL direct     ${BIND}:${POSTGRES_DIRECT_PORT}"
 info "Roundcube             http://${BIND}:${ROUNDCUBE_PORT}"

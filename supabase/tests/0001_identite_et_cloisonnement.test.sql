@@ -1,15 +1,17 @@
 -- @verifies CRM-003 (docs/BACKLOG.md) — migrations d'amorçage : identité et cloisonnement
 -- @verifies CRM-022 (docs/BACKLOG.md) — politiques d'identité qui ferment le refus transitoire
 -- @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §7.2 — `profiles.id` est le `sub`
---           du SSO et ne référence plus `auth.users` (assertions 18, 19 et 43 RÉVISÉES)
+--           du SSO et ne référence plus `auth.users` (assertions 18, 19 et 43 RÉVISÉES) ; §7.5 —
+--           tranche T6 : le trigger de création de profil est retiré par `0077`, ses assertions
+--           avec lui (docs/JOURNAL.md décision 589)
 -- @verifies docs/SCHEMA.md §1 (identité et cloisonnement), « Conventions générales »
 -- @verifies docs/SPEC-permissions-rls.md §2 (rôles), §4 (politiques), §7 (preuves de refus)
 --
 -- Suite pgTAP de l'unité `CRM-003`. Elle prouve trois choses :
 --
 --   1. la structure réellement créée est conforme à `docs/SCHEMA.md` §1 ;
---   2. le trigger de création de profil se comporte comme spécifié, y compris sur ses cas
---      limites — métadonnée absente, email absent, profil déjà présent, compte supprimé ;
+--   2. le trigger de création de profil n'existe plus (`CRM-092` T6) : un profil naît de la
+--      première connexion LeLabs admise, jamais d'une ligne `auth.users` ;
 --   3. la RLS reste activée et porte désormais les politiques exactes de `CRM-022`, tandis que
 --      les privilèges minimaux empêchent une colonne protégée de reposer sur la seule politique.
 --
@@ -25,7 +27,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(72);
+select plan(62);
 
 -- =============================================================================================
 -- 1. Structure — docs/SCHEMA.md §1
@@ -118,22 +120,13 @@ select has_index('public', 'channel_members', 'channel_members_user_id_idx',
 -- 2. Fonctions et triggers
 -- =============================================================================================
 
-select has_function('app', 'handle_new_user', 'la fonction `app.handle_new_user` existe');
+-- RÉVISÉE par `CRM-092` T6 (docs/SPEC-session-sso.md §7.5) : `0077` retire la fonction, et
+-- l'assertion prouve son ABSENCE. Les deux qui la suivaient — `SECURITY DEFINER`, propriétaire
+-- `postgres` — sont RETIRÉES avec leur objet : une fonction absente n'a ni l'un ni l'autre
+-- (docs/JOURNAL.md décision 589 ; l'absence est aussi prouvée par `0071_retrait_gotrue.test.sql`).
+select hasnt_function('app', 'handle_new_user',
+	'la fonction `app.handle_new_user` n''existe plus : aucun compte GoTrue ne crée de profil (CRM-092)');
 select has_function('app', 'set_updated_at',  'la fonction `app.set_updated_at` existe');
-
-select is(
-	(select prosecdef from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-	  where n.nspname = 'app' and p.proname = 'handle_new_user'),
-	true,
-	'`app.handle_new_user` est SECURITY DEFINER'
-);
-
-select is(
-	(select pg_get_userbyid(proowner) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-	  where n.nspname = 'app' and p.proname = 'handle_new_user'),
-	'postgres',
-	'`app.handle_new_user` appartient à `postgres`, propriétaire de `public.profiles`'
-);
 
 -- `search_path` explicite sur toute fonction du schéma : exigé par docs/SCHEMA.md §9.
 select is(
@@ -145,88 +138,39 @@ select is(
 	'toutes les fonctions du schéma `app` fixent `search_path`'
 );
 
-select has_trigger('auth', 'users', 'on_auth_user_created',
-	'le trigger de création de profil est posé sur `auth.users`');
+-- RÉVISÉE par `CRM-092` T6 : l'assertion prouve l'ABSENCE du trigger retiré par `0077`.
+select hasnt_trigger('auth', 'users', 'on_auth_user_created',
+	'aucun trigger de création de profil sur `auth.users` : plus rien n''y écrit (CRM-092)');
 select has_trigger('public', 'profiles', 'profiles_set_updated_at',
 	'`profiles` maintient `updated_at`');
 select has_trigger('public', 'workspaces', 'workspaces_set_updated_at',
 	'`workspaces` maintient `updated_at`');
 
 -- =============================================================================================
--- 3. Comportement du trigger de création de profil
+-- 3. Profils de la suite, et `updated_at`
 -- =============================================================================================
--- Les comptes sont insérés directement dans `auth.users`, ce qui est exactement ce que fait
--- GoTrue. La preuve par le **véritable** chemin applicatif — API d'administration GoTrue — est
--- rejouée hors interface par `scripts/verify-migrations.sh`, comme l'exige `CLAUDE.md` §8.
+-- RÉVISÉE par `CRM-092` T6 (docs/JOURNAL.md décision 589). Cette section éprouvait le trigger de
+-- création de profil : nom tiré de `full_name`, puis de `name`, puis de l'email, puis de
+-- l'identifiant ; langue et avatar des métadonnées ; profil existant intact ; compte supprimé. Le
+-- trigger est retiré par `0077`, et ses SIX assertions de comportement le sont avec lui, ainsi que
+-- le décompte des quatre profils qu'il créait. Ce qui les remplace : un profil naît désormais de
+-- `public.ouvrir_session_sso`, dont `0069_identite_sso.test.sql` prouve la création unique, le nom
+-- et l'absence de réécriture ; `0071_retrait_gotrue.test.sql` prouve qu'une ligne `auth.users` ne
+-- crée plus rien. Les profils de cette suite sont donc posés directement, la clé vers `auth.users`
+-- n'existant plus depuis `0075`.
+insert into public.profiles (id, full_name, avatar_url, locale)
+values
+	('00000000-0000-4000-8000-000000000001', 'Alice Martin', 'https://exemple.test/a.png', 'en'),
+	('00000000-0000-4000-8000-000000000002', 'Bob Durand', null, default);
 
--- 3.1 Métadonnée `full_name` fournie
-insert into auth.users (id, email, raw_user_meta_data)
-values (
-	'00000000-0000-4000-8000-000000000001',
-	'alice@exemple.test',
-	'{"full_name": "Alice Martin", "locale": "en", "avatar_url": "https://exemple.test/a.png"}'
-);
-
-select results_eq(
-	$$ select full_name, locale, avatar_url from public.profiles
-	    where id = '00000000-0000-4000-8000-000000000001' $$,
-	$$ values ('Alice Martin', 'en', 'https://exemple.test/a.png') $$,
-	'le profil reprend `full_name`, `locale` et `avatar_url` des métadonnées'
-);
-
--- 3.2 Métadonnée `name` seule (forme émise par plusieurs fournisseurs OAuth)
-insert into auth.users (id, email, raw_user_meta_data)
-values ('00000000-0000-4000-8000-000000000002', 'bob@exemple.test', '{"name": "Bob Durand"}');
-
-select is(
-	(select full_name from public.profiles where id = '00000000-0000-4000-8000-000000000002'),
-	'Bob Durand',
-	'à défaut de `full_name`, la métadonnée `name` est retenue'
-);
-
+-- 3.1 La langue par défaut s'applique à un profil posé sans langue.
 select is(
 	(select locale from public.profiles where id = '00000000-0000-4000-8000-000000000002'),
 	'fr',
-	'sans métadonnée `locale`, la langue par défaut est « fr »'
+	'sans langue fournie, la langue par défaut est « fr »'
 );
 
--- 3.3 Aucune métadonnée : repli sur la partie locale de l'email
-insert into auth.users (id, email)
-values ('00000000-0000-4000-8000-000000000003', 'carole.dupont@exemple.test');
-
-select is(
-	(select full_name from public.profiles where id = '00000000-0000-4000-8000-000000000003'),
-	'carole.dupont',
-	'sans métadonnée, le nom affiché est la partie locale de l''email'
-);
-
--- 3.4 Ni métadonnée ni email : repli terminal. Sans lui, la contrainte `NOT NULL` ferait échouer
---     la création du compte lui-même, ce qui serait un défaut bien plus grave qu'un nom fade.
-insert into auth.users (id, phone)
-values ('00000000-0000-4000-8000-000000000004', '+33600000004');
-
-select is(
-	(select full_name from public.profiles where id = '00000000-0000-4000-8000-000000000004'),
-	'Utilisateur 00000000',
-	'sans email ni métadonnée, le nom affiché dérive de l''identifiant'
-);
-
--- Le compte est fait sur les **seules fixtures de cette suite**, et non sur toute la table.
--- Un décompte global supposait une base vide, ce qui n'a jamais été garanti et a cessé d'être
--- vrai avec le seed socle de `CRM-005` : `resetMe.sh` l'applique après chaque redémarrage à
--- froid. Une suite dont le résultat dépend de ce qui l'entoure ne prouve pas ce qu'elle annonce
--- (`docs/JOURNAL.md`, décision 35).
-select is(
-	(select count(*)::int from public.profiles
-	  where id in ('00000000-0000-4000-8000-000000000001',
-	               '00000000-0000-4000-8000-000000000002',
-	               '00000000-0000-4000-8000-000000000003',
-	               '00000000-0000-4000-8000-000000000004')),
-	4,
-	'quatre comptes créés par cette suite, quatre profils'
-);
-
--- 3.5 `updated_at` est maintenu par trigger, pas par le client
+-- 3.2 `updated_at` est maintenu par trigger, pas par le client
 update public.profiles
    set full_name = 'Alice Martin-Durand', updated_at = '2000-01-01T00:00:00Z'
  where id = '00000000-0000-4000-8000-000000000001';
@@ -235,34 +179,6 @@ select ok(
 	(select updated_at from public.profiles where id = '00000000-0000-4000-8000-000000000001')
 		> now() - interval '1 minute',
 	'`updated_at` est réécrit par le trigger, même si le client tente de le forcer'
-);
-
--- 3.6 Profil déjà présent : le trigger ne l'écrase pas.
---     Un second `INSERT` sur le même identifiant est impossible — c'est une clé primaire. On
---     rejoue donc la **même fonction** sur la même ligne au moyen d'un trigger de test posé sur
---     `UPDATE`, puis on vérifie que la valeur éditée par l'utilisateur a survécu.
-create trigger tst_rejoue_handle_new_user
-	after update on auth.users
-	for each row execute function app.handle_new_user();
-
-update auth.users set updated_at = now() where id = '00000000-0000-4000-8000-000000000001';
-
-select is(
-	(select full_name from public.profiles where id = '00000000-0000-4000-8000-000000000001'),
-	'Alice Martin-Durand',
-	'rejoué sur un profil existant, le trigger ne réécrit rien (`on conflict do nothing`)'
-);
-
-drop trigger tst_rejoue_handle_new_user on auth.users;
-
--- 3.7 Suppression d'une ligne `auth.users` : le profil DEMEURE. RÉVISÉE par `CRM-092` : le profil
--- n'est plus le prolongement d'un compte GoTrue (docs/SPEC-session-sso.md §7.2) ; supprimer une
--- ligne inerte d'`auth.users` n'emporte plus rien. Retirer une personne, c'est retirer son profil.
-delete from auth.users where id = '00000000-0000-4000-8000-000000000004';
-
-select isnt_empty(
-	$$ select 1 from public.profiles where id = '00000000-0000-4000-8000-000000000004' $$,
-	'supprimer une ligne d''`auth.users` n''emporte plus le profil (CRM-092)'
 );
 
 -- =============================================================================================
@@ -383,7 +299,7 @@ select is(
 	    and c.relname in ('profiles', 'workspaces', 'workspace_members',
 	                      'track_members', 'channel_members')),
 	false,
-	'RLS n''est pas forcée : le trigger de création de profil doit rester opérant'
+	'RLS n''est pas forcée : l''admission `SECURITY DEFINER` doit rester opérante (CRM-092)'
 );
 
 select policies_are('public', 'profiles',
@@ -423,11 +339,12 @@ select ok(has_table_privilege('anon', 'public.track_members', 'SELECT'),
 select ok(has_table_privilege('anon', 'public.channel_members', 'SELECT'),
 	'`anon` détient SELECT sur `channel_members`');
 
--- En revanche, aucun client ne crée ni ne supprime un profil : c'est le trigger et la cascade.
+-- En revanche, aucun client ne crée ni ne supprime un profil. RÉVISÉ par `CRM-092` : le profil naît
+-- de l'admission (`ouvrir_session_sso`, clé de service seule), et le retirer est un geste de service.
 select ok(not has_table_privilege('authenticated', 'public.profiles', 'INSERT'),
-	'`authenticated` ne peut pas insérer un profil : c''est le rôle du trigger');
+	'`authenticated` ne peut pas insérer un profil : il naît de l''admission LeLabs (CRM-092)');
 select ok(not has_table_privilege('authenticated', 'public.profiles', 'DELETE'),
-	'`authenticated` ne peut pas supprimer un profil : c''est la cascade depuis `auth.users`');
+	'`authenticated` ne peut pas supprimer un profil : c''est un geste de service (CRM-092)');
 select ok(not has_table_privilege('anon', 'public.profiles', 'INSERT'),
 	'`anon` ne peut pas insérer un profil');
 select ok(not has_table_privilege('authenticated', 'public.profiles', 'UPDATE'),
@@ -438,16 +355,15 @@ select ok(not has_table_privilege('anon', 'public.workspaces', 'INSERT'),
 select ok(not has_table_privilege('anon', 'public.workspace_members', 'INSERT'),
 	'`anon` n''écrit pas dans `workspace_members`');
 
--- Le schéma `app` est utilisable. `handle_new_user` n'est exécutable par personne : elle n'est
--- appelée que par le trigger. Les fonctions d'autorisation de `CRM-010`, elles, sont explicitement
+-- Le schéma `app` est utilisable. Les fonctions d'autorisation de `CRM-010` sont explicitement
 -- accordées à `anon` — voir `supabase/tests/0002_fonctions_autorisation.test.sql` §5.
 select ok(has_schema_privilege('anon', 'app', 'USAGE'),
 	'`anon` a USAGE sur `app` : une politique appelant une fonction `app.*` refusera par zéro '
 	'ligne, non par une erreur de privilège');
 select ok(has_schema_privilege('authenticated', 'app', 'USAGE'),
 	'`authenticated` a USAGE sur `app`');
-select ok(not has_function_privilege('authenticated', 'app.handle_new_user()', 'EXECUTE'),
-	'`app.handle_new_user` n''est exécutable par personne d''autre que le trigger');
+-- RETIRÉE par `CRM-092` T6 : « `app.handle_new_user` n'est exécutable par personne d'autre que le
+-- trigger ». La fonction n'existe plus (`0077`) ; son absence est prouvée au §2 et par `0071`.
 
 select * from finish();
 

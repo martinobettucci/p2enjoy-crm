@@ -1,13 +1,14 @@
 # @spec CRM-001 (docs/BACKLOG.md) — pile Supabase self-hosted, assemblage commun des services
 # @spec CRM-016 (docs/BACKLOG.md), docs/SPEC-edge-functions.md §2 — runtime Deno commun
-# @spec CRM-091 (docs/BACKLOG.md), docs/SPEC-auth.md §10.2 — fournisseur `keycloak` de GoTrue
+# @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §2, §14 (T6) — GoTrue, ses gabarits et
+#       Inbucket quittent la pile ; l'identité vient du seul SSO LeLabs (docs/JOURNAL.md décision 589)
 # @spec docs/JOURNAL.md décision 100 (un contrôle de santé nomme une famille d'adresses)
 # @spec docs/DAT.md §3 (composants), §3.8 (contraintes d'exécution de l'hôte), §9 (déploiement),
 #       §15 (dépendances structurantes)
 # @spec README.md §2 (stack), §5 (commandes), §6 (lancement en développement)
 #
 # Assemblage **commun** aux deux environnements. Il ne contient aucun outillage de
-# développement : Studio, MinIO, Inbucket et postgres-meta vivent dans
+# développement : Studio, MinIO, Keycloak et postgres-meta vivent dans
 # `docker-compose.dev.yml`, Caddy dans `docker-compose.prod.yml`.
 #
 #   Développement : docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
@@ -61,9 +62,10 @@ services:
 
   # --- Application des migrations applicatives -----------------------------------------------
   # Conteneur éphémère décrit par docs/DAT.md §3.2 : il rejoue en ordre les fichiers de
-  # `supabase/migrations/`. Il s'exécute après GoTrue, dont le schéma `auth` est référencé par
-  # les migrations d'amorçage (`CRM-003`), et après `storage`, dont le schéma est référencé par
-  # `CRM-054` (`docs/JOURNAL.md` décision 342). Aucune migration n'est appliquée en production par
+  # `supabase/migrations/`. Il s'exécute après `storage`, dont le schéma est référencé par
+  # `CRM-054` (`docs/JOURNAL.md` décision 342). Il n'attend plus GoTrue, retiré par `CRM-092` : les
+  # tables du schéma `auth` que référencent les migrations d'amorçage (`CRM-003`) viennent de
+  # l'image de la base (K10), et `0074` y pose les fonctions de lecture du jeton. Aucune migration n'est appliquée en production par
   # ce chemin : docs/PROD_MIGRATIONS.md fait foi (docs/DAT.md §9).
   migrations-runner:
     container_name: p2enjoy-migrations
@@ -71,8 +73,6 @@ services:
     restart: "no"
     depends_on:
       db:
-        condition: service_healthy
-      auth:
         condition: service_healthy
       storage:
         condition: service_healthy
@@ -87,98 +87,6 @@ services:
       PGPASSWORD: ${POSTGRES_PASSWORD}
       APPLY_MIGRATIONS: ${APPLY_MIGRATIONS:-true}
     entrypoint: ["/bin/sh", "/usr/local/bin/apply-migrations.sh"]
-
-  # --- Gabarits transactionnels ---------------------------------------------------------------
-  # @spec CRM-009 (docs/BACKLOG.md), docs/SPEC-auth.md §5.1 — quatre corps français servis en
-  # HTTP sur le seul réseau interne, dans les assemblages de développement comme de production.
-  auth-templates:
-    container_name: p2enjoy-auth-templates
-    image: caddy:2.9-alpine
-    restart: unless-stopped
-    command: ["caddy", "file-server", "--root", "/srv/templates", "--listen", ":8080"]
-    volumes:
-      - ./supabase/auth/templates:/srv/templates:ro,z
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8080/invite.html"]
-      timeout: 5s
-      interval: 5s
-      retries: 5
-
-  # --- Authentification ----------------------------------------------------------------------
-  # docs/DAT.md §4.1 : inscription libre désactivée, comptes créés par invitation (CRM-011) ;
-  # écran, session d'onglet et gabarits transactionnels portés par CRM-009.
-  auth:
-    container_name: p2enjoy-auth
-    image: supabase/gotrue:v2.189.0
-    restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
-      auth-templates:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9999/health"]
-      timeout: 5s
-      interval: 5s
-      retries: 5
-    environment:
-      GOTRUE_API_HOST: 0.0.0.0
-      GOTRUE_API_PORT: 9999
-      API_EXTERNAL_URL: ${API_EXTERNAL_URL}
-
-      GOTRUE_DB_DRIVER: postgres
-      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
-
-      GOTRUE_SITE_URL: ${SITE_URL}
-      GOTRUE_URI_ALLOW_LIST: ${ADDITIONAL_REDIRECT_URLS}
-      # Toujours `true` : les comptes naissent d'une invitation d'administrateur.
-      GOTRUE_DISABLE_SIGNUP: ${DISABLE_SIGNUP}
-
-      GOTRUE_JWT_ADMIN_ROLES: service_role
-      GOTRUE_JWT_AUD: authenticated
-      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
-      GOTRUE_JWT_EXP: ${JWT_EXPIRY}
-      GOTRUE_JWT_SECRET: ${JWT_SECRET}
-      GOTRUE_JWT_ISSUER: ${API_EXTERNAL_URL}
-
-      GOTRUE_EXTERNAL_EMAIL_ENABLED: ${ENABLE_EMAIL_SIGNUP}
-      # Connexion unique (CRM-091, docs/SPEC-auth.md §10.2). GoTrue ne sert QUE l'échange
-      # d'`id_token` : il n'envoie aucun `code_challenge` à Keycloak (décision 568, M1), et l'absence
-      # de secret client et d'URL de retour ferme d'elle-même sa voie `/authorize` sans PKCE (M9).
-      # L'émetteur doit être celui des jetons au caractère près ; le client est la seule audience
-      # acceptée (M8).
-      GOTRUE_EXTERNAL_KEYCLOAK_ENABLED: "true"
-      GOTRUE_EXTERNAL_KEYCLOAK_URL: ${SSO_OIDC_ISSUER}
-      GOTRUE_EXTERNAL_KEYCLOAK_CLIENT_ID: ${SSO_OIDC_CLIENT_ID}
-      GOTRUE_EXTERNAL_ANONYMOUS_USERS_ENABLED: ${ENABLE_ANONYMOUS_USERS}
-      GOTRUE_MAILER_AUTOCONFIRM: ${ENABLE_EMAIL_AUTOCONFIRM}
-      GOTRUE_EXTERNAL_PHONE_ENABLED: ${ENABLE_PHONE_SIGNUP}
-      GOTRUE_SMS_AUTOCONFIRM: ${ENABLE_PHONE_AUTOCONFIRM}
-
-      # Le défaut de GoTrue est 6, mesuré comme réellement permissif (docs/SPEC-auth.md §4).
-      GOTRUE_PASSWORD_MIN_LENGTH: ${PASSWORD_MIN_LENGTH}
-
-      # SMTP transactionnel : Inbucket en développement, fournisseur réel en production.
-      GOTRUE_SMTP_ADMIN_EMAIL: ${SMTP_ADMIN_EMAIL}
-      GOTRUE_SMTP_HOST: ${SMTP_HOST}
-      GOTRUE_SMTP_PORT: ${SMTP_PORT}
-      GOTRUE_SMTP_USER: ${SMTP_USER}
-      GOTRUE_SMTP_PASS: ${SMTP_PASS}
-      GOTRUE_SMTP_SENDER_NAME: ${SMTP_SENDER_NAME}
-      GOTRUE_MAILER_URLPATHS_INVITE: ${MAILER_URLPATHS_INVITE}
-      GOTRUE_MAILER_URLPATHS_CONFIRMATION: ${MAILER_URLPATHS_CONFIRMATION}
-      GOTRUE_MAILER_URLPATHS_RECOVERY: ${MAILER_URLPATHS_RECOVERY}
-      GOTRUE_MAILER_URLPATHS_EMAIL_CHANGE: ${MAILER_URLPATHS_EMAIL_CHANGE}
-      # Les URL sont absolues : sans préfixe http, GoTrue les concatène à SITE_URL. Un échec de
-      # chargement retombe sur l'anglais ; scripts/verify-auth.sh vérifie donc le corps reçu.
-      GOTRUE_MAILER_TEMPLATES_INVITE: http://auth-templates:8080/invite.html
-      GOTRUE_MAILER_TEMPLATES_CONFIRMATION: http://auth-templates:8080/confirmation.html
-      GOTRUE_MAILER_TEMPLATES_RECOVERY: http://auth-templates:8080/recovery.html
-      GOTRUE_MAILER_TEMPLATES_EMAIL_CHANGE: http://auth-templates:8080/email-change.html
-      GOTRUE_MAILER_SUBJECTS_INVITE: Invitation à P2Enjoy CRM
-      GOTRUE_MAILER_SUBJECTS_CONFIRMATION: Confirmez votre adresse — P2Enjoy CRM
-      GOTRUE_MAILER_SUBJECTS_RECOVERY: Réinitialisez votre mot de passe — P2Enjoy CRM
-      GOTRUE_MAILER_SUBJECTS_EMAIL_CHANGE: Confirmez votre nouvelle adresse — P2Enjoy CRM
 
   # --- API REST ------------------------------------------------------------------------------
   # PostgREST expose le schéma filtré par RLS (docs/DAT.md §6, docs/SPEC-permissions-rls.md).
@@ -358,7 +266,7 @@ services:
       SSO_OIDC_CLIENT_SECRET: ${SSO_OIDC_CLIENT_SECRET}
 
   # --- Passerelle ----------------------------------------------------------------------------
-  # Kong expose REST, Auth, Storage, Realtime et les fonctions edge sur un port unique
+  # Kong expose REST, Storage, Realtime et les fonctions edge sur un port unique
   # (docs/DAT.md §3.5, docs/SPEC-edge-functions.md §5).
   # La configuration déclarative ne référence aucun service de développement : Studio est joint
   # directement sur son propre port en développement, jamais au travers de la passerelle.
@@ -367,7 +275,8 @@ services:
     image: kong/kong:3.9.1
     restart: unless-stopped
     labels:
-      com.p2enjoy.kong-config-revision: crm-016
+      # `crm-092` : routes d'authentification retirées (docs/SPEC-edge-functions.md §2, décision 589).
+      com.p2enjoy.kong-config-revision: crm-092
     depends_on:
       functions:
         condition: service_healthy

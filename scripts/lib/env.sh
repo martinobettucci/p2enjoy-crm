@@ -358,7 +358,6 @@ env_print_dev_credentials() {
 		"Authorization: Bearer $(env_get "$ENV_FILE" MAIL_SYNC_INTERNAL_TOKEN)"
 	env_credential_line "Keycloak (admin)" "admin / $(env_get "$ENV_FILE" SSO_DEV_ADMIN_PASSWORD)"
 	env_credential_line "Supabase Studio" "sans authentification en développement"
-	env_credential_line "Inbucket" "sans authentification : puits des emails transactionnels"
 }
 
 # --- Validation ---------------------------------------------------------------------------------
@@ -469,30 +468,22 @@ env_require_dev_sso_issuer() {
 	fi
 }
 
-# Les liens transactionnels de GoTrue reviennent vers SITE_URL. En développement, cette origine
-# doit donc désigner exactement le Vite publié par l'overlay et faire partie des redirections
-# autorisées. La garde est indépendante de Docker afin que `runDev.sh --bootstrap` puisse révéler
-# une configuration inutilisable sans démarrer ni interroger la pile (décision 272).
+# La connexion LeLabs revient vers `SITE_URL/auth/retour`, l'URL de retour que le realm de
+# développement déclare (docs/SPEC-session-sso.md §10). En développement, cette origine doit donc
+# désigner exactement le Vite publié par l'overlay. La garde est indépendante de Docker afin que
+# `runDev.sh --bootstrap` puisse révéler une configuration inutilisable sans démarrer ni interroger
+# la pile (décision 272). RÉVISÉE par `CRM-092` T6 : la liste `ADDITIONAL_REDIRECT_URLS` de GoTrue
+# est partie avec lui, et sa vérification avec elle (décision 589).
 env_require_dev_webapp_origin() {
-	local bind port expected site redirects
+	local bind port expected site
 	bind=$(env_get "$ENV_FILE" DEV_BIND_ADDRESS)
 	port=$(env_get "$ENV_FILE" WEBAPP_DEV_PORT)
 	expected="http://${bind}:${port}"
 	site=$(env_get "$ENV_FILE" SITE_URL)
-	redirects=$(env_get "$ENV_FILE" ADDITIONAL_REDIRECT_URLS)
 
 	if [ "$site" != "$expected" ]; then
 		die "SITE_URL vaut « ${site:-<vide>} », or la webapp de développement est publiée à « $expected ».
         Alignez SITE_URL sur DEV_BIND_ADDRESS et WEBAPP_DEV_PORT dans $ENV_FILE avant de démarrer."
-	fi
-
-	if ! printf '%s' "$redirects" | awk -v want="$expected" '
-		BEGIN { RS = ","; found = 0 }
-		{ gsub(/^[[:space:]]+|[[:space:]]+$/, "", $0); if ($0 == want) found = 1 }
-		END { exit found ? 0 : 1 }
-	'; then
-		die "ADDITIONAL_REDIRECT_URLS n'autorise pas l'origine webapp de développement « $expected ».
-        Ajoutez cette origine comme entrée entière dans $ENV_FILE avant de démarrer."
 	fi
 }
 

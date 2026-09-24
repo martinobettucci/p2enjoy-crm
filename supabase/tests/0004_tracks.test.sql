@@ -4,6 +4,9 @@
 -- @verifies docs/SPEC-permissions-rls.md §4 (politiques), §7 (preuves de refus n° 3 et n° 11)
 -- @verifies docs/DESIGN_SYSTEM.md §1 (couleurs de données : un nom de jeton)
 -- @verifies docs/INCONSISTENCY_REPORT.md INC-010 (clé étrangère rétablie), INC-024 (droits fins)
+-- @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §7.5 — tranche T6 : les profils de
+--           fixture sont posés directement, plus aucun trigger ne les tire d'`auth.users`
+--           (docs/JOURNAL.md décision 589)
 --
 -- Suite pgTAP de l'unité `CRM-020`. Elle prouve cinq choses :
 --
@@ -363,14 +366,13 @@ select is(
 -- claims` en réglage local, et le rôle applicatif endossé par `set local role`. C'est le même
 -- procédé que la suite `0002` de `CRM-010`.
 
-insert into auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
-	values
-		('22220000-0000-4000-8000-00000000000a', '00000000-0000-0000-0000-000000000000',
-		 'authenticated', 'authenticated', 'admin-a@exemple.test', '{"full_name": "Admin A"}'),
-		('22220000-0000-4000-8000-00000000000b', '00000000-0000-0000-0000-000000000000',
-		 'authenticated', 'authenticated', 'viewer-a@exemple.test', '{"full_name": "Viewer A"}'),
-		('22220000-0000-4000-8000-00000000000c', '00000000-0000-0000-0000-000000000000',
-		 'authenticated', 'authenticated', 'admin-b@exemple.test', '{"full_name": "Admin B"}');
+-- `CRM-092` T6 (docs/JOURNAL.md décision 589) : le profil est posé directement. Plus aucun
+-- trigger ne le tire d'une ligne `auth.users` (`0077`), et la clé vers `auth.users` est partie
+-- en `0075`.
+insert into public.profiles (id, full_name) values
+	('22220000-0000-4000-8000-00000000000a', 'Admin A'),
+	('22220000-0000-4000-8000-00000000000b', 'Viewer A'),
+	('22220000-0000-4000-8000-00000000000c', 'Admin B');
 
 insert into public.workspace_members (workspace_id, user_id, role) values
 	('11110000-0000-4000-8000-000000000001', '22220000-0000-4000-8000-00000000000a', 'admin'),

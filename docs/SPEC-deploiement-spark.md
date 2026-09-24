@@ -226,7 +226,8 @@ migration 1 n'existe pas, reste `unhealthy`, et `mail-sync` qui en dépend ne d�
 séquence documentée jusqu'ici, `./runProd.sh` puis `./runProd.sh --migrate`, échouait donc à sa
 première étape. `./runProd.sh [--spark] --migrate --premier-deploiement` :
 
-1. ne démarre que `db`, `auth` et `storage` — les dépendances du runner — et ce qu'eux exigent ;
+1. ne démarre que `db` et `storage` — les dépendances du runner — et ce qu'eux exigent (`auth` en
+   faisait partie jusqu'au retrait de GoTrue, `CRM-092` T6) ;
 2. **mesure** `select count(*) from pg_tables where schemaname = 'public'` dans `p2enjoy-db` ;
 3. refuse si le compte n'est pas `0`, en le rendant et en renvoyant vers `--migrate
    --instantane-verifie` ;

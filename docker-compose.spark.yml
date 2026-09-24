@@ -2,6 +2,8 @@
 # @spec docs/SPEC-deploiement-spark.md §3 (assemblage), §4.2 (variables sans objet), §8 (capacité)
 # @spec docs/DAT.md §3.5 (passerelle et périphérie), §9 (déploiement)
 # @spec docs/JOURNAL.md décisions 567 (la cellule), 569 (registre MinIO), 571 (image Realtime)
+# @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §2 — tranche T6 : plus de limite mémoire pour
+#       `auth` ni `auth-templates`, retirés de la pile (décision 589)
 #
 #   ./runProd.sh --spark      — jamais à la main : le script fusionne d'abord les variables
 #                               injectées par le plan de contrôle (§4.1) et compose les trois
@@ -119,10 +121,6 @@ services:
 
   db:
     mem_limit: 512m
-  auth:
-    mem_limit: 128m
-  auth-templates:
-    mem_limit: 64m
   migrations-runner:
     mem_limit: 128m
   rest:

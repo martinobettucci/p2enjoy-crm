@@ -516,7 +516,7 @@ scripts/verify-scripts.sh      # scripts de lancement et contrat d'environnement
 scripts/verify-migrations.sh   # migrations, suite pgTAP, refus par défaut          (CRM-003)
 scripts/verify-vault.sh        # chiffrement des secrets de messagerie              (CRM-004)
 scripts/verify-authz.sh        # fonctions d'autorisation, jetons réels             (CRM-010)
-scripts/verify-auth.sh         # GoTrue + contenu des emails transactionnels (CRM-011, CRM-009)
+scripts/verify-session-sso.sh  # SSO seule identité : échangeur, sessions, admission  (CRM-092)
 scripts/verify-seed.sh         # seed socle : contrat, identifiants stables, convergence  (CRM-005)
 scripts/verify-types.sh        # types générés : déterminisme, garde anti-dérive        (CRM-006)
 scripts/verify-webapp.sh       # webapp : build/chunks, jetons, états, clavier, console (CRM-007)
@@ -592,16 +592,11 @@ décision 28). Les quatre fonctions `can_*` n'ont pas besoin de cette instrument
 politiques de `tracks`, `channels` et `cards` les appellent déjà, et le harnais les exerce donc par
 le chemin réel du produit, avec les jetons des trois profils du seed.
 
-`scripts/verify-auth.sh` couvre l'authentification, entièrement **hors interface**. Il vérifie
-d'abord que la configuration réellement appliquée au service `auth` est celle du `.env`, puis
-exerce le cycle de vie complet d'un compte : inscription libre refusée — y compris avec la clé de
-service —, invitation refusée à la clé anonyme puis émise par la clé de service, email
-**réellement reçu** dans Inbucket, acceptation en suivant le lien de cet email, définition du mot
-de passe, connexion, rafraîchissement, déconnexion, réinitialisation menée à son terme et
-suppression du compte. Les refus qui doivent rester **muets** sur l'existence d'un compte sont
-comparés message à message. Sa non-complaisance est éprouvée par un GoTrue **jetable**, à la même
-version épinglée, portant le réglage affaibli : le contrôle n'est réussi que si ce GoTrue-là
-accepte ce que la pile refuse.
+`scripts/verify-session-sso.sh` couvre l'authentification, entièrement **hors interface** : le SSO
+LeLabs est la seule identité (`CRM-092`). Il éprouve la base neuve sans GoTrue, le realm de
+développement, l'échangeur de session et ses trois gestes, les sessions serveur chiffrées,
+l'admission, et `/auth/v1/*` en 404 ; ses mutations et dégradations doivent chacune le faire rougir.
+`scripts/verify-auth.sh`, qui éprouvait GoTrue, est retiré avec lui (`CRM-092` T6, décision 581).
 
 ## 8. Build
 
@@ -695,7 +690,7 @@ Livré à ce jour :
 │   ├── verify-migrations.sh    Preuves rejouables des migrations et du refus par défaut
 │   ├── verify-vault.sh         Preuves rejouables du chiffrement des secrets de messagerie
 │   ├── verify-authz.sh         Preuves rejouables des fonctions d'autorisation
-│   ├── verify-auth.sh          Preuves rejouables de l'authentification
+│   ├── verify-session-sso.sh   Preuves rejouables de la connexion par le seul SSO LeLabs
 │   ├── verify-seed.sh          Preuves rejouables du seed socle
 │   ├── generate-types.sh       Génération des types TypeScript depuis le schéma migré
 │   ├── verify-types.sh         Preuves rejouables des types générés et de leur garde anti-dérive

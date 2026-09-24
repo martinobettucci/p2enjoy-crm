@@ -615,13 +615,15 @@ restauration).
 
 ## 7. Authentification et autorisation
 
-- **Authentification** : GoTrue, email et mot de passe, inscription libre désactivée,
-  invitations émises avec un droit d'administration. Spécifiée par `docs/SPEC-auth.md`, prouvée
-  hors interface par `scripts/verify-auth.sh` (**62 contrôles**, dont service et contenu réel des
-  gabarits français). Le retour destinataire est en plus exercé dans Chromium par `CRM-009`.
-- **Politique de mot de passe** : longueur minimale de 12 caractères (`PASSWORD_MIN_LENGTH`),
-  sans exigence de composition. Le défaut de GoTrue, 6, a été mesuré comme réellement permissif
-  (`docs/JOURNAL.md`, décision 29).
+- **Authentification** — `CRM-092` : le SSO LeLabs (`oauth.lelabs.tech`) est la **seule** source
+  d'identité, en développement (Keycloak préchargé) comme en production. Le CRM est un client
+  **confidentiel** : la fonction edge `session` échange le code avec le secret du client, garde le
+  jeton de rafraîchissement chiffré (`public.sessions_sso`) et ne rend qu'un jeton interne de 300 s
+  au plus et une poignée `httpOnly`. Admission : personne attendue **et** rôle `verified`. Spécifiée
+  par `docs/SPEC-session-sso.md`, prouvée par `scripts/verify-session-sso.sh` et
+  `e2e/api/session.spec.ts`. GoTrue, ses gabarits et Inbucket ont quitté la pile (T6, décision 589) ;
+  `docs/SPEC-auth.md` n'est plus qu'un renvoi.
+- **Mot de passe** : le CRM n'en connaît aucun. La politique de mot de passe est celle de LeLabs.
 - **Rôles de workspace** : `admin`, `business_developer`, `viewer`.
 - **Droits fins** : `track_members` et `channel_members` accordent l'accès à un sous-arbre.
 - **Application** : politiques RLS sur toutes les tables, appuyées sur des fonctions

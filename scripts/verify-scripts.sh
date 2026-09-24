@@ -4,7 +4,8 @@
 # @verifies CRM-017 (docs/BACKLOG.md) — rôle propriétaire explicite des migrations d'extension
 # @verifies CRM-090 (docs/BACKLOG.md) — le gabarit couvre aussi l'overlay de la cellule Spark
 # @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §10, §11 — tranche T4 : le rappel des
-#           identifiants lit le mot de passe du realm de développement, seul que la pile connaisse
+#           identifiants lit le mot de passe du realm de développement, seul que la pile connaisse ;
+#           tranche T6 (décision 589) : plus d'Inbucket ni de variable de GoTrue exigée
 # @verifies CRM-087 (docs/BACKLOG.md) — garde et progression de « ./runProd.sh --migrate » au
 #           terminal, éprouvées par un vrai PTY (scripts/lib/spawn-pty.py)
 # @verifies docs/JOURNAL.md décision 15 (liste exhaustive des variables), décision 16 (gardes),
@@ -94,6 +95,7 @@ BACKUP_MIN_RECIPIENTS       lue par scripts/backup-supervision.sh depuis CRM-080
 BACKUP_OFFSITE_DIR          lue par scripts/backup-supervision.sh depuis CRM-080 tranche 3, jamais par un service
 BACKUP_DRILL_STAMP_FILE     lue par scripts/backup-supervision.sh depuis CRM-080 tranche 3, jamais par un service ; elle est écrite par le déclencheur de l'exercice, jamais par un script du dépôt
 BACKUP_DRILL_MAX_AGE_DAYS   lue par scripts/backup-supervision.sh depuis CRM-080 tranche 3, jamais par un service
+API_EXTERNAL_URL            lue par scripts/spark/livrer.sh pour le build de la webapp ; plus par aucun service depuis le retrait de GoTrue (CRM-092 T6, décision 589)
 "
 
 # --- 1. Le gabarit est le contrat exact de l'assemblage ----------------------------------------
@@ -393,7 +395,7 @@ CREDENTIALS="$WORK/credentials.txt"
 for attendu in \
 	'admin@' 'bizdev@' 'viewer@' 'systeme@' \
 	'PostgreSQL' 'Stalwart (gestion)' 'MinIO (console)' 'mail-sync (API interne)' \
-	'Supabase Studio' 'Inbucket'
+	'Supabase Studio' 'Keycloak (admin)'
 do
 	if grep -qF "$attendu" "$CREDENTIALS"; then
 		ok "les identifiants annoncent « $attendu »"
@@ -568,15 +570,15 @@ else
 	fail "runDev.sh refuse SITE_URL sans expliquer l'origine attendue"
 fi
 
-REDIRECT_DIVERGENT="$WORK/env.redirect-divergent"
-sed 's#^ADDITIONAL_REDIRECT_URLS=.*#ADDITIONAL_REDIRECT_URLS=http://127.0.0.1:5999#' \
-	"$BOOT1" > "$REDIRECT_DIVERGENT"
-if P2ENJOY_ENV_FILE="$REDIRECT_DIVERGENT" ./runDev.sh --bootstrap >"$WORK/redirect-divergent.log" 2>&1; then
-	fail "runDev.sh accepte une origine absente de ADDITIONAL_REDIRECT_URLS"
-elif grep -q 'ADDITIONAL_REDIRECT_URLS.*origine webapp' "$WORK/redirect-divergent.log"; then
-	ok "runDev.sh refuse une redirection incohérente avant Docker et nomme sa correction"
+# RÉVISÉ par `CRM-092` T6 (décision 589) : `ADDITIONAL_REDIRECT_URLS` était la liste de redirections
+# de GoTrue, parti avec elle, et la garde qui la vérifiait aussi. Le contrôle est retourné : un
+# `.env` qui ne la porte plus démarre, et un ancien `.env` qui la porte encore aussi (`BOOT1`).
+SANS_REDIRECTIONS="$WORK/env.sans-redirections"
+grep -v '^ADDITIONAL_REDIRECT_URLS=' "$BOOT1" > "$SANS_REDIRECTIONS"
+if P2ENJOY_ENV_FILE="$SANS_REDIRECTIONS" ./runDev.sh --bootstrap >"$WORK/sans-redirections.log" 2>&1; then
+	ok "runDev.sh n'exige plus ADDITIONAL_REDIRECT_URLS, variable de GoTrue retirée avec lui"
 else
-	fail "runDev.sh refuse ADDITIONAL_REDIRECT_URLS sans expliquer l'origine attendue"
+	fail "runDev.sh exige encore une variable de GoTrue : $(tail -n 2 "$WORK/sans-redirections.log" | tr '\n' ' ')"
 fi
 
 # --- 5. Gardes de profil -----------------------------------------------------------------------

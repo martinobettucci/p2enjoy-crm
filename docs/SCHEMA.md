@@ -34,9 +34,10 @@ Documents liés : `docs/DAT.md`, `docs/SPEC-permissions-rls.md`, `docs/SPEC-work
 La personne du CRM. **Son identifiant est le `sub` du SSO LeLabs** (`CRM-092`,
 `docs/SPEC-session-sso.md` §1) : le profil naît à la première connexion admise, par
 `public.ouvrir_session_sso` (§6.2 de cette spécification). Il ne prolonge plus `auth.users` : la clé
-étrangère est retirée par la migration 75. Tant que GoTrue tourne encore (tranches T1 à T5), le
-trigger historique sur `auth.users` continue de créer un profil pour un compte GoTrue ; il part avec
-GoTrue (migration 76).
+étrangère est retirée par la migration 75. Le trigger historique `on_auth_user_created`, qui créait un
+profil pour chaque compte GoTrue, et sa fonction `app.handle_new_user()` sont retirés par la migration
+77 avec GoTrue (`CRM-092` T6, `docs/SPEC-session-sso.md` §7.5) : plus rien n'écrit dans `auth.users`,
+dont les tables restent, inertes.
 
 | Colonne | Type | Contraintes |
 |---|---|---|

@@ -106,10 +106,10 @@ fi
 
 revision=$(docker inspect -f '{{index .Config.Labels "com.p2enjoy.kong-config-revision"}}' \
 	p2enjoy-kong 2>/dev/null || true)
-if [ "$revision" = crm-016 ]; then
-	ok "Kong exécute la révision déclarative crm-016"
+if [ "$revision" = crm-092 ]; then
+	ok "Kong exécute la révision déclarative crm-092"
 else
-	fail "révision Kong active : '$revision' (attendu crm-016 ; relancer ./runDev.sh)"
+	fail "révision Kong active : '$revision' (attendu crm-092 ; relancer ./runDev.sh)"
 fi
 
 if docker compose -f docker-compose.yml -f docker-compose.prod.yml config --services \

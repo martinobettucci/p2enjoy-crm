@@ -3,9 +3,12 @@
 -- @verifies docs/SPEC-seed.md §2 (contrat), §4 (identifiants stables), §7 (preuves n° 1 à 4)
 -- @verifies docs/SCHEMA.md §1 (`profiles`, `workspaces`, `workspace_members`)
 -- @verifies docs/SPEC-permissions-rls.md §2.1 (les trois rôles de workspace)
+-- @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §11, docs/SPEC-seed.md §2.2 — le seed
+--           naît par LeLabs : attentes, admission, aucune écriture dans `auth.users` (sections 2 et 3
+--           RÉVISÉES à nombre constant, décision 51 ; docs/JOURNAL.md décision 589)
 --
 -- Suite pgTAP du seed socle. Elle vérifie le contrat de `docs/SPEC-seed.md` §2 **au niveau SQL**,
--- c'est-à-dire un cran sous l'API : ni PostgREST, ni Kong, ni GoTrue n'interviennent.
+-- c'est-à-dire un cran sous l'API : ni PostgREST, ni Kong, ni l'échangeur de session n'interviennent.
 --
 -- Ce n'est pas une redite de `scripts/verify-seed.sh`, qui interroge l'API. Les deux vues sont
 -- complémentaires et peuvent diverger : une ligne présente en base mais invisible de l'API
@@ -67,74 +70,80 @@ select is(
 	'workspaces.settings vaut « {} » : aucun réglage, et non NULL');
 
 -- =============================================================================================
--- 2. Les comptes — docs/SPEC-seed.md §2.2
+-- 2. Les personnes et leurs attentes — docs/SPEC-seed.md §2.2
 -- =============================================================================================
--- Les comptes sont lus dans `auth.users`, dont GoTrue est l'autorité. Le seed n'y écrit jamais
--- directement : il passe par l'API d'administration. Ce que la suite vérifie ici, c'est le
--- **résultat** de cet appel, pas le moyen.
-
-select is(
-	(select count(*)::int from auth.users where id::text like '5eed%'),
-	3,
-	'le seed pose exactement trois comptes, reconnaissables à leur préfixe « 5eed »');
-
-select is(
-	(select email from auth.users where id = '5eed0000-0000-4000-8000-000000000011'::uuid),
-	'admin@p2enjoy.test',
-	'…000000000011 est admin@p2enjoy.test');
-
-select is(
-	(select email from auth.users where id = '5eed0000-0000-4000-8000-000000000012'::uuid),
-	'bizdev@p2enjoy.test',
-	'…000000000012 est bizdev@p2enjoy.test');
-
-select is(
-	(select email from auth.users where id = '5eed0000-0000-4000-8000-000000000013'::uuid),
-	'viewer@p2enjoy.test',
-	'…000000000013 est viewer@p2enjoy.test');
-
--- Une adresse non confirmée rendrait le compte inutilisable pour les tests et les captures, sans
--- que rien ne le signale avant la première tentative de connexion.
-select is(
-	(select count(*)::int from auth.users
-	  where id::text like '5eed%' and email_confirmed_at is not null),
-	3,
-	'les trois comptes ont une adresse confirmée : ils sont immédiatement utilisables');
-
-select is(
-	(select count(*)::int from auth.users
-	  where id::text like '5eed%' and encrypted_password is not null),
-	3,
-	'les trois comptes portent un mot de passe : aucun n''est resté au stade de l''invitation');
-
--- Le mot de passe n'est jamais stocké en clair. On ne teste pas sa valeur — elle est publiée —
--- mais le fait qu'elle ne soit pas lisible telle quelle dans la colonne.
-select is(
-	(select count(*)::int from auth.users
-	  where id::text like '5eed%' and encrypted_password = 'SeedDev2026Local'),
-	0,
-	'le mot de passe du seed n''est pas stocké en clair dans auth.users');
-
--- Toutes les adresses du seed sont sous un TLD qui ne peut pas être routé : un email envoyé par
--- erreur à un compte de démonstration ne peut atteindre personne de réel.
-select is(
-	(select count(*)::int from auth.users
-	  where id::text like '5eed%' and email not like '%@p2enjoy.test'),
-	0,
-	'aucune adresse du seed n''échappe au domaine réservé p2enjoy.test');
-
--- =============================================================================================
--- 3. Les profils — nés du trigger de CRM-003, convergés par le seed
--- =============================================================================================
--- Le seed ne crée aucun profil : `app.handle_new_user()` s'en charge (docs/SCHEMA.md §1). Ce que
--- la suite vérifie, c'est que le trigger a bien fonctionné pour les trois comptes, et que le nom
--- affiché est celui du contrat — ce qui, après une mise à jour de compte, n'a rien d'automatique
--- (docs/JOURNAL.md, décision 34).
+-- RÉVISÉE par `CRM-092` (tranche T4 pour le seed, T6 pour cette suite — décision 589). Les comptes
+-- étaient lus dans `auth.users`, que GoTrue remplissait à l'appel du seed. Ils vivent désormais dans
+-- le LeLabs de développement, et le CRM n'en garde que ce que l'admission produit : un profil et une
+-- appartenance, nés de la première connexion admise, et les attentes que personne n'a encore
+-- consommées. Les huit assertions de cette section et les neuf de la suivante éprouvent ce
+-- contrat-là, à nombre constant (dix-sept avant comme après).
+-- MESURÉ le 2026-09-24 : cette section restait VERTE après T4 pour une seule raison — les lignes
+-- GoTrue des seeds antérieurs survivaient dans `auth.users` ; sur une base neuve, elle serait tombée.
 
 select is(
 	(select count(*)::int from public.profiles where id::text like '5eed%'),
 	3,
-	'les trois profils existent : le trigger de CRM-003 s''est déclenché pour chaque compte');
+	'le seed installe exactement trois personnes, reconnaissables à leur préfixe « 5eed »');
+
+select is(
+	(select count(*)::int from public.workspace_invitations
+	  where workspace_id = '5eed0000-0000-4000-8000-000000000001'::uuid),
+	1,
+	'une seule attente demeure dans l''espace : les trois personnes admises ont consommé la leur');
+
+select is(
+	(select email from public.workspace_invitations
+	  where workspace_id = '5eed0000-0000-4000-8000-000000000001'::uuid),
+	'attendu@p2enjoy.test',
+	'l''attente démontrée est celle d''attendu@p2enjoy.test, que LeLabs n''a pas vérifiée');
+
+select is(
+	(select role from public.workspace_invitations
+	  where workspace_id = '5eed0000-0000-4000-8000-000000000001'::uuid),
+	'viewer',
+	'et elle attend le rôle « viewer »');
+
+select is(
+	(select count(*)::int from public.profiles where id = '5eed0000-0000-4000-8000-000000000014'::uuid),
+	0,
+	'inconnu@p2enjoy.test, attendu par personne, ne laisse aucun profil');
+
+select is(
+	(select count(*)::int from public.profiles where id = '5eed0000-0000-4000-8000-000000000015'::uuid),
+	0,
+	'attendu@p2enjoy.test, refusé tant que LeLabs ne l''a pas vérifié, n''a pas de profil');
+
+-- Toutes les adresses du seed sont sous un TLD qui ne peut pas être routé : un email envoyé par
+-- erreur à une personne de démonstration ne peut atteindre personne de réel.
+select is(
+	(select count(*)::int from public.workspace_invitations
+	  where workspace_id = '5eed0000-0000-4000-8000-000000000001'::uuid
+	    and email not like '%@p2enjoy.test'),
+	0,
+	'aucune attente du seed n''échappe au domaine réservé p2enjoy.test');
+
+select is(
+	(select count(*)::int from auth.users where id::text like '5eed%'),
+	0,
+	'le seed n''écrit rien dans `auth.users` : le CRM ne crée aucun compte (CRM-092)');
+
+-- =============================================================================================
+-- 3. Les profils — nés de l'admission, nommés par la personne elle-même
+-- =============================================================================================
+-- RÉVISÉE par `CRM-092`. Un profil naît de `public.ouvrir_session_sso` à la première connexion
+-- admise ; la personne pose ensuite son nom et son avatar par la mise à jour de SON profil, avec son
+-- propre jeton (docs/SPEC-seed.md §2.2). Le nom affiché du contrat n'a donc rien d'automatique
+-- (docs/JOURNAL.md, décision 34).
+
+select is(
+	(select count(*)::int from public.profiles p
+	  where p.id::text like '5eed%'
+	    and exists (select 1 from public.workspace_members m
+	                 where m.user_id = p.id
+	                   and m.workspace_id = '5eed0000-0000-4000-8000-000000000001'::uuid)),
+	3,
+	'chaque profil seedé est né d''une admission : il porte son appartenance à l''espace');
 
 select is(
 	(select full_name from public.profiles where id = '5eed0000-0000-4000-8000-000000000011'::uuid),
@@ -164,30 +173,26 @@ select results_eq(
 		('5eed0000-0000-4000-8000-000000000013'::uuid, '/avatars/farida-nowak.svg'::text) $$,
 	'les trois profils portent les avatars même origine du contrat CRM-022');
 
-select results_eq(
-	$$ select id, raw_user_meta_data ->> 'avatar_url' from auth.users
-	    where id::text like '5eed%' order by id $$,
-	$$ values
-		('5eed0000-0000-4000-8000-000000000011'::uuid, '/avatars/camille-aubert.svg'::text),
-		('5eed0000-0000-4000-8000-000000000012'::uuid, '/avatars/driss-lemoine.svg'::text),
-		('5eed0000-0000-4000-8000-000000000013'::uuid, '/avatars/farida-nowak.svg'::text) $$,
-	'les métadonnées GoTrue convergent sur les mêmes avatars');
-
--- Un profil sans compte serait le signe d'une cascade rompue ; un compte sans profil, d'un
--- trigger défaillant. Les deux sens sont vérifiés.
+-- Les sessions qu'ouvre le seed sont refermées aussitôt ; celles des campagnes d'interface vivent
+-- jusqu'à leur échéance. Aucune, quelle qu'elle soit, ne garde le jeton LeLabs en clair (§7.4).
 select is(
-	(select count(*)::int from public.profiles p
-	  where p.id::text like '5eed%'
-	    and not exists (select 1 from auth.users u where u.id = p.id)),
+	(select count(*)::int from public.sessions_sso
+	  where sub::text like '5eed%' and rafraichissement not like 'v1.%'),
 	0,
-	'aucun profil seedé n''est orphelin de son compte');
+	'aucune session serveur d''une personne seedée ne garde son jeton de rafraîchissement en clair');
 
 select is(
-	(select count(*)::int from auth.users u
-	  where u.id::text like '5eed%'
-	    and not exists (select 1 from public.profiles p where p.id = u.id)),
+	(select count(*)::int from public.sessions_sso
+	  where sub in ('5eed0000-0000-4000-8000-000000000014'::uuid,
+	                '5eed0000-0000-4000-8000-000000000015'::uuid)),
 	0,
-	'aucun compte seedé n''est dépourvu de profil');
+	'aucune session serveur pour inconnu@ ni pour attendu@ : l''échangeur n''en ouvre aucune sans admission');
+
+select is(
+	(select count(*)::int from public.workspace_invitations
+	  where email in ('admin@p2enjoy.test', 'bizdev@p2enjoy.test', 'viewer@p2enjoy.test')),
+	0,
+	'les attentes des trois personnes admises sont consommées : aucune ne demeure');
 
 -- =============================================================================================
 -- 4. Les appartenances et les rôles — docs/SPEC-permissions-rls.md §2.1

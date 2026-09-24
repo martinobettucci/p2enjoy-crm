@@ -553,7 +553,10 @@ PORT_RAPPORT=9323
 # **70 depuis `CRM-092` tranche T3 bis, 2026-09-24** : `supabase/tests/0070_sessions_serveur.test.sql`
 # est le fichier ajouté, et il est le seul. 69 + 1 = 70, valeur COMPTÉE — « 70 fichiers ». Garde-fou
 # RÉVISÉ, jamais retiré (décision 51).
-FICHIERS_SQL_ATTENDUS=70
+# **71 depuis `CRM-092` tranche T6, 2026-09-24** : `supabase/tests/0071_retrait_gotrue.test.sql` est le
+# fichier ajouté, et il est le seul. 70 + 1 = 71, valeur COMPTÉE sur la pile recréée sans GoTrue —
+# « 71 fichiers ». Garde-fou RÉVISÉ, jamais retiré (décision 51).
+FICHIERS_SQL_ATTENDUS=71
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -586,7 +589,13 @@ FICHIERS_SQL_ATTENDUS=70
 # `0070_sessions_serveur.test.sql` (**40** assertions : table sans politique ni privilège, empreinte
 # unique, cascade, quatre fonctions réservées à `service_role`, admission à l'ouverture et au
 # renouvellement) — 3142 + 40 = 3182 —, et `npm run test:sql` en COMPTE exactement **3182**.
-ASSERTIONS_ATTENDUES=3182
+# **3180 le 2026-09-24, et l'écart est ENTIÈREMENT le mien** : `CRM-092` tranche T6 retire GoTrue et
+# son trigger. `0001_identite_et_cloisonnement.test.sql` passe de 72 à **62** — dix assertions qui
+# éprouvaient le trigger RETIRÉES avec leur objet, deux autres RÉVISÉES en preuves d'absence —, et
+# `0071_retrait_gotrue.test.sql` en apporte **8** : 3182 − 10 + 8 = 3180. `0003`, `0023` et huit
+# autres suites sont RÉVISÉES à nombre constant (décision 589). `npm run test:sql` en COMPTE
+# exactement **3180**, sur la pile recréée par `./resetMe.sh` sans GoTrue.
+ASSERTIONS_ATTENDUES=3180
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS

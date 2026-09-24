@@ -4,6 +4,8 @@
 # @verifies docs/SPEC-deploiement-spark.md §3 (assemblage), §4.1 (fusion), §4.2 (variables sans
 #           objet), §4.4 (proposer), §5.1 (livrer), §5.2 (premier déploiement), §9 (preuves)
 # @verifies docs/JOURNAL.md décisions 567, 570, 571, 575 et 577 (image Realtime dérivée)
+# @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §2, §12 — tranche T6 : ni GoTrue ni SMTP dans
+#           les propositions ; `--demandes-seules` pour une cellule en service (décisions 589 et 590)
 #
 # Rejoue les preuves de `CRM-090` qui ne demandent PAS la cellule :
 #
@@ -66,14 +68,10 @@ fichiers_conformes() {
 		API_EXTERNAL_URL=https://crm.exemple.tld
 		SUPABASE_PUBLIC_URL=https://crm.exemple.tld
 		SITE_URL=https://crm.exemple.tld
-		ADDITIONAL_REDIRECT_URLS=https://crm.exemple.tld
 		SPARK_HTTP_PORT=8080
 		ANON_KEY=$(jwt_hs256 "$jwt" anon)
 		SSO_OIDC_ISSUER=https://oauth.exemple.tld/realms/lelabs
 		SSO_OIDC_CLIENT_ID=lelabs-crm-serveur
-		SMTP_HOST=smtp.exemple.tld
-		SMTP_PORT=2587
-		SMTP_ADMIN_EMAIL=no-reply@exemple.tld
 	EOF
 	cat > "$dir/secrets" <<-EOF
 		POSTGRES_PASSWORD=$(gen_hex 24)
@@ -113,7 +111,7 @@ echo "1. Fusion des fichiers injectés"
 
 F="$WORK/f1"
 fichiers_conformes "$F"
-printf 'APP_DOMAIN="dans.env.tld"\nSMTP_SENDER_NAME=Nom avec $LITTERAL\n' >> "$F/env"
+printf 'APP_DOMAIN="dans.env.tld"\nSTUDIO_DEFAULT_PROJECT=Nom avec $LITTERAL\n' >> "$F/env"
 printf 'APP_DOMAIN=gagnant.exemple.tld\nAWS_ACCESS_KEY_ID=fournie\n' >> "$F/secrets"
 if sortie=$(fusion "$F/env" "$F/secrets" "$F/run"); then
 	ok "fusion d'un couple conforme"
@@ -122,8 +120,8 @@ if sortie=$(fusion "$F/env" "$F/secrets" "$F/run"); then
 	[ "$(env_get "$sortie" APP_DOMAIN)" = gagnant.exemple.tld ] \
 		&& ok "les secrets l'emportent sur les variables, qui l'emportent sur le gabarit" \
 		|| fail "ordre des sources : APP_DOMAIN = $(env_get "$sortie" APP_DOMAIN)"
-	[ "$(env_get "$sortie" SMTP_SENDER_NAME)" = 'Nom avec $LITTERAL' ] \
-		&& ok "« \$ » reste littéral, espaces conservés" || fail "valeur altérée : $(env_get "$sortie" SMTP_SENDER_NAME)"
+	[ "$(env_get "$sortie" STUDIO_DEFAULT_PROJECT)" = 'Nom avec $LITTERAL' ] \
+		&& ok "« \$ » reste littéral, espaces conservés" || fail "valeur altérée : $(env_get "$sortie" STUDIO_DEFAULT_PROJECT)"
 	[ "$(env_get "$sortie" POSTGRES_PORT)" = "$(env_get "$ENV_EXAMPLE" POSTGRES_PORT)" ] \
 		&& ok "une valeur non injectée vient du gabarit" || fail "POSTGRES_PORT non repris du gabarit"
 	[ "$(env_get "$sortie" CADDY_ACME_EMAIL)" = "$SPARK_SANS_OBJET_VALEUR" ] \
@@ -161,11 +159,11 @@ else
 		|| fail "environnement périmé laissé en place après refus"
 fi
 fichiers_conformes "$F2"
-printf "SMTP_PASS=secret'apostrophe-TEMOIN\n" >> "$F2/secrets"
+printf "S3_PROTOCOL_ACCESS_KEY_SECRET=secret'apostrophe-TEMOIN\n" >> "$F2/secrets"
 if out=$(fusion "$F2/env" "$F2/secrets" "$F2/run" 2>&1); then
 	fail "valeur à apostrophe acceptée"
 else
-	case "$out" in *SMTP_PASS*) ok "valeur à apostrophe refusée, variable nommée" ;; *) fail "refus sans nom : $out" ;; esac
+	case "$out" in *S3_PROTOCOL_ACCESS_KEY_SECRET*) ok "valeur à apostrophe refusée, variable nommée" ;; *) fail "refus sans nom : $out" ;; esac
 	case "$out" in *TEMOIN*) fail "le refus affiche la valeur du secret" ;; *) ok "le refus n'affiche aucune valeur" ;; esac
 fi
 
@@ -195,7 +193,7 @@ garde() {
 garde "profil dev refusé" "P2ENJOY_ENV_PROFILE" env "P2ENJOY_ENV_PROFILE=dev"
 garde "APPLY_MIGRATIONS=true refusé" "APPLY_MIGRATIONS" env "APPLY_MIGRATIONS=true"
 garde "secret non importé refusé, nommé" "POSTGRES_PASSWORD" secrets "POSTGRES_PASSWORD=CHANGE_ME_POSTGRES_PASSWORD"
-garde "variable obligatoire vide refusée" "SMTP_HOST" env "SMTP_HOST="
+garde "variable obligatoire vide refusée" "SITE_URL" env "SITE_URL="
 garde "--premier-deploiement sans --migrate refusé" "n'a de sens qu'avec --migrate" env "" --premier-deploiement
 out=$(SPARK_ENV_FILE="$G/env" SPARK_SECRETS_FILE="$G/aucun" P2ENJOY_SPARK_RUNTIME_DIR="$G/run" \
 	DOCKER_HOST=$FAUX_DOCKER ./runProd.sh --spark 2>&1)
@@ -262,8 +260,9 @@ if s.get("caddy", {}).get("environment"):
 # le remettrait à tous ; Compose le résout dans environment, et cette comparaison le voit.
 attendus = {
     # functions depuis CRM-092 (décision 584) : son échangeur de session signe le jeton interne.
-    "JWT_SECRET": ["auth", "db", "functions", "realtime", "rest", "storage"],
-    "POSTGRES_PASSWORD": ["auth", "db", "migrations-runner", "realtime", "rest", "storage"],
+    # auth ne reçoit plus rien depuis CRM-092 T6 : GoTrue a quitté la pile (décision 589).
+    "JWT_SECRET": ["db", "functions", "realtime", "rest", "storage"],
+    "POSTGRES_PASSWORD": ["db", "migrations-runner", "realtime", "rest", "storage"],
     "SERVICE_ROLE_KEY": ["functions", "kong", "mail-sync", "storage"],
     "MINIO_ROOT_PASSWORD": ["minio", "minio-createbucket", "storage"],
     "MAIL_SYNC_INTERNAL_TOKEN": ["mail-sync"],
@@ -394,7 +393,7 @@ proposer() {
 	local dir=$1
 	shift
 	SPARK_ENV_PROPOSAL="$dir/env.?" SPARK_SECRETS_PROPOSAL="$dir/secrets.?" \
-		SPARK_ROUTES_PROPOSAL="$dir/routes.?" SPARK_SECRETS_FILE="$dir/secrets" \
+		SPARK_ROUTES_PROPOSAL="$dir/routes.?" SPARK_SECRETS_FILE="$dir/secrets" SPARK_ENV_FILE="$dir/env" \
 		"$REPO_ROOT/scripts/spark/proposer.sh" "$@" 2>&1
 }
 empreintes() { sha256sum "$1/env.?" "$1/secrets.?" "$1/routes.?" | awk '{print $1}' | tr '\n' ' '; }
@@ -415,8 +414,10 @@ if out=$(proposer "$P"); then
 	# `tls` : ce que la Forge expose au public. Une route `clair` n'est servie qu'en http:// (décision 576).
 	[ "$(grep -vE '^#|^$' "$P/routes.?")" = "crm.lelabs.tech 8080 tls" ] \
 		&& ok "route proposée : crm.lelabs.tech 8080 tls" || fail "route : $(grep -vE '^#|^$' "$P/routes.?")"
-	demandes=$(grep -hE '^SMTP_(HOST|PORT|ADMIN_EMAIL|USER|PASS)=$' "$P/env.?" "$P/secrets.?" | wc -l)
-	[ "$demandes" = 5 ] && ok "les cinq valeurs SMTP inconnues sont des DEMANDES vides" || fail "demandes SMTP : $demandes sur 5"
+	# RÉVISÉ par `CRM-092` T6 (décision 589) : les cinq demandes SMTP étaient celles de GoTrue, retiré.
+	# Le contrôle est retourné : plus aucune variable de GoTrue n'est proposée à la cellule.
+	gotrue=$(grep -hE '^(SMTP_[A-Z_]+|ADDITIONAL_REDIRECT_URLS|DISABLE_SIGNUP|MAILER_[A-Z_]+)=' "$P/env.?" "$P/secrets.?" | wc -l)
+	[ "$gotrue" = 0 ] && ok "aucune variable de GoTrue ni de relais SMTP n'est proposée" || fail "variables de GoTrue proposées : $gotrue"
 	jwt=$(env_get "$P/secrets.?" JWT_SECRET)
 	verifier_jeton() {
 		local jeton=$1 role=$2 signe
@@ -439,14 +440,11 @@ if out=$(proposer "$P"); then
 		&& ok "client SSO proposé : le client confidentiel lelabs-crm-serveur" \
 		|| fail "client SSO proposé : « $(env_get "$P/env.?" SSO_OIDC_CLIENT_ID) »"
 
-	# Les propositions, importées telles quelles et complétées des seules valeurs demandées — relais
-	# SMTP et secret du client SSO —, doivent franchir toutes les gardes : c'est la preuve qu'elles
-	# couvrent le contrat.
+	# Les propositions, importées telles quelles et complétées de la seule valeur demandée — le secret
+	# du client SSO —, doivent franchir toutes les gardes : c'est la preuve qu'elles couvrent le contrat.
 	I="$WORK/importe"
 	mkdir -p "$I"
-	sed -n "/^$MARQUE\$/,\$p" "$P/env.?" | grep -E '^[A-Z0-9_]+=' \
-		| sed -e 's/^SMTP_HOST=$/SMTP_HOST=smtp.exemple.tld/' -e 's/^SMTP_PORT=$/SMTP_PORT=2587/' \
-		      -e 's/^SMTP_ADMIN_EMAIL=$/SMTP_ADMIN_EMAIL=no-reply@exemple.tld/' > "$I/env"
+	sed -n "/^$MARQUE\$/,\$p" "$P/env.?" | grep -E '^[A-Z0-9_]+=' > "$I/env"
 	sed -n "/^$MARQUE\$/,\$p" "$P/secrets.?" | grep -E '^[A-Z0-9_]+=' \
 		| sed -e 's/^SSO_OIDC_CLIENT_SECRET=$/SSO_OIDC_CLIENT_SECRET=secret-saisi-par-le-realm/' > "$I/secrets"
 	out=$(prod_spark "$I/env" "$I/secrets" "$I/run")
@@ -479,25 +477,49 @@ else
 fi
 cellule_vierge "$P"
 proposer "$P" --port 443 >/dev/null && fail "port 443 proposé" || ok "port inférieur à 1024 refusé"
+# RÉVISÉ par `CRM-092` T6 : les options SMTP sont retirées avec GoTrue ; une option inconnue est refusée.
 cellule_vierge "$P"
-proposer "$P" --smtp-port 587 >/dev/null && fail "port SMTP 587 proposé" || ok "port SMTP fermé par la Forge refusé"
+proposer "$P" --smtp-port 2587 >/dev/null && fail "option SMTP retirée encore acceptée" || ok "option SMTP retirée : refusée comme inconnue"
+
+# `--demandes-seules` (décision 590) : une cellule EN SERVICE, restée sur le client public de `CRM-091`
+# et portant encore des variables de GoTrue. Rien n'est tiré ; seules les variables du client serveur
+# absentes ou différentes sont proposées, le secret en demande vide.
 cellule_vierge "$P"
-if proposer "$P" --smtp-hote smtp.exemple.tld --smtp-port 2587 --smtp-expediteur no-reply@exemple.tld >/dev/null; then
-	[ "$(env_get "$P/env.?" SMTP_HOST)|$(env_get "$P/env.?" SMTP_PORT)|$(env_get "$P/env.?" SMTP_ADMIN_EMAIL)" = "smtp.exemple.tld|2587|no-reply@exemple.tld" ] \
-		&& [ -z "$(env_get "$P/secrets.?" SMTP_USER)" ] && [ -z "$(env_get "$P/secrets.?" SMTP_PASS)" ] \
-		&& ok "relais proposé par option ; identifiants toujours laissés en demande" \
-		|| fail "options SMTP mal reportées"
-	# Propositions importées telles quelles, identifiants du relais ABSENTS : la pile doit démarrer,
-	# car la connexion par le SSO ne dépend d'aucun courriel.
-	I2="$WORK/importe-smtp"; mkdir -p "$I2"
-	sed -n "/^$MARQUE\$/,\$p" "$P/env.?" | grep -E '^[A-Z0-9_]+=' > "$I2/env"
-	sed -n "/^$MARQUE\$/,\$p" "$P/secrets.?" | grep -E '^[A-Z0-9_]+=' | grep -v '^SMTP_' \
-		| sed -e 's/^SSO_OIDC_CLIENT_SECRET=$/SSO_OIDC_CLIENT_SECRET=secret-saisi-par-le-realm/' > "$I2/secrets"
-	out=$(prod_spark "$I2/env" "$I2/secrets" "$I2/run")
-	case "$out" in *"démon Docker ne répond pas"*) ok "sans identifiants SMTP, toutes les gardes sont franchies" ;;
-		*) fail "identifiants SMTP exigés : $(printf '%s' "$out" | grep -E 'manquante|vide|définir' | head -n 2 | tr '\n' ' ')" ;; esac
+fichiers_conformes "$P"
+sed -i -e 's/^SSO_OIDC_CLIENT_ID=.*/SSO_OIDC_CLIENT_ID=lelabs-crm/' -e 's#^SSO_OIDC_ISSUER=.*#SSO_OIDC_ISSUER=https://oauth.lelabs.tech/realms/lelabs#' "$P/env"
+sed -i '/^SSO_OIDC_CLIENT_SECRET=/d' "$P/secrets"
+printf 'SMTP_HOST=smtp.exemple.tld\nADDITIONAL_REDIRECT_URLS=https://crm.exemple.tld\n' >> "$P/env"
+printf 'SMTP_PASS=VALEUR-SMTP-TEMOIN\n' >> "$P/secrets"
+reels_avant=$(sha256sum "$P/env" "$P/secrets")
+if out=$(proposer "$P" --demandes-seules); then
+	props_env=$(sed -n "/^$MARQUE\$/,\$p" "$P/env.?" | grep -E '^[A-Z0-9_]+=' | tr '\n' ';')
+	props_secrets=$(sed -n "/^$MARQUE\$/,\$p" "$P/secrets.?" | grep -E '^[A-Z0-9_]+=' | tr '\n' ';')
+	[ "$props_env" = "SSO_OIDC_CLIENT_ID=lelabs-crm-serveur;" ] && [ "$props_secrets" = "SSO_OIDC_CLIENT_SECRET=;" ] \
+		&& ok "--demandes-seules, cellule en service : le client serveur et la demande de son secret, rien d'autre" \
+		|| fail "--demandes-seules : variables « $props_env » secrets « $props_secrets »"
+	[ -z "$(grep -vE '^#|^$' "$P/routes.?")" ] && [ "$(sha256sum "$P/env" "$P/secrets")" = "$reels_avant" ] \
+		&& ok "--demandes-seules : ni route proposée, ni fichier réel touché" || fail "--demandes-seules : route ou fichiers réels modifiés"
+	case "$out" in *TEMOIN*|*"$(env_get "$P/secrets" JWT_SECRET)"*) fail "--demandes-seules affiche une valeur secrète" ;;
+		*SMTP_HOST*SMTP_PASS*|*SMTP_PASS*SMTP_HOST*) ok "--demandes-seules nomme les variables de GoTrue restées inertes, sans aucune valeur" ;;
+		*) fail "--demandes-seules ne nomme pas les variables inertes : $(printf '%s' "$out" | tail -n 1)" ;; esac
+	avant=$(empreintes "$P")
+	if proposer "$P" --demandes-seules >/dev/null; then fail "--demandes-seules : demande pendante écrasée"
+	else [ "$(empreintes "$P")" = "$avant" ] && ok "--demandes-seules : demande pendante, refus, fichiers inchangés" || fail "--demandes-seules : refus, mais fichiers modifiés"; fi
 else
-	fail "proposer.sh refuse les options SMTP"
+	fail "--demandes-seules refusé sur une cellule en service : $(printf '%s' "$out" | head -n 1)"
+fi
+# Tout est à jour, secret déjà posé : rien n'est demandé, et un secret posé n'est jamais redemandé.
+cellule_vierge "$P"
+fichiers_conformes "$P"
+sed -i 's#^SSO_OIDC_ISSUER=.*#SSO_OIDC_ISSUER=https://oauth.lelabs.tech/realms/lelabs#' "$P/env"
+avant=$(empreintes "$P")
+if out=$(proposer "$P" --demandes-seules); then
+	case "$out" in *"Rien à demander"*) [ "$(empreintes "$P")" = "$avant" ] \
+		&& ok "--demandes-seules, cellule à jour : rien à demander, le secret posé n'est pas redemandé" \
+		|| fail "--demandes-seules, cellule à jour : fichiers modifiés" ;;
+		*) fail "--demandes-seules, cellule à jour : $(printf '%s' "$out" | head -n 1)" ;; esac
+else
+	fail "--demandes-seules refusé sur une cellule à jour : $(printf '%s' "$out" | head -n 1)"
 fi
 
 # --- 6. livrer.sh contre une cellule simulée --------------------------------------------------------

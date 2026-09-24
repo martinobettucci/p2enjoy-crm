@@ -11,7 +11,8 @@
 # @verifies docs/SPEC-permissions-rls.md §4 (politiques), §7 (preuves de refus n° 3 et 11)
 # @verifies docs/PROD_MIGRATIONS.md §3 (migrations en attente)
 # @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §6, §13 — tranche T4 : le profil naît de
-#           la vraie connexion LeLabs ; plus aucun compte GoTrue
+#           la vraie connexion LeLabs ; plus aucun compte GoTrue ; tranche T6 (§7.5, décision 589) :
+#           le trigger GoTrue retiré, et la mutation qui le visait retournée
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-003` :
 #
@@ -312,8 +313,10 @@ if [ -n "${JETON:-}" ]; then
 	fi
 fi
 
-# 4.3 Le schéma `app` n'est pas exposé par PostgREST.
-code=$(http POST "$API/rest/v1/rpc/handle_new_user" \
+# 4.3 Le schéma `app` n'est pas exposé par PostgREST. RÉVISÉ par `CRM-092` T6 : la fonction visée,
+# `app.handle_new_user`, est retirée par `0077` — un appel rendrait 404 qu'elle soit exposée ou non, et
+# ne prouverait plus rien. `app.set_updated_at`, qui existe, porte la même preuve.
+code=$(http POST "$API/rest/v1/rpc/set_updated_at" \
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
 	-H 'Content-Type: application/json' -d '{}')
 if [ "$code" -ge 400 ]; then
@@ -379,8 +382,12 @@ verifier_mutation() {
 	fi
 }
 
-verifier_mutation "trigger de création de profil retiré" \
-	"drop trigger on_auth_user_created on auth.users;"
+# RÉVISÉE par `CRM-092` T6 (décision 589) : la mutation retirait le trigger GoTrue, que `0077` retire
+# désormais pour de bon — elle ne s'appliquerait plus. Le contrat éprouvé est l'inverse : un trigger
+# reposé sur `auth.users` doit rougir la suite (`0001` prouve son absence).
+verifier_mutation "trigger rétabli sur auth.users" \
+	"create trigger on_auth_user_created after insert on auth.users
+	   for each row execute function app.set_updated_at();"
 
 verifier_mutation "RLS désactivée sur profiles" \
 	"alter table public.profiles disable row level security;"

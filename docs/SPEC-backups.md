@@ -627,7 +627,7 @@ deux commandes exactes de destruction manuelle, et son code de sortie n'en est p
 |---|---|---|---|
 | I1 | **Déchiffrement d'un secret de Vault** | **que la clé racine a suivi** — le seul invariant qui le voie (M12) | empreinte SHA-256 de chaque `decrypted_secret`, comparée ligne à ligne (M13) |
 | I2 | Nombre de secrets de `vault.secrets` | que les secrets ont été restaurés, et pas seulement leur table | `count(*)` |
-| I3 | Comptes de lignes des tables du seed | que les données sont là | `auth.users`, `public.cards`, `public.mail_messages` |
+| I3 | Comptes de lignes des tables du seed | que les données sont là | `public.profiles` (`auth.users` jusqu'à `CRM-092` T6, qui n'y écrit plus rien), `public.cards`, `public.mail_messages` |
 | I4 | Nombre de tables de `public` | que le schéma est complet | `pg_tables` |
 | I5 | Politiques RLS de `public` | que les règles d'autorisation ont suivi — une base restaurée sans elles serait **ouverte** | `count(*)` sur `pg_policies` |
 | I6 | Tables à RLS **active** | qu'aucune table n'a perdu son `row level security` | `pg_class.relrowsecurity` |

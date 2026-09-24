@@ -2,11 +2,13 @@
 # @spec CRM-016 (docs/BACKLOG.md), docs/SPEC-edge-functions.md §2, §8 — runtime edge commun
 # @spec docs/DAT.md §3.5 (passerelle et périphérie), §9 (déploiement)
 # @spec docs/PROD_MIGRATIONS.md §2 (prérequis), §4 (services à redéployer)
+# @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §2, §12 — tranche T6 : GoTrue n'est plus
+#       redémarré ici, il a quitté la pile (docs/JOURNAL.md décision 589)
 #
 #   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 #
 # Aucun service de développement n'est déclaré ici, et aucun n'est hérité : Studio, MinIO,
-# Inbucket et postgres-meta n'existent que dans `docker-compose.dev.yml`. Cet assemblage est
+# Keycloak et postgres-meta n'existent que dans `docker-compose.dev.yml`. Cet assemblage est
 # vérifié par `scripts/verify-stack.sh`, qui échoue si l'un d'eux réapparaît.
 #
 # Seul Caddy est joignable depuis l'extérieur. Kong ne publie plus aucun port : il n'est atteint
@@ -16,9 +18,6 @@
 services:
 
   db:
-    restart: always
-
-  auth:
     restart: always
 
   rest:

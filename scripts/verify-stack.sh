@@ -3,6 +3,8 @@
 # @verifies CRM-016 (docs/BACKLOG.md), docs/SPEC-edge-functions.md §2, §5, §7.2
 # @verifies docs/DAT.md §3 (composants), §3.6 (composants de développement uniquement), §9
 # @verifies README.md §6 (services exposés en développement)
+# @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §2, §13 — tranche T6 : GoTrue, ses
+#           gabarits et Inbucket sont absents des deux assemblages, et `/auth/v1/*` rend 404
 #
 # Rejoue les quatre preuves exigées par la Definition of Done de `CRM-001` :
 #
@@ -61,9 +63,10 @@ fail() { checks=$((checks + 1)); failures=$((failures + 1)); printf '  \033[31mE
 
 # --- 1. Santé des services de l'assemblage de développement ------------------------------------
 # Services de longue durée porteurs d'un healthcheck : doivent être `running` ET `healthy`.
-LONG_RUNNING_HEALTHY="p2enjoy-db p2enjoy-auth-templates p2enjoy-auth p2enjoy-rest realtime-dev.p2enjoy-realtime \
+# `CRM-092` T6 : `p2enjoy-auth`, `p2enjoy-auth-templates` et `p2enjoy-inbucket` ne sont plus de la pile.
+LONG_RUNNING_HEALTHY="p2enjoy-db p2enjoy-rest realtime-dev.p2enjoy-realtime \
 p2enjoy-storage p2enjoy-functions p2enjoy-kong p2enjoy-studio p2enjoy-meta p2enjoy-minio \
-p2enjoy-inbucket p2enjoy-webapp p2enjoy-stalwart p2enjoy-roundcube p2enjoy-clamav"
+p2enjoy-webapp p2enjoy-stalwart p2enjoy-roundcube p2enjoy-clamav"
 # Conteneurs éphémères : doivent s'être terminés avec le code 0.
 ONE_SHOT="p2enjoy-migrations p2enjoy-minio-createbucket p2enjoy-stalwart-init"
 
@@ -122,13 +125,15 @@ else
 	fail "REST racine OpenAPI avec clé anonyme : $code (attendu 403)"
 fi
 
-# GoTrue est joignable au travers de la passerelle.
+# RÉVISÉ par `CRM-092` T6 (docs/SPEC-session-sso.md §13, décision 589) : GoTrue est retiré, et la
+# passerelle n'a plus aucune route vers lui. `/auth/v1/health` doit rendre 404 — un 200 dirait qu'un
+# service d'authentification répond encore à côté du SSO.
 code=$(curl -s -o /dev/null -w '%{http_code}' -H "apikey: ${ANON_KEY}" \
 	"$KONG_URL/auth/v1/health" || echo 000)
-if [ "$code" = 200 ]; then
-	ok "Auth /health au travers de Kong : $code"
+if [ "$code" = 404 ]; then
+	ok "Auth /health au travers de Kong : $code — GoTrue retiré, aucune route"
 else
-	fail "Auth /health au travers de Kong : $code (attendu 200)"
+	fail "Auth /health au travers de Kong : $code (attendu 404 : GoTrue est retiré)"
 fi
 
 # Storage est joignable au travers de la passerelle.
@@ -162,10 +167,10 @@ fi
 
 revision=$(docker inspect -f '{{index .Config.Labels "com.p2enjoy.kong-config-revision"}}' \
 	p2enjoy-kong 2>/dev/null || true)
-if [ "$revision" = crm-016 ]; then
-	ok "Kong exécute la révision déclarative crm-016"
+if [ "$revision" = crm-092 ]; then
+	ok "Kong exécute la révision déclarative crm-092"
 else
-	fail "révision Kong active : '$revision' (attendu crm-016)"
+	fail "révision Kong active : '$revision' (attendu crm-092)"
 fi
 
 # --- 3. Studio accessible en développement -----------------------------------------------------
@@ -198,7 +203,7 @@ if echo "$prod_services" | grep -qx functions; then
 else
 	fail "service commun 'functions' absent de l'assemblage de production"
 fi
-for dev_only in studio meta minio minio-createbucket inbucket webapp stalwart stalwart-init roundcube clamav; do
+for dev_only in studio meta minio minio-createbucket webapp stalwart stalwart-init roundcube clamav; do
 	if echo "$prod_services" | grep -qx "$dev_only"; then
 		fail "service de développement '$dev_only' présent en production"
 	else
@@ -218,7 +223,16 @@ fi
 
 # L'assemblage de développement, lui, doit bien déclarer l'outillage.
 dev_services=$(docker compose "${DEV_COMPOSE[@]}" config --services | sort)
-for dev_only in studio meta minio minio-createbucket inbucket webapp stalwart stalwart-init roundcube clamav; do
+
+# `CRM-092` T6 : GoTrue, ses gabarits et Inbucket — son seul client — n'existent dans AUCUN assemblage.
+for retire in auth auth-templates inbucket; do
+	if echo "$prod_services" | grep -qx "$retire" || echo "$dev_services" | grep -qx "$retire"; then
+		fail "service retiré '$retire' encore déclaré (CRM-092)"
+	else
+		ok "service retiré '$retire' absent des deux assemblages (CRM-092)"
+	fi
+done
+for dev_only in studio meta minio minio-createbucket webapp stalwart stalwart-init roundcube clamav; do
 	if echo "$dev_services" | grep -qx "$dev_only"; then
 		ok "service de développement '$dev_only' présent en développement"
 	else

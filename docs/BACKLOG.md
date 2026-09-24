@@ -14512,9 +14512,14 @@ connexion réelle de `martino@p2enjoy.studio` aboutie après les opérations du 
       et dix autres harnais portés, sans anomalie. Rouges étrangers consignés : INC-250
       (`verify-droits-fins`), INC-231 et INC-189 (`verify-webapp`). Constat INC-249 (garde du dernier
       administrateur) : spécification corrigée, comportement à arbitrer.
-- [ ] **T6** — retrait de GoTrue, d'`auth-templates` et d'Inbucket, migration `0077` et suite
+- [x] **T6** — retrait de GoTrue, d'`auth-templates` et d'Inbucket, migration `0077` et suite
       `0071`, dix suites pgTAP portées, `404` de Caddy, retrait de `verify-auth.sh` (§2, §7.5 ;
-      décision 589, faits mesurés avant le code).
+      décisions 589 et 590, faits mesurés avant le code). Sur la pile recréée par `./resetMe.sh`
+      sans GoTrue : pgTAP **71 fichiers, 3180 assertions** ; `verify-session-sso` **54**,
+      `verify-stack` **52**, `verify-migrations` **31**, `verify-seed` **52**, `verify-scripts`
+      **112**, `verify-spark` **82**, `verify-functions` **14** ; `e2e:api` **1079/1079**,
+      `e2e:mail` **42/42**, interface **755/755**. `proposer.sh --demandes-seules` pour la cellule en
+      service (décision 590).
 - [ ] **T7** — documentation transverse, contrat de production (§12), campagne.
 - [ ] **Préalable humain chez LeLabs** : déclaration du client serveur `lelabs-crm-serveur` et secret
       posé dans la cellule (décision 586, §12) ; `verified` sur `martino@p2enjoy.studio`.

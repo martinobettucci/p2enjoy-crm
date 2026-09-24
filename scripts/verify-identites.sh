@@ -2,6 +2,8 @@
 # @verifies CRM-022 (docs/BACKLOG.md) — identités lisibles et memberships sûrs
 # @verifies docs/SPEC-identite.md §4 à §10
 # @verifies docs/SCHEMA.md §1 et §5
+# @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §7.5 — tranche T6 : la restauration
+#           passe par le runner, `0077` étant la dernière autorité sur `app.handle_new_user`
 #
 # Reproduit l'état legacy concerné sur la base seedée, applique la vraie migration, vérifie que les
 # données n'ont pas bougé et que son rejeu conserve les OID. Il exerce ensuite pgTAP, les vrais JWT
@@ -41,9 +43,17 @@ appliquer_migration() {
 	psql_db -f - < "$MIGRATION"
 }
 
+# RÉVISÉ par `CRM-092` T6 (docs/JOURNAL.md décision 589) : la restauration réappliquait `0021` SEULE,
+# qui recrée `app.handle_new_user` — fonction que `0077` retire depuis. Famille d'INC-142, INC-213 et
+# INC-250 : une migration dépassée rejouée isolément laisse la base dans un état qu'aucune migration
+# ne produit. Le retour à l'état courant passe donc par le `migrations-runner` sur TOUT le répertoire,
+# comme `verify-droits-fins.sh` depuis INC-213 (docs/SPEC-test-harness.md §3.5), avec `--env-file` et
+# les deux fichiers de composition (décisions 471 et 497).
 restaurer() {
 	set +e
 	appliquer_migration >/dev/null 2>&1
+	docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
+		up --force-recreate migrations-runner >/dev/null 2>&1
 	set -e
 }
 

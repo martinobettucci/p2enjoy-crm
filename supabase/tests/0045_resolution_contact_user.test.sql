@@ -3,6 +3,9 @@
 -- @verifies docs/SPEC-form-composer.md §6.4 (le trigger), §6.5 (ce que chaque type accepte)
 -- @verifies docs/JOURNAL.md décision 295 (l'arbitrage), INC-053 (close)
 -- @verifies CLAUDE.md §10 (une règle d'appartenance se prouve hors interface), §15
+-- @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §7.5 — tranche T6 : les profils de
+--           fixture sont posés directement, plus aucun trigger ne les tire d'`auth.users`
+--           (docs/JOURNAL.md décision 589)
 --
 -- CE QUE CETTE SUITE PROUVE.
 --
@@ -146,17 +149,15 @@ select lives_ok(
 	'sortie anticipée du §6.6');
 
 -- --- CAS h : un profil qui EXISTE mais n'est PAS membre du workspace --------------------------
--- MESURÉ le 2026-08-18 : insérer dans `auth.users` crée le profil par le trigger
--- `app.handle_new_user()`. C'est le SEUL chemin — `public.profiles.id` référence `auth.users(id)`,
--- et une insertion directe est refusée en 23503. La suite emprunte donc le vrai mécanisme
--- d'inscription plutôt que de fabriquer une trace (CLAUDE.md §8).
+-- RÉVISÉ par `CRM-092` T6 (docs/JOURNAL.md décision 589). MESURÉ le 2026-08-18, le seul chemin
+-- vers un profil était le trigger `app.handle_new_user()` sur `auth.users` : la clé
+-- `profiles.id → auth.users(id)` refusait l'insertion directe en 23503. Cette clé est partie en
+-- `0075`, le trigger en `0077` : un profil naît désormais de l'admission LeLabs, et une suite pose le
+-- sien directement, comme `0069` et `0070`. Le profil étranger reste sans appartenance.
 savepoint profil_etranger;
 
-insert into auth.users (id, instance_id, aud, role, email, encrypted_password,
-                        email_confirmed_at, created_at, updated_at)
-values ('a5000000-0000-4000-8000-0000000000e1', '00000000-0000-0000-0000-000000000000',
-        'authenticated', 'authenticated', 'etranger-0045@p2enjoy.test', 'x',
-        now(), now(), now());
+insert into public.profiles (id, full_name)
+values ('a5000000-0000-4000-8000-0000000000e1', 'etranger-0045');
 
 select is(
 	(select count(*)::int from public.profiles

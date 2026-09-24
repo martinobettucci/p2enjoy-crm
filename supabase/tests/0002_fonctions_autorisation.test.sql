@@ -6,6 +6,9 @@
 -- @verifies docs/SCHEMA.md §9 (fonctions et RPC)
 -- @verifies docs/INCONSISTENCY_REPORT.md INC-013 (quatre fonctions différées — close le 2026-08-05)
 -- @verifies docs/JOURNAL.md décisions 27, 51, 155, 156
+-- @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §7.5 — tranche T6 : les profils de
+--           fixture sont posés directement, plus aucun trigger ne les tire d'`auth.users`
+--           (docs/JOURNAL.md décision 589)
 --
 -- Suite pgTAP de l'unité `CRM-010`. Elle prouve sept choses — les quatre premières depuis le
 -- 2026-08-03, les trois dernières depuis la reprise de l'unité le 2026-08-05, quand les quatre
@@ -233,21 +236,23 @@ order by t.rang;
 -- =============================================================================================
 -- 3. Résolution du rôle contre des comptes réels
 -- =============================================================================================
--- Les comptes sont insérés dans `auth.users`, ce que fait GoTrue ; le trigger de `CRM-003` crée
--- les profils. La preuve par le **véritable** chemin applicatif — comptes créés par l'API
--- d'administration, jeton obtenu par la route de connexion — est rejouée hors interface par
--- `scripts/verify-authz.sh`.
+-- Les profils sont posés directement (`CRM-092` T6). La preuve par le **véritable** chemin
+-- applicatif — comptes du LeLabs de développement, jeton interne obtenu par la vraie connexion et
+-- l'échangeur de session — est rejouée hors interface par `scripts/verify-authz.sh`.
 --
 -- La session est simulée en posant `request.jwt.claims`, exactement le réglage que PostgREST
 -- positionne à partir du jeton : `auth.uid()` en dérive (voir sa définition dans le schéma
 -- `auth`). Rien n'est contourné, c'est le mécanisme réel.
 
-insert into auth.users (id, email, raw_user_meta_data) values
-	('00000000-0000-4000-8000-000000000001', 'anne@exemple.test',   '{"full_name":"Anne Admin"}'),
-	('00000000-0000-4000-8000-000000000002', 'bruno@exemple.test',  '{"full_name":"Bruno Biz"}'),
-	('00000000-0000-4000-8000-000000000003', 'chloe@exemple.test',  '{"full_name":"Chloé Viewer"}'),
-	('00000000-0000-4000-8000-000000000004', 'david@exemple.test',  '{"full_name":"David Autre"}'),
-	('00000000-0000-4000-8000-000000000005', 'elise@exemple.test',  '{"full_name":"Élise Sans"}');
+-- `CRM-092` T6 (docs/JOURNAL.md décision 589) : le profil est posé directement. Plus aucun
+-- trigger ne le tire d'une ligne `auth.users` (`0077`), et la clé vers `auth.users` est partie
+-- en `0075`.
+insert into public.profiles (id, full_name) values
+	('00000000-0000-4000-8000-000000000001', 'Anne Admin'),
+	('00000000-0000-4000-8000-000000000002', 'Bruno Biz'),
+	('00000000-0000-4000-8000-000000000003', 'Chloé Viewer'),
+	('00000000-0000-4000-8000-000000000004', 'David Autre'),
+	('00000000-0000-4000-8000-000000000005', 'Élise Sans');
 
 insert into public.workspaces (id, name, slug) values
 	('00000000-0000-4000-8000-000000000a01', 'Workspace Un',   'ws-un'),
@@ -605,11 +610,12 @@ update tst_matrice set role_ws = 'admin'              where w = 1;
 update tst_matrice set role_ws = 'business_developer' where w = 2;
 update tst_matrice set role_ws = 'viewer'             where w = 3;
 
-insert into auth.users (id, email, raw_user_meta_data) values
-	('00000000-0000-4000-8000-000000000006', 'mathis@exemple.test',
-	 '{"full_name":"Mathis Matrice"}'),
-	('00000000-0000-4000-8000-000000000007', 'gardienne-matrice@exemple.test',
-	 '{"full_name":"Gardienne Matrice"}');
+-- `CRM-092` T6 (docs/JOURNAL.md décision 589) : le profil est posé directement. Plus aucun
+-- trigger ne le tire d'une ligne `auth.users` (`0077`), et la clé vers `auth.users` est partie
+-- en `0075`.
+insert into public.profiles (id, full_name) values
+	('00000000-0000-4000-8000-000000000006', 'Mathis Matrice'),
+	('00000000-0000-4000-8000-000000000007', 'Gardienne Matrice');
 
 insert into public.workspaces (id, name, slug)
 select ('00000000-0000-4000-8000-b0000000000' || w)::uuid,

@@ -7,6 +7,8 @@
 #       §11.6 (les onze refus), §11.7 (ce que l'exercice n'écrit jamais),
 #       §12 (contrat de comportement, cas o à z), §14 (limites nommées)
 # @spec docs/DAT.md §10 (reprise et continuité), §8 (chiffrement des secrets par pgsodium)
+# @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §7.5 — tranche T6 : I3 compte les profils,
+#       plus `auth.users`, où plus rien n'écrit (docs/JOURNAL.md décision 589)
 # @spec CLAUDE.md §9 (aucune écriture non validée, aucune commande destructrice par
 #       commodité), §10 (les politiques d'autorisation sont une règle de backend),
 #       §20 (aucun secret journalisé)
@@ -381,7 +383,9 @@ interroger() {
 REQUETE_VAULT="select name || ' ' || encode(digest(decrypted_secret,'sha256'),'hex') from vault.decrypted_secrets order by name;"
 REQUETES=(
 	"I2 secrets de Vault|select count(*) from vault.secrets;"
-	"I3 utilisateurs|select count(*) from auth.users;"
+	# `CRM-092` T6 (décision 589) : les personnes du CRM sont ses PROFILS, nés d'un `sub` LeLabs ; plus rien
+	# n'écrit dans `auth.users`, dont le compte ne dirait plus rien de ce qu'une restauration a perdu.
+	"I3 personnes|select count(*) from public.profiles;"
 	"I3 cards|select count(*) from public.cards;"
 	"I3 messages|select count(*) from public.mail_messages;"
 	"I4 tables de public|select count(*) from pg_tables where schemaname='public';"

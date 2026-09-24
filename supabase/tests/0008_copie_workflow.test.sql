@@ -5,6 +5,9 @@
 -- @verifies docs/SPEC-permissions-rls.md §4 (écriture réservée aux administrateurs), §7 (refus n° 2)
 -- @verifies docs/INCONSISTENCY_REPORT.md INC-037 (formulaire remappé), INC-038 (suppression
 --           détectée), INC-039 (ordre de suppression d'un workspace)
+-- @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §7.5 — tranche T6 : les profils de
+--           fixture sont posés directement, plus aucun trigger ne les tire d'`auth.users`
+--           (docs/JOURNAL.md décision 589)
 --
 -- Suite pgTAP de l'unité `CRM-032`. Elle prouve six choses :
 --
@@ -245,15 +248,14 @@ insert into public.workflow_transition_required_fields (transition_id, field_id)
 values ('c0b10000-0000-4000-8000-0000000000e1',
 	'c0b10000-0000-4000-8000-0000000000f2');
 
-insert into auth.users (id, instance_id, aud, role, email, raw_user_meta_data) values
-	('c0b10000-0000-4000-8000-00000000000a', '00000000-0000-0000-0000-000000000000',
-	 'authenticated', 'authenticated', 'cp-admin-a@exemple.test', '{"full_name": "Admin CP A"}'),
-	('c0b10000-0000-4000-8000-00000000000b', '00000000-0000-0000-0000-000000000000',
-	 'authenticated', 'authenticated', 'cp-bizdev-a@exemple.test', '{"full_name": "Bizdev CP A"}'),
-	('c0b10000-0000-4000-8000-00000000000c', '00000000-0000-0000-0000-000000000000',
-	 'authenticated', 'authenticated', 'cp-viewer-a@exemple.test', '{"full_name": "Viewer CP A"}'),
-	('c0b10000-0000-4000-8000-00000000000d', '00000000-0000-0000-0000-000000000000',
-	 'authenticated', 'authenticated', 'cp-admin-b@exemple.test', '{"full_name": "Admin CP B"}');
+-- `CRM-092` T6 (docs/JOURNAL.md décision 589) : le profil est posé directement. Plus aucun
+-- trigger ne le tire d'une ligne `auth.users` (`0077`), et la clé vers `auth.users` est partie
+-- en `0075`.
+insert into public.profiles (id, full_name) values
+	('c0b10000-0000-4000-8000-00000000000a', 'Admin CP A'),
+	('c0b10000-0000-4000-8000-00000000000b', 'Bizdev CP A'),
+	('c0b10000-0000-4000-8000-00000000000c', 'Viewer CP A'),
+	('c0b10000-0000-4000-8000-00000000000d', 'Admin CP B');
 
 insert into public.workspace_members (workspace_id, user_id, role) values
 	('c0b10000-0000-4000-8000-000000000001', 'c0b10000-0000-4000-8000-00000000000a', 'admin'),

@@ -2,6 +2,8 @@
 # @spec CRM-090 (docs/BACKLOG.md) — fragment partagé par les deux Caddyfile
 # @spec docs/SPEC-deploiement-spark.md §3.2 ; docs/DAT.md §3.5 (passerelle et périphérie), §9
 # @spec docs/PROD_MIGRATIONS.md §5.10 (route edge traversant Kong)
+# @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §2, §12 (point 7), §13 — tranche T6 : les
+#       routes de GoTrue répondent 404 (docs/JOURNAL.md décision 589)
 #
 # Importé par `caddy/Caddyfile` (hôte disposant de 80 et 443, TLS par ACME) et par
 # `caddy/Caddyfile.spark` (cellule dont la Forge termine TLS). Une seule copie des routes : deux
@@ -10,10 +12,18 @@
 encode zstd gzip
 
 # API Supabase : les chemins sont conservés tels quels, car Kong route sur les préfixes
-# versionnés (`/auth/v1/`, `/rest/v1/`, …). Aucune réécriture ici, sous peine de rendre la
+# versionnés (`/rest/v1/`, `/functions/v1/`, …). Aucune réécriture ici, sous peine de rendre la
 # configuration déclarative de Kong inopérante. `/functions/v1/` est la route edge déclarée par
 # Kong depuis CRM-016 : sans elle, la vérification §5.10 du contrat de déploiement échouait.
-@supabase path /auth/v1/* /rest/v1/* /graphql/v1/* /realtime/v1/* /storage/v1/* /functions/v1/* /.well-known/oauth-authorization-server
+# Routes de GoTrue, retiré par `CRM-092` T6 : Caddy répond lui-même 404. Les retirer seulement du
+# filtre ci-dessous ne suffirait pas — le repli de l'application monopage, plus bas, rendrait
+# `index.html` en 200, et « `/auth/v1/health` ne répond plus » serait une vérification trompée.
+@gotrue_retire path /auth/v1/* /.well-known/oauth-authorization-server
+handle @gotrue_retire {
+	respond 404
+}
+
+@supabase path /rest/v1/* /graphql/v1/* /realtime/v1/* /storage/v1/* /functions/v1/*
 handle @supabase {
 	reverse_proxy kong:8000 {
 		header_up X-Forwarded-Path {uri}

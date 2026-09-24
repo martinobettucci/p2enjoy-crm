@@ -4,7 +4,9 @@
 -- @verifies docs/SPEC-permissions-rls.md §4.1 bis et §7
 -- @verifies docs/JOURNAL.md décisions 294 et 307
 -- @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §7.2 — la suppression d'une personne
---           passe par son profil, plus par `auth.users` (assertion 82 RÉVISÉE)
+--           passe par son profil, plus par `auth.users` (assertion 82 RÉVISÉE) ; §6.2, §7.5 — tranche
+--           T6 : le profil né d'une identité externe mal formée l'est par l'admission, plus par le
+--           trigger GoTrue (assertions 43 à 45 RÉVISÉES, docs/JOURNAL.md décision 589)
 
 begin;
 
@@ -195,28 +197,41 @@ select lives_ok(
 	    where id = '5eed0000-0000-4000-8000-000000000011' $$,
 	'42 — HTTPS est accepté');
 
+-- 43 à 45 RÉVISÉES par `CRM-092` T6 (docs/JOURNAL.md décision 589), à nombre constant. Elles
+-- prouvaient qu'une identité externe mal formée ne fait pas échouer la création du profil par le
+-- trigger GoTrue — nom trop long borné, avatar étranger annulé. Le trigger est retiré par `0077` ; le
+-- profil naît désormais de l'admission (`public.ouvrir_session_sso`, docs/SPEC-session-sso.md §6.2),
+-- qui reçoit le nom de LeLabs et ne pose AUCUN avatar : la même propriété s'éprouve là. L'auteur est
+-- attendu dans un espace à lui — administrateur, la première appartenance d'un espace l'étant
+-- (INC-249) —, que les lectures des espaces A et B ne voient pas.
+insert into public.workspaces (id, name, slug)
+values ('02200000-0000-4000-8000-0000000000a3', 'Workspace Auteur CRM022', 'workspace-auteur-crm022');
+insert into public.workspace_invitations (workspace_id, email, role)
+values ('02200000-0000-4000-8000-0000000000a3', 'auteur-crm022@exemple.test', 'admin');
 select lives_ok(
-	$$ insert into auth.users (id, email, raw_user_meta_data)
-	   values ('02200000-0000-4000-8000-000000000003', 'auteur-crm022@exemple.test',
-	           jsonb_build_object('full_name', repeat('N', 125),
-	                              'avatar_url', 'javascript:alert(1)')) $$,
-	'43 — une métadonnée avatar invalide ne fait pas échouer la création GoTrue');
+	$$ select public.ouvrir_session_sso('02200000-0000-4000-8000-000000000003',
+	                                     'auteur-crm022@exemple.test', repeat('N', 125)) $$,
+	'43 — un nom LeLabs trop long ne fait pas échouer l''admission');
 select is(
 	(select avatar_url from public.profiles where id = '02200000-0000-4000-8000-000000000003'),
-	null, '44 — l''avatar invalide de GoTrue devient nul');
+	null, '44 — l''admission ne pose aucun avatar : la personne choisit le sien');
 select is(
 	(select char_length(full_name) from public.profiles
 	  where id = '02200000-0000-4000-8000-000000000003'),
-	120, '45 — le nom GoTrue est borné à 120 caractères');
+	120, '45 — le nom reçu de LeLabs est borné à 120 caractères');
+-- L'espace de l'auteur est retiré aussitôt, et son appartenance avec lui par la cascade que permet
+-- l'assertion 80 : l'auteur redevient un profil SANS appartenance, l'état que la section 6 suppose —
+-- la garde du dernier administrateur refuserait sinon d'en supprimer le profil (assertion 82).
+delete from public.workspaces where id = '02200000-0000-4000-8000-0000000000a3';
 
 -- Fixtures des frontières : deux collègues dans B et un profil sans membership pour les ajouts.
-insert into auth.users (id, email, raw_user_meta_data) values
-	('02200000-0000-4000-8000-000000000001', 'admin-b-crm022@exemple.test',
-	 '{"full_name":"Admin B CRM022"}'),
-	('02200000-0000-4000-8000-000000000002', 'releve-b-crm022@exemple.test',
-	 '{"full_name":"Relève B CRM022"}'),
-	('02200000-0000-4000-8000-000000000004', 'invite-crm022@exemple.test',
-	 '{"full_name":"Invité CRM022"}');
+-- `CRM-092` T6 (docs/JOURNAL.md décision 589) : le profil est posé directement. Plus aucun
+-- trigger ne le tire d'une ligne `auth.users` (`0077`), et la clé vers `auth.users` est partie
+-- en `0075`.
+insert into public.profiles (id, full_name) values
+	('02200000-0000-4000-8000-000000000001', 'Admin B CRM022'),
+	('02200000-0000-4000-8000-000000000002', 'Relève B CRM022'),
+	('02200000-0000-4000-8000-000000000004', 'Invité CRM022');
 
 insert into public.workspaces (id, name, slug)
 values ('02200000-0000-4000-8000-0000000000b1', 'Workspace B CRM022', 'workspace-b-crm022');

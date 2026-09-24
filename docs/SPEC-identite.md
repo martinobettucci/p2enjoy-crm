@@ -96,9 +96,10 @@ Un utilisateur ne modifie que sa propre ligne, et seulement :
 serveur maintient `updated_at`. Une URL d'un autre schéma est refusée par contrainte ; le composant
 d'avatar applique la même liste sûre et se replie sur les initiales si l'image ne charge pas.
 
-Le trigger de création depuis `auth.users` normalise lui aussi le nom et écarte une URL de
-métadonnée invalide plutôt que de faire échouer la création du compte GoTrue. Il ne réécrit jamais
-un profil existant.
+**RÉVISÉ par `CRM-092`.** Le trigger de création depuis `auth.users` est retiré avec GoTrue (migration
+77, `docs/SPEC-session-sso.md` §7.5). Un profil naît de l'admission (`public.ouvrir_session_sso`), qui
+borne de même le nom reçu de LeLabs à 120 caractères, ne pose aucun avatar, et ne réécrit jamais un
+profil existant.
 
 ## 5. Invariant du dernier administrateur
 
@@ -174,8 +175,9 @@ Les profils stables convergent vers :
 | Driss Lemoine | `/avatars/driss-lemoine.svg` |
 | Farida Nowak | `/avatars/farida-nowak.svg` |
 
-Le chemin est écrit dans `auth.users.raw_user_meta_data` **et** dans `profiles`, parce que le
-trigger ne rejoue pas sur un compte existant. Le seed relit les trois valeurs. Son rejeu ne crée
+Depuis `CRM-092` T4, le chemin n'est écrit que dans `profiles`, par la personne elle-même avec son
+propre jeton (`docs/SPEC-seed.md` §2.2) : il n'existe plus de métadonnée de compte GoTrue à tenir
+en accord. Le seed relit les trois valeurs. Son rejeu ne crée
 ni compte, ni appartenance, ni fichier supplémentaire.
 
 ## 9. Preuves obligatoires

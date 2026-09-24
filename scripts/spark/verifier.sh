@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # @spec CRM-090 (docs/BACKLOG.md) — vérifications après déploiement dans la cellule Spark
-# @spec CRM-091 (docs/BACKLOG.md) — sonde du client OIDC et configuration de GoTrue en production
+# @spec CRM-091 (docs/BACKLOG.md) — sonde du client OIDC en production
+# @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §12 (points 5 et 7) — tranche T6 : GoTrue
+#       retiré — `/auth/v1/health` rend 404, aucun conteneur `auth` ne subsiste, l'échangeur de session
+#       répond (docs/JOURNAL.md décision 589)
 # @spec docs/SPEC-deploiement-spark.md §7 (vérifications) ; docs/SPEC-auth.md §10.8 (sonde)
 # @spec docs/PROD_MIGRATIONS.md §2.4 (étape 6), §5 (vérifications après déploiement)
 # @spec docs/JOURNAL.md décision 576 (une route `clair` n'est publiée qu'en http://)
@@ -12,8 +15,9 @@
 #   1. la révision livrée est celle attendue (`REVISION`) ;
 #   2. chaque service est sain, aucun n'a été tué par manque de mémoire ni redémarré ;
 #   3. seul SPARK_HTTP_PORT est publié ;
-#   4. depuis la cellule, par Caddy : webapp, santé de GoTrue, PostgREST, fonction edge ;
-#   5. GoTrue annonce le fournisseur `keycloak` ;
+#   4. depuis la cellule, par Caddy : webapp, `/auth/v1/health` en 404 (GoTrue retiré), PostgREST,
+#      fonction edge ;
+#   5. l'échangeur de session répond, et rend 204 sans session (décision 587) ;
 #   6. il reste au moins 2 Gio de disque ;
 #   7. la route active est en `tls` ; depuis Internet, si le domaine résout : webapp et API en
 #      https:// par la route publique ;
@@ -80,7 +84,11 @@ while IFS='|' read -r nom statut; do
 		*) echec "$nom : $statut" ;;
 	esac
 done <<< "$etats"
-[ "$(printf '%s\n' "$etats" | grep -c .)" -ge 13 ] && ok "treize conteneurs de l'assemblage présents" || echec "conteneurs présents : $(printf '%s\n' "$etats" | grep -c .) sur 13"
+# `CRM-092` T6 : onze conteneurs — `auth` et `auth-templates` ont quitté la pile, et leur arrêt est
+# une opération du §12 (point 5) que rien d'autre ne fait : `./runProd.sh` ne retire pas d'orphelin.
+[ "$(printf '%s\n' "$etats" | grep -c .)" -ge 11 ] && ok "onze conteneurs de l'assemblage présents" || echec "conteneurs présents : $(printf '%s\n' "$etats" | grep -c .) sur 11"
+orphelins=$(printf '%s\n' "$etats" | cut -d'|' -f1 | grep -xE 'p2enjoy-auth|p2enjoy-auth-templates|p2enjoy-inbucket')
+[ -z "$orphelins" ] && ok "aucun conteneur de GoTrue ne subsiste" || echec "conteneurs retirés de la pile encore présents : $(printf '%s' "$orphelins" | tr '\n' ' ')"
 tues=$(distant "for c in \$(docker ps -aq --filter label=com.docker.compose.project=p2enjoy-crm); do docker inspect -f '{{.Name}} {{.State.OOMKilled}} {{.RestartCount}}' \$c; done" | awk '$2 == "true" || $3 != 0')
 [ -z "$tues" ] && ok "aucun arrêt par manque de mémoire, aucun redémarrage" || echec "arrêts ou redémarrages : $(printf '%s' "$tues" | tr '\n' ';')"
 
@@ -93,14 +101,15 @@ publies=$(distant "docker ps --filter label=com.docker.compose.project=p2enjoy-c
 local_http() { distant "curl -s -o /dev/null -w '%{http_code}' $* 'http://127.0.0.1:$PORT$CHEMIN'"; }
 CHEMIN=/; [ "$(local_http)" = 200 ] && distant "curl -s http://127.0.0.1:$PORT/" | grep -q 'id="root"' \
 	&& ok "webapp servie par Caddy" || echec "webapp non servie sur :$PORT"
-CHEMIN=/auth/v1/health; code=$(local_http -H "'apikey: $ANON'"); [ "$code" = 200 ] && ok "GoTrue sain par Caddy" || echec "GoTrue : HTTP $code"
+CHEMIN=/auth/v1/health; code=$(local_http -H "'apikey: $ANON'"); [ "$code" = 404 ] && ok "/auth/v1/health rend 404 : GoTrue retiré" || echec "/auth/v1/health : HTTP $code, 404 attendu"
 CHEMIN=/rest/v1/workflow_nodes_catalog; code=$(local_http -H "'apikey: $ANON'"); [ "$code" = 200 ] && ok "PostgREST répond à la clé anonyme" || echec "PostgREST : HTTP $code"
 CHEMIN=/functions/v1/example; code=$(local_http -X POST -H "'apikey: $ANON'" -H "'Authorization: Bearer $ANON'" -H "'content-type: application/json'" -d "'{}'"); [ "$code" = 200 ] && ok "fonction edge traversant Kong" || echec "fonction edge : HTTP $code"
 
-# --- 5. Fournisseur SSO de GoTrue ------------------------------------------------------------------
-reglages=$(distant "curl -s -H 'apikey: $ANON' http://127.0.0.1:$PORT/auth/v1/settings")
-printf '%s' "$reglages" | python3 -c 'import json,sys; d=json.load(sys.stdin); sys.exit(0 if d["external"].get("keycloak") and d.get("disable_signup") else 1)' 2>/dev/null \
-	&& ok "GoTrue : fournisseur keycloak actif, inscription libre fermée" || echec "GoTrue : réglages inattendus"
+# --- 5. Échangeur de session ----------------------------------------------------------------------
+# RÉVISÉ par `CRM-092` T6 : GoTrue n'annonce plus rien, il est retiré. La session s'ouvre par la
+# fonction `session` ; sans poignée, prolonger rend 204 et aucun corps (décision 587).
+CHEMIN=/functions/v1/session/prolonger; code=$(local_http -X POST -H "'apikey: $ANON'"); [ "$code" = 204 ] \
+	&& ok "échangeur de session : 204 sans session" || echec "échangeur de session : HTTP $code, 204 attendu"
 
 # --- 6. Disque -------------------------------------------------------------------------------------
 libre=$(distant "df -BG --output=avail / | tail -n 1 | tr -dc 0-9")
@@ -122,7 +131,7 @@ if [ "$mode" != tls ]; then
 elif getent ahostsv4 "$DOMAINE" >/dev/null; then
 	page=$(curl -s -m 20 "https://$DOMAINE/")
 	printf '%s' "$page" | grep -q 'id="root"' && ok "https://$DOMAINE/ sert la webapp" || echec "https://$DOMAINE/ ne sert pas la webapp"
-	code=$(curl -s -m 20 -o /dev/null -w '%{http_code}' -H "apikey: $ANON" "https://$DOMAINE/auth/v1/health")
+	code=$(curl -s -m 20 -o /dev/null -w '%{http_code}' -H "apikey: $ANON" "https://$DOMAINE/rest/v1/workflow_nodes_catalog")
 	[ "$code" = 200 ] && ok "API joignable par la route publique" || echec "API publique : HTTP $code"
 else
 	attente "$DOMAINE ne résout pas : enregistrement DNS et route à poser par le propriétaire du Spark"

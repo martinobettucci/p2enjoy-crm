@@ -1,6 +1,8 @@
 # @spec CRM-001 (docs/BACKLOG.md) — overlay de développement de la pile Supabase self-hosted
 # @spec CRM-015 (docs/BACKLOG.md) — secret BuildKit facultatif du registre npm
 # @spec CRM-091 (docs/BACKLOG.md), docs/SPEC-auth.md §10.9 — Keycloak de développement, realm `lelabs`
+# @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §2, §10 — tranche T6 : ni GoTrue ni Inbucket ;
+#       le Keycloak de développement est la seule identité (docs/JOURNAL.md décision 589)
 # @spec docs/DAT.md §3.6 (composants de développement uniquement), §9 (déploiement)
 # @spec README.md §6 (lancement en développement)
 #
@@ -18,14 +20,6 @@ services:
     restart: "no"
     ports:
       - ${DEV_BIND_ADDRESS:-127.0.0.1}:${POSTGRES_DIRECT_PORT}:${POSTGRES_PORT}
-
-  # Les emails transactionnels partent vers Inbucket, jamais vers l'extérieur.
-  auth:
-    depends_on:
-      db:
-        condition: service_healthy
-      inbucket:
-        condition: service_started
 
   # Le stockage vise le MinIO local ; aucun compte S3 réel n'est requis en développement
   # (CLAUDE.md §3 : « aucun service cloud obligatoire lorsque son équivalent local peut être
@@ -148,7 +142,7 @@ services:
   # réel, un realm `lelabs` qui en reproduit ce qui se paierait au premier déploiement — PKCE `S256`
   # imposé, URL de retour exactes, rôles `verified` et `admin`, vérification d'adresse exigée.
   #
-  # L'émetteur est le MÊME vu du navigateur et vu de GoTrue (décision 568, M11) : l'alias réseau
+  # L'émetteur est le MÊME vu du navigateur et vu de la pile (décision 568, M11) : l'alias réseau
   # `sso.localhost`, que les navigateurs résolvent en boucle locale et que Docker résout vers ce
   # conteneur, sur un port identique dedans et dehors. D'où la publication sur 127.0.0.1 : c'est là
   # que `sso.localhost` mène un navigateur, quelle que soit `DEV_BIND_ADDRESS`.
@@ -212,21 +206,6 @@ services:
         mc alias set p2enjoy http://minio:9000 "${MINIO_ROOT_USER}" "${MINIO_ROOT_PASSWORD}"
         mc mb --ignore-existing "p2enjoy/${GLOBAL_S3_BUCKET}"
 
-  # Puits des emails transactionnels : invitations, réinitialisations, @mentions, digest
-  # (docs/JOURNAL.md décision 6). Il n'expose pas d'IMAP : le vrai serveur mail arrive en
-  # CRM-050.
-  inbucket:
-    container_name: p2enjoy-inbucket
-    image: inbucket/inbucket:stable
-    restart: unless-stopped
-    ports:
-      - ${DEV_BIND_ADDRESS:-127.0.0.1}:${INBUCKET_WEB_PORT}:9000
-      - ${DEV_BIND_ADDRESS:-127.0.0.1}:${INBUCKET_SMTP_PORT}:2500
-    environment:
-      INBUCKET_WEB_ADDR: 0.0.0.0:9000
-      INBUCKET_SMTP_ADDR: 0.0.0.0:2500
-      INBUCKET_POP3_ADDR: 0.0.0.0:1100
-
   # Interface en développement : Vite, sources montées, rechargement à chaud (CRM-007).
   # Le build de production ne passe pas par ici : il est produit sur l'hôte par
   # `npm run build` et servi par Caddy (docker-compose.prod.yml, README.md §8).
@@ -280,9 +259,8 @@ services:
   # @spec docs/SPEC-mail-subsystem.md §11.2 (composants et placement), §11.8 (ports)
   #
   # Aucun de ces services n'existe en production : elle lit les serveurs des utilisateurs
-  # (docs/DAT.md §3.6). Inbucket, déclaré plus haut, n'est **pas** remplacé — il reste le puits
-  # des emails transactionnels, et les deux serveurs ne servent pas le même usage
-  # (docs/SPEC-mail-subsystem.md §11.1).
+  # (docs/DAT.md §3.6). Inbucket, puits des emails transactionnels de GoTrue, est parti avec lui
+  # (`CRM-092` T6, décision 589) : il n'avait pas d'autre client.
 
   # Le vrai serveur IMAP/SMTP local. Sa configuration est versionnée et montée en lecture seule :
   # l'entrée par défaut de l'image écrirait sinon une configuration dont le mot de passe

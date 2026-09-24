@@ -29486,6 +29486,41 @@ final est constant, et `0001`, appliquée en production, n'est pas réécrite.
 pile recréée par `./resetMe.sh --yes` sans GoTrue, seed, `e2e:api`, `e2e:mail`, campagne d'interface ;
 `verify-stack`, `verify-migrations`, `verify-scripts`, `verify-spark`, `verify-harness` révisés.
 
+**RÉALISÉ ET VÉRIFIÉ — T6, 2026-09-24.**
+
+*Livré.* Services `auth`, `auth-templates` et `inbucket` retirés des quatre assemblages, et le
+`migrations-runner` n'attend plus que `db` et `storage` ; gabarits `supabase/auth/templates/` supprimés ;
+routes Kong d'authentification retirées (révision `crm-092`) ; `caddy/routes.caddy` répond lui-même `404`
+sur `/auth/v1/*` et `/.well-known/oauth-authorization-server` — **mesuré** sur une Caddy de la cellule
+lancée à part : `404` sur les trois chemins de GoTrue, `200` sur `/auth/retour` et sur une route de la
+webapp ; variables de GoTrue et d'Inbucket retirées du gabarit, garde `ADDITIONAL_REDIRECT_URLS` avec
+elles ; `runProd.sh` ne démarre plus `auth` au premier déploiement ; `0077_retrait_gotrue.sql` et la suite
+`0071` ; dix suites pgTAP portées, dont `0003`, qui lisait encore les comptes seedés dans `auth.users` —
+**défaut de T4**, resté vert sur une base qui gardait les lignes GoTrue des seeds antérieurs ;
+`verify-migrations`, `verify-stack`, `verify-functions`, `verify-scripts`, `verify-spark`,
+`scripts/spark/verifier.sh` révisés avec leur objet ; `verify-auth.sh` retiré (décision 581) ;
+`restore-drill.sh` compte les profils ; `docs/SPEC-auth.md` réduit à un renvoi avec la table de
+correspondance des sections encore citées.
+
+*Deux restaurations de harnais corrigées, même famille qu'INC-142, INC-213 et INC-250.*
+`verify-identites` et `verify-commentaires` rejouent `0021` isolément, qui recrée `app.handle_new_user` ;
+leur restauration aurait laissé une fonction qu'aucune migration ne produit plus. La première se
+restaure désormais par le runner, la seconde ferme sa chaîne par `0077`.
+
+*Vérifications, sur la pile recréée par `./resetMe.sh` sans GoTrue* (`auth.users` vide, aucun trigger,
+77 migrations appliquées, seed par le seul SSO) : série pgTAP **71 fichiers, 3180 assertions** ;
+`verify-session-sso` **54/54** (dont `0077` rejouée deux fois sous `postgres`, un trigger reposé détecté,
+`/auth/v1/*` en `404`, aucune ligne active de configuration nommant GoTrue, et la recherche éprouvée
+par une copie dégradée) ; `verify-stack` **52** ; `verify-migrations` **31** ; `verify-seed` **52** ;
+`verify-scripts` **112** ; `verify-spark` **82** (dont cinq preuves de `--demandes-seules`) ;
+`verify-functions` **14** ; `e2e:api` **1079/1079** ; `e2e:mail` **42/42** ; campagne d'interface
+**755/755** ; `npm run typecheck` vert. Les deux restaurations révisées sont éprouvées :
+`verify-identites` **23/23** ; `verify-commentaires` 79 contrôles dont un rouge, **INC-242** antérieure
+(compteur figé à 98 pour une suite qui en rend 99) — ses deux abonnements au temps réel, portés en T4,
+y sont verts —, et après l'un comme l'autre la base n'a ni `app.handle_new_user` ni trigger sur
+`auth.users`. Compteurs de `verify-harness.sh` portés aux valeurs comptées
+(71 fichiers, 3180 assertions) ; le harnais lui-même, qui rejoue toute la campagne, n'est pas relancé.
+
 ## décision 590 — `CRM-092` T6 : reposer les demandes à une cellule déjà en service
 
 *2026-09-24, même session. Instruction du responsable : « pense aussi à reposer les demandes des

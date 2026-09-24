@@ -11,6 +11,8 @@
 # @verifies docs/INCONSISTENCY_REPORT.md INC-071, INC-072, INC-048, INC-061 (jeu d'essai nettoyé),
 #           INC-021 (close par CRM-009 : les deux gestes de l'auteur en dépendaient) ;
 #           CRM-022 ferme INC-014
+# @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §7.5 — tranche T6 : `0077` ferme la
+#           chaîne de restauration (décision 589)
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-043`, POUR CE QUI EST LIVRÉ :
 #
@@ -60,6 +62,7 @@ node_toolchain_prepare "$PWD/.nvmrc" || exit 1
 
 MIGRATION=supabase/migrations/0015_commentaires.sql
 MIGRATION_IDENTITES=supabase/migrations/0021_identites_et_memberships_surs.sql
+MIGRATION_RETRAIT_GOTRUE=supabase/migrations/0077_retrait_gotrue.sql
 # La migration du lot G REDÉFINIT `app.card_comments_avant_maj()` et ajoute la politique de
 # modération. Rejouer 0015 puis 0021 sans elle réinstalle une version ANTÉRIEURE du trigger et perd
 # `card_comments_moderation` : la restauration laissait alors la suite 0017 rouge, et le harnais
@@ -581,6 +584,10 @@ degrader_et_verifier \
 # L'ORDRE EST CELUI DE LA LIVRAISON, ET IL N'EST PAS INDIFFÉRENT : chacune des trois migrations
 # remplace la fonction de la précédente. En omettre une revient à livrer une version antérieure du
 # produit, ce qui a été mesuré le 2026-08-14 — la suite 0017 restait rouge après « restauration ».
+#
+# `0077` FERME LA CHAÎNE depuis `CRM-092` T6 (docs/JOURNAL.md décision 589) : `0021` recrée
+# `app.handle_new_user`, que `0077` retire. Sans elle, la « restauration » laisserait une fonction
+# qu'aucune migration ne produit plus — famille d'INC-142, INC-213 et INC-250.
 titre "6. Restauration"
 
 if docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
@@ -588,8 +595,10 @@ if docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=
 	&& docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
 		-f - <"$MIGRATION_IDENTITES" >>"$TRAVAIL/rejeu.log" 2>&1 \
 	&& docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
-		-f - <"$MIGRATION_LOT_G" >>"$TRAVAIL/rejeu.log" 2>&1; then
-	ok "les migrations CRM-043, CRM-022 puis le lot G se rejouent dans l'ordre livré"
+		-f - <"$MIGRATION_LOT_G" >>"$TRAVAIL/rejeu.log" 2>&1 \
+	&& docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
+		-f - <"$MIGRATION_RETRAIT_GOTRUE" >>"$TRAVAIL/rejeu.log" 2>&1; then
+	ok "les migrations CRM-043, CRM-022, le lot G puis le retrait de GoTrue se rejouent dans l'ordre livré"
 else
 	fail "le rejeu ordonné des migrations ÉCHOUE : voir $TRAVAIL/rejeu.log"
 fi

@@ -5,6 +5,9 @@
 -- @verifies docs/SPEC-permissions-rls.md §4 (politiques), §7 (preuves de refus n° 3 et n° 11)
 -- @verifies docs/DESIGN_SYSTEM.md §1 (couleurs de données)
 -- @verifies docs/INCONSISTENCY_REPORT.md INC-031 (garde d'archivage différée)
+-- @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §7.5 — tranche T6 : les profils de
+--           fixture sont posés directement, plus aucun trigger ne les tire d'`auth.users`
+--           (docs/JOURNAL.md décision 589)
 --
 -- Suite pgTAP de l'unité `CRM-030`. Elle prouve six choses :
 --
@@ -424,15 +427,14 @@ select table_privs_are('public', 'workflow_nodes_catalog', 'authenticated',
 -- réglage local, rôle applicatif endossé par `set local role`. Même procédé que les suites `0002`,
 -- `0004` et `0005`.
 
-insert into auth.users (id, instance_id, aud, role, email, raw_user_meta_data) values
-	('77770000-0000-4000-8000-00000000000a', '00000000-0000-0000-0000-000000000000',
-	 'authenticated', 'authenticated', 'nd-admin-a@exemple.test', '{"full_name": "Admin ND A"}'),
-	('77770000-0000-4000-8000-00000000000b', '00000000-0000-0000-0000-000000000000',
-	 'authenticated', 'authenticated', 'nd-viewer-a@exemple.test', '{"full_name": "Viewer ND A"}'),
-	('77770000-0000-4000-8000-00000000000c', '00000000-0000-0000-0000-000000000000',
-	 'authenticated', 'authenticated', 'nd-bizdev-a@exemple.test', '{"full_name": "Bizdev ND A"}'),
-	('77770000-0000-4000-8000-00000000000d', '00000000-0000-0000-0000-000000000000',
-	 'authenticated', 'authenticated', 'nd-admin-b@exemple.test', '{"full_name": "Admin ND B"}');
+-- `CRM-092` T6 (docs/JOURNAL.md décision 589) : le profil est posé directement. Plus aucun
+-- trigger ne le tire d'une ligne `auth.users` (`0077`), et la clé vers `auth.users` est partie
+-- en `0075`.
+insert into public.profiles (id, full_name) values
+	('77770000-0000-4000-8000-00000000000a', 'Admin ND A'),
+	('77770000-0000-4000-8000-00000000000b', 'Viewer ND A'),
+	('77770000-0000-4000-8000-00000000000c', 'Bizdev ND A'),
+	('77770000-0000-4000-8000-00000000000d', 'Admin ND B');
 
 insert into public.workspace_members (workspace_id, user_id, role) values
 	('66660000-0000-4000-8000-000000000001', '77770000-0000-4000-8000-00000000000a', 'admin'),

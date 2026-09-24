@@ -5,6 +5,9 @@
 -- @verifies docs/SCHEMA.md §1 (`track_members`, `channel_members`), §9 (fonctions)
 -- @verifies docs/SPEC-tracks.md §5.3 ; docs/SPEC-channels.md §6.3
 -- @verifies docs/JOURNAL.md décisions 103, 104, 105, 333 ; INC-013, INC-045, INC-085, INC-075
+-- @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §7.5 — tranche T6 : les profils de
+--           fixture sont posés directement, plus aucun trigger ne les tire d'`auth.users`
+--           (docs/JOURNAL.md décision 589)
 --
 -- Suite pgTAP de l'unité `CRM-012`. Elle prouve six choses :
 --
@@ -105,8 +108,8 @@ select ok(
 -- =============================================================================================
 -- 2. Fixtures : deux workspaces, deux tracks, deux channels, quatre comptes
 -- =============================================================================================
--- Les comptes sont créés dans `auth.users`, le trigger de `CRM-003` en dérive les profils. Les
--- appartenances sont posées directement : CRM-022 réserve désormais leur création à un
+-- Les profils sont posés directement (`CRM-092` T6 : plus aucun trigger ne les tire d'`auth.users`).
+-- Les appartenances aussi : CRM-022 réserve désormais leur création à un
 -- administrateur existant, et CRM-070 reste propriétaire du parcours d'invitation.
 
 create or replace function pg_temp.endosser(utilisateur uuid)
@@ -126,16 +129,11 @@ begin
 end;
 $$;
 
-insert into auth.users (id, instance_id, aud, role, email, encrypted_password,
-                        email_confirmed_at, created_at, updated_at)
-select id, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
-       courriel, 'x', now(), now(), now()
-  from (values
-	('55550000-0000-4000-8000-00000000000a'::uuid, 'df-admin@exemple.test'),
-	('55550000-0000-4000-8000-00000000000b'::uuid, 'df-bizdev@exemple.test'),
-	('55550000-0000-4000-8000-00000000000c'::uuid, 'df-viewer@exemple.test'),
-	('55550000-0000-4000-8000-00000000000d'::uuid, 'df-etranger@exemple.test')
-  ) as v(id, courriel);
+insert into public.profiles (id, full_name) values
+	('55550000-0000-4000-8000-00000000000a', 'df-admin'),
+	('55550000-0000-4000-8000-00000000000b', 'df-bizdev'),
+	('55550000-0000-4000-8000-00000000000c', 'df-viewer'),
+	('55550000-0000-4000-8000-00000000000d', 'df-etranger');
 
 insert into public.workspaces (id, name, slug) values
 	('55550000-0000-4000-8000-000000000001', 'Atelier DF A', 'atelier-df-a'),

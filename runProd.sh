@@ -2,6 +2,8 @@
 # @spec CRM-002 (docs/BACKLOG.md) — script de lancement de l'assemblage de production
 # @spec CRM-087 (docs/BACKLOG.md) — fenêtre de migration ouverte par --migrate
 # @spec CRM-090 (docs/BACKLOG.md) — cellule Spark : --spark et --premier-deploiement
+# @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §2 — tranche T6 : GoTrue retiré du premier
+#       déploiement
 # @spec docs/SPEC-deploiement-spark.md §3.1 (assemblage), §4.1 (variables injectées), §5.2
 # @spec docs/JOURNAL.md décision 567 (la cellule et son premier déploiement)
 # @spec docs/JOURNAL.md décision 16 (gardes de profil et de migrations)
@@ -160,11 +162,12 @@ if [ "$MODE" = migrate ]; then
 	# MESURÉ le 2026-09-23 (décision 570) : sur une base vierge, la pile ENTIÈRE ne peut pas
 	# démarrer — PostgREST ne charge pas son cache de schéma tant que `app` n'existe pas, et
 	# `mail-sync` dépend de lui. Le premier déploiement ne démarre donc que les services dont le
-	# runner dépend, mesure, migre, puis démarre tout.
+	# runner dépend, mesure, migre, puis démarre tout. Depuis `CRM-092` T6, GoTrue n'en fait plus
+	# partie : il a quitté la pile (docs/SPEC-session-sso.md §2, décision 589).
 	if [ "$PREMIER_DEPLOIEMENT" = 1 ]; then
 		require_free_ports compose_prod
 		say "Premier déploiement : services dont le runner dépend"
-		compose_prod up -d --wait db auth storage
+		compose_prod up -d --wait db storage
 		tables=$(docker exec -i p2enjoy-db psql -U postgres -d "$(env_get "$ENV_FILE" POSTGRES_DB)" -qtA \
 			-c "select count(*) from pg_tables where schemaname = 'public'") \
 			|| die "premier déploiement : la base n'a pas pu être interrogée."

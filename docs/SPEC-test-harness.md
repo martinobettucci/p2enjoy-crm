@@ -269,8 +269,8 @@ de Playwright.
 Keycloak de DÉVELOPPEMENT, par son API d'administration (`e2e/api/keycloak-dev.ts`,
 `scripts/lib/sso.sh`), inscrit son attente dans un espace, et laisse la vraie connexion en faire un
 membre (`docs/SPEC-session-sso.md` §6). Elle retire ensuite le profil — qu'aucune cascade ne suit plus
-— et le compte. Plus aucun compte GoTrue n'est créé par une preuve, hormis `scripts/verify-auth.sh`,
-qui éprouve GoTrue lui-même jusqu'à son retrait (T6).
+— et le compte. Plus aucun compte GoTrue n'est créé par une preuve : `scripts/verify-auth.sh`, qui
+éprouvait GoTrue lui-même, est retiré avec lui en T6 (décision 589).
 
 **Les scripts de preuve** obtiennent leur jeton par `sso_jeton_interne` (`scripts/lib/sso.sh`), même
 chemin, même fermeture immédiate de la session. Un script qui dure plus de cinq minutes redemande un

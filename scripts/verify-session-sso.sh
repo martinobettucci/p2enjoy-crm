@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # @verifies CRM-092 (docs/BACKLOG.md) — le SSO, seule source d'identité : harnais de l'unité
 # @verifies docs/SPEC-session-sso.md §7.1 (fonctions auth.*), §7.2 (modèle), §10 (realm préchargé),
-#           §13 (preuves), §14 (T1, T2)
+#           §13 (preuves), §14 (T1, T2, T6), §7.5 (migration 0077), §2 (ce qui est retiré)
 # @verifies docs/JOURNAL.md décisions 580 (K11, K12), 581 (migration élevée, harnais de l'unité),
-#           586 (client serveur, T3 bis), 587 (aucune session : `204`)
+#           586 (client serveur, T3 bis), 587 (aucune session : `204`), 589 (retrait de GoTrue, T6)
 # @verifies CLAUDE.md §15 (tests non complaisants), §18 (un défaut se reproduit avant sa correction)
 #
 # Harnais de `CRM-092`, qui grandit à chaque tranche (décision 581). Tranche T1 :
@@ -45,6 +45,14 @@
 #      jeton de rafraîchissement chiffré côté serveur, admission rejouée à la prolongation ;
 #  10. trois mutations de plus : le secret omis de l'échange, `HttpOnly` retiré du cookie, le jeton de
 #      rafraîchissement gardé en clair.
+#
+# Tranche T6 — GoTrue retiré (§2, §7.5, décision 589) :
+#
+#   2–4. la migration 0077 rejouée deux fois SOUS `postgres` — elle n'est pas élevée —, sa suite
+#      `0071` verte à son nombre exact, et une dégradation de plus : un trigger reposé sur `auth.users` ;
+#  11. la pile sans GoTrue : `/auth/v1/*` et `/.well-known/oauth-authorization-server` en 404 par
+#      Kong ; aucun service ni conteneur `auth`, `auth-templates`, `inbucket` ; aucune ligne de
+#      configuration ne nomme plus GoTrue — recherche éprouvée par une copie dégradée, qui doit rougir.
 
 set -euo pipefail
 
@@ -71,11 +79,14 @@ IMAGE_DB=$(sed -n 's/^[[:space:]]*image: \(supabase\/postgres:[^[:space:]]*\)$/\
 MIGRATION_CLAIMS=supabase/migrations/0074_revendications_du_jeton.sql
 MIGRATION_MODELE=supabase/migrations/0075_identite_sso.sql
 MIGRATION_SESSIONS=supabase/migrations/0076_sessions_serveur.sql
+MIGRATION_RETRAIT=supabase/migrations/0077_retrait_gotrue.sql
 TEST_SQL=supabase/tests/0069_identite_sso.test.sql
 TEST_SQL_SESSIONS=supabase/tests/0070_sessions_serveur.test.sql
+TEST_SQL_RETRAIT=supabase/tests/0071_retrait_gotrue.test.sql
 ASSERTIONS_T1=58
 ASSERTIONS_T3BIS=40
-ASSERTIONS_UNITE=$((ASSERTIONS_T1 + ASSERTIONS_T3BIS))
+ASSERTIONS_T6=8
+ASSERTIONS_UNITE=$((ASSERTIONS_T1 + ASSERTIONS_T3BIS + ASSERTIONS_T6))
 BASE_NEUVE=verify-session-sso-base-neuve
 SUB_PREUVE=0c920000-0000-4000-8000-0000000000bb
 
@@ -93,7 +104,8 @@ psql_admin() { docker exec -i "$DB_CONTAINER" psql -U supabase_admin -d postgres
 appliquer_migrations_dev() {
 	psql_admin --single-transaction -f - < "$MIGRATION_CLAIMS" >/dev/null 2>&1 \
 		&& psql_dev --single-transaction -f - < "$MIGRATION_MODELE" >/dev/null 2>&1 \
-		&& psql_dev --single-transaction -f - < "$MIGRATION_SESSIONS" >/dev/null 2>&1
+		&& psql_dev --single-transaction -f - < "$MIGRATION_SESSIONS" >/dev/null 2>&1 \
+		&& psql_dev --single-transaction -f - < "$MIGRATION_RETRAIT" >/dev/null 2>&1
 }
 
 role_a_rendre=false
@@ -154,12 +166,12 @@ effacer_actions_requises() {
 }
 
 suite_verte() {
-	scripts/run-sql-tests.sh "$TEST_SQL" "$TEST_SQL_SESSIONS" > "$WORK/tap.log" 2>&1 \
-		&& grep -q "2 fichiers, $ASSERTIONS_UNITE assertions, aucune anomalie" "$WORK/tap.log"
+	scripts/run-sql-tests.sh "$TEST_SQL" "$TEST_SQL_SESSIONS" "$TEST_SQL_RETRAIT" > "$WORK/tap.log" 2>&1 \
+		&& grep -q "3 fichiers, $ASSERTIONS_UNITE assertions, aucune anomalie" "$WORK/tap.log"
 }
 
 suite_rouge() {
-	if scripts/run-sql-tests.sh "$TEST_SQL" "$TEST_SQL_SESSIONS" > "$WORK/tap-rouge.log" 2>&1; then
+	if scripts/run-sql-tests.sh "$TEST_SQL" "$TEST_SQL_SESSIONS" "$TEST_SQL_RETRAIT" > "$WORK/tap-rouge.log" 2>&1; then
 		return 1
 	fi
 	grep -Eq 'ECHEC|not ok|psql a échoué' "$WORK/tap-rouge.log"
@@ -244,7 +256,7 @@ docker rm -f "$BASE_NEUVE" >/dev/null 2>&1 || true
 # 2. Base de développement — rejeu convergent sous le rôle de chaque migration
 # =================================================================================================
 echo
-echo "2. Base de développement : rejeu des migrations 0074, 0075 et 0076"
+echo "2. Base de développement : rejeu des migrations 0074, 0075, 0076 et 0077"
 
 for passage in premier second; do
 	if psql_admin --single-transaction -f - < "$MIGRATION_CLAIMS" >"$WORK/dev-claims-$passage.log" 2>&1; then
@@ -262,6 +274,13 @@ for passage in premier second; do
 	else
 		fail "0076 refusée ($passage passage) : $(tail -n 2 "$WORK/dev-sessions-$passage.log")"
 	fi
+	# T6 : sous `postgres`, SANS élévation — mesuré, `postgres` retire le trigger d'`auth.users`
+	# (décision 589, correction). Rejouée, elle ne trouve plus rien et ne fait rien.
+	if psql_dev --single-transaction -f - < "$MIGRATION_RETRAIT" >"$WORK/dev-retrait-$passage.log" 2>&1; then
+		ok "0077 rejouée sous postgres, sans élévation ($passage passage)"
+	else
+		fail "0077 refusée ($passage passage) : $(tail -n 2 "$WORK/dev-retrait-$passage.log")"
+	fi
 done
 
 if psql_dev --single-transaction -f - < "$MIGRATION_CLAIMS" >"$WORK/dev-claims-postgres.log" 2>&1; then
@@ -276,10 +295,10 @@ fi
 # 3. Suite pgTAP de l'unité
 # =================================================================================================
 echo
-echo "3. pgTAP : $TEST_SQL et $TEST_SQL_SESSIONS"
+echo "3. pgTAP : $TEST_SQL, $TEST_SQL_SESSIONS et $TEST_SQL_RETRAIT"
 
 if suite_verte; then
-	ok "deux suites vertes, $ASSERTIONS_T1 + $ASSERTIONS_T3BIS = $ASSERTIONS_UNITE assertions"
+	ok "trois suites vertes, $ASSERTIONS_T1 + $ASSERTIONS_T3BIS + $ASSERTIONS_T6 = $ASSERTIONS_UNITE assertions"
 else
 	fail "suites non vertes ou nombre d'assertions différent de $ASSERTIONS_UNITE : $(tail -n 3 "$WORK/tap.log")"
 fi
@@ -330,6 +349,11 @@ degrader "table des sessions serveur lisible par authenticated" postgres \
 
 degrader "lecture d'une session serveur exécutable par authenticated" postgres \
 	"grant execute on function public.lire_session_serveur(bytea) to authenticated;"
+
+# T6 : un trigger reposé sur `auth.users` doit rougir `0071` ; le rejeu de `0077` le retire.
+degrader "trigger de création de profil reposé sur auth.users" postgres \
+	"create trigger on_auth_user_created after insert on auth.users
+	 for each row execute function app.set_updated_at();"
 
 if suite_verte; then
 	ok "après restauration, la suite est de nouveau verte"
@@ -550,6 +574,47 @@ if unites_session && grep -qE "Tests +$UNITES_SESSION passed" "$WORK/unites.log"
 else
 	fail "après restauration, les tests unitaires ne sont pas verts"
 fi
+
+# =================================================================================================
+# 11. La pile sans GoTrue — tranche T6 (docs/SPEC-session-sso.md §2, §13, §16 ; décision 589)
+# =================================================================================================
+echo
+echo "11. La pile sans GoTrue"
+
+API_KONG="http://127.0.0.1:$(env_get "$ENV_FILE" KONG_HTTP_PORT)"
+ANON_KEY=$(env_get "$ENV_FILE" ANON_KEY)
+for chemin in /auth/v1/health /auth/v1/token /.well-known/oauth-authorization-server; do
+	code=$(curl -s -o /dev/null -w '%{http_code}' -H "apikey: $ANON_KEY" "$API_KONG$chemin" || echo 000)
+	[ "$code" = 404 ] && ok "$chemin rend 404 par la passerelle : aucune route vers GoTrue" \
+		|| fail "$chemin rend $code par la passerelle, 404 attendu"
+done
+
+services_dev=$(docker compose --env-file "$ENV_FILE" -f docker-compose.yml -f docker-compose.dev.yml config --services 2>/dev/null)
+services_prod=$(docker compose --env-file .env.example -f docker-compose.yml -f docker-compose.prod.yml config --services 2>/dev/null)
+if [ -n "$services_dev" ] && [ -n "$services_prod" ] \
+	&& ! printf '%s\n%s\n' "$services_dev" "$services_prod" | grep -qxE 'auth|auth-templates|inbucket'; then
+	ok "aucun service auth, auth-templates ni inbucket, en développement comme en production"
+else
+	fail "un service retiré est encore déclaré, ou un assemblage ne se résout pas"
+fi
+conteneurs=$(docker ps -a --format '{{.Names}}' | grep -xE 'p2enjoy-auth|p2enjoy-auth-templates|p2enjoy-inbucket' || true)
+[ -z "$conteneurs" ] && ok "aucun conteneur de GoTrue, de ses gabarits ni d'Inbucket sur le poste" \
+	|| fail "conteneurs retirés encore présents : $(printf '%s' "$conteneurs" | tr '\n' ' ')"
+
+# La recherche du §16 : aucune LIGNE ACTIVE de configuration ne nomme plus GoTrue. Les commentaires
+# qui racontent le retrait sont permis ; une valeur, un service, une route ou une variable, non.
+MOTIF_GOTRUE='gotrue|GOTRUE_|auth-templates|inbucket|INBUCKET_|auth:9999|DISABLE_SIGNUP|ENABLE_EMAIL_|ENABLE_PHONE_|ENABLE_ANONYMOUS_USERS|PASSWORD_MIN_LENGTH|ADDITIONAL_REDIRECT_URLS|MAILER_|^[[:space:]]*SMTP_(HOST|PORT|USER|PASS|ADMIN_EMAIL|SENDER_NAME)='
+CONFIGURATIONS=(docker-compose.yml docker-compose.dev.yml docker-compose.prod.yml docker-compose.spark.yml
+	supabase/docker/volumes/api/kong.yml .env.example)
+lignes_gotrue() { grep -hvE '^[[:space:]]*#' "$@" | grep -E "$MOTIF_GOTRUE" || true; }
+restes=$(lignes_gotrue "${CONFIGURATIONS[@]}")
+[ -z "$restes" ] && ok "aucune ligne active de configuration ne nomme GoTrue, ses gabarits, Inbucket ni leurs variables" \
+	|| fail "configuration qui nomme encore GoTrue : $(printf '%s' "$restes" | head -n 3 | tr '\n' ' ')"
+# Non-complaisance : la même recherche sur une copie où le service est reposé doit le trouver.
+cp docker-compose.yml "$WORK/compose-degrade.yml"
+printf '  auth:\n    image: supabase/gotrue:v2.189.0\n' >> "$WORK/compose-degrade.yml"
+[ -n "$(lignes_gotrue "$WORK/compose-degrade.yml")" ] && ok "dégradation détectée : service GoTrue reposé dans une copie de l'assemblage" \
+	|| fail "dégradation NON détectée : la recherche ne voit pas un service GoTrue reposé"
 
 echo
 if [ "$failures" -eq 0 ]; then
