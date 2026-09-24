@@ -29485,3 +29485,34 @@ final est constant, et `0001`, appliquée en production, n'est pas réécrite.
 **Vérifications prévues.** Suite pgTAP complète ; `verify-session-sso.sh` (dont `/auth/v1` en `404`) ;
 pile recréée par `./resetMe.sh --yes` sans GoTrue, seed, `e2e:api`, `e2e:mail`, campagne d'interface ;
 `verify-stack`, `verify-migrations`, `verify-scripts`, `verify-spark`, `verify-harness` révisés.
+
+## décision 590 — `CRM-092` T6 : reposer les demandes à une cellule déjà en service
+
+*2026-09-24, même session. Instruction du responsable : « pense aussi à reposer les demandes des
+variables manquantes dans l'environnement ». Spécification `docs/SPEC-session-sso.md` §12 (point 2),
+`docs/SPEC-deploiement-spark.md` §4.4, amendées avant le code.*
+
+**Problème.** Le §12 (point 2) confie à `scripts/spark/proposer.sh` le soin de reposer les demandes de
+variables. Mais la cellule `crm` est **en service** : `/run/spark/secrets` porte `JWT_SECRET`, et le
+script refuse alors toute proposition autre que la route — à raison, puisqu'il tirerait de nouveaux
+secrets qui invalideraient jetons et base. En l'état, le point 2 est impossible.
+
+**Observations.** Ce que `CRM-092` change dans la cellule tient en trois noms : `SSO_OIDC_ISSUER`
+(inchangé, `https://oauth.lelabs.tech/realms/lelabs`), `SSO_OIDC_CLIENT_ID` (de `lelabs-crm`, le client
+public de `CRM-091`, à `lelabs-crm-serveur`) et `SSO_OIDC_CLIENT_SECRET` (nouveau, inconnu de la
+cellule). La grammaire des fichiers `.?` (`docs/PROD-SERVER.md`) : une valeur vide est une DEMANDE ; un
+import **ajoute et remplace, il ne retire jamais**.
+
+**Décision.** Un mode `--demandes-seules`, permis sur une cellule en service parce qu'il ne tire **aucun**
+secret : il propose, parmi ces trois variables, celles que la cellule n'a pas ou n'a pas à la valeur
+attendue — les deux publiques avec leur valeur, le secret comme demande vide, **seulement s'il manque
+ou est vide** (un secret posé n'est jamais redemandé). Il ne lit des fichiers réels que la **présence**
+d'un nom, jamais une valeur secrète, et n'affiche que des noms. Mêmes refus que les autres modes sur une
+proposition pendante. Les variables de GoTrue restent dans la cellule, **inertes** : la grammaire ne
+permet pas de proposer un retrait, et plus rien ne les lit ; le script les nomme pour que le propriétaire
+les retire à la console s'il le souhaite. Le mode complet perd ses options et lignes SMTP et
+`ADDITIONAL_REDIRECT_URLS` ; sa seule demande est désormais `SSO_OIDC_CLIENT_SECRET`.
+
+**Vérifications prévues.** `scripts/verify-spark.sh` éprouve le mode sur des fichiers jetables : cellule
+en service sans client serveur → deux propositions ; secret déjà posé → jamais redemandé ; tout à jour →
+rien à proposer ; aucune valeur secrète dans la sortie.

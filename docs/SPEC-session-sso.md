@@ -574,8 +574,11 @@ responsable a demandé une fois `CRM-092` entièrement vérifiée (décision 584
    - `martino@p2enjoy.studio` porte `verified` et une adresse vérifiée (décision 579) ; sans cela, sa
      connexion rend l'attente, et c'est le comportement voulu.
 2. **Variables** : les demandes de variables manquantes sont **reposées** par
-   `scripts/spark/proposer.sh` (décision 586) — `SSO_OIDC_CLIENT_ID` au nouvel identifiant,
-   `SSO_OIDC_CLIENT_SECRET` —, et les variables propres à GoTrue sont retirées, dont les `SMTP_*`.
+   `scripts/spark/proposer.sh --demandes-seules` (décisions 586 et 590) — `SSO_OIDC_CLIENT_ID` au
+   nouvel identifiant, `SSO_OIDC_CLIENT_SECRET` en demande —, le seul mode permis sur une cellule en
+   service. Les variables propres à GoTrue, dont les `SMTP_*`, restent inertes dans la cellule : la
+   grammaire des propositions ne permet pas d'en demander le retrait, que le propriétaire fait à la
+   console s'il le souhaite.
 3. **Lecture seule d'abord** : l'espace `crm` ne porte rien d'autre que l'appartenance de K9 — aucune
    card, aucun commentaire, aucune donnée — et le compte n'a jamais été connecté.
 4. Appliquer `0074` à `0077` en fenêtre de maintenance.

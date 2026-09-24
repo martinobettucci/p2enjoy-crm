@@ -184,9 +184,15 @@ propositions **sous** le bloc posé par le plan de contrôle dans `/etc/spark/en
   que la Forge expose au public, non ce que la pile sert** — mesuré (décision 576) : une route
   `clair` est publiée en `http://` seul, et le SSO refuse toute URL de retour hors `https://`. Dans
   les deux modes, la Forge fait suivre en clair vers Caddy.
-- `--route-seule` ne propose que la route, sans toucher aux variables ni aux secrets : c'est la
-  seule proposition encore possible quand des secrets sont en service. Mêmes refus sur une
-  proposition de route pendante.
+- `--route-seule` ne propose que la route, sans toucher aux variables ni aux secrets. Mêmes refus
+  sur une proposition de route pendante.
+- `--demandes-seules` (`CRM-092`, décision 590) **repose les demandes** à une cellule en service,
+  sans tirer aucun secret : `SSO_OIDC_ISSUER` et `SSO_OIDC_CLIENT_ID` si la cellule ne les a pas à la
+  valeur attendue, `SSO_OIDC_CLIENT_SECRET` en demande vide s'il manque ou est vide — un secret posé
+  n'est jamais redemandé. Des fichiers réels, il ne lit que la présence d'un nom ; il n'affiche que des
+  noms. Il nomme les variables retirées de la pile (GoTrue, `SMTP_*`) que la cellule porte encore,
+  inertes : un import ne retire jamais rien. Avec `--route-seule`, c'est la seule proposition possible
+  quand des secrets sont en service.
 
 ## 5. Livrer
 
