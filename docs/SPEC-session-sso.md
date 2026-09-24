@@ -4,7 +4,9 @@ Unité de backlog : `CRM-092` (`docs/BACKLOG.md`).
 Décisions : `docs/JOURNAL.md` 578 (instruction du responsable, mesures K1 à K9), 579 (arbitrage A1 à
 A3), 580 (mesures K10 à K17), 581 (correction de K12 : migration élevée, harnais de l'unité),
 585 (T5 avant T4), 586 (**client serveur** : arbitrage du responsable, sessions serveur), 587
-(l'absence de session n'est pas un refus ; échéance comptée sur la durée du jeton ; preuves révisées).
+(l'absence de session n'est pas un refus ; échéance comptée sur la durée du jeton ; preuves révisées),
+589 (**T6** : faits mesurés avant le retrait — migration `0077` élevée, Inbucket retiré avec GoTrue,
+`404` explicite de Caddy, dix suites pgTAP portées).
 Contrats du fournisseur : `docs/SSO.md` (général), `docs/SSO-client-lelabs-crm.md` (client du CRM).
 Documents liés : `docs/SPEC-auth.md` (état remplacé), `docs/SPEC-identite.md` §3 à §6,
 `docs/SPEC-permissions-rls.md` §1 à §3, `docs/SPEC-edge-functions.md` §2 à §5, `docs/SPEC-seed.md`
@@ -48,7 +50,10 @@ transporte des preuves ; il ne décide d'aucun accès.
 | Variables propres à GoTrue : `DISABLE_SIGNUP`, `ENABLE_EMAIL_SIGNUP`, `ENABLE_EMAIL_AUTOCONFIRM`, `ENABLE_PHONE_*`, `ENABLE_ANONYMOUS_USERS`, `PASSWORD_MIN_LENGTH`, `ADDITIONAL_REDIRECT_URLS`, `MAILER_*`, `SMTP_*` | `.env.example`, `scripts/lib/env.sh`, `runDev.sh`, `scripts/spark/proposer.sh` | T6 |
 | Formulaire à mot de passe de `/connexion` et module `webapp/src/lib/auth.ts` en ce qu'il classe les refus de GoTrue | webapp | T5 |
 | Échange d'`id_token` de `CRM-091` et son nonce ; client public `lelabs-crm` | `webapp/src/lib/sso.ts`, `Authentification.tsx` ; realm LeLabs (retrait par son administrateur, décision 586) | T5, production |
-| Trigger `on_auth_user_created` et `app.handle_new_user()` | migration `0077` | T6 |
+| Trigger `on_auth_user_created` et `app.handle_new_user()` | migration `0077`, **élevée** (§7.5) | T6 |
+| Service `inbucket` et ses variables `INBUCKET_WEB_PORT`, `INBUCKET_SMTP_PORT` — son **seul** client était GoTrue, mesuré (décision 589) | `docker-compose.dev.yml`, `.env.example`, `runDev.sh`, `scripts/lib/env.sh` | T6 |
+| Routes Caddy `/auth/v1/*` et `/.well-known/oauth-authorization-server` vers Kong — **remplacées par un `404` explicite** : sans lui, le repli de l'application monopage rendrait `index.html` en `200` (décision 589) | `caddy/routes.caddy` | T6 |
+| Création de profils par `insert into auth.users` dans dix suites pgTAP : les profils y sont posés directement, comme dans `0069` et `0070` | `supabase/tests/` | T6 |
 | Clé étrangère `profiles.id → auth.users` | migration `0075` | T1 |
 | Création de comptes par l'API d'administration GoTrue, connexions par mot de passe GoTrue | seed, `e2e/api/jetons.ts`, 18 scripts, 50 specs d'interface | T4, T5 |
 
@@ -380,6 +385,19 @@ exécutée sur instruction explicite seulement.
 
 - Un profil supprimé emporte ses sessions ; une session ne survit jamais à la personne.
 
+### 7.5 Migration `0077_retrait_gotrue.sql` — tranche T6, **élevée** (décision 589)
+
+- **Retire** le trigger `on_auth_user_created` d'`auth.users` et la fonction `app.handle_new_user()`.
+  Plus rien n'écrit dans `auth.users` : le trigger ne se déclencherait plus jamais, et le garder
+  laisserait croire qu'un compte GoTrue crée encore un profil.
+- **Élevée** — `-- @migration-role: supabase_admin`, garde `current_user` comme `0074` : **mesuré**,
+  `auth.users` appartient à `supabase_auth_admin`, et seul le propriétaire d'une table (ou un
+  superutilisateur) retire un trigger. `postgres` avait pu le **créer** (privilège `TRIGGER`), pas le
+  retirer. `scripts/verify-scripts.sh` ajoute ce fichier à la liste nommée des élévations.
+- **Idempotente** (`if exists`) : rejouée à chaque passage du runner, elle est sans effet la seconde
+  fois ; sur une base neuve, elle retire ce que `0001` vient de poser.
+- **Ne supprime rien d'autre.** Les tables du schéma `auth` restent, inertes (§2, §15).
+
 ## 8. Webapp
 
 ### 8.1 `webapp/src/lib/sso.ts` — révisé
@@ -578,7 +596,8 @@ responsable a demandé une fois `CRM-092` entièrement vérifiée (décision 584
 |---|---|
 | Unitaire, Deno | `supabase/functions/session/*.test.ts` — **révisés par la décision 586** : corps d'ouverture invalide ; code refusé par LeLabs ; échange avec le secret et le vérificateur exacts ; trois gestes, chemin inconnu, méthode ; poignée absente, inconnue, échue — `204`, jamais un refus (décision 587) ; `session_expiree` qui supprime la session et efface le cookie ; admission rejouée à la prolongation ; cookie `HttpOnly`, `SameSite=Strict`, `Path`, `Secure` sur `https` seulement ; chiffrement AES-GCM : aller-retour, vecteur unique, altération refusée ; échéance globale ; et toujours : jeton mal formé ; `alg` `none`, `HS256`, `HS512`, `RS384` refusés **sans** lecture de clé ; `kid` inconnu ; signature altérée d'un octet ; `iss`, `azp`, `typ` différents ; `exp` passé d'une seconde ; `iat` futur ; `sub` non UUID ; adresse non vérifiée ; `verified` absent, puis présent parmi d'autres rôles dans un autre ordre ; découverte d'un autre émetteur ; délai dépassé ; jeton interne : revendications exactes, signature vérifiable par `JWT_SECRET`, `exp` = min des deux ; dictionnaire du §5.4 complet. Clés RSA et EC tirées par WebCrypto dans le test, jamais versées |
 | pgTAP | `sessions_sso` : aucune politique, aucun privilège pour `anon` et `authenticated`, empreinte unique, cascade depuis `profiles` ; les quatre fonctions de session réservées à `service_role`, admission appliquée à l'ouverture et au renouvellement, suppression d'une session non admise ; `workspace_invitations` : contraintes, clé, trois politiques et privilèges ; `ouvrir_session_sso` : attente consommée en appartenance au bon rôle, profil créé une fois, profil existant non réécrit, appartenance existante non rétrogradée, aucune trace sans attente, rejeu stable, `EXECUTE` refusé à `anon` et `authenticated` ; `profiles` sans clé vers `auth.users` |
-| Base neuve | T1 : un cluster jetable **sans GoTrue**, `0074` appliquée deux fois : `auth.uid()` rend le `sub` de `request.jwt.claims` (K11 levée), propriétaire inchangé. T6 : la pile entière recréée sans GoTrue par `./resetMe.sh`, seed et preuves d'API rejoués — une lecture RLS réelle aboutit |
+| Base neuve | T1 : un cluster jetable **sans GoTrue**, `0074` appliquée deux fois : `auth.uid()` rend le `sub` de `request.jwt.claims` (K11 levée), propriétaire inchangé. T6 : la pile entière recréée sans GoTrue par `./resetMe.sh`, seed et preuves d'API rejoués — une lecture RLS réelle aboutit ; `0077` rejouée est sans effet ; aucun conteneur `auth`, `auth-templates` ni `inbucket` |
+| pgTAP, T6 | `0071_retrait_gotrue.test.sql` : aucun trigger utilisateur sur `auth.users`, `app.handle_new_user()` absente, un profil naît sans ligne `auth.users`. Les assertions de `0001` et `0023` qui éprouvaient le trigger sont **retirées avec leur objet**, et nommées au journal avec ce qui les remplace |
 | API, pile réelle | `e2e/api/session.spec.ts`, **révisé par la décision 586** — code et vérificateur remis à l'échangeur, jamais de jeton LeLabs côté client : ouverture, prolongation par le cookie, fermeture qui rend le cookie inopérant ; la table de sessions ne porte aucun jeton en clair ; un code émis pour le client étranger est refusé ; un code rejoué est refusé ; et toujours : les trois comptes seedés ouvrent une session et lisent leurs données sous RLS ; `inconnu@`, `attendu@`, adresse non vérifiée rendent leur `403` et leur code ; jeton d'accès LeLabs, `id_token` ou jeton interne présentés à l'échangeur en `Authorization` : **n'ouvrent rien** — il n'en lit aucun (`400` à l'ouverture, `204` à la prolongation) ; jeton interne accepté par PostgREST, **Realtime** et **Storage** ; `verified` retiré par l'API d'administration de développement → **prolongation suivante** refusée et session supprimée ; appartenance retirée → de même ; session LeLabs close → `session_expiree` ; **rotation** : nouvelle clé prioritaire créée, suivie sans redémarrer à l'ouverture comme à la prolongation, anciennes clés désactivées sans gêner aucune session. *Révisé par la décision 587* : « ancien jeton refusé » ne se prouve plus par l'API, l'échangeur ne recevant jamais qu'un jeton qu'il vient d'obtenir lui-même de LeLabs ; la preuve de `kid` inconnu reste unitaire. `/auth/v1/*` → `404` après T6 |
 | E2E | `e2e/ui/connexion.spec.ts` : vraie page Keycloak pour chacun des trois rôles ; **aucun jeton dans `sessionStorage` ni `localStorage`**, cookie de poignée `HttpOnly` présent, transaction retirée, URL sans `code` ; rechargement conservant la session ; **rafraîchissement** franchi par l'horloge de Playwright sans perte de session ; déconnexion ramenant à `/connexion` et reconnexion sans formulaire tant que LeLabs vit ; `inconnu@`, `attendu@` et l'adresse non prouvée voyant leur attente ; session close chez LeLabs ramenant à `/connexion` avec son message ; annulation ; console vierge. *La configuration absente est prouvée au niveau unitaire* (`EcranConnexion.test.tsx`) : le build sous test est configuré, et en produire un second pour ce seul état doublerait le temps du harnais sans rien prouver de plus (décision 587). Les 50 specs d'interface se connectent par la fixture `connecterAvecLeLabs` |
 | Visuel | carte de connexion, redirection, retour, chacun des refus et chacune des attentes, textes longs, aux quatre paliers ; captures observées |
@@ -602,7 +621,7 @@ passée au SSO.
 | **T3 bis** | Client serveur (décision 586) : migration `0076`, échangeur à trois gestes, chiffrement, cookie, realm de développement confidentiel, relais Vite, preuves unitaires, pgTAP et d'API révisées | T3 |
 | **T5** | Webapp (§8, §9), tests unitaires, `e2e/ui/connexion.spec.ts`, fixture et portage des 50 specs d'interface, `docs/DESIGN_SYSTEM.md` §5.12, captures, `docs/manual.md` chapitre 1 — **livrée AVANT T4** (décision 585) | T3 bis |
 | **T4** | `e2e/api/jetons.ts` et `scripts/lib/sso.sh` par la vraie connexion, comptes jetables par l'API de développement, seed (§11), portage des 18 scripts et des specs d'API qui créaient des comptes GoTrue, `docs/SPEC-seed.md`, `docs/SPEC-test-harness.md` | T3, T5 |
-| **T6** | Retrait de GoTrue (§2), migration `0077`, retrait de `verify-auth.sh`, scripts d'environnement et de cellule, `docs/SPEC-auth.md` réduit à un renvoi | T4, T5 |
+| **T6** | Retrait de GoTrue, d'`auth-templates` et d'Inbucket (§2), migration élevée `0077` (§7.5) et suite `0071`, dix suites pgTAP portées, `404` de Caddy, retrait de `verify-auth.sh`, scripts d'environnement et de cellule (`proposer.sh` sans SMTP, `verifier.sh`, `verify-stack.sh`, `restore-drill.sh`), `docs/SPEC-auth.md` réduit à un renvoi | T4, T5 |
 | **T7** | `README.md`, `docs/DAT.md`, `docs/SPEC-deploiement-spark.md`, `docs/manual.md` chapitre 17, `docs/PROD_MIGRATIONS.md` (§12), `CHANGELOG.md` ; campagne des harnais touchés | T6 |
 
 ## 15. Hors périmètre

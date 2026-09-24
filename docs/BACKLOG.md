@@ -14512,7 +14512,9 @@ connexion réelle de `martino@p2enjoy.studio` aboutie après les opérations du 
       et dix autres harnais portés, sans anomalie. Rouges étrangers consignés : INC-250
       (`verify-droits-fins`), INC-231 et INC-189 (`verify-webapp`). Constat INC-249 (garde du dernier
       administrateur) : spécification corrigée, comportement à arbitrer.
-- [ ] **T6** — retrait de GoTrue, migration `0077`, retrait de `verify-auth.sh` (§2).
+- [ ] **T6** — retrait de GoTrue, d'`auth-templates` et d'Inbucket, migration élevée `0077` et suite
+      `0071`, dix suites pgTAP portées, `404` de Caddy, retrait de `verify-auth.sh` (§2, §7.5 ;
+      décision 589, faits mesurés avant le code).
 - [ ] **T7** — documentation transverse, contrat de production (§12), campagne.
 - [ ] **Préalable humain chez LeLabs** : déclaration du client serveur `lelabs-crm-serveur` et secret
       posé dans la cellule (décision 586, §12) ; `verified` sur `martino@p2enjoy.studio`.

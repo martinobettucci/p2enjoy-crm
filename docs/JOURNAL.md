@@ -29415,3 +29415,63 @@ famille d'**INC-189** ; la suite unitaire complète, rejouée seule, est verte.
   après correction, **1079/1079**. `e2e:mail` **42/42**. Campagne d'interface complète, jouée par
   `verify-webapp` avec les jetons de la tranche : **755/755**.
 
+
+## décision 589 — `CRM-092` T6 : ce qui part avec GoTrue, mesuré avant le retrait
+
+*2026-09-24, même session, après le commit de T4 (`9c9c0001`). Spécification `docs/SPEC-session-sso.md`
+§2, §7.5, §13, §14 — amendée par cette décision avant toute ligne de code.*
+
+**Problème.** T6 retire GoTrue de la pile. La spécification nommait les services, les variables et la
+migration `0077` ; elle ne disait ni qui peut retirer le trigger, ni ce qui dépendait encore du trigger,
+ni ce que deviennent les routes retirées derrière Caddy. Tout est mesuré ici avant d'écrire.
+
+**Observations.**
+1. **`auth.users` appartient à `supabase_auth_admin`** (mesuré sur la base de développement ; même
+   origine en production, où GoTrue a créé ses tables). Seul le propriétaire d'une table — ou un
+   superutilisateur — retire un trigger. `postgres` a pu le **créer** en `0001` (privilège `TRIGGER`),
+   il ne peut pas le retirer. `0077` est donc **élevée**, sur le modèle exact de `0074`
+   (`-- @migration-role: supabase_admin`, garde `current_user`), et nommée dans la liste des élévations
+   de `verify-scripts.sh`.
+2. **Dix suites pgTAP créent leurs personnes par `insert into auth.users`** et comptent sur le trigger
+   pour poser le profil (`0001`, `0002`, `0004`, `0005`, `0006`, `0007`, `0008`, `0011`, `0023`,
+   `0045`). `0045` le disait explicitement : « c'est le SEUL chemin », la clé `profiles → auth.users`
+   refusant l'insertion directe. Cette clé est partie en `0075` : le profil se pose désormais
+   directement, comme le font déjà `0069` et `0070`. Les assertions de `0001` et `0023` qui éprouvaient
+   **le trigger lui-même** (bornes du nom, avatar extérieur annulé, profil existant intact) sont
+   retirées **avec leur objet** ; la nouvelle suite `0071_retrait_gotrue.test.sql` prouve l'absence.
+3. **Inbucket n'a qu'un client : GoTrue.** Recherche exhaustive : aucun code, aucune fonction edge,
+   aucune spec, aucun harnais hors `verify-auth.sh` ne lit `SMTP_HOST` ni l'API d'Inbucket. Les
+   courriels du produit passent par `mail-sync` et Stalwart. Le garder laisserait un service sans
+   usage démarré à chaque `./runDev.sh` : il part avec GoTrue, avec `INBUCKET_WEB_PORT` et
+   `INBUCKET_SMTP_PORT`.
+4. **Une route retirée de Caddy ne répondrait PAS `404`.** Le dernier bloc de `caddy/routes.caddy` est le
+   repli de l'application monopage (`try_files {path} /index.html`) : sans `/auth/v1/*` dans le
+   filtre vers Kong, `/auth/v1/health` rendrait `index.html` en `200`, et la vérification du §12
+   (point 7) serait trompée. Caddy répond donc lui-même `404` sur `/auth/v1/*` et
+   `/.well-known/oauth-authorization-server`. En développement, Kong, qui n'a plus de route, répond
+   `404` de lui-même.
+5. **Variables qui restent**, parce qu'un autre service les lit : `JWT_EXPIRY` (base et PostgREST),
+   `SITE_URL` (URL de retour déclarée au realm de développement, `scripts/lib/sso.sh`, preuves),
+   `API_EXTERNAL_URL` (build de la webapp par `scripts/spark/livrer.sh`). La garde de `runDev.sh` sur
+   `SITE_URL` reste ; celle sur `ADDITIONAL_REDIRECT_URLS` part avec la variable.
+6. **`scripts/restore-drill.sh`** compte les personnes par `auth.users` (contrôle I3) : il comptera les
+   profils, seule identité que le CRM tient désormais.
+
+**Décision.** T6 retire : services `auth`, `auth-templates`, `inbucket` (base, overlays dev, prod et
+cellule, dépendance du `migrations-runner`) ; gabarits `supabase/auth/templates/` ; routes Kong
+d'authentification et `/.well-known/oauth-authorization-server` (révision de configuration `crm-092`) ;
+variables `DISABLE_SIGNUP`, `ENABLE_*`, `PASSWORD_MIN_LENGTH`, `ADDITIONAL_REDIRECT_URLS`,
+`MAILER_URLPATHS_*`, `SMTP_*`, `INBUCKET_*` ; demandes SMTP de `proposer.sh` ; contrôles GoTrue de
+`verify-stack.sh` et de `scripts/spark/verifier.sh`, remplacés par « `/auth/v1/health` rend `404` » ;
+`scripts/verify-auth.sh` (décision 581). Il ajoute `0077` élevée et la suite `0071`, porte les dix
+suites pgTAP, révise les mutations de `verify-migrations.sh` qui visaient le trigger, et réduit
+`docs/SPEC-auth.md` à un renvoi.
+
+**Conséquences.** Le `.env` d'un poste garde ses anciennes variables sans effet — le gabarit ne les
+exige plus, et rien ne les lit ; il n'est pas réécrit. En production, `0077` s'applique comme `0074`,
+sous `supabase_admin`, dans la fenêtre du §12 (point 4) ; les services `auth` et `auth-templates`
+s'arrêtent au point 5.
+
+**Vérifications prévues.** Suite pgTAP complète ; `verify-session-sso.sh` (dont `/auth/v1` en `404`) ;
+pile recréée par `./resetMe.sh --yes` sans GoTrue, seed, `e2e:api`, `e2e:mail`, campagne d'interface ;
+`verify-stack`, `verify-migrations`, `verify-scripts`, `verify-spark`, `verify-harness` révisés.
