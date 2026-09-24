@@ -186,7 +186,7 @@ l'amorçage du 2026-09-23 (§8), qui n'a jamais été connecté.
 | 3 | Importer `SSO_OIDC_CLIENT_ID` ; **saisir `SSO_OIDC_CLIENT_SECRET`**, affiché une seule fois par LeLabs, sans qu'il transite par aucun dépôt ni message | propriétaire du Spark ; le secret, par l'administrateur du realm | console. Les variables de GoTrue (`SMTP_*`, `ADDITIONAL_REDIRECT_URLS`, `DISABLE_SIGNUP`…) peuvent être retirées à la console : un import ne retire rien, et plus rien ne les lit |
 | 4 | **Lecture seule d'abord** : l'espace `crm` ne porte que l'appartenance du compte invité — aucune card, aucun commentaire, aucune attente, aucune donnée | opérateur | `docker exec -i p2enjoy-db psql -U postgres -d postgres -At -c "select (select count(*) from public.workspace_members m join public.workspaces w on w.id = m.workspace_id where w.slug = 'crm'), (select count(*) from public.cards), (select count(*) from public.card_comments), (select count(*) from public.profiles)"` rend `1|0|0|1`. **Tout autre résultat arrête la reprise** |
 | 5 | Prendre l'**instantané de VM** — seul retour arrière de la fenêtre (décision 489) | propriétaire de la cellule | console de l'hébergeur |
-| 6 | Livrer et migrer : build de la webapp avec le nouveau client, migrations 74 à 79 (la 74 sous `supabase_admin`), fonction `session` et son environnement, Kong et Caddy recréés par leurs labels `crm-092` | poste qui livre | `scripts/spark/livrer.sh -- --migrate --instantane-verifie` |
+| 6 | Livrer et migrer : build de la webapp avec le nouveau client, migrations 74 à 79 (la 74 sous `supabase_admin`), fonction `session` et son environnement, Kong et Caddy recréés par leurs labels `crm-092` | poste qui livre, puis `spark-docker` dans la cellule | `scripts/spark/livrer.sh -- --migrate --instantane-verifie`, **puis** `cd /srv/crm && ./runProd.sh --spark` : sur une pile en service, `--migrate` n'applique que les migrations et rend la main **sans redémarrer aucun service** (seul le premier déploiement enchaîne le démarrage) — la webapp neuve est alors servie par Caddy devant un échangeur, un Kong et un Caddy anciens. Mesuré le 2026-09-24 (§8) |
 | 7 | **Arrêter et supprimer GoTrue et ses gabarits**, que `./runProd.sh` ne retire pas | `spark-docker`, dans la cellule | `docker rm -f p2enjoy-auth p2enjoy-auth-templates` |
 | 8 | **Reprise du compte invité** : supprimer l'espace vide et le profil du compte invité — l'unique administrateur d'un espace ne peut être retiré autrement (`docs/SPEC-identite.md` §5), et le `sub` LeLabs n'est connu qu'à la première connexion —, puis réamorcer | opérateur, dans la cellule | **l'espace d'abord, puis le profil** — l'ordre inverse est refusé par la garde du dernier administrateur (mesuré le 2026-09-24 sur la base de développement, transaction annulée) : `docker exec -i p2enjoy-db psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c "begin; create temp table compte_invite on commit drop as select m.user_id from public.workspace_members m join public.workspaces w on w.id = m.workspace_id where w.slug = 'crm'; delete from public.workspaces where slug = 'crm'; delete from public.profiles where id in (select user_id from compte_invite); commit;"` puis `scripts/spark/amorcer-espace.sh --email martino@p2enjoy.studio --espace "P2Enjoy CRM" --slug crm` — il n'inscrit qu'une **attente** `admin`. La ligne `auth.users` du compte invité reste, inerte (§15 de la spécification). Consigner au §8 |
 | 9 | Vérifier | poste, en lecture seule | `scripts/spark/verifier.sh` : `/auth/v1/health` en `404`, aucun conteneur de GoTrue, échangeur en `204` sans session, sonde du **nouveau** client (`302` et PKCE exigé). Puis le §5 |
@@ -990,3 +990,21 @@ Spark distant de prod »).
   sauf `p2enjoy-auth-templates`.
 - **En attente du responsable** : import de `SSO_OIDC_CLIENT_ID` en console (étape 3), instantané de VM
   (étape 5).
+- **Étapes 3 et 5**, par le responsable : `SSO_OIDC_CLIENT_ID="lelabs-crm-serveur"` relu importé,
+  aucune proposition pendante, secret posé ; instantané de VM confirmé par lui (non vérifiable depuis
+  le poste).
+- **Étape 6** — `scripts/spark/livrer.sh -- --migrate --instantane-verifie` : révision **`03dd22f0`**,
+  webapp construite pour `https://crm.lelabs.tech` avec `lelabs-crm-serveur`, image Realtime
+  inchangée, **migrations appliquées avec succès** (74 à 79), code `0`. **Aucun service redémarré** :
+  `--migrate` rend la main après le runner ; `./runProd.sh --spark` lancé ensuite dans la cellule —
+  tous les services `Healthy`, Kong, Caddy et `functions` recréés. Le contrat de l'étape 6 est corrigé
+  en conséquence.
+- **Contrôles publics** (le script `verifier.sh`, lecture seule, a été refusé par le contrôle de
+  permissions de la session) : webapp `200`, bundle construit avec `lelabs-crm-serveur` ;
+  `/auth/v1/health` **`404`** ; `POST /functions/v1/session/prolonger` sans session **`204`** ;
+  `/rest/v1/workspaces` à la clé anonyme `200` ; sonde du client `302`, PKCE exigé.
+- **Étape 7 non faite** : le retrait des deux conteneurs de GoTrue a été refusé par le contrôle de
+  permissions (suppression en production). Ils tournent encore, orphelins et injoignables — Caddy
+  rend `404` sur `/auth/v1/*`.
+- **Étapes 8 à 10 en attente** : reprise du compte invité (suppression de données de production,
+  validation humaine requise), `verifier.sh`, connexion réelle.
