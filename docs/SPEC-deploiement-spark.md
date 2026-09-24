@@ -4,7 +4,7 @@ Unité de backlog : `CRM-090` (voir `docs/BACKLOG.md`).
 Documents liés : `docs/PROD-SERVER.md` (dossier de la cellule, source des faits imposés — **non
 versionné**, il porte des adresses d'infrastructure ; le même texte est réécrit par le plan de contrôle
 dans `/etc/spark/BRIEFING.md`),
-`docs/DAT.md` §3.5 et §9, `docs/PROD_MIGRATIONS.md`, `docs/SPEC-auth.md` §10 (`CRM-091`, le SSO),
+`docs/DAT.md` §3.5 et §9, `docs/PROD_MIGRATIONS.md`, `docs/SPEC-session-sso.md` (`CRM-092`, le SSO seule identité),
 `docs/JOURNAL.md` décisions 567 et 569.
 
 Écrite le 2026-09-23 **après mesure dans la cellule**, en lecture seule, et **avant la première ligne
@@ -151,13 +151,15 @@ le reste : une variable qui deviendrait consommée ferait rougir la preuve.
 | `P2ENJOY_ENV_PROFILE` | `prod` | constante |
 | `APPLY_MIGRATIONS` | `false` | constante (décision 489) |
 | `APP_DOMAIN` | `crm.lelabs.tech` | proposition, décision 567 |
-| `API_EXTERNAL_URL`, `SUPABASE_PUBLIC_URL`, `SITE_URL`, `ADDITIONAL_REDIRECT_URLS` | `https://crm.lelabs.tech` | dérivées du domaine |
+| `API_EXTERNAL_URL`, `SUPABASE_PUBLIC_URL`, `SITE_URL` | `https://crm.lelabs.tech` | dérivées du domaine ; `ADDITIONAL_REDIRECT_URLS`, lue par GoTrue seul, est retirée par `CRM-092` T6 |
 | `SPARK_HTTP_PORT` | `8080` | constante, égale au port de la route |
 | `ANON_KEY` | jeton `anon` signé par `JWT_SECRET` | dérivée ; **publique par construction**, elle entre dans le bundle |
 | `SSO_OIDC_ISSUER` | `https://oauth.lelabs.tech/realms/lelabs` | `docs/SSO.md` |
-| `SSO_OIDC_CLIENT_ID` | l'identifiant **réellement créé** par le realm | réponse à la déclaration, `docs/SPEC-auth.md` §10.8 |
-| `SMTP_HOST`, `SMTP_PORT` | relais d'envoi, port de repli ouvert | proposés par `proposer.sh --smtp-hote --smtp-port`, sinon demandés ; la Forge ferme `25`, `465` et `587` en sortie, et le script refuse de les proposer |
-| `SMTP_ADMIN_EMAIL` | expéditeur sur un domaine vérifié chez le relais | proposé par `--smtp-expediteur`, sinon demandé |
+| `SSO_OIDC_CLIENT_ID` | l'identifiant **réellement créé** par le realm pour le client **confidentiel** — `lelabs-crm-serveur` déclaré | réponse à la déclaration, `docs/SPEC-session-sso.md` §12 |
+
+Les variables `SMTP_HOST`, `SMTP_PORT` et `SMTP_ADMIN_EMAIL` — relais des courriels transactionnels de
+GoTrue — sont **retirées** par `CRM-092` T6 avec lui, ainsi que les options `--smtp-*` de
+`proposer.sh`. Une cellule qui les porte encore les garde inertes : un import ne retire rien.
 
 **Secrets** — `/run/spark/secrets` :
 
@@ -165,7 +167,7 @@ le reste : une variable qui deviendrait consommée ferait rougir la preuve.
 |---|---|
 | `POSTGRES_PASSWORD`, `JWT_SECRET`, `SECRET_KEY_BASE`, `REALTIME_DB_ENC_KEY`, `MAIL_SYNC_INTERNAL_TOKEN`, `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD`, `S3_PROTOCOL_ACCESS_KEY_ID`, `S3_PROTOCOL_ACCESS_KEY_SECRET` | **tirés dans la cellule** par `scripts/spark/proposer.sh`, aux longueurs de `env_bootstrap_dev` |
 | `SERVICE_ROLE_KEY` | dérivé de `JWT_SECRET` par le même script |
-| `SMTP_USER`, `SMTP_PASS` | **demandés vides** : seul le titulaire du relais les connaît. Facultatifs au regard des gardes : sans eux, la pile démarre et seuls les courriels transactionnels échouent |
+| `SSO_OIDC_CLIENT_SECRET` | **demandé vide** (`CRM-092`, décision 586) : LeLabs l'émet et l'affiche une seule fois à l'administrateur du realm, qui le saisit lui-même. Remis au seul worker `session`. `SMTP_USER` et `SMTP_PASS` sont retirés avec GoTrue |
 
 ### 4.4 Proposer, sans jamais appliquer
 
@@ -211,8 +213,16 @@ propositions **sous** le bloc posé par le plan de contrôle dans `/etc/spark/en
 5. Écrit `REVISION` (le condensé du commit livré) dans `/srv/crm`.
 6. Lance `./runProd.sh --spark` dans la cellule.
 
-`git diff --diff-filter=D` entre la révision déployée et `HEAD` doit être vide : une extraction
-par-dessus ne retire pas un fichier supprimé. Le script le vérifie et refuse sinon.
+Une extraction par-dessus ne retire pas un fichier supprimé : le script **retire dans la cellule**,
+avant l'extraction, les fichiers que `git diff --diff-filter=D` nomme entre la révision déployée et
+`HEAD`, et les liste (`CRM-092` T6 en supprime cinq : `scripts/verify-auth.sh` et les quatre gabarits de
+`supabase/auth/templates/`).
+
+**Kong et Caddy ne relisent pas leurs fichiers montés**, que l'extraction remplace sous les conteneurs
+en service. Chacun porte donc un label de révision — `com.p2enjoy.kong-config-revision` et
+`com.p2enjoy.caddy-routes-revision`, **`crm-092`** depuis le retrait de GoTrue — que tout changement
+de `kong.yml` ou de `caddy/routes.caddy` incrémente dans le même commit : Compose voit une définition
+différente et recrée le conteneur au `up` ordinaire. `scripts/verify-spark.sh` exige les deux labels.
 
 ### 5.2 Le premier déploiement : `--premier-deploiement`
 
@@ -246,8 +256,8 @@ hors de la cellule : le défaut qu'elle corrige est celui de l'assemblage de pro
 |---|---|---|
 | Créer `/srv/crm` et le confier à `spark-docker` | `root` de la cellule | S7 ; une seule fois |
 | Enregistrement DNS `crm.lelabs.tech` vers la Forge, et route `crm.lelabs.tech 8080 tls` | propriétaire du Spark | S8 ; « rien ne s'expose depuis l'intérieur » |
-| Importer variables et secrets proposés, **puis fournir** les valeurs SMTP | propriétaire du Spark | S6 ; seule la console écrit |
-| Déclarer le client OIDC | administrateur du realm `lelabs` | `docs/SPEC-auth.md` §10.8 |
+| Importer variables et secrets proposés | propriétaire du Spark | S6 ; seule la console écrit |
+| Déclarer le client OIDC **confidentiel** et saisir son secret | administrateur du realm `lelabs` | `docs/SPEC-session-sso.md` §12 (point 1) ; le secret ne transite par aucun dépôt ni message |
 | Créer le premier espace et attendre son administrateur | opérateur, sur instruction explicite | `scripts/spark/amorcer-espace.sh` (décision 573, révisé par `CRM-092` T4) : espace, puis **attente** `admin` à l'adresse donnée ; aucun compte n'est créé dans le CRM — la personne devient administratrice à sa première connexion LeLabs, adresse vérifiée et rôle `verified` exigés |
 
 ## 7. Vérifications
@@ -258,8 +268,10 @@ exécutés, en lecture seule, par `scripts/spark/verifier.sh`, qui distingue un 
 
 1. `cat /srv/crm/REVISION` rend le commit livré.
 2. Tous les conteneurs sont `healthy` ; `docker stats --no-stream` reste sous les limites du §8.
-3. Depuis la cellule : `curl -fsS http://127.0.0.1:8080/auth/v1/health -H "apikey: $ANON_KEY"` rend
-   `200`, et `http://127.0.0.1:8080/` rend l'`index.html` de la webapp.
+3. Depuis la cellule : `http://127.0.0.1:8080/` rend l'`index.html` de la webapp ;
+   `/auth/v1/health` rend **`404`** — GoTrue est retiré (`CRM-092` T6) ; `POST
+   /functions/v1/session/prolonger` avec la clé anonyme rend **`204`** — l'échangeur répond, sans
+   session (décision 587) ; et aucun conteneur `p2enjoy-auth` ni `p2enjoy-auth-templates` ne subsiste.
 4. Aucun port n'est publié hors `SPARK_HTTP_PORT` : `docker ps --format '{{.Ports}}'`.
 5. La route active de `/etc/spark/routes` est en **`tls`** (décision 576) — une route `clair` n'est
    publiée qu'en `http://` ; puis, depuis Internet : `https://crm.lelabs.tech/` charge
@@ -284,9 +296,12 @@ Caddy : un compte créé, 40 connexions et 200 lectures REST — **240 réponses
 | `mail-sync` | 43 Mio | 42 Mio | 256 Mio |
 | `functions` | 23 Mio | 23 Mio | 256 Mio |
 | `caddy` | 13 Mio | 15 Mio | 128 Mio |
-| `auth-templates` | 12 Mio | 12 Mio | 64 Mio |
-| `auth` | 10 Mio | 13 Mio | 128 Mio |
+| ~~`auth-templates`~~ | 12 Mio | 12 Mio | ~~64 Mio~~ — retiré (`CRM-092` T6) |
+| ~~`auth`~~ | 10 Mio | 13 Mio | ~~128 Mio~~ — retiré (`CRM-092` T6) |
 | **Pile** | **≈ 1 060 Mio** | **≈ 940 Mio** | — |
+
+Mesure du 2026-09-23, avec GoTrue. Son retrait libère ≈ 22 Mio au repos et 192 Mio de plafonds ; la
+pile compte désormais neuf services durables (onze conteneurs avec les deux passages uniques).
 
 `migrations-runner` (128 Mio) et `minio-createbucket` (64 Mio) ne vivent que le temps de leur
 passage. Les limites valent environ le double de l'empreinte, arrondi : ce sont des **plafonds**, et

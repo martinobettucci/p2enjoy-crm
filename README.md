@@ -72,7 +72,8 @@ réellement créés côté serveur IMAP.
 | Couche | Technologie |
 |---|---|
 | Interface | React 19, Vite 8, TypeScript, Tailwind CSS 4, lucide-react, React Router 8 ; TanStack Query, react-hook-form, zod et dnd-kit viendront avec le métier qui les exige |
-| Backend | Supabase **self-hosted** (PostgreSQL 17, GoTrue, PostgREST, Realtime, Storage, Edge Runtime/Deno, Kong) |
+| Backend | Supabase **self-hosted** (PostgreSQL 17, PostgREST, Realtime, Storage, Edge Runtime/Deno, Kong) — sans GoTrue depuis `CRM-092` |
+| Identité | SSO LeLabs (`oauth.lelabs.tech`, Keycloak) **seule source d'identité** ; le CRM en est un client confidentiel, par son échangeur de session (fonction edge `session`). Keycloak préchargé en développement |
 | Règles métier | PostgreSQL : fonctions `SECURITY DEFINER` + Row Level Security |
 | Messagerie | Service Python `mail-sync` (IMAP IDLE, file d'envoi SMTP) ; ordonnancement durable par `pg_cron` |
 | Antivirus | ClamAV (pièces jointes entrantes) |
@@ -163,7 +164,7 @@ la question d'une façade `npm` par-dessus `runDev.sh` et consorts reste ouverte
 | `scripts/spark/livrer.sh` | Depuis le poste : build de la webapp pour la cellule, archive Git par-dessus `/srv/crm`, `REVISION`, puis `./runProd.sh --spark` ; `--archive-seule` pour amorcer une cellule, `-- <options>` pour `runProd.sh` | **disponible** — `CRM-090` |
 | `scripts/spark/amorcer-espace.sh` | Dans la cellule, sur instruction explicite : premier espace et son administrateur **attendu** — espace, puis attente `admin` à l'adresse donnée, que la première connexion LeLabs consomme ; aucun compte créé ; idempotent | **disponible** — `CRM-090`, révisé par `CRM-092` T4 |
 | `scripts/spark/verifier.sh` | Depuis le poste, en lecture seule : vérifications après déploiement de la cellule, sonde du client OIDC comprise ; « EN ATTENTE » pour ce qui dépend d'un geste extérieur | **disponible** — `CRM-090` ; première exécution réelle due au premier déploiement |
-| `scripts/spark/proposer.sh` | Dans la cellule : propose au propriétaire du Spark les variables, les secrets — tirés sur place, jamais affichés — et la route | **disponible** — `CRM-090` |
+| `scripts/spark/proposer.sh` | Dans la cellule : propose au propriétaire du Spark les variables, les secrets — tirés sur place, jamais affichés — et la route ; `--demandes-seules` repose à une cellule **en service** les variables du client serveur LeLabs et la demande de son secret, sans rien tirer | **disponible** — `CRM-090`, `CRM-092` (décision 590) |
 | `scripts/verify-spark.sh` | Rejoue les preuves de la cellule : fusion, gardes, assemblage résolu, répartition des secrets, Caddyfile, propositions, livraison contre une cellule simulée, cinq dégradations | **disponible** — `CRM-090` |
 | `./resetMe.sh` | Détruit la base et les volumes locaux, redémarre à froid, rejoue migrations et seed | **disponible** |
 | `scripts/verify-stack.sh` | Rejoue les preuves de la pile : santé des services, passerelle, Studio, absence d'outillage en production, chaîne de stockage | **disponible** |
@@ -286,12 +287,13 @@ complètent des variables introduites depuis — un `.env` créé avant une unit
 cul-de-sac. Une variable **effacée** reste refusée : seules celles qu'une unité a ajoutées après
 coup sont complétées, et la liste en est explicite dans `scripts/lib/env.sh`.
 
-À la fin du démarrage, le script rappelle les **identifiants de développement** : les trois comptes
-seedés et leur mot de passe commun, les trois boîtes mail, puis l'administration de PostgreSQL,
-Stalwart, MinIO et de l'API interne de `mail-sync`. Ce sont des secrets **locaux et jetables** — le
+À la fin du démarrage, le script rappelle les **identifiants de développement** : les comptes du
+LeLabs de développement et leur mot de passe commun, les trois boîtes mail, puis l'administration de
+PostgreSQL, Stalwart, MinIO, Keycloak et de l'API interne de `mail-sync`. Ce sont des secrets **locaux et jetables** — le
 profil `dev` est exigé, les domaines sont sous des TLD réservés par la RFC 2606 donc non routables,
 et les ports ne sont publiés que sur la boucle locale. Le mot de passe des comptes est lu dans
-`supabase/seed/apply-seed.sh`, jamais recopié dans les scripts.
+`keycloak/realm-lelabs.json`, qui le pose, jamais recopié dans les scripts : la webapp, elle, n'en a
+aucun (`CRM-092`).
 
 Repartir d'une base vierge :
 
@@ -325,9 +327,8 @@ la pile de développement n'est pas destinée à être exposée sur le réseau.
 
 | Service | URL / port | Usage | État |
 |---|---|---|---|
-| API Supabase (Kong) | http://localhost:8000 | REST, Auth, Storage, Realtime | **disponible** |
+| API Supabase (Kong) | http://localhost:8000 | REST, Storage, Realtime, fonctions edge — dont l'échangeur de session | **disponible** |
 | Supabase Studio | http://localhost:54323 | Inspection de la base | **disponible** |
-| Inbucket | http://localhost:54324 | Emails **transactionnels** (invitations, @mentions, relances, digest) | **disponible** |
 | MinIO | http://localhost:9001 | Console du stockage S3 local | **disponible** |
 | PostgreSQL | localhost:54322 | Accès SQL direct (pgTAP, outillage de migration) | **disponible** |
 | Webapp | http://127.0.0.1:5173 | L'application | **disponible** |
@@ -357,11 +358,11 @@ de passe que le seed, `SeedDev2026Local`, et leur `sub` est l'identifiant stable
 LeLabs, `adresse-non-verifiee@p2enjoy.test` n'a pas prouvé son adresse. Le realm est réimporté à
 chaque recréation du conteneur.
 
-**Pourquoi deux serveurs mail en développement ?** Inbucket est un puits SMTP : il capture les
-emails que l'application *envoie* (GoTrue, notifications) et n'expose pas d'IMAP. Or le produit
-doit *lire* des boîtes en IMAP, y créer des dossiers imbriqués et y déposer des messages :
-cela exige un vrai serveur, d'où Stalwart. Roundcube permet de **voir** le résultat, ce qui rend
-la vérification visuelle possible.
+**Pourquoi un vrai serveur mail en développement ?** Le produit doit *lire* des boîtes en IMAP, y
+créer des dossiers imbriqués et y déposer des messages, et *envoyer* par les identités de ses
+utilisateurs : cela exige un vrai serveur, d'où Stalwart. Roundcube permet de **voir** le résultat,
+ce qui rend la vérification visuelle possible. Inbucket, le puits des courriels transactionnels de
+GoTrue, est parti avec lui (`CRM-092` T6) : il n'avait pas d'autre client.
 
 ### Boîtes de développement
 
@@ -419,7 +420,9 @@ Deux identifiants échappent à la règle de stabilité, et c'est le produit qui
 dérivé et ses sept étapes naissent de `copy_workflow_to_track`, avec `gen_random_uuid()`. Le seed
 les résout à l'exécution par la clé de nœud du catalogue (`docs/SPEC-seed.md` §9.4).
 
-Un espace de travail, **P2Enjoy SAS** (`p2enjoy`), et trois comptes couvrant les trois rôles :
+Un espace de travail, **P2Enjoy SAS** (`p2enjoy`), et trois personnes couvrant les trois rôles. Depuis
+`CRM-092`, leurs comptes vivent dans le LeLabs de développement : le seed inscrit leurs attentes et les
+connecte par la vraie connexion LeLabs (`docs/SPEC-seed.md` §2.2) :
 
 | Email | Nom affiché | Rôle | Identifiant |
 |---|---|---|---|
@@ -427,7 +430,7 @@ Un espace de travail, **P2Enjoy SAS** (`p2enjoy`), et trois comptes couvrant les
 | `bizdev@p2enjoy.test` | Driss Lemoine | `business_developer` | `5eed0000-0000-4000-8000-000000000012` |
 | `viewer@p2enjoy.test` | Farida Nowak | `viewer` | `5eed0000-0000-4000-8000-000000000013` |
 
-Mot de passe commun : **`SeedDev2026Local`**.
+Mot de passe commun, celui du LeLabs de développement : **`SeedDev2026Local`**.
 
 Ce mot de passe n'est pas un secret, et c'est délibéré : il ne protège rien. Les adresses sont
 sous `p2enjoy.test`, TLD réservé par la RFC 2606, donc non routable — un email envoyé par erreur
@@ -571,9 +574,9 @@ redémarrage ; perdue, il devient définitivement illisible. C'est ce dernier po
 contrainte de sauvegarde de `docs/DAT.md` §10.
 
 `scripts/verify-migrations.sh` exécute la suite pgTAP de `supabase/tests/`, réapplique la
-migration pour prouver son idempotence, crée un compte par l'**API d'administration GoTrue** puis
-constate le profil correspondant par PostgREST, et mesure les refus **hors interface** avec les
-jetons réels. Il vérifie enfin sa propre sévérité en mutant la structure : chaque mutation doit le
+migration pour prouver son idempotence, crée une personne jetable dans le **LeLabs de développement**,
+la connecte par la vraie connexion et constate que son profil naît de l'admission, puis mesure les
+refus **hors interface** avec les jetons réels. Il vérifie enfin sa propre sévérité en mutant la structure : chaque mutation doit le
 faire échouer.
 
 `scripts/verify-authz.sh` couvre les fonctions d'autorisation. Sa suite pgTAP énumère les **64
@@ -632,9 +635,8 @@ preuves.
 | Messagerie | `CRM_INBOUND_DOMAIN`, `MAIL_SYNC_INTERNAL_TOKEN`, `MAIL_SYNC_LOG_LEVEL`, `MAIL_SYNC_POLL_INTERVAL`, `MAIL_MAX_ATTACHMENT_MB` | `CRM_INBOUND_DOMAIN` est consommée **depuis `CRM-050`** — Stalwart lui attache la boîte système, et sa valeur doit égaler `workspaces.inbound_domain`. Les deux variables `MAIL_SYNC_INTERNAL_TOKEN` et `MAIL_SYNC_LOG_LEVEL` le sont **depuis `CRM-051`** : le service refuse de démarrer sous 32 caractères de jeton. **`MAIL_SYNC_POLL_INTERVAL` est consommée depuis `CRM-059`** : elle règle l'intervalle de la boucle de veille, en secondes. `0` **désactive** la veille — la relève reste alors déclenchable par l'API interne — et toute autre valeur doit tenir entre **5 secondes et 1 heure**, bornes appliquées au démarrage et non corrigées en silence. `MAIL_MAX_ATTACHMENT_MB` l'est depuis `CRM-054` |
 | Messagerie de développement | `STALWART_IMAP_PORT`, `STALWART_SMTP_PORT`, `STALWART_SUBMISSION_PORT`, `STALWART_ADMIN_PORT`, `STALWART_ADMIN_USER`, `STALWART_ADMIN_PASSWORD`, `STALWART_MAILBOX_PASSWORD`, `MAIL_DEV_PERSONAL_DOMAIN`, `MAIL_DEV_CORRESPONDENT_ADDRESS`, `ROUNDCUBE_PORT`, `CLAMAV_PORT` | Obligatoires **en développement uniquement** : aucun de ces services n'existe en production. `STALWART_ADMIN_PASSWORD` est tiré au hasard à l'amorçage |
 | Chiffrement | `PG_META_CRYPTO_KEY`, `REALTIME_DB_ENC_KEY` | Obligatoires. Longueurs imposées : 32 et 16 caractères. Les secrets de messagerie ne sont pas ici : ils vivent dans le Vault de la base, chiffrés par sa clé racine (décision 366, INC-098) |
-| Authentification | `DISABLE_SIGNUP`, `PASSWORD_MIN_LENGTH`, `JWT_EXPIRY` | Obligatoires. `DISABLE_SIGNUP` vaut **toujours** `true` (`docs/SPEC-auth.md` §2) |
+| Durée des jetons | `JWT_EXPIRY` | Obligatoire, lue par la base et PostgREST. `DISABLE_SIGNUP` et `PASSWORD_MIN_LENGTH` sont retirées avec GoTrue (`CRM-092` T6) |
 | Connexion unique | `SSO_OIDC_ISSUER`, `SSO_OIDC_CLIENT_ID`, `SSO_OIDC_CLIENT_SECRET`, `SSO_DEV_PORT`, `SSO_DEV_ADMIN_PASSWORD` | `CRM-091`, révisé par `CRM-092`. Les trois premières sont obligatoires partout : émetteur exact, client OIDC **confidentiel** (`lelabs-crm-serveur`) et son secret, lus par l'échangeur de session — le secret n'atteint que lui, et jamais le bundle ; l'émetteur et le client sont en outre figés au build de la webapp. En production, le secret est posé par l'administrateur du realm LeLabs ; en développement, tiré au hasard par `./runDev.sh`. Les deux dernières ne servent qu'au Keycloak de développement ; le mot de passe d'administration est tiré au hasard par `./runDev.sh` et **sans objet** dans la cellule Spark |
-| SMTP transactionnel | `SMTP_HOST`, `SMTP_PORT`, `SMTP_ADMIN_EMAIL` | Obligatoires |
 | Pile | `STACK_RLIMIT_NOFILE`, `APPLY_MIGRATIONS` | Facultatives, avec défauts. `APPLY_MIGRATIONS=false` est imposé en production **et doit y rester** : c'est ce qui empêche une migration non décidée. Les migrations de production s'appliquent dans une fenêtre de maintenance ouverte par `./runProd.sh --migrate`, qui surcharge la variable pour sa seule invocation sans réécrire `.env`, et dont le retour arrière est la restauration de l'instantané de VM (décision 489, `CRM-087`) |
 | Production | `APP_DOMAIN`, `CADDY_ACME_EMAIL` | Obligatoires en production uniquement. `CADDY_ACME_EMAIL` est **sans objet dans la cellule Spark**, où la Forge porte le certificat |
 | Cellule Spark | `SPARK_HTTP_PORT` | Port de la cellule servi en clair par Caddy, égal au port de la route, défaut `8080` (`CRM-090`). Dans la cellule, **aucune variable ne vit dans un `.env`** : toutes sont posées par la console dans `/etc/spark/env` et `/run/spark/secrets` (`docs/SPEC-deploiement-spark.md` §4) |
@@ -655,7 +657,7 @@ Livré à ce jour :
 ├── runProd.sh                  Lancement de la production, gardes de profil et de migrations
 ├── resetMe.sh                  Réinitialisation destructive de l'environnement local
 ├── docker-compose.yml          Assemblage commun des services
-├── docker-compose.dev.yml      Outillage de développement (Studio, meta, MinIO, Inbucket, webapp)
+├── docker-compose.dev.yml      Outillage de développement (Studio, meta, MinIO, Keycloak, messagerie, webapp)
 ├── docker-compose.prod.yml     Production (Caddy, aucun outillage de développement)
 ├── docker-compose.spark.yml    Cellule Spark : Caddy en clair, MinIO interne, limites mémoire
 ├── caddy/Caddyfile             Terminaison TLS (ACME) sur un hôte qui dispose de 80 et 443
@@ -713,7 +715,7 @@ Livré à ce jour :
 │   └── config.test.ts          Invariants de la configuration, éprouvés par Vitest
 ├── e2e/
 │   ├── playwright.config.ts    Projets `api`, `mail` et `ui`
-│   ├── api/                    Contrats directs de Kong, PostgREST, GoTrue et Edge Runtime
+│   ├── api/                    Contrats directs de Kong, PostgREST, de l'échangeur de session et d'Edge Runtime
 │   ├── mail/                   Scénarios IMAP, SMTP, ClamAV et Roundcube (CRM-050)
 │   └── ui/                     Scénarios d'interface et production des captures
 └── webapp/
@@ -750,9 +752,9 @@ supabase/functions/
 ```
 
 Kong est l'unique entrée : `/functions/v1/example` exige une clé d'API avant de joindre un worker
-`oneshot`, et le conteneur ne publie aucun port. Ce porteur servira à l'invitation d'un membre
-(`CRM-070`) et aux webhooks sortants signés (`CRM-073`) ; ces fonctions métier ne sont pas encore
-livrées. La logique métier existante reste en PostgreSQL et `mail-sync` reste un service Python.
+`oneshot`, et le conteneur ne publie aucun port. Il porte l'**échangeur de session** `session`
+(`CRM-092`), seule fonction qui reçoive `JWT_SECRET` et le secret du client LeLabs, et servira aux
+webhooks sortants signés (`CRM-073`), pas encore livrés. La logique métier existante reste en PostgreSQL et `mail-sync` reste un service Python.
 
 Documentation de référence :
 
@@ -821,8 +823,8 @@ Documentation de référence :
   au-delà de la boucle locale imposerait de revenir sur ce choix.
 - **L'administration des membres n'a pas encore d'écran.** Les politiques de `CRM-022` rendent les
   identités de l'équipe lisibles et réservent les mutations de memberships aux administrateurs ;
-  la base protège aussi le dernier administrateur. Le parcours d'invitation et l'écran complet de
-  gestion restent portés par `CRM-070`.
+  la base protège aussi le dernier administrateur. L'écran d'inscription d'une attente et l'écran
+  complet de gestion restent portés par `CRM-070`.
 - **La webapp ne connaît aucune règle d'accès**, par construction : elle affiche ce que le backend
   consent à rendre. Un type ne décrit jamais un droit (voir ci-dessous), et l'interface ne
   masque rien qui ne soit déjà refusé côté base.
@@ -882,14 +884,14 @@ Documentation de référence :
 - **La production exige des prérequis externes** non fournis par le dépôt : domaine des adresses
   de card, enregistrements DNS, SPF/DKIM/DMARC pour les identités sortantes, certificats TLS.
   Voir [`docs/PROD_MIGRATIONS.md`](docs/PROD_MIGRATIONS.md).
-- **L'invitation n'est pas encore un parcours produit.** Un compte se crée par
-  `POST /auth/v1/invite`, qui exige la clé de service : c'est aujourd'hui une opération
-  d'**exploitation**, pas un bouton dans l'interface. Le composant qui permettrait à un
-  administrateur de workspace d'inviter depuis le produit n'existe pas et n'est rattaché à aucune
-  unité — consigné en [`docs/INCONSISTENCY_REPORT.md`](docs/INCONSISTENCY_REPORT.md), INC-015.
-- **Les emails transactionnels français sont livrés ; leur limite est MIME.** Le service interne
-  `auth-templates` sert les quatre gabarits à GoTrue et les preuves vérifient le contenu SMTP réel,
-  pas la seule présence d'un message : INC-016 est close. GoTrue 2.189.0 n'émet toutefois qu'une
-  partie `text/html`, sans alternative `text/plain` ; Inbucket reconstruit son onglet texte.
+- **Attendre une personne n'a pas encore d'écran.** Depuis `CRM-092`, on n'invite plus un compte :
+  on inscrit une **attente** — une adresse et un rôle dans `workspace_invitations` —, que la première
+  connexion LeLabs de la personne, adresse vérifiée et rôle `verified`, change en appartenance
+  (`docs/SPEC-session-sso.md` §6). Une attente s'inscrit aujourd'hui par l'API, avec le jeton d'un
+  administrateur de l'espace, ou par `scripts/spark/amorcer-espace.sh` pour le premier
+  administrateur ; l'écran est porté par `CRM-070` (INC-015).
+- **Le CRM n'envoie plus aucun courriel d'identité.** Inscription, vérification d'adresse et
+  récupération du mot de passe appartiennent à LeLabs ; GoTrue, ses gabarits et Inbucket ont quitté
+  la pile (`CRM-092` T6).
 - **Le seed de démonstration n'est pas une base de production** : mots de passe faibles connus,
   domaines fictifs, boîtes locales.

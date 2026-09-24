@@ -16,7 +16,11 @@
   (tmpfs, `600`), puis applique ses gardes : profil `prod`, `APPLY_MIGRATIONS=false`, aucune valeur
   `CHANGE_ME_*`.
 - Les secrets ont été **tirés dans la cellule** par `scripts/spark/proposer.sh` et proposés en
-  console ; ils n'ont jamais quitté la cellule autrement.
+  console ; ils n'ont jamais quitté la cellule autrement. Seul `SSO_OIDC_CLIENT_SECRET`, le secret du
+  client confidentiel chez LeLabs, n'est pas tiré ici : l'administrateur du realm le saisit lui-même.
+- Sur une cellule **en service**, `scripts/spark/proposer.sh --demandes-seules` repose les demandes
+  qui manquent — client SSO et demande de son secret — sans rien tirer. Les anciennes variables de
+  GoTrue (`SMTP_*`, `ADDITIONAL_REDIRECT_URLS`, `DISABLE_SIGNUP`…) sont inertes : plus rien ne les lit.
 
 ## Commandes, dans `/srv/crm`, sous `spark-docker`
 
@@ -26,14 +30,16 @@
 | Premier déploiement (base vierge mesurée) | `./runProd.sh --spark --migrate --premier-deploiement` |
 | Appliquer les migrations d'une nouvelle révision | `./runProd.sh --spark --migrate` (instantané confirmé) |
 | Arrêter, volumes conservés | `./runProd.sh --spark --stop` |
-| Premier espace et son administrateur (instruction explicite) | `scripts/spark/amorcer-espace.sh --email … --espace "…" --slug …` |
+| Premier espace et l'**attente** de son administrateur (instruction explicite) — la personne devient administratrice à sa première connexion LeLabs | `scripts/spark/amorcer-espace.sh --email … --espace "…" --slug …` |
+| Reposer les demandes de variables à une cellule en service | `scripts/spark/proposer.sh --demandes-seules` |
 | Journaux d'un service | `docker logs p2enjoy-<service>` |
 
 ## Données
 
 Base : `supabase/docker/volumes/db/data` (montage) et volume `db-config`, qui porte la **clé racine
-de Vault** — sans elle, les mots de passe de messagerie enregistrés sont perdus. Objets : volume
-`minio-data`. État de `mail-sync` : volume `mail-sync-state`.
+de Vault** — sans elle, les mots de passe de messagerie enregistrés sont perdus. Les sessions
+ouvertes par LeLabs vivent dans la table `public.sessions_sso`, jeton de rafraîchissement chiffré.
+Objets : volume `minio-data`. État de `mail-sync` : volume `mail-sync-state`.
 
 ## Limites connues de cette cellule
 
@@ -44,4 +50,7 @@ de Vault** — sans elle, les mots de passe de messagerie enregistrés sont perd
   jamais « réparer » par un `docker pull` de l'image d'origine.
 - **ClamAV absent** (mémoire) : une pièce jointe reçue reste non téléchargeable.
 - **Sauvegardes hors site non en place** : `age` n'est pas installé.
-- Sortie SMTP : `25`, `465` et `587` fermés par l'hébergeur ; employer un port de repli.
+- Sortie SMTP : `25`, `465` et `587` fermés par l'hébergeur. Une identité d'expédition d'utilisateur
+  qui n'emploie que l'un de ces ports ne pourra pas envoyer depuis cette cellule.
+- Toute nouvelle connexion dépend de `oauth.lelabs.tech` ; les sessions ouvertes survivent à son
+  indisponibilité jusqu'à leur prolongation.

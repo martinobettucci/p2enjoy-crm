@@ -3,7 +3,8 @@
 # @spec docs/DAT.md §3.5 (passerelle et périphérie), §9 (déploiement)
 # @spec docs/PROD_MIGRATIONS.md §2 (prérequis), §4 (services à redéployer)
 # @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §2, §12 — tranche T6 : GoTrue n'est plus
-#       redémarré ici, il a quitté la pile (docs/JOURNAL.md décision 589)
+#       redémarré ici, il a quitté la pile (docs/JOURNAL.md décision 589) ; tranche T7 : label de
+#       révision des routes de Caddy (décision 591, docs/SPEC-deploiement-spark.md §5.1)
 #
 #   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 #
@@ -53,6 +54,12 @@ services:
     container_name: p2enjoy-caddy
     image: caddy:2.9-alpine
     restart: always
+    # Révision des routes, sur le modèle de Kong (docs/SPEC-edge-functions.md §2) : Caddy ne relit pas
+    # `routes.caddy`, et la livraison remplace le fichier sous le conteneur en service. Changer ce label
+    # dans le même changement que les routes fait recréer Caddy par le `up` ordinaire. `crm-092` :
+    # `/auth/v1/*` répond 404 (docs/JOURNAL.md décision 589).
+    labels:
+      com.p2enjoy.caddy-routes-revision: crm-092
     depends_on:
       kong:
         condition: service_healthy

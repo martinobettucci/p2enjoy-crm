@@ -29551,3 +29551,40 @@ les retire à la console s'il le souhaite. Le mode complet perd ses options et l
 **Vérifications prévues.** `scripts/verify-spark.sh` éprouve le mode sur des fichiers jetables : cellule
 en service sans client serveur → deux propositions ; secret déjà posé → jamais redemandé ; tout à jour →
 rien à proposer ; aucune valeur secrète dans la sortie.
+
+## décision 591 — `CRM-092` T7 : la documentation transverse, et deux défauts de déploiement trouvés en l'écrivant
+
+*2026-09-24, même session. Spécification `docs/SPEC-session-sso.md` §12, §14 (T7).*
+
+**Livré.** `README.md`, `docs/DAT.md` (vue d'ensemble, composants, flux d'authentification réécrit,
+données de développement, compromis), `docs/SPEC-deploiement-spark.md`, la ligne 17 du sommaire de
+`docs/manual.md` (on attend une personne, on n'invite plus un compte ; le chapitre 1, révisé en T5,
+était déjà juste), `docs/PROD_MIGRATIONS.md` — nouveau **§2.5**, la reprise `CRM-092` en treize gestes
+ordonnés, avec retour arrière et risques ; §1, §2.4, §3, §4 et §7 révisés — et les trois notes de la
+Forge (`docs/spark-notes/`) réécrites pour l'état qui suivra la reprise, à reproposer à son étape 12.
+
+**Deux défauts de déploiement, trouvés en écrivant la procédure et non en production.**
+1. **Caddy ne relit pas `routes.caddy`.** La livraison remplace le fichier sous le conteneur en service,
+   et rien ne recrée Caddy : la production aurait continué de relayer `/auth/v1/*` vers Kong. Remède,
+   celui que Kong emploie depuis `CRM-016` : un label de révision, `com.p2enjoy.caddy-routes-revision`
+   (`crm-092`), sur le service `caddy` de `docker-compose.prod.yml`. Compose voit une définition
+   différente et recrée Caddy au `up` ordinaire. `scripts/verify-spark.sh` exige désormais les deux
+   labels, et une dégradation — l'ancienne révision — doit le faire rougir : **84/84**.
+2. **La reprise du compte invité, dans l'ordre que j'avais d'abord écrit, aurait échoué.** Supprimer
+   le profil avant l'espace fait tomber par cascade l'appartenance du seul administrateur d'un espace
+   existant, que la garde refuse. **Mesuré** sur la base de développement, en transaction annulée :
+   profil d'abord → `last_workspace_admin` ; espace d'abord, profil retenu dans une table temporaire
+   → les deux lignes partent. La procédure porte l'ordre mesuré.
+
+**Et une phrase périmée corrigée** : `docs/SPEC-deploiement-spark.md` §5.1 disait que `livrer.sh`
+refusait une livraison qui supprime des fichiers ; le script les retire dans la cellule, ce que T6 va
+éprouver avec ses cinq fichiers supprimés.
+
+**Vérifications.** `verify-spark` **84/84**, `verify-stack` **52/52**, `verify-scripts` **112/112**
+après ces changements ; la campagne complète de T6 (pgTAP 3180, `e2e:api` 1079, `e2e:mail` 42,
+interface 755) couvre le code, que T7 ne change pas hors du label et du harnais.
+
+**Reste à la production (§2.5), sur instruction explicite** : préalables LeLabs, demandes reposées,
+lecture seule, instantané, livraison et migrations 74 à 77, retrait des conteneurs de GoTrue, reprise
+du compte invité, connexion réelle de `martino@p2enjoy.studio` — la seule preuve que ce dépôt ne peut
+pas produire seul —, retrait du client public `lelabs-crm`, notes reproposées.

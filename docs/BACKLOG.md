@@ -14520,12 +14520,18 @@ connexion réelle de `martino@p2enjoy.studio` aboutie après les opérations du 
       **112**, `verify-spark` **82**, `verify-functions` **14** ; `e2e:api` **1079/1079**,
       `e2e:mail` **42/42**, interface **755/755**. `proposer.sh --demandes-seules` pour la cellule en
       service (décision 590).
-- [ ] **T7** — documentation transverse, contrat de production (§12), campagne.
+- [x] **T7** — documentation transverse, contrat de production (§12), campagne — décision 591.
+      README, DAT, `SPEC-deploiement-spark`, manuel (ligne 17), `PROD_MIGRATIONS` §2.5 (reprise en
+      treize gestes, ordre de la reprise du compte invité mesuré) ; label de révision des routes de
+      Caddy, sans lequel la production aurait relayé `/auth/v1/*` ; `verify-spark` **84**,
+      `verify-stack` **52**, `verify-scripts` **112** ; campagne complète de T6 inchangée.
 - [ ] **Préalable humain chez LeLabs** : déclaration du client serveur `lelabs-crm-serveur` et secret
       posé dans la cellule (décision 586, §12) ; `verified` sur `martino@p2enjoy.studio`.
-- [ ] Production : opérations du §12 — dont les demandes de variables manquantes reposées par
-      `proposer.sh` —, connexion réelle relue.
-- [ ] **Notes du Spark réécrites et reproposées** (`docs/spark-notes/`) : déposées le 2026-09-23 comme
+- [ ] Production : opérations du §12, écrites en `docs/PROD_MIGRATIONS.md` §2.5 — dont les demandes
+      de variables manquantes reposées par `proposer.sh --demandes-seules` (décision 590) —, connexion
+      réelle relue.
+- [~] **Notes du Spark réécrites et reproposées** (`docs/spark-notes/`) — **réécrites en T7** (état qui
+      suivra la reprise), **reproposition due** à l'étape 12 du §2.5 de `PROD_MIGRATIONS`. Déposées le 2026-09-23 comme
       propositions `.?`, elles attendent l'acceptation du propriétaire dans la console de la Forge
       (`docs/PROD_MIGRATIONS.md` §2.4, étape 9), et `CRM-092` les rend périmées — GoTrue, client
       public, relais SMTP. À réécrire en T7 et à reproposer au déploiement. **Instruction reçue le 2026-09-23** :

@@ -38,7 +38,8 @@ isolée hors fenêtre.
 | Données | Un compte invité et un espace, « P2Enjoy CRM » (`crm`), posés par `scripts/spark/amorcer-espace.sh` (§8) ; aucune autre donnée, aucun seed |
 | Route publique | `crm.lelabs.tech 8080 tls`, active : `https://crm.lelabs.tech`, certificat Let's Encrypt présenté par la Forge (décision 576) |
 | Client OIDC `lelabs-crm` | **Déclaré** et créé au realm le 2026-09-23 à 16:08:44 (`docs/SSO-client-lelabs-crm.md`) : sonde `302` rejouée le jour même. Aucune connexion encore faite : elle attend `CRM-092` (§3) |
-| Relais SMTP | Hôte, port et expéditeur importés ; identifiants non fournis — les courriels transactionnels échouent, la connexion par le SSO n'en dépend pas |
+| Relais SMTP | Hôte, port et expéditeur importés ; identifiants non fournis — les courriels transactionnels de GoTrue échouent. **Sans objet après la reprise `CRM-092` (§2.5)** : GoTrue et ses variables quittent la pile |
+| Reprise `CRM-092` | **En attente** (§2.5) : migrations 74 à 77, client confidentiel `lelabs-crm-serveur`, retrait de GoTrue, attente administratrice de `martino@p2enjoy.studio` |
 
 ## 2. Prérequis à provisionner avant le premier déploiement
 
@@ -100,7 +101,7 @@ positionner `P2ENJOY_ENV_PROFILE=prod`.
 | `CADDY_ACME_EMAIL` | Adresse de contact pour l'émission des certificats | Oui |
 | `APPLY_MIGRATIONS` | Doit valoir `false`, **et le rester** : c'est ce qui garantit qu'un lancement ordinaire, un redémarrage d'hôte ou le redéploiement d'un service ne migrent rien. La fenêtre de migration surcharge la valeur pour sa seule invocation et ne réécrit jamais le fichier (§3.1, `CRM-087`) | Oui |
 | `STACK_RLIMIT_NOFILE` | Descripteurs de fichiers réclamés par Realtime ; défaut `10000`, à abaisser si la limite dure de l'hôte est inférieure | Non |
-| `SSO_OIDC_ISSUER` | **Nouvelle variable (`CRM-091`).** Émetteur exact du SSO, `https://oauth.lelabs.tech/realms/lelabs` ; lu par GoTrue et figé au build de la webapp | Oui |
+| `SSO_OIDC_ISSUER` | **Nouvelle variable (`CRM-091`).** Émetteur exact du SSO, `https://oauth.lelabs.tech/realms/lelabs` ; lu par l'échangeur de session depuis `CRM-092` (par GoTrue avant lui) et figé au build de la webapp | Oui |
 | `SSO_OIDC_CLIENT_ID` | **Nouvelle variable (`CRM-091`), révisée par `CRM-092` (décision 586).** Identifiant du client OIDC **réellement créé** par le realm : le client **confidentiel** `lelabs-crm-serveur` à déclarer (`docs/SPEC-session-sso.md` §12), et non plus le client public `lelabs-crm`. Lu par l'échangeur de session et figé au build de la webapp | Oui |
 | `SSO_OIDC_CLIENT_SECRET` | **Nouvelle variable (`CRM-092`, décision 586).** Secret du client confidentiel, affiché une seule fois à l'administrateur du realm, **qui le pose lui-même** comme variable secrète de la cellule — il ne transite par aucun dépôt ni message. Remis au seul worker `session` | Oui |
 | `SPARK_HTTP_PORT` | **Nouvelle variable (`CRM-090`).** Port de la cellule Spark servi en clair par Caddy, égal au port de la route ; défaut `8080`. Sans effet hors de la cellule | Oui dans la cellule |
@@ -142,11 +143,11 @@ de cellule — aucune adresse n'est écrite dans ce dépôt.
 | 1 | Déposer le dépôt, sans build ni lancement | poste qui livre | `scripts/spark/livrer.sh --archive-seule` |
 | 2 | Déposer les propositions de variables, de secrets et de route | `spark-docker`, dans la cellule | `cd /srv/crm && scripts/spark/proposer.sh` |
 | 3 | Enregistrement DNS `crm.lelabs.tech` vers la Forge ; accepter la route `crm.lelabs.tech 8080 tls` — **`tls`, pas `clair`** : le mode dit ce que la Forge expose au public ; une route `clair` n'est servie qu'en `http://`, que le SSO refuse (décision 576). Pour la reproposer seule, secrets en service : `cd /srv/crm && scripts/spark/proposer.sh --route-seule` | propriétaire du Spark | console |
-| 4 | Importer variables et secrets proposés ; **saisir `SMTP_USER` et `SMTP_PASS`** du relais — les seules valeurs laissées en demande. Le relais lui-même est proposé (`smtp.tem.scaleway.com`, `2587`, `no-reply@noreply.lelabs.tech`, le domaine d'envoi vérifié du SSO) et reste modifiable. Sans les identifiants, la pile démarre et seuls les courriels transactionnels échouent : la connexion par le SSO n'en dépend pas | propriétaire du Spark | console ; les fichiers `.?` redeviennent vides une fois tranchés. **Propositions renouvelées le 2026-09-23** : les secrets ont été retirés au même moment, avant tout import |
+| 4 | Importer variables et secrets proposés. **Depuis `CRM-092`**, la seule valeur laissée en demande est `SSO_OIDC_CLIENT_SECRET`, que l'administrateur du realm saisit (étape 7) ; plus aucune variable SMTP n'est proposée | propriétaire du Spark | console ; les fichiers `.?` redeviennent vides une fois tranchés |
 | 5 | Premier déploiement | poste qui livre | `scripts/spark/livrer.sh -- --migrate --premier-deploiement` |
-| 6 | Vérifications | poste, en lecture seule | `scripts/spark/verifier.sh` — révision, santé, mémoire, ports, API par Caddy, fournisseur SSO de GoTrue, disque, mode `tls` de la route active, accès `https://` public et sonde du client OIDC ; ce qui attend un geste extérieur est rendu « EN ATTENTE », jamais compté comme un succès. Puis le §5 ci-dessous |
-| 7 | Déclarer le client OIDC, puis corriger `SSO_OIDC_CLIENT_ID` si le realm l'a renommé et relivrer | administrateur du realm, puis propriétaire du Spark | `docs/SPEC-auth.md` §10.8 (`CRM-091`) |
-| 8 | Créer le premier compte et le premier espace — **arbitré (décision 574)** : `--email martino@p2enjoy.studio --espace "P2Enjoy CRM" --slug crm` | opérateur, dans la cellule, sur instruction explicite | `scripts/spark/amorcer-espace.sh --email <adresse> --espace "<nom>" --slug <identifiant>` : compte **invité sans mot de passe ni courriel**, espace, appartenance `admin` ; idempotent. La personne accepte en se connectant avec LeLabs à la même adresse vérifiée. Consigner l'opération au §8 |
+| 6 | Vérifications | poste, en lecture seule | `scripts/spark/verifier.sh` — révision, santé, mémoire, ports, `/auth/v1/health` en `404` et aucun conteneur de GoTrue, API et échangeur de session par Caddy, disque, mode `tls` de la route active, accès `https://` public et sonde du client OIDC ; ce qui attend un geste extérieur est rendu « EN ATTENTE », jamais compté comme un succès. Puis le §5 ci-dessous |
+| 7 | Déclarer le client OIDC **confidentiel** et saisir son secret dans la cellule, puis corriger `SSO_OIDC_CLIENT_ID` si le realm l'a renommé et relivrer | administrateur du realm, puis propriétaire du Spark | `docs/SPEC-session-sso.md` §12 (point 1) ; `docs/SSO-client-lelabs-crm.md` |
+| 8 | Créer le premier espace et **attendre** son administrateur — **arbitré (décision 574)** : `--email martino@p2enjoy.studio --espace "P2Enjoy CRM" --slug crm` | opérateur, dans la cellule, sur instruction explicite | `scripts/spark/amorcer-espace.sh --email <adresse> --espace "<nom>" --slug <identifiant>` : espace, puis **attente** `admin` à l'adresse donnée ; aucun compte n'est créé (`CRM-092` T4) ; idempotent. La personne devient administratrice à sa première connexion LeLabs, adresse vérifiée et rôle `verified` exigés. Consigner l'opération au §8 |
 | 9 | Accepter les trois notes du Spark (README, CONTRIBUTORS, INSTALL) | propriétaire du Spark | console ; déposées le 2026-09-23 depuis `docs/spark-notes/` par `ssh … 'cat > /etc/spark/notes/<NOM>.md.?' < docs/spark-notes/<NOM>.md` |
 
 **Realtime ne se tire pas dans la cellule, et c'est mesuré** (décisions 571 et 575) : la cellule ne
@@ -156,10 +157,9 @@ ses migrations par `sudo`. `scripts/spark/livrer.sh` construit sur le poste l'im
 son **contenu** y diffère (décision 577) ; ne jamais lancer `docker pull supabase/realtime` dans la
 cellule pour « réparer » : il échouera toujours.
 
-**Le relais d'envoi.** La Forge ferme `25`, `465` et `587` en sortie (relevé du dépôt du SSO de la
-même Forge) : `SMTP_PORT` doit être un port de repli, `2587` en STARTTLS chez Scaleway TEM. GoTrue ne
-parle TLS implicite que sur `465` : `2465` ne convient pas. L'expéditeur doit appartenir à un
-domaine vérifié chez le relais.
+**Le relais d'envoi — sans objet depuis `CRM-092` T6.** Il ne servait que les courriels
+transactionnels de GoTrue, retiré. Pour mémoire, la Forge ferme `25`, `465` et `587` en sortie : un
+relais futur devra employer un port de repli.
 
 **Après un redémarrage de la cellule.** Le démon rootless repart seul et recrée les conteneurs avec
 leur configuration enregistrée : la pile revient **sans** attendre `/run/spark/secrets`. Une
@@ -170,15 +170,46 @@ refusée, en le nommant : attendre, puis relancer.
 jointe reçue y reste `pending`, non téléchargeable ; les sauvegardes hors site — `age` n'y est pas
 installé, et `scripts/backup.sh` le refuse sans repli (`CRM-080`).
 
+### 2.5 Reprise `CRM-092` — le SSO LeLabs, seule identité (EN ATTENTE)
+
+**À n'exécuter que sur instruction explicite du responsable**, l'ensemble dans une même fenêtre. Spécifiée
+par `docs/SPEC-session-sso.md` §12 ; décisions 578, 579, 586, 589 et 590. Elle remplace GoTrue par le
+client **confidentiel** `lelabs-crm-serveur` et l'échangeur de session, et reprend le compte invité de
+l'amorçage du 2026-09-23 (§8), qui n'a jamais été connecté.
+
+| # | Geste | Qui | Commande ou lieu |
+|---|---|---|---|
+| 0 | **Préalables chez LeLabs** : déclarer le client serveur (`CLIENTID=lelabs-crm-serveur`, `NOM=P2Enjoy CRM`, `TYPE=serveur`, `REDIRECT=https://crm.lelabs.tech/auth/retour`, `SECRET_VAR=SSO_OIDC_CLIENT_SECRET`) ; s'assurer que `martino@p2enjoy.studio` a une adresse vérifiée et le rôle de realm `verified` | administrateur du realm `lelabs` | hors du dépôt. L'identifiant **retenu par le service** fait foi |
+| 1 | Déposer le code, **sans build ni lancement** : la pile en service n'est pas touchée ; les fichiers supprimés depuis la révision déployée sont retirés | poste qui livre | `scripts/spark/livrer.sh --archive-seule` |
+| 2 | **Reposer les demandes** : le client serveur et la demande de son secret, sans rien tirer (décision 590) | `spark-docker`, dans la cellule | `cd /srv/crm && scripts/spark/proposer.sh --demandes-seules` — la sortie nomme aussi les variables de GoTrue restées inertes |
+| 3 | Importer `SSO_OIDC_CLIENT_ID` ; **saisir `SSO_OIDC_CLIENT_SECRET`**, affiché une seule fois par LeLabs, sans qu'il transite par aucun dépôt ni message | propriétaire du Spark ; le secret, par l'administrateur du realm | console. Les variables de GoTrue (`SMTP_*`, `ADDITIONAL_REDIRECT_URLS`, `DISABLE_SIGNUP`…) peuvent être retirées à la console : un import ne retire rien, et plus rien ne les lit |
+| 4 | **Lecture seule d'abord** : l'espace `crm` ne porte que l'appartenance du compte invité — aucune card, aucun commentaire, aucune attente, aucune donnée | opérateur | `docker exec -i p2enjoy-db psql -U postgres -d postgres -At -c "select (select count(*) from public.workspace_members m join public.workspaces w on w.id = m.workspace_id where w.slug = 'crm'), (select count(*) from public.cards), (select count(*) from public.card_comments), (select count(*) from public.profiles)"` rend `1|0|0|1`. **Tout autre résultat arrête la reprise** |
+| 5 | Prendre l'**instantané de VM** — seul retour arrière de la fenêtre (décision 489) | propriétaire de la cellule | console de l'hébergeur |
+| 6 | Livrer et migrer : build de la webapp avec le nouveau client, migrations 74 à 77 (la 74 sous `supabase_admin`), fonction `session` et son environnement, Kong et Caddy recréés par leurs labels `crm-092` | poste qui livre | `scripts/spark/livrer.sh -- --migrate --instantane-verifie` |
+| 7 | **Arrêter et supprimer GoTrue et ses gabarits**, que `./runProd.sh` ne retire pas | `spark-docker`, dans la cellule | `docker rm -f p2enjoy-auth p2enjoy-auth-templates` |
+| 8 | **Reprise du compte invité** : supprimer l'espace vide et le profil du compte invité — l'unique administrateur d'un espace ne peut être retiré autrement (`docs/SPEC-identite.md` §5), et le `sub` LeLabs n'est connu qu'à la première connexion —, puis réamorcer | opérateur, dans la cellule | **l'espace d'abord, puis le profil** — l'ordre inverse est refusé par la garde du dernier administrateur (mesuré le 2026-09-24 sur la base de développement, transaction annulée) : `docker exec -i p2enjoy-db psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c "begin; create temp table compte_invite on commit drop as select m.user_id from public.workspace_members m join public.workspaces w on w.id = m.workspace_id where w.slug = 'crm'; delete from public.workspaces where slug = 'crm'; delete from public.profiles where id in (select user_id from compte_invite); commit;"` puis `scripts/spark/amorcer-espace.sh --email martino@p2enjoy.studio --espace "P2Enjoy CRM" --slug crm` — il n'inscrit qu'une **attente** `admin`. La ligne `auth.users` du compte invité reste, inerte (§15 de la spécification). Consigner au §8 |
+| 9 | Vérifier | poste, en lecture seule | `scripts/spark/verifier.sh` : `/auth/v1/health` en `404`, aucun conteneur de GoTrue, échangeur en `204` sans session, sonde du **nouveau** client (`302` et PKCE exigé). Puis le §5 |
+| 10 | **Connexion réelle** de `martino@p2enjoy.studio` par « Se connecter avec LeLabs », puis relecture en base : attente consommée, `profiles.id` égal au `sub` LeLabs, appartenance `admin`, une session dans `public.sessions_sso` dont le jeton est chiffré (`v1.…`) ; aucun jeton LeLabs dans le stockage du navigateur | la personne, puis l'opérateur en lecture seule | `select id, full_name from public.profiles; select role from public.workspace_members; select count(*), bool_and(rafraichissement like 'v1.%') from public.sessions_sso;` |
+| 11 | Après une connexion réelle réussie : demander le **retrait du client public `lelabs-crm`**, désormais sans emploi | administrateur du realm | hors du dépôt |
+| 12 | Reproposer les notes du Spark réécrites (`docs/spark-notes/`) — les précédentes décrivaient GoTrue et le relais SMTP | poste qui livre | `ssh crm 'cat > /etc/spark/notes/<NOM>.md.?' < docs/spark-notes/<NOM>.md`, pour `README`, `CONTRIBUTORS` et `INSTALL` ; le propriétaire du Spark les accepte en console |
+
+**Retour arrière.** Avant l'étape 6 : rien à défaire — l'archive déposée ne change pas la pile en service,
+et les variables importées ne sont lues qu'au prochain démarrage. À partir de l'étape 6 : **restaurer
+l'instantané de VM** de l'étape 5, puis relivrer la révision précédente ; les migrations 74 à 77 n'ont
+pas de retour arrière pris isolément qui soit plus sûr (§3.2).
+
+**Risques.** Une panne de LeLabs empêche toute nouvelle connexion, les sessions ouvertes survivant
+jusqu'à leur prolongation. Un secret mal saisi fait rendre `service_indisponible` à l'ouverture de
+session, sans autre effet : le corriger en console et recréer `functions`.
+
 ## 3. Migrations en attente
 
 **Quatre en attente depuis le 2026-09-23, `CRM-092`** : `0074_revendications_du_jeton.sql` et
 `0075_identite_sso.sql` (tranche T1), `0076_sessions_serveur.sql` (tranche T3 bis, décision 586), puis
 `0077_retrait_gotrue.sql` (tranche T6, décision 589) — lignes 74 à 77 du tableau du §3.2. Les 73 premières ont été appliquées par le premier déploiement
-(§8). **Ne pas les appliquer isolément** : elles appartiennent à la reprise de `CRM-092`, dont les
+(§8). **Ne pas les appliquer isolément** : elles appartiennent à la reprise de `CRM-092` (§2.5), dont les
 autres opérations — déclaration du client confidentiel et pose de son secret, fonction `session`,
-retrait de GoTrue, reprise du compte invité — seront décrites ici avec la tranche T7
-(`docs/SPEC-session-sso.md` §12), et chacune n'est exécutée que sur instruction explicite du
+retrait de GoTrue, reprise du compte invité — ne sont exécutées que sur instruction explicite du
 responsable. Appliquées seules, elles ne cassent rien : la 74 réécrit une définition identique à
 celle de GoTrue, la 75 et la 76 n'ajoutent que des tables vides et des fonctions que rien n'appelle
 encore. **La 77 ne s'applique qu'avec le retrait de GoTrue** : appliquée alors que GoTrue tourne, un
@@ -616,7 +647,7 @@ hors fenêtre, quand le rejeu intégral n'est pas souhaitable, ou à diagnostiqu
 donnée en dehors du chemin outillé.
 
 ```bash
-# Depuis l'hôte de production, la pile démarrée et GoTrue sain.
+# Depuis l'hôte de production, la pile démarrée.
 # Une transaction par fichier, dans l'ordre du tableau ci-dessus.
 for m in supabase/migrations/0001_identite_et_cloisonnement.sql \
          supabase/migrations/0002_fonctions_autorisation.sql; do
@@ -676,7 +707,7 @@ attendue à ce stade : `select count(*) from pg_policies where schemaname = 'pub
 | Pile Supabase | À chaque changement de version épinglée d'un composant (tableau dans `docs/DAT.md` §3.7) |
 | `functions` | À chaque changement sous `supabase/functions/` ou de l'image Edge Runtime ; `CRM-016` impose un premier déploiement conjoint avec Kong. **`CRM-092` T3 et T3 bis (en attente de la reprise complète, §3)** : nouvelle fonction `session`, et le conteneur reçoit `JWT_SECRET`, `SSO_OIDC_ISSUER`, `SSO_OIDC_CLIENT_ID` et **`SSO_OIDC_CLIENT_SECRET`**, que le service principal ne remet qu'au worker `session` — la phrase « ne reçoit pas `JWT_SECRET` » plus bas est révisée par la décision 584. Recréer `functions` **après** la pose du secret par l'administrateur du realm et la correction de `SSO_OIDC_CLIENT_ID` (§2.3) |
 | `kong` | À chaque changement de `supabase/docker/volumes/api/kong.yml`, qui incrémente le label `com.p2enjoy.kong-config-revision` — **`crm-092`** depuis `CRM-092` T6 : routes `/auth/v1/*` et `/.well-known/oauth-authorization-server` retirées, Kong répond 404 |
-| `caddy` | À chaque changement de `caddy/Caddyfile`, de `caddy/Caddyfile.spark` ou de `caddy/routes.caddy` — **`CRM-090` les modifie : routes extraites et `/functions/v1/*` relayé** |
+| `caddy` | À chaque changement de `caddy/Caddyfile`, de `caddy/Caddyfile.spark` ou de `caddy/routes.caddy` — **`CRM-090` les modifie : routes extraites et `/functions/v1/*` relayé** ; **`CRM-092` T6** : `/auth/v1/*` répond 404, et le label `com.p2enjoy.caddy-routes-revision` (`crm-092`) fait recréer Caddy au `up` ordinaire |
 | `minio`, `minio-createbucket` | Cellule Spark seulement (`CRM-090`) : stockage objet interne, sans port publié |
 | `realtime` dans la cellule | À chaque montée de version de Realtime : reconstruire l'image dérivée, que `scripts/spark/livrer.sh` recharge (décision 571) |
 | ~~`auth`~~, ~~`auth-templates`~~ | **Retirés de la pile par `CRM-092` T6** (décision 589). À la reprise : les arrêter et les supprimer explicitement (`docker rm -f p2enjoy-auth p2enjoy-auth-templates`) — `./runProd.sh` ne retire aucun orphelin —, après l'application de la migration 77 ; `scripts/spark/verifier.sh` contrôle qu'aucun ne subsiste. Caddy répond lui-même 404 sur `/auth/v1/*` |
@@ -890,27 +921,14 @@ sauvegarde couvre la perte de l'hôte.
   filtré. Prévoir une montée en charge progressive.
 - **Données personnelles** : le produit stocke la correspondance de tiers. La rétention et la
   purge doivent être configurées avant la mise en service réelle (unité `CRM-072`).
-- **`POST /auth/v1/admin/users` contourne la politique de mot de passe.** Mesuré : ce chemin crée
-  un compte avec un mot de passe de **8 caractères** là où le chemin utilisateur en exige 12 et
-  refuse en `422 weak_password`. Le compte ainsi créé **est utilisable**.
-
-  **Arbitrage du responsable — `docs/JOURNAL.md`, décision 265, INC-018 : ce chemin est interdit
-  en production.** Il n'est pas accepté au motif qu'il exige la clé de service : un privilège ne
-  dispense pas d'une règle, et un compte à 8 caractères créé par commodité est exactement la
-  brèche que la politique existe pour éviter.
-
-  **Opération d'exploitation encadrée.** Lorsqu'un compte doit être créé hors du parcours produit —
-  amorçage d'un espace, invitation avant `CRM-070` —, l'opérateur :
-
-  1. crée le compte par ce chemin **en respectant la politique de 12 caractères**, que GoTrue
-     n'appliquera pas à sa place ;
-  2. n'emploie jamais de mot de passe partagé, réutilisé ou dérivé d'un nom ;
-  3. consigne l'opération, sa date et son motif ;
-  4. déclenche immédiatement une réinitialisation, pour que le secret n'ait jamais transité par
-     l'opérateur au-delà de la création.
-
-  La clé de service ne quitte pas l'environnement d'exploitation. `docs/SPEC-auth.md` §4.1 porte
-  la même réserve du côté de la spécification.
+- ~~**`POST /auth/v1/admin/users` contourne la politique de mot de passe.**~~ **Sans objet depuis
+  `CRM-092` T6** : GoTrue a quitté la pile, le CRM ne crée plus aucun compte ni mot de passe, et
+  l'amorçage d'un espace n'inscrit qu'une attente (`scripts/spark/amorcer-espace.sh`). L'arbitrage de
+  la décision 265 (INC-018) — ce chemin interdit en production — reste consigné au journal.
+- **Dépendance à LeLabs.** Toute nouvelle connexion passe par `oauth.lelabs.tech` : son indisponibilité
+  empêche d'entrer, les sessions ouvertes survivant jusqu'à leur prolongation. Le secret du client
+  confidentiel vit dans la cellule ; sa rotation se fait chez LeLabs puis en console, suivie de la
+  recréation de `functions`.
 
 ## 8. Historique des déploiements
 

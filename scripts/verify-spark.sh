@@ -5,7 +5,8 @@
 #           objet), §4.4 (proposer), §5.1 (livrer), §5.2 (premier déploiement), §9 (preuves)
 # @verifies docs/JOURNAL.md décisions 567, 570, 571, 575 et 577 (image Realtime dérivée)
 # @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §2, §12 — tranche T6 : ni GoTrue ni SMTP dans
-#           les propositions ; `--demandes-seules` pour une cellule en service (décisions 589 et 590)
+#           les propositions ; `--demandes-seules` pour une cellule en service (décisions 589 et 590) ;
+#           T7 (décision 591) : Kong et Caddy portent leur label de révision `crm-092`
 #
 # Rejoue les preuves de `CRM-090` qui ne demandent PAS la cellule :
 #
@@ -255,6 +256,13 @@ if montages.get("/etc/caddy/Caddyfile") != "Caddyfile.spark" or montages.get("/e
     e.append(f"montages de caddy {montages}")
 if s.get("caddy", {}).get("environment"):
     e.append("caddy reçoit encore un environnement")
+# Révisions de configuration (CRM-092 T6, décision 589) : ni Kong ni Caddy ne relisent leurs fichiers
+# montés, et la livraison les remplace sous les conteneurs en service. Un label changé dans le même
+# commit que la configuration les fait recréer par le up ordinaire.
+if s.get("kong", {}).get("labels", {}).get("com.p2enjoy.kong-config-revision") != "crm-092":
+    e.append("Kong sans la révision de configuration crm-092")
+if s.get("caddy", {}).get("labels", {}).get("com.p2enjoy.caddy-routes-revision") != "crm-092":
+    e.append("Caddy sans la révision de routes crm-092")
 # Moindre privilège, mesuré le 2026-09-23 (docs/SPEC-deploiement-spark.md §3, décision 567) :
 # chaque secret atteint SEULEMENT les services qui le consomment. Un env_file posé sur un service
 # le remettrait à tous ; Compose le résout dans environment, et cette comparaison le voit.
@@ -288,6 +296,7 @@ if docker compose version >/dev/null 2>&1; then
 		ok "un seul port publié (caddy, SPARK_HTTP_PORT → 8080), aucun 80/443, MinIO sans port"
 		ok "aucune valeur de remplissage consommée ; Kong à un processus ; limite mémoire partout"
 		ok "Caddy monte Caddyfile.spark et routes.caddy, sans environnement"
+		ok "Kong et Caddy portent la révision crm-092 : recréés par le up ordinaire quand leur configuration change"
 		ok "chaque secret n'atteint que les services qui le consomment — Caddy n'en reçoit aucun"
 	fi
 else
@@ -660,6 +669,7 @@ if docker compose version >/dev/null 2>&1; then
 	degrader "environnement de Caddy hérité" 'import sys; p=sys.argv[1]; s=open(p).read(); s=s.replace("    environment: !reset {}\n","",1); open(p,"w").write(s)'
 	degrader "env_file des secrets posé sur Caddy" "import sys; p=sys.argv[1]; s=open(p).read(); s=s.replace('  caddy:\n    mem_limit: 128m\n','  caddy:\n    mem_limit: 128m\n    env_file:\n      - $ENV_A\n',1); open(p,'w').write(s)"
 	degrader "Kong sans borne de processus" 'import sys; p=sys.argv[1]; s=open(p).read(); s=s.replace("KONG_NGINX_WORKER_PROCESSES: \"1\"","KONG_NGINX_WORKER_PROCESSES: \"auto\"",1); open(p,"w").write(s)'
+	degrader "révision des routes de Caddy laissée à l'ancienne valeur" 'import sys; p=sys.argv[1]; s=open(p).read(); s=s.replace("  caddy:\n    mem_limit: 128m\n","  caddy:\n    mem_limit: 128m\n    labels:\n      com.p2enjoy.caddy-routes-revision: crm-090\n",1); open(p,"w").write(s)'
 else
 	skip "docker compose indisponible : dégradations d'assemblage non exécutées"
 fi

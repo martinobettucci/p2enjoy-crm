@@ -13,7 +13,7 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-092` — Le SSO, seule source d'identité (en cours : tranches T1, T2, T3, T3 bis, T5, T4 et T6 livrées)
+### `CRM-092` — Le SSO, seule source d'identité (tranches T1 à T7 livrées ; déploiement en production en attente)
 
 Décision du responsable (décisions 578 et 579) : le SSO LeLabs devient la **seule** source d'identité
 du CRM, en développement comme en production ; GoTrue et la connexion par mot de passe quittent la
@@ -45,6 +45,10 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   chaque compte GoTrue : un profil ne naît plus que de la première connexion LeLabs admise. Les
   tables du schéma `auth` restent, inertes. `scripts/verify-auth.sh` est retiré avec son objet, et
   `docs/SPEC-auth.md` n'est plus qu'un renvoi vers `docs/SPEC-session-sso.md`.
+- **La reprise en production est écrite** (tranche T7, `docs/PROD_MIGRATIONS.md` §2.5) : treize gestes
+  ordonnés, du client confidentiel à la connexion réelle, avec retour arrière. Caddy porte désormais un
+  label de révision de ses routes, comme Kong, pour être recréé quand elles changent — sans lui, la
+  production aurait continué de relayer `/auth/v1/*`.
 - **Reposer les demandes à une cellule en service** : `scripts/spark/proposer.sh --demandes-seules`
   propose le client serveur et la demande de son secret, sans tirer aucun secret, et nomme les
   anciennes variables de GoTrue restées inertes dans la cellule.

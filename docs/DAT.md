@@ -42,12 +42,10 @@ flowchart LR
 
   subgraph Supa["Supabase self-hosted"]
     Kong[Kong — passerelle]
-    GoTrue[GoTrue — authentification]
-    Templates[auth-templates — Caddy interne]
     PostgREST[PostgREST — API REST]
     RT[Realtime]
     Storage[Storage]
-    Edge[edge-runtime — fonctions Deno]
+    Edge[edge-runtime — fonctions Deno, dont l'échangeur de session]
     DB[(PostgreSQL 17 — RLS + RPC)]
   end
 
@@ -58,20 +56,21 @@ flowchart LR
   end
 
   Cron[pg_cron — relances, digest, purge RGPD]
+  SSO[SSO LeLabs — oauth.lelabs.tech, seule identité]
 
   Nav -->|HTTPS| Front
+  Nav -->|connexion PKCE| SSO
   Front -->|supabase-js| Kong
   Front -->|RPC / REST| Kong
-  Kong --> GoTrue
-  GoTrue -->|gabarits HTML français| Templates
+  Front -->|code, poignée httpOnly| Kong
   Kong --> PostgREST
   Kong --> RT
   Kong --> Storage
   Kong --> Edge
   Edge --> DB
+  Edge -->|échange du code, secret du client| SSO
   DB --> Cron
   PostgREST --> DB
-  GoTrue --> DB
   RT --> DB
   Storage --> S3[(S3 / MinIO)]
 
@@ -93,12 +92,12 @@ flowchart LR
 
 React 19 + Vite 8 + TypeScript + Tailwind 4. Responsabilités :
 
-- Authentification via `supabase-js` (GoTrue). L'arbitrage de persistance est rendu par
-  `docs/SPEC-auth.md` §9 : **`sessionStorage` uniquement**, limité à l'onglet, avec repli mémoire
-  si ce stockage est indisponible. Le défaut `localStorage` de la bibliothèque n'est jamais
-  employé. Ce contrat referme INC-022 et appartient à l'unité dédiée `CRM-009`, selon l'arbitrage
-  du responsable — `docs/JOURNAL.md`, décision 253, INC-021. `CRM-011` reste propriétaire du
-  mécanisme GoTrue éprouvé hors interface.
+- Connexion par le **seul SSO LeLabs** (`CRM-092`, `docs/SPEC-session-sso.md` §4 et §8) : la webapp
+  mène l'aller PKCE jusqu'au code, puis le remet à l'échangeur de session par un chemin relatif. Elle
+  ne garde qu'un **jeton interne en mémoire**, remis à `supabase-js` par son option `accessToken` et
+  poussé au temps réel avant tout abonnement ; le navigateur ne porte que la poignée de session, en
+  cookie `httpOnly`. Aucun jeton dans `sessionStorage` ni `localStorage`. Remplace la session d'onglet
+  de `CRM-009` et l'échange d'`id_token` de `CRM-091`.
 - Lecture des données par PostgREST, **écritures métier par RPC** lorsqu'une règle doit être
   appliquée (transition de card, copie de workflow, envoi d'email).
 - Abonnements Realtime pour les commentaires, les déplacements de cards et les notifications.
@@ -123,9 +122,9 @@ Découpage prévu : `src/lib` (client Supabase, types générés, helpers), `src
 
 - `src/lib/database.types.ts` — les types dérivés du schéma, **générés et versionnés** ;
   `npm run types:check` prouve qu'ils n'ont pas dérivé du schéma réellement migré ;
-- `src/lib/supabase.ts` — le client, typé par ce schéma, avec session limitée à
-  **`sessionStorage`**, repli mémoire, rafraîchissement automatique et consommation des fragments
-  GoTrue (`CRM-009`, `docs/SPEC-auth.md` §9). Aucun jeton ne passe dans `localStorage` ;
+- `src/lib/supabase.ts` — le client, typé par ce schéma, qui lit le jeton interne tenu en mémoire
+  par `src/lib/session.ts` (`CRM-092`, `docs/SPEC-session-sso.md` §8.2) ; aucun jeton sur
+  l'appareil ;
 - `src/lib/async.ts`, `src/lib/workspaces.ts`, `src/lib/tracks.ts`, `src/lib/channels.ts` — un type
   somme unique pour tout chargement, et les lectures que l'application effectue : le contexte
   d'espace de travail pour l'en-tête, les tracks pour la barre latérale (`CRM-020`), et — sur la
@@ -226,9 +225,11 @@ Source de vérité du produit. Contient :
 
 Les migrations sont appliquées au démarrage par le conteneur `migrations-runner`, qui rejoue en
 ordre lexicographique les fichiers de `supabase/migrations/`, une transaction par fichier, en
-s'arrêtant à la première erreur. Il démarre après GoTrue, dont le schéma `auth` est référencé dès
-les migrations d'amorçage, et après `storage`, dont le schéma (`storage.buckets`, référencé par
-`CRM-054` depuis la migration 24) n'existe qu'une fois la migration interne du service jouée ;
+s'arrêtant à la première erreur. Il démarre après `storage`, dont le schéma (`storage.buckets`,
+référencé par `CRM-054` depuis la migration 24) n'existe qu'une fois la migration interne du service
+jouée ; il n'attend plus GoTrue, retiré par `CRM-092` T6 — les tables du schéma `auth` que référencent
+les migrations d'amorçage viennent de l'image de la base, et la migration 74 y pose les fonctions de
+lecture du jeton ;
 `rest` attend à son tour que `migrations-runner` se soit terminé avec succès. **Cet ordre casse un
 cycle mesuré** (`docs/JOURNAL.md` décision 342) : `storage` ne dépend plus de `rest` au démarrage —
 sa propre migration ne parle qu'à `db`, et `POSTGREST_URL` ne sert qu'aux requêtes proxy, bien après
@@ -379,9 +380,13 @@ la base vieillit avec l'image : la production devra prévoir son rafraîchisseme
   où la Forge termine TLS et où Caddy sert **en clair** sur `SPARK_HTTP_PORT` (`CRM-090`,
   `docs/SPEC-deploiement-spark.md` §3.2). `/functions/v1/*` fait partie des préfixes relayés vers
   Kong depuis `CRM-090` : la vérification §5.10 du contrat de déploiement l'exigeait.
-- **`auth-templates`** emploie également `caddy:2.9-alpine`, mais comme serveur statique interne
-  commun aux deux assemblages. Il sert en lecture seule les quatre gabarits français de GoTrue sur
-  `:8080`, sans publier de port hôte ; `auth` attend sa sonde saine (`CRM-009`).
+- Caddy porte le label `com.p2enjoy.caddy-routes-revision` (**`crm-092`**), incrémenté avec toute
+  modification de `caddy/routes.caddy` : Caddy ne relit pas ce fichier monté, et le label le fait
+  recréer au `up` ordinaire, comme celui de Kong (`docs/SPEC-deploiement-spark.md` §5.1).
+- Depuis `CRM-092` T6, Caddy **répond lui-même `404`** sur `/auth/v1/*` et
+  `/.well-known/oauth-authorization-server` : GoTrue et son serveur de gabarits `auth-templates` ont
+  quitté la pile, et sans cette règle le repli de l'application monopage rendrait `index.html` en
+  `200`.
 
 ### 3.6 Composants de développement uniquement
 
@@ -389,12 +394,11 @@ la base vieillit avec l'image : la production devra prévoir son rafraîchisseme
 |---|---|---|
 | Supabase Studio | Inspection de la base | Outil d'administration, non exposé publiquement |
 | `postgres-meta` | Introspection du schéma, consommée **uniquement** par Studio | Sans Studio, il n'a aucun consommateur |
-| Inbucket | Puits des emails transactionnels | La production envoie réellement |
 | Stalwart | Vrai serveur IMAP/SMTP local | La production utilise les serveurs des utilisateurs |
 | `stalwart-init` | Provisionne les domaines et les boîtes de développement par la vraie API de gestion, puis s'arrête | Il ne provisionne que des boîtes de démonstration |
 | Roundcube | Webmail de vérification visuelle | Outil de contrôle du développement |
 | MinIO | S3 local | La production générique utilise son propre stockage objet ; la cellule Spark en déclare un, interne (`CRM-090`) |
-| Keycloak (`keycloak`) | SSO de développement : realm `lelabs` importé depuis `keycloak/realm-lelabs.json`, émetteur `http://sso.localhost:<SSO_DEV_PORT>` identique pour le navigateur et pour GoTrue (`CRM-091`) | La production vise le SSO réel, `oauth.lelabs.tech`, qu'elle n'héberge pas |
+| Keycloak (`keycloak`) | SSO de développement : realm `lelabs` importé depuis `keycloak/realm-lelabs.json`, émetteur `http://sso.localhost:<SSO_DEV_PORT>` identique pour le navigateur et pour l'échangeur de session (`CRM-091`, `CRM-092`) ; client **confidentiel** `lelabs-crm-serveur`, comptes préchargés alignés sur le seed | La production vise le SSO réel, `oauth.lelabs.tech`, qu'elle n'héberge pas |
 
 Ces composants vivent exclusivement dans `docker-compose.dev.yml`. La passerelle **ne connaît
 aucun d'entre eux** : Studio est joint directement sur son port, et il joint `postgres-meta` par
@@ -419,9 +423,7 @@ impose de rejouer `scripts/verify-stack.sh` et de mettre à jour `docs/PROD_MIGR
 |---|---|---|
 | `db` | `supabase/postgres:17.6.1.136` | dev, prod |
 | `migrations-runner` | `postgres:17-alpine` | dev, prod |
-| `auth-templates` | `caddy:2.9-alpine` | dev, prod |
 | `functions` | `public.ecr.aws/supabase/edge-runtime:v1.74.2` | dev, prod |
-| `auth` | `supabase/gotrue:v2.189.0` | dev, prod |
 | `rest` | `postgrest/postgrest:v14.12` | dev, prod |
 | `realtime` | `supabase/realtime:v2.102.3` | dev, prod — dans la cellule Spark, image **dérivée** `p2enjoy/realtime-spark:v2.102.3`, construite sur le poste (décisions 571 et 575) |
 | `storage` | `supabase/storage-api:v1.60.4` | dev, prod |
@@ -430,7 +432,6 @@ impose de rejouer `scripts/verify-stack.sh` et de mettre à jour `docs/PROD_MIGR
 | `meta` | `supabase/postgres-meta:v0.96.6` | dev |
 | `minio` | `quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z` | dev ; cellule Spark (`CRM-090`) |
 | `minio-createbucket` | `quay.io/minio/mc:RELEASE.2025-04-16T18-13-26Z` | dev ; cellule Spark (`CRM-090`) |
-| `inbucket` | `inbucket/inbucket:stable` | dev |
 | `keycloak` | `quay.io/keycloak/keycloak:26.7.3` | dev — la version du SSO réel (`CRM-091`) |
 | `stalwart` | `stalwartlabs/stalwart:v0.13.4` | dev |
 | `stalwart-init` | `curlimages/curl:8.16.0` | dev |
@@ -479,43 +480,37 @@ conteneur d'intégration.
 
 ### 4.1 Authentification et session
 
-1. L'utilisateur s'authentifie par email et mot de passe auprès de GoTrue.
-2. GoTrue émet un JWT contenant `sub` (l'identifiant utilisateur).
-3. `supabase-js` joint ce JWT à chaque requête ; PostgREST le transmet à PostgreSQL, qui
-   positionne `auth.uid()`.
-4. Les politiques RLS résolvent les droits **à partir des tables d'appartenance**, pas de
-   revendications portées par le jeton : un droit révoqué prend effet immédiatement, sans
-   attendre l'expiration du JWT.
-5. Après une invitation ou une autre action transactionnelle, le destinataire clique le lien
-   GoTrue reçu par SMTP. La webapp consomme son fragment, valide l'utilisateur, nettoie l'URL puis
-   conserve la session uniquement dans le `sessionStorage` de cet onglet (`CRM-009`).
+**RÉÉCRIT par `CRM-092`** (`docs/SPEC-session-sso.md`, décisions 578, 579, 586 et 587). Le SSO LeLabs
+(`oauth.lelabs.tech`, Keycloak, realm `lelabs`) est la **seule** source d'identité, en développement
+comme en production. Le CRM en est un client **confidentiel**, `lelabs-crm-serveur`.
 
-L'inscription libre est désactivée : `POST /signup` est refusé par `422 signup_disabled`, et
-**le privilège ne contourne pas ce refus** — la clé `service_role` est refusée à l'identique
-(mesuré, `docs/JOURNAL.md`, `CRM-011`). Les comptes sont créés par invitation.
+1. La webapp lit la découverte OIDC, tire vérificateur et `state`, et navigue vers LeLabs avec PKCE
+   `S256`. LeLabs authentifie la personne et revient sur `/auth/retour` avec un code.
+2. La webapp remet le code, son vérificateur et l'URL de retour à l'**échangeur de session** — la
+   fonction edge `session`, geste `ouvrir` —, par un chemin relatif que Caddy (ou le relais de Vite en
+   développement) fait suivre à Kong.
+3. L'échangeur échange le code **avec le secret du client**, vérifie le jeton LeLabs (signature,
+   émetteur, `azp`, échéance), puis applique l'**admission** : adresse vérifiée, rôle de realm
+   `verified`, et personne **attendue** par un espace (`workspace_invitations`) ou déjà membre.
+   `public.ouvrir_session_serveur` consomme les attentes, crée le profil au `sub` LeLabs s'il manque
+   et enregistre la session — jeton de rafraîchissement **chiffré** (AES-GCM), poignée désignée par
+   son empreinte.
+4. Il rend un **jeton interne** HS256 signé par `JWT_SECRET` — 300 s au plus, jamais au-delà du
+   jeton LeLabs — et pose la poignée en cookie `httpOnly`, `SameSite=Strict`, limité à
+   `/functions/v1/session`. La webapp garde le jeton en mémoire ; `supabase-js` le joint à chaque
+   requête, PostgREST le transmet à PostgreSQL, qui positionne `auth.uid()` (migration 74).
+5. Avant l'échéance, la webapp **prolonge** par la seule poignée : l'échangeur rafraîchit chez
+   LeLabs et **rejoue l'admission** — un rôle `verified` retiré ou une appartenance supprimée ferment
+   l'accès au plus tard à la prolongation suivante. Sans session, prolonger rend `204` (décision 587).
+   **Fermer** supprime la session serveur et efface le cookie.
+6. Les politiques RLS résolvent les droits **à partir des tables d'appartenance**, pas de
+   revendications portées par le jeton : un droit révoqué prend effet immédiatement.
 
-L'émission d'une invitation exige un jeton `service_role`, que la webapp ne détient jamais : c'est
-donc aujourd'hui une opération d'**exploitation** et non un parcours produit. Le composant qui
-porterait ce parcours n'existe pas et n'est rattaché à aucune unité (INC-015). Le détail complet
-du cycle de vie d'un compte — invitation, acceptation, connexion, session, déconnexion,
-réinitialisation — est spécifié dans `docs/SPEC-auth.md`.
-
-**La connexion unique (`CRM-091`, `docs/SPEC-auth.md` §10).** Le SSO `oauth.lelabs.tech` (Keycloak,
-realm `lelabs`) impose PKCE `S256`, que GoTrue 2.189.0 n'envoie pas à son fournisseur (décision
-568, M1). Le flux est donc :
-
-1. la webapp lit la découverte OIDC, tire vérificateur, `state` et nonce, écrit la transaction dans
-   le `sessionStorage` de l'onglet, et navigue vers Keycloak en **client public** avec PKCE ;
-2. Keycloak authentifie la personne et revient sur `/auth/retour` avec un code ;
-3. la webapp échange ce code au point de jeton de Keycloak, en ne lisant que l'`id_token` ;
-4. elle le remet à GoTrue par `POST /auth/v1/token?grant_type=id_token` (fournisseur `keycloak`),
-   avec le nonce brut ;
-5. **GoTrue vérifie** signature, émetteur, audience et nonce, puis applique `DISABLE_SIGNUP` :
-   un compte CRM à la même adresse, adresse attestée vérifiée, reçoit une session ordinaire — la
-   suite est celle des points 2 à 4 ci-dessus. Aucun rôle du realm n'est lu.
-
-GoTrue ne reçoit **aucun secret client** : sans lui, sa propre voie `/authorize` sans PKCE est
-fermée d'elle-même (M9). En développement, un Keycloak local reproduit le realm (§3.6).
+Il n'existe ni inscription, ni mot de passe, ni courriel d'identité dans le CRM : ils appartiennent à
+LeLabs. Une personne n'entre que si un administrateur de l'espace l'**attend** — l'écran qui inscrit
+une attente est porté par `CRM-070` ; le premier administrateur d'un espace de production est attendu
+par `scripts/spark/amorcer-espace.sh`. GoTrue, qui portait jusqu'ici les comptes, a quitté la pile
+(T6, migration 77) ; les tables du schéma `auth` restent, inertes.
 
 ### 4.2 Déplacement d'une card dans son workflow
 
@@ -827,7 +822,7 @@ Les preuves sont rejouables : `scripts/verify-vault.sh`.
 
 | Environnement | Assemblage | Particularités |
 |---|---|---|
-| Développement | `docker-compose.yml` + `docker-compose.dev.yml` | Studio, Inbucket, Stalwart, Roundcube, MinIO, Vite en HMR, seed complet |
+| Développement | `docker-compose.yml` + `docker-compose.dev.yml` | Studio, Keycloak préchargé, Stalwart, Roundcube, MinIO, Vite en HMR, seed complet |
 | Production | `docker-compose.yml` + `docker-compose.prod.yml` | Caddy et TLS, images buildées, aucun outillage de développement, aucun seed |
 | Production — cellule Spark `crm` | les deux précédents + `docker-compose.spark.yml` | Caddy en clair sur `SPARK_HTTP_PORT`, TLS porté par la Forge ; MinIO **interne** sans port publié ; Kong à un processus ; une limite mémoire par service ; environnement fusionné depuis `/etc/spark/env` et `/run/spark/secrets` (`CRM-090`) |
 
@@ -969,7 +964,9 @@ recrée PostgREST sur le schéma migré, puis démarre la pile entière. Sur une
 Le seed est un contrat maintenu, spécifié par `docs/SPEC-seed.md`. Il doit démontrer chaque
 fonctionnalité livrée, et il est produit **par les vrais mécanismes applicatifs** :
 
-- les utilisateurs sont créés par l'API d'administration GoTrue ;
+- les personnes sont celles du LeLabs de développement, **connectées par la vraie connexion** :
+  le seed n'inscrit que leurs attentes, et l'échangeur de session crée profils et appartenances
+  (`CRM-092` T4) ;
 - les boîtes mail de démonstration sont connectées par le même chemin que dans l'application,
   de sorte que les secrets sont chiffrés par le mécanisme réel ;
 - les emails de démonstration sont **réellement envoyés** vers le serveur local, puis ingérés
@@ -979,10 +976,11 @@ fonctionnalité livrée, et il est produit **par les vrais mécanismes applicati
 Aucune trace n'est fabriquée artificiellement pour simuler l'exécution d'un processus.
 
 **Livré à ce jour (`CRM-005`, seed socle).** `supabase/seed/apply-seed.sh` pose un espace de
-travail et trois comptes couvrant les trois rôles de workspace. Les comptes naissent de l'API
-d'administration GoTrue, leurs profils du trigger de `CRM-003`, l'espace de travail et les
-appartenances de l'API REST : **aucun `INSERT` direct, aucun `psql`** (`docs/JOURNAL.md`,
-décision 32). Le script est **convergent** — rejoué sans doublon, il rattrape une dérive — et
+travail et trois personnes couvrant les trois rôles de workspace. **Révisé par `CRM-092` T4** : les
+comptes vivent dans le LeLabs de développement ; le seed inscrit leurs attentes par l'API REST, puis
+ouvre la session de chacune par la vraie connexion, et ce sont l'échangeur et
+`public.ouvrir_session_sso` qui créent profils et appartenances : **aucun `INSERT` direct, aucun
+`psql`** (`docs/JOURNAL.md`, décisions 32 et 588). Le script est **convergent** — rejoué sans doublon, il rattrape une dérive — et
 refuse tout profil d'environnement autre que `dev`. Ses identifiants sont fixes et préfixés
 `5eed` (décision 33). Preuves : `scripts/verify-seed.sh` (49 contrôles) et
 `supabase/tests/0003_seed_socle.test.sql` (30 assertions).
@@ -999,9 +997,9 @@ script refuserait de s'exécuter. Le jeu de démonstration complet est l'objet d
 | Copie tracée des workflows vers un track | Correspond au geste demandé, et l'origine reste connue | Les copies divergent ; une évolution du workflow global ne se propage pas |
 | Service mail en Python séparé | IMAP/SMTP demandent des connexions longues, incompatibles avec des fonctions courtes | Un service de plus à superviser |
 | Ordonnancement par `pg_cron` | S'exécute là où vivent les données et les règles métier, et ne s'arrête pas avec un service applicatif — une purge RGPD qui ne part pas est un manquement (décision 261, INC-012, `CRM-017`) | Les tâches planifiées se testent par pgTAP et non par pytest ; le heartbeat s'amorce en quelques secondes puis passe à une cadence horaire pour ne pas créer de bruit durable (`docs/SPEC-scheduler.md`) |
-| Fonctions edge au périmètre | Le socle documentaire les annonce ; elles donnent un porteur à l'invitation d'un membre et aux webhooks sortants signés (décision 260, INC-007, `CRM-016`) | Un service de plus dans la pile ; la logique métier reste en PostgreSQL, `mail-sync` reste en Python |
+| Fonctions edge au périmètre | Le socle documentaire les annonce ; elles portent l'échangeur de session du SSO (`CRM-092`) et porteront les webhooks sortants signés (décision 260, INC-007, `CRM-016`) | Un service de plus dans la pile ; la logique métier reste en PostgreSQL, `mail-sync` reste en Python |
 | Secrets de messagerie en Supabase Vault | Extension présente et fonctionnelle dans l'image épinglée ; schéma `vault` hors de portée d'`anon` et d'`authenticated` (`CRM-004`) | La clé racine vit hors de `PGDATA` : elle devient une donnée de sauvegarde à part entière (§10) |
-| Deux serveurs mail en développement | Inbucket ne fournit pas d'IMAP, indispensable au produit | Un conteneur supplémentaire en développement |
+| Le SSO LeLabs seule identité, CRM client confidentiel | Une seule identité pour tous les produits de LeLabs, et aucun jeton du fournisseur sur l'appareil (décisions 578 et 586) | Le CRM dépend de la disponibilité de LeLabs pour toute nouvelle connexion ; les sessions ouvertes survivent jusqu'à leur prolongation |
 | Index fractionnaire pour l'ordre des cards | Réordonnancement en une écriture | Nécessite une renumérotation lorsque les écarts deviennent trop petits |
 | Dédoublonnage par `Message-ID` | Un message arrive souvent par deux boîtes | Les expéditeurs non conformes sans `Message-ID` exigent une empreinte de repli |
 
