@@ -3955,6 +3955,11 @@ désormais un signal observable (mentions, routes chargées à la demande, parco
 d'auteur), et toute exécution unitaire rouge laisse son journal dans `e2e/output/journaux-unitaires/`.
 Mesuré : `e2e:api` 1080/1080, `e2e:ui` 756/756, `verify-harness` 32 contrôles sans anomalie.
 
+**Complément du même jour.** Le rouge de `routes.test.tsx` sous `verify-webapp.sh`, cité en tête de cette
+entrée, n'était pas dû à la charge : le harnais exporte `VITE_SUPABASE_*` pour son build, et les tests
+lancés ensuite en héritaient. Le journal conservé l'a nommé ; `webapp/vitest.config.ts` vide désormais
+ces variables pour les tests (reproduit rouge, puis 15/15 et 3281 variables posées).
+
 ## Consignées le 2026-08-20 — méthode et harnais, relevées par le rejeu complet de la série
 
 ### INC-190 — la série complète des `scripts/verify-*.sh` tient dans UNE session en `--rapide`, et cinq entrées du backlog l'affirmaient impossible

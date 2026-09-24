@@ -29848,3 +29848,19 @@ les droits d'un tiers ne voient que les appartenances enregistrées. Mise en œu
 `lelabs-crm` n'est **pas** supprimé maintenant : la production tourne encore sur lui ; il le sera
 après le déploiement de `CRM-092` et une connexion réelle réussie par le client serveur (§2.5 de
 `docs/PROD_MIGRATIONS.md`).
+
+**INC-189, un quatrième membre — et une cause d'abord mal nommée (2026-09-24).** Le journal conservé par
+le rapporteur d'INC-189 c a servi dès le premier rejeu de `verify-webapp.sh` : il nomme six rouges de
+`routes.test.tsx` — « Aucune échéance dans votre journée » là où la route sans configuration doit dire
+« Aucun espace de travail ». **La cause n'est pas la charge**, comme l'entrée INC-189 le supposait pour
+ce fichier : `verify-webapp.sh` exporte `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY` pour son build,
+et `npm run test:unit`, lancé ensuite, les héritait ; les modules qui lisent `import.meta.env` au
+chargement construisaient alors un vrai client. Reproduit à volonté — variables posées : six rouges ;
+corrigé dans `webapp/vitest.config.ts`, qui vide les quatre variables de configuration pour les tests
+(`test.env`) — variables posées : **15/15**, suite entière **3281**. Le préchargement des modules
+(INC-189 b) reste juste, mais il ne répondait pas à ce rouge-là.
+
+**Et une faute de méthode, la seconde du jour** : le rejeu de `verify-webapp.sh` a aussi rougi sur
+`e2e:ui`, parce que j'ai modifié `webapp/src/lib/roles.ts` (T8) pendant qu'il tournait — sa campagne a
+construit l'application avec un appel à une fonction pas encore migrée. Même leçon que le build
+concurrent : aucune édition de `webapp/` pendant une campagne d'interface.

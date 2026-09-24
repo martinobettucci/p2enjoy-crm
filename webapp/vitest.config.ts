@@ -40,6 +40,19 @@ export default defineConfig({
 		// rapporteur dépose les tests en échec dans `e2e/output/journaux-unitaires/`, quel que soit
 		// l'appelant. `default` reste le rapporteur de la console, inchangé.
 		reporters: ['default', './vitest.rapporteur-echecs.ts'],
+		// LA CONFIGURATION DE L'APPLICATION NE FUIT PAS DANS LES TESTS — INC-189, corrigé le 2026-09-24,
+		// et c'est le journal ci-dessus qui en a nommé la cause. `scripts/verify-webapp.sh` exporte
+		// `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY` pour son build, et les tests lancés ensuite
+		// les héritaient : les modules qui lisent `import.meta.env` au chargement construisaient alors
+		// un vrai client, et `routes.test.tsx` — qui prouve les routes SANS configuration — rendait
+		// six rouges, attribués à tort à la charge. Les quatre variables sont vidées ici : un test qui
+		// veut une configuration la passe explicitement, comme `lireConfigurationSso(env)`.
+		env: {
+			VITE_SUPABASE_URL: '',
+			VITE_SUPABASE_ANON_KEY: '',
+			VITE_SSO_ISSUER: '',
+			VITE_SSO_CLIENT_ID: '',
+		},
 		restoreMocks: true,
 		// LE DÉLAI PAR DÉFAUT DE VITEST — 5 s — EST TROP COURT POUR CE HARNAIS, ET C'EST MESURÉ.
 		// `npm run test:unit` monte 28 fichiers de composants React sous jsdom, en parallèle, et
