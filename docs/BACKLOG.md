@@ -14501,7 +14501,17 @@ connexion réelle de `martino@p2enjoy.studio` aboutie après les opérations du 
       **112**, `verify-spark` **80**, `verify-auth` **62**, sans anomalie ; `verify-spark` et
       `verify-auth` révisés pour la fuite de profils de la décision 583. Captures
       `docs/captures/CRM-092/` observées ; design system §5.12 et manuel chapitre 1 révisés.
-- [ ] **T4** — jetons des preuves et seed par la vraie connexion SSO (§11, §13).
+- [x] **T4** — jetons des preuves et seed par la vraie connexion SSO (§11, §13) — décision 588.
+      `jetonDe` et `sso_jeton_interne` passent par la vraie connexion et l'échangeur ; comptes
+      jetables par l'API du Keycloak de développement ; seed §11 ; treize scripts, `verify-webapp`,
+      `verify-seed`, `verify-authz`, `verify-migrations`, `verify-spark`, deux specs `mail` et deux
+      abonnements au temps réel portés ; `amorcer-espace.sh` n'inscrit plus qu'une attente. Mesuré :
+      `e2e:api` **1079/1079**, `e2e:mail` **42/42**, campagne d'interface **755/755**, suite unitaire
+      **3265/3265** ; `verify-session-sso` **44**, `verify-scripts` **112**, `verify-spark` **79**,
+      `verify-seed` **52**, `verify-migrations` **31**, `verify-authz` **37**, `verify-tracks` **43**
+      et dix autres harnais portés, sans anomalie. Rouges étrangers consignés : INC-250
+      (`verify-droits-fins`), INC-231 et INC-189 (`verify-webapp`). Constat INC-249 (garde du dernier
+      administrateur) : spécification corrigée, comportement à arbitrer.
 - [ ] **T6** — retrait de GoTrue, migration `0077`, retrait de `verify-auth.sh` (§2).
 - [ ] **T7** — documentation transverse, contrat de production (§12), campagne.
 - [ ] **Préalable humain chez LeLabs** : déclaration du client serveur `lelabs-crm-serveur` et secret

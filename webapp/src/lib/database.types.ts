@@ -2041,6 +2041,44 @@ export type Database = {
         }
         Relationships: []
       }
+      sessions_sso: {
+        Row: {
+          cree_le: string
+          expire_le: string
+          id: string
+          poignee_empreinte: string
+          rafraichissement: string
+          renouvele_le: string
+          sub: string
+        }
+        Insert: {
+          cree_le?: string
+          expire_le: string
+          id?: string
+          poignee_empreinte: string
+          rafraichissement: string
+          renouvele_le?: string
+          sub: string
+        }
+        Update: {
+          cree_le?: string
+          expire_le?: string
+          id?: string
+          poignee_empreinte?: string
+          rafraichissement?: string
+          renouvele_le?: string
+          sub?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_sso_sub_fkey"
+            columns: ["sub"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       track_members: {
         Row: {
           access: string
@@ -2814,6 +2852,10 @@ export type Database = {
           status: string
         }[]
       }
+      fermer_session_serveur: {
+        Args: { p_empreinte: string }
+        Returns: undefined
+      }
       inbox_arborescence: {
         Args: never
         Returns: {
@@ -2829,6 +2871,13 @@ export type Database = {
       interrompre_sequence_relance: {
         Args: { p_enrollment_id: string }
         Returns: undefined
+      }
+      lire_session_serveur: {
+        Args: { p_empreinte: string }
+        Returns: {
+          rafraichissement: string
+          sub: string
+        }[]
       }
       mail_folder_map_reparenter: {
         Args: {
@@ -2982,6 +3031,17 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      ouvrir_session_serveur: {
+        Args: {
+          p_email: string
+          p_empreinte: string
+          p_expire_le: string
+          p_nom: string
+          p_rafraichissement: string
+          p_sub: string
+        }
+        Returns: Json
+      }
       ouvrir_session_sso: {
         Args: { p_email: string; p_nom: string; p_sub: string }
         Returns: Json
@@ -3065,6 +3125,17 @@ export type Database = {
           subject: string
           variables_nulles: string[]
         }[]
+      }
+      renouveler_session_serveur: {
+        Args: {
+          p_email: string
+          p_empreinte: string
+          p_expire_le: string
+          p_nom: string
+          p_rafraichissement: string
+          p_sub: string
+        }
+        Returns: Json
       }
       reordonner_paliers_sequence: {
         Args: { p_paliers: string[]; p_sequence_id: string }

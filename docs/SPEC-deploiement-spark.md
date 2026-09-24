@@ -241,7 +241,7 @@ hors de la cellule : le défaut qu'elle corrige est celui de l'assemblage de pro
 | Enregistrement DNS `crm.lelabs.tech` vers la Forge, et route `crm.lelabs.tech 8080 tls` | propriétaire du Spark | S8 ; « rien ne s'expose depuis l'intérieur » |
 | Importer variables et secrets proposés, **puis fournir** les valeurs SMTP | propriétaire du Spark | S6 ; seule la console écrit |
 | Déclarer le client OIDC | administrateur du realm `lelabs` | `docs/SPEC-auth.md` §10.8 |
-| Créer le premier compte et le premier espace | opérateur, sur instruction explicite | `scripts/spark/amorcer-espace.sh` (décision 573) : compte invité par `generate_link` — sans mot de passe, donc hors du chemin que la décision 265 encadre —, espace, appartenance `admin` ; le lien d'action n'est jamais affiché |
+| Créer le premier espace et attendre son administrateur | opérateur, sur instruction explicite | `scripts/spark/amorcer-espace.sh` (décision 573, révisé par `CRM-092` T4) : espace, puis **attente** `admin` à l'adresse donnée ; aucun compte n'est créé dans le CRM — la personne devient administratrice à sa première connexion LeLabs, adresse vérifiée et rôle `verified` exigés |
 
 ## 7. Vérifications
 

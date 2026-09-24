@@ -2,7 +2,8 @@
 // @verifies docs/SPEC-types.md §5 (fichier produit), §7 (ce que les types n'expriment pas)
 // @verifies docs/SCHEMA.md §1 (socle d'identité) ; docs/INCONSISTENCY_REPORT.md INC-010
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §7.2 — `workspace_invitations` et
-//           `ouvrir_session_sso` dans le contrat de types (tranche T1)
+//           `ouvrir_session_sso` dans le contrat de types (tranche T1) ; §5.6 — `sessions_sso` et
+//           ses quatre fonctions de service (tranche T3 bis, témoin rattrapé en T4)
 //
 // Test **unitaire** du contrat de types. Il ne s'exécute pas : il se compile. Chaque assertion
 // ci-dessous est une contrainte que `tsc --noEmit` vérifie, et qui fait échouer la compilation
@@ -202,6 +203,13 @@ type _tables = Expect<
     | 'notification_preferences'
     | 'organizations'
     | 'profiles'
+    // `0076` de `CRM-092` TRANCHE T3 BIS ajoute `sessions_sso`, ET LE TÉMOIN NE L'A PAS VUE EN SON
+    // TEMPS : la tranche a été committée sans que `scripts/generate-types.sh` soit rejoué, et le
+    // fichier généré comme ce témoin sont restés également périmés, donc VERTS. C'est la quatrième
+    // occurrence du défaut de chaîne décrit plus haut ; T4 régénère et le témoin rougit, ce qui est
+    // exactement son rôle. Le type n'ouvre rien : la table n'accorde AUCUN privilège à `anon` ni
+    // à `authenticated`, seule la clé de service de l'échangeur la lit (docs/SPEC-session-sso.md §5.6).
+    | 'sessions_sso'
     | 'track_members'
     | 'tracks'
     | 'workflow_nodes_catalog'
@@ -908,7 +916,13 @@ type _vueDerivationColonnes = Expect<
 // n'est exécutable que par la clé de service, que la webapp ne détient jamais ; un
 // `client.rpc('ouvrir_session_sso')` de la webapp compile, et le serveur le refuse en `42501`
 // (docs/SPEC-session-sso.md §6.2). Quarante-neuf devient CINQUANTE.
-type _lesCinquanteFonctions = Expect<
+// `0076` de `CRM-092` TRANCHE T3 BIS ajoute les quatre fonctions de la session serveur —
+// `ouvrir_session_serveur`, `lire_session_serveur`, `renouveler_session_serveur`,
+// `fermer_session_serveur` —, que le témoin n'a vues qu'à la régénération de T4 (même défaut de
+// chaîne que `sessions_sso`). Même limite que `ouvrir_session_sso` : elles ne sont exécutables que
+// par `service_role`, et le type ne dit rien de ce refus (docs/SPEC-session-sso.md §5.6).
+// Cinquante devient CINQUANTE-QUATRE.
+type _lesCinquanteQuatreFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
     | 'entonnoir_conversion'
@@ -952,6 +966,10 @@ type _lesCinquanteFonctions = Expect<
     | 'snooze_card'
     | 'previsualiser_exigence'
     | 'ouvrir_session_sso'
+    | 'ouvrir_session_serveur'
+    | 'lire_session_serveur'
+    | 'renouveler_session_serveur'
+    | 'fermer_session_serveur'
     | 'queue_outbound_email'
     | 'reprendre_envois_orphelins'
     | 'reprogrammer_envoi'
@@ -1166,7 +1184,7 @@ export type AssertionsDuContratDeTypes = [
   _relationsWorkspaceMembers,
   _laSeuleVue,
   _vueDerivationColonnes,
-  _lesCinquanteFonctions,
+  _lesCinquanteQuatreFonctions,
   _signatureReelSaisissable,
   _retourReelSaisissable,
   _ecriturePermisePrendUneLigneDeTableau,

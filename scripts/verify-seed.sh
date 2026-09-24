@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 # @verifies CRM-005 (docs/BACKLOG.md) — Definition of Done du seed socle
 # @verifies docs/SPEC-seed.md §2 (contrat), §3 (mécanismes), §4 (identifiants stables),
-#           §5 (gardes), §7 (les douze preuves exigées)
+#           §5 (gardes), §7 (les douze preuves exigées, dont la n° 7 retirée par `CRM-092` T4)
 # @verifies docs/SPEC-permissions-rls.md §2.1 (rôles), §7 (refus par défaut, preuve n° 11)
 # @verifies docs/SCHEMA.md §1 (`profiles`, `workspaces`, `workspace_members`)
-# @verifies docs/INCONSISTENCY_REPORT.md INC-018 (politique de mot de passe non appliquée)
+# @verifies docs/INCONSISTENCY_REPORT.md INC-018 (politique de mot de passe non appliquée) — sans objet
+#           depuis `CRM-092` T4 : le CRM ne connaît plus aucun mot de passe
+# @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §10, §11 — tranche T4 : comptes du
+#           Keycloak de développement, attentes consommées par la vraie connexion, jetons internes
 #
-# Rejoue les douze preuves de `docs/SPEC-seed.md` §7, **toutes hors interface**, contre l'API
+# Rejoue les preuves de `docs/SPEC-seed.md` §7 — onze depuis `CRM-092` T4 —, **toutes hors interface**, contre l'API
 # réellement exposée par la passerelle. Elles portent sur quatre questions :
 #
 #   1. le seed a-t-il produit **exactement** le contrat du §2, identifiants fixes compris ;
@@ -34,7 +37,11 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-AUTH_CONTAINER=p2enjoy-auth
+# shellcheck source=scripts/lib/sso.sh
+source scripts/lib/sso.sh
+sso_env_charger .env
+
+FUNCTIONS_CONTAINER=p2enjoy-functions
 DB_CONTAINER=p2enjoy-db
 
 if [ ! -f .env ]; then
@@ -60,7 +67,6 @@ WS_ID='5eed0000-0000-4000-8000-000000000001'
 WS_NAME='P2Enjoy SAS'
 WS_SLUG='p2enjoy'
 WS_DOMAIN='crm.p2enjoy.test'
-SEED_PASSWORD='SeedDev2026Local'
 
 ADMIN_ID='5eed0000-0000-4000-8000-000000000011'
 BIZDEV_ID='5eed0000-0000-4000-8000-000000000012'
@@ -105,8 +111,9 @@ jwt_payload() {
 echo
 echo "Preuves de CRM-005 — seed socle"
 
-if ! docker inspect -f '{{.State.Status}}' "$AUTH_CONTAINER" >/dev/null 2>&1; then
-	echo "ERREUR : conteneur $AUTH_CONTAINER absent. Lancez ./runDev.sh." >&2
+# `CRM-092` T4 : les comptes se connectent par l'échangeur de session, et non plus par GoTrue.
+if ! docker inspect -f '{{.State.Status}}' "$FUNCTIONS_CONTAINER" >/dev/null 2>&1; then
+	echo "ERREUR : conteneur $FUNCTIONS_CONTAINER absent. Lancez ./runDev.sh." >&2
 	exit 1
 fi
 
@@ -180,16 +187,16 @@ fi
 echo
 echo "2. Comptes et profils — docs/SPEC-seed.md §2.2"
 
-utilisateurs=$(curl -s "$API/auth/v1/admin/users?page=1&per_page=200" "${SR[@]}")
-
+# RÉVISÉE par `CRM-092` T4 : le compte est celui du Keycloak de DÉVELOPPEMENT, dont le `sub` est
+# l'identifiant fixe du contrat ; le seed n'en crée plus aucun (docs/SPEC-session-sso.md §10, §11).
 for ligne in "${COMPTES[@]}"; do
 	IFS='|' read -r id email nom avatar role <<< "$ligne"
 
-	obtenu=$(jq -r --arg m "$email" '.users[]? | select(.email == $m) | .id' <<< "$utilisateurs")
+	obtenu=$(sso_compte_id "$email" 2>/dev/null || true)
 	if [ "$obtenu" = "$id" ]; then
-		ok "n° 2 — $email porte l'identifiant fixe $id"
+		ok "n° 2 — le compte LeLabs de développement de $email porte le sub fixe $id"
 	else
-		fail "n° 2 — $email : identifiant attendu $id, observé « ${obtenu:-aucun compte} »"
+		fail "n° 2 — $email : sub attendu $id, observé « ${obtenu:-aucun compte} »"
 	fi
 
 	profil=$(rest "profiles?id=eq.$id&select=full_name,locale,avatar_url")
@@ -208,14 +215,21 @@ for ligne in "${COMPTES[@]}"; do
 	else
 		fail "n° 3 — profil de $email : avatar attendu « $avatar », observé « $(jq -r '.[0].avatar_url // "-"' <<< "$profil") »"
 	fi
-	avatar_metadata=$(jq -r --arg m "$email" \
-		'.users[]? | select(.email == $m) | .user_metadata.avatar_url // ""' <<< "$utilisateurs")
-	if [ "$avatar_metadata" = "$avatar" ]; then
-		ok "n° 3 — métadonnée GoTrue de $email : avatar_url converge aussi"
-	else
-		fail "n° 3 — métadonnée GoTrue de $email : avatar attendu « $avatar », observé « ${avatar_metadata:--} »"
-	fi
 done
+
+# `CRM-092` T4 (§11) : l'attente d'`attendu@`, non vérifié par LeLabs, demeure ; `inconnu@`, attendu par
+# personne, ne laisse aucune trace. Remplace la convergence de la métadonnée GoTrue, sans objet.
+attente=$(rest "workspace_invitations?workspace_id=eq.$WS_ID&email=eq.attendu@p2enjoy.test&select=role")
+if [ "$(jq -r '.[0].role // ""' <<< "$attente")" = viewer ]; then
+	ok "n° 3 — l'attente d'attendu@p2enjoy.test est en place, non consommée"
+else
+	fail "n° 3 — attente d'attendu@p2enjoy.test absente ou altérée : $attente"
+fi
+if [ "$(rest "profiles?id=eq.5eed0000-0000-4000-8000-000000000014&select=id" | jq 'length')" = 0 ]; then
+	ok "n° 3 — inconnu@p2enjoy.test n'a laissé aucun profil"
+else
+	fail "n° 3 — inconnu@p2enjoy.test a un profil, alors qu'aucun espace ne l'attend"
+fi
 
 # --- 4. Appartenances et rôles (preuve n° 4) ---------------------------------------------------
 
@@ -258,18 +272,15 @@ echo "4. Connexion réelle et contenu du jeton"
 for ligne in "${COMPTES[@]}"; do
 	IFS='|' read -r id email nom avatar role <<< "$ligne"
 
-	code=$(http POST "$API/auth/v1/token?grant_type=password" \
-		-H "apikey: $ANON_KEY" -H 'Content-Type: application/json' \
-		-d "$(jq -nc --arg e "$email" --arg p "$SEED_PASSWORD" '{email: $e, password: $p}')")
-
-	if [ "$code" = "200" ]; then
-		ok "n° 5 — $email se connecte avec le mot de passe publié"
+	# RÉVISÉE par `CRM-092` T4 : la vraie connexion LeLabs, puis l'échangeur de session.
+	jeton=$(sso_jeton_interne "$API" "$ANON_KEY" "$email" 2>"$CORPS" || true)
+	if [ -n "$jeton" ]; then
+		ok "n° 5 — $email se connecte par LeLabs avec le mot de passe publié du realm de développement"
 	else
-		fail "n° 5 — $email : connexion refusée, code $code $(head -c 160 "$CORPS")"
+		fail "n° 5 — $email : connexion refusée — $(head -c 160 "$CORPS")"
 		continue
 	fi
 
-	jeton=$(jq -r '.access_token' "$CORPS")
 	sub=$(jwt_payload "$jeton" | jq -r '.sub')
 	if [ "$sub" = "$id" ]; then
 		ok "n° 6 — le jeton de $email porte sub = $id"
@@ -278,34 +289,11 @@ for ligne in "${COMPTES[@]}"; do
 	fi
 done
 
-# --- 7. Le mot de passe respecte la politique (preuve n° 7) ------------------------------------
-# Prouvé et non supposé : l'API d'administration employée par le seed **n'applique pas** cette
-# politique (INC-018). Sans ce contrôle, un mot de passe trop court passerait sans bruit.
-
-echo
-echo "5. Politique de mot de passe — INC-018"
-
-min=$(docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' "$AUTH_CONTAINER" \
-	| sed -n 's/^GOTRUE_PASSWORD_MIN_LENGTH=//p' | head -n 1)
-if [ -n "$min" ] && [ "${#SEED_PASSWORD}" -ge "$min" ]; then
-	ok "n° 7 — le mot de passe du seed fait ${#SEED_PASSWORD} caractères, minimum appliqué au conteneur : $min"
-else
-	fail "n° 7 — mot de passe du seed : ${#SEED_PASSWORD} caractères, minimum « ${min:-inconnu} »"
-fi
-
-# Rappel mesuré du motif d'INC-018 : la même API accepte huit caractères. Le contrôle vaut par ce
-# qu'il documente autant que par ce qu'il vérifie — il échouera le jour où GoTrue durcira ce
-# chemin, et il faudra alors clore INC-018.
-code=$(http POST "$API/auth/v1/admin/users" "${SR[@]}" -H 'Content-Type: application/json' \
-	-d '{"email":"crm-005-faible@p2enjoy.test","password":"court123","email_confirm":true}')
-if [ "$code" = "200" ] || [ "$code" = "201" ]; then
-	ok "n° 7 — INC-018 toujours d'actualité : l'API d'administration accepte 8 caractères"
-	faible=$(jq -r '.id' "$CORPS")
-	[ -n "$faible" ] && [ "$faible" != null ] && \
-		curl -s -o /dev/null -X DELETE "$API/auth/v1/admin/users/$faible" "${SR[@]}"
-else
-	fail "n° 7 — l'API d'administration refuse désormais 8 caractères (code $code) : INC-018 est à clore"
-fi
+# --- 7. Politique de mot de passe (preuve n° 7) — RETIRÉE avec son objet par `CRM-092` T4 --------
+# Elle prouvait que le mot de passe du seed respectait le minimum de GoTrue, et que son API
+# d'administration n'appliquait pas ce minimum (INC-018). Le CRM ne connaît plus aucun mot de passe :
+# le mot de passe publié est celui du Keycloak de DÉVELOPPEMENT, que la politique du realm réel ne
+# concerne pas, et le seed ne crée plus de compte (décision 587, docs/SPEC-session-sso.md §11).
 
 # --- 8. Rejouabilité (preuve n° 8) -------------------------------------------------------------
 
@@ -380,10 +368,7 @@ for table in profiles workspaces workspace_members track_members channel_members
 	fi
 done
 
-code=$(http POST "$API/auth/v1/token?grant_type=password" -H "apikey: $ANON_KEY" \
-	-H 'Content-Type: application/json' \
-	-d "$(jq -nc --arg p "$SEED_PASSWORD" '{email: "admin@p2enjoy.test", password: $p}')")
-jeton_admin=$(jq -r '.access_token' "$CORPS")
+jeton_admin=$(sso_jeton_interne "$API" "$ANON_KEY" admin@p2enjoy.test 2>/dev/null || true)
 
 for contrat in profiles:3 workspaces:1 workspace_members:3; do
 	table=${contrat%%:*}
@@ -427,50 +412,46 @@ rm -f "$FAUX_ENV"
 echo
 echo "10. Non-complaisance — le harnais échoue-t-il quand le seed est faux ?"
 
-# Une dérive réparable du mot de passe doit faire échouer la preuve n° 5 sans supprimer l'identité
-# ni détacher ses commentaires historiques. Le seed doit ensuite réaligner le mot de passe.
+# RÉVISÉE par `CRM-092` T4. La dérive n'est plus un mot de passe GoTrue — le CRM n'en a plus — mais
+# l'APPARTENANCE : retirée, la personne n'est plus ni membre ni attendue, et sa connexion doit être
+# refusée ; la preuve n° 5 doit donc savoir échouer. Le seed doit ensuite la réinscrire comme
+# ATTENTE, que la vraie connexion consomme, sans toucher à son identité ni à ses paroles.
 commentaires_biz_avant=$(rest "card_comments?author_id=eq.$BIZDEV_ID&select=id" | jq 'length')
-code=$(http PUT "$API/auth/v1/admin/users/$BIZDEV_ID" "${SR[@]}" \
-	-H 'Content-Type: application/json' -d '{"password":"MotDePasseDerive2026"}')
-if [ "$code" = "200" ]; then
-	ok "mutation appliquée : le mot de passe du compte bizdev est réellement dérivé"
+code=$(http DELETE "$API/rest/v1/workspace_members?workspace_id=eq.$WS_ID&user_id=eq.$BIZDEV_ID" "${SR[@]}")
+if [ "$code" = "204" ] && [ "$(rest "workspace_members?user_id=eq.$BIZDEV_ID&select=role" | jq 'length')" = 0 ]; then
+	ok "mutation appliquée : l'appartenance du compte bizdev est réellement retirée"
 else
-	fail "mutation non appliquée : GoTrue a refusé la dérive du mot de passe (code $code)"
+	fail "mutation non appliquée : l'appartenance de bizdev n'a pas pu être retirée (code $code)"
 fi
 
-code=$(http POST "$API/auth/v1/token?grant_type=password" -H "apikey: $ANON_KEY" \
-	-H 'Content-Type: application/json' \
-	-d "$(jq -nc --arg p "$SEED_PASSWORD" '{email: "bizdev@p2enjoy.test", password: $p}')")
-if [ "$code" != "200" ]; then
-	ok "le mot de passe contractuel échoue pendant la dérive (code $code) : la preuve n° 5 sait échouer"
+if [ -z "$(sso_jeton_interne "$API" "$ANON_KEY" bizdev@p2enjoy.test 2>/dev/null || true)" ]; then
+	ok "la connexion est refusée pendant la dérive : la preuve n° 5 sait échouer"
 else
-	fail "le mot de passe contractuel fonctionne malgré la dérive : la preuve n° 5 est complaisante"
+	fail "la connexion aboutit sans appartenance ni attente : la preuve n° 5 est complaisante"
 fi
 
 profil_conserve=$(rest "profiles?id=eq.$BIZDEV_ID&select=id" | jq 'length')
 commentaires_biz_derives=$(rest "card_comments?author_id=eq.$BIZDEV_ID&select=id" | jq 'length')
 if [ "$profil_conserve" -eq 1 ] && [ "$commentaires_biz_derives" -eq "$commentaires_biz_avant" ]; then
-	ok "la dérive réparable conserve le profil et ses auteurs historiques"
+	ok "la dérive conserve le profil et ses auteurs historiques"
 else
 	fail "la dérive a touché l'identité ou ses paroles : profil=$profil_conserve, commentaires=$commentaires_biz_derives/$commentaires_biz_avant"
 fi
 
-# Rétablissement par le seed lui-même.
+# Rétablissement par le seed lui-même : attente réinscrite, consommée par la vraie connexion.
 supabase/seed/apply-seed.sh >/dev/null 2>&1 || true
 
-code=$(http POST "$API/auth/v1/token?grant_type=password" -H "apikey: $ANON_KEY" \
-	-H 'Content-Type: application/json' \
-	-d "$(jq -nc --arg p "$SEED_PASSWORD" '{email: "bizdev@p2enjoy.test", password: $p}')")
-sub_retabli=$( [ "$code" = "200" ] && jwt_payload "$(jq -r '.access_token' "$CORPS")" | jq -r '.sub' || true )
-if [ "$code" = "200" ] && [ "$sub_retabli" = "$BIZDEV_ID" ]; then
-	ok "le seed rétablit le mot de passe et conserve le même identifiant fixe"
+jeton_retabli=$(sso_jeton_interne "$API" "$ANON_KEY" bizdev@p2enjoy.test 2>/dev/null || true)
+sub_retabli=$( [ -n "$jeton_retabli" ] && jwt_payload "$jeton_retabli" | jq -r '.sub' || true )
+if [ -n "$jeton_retabli" ] && [ "$sub_retabli" = "$BIZDEV_ID" ]; then
+	ok "le seed rétablit l'accès par une attente consommée, sous le même identifiant fixe"
 else
-	fail "connexion non rétablie (code $code, sub « ${sub_retabli:-absent} »)"
+	fail "connexion non rétablie (sub « ${sub_retabli:-absent} »)"
 fi
 
 role_retabli=$(rest "workspace_members?user_id=eq.$BIZDEV_ID&select=role" | jq -r '.[0].role // ""')
 if [ "$role_retabli" = "business_developer" ]; then
-	ok "le seed conserve aussi l'appartenance et rétablit le rôle du compte"
+	ok "le seed rétablit l'appartenance au rôle contractuel"
 else
 	fail "appartenance non rétablie : rôle « ${role_retabli:-aucun} »"
 fi

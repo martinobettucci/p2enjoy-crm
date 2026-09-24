@@ -63,22 +63,38 @@ Les trois rôles de `docs/SPEC-permissions-rls.md` §2.1 sont représentés, un 
 détaillé au §2.11.
 
 **Extension décidée par `CRM-022`.** Les trois profils portent un avatar SVG même origine :
-`/avatars/camille-aubert.svg`, `/avatars/driss-lemoine.svg` et `/avatars/farida-nowak.svg`. La
-valeur converge à la fois dans les métadonnées GoTrue et dans `profiles`, puis est relue. Aucun
+`/avatars/camille-aubert.svg`, `/avatars/driss-lemoine.svg` et `/avatars/farida-nowak.svg`. Aucun
 réseau tiers n'est nécessaire pour prouver le rendu des avatars.
+
+**RÉVISÉ par `CRM-092` T4 (`docs/SPEC-session-sso.md` §11, décision 588).** Le seed ne crée plus aucun
+compte : les trois comptes existent dans le **Keycloak de développement**, préchargé avec leur `sub`
+égal à l'identifiant ci-dessus (`keycloak/realm-lelabs.json`). Le seed inscrit leurs **attentes**, puis
+ouvre la session de chacun par la **vraie connexion** — page du realm, puis échangeur de session : ce
+sont l'échangeur et `ouvrir_session_sso` qui créent profils et appartenances. Chaque personne pose
+ensuite son nom et son avatar par la mise à jour de **son propre** profil, avec son propre jeton.
+S'y ajoute une **attente démontrée** : `attendu@p2enjoy.test`, rôle `viewer`, que LeLabs n'a pas
+vérifié — sa connexion est refusée et l'attente demeure. `inconnu@p2enjoy.test`, attendu par personne,
+ne laisse aucune trace.
 
 ### 2.3 Mot de passe de développement
 
-Les trois comptes partagent le mot de passe **`SeedDev2026Local`** (16 caractères).
+Les trois comptes partagent le mot de passe **`SeedDev2026Local`** (16 caractères). **Depuis
+`CRM-092` T4, c'est celui du Keycloak de DÉVELOPPEMENT** : le CRM ne connaît plus aucun mot de passe,
+et le realm réel refuse ces comptes.
 
-Ce n'est pas un secret : il est publié ici, dans `README.md` et dans le script lui-même. C'est
+Sa **seule source** est `keycloak/realm-lelabs.json`, qui le pose aux comptes du realm :
+`./runDev.sh` le lit là pour le rappeler au démarrage, et `scripts/verify-scripts.sh` vérifie qu'aucun
+script de lancement ne le recopie et que tous les comptes du realm portent le même. `scripts/lib/sso.sh`
+et `e2e/api/sso.ts` le reprennent comme valeur par défaut de la connexion des preuves.
+
+Ce n'est pas un secret : il est publié ici, dans `README.md` et dans le realm lui-même. C'est
 précisément ce qui le rend acceptable — il ne prétend pas protéger quoi que ce soit, et le §1
 interdit au seed de s'appliquer ailleurs qu'en développement. `CLAUDE.md` §3 interdit de versionner
 un secret **réel** ; un identifiant de démonstration destiné à une base jetable n'en est pas un, et
 `README.md` §11 l'annonçait déjà.
 
-Sa longueur satisfait `PASSWORD_MIN_LENGTH=12` (`docs/SPEC-auth.md` §4) — **volontairement**, et
-non parce que l'API l'imposerait : la mesure du §3.5 établit qu'elle ne l'impose pas sur ce chemin.
+~~Sa longueur satisfait `PASSWORD_MIN_LENGTH=12` (`docs/SPEC-auth.md` §4).~~ Sans objet depuis
+`CRM-092` T4 : cette politique était celle de GoTrue, qui ne porte plus aucun compte du seed.
 
 ### 2.4 Domaine des adresses
 
@@ -113,7 +129,12 @@ pas cassé (`e2e/ui/objectifs.spec.ts`, tranche 2 h).
 
 ## 3. Mécanismes employés, et ce qui a été mesuré
 
-### 3.1 Les comptes naissent de l'API d'administration GoTrue
+### 3.1 Les comptes naissent de l'API d'administration GoTrue — REMPLACÉ par `CRM-092` T4
+
+**Depuis `CRM-092` T4, ce paragraphe décrit un mécanisme retiré.** Les comptes existent dans le Keycloak
+de développement ; profils et appartenances naissent de la vraie connexion, qui consomme les attentes
+(§2.2, `docs/SPEC-session-sso.md` §6 et §11). Le texte ci-dessous est conservé pour l'histoire des
+mesures, jusqu'au retrait de GoTrue (T6).
 
 `POST /auth/v1/admin/users`, avec la clé de service. Trois faits mesurés :
 
@@ -165,7 +186,7 @@ Le seed converge donc `public.profiles` **explicitement**, par `PATCH /rest/v1/p
 efficace avec la clé de service. Les deux voies restent des mécanismes réels du produit ; aucune ne
 passe par `psql`.
 
-### 3.5 L'API d'administration n'applique pas la politique de mot de passe
+### 3.5 L'API d'administration n'applique pas la politique de mot de passe — SANS OBJET depuis `CRM-092` T4
 
 Mesuré, et contraire à `docs/SPEC-auth.md` §4, qui énonce la politique sans réserve :
 
@@ -254,12 +275,12 @@ Exécutées **hors interface**, contre l'API réelle, par `scripts/verify-seed.s
 | # | Scénario | Attendu |
 |---|---|---|
 | 1 | Le workspace existe, avec l'identifiant, le nom, le slug et le domaine du §2.1 | Conforme |
-| 2 | Les trois comptes existent, avec les identifiants **fixes** du §2.2 | Conforme |
-| 3 | Les trois profils existent, avec nom, langue et avatar attendus dans `profiles` et GoTrue | Conforme |
+| 2 | Les trois comptes du Keycloak de développement portent les `sub` **fixes** du §2.2 *(révisée par `CRM-092` T4)* | Conforme |
+| 3 | Les trois profils existent, avec nom, langue et avatar attendus ; l'attente d'`attendu@` est en place, `inconnu@` n'a aucun profil *(révisée par `CRM-092` T4)* | Conforme |
 | 4 | Les trois appartenances existent, avec les rôles attendus, et **aucune autre** | Conforme |
-| 5 | Chacun des trois comptes **se connecte réellement** avec le mot de passe publié | `200`, jeton émis |
+| 5 | Chacun des trois comptes **se connecte réellement** par LeLabs — page du realm, puis échangeur *(révisée par `CRM-092` T4)* | jeton interne émis |
 | 6 | Le jeton obtenu porte le `sub` égal à l'identifiant fixe du compte | Conforme |
-| 7 | Le mot de passe du seed satisfait `PASSWORD_MIN_LENGTH` | Longueur ≥ réglage appliqué au conteneur |
+| 7 | ~~Le mot de passe du seed satisfait `PASSWORD_MIN_LENGTH`~~ — **retirée avec son objet** par `CRM-092` T4 : le CRM ne connaît plus de mot de passe | — |
 | 8 | Le seed est **rejouable** : second passage sans erreur | Aucune ligne dupliquée, identifiants inchangés |
 | 9 | Une dérive est **rattrapée** : nom de profil et rôle modifiés à la main, seed rejoué | Valeurs du contrat rétablies |
 | 10 | Le refus par défaut tient toujours : anonyme sur les cinq tables du socle | `200` et zéro ligne |
@@ -267,7 +288,9 @@ Exécutées **hors interface**, contre l'API réelle, par `scripts/verify-seed.s
 | 12 | Le seed **refuse** un profil d'environnement autre que `dev` | Sortie non nulle, aucune écriture |
 
 Le harnais doit être **non complaisant** : sa sévérité est éprouvée en faussant réellement le seed
-— nom, rôle et mot de passe modifiés — et en exigeant qu'il échoue, puis qu'il rétablisse l'état.
+— nom et rôle modifiés, puis, depuis `CRM-092` T4, l'**appartenance retirée** : la connexion doit alors
+être refusée, et le seed doit la rétablir par une attente que la vraie connexion consomme — et en
+exigeant qu'il échoue, puis qu'il rétablisse l'état.
 
 La preuve n° 11 a été retournée par `CRM-022` : le seed ne pose toujours aucune politique, mais la
 migration consent désormais les identités d'une même équipe. Le harnais exige les volumes exacts,

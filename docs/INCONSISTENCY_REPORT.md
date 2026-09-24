@@ -6555,3 +6555,57 @@ connectent, lisent l'écran et comptent ses sections ; c'est le compte qui diff�
 la translation sur le jour du fuseau que l'écran emploie, ou faire rendre à l'écran le jour que la base
 emploie. Les deux touchent une règle de `docs/SPEC-cards.md` §17 et du seed, hors de la tâche en cours.
 **Unité due : `CRM-061`.**
+
+### INC-249 — l'admission sollicite bien la garde du dernier administrateur : une attente non administratrice dans un espace VIDE rend `service_indisponible`
+
+*Mesurée le 2026-09-24 en portant `scripts/verify-migrations.sh` sur le SSO (`CRM-092` T4).*
+
+**Ce que la spécification affirme.** `docs/SPEC-session-sso.md` §6.2 : « L'invariant du dernier
+administrateur (`docs/SPEC-identite.md` §5) n'est jamais sollicité : la fonction n'insère que. »
+
+**Ce qui est mesuré.** Un espace sans aucun membre, une seule attente `viewer`, puis la connexion de la
+personne attendue : `public.ouvrir_session_sso` échoue sur `last_workspace_admin` — « La première
+appartenance d'un workspace doit être administratrice » — levé par `app.workspace_members_garder_admin`.
+L'échangeur, qui voit l'appel de la base échouer, rend `502 service_indisponible`. L'INSERTION suffit à
+solliciter la garde, dès qu'elle serait la première de l'espace.
+
+**Portée.** Un espace vide n'existe que par un geste d'exploitation : `amorcer-espace.sh` inscrit une
+attente **administratrice**, et le seed une appartenance administratrice avant toute autre. Aucun
+parcours du produit n'y mène aujourd'hui. Mais la conséquence est large quand il se produit : l'échec
+porte sur TOUTE la connexion, y compris les attentes d'autres espaces de la même personne, et le message
+dit « service indisponible » là où la cause est une configuration de l'espace.
+
+**Comportement inchangé** (`CLAUDE.md` §5). Deux voies à arbitrer : refuser l'inscription d'une attente
+non administratrice dans un espace sans administrateur (contrainte au moment de l'inscription), ou faire
+ignorer par l'admission l'attente qui violerait la garde en la laissant en place. La preuve de
+`verify-migrations.sh` inscrit désormais une attente administratrice. **Unités concernées : `CRM-092`
+(spécification §6.2 à corriger) et `CRM-070` (l'écran d'inscription).**
+
+### INC-250 — `verify-droits-fins.sh` attend que le rejeu isolé de `0010` ne fasse dériver QUE `pol:tracks_lecture_membre` ; `0063` a depuis redéfini deux de ses fonctions
+
+*Mesurée le 2026-09-24 en rejouant `scripts/verify-droits-fins.sh` pour `CRM-092` T4 (1383 s, 38 contrôles,
+2 en échec).*
+
+**Ce que le harnais affirme.** Son §2 rejoue `0010_droits_fins.sql` SEULE et exige que l'empreinte ne
+dérive que sur `pol:tracks_lecture_membre`, dont `0034_lecture_track_transitive.sql` est devenue la
+dernière autorité (INC-213, révision `16e5393a` du 2026-08-25). Toute autre dérive est déclarée « fait
+neuf ».
+
+**Ce qui est mesuré.** Le rejeu isolé fait dériver « `fn:can_read_channel,fn:resolve_channel_access,
+pol:tracks_lecture_membre` ». `0063_mentions_commentaires.sql` (`CRM-064`, 2026-08-26) redéfinit
+`app.resolve_channel_access` et `app.can_read_channel` en les appuyant sur leurs variantes `_pour` : la
+`0010` n'est donc plus la dernière autorité sur ces deux fonctions non plus, et les réappliquer seules les
+ramène à leur corps d'origine. Le rejeu COMPLET du répertoire rend l'empreinte à l'octet près (contrôle
+vert du même §2), et la restauration du §7 est constatée : le produit n'est pas en cause, seul le relevé
+attendu est périmé. Aucune migration de `CRM-092` (`0074` à `0076`) ne touche ces fonctions ; la série du
+2026-08-29 n'avait pas pu le voir, `verify-droits-fins` y ayant été interrompu au plafond de 900 s.
+
+**Même famille qu'INC-142 et INC-213** — un harnais rejoue une migration que d'autres ont depuis
+dépassée. Le second échec du même rapport, `verify-tracks.sh --rapide` en non-régression, était en
+revanche imputable à `CRM-092` : `npm run typecheck` rougissait sur le témoin de types, que `0076` avait
+laissé périmé ; il est corrigé dans T4.
+
+**Comportement inchangé** (`CLAUDE.md` §5). La révision attendue est d'accepter les trois éléments
+nommés — et de le justifier par `0063` dans le harnais —, ou de faire rejouer au §2 la chaîne
+`0010` → `0034` → `0063`. Elle relève de la tenue des harnais, hors de la tranche en cours. **Unités
+concernées : `CRM-008` (harnais des droits fins) et `CRM-064` (auteur de `0063`).**

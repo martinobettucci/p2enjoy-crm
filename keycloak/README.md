@@ -52,8 +52,9 @@ d'adresse exigée. La version de l'image est celle du SSO réel, `26.7.3`.
 | `adresse-non-verifiee@` | `5eed…0016` | **non** | non | non | le refus d'une adresse non prouvée ; la preuve lève le temps d'un jeton l'exigence de vérification du realm |
 
 Le domaine est `MAIL_DEV_PERSONAL_DOMAIN`, substitué à l'import : ce sont les adresses du seed.
-Chaque compte porte `default-roles-lelabs`. « Attendu par le seed » décrit l'état que le seed pose à
-partir de la tranche T4 de `CRM-092`.
+Chaque compte porte `default-roles-lelabs`. « Attendu par le seed » décrit l'état que le seed pose
+depuis la tranche T4 de `CRM-092` : une attente, consommée à la première connexion — sauf celle
+d'`attendu@`, que LeLabs n'a pas vérifié.
 
 ## L'émetteur
 

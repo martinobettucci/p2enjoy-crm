@@ -2,6 +2,8 @@
 // @verifies docs/SPEC-mail-subsystem.md §14.4 (le test n'envoie aucun message), §14.5 (le délai
 //           de pénalité mesuré), §13.7 (le code, jamais la phrase du serveur)
 // @verifies docs/JOURNAL.md décision 318 ; CLAUDE.md §8 (aucune trace fabriquée)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — tranche T4 : le jeton de
+//           l'administratrice par la vraie connexion LeLabs, plus par GoTrue
 //
 // Rien n'est substitué : le service ouvre de vraies sessions SMTP vers le Stalwart de `CRM-050`,
 // et chaque assertion RELIT la base. Le seed est rendu intact par les `finally`.
@@ -9,7 +11,7 @@
 import { execFileSync } from 'node:child_process'
 import { expect, test } from '@playwright/test'
 import { lireEnv, urlApi } from '../env'
-import { CLE_ANONYME, MOT_DE_PASSE_SEED, enTetesService } from '../api/jetons'
+import { CLE_ANONYME, MOT_DE_PASSE_SEED, enTetesService, jetonDe } from '../api/jetons'
 
 const CONTENEUR = 'p2enjoy-mail-sync'
 const IMAGE_APPELANTE = 'python:3.13.13-slim-bookworm'
@@ -100,16 +102,11 @@ async function lireIdentite(
 	return lignes[0] as IdentiteEnBase
 }
 
+/** `CRM-092` T4 : le jeton interne de l'administratrice, par la vraie connexion LeLabs. */
 async function jetonAdministratrice(
-	request: import('@playwright/test').APIRequestContext,
+	_request: import('@playwright/test').APIRequestContext,
 ): Promise<string> {
-	const reponse = await request.post(`${URL_API}/auth/v1/token?grant_type=password`, {
-		headers: { apikey: CLE_ANONYME, 'Content-Type': 'application/json' },
-		data: { email: 'admin@p2enjoy.test', password: MOT_DE_PASSE_SEED },
-	})
-	const corps = (await reponse.json()) as { access_token?: string }
-	expect(corps.access_token).toBeTruthy()
-	return corps.access_token as string
+	return jetonDe('admin@p2enjoy.test')
 }
 
 async function ecrire(

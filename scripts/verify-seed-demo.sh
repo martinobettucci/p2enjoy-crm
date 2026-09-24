@@ -8,6 +8,8 @@
 # @verifies docs/SPEC-permissions-rls.md §3 ligne f (channel rouvert sous un track fermé)
 # @verifies docs/INCONSISTENCY_REPORT.md INC-046 (non levée), INC-037 (close par CRM-018),
 #           INC-075 (droit sans chemin de navigation)
+# @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — tranche T4 : jetons par la vraie
+#           connexion LeLabs et l'échangeur de session, plus par GoTrue
 #
 # Rejoue les quatorze preuves du §9.9 de `docs/SPEC-seed.md`, **hors interface**, contre l'API
 # réelle et la base réelle.
@@ -55,6 +57,10 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+
+# shellcheck source=scripts/lib/sso.sh
+source scripts/lib/sso.sh
+sso_env_charger .env
 
 SEED=supabase/seed/apply-seed.sh
 DB_CONTAINER=p2enjoy-db
@@ -150,11 +156,11 @@ lire() {
 	curl -s "$API$chemin" -H "apikey: $ANON_KEY" -H "Authorization: Bearer $jeton"
 }
 
+# `CRM-092` T4 (docs/SPEC-session-sso.md §13) : le jeton est le jeton INTERNE, obtenu par la vraie
+# connexion LeLabs et l'échangeur de session (`scripts/lib/sso.sh`), comme celui de la webapp. Il vit
+# 300 s au plus ; une connexion refusée rend un jeton vide, que l'appelant constate.
 jeton_de() {
-	curl -s -X POST "$API/auth/v1/token?grant_type=password" \
-		-H "apikey: $ANON_KEY" -H 'Content-Type: application/json' \
-		-d "$(jq -nc --arg m "$1@p2enjoy.test" --arg p 'SeedDev2026Local' '{email: $m, password: $p}')" \
-		| jq -r '.access_token // empty'
+	sso_jeton_interne "$API" "$ANON_KEY" "$1@p2enjoy.test" 2>/dev/null || true
 }
 
 # ---------------------------------------------------------------------------------------------

@@ -1,28 +1,27 @@
 #!/usr/bin/env bash
 # @spec CRM-090 (docs/BACKLOG.md) — amorçage du premier espace de travail et de son administrateur
+# @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §6.3 (qui inscrit une attente), §12 (point 6)
+#       — tranche T4 : plus aucun compte n'est créé ; une ATTENTE administratrice est inscrite
 # @spec docs/SPEC-deploiement-spark.md §6 (ce qui n'appartient pas au dépôt), §7 (vérifications)
 # @spec docs/PROD_MIGRATIONS.md §2.4 (étape 8), §7 (opération d'exploitation encadrée)
-# @spec docs/SPEC-auth.md §3.2 (invitation), §10.6 (une invitation s'accepte par le SSO)
-# @spec docs/JOURNAL.md décisions 265 (chemin d'administration encadré) et 573
+# @spec docs/JOURNAL.md décisions 265 (chemin d'administration encadré), 573, 579 (admission) et 587
 #
 # S'exécute DANS la cellule, sous `spark-docker`, la pile démarrée. Opération d'EXPLOITATION : elle
 # écrit en production et suppose une instruction humaine explicite, dont elle ne dispense pas.
 #
-# Un espace de travail naît sans aucun écran : ce script en pose le premier, et son administrateur.
-#   1. le compte est créé INVITÉ, sans mot de passe, par `POST /auth/v1/admin/generate_link` de type
-#      `invite` — mesuré : le compte naît avec `invited_at` et SANS courriel envoyé. Le chemin qui
-#      contourne la politique de mot de passe (décision 265) n'est donc pas emprunté : aucun mot de
-#      passe n'existe. Le lien d'action rendu est une crédentielle : il n'est ni affiché, ni écrit ;
-#   2. la personne accepte l'invitation en se connectant avec LeLabs à la même adresse, vérifiée
-#      (docs/SPEC-auth.md §10.6, mesure M6) — ou, si le relais SMTP est en place, par une
-#      réinitialisation de mot de passe ;
-#   3. l'espace est créé s'il manque, désigné par son identifiant court ;
-#   4. l'appartenance `admin` est posée, ou rétablie.
+# Un espace de travail naît sans aucun écran : ce script en pose le premier, et ATTEND son
+# administrateur. Depuis `CRM-092`, le CRM ne crée aucune identité : le compte existe chez LeLabs.
+#   1. l'espace est créé s'il manque, désigné par son identifiant court ;
+#   2. s'il n'a encore aucun administrateur, une ATTENTE `admin` est inscrite à l'adresse donnée
+#      (`workspace_invitations`). La personne devient administratrice à sa première connexion
+#      LeLabs — adresse vérifiée ET rôle `verified` (docs/SPEC-session-sso.md §6) ;
+#   3. un espace qui a déjà un administrateur n'est pas touché : l'amorçage est fait, et inscrire les
+#      personnes suivantes appartient à un administrateur de l'espace (`CRM-070`).
 # Chaque étape est idempotente : relancer le script ne crée rien deux fois.
 #
 # Usage :
 #   scripts/spark/amorcer-espace.sh --email <adresse> --espace "<nom>" --slug <identifiant>
-#                                   [--nom "<nom affiché>"] [--domaine-entrant <domaine>]
+#                                   [--domaine-entrant <domaine>]
 #   scripts/spark/amorcer-espace.sh --help
 #
 # Variables, pour les preuves seulement :
@@ -37,7 +36,6 @@ source "$(dirname "${BASH_SOURCE[0]}")/../lib/env.sh"
 EMAIL=""
 ESPACE=""
 SLUG=""
-NOM=""
 DOMAINE=""
 
 usage() { print_header_help "${BASH_SOURCE[0]}"; }
@@ -47,7 +45,6 @@ while [ $# -gt 0 ]; do
 		--email)           EMAIL=${2:?--email exige une valeur}; shift ;;
 		--espace)          ESPACE=${2:?--espace exige une valeur}; shift ;;
 		--slug)            SLUG=${2:?--slug exige une valeur}; shift ;;
-		--nom)             NOM=${2:?--nom exige une valeur}; shift ;;
 		--domaine-entrant) DOMAINE=${2:?--domaine-entrant exige une valeur}; shift ;;
 		--help|-h)         usage; exit 0 ;;
 		*)                 die "option inconnue « $1 ». Voir scripts/spark/amorcer-espace.sh --help." ;;
@@ -57,6 +54,8 @@ done
 
 [ -n "$EMAIL" ] && [ -n "$ESPACE" ] && [ -n "$SLUG" ] || die "--email, --espace et --slug sont obligatoires."
 case "$EMAIL" in *@*.*) ;; *) die "adresse « $EMAIL » hors forme." ;; esac
+# L'attente porte l'adresse sous sa forme normalisée, celle que la base exige (docs/SCHEMA.md §1).
+EMAIL=$(printf '%s' "$EMAIL" | tr '[:upper:]' '[:lower:]')
 case "$SLUG" in *[!a-z0-9-]* | -* | *-) die "identifiant court « $SLUG » : minuscules, chiffres et tirets." ;; esac
 command -v python3 >/dev/null 2>&1 || die "python3 est requis (la cellule n'a pas jq)."
 
@@ -86,29 +85,10 @@ appel() {
 champ() { python3 -c "import json,sys; d=json.load(open(sys.argv[1])); print($1)" "$REPONSE"; }
 json() { python3 -c 'import json,sys; print(json.dumps(dict(zip(sys.argv[1::2], sys.argv[2::2]))))' "$@"; }
 
-say "Amorçage de l'espace « $ESPACE » ($SLUG) — administrateur $EMAIL"
+say "Amorçage de l'espace « $ESPACE » ($SLUG) — administrateur attendu : $EMAIL"
 info "API : $API"
 
-# --- 1. Le compte ---------------------------------------------------------------------------------
-
-code=$(appel GET "/auth/v1/admin/users?per_page=1000")
-[ "$code" = 200 ] || die "lecture des comptes refusée (HTTP $code)."
-UTILISATEUR=$(python3 -c "import json,sys; d=json.load(open(sys.argv[1])); print(next((u['id'] for u in d.get('users', []) if u.get('email') == sys.argv[2]), ''))" "$REPONSE" "$EMAIL")
-
-if [ -n "$UTILISATEUR" ]; then
-	info "compte déjà présent : $UTILISATEUR"
-else
-	donnees=$(json full_name "${NOM:-${EMAIL%%@*}}")
-	corps=$(python3 -c 'import json,sys; print(json.dumps({"type": "invite", "email": sys.argv[1], "data": json.loads(sys.argv[2])}))' "$EMAIL" "$donnees")
-	code=$(appel POST /auth/v1/admin/generate_link "$corps")
-	[ "$code" = 200 ] || die "création du compte invité refusée (HTTP $code)."
-	UTILISATEUR=$(champ "d['id']")
-	# Le lien d'action est une crédentielle : effacé du fichier avant toute autre lecture.
-	: > "$REPONSE"
-	info "compte invité créé, sans courriel envoyé : $UTILISATEUR"
-fi
-
-# --- 2. L'espace ------------------------------------------------------------------------------------
+# --- 1. L'espace ------------------------------------------------------------------------------------
 
 code=$(appel GET "/rest/v1/workspaces?slug=eq.$SLUG&select=id,name")
 [ "$code" = 200 ] || die "lecture des espaces refusée (HTTP $code)."
@@ -123,18 +103,29 @@ else
 	info "espace créé : $ESPACE_ID"
 fi
 
-# --- 3. L'appartenance --------------------------------------------------------------------------------
+# --- 2. L'administrateur, attendu ---------------------------------------------------------------------
 #
-# Upsert natif de PostgREST, mesuré comme tel par le seed (décision 34) : une appartenance existante
-# est RÉTABLIE à `admin`, jamais dupliquée.
+# Un espace qui a déjà un administrateur est amorcé : rien n'est inscrit. Sinon, l'attente `admin` est
+# posée par l'upsert natif de PostgREST, mesuré comme tel par le seed (décision 34) — relancer le
+# script la rétablit, sans la dupliquer. Elle doit être ADMINISTRATRICE : la première appartenance
+# d'un espace l'est, et la garde du dernier administrateur refuserait toute autre (INC-249).
 
-corps=$(json workspace_id "$ESPACE_ID" user_id "$UTILISATEUR" role admin)
-code=$(curl -sS -o "$REPONSE" -w '%{http_code}' -X POST "$API/rest/v1/workspace_members" \
+code=$(appel GET "/rest/v1/workspace_members?workspace_id=eq.$ESPACE_ID&role=eq.admin&select=user_id")
+[ "$code" = 200 ] || die "lecture des administrateurs refusée (HTTP $code)."
+if [ "$(champ "len(d)")" != 0 ]; then
+	info "espace déjà amorcé : il a un administrateur ; aucune attente n'est inscrite"
+	echo
+	say "Rien à faire — inscrire d'autres personnes appartient à un administrateur de l'espace"
+	exit 0
+fi
+
+corps=$(json workspace_id "$ESPACE_ID" email "$EMAIL" role admin)
+code=$(curl -sS -o "$REPONSE" -w '%{http_code}' -X POST "$API/rest/v1/workspace_invitations" \
 	-H "apikey: $SERVICE" -H "Authorization: Bearer $SERVICE" -H 'Content-Type: application/json' \
 	-H 'Prefer: return=representation,resolution=merge-duplicates' -d "$corps")
-case "$code" in 200|201) ;; *) die "appartenance administrateur refusée (HTTP $code)." ;; esac
-info "appartenance : $EMAIL est administrateur de « $ESPACE »"
+case "$code" in 200|201) ;; *) die "attente administratrice refusée (HTTP $code)." ;; esac
+info "attente inscrite : $EMAIL deviendra administrateur de « $ESPACE » à sa première connexion"
 
 echo
 say "Amorçage terminé — à consigner dans docs/PROD_MIGRATIONS.md §8 (date, motif, adresse)"
-info "La personne se connecte avec LeLabs à $EMAIL, adresse vérifiée : l'invitation est acceptée."
+info "La personne se connecte avec LeLabs à $EMAIL : adresse vérifiée et rôle « verified » exigés."

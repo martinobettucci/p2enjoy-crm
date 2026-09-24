@@ -290,6 +290,8 @@ env_ensure_dev_completions() {
 # --- Identifiants de développement ----------------------------------------------------------------
 #
 # @spec CRM-002 (docs/BACKLOG.md) — rappel des comptes de démonstration au démarrage
+# @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §10, §11 — tranche T4 : le mot de passe
+#       est celui du realm de développement, et la webapp n'en a plus
 # @spec docs/SPEC-seed.md §2 (comptes du seed socle), docs/SPEC-mail-subsystem.md §11.4 (boîtes)
 # @spec README.md §6 (développement), §8 (données de développement)
 #
@@ -298,10 +300,11 @@ env_ensure_dev_completions() {
 # a déjà exigé le profil `dev`. Le rendu vit ici, et non dans `runDev.sh`, pour être exercé sans
 # démarrer la pile.
 
-# Mot de passe des comptes seedés, lu dans le script de seed — seule source de vérité. Le recopier
-# ici en ferait une copie de plus, muette le jour où elle divergerait.
+# Mot de passe des comptes de démonstration, lu dans le realm de développement — seule source de
+# vérité depuis `CRM-092` T4 : c'est lui que Keycloak pose, et le CRM n'en connaît plus aucun. Le
+# recopier ici en ferait une copie de plus, muette le jour où elle divergerait.
 env_seed_password() {
-	sed -n "s/^SEED_PASSWORD='\(.*\)'\$/\1/p" "$REPO_ROOT/supabase/seed/apply-seed.sh" | head -1
+	sed -n 's/^ *"value": "\(.*\)",\{0,1\}$/\1/p' "$REPO_ROOT/keycloak/realm-lelabs.json" | head -1
 }
 
 # Les adresses n'ont pas toutes la même longueur : la colonne est posée, pas devinée.
@@ -319,7 +322,8 @@ env_print_dev_credentials() {
 	warn "Secrets de développement, affichés à dessein : ne les recopiez pas hors de ce poste."
 
 	echo
-	info "Webapp et API — mot de passe commun « ${mdp_seed:-<seed introuvable>} »"
+	# `CRM-092` T4 : la webapp n'a plus de mot de passe ; on s'y connecte avec LeLabs (bloc suivant).
+	info "Webapp — « Se connecter avec LeLabs », puis l'un des comptes de l'espace de démonstration"
 	env_credential_line "admin@${domaine_perso}"  "Camille Aubert — administrateur"
 	env_credential_line "bizdev@${domaine_perso}" "Driss Lemoine — business developer"
 	env_credential_line "viewer@${domaine_perso}" "Farida Nowak — lecteur seul"
@@ -332,9 +336,9 @@ env_print_dev_credentials() {
 	info "  Farida Nowak n'a pas de boîte : un lecteur ne correspond pas (décision 239)."
 
 	echo
-	# Realm préchargé de `CRM-092` T2 (docs/SPEC-session-sso.md §10) : mêmes adresses et même mot de
-	# passe que le seed, `sub` égaux à ses identifiants stables.
-	info "LeLabs de développement (SSO) — mot de passe commun « ${mdp_seed:-<seed introuvable>} »"
+	# Realm préchargé de `CRM-092` T2 (docs/SPEC-session-sso.md §10) : mêmes adresses que le seed,
+	# `sub` égaux à ses identifiants stables ; son mot de passe est le seul que la pile connaisse.
+	info "LeLabs de développement (SSO) — mot de passe commun « ${mdp_seed:-<realm introuvable>} »"
 	env_credential_line "admin@${domaine_perso}"  "verified — Camille Aubert, administratrice"
 	env_credential_line "bizdev@${domaine_perso}" "verified — Driss Lemoine, business developer"
 	env_credential_line "viewer@${domaine_perso}" "verified + admin du realm — reste lectrice dans le CRM"

@@ -5,6 +5,8 @@
 //            §26.1 (le compteur sans corps), §26.5 (la borne), §31 (preuves attendues)
 // @verifies docs/SPEC-notifications.md §21 (M4, M5, M8, M9, M13) ; §16.1 (la politique de lecture)
 // @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface, avec le jeton réel)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §8.4 (K18), §13 — tranche T4 : le
+//           temps réel s'ouvre avec le jeton interne de la vraie connexion LeLabs, plus avec GoTrue
 //
 // LES SEIZE LIGNES DU §17 NE SONT PAS REJOUÉES ICI : `notifications.spec.ts` les tient, et la
 // tranche 3a ne change AUCUNE règle de la table. Ce fichier éprouve ce que la tranche AJOUTE — la
@@ -166,12 +168,10 @@ test.describe('La publication au temps réel — §25.1', () => {
 		// publication qui soit atteignable depuis ce projet, et c'est la SEULE qui compte — une
 		// table publiée dont rien ne sort ne servirait à rien. La preuve directe de la ligne de
 		// `pg_publication_tables` vit dans `0062_notifications.test.sql`, assertion 40.
-		const client = createClient(URL_API, CLE_ANONYME)
-		const { error } = await client.auth.signInWithPassword({
-			email: 'bizdev@p2enjoy.test',
-			password: 'SeedDev2026Local',
-		})
-		expect(error).toBeNull()
+		// `CRM-092` T4 : le jeton interne de la vraie connexion LeLabs, poussé au temps réel (K18).
+		const jeton = await jetonDe('bizdev@p2enjoy.test')
+		const client = createClient(URL_API, CLE_ANONYME, { accessToken: async () => jeton })
+		await client.realtime.setAuth()
 		const canal = client.channel('preuve-publication').on(
 			'postgres_changes',
 			{ event: '*', schema: 'public', table: 'notifications' },
@@ -188,7 +188,6 @@ test.describe('La publication au temps réel — §25.1', () => {
 		// distingue d'un défaut de délivrance.
 		expect(statut).toBe('SUBSCRIBED')
 		await client.removeAllChannels()
-		await client.auth.signOut()
 		void request
 	})
 })
@@ -200,12 +199,11 @@ test.describe('La publication au temps réel — §25.1', () => {
  * plutôt que réécrit, deux ouvertures du même canal divergeant au premier ajustement.
  */
 async function abonne(adresse: string, filtre?: string) {
-	const client = createClient(URL_API, CLE_ANONYME)
-	const { error } = await client.auth.signInWithPassword({
-		email: adresse,
-		password: 'SeedDev2026Local',
-	})
-	if (error) throw error
+	// `CRM-092` T4 : même ouverture que `abonne` de `commentaires.spec.ts` — le jeton interne de la
+	// vraie connexion LeLabs, poussé au temps réel avant l'abonnement (K18).
+	const jeton = await jetonDe(adresse)
+	const client = createClient(URL_API, CLE_ANONYME, { accessToken: async () => jeton })
+	await client.realtime.setAuth()
 
 	const recues: { new: Record<string, unknown> }[] = []
 	const canal = client
@@ -232,7 +230,6 @@ async function abonne(adresse: string, filtre?: string) {
 		recues,
 		fermer: async () => {
 			await client.removeAllChannels()
-			await client.auth.signOut()
 		},
 	}
 }

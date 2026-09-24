@@ -34,6 +34,9 @@ cd "$(dirname "$0")/.."
 
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
+# shellcheck source=scripts/lib/sso.sh
+source scripts/lib/sso.sh
+sso_env_charger .env
 node_toolchain_prepare "$PWD/.nvmrc" || exit 1
 
 DB_CONTAINER=p2enjoy-db
@@ -337,12 +340,10 @@ else
 	fail "clé anonyme : attendu 200 et [], obtenu $reponse_anon et $corps_anon"
 fi
 
-jeton=$(curl -s -X POST "$BASE_API/auth/v1/token?grant_type=password" \
-	-H "apikey: $ANON_KEY" -H 'Content-Type: application/json' \
-	-d "{\"email\":\"$COMPTE_SEED\",\"password\":\"$MOT_DE_PASSE_SEED\"}" \
-	| python3 -c 'import sys, json; print(json.load(sys.stdin).get("access_token", ""))')
+# `CRM-092` T4 : le jeton INTERNE, par la vraie connexion LeLabs et l'échangeur de session.
+jeton=$(sso_jeton_interne "$BASE_API" "$ANON_KEY" "$COMPTE_SEED" 2>/dev/null || true)
 if [ -n "$jeton" ]; then
-	ok "jeton réel obtenu par la véritable route de connexion pour $COMPTE_SEED"
+	ok "jeton interne obtenu par la vraie connexion LeLabs pour $COMPTE_SEED"
 else
 	fail "connexion impossible pour $COMPTE_SEED : le seed est-il appliqué ?"
 fi

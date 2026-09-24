@@ -13,7 +13,7 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-092` — Le SSO, seule source d'identité (en cours : tranches T1, T2, T3, T3 bis et T5 livrées)
+### `CRM-092` — Le SSO, seule source d'identité (en cours : tranches T1, T2, T3, T3 bis, T5 et T4 livrées)
 
 Décision du responsable (décisions 578 et 579) : le SSO LeLabs devient la **seule** source d'identité
 du CRM, en développement comme en production ; GoTrue et la connexion par mot de passe quittent la
@@ -30,6 +30,14 @@ pile. Contrat : `docs/SPEC-session-sso.md`.
   appartenance à l'espace — ferme l'accès au plus tard cinq minutes après. Une session close chez
   LeLabs ramène à l'écran de connexion, qui dit pourquoi. « Se déconnecter » ferme la session du CRM,
   pas celle de LeLabs.
+- **Le jeu de démonstration naît par LeLabs** (tranche T4). Le seed ne crée plus de compte : il inscrit
+  les personnes attendues par l'espace et les connecte par la vraie connexion LeLabs ; l'attente
+  d'`attendu@`, que LeLabs n'a pas vérifié, reste en place. Les preuves obtiennent leurs jetons de la
+  même façon, et créent leurs personnes de passage dans le LeLabs de développement. Au démarrage,
+  `./runDev.sh` ne rappelle plus de mot de passe pour la webapp : seul celui du LeLabs de
+  développement existe, lu dans son realm.
+- **L'amorçage d'un espace de production n'inscrit plus qu'une attente** administratrice : la personne
+  devient administratrice à sa première connexion LeLabs.
 - **Plus aucun jeton sur l'appareil** (tranche T3 bis, décision 586) : le CRM est un client
   **confidentiel** de LeLabs. Le navigateur remet le code de connexion à l'échangeur de session, qui
   l'échange avec le secret du client, garde le jeton de rafraîchissement **chiffré** en base

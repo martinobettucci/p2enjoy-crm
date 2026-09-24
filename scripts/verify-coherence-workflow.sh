@@ -6,6 +6,8 @@
 # @verifies docs/SPEC-channels.md §2.5 (INC-029 soldée), §8 (seed)
 # @verifies docs/INCONSISTENCY_REPORT.md INC-029 (soldée), INC-040 (portes 3 et 4),
 #           INC-041 (convergence du seed, corrigée ici)
+# @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — tranche T4 : jetons par la vraie
+#           connexion LeLabs et l'échangeur de session, plus par GoTrue
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-033` :
 #
@@ -47,6 +49,9 @@ cd "$(dirname "$0")/.."
 
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
+# shellcheck source=scripts/lib/sso.sh
+source scripts/lib/sso.sh
+sso_env_charger .env
 node_toolchain_prepare "$PWD/.nvmrc" || exit 1
 
 TEST_FILE=supabase/tests/0009_coherence_workflow_channel.test.sql
@@ -62,7 +67,6 @@ CH_PROSPECTION=5eed0000-0000-4000-8000-000000000031
 CH_REFONTE=5eed0000-0000-4000-8000-000000000034
 CH_ACCEPTATION=c0330000-0000-4000-8000-00000000ff02
 MAIL_ADMIN=admin@p2enjoy.test
-MDP_SEED=SeedDev2026Local
 
 RAPIDE=false
 while [ $# -gt 0 ]; do
@@ -114,11 +118,11 @@ http() {
 	curl -s -o "$CORPS" -w '%{http_code}' -X "$method" "$url" "$@"
 }
 
+# `CRM-092` T4 (docs/SPEC-session-sso.md §13) : le jeton est le jeton INTERNE, obtenu par la vraie
+# connexion LeLabs et l'échangeur de session (`scripts/lib/sso.sh`), comme celui de la webapp. Il vit
+# 300 s au plus ; une connexion refusée rend un jeton vide, que l'appelant constate.
 jeton_de() {
-	curl -s -X POST "$API/auth/v1/token?grant_type=password" \
-		-H "apikey: $ANON_KEY" -H 'Content-Type: application/json' \
-		-d "$(jq -nc --arg m "$1" --arg p "$MDP_SEED" '{email: $m, password: $p}')" \
-		| jq -r '.access_token // empty'
+	sso_jeton_interne "$API" "$ANON_KEY" "$1" 2>/dev/null || true
 }
 
 # Le ménage est posé avant toute création : une interruption ne doit jamais laisser un channel de

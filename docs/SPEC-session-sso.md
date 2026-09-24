@@ -301,8 +301,12 @@ Dans une transaction :
 5. rendre `{"admis": <au moins une appartenance>, "espaces": n, "rattachees": m, "nom": <nom du profil ou null>}`.
 
 Deux ouvertures concurrentes de la même personne convergent : la seconde attend les verrous de la
-première sur les attentes, puis n'en trouve plus et lit l'appartenance validée. L'invariant du dernier
-administrateur (`docs/SPEC-identite.md` §5) n'est jamais sollicité : la fonction n'insère que.
+première sur les attentes, puis n'en trouve plus et lit l'appartenance validée. ~~L'invariant du dernier
+administrateur (`docs/SPEC-identite.md` §5) n'est jamais sollicité : la fonction n'insère que.~~
+**Corrigé par la mesure (INC-249, `CRM-092` T4)** : l'insertion le sollicite quand elle serait la
+PREMIÈRE appartenance d'un espace vide et qu'elle n'est pas administratrice — la garde refuse, et
+l'échangeur rend `service_indisponible`. Un espace vide ne naît que par l'exploitation, qui y inscrit
+une attente administratrice (`amorcer-espace.sh`, §12) ; la voie de correction est à arbitrer.
 
 ### 6.3 Qui inscrit une attente
 

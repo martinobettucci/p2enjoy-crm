@@ -13,8 +13,21 @@
 // un jeton LeLabs brut — ce que le produit, lui, ne remet jamais au navigateur.
 
 import { createHash, randomBytes } from 'node:crypto'
-import { lireEnv } from '../env'
-import { CLE_ANONYME, MOT_DE_PASSE_SEED, URL_API } from './jetons'
+import { cleAnonyme, lireEnv, urlApi } from '../env'
+
+// Ce module ne dépend PAS de `jetons.ts`, qui dépend de lui (`jetonDe`) : un cycle d'imports entre
+// modules ESM rend `undefined` une constante lue avant son initialisation (`CRM-092` T4).
+const URL_API = urlApi()
+const CLE_ANONYME = cleAnonyme()
+
+/**
+ * Mot de passe de développement commun aux comptes seedés et au realm de développement.
+ *
+ * Il est publié dans `docs/SPEC-seed.md` §2.3 et `README.md` : ce n'est pas un secret, mais une
+ * donnée de développement sur un domaine `.test`, réservé par la RFC 2606 et non routable. Le realm
+ * réel refuse ces comptes (docs/SPEC-session-sso.md §10).
+ */
+export const MOT_DE_PASSE_SEED = 'SeedDev2026Local'
 
 export const EMETTEUR = lireEnv('SSO_OIDC_ISSUER')
 export const CLIENT = lireEnv('SSO_OIDC_CLIENT_ID')

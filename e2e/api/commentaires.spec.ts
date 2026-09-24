@@ -8,11 +8,13 @@
 // @verifies docs/INCONSISTENCY_REPORT.md INC-071 (le refus opposé au `viewer`), INC-072
 //           (la modération), INC-026 (le refus divulgue la commande `GRANT`)
 // @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface, avec le jeton réel)
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §8.4 (K18), §13 — tranche T4 : le
+//           temps réel s'ouvre avec le jeton interne de la vraie connexion LeLabs, plus avec GoTrue
 //
 // LA QUESTION À LAQUELLE CE FICHIER RÉPOND. La suite pgTAP prouve les mêmes règles **dans la
-// base**, avec `set local role` : elle ne traverse ni PostgREST, ni Kong, ni GoTrue. Un privilège
-// de colonne rendu `403` par la pile, un `USING` qui rend `200` et un corps vide plutôt qu'une
-// erreur, un trigger dont le refus arrive en `400` et non en `403` — rien de cela ne se voit
+// base**, avec `set local role` : elle ne traverse ni PostgREST, ni Kong, ni l'échangeur de session.
+// Un privilège de colonne rendu `403` par la pile, un `USING` qui rend `200` et un corps vide plutôt
+// qu'une erreur, un trigger dont le refus arrive en `400` et non en `403` — rien de cela ne se voit
 // depuis `psql`. Ce fichier rejoue le contrat du §13.8 **par la vraie route**, avec les jetons
 // réels obtenus par la véritable connexion.
 //
@@ -397,12 +399,11 @@ test.describe('Édition et suppression — §13.4, §13.5, INC-072', () => {
 
 /** Ouvre un canal `postgres_changes` et rend les charges reçues. */
 async function abonne(adresse: string, filtre?: string) {
-	const client = createClient(URL_API, CLE_ANONYME)
-	const { error } = await client.auth.signInWithPassword({
-		email: adresse,
-		password: 'SeedDev2026Local',
-	})
-	if (error) throw error
+	// `CRM-092` T4 : le jeton INTERNE de la vraie connexion LeLabs, remis au client comme le fait la
+	// webapp, et poussé au temps réel AVANT l'abonnement (K18, docs/SPEC-session-sso.md §8.4).
+	const jeton = await jetonDe(adresse)
+	const client = createClient(URL_API, CLE_ANONYME, { accessToken: async () => jeton })
+	await client.realtime.setAuth()
 
 	const recues: { new: Record<string, unknown> }[] = []
 	const canal = client
@@ -424,7 +425,6 @@ async function abonne(adresse: string, filtre?: string) {
 		recues,
 		fermer: async () => {
 			await client.removeAllChannels()
-			await client.auth.signOut()
 		},
 	}
 }

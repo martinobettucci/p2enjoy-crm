@@ -651,38 +651,54 @@ echo
 echo "8. scripts/spark/amorcer-espace.sh contre la pile de développement"
 
 API_DEV="http://127.0.0.1:$(env_get "$REPO_ROOT/.env" KONG_HTTP_PORT 2>/dev/null)"
-if [ -f "$REPO_ROOT/.env" ] && curl -sf -o /dev/null "$API_DEV/auth/v1/health" -H "apikey: $(env_get "$REPO_ROOT/.env" ANON_KEY)"; then
+# RÉVISÉE par `CRM-092` T4 (docs/SPEC-session-sso.md §12, point 6) : l'amorçage ne crée plus de compte
+# GoTrue ; il inscrit une ATTENTE administratrice, que la vraie connexion LeLabs consomme. La preuve
+# la mène jusqu'au bout avec un compte jetable du Keycloak de développement.
+# La sonde porte la clé de SERVICE : la racine OpenAPI de PostgREST est refusée à la clé anonyme (403,
+# prouvé par `verify-stack.sh`), et une sonde anonyme conclurait à tort à une pile injoignable.
+SR_POSTE=$( [ -f "$REPO_ROOT/.env" ] && env_get "$REPO_ROOT/.env" SERVICE_ROLE_KEY 2>/dev/null || true)
+if [ -n "$SR_POSTE" ] && curl -sf -o /dev/null "$API_DEV/rest/v1/" -H "apikey: $SR_POSTE" -H "Authorization: Bearer $SR_POSTE"; then
+	# shellcheck source=scripts/lib/sso.sh
+	source "$REPO_ROOT/scripts/lib/sso.sh"
+	sso_env_charger "$REPO_ROOT/.env"
 	E="$WORK/amorcage.env"
 	sed -e 's/^P2ENJOY_ENV_PROFILE=.*/P2ENJOY_ENV_PROFILE=prod/' "$REPO_ROOT/.env" > "$E"
 	SR=$(env_get "$E" SERVICE_ROLE_KEY)
+	ANON_DEV=$(env_get "$E" ANON_KEY)
 	ADRESSE="amorcage-$(gen_hex 4)@exemple.test"
 	SLUG_ESSAI="amorcage-$(gen_hex 4)"
 	amorcer() { P2ENJOY_ENV_FILE=$E P2ENJOY_AMORCAGE_API=$API_DEV "$REPO_ROOT/scripts/spark/amorcer-espace.sh" \
-		--email "$ADRESSE" --espace "Espace d'amorçage" --slug "$SLUG_ESSAI" --nom "Amorçage Preuve" 2>&1; }
+		--email "$ADRESSE" --espace "Espace d'amorçage" --slug "$SLUG_ESSAI" 2>&1; }
 	lire() { curl -s "$API_DEV$1" -H "apikey: $SR" -H "Authorization: Bearer $SR"; }
+	compter() { lire "$1" | python3 -c 'import json,sys; print(len(json.load(sys.stdin)))'; }
+	sub=''
 	if out=$(amorcer); then
 		ok "premier passage abouti"
-		case "$out" in *"compte invité créé"*"espace créé"*"administrateur"*) ok "compte invité, espace et appartenance créés" ;;
+		case "$out" in *"espace créé"*"attente inscrite"*) ok "espace créé, attente administratrice inscrite" ;;
 			*) fail "premier passage incomplet : $(printf '%s' "$out" | tail -n 3 | tr '\n' ' ')" ;; esac
-		case "$out" in *verify*|*token=*|*action_link*) fail "le lien d'action apparaît dans la sortie" ;; *) ok "aucun lien d'action dans la sortie" ;; esac
 		id_ws=$(lire "/rest/v1/workspaces?slug=eq.$SLUG_ESSAI&select=id" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d[0]["id"] if d else "")')
-		id_u=$(lire "/auth/v1/admin/users?per_page=1000" | python3 -c 'import json,sys; print(next((u["id"] for u in json.load(sys.stdin)["users"] if u["email"]==sys.argv[1]), ""))' "$ADRESSE")
-		etat=$(lire "/auth/v1/admin/users/$id_u" | python3 -c 'import json,sys; u=json.load(sys.stdin); print(bool(u.get("invited_at")), u.get("email_confirmed_at") is None)')
-		[ "$etat" = "True True" ] && ok "le compte est INVITÉ, non confirmé : aucun mot de passe n'existe" || fail "état du compte : $etat"
-		role=$(lire "/rest/v1/workspace_members?workspace_id=eq.$id_ws&user_id=eq.$id_u&select=role" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d[0]["role"] if d else "")')
-		[ "$role" = admin ] && ok "appartenance administrateur posée" || fail "appartenance : « $role »"
+		role_attendu=$(lire "/rest/v1/workspace_invitations?workspace_id=eq.$id_ws&email=eq.$ADRESSE&select=role" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d[0]["role"] if d else "")')
+		[ "$role_attendu" = admin ] && [ "$(compter "/rest/v1/workspace_members?workspace_id=eq.$id_ws&select=user_id")" = 0 ] \
+			&& ok "attente admin en place, aucune appartenance avant la connexion : aucune identité n'est créée" \
+			|| fail "attente « $role_attendu », ou une appartenance existe déjà"
+		# La personne existe chez LeLabs — ici, dans le Keycloak de développement — et se connecte.
+		sub=$(sso_compte_jetable_creer "$ADRESSE" 'Amorçage' 'Preuve' || true)
+		jeton=$( [ -n "$sub" ] && sso_jeton_interne "$API_DEV" "$ANON_DEV" "$ADRESSE" 2>/dev/null || true)
+		role=$(lire "/rest/v1/workspace_members?workspace_id=eq.$id_ws&user_id=eq.$sub&select=role" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d[0]["role"] if d else "")')
+		[ -n "$jeton" ] && [ "$role" = admin ] && [ "$(compter "/rest/v1/workspace_invitations?workspace_id=eq.$id_ws&select=email")" = 0 ] \
+			&& ok "la première connexion LeLabs consomme l'attente : administrateur de l'espace" \
+			|| fail "connexion ou appartenance : jeton « ${jeton:+présent} », rôle « $role »"
 		out2=$(amorcer)
-		case "$out2" in *"compte déjà présent"*"espace déjà présent"*) ok "second passage idempotent : rien n'est créé deux fois" ;;
+		case "$out2" in *"espace déjà présent"*"espace déjà amorcé"*) ok "second passage idempotent : l'espace a son administrateur, rien n'est inscrit" ;;
 			*) fail "second passage : $(printf '%s' "$out2" | tail -n 3 | tr '\n' ' ')" ;; esac
-		n=$(lire "/rest/v1/workspace_members?workspace_id=eq.$id_ws&select=user_id" | python3 -c 'import json,sys; print(len(json.load(sys.stdin)))')
-		[ "$n" = 1 ] && ok "une seule appartenance après deux passages" || fail "$n appartenances"
-		curl -s -o /dev/null -X DELETE "$API_DEV/rest/v1/workspace_members?workspace_id=eq.$id_ws" -H "apikey: $SR" -H "Authorization: Bearer $SR"
+		n=$(compter "/rest/v1/workspace_members?workspace_id=eq.$id_ws&select=user_id")
+		m=$(compter "/rest/v1/workspace_invitations?workspace_id=eq.$id_ws&select=email")
+		[ "$n" = 1 ] && [ "$m" = 0 ] && ok "une appartenance, aucune attente après deux passages" || fail "$n appartenances, $m attentes"
 		curl -s -o /dev/null -X DELETE "$API_DEV/rest/v1/workspaces?id=eq.$id_ws" -H "apikey: $SR" -H "Authorization: Bearer $SR"
-		curl -s -o /dev/null -X DELETE "$API_DEV/auth/v1/admin/users/$id_u" -H "apikey: $SR" -H "Authorization: Bearer $SR"
-		# `CRM-092` (décisions 583 et 587) : sans la clé `profiles.id → auth.users`, retirée par 0075, le
-		# profil ne suit plus le compte. La preuve retire le sien, faute de quoi chaque passage en
-		# laissait un, orphelin, dans la base de développement. L'amorçage passe au SSO en T4.
-		curl -s -o /dev/null -X DELETE "$API_DEV/rest/v1/profiles?id=eq.$id_u" -H "apikey: $SR" -H "Authorization: Bearer $SR"
+		if [ -n "$sub" ]; then
+			curl -s -o /dev/null -X DELETE "$API_DEV/rest/v1/profiles?id=eq.$sub" -H "apikey: $SR" -H "Authorization: Bearer $SR"
+			sso_compte_supprimer "$sub" || true
+		fi
 	else
 		fail "premier passage refusé : $(printf '%s' "$out" | tail -n 3 | tr '\n' ' ')"
 	fi

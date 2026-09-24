@@ -3,6 +3,8 @@
 # @verifies CRM-015 (docs/BACKLOG.md) — secret BuildKit npm_ca facultatif et sans fuite
 # @verifies CRM-017 (docs/BACKLOG.md) — rôle propriétaire explicite des migrations d'extension
 # @verifies CRM-090 (docs/BACKLOG.md) — le gabarit couvre aussi l'overlay de la cellule Spark
+# @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §10, §11 — tranche T4 : le rappel des
+#           identifiants lit le mot de passe du realm de développement, seul que la pile connaisse
 # @verifies CRM-087 (docs/BACKLOG.md) — garde et progression de « ./runProd.sh --migrate » au
 #           terminal, éprouvées par un vrai PTY (scripts/lib/spawn-pty.py)
 # @verifies docs/JOURNAL.md décision 15 (liste exhaustive des variables), décision 16 (gardes),
@@ -400,18 +402,22 @@ do
 	fi
 done
 
-# Le mot de passe des comptes vient du script de seed, jamais d'une copie dans runDev.sh.
-SEED_ATTENDU=$(sed -n "s/^SEED_PASSWORD='\(.*\)'$/\1/p" "$REPO_ROOT/supabase/seed/apply-seed.sh" | head -1)
+# Le mot de passe des comptes vient du realm de développement, jamais d'une copie dans runDev.sh.
+# RÉVISÉ par `CRM-092` T4 : le seed n'en porte plus — le CRM n'en connaît aucun —, et c'est le realm
+# qui le pose aux comptes (docs/SPEC-session-sso.md §10). Tous ses comptes portent le MÊME : un
+# realm où ils divergeraient rendrait le rappel faux pour certains, et le contrôle le dirait.
+REALM="$REPO_ROOT/keycloak/realm-lelabs.json"
+SEED_ATTENDU=$(python3 -c 'import json,sys; r=json.load(open(sys.argv[1])); v={c["value"] for u in r.get("users",[]) for c in u.get("credentials",[]) if c.get("type")=="password"}; print(v.pop() if len(v)==1 else "")' "$REALM")
 if [ -n "$SEED_ATTENDU" ] && grep -qF "« $SEED_ATTENDU »" "$CREDENTIALS"; then
-	ok "le mot de passe des comptes est lu dans supabase/seed/apply-seed.sh"
+	ok "le mot de passe des comptes est lu dans keycloak/realm-lelabs.json, unique pour tous ses comptes"
 else
-	fail "le mot de passe des comptes n'est pas repris du script de seed"
+	fail "le mot de passe des comptes n'est pas repris du realm de développement, ou ses comptes divergent"
 fi
 
 if grep -qF "$SEED_ATTENDU" "$REPO_ROOT/runDev.sh" "$REPO_ROOT/scripts/lib/env.sh"; then
-	fail "le mot de passe du seed est recopié en dur dans les scripts de lancement"
+	fail "le mot de passe du realm est recopié en dur dans les scripts de lancement"
 else
-	ok "aucun script de lancement ne recopie le mot de passe du seed"
+	ok "aucun script de lancement ne recopie le mot de passe du realm"
 fi
 
 # Chaque secret affiché doit être celui du fichier visé, et aucune valeur ne doit manquer.

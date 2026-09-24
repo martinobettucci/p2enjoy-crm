@@ -257,9 +257,24 @@ de Playwright.
 **Fixtures.** Un module `e2e/api/jetons.ts` expose :
 
 - `cleAnonyme` et `cleService`, lues depuis `.env` ;
-- `jetonDe(adresse, motDePasse)`, qui obtient un jeton par la **véritable route de connexion**
-  (`POST /auth/v1/token?grant_type=password`), jamais par fabrication locale ;
+- `jetonDe(adresse, motDePasse)`, qui obtient un jeton par la **véritable connexion**, jamais par
+  fabrication locale. ~~`POST /auth/v1/token?grant_type=password`~~ : **depuis `CRM-092` T4**, c'est la
+  connexion de la webapp — code PKCE sur la page du Keycloak de développement, puis ouverture par
+  l'échangeur de session (`e2e/api/sso.ts`) — qui rend le **jeton interne**. La session serveur est
+  aussitôt fermée : la preuve n'emploie que le jeton, valable 300 s au plus, gardé en mémoire du
+  processus tant qu'il lui reste au moins une minute ;
 - les trois comptes du seed (`docs/SPEC-seed.md` §2.3) et leur rôle.
+
+**Comptes jetables — `CRM-092` T4.** Une preuve qui a besoin d'une personne de plus la crée dans le
+Keycloak de DÉVELOPPEMENT, par son API d'administration (`e2e/api/keycloak-dev.ts`,
+`scripts/lib/sso.sh`), inscrit son attente dans un espace, et laisse la vraie connexion en faire un
+membre (`docs/SPEC-session-sso.md` §6). Elle retire ensuite le profil — qu'aucune cascade ne suit plus
+— et le compte. Plus aucun compte GoTrue n'est créé par une preuve, hormis `scripts/verify-auth.sh`,
+qui éprouve GoTrue lui-même jusqu'à son retrait (T6).
+
+**Les scripts de preuve** obtiennent leur jeton par `sso_jeton_interne` (`scripts/lib/sso.sh`), même
+chemin, même fermeture immédiate de la session. Un script qui dure plus de cinq minutes redemande un
+jeton ; il ne le prolonge pas.
 
 C'est cette fixture que `CRM-014` reprendra pour ses douze scénarios : elle est le livrable
 durable de ce projet.
@@ -293,6 +308,12 @@ acquise ici. Les onze autres exigent des cards, des channels, des comptes mail, 
 — rien de tout cela n'existe. `CRM-014` reste donc entière, et sa Definition of Done inchangée.
 
 ### 4.4 Projet `ui`
+
+**`CRM-092` T5** : chaque spec se connecte par la fixture `connecterAvecLeLabs` (`e2e/ui/fixtures.ts`)
+— l'écran `/connexion`, la vraie page du Keycloak de développement, le retour et l'échangeur. Les
+cookies du realm sont oubliés avant chaque connexion : une session LeLabs vivante reconnecterait sinon
+la personne PRÉCÉDENTE sans formulaire. Le `vite preview` relaie l'échangeur (`API_RELAIS_SESSION`) :
+le cookie de session y est de même origine, comme en production.
 
 Inchangé quant au fond : les 13 scénarios de `CRM-007`, contre le build de production servi par
 `vite preview`. Deux changements de forme seulement — le projet est désormais nommé explicitement

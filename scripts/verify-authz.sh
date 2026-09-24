@@ -3,6 +3,8 @@
 # @verifies docs/SPEC-permissions-rls.md §2 (rôles et droits fins), §3 (fonctions), §7 (preuves)
 # @verifies docs/SCHEMA.md §9 (fonctions et RPC)
 # @verifies docs/PROD_MIGRATIONS.md §3 (migrations en attente)
+# @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §6, §13 — tranche T4 : comptes de preuve
+#           du Keycloak de développement, appartenances nées de la vraie connexion
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-010` :
 #
@@ -47,6 +49,10 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+
+# shellcheck source=scripts/lib/sso.sh
+source scripts/lib/sso.sh
+sso_env_charger .env
 
 TEST_FILE=supabase/tests/0002_fonctions_autorisation.test.sql
 MIGRATION_FILE=supabase/migrations/0002_fonctions_autorisation.sql
@@ -98,15 +104,16 @@ http() {
 }
 http_body() { cat /tmp/p2enjoy-authz-body; }
 
+# `CRM-092` T4 : les comptes de preuve vivent dans le Keycloak de DÉVELOPPEMENT (scripts/lib/sso.sh),
+# et leur profil, né de la connexion, ne suit plus aucune cascade depuis 0075 : les deux sont retirés.
 supprimer_compte_par_email() {
 	local mail=$1 id
-	id=$(curl -s "$API/auth/v1/admin/users?page=1&per_page=200" \
-		-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
-		| jq -r --arg m "$mail" '.users[]? | select(.email == $m) | .id' | head -n 1)
+	id=$(sso_compte_id "$mail" 2>/dev/null || true)
 	if [ -n "$id" ]; then
-		curl -s -o /dev/null -X DELETE "$API/auth/v1/admin/users/$id" \
-			-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" || true
+		psql_db -c "delete from public.profiles where id = '$id';" >/dev/null 2>&1 || true
+		sso_compte_supprimer "$id" || true
 	fi
+	psql_db -c "delete from public.workspace_invitations where email = '$mail';" >/dev/null 2>&1 || true
 }
 
 # Le ménage est posé avant toute création : une interruption ne doit jamais laisser une politique
@@ -283,55 +290,49 @@ echo "3. Sous PostgREST, avec les jetons réels de trois profils"
 
 menage
 
+# `CRM-092` T4 : un compte de preuve naît dans le Keycloak de DÉVELOPPEMENT, par son API
+# d'administration ; son profil et son appartenance naissent de sa première connexion, qui consomme
+# l'attente inscrite pour lui (docs/SPEC-session-sso.md §6). Plus aucun compte GoTrue.
 creer_compte() {
-	local mail=$1 nom=$2 code
-	code=$(http POST "$API/auth/v1/admin/users" \
-		-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
-		-H 'Content-Type: application/json' \
-		-d "{\"email\":\"$mail\",\"password\":\"$MOT_DE_PASSE\",\"email_confirm\":true,
-		     \"user_metadata\":{\"full_name\":\"$nom\"}}")
-	if [ "$code" != 200 ]; then
-		echo "ERREUR : création du compte $mail refusée (HTTP $code) : $(http_body | head -c 200)" >&2
+	local mail=$1 prenom=$2 nom=$3 sub
+	sub=$(sso_compte_jetable_creer "$mail" "$prenom" "$nom") || {
+		echo "ERREUR : création du compte $mail refusée par le Keycloak de développement" >&2
 		exit 1
-	fi
-	http_body | jq -r '.id'
+	}
+	printf '%s\n' "$sub"
 }
 
 jeton_de() {
-	local mail=$1 code
-	code=$(http POST "$API/auth/v1/token?grant_type=password" \
-		-H "apikey: $ANON_KEY" -H 'Content-Type: application/json' \
-		-d "{\"email\":\"$mail\",\"password\":\"$MOT_DE_PASSE\"}")
-	if [ "$code" != 200 ]; then
-		echo "ERREUR : connexion de $mail refusée (HTTP $code)" >&2
+	local mail=$1 jeton
+	jeton=$(sso_jeton_interne "$API" "$ANON_KEY" "$mail") || {
+		echo "ERREUR : connexion LeLabs de $mail refusée" >&2
 		exit 1
-	fi
-	http_body | jq -r '.access_token'
+	}
+	printf '%s\n' "$jeton"
 }
 
-MOT_DE_PASSE="preuve-crm010-$(head -c 12 /dev/urandom | od -An -tx1 | tr -d ' \n')"
+ID_ANNE=$(creer_compte "$MAIL_ANNE"  'Anne' 'Admin CRM-010')
+ID_CHLOE=$(creer_compte "$MAIL_CHLOE" 'Chloé' 'Viewer CRM-010')
+ID_DAVID=$(creer_compte "$MAIL_DAVID" 'David' 'Autre CRM-010')
+ok "trois comptes créés dans le Keycloak de développement, par son API d'administration"
 
-ID_ANNE=$(creer_compte "$MAIL_ANNE"  'Anne Admin CRM-010')
-ID_CHLOE=$(creer_compte "$MAIL_CHLOE" 'Chloé Viewer CRM-010')
-ID_DAVID=$(creer_compte "$MAIL_DAVID" 'David Autre CRM-010')
-ok "trois comptes créés par l'API d'administration GoTrue, profils créés par le trigger de CRM-003"
-
-# Les workspaces et les appartenances sont posés en SQL : aucune politique n'autorise encore leur
-# création par l'API, c'est précisément l'objet de `CRM-012`. Le fait est nommé, pas masqué.
+# Les workspaces et les ATTENTES sont posés en SQL : aucune politique n'autorise la création d'un
+# workspace par l'API, et c'est l'objet de `CRM-012`. Le fait est nommé, pas masqué. Les
+# appartenances, elles, naissent de la vraie connexion, qui consomme chaque attente.
 psql_db -v ON_ERROR_STOP=1 -c "
 	insert into public.workspaces (id, name, slug) values
 		('$WS_UN',   'Preuve CRM-010 — un',   'crm010-un'),
 		('$WS_DEUX', 'Preuve CRM-010 — deux', 'crm010-deux');
-	insert into public.workspace_members (workspace_id, user_id, role) values
-		('$WS_UN',   '$ID_ANNE',  'admin'),
-		('$WS_UN',   '$ID_CHLOE', 'viewer'),
-		('$WS_DEUX', '$ID_DAVID', 'admin');
+	insert into public.workspace_invitations (workspace_id, email, role) values
+		('$WS_UN',   '$MAIL_ANNE',  'admin'),
+		('$WS_UN',   '$MAIL_CHLOE', 'viewer'),
+		('$WS_DEUX', '$MAIL_DAVID', 'admin');
 " >/dev/null
 
 JETON_ANNE=$(jeton_de "$MAIL_ANNE")
 JETON_CHLOE=$(jeton_de "$MAIL_CHLOE")
 JETON_DAVID=$(jeton_de "$MAIL_DAVID")
-ok "trois jetons d'accès obtenus par la véritable route de connexion"
+ok "trois jetons internes obtenus par la vraie connexion LeLabs, attentes consommées"
 
 # 3.1 CRM-022 livre désormais la politique de lecture des workspaces. Avant instrumentation,
 #     l'administratrice voit donc exactement son workspace, jamais celui de David.
@@ -484,17 +485,8 @@ fi
 #     aurait déteint sur les channels ou les cards rendrait ce contrôle rouge, ce qui est
 #     exactement son office.
 
-MOT_DE_PASSE_SEED=SeedDev2026Local
-
 jeton_seed() {
-	local mail=$1 code
-	code=$(http POST "$API/auth/v1/token?grant_type=password" \
-		-H "apikey: $ANON_KEY" -H 'Content-Type: application/json' \
-		-d "{\"email\":\"$mail\",\"password\":\"$MOT_DE_PASSE_SEED\"}")
-	if [ "$code" != 200 ]; then
-		echo "" ; return
-	fi
-	http_body | jq -r '.access_token'
+	sso_jeton_interne "$API" "$ANON_KEY" "$1" 2>/dev/null || true
 }
 
 compter() {

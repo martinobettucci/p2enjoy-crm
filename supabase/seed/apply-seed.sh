@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 # @spec CRM-005 (docs/BACKLOG.md) — seed socle : comptes, espace de travail, rôles
+# @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §11 — tranche T4 : aucun compte n'est plus
+#       créé ; les attentes de l'espace sont consommées par la vraie connexion LeLabs
 # @spec CRM-020 (docs/BACKLOG.md) — tracks de démonstration, dont un archivé
 # @spec CRM-021 (docs/BACKLOG.md) — channels de démonstration, dont un archivé
 # @spec CRM-030 (docs/BACKLOG.md) — catalogue de nœuds de démonstration, dont un archivé
@@ -48,6 +50,8 @@ set -euo pipefail
 
 # shellcheck source=../../scripts/lib/env.sh
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/scripts/lib/env.sh"
+# shellcheck source=scripts/lib/sso.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/scripts/lib/sso.sh"
 
 usage() { print_header_help "${BASH_SOURCE[0]}"; }
 
@@ -74,7 +78,8 @@ command -v jq   >/dev/null 2>&1 || die "jq est introuvable : le seed lit des ré
 
 # La pile doit tourner. Sans elle le seed ne peut qu'échouer, et il doit le dire plutôt que
 # réussir à moitié (docs/SPEC-seed.md §5).
-if ! curl -sf -o /dev/null "$API/auth/v1/health" \
+# `CRM-092` T4 : l'API REST, et non plus GoTrue, qui quitte la pile en T6.
+if ! curl -sf -o /dev/null "$API/rest/v1/" \
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY"; then
 	die "l'API ne répond pas sur $API. Lancez ./runDev.sh, puis relancez le seed."
 fi
@@ -88,12 +93,9 @@ WS_NAME='P2Enjoy SAS'
 WS_SLUG='p2enjoy'
 WS_DOMAIN='crm.p2enjoy.test'
 
-# Mot de passe de développement, volontairement à 16 caractères. Ce n'est pas un secret : le §2.3
-# de la spécification explique pourquoi il est publié, et pourquoi cela reste acceptable.
-#
-# Il satisfait `PASSWORD_MIN_LENGTH` par choix, non par contrainte : l'API d'administration ne
-# l'applique pas (docs/SPEC-seed.md §3.5, INC-018). `scripts/verify-seed.sh` le prouve.
-SEED_PASSWORD='SeedDev2026Local'
+# Le mot de passe des comptes n'est plus une donnée du seed (`CRM-092` T4) : le CRM n'en connaît
+# aucun. Les comptes sont ceux du realm de développement (`keycloak/realm-lelabs.json`), et
+# `scripts/lib/sso.sh` porte le mot de passe publié que leur connexion emploie (§2.3).
 
 # id | email | nom affiché | avatar même origine | rôle de workspace
 COMPTES=(
@@ -827,12 +829,6 @@ verifier_composition_copie_seed() {
         explicitement cette fixture, ou repartir d'une base locale neuve par ./resetMe.sh."
 }
 
-compte_id_par_email() {
-	curl -s "$API/auth/v1/admin/users?page=1&per_page=200" \
-		-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
-		| jq -r --arg m "$1" '.users[]? | select(.email == $m) | .id' | head -n 1
-}
-
 say "Application du seed socle — docs/SPEC-seed.md"
 info "Cible : $API"
 info "Profil d'environnement : dev (vérifié)"
@@ -852,57 +848,69 @@ code=$(api POST /rest/v1/workspaces \
 attendu "$code" "création de l'espace de travail $WS_SLUG" 200 201
 info "$WS_NAME ($WS_SLUG) — $WS_ID"
 
-# --- 2. Comptes, profils et appartenances ------------------------------------------------------
+# --- 2. Attentes, connexions LeLabs, profils et appartenances — CRM-092 T4 ----------------------
+#
+# @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §11 (seed), §6 (admission), §10 (realm)
+#
+# LE SEED NE CRÉE PLUS AUCUN COMPTE : les comptes existent dans le Keycloak de développement,
+# préchargé avec leur `sub` stable (keycloak/realm-lelabs.json). Le seed inscrit les ATTENTES de
+# l'espace, puis OUVRE LA SESSION de chaque personne par la vraie connexion — page du realm, puis
+# échangeur de session. Ce sont donc l'échangeur et `ouvrir_session_sso` qui créent profils et
+# appartenances, par le chemin de production (`CLAUDE.md` §8). Chaque personne pose ensuite son nom
+# et son avatar par la mise à jour de SON PROPRE profil, avec son propre jeton.
+#
+# Le rejeu ne crée rien : une personne déjà membre n'est pas réinscrite, sa connexion est admise par
+# son appartenance, et la convergence du rôle reste un upsert. `attendu@` n'étant pas vérifié par
+# LeLabs, son attente demeure — c'est l'état démontré ; `inconnu@` n'est attendu par personne.
 
 echo
-say "2. Comptes, profils et appartenances"
+say "2. Attentes, connexions LeLabs, profils et appartenances"
+
+sso_env_charger "$ENV_FILE"
+# `attendu@` : attendu par l'espace, jamais admis tant que LeLabs ne l'a pas vérifié (§10).
+ATTENTE_DEMONTREE='attendu@p2enjoy.test|viewer'
+INCONNU_SUB='5eed0000-0000-4000-8000-000000000014'
+
+inscrire_attente() {
+	local email=$1 role=$2
+	code=$(api POST /rest/v1/workspace_invitations \
+		-H 'Prefer: return=representation,resolution=merge-duplicates' \
+		-d "$(jq -nc --arg ws "$WS_ID" --arg e "$email" --arg r "$role" \
+		     '{workspace_id: $ws, email: $e, role: $r}')")
+	attendu "$code" "attente de $email" 200 201
+}
 
 for ligne in "${COMPTES[@]}"; do
 	IFS='|' read -r id email nom avatar role <<< "$ligne"
 
-	# 2.a. Le compte. Recréer une adresse existante est refusé en `422 email_exists` : la présence
-	#      est donc testée avant la création, jamais rattrapée après coup (décision 34).
-	existant=$(compte_id_par_email "$email")
-
-	if [ -z "$existant" ]; then
-		code=$(api POST /auth/v1/admin/users \
-			-d "$(jq -nc --arg id "$id" --arg email "$email" --arg mdp "$SEED_PASSWORD" \
-			              --arg nom "$nom" --arg avatar "$avatar" \
-			     '{id: $id, email: $email, password: $mdp, email_confirm: true,
-			       user_metadata: {full_name: $nom, avatar_url: $avatar, locale: "fr"}}')")
-		attendu "$code" "création du compte $email" 200 201
-		etat='créé'
+	# 2.a. L'attente, pour une personne qui n'est pas encore membre.
+	code=$(api GET "/rest/v1/workspace_members?select=user_id&workspace_id=eq.$WS_ID&user_id=eq.$id")
+	attendu "$code" "lecture de l'appartenance de $email" 200
+	if [ "$(jq 'length' "$CORPS")" -eq 0 ]; then
+		inscrire_attente "$email" "$role"
+		etat='attendu, puis admis'
 	else
-		[ "$existant" = "$id" ] || die "le compte $email existe avec l'identifiant $existant,
-        alors que le contrat du seed impose $id. Le seed ne détruit rien : réinitialisez la base
-        avec ./resetMe.sh, ou corrigez ce compte à la main (docs/SPEC-seed.md §4)."
-
-		# Le mot de passe est réaligné sur le contrat : sans cela, un compte dont le mot de passe
-		# a été changé pendant une session de développement cesserait silencieusement de servir
-		# aux preuves et aux tests.
-		code=$(api PUT "/auth/v1/admin/users/$id" \
-			-d "$(jq -nc --arg mdp "$SEED_PASSWORD" --arg nom "$nom" --arg avatar "$avatar" \
-			     '{password: $mdp, email_confirm: true,
-			       user_metadata: {full_name: $nom, avatar_url: $avatar, locale: "fr"}}')")
-		attendu "$code" "mise à jour du compte $email" 200
-		etat='mis à jour'
+		etat='déjà membre'
 	fi
 
-	# 2.b. Le profil. Il naît du trigger de `CRM-003` — le seed n'en crée aucun. En revanche il le
-	#      CONVERGE explicitement : mettre à jour `user_metadata` ne met pas à jour le profil, le
-	#      trigger étant `AFTER INSERT` et portant `on conflict do nothing` (décision 34). Sans ce
-	#      PATCH, une dérive du nom affiché ne serait jamais rattrapée.
-	code=$(api PATCH "/rest/v1/profiles?id=eq.$id" \
-		-H 'Prefer: return=representation' \
-		-d "$(jq -nc --arg nom "$nom" --arg avatar "$avatar" \
-		     '{full_name: $nom, avatar_url: $avatar, locale: "fr"}')")
-	attendu "$code" "convergence du profil de $email" 200
-	[ "$(jq 'length' "$CORPS")" -eq 1 ] \
-		|| die "aucun profil pour $email après création du compte : le trigger de CRM-003
-        (app.handle_new_user) ne s'est pas déclenché. La base n'est pas dans l'état attendu."
+	# 2.b. La connexion LeLabs réelle ; son `sub` doit être celui du contrat.
+	jeton=$(sso_jeton_interne "$API" "$ANON_KEY" "$email") \
+		|| die "connexion LeLabs de $email impossible. Le Keycloak de développement est-il démarré et
+        préchargé (keycloak/README.md) ?"
+	sub=$(sso_revendications "$jeton" | jq -r '.sub // empty')
+	[ "$sub" = "$id" ] || die "le sub LeLabs de $email vaut « $sub », alors que le contrat du seed impose $id.
+        Le realm de développement est-il celui de keycloak/realm-lelabs.json ? (docs/SPEC-session-sso.md §10)"
 
-	# 2.c. L'appartenance, et donc le rôle. Upsert : la clé primaire est composite, et deux
-	#      passages laissent une seule ligne (mesuré, décision 34).
+	# 2.c. Le profil, par la personne elle-même : seules ces deux colonnes lui sont ouvertes.
+	code=$(curl -s -o "$CORPS" -w '%{http_code}' -X PATCH "$API/rest/v1/profiles?id=eq.$id" \
+		-H "apikey: $ANON_KEY" -H "Authorization: Bearer $jeton" \
+		-H 'Content-Type: application/json' -H 'Prefer: return=representation' \
+		-d "$(jq -nc --arg nom "$nom" --arg avatar "$avatar" '{full_name: $nom, avatar_url: $avatar}')")
+	attendu "$code" "profil de $email posé par la personne" 200
+	[ "$(jq 'length' "$CORPS")" -eq 1 ] \
+		|| die "aucun profil pour $email après sa connexion : l'échangeur ne l'a pas admis."
+
+	# 2.d. Le rôle, convergé : l'appartenance est née de l'attente, un upsert n'y change rien.
 	code=$(api POST /rest/v1/workspace_members \
 		-H 'Prefer: return=representation,resolution=merge-duplicates' \
 		-d "$(jq -nc --arg ws "$WS_ID" --arg u "$id" --arg r "$role" \
@@ -911,6 +919,25 @@ for ligne in "${COMPTES[@]}"; do
 
 	printf '  %-22s %-20s %s\n' "$email" "$role" "$etat"
 done
+
+IFS='|' read -r email role <<< "$ATTENTE_DEMONTREE"
+inscrire_attente "$email" "$role"
+printf '  %-22s %-20s %s\n' "$email" "$role" "attendu, non vérifié par LeLabs"
+
+# 2.e. Relecture du contrat du §11 : trois profils et trois appartenances, l'attente d'`attendu@`
+#      intacte, aucune trace d'`inconnu@`.
+for ligne in "${COMPTES[@]}"; do
+	IFS='|' read -r id email nom avatar role <<< "$ligne"
+	code=$(api GET "/rest/v1/workspace_members?select=role&workspace_id=eq.$WS_ID&user_id=eq.$id")
+	[ "$code" = 200 ] && [ "$(jq -r '.[0].role // empty' "$CORPS")" = "$role" ] \
+		|| die "relecture : $email n'est pas $role de l'espace."
+done
+code=$(api GET "/rest/v1/workspace_invitations?select=role&workspace_id=eq.$WS_ID&email=eq.attendu@p2enjoy.test")
+[ "$code" = 200 ] && [ "$(jq -r '.[0].role // empty' "$CORPS")" = viewer ] \
+	|| die "relecture : l'attente d'attendu@p2enjoy.test n'est pas en place."
+code=$(api GET "/rest/v1/profiles?select=id&id=eq.$INCONNU_SUB")
+[ "$code" = 200 ] && [ "$(jq 'length' "$CORPS")" -eq 0 ] \
+	|| die "relecture : inconnu@p2enjoy.test a laissé un profil, alors qu'aucun espace ne l'attend."
 
 # --- 3. Tracks — docs/SPEC-tracks.md §8 --------------------------------------------------------
 # Créés par la véritable API REST avec la clé de service, comme le workspace et les appartenances
@@ -1311,11 +1338,7 @@ info "Source : ${#CHAMPS[@]} champs, ${#REGLES[@]} règles et 1 exigence — pr�
 echo
 say "7. Copie du workflow vers un track"
 
-JETON_ADMIN=$(curl -s -X POST "$API/auth/v1/token?grant_type=password" \
-	-H "apikey: $(env_get "$ENV_FILE" ANON_KEY)" -H 'Content-Type: application/json' \
-	-d "$(jq -nc --arg m 'admin@p2enjoy.test' --arg p "$SEED_PASSWORD" \
-	      '{email: $m, password: $p}')" \
-	| jq -r '.access_token // empty')
+JETON_ADMIN=$(sso_jeton_interne "$API" "$ANON_KEY" 'admin@p2enjoy.test' || true)
 [ -n "$JETON_ADMIN" ] || die "connexion de l'administrateur seedé impossible : la copie ne peut pas
         être créée par la véritable route."
 
@@ -2034,11 +2057,7 @@ info "Celui de la card c4 est retiré par un TIERS : deleted_by diffère d'autho
 echo
 say "8 quinquies bis. Mentions"
 
-JETON_BIZDEV_MENTIONS=$(curl -s -X POST "$API/auth/v1/token?grant_type=password" \
-	-H "apikey: $(env_get "$ENV_FILE" ANON_KEY)" -H 'Content-Type: application/json' \
-	-d "$(jq -nc --arg m 'bizdev@p2enjoy.test' --arg p "$SEED_PASSWORD" \
-	      '{email: $m, password: $p}')" \
-	| jq -r '.access_token // empty')
+JETON_BIZDEV_MENTIONS=$(sso_jeton_interne "$API" "$ANON_KEY" 'bizdev@p2enjoy.test' || true)
 [ -n "$JETON_BIZDEV_MENTIONS" ] || die "connexion du business developer seedé impossible : la
         seconde mention ne peut pas être posée par la véritable route."
 
@@ -3390,11 +3409,7 @@ directions=$(curl -s "$API/rest/v1/goal_links?board_id=eq.$GOAL_BOARD_ID&select=
 # LE JETON EST OBTENU PAR LA VRAIE ROUTE DE CONNEXION, comme celui de l'administratrice à la
 # section 7 : un contrôle qui s'appuierait sur la clé de service ne prouverait rien, la clé de
 # service traversant la RLS.
-JETON_VIEWER=$(curl -s -X POST "$API/auth/v1/token?grant_type=password" \
-	-H "apikey: $ANON_KEY" -H 'Content-Type: application/json' \
-	-d "$(jq -nc --arg m 'viewer@p2enjoy.test' --arg p "$SEED_PASSWORD" \
-	      '{email: $m, password: $p}')" \
-	| jq -r '.access_token // empty')
+JETON_VIEWER=$(sso_jeton_interne "$API" "$ANON_KEY" 'viewer@p2enjoy.test' || true)
 [ -n "$JETON_VIEWER" ] || die "connexion de la lectrice seedée impossible : la visibilité des blocs
         d'objectifs ne peut pas être vérifiée avec un jeton réel (docs/SPEC-goals.md §4.1)."
 
@@ -3700,11 +3715,7 @@ info "Clôtures posées par un vrai PATCH : 1 budget et 1 occurrence sur 2"
 # LE JETON EST OBTENU PAR LA VRAIE ROUTE DE CONNEXION, comme celui de l'administratrice à la
 # section 7 : un contrôle qui s'appuierait sur la clé de service ne prouverait rien, la clé de
 # service traversant la RLS.
-JETON_VIEWER=$(curl -s -X POST "$API/auth/v1/token?grant_type=password" \
-	-H "apikey: $ANON_KEY" -H 'Content-Type: application/json' \
-	-d "$(jq -nc --arg m 'viewer@p2enjoy.test' --arg p "$SEED_PASSWORD" \
-	      '{email: $m, password: $p}')" \
-	| jq -r '.access_token // empty')
+JETON_VIEWER=$(sso_jeton_interne "$API" "$ANON_KEY" 'viewer@p2enjoy.test' || true)
 [ -n "$JETON_VIEWER" ] || die "connexion de la lectrice seedée impossible : la visibilité des
         budgets ne peut pas être vérifiée avec un jeton réel (docs/SPEC-costs.md §3.1)."
 
@@ -3719,11 +3730,7 @@ vus=$(curl -s "$API/rest/v1/budgets?select=id" \
 # C'est la ligne de partage du §3 — « le budget est un cadre, l'affectation est un geste » —, et
 # c'est la seule règle du sous-système qu'un jeu de données ne peut pas montrer : elle ne se voit
 # qu'en essayant. Le refus attendu est un 403 rendu par la politique, pas une absence de ligne.
-JETON_BIZDEV=$(curl -s -X POST "$API/auth/v1/token?grant_type=password" \
-	-H "apikey: $ANON_KEY" -H 'Content-Type: application/json' \
-	-d "$(jq -nc --arg m 'bizdev@p2enjoy.test' --arg p "$SEED_PASSWORD" \
-	      '{email: $m, password: $p}')" \
-	| jq -r '.access_token // empty')
+JETON_BIZDEV=$(sso_jeton_interne "$API" "$ANON_KEY" 'bizdev@p2enjoy.test' || true)
 [ -n "$JETON_BIZDEV" ] || die "connexion du business developer seedé impossible : le refus
         d'écriture d'un budget ne peut pas être vérifié avec un jeton réel."
 

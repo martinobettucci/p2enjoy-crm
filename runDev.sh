@@ -27,7 +27,7 @@
 # Au démarrage, le script rappelle les **identifiants de développement** : comptes seedés, boîtes
 # mail, et administration de chaque service. Ce sont des secrets locaux et jetables — le profil
 # `dev` est exigé, les domaines sont sous des TLD réservés, et les ports restent sur la boucle
-# locale. Le mot de passe des comptes est lu dans `supabase/seed/apply-seed.sh`, jamais recopié.
+# locale. Le mot de passe des comptes est lu dans `keycloak/realm-lelabs.json`, jamais recopié.
 
 set -euo pipefail
 

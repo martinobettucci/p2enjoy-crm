@@ -6,6 +6,8 @@
 # @verifies docs/SPEC-permissions-rls.md §4 (écriture réservée aux administrateurs), §7 (refus n° 2, n° 11)
 # @verifies docs/INCONSISTENCY_REPORT.md INC-037 (formulaire remappé), INC-038 (suppression visible),
 #           INC-039 (ordre de suppression d'un workspace), INC-021 (aucun écran)
+# @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — tranche T4 : jetons par la vraie
+#           connexion LeLabs et l'échangeur de session, plus par GoTrue
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-032` :
 #
@@ -46,6 +48,9 @@ cd "$(dirname "$0")/.."
 
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
+# shellcheck source=scripts/lib/sso.sh
+source scripts/lib/sso.sh
+sso_env_charger .env
 node_toolchain_prepare "$PWD/.nvmrc" || exit 1
 
 TEST_FILE=supabase/tests/0008_copie_workflow.test.sql
@@ -76,7 +81,6 @@ TRACK_STUDIO=5eed0000-0000-4000-8000-000000000022
 TRACK_ARCHIVE=5eed0000-0000-4000-8000-000000000024
 MAIL_ADMIN=admin@p2enjoy.test
 MAIL_BIZDEV=bizdev@p2enjoy.test
-MDP_SEED=SeedDev2026Local
 
 RAPIDE=false
 while [ $# -gt 0 ]; do
@@ -128,11 +132,11 @@ http() {
 	curl -s -o "$CORPS" -w '%{http_code}' -X "$method" "$url" "$@"
 }
 
+# `CRM-092` T4 (docs/SPEC-session-sso.md §13) : le jeton est le jeton INTERNE, obtenu par la vraie
+# connexion LeLabs et l'échangeur de session (`scripts/lib/sso.sh`), comme celui de la webapp. Il vit
+# 300 s au plus ; une connexion refusée rend un jeton vide, que l'appelant constate.
 jeton_de() {
-	curl -s -X POST "$API/auth/v1/token?grant_type=password" \
-		-H "apikey: $ANON_KEY" -H 'Content-Type: application/json' \
-		-d "$(jq -nc --arg m "$1" --arg p "$MDP_SEED" '{email: $m, password: $p}')" \
-		| jq -r '.access_token // empty'
+	sso_jeton_interne "$API" "$ANON_KEY" "$1" 2>/dev/null || true
 }
 
 # Le ménage retire uniquement les copies créées par CE harnais, identifiables par son préfixe

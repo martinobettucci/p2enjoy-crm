@@ -106,3 +106,104 @@ sso_revendications() {
 	esac
 	base64 -d <<<"$charge" 2>/dev/null
 }
+
+# --- Jeton interne, par la vraie connexion et l'échangeur (CRM-092 T4) --------------------------
+#
+# @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §5.2 (ouvrir), §5.3 (fermer), §11 (seed),
+#       §13 — le jeton d'un script est le jeton INTERNE, comme celui de la webapp
+#
+# `sso_jeton_interne API CLE_ANONYME ADRESSE [MOT_DE_PASSE]` mène la connexion jusqu'au code, le remet
+# à l'échangeur de session par la vraie passerelle, et écrit le jeton interne sur la sortie standard.
+# La session serveur est aussitôt FERMÉE : le script n'emploie que le jeton interne, qui reste
+# valable jusqu'à son échéance — 300 s au plus —, et la table des sessions ne garde rien d'un
+# script. Un script qui dure plus longtemps redemande un jeton : il ne le prolonge pas.
+sso_jeton_interne() {
+	local api=$1 cle=$2 adresse=$3 mot_de_passe=${4:-}
+	local obtenu code verificateur retour entetes corps jeton poignee
+	obtenu=$(sso_code_pkce "$adresse" "$mot_de_passe") || return 1
+	read -r code verificateur retour <<<"$obtenu"
+	entetes=$(mktemp)
+	corps=$(curl -s --max-time 15 -D "$entetes" -X POST "$api/functions/v1/session/ouvrir" \
+		-H "apikey: $cle" -H 'content-type: application/json' \
+		-d "$(jq -nc --arg c "$code" --arg v "$verificateur" --arg r "$retour" \
+		     '{code: $c, verificateur: $v, redirect_uri: $r}')")
+	poignee=$(sed -n 's/^[Ss]et-[Cc]ookie: p2enjoy_crm_session=\([^;]*\).*/\1/p' "$entetes" | tr -d '\r')
+	rm -f "$entetes"
+	if [ -n "$poignee" ]; then
+		curl -s -o /dev/null --max-time 10 -X POST "$api/functions/v1/session/fermer" \
+			-H "apikey: $cle" -H "Cookie: p2enjoy_crm_session=$poignee" || true
+	fi
+	jeton=$(jq -r '.jeton // empty' <<<"$corps" 2>/dev/null)
+	[ -n "$jeton" ] || { echo "sso : ouverture refusée pour $adresse : $corps" >&2; return 1; }
+	printf '%s\n' "$jeton"
+}
+
+# `sso_env_charger FICHIER` complète, depuis un fichier d'environnement, les variables que cette
+# bibliothèque lit et que l'appelant n'a pas posées. Le fichier n'est jamais exécuté.
+sso_env_charger() {
+	local fichier=$1 nom valeur
+	for nom in SSO_OIDC_ISSUER SSO_OIDC_CLIENT_ID SSO_OIDC_CLIENT_SECRET SITE_URL SSO_DEV_ADMIN_PASSWORD; do
+		[ -n "${!nom:-}" ] && continue
+		valeur=$(grep -m 1 "^$nom=" "$fichier" 2>/dev/null | cut -d= -f2-)
+		valeur=${valeur%\"}; valeur=${valeur#\"}; valeur=${valeur%\'}; valeur=${valeur#\'}
+		printf -v "$nom" '%s' "$valeur"
+		export "${nom?}"
+	done
+}
+
+# --- Comptes du Keycloak de DÉVELOPPEMENT, par son API d'administration --------------------------
+#
+# @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §10 (« l'API d'administration du Keycloak de
+#       développement sert au seul harnais »), §13 (comptes jetables)
+#
+# Le produit ne l'appelle jamais (docs/SSO.md). Chaque geste a son inverse, que l'appelant rend.
+_sso_admin_base() { printf '%s' "${SSO_OIDC_ISSUER%/realms/lelabs}"; }
+
+sso_admin_jeton() {
+	curl -sf --max-time 10 "$(_sso_admin_base)/realms/master/protocol/openid-connect/token" \
+		--data-urlencode client_id=admin-cli --data-urlencode username=admin \
+		--data-urlencode "password=${SSO_DEV_ADMIN_PASSWORD:?SSO_DEV_ADMIN_PASSWORD absente}" \
+		--data-urlencode grant_type=password | jq -r '.access_token // empty'
+}
+
+# `sso_admin MÉTHODE CHEMIN [options curl…]` — sur `/admin/realms/lelabs`.
+sso_admin() {
+	local methode=$1 chemin=$2 jeton
+	shift 2
+	jeton=$(sso_admin_jeton) || return 1
+	curl -s --max-time 15 -X "$methode" "$(_sso_admin_base)/admin/realms/lelabs$chemin" \
+		-H "Authorization: Bearer $jeton" -H 'content-type: application/json' "$@"
+}
+
+# `sso_compte_id ADRESSE` écrit le `sub` du compte, ou rien.
+sso_compte_id() {
+	sso_admin GET "/users?exact=true&email=$(jq -rn --arg a "$1" '$a|@uri')" | jq -r '.[0].id // empty'
+}
+
+# `sso_compte_jetable_creer ADRESSE PRÉNOM NOM [oui|non]` crée un compte au mot de passe du realm,
+# adresse vérifiée, rôles par défaut, et `verified` sauf si le quatrième argument vaut `non`. Écrit
+# son `sub`.
+sso_compte_jetable_creer() {
+	local adresse=$1 prenom=$2 nom=$3 verifie=${4:-oui} entetes sub role roles='[]'
+	entetes=$(mktemp)
+	sso_admin POST /users -D "$entetes" -o /dev/null \
+		-d "$(jq -nc --arg a "$adresse" --arg p "$prenom" --arg n "$nom" \
+		              --arg m "${SSO_MOT_DE_PASSE:-$SSO_MOT_DE_PASSE_DEFAUT}" \
+		     '{username: $a, email: $a, emailVerified: true, enabled: true, firstName: $p,
+		       lastName: $n, credentials: [{type: "password", value: $m, temporary: false}]}')"
+	sub=$(sed -n 's/^[Ll]ocation: .*\/users\/\([^[:space:]]*\).*/\1/p' "$entetes" | tr -d '\r')
+	rm -f "$entetes"
+	[ -n "$sub" ] || { echo "sso : création du compte jetable $adresse refusée" >&2; return 1; }
+	for role in default-roles-lelabs verified; do
+		[ "$role" = verified ] && [ "$verifie" != oui ] && continue
+		roles=$(jq -c --argjson r "$(sso_admin GET "/roles/$role")" '. + [$r]' <<<"$roles")
+	done
+	sso_admin POST "/users/$sub/role-mappings/realm" -o /dev/null -d "$roles"
+	printf '%s\n' "$sub"
+}
+
+# `sso_compte_supprimer SUB` — sans effet si le compte n'existe plus.
+sso_compte_supprimer() {
+	[ -n "${1:-}" ] || return 0
+	sso_admin DELETE "/users/$1" -o /dev/null
+}

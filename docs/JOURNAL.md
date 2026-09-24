@@ -29318,3 +29318,100 @@ valeur qu'on lui donne — la preuve tourne donc sous cet identifiant sur ce pos
 `lelabs-crm-serveur`.
 
 **Vérifications** : voir le compte rendu de livraison consigné au backlog (`CRM-092`, T3 bis et T5).
+
+## décision 588 — `CRM-092` T4 : jetons des preuves, comptes jetables et seed par la seule connexion SSO
+
+*2026-09-24, même session. Spécification `docs/SPEC-session-sso.md` §11, §13, §14 (T4).*
+
+**Livré.**
+- **`jetonDe` (`e2e/api/jetons.ts`) et `sso_jeton_interne` (`scripts/lib/sso.sh`)** rendent le jeton
+  INTERNE par la connexion de la webapp : code PKCE sur la page du Keycloak de développement, puis
+  ouverture par l'échangeur. La session serveur est aussitôt **fermée** — la preuve n'emploie que le
+  jeton, valable 300 s au plus, et la table des sessions ne garde rien d'une preuve. `jetonDe` garde le
+  jeton en mémoire du processus tant qu'il lui reste une minute : 480 appels répartis dans 70 fichiers
+  n'ouvrent pas 480 connexions. Pour rompre un cycle d'imports ESM (`sso.ts` ↔ `jetons.ts`), le mot de
+  passe publié vit désormais dans `sso.ts`, réexporté par `jetons.ts`.
+- **Comptes jetables** par l'API d'administration du Keycloak de DÉVELOPPEMENT (`keycloak-dev.ts`,
+  `sso_compte_jetable_creer`) ; l'appartenance naît d'une **attente consommée** par la vraie connexion.
+  Portés : `verify-authz`, `verify-migrations`, `e2e/api/identites.spec.ts`, `e2e/ui/demarrage.spec.ts`
+  (en T5), et l'amorçage de `verify-spark`.
+- **Seed §11** : il n'inscrit plus que des attentes, ouvre la session de chaque personne par la vraie
+  connexion, pose nom et avatar par la mise à jour de son propre profil, puis relit le contrat —
+  trois appartenances, l'attente d'`attendu@` intacte, aucune trace d'`inconnu@`.
+- **Treize scripts** dont la fonction `jeton_de` parlait à GoTrue, plus `verify-webapp`, `verify-seed`,
+  les deux specs `mail` et les deux abonnements au temps réel des specs d'API : portés sur le même
+  chemin.
+- **`scripts/spark/amorcer-espace.sh`** : il ne crée plus aucun compte ; il pose l'espace et une attente
+  administratrice, et ne touche pas un espace qui a déjà un administrateur (§12, point 6).
+
+**Trois faits mesurés en portant.**
+1. **INC-249** : la garde du dernier administrateur est bien sollicitée par l'admission — une attente
+   `viewer` dans un espace vide fait échouer toute la connexion en `service_indisponible`. La
+   spécification §6.2 affirmait le contraire ; elle est corrigée, la voie de correction du comportement
+   est à arbitrer. Les preuves et l'amorçage inscrivent une attente administratrice.
+2. **Une mutation de `verify-migrations` ne s'appliquait plus depuis T1** : elle retirait la clé
+   `profiles → auth.users` que 0075 a supprimée. Elle est remplacée par l'inverse — la clé rétablie doit
+   rougir la suite —, qui éprouve le contrat actuel.
+3. **Les types générés n'avaient pas suivi 0076** (oubli de T3 bis) : `types:check` rougissait ;
+   régénérés, 71 lignes. Le témoin `database.types.test-d.ts` a alors rougi à son tour, ce qui est
+   son rôle — `npm run typecheck` rouge dans la non-régression de `verify-tracks` : il nomme
+   désormais `sessions_sso` et les quatre fonctions de service (cinquante devient cinquante-quatre).
+   Quatrième occurrence du défaut de chaîne que ce témoin décrit déjà.
+
+**Retiré avec son objet.** La preuve n° 7 de `verify-seed.sh` (politique de mot de passe de GoTrue,
+INC-018) : le CRM ne connaît plus de mot de passe. La non-complaisance du seed éprouve désormais une
+appartenance retirée : la connexion doit être refusée, puis rétablie par une attente consommée.
+
+**Ce qui reste à GoTrue jusqu'à T6** : `scripts/verify-auth.sh` (qui l'éprouve lui-même), les contrôles
+de santé `/auth/v1/health` de `verify-stack.sh` et de `scripts/spark/verifier.sh`, le trigger
+`on_auth_user_created` et sa preuve pgTAP.
+
+**Environnement de vérification.** Le `.env` du poste garde la dérive `PGRST_DB_EXTRA_SEARCH_PATH`
+(décision 582) ; il n'est pas réécrit. Pour vérifier, le seul conteneur PostgREST est recréé avec la
+valeur du gabarit passée par l'environnement du shell, prioritaire pour Compose, sans toucher au fichier.
+
+**CE QUE LA VÉRIFICATION A ENCORE TROUVÉ — cinq défauts de la tranche, corrigés dans son commit.**
+4. **Deux specs d'API se connectaient encore à GoTrue**, par `signInWithPassword`, pour s'abonner au
+   temps réel : `commentaires.spec.ts` (§13.9) et `notifications-surface.spec.ts` (§25.1, deux
+   ouvertures). Elles restaient vertes pour une seule raison : les comptes GoTrue des seeds antérieurs
+   vivaient encore dans `auth.users`. Sur une base neuve, elles seraient tombées. Portées sur `jetonDe`,
+   remis au client par l'option `accessToken` et poussé au temps réel par `realtime.setAuth()` avant
+   l'abonnement (K18) — le geste exact de la webapp.
+5. **`session.spec.ts` lisait TOUTES les sessions d'`admin@` et filtrait côté client** : 2949 lignes en
+   base, dont 764 vivantes — chaque scénario d'interface ouvre une session, qui vit jusqu'à son
+   échéance ; la purge ne prend que les sessions échues depuis plus d'un jour (§7.4). La lecture,
+   tronquée à 1000 lignes par `PGRST_DB_MAX_ROWS`, ne contenait plus celle de la preuve : échec
+   reproduit deux fois, dans `verify-session-sso` et dans `e2e:api`. La preuve filtre désormais **par
+   la base**, sur l'empreinte. Le produit est conforme à sa spécification ; l'accumulation est celle
+   d'une campagne de 755 scénarios.
+6. **Le rappel des identifiants de `./runDev.sh` lisait `SEED_PASSWORD` dans `apply-seed.sh`**, que la
+   tranche a retiré : trois anomalies de `verify-scripts`. Il lit maintenant le mot de passe dans
+   `keycloak/realm-lelabs.json`, qui le pose réellement, et n'annonce plus de mot de passe pour la
+   webapp ; le contrôle est révisé avec son objet et exige en plus que tous les comptes du realm portent
+   le même (`docs/SPEC-seed.md` §2.3).
+7. **La preuve d'amorçage de `verify-spark` était sautée en silence** — « pile injoignable » : sa sonde
+   présentait la clé ANONYME à la racine OpenAPI de PostgREST, que Kong lui refuse en `403`
+   (`verify-stack.sh` le prouve). Le harnais le disait par un « NON EXÉCUTÉE » et un code 2, pas par
+   un vert : la sonde porte désormais la clé de service, comme celle du seed.
+8. Le `typecheck` rouge du témoin de types, décrit au point 3.
+
+**Trois rouges étrangers à la tranche, mesurés comme tels.** `verify-droits-fins` : le rejeu isolé de
+`0010` fait dériver deux fonctions que `0063` (`CRM-064`) a redéfinies après la dernière révision du
+harnais — **INC-250**, comportement inchangé. `verify-webapp` : cinq classes non engendrées
+(**INC-231**, antérieure) et un `findBy` expiré dans `routes.test.tsx` sous la charge du harnais —
+famille d'**INC-189** ; la suite unitaire complète, rejouée seule, est verte.
+
+**Vérifications, sur la pile de développement seedée par le seul SSO.**
+- Harnais portés : `verify-catalogue` 32, `verify-seed-demo` 53, `verify-colonnes-protegees` 44,
+  `verify-channels` 27, `verify-champs-formulaire` 31, `verify-move-card` 57, `verify-cards` 42,
+  `verify-workflows` 43, `verify-coherence-workflow` 29, `verify-valeurs-champs` 41,
+  `verify-copie-workflow` 29, `verify-seed` 52, `verify-migrations` 31, `verify-authz` 37 — sans
+  anomalie. `verify-droits-fins` 38 dont 36 verts : INC-250 et le `typecheck` de sa non-régression.
+  `verify-tracks` rejoué après la correction du témoin : **43/43**.
+- `verify-session-sso` **44/44** (21 scénarios d'API) ; `verify-scripts` **112/112** ; `verify-spark`
+  **79/79**, amorçage mené jusqu'à la première connexion LeLabs ; `npm run typecheck` vert ;
+  `npm run test:unit` **3265/3265**.
+- `e2e:api` : premier passage 1061 verts, 1 rouge (point 5), 17 non joués derrière lui en mode série ;
+  après correction, **1079/1079**. `e2e:mail` **42/42**. Campagne d'interface complète, jouée par
+  `verify-webapp` avec les jetons de la tranche : **755/755**.
+

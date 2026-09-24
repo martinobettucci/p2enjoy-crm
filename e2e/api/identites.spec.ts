@@ -1,9 +1,12 @@
 // @verifies CRM-022 (docs/BACKLOG.md) — identités, profils et memberships sûrs
 // @verifies docs/SPEC-identite.md §5 (RLS), §6 (mutations), §7 (dernier admin), §10 (preuves)
-// @verifies CLAUDE.md §10 — les refus passent par de vrais JWT obtenus auprès de GoTrue
+// @verifies CLAUDE.md §10 — les refus passent par de vrais jetons, obtenus par la vraie connexion
+// @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §6, §13 — tranche T4 : le compte de preuve
+//           naît dans le Keycloak de développement, son appartenance d'une attente consommée
 
 import { expect, test, type APIRequestContext } from '@playwright/test'
-import { enTetesAuthentifies, enTetesService, jetonDe, MOT_DE_PASSE_SEED } from './jetons'
+import { enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
+import { creerCompteJetable, idUtilisateur, supprimerCompte } from './keycloak-dev'
 
 const WS_SEED = '5eed0000-0000-4000-8000-000000000001'
 const U_ADMIN = '5eed0000-0000-4000-8000-000000000011'
@@ -11,7 +14,6 @@ const U_BIZDEV = '5eed0000-0000-4000-8000-000000000012'
 const U_VIEWER = '5eed0000-0000-4000-8000-000000000013'
 
 const WS_B = '02200000-0000-4000-8000-00000000e2e1'
-const EMAIL_B = 'crm022-api@p2enjoy.test'
 
 type Erreur = { readonly code?: string; readonly message?: string }
 type Profil = {
@@ -42,20 +44,15 @@ async function lire<T>(
 	return (await reponse.json()) as readonly T[]
 }
 
-async function supprimerCompteDePreuve(request: APIRequestContext, id?: string): Promise<void> {
-	if (id !== undefined) {
-		await request.delete(`/auth/v1/admin/users/${id}`, { headers: enTetesService() })
-		return
-	}
-	const liste = await request.get('/auth/v1/admin/users?page=1&per_page=200', {
-		headers: enTetesService(),
-	})
-	if (!liste.ok()) return
-	const corps = (await liste.json()) as { readonly users?: readonly { id: string; email?: string }[] }
-	const ancien = corps.users?.find((utilisateur) => utilisateur.email === EMAIL_B)
-	if (ancien !== undefined) {
-		await request.delete(`/auth/v1/admin/users/${ancien.id}`, { headers: enTetesService() })
-	}
+/**
+ * Retire un compte de preuve : son profil — qu'aucune cascade ne suit plus depuis 0075 —, ses
+ * attentes, puis le compte du Keycloak de développement (`CRM-092` T4).
+ */
+async function supprimerCompteDePreuve(request: APIRequestContext, compte?: { adresse: string; sub: string }): Promise<void> {
+	if (compte === undefined) return
+	await request.delete(`/rest/v1/profiles?id=eq.${compte.sub}`, { headers: enTetesService() })
+	await request.delete(`/rest/v1/workspace_invitations?email=eq.${compte.adresse}`, { headers: enTetesService() })
+	await supprimerCompte(compte.sub)
 }
 
 test('les trois rôles lisent exactement les trois identités consenties du seed', async ({ request }) => {
@@ -166,37 +163,27 @@ test('seul l’admin change un rôle, et l’état initial est restauré', async
 test('un second workspace créé par les vraies routes reste invisible dans les deux directions', async ({
 	request,
 }) => {
-	let utilisateurB: string | undefined
+	let compteB: { adresse: string; sub: string } | undefined
 	await request.delete(`/rest/v1/workspaces?id=eq.${WS_B}`, { headers: enTetesService() })
-	await supprimerCompteDePreuve(request)
 	try {
-		const compte = await request.post('/auth/v1/admin/users', {
-			headers: { ...enTetesService(), 'Content-Type': 'application/json' },
-			data: {
-				email: EMAIL_B,
-				password: MOT_DE_PASSE_SEED,
-				email_confirm: true,
-				user_metadata: {
-					full_name: 'Élodie Espace B',
-					avatar_url: '/avatars/camille-aubert.svg',
-				},
-			},
-		})
-		expect(compte.status(), await compte.text()).toBe(200)
-		utilisateurB = ((await compte.json()) as { id: string }).id
+		// `CRM-092` T4 : le compte naît dans le Keycloak de développement ; son appartenance naîtra de
+		// SA connexion, qui consomme l'attente inscrite ci-dessous (docs/SPEC-session-sso.md §6).
+		compteB = await creerCompteJetable('crm022-api', 'Élodie', 'Espace B')
+		expect(await idUtilisateur(compteB.adresse)).toBe(compteB.sub)
+		const utilisateurB = compteB.sub
 
 		const workspace = await request.post('/rest/v1/workspaces', {
 			headers: { ...enTetesService(), 'Content-Type': 'application/json' },
 			data: { id: WS_B, name: 'Espace de preuve CRM-022', slug: 'preuve-crm-022-e2e' },
 		})
 		expect(workspace.status(), await workspace.text()).toBe(201)
-		const membership = await request.post('/rest/v1/workspace_members', {
+		const attente = await request.post('/rest/v1/workspace_invitations', {
 			headers: { ...enTetesService(), 'Content-Type': 'application/json' },
-			data: { workspace_id: WS_B, user_id: utilisateurB, role: 'admin' },
+			data: { workspace_id: WS_B, email: compteB.adresse, role: 'admin' },
 		})
-		expect(membership.status(), await membership.text()).toBe(201)
+		expect(attente.status(), await attente.text()).toBe(201)
 
-		const jetonB = await jetonDe(EMAIL_B)
+		const jetonB = await jetonDe(compteB.adresse)
 		expect(await lire(request, `/rest/v1/workspaces?select=id&id=eq.${WS_B}`, jetonAdmin)).toEqual([])
 		expect(await lire(request, `/rest/v1/profiles?select=id&id=eq.${utilisateurB}`, jetonAdmin)).toEqual(
 			[],
@@ -215,7 +202,7 @@ test('un second workspace créé par les vraies routes reste invisible dans les 
 		expect(await lire(request, `/rest/v1/profiles?select=id&id=eq.${U_ADMIN}`, jetonB)).toEqual([])
 	} finally {
 		await request.delete(`/rest/v1/workspaces?id=eq.${WS_B}`, { headers: enTetesService() })
-		await supprimerCompteDePreuve(request, utilisateurB)
+		await supprimerCompteDePreuve(request, compteB)
 	}
 })
 

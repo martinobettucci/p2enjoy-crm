@@ -10,14 +10,16 @@
 # @verifies docs/SCHEMA.md §1 (identité et cloisonnement)
 # @verifies docs/SPEC-permissions-rls.md §4 (politiques), §7 (preuves de refus n° 3 et 11)
 # @verifies docs/PROD_MIGRATIONS.md §3 (migrations en attente)
+# @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §6, §13 — tranche T4 : le profil naît de
+#           la vraie connexion LeLabs ; plus aucun compte GoTrue
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-003` :
 #
 #   1. la suite pgTAP `supabase/tests/0001_identite_et_cloisonnement.test.sql` est verte ;
 #   2. la migration est **rejouable** : réappliquée sur une base déjà migrée, elle réussit sans
 #      erreur ni effet de bord — exigence du `migrations-runner`, qui ne tient aucun registre ;
-#   3. le trigger de création de profil fonctionne par le **véritable** chemin applicatif :
-#      compte créé par l'API d'administration GoTrue, profil constaté par PostgREST ;
+#   3. le profil naît par le **véritable** chemin applicatif — révisé par `CRM-092` T4 : compte du
+#      Keycloak de développement, attente, vraie connexion LeLabs ; profil constaté par PostgREST ;
 #   4. le refus anonyme reste réel et le contrat CRM-022 est mesuré **hors interface** avec un vrai
 #      jeton : profil propre lisible, nom normalisé, locale protégée, workspace non créable et
 #      schéma `app` injoignable par l'API ;
@@ -34,6 +36,10 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+
+# shellcheck source=scripts/lib/sso.sh
+source scripts/lib/sso.sh
+sso_env_charger .env
 
 TEST_FILE=supabase/tests/0001_identite_et_cloisonnement.test.sql
 MIGRATION_FILE=supabase/migrations/0001_identite_et_cloisonnement.sql
@@ -172,53 +178,63 @@ else
 	tail -10 /tmp/p2enjoy-runner.log | sed 's/^/        /'
 fi
 
-# --- 3. Le trigger par le véritable chemin applicatif ------------------------------------------
-# Aucune insertion directe dans `auth.users` ici : le compte est créé par l'API d'administration
-# GoTrue, c'est-à-dire par le mécanisme que le produit utilisera réellement (`CLAUDE.md` §8).
+# --- 3. Le profil par le véritable chemin applicatif — révisé par `CRM-092` T4 -------------------
+# Aucune insertion directe dans `profiles` ici. Depuis `CRM-092`, un profil naît de la PREMIÈRE
+# CONNEXION LeLabs d'une personne attendue (docs/SPEC-session-sso.md §6) : le compte naît dans le
+# Keycloak de développement, par son API d'administration ; l'attente est inscrite dans un espace de
+# preuve ; la vraie connexion la consomme et crée le profil. C'est le mécanisme que le produit
+# emploie réellement (`CLAUDE.md` §8). Le trigger de GoTrue, lui, reste prouvé par la suite pgTAP
+# jusqu'à son retrait (migration 0077, tranche T6).
 
 echo
-echo "3. Création de profil par l'API d'administration GoTrue"
+echo "3. Création de profil par la vraie connexion LeLabs (CRM-092)"
 
-# Ménage préalable : un compte de preuve resté d'une exécution interrompue est supprimé.
-ancien=$(curl -s "$API/auth/v1/admin/users?page=1&per_page=200" \
-	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
-	| jq -r --arg m "$PREUVE_EMAIL" '.users[]? | select(.email == $m) | .id' | head -n 1)
-if [ -n "$ancien" ]; then
-	curl -s -o /dev/null -X DELETE "$API/auth/v1/admin/users/$ancien" \
-		-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY"
-fi
-
-MOT_DE_PASSE="preuve-crm003-$(head -c 12 /dev/urandom | od -An -tx1 | tr -d ' \n')"
-
-code=$(http POST "$API/auth/v1/admin/users" \
-	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
-	-H 'Content-Type: application/json' \
-	-d "{\"email\":\"$PREUVE_EMAIL\",\"password\":\"$MOT_DE_PASSE\",\"email_confirm\":true,
-	     \"user_metadata\":{\"full_name\":\"Preuve CRM-003\",\"locale\":\"fr\"}}")
-USER_ID=$(http_body | jq -r '.id // empty')
-
-if [ "$code" = 200 ] && [ -n "$USER_ID" ]; then
-	ok "compte créé par GoTrue (HTTP $code), identifiant $USER_ID"
-else
-	fail "création du compte refusée par GoTrue (HTTP $code) : $(http_body | head -c 200)"
-fi
+WS_PREUVE=c0030000-0000-4000-8000-00000000c003
+# L'attente est ADMINISTRATRICE : la première appartenance d'un espace doit l'être, et la garde du
+# dernier administrateur refuse toute autre (mesuré, INC-249).
 
 nettoyer() {
-	[ -n "${USER_ID:-}" ] || return 0
-	curl -s -o /dev/null -X DELETE "$API/auth/v1/admin/users/$USER_ID" \
-		-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" || true
+	psql_db -c "delete from public.workspaces where id = '$WS_PREUVE';
+	            delete from public.workspace_invitations where email = '$PREUVE_EMAIL';" >/dev/null 2>&1 || true
+	local id
+	id=${USER_ID:-$(sso_compte_id "$PREUVE_EMAIL" 2>/dev/null || true)}
+	if [ -n "$id" ]; then
+		psql_db -c "delete from public.profiles where id = '$id';" >/dev/null 2>&1 || true
+		sso_compte_supprimer "$id" || true
+	fi
 }
 trap nettoyer EXIT
+# Ménage préalable : un compte de preuve resté d'une exécution interrompue est supprimé.
+USER_ID=''
+nettoyer
+
+code=$(http POST "$API/rest/v1/workspaces" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+	-H 'Content-Type: application/json' \
+	-d "{\"id\":\"$WS_PREUVE\",\"name\":\"Preuve CRM-003\",\"slug\":\"preuve-crm003\"}")
+code_attente=$(http POST "$API/rest/v1/workspace_invitations" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+	-H 'Content-Type: application/json' \
+	-d "{\"workspace_id\":\"$WS_PREUVE\",\"email\":\"$PREUVE_EMAIL\",\"role\":\"admin\"}")
+USER_ID=$(sso_compte_jetable_creer "$PREUVE_EMAIL" 'Preuve' 'CRM-003' || true)
+
+if [ "$code" = 201 ] && [ "$code_attente" = 201 ] && [ -n "$USER_ID" ]; then
+	ok "compte créé dans le Keycloak de développement ($USER_ID), attendu par un espace de preuve"
+else
+	fail "préparation refusée : espace HTTP $code, attente HTTP $code_attente, compte « $USER_ID »"
+fi
+
+JETON=$(sso_jeton_interne "$API" "$ANON_KEY" "$PREUVE_EMAIL" 2>/dev/null || true)
 
 code=$(http GET "$API/rest/v1/profiles?id=eq.$USER_ID&select=id,full_name,locale" \
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY")
 nom=$(http_body | jq -r '.[0].full_name // empty')
 langue=$(http_body | jq -r '.[0].locale // empty')
 
-if [ "$code" = 200 ] && [ "$nom" = "Preuve CRM-003" ] && [ "$langue" = "fr" ]; then
-	ok "le profil correspondant existe, avec le nom et la langue des métadonnées"
+if [ -n "$JETON" ] && [ "$code" = 200 ] && [ "$nom" = "Preuve CRM-003" ] && [ "$langue" = "fr" ]; then
+	ok "la première connexion crée le profil, avec le nom de LeLabs et la langue par défaut"
 else
-	fail "profil introuvable ou incorrect (HTTP $code) : $(http_body | head -c 200)"
+	fail "profil introuvable ou incorrect après la connexion (HTTP $code) : $(http_body | head -c 200)"
 fi
 
 # --- 4. Contrats d'identité, mesurés hors interface --------------------------------------------
@@ -239,21 +255,16 @@ for table in profiles workspaces workspace_members track_members channel_members
 	fi
 done
 
-# 4.2 Compte authentifié réel — le jeton est obtenu par la véritable route de connexion.
-code=$(http POST "$API/auth/v1/token?grant_type=password" \
-	-H "apikey: $ANON_KEY" -H 'Content-Type: application/json' \
-	-d "{\"email\":\"$PREUVE_EMAIL\",\"password\":\"$MOT_DE_PASSE\"}")
-JETON=$(http_body | jq -r '.access_token // empty')
-
-if [ "$code" = 200 ] && [ -n "$JETON" ]; then
+# 4.2 Compte authentifié réel — le jeton interne de la section 3, obtenu par la vraie connexion.
+if [ -n "$JETON" ]; then
 	role_jeton=$(decoder_jwt "$JETON" | jq -r '.role // empty')
 	if [ "$role_jeton" = authenticated ]; then
-		ok "connexion du compte de preuve : jeton d'accès authenticated obtenu"
+		ok "connexion du compte de preuve : jeton interne authenticated obtenu"
 	else
 		fail "connexion obtenue avec un rôle JWT inattendu : « $role_jeton »"
 	fi
 else
-	fail "connexion refusée (HTTP $code) : $(http_body | head -c 200)"
+	fail "connexion LeLabs du compte de preuve refusée"
 fi
 
 if [ -n "${JETON:-}" ]; then
@@ -311,27 +322,19 @@ else
 	fail 'une fonction du schéma app est exposée par PostgREST (HTTP '"$code"')'
 fi
 
-# 4.4 Suppression du compte : la session ouverte par cette preuve est d'abord fermée par la vraie
-# route. Supprimer simultanément l'utilisateur et sa session peut mettre GoTrue en deadlock ; ce
-# n'est ni un parcours utilisateur cohérent, ni une propriété de cascade à mesurer ici.
-code=$(http POST "$API/auth/v1/logout" \
-	-H "apikey: $ANON_KEY" -H "Authorization: Bearer $JETON")
-if [ "$code" = 204 ]; then
-	ok "la session de preuve est fermée avant suppression du compte"
-else
-	fail "déconnexion de la session de preuve refusée (HTTP $code)"
-fi
-
-code_suppression=$(http DELETE "$API/auth/v1/admin/users/$USER_ID" \
+# 4.4 Retrait du compte de preuve — révisé par `CRM-092` T4. Le compte est supprimé du Keycloak de
+# développement et son profil retiré : depuis 0075, aucune cascade ne relie plus un profil à un
+# compte, et c'est au geste qui retire une personne de retirer ses données.
+id_retire=$USER_ID
+nettoyer
+USER_ID=''
+code=$(http GET "$API/rest/v1/profiles?id=eq.$id_retire&select=id" \
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY")
-code=$(http GET "$API/rest/v1/profiles?id=eq.$USER_ID&select=id" \
-	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY")
-if [ "$code_suppression" = 200 ] && [ "$code" = 200 ] && [ "$(http_body)" = "[]" ]; then
-	ok "la suppression du compte par GoTrue supprime le profil (HTTP $code_suppression)"
+if [ "$code" = 200 ] && [ "$(http_body)" = "[]" ] && [ -z "$(sso_compte_id "$PREUVE_EMAIL")" ]; then
+	ok "le compte de preuve et son profil sont retirés"
 else
-	fail "suppression GoTrue HTTP $code_suppression ; profil relu HTTP $code : $(http_body | head -c 120)"
+	fail "retrait incomplet : profil relu HTTP $code $(http_body | head -c 120)"
 fi
-USER_ID=""
 
 # --- 5. Non-complaisance du harnais ------------------------------------------------------------
 # Chaque mutation est injectée **dans la transaction de la suite pgTAP**, qui se termine par un
@@ -391,10 +394,13 @@ verifier_mutation "SELECT retiré à anon sur profiles" \
 verifier_mutation "contrainte de rôle relâchée" \
 	"alter table public.workspace_members drop constraint workspace_members_role_check;"
 
-verifier_mutation "cascade de suppression du profil retirée" \
-	"alter table public.profiles drop constraint profiles_id_fkey;
-	 alter table public.profiles add constraint profiles_id_fkey
-	   foreign key (id) references auth.users (id);"
+# RÉVISÉE par `CRM-092` (décisions 582 et 587) : la mutation retirait une clé `profiles.id →
+# auth.users` que la migration 0075 a supprimée — un profil naît désormais d'un `sub` LeLabs, sans
+# ligne dans `auth.users`. Elle ne s'appliquait donc plus. Le contrat éprouvé est l'inverse : la clé
+# ne doit PAS revenir, et la suite doit rougir si elle revient.
+verifier_mutation "clé profiles → auth.users rétablie" \
+	"alter table public.profiles add constraint profiles_id_fkey
+	   foreign key (id) references auth.users (id) on delete cascade not valid;"
 
 # --- 6. Convergence du répertoire : aucune migration ne cite une colonne supprimée --------------
 # @verifies CRM-064 (docs/BACKLOG.md) — INC-240

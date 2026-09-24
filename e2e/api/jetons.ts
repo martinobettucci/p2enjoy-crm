@@ -3,16 +3,22 @@
 // @spec docs/SPEC-seed.md §2.3 (comptes du seed, mot de passe de développement)
 // @spec docs/SPEC-permissions-rls.md §7 (preuves de refus, hors interface)
 // @spec CLAUDE.md §10 (toute règle d'accès se prouve hors interface)
+// @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §4, §5.2, §13 — tranche T4 : le jeton d'une
+//       preuve est le jeton INTERNE, obtenu par la vraie connexion LeLabs et l'échangeur de session
 //
-// Les jetons sont obtenus par la **véritable route de connexion** de GoTrue, jamais fabriqués
-// localement. Un jeton signé à la main prouverait que la signature est acceptée ; il ne
-// prouverait rien de ce que le produit consent à un profil réel.
+// Les jetons sont obtenus par la **véritable connexion**, jamais fabriqués localement. Un jeton
+// signé à la main prouverait que la signature est acceptée ; il ne prouverait rien de ce que le
+// produit consent à un profil réel. Depuis `CRM-092` T4, cette connexion est celle de la webapp :
+// la page du Keycloak de développement, puis l'échangeur de session, qui rend le jeton interne que
+// PostgREST, Realtime et Storage acceptent. GoTrue n'y prend plus aucune part.
 //
 // Ce module est le livrable durable du projet `api` : `CRM-014` s'appuiera dessus pour ses
 // douze scénarios de refus, avec les mêmes profils et le même chemin d'obtention.
 
-import { request } from '@playwright/test'
 import { cleAnonyme, cleService, urlApi } from '../env'
+import { MOT_DE_PASSE_SEED, fermer, obtenirCode, ouvrir } from './sso'
+
+export { MOT_DE_PASSE_SEED }
 
 export const URL_API = urlApi()
 export const CLE_ANONYME = cleAnonyme()
@@ -26,14 +32,6 @@ export const COMPTES_SEED = [
 ] as const
 
 /**
- * Mot de passe de développement commun aux comptes seedés.
- *
- * Il est publié dans `docs/SPEC-seed.md` §2.3 et `README.md` : ce n'est pas un secret, mais une
- * donnée de développement sur un domaine `.test`, réservé par la RFC 2606 et non routable.
- */
-export const MOT_DE_PASSE_SEED = 'SeedDev2026Local'
-
-/**
  * Tables du socle réellement alimentées par le seed.
  *
  * `track_members` et `channel_members` en sont **absentes à dessein** : le seed n'y pose aucune
@@ -43,33 +41,40 @@ export const MOT_DE_PASSE_SEED = 'SeedDev2026Local'
  */
 export const TABLES_ALIMENTEES = ['profiles', 'workspaces', 'workspace_members'] as const
 
+/** Marge sous laquelle un jeton en cache n'est plus rendu : la preuve doit pouvoir s'en servir. */
+const MARGE_JETON_S = 60
+
+const jetonsObtenus = new Map<string, { readonly jeton: string; readonly expireA: number }>()
+
 /**
- * Obtient un jeton d'accès par la route de connexion réelle.
+ * Obtient le jeton interne d'un compte par la vraie connexion : code PKCE sur la page du Keycloak de
+ * développement, puis ouverture par l'échangeur de session (docs/SPEC-session-sso.md §5.2).
  *
- * Échoue en nommant la cause probable : un compte seedé introuvable signale presque toujours un
- * seed non appliqué, et non un défaut d'authentification.
+ * La session serveur est aussitôt FERMÉE : la preuve n'emploie que le jeton interne, qui reste
+ * valable jusqu'à son échéance, et la table des sessions ne garde rien d'une preuve. Le jeton est
+ * gardé en mémoire du processus tant qu'il vit encore au moins une minute ; un compte jetable
+ * portant une adresse tirée au hasard, une adresse désigne toujours la même personne.
+ *
+ * Échoue en nommant la cause probable : un compte refusé signale presque toujours un seed non
+ * appliqué — personne n'attend l'adresse —, et non un défaut d'authentification.
  */
 export async function jetonDe(adresse: string, motDePasse = MOT_DE_PASSE_SEED): Promise<string> {
-	const contexte = await request.newContext({ baseURL: URL_API })
-	try {
-		const reponse = await contexte.post('/auth/v1/token?grant_type=password', {
-			headers: { apikey: CLE_ANONYME, 'Content-Type': 'application/json' },
-			data: { email: adresse, password: motDePasse },
-		})
-		if (!reponse.ok()) {
-			throw new Error(
-				`Connexion refusée pour ${adresse} (HTTP ${reponse.status()}) : ${await reponse.text()}\n` +
-					`Le seed est-il appliqué ? Voir supabase/seed/apply-seed.sh.`,
-			)
-		}
-		const corps = (await reponse.json()) as { access_token?: string }
-		if (!corps.access_token) {
-			throw new Error(`Réponse de connexion sans access_token pour ${adresse}.`)
-		}
-		return corps.access_token
-	} finally {
-		await contexte.dispose()
+	const cle = `${adresse}\u0000${motDePasse}`
+	const maintenant = Math.floor(Date.now() / 1000)
+	const garde = jetonsObtenus.get(cle)
+	if (garde !== undefined && garde.expireA - maintenant > MARGE_JETON_S) return garde.jeton
+
+	const ouverte = await ouvrir(await obtenirCode(adresse, { motDePasse }))
+	if (ouverte.statut !== 200 || typeof ouverte.corps?.jeton !== 'string') {
+		throw new Error(
+			`Connexion LeLabs refusée pour ${adresse} (HTTP ${ouverte.statut}) : ${JSON.stringify(ouverte.corps)}\n` +
+				`Le seed est-il appliqué ? Voir supabase/seed/apply-seed.sh.`,
+		)
 	}
+	await fermer(ouverte.poignee)
+	const jeton = ouverte.corps.jeton
+	jetonsObtenus.set(cle, { jeton, expireA: Number(ouverte.corps.expire_a) })
+	return jeton
 }
 
 /** En-têtes d'un appelant anonyme : la clé de la webapp, aucune session. */

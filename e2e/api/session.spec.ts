@@ -81,8 +81,19 @@ async function lireService<T>(chemin: string): Promise<T[]> {
 	return (await reponse.json()) as T[]
 }
 
-const sessionsDe = (sub: string) =>
-	lireService<LigneSession>(`sessions_sso?select=sub,poignee_empreinte,rafraichissement,expire_le&sub=eq.${sub}`)
+const COLONNES_SESSION = 'select=sub,poignee_empreinte,rafraichissement,expire_le'
+
+const sessionsDe = (sub: string) => lireService<LigneSession>(`sessions_sso?${COLONNES_SESSION}&sub=eq.${sub}`)
+
+/**
+ * La session d'une poignée, filtrée PAR LA BASE. Un compte du seed accumule les sessions des campagnes
+ * d'interface — chacune en ouvre une, qui vit jusqu'à son échéance (§7.4) : une lecture de toutes ses
+ * sessions, tronquée par `PGRST_DB_MAX_ROWS`, peut ne pas contenir celle de la preuve (`CRM-092` T4).
+ */
+const sessionsDePoignee = (sub: string, poignee: string) =>
+	lireService<LigneSession>(
+		`sessions_sso?${COLONNES_SESSION}&sub=eq.${sub}&poignee_empreinte=eq.${encodeURIComponent(empreinte(poignee))}`,
+	)
 
 /** Le cookie d'une poignée : `HttpOnly`, `SameSite=Strict`, chemin de l'échangeur, sans durée (§5.6). */
 function attendreCookieDePoignee(setCookie: string | null, poignee: string | null) {
@@ -121,7 +132,7 @@ test.describe('Ouvrir, prolonger, fermer : les comptes du seed, et la pile de do
 		expect(ouverte.statut).toBe(200)
 		const poignee = ouverte.poignee ?? ''
 
-		const lignes = (await sessionsDe(sub)).filter((l) => l.poignee_empreinte === empreinte(poignee))
+		const lignes = await sessionsDePoignee(sub, poignee)
 		expect(lignes, 'une ligne par session, désignée par l’empreinte de sa poignée').toHaveLength(1)
 		const ligne = lignes[0] as LigneSession
 		expect(JSON.stringify(ligne), 'la poignée elle-même n’est jamais gardée').not.toContain(poignee)
@@ -139,7 +150,7 @@ test.describe('Ouvrir, prolonger, fermer : les comptes du seed, et la pile de do
 		expect(revendications(prolongee.corps?.jeton as string).sub).toBe(sub)
 		expect(prolongee.corps?.identite).toMatchObject({ id: sub, adresse: ADMIN })
 		// LeLabs rend un nouveau jeton de rafraîchissement à chaque fois : il remplace l'ancien.
-		const apres = (await sessionsDe(sub)).find((l) => l.poignee_empreinte === empreinte(poignee))
+		const [apres] = await sessionsDePoignee(sub, poignee)
 		expect(apres?.rafraichissement).not.toBe(ligne.rafraichissement)
 		expect((await prolonger(poignee)).statut, 'le jeton remplacé se prolonge encore').toBe(200)
 
@@ -147,7 +158,7 @@ test.describe('Ouvrir, prolonger, fermer : les comptes du seed, et la pile de do
 		const fermee = await fermer(poignee)
 		expect(fermee.statut).toBe(204)
 		expect(fermee.setCookie).toBe(`${NOM_COOKIE}=; Path=/functions/v1/session; HttpOnly; SameSite=Strict; Max-Age=0`)
-		expect((await sessionsDe(sub)).filter((l) => l.poignee_empreinte === empreinte(poignee))).toEqual([])
+		expect(await sessionsDePoignee(sub, poignee)).toEqual([])
 		expect(await prolonger(poignee), 'aucune session : 204, jamais une erreur (décision 587)').toMatchObject({ statut: 204, corps: null })
 		// Fermer ce qui n'existe pas n'est pas une erreur.
 		expect((await fermer(poignee)).statut).toBe(204)
@@ -411,7 +422,7 @@ test.describe('Une attente se consomme, et l’accès se ferme quand sa cause di
 			const sansEspace = await prolonger(avantSortie.poignee)
 			expect(sansEspace).toMatchObject({ statut: 403, corps: { erreur: 'attente_espace', adresse: compte.adresse } })
 			expect(sansEspace.setCookie).toContain('Max-Age=0')
-			expect((await sessionsDe(compte.sub)).filter((l) => l.poignee_empreinte === empreinte(avantSortie.poignee ?? ''))).toEqual([])
+			expect(await sessionsDePoignee(compte.sub, avantSortie.poignee ?? '')).toEqual([])
 			expect(await ouvrirSession(compte.adresse)).toMatchObject({ statut: 403, corps: { erreur: 'attente_espace' } })
 		} finally {
 			await fetch(`${URL_API}/rest/v1/workspace_invitations?email=eq.${compte.adresse}`, { method: 'DELETE', headers: enTetesService() })
