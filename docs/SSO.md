@@ -22,28 +22,46 @@ de l'instance et n'a aucun utilisateur final.
 
 ## Les trois états d'un compte, et ce qu'ils veulent dire
 
-C'est le cœur de ce document. Le SSO énonce ces trois états ; **il ne décide pas
-à votre place de ce qu'ils autorisent**. Chaque application choisit, mais doit
-choisir en connaissance de cause.
+C'est le cœur de ce document. Le domaine `lelabs.tech` fixe **deux règles qui
+valent pour toute application**. Elles ne sont pas des recommandations, et elles
+ne vous laissent pas le choix ; tout le reste vous appartient.
 
-| État | Ce qui a été établi | Ce qui ne l'a PAS été |
+| État | Ce qui a été établi | Ce que votre application en fait |
 | --- | --- | --- |
-| **aucun rôle** | La personne détient l'adresse e-mail déclarée. | Rien d'autre. Personne n'a contrôlé qu'il s'agit d'un être humain réel. |
-| **`verified`** | Un administrateur a consulté un profil LinkedIn ou Facebook public déclaré par la personne, et constaté qu'elle est réelle. | Ce n'est pas une vérification d'identité officielle : aucun document n'a été contrôlé. |
-| **`admin`** | La personne peut vérifier les autres comptes du realm. | Ce rôle ne dit rien des droits qu'elle devrait avoir dans VOTRE application. |
+| **aucun rôle** | La personne détient l'adresse e-mail déclarée. Rien d'autre : personne n'a contrôlé qu'il s'agit d'un être humain réel. | **Aucun accès.** Règle du domaine, pas un choix d'application. |
+| **`verified`** | Un administrateur a consulté un profil LinkedIn ou Facebook public déclaré par la personne, et constaté qu'elle est réelle. Ce n'est **pas** une vérification d'identité officielle : aucun document n'a été contrôlé. | **L'accès au service**, au niveau ordinaire que vous définissez. |
+| **`admin`** | La personne exploite le SSO : elle vérifie les autres comptes et déclare les intégrations. | **Les droits d'administration de votre application**, d'office. |
 
-Trois conséquences pratiques :
+### Les deux règles du domaine
 
-1. **L'absence de rôle est un état normal, pas une erreur.** Tout compte neuf y
-   passe. Décidez explicitement de ce que votre application en fait — accès
-   restreint, lecture seule, écran d'attente — plutôt que de tomber dans un cas
-   par défaut non pensé.
-2. **`verified` atteste d'une personne réelle, pas d'une identité prouvée.** Si
-   votre application a besoin d'une identité au sens légal, ce rôle ne suffit
-   pas.
-3. **`admin` n'est pas « administrateur de votre application ».** C'est un rôle
-   d'exploitation du SSO. Si votre application a ses propres administrateurs,
-   définissez vos propres rôles.
+1. **Aucune application n'est accessible sans `verified`.** Un compte sans rôle
+   est un compte dont personne n'a encore constaté qu'il correspond à une
+   personne réelle. Il s'authentifie — la connexion réussit — et votre
+   application lui refuse l'accès en disant quoi faire : demander sa
+   vérification. C'est une attente, pas une erreur, et cela se dit comme telle.
+2. **`admin` vaut administrateur chez vous.** Qui porte ce rôle reçoit d'office
+   les droits d'administration de votre application. C'est le rôle
+   d'exploitation du domaine : la personne qui vérifie les comptes et déclare
+   les intégrations administre aussi ce qui en dépend.
+
+Ces deux règles fixent un **plancher** : qui entre, et qui administre. Vous
+pouvez être plus strict — n'ouvrir qu'aux porteurs d'`admin`, par exemple, si
+votre service ne s'adresse qu'à eux. Vous ne pouvez pas être plus permissif.
+
+### Ce qui reste entièrement vôtre
+
+Tout ce qui vient **après** l'entrée. Rôles métier, propriété des objets,
+appartenance à une équipe, quotas, lecture seule, étapes d'un processus : le SSO
+ne les connaît pas et n'a pas à les connaître. Il dit qui est la personne et où
+elle en est dans le domaine ; ce qu'elle a le droit de faire chez vous est votre
+affaire, et se décide sur votre serveur.
+
+Deux pièges que ces règles ne lèvent pas :
+
+- **`verified` atteste d'une personne réelle, pas d'une identité prouvée.** Si
+  votre application a besoin d'une identité au sens légal, ce rôle ne suffit pas.
+- **Un rôle se retire.** Relisez-le à chaque requête, depuis le jeton, et ne le
+  mettez pas en cache au-delà de sa durée de vie.
 
 ### Comment la vérification se produit
 
@@ -124,6 +142,25 @@ SECRET_VAR=MON_APP_OIDC_CLIENT_SECRET
 Si vous servez un apex **et** son `www`, donnez les deux, partout : les URL sont
 comparées caractère par caractère, et une différence d'un seul caractère fait
 échouer la connexion sans message utile.
+
+### Apparaître dans le portail des personnes
+
+Une fois le client créé, votre application figure d'office dans l'onglet
+*Applications* de l'espace de compte, à l'adresse
+`https://oauth.lelabs.tech/realms/lelabs/account`. Les personnes du domaine y
+trouvent donc votre service sans que personne ne leur en ait donné l'adresse, et
+**avant** même de s'y être connectées une première fois.
+
+Deux clés de votre déclaration décident de ce qu'elles y voient :
+
+- `NOM` est le **libellé** affiché. Nommez-y la page que l'entrée ouvre, pas le
+  projet : c'est ce que la personne lit pour décider de cliquer.
+- `ACCUEIL` est le **lien**. Par défaut, c'est l'origine de votre premier
+  `REDIRECT` — presque toujours juste. Ne le donnez que si votre application
+  s'ouvre ailleurs que sur sa racine, par exemple sous un chemin.
+
+Rien d'autre n'est à demander : l'inscription au portail n'est pas une option de
+la déclaration, elle est systématique.
 
 ### Ce qui est refusé, et pourquoi
 

@@ -29814,3 +29814,37 @@ classes ne voit pas) et **INC-252** (deux harnais qui restaurent en rejouant `00
   silence. Unités `CRM-060`, `CRM-064`, `CRM-007`.
 
 Deux commits, dans cet ordre : INC-252, puis INC-251.
+
+## décision 597 — la règle du domaine sur `admin` : administrateur du CRM d'office, porté par le jeton
+
+*2026-09-24. `docs/SSO.md` mis à jour par le responsable (et confirmé par l'agent du dépôt du SSO) : le
+domaine `lelabs.tech` fixe deux règles qui valent pour toute application. Arbitrage rendu le même
+jour ; `docs/SPEC-session-sso.md` §5.2, §5.4, §6.1, §6.1 bis, §7.7, §10, §14 (T8), §15, §16 amendé avant
+le code.*
+
+**Les deux règles.** (1) Aucune application n'est accessible sans `verified` — le CRM l'exige déjà
+(condition 2 du §6.1, attente `attente_verification`). (2) **`admin` vaut administrateur chez vous** —
+le CRM l'ignorait délibérément (décision 579, A3 : « un porteur d'`admin` chez LeLabs reste lecteur ») ;
+cette position est **renversée** par une règle qui ne laisse pas le choix.
+
+**Arbitrages du responsable.**
+- **Porté par le jeton** : l'échangeur pose `lelabs_admin: true` dans le jeton interne (≤ 300 s) si et
+  seulement si `admin` est présent dans `realm_access.roles` ; les fonctions d'appartenance de la base
+  (`app.is_workspace_member`, `app.is_workspace_admin`, `app.workspace_role`) le consultent ; rien
+  n'est écrit en base, et le retrait du rôle agit à la prolongation suivante. Écartée : l'appartenance
+  matérialisée à chaque ouverture, qui laissait une ligne périmée tant que la personne ne se
+  reconnectait pas et heurtait la garde du dernier administrateur.
+- **Tous les espaces** : « les droits d'administration de votre application ».
+
+**Conséquences.** Un porteur d'`admin` vérifié est admis sans attente, son profil est créé. `viewer@`
+du realm de développement perd `admin` — sinon la lectrice de toutes les preuves deviendrait
+administratrice — et un compte `exploitante@` (`5eed…0017`) démontre la règle. Les fonctions qui jugent
+les droits d'un tiers ne voient que les appartenances enregistrées. Mise en œuvre : tranche **T8** de
+`CRM-092`, qui repasse `[~]` jusqu'à sa livraison.
+
+**Bloc de déclaration et client public.** Redonné au responsable : `CLIENTID=lelabs-crm-serveur`,
+`NOM=P2Enjoy CRM`, `TYPE=serveur`, `REDIRECT=https://crm.lelabs.tech/auth/retour`, `ROLE=verified`,
+`SECRET_VAR=SSO_OIDC_CLIENT_SECRET` — format inchangé par la nouvelle note. Le client public
+`lelabs-crm` n'est **pas** supprimé maintenant : la production tourne encore sur lui ; il le sera
+après le déploiement de `CRM-092` et une connexion réelle réussie par le client serveur (§2.5 de
+`docs/PROD_MIGRATIONS.md`).

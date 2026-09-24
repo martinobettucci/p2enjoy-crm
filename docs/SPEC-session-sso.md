@@ -144,9 +144,10 @@ le point 5.
    5. **revendications** : `iss` égal à `SSO_OIDC_ISSUER`, `azp` égal à `SSO_OIDC_CLIENT_ID`, `typ` égal à
       `Bearer`, `exp` futur sans tolérance, `iat` au plus 60 s dans le futur, `sub` UUID ; **jamais
       `aud`** (K14).
-5. **Admission** (§6) : adresse vérifiée, puis **présence** de `verified`, puis
-   `public.ouvrir_session_serveur` (§7.4), qui applique `ouvrir_session_sso` (§6.2) **et**, si la
-   personne est admise, enregistre la session serveur — en un seul appel.
+5. **Admission** (§6) : adresse vérifiée, puis **présence** de `verified`, puis lecture de la
+   **présence** d'`admin` (règle du domaine, §6.1 bis), puis `public.ouvrir_session_serveur` (§7.4),
+   qui applique `ouvrir_session_sso` (§6.2) **et**, si la personne est admise, enregistre la session
+   serveur — en un seul appel.
 6. **Réponse** : jeton interne (§5.4) et `Set-Cookie` de la poignée (§5.6).
 
 ### 5.3 Prolonger et fermer
@@ -193,10 +194,14 @@ Storage connaissent déjà :
 | `aud` | `authenticated` |
 | `iat` | l'instant du geste |
 | `exp` | **le plus proche** de l'`exp` du jeton d'accès LeLabs et de `iat + 300` |
+| `lelabs_admin` | `true` **si et seulement si** `admin` est présent dans `realm_access.roles` du jeton d'accès LeLabs vérifié ; **absente** sinon (décision 597, §6.1 bis) |
 
-Il ne porte **ni rôle du realm, ni rôle d'espace, ni adresse** : les droits restent relus par la RLS
-(§1), et l'admission est rejouée à chaque prolongation (§5.3). C'est la lecture, pour ce CRM, de
-« relisez le rôle à chaque requête et ne le gardez pas au-delà de la durée de vie du jeton ».
+Il ne porte **aucun autre rôle du realm, aucun rôle d'espace, aucune adresse** : les droits restent
+relus par la RLS (§1), et l'admission est rejouée à chaque prolongation (§5.3). `lelabs_admin` est la
+seule exception, et elle est imposée par la règle du domaine (`docs/SSO.md`, « `admin` vaut
+administrateur chez vous ») : elle vit ce que vit le jeton, **300 s au plus**, et se relit du jeton
+LeLabs à chaque prolongation. C'est la lecture, pour ce CRM, de « relisez le rôle à chaque requête et ne
+le gardez pas au-delà de la durée de vie du jeton ».
 
 Ce jeton est symétrique, et la règle du fournisseur interdit d'**accepter** un jeton symétrique **comme
 preuve SSO** : l'échangeur n'en accepte aucun (§5.2, point 4.2). Le jeton interne ne prouve rien au
@@ -272,7 +277,8 @@ Une connexion LeLabs ouvre une session du CRM **si et seulement si** (décision 
 
 1. l'adresse du jeton est **vérifiée** (`email_verified = true`) ;
 2. la personne porte le rôle de realm **`verified`** ;
-3. la personne est **membre** d'au moins un espace, ou **attendue** à cette adresse par au moins un.
+3. la personne est **membre** d'au moins un espace, ou **attendue** à cette adresse par au moins un,
+   **ou porte le rôle de realm `admin`** (§6.1 bis).
 
 Une personne attendue devient membre à sa première connexion admise : ses attentes sont
 **consommées** et changées en appartenances, avec le rôle choisi par l'administrateur. Elles se
@@ -282,8 +288,50 @@ Une personne qui ne remplit pas 1 ou 2 n'est **jamais** rattachée, même attend
 place et se consommera le jour où elle sera vérifiée. Une personne vérifiée mais ni membre ni attendue
 ne laisse **aucune trace** dans le CRM : pas de profil, pas de ligne (`CLAUDE.md` §11, minimisation).
 
-Les rôles `admin` du realm et tout autre rôle ne sont **pas** lus (décision 579, A3) : un porteur
-d'`admin` chez LeLabs reste lecteur dans un espace où il est lecteur.
+*Révisé le 2026-09-24 (décision 597).* Ce paragraphe disait : « les rôles `admin` du realm et tout
+autre rôle ne sont pas lus (décision 579, A3) ». Le domaine `lelabs.tech` a depuis fixé deux règles qui
+valent pour toute application et ne laissent pas le choix (`docs/SSO.md`, « Les deux règles du
+domaine ») : la première — aucun accès sans `verified` — est déjà la condition 2 ; la seconde fait
+l'objet du §6.1 bis. Tout autre rôle du realm reste ignoré.
+
+### 6.1 bis Le rôle de realm `admin` vaut administrateur du CRM — décision 597
+
+**Règle du domaine** : qui porte `admin` chez LeLabs reçoit **d'office** les droits d'administration de
+l'application, et les perd dès que le rôle lui est retiré. **Arbitrage du responsable** : ces droits
+valent pour **tous les espaces** du CRM, présents et à venir, et ils sont **portés par le jeton**, jamais
+écrits en base.
+
+1. **L'échangeur lit la présence** d'`admin` dans `realm_access.roles` du jeton d'accès LeLabs qu'il
+   vient de vérifier — la présence, jamais le nombre ni l'ordre : le tableau porte aussi les rôles
+   techniques par défaut (K14). Il pose alors `lelabs_admin: true` dans le jeton interne (§5.4).
+2. **Les conditions 1 et 2 restent exigées** : un `admin` sans `verified` n'entre pas. La règle fixe un
+   plancher, et `verified` est la première marche du domaine.
+3. **La condition 3 est remplie par le rôle** : un porteur d'`admin` est admis sans être ni membre ni
+   attendu. Son profil est créé à sa première connexion admise — il signe ce qu'il écrit —, et ses
+   attentes éventuelles sont consommées comme celles de tout le monde.
+4. **La base lit la revendication, jamais une table.** `app.est_admin_lelabs()` rend vrai si et
+   seulement si `auth.jwt() ->> 'lelabs_admin'` vaut `true`. `app.is_workspace_member(ws)`,
+   `app.is_workspace_admin(ws)` et `app.workspace_role(ws)` la consultent : le porteur est membre et
+   administrateur de **tout espace existant**, avec le rôle `admin`, sans ligne dans
+   `workspace_members`. Toutes les politiques qui s'appuient sur ces fonctions suivent sans être
+   réécrites, droits fins compris — un administrateur d'espace les franchit déjà.
+5. **Le retrait agit au plus tard 300 s après** : à la prolongation suivante, le jeton LeLabs ne porte
+   plus `admin`, le jeton interne ne porte plus la revendication, et l'admission est rejouée — la
+   personne reste admise par ses appartenances, ou reçoit `attente_espace` et sa session est supprimée.
+   Rien ne reste en base à défaire.
+6. **Ce que la revendication ne couvre pas**, et c'est voulu : les fonctions qui jugent les droits
+   d'une **autre** personne que l'appelant — `app.workspace_role_pour(ws, p_user)` pour un tiers,
+   `public.mentionnables` — ne voient que les appartenances enregistrées. Un administrateur du domaine
+   sans appartenance n'est donc ni mentionnable ni proposé comme responsable : le SSO dit qui entre et
+   qui administre ; qui figure dans les listes d'un espace reste l'affaire du CRM.
+7. **L'interface lit son propre rôle par le serveur** : `webapp/src/lib/roles.ts` cesse de lire
+   `workspace_members` et appelle `public.mon_role_espace(ws uuid) returns text` — `SECURITY INVOKER`,
+   `EXECUTE` à `authenticated` seul —, qui rend `app.workspace_role(ws)`. Sans quoi les aides d'écran
+   réservées à l'administrateur (§5.10 du design system, le geste de modération) disparaîtraient pour
+   lui alors que la base les lui accorde.
+8. **Aucun jeton n'accorde la revendication hors de l'échangeur** : le jeton interne est signé par
+   `JWT_SECRET`, que seule la fonction `session` détient avec PostgREST, Realtime et Storage ; la clé
+   anonyme ne la porte pas.
 
 ### 6.2 `public.ouvrir_session_sso(p_sub uuid, p_email text, p_nom text) returns jsonb`
 
@@ -417,6 +465,28 @@ porte `en_suspens`. Signature, propriétaire, `search_path` et privilèges incha
 session du §7.4, qui l'appellent et rendent son objet tel quel, ne changent pas. Ordinaire, idempotente
 (`create or replace`). Aucune donnée n'est modifiée.
 
+### 7.7 Migration `0079_admin_du_domaine.sql` — règle du domaine sur `admin` (décision 597)
+
+Ordinaire, idempotente (`create or replace`), aucune donnée modifiée :
+
+- **`app.est_admin_lelabs() returns boolean`** — `STABLE`, `search_path = ''`, rend
+  `coalesce((auth.jwt() ->> 'lelabs_admin')::boolean, false)`. Aucun privilège public.
+- **`app.is_workspace_member(ws)`, `app.is_workspace_admin(ws)`, `app.workspace_role(ws)`** redéfinies :
+  appartenance enregistrée, **ou** `app.est_admin_lelabs()` et l'espace `ws` existe — rôle `admin` dans
+  ce cas. Signatures, propriétaires et privilèges inchangés.
+- **`public.ouvrir_session_sso(p_sub, p_email, p_nom, p_admin_lelabs boolean default false)`** : un
+  porteur d'`admin` est admis sans appartenance ni attente ; son profil est créé ; `espaces` compte
+  alors les espaces qu'il administre. L'ancienne signature à trois arguments est retirée dans la même
+  migration, et `public.ouvrir_session_serveur` / `public.renouveler_session_serveur` (§7.4) reçoivent
+  et transmettent le drapeau.
+- **`public.mon_role_espace(ws uuid) returns text`** — `SECURITY INVOKER`, `EXECUTE` à `authenticated`
+  seul — rend `app.workspace_role(ws)` (§6.1 bis, point 7).
+
+Suite pgTAP dédiée : revendication présente → membre et administrateur de chaque espace, rôle `admin`,
+aucune ligne créée ; absente, `false` ou mal formée → rien ; un vrai membre garde son rôle sans elle ;
+`ouvrir_session_sso` admet le porteur sans attente et crée son profil, refuse le même sans le
+drapeau ; privilèges de `mon_role_espace`.
+
 ## 8. Webapp
 
 ### 8.1 `webapp/src/lib/sso.ts` — révisé
@@ -534,7 +604,8 @@ développement. Ce qui change :
 |---|---|---|---|---|---|
 | `admin@` | `5eed…0011` | oui | oui | `admin` | le parcours nominal |
 | `bizdev@` | `5eed…0012` | oui | oui | `business_developer` | un membre ordinaire |
-| `viewer@` | `5eed…0013` | oui | oui, et `admin` du realm | `viewer` | que l'`admin` du realm n'ouvre aucun droit |
+| `viewer@` | `5eed…0013` | oui | oui | `viewer` | la lectrice — **n'est plus** `admin` du realm depuis la décision 597, qui ferait d'elle une administratrice |
+| `exploitante@` | `5eed…0017` | oui | oui, et `admin` du realm | **non** | la règle du domaine (§6.1 bis) : admise sans attente, administratrice de tout espace, sans appartenance |
 | `inconnu@` | `5eed…0014` | oui | oui | non | l'attente `attente_espace` |
 | `attendu@` | `5eed…0015` | oui | **non** | `viewer` | l'attente `attente_verification`, attente non consommée |
 | `adresse-non-verifiee@` | `5eed…0016` | **non** | non | non | l'attente `adresse_non_verifiee`, par la preuve qui l'y amène (§13) |
@@ -648,18 +719,20 @@ passée au SSO.
 | **T4** | `e2e/api/jetons.ts` et `scripts/lib/sso.sh` par la vraie connexion, comptes jetables par l'API de développement, seed (§11), portage des 18 scripts et des specs d'API qui créaient des comptes GoTrue, `docs/SPEC-seed.md`, `docs/SPEC-test-harness.md` | T3, T5 |
 | **T6** | Retrait de GoTrue, d'`auth-templates` et d'Inbucket (§2), migration `0077` (§7.5) et suite `0071`, dix suites pgTAP portées, `404` de Caddy, retrait de `verify-auth.sh`, scripts d'environnement et de cellule (`proposer.sh` sans SMTP, `verifier.sh`, `verify-stack.sh`, `restore-drill.sh`), `docs/SPEC-auth.md` réduit à un renvoi | T4, T5 |
 | **T7** | `README.md`, `docs/DAT.md`, `docs/SPEC-deploiement-spark.md`, `docs/manual.md` chapitre 17, `docs/PROD_MIGRATIONS.md` (§12), `CHANGELOG.md` ; campagne des harnais touchés | T6 |
+| **T8** | Règle du domaine sur `admin` (§6.1 bis, décision 597) : revendication `lelabs_admin` posée par l'échangeur ; migration `0079_admin_du_domaine.sql` — `app.est_admin_lelabs()`, les trois fonctions d'appartenance, `ouvrir_session_sso` qui admet le porteur, `public.mon_role_espace` — et sa suite pgTAP ; `roles.ts` ; realm de développement (`viewer@` sans `admin`, `exploitante@`) ; preuves unitaires, d'API — admis sans attente, geste d'administration accepté, rôle retiré puis prolongation refusée ou déchue —, d'interface et `verify-session-sso` qui rougit si la revendication est ignorée ou accordée sans le rôle ; `docs/SSO-client-lelabs-crm.md`, `docs/SPEC-permissions-rls.md`, `docs/PROD_MIGRATIONS.md` | T7 |
 
 ## 15. Hors périmètre
 
 - **L'écran d'inscription d'une attente** : `CRM-070` (§6.3).
 - **La déconnexion de LeLabs** depuis le CRM (§8.5).
-- **La lecture de rôles** autres que `verified` (décision 579, A3).
+- **La lecture de rôles** autres que `verified` et `admin` (décision 579, A3, révisée par la décision
+  597).
 - **`offline_access`** : le CRM ne demande pas de jeton hors ligne.
 - **La suppression des tables inertes du schéma `auth`** (§2) : opération destructive distincte.
 
 ## 16. Definition of Done de `CRM-092`
 
-Tranches T1 à T7 livrées, chacune poussée. Aucune route, aucun service, aucune variable, aucun script
+Tranches T1 à T8 livrées, chacune poussée. Aucune route, aucun service, aucune variable, aucun script
 ni aucune preuve ne dépend plus de GoTrue — prouvé par recherche et par le harnais. Chaque preuve du
 §13 verte contre la pile réelle, harnais non complaisant. Seed rejouable par le seul SSO. Captures
 observées. Documentation du §14 à jour. En production, sur instruction : opérations du §12 faites, une
