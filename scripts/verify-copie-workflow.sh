@@ -8,6 +8,8 @@
 #           INC-039 (ordre de suppression d'un workspace), INC-021 (aucun écran)
 # @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — tranche T4 : jetons par la vraie
 #           connexion LeLabs et l'échangeur de session, plus par GoTrue
+# @verifies docs/BACKLOG.md « Correctifs arbitrés », INC-252 ; docs/JOURNAL.md décision 596 —
+#           restauration par le runner complet, suivie de la suite globale (docs/SPEC-test-harness.md §3.5)
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-032` :
 #
@@ -67,10 +69,16 @@ MIGRATION_FILE=supabase/migrations/0019_transition_required_fields.sql
 # quatre de la conservation du motif —, alors qu'il était vert lancé seul. Une session qui aurait
 # rejoué la série dans cet ordre aurait lu une régression de `move_card` là où il n'y en avait pas.
 #
-# Chaque rejeu de la 19 est donc suivi du lot G, exactement comme `scripts/verify-valeurs-champs.sh`
-# le fait depuis la décision 448. Trois autres harnais portaient déjà ce défaut ; celui-ci est le
-# quatrième, et il est corrigé ici parce qu'il vit dans un fichier de cette session.
-MIGRATION_LOT_G=supabase/migrations/0035_commentaires_lot_g.sql
+# Chaque rejeu de la 19 était donc suivi du lot G — et la liste avait encore un maillon de retard :
+# la 35 réinstallait sa version de `app.card_comments_avant_maj()`, dont la 63 est la dernière
+# autorité, et la suite `0061` rougissait ensuite, hors de ce harnais (INC-252, 2026-09-24).
+# Désormais la 19 est rejouée SEULE — c'est ce qui prouve qu'elle se réapplique —, puis le RUNNER
+# COMPLET rétablit l'état courant (docs/SPEC-test-harness.md §3.5, décision 596) : une liste manuelle
+# de migrations suivantes devient fausse à chaque nouvelle révision.
+restaurer_etat_courant() {
+	docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
+		run --rm migrations-runner >/tmp/p2enjoy-copie-workflow-runner.log 2>&1
+}
 DB_CONTAINER=p2enjoy-db
 
 WS_SEED=5eed0000-0000-4000-8000-000000000001
@@ -202,8 +210,8 @@ empreinte() {
 
 avant=$(empreinte)
 if psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 \
-   && psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_LOT_G" >/dev/null 2>&1; then
-	ok "la migration se réapplique sans erreur sur une base déjà migrée, le lot G derrière elle (INC-154)"
+   && restaurer_etat_courant; then
+	ok "la migration se réapplique sans erreur sur une base déjà migrée, le runner derrière elle (INC-154, INC-252)"
 else
 	fail "la migration échoue au rejeu — l'idempotence n'est pas acquise"
 fi
@@ -220,7 +228,7 @@ fi
 psql_db -c "grant execute on function public.copy_workflow_to_track(uuid, uuid, text) to anon;" \
 	>/dev/null
 psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || true
-psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_LOT_G" >/dev/null 2>&1 || true
+restaurer_etat_courant || true
 if [ "$(psql_db -c "select has_function_privilege('anon',
                      'public.copy_workflow_to_track(uuid, uuid, text)', 'EXECUTE');")" = "f" ]; then
 	ok "un privilège rendu à \`anon\` est **retiré** par un rejeu : la migration répare"
@@ -530,7 +538,7 @@ fi
 
 # b. Le privilège rendu à `anon` : le refus 401 doit disparaître.
 psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || true
-psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_LOT_G" >/dev/null 2>&1 || true
+restaurer_etat_courant || true
 psql_db -c "grant execute on function public.copy_workflow_to_track(uuid, uuid, text) to anon;
             notify pgrst, 'reload schema';" >/dev/null
 sleep 1
@@ -559,7 +567,7 @@ fi
 
 # d. Restauration **constatée**, et non supposée.
 psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || true
-psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_LOT_G" >/dev/null 2>&1 || true
+restaurer_etat_courant || true
 ./supabase/seed/apply-seed.sh >/dev/null 2>&1 || fail "le seed a échoué à la restauration"
 sleep 1
 
@@ -597,10 +605,22 @@ titre "8. Suites, tests unitaires et build"
 # trap de sortie fait le même ménage, mais trop tard pour ces suites.
 menage
 
+# LA RESTAURATION EST SUIVIE DE LA SUITE GLOBALE, Y COMPRIS EN `--rapide` (§3.5, INC-252) : c'est par
+# ce mode que `verify-droits-fins.sh` lance ce harnais, et c'est une suite étrangère à lui, `0061`,
+# qui a vu la restauration incomplète d'avant le runner. Elle court APRÈS le ménage ci-dessus — le
+# second alinéa du §3.5 —, et c'est MESURÉ : placée avant lui, `0012` choisissait une copie d'essai
+# d'un autre track et rendait `workflow_hors_track` au lieu de `23503`.
+if npm run test:sql >/tmp/p2enjoy-copie-workflow-sql.log 2>&1; then
+	ok "la suite pgTAP GLOBALE est verte après restauration : $(grep -oE '[0-9]+ fichiers?, [0-9]+ assertions' /tmp/p2enjoy-copie-workflow-sql.log | tail -n 1)"
+else
+	fail "la suite pgTAP globale est rouge après restauration — voir /tmp/p2enjoy-copie-workflow-sql.log"
+	grep -E 'ECHEC|not ok' /tmp/p2enjoy-copie-workflow-sql.log | head -10 | sed 's/^/        /'
+fi
+
 if [ "$RAPIDE" = true ]; then
 	printf '  (ignorés : --rapide)\n'
 else
-	npm run test:sql >/dev/null 2>&1 && ok "npm run test:sql" || fail "npm run test:sql"
+	# `npm run test:sql` est rejouée ci-dessus, en tout mode, après le ménage (INC-252).
 	npm run test:unit >/dev/null 2>&1 && ok "npm run test:unit" || fail "npm run test:unit"
 	npm run typecheck >/dev/null 2>&1 && ok "npm run typecheck" || fail "npm run typecheck"
 	npm run types:check >/dev/null 2>&1 && ok "npm run types:check" || fail "npm run types:check"

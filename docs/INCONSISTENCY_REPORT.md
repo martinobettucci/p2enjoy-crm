@@ -6701,3 +6701,16 @@ runner complet et se fait suivre de la suite globale — exactement la correctio
 
 **ARBITRÉE le 2026-09-24 — décision 596 : corriger maintenant**, par le runner complet suivi de la
 suite globale.
+
+**Mesuré en corrigeant, et plus large que relevé.** L'ancienne version de `verify-move-card.sh`, lancée
+en `--rapide`, se déclare verte (57 contrôles) et laisse **trois** suites rouges : `0061` (le schéma,
+cause relevée ci-dessus), mais aussi `0051` — « 3 affaires figées au lieu de 4 » — et `0058`, refus
+(g) : ce sont des **données**. `move_card` remet `entered_step_at` à l'instant du geste, et le harnais,
+qui remet chaque card à son étape, ne remet pas son ancienneté. Runner rejoué, `0061` redevient vert ;
+seed rejoué, les trois le sont (72 fichiers, 3196 assertions). La correction couvre donc les deux
+alinéas du §3.5 : runner pour le schéma, seed pour les données, puis suite globale.
+
+**RÉSOLUE le 2026-09-24.** `verify-move-card` : 59 contrôles, aucune anomalie. `verify-copie-workflow` :
+la suite globale court après le ménage de ses copies d'essai — placée avant, `0012` choisissait une
+copie d'un autre track (mesuré) — ; 30 contrôles, aucune anomalie ; suite globale 72 fichiers, 3196
+assertions.

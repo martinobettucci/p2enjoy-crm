@@ -14598,9 +14598,15 @@ décision 594.
       mentions des préférences s'alignent sur le libellé ; `objectifs`, `preferences-notifications`,
       `reglages-modeles-emails` **37/37**. Trois écarts voisins, que le contrôle ne voit pas,
       consignés en **INC-251**.
-- [ ] **INC-252 — deux harnais restaurés par le runner complet** (`CRM-032`, `CRM-041`) :
+- [x] **INC-252 — deux harnais restaurés par le runner complet** (`CRM-032`, `CRM-041`) :
       `verify-copie-workflow.sh` et `verify-move-card.sh` cessent de rejouer `0035` à la main
-      (décision 596).
+      (décision 596). Mesuré AVANT : l'ancien `verify-move-card --rapide` se dit vert (57) et laisse
+      trois suites rouges — `0061` (schéma), `0051` et `0058` (données : `move_card` remet
+      `entered_step_at`). APRÈS : runner pour le schéma, seed pour les données, puis suite globale ;
+      `verify-move-card` **59 contrôles, aucune anomalie** ; `verify-copie-workflow` complet a révélé
+      que la suite globale doit courir APRÈS son ménage des copies d'essai (`0012` choisissait une
+      copie), déplacée — `--rapide` **30 contrôles, aucune anomalie**, suite globale **72 fichiers,
+      3196 assertions**.
 - [ ] **INC-251 — trois écarts de jetons, et le contrôle qui les voit** (`CRM-060`, `CRM-064`,
       `CRM-007`) : `text-text`, `--color-brand`, case de 24 px ; `classes-css.mjs` lit les constantes
       de classes et les variables citées (décision 596).

@@ -9,6 +9,8 @@
 #           INC-047, INC-048, INC-049, INC-050, INC-051, INC-052
 # @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — tranche T4 : jetons par la vraie
 #           connexion LeLabs et l'échangeur de session, plus par GoTrue
+# @verifies docs/BACKLOG.md « Correctifs arbitrés », INC-252 ; docs/JOURNAL.md décision 596 —
+#           restauration par le runner complet, suivie de la suite globale (docs/SPEC-test-harness.md §3.5)
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-034` :
 #
@@ -67,48 +69,24 @@ node_toolchain_prepare "$PWD/.nvmrc" || exit 1
 
 TEST_FILE=supabase/tests/0013_move_card.test.sql
 MIGRATION_FILE=supabase/migrations/0012_move_card.sql
-# LA MIGRATION 13 SUIT TOUJOURS LA 12, ET CE N'EST PAS UNE PRÉCAUTION DE STYLE. Depuis `CRM-036`,
-# la migration 13 REDÉFINIT `public.move_card` pour y ajouter sa sixième vérification. Rejouer la 12
-# seule ramène donc la fonction à sa version à CINQ vérifications et **laisse le produit dégradé**,
-# sans aucun signal — c'est exactement la faute que la décision 108 avait relevée sur
-# `verify-tracks.sh`, qui réappliquait `0003` seule et ramenait la politique à sa version sans
-# droits fins. `rejouer_migration` rejoue donc toute la chaîne d'autorité, dans l'ordre.
-MIGRATION_SUIVANTE=supabase/migrations/0013_valeurs_champs.sql
-# ET LA 14 SUIT LA 13, POUR LA MÊME RAISON, TROISIÈME OCCURRENCE. Depuis `CRM-013`, la migration 14
-# retire à `authenticated` l'`UPDATE` sur `cards.email_local_part` — colonne que la section 2 de la
-# migration 12 rend au contraire OUVERTE (INC-050, à l'époque non résolue). Rejouer la 12 sans la 14
-# ROUVRE donc cette colonne et laisse le produit dégradé, exactement comme la 13 sur `move_card`.
-MIGRATION_TROISIEME=supabase/migrations/0014_colonnes_protegees.sql
-# CRM-018 remplace enfin la lecture du tableau historique par la table de liaison. Sans cette
-# dernière migration, un harnais ancien laisserait `move_card` sur son adaptateur de rejeu.
-# ET LA 47 SUIT LA 13, QUATRIÈME OCCURRENCE DE LA MÊME CLASSE (décisions 108, 135, 143, 145,
-# INC-153). MESURÉ le 2026-08-18 : la migration 13 définit `app.card_field_values_valider()` dans sa
-# version qui valide la seule FORME d'un uuid ; la 47 la redéfinit avec la RÉSOLUTION des types
-# `contact` et `user` (`CRM-060` tranche 3). Rejouer la 13 sans la 47 derrière retire donc la
-# résolution EN SILENCE, et les harnais exécutés ensuite mesurent un produit amputé — exactement ce
-# qu'INC-153 a coûté à la tranche 2. Mesure de la dégradation, puis de sa réparation :
-#   après rejeu de la 13 seule : la fonction ne contient plus « ne désigne aucun contact » ;
-#   après rejeu de la 47       : elle la contient de nouveau.
-MIGRATION_RESOLUTION=supabase/migrations/0047_resolution_champs_contact_user.sql
-MIGRATION_FINALE=supabase/migrations/0019_transition_required_fields.sql
-# ET LA 35 SUIT LA 19, CINQUIÈME OCCURRENCE DE LA MÊME CLASSE — DÉFAUT ANTÉRIEUR, MESURÉ LE
-# 2026-08-18 SUR LA LIGNE DE BASE. `MIGRATION_FINALE` nommait la 19 « dernière autorité sur
-# `move_card` » ; elle ne l'est plus depuis le lot G (décision 374), qui redéfinit la fonction avec
-# `app.btrim_blancs` et la conservation du commentaire de transition (INC-048, INC-052). Toute
-# chaîne de restauration s'arrêtant à la 19 laissait donc `move_card` AMPUTÉE en sortant, et la
-# suite pgTAP `0014` rendait `not ok 99` et `not ok 100` à l'exécution SUIVANTE de ce harnais.
-# MESURÉ des deux côtés d'un `git stash` : rouge avant comme après mes changements, donc antérieur
-# — consigné INC-154, et corrigé ici parce que le défaut vit dans les fichiers mêmes de cette
-# session (même geste que la décision 447 pour INC-153).
-MIGRATION_LOT_G=supabase/migrations/0035_commentaires_lot_g.sql
+# LA RESTAURATION PASSE PAR LE RUNNER COMPLET, PLUS PAR UNE CHAÎNE ÉCRITE À LA MAIN — INC-252,
+# arbitrée le 2026-09-24 (docs/JOURNAL.md décision 596), docs/SPEC-test-harness.md §3.5.
+#
+# Ce harnais rejouait la 12, puis la 13, la 14, la 47, la 19 et la 35, chacune ajoutée à la chaîne
+# après qu'un rejeu incomplet eut laissé le produit amputé (décisions 108, 135, 143, 145, INC-153,
+# INC-154). La chaîne avait encore un maillon de retard : la 35 réinstallait sa version de
+# `app.card_comments_avant_maj()`, dont la 63 est la dernière autorité, et la suite `0061` rougissait
+# ensuite, hors de ce harnais. Une liste manuelle devient fausse à chaque nouvelle révision : la 12
+# est rejouée SEULE — c'est ce qui prouve qu'elle se réapplique —, puis le runner rejoue tout le
+# répertoire dans l'ordre livré et rend son code de sortie.
+restaurer_etat_courant() {
+	docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
+		run --rm migrations-runner >/tmp/p2enjoy-move-card-runner.log 2>&1
+}
 
 rejouer_migration() {
 	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || return 1
-	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_SUIVANTE" >/dev/null 2>&1 || return 1
-	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_TROISIEME" >/dev/null 2>&1 || return 1
-	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_RESOLUTION" >/dev/null 2>&1 || return 1
-	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FINALE" >/dev/null 2>&1 || return 1
-	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_LOT_G" >/dev/null 2>&1 || return 1
+	restaurer_etat_courant
 }
 DB_CONTAINER=p2enjoy-db
 
@@ -296,17 +274,10 @@ restaurer_privileges() {
 	            revoke all on function public.move_card(uuid, uuid, text) from public, anon;
 	            grant execute on function public.move_card(uuid, uuid, text) to authenticated, service_role;" \
 		>/dev/null 2>&1 || true
-	# La dégradation « vérification n° 4 retirée » réécrit la FONCTION : les privilèges seuls ne la
-	# restaurent pas. La migration 13 est rejouée, et c'est elle — non la 12 — qui porte la
-	# définition à SIX vérifications depuis `CRM-036`. La rejouer ici garantit qu'une interruption
-	# ne laisse jamais le produit avec une garde amputée.
-	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_SUIVANTE" >/dev/null 2>&1 || true
-	# Et la 14 derrière elle : elle seule referme `email_local_part` (CRM-013).
-	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_TROISIEME" >/dev/null 2>&1 || true
-	# Enfin la 19 remet la définition canonique adossée à la table de liaison (CRM-018).
-	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_RESOLUTION" >/dev/null 2>&1 || true
-	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FINALE" >/dev/null 2>&1 || true
-	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_LOT_G" >/dev/null 2>&1 || true
+	# La dégradation « vérification n° 4 retirée » réécrit la FONCTION, et les privilèges écrits
+	# ci-dessus peuvent avoir dérivé de ceux que le répertoire pose : le runner complet rétablit
+	# l'état que la production exécute, qu'une interruption survienne ou non (INC-252).
+	restaurer_etat_courant || true
 }
 trap 'restaurer_privileges; rm -f "$CORPS"' EXIT
 
@@ -704,6 +675,25 @@ titre '7. Le seed est inchangé par cette unité'
 # =============================================================================================
 titre '8. Les suites complètes'
 # =============================================================================================
+
+# LA RESTAURATION EST SUIVIE DE LA SUITE GLOBALE (§3.5, INC-252) : c'est une suite étrangère à ce
+# harnais, `0061`, qui a vu la restauration incomplète d'avant le runner.
+#
+# ET LES DONNÉES SONT RÉTABLIES AVANT ELLE — le second alinéa du §3.5, mesuré le 2026-09-24. Ce harnais
+# déplace des cards du seed et les remet à leur étape ; mais `move_card` remet `entered_step_at` à
+# l'instant du geste, et une affaire figée cesse de l'être. MESURÉ après ce harnais, runner rejoué :
+# `0051` rendait « 3 affaires figées au lieu de 4 », `0058` voyait l'affaire de son refus (g) changer
+# d'état. Le contrôle du §7 ne relevait que l'étape. Le seed, convergent, est donc rejoué : c'est lui
+# qui pose l'ancienneté de démonstration (docs/SPEC-seed.md §9.12).
+restaurer_etat_courant || fail 'le runner échoue à restaurer le répertoire — voir /tmp/p2enjoy-move-card-runner.log'
+./supabase/seed/apply-seed.sh >/tmp/p2enjoy-move-card-seed.log 2>&1 \
+	|| fail 'le seed échoue à rétablir les données — voir /tmp/p2enjoy-move-card-seed.log'
+if npm run test:sql >/tmp/p2enjoy-move-card-sql.log 2>&1; then
+	ok "la suite pgTAP GLOBALE est verte après restauration : $(grep -oE '[0-9]+ fichiers?, [0-9]+ assertions' /tmp/p2enjoy-move-card-sql.log | tail -n 1)"
+else
+	fail 'la suite pgTAP globale est rouge après restauration — voir /tmp/p2enjoy-move-card-sql.log'
+	grep -E 'ECHEC|not ok' /tmp/p2enjoy-move-card-sql.log | head -10 | sed 's/^/        /'
+fi
 
 if [ "$RAPIDE" = true ]; then
 	printf '  \033[33mIGNORÉ\033[0m Playwright (--rapide)\n'
