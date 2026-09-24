@@ -29463,14 +29463,24 @@ d'authentification et `/.well-known/oauth-authorization-server` (révision de co
 variables `DISABLE_SIGNUP`, `ENABLE_*`, `PASSWORD_MIN_LENGTH`, `ADDITIONAL_REDIRECT_URLS`,
 `MAILER_URLPATHS_*`, `SMTP_*`, `INBUCKET_*` ; demandes SMTP de `proposer.sh` ; contrôles GoTrue de
 `verify-stack.sh` et de `scripts/spark/verifier.sh`, remplacés par « `/auth/v1/health` rend `404` » ;
-`scripts/verify-auth.sh` (décision 581). Il ajoute `0077` élevée et la suite `0071`, porte les dix
+`scripts/verify-auth.sh` (décision 581). Il ajoute `0077` et la suite `0071`, porte les dix
 suites pgTAP, révise les mutations de `verify-migrations.sh` qui visaient le trigger, et réduit
 `docs/SPEC-auth.md` à un renvoi.
 
 **Conséquences.** Le `.env` d'un poste garde ses anciennes variables sans effet — le gabarit ne les
-exige plus, et rien ne les lit ; il n'est pas réécrit. En production, `0077` s'applique comme `0074`,
-sous `supabase_admin`, dans la fenêtre du §12 (point 4) ; les services `auth` et `auth-templates`
+exige plus, et rien ne les lit ; il n'est pas réécrit. En production, `0077` s'applique avec les autres,
+sous le rôle ordinaire du runner, dans la fenêtre du §12 (point 4) ; les services `auth` et `auth-templates`
 s'arrêtent au point 5.
+
+**CORRECTION, avant la première ligne de code — l'observation 1 était une DÉDUCTION, pas une mesure.**
+La propriété d'`auth.users` était mesurée ; le privilège ne l'était pas. Mesuré ensuite, en transaction
+annulée sur la base de développement : `postgres` — ni superutilisateur, ni membre de
+`supabase_auth_admin` — exécute `drop trigger on_auth_user_created on auth.users` **sans erreur**. Et
+`0001` le fait déjà à chaque passage du runner. **`0077` n'est donc PAS élevée** : sans motif mesuré,
+une élévation est refusée par la décision 363. La spécification §2 et §7.5 est corrigée dans le même
+commit ; la liste des élévations de `verify-scripts.sh` ne change pas. Conséquence de la relecture
+répétée : à chaque passage, `0001` repose le trigger et la fonction, puis `0077` les retire. L'état
+final est constant, et `0001`, appliquée en production, n'est pas réécrite.
 
 **Vérifications prévues.** Suite pgTAP complète ; `verify-session-sso.sh` (dont `/auth/v1` en `404`) ;
 pile recréée par `./resetMe.sh --yes` sans GoTrue, seed, `e2e:api`, `e2e:mail`, campagne d'interface ;

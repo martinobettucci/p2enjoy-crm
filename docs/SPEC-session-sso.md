@@ -5,8 +5,8 @@ Décisions : `docs/JOURNAL.md` 578 (instruction du responsable, mesures K1 à K9
 A3), 580 (mesures K10 à K17), 581 (correction de K12 : migration élevée, harnais de l'unité),
 585 (T5 avant T4), 586 (**client serveur** : arbitrage du responsable, sessions serveur), 587
 (l'absence de session n'est pas un refus ; échéance comptée sur la durée du jeton ; preuves révisées),
-589 (**T6** : faits mesurés avant le retrait — migration `0077` élevée, Inbucket retiré avec GoTrue,
-`404` explicite de Caddy, dix suites pgTAP portées).
+589 (**T6** : faits mesurés avant le retrait — migration `0077` ordinaire, Inbucket retiré avec
+GoTrue, `404` explicite de Caddy, dix suites pgTAP portées).
 Contrats du fournisseur : `docs/SSO.md` (général), `docs/SSO-client-lelabs-crm.md` (client du CRM).
 Documents liés : `docs/SPEC-auth.md` (état remplacé), `docs/SPEC-identite.md` §3 à §6,
 `docs/SPEC-permissions-rls.md` §1 à §3, `docs/SPEC-edge-functions.md` §2 à §5, `docs/SPEC-seed.md`
@@ -50,7 +50,7 @@ transporte des preuves ; il ne décide d'aucun accès.
 | Variables propres à GoTrue : `DISABLE_SIGNUP`, `ENABLE_EMAIL_SIGNUP`, `ENABLE_EMAIL_AUTOCONFIRM`, `ENABLE_PHONE_*`, `ENABLE_ANONYMOUS_USERS`, `PASSWORD_MIN_LENGTH`, `ADDITIONAL_REDIRECT_URLS`, `MAILER_*`, `SMTP_*` | `.env.example`, `scripts/lib/env.sh`, `runDev.sh`, `scripts/spark/proposer.sh` | T6 |
 | Formulaire à mot de passe de `/connexion` et module `webapp/src/lib/auth.ts` en ce qu'il classe les refus de GoTrue | webapp | T5 |
 | Échange d'`id_token` de `CRM-091` et son nonce ; client public `lelabs-crm` | `webapp/src/lib/sso.ts`, `Authentification.tsx` ; realm LeLabs (retrait par son administrateur, décision 586) | T5, production |
-| Trigger `on_auth_user_created` et `app.handle_new_user()` | migration `0077`, **élevée** (§7.5) | T6 |
+| Trigger `on_auth_user_created` et `app.handle_new_user()` | migration `0077` (§7.5) | T6 |
 | Service `inbucket` et ses variables `INBUCKET_WEB_PORT`, `INBUCKET_SMTP_PORT` — son **seul** client était GoTrue, mesuré (décision 589) | `docker-compose.dev.yml`, `.env.example`, `runDev.sh`, `scripts/lib/env.sh` | T6 |
 | Routes Caddy `/auth/v1/*` et `/.well-known/oauth-authorization-server` vers Kong — **remplacées par un `404` explicite** : sans lui, le repli de l'application monopage rendrait `index.html` en `200` (décision 589) | `caddy/routes.caddy` | T6 |
 | Création de profils par `insert into auth.users` dans dix suites pgTAP : les profils y sont posés directement, comme dans `0069` et `0070` | `supabase/tests/` | T6 |
@@ -385,15 +385,17 @@ exécutée sur instruction explicite seulement.
 
 - Un profil supprimé emporte ses sessions ; une session ne survit jamais à la personne.
 
-### 7.5 Migration `0077_retrait_gotrue.sql` — tranche T6, **élevée** (décision 589)
+### 7.5 Migration `0077_retrait_gotrue.sql` — tranche T6 (décision 589)
 
 - **Retire** le trigger `on_auth_user_created` d'`auth.users` et la fonction `app.handle_new_user()`.
   Plus rien n'écrit dans `auth.users` : le trigger ne se déclencherait plus jamais, et le garder
   laisserait croire qu'un compte GoTrue crée encore un profil.
-- **Élevée** — `-- @migration-role: supabase_admin`, garde `current_user` comme `0074` : **mesuré**,
-  `auth.users` appartient à `supabase_auth_admin`, et seul le propriétaire d'une table (ou un
-  superutilisateur) retire un trigger. `postgres` avait pu le **créer** (privilège `TRIGGER`), pas le
-  retirer. `scripts/verify-scripts.sh` ajoute ce fichier à la liste nommée des élévations.
+- **Ordinaire, non élevée** : elle s'exécute sous `postgres`, rôle par défaut du runner. **Mesuré**
+  (décision 589, correction) : `auth.users` appartient à `supabase_auth_admin`, dont `postgres` n'est
+  pas membre, et `postgres` retire pourtant le trigger — `0001` le fait déjà à chaque passage
+  (`drop trigger if exists` avant de le recréer). Aucune élévation n'est donc justifiable (décision
+  363 : une élévation exige un motif mesuré), et la liste des élévations de `verify-scripts.sh` ne
+  change pas.
 - **Idempotente** (`if exists`) : rejouée à chaque passage du runner, elle est sans effet la seconde
   fois ; sur une base neuve, elle retire ce que `0001` vient de poser.
 - **Ne supprime rien d'autre.** Les tables du schéma `auth` restent, inertes (§2, §15).
