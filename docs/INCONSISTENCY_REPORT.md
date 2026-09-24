@@ -3947,6 +3947,14 @@ un poste lent.
 `CRM-081`, et le corriger sous une autre unité reviendrait à en solder une seconde
 (`CLAUDE.md` §13, `docs/CloudWorker.md` §3.1).
 
+**RÉSOLUE le 2026-09-24** (décisions 592 et 594). La famille comptait cinq membres, dont **deux défauts
+du produit** : l'image de « Ma journée » qui annonçait une portée avec le total d'une autre, et
+l'effet du canevas d'objectifs qui effaçait un geste posé juste après le chargement — c'est lui, le
+« reçu 260 » de cette entrée, reproduit de façon déterministe puis corrigé. Trois preuves attendent
+désormais un signal observable (mentions, routes chargées à la demande, parcours clavier des gestes
+d'auteur), et toute exécution unitaire rouge laisse son journal dans `e2e/output/journaux-unitaires/`.
+Mesuré : `e2e:api` 1080/1080, `e2e:ui` 756/756, `verify-harness` 32 contrôles sans anomalie.
+
 ## Consignées le 2026-08-20 — méthode et harnais, relevées par le rejeu complet de la série
 
 ### INC-190 — la série complète des `scripts/verify-*.sh` tient dans UNE session en `--rapide`, et cinq entrées du backlog l'affirmaient impossible

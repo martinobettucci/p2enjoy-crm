@@ -29787,3 +29787,12 @@ elle devient fausse à chaque nouvelle révision ». Le §6 de `verify-commentai
 runner complet (`docker compose run --rm migrations-runner`, code de sortie attendu), puis la suite
 pgTAP globale — c'est une suite étrangère au harnais, `0061`, qui avait vu la restauration incomplète.
 Mesuré : 79 contrôles, aucune anomalie ; suite globale 72 fichiers, 3196 assertions.
+
+**Clôture des correctifs de la décision 594 (2026-09-24).** INC-189 (a, b, c), INC-231, INC-242, INC-248
+et INC-250 sont livrés, chacun dans son commit. Campagne complète rejouée sans aucun build concurrent :
+`e2e:api` **1080/1080**, `e2e:ui` **756/756** (17,5 min) ; `verify-harness` **32 contrôles, aucune
+anomalie**, dont le journal d'une exécution rouge lancée sortie jetée ; `verify-ma-journee` **85**,
+`verify-commentaires` **79**, `verify-droits-fins` **46 dont 1 étranger** (INC-252). Deux entrées
+nouvelles, consignées sans être corrigées : **INC-251** (trois écarts de jetons que le contrôle des
+classes ne voit pas) et **INC-252** (deux harnais qui restaurent en rejouant `0035` à la main).
+

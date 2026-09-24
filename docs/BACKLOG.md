@@ -14548,28 +14548,28 @@ connexion réelle de `martino@p2enjoy.studio` aboutie après les opérations du 
 Chaque ligne est un commit distinct ; l'unité porteuse est nommée. Le découpage est celui de la
 décision 594.
 
-- [~] **INC-189 a — deux images périmées** (`CRM-061`, `CRM-083`) : « Ma journée » ne rend jamais la
+- [x] **INC-189 a — deux images périmées** (`CRM-061`, `CRM-083`) : « Ma journée » ne rend jamais la
       portée nouvelle avec les données de l'ancienne ; le canevas d'objectifs ne perd plus un geste
       posé juste après le chargement. Preuves unitaires qui échouent avant correction — mesuré : la
       sonde relevait « Tout l'espace de travail : 0 affaire(s) », le geste rendait `width: 260`, trois
       exécutions sur trois — puis vertes ; `MaJournee.test` **23**, `Objectifs.test` **98**, unitaires
       **3271** ; `ma-journee.spec.ts` et `objectifs.spec.ts` **62/62**, captures relues, inchangées.
-      Reste la campagne complète, rejouée après INC-189 b et c.
-- [~] **INC-189 b — deux preuves attendent un signal observable** (`CRM-064`, `CRM-007`) : brouillon
+      Campagne complète rejouée après INC-189 b et c : `e2e:api` **1080/1080**, `e2e:ui` **756/756**.
+- [x] **INC-189 b — deux preuves attendent un signal observable** (`CRM-064`, `CRM-007`) : brouillon
       vidé avant le nettoyage des mentions ; module importé avant le rendu d'une route chargée à la
       demande. Mesuré : `mentions-composeur.spec.ts` **12/12**, aucune notification restante hors des
       deux du seed ; `routes.test.tsx` **15/15**, le repli de `Suspense` toujours observé. La
       campagne du 2026-09-24 (interrompue, voir décision 594) a révélé un troisième membre :
       `commentaires-gestes.spec.ts`, parcours clavier — le texte du commentaire visible, ses actions
       pas encore dans l'ordre de tabulation, deux `Shift+Tab` menaient à la barre de filtres (vu sur
-      la vidéo). Il attend désormais la carte et « Modifier » : **24/24** en trois répétitions. Reste
-      la campagne complète.
-- [~] **INC-189 c — le journal d'une exécution unitaire rouge est conservé** (`CRM-008`) : rapporteur
+      la vidéo). Il attend désormais la carte et « Modifier » : **24/24** en trois répétitions.
+      Campagne complète : `e2e:ui` **756/756**, aucun rouge.
+- [x] **INC-189 c — le journal d'une exécution unitaire rouge est conservé** (`CRM-008`) : rapporteur
       Vitest vers `e2e/output/journaux-unitaires/`. Mesuré : sa preuve **10/10** ; le test
       volontairement faux du §9.5 de `verify-harness`, lancé sortie jetée, laisse un journal qui le
       nomme — la première exécution a révélé que Vitest construit un rapporteur avec un objet
       d'options, corrigé avant commit ; une exécution verte n'écrit rien ; unitaires **3281**.
-      Reste `verify-harness` complet, avec la campagne.
+      `verify-harness` complet : **32 contrôles, aucune anomalie** (1458 s), dont le §9.5.
 - [x] **INC-250 — rejouer la chaîne des droits fins** (`CRM-008`) : `0010` → `0034` → `0063`. Le §2
       de `verify-droits-fins.sh` rejoue la chaîne des autorités — relevées sur les fichiers : aucune
       autre migration ne redéfinit les sept fonctions ni les politiques des quatre tables — et exige
