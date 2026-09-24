@@ -14558,8 +14558,12 @@ décision 594.
 - [~] **INC-189 b — deux preuves attendent un signal observable** (`CRM-064`, `CRM-007`) : brouillon
       vidé avant le nettoyage des mentions ; module importé avant le rendu d'une route chargée à la
       demande. Mesuré : `mentions-composeur.spec.ts` **12/12**, aucune notification restante hors des
-      deux du seed ; `routes.test.tsx` **15/15**, le repli de `Suspense` toujours observé. Reste la
-      campagne complète.
+      deux du seed ; `routes.test.tsx` **15/15**, le repli de `Suspense` toujours observé. La
+      campagne du 2026-09-24 (interrompue, voir décision 594) a révélé un troisième membre :
+      `commentaires-gestes.spec.ts`, parcours clavier — le texte du commentaire visible, ses actions
+      pas encore dans l'ordre de tabulation, deux `Shift+Tab` menaient à la barre de filtres (vu sur
+      la vidéo). Il attend désormais la carte et « Modifier » : **24/24** en trois répétitions. Reste
+      la campagne complète.
 - [~] **INC-189 c — le journal d'une exécution unitaire rouge est conservé** (`CRM-008`) : rapporteur
       Vitest vers `e2e/output/journaux-unitaires/`. Mesuré : sa preuve **10/10** ; le test
       volontairement faux du §9.5 de `verify-harness`, lancé sortie jetée, laisse un journal qui le

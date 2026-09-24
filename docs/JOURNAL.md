@@ -29751,3 +29751,21 @@ toute heure dans un fuseau choisi pour que sa date diffère de la date UTC au mo
 `Pacific/Pago_Pago` avant 11 h UTC, `Pacific/Kiritimati` ensuite. Le harnais de « Ma journée »
 applique le seed sous ce fuseau, rejoue les preuves de l'écran sous ce même fuseau, puis rétablit le
 seed sous le fuseau de l'hôte. La preuve est exécutée AVANT la correction et doit rougir.
+
+**Suite de la décision 594 — la campagne du 2026-09-24, interrompue par ma faute, et ce qu'elle a
+appris.** `e2e:api` **1080/1080**. La campagne d'interface a été **arrêtée à 445 scénarios** : un
+`npm run build` lancé pendant qu'elle tournait a remplacé, sous le `vite preview` de la campagne, le
+build de preuve et sa configuration — le rouge suivant (`formulaire.spec.ts`, palier md) en était la
+conséquence, et le reste de la campagne ne prouvait plus rien. Elle est rejouée en entier. Leçon :
+aucun build de l'application pendant une campagne d'interface.
+
+Avant l'arrêt, un rouge réel : `commentaires-gestes.spec.ts`, parcours clavier. La vidéo le montre —
+après la publication, le focus finit sur le filtre « Organisation » : le texte du commentaire était
+visible, mais ses actions n'étaient pas encore dans l'ordre de tabulation, et les deux `Shift+Tab`
+les ont franchies. Troisième membre d'INC-189 ; le scénario attend désormais la carte et son bouton
+« Modifier » (24/24 en trois répétitions).
+
+**Observation, étrangère aux correctifs** : les captures `lecture-seule-md-900` et `-sm-390` des
+objectifs saisissent le tiroir de navigation en cours de fermeture après le redimensionnement — c'était
+déjà le cas de la capture `md-900` versionnée le 2026-08-30. Le scénario mesure le débordement, que le
+tiroir n'affecte pas ; la capture, elle, montre moins bien la mention.

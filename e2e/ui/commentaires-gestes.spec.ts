@@ -6,6 +6,8 @@
 // @verifies docs/INCONSISTENCY_REPORT.md INC-021 (close : c'est elle qui bloquait ces boutons)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
+// @verifies docs/BACKLOG.md « Correctifs arbitrés », INC-189 b ; docs/JOURNAL.md décision 594 — le
+//           parcours clavier attend la carte et ses actions avant de tabuler
 //
 // CE QUE CE FICHIER PROUVE, ET POURQUOI IL N'EXISTAIT PAS.
 //
@@ -299,11 +301,16 @@ test.describe('les deux gestes de l’auteur, sur la vraie base', () => {
 			await page.keyboard.press('Tab')
 			await expect(page.getByRole('button', { name: 'Publier' })).toBeFocused()
 			await page.keyboard.press('Enter')
-			await expect(page.getByText(texte)).toBeVisible()
-			id = (await relire(request, texte))?.id
-
 			const carte = page.getByTestId('commentaire').filter({ hasText: texte })
 			const modifier = carte.getByRole('button', { name: 'Modifier' })
+			// LE SIGNAL EST LA CARTE ET SES ACTIONS, PAS LE TEXTE SEUL — corrigé le 2026-09-24
+			// (INC-189, docs/JOURNAL.md décision 594). La campagne du jour a vu les deux `Shift+Tab`
+			// ci-dessous atteindre la barre de filtres : le texte était visible, mais les actions du
+			// commentaire n'étaient pas encore dans l'ordre de tabulation, et le focus les a
+			// franchies. Les tabulations attendent donc que la carte soit rendue AVEC « Modifier ».
+			await expect(carte).toBeVisible()
+			await expect(modifier).toBeAttached()
+			id = (await relire(request, texte))?.id
 			// LE FOCUS EST ATTEINT PAR `Tab`, JAMAIS PAR `focus()`. Un appel programmatique ne pose
 			// pas `:focus-visible` dans Chromium : la preuve serait verte et la capture montrerait
 			// un bouton sans anneau de focus, c'est-à-dire l'inverse de ce que le §8 exige.
