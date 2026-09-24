@@ -14542,3 +14542,21 @@ connexion réelle de `martino@p2enjoy.studio` aboutie après les opérations du 
       (`docs/PROD_MIGRATIONS.md` §2.4, étape 9), et `CRM-092` les rend périmées — GoTrue, client
       public, relais SMTP. À réécrire en T7 et à reproposer au déploiement. **Instruction reçue le 2026-09-23** :
       « pense à déployer quand c'est tout bon » (décision 584) — une fois T1 à T7 vérifiées.
+
+## Correctifs arbitrés le 2026-09-24 — décisions 592 et 594
+
+Chaque ligne est un commit distinct ; l'unité porteuse est nommée. Le découpage est celui de la
+décision 594.
+
+- [ ] **INC-189 a — deux images périmées** (`CRM-061`, `CRM-083`) : « Ma journée » ne rend jamais la
+      portée nouvelle avec les données de l'ancienne ; le canevas d'objectifs ne perd plus un geste
+      posé juste après le chargement. Preuves unitaires qui échouent avant correction.
+- [ ] **INC-189 b — deux preuves attendent un signal observable** (`CRM-064`, `CRM-007`) : brouillon
+      vidé avant le nettoyage des mentions ; module importé avant le rendu d'une route chargée à la
+      demande.
+- [ ] **INC-189 c — le journal d'une exécution unitaire rouge est conservé** (`CRM-008`) : rapporteur
+      Vitest vers `e2e/output/journaux-unitaires/`.
+- [ ] **INC-250 — rejouer la chaîne des droits fins** (`CRM-008`) : `0010` → `0034` → `0063`.
+- [ ] **INC-248 — le jour local fait foi** (`CRM-061`) : seed et preuves de « Ma journée ».
+- [ ] **INC-242 — `verify-commentaires` à 99, et sa restauration complète** (`CRM-043`).
+- [ ] **INC-231 — cinq classes absentes du CSS produit** (`CRM-063`, `CRM-064`, `CRM-083`).

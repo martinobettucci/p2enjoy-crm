@@ -29671,3 +29671,62 @@ La campagne d'interface complète compte **749 verts sur 756** — le scénario 
 
 Les deux relèvent de l'arbitrage INC-189 (« attendre un signal observable ») et sont corrigés dans le
 changement suivant, avec leur test qui échoue d'abord ; la campagne complète y est rejouée.
+
+## décision 594 — le plan des cinq correctifs arbitrés par la décision 592
+
+*2026-09-24. Découpage décidé avant la première ligne de code, et mesures qui le fondent. Chaque
+ligne est un commit distinct ; la campagne complète est rejouée après les corrections d'INC-189.*
+
+**INC-189 — les preuves intermittentes sous charge, en trois commits.** La relecture des traces montre
+que la famille n'est pas faite que de preuves fragiles : deux de ses membres sont des **défauts du
+produit** de même nature — un état local réinitialisé par un effet, c'est-à-dire APRÈS l'image qu'il
+aurait dû précéder.
+
+1. **Deux images périmées, corrigées dans le produit.**
+   - **« Ma journée »** (`CRM-061`) : la portée vient de l'adresse et les données de l'état ; au clic sur
+     une portée, l'écran rend UNE image où la région live du §17.9 nomme la nouvelle portée avec le
+     total de l'ancienne, avant que l'effet ne repasse en chargement (trace de la campagne du
+     2026-09-24, décision 593). Remède : les données portent la portée qu'elles décrivent, et des
+     données d'une autre portée se rendent comme un chargement. Preuve unitaire qui enregistre chaque
+     image validée et échoue avant correction ; la preuve d'interface lit le total annoncé et exige
+     exactement ce nombre de lignes.
+   - **Le canevas d'objectifs** (`CRM-083`, le « Alt et flèche » consigné en INC-189) : l'effet qui
+     vide l'ébauche à chaque relecture s'exécute APRÈS l'image du contenu chargé. Un geste qui tombe
+     dans cet intervalle — le test sous charge, un poste lent — pose son ébauche, que l'effet efface
+     ensuite : le relâchement envoie la géométrie d'origine, exactement la valeur `260` mesurée. Cause
+     établie par l'ordonnancement : `waitFor` rend la main après un `setTimeout(0)`, et sous charge ce
+     délai échoit avant la tâche qui exécute les effets différés. Remède : la réinitialisation se fait
+     pendant le rendu, au changement de contenu — forme que React recommande pour « ajuster un état
+     quand une donnée change » —, si bien qu'aucune image ni aucun geste ne la précède. Preuve
+     unitaire qui pose le geste dans cet intervalle, de façon déterministe, et échoue avant
+     correction.
+2. **Deux preuves qui attendent un signal observable.**
+   - `e2e/ui/mentions-composeur.spec.ts`, scénario clavier : le commentaire paraît au fil AVANT que
+     les mentions ne soient posées, et le nettoyage courait alors devant l'insertion de la mention —
+     la notification restante a fait rougir six scénarios de notifications. Le signal est le
+     brouillon vidé, que l'écran ne vide qu'une fois les mentions posées.
+   - `webapp/src/app/routes.test.tsx` : l'échec consigné est un `findBy` expiré pendant l'IMPORT du
+     module chargé à la demande. Le module est importé avant le rendu : le repli de `Suspense` reste
+     observé, et l'attente ne mesure plus que le rendu.
+3. **Le journal d'un rejeu rouge est conservé.** Trente harnais lancent `npm run test:unit` ; les uns
+   jettent la sortie, les autres l'écrivent dans un répertoire qu'ils effacent en sortant. Un
+   rapporteur Vitest écrit, pour toute exécution rouge, les tests en échec et leurs erreurs dans
+   `e2e/output/journaux-unitaires/` — répertoire non versionné —, en gardant les plus récents. Le
+   remède est central : il vaut pour tous les harnais sans en réécrire un seul.
+
+**INC-250** (`CRM-008`) : le §2 de `verify-droits-fins.sh` rejoue la chaîne `0010` → `0034` → `0063`,
+et la dérive attendue est mesurée sur elle.
+
+**INC-248** (`CRM-061`) : le seed translate les échéances sur le jour local, et les preuves de « Ma
+journée » calent leur « aujourd'hui » sur ce même jour.
+
+**INC-242** (`CRM-043`) : compteur porté à 99. **Et un fait neuf, mesuré le 2026-09-24** : la chaîne de
+restauration du §6 de `verify-commentaires.sh` rejoue `0015`, `0021`, `0035` puis `0077`, mais pas
+`0063`, quatrième et dernière définition de `app.card_comments_avant_maj()` ; le harnais laisse la base
+avec le corps de `0035`, et l'assertion 14 de la suite `0061` rougit ensuite (base restaurée par le
+coureur de migrations). La chaîne est complétée dans le même commit — même famille qu'INC-250.
+
+**INC-231** (`CRM-063`, `CRM-064`, `CRM-083`) : les cinq classes absentes du CSS produit
+(`bg-surface-2`, `leading-relaxed`, `ml-7`, `mt-0.5`, `pl-7`) sont remplacées par des jetons ou des
+valeurs arbitraires assumées (§5.29), le §5.29 ter du design system cesse de citer
+`--color-surface-2` et `--color-text-1`, et les écrans sont revus sur capture.
