@@ -158,10 +158,6 @@ PKCE `S256`, y compris pour un client confidentiel. Le code d'autorisation seul 
 le flux implicite et l'octroi direct par mot de passe sont **refusés par le
 serveur**, pas simplement découragés. Et des URL exactes.
 
-Deux gabarits, `lelabs-backend` et `lelabs-spa`, montrent ces deux formes dans le
-realm. Ils n'authentifient personne : ils ne servent qu'à lire ce que produit
-`TYPE=serveur` et `TYPE=navigateur`.
-
 ### Vérifier par vous-même que le client existe
 
 Cette commande ne lit qu'un point d'entrée public et ne modifie rien :
@@ -171,14 +167,27 @@ curl -s -o /dev/null -w '%{http_code} %{redirect_url}\n' \
   'https://oauth.lelabs.tech/realms/lelabs/protocol/openid-connect/auth?client_id=VOTRE_CLIENTID&response_type=code&scope=openid&redirect_uri=VOTRE_REDIRECT_ENCODEE'
 ```
 
-Attendu : **`302`** vers votre URL, avec
-`error_description=Missing+parameter%3A+code_challenge_method`. Ce seul retour
-établit trois choses — le client existe, votre URL est acceptée **au caractère
-près**, et PKCE est bien **exigé**, puisque la demande est refusée sans lui.
+**Le retour qui porte l'information est `400`** : le client n'existe pas, ou
+l'URL n'est pas celle qui a été enregistrée. Les deux cas se ressemblent vus de
+l'extérieur, et c'est voulu. Une URL non déclarée ne provoque jamais de
+redirection : le refus reste chez le fournisseur, affiché « Paramètre invalide :
+redirect_uri ».
 
-Un **`400`** signifie que le client n'existe pas, ou que l'URL n'est pas celle
-qui a été enregistrée. Une URL non déclarée ne provoque jamais de redirection :
-le refus reste chez le fournisseur, affiché « Paramètre invalide : redirect_uri ».
+**Tout le reste est une acceptation** : le client existe, et votre URL est
+acceptée au caractère près. Dans un contrôle automatisé, écrivez donc le refus —
+`!= 400` — jamais `== 200` ni `== 302` : la forme de l'acceptation dépend du
+client, et un contrôle écrit sur elle signalerait une panne sur une intégration
+parfaitement saine.
+
+| Acceptation | Ce qu'elle dit de plus |
+| --- | --- |
+| `302` vers **votre** URL, avec `error=invalid_request` et `error_description=Missing+parameter%3A+code_challenge_method` | le client exige PKCE et refuse une demande qui n'en porte pas. C'est le retour de tout client déclaré ici, puisque PKCE `S256` leur est imposé. |
+| `200`, avec l'écran de connexion | le client n'exige pas PKCE : la demande est complète telle quelle, et le fournisseur affiche la page de connexion. |
+
+Relevé le 2026-09-24 : **tout client de ce realm rend la première forme**, PKCE
+leur étant imposé sans exception. La seconde ligne reste néanmoins dans ce
+tableau, parce qu'elle décrit ce que le point d'entrée fait — et qu'un contrôle
+écrit sur une forme d'acceptation casse le jour où cette forme change.
 
 ## Adresse e-mail vérifiée
 

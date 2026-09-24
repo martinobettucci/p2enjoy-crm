@@ -204,7 +204,7 @@ SSO ; il ne sort pas du CRM.
 
 ### 5.5 Refus — dictionnaire fermé
 
-Corps `{"erreur": "<code>"}`, auquel s'ajoute `"adresse"` pour les trois attentes, afin que l'écran
+Corps `{"erreur": "<code>"}`, auquel s'ajoute `"adresse"` pour les quatre attentes, afin que l'écran
 puisse la nommer. Aucune autre information : ni motif technique, ni message du fournisseur.
 
 | Code HTTP | `erreur` | Cause |
@@ -215,6 +215,7 @@ puisse la nommer. Aucune autre information : ni motif technique, ni message du f
 | `403` | `adresse_non_verifiee` | `email` absent ou `email_verified` différent de `true` |
 | `403` | `attente_verification` | `verified` absent des rôles du realm |
 | `403` | `attente_espace` | personne vérifiée, mais aucune appartenance ni aucune attente à son adresse (§6) |
+| `403` | `attente_administrateur` | personne vérifiée et attendue, mais chacune de ses attentes vise un espace qui n'a pas encore d'administrateur : elles restent en place (§6.2, INC-249, décision 593) |
 | `404` | `geste_inconnu` | chemin autre que `ouvrir`, `prolonger`, `fermer` |
 | `405` | `methode` | méthode autre que `POST` |
 | `502` | `sso_injoignable` | découverte, point de jeton ou clés injoignables, échéance dépassée, réponse non conforme |
@@ -294,7 +295,11 @@ le §5.2 ; la fonction ne revérifie pas le jeton, qu'elle ne voit pas.
 Dans une transaction :
 
 1. normaliser l'adresse : `lower(btrim(p_email))` ;
-2. consommer les attentes de cette adresse (`delete … returning`) ;
+2. consommer les attentes de cette adresse (`delete … returning`) — **sauf celles qui feraient de la
+   personne le premier membre, non administrateur, d'un espace sans administrateur** : elles restent
+   **en suspens**, en place, et se consommeront à une connexion suivante, une fois un administrateur
+   entré (décision 593, INC-249). Une attente `admin`, ou une attente dans un espace qui a déjà un
+   administrateur ou dont la personne est déjà membre, se consomme toujours ;
 3. si des attentes ont été consommées ou si `p_sub` a déjà un profil : créer le profil s'il manque
    (`on conflict (id) do nothing`), le nom suivant la chaîne de repli de `docs/SCHEMA.md` §1 appliquée
    aux revendications — `p_nom` épuré, puis la partie locale de l'adresse, puis
@@ -303,15 +308,19 @@ Dans une transaction :
    par la personne ;
 4. insérer une appartenance par attente consommée, `on conflict do nothing` — une appartenance
    existante garde son rôle ;
-5. rendre `{"admis": <au moins une appartenance>, "espaces": n, "rattachees": m, "nom": <nom du profil ou null>}`.
+5. rendre `{"admis": <au moins une appartenance>, "espaces": n, "rattachees": m, "en_suspens": k, "nom": <nom du profil ou null>}`
+   — `en_suspens` compte les attentes laissées en place au point 2. Non admise et `en_suspens > 0`,
+   la personne reçoit `attente_administrateur` ; non admise sans attente en suspens, `attente_espace`.
 
 Deux ouvertures concurrentes de la même personne convergent : la seconde attend les verrous de la
 première sur les attentes, puis n'en trouve plus et lit l'appartenance validée. ~~L'invariant du dernier
 administrateur (`docs/SPEC-identite.md` §5) n'est jamais sollicité : la fonction n'insère que.~~
-**Corrigé par la mesure (INC-249, `CRM-092` T4)** : l'insertion le sollicite quand elle serait la
-PREMIÈRE appartenance d'un espace vide et qu'elle n'est pas administratrice — la garde refuse, et
-l'échangeur rend `service_indisponible`. Un espace vide ne naît que par l'exploitation, qui y inscrit
-une attente administratrice (`amorcer-espace.sh`, §12) ; la voie de correction est à arbitrer.
+**Corrigé par la mesure (INC-249, `CRM-092` T4)** : l'insertion le sollicitait quand elle aurait été la
+PREMIÈRE appartenance d'un espace vide sans être administratrice — la garde refusait, et toute la
+connexion échouait en `service_indisponible`, autres espaces compris. **Arbitré le 2026-09-24
+(décision 593) : patienter à la connexion** — le point 2 laisse ces attentes en suspens au lieu de
+les consommer, la garde n'est plus jamais sollicitée, et l'ordre d'arrivée des personnes ne compte
+plus. Migration `0078_admission_patiente.sql` (§7.6).
 
 ### 6.3 Qui inscrit une attente
 
@@ -400,6 +409,14 @@ exécutée sur instruction explicite seulement.
   fois ; sur une base neuve, elle retire ce que `0001` vient de poser.
 - **Ne supprime rien d'autre.** Les tables du schéma `auth` restent, inertes (§2, §15).
 
+### 7.6 Migration `0078_admission_patiente.sql` — INC-249 (décision 593)
+
+Redéfinit `public.ouvrir_session_sso` selon le §6.2 : les attentes qui feraient d'une personne le
+premier membre non administrateur d'un espace sans administrateur restent en suspens, et l'objet rendu
+porte `en_suspens`. Signature, propriétaire, `search_path` et privilèges inchangés ; les fonctions de
+session du §7.4, qui l'appellent et rendent son objet tel quel, ne changent pas. Ordinaire, idempotente
+(`create or replace`). Aucune donnée n'est modifiée.
+
 ## 8. Webapp
 
 ### 8.1 `webapp/src/lib/sso.ts` — révisé
@@ -484,6 +501,7 @@ et qu'un geste d'autrui manque. Elles ne se ressemblent pas.
 | `adresse_non_verifiee` | attente | Votre adresse *adresse* n'est pas encore vérifiée auprès de LeLabs. Vérifiez-la depuis votre compte LeLabs, puis reconnectez-vous. |
 | `attente_verification` | attente | Votre compte LeLabs *adresse* n'est pas encore vérifié. Un administrateur de LeLabs doit confirmer votre identité avant que le CRM vous ouvre ses espaces ; ce geste est humain et peut prendre du temps. |
 | `attente_espace` | attente | Aucun espace du CRM ne vous attend à l'adresse *adresse*. Demandez à un administrateur de votre espace de vous inscrire avec cette adresse, puis reconnectez-vous. |
+| `attente_administrateur` | attente | Un espace du CRM vous attend à l'adresse *adresse*, mais son administrateur ne s'y est pas encore connecté. Votre accès s'ouvrira dès qu'il l'aura fait : reconnectez-vous alors. |
 
 - **Refus** : surface `--color-danger-soft`, texte `--color-danger-on-soft`, icône `TriangleAlert`,
   `role="alert"` — la forme existante.
@@ -602,6 +620,7 @@ responsable a demandé une fois `CRM-092` entièrement vérifiée (décision 584
 |---|---|
 | Unitaire, Deno | `supabase/functions/session/*.test.ts` — **révisés par la décision 586** : corps d'ouverture invalide ; code refusé par LeLabs ; échange avec le secret et le vérificateur exacts ; trois gestes, chemin inconnu, méthode ; poignée absente, inconnue, échue — `204`, jamais un refus (décision 587) ; `session_expiree` qui supprime la session et efface le cookie ; admission rejouée à la prolongation ; cookie `HttpOnly`, `SameSite=Strict`, `Path`, `Secure` sur `https` seulement ; chiffrement AES-GCM : aller-retour, vecteur unique, altération refusée ; échéance globale ; et toujours : jeton mal formé ; `alg` `none`, `HS256`, `HS512`, `RS384` refusés **sans** lecture de clé ; `kid` inconnu ; signature altérée d'un octet ; `iss`, `azp`, `typ` différents ; `exp` passé d'une seconde ; `iat` futur ; `sub` non UUID ; adresse non vérifiée ; `verified` absent, puis présent parmi d'autres rôles dans un autre ordre ; découverte d'un autre émetteur ; délai dépassé ; jeton interne : revendications exactes, signature vérifiable par `JWT_SECRET`, `exp` = min des deux ; dictionnaire du §5.4 complet. Clés RSA et EC tirées par WebCrypto dans le test, jamais versées |
 | pgTAP | `sessions_sso` : aucune politique, aucun privilège pour `anon` et `authenticated`, empreinte unique, cascade depuis `profiles` ; les quatre fonctions de session réservées à `service_role`, admission appliquée à l'ouverture et au renouvellement, suppression d'une session non admise ; `workspace_invitations` : contraintes, clé, trois politiques et privilèges ; `ouvrir_session_sso` : attente consommée en appartenance au bon rôle, profil créé une fois, profil existant non réécrit, appartenance existante non rétrogradée, aucune trace sans attente, rejeu stable, `EXECUTE` refusé à `anon` et `authenticated` ; `profiles` sans clé vers `auth.users` |
+| INC-249 (décision 593) | pgTAP `0072_admission_patiente.test.sql` : attente non administratrice dans un espace vide laissée **en suspens**, `en_suspens` compté, aucun profil ni appartenance créés ; attente `admin` consommée dans le même espace vide ; l'attente en suspens consommée à une ouverture suivante, une fois l'administrateur entré ; une personne admise ailleurs entre malgré une attente en suspens. API (`session.spec.ts`) : compte jetable attendu comme lecteur dans un espace vide → `403 attente_administrateur` avec l'adresse, attente intacte, **jamais `502`** ; puis admis après l'administrateur. Unitaire : dictionnaire du §5.5 et message du §9.2. E2E : la surface d'attente et son message, avec un compte jetable. Visuel : capture de cette attente |
 | Base neuve | T1 : un cluster jetable **sans GoTrue**, `0074` appliquée deux fois : `auth.uid()` rend le `sub` de `request.jwt.claims` (K11 levée), propriétaire inchangé. T6 : la pile entière recréée sans GoTrue par `./resetMe.sh`, seed et preuves d'API rejoués — une lecture RLS réelle aboutit ; `0077` rejouée est sans effet ; aucun conteneur `auth`, `auth-templates` ni `inbucket` |
 | pgTAP, T6 | `0071_retrait_gotrue.test.sql` : aucun trigger utilisateur sur `auth.users`, `app.handle_new_user()` absente, un profil naît sans ligne `auth.users`. Les assertions de `0001` et `0023` qui éprouvaient le trigger sont **retirées avec leur objet**, et nommées au journal avec ce qui les remplace |
 | API, pile réelle | `e2e/api/session.spec.ts`, **révisé par la décision 586** — code et vérificateur remis à l'échangeur, jamais de jeton LeLabs côté client : ouverture, prolongation par le cookie, fermeture qui rend le cookie inopérant ; la table de sessions ne porte aucun jeton en clair ; un code émis pour le client étranger est refusé ; un code rejoué est refusé ; et toujours : les trois comptes seedés ouvrent une session et lisent leurs données sous RLS ; `inconnu@`, `attendu@`, adresse non vérifiée rendent leur `403` et leur code ; jeton d'accès LeLabs, `id_token` ou jeton interne présentés à l'échangeur en `Authorization` : **n'ouvrent rien** — il n'en lit aucun (`400` à l'ouverture, `204` à la prolongation) ; jeton interne accepté par PostgREST, **Realtime** et **Storage** ; `verified` retiré par l'API d'administration de développement → **prolongation suivante** refusée et session supprimée ; appartenance retirée → de même ; session LeLabs close → `session_expiree` ; **rotation** : nouvelle clé prioritaire créée, suivie sans redémarrer à l'ouverture comme à la prolongation, anciennes clés désactivées sans gêner aucune session. *Révisé par la décision 587* : « ancien jeton refusé » ne se prouve plus par l'API, l'échangeur ne recevant jamais qu'un jeton qu'il vient d'obtenir lui-même de LeLabs ; la preuve de `kid` inconnu reste unitaire. `/auth/v1/*` → `404` après T6 |

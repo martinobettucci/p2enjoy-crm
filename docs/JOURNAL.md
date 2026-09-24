@@ -29612,3 +29612,36 @@ par défaut — celle de l'URL de retour — suffit, et aucun jeton hors ligne n
 - **INC-249** : le responsable demande une explication développée avant de trancher — question reposée.
 
 Chaque correction est un commit distinct, avec ses preuves.
+
+## décision 593 — INC-249 arbitré : patienter à la connexion
+
+*2026-09-24. Arbitrage du responsable, après une explication développée. Spécification
+`docs/SPEC-session-sso.md` §5.5, §6.2, §7.6, §9.2, §13 amendée avant le code.*
+
+**Problème.** Un espace neuf n'a aucun membre. Si la première personne à s'y connecter y est attendue
+avec un autre rôle qu'administrateur, la conversion de son attente ferait d'elle le premier membre
+non administrateur ; la garde du dernier administrateur refuse, et comme toutes les attentes se
+convertissent dans une seule transaction, **toute** la connexion échoue en `service_indisponible`,
+autres espaces compris.
+
+**Voies présentées.** Patienter à la connexion ; refuser l'inscription tant que l'espace n'a pas
+d'administrateur membre ; les deux.
+
+**Décision du responsable : patienter à la connexion.** `public.ouvrir_session_sso` laisse **en
+suspens** — en place, non consommées — les attentes qui feraient de la personne le premier membre non
+administrateur d'un espace sans administrateur, et consomme les autres. La garde n'est plus jamais
+sollicitée ; l'ordre d'arrivée des personnes ne compte plus ; l'attente se convertit à une connexion
+suivante, une fois l'administrateur entré.
+
+**Conséquence visible.** Une personne qui n'est admise nulle part mais dont une attente est en suspens
+recevrait sinon `attente_espace` — « Aucun espace du CRM ne vous attend » —, ce qui est faux. Un
+quatrième motif d'attente, `attente_administrateur`, lui dit qu'un espace l'attend et que son accès
+s'ouvrira quand l'administrateur s'y sera connecté. Même surface d'attente (`docs/DESIGN_SYSTEM.md`
+§5.12), aucun jeton nouveau.
+
+**Mise en œuvre.** Migration `0078_admission_patiente.sql`, suite `0072`, échangeur (dictionnaire,
+choix du motif), webapp (nature d'attente, message), preuves d'API et d'interface avec un compte
+jetable, capture. **Le seed n'est pas étendu** : démontrer cet état exigerait un second espace sans
+administrateur, alors que le contrat du seed est « un espace » (`docs/SPEC-seed.md` §2.1, assertion 1
+de `0003`) ; l'état est démontré par les preuves, sur des données jetables — même traitement que les
+autres refus d'admission hors des trois comptes du realm.

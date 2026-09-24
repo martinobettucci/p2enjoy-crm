@@ -6556,6 +6556,9 @@ la translation sur le jour du fuseau que l'écran emploie, ou faire rendre à l'
 emploie. Les deux touchent une règle de `docs/SPEC-cards.md` §17 et du seed, hors de la tâche en cours.
 **Unité due : `CRM-061`.**
 
+**ARBITRÉE le 2026-09-24 — décision 592 : le jour local fait foi.** Le seed et les preuves calent
+les échéances sur le jour local, comme l'écran. Mise en œuvre : `CRM-061`.
+
 ### INC-249 — l'admission sollicite bien la garde du dernier administrateur : une attente non administratrice dans un espace VIDE rend `service_indisponible`
 
 *Mesurée le 2026-09-24 en portant `scripts/verify-migrations.sh` sur le SSO (`CRM-092` T4).*
@@ -6580,6 +6583,10 @@ non administratrice dans un espace sans administrateur (contrainte au moment de 
 ignorer par l'admission l'attente qui violerait la garde en la laissant en place. La preuve de
 `verify-migrations.sh` inscrit désormais une attente administratrice. **Unités concernées : `CRM-092`
 (spécification §6.2 à corriger) et `CRM-070` (l'écran d'inscription).**
+
+**ARBITRÉE le 2026-09-24 — décision 593 : patienter à la connexion.** Les attentes qui feraient d'une
+personne le premier membre non administrateur d'un espace sans administrateur restent en suspens, et
+un motif `attente_administrateur` le lui dit. Mise en œuvre : migration `0078`, `CRM-092`.
 
 ### INC-250 — `verify-droits-fins.sh` attend que le rejeu isolé de `0010` ne fasse dériver QUE `pol:tracks_lecture_membre` ; `0063` a depuis redéfini deux de ses fonctions
 
@@ -6609,3 +6616,6 @@ laissé périmé ; il est corrigé dans T4.
 nommés — et de le justifier par `0063` dans le harnais —, ou de faire rejouer au §2 la chaîne
 `0010` → `0034` → `0063`. Elle relève de la tenue des harnais, hors de la tranche en cours. **Unités
 concernées : `CRM-008` (harnais des droits fins) et `CRM-064` (auteur de `0063`).**
+
+**ARBITRÉE le 2026-09-24 — décision 592 : rejouer la chaîne `0010` → `0034` → `0063`.** Mise en
+œuvre : `CRM-008`.

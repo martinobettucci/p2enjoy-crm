@@ -14525,6 +14525,8 @@ connexion réelle de `martino@p2enjoy.studio` aboutie après les opérations du 
       treize gestes, ordre de la reprise du compte invité mesuré) ; label de révision des routes de
       Caddy, sans lequel la production aurait relayé `/auth/v1/*` ; `verify-spark` **84**,
       `verify-stack` **52**, `verify-scripts` **112** ; campagne complète de T6 inchangée.
+- [ ] **Correctif INC-249 — patienter à la connexion** (décision 593) : migration `0078`, suite `0072`,
+      motif `attente_administrateur` (échangeur et webapp), preuves d'API et d'interface, capture.
 - [ ] **Préalable humain chez LeLabs** : déclaration du client serveur `lelabs-crm-serveur` et secret
       posé dans la cellule (décision 586, §12) ; `verified` sur `martino@p2enjoy.studio`.
 - [ ] Production : opérations du §12, écrites en `docs/PROD_MIGRATIONS.md` §2.5 — dont les demandes
