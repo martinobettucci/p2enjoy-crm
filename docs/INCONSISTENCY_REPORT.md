@@ -6680,6 +6680,19 @@ premiers changent l'apparence de trois surfaces et demandent leurs captures (`CL
 
 **ARBITRÉE le 2026-09-24 — décision 596 : tout corriger**, contrôle des classes compris.
 
+**RÉSOLUE le 2026-09-24.** `text-text-1` → `text-text` ; `accent-[var(--color-primary)]` → `accent-brand`
+et case de 24 px, mentions réalignées à 36 px ; `classes-css.mjs` lit les constantes `CLASSES_*` et exige
+que toute variable citée par une valeur arbitraire soit déclarée dans le CSS produit — deux dégradations
+de `verify-webapp.sh` le prouvent. Captures des deux écrans renouvelées et relues.
+
+### INC-253 — la case « Afficher les affaires en sommeil » mesure 16 px, contre 24 px au §5.7 bis
+
+*Relevée le 2026-09-24 en corrigeant INC-251. Comportement **inchangé** : hors de l'arbitrage de la
+décision 596, qui visait la case des préférences.* `webapp/src/components/ui/Sommeil.tsx`, ligne 156 :
+`size-4 accent-brand`. Le §5.3 quinquies du design system renvoie au §5.7 bis, qui fixe toute case à
+24 px sur une ligne de `--size-target`. La couleur, elle, est juste (`accent-brand`). **Unité concernée :
+`CRM-081`.**
+
 ### INC-252 — `verify-copie-workflow.sh` et `verify-move-card.sh` restaurent en rejouant `0035` à la main : la base reste avec l'ancienne `app.card_comments_avant_maj()`
 
 *Mesurée le 2026-09-24 en rejouant `scripts/verify-droits-fins.sh` pour INC-250 (2579 s, 46 contrôles,

@@ -4214,10 +4214,15 @@ l'ouvrent, et c'est la première entrée de `/reglages` dont ce soit le cas.
   §42.1 de la spécification le mesure, aucun canal sortant n'existe. Une case qui ne commande rien
   est la **commande morte** du §5.10, et ici elle serait pire qu'inerte — elle promettrait un email.
 
-- **LA MENTION D'ÉTAT S'ALIGNE SUR LE LIBELLÉ DE LA CASE, À 28 px** — la case (16 px) plus son écart
-  (12 px). Valeur arbitraire assumée (§5.29) : écrite `pl-7` / `ml-7`, hors de l'échelle close, la
-  classe n'était pas engendrée et les trois mentions se collaient au bord gauche (INC-231, corrigé
-  le 2026-09-24).
+- **LA CASE MESURE 24 px, COMME TOUTE CASE DU PRODUIT (§5.7 bis), ET PORTE L'ACCENT `--color-brand`.**
+  Elle mesurait 16 px et citait `--color-primary`, jeton déclaré nulle part : la case prenait la
+  couleur par défaut du navigateur (INC-251, corrigé le 2026-09-24). Sa ligne garde la hauteur
+  `--size-target`, et son libellé reste sa cible étendue.
+
+- **LA MENTION D'ÉTAT S'ALIGNE SUR LE LIBELLÉ DE LA CASE, À 36 px** — la case (24 px) plus son écart
+  (12 px). Valeur arbitraire assumée (§5.29) : écrite d'abord `pl-7` / `ml-7`, hors de l'échelle
+  close, la classe n'était pas engendrée et les trois mentions se collaient au bord gauche (INC-231) ;
+  28 px ensuite, le temps que la case mesure encore 16 px.
 
 - **L'ÉCRAN ÉCRIT IMMÉDIATEMENT, SANS BOUTON « ENREGISTRER », ET C'EST LE MODE DU §5.7 ter.** Un
   réglage à une seule valeur n'a rien à valider, et un bouton d'enregistrement y ajouterait un état

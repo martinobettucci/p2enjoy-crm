@@ -5,6 +5,8 @@
 //       §13.5 (cas h et i : les trois états du sélecteur d'organisation)
 // @spec docs/DESIGN_SYSTEM.md §5.23 (le formulaire de création), §5.25 (celui de modification),
 //       §5.7 (contrôles), §5.8 (états systématiques)
+// @spec docs/BACKLOG.md « Correctifs arbitrés », INC-251 ; docs/JOURNAL.md décision 596 —
+//       l'encre des champs est un jeton déclaré
 //
 // EXTRAIT SANS CHANGEMENT DE COMPORTEMENT. Ce module ne fait que déplacer les champs qui vivaient
 // dans `FormulaireCreationContact`, avec leurs `data-testid`, leurs libellés, leurs identifiants
@@ -23,8 +25,12 @@ import { t } from '../i18n'
 import type { EtatAsync } from '../lib/async'
 import type { OrganisationChoisissable, SaisieContact } from '../lib/contacts'
 
+// L'ENCRE DU CHAMP EST `--color-text`, celle du corps (§1, §2). Elle était écrite `text-text-1`, un
+// niveau que l'échelle des neutres ne porte pas : la classe n'était pas engendrée, et le champ
+// héritait son encre sans que le contrôle des classes — qui ne lisait pas les constantes — le dise
+// (INC-251).
 export const CLASSES_CHAMP =
-	'h-[var(--size-target)] w-full rounded-md border border-border bg-surface px-3 text-text-1'
+	'h-[var(--size-target)] w-full rounded-md border border-border bg-surface px-3 text-text'
 
 export type ProprietesChampsContact = {
 	readonly saisie: SaisieContact

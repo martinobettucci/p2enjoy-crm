@@ -14610,6 +14610,12 @@ décision 594.
       que la suite globale doit courir APRÈS son ménage des copies d'essai (`0012` choisissait une
       copie), déplacée — `--rapide` **30 contrôles, aucune anomalie**, suite globale **72 fichiers,
       3196 assertions**.
-- [ ] **INC-251 — trois écarts de jetons, et le contrôle qui les voit** (`CRM-060`, `CRM-064`,
-      `CRM-007`) : `text-text`, `--color-brand`, case de 24 px ; `classes-css.mjs` lit les constantes
-      de classes et les variables citées (décision 596).
+- [x] **INC-251 — trois écarts de jetons, et le contrôle qui les voit** (`CRM-060`, `CRM-064`,
+      `CRM-007`) : `text-text`, `accent-brand`, case de 24 px ; `classes-css.mjs` lit les constantes
+      `CLASSES_*` et les variables citées par une valeur arbitraire (décision 596). Mesuré : le contrôle
+      étendu rendait exactement les deux cas réels (`text-text-1`, `--color-primary`), puis « aucune
+      classe manquante » ; `verify-webapp` prouve les deux nouvelles dégradations ; unitaires **3281** ;
+      `contacts` et `preferences-notifications` **68/68**, captures relues. Ses deux autres rouges du
+      jour sont étrangers : `test:unit` par la fuite de `VITE_*` (INC-189, commit suivant), `e2e:ui`
+      par le travail en cours de T8 (`roles.ts` appelant une fonction pas encore migrée). Rejoué avec
+      T8. Case de 16 px de `Sommeil.tsx` relevée, hors arbitrage : consignée en INC-253.

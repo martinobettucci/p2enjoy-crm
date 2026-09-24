@@ -6,6 +6,8 @@
 //       règles), §5.8 (états systématiques), §5.13 (étiquettes et focus)
 // @spec docs/BACKLOG.md « Correctifs arbitrés », INC-231 ; docs/JOURNAL.md décisions 592 et 594 —
 //       classes absentes du CSS produit remplacées (docs/DESIGN_SYSTEM.md §11, §5.29)
+// @spec docs/BACKLOG.md « Correctifs arbitrés », INC-251 ; docs/JOURNAL.md décision 596 —
+//       case de 24 px et couleur d'accent `--color-brand` (docs/DESIGN_SYSTEM.md §5.7 bis)
 //
 // UN ÉCRAN QUI LIT ET QUI ÉCRIT, ET QUI NE DÉCIDE RIEN DE CE QUI EST REÇU. La préférence agit en
 // base, dans la troisième condition de `notifications_lecture` (§45.2) ; cet écran ne masque
@@ -213,7 +215,7 @@ export function ReglagesNotifications({
 							<label className="flex items-start gap-3 min-h-[var(--size-target)] cursor-pointer">
 								<input
 									type="checkbox"
-									className="mt-1 size-4 accent-[var(--color-primary)]"
+									className="size-6 shrink-0 accent-brand"
 									checked={preference.recevoirDansApplication}
 									aria-describedby={ecriture.phase === 'repos' ? undefined : idMention}
 									onChange={(evenement) => {
@@ -227,26 +229,27 @@ export function ReglagesNotifications({
 							</label>
 							{/* LA MENTION D'ÉTAT VIT SOUS LA CASE (§5.7 ter), jamais en tête d'écran, et
 							    une seule à la fois : deux mentions superposées feraient croire à deux
-							    écritures. Elle s'aligne sur le LIBELLÉ : 28 px, la case (16 px) plus
-							    l'écart `gap-3` (12 px). Valeur arbitraire assumée (§5.29) — `pl-7`,
+							    écritures. Elle s'aligne sur le LIBELLÉ : 36 px, la case (24 px, §5.7 bis)
+							    plus l'écart `gap-3` (12 px). Valeur arbitraire assumée (§5.29) — `pl-7`,
 							    écrit d'abord, n'existe pas sur l'échelle close et n'était pas engendré
-							    (INC-231) : les mentions se collaient au bord gauche. */}
+							    (INC-231) ; la case mesurait 16 px et citait `--color-primary`, jeton
+							    déclaré nulle part (INC-251). */}
 							{ecriture.phase === 'envoi' ? (
-								<p id={idMention} className="text-sm text-text-3 pl-[28px]">
+								<p id={idMention} className="text-sm text-text-3 pl-[36px]">
 									{t('settings.notifications.saving')}
 								</p>
 							) : null}
 							{/* LA CONFIRMATION REMPLACE L'ENVOI, elle ne s'y ajoute pas (§5.7 ter) : deux
 							    mentions superposées feraient croire à deux écritures. */}
 							{ecriture.phase === 'ecrite' ? (
-								<p id={idMention} className="text-sm text-success pl-[28px]">
+								<p id={idMention} className="text-sm text-success pl-[36px]">
 									{t('settings.notifications.saved')}
 								</p>
 							) : null}
 							{ecriture.phase === 'refus' ? (
 								<p
 									id={idMention}
-									className="text-sm text-danger-on-soft bg-danger-soft rounded px-2 py-1 ml-[28px]"
+									className="text-sm text-danger-on-soft bg-danger-soft rounded px-2 py-1 ml-[36px]"
 								>
 									{t(ecriture.cle)}
 								</p>

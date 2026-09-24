@@ -3,6 +3,8 @@
 # @verifies docs/SPEC-webapp.md §4 (jetons), §6 (données), §7 (états), §12.3 (chunks), §14
 # @verifies docs/DESIGN_SYSTEM.md §1 (palette), §5.8 (états), §7 (paliers), §10, §11
 # @verifies docs/INCONSISTENCY_REPORT.md INC-020 (build dû par CRM-007)
+# @verifies docs/BACKLOG.md « Correctifs arbitrés », INC-251 ; docs/JOURNAL.md décision 596 — le
+#           contrôle des classes lit les constantes `CLASSES_*` et les variables des valeurs arbitraires
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-007` :
 #
@@ -54,7 +56,7 @@ fail() { checks=$((checks + 1)); failures=$((failures + 1)); printf '  \033[31mE
 
 # Les fichiers altérés par les contrôles de non-complaisance sont sauvegardés avant la première
 # altération, et restaurés quoi qu'il arrive.
-A_RESTAURER=(webapp/src/app/TabBar.tsx webapp/src/lib/workspaces.ts)
+A_RESTAURER=(webapp/src/app/TabBar.tsx webapp/src/lib/workspaces.ts webapp/src/app/FormulaireRattachementAffaire.tsx)
 
 menage() {
 	for fichier in "${A_RESTAURER[@]}"; do
@@ -255,6 +257,33 @@ if node scripts/lib/classes-css.mjs webapp/src webapp/dist/assets >/dev/null 2>&
 	fail "un espacement hors échelle passe inaperçu"
 else
 	ok "un espacement hors échelle (px-7) fait échouer le contrôle"
+fi
+cp "$TRAVAIL/webapp_src_app_TabBar.tsx" webapp/src/app/TabBar.tsx
+
+# LES DEUX ANGLES MORTS FERMÉS PAR INC-251 (décision 596) doivent eux aussi être vus. Une classe hors
+# échelle écrite dans une CONSTANTE `CLASSES_*` — et non dans un `className` —, puis une valeur
+# arbitraire qui cite une variable CSS déclarée nulle part : les deux passaient le contrôle avant
+# le 2026-09-24, `text-text-1` et `--color-primary` en étant les deux cas réels.
+sed -i "s/^const CLASSES_CONTROLE = 'min-h-\[var(--size-target)\] rounded-sm border border-border bg-surface px-3'/const CLASSES_CONTROLE = 'min-h-[var(--size-target)] rounded-sm border border-border bg-surface px-7'/" \
+	webapp/src/app/FormulaireRattachementAffaire.tsx
+if cmp -s "$TRAVAIL/webapp_src_app_FormulaireRattachementAffaire.tsx" webapp/src/app/FormulaireRattachementAffaire.tsx; then
+	fail "la dégradation de la constante n'a rien modifié : le contrôle qui suit ne prouverait rien"
+elif node scripts/lib/classes-css.mjs webapp/src webapp/dist/assets >/dev/null 2>&1; then
+	fail "une classe hors échelle dans une constante CLASSES_* passe inaperçue"
+else
+	ok "une classe hors échelle dans une constante CLASSES_* (px-7) fait échouer le contrôle"
+fi
+cp "$TRAVAIL/webapp_src_app_FormulaireRattachementAffaire.tsx" webapp/src/app/FormulaireRattachementAffaire.tsx
+
+sed -i 's/gap-2 px-4 bg-bg/gap-2 px-4 bg-bg accent-[var(--jeton-inexistant)]/' webapp/src/app/TabBar.tsx
+if node scripts/lib/classes-css.mjs webapp/src webapp/dist/assets >"$TRAVAIL/classes-variable.log" 2>&1; then
+	fail "une valeur arbitraire citant une variable non déclarée passe inaperçue"
+# Le build n'est pas refait : la classe est donc AUSSI absente du CSS. Le contrôle vise le message des
+# variables lui-même, sans quoi il passerait sur la seule absence de la classe.
+elif grep -q -- 'déclarées nulle part : .*--jeton-inexistant' "$TRAVAIL/classes-variable.log"; then
+	ok "une valeur arbitraire citant une variable déclarée nulle part fait échouer le contrôle, qui la nomme"
+else
+	fail "le contrôle échoue, mais sans nommer la variable non déclarée : $(tail -n 1 "$TRAVAIL/classes-variable.log")"
 fi
 cp "$TRAVAIL/webapp_src_app_TabBar.tsx" webapp/src/app/TabBar.tsx
 
