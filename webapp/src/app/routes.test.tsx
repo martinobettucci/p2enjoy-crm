@@ -3,10 +3,12 @@
 // @verifies CRM-059 (docs/BACKLOG.md) — adresse de l'écran d'état de la messagerie
 // @verifies docs/SPEC-webapp.md §5.2 (routes) ; docs/DESIGN_SYSTEM.md §5.8 (aucune page blanche)
 // @verifies docs/DESIGN_SYSTEM.md §10 (libellés issus du dictionnaire)
+// @verifies docs/BACKLOG.md « Correctifs arbitrés », INC-189 b ; docs/JOURNAL.md décision 594 — le
+//           module chargé à la demande est importé AVANT le rendu : l'attente ne mesure que le rendu
 
 import { Suspense } from 'react'
 import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeAll, describe, expect, it } from 'vitest'
 import { MemoryRouter } from 'react-router'
 import { fr } from '../i18n'
 import { ChargementRoute } from './App'
@@ -30,6 +32,26 @@ import {
 afterEach(cleanup)
 
 describe('table des routes', () => {
+	// LES SEPT MODULES CHARGÉS À LA DEMANDE SONT IMPORTÉS AVANT TOUT RENDU — corrigé le 2026-09-24
+	// (INC-189, docs/JOURNAL.md décision 594). Le seul échec de cette famille dont le journal ait
+	// survécu est un `findByTestId` expiré sur une de ces routes : l'import du module — sa
+	// transformation, sous charge, pendant qu'un harnais fait tourner la pile — mangeait la seconde
+	// que l'attente accorde au RENDU. Le module importé d'abord, l'attente ne mesure plus que le
+	// rendu. Ce que ces preuves affirment est intact : `React.lazy` rend toujours une promesse au
+	// premier rendu, si bien que le repli de `Suspense` reste observé, et chaque route rend toujours
+	// son écran. Ce n'est ni un délai relevé ni une temporisation (`CLAUDE.md` §18).
+	beforeAll(async () => {
+		await Promise.all([
+			import('./RouteInbox'),
+			import('./Carnet'),
+			import('./MaJournee'),
+			import('./AffairesFigees'),
+			import('./Objectifs'),
+			import('./CoutsWorkspace'),
+			import('./Pilotage'),
+		])
+	})
+
 	it('couvre exactement les entrées de navigation, sans orpheline dans un sens ni dans l’autre', () => {
 		expect(ROUTES.map((route) => route.chemin).sort()).toEqual(
 			ENTREES_TRANSVERSES.map((entree) => entree.chemin).sort(),

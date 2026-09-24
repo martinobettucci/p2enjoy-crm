@@ -10,6 +10,8 @@
 //           CLAUDE.md §16 (vérification visuelle)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
+// @verifies docs/BACKLOG.md « Correctifs arbitrés », INC-189 b ; docs/JOURNAL.md décision 594 — le
+//           nettoyage attend que les mentions soient posées
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, comme un utilisateur réel : aucune fonction
 // interne n'est appelée, le navigateur obtient son jeton par le formulaire réel puis parle à la
@@ -392,6 +394,15 @@ test.describe('Le refus partiel, et le clavier (§35.4, §8)', () => {
 			await page.keyboard.press('Enter')
 
 			await expect(page.getByText(corps)).toBeVisible()
+			// LE BROUILLON VIDÉ EST LE SIGNAL QUE LES MENTIONS SONT POSÉES, ET LE NETTOYAGE L'ATTEND —
+			// corrigé le 2026-09-24 (INC-189, docs/JOURNAL.md décision 594). Le commentaire paraît au
+			// fil dès son insertion, AVANT que les mentions ne partent (§35 : elles exigent le
+			// commentaire). Le nettoyage courait alors devant l'insertion de la mention : la
+			// notification de Driss naissait après sa suppression, et six scénarios de notifications
+			// l'ont trouvée dans la campagne suivante. L'écran ne vide le brouillon qu'une fois les
+			// mentions posées — c'est ce que les deux autres scénarios de publication attendaient déjà.
+			await expect(page.getByLabel('Votre commentaire')).toHaveValue('')
+			await expect(page.getByRole('checkbox', { name: DRISS_NOM })).not.toBeChecked()
 		} finally {
 			const commentaires = await page.request.get(
 				`${URL_API}/rest/v1/card_comments?body=eq.${encodeURIComponent(corps)}&select=id`,

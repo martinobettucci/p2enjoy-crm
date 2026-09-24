@@ -14555,9 +14555,11 @@ décision 594.
       exécutions sur trois — puis vertes ; `MaJournee.test` **23**, `Objectifs.test` **98**, unitaires
       **3271** ; `ma-journee.spec.ts` et `objectifs.spec.ts` **62/62**, captures relues, inchangées.
       Reste la campagne complète, rejouée après INC-189 b et c.
-- [ ] **INC-189 b — deux preuves attendent un signal observable** (`CRM-064`, `CRM-007`) : brouillon
+- [~] **INC-189 b — deux preuves attendent un signal observable** (`CRM-064`, `CRM-007`) : brouillon
       vidé avant le nettoyage des mentions ; module importé avant le rendu d'une route chargée à la
-      demande.
+      demande. Mesuré : `mentions-composeur.spec.ts` **12/12**, aucune notification restante hors des
+      deux du seed ; `routes.test.tsx` **15/15**, le repli de `Suspense` toujours observé. Reste la
+      campagne complète.
 - [ ] **INC-189 c — le journal d'une exécution unitaire rouge est conservé** (`CRM-008`) : rapporteur
       Vitest vers `e2e/output/journaux-unitaires/`.
 - [ ] **INC-250 — rejouer la chaîne des droits fins** (`CRM-008`) : `0010` → `0034` → `0063`.
