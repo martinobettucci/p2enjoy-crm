@@ -38,7 +38,7 @@ isolée hors fenêtre.
 | Données | Un compte invité et un espace, « P2Enjoy CRM » (`crm`), posés par `scripts/spark/amorcer-espace.sh` (§8) ; aucune autre donnée, aucun seed |
 | Route publique | `crm.lelabs.tech 8080 tls`, active : `https://crm.lelabs.tech`, certificat Let's Encrypt présenté par la Forge (décision 576) |
 | Client OIDC `lelabs-crm` | Déclaré et créé au realm le 2026-09-23 à 16:08:44 (`docs/SSO-client-lelabs-crm.md`), **supprimé du realm avant le déploiement de `CRM-092`** : sonde `400` « Client non trouvé » le 2026-09-24 à 18 h, retrait confirmé par l'instantané de reprise du dépôt du SSO (décision 598). Sans effet sur le service : aucune connexion n'avait encore été faite, elle attend `CRM-092` (§3) |
-| Client OIDC `lelabs-crm-serveur` | **Déclaré et créé** : sonde `302` vers `https://crm.lelabs.tech/auth/retour`, PKCE exigé, le 2026-09-24 (décision 598). Son secret n'est pas encore saisi dans la cellule (§2.5, étapes 2 et 3) |
+| Client OIDC `lelabs-crm-serveur` | **Déclaré et créé** : sonde `302` vers `https://crm.lelabs.tech/auth/retour`, PKCE exigé, le 2026-09-24 (décision 598). Son secret est **saisi** dans la cellule (relu le 2026-09-24, présence seule, décision 599) ; `SSO_OIDC_CLIENT_ID` y vaut encore `lelabs-crm` (§2.5, étapes 2 et 3) |
 | Relais SMTP | Hôte, port et expéditeur importés ; identifiants non fournis — les courriels transactionnels de GoTrue échouent. **Sans objet après la reprise `CRM-092` (§2.5)** : GoTrue et ses variables quittent la pile |
 | Reprise `CRM-092` | **En attente** (§2.5) : migrations 74 à 79, client confidentiel `lelabs-crm-serveur`, retrait de GoTrue, attente administratrice de `martino@p2enjoy.studio` |
 

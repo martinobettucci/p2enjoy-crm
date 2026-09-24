@@ -29909,3 +29909,23 @@ l'agent vers la cellule sont refusées par le contrôle de permissions de sa ses
 en écriture ; elles attendent que le responsable les autorise ou les lance (`docs/PROD_MIGRATIONS.md`
 §2.5). Restent aussi la saisie du secret et la confirmation du rôle `verified` de
 `martino@p2enjoy.studio`.
+
+## décision 599 — `proposer.sh --demandes-seules` lit les valeurs comme la cellule les écrit
+
+*2026-09-24. Défaut trouvé à la reprise des étapes 1 et 2 du §2.5, avant toute écriture dans la cellule.*
+
+**Observation** (lecture seule de la cellule, aucune valeur secrète affichée) : révision `23e5f407`,
+fichiers `.?` vides, `SSO_OIDC_CLIENT_ID="lelabs-crm"` et `SSO_OIDC_ISSUER="https://…"` — **le plan de
+contrôle écrit chaque valeur entre guillemets** —, `SSO_OIDC_CLIENT_SECRET` posé (86 caractères hors
+guillemets : l'administrateur du realm l'a saisi).
+
+**Défaut.** `--demandes-seules` comparait la valeur brute, guillemets compris : il aurait redemandé un
+émetteur déjà juste. Et il tenait pour posé tout secret suivi d'un caractère : `SSO_OIDC_CLIENT_SECRET=""`
+passait pour présent, et la demande n'aurait jamais été faite. Les preuves de `verify-spark` n'écrivaient
+que des valeurs nues, d'où le trou.
+
+**Correction.** Les valeurs publiques passent par `env_get`, qui retire les guillemets comme partout
+ailleurs ; la présence du secret exige un premier caractère hors guillemets, `""` et `''` comptant pour
+vides — toujours par `grep`, sans lire la valeur dans le shell. Deux preuves au format réel dans
+`verify-spark`, rouges avant la correction (86 vérifications, 2 anomalies), vertes après (86, aucune).
+

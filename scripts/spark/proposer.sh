@@ -147,12 +147,15 @@ ligne() { printf '# %s\n%s=%s\n' "$2" "$1" "$3"; }
 # --- Les demandes seules, pour une cellule en service (décision 590) ---------------------------
 #
 # Rien n'est tiré. La valeur d'une variable PUBLIQUE est comparée à l'attendue ; pour le secret, seule
-# sa PRÉSENCE non vide est constatée — `grep -q` sur le nom suivi d'au moins un caractère —, et la
+# sa PRÉSENCE non vide est constatée — `grep -q` sur le nom suivi d'un caractère, `""` et `''` comptant
+# pour vides —, et la
 # valeur n'est jamais lue dans une variable du shell, ni affichée.
 
 if [ "$DEMANDES_SEULES" = 1 ]; then
 	proposees=""
-	valeur_publique() { [ -f "$SPARK_ENV_FILE" ] && sed -n "s/^$1=//p" "$SPARK_ENV_FILE" | tail -n 1; }
+	# @spec docs/JOURNAL.md décision 599 — le plan de contrôle écrit chaque valeur entre guillemets :
+	# `env_get` les retire, et un secret réduit à `""` ou `''` est vide.
+	valeur_publique() { [ -f "$SPARK_ENV_FILE" ] && env_get "$SPARK_ENV_FILE" "$1"; }
 	{
 		for paire in "SSO_OIDC_ISSUER|$EMETTEUR_SSO|Émetteur OIDC du SSO lelabs (docs/SSO.md)." \
 			"SSO_OIDC_CLIENT_ID|$CLIENT_SSO|Client OIDC serveur RÉELLEMENT créé par le realm (CRM-092)."; do
@@ -163,7 +166,8 @@ if [ "$DEMANDES_SEULES" = 1 ]; then
 			fi
 		done
 	} >> "$PROPOSITION_ENV"
-	if ! { [ -f "$SPARK_SECRETS_FILE" ] && grep -q '^SSO_OIDC_CLIENT_SECRET=.' "$SPARK_SECRETS_FILE"; }; then
+	if ! { [ -f "$SPARK_SECRETS_FILE" ] \
+		&& grep -qE "^SSO_OIDC_CLIENT_SECRET=(\"[^\"]|'[^']|[^\"'])" "$SPARK_SECRETS_FILE"; }; then
 		{
 			printf '\n'
 			ligne SSO_OIDC_CLIENT_SECRET "Secret du client confidentiel chez LeLabs : l'administrateur du realm le saisit." ""

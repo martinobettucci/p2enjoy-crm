@@ -13,6 +13,12 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Déploiement
+
+- **`proposer.sh --demandes-seules` lit les valeurs de la cellule entre guillemets**, comme le plan de
+  contrôle les écrit : un émetteur déjà juste n'est plus redemandé, et un secret réduit à `""` est
+  demandé au lieu d'être tenu pour posé (décision 599).
+
 ### Correctifs arbitrés le 2026-09-24 (décisions 592 et 594)
 
 - **« Ma journée » n'annonce plus une portée avec le total d'une autre** (INC-189). Au clic sur « Tout

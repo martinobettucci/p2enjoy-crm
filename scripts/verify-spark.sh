@@ -6,7 +6,8 @@
 # @verifies docs/JOURNAL.md décisions 567, 570, 571, 575 et 577 (image Realtime dérivée)
 # @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §2, §12 — tranche T6 : ni GoTrue ni SMTP dans
 #           les propositions ; `--demandes-seules` pour une cellule en service (décisions 589 et 590) ;
-#           T7 (décision 591) : Kong et Caddy portent leur label de révision `crm-092`
+#           T7 (décision 591) : Kong et Caddy portent leur label de révision `crm-092` ; valeurs de la
+#           cellule entre guillemets, lues comme la cellule les écrit (décision 599)
 #
 # Rejoue les preuves de `CRM-090` qui ne demandent PAS la cellule :
 #
@@ -529,6 +530,35 @@ if out=$(proposer "$P" --demandes-seules); then
 		*) fail "--demandes-seules, cellule à jour : $(printf '%s' "$out" | head -n 1)" ;; esac
 else
 	fail "--demandes-seules refusé sur une cellule à jour : $(printf '%s' "$out" | head -n 1)"
+fi
+# Le format RÉEL de la cellule (décision 599) : le plan de contrôle écrit chaque valeur entre
+# guillemets, relevé en lecture seule le 2026-09-24. Un émetteur déjà juste n'est pas redemandé, un
+# secret posé non plus ; un secret réduit à `""` est vide, et il est demandé.
+cellule_vierge "$P"
+fichiers_conformes "$P"
+sed -i -e 's/^SSO_OIDC_CLIENT_ID=.*/SSO_OIDC_CLIENT_ID="lelabs-crm"/' \
+	-e 's#^SSO_OIDC_ISSUER=.*#SSO_OIDC_ISSUER="https://oauth.lelabs.tech/realms/lelabs"#' "$P/env"
+sed -i 's/^SSO_OIDC_CLIENT_SECRET=.*/SSO_OIDC_CLIENT_SECRET="secret-guillemets-temoin"/' "$P/secrets"
+if out=$(proposer "$P" --demandes-seules); then
+	props_env=$(sed -n "/^$MARQUE\$/,\$p" "$P/env.?" | grep -E '^[A-Z0-9_]+=' | tr '\n' ';')
+	props_secrets=$(sed -n "/^$MARQUE\$/,\$p" "$P/secrets.?" | grep -E '^[A-Z0-9_]+=' | tr '\n' ';')
+	[ "$props_env" = "SSO_OIDC_CLIENT_ID=lelabs-crm-serveur;" ] && [ -z "$props_secrets" ] \
+		&& ok "--demandes-seules, valeurs entre guillemets : le seul client demandé, ni l'émetteur juste ni le secret posé" \
+		|| fail "--demandes-seules, valeurs entre guillemets : variables « $props_env » secrets « $props_secrets »"
+else
+	fail "--demandes-seules refusé, valeurs entre guillemets : $(printf '%s' "$out" | head -n 1)"
+fi
+cellule_vierge "$P"
+fichiers_conformes "$P"
+sed -i 's#^SSO_OIDC_ISSUER=.*#SSO_OIDC_ISSUER="https://oauth.lelabs.tech/realms/lelabs"#' "$P/env"
+sed -i 's/^SSO_OIDC_CLIENT_SECRET=.*/SSO_OIDC_CLIENT_SECRET=""/' "$P/secrets"
+if out=$(proposer "$P" --demandes-seules); then
+	props_secrets=$(sed -n "/^$MARQUE\$/,\$p" "$P/secrets.?" | grep -E '^[A-Z0-9_]+=' | tr '\n' ';')
+	[ "$props_secrets" = "SSO_OIDC_CLIENT_SECRET=;" ] \
+		&& ok "--demandes-seules : un secret réduit à \"\" est vide, et il est demandé" \
+		|| fail "--demandes-seules : secret \"\" tenu pour posé — secrets « $props_secrets »"
+else
+	fail "--demandes-seules refusé, secret \"\" : $(printf '%s' "$out" | head -n 1)"
 fi
 
 # --- 6. livrer.sh contre une cellule simulée --------------------------------------------------------
