@@ -1873,6 +1873,40 @@ dont aucune ne dit plus quand l'affaire est due par rapport aux autres — et au
 dans quarante endroits. Une translation unique laisse le contrat lisible et met la règle à un seul
 endroit.
 
+### 13.2 bis Le jour est celui du lecteur — INC-248, décision 592
+
+**Mesuré le 2026-09-24 à 00:43 CEST.** La translation du §13.2 partait de `date_trunc('day', now())`,
+c'est-à-dire du jour **UTC** de la base (`2026-09-23`), alors que l'écran range « En retard »,
+« Aujourd'hui » et « À venir » selon le jour **local** du navigateur (`2026-09-24`,
+`docs/SPEC-cards.md` §17.5). Chaque nuit, entre minuit local et minuit UTC — deux heures en heure
+d'été française —, la section « Aujourd'hui » du jeu de démonstration était vide, et trois preuves
+rougissaient.
+
+**Arbitré par le responsable : le jour local fait foi.** La translation part du **début du jour
+local** dans le fuseau du seed, et rejoue à partir de lui l'écart de chaque littéral au minuit UTC de
+l'ancre :
+
+```
+début_du_jour_local ← date_trunc('day', now() at time zone F) at time zone F
+next_action_at      ← début_du_jour_local + (next_action_at − timestamptz '2026-08-21 00:00:00+00')
+```
+
+- **`F` est le fuseau du seed** : la variable `TZ` si elle est posée, sinon le fuseau de l'hôte
+  (`/etc/localtime`), sinon `UTC`. Le seed s'exécute sur l'hôte, là où tourne le navigateur des
+  preuves et du développeur ; un fuseau que PostgreSQL ne reconnaît pas fait échouer le seed.
+- **L'écart est mesuré depuis le minuit UTC de l'ancre, et rejoué depuis le minuit LOCAL du jour** :
+  les littéraux du §9 sont écrits en UTC, et une simple translation d'un nombre entier de jours
+  laisserait « aujourd'hui 09:00 UTC » tomber la veille dans un fuseau à onze heures de retard. Ainsi
+  la distribution du contrat se retrouve **telle quelle au regard des jours locaux**, dans n'importe
+  quel fuseau. Contrepartie assumée : en heure française, les heures affichées glissent du décalage
+  horaire — `09:00 UTC` devient `09:00` locale.
+- **Les contrôles du §13.5 emploient les mêmes bornes locales**, comme l'écran ; le seed et
+  `scripts/verify-ma-journee.sh` cessent de compter en jour UTC.
+- **Preuve déterministe, sans attendre la nuit** : le seed appliqué sous un fuseau dont la date
+  diffère de la date UTC au moment de l'exécution — `Pacific/Pago_Pago` avant 11 h UTC,
+  `Pacific/Kiritimati` ensuite —, et les preuves de « Ma journée » rejouées sous ce même fuseau,
+  doivent rendre les trois sections. Avant correction, l'écran n'en rend que deux.
+
 ### 13.3 Convergence, et l'ordre qui la porte
 
 L'instruction est **convergente**, et c'est l'ordre des sections qui le garantit : la section 8 ter
@@ -1913,8 +1947,8 @@ Quel que soit le jour où le seed s'applique, et pour l'administratrice `…011`
 
 | # | Ce qui doit être vrai | Vérifié par |
 |---|---|---|
-| a | **Au moins une** affaire active, non endormie, dont elle est responsable, a une échéance **strictement antérieure** au début du jour courant | le seed lui-même |
-| b | **Au moins une**, dans le **jour courant** | le seed lui-même |
+| a | **Au moins une** affaire active, non endormie, dont elle est responsable, a une échéance **strictement antérieure** au début du jour courant — **local**, §13.2 bis | le seed lui-même |
+| b | **Au moins une**, dans le **jour courant** local | le seed lui-même |
 | c | **Au moins une**, entre demain et l'horizon de sept jours | le seed lui-même |
 | d | La portée « tout l'espace de travail » rend **strictement plus** de lignes que « mes affaires » | le seed lui-même |
 | e | **Exactement une** affaire endormie porte une échéance dans l'horizon — `…0ca` « Cadrage data — Groupe Vallier » | le seed lui-même |

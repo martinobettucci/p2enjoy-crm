@@ -29730,3 +29730,24 @@ coureur de migrations). La chaîne est complétée dans le même commit — mêm
 (`bg-surface-2`, `leading-relaxed`, `ml-7`, `mt-0.5`, `pl-7`) sont remplacées par des jetons ou des
 valeurs arbitraires assumées (§5.29), le §5.29 ter du design system cesse de citer
 `--color-surface-2` et `--color-text-1`, et les écrans sont revus sur capture.
+
+## décision 595 — INC-248 : la forme exacte du « jour local », écrite avant le code
+
+*2026-09-24. Mise en œuvre de l'arbitrage de la décision 592 ; `docs/SPEC-seed.md` §13.2 bis amendé
+avant la première ligne de code.*
+
+**Problème précisé en relisant le contrat.** Les littéraux du §9 de `docs/SPEC-seed.md` sont écrits en
+UTC (`2026-08-21T09:00:00Z`). Translater d'un nombre entier de jours LOCAUX ne suffit donc pas : dans un
+fuseau à onze heures de retard, « aujourd'hui 09:00 UTC » tombe la veille. La translation part du
+début du jour local et rejoue, depuis lui, l'écart de chaque littéral au minuit UTC de l'ancre : la
+distribution du contrat se retrouve telle quelle au regard des jours locaux, quel que soit le fuseau.
+
+**Le fuseau du seed** est `TZ` si posée, sinon celui de l'hôte, sinon `UTC` — le seed tourne sur
+l'hôte, comme le navigateur des preuves. Les contrôles du §13.5, dans le seed et dans
+`verify-ma-journee.sh`, emploient les mêmes bornes locales.
+
+**Preuve déterministe.** Le défaut ne se montre que deux heures par nuit en France ; il se montre à
+toute heure dans un fuseau choisi pour que sa date diffère de la date UTC au moment de l'exécution —
+`Pacific/Pago_Pago` avant 11 h UTC, `Pacific/Kiritimati` ensuite. Le harnais de « Ma journée »
+applique le seed sous ce fuseau, rejoue les preuves de l'écran sous ce même fuseau, puis rétablit le
+seed sous le fuseau de l'hôte. La preuve est exécutée AVANT la correction et doit rougir.
