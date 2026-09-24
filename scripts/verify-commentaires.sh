@@ -11,8 +11,10 @@
 # @verifies docs/INCONSISTENCY_REPORT.md INC-071, INC-072, INC-048, INC-061 (jeu d'essai nettoyé),
 #           INC-021 (close par CRM-009 : les deux gestes de l'auteur en dépendaient) ;
 #           CRM-022 ferme INC-014
-# @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §7.5 — tranche T6 : `0077` ferme la
-#           chaîne de restauration (décision 589)
+# @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §7.5 — tranche T6 : `0077` fermait la
+#           chaîne de restauration (décision 589), que le runner complet remplace depuis INC-242
+# @verifies docs/BACKLOG.md « Correctifs arbitrés », INC-242 ; docs/JOURNAL.md décisions 592 et 594 —
+#           compteur porté à 99 ; restauration par le runner complet (docs/SPEC-test-harness.md §3.5)
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-043`, POUR CE QUI EST LIVRÉ :
 #
@@ -61,15 +63,11 @@ source scripts/lib/node.sh
 node_toolchain_prepare "$PWD/.nvmrc" || exit 1
 
 MIGRATION=supabase/migrations/0015_commentaires.sql
-MIGRATION_IDENTITES=supabase/migrations/0021_identites_et_memberships_surs.sql
-MIGRATION_RETRAIT_GOTRUE=supabase/migrations/0077_retrait_gotrue.sql
 # La migration du lot G REDÉFINIT `app.card_comments_avant_maj()` et ajoute la politique de
-# modération. Rejouer 0015 puis 0021 sans elle réinstalle une version ANTÉRIEURE du trigger et perd
-# `card_comments_moderation` : la restauration laissait alors la suite 0017 rouge, et le harnais
-# accusait le produit d'un défaut qu'il venait lui-même d'introduire. MESURÉ le 2026-08-14.
+# modération ; elle est livrée avec l'unité, et le §1 la tient pour intacte. La restauration, elle,
+# ne rejoue plus aucune migration à la main : c'est le runner complet (§6, INC-242).
 MIGRATION_LOT_G=supabase/migrations/0035_commentaires_lot_g.sql
 TEST_SQL=supabase/tests/0017_commentaires.test.sql
-TEST_IDENTITES=supabase/tests/0023_identites_et_memberships_surs.test.sql
 SPEC_API=e2e/api/commentaires.spec.ts
 MODULE=webapp/src/lib/commentaires.ts
 COMPOSANT=webapp/src/app/PanneauTimeline.tsx
@@ -325,10 +323,16 @@ if npm run test:sql -- "$TEST_SQL" >"$TRAVAIL/pgtap.log" 2>&1; then
 	assertions=$(grep -oE '[0-9]+ assertions' "$TRAVAIL/pgtap.log" | head -1 | grep -oE '[0-9]+')
 	# RÉVISÉ À 98 LE 2026-08-14, EN DEUX FOIS ET D'UN SEUL GESTE : le lot G a porté la suite de 84
 	# à 96 sans rejouer ce harnais, et INC-072 y ajoute les deux assertions de l'audit du seed.
-	if [ "${assertions:-0}" -eq 98 ]; then
-		ok "supabase/tests/0017_commentaires.test.sql — 98 assertions, aucune anomalie"
+	#
+	# RÉVISÉ À 99 LE 2026-09-24 — INC-242, arbitrée par la décision 592. `CRM-064` tranche 2
+	# (`ca6da97b`, 2026-08-26) a porté la suite à 99 : l'assertion qui exigeait l'ABSENCE de
+	# `public.notifications` mesure désormais sa présence ET sa production, et une assertion s'y est
+	# ajoutée — sans rejouer ce harnais, troisième épisode du même mécanisme. L'égalité reste
+	# STRICTE : un `-ge` laisserait passer une suite amputée.
+	if [ "${assertions:-0}" -eq 99 ]; then
+		ok "supabase/tests/0017_commentaires.test.sql — 99 assertions, aucune anomalie"
 	else
-		fail "suite pgTAP verte mais ${assertions:-0} assertions au lieu de 98"
+		fail "suite pgTAP verte mais ${assertions:-0} assertions au lieu de 99"
 	fi
 else
 	fail_journal "supabase/tests/0017_commentaires.test.sql ÉCHOUE" "$TRAVAIL/pgtap.log"
@@ -576,31 +580,24 @@ degrader_et_verifier \
 	"create trigger card_comments_avant_maj before update on public.card_comments
 	   for each row execute function app.card_comments_avant_maj()"
 
-# La restauration est CONSTATÉE, pas supposée. Rejouer 0015 seule réinstallerait sa version
-# historique de `app.card_comments_avant_maj()` et retirerait l'exception étroite au SET NULL de
-# CRM-022. Le suffixe 0021 est donc rejoué immédiatement, PUIS 0035 — qui redéfinit le même trigger
-# une troisième fois et rétablit la politique de modération —, et les DEUX suites sont exigées.
+# La restauration est CONSTATÉE, pas supposée — et elle passe par le RUNNER COMPLET, plus par une
+# chaîne écrite à la main. Corrigé le 2026-09-24 (INC-242, docs/JOURNAL.md décision 594).
 #
-# L'ORDRE EST CELUI DE LA LIVRAISON, ET IL N'EST PAS INDIFFÉRENT : chacune des trois migrations
-# remplace la fonction de la précédente. En omettre une revient à livrer une version antérieure du
-# produit, ce qui a été mesuré le 2026-08-14 — la suite 0017 restait rouge après « restauration ».
-#
-# `0077` FERME LA CHAÎNE depuis `CRM-092` T6 (docs/JOURNAL.md décision 589) : `0021` recrée
-# `app.handle_new_user`, que `0077` retire. Sans elle, la « restauration » laisserait une fonction
-# qu'aucune migration ne produit plus — famille d'INC-142, INC-213 et INC-250.
+# CE PARAGRAPHE REJOUAIT `0015`, `0021`, `0035` PUIS `0077`, et la liste était déjà fausse :
+# `app.card_comments_avant_maj()` est définie QUATRE fois, et `0063` (`CRM-064`) en est la dernière
+# autorité. MESURÉ : le harnais laissait la base avec le corps de `0035`, et l'assertion 14 de la
+# suite `0061` rougissait ensuite, hors de ce harnais. C'est exactement ce que le §3.5 de
+# `docs/SPEC-test-harness.md` interdit : « une liste manuelle de migrations suivantes devient fausse
+# à chaque nouvelle révision ». Le runner rejoue tout le répertoire, dans l'ordre livré, et rend son
+# code de sortie ; la restauration est ensuite suivie de la suite GLOBALE, qui est ce qui a vu le
+# défaut.
 titre "6. Restauration"
 
-if docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
-	-f - <"$MIGRATION" >"$TRAVAIL/rejeu.log" 2>&1 \
-	&& docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
-		-f - <"$MIGRATION_IDENTITES" >>"$TRAVAIL/rejeu.log" 2>&1 \
-	&& docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
-		-f - <"$MIGRATION_LOT_G" >>"$TRAVAIL/rejeu.log" 2>&1 \
-	&& docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
-		-f - <"$MIGRATION_RETRAIT_GOTRUE" >>"$TRAVAIL/rejeu.log" 2>&1; then
-	ok "les migrations CRM-043, CRM-022, le lot G puis le retrait de GoTrue se rejouent dans l'ordre livré"
+if docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
+	run --rm migrations-runner >"$TRAVAIL/rejeu.log" 2>&1; then
+	ok "le runner rejoue tout le répertoire, dans l'ordre livré — 0015, 0021, 0035, 0063 et 0077 compris"
 else
-	fail "le rejeu ordonné des migrations ÉCHOUE : voir $TRAVAIL/rejeu.log"
+	fail "le runner ÉCHOUE à rejouer le répertoire : voir $TRAVAIL/rejeu.log"
 fi
 
 for fichier in "$MIGRATION" "$TEST_SQL"; do
@@ -611,10 +608,13 @@ for fichier in "$MIGRATION" "$TEST_SQL"; do
 	fi
 done
 
-if npm run test:sql -- "$TEST_SQL" "$TEST_IDENTITES" >"$TRAVAIL/apres.log" 2>&1; then
-	ok "les suites commentaires et identités redeviennent vertes après restauration"
+# LA SUITE GLOBALE, ET NON LES DEUX SUITES DE L'UNITÉ : c'est la suite `0061` — étrangère à ce
+# harnais — qui a vu la restauration incomplète (§3.5 : « une restauration réussie est suivie de la
+# suite globale concernée »).
+if npm run test:sql >"$TRAVAIL/apres.log" 2>&1; then
+	ok "la suite pgTAP GLOBALE est verte après restauration : $(grep -oE '[0-9]+ fichiers?, [0-9]+ assertions' "$TRAVAIL/apres.log" | tail -n 1)"
 else
-	fail "une suite commentaires/identités reste rouge après restauration : voir $TRAVAIL/apres.log"
+	fail_journal "la suite pgTAP globale reste rouge après restauration" "$TRAVAIL/apres.log"
 fi
 
 # --- Bilan ---------------------------------------------------------------------------------------

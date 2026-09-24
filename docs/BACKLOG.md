@@ -14578,7 +14578,12 @@ décision 594.
       et la route aussi ; `verify-ma-journee` **85 contrôles, aucune anomalie**, dont la section 2 bis
       qui rejoue seed, écran et route sous un fuseau éloigné. Captures de « Ma journée » renouvelées :
       mêmes sections, heures désormais locales (§13.2 bis).
-- [ ] **INC-242 — `verify-commentaires` à 99, et sa restauration complète** (`CRM-043`).
+- [x] **INC-242 — `verify-commentaires` à 99, et sa restauration complète** (`CRM-043`). Compteur
+      porté à 99 (assertion ajoutée par `CRM-064` tranche 2, `ca6da97b`), égalité stricte
+      conservée. La restauration du §6 passe par le runner complet, et non plus par la chaîne écrite
+      à la main qui omettait `0063` — le §3.5 de `docs/SPEC-test-harness.md` l'interdisait déjà —,
+      suivie de la suite pgTAP GLOBALE. Mesuré : **79 contrôles, aucune anomalie** ; suite globale
+      **72 fichiers, 3196 assertions** après restauration.
 - [x] **INC-231 — cinq classes absentes du CSS produit** (`CRM-063`, `CRM-064`, `CRM-083`).
       `bg-surface-2` → `bg-hover`, `leading-relaxed` → `leading-normal` (jetons du design system) ;
       `pl-7`/`ml-7` → 28 px et `mt-0.5` → 2 px, valeurs arbitraires assumées (§5.29), la mesure

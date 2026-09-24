@@ -6324,6 +6324,12 @@ harnais.
 
 **Statut :** ouverte, comportement inchangé, issue retenue et écrite, mise en œuvre due — `CRM-043`.
 
+**RÉSOLUE le 2026-09-24** (décisions 592 et 594). Compteur à 99. Et un second défaut du même harnais,
+mesuré le même jour : sa restauration rejouait `0015`, `0021`, `0035` puis `0077`, mais pas `0063`,
+dernière autorité sur `app.card_comments_avant_maj()` — la base restait avec le corps de `0035`, et la
+suite `0061` rougissait ensuite. La restauration passe désormais par le runner complet, suivie de la
+suite pgTAP globale : 79 contrôles, aucune anomalie.
+
 ### INC-241 — `verify-board.sh` exige UNE seule lecture des channels, là où son propre §5.4 en admet plusieurs
 
 **Ouverte le 2026-08-29 par la session qui a rejoué la série entière** — décision 553. Comportement

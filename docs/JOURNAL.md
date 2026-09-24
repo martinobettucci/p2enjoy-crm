@@ -29779,3 +29779,11 @@ forme exacte de la nuit française —, `Pacific/Gambier` (UTC−9) avant 9 h UT
 ignorée entre les deux. **Mesuré** : ancien seed sous `Pacific/Gambier`, l'écran rend **2** sections
 (`Expected: 3, Received: 2`) ; nouveau seed, **3**, et la route de l'API aussi. `docs/SPEC-seed.md`
 §13.2 bis est corrigé dans le même changement.
+
+**INC-242, mise en œuvre (2026-09-24) — la chaîne annoncée par la décision 594 n'est PAS complétée.**
+Le plan disait « la chaîne est complétée » ; en relisant `docs/SPEC-test-harness.md` §3.5 avant de
+coder, la chaîne elle-même est la faute : « une liste manuelle de migrations suivantes est interdite ;
+elle devient fausse à chaque nouvelle révision ». Le §6 de `verify-commentaires.sh` rappelle donc le
+runner complet (`docker compose run --rm migrations-runner`, code de sortie attendu), puis la suite
+pgTAP globale — c'est une suite étrangère au harnais, `0061`, qui avait vu la restauration incomplète.
+Mesuré : 79 contrôles, aucune anomalie ; suite globale 72 fichiers, 3196 assertions.
