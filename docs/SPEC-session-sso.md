@@ -565,6 +565,7 @@ responsable a demandé une fois `CRM-092` entièrement vérifiée (décision 584
      NOM=P2Enjoy CRM
      TYPE=serveur
      REDIRECT=https://crm.lelabs.tech/auth/retour
+     ROLE=verified
      SECRET_VAR=SSO_OIDC_CLIENT_SECRET
      ```
 

@@ -29588,3 +29588,27 @@ interface 755) couvre le code, que T7 ne change pas hors du label et du harnais.
 lecture seule, instantané, livraison et migrations 74 à 77, retrait des conteneurs de GoTrue, reprise
 du compte invité, connexion réelle de `martino@p2enjoy.studio` — la seule preuve que ce dépôt ne peut
 pas produire seul —, retrait du client public `lelabs-crm`, notes reproposées.
+
+## décision 592 — arbitrages du responsable sur les incohérences restantes, et le bloc de déclaration du client
+
+*2026-09-24. Arbitrages rendus par le responsable, consignés avant toute mise en œuvre.*
+
+**Déclaration du client confidentiel.** Le bloc remis au responsable pour l'interface d'intégration de
+`oauth.lelabs.tech` ajoute `ROLE=verified` à la déclaration du §12 : `docs/SSO.md` le décrit comme « le
+rôle de realm dont votre application dépend », et l'admission l'exige (décision 579). `DECONNEXION`,
+`ORIGINE` et `HORS_LIGNE` sont omises à dessein : le CRM ne ferme pas la session LeLabs (§8.5), l'origine
+par défaut — celle de l'URL de retour — suffit, et aucun jeton hors ligne n'est demandé (§15).
+
+**Arbitrages.**
+- **INC-250 — rejouer la chaîne.** Le rejeu isolé de `verify-droits-fins.sh` devient la chaîne des
+  migrations qui font autorité, `0010` → `0034` → `0063`, au lieu de `0010` seule ; la dérive attendue
+  est mesurée sur cette chaîne. Unité : `CRM-008` (tenue des harnais).
+- **INC-248 — le jour local fait foi.** « Aujourd'hui » est le jour de la personne : le seed et les
+  preuves de « Ma journée » calent leurs échéances sur le jour local, comme l'écran. Unité : `CRM-061`.
+- **INC-242, INC-231, INC-189 — à corriger maintenant**, sans arbitrage de fond : compteur de
+  `verify-commentaires.sh` porté à 99 ; cinq classes hors échelle remplacées par des jetons du design
+  system, avec vérification visuelle ; tests intermittents sous charge rendus déterministes (attente
+  d'un signal observable, journal du rejeu conservé).
+- **INC-249** : le responsable demande une explication développée avant de trancher — question reposée.
+
+Chaque correction est un commit distinct, avec ses preuves.
