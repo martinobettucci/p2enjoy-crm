@@ -11,6 +11,10 @@ Sonde publique rejouée le 2026-09-23 après réception (`docs/SPEC-auth.md` §1
 `https://crm.lelabs.tech/auth/retour` avec `error_description=Missing+parameter%3A+code_challenge_method`
 — le client existe, l'URL est acceptée au caractère près, PKCE est exigé.
 
+**Client supprimé du realm le 2026-09-24**, avant le déploiement de `CRM-092` : sonde `400`, « Client
+non trouvé. » (`docs/JOURNAL.md`, décision 598). Ce bloc n'est plus qu'une archive ; le client du CRM
+est désormais `lelabs-crm-serveur` (`docs/SPEC-session-sso.md` §12).
+
 ---
 
 ```

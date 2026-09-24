@@ -29884,3 +29884,28 @@ Mesures : pgTAP **73 fichiers, 3225 assertions** (`0073` : 29) ; échangeur **12
 `session.spec.ts` **24/24** ; `connexion.spec.ts` **15/15**, capture `admin-domaine-moderation-1440`
 relue ; `verify-session-sso` **66 vérifications, aucune anomalie**, dont trois dégradations et deux
 mutations neuves. Realm de développement réimporté : `viewer@` sans `admin`, `exploitante@` ajoutée.
+
+## décision 598 — `lelabs-crm-serveur` créé, et `lelabs-crm` supprimé avant le déploiement
+
+*2026-09-24, vers 18 h. Constat, pas un arbitrage.*
+
+**Observations.** Sonde publique du point d'autorisation (`docs/SSO.md`, « Vérifier par vous-même ») :
+`lelabs-crm-serveur` rend `302` vers `https://crm.lelabs.tech/auth/retour` avec
+`Missing parameter: code_challenge_method` — le client existe et PKCE y est exigé ; `lelabs-crm` rend
+`400`, page « Client non trouvé. », avec l'URL de retour du CRM comme avec celle de GoTrue.
+L'agent du dépôt du SSO (sso-66) signale le même retrait, confirmé par le rapatriement de l'instantané
+de reprise du realm, et dit ne pas l'avoir fait.
+
+**Ce que cela change.** La consigne de la décision 597 et du §2.5 (étape 11) — garder `lelabs-crm`
+jusqu'à une connexion réussie par le client serveur — n'a pas été suivie ; le geste est irréversible.
+**Aucun effet sur le service** : la baseline de production (§1 de `docs/PROD_MIGRATIONS.md`) n'avait
+jamais permis de connexion par le SSO, qui attend `CRM-092`. Le retour arrière d'après l'étape 6 rend
+désormais une production sans connexion possible — l'état d'avant, sans plus ; y redonner une
+connexion exigerait de redéclarer un client public. Le second avis promis à l'exploitant du SSO est
+sans objet ; le premier (client serveur créé) lui a été envoyé.
+
+**Suite.** Étapes 1 et 2 du §2.5 (archive seule, `proposer.sh --demandes-seules`) : les commandes ssh de
+l'agent vers la cellule sont refusées par le contrôle de permissions de sa session, en lecture comme
+en écriture ; elles attendent que le responsable les autorise ou les lance (`docs/PROD_MIGRATIONS.md`
+§2.5). Restent aussi la saisie du secret et la confirmation du rôle `verified` de
+`martino@p2enjoy.studio`.

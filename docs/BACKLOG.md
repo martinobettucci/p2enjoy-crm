@@ -14537,8 +14537,10 @@ connexion réelle de `martino@p2enjoy.studio` aboutie après les opérations du 
       3225 assertions** ; unitaires **3285**, dont **126** pour l'échangeur ; `e2e:api` **1082/1082** ;
       `e2e:ui` **757/757** (par `verify-webapp`, **44 contrôles, aucune anomalie**) ;
       `verify-session-sso` **66, aucune anomalie** ; capture de l'exploitante relue.
-- [ ] **Préalable humain chez LeLabs** : déclaration du client serveur `lelabs-crm-serveur` et secret
-      posé dans la cellule (décision 586, §12) ; `verified` sur `martino@p2enjoy.studio`.
+- [~] **Préalable humain chez LeLabs** : déclaration du client serveur `lelabs-crm-serveur` et secret
+      posé dans la cellule (décision 586, §12) ; `verified` sur `martino@p2enjoy.studio`. Client **créé**
+      (sonde `302`, PKCE exigé, 2026-09-24, décision 598) ; secret non saisi, `verified` à confirmer.
+      Le client public `lelabs-crm` a été supprimé avant le déploiement (décision 598).
 - [ ] Production : opérations du §12, écrites en `docs/PROD_MIGRATIONS.md` §2.5 — dont les demandes
       de variables manquantes reposées par `proposer.sh --demandes-seules` (décision 590) —, connexion
       réelle relue.
