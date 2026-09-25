@@ -41,7 +41,7 @@ source d'identité.
 | Client OIDC `lelabs-crm` | Déclaré et créé au realm le 2026-09-23 à 16:08:44 (`docs/SSO-client-lelabs-crm.md`), **supprimé du realm avant le déploiement de `CRM-092`** : sonde `400` « Client non trouvé » le 2026-09-24 à 18 h, retrait confirmé par l'instantané de reprise du dépôt du SSO (décision 598). Sans effet sur le service : aucune connexion n'avait encore été faite, elle attend `CRM-092` (§3) |
 | Client OIDC `lelabs-crm-serveur` | **Déclaré et créé** : sonde `302` vers `https://crm.lelabs.tech/auth/retour`, PKCE exigé, le 2026-09-24 (décision 598). Son secret est **saisi** dans la cellule (relu le 2026-09-24, présence seule, décision 599) ; `SSO_OIDC_CLIENT_ID` y vaut encore `lelabs-crm` (§2.5, étapes 2 et 3) |
 | Relais SMTP | **Sans objet depuis la reprise `CRM-092`** : GoTrue a quitté la pile ; `SMTP_HOST`, `SMTP_PORT`, `SMTP_ADMIN_EMAIL` et `ADDITIONAL_REDIRECT_URLS` restent dans la cellule, inertes, à retirer en console si souhaité |
-| Reprise `CRM-092` | **Exécutée le 2026-09-24** (§2.5, §8) : migrations 74 à 79, client confidentiel `lelabs-crm-serveur`, GoTrue retiré, compte invité repris ; connexion réelle du responsable relue en base. Notes du Spark reproposées, en attente d'acceptation |
+| Reprise `CRM-092` | **Exécutée le 2026-09-24** (§2.5, §8) : migrations 74 à 79, client confidentiel `lelabs-crm-serveur`, GoTrue retiré, compte invité repris ; connexion réelle du responsable relue en base. Notes du Spark reproposées et acceptées (2026-09-25) |
 
 ## 2. Prérequis à provisionner avant le premier déploiement
 
@@ -1023,3 +1023,6 @@ Spark distant de prod »).
 - Constat en production, sans session : `/`, `/ma-journee?qui=tous`, `/tracks/conseil-ia/grands-comptes`
   et `/contacts` mènent à `/connexion`, sans navigation principale ni en-tête ; capture relue.
 - `CHANGELOG.md` : l'entrée T9 déplacée sous « Publié », entrée du 2026-09-25.
+- **Étape 12 close** : les trois notes du Spark acceptées en console par le responsable le 2026-09-25
+  (déclaré ; relecture dans la cellule impossible, l'accès ssh de la session étant refusé). Reste de la
+  reprise : le relevé mémoire, ports et disque de `scripts/spark/verifier.sh`.

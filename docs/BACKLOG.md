@@ -14558,8 +14558,9 @@ connexion réelle de `martino@p2enjoy.studio` aboutie après les opérations du 
       GoTrue retiré, compte invité repris ; connexion réelle du responsable relue en base (profil,
       appartenance `admin`, session chiffrée). `verifier.sh` refusé à la session : remplacé par les
       contrôles publics et une lecture de la base, mémoire, ports et disque non relevés.
-- [~] **Notes du Spark réécrites et reproposées** (`docs/spark-notes/`) — **réécrites en T7**, **reproposées
-      le 2026-09-24** (identiques au dépôt), **acceptation en console attendue** ; étape 12 du §2.5 de `PROD_MIGRATIONS`. Déposées le 2026-09-23 comme
+- [x] **Notes du Spark réécrites et reproposées** (`docs/spark-notes/`) — **réécrites en T7**, **reproposées
+      le 2026-09-24** (identiques au dépôt), **acceptées en console par le responsable le 2026-09-25**
+      (déclaré par lui ; non relu dans la cellule, l'accès ssh de la session étant refusé) ; étape 12 du §2.5 de `PROD_MIGRATIONS`. Déposées le 2026-09-23 comme
       propositions `.?`, elles attendent l'acceptation du propriétaire dans la console de la Forge
       (`docs/PROD_MIGRATIONS.md` §2.4, étape 9), et `CRM-092` les rend périmées — GoTrue, client
       public, relais SMTP. À réécrire en T7 et à reproposer au déploiement. **Instruction reçue le 2026-09-23** :
