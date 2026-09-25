@@ -35,7 +35,7 @@ source d'identité.
 | Environnement de production | Cellule Spark `crm` (`docs/SPEC-deploiement-spark.md`), assemblage à trois fichiers : neuf services sains et deux conteneurs à usage unique (runner, bucket) ; GoTrue retiré le 2026-09-24 |
 | Schéma appliqué | Les **79 migrations** du dépôt : 1 à 73 par `--migrate --premier-deploiement` sur une base mesurée vierge (2026-09-23), 74 à 79 par la reprise `CRM-092` (2026-09-24) |
 | Dernière migration appliquée | `0079_admin_du_domaine.sql` — objets relus en base le 2026-09-24 |
-| Version déployée | La révision inscrite dans `/srv/crm/REVISION` — celle que `scripts/spark/verifier.sh` compare au `HEAD` du poste ; **`03dd22f0`** le 2026-09-24 |
+| Version déployée | La révision inscrite dans `/srv/crm/REVISION` — celle que `scripts/spark/verifier.sh` compare au `HEAD` du poste ; **`d58eb9a7`** le 2026-09-25 (`CRM-092` T9, webapp seule) |
 | Données | Un espace, « P2Enjoy CRM » (`crm`), réamorcé par la reprise `CRM-092` ; un profil, celui du responsable, administrateur depuis sa première connexion LeLabs ; aucune autre donnée, aucun seed. La ligne `auth.users` de l'ancien compte invité reste, inerte |
 | Route publique | `crm.lelabs.tech 8080 tls`, active : `https://crm.lelabs.tech`, certificat Let's Encrypt présenté par la Forge (décision 576) |
 | Client OIDC `lelabs-crm` | Déclaré et créé au realm le 2026-09-23 à 16:08:44 (`docs/SSO-client-lelabs-crm.md`), **supprimé du realm avant le déploiement de `CRM-092`** : sonde `400` « Client non trouvé » le 2026-09-24 à 18 h, retrait confirmé par l'instantané de reprise du dépôt du SSO (décision 598). Sans effet sur le service : aucune connexion n'avait encore été faite, elle attend `CRM-092` (§3) |
@@ -1014,3 +1014,12 @@ Spark distant de prod »).
   portaient que le gabarit vide du plan de contrôle — et relues identiques au dépôt ; **acceptation en
   console attendue**.
 - `CHANGELOG.md` : tout le contenu de « Non publié » déplacé sous « Publié », entrée du 2026-09-24.
+
+### `CRM-092` T9 — aucune page sans session, 2026-09-25
+
+- `scripts/spark/livrer.sh` : révision **`d58eb9a7`**, webapp construite pour `https://crm.lelabs.tech`,
+  image Realtime inchangée, `./runProd.sh --spark` sans `--migrate` — le runner, lancé par `up`, sort
+  aussitôt (`APPLY_MIGRATIONS=false`) ; aucune migration, aucune variable, services sains.
+- Constat en production, sans session : `/`, `/ma-journee?qui=tous`, `/tracks/conseil-ia/grands-comptes`
+  et `/contacts` mènent à `/connexion`, sans navigation principale ni en-tête ; capture relue.
+- `CHANGELOG.md` : l'entrée T9 déplacée sous « Publié », entrée du 2026-09-25.

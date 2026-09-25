@@ -30008,4 +30008,6 @@ reste la protection.
   les deux vides de « Ma journée », qu'aucun profil du seed ne produit, sont atteints par une lecture
   des affaires servie vide, NOMMÉE. Un second rouge de « Ma journée » (trois sections attendues, deux
   rendues) était la dérive des échéances d'un seed posé la veille : seed réappliqué, sans lien avec T9.
+- **En production le 2026-09-25** : révision `d58eb9a7`, webapp seule. Quatre adresses ouvertes sans
+  session mènent à `/connexion` sans rien montrer de la coquille — le relevé du responsable est clos.
 

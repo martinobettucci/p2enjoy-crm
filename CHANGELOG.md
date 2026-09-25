@@ -13,7 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-092` T9 — Aucune page sans session
+_Rien à publier pour le moment._
+
+## [Publié]
+
+### Déployé en production, 2026-09-25
+
+Cellule Spark `crm`, révision `d58eb9a7`, webapp seule : aucune migration, aucune variable (`docs/PROD_MIGRATIONS.md`
+§8). Vérifié en production : quatre adresses ouvertes sans session — la racine, `/ma-journee?qui=tous`, le
+board d'un channel et `/contacts` — mènent à `/connexion`, sans navigation ni en-tête.
+
+#### `CRM-092` T9 — Aucune page sans session
 
 - **Toute adresse du CRM ouverte sans session mène à l'écran de connexion**, qui ramène à l'adresse
   demandée — paramètres compris — une fois la connexion faite. Un visiteur anonyme ne voit plus la
@@ -24,8 +34,6 @@ d'exécuter le code attendu.
   session, seul l'écran de chargement est rendu.
 - Les preuves d'interface qui naviguaient sans session se connectent désormais, et le manuel ne décrit
   plus de parcours anonyme.
-
-## [Publié]
 
 ### Déployé en production, 2026-09-24
 
