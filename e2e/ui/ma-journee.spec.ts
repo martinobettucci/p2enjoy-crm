@@ -9,6 +9,8 @@
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 // @verifies docs/BACKLOG.md « Correctifs arbitrés », INC-189 a ; docs/JOURNAL.md décision 594 — le
 //           compte est celui que la région live annonce, jamais une lecture instantanée
+// @verifies CRM-092 (docs/BACKLOG.md) tranche T9 — docs/SPEC-session-sso.md §8.7 : les scénarios anonymes
+//           se connectent ou sont convertis, aucune page n'étant rendue sans session (décision 601)
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, comme un utilisateur réel : aucune fonction
 // interne n'est appelée, aucune réponse n'est substituée, et la navigation passe par la BARRE
@@ -280,7 +282,11 @@ test.describe('« Ma journée » (docs/SPEC-cards.md §17)', () => {
 		})
 	}
 
-	test('les DEUX états vides sont atteints SANS aucune substitution, en visiteur anonyme', async ({
+	// RÉVISÉ PAR `CRM-092` T9 : le visiteur anonyme, seul à produire les deux vides sans rien écrire,
+	// n'atteint plus l'écran. Les deux vides sont désormais atteints par la LECTRICE, la lecture des
+	// affaires étant servie vide (`200 []`, docs/DESIGN_SYSTEM.md §12.5) : réponse substituée NOMMÉE,
+	// qui isole l'état rare qu'aucun profil du seed ne produit.
+	test('les DEUX états vides sont atteints, la lecture des affaires servie vide', async ({
 		page,
 	}) => {
 		// AUCUN PROFIL DU SEED N'A DE JOURNÉE VIDE — mesuré : Camille 3, Driss 3, Farida 1 dans
@@ -292,6 +298,15 @@ test.describe('« Ma journée » (docs/SPEC-cards.md §17)', () => {
 		// C'est une donnée RÉELLE et un parcours réel, jamais une réponse substituée
 		// (`docs/DESIGN_SYSTEM.md` §12.5) : l'état vide de cette adresse en visiteur anonyme est
 		// d'ailleurs déjà ce que `docs/SPEC-manual.md` §7 capture, et cette tranche ne le change pas.
+		await connecter(page, VIEWER)
+		await page.route('**/rest/v1/cards*', (route) =>
+			route.fulfill({
+				status: 200,
+				contentType: 'application/json',
+				headers: { 'content-range': '*/0', 'access-control-expose-headers': 'Content-Range' },
+				body: '[]',
+			}),
+		)
 		await page.setViewportSize({ width: 1440, height: 900 })
 		await page.goto('/ma-journee')
 

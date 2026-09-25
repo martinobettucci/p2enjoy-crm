@@ -12,6 +12,8 @@
 //           §7 (paliers) ; CLAUDE.md §16 (vérification visuelle)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
+// @verifies CRM-092 (docs/BACKLOG.md) tranche T9 — docs/SPEC-session-sso.md §8.7 : les scénarios anonymes
+//           se connectent ou sont convertis, aucune page n'étant rendue sans session (décision 601)
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, comme un utilisateur réel : aucune fonction
 // interne n'est appelée, et la navigation passe par la BARRE LATÉRALE, jamais par un `goto` sur
@@ -193,9 +195,20 @@ test.describe('paliers responsive (docs/DESIGN_SYSTEM.md §7)', () => {
 })
 
 test('l’état vide du carnet est rendu SANS action — cas f du §10.6', async ({ page }) => {
-	// Sans session, la RLS ne consent aucune ligne : `200` et `[]`, mesuré. C'est l'état vide
-	// ordinaire, et il n'offre AUCUNE action — le carnet ne livre aucun geste de création (§10.7),
-	// et un bouton vers nulle part serait une commande morte (docs/DESIGN_SYSTEM.md §5.16).
+	// Un carnet sans ligne rend `200` et `[]`. C'est l'état vide ordinaire, et il n'offre AUCUNE
+	// action — un bouton vers nulle part serait une commande morte (docs/DESIGN_SYSTEM.md §5.16).
+	//
+	// RÉVISÉ PAR `CRM-092` T9 : ce vide était celui de l'anonyme, qui n'atteint plus le carnet. La
+	// lectrice le reçoit désormais par une réponse substituée (docs/DESIGN_SYSTEM.md §12.5).
+	await connecter(page, VIEWER)
+	await page.route('**/rest/v1/contacts*', (route) =>
+		route.fulfill({
+			status: 200,
+			contentType: 'application/json',
+			headers: { 'content-range': '*/0', 'access-control-expose-headers': 'Content-Range' },
+			body: '[]',
+		}),
+	)
 	await page.goto('/contacts')
 	await expect(page.getByTestId('etat-vide')).toBeVisible()
 	await capturer(page, 'carnet-contacts-vide-1440', UNITE)
@@ -363,13 +376,14 @@ test.describe("fiche d'organisation (docs/SPEC-contacts.md §11)", () => {
 		await expect(page.getByTestId('ligne-contact-organisation')).toHaveCount(1)
 	})
 
-	test('sans session, la fiche rend « introuvable » — un refus est zéro ligne, jamais une erreur', async ({
+	// RÉVISÉ PAR `CRM-092` T9 : l'anonyme n'atteint plus la fiche. Le refus reste zéro ligne, et
+	// l'écran d'un identifiant inconnu est par construction celui d'une fiche refusée (§7 de
+	// docs/SPEC-permissions-rls.md) : la lectrice ouvre un identifiant qu'aucune ligne ne porte.
+	test('une fiche invisible rend « introuvable » — un refus est zéro ligne, jamais une erreur', async ({
 		page,
 	}) => {
-		// MESURÉ : un appelant anonyme reçoit `200` et `[]` sur une organisation qui EXISTE. L'écran
-		// est donc le même que celui d'un identifiant inconnu, et c'est exactement ce que le §7 de
-		// docs/SPEC-permissions-rls.md exige.
-		await page.goto('/contacts/organisations/5eed0000-0000-4000-8000-000000000081')
+		await connecter(page, VIEWER)
+		await page.goto('/contacts/organisations/f0000000-0000-4000-8000-000000000404')
 		await expect(page.getByText('Organisation introuvable')).toBeVisible()
 	})
 
@@ -542,10 +556,12 @@ test.describe("fiche d'un contact (docs/SPEC-contacts.md §15)", () => {
 		)
 	})
 
-	test('sans session, la fiche rend « introuvable » — un refus est zéro ligne, jamais une erreur', async ({
+	// RÉVISÉ PAR `CRM-092` T9 : même conversion que pour la fiche d'organisation.
+	test('une fiche invisible rend « introuvable » — un refus est zéro ligne, jamais une erreur', async ({
 		page,
 	}) => {
-		await page.goto(`/contacts/${ID_LEO_UI}`)
+		await connecter(page, VIEWER)
+		await page.goto('/contacts/f0000000-0000-4000-8000-000000000404')
 		await expect(page.getByText('Contact introuvable')).toBeVisible()
 	})
 

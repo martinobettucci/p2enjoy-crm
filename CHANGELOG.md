@@ -13,7 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-_Rien à publier pour le moment._
+### `CRM-092` T9 — Aucune page sans session
+
+- **Toute adresse du CRM ouverte sans session mène à l'écran de connexion**, qui ramène à l'adresse
+  demandée — paramètres compris — une fois la connexion faite. Un visiteur anonyme ne voit plus la
+  coquille : ni menus, ni écrans vides, ni « Se connecter » dans l'en-tête. Relevé en production le
+  2026-09-24 ; aucune donnée ne fuyait, la base refusant tout à l'anonyme, mais l'accès est réservé
+  aux personnes inscrites (décision 601).
+- Seules `/connexion` et l'URL de retour du SSO restent publiques ; pendant la restauration de la
+  session, seul l'écran de chargement est rendu.
+- Les preuves d'interface qui naviguaient sans session se connectent désormais, et le manuel ne décrit
+  plus de parcours anonyme.
 
 ## [Publié]
 

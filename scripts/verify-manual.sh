@@ -29,7 +29,7 @@
 # reste la seule preuve de la qualité d'un manuel (docs/SPEC-manual.md §8).
 #
 # Il ne prouve **aucun écran** : c'est l'objet de `e2e/ui/manuel.spec.ts`, qui ouvre les huit
-# adresses citées par le manuel en visiteur anonyme réel.
+# adresses citées par le manuel avec la session réelle de la lectrice (`CRM-092` T9).
 #
 # Le script ne démarre ni n'arrête rien : la pile de développement doit déjà tourner
 # (`./runDev.sh`) et le seed être appliqué (`supabase/seed/apply-seed.sh`).

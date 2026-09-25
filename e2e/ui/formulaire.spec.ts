@@ -5,6 +5,8 @@
 // @verifies docs/SPEC-channels.md §5 (ce que la barre d'onglets lit), §5.3 (patron ARIA), §5.4
 // @verifies docs/DESIGN_SYSTEM.md §5.7 (champs de formulaire), §5.8 (états), §7 (paliers),
 //           §8 (accessibilité) ; CLAUDE.md §16 (vérification visuelle)
+// @verifies CRM-092 (docs/BACKLOG.md) tranche T9 — docs/SPEC-session-sso.md §8.7 : ces scénarios se
+//           connectent, aucune page n'étant rendue sans session (docs/JOURNAL.md décision 601)
 //
 // Ces scénarios s'exécutent contre le **build de production** servi par `vite preview`, et contre
 // la vraie API. Rien n'est simulé, sauf là où c'est explicitement dit — et alors c'est le
@@ -22,8 +24,16 @@
 // Definition of Done exige : il suppose une session et un contrôle de transition, dus par
 // `CRM-041`. C'est INC-062, et l'absence est nommée plutôt que maquillée.
 
-import { autoriserErreursConsole, ERREUR_RESSOURCE_HTTP, expect, test } from './fixtures'
+import { autoriserErreursConsole, connecterAvecLeLabs, ERREUR_RESSOURCE_HTTP, expect, test } from './fixtures'
 import { PALIERS, capturer } from './captures'
+
+// RÉVISÉ PAR `CRM-092` T9 (docs/SPEC-session-sso.md §8.7, décision 601) : sans session, aucune page de
+// l'application n'est rendue. Ces scénarios, écrits pour un visiteur anonyme à réponses substituées, se
+// connectent d'abord — comme LECTRICE, le profil le plus proche de l'anonyme qu'ils supposaient :
+// aucun geste d'écriture ne lui est offert.
+test.beforeEach(async ({ page }) => {
+	await connecterAvecLeLabs(page, 'viewer@p2enjoy.test')
+})
 
 const ROUTE_CARDS = '**/rest/v1/cards*'
 const ROUTE_ETAPES = '**/rest/v1/workflow_steps*'
@@ -48,6 +58,10 @@ const CARD = '5eed0000-0000-4000-8000-0000000000c6'
 const TRACK = { id: '5eed0000-0000-4000-8000-000000000023', slug: 'formation', nom: 'Formation' }
 const CHANNEL = { id: '5eed0000-0000-4000-8000-000000000036', slug: 'inter-entreprises' }
 const ADRESSE = `/tracks/${TRACK.slug}/${CHANNEL.slug}/cards/${CARD}`
+/** Une card qu'aucune ligne ne porte : la session l'obtient comme une card non consentie (`CRM-092` T9). */
+const ADRESSE_INEXISTANTE = `/tracks/${TRACK.slug}/${CHANNEL.slug}/cards/f0000000-0000-4000-8000-000000000404`
+/** Un track qu'aucune ligne ne porte, pour la même raison. */
+const SLUG_TRACK_INEXISTANT = 'ce-track-nexiste-pas'
 
 /**
  * Le jeu servi reprend **la card `…0000c6` du seed, à l'étape `Prospection`** : `source` y est
@@ -239,11 +253,13 @@ test.describe('la route de détail interroge réellement `cards`', () => {
 		).toBe('is.null')
 	})
 
-	test('l’appelant anonyme n’obtient aucune card, et l’écran le dit', async ({ page }) => {
+	// RÉVISÉ PAR `CRM-092` T9 : ce scénario exerçait l'anonyme, qui n'atteint plus la route. Une card
+	// qu'aucune ligne ne porte produit le même écran qu'une card que la RLS refuse.
+	test('une card invisible n’est pas obtenue, et l’écran le dit', async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
-		await page.goto(ADRESSE)
+		await page.goto(ADRESSE_INEXISTANTE)
 		// C'est le refus réel du backend, mesuré par e2e/api/cards.spec.ts : la RLS rend `200` et
-		// zéro ligne à un anonyme. L'écran ne prétend ni à une erreur, ni à une page blanche.
+		// zéro ligne. L'écran ne prétend ni à une erreur, ni à une page blanche.
 		await expect(page.getByTestId('etat-vide')).toBeVisible()
 		await expect(page.getByTestId('etat-vide')).toContainText('Card introuvable')
 		await capturer(page, 'card-introuvable-1440', 'CRM-037')
@@ -502,7 +518,9 @@ test.describe('la saisie depuis la fiche (§4 bis)', () => {
 })
 
 test.describe('la coquille autour du formulaire (§4.6 bis)', () => {
-	test('anonyme : le track de l’adresse est réellement demandé, et la barre reste vide', async ({
+	// RÉVISÉ PAR `CRM-092` T9 : l'anonyme n'atteint plus la route ; le track non consenti est un
+	// slug qu'aucune ligne ne porte, indiscernable pour l'écran d'un track que la RLS refuse.
+	test('track non consenti : le track de l’adresse est réellement demandé, et la barre reste vide', async ({
 		page,
 	}) => {
 		const urls: string[] = []
@@ -510,15 +528,15 @@ test.describe('la coquille autour du formulaire (§4.6 bis)', () => {
 			const url = requete.url()
 			if (url.includes('/rest/v1/tracks') || url.includes('/rest/v1/channels')) urls.push(url)
 		})
-		await page.goto(ADRESSE)
+		await page.goto(`/tracks/${SLUG_TRACK_INEXISTANT}/${CHANNEL.slug}/cards/${CARD}`)
 		await expect(page.getByTestId('etat-vide')).toBeVisible()
 
-		const resolution = urls.find((url) => url.includes(`slug=eq.${TRACK.slug}`))
+		const resolution = urls.find((url) => url.includes(`slug=eq.${SLUG_TRACK_INEXISTANT}`))
 		expect(resolution, 'le track porteur est résolu par le slug de l’adresse').toBeTruthy()
 		// Un track archivé reste masqué même quand son adresse est saisie directement.
 		expect(resolution).toContain('archived_at=is.null')
 
-		// La RLS ne consent aucun track à un anonyme : la seconde requête n'est **pas** émise, le
+		// Aucun track ne répond à ce slug : la seconde requête n'est **pas** émise, le
 		// chargeur ne demandant pas les channels d'un track qu'il n'a pas. La barre affiche donc
 		// son état vide, qui est le refus réel du backend et non une barre qu'on aurait oublié
 		// d'alimenter (§4.6 bis).

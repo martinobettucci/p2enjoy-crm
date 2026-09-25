@@ -8,6 +8,8 @@
 //           compte jetable dans un espace neuf
 // @verifies CRM-092 (docs/BACKLOG.md) — tranche T8 ; docs/SPEC-session-sso.md §6.1 bis ; docs/JOURNAL.md décision 597 —
 //           l'`admin` du realm entre sans attente, et l'écran lui offre le geste de l'administratrice
+// @verifies CRM-092 (docs/BACKLOG.md) tranche T9 — docs/SPEC-session-sso.md §8.7, §13 (preuve E2E T9) : une
+//           adresse de l'application sans session mène à /connexion, puis y ramène (décision 601)
 //
 // Le navigateur quitte réellement le CRM pour la page de connexion du Keycloak de développement, y
 // saisit les identifiants d'un compte du realm, et revient ; l'échangeur de session, client
@@ -68,9 +70,12 @@ test.describe('Parcours de connexion', () => {
 	for (const compte of COMPTES_SEED) {
 		test(`${compte.role} : vraie page LeLabs, retour à l’adresse demandée, aucun jeton sur l’appareil`, async ({ page }) => {
 			await page.setViewportSize({ width: PALIERS[0].largeur, height: PALIERS[0].hauteur })
+			// RÉVISÉ PAR `CRM-092` T9 (§8.7) : sans session, l'adresse du board mène d'elle-même à
+			// `/connexion`, sans rien montrer de la coquille, et la connexion y ramènera.
 			await page.goto(ROUTE_BOARD)
-			await page.getByRole('link', { name: 'Se connecter' }).click()
 			await expect(page).toHaveURL(/\/connexion$/)
+			await expect(page.getByRole('navigation', { name: 'Navigation principale' })).toHaveCount(0)
+			await expect(page.getByTestId('entete')).toHaveCount(0)
 
 			// L'action unique se rejoint et s'active au clavier.
 			const action = page.getByRole('button', { name: 'Se connecter avec LeLabs' })
@@ -370,5 +375,35 @@ test.describe('L’écran', () => {
 		await expect(page.getByLabel('Connexion LeLabs en cours')).toBeVisible()
 		await capturer(page, `connexion-retour-${PALIERS[3].nom}`, UNITE)
 		await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	})
+})
+
+// `CRM-092` T9 (docs/SPEC-session-sso.md §8.7, décision 601) : relevé en production le 2026-09-24 —
+// un visiteur sans session parcourait la coquille. Ce scénario ouvre une adresse PROFONDE, avec ses
+// paramètres, sans session : rien de l'application n'est rendu, `/connexion` s'affiche, et la vraie
+// connexion ramène à l'adresse exacte, paramètres compris.
+test.describe('Aucune page sans session (T9, §8.7)', () => {
+	test('une adresse de l’application mène à /connexion, puis la connexion y ramène, paramètres compris', async ({
+		page,
+	}) => {
+		const adresse = '/ma-journee?qui=tous'
+		await page.setViewportSize({ width: PALIERS[0].largeur, height: PALIERS[0].hauteur })
+		await page.context().clearCookies()
+		await page.goto(adresse)
+
+		await expect(page).toHaveURL(/\/connexion$/)
+		await expect(page.getByRole('heading', { level: 1, name: 'Se connecter' })).toBeVisible()
+		await expect(page.getByRole('navigation', { name: 'Navigation principale' })).toHaveCount(0)
+		await expect(page.getByTestId('entete')).toHaveCount(0)
+		await expect(page.getByTestId('barre-laterale')).toHaveCount(0)
+		await capturer(page, 'sans-session-redirection-xl-1440', UNITE)
+
+		await page.getByRole('button', { name: 'Se connecter avec LeLabs' }).click()
+		await remplirKeycloak(page, ADMIN)
+		await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+		await expect(page).toHaveURL(new RegExp(`${adresse.replace('?', '\\?')}$`))
+		await expect(
+			page.getByRole('navigation', { name: 'Portée de la journée' }).getByRole('link', { name: /^Tout l.espace de travail$/ }),
+		).toHaveAttribute('aria-current', 'page')
 	})
 })

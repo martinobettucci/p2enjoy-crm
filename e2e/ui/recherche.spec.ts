@@ -8,6 +8,8 @@
 //           CLAUDE.md §16 (vérification visuelle)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
+// @verifies CRM-092 (docs/BACKLOG.md) tranche T9 — docs/SPEC-session-sso.md §8.7 : sans session, aucune page
+//           de l'application ; l'adresse demandée mène à /connexion (docs/JOURNAL.md décision 601)
 //
 // LE PARCOURS EST FAIT AU CLAVIER, comme un utilisateur réel : aucune fonction interne n'est
 // appelée, aucune réponse n'est substituée, et le navigateur obtient son jeton par le formulaire
@@ -44,12 +46,14 @@ async function chercherAuClavier(page: Page, terme: string): Promise<void> {
 test.describe('Le champ et son raccourci (§12.1, §14.1, §14.5)', () => {
 	// SANS SESSION, RIEN N'EST RENDU (§14.5). Un champ offert à un anonyme promettrait une
 	// recherche que la base refuse par le PRIVILÈGE — la commande morte du §5.10.
-	test('aucun champ de recherche pour un visiteur anonyme', async ({ page }) => {
+	//
+	// RÉVISÉ PAR `CRM-092` T9 : sans session, aucune coquille n'est plus rendue (docs/DESIGN_SYSTEM.md
+	// §5.12). Le témoin qui rend l'absence PROBANTE est désormais la redirection constatée : la
+	// racine demandée mène à `/connexion`.
+	test('aucun champ de recherche pour un visiteur anonyme : l’application le mène à /connexion', async ({ page }) => {
 		await page.goto('/')
-		await expect(page.getByTestId('entete')).toBeVisible()
-		// Le témoin qui rend l'absence PROBANTE, et non un écran simplement vide : l'en-tête
-		// anonyme rend « Se connecter » à la place de l'identité (§5.12).
-		await expect(page.getByRole('link', { name: 'Se connecter' })).toBeVisible()
+		await expect(page).toHaveURL(/\/connexion$/)
+		await expect(page.getByRole('button', { name: 'Se connecter avec LeLabs' })).toBeVisible()
 		await expect(page.getByTestId('champ-recherche')).toHaveCount(0)
 		// Le raccourci est INACTIF, et pas seulement le champ absent.
 		await page.keyboard.press('ControlOrMeta+k')

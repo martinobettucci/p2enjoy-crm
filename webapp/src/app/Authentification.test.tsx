@@ -4,13 +4,16 @@
 //           rafraîchissement 60 s avant l'échéance, panne réessayée jusqu'à l'échéance, fin de session,
 //           K18 : Realtime attendu avant la session), §8.5 (déconnexion sans révocation)
 // @verifies docs/SPEC-auth.md §9.1 ; docs/SPEC-webapp.md §6.2
+// @verifies CRM-092 (docs/BACKLOG.md) tranche T9 — docs/SPEC-session-sso.md §8.7 (aucune page sans
+//           session), §13 (preuve unitaire T9) ; docs/DESIGN_SYSTEM.md §5.12 ; docs/JOURNAL.md décision 601
 
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 import type { Echangeur, IssueFermeture, IssueGeste, SessionInterne } from '../lib/session'
+import { CHEMIN_RETOUR_SSO } from '../lib/sso'
 import { creerPorteurJeton, type ClientCrm, type PorteurJeton } from '../lib/supabase'
-import { useRenvoiFinSession } from './App'
+import { ExigerSession, useRenvoiFinSession } from './App'
 import { AVANCE_RAFRAICHISSEMENT_MS, FournisseurAuthentification, useAuthentification } from './Authentification'
 
 const T0 = 1_790_000_000_000
@@ -270,3 +273,91 @@ describe('fin de session rendue par /connexion', () => {
 		await waitFor(() => expect(screen.getByTestId('lieu').textContent).toBe('/connexion|session_expiree|/tracks/conseil-ia'))
 	})
 })
+
+describe('aucune page sans session — T9', () => {
+	function Lieu() {
+		const location = useLocation()
+		const etat = location.state as { erreurSso?: string; retour?: string } | null
+		return <p data-testid="lieu">{`${location.pathname}${location.search}|${etat?.erreurSso ?? ''}|${etat?.retour ?? ''}`}</p>
+	}
+	function Application() {
+		useRenvoiFinSession()
+		return (
+			<ExigerSession>
+				<Routes>
+					<Route path="/connexion" element={<Lieu />} />
+					<Route path={CHEMIN_RETOUR_SSO} element={<Lieu />} />
+					<Route
+						path="*"
+						element={
+							<>
+								<Lieu />
+								<p data-testid="page">page de l’application</p>
+							</>
+						}
+					/>
+				</Routes>
+			</ExigerSession>
+		)
+	}
+	function demarrer(adresse: string, echangeur: Echangeur) {
+		const porteur = creerPorteurJeton()
+		render(
+			<MemoryRouter initialEntries={[adresse]}>
+				<FournisseurAuthentification client={fauxClient(porteur).client} porteur={porteur} echangeur={echangeur}>
+					<Application />
+				</FournisseurAuthentification>
+			</MemoryRouter>,
+		)
+	}
+
+	it('mène une adresse profonde à /connexion, en retenant chemin et paramètres comme retour', async () => {
+		demarrer('/tracks/conseil-ia/prospection?vue=liste', fauxEchangeur([{ ok: false, nature: 'session_absente' }]))
+		await waitFor(() =>
+			expect(screen.getByTestId('lieu').textContent).toBe('/connexion||/tracks/conseil-ia/prospection?vue=liste'),
+		)
+		expect(screen.queryByTestId('page')).toBeNull()
+	})
+
+	it('mène la racine à /connexion, elle aussi', async () => {
+		demarrer('/', fauxEchangeur([{ ok: false, nature: 'session_absente' }]))
+		await waitFor(() => expect(screen.getByTestId('lieu').textContent).toBe('/connexion||/'))
+		expect(screen.queryByTestId('page')).toBeNull()
+	})
+
+	it('laisse /connexion et l’URL de retour du SSO publiques', async () => {
+		demarrer('/connexion', fauxEchangeur([{ ok: false, nature: 'session_absente' }]))
+		await waitFor(() => expect(screen.getByTestId('lieu').textContent).toBe('/connexion||'))
+		cleanup()
+		demarrer(`${CHEMIN_RETOUR_SSO}?code=c&state=s`, fauxEchangeur([{ ok: false, nature: 'session_absente' }]))
+		await waitFor(() => expect(screen.getByTestId('lieu').textContent).toBe(`${CHEMIN_RETOUR_SSO}?code=c&state=s||`))
+	})
+
+	it('rend la page demandée à une session ouverte', async () => {
+		demarrer('/contacts?q=durand', fauxEchangeur([{ ok: true, session: session('jeton-1', 300) }]))
+		await waitFor(() => expect(screen.getByTestId('page')).toBeTruthy())
+		expect(screen.getByTestId('lieu').textContent).toBe('/contacts?q=durand||')
+	})
+
+	it('ne rend rien de l’application pendant la restauration, seulement l’écran de chargement', async () => {
+		let repondre!: (issue: IssueGeste) => void
+		demarrer('/contacts', fauxEchangeur([new Promise((r) => (repondre = r))]))
+		expect(screen.getByRole('status', { name: 'Restauration de votre session' })).toBeTruthy()
+		expect(screen.queryByTestId('page')).toBeNull()
+		expect(screen.queryByTestId('lieu')).toBeNull()
+		await act(async () => repondre({ ok: true, session: session('jeton-1', 300) }))
+		await waitFor(() => expect(screen.getByTestId('page')).toBeTruthy())
+	})
+
+	it('laisse une session refusée à la restauration dire pourquoi, au lieu de la simple redirection', async () => {
+		demarrer(
+			'/tracks/conseil-ia',
+			fauxEchangeur([{ ok: false, nature: 'attente_verification', adresse: 'attendu@exemple.tld' }]),
+		)
+		await waitFor(() =>
+			expect(screen.getByTestId('lieu').textContent).toBe('/connexion|attente_verification|/tracks/conseil-ia'),
+		)
+		expect(screen.queryByTestId('page')).toBeNull()
+	})
+})
+

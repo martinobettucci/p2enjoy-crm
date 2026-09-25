@@ -5,6 +5,8 @@
 // @verifies docs/INCONSISTENCY_REPORT.md INC-077 (le changement de dossier est désormais nommé)
 // @verifies docs/DESIGN_SYSTEM.md §5.8 (états explicites), §12.5 (réponses substituées)
 // @verifies CLAUDE.md §7 (documentation utilisateur), §16 (vérification visuelle)
+// @verifies CRM-092 (docs/BACKLOG.md) tranche T9 — docs/SPEC-session-sso.md §8.7 : ces scénarios se
+//           connectent, aucune page n'étant rendue sans session (docs/JOURNAL.md décision 601)
 //
 // CE QUE CE FICHIER PROUVE, ET QU'AUCUN AUTRE NE PROUVE.
 //
@@ -15,17 +17,18 @@
 // lecteur s'en aperçoive — ce qui est exactement arrivé au §4.7, qui annonçait « Affaire
 // introuvable » là où l'écran dit « Card introuvable » (docs/SPEC-manual.md §6, écart n° 1).
 //
-// AUCUNE SUBSTITUTION SUR LES HUIT PARCOURS. Ils exercent volontairement le visiteur sans session
-// et les refus réels que le manuel lui décrit. Les parcours connectés vivent dans la preuve de
-// `CRM-011`, sans retirer la valeur de ces contre-épreuves anonymes.
+// AUCUNE SUBSTITUTION SUR LES HUIT PARCOURS. Ils exerçaient le visiteur sans session et les refus
+// réels que le manuel lui décrivait ; depuis `CRM-092` T9, aucun visiteur sans session n'atteint
+// ces adresses, et le manuel le dit. Ils exercent donc la session réelle de la LECTRICE du jeu de
+// démonstration, et les refus réels que le manuel décrit pour un compte : un track ou une card
+// qu'il ne peut pas lire.
 //
 // UNE SEULE EXCEPTION, NOMMÉE : le neuvième scénario substitue un événement `channel_changed`,
-// parce que **rien d'autre ne peut le rendre visible** — le fil n'est jamais atteint par un
-// anonyme. Il MESURE la clôture d'INC-077 plutôt que de la déduire de la lecture d'un fichier.
+// parce que **rien d'autre ne peut le rendre visible** — la lectrice n'atteint pas le fil de cette
+// card. Il MESURE la clôture d'INC-077 plutôt que de la déduire de la lecture d'un fichier.
 
 import {
-	ERREUR_RESSOURCE_HTTP,
-	autoriserErreursConsole,
+	connecterAvecLeLabs,
 	expect,
 	test,
 	type Page,
@@ -33,10 +36,20 @@ import {
 } from './fixtures'
 import { capturer } from './captures'
 
+// RÉVISÉ PAR `CRM-092` T9 (docs/SPEC-session-sso.md §8.7, décision 601) : sans session, aucune page de
+// l'application n'est rendue. Ces scénarios, écrits pour un visiteur anonyme à réponses substituées, se
+// connectent d'abord — comme LECTRICE, le profil le plus proche de l'anonyme qu'ils supposaient :
+// aucun geste d'écriture ne lui est offert.
+test.beforeEach(async ({ page }) => {
+	await connecterAvecLeLabs(page, 'viewer@p2enjoy.test')
+})
+
 const UNITE = 'CRM-047'
 
 /** Identifiants du seed, employés tels quels : le manuel cite des adresses réelles du produit. */
 const TRACK = 'conseil-ia'
+/** Un track qu'aucune ligne ne porte : même écran qu'un track non consenti (docs/manual.md §3.2 ter). */
+const TRACK_INEXISTANT = 'ce-track-nexiste-pas'
 const CHANNEL = 'grands-comptes'
 const CARD = '5eed0000-0000-4000-8000-0000000000c3'
 
@@ -50,85 +63,67 @@ const etatVide = (page: Page) => page.getByTestId('etat-vide')
  * est éprouvé ici est l'accord entre le PRODUIT et un TROISIÈME document, le manuel.
  */
 const LIBELLES = {
-	board: 'Aucun board à afficher',
-	refus: 'Accès refusé',
-	// RÉVISÉ PAR `CRM-061` (mécanisme de la décision 51). Ce libellé était celui du gabarit vide
-	// INCONDITIONNEL que `/ma-journee` rendait depuis `CRM-007` ; la route porte désormais un écran
-	// (`docs/SPEC-cards.md` §17), et le visiteur anonyme y lit le premier des DEUX vides du §17.8 —
-	// la portée « mes affaires » n'ayant aucun sujet sans session (§17.3). La règle a changé par
-	// LIVRAISON : le contrat de `docs/SPEC-manual.md` §7 — « état vide explicite » — est tenu, et
-	// c'est son TEXTE qui change, jamais l'exigence.
-	journee: 'Aucune échéance dans votre journée',
+	// RÉVISÉ PAR `CRM-092` T9 : les libellés des vides anonymes (« Aucune échéance dans votre
+	// journée », « Accès refusé », « Aucun track »…) quittent cette liste avec les parcours anonymes ;
+	// ceux-ci sont ceux que le manuel cite pour un compte connecté.
+	nonClasses: 'Non classés',
+	mesAffaires: 'Mes affaires',
 	reglagesIndex: 'Sections de réglages',
 	reglagesArborescence: 'Arborescence : tracks et channels',
 	trackIntrouvable: 'Track introuvable',
 	cardIntrouvable: 'Card introuvable',
 	retour: "Revenir à l'accueil",
-	tracksVides: 'Aucun track',
-	onglets: 'Aucun channel',
-	workspace: 'Aucun workspace accessible',
+	tracksDemonstration: ['Conseil & IA', 'Studio web', 'Formation'],
 	dossierChange: 'Dossier changé',
 } as const
 
 test.describe('le parcours que le manuel décrit, sans aucune substitution (docs/manual.md §3.2)', () => {
-	test('l’accueil dit les trois refus que le manuel annonce (§3.1, §3.2)', async ({ page }) => {
+	// RÉVISÉ PAR `CRM-092` T9 : l'accueil anonyme et ses trois refus n'existent plus. Le §3.2 décrit
+	// désormais ce qu'un compte voit après connexion : son espace, et les tracks du jeu de
+	// démonstration dans la barre latérale.
+	test('l’accueil montre, après connexion, ce que le manuel annonce (§3.2)', async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
 		await page.goto('/')
 
-		await expect(etatVide(page)).toContainText(LIBELLES.board)
-		await expect(page.getByTestId('tracks-vides')).toContainText(LIBELLES.tracksVides)
-		await expect(page.getByTestId('barre-onglets')).toContainText(LIBELLES.onglets)
-		await expect(page.getByTestId('workspace-absent')).toContainText(LIBELLES.workspace)
-
-		// §3.5 : « Aucun … » n'est pas une erreur, et le manuel le dit. L'écran ne doit donc
-		// afficher aucun état d'erreur en même temps.
+		await expect(page.getByTestId('workspace-courant')).toBeVisible()
+		const tracks = page.getByTestId('entree-track')
+		for (const nom of LIBELLES.tracksDemonstration) await expect(tracks.filter({ hasText: nom })).toHaveCount(1)
 		await expect(page.getByTestId('etat-erreur')).toHaveCount(0)
 
 		await capturer(page, 'manuel-accueil-1440', UNITE)
 	})
 
-	// RÉVISÉ PAR `CRM-057`, ET L'ASSERTION AVAIT JOUÉ : `/inbox` rendait un état vide — « la
-	// messagerie n'est pas encore raccordée » —, et cette phrase a cessé d'être vraie le jour où
-	// l'écran a été livré. La promesse du manuel change avec lui : pour un visiteur anonyme, la
-	// messagerie n'est pas vide, elle est REFUSÉE, et l'écran le dit sans proposer de réessayer.
-	test('/inbox refuse la messagerie à un anonyme, et le dit (§4.15)', async ({ page }) => {
+	// RÉVISÉ PAR `CRM-092` T9 : ce scénario prouvait le REFUS de la messagerie à un anonyme, qui
+	// n'atteint plus l'écran. Il éprouve désormais ce que le §4.15 promet à un compte : « Non
+	// classés » en premier, même vide — et un zéro qui n'est pas une panne, ce que la lectrice lit.
+	// Plus aucun `401` à consommer : la console doit rester vierge.
+	test('/inbox ouvre « Non classés » en premier, à zéro sans panne (§4.15)', async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
 		await page.goto('/inbox')
 
-		await expect(page.getByTestId('etat-refus').first()).toContainText(LIBELLES.refus)
-		// Un refus n'est pas une panne : aucun « Réessayer » n'est offert, car un second essai
-		// donnerait la même réponse.
+		const dossiers = page.getByRole('navigation', { name: 'Dossiers de la messagerie' }).getByRole('button')
+		await expect(dossiers.first()).toContainText(LIBELLES.nonClasses)
+		await expect(dossiers.first()).toContainText('0')
+		await expect(page.getByTestId('etat-refus')).toHaveCount(0)
 		await expect(page.getByTestId('etat-erreur')).toHaveCount(0)
 		await capturer(page, 'manuel-inbox-1440', UNITE)
-
-		// LES REFUS SONT CEUX QUE LE SCÉNARIO VIENT DE PROVOQUER, et ils sont consommés
-		// explicitement : PostgREST rend `401` à la clé anonyme, et le navigateur l'écrit dans sa
-		// console. Rien n'est filtré globalement (docs/JOURNAL.md décision 248).
-		// DEUX REFUS, ET LE COMPTE EST RÉVISÉ PLUTÔT QUE CONTOURNÉ (mécanisme de la décision 51).
-		// Il en attendait UN, et le motif écrit était juste : seule l'arborescence était demandée
-		// tant qu'aucun dossier n'est choisi. `CRM-081` tranche 2 e ajoute une SECONDE lecture au
-		// chargement de l'écran — `mail_thread_snoozes`, l'état des fils endormis
-		// (docs/SPEC-cards.md §16.15.3) —, qui est refusée à la clé anonyme exactement comme la
-		// première.
-		//
-		// LA PROPRIÉTÉ ÉPROUVÉE NE CHANGE PAS, et c'est ce qui autorise la révision : l'écran ne
-		// demande QUE ce dont il a besoin pour ce qu'il affiche. La liste et le message ne partent
-		// toujours pas à la pêche d'un contenu que personne n'a demandé — le compte suit le nombre
-		// de lectures que l'écran assume, et il reste FIGÉ pour qu'une troisième se voie.
-		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[401], ERREUR_RESSOURCE_HTTP[401]])
 	})
 
-	for (const [chemin, libelle, capture] of [
-		['/ma-journee', LIBELLES.journee, 'manuel-ma-journee-1440'],
-	] as const) {
-		test(`${chemin} rend l’état vide explicite que le manuel promet (§3.1)`, async ({ page }) => {
-			await page.setViewportSize({ width: 1440, height: 900 })
-			await page.goto(chemin)
+	// RÉVISÉ PAR `CRM-092` T9 : l'anonyme lisait le premier des deux vides du §3 quater.6, « mes
+	// affaires » n'ayant pas de sujet sans session. La lectrice, elle, a une affaire à son nom : le
+	// scénario éprouve la bascule de portée que le §3 quater.3 décrit, sans dépendre d'une date.
+	test('/ma-journee s’ouvre sur « Mes affaires », avec la bascule vers tout l’espace (§3 quater.3)', async ({
+		page,
+	}) => {
+		await page.setViewportSize({ width: 1440, height: 900 })
+		await page.goto('/ma-journee')
 
-			await expect(etatVide(page)).toContainText(libelle)
-			await capturer(page, capture, UNITE)
-		})
-	}
+		const portee = page.getByRole('navigation', { name: 'Portée de la journée' })
+		await expect(portee.getByRole('link', { name: LIBELLES.mesAffaires })).toBeVisible()
+		await expect(portee.getByRole('link', { name: /^Tout l.espace de travail$/ })).toBeVisible()
+		await expect(page.getByTestId('etat-erreur')).toHaveCount(0)
+		await capturer(page, 'manuel-ma-journee-1440', UNITE)
+	})
 
 	// RÉVISÉ PAR `CRM-075`, § 5 « L'index » : `/reglages` a cessé d'être un état vide le jour où
 	// l'administration de l'arborescence lui a donné une première section. L'assertion n'avait
@@ -147,9 +142,11 @@ test.describe('le parcours que le manuel décrit, sans aucune substitution (docs
 		await capturer(page, 'manuel-reglages-1440', UNITE)
 	})
 
-	test('un track du seed est « Track introuvable » pour un anonyme (§3.2 ter)', async ({ page }) => {
+	// RÉVISÉ PAR `CRM-092` T9 : un track du seed n'est plus refusé à personne qui atteigne l'écran ;
+	// le §3.2 ter promet le même message pour une adresse qui ne désigne aucun track.
+	test('une adresse qui ne désigne aucun track est « Track introuvable » (§3.2 ter)', async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
-		await page.goto(`/tracks/${TRACK}`)
+		await page.goto(`/tracks/${TRACK_INEXISTANT}`)
 
 		await expect(etatVide(page)).toContainText(LIBELLES.trackIntrouvable)
 		await expect(page.getByRole('link', { name: LIBELLES.retour })).toBeVisible()
@@ -159,7 +156,7 @@ test.describe('le parcours que le manuel décrit, sans aucune substitution (docs
 
 	test('le tableau kanban n’est jamais atteint, et le manuel le dit (§4.8)', async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
-		await page.goto(`/tracks/${TRACK}/${CHANNEL}`)
+		await page.goto(`/tracks/${TRACK_INEXISTANT}/${CHANNEL}`)
 
 		await expect(etatVide(page)).toContainText(LIBELLES.trackIntrouvable)
 		await expect(page.getByTestId('board')).toHaveCount(0)
@@ -169,7 +166,7 @@ test.describe('le parcours que le manuel décrit, sans aucune substitution (docs
 
 	test('la vue liste non plus, pour la même cause (§4.9)', async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
-		await page.goto(`/tracks/${TRACK}/${CHANNEL}/liste`)
+		await page.goto(`/tracks/${TRACK_INEXISTANT}/${CHANNEL}/liste`)
 
 		await expect(etatVide(page)).toContainText(LIBELLES.trackIntrouvable)
 		await expect(page.getByRole('table')).toHaveCount(0)

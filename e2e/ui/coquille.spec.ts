@@ -1,10 +1,13 @@
 // @verifies CRM-007 (docs/BACKLOG.md) — Definition of Done du squelette de la webapp
 // @verifies docs/DESIGN_SYSTEM.md §4 (coquille), §5.8 (états), §7 (paliers), §8 (clavier)
 // @verifies docs/SPEC-webapp.md §7 (états), §8 (responsive), §9 (accessibilité), §11 (stockage)
+// @verifies CRM-092 (docs/BACKLOG.md) tranche T9 — docs/SPEC-session-sso.md §8.7 : ces scénarios se
+//           connectent, aucune page n'étant rendue sans session (docs/JOURNAL.md décision 601)
 //
 // Ces scénarios s'exécutent contre le **build de production** servi par `vite preview`, et
-// contre la vraie API : l'état vide observé est celui que la RLS en refus par défaut produit,
-// il n'est simulé nulle part.
+// contre la vraie API, avec une vraie session (`CRM-092` T9) : la coquille observée est celle que
+// la lectrice du seed reçoit. L'état « aucun espace », qu'un anonyme produisait avant T9, est
+// désormais servi par le réseau (`200 []`, docs/DESIGN_SYSTEM.md §12.5).
 //
 // Les états de chargement et d'erreur, eux, sont provoqués en agissant sur le **réseau** —
 // retard réel, échec réel — et non en injectant un état dans l'application. Une simulation
@@ -12,6 +15,7 @@
 
 import {
 	autoriserErreursConsole,
+	connecterAvecLeLabs,
 	ERREUR_CONNEXION_REFUSEE,
 	ERREUR_RESSOURCE_HTTP,
 	expect,
@@ -19,10 +23,18 @@ import {
 } from './fixtures'
 import { PALIERS, capturer } from './captures'
 
+// RÉVISÉ PAR `CRM-092` T9 (docs/SPEC-session-sso.md §8.7, décision 601) : sans session, aucune page de
+// l'application n'est rendue. Ces scénarios, écrits pour un visiteur anonyme à réponses substituées, se
+// connectent d'abord — comme LECTRICE, le profil le plus proche de l'anonyme qu'ils supposaient :
+// aucun geste d'écriture ne lui est offert.
+test.beforeEach(async ({ page }) => {
+	await connecterAvecLeLabs(page, 'viewer@p2enjoy.test')
+})
+
 const ROUTE_WORKSPACES = '**/rest/v1/workspaces*'
 
 test.describe('coquille', () => {
-	test('rend les points de repère et les états réels du backend', async ({ page }) => {
+	test('rend les points de repère et les données réelles de la session', async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
 		await page.goto('/')
 
@@ -32,12 +44,39 @@ test.describe('coquille', () => {
 		await expect(page.getByRole('navigation', { name: 'Navigation principale' })).toBeVisible()
 		await expect(page.getByTestId('barre-onglets')).toBeVisible()
 
-		// L'appelant est anonyme : la RLS ne consent aucune ligne, l'interface le dit.
-		await expect(page.getByTestId('workspace-absent')).toBeVisible()
-		await expect(page.getByTestId('tracks-vides')).toBeVisible()
-		await expect(page.getByTestId('etat-vide')).toBeVisible()
+		// RÉVISÉ PAR `CRM-092` T9 : la lectrice reçoit l'espace et les tracks du seed.
+		await expect(page.getByTestId('workspace-courant')).toBeVisible()
+		await expect(page.getByTestId('entree-track').first()).toBeVisible()
 		await expect(page.getByTestId('etat-erreur')).toHaveCount(0)
 
+		await capturer(page, 'coquille-1440')
+	})
+
+	// RÉVISÉ PAR `CRM-092` T9 : l'état « aucun espace » était celui de l'anonyme, qui n'atteint plus
+	// la coquille. Il reste l'état d'une session à qui la RLS ne consent aucun espace — `200 []` —,
+	// servi ici par le réseau ; ce que l'interface en dit n'a pas changé.
+	test('aucun espace consenti (`200 []`) : l’en-tête et la zone principale le disent', async ({ page }) => {
+		await page.setViewportSize({ width: 1440, height: 900 })
+		// Une session sans espace ne lit rien d'autre : les tracks, channels et affaires sont servis
+		// vides eux aussi, sans quoi la capture montrerait des tracks sous « Aucun workspace
+		// accessible ». `Content-Range: */0` est la forme exacte de PostgREST, que le guide de
+		// démarrage lit pour COMPTER ; l'API étant sur une autre origine, l'en-tête doit être EXPOSÉ,
+		// comme la vraie pile le fait.
+		for (const table of ['workspaces', 'tracks', 'channels', 'cards']) {
+			await page.route(`**/rest/v1/${table}*`, (route) =>
+				route.fulfill({
+					status: 200,
+					contentType: 'application/json',
+					headers: { 'content-range': '*/0', 'access-control-expose-headers': 'Content-Range' },
+					body: '[]',
+				}),
+			)
+		}
+		await page.goto('/')
+
+		await expect(page.getByTestId('workspace-absent')).toBeVisible()
+		await expect(page.getByTestId('tracks-vides')).toBeVisible()
+		await expect(page.getByTestId('etat-erreur')).toHaveCount(0)
 		await capturer(page, 'coquille-vide-1440')
 	})
 
@@ -45,6 +84,11 @@ test.describe('coquille', () => {
 		await page.setViewportSize({ width: 1440, height: 900 })
 		await page.goto('/')
 
+		// RÉVISÉ PAR `CRM-092` T9 : ces routes sont désormais parcourues par la lectrice du seed, et
+		// non plus par un anonyme. Ce qui est exigé ne change pas — aucune route n'est une page
+		// blanche : chacune rend son titre et son contenu, sans erreur. L'inbox n'est plus REFUSÉE,
+		// elle rend le courrier de la lectrice ; « Ma journée » garde sa bascule de portée.
+		//
 		// RÉVISÉ PAR `CRM-057` : les trois routes transverses rendaient un état VIDE, et `/inbox` a
 		// cessé d'en être un le jour où la messagerie a été livrée. Pour un visiteur anonyme, elle
 		// n'est pas vide — elle est REFUSÉE. La garantie ne change pas : aucune route n'est une page
@@ -58,15 +102,13 @@ test.describe('coquille', () => {
 		// aurait continué de passer sans rien dire du changement. Elle vérifie donc désormais
 		// LEQUEL des deux vides est rendu, et que la bascule de portée l'accompagne : c'est ce qui
 		// distingue l'écran livré du gabarit qu'il remplace.
-		for (const [libelle, etat] of [
-			['Inbox', 'etat-refus'],
-			['Ma journée', 'etat-vide'],
-		] as const) {
-			await page.getByRole('navigation', { name: 'Navigation principale' }).getByTitle(libelle).click()
-			await expect(page.getByRole('heading', { level: 1 })).toHaveText(libelle)
-			await expect(page.getByTestId(etat).first()).toBeVisible()
-		}
-		await expect(page.getByTestId('etat-vide')).toContainText('Aucune échéance dans votre journée')
+		await page.getByRole('navigation', { name: 'Navigation principale' }).getByTitle('Inbox').click()
+		await expect(page.getByRole('heading', { level: 1 })).toHaveText('Inbox')
+		await expect(page.getByTestId('etat-refus')).toHaveCount(0)
+		await expect(page.getByTestId('etat-erreur')).toHaveCount(0)
+
+		await page.getByRole('navigation', { name: 'Navigation principale' }).getByTitle('Ma journée').click()
+		await expect(page.getByRole('heading', { level: 1 })).toHaveText('Ma journée')
 		await expect(page.getByTestId('portee-journee')).toBeVisible()
 		await expect(page.getByTestId('lien-portee')).toHaveCount(2)
 
@@ -83,14 +125,8 @@ test.describe('coquille', () => {
 		await expect(page.getByTestId('etat-vide')).toHaveCount(0)
 		await capturer(page, 'route-reglages-1440')
 
-		// LES REFUS DE L'INBOX SONT CONSOMMÉS EXPLICITEMENT : PostgREST rend `401` à la clé anonyme,
-		// et le navigateur l'écrit dans sa console. Rien n'est filtré globalement (décision 248).
-		//
-		// LE COMPTE PASSE DE UN À DEUX, RÉVISÉ ET NON CONTOURNÉ : `CRM-081` tranche 2 e ajoute au
-		// chargement de l'inbox la lecture de `mail_thread_snoozes` — l'état des fils endormis
-		// (docs/SPEC-cards.md §16.15.3) —, refusée à la clé anonyme comme l'arborescence. Le compte
-		// reste FIGÉ, de sorte qu'une lecture de plus se voie ici avant d'atteindre un utilisateur.
-		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[401], ERREUR_RESSOURCE_HTTP[401]])
+		// Plus aucun refus `401` à consommer : ils étaient ceux de la clé anonyme sur l'inbox, et
+		// la lectrice est servie (`CRM-092` T9). La console doit donc rester VIERGE.
 
 		await page.goto('/adresse-inexistante')
 		await expect(page.getByRole('heading', { level: 1 })).toHaveText('Page introuvable')
@@ -104,7 +140,7 @@ test.describe('paliers responsive (docs/DESIGN_SYSTEM.md §7)', () => {
 		test(`${palier.nom} : la page ne défile jamais horizontalement`, async ({ page }) => {
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
 			await page.goto('/')
-			await expect(page.getByTestId('etat-vide')).toBeVisible()
+			await expect(page.getByTestId('entree-track').first()).toBeVisible()
 
 			const debordement = await page.evaluate(
 				() => document.documentElement.scrollWidth - document.documentElement.clientWidth,
@@ -127,7 +163,7 @@ test.describe('paliers responsive (docs/DESIGN_SYSTEM.md §7)', () => {
 		const barre = page.getByTestId('barre-laterale')
 
 		await page.setViewportSize({ width: 1440, height: 900 })
-		await expect(page.getByTestId('etat-vide')).toBeVisible()
+		await expect(page.getByTestId('entree-track').first()).toBeVisible()
 		const largeurXl = (await barre.boundingBox())?.width ?? 0
 		expect(largeurXl).toBeGreaterThan(200)
 
@@ -160,7 +196,7 @@ test.describe('paliers responsive (docs/DESIGN_SYSTEM.md §7)', () => {
 	}) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
 		await page.goto('/')
-		await expect(page.getByTestId('etat-vide')).toBeVisible()
+		await expect(page.getByTestId('entree-track').first()).toBeVisible()
 
 		const barre = page.getByTestId('barre-laterale')
 		const largeurDepliee = (await barre.boundingBox())?.width ?? 0
@@ -194,7 +230,7 @@ test.describe('navigation au clavier (docs/DESIGN_SYSTEM.md §8)', () => {
 	test('le parcours complet est atteignable sans souris', async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
 		await page.goto('/')
-		await expect(page.getByTestId('etat-vide')).toBeVisible()
+		await expect(page.getByTestId('entree-track').first()).toBeVisible()
 
 		// 1. Le premier élément focusable est le lien d'évitement, et il devient visible.
 		await page.keyboard.press('Tab')
@@ -245,7 +281,12 @@ test.describe('navigation au clavier (docs/DESIGN_SYSTEM.md §8)', () => {
 		// réclame ? ». La preuve est mise à jour AVEC son ordre réel, jamais contournée : elle est
 		// devenue rouge pendant la campagne de cette tranche, ce qui est exactement son travail.
 
-		await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
+		// RÉVISÉ PAR `CRM-092` T9 : avec une session, le contenu principal porte des éléments
+		// focusables — le guide de démarrage. Retirer le focus y laissait le point de départ de la
+		// tabulation, et `Tab` entrait dans le guide. La page est rechargée pour repartir, comme un
+		// utilisateur qui arrive, du début du document.
+		await page.goto('/')
+		await expect(page.getByTestId('entree-track').first()).toBeVisible()
 		await page.keyboard.press('Tab')
 		await page.keyboard.press('Tab')
 		await expect(page.getByTestId('bascule-repli')).toBeFocused()
@@ -295,7 +336,7 @@ test.describe('états provoqués sur le réseau (docs/DESIGN_SYSTEM.md §5.8)', 
 
 		await expect(page.getByTestId('squelette').first()).toBeVisible()
 		await capturer(page, 'etat-chargement-1440')
-		await expect(page.getByTestId('workspace-absent')).toBeVisible({ timeout: 10_000 })
+		await expect(page.getByTestId('workspace-courant')).toBeVisible({ timeout: 10_000 })
 	})
 
 	// Mesuré : `postgrest-js` réessaie **trois fois** une lecture en échec, avec une attente
@@ -309,7 +350,13 @@ test.describe('états provoqués sur le réseau (docs/DESIGN_SYSTEM.md §5.8)', 
 		test.setTimeout(60_000)
 		await page.setViewportSize({ width: 1440, height: 900 })
 		let echecs = 0
-		await page.route(ROUTE_WORKSPACES, async (route) => {
+		// RÉVISÉ PAR `CRM-092` T9 : avec une session, le guide de démarrage compte aussi les espaces
+		// (`webapp/src/lib/demarrage.ts`, requête `HEAD` sans ordre). La panne ne vise que la lecture
+		// de la coquille — celle qui ordonne par nom —, pour que ses quatre tentatives restent
+		// comptées exactement.
+		const lectureCoquille = (url: URL) =>
+			url.pathname.endsWith('/rest/v1/workspaces') && url.searchParams.get('order') === 'name.asc'
+		await page.route(lectureCoquille, async (route) => {
 			if (echecs < 4) {
 				echecs += 1
 				await route.abort('connectionrefused')
@@ -327,7 +374,7 @@ test.describe('états provoqués sur le réseau (docs/DESIGN_SYSTEM.md §5.8)', 
 		// La reprise relance la requête ; la seconde tentative passe, et l'erreur disparaît.
 		await page.getByRole('button', { name: 'Réessayer' }).click()
 		await expect(page.getByTestId('etat-erreur')).toHaveCount(0)
-		await expect(page.getByTestId('workspace-absent')).toBeVisible()
+		await expect(page.getByTestId('workspace-courant')).toBeVisible()
 		// La tentative initiale et ses trois reprises automatiques : au-delà, la requête
 		// passe, ce qui prouve que la reprise a bien relancé un appel réseau.
 		expect(echecs).toBe(4)
@@ -346,7 +393,10 @@ test.describe('états provoqués sur le réseau (docs/DESIGN_SYSTEM.md §5.8)', 
 
 		await expect(page.getByTestId('etat-refus')).toBeVisible()
 		await expect(page.getByTestId('etat-erreur')).toHaveCount(0)
-		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[403]])
+		// DEUX REFUS, ET NON UN, RÉVISÉ PAR `CRM-092` T9 : avec une session, l'accueil lit aussi
+		// `workspaces` pour le guide de démarrage (`webapp/src/lib/demarrage.ts`), que l'anonyme ne
+		// chargeait pas. Le compte reste FIGÉ, pour qu'une lecture de plus se voie ici.
+		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[403], ERREUR_RESSOURCE_HTTP[403]])
 		await capturer(page, 'etat-refus-1440')
 	})
 })

@@ -1288,7 +1288,13 @@ SCENARIOS_API=1082
 # **RÉVISÉ À 757 PAR `CRM-092` tranche T8, 2026-09-24** (décision 597) : `connexion.spec.ts` gagne la
 # preuve de l'exploitante qui entre sans attente et reçoit le geste de modération. 756 + 1 = 757,
 # valeur COMPTÉE — « Total: 757 tests in 59 files ».
-SCENARIOS_UI=757
+# **RÉVISÉ À 759 PAR `CRM-092` tranche T9, 2026-09-25** (décision 601) : sans session, aucune page. Huit
+# fichiers qui naviguaient en anonyme se connectent ; `coquille.spec.ts` sépare la coquille d'une session
+# et l'état « aucun espace » servi par le réseau (+1), et `connexion.spec.ts` gagne l'adresse profonde
+# qui mène à `/connexion` puis y ramène (+1). Aucun scénario retiré : les preuves anonymes sont
+# CONVERTIES — track ou card qu'aucune ligne ne porte, réponse `200 []` substituée. 757 + 2 = 759, valeur
+# COMPTÉE — « Total: 759 tests in 59 files ».
+SCENARIOS_UI=759
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

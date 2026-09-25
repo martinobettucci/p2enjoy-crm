@@ -6,6 +6,8 @@
 //           CLAUDE.md §16 (vérification visuelle)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
+// @verifies CRM-092 (docs/BACKLOG.md) tranche T9 — docs/SPEC-session-sso.md §8.7 : sans session, aucune page
+//           de l'application ; l'adresse demandée mène à /connexion (docs/JOURNAL.md décision 601)
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, comme un utilisateur réel : aucune fonction
 // interne n'est appelée, aucune réponse n'est substituée, et le navigateur obtient son jeton par
@@ -34,16 +36,16 @@ async function connecter(page: Page, email: string): Promise<void> {
 test.describe('La cloche et son compteur (docs/SPEC-notifications.md §26.1)', () => {
 	// SANS SESSION, LA CLOCHE N'EST PAS RENDUE (§26.7). Une cloche offerte à un anonyme
 	// annoncerait une boîte qu'aucune session ne peut remplir.
-	test('aucune cloche pour un visiteur anonyme', async ({ page }) => {
-		// LA RACINE, ET NON `/connexion` : l'écran de connexion est une surface AUTONOME, sans
-		// coquille ni en-tête (`docs/DESIGN_SYSTEM.md` §5.12), si bien qu'y chercher l'absence de
-		// cloche ne prouverait rien — rien n'y est rendu. Défaut trouvé en exécutant la preuve, et
-		// c'était la PREUVE qui était fausse, jamais le produit.
+	//
+	// RÉVISÉ PAR `CRM-092` T9 : sans session, aucune coquille n'est plus rendue (docs/DESIGN_SYSTEM.md
+	// §5.12). La racine demandée par un anonyme mène à `/connexion` : l'absence de cloche y est
+	// PROBANTE parce que l'adresse demandée était celle de l'application, et que la redirection est
+	// constatée — non parce que l'écran de connexion n'en porte pas.
+	test('aucune cloche pour un visiteur anonyme : l’application le mène à /connexion', async ({ page }) => {
 		await page.goto('/')
-		await expect(page.getByTestId('entete')).toBeVisible()
-		// L'en-tête anonyme rend « Se connecter » à la place de l'identité (§5.12) : c'est le
-		// témoin qui rend l'absence de cloche probante, et non un écran simplement vide.
-		await expect(page.getByRole('link', { name: 'Se connecter' })).toBeVisible()
+		await expect(page).toHaveURL(/\/connexion$/)
+		await expect(page.getByRole('button', { name: 'Se connecter avec LeLabs' })).toBeVisible()
+		await expect(page.getByTestId('entete')).toHaveCount(0)
 		await expect(page.getByTestId('cloche-notifications')).toHaveCount(0)
 	})
 

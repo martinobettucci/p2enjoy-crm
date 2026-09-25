@@ -10,6 +10,8 @@
 // @verifies CLAUDE.md §16 (vérification visuelle)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
+// @verifies CRM-092 (docs/BACKLOG.md) tranche T9 — docs/SPEC-session-sso.md §8.7 : les blocs anonymes se
+//           connectent comme lectrice, aucune page n'étant rendue sans session (décision 601)
 //
 // Ces scénarios s'exécutent contre le **build de production** servi par `vite preview`, et contre
 // la vraie API. Rien n'est simulé, sauf là où c'est explicitement dit — et alors c'est le
@@ -286,31 +288,51 @@ async function ouvrir(
 	await page.goto(adresse)
 }
 
+/**
+ * RÉVISÉ PAR `CRM-092` T9 (docs/SPEC-session-sso.md §8.7, décision 601) : sans session, aucune page de
+ * l'application n'est rendue. Les blocs qui naviguaient en anonyme, à réponses substituées, se
+ * connectent d'abord comme LECTRICE — le profil le plus proche de l'anonyme qu'ils supposaient. Les
+ * blocs contre la pile réelle gardent leur propre connexion d'administratrice.
+ */
+async function connecterLectrice(page: Page): Promise<void> {
+	await connecterAvecLeLabs(page, 'viewer@p2enjoy.test')
+}
+
 // --- Sans aucune substitution -----------------------------------------------------------------
 
 test.describe('la route de la vue liste, sans aucune substitution', () => {
-	test('l’anonyme demande réellement le track de l’adresse et n’obtient aucune liste', async ({
+	test.beforeEach(async ({ page }) => {
+		await connecterLectrice(page)
+	})
+
+	// RÉVISÉ PAR `CRM-092` T9 : l'anonyme n'atteint plus la route. Le track non consenti est un slug
+	// qu'aucune ligne ne porte — indiscernable, pour l'écran, d'un track que la RLS refuse.
+	test('un track non consenti est réellement demandé, et aucune liste n’est rendue', async ({
 		page,
 	}) => {
 		const attendue = page.waitForRequest(
 			(requete) => requete.url().includes('/rest/v1/tracks?') && requete.url().includes('slug='),
 		)
 		await page.setViewportSize({ width: 1440, height: 900 })
-		await page.goto(ADRESSE)
+		await page.goto(ADRESSE.replace(`/tracks/${TRACK.slug}/`, '/tracks/ce-track-nexiste-pas/'))
 
 		const url = new URL((await attendue).url())
-		expect(url.searchParams.get('slug')).toBe(`eq.${TRACK.slug}`)
+		expect(url.searchParams.get('slug')).toBe('eq.ce-track-nexiste-pas')
 		expect(url.searchParams.get('archived_at')).toBe('is.null')
 
 		await expect(page.getByTestId('etat-vide')).toBeVisible()
 		await expect(page.getByTestId('tableau-liste')).toHaveCount(0)
-		await capturer(page, 'liste-anonyme-1440', 'CRM-042')
+		await capturer(page, 'liste-track-introuvable-1440', 'CRM-042')
 	})
 })
 
 // --- Le tableau (§12.7) -----------------------------------------------------------------------
 
 test.describe('le tableau (§12.7)', () => {
+	test.beforeEach(async ({ page }) => {
+		await connecterLectrice(page)
+	})
+
 	test('rend une ligne par affaire, avec ses six colonnes', async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
 		await ouvrir(page, ADRESSE)
@@ -349,6 +371,10 @@ test.describe('le tableau (§12.7)', () => {
 // --- Le tri (§12.4) ---------------------------------------------------------------------------
 
 test.describe('le tri (§12.4)', () => {
+	test.beforeEach(async ({ page }) => {
+		await connecterLectrice(page)
+	})
+
 	test('demande l’ordre TOTAL, terminé par `id`', async ({ page }) => {
 		const journal: Demande[] = []
 		await ouvrir(page, ADRESSE, { journal })
@@ -423,6 +449,10 @@ test.describe('le tri (§12.4)', () => {
 // --- Les filtres (§12.5) ----------------------------------------------------------------------
 
 test.describe('les filtres (§12.5)', () => {
+	test.beforeEach(async ({ page }) => {
+		await connecterLectrice(page)
+	})
+
 	test('le filtre par étape part vers l’API et s’inscrit dans l’adresse', async ({ page }) => {
 		const journal: Demande[] = []
 		await ouvrir(page, ADRESSE, { journal })
@@ -476,6 +506,10 @@ test.describe('les filtres (§12.5)', () => {
 // --- La pagination (§12.6) --------------------------------------------------------------------
 
 test.describe('la pagination (§12.6)', () => {
+	test.beforeEach(async ({ page }) => {
+		await connecterLectrice(page)
+	})
+
 	const beaucoup = (nombre: number) =>
 		Array.from({ length: Math.min(nombre, LIGNES_PAR_PAGE) }, (_, rang) => ({
 			id: `5eed0000-0000-4000-8000-0000000${String(rang).padStart(5, '0')}`,
@@ -550,6 +584,10 @@ test.describe('la pagination (§12.6)', () => {
 // --- La bascule board ↔ liste (§12.8) ----------------------------------------------------------
 
 test.describe('la bascule entre les deux vues (§12.8)', () => {
+	test.beforeEach(async ({ page }) => {
+		await connecterLectrice(page)
+	})
+
 	test('mène du board à la liste et retour, en changeant l’adresse', async ({ page }) => {
 		await ouvrir(page, BASE)
 		await expect(page.getByTestId('board')).toBeVisible()
@@ -727,6 +765,10 @@ test.describe('les données longues et la seconde page, contre la pile réelle',
 // --- Les quatre paliers (docs/DESIGN_SYSTEM.md §7) ---------------------------------------------
 
 test.describe('paliers responsive', () => {
+	test.beforeEach(async ({ page }) => {
+		await connecterLectrice(page)
+	})
+
 	for (const palier of PALIERS) {
 		test(`${palier.nom} : la liste tient, et la page ne défile jamais horizontalement`, async ({
 			page,

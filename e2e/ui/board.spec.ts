@@ -5,6 +5,8 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.1 (carte), §5.2 (colonne), §7 (paliers), §8 (accessibilité),
 //           §12.5 (réponses substituées), §12.6 (indication de débordement)
 // @verifies CLAUDE.md §16 (vérification visuelle)
+// @verifies CRM-092 (docs/BACKLOG.md) tranche T9 — docs/SPEC-session-sso.md §8.7 : ces scénarios se
+//           connectent, aucune page n'étant rendue sans session (docs/JOURNAL.md décision 601)
 //
 // Ces scénarios s'exécutent contre le **build de production** servi par `vite preview`, et contre
 // la vraie API. Rien n'est simulé, sauf là où c'est explicitement dit — et alors c'est le
@@ -22,6 +24,7 @@
 
 import {
 	autoriserErreursConsole,
+	connecterAvecLeLabs,
 	ERREUR_RESSOURCE_HTTP,
 	expect,
 	surveillerConsole,
@@ -32,6 +35,14 @@ import {
 import { copyFileSync, mkdirSync, readdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { PALIERS, capturer } from './captures'
+
+// RÉVISÉ PAR `CRM-092` T9 (docs/SPEC-session-sso.md §8.7, décision 601) : sans session, aucune page de
+// l'application n'est rendue. Ces scénarios, écrits pour un visiteur anonyme à réponses substituées, se
+// connectent d'abord — comme LECTRICE, le profil le plus proche de l'anonyme qu'ils supposaient :
+// aucun geste d'écriture ne lui est offert.
+test.beforeEach(async ({ page }) => {
+	await connecterAvecLeLabs(page, 'viewer@p2enjoy.test')
+})
 
 const ROUTE_CARDS = '**/rest/v1/cards*'
 const ROUTE_ETAPES = '**/rest/v1/workflow_steps*'
@@ -252,8 +263,11 @@ const carte = (page: Page, idCard: string) => page.locator(`[data-testid="carte-
 
 // --- Sans aucune substitution ----------------------------------------------------------------
 
+// RÉVISÉ PAR `CRM-092` T9 : ce scénario exerçait l'anonyme, qui n'atteint plus la route. Le track non
+// consenti est désormais un slug qu'aucune ligne ne porte — indiscernable, pour l'écran, d'un track
+// que la RLS refuse (docs/SPEC-permissions-rls.md §7).
 test.describe('la route d’un channel, sans aucune substitution', () => {
-	test('l’anonyme demande réellement le track de l’adresse et n’obtient aucun board', async ({
+	test('un track non consenti est réellement demandé, et aucun board n’est atteint', async ({
 		page,
 	}) => {
 		// Le filtre `slug=` distingue la résolution de la route de la lecture de la barre latérale :
@@ -263,19 +277,19 @@ test.describe('la route d’un channel, sans aucune substitution', () => {
 			(requete) => requete.url().includes('/rest/v1/tracks?') && requete.url().includes('slug='),
 		)
 		await page.setViewportSize({ width: 1440, height: 900 })
-		await page.goto(ADRESSE)
+		await page.goto(`/tracks/ce-track-nexiste-pas/${CHANNEL.slug}`)
 
 		const url = new URL((await attendue).url())
-		expect(url.searchParams.get('slug'), 'le track est résolu par son slug').toBe(`eq.${TRACK.slug}`)
+		expect(url.searchParams.get('slug'), 'le track est résolu par son slug').toBe('eq.ce-track-nexiste-pas')
 		expect(url.searchParams.get('archived_at'), 'un track archivé n’est pas ouvert par son URL').toBe(
 			'is.null',
 		)
 
 		// C'est le refus réel du backend, mesuré par e2e/api/board.spec.ts : la RLS rend `200` et
-		// zéro ligne à un anonyme. Le board n'est jamais atteint (§7.12).
+		// zéro ligne. Le board n'est jamais atteint (§7.12).
 		await expect(page.getByTestId('etat-vide')).toContainText('Track introuvable')
 		await expect(page.getByTestId('board')).toHaveCount(0)
-		await capturer(page, 'board-anonyme-1440', 'CRM-041')
+		await capturer(page, 'board-track-introuvable-1440', 'CRM-041')
 	})
 })
 
@@ -707,6 +721,9 @@ test.describe('vidéo du glisser-déposer', () => {
 		})
 		const page = await contexte.newPage()
 		const anomaliesConsole = surveillerConsole(page)
+		// Ce contexte est le sien, et non celui de la fixture : la session s'y ouvre à part
+		// (`CRM-092` T9).
+		await connecterAvecLeLabs(page, 'viewer@p2enjoy.test')
 		await servirBoard(page)
 		await servirDeplacement(page, {
 			ok: true,

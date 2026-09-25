@@ -2,6 +2,8 @@
 // @verifies docs/SPEC-channels.md §5 (ce que la barre lit), §5.1 (route), §5.2 (pilules), §5.3
 // @verifies docs/DESIGN_SYSTEM.md §4 (onglets), §5.8 (états), §7 (paliers), §12.1, §12.4
 // @verifies docs/SPEC-webapp.md §7 (états), §8 (responsive) ; CLAUDE.md §16 (vérification visuelle)
+// @verifies CRM-092 (docs/BACKLOG.md) tranche T9 — docs/SPEC-session-sso.md §8.7 : ces scénarios se
+//           connectent, aucune page n'étant rendue sans session (docs/JOURNAL.md décision 601)
 //
 // Ces scénarios s'exécutent contre le **build de production** servi par `vite preview`, et contre
 // la vraie API. Rien n'est simulé, sauf là où c'est explicitement dit — et alors c'est le
@@ -20,11 +22,20 @@
 
 import {
 	autoriserErreursConsole,
+	connecterAvecLeLabs,
 	ERREUR_CONNEXION_REFUSEE,
 	expect,
 	test,
 } from './fixtures'
 import { PALIERS, capturer } from './captures'
+
+// RÉVISÉ PAR `CRM-092` T9 (docs/SPEC-session-sso.md §8.7, décision 601) : sans session, aucune page de
+// l'application n'est rendue. Ces scénarios, écrits pour un visiteur anonyme à réponses substituées, se
+// connectent d'abord — comme LECTRICE, le profil le plus proche de l'anonyme qu'ils supposaient :
+// aucun geste d'écriture ne lui est offert.
+test.beforeEach(async ({ page }) => {
+	await connecterAvecLeLabs(page, 'viewer@p2enjoy.test')
+})
 
 const UNITE = 'CRM-021'
 
@@ -102,25 +113,29 @@ test.describe('la route d’un track interroge réellement le backend', () => {
 		expect(channels).toContain('order=position')
 	})
 
+	// RÉVISÉ PAR `CRM-092` T9 : le track non consenti était celui de l'anonyme. Pour une session, un
+	// slug qu'aucun track ne porte produit le même écran (le scénario suivant le prouve).
 	test('elle n’interroge pas `channels` lorsque le track n’est pas consenti', async ({ page }) => {
 		// Émettre une requête dont on sait qu'elle rendra `[]` est une requête de trop.
 		let channelsDemandes = false
 		page.on('request', (requete) => {
 			if (requete.url().includes('/rest/v1/channels')) channelsDemandes = true
 		})
-		await page.goto('/tracks/conseil-ia')
+		await page.goto('/tracks/ce-track-nexiste-pas')
 		await expect(page.getByTestId('etat-vide')).toBeVisible()
 		expect(channelsDemandes).toBe(false)
 	})
 })
 
 test.describe('états de la route d’un track', () => {
-	test('appelant anonyme : « track introuvable », qui est le refus réel du backend', async ({
+	// RÉVISÉ PAR `CRM-092` T9 : l'anonyme n'atteint plus cette route. « Track introuvable » reste
+	// l'écran d'un track que la RLS ne consent pas, indiscernable d'un slug inexistant — c'est par
+	// celui-ci que la session l'atteint.
+	test('track non consenti : « track introuvable », qui est le refus réel du backend', async ({
 		page,
 	}) => {
-		// C'est l'état réel du produit pour un visiteur sans session. Il est capturé comme tel.
 		await page.setViewportSize({ width: 1440, height: 900 })
-		await page.goto('/tracks/conseil-ia')
+		await page.goto('/tracks/ce-track-nexiste-pas')
 		const vide = page.getByTestId('etat-vide')
 		await expect(vide).toBeVisible()
 		await expect(vide).toContainText('Track introuvable')
@@ -209,13 +224,18 @@ test.describe('onglets réels, servis par le réseau', () => {
 		await expect(page).toHaveURL(/\/tracks\/conseil-ia\/grands-comptes$/)
 		// L'onglet courant se signale par `aria-current`, pas seulement par la couleur.
 		await expect(page.getByTestId('onglet-channel').nth(1)).toHaveAttribute('aria-current', 'page')
+		// RÉVISÉE PAR `CRM-092` T9 : les étapes et les cards sont demandées à la vraie API par la
+		// LECTRICE, et non plus par un anonyme. Ce qu'elle reçoit pour ce channel est l'état vide du
+		// board, jamais une erreur ; « aucune étape » était le refus opposé à l'anonyme.
+		//
 		// ASSERTION RETOURNÉE PAR `CRM-041`, non retirée (mécanisme de la décision 51). Elle
 		// attendait « Aucune card dans ce channel », l'état vide que `CRM-021` avait posé faute de
 		// board. Le board existe ; ouvrir un onglet ouvre désormais **ses colonnes**. Ici, seuls
 		// les channels sont substitués : les étapes du workflow sont demandées à la vraie API, qui
 		// n'en consent aucune à un anonyme — l'écran dit donc que le workflow ne déclare aucune
 		// étape, et c'est le refus réel du backend (docs/SPEC-workflow-engine.md §7.11).
-		await expect(page.getByTestId('etat-vide')).toContainText('aucune étape')
+		await expect(page.getByTestId('etat-vide')).toContainText('Aucune card dans ce channel')
+		await expect(page.getByTestId('etat-erreur')).toHaveCount(0)
 		await capturer(page, 'channel-ouvert-1440', UNITE)
 	})
 

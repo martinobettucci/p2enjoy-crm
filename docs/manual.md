@@ -268,8 +268,8 @@ L'écran se lit en trois zones :
 
 ### 3.2 Ce que vous voyez aujourd'hui, et pourquoi
 
-Sans session, l'application affiche les états vides et « introuvable » que le serveur oppose à un
-visiteur anonyme. Après connexion, la barre latérale montre les tracks consentis à votre compte ;
+Sans session, aucune page de l'application ne s'affiche : toute adresse mène à l'écran de
+connexion (chapitre 1). Après connexion, la barre latérale montre les tracks consentis à votre compte ;
 leurs onglets ouvrent les channels, le tableau et les fiches réels. Une administratrice du jeu de
 démonstration voit par exemple « Conseil & IA », « Studio web » et « Formation ».
 
@@ -311,8 +311,8 @@ une donnée manquante à corriger. Dans l'espace de démonstration, Sophie Dupon
 d'organisation et Élise Fabre n'a pas d'email.
 
 **Qui voit quoi.** Tout membre de l'espace de travail lit le carnet, y compris un compte en lecture
-seule. Sans session, la page s'affiche vide : le serveur ne consent aucune ligne à un visiteur
-anonyme, et c'est la règle générale du produit — un refus se manifeste par l'absence de donnée,
+seule. Une ligne que votre compte n'a pas le droit de lire n'apparaît simplement pas, et c'est la
+règle générale du produit — un refus se manifeste par l'absence de donnée,
 jamais par un message d'erreur technique.
 
 **Ce que le carnet ne fait pas encore, et c'est dit plutôt que laissé à deviner.** Il permet de
@@ -813,8 +813,7 @@ Deux messages, et ils ne disent pas la même chose :
 - **« Aucune échéance dans les 7 prochains jours »** — personne n'en a, parmi ce que vous pouvez
   lire. Il n'y a rien à élargir, et l'écran n'offre donc aucun bouton.
 
-Sans session, c'est le **premier** de ces deux messages que vous lisez : « mes affaires » n'a pas de
-sujet tant que personne n'est connecté.
+Sans session, la page ne s'affiche pas : son adresse mène à l'écran de connexion (chapitre 1).
 
 ## 3 quinquies. Les affaires figées : ce qui dort depuis trop longtemps
 
@@ -1190,8 +1189,9 @@ deviner.
 
 **Un second geste y est offert : mettre l'affaire à la corbeille** (chapitre 4.7 *bis*).
 
-Sans connexion, cette adresse affiche « Card introuvable » : c'est le refus réel du serveur. Après
-connexion, une card consentie ouvre sa fiche et son fil.
+Une card que votre compte ne peut pas lire — ou qui n'existe pas — affiche « Card introuvable » :
+c'est le refus réel du serveur. Une card consentie ouvre sa fiche et son fil. Sans connexion,
+l'adresse mène à l'écran de connexion, qui y ramène une fois connecté.
 
 ### 4.7 ter Les contacts d'une affaire : les rattacher, les détacher
 
@@ -1333,8 +1333,9 @@ déplacement non déclaré, droit d'écriture insuffisant, affaire devenue inacc
 questions restées sans réponse**, nommées par leur libellé. Un refus que l'écran ne connaîtrait pas
 est affiché tel quel, plutôt que traduit à tort.
 
-Sans connexion, cette adresse affiche « Track introuvable ». Après connexion, le tableau réel est
-atteint et les déplacements consentis sont exécutables depuis le menu ou par glisser-déposer.
+Pour un track que votre compte ne peut pas lire, cette adresse affiche « Track introuvable ». Sinon,
+le tableau réel est atteint et les déplacements consentis sont exécutables depuis le menu ou par
+glisser-déposer. Sans connexion, l'adresse mène à l'écran de connexion.
 
 ### 4.9 La vue liste d'un channel
 
@@ -1404,8 +1405,9 @@ aucune affaire : le déplacement reste le geste du tableau (chapitre 4.8), et le
 d'écran. Le **responsable** n'y figure pas non plus, pour le même motif qu'au tableau : aucun nom
 n'est aujourd'hui lisible, et le produit préfère ne rien afficher qu'un identifiant technique.
 
-Sans connexion, cette adresse affiche « Track introuvable », comme pour le tableau. Après
-connexion, la liste réelle est consultable, triable et filtrable.
+Pour un track que votre compte ne peut pas lire, cette adresse affiche « Track introuvable », comme
+pour le tableau. Sinon, la liste réelle est consultable, triable et filtrable. Sans connexion,
+l'adresse mène à l'écran de connexion.
 
 ### 4.9 bis Mettre une affaire en sommeil, et la retrouver
 
@@ -3505,7 +3507,7 @@ y jette un œil et l'on retourne à ce qu'on faisait.
 
 **Qui.** Chacun voit **ses** notifications, et elles seules. Personne d'autre — ni un collègue, ni
 un administrateur de l'espace de travail. La boîte de quelqu'un n'est pas une donnée
-d'exploitation. Sans session ouverte, aucune cloche n'est affichée.
+d'exploitation. Sans session ouverte, aucune page ne s'affiche, cloche comprise.
 
 ### 8.1 Ce que la cloche annonce
 
@@ -3745,7 +3747,8 @@ nécessairement la même liste, et c'est voulu.
   liste tous à l'écran.
 - **Un résultat dont l'écran n'est pas atteignable reste affiché**, marqué « Objet non
   atteignable » et non cliquable — plutôt que de disparaître ou de mener à un écran cassé.
-- **Sans être connecté, la recherche n'existe pas** : ni champ, ni raccourci.
+- **Sans être connecté, la recherche n'existe pas** : aucune page ne s'affiche sans session
+  (chapitre 1).
 
 ## Annexe A — Ce que contient l'espace de démonstration
 
@@ -3820,4 +3823,6 @@ Rappelées ici pour que chaque contribution s'y conforme :
   l'annexe A, où ils sont vérifiés contre la base. Les nombres qui sont des **règles du produit** —
   vingt-cinq lignes par page, dix mille caractères — restent dans leur chapitre.
 - Ces règles sont opposables : `scripts/verify-manual.sh` en vérifie quatre, et
-  `e2e/ui/manuel.spec.ts` exerce les huit adresses citées par le manuel en visiteur anonyme réel.
+  `e2e/ui/manuel.spec.ts` exerce les huit adresses citées par le manuel avec la session réelle de
+  la lectrice du jeu de démonstration (`CRM-092` T9 : un visiteur sans session n'en atteint plus
+  aucune).

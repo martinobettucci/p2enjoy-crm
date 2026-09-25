@@ -29978,3 +29978,34 @@ reste la protection.
 
 **Conséquences.** Tranche T9 de `CRM-092` ; redéploiement de la webapp seule, sans migration.
 
+**T9 mise en œuvre (2026-09-25) — ce que les preuves ont appris.**
+- **La garde a trouvé un défaut qu'elle rendait visible.** `useRenvoiFinSession` acquittait la fin de
+  session dans le même geste que la navigation vers `/connexion`. React Router mène ses navigations
+  en transition : l'acquittement, urgent, était rendu d'abord, sur l'adresse quittée, où
+  `ExigerSession` voyait un anonyme sans fin et le menait à `/connexion` **sans la cause**. Une session
+  refusée à la restauration aurait perdu son message. Rouge d'abord au test unitaire ; l'acquittement
+  attend désormais que la clé d'adresse ait changé.
+- **Aucun scénario anonyme n'a été retiré : tous ont été convertis.** Premier passage des huit fichiers
+  connectés comme lectrice : 92 verts, 32 rouges — tous des preuves de l'anonyme (« Track introuvable »,
+  Inbox refusée, vides de la RLS) ou de la coquille vide. Un track ou une card non consentis deviennent
+  un track ou une card qu'aucune ligne ne porte, indiscernables par construction ; un vide rendu par la
+  RLS devient une réponse `200 []` substituée. Quatre autres specs cliquaient « Se connecter » dans
+  l'en-tête : elles constatent la redirection.
+- **Le guide de démarrage compte, et une substitution doit le savoir.** Avec une session, l'accueil
+  lit aussi `workspaces` et `tracks` par des requêtes `HEAD` de comptage (`webapp/src/lib/demarrage.ts`).
+  D'où deux refus au lieu d'un, une panne répartie entre deux lecteurs, et une première requête de
+  `tracks` qui n'était plus celle de la barre. Surtout, une réponse substituée sans `Content-Range` —
+  et sans `Access-Control-Expose-Headers`, l'API étant sur une autre origine — faisait dire au guide
+  « Cette étape n'a pas pu être vérifiée » : trouvé en **regardant** les captures, vertes au test.
+- **Le manuel décrivait neuf fois un parcours anonyme** (§3.2, §3 ter, §3 quater.6, §4.7, §4.8, §4.9,
+  §8, recherche, règles de rédaction) : révisé, et `manuel.spec.ts` éprouve désormais, avec la session
+  de la lectrice, « Non classés » à zéro sans panne (§4.15) et la bascule de portée de « Ma journée ».
+  `verify-manual` : 136 contrôles, aucune anomalie.
+- **La campagne complète a trouvé ce que la recherche par fichier avait manqué** : 729/759. Trois
+  fichiers mêlaient des blocs connectés et des blocs anonymes (`liste-cards` : sept blocs, 25
+  scénarios ; `contacts` : trois ; `ma-journee` : un) — la recherche des fichiers « sans
+  `connecterAvecLeLabs` » ne pouvait pas les voir. Les blocs anonymes se connectent comme lectrice ;
+  les deux vides de « Ma journée », qu'aucun profil du seed ne produit, sont atteints par une lecture
+  des affaires servie vide, NOMMÉE. Un second rouge de « Ma journée » (trois sections attendues, deux
+  rendues) était la dérive des échéances d'un seed posé la veille : seed réappliqué, sans lien avec T9.
+

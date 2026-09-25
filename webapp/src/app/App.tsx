@@ -3,6 +3,8 @@
 // @spec CRM-091 (docs/BACKLOG.md) — route publique de retour du SSO (docs/SPEC-auth.md §10.3)
 // @spec CRM-092 (docs/BACKLOG.md) — une session qui prend fin ramène à `/connexion`, qui dit pourquoi
 //       (docs/SPEC-session-sso.md §8.4)
+// @spec CRM-092 (docs/BACKLOG.md) tranche T9 — aucune page sans session (docs/SPEC-session-sso.md §8.7,
+//       docs/DESIGN_SYSTEM.md §5.12, docs/manual.md chapitre 1, docs/JOURNAL.md décision 601)
 // @spec CRM-075 (docs/BACKLOG.md) — route de l'administration de l'arborescence
 // @spec CRM-076 (docs/BACKLOG.md) — route de l'éditeur de workflows
 // @spec CRM-059 (docs/BACKLOG.md) — route de l'écran d'état de la messagerie
@@ -16,12 +18,12 @@
 // pas de toucher à ce fichier, et le titre affiché par l'en-tête ne peut pas diverger de la
 // route rendue, puisqu'ils viennent de la même description.
 
-import { lazy, Suspense, useEffect } from 'react'
-import { BrowserRouter, Route, Routes, useLocation, useNavigate } from 'react-router'
+import { lazy, Suspense, useEffect, useRef, type ReactNode } from 'react'
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t } from '../i18n'
 import { AppShell } from './AppShell'
-import { FournisseurAuthentification, useAuthentification } from './Authentification'
+import { FournisseurAuthentification, useAuthentification, type EchecSession } from './Authentification'
 import { ChargementAuthentification, EcranConnexion } from './EcranConnexion'
 import { RetourSso } from './RetourSso'
 import { CHEMIN_RETOUR_SSO } from '../lib/sso'
@@ -194,35 +196,72 @@ export function App() {
 	)
 }
 
+/** Les deux seules adresses rendues sans session (docs/SPEC-session-sso.md §8.7). */
+function estAdressePublique(chemin: string): boolean {
+	return chemin === '/connexion' || chemin === CHEMIN_RETOUR_SSO
+}
+
+/**
+ * Sans session, aucune page de l'application (docs/SPEC-session-sso.md §8.7) : toute adresse autre que
+ * `/connexion` et l'URL de retour mène à `/connexion`, qui ramènera à l'adresse demandée. Pendant la
+ * restauration, seul l'écran de chargement est rendu. Une fin de session est laissée à
+ * `useRenvoiFinSession`, qui dit pourquoi — la redirection simple l'écraserait.
+ *
+ * C'est une aide d'interface : la base refuse déjà tout à l'anonyme, et c'est elle qui fait foi.
+ */
+export function ExigerSession({ children }: { readonly children: ReactNode }) {
+	const { etat, fin } = useAuthentification()
+	const location = useLocation()
+	if (etat.statut === 'chargement') return <ChargementAuthentification />
+	if (etat.statut === 'authentifie' || estAdressePublique(location.pathname)) return children
+	if (fin !== null) return null
+	return <Navigate to="/connexion" replace state={{ retour: `${location.pathname}${location.search}` }} />
+}
+
 /**
  * Une session qui prend fin sans geste de la personne — refus au rafraîchissement, session LeLabs
  * échue, panne prolongée — mène à `/connexion`, qui dit pourquoi, en retenant l'adresse quittée
- * (docs/SPEC-session-sso.md §8.4). La fin est acquittée aussitôt : elle n'est rendue qu'une fois.
+ * (docs/SPEC-session-sso.md §8.4). La fin n'est rendue qu'une fois.
+ *
+ * Elle n'est acquittée qu'une fois la navigation FAITE — la clé d'adresse a changé —, et non dans le
+ * même geste (décision 601) : React Router mène ses navigations en transition, et un acquittement
+ * urgent était rendu d'abord, sur l'adresse quittée, où `ExigerSession` voyait un anonyme sans fin
+ * et le menait à `/connexion` sans la cause.
  */
 export function useRenvoiFinSession() {
 	const { fin, acquitterFin } = useAuthentification()
 	const navigate = useNavigate()
 	const location = useLocation()
+	const renvoi = useRef<{ readonly fin: EchecSession; readonly cle: string } | null>(null)
 	useEffect(() => {
-		if (fin === null) return
-		const publique = location.pathname === '/connexion' || location.pathname === CHEMIN_RETOUR_SSO
-		const retour = publique ? undefined : `${location.pathname}${location.search}`
+		if (fin === null) {
+			renvoi.current = null
+			return
+		}
+		if (renvoi.current?.fin === fin) {
+			if (renvoi.current.cle !== location.key) acquitterFin()
+			return
+		}
+		renvoi.current = { fin, cle: location.key }
+		const retour = estAdressePublique(location.pathname) ? undefined : `${location.pathname}${location.search}`
 		navigate('/connexion', {
 			replace: true,
 			state: { erreurSso: fin.nature, ...(fin.adresse === undefined ? {} : { adresse: fin.adresse }), retour },
 		})
-		acquitterFin()
-	}, [acquitterFin, fin, location.pathname, location.search, navigate])
+	}, [acquitterFin, fin, location.key, location.pathname, location.search, navigate])
 }
 
 function RoutesApplication() {
-	const { etat } = useAuthentification()
-	const location = useLocation()
 	useRenvoiFinSession()
-	if (etat.statut === 'chargement') {
-		return <ChargementAuthentification />
-	}
+	return (
+		<ExigerSession>
+			<RoutesPages />
+		</ExigerSession>
+	)
+}
 
+function RoutesPages() {
+	const location = useLocation()
 	return (
 		<Suspense fallback={<ChargementRoute />}>
 			<Routes>

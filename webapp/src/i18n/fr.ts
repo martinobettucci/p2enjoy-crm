@@ -45,7 +45,6 @@ export const fr = {
 	'header.breadcrumb.aria': "Fil d'Ariane",
 	'header.workspace.unknown': 'Aucun workspace accessible',
 	'header.workspace.loading': 'Chargement du workspace',
-	'header.auth.login': 'Se connecter',
 	'header.auth.logout': 'Se déconnecter',
 	'header.auth.logout.error': "La déconnexion n'a pas abouti. Réessayez.",
 

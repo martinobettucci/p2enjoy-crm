@@ -6,6 +6,8 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.12, §7, §8 ; CLAUDE.md §10, §15 et §16
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
+// @verifies CRM-092 (docs/BACKLOG.md) tranche T9 — docs/SPEC-session-sso.md §8.7 : sans session, aucune page
+//           de l'application ; l'adresse demandée mène à /connexion (docs/JOURNAL.md décision 601)
 //
 // Ces scénarios sont la jonction que les preuves d’interface précédentes ne pouvaient pas faire :
 // le navigateur obtient sa session par la vraie connexion, puis parle à la vraie API sans aucune
@@ -79,9 +81,10 @@ test('le retour à la card publie réellement le commentaire de l’administratr
 }) => {
 	const corps = `Preuve utilisateur CRM-009 ${randomUUID()}`
 	try {
+		// RÉVISÉ PAR `CRM-092` T9 : sans session, l'adresse de la card mène d'elle-même à
+		// `/connexion`, qui la retient ; plus de « Card introuvable » ni de lien à cliquer.
 		await page.goto(ROUTE_AUDIT)
-		await expect(page.getByTestId('etat-vide')).toContainText('Card introuvable')
-		await page.getByRole('link', { name: 'Se connecter' }).click()
+		await expect(page).toHaveURL(/\/connexion$/)
 		await connecter(page, ADMIN)
 
 		await expect(page).toHaveURL(new RegExp(`${ROUTE_AUDIT}$`))
@@ -118,8 +121,9 @@ test('le viewer voit la card mais son commentaire est refusé sans perdre son te
 }) => {
 	const corps = `Refus viewer CRM-009 ${randomUUID()}`
 	try {
+		// RÉVISÉ PAR `CRM-092` T9 : l'adresse mène d'elle-même à `/connexion`, qui la retient.
 		await page.goto(ROUTE_MAINTENANCE)
-		await page.getByRole('link', { name: 'Se connecter' }).click()
+		await expect(page).toHaveURL(/\/connexion$/)
 		await connecter(page, VIEWER)
 
 		await expect(page).toHaveURL(new RegExp(`${ROUTE_MAINTENANCE}$`))

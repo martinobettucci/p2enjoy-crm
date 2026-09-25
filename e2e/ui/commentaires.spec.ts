@@ -5,6 +5,8 @@
 //           §13.10 (ce que le panneau montre), §13.14 (preuves attendues)
 // @verifies docs/DESIGN_SYSTEM.md §5.10 (panneau de commentaires), §5.3 (deux colonnes),
 //           §5.8 (états), §7 (paliers), §8 (accessibilité) ; CLAUDE.md §16 (vérification visuelle)
+// @verifies CRM-092 (docs/BACKLOG.md) tranche T9 — docs/SPEC-session-sso.md §8.7 : ces scénarios se
+//           connectent, aucune page n'étant rendue sans session (docs/JOURNAL.md décision 601)
 //
 // Ces scénarios s'exécutent contre le **build de production** servi par `vite preview`, et contre
 // la vraie API. Rien n'est simulé, sauf là où c'est explicitement dit — et alors c'est le
@@ -21,6 +23,7 @@
 
 import {
 	autoriserErreursConsole,
+	connecterAvecLeLabs,
 	ERREUR_RESSOURCE_HTTP,
 	expect,
 	test,
@@ -28,6 +31,14 @@ import {
 	type Route,
 } from './fixtures'
 import { PALIERS, capturer } from './captures'
+
+// RÉVISÉ PAR `CRM-092` T9 (docs/SPEC-session-sso.md §8.7, décision 601) : sans session, aucune page de
+// l'application n'est rendue. Ces scénarios, écrits pour un visiteur anonyme à réponses substituées, se
+// connectent d'abord — comme LECTRICE, le profil le plus proche de l'anonyme qu'ils supposaient :
+// aucun geste d'écriture ne lui est offert.
+test.beforeEach(async ({ page }) => {
+	await connecterAvecLeLabs(page, 'viewer@p2enjoy.test')
+})
 
 const ROUTE_COMMENTAIRES = '**/rest/v1/card_comments*'
 const ROUTE_VALEURS = '**/rest/v1/card_field_values*'
@@ -44,6 +55,8 @@ const WORKSPACE = '5eed0000-0000-4000-8000-000000000001'
 const TRACK = { id: '5eed0000-0000-4000-8000-000000000023', slug: 'formation', nom: 'Formation' }
 const CHANNEL = { id: '5eed0000-0000-4000-8000-000000000036', slug: 'inter-entreprises' }
 const ADRESSE = `/tracks/${TRACK.slug}/${CHANNEL.slug}/cards/${CARD}`
+/** Une card qu'aucune ligne ne porte : la session l'obtient comme une card non consentie (`CRM-092` T9). */
+const ADRESSE_INEXISTANTE = `/tracks/${TRACK.slug}/${CHANNEL.slug}/cards/f0000000-0000-4000-8000-000000000404`
 
 const ETAPE = { id: 'etape-1', label: 'Prospection' }
 
@@ -169,17 +182,21 @@ async function servirEcran(page: Page, commentaires: unknown = COMMENTAIRES_SERV
 const fil = (page: Page) => page.getByRole('region', { name: 'Fil de cette affaire' })
 
 test.describe('le panneau interroge réellement `card_comments`', () => {
-	// L'APPELANT ANONYME N'ATTEINT JAMAIS LE PANNEAU, et c'est mesuré ici plutôt qu'affirmé. Sans
-	// aucune substitution et sans connexion, la route rend « card introuvable » — refus réel du
+	// UNE CARD QUE LA SESSION NE VOIT PAS N'ATTEINT JAMAIS LE PANNEAU, et c'est mesuré ici plutôt
+	// qu'affirmé. Sans aucune substitution, la route rend « card introuvable » — refus réel du
 	// backend —, le panneau n'est donc pas monté, et AUCUNE requête ne part vers
 	// `card_comments`. C'est ce que le premier scénario constate ; le second substitue la card, et
 	// la seule chose qu'il ne substitue pas est précisément la requête qu'il observe.
-	test('sans session, l’écran n’atteint pas le panneau : aucune requête ne part', async ({ page }) => {
+	//
+	// RÉVISÉ PAR `CRM-092` T9 : ce scénario exerçait l'anonyme, qui n'atteint plus la route. La card
+	// invisible est désormais une card qu'aucune ligne ne porte — indiscernable, pour l'écran, d'une
+	// card que la RLS refuse.
+	test('card invisible : l’écran n’atteint pas le panneau, aucune requête ne part', async ({ page }) => {
 		let vue = false
 		page.on('request', (requete) => {
 			if (requete.url().includes('/rest/v1/card_comments')) vue = true
 		})
-		await page.goto(ADRESSE)
+		await page.goto(ADRESSE_INEXISTANTE)
 		await expect(page.getByTestId('etat-vide')).toContainText('Card introuvable')
 		expect(vue, 'aucun fil n’est demandé pour une card que l’appelant ne voit pas').toBe(false)
 	})
@@ -188,7 +205,7 @@ test.describe('le panneau interroge réellement `card_comments`', () => {
 		page,
 	}) => {
 		// Tout est substitué SAUF `card_comments` : la requête observée est celle que le produit
-		// émet, et la réponse est celle que la pile rend réellement à un appelant anonyme.
+		// émet, et la réponse est celle que la pile rend réellement à la lectrice (`CRM-092` T9).
 		await page.route(ROUTE_VALEURS, servir(VALEURS_SERVIES))
 		await page.route(ROUTE_CHAMPS, servir(CHAMPS_SERVIS))
 		await page.route(ROUTE_REGLES, servir(REGLES_SERVIES))
@@ -259,6 +276,9 @@ test.describe('fil chargé (réponse réseau substituée, docs/DESIGN_SYSTEM.md 
 	test('le fil vide le dit, plutôt que de rester muet', async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
 		await servirEcran(page, [])
+		// RÉVISÉ PAR `CRM-092` T9 : les faits de la card du seed sont servis à la lectrice ; le fil
+		// vide exige donc que les événements le soient aussi. L'anonyme les recevait vides d'office.
+		await page.route('**/rest/v1/card_events*', servir([]))
 		await page.goto(ADRESSE)
 		await expect(fil(page).getByTestId('etat-vide')).toBeVisible()
 		// Le vide d'un fil unifié ne parle plus des seuls commentaires : les deux sources sont

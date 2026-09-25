@@ -2,6 +2,8 @@
 // @verifies docs/SPEC-tracks.md §7 (ce que la barre latérale lit, et ce qu'elle affiche)
 // @verifies docs/DESIGN_SYSTEM.md §4 (barre latérale), §5.8 (états), §7 (paliers)
 // @verifies docs/SPEC-webapp.md §7 (états), §8 (responsive) ; CLAUDE.md §16 (vérification visuelle)
+// @verifies CRM-092 (docs/BACKLOG.md) tranche T9 — docs/SPEC-session-sso.md §8.7 : ces scénarios se
+//           connectent, aucune page n'étant rendue sans session (docs/JOURNAL.md décision 601)
 //
 // Ces scénarios s'exécutent contre le **build de production** servi par `vite preview`, et contre
 // la vraie API. Rien n'est simulé, sauf là où c'est explicitement dit — et alors c'est le
@@ -10,16 +12,24 @@
 // CE QUE CES SCÉNARIOS PROUVENT, ET CE QU'ILS NE PROUVENT PAS.
 //
 // Ils prouvent que la barre latérale interroge réellement `public.tracks`, et qu'elle affiche
-// l'état que le backend lui rend. Le cas sans substitution de ce fichier exerce explicitement
-// l'anonyme et son vide réel ; `e2e/ui/authentification.spec.ts` constate que les trois tracks du
-// seed apparaissent après une connexion réelle.
+// l'état que le backend lui rend. Depuis `CRM-092` T9, aucun anonyme n'atteint la barre : le cas
+// sans substitution lit les trois tracks du seed que la lectrice reçoit, et le vide se prouve par
+// une réponse `200 []` substituée.
 //
 // Le rendu chargé — pilules, couleurs, icônes, repli — est éprouvé par
 // `webapp/src/app/SectionTracks.test.tsx`, qui monte le composant réel. C'est la seule preuve
 // déterministe des variantes visuelles ; il complète le parcours connecté sans le remplacer.
 
-import { autoriserErreursConsole, ERREUR_RESSOURCE_HTTP, expect, test } from './fixtures'
+import { autoriserErreursConsole, connecterAvecLeLabs, ERREUR_RESSOURCE_HTTP, expect, test } from './fixtures'
 import { PALIERS, capturer } from './captures'
+
+// RÉVISÉ PAR `CRM-092` T9 (docs/SPEC-session-sso.md §8.7, décision 601) : sans session, aucune page de
+// l'application n'est rendue. Ces scénarios, écrits pour un visiteur anonyme à réponses substituées, se
+// connectent d'abord — comme LECTRICE, le profil le plus proche de l'anonyme qu'ils supposaient :
+// aucun geste d'écriture ne lui est offert.
+test.beforeEach(async ({ page }) => {
+	await connecterAvecLeLabs(page, 'viewer@p2enjoy.test')
+})
 
 const ROUTE_TRACKS = '**/rest/v1/tracks*'
 
@@ -52,6 +62,25 @@ const TRACKS_SERVIS = [
 /** Les cinq jetons, dans l'ordre où `TRACKS_SERVIS` les rend. */
 const JETONS_SERVIS = ['brand', 'success', 'accent', 'danger', 'neutral'] as const
 
+/**
+ * Sert des tracks à la forme exacte de PostgREST, `Content-Range` compris (`CRM-092` T9) : avec une
+ * session, le guide de démarrage de l'accueil COMPTE les tracks par une requête `HEAD`, dont le
+ * nombre vient de cet en-tête. Servir un corps sans lui faisait dire au guide que l'étape « n'a pas
+ * pu être vérifiée » — un état que la capture aurait montré à tort.
+ */
+const servirTracks = (corps: readonly unknown[]) => (route: import('@playwright/test').Route) =>
+	route.fulfill({
+		status: 200,
+		contentType: 'application/json',
+		// L'API est sur une autre origine que la webapp : l'en-tête n'est lisible par le script que
+		// s'il est EXPOSÉ, comme la vraie pile l'expose.
+		headers: {
+			'content-range': corps.length === 0 ? '*/0' : `0-${corps.length - 1}/${corps.length}`,
+			'access-control-expose-headers': 'Content-Range',
+		},
+		body: JSON.stringify(corps),
+	})
+
 test.describe('la barre latérale interroge réellement `tracks`', () => {
 	test('une requête part vers `/rest/v1/tracks`, filtrée et ordonnée', async ({ page }) => {
 		// La preuve porte sur la requête **émise par l'application construite**, pas sur celle
@@ -64,10 +93,12 @@ test.describe('la barre latérale interroge réellement `tracks`', () => {
 		})
 
 		await page.goto('/')
-		await expect(page.getByTestId('tracks-vides')).toBeVisible()
+		await expect(page.getByTestId('entree-track').first()).toBeVisible()
 
 		expect(requetes.length).toBeGreaterThan(0)
-		const url = new URL(requetes[0] as string)
+		// RÉVISÉ PAR `CRM-092` T9 : avec une session, le guide de démarrage compte aussi les tracks, par
+		// une requête sans ordre qui peut partir la première. Celle de la barre est celle qui ordonne.
+		const url = new URL((requetes.find((u) => new URL(u).searchParams.has('order')) ?? requetes[0]) as string)
 		// docs/SPEC-tracks.md §4 : les tracks archivés sont masqués **côté serveur**.
 		expect(url.searchParams.get('archived_at')).toBe('is.null')
 		// docs/SPEC-tracks.md §3 : l'ordre est celui de `position`, puis du nom.
@@ -76,11 +107,14 @@ test.describe('la barre latérale interroge réellement `tracks`', () => {
 		expect(url.searchParams.get('select')).toContain('icon')
 	})
 
-	test('l’appelant anonyme n’obtient aucun track, et l’interface le dit', async ({ page }) => {
+	// RÉVISÉ PAR `CRM-092` T9 : ce scénario exerçait l'anonyme, qui n'atteint plus la barre. Le vide
+	// qu'il prouvait — `200` et `[]`, la forme du refus par la RLS — est désormais servi par le
+	// réseau (docs/DESIGN_SYSTEM.md §12.5) ; ce que l'écran en fait n'a pas changé.
+	test('aucun track consenti (`200 []`) : l’interface le dit, sans erreur ni refus', async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
+		await page.route(ROUTE_TRACKS, servirTracks([]))
 		await page.goto('/')
 
-		// C'est le refus réel du backend, pas un état d'attente : `200` et `[]`.
 		await expect(page.getByTestId('tracks-vides')).toBeVisible()
 		await expect(page.getByTestId('tracks-vides')).toHaveText('Aucun track')
 		await expect(page.getByTestId('entree-track')).toHaveCount(0)
@@ -101,13 +135,7 @@ test.describe('états provoqués sur le réseau (docs/DESIGN_SYSTEM.md §5.8)', 
 		page,
 	}) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
-		await page.route(ROUTE_TRACKS, (route) =>
-			route.fulfill({
-				status: 200,
-				contentType: 'application/json',
-				body: JSON.stringify(TRACKS_SERVIS),
-			}),
-		)
+		await page.route(ROUTE_TRACKS, servirTracks(TRACKS_SERVIS))
 		await page.goto('/')
 
 		const entrees = page.getByTestId('entree-track')
@@ -151,13 +179,7 @@ test.describe('états provoqués sur le réseau (docs/DESIGN_SYSTEM.md §5.8)', 
 		page,
 	}) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
-		await page.route(ROUTE_TRACKS, (route) =>
-			route.fulfill({
-				status: 200,
-				contentType: 'application/json',
-				body: JSON.stringify(TRACKS_SERVIS),
-			}),
-		)
+		await page.route(ROUTE_TRACKS, servirTracks(TRACKS_SERVIS))
 		await page.goto('/')
 		await expect(page.getByTestId('entree-track')).toHaveCount(TRACKS_SERVIS.length)
 
@@ -213,7 +235,7 @@ test.describe('états provoqués sur le réseau (docs/DESIGN_SYSTEM.md §5.8)', 
 
 		await expect(page.getByTestId('squelette').first()).toBeVisible()
 		await capturer(page, 'tracks-chargement-1440', 'CRM-020')
-		await expect(page.getByTestId('tracks-vides')).toBeVisible({ timeout: 10_000 })
+		await expect(page.getByTestId('entree-track').first()).toBeVisible({ timeout: 10_000 })
 	})
 
 	// Un échec du chargement des tracks ne doit pas être avalé par la barre latérale : elle n'a
@@ -231,7 +253,10 @@ test.describe('états provoqués sur le réseau (docs/DESIGN_SYSTEM.md §5.8)', 
 
 		await expect(page.getByTestId('etat-refus')).toBeVisible()
 		await expect(page.getByTestId('etat-erreur')).toHaveCount(0)
-		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[403]])
+		// DEUX REFUS, ET NON UN, RÉVISÉ PAR `CRM-092` T9 : avec une session, l'accueil lit aussi
+		// `tracks` pour le guide de démarrage (`webapp/src/lib/demarrage.ts`), que l'anonyme ne
+		// chargeait pas. Le compte reste FIGÉ, pour qu'une lecture de plus se voie ici.
+		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[403], ERREUR_RESSOURCE_HTTP[403]])
 		await capturer(page, 'tracks-refus-1440', 'CRM-020')
 	})
 })
@@ -242,13 +267,7 @@ test.describe('paliers responsive (docs/DESIGN_SYSTEM.md §7)', () => {
 			page,
 		}) => {
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
-			await page.route(ROUTE_TRACKS, (route) =>
-				route.fulfill({
-					status: 200,
-					contentType: 'application/json',
-					body: JSON.stringify(TRACKS_SERVIS),
-				}),
-			)
+			await page.route(ROUTE_TRACKS, servirTracks(TRACKS_SERVIS))
 			await page.goto('/')
 
 			// Sous le palier « colonne », la barre est un tiroir : il faut l'ouvrir pour la voir.

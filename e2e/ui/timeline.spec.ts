@@ -6,6 +6,8 @@
 //           §5.8 (états systématiques), §7 (paliers), §8 (accessibilité), §12.5 (réponses
 //           substituées)
 // @verifies CLAUDE.md §11 (aucune persistance côté client), §16 (vérification visuelle)
+// @verifies CRM-092 (docs/BACKLOG.md) tranche T9 — docs/SPEC-session-sso.md §8.7 : ces scénarios se
+//           connectent, aucune page n'étant rendue sans session (docs/JOURNAL.md décision 601)
 //
 // CE QUE CE FICHIER PROUVE SANS AUCUNE SUBSTITUTION : qu'un appelant anonyme n'obtient aucune
 // card, et qu'aucune requête d'événements ne part alors — l'écran ne devine rien.
@@ -15,8 +17,16 @@
 // consentie est désormais atteint après connexion dans `e2e/ui/authentification.spec.ts`, et son
 // contrat de lecture reste prouvé hors interface par `e2e/api/timeline.spec.ts`.
 
-import { expect, test, type Page, type Route } from './fixtures'
+import { connecterAvecLeLabs, expect, test, type Page, type Route } from './fixtures'
 import { PALIERS, capturer } from './captures'
+
+// RÉVISÉ PAR `CRM-092` T9 (docs/SPEC-session-sso.md §8.7, décision 601) : sans session, aucune page de
+// l'application n'est rendue. Ces scénarios, écrits pour un visiteur anonyme à réponses substituées, se
+// connectent d'abord — comme LECTRICE, le profil le plus proche de l'anonyme qu'ils supposaient :
+// aucun geste d'écriture ne lui est offert.
+test.beforeEach(async ({ page }) => {
+	await connecterAvecLeLabs(page, 'viewer@p2enjoy.test')
+})
 
 const ROUTE_EVENEMENTS = '**/rest/v1/card_events*'
 const ROUTE_COMMENTAIRES = '**/rest/v1/card_comments*'
@@ -34,6 +44,8 @@ const WORKSPACE = '5eed0000-0000-4000-8000-000000000001'
 const TRACK = { id: '5eed0000-0000-4000-8000-000000000023', slug: 'formation', nom: 'Formation' }
 const CHANNEL = { id: '5eed0000-0000-4000-8000-000000000036', slug: 'inter-entreprises' }
 const ADRESSE = `/tracks/${TRACK.slug}/${CHANNEL.slug}/cards/${CARD}`
+/** Une card qu'aucune ligne ne porte : la session l'obtient comme une card non consentie (`CRM-092` T9). */
+const ADRESSE_INEXISTANTE = `/tracks/${TRACK.slug}/${CHANNEL.slug}/cards/f0000000-0000-4000-8000-000000000404`
 
 const ETAPE_PROSPECTION = { id: 'etape-1', label: 'Prospection' }
 const ETAPE_RELANCE = { id: 'etape-2', label: 'Relance' }
@@ -180,17 +192,20 @@ async function servirEcran(
 const fil = (page: Page) => page.getByRole('region', { name: 'Fil de cette affaire' })
 const filtres = (page: Page) => page.getByRole('group', { name: 'Filtres du fil' })
 
-test.describe('sans aucune substitution : l’appelant anonyme', () => {
+// RÉVISÉ PAR `CRM-092` T9 : ce scénario exerçait l'anonyme, qui n'atteint plus la route. La card
+// invisible est désormais une card qu'aucune ligne ne porte — indiscernable, pour l'écran, d'une card
+// que la RLS refuse.
+test.describe('sans aucune substitution : une card que la session ne voit pas', () => {
 	test('n’obtient aucune affaire, et aucune requête d’événements ne part', async ({ page }) => {
 		const requetes: string[] = []
 		page.on('request', (requete) => {
 			if (requete.url().includes('/rest/v1/card_events')) requetes.push(requete.url())
 		})
 
-		await page.goto(ADRESSE)
+		await page.goto(ADRESSE_INEXISTANTE)
 		await expect(page.getByTestId('etat-vide')).toBeVisible()
 
-		// La card n'existe pas pour un anonyme : le panneau n'est jamais monté, donc rien n'est
+		// La card n'existe pas pour cette session : le panneau n'est jamais monté, donc rien n'est
 		// demandé. Une requête émise ici signalerait un écran qui devine ce qu'il n'a pas lu.
 		expect(requetes, 'une requête d’événements est partie sans card').toHaveLength(0)
 	})

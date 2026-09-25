@@ -567,10 +567,14 @@ personnes inscrites (§9.1), et la coquille n'a pas à être montrée à qui n'y
   l'absence de cloche et de champ de recherche qui l'accompagnait (`docs/DESIGN_SYSTEM.md` §5.43 et la
   recherche globale) : ils sont **retirés** avec leurs preuves dans la même tranche, plutôt que gardés
   comme code mort.
-- **Les specs d'interface qui naviguaient sans session** — huit fichiers, cent trois scénarios, à
-  réponses substituées — **se connectent** désormais par la fixture `connecterAvecLeLabs` ; les
-  substitutions restent, elles isolent un état (`docs/DESIGN_SYSTEM.md` §12.5). Un scénario qui
-  prouvait un rendu anonyme de la coquille est retiré avec son objet, et nommé au journal.
+- **Les specs d'interface qui naviguaient sans session** — huit fichiers entiers, cent trois scénarios à
+  réponses substituées, et des blocs de trois autres (`liste-cards`, `ma-journee`, `contacts`), que la
+  campagne complète a trouvés — **se connectent** désormais par la fixture `connecterAvecLeLabs`, comme
+  lectrice ; les substitutions restent, elles isolent un état (`docs/DESIGN_SYSTEM.md` §12.5). Un
+  scénario qui prouvait l'état d'un anonyme est **converti**, jamais retiré : un track ou une card
+  non consentis deviennent un track ou une card qu'aucune ligne ne porte — même écran, par
+  construction —, et un vide rendu par la RLS devient une réponse `200 []` substituée. Les quatre
+  specs qui cliquaient « Se connecter » dans l'en-tête constatent la redirection à la place.
 
 ## 9. Interface
 

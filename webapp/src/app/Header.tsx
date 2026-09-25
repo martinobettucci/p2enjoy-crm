@@ -9,6 +9,8 @@
 // @spec docs/SPEC-webapp.md §5.1 ; docs/SPEC-auth.md §9.1, §9.4
 // @spec docs/SPEC-identite.md §7 (identité d'en-tête)
 // @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §8.5 (déconnexion), §9.3 (en-tête)
+// @spec CRM-092 (docs/BACKLOG.md) tranche T9, docs/SPEC-session-sso.md §8.7 — sans session, aucune coquille :
+//       l'en-tête n'a plus de rendu anonyme (docs/JOURNAL.md décision 601)
 //
 // L'en-tête porte le fil d'Ariane et, sous 1024 px, l'ouverture du tiroir de navigation.
 //
@@ -19,9 +21,9 @@
 // L'identité de session vient de l'échangeur de session depuis `CRM-092` — plus de GoTrue — et offre
 // toujours son action réelle : « Se déconnecter » ferme la session serveur (§8.5).
 
-import { LogIn, LogOut, Menu } from 'lucide-react'
+import { LogOut, Menu } from 'lucide-react'
 import { useCallback, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router'
+import { useNavigate } from 'react-router'
 import { t } from '../i18n'
 import { Avatar } from '../components/ui/Avatar'
 import { SkeletonListe } from '../components/ui/Skeleton'
@@ -146,9 +148,7 @@ export function Header({ titreRoute, onOuvrirTiroir, etatWorkspaces }: Propriete
 				].join(' ')}
 			>
 				<ContexteWorkspace etat={etatWorkspaces} />
-				{/* La cloche ne rend rien sans session — l'en-tête rend « Se connecter » à sa place
-				    (§5.12), et une cloche offerte à un anonyme annoncerait une boîte qu'aucune
-				    session ne peut remplir. */}
+				{/* Sans session, aucune coquille n'est rendue (`CRM-092` T9, §5.12). */}
 				<ClocheNotifications />
 				<ControleSession />
 			</div>
@@ -158,24 +158,13 @@ export function Header({ titreRoute, onOuvrirTiroir, etatWorkspaces }: Propriete
 
 function ControleSession() {
 	const { etat, profilCourant, deconnecter } = useAuthentification()
-	const location = useLocation()
 	const navigate = useNavigate()
 	const [enCours, setEnCours] = useState(false)
 	const [erreur, setErreur] = useState(false)
 
-	if (etat.statut !== 'authentifie') {
-		return (
-			<Link
-				to="/connexion"
-				state={{ retour: `${location.pathname}${location.search}` }}
-				className="inline-flex items-center justify-center gap-2 min-h-[var(--size-target)] px-3 rounded-sm text-brand font-medium hover:bg-hover"
-			>
-				<LogIn aria-hidden="true" size={18} />
-				<span className="hidden md:inline">{t('header.auth.login')}</span>
-				<span className="sr-only md:hidden">{t('header.auth.login')}</span>
-			</Link>
-		)
-	}
+	// Sans session, `ExigerSession` ne rend aucune coquille (docs/SPEC-session-sso.md §8.7) : il n'y a
+	// plus de rendu anonyme à offrir ici.
+	if (etat.statut !== 'authentifie') return null
 	const profil =
 		profilCourant.statut === 'pret' && profilCourant.donnees !== null
 			? profilCourant.donnees
