@@ -98,6 +98,10 @@ CRM, à l'adresse d'où vous étiez parti si vous aviez commencé depuis une fic
 l'aller, le bouton affiche « Redirection vers LeLabs… » ; au retour, une carte grisée annonce
 « Connexion LeLabs en cours » le temps que le CRM vérifie votre connexion.
 
+**Ouvrir une adresse du CRM sans être connecté** — un lien reçu, un favori — affiche l'écran de
+connexion, et rien d'autre : ni menu, ni page vide. Une fois connecté avec LeLabs, vous arrivez sur
+la page demandée.
+
 ### 1.1 Qui peut entrer
 
 Un compte LeLabs n'ouvre le CRM que si **trois** conditions sont réunies :

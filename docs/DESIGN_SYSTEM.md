@@ -1050,6 +1050,13 @@ s'ajoutent, elles ne les remplacent pas.
 L'écran de connexion est une surface autonome, sans barre latérale ni onglets : tant qu'aucune
 session n'existe, ces repères ne contiennent que le refus anonyme et détournent de l'action utile.
 
+**SANS SESSION, AUCUNE COQUILLE — RÉVISÉ le 2026-09-24 par `CRM-092` T9** (`docs/SPEC-session-sso.md`
+§8.7, décision 601). Toute adresse de l'application ouverte sans session mène à cet écran, qui ramène
+à l'adresse demandée une fois la connexion faite ; seules `/connexion` et l'URL de retour du SSO sont
+publiques. La coquille — navigation, titres, états vides — n'est plus jamais rendue à un anonyme, et
+ses rendus anonymes (« Se connecter » dans l'en-tête, absence de cloche et de champ de recherche,
+§5.43 et recherche globale) sont retirés avec elle.
+
 **RÉVISÉ le 2026-09-24 par `CRM-092` T5** (`docs/SPEC-session-sso.md` §9, décisions 578, 586, 587). Le
 SSO de LeLabs est la seule source d'identité : le formulaire par adresse et mot de passe de `CRM-009`
 et la seconde voie « ou » de `CRM-091` quittent l'écran, qui ne porte plus qu'**une** action.
@@ -4016,9 +4023,9 @@ un œil, on suit un lien, on revient à ce qu'on faisait.
   serait une donnée perdue. C'est la règle du §5.15 pour l'empreinte tronquée à douze caractères —
   l'œil reçoit la forme, la technologie d'assistance reçoit la valeur.
 
-- **SANS SESSION, LA CLOCHE N'EST PAS RENDUE.** L'en-tête rend « Se connecter » à sa place (§5.12).
-  Une cloche offerte à un anonyme annoncerait une boîte qu'aucune session ne peut remplir, et son
-  compteur serait un zéro permanent — la commande morte que le §5.10 proscrit.
+- **SANS SESSION, LA CLOCHE N'EST PAS RENDUE** — **sans objet depuis `CRM-092` T9** : sans session,
+  aucune coquille n'est rendue (§5.12). La règle d'origine disait : l'en-tête rend « Se connecter » à
+  sa place ; une cloche offerte à un anonyme annoncerait une boîte qu'aucune session ne peut remplir.
 
 - **LE PANNEAU EST ANCRÉ À LA CLOCHE, DANS LE FLUX DU DOCUMENT — AUCUNE MODALE.** Le §5 n'en
   déclare aucune, et `CRM-043` puis `CRM-075` l'ont tranché deux fois. Surface `--color-surface`,
@@ -4357,9 +4364,8 @@ parce qu'elle porte sur le produit entier, et non sur l'utilisateur.
   quand elle est pleine, en `--text-xs` `--color-text-3`. C'est la règle du §5.43 pour « les 20 plus
   récentes » et du §5.15 pour « 3 affaires listées sur 13 ».
 
-- **SANS SESSION, LE CHAMP N'EST PAS RENDU**, et le raccourci est inactif. C'est la règle du §5.43
-  pour la cloche : la RPC refuse l'anonyme par le **privilège**, et un champ offert à un anonyme
-  promettrait une recherche que la base refuse — la commande morte du §5.10.
+- **SANS SESSION, LE CHAMP N'EST PAS RENDU** — **sans objet depuis `CRM-092` T9** : sans session,
+  aucune coquille n'est rendue (§5.12). La RPC refuse toujours l'anonyme par le **privilège**.
 
 - **`ÉCHAP` REFERME ET REND LE FOCUS**, un clic hors du panneau le referme sans rendre le focus — la
   distinction que le §5.43 fait entre fermer et annuler, reprise sans changement.

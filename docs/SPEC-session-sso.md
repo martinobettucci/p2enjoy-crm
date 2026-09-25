@@ -548,6 +548,30 @@ comme pour `vite preview` du harnais —, la cible venant de l'environnement du 
 (`API_RELAIS_SESSION`), jamais du bundle. En production, ce relais n'existe pas : Caddy sert la
 webapp et relaie `/functions/v1/*` sur la même origine.
 
+### 8.7 Aucune page sans session — tranche T9 (décision 601)
+
+Relevé en production le 2026-09-24 : un visiteur sans session ouvrait toute adresse de l'application
+et en voyait la coquille — navigation, titres, états vides, « Se connecter » dans l'en-tête. La base
+ne lui rendait rien (RLS et privilèges, vérifié par requêtes directes), mais l'accès est réservé aux
+personnes inscrites (§9.1), et la coquille n'a pas à être montrée à qui n'y entre pas.
+
+- **Deux adresses seulement sont publiques** : `/connexion` et l'URL de retour du SSO
+  (`/auth/retour`). Toute autre adresse, sans session, **mène à `/connexion`** en remplaçant l'entrée
+  d'historique, et retient l'adresse demandée — chemin et paramètres — comme adresse de retour : la
+  connexion y ramène (§4, le mécanisme de retour existant).
+- **Pendant la restauration** (§8.4), l'écran de chargement existant est rendu ; rien de l'application
+  ne l'est avant que la session soit connue.
+- **La règle est une aide d'interface, pas une protection** : la base refuse déjà tout à l'anonyme, et
+  c'est elle qui fait foi (`CLAUDE.md` §10). La preuve d'API qui le montre reste celle du §13.
+- **Les rendus anonymes de la coquille deviennent inaccessibles** — « Se connecter » dans l'en-tête, et
+  l'absence de cloche et de champ de recherche qui l'accompagnait (`docs/DESIGN_SYSTEM.md` §5.43 et la
+  recherche globale) : ils sont **retirés** avec leurs preuves dans la même tranche, plutôt que gardés
+  comme code mort.
+- **Les specs d'interface qui naviguaient sans session** — huit fichiers, cent trois scénarios, à
+  réponses substituées — **se connectent** désormais par la fixture `connecterAvecLeLabs` ; les
+  substitutions restent, elles isolent un état (`docs/DESIGN_SYSTEM.md` §12.5). Un scénario qui
+  prouvait un rendu anonyme de la coquille est retiré avec son objet, et nommé au journal.
+
 ## 9. Interface
 
 ### 9.1 `/connexion` — `docs/DESIGN_SYSTEM.md` §5.12, révisé en T5
@@ -698,6 +722,7 @@ responsable a demandé une fois `CRM-092` entièrement vérifiée (décision 584
 | Unitaire, Deno | `supabase/functions/session/*.test.ts` — **révisés par la décision 586** : corps d'ouverture invalide ; code refusé par LeLabs ; échange avec le secret et le vérificateur exacts ; trois gestes, chemin inconnu, méthode ; poignée absente, inconnue, échue — `204`, jamais un refus (décision 587) ; `session_expiree` qui supprime la session et efface le cookie ; admission rejouée à la prolongation ; cookie `HttpOnly`, `SameSite=Strict`, `Path`, `Secure` sur `https` seulement ; chiffrement AES-GCM : aller-retour, vecteur unique, altération refusée ; échéance globale ; et toujours : jeton mal formé ; `alg` `none`, `HS256`, `HS512`, `RS384` refusés **sans** lecture de clé ; `kid` inconnu ; signature altérée d'un octet ; `iss`, `azp`, `typ` différents ; `exp` passé d'une seconde ; `iat` futur ; `sub` non UUID ; adresse non vérifiée ; `verified` absent, puis présent parmi d'autres rôles dans un autre ordre ; découverte d'un autre émetteur ; délai dépassé ; jeton interne : revendications exactes, signature vérifiable par `JWT_SECRET`, `exp` = min des deux ; dictionnaire du §5.4 complet. Clés RSA et EC tirées par WebCrypto dans le test, jamais versées |
 | pgTAP | `sessions_sso` : aucune politique, aucun privilège pour `anon` et `authenticated`, empreinte unique, cascade depuis `profiles` ; les quatre fonctions de session réservées à `service_role`, admission appliquée à l'ouverture et au renouvellement, suppression d'une session non admise ; `workspace_invitations` : contraintes, clé, trois politiques et privilèges ; `ouvrir_session_sso` : attente consommée en appartenance au bon rôle, profil créé une fois, profil existant non réécrit, appartenance existante non rétrogradée, aucune trace sans attente, rejeu stable, `EXECUTE` refusé à `anon` et `authenticated` ; `profiles` sans clé vers `auth.users` |
 | T8 (décision 597) | pgTAP `0073_admin_du_domaine.test.sql` (29) : revendication lue au seul booléen `true` ; membre et administrateur de tout espace sans ligne, lecture des espaces et écriture réservée à l'administrateur acceptées, refusées sans elle ; droits fins d'un channel ; un tiers jugé sur ses appartenances ; admission du porteur et profil créé ; contrats. Unitaire : présence d'`admin` rapportée quels que soient l'ordre et les autres rôles, `admin` sans `verified` refusé, revendication et drapeau à l'ouverture comme à la prolongation. API (`session.spec.ts`) : l'exploitante admise sans attente, administratrice sans appartenance, la lectrice refusée ; un compte jetable dont `admin` est retiré perd l'accès à la prolongation suivante. E2E : l'exploitante reçoit le geste de modération d'un propos d'autrui, capture. Harnais : `verify-session-sso` rougit si la revendication est ignorée, accordée sans le rôle, appliquée à un tiers, ou posée par l'échangeur sans le rôle |
+| T9 (décision 601) | Unitaire : sans session, chaque adresse de l'application mène à `/connexion` avec l'adresse demandée — chemin et paramètres — comme retour ; `/connexion` et l'URL de retour restent rendues ; pendant la restauration, l'écran de chargement seul. E2E : une adresse profonde ouverte sans session mène à `/connexion` sans rien montrer de la coquille, puis la connexion ramène à cette adresse ; les huit specs portées, vertes. Production : la même adresse ouverte sans session mène à `/connexion` |
 | INC-249 (décision 593) | pgTAP `0072_admission_patiente.test.sql` : attente non administratrice dans un espace vide laissée **en suspens**, `en_suspens` compté, aucun profil ni appartenance créés ; attente `admin` consommée dans le même espace vide ; l'attente en suspens consommée à une ouverture suivante, une fois l'administrateur entré ; une personne admise ailleurs entre malgré une attente en suspens. API (`session.spec.ts`) : compte jetable attendu comme lecteur dans un espace vide → `403 attente_administrateur` avec l'adresse, attente intacte, **jamais `502`** ; puis admis après l'administrateur. Unitaire : dictionnaire du §5.5 et message du §9.2. E2E : la surface d'attente et son message, avec un compte jetable. Visuel : capture de cette attente |
 | Base neuve | T1 : un cluster jetable **sans GoTrue**, `0074` appliquée deux fois : `auth.uid()` rend le `sub` de `request.jwt.claims` (K11 levée), propriétaire inchangé. T6 : la pile entière recréée sans GoTrue par `./resetMe.sh`, seed et preuves d'API rejoués — une lecture RLS réelle aboutit ; `0077` rejouée est sans effet ; aucun conteneur `auth`, `auth-templates` ni `inbucket` |
 | pgTAP, T6 | `0071_retrait_gotrue.test.sql` : aucun trigger utilisateur sur `auth.users`, `app.handle_new_user()` absente, un profil naît sans ligne `auth.users`. Les assertions de `0001` et `0023` qui éprouvaient le trigger sont **retirées avec leur objet**, et nommées au journal avec ce qui les remplace |
@@ -727,6 +752,7 @@ passée au SSO.
 | **T6** | Retrait de GoTrue, d'`auth-templates` et d'Inbucket (§2), migration `0077` (§7.5) et suite `0071`, dix suites pgTAP portées, `404` de Caddy, retrait de `verify-auth.sh`, scripts d'environnement et de cellule (`proposer.sh` sans SMTP, `verifier.sh`, `verify-stack.sh`, `restore-drill.sh`), `docs/SPEC-auth.md` réduit à un renvoi | T4, T5 |
 | **T7** | `README.md`, `docs/DAT.md`, `docs/SPEC-deploiement-spark.md`, `docs/manual.md` chapitre 17, `docs/PROD_MIGRATIONS.md` (§12), `CHANGELOG.md` ; campagne des harnais touchés | T6 |
 | **T8** | Règle du domaine sur `admin` (§6.1 bis, décision 597) : revendication `lelabs_admin` posée par l'échangeur ; migration `0079_admin_du_domaine.sql` — `app.est_admin_lelabs()`, les trois fonctions d'appartenance, `ouvrir_session_sso` qui admet le porteur, `public.mon_role_espace` — et sa suite pgTAP ; `roles.ts` ; realm de développement (`viewer@` sans `admin`, `exploitante@`) ; preuves unitaires, d'API — admis sans attente, geste d'administration accepté, rôle retiré puis prolongation refusée ou déchue —, d'interface et `verify-session-sso` qui rougit si la revendication est ignorée ou accordée sans le rôle ; `docs/SSO-client-lelabs-crm.md`, `docs/SPEC-permissions-rls.md`, `docs/PROD_MIGRATIONS.md` | T7 |
+| **T9** | Aucune page sans session (§8.7, décision 601) : garde des routes, retrait des rendus anonymes de la coquille, portage des huit specs d'interface qui naviguaient sans session, preuves unitaire et E2E, `docs/DESIGN_SYSTEM.md` §5.12, `docs/manual.md` chapitre 1 ; redéploiement de la webapp seule | T8 |
 
 ## 15. Hors périmètre
 

@@ -29958,3 +29958,23 @@ le responsable ; connexion réelle du responsable ; notes du Spark reproposées.
 baseline de production est la migration 79, plus aucune migration en attente. `CRM-092` reste `[~]`
 jusqu'à l'acceptation des notes du Spark en console et au relevé mémoire, ports et disque.
 
+## décision 601 — aucune page sans session (`CRM-092` T9)
+
+*2026-09-25. Relevé par le responsable en production (« sérieux, je peux naviguer l'app en étant
+anonyme ? »). Spécifié avant le code : `docs/SPEC-session-sso.md` §8.7, §13, §14.*
+
+**Observations.** Sans session, `https://crm.lelabs.tech/` rendait la coquille entière : navigation,
+titres, états vides, « Aucun workspace accessible », « Se connecter » dans l'en-tête. Requêtes
+directes à la clé anonyme sur douze tables : dix rendent `[]`, `sessions_sso` et
+`mail_outbound_identities` rendent `42501` — **aucune donnée ne fuit**. Cause : `RoutesApplication`
+ne garde aucune route ; seule une fin de session ramenait à `/connexion`. Le comportement date des
+premières unités, où la coquille anonyme servait les preuves d'interface à réponses substituées.
+
+**Décision.** Deux adresses publiques, `/connexion` et l'URL de retour ; toute autre, sans session,
+mène à `/connexion` avec l'adresse demandée comme retour, par le mécanisme existant. Les rendus
+anonymes de la coquille sont retirés plutôt que gardés en code mort. Les huit specs d'interface qui
+naviguaient sans session (103 scénarios) se connectent. La garde est une aide d'interface ; la base
+reste la protection.
+
+**Conséquences.** Tranche T9 de `CRM-092` ; redéploiement de la webapp seule, sans migration.
+

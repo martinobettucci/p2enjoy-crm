@@ -14531,6 +14531,10 @@ connexion réelle de `martino@p2enjoy.studio` aboutie après les opérations du 
       l'échangeur ; `e2e:api` **1080/1080** ; `verify-session-sso` **57/57** ; `connexion.spec.ts`
       **14/14**, captures relues. Campagne d'interface **749/756** : sept rouges étrangers, relus dans
       leur trace et rattachés à INC-189 (journal, décision 593).
+- [ ] **T9** — aucune page sans session (décision 601, `docs/SPEC-session-sso.md` §8.7 et §14) : garde
+      des routes, rendus anonymes de la coquille retirés, huit specs d'interface portées à la
+      connexion, preuves unitaire et E2E, redéploiement de la webapp. Relevé par le responsable en
+      production le 2026-09-24 : un anonyme naviguait dans la coquille, la base ne lui rendant rien.
 - [x] **T8** — règle du domaine sur `admin` (décision 597, §6.1 bis et §7.7) : revendication
       `lelabs_admin`, migration `0079`, `mon_role_espace`, `roles.ts`, realm de développement
       (`viewer@` sans `admin`, `exploitante@`), preuves et harnais. Mesuré : pgTAP **73 fichiers,
