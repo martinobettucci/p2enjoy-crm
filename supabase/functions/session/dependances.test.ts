@@ -8,7 +8,7 @@ import { DELAI_APPEL_MS, creerDependances, delaiAppel, lireConfiguration } from 
 const ENV: Record<string, string> = {
 	SSO_OIDC_ISSUER: 'http://sso.localhost:18480/realms/lelabs/',
 	SSO_OIDC_CLIENT_ID: ' lelabs-crm-serveur ',
-	SSO_OIDC_CLIENT_SECRET: 'secret-du-client',
+	OIDC_CLIENT_SECRET: 'secret-du-client',
 	JWT_SECRET: 'secret',
 	SUPABASE_URL: 'http://kong:8000/',
 	SUPABASE_SERVICE_ROLE_KEY: 'cle-de-service',
@@ -36,7 +36,7 @@ describe('lireConfiguration', () => {
 		})
 	})
 
-	it.each(['SSO_OIDC_ISSUER', 'SSO_OIDC_CLIENT_ID', 'SSO_OIDC_CLIENT_SECRET', 'JWT_SECRET'])('rend null sans %s', (nom) => {
+	it.each(['SSO_OIDC_ISSUER', 'SSO_OIDC_CLIENT_ID', 'OIDC_CLIENT_SECRET', 'JWT_SECRET'])('rend null sans %s', (nom) => {
 		expect(lireConfiguration(lire({ ...ENV, [nom]: '' }))).toBeNull()
 	})
 })

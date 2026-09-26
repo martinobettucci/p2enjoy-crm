@@ -91,7 +91,7 @@ fi
 if printf '%s\n' "$environment" | grep -q '^JWT_SECRET=' \
 	&& printf '%s\n' "$environment" | grep -q '^SSO_OIDC_ISSUER=' \
 	&& printf '%s\n' "$environment" | grep -q '^SSO_OIDC_CLIENT_ID=' \
-	&& printf '%s\n' "$environment" | grep -q '^SSO_OIDC_CLIENT_SECRET=.'; then
+	&& printf '%s\n' "$environment" | grep -q '^OIDC_CLIENT_SECRET=.'; then
 	ok "le conteneur reçoit JWT_SECRET et la configuration SSO de l'échangeur, secret du client compris"
 else
 	fail "JWT_SECRET ou SSO_OIDC_* absents du conteneur : l'échangeur de session ne peut ni échanger ni signer"

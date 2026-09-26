@@ -30054,4 +30054,9 @@ ne lit plus que le nouveau nom. Conséquence : en production, la variable doit e
 AVANT la livraison ; l'ordre est écrit au §12 bis de `docs/SPEC-session-sso.md`. En développement,
 l'amorçage recopie l'ancienne valeur sous le nouveau nom, sans quoi le realm et l'échangeur
 divergeraient.
+- **Mis en œuvre le 2026-09-26.** Renommage dans le code, Compose, le realm de développement, les
+  harnais et la documentation en vigueur — l'historique garde l'ancien nom. L'amorçage gagne un mode
+  `copie:<ANCIEN>:<longueur>` : `./runDev.sh` a recopié la valeur du poste, Keycloak et `functions` recréés,
+  connexions réelles vertes. Un test d'environnement triait les noms : `OIDC_CLIENT_SECRET` ne se range
+  plus au même endroit — attente révisée, non contournée.
 

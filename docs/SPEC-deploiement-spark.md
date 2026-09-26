@@ -167,7 +167,7 @@ GoTrue — sont **retirées** par `CRM-092` T6 avec lui, ainsi que les options `
 |---|---|
 | `POSTGRES_PASSWORD`, `JWT_SECRET`, `SECRET_KEY_BASE`, `REALTIME_DB_ENC_KEY`, `MAIL_SYNC_INTERNAL_TOKEN`, `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD`, `S3_PROTOCOL_ACCESS_KEY_ID`, `S3_PROTOCOL_ACCESS_KEY_SECRET` | **tirés dans la cellule** par `scripts/spark/proposer.sh`, aux longueurs de `env_bootstrap_dev` |
 | `SERVICE_ROLE_KEY` | dérivé de `JWT_SECRET` par le même script |
-| `SSO_OIDC_CLIENT_SECRET` | **demandé vide** (`CRM-092`, décision 586) : LeLabs l'émet et l'affiche une seule fois à l'administrateur du realm, qui le saisit lui-même. Remis au seul worker `session`. `SMTP_USER` et `SMTP_PASS` sont retirés avec GoTrue |
+| `OIDC_CLIENT_SECRET` | **demandé vide** (`CRM-092`, décision 586) : LeLabs l'émet et l'affiche une seule fois à l'administrateur du realm, qui le saisit lui-même. Remis au seul worker `session`. `SMTP_USER` et `SMTP_PASS` sont retirés avec GoTrue |
 
 ### 4.4 Proposer, sans jamais appliquer
 
@@ -190,7 +190,7 @@ propositions **sous** le bloc posé par le plan de contrôle dans `/etc/spark/en
   sur une proposition de route pendante.
 - `--demandes-seules` (`CRM-092`, décision 590) **repose les demandes** à une cellule en service,
   sans tirer aucun secret : `SSO_OIDC_ISSUER` et `SSO_OIDC_CLIENT_ID` si la cellule ne les a pas à la
-  valeur attendue, `SSO_OIDC_CLIENT_SECRET` en demande vide s'il manque ou est vide — un secret posé
+  valeur attendue, `OIDC_CLIENT_SECRET` en demande vide s'il manque ou est vide — un secret posé
   n'est jamais redemandé. Des fichiers réels, il ne lit que la présence d'un nom ; il n'affiche que des
   noms. Il nomme les variables retirées de la pile (GoTrue, `SMTP_*`) que la cellule porte encore,
   inertes : un import ne retire jamais rien. Avec `--route-seule`, c'est la seule proposition possible

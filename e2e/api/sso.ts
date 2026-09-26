@@ -130,7 +130,7 @@ export async function connexionPkce(adresse: string, options: OptionsConnexion =
 		redirect_uri: obtenu.redirectUri,
 		code_verifier: obtenu.verificateur,
 	})
-	if (obtenu.client === CLIENT) champs.set('client_secret', lireEnv('SSO_OIDC_CLIENT_SECRET'))
+	if (obtenu.client === CLIENT) champs.set('client_secret', lireEnv('OIDC_CLIENT_SECRET'))
 	const jeton = await fetch(`${EMETTEUR}/protocol/openid-connect/token`, {
 		method: 'POST',
 		headers: { 'content-type': 'application/x-www-form-urlencoded' },

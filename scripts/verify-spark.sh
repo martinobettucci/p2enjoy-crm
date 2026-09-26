@@ -88,7 +88,7 @@ fichiers_conformes() {
 		MINIO_ROOT_PASSWORD=$(gen_hex 20)
 		S3_PROTOCOL_ACCESS_KEY_ID=$(gen_hex 16)
 		S3_PROTOCOL_ACCESS_KEY_SECRET=$(gen_hex 32)
-		SSO_OIDC_CLIENT_SECRET=$(gen_hex 32)
+		OIDC_CLIENT_SECRET=$(gen_hex 32)
 	EOF
 }
 
@@ -443,7 +443,7 @@ if out=$(proposer "$P"); then
 
 	# Le secret du client confidentiel est une DEMANDE, jamais un tirage : LeLabs l'émet, et seul
 	# l'administrateur du realm le saisit (`CRM-092`, décision 586).
-	if grep -q '^SSO_OIDC_CLIENT_SECRET=$' "$P/secrets.?" && ! grep -q '^SSO_OIDC_CLIENT_SECRET=$' "$P/env.?"; then
+	if grep -q '^OIDC_CLIENT_SECRET=$' "$P/secrets.?" && ! grep -q '^OIDC_CLIENT_SECRET=$' "$P/env.?"; then
 		ok "secret du client SSO laissé en demande, parmi les secrets, sans valeur tirée"
 	else
 		fail "secret du client SSO tiré, absent, ou proposé hors des secrets"
@@ -458,7 +458,7 @@ if out=$(proposer "$P"); then
 	mkdir -p "$I"
 	sed -n "/^$MARQUE\$/,\$p" "$P/env.?" | grep -E '^[A-Z0-9_]+=' > "$I/env"
 	sed -n "/^$MARQUE\$/,\$p" "$P/secrets.?" | grep -E '^[A-Z0-9_]+=' \
-		| sed -e 's/^SSO_OIDC_CLIENT_SECRET=$/SSO_OIDC_CLIENT_SECRET=secret-saisi-par-le-realm/' > "$I/secrets"
+		| sed -e 's/^OIDC_CLIENT_SECRET=$/OIDC_CLIENT_SECRET=secret-saisi-par-le-realm/' > "$I/secrets"
 	out=$(prod_spark "$I/env" "$I/secrets" "$I/run")
 	case "$out" in *"démon Docker ne répond pas"*) ok "propositions importées : toutes les gardes franchies" ;;
 		*) fail "propositions incomplètes au regard du contrat : $(printf '%s' "$out" | grep -E 'manquante|vide|définir|ERREUR' | head -n 3 | tr '\n' ' ')" ;; esac
@@ -499,14 +499,14 @@ proposer "$P" --smtp-port 2587 >/dev/null && fail "option SMTP retirée encore a
 cellule_vierge "$P"
 fichiers_conformes "$P"
 sed -i -e 's/^SSO_OIDC_CLIENT_ID=.*/SSO_OIDC_CLIENT_ID=lelabs-crm/' -e 's#^SSO_OIDC_ISSUER=.*#SSO_OIDC_ISSUER=https://oauth.lelabs.tech/realms/lelabs#' "$P/env"
-sed -i '/^SSO_OIDC_CLIENT_SECRET=/d' "$P/secrets"
+sed -i '/^OIDC_CLIENT_SECRET=/d' "$P/secrets"
 printf 'SMTP_HOST=smtp.exemple.tld\nADDITIONAL_REDIRECT_URLS=https://crm.exemple.tld\n' >> "$P/env"
 printf 'SMTP_PASS=VALEUR-SMTP-TEMOIN\n' >> "$P/secrets"
 reels_avant=$(sha256sum "$P/env" "$P/secrets")
 if out=$(proposer "$P" --demandes-seules); then
 	props_env=$(sed -n "/^$MARQUE\$/,\$p" "$P/env.?" | grep -E '^[A-Z0-9_]+=' | tr '\n' ';')
 	props_secrets=$(sed -n "/^$MARQUE\$/,\$p" "$P/secrets.?" | grep -E '^[A-Z0-9_]+=' | tr '\n' ';')
-	[ "$props_env" = "SSO_OIDC_CLIENT_ID=lelabs-crm-serveur;" ] && [ "$props_secrets" = "SSO_OIDC_CLIENT_SECRET=;" ] \
+	[ "$props_env" = "SSO_OIDC_CLIENT_ID=lelabs-crm-serveur;" ] && [ "$props_secrets" = "OIDC_CLIENT_SECRET=;" ] \
 		&& ok "--demandes-seules, cellule en service : le client serveur et la demande de son secret, rien d'autre" \
 		|| fail "--demandes-seules : variables « $props_env » secrets « $props_secrets »"
 	[ -z "$(grep -vE '^#|^$' "$P/routes.?")" ] && [ "$(sha256sum "$P/env" "$P/secrets")" = "$reels_avant" ] \
@@ -540,7 +540,7 @@ cellule_vierge "$P"
 fichiers_conformes "$P"
 sed -i -e 's/^SSO_OIDC_CLIENT_ID=.*/SSO_OIDC_CLIENT_ID="lelabs-crm"/' \
 	-e 's#^SSO_OIDC_ISSUER=.*#SSO_OIDC_ISSUER="https://oauth.lelabs.tech/realms/lelabs"#' "$P/env"
-sed -i 's/^SSO_OIDC_CLIENT_SECRET=.*/SSO_OIDC_CLIENT_SECRET="secret-guillemets-temoin"/' "$P/secrets"
+sed -i 's/^OIDC_CLIENT_SECRET=.*/OIDC_CLIENT_SECRET="secret-guillemets-temoin"/' "$P/secrets"
 if out=$(proposer "$P" --demandes-seules); then
 	props_env=$(sed -n "/^$MARQUE\$/,\$p" "$P/env.?" | grep -E '^[A-Z0-9_]+=' | tr '\n' ';')
 	props_secrets=$(sed -n "/^$MARQUE\$/,\$p" "$P/secrets.?" | grep -E '^[A-Z0-9_]+=' | tr '\n' ';')
@@ -553,10 +553,10 @@ fi
 cellule_vierge "$P"
 fichiers_conformes "$P"
 sed -i 's#^SSO_OIDC_ISSUER=.*#SSO_OIDC_ISSUER="https://oauth.lelabs.tech/realms/lelabs"#' "$P/env"
-sed -i 's/^SSO_OIDC_CLIENT_SECRET=.*/SSO_OIDC_CLIENT_SECRET=""/' "$P/secrets"
+sed -i 's/^OIDC_CLIENT_SECRET=.*/OIDC_CLIENT_SECRET=""/' "$P/secrets"
 if out=$(proposer "$P" --demandes-seules); then
 	props_secrets=$(sed -n "/^$MARQUE\$/,\$p" "$P/secrets.?" | grep -E '^[A-Z0-9_]+=' | tr '\n' ';')
-	[ "$props_secrets" = "SSO_OIDC_CLIENT_SECRET=;" ] \
+	[ "$props_secrets" = "OIDC_CLIENT_SECRET=;" ] \
 		&& ok "--demandes-seules : un secret réduit à \"\" est vide, et il est demandé" \
 		|| fail "--demandes-seules : secret \"\" tenu pour posé — secrets « $props_secrets »"
 else

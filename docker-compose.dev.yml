@@ -169,7 +169,7 @@ services:
       # Client CONFIDENTIEL du CRM (`CRM-092`, décision 586) : identifiant et secret du `.env`, les mêmes
       # noms qu'en production ; le secret est tiré au hasard par `./runDev.sh`, jamais versé.
       SSO_OIDC_CLIENT_ID: ${SSO_OIDC_CLIENT_ID}
-      SSO_OIDC_CLIENT_SECRET: ${SSO_OIDC_CLIENT_SECRET}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET}
     volumes:
       - ./keycloak/realm-lelabs.json:/opt/keycloak/data/import/realm-lelabs.json:ro,z
     ports:

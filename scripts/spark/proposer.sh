@@ -167,12 +167,12 @@ if [ "$DEMANDES_SEULES" = 1 ]; then
 		done
 	} >> "$PROPOSITION_ENV"
 	if ! { [ -f "$SPARK_SECRETS_FILE" ] \
-		&& grep -qE "^SSO_OIDC_CLIENT_SECRET=(\"[^\"]|'[^']|[^\"'])" "$SPARK_SECRETS_FILE"; }; then
+		&& grep -qE "^OIDC_CLIENT_SECRET=(\"[^\"]|'[^']|[^\"'])" "$SPARK_SECRETS_FILE"; }; then
 		{
 			printf '\n'
-			ligne SSO_OIDC_CLIENT_SECRET "Secret du client confidentiel chez LeLabs : l'administrateur du realm le saisit." ""
+			ligne OIDC_CLIENT_SECRET "Secret du client confidentiel chez LeLabs : l'administrateur du realm le saisit." ""
 		} >> "$PROPOSITION_SECRETS"
-		proposees="$proposees SSO_OIDC_CLIENT_SECRET"
+		proposees="$proposees OIDC_CLIENT_SECRET"
 	fi
 
 	inertes=""
@@ -228,7 +228,7 @@ URL="https://$DOMAINE"
 	ligne MINIO_ROOT_PASSWORD "Mot de passe du stockage objet interne (MinIO)." "$(gen_hex 20)"
 	ligne S3_PROTOCOL_ACCESS_KEY_ID "Accès au protocole S3 exposé par Supabase Storage." "$(gen_hex 16)"
 	ligne S3_PROTOCOL_ACCESS_KEY_SECRET "Secret du protocole S3 exposé par Supabase Storage." "$(gen_hex 32)"
-	ligne SSO_OIDC_CLIENT_SECRET "Secret du client confidentiel chez LeLabs : l'administrateur du realm le saisit." ""
+	ligne OIDC_CLIENT_SECRET "Secret du client confidentiel chez LeLabs : l'administrateur du realm le saisit." ""
 } >> "$PROPOSITION_SECRETS"
 
 proposer_route
@@ -237,7 +237,7 @@ say "Propositions déposées — rien n'est appliqué"
 info "Variables : $PROPOSITION_ENV"
 info "Secrets   : $PROPOSITION_SECRETS (tirés ici ; aucune valeur n'est affichée)"
 info "Route     : $PROPOSITION_ROUTES — $DOMAINE $PORT tls"
-info "Demande laissée vide : SSO_OIDC_CLIENT_SECRET."
+info "Demande laissée vide : OIDC_CLIENT_SECRET."
 warn "$PROPOSITION_SECRETS vit dans un tmpfs : un redémarrage de la cellule l'efface sans qu'il ait été lu."
 info "Le propriétaire du Spark les relit et les importe depuis la console. Suite :"
 info "docs/SPEC-deploiement-spark.md §5 et docs/PROD_MIGRATIONS.md."

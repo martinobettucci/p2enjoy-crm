@@ -25,7 +25,7 @@ export type ConfigurationSession = {
 	readonly emetteur: string
 	/** Client confidentiel du CRM (`SSO_OIDC_CLIENT_ID`), seul `azp` accepté. */
 	readonly clientId: string
-	/** Secret de ce client (`SSO_OIDC_CLIENT_SECRET`), posé par l'administrateur du realm. */
+	/** Secret de ce client (`OIDC_CLIENT_SECRET`), posé par l'administrateur du realm. */
 	readonly clientSecret: string
 	/** Clé de signature du jeton interne (`JWT_SECRET`), dont dérive aussi la clé de chiffrement. */
 	readonly secretJwt: string

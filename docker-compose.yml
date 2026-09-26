@@ -253,7 +253,7 @@ services:
       retries: 10
       start_period: 10s
     # @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §5.7 — l'échangeur de session, client
-    # confidentiel de LeLabs, échange le code avec `SSO_OIDC_CLIENT_SECRET`, vérifie le jeton contre
+    # confidentiel de LeLabs, échange le code avec `OIDC_CLIENT_SECRET`, vérifie le jeton contre
     # `SSO_OIDC_*` et signe le jeton interne avec `JWT_SECRET`. Le conteneur les reçoit, mais le
     # service principal ne les remet QU'AU worker `session` (`main/environnement.ts`, décisions 584, 586).
     environment:
@@ -263,7 +263,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       SSO_OIDC_ISSUER: ${SSO_OIDC_ISSUER}
       SSO_OIDC_CLIENT_ID: ${SSO_OIDC_CLIENT_ID}
-      SSO_OIDC_CLIENT_SECRET: ${SSO_OIDC_CLIENT_SECRET}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET}
 
   # --- Passerelle ----------------------------------------------------------------------------
   # Kong expose REST, Storage, Realtime et les fonctions edge sur un port unique

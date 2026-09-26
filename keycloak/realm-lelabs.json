@@ -35,7 +35,7 @@
       "enabled": true,
       "publicClient": false,
       "clientAuthenticatorType": "client-secret",
-      "secret": "${SSO_OIDC_CLIENT_SECRET}",
+      "secret": "${OIDC_CLIENT_SECRET}",
       "standardFlowEnabled": true,
       "implicitFlowEnabled": false,
       "directAccessGrantsEnabled": false,

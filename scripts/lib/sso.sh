@@ -19,7 +19,7 @@
 # Variables lues, avec leur défaut : `SSO_OIDC_ISSUER`, `SSO_OIDC_CLIENT_ID`, `SITE_URL` (l'URL de
 # retour est `SITE_URL/auth/retour`, déclarée au realm), `SSO_MOT_DE_PASSE` (`SeedDev2026Local`, le
 # mot de passe publié du realm de développement, docs/SPEC-session-sso.md §10), et
-# `SSO_OIDC_CLIENT_SECRET`, le secret de DÉVELOPPEMENT du client confidentiel, tiré par `./runDev.sh` :
+# `OIDC_CLIENT_SECRET`, le secret de DÉVELOPPEMENT du client confidentiel, tiré par `./runDev.sh` :
 # il accompagne l'échange quand le client est celui du CRM, et lui seul (décision 586).
 #
 # `sso_code_pkce ADRESSE [MOT_DE_PASSE] [CLIENT]` s'arrête au code : elle écrit « code vérificateur
@@ -84,7 +84,7 @@ sso_connexion_pkce() {
 	obtenu=$(sso_code_pkce "$@") || return 1
 	read -r code verificateur retour <<<"$obtenu"
 	if [ "$client" = "${SSO_OIDC_CLIENT_ID:-}" ]; then
-		secret=(--data-urlencode "client_secret=${SSO_OIDC_CLIENT_SECRET:?SSO_OIDC_CLIENT_SECRET absente}")
+		secret=(--data-urlencode "client_secret=${OIDC_CLIENT_SECRET:?OIDC_CLIENT_SECRET absente}")
 	fi
 	curl -sf --max-time 10 "$emetteur/protocol/openid-connect/token" \
 		--data-urlencode grant_type=authorization_code \
@@ -142,7 +142,7 @@ sso_jeton_interne() {
 # bibliothèque lit et que l'appelant n'a pas posées. Le fichier n'est jamais exécuté.
 sso_env_charger() {
 	local fichier=$1 nom valeur
-	for nom in SSO_OIDC_ISSUER SSO_OIDC_CLIENT_ID SSO_OIDC_CLIENT_SECRET SITE_URL SSO_DEV_ADMIN_PASSWORD; do
+	for nom in SSO_OIDC_ISSUER SSO_OIDC_CLIENT_ID OIDC_CLIENT_SECRET SITE_URL SSO_DEV_ADMIN_PASSWORD; do
 		[ -n "${!nom:-}" ] && continue
 		valeur=$(grep -m 1 "^$nom=" "$fichier" 2>/dev/null | cut -d= -f2-)
 		valeur=${valeur%\"}; valeur=${valeur#\"}; valeur=${valeur%\'}; valeur=${valeur#\'}

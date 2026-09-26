@@ -26,7 +26,7 @@ d'adresse exigée. La version de l'image est celle du SSO réel, `26.7.3`.
   secret, et le realm réel refuse ces comptes.
 - Pas d'inscription libre.
 - **Le client du CRM est CONFIDENTIEL, comme en production** (décision 586). Son identifiant est
-  `SSO_OIDC_CLIENT_ID` (`lelabs-crm-serveur` par défaut) et son secret `SSO_OIDC_CLIENT_SECRET`, tous
+  `SSO_OIDC_CLIENT_ID` (`lelabs-crm-serveur` par défaut) et son secret `OIDC_CLIENT_SECRET`, tous
   deux **substitués à l'import** depuis le `.env` du poste, où `./runDev.sh` tire le secret au hasard :
   le même nom de variable qu'en production, jamais une valeur versée. Un code n'est échangé qu'avec
   lui ; seul l'échangeur de session le détient, et le harnais le lit dans le `.env` pour les preuves

@@ -20,7 +20,7 @@ type LireEnv = (nom: string) => string | undefined
 export function lireConfiguration(lire: LireEnv): ConfigurationSession | null {
 	const emetteur = lire('SSO_OIDC_ISSUER')?.trim().replace(/\/+$/, '')
 	const clientId = lire('SSO_OIDC_CLIENT_ID')?.trim()
-	const clientSecret = lire('SSO_OIDC_CLIENT_SECRET')
+	const clientSecret = lire('OIDC_CLIENT_SECRET')
 	const secretJwt = lire('JWT_SECRET')
 	if (!emetteur || !clientId || !clientSecret || !secretJwt) return null
 	return { emetteur, clientId, clientSecret, secretJwt }

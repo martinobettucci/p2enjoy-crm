@@ -12,7 +12,7 @@ const CONTENEUR: Record<string, string> = {
 	JWT_SECRET: 'secret-de-signature',
 	SSO_OIDC_ISSUER: 'http://sso.localhost:18480/realms/lelabs',
 	SSO_OIDC_CLIENT_ID: 'lelabs-crm-serveur',
-	SSO_OIDC_CLIENT_SECRET: 'secret-du-client',
+	OIDC_CLIENT_SECRET: 'secret-du-client',
 	POSTGRES_PASSWORD: 'jamais-transmis',
 }
 const lire = (nom: string) => CONTENEUR[nom]
@@ -21,7 +21,7 @@ const noms = (valeurs: [string, string][]) => valeurs.map(([nom]) => nom).sort()
 describe('environnementDe', () => {
 	it('remet à `session` le commun, la clé de signature, la configuration SSO et le secret du client', () => {
 		expect(noms(environnementDe('session', lire))).toEqual(
-			['JWT_SECRET', 'SSO_OIDC_CLIENT_ID', 'SSO_OIDC_CLIENT_SECRET', 'SSO_OIDC_ISSUER', 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_URL'],
+			['JWT_SECRET', 'OIDC_CLIENT_SECRET', 'SSO_OIDC_CLIENT_ID', 'SSO_OIDC_ISSUER', 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_URL'],
 		)
 	})
 
@@ -30,7 +30,7 @@ describe('environnementDe', () => {
 			const recu = noms(environnementDe(fonction, lire))
 			expect(recu, fonction).toEqual([...ENVIRONNEMENT_COMMUN].sort())
 			expect(recu, fonction).not.toContain('JWT_SECRET')
-			expect(recu, fonction).not.toContain('SSO_OIDC_CLIENT_SECRET')
+			expect(recu, fonction).not.toContain('OIDC_CLIENT_SECRET')
 		}
 	})
 

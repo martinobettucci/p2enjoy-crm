@@ -105,7 +105,7 @@ positionner `P2ENJOY_ENV_PROFILE=prod`.
 | `STACK_RLIMIT_NOFILE` | Descripteurs de fichiers réclamés par Realtime ; défaut `10000`, à abaisser si la limite dure de l'hôte est inférieure | Non |
 | `SSO_OIDC_ISSUER` | **Nouvelle variable (`CRM-091`).** Émetteur exact du SSO, `https://oauth.lelabs.tech/realms/lelabs` ; lu par l'échangeur de session depuis `CRM-092` (par GoTrue avant lui) et figé au build de la webapp | Oui |
 | `SSO_OIDC_CLIENT_ID` | **Nouvelle variable (`CRM-091`), révisée par `CRM-092` (décision 586).** Identifiant du client OIDC **réellement créé** par le realm : le client **confidentiel** `lelabs-crm-serveur` à déclarer (`docs/SPEC-session-sso.md` §12), et non plus le client public `lelabs-crm`. Lu par l'échangeur de session et figé au build de la webapp | Oui |
-| `SSO_OIDC_CLIENT_SECRET` | **Nouvelle variable (`CRM-092`, décision 586).** Secret du client confidentiel, affiché une seule fois à l'administrateur du realm, **qui le pose lui-même** comme variable secrète de la cellule — il ne transite par aucun dépôt ni message. Remis au seul worker `session` | Oui |
+| `OIDC_CLIENT_SECRET` | **Renommée le 2026-09-26 (décision 604)** : `SSO_OIDC_CLIENT_SECRET` jusque-là — même valeur, voir §2.6. **Introduite par `CRM-092`, décision 586.** Secret du client confidentiel, affiché une seule fois à l'administrateur du realm, **qui le pose lui-même** comme variable secrète de la cellule — il ne transite par aucun dépôt ni message. Remis au seul worker `session` | Oui |
 | `SPARK_HTTP_PORT` | **Nouvelle variable (`CRM-090`).** Port de la cellule Spark servi en clair par Caddy, égal au port de la route ; défaut `8080`. Sans effet hors de la cellule | Oui dans la cellule |
 
 **Deux variables du service `mail-sync` deviennent obligatoires avec `CRM-052`.** Le conteneur ne
@@ -147,7 +147,7 @@ aucune adresse n'est écrite dans ce dépôt. Les gestes manuels s'écrivent de 
 | 1 | Déposer le dépôt, sans build ni lancement | poste qui livre | `scripts/spark/livrer.sh --archive-seule` |
 | 2 | Déposer les propositions de variables, de secrets et de route | `spark-docker`, dans la cellule | `cd /srv/crm && scripts/spark/proposer.sh` |
 | 3 | Enregistrement DNS `crm.lelabs.tech` vers la Forge ; accepter la route `crm.lelabs.tech 8080 tls` — **`tls`, pas `clair`** : le mode dit ce que la Forge expose au public ; une route `clair` n'est servie qu'en `http://`, que le SSO refuse (décision 576). Pour la reproposer seule, secrets en service : `cd /srv/crm && scripts/spark/proposer.sh --route-seule` | propriétaire du Spark | console |
-| 4 | Importer variables et secrets proposés. **Depuis `CRM-092`**, la seule valeur laissée en demande est `SSO_OIDC_CLIENT_SECRET`, que l'administrateur du realm saisit (étape 7) ; plus aucune variable SMTP n'est proposée | propriétaire du Spark | console ; les fichiers `.?` redeviennent vides une fois tranchés |
+| 4 | Importer variables et secrets proposés. **Depuis `CRM-092`**, la seule valeur laissée en demande est `OIDC_CLIENT_SECRET`, que l'administrateur du realm saisit (étape 7) ; plus aucune variable SMTP n'est proposée | propriétaire du Spark | console ; les fichiers `.?` redeviennent vides une fois tranchés |
 | 5 | Premier déploiement | poste qui livre | `scripts/spark/livrer.sh -- --migrate --premier-deploiement` |
 | 6 | Vérifications | poste, en lecture seule | `scripts/spark/verifier.sh` — révision, santé, mémoire, ports, `/auth/v1/health` en `404` et aucun conteneur de GoTrue, API et échangeur de session par Caddy, disque, mode `tls` de la route active, accès `https://` public et sonde du client OIDC ; ce qui attend un geste extérieur est rendu « EN ATTENTE », jamais compté comme un succès. Puis le §5 ci-dessous |
 | 7 | Déclarer le client OIDC **confidentiel** et saisir son secret dans la cellule, puis corriger `SSO_OIDC_CLIENT_ID` si le realm l'a renommé et relivrer | administrateur du realm, puis propriétaire du Spark | `docs/SPEC-session-sso.md` §12 (point 1) ; `docs/SSO-client-lelabs-crm.md` |
@@ -186,7 +186,7 @@ l'amorçage du 2026-09-23 (§8), qui n'a jamais été connecté.
 | 0 | **Préalables chez LeLabs** — client serveur **créé le 2026-09-24** (sonde `302`, PKCE exigé ; décision 598), rôle `verified` de `martino@p2enjoy.studio` encore à confirmer : déclarer le client serveur (`CLIENTID=lelabs-crm-serveur`, `NOM=P2Enjoy CRM`, `TYPE=serveur`, `REDIRECT=https://crm.lelabs.tech/auth/retour`, `ROLE=verified`, `SECRET_VAR=SSO_OIDC_CLIENT_SECRET` — décision 592) ; s'assurer que `martino@p2enjoy.studio` a une adresse vérifiée et le rôle de realm `verified` | administrateur du realm `lelabs` | hors du dépôt. L'identifiant **retenu par le service** fait foi |
 | 1 | Déposer le code, **sans build ni lancement** : la pile en service n'est pas touchée ; les fichiers supprimés depuis la révision déployée sont retirés | poste qui livre | `scripts/spark/livrer.sh --archive-seule` |
 | 2 | **Reposer les demandes** : le client serveur et la demande de son secret, sans rien tirer (décision 590) | `spark-docker`, dans la cellule | `cd /srv/crm && scripts/spark/proposer.sh --demandes-seules` — la sortie nomme aussi les variables de GoTrue restées inertes |
-| 3 | Importer `SSO_OIDC_CLIENT_ID` ; **saisir `SSO_OIDC_CLIENT_SECRET`**, affiché une seule fois par LeLabs, sans qu'il transite par aucun dépôt ni message | propriétaire du Spark ; le secret, par l'administrateur du realm | console. Les variables de GoTrue (`SMTP_*`, `ADDITIONAL_REDIRECT_URLS`, `DISABLE_SIGNUP`…) peuvent être retirées à la console : un import ne retire rien, et plus rien ne les lit |
+| 3 | Importer `SSO_OIDC_CLIENT_ID` ; **saisir `OIDC_CLIENT_SECRET`**, affiché une seule fois par LeLabs, sans qu'il transite par aucun dépôt ni message | propriétaire du Spark ; le secret, par l'administrateur du realm | console. Les variables de GoTrue (`SMTP_*`, `ADDITIONAL_REDIRECT_URLS`, `DISABLE_SIGNUP`…) peuvent être retirées à la console : un import ne retire rien, et plus rien ne les lit |
 | 4 | **Lecture seule d'abord** : l'espace `crm` ne porte que l'appartenance du compte invité — aucune card, aucun commentaire, aucune attente, aucune donnée | opérateur | `docker exec -i p2enjoy-db psql -U postgres -d postgres -At -c "select (select count(*) from public.workspace_members m join public.workspaces w on w.id = m.workspace_id where w.slug = 'crm'), (select count(*) from public.cards), (select count(*) from public.card_comments), (select count(*) from public.profiles)"` rend `1|0|0|1`. **Tout autre résultat arrête la reprise** |
 | 5 | Prendre l'**instantané de VM** — seul retour arrière de la fenêtre (décision 489) | propriétaire de la cellule | console de l'hébergeur |
 | 6 | Livrer et migrer : build de la webapp avec le nouveau client, migrations 74 à 79 (la 74 sous `supabase_admin`), fonction `session` et son environnement, Kong et Caddy recréés par leurs labels `crm-092` | poste qui livre, puis `spark-docker` dans la cellule | `scripts/spark/livrer.sh -- --migrate --instantane-verifie`, **puis** `cd /srv/crm && ./runProd.sh --spark` : sur une pile en service, `--migrate` n'applique que les migrations et rend la main **sans redémarrer aucun service** (seul le premier déploiement enchaîne le démarrage) — la webapp neuve est alors servie par Caddy devant un échangeur, un Kong et un Caddy anciens. Mesuré le 2026-09-24 (§8) |
@@ -208,6 +208,27 @@ de redéclarer un client public.
 **Risques.** Une panne de LeLabs empêche toute nouvelle connexion, les sessions ouvertes survivant
 jusqu'à leur prolongation. Un secret mal saisi fait rendre `service_indisponible` à l'ouverture de
 session, sans autre effet : le corriger en console et recréer `functions`.
+
+### 2.6 Le secret sous `OIDC_CLIENT_SECRET` — bascule directe (EN ATTENTE)
+
+**Décision 604**, `docs/SPEC-session-sso.md` §12 bis. Le code livré après cette opération ne lit plus que
+`OIDC_CLIENT_SECRET` : **la variable doit exister dans la cellule AVANT la livraison**, sinon
+`./runProd.sh --spark` refuse de démarrer (variable obligatoire absente) — ou, si elle existait vide, la
+connexion tombe. Aucune migration.
+
+| # | Geste | Qui | Commande ou lieu |
+|---|---|---|---|
+| 1 | Déposer la **demande vide** `OIDC_CLIENT_SECRET` dans `/run/spark/secrets.?`, étiquetée | poste, par les IP | écriture de la seule demande ; aucun secret n'est tiré ni lu |
+| 2 | Y saisir **la même valeur** que `SSO_OIDC_CLIENT_SECRET` — aucun nouveau secret n'est émis chez LeLabs | responsable | console du Spark |
+| 3 | Vérifier que les deux valeurs sont égales, sans en afficher aucune | poste, lecture seule | comparaison dans la cellule, qui ne rend que « égales » ou « différentes » |
+| 4 | Livrer la révision qui lit le nouveau nom ; `functions` est recréé par le changement d'environnement | poste, par les IP | `scripts/spark/livrer.sh` |
+| 5 | Vérifier, puis **connexion réelle** | poste, puis responsable | `scripts/spark/verifier.sh` ; « Se connecter avec LeLabs » |
+| 6 | Retirer `SSO_OIDC_CLIENT_SECRET`, désormais inerte | responsable | console du Spark |
+| 7 | Prévenir l'agent du dépôt du SSO, qui normalise l'attribut du client `lelabs-crm-serveur` | poste | message |
+| 8 | Reproposer la note `CONTRIBUTORS` du Spark, qui nomme désormais `OIDC_CLIENT_SECRET` | poste, puis responsable | `docs/spark-notes/CONTRIBUTORS.md` déposée en `.?`, acceptée en console |
+
+**Retour arrière** : avant l'étape 6, relivrer la révision précédente suffit — l'ancien nom est encore
+là. Après, recopier la valeur sous l'ancien nom avant de relivrer.
 
 ## 3. Migrations en attente
 
@@ -705,7 +726,7 @@ attendue à ce stade : `select count(*) from pg_policies where schemaname = 'pub
 | `webapp` | À chaque changement d'interface — **et à chaque changement de `VITE_SUPABASE_URL` ou `VITE_SUPABASE_ANON_KEY`**, voir ci-dessous. **`CRM-092` T5** : la connexion passe par le seul SSO et l'échangeur de session, appelé par un chemin relatif que Caddy relaie déjà (`/functions/v1/*`) ; reconstruire avec `VITE_SSO_CLIENT_ID` au nouvel identifiant, et **seulement** avec les opérations de la reprise (§3) — une webapp neuve face à une base sans les migrations 74 à 76 ne connecterait personne |
 | `mail-sync` | À chaque changement du service de messagerie ou de ses dépendances |
 | Pile Supabase | À chaque changement de version épinglée d'un composant (tableau dans `docs/DAT.md` §3.7) |
-| `functions` | À chaque changement sous `supabase/functions/` ou de l'image Edge Runtime ; `CRM-016` impose un premier déploiement conjoint avec Kong. **`CRM-092` T3 et T3 bis (en attente de la reprise complète, §3)** : nouvelle fonction `session`, et le conteneur reçoit `JWT_SECRET`, `SSO_OIDC_ISSUER`, `SSO_OIDC_CLIENT_ID` et **`SSO_OIDC_CLIENT_SECRET`**, que le service principal ne remet qu'au worker `session` — la phrase « ne reçoit pas `JWT_SECRET` » plus bas est révisée par la décision 584. Recréer `functions` **après** la pose du secret par l'administrateur du realm et la correction de `SSO_OIDC_CLIENT_ID` (§2.3) |
+| `functions` | À chaque changement sous `supabase/functions/` ou de l'image Edge Runtime ; `CRM-016` impose un premier déploiement conjoint avec Kong. **`CRM-092` T3 et T3 bis (en attente de la reprise complète, §3)** : nouvelle fonction `session`, et le conteneur reçoit `JWT_SECRET`, `SSO_OIDC_ISSUER`, `SSO_OIDC_CLIENT_ID` et **`OIDC_CLIENT_SECRET`**, que le service principal ne remet qu'au worker `session` — la phrase « ne reçoit pas `JWT_SECRET` » plus bas est révisée par la décision 584. Recréer `functions` **après** la pose du secret par l'administrateur du realm et la correction de `SSO_OIDC_CLIENT_ID` (§2.3) |
 | `kong` | À chaque changement de `supabase/docker/volumes/api/kong.yml`, qui incrémente le label `com.p2enjoy.kong-config-revision` — **`crm-092`** depuis `CRM-092` T6 : routes `/auth/v1/*` et `/.well-known/oauth-authorization-server` retirées, Kong répond 404 |
 | `caddy` | À chaque changement de `caddy/Caddyfile`, de `caddy/Caddyfile.spark` ou de `caddy/routes.caddy` — **`CRM-090` les modifie : routes extraites et `/functions/v1/*` relayé** ; **`CRM-092` T6** : `/auth/v1/*` répond 404, et le label `com.p2enjoy.caddy-routes-revision` (`crm-092`) fait recréer Caddy au `up` ordinaire |
 | `minio`, `minio-createbucket` | Cellule Spark seulement (`CRM-090`) : stockage objet interne, sans port publié |

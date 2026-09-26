@@ -61,7 +61,7 @@ Le service reçoit seulement les variables nécessaires aux fonctions de confian
 n'est journalisée, retournée par `example` ou inscrite dans les sources.
 
 **Révisé par `CRM-092` (décisions 584, 586) : l'environnement est remis PAR FONCTION.** Le conteneur
-reçoit en plus `JWT_SECRET`, `SSO_OIDC_ISSUER`, `SSO_OIDC_CLIENT_ID` et `SSO_OIDC_CLIENT_SECRET`,
+reçoit en plus `JWT_SECRET`, `SSO_OIDC_ISSUER`, `SSO_OIDC_CLIENT_ID` et `OIDC_CLIENT_SECRET`,
 parce que l'échangeur de session (`docs/SPEC-session-sso.md` §5), client **confidentiel** de LeLabs,
 échange le code avec le secret du client et signe le jeton interne que PostgREST, Realtime et Storage
 acceptent.

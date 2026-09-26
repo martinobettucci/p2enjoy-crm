@@ -16,7 +16,7 @@
   (tmpfs, `600`), puis applique ses gardes : profil `prod`, `APPLY_MIGRATIONS=false`, aucune valeur
   `CHANGE_ME_*`.
 - Les secrets ont été **tirés dans la cellule** par `scripts/spark/proposer.sh` et proposés en
-  console ; ils n'ont jamais quitté la cellule autrement. Seul `SSO_OIDC_CLIENT_SECRET`, le secret du
+  console ; ils n'ont jamais quitté la cellule autrement. Seul `OIDC_CLIENT_SECRET`, le secret du
   client confidentiel chez LeLabs, n'est pas tiré ici : l'administrateur du realm le saisit lui-même.
 - Sur une cellule **en service**, `scripts/spark/proposer.sh --demandes-seules` repose les demandes
   qui manquent — client SSO et demande de son secret — sans rien tirer. Les anciennes variables de

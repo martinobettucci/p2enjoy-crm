@@ -76,11 +76,11 @@ source scripts/lib/env.sh
 source scripts/lib/sso.sh
 SSO_OIDC_ISSUER=$(env_get "$ENV_FILE" SSO_OIDC_ISSUER)
 SSO_OIDC_CLIENT_ID=$(env_get "$ENV_FILE" SSO_OIDC_CLIENT_ID)
-SSO_OIDC_CLIENT_SECRET=$(env_get "$ENV_FILE" SSO_OIDC_CLIENT_SECRET)
+OIDC_CLIENT_SECRET=$(env_get "$ENV_FILE" OIDC_CLIENT_SECRET)
 SITE_URL=$(env_get "$ENV_FILE" SITE_URL)
 SSO_DEV_ADMIN_PASSWORD=$(env_get "$ENV_FILE" SSO_DEV_ADMIN_PASSWORD)
 DOMAINE=$(env_get "$ENV_FILE" MAIL_DEV_PERSONAL_DOMAIN)
-export SSO_OIDC_ISSUER SSO_OIDC_CLIENT_ID SSO_OIDC_CLIENT_SECRET SITE_URL
+export SSO_OIDC_ISSUER SSO_OIDC_CLIENT_ID OIDC_CLIENT_SECRET SITE_URL
 KEYCLOAK_BASE=${SSO_OIDC_ISSUER%/realms/lelabs}
 
 DB_CONTAINER=p2enjoy-db
@@ -496,7 +496,7 @@ esac
 # Avec le secret : le client est bien authentifié, et c'est l'octroi lui-même qui est refusé.
 direct=$(curl -s -o "$WORK/direct.json" -w '%{http_code}' "$SSO_OIDC_ISSUER/protocol/openid-connect/token" \
 	--data-urlencode grant_type=password --data-urlencode "client_id=$SSO_OIDC_CLIENT_ID" \
-	--data-urlencode "client_secret=$SSO_OIDC_CLIENT_SECRET" \
+	--data-urlencode "client_secret=$OIDC_CLIENT_SECRET" \
 	--data-urlencode "username=admin@$DOMAINE" --data-urlencode "password=$SSO_MOT_DE_PASSE_DEFAUT")
 if [ "$direct" != 200 ] && [ "$(jq -r .error "$WORK/direct.json")" = unauthorized_client ] \
 	&& jq -r .error_description "$WORK/direct.json" | grep -qi 'direct access grants'; then
@@ -628,8 +628,8 @@ muter "jeton interne non borné par l'échéance du jeton LeLabs" supabase/funct
 	"Math.min(identite.exp, maintenant + DUREE_MAX_JETON_INTERNE)" \
 	"maintenant + DUREE_MAX_JETON_INTERNE" ../supabase/functions/session
 muter "JWT_SECRET remis à la fonction d'exemple" supabase/functions/main/environnement.ts \
-	"session: ['JWT_SECRET', 'SSO_OIDC_ISSUER', 'SSO_OIDC_CLIENT_ID', 'SSO_OIDC_CLIENT_SECRET']," \
-	"session: ['JWT_SECRET', 'SSO_OIDC_ISSUER', 'SSO_OIDC_CLIENT_ID', 'SSO_OIDC_CLIENT_SECRET'], example: ['JWT_SECRET']," ../supabase/functions/main
+	"session: ['JWT_SECRET', 'SSO_OIDC_ISSUER', 'SSO_OIDC_CLIENT_ID', 'OIDC_CLIENT_SECRET']," \
+	"session: ['JWT_SECRET', 'SSO_OIDC_ISSUER', 'SSO_OIDC_CLIENT_ID', 'OIDC_CLIENT_SECRET'], example: ['JWT_SECRET']," ../supabase/functions/main
 muter "le secret du client omis de l'échange du code" supabase/functions/session/handler.ts \
 	$'\t\t\tclient_secret: c.clientSecret,\n' \
 	"" ../supabase/functions/session

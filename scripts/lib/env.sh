@@ -4,6 +4,8 @@
 # @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §10 — secret du client confidentiel du
 #       realm de développement, tiré à l'amorçage et complété sur un `.env` antérieur (décision 586)
 # @spec docs/JOURNAL.md décision 16 (amorçage automatique des secrets, gardes de profil)
+# @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §12 bis — `OIDC_CLIENT_SECRET`, repris d'un
+#       `.env` antérieur par le mode `copie` (décision 604)
 # @spec docs/JOURNAL.md décision 98 (identifiants Docker), décision 99 (ports déjà pris),
 #       décision 101 (ce que la pile crée sur l'hôte appartient à l'hôte), décision 257
 #       (lecture de secours des ports par /proc), décision 272 (origine webapp de développement
@@ -208,8 +210,8 @@ env_bootstrap_dev() {
 	# qui règlent le realm ; les comptes du realm, eux, ont un mot de passe stable et publié.
 	env_set "$ENV_FILE" SSO_DEV_ADMIN_PASSWORD "$(gen_hex 20)"
 	# Secret du client confidentiel du realm local (`CRM-092`, décision 586) : même nom qu'en
-	# production, jamais une valeur versée.
-	env_set "$ENV_FILE" SSO_OIDC_CLIENT_SECRET "$(gen_hex 32)"
+	# production — `OIDC_CLIENT_SECRET` depuis la décision 604 —, jamais une valeur versée.
+	env_set "$ENV_FILE" OIDC_CLIENT_SECRET "$(gen_hex 32)"
 
 	local wanted hard
 	wanted=$(env_get "$ENV_FILE" STACK_RLIMIT_NOFILE)
@@ -227,7 +229,9 @@ env_bootstrap_dev() {
 
 # Variables introduites APRÈS `env_bootstrap_dev`, et elles seules. Chaque entrée est
 # « NOM:origine » : `alea:<longueur>` tire un secret comme au premier amorçage, `gabarit` recopie
-# le défaut documenté de `.env.example`.
+# le défaut documenté de `.env.example`, `copie:<ANCIEN>:<longueur>` reprend la valeur d'une variable
+# RENOMMÉE — et tire un secret si l'ancienne manque (décision 604 : le secret du client confidentiel
+# doit rester celui que le realm de développement a importé).
 #
 # Cette liste est **explicite, et doit le rester**. Compléter automatiquement toute variable
 # absente du fichier reviendrait à accepter un `.env` tronqué en lui substituant des défauts : un
@@ -242,7 +246,7 @@ MAIL_SYNC_SMTP_TIMEOUT_SECONDS:gabarit
 MAIL_DEV_CORRESPONDENT_ADDRESS:gabarit
 SSO_OIDC_ISSUER:gabarit
 SSO_OIDC_CLIENT_ID:gabarit
-SSO_OIDC_CLIENT_SECRET:alea:32
+OIDC_CLIENT_SECRET:copie:SSO_OIDC_CLIENT_SECRET:32
 SSO_DEV_PORT:gabarit
 SSO_DEV_ADMIN_PASSWORD:alea:20
 SPARK_HTTP_PORT:gabarit
@@ -265,6 +269,18 @@ env_ensure_dev_completions() {
 			alea:*)
 				env_append "$ENV_FILE" "$name" "$(gen_hex "${origine#alea:}")"
 				info "$name amorcé au hasard : secret introduit après $(basename "$ENV_FILE")."
+				;;
+			copie:*)
+				local ancien=${origine#copie:}
+				local longueur=${ancien#*:}
+				ancien=${ancien%%:*}
+				if env_has "$ENV_FILE" "$ancien" && [ -n "$(env_get "$ENV_FILE" "$ancien")" ]; then
+					env_append "$ENV_FILE" "$name" "$(env_get "$ENV_FILE" "$ancien")"
+					info "$name repris de $ancien : variable renommée, valeur conservée."
+				else
+					env_append "$ENV_FILE" "$name" "$(gen_hex "$longueur")"
+					info "$name amorcé au hasard : secret introduit après $(basename "$ENV_FILE")."
+				fi
 				;;
 			gabarit)
 				example=$(env_get "$ENV_EXAMPLE" "$name")

@@ -8,7 +8,7 @@
 // doit signer le jeton interne que PostgREST, Realtime et Storage acceptent. Le service principal ne
 // le remet pourtant qu'au SEUL worker `session` : une autre fonction, présente ou future, ne peut pas
 // frapper un jeton. Depuis la décision 586, `session` reçoit aussi le secret du client confidentiel
-// (`SSO_OIDC_CLIENT_SECRET`), qu'aucune autre fonction ne voit. Ajouter une fonction à
+// (`OIDC_CLIENT_SECRET`), qu'aucune autre fonction ne voit. Ajouter une fonction à
 // `ENVIRONNEMENT_PROPRE` est un geste à justifier.
 
 /** Ce que toute fonction de confiance reçoit (`docs/SPEC-edge-functions.md` §2). */
@@ -16,7 +16,7 @@ export const ENVIRONNEMENT_COMMUN = ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPAB
 
 /** Ce qu'une fonction nommée reçoit EN PLUS, et elle seule. */
 export const ENVIRONNEMENT_PROPRE: Readonly<Record<string, readonly string[]>> = {
-	session: ['JWT_SECRET', 'SSO_OIDC_ISSUER', 'SSO_OIDC_CLIENT_ID', 'SSO_OIDC_CLIENT_SECRET'],
+	session: ['JWT_SECRET', 'SSO_OIDC_ISSUER', 'SSO_OIDC_CLIENT_ID', 'OIDC_CLIENT_SECRET'],
 }
 
 export function environnementDe(fonction: string, lire: (nom: string) => string | undefined): [string, string][] {

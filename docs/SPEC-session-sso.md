@@ -129,7 +129,7 @@ le point 5.
    **égal** à `SSO_OIDC_ISSUER` ; son `token_endpoint` et son `jwks_uri` sont des URL `https:` — ou
    `http:` vers la boucle locale ou `*.localhost`, pour le seul Keycloak de développement.
 3. **Échange du code** au `token_endpoint` : `grant_type=authorization_code`, `client_id`,
-   **`client_secret`** (`SSO_OIDC_CLIENT_SECRET`), `code`, `code_verifier`, `redirect_uri`. Un refus
+   **`client_secret`** (`OIDC_CLIENT_SECRET`), `code`, `code_verifier`, `redirect_uri`. Un refus
    `4xx` de LeLabs — code déjà servi, échu, émis pour un autre client, vérificateur faux — rend
    `401 jeton_refuse`. La réponse doit porter `access_token` et `refresh_token`.
 4. **Vérification du jeton d'accès** obtenu, même reçu directement de LeLabs par TLS : c'est la même
@@ -249,7 +249,7 @@ Un `401 jeton_refuse` ne distingue pas ses causes : les distinguer n'aiderait qu
 ### 5.7 Environnement, chiffrement, journal, limites
 
 - **Variables remises au seul worker `session`** (`main/environnement.ts`) : `JWT_SECRET`,
-  `SSO_OIDC_ISSUER`, `SSO_OIDC_CLIENT_ID`, **`SSO_OIDC_CLIENT_SECRET`**, en plus du commun. Une autre
+  `SSO_OIDC_ISSUER`, `SSO_OIDC_CLIENT_ID`, **`OIDC_CLIENT_SECRET`**, en plus du commun. Une autre
   fonction ne peut ni frapper un jeton, ni parler à LeLabs au nom du CRM.
 - **Chiffrement au repos du jeton de rafraîchissement** : AES-GCM 256, vecteur de 12 octets tiré à
   chaque écriture, clé dérivée de `JWT_SECRET` par HKDF-SHA-256 (sel fixe, information
@@ -647,7 +647,7 @@ développement. Ce qui change :
 Le domaine reste `MAIL_DEV_PERSONAL_DOMAIN`, substitué à l'import.
 
 **Le client devient confidentiel, comme en production (décision 586)** : `lelabs-crm-serveur`,
-`publicClient: false`, secret **substitué à l'import** depuis `SSO_OIDC_CLIENT_SECRET`, que
+`publicClient: false`, secret **substitué à l'import** depuis `OIDC_CLIENT_SECRET`, que
 `./runDev.sh` tire au hasard dans le `.env` du poste — le même nom de variable qu'en production, jamais
 une valeur versée. PKCE `S256` reste imposé, les deux URL de retour exactes sont conservées. Le client
 public `lelabs-crm` est **retiré** du realm de développement : il n'a plus d'emploi, et le garder
@@ -702,7 +702,7 @@ responsable a demandé une fois `CRM-092` entièrement vérifiée (décision 584
      connexion rend l'attente, et c'est le comportement voulu.
 2. **Variables** : les demandes de variables manquantes sont **reposées** par
    `scripts/spark/proposer.sh --demandes-seules` (décisions 586 et 590) — `SSO_OIDC_CLIENT_ID` au
-   nouvel identifiant, `SSO_OIDC_CLIENT_SECRET` en demande —, le seul mode permis sur une cellule en
+   nouvel identifiant, `OIDC_CLIENT_SECRET` en demande —, le seul mode permis sur une cellule en
    service. Les variables propres à GoTrue, dont les `SMTP_*`, restent inertes dans la cellule : la
    grammaire des propositions ne permet pas d'en demander le retrait, que le propriétaire fait à la
    console s'il le souhaite.

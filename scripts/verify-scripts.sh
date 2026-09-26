@@ -17,6 +17,8 @@
 #           (chemin PEM effectif, ancien `.env`, deux branches de build et absence dans l'image)
 # @verifies docs/DAT.md §3.8 (contraintes d'exécution de l'hôte)
 # @verifies docs/PROD_MIGRATIONS.md §2.3 ; README.md §4, §5, §9, §11
+# @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §12 bis ; docs/JOURNAL.md décision 604 —
+#           OIDC_CLIENT_SECRET repris d'un .env antérieur à la valeur de SSO_OIDC_CLIENT_SECRET
 #
 # Rejoue les preuves de `CRM-002` :
 #
@@ -372,6 +374,30 @@ if [ "$(env_get "$AJOUTEES" MAIL_SYNC_INTERNAL_TOKEN)" = "$jeton_ajoute" ]; then
 	ok "un second passage ne fait pas tourner le secret déjà complété"
 else
 	fail "le secret complété a été réécrit au passage suivant"
+fi
+
+# Variable RENOMMÉE (décision 604) : un `.env` qui porte encore `SSO_OIDC_CLIENT_SECRET` reçoit
+# `OIDC_CLIENT_SECRET` à la MÊME valeur — celle que le realm de développement a importée —, et l'ancien
+# nom n'est pas touché. Sans l'ancien nom, un secret est tiré comme pour toute variable ajoutée.
+RENOMMEE="$WORK/env.renommee"
+grep -v '^OIDC_CLIENT_SECRET=' "$BOOT1" > "$RENOMMEE"
+printf 'SSO_OIDC_CLIENT_SECRET=ancienne-valeur-du-realm-0123456789\n' >> "$RENOMMEE"
+if P2ENJOY_ENV_FILE="$RENOMMEE" ./runDev.sh --bootstrap >"$WORK/renommee.log" 2>&1 \
+	&& [ "$(env_get "$RENOMMEE" OIDC_CLIENT_SECRET)" = ancienne-valeur-du-realm-0123456789 ] \
+	&& [ "$(env_get "$RENOMMEE" SSO_OIDC_CLIENT_SECRET)" = ancienne-valeur-du-realm-0123456789 ]; then
+	ok "OIDC_CLIENT_SECRET reprend la valeur de SSO_OIDC_CLIENT_SECRET, qui reste intacte"
+else
+	fail "variable renommée : OIDC_CLIENT_SECRET « $(env_get "$RENOMMEE" OIDC_CLIENT_SECRET) »"
+	cat "$WORK/renommee.log"
+fi
+SANS_ANCIEN="$WORK/env.sans-ancien"
+grep -v '^OIDC_CLIENT_SECRET=' "$BOOT1" > "$SANS_ANCIEN"
+P2ENJOY_ENV_FILE="$SANS_ANCIEN" ./runDev.sh --bootstrap >/dev/null 2>&1 || true
+secret_tire=$(env_get "$SANS_ANCIEN" OIDC_CLIENT_SECRET)
+if [ "${#secret_tire}" -ge 32 ] && printf '%s' "$secret_tire" | grep -qE '^[0-9a-f]+$'; then
+	ok "sans l'ancien nom, OIDC_CLIENT_SECRET est tiré au hasard, ${#secret_tire} caractères"
+else
+	fail "sans l'ancien nom, OIDC_CLIENT_SECRET vaut « $secret_tire »"
 fi
 
 # --- 4 bis. Rappel des identifiants de développement -------------------------------------------

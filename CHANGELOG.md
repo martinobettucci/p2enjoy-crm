@@ -13,7 +13,12 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-_Rien à publier pour le moment._
+### Déploiement
+
+- **Le secret du client LeLabs se lit sous `OIDC_CLIENT_SECRET`**, le nom commun à toutes les intégrations
+  du SSO (décision 604) ; `SSO_OIDC_CLIENT_SECRET` n'est plus lu. Un `.env` de développement antérieur
+  reçoit le nouveau nom à la même valeur au prochain `./runDev.sh`. En production, la variable doit être
+  posée AVANT la livraison (`docs/PROD_MIGRATIONS.md` §2.6).
 
 ## [Publié]
 
