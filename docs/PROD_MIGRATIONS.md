@@ -35,7 +35,7 @@ source d'identité.
 | Environnement de production | Cellule Spark `crm` (`docs/SPEC-deploiement-spark.md`), assemblage à trois fichiers : neuf services sains et deux conteneurs à usage unique (runner, bucket) ; GoTrue retiré le 2026-09-24 |
 | Schéma appliqué | Les **79 migrations** du dépôt : 1 à 73 par `--migrate --premier-deploiement` sur une base mesurée vierge (2026-09-23), 74 à 79 par la reprise `CRM-092` (2026-09-24) |
 | Dernière migration appliquée | `0079_admin_du_domaine.sql` — objets relus en base le 2026-09-24 |
-| Version déployée | La révision inscrite dans `/srv/crm/REVISION` — celle que `scripts/spark/verifier.sh` compare au `HEAD` du poste ; **`e81d01a4`** le 2026-09-26 (INC-253, webapp seule) |
+| Version déployée | La révision inscrite dans `/srv/crm/REVISION` — celle que `scripts/spark/verifier.sh` compare au `HEAD` du poste ; **`f99a9b32`** le 2026-09-26 (secret sous `OIDC_CLIENT_SECRET`) |
 | Données | Un espace, « P2Enjoy CRM » (`crm`), réamorcé par la reprise `CRM-092` ; un profil, celui du responsable, administrateur depuis sa première connexion LeLabs ; aucune autre donnée, aucun seed. La ligne `auth.users` de l'ancien compte invité reste, inerte |
 | Route publique | `crm.lelabs.tech 8080 tls`, active : `https://crm.lelabs.tech`, certificat Let's Encrypt présenté par la Forge (décision 576) |
 | Client OIDC `lelabs-crm` | Déclaré et créé au realm le 2026-09-23 à 16:08:44 (`docs/SSO-client-lelabs-crm.md`), **supprimé du realm avant le déploiement de `CRM-092`** : sonde `400` « Client non trouvé » le 2026-09-24 à 18 h, retrait confirmé par l'instantané de reprise du dépôt du SSO (décision 598). Sans effet sur le service : aucune connexion n'avait encore été faite, elle attend `CRM-092` (§3) |
@@ -1064,3 +1064,14 @@ Spark distant de prod »).
 - `scripts/spark/verifier.sh` : un premier passage a rendu la route « aucune » alors que
   `/etc/spark/routes` porte bien `crm.lelabs.tech 8080 tls` et que `https://` répond `200` — lecture ssh
   ponctuellement ratée ; rejoué aussitôt : **26 contrôles, aucune anomalie**.
+
+### Secret sous `OIDC_CLIENT_SECRET` — 2026-09-26 (§2.6, décision 604)
+
+- **Étape 1** : demande vide `OIDC_CLIENT_SECRET` déposée, étiquetée, après constat qu'aucune proposition
+  n'était pendante. **Étape 2** : saisie par le responsable. **Étape 3** : comparées dans la cellule,
+  sans affichage — **égales**, 86 caractères ; aucune proposition pendante.
+- **Étape 4** : `scripts/spark/livrer.sh` par les IP, révision **`f99a9b32`** ; `functions` recréé, sain.
+- **Étape 5** : `verifier.sh` — un premier passage a lu « 0 conteneur sur 11 », lecture ssh ratée au
+  rebond (neuf services sains relus aussitôt, `https://` en `200`) ; rejoué : **26 contrôles, aucune
+  anomalie**. `functions` porte `OIDC_CLIENT_SECRET` et plus l'ancien nom. **Connexion réelle attendue
+  du responsable**, avant le retrait de `SSO_OIDC_CLIENT_SECRET` (étape 6).
