@@ -6698,6 +6698,9 @@ décision 596, qui visait la case des préférences.* `webapp/src/components/ui/
 24 px sur une ligne de `--size-target`. La couleur, elle, est juste (`accent-brand`). **Unité concernée :
 `CRM-081`.**
 
+**ARBITRÉE le 2026-09-26 — décision 603 : corriger maintenant.** La case est portée à 24 px, comme le
+§5.7 bis l'exige, avec sa preuve et sa capture, puis la webapp est redéployée seule.
+
 ### INC-252 — `verify-copie-workflow.sh` et `verify-move-card.sh` restaurent en rejouant `0035` à la main : la base reste avec l'ancienne `app.card_comments_avant_maj()`
 
 *Mesurée le 2026-09-24 en rejouant `scripts/verify-droits-fins.sh` pour INC-250 (2579 s, 46 contrôles,

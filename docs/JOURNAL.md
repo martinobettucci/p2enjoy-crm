@@ -30021,3 +30021,16 @@ empreintes des clés CLIENTES : celles des serveurs ont été acceptées au prem
 sessions précédentes. `verifier.sh` sur `d58eb9a7` : 26 contrôles, aucune anomalie. Les étapes du §2.5
 sont toutes faites ou sans objet ; `CRM-092` passe `[x]`.
 
+## décision 603 — arbitrages du 2026-09-26
+
+*Réponses du responsable à trois questions posées après la clôture de `CRM-092`.*
+
+- **INC-253 : corriger maintenant.** La case « Afficher les affaires en sommeil » passe de 16 px à
+  24 px (§5.7 bis).
+- **Gestes offerts à la lectrice : les masquer selon le rôle.** Nouvelle unité `CRM-093`, spécifiée et
+  validée avant le code ; le refus serveur reste la règle, le masquage n'est qu'une aide d'interface.
+- **Jamais d'alias ssh, toujours les IP** (règle du responsable). La configuration ssh jetable de la
+  session porte déjà les IP en `HostName` et `ProxyJump` ; le nom `crm` n'y est qu'une étiquette locale
+  que les scripts de la cellule attendent par défaut (`SPARK_SSH_HOTE`). Question de suivi posée au
+  responsable : passer les IP directement aux scripts, ou garder l'étiquette.
+

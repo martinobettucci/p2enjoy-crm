@@ -14641,3 +14641,20 @@ décision 594.
       par le travail en cours de T8 (`roles.ts` appelant une fonction pas encore migrée). Rejoué avec
       T8 : **44 contrôles, aucune anomalie**. Case de 16 px de `Sommeil.tsx` relevée, hors arbitrage :
       consignée en INC-253.
+
+## Arbitrages du 2026-09-26 — décision 603
+
+- [ ] **INC-253** (`CRM-081`) — la case « Afficher les affaires en sommeil » portée à 24 px
+      (`docs/DESIGN_SYSTEM.md` §5.7 bis) ; test, capture, redéploiement de la webapp.
+
+### CRM-093 — L'interface n'offre pas à un compte les gestes que le serveur lui refuse `[ ]`
+*Créée le 2026-09-26 — décision 603, arbitrage du responsable. Relevé en relisant les captures de
+`CRM-092` T9 : la lectrice du seed voit « Nouveau contact » et les liens d'administration du guide de
+démarrage ; le serveur refuse ces gestes, mais l'interface les propose. Spécification à écrire et à
+faire valider avant tout code : inventaire des gestes offerts par rôle, règle de masquage, et rappel
+que le refus serveur reste la seule règle (`CLAUDE.md` §10).*
+
+- [ ] Spécification : inventaire des écrans et des gestes offerts à `viewer`, règle d'affichage
+      selon `mon_role_espace`, états, preuves.
+- [ ] Mise en œuvre, preuves unitaires et E2E par rôle, captures, manuel, redéploiement.
+
