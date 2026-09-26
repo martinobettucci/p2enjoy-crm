@@ -13,6 +13,11 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Correctif arbitré le 2026-09-26 (décision 603)
+
+- **La case « Afficher les affaires en sommeil » mesure 24 px**, comme toute case du produit : elle en
+  mesurait 16, sous la taille que le design system fixe (INC-253).
+
 ### Déploiement
 
 - **Les scripts du poste joignent la cellule par ses adresses IP, jamais par un alias** (décision 603) :

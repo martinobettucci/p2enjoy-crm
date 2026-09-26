@@ -4,6 +4,7 @@
 //       §16.11.4 (dictionnaire fermé des issues), §16.13.4 (les mêmes mentions qu'à la fiche)
 // @spec docs/DESIGN_SYSTEM.md §5.3 quinquies (de quoi la bascule et la pastille compacte ont l'air),
 //       §5.3 quater (les jetons et l'icône dont elles héritent), §8 (cible de 40 px, nom accessible)
+// @spec docs/INCONSISTENCY_REPORT.md INC-253 ; docs/JOURNAL.md décision 603 — case de 24 px (§5.7 bis)
 //
 // Ces deux éléments sont rendus par le board ET par la vue liste. Ils vivent donc ici plutôt que
 // dupliqués dans les deux écrans : la pastille est « la même information, elle doit se reconnaître
@@ -153,7 +154,9 @@ export function BasculeSommeil({
 				// les affaires endormies n'a aucun rapport avec la page 3 de celle qui les masque.
 				// C'est l'appelant qui le fait — lui seul sait s'il pagine (§16.12.3).
 				onChange={(evenement) => onMode(evenement.target.checked ? 'visibles' : 'masquees')}
-				className="size-4 accent-brand"
+				// 24 px (§5.7 bis) : la case mesurait 16 px (INC-253, décision 603) ; le libellé reste
+				// la cible étendue de 40 px.
+				className="size-6 shrink-0 accent-brand"
 			/>
 			<Moon aria-hidden="true" size={16} strokeWidth={2} className="shrink-0" />
 			{libelle ?? t('sommeil.afficher')}

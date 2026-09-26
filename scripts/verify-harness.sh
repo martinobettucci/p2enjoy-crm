@@ -1294,7 +1294,9 @@ SCENARIOS_API=1082
 # qui mène à `/connexion` puis y ramène (+1). Aucun scénario retiré : les preuves anonymes sont
 # CONVERTIES — track ou card qu'aucune ligne ne porte, réponse `200 []` substituée. 757 + 2 = 759, valeur
 # COMPTÉE — « Total: 759 tests in 59 files ».
-SCENARIOS_UI=759
+# **RÉVISÉ À 760 PAR INC-253, 2026-09-26** (décision 603) : `filtre-sommeil.spec.ts` MESURE la case de la
+# bascule — 24 px sur une ligne de 40 px (§5.7 bis). 759 + 1 = 760, valeur COMPTÉE.
+SCENARIOS_UI=760
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

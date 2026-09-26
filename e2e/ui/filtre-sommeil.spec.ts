@@ -14,6 +14,8 @@
 // @verifies CLAUDE.md §16 (vérification visuelle)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
+// @verifies docs/INCONSISTENCY_REPORT.md INC-253 ; docs/JOURNAL.md décision 603 ; docs/DESIGN_SYSTEM.md §5.7 bis —
+//           la case de la bascule mesure 24 px sur une ligne de 40 px
 //
 // AUCUNE RÉPONSE N'EST SUBSTITUÉE : ces scénarios se connectent réellement et lisent les affaires
 // **du seed** par la vraie route. C'est l'objet même de la preuve — la tranche 2 a avait livré la
@@ -150,6 +152,20 @@ test.describe('le board masque, ramène et marque (docs/SPEC-cards.md §16.12.3,
 			await expect(page.getByTestId('barre-sommeil-board')).toBeVisible()
 			await expect(page.getByRole('checkbox', { name: AFFICHER })).toBeVisible()
 		}
+	})
+
+	// INC-253, arbitrée par la décision 603 : la case mesurait 16 px. Le §5.7 bis du design system
+	// fixe toute case à 24 px, sur une ligne — le libellé, cible étendue — d'au moins `--size-target`
+	// (40 px). MESURÉ sur le rendu, et non déduit d'une classe.
+	test('la case mesure 24 px, sur une ligne cliquable d’au moins 40 px (§5.7 bis, INC-253)', async ({ page }) => {
+		await connecter(page)
+		await page.goto(PROSPECTION.board)
+		const caseSommeil = await page.getByRole('checkbox', { name: AFFICHER }).boundingBox()
+		const ligne = await page.getByTestId('bascule-sommeil').boundingBox()
+		expect(caseSommeil?.width, 'largeur de la case').toBe(24)
+		expect(caseSommeil?.height, 'hauteur de la case').toBe(24)
+		expect(ligne?.height ?? 0, 'hauteur de la ligne cliquable').toBeGreaterThanOrEqual(40)
+		await capturer(page, 'filtre-sommeil-case-24-1440', UNITE)
 	})
 })
 

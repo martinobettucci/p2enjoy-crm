@@ -6701,6 +6701,11 @@ décision 596, qui visait la case des préférences.* `webapp/src/components/ui/
 **ARBITRÉE le 2026-09-26 — décision 603 : corriger maintenant.** La case est portée à 24 px, comme le
 §5.7 bis l'exige, avec sa preuve et sa capture, puis la webapp est redéployée seule.
 
+**CORRIGÉE le 2026-09-26.** `size-6 shrink-0 accent-brand`. Rouge d'abord : le test unitaire
+(`Sommeil.test.tsx`, classe `size-4`) et la mesure E2E (`filtre-sommeil.spec.ts` : **16 px** relevés),
+verts ensuite (24 × 24, ligne de 40 px) ; capture `docs/captures/CRM-081/filtre-sommeil-case-24-1440.jpg`
+relue.
+
 ### INC-252 — `verify-copie-workflow.sh` et `verify-move-card.sh` restaurent en rejouant `0035` à la main : la base reste avec l'ancienne `app.card_comments_avant_maj()`
 
 *Mesurée le 2026-09-24 en rejouant `scripts/verify-droits-fins.sh` pour INC-250 (2579 s, 46 contrôles,

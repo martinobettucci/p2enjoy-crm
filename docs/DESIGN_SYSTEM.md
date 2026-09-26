@@ -410,7 +410,9 @@ ci-dessous ne disent que de quoi il a l'air.
 - **La bascule est une case à cocher étiquetée, pas un bouton à deux états.** « Afficher les
   affaires en sommeil » se lit sans avoir à deviner ce que l'état courant signifie, là où un bouton
   unique laisse toujours l'ambiguïté entre « ce que je fais » et « ce qui est ». Elle porte
-  l'icône `Moon` du §5.3 quater et respecte la cible de 40 px du §8.
+  l'icône `Moon` du §5.3 quater et respecte la cible de 40 px du §8. **La case mesure 24 px**, comme
+  toute case du produit (§5.7 bis) : elle en mesurait 16 jusqu'au 2026-09-26 (INC-253, décision 603),
+  mesuré sur le rendu par `e2e/ui/filtre-sommeil.spec.ts`.
 
 - **Elle vit dans la barre de filtres de la vue liste, et dans une barre de même rôle au-dessus des
   colonnes du board.** Le board n'avait aucune barre : celle-ci n'en est pas une de plus, c'est la
