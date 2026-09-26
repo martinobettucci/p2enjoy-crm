@@ -30033,4 +30033,8 @@ sont toutes faites ou sans objet ; `CRM-092` passe `[x]`.
   session porte déjà les IP en `HostName` et `ProxyJump` ; le nom `crm` n'y est qu'une étiquette locale
   que les scripts de la cellule attendent par défaut (`SPARK_SSH_HOTE`). Question de suivi posée au
   responsable : passer les IP directement aux scripts, ou garder l'étiquette.
+- **Suite, même jour : l'étiquette `crm` disparaît aussi.** Le responsable a choisi de passer les IP
+  directement aux scripts. `SPARK_SSH_HOTE` porte l'IP de la cellule, sans défaut, et refuse un nom
+  d'hôte ; `SPARK_SSH_REBOND` porte `utilisateur@IP` du rebond, passé par `-J`. Spécifié au §5.1 de
+  `docs/SPEC-deploiement-spark.md` et au §2.4 de `docs/PROD_MIGRATIONS.md` avant le code.
 

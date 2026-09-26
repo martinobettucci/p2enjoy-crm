@@ -14646,6 +14646,9 @@ décision 594.
 
 - [ ] **INC-253** (`CRM-081`) — la case « Afficher les affaires en sommeil » portée à 24 px
       (`docs/DESIGN_SYSTEM.md` §5.7 bis) ; test, capture, redéploiement de la webapp.
+- [ ] **SSH par IP** (`CRM-090`, `docs/SPEC-deploiement-spark.md` §5.1) — `livrer.sh` et `verifier.sh`
+      joignent la cellule par `SPARK_SSH_HOTE` (IP, obligatoire, un nom refusé) et `SPARK_SSH_REBOND`
+      (`utilisateur@IP`, par `-J`) ; plus aucun alias. Preuves dans `verify-spark`.
 
 ### CRM-093 — L'interface n'offre pas à un compte les gestes que le serveur lui refuse `[ ]`
 *Créée le 2026-09-26 — décision 603, arbitrage du responsable. Relevé en relisant les captures de

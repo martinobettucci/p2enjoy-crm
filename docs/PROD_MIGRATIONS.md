@@ -135,9 +135,11 @@ Aucune clé de production n'est utilisée pour les tests. Aucun environnement lo
 `docs/SPEC-deploiement-spark.md` décrit l'assemblage ; cette section dit **ce qu'un humain applique,
 dans l'ordre**. Dans la cellule, aucun `.env` n'existe : les variables et les secrets sont posés par
 la **console** du plan de contrôle dans `/etc/spark/env` et `/run/spark/secrets`, que
-`./runProd.sh --spark` fusionne à chaque invocation. Le poste qui livre joint la cellule par un
-alias `ssh`, `crm` par défaut (`SPARK_SSH_HOTE`), défini selon le fragment `ssh_config` du dossier
-de cellule — aucune adresse n'est écrite dans ce dépôt.
+`./runProd.sh --spark` fusionne à chaque invocation. Le poste qui livre joint la cellule **par ses
+adresses IP, jamais par un alias** (décision 603) : `SPARK_SSH_HOTE=<IP de la cellule>` (obligatoire)
+et `SPARK_SSH_REBOND=ubuntu@<IP du rebond>`, lus dans la ligne `ssh -J` du §1 du dossier de cellule —
+aucune adresse n'est écrite dans ce dépôt. Les gestes manuels s'écrivent de même :
+`ssh -J ubuntu@<IP du rebond> spark-docker@<IP de la cellule> '…'`.
 
 | # | Geste | Qui | Commande ou lieu |
 |---|---|---|---|
@@ -193,7 +195,7 @@ l'amorçage du 2026-09-23 (§8), qui n'a jamais été connecté.
 | 9 | Vérifier | poste, en lecture seule | `scripts/spark/verifier.sh` : `/auth/v1/health` en `404`, aucun conteneur de GoTrue, échangeur en `204` sans session, sonde du **nouveau** client (`302` et PKCE exigé). Puis le §5 |
 | 10 | **Connexion réelle** de `martino@p2enjoy.studio` par « Se connecter avec LeLabs », puis relecture en base : attente consommée, `profiles.id` égal au `sub` LeLabs, appartenance `admin`, une session dans `public.sessions_sso` dont le jeton est chiffré (`v1.…`) ; aucun jeton LeLabs dans le stockage du navigateur | la personne, puis l'opérateur en lecture seule | `select id, full_name from public.profiles; select role from public.workspace_members; select count(*), bool_and(rafraichissement like 'v1.%') from public.sessions_sso;` |
 | 11 | **Fait avant l'heure** : `lelabs-crm` a été supprimé le 2026-09-24, avant le déploiement (décision 598) ; le second avis à l'exploitant du SSO est sans objet. Consigne d'origine : après une connexion réelle réussie, **supprimer le client public `lelabs-crm`**, désormais sans emploi — onglet *Intégrations*, action **Supprimer** avec confirmation par frappe de l'identifiant. **Irréversible** : jamais avant cette connexion réussie, la production tournant sur lui jusque-là | administrateur du realm | hors du dépôt. **Prévenir l'exploitant du SSO à deux moments** — après la création de `lelabs-crm-serveur` (étape 0), puis après ce retrait — : il rapatrie et committe l'instantané de reprise du realm, faute de quoi une réinstallation recréerait un état périmé (message de l'agent du dépôt du SSO, 2026-09-24) |
-| 12 | Reproposer les notes du Spark réécrites (`docs/spark-notes/`) — les précédentes décrivaient GoTrue et le relais SMTP | poste qui livre | `ssh crm 'cat > /etc/spark/notes/<NOM>.md.?' < docs/spark-notes/<NOM>.md`, pour `README`, `CONTRIBUTORS` et `INSTALL` ; le propriétaire du Spark les accepte en console |
+| 12 | Reproposer les notes du Spark réécrites (`docs/spark-notes/`) — les précédentes décrivaient GoTrue et le relais SMTP | poste qui livre | `ssh -J ubuntu@<IP du rebond> spark-docker@<IP de la cellule> 'cat > /etc/spark/notes/<NOM>.md.?' < docs/spark-notes/<NOM>.md`, pour `README`, `CONTRIBUTORS` et `INSTALL` ; le propriétaire du Spark les accepte en console |
 
 **Retour arrière.** Avant l'étape 6 : rien à défaire — l'archive déposée ne change pas la pile en service,
 et les variables importées ne sont lues qu'au prochain démarrage. À partir de l'étape 6 : **restaurer

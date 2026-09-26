@@ -201,9 +201,12 @@ propositions **sous** le bloc posé par le plan de contrôle dans `/etc/spark/en
 ### 5.1 Depuis le poste : `scripts/spark/livrer.sh`
 
 1. Refuse un arbre de travail modifié et un `HEAD` absent d'`origin/main` : la cellule exécute du
-   code **poussé**, jamais un état local. La cellule est jointe par un **alias `ssh`**,
-   `SPARK_SSH_HOTE` (`crm` par défaut), que le poste définit selon le fragment `ssh_config` du
-   dossier de cellule : aucune adresse n'entre au dépôt.
+   code **poussé**, jamais un état local. **La cellule est jointe par ses adresses IP, jamais par un
+   alias** (décision 603, règle du responsable) : `SPARK_SSH_HOTE` porte l'IP de la cellule et est
+   **obligatoire** — un nom d'hôte y est refusé —, `SPARK_SSH_REBOND` porte `utilisateur@IP` du rebond,
+   passé à `ssh -J`. Les deux valeurs viennent de la ligne `ssh -J` du §1 du dossier de cellule
+   (`docs/PROD-SERVER.md`, non versionné) : aucune adresse n'entre au dépôt. `scripts/spark/verifier.sh`
+   suit la même règle.
 2. Relit dans la cellule les variables **publiques** du build — `API_EXTERNAL_URL`, `ANON_KEY`,
    `SSO_OIDC_ISSUER`, `SSO_OIDC_CLIENT_ID` — depuis `/etc/spark/env`, et refuse si l'une manque.
 3. Construit la webapp **sur le poste** avec ces valeurs (`VITE_SUPABASE_URL`,
