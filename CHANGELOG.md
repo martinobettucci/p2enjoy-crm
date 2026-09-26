@@ -13,18 +13,25 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### Correctif arbitré le 2026-09-26 (décision 603)
+_Rien à publier pour le moment._
+
+## [Publié]
+
+### Déployé en production, 2026-09-26
+
+Cellule Spark `crm`, révision `e81d01a4`, livrée par les seules adresses IP : aucune migration, aucune
+variable (`docs/PROD_MIGRATIONS.md` §8). `scripts/spark/verifier.sh` : 26 contrôles, aucune anomalie.
+
+#### Correctif arbitré le 2026-09-26 (décision 603)
 
 - **La case « Afficher les affaires en sommeil » mesure 24 px**, comme toute case du produit : elle en
   mesurait 16, sous la taille que le design system fixe (INC-253).
 
-### Déploiement
+#### Déploiement
 
 - **Les scripts du poste joignent la cellule par ses adresses IP, jamais par un alias** (décision 603) :
   `SPARK_SSH_HOTE` porte l'IP de la cellule et devient obligatoire — un nom d'hôte est refusé avant
   tout ssh —, `SPARK_SSH_REBOND` porte `utilisateur@IP` du rebond, passé par `-J`.
-
-## [Publié]
 
 ### Déployé en production, 2026-09-25
 

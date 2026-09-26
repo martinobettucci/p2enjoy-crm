@@ -35,7 +35,7 @@ source d'identité.
 | Environnement de production | Cellule Spark `crm` (`docs/SPEC-deploiement-spark.md`), assemblage à trois fichiers : neuf services sains et deux conteneurs à usage unique (runner, bucket) ; GoTrue retiré le 2026-09-24 |
 | Schéma appliqué | Les **79 migrations** du dépôt : 1 à 73 par `--migrate --premier-deploiement` sur une base mesurée vierge (2026-09-23), 74 à 79 par la reprise `CRM-092` (2026-09-24) |
 | Dernière migration appliquée | `0079_admin_du_domaine.sql` — objets relus en base le 2026-09-24 |
-| Version déployée | La révision inscrite dans `/srv/crm/REVISION` — celle que `scripts/spark/verifier.sh` compare au `HEAD` du poste ; **`d58eb9a7`** le 2026-09-25 (`CRM-092` T9, webapp seule) |
+| Version déployée | La révision inscrite dans `/srv/crm/REVISION` — celle que `scripts/spark/verifier.sh` compare au `HEAD` du poste ; **`e81d01a4`** le 2026-09-26 (INC-253, webapp seule) |
 | Données | Un espace, « P2Enjoy CRM » (`crm`), réamorcé par la reprise `CRM-092` ; un profil, celui du responsable, administrateur depuis sa première connexion LeLabs ; aucune autre donnée, aucun seed. La ligne `auth.users` de l'ancien compte invité reste, inerte |
 | Route publique | `crm.lelabs.tech 8080 tls`, active : `https://crm.lelabs.tech`, certificat Let's Encrypt présenté par la Forge (décision 576) |
 | Client OIDC `lelabs-crm` | Déclaré et créé au realm le 2026-09-23 à 16:08:44 (`docs/SSO-client-lelabs-crm.md`), **supprimé du realm avant le déploiement de `CRM-092`** : sonde `400` « Client non trouvé » le 2026-09-24 à 18 h, retrait confirmé par l'instantané de reprise du dépôt du SSO (décision 598). Sans effet sur le service : aucune connexion n'avait encore été faite, elle attend `CRM-092` (§3) |
@@ -1033,3 +1033,13 @@ Spark distant de prod »).
   redémarrage, seul le port `8080` publié, `/auth/v1/health` en `404`, échangeur en `204`, 6 Gio de
   disque libres, route `tls`, accès `https://` public, client `lelabs-crm-serveur` avec PKCE exigé.
   **La reprise `CRM-092` est close.**
+
+### INC-253 et accès par IP — 2026-09-26
+
+- `scripts/spark/livrer.sh`, la cellule jointe par `SPARK_SSH_HOTE` et `SPARK_SSH_REBOND` en IP (décision
+  603) : révision **`e81d01a4`**, webapp seule, aucune migration ni variable. Premier essai arrêté avant
+  tout geste distant : l'enveloppe ssh jetable imposait le fichier d'empreintes de la cellule à tous les
+  hôtes, `git fetch` vers GitHub compris — restreinte aux deux IP.
+- `scripts/spark/verifier.sh` : un premier passage a rendu la route « aucune » alors que
+  `/etc/spark/routes` porte bien `crm.lelabs.tech 8080 tls` et que `https://` répond `200` — lecture ssh
+  ponctuellement ratée ; rejoué aussitôt : **26 contrôles, aucune anomalie**.

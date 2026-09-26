@@ -14644,12 +14644,12 @@ décision 594.
 
 ## Arbitrages du 2026-09-26 — décision 603
 
-- [~] **INC-253** (`CRM-081`) — la case « Afficher les affaires en sommeil » portée à 24 px
+- [x] **INC-253** (`CRM-081`) — la case « Afficher les affaires en sommeil » portée à 24 px
       (`docs/DESIGN_SYSTEM.md` §5.7 bis) ; test, capture, redéploiement de la webapp. Rouge puis vert :
       unitaire (`Sommeil.test.tsx`) et mesure E2E (16 px relevés, puis 24) ; trois specs du sommeil
       **30/30** ; capture relue ; `verify-webapp` : unitaires **3294**, `e2e:ui` **757/760**, les trois
       rouges étant la dérive des échéances d'un seed de la veille — seed réappliqué, **24/24** sur leurs
-      trois fichiers.
+      trois fichiers. **En production le 2026-09-26** (révision `e81d01a4`).
 - [x] **SSH par IP** (`CRM-090`, `docs/SPEC-deploiement-spark.md` §5.1) — `livrer.sh` et `verifier.sh`
       joignent la cellule par `SPARK_SSH_HOTE` (IP, obligatoire, un nom refusé) et `SPARK_SSH_REBOND`
       (`utilisateur@IP`, par `-J`) ; plus aucun alias. Preuves dans `verify-spark`. Mesuré le 2026-09-26 :
