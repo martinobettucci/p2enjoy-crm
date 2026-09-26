@@ -14457,7 +14457,7 @@ client est déclaré, la sonde du §10.8 rend `302` et une connexion réelle abo
       (`docs/SSO-client-lelabs-crm.md`), sonde `302` rejouée (décision 578, K1). La connexion réelle
       en production n'emploiera **pas** l'échange d'`id_token` de GoTrue : elle revient à `CRM-092`.
 
-### CRM-092 — Le SSO, seule source d'identité : GoTrue quitte la pile `[~]`
+### CRM-092 — Le SSO, seule source d'identité : GoTrue quitte la pile `[x]`
 *Créée le 2026-09-23 — décision 578, arbitrage du responsable. Motif : la décision 568 avait gardé
 GoTrue comme émetteur et la connexion par mot de passe ; le responsable exige que le SSO soit la seule
 source d'identité, en développement (Keycloak préchargé de comptes et de rôles) comme en production
@@ -14538,7 +14538,8 @@ connexion réelle de `martino@p2enjoy.studio` aboutie après les opérations du 
       Mesuré le 2026-09-25 : unitaires **3291** (six de la garde, rouges avant elle) ; `verify-webapp`
       **44 contrôles, aucune anomalie**, `e2e:ui` **759/759** ; `verify-manual` **136** ; captures
       relues. **En production le 2026-09-25** (révision `d58eb9a7`, webapp seule) : quatre adresses
-      ouvertes sans session mènent à `/connexion`, sans navigation ni en-tête.
+      ouvertes sans session mènent à `/connexion`, sans navigation ni en-tête. `verifier.sh` du
+      2026-09-26 sur cette révision : **26 contrôles, aucune anomalie** — `CRM-092` clos.
 - [x] **T8** — règle du domaine sur `admin` (décision 597, §6.1 bis et §7.7) : revendication
       `lelabs_admin`, migration `0079`, `mon_role_espace`, `roles.ts`, realm de développement
       (`viewer@` sans `admin`, `exploitante@`), preuves et harnais. Mesuré : pgTAP **73 fichiers,
@@ -14560,7 +14561,7 @@ connexion réelle de `martino@p2enjoy.studio` aboutie après les opérations du 
       contrôles publics et une lecture de la base, mémoire, ports et disque non relevés.
 - [x] **Notes du Spark réécrites et reproposées** (`docs/spark-notes/`) — **réécrites en T7**, **reproposées
       le 2026-09-24** (identiques au dépôt), **acceptées en console par le responsable le 2026-09-25**
-      (déclaré par lui ; non relu dans la cellule, l'accès ssh de la session étant refusé) ; étape 12 du §2.5 de `PROD_MIGRATIONS`. Déposées le 2026-09-23 comme
+      — relu le 2026-09-26 : les trois notes en service sont identiques au dépôt ; étape 12 du §2.5 de `PROD_MIGRATIONS`. Déposées le 2026-09-23 comme
       propositions `.?`, elles attendent l'acceptation du propriétaire dans la console de la Forge
       (`docs/PROD_MIGRATIONS.md` §2.4, étape 9), et `CRM-092` les rend périmées — GoTrue, client
       public, relais SMTP. À réécrire en T7 et à reproposer au déploiement. **Instruction reçue le 2026-09-23** :

@@ -30011,3 +30011,13 @@ reste la protection.
 - **En production le 2026-09-25** : révision `d58eb9a7`, webapp seule. Quatre adresses ouvertes sans
   session mènent à `/connexion` sans rien montrer de la coquille — le relevé du responsable est clos.
 
+## décision 602 — `CRM-092` clos
+
+*2026-09-26.* Le responsable a accepté les notes du Spark (relues : identiques au dépôt) et autorisé la
+session à travailler dans la cellule. La configuration ssh jetable, perdue avec le répertoire de travail,
+a été reconstruite depuis la ligne `ssh -J` du §1 de `docs/PROD-SERVER.md` — le fragment `ssh_config`
+y nomme le rebond par un alias (`spark-host`) que le poste ne définit pas. Le dossier ne publie que les
+empreintes des clés CLIENTES : celles des serveurs ont été acceptées au premier contact, comme dans les
+sessions précédentes. `verifier.sh` sur `d58eb9a7` : 26 contrôles, aucune anomalie. Les étapes du §2.5
+sont toutes faites ou sans objet ; `CRM-092` passe `[x]`.
+

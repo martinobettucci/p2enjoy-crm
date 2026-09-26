@@ -1023,6 +1023,11 @@ Spark distant de prod »).
 - Constat en production, sans session : `/`, `/ma-journee?qui=tous`, `/tracks/conseil-ia/grands-comptes`
   et `/contacts` mènent à `/connexion`, sans navigation principale ni en-tête ; capture relue.
 - `CHANGELOG.md` : l'entrée T9 déplacée sous « Publié », entrée du 2026-09-25.
-- **Étape 12 close** : les trois notes du Spark acceptées en console par le responsable le 2026-09-25
-  (déclaré ; relecture dans la cellule impossible, l'accès ssh de la session étant refusé). Reste de la
-  reprise : le relevé mémoire, ports et disque de `scripts/spark/verifier.sh`.
+- **Étape 12 close** : les trois notes du Spark acceptées en console par le responsable le 2026-09-25 ;
+  relu le 2026-09-26, les notes en service sont identiques au dépôt.
+- **Étape 9 close, 2026-09-26** — sur autorisation du responsable (« je t'autorise à travailler dans le
+  Spark »), `scripts/spark/verifier.sh --revision d58eb9a7` : **26 contrôles, aucune anomalie** — onze
+  conteneurs sains ou terminés en `0`, aucun conteneur de GoTrue, aucun arrêt par manque de mémoire ni
+  redémarrage, seul le port `8080` publié, `/auth/v1/health` en `404`, échangeur en `204`, 6 Gio de
+  disque libres, route `tls`, accès `https://` public, client `lelabs-crm-serveur` avec PKCE exigé.
+  **La reprise `CRM-092` est close.**
