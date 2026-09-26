@@ -30043,3 +30043,15 @@ sont toutes faites ou sans objet ; `CRM-092` passe `[x]`.
   proprement la veille à 07:45 UTC, Storage et Realtime en boucle faute de résoudre `db` : relancée par
   `./runDev.sh` après redémarrage des deux services, sans perte.
 
+## décision 604 — le secret du client s'appelle `OIDC_CLIENT_SECRET`, bascule directe
+
+*2026-09-26. Annoncée par l'agent du dépôt du SSO comme décision du responsable, confirmée par lui
+dans cette session (« Bascule directe »).* Le SSO refuse désormais `SECRET_VAR` ; toute intégration lit
+son secret sous `OIDC_CLIENT_SECRET`. Le CRM lisait `SSO_OIDC_CLIENT_SECRET`.
+
+**Écarté : la transition douce** (lire les deux noms un temps). **Retenu : bascule directe** — le code
+ne lit plus que le nouveau nom. Conséquence : en production, la variable doit exister dans la cellule
+AVANT la livraison ; l'ordre est écrit au §12 bis de `docs/SPEC-session-sso.md`. En développement,
+l'amorçage recopie l'ancienne valeur sous le nouveau nom, sans quoi le realm et l'échangeur
+divergeraient.
+

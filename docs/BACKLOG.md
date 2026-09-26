@@ -14644,13 +14644,20 @@ décision 594.
 
 ## Arbitrages du 2026-09-26 — décision 603
 
-- [ ] **INC-253** (`CRM-081`) — la case « Afficher les affaires en sommeil » portée à 24 px
-      (`docs/DESIGN_SYSTEM.md` §5.7 bis) ; test, capture, redéploiement de la webapp.
+- [~] **INC-253** (`CRM-081`) — la case « Afficher les affaires en sommeil » portée à 24 px
+      (`docs/DESIGN_SYSTEM.md` §5.7 bis) ; test, capture, redéploiement de la webapp. Rouge puis vert :
+      unitaire (`Sommeil.test.tsx`) et mesure E2E (16 px relevés, puis 24) ; trois specs du sommeil
+      **30/30** ; capture relue.
 - [x] **SSH par IP** (`CRM-090`, `docs/SPEC-deploiement-spark.md` §5.1) — `livrer.sh` et `verifier.sh`
       joignent la cellule par `SPARK_SSH_HOTE` (IP, obligatoire, un nom refusé) et `SPARK_SSH_REBOND`
       (`utilisateur@IP`, par `-J`) ; plus aucun alias. Preuves dans `verify-spark`. Mesuré le 2026-09-26 :
       `verify-spark` **91, aucune anomalie** (cinq preuves nouvelles, dont quatre refus avant tout ssh) ;
       `verifier.sh` joint la production par les seules IP : **26 contrôles, aucune anomalie**.
+
+- [ ] **Secret sous `OIDC_CLIENT_SECRET`** (`CRM-092`, `docs/SPEC-session-sso.md` §12 bis, décision 604)
+      — bascule directe : code, Compose, harnais, realm de développement, amorçage d'un `.env`
+      antérieur, documentation ; en production, la variable posée AVANT la livraison, puis l'ancien nom
+      retiré et l'agent du SSO prévenu.
 
 ### CRM-093 — L'interface n'offre pas à un compte les gestes que le serveur lui refuse `[ ]`
 *Créée le 2026-09-26 — décision 603, arbitrage du responsable. Relevé en relisant les captures de

@@ -689,8 +689,11 @@ responsable a demandé une fois `CRM-092` entièrement vérifiée (décision 584
      TYPE=serveur
      REDIRECT=https://crm.lelabs.tech/auth/retour
      ROLE=verified
-     SECRET_VAR=SSO_OIDC_CLIENT_SECRET
      ```
+
+     **RÉVISÉ par la décision 604** : la clé `SECRET_VAR` est refusée par le SSO, et toute intégration
+     lit son secret sous **`OIDC_CLIENT_SECRET`** (§12 bis). La déclaration d'origine portait
+     `SECRET_VAR=SSO_OIDC_CLIENT_SECRET`.
 
      L'identifiant **retenu par le service** fait foi ; le secret, affiché une seule fois à
      l'administrateur, est posé par lui comme variable de la cellule, sans transiter par aucun dépôt
@@ -718,6 +721,31 @@ responsable a demandé une fois `CRM-092` entièrement vérifiée (décision 584
    serveur existe, chiffrée ; le navigateur ne porte aucun jeton LeLabs.
 8. Après une connexion réelle réussie : demander à l'administrateur du realm de **retirer le client
    public `lelabs-crm`**, désormais sans emploi.
+
+## 12 bis. Le secret du client s'appelle `OIDC_CLIENT_SECRET` — décision 604
+
+Le responsable a tranché pour tout le domaine : le SSO refuse désormais la clé `SECRET_VAR`, et
+**toute** intégration lit le secret de son client sous le même nom, `OIDC_CLIENT_SECRET`. Le CRM le
+lisait sous `SSO_OIDC_CLIENT_SECRET`. **Bascule directe**, arbitrée par le responsable : le code ne lit
+plus que le nouveau nom, sans période où les deux vaudraient.
+
+- **Partout le même nom** : échangeur de session (`dependances.ts`), environnement par fonction de
+  `main`, fichiers Compose, `.env.example`, realm de développement (secret substitué à l'import),
+  bibliothèques et harnais (`env.sh`, `sso.sh`, `verify-session-sso`, `verify-functions`,
+  `verify-spark`), `proposer.sh`, et la documentation qui nomme la variable.
+- **Un `.env` de développement antérieur** : l'amorçage de `./runDev.sh` y recopie la valeur de
+  `SSO_OIDC_CLIENT_SECRET` sous `OIDC_CLIENT_SECRET` quand le second manque — le realm de développement
+  et l'échangeur gardent le même secret —, et laisse l'ancien nom, inerte.
+- **L'ordre en production est imposé par la bascule directe**, car un code livré avant la variable
+  couperait la connexion :
+  1. `proposer.sh --demandes-seules` demande `OIDC_CLIENT_SECRET`, vide ;
+  2. le responsable y saisit **la même valeur** que `SSO_OIDC_CLIENT_SECRET` — aucun nouveau secret
+     n'est émis — ;
+  3. livraison de la révision qui lit le nouveau nom, et recréation de `functions` ;
+  4. connexion réelle ;
+  5. `SSO_OIDC_CLIENT_SECRET` retiré à la console, désormais inerte ;
+  6. l'agent du dépôt du SSO est prévenu, pour que l'attribut du client et son bloc d'intégration
+     nomment `OIDC_CLIENT_SECRET`.
 
 ## 13. Preuves exigées
 
