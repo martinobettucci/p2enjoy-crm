@@ -8,6 +8,8 @@
 #           les propositions ; `--demandes-seules` pour une cellule en service (décisions 589 et 590) ;
 #           T7 (décision 591) : Kong et Caddy portent leur label de révision `crm-092` ; valeurs de la
 #           cellule entre guillemets, lues comme la cellule les écrit (décision 599)
+# @verifies docs/SPEC-deploiement-spark.md §5.1 ; docs/JOURNAL.md décision 603 — la cellule est jointe
+#           par ses IP, jamais par un alias : livrer.sh et verifier.sh refusent un nom d'hôte
 #
 # Rejoue les preuves de `CRM-090` qui ne demandent PAS la cellule :
 #
@@ -585,6 +587,7 @@ cp "$L/injecte/env" "$L/cellule/etc/env"
 cat > "$L/bin/ssh" <<EOF
 #!/usr/bin/env bash
 commande="\${@: -1}"
+printf '%s\n' "\$*" >> "$L/ssh-args.log"
 printf '%s\n' "\$commande" >> "$L/ssh.log"
 commande="\${commande//\/etc\/spark\/env/$L/cellule/etc/env}"
 case "\$commande" in
@@ -601,8 +604,25 @@ env | grep '^VITE_' | sort > "$L/build.env"
 mkdir -p webapp/dist && echo "<!doctype html><title>build \$(date +%s%N)</title>" > webapp/dist/index.html
 EOF
 chmod +x "$L/bin/ssh" "$L/bin/npm"
+# Adresses de DOCUMENTATION (RFC 5737), jamais celles de la cellule réelle : aucune n'entre au dépôt.
 livrer() { ( cd "$L/clone" && PATH="$L/bin:$PATH" SPARK_REPERTOIRE="$L/cellule/srv" \
+	SPARK_SSH_HOTE="${HOTE_ESSAI-192.0.2.10}" SPARK_SSH_REBOND="${REBOND_ESSAI-ubuntu@192.0.2.1}" \
 	./scripts/spark/livrer.sh --sans-lancer "$@" 2>&1 ); }
+
+# La cellule est jointe par ses IP, jamais par un alias (décision 603) : les trois refus précèdent
+# tout geste distant, et l'appel accepté porte le rebond par `-J`.
+for cas in "|ubuntu@192.0.2.1|SPARK_SSH_HOTE absente" "crm|ubuntu@192.0.2.1|n'est pas une adresse IP" \
+	"192.0.2.10|ubuntu@spark-host|utilisateur@IP attendu" "192.0.2.300|ubuntu@192.0.2.1|n'est pas une adresse IP"; do
+	IFS='|' read -r HOTE_ESSAI REBOND_ESSAI attendu <<<"$cas"
+	rm -f "$L/ssh-args.log"
+	out=$(HOTE_ESSAI=$HOTE_ESSAI REBOND_ESSAI=$REBOND_ESSAI livrer)
+	case "$out" in *"$attendu"*) [ ! -e "$L/ssh-args.log" ] \
+			&& ok "hôte « ${HOTE_ESSAI:-(absent)} », rebond « $REBOND_ESSAI » : refusé avant tout ssh" \
+			|| fail "hôte « $HOTE_ESSAI » : refusé, mais ssh a été appelé" ;;
+		*) fail "hôte « ${HOTE_ESSAI:-(absent)} », rebond « $REBOND_ESSAI » accepté : $(printf '%s' "$out" | tail -n 1)" ;; esac
+done
+unset HOTE_ESSAI REBOND_ESSAI
+rm -f "$L/ssh-args.log"
 
 out=$(livrer)
 case "$out" in *"absent ou non inscriptible"*) ok "répertoire de l'application absent : refus nommant le geste de root" ;;
@@ -620,6 +640,9 @@ mv "$L/cellule/etc/env.attente" "$L/cellule/etc/env"
 mkdir -p "$L/cellule/srv/webapp/dist" && echo perime > "$L/cellule/srv/webapp/dist/perime.js"
 if out=$(livrer); then
 	ok "première livraison aboutie"
+	grep -q -- "-J ubuntu@192.0.2.1 spark-docker@192.0.2.10 " "$L/ssh-args.log" \
+		&& ok "ssh reçoit le rebond par -J et la cellule par leurs IP, sans aucun alias" \
+		|| fail "arguments ssh : $(head -n 1 "$L/ssh-args.log")"
 	[ "$(cat "$L/cellule/srv/REVISION")" = "$(git -C "$L/clone" rev-parse HEAD)" ] && ok "REVISION = HEAD livré" || fail "REVISION erronée"
 	[ -f "$L/cellule/srv/runProd.sh" ] && [ -f "$L/cellule/srv/docker-compose.spark.yml" ] && ok "archive extraite dans le répertoire de l'application" || fail "archive non extraite"
 	[ ! -e "$L/cellule/srv/webapp/dist/perime.js" ] && [ -f "$L/cellule/srv/webapp/dist/index.html" ] \

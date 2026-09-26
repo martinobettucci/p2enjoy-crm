@@ -30037,4 +30037,9 @@ sont toutes faites ou sans objet ; `CRM-092` passe `[x]`.
   directement aux scripts. `SPARK_SSH_HOTE` porte l'IP de la cellule, sans défaut, et refuse un nom
   d'hôte ; `SPARK_SSH_REBOND` porte `utilisateur@IP` du rebond, passé par `-J`. Spécifié au §5.1 de
   `docs/SPEC-deploiement-spark.md` et au §2.4 de `docs/PROD_MIGRATIONS.md` avant le code.
+- **Mis en œuvre le 2026-09-26** : `scripts/lib/spark-ssh.sh`, partagée par `livrer.sh` et
+  `verifier.sh`. `verify-spark` : 91, aucune anomalie ; `verifier.sh` par les seules IP : 26, aucune
+  anomalie. En le rejouant, la pile de développement a été trouvée à moitié arrêtée — PostgreSQL arrêté
+  proprement la veille à 07:45 UTC, Storage et Realtime en boucle faute de résoudre `db` : relancée par
+  `./runDev.sh` après redémarrage des deux services, sans perte.
 

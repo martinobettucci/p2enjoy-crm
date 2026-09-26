@@ -7,6 +7,7 @@
 # @spec docs/SPEC-deploiement-spark.md §7 (vérifications) ; docs/SPEC-auth.md §10.8 (sonde)
 # @spec docs/PROD_MIGRATIONS.md §2.4 (étape 6), §5 (vérifications après déploiement)
 # @spec docs/JOURNAL.md décision 576 (une route `clair` n'est publiée qu'en http://)
+# @spec docs/JOURNAL.md décision 603 — la cellule est jointe par ses IP, jamais par un alias
 #
 # S'exécute sur le POSTE, en LECTURE SEULE : aucune commande n'écrit, ni dans la cellule, ni dans la
 # base, ni au SSO. Chaque contrôle rend OK ou ECHEC ; ce qui ne peut pas encore être vérifié — route
@@ -27,16 +28,17 @@
 #   scripts/spark/verifier.sh [--revision <commit>]      défaut : HEAD du poste
 #   scripts/spark/verifier.sh --help
 #
-# Variables : SPARK_SSH_HOTE, SPARK_SSH_UTILISATEUR, SPARK_REPERTOIRE — comme livrer.sh.
+# Variables : SPARK_SSH_HOTE (IP, obligatoire), SPARK_SSH_REBOND, SPARK_SSH_UTILISATEUR,
+# SPARK_REPERTOIRE — comme livrer.sh.
 
 set -uo pipefail
 
 # shellcheck source=../lib/env.sh
 source "$(dirname "${BASH_SOURCE[0]}")/../lib/env.sh"
+# shellcheck source=../lib/spark-ssh.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/spark-ssh.sh"
 set +e
 
-SPARK_SSH_HOTE="${SPARK_SSH_HOTE:-crm}"
-SPARK_SSH_UTILISATEUR="${SPARK_SSH_UTILISATEUR:-spark-docker}"
 SPARK_REPERTOIRE="${SPARK_REPERTOIRE:-/srv/crm}"
 REVISION=$(git -C "$REPO_ROOT" rev-parse HEAD)
 
@@ -50,8 +52,9 @@ while [ $# -gt 0 ]; do
 	shift
 done
 
-cible="$SPARK_SSH_UTILISATEUR@$SPARK_SSH_HOTE"
-distant() { ssh -o BatchMode=yes "$cible" "$@"; }
+spark_ssh_preparer
+cible="$SPARK_SSH_CIBLE"
+distant() { ssh "${SPARK_SSH_OPTIONS[@]}" "$cible" "$@"; }
 
 echecs=0; controles=0; attentes=0
 ok()      { controles=$((controles + 1)); printf '  \033[32mOK\033[0m         %s\n' "$1"; }

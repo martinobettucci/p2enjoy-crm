@@ -13,7 +13,11 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-_Rien à publier pour le moment._
+### Déploiement
+
+- **Les scripts du poste joignent la cellule par ses adresses IP, jamais par un alias** (décision 603) :
+  `SPARK_SSH_HOTE` porte l'IP de la cellule et devient obligatoire — un nom d'hôte est refusé avant
+  tout ssh —, `SPARK_SSH_REBOND` porte `utilisateur@IP` du rebond, passé par `-J`.
 
 ## [Publié]
 

@@ -2,6 +2,7 @@
 # @spec CRM-090 (docs/BACKLOG.md) — livraison d'une révision poussée dans la cellule Spark
 # @spec docs/SPEC-deploiement-spark.md §5.1 (livrer), §5.2 (premier déploiement), §7 (vérifications)
 # @spec docs/JOURNAL.md décision 567 (build sur le poste, archive par-dessus /srv/crm)
+# @spec docs/JOURNAL.md décision 603 — la cellule est jointe par ses IP, jamais par un alias
 #
 # S'exécute sur le POSTE qui livre, jamais dans la cellule : celle-ci n'a pas Node, et un build
 # Vite y consommerait la mémoire de la pile.
@@ -21,8 +22,9 @@
 #      (décision 571 : l'image d'origine n'y est pas extractible) ;
 #   7. lance `./runProd.sh --spark` dans la cellule, avec les options passées après `--`.
 #
-# La cellule est jointe par un ALIAS ssh — aucune adresse n'entre au dépôt. Le poste le définit
-# selon le fragment `ssh_config` du dossier de cellule (rebond compris).
+# La cellule est jointe par ses adresses IP, JAMAIS par un alias (décision 603) : elles sont passées
+# par l'environnement, lues dans la ligne `ssh -J` du §1 du dossier de cellule — aucune n'entre au
+# dépôt.
 #
 # Usage :
 #   scripts/spark/livrer.sh                                   livre HEAD et démarre la pile
@@ -38,7 +40,8 @@
 #   scripts/spark/livrer.sh --help
 #
 # Variables :
-#   SPARK_SSH_HOTE         alias ssh de la cellule, défaut `crm`
+#   SPARK_SSH_HOTE         IP de la cellule — obligatoire, un nom d'hôte est refusé
+#   SPARK_SSH_REBOND       `utilisateur@IP` du rebond, passé à `ssh -J` — facultatif
 #   SPARK_SSH_UTILISATEUR  compte qui porte la pile, défaut `spark-docker`
 #   SPARK_REPERTOIRE       répertoire de l'application, défaut `/srv/crm`
 
@@ -46,9 +49,9 @@ set -euo pipefail
 
 # shellcheck source=../lib/env.sh
 source "$(dirname "${BASH_SOURCE[0]}")/../lib/env.sh"
+# shellcheck source=../lib/spark-ssh.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/spark-ssh.sh"
 
-SPARK_SSH_HOTE="${SPARK_SSH_HOTE:-crm}"
-SPARK_SSH_UTILISATEUR="${SPARK_SSH_UTILISATEUR:-spark-docker}"
 SPARK_REPERTOIRE="${SPARK_REPERTOIRE:-/srv/crm}"
 LANCER=1
 ARCHIVE_SEULE=0
@@ -67,8 +70,9 @@ while [ $# -gt 0 ]; do
 	shift
 done
 
-cible="$SPARK_SSH_UTILISATEUR@$SPARK_SSH_HOTE"
-distant() { ssh -o BatchMode=yes "$cible" "$@"; }
+spark_ssh_preparer
+cible="$SPARK_SSH_CIBLE"
+distant() { ssh "${SPARK_SSH_OPTIONS[@]}" "$cible" "$@"; }
 
 # Une valeur passée à un shell distant est citée entre apostrophes ; le répertoire en contient
 # rarement, mais une livraison ne se joue pas sur « rarement ».
@@ -194,4 +198,4 @@ fi
 say "Lancement dans la cellule : ./runProd.sh --spark ${OPTIONS_PROD[*]:-}"
 # `-t` donne un terminal au script distant : la confirmation d'instantané de --migrate le demande.
 options=$(printf " %q" "${OPTIONS_PROD[@]}")
-ssh -t -o BatchMode=yes "$cible" "cd '$SPARK_REPERTOIRE' && ./runProd.sh --spark${OPTIONS_PROD[0]+$options}"
+ssh -t "${SPARK_SSH_OPTIONS[@]}" "$cible" "cd '$SPARK_REPERTOIRE' && ./runProd.sh --spark${OPTIONS_PROD[0]+$options}"
