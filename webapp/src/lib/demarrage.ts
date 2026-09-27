@@ -1,7 +1,11 @@
-// @spec CRM-079 (docs/BACKLOG.md) — guide de démarrage : la mesure des cinq étapes
+// @spec CRM-079 (docs/BACKLOG.md) — guide de démarrage : la mesure des étapes
 // @spec docs/SPEC-onboarding.md §2 (la progression est une mesure, jamais un drapeau),
-//       §3 (les cinq étapes et leurs filtres), §3.1 (ce qui a été mesuré), §3.2 (cinq comptages,
-//       une seule décision), §6.2 (les trois états d'une étape)
+//       §3 (les étapes et leurs filtres), §3.1 (ce qui a été mesuré), §3.2 (des comptages
+//       indépendants, une seule décision), §6.2 (les trois états d'une étape)
+// @spec CRM-094 (docs/BACKLOG.md) tranche T2 — docs/SPEC-onboarding.md §10.1 (six étapes, le workflow
+//       avant le channel), §10.3 (le geste « Créer le workflow de départ », et le signal qui fait se
+//       relire les écrans ouverts) ; docs/SPEC-workflow-engine.md §7 quater ; docs/JOURNAL.md décisions
+//       606 et 607
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone) ; docs/DESIGN_SYSTEM.md §5.17
 //
 // CE MODULE N'OUVRE AUCUNE POLITIQUE NOUVELLE. Chaque table est comptée sous la politique qui la
@@ -25,8 +29,11 @@ import type { ClientCrm } from './supabase'
  */
 type TableLisible = keyof Database['public']['Tables']
 
-/** Les cinq étapes, dans l'ordre où elles se lisent (docs/SPEC-onboarding.md §3). */
-export const CLES_ETAPES_DEMARRAGE = ['espace', 'track', 'channel', 'affaire', 'messagerie'] as const
+/**
+ * Les six étapes, dans l'ordre où elles se lisent (docs/SPEC-onboarding.md §3, §10.1). Le workflow
+ * précède le channel depuis `CRM-094` : un channel en exige un, et un espace neuf n'en a aucun.
+ */
+export const CLES_ETAPES_DEMARRAGE = ['espace', 'track', 'workflow', 'channel', 'affaire', 'messagerie'] as const
 
 export type CleEtapeDemarrage = (typeof CLES_ETAPES_DEMARRAGE)[number]
 
@@ -58,6 +65,8 @@ export const FILTRES_ETAPES_DEMARRAGE: Readonly<
 > = {
 	espace: { table: 'workspaces', nuls: [] },
 	track: { table: 'tracks', nuls: ['archived_at', 'deleted_at'] },
+	// Un workflow s'archive et n'a pas de corbeille ; archivé, aucun channel ne peut plus le choisir.
+	workflow: { table: 'workflows', nuls: ['archived_at'] },
 	channel: { table: 'channels', nuls: ['archived_at', 'deleted_at'] },
 	affaire: { table: 'cards', nuls: ['deleted_at'] },
 	messagerie: { table: 'mail_inbound_accounts', nuls: [] },
@@ -96,7 +105,7 @@ export async function mesurerEtape(
 }
 
 /**
- * Les cinq mesures, émises **en parallèle** et rendues indépendantes (docs/SPEC-onboarding.md §3.2).
+ * Les mesures, émises **en parallèle** et rendues indépendantes (docs/SPEC-onboarding.md §3.2).
  *
  * Aucune n'est conditionnée à la précédente : subordonner la mesure d'un channel à l'existence d'un
  * track ferait passer un refus de lecture pour une absence, et l'écran n'aurait plus rien à dire de
@@ -142,14 +151,14 @@ export function mesureEnCours(progression: ProgressionDemarrage): boolean {
 	return progression.etapes.some((etat) => etat.statut === 'chargement')
 }
 
-/** État initial : cinq chargements. Il évite un rendu où `etapes` serait vide, donc « accompli ». */
+/** État initial : un chargement par étape. Il évite un rendu où `etapes` serait vide, donc « accompli ». */
 export const PROGRESSION_INITIALE: ProgressionDemarrage = {
 	etapes: CLES_ETAPES_DEMARRAGE.map(() => enChargement<EtapeDemarrage>()),
 }
 
 /**
  * Charge la progression et expose un rechargement **réel** : la reprise proposée par une ligne en
- * erreur relance les cinq mesures, elle ne recharge pas la page (docs/SPEC-webapp.md §7).
+ * erreur relance toutes les mesures, elle ne recharge pas la page (docs/SPEC-webapp.md §7).
  *
  * Même garde que `useTracks` contre les réponses périmées : une réponse arrivée après le démontage
  * n'écrit pas, et une réponse plus ancienne n'écrase pas une plus récente.
@@ -177,3 +186,72 @@ export function useDemarrage(client: ClientCrm | null): {
 
 	return { progression, recharger }
 }
+
+// ---------------------------------------------------------------------------------------------
+// Le workflow de départ — `CRM-094` (docs/SPEC-workflow-engine.md §7 quater)
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * L'issue du geste, et chacune se dit sur la ligne de l'étape (docs/SPEC-onboarding.md §10.3).
+ *
+ * Le refus est lu sur le `code` SQL, jamais sur une phrase — sauf la clé du nœud archivé, que seule
+ * la phrase porte et que l'écran doit nommer pour dire QUOI restaurer.
+ */
+export type IssueWorkflowDepart =
+	| { readonly ok: true }
+	| { readonly ok: false; readonly raison: 'existant' }
+	| { readonly ok: false; readonly raison: 'reserve' | 'panne' }
+	| { readonly ok: false; readonly raison: 'noeud-archive'; readonly cle: string }
+
+const MOTIF_NOEUD_ARCHIVE = /^noeud archive : ([a-z0-9-]+)$/
+
+/**
+ * L'événement d'interface émis quand la base porte un workflow que les écrans ouverts ignorent
+ * peut-être (docs/SPEC-onboarding.md §10.3, « les écrans ouverts se relisent »).
+ *
+ * Le geste se fait depuis le panneau flottant, PAR-DESSUS l'écran courant — l'éditeur de workflows, le
+ * catalogue, l'arborescence et son formulaire de channel. Ces écrans ont lu à leur montage : sans ce
+ * signal, ils continueraient d'affirmer qu'aucun workflow n'existe sous l'étape qui vient de passer à
+ * « Fait ». Chacun se relit lui-même, sans être remonté : une saisie en cours survit.
+ */
+export const EVENEMENT_WORKFLOW_DEPART = 'p2enjoy:workflow-de-depart'
+
+/** Abonne un écran au signal ; `relire` doit être stable (`useCallback`), comme toute dépendance d'effet. */
+export function useApresWorkflowDeDepart(relire: () => void): void {
+	useEffect(() => {
+		globalThis.addEventListener(EVENEMENT_WORKFLOW_DEPART, relire)
+		return () => globalThis.removeEventListener(EVENEMENT_WORKFLOW_DEPART, relire)
+	}, [relire])
+}
+
+/**
+ * Pose le workflow de départ de l'espace. Ne lève jamais.
+ *
+ * Aucune règle n'est jugée ici : la base décide, et `SECURITY INVOKER` y fait jouer la RLS des tables
+ * écrites (`CLAUDE.md` §10). Une panne n'est jamais présentée comme un succès (`CLAUDE.md` §18).
+ *
+ * Le signal part sur un succès ET sur `existant` : dans les deux cas, la base porte un workflow que
+ * l'écran ouvert sous le panneau n'a peut-être pas lu — posé à l'instant, ou par un collègue.
+ */
+export async function creerWorkflowDeDepart(client: ClientCrm, idWorkspace: string): Promise<IssueWorkflowDepart> {
+	const issue = await appelerWorkflowDeDepart(client, idWorkspace)
+	if (issue.ok || issue.raison === 'existant') globalThis.dispatchEvent(new Event(EVENEMENT_WORKFLOW_DEPART))
+	return issue
+}
+
+async function appelerWorkflowDeDepart(client: ClientCrm, idWorkspace: string): Promise<IssueWorkflowDepart> {
+	try {
+		const reponse = await client.rpc('creer_workflow_de_depart', { p_workspace: idWorkspace })
+		if (reponse.error === null) return { ok: true }
+		if (reponse.error.code === '42501') return { ok: false, raison: 'reserve' }
+		if (reponse.error.code === 'P0001') {
+			if (reponse.error.message === 'workflow existant') return { ok: false, raison: 'existant' }
+			const archive = MOTIF_NOEUD_ARCHIVE.exec(reponse.error.message)
+			if (archive?.[1] !== undefined) return { ok: false, raison: 'noeud-archive', cle: archive[1] }
+		}
+		return { ok: false, raison: 'panne' }
+	} catch {
+		return { ok: false, raison: 'panne' }
+	}
+}
+

@@ -5,14 +5,17 @@
 //           §8 (ligne « Hors interface »), §9 (première limite connue)
 // @verifies docs/SPEC-seed.md §2.3 (les comptes du seed), §2.5 (les droits fins du `viewer`)
 // @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface, avec les vrais jetons)
+// @verifies CRM-094 (docs/BACKLOG.md) tranche T2 — docs/SPEC-onboarding.md §10.1 : la sixième mesure,
+//           `workflows` vivants sous la politique existante (`workflows_lecture_membre`), hors interface
 //
 // CE QUE CE FICHIER ÉTABLIT, ET QUE L'ÉCRAN NE PEUT PAS ÉTABLIR LUI-MÊME.
 //
 // `e2e/ui/demarrage.spec.ts` prouve que le guide REND les états qu'il reçoit. Il ne peut pas prouver
 // que les écarts entre deux profils viennent du BACKEND : un écran interrogé sur ce qu'il affiche
 // répondrait la même chose si l'écart était fabriqué côté client. Ce fichier interroge donc PostgREST
-// directement, avec les jetons réels obtenus par la véritable route de connexion, et mesure les cinq
-// comptages exactement comme `webapp/src/lib/demarrage.ts` les émet — `HEAD`, `count=exact`.
+// directement, avec les jetons réels obtenus par la véritable route de connexion, et mesure les six
+// comptages exactement comme `webapp/src/lib/demarrage.ts` les émet — `HEAD`, `count=exact`. Le
+// sixième, celui des workflows, est ajouté par `CRM-094` (§10.1).
 //
 // Les trois faits du §3.1 sont ici des ASSERTIONS et non des souvenirs :
 //
@@ -20,8 +23,8 @@
 //      MOINS de channels et MOINS d'affaires que l'administratrice, sur la même base ;
 //   2. la lectrice compte ZÉRO boîte entrante là où trois existent — c'est la première limite
 //      connue du §9, et elle est produite par la RLS, pas par l'écran ;
-//   3. `mail_inbound_accounts` est la SEULE des cinq tables à refuser la clé anonyme — c'est ce
-//      qui rend la cinquième mesure seule capable d'un état de refus plutôt que d'un état vide.
+//   3. `mail_inbound_accounts` est la SEULE des six tables à refuser la clé anonyme — c'est ce
+//      qui rend la mesure des boîtes seule capable d'un état de refus plutôt que d'un état vide.
 //
 // AUCUNE ÉCRITURE. Le guide lit et renvoie (docs/SPEC-onboarding.md §1.2) : cette suite est
 // rejouable indéfiniment et rend le seed strictement intact — il n'y a rien à défaire.
@@ -33,7 +36,7 @@ const ADMIN = 'admin@p2enjoy.test'
 const VIEWER = 'viewer@p2enjoy.test'
 
 /**
- * Les cinq lectures, RECOPIÉES DE LA SPÉCIFICATION §3 et non du module : une preuve qui importerait
+ * Les six lectures, RECOPIÉES DE LA SPÉCIFICATION §3 et §10.1 et non du module : une preuve qui importerait
  * `FILTRES_ETAPES_DEMARRAGE` serait verte quel que soit le filtre écrit dans le produit, et ne
  * dirait plus rien du contrat. C'est la table du §3 qui fait foi ici.
  *
@@ -42,6 +45,8 @@ const VIEWER = 'viewer@p2enjoy.test'
 const LECTURES = {
 	espace: 'workspaces?select=id',
 	track: 'tracks?select=id&archived_at=is.null&deleted_at=is.null',
+	// `workflows` s'archive et n'a pas de corbeille (§10.1) : un workflow archivé n'accomplit rien.
+	workflow: 'workflows?select=id&archived_at=is.null',
 	channel: 'channels?select=id&archived_at=is.null&deleted_at=is.null',
 	affaire: 'cards?select=id&deleted_at=is.null',
 	messagerie: 'mail_inbound_accounts?select=id',
@@ -49,7 +54,7 @@ const LECTURES = {
 
 type CleEtape = keyof typeof LECTURES
 
-const CLES: readonly CleEtape[] = ['espace', 'track', 'channel', 'affaire', 'messagerie']
+const CLES: readonly CleEtape[] = ['espace', 'track', 'workflow', 'channel', 'affaire', 'messagerie']
 
 type Comptage = {
 	readonly statut: number
@@ -90,8 +95,8 @@ async function total(
 	return mesure.compte ?? -1
 }
 
-test.describe('guide de démarrage — les cinq comptages hors interface (docs/SPEC-onboarding.md §3)', () => {
-	test('l’administratrice voit les cinq étapes accomplies, et chaque mesure aboutit', async ({
+test.describe('guide de démarrage — les six comptages hors interface (docs/SPEC-onboarding.md §3, §10.1)', () => {
+	test('l’administratrice voit les six étapes accomplies, et chaque mesure aboutit', async ({
 		request,
 	}) => {
 		const enTetes = enTetesAuthentifies(await jetonDe(ADMIN))
@@ -101,10 +106,10 @@ test.describe('guide de démarrage — les cinq comptages hors interface (docs/S
 		}
 	})
 
-	test('les cinq mesures sont INDÉPENDANTES : aucune n’est conditionnée à une autre (§3.2)', async ({
+	test('les six mesures sont INDÉPENDANTES : aucune n’est conditionnée à une autre (§3.2)', async ({
 		request,
 	}) => {
-		// Le module émet les cinq en parallèle. Émises ensemble ici, elles aboutissent toutes :
+		// Le module émet les six en parallèle. Émises ensemble ici, elles aboutissent toutes :
 		// aucune ne dépend de l'ordre, et aucune n'exige qu'une autre l'ait précédée.
 		const enTetes = enTetesAuthentifies(await jetonDe(ADMIN))
 		const mesures = await Promise.all(CLES.map((cle) => compter(request, enTetes, cle)))
@@ -131,9 +136,9 @@ test.describe('guide de démarrage — les cinq comptages hors interface (docs/S
 			await total(request, admin, 'affaire'),
 		)
 
-		// Les quatre premières étapes lui restent accomplies : elle voit son espace, des tracks,
-		// des channels et des affaires — moins, mais pas aucun.
-		for (const cle of ['espace', 'track', 'channel', 'affaire'] as const) {
+		// Les cinq premières étapes lui restent accomplies : elle voit son espace, des tracks, des
+		// workflows — tout membre les lit (§10.1) —, des channels et des affaires — moins, mais pas aucun.
+		for (const cle of ['espace', 'track', 'workflow', 'channel', 'affaire'] as const) {
 			expect(await total(request, lectrice, cle), `la lectrice voit au moins un ${cle}`).toBeGreaterThanOrEqual(1)
 		}
 	})
@@ -151,25 +156,26 @@ test.describe('guide de démarrage — les cinq comptages hors interface (docs/S
 		// état VIDE à l'écran, jamais un état d'erreur (`webapp/src/lib/async.ts`).
 		const mesure = await compter(request, lectrice, 'messagerie')
 		expect([200, 206]).toContain(mesure.statut)
-		expect(mesure.compte, 'la cinquième étape restera « À faire » pour la lectrice').toBe(0)
+		expect(mesure.compte, 'l’étape des boîtes restera « À faire » pour la lectrice').toBe(0)
 
 		// La limite du §9 est donc STRUCTURELLE, et non un défaut d'écran : quelle que soit la
 		// façon dont le guide interroge, la lectrice ne peut pas accomplir cette étape en lecture.
 	})
 
-	test('`mail_inbound_accounts` est la SEULE des cinq à refuser la clé anonyme (§3.1, fait 3)', async ({
+	test('`mail_inbound_accounts` est la SEULE des six à refuser la clé anonyme (§3.1, fait 3)', async ({
 		request,
 	}) => {
-		// Les quatre autres rendent une réponse ABOUTIE et un total nul : `anon` a le privilège de
-		// lecture, et c'est la politique qui ne lui accorde aucune ligne.
-		for (const cle of ['espace', 'track', 'channel', 'affaire'] as const) {
+		// Les cinq autres rendent une réponse ABOUTIE et un total nul : `anon` a le privilège de
+		// lecture — `workflows` compris, mesuré le 2026-09-28 —, et c'est la politique qui ne lui
+		// accorde aucune ligne.
+		for (const cle of ['espace', 'track', 'workflow', 'channel', 'affaire'] as const) {
 			const mesure = await compter(request, enTetesAnonymes(), cle)
 			expect([200, 206], `${cle} doit aboutir pour l'anonyme`).toContain(mesure.statut)
 			expect(mesure.compte, `${cle} doit rendre zéro à l'anonyme`).toBe(0)
 		}
 
-		// La cinquième REFUSE, `anon` n'ayant aucun privilège sur cette table : PostgREST rend
-		// `401`. C'est le seul des cinq comptages qui peut porter l'écran à un état de refus —
+		// Celle des boîtes REFUSE, `anon` n'ayant aucun privilège sur cette table : PostgREST rend
+		// `401`. C'est le seul des six comptages qui peut porter l'écran à un état de refus —
 		// celui que `classerErreur` nomme `forbidden`, et qui n'offre AUCUNE reprise (§6.1).
 		const refus = await compter(request, enTetesAnonymes(), 'messagerie')
 		expect(refus.statut, 'la clé anonyme n’a aucun privilège sur les boîtes entrantes').toBe(401)

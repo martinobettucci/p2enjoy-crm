@@ -11,6 +11,10 @@
 //       §9 (les refus), §10 (ce que voit un non-administrateur)
 // @spec docs/DESIGN_SYSTEM.md §5.13 (cette surface), §5.7 (champs), §5.8 (états), §6
 //       (confirmation), §8 (accessibilité), §9 (icônes Lucide), §10 (aucun texte en dur)
+// @spec CRM-094 (docs/BACKLOG.md) tranche T2 — docs/SPEC-onboarding.md §10.5 : sans workflow affectable, le
+//       formulaire de channel mène à l'éditeur de workflows ; §10.3 : un formulaire de channel OUVERT relit
+//       ses workflows quand le workflow de départ est posé depuis le guide flottant (docs/JOURNAL.md
+//       décisions 606 et 607)
 //
 // AUCUN DROIT N'EST CALCULÉ ICI, et c'est la règle qui gouverne tout le fichier. Les commandes sont
 // rendues pour tout le monde ; l'écriture part, et le refus du backend est traduit (§10). Une
@@ -22,6 +26,7 @@
 // au lieu d'écrire une valeur sans effet.
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import { Link } from 'react-router'
 import {
 	Archive,
 	ArchiveRestore,
@@ -41,6 +46,7 @@ import { EtatErreur, EtatVide } from '../components/ui/States'
 import { t } from '../i18n'
 import type { EtatAsync } from '../lib/async'
 import { enChargement } from '../lib/async'
+import { useApresWorkflowDeDepart } from '../lib/demarrage'
 import {
 	archiverChannel,
 	archiverTrack,
@@ -73,6 +79,7 @@ import {
 	type CibleEnumeration,
 } from '../lib/corbeille'
 import { BlocBudgetsTrack } from './BlocBudgetsTrack'
+import { CHEMIN_ADMIN_WORKFLOWS } from './chemins'
 import { classesPilule, iconeTrack, NOMS_ICONES } from './presentation-tracks'
 import { texteLigneEnumeration, type EtatEnumeration } from './presentation-corbeille'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
@@ -443,8 +450,13 @@ function FormulaireChannel({
 				) : null}
 				{aucunWorkflow ? (
 					// État vide, et non un contrôle d'accès : il n'y a rien à choisir.
-					<p data-testid="admin-sans-workflow" className="text-sm text-text-3">
-						{t('admin.form.workflow.none')}
+					<p data-testid="admin-sans-workflow" className="flex flex-col gap-1 text-sm text-text-3">
+						<span>{t('admin.form.workflow.none')}</span>
+						{/* `CRM-094` (docs/SPEC-onboarding.md §10.5) : la phrase dit de créer un workflow ;
+						    le chemin y mène. */}
+						<Link to={CHEMIN_ADMIN_WORKFLOWS} className="self-start font-medium text-brand underline">
+							{t('admin.form.workflow.none.action')}
+						</Link>
 					</p>
 				) : null}
 				{workflows.statut === 'pret' && workflows.donnees.length > 0 ? (
@@ -967,6 +979,23 @@ export function AdministrationArborescence({ client = clientCrm }: ProprietesAdm
 		},
 		[client],
 	)
+
+	/**
+	 * `CRM-094` (docs/SPEC-onboarding.md §10.3). Le workflow de départ se pose depuis le guide flottant,
+	 * PAR-DESSUS cet écran : un formulaire de channel ouvert sur « aucun workflow n'est affectable »
+	 * relit alors sa liste, sans être refermé — le nom déjà saisi survit. Formulaire fermé, il n'y a rien
+	 * à relire : la liste est lue à chaque ouverture.
+	 */
+	const relireWorkflowsDuFormulaire = useCallback(() => {
+		if (client === null) return
+		if (ouverture.type !== 'creation-channel' && ouverture.type !== 'edition-channel') return
+		const idTrack = ouverture.idTrack
+		const track = tracks.statut === 'pret' ? tracks.donnees.find((candidat) => candidat.id === idTrack) : undefined
+		if (track === undefined) return
+		setWorkflows(enChargement())
+		void lireWorkflowsAffectables(client, track.workspace_id, track.id).then(setWorkflows)
+	}, [client, ouverture, tracks])
+	useApresWorkflowDeDepart(relireWorkflowsDuFormulaire)
 
 	if (client === null || (tracks.statut === 'pret' && idWorkspace === null)) {
 		return (

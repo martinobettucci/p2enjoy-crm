@@ -1,24 +1,31 @@
-// @verifies CRM-079 (docs/BACKLOG.md) — guide de démarrage : la mesure des cinq étapes
+// @verifies CRM-079 (docs/BACKLOG.md) — guide de démarrage : la mesure des étapes
 // @verifies docs/SPEC-onboarding.md §2 (la progression est une mesure, jamais un drapeau),
-//           §3 (les cinq étapes et leurs filtres), §3.2 (cinq comptages indépendants),
+//           §3 (les étapes et leurs filtres), §3.2 (comptages indépendants),
 //           §6.2 (les trois états d'une étape)
+// @verifies CRM-094 (docs/BACKLOG.md) tranche T2 — docs/SPEC-onboarding.md §10.1 (six étapes, le workflow
+//           avant le channel), §10.3 (le geste, ses issues, et le signal aux écrans ouverts) ;
+//           docs/SPEC-workflow-engine.md §7 quater
 //
 // Comme `mail-etat.test.ts`, ce fichier éprouve la requête RÉELLEMENT émise et pas seulement la
 // valeur rendue : les filtres `archived_at`/`deleted_at` du §3 sont une exigence de la
 // spécification portée par la requête elle-même. Une étape qui compterait un objet en corbeille se
 // dirait accomplie par un objet que l'écran ne montre nulle part.
 
-import { describe, expect, it } from 'vitest'
+import { renderHook } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
 	CLES_ETAPES_DEMARRAGE,
+	EVENEMENT_WORKFLOW_DEPART,
 	FILTRES_ETAPES_DEMARRAGE,
 	compterAccomplies,
+	creerWorkflowDeDepart,
 	estAccomplie,
 	mesureEnCours,
 	mesurerDemarrage,
 	mesurerEtape,
 	PROGRESSION_INITIALE,
 	resteUneEtape,
+	useApresWorkflowDeDepart,
 	type EtapeDemarrage,
 } from './demarrage'
 import { enChargement, enErreur, pret, type EtatAsync } from './async'
@@ -69,14 +76,16 @@ const ok = (count: number): ReponseCompte => ({ count, error: null, status: 200 
 const TOUTES_VIDES: Readonly<Record<string, ReponseCompte>> = {
 	workspaces: ok(0),
 	tracks: ok(0),
+	workflows: ok(0),
 	channels: ok(0),
 	cards: ok(0),
 	mail_inbound_accounts: ok(0),
 }
 
-describe('les cinq étapes et leurs filtres — docs/SPEC-onboarding.md §3', () => {
-	it('déclare exactement cinq étapes, dans l’ordre où elles se lisent', () => {
-		expect(CLES_ETAPES_DEMARRAGE).toEqual(['espace', 'track', 'channel', 'affaire', 'messagerie'])
+describe('les six étapes et leurs filtres — docs/SPEC-onboarding.md §3 et §10.1', () => {
+	it('déclare exactement six étapes, le workflow AVANT le channel', () => {
+		// `CRM-094` : un channel exige un workflow ; dans un espace neuf, aucun n'existe (décision 606).
+		expect(CLES_ETAPES_DEMARRAGE).toEqual(['espace', 'track', 'workflow', 'channel', 'affaire', 'messagerie'])
 	})
 
 	it('interroge la table attendue pour chaque étape', async () => {
@@ -85,6 +94,7 @@ describe('les cinq étapes et leurs filtres — docs/SPEC-onboarding.md §3', ()
 		expect(appels.map((appel) => appel.table)).toEqual([
 			'workspaces',
 			'tracks',
+			'workflows',
 			'channels',
 			'cards',
 			'mail_inbound_accounts',
@@ -111,6 +121,14 @@ describe('les cinq étapes et leurs filtres — docs/SPEC-onboarding.md §3', ()
 			['archived_at', null],
 			['deleted_at', null],
 		])
+	})
+
+	it('ne compte que les workflows VIVANTS, sans filtre de corbeille qu’ils ne portent pas', async () => {
+		// `workflows` s'archive et n'a pas de corbeille : un workflow archivé ne rend pas l'étape
+		// accomplie, puisque aucun channel ne peut plus le choisir.
+		const { client, appels } = espion(TOUTES_VIDES)
+		await mesurerDemarrage(client)
+		expect(appels.find((appel) => appel.table === 'workflows')?.nuls).toEqual([['archived_at', null]])
 	})
 
 	it('retire l’affaire en corbeille, et n’invente aucun filtre d’archivage pour elle', async () => {
@@ -178,16 +196,18 @@ describe('ce qu’une réponse produit — docs/SPEC-onboarding.md §3.2 et §6.
 		expect(etat.statut === 'erreur' && etat.erreur.nature).toBe('network')
 	})
 
-	it('rend les cinq états indépendants : une mesure refusée n’efface pas les quatre autres', async () => {
+	it('rend les six états indépendants : une mesure refusée n’efface pas les cinq autres', async () => {
 		const { client } = espion({
 			workspaces: ok(1),
 			tracks: ok(3),
+			workflows: ok(2),
 			channels: ok(6),
 			cards: ok(14),
 			mail_inbound_accounts: { count: null, error: { message: 'refus' }, status: 401 },
 		})
 		const progression = await mesurerDemarrage(client)
 		expect(progression.etapes.map((etat) => etat.statut)).toEqual([
+			'pret',
 			'pret',
 			'pret',
 			'pret',
@@ -222,20 +242,20 @@ describe('les trois états d’une étape, et la décision de l’accueil', () =
 		expect(resteUneEtape(progression)).toBe(true)
 	})
 
-	it('cinq étapes accomplies retirent le guide de l’accueil', () => {
-		const progression = { etapes: Array.from({ length: 5 }, () => accomplie) }
+	it('six étapes accomplies retirent le guide de l’accueil', () => {
+		const progression = { etapes: Array.from({ length: 6 }, () => accomplie) }
 		expect(resteUneEtape(progression)).toBe(false)
 	})
 
-	it('l’état initial est CHARGEMENT sur les cinq étapes, jamais un accompli par défaut', () => {
+	it('l’état initial est CHARGEMENT sur les six étapes, jamais un accompli par défaut', () => {
 		// Sans cet état, un rendu où `etapes` serait vide passerait pour « tout accompli » et
 		// l'accueil afficherait « aucun board » à qui en a (docs/SPEC-onboarding.md §4.2).
-		expect(PROGRESSION_INITIALE.etapes).toHaveLength(5)
+		expect(PROGRESSION_INITIALE.etapes).toHaveLength(6)
 		expect(mesureEnCours(PROGRESSION_INITIALE)).toBe(true)
 		expect(resteUneEtape(PROGRESSION_INITIALE)).toBe(true)
 	})
 
-	it('la mesure cesse d’être en cours dès que les cinq états sont rendus', () => {
+	it('la mesure cesse d’être en cours dès que tous les états sont rendus', () => {
 		const rendus: readonly EtatAsync<EtapeDemarrage>[] = [
 			accomplie,
 			aFaire,
@@ -246,3 +266,98 @@ describe('les trois états d’une étape, et la décision de l’accueil', () =
 		expect(mesureEnCours({ etapes: rendus })).toBe(false)
 	})
 })
+
+describe('le workflow de départ — docs/SPEC-workflow-engine.md §7 quater, SPEC-onboarding §10.3', () => {
+	type ReponseRpc = { data: unknown; error: { code?: string; message: string } | null; status: number }
+	function client(reponse: ReponseRpc | Error): { client: ClientCrm; appels: [string, unknown][] } {
+		const appels: [string, unknown][] = []
+		return {
+			appels,
+			client: {
+				rpc: async (fonction: string, args: unknown) => {
+					appels.push([fonction, args])
+					if (reponse instanceof Error) throw reponse
+					return reponse
+				},
+			} as unknown as ClientCrm,
+		}
+	}
+
+	it('appelle la fonction du §7 quater avec l’espace courant, et rend le succès', async () => {
+		const { client: c, appels } = client({ data: 'e0940000-0000-4000-8000-0000000000c9', error: null, status: 200 })
+		expect(await creerWorkflowDeDepart(c, 'e0940000-0000-4000-8000-0000000000c1')).toEqual({ ok: true })
+		expect(appels).toEqual([['creer_workflow_de_depart', { p_workspace: 'e0940000-0000-4000-8000-0000000000c1' }]])
+	})
+
+	it('nomme le refus d’un non-administrateur, lu sur le code et non sur le texte', async () => {
+		const { client: c } = client({ data: null, error: { code: '42501', message: 'reserve aux administrateurs' }, status: 403 })
+		expect(await creerWorkflowDeDepart(c, 'x')).toEqual({ ok: false, raison: 'reserve' })
+	})
+
+	it('nomme un workflow déjà présent', async () => {
+		const { client: c } = client({ data: null, error: { code: 'P0001', message: 'workflow existant' }, status: 400 })
+		expect(await creerWorkflowDeDepart(c, 'x')).toEqual({ ok: false, raison: 'existant' })
+	})
+
+	it('nomme le nœud archivé, clé comprise, pour que l’écran dise lequel restaurer', async () => {
+		const { client: c } = client({ data: null, error: { code: 'P0001', message: 'noeud archive : perdu' }, status: 400 })
+		expect(await creerWorkflowDeDepart(c, 'x')).toEqual({ ok: false, raison: 'noeud-archive', cle: 'perdu' })
+	})
+
+	it('rend une panne — jamais un succès supposé — sur tout autre échec, transport compris', async () => {
+		const { client: c } = client({ data: null, error: { code: '57014', message: 'annulée' }, status: 500 })
+		expect(await creerWorkflowDeDepart(c, 'x')).toEqual({ ok: false, raison: 'panne' })
+		const { client: d } = client(new Error('transport injoignable'))
+		expect(await creerWorkflowDeDepart(d, 'x')).toEqual({ ok: false, raison: 'panne' })
+	})
+
+	describe('le signal aux écrans ouverts — §10.3, « les écrans ouverts se relisent »', () => {
+		let recus = 0
+		const compter = () => {
+			recus += 1
+		}
+		beforeEach(() => {
+			recus = 0
+			globalThis.addEventListener(EVENEMENT_WORKFLOW_DEPART, compter)
+		})
+		afterEach(() => globalThis.removeEventListener(EVENEMENT_WORKFLOW_DEPART, compter))
+
+		it('part sur un succès : la base porte un workflow que l’écran sous le panneau n’a pas lu', async () => {
+			const { client: c } = client({ data: 'wf', error: null, status: 200 })
+			await creerWorkflowDeDepart(c, 'x')
+			expect(recus).toBe(1)
+		})
+
+		it('part aussi sur « existant » : un collègue l’a posé, et l’écran ouvert l’ignore peut-être', async () => {
+			const { client: c } = client({ data: null, error: { code: 'P0001', message: 'workflow existant' }, status: 400 })
+			await creerWorkflowDeDepart(c, 'x')
+			expect(recus).toBe(1)
+		})
+
+		it('ne part PAS sur un refus ni sur une panne : rien n’a changé en base', async () => {
+			for (const reponse of [
+				{ data: null, error: { code: '42501', message: 'reserve aux administrateurs' }, status: 403 },
+				{ data: null, error: { code: 'P0001', message: 'noeud archive : perdu' }, status: 400 },
+				{ data: null, error: { code: '57014', message: 'annulée' }, status: 500 },
+				new Error('transport injoignable'),
+			]) {
+				await creerWorkflowDeDepart(client(reponse).client, 'x')
+			}
+			expect(recus).toBe(0)
+		})
+
+		it('l’abonnement d’un écran reçoit le signal, et le lâche à son démontage', () => {
+			let relectures = 0
+			const relire = () => {
+				relectures += 1
+			}
+			const { unmount } = renderHook(() => useApresWorkflowDeDepart(relire))
+			globalThis.dispatchEvent(new Event(EVENEMENT_WORKFLOW_DEPART))
+			expect(relectures).toBe(1)
+			unmount()
+			globalThis.dispatchEvent(new Event(EVENEMENT_WORKFLOW_DEPART))
+			expect(relectures).toBe(1)
+		})
+	})
+})
+

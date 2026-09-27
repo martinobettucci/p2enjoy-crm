@@ -24,15 +24,20 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.9 (tableau sémantique, jamais simulé)
 // @verifies docs/DESIGN_SYSTEM.md §5.7 bis (case à cocher), §5.8 (états), §6 (confirmation avant
 //           retrait), §8, §10
+// @verifies CRM-094 (docs/BACKLOG.md) tranche T2 — docs/SPEC-onboarding.md §10.5 : un catalogue vide le
+//           dit, et mène au catalogue ; §10.3 : l'écran se relit au signal du workflow de départ
+//           (docs/JOURNAL.md décisions 606 et 607)
 //
 // Ces preuves montent le **vrai** écran avec un client factice qui enregistre les requêtes émises,
 // le patron d'`AdministrationArborescence.test.tsx`. Le parcours connecté complet relève du projet
 // E2E, qui exige la pile.
 
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it } from 'vitest'
+import { MemoryRouter } from 'react-router'
 import { AdministrationWorkflows } from './AdministrationWorkflows'
+import { EVENEMENT_WORKFLOW_DEPART } from '../lib/demarrage'
 import type { ClientCrm } from '../lib/supabase'
 
 afterEach(cleanup)
@@ -509,6 +514,28 @@ describe('les gestes et leurs écritures (§7 bis.4)', () => {
 			verbe: 'insert',
 			charge: { workflow_id: 'wf-1', workspace_id: 'ws-1', node_id: 'n-3', position: null },
 		})
+	})
+
+	// `CRM-094` (docs/SPEC-onboarding.md §10.5, décision 606) : sur un catalogue VIDE, l'éditeur disait
+	// « Tous les nœuds actifs du catalogue sont déjà des étapes » — faux, et c'est l'écran exact d'un
+	// espace neuf. Le vide dit qu'il l'est, et mène au catalogue ; « tous employés » reste l'autre cas.
+	it('un catalogue VIDE le dit, et mène au catalogue — il ne passe pas pour « tous employés »', async () => {
+		const factice = clientFactice({ catalogue: [] })
+		render(
+			<MemoryRouter>
+				<AdministrationWorkflows client={factice.client} />
+			</MemoryRouter>,
+		)
+		await attendreEcran()
+		await userEvent.click(screen.getByRole('button', { name: 'Ajouter une étape' }))
+		const selecteur = await screen.findByTestId('selecteur-ajout')
+		await waitFor(() =>
+			expect(selecteur.textContent).toContain('Le catalogue ne porte encore aucun nœud.'),
+		)
+		expect(selecteur.textContent).not.toContain('déjà des étapes')
+		expect(within(selecteur).getByRole('link', { name: 'Ouvrir le catalogue de nœuds' }).getAttribute('href')).toBe(
+			'/reglages/catalogue',
+		)
 	})
 
 	it('monter la seconde étape écrit UNE position, sur la seule étape déplacée', async () => {
@@ -2149,5 +2176,35 @@ describe('le geste « comparer à la source » (§4 quater)', () => {
 		expect(bouton.getAttribute('aria-label')).toBe(
 			'Comparer ce workflow à sa source « Cycle commercial standard »',
 		)
+	})
+})
+
+// ---------------------------------------------------------------------------------------------
+// `CRM-094` — docs/SPEC-onboarding.md §10.3 : le geste du guide flottant, posé PAR-DESSUS cet écran
+// ---------------------------------------------------------------------------------------------
+
+describe('le signal du workflow de départ (CRM-094, docs/SPEC-onboarding.md §10.3)', () => {
+	it('relit la liste quand le workflow de départ est posé depuis le guide, et le choisit', async () => {
+		// La liste est lue par référence à chaque requête : la remplir simule la base après le geste.
+		const workflows: unknown[] = []
+		const factice = clientFactice({ workflows })
+		render(
+			<MemoryRouter>
+				<AdministrationWorkflows client={factice.client} />
+			</MemoryRouter>,
+		)
+		// L'état d'un espace neuf : aucun workflow — c'est ce qu'affichait l'écran sous le panneau.
+		expect(await screen.findByTestId('etat-vide')).toBeTruthy()
+		const lecturesAvant = factice.lectures.filter((table) => table === 'workflows').length
+
+		workflows.push(WORKFLOWS[0])
+		act(() => {
+			globalThis.dispatchEvent(new Event(EVENEMENT_WORKFLOW_DEPART))
+		})
+
+		// Le workflow posé paraît, CHOISI d'office comme au premier montage : ses étapes sont rendues.
+		await attendreEcran()
+		expect(screen.queryByTestId('etat-vide')).toBeNull()
+		expect(factice.lectures.filter((table) => table === 'workflows').length).toBe(lecturesAvant + 1)
 	})
 })

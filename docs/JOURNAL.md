@@ -30108,3 +30108,90 @@ décider d'un **affichage**, jamais d'un droit.
 
 **Conséquences.** Unité `CRM-094`, quatre tranches ; spécifications écrites et committées avant le code.
 
+
+## décision 607 — `CRM-094` T2 et T3 : ce que la relecture a trouvé avant la preuve de bout en bout
+
+*2026-09-28. Le code des tranches T2 (six étapes, le geste) et T3 (la pastille) était écrit, ses preuves
+unitaires vertes. En écrivant la preuve E2E du parcours réel — un espace neuf, le premier track, le
+formulaire de channel sans workflow, le geste depuis le panneau —, la relecture a trouvé cinq défauts
+qu'aucune preuve ne voyait.*
+
+**1. L'écran sous le panneau restait périmé.** Le geste se fait par-dessus l'écran courant ; l'éditeur
+de workflows, le catalogue et le formulaire de channel ont lu au montage. Sur le chemin le plus
+probable — le formulaire de channel mène à l'éditeur, l'administrateur ouvre la pastille et pose le
+workflow —, l'éditeur aurait continué d'écrire « Aucun workflow dans cet espace de travail » sous une
+étape passée à « Fait ». *Envisagé* : remonter la page entière (générique, mais une saisie en cours
+serait perdue) ; mener d'office à l'éditeur (l'administrateur quitte ce qu'il faisait). *Retenu* : un
+événement d'interface nommé, `p2enjoy:workflow-de-depart`, émis sur un succès et sur « déjà présent » ;
+chaque écran concerné se relit lui-même, sans être remonté. Le formulaire de channel ouvert relit ses
+workflows et garde le nom saisi. *Conséquence* : tout écran qui viendrait à lire les workflows ou le
+catalogue s'abonne — écrit au §10.3 de `docs/SPEC-onboarding.md`.
+
+**2. Le bouton du geste redevenait cliquable pendant la re-mesure.** Le panneau garde la dernière
+progression mesurée — c'est ce qui l'empêche de clignoter —, où l'étape est encore à faire ; le bouton,
+réactivé à la réponse, offrait un second appel, refusé « workflow existant » sous une étape qui venait
+de réussir. Il reste désactivé sur une issue aboutie, jusqu'à la re-mesure qui le retire.
+
+**3. « Déjà présent » s'écrivait en refus ET s'annonçait « Workflow de départ créé ».** Deux textes
+contradictoires, dont le premier disparaissait avec la ligne à la re-mesure. Un workflow déjà là
+accomplit l'étape : c'est une issue aboutie, annoncée avec son propre texte, sans alerte. La clé
+`onboarding.step.workflow.create.refus.existant` devient `…create.existant`.
+
+**4. Le focus tombait sur le document** quand le bouton disparaissait avec l'étape accomplie. Il passe
+au lien de la même ligne, « Ouvrir l'éditeur de workflows », le geste suivant naturel.
+
+**5. La réserve sous la pastille n'existait pas.** Écrite `h-16`, hors de l'échelle d'espacement close
+(`docs/DESIGN_SYSTEM.md` §3, §11) : la classe n'était pas engendrée. Trouvé par le contrôle des classes
+(`scripts/lib/classes-css.mjs`) ; écrite désormais `calc(--size-target + --spacing-4)`.
+
+**Et une phrase du design system corrigée** : le §5.49 disait la progression annoncée par « la région
+polie de la coquille ». La région est celle que porte la liste des étapes, dans la page comme dans le
+panneau ; ce que la règle protège est tenu — la pastille n'est pas une région vivante.
+
+**Vérifications.** Chaque défaut a sa preuve unitaire, et chacune a été **vue échouer** sans sa
+correction (mutation ciblée, puis correction restaurée) : focus au lien, « déjà présent » annoncé sans
+alerte, bouton tenu pendant la re-mesure dans le panneau, relecture de l'éditeur, du catalogue et du
+formulaire de channel ouvert. Suite unitaire complète : 103 fichiers, 3 340 tests verts ; typage vert.
+
+**Trouvé ensuite par la preuve E2E elle-même** (`e2e/ui/guide-flottant.spec.ts`, sur la vraie base) :
+
+6. **La pastille ne re-mesurait pas d'une page de réglages à l'autre.** Le track créé sur l'arborescence
+   ne comptait pas sur l'éditeur : « 1 étape sur 6 » au lieu de 2. *Cause* : les routes de réglages
+   rendent toutes la même coquille au même endroit, et React la **garde** — le guide avec elle. Le
+   commentaire du code affirmait le contraire (« la coquille est remontée par chaque route »), et la
+   preuve unitaire remontait le composant : elle ne pouvait pas le voir. *Correction* : le guide relance
+   sa mesure quand l'adresse change sous lui, sauf s'il vient de devenir actif — il mesure alors déjà, et
+   relancer ferait partir les six comptages deux fois. Deux preuves unitaires sous un vrai routeur, qui
+   garde l'instance comme l'application ; chacune vue échouer sous sa mutation.
+7. **La même cause laisse la barre latérale périmée** : « Aucun track » après la création du premier
+   track, tant qu'on reste dans les réglages. Antérieur à `CRM-094` et étranger à lui : **consigné en
+   INC-254**, comportement inchangé, arbitrage demandé.
+8. **Les captures du panneau étaient prises pendant son fondu d'ouverture** — un panneau transparent, la
+   page lisible au travers. Ce n'était pas un défaut du produit : la preuve attend désormais la fin des
+   animations avant de capturer. Le §5.49 annonçait en outre un fondu de **fermeture** que le code ne
+   fait pas : la fermeture est immédiate, et le design system le dit maintenant, avec son motif.
+
+**Deux pièges de mesure**, écrits dans la preuve pour qu'on ne les reprenne pas : la cloche compte elle
+aussi en `HEAD` (sur `notifications`), si bien qu'un compteur des mesures du guide doit nommer ses six
+tables ; et la connexion aboutit sur l'accueil, dont le guide dans la page mesure les mêmes tables — une
+réponse tardive de l'accueil arrivait après la pose du compteur. Enfin, `requestfinished` ne part pas
+pour ces `HEAD` sans corps : la preuve compte les `response`.
+
+**La pastille à 390 px** a montré un titre de route réduit à une lettre : défaut **antérieur**, déjà
+consigné en INC-233 (capture de référence `docs/captures/CRM-076/workflows-sm-390.jpg`, 2026-08-30).
+
+**Campagne complète**, seed ré-appliqué le 2026-09-28 : `scripts/verify-webapp.sh` **44 contrôles, aucune
+anomalie** — 3 342 tests unitaires, **765** scénarios d'interface, classes toutes engendrées, restauration
+constatée. `verify-onboarding.sh --rapide` : 28 contrôles, la sixième dégradation — le filtre d'archivage
+des workflows — vue.
+
+**Les captures : 503 réécrites par la campagne, 33 dues.** L'écart mesuré en pixels venait presque
+partout de deux causes étrangères à l'unité : la police système de l'hôte a changé depuis la dernière
+campagne committée (2026-08-30), et les échéances suivent le jour où le seed est appliqué. Comme au
+commit `ee57958a`, seules les captures dont l'**interface** a changé sont gardées : celles de
+`CRM-079` et `CRM-094`, et les 33 captures d'autres unités qui montrent l'accueil guidé de la lectrice —
+barre de progression de 4 px repérée dans l'image, puis tiroirs ouverts vérifiés à l'œil — ou l'index des
+réglages, dont la description du guide dit désormais « six étapes ». Les 470 autres sont rendues.
+
+**Écart corrigé au passage** : le commit de T1 (`4544d737`) n'avait pas porté son entrée au `CHANGELOG`.
+L'entrée de `CRM-094` sous « Non publié » couvre désormais T1, T2 et T3.

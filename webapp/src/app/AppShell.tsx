@@ -1,6 +1,9 @@
 // @spec CRM-007 (docs/BACKLOG.md) — coquille de l'application
 // @spec docs/DESIGN_SYSTEM.md §4 (architecture des écrans), §5.8 (états), §7, §8
 // @spec docs/SPEC-webapp.md §5.1 (coquille), §7 (états), §9 (accessibilité), §11 (stockage)
+// @spec CRM-094 (docs/BACKLOG.md) tranches T2 et T3 — l'espace courant et son rôle rendus par un contexte,
+//       et le guide flottant monté au bas de la zone principale (docs/SPEC-onboarding.md §10.2,
+//       docs/DESIGN_SYSTEM.md §5.49)
 //
 // La coquille assemble les points de repère sémantiques exigés par docs/DESIGN_SYSTEM.md §8 —
 // `aside`, `nav`, `header`, `main` — et décide, à un seul endroit, lequel des états de
@@ -17,8 +20,12 @@ import { t, type CleTraduction } from '../i18n'
 import type { EtatAsync } from '../lib/async'
 import { clientCrm } from '../lib/supabase'
 import type { Channel } from '../lib/channels'
+import { estAdministrateur, useRoleWorkspace } from '../lib/roles'
 import { useTracks } from '../lib/tracks'
 import { useWorkspaces } from '../lib/workspaces'
+import { useAuthentification } from './Authentification'
+import { FournisseurEspace } from './ContexteEspace'
+import { GuideFlottant } from './GuideFlottant'
 import { Header } from './Header'
 import { Sidebar } from './Sidebar'
 import { TabBar } from './TabBar'
@@ -61,6 +68,16 @@ export function AppShell({
 	// principale décide en les regardant **tous les deux** (voir `ZonePrincipale`).
 	const { etat, recharger } = useWorkspaces(clientCrm)
 	const { etat: etatTracks, recharger: rechargerTracks } = useTracks(clientCrm)
+	// L'espace courant est le premier rendu — patron de `Carnet` et `Objectifs` —, et son rôle est
+	// celui que la base applique (`mon_role_espace`). Tenus ici une fois, rendus par le contexte au
+	// guide et à sa pastille (docs/SPEC-onboarding.md §10.2) ; ils décident d'un affichage, jamais
+	// d'un droit.
+	const { etat: etatSession } = useAuthentification()
+	const idUtilisateur = etatSession.statut === 'authentifie' ? etatSession.utilisateur.id : null
+	const idWorkspace = etat.statut === 'pret' ? (etat.donnees[0]?.id ?? null) : null
+	const { etat: etatRole } = useRoleWorkspace(clientCrm, idWorkspace, idUtilisateur)
+	const estAdmin = estAdministrateur(etatRole)
+	const contexteEspace = useMemo(() => ({ idWorkspace, estAdmin }), [idWorkspace, estAdmin])
 
 	const toutRecharger = useCallback(() => {
 		recharger()
@@ -101,7 +118,7 @@ export function AppShell({
 		return parts.join(' ')
 	}, [etat, etatTracks])
 
-	return (
+	const coquille = (
 		<div className="min-h-dvh flex flex-col">
 			<SkipLink cible={ID_CONTENU} libelle={t('skip.toContent')} />
 			<LiveRegion libelle={t('live.aria')} message={annonce} />
@@ -146,11 +163,14 @@ export function AppShell({
 							recharger={toutRecharger}
 							contenu={children}
 						/>
+						<GuideFlottant />
 					</main>
 				</div>
 			</div>
 		</div>
 	)
+
+	return <FournisseurEspace valeur={contexteEspace}>{coquille}</FournisseurEspace>
 }
 
 /**

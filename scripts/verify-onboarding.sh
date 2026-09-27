@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # @verifies CRM-079 (docs/BACKLOG.md) — Definition of Done du guide de démarrage
 # @verifies docs/SPEC-onboarding.md §8 (preuves attendues), §8 bis (contrat de CE harnais),
-#           §3 (les cinq étapes et leurs filtres), §3.2 (cinq comptages indépendants),
+#           §3 et §10.1 (les six étapes et leurs filtres), §3.2 (six comptages indépendants),
 #           §4.4 (aucune mesure sans session), §6.2 (les trois états d'une étape)
+# @verifies CRM-094 (docs/BACKLOG.md) tranche T2 — la sixième étape, `workflow`, et la sixième
+#           dégradation qui attaque son filtre d'archivage (docs/SPEC-onboarding.md §8 bis.2)
 # @verifies docs/SPEC-test-harness.md §1 (un harnais qui rend vert sans rien exercer est pire
 #           qu'une commande absente), §7.1 (chaîne Node Linux), §7.2 point 9 (restauration
 #           constatée octet à octet, jamais comparée à HEAD)
@@ -16,16 +18,16 @@
 #   3. Vitest : le module de mesure et l'écran, fichiers ET tests figés (décision 279) ;
 #   4. l'API : les trois faits du §3.1 hors interface, jetons réels des trois profils ;
 #   5. l'UI : clavier seul, mobile, masquage et reprise, console stricte ;
-#   6. le harnais est NON COMPLAISANT : cinq dégradations réelles des deux fichiers de l'unité
+#   6. le harnais est NON COMPLAISANT : six dégradations réelles des deux fichiers de l'unité
 #      doivent faire rougir la suite unitaire, et la restauration est CONSTATÉE octet à octet.
 #
 # ---------------------------------------------------------------------------------------------
 # Ce que ce harnais NE prouve PAS, et le dit (docs/SPEC-onboarding.md §8 bis.3).
 # ---------------------------------------------------------------------------------------------
 # AUCUN COMPTE pgTAP N'EST FIGÉ, et c'est une propriété de l'unité : `CRM-079` n'ajoute AUCUNE
-# migration et n'ouvre AUCUNE politique. Ses cinq lectures sont régies par les politiques de
-# CRM-020, CRM-021, CRM-040, CRM-022 et CRM-052, prouvées par leurs propres suites. Les rejouer
-# ici mesurerait le travail d'autres unités.
+# migration et n'ouvre AUCUNE politique. Ses six lectures sont régies par les politiques de
+# CRM-020, CRM-021, CRM-040, CRM-022, CRM-052 et, pour les workflows (CRM-094), CRM-076, prouvées
+# par leurs propres suites. Les rejouer ici mesurerait le travail d'autres unités.
 # AUCUNE CONVERGENCE DU SEED : elle appartient à scripts/verify-seed-demo.sh. Les écarts du
 # `viewer` (§3.1) sont le fait du BACKEND, et le contrôle 4 les constate sans les corriger.
 # AUCUNE OBSERVATION VISUELLE : le contrôle 2 constate que les captures EXISTENT. Les regarder
@@ -59,7 +61,8 @@ CAPTURES=docs/captures/CRM-079
 # qui descend. Les FICHIERS sont figés autant que les tests — vérifier les seuls tests ne détecte
 # pas la disparition d'une suite entière (décision 279).
 VITEST_FICHIERS_ATTENDUS=2
-VITEST_TESTS_ATTENDUS=43
+# 62 depuis `CRM-094` (2026-09-28) : la sixième étape, le geste et ses issues, le signal aux écrans.
+VITEST_TESTS_ATTENDUS=62
 API_SCENARIOS_ATTENDUS=6
 UI_SCENARIOS_ATTENDUS=11
 
@@ -213,7 +216,7 @@ else
 	fi
 fi
 
-titre "6. Non-complaisance — cinq dégradations réelles (§8 bis.2)"
+titre "6. Non-complaisance — six dégradations réelles (§8 bis.2)"
 
 if npm run test:unit -- --run demarrage >"$TRAVAIL/temoin.log" 2>&1; then
 	ok "témoin : les deux suites de l'unité sont VERTES avant toute dégradation"
@@ -254,7 +257,7 @@ degrader "$LIB" \
 	"if (false) {"
 
 # LE SEUIL D'ACCOMPLISSEMENT (§6.2) : une étape est accomplie dès la PREMIÈRE ligne visible, et un
-# seuil à zéro déclarerait les cinq étapes faites sur un espace vide.
+# seuil à zéro déclarerait les six étapes faites sur un espace vide.
 degrader "$LIB" \
 	"le seuil d'accomplissement tombe à zéro — un espace vide se dirait intégralement démarré" \
 	"etat.donnees.compte >= 1" \
@@ -272,12 +275,20 @@ degrader "$LIB" \
 	"progression.etapes.some((etat) => (etat.statut === 'pret' ? !estAccomplie(etat) : false))"
 
 # LA GARDE DE SESSION (§4.4) : c'est le défaut RÉEL qu'une campagne a mesuré — un visiteur sans
-# session déclenchait les cinq comptages, et `mail_inbound_accounts` répondait `401` dans la
+# session déclenchait les comptages, et `mail_inbound_accounts` répondait `401` dans la
 # console de l'écran d'arrivée du produit.
 degrader "$ECRAN" \
 	"la garde de session saute — l'accueil mesurerait sans session et salirait la console" \
 	"useDemarrage(ouverte ? client : null)" \
 	"useDemarrage(client)"
+
+# LE FILTRE D'ARCHIVAGE DES WORKFLOWS (§10.1, `CRM-094`) : sans lui, un workflow archivé — que
+# l'éditeur range et qu'aucun channel ne peut plus recevoir — accomplirait l'étape « Workflow », et
+# le guide tairait l'impossibilité même qu'il existe pour lever : créer un channel.
+degrader "$LIB" \
+	"le filtre archived_at des workflows disparaît — un workflow archivé accomplirait l'étape" \
+	"table: 'workflows', nuls: \['archived_at'\] }" \
+	"table: 'workflows', nuls: [] }"
 
 titre "7. Restauration CONSTATÉE, pas supposée"
 

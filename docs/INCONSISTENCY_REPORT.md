@@ -6740,3 +6740,25 @@ alinéas du §3.5 : runner pour le schéma, seed pour les données, puis suite g
 la suite globale court après le ménage de ses copies d'essai — placée avant, `0012` choisissait une
 copie d'un autre track (mesuré) — ; 30 contrôles, aucune anomalie ; suite globale 72 fichiers, 3196
 assertions.
+
+### INC-254 — après la création d'un track, la barre latérale dit encore « Aucun track » tant qu'on reste dans les réglages
+
+*Relevée le 2026-09-28 en regardant les captures de la preuve E2E de `CRM-094` (`CLAUDE.md` §16),
+`docs/captures/CRM-094/editeur-vide-panneau-ouvert-1440.jpg` et `editeur-relu-apres-geste-1440.jpg`.
+Comportement **inchangé** : étranger à `CRM-094`, qui ne touche ni l'arborescence ni la barre latérale.*
+
+**Ce qui est observé.** Dans un espace neuf, l'administrateur crée son premier track sur
+`/reglages/arborescence`, puis passe à l'éditeur de workflows : l'arbre montre le track, la barre
+latérale écrit toujours « Aucun track », et la barre d'onglets « Aucun channel ». Un rechargement de la
+page, ou l'ouverture d'un écran d'une autre nature (un track, une affaire), les remet à jour.
+
+**Cause, MESURÉE par la même preuve.** Les routes de réglages rendent toutes `<AppShell>` au même
+endroit de l'arbre : React **garde** la coquille d'une page à l'autre, et ses lectures — `useWorkspaces`,
+`useTracks` — ne sont faites qu'à son montage. Aucune écriture de l'arborescence ne demande à la coquille
+de relire ses tracks. C'est la même cause que le défaut de re-mesure du guide flottant, corrigé dans
+`CRM-094` (décision 607) pour le seul guide.
+
+**Unités concernées** : `CRM-007` (la coquille) et `CRM-075` (l'arborescence). **Ce que le responsable
+doit trancher** : corriger maintenant — la coquille relit ses tracks sur un signal émis par les
+écritures de l'arborescence, sur le modèle de `p2enjoy:workflow-de-depart` — ou en faire une unité
+propre.

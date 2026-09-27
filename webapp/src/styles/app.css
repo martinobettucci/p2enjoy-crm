@@ -2,6 +2,8 @@
   @spec CRM-007 (docs/BACKLOG.md) — styles de base de l'application
   @spec docs/DESIGN_SYSTEM.md §2 (typographie), §6 (interactions), §8 (accessibilité)
   @spec docs/SPEC-webapp.md §4 (jetons), §9 (accessibilité)
+  @spec CRM-094 (docs/BACKLOG.md) tranche T3 — l'apparition du panneau du guide flottant
+        (docs/DESIGN_SYSTEM.md §5.49, docs/SPEC-onboarding.md §10.2)
 
   Ce fichier ne contient **aucune valeur hexadécimale** : il ne fait que consommer les jetons
   de `tokens.css`.
@@ -9,6 +11,20 @@
 
 @import 'tailwindcss';
 @import './tokens.css';
+
+/* docs/DESIGN_SYSTEM.md §5.49 — le panneau du guide flottant paraît en 150 ms de fondu et de
+   translation verticale ; la règle `prefers-reduced-motion` ci-dessous l'annule, et la classe qui
+   l'emploie ne s'applique qu'en `motion-safe`. */
+@keyframes apparition-guide {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
 
 @layer base {
 	html {

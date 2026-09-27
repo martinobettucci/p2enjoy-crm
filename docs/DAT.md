@@ -184,6 +184,18 @@ Découpage prévu : `src/lib` (client Supabase, types générés, helpers), `src
   `aria-sort`, filtres par étape et par recherche plein texte, pagination, et la bascule
   board ↔ liste. Aucune règle n'y vit, et **aucun chemin d'écriture** n'y est ouvert : la liste
   lit (`CRM-042`) ;
+- `src/app/ContexteEspace.tsx`, `src/app/GuideFlottant.tsx`, et le signal `p2enjoy:workflow-de-depart`
+  de `src/lib/demarrage.ts` (`CRM-094`, `docs/SPEC-onboarding.md` §10) — la coquille lit **une fois**
+  l'espace courant et le rôle que la base y rend (`mon_role_espace`), et les passe par un contexte au
+  guide flottant, monté au bas de la zone principale ; ce rôle décide d'un **affichage**, jamais d'un
+  droit. Le geste du workflow de départ émet un **événement d'interface nommé**, auquel l'éditeur de
+  workflows, le catalogue et le formulaire de channel ouvert s'abonnent pour se relire eux-mêmes.
+  **Compromis** : un contrat entre écrans que rien ne vérifie à la compilation — tout écran qui
+  viendrait à lire les workflows ou le catalogue doit s'abonner, règle écrite au §10.3 —, préféré au
+  remontage de la page, qui perdait une saisie en cours (décision 607). **Constat structurant** : les
+  routes de réglages rendent la même coquille au même endroit, et React la **garde** d'une page à
+  l'autre ; ce qu'elle lit à son montage ne se relit donc pas en changeant de page — corrigé pour le
+  guide, qui relance sa mesure quand l'adresse change ; ouvert pour la barre latérale (INC-254) ;
 - `src/app/presentation-tracks.ts` — la correspondance jeton de couleur → classes et nom d'icône →
   composant Lucide, à un seul endroit, avec ses replis documentés ;
 - `src/app/`, `src/components/ui/`, `src/i18n/`, `src/styles/tokens.css` — la coquille, les

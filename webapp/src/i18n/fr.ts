@@ -1365,6 +1365,7 @@ export const fr = {
 	'admin.form.workflow.default': '{nom} (par défaut)',
 	'admin.form.workflow.none':
 		"Aucun workflow n'est affectable à ce track. Un channel doit en suivre un ; créez d'abord un workflow global ou propre à ce track.",
+	'admin.form.workflow.none.action': 'Ouvrir l’éditeur de workflows',
 	'admin.form.workflow.loading': 'Chargement des workflows…',
 
 	// Confirmation d'archivage (docs/DESIGN_SYSTEM.md §6).
@@ -1742,6 +1743,9 @@ export const fr = {
 	'admin.workflows.catalogue.title': 'Nœuds ajoutables',
 	'admin.workflows.catalogue.empty':
 		'Tous les nœuds actifs du catalogue sont déjà des étapes de ce workflow.',
+	'admin.workflows.catalogue.none':
+		'Le catalogue ne porte encore aucun nœud. Créez-y vos étapes — Prospection, Négociation… — pour les ajouter ici ; le guide de démarrage peut aussi poser un workflow de départ complet.',
+	'admin.workflows.catalogue.none.action': 'Ouvrir le catalogue de nœuds',
 	'admin.workflows.catalogue.loading': 'Chargement du catalogue…',
 	'admin.workflows.catalogue.error': 'Le catalogue n’a pas pu être chargé.',
 
@@ -2499,11 +2503,11 @@ export const fr = {
 	// en porte 6 (§3.1 de la spécification). Écrire « aucun channel n'existe » serait faux.
 	'admin.settings.index.onboarding': 'Guide de démarrage',
 	'admin.settings.index.onboarding.body':
-		'Les cinq étapes du premier lancement, et où chacune se fait. Consultable à tout moment.',
+		'Les six étapes du premier lancement, et où chacune se fait. Consultable à tout moment.',
 
 	'onboarding.title': 'Guide de démarrage',
 	'onboarding.intro':
-		'Cinq étapes pour rendre le CRM utilisable. Chacune renvoie vers l’écran qui la réalise, et son état est mesuré à chaque affichage.',
+		'Six étapes pour rendre le CRM utilisable. Chacune renvoie vers l’écran qui la réalise, et son état est mesuré à chaque affichage.',
 	'onboarding.progress': '{faites} étape(s) sur {total}',
 	'onboarding.progress.loading': 'Mesure des étapes en cours',
 	'onboarding.hide': 'Masquer le guide',
@@ -2525,6 +2529,28 @@ export const fr = {
 		'Un track regroupe des activités proches — un métier, un marché, une équipe.',
 	'onboarding.step.track.vide': 'Vous n’en voyez aucun pour le moment.',
 	'onboarding.step.track.action': 'Ouvrir l’administration de l’arborescence',
+	'onboarding.step.workflow.title': 'Préparer un premier workflow',
+	'onboarding.step.workflow.body':
+		'Un workflow décrit les étapes d’une affaire, de la prospection à la signature. Chaque channel en suit un : il faut donc un workflow avant le premier channel.',
+	'onboarding.step.workflow.vide': 'Vous n’en voyez aucun pour le moment.',
+	'onboarding.step.workflow.action': 'Ouvrir l’éditeur de workflows',
+	'onboarding.step.workflow.create': 'Créer le workflow de départ',
+	'onboarding.step.workflow.create.encours': 'Création…',
+	'onboarding.step.workflow.create.aide':
+		'Le cycle commercial type — Prospection, Relance, Négociation, Signature, Réalisation, Livré, Perdu —, que vous pourrez modifier ensuite dans l’éditeur.',
+	'onboarding.step.workflow.create.ok': 'Workflow de départ créé',
+	'onboarding.step.workflow.create.refus.reserve':
+		'Seul un administrateur de l’espace peut créer le workflow de départ.',
+	'onboarding.step.workflow.create.existant':
+		'Cet espace a déjà un workflow : ouvrez l’éditeur pour le composer.',
+	'onboarding.step.workflow.create.refus.noeud-archive':
+		'Le nœud « {cle} » est archivé dans le catalogue : restaurez-le, ou composez votre workflow depuis l’éditeur.',
+	'onboarding.step.workflow.create.refus.panne': 'Le workflow de départ n’a pas pu être créé. Réessayez.',
+	'onboarding.flottant.titre': 'Démarrage',
+	'onboarding.flottant.pastille': 'Démarrage · {faites} sur {total}',
+	'onboarding.flottant.pastille.courte': '{faites}/{total}',
+	'onboarding.flottant.reduire': 'Réduire',
+	'onboarding.flottant.masquer': 'Masquer pour la session',
 	'onboarding.step.channel.title': 'Ouvrir un channel dans ce track',
 	'onboarding.step.channel.body':
 		'Un channel porte un workflow et ses étapes. C’est lui qui donne son board à vos affaires.',

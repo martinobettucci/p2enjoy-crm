@@ -301,7 +301,7 @@ au même titre qu'un compte qui descend.
 
 | Grandeur | Valeur figée | Mesurée le |
 |---|---|---|
-| Vitest, filtre `demarrage` | **2 fichiers, 43 tests** | 2026-08-16 |
+| Vitest, filtre `demarrage` | **2 fichiers, 62 tests** — 43 jusqu'à `CRM-094` | 2026-09-28 |
 | `e2e/api/demarrage.spec.ts` | **6 scénarios** | 2026-08-16 |
 | `e2e/ui/demarrage.spec.ts` | **11 scénarios** | 2026-08-16 |
 | Captures sous `docs/captures/CRM-079/` | **10** — quatre paliers, plus six états | 2026-08-16 |
@@ -314,7 +314,7 @@ Aucun compte pgTAP n'est figé, et c'est une propriété de l'unité, pas un oub
 les politiques de `CRM-020`, `CRM-021`, `CRM-040`, `CRM-022` et `CRM-052`, prouvées par leurs
 propres suites. Le harnais qui rejouerait ces suites mesurerait le travail d'autres unités.
 
-### 8 bis.2 Non-complaisance — cinq dégradations réelles
+### 8 bis.2 Non-complaisance — six dégradations réelles
 
 Un harnais qui rend vert sans rien exercer est pire qu'une commande absente
 (`docs/SPEC-test-harness.md` §1). Le harnais dégrade donc réellement les deux fichiers de l'unité,
@@ -328,6 +328,7 @@ harnais : le remède est alors d'écrire la preuve manquante, jamais de retirer 
 | 3 | le seuil d'accomplissement (`estAccomplie`) | §6.2 : une étape est accomplie **dès la première ligne visible**, pas avant |
 | 4 | la prise en compte du non-mesurable (`resteUneEtape`) | §6.2 : le guide ne se retire pas sur un accomplissement qu'il n'a pas constaté |
 | 5 | la garde de session (`GuideDemarrage`, `ouverte ? client : null`) | §4.4 : tant que la session n'est pas ouverte, **aucune mesure n'est émise** |
+| 6 | le filtre `archived_at` des workflows (`FILTRES_ETAPES_DEMARRAGE`) — ajoutée par `CRM-094` | §10.1 : un workflow archivé n'accomplit pas l'étape — aucun channel ne peut plus le recevoir |
 
 La cinquième porte sur l'écran et non sur le module : c'est là que vit la garde, et c'est le défaut
 réel qu'une campagne a mesuré (§4.4).
@@ -524,10 +525,28 @@ spécifiée au §7 quater de `docs/SPEC-workflow-engine.md`, puis re-mesure les 
 | Issue | Rendu sur la ligne |
 |---|---|
 | en cours | le bouton désactivé, « Création… » |
-| succès | l'étape passe à « Fait » ; annonce polie « Workflow de départ créé » |
+| succès | le bouton reste désactivé jusqu'à la re-mesure, qui fait passer l'étape à « Fait » et le retire ; le focus passe au lien de la ligne ; annonce polie « Workflow de départ créé » |
+| déjà présent (`workflow existant`) | **pas un refus** : la base porte un workflow — un second onglet, un collègue —, l'étape est donc accomplie. Même rendu que le succès, avec l'annonce polie « Cet espace a déjà un workflow : ouvrez l'éditeur pour le composer. » ; aucune alerte |
 | refus | le message du refus, sur la ligne, le bouton restant offert s'il a un sens |
 
 Le workflow créé s'ouvre dans l'éditeur comme tout autre : il se renomme, se recompose, s'archive.
+
+**Les écrans ouverts se relisent** *(précisé le 2026-09-28, décision 607, avant la preuve E2E)*. Le geste
+se fait depuis le panneau flottant, **par-dessus** l'écran courant, et les écrans qui lisent les
+workflows ont lu à leur montage : sans relecture, l'éditeur continuerait d'écrire « Aucun workflow dans
+cet espace de travail » sous une étape passée à « Fait ». Sur un succès et sur « déjà présent », le
+geste émet l'événement d'interface **`p2enjoy:workflow-de-depart`**, et chaque écran concerné se relit
+**lui-même, sans être remonté** :
+
+| Écran | Ce qu'il relit |
+|---|---|
+| `/reglages/workflows` | la liste des workflows ; le workflow posé devient le workflow choisi |
+| `/reglages/catalogue` | le catalogue, où le geste a posé ses nœuds |
+| `/reglages/arborescence` | **seulement si un formulaire de channel est ouvert** : ses workflows affectables — la saisie en cours survit ; formulaire fermé, rien, la liste étant lue à chaque ouverture |
+
+Écartés : remonter la page entière (une saisie en cours serait perdue) et mener d'office à l'éditeur
+(l'administrateur est déplacé hors de ce qu'il faisait). **Tout écran qui viendrait à lire les workflows
+ou le catalogue s'abonne au même événement.**
 
 ### 10.4 Stockage
 
@@ -552,7 +571,7 @@ Rien d'autre ; aucun `localStorage`.
 |---|---|
 | pgTAP | `creer_workflow_de_depart` : l'administrateur crée nœuds, workflow par défaut, sept étapes dont l'initiale, onze transitions ; un nœud vivant de même clé est réutilisé, un nœud archivé refusé ; second appel refusé ; non-administrateur refusé ; anonyme refusé par le privilège ; `SECURITY INVOKER`, `search_path` vide, `EXECUTE` à `authenticated` seul |
 | API | le geste par un vrai jeton d'administratrice sur un espace neuf, puis un channel créé sur le workflow rendu ; `business_developer` refusé ; second appel refusé |
-| Unitaires | la sixième mesure ; les états de la pastille (cachée sans rôle admin, pendant la mesure, tout accompli, masquée, sur `/` et `/demarrage`) ; la forme retenue en `sessionStorage` ; `Échap` ; le geste et ses trois issues ; le message du catalogue vide |
-| E2E | un administrateur sur un **espace neuf** : pastille « 2 sur 6 », ouverture, geste, lien suivi sans perte du panneau, retour, channel créé, progression re-mesurée ; une lectrice ne voit aucune pastille ; clavier seul ; palier mobile ; console vierge |
+| Unitaires | la sixième mesure ; les états de la pastille (cachée sans rôle admin, pendant la mesure, tout accompli, masquée, sur `/` et `/demarrage`) ; la forme retenue en `sessionStorage` ; `Échap` ; le geste et ses issues — dont « déjà présent », annoncé sans alerte —, le bouton tenu pendant la re-mesure, le focus rendu au lien ; le signal et la relecture des trois écrans ouverts, saisie du formulaire de channel conservée ; le message du catalogue vide |
+| E2E | un administrateur sur un **espace neuf** : pastille « 1 sur 6 », ouverture, premier track, formulaire de channel sans workflow qui mène à l'éditeur, geste depuis le panneau **au-dessus de l'éditeur, qui se relit**, lien suivi sans perte du panneau, channel créé, progression re-mesurée ; une lectrice ne voit aucune pastille ; clavier seul ; palier mobile ; console vierge |
 | Visuel | pastille et panneau aux quatre paliers, ouvert et réduit, sur un écran chargé ; captures observées |
 

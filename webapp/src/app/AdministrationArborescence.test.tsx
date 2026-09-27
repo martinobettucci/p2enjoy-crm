@@ -11,17 +11,21 @@
 //           §10 (les commandes ne sont pas masquées)
 // @verifies docs/DESIGN_SYSTEM.md §5.13 (commandes visibles, désactivées aux extrémités, mention
 //           textuelle « Archivé », focus à l'ouverture), §6 (confirmation), §8, §10
+// @verifies CRM-094 (docs/BACKLOG.md) tranche T2 — docs/SPEC-onboarding.md §10.5 (sans workflow
+//           affectable, le formulaire mène à l'éditeur), §10.3 (un formulaire ouvert relit ses workflows
+//           au signal du workflow de départ, saisie conservée) ; docs/JOURNAL.md décisions 606 et 607
 //
 // Ces preuves montent le **vrai** écran avec un client factice qui enregistre les requêtes émises.
 // Elles n'injectent aucun état interne : ce qui est observé est ce qu'un utilisateur voit et ce que
 // le réseau reçoit. Le parcours connecté complet relève de `e2e/ui/administration-arborescence.spec.ts`,
 // qui ne peut pas être exécuté sans la pile.
 
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter } from 'react-router'
 import { AdministrationArborescence } from './AdministrationArborescence'
+import { EVENEMENT_WORKFLOW_DEPART } from '../lib/demarrage'
 import type { ClientCrm } from '../lib/supabase'
 
 afterEach(cleanup)
@@ -183,6 +187,24 @@ function monter(options: Options = {}) {
 
 const attendreTracks = async () => {
 	await screen.findByText('Conseil & IA')
+}
+
+/** Monte l'écran en COMPTANT les lectures par table — pour prouver qu'un signal ne relit rien. */
+function monterEnComptant(options: Options = {}) {
+	const { client } = clientFactice(options)
+	const lectures: Record<string, number> = {}
+	const compteur = {
+		from: (table: string) => {
+			lectures[table] = (lectures[table] ?? 0) + 1
+			return (client as unknown as { from: (nom: string) => unknown }).from(table)
+		},
+	} as unknown as ClientCrm
+	render(
+		<MemoryRouter>
+			<AdministrationArborescence client={compteur} />
+		</MemoryRouter>,
+	)
+	return { lectures }
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -596,6 +618,48 @@ describe('les channels (§3.2, §7)', () => {
 		await utilisateur.click(screen.getByRole('button', { name: 'Nouveau channel' }))
 		expect(await screen.findByTestId('admin-sans-workflow')).toBeTruthy()
 		expect(screen.queryByLabelText('Workflow')).toBeNull()
+		// `CRM-094` (docs/SPEC-onboarding.md §10.5) : la phrase dit de créer un workflow ; le chemin
+		// y mène, au lieu de laisser chercher l'éditeur dans l'index des réglages.
+		expect(
+			within(screen.getByTestId('admin-sans-workflow')).getByRole('link', { name: 'Ouvrir l’éditeur de workflows' }).getAttribute('href'),
+		).toBe('/reglages/workflows')
+	})
+
+	it('formulaire OUVERT, il relit ses workflows quand le workflow de départ est posé — et garde la saisie (§10.3)', async () => {
+		const utilisateur = userEvent.setup()
+		// La liste est lue par référence à chaque requête : la remplir simule la base après le geste.
+		const workflows: unknown[] = []
+		monter({ workflows })
+		await attendreTracks()
+		await utilisateur.click(screen.getByRole('button', { name: 'Déplier Conseil & IA' }))
+		await screen.findByText('Prospection')
+		await utilisateur.click(screen.getByRole('button', { name: 'Nouveau channel' }))
+		expect(await screen.findByTestId('admin-sans-workflow')).toBeTruthy()
+		const formulaire = screen.getByTestId('formulaire-channel')
+		await utilisateur.type(within(formulaire).getByLabelText('Nom'), 'Premier channel')
+
+		// Le geste du guide flottant, par-dessus l'écran : il pose le workflow et émet le signal.
+		workflows.push({ id: 'wf-9', name: 'Cycle commercial', scope: 'global', is_default: true })
+		act(() => {
+			globalThis.dispatchEvent(new Event(EVENEMENT_WORKFLOW_DEPART))
+		})
+
+		const choix = await within(formulaire).findByLabelText('Workflow')
+		expect(within(choix).getByRole('option', { name: 'Cycle commercial (par défaut)' })).toBeTruthy()
+		expect(screen.queryByTestId('admin-sans-workflow')).toBeNull()
+		// Le formulaire n'a pas été refermé : c'est tout le motif d'une relecture ciblée.
+		expect((within(formulaire).getByLabelText('Nom') as HTMLInputElement).value).toBe('Premier channel')
+	})
+
+	it('formulaire FERMÉ, le signal ne relit rien : la liste est lue à chaque ouverture', async () => {
+		const { lectures } = monterEnComptant()
+		await attendreTracks()
+		const avant = lectures['workflows'] ?? 0
+		act(() => {
+			globalThis.dispatchEvent(new Event(EVENEMENT_WORKFLOW_DEPART))
+		})
+		await new Promise((resoudre) => setTimeout(resoudre, 20))
+		expect(lectures['workflows'] ?? 0).toBe(avant)
 	})
 
 	it('réordonne un channel DANS SON TRACK, sur une seule écriture', async () => {

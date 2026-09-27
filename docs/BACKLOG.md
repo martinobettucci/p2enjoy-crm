@@ -14676,7 +14676,7 @@ que le refus serveur reste la seule règle (`CLAUDE.md` §10).*
       selon `mon_role_espace`, états, preuves.
 - [ ] Mise en œuvre, preuves unitaires et E2E par rôle, captures, manuel, redéploiement.
 
-### CRM-094 — Démarrer un espace neuf : le workflow de départ et le guide flottant `[ ]`
+### CRM-094 — Démarrer un espace neuf : le workflow de départ et le guide flottant `[~]`
 *Créée le 2026-09-28 — décision 606, arbitrages du responsable. Relevé en production : dans un espace
 neuf, impossible de créer un channel — aucun workflow ni aucun nœud de catalogue n'existe, et le guide
 n'en disait rien ; et le guide « se perd » dès qu'on suit l'un de ses liens. Spécifié avant le code :
@@ -14687,11 +14687,21 @@ et §5.49.*
       (`SECURITY INVOKER`), sa suite pgTAP, preuves d'API ; `docs/SCHEMA.md`, `docs/PROD_MIGRATIONS.md`.
       Mesuré le 2026-09-28 : pgTAP **74 fichiers, 3253 assertions** (`0074` : **28**) ;
       `workflow-depart.spec.ts` **3/3** ; types régénérés, `types:check` à jour, `typecheck` vert.
-- [ ] **T2** — le guide à six étapes, l'étape « Workflow » et son geste ; le message du catalogue vide
+- [x] **T2** — le guide à six étapes, l'étape « Workflow » et son geste ; le message du catalogue vide
       de l'éditeur de workflows ; le lien du formulaire de channel sans workflow ; preuves unitaires.
-- [ ] **T3** — le guide flottant pour les administrateurs : pastille, panneau, forme retenue pour la
+      Précisé par la décision 607 : « déjà présent » est une issue aboutie, le bouton reste éteint
+      jusqu'à la re-mesure, le focus passe au lien de l'étape, et l'éditeur, le catalogue et le
+      formulaire de channel ouvert se relisent au signal `p2enjoy:workflow-de-depart`. Mesuré le
+      2026-09-28 : Vitest « demarrage » **2 fichiers, 62 tests** ; `e2e/api/demarrage.spec.ts` **6/6**,
+      sixième mesure comprise ; `verify-onboarding.sh --rapide` **28 contrôles**, six dégradations vues.
+- [x] **T3** — le guide flottant pour les administrateurs : pastille, panneau, forme retenue pour la
       session, re-mesure au changement de page ; preuves unitaires et E2E sur un espace neuf, captures
-      observées aux quatre paliers ; `docs/manual.md`.
+      observées aux quatre paliers ; `docs/manual.md`. Mesuré le 2026-09-28 :
+      `e2e/ui/guide-flottant.spec.ts` **5/5** sur un espace réellement neuf, console vierge ;
+      `GuideFlottant.test.tsx` **17 tests** ; campagne `verify-webapp.sh` **44 contrôles sans anomalie**
+      — 3 342 tests unitaires, **765** scénarios d'interface ; captures `docs/captures/CRM-094/` observées
+      aux quatre paliers. Laissé ouvert et consigné : INC-254 (barre latérale périmée après la création
+      d'un track), antérieur à l'unité.
 - [ ] **T4** — livraison en production (migration 80) et constat : l'administrateur crée son workflow
       de départ puis son premier channel depuis le guide.
 

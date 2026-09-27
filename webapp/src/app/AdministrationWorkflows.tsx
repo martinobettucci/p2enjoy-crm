@@ -31,6 +31,9 @@
 //       et le tableau qui défile dans son propre conteneur)
 // @spec docs/DESIGN_SYSTEM.md §5.7 (champs), §5.7 bis (case à cocher), §5.8 (états), §6
 //       (confirmation), §8 (accessibilité), §9 (icônes Lucide), §10 (aucun texte en dur)
+// @spec CRM-094 (docs/BACKLOG.md) tranche T2 — docs/SPEC-onboarding.md §10.5 : un catalogue vide le dit,
+//       et mène au catalogue de nœuds ; §10.3 : l'écran se relit quand le workflow de départ est posé
+//       depuis le guide flottant (docs/JOURNAL.md décisions 606 et 607)
 //
 // AUCUN DROIT N'EST CALCULÉ ICI — la règle de `CRM-075`, reprise mot pour mot. Les commandes sont
 // rendues pour tout le monde ; l'écriture part, et le refus du backend est traduit. Une commande
@@ -42,6 +45,7 @@
 // d'offrir un choix dont on sait qu'il sera refusé — une aide d'interface, pas une garde.
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
+import { Link } from 'react-router'
 import {
 	Archive,
 	ArchiveRestore,
@@ -58,6 +62,7 @@ import {
 	TriangleAlert,
 } from 'lucide-react'
 import { BlocVersionsWorkflow } from './BlocVersionsWorkflow'
+import { CHEMIN_ADMIN_CATALOGUE } from './chemins'
 import { ListeCollections } from './CollectionsComparees'
 import { Button } from '../components/ui/Button'
 import { LiveRegion } from '../components/ui/LiveRegion'
@@ -67,6 +72,7 @@ import { t } from '../i18n'
 import type { CleTraduction } from '../i18n/fr'
 import type { EtatAsync } from '../lib/async'
 import { enChargement } from '../lib/async'
+import { useApresWorkflowDeDepart } from '../lib/demarrage'
 import {
 	calculerDeplacement,
 	deplacementPossible,
@@ -796,6 +802,19 @@ function SelecteurAjout({
 			) : null}
 			{catalogue.statut === 'pret'
 				? (() => {
+						// `CRM-094` (docs/SPEC-onboarding.md §10.5) : un catalogue VIDE n'est pas un
+						// catalogue entièrement employé. C'est l'écran d'un espace neuf, et le dire
+						// « tous employés » y serait faux : il mène au catalogue, où l'on crée ses étapes.
+						if (catalogue.donnees.length === 0) {
+							return (
+								<p className="flex flex-col gap-2 text-sm text-text-2">
+									<span>{t('admin.workflows.catalogue.none')}</span>
+									<Link to={CHEMIN_ADMIN_CATALOGUE} className="self-start font-medium text-brand underline">
+										{t('admin.workflows.catalogue.none.action')}
+									</Link>
+								</p>
+							)
+						}
 						const restants = noeudsAjoutables(catalogue.donnees, etapes)
 						if (restants.length === 0) {
 							return <p className="text-sm text-text-2">{t('admin.workflows.catalogue.empty')}</p>
@@ -2394,6 +2413,11 @@ export function AdministrationWorkflows({
 	const [effetsExigence, setEffetsExigence] = useState<MessageEffets | null>(null)
 	const [annonce, setAnnonce] = useState('')
 	const [tentative, setTentative] = useState(0)
+	// `CRM-094` (docs/SPEC-onboarding.md §10.3) : le workflow de départ peut être posé depuis le guide
+	// flottant PAR-DESSUS cet écran, et la liste lue au montage le tairait. Relire ici est la reprise
+	// que l'écran connaît déjà : le workflow posé devient le workflow choisi, comme au premier montage.
+	const relireApresDepart = useCallback(() => setTentative((precedente) => precedente + 1), [])
+	useApresWorkflowDeDepart(relireApresDepart)
 	/**
 	 * La création d'un workflow — CRM-031, §3 bis.
 	 *

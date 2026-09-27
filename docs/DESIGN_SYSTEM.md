@@ -1613,7 +1613,7 @@ d'autres écrans. Ce que le guide lit, mesure et refuse de deviner est spécifi�
   track après le premier, et éteindre le chemin dès la première réussite ferait du guide un écran
   qui se referme derrière soi.
 
-- **La progression s'écrit en toutes lettres** — « 3 étapes sur 5 » —, et la barre qui l'accompagne
+- **La progression s'écrit en toutes lettres** — « 3 étape(s) sur 6 » depuis `CRM-094` —, et la barre qui l'accompagne
   est `aria-hidden`. Une barre seule ne se lit ni à la voix, ni en cas de daltonisme, ni sur une
   capture d'écran étroite. C'est la même règle qu'au §5.15 pour les compteurs de `summary` : le
   chiffre est écrit, jamais laissé à deviner.
@@ -4830,7 +4830,9 @@ Elle reprend la liste du §5.17 telle quelle — mêmes lignes, mêmes mots d'é
   (`z-30`) et le tiroir (`z-40`) de la navigation mobile, sous les panneaux de l'en-tête (`z-40`) — un
   menu qu'on ouvre passe devant le guide, jamais derrière. Pastille visible, la zone principale reçoit
   en bas une marge égale à la hauteur de la pastille plus son écart : le dernier élément d'une liste
-  n'est jamais caché dessous.
+  n'est jamais caché dessous. **Cette réserve s'écrit `calc(--size-target + --spacing-4)`** : écrite
+  d'abord `h-16`, hors de l'échelle close du §3, la classe n'était pas engendrée (§11) et la réserve
+  n'existait pas — trouvé par le contrôle des classes, le 2026-09-28.
 
 - **Non modale.** Aucun voile, aucun piège de focus, page utilisable panneau ouvert. Ouvrir place le
   focus sur le titre du panneau ; `Échap` referme et rend le focus à la pastille ; « Réduire » aussi.
@@ -4838,14 +4840,37 @@ Elle reprend la liste du §5.17 telle quelle — mêmes lignes, mêmes mots d'é
   rend le focus au contenu principal.
 
 - **Ce qui ne bouge pas.** L'état d'une étape est un mot (§5.17) ; la progression est écrite, la barre
-  `aria-hidden` ; toute cible fait au moins `--size-target`. Le changement de progression est annoncé
-  par la région polie de la coquille, non par la pastille.
+  `aria-hidden` ; toute cible fait au moins `--size-target`. **La pastille n'est pas une région
+  vivante** : re-mesurée à chaque page, elle ferait annoncer la progression à chaque navigation. L'issue
+  aboutie du geste est annoncée par la région polie (`role="status"`) que porte la liste des étapes,
+  dans la page comme dans le panneau. *Corrigé le 2026-09-28 (décision 607) : ce point écrivait « la
+  région polie de la coquille » ; la région est celle de la liste, qui vit dans les deux contenants.*
 
 - **Le geste « Créer le workflow de départ »** est un bouton **primaire** sur la ligne de l'étape — le
   seul primaire du panneau, puisque c'est la seule action qui s'y accomplit plutôt que d'y mener. En
   cours, il est désactivé et dit « Création… » ; son refus s'écrit sur la ligne, en
   `--color-danger-on-soft` sur `--color-danger-soft` (§5.7).
+  - **Une issue aboutie le laisse désactivé jusqu'à la re-mesure**, qui fait passer l'étape à « Fait »
+    et le retire. Réactivé à la réponse, il redevenait cliquable le temps de la re-mesure — le panneau
+    garde la dernière progression mesurée — et un second clic valait un refus sous une étape réussie.
+  - **Le focus passe alors au lien de la même ligne**, « Ouvrir l'éditeur de workflows » : le bouton
+    qui a agi disparaît, et le focus ne reste jamais sur un élément qui disparaît (§5.13, §5.29).
+  - **« Déjà présent » n'est pas un refus.** Un workflow posé entre-temps — second onglet, collègue —
+    accomplit l'étape : l'issue s'annonce dans la région polie, avec son propre texte, et n'écrit
+    aucune alerte sous une étape qui passe à « Fait ».
+  - **L'écran sous le panneau se relit** — éditeur de workflows, catalogue, formulaire de channel
+    ouvert de l'arborescence —, sans être remonté : une saisie en cours survit
+    (`docs/SPEC-onboarding.md` §10.3).
 
-- **Mouvement.** Ouverture et fermeture en 150 ms de fondu et de translation verticale ; rien sous
-  `prefers-reduced-motion` (§6).
+- **Mouvement.** Ouverture en 150 ms de fondu et de translation verticale ; rien sous
+  `prefers-reduced-motion` (§6). **La fermeture est immédiate** — *précisé le 2026-09-28, décision 607 :
+  ce point annonçait aussi un fondu de fermeture*. Le panneau est démonté à la fermeture, le focus
+  revenant à la pastille (§5.43) : une sortie animée garderait dans le document, le temps du fondu, des
+  liens déjà hors d'atteinte.
+
+- **Le panneau ouvert recouvre la droite de la zone principale, et c'est une limite ASSUMÉE**, observée
+  sur les captures du 2026-09-28 (`docs/captures/CRM-094/editeur-relu-apres-geste-1440.jpg`) : les
+  commandes de ligne de l'éditeur, la fin d'une phrase centrée. C'est le prix d'une surface flottante
+  non modale, et « Réduire » le rend en un geste. La pastille réduite, elle, ne cache rien que la
+  réserve ne libère.
 

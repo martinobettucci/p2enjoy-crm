@@ -227,7 +227,7 @@ export const ROUTES: readonly DescriptionRoute[] = [
 		// `CRM-079` remplace l'état vide inconditionnel de `CRM-007` par l'accueil du guide de
 		// démarrage : tant qu'une étape reste à faire, l'écran d'arrivée enseigne au lieu de
 		// constater (docs/SPEC-onboarding.md §4.2). L'état vide reste le contenu légitime dès que
-		// les cinq étapes sont accomplies.
+		// les six étapes sont accomplies (`CRM-094`).
 		chemin: '/',
 		cleTitre: 'route.board.title',
 		rendu: () => <AccueilDemarrage />,

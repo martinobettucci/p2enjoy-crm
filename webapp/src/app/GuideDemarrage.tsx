@@ -3,15 +3,22 @@
 //       §5 (interruption et reprise),
 //       §6 (états, et il y en a cinq), §7 (accessibilité et clavier)
 // @spec docs/DESIGN_SYSTEM.md §5.17 (de quoi l'écran a l'air), §5.8 (états), §8, §9
+// @spec CRM-094 (docs/BACKLOG.md) tranche T2 — docs/SPEC-onboarding.md §10.1 (six étapes), §10.3 (le
+//       geste « Créer le workflow de départ », son bouton tenu jusqu'à la re-mesure, le focus rendu au
+//       lien de l'étape) ; docs/DESIGN_SYSTEM.md §5.49 ; docs/JOURNAL.md décisions 606 et 607
 //
-// L'écran LIT et RENVOIE. Il n'écrit rien, ne crée ni track, ni channel, ni affaire : chaque étape
-// pointe vers l'écran réellement livré qui l'accomplit (docs/SPEC-onboarding.md §1.2).
+// L'écran LIT et RENVOIE : chaque étape pointe vers l'écran réellement livré qui l'accomplit
+// (docs/SPEC-onboarding.md §1.2). Une seule exception depuis `CRM-094`, et elle est nommée : l'étape
+// « Workflow » porte le geste qui pose le workflow de départ, parce qu'un espace neuf n'a ni workflow
+// ni nœud, et qu'aucun écran ne l'accomplit en un temps (§10.3).
 //
-// Il n'interroge AUCUN rôle et n'éteint AUCUN lien. Les écrans visés portent déjà leurs propres
-// refus, mesurés et prouvés par leurs unités ; un lien éteint d'après un rôle lu côté client ferait
-// passer une règle de base pour une décision d'interface (`CLAUDE.md` §10, §6.3 de la spécification).
+// Il n'éteint AUCUN lien. Les écrans visés portent déjà leurs propres refus, mesurés et prouvés par
+// leurs unités ; un lien éteint d'après un rôle lu côté client ferait passer une règle de base pour
+// une décision d'interface (`CLAUDE.md` §10, §6.3 de la spécification). Le GESTE, lui, n'est rendu
+// qu'à qui la base rend `admin` (§10.3) : il écrit, et la base le refuse à tout autre rôle.
 
 import { Circle, CircleCheck, CircleHelp } from 'lucide-react'
+import { useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { useAuthentification } from './Authentification'
 import { Button } from '../components/ui/Button'
@@ -21,21 +28,24 @@ import type { EtatAsync } from '../lib/async'
 import { EtatVide } from '../components/ui/States'
 import {
 	compterAccomplies,
+	creerWorkflowDeDepart,
 	estAccomplie,
 	mesureEnCours,
 	resteUneEtape,
 	useDemarrage,
 	type CleEtapeDemarrage,
 	type EtapeDemarrage,
+	type IssueWorkflowDepart,
 	type ProgressionDemarrage,
 } from '../lib/demarrage'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
-import { CHEMIN_ADMIN_ARBORESCENCE, CHEMIN_DEMARRAGE, CHEMIN_ETAT_MESSAGERIE } from './chemins'
+import { CHEMIN_ADMIN_ARBORESCENCE, CHEMIN_ADMIN_WORKFLOWS, CHEMIN_DEMARRAGE, CHEMIN_ETAT_MESSAGERIE } from './chemins'
+import { useContexteEspace } from './ContexteEspace'
 import { useMasqueDemarrage } from './preferences'
 
 /**
- * Ce que chaque étape dit et où elle mène. Une table, et non cinq blocs de JSX : les cinq lignes
- * partagent exactement la même composition, et les distinguer structurellement produirait cinq
+ * Ce que chaque étape dit et où elle mène. Une table, et non six blocs de JSX : les six lignes
+ * partagent exactement la même composition, et les distinguer structurellement produirait six
  * variantes à maintenir au lieu d'une.
  *
  * `destination` absente pour la première étape : elle est accomplie par la connexion elle-même, et
@@ -75,6 +85,14 @@ export const ETAPES_DEMARRAGE: readonly DescriptionEtape[] = [
 		cleAction: 'onboarding.step.track.action',
 	},
 	{
+		cle: 'workflow',
+		cleTitre: 'onboarding.step.workflow.title',
+		cleCorps: 'onboarding.step.workflow.body',
+		cleVide: 'onboarding.step.workflow.vide',
+		destination: CHEMIN_ADMIN_WORKFLOWS,
+		cleAction: 'onboarding.step.workflow.action',
+	},
+	{
 		cle: 'channel',
 		cleTitre: 'onboarding.step.channel.title',
 		cleCorps: 'onboarding.step.channel.body',
@@ -100,9 +118,23 @@ export const ETAPES_DEMARRAGE: readonly DescriptionEtape[] = [
 	},
 ]
 
+/**
+ * Ce que le geste du §10.3 exige : le client et l'espace courant. Absent — `null` —, le geste n'est
+ * pas rendu : c'est le cas de tout rôle autre qu'`admin`, et de toute preuve qui monte l'écran seul.
+ */
+export type GesteDepart = { readonly client: ClientCrm; readonly idWorkspace: string }
+
+/** Le geste n'est offert qu'à qui la base rend `admin`, dans un espace connu (§10.3). */
+export function useGesteDepart(client: ClientCrm | null): GesteDepart | null {
+	const { idWorkspace, estAdmin } = useContexteEspace()
+	return client !== null && idWorkspace !== null && estAdmin ? { client, idWorkspace } : null
+}
+
 export type ProprietesVueGuideDemarrage = {
 	readonly progression: ProgressionDemarrage
 	readonly recharger: () => void
+	/** Le geste du §10.3, ou `null` quand il n'est pas offert. */
+	readonly geste?: GesteDepart | null
 	/**
 	 * Commande de masquage — rendue uniquement là où le masquage a un sens, c'est-à-dire sur `/`.
 	 * `/demarrage` ignore la préférence et ne propose donc pas de la poser (§4.1, §5).
@@ -114,7 +146,7 @@ export type ProprietesVueGuideDemarrage = {
  * Le rendu, sans mesure : les deux surfaces du §4 mesurent chacune UNE fois et rendent cette vue.
  * Mesurer ici obligerait l'accueil à compter deux fois pour décider puis afficher.
  */
-export function VueGuideDemarrage({ progression, recharger, onMasquer }: ProprietesVueGuideDemarrage) {
+export function VueGuideDemarrage({ progression, recharger, onMasquer, geste = null }: ProprietesVueGuideDemarrage) {
 	const { accomplies, total } = compterAccomplies(progression)
 
 	return (
@@ -131,16 +163,7 @@ export function VueGuideDemarrage({ progression, recharger, onMasquer }: Proprie
 				<Progression accomplies={accomplies} total={total} progression={progression} />
 			</header>
 
-			<ol className="flex flex-col rounded-lg border border-border bg-surface">
-				{ETAPES_DEMARRAGE.map((description, rang) => (
-					<LigneEtape
-						key={description.cle}
-						description={description}
-						etat={progression.etapes[rang] ?? { statut: 'chargement' }}
-						onReprise={recharger}
-					/>
-				))}
-			</ol>
+			<ListeEtapesDemarrage progression={progression} recharger={recharger} geste={geste} />
 
 			{onMasquer === undefined ? null : (
 				<div className="flex flex-col gap-1">
@@ -155,13 +178,56 @@ export function VueGuideDemarrage({ progression, recharger, onMasquer }: Proprie
 }
 
 /**
+ * La liste ordonnée des étapes — partagée par la page et par le panneau flottant (§5.49) : c'est le
+ * même guide dans un autre contenant, jamais une seconde écriture.
+ *
+ * L'issue ABOUTIE du geste est ANNONCÉE par une région polie : la ligne passe à « Fait », et le bouton
+ * qui vient d'agir disparaît avec elle ; sans annonce, une technologie d'assistance ne saurait pas
+ * que le geste a abouti (§10.3). La pastille, elle, n'est pas une région vivante : re-mesurée à
+ * chaque page, elle ferait annoncer la progression à chaque navigation.
+ */
+export function ListeEtapesDemarrage({
+	progression,
+	recharger,
+	geste,
+}: {
+	readonly progression: ProgressionDemarrage
+	readonly recharger: () => void
+	readonly geste: GesteDepart | null
+}) {
+	const [annonce, setAnnonce] = useState('')
+	return (
+		<>
+			<ol className="flex flex-col rounded-lg border border-border bg-surface">
+				{ETAPES_DEMARRAGE.map((description, rang) => (
+					<LigneEtape
+						key={description.cle}
+						description={description}
+						etat={progression.etapes[rang] ?? { statut: 'chargement' }}
+						onReprise={recharger}
+						geste={description.cle === 'workflow' ? geste : null}
+						onGesteAbouti={(issue) => {
+							setAnnonce(t(CLES_ANNONCE_DEPART[issue]))
+							recharger()
+						}}
+					/>
+				))}
+			</ol>
+			<p role="status" className="sr-only" data-testid="annonce-demarrage">
+				{annonce}
+			</p>
+		</>
+	)
+}
+
+/**
  * La progression s'écrit EN TOUTES LETTRES, et la barre qui l'accompagne est décorative
  * (docs/DESIGN_SYSTEM.md §5.17). Une barre seule ne se lit ni à la voix, ni en cas de daltonisme.
  *
- * Tant qu'une mesure est en vol, aucun chiffre n'est écrit : « 0 étape sur 5 » serait faux, et
+ * Tant qu'une mesure est en vol, aucun chiffre n'est écrit : « 0 étape sur 6 » serait faux, et
  * l'annoncer puis le corriger ferait sauter le compte sous les yeux de l'utilisateur.
  */
-function Progression({
+export function Progression({
 	accomplies,
 	total,
 	progression,
@@ -201,11 +267,19 @@ function LigneEtape({
 	description,
 	etat,
 	onReprise,
+	geste,
+	onGesteAbouti,
 }: {
 	readonly description: DescriptionEtape
 	readonly etat: EtatAsync<EtapeDemarrage>
 	readonly onReprise: () => void
+	readonly geste: GesteDepart | null
+	readonly onGesteAbouti: (issue: IssueAboutie) => void
 }) {
+	const lien = useRef<HTMLAnchorElement>(null)
+	// Le geste n'a de sens que sur une étape MESURÉE à faire : ni pendant la mesure, ni sur une étape
+	// non mesurable — il pourrait créer un second workflow que la base refuserait.
+	const offrirGeste = geste !== null && etat.statut === 'pret' && etat.donnees.compte === 0
 	return (
 		<li
 			data-testid={`etape-${description.cle}`}
@@ -219,8 +293,21 @@ function LigneEtape({
 					<StatutEtape etat={etat} cleVide={description.cleVide} onReprise={onReprise} />
 				</div>
 			</div>
+			{offrirGeste ? (
+				<GesteWorkflowDepart
+					geste={geste}
+					onAbouti={(issue) => {
+						// Le bouton va disparaître avec l'étape accomplie : le focus ne reste jamais sur un
+						// élément qui disparaît (docs/DESIGN_SYSTEM.md §5.49). Il passe au lien de la même
+						// ligne, qui mène au workflow que la base porte désormais — le geste suivant naturel.
+						lien.current?.focus()
+						onGesteAbouti(issue)
+					}}
+				/>
+			) : null}
 			{description.destination === undefined || description.cleAction === undefined ? null : (
 				<Link
+					ref={lien}
 					to={description.destination}
 					data-testid={`lien-${description.cle}`}
 					className={[
@@ -237,6 +324,86 @@ function LigneEtape({
 	)
 }
 
+/**
+ * Les deux issues ABOUTIES du geste : la base porte désormais un workflow, posé à l'instant ou déjà là
+ * — un double onglet, un collègue. Dans les deux cas l'étape est accomplie, et le dire comme un refus
+ * serait faux : « existant » s'annonce, il ne s'écrit pas en alerte (docs/SPEC-onboarding.md §10.3).
+ */
+type IssueAboutie = 'cree' | 'existant'
+
+const CLES_ANNONCE_DEPART: Readonly<Record<IssueAboutie, CleTraduction>> = {
+	cree: 'onboarding.step.workflow.create.ok',
+	existant: 'onboarding.step.workflow.create.existant',
+}
+
+/**
+ * « Créer le workflow de départ » — le seul bouton PRIMAIRE du guide, parce que c'est la seule action
+ * qui s'y accomplit plutôt que d'y mener (docs/DESIGN_SYSTEM.md §5.49).
+ *
+ * Désactivé pendant l'envoi : un second clic poserait un second appel, que la base refuserait
+ * (`workflow existant`) — le refus serait exact, mais l'écran aurait laissé faire un geste inutile.
+ * Un refus s'écrit sur la ligne, le bouton restant offert : après une panne, on réessaie.
+ *
+ * Une issue ABOUTIE le laisse désactivé, « Création… », jusqu'à ce que la re-mesure fasse passer
+ * l'étape à « Fait » et le retire. Réactivé à la réponse, il redevenait cliquable pendant la re-mesure
+ * — le panneau flottant garde la dernière progression mesurée, où l'étape est encore à faire —, et un
+ * second clic aurait valu un refus « existant » sous une étape qui venait de réussir.
+ */
+function GesteWorkflowDepart({
+	geste,
+	onAbouti,
+}: {
+	readonly geste: GesteDepart
+	readonly onAbouti: (issue: IssueAboutie) => void
+}) {
+	const [enCours, setEnCours] = useState(false)
+	const [refus, setRefus] = useState<RefusDepart | null>(null)
+
+	const creer = async () => {
+		setEnCours(true)
+		setRefus(null)
+		const issue = await creerWorkflowDeDepart(geste.client, geste.idWorkspace)
+		if (issue.ok || issue.raison === 'existant') {
+			onAbouti(issue.ok ? 'cree' : 'existant')
+			return
+		}
+		setEnCours(false)
+		setRefus(issue)
+	}
+
+	return (
+		<div className="flex flex-col gap-2 self-start">
+			{/* `self-start` : la largeur propre du libellé, comme les liens des étapes — étiré sur la largeur du
+			    texte d'aide, il se lisait comme une bande plutôt qu'un bouton (vu sur une capture, décision 607). */}
+			<Button
+				variante="primaire"
+				onClick={() => void creer()}
+				disabled={enCours}
+				data-testid="creer-workflow-depart"
+				className="self-start"
+			>
+				{enCours ? t('onboarding.step.workflow.create.encours') : t('onboarding.step.workflow.create')}
+			</Button>
+			<p className="text-sm text-text-3 max-w-[60ch]">{t('onboarding.step.workflow.create.aide')}</p>
+			{refus === null ? null : (
+				<p role="alert" data-testid="refus-workflow-depart" className="text-sm text-danger-on-soft bg-danger-soft rounded px-2 py-1">
+					{refus.raison === 'noeud-archive'
+						? t('onboarding.step.workflow.create.refus.noeud-archive', { cle: refus.cle })
+						: t(CLES_REFUS_DEPART[refus.raison])}
+				</p>
+			)}
+		</div>
+	)
+}
+
+/** Les issues qui laissent l'étape à faire, et le geste offert. */
+type RefusDepart = Exclude<IssueWorkflowDepart, { ok: true } | { raison: 'existant' }>
+
+const CLES_REFUS_DEPART: Readonly<Record<'reserve' | 'panne', CleTraduction>> = {
+	reserve: 'onboarding.step.workflow.create.refus.reserve',
+	panne: 'onboarding.step.workflow.create.refus.panne',
+}
+
 function MarqueurEtat({ etat }: { readonly etat: EtatAsync<EtapeDemarrage> }) {
 	if (etat.statut === 'erreur') {
 		return <CircleHelp aria-hidden="true" size={20} strokeWidth={2} className="shrink-0 text-text-3" />
@@ -251,7 +418,7 @@ function MarqueurEtat({ etat }: { readonly etat: EtatAsync<EtapeDemarrage> }) {
  * Le mot qui porte l'état, et lui seul décide.
  *
  * Un refus n'offre AUCUNE reprise : il est définitif tant que la session ne change pas. Une panne
- * en offre une, qui relance réellement les cinq mesures (docs/SPEC-onboarding.md §6.1).
+ * en offre une, qui relance réellement les six mesures (docs/SPEC-onboarding.md §6.1).
  */
 function StatutEtape({
 	etat,
@@ -319,7 +486,7 @@ export type ProprietesSurfaceDemarrage = {
  * La session est-elle ouverte ? Une seule formulation, partagée par les deux surfaces.
  *
  * `chargement` compte comme fermée : la session se restaure encore, et mesurer maintenant émettrait
- * cinq requêtes sans jeton dont l'une est vouée au `401` (§4.4). Attendre coûte un rendu ; ne pas
+ * six requêtes sans jeton dont l'une est vouée au `401` (§4.4). Attendre coûte un rendu ; ne pas
  * attendre salit la console de l'écran d'arrivée.
  */
 function useSessionOuverte(declaree: boolean | undefined): boolean {
@@ -332,11 +499,12 @@ export function GuideDemarrage({
 	sessionOuverte,
 }: ProprietesSurfaceDemarrage = {}) {
 	const ouverte = useSessionOuverte(sessionOuverte)
-	// `useDemarrage(null)` n'émet rien et laisse les cinq étapes en chargement : c'est exactement ce
+	// `useDemarrage(null)` n'émet rien et laisse les étapes en chargement : c'est exactement ce
 	// que le §4.4 demande à `/demarrage` pour un visiteur sans session. L'adresse rend le guide
 	// QUAND MÊME — §4.1 est intact —, elle ne pose simplement aucune question à la base.
 	const { progression, recharger } = useDemarrage(ouverte ? client : null)
-	return <VueGuideDemarrage progression={progression} recharger={recharger} />
+	const geste = useGesteDepart(client)
+	return <VueGuideDemarrage progression={progression} recharger={recharger} geste={geste} />
 }
 
 /**
@@ -358,15 +526,16 @@ export function AccueilDemarrage({
 	const ouverte = useSessionOuverte(sessionOuverte)
 	const { progression, recharger } = useDemarrage(ouverte ? client : null)
 	const { masque, masquer } = useMasqueDemarrage()
+	const geste = useGesteDepart(client)
 
 	if (!ouverte) {
 		return <EtatVide titre={t('route.board.empty.title')} corps={t('route.board.empty.body')} />
 	}
 	if (mesureEnCours(progression)) {
-		return <VueGuideDemarrage progression={progression} recharger={recharger} />
+		return <VueGuideDemarrage progression={progression} recharger={recharger} geste={geste} />
 	}
 	if (resteUneEtape(progression) && !masque) {
-		return <VueGuideDemarrage progression={progression} recharger={recharger} onMasquer={masquer} />
+		return <VueGuideDemarrage progression={progression} recharger={recharger} onMasquer={masquer} geste={geste} />
 	}
 	return (
 		<EtatVide

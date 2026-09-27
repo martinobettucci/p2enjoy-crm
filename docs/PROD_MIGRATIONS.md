@@ -232,8 +232,10 @@ là. Après, recopier la valeur sous l'ancien nom avant de relivrer.
 
 ### 2.7 `CRM-094` — le workflow de départ et le guide flottant (EN ATTENTE)
 
-`docs/SPEC-onboarding.md` §10, `docs/SPEC-workflow-engine.md` §7 quater ; décision 606. Une migration,
-pure addition d'une fonction ; aucune variable, aucun service nouveau.
+`docs/SPEC-onboarding.md` §10, `docs/SPEC-workflow-engine.md` §7 quater ; décisions 606 et 607. Une
+migration, pure addition d'une fonction ; aucune variable, aucun service nouveau. La webapp des tranches
+T2 et T3 — six étapes, guide flottant, écrans qui se relisent — part dans la **même** livraison : le
+signal entre écrans vit dans le navigateur, il n'ajoute rien à la cellule.
 
 | # | Geste | Qui | Commande ou lieu |
 |---|---|---|---|

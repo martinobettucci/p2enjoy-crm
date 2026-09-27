@@ -1,4 +1,6 @@
 // @spec CRM-007 (docs/BACKLOG.md) — préférences d'interface limitées à la session
+// @spec CRM-094 (docs/BACKLOG.md) tranche T3 — forme du guide flottant, préférence de session
+//       (docs/SPEC-onboarding.md §10.2, §10.4)
 // @spec docs/DESIGN_SYSTEM.md §4 (« l'état de repli est une préférence de session »)
 // @spec docs/SPEC-webapp.md §11 (stockage côté client) ; CLAUDE.md §11 (RGPD)
 //
@@ -98,3 +100,50 @@ export function useMasqueDemarrage(): {
 }
 
 export const CLE_PREFERENCE_DEMARRAGE_MASQUE = CLE_DEMARRAGE_MASQUE
+
+// ---------------------------------------------------------------------------------------------
+// Forme du guide flottant — `CRM-094`, docs/SPEC-onboarding.md §10.2 et §10.4
+// ---------------------------------------------------------------------------------------------
+//
+// Même support et même catégorie que ci-dessus. La coquille est remontée par chaque route : sans
+// cette préférence, suivre un lien du panneau le refermerait — le défaut que le responsable a relevé
+// (« quand on clique, on le perd »). Ouvert s'écrit `ouvert` ; réduit, la clé est retirée.
+
+const CLE_GUIDE_FLOTTANT = 'p2enjoy.demarrage.flottant'
+
+function lireOuvert(): boolean {
+	try {
+		return globalThis.sessionStorage?.getItem(CLE_GUIDE_FLOTTANT) === 'ouvert'
+	} catch {
+		// Stockage d'onglet indisponible : la pastille reste réduite, ce qui ne cache rien.
+		return false
+	}
+}
+
+function ecrireOuvert(ouvert: boolean): void {
+	try {
+		if (ouvert) globalThis.sessionStorage?.setItem(CLE_GUIDE_FLOTTANT, 'ouvert')
+		else globalThis.sessionStorage?.removeItem(CLE_GUIDE_FLOTTANT)
+	} catch {
+		// Même raison qu'au repli : ne pas pouvoir mémoriser la forme n'empêche pas de l'appliquer.
+	}
+}
+
+export function useFormeGuideFlottant(): {
+	readonly ouvert: boolean
+	readonly ouvrir: () => void
+	readonly reduire: () => void
+} {
+	const [ouvert, setOuvert] = useState<boolean>(lireOuvert)
+	const ouvrir = useCallback(() => {
+		ecrireOuvert(true)
+		setOuvert(true)
+	}, [])
+	const reduire = useCallback(() => {
+		ecrireOuvert(false)
+		setOuvert(false)
+	}, [])
+	return { ouvert, ouvrir, reduire }
+}
+
+export const CLE_PREFERENCE_GUIDE_FLOTTANT = CLE_GUIDE_FLOTTANT

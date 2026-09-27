@@ -23,7 +23,7 @@
 | Chapitre | Contenu | Unité | État |
 |---|---|---|---|
 | 1 | Se connecter avec LeLabs, se déconnecter | `CRM-011`, `CRM-092` | **Livré et vérifié** — voir le chapitre 1. La connexion passe par le seul SSO LeLabs : aucun mot de passe n'existe dans le CRM, donc aucune récupération à y faire. Les attentes — adresse ou compte à vérifier chez LeLabs, inscription à demander — sont nommées à l'écran. La session vit dans le navigateur et se prolonge d'elle-même |
-| 1 bis | Le guide de démarrage : par où commencer | `CRM-079` | **Livré et vérifié** — voir le chapitre 1 *bis*. Cinq étapes mesurées à chaque affichage, chacune renvoyant vers l'écran qui la réalise. L'état est **mesuré**, jamais mémorisé : supprimer le dernier track décoche l'étape. Le guide se masque pour la session — rien n'est écrit durablement sur l'appareil — et reste toujours consultable depuis « Réglages ▸ Guide de démarrage ». Il **lit et renvoie** : il ne crée ni track, ni channel, ni affaire |
+| 1 bis | Le guide de démarrage : par où commencer | `CRM-079`, `CRM-094` | **Livré et vérifié** — voir le chapitre 1 *bis*. **Six** étapes mesurées à chaque affichage, chacune renvoyant vers l'écran qui la réalise ; le workflow y précède le channel. L'état est **mesuré**, jamais mémorisé : supprimer le dernier track décoche l'étape. Le guide se masque pour la session — rien n'est écrit durablement sur l'appareil — et reste toujours consultable depuis « Réglages ▸ Guide de démarrage ». Depuis `CRM-094`, un administrateur y **crée le workflow de départ en un geste**, et le guide le **suit sur toutes les pages** sous forme de pastille (§1 bis.4 et §1 bis.5). Pour le reste, il **lit et renvoie** : il ne crée ni track, ni channel, ni affaire |
 | 2 | Comprendre l'organisation : espace, tracks, channels, cards | `CRM-020`, `CRM-021` | À livrer |
 | 3 | Naviguer : barre latérale, onglets, recherche | `CRM-007`, `CRM-065` | **Partiellement livré** — voir ci-dessous ; la recherche relève de `CRM-065` |
 | 3 ter | Le carnet de contacts | `CRM-060` | **Livré en LECTURE** — voir la section 3 *ter*. L'entrée « Contacts » de la barre latérale ouvre le carnet de l'espace : nom, organisation, fonction, email et téléphone, une ligne par personne. Tout membre le lit, y compris un compte en lecture seule. Le nom d'organisation ouvre sa **fiche** (sous-tranche 4b) : domaine, site web et contacts rattachés. Une affaire **rattache et détache** ses contacts depuis sa fiche (sous-tranche 4c, chapitre 4.7 *ter*). Un contact **se crée** depuis le carnet (sous-tranche 4e) : le bouton « Nouveau contact » ouvre un formulaire au-dessus du tableau. Il **se modifie** depuis sa fiche (sous-tranche 4g) : le bouton « Modifier » ouvre le même formulaire, prérempli. Il **se rattache à une affaire** depuis sa fiche (sous-tranche 4h) : le bouton « Rattacher à une affaire » vit dans le bloc des affaires, et il **s'en détache** depuis la même page (sous-tranche 4i), chaque ligne du tableau portant sa commande. Le **rôle** d'un rattachement **se corrige** depuis la même page (sous-tranche 4j) : un bouton « Modifier le rôle » par ligne, et vider le champ efface le rôle sans défaire le lien. Ce qui manque est dit : aucune suppression d'un contact, aucune création d'organisation, aucune recherche |
@@ -63,7 +63,7 @@
 | 18 | Créer des tracks et des channels | `CRM-020`, `CRM-021`, `CRM-075`, `CRM-077` | **Livré et vérifié** — voir le chapitre 5. Un administrateur crée, renomme, réordonne, archive, désarchive et **met à la corbeille** un track comme un channel, depuis « Réglages ▸ Arborescence ». Le rattachement d'un channel à son track et le choix de son workflow y sont faits. La **suppression définitive n'existe pas** : archiver masque, la corbeille retire, et les deux restent réversibles |
 | 18 bis | Retrouver et restaurer ce qui a été retiré | `CRM-077` | **Livré et vérifié** — voir le chapitre 5 ter. « Réglages ▸ Corbeille » liste les tracks, channels et affaires retirés, qui les a retirés, quand, et ce que chacun retient avec lui ; un clic les rend. Un enfant dont le parent est lui-même dans la corbeille n'est pas restaurable seul, et le produit dit lequel restaurer d'abord. **Aucun effacement définitif n'est offert** : la durée de conservation n'est pas arrêtée |
 | 19 | Le catalogue de nœuds | `CRM-030` | **Livré et vérifié** — voir le chapitre 5 *quater*. Les états par lesquels une affaire passe ont désormais leur écran, « Réglages ▸ Catalogue de nœuds » : un administrateur y crée un nœud, en modifie le libellé, le type, la couleur et les valeurs par défaut, l'archive et le rétablit. La **clé ne se modifie pas** — les statistiques s'appuient sur elle —, et un nœud sur lequel des affaires se trouvent encore **ne s'archive pas** : le produit dit combien il en porte. Deux flèches par ligne **réordonnent** le catalogue, d'un cran à la fois |
-| 20 | Construire un workflow et ses transitions | `CRM-031` | **Partiellement livré, sans écran.** Le workflow existe côté serveur — l'espace de travail est livré avec le sien, « Cycle commercial standard », ses étapes et les déplacements qu'il autorise (annexe A), et chacun de ses channels suit un workflow. L'**éditeur** est livré : un administrateur **crée** un workflow depuis « Réglages ▸ Workflows » — nom, portée globale ou propre à un track —, puis en compose les étapes et les transitions (chapitres 5 bis.0 à 5 bis.3). Le workflow naît vide et reste un brouillon tant qu'il n'a pas d'étape initiale. Ce qui reste hors interface est la **copie** vers un track et la désignation du workflow **par défaut** |
+| 20 | Construire un workflow et ses transitions | `CRM-031` | **Partiellement livré, sans écran.** Le workflow existe côté serveur — l'espace de travail est livré avec le sien, « Cycle commercial standard », ses étapes et les déplacements qu'il autorise (annexe A), et chacun de ses channels suit un workflow. L'**éditeur** est livré : un administrateur **crée** un workflow depuis « Réglages ▸ Workflows » — nom, portée globale ou propre à un track —, puis en compose les étapes et les transitions (chapitres 5 bis.0 à 5 bis.3). Un espace **neuf**, lui, n'a aucun workflow : depuis `CRM-094`, le guide de démarrage y pose le workflow de départ en un geste (chapitre 1 bis.4). Le workflow naît vide et reste un brouillon tant qu'il n'a pas d'étape initiale. Ce qui reste hors interface est la **copie** vers un track et la désignation du workflow **par défaut** |
 | 20 bis | Garder une photographie d'un workflow, la comparer et y revenir | `CRM-078` | **Livré.** Un workflow change : ses étapes, ses déplacements, ses questions et leurs règles sont modifiables à tout moment, et rien ne disait jusqu'ici sous quelle forme une affaire avait circulé. Un administrateur peut désormais **publier une version** : le produit fige une photographie datée, numérotée et signée de la composition entière du workflow, que plus personne ne peut réécrire — pas même le produit lui-même. Publier une version **ne change rien** au fonctionnement : les affaires continuent de circuler sur le workflow vivant, une version est un témoin et non une cible. Republier sans avoir rien modifié est refusé, pour que deux versions ne soient jamais indiscernables. Le produit sait aussi **comparer deux versions** — quelles étapes, quels déplacements, quelles questions et quelles règles ont été ajoutés, retirés ou modifiés, et pour chaque modification ce qui a changé et de quoi vers quoi. Et, avant de revenir à une version, il sait dire **affaire par affaire où elle atterrit** : celles dont l'étape existe toujours ne bougent pas, et celles dont l'étape a été créée depuis restent **sans destination** tant qu'un administrateur n'a pas dit où les envoyer. Le produit ne devine jamais à sa place, même lorsqu'une étape disparue est sur le point d'être rétablie : il la nomme, il ne la choisit pas. Les affaires archivées et celles en corbeille sont comptées comme les autres. Le produit sait désormais **appliquer** ce plan en une seule transaction, et **revenir en arrière** : la composition d'avant est publiée comme point de retour avant toute écriture. Et les quatre gestes ont leur **écran**, au bas de l'éditeur de workflows : voir le chapitre 5 bis.6 |
 | 21 | Copier un workflow dans un track et le modifier | `CRM-032`, `CRM-018` | **Partiellement livré, sans écran.** La copie existe côté serveur : un administrateur duplique un workflow global vers un track, avec ses étapes, transitions, champs, règles et exigences remappés, et la copie se souvient de son origine. L'espace de travail est livré avec un exemple, « Cycle commercial — Conseil IA » sur le track « Conseil & IA ». Une empreinte de composition permet au produit de signaler toute divergence, suppression comprise. Ce qui manque est l'écran : aucun bouton ne permet encore de copier, et la mention de divergence n'est affichée nulle part |
 | 22 | Choisir le workflow d'un channel | `CRM-033`, `CRM-019` | **Livré côté serveur, sans écran.** Un channel suit désormais **obligatoirement** un workflow, et pas n'importe lequel : le workflow général de l'espace de travail, ou celui de son propre track. Toute affectation directe incohérente est refusée. Même lorsque le channel contient des affaires, une administratrice peut changer son workflow par l'API en donnant le mapping exhaustif de toutes les étapes occupées ; aucune affaire n'est laissée à moitié remappée et toute perte de réponse doit être acceptée explicitement. L'espace de travail livré le montre : tous ses channels suivent « Cycle commercial standard », sauf « Prospection » qui suit la copie réservée à son track (annexe A). Ce qui manque est l'écran : aucun sélecteur ne permet encore ce geste |
@@ -185,22 +185,29 @@ d'exploitation : aucun écran du CRM ne la porte avant `CRM-070`.
 
 ## 1 bis. Le guide de démarrage : par où commencer
 
-*Livré par `CRM-079`. Décrit l'application réellement exécutée ; captures dans
-`docs/captures/CRM-079/`.*
+*Livré par `CRM-079`, révisé par `CRM-094` (six étapes, le workflow de départ, le guide flottant).
+Décrit l'application réellement exécutée ; captures dans `docs/captures/CRM-079/` et
+`docs/captures/CRM-094/`.*
 
 À la première connexion, l'accueil ne montre aucun board — il n'y en a pas encore. Il montre à la
-place le **Guide de démarrage**, une liste de **cinq étapes** qui mènent chacune vers l'écran qui
+place le **Guide de démarrage**, une liste de **six étapes** qui mènent chacune vers l'écran qui
 la réalise.
 
-Les cinq étapes, dans l'ordre :
+Les six étapes, dans l'ordre :
 
 | Étape | Ce qu'elle établit | Où elle se fait |
 |---|---|---|
 | Rejoindre un espace de travail | Votre compte appartient à un espace | Aucun écran : elle est accomplie par votre connexion |
 | Créer un premier track | Un dossier de premier niveau existe | Réglages ▸ Arborescence |
+| Préparer un premier workflow | Les affaires ont des étapes à suivre | Réglages ▸ Workflows — ou, pour un administrateur, le bouton **Créer le workflow de départ** du guide (§1 bis.4) |
 | Ouvrir un channel dans ce track | Un onglet de travail existe sous ce track | Réglages ▸ Arborescence |
 | Créer une première affaire | Un board a quelque chose à montrer | Réglages ▸ Arborescence, puis le channel choisi |
 | Raccorder une boîte de réception | Le courrier entrant se classe dans les affaires | Réglages ▸ État de la messagerie |
+
+**Le workflow vient avant le channel, et ce n'est pas un détail d'ordre** : un channel suit
+toujours un workflow, et un espace neuf n'en a **aucun**. Tant qu'il n'y en a pas, le formulaire
+« Nouveau channel » le dit — « Aucun workflow n'est affectable à ce track » — et propose le lien
+**Ouvrir l'éditeur de workflows**.
 
 ### 1 bis.1 L'état d'une étape est mesuré, jamais mémorisé
 
@@ -208,20 +215,20 @@ Une étape n'est pas « cochée » : à **chaque affichage**, le produit compte 
 réellement, et en déduit l'état. Trois conséquences directes, et elles sont voulues :
 
 - supprimer votre dernier track **décoche** l'étape correspondante ; rien ne prétend qu'elle est
-  faite parce qu'elle l'a été un jour ;
+  faite parce qu'elle l'a été un jour ; un workflow **archivé** ne compte pas non plus ;
 - une étape marquée **Fait** garde son lien : accompli ne veut pas dire terminé, et rien n'empêche
   d'ajouter un second track ;
 - rien n'est enregistré sur votre appareil, et aucune progression n'est stockée sur le serveur.
 
 Chaque état est écrit **en toutes lettres** — *Fait*, *À faire* — à côté de son icône, et la
-progression est une phrase, « 3 étape(s) sur 5 », jamais une barre seule.
+progression est une phrase, « 3 étape(s) sur 6 », jamais une barre seule.
 
 ### 1 bis.2 Ce que le guide dit exactement, et ce qu'il ne dit pas
 
 Une étape non accomplie écrit « **Vous n'en voyez aucun pour le moment** », et le mot est choisi :
 le guide rapporte ce que **votre compte** voit, jamais ce qui existe dans l'espace. Deux personnes
 n'ont donc pas nécessairement le même guide — un compte en lecture seule peut ne voir aucune boîte
-de réception là où l'espace en porte trois, et sa cinquième étape restera « à faire ». Ce n'est pas
+de réception là où l'espace en porte trois, et sa dernière étape restera « à faire ». Ce n'est pas
 un défaut d'affichage : ce sont ses droits, et le guide ne prétend jamais les contourner.
 
 Aucun lien n'est jamais éteint, quel que soit votre rôle. Les écrans vers lesquels le guide renvoie
@@ -229,13 +236,14 @@ portent eux-mêmes leurs refus, et c'est là que vous les rencontrerez, expliqu�
 
 Lorsqu'une étape **n'a pas pu être mesurée** — une coupure réseau, une session expirée —, sa ligne
 le dit (« Cette étape n'a pas pu être vérifiée ») et propose de **réessayer**, ce qui relance
-réellement les cinq mesures. Les quatre autres étapes restent lisibles : une mesure manquante n'en
+réellement les six mesures. Les cinq autres étapes restent lisibles : une mesure manquante n'en
 efface aucune.
 
 ### 1 bis.3 Le masquer, et le retrouver
 
 Le bouton **Masquer le guide** le retire de l'accueil **pour cette session** et rend la place au
-board. Un lien discret, *Rouvrir le guide de démarrage*, reste sur l'accueil.
+board. Un lien discret, *Rouvrir le guide de démarrage*, reste sur l'accueil. Pour un
+administrateur, il masque aussi la pastille du guide flottant (§1 bis.5).
 
 Le guide vit aussi à son adresse propre, `/demarrage`, et **Réglages ▸ Guide de démarrage** le
 place en tête de l'index. Là, il est toujours rendu : même masqué, même intégralement accompli.
@@ -245,10 +253,66 @@ Le masquage survit au **rechargement** de l'onglet, et disparaît quand l'onglet
 délibéré : cette préférence d'affichage ne justifie aucun stockage durable sur votre appareil, et
 le produit n'en écrit aucun.
 
-**Ce qui reste hors du guide.** Il **lit et renvoie** ; il ne crée ni track, ni channel, ni
-affaire, et il n'existe aucune création assistée « en trois clics » qui doublerait les écrans
-réels. Aucune étape ne mesure votre workflow : un channel naît avec le workflow par défaut, et
-l'éditeur reste accessible depuis les réglages (chapitre 5 *bis*).
+### 1 bis.4 Le workflow de départ, en un geste
+
+Dans un espace neuf, l'étape **Préparer un premier workflow** porte, pour un **administrateur** de
+l'espace, un bouton **Créer le workflow de départ**. Il pose en une fois le cycle commercial type :
+
+- un workflow **Cycle commercial**, le workflow **par défaut** de l'espace ;
+- sept étapes — Prospection (l'étape initiale), Relance, Négociation, Signature, Réalisation,
+  Livré, Perdu — et les nœuds correspondants dans le catalogue ;
+- onze transitions, dont « Marquer perdu » depuis chaque étape ouverte, qui **exige un motif**.
+
+Tout se modifie ensuite dans **Réglages ▸ Workflows**, comme n'importe quel workflow :
+le renommer, retirer ou ajouter des étapes, changer ses transitions.
+
+Ce que l'écran montre pendant et après :
+
+- pendant la création, le bouton est désactivé et dit « Création… » ;
+- une fois le workflow posé, l'étape passe à **Fait**, le bouton disparaît, et le curseur du
+  clavier se place sur le lien **Ouvrir l'éditeur de workflows** de la même ligne ; un lecteur
+  d'écran annonce « Workflow de départ créé » ;
+- si un workflow existe déjà — créé entre-temps dans un autre onglet, ou par un collègue —, l'étape
+  passe aussi à **Fait**, et l'annonce dit « Cet espace a déjà un workflow : ouvrez l'éditeur pour
+  le composer. » Ce n'est pas une erreur ;
+- si un nœud du cycle type a été **archivé** dans le catalogue, la création est refusée et le
+  message nomme ce nœud : restaurez-le depuis **Réglages ▸ Catalogue de nœuds**, ou composez votre
+  workflow à la main ;
+- sur une coupure réseau, le message invite à réessayer, et le bouton reste disponible.
+
+Le bouton n'est montré qu'aux administrateurs, et le serveur refuse ce geste à tout autre rôle.
+Un compte qui n'est pas administrateur voit l'étape et son lien, pas le bouton.
+
+**L'écran ouvert se met à jour.** Si vous créez le workflow depuis le guide flottant alors que
+l'éditeur de workflows, le catalogue de nœuds ou un formulaire « Nouveau channel » est ouvert, cet
+écran se relit aussitôt : le formulaire de channel propose alors le nouveau workflow, sans perdre
+le nom déjà saisi.
+
+### 1 bis.5 Le guide flottant des administrateurs
+
+Pour un **administrateur**, le guide ne reste pas sur l'accueil : il le suit sur toutes les pages,
+sous la forme d'une **pastille** en bas à droite de l'écran — « Démarrage · 2 sur 6 », ou « 2/6 »
+sur un téléphone. Les autres rôles gardent le guide sur l'accueil et à son adresse `/demarrage`.
+
+- **L'ouvrir** : un clic sur la pastille (ou `Entrée` quand elle a le focus) déploie au-dessus
+  d'elle un panneau avec les six étapes, leurs liens et le bouton du workflow de départ.
+- **Suivre un lien ne le referme pas.** Vous pouvez aller créer votre track, revenir, ouvrir
+  l'éditeur : le panneau reste ouvert, et la progression est **re-mesurée à chaque changement de
+  page**, sans recharger.
+- **Le refermer** : le bouton **Réduire**, la touche `Échap`, ou un nouveau clic sur la pastille.
+  Le focus revient sur la pastille. **Masquer pour la session** la retire jusqu'à la fermeture de
+  l'onglet — c'est la même préférence que *Masquer le guide*.
+- **Ce qu'il retient** : ouvert ou réduit, pour la durée de l'onglet seulement ; rien d'autre, et
+  rien de durable sur votre appareil.
+- **Quand il disparaît** : une fois les six étapes accomplies. Il n'apparaît pas non plus sur
+  l'accueil ni sur `/demarrage`, qui montrent déjà le guide dans la page.
+
+Le panneau n'est pas une fenêtre modale : le reste de la page reste utilisable, panneau ouvert. Il
+couvre en revanche la partie droite de l'écran ; **Réduire** la libère d'un geste.
+
+**Ce qui reste hors du guide.** Il **lit et renvoie**, à une exception près : le workflow de départ,
+qu'il pose en un geste parce qu'aucun écran ne l'accomplissait en une fois. Il ne crée ni track, ni
+channel, ni affaire : ces écrans existent, et le guide y mène.
 
 ## 3. Naviguer : barre latérale, onglets, états
 
@@ -2098,7 +2162,9 @@ Les mêmes six gestes s'appliquent, avec deux différences :
   choisit pas à votre place. Tant qu'aucun workflow n'est choisi, « Créer » reste indisponible.
 
 Si aucun workflow n'est affectable à ce track, l'écran vous le dit au lieu d'afficher un formulaire
-que le serveur refuserait.
+que le serveur refuserait, et propose le lien **Ouvrir l'éditeur de workflows**. C'est le cas d'un
+espace neuf : le guide de démarrage pose alors le workflow de départ en un geste (§1 bis.4), et un
+formulaire resté ouvert le propose aussitôt.
 
 ### 5.3 Quand un déplacement est indisponible sans être en bout de liste
 
@@ -2226,7 +2292,9 @@ travail n'a qu'un seul workflow par défaut, et le proposer à chaque création 
 un réglage refusé neuf fois sur dix. Rendre un workflow par défaut reste un geste d'API.
 
 **Si l'espace de travail est vide**, l'écran affiche « Aucun workflow dans cet espace de travail »
-et porte le même bouton : c'est ainsi que se pose le tout premier workflow d'un espace neuf.
+et porte le même bouton. Un workflow composé ainsi part d'un catalogue de nœuds **vide** dans un
+espace neuf : le plus court est souvent le workflow de départ du guide (§1 bis.4), que vous
+recomposez ensuite ici.
 
 ### 5 bis.1 Choisir un workflow
 
@@ -2240,7 +2308,9 @@ relance — ceux du catalogue, ou ceux que vous avez surchargés.
 
 - **Ajouter** : « Ajouter une étape » ouvre le catalogue des nœuds encore disponibles. Un nœud déjà
   employé par ce workflow n'y figure pas, un nœud archivé non plus. Lorsque tout le catalogue actif
-  est employé, l'écran le dit plutôt que d'afficher une liste vide.
+  est employé, l'écran le dit plutôt que d'afficher une liste vide. Lorsque le catalogue est
+  **vide** — le cas d'un espace neuf —, l'écran le dit aussi, autrement, et propose le lien **Ouvrir
+  le catalogue de nœuds**.
 - **Ordonner** : les flèches montent et descendent une étape. Une flèche désactivée sans être en
   bout de liste s'explique comme au §5.3.
 - **Surcharger** : le crayon ouvre un formulaire à trois champs — libellé, probabilité, seuil de

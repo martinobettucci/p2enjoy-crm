@@ -4,7 +4,11 @@
 //           §6.1 (états), §6.2 (les trois états d'une étape), §6.3 (aucune étape désactivée),
 //           §7 (accessibilité : une `ol`, un mot et non une icône seule)
 // @verifies docs/DESIGN_SYSTEM.md §5.17 (cette surface)
-// @verifies CLAUDE.md §10 (aucun rôle lu côté client), §11 (rien hors de la session)
+// @verifies CLAUDE.md §10 (aucun lien éteint d'après un rôle), §11 (rien hors de la session)
+// @verifies CRM-094 (docs/BACKLOG.md) tranche T2 — docs/SPEC-onboarding.md §10.1 (six étapes), §10.3 (le
+//           geste « Créer le workflow de départ », rendu aux seuls administrateurs, ses issues — dont
+//           « existant », qui s'annonce sans alerte —, et le focus rendu au lien de sa ligne) ;
+//           docs/DESIGN_SYSTEM.md §5.49 ; docs/JOURNAL.md décisions 606 et 607
 //
 // Ces preuves montent le VRAI écran avec un client factice, comme `Corbeille.test.tsx`. Le parcours
 // connecté sur la vraie base relève de `e2e/ui/demarrage.spec.ts`.
@@ -17,6 +21,7 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { MemoryRouter } from 'react-router'
+import { FournisseurEspace } from './ContexteEspace'
 import { AccueilDemarrage, GuideDemarrage } from './GuideDemarrage'
 import { CLE_PREFERENCE_DEMARRAGE_MASQUE } from './preferences'
 import type { ClientCrm } from '../lib/supabase'
@@ -35,12 +40,13 @@ const ok = (count: number): ReponseCompte => ({ count, error: null, status: 200 
 const SEED_ADMIN: Readonly<Record<string, ReponseCompte>> = {
 	workspaces: ok(1),
 	tracks: ok(3),
+	workflows: ok(2),
 	channels: ok(6),
 	cards: ok(14),
 	mail_inbound_accounts: ok(3),
 }
 
-/** Le seed réel vu par `viewer@p2enjoy.test` : la cinquième étape lui paraît toujours à faire. */
+/** Le seed réel vu par `viewer@p2enjoy.test` : la dernière étape lui paraît toujours à faire. */
 const SEED_VIEWER: Readonly<Record<string, ReponseCompte>> = {
 	...SEED_ADMIN,
 	channels: ok(5),
@@ -52,6 +58,7 @@ const SEED_VIEWER: Readonly<Record<string, ReponseCompte>> = {
 const NEUF: Readonly<Record<string, ReponseCompte>> = {
 	workspaces: ok(1),
 	tracks: ok(0),
+	workflows: ok(0),
 	channels: ok(0),
 	cards: ok(0),
 	mail_inbound_accounts: ok(0),
@@ -79,18 +86,18 @@ function monter(element: React.ReactElement) {
 }
 
 describe('le guide, à son adresse — docs/SPEC-onboarding.md §4.1', () => {
-	it('rend les cinq étapes dans une liste ORDONNÉE', async () => {
+	it('rend les six étapes dans une liste ORDONNÉE', async () => {
 		monter(<GuideDemarrage sessionOuverte client={client(NEUF)} />)
 		const liste = await screen.findByRole('list')
 		expect(liste.tagName).toBe('OL')
-		expect(await screen.findAllByRole('listitem')).toHaveLength(5)
+		expect(await screen.findAllByRole('listitem')).toHaveLength(6)
 	})
 
 	it('est rendu MÊME intégralement accompli : c’est ce qui le rend relançable', async () => {
 		monter(<GuideDemarrage sessionOuverte client={client(SEED_ADMIN)} />)
 		expect(await screen.findByTestId('guide-demarrage')).toBeTruthy()
 		await waitFor(() =>
-			expect(screen.getByTestId('progression-demarrage').textContent).toContain('5'),
+			expect(screen.getByTestId('progression-demarrage').textContent).toContain('6'),
 		)
 	})
 
@@ -182,7 +189,7 @@ describe('l’état d’une étape est un MOT — §6.2, docs/DESIGN_SYSTEM.md �
 	it('n’éteint AUCUN lien, quel que soit l’état de l’étape — CLAUDE.md §10', async () => {
 		monter(<GuideDemarrage sessionOuverte client={client(SEED_VIEWER)} />)
 		await screen.findByTestId('guide-demarrage')
-		for (const cle of ['track', 'channel', 'affaire', 'messagerie']) {
+		for (const cle of ['track', 'workflow', 'channel', 'affaire', 'messagerie']) {
 			const lien = await screen.findByTestId(`lien-${cle}`)
 			expect(lien.getAttribute('aria-disabled')).toBeNull()
 			expect(lien.getAttribute('href')).toBeTruthy()
@@ -202,11 +209,11 @@ describe('la progression s’écrit en toutes lettres — §7', () => {
 		expect(screen.getByTestId('progression-demarrage').textContent).toContain('Mesure des étapes')
 	})
 
-	it('écrit le compte et le total une fois les cinq mesures rendues', async () => {
+	it('écrit le compte et le total une fois les six mesures rendues', async () => {
 		monter(<GuideDemarrage sessionOuverte client={client(SEED_VIEWER)} />)
-		// admin : 5 sur 5 ; viewer : 4 sur 5, faute de voir une boîte entrante (§3.1, fait 2).
+		// admin : 6 sur 6 ; viewer : 5 sur 6, faute de voir une boîte entrante (§3.1, fait 2).
 		await waitFor(() =>
-			expect(screen.getByTestId('progression-demarrage').textContent).toBe('4 étape(s) sur 5'),
+			expect(screen.getByTestId('progression-demarrage').textContent).toBe('5 étape(s) sur 6'),
 		)
 	})
 })
@@ -218,7 +225,7 @@ describe('l’accueil et sa décision — §4.2', () => {
 		expect(screen.getByTestId('masquer-guide')).toBeTruthy()
 	})
 
-	it('rend l’état vide du board une fois les cinq étapes accomplies', async () => {
+	it('rend l’état vide du board une fois les six étapes accomplies', async () => {
 		monter(<AccueilDemarrage sessionOuverte client={client(SEED_ADMIN)} />)
 		await waitFor(() => expect(screen.queryByTestId('guide-demarrage')).toBeNull())
 		expect(screen.getByTestId('etat-vide')).toBeTruthy()
@@ -275,7 +282,7 @@ describe('ce que le guide N’ÉCRIT PAS sur l’appareil — CLAUDE.md §11', (
 	it('n’écrit AUCUNE progression : elle est mesurée, jamais mémorisée — §2', async () => {
 		monter(<GuideDemarrage sessionOuverte client={client(SEED_ADMIN)} />)
 		await waitFor(() =>
-			expect(screen.getByTestId('progression-demarrage').textContent).toBe('5 étape(s) sur 5'),
+			expect(screen.getByTestId('progression-demarrage').textContent).toBe('6 étape(s) sur 6'),
 		)
 		expect(globalThis.sessionStorage.length).toBe(0)
 		expect(globalThis.localStorage.length).toBe(0)
@@ -316,12 +323,12 @@ describe('aucune mesure sans session — docs/SPEC-onboarding.md §4.4', () => {
 		// L'état vide est celui de `CRM-007`, inchangé : il ne porte donc AUCUN lien de réouverture,
 		// qui n'aurait de sens que si le guide avait été masqué (§4.2, troisième ligne).
 		expect(screen.queryByTestId('rouvrir-guide')).toBeNull()
-		expect(espion.appels(), 'aucune des cinq mesures n’est émise sans session').toBe(0)
+		expect(espion.appels(), 'aucune des six mesures n’est émise sans session').toBe(0)
 	})
 
 	it('l’adresse du guide le rend QUAND MÊME, mais sans poser aucune question', async () => {
 		// §4.1 reste intact : `/demarrage` rend toujours le guide. Ce que le §4.4 lui retire est la
-		// mesure, pas l'écran — les cinq étapes restent en chargement, et rien n'est affirmé.
+		// mesure, pas l'écran — les six étapes restent en chargement, et rien n'est affirmé.
 		const espion = clientEspion()
 		monter(<GuideDemarrage sessionOuverte={false} client={espion.client} />)
 
@@ -329,20 +336,160 @@ describe('aucune mesure sans session — docs/SPEC-onboarding.md §4.4', () => {
 		expect(screen.getByTestId('progression-demarrage').textContent).toBe(
 			'Mesure des étapes en cours',
 		)
-		// Aucun chiffre n'est écrit : « 0 étape sur 5 » serait une affirmation non mesurée.
-		expect(screen.getByTestId('progression-demarrage').textContent).not.toContain('sur 5')
-		expect(espion.appels(), 'aucune des cinq mesures n’est émise sans session').toBe(0)
+		// Aucun chiffre n'est écrit : « 0 étape sur 6 » serait une affirmation non mesurée.
+		expect(screen.getByTestId('progression-demarrage').textContent).not.toContain('sur 6')
+		expect(espion.appels(), 'aucune des six mesures n’est émise sans session').toBe(0)
 	})
 
-	it('la session ouverte rétablit les cinq mesures, et rien d’autre ne change', async () => {
+	it('la session ouverte rétablit les six mesures, et rien d’autre ne change', async () => {
 		// La garde est un INTERRUPTEUR, pas une extinction : la même surface, le même client, la
-		// seule session ouverte, et les cinq comptages repartent.
+		// seule session ouverte, et les six comptages repartent.
 		const espion = clientEspion()
 		monter(<GuideDemarrage sessionOuverte client={espion.client} />)
 
 		await waitFor(() =>
-			expect(screen.getByTestId('progression-demarrage').textContent).toBe('0 étape(s) sur 5'),
+			expect(screen.getByTestId('progression-demarrage').textContent).toBe('0 étape(s) sur 6'),
 		)
-		expect(espion.appels(), 'les cinq tables sont interrogées, une fois chacune').toBe(5)
+		expect(espion.appels(), 'les six tables sont interrogées, une fois chacune').toBe(6)
 	})
 })
+
+describe('le workflow de départ, en un geste — docs/SPEC-onboarding.md §10.3', () => {
+	type ReponseRpc = { data: unknown; error: { code: string; message: string } | null; status: number }
+
+	/**
+	 * Un client dont les comptages CHANGENT après le geste : la preuve porte sur la re-mesure, et non
+	 * sur un état que l'écran se donnerait à lui-même en supposant le succès.
+	 */
+	function clientAvecGeste(reponseRpc: ReponseRpc | Promise<ReponseRpc>): {
+		readonly client: ClientCrm
+		readonly appelsRpc: () => number
+	} {
+		let apres = false
+		let appelsRpc = 0
+		// Le client factice route sur le NOM de table, reçu comme une chaîne : on l'appelle hors du
+		// typage de `ClientCrm`, qui n'accepte qu'un nom de table littéral.
+		const lire = (reponses: Readonly<Record<string, ReponseCompte>>, table: string) =>
+			(client(reponses) as unknown as { from: (nom: string) => unknown }).from(table)
+		const client_ = {
+			from: (table: string) => lire(apres && table === 'workflows' ? { ...NEUF, workflows: ok(1) } : NEUF, table),
+			rpc: async () => {
+				appelsRpc += 1
+				const reponse = await reponseRpc
+				if (reponse.error === null) apres = true
+				return reponse
+			},
+		} as unknown as ClientCrm
+		return { client: client_, appelsRpc: () => appelsRpc }
+	}
+
+	const ADMIN = { idWorkspace: 'e0940000-0000-4000-8000-0000000000c1', estAdmin: true }
+
+	function monterAdmin(element: React.ReactElement, valeur = ADMIN) {
+		return monter(<FournisseurEspace valeur={valeur}>{element}</FournisseurEspace>)
+	}
+
+	it('est offert à l’administratrice sur l’étape « Workflow » À FAIRE, avec ce qu’il pose', async () => {
+		monterAdmin(<GuideDemarrage sessionOuverte client={clientAvecGeste({ data: 'w', error: null, status: 200 }).client} />)
+		const ligne = await screen.findByTestId('etape-workflow')
+		await waitFor(() => expect(screen.getByTestId('creer-workflow-depart').textContent).toBe('Créer le workflow de départ'))
+		expect(ligne.textContent).toContain('Prospection, Relance, Négociation')
+		// Le lien vers l'éditeur reste offert à côté du geste : on peut aussi composer le sien.
+		expect(screen.getByTestId('lien-workflow').getAttribute('href')).toBe('/reglages/workflows')
+	})
+
+	it('n’est PAS rendu à qui la base ne rend pas `admin` — le lien, lui, reste', async () => {
+		monterAdmin(<GuideDemarrage sessionOuverte client={client(NEUF)} />, { ...ADMIN, estAdmin: false })
+		await waitFor(() => expect(screen.getByTestId('etape-workflow').textContent).toContain('À faire'))
+		expect(screen.queryByTestId('creer-workflow-depart')).toBeNull()
+		expect(screen.getByTestId('lien-workflow')).toBeTruthy()
+	})
+
+	it('n’est PAS rendu sur une étape accomplie : un second workflow serait refusé', async () => {
+		monterAdmin(<GuideDemarrage sessionOuverte client={client(SEED_ADMIN)} />)
+		await waitFor(() => expect(screen.getByTestId('etape-workflow').textContent).toContain('Fait'))
+		expect(screen.queryByTestId('creer-workflow-depart')).toBeNull()
+	})
+
+	it('réussi, il ANNONCE le succès et l’étape passe à « Fait » par une nouvelle mesure', async () => {
+		const utilisateur = userEvent.setup()
+		const espion = clientAvecGeste({ data: 'w', error: null, status: 200 })
+		monterAdmin(<GuideDemarrage sessionOuverte client={espion.client} />)
+		await utilisateur.click(await screen.findByTestId('creer-workflow-depart'))
+		await waitFor(() => expect(screen.getByTestId('etape-workflow').textContent).toContain('Fait'))
+		expect(screen.getByTestId('annonce-demarrage').textContent).toBe('Workflow de départ créé')
+		expect(screen.queryByTestId('creer-workflow-depart')).toBeNull()
+		expect(espion.appelsRpc()).toBe(1)
+	})
+
+	it('réussi, il rend le focus au lien de sa ligne : le bouton qui a agi disparaît', async () => {
+		const utilisateur = userEvent.setup()
+		monterAdmin(<GuideDemarrage sessionOuverte client={clientAvecGeste({ data: 'w', error: null, status: 200 }).client} />)
+		await utilisateur.click(await screen.findByTestId('creer-workflow-depart'))
+		await waitFor(() => expect(screen.getByTestId('etape-workflow').textContent).toContain('Fait'))
+		// Sans ce déplacement, le focus retombait sur le document, et la tabulation suivante repartait
+		// du lien d'évitement (docs/DESIGN_SYSTEM.md §5.49).
+		expect(document.activeElement).toBe(screen.getByTestId('lien-workflow'))
+	})
+
+	it('« existant » n’est PAS un refus : il s’annonce, sans alerte, et l’étape passe à « Fait »', async () => {
+		const utilisateur = userEvent.setup()
+		let apres = false
+		const lire = (reponses: Readonly<Record<string, ReponseCompte>>, table: string) =>
+			(client(reponses) as unknown as { from: (nom: string) => unknown }).from(table)
+		// Un collègue a posé un workflow entre la mesure et le clic : la base refuse le second, et la
+		// re-mesure, elle, le trouve.
+		const client_ = {
+			from: (table: string) => lire(apres && table === 'workflows' ? { ...NEUF, workflows: ok(1) } : NEUF, table),
+			rpc: async () => {
+				apres = true
+				return { data: null, error: { code: 'P0001', message: 'workflow existant' }, status: 400 }
+			},
+		} as unknown as ClientCrm
+		monterAdmin(<GuideDemarrage sessionOuverte client={client_} />)
+		await utilisateur.click(await screen.findByTestId('creer-workflow-depart'))
+		await waitFor(() => expect(screen.getByTestId('etape-workflow').textContent).toContain('Fait'))
+		expect(screen.getByTestId('annonce-demarrage').textContent).toBe(
+			'Cet espace a déjà un workflow : ouvrez l’éditeur pour le composer.',
+		)
+		// Ni « Workflow de départ créé » — il ne l'a pas été —, ni une alerte de refus sous une étape
+		// accomplie : les deux diraient faux.
+		expect(screen.queryByTestId('refus-workflow-depart')).toBeNull()
+		expect(document.activeElement).toBe(screen.getByTestId('lien-workflow'))
+	})
+
+	it('désactive le bouton pendant l’envoi, et le dit', async () => {
+		const utilisateur = userEvent.setup()
+		let repondre!: (reponse: ReponseRpc) => void
+		const espion = clientAvecGeste(new Promise<ReponseRpc>((r) => (repondre = r)))
+		monterAdmin(<GuideDemarrage sessionOuverte client={espion.client} />)
+		await utilisateur.click(await screen.findByTestId('creer-workflow-depart'))
+		const bouton = screen.getByTestId('creer-workflow-depart')
+		expect(bouton.textContent).toBe('Création…')
+		expect((bouton as HTMLButtonElement).disabled).toBe(true)
+		repondre({ data: 'w', error: null, status: 200 })
+		await waitFor(() => expect(screen.getByTestId('etape-workflow').textContent).toContain('Fait'))
+	})
+
+	it('refusé par la base, il écrit le refus sur la ligne et reste offert', async () => {
+		const utilisateur = userEvent.setup()
+		const espion = clientAvecGeste({ data: null, error: { code: '42501', message: 'reserve aux administrateurs' }, status: 403 })
+		monterAdmin(<GuideDemarrage sessionOuverte client={espion.client} />)
+		await utilisateur.click(await screen.findByTestId('creer-workflow-depart'))
+		expect((await screen.findByTestId('refus-workflow-depart')).textContent).toBe(
+			'Seul un administrateur de l’espace peut créer le workflow de départ.',
+		)
+		expect(screen.getByTestId('creer-workflow-depart')).toBeTruthy()
+	})
+
+	it('nomme le nœud archivé qui l’empêche, pour dire quoi restaurer', async () => {
+		const utilisateur = userEvent.setup()
+		const espion = clientAvecGeste({ data: null, error: { code: 'P0001', message: 'noeud archive : perdu' }, status: 400 })
+		monterAdmin(<GuideDemarrage sessionOuverte client={espion.client} />)
+		await utilisateur.click(await screen.findByTestId('creer-workflow-depart'))
+		expect((await screen.findByTestId('refus-workflow-depart')).textContent).toBe(
+			'Le nœud « perdu » est archivé dans le catalogue : restaurez-le, ou composez votre workflow depuis l’éditeur.',
+		)
+	})
+})
+

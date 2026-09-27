@@ -7,6 +7,9 @@
 // @spec docs/DESIGN_SYSTEM.md §5.18 (cette surface), §5.13 (formulaires dans le flux, focus),
 //       §5.8 (états systématiques), §5.6 et §12.5 (pilules), §9 (icônes)
 // @spec CLAUDE.md §10 (la garde est backend), §23 (aucune phrase construite par concaténation)
+// @spec CRM-094 (docs/BACKLOG.md) tranche T2 — docs/SPEC-onboarding.md §10.3 : l'écran se relit quand le
+//       workflow de départ, qui pose aussi ses nœuds, l'est depuis le guide flottant (docs/JOURNAL.md
+//       décision 607)
 //
 // L'ÉCRAN N'ANTICIPE AUCUN REFUS. « Archiver » est offerte sur toutes les lignes actives, quelle
 // que soit leur occupation : l'écran ne mesure pas les affaires posées sur un nœud (§2 bis.3), la
@@ -21,6 +24,7 @@ import { SkeletonListe } from '../components/ui/Skeleton'
 import { t } from '../i18n'
 import type { CleTraduction } from '../i18n'
 import { enChargement, enErreur, pret, type EtatAsync } from '../lib/async'
+import { useApresWorkflowDeDepart } from '../lib/demarrage'
 import {
 	calculerDeplacement,
 	proposerSlug,
@@ -186,6 +190,9 @@ export function AdministrationCatalogue({
 	}, [client, tentative])
 
 	const recharger = useCallback(() => setTentative((precedente) => precedente + 1), [])
+	// Le workflow de départ pose ses sept nœuds dans ce catalogue (§7 quater du moteur) : posé depuis le
+	// guide flottant par-dessus cet écran, il y resterait invisible jusqu'au prochain montage.
+	useApresWorkflowDeDepart(recharger)
 
 	const fermer = useCallback(() => {
 		setOuverture(AUCUNE)

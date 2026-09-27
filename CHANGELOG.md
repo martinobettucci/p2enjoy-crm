@@ -13,7 +13,27 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-_Rien à publier pour le moment._
+### `CRM-094` — Démarrer un espace neuf : le workflow de départ et le guide flottant
+
+*Décisions 606 et 607. Migration **80** à appliquer en production (`docs/PROD_MIGRATIONS.md` §2.7).*
+
+- **Un espace neuf peut enfin recevoir son premier channel.** Il n'avait ni workflow ni nœud de
+  catalogue — le workflow par défaut ne venait que du jeu de démonstration —, et un channel exige un
+  workflow. Un administrateur pose désormais, depuis le guide de démarrage, le **workflow de départ**
+  en un geste : « Cycle commercial », sept étapes, onze transitions, puis modifiable dans l'éditeur.
+  Fonction `public.creer_workflow_de_depart` (migration `0080`), réservée aux administrateurs et
+  refusée par la base à tout autre rôle (T1).
+- **Le guide compte six étapes**, le workflow avant le channel. Un workflow déjà présent n'est pas une
+  erreur : l'étape passe à « Fait » et l'annonce le dit (T2).
+- **Le formulaire « Nouveau channel » sans workflow affectable mène à l'éditeur de workflows**, et
+  l'éditeur ne dit plus d'un catalogue vide que « tous ses nœuds sont déjà des étapes » : il dit qu'il
+  est vide, et mène au catalogue (T2).
+- **Pour un administrateur, le guide suit sur toutes les pages** : une pastille en bas à droite,
+  « Démarrage · 2 sur 6 », qui s'ouvre en panneau non modal. Suivre l'un de ses liens ne le referme
+  plus, la progression est re-mesurée à chaque page, `Échap` le referme ; sa forme est retenue pour
+  la session seulement (T3).
+- **L'écran ouvert sous le panneau se met à jour** quand le workflow de départ est posé : éditeur de
+  workflows, catalogue de nœuds, formulaire de channel ouvert — dont la saisie est conservée (T2).
 
 ## [Publié]
 

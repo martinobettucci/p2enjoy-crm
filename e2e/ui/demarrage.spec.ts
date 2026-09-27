@@ -9,15 +9,17 @@
 //           §16 (vérification visuelle)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
+// @verifies CRM-094 (docs/BACKLOG.md) tranche T2 — docs/SPEC-onboarding.md §10.1 : six étapes, le
+//           workflow avant le channel ; le parcours de la pastille est dans `guide-flottant.spec.ts`
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, sur la VRAIE base et avec le VRAI seed : aucune
-// étape n'est accomplie par une réponse substituée. Les cinq étapes sont accomplies parce que le
-// seed porte des tracks, des channels, des affaires et des boîtes — c'est ce que
+// étape n'est accomplie par une réponse substituée. Les six étapes sont accomplies parce que le
+// seed porte des tracks, des workflows, des channels, des affaires et des boîtes — c'est ce que
 // `docs/SPEC-onboarding.md` §8 exige.
 //
 // LA SEULE RÉPONSE SUBSTITUÉE DE CE FICHIER isole l'état « non mesurable » du §6.2, que rien dans
-// le seed ne produit : elle fait échouer UNE des cinq mesures au niveau du réseau, et le scénario
-// vérifie que les quatre autres restent lisibles. Elle est nommée ici comme le §12.5 du design
+// le seed ne produit : elle fait échouer UNE des six mesures au niveau du réseau, et le scénario
+// vérifie que les cinq autres restent lisibles. Elle est nommée ici comme le §12.5 du design
 // system l'exige, et elle ne remplace aucun parcours connecté.
 //
 // AUCUNE ÉCRITURE : le guide lit et renvoie. La base est donc rendue intacte sans aucune remise en
@@ -67,7 +69,7 @@ async function connecter(page: Page, email: string): Promise<void> {
  * une opération d'exploitation, nommée comme telle plutôt que déguisée en parcours utilisateur
  * (§8 ter.3). Le compte naît dans le Keycloak de développement, par son API d'administration
  * (`CRM-092`, docs/SPEC-session-sso.md §10) ; l'appartenance, elle, naît de la VRAIE connexion SSO,
- * qui consomme l'attente (§6). Les cinq comptages que la preuve observe ensuite sont émis par
+ * qui consomme l'attente (§6). Les six comptages que la preuve observe ensuite sont émis par
  * l'application avec le JETON RÉEL du compte, sous les politiques inchangées.
  */
 async function monterEspaceNeuf(requete: APIRequestContext): Promise<CompteNeuf> {
@@ -124,28 +126,29 @@ async function demonterEspaceNeuf(requete: APIRequestContext, compte: CompteNeuf
 }
 
 test.describe('CRM-079 — guide de démarrage', () => {
-	test('l’accueil rend le guide, et le seed accomplit les cinq étapes pour l’administratrice', async ({
+	test('l’accueil rend le guide, et le seed accomplit les six étapes pour l’administratrice', async ({
 		page,
 	}) => {
 		await connecter(page, ADMIN)
 		await page.goto('/demarrage')
 
-		// Les cinq étapes, dans une liste ORDONNÉE (§7).
+		// Les six étapes, dans une liste ORDONNÉE (§7, §10.1).
 		const guide = page.getByTestId('guide-demarrage')
 		await expect(guide).toBeVisible()
-		await expect(guide.locator('ol > li')).toHaveCount(5)
+		await expect(guide.locator('ol > li')).toHaveCount(6)
 
 		// MESURÉ le 2026-08-15 : admin voit 1 workspace, 3 tracks, 6 channels, 14 affaires et
-		// 3 boîtes. Les cinq étapes sont donc accomplies, et le compte l'écrit en toutes lettres.
-		await expect(page.getByTestId('progression-demarrage')).toHaveText('5 étape(s) sur 5')
-		for (const cle of ['espace', 'track', 'channel', 'affaire', 'messagerie']) {
+		// 3 boîtes ; et le 2026-09-28 (`CRM-094`), 2 workflows. Les six étapes sont donc accomplies,
+		// et le compte l'écrit en toutes lettres.
+		await expect(page.getByTestId('progression-demarrage')).toHaveText('6 étape(s) sur 6')
+		for (const cle of ['espace', 'track', 'workflow', 'channel', 'affaire', 'messagerie']) {
 			await expect(page.getByTestId(`etape-${cle}`)).toContainText('Fait')
 		}
 
 		await capturer(page, 'guide-accompli-1440', UNITE)
 	})
 
-	test('la lectrice voit la cinquième étape à faire : le guide dit ce qu’ELLE voit', async ({
+	test('la lectrice voit la sixième étape à faire : le guide dit ce qu’ELLE voit', async ({
 		page,
 	}) => {
 		// C'est le fait 2 du §3.1, et il n'est pas un défaut : le comptage est borné par les droits
@@ -154,7 +157,10 @@ test.describe('CRM-079 — guide de démarrage', () => {
 		await connecter(page, VIEWER)
 		await page.goto('/demarrage')
 
-		await expect(page.getByTestId('progression-demarrage')).toHaveText('4 étape(s) sur 5')
+		// Les workflows se lisent par tout membre (`workflows_lecture_membre`) : l'étape « Workflow »
+		// est accomplie pour elle aussi, mesuré le 2026-09-28.
+		await expect(page.getByTestId('progression-demarrage')).toHaveText('5 étape(s) sur 6')
+		await expect(page.getByTestId('etape-workflow')).toContainText('Fait')
 		await expect(page.getByTestId('etape-messagerie')).toContainText('À faire')
 		// La phrase d'absence n'accompagne QUE l'étape à faire : sur une étape accomplie, elle
 		// contredirait « Fait » (défaut trouvé sur `guide-viewer-1440.jpg`).
@@ -224,7 +230,7 @@ test.describe('CRM-079 — guide de démarrage', () => {
 	})
 
 	test('masquer le guide le retire de l’accueil, et le laisse à son adresse', async ({ page }) => {
-		// Le seed accomplit les cinq étapes pour l'administratrice : l'accueil rend donc déjà son
+		// Le seed accomplit les six étapes pour l'administratrice : l'accueil rend donc déjà son
 		// état vide. La lectrice, elle, garde une étape à faire — c'est chez elle que le masquage
 		// s'observe (§4.2).
 		await connecter(page, VIEWER)
@@ -278,7 +284,7 @@ test.describe('CRM-079 — guide de démarrage', () => {
 		expect(stockage.tailleLocale).toBe(0)
 	})
 
-	test('une mesure en échec est NOMMÉE, et les quatre autres restent lisibles', async ({ page }) => {
+	test('une mesure en échec est NOMMÉE, et les cinq autres restent lisibles', async ({ page }) => {
 		test.setTimeout(90_000)
 		await connecter(page, ADMIN)
 
@@ -317,11 +323,11 @@ test.describe('CRM-079 — guide de démarrage', () => {
 		await expect(reprise).toBeVisible()
 		await expect(page.getByTestId('lien-track')).toBeVisible()
 
-		// Les quatre autres mesures ont abouti : un échec n'efface pas ce que le guide a mesuré.
-		for (const cle of ['espace', 'channel', 'affaire', 'messagerie']) {
+		// Les cinq autres mesures ont abouti : un échec n'efface pas ce que le guide a mesuré.
+		for (const cle of ['espace', 'workflow', 'channel', 'affaire', 'messagerie']) {
 			await expect(page.getByTestId(`etape-${cle}`)).toContainText('Fait')
 		}
-		await expect(page.getByTestId('progression-demarrage')).toHaveText('4 étape(s) sur 5')
+		await expect(page.getByTestId('progression-demarrage')).toHaveText('5 étape(s) sur 6')
 
 		await capturer(page, 'guide-non-mesurable-1440', UNITE)
 
@@ -339,12 +345,12 @@ test.describe('CRM-079 — guide de démarrage', () => {
 			.toBe(true)
 		const refusEmis = echecs
 
-		// Le réseau revient, et la reprise relance RÉELLEMENT les cinq mesures : elle ne recharge
+		// Le réseau revient, et la reprise relance RÉELLEMENT les six mesures : elle ne recharge
 		// pas la page (docs/SPEC-webapp.md §7).
 		panne = false
 		await reprise.click()
 		await expect(ligne).toContainText('Fait', { timeout: 30_000 })
-		await expect(page.getByTestId('progression-demarrage')).toHaveText('5 étape(s) sur 5')
+		await expect(page.getByTestId('progression-demarrage')).toHaveText('6 étape(s) sur 6')
 		expect(echecs, 'aucune requête n’est abattue après le rétablissement').toBe(refusEmis)
 
 		// Les refus réseau volontaires sont CONSOMMÉS par égalité sur le message exact, et APRÈS
@@ -357,12 +363,13 @@ test.describe('CRM-079 — guide de démarrage', () => {
 		request,
 	}) => {
 		// C'est le §8 ter, et c'est l'état pour lequel le guide a été écrit (§1) : jusqu'ici aucune
-		// preuve d'interface ne le montrait. Le seed accomplit les cinq étapes pour
+		// preuve d'interface ne le montrait. Le seed accomplit les six étapes pour
 		// l'administratrice, et la lectrice n'en laisse voir qu'une à faire — pour un motif, ses
 		// droits fins, qui n'est pas celui d'un espace vide.
 		//
-		// AUCUNE RÉPONSE N'EST SUBSTITUÉE : les quatre étapes sont à faire parce que l'espace ne
-		// porte réellement rien, ce que le §8 exige.
+		// AUCUNE RÉPONSE N'EST SUBSTITUÉE : les cinq étapes sont à faire parce que l'espace ne
+		// porte réellement rien, ce que le §8 exige. Le parcours qui les accomplit, pastille et
+		// workflow de départ compris, est celui de `guide-flottant.spec.ts` (`CRM-094`).
 		let compte: CompteNeuf | null = null
 		try {
 			compte = await monterEspaceNeuf(request)
@@ -375,14 +382,15 @@ test.describe('CRM-079 — guide de démarrage', () => {
 			await expect(guide).toBeVisible()
 
 			// MESURÉ le 2026-08-16 (§8 ter.1) : 1 workspace, et zéro track, channel, affaire et
-			// boîte. Une seule étape est accomplie, et c'est la connexion qui l'accomplit (§3).
-			await expect(page.getByTestId('progression-demarrage')).toHaveText('1 étape(s) sur 5')
+			// boîte ; zéro workflow aussi, mesuré en production le 2026-09-28 (décision 606). Une
+			// seule étape est accomplie, et c'est la connexion qui l'accomplit (§3).
+			await expect(page.getByTestId('progression-demarrage')).toHaveText('1 étape(s) sur 6')
 			await expect(page.getByTestId('etape-espace')).toContainText('Fait')
 
-			// Les quatre autres sont À FAIRE, et non « non mesurable » : la cinquième mesure rend
+			// Les cinq autres sont À FAIRE, et non « non mesurable » : la mesure des boîtes rend
 			// `200` et zéro pour une session ouverte, là où le `401` du §3.1 est celui de la clé
 			// ANONYME. C'est la distinction du §6.2, et rien ne l'éprouvait.
-			for (const cle of ['track', 'channel', 'affaire', 'messagerie']) {
+			for (const cle of ['track', 'workflow', 'channel', 'affaire', 'messagerie']) {
 				const ligne = page.getByTestId(`etape-${cle}`)
 				await expect(ligne).toContainText('À faire')
 				await expect(ligne).not.toContainText('Cette étape n’a pas pu être vérifiée')
@@ -406,7 +414,7 @@ test.describe('CRM-079 — guide de démarrage', () => {
 
 			// Et le guide reste relançable à son adresse propre, dans le même état (§4.1).
 			await page.goto('/demarrage')
-			await expect(page.getByTestId('progression-demarrage')).toHaveText('1 étape(s) sur 5')
+			await expect(page.getByTestId('progression-demarrage')).toHaveText('1 étape(s) sur 6')
 		} finally {
 			await demonterEspaceNeuf(request, compte)
 		}

@@ -1302,7 +1302,13 @@ SCENARIOS_API=1085
 # COMPTÉE — « Total: 759 tests in 59 files ».
 # **RÉVISÉ À 760 PAR INC-253, 2026-09-26** (décision 603) : `filtre-sommeil.spec.ts` MESURE la case de la
 # bascule — 24 px sur une ligne de 40 px (§5.7 bis). 759 + 1 = 760, valeur COMPTÉE.
-SCENARIOS_UI=760
+# **RÉVISÉ À 765 PAR `CRM-094` tranches T2 et T3, 2026-09-28** (décisions 606 et 607) :
+# `e2e/ui/guide-flottant.spec.ts`, fichier NEUF, porte **5** scénarios — l'espace neuf de l'accueil au
+# premier channel par la pastille et le workflow de départ, le clavier seul, les quatre paliers réduite
+# et ouverte, la lectrice sans pastille ni mesure, l'administratrice du seed sans pastille.
+# `demarrage.spec.ts` passe à six étapes sans scénario ajouté. 760 + 5 = 765, valeur COMPTÉE —
+# « Total: 765 tests in 60 files ».
+SCENARIOS_UI=765
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,
