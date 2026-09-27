@@ -230,10 +230,26 @@ connexion tombe. Aucune migration.
 **Retour arrière** : avant l'étape 6, relivrer la révision précédente suffit — l'ancien nom est encore
 là. Après, recopier la valeur sous l'ancien nom avant de relivrer.
 
+### 2.7 `CRM-094` — le workflow de départ et le guide flottant (EN ATTENTE)
+
+`docs/SPEC-onboarding.md` §10, `docs/SPEC-workflow-engine.md` §7 quater ; décision 606. Une migration,
+pure addition d'une fonction ; aucune variable, aucun service nouveau.
+
+| # | Geste | Qui | Commande ou lieu |
+|---|---|---|---|
+| 1 | Instantané de VM, avant la fenêtre de migration (§3.1) | propriétaire de la cellule | console de l'hébergeur |
+| 2 | Livrer et migrer — la 80 seule est en attente | poste, par les IP | `scripts/spark/livrer.sh -- --migrate --instantane-verifie`, **puis** `./runProd.sh --spark` dans la cellule (§2.5, étape 6) |
+| 3 | Vérifier, puis les contrôles de la ligne 80 du §3.2 | poste, lecture seule | `scripts/spark/verifier.sh` |
+| 4 | Depuis le guide flottant : « Créer le workflow de départ », puis le premier channel du premier track | le responsable | l'application |
+
+**Retour arrière** : la 80 se retire par sa ligne du §3.2 ; les workflows posés restent, ce sont des
+données.
+
 ## 3. Migrations en attente
 
-**Aucune migration en attente.** Baseline de production : la migration **79**. Les six migrations de
-`CRM-092` (74 à 79) ont été appliquées le 2026-09-24 par la reprise (§2.5, §8).
+**Une migration en attente depuis le 2026-09-28 : la 80** (`CRM-094`, décision 606), pure addition d'une
+fonction — voir la ligne 80 du §3.2. Baseline de production : la migration **79** ; les six migrations
+de `CRM-092` (74 à 79) ont été appliquées le 2026-09-24 par la reprise (§2.5, §8).
 
 ### 3.1 Procédure nominale — la fenêtre de maintenance (`CRM-087`, livrée)
 
@@ -409,6 +425,7 @@ confirmée avec le responsable du workspace concerné : un droit fin posé « po
 | 77 — `CRM-092` | `supabase/migrations/0077_retrait_gotrue.sql` | **Le retrait de GoTrue, côté base** (`docs/SPEC-session-sso.md` §7.5 ; décision 589). Retire le trigger `on_auth_user_created` d'`auth.users` et la fonction `app.handle_new_user()` : plus rien n'écrit dans `auth.users`, et un profil naît de l'admission (`public.ouvrir_session_sso`). **Rien d'autre** : les tables du schéma `auth` restent, inertes (§15 de la spécification). | Migrations 1 (le trigger) et 21 (la dernière définition de la fonction). **Ordinaire, non élevée** : mesuré, `postgres` retire ce trigger (décision 589, correction). Idempotente : `drop … if exists`. | **Sans effet sur les données** : aucune ligne n'est lue ni écrite. À appliquer avec l'arrêt de GoTrue (§12 de la spécification, points 4 et 5). | **Retour arrière** : rejouer la migration 1 puis la 21, qui reposent la fonction et le trigger — sans objet tant que GoTrue n'est pas rétabli. | Vérifier après application que `select count(*) from pg_trigger where tgrelid = 'auth.users'::regclass and not tgisinternal` rend **0** et que `select to_regprocedure('app.handle_new_user()')` rend **NULL**. |
 | 78 — `CRM-092` | `supabase/migrations/0078_admission_patiente.sql` | **L'admission patiente** (`docs/SPEC-session-sso.md` §6.2, §7.6 ; décision 593, INC-249). Redéfinit `public.ouvrir_session_sso` : une attente qui ferait d'une personne le premier membre non administrateur d'un espace sans administrateur reste **en suspens** au lieu de faire échouer toute la connexion ; l'objet rendu porte `en_suspens`. Signature, propriétaire, `search_path` et privilèges inchangés. | Migration 75. Ordinaire, idempotente (`create or replace`). | **Aucune donnée n'est modifiée.** En production, l'espace `crm` réamorcé n'attend que son administratrice : la migration n'y change rien, elle protège les attentes suivantes. | **Retour arrière** : rejouer la migration 75, qui repose l'ancienne définition — et avec elle le défaut d'INC-249. | Vérifier après application que `select public.ouvrir_session_sso(gen_random_uuid(), 'personne@exemple.tld', 'x') ->> 'en_suspens'` rend **`0`** dans une transaction annulée, et que `has_function_privilege('authenticated', 'public.ouvrir_session_sso(uuid, text, text, boolean)', 'execute')` rend toujours **`false`** — la signature à quatre arguments, la 79 étant livrée avec elle. |
 | 79 — `CRM-092` | `supabase/migrations/0079_admin_du_domaine.sql` | **La règle du domaine sur `admin`** (`docs/SPEC-session-sso.md` §6.1 bis, §7.7 ; décision 597). `app.est_admin_lelabs()` lit la revendication `lelabs_admin` du jeton interne ; `app.is_workspace_member`, `app.is_workspace_admin`, `app.workspace_role` et `app.workspace_role_pour` — pour l'appelant — en font un administrateur de tout espace, **sans rien écrire** ; `public.ouvrir_session_sso` et les deux fonctions de session serveur reçoivent `p_admin_lelabs` (anciennes signatures retirées) ; `public.mon_role_espace(ws)` pour l'interface. | Migrations 63, 75, 76 et 78, dont elle redéfinit les fonctions. **L'échangeur de session livré avec elle** pose la revendication : sans lui, la migration ne change aucun droit. Ordinaire, idempotente ; le runner la rejoue après celles qu'elle redéfinit. | **Aucune donnée n'est modifiée.** Effet en production : toute personne portant `admin` chez LeLabs devient administratrice de l'espace `crm` dès sa connexion — c'est la règle du domaine, et c'est le cas attendu de `martino@p2enjoy.studio`. | **Retour arrière** : rejouer les migrations 63, 75, 76 et 78, puis retirer `app.est_admin_lelabs()` et `public.mon_role_espace(uuid)` ; la webapp livrée avec T8 appelle `mon_role_espace` et perdrait alors les aides d'écran de l'administrateur, sans perte de droit — le retour arrière se fait donc avec la révision précédente de la webapp. | Après application, dans une transaction annulée : `select app.est_admin_lelabs()` rend **`false`** hors revendication, `select public.ouvrir_session_sso(gen_random_uuid(), 'personne@exemple.tld', 'x') ->> 'admis'` rend **`false`**, et `to_regprocedure('public.ouvrir_session_sso(uuid, text, text)')` rend **`null`**. |
+| 80 — `CRM-094` | `supabase/migrations/0080_workflow_de_depart.sql` | **Le workflow de départ** (`docs/SPEC-workflow-engine.md` §7 quater ; décision 606). Ajoute `public.creer_workflow_de_depart(uuid)`, `SECURITY INVOKER`, `search_path` vide, `EXECUTE` à `authenticated`, révoqué nommément à `public` et `anon`. **Aucune table, aucune politique, aucun privilège de table ne change.** | Les tables `workspaces`, `workflow_nodes_catalog`, `workflows`, `workflow_steps` et `workflow_transitions`, et `app.is_workspace_admin` révisée par la 79. | **PURE ADDITION.** Retour arrière : `drop function if exists public.creer_workflow_de_depart(uuid);` — le geste disparaît, les workflows déjà posés restent, ce sont des données ordinaires. | Vérifier après application que `has_function_privilege('anon','public.creer_workflow_de_depart(uuid)','execute')` rend **false** et que `prosecdef` rend **false** ; puis, avec un jeton réel, qu'un `business_developer` reçoit **403 / 42501**. Le geste lui-même est éprouvé par le responsable depuis le guide (§2.7). |
 
 **Ce que la migration 12 ajoute au contrat d'exploitation.** Un seul point, mais il casse
 potentiellement des appelants existants :

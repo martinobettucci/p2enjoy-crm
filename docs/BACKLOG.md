@@ -14683,8 +14683,10 @@ n'en disait rien ; et le guide « se perd » dès qu'on suit l'un de ses liens. 
 `docs/SPEC-onboarding.md` §10, `docs/SPEC-workflow-engine.md` §7 quater, `docs/DESIGN_SYSTEM.md` §5.17
 et §5.49.*
 
-- [ ] **T1** — migration `0080_workflow_de_depart.sql` : `public.creer_workflow_de_depart`
+- [x] **T1** — migration `0080_workflow_de_depart.sql` : `public.creer_workflow_de_depart`
       (`SECURITY INVOKER`), sa suite pgTAP, preuves d'API ; `docs/SCHEMA.md`, `docs/PROD_MIGRATIONS.md`.
+      Mesuré le 2026-09-28 : pgTAP **74 fichiers, 3253 assertions** (`0074` : **28**) ;
+      `workflow-depart.spec.ts` **3/3** ; types régénérés, `types:check` à jour, `typecheck` vert.
 - [ ] **T2** — le guide à six étapes, l'étape « Workflow » et son geste ; le message du catalogue vide
       de l'éditeur de workflows ; le lien du formulaire de channel sans workflow ; preuves unitaires.
 - [ ] **T3** — le guide flottant pour les administrateurs : pastille, panneau, forme retenue pour la
