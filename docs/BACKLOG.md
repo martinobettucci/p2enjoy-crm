@@ -14676,3 +14676,20 @@ que le refus serveur reste la seule règle (`CLAUDE.md` §10).*
       selon `mon_role_espace`, états, preuves.
 - [ ] Mise en œuvre, preuves unitaires et E2E par rôle, captures, manuel, redéploiement.
 
+### CRM-094 — Démarrer un espace neuf : le workflow de départ et le guide flottant `[ ]`
+*Créée le 2026-09-28 — décision 606, arbitrages du responsable. Relevé en production : dans un espace
+neuf, impossible de créer un channel — aucun workflow ni aucun nœud de catalogue n'existe, et le guide
+n'en disait rien ; et le guide « se perd » dès qu'on suit l'un de ses liens. Spécifié avant le code :
+`docs/SPEC-onboarding.md` §10, `docs/SPEC-workflow-engine.md` §7 quater, `docs/DESIGN_SYSTEM.md` §5.17
+et §5.49.*
+
+- [ ] **T1** — migration `0080_workflow_de_depart.sql` : `public.creer_workflow_de_depart`
+      (`SECURITY INVOKER`), sa suite pgTAP, preuves d'API ; `docs/SCHEMA.md`, `docs/PROD_MIGRATIONS.md`.
+- [ ] **T2** — le guide à six étapes, l'étape « Workflow » et son geste ; le message du catalogue vide
+      de l'éditeur de workflows ; le lien du formulaire de channel sans workflow ; preuves unitaires.
+- [ ] **T3** — le guide flottant pour les administrateurs : pastille, panneau, forme retenue pour la
+      session, re-mesure au changement de page ; preuves unitaires et E2E sur un espace neuf, captures
+      observées aux quatre paliers ; `docs/manual.md`.
+- [ ] **T4** — livraison en production (migration 80) et constat : l'administrateur crée son workflow
+      de départ puis son premier channel depuis le guide.
+

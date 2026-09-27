@@ -5191,6 +5191,85 @@ Ce que cette tranche ne livre PAS :
 | Visuel | Captures aux quatre paliers de `docs/DESIGN_SYSTEM.md` §7, bloc des versions déployé, plan rendu, refus affiché |
 | Seed | La version du §7 ter.8 suffit (§7 ter.14.8) |
 
+## 7 quater. Le workflow de départ — `CRM-094` (décision 606)
+
+*Spécifié le 2026-09-28, avant le code. Mesuré en production : un espace neuf n'a **ni workflow ni
+nœud de catalogue** — le workflow par défaut ne vient que du seed —, si bien qu'aucun channel n'y peut
+naître (§4.12.5). Arbitrage du responsable : un workflow de départ, créé en un geste depuis le guide
+de démarrage (`docs/SPEC-onboarding.md` §10.3).*
+
+### 7 quater.1 Le geste
+
+```
+public.creer_workflow_de_depart(p_workspace uuid) returns uuid   -- l'identifiant du workflow créé
+```
+
+`security invoker`, `search_path` vide, `volatile`. `EXECUTE` à `authenticated` seul ; **révoqué** de
+`public` et d'`anon` par des `revoke` nommés (§4.7, décision 80). **`SECURITY INVOKER` est le choix de
+fond** : la fonction n'ouvre aucun droit, elle enchaîne des insertions que les politiques existantes
+réservent déjà aux administrateurs (`docs/SPEC-permissions-rls.md` §4) — catalogue, workflow, étapes,
+transitions. Un appelant qui ne pourrait pas les écrire une à une ne les écrit pas davantage ensemble.
+
+Les vérifications, **dans cet ordre** :
+
+| # | Vérification | Refus | `SQLSTATE` | HTTP |
+|---|---|---|---|---|
+| 1 | l'appelant est authentifié | `authentification requise` | `42501` | `403` (anonyme : `401`, le privilège refuse d'abord) |
+| 2 | l'appelant administre l'espace — `app.is_workspace_admin(p_workspace)`, revendication du domaine comprise (`CRM-092` T8) | `reserve aux administrateurs` | `42501` | `403` |
+| 3 | l'espace n'a **aucun** workflow vivant (`archived_at is null`) | `workflow existant` | `P0001` | `400` |
+| 4 | aucune des sept clés du modèle ne désigne un nœud **archivé** de l'espace | `noeud archive : <clé>` | `P0001` | `400` |
+
+La vérification 2 précède la 3 : un non-administrateur n'apprend rien de l'espace. La 3 garantit
+qu'un double clic ne crée pas deux workflows ; l'index unique partiel « au plus un défaut par
+workspace » (§3.2) en est le filet si deux appels se croisent — le second échoue en `23505` et ne
+laisse rien.
+
+### 7 quater.2 Le modèle
+
+Le cycle commercial du seed, éprouvé depuis `CRM-031` — le même, pour qu'un espace neuf se comporte
+comme l'espace de démonstration :
+
+| Position | Clé | Libellé | Type | Couleur | Probabilité | Seuil (jours) | Initiale |
+|---|---|---|---|---|---|---|---|
+| 1 | `prospection` | Prospection | `open` | `neutral` | 10 | 14 | oui |
+| 2 | `relance` | Relance | `open` | `accent` | 20 | 7 | |
+| 3 | `negociation` | Négociation | `open` | `brand` | 50 | 10 | |
+| 4 | `signature` | Signature | `open` | `brand` | 90 | 7 | |
+| 5 | `realisation` | Réalisation | `open` | `success` | 100 | 30 | |
+| 6 | `livre` | Livré | `won` | `success` | 100 | — | |
+| 7 | `perdu` | Perdu | `lost` | `danger` | 0 | — | |
+
+**Nœuds.** Une clé déjà présente et **vivante** dans le catalogue est **réutilisée** telle quelle — son
+libellé et ses réglages sont ceux de l'administrateur, le modèle ne les écrase pas ; une clé absente
+est insérée avec la ligne ci-dessus, à la position qui suit la plus grande de l'espace.
+
+**Workflow.** « Cycle commercial », portée `global`, **`is_default` vrai** — le premier workflow d'un
+espace est son défaut —, **sauf** si l'espace porte déjà un défaut, fût-il archivé : l'index unique
+partiel `workflows_workspace_default_uk` le compte, et le workflow de départ naît alors sans être le
+défaut, plutôt que d'échouer en `23505`.
+
+**Transitions** — onze, libellées :
+
+| De | Vers | Libellé | Commentaire exigé |
+|---|---|---|---|
+| Prospection | Relance | Relancer | non |
+| Relance | Négociation | Engager la négociation | non |
+| Négociation | Relance | Revenir en relance | non |
+| Négociation | Signature | Passer en signature | non |
+| Signature | Réalisation | Démarrer la réalisation | non |
+| Réalisation | Livré | Marquer comme livré | non |
+| Prospection, Relance, Négociation, Signature, Réalisation | Perdu | Marquer perdu | **oui** |
+
+Aucune version n'est publiée : une affaire suit le workflow, non une version (§7 ter), et publier
+reste le geste de l'administrateur quand il le juge utile.
+
+**Atomicité.** Une seule transaction : un refus à n'importe quelle insertion n'en laisse aucune.
+
+### 7 quater.3 Preuves
+
+pgTAP, API et E2E du `docs/SPEC-onboarding.md` §10.6. La migration est `0080_workflow_de_depart.sql`,
+pure addition d'une fonction : aucune table, aucune politique, aucun privilège de table ne change.
+
 ## 8. Vérification exigée
 
 | Niveau | Preuves attendues |

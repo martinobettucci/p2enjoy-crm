@@ -1,6 +1,9 @@
 # Spécification — guide de démarrage
 
-Unité de backlog : `CRM-079` (`docs/BACKLOG.md`, « Onboarding guidé au premier lancement »).
+Unité de backlog : `CRM-079` (`docs/BACKLOG.md`, « Onboarding guidé au premier lancement »), **révisée
+par `CRM-094`** (décision 606) — six étapes dont le workflow, un workflow de départ en un geste, et un
+guide **flottant** pour les administrateurs : voir le **§10**, qui l'emporte sur toute règle antérieure
+qu'il contredit.
 Documents liés : `docs/DESIGN_SYSTEM.md` §5.17 (de quoi l'écran a l'air), §5.8 (états), §7, §8 ;
 `docs/SPEC-webapp.md` §5.2 (routes), §6.4 (contrat asynchrone), §11 (stockage côté client) ;
 `docs/SPEC-permissions-rls.md` §4 ; `docs/SPEC-administration-arborescence.md` ;
@@ -63,6 +66,7 @@ chaque table est interrogée exactement sous la politique qui la régit déjà.
 |---|---|---|---|---|
 | 1 | `espace` | Un espace de travail est accessible | `workspaces` | aucun — l'étape est accomplie par la connexion |
 | 2 | `track` | Au moins un track vivant | `tracks`, `archived_at is null`, `deleted_at is null` | `/reglages/arborescence` |
+| 2 bis | `workflow` | Au moins un workflow vivant — **ajoutée par `CRM-094`** (§10.1) | `workflows`, `archived_at is null` | `/reglages/workflows`, ou le geste « Créer le workflow de départ » |
 | 3 | `channel` | Au moins un channel vivant | `channels`, mêmes deux filtres | `/reglages/arborescence` |
 | 4 | `affaire` | Au moins une affaire | `cards`, `deleted_at is null` | `/reglages/arborescence` (le board s'ouvre depuis un channel) |
 | 5 | `messagerie` | Au moins une boîte entrante déclarée | `mail_inbound_accounts` | `/reglages/messagerie` |
@@ -138,8 +142,11 @@ session (§5) : c'est ce qui le rend **relançable**, exigence explicite de la D
 La dernière ligne n'est pas un détail : rendre l'état vide pendant le chargement ferait clignoter
 l'écran d'accueil à chaque ouverture, et afficherait « aucun board » à qui en a.
 
-Le guide n'est pas rendu ailleurs. Aucune surimpression, aucune bannière sur les écrans métier :
-une aide au démarrage qui suit l'utilisateur partout devient un bandeau qu'on apprend à ignorer.
+~~Le guide n'est pas rendu ailleurs. Aucune surimpression, aucune bannière sur les écrans métier :
+une aide au démarrage qui suit l'utilisateur partout devient un bandeau qu'on apprend à ignorer.~~
+**RENVERSÉ par la décision 606** (arbitrage du responsable, 2026-09-28) : le guide « se perdait » dès
+qu'on suivait l'un de ses liens. Il suit désormais l'**administrateur** sous la forme d'une pastille
+flottante, non modale, qui s'ouvre en panneau (§10.2).
 
 ### 4.3 Une entrée dans l'index des réglages
 
@@ -431,9 +438,12 @@ et le premier suffit :
 
 - **Le `viewer` ne verra jamais la cinquième étape accomplie** (§3.1, fait 2). Le guide dit ce que
   l'appelant voit ; il ne peut pas dire ce qu'il ne voit pas sans mentir sur ses droits.
-- **Aucune étape ne mesure un workflow.** Un channel naît avec le workflow par défaut
+- ~~**Aucune étape ne mesure un workflow.** Un channel naît avec le workflow par défaut
   (`docs/SPEC-workflow-engine.md`), et une étape « composez votre workflow » serait donc accomplie
-  d'avance pour tout le monde. L'éditeur reste atteignable par l'index des réglages.
+  d'avance pour tout le monde. L'éditeur reste atteignable par l'index des réglages.~~ **FAUX, mesuré
+  en production le 2026-09-28** (décision 606) : aucun workflow n'est créé avec un espace — le
+  « workflow par défaut » ne venait que du seed. Un espace neuf n'a ni workflow ni catalogue de nœuds,
+  et la création d'un channel y est impossible. Corrigé par le §10.1.
 - **Le guide ne mesure pas la qualité de ce qu'il compte** : un track vide accomplit l'étape 2.
   Compter la profondeur reviendrait à noter le travail de l'utilisateur.
 - ~~**Aucun `scripts/verify-onboarding.sh`** n'est écrit tant qu'aucun harnais du dépôt n'est
@@ -444,3 +454,105 @@ et le premier suffit :
   l'interdisait reste vraie et intacte : un harnais qu'aucune session ne peut exécuter livrerait
   une preuve non éprouvée (`CLAUDE.md` §25) — c'est bien pour cela qu'il n'est écrit qu'une fois
   exécutable, et son verdict est consigné avec lui.
+
+## 10. Révision `CRM-094` — le vrai premier lancement (décision 606)
+
+*Écrite le 2026-09-28, avant le code, après mesure de l'espace de production : un track, **aucun
+workflow, aucun nœud de catalogue**, aucun channel — et la création d'un channel impossible. Les trois
+arbitrages du responsable : un workflow de départ en un clic, une pastille qui s'ouvre, pour les
+administrateurs. Ce paragraphe l'emporte sur toute règle antérieure de ce document qu'il contredit.*
+
+### 10.1 Six étapes, et le workflow avant le channel
+
+| # | Clé | Mesure | Écran, ou geste |
+|---|---|---|---|
+| 1 | `espace` | inchangée | — |
+| 2 | `track` | inchangée | `/reglages/arborescence` |
+| 3 | `workflow` | `workflows`, `archived_at is null`, `HEAD count=exact` sous la politique existante | lien `/reglages/workflows` ; **et**, tant que le compte est nul, le geste « Créer le workflow de départ » (§10.3) |
+| 4 | `channel` | inchangée | `/reglages/arborescence` |
+| 5 | `affaire` | inchangée | `/reglages/arborescence` |
+| 6 | `messagerie` | inchangée | `/reglages/messagerie` |
+
+Un channel exige un workflow (`docs/SPEC-workflow-engine.md` §4.12.5) : l'étape le précède. La
+progression s'écrit désormais « N étapes sur 6 ».
+
+### 10.2 Le guide flottant
+
+**Pour qui.** Les **administrateurs** de l'espace courant : le rôle est celui que rend la base,
+`public.mon_role_espace` (`CRM-092` T8), jamais une table recopiée dans le navigateur. Le guide dans la
+page (`/`, `/demarrage`) reste rendu à tous, inchangé ; la pastille n'apparaît qu'aux administrateurs,
+parce que ses étapes sont des gestes d'administration. Cette lecture du rôle **décide d'un affichage**,
+jamais d'un droit : chaque écran et le geste du §10.3 gardent leurs refus serveur (`CLAUDE.md` §10).
+
+**Où.** Dans la coquille de l'application, donc sur **toutes** ses pages, sauf :
+
+| Page | Motif |
+|---|---|
+| `/` tant qu'elle rend le guide dans la page | le même contenu deux fois sur un écran |
+| `/demarrage` | même motif |
+
+**Quand.** Tant qu'**au moins une étape est à faire**, le guide n'étant pas masqué pour la session.
+Toutes les étapes accomplies : la pastille disparaît. Pendant la première mesure : rien n'est rendu —
+une pastille qui clignoterait « 0 sur 6 » puis « 4 sur 6 » dirait faux.
+
+**Deux formes.**
+
+| Forme | Rendu |
+|---|---|
+| **Réduite** — la pastille | un `button` en bas à droite, « Démarrage · 2 sur 6 » ; `aria-expanded` faux |
+| **Ouverte** — le panneau | la liste ordonnée des six étapes, au-dessus de la pastille ; « Réduire » et « Masquer pour la session » ; `aria-expanded` vrai |
+
+**Suivre un lien du panneau ne le referme pas** : c'est le défaut relevé par le responsable (« quand on
+clique on le perd »). La forme — réduite ou ouverte — est une préférence d'interface **de session**,
+retenue en `sessionStorage` (§10.4) pour survivre au changement de page, la coquille étant remontée par
+chaque route.
+
+**La progression est re-mesurée à chaque changement de page** et après le geste du §10.3 : terminer une
+étape sur un écran se voit dans la pastille en y revenant, sans recharger.
+
+**Non modal.** Aucun voile, aucun piège de focus : le reste de la page reste utilisable, panneau ouvert.
+`Échap` referme le panneau et rend le focus à la pastille ; ouvrir le panneau place le focus sur son
+titre. « Masquer pour la session » rend le focus au contenu principal (§7).
+
+### 10.3 Le workflow de départ, en un geste
+
+Tant que l'étape `workflow` est à faire, sa ligne porte, en plus de son lien, le bouton **« Créer le
+workflow de départ »** — rendu aux seuls administrateurs (même lecture qu'au §10.2 ; le geste est
+refusé par la base à tout autre rôle). Il appelle `public.creer_workflow_de_depart(p_workspace)`,
+spécifiée au §7 quater de `docs/SPEC-workflow-engine.md`, puis re-mesure les étapes.
+
+| Issue | Rendu sur la ligne |
+|---|---|
+| en cours | le bouton désactivé, « Création… » |
+| succès | l'étape passe à « Fait » ; annonce polie « Workflow de départ créé » |
+| refus | le message du refus, sur la ligne, le bouton restant offert s'il a un sens |
+
+Le workflow créé s'ouvre dans l'éditeur comme tout autre : il se renomme, se recompose, s'archive.
+
+### 10.4 Stockage
+
+| Donnée | Support | Catégorie `CLAUDE.md` §11 |
+|---|---|---|
+| Guide masqué | `sessionStorage`, `p2enjoy.demarrage.masque` — **inchangé**, il masque aussi la pastille | 2 |
+| Forme de la pastille | `sessionStorage`, `p2enjoy.demarrage.flottant` : `ouvert` ou absent | 2 |
+
+Rien d'autre ; aucun `localStorage`.
+
+### 10.5 Ce que `CRM-094` corrige au passage
+
+- **L'éditeur de workflows disait d'un catalogue VIDE que « tous ses nœuds sont déjà des étapes ».**
+  Il distingue désormais les deux cas ; le catalogue vide dit qu'il l'est, et renvoie vers
+  `/reglages/catalogue` et vers le geste du §10.3.
+- **Le formulaire de création d'un channel sans workflow affectable** garde sa phrase, et gagne le lien
+  vers l'éditeur de workflows.
+
+### 10.6 Preuves
+
+| Niveau | Preuve |
+|---|---|
+| pgTAP | `creer_workflow_de_depart` : l'administrateur crée nœuds, workflow par défaut, sept étapes dont l'initiale, onze transitions ; un nœud vivant de même clé est réutilisé, un nœud archivé refusé ; second appel refusé ; non-administrateur refusé ; anonyme refusé par le privilège ; `SECURITY INVOKER`, `search_path` vide, `EXECUTE` à `authenticated` seul |
+| API | le geste par un vrai jeton d'administratrice sur un espace neuf, puis un channel créé sur le workflow rendu ; `business_developer` refusé ; second appel refusé |
+| Unitaires | la sixième mesure ; les états de la pastille (cachée sans rôle admin, pendant la mesure, tout accompli, masquée, sur `/` et `/demarrage`) ; la forme retenue en `sessionStorage` ; `Échap` ; le geste et ses trois issues ; le message du catalogue vide |
+| E2E | un administrateur sur un **espace neuf** : pastille « 2 sur 6 », ouverture, geste, lien suivi sans perte du panneau, retour, channel créé, progression re-mesurée ; une lectrice ne voit aucune pastille ; clavier seul ; palier mobile ; console vierge |
+| Visuel | pastille et panneau aux quatre paliers, ouvert et réduit, sur un écran chargé ; captures observées |
+

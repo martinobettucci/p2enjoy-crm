@@ -30078,3 +30078,33 @@ orphelines ne portent aucun cookie remis et sont purgées d'elles-mêmes, un jou
 chaque ouverture (`0076`). **Si le cas se reproduit**, la piste est de distinguer, dans l'échangeur, le
 délai d'un appel en écriture de celui d'une lecture — à arbitrer alors, avec la mesure.
 
+## décision 606 — le vrai premier lancement : un workflow de départ, et un guide qui suit l'administrateur
+
+*2026-09-28. Retour du responsable, en production : « impossible de créer un channel dans mon premier
+track (j'imagine car il n'y a aucun workflow… peut-être dans le wizard créer d'abord son premier
+workflow ?) » et « le wizard, quand on clique, on le perd… il serait mieux qu'il soit un élément
+flottant, style onboarding de Stripe ».*
+
+**Observations.** Espace de production, lu en base : un track, **zéro** workflow, **zéro** nœud de
+catalogue, zéro channel. Le formulaire de channel le dit (« Aucun workflow n'est affectable… créez
+d'abord un workflow »), mais le guide ne mène à aucun workflow, et l'éditeur de workflows, sur un
+catalogue vide, affiche « Tous les nœuds actifs du catalogue sont déjà des étapes » — faux. La cause de
+fond est une **hypothèse fausse écrite dans la spécification du guide** (§9 de
+`docs/SPEC-onboarding.md`) : « un channel naît avec le workflow par défaut ». Le défaut ne venait que du
+seed ; aucune preuve n'avait joué le parcours depuis un espace réellement vide jusqu'au premier channel.
+
+**Arbitrages du responsable** (questions posées, options recommandées retenues toutes trois) :
+1. **Un workflow de départ en un clic** — le cycle commercial du seed, créé par une fonction
+   `SECURITY INVOKER` depuis l'étape « Workflow » du guide, puis modifiable. Écartés : des étapes de
+   guide sans rien créer ; un workflow posé d'office avec chaque espace.
+2. **Une pastille qui s'ouvre** en panneau, sur toutes les pages, qui ne se referme pas quand on suit un
+   de ses liens. Écarté : un panneau toujours ouvert.
+3. **Pour les administrateurs** ; les autres gardent le guide dans la page et dans les réglages.
+
+**Deux règles écrites sont renversées, et nommées comme telles** : « aucune surimpression » (§4.2 de la
+spécification du guide, §5.17 du design system) — la pastille reste non modale, sans voile ni piège de
+focus ; et « le guide n'interroge aucun rôle » (§6.3) — la pastille lit le rôle rendu par la base pour
+décider d'un **affichage**, jamais d'un droit.
+
+**Conséquences.** Unité `CRM-094`, quatre tranches ; spécifications écrites et committées avant le code.
+

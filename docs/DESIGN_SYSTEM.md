@@ -1618,10 +1618,11 @@ d'autres écrans. Ce que le guide lit, mesure et refuse de deviner est spécifi�
   capture d'écran étroite. C'est la même règle qu'au §5.15 pour les compteurs de `summary` : le
   chiffre est écrit, jamais laissé à deviner.
 
-- **Aucune surimpression, aucun voile, aucune bulle d'aide flottante.** Le §5 ne déclare aucune
-  modale — `CRM-043` puis `CRM-075` l'ont tranché deux fois —, et une visite guidée par surimpression
-  demanderait un piège de focus, une gestion d'`Échap` et un voile, trois mécanismes qu'aucune unité
-  n'a spécifiés. Le guide occupe la zone principale, dans le flux du document.
+- ~~**Aucune surimpression, aucun voile, aucune bulle d'aide flottante.**~~ **RÉVISÉ par `CRM-094`**
+  (décision 606, arbitrage du responsable) : le guide dans la page reste dans le flux du document, et
+  il gagne pour les administrateurs une **pastille flottante** qui s'ouvre en panneau (§5.49). La
+  pastille n'est **toujours pas une modale** : ni voile, ni piège de focus — la raison d'origine de la
+  règle, qui visait la visite guidée par surimpression, tient toujours.
 
 - **« Masquer le guide » est un bouton secondaire, jamais une croix seule.** Une croix sans libellé
   n'annonce ni ce qu'elle ferme ni pour combien de temps ; le libellé le dit, et la phrase sous le
@@ -4807,3 +4808,44 @@ d'onglets déborderait dès le troisième track. C'est le critère déjà écrit
 - **AUCUNE COULEUR, AUCUN JETON, AUCUNE ICÔNE NOUVELLE.** La tranche emprunte au §5.22 son `select`
   et sa dérogation, au §5.30 la graduation de sa mention, au §5.8 ses états. Le §5.48 tient sans
   changement pour tout le reste.
+
+### 5.49 Guide flottant — `CRM-094`
+
+La seule surface du produit **positionnée hors du flux** du document. Ce qu'elle mesure et quand elle
+paraît est spécifié par `docs/SPEC-onboarding.md` §10 ; ces règles ne disent que de quoi elle a l'air.
+Elle reprend la liste du §5.17 telle quelle — mêmes lignes, mêmes mots d'état, même progression écrite
+— : c'est le même guide, dans un autre contenant.
+
+- **Une pastille, puis un panneau.** Réduite, c'est un `button` en bas à droite de la fenêtre : icône
+  Lucide **`ListChecks`** — employée nulle part ailleurs (§9) —, et « Démarrage · 2 sur 6 ». Sous `md`,
+  le libellé visible se réduit à « 2/6 », le libellé complet restant le nom accessible (§12.3). Ouverte,
+  elle porte au-dessus d'elle un panneau à la largeur d'un formulaire court, `min(380px, 100vw − 32px)`,
+  d'une hauteur plafonnée à `min(70vh, 560px)` et qui défile en lui-même, jamais la page.
+
+- **Surface et relief.** `--color-surface`, bordure `--color-border`, `--radius-lg` pour le panneau et
+  rayon plein pour la pastille, ombre **`--shadow-card-hover`** — le relief existant le plus marqué, parce
+  que c'est la seule surface qui flotte au-dessus du contenu. Aucun jeton nouveau.
+
+- **Position.** `fixed`, à `16 px` des bords (`12 px` sous `md`). Empilement **`z-20`** : sous le voile
+  (`z-30`) et le tiroir (`z-40`) de la navigation mobile, sous les panneaux de l'en-tête (`z-40`) — un
+  menu qu'on ouvre passe devant le guide, jamais derrière. Pastille visible, la zone principale reçoit
+  en bas une marge égale à la hauteur de la pastille plus son écart : le dernier élément d'une liste
+  n'est jamais caché dessous.
+
+- **Non modale.** Aucun voile, aucun piège de focus, page utilisable panneau ouvert. Ouvrir place le
+  focus sur le titre du panneau ; `Échap` referme et rend le focus à la pastille ; « Réduire » aussi.
+  « Masquer pour la session » est un bouton secondaire à libellé, jamais une croix seule (§5.17), et
+  rend le focus au contenu principal.
+
+- **Ce qui ne bouge pas.** L'état d'une étape est un mot (§5.17) ; la progression est écrite, la barre
+  `aria-hidden` ; toute cible fait au moins `--size-target`. Le changement de progression est annoncé
+  par la région polie de la coquille, non par la pastille.
+
+- **Le geste « Créer le workflow de départ »** est un bouton **primaire** sur la ligne de l'étape — le
+  seul primaire du panneau, puisque c'est la seule action qui s'y accomplit plutôt que d'y mener. En
+  cours, il est désactivé et dit « Création… » ; son refus s'écrit sur la ligne, en
+  `--color-danger-on-soft` sur `--color-danger-soft` (§5.7).
+
+- **Mouvement.** Ouverture et fermeture en 150 ms de fondu et de translation verticale ; rien sous
+  `prefers-reduced-motion` (§6).
+
