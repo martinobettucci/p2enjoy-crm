@@ -30060,3 +30060,21 @@ divergeraient.
   connexions réelles vertes. Un test d'environnement triait les noms : `OIDC_CLIENT_SECRET` ne se range
   plus au même endroit — attente révisée, non contournée.
 
+## décision 605 — une ouverture de session abandonnée alors que son écriture avait abouti
+
+*2026-09-27, 21:55 UTC, en production, juste après la bascule du secret (décision 604).* Deux tentatives de
+connexion du responsable ont rendu « le serveur n'a pas répondu ».
+
+**Observations.** Kong : `ouvrir_session_serveur` en `499` — l'échangeur a fermé la requête à son délai
+de 3 s par appel (`DELAI_APPEL_MS`). Pourtant, `sessions_sso` porte deux lignes créées à 21:55:49 et
+21:55:56 : la transaction avait commencé aussitôt et a été validée, sa réponse arrivant trop tard. Le
+secret n'y est pour rien — LeLabs rend `invalid_grant` à un code inventé avec l'un comme l'autre nom, et
+non `invalid_client`. Mesuré après coup : écriture réelle annulée en 6 ms, `lire_session_serveur` en
+0,17 s par le même chemin, aucun verrou, disque et mémoire normaux. Les connexions ssh vers la cellule
+expiraient elles aussi par moments ce soir-là. Troisième tentative à 22:14:40 : réussie.
+
+**Décision.** Latence passagère de la cellule sur une écriture : rien n'est changé. Les deux sessions
+orphelines ne portent aucun cookie remis et sont purgées d'elles-mêmes, un jour après leur échéance, par
+chaque ouverture (`0076`). **Si le cas se reproduit**, la piste est de distinguer, dans l'échangeur, le
+délai d'un appel en écriture de celui d'une lecture — à arbitrer alors, avec la mesure.
+

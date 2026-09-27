@@ -1073,5 +1073,15 @@ Spark distant de prod »).
 - **Étape 4** : `scripts/spark/livrer.sh` par les IP, révision **`f99a9b32`** ; `functions` recréé, sain.
 - **Étape 5** : `verifier.sh` — un premier passage a lu « 0 conteneur sur 11 », lecture ssh ratée au
   rebond (neuf services sains relus aussitôt, `https://` en `200`) ; rejoué : **26 contrôles, aucune
-  anomalie**. `functions` porte `OIDC_CLIENT_SECRET` et plus l'ancien nom. **Connexion réelle attendue
-  du responsable**, avant le retrait de `SSO_OIDC_CLIENT_SECRET` (étape 6).
+  anomalie**. `functions` porte `OIDC_CLIENT_SECRET` et plus l'ancien nom.
+- **Étape 5, connexion réelle.** Deux premières tentatives du responsable, le 2026-09-27 à 21:55 UTC, ont
+  rendu « le serveur n'a pas répondu » : l'échangeur a abandonné `ouvrir_session_serveur` à son délai de
+  3 s (Kong : `499`), alors que l'écriture a ABOUTI — deux sessions créées à 21:55:49 et 21:55:56, jamais
+  remises au navigateur. Mesuré ensuite : LeLabs accepte le secret des deux noms (`invalid_grant` sur un
+  code inventé, et non `invalid_client`) ; la même écriture, annulée, prend 6 ms ; `lire_session_serveur`
+  répond en 0,17 s par le même chemin ; aucun verrou, disque et mémoire normaux. Une latence d'écriture
+  passagère de la cellule, donc (décision 605). Troisième tentative, 22:14:40 UTC : **session ouverte,
+  jeton chiffré, renouvelée ensuite**.
+- **Étape 7** : l'agent du dépôt du SSO prévenu (`sso-85`). **Étape 8** : note `CONTRIBUTORS` reproposée,
+  identique au dépôt. **Restent au responsable** : retirer `SSO_OIDC_CLIENT_SECRET` (étape 6) et accepter
+  la note en console.

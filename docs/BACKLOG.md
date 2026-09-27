@@ -14656,13 +14656,14 @@ décision 594.
       `verify-spark` **91, aucune anomalie** (cinq preuves nouvelles, dont quatre refus avant tout ssh) ;
       `verifier.sh` joint la production par les seules IP : **26 contrôles, aucune anomalie**.
 
-- [~] **Secret sous `OIDC_CLIENT_SECRET`** (`CRM-092`, `docs/SPEC-session-sso.md` §12 bis, décision 604)
+- [x] **Secret sous `OIDC_CLIENT_SECRET`** (`CRM-092`, `docs/SPEC-session-sso.md` §12 bis, décision 604)
       — bascule directe : code, Compose, harnais, realm de développement, amorçage d'un `.env`
       antérieur, documentation ; en production, la variable posée AVANT la livraison, puis l'ancien nom
       retiré et l'agent du SSO prévenu. Mesuré le 2026-09-26 : `verify-scripts` **114** (mode `copie` :
       valeur reprise, ou tirée sans l'ancien nom) ; `verify-functions` **14** ; `verify-spark` **91** ;
       `verify-session-sso` **66** ; `e2e/api/session.spec.ts` **24/24** ; `connexion.spec.ts` **16/16**.
-      Reste la production (`docs/PROD_MIGRATIONS.md` §2.6).
+      **En production le 2026-09-27** (révision `f99a9b32`), connexion réelle vérifiée ; le retrait de
+      l'ancien nom revient au responsable (`docs/PROD_MIGRATIONS.md` §2.6, étape 6).
 
 ### CRM-093 — L'interface n'offre pas à un compte les gestes que le serveur lui refuse `[ ]`
 *Créée le 2026-09-26 — décision 603, arbitrage du responsable. Relevé en relisant les captures de

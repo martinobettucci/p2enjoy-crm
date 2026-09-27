@@ -13,14 +13,22 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### Déploiement
+_Rien à publier pour le moment._
+
+## [Publié]
+
+### Déployé en production, 2026-09-27
+
+Cellule Spark `crm`, révision `f99a9b32` : `OIDC_CLIENT_SECRET` posé à la même valeur AVANT la livraison,
+`functions` recréé (`docs/PROD_MIGRATIONS.md` §2.6). Vérifié : `verifier.sh` 26 contrôles sans anomalie,
+connexion réelle du responsable le 2026-09-27 à 22:14 UTC.
+
+#### Déploiement
 
 - **Le secret du client LeLabs se lit sous `OIDC_CLIENT_SECRET`**, le nom commun à toutes les intégrations
   du SSO (décision 604) ; `SSO_OIDC_CLIENT_SECRET` n'est plus lu. Un `.env` de développement antérieur
   reçoit le nouveau nom à la même valeur au prochain `./runDev.sh`. En production, la variable doit être
   posée AVANT la livraison (`docs/PROD_MIGRATIONS.md` §2.6).
-
-## [Publié]
 
 ### Déployé en production, 2026-09-26
 
