@@ -14745,3 +14745,12 @@ que le guide et le board le promettaient (INC-256). Spécifié avant le code : `
       `e2e/ui/premier-lancement.spec.ts` jusqu'à l'affaire, à la souris et au clavier seul ;
       `docs/manual.md` ; captures aux quatre paliers.
 - [ ] **T4** — livraison en production (migration 81) et constat : le responsable crée sa première affaire.
+
+## Arbitrage du 2026-09-29 — INC-257 (décision 610)
+
+- [ ] **INC-257 — la preuve B5 « aucune card archivée n'est vieillie par le seed » mesure le temps
+      écoulé, non le geste du seed** (`CRM-046` tranche 3, `CRM-041` ; `e2e/api/board.spec.ts`).
+      Arbitrage du responsable : **réinitialiser la base de développement** (`./resetMe.sh`), sans
+      corriger la mesure à ce stade. Reste à faire, sur instruction : une mesure qui ne dépende pas du
+      jour — par exemple `entered_step_at ≥ created_at` —, vue rouge sous un seed qui vieillirait
+      l'affaire archivée, puis la ligne *f* de `docs/SPEC-seed.md` §9.12.6 précisée en ce sens.

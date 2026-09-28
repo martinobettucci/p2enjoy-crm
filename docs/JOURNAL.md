@@ -30279,3 +30279,28 @@ sélecteur revenu à vide, vert après — lien, titre, flèche tracée et direc
 après rechargement ; la correction des seules flèches, retirée sous mutation, fait rougir le parcours sur
 la direction. Le parcours de reproduction, encore rouge, avait été committé avec la spécification
 (`2e3ba587`) ; il devient vert avec ce correctif.
+
+## décision 610 — INC-257 : la base de développement est reconstruite, la mesure de B5 reste à corriger
+
+*2026-09-29, pendant la vérification de `CRM-095` T1 ; arbitrage du responsable.*
+
+**Problème.** `scripts/verify-harness.sh` échoue sur un seul scénario d'API, sans rapport avec `CRM-095` :
+B5 « aucune card archivée n'est vieillie par le seed » (`e2e/api/board.spec.ts`) rend un âge de **4** jours
+là où il attend 0.
+
+**Observations.** La card archivée `…0c8` porte `entered_step_at = created_at = 2026-09-24 01:52:46` — la
+reconstruction de la base du 2026-09-24. Le seed, réappliqué à 01:00 le 2026-09-29, ne rafraîchit par
+construction que l'ancienneté des cards vivantes (section 8 octies bis de `supabase/seed/apply-seed.sh`).
+La preuve mesure donc le temps écoulé depuis la reconstruction, non un geste du seed : elle n'est verte que
+dans les 24 heures qui suivent un `./resetMe.sh` (INC-257).
+
+**Options soumises.** Corriger la mesure (`entered_step_at ≥ created_at`, indépendante du jour) —
+recommandée ; réinitialiser la base seulement ; faire rajeunir aussi l'affaire archivée par le seed, ce qui
+change le contrat du §9.12 de `docs/SPEC-seed.md`.
+
+**Décision du responsable : réinitialiser la base seulement.** `./resetMe.sh` reconstruit la base de
+développement — migrations 1 à 81 rejouées, seed réappliqué — ; la mesure n'est pas modifiée et INC-257
+**reste ouverte** (`docs/BACKLOG.md`, « Arbitrage du 2026-09-29 »).
+
+**Conséquence connue.** B5 rougira de nouveau 24 heures après chaque reconstruction ; une campagne qui
+l'atteint après ce délai doit être précédée d'un `./resetMe.sh`.

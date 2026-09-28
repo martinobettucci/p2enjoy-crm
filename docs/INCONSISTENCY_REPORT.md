@@ -6798,3 +6798,26 @@ une première affaire » (`docs/SPEC-onboarding.md` §3, §10.1), le design syst
 la première » dans une colonne vide du board (§5.2), et le lien de l'étape mène à l'arborescence, d'où rien
 ne mène à un board. **ARBITRÉE le 2026-09-28 — décision 609** : créer depuis le board du channel, le titre
 seul, puis ouvrir la fiche. Suivi : unité `CRM-095`.
+
+### INC-257 — la preuve « aucune card archivée n'est vieillie par le seed » échoue dès que la base de développement a plus de 24 heures
+
+*Relevée le 2026-09-29 par `scripts/verify-harness.sh`, pendant la vérification de `CRM-095` T1 ; sans
+rapport avec cette unité. Unités concernées : `CRM-046` tranche 3 (le contrat), `CRM-041` (la preuve).*
+`e2e/api/board.spec.ts`, scénario B5 « aucune card archivée n'est vieillie par le seed », mesure la ligne
+*f* du contrat de `docs/SPEC-seed.md` §9.12.6 par `Math.floor((now − entered_step_at) / 1 jour) = 0` sur
+la card archivée `…0c8`. Or le seed, **par construction**, ne touche pas l'ancienneté d'une card archivée :
+la section 8 octies bis de `supabase/seed/apply-seed.sh` ne ramène à `now()` que les cards vivantes
+(`archived_at is null and deleted_at is null`). `…0c8` garde donc l'`entered_step_at` de sa création —
+mesuré en base : `2026-09-24 01:52:46`, égal à son `created_at`, soit la reconstruction de la base du
+2026-09-24 — et la preuve rend **4** au lieu de 0, sur un seed réappliqué une heure plus tôt.
+
+**Ce que la preuve confond** : « le seed l'a vieillie » — une date **posée dans le passé** par le seed,
+ce que la ligne *f* interdit — et « le temps a passé depuis sa création », que le contrat n'interdit pas
+et que le seed ne corrige volontairement pas sur une affaire archivée. La preuve n'est donc verte que
+dans les 24 heures qui suivent un `./resetMe.sh`. Le comportement du seed n'est pas en cause ; la mesure
+l'est.
+
+**ARBITRÉE le 2026-09-29 — décision 610** : réinitialiser la base de développement (`./resetMe.sh`) ; la
+mesure n'est pas corrigée à ce stade, et INC-257 **reste ouverte**. Conséquence connue : B5 rougira de
+nouveau 24 heures après chaque reconstruction de la base. Suivi : `docs/BACKLOG.md`, « Arbitrage du
+2026-09-29 ».
