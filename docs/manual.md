@@ -2124,6 +2124,11 @@ interdire un geste qui vous est peut-être permis. Le produit préfère vous mon
   alors l'arborescence et se retrouve dans **Réglages ▸ Corbeille**, d'où il se restaure
   (chapitre 5 ter).
 
+**La barre latérale suit vos gestes, sans rechargement** : un track créé y paraît aussitôt, un track
+renommé ou recoloré y change, un track archivé ou mis à la corbeille la quitte — et il y revient
+dès que vous le désarchivez ou le restaurez depuis la corbeille. L'ancienne liste reste affichée le
+temps de la mise à jour : la barre ne clignote pas.
+
 **La suppression définitive n'existe pas**, et ce n'est pas un oubli : le produit ne l'expose nulle
 part, et la base la refuse. Archiver masque ; mettre à la corbeille retire. Les deux sont
 réversibles, et **rien n'efface**.

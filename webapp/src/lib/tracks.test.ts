@@ -1,14 +1,26 @@
 // @verifies CRM-020 (docs/BACKLOG.md) — lecture des tracks par la barre latérale
 // @verifies docs/SPEC-tracks.md §7 (requête émise), §4 (archivage masqué), §3 (ordre)
 // @verifies docs/SPEC-webapp.md §6.4 (contrat asynchrone), §7 (états systématiques)
+// @verifies INC-254, décision 608 — docs/BACKLOG.md « Correctif arbitré le 2026-09-28 » ;
+//           docs/SPEC-webapp.md §6.3 bis (la relecture silencieuse et le signal `p2enjoy:tracks-modifies`),
+//           docs/DESIGN_SYSTEM.md §5.13, §5.29 tranche 2 c (un rechargement n'efface pas la liste qu'il relit)
 //
 // Ce fichier éprouve **la requête réellement émise** et la classification des échecs, pas
 // seulement la valeur rendue. Motif : deux des trois exigences de `docs/SPEC-tracks.md` §7 sont
 // portées par la requête elle-même — le filtre des archivés et l'ordre — et un test qui
 // n'observerait que la réponse les laisserait disparaître sans bruit.
 
+import { act, renderHook, waitFor } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { COLONNES_TRACK, lireTracks, type Track } from './tracks'
+import {
+	COLONNES_TRACK,
+	EVENEMENT_TRACKS_MODIFIES,
+	lireTracks,
+	signalerTracksModifies,
+	useApresTracksModifies,
+	useTracks,
+	type Track,
+} from './tracks'
 import type { ClientCrm } from './supabase'
 
 type Appel = {
@@ -175,3 +187,109 @@ describe('états rendus (docs/SPEC-webapp.md §6.4)', () => {
 		if (etat.statut === 'erreur') expect(etat.erreur.detail).toBe('panne brute')
 	})
 })
+
+// ---------------------------------------------------------------------------------------------
+// INC-254, décision 608 — docs/SPEC-webapp.md §6.3 bis
+// ---------------------------------------------------------------------------------------------
+
+/** Un client dont les réponses se succèdent, une par lecture, et qui peut retenir la suivante. */
+function clientSuccessif(reponses: Reponse[]): { client: ClientCrm; lectures: () => number; liberer: () => void } {
+	let lectures = 0
+	// `await` appelle le `then` d'un objet dans une micro-tâche : une libération demandée AVANT cet appel
+	// est retenue, sans quoi elle ne libérerait rien et la lecture attendrait pour toujours.
+	let libere = false
+	let suite: (() => void) | null = null
+	const client = {
+		from: () => ({
+			select: () => {
+				const rang = lectures
+				lectures += 1
+				const reponse = reponses[Math.min(rang, reponses.length - 1)] as Reponse
+				const chaine = {
+					is: () => chaine,
+					order: () => chaine,
+					then: (resoudre: (valeur: Reponse) => unknown) =>
+						// La SECONDE lecture est retenue jusqu'à `liberer` : c'est la fenêtre où une relecture
+						// qui repasserait par le chargement ferait paraître le squelette.
+						rang === 0
+							? Promise.resolve(reponse).then(resoudre)
+							: new Promise<void>((poursuivre) => {
+									if (libere) poursuivre()
+									else suite = poursuivre
+								}).then(() => resoudre(reponse)),
+				}
+				return chaine
+			},
+		}),
+	} as unknown as ClientCrm
+	return {
+		client,
+		lectures: () => lectures,
+		liberer: () => {
+			libere = true
+			suite?.()
+		},
+	}
+}
+
+const SECOND: Track = { ...TRACK, id: 't-2', name: 'Studio web', slug: 'studio-web', position: 2 }
+
+describe('la relecture silencieuse — docs/SPEC-webapp.md §6.3 bis', () => {
+	it('garde la liste affichée pendant la relecture, puis rend la nouvelle — aucun squelette', async () => {
+		const espion = clientSuccessif([
+			{ data: [TRACK], error: null, status: 200 },
+			{ data: [TRACK, SECOND], error: null, status: 200 },
+		])
+		const { result } = renderHook(() => useTracks(espion.client))
+		await waitFor(() => expect(result.current.etat.statut).toBe('pret'))
+
+		act(() => result.current.relire())
+		// La relecture est en vol : l'état reste PRÊT, avec l'ancienne liste.
+		expect(espion.lectures()).toBe(2)
+		expect(result.current.etat).toEqual({ statut: 'pret', donnees: [TRACK] })
+
+		await act(async () => espion.liberer())
+		await waitFor(() => expect(result.current.etat).toEqual({ statut: 'pret', donnees: [TRACK, SECOND] }))
+	})
+
+	it('un échec de la relecture est un échec de lecture comme un autre — jamais une liste gardée en silence', async () => {
+		const espion = clientSuccessif([
+			{ data: [TRACK], error: null, status: 200 },
+			{ data: null, error: { message: 'Failed to fetch' }, status: 0 },
+		])
+		const { result } = renderHook(() => useTracks(espion.client))
+		await waitFor(() => expect(result.current.etat.statut).toBe('pret'))
+		act(() => result.current.relire())
+		await act(async () => espion.liberer())
+		await waitFor(() => expect(result.current.etat.statut).toBe('erreur'))
+	})
+
+	it('`recharger`, la reprise d’une erreur, repasse bien par le chargement : seule la relecture est silencieuse', async () => {
+		const espion = clientSuccessif([
+			{ data: [TRACK], error: null, status: 200 },
+			{ data: [TRACK], error: null, status: 200 },
+		])
+		const { result } = renderHook(() => useTracks(espion.client))
+		await waitFor(() => expect(result.current.etat.statut).toBe('pret'))
+		act(() => result.current.recharger())
+		expect(result.current.etat.statut).toBe('chargement')
+		await act(async () => espion.liberer())
+	})
+})
+
+describe('le signal `p2enjoy:tracks-modifies` — docs/SPEC-webapp.md §6.3 bis', () => {
+	it('`signalerTracksModifies` émet l’événement nommé, et l’abonnement le reçoit', () => {
+		let recus = 0
+		const relire = () => {
+			recus += 1
+		}
+		const { unmount } = renderHook(() => useApresTracksModifies(relire))
+		signalerTracksModifies()
+		expect(recus).toBe(1)
+		// Démonté, il le lâche : aucune relecture ne part d'une coquille quittée.
+		unmount()
+		globalThis.dispatchEvent(new Event(EVENEMENT_TRACKS_MODIFIES))
+		expect(recus).toBe(1)
+	})
+})
+

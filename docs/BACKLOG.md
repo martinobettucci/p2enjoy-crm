@@ -14708,10 +14708,14 @@ et §5.49.*
 
 ## Correctif arbitré le 2026-09-28 — décision 608
 
-- [ ] **INC-254 — la barre latérale relit ses tracks après une écriture de l'arborescence** (`CRM-007`,
+- [x] **INC-254 — la barre latérale relit ses tracks après une écriture de l'arborescence** (`CRM-007`,
       `CRM-075`). La coquille, gardée d'une page de réglages à l'autre, relit ses tracks sur un signal
       d'interface émis par les écritures de l'arborescence — création, renommage, réordonnancement,
       archivage, restauration, corbeille —, sur le modèle de `p2enjoy:workflow-de-depart`. Spécification
-      écrite avant le code (`docs/SPEC-webapp.md`, coquille), preuve unitaire qui échoue avant
-      correction, preuve E2E — un track créé paraît dans la barre latérale sans rechargement —, captures
-      observées ; livraison webapp seule, après celle de `CRM-094`.
+      écrite avant le code (`docs/SPEC-webapp.md` §6.3 bis, `docs/DESIGN_SYSTEM.md` §5.13, commit
+      `64ae4d7a`). Mesuré le 2026-09-28 : onze preuves unitaires, chacune vue échouer sans son code —
+      `tracks.test` **15**, `AppShell.test` **16**, `AdministrationArborescence.test` **50**,
+      `Corbeille.test` **14** ; E2E `administration-arborescence`, `corbeille` et `guide-flottant`
+      **37/37**, le premier vu rouge sans l'abonnement de la coquille ; campagne `verify-webapp.sh`
+      **44 contrôles sans anomalie** — 3 353 tests unitaires, 765 scénarios d'interface ; quatre captures
+      de `CRM-094` renouvelées, où « Premier track » paraît dans la barre latérale.

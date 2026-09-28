@@ -4,6 +4,9 @@
 //       §3.3 (un enfant dont le parent est en corbeille est traité comme inaccessible), §4
 // @spec docs/SPEC-webapp.md §6.3 (ce que la coquille lit), §6.4 (contrat asynchrone)
 // @spec docs/SPEC-permissions-rls.md §4 (lecture par les membres du workspace)
+// @spec INC-254, décision 608 — docs/BACKLOG.md « Correctif arbitré le 2026-09-28 » ; docs/SPEC-webapp.md
+//       §6.3 bis (la relecture silencieuse et le signal `p2enjoy:tracks-modifies`) ; docs/DESIGN_SYSTEM.md
+//       §5.13, §5.29 tranche 2 c
 //
 // `public.tracks` porte, depuis `CRM-020`, une politique de lecture réservée aux membres du
 // workspace. Sans session la requête rend `200` et `[]` ; avec la session restaurée par `CRM-009`,
@@ -71,15 +74,22 @@ export async function lireTracks(client: ClientCrm): Promise<EtatAsync<readonly 
 }
 
 /**
- * Charge les tracks accessibles et expose un rechargement **réel** — la reprise proposée par
- * l'état d'erreur relance la requête, elle ne recharge pas la page (docs/SPEC-webapp.md §7).
+ * Charge les tracks accessibles et expose deux relectures **réelles** :
+ *
+ * - `recharger`, la reprise proposée par l'état d'erreur, repasse par le chargement — elle relance la
+ *   requête, elle ne recharge pas la page (docs/SPEC-webapp.md §7) ;
+ * - `relire`, la relecture qui suit une écriture (INC-254, §6.3 bis), GARDE la liste affichée jusqu'à la
+ *   nouvelle : un squelette ferait clignoter la barre latérale à chaque geste de l'arborescence, et un
+ *   rechargement n'efface pas la liste qu'il relit (docs/DESIGN_SYSTEM.md §5.29 tranche 2 c). Son échec,
+ *   lui, remplace la liste comme tout échec : la garder en silence serait une valeur trompeuse.
  */
 export function useTracks(client: ClientCrm | null): {
 	readonly etat: EtatAsync<readonly Track[]>
 	readonly recharger: () => void
+	readonly relire: () => void
 } {
 	const [etat, setEtat] = useState<EtatAsync<readonly Track[]>>(enChargement)
-	const [tentative, setTentative] = useState(0)
+	const [demande, setDemande] = useState({ tentative: 0, silencieuse: false })
 	// Une réponse arrivée après le démontage ne doit pas écrire dans un composant démonté, ni une
 	// réponse périmée écraser une réponse plus récente.
 	const courant = useRef(0)
@@ -87,15 +97,40 @@ export function useTracks(client: ClientCrm | null): {
 	useEffect(() => {
 		if (client === null) return
 		const rang = ++courant.current
-		setEtat(enChargement)
+		if (!demande.silencieuse) setEtat(enChargement)
 		void lireTracks(client).then((resultat) => {
 			if (rang === courant.current) setEtat(resultat)
 		})
-	}, [client, tentative])
+	}, [client, demande])
 
 	const recharger = useCallback(() => {
-		setTentative((precedente) => precedente + 1)
+		setDemande((precedente) => ({ tentative: precedente.tentative + 1, silencieuse: false }))
 	}, [])
 
-	return { etat, recharger }
+	const relire = useCallback(() => {
+		setDemande((precedente) => ({ tentative: precedente.tentative + 1, silencieuse: true }))
+	}, [])
+
+	return { etat, recharger, relire }
+}
+
+/**
+ * L'événement d'interface émis après toute écriture qui change ce que la barre latérale montre
+ * (docs/SPEC-webapp.md §6.3 bis) : la coquille, gardée d'une page de réglages à l'autre, ne relit ses
+ * tracks qu'à son montage, et sans ce signal elle écrirait « Aucun track » sous un track qui vient de
+ * naître (INC-254).
+ */
+export const EVENEMENT_TRACKS_MODIFIES = 'p2enjoy:tracks-modifies'
+
+/** Émis par les écrans qui écrivent un track, après un succès — jamais sur un refus ni sans effet. */
+export function signalerTracksModifies(): void {
+	globalThis.dispatchEvent(new Event(EVENEMENT_TRACKS_MODIFIES))
+}
+
+/** Abonne la coquille au signal ; `relire` doit être stable, comme toute dépendance d'effet. */
+export function useApresTracksModifies(relire: () => void): void {
+	useEffect(() => {
+		globalThis.addEventListener(EVENEMENT_TRACKS_MODIFIES, relire)
+		return () => globalThis.removeEventListener(EVENEMENT_TRACKS_MODIFIES, relire)
+	}, [relire])
 }

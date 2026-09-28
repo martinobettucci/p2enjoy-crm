@@ -1,16 +1,18 @@
 // @verifies CRM-007 (docs/BACKLOG.md) — coquille : points de repère, états, préférences
 // @verifies docs/DESIGN_SYSTEM.md §4 (architecture), §5.8 (états), §8 (accessibilité)
 // @verifies docs/SPEC-webapp.md §5.1 (coquille), §7 (états), §9 (accessibilité), §11 (stockage)
+// @verifies INC-254, décision 608 — docs/SPEC-webapp.md §6.3 bis : la coquille relit ses tracks au signal
+//           `p2enjoy:tracks-modifies`, sans squelette ni remontage de la page ; docs/DESIGN_SYSTEM.md §5.13
 //
 // Les composants sont réellement montés et interrogés par leur **rôle accessible** quand il
 // existe : un test qui n'interrogerait que des classes CSS validerait une apparence sans rien
 // dire de l'utilisabilité.
 
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter } from 'react-router'
 import type { ClientCrm } from '../lib/supabase'
-import type { Track } from '../lib/tracks'
+import { EVENEMENT_TRACKS_MODIFIES, type Track } from '../lib/tracks'
 import type { Workspace } from '../lib/workspaces'
 
 const injecte = vi.hoisted(() => ({ client: null as ClientCrm | null }))
@@ -243,3 +245,24 @@ describe('préférences et stockage (CLAUDE.md §11)', () => {
 		)
 	})
 })
+
+describe('INC-254 — la barre latérale suit les écritures de l’arborescence (docs/SPEC-webapp.md §6.3 bis)', () => {
+	it('relit ses tracks au signal, sans squelette et sans remonter la page', async () => {
+		const DEUX_TRACKS: Reponse = { ...TROIS_TRACKS, data: (TROIS_TRACKS.data as Track[]).slice(0, 2) }
+		injecte.client = client([UNE_LIGNE], [DEUX_TRACKS, TROIS_TRACKS])
+		monter()
+		await waitFor(() => expect(screen.getAllByTestId('entree-track')).toHaveLength(2))
+		const contenu = screen.getByText('contenu')
+
+		// Un track vient de naître sur l'arborescence, qui émet le signal.
+		act(() => {
+			globalThis.dispatchEvent(new Event(EVENEMENT_TRACKS_MODIFIES))
+		})
+		// Pendant la relecture, l'ancienne liste reste : aucun squelette, aucun clignotement.
+		expect(screen.getAllByTestId('entree-track')).toHaveLength(2)
+		await waitFor(() => expect(screen.getAllByTestId('entree-track')).toHaveLength(3))
+		// La page n'a pas été remontée : c'est le même nœud, une saisie en cours y aurait survécu.
+		expect(screen.getByText('contenu')).toBe(contenu)
+	})
+})
+

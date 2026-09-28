@@ -4,6 +4,8 @@
 // @spec CRM-094 (docs/BACKLOG.md) tranches T2 et T3 — l'espace courant et son rôle rendus par un contexte,
 //       et le guide flottant monté au bas de la zone principale (docs/SPEC-onboarding.md §10.2,
 //       docs/DESIGN_SYSTEM.md §5.49)
+// @spec INC-254, décision 608 — docs/SPEC-webapp.md §6.3 bis : la barre latérale relit ses tracks au
+//       signal des écritures de l'arborescence, sans squelette ; docs/DESIGN_SYSTEM.md §5.13
 //
 // La coquille assemble les points de repère sémantiques exigés par docs/DESIGN_SYSTEM.md §8 —
 // `aside`, `nav`, `header`, `main` — et décide, à un seul endroit, lequel des états de
@@ -21,7 +23,7 @@ import type { EtatAsync } from '../lib/async'
 import { clientCrm } from '../lib/supabase'
 import type { Channel } from '../lib/channels'
 import { estAdministrateur, useRoleWorkspace } from '../lib/roles'
-import { useTracks } from '../lib/tracks'
+import { useApresTracksModifies, useTracks } from '../lib/tracks'
 import { useWorkspaces } from '../lib/workspaces'
 import { useAuthentification } from './Authentification'
 import { FournisseurEspace } from './ContexteEspace'
@@ -67,7 +69,11 @@ export function AppShell({
 	// l'en-tête, et les tracks, portés par la barre latérale. Ils échouent séparément, et la zone
 	// principale décide en les regardant **tous les deux** (voir `ZonePrincipale`).
 	const { etat, recharger } = useWorkspaces(clientCrm)
-	const { etat: etatTracks, recharger: rechargerTracks } = useTracks(clientCrm)
+	const { etat: etatTracks, recharger: rechargerTracks, relire: relireTracks } = useTracks(clientCrm)
+	// INC-254 (docs/SPEC-webapp.md §6.3 bis) : les routes de réglages rendent cette coquille au même
+	// endroit, et React la GARDE d'une page à l'autre ; ses tracks, lus au montage, ne suivraient pas un
+	// track créé sur l'arborescence. Le signal les fait relire, sans squelette.
+	useApresTracksModifies(relireTracks)
 	// L'espace courant est le premier rendu — patron de `Carnet` et `Objectifs` —, et son rôle est
 	// celui que la base applique (`mon_role_espace`). Tenus ici une fois, rendus par le contexte au
 	// guide et à sa pastille (docs/SPEC-onboarding.md §10.2) ; ils décident d'un affichage, jamais

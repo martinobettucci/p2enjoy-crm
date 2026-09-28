@@ -3,6 +3,8 @@
 //           archiver), §7 (les channels), §3 (adresse et composition)
 // @verifies docs/DESIGN_SYSTEM.md §5.13 (cette surface), §7 (paliers), §8 (accessibilité)
 // @verifies CLAUDE.md §16 (vérification visuelle), §22 (accessibilité clavier)
+// @verifies INC-254, décision 608 — docs/SPEC-webapp.md §6.3 bis, docs/DESIGN_SYSTEM.md §5.13 : la barre
+//           latérale suit chaque geste sur un track — créé, renommé, archivé, désarchivé — sans rechargement
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
@@ -148,6 +150,10 @@ test.describe('les cinq gestes, à la souris (docs/SPEC-administration-arboresce
 			await expect(creation).toBeHidden()
 			await expect(listeTracks(page).getByText(nom, { exact: true })).toBeVisible()
 			await expect(listeTracks(page).locator('code', { hasText: slug })).toBeVisible()
+			// INC-254 : la barre latérale le liste aussitôt, sans rechargement — la coquille, gardée d'une
+			// page de réglages à l'autre, relit ses tracks au signal de l'écriture.
+			const barre = page.getByTestId('barre-laterale')
+			await expect(barre.getByText(nom, { exact: true })).toBeVisible()
 
 			// --- Renommer ----------------------------------------------------------------------
 			await page.getByRole('button', { name: `Modifier ${nom}` }).click()
@@ -159,6 +165,8 @@ test.describe('les cinq gestes, à la souris (docs/SPEC-administration-arboresce
 			await edition.getByRole('button', { name: 'Enregistrer' }).click()
 			await expect(edition).toBeHidden()
 			await expect(listeTracks(page).getByText(nomRenomme, { exact: true })).toBeVisible()
+			await expect(barre.getByText(nomRenomme, { exact: true })).toBeVisible()
+			await expect(barre.getByText(nom, { exact: true })).toHaveCount(0)
 
 			// --- Réordonner ----------------------------------------------------------------------
 			// Le track créé est en fin de liste active : « Monter » le fait passer devant sa voisine.
@@ -177,6 +185,8 @@ test.describe('les cinq gestes, à la souris (docs/SPEC-administration-arboresce
 			await confirmation.getByRole('button', { name: 'Archiver' }).click()
 			await expect(confirmation).toBeHidden()
 			await expect(listeTracks(page).getByText(nomRenomme, { exact: true })).toHaveCount(0)
+			// Archivé, il quitte la barre latérale, qui ne liste que les vivants.
+			await expect(barre.getByText(nomRenomme, { exact: true })).toHaveCount(0)
 
 			// --- Désarchiver ---------------------------------------------------------------------
 			await page.getByLabel('Afficher les archivés').check()
@@ -187,6 +197,7 @@ test.describe('les cinq gestes, à la souris (docs/SPEC-administration-arboresce
 			await ligneArchivee.getByRole('button', { name: `Désarchiver ${nomRenomme}` }).click()
 			await expect(ligneArchivee.getByText('Archivé')).toHaveCount(0)
 			await expect(ligneArchivee.getByRole('button', { name: `Archiver ${nomRenomme}` })).toBeVisible()
+			await expect(barre.getByText(nomRenomme, { exact: true })).toBeVisible()
 		} finally {
 			await supprimerParSlug(request, CHEMIN_TRACKS, slug)
 		}

@@ -30208,3 +30208,26 @@ L'entrée de `CRM-094` sous « Non publié » couvre désormais T1, T2 et T3.
    d'interface émis par les écritures de l'arborescence. Écartés : une unité à part ; laisser l'écart
    ouvert. **Ordre** : après la livraison de `CRM-094`, pour ne pas vieillir l'instantané pris pour la
    migration 80 ; spécification avant le code, puis livraison webapp seule.
+
+**Mise en œuvre d'INC-254, le 2026-09-28, après la livraison de `CRM-094`.** Spécification écrite et
+committée d'abord (`docs/SPEC-webapp.md` §6.3 bis, `docs/DESIGN_SYSTEM.md` §5.13, commit `64ae4d7a`).
+
+- *Émetteurs* : le point d'écriture unique de l'arborescence (`apres`) émet `p2enjoy:tracks-modifies`
+  après toute écriture de track aboutie — la seule à ne nommer aucun track parent, invariant relu sur
+  les onze appels d'écriture ; la corbeille, après la restauration aboutie d'un track. Ni un refus, ni
+  un « sans effet », ni une écriture de channel.
+- *Récepteur* : la coquille relit ses tracks par `relire`, nouvelle dans `useTracks`, qui garde la
+  liste affichée jusqu'à la nouvelle ; `recharger`, la reprise d'une erreur, repasse toujours par le
+  chargement. Relu avant d'écrire : `ZonePrincipale` laisse la route rendre son contenu pendant un
+  chargement, donc aucune relecture ne démonte la page — seul un échec la remplace, comme tout échec.
+- *Un piège de preuve* : `await` appelle le `then` d'un objet dans une micro-tâche, si bien qu'une
+  libération demandée avant cet appel ne libérait rien ; le client de test la retient désormais.
+- *Vérifications* : chaque preuve unitaire vue échouer sans son code — relecture silencieuse, coquille,
+  émetteurs positifs et négatifs de l'arborescence, restauration d'un track contre celle d'un channel ;
+  l'E2E `administration-arborescence.spec.ts` rouge sans l'abonnement de la coquille, sur la ligne
+  « barre latérale : track visible », vert avec ; `administration-arborescence`, `corbeille` et
+  `guide-flottant` : **37/37**.
+- *Campagne complète* : `verify-webapp.sh` **44 contrôles, aucune anomalie** — 3 353 tests unitaires (onze
+  de plus), 765 scénarios d'interface. Captures : 487 réécrites, **4 dues** — celles de `CRM-094` prises
+  après la création du premier track, où la barre latérale le montre enfin ; les autres sont rendues,
+  pour le motif de la décision 607.

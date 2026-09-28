@@ -15,6 +15,8 @@
 //       formulaire de channel mène à l'éditeur de workflows ; §10.3 : un formulaire de channel OUVERT relit
 //       ses workflows quand le workflow de départ est posé depuis le guide flottant (docs/JOURNAL.md
 //       décisions 606 et 607)
+// @spec INC-254, décision 608 — docs/SPEC-webapp.md §6.3 bis : toute écriture de track aboutie émet
+//       `p2enjoy:tracks-modifies`, que la coquille écoute pour relire sa barre latérale
 //
 // AUCUN DROIT N'EST CALCULÉ ICI, et c'est la règle qui gouverne tout le fichier. Les commandes sont
 // rendues pour tout le monde ; l'écriture part, et le refus du backend est traduit (§10). Une
@@ -47,6 +49,7 @@ import { t } from '../i18n'
 import type { EtatAsync } from '../lib/async'
 import { enChargement } from '../lib/async'
 import { useApresWorkflowDeDepart } from '../lib/demarrage'
+import { signalerTracksModifies } from '../lib/tracks'
 import {
 	archiverChannel,
 	archiverTrack,
@@ -905,6 +908,10 @@ export function AdministrationArborescence({ client = clientCrm }: ProprietesAdm
 			setOuverture(AUCUNE)
 			setAnnonce(message)
 			setTentative((precedente) => precedente + 1)
+			// INC-254 (docs/SPEC-webapp.md §6.3 bis) : une écriture de TRACK — la seule à ne pas nommer de
+			// track parent — change ce que la barre latérale montre. La coquille, gardée d'une page de
+			// réglages à l'autre, ne le saurait pas sans ce signal.
+			if (idTrack === undefined) signalerTracksModifies()
 			if (idTrack !== undefined) await rechargerChannels(idTrack)
 		},
 		[rechargerChannels],

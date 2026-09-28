@@ -8,6 +8,8 @@
 // @verifies docs/JOURNAL.md décisions 606 et 607 ; CLAUDE.md §10 (le rôle décide d'un affichage),
 //           §11 (rien hors de la session), §16 (vérification visuelle)
 // @verifies CRM-092 (docs/BACKLOG.md) — connexion par la vraie page du SSO (`connecterAvecLeLabs`)
+// @verifies INC-254, décision 608 — docs/SPEC-webapp.md §6.3 bis : le premier track paraît dans la barre
+//           latérale sans rechargement, là où le défaut avait été vu sur les captures de ce parcours
 //
 // LE DÉFAUT RELEVÉ PAR LE RESPONSABLE EST REJOUÉ TEL QU'IL L'A VÉCU, et c'est ce que ce fichier a de plus
 // utile : un espace neuf, un premier track, un channel IMPOSSIBLE faute de workflow — puis la même chose
@@ -171,6 +173,8 @@ test.describe('CRM-094 — le guide flottant, dans un espace neuf', () => {
 		await expect(formTrack.getByLabel('Slug')).toHaveValue(TRACK.slug)
 		await formTrack.getByRole('button', { name: 'Créer' }).click()
 		await expect(formTrack).toBeHidden()
+		// INC-254 : la barre latérale le liste aussitôt — elle écrivait « Aucun track » jusqu'au rechargement.
+		await expect(page.getByTestId('barre-laterale').getByText(TRACK.nom, { exact: true })).toBeVisible()
 
 		// 5. Le défaut d'origine, tel que le responsable l'a vécu : sans workflow, aucun channel ne peut
 		//    naître. Le formulaire le dit — et mène désormais à l'éditeur (§10.5).

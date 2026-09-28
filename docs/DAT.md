@@ -195,7 +195,9 @@ Découpage prévu : `src/lib` (client Supabase, types générés, helpers), `src
   remontage de la page, qui perdait une saisie en cours (décision 607). **Constat structurant** : les
   routes de réglages rendent la même coquille au même endroit, et React la **garde** d'une page à
   l'autre ; ce qu'elle lit à son montage ne se relit donc pas en changeant de page — corrigé pour le
-  guide, qui relance sa mesure quand l'adresse change ; ouvert pour la barre latérale (INC-254) ;
+  guide, qui relance sa mesure quand l'adresse change, et pour la barre latérale par le même patron :
+  les écritures de track émettent `p2enjoy:tracks-modifies`, et la coquille relit ses tracks sans
+  squelette (`src/lib/tracks.ts`, INC-254, décision 608, `docs/SPEC-webapp.md` §6.3 bis) ;
 - `src/app/presentation-tracks.ts` — la correspondance jeton de couleur → classes et nom d'icône →
   composant Lucide, à un seul endroit, avec ses replis documentés ;
 - `src/app/`, `src/components/ui/`, `src/i18n/`, `src/styles/tokens.css` — la coquille, les

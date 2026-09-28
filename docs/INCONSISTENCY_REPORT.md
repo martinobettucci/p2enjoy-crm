@@ -6765,3 +6765,11 @@ propre.
 
 **ARBITRÉE le 2026-09-28 — décision 608 : corriger maintenant**, après la livraison de `CRM-094`, par la
 voie proposée. Suivi : `docs/BACKLOG.md`, « Correctif arbitré le 2026-09-28 ».
+
+**CORRIGÉE le 2026-09-28** (`docs/SPEC-webapp.md` §6.3 bis, écrit et committé avant le code). Toute
+écriture de track aboutie de l'arborescence, et la restauration d'un track dans la corbeille, émettent
+`p2enjoy:tracks-modifies` ; la coquille relit ses tracks **sans squelette** — `useTracks` gagne `relire`,
+qui garde la liste affichée, là où `recharger` repasse par le chargement. Rouge d'abord, puis vert : les
+preuves unitaires de la relecture, de la coquille, de l'arborescence et de la corbeille, chacune vue
+échouer sans son code ; l'E2E `administration-arborescence.spec.ts` échoue sans l'abonnement de la
+coquille (« barre latérale : track visible »), et passe avec.

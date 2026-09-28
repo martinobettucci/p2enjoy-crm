@@ -6,6 +6,8 @@
 // @verifies docs/SPEC-seed.md §10.1 (les trois objets), §10.4 bis (l'affaire `…0cf`)
 // @verifies docs/DESIGN_SYSTEM.md §5.16 (cette surface), §7 (paliers), §12.5 (réponse substituée)
 // @verifies CLAUDE.md §10 (une règle se prouve sur la vraie base), §16 (vérification visuelle)
+// @verifies INC-254, décision 608 — docs/SPEC-webapp.md §6.3 bis : le track restauré paraît dans la barre
+//           latérale sans rechargement
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
@@ -144,9 +146,14 @@ test.describe('corbeille (docs/SPEC-corbeille.md §4)', () => {
 		await page.goto('/reglages/corbeille')
 		try {
 			const ligneTrack = page.getByTestId('ligne-corbeille').filter({ hasText: NOM_TRACK })
+			// En corbeille, le track n'est pas dans la barre latérale ; restauré, il y paraît sans
+			// rechargement (INC-254, docs/SPEC-webapp.md §6.3 bis).
+			const barre = page.getByTestId('barre-laterale')
+			await expect(barre.getByText(NOM_TRACK, { exact: true })).toHaveCount(0)
 			await ligneTrack.getByTestId('bouton-restaurer').click()
 
 			await expect(page.getByTestId('corbeille-succes')).toContainText(NOM_TRACK)
+			await expect(barre.getByText(NOM_TRACK, { exact: true })).toBeVisible()
 
 			// L'EFFET EST CONSTATÉ EN BASE, et c'est ce qui donne sa valeur au reste : `deleted_at`
 			// vaut réellement `NULL` (ligne « E2E » du §5).

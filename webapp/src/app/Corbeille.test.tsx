@@ -5,6 +5,8 @@
 //           états, l'état vide sans action), §4.7 (aucun effacement définitif)
 // @verifies docs/DESIGN_SYSTEM.md §5.16 (cette surface), §5.9 (tableau), §5.8 (états)
 // @verifies CLAUDE.md §10 (la garde est backend, jamais une aide d'interface)
+// @verifies INC-254, décision 608 — docs/SPEC-webapp.md §6.3 bis : restaurer un TRACK émet
+//           `p2enjoy:tracks-modifies`, que la coquille écoute ; ni un channel, ni un « sans effet »
 //
 // Ces preuves montent le VRAI écran avec un client factice, comme `EtatMessagerie.test.tsx`. Le
 // parcours connecté sur la vraie base relève de `e2e/ui/corbeille.spec.ts`.
@@ -19,6 +21,7 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Corbeille } from './Corbeille'
+import { EVENEMENT_TRACKS_MODIFIES } from '../lib/tracks'
 import type { ClientCrm } from '../lib/supabase'
 
 afterEach(cleanup)
@@ -293,3 +296,71 @@ describe("Corbeille — ce que l'écran ne fait PAS (§4.7)", () => {
 		expect(commandes.every((libelle) => libelle.includes('Restaurer'))).toBe(true)
 	})
 })
+
+describe('Corbeille — le signal des tracks modifiés (INC-254, docs/SPEC-webapp.md §6.3 bis)', () => {
+	function ecouter(): { readonly recus: () => number; readonly lacher: () => void } {
+		let recus = 0
+		const compter = () => {
+			recus += 1
+		}
+		globalThis.addEventListener(EVENEMENT_TRACKS_MODIFIES, compter)
+		return { recus: () => recus, lacher: () => globalThis.removeEventListener(EVENEMENT_TRACKS_MODIFIES, compter) }
+	}
+
+	it('restaurer un TRACK émet le signal : il redevient vivant, donc listé par la barre latérale', async () => {
+		const signal = ecouter()
+		try {
+			render(
+				<Corbeille
+					client={client({
+						lectures: { tracks: { data: [TRACK], error: null, status: 200 } },
+						enumerations: [VIDE, VIDE],
+						ecriture: { data: [{ id: 't-25' }], error: null, status: 200 },
+					})}
+				/>,
+			)
+			await screen.findByText('Legacy 2023')
+			await userEvent.click(screen.getByTestId('bouton-restaurer'))
+			await screen.findByTestId('corbeille-succes')
+			expect(signal.recus()).toBe(1)
+		} finally {
+			signal.lacher()
+		}
+	})
+
+	it('restaurer un CHANNEL n’émet rien, ni un « sans effet » : la barre latérale n’a pas bougé', async () => {
+		const signal = ecouter()
+		try {
+			render(
+				<Corbeille
+					client={client({
+						lectures: { channels: { data: [CHANNEL], error: null, status: 200 } },
+						enumerations: [VIDE, VIDE],
+						ecriture: { data: [{ id: 'ch-38' }], error: null, status: 200 },
+					})}
+				/>,
+			)
+			await screen.findByText('Annexes 2023')
+			await userEvent.click(screen.getByTestId('bouton-restaurer'))
+			await screen.findByTestId('corbeille-succes')
+			cleanup()
+
+			render(
+				<Corbeille
+					client={client({
+						lectures: { tracks: { data: [TRACK], error: null, status: 200 } },
+						enumerations: [VIDE],
+						ecriture: { data: [], error: null, status: 200 },
+					})}
+				/>,
+			)
+			await screen.findByText('Legacy 2023')
+			await userEvent.click(screen.getByTestId('bouton-restaurer'))
+			await screen.findByTestId('refus-restauration')
+			expect(signal.recus()).toBe(0)
+		} finally {
+			signal.lacher()
+		}
+	})
+})
+

@@ -13,6 +13,14 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Correctif arbitré le 2026-09-28 — INC-254 (décision 608)
+
+- **La barre latérale suit l'administration de l'arborescence** : un track créé, renommé, recoloré,
+  réordonné, archivé, désarchivé ou mis à la corbeille — ou restauré depuis la corbeille — y paraît, y
+  change ou la quitte sans rechargement. Elle écrivait « Aucun track » après la création du premier
+  track tant qu'on restait dans les réglages. La mise à jour garde l'ancienne liste affichée : aucun
+  clignotement.
+
 ### `CRM-094` — Démarrer un espace neuf : le workflow de départ et le guide flottant
 
 *Décisions 606 et 607. Migration **80** à appliquer en production (`docs/PROD_MIGRATIONS.md` §2.7).*

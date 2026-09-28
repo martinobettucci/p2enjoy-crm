@@ -14,6 +14,8 @@
 // @verifies CRM-094 (docs/BACKLOG.md) tranche T2 — docs/SPEC-onboarding.md §10.5 (sans workflow
 //           affectable, le formulaire mène à l'éditeur), §10.3 (un formulaire ouvert relit ses workflows
 //           au signal du workflow de départ, saisie conservée) ; docs/JOURNAL.md décisions 606 et 607
+// @verifies INC-254, décision 608 — docs/SPEC-webapp.md §6.3 bis : toute écriture de TRACK aboutie émet
+//           `p2enjoy:tracks-modifies` ; ni un refus, ni un « sans effet », ni une écriture de channel
 //
 // Ces preuves montent le **vrai** écran avec un client factice qui enregistre les requêtes émises.
 // Elles n'injectent aucun état interne : ce qui est observé est ce qu'un utilisateur voit et ce que
@@ -22,10 +24,11 @@
 
 import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter } from 'react-router'
 import { AdministrationArborescence } from './AdministrationArborescence'
 import { EVENEMENT_WORKFLOW_DEPART } from '../lib/demarrage'
+import { EVENEMENT_TRACKS_MODIFIES } from '../lib/tracks'
 import type { ClientCrm } from '../lib/supabase'
 
 afterEach(cleanup)
@@ -853,3 +856,76 @@ describe('le geste de mise à la corbeille (CRM-077, §4 bis)', () => {
 		expect(ecritures).toEqual([])
 	})
 })
+
+// ---------------------------------------------------------------------------------------------
+// INC-254, décision 608 — docs/SPEC-webapp.md §6.3 bis : le signal qui fait relire la barre latérale
+// ---------------------------------------------------------------------------------------------
+
+describe('le signal des tracks modifiés (INC-254, docs/SPEC-webapp.md §6.3 bis)', () => {
+	let signaux = 0
+	const compter = () => {
+		signaux += 1
+	}
+	beforeEach(() => {
+		signaux = 0
+		globalThis.addEventListener(EVENEMENT_TRACKS_MODIFIES, compter)
+	})
+	afterEach(() => globalThis.removeEventListener(EVENEMENT_TRACKS_MODIFIES, compter))
+
+	it('part une fois après la création d’un track aboutie', async () => {
+		const utilisateur = userEvent.setup()
+		const { ecritures } = monter()
+		await attendreTracks()
+		await utilisateur.click(screen.getByRole('button', { name: 'Nouveau track' }))
+		const formulaire = await screen.findByTestId('formulaire-track')
+		await utilisateur.type(within(formulaire).getByLabelText('Nom'), 'Premier track')
+		await utilisateur.click(within(formulaire).getByRole('button', { name: 'Créer' }))
+		await waitFor(() => expect(ecritures).toHaveLength(1))
+		await waitFor(() => expect(signaux).toBe(1))
+	})
+
+	it('part aussi après l’archivage d’un track : la barre latérale ne liste que les vivants', async () => {
+		const utilisateur = userEvent.setup()
+		monter()
+		await attendreTracks()
+		await utilisateur.click(screen.getByRole('button', { name: 'Archiver Conseil & IA' }))
+		await utilisateur.click(await screen.findByRole('button', { name: 'Archiver' }))
+		await waitFor(() => expect(signaux).toBe(1))
+	})
+
+	it('ne part PAS sur un refus, ni sur un « sans effet » : la base n’a rien changé', async () => {
+		const utilisateur = userEvent.setup()
+		monter({ reponseEcriture: { data: null, error: { message: 'rls', code: '42501' }, status: 403 } })
+		await attendreTracks()
+		await utilisateur.click(screen.getByRole('button', { name: 'Nouveau track' }))
+		const formulaire = await screen.findByTestId('formulaire-track')
+		await utilisateur.type(within(formulaire).getByLabelText('Nom'), 'Refusé')
+		await utilisateur.click(within(formulaire).getByRole('button', { name: 'Créer' }))
+		await screen.findByTestId('admin-refus')
+		cleanup()
+
+		monter({ reponseEcriture: { data: [], error: null, status: 200 } })
+		await attendreTracks()
+		await utilisateur.click(screen.getByRole('button', { name: 'Modifier Conseil & IA' }))
+		await utilisateur.click(within(await screen.findByTestId('formulaire-track')).getByRole('button', { name: 'Enregistrer' }))
+		await screen.findByTestId('admin-refus')
+		expect(signaux).toBe(0)
+	})
+
+	it('ne part PAS après l’écriture d’un channel : la barre latérale ne liste pas les channels', async () => {
+		const utilisateur = userEvent.setup()
+		const { ecritures } = monter()
+		await attendreTracks()
+		await utilisateur.click(screen.getByRole('button', { name: 'Déplier Conseil & IA' }))
+		await screen.findByText('Prospection')
+		await utilisateur.click(screen.getByRole('button', { name: 'Nouveau channel' }))
+		const formulaire = await screen.findByTestId('formulaire-channel')
+		await utilisateur.type(within(formulaire).getByLabelText('Nom'), 'Appels offres')
+		await utilisateur.selectOptions(await within(formulaire).findByLabelText('Workflow'), 'wf-2')
+		await utilisateur.click(within(formulaire).getByRole('button', { name: 'Créer' }))
+		await waitFor(() => expect(ecritures).toHaveLength(1))
+		await screen.findByText('Appels offres').catch(() => undefined)
+		expect(signaux).toBe(0)
+	})
+})
+

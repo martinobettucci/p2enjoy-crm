@@ -5,6 +5,8 @@
 // @spec docs/DESIGN_SYSTEM.md §5.16 (cette surface), §5.9 (tableau), §5.8 (états systématiques)
 // @spec CLAUDE.md §10 (la garde est backend, jamais une aide d'interface), §23 (aucune phrase
 //       construite par concaténation)
+// @spec INC-254, décision 608 — docs/SPEC-webapp.md §6.3 bis : restaurer un track émet
+//       `p2enjoy:tracks-modifies`, que la coquille écoute pour relire sa barre latérale
 //
 // L'ÉCRAN N'ANTICIPE AUCUN REFUS. Il affiche la même commande sur toutes les lignes, envoie, puis
 // traduit ce qu'il reçoit : la garde de `0038` vit dans la base, et une commande éteinte d'avance
@@ -29,6 +31,7 @@ import {
 } from '../lib/corbeille'
 import { texteLigneEnumeration, type EtatEnumeration } from './presentation-corbeille'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
+import { signalerTracksModifies } from '../lib/tracks'
 
 /** Le type est un MOT, jamais une icône seule (`docs/DESIGN_SYSTEM.md` §5.16). */
 const CLES_TYPE: Readonly<Record<TypeObjetCorbeille, CleTraduction>> = {
@@ -146,6 +149,9 @@ export function Corbeille({ client = clientCrm }: ProprietesCorbeille = {}) {
 			const resultat = await restaurer(client, entree.type, entree.id)
 			if (resultat.statut === 'appliquee') {
 				setSucces(t('admin.trash.restored', { nom: entree.nom }))
+				// INC-254 (docs/SPEC-webapp.md §6.3 bis) : un track restauré redevient vivant, donc listé par
+				// la barre latérale — que la coquille, gardée d'une page de réglages à l'autre, relit au signal.
+				if (entree.type === 'track') signalerTracksModifies()
 				// LA LISTE EST RELUE, JAMAIS CORRIGÉE EN MÉMOIRE (§4.6) : c'est la base qui décide de
 				// ce que contient la corbeille, et une liste recomposée localement finirait par en
 				// diverger — restaurer un track rend aussi ses enfants joignables, ce que seule une
