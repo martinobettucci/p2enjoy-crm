@@ -196,6 +196,10 @@ la card, jamais d'une requête par carte.
 En-tête collant, fond `--color-bg`, compteur en badge neutre. Zone de dépôt signalée par un
 liseré `--color-brand` en pointillés pendant le glissement. État vide : message et action
 (« Aucune card à cette étape — créez la première »).
+*Précisé le 2026-09-28 par `CRM-095` (décision 609) : cette action n'était rendue nulle part, faute de
+geste de création. Elle est portée par la **seule colonne de l'étape initiale** — une affaire naît là et
+nulle part ailleurs (`docs/SPEC-cards.md` §18.2) — et ouvre le formulaire du §5.50 ; les autres colonnes
+vides gardent leur message sans action.*
 
 ### 5.2 bis Ce que le board a appris en étant rendu — `CRM-041`
 
@@ -4880,4 +4884,30 @@ Elle reprend la liste du §5.17 telle quelle — mêmes lignes, mêmes mots d'é
   commandes de ligne de l'éditeur, la fin d'une phrase centrée. C'est le prix d'une surface flottante
   non modale, et « Réduire » le rend en un geste. La pastille réduite, elle, ne cache rien que la
   réserve ne libère.
+
+### 5.50 Nouvelle affaire — `CRM-095`
+
+*Écrit le 2026-09-28, avant le code (décision 609).* Le premier geste de création d'une affaire. Ce qu'il
+envoie et refuse est spécifié par `docs/SPEC-cards.md` §18 ; ces règles ne disent que de quoi il a l'air.
+Tout ce que le §5.13 pose vaut ici sans être répété : formulaire **dans le flux** — aucune modale —, focus
+entrant dans le premier champ et rendu à la commande qui l'a ouvert, alerte de refus dans le formulaire.
+
+- **Le bouton est primaire**, icône Lucide `Plus`, libellé « Nouvelle affaire ». Il vit dans la barre
+  au-dessus des colonnes du board — celle du filtre de sommeil (§5.3 quinquies), qui cesse d'être une
+  barre à un seul contrôle — et dans la barre de filtres de la vue liste (§5.9). Le filtre reste à sa
+  place ; le bouton vient **en tête** de la barre : créer précède filtrer.
+- **Le formulaire s'ouvre sous la barre**, sur toute la largeur utile, `--color-surface`, `--radius-lg`,
+  bordure `--color-border` : un champ « Titre », puis « Créer » (primaire) et « Annuler » (secondaire).
+  La commande et le formulaire **s'excluent** (§5.23) : le bouton cède la place pendant la saisie.
+- **« Créer » est désactivé tant que le titre est blanc**, et le dit par sa forme désactivée lisible
+  (§8) : c'est un champ requis, comme le nom d'un channel (§5.13), non un droit calculé.
+- **Pendant l'envoi**, « Créer » est désactivé et dit « Création… » ; un **succès** ouvre la fiche de
+  l'affaire, qui porte la suite (§5.3 bis) ; un **refus** s'écrit sous le champ, `role="alert"`,
+  `--color-danger-on-soft` sur `--color-danger-soft`, la saisie conservée (§5.7 ter). Le refus « aucune
+  étape initiale » porte le lien vers l'éditeur de workflows : le §5.29 bis veut qu'un refus nomme le
+  geste qui le lève.
+- **`Échap` referme** depuis le champ, comme « Annuler », et rend le focus au bouton — différé d'un tour
+  de rendu, la commande étant démontée pendant la saisie (§5.25). Aucune temporisation.
+- **Rendu à tous les rôles** (§5.13, §5.16) : la base refuse, l'écran traduit.
+- **Aucune couleur, aucun jeton nouveau** ; une icône déjà employée, `Plus` (§5.13).
 

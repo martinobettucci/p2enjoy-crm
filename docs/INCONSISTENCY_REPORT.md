@@ -6773,3 +6773,23 @@ qui garde la liste affichée, là où `recharger` repasse par le chargement. Rou
 preuves unitaires de la relecture, de la coquille, de l'arborescence et de la corbeille, chacune vue
 échouer sans son code ; l'E2E `administration-arborescence.spec.ts` échoue sans l'abonnement de la
 coquille (« barre latérale : track visible »), et passe avec.
+
+### INC-255 — sur le canevas d'objectifs, ce qu'on écrit sur un bloc posé pendant la visite ne s'affiche pas
+
+*Relevée par le responsable en production le 2026-09-28 (« la sélection ne persiste pas »), reproduite
+en développement par `e2e/ui/premier-lancement.spec.ts`. Unité concernée : `CRM-083`.* Le lien EST
+écrit — relu en base de production —, mais le sélecteur revient à « Aucun channel ». `CanevasObjectifs`
+applique les lignes rendues par le serveur (`ecrits`) aux seuls blocs lus au chargement, jamais à ceux
+posés pendant la visite (`ajoutes`) ; même défaut pour les flèches (`flechesEcrites`, `flechesTracees`).
+**À corriger sans arbitrage** : c'est le contrat existant — « la fiche prend la ligne rendue »
+(`docs/DESIGN_SYSTEM.md` §5.28, §5.29) — qui n'est pas tenu. Suivi : `docs/BACKLOG.md`, « Correctif du
+2026-09-28 ».
+
+### INC-256 — le guide et le board promettent de créer une affaire, et aucun écran ne le permet
+
+*Relevée par le responsable en production le 2026-09-28.* Aucun module de la webapp n'écrit dans `cards`.
+Le manuel l'écrivait (« ce qui manque est l'écran de création »), mais le guide propose l'étape « Créer
+une première affaire » (`docs/SPEC-onboarding.md` §3, §10.1), le design system promet une action « créez
+la première » dans une colonne vide du board (§5.2), et le lien de l'étape mène à l'arborescence, d'où rien
+ne mène à un board. **ARBITRÉE le 2026-09-28 — décision 609** : créer depuis le board du channel, le titre
+seul, puis ouvrir la fiche. Suivi : unité `CRM-095`.

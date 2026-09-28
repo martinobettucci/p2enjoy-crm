@@ -14719,3 +14719,26 @@ et §5.49.*
       **37/37**, le premier vu rouge sans l'abonnement de la coquille ; campagne `verify-webapp.sh`
       **44 contrôles sans anomalie** — 3 353 tests unitaires, 765 scénarios d'interface ; quatre captures
       de `CRM-094` renouvelées, où « Premier track » paraît dans la barre latérale.
+
+## Correctif du 2026-09-28 — INC-255 (décision 609)
+
+- [ ] **INC-255 — le canevas d'objectifs rend ce qu'on écrit sur un bloc posé, ou une flèche tracée,
+      pendant la visite** (`CRM-083`). Les lignes que le serveur rend après une écriture s'appliquent à
+      TOUS les blocs et à TOUTES les flèches rendus, et non aux seuls lus au chargement. Preuve unitaire qui
+      échoue avant correction ; parcours `e2e/ui/premier-lancement.spec.ts` — le lien posé reste affiché,
+      puis relu après rechargement — ; captures observées.
+
+### CRM-095 — Créer une affaire depuis le board `[ ]`
+*Créée le 2026-09-28 — décision 609, arbitrages du responsable. Aucune surface ne créait d'affaire, alors
+que le guide et le board le promettaient (INC-256). Spécifié avant le code : `docs/SPEC-cards.md` §18,
+`docs/SPEC-onboarding.md` §10.7, `docs/DESIGN_SYSTEM.md` §5.2 et §5.50.*
+
+- [ ] **T1** — migration `0081_creer_affaire.sql` : `public.creer_affaire(p_channel, p_titre)`,
+      `SECURITY INVOKER` ; sa suite pgTAP ; preuve d'API aux jetons réels ; `docs/SCHEMA.md`,
+      `docs/PROD_MIGRATIONS.md`.
+- [ ] **T2** — l'écran : « Nouvelle affaire » sur le board, la vue liste et la colonne vide de l'étape
+      initiale ; le formulaire, ses refus, l'ouverture de la fiche ; preuves unitaires et E2E.
+- [ ] **T3** — le guide mène au board du premier channel ; le parcours complet
+      `e2e/ui/premier-lancement.spec.ts` jusqu'à l'affaire, à la souris et au clavier seul ;
+      `docs/manual.md` ; captures aux quatre paliers.
+- [ ] **T4** — livraison en production (migration 81) et constat : le responsable crée sa première affaire.

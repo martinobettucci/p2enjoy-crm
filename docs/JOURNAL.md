@@ -30231,3 +30231,43 @@ committée d'abord (`docs/SPEC-webapp.md` §6.3 bis, `docs/DESIGN_SYSTEM.md` §5
   de plus), 765 scénarios d'interface. Captures : 487 réécrites, **4 dues** — celles de `CRM-094` prises
   après la création du premier track, où la barre latérale le montre enfin ; les autres sont rendues,
   pour le motif de la décision 607.
+
+## décision 609 — le premier lancement jusqu'à l'affaire : créer une affaire depuis le board, et le lien d'un bloc qui « ne persiste pas »
+
+*2026-09-28 au soir, retour du responsable en production, après avoir posé son workflow de départ et son
+premier channel : « apparemment on ne peut pas créer d'affaires, pas de boutons sur l'interface. Et
+pourtant tu es censé tester en utilisant clavier et souris uniquement… de plus, attacher un bloc objectif
+à un channel ne marche pas, la sélection ne persiste pas ».*
+
+**Le reproche est fondé.** La preuve E2E de `CRM-094` s'arrêtait au premier channel ; aucune preuve ne
+rejouait le parcours d'un administrateur qui part de rien et fait tout lui-même, écran après écran. Les
+preuves existantes partent du seed, où les objets existent déjà — c'est ce qui a laissé passer les deux
+défauts. **Consigne retenue** : le premier lancement complet est prouvé par un parcours à la souris et au
+clavier seuls, dans un espace neuf (`e2e/ui/premier-lancement.spec.ts`), sans aucune écriture de service
+hors du montage.
+
+**1. Le lien d'un bloc — INC-255, un défaut, corrigé sans arbitrage.** Relu en base de production : le bloc
+EST lié (`channel_id` renseigné). Reproduit en développement par le parcours ci-dessus : après le choix,
+« Enregistré » s'affiche et le sélecteur revient à « Aucun channel ». *Cause* : le canevas applique les
+lignes que le serveur rend après une écriture (`ecrits`) aux seuls blocs LUS au chargement ; un bloc POSÉ
+pendant la visite (`ajoutes`) garde l'état de sa pose. Tout ce qu'on écrit sur un bloc neuf — lien, titre,
+remplissage, couleur — est donc enregistré mais invisible jusqu'au rechargement. Les flèches ont le même
+défaut (`flechesEcrites` contre `flechesTracees`). Le seed ne pouvait pas le montrer : il lie un bloc qui
+existe déjà.
+
+**2. Créer une affaire — INC-256, une fonctionnalité jamais livrée, et promise.** Aucun module de la webapp
+n'écrit dans `cards` ; le manuel le dit (« ce qui manque est l'écran de création »), mais le guide propose
+l'étape « Créer une première affaire », le design system promet une action « créez la première » dans une
+colonne vide du board (§5.2), et le lien de l'étape mène à l'arborescence, d'où aucun lien ne mène au
+board. **Arbitrages du responsable** (options recommandées, retenues toutes trois) : sur le **board du
+channel** — bouton « Nouvelle affaire », aussi dans la vue liste et dans la colonne vide de l'étape
+initiale ; le **titre seul** — l'affaire naît à l'étape initiale, le reste se complète sur la fiche ; après
+la création, **la fiche s'ouvre**. Écartés : un bouton global dans l'en-tête ; un formulaire à trois champs ;
+rester sur le board.
+
+**Choix de conception, écrits avant le code** (`docs/SPEC-cards.md` §18) : le geste passe par une fonction
+`public.creer_affaire(p_channel, p_titre)`, `SECURITY INVOKER`, sur le modèle de `creer_workflow_de_depart` :
+elle résout le workflow du channel et son étape INITIALE sous la RLS de l'appelant — la règle « les
+nouvelles affaires entrent par l'étape initiale » (manuel, §5 bis.2) n'était tenue par rien — et nomme ses
+refus. Position et adresse viennent des triggers existants. Le guide mène désormais au board du premier
+channel. **Unité `CRM-095`**, quatre tranches ; migration **81** — une livraison avec instantané.

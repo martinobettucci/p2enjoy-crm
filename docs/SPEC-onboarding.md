@@ -575,3 +575,12 @@ Rien d'autre ; aucun `localStorage`.
 | E2E | un administrateur sur un **espace neuf** : pastille « 1 sur 6 », ouverture, premier track, formulaire de channel sans workflow qui mène à l'éditeur, geste depuis le panneau **au-dessus de l'éditeur, qui se relit**, lien suivi sans perte du panneau, channel créé, progression re-mesurée ; une lectrice ne voit aucune pastille ; clavier seul ; palier mobile ; console vierge |
 | Visuel | pastille et panneau aux quatre paliers, ouvert et réduit, sur un écran chargé ; captures observées |
 
+### 10.7 Révision `CRM-095` — l'étape « affaire » mène au board (décision 609)
+
+*Écrit le 2026-09-28, avant le code.* L'étape « Créer une première affaire » menait à l'arborescence, d'où
+aucun lien ne mène à un board, et aucun board ne portait de geste de création (INC-256). Elle mène
+désormais au **board du premier channel** lisible et vivant — premier track par position, puis premier
+channel —, où vit le bouton « Nouvelle affaire » (`docs/SPEC-cards.md` §18.3) ; son action se lit « Ouvrir
+le board et créer l'affaire ». Sans channel, elle mène à l'arborescence, comme avant. La destination est
+lue une fois par mesure, sous la RLS de l'appelant ; son échec laisse le lien vers l'arborescence.
+

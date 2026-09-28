@@ -4363,3 +4363,73 @@ Le contrat, en trois lignes :
 | a | L'administratrice a **au moins une** affaire dans **chacune** des trois sections, en portée « mes affaires » |
 | b | La portée « tout l'espace de travail » rend **strictement plus** de lignes que « mes affaires » |
 | c | **Une** affaire dont l'échéance tombe dans l'horizon est **en sommeil**, et n'est donc rendue par aucune des deux portées |
+
+## 18. Créer une affaire depuis le board — `CRM-095`
+
+*Écrit le 2026-09-28, avant le code, sur les arbitrages du responsable (décision 609). Jusqu'ici, aucune
+surface ne créait d'affaire : le seed était le seul chemin, et le guide de démarrage menait à une impasse
+(INC-256).*
+
+### 18.1 Ce que le responsable a arbitré
+
+| Question | Retenu | Écarté |
+|---|---|---|
+| Où | sur le **board du channel** — bouton « Nouvelle affaire » ; le même dans la **vue liste** ; et l'action de la **colonne vide de l'étape initiale** | un bouton global dans l'en-tête |
+| Quoi | le **titre seul** ; l'affaire naît à l'**étape initiale** du workflow du channel ; montant, responsable, échéance, contacts se complètent sur la fiche (§15 bis) | titre, responsable et montant ; titre et contact |
+| Ensuite | **la fiche s'ouvre** | rester sur le board |
+
+### 18.2 Le geste serveur — `public.creer_affaire(p_channel uuid, p_titre text) returns uuid`
+
+`SECURITY INVOKER`, `search_path` vide, `EXECUTE` à `authenticated` seul — révoqué nommément à `public` et
+`anon`. La fonction n'ouvre aucun droit : l'insertion reste soumise à `cards_insertion`
+(`app.can_write_channel(channel_id)`, §4). Elle existe pour tenir, côté base, ce que le client ne doit pas
+décider : **l'étape d'entrée d'une affaire est l'étape initiale de son workflow** (manuel §5 bis.2 —
+règle jusqu'ici tenue par rien).
+
+Dans cet ordre :
+
+| # | Contrôle | Refus |
+|---|---|---|
+| 1 | appelant authentifié | `42501` (l'anonyme est d'abord refusé par le privilège : `401`) |
+| 2 | le channel est **lisible** par l'appelant — lu sous la RLS | `P0002` « channel introuvable » : illisible et inexistant se confondent, rien n'est divulgué |
+| 3 | le channel est **vivant** — ni archivé, ni en corbeille | `P0001` « channel ferme » |
+| 4 | son workflow a une **étape initiale** | `P0001` « aucune etape initiale » |
+| 5 | insertion : espace, channel, workflow **du channel**, étape initiale, titre ramené par `trim`, `created_by` = l'appelant | `23514` sur un titre blanc (contrainte existante) ; `42501` si la politique refuse l'écriture du channel |
+
+La position et l'adresse de l'affaire viennent des triggers existants (§3.4) ; l'événement « créée » du
+fil, du trigger `card_events_apres_insertion`. Une seule instruction d'écriture : aucun état intermédiaire.
+Rend l'identifiant de l'affaire.
+
+### 18.3 L'écran
+
+- **Le bouton « Nouvelle affaire »**, primaire, icône `Plus`, vit dans la barre au-dessus des colonnes du
+  board (celle du filtre de sommeil, `docs/DESIGN_SYSTEM.md` §5.3 quinquies) et dans la barre de filtres de
+  la vue liste. La **colonne vide de l'étape initiale** porte la même action ; les autres colonnes vides
+  gardent leur seul message — une affaire n'y naît pas.
+- **Le formulaire vit dans le flux**, sous la barre — aucune modale (§5.13 du design system) : un champ
+  « Titre », « Créer » (primaire) et « Annuler ». « Créer » est désactivé tant que le titre est blanc :
+  c'est un champ requis, non un droit calculé (patron du formulaire de channel). Le focus entre dans le
+  titre ; `Entrée` crée ; `Échap` et « Annuler » referment et rendent le focus à la commande qui a ouvert.
+- **Succès** : la fiche de l'affaire s'ouvre (`/tracks/:slugTrack/:slugChannel/cards/:idCard`).
+- **Refus** : écrits dans le formulaire, `role="alert"`, la saisie conservée — « Ce channel est archivé ou
+  à la corbeille : une affaire n'y naît plus. » ; « Le workflow de ce channel n'a pas d'étape initiale. »
+  suivi du lien « Ouvrir l'éditeur de workflows » ; « Vous ne pouvez pas créer d'affaire dans ce
+  channel. » ; « L'affaire n'a pas pu être créée. Réessayez. »
+- **Le bouton est rendu à tous les rôles** — la règle du §5.13 du design system — et la base refuse à qui
+  ne peut pas écrire le channel. `CRM-093`, une fois spécifié, décidera du masquage pour la lectrice.
+
+### 18.4 Le guide de démarrage (révise `docs/SPEC-onboarding.md` §10.1, étape `affaire`)
+
+L'étape « Créer une première affaire » mène au **board du premier channel** lisible et vivant — premier
+track par position, puis premier channel — avec l'action « Ouvrir le board et créer l'affaire » ; sans
+channel, à l'arborescence, comme avant. L'impasse relevée (INC-256) tenait à deux manques : aucun lien de
+l'arborescence vers un board, et aucun bouton sur le board.
+
+### 18.5 Preuves
+
+| Niveau | Preuve |
+|---|---|
+| pgTAP | privilèges, `SECURITY INVOKER`, `search_path` ; l'administrateur et le commercial créent, à l'étape INITIALE, avec position, adresse et événement « créée » ; la lectrice refusée `42501` ; channel inconnu `P0002` ; channel archivé et channel en corbeille `P0001` ; workflow sans étape initiale `P0001` ; titre blanc `23514` |
+| API | jetons réels : le commercial crée et relit l'affaire à l'étape initiale ; la lectrice `403` ; l'anonyme `401` |
+| Unitaires | les issues de la fonction d'écran ; le formulaire — focus, « Créer » éteint sur un titre blanc, `Échap`, refus qui gardent la saisie, succès qui ouvre la fiche ; le bouton du board, de la vue liste, et l'action de la seule colonne initiale vide |
+| E2E | `premier-lancement.spec.ts` : depuis le guide, le board, « Nouvelle affaire », le titre, la fiche qui s'ouvre, le guide à 5/6 — à la souris et au clavier seul ; la lectrice refusée ; captures aux quatre paliers |
