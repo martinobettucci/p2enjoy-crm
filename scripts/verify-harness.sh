@@ -1308,7 +1308,11 @@ SCENARIOS_API=1085
 # et ouverte, la lectrice sans pastille ni mesure, l'administratrice du seed sans pastille.
 # `demarrage.spec.ts` passe à six étapes sans scénario ajouté. 760 + 5 = 765, valeur COMPTÉE —
 # « Total: 765 tests in 60 files ».
-SCENARIOS_UI=765
+# **RÉVISÉ À 766 PAR INC-255, 2026-09-29** (décision 609) : `e2e/ui/premier-lancement.spec.ts`, fichier NEUF,
+# porte le parcours d'un administrateur qui part de rien, à la souris et au clavier seuls — structure, puis
+# objectifs : lien d'un bloc posé, titre, flèche et direction, relus après rechargement. 765 + 1 = 766,
+# valeur COMPTÉE — « Total: 766 tests in 61 files ».
+SCENARIOS_UI=766
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

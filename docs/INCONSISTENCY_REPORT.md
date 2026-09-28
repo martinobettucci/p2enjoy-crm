@@ -6785,6 +6785,11 @@ posés pendant la visite (`ajoutes`) ; même défaut pour les flèches (`fleches
 (`docs/DESIGN_SYSTEM.md` §5.28, §5.29) — qui n'est pas tenu. Suivi : `docs/BACKLOG.md`, « Correctif du
 2026-09-28 ».
 
+**CORRIGÉE le 2026-09-29.** Les lignes rendues s'appliquent à tous les blocs et à toutes les flèches rendus,
+posés ou tracés pendant la visite compris. Rouge d'abord : deux preuves unitaires (`Objectifs.test.tsx` — le
+lien d'un bloc posé, le titre d'un bloc posé) et le parcours `e2e/ui/premier-lancement.spec.ts` ; la
+direction corrigée d'une flèche tracée, vue rouge sous mutation de la seule correction des flèches.
+
 ### INC-256 — le guide et le board promettent de créer une affaire, et aucun écran ne le permet
 
 *Relevée par le responsable en production le 2026-09-28.* Aucun module de la webapp n'écrit dans `cards`.

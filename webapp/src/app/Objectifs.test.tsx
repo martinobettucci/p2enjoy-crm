@@ -10,6 +10,9 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.29 (jauge jamais colorée par la valeur, flèche pointillée)
 // @verifies docs/BACKLOG.md « Correctifs arbitrés », INC-189 a ; docs/JOURNAL.md décision 594 — un
 //           geste posé entre l'image du contenu et ses effets n'est pas perdu
+// @verifies INC-255 — docs/BACKLOG.md « Correctif du 2026-09-28 », docs/JOURNAL.md décision 609 : ce qu'on
+//           écrit sur un bloc POSÉ pendant la visite s'affiche comme sur un bloc lu (docs/DESIGN_SYSTEM.md
+//           §5.28, « la fiche prend la ligne rendue »)
 //
 // CE FICHIER ÉPROUVE LE RENDU, PAS LA REQUÊTE — celle-ci l'est par `lib/objectifs.test.ts`.
 //
@@ -341,8 +344,23 @@ type Ecriture = {
 function clientEcrivant(
 	reponses: Readonly<Record<string, Reponse>>,
 	reponseEcriture: Reponse,
+	/** Une réponse PAR OPÉRATION, quand un scénario pose PUIS modifie (INC-255) ; à défaut, la commune. */
+	parOperation: Partial<Record<'insert' | 'update' | 'delete', Reponse>> = {},
 ): { client: ClientCrm; ecritures: Ecriture[] } {
 	const ecritures: Ecriture[] = []
+	const ecritureRendant = (reponseEcrite: Reponse) => {
+		const ecriture: Record<string, unknown> = {}
+		for (const methode of ['select', 'eq']) {
+			ecriture[methode] = () => ecriture
+		}
+		ecriture.single = () =>
+			Promise.resolve({
+				...reponseEcrite,
+				data: Array.isArray(reponseEcrite.data) ? (reponseEcrite.data[0] ?? null) : reponseEcrite.data,
+			})
+		ecriture.then = (resoudre: (valeur: Reponse) => unknown) => Promise.resolve(reponseEcrite).then(resoudre)
+		return ecriture
+	}
 	const client = {
 		from: (table: string) => {
 			const reponse = reponses[table] ?? ok([])
@@ -353,31 +371,19 @@ function clientEcrivant(
 			lecture.maybeSingle = () => Promise.resolve(reponse)
 			lecture.then = (resoudre: (valeur: Reponse) => unknown) => Promise.resolve(reponse).then(resoudre)
 
-			const ecriture: Record<string, unknown> = {}
-			for (const methode of ['select', 'eq']) {
-				ecriture[methode] = () => ecriture
-			}
-			ecriture.single = () =>
-				Promise.resolve({
-					...reponseEcriture,
-					data: Array.isArray(reponseEcriture.data) ? (reponseEcriture.data[0] ?? null) : reponseEcriture.data,
-				})
-			ecriture.then = (resoudre: (valeur: Reponse) => unknown) =>
-				Promise.resolve(reponseEcriture).then(resoudre)
-
 			return {
 				...lecture,
 				insert: (charge: Record<string, unknown>) => {
 					ecritures.push({ operation: 'insert', charge, table })
-					return ecriture
+					return ecritureRendant(parOperation.insert ?? reponseEcriture)
 				},
 				update: (charge: Record<string, unknown>) => {
 					ecritures.push({ operation: 'update', charge, table })
-					return ecriture
+					return ecritureRendant(parOperation.update ?? reponseEcriture)
 				},
 				delete: () => {
 					ecritures.push({ operation: 'delete', table })
-					return ecriture
+					return ecritureRendant(parOperation.delete ?? reponseEcriture)
 				},
 			}
 		},
@@ -2068,3 +2074,60 @@ describe('canevas — l’état de LECTURE SEULE, §5.7', () => {
 		expect((await screen.findByTestId('poser-bloc')).hasAttribute('disabled')).toBe(true)
 	})
 })
+
+describe('INC-255 — un bloc POSÉ pendant la visite rend ce qu’on y écrit (§5.28)', () => {
+	const NEUF = { ...BLOC_LIBRE, id: 'neuf', title: 'Nouvel objectif', pos_x: 32, pos_y: 24 }
+
+	/** Pose un bloc au clavier, puis ouvre SA fiche — et non celle du bloc lu au chargement. */
+	async function poserPuisOuvrir(): Promise<HTMLElement> {
+		await screen.findByTestId('canevas-surface')
+		fireEvent.click(screen.getAllByTestId('poser-bloc')[0] as HTMLElement)
+		await act(async () => {
+			fireEvent.keyDown(screen.getByTestId('repere-pose'), { key: 'Enter' })
+		})
+		const neuf = (await screen.findAllByTestId('bloc-objectif')).find((bloc) => bloc.textContent?.includes('Nouvel objectif'))
+		if (neuf === undefined) throw new Error('le bloc posé n’est pas rendu')
+		fireEvent.keyDown(neuf, { key: 'Enter' })
+		await screen.findByTestId('fiche-bloc')
+		return neuf
+	}
+
+	it('le LIEN choisi reste affiché dans la fiche, et la pilule paraît sur le bloc — le défaut relevé', async () => {
+		const { client } = clientEcrivant(LECTURES_AVEC_CHANNELS, ok([]), {
+			insert: ok([NEUF]),
+			update: ok([{ ...NEUF, channel_id: 'c1', channels: CHANNEL_VIVANT }]),
+		})
+		rendreCanevas(client)
+		await poserPuisOuvrir()
+		const selecteur = (await screen.findByTestId('champ-lien')) as HTMLSelectElement
+		await waitFor(() => expect(selecteur.querySelectorAll('optgroup').length).toBeGreaterThan(0))
+
+		await act(async () => {
+			fireEvent.change(selecteur, { target: { value: 'c1' } })
+		})
+		expect(screen.getByTestId('etat-lien').textContent).toBe(fr['goals.write.saved'])
+		// Avant la correction : « Enregistré », et le sélecteur retombait sur « Aucun channel ».
+		expect((screen.getByTestId('champ-lien') as HTMLSelectElement).value).toBe('c1')
+		const pose = screen.getAllByTestId('bloc-objectif').find((bloc) => bloc.textContent?.includes('Nouvel objectif'))
+		expect(pose?.textContent).toContain('Refonte de site')
+	})
+
+	it('le TITRE écrit renomme le bloc posé sur le canevas, sans rechargement', async () => {
+		const { client } = clientEcrivant(LECTURES_AVEC_CHANNELS, ok([]), {
+			insert: ok([NEUF]),
+			update: ok([{ ...NEUF, title: 'Doubler le pipeline' }]),
+		})
+		rendreCanevas(client)
+		await poserPuisOuvrir()
+		const titre = screen.getByTestId('champ-titre') as HTMLInputElement
+		fireEvent.change(titre, { target: { value: 'Doubler le pipeline' } })
+		await act(async () => {
+			fireEvent.keyDown(titre, { key: 'Enter' })
+		})
+		await waitFor(() => expect(screen.getByTestId('etat-titre').textContent).toBe(fr['goals.write.saved']))
+		const blocs = screen.getAllByTestId('bloc-objectif').map((bloc) => bloc.textContent ?? '')
+		expect(blocs.some((texte) => texte.includes('Doubler le pipeline'))).toBe(true)
+		expect(blocs.some((texte) => texte.includes('Nouvel objectif'))).toBe(false)
+	})
+})
+

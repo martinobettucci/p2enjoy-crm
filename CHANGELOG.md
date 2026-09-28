@@ -13,6 +13,13 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Correctif du 2026-09-29 — INC-255 (décision 609)
+
+- **Le canevas d'objectifs montre aussitôt ce qu'on écrit sur un bloc qu'on vient de poser** : le channel
+  visé reste choisi et sa pilule paraît sur le bloc, un titre écrit le renomme ; de même, la direction
+  corrigée d'une flèche qu'on vient de tracer. Tout était enregistré, mais ne s'affichait qu'après
+  rechargement — « la sélection ne persiste pas ».
+
 ### Correctif arbitré le 2026-09-28 — INC-254 (décision 608)
 
 - **La barre latérale suit l'administration de l'arborescence** : un track créé, renommé, recoloré,

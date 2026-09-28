@@ -1,4 +1,6 @@
 // @verifies CRM-094 (docs/BACKLOG.md) — le premier lancement complet, à la souris et au clavier seuls
+// @verifies INC-255, décision 609 — ce qu'on écrit sur un bloc posé ou une flèche tracée pendant la visite
+//           s'affiche aussitôt : lien, titre, direction (docs/DESIGN_SYSTEM.md §5.28, §5.29)
 // @verifies docs/SPEC-onboarding.md §10 (le guide et le workflow de départ) ; docs/SPEC-goals.md §3
 //           (lier un bloc à un channel), §5.5 (la fiche d'un bloc) ; docs/DESIGN_SYSTEM.md §5.29
 // @verifies CLAUDE.md §15 (un parcours E2E part d'un état déterministe et vérifie les résultats
@@ -23,6 +25,7 @@ const ESPACE = { id: 'e0940000-0000-4000-8000-0000000000e1', slug: 'sonde-094-pr
 const TRACK = { nom: 'Premier track', slug: 'premier-track' } as const
 const CHANNEL = { nom: 'Premier channel', slug: 'premier-channel' } as const
 const TABLEAU = 'Objectifs 2027'
+const BLOC_A = 'Signer dix affaires'
 
 type Compte = { readonly adresse: string; readonly sub: string }
 
@@ -159,11 +162,45 @@ test.describe('le premier lancement complet, à la souris et au clavier', () => 
 		)
 		expect(blocs.map((ligne) => ligne.channel_id === null)).toEqual([false])
 
-		// Et relu du serveur : la pilule « Track › Channel » sur le bloc, la sélection dans la fiche.
+		// Sur le canevas, SANS rechargement : la pilule « Track › Channel » paraît sur le bloc posé.
+		await expect(bloc).toContainText(TRACK.nom)
+		await expect(bloc).toContainText(CHANNEL.nom)
+
+		// Le TITRE écrit sur ce bloc neuf le renomme aussitôt — même défaut, même correction (INC-255).
+		const titre = page.getByTestId('champ-titre')
+		await titre.fill(BLOC_A)
+		await page.keyboard.press('Enter')
+		await expect(page.getByTestId('etat-titre')).toHaveText('Enregistré')
+		await expect(page.getByTestId('bloc-objectif').filter({ hasText: BLOC_A })).toHaveCount(1)
+		await page.keyboard.press('Escape')
+		await expect(page.getByTestId('fiche-bloc')).toHaveCount(0)
+
+		// Un second bloc, décalé au clavier, puis une FLÈCHE tracée de l'un à l'autre : `Espace` sur le
+		// départ, `Entrée` sur l'arrivée (docs/SPEC-goals.md §5.5).
+		await page.getByTestId('poser-bloc').first().click()
+		for (let pas = 0; pas < 48; pas += 1) await page.keyboard.press('ArrowRight')
+		await page.keyboard.press('Enter')
+		await expect(page.getByTestId('bloc-objectif')).toHaveCount(2)
+		await page.getByTestId('bloc-objectif').filter({ hasText: BLOC_A }).focus()
+		await page.keyboard.press('Space')
+		await page.getByTestId('bloc-objectif').filter({ hasText: 'Nouvel objectif' }).focus()
+		await page.keyboard.press('Enter')
+		await expect(page.getByTestId('mention-ecriture')).toHaveText('Flèche tracée')
+
+		// Sa direction corrigée s'affiche aussitôt — la flèche tracée pendant la visite suit la ligne rendue.
+		const direction = page.getByTestId('direction-fleche').first()
+		await expect(direction).toHaveValue('forward')
+		await direction.selectOption('both')
+		await expect(page.getByTestId('mention-ecriture')).toHaveText('Enregistré')
+		await expect(direction).toHaveValue('both')
+		await capturer(page, 'premier-lancement-canevas-1440', UNITE)
+
+		// Et tout est relu du serveur : lien, titre, flèche et sa direction.
 		await page.reload()
-		const recharge = page.getByTestId('bloc-objectif').first()
+		const recharge = page.getByTestId('bloc-objectif').filter({ hasText: BLOC_A })
 		await expect(recharge).toContainText(TRACK.nom)
 		await expect(recharge).toContainText(CHANNEL.nom)
+		await expect(page.getByTestId('direction-fleche').first()).toHaveValue('both')
 		await recharge.focus()
 		await page.keyboard.press('Enter')
 		await expect(page.getByTestId('champ-lien')).not.toHaveValue('')

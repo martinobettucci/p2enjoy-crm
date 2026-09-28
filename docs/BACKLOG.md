@@ -14722,11 +14722,14 @@ et §5.49.*
 
 ## Correctif du 2026-09-28 — INC-255 (décision 609)
 
-- [ ] **INC-255 — le canevas d'objectifs rend ce qu'on écrit sur un bloc posé, ou une flèche tracée,
+- [x] **INC-255 — le canevas d'objectifs rend ce qu'on écrit sur un bloc posé, ou une flèche tracée,
       pendant la visite** (`CRM-083`). Les lignes que le serveur rend après une écriture s'appliquent à
-      TOUS les blocs et à TOUTES les flèches rendus, et non aux seuls lus au chargement. Preuve unitaire qui
-      échoue avant correction ; parcours `e2e/ui/premier-lancement.spec.ts` — le lien posé reste affiché,
-      puis relu après rechargement — ; captures observées.
+      TOUS les blocs et à TOUTES les flèches rendus, et non aux seuls lus au chargement. Mesuré le
+      2026-09-29 : `Objectifs.test` **100** — dont deux preuves vues rouges puis vertes, lien et titre d'un
+      bloc posé ; parcours `e2e/ui/premier-lancement.spec.ts` rouge avant, vert après — lien, titre, flèche
+      et direction, à l'écran puis après rechargement —, la correction des flèches vue rouge sous
+      mutation ; campagne `verify-webapp.sh` **44 contrôles sans anomalie**, 3 355 tests unitaires,
+      **766** scénarios d'interface ; captures `docs/captures/CRM-094/premier-lancement-*` observées.
 
 ### CRM-095 — Créer une affaire depuis le board `[ ]`
 *Créée le 2026-09-28 — décision 609, arbitrages du responsable. Aucune surface ne créait d'affaire, alors

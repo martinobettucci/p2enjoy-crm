@@ -35,6 +35,9 @@
 //       chargement n'est plus effacé
 // @spec docs/BACKLOG.md « Correctifs arbitrés », INC-231 ; docs/JOURNAL.md décisions 592 et 594 —
 //       classes absentes du CSS produit remplacées (docs/DESIGN_SYSTEM.md §11, §5.29)
+// @spec docs/BACKLOG.md « Correctif du 2026-09-28 », INC-255 ; docs/JOURNAL.md décision 609 — les lignes
+//       rendues après une écriture s'appliquent aussi aux blocs posés et aux flèches tracées pendant la
+//       visite (docs/DESIGN_SYSTEM.md §5.28, §5.29)
 //
 // CE QUE CES TRANCHES LIVRENT, ET CE QU'ELLES NE LIVRENT PAS — nommé ici plutôt que découvert à
 // l'usage (`CLAUDE.md` §25) :
@@ -1153,9 +1156,14 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 	// pendant un déplacement ferait sauter le bloc d'une place à l'autre de l'ordre du clavier
 	// sous les doigts de celui qui le déplace — le défaut que le §5.31 nomme pour une table de
 	// saisie, transposé au canevas.
+	//
+	// LES LIGNES ÉCRITES S'APPLIQUENT À TOUS LES BLOCS, POSÉS PENDANT LA VISITE COMPRIS — INC-255,
+	// relevé par le responsable en production le 2026-09-28 (décision 609). Appliquées aux seuls blocs
+	// LUS, elles laissaient un bloc qu'on venait de poser dans l'état de sa pose : le lien choisi était
+	// écrit, et le sélecteur retombait sur « Aucun channel » ; un titre écrit ne renommait rien.
 	const blocs = useMemo(() => {
-		const lus = (contenu?.blocs ?? []).map((bloc) => ecrits.get(bloc.id) ?? bloc)
-		return ordreTabulation([...lus, ...ajoutes].filter((bloc) => !blocsSupprimes.has(bloc.id)))
+		const rendus = [...(contenu?.blocs ?? []), ...ajoutes].map((bloc) => ecrits.get(bloc.id) ?? bloc)
+		return ordreTabulation(rendus.filter((bloc) => !blocsSupprimes.has(bloc.id)))
 	}, [contenu, ecrits, ajoutes, blocsSupprimes])
 
 	const blocsRendus = useMemo(
@@ -1172,8 +1180,11 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 	// la cascade du §2.3 l'a détruite avec le bloc, et la laisser pendre dessinerait un lien que
 	// plus rien ne porte.
 	const flechesRendues = useMemo(() => {
-		const lues = (contenu?.fleches ?? []).map((fleche) => flechesEcrites.get(fleche.id) ?? fleche)
-		return [...lues, ...flechesTracees].filter(
+		// INC-255 : même règle que les blocs — une flèche tracée pendant la visite rend sa direction corrigée.
+		const rendues = [...(contenu?.fleches ?? []), ...flechesTracees].map(
+			(fleche) => flechesEcrites.get(fleche.id) ?? fleche,
+		)
+		return rendues.filter(
 			(fleche) =>
 				!flechesSupprimees.has(fleche.id) &&
 				!blocsSupprimes.has(fleche.source_block_id) &&

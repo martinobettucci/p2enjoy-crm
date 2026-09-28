@@ -30271,3 +30271,11 @@ elle résout le workflow du channel et son étape INITIALE sous la RLS de l'appe
 nouvelles affaires entrent par l'étape initiale » (manuel, §5 bis.2) n'était tenue par rien — et nomme ses
 refus. Position et adresse viennent des triggers existants. Le guide mène désormais au board du premier
 channel. **Unité `CRM-095`**, quatre tranches ; migration **81** — une livraison avec instantané.
+
+**Correction d'INC-255, le 2026-09-29.** Les lignes rendues après une écriture s'appliquent désormais à
+tous les blocs et à toutes les flèches rendus. Preuves : deux tests unitaires — lien et titre d'un bloc
+posé — vus rouges puis verts ; le parcours `premier-lancement.spec.ts`, rouge avant la correction sur le
+sélecteur revenu à vide, vert après — lien, titre, flèche tracée et direction corrigée, à l'écran puis
+après rechargement ; la correction des seules flèches, retirée sous mutation, fait rougir le parcours sur
+la direction. Le parcours de reproduction, encore rouge, avait été committé avec la spécification
+(`2e3ba587`) ; il devient vert avec ce correctif.
