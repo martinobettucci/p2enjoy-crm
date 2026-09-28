@@ -33,9 +33,9 @@ source d'identité.
 | Élément | État |
 |---|---|
 | Environnement de production | Cellule Spark `crm` (`docs/SPEC-deploiement-spark.md`), assemblage à trois fichiers : neuf services sains et deux conteneurs à usage unique (runner, bucket) ; GoTrue retiré le 2026-09-24 |
-| Schéma appliqué | Les **79 migrations** du dépôt : 1 à 73 par `--migrate --premier-deploiement` sur une base mesurée vierge (2026-09-23), 74 à 79 par la reprise `CRM-092` (2026-09-24) |
-| Dernière migration appliquée | `0079_admin_du_domaine.sql` — objets relus en base le 2026-09-24 |
-| Version déployée | La révision inscrite dans `/srv/crm/REVISION` — celle que `scripts/spark/verifier.sh` compare au `HEAD` du poste ; **`f99a9b32`** le 2026-09-26 (secret sous `OIDC_CLIENT_SECRET`) |
+| Schéma appliqué | Les **80 migrations** du dépôt : 1 à 73 par `--migrate --premier-deploiement` sur une base mesurée vierge (2026-09-23), 74 à 79 par la reprise `CRM-092` (2026-09-24), 80 par `CRM-094` (2026-09-28) |
+| Dernière migration appliquée | `0080_workflow_de_depart.sql` — relue en base le 2026-09-28 : `anon` sans `EXECUTE`, `authenticated` avec, `SECURITY INVOKER`, `search_path` vide |
+| Version déployée | La révision inscrite dans `/srv/crm/REVISION` — celle que `scripts/spark/verifier.sh` compare au `HEAD` du poste ; **`561622ae`** le 2026-09-28 (`CRM-094`) |
 | Données | Un espace, « P2Enjoy CRM » (`crm`), réamorcé par la reprise `CRM-092` ; un profil, celui du responsable, administrateur depuis sa première connexion LeLabs ; aucune autre donnée, aucun seed. La ligne `auth.users` de l'ancien compte invité reste, inerte |
 | Route publique | `crm.lelabs.tech 8080 tls`, active : `https://crm.lelabs.tech`, certificat Let's Encrypt présenté par la Forge (décision 576) |
 | Client OIDC `lelabs-crm` | Déclaré et créé au realm le 2026-09-23 à 16:08:44 (`docs/SSO-client-lelabs-crm.md`), **supprimé du realm avant le déploiement de `CRM-092`** : sonde `400` « Client non trouvé » le 2026-09-24 à 18 h, retrait confirmé par l'instantané de reprise du dépôt du SSO (décision 598). Sans effet sur le service : aucune connexion n'avait encore été faite, elle attend `CRM-092` (§3) |
@@ -209,7 +209,7 @@ de redéclarer un client public.
 jusqu'à leur prolongation. Un secret mal saisi fait rendre `service_indisponible` à l'ouverture de
 session, sans autre effet : le corriger en console et recréer `functions`.
 
-### 2.6 Le secret sous `OIDC_CLIENT_SECRET` — bascule directe (EN ATTENTE)
+### 2.6 Le secret sous `OIDC_CLIENT_SECRET` — bascule directe (EXÉCUTÉE les 2026-09-26 et 27, sauf les gestes 6 et 8 du responsable)
 
 **Décision 604**, `docs/SPEC-session-sso.md` §12 bis. Le code livré après cette opération ne lit plus que
 `OIDC_CLIENT_SECRET` : **la variable doit exister dans la cellule AVANT la livraison**, sinon
@@ -230,7 +230,7 @@ connexion tombe. Aucune migration.
 **Retour arrière** : avant l'étape 6, relivrer la révision précédente suffit — l'ancien nom est encore
 là. Après, recopier la valeur sous l'ancien nom avant de relivrer.
 
-### 2.7 `CRM-094` — le workflow de départ et le guide flottant (EN ATTENTE)
+### 2.7 `CRM-094` — le workflow de départ et le guide flottant (EXÉCUTÉE le 2026-09-28, sauf le geste 4 du responsable)
 
 `docs/SPEC-onboarding.md` §10, `docs/SPEC-workflow-engine.md` §7 quater ; décisions 606 et 607. Une
 migration, pure addition d'une fonction ; aucune variable, aucun service nouveau. La webapp des tranches
@@ -249,9 +249,9 @@ données.
 
 ## 3. Migrations en attente
 
-**Une migration en attente depuis le 2026-09-28 : la 80** (`CRM-094`, décision 606), pure addition d'une
-fonction — voir la ligne 80 du §3.2. Baseline de production : la migration **79** ; les six migrations
-de `CRM-092` (74 à 79) ont été appliquées le 2026-09-24 par la reprise (§2.5, §8).
+**Aucune migration en attente depuis le 2026-09-28.** Baseline de production : la migration **80**
+(`CRM-094`, décision 606), appliquée le 2026-09-28 (§2.7, §8) ; les six migrations de `CRM-092` (74 à 79)
+l'avaient été le 2026-09-24 par la reprise (§2.5, §8).
 
 ### 3.1 Procédure nominale — la fenêtre de maintenance (`CRM-087`, livrée)
 
@@ -1104,3 +1104,24 @@ Spark distant de prod »).
 - **Étape 7** : l'agent du dépôt du SSO prévenu (`sso-85`). **Étape 8** : note `CONTRIBUTORS` reproposée,
   identique au dépôt. **Restent au responsable** : retirer `SSO_OIDC_CLIENT_SECRET` (étape 6) et accepter
   la note en console.
+
+### `CRM-094` — le workflow de départ et le guide flottant, 2026-09-28 (§2.7, décisions 606 à 608)
+
+- **Geste 1** : instantané de VM pris par le responsable avant la fenêtre.
+- **Geste 2** : `scripts/spark/livrer.sh -- --migrate --instantane-verifie` par les IP. Un premier passage
+  a échoué **au transfert** — `ssh: connect … Connection timed out` au rebond — après avoir relu les
+  variables publiques et construit la webapp : **rien n'a été déposé**, aucun fichier n'était à retirer
+  depuis `f99a9b32`, la production est restée sur cette révision. Rejoué : révision **`561622ae`**,
+  image Realtime identique, **« Migrations appliquées avec succès »** — la 80. Puis `./runProd.sh
+  --spark` : les neuf services sains, les deux conteneurs à usage unique terminés en `0`.
+- **Geste 3** : `verifier.sh` — un premier passage a lu la route « aucune », lecture ssh expirée au rebond
+  (ligne `Connection timed out` juste avant) ; rejoué : **26 contrôles, aucune anomalie**. Ligne 80 du
+  §3.2, en base : `anon` sans `EXECUTE`, `authenticated` avec, `prosecdef` faux, `search_path` vide ;
+  par la route publique, l'appel anonyme rend **`401` / `42501`**. Le refus d'un `business_developer`
+  n'est pas éprouvable en production — aucun compte de ce rôle n'y existe, et en créer un pour la preuve
+  écrirait des données de production — : il l'est en développement, par `0074` (pgTAP) et
+  `e2e/api/workflow-depart.spec.ts`.
+- **Données avant le geste 4**, relues : 1 track, **0 workflow, 0 nœud, 0 channel** — l'état du défaut
+  relevé par le responsable. **Reste au responsable** : le geste 4 — le workflow de départ, puis le
+  premier channel, depuis la pastille.
+
