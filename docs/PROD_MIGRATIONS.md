@@ -35,7 +35,7 @@ source d'identité.
 | Environnement de production | Cellule Spark `crm` (`docs/SPEC-deploiement-spark.md`), assemblage à trois fichiers : neuf services sains et deux conteneurs à usage unique (runner, bucket) ; GoTrue retiré le 2026-09-24 |
 | Schéma appliqué | Les **80 migrations** du dépôt : 1 à 73 par `--migrate --premier-deploiement` sur une base mesurée vierge (2026-09-23), 74 à 79 par la reprise `CRM-092` (2026-09-24), 80 par `CRM-094` (2026-09-28) |
 | Dernière migration appliquée | `0080_workflow_de_depart.sql` — relue en base le 2026-09-28 : `anon` sans `EXECUTE`, `authenticated` avec, `SECURITY INVOKER`, `search_path` vide |
-| Version déployée | La révision inscrite dans `/srv/crm/REVISION` — celle que `scripts/spark/verifier.sh` compare au `HEAD` du poste ; **`561622ae`** le 2026-09-28 (`CRM-094`) |
+| Version déployée | La révision inscrite dans `/srv/crm/REVISION` — celle que `scripts/spark/verifier.sh` compare au `HEAD` du poste ; **`99c12a26`** le 2026-09-28 (`CRM-094`, puis INC-254) |
 | Données | Un espace, « P2Enjoy CRM » (`crm`), réamorcé par la reprise `CRM-092` ; un profil, celui du responsable, administrateur depuis sa première connexion LeLabs ; aucune autre donnée, aucun seed. La ligne `auth.users` de l'ancien compte invité reste, inerte |
 | Route publique | `crm.lelabs.tech 8080 tls`, active : `https://crm.lelabs.tech`, certificat Let's Encrypt présenté par la Forge (décision 576) |
 | Client OIDC `lelabs-crm` | Déclaré et créé au realm le 2026-09-23 à 16:08:44 (`docs/SSO-client-lelabs-crm.md`), **supprimé du realm avant le déploiement de `CRM-092`** : sonde `400` « Client non trouvé » le 2026-09-24 à 18 h, retrait confirmé par l'instantané de reprise du dépôt du SSO (décision 598). Sans effet sur le service : aucune connexion n'avait encore été faite, elle attend `CRM-092` (§3) |
@@ -1124,4 +1124,10 @@ Spark distant de prod »).
 - **Données avant le geste 4**, relues : 1 track, **0 workflow, 0 nœud, 0 channel** — l'état du défaut
   relevé par le responsable. **Reste au responsable** : le geste 4 — le workflow de départ, puis le
   premier channel, depuis la pastille.
+
+### INC-254 — la barre latérale suit l'arborescence, 2026-09-28 (décision 608)
+
+Webapp seule : aucune migration, aucune variable, aucun service nouveau. `scripts/spark/livrer.sh` par les
+IP, révision **`99c12a26`**, image Realtime identique, `./runProd.sh --spark` enchaîné par le script ;
+`verifier.sh` : **26 contrôles, aucune anomalie** du premier coup.
 
