@@ -1190,6 +1190,13 @@ quoi il a l'air.
     autorisation, alors que le compte est celui de l'appelant et n'a jamais prétendu à
     l'exhaustivité.
 
+- **La barre latérale suit les gestes de cet écran** — *INC-254, décision 608, écrit le 2026-09-28 avant
+  le code*. Un track créé, modifié, réordonné, archivé, désarchivé ou retiré y paraît — ou la quitte —
+  **sans rechargement**, et **sans squelette** : l'ancienne liste reste affichée le temps de la
+  relecture, la règle du §5.29 tranche 2 c (« un rechargement n'efface pas la liste qu'il relit »). Ce
+  que la barre montre vient toujours de la base (`docs/SPEC-webapp.md` §6.3 bis) ; une restauration
+  depuis la corbeille (§5.16) la met à jour de la même façon.
+
 ### 5.14 État de la messagerie — `CRM-059`
 
 Ce que l'écran **lit** — deux requêtes, sous les RLS déjà posées par `CRM-052` et `CRM-058` — est

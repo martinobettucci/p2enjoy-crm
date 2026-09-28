@@ -308,6 +308,38 @@ L'interface n'en déduit **aucun droit** : `docs/DAT.md` §3.1 et `docs/SPEC-typ
 type ne décrit jamais une autorisation. Ce que la coquille affiche est ce que le backend a
 consenti à rendre.
 
+### 6.3 bis Quand la coquille relit ses tracks — INC-254, décision 608
+
+*Écrit le 2026-09-28, avant le code, sur l'arbitrage du responsable (« corriger maintenant »).*
+
+La coquille lit ses tracks **à son montage** (§6.3). Or les routes de réglages rendent toutes `<AppShell>`
+au même endroit de l'arbre, et React la **garde** d'une page à l'autre — mesuré par la preuve E2E de
+`CRM-094` (décision 607). Créer un track sur `/reglages/arborescence` laissait donc la barre latérale
+écrire « Aucun track » jusqu'au rechargement, ou jusqu'à l'ouverture d'un écran d'une autre nature
+(INC-254).
+
+**Règle.** Toute écriture qui change **ce que la barre latérale montre** émet, après son succès,
+l'événement d'interface **`p2enjoy:tracks-modifies`** ; la coquille s'y abonne et **relit ses tracks
+sans être remontée** — la page courante, et une saisie en cours, ne bougent pas.
+
+| Émetteur | Écritures | Motif |
+|---|---|---|
+| `AdministrationArborescence` | toute écriture de **track** aboutie : création, modification (nom, couleur, icône — la pilule), réordonnancement, archivage, désarchivage, mise à la corbeille | la barre latérale liste les tracks vivants, dans leur ordre, avec leur pilule |
+| `Corbeille` | la **restauration d'un track** aboutie | le track redevient vivant, donc listé |
+
+Une écriture de **channel** n'émet rien : la barre latérale ne liste pas les channels, et la barre
+d'onglets d'un track est lue par la route du track, montée à chaque ouverture. Une issue « sans effet »
+ou un refus n'émet rien non plus : la base n'a rien changé.
+
+**La relecture garde la liste affichée.** Aucun squelette, aucun clignotement : la barre latérale montre
+l'ancienne liste jusqu'à ce que la nouvelle arrive (`docs/DESIGN_SYSTEM.md` §5.29 tranche 2 c, « un
+rechargement n'efface pas la liste qu'il relit »). Le squelette reste réservé au **premier** chargement.
+**Son échec est un échec de lecture comme un autre**, rendu par la coquille (§7) avec sa reprise : une
+liste gardée en silence après un échec serait la valeur trompeuse que `CLAUDE.md` §18 interdit.
+
+**Écartés.** Remonter la coquille à chaque page — elle relirait tout à chaque navigation et ferait
+clignoter la barre latérale ; relire à chaque changement d'adresse — des lectures sans cause.
+
 ### 6.4 Contrat asynchrone
 
 Un type somme unique décrit tout chargement :
