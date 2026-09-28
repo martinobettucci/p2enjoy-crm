@@ -14705,3 +14705,13 @@ et §5.49.*
 - [ ] **T4** — livraison en production (migration 80) et constat : l'administrateur crée son workflow
       de départ puis son premier channel depuis le guide.
 
+
+## Correctif arbitré le 2026-09-28 — décision 608
+
+- [ ] **INC-254 — la barre latérale relit ses tracks après une écriture de l'arborescence** (`CRM-007`,
+      `CRM-075`). La coquille, gardée d'une page de réglages à l'autre, relit ses tracks sur un signal
+      d'interface émis par les écritures de l'arborescence — création, renommage, réordonnancement,
+      archivage, restauration, corbeille —, sur le modèle de `p2enjoy:workflow-de-depart`. Spécification
+      écrite avant le code (`docs/SPEC-webapp.md`, coquille), preuve unitaire qui échoue avant
+      correction, preuve E2E — un track créé paraît dans la barre latérale sans rechargement —, captures
+      observées ; livraison webapp seule, après celle de `CRM-094`.

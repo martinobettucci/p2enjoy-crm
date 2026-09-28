@@ -30195,3 +30195,16 @@ réglages, dont la description du guide dit désormais « six étapes ». Les 47
 
 **Écart corrigé au passage** : le commit de T1 (`4544d737`) n'avait pas porté son entrée au `CHANGELOG`.
 L'entrée de `CRM-094` sous « Non publié » couvre désormais T1, T2 et T3.
+
+## décision 608 — arbitrages du 2026-09-28 : livrer `CRM-094`, puis corriger INC-254
+
+*2026-09-28, questions posées au responsable après le commit `26cf35de`.*
+
+1. **Livrer `CRM-094` maintenant** — l'instantané de VM de la cellule est pris (§2.7 de
+   `docs/PROD_MIGRATIONS.md`, geste 1) : migration 80 et webapp des tranches T2 et T3, par les adresses
+   IP, puis `./runProd.sh --spark` et `verifier.sh` ; le responsable crée ensuite son workflow de départ
+   et son premier channel depuis la pastille (T4).
+2. **INC-254 : corriger maintenant**, par la voie proposée — la coquille relit ses tracks sur un signal
+   d'interface émis par les écritures de l'arborescence. Écartés : une unité à part ; laisser l'écart
+   ouvert. **Ordre** : après la livraison de `CRM-094`, pour ne pas vieillir l'instantané pris pour la
+   migration 80 ; spécification avant le code, puis livraison webapp seule.

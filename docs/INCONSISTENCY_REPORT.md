@@ -6762,3 +6762,6 @@ de relire ses tracks. C'est la même cause que le défaut de re-mesure du guide 
 doit trancher** : corriger maintenant — la coquille relit ses tracks sur un signal émis par les
 écritures de l'arborescence, sur le modèle de `p2enjoy:workflow-de-depart` — ou en faire une unité
 propre.
+
+**ARBITRÉE le 2026-09-28 — décision 608 : corriger maintenant**, après la livraison de `CRM-094`, par la
+voie proposée. Suivi : `docs/BACKLOG.md`, « Correctif arbitré le 2026-09-28 ».
