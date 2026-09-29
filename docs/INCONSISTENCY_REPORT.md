@@ -6842,5 +6842,34 @@ textes de même nature que cette unité rend faux — `route.channel.empty.body`
 **ARBITRÉE le 2026-09-29 — décision 611** : corrigée **dans `CRM-095`**, même livraison que la création
 d'affaire. Les deux textes nomment le vrai geste et portent un lien vers l'écran qui le fait —
 l'arborescence, l'éditeur de workflows — ; le parcours `e2e/ui/premier-lancement.spec.ts` les vérifie à
-l'écran. Spécification : `docs/SPEC-cards.md` §18.6, `docs/DESIGN_SYSTEM.md` §5.51. Suivi :
+l'écran. Spécification : `docs/SPEC-cards.md` §18.4 bis, `docs/DESIGN_SYSTEM.md` §5.51. Suivi :
 `docs/BACKLOG.md`, `CRM-095` T2 bis.
+
+### INC-259 — deux autres textes décrivent un produit disparu : le carnet « que le produit ne livre pas », le motif « pas encore conservé »
+
+*Relevée le 2026-09-29 en regardant les captures du parcours de premier lancement (`CRM-095`).* Même nature
+qu'INC-258, sur deux chemins quotidiens :
+
+- `cardContacts.attach.noContact` — la fiche d'une affaire dans un espace sans contact : « Le carnet se
+  remplira depuis une surface que le produit ne livre pas encore. » Faux depuis `CRM-060` sous-tranche
+  4e : le carnet crée des contacts (`docs/DESIGN_SYSTEM.md` §5.23). C'est l'écran que voit l'administrateur
+  qui vient de créer sa première affaire (capture `docs/captures/CRM-095/premier-lancement-fiche-premiere-affaire-xl-1440.jpg`) ;
+- `board.comment.notstored` — le motif exigé par un déplacement : « Il n'est pas encore conservé :
+  l'historique des affaires arrive avec les commentaires. » Faux depuis la clôture d'INC-048 : **mesuré**
+  le 2026-09-29, `move_card` écrit le motif dans `card_comments`.
+
+**ARBITRÉE le 2026-09-29 — décision 612** : corrigée dans `CRM-095`. Spécification :
+`docs/SPEC-cards.md` §18.4 bis, `docs/SPEC-workflow-engine.md` §7.8 (révisé), `docs/DESIGN_SYSTEM.md`
+§5.21, §5.22, §5.51. Suivi : `docs/BACKLOG.md`, `CRM-095` T2 ter.
+
+### INC-260 — la palette de recherche de l'en-tête reste ouverte quand le clavier la quitte par `Tab`
+
+*Relevée le 2026-09-29 en regardant la capture du parcours au clavier seul (`CRM-095`).* Traverser l'en-tête
+au clavier donne le focus au champ de recherche, qui ouvre son panneau ; le `Tab` suivant quitte le champ,
+et le panneau **reste ouvert**, par-dessus la barre d'onglets, jusqu'à `Échap` ou un clic hors de lui
+(`docs/DESIGN_SYSTEM.md` §5.46 ne règle que ces deux fermetures). Pour qui navigue au clavier seul, chaque
+traversée de l'en-tête laisse un panneau ouvert sur l'écran qu'il atteint. Hors du périmètre de `CRM-095`
+(`CRM-065`).
+
+**ARBITRÉE le 2026-09-29 — décision 612** : corrigée dans `CRM-095`. Spécification :
+`docs/SPEC-recherche.md` §14.3, `docs/DESIGN_SYSTEM.md` §5.46. Suivi : `docs/BACKLOG.md`, `CRM-095` T2 ter.

@@ -983,6 +983,14 @@ La **troncature est écrite** quand la liste est pleine, jamais laissée à devi
 | `Flèche haut` | monte d'un résultat ; depuis le premier, va au dernier |
 | `Entrée` | suit le résultat **actif** ; sans résultat actif, ne fait rien |
 | `Échap` | referme et rend le focus (§14.1) |
+| `Tab` / `Maj+Tab` hors de la palette | **referme sans rendre le focus** : il est déjà là où l'utilisateur l'a envoyé — *ajouté le 2026-09-29, INC-260, décision 612* |
+
+**La palette se referme quand le focus la QUITTE** — par `Tab`, `Maj+Tab` ou tout autre chemin — et reste
+ouverte tant qu'il circule en elle, du champ à l'action de reprise d'une erreur (§14.4). Relevé au
+clavier seul le 2026-09-29 (INC-260) : traverser l'en-tête ouvrait le panneau, qui restait ouvert
+par-dessus la barre d'onglets jusqu'à `Échap`. **Un clic dans le panneau ne retire pas le focus du
+champ** — le panneau ne le prend pas à la souris —, sans quoi la sortie de focus fermerait le panneau
+avant que le clic sur un résultat n'arrive.
 
 **Le focus ne quitte JAMAIS le champ**, et c'est la règle qui décide la forme : les flèches déplacent
 un **résultat actif**, pas le focus. Un focus qui descendrait dans la liste ferait perdre la frappe

@@ -14752,6 +14752,11 @@ que le guide et le board le promettaient (INC-256). Spécifié avant le code : `
       étape » nomment le geste et mènent à l'arborescence ou à l'éditeur de workflows, pour tous les
       rôles (`docs/SPEC-cards.md` §18.4 bis, `docs/DESIGN_SYSTEM.md` §5.51) ; preuves unitaires et
       E2E dans `e2e/ui/premier-lancement.spec.ts`.
+- [ ] **T2 ter** — INC-259 et INC-260 (décision 612) : le bloc des contacts d'une affaire sans contact
+      nomme « Nouveau contact » et mène au carnet ; la saisie du motif dit qu'il est conservé ; la
+      palette de recherche se referme quand le focus la quitte (`docs/SPEC-cards.md` §18.4 bis,
+      `docs/SPEC-workflow-engine.md` §7.8, `docs/SPEC-recherche.md` §14.3, `docs/DESIGN_SYSTEM.md` §5.21,
+      §5.46) ; preuves unitaires et E2E au clavier.
 - [ ] **T3** — le guide mène au board du premier channel ; le parcours complet
       `e2e/ui/premier-lancement.spec.ts` jusqu'à l'affaire, à la souris et au clavier seul ;
       `docs/manual.md` ; captures aux quatre paliers.

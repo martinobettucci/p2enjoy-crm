@@ -4442,6 +4442,14 @@ Les deux liens sont **rendus à tous les rôles** : ils mènent à un écran, pa
 qui refuse ce que l'appelant ne peut pas écrire (§18.3, `CLAUDE.md` §10). Aucun rôle n'est calculé pour
 décider de les montrer.
 
+**Deux textes de plus, même nature (INC-259, décision 612, arbitrage du 2026-09-29 : « Oui, dans
+`CRM-095` »)** :
+
+| Texte | Révisé en | Lien |
+|---|---|---|
+| Contacts d'une affaire, espace sans contact (`cardContacts.attach.noContact`) | le contact se crée dans le carnet, avec « Nouveau contact » | « Ouvrir le carnet » → `/contacts`, rendu à tous les rôles |
+| Motif exigé par un déplacement (`board.comment.notstored`) | le motif est conservé dans l'historique de l'affaire, comme un commentaire (`docs/SPEC-workflow-engine.md` §7.8, révisé) | aucun : c'est une information, pas un renvoi |
+
 ### 18.5 Preuves
 
 | Niveau | Preuve |

@@ -1861,6 +1861,9 @@ le premier champ et rendu à la commande qui l'a ouvert, alerte de refus **dans 
   **aucun sélecteur vide** ; et « cet espace de travail n'a aucun contact », qui n'offre **aucune
   action** — aucun écran du produit ne crée de contact, et un bouton y serait un chemin vers nulle
   part (§5.16, §5.19).
+  *RÉVISÉ le 2026-09-29 (INC-259, décision 612) : le motif est tombé par livraison — le carnet crée des
+  contacts depuis le §5.23. Ce troisième vide nomme donc « Nouveau contact » et porte le lien « Ouvrir
+  le carnet », selon le §5.51.*
 
 - **Le détachement demande une confirmation NOMMANT le contact** (§6). C'est un retrait : la ligne
   disparaît et le rôle saisi avec elle, sans reprise possible. Elle se distingue en cela de
@@ -1940,6 +1943,9 @@ deux à la fois, un refus n'efface pas la saisie.
 - **Une liste vide le dit en toutes lettres, sans action** : « cet espace de travail n'a aucun
   contact ». C'est le troisième vide du §5.21, repris sans changement — aucun écran du produit ne
   crée de contact, et un bouton y serait un chemin vers nulle part (§5.16, §5.19).
+  *Précisé le 2026-09-29 (INC-259) : ce motif est tombé — le carnet crée des contacts (§5.23) — et le
+  bloc du §5.21 y renvoie désormais. Le sélecteur, lui, reste sans action : c'est un contrôle de
+  formulaire, et un lien dans un `select` n'existe pas.*
 
 - **En lecture seule, dans la section repliée du formulaire, la valeur se rend en NOM.** Si elle ne
   se résout pas, ou si la liste n'a pas pu être lue, c'est l'**identifiant brut** qui s'affiche, en
@@ -4383,6 +4389,12 @@ parce qu'elle porte sur le produit entier, et non sur l'utilisateur.
 
 - **`ÉCHAP` REFERME ET REND LE FOCUS**, un clic hors du panneau le referme sans rendre le focus — la
   distinction que le §5.43 fait entre fermer et annuler, reprise sans changement.
+- **LE FOCUS QUI QUITTE LA PALETTE LA REFERME, sans être rendu** — *ajouté le 2026-09-29, INC-260,
+  décision 612*. Traverser l'en-tête au clavier ouvrait le panneau, qui restait par-dessus la barre
+  d'onglets jusqu'à `Échap` : trouvé en regardant la capture d'un parcours au clavier seul
+  (`CLAUDE.md` §16). Le focus peut circuler DANS la palette — du champ à l'action de reprise — sans la
+  refermer ; et le panneau ne prend pas le focus à la souris, pour que la sortie de focus ne le ferme
+  pas avant qu'un clic sur un résultat n'arrive (`docs/SPEC-recherche.md` §14.3).
 
 - **LE PANNEAU N'A NI BARRE DE TITRE, NI COMMANDE DE FERMETURE, et c'est l'écart au §5.43 qu'il faut
   écrire pour qu'on ne le recopie pas sans son motif.** Le panneau de notifications en porte une
@@ -4929,3 +4941,8 @@ action ». Quatre états vides renvoyaient à « l'API » là où le produit por
   parce qu'y renvoyer **conditionnellement au rôle** ferait calculer un droit à l'écran : ici rien n'est
   conditionnel, le lien mène à un écran, et la base refuse les gestes que l'appelant ne peut pas faire.
 - **Aucune couleur, aucun jeton, aucune icône nouvelle.**
+- **Les guillemets français d'un texte nouveau encadrent l'étiquette d'espaces INSÉCABLES** — `« Nouvelle
+  affaire »` s'écrit avec U+00A0 après « et avant ». Défaut trouvé EN REGARDANT UNE CAPTURE à 390 px
+  (`CLAUDE.md` §16, 2026-09-29) : écrit avec des espaces ordinaires, le texte revenait à la ligne entre
+  l'étiquette et son « » », qui ouvrait seul la ligne suivante. Les 156 guillemets des textes antérieurs
+  portent des espaces ordinaires ; ils ne sont pas repris ici.

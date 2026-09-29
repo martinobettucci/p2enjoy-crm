@@ -30342,3 +30342,27 @@ le comble ; le lien est rendu à tous les rôles — écart motivé au §5.33), 
 **Conséquence.** Le parcours `premier-lancement.spec.ts` ouvre le premier track avant son premier channel,
 et pose un workflow sans étape pour éprouver le second état — deux écrans qu'un administrateur rencontre
 réellement en démarrant.
+
+## décision 612 — INC-259 et INC-260, trouvées en regardant les captures du premier lancement : corrigées dans `CRM-095`
+
+*2026-09-29, pendant la vérification visuelle de `CRM-095` ; arbitrages du responsable.*
+
+**Observations.** Les captures du parcours au clavier seul, dans un espace neuf, montrent trois écarts :
+- la fiche de la première affaire écrit, sous « Contacts de l'affaire », que le carnet se remplira
+  « depuis une surface que le produit ne livre pas encore » — faux depuis `CRM-060` sous-tranche 4e ;
+- la saisie du motif d'un déplacement dit qu'il « n'est pas encore conservé » — faux depuis la clôture
+  d'INC-048 : **mesuré**, `move_card` écrit le motif dans `card_comments` (INC-259) ;
+- traverser l'en-tête au clavier ouvre la palette de recherche, qui reste ouverte après le `Tab` suivant,
+  par-dessus la barre d'onglets, jusqu'à `Échap` (INC-260).
+
+**Options soumises**, pour chacune : corriger dans `CRM-095` — recommandée — ou plus tard, à part.
+
+**Décision du responsable : les deux corrigées dans `CRM-095`.** Écrit avant le code : `docs/SPEC-cards.md`
+§18.4 bis (les deux textes), `docs/SPEC-workflow-engine.md` §7.8 (le motif est conservé — révisé),
+`docs/SPEC-recherche.md` §14.3 (la palette se referme quand le focus la quitte, sans le rendre ; un clic
+dans le panneau ne retire pas le focus du champ), `docs/DESIGN_SYSTEM.md` §5.21, §5.22 et §5.46,
+`docs/BACKLOG.md` T2 ter.
+
+**Aussi relevé, sans arbitrage demandé : les guillemets.** À 390 px, « Nouvelle affaire » revenait à la
+ligne avant son « » ». Les textes nouveaux de l'unité emploient des espaces insécables autour de
+l'étiquette (`docs/DESIGN_SYSTEM.md` §5.51) ; les 156 guillemets antérieurs ne sont pas repris.

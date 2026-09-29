@@ -2971,10 +2971,15 @@ aboutir sans motif. Deux comportements étaient possibles ; le second est retenu
 le motif n'est pas donné. Déplacer d'abord et demander ensuite montrerait une card à une étape
 qu'elle n'a pas atteinte.
 
-**Et le motif est perdu à l'arrivée.** `move_card` le contrôle et ne l'écrit nulle part —
+~~**Et le motif est perdu à l'arrivée.** `move_card` le contrôle et ne l'écrit nulle part —
 `card_comments` est `CRM-043`, **INC-048**. L'écran ne peut pas le taire : la saisie **dit** que le
-motif est exigé pour valider le déplacement et qu'il n'est pas encore conservé. Laisser croire à un
-enregistrement serait le mensonge que `CLAUDE.md` §18 proscrit.
+motif est exigé pour valider le déplacement et qu'il n'est pas encore conservé.~~
+
+**RÉVISÉ le 2026-09-29 (INC-259, décision 612) : le motif EST conservé.** Depuis la clôture d'INC-048,
+`move_card` l'écrit dans `card_comments` — mesuré le 2026-09-29 : `insert into public.card_comments
+(card_id, workspace_id, author_id, body)`, l'auteur étant l'appelant. La saisie le dit donc : le motif
+rejoint l'historique de l'affaire, comme un commentaire. Le principe ne change pas — l'écran dit ce que
+la base fait, sans quoi il mentirait (`CLAUDE.md` §18) —, seul le fait a changé.
 
 ### 7.9 Optimisme et retour arrière
 
