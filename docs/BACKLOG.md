@@ -14770,3 +14770,12 @@ que le guide et le board le promettaient (INC-256). Spécifié avant le code : `
       corriger la mesure à ce stade. Reste à faire, sur instruction : une mesure qui ne dépende pas du
       jour — par exemple `entered_step_at ≥ created_at` —, vue rouge sous un seed qui vieillirait
       l'affaire archivée, puis la ligne *f* de `docs/SPEC-seed.md` §9.12.6 précisée en ce sens.
+
+## Arbitrage du 2026-09-29 — INC-261 (décision 613)
+
+- [x] **INC-261 — « track non consenti » attendait un état vide qu'une base neuve ne produit pas**
+      (`CRM-092` T9 ; `e2e/ui/formulaire.spec.ts`). Arbitrage du responsable : corriger le test. Il
+      attend la fiche rendue et la barre d'onglets vide ; ses trois autres vérifications — le track
+      demandé par son slug, filtré sur `archived_at`, aucune lecture de channels — sont inchangées.
+      Mesuré le 2026-09-29 : rouge sur `HEAD` sur la base reconstruite, vert après correction. INC-065
+      reste ouverte.

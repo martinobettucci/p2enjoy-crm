@@ -30366,3 +30366,19 @@ dans le panneau ne retire pas le focus du champ), `docs/DESIGN_SYSTEM.md` §5.21
 **Aussi relevé, sans arbitrage demandé : les guillemets.** À 390 px, « Nouvelle affaire » revenait à la
 ligne avant son « » ». Les textes nouveaux de l'unité emploient des espaces insécables autour de
 l'étiquette (`docs/DESIGN_SYSTEM.md` §5.51) ; les 156 guillemets antérieurs ne sont pas repris.
+
+## décision 613 — INC-261 : le scénario « track non consenti » attend ce que son titre promet
+
+*2026-09-29, pendant la campagne de `CRM-095` ; arbitrage du responsable.*
+
+**Problème.** Sur la base reconstruite (décision 610), la campagne `verify-webapp.sh` rougit sur un
+scénario étranger à `CRM-095` : « track non consenti » (`e2e/ui/formulaire.spec.ts`) attend `etat-vide`.
+**Mesuré** : il rougit aussi sur `HEAD`, les changements de l'unité mis de côté.
+
+**Observations.** La lectrice lit l'affaire `…0c6` (track `formation`) ; la route d'une card ne confronte
+pas les slugs de l'adresse (INC-065) ; la fiche est donc rendue. L'attente d'un état vide datait de la
+version anonyme du scénario ; elle passait sur une base que cinq jours de campagnes avaient modifiée.
+
+**Décision du responsable : corriger le test.** Il attend la fiche et la barre d'onglets vide ; le reste
+est inchangé. Conséquence : deux scénarios au moins (INC-257, INC-261) dépendaient de l'âge ou de
+l'histoire de la base de développement — une campagne sur base neuve est le seul état déterministe.

@@ -7,6 +7,8 @@
 //           §8 (accessibilité) ; CLAUDE.md §16 (vérification visuelle)
 // @verifies CRM-092 (docs/BACKLOG.md) tranche T9 — docs/SPEC-session-sso.md §8.7 : ces scénarios se
 //           connectent, aucune page n'étant rendue sans session (docs/JOURNAL.md décision 601)
+// @verifies INC-261, décision 613 — « track non consenti » attend la fiche et la barre vide, que produit
+//           une base neuve (docs/INCONSISTENCY_REPORT.md INC-261)
 //
 // Ces scénarios s'exécutent contre le **build de production** servi par `vite preview`, et contre
 // la vraie API. Rien n'est simulé, sauf là où c'est explicitement dit — et alors c'est le
@@ -529,7 +531,11 @@ test.describe('la coquille autour du formulaire (§4.6 bis)', () => {
 			if (url.includes('/rest/v1/tracks') || url.includes('/rest/v1/channels')) urls.push(url)
 		})
 		await page.goto(`/tracks/${SLUG_TRACK_INEXISTANT}/${CHANNEL.slug}/cards/${CARD}`)
-		await expect(page.getByTestId('etat-vide')).toBeVisible()
+		// RÉVISÉ le 2026-09-29 (INC-261, décision 613) : ce scénario attendait `etat-vide`, qu'une base neuve
+		// ne produit pas — la lectrice LIT l'affaire `…0c6`, et la route d'une card ne confronte pas les slugs
+		// de l'adresse à la card (INC-065) : la fiche est rendue. Il attend désormais ce que son titre promet.
+		await expect(page.getByTestId('entete-card')).toBeVisible()
+		await expect(page.getByTestId('onglets-vides')).toBeVisible()
 
 		const resolution = urls.find((url) => url.includes(`slug=eq.${SLUG_TRACK_INEXISTANT}`))
 		expect(resolution, 'le track porteur est résolu par le slug de l’adresse').toBeTruthy()

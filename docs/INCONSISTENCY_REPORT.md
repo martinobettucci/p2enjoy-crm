@@ -6873,3 +6873,21 @@ traversée de l'en-tête laisse un panneau ouvert sur l'écran qu'il atteint. Ho
 
 **ARBITRÉE le 2026-09-29 — décision 612** : corrigée dans `CRM-095`. Spécification :
 `docs/SPEC-recherche.md` §14.3, `docs/DESIGN_SYSTEM.md` §5.46. Suivi : `docs/BACKLOG.md`, `CRM-095` T2 ter.
+
+### INC-261 — « track non consenti » attend un état vide qu'une base neuve ne produit pas
+
+*Relevée le 2026-09-29 par la campagne `verify-webapp.sh` de `CRM-095`, sur la base reconstruite par la
+décision 610 ; sans rapport avec cette unité — **mesuré** : le scénario échoue aussi sur la révision
+`HEAD`, les changements de `CRM-095` mis de côté.* `e2e/ui/formulaire.spec.ts`, « track non consenti : le
+track de l'adresse est réellement demandé, et la barre reste vide », ouvre
+`/tracks/ce-track-nexiste-pas/inter-entreprises/cards/…0c6` en LECTRICE et attend `etat-vide`. Or la
+lectrice LIT `…0c6` — track `formation`, sans droit fin qui le lui ferme —, et la route d'une card ne
+confronte pas les slugs de l'adresse à la card (INC-065) : la fiche est rendue, sans aucun état vide. Le
+scénario passait sur la base précédente, reconstruite le 2026-09-24 puis modifiée par cinq jours de
+campagnes : un état qu'une base neuve ne reproduit pas. Son attente d'`etat-vide` date de la version
+anonyme du scénario, révisée par `CRM-092` T9 ; ce que le titre promet — le track demandé par son slug,
+aucune lecture de channels, la barre vide — ne dépend pas de la fiche.
+
+**ARBITRÉE le 2026-09-29 — décision 613 : corriger le test.** Le scénario attend la fiche rendue et la barre
+d'onglets vide au lieu d'un état vide absent ; ses trois autres vérifications sont inchangées. INC-065 —
+la route d'une card ne confronte pas les slugs de l'adresse — reste ouverte, ce correctif n'y touche pas.
