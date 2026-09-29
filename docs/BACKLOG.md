@@ -14731,14 +14731,21 @@ et §5.49.*
       mutation ; campagne `verify-webapp.sh` **44 contrôles sans anomalie**, 3 355 tests unitaires,
       **766** scénarios d'interface ; captures `docs/captures/CRM-094/premier-lancement-*` observées.
 
-### CRM-095 — Créer une affaire depuis le board `[ ]`
+### CRM-095 — Créer une affaire depuis le board `[~]`
 *Créée le 2026-09-28 — décision 609, arbitrages du responsable. Aucune surface ne créait d'affaire, alors
 que le guide et le board le promettaient (INC-256). Spécifié avant le code : `docs/SPEC-cards.md` §18,
 `docs/SPEC-onboarding.md` §10.7, `docs/DESIGN_SYSTEM.md` §5.2 et §5.50.*
 
-- [ ] **T1** — migration `0081_creer_affaire.sql` : `public.creer_affaire(p_channel, p_titre)`,
+- [x] **T1** — migration `0081_creer_affaire.sql` : `public.creer_affaire(p_channel, p_titre)`,
       `SECURITY INVOKER` ; sa suite pgTAP ; preuve d'API aux jetons réels ; `docs/SCHEMA.md`,
-      `docs/PROD_MIGRATIONS.md`.
+      `docs/PROD_MIGRATIONS.md`. Mesuré le 2026-09-29, en développement : pgTAP **75 fichiers, 3275
+      assertions** (`0075` : **22**), cinq mutations de la fonction vues rouges ; API
+      `creer-affaire.spec.ts` **2** scénarios, la lectrice à `200` sous mutation `SECURITY DEFINER` ;
+      types régénérés, témoin à cinquante-sept fonctions, `typecheck` vert. `verify-harness.sh` aux
+      compteurs révisés (75, 3275, 1087) : conformes, 766 scénarios d'interface, 42 de messagerie et
+      3 355 tests unitaires verts ; ses deux anomalies étaient B5 d'`e2e/api/board.spec.ts` (INC-257,
+      décision 610) — après `./resetMe.sh`, `e2e:api` **1087** verts et pgTAP 75 / 3275. La production
+      reçoit la 81 avec T4.
 - [ ] **T2** — l'écran : « Nouvelle affaire » sur le board, la vue liste et la colonne vide de l'étape
       initiale ; le formulaire, ses refus, l'ouverture de la fiche ; preuves unitaires et E2E.
 - [ ] **T3** — le guide mène au board du premier channel ; le parcours complet

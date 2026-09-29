@@ -30280,6 +30280,22 @@ après rechargement ; la correction des seules flèches, retirée sous mutation,
 la direction. Le parcours de reproduction, encore rouge, avait été committé avec la spécification
 (`2e3ba587`) ; il devient vert avec ce correctif.
 
+**INC-255 en production, le 2026-09-29** : révision `4a6ff092`, webapp seule, 26 contrôles sans anomalie.
+Les brouillons non appliqués de `CRM-095` T1 ont été mis de côté le temps de la livraison — le script
+refuse un arbre portant des fichiers non suivis, et c'est ce qui garantit que la cellule n'a reçu que la
+révision poussée, sans migration nouvelle.
+
+**`CRM-095` T1, le 2026-09-29.** Migration 81 appliquée en développement par le runner. *Preuves* : pgTAP
+`0075`, **22** assertions, vertes du premier coup — ce qui ne prouve rien seul ; cinq mutations de la
+fonction les font donc rougir chacune là où elles le doivent : sans le filtre `is_initial` (16, 18 — le
+workflow sans étape initiale reçoit une affaire), sans le refus du channel fermé (14, 15, 18), en
+`SECURITY DEFINER` (2, 11, 12, 19, 22 — la lectrice et l'étrangère écrivent), sans `btrim` (3), sans
+`created_by` (6). API `creer-affaire.spec.ts`, **2** scénarios aux jetons réels ; en `SECURITY DEFINER`, la
+lectrice reçoit `200` au lieu de `403`. Types régénérés : seule `creer_affaire` y entre ; témoin porté à
+cinquante-sept fonctions. *Observation* : dans le workflow de départ, l'étape initiale est aussi la
+première par position ; c'est donc le workflow sans étape initiale, et non l'étape rendue, qui rougit sous
+la mutation du filtre.
+
 ## décision 610 — INC-257 : la base de développement est reconstruite, la mesure de B5 reste à corriger
 
 *2026-09-29, pendant la vérification de `CRM-095` T1 ; arbitrage du responsable.*

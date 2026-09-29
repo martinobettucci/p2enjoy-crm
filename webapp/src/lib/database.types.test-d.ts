@@ -3,6 +3,8 @@
 // @verifies docs/SCHEMA.md §1 (socle d'identité) ; docs/INCONSISTENCY_REPORT.md INC-010
 // @verifies CRM-094 (docs/BACKLOG.md) tranche T1 — `creer_workflow_de_depart` au témoin des fonctions
 //           (docs/SPEC-workflow-engine.md §7 quater)
+// @verifies CRM-095 (docs/BACKLOG.md) tranche T1 — `creer_affaire` au témoin des fonctions
+//           (docs/SPEC-cards.md §18.2)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §7.2 — `workspace_invitations` et
 //           `ouvrir_session_sso` dans le contrat de types (tranche T1) ; §5.6 — `sessions_sso` et
 //           ses quatre fonctions de service (tranche T3 bis, témoin rattrapé en T4)
@@ -932,7 +934,11 @@ type _vueDerivationColonnes = Expect<
 // `0080` de `CRM-094` TRANCHE T1 ajoute `creer_workflow_de_depart` — le geste du guide de démarrage qui
 // pose le cycle commercial d'un espace neuf (docs/SPEC-workflow-engine.md §7 quater, décision 606).
 // Cinquante-cinq devient CINQUANTE-SIX.
-type _lesCinquanteSixFonctions = Expect<
+// `0081` de `CRM-095` TRANCHE T1 ajoute `creer_affaire` — le geste du board qui crée une affaire à
+// l'étape INITIALE du workflow de son channel, avec le seul titre (docs/SPEC-cards.md §18.2, décision
+// 609). SECURITY INVOKER : le type ne dit rien du refus de la lectrice, que `cards_insertion` rend en
+// `42501`. Cinquante-six devient CINQUANTE-SEPT.
+type _lesCinquanteSeptFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
     | 'entonnoir_conversion'
@@ -978,6 +984,7 @@ type _lesCinquanteSixFonctions = Expect<
     | 'ouvrir_session_sso'
     | 'mon_role_espace'
     | 'creer_workflow_de_depart'
+    | 'creer_affaire'
     | 'ouvrir_session_serveur'
     | 'lire_session_serveur'
     | 'renouveler_session_serveur'
@@ -1196,7 +1203,7 @@ export type AssertionsDuContratDeTypes = [
   _relationsWorkspaceMembers,
   _laSeuleVue,
   _vueDerivationColonnes,
-  _lesCinquanteSixFonctions,
+  _lesCinquanteSeptFonctions,
   _signatureReelSaisissable,
   _retourReelSaisissable,
   _ecriturePermisePrendUneLigneDeTableau,

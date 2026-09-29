@@ -13,6 +13,15 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-095` — Créer une affaire depuis le board
+
+*Décision 609. Migration **81** à appliquer en production (`docs/PROD_MIGRATIONS.md` §2.8).*
+
+- **Le geste serveur de création d'une affaire** : fonction `public.creer_affaire` (migration `0081`),
+  avec le titre seul ; l'affaire naît à l'**étape initiale** du workflow de son channel — règle que rien
+  ne tenait jusqu'ici. La base refuse un channel archivé ou à la corbeille, un workflow sans étape
+  initiale, un titre blanc, et quiconque ne peut pas écrire le channel (T1). L'écran vient avec T2.
+
 ### Correctif du 2026-09-29 — INC-255 (décision 609)
 
 - **Le canevas d'objectifs montre aussitôt ce qu'on écrit sur un bloc qu'on vient de poser** : le channel

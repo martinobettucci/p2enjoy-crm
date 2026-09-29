@@ -2791,6 +2791,10 @@ export type Database = {
         Args: { new_name?: string; track_id: string; workflow_id: string }
         Returns: string
       }
+      creer_affaire: {
+        Args: { p_channel: string; p_titre: string }
+        Returns: string
+      }
       creer_workflow_de_depart: {
         Args: { p_workspace: string }
         Returns: string

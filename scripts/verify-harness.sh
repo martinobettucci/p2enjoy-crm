@@ -563,7 +563,9 @@ PORT_RAPPORT=9323
 # seul fichier ajouté. 72 + 1 = 73, valeur COMPTÉE — « 73 fichiers ».
 # **74 depuis `CRM-094` tranche T1, 2026-09-28** (décision 606) : `0074_workflow_de_depart.test.sql`, seul
 # fichier ajouté. 73 + 1 = 74, valeur COMPTÉE — « 74 fichiers ».
-FICHIERS_SQL_ATTENDUS=74
+# **75 depuis `CRM-095` tranche T1, 2026-09-29** (décision 609) : `0075_creer_affaire.test.sql`, seul
+# fichier ajouté. 74 + 1 = 75, valeur COMPTÉE — « 75 fichiers ».
+FICHIERS_SQL_ATTENDUS=75
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -608,7 +610,8 @@ FICHIERS_SQL_ATTENDUS=74
 # **3225 depuis `CRM-092` tranche T8** : `0073` apporte **29** assertions — 3196 + 29 = 3225 ; `0069`,
 # `0070` et `0072` sont révisées à nombre constant (signatures à `p_admin_lelabs`). COMPTÉE.
 # **3253 depuis `CRM-094` tranche T1** : `0074` apporte **28** assertions — 3225 + 28 = 3253. COMPTÉE.
-ASSERTIONS_ATTENDUES=3253
+# **3275 depuis `CRM-095` tranche T1** : `0075` apporte **22** assertions — 3253 + 22 = 3275. COMPTÉE.
+ASSERTIONS_ATTENDUES=3275
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -920,7 +923,11 @@ ASSERTIONS_ATTENDUES=3253
 # **1085 depuis `CRM-094` tranche T1, 2026-09-28** (décision 606) : `workflow-depart.spec.ts`, fichier NEUF,
 # porte **3** scénarios — refus du commercial et de l'anonyme, geste de l'administratrice suivi d'un channel
 # qui naît, second appel refusé. 1082 + 3 = 1085, valeur COMPTÉE — « Total: 1085 tests in 68 files ».
-SCENARIOS_API=1085
+# **1087 depuis `CRM-095` tranche T1, 2026-09-29** (décision 609) : `creer-affaire.spec.ts`, fichier NEUF,
+# porte **2** scénarios — le commercial crée et relit l'affaire à l'étape initiale ; la lectrice refusée
+# `403` sur un channel qu'elle lit, l'anonyme `401`. 1085 + 2 = 1087, valeur COMPTÉE — « Total: 1087 tests
+# in 69 files ».
+SCENARIOS_API=1087
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
