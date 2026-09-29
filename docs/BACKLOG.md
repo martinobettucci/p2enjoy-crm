@@ -14780,7 +14780,11 @@ que le guide et le board le promettaient (INC-256). Spécifié avant le code : `
       `verify-harness.sh` **32 contrôles sans anomalie** : pgTAP 75 / 3275, **1088** scénarios d'API,
       **778** d'interface, 42 de messagerie, **3 394** tests unitaires ; 57 captures renouvelées, dont
       le board et la vue liste, qui portent désormais la commande.
-- [ ] **T4** — livraison en production (migration 81) et constat : le responsable crée sa première affaire.
+- [~] **T4** — livraison en production (migration 81) et constat : le responsable crée sa première affaire.
+      **Livré le 2026-09-29** : révision `796aa3c1`, migration 81 appliquée après instantané, `verifier.sh`
+      26 contrôles sans anomalie, ligne 81 relue en base et refus anonyme `401` / `42501`
+      (`docs/PROD_MIGRATIONS.md` §8). **Reste** : le constat — la première affaire créée par le
+      responsable.
 
 ## Arbitrage du 2026-09-29 — INC-257 (décision 610)
 

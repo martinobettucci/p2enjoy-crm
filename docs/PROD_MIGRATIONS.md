@@ -33,9 +33,9 @@ source d'identité.
 | Élément | État |
 |---|---|
 | Environnement de production | Cellule Spark `crm` (`docs/SPEC-deploiement-spark.md`), assemblage à trois fichiers : neuf services sains et deux conteneurs à usage unique (runner, bucket) ; GoTrue retiré le 2026-09-24 |
-| Schéma appliqué | Les **80 migrations** du dépôt : 1 à 73 par `--migrate --premier-deploiement` sur une base mesurée vierge (2026-09-23), 74 à 79 par la reprise `CRM-092` (2026-09-24), 80 par `CRM-094` (2026-09-28) |
-| Dernière migration appliquée | `0080_workflow_de_depart.sql` — relue en base le 2026-09-28 : `anon` sans `EXECUTE`, `authenticated` avec, `SECURITY INVOKER`, `search_path` vide |
-| Version déployée | La révision inscrite dans `/srv/crm/REVISION` — celle que `scripts/spark/verifier.sh` compare au `HEAD` du poste ; **`4a6ff092`** le 2026-09-29 (`CRM-094`, INC-254, puis INC-255) |
+| Schéma appliqué | Les **81 migrations** du dépôt : 1 à 73 par `--migrate --premier-deploiement` sur une base mesurée vierge (2026-09-23), 74 à 79 par la reprise `CRM-092` (2026-09-24), 80 par `CRM-094` (2026-09-28), 81 par `CRM-095` (2026-09-29) |
+| Dernière migration appliquée | `0081_creer_affaire.sql` — relue en base le 2026-09-29 : `anon` sans `EXECUTE`, `authenticated` avec, `SECURITY INVOKER`, `search_path` vide ; l'appel anonyme par la route publique rend `401` / `42501` |
+| Version déployée | La révision inscrite dans `/srv/crm/REVISION` — celle que `scripts/spark/verifier.sh` compare au `HEAD` du poste ; **`796aa3c1`** le 2026-09-29 (`CRM-095` et INC-258 à INC-261, après `CRM-094`, INC-254 et INC-255) |
 | Données | Un espace, « P2Enjoy CRM » (`crm`), réamorcé par la reprise `CRM-092` ; un profil, celui du responsable, administrateur depuis sa première connexion LeLabs ; aucune autre donnée, aucun seed. La ligne `auth.users` de l'ancien compte invité reste, inerte |
 | Route publique | `crm.lelabs.tech 8080 tls`, active : `https://crm.lelabs.tech`, certificat Let's Encrypt présenté par la Forge (décision 576) |
 | Client OIDC `lelabs-crm` | Déclaré et créé au realm le 2026-09-23 à 16:08:44 (`docs/SSO-client-lelabs-crm.md`), **supprimé du realm avant le déploiement de `CRM-092`** : sonde `400` « Client non trouvé » le 2026-09-24 à 18 h, retrait confirmé par l'instantané de reprise du dépôt du SSO (décision 598). Sans effet sur le service : aucune connexion n'avait encore été faite, elle attend `CRM-092` (§3) |
@@ -247,7 +247,7 @@ signal entre écrans vit dans le navigateur, il n'ajoute rien à la cellule.
 **Retour arrière** : la 80 se retire par sa ligne du §3.2 ; les workflows posés restent, ce sont des
 données.
 
-### 2.8 `CRM-095` — créer une affaire depuis le board (EN ATTENTE)
+### 2.8 `CRM-095` — créer une affaire depuis le board (EXÉCUTÉE le 2026-09-29, sauf le geste 4 du responsable)
 
 `docs/SPEC-cards.md` §18, `docs/SPEC-onboarding.md` §10.7 ; décision 609. Une migration, pure addition
 d'une fonction ; aucune variable, aucun service nouveau. La webapp de l'unité — le bouton « Nouvelle
@@ -267,10 +267,9 @@ affaires créées restent, ce sont des données.
 
 ## 3. Migrations en attente
 
-**Une migration en attente : la 81** (`CRM-095`, décision 609 — `0081_creer_affaire.sql`, pure addition
-d'une fonction), à appliquer par la fenêtre du §3.1 selon les gestes du §2.8. Baseline de production : la
-migration **80** (`CRM-094`, décision 606), appliquée le 2026-09-28 (§2.7, §8) ; les six migrations de
-`CRM-092` (74 à 79) l'avaient été le 2026-09-24 par la reprise (§2.5, §8).
+**Aucune migration en attente depuis le 2026-09-29.** Baseline de production : la migration **81**
+(`CRM-095`, décision 609), appliquée le 2026-09-29 (§2.8, §8) ; la 80 (`CRM-094`) l'avait été le
+2026-09-28 (§2.7), les six migrations de `CRM-092` (74 à 79) le 2026-09-24 par la reprise (§2.5).
 
 ### 3.1 Procédure nominale — la fenêtre de maintenance (`CRM-087`, livrée)
 
@@ -1159,3 +1158,20 @@ IP, révision **`4a6ff092`**, image Realtime identique, `./runProd.sh --spark` e
 81 et ses preuves) ont été mis de côté pendant la livraison : la cellule n'a reçu que la révision poussée,
 sans migration nouvelle — la baseline reste **80**.
 
+### `CRM-095` — créer une affaire depuis le board, 2026-09-29 (§2.8, décisions 609 à 613)
+
+- **Geste 1** : instantané de VM pris par le responsable avant la fenêtre (confirmé le 2026-09-29).
+- **Geste 2** : `scripts/spark/livrer.sh -- --migrate --instantane-verifie` par les IP : révision
+  **`796aa3c1`**, image Realtime identique, **« Migrations appliquées avec succès »** — la 81. Puis
+  `./runProd.sh --spark` dans la cellule : les services sains, les deux conteneurs à usage unique
+  terminés en `0`.
+- **Geste 3** : `verifier.sh` — **26 contrôles, aucune anomalie**. Ligne 81 du §3.2, en base : `anon` sans
+  `EXECUTE`, `authenticated` avec, `prosecdef` faux, `search_path` vide ; par la route publique, la clé
+  anonyme lit (`200`) et l'appel anonyme de `creer_affaire` rend **`401` / `42501`** « permission denied
+  for function creer_affaire » — rien n'est écrit. Le refus d'une lectrice n'est pas éprouvé en
+  production, faute d'un compte de ce rôle — en créer un pour la preuve écrirait des données de
+  production — : il l'est en développement, par `0075` (pgTAP), `e2e/api/creer-affaire.spec.ts` et
+  `e2e/ui/nouvelle-affaire.spec.ts`.
+- **Données avant le geste 4**, relues : 8 tracks, 1 workflow, 2 channels, **0 affaire**. **Reste au
+  responsable** : le geste 4 — « Ouvrir le board et créer l'affaire » depuis le guide, puis « Nouvelle
+  affaire » : la fiche s'ouvre.
