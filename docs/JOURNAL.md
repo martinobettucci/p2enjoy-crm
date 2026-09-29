@@ -30294,7 +30294,9 @@ workflow sans étape initiale reçoit une affaire), sans le refus du channel fer
 lectrice reçoit `200` au lieu de `403`. Types régénérés : seule `creer_affaire` y entre ; témoin porté à
 cinquante-sept fonctions. *Observation* : dans le workflow de départ, l'étape initiale est aussi la
 première par position ; c'est donc le workflow sans étape initiale, et non l'étape rendue, qui rougit sous
-la mutation du filtre.
+la mutation du filtre. `verify-harness.sh` aux compteurs révisés : conformes, et ses deux seules anomalies
+étaient B5, étrangère à cette unité (INC-257, décision 610) ; la base reconstruite, `e2e:api` rend 1087
+verts et pgTAP 75 fichiers, 3275 assertions.
 
 ## décision 610 — INC-257 : la base de développement est reconstruite, la mesure de B5 reste à corriger
 
