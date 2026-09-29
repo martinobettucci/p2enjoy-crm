@@ -7,6 +7,8 @@
 //       relire les écrans ouverts) ; docs/SPEC-workflow-engine.md §7 quater ; docs/JOURNAL.md décisions
 //       606 et 607
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone) ; docs/DESIGN_SYSTEM.md §5.17
+// @spec CRM-095 (docs/BACKLOG.md) tranche T3 — docs/SPEC-onboarding.md §10.7, docs/SPEC-cards.md §18.4 :
+//       l'étape « affaire » mène au board du premier channel lisible et vivant, lu avec chaque mesure
 //
 // CE MODULE N'OUVRE AUCUNE POLITIQUE NOUVELLE. Chaque table est comptée sous la politique qui la
 // régit déjà — `tracks` (CRM-020), `channels` (CRM-021), `cards` (CRM-040), `workspaces` (CRM-022),
@@ -50,6 +52,12 @@ export type EtapeDemarrage = {
 export type ProgressionDemarrage = {
 	/** Un état par étape : quatre mesures abouties et une refusée doivent laisser lire les quatre. */
 	readonly etapes: readonly EtatAsync<EtapeDemarrage>[]
+	/**
+	 * L'adresse du board où créer la première affaire (`CRM-095`, docs/SPEC-onboarding.md §10.7) : celui
+	 * du premier channel lisible et vivant — premier track par position, puis premier channel. `null`
+	 * sans channel, ou quand la lecture échoue : l'étape mène alors à l'arborescence, comme avant.
+	 */
+	readonly boardAffaire: string | null
 }
 
 /**
@@ -112,8 +120,58 @@ export async function mesurerEtape(
  * l'étape qu'il n'a pas mesurée.
  */
 export async function mesurerDemarrage(client: ClientCrm): Promise<ProgressionDemarrage> {
-	const etapes = await Promise.all(CLES_ETAPES_DEMARRAGE.map((cle) => mesurerEtape(client, cle)))
-	return { etapes }
+	const [etapes, boardAffaire] = await Promise.all([
+		Promise.all(CLES_ETAPES_DEMARRAGE.map((cle) => mesurerEtape(client, cle))),
+		lireBoardAffaire(client),
+	])
+	return { etapes, boardAffaire }
+}
+
+/**
+ * Les colonnes de la lecture de la destination : le slug du channel et celui de son track.
+ * `!inner` : un channel dont le track n'est pas lisible — ou pas vivant — n'est pas une destination.
+ *
+ * `position` ET `name` DU TRACK SONT DEMANDÉS, ET CE N'EST PAS POUR LES RENDRE. MESURÉ contre la pile
+ * réelle le 2026-09-29 par `e2e/ui/nouvelle-affaire.spec.ts` : PostgREST ne trie sur une colonne d'une
+ * ressource embarquée que si elle est sélectionnée — sans elles, `order=tracks(position)` rend `400`,
+ * « column channels_tracks_1.position does not exist », et l'étape retombait en silence sur
+ * l'arborescence.
+ */
+export const COLONNES_BOARD_AFFAIRE = 'slug, tracks!inner(slug, position, name)'
+
+/**
+ * Le board du premier channel lisible et vivant (`CRM-095`, docs/SPEC-onboarding.md §10.7).
+ *
+ * UNE SEULE LIGNE, DANS L'ORDRE DE LA BARRE LATÉRALE PUIS DE LA BARRE D'ONGLETS : track par position puis
+ * nom (`tracks.ts`), channel par position puis nom (`channels.ts`). La position d'un channel est
+ * numérotée PAR TRACK (docs/DESIGN_SYSTEM.md §5.48 bis) : trier sur elle seule entrelacerait les tracks,
+ * d'où le tri d'abord sur le track embarqué.
+ *
+ * Sous la RLS de l'appelant, comme les comptages : la destination est un channel qu'il VOIT. Un échec
+ * n'est pas une erreur de l'étape — l'étape est mesurée par ailleurs —, il laisse le lien d'avant.
+ */
+export async function lireBoardAffaire(client: ClientCrm): Promise<string | null> {
+	try {
+		const reponse = await client
+			.from('channels')
+			.select(COLONNES_BOARD_AFFAIRE)
+			.is('archived_at', null)
+			.is('deleted_at', null)
+			.is('tracks.archived_at', null)
+			.is('tracks.deleted_at', null)
+			.order('tracks(position)')
+			.order('tracks(name)')
+			.order('position')
+			.order('name')
+			.limit(1)
+		if (reponse.error !== null) return null
+		const premier = reponse.data?.[0]
+		const slugTrack = premier?.tracks?.slug
+		if (premier === undefined || typeof slugTrack !== 'string') return null
+		return `/tracks/${slugTrack}/${premier.slug}`
+	} catch {
+		return null
+	}
 }
 
 /** Une étape est accomplie dès la première ligne visible — docs/SPEC-onboarding.md §6.2. */
@@ -154,6 +212,7 @@ export function mesureEnCours(progression: ProgressionDemarrage): boolean {
 /** État initial : un chargement par étape. Il évite un rendu où `etapes` serait vide, donc « accompli ». */
 export const PROGRESSION_INITIALE: ProgressionDemarrage = {
 	etapes: CLES_ETAPES_DEMARRAGE.map(() => enChargement<EtapeDemarrage>()),
+	boardAffaire: null,
 }
 
 /**

@@ -4,6 +4,8 @@
 //           colonnes), §7.4 (ancienneté), §7.5 (transitions atteignables), §7.9 (optimisme et
 //           retour arrière), §7.10 (les sept refus), §5.2 (valeur de retour de `move_card`)
 // @verifies docs/SPEC-cards.md §2.6 (ordre dans une colonne), §5 (« active »)
+// @verifies CRM-095 (docs/BACKLOG.md) — tranche T2 : l'étape initiale lue avec les colonnes, jamais
+//           déduite de la position (docs/SPEC-cards.md §18.3, docs/DESIGN_SYSTEM.md §5.2)
 //
 // Ce fichier éprouve **la requête réellement émise** autant que la valeur rendue. Motif, repris
 // de `channels.test.ts` : plusieurs exigences du §7.2 sont portées par la requête elle-même — la
@@ -47,11 +49,11 @@ import type { ClientCrm } from './supabase'
 
 /** Les sept étapes du workflow standard, telles que la base les rend (mesuré le 2026-08-05). */
 const ETAPES: readonly EtapeBoard[] = [
-	{ id: 's1', position: 1, libelle: 'Prospection', couleur: 'neutral', kind: 'open', seuilJours: 14 },
-	{ id: 's2', position: 2, libelle: 'Relance', couleur: 'accent', kind: 'open', seuilJours: 7 },
-	{ id: 's3', position: 3, libelle: 'Négociation', couleur: 'brand', kind: 'open', seuilJours: 5 },
-	{ id: 's4', position: 4, libelle: 'Signature', couleur: 'brand', kind: 'open', seuilJours: 7 },
-	{ id: 's7', position: 7, libelle: 'Perdu', couleur: 'danger', kind: 'lost', seuilJours: null },
+	{ id: 's1', position: 1, libelle: 'Prospection', couleur: 'neutral', kind: 'open', seuilJours: 14, initiale: true },
+	{ id: 's2', position: 2, libelle: 'Relance', couleur: 'accent', kind: 'open', seuilJours: 7, initiale: false },
+	{ id: 's3', position: 3, libelle: 'Négociation', couleur: 'brand', kind: 'open', seuilJours: 5, initiale: false },
+	{ id: 's4', position: 4, libelle: 'Signature', couleur: 'brand', kind: 'open', seuilJours: 7, initiale: false },
+	{ id: 's7', position: 7, libelle: 'Perdu', couleur: 'danger', kind: 'lost', seuilJours: null, initiale: false },
 ]
 
 const MAINTENANT = new Date('2026-08-05T12:00:00.000Z')
@@ -266,6 +268,7 @@ describe('résolution d’une étape lue (§7.2)', () => {
 	const lue = (partiel: Partial<EtapeLue>): EtapeLue => ({
 		id: 's1',
 		position: 1,
+		is_initial: false,
 		label_override: null,
 		stale_after_days: null,
 		workflow_nodes_catalog: {
@@ -293,6 +296,13 @@ describe('résolution d’une étape lue (§7.2)', () => {
 
 	it('se replie sur le seuil du nœud', () => {
 		expect(resoudreEtape(lue({})).seuilJours).toBe(30)
+	})
+
+	// `CRM-095` T2 : la colonne de l'étape initiale porte l'action de création. Le drapeau est celui de
+	// la base — une étape initiale peut vivre à n'importe quelle position (docs/SPEC-cards.md §18.2).
+	it('lit l’étape initiale sur le drapeau de la base, jamais sur la position', () => {
+		expect(resoudreEtape(lue({ is_initial: true, position: 3 })).initiale).toBe(true)
+		expect(resoudreEtape(lue({ is_initial: false, position: 1 })).initiale).toBe(false)
 	})
 
 	// La politique de lecture du catalogue est distincte de celle des étapes : rien ne garantit
@@ -447,6 +457,8 @@ describe('les quatre lectures du board (§7.2)', () => {
 		expect(appel.table).toBe('workflow_steps')
 		expect(appel.colonnes).toBe(COLONNES_ETAPE)
 		expect(appel.colonnes).toContain('workflow_nodes_catalog(')
+		// `CRM-095` T2 : le drapeau de l'étape initiale est demandé avec les colonnes.
+		expect(appel.colonnes).toContain('is_initial')
 		expect(appel.egalites).toEqual([['workflow_id', 'wf-1']])
 		expect(appel.tris).toEqual(['position'])
 	})

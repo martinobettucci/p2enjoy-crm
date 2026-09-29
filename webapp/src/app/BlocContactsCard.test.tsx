@@ -1,6 +1,8 @@
 // @verifies CRM-060 (docs/BACKLOG.md) — contacts et organisations, tranche 4 sous-tranche 4c
 // @verifies docs/SPEC-contacts.md §12.6 (de quoi le bloc a l'air), §12.7 (contrat de comportement,
 //           cas a à p), §12.8 (limites nommées)
+// @verifies CRM-095 (docs/BACKLOG.md) — tranche T2 ter : l'espace sans contact mène au carnet (INC-259,
+//           décision 612 ; docs/SPEC-cards.md §18.4 bis ; docs/DESIGN_SYSTEM.md §5.21 révisé, §5.51)
 // @verifies docs/DESIGN_SYSTEM.md §5.21 (le bloc), §5.18 (liste plate), §5.13 (formulaire et
 //           confirmation DANS LE FLUX, focus entrant puis rendu), §5.8 (états),
 //           §5.7 ter (un refus n'efface pas la saisie), §6 (confirmation nommant l'objet)
@@ -16,6 +18,7 @@ import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { BlocContactsCard } from './BlocContactsCard'
 import type { ClientCrm } from '../lib/supabase'
+import { fr } from '../i18n'
 
 afterEach(cleanup)
 
@@ -320,14 +323,20 @@ describe('BlocContactsCard — rattachement (§12.7)', () => {
 		expect(screen.queryByTestId('ouvrir-rattachement')).toBeNull()
 	})
 
-	it('nomme l’absence de contact au carnet, SANS action — cas l', async () => {
+	it('nomme l’absence de contact au carnet, et MÈNE au carnet qui les crée — cas l, INC-259', async () => {
 		const { client } = clientEspion({
 			rattachements: { data: [], error: null, status: 200 },
 			carnet: { data: [], error: null, status: 200 },
 		})
 		rendreBloc(client)
-		expect(await screen.findByTestId('carnet-vide')).toBeTruthy()
-		// Aucun écran du produit ne crée de contact : un bouton serait un chemin vers nulle part.
+		// RÉVISÉ le 2026-09-29 (INC-259, décision 612) : ce cas affirmait qu'aucun écran ne crée de contact,
+		// ce que le carnet fait depuis `CRM-060` (4e). Le texte nomme le geste, le lien mène à son écran.
+		expect((await screen.findByTestId('carnet-vide')).textContent).toBe(fr['cardContacts.attach.noContact'])
+		expect(fr['cardContacts.attach.noContact']).not.toMatch(/ne livre pas/)
+		const lien = screen.getByTestId('lien-carnet-vide')
+		expect(lien.getAttribute('href')).toBe('/contacts')
+		expect(lien.textContent).toBe(fr['cardContacts.attach.noContact.action'])
+		// Aucun sélecteur n'est offert : il n'y a aucun contact à rattacher.
 		expect(screen.queryByTestId('ouvrir-rattachement')).toBeNull()
 	})
 

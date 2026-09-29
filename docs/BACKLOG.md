@@ -14746,20 +14746,40 @@ que le guide et le board le promettaient (INC-256). Spécifié avant le code : `
       3 355 tests unitaires verts ; ses deux anomalies étaient B5 d'`e2e/api/board.spec.ts` (INC-257,
       décision 610) — après `./resetMe.sh`, `e2e:api` **1087** verts et pgTAP 75 / 3275. La production
       reçoit la 81 avec T4.
-- [ ] **T2** — l'écran : « Nouvelle affaire » sur le board, la vue liste et la colonne vide de l'étape
-      initiale ; le formulaire, ses refus, l'ouverture de la fiche ; preuves unitaires et E2E.
-- [ ] **T2 bis** — INC-258 (décision 611) : les états vides « aucun channel dans ce track » et « aucune
+- [x] **T2** — l'écran : « Nouvelle affaire » sur le board, la vue liste et la colonne vide de l'étape
+      initiale ; le formulaire, ses refus, l'ouverture de la fiche ; preuves unitaires et E2E. Mesuré le
+      2026-09-29 : `creer-affaire.test` **9**, `NouvelleAffaire.test` **14** — huit mutations vues
+      rouges —, `Board.test` +4 (trois mutations rouges), `ListeCards.test` +1, `board.test` +1 ; API
+      `board.spec.ts` B1 +1 (l'étape initiale lue par `COLONNES_ETAPE`) ; E2E `nouvelle-affaire.spec.ts`
+      **7** — souris depuis la colonne initiale vide, clavier seul depuis la vue liste, refus de la
+      lectrice, quatre paliers ; un `400` relevé par la pile réelle et corrigé (décision 612, journal).
+- [x] **T2 bis** — INC-258 (décision 611) : les états vides « aucun channel dans ce track » et « aucune
       étape » nomment le geste et mènent à l'arborescence ou à l'éditeur de workflows, pour tous les
       rôles (`docs/SPEC-cards.md` §18.4 bis, `docs/DESIGN_SYSTEM.md` §5.51) ; preuves unitaires et
-      E2E dans `e2e/ui/premier-lancement.spec.ts`.
-- [ ] **T2 ter** — INC-259 et INC-260 (décision 612) : le bloc des contacts d'une affaire sans contact
+      E2E dans `e2e/ui/premier-lancement.spec.ts`. Mesuré le 2026-09-29 : le track ouvert avant son
+      premier channel et le channel d'un workflow sans étape, chacun suivi jusqu'à l'écran qui le
+      comble, à la souris — deux scénarios verts, captures observées.
+- [x] **T2 ter** — INC-259 et INC-260 (décision 612) : le bloc des contacts d'une affaire sans contact
       nomme « Nouveau contact » et mène au carnet ; la saisie du motif dit qu'il est conservé ; la
       palette de recherche se referme quand le focus la quitte (`docs/SPEC-cards.md` §18.4 bis,
       `docs/SPEC-workflow-engine.md` §7.8, `docs/SPEC-recherche.md` §14.3, `docs/DESIGN_SYSTEM.md` §5.21,
-      §5.46) ; preuves unitaires et E2E au clavier.
-- [ ] **T3** — le guide mène au board du premier channel ; le parcours complet
+      §5.46) ; preuves unitaires et E2E au clavier. Mesuré le 2026-09-29 : `BlocContactsCard.test` (cas l
+      révisé : le lien vers le carnet), `Board.test` (le motif conservé, texte exact — l'ancienne preuve
+      ne lisait que « conserv ») ; `recherche.spec.ts` +2 — `Tab` et `Maj+Tab` referment la palette,
+      l'appui de la souris garde le focus au champ —, les deux mutations vues rouges, la seconde faisant
+      aussi rougir la preuve existante du clic sur une organisation.
+- [x] **T3** — le guide mène au board du premier channel ; le parcours complet
       `e2e/ui/premier-lancement.spec.ts` jusqu'à l'affaire, à la souris et au clavier seul ;
-      `docs/manual.md` ; captures aux quatre paliers.
+      `docs/manual.md` ; captures aux quatre paliers. Mesuré le 2026-09-29 : `demarrage.test` +3,
+      `GuideDemarrage.test` +2 (deux mutations rouges) ; le parcours de premier lancement, **4**
+      scénarios dans un espace neuf — le lien du guide suivi, la première affaire créée au clavier
+      seul, la fiche ouverte, le guide à 5 sur 6 —, rouge sous mutation de la destination ; manuel
+      (`scripts/verify-manual.sh` **140** contrôles) ; captures `docs/captures/CRM-095/` observées aux
+      quatre paliers. **Campagne** : `verify-webapp.sh` 44 contrôles, une anomalie — un `502` passager
+      (rejoué vert) et INC-261, rouge sur `HEAD`, corrigée par la décision 613 — ; puis
+      `verify-harness.sh` **32 contrôles sans anomalie** : pgTAP 75 / 3275, **1088** scénarios d'API,
+      **778** d'interface, 42 de messagerie, **3 394** tests unitaires ; 57 captures renouvelées, dont
+      le board et la vue liste, qui portent désormais la commande.
 - [ ] **T4** — livraison en production (migration 81) et constat : le responsable crée sa première affaire.
 
 ## Arbitrage du 2026-09-29 — INC-257 (décision 610)

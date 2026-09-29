@@ -251,8 +251,9 @@ données.
 
 `docs/SPEC-cards.md` §18, `docs/SPEC-onboarding.md` §10.7 ; décision 609. Une migration, pure addition
 d'une fonction ; aucune variable, aucun service nouveau. La webapp de l'unité — le bouton « Nouvelle
-affaire », son formulaire, le guide qui mène au board — part dans la **même** livraison que la 81 : sans
-elle, le bouton appellerait une fonction absente.
+affaire », son formulaire, le guide qui mène au board, et les correctifs d'interface INC-258 à INC-260
+(décisions 611 et 612) — part dans la **même** livraison que la 81 : sans elle, le bouton appellerait une
+fonction absente.
 
 | # | Geste | Qui | Commande ou lieu |
 |---|---|---|---|

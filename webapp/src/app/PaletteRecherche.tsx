@@ -6,6 +6,8 @@
 // @spec docs/SPEC-recherche.md §12 (où la surface vit), §14.1 (le raccourci), §14.2 (ce que le
 //       champ envoie), §14.3 (la navigation clavier), §14.4 (les états), §14.5 (sans session),
 //       §14.6 (ce que la surface ne fait pas), §13.2 (la garde d'ordre), §13.3 (le délai)
+// @spec CRM-095 (docs/BACKLOG.md) — tranche T2 ter : la palette se referme quand le focus la quitte
+//       (INC-260, décision 612 ; docs/SPEC-recherche.md §14.3 ; docs/DESIGN_SYSTEM.md §5.46)
 //
 // AUCUNE MODALE, ET C'EST LE CAS OÙ L'ON EST LE PLUS TENTÉ D'Y DÉROGER (§12.2, §5.46). Le §5 du
 // design system n'en déclare aucune, et `CRM-043`, `CRM-075`, `CRM-079`, `CRM-060` puis `CRM-064`
@@ -257,6 +259,15 @@ export function PaletteRecherche({
 		// `ancre` ne sert qu'à reconnaître un clic intérieur.
 		<div
 			ref={ancre}
+			// LE FOCUS QUI QUITTE LA PALETTE LA REFERME, SANS ÊTRE RENDU (INC-260, §14.3) : il est déjà là
+			// où l'utilisateur l'a envoyé. `Tab` depuis le champ ne le déplace plus sous un panneau resté
+			// ouvert par-dessus la barre d'onglets. Le focus peut circuler DANS la palette — le champ, la
+			// commande qui l'ouvre sous `lg`, l'action de reprise d'une erreur — sans la refermer.
+			onBlur={(evenement) => {
+				const suivant = evenement.relatedTarget
+				if (suivant instanceof Node && evenement.currentTarget.contains(suivant)) return
+				if (ouvert) fermer(false)
+			}}
 			className={[
 				'min-w-0',
 				// LE CONTENEUR EXTÉRIEUR EST L'ÉLÉMENT FLEX DE L'EN-TÊTE, ET C'EST LUI QUI DOIT
@@ -395,6 +406,10 @@ export function PaletteRecherche({
 					role="region"
 					aria-label={t('search.panel.aria')}
 					data-testid="panneau-recherche"
+					// LE PANNEAU NE PREND PAS LE FOCUS À LA SOURIS (INC-260) : une ligne de résultat n'est pas
+					// focalisable, et un clic dessus retirerait le focus du champ — la sortie de focus fermerait
+					// alors le panneau avant que le clic n'arrive. Le focus ne quitte jamais le champ (§14.3).
+					onMouseDown={(evenement) => evenement.preventDefault()}
 					className={[
 						// ANCRÉ À L'EN-TÊTE, QUI OCCUPE TOUTE LA LARGEUR (§5.46). Sous `md` il
 						// s'étend d'un bord à l'autre moins la marge ; à partir de `md` il retrouve

@@ -6,6 +6,10 @@
 // @spec docs/SPEC-cards.md §12.2 (l'adresse porte tout), §12.3 (ce que la liste lit), §12.9 (états)
 // @spec docs/DESIGN_SYSTEM.md §4 (architecture), §5.8 (états explicites), §10 (libellés métier)
 // @spec docs/SPEC-webapp.md §5.2 (routes), §6.4 (contrat asynchrone)
+// @spec CRM-095 (docs/BACKLOG.md) — tranche T2 : « Nouvelle affaire » dans la vue liste, dont l'état vit
+//       dans sa zone (docs/SPEC-cards.md §18.3, docs/DESIGN_SYSTEM.md §5.50) ; tranche T2 bis : les
+//       états vides « aucun channel » et « aucune étape » mènent à l'écran qui les comble (INC-258,
+//       décision 611 ; docs/SPEC-cards.md §18.4 bis, docs/DESIGN_SYSTEM.md §5.51)
 //
 // La destination que `CRM-020` avait annoncée sans pouvoir la livrer : « un track s'ouvre sur ses
 // channels, livrés par `CRM-021` » (docs/DESIGN_SYSTEM.md §12.4).
@@ -51,7 +55,9 @@ import {
 import { clientCrm } from '../lib/supabase'
 import { AppShell } from './AppShell'
 import { Board } from './Board'
+import { CHEMIN_ADMIN_ARBORESCENCE, CHEMIN_ADMIN_WORKFLOWS } from './chemins'
 import { BasculeVue, ListeCards } from './ListeCards'
+import { CommandeNouvelleAffaire, FormulaireNouvelleAffaire, useCreationAffaire } from './NouvelleAffaire'
 
 /** Les deux lectures d'un même channel. Le board est la vue par défaut (docs/SPEC-cards.md §12.2). */
 export type VueChannel = 'board' | 'liste'
@@ -152,8 +158,19 @@ function ContenuTrack({
 	}
 
 	if (nombreChannels === 0) {
+		// UN ÉTAT VIDE NOMME L'ÉCRAN QUI LE COMBLE (INC-258, docs/DESIGN_SYSTEM.md §5.51) : « Nouveau
+		// channel » vit dans l'arborescence, et le lien y mène — pour tous les rôles, la base refusant le
+		// geste à qui ne peut pas le faire.
 		return (
-			<EtatVide titre={t('route.track.nochannel.title')} corps={t('route.track.nochannel.body')} />
+			<EtatVide
+				titre={t('route.track.nochannel.title')}
+				corps={t('route.track.nochannel.body')}
+				action={
+					<Link to={CHEMIN_ADMIN_ARBORESCENCE} data-testid="lien-arborescence-vide" className={CLASSES_RETOUR}>
+						{t('route.track.nochannel.action')}
+					</Link>
+				}
+			/>
 		)
 	}
 
@@ -268,8 +285,17 @@ function ZoneBoard({ channel, slugTrack }: { readonly channel: Channel; readonly
 	}
 
 	if (etat.donnees.etapes.length === 0) {
+		// INC-258 (docs/DESIGN_SYSTEM.md §5.51) : les étapes s'ajoutent dans l'éditeur de workflows.
 		return (
-			<EtatVide titre={t('route.channel.nostep.title')} corps={t('route.channel.nostep.body')} />
+			<EtatVide
+				titre={t('route.channel.nostep.title')}
+				corps={t('route.channel.nostep.body')}
+				action={
+					<Link to={CHEMIN_ADMIN_WORKFLOWS} data-testid="lien-editeur-vide" className={CLASSES_RETOUR}>
+						{t('route.channel.nostep.action')}
+					</Link>
+				}
+			/>
 		)
 	}
 
@@ -313,6 +339,7 @@ function ZoneBoard({ channel, slugTrack }: { readonly channel: Channel; readonly
 					cards={cards}
 					onCards={setCards}
 					libelles={etat.donnees.libellesChamps}
+					idChannel={channel.id}
 					slugTrack={slugTrack}
 					slugChannel={channel.slug}
 					modeSommeil={modeSommeil}
@@ -329,6 +356,7 @@ function ZoneBoard({ channel, slugTrack }: { readonly channel: Channel; readonly
 				cards={cards}
 				onCards={setCards}
 				libelles={etat.donnees.libellesChamps}
+				idChannel={channel.id}
 				slugTrack={slugTrack}
 				slugChannel={channel.slug}
 				modeSommeil={modeSommeil}
@@ -344,6 +372,7 @@ function BoardRendu({
 	cards,
 	onCards,
 	libelles,
+	idChannel,
 	slugTrack,
 	slugChannel,
 	modeSommeil,
@@ -353,6 +382,8 @@ function BoardRendu({
 	readonly cards: readonly CardBoard[]
 	readonly onCards: (cards: readonly CardBoard[]) => void
 	readonly libelles: ReadonlyMap<string, string>
+	/** Le channel du board, où naît une affaire créée (`CRM-095`, docs/SPEC-cards.md §18.2). */
+	readonly idChannel: string
 	readonly slugTrack: string
 	readonly slugChannel: string
 	readonly modeSommeil: ModeSommeil
@@ -365,6 +396,7 @@ function BoardRendu({
 			onCards={onCards}
 			libellesChamps={libelles}
 			client={clientCrm}
+			idChannel={idChannel}
 			slugTrack={slugTrack}
 			slugChannel={slugChannel}
 			modeSommeil={modeSommeil}
@@ -385,6 +417,9 @@ function BoardRendu({
  * page que la première réponse suffit à écarter.
  */
 function ZoneListe({ channel, slugTrack }: { readonly channel: Channel; readonly slugTrack: string }) {
+	// L'ÉTAT DU GESTE DE CRÉATION VIT ICI, et non dans `ListeCards` (`CRM-095`, §5.50) : le tableau rend,
+	// il n'écrit pas — il reçoit la commande et le formulaire, et les place.
+	const creation = useCreationAffaire()
 	const [parametresUrl, setParametresUrl] = useSearchParams()
 	const demandes = lireParametres(parametresUrl)
 	const workflowId = channel.workflow_id ?? undefined
@@ -558,6 +593,18 @@ function ZoneListe({ channel, slugTrack }: { readonly channel: Channel; readonly
 				slugTrack={slugTrack}
 				slugChannel={channel.slug}
 				onParametres={appliquer}
+				commandeCreation={<CommandeNouvelleAffaire creation={creation} />}
+				formulaireCreation={
+					creation.ouvert ? (
+						<FormulaireNouvelleAffaire
+							creation={creation}
+							client={clientCrm}
+							idChannel={channel.id}
+							slugTrack={slugTrack}
+							slugChannel={channel.slug}
+						/>
+					) : null
+				}
 				{...(etatVide === undefined ? {} : { etatVide })}
 			/>
 		</div>
@@ -577,6 +624,8 @@ function ListeRendue({
 	slugTrack,
 	slugChannel,
 	onParametres,
+	commandeCreation,
+	formulaireCreation,
 	etatVide,
 }: {
 	readonly cards: readonly CardListeRendue[]
@@ -586,6 +635,8 @@ function ListeRendue({
 	readonly slugTrack: string
 	readonly slugChannel: string
 	readonly onParametres: (parametres: ParametresListe) => void
+	readonly commandeCreation: ReactNode
+	readonly formulaireCreation: ReactNode
 	readonly etatVide?: ReactNode
 }) {
 	return (
@@ -599,6 +650,8 @@ function ListeRendue({
 				slugTrack={slugTrack}
 				slugChannel={slugChannel}
 				onParametres={onParametres}
+				commandeCreation={commandeCreation}
+				formulaireCreation={formulaireCreation}
 				{...(etatVide === undefined ? {} : { etatVide })}
 			/>
 		</>

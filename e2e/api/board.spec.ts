@@ -4,6 +4,8 @@
 //           colonnes), §7.4 (ce qu'une carte ne peut pas montrer), §7.14 (preuves attendues)
 // @verifies docs/SPEC-permissions-rls.md §7 (preuves hors interface, jetons réels)
 // @verifies docs/SPEC-cards.md §5 (« active » : ni archivée, ni en corbeille)
+// @verifies CRM-095 (docs/BACKLOG.md) — tranche T2 : l'étape initiale lue par `COLONNES_ETAPE`
+//           (docs/SPEC-cards.md §18.3, docs/DESIGN_SYSTEM.md §5.2)
 // @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface, avec le jeton réel)
 //
 // LA QUESTION À LAQUELLE CE FICHIER RÉPOND. Le board compose ses colonnes à partir de quatre
@@ -57,6 +59,8 @@ const PROFILS = '/rest/v1/profiles'
 type EtapeLue = {
 	id: string
 	position: number
+	/** Lue depuis `CRM-095` T2 : la colonne initiale porte l'action de création (§5.2). */
+	is_initial: boolean
 	label_override: string | null
 	stale_after_days: number | null
 	workflow_nodes_catalog: {
@@ -113,6 +117,20 @@ test.describe('B1 — la lecture des étapes rend les colonnes du board (§7.2, 
 		const etapes = (await reponse.json()) as EtapeLue[]
 		expect(etapes.every((etape) => etape.workflow_nodes_catalog !== null)).toBe(true)
 		expect(etapes[0]?.workflow_nodes_catalog?.label).toBe('Prospection')
+	})
+
+	// `CRM-095` T2 : la colonne de l'étape INITIALE porte l'action de création (docs/DESIGN_SYSTEM.md
+	// §5.2). Le drapeau est lu par la requête du produit — `COLONNES_ETAPE` —, jamais déduit de la position.
+	test('l’étape initiale est lue avec les colonnes : une seule, et c’est Prospection', async ({ request }) => {
+		const reponse = await request.get(
+			`${ETAPES}?select=${encodeURIComponent(COLONNES_ETAPE)}&workflow_id=eq.${WORKFLOW_GLOBAL}&order=position`,
+			{ headers: enTetesAuthentifies(jetonAdmin) },
+		)
+		expect(reponse.status()).toBe(200)
+		const etapes = (await reponse.json()) as EtapeLue[]
+		const initiales = etapes.filter((etape) => etape.is_initial)
+		expect(initiales).toHaveLength(1)
+		expect(initiales[0]?.workflow_nodes_catalog?.label).toBe('Prospection')
 	})
 
 	// Les deux replis du §7.2 sont exercés par le seed lui-même, et non par un cas fabriqué.

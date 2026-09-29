@@ -1,5 +1,7 @@
 // @verifies CRM-042 (docs/BACKLOG.md) — rendu réel du tableau, de ses tris, filtres et pages
 // @verifies CRM-022 (docs/BACKLOG.md) — colonne Responsable avec avatar et nom
+// @verifies CRM-095 (docs/BACKLOG.md) — tranche T2 : la commande « Nouvelle affaire » et son formulaire,
+//           placés par la vue liste (docs/SPEC-cards.md §18.3, docs/DESIGN_SYSTEM.md §5.50)
 // @verifies docs/SPEC-cards.md §12.4 (bascule de tri), §12.5 (filtres), §12.6 (pagination),
 //           §12.7 (le tableau, sa densité et ses colonnes), §12.8 (accessibilité et clavier)
 // @verifies docs/DESIGN_SYSTEM.md §5.9 (tableau de données), §8 (états désactivés lisibles,
@@ -26,9 +28,9 @@ import {
 afterEach(cleanup)
 
 const ETAPES: readonly EtapeBoard[] = [
-	{ id: 's1', position: 1, libelle: 'Prospection', couleur: 'neutral', kind: 'open', seuilJours: 14 },
-	{ id: 's2', position: 2, libelle: 'Relance', couleur: 'accent', kind: 'open', seuilJours: 7 },
-	{ id: 's7', position: 7, libelle: 'Perdu', couleur: 'danger', kind: 'lost', seuilJours: null },
+	{ id: 's1', position: 1, libelle: 'Prospection', couleur: 'neutral', kind: 'open', seuilJours: 14, initiale: true },
+	{ id: 's2', position: 2, libelle: 'Relance', couleur: 'accent', kind: 'open', seuilJours: 7, initiale: false },
+	{ id: 's7', position: 7, libelle: 'Perdu', couleur: 'danger', kind: 'lost', seuilJours: null, initiale: false },
 ]
 
 function card(partiel: Partial<CardListe> & Pick<CardListe, 'id'>): CardListe {
@@ -736,5 +738,33 @@ describe('la bascule de vue conserve le mode du sommeil (§16.12.4)', () => {
 				expect(adresse).not.toContain(absent)
 			}
 		}
+	})
+})
+
+// @verifies CRM-095 (docs/BACKLOG.md) — tranche T2 : la vue liste PLACE la commande et le formulaire
+//           qu'elle reçoit, sans les construire (docs/DESIGN_SYSTEM.md §5.50)
+describe('« Nouvelle affaire » dans la vue liste (CRM-095, docs/DESIGN_SYSTEM.md §5.50)', () => {
+	it('la commande vient en tête de la barre, HORS du formulaire des filtres ; son formulaire sous la barre', () => {
+		render(
+			<MemoryRouter>
+				<ListeCards
+					cards={CARDS}
+					etapes={ETAPES}
+					parametres={parametres()}
+					total={CARDS.length}
+					slugTrack="conseil-ia"
+					slugChannel="grands-comptes"
+					onParametres={vi.fn()}
+					commandeCreation={<button type="button" data-testid="commande-recue" />}
+					formulaireCreation={<form data-testid="formulaire-recu" />}
+				/>
+			</MemoryRouter>,
+		)
+		const barre = screen.getByTestId('barre-liste')
+		expect(barre.firstElementChild).toBe(screen.getByTestId('commande-recue'))
+		expect(within(screen.getByTestId('filtres-liste')).queryByTestId('commande-recue')).toBeNull()
+		const formulaire = screen.getByTestId('formulaire-recu')
+		expect(barre.compareDocumentPosition(formulaire) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+		expect(formulaire.compareDocumentPosition(screen.getByRole('table')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
 	})
 })

@@ -524,8 +524,11 @@ export const fr = {
 	'cardContacts.attach.pending': 'Rattachement…',
 	'cardContacts.attach.allAttached':
 		'Tous les contacts du carnet sont déjà rattachés à cette affaire.',
+	// RÉVISÉ le 2026-09-29 (INC-259, décision 612) : le carnet crée des contacts depuis CRM-060 (4e) —
+	// la phrase disait « une surface que le produit ne livre pas encore ».
 	'cardContacts.attach.noContact':
-		'Cet espace de travail n’a encore aucun contact. Le carnet se remplira depuis une surface que le produit ne livre pas encore.',
+		'Cet espace de travail n’a encore aucun contact. Créez-le dans le carnet, avec « Nouveau contact ».',
+	'cardContacts.attach.noContact.action': 'Ouvrir le carnet',
 	'cardContacts.detach.action': 'Détacher',
 	'cardContacts.detach.confirm.title': 'Détacher {nom} de cette affaire ?',
 	'cardContacts.detach.confirm.body':
@@ -835,13 +838,18 @@ export const fr = {
 	'route.track.notfound.body':
 		"Aucun track de cet espace de travail ne correspond à cette adresse, ou votre compte n'y a pas accès.",
 	'route.track.nochannel.title': 'Aucun channel dans ce track',
+	// RÉVISÉ le 2026-09-29 (INC-258, décision 611, docs/SPEC-cards.md §18.4 bis) : ce texte disait
+	// « par l'API » alors que « Nouveau channel » vit dans l'arborescence depuis CRM-075.
 	'route.track.nochannel.body':
-		"Les channels d'un track s'administrent par l'API : aucun écran de création n'est encore livré.",
+		"Un channel se crée avec « Nouveau channel », dans l'administration de l'arborescence.",
+	'route.track.nochannel.action': "Ouvrir l'arborescence",
 	'route.track.pickchannel.title': 'Choisissez un channel',
 	'route.track.pickchannel.body': 'Les onglets ci-dessus ouvrent les channels de ce track.',
 	'route.channel.empty.title': 'Aucune card dans ce channel',
+	// RÉVISÉ par CRM-095 T2 (docs/SPEC-cards.md §18.4 bis) : le bouton est à l'écran, au-dessus des
+	// colonnes — aucun lien n'est ajouté, deux commandes pour un geste (docs/DESIGN_SYSTEM.md §5.51).
 	'route.channel.empty.body':
-		"Les affaires s'y créent par l'API : aucun écran de création n'est encore livré.",
+		"Créez la première avec « Nouvelle affaire », au-dessus des colonnes : elle entre à l'étape initiale du workflow de ce channel.",
 	// Le board, LUI, sait combien il en masque : il a lu toutes les cards actives du channel
 	// (§16.12.3). Son état vide peut donc affirmer ce que la liste ne peut que suggérer.
 	'route.channel.empty.sommeil.title': 'Toutes les affaires de ce channel sont en sommeil',
@@ -851,8 +859,10 @@ export const fr = {
 	'route.channel.noworkflow.body':
 		"Un board a besoin des étapes d'un workflow : ce channel n'en désigne aucun que votre compte puisse lire.",
 	'route.channel.nostep.title': 'Ce workflow ne déclare aucune étape',
+	// RÉVISÉ le 2026-09-29 (INC-258, décision 611) : l'éditeur ajoute des étapes depuis CRM-076.
 	'route.channel.nostep.body':
-		"Un board sans étape n'a aucune colonne. Les étapes d'un workflow s'administrent par l'API.",
+		"Un board sans étape n'a aucune colonne. Les étapes d'un workflow s'ajoutent dans l'éditeur de workflows.",
+	'route.channel.nostep.action': "Ouvrir l'éditeur de workflows",
 	'route.card.title': 'Card',
 	'route.card.notfound.title': 'Card introuvable',
 	'route.card.notfound.body':
@@ -1002,6 +1012,24 @@ export const fr = {
 	// --- Board kanban (docs/SPEC-workflow-engine.md §7) ------------------------------------
 	'board.aria': 'Board du channel',
 	'board.column.empty': 'Aucune affaire à cette étape.',
+
+	// --- Nouvelle affaire (CRM-095, docs/SPEC-cards.md §18.3, docs/DESIGN_SYSTEM.md §5.50) ----------
+	// Les quatre refus sont ceux du §18.3, mot pour mot : un même refus ne se formule pas de deux façons
+	// selon l'écran — le board ou la vue liste — d'où il a été demandé (§5.3 sexies).
+	'affaire.creation.commande': 'Nouvelle affaire',
+	// L'action de la colonne initiale vide dit « une » et non « la première » : une colonne vide en mode
+	// masqué peut porter des affaires en sommeil (docs/SPEC-cards.md §16.12), et « la première » mentirait.
+	'affaire.creation.colonne': 'Créer une affaire',
+	'affaire.creation.aria': 'Nouvelle affaire',
+	'affaire.creation.titre': 'Titre',
+	'affaire.creation.creer': 'Créer',
+	'affaire.creation.encours': 'Création…',
+	'affaire.creation.annuler': 'Annuler',
+	'affaire.creation.refus.ferme': "Ce channel est archivé ou à la corbeille : une affaire n'y naît plus.",
+	'affaire.creation.refus.initiale': "Le workflow de ce channel n'a pas d'étape initiale.",
+	'affaire.creation.refus.initiale.lien': "Ouvrir l'éditeur de workflows",
+	'affaire.creation.refus.interdit': "Vous ne pouvez pas créer d'affaire dans ce channel.",
+	'affaire.creation.refus.panne': "L'affaire n'a pas pu être créée. Réessayez.",
 	'board.age.days': 'j dans cette étape',
 	// LE MENU EST CELUI DES ACTIONS DE LA CARTE, PLUS CELUI DE SES SEULS DÉPLACEMENTS
 	// (docs/SPEC-cards.md §16.13.1) : il porte le sommeil, donc « Déplacer » ne le nomme plus.
@@ -1013,8 +1041,10 @@ export const fr = {
 	// le composant construise la phrase (docs/SPEC-workflow-engine.md §7.5, CLAUDE.md §23).
 	'board.transition.fallback': 'Passer à {etape}',
 	'board.comment.label': 'Motif exigé pour passer à',
-	'board.comment.notstored':
-		"Ce motif est exigé pour valider le déplacement. Il n'est pas encore conservé : l'historique des affaires arrive avec les commentaires.",
+	// RÉVISÉ le 2026-09-29 (INC-259, décision 612) : `move_card` écrit le motif dans `card_comments`
+	// depuis la clôture d'INC-048 — la phrase disait qu'il n'était « pas encore conservé ».
+	'board.comment.stored':
+		"Ce motif est exigé pour valider le déplacement. Il est conservé dans l'historique de l'affaire, comme un commentaire.",
 	'board.comment.submit': 'Déplacer',
 	'board.comment.cancel': 'Annuler',
 	'board.refusal.dismiss': 'Fermer',
@@ -1061,8 +1091,8 @@ export const fr = {
 	'liste.page.precedente': 'Page précédente',
 	'liste.page.suivante': 'Page suivante',
 	'liste.empty.title': 'Aucune affaire dans ce channel',
-	'liste.empty.body':
-		"Les affaires s'y créent par l'API : aucun écran de création n'est encore livré.",
+	// RÉVISÉ par CRM-095 T2 (docs/SPEC-cards.md §18.4 bis) : le bouton est au-dessus du tableau.
+	'liste.empty.body': 'Créez la première avec « Nouvelle affaire », ci-dessus.',
 	// LE SOMMEIL A SON PROPRE ÉTAT VIDE, et ce n'est pas une nuance de rédaction (§16.12.6) : le
 	// défaut masque les affaires endormies, donc « aucune affaire dans ce channel » serait FAUX sur
 	// un channel dont toutes les affaires dorment. La liste ne prétend pourtant pas savoir s'il en
@@ -2561,6 +2591,9 @@ export const fr = {
 		'Une affaire avance d’étape en étape sur le board de son channel, et rassemble ses messages et ses commentaires.',
 	'onboarding.step.affaire.vide': 'Vous n’en voyez aucune pour le moment.',
 	'onboarding.step.affaire.action': 'Choisir un channel où créer l’affaire',
+	// `CRM-095` (docs/SPEC-onboarding.md §10.7) : dès qu'un channel existe, l'étape mène à son board, où
+	// vit « Nouvelle affaire » — l'impasse relevée (INC-256) tenait à l'absence de ce chemin.
+	'onboarding.step.affaire.action.board': 'Ouvrir le board et créer l’affaire',
 	'onboarding.step.messagerie.title': 'Raccorder une boîte de réception',
 	'onboarding.step.messagerie.body':
 		'Une boîte relevée classe le courrier entrant dans les affaires.',

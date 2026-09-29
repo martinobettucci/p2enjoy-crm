@@ -9,6 +9,9 @@
 //       focus entrant puis rendu), §5.8 (états), §5.6 (pilule), §6 (confirmation nommant l'objet),
 //       §5.7 ter (un refus n'efface pas la saisie), §9 (icônes Lucide)
 // @spec docs/SPEC-permissions-rls.md §7 (un refus de lecture est zéro ligne)
+// @spec CRM-095 (docs/BACKLOG.md) — tranche T2 ter : l'espace sans contact nomme « Nouveau contact » et
+//       mène au carnet (INC-259, décision 612 ; docs/SPEC-cards.md §18.4 bis ; docs/DESIGN_SYSTEM.md
+//       §5.21 révisé, §5.51)
 //
 // L'ÉCRAN NE CALCULE AUCUN DROIT, et AUCUNE COMMANDE N'EST ÉTEINTE D'AVANCE, quel que soit le
 // rôle de l'appelant (§12.4). La règle vit dans `card_contacts_insertion` et
@@ -39,7 +42,18 @@ import {
 	type NatureRefusRattachement,
 } from '../lib/contacts'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
-import { cheminOrganisation } from './chemins'
+import { CHEMIN_CONTACTS, cheminOrganisation } from './chemins'
+
+/**
+ * Le lien de l'espace sans contact vers le carnet — la forme du lien de retour d'un état « introuvable »
+ * (docs/DESIGN_SYSTEM.md §5.5, primaire), que le §5.51 donne à tout état vide qui renvoie ailleurs.
+ */
+const CLASSES_LIEN_CARNET = [
+	'inline-flex items-center justify-center self-start',
+	'min-h-[var(--size-target)] px-4 rounded-sm',
+	'bg-brand text-white font-medium',
+	'transition-colors duration-[var(--transition-duration-fast)] hover:bg-brand-hover',
+].join(' ')
 
 /**
  * Les cinq refus du dictionnaire FERMÉ du §12.5, jamais le message du serveur.
@@ -489,13 +503,20 @@ function FormulaireRattachement({
 		setMessage(t(MESSAGES_REFUS[resultat.refus.nature]))
 	}, [client, fermer, idCard, idContact, idWorkspace, onRelire, role])
 
-	// Cas l du §12.7 : le workspace n'a AUCUN contact. Le bloc le nomme et s'arrête là — la
-	// création d'un contact n'est livrée par aucun écran, et sa surface n'est spécifiée nulle part.
+	// Cas l du §12.7 : le workspace n'a AUCUN contact. RÉVISÉ le 2026-09-29 (INC-259) : le bloc disait
+	// que la création n'était livrée nulle part ; le carnet crée des contacts depuis `CRM-060` (4e). Il
+	// nomme donc « Nouveau contact » et mène au carnet — pour tous les rôles, la base refusant la création
+	// à qui ne peut pas la faire (docs/DESIGN_SYSTEM.md §5.51).
 	if (carnetVide) {
 		return (
-			<p data-testid="carnet-vide" className="text-sm text-text-3">
-				{t('cardContacts.attach.noContact')}
-			</p>
+			<div className="flex flex-col gap-2">
+				<p data-testid="carnet-vide" className="text-sm text-text-3">
+					{t('cardContacts.attach.noContact')}
+				</p>
+				<Link to={CHEMIN_CONTACTS} data-testid="lien-carnet-vide" className={CLASSES_LIEN_CARNET}>
+					{t('cardContacts.attach.noContact.action')}
+				</Link>
+			</div>
 		)
 	}
 

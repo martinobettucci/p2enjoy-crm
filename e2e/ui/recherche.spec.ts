@@ -10,6 +10,9 @@
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 // @verifies CRM-092 (docs/BACKLOG.md) tranche T9 — docs/SPEC-session-sso.md §8.7 : sans session, aucune page
 //           de l'application ; l'adresse demandée mène à /connexion (docs/JOURNAL.md décision 601)
+// @verifies CRM-095 (docs/BACKLOG.md) — tranche T2 ter : la palette se referme quand le focus la quitte
+//           par `Tab` ou `Maj+Tab`, sans le rendre ; un clic dans le panneau garde le focus au champ
+//           (INC-260, décision 612 ; docs/SPEC-recherche.md §14.3 ; docs/DESIGN_SYSTEM.md §5.46)
 //
 // LE PARCOURS EST FAIT AU CLAVIER, comme un utilisateur réel : aucune fonction interne n'est
 // appelée, aucune réponse n'est substituée, et le navigateur obtient son jeton par le formulaire
@@ -265,6 +268,48 @@ test.describe('La navigation clavier (§14.3)', () => {
 		await expect(page.getByTestId('panneau-recherche')).toBeVisible()
 		await page.keyboard.press('Escape')
 		await expect(page.getByTestId('panneau-recherche')).toHaveCount(0)
+	})
+
+	// INC-260 (décision 612, §14.3) : traverser l'en-tête au clavier laissait le panneau ouvert
+	// par-dessus la barre d'onglets. Le focus qui quitte la palette la referme, et il n'est PAS ramené.
+	test('`Tab` et `Maj+Tab` hors de la palette la referment, et le focus reste où ils l’ont envoyé', async ({
+		page,
+	}) => {
+		await connecter(page, ADMIN)
+		const champ = page.getByTestId('champ-recherche')
+		await chercherAuClavier(page, TERME_ASYMETRIQUE)
+		await expect(page.getByTestId('resultat-recherche')).toHaveCount(4)
+
+		await page.keyboard.press('Tab')
+		await expect(page.getByTestId('panneau-recherche')).toHaveCount(0)
+		await expect(champ).not.toBeFocused()
+		// Le focus n'est pas retombé sur le document : il a avancé d'un pas, comme `Tab` le promet.
+		expect(await page.evaluate(() => document.activeElement === document.body)).toBe(false)
+
+		// Et dans l'autre sens : le champ reprend le focus — la palette se rouvre (§14.1) —, puis `Maj+Tab`.
+		await champ.focus()
+		await expect(page.getByTestId('panneau-recherche')).toBeVisible()
+		await page.keyboard.press('Shift+Tab')
+		await expect(page.getByTestId('panneau-recherche')).toHaveCount(0)
+		await expect(champ).not.toBeFocused()
+	})
+
+	// La moitié souris de la même règle : un clic DANS le panneau ne retire pas le focus du champ, sans
+	// quoi la sortie de focus fermerait le panneau avant que le clic sur un résultat n'arrive.
+	test('un appui de la souris dans le panneau laisse le focus au champ, et le panneau ouvert', async ({
+		page,
+	}) => {
+		await connecter(page, ADMIN)
+		await chercherAuClavier(page, TERME_ASYMETRIQUE)
+		const lignes = page.getByTestId('resultat-recherche')
+		await expect(lignes).toHaveCount(4)
+		const cadre = await lignes.nth(1).boundingBox()
+		if (cadre === null) throw new Error('la deuxième ligne n’est pas rendue')
+		await page.mouse.move(cadre.x + cadre.width / 2, cadre.y + cadre.height / 2)
+		await page.mouse.down()
+		await expect(page.getByTestId('champ-recherche')).toBeFocused()
+		await expect(page.getByTestId('panneau-recherche')).toBeVisible()
+		await page.mouse.up()
 	})
 })
 

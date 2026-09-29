@@ -5,6 +5,9 @@
 //           §7.9 (optimisme et retour arrière), §7.10 (les sept refus), §7.11 (accessibilité)
 // @verifies docs/DESIGN_SYSTEM.md §5.1 (carte de card), §5.2 (colonne), §8 (états désactivés
 //           lisibles, annonces), §10 (aucun texte en dur)
+// @verifies CRM-095 (docs/BACKLOG.md) — tranche T2 : « Nouvelle affaire » en tête de la barre du board,
+//           le formulaire sous elle, l'action de la seule colonne initiale vide (docs/SPEC-cards.md §18.3 ;
+//           docs/DESIGN_SYSTEM.md §5.50, §5.2)
 //
 // Ces tests montent le **vrai** composant et isolent son menu, son optimisme et chaque refus par
 // leurs rôles accessibles. Les déplacements connecté autorisé et refusé sont prouvés en complément
@@ -23,9 +26,9 @@ import type { ClientCrm } from '../lib/supabase'
 afterEach(cleanup)
 
 const ETAPES: readonly EtapeBoard[] = [
-	{ id: 's1', position: 1, libelle: 'Prospection', couleur: 'neutral', kind: 'open', seuilJours: 14 },
-	{ id: 's2', position: 2, libelle: 'Relance', couleur: 'accent', kind: 'open', seuilJours: 7 },
-	{ id: 's7', position: 7, libelle: 'Perdu', couleur: 'danger', kind: 'lost', seuilJours: null },
+	{ id: 's1', position: 1, libelle: 'Prospection', couleur: 'neutral', kind: 'open', seuilJours: 14, initiale: true },
+	{ id: 's2', position: 2, libelle: 'Relance', couleur: 'accent', kind: 'open', seuilJours: 7, initiale: false },
+	{ id: 's7', position: 7, libelle: 'Perdu', couleur: 'danger', kind: 'lost', seuilJours: null, initiale: false },
 ]
 
 const TRANSITIONS: readonly TransitionLue[] = [
@@ -116,6 +119,7 @@ function monter({
 				onCards={onCards}
 				libellesChamps={LIBELLES}
 				client={client}
+				idChannel="ch-1"
 				slugTrack="conseil-ia"
 				slugChannel="grands-comptes"
 				modeSommeil={modeSommeil}
@@ -337,12 +341,16 @@ describe('motif exigé, jamais optimiste (§7.8)', () => {
 		expect(onCards).not.toHaveBeenCalled()
 	})
 
-	it('dit que le motif n’est pas encore conservé, plutôt que de laisser croire l’inverse', async () => {
+	// RÉVISÉ le 2026-09-29 (INC-259, décision 612) : ce test attendait « pas encore conservé », devenu faux
+	// depuis que `move_card` écrit le motif dans `card_comments` (INC-048 close, mesuré). Il vérifiait
+	// seulement le mot « conserv », que la phrase fausse et la phrase juste portent toutes deux.
+	it('dit que le motif est conservé dans l’historique de l’affaire, ce que la base fait (§7.8 révisé)', async () => {
 		const utilisateur = userEvent.setup()
 		monter({ cards: [card({ id: 'c1', current_step_id: 's1' })], client: clientRpc().client })
 		await utilisateur.click(screen.getByTestId('menu-transitions'))
 		await utilisateur.click(screen.getAllByTestId('transition')[1] as HTMLElement)
-		expect(screen.getByTestId('saisie-motif').textContent).toMatch(/conserv/i)
+		expect(screen.getByTestId('motif-conserve').textContent).toBe(fr['board.comment.stored'])
+		expect(screen.getByTestId('saisie-motif').textContent).not.toMatch(/pas encore conserv/i)
 	})
 
 	it('transmet le motif saisi à la garde', async () => {
@@ -805,5 +813,43 @@ describe('sommeil depuis le menu de la carte (docs/SPEC-cards.md §16.13)', () =
 		for (const geste of screen.getAllByTestId(/^carte-sommeil-/)) {
 			expect((geste as HTMLButtonElement).disabled).toBe(false)
 		}
+	})
+})
+
+describe('« Nouvelle affaire » sur le board (CRM-095, docs/DESIGN_SYSTEM.md §5.50, §5.2)', () => {
+	it('la commande vient EN TÊTE de la barre, avant la bascule du sommeil, et hors de son groupe', () => {
+		monter({ cards: [card({ id: 'c1', current_step_id: 's1' })], client: clientRpc().client })
+		const barre = screen.getByTestId('barre-board')
+		expect(barre.firstElementChild).toBe(screen.getByTestId('nouvelle-affaire'))
+		expect(within(screen.getByTestId('barre-sommeil-board')).queryByTestId('nouvelle-affaire')).toBeNull()
+	})
+
+	it('seule la colonne VIDE de l’étape INITIALE porte l’action — les autres colonnes vides gardent leur message', () => {
+		monter({ cards: [card({ id: 'c1', current_step_id: 's2' })], client: clientRpc().client })
+		const [prospection, relance, perdu] = screen.getAllByTestId('colonne') as HTMLElement[]
+		expect(within(prospection as HTMLElement).getByTestId('creer-affaire-colonne')).toBeDefined()
+		expect(within(relance as HTMLElement).queryByTestId('creer-affaire-colonne')).toBeNull()
+		expect(within(perdu as HTMLElement).getByTestId('colonne-vide')).toBeDefined()
+		expect(within(perdu as HTMLElement).queryByTestId('creer-affaire-colonne')).toBeNull()
+	})
+
+	it('une colonne initiale qui porte des affaires n’offre pas l’action', () => {
+		monter({ cards: [card({ id: 'c1', current_step_id: 's1' })], client: clientRpc().client })
+		expect(screen.queryByTestId('creer-affaire-colonne')).toBeNull()
+	})
+
+	it('le formulaire s’ouvre SOUS la barre, et l’affaire part vers le channel du board', async () => {
+		const { client, appels } = clientRpc({ data: null, error: { message: 'channel ferme', details: null, code: 'P0001' } })
+		monter({ cards: [], client })
+		await userEvent.click(screen.getByTestId('creer-affaire-colonne'))
+		const formulaire = screen.getByTestId('formulaire-nouvelle-affaire')
+		expect(
+			screen.getByTestId('barre-board').compareDocumentPosition(formulaire) & Node.DOCUMENT_POSITION_FOLLOWING,
+		).toBeTruthy()
+		await userEvent.type(screen.getByTestId('champ-titre-affaire'), 'Refonte{Enter}')
+		expect((await screen.findByTestId('refus-nouvelle-affaire')).textContent).toContain(
+			fr['affaire.creation.refus.ferme'],
+		)
+		expect(appels).toEqual([{ nom: 'creer_affaire', arguments: { p_channel: 'ch-1', p_titre: 'Refonte' } }])
 	})
 })

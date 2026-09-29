@@ -10,6 +10,8 @@
 //       §5.7 (champs), §5.8 (états), §7 (paliers), §8 (accessibilité), §9 (icônes Lucide),
 //       §12.1 (navigation par liens, non `tablist`), §12.6 (débordement signalé),
 //       §5.3 quinquies (la bascule et la pastille compacte)
+// @spec CRM-095 (docs/BACKLOG.md) — tranche T2 : la commande « Nouvelle affaire » en tête de la barre
+//       de filtres, le formulaire sous elle (docs/SPEC-cards.md §18.3, docs/DESIGN_SYSTEM.md §5.50)
 //
 // Ce composant **rend** ; il ne compose pas. La clôture des tris, l'ordre total, le repli des
 // paramètres d'adresse, le bornage du rang de page et la classification du `416` vivent dans
@@ -135,6 +137,16 @@ export type ProprietesListeCards = {
 	 */
 	readonly etatVide?: ReactNode
 	/**
+	 * La commande « Nouvelle affaire » et son formulaire (`CRM-095`, docs/DESIGN_SYSTEM.md §5.50).
+	 *
+	 * REÇUS ET PLACÉS, JAMAIS CONSTRUITS ICI : ce composant rend un tableau, il n'écrit rien — l'état du
+	 * geste et son appel vivent dans la zone qui monte la liste (`RouteTrack.tsx`). La commande vient EN
+	 * TÊTE de la barre, créer précédant filtrer ; le formulaire s'ouvre SOUS elle. Absents, aucun geste
+	 * n'est rendu : c'est le cas des preuves qui ne portent pas sur lui.
+	 */
+	readonly commandeCreation?: ReactNode
+	readonly formulaireCreation?: ReactNode
+	/**
 	 * L'instant qui départage le sommeil pour la **marque** des lignes (§16.12.7).
 	 *
 	 * Injectable pour la même raison qu'au §16.11.1 : sans lui, aucune preuve ne pourrait éprouver
@@ -159,6 +171,8 @@ export function ListeCards({
 	slugChannel,
 	onParametres,
 	etatVide,
+	commandeCreation,
+	formulaireCreation,
 	maintenant = new Date(),
 }: ProprietesListeCards) {
 	const etapesParId = new Map(etapes.map((etape) => [etape.id, etape]))
@@ -170,13 +184,19 @@ export function ListeCards({
 			{/* Les filtres restent **au-dessus** et **toujours rendus**, y compris sur un total nul :
 			    ils sont la cause de l'état vide filtré, et les masquer priverait l'utilisateur du
 			    seul geste qui l'en sort. */}
-			<BarreFiltres
-				etapes={etapes}
-				parametres={parametres}
-				total={total}
-				onParametres={onParametres}
-				offrirEffacement={!vide}
-			/>
+			{/* La commande PRÉCÈDE le formulaire des filtres sans y entrer : le formulaire est étiqueté
+			    « filtres », et un geste de création n'en est pas un. */}
+			<div data-testid="barre-liste" className="flex flex-wrap items-end gap-3 min-w-0">
+				{commandeCreation}
+				<BarreFiltres
+					etapes={etapes}
+					parametres={parametres}
+					total={total}
+					onParametres={onParametres}
+					offrirEffacement={!vide}
+				/>
+			</div>
+			{formulaireCreation}
 			{vide ? (
 				etatVide
 			) : (
@@ -418,7 +438,7 @@ function BarreFiltres({
 		<form
 			data-testid="filtres-liste"
 			aria-label={t('liste.filtres.aria')}
-			className="flex flex-wrap items-end gap-3"
+			className="flex flex-wrap items-end gap-3 grow min-w-0"
 			onSubmit={(evenement) => {
 				evenement.preventDefault()
 				const saisie = new FormData(evenement.currentTarget).get(CHAMP_RECHERCHE)

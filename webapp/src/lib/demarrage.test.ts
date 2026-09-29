@@ -5,6 +5,8 @@
 // @verifies CRM-094 (docs/BACKLOG.md) tranche T2 — docs/SPEC-onboarding.md §10.1 (six étapes, le workflow
 //           avant le channel), §10.3 (le geste, ses issues, et le signal aux écrans ouverts) ;
 //           docs/SPEC-workflow-engine.md §7 quater
+// @verifies CRM-095 (docs/BACKLOG.md) tranche T3 — docs/SPEC-onboarding.md §10.7 : la destination de
+//           l'étape « affaire », le premier channel vivant, lue avec chaque mesure
 //
 // Comme `mail-etat.test.ts`, ce fichier éprouve la requête RÉELLEMENT émise et pas seulement la
 // valeur rendue : les filtres `archived_at`/`deleted_at` du §3 sont une exigence de la
@@ -15,6 +17,7 @@ import { renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
 	CLES_ETAPES_DEMARRAGE,
+	COLONNES_BOARD_AFFAIRE,
 	EVENEMENT_WORKFLOW_DEPART,
 	FILTRES_ETAPES_DEMARRAGE,
 	compterAccomplies,
@@ -40,18 +43,60 @@ type Appel = {
 	readonly nuls: [string, unknown][]
 }
 
+/** La lecture de la destination de l'étape « affaire » (`CRM-095`), notée à part des comptages. */
+type Lecture = {
+	readonly table: string
+	readonly colonnes: string
+	readonly nuls: [string, unknown][]
+	readonly tris: string[]
+	limite: number | null
+}
+
+type ReponseLignes = { data: unknown[] | null; error: { message: string } | null; status: number }
+
+const AUCUN_CHANNEL: ReponseLignes = { data: [], error: null, status: 200 }
+
 /**
  * Client espion : il enregistre chaque requête émise, et rend la réponse associée à la table.
  * Une table absente de `reponses` fait échouer le test plutôt que de rendre un défaut silencieux.
+ *
+ * Depuis `CRM-095`, la mesure lit AUSSI une ligne — la destination de l'étape « affaire » : sans options
+ * de comptage, elle est notée dans `lectures` et reçoit `destination`. `appels` ne porte que les six
+ * comptages, dont les preuves ci-dessous gardent ainsi leur sens exact.
  */
-function espion(reponses: Readonly<Record<string, ReponseCompte>>): {
+function espion(
+	reponses: Readonly<Record<string, ReponseCompte>>,
+	destination: ReponseLignes = AUCUN_CHANNEL,
+): {
 	client: ClientCrm
 	appels: Appel[]
+	lectures: Lecture[]
 } {
 	const appels: Appel[] = []
+	const lectures: Lecture[] = []
 	const client = {
 		from: (table: string) => ({
 			select: (colonnes: string, options?: unknown) => {
+				if (options === undefined) {
+					const lecture: Lecture = { table, colonnes, nuls: [], tris: [], limite: null }
+					lectures.push(lecture)
+					const lignes = {
+						is: (colonne: string, valeur: unknown) => {
+							lecture.nuls.push([colonne, valeur])
+							return lignes
+						},
+						order: (colonne: string) => {
+							lecture.tris.push(colonne)
+							return lignes
+						},
+						limit: (nombre: number) => {
+							lecture.limite = nombre
+							return lignes
+						},
+						then: (resoudre: (valeur: ReponseLignes) => unknown) => Promise.resolve(destination).then(resoudre),
+					}
+					return lignes
+				}
 				const nuls: [string, unknown][] = []
 				const reponse = reponses[table]
 				if (reponse === undefined) throw new Error(`table non attendue : ${table}`)
@@ -68,7 +113,7 @@ function espion(reponses: Readonly<Record<string, ReponseCompte>>): {
 			},
 		}),
 	} as unknown as ClientCrm
-	return { client, appels }
+	return { client, appels, lectures }
 }
 
 const ok = (count: number): ReponseCompte => ({ count, error: null, status: 200 })
@@ -233,17 +278,17 @@ describe('les trois états d’une étape, et la décision de l’accueil', () =
 	})
 
 	it('compte les accomplies sans retirer du total celles qui ont échoué', () => {
-		const progression = { etapes: [accomplie, accomplie, aFaire, nonMesurable, aFaire] }
+		const progression = { etapes: [accomplie, accomplie, aFaire, nonMesurable, aFaire], boardAffaire: null }
 		expect(compterAccomplies(progression)).toEqual({ accomplies: 2, total: 5 })
 	})
 
 	it('une étape non mesurable maintient le guide : le guide ne se retire pas sur une supposition', () => {
-		const progression = { etapes: [accomplie, accomplie, accomplie, accomplie, nonMesurable] }
+		const progression = { etapes: [accomplie, accomplie, accomplie, accomplie, nonMesurable], boardAffaire: null }
 		expect(resteUneEtape(progression)).toBe(true)
 	})
 
 	it('six étapes accomplies retirent le guide de l’accueil', () => {
-		const progression = { etapes: Array.from({ length: 6 }, () => accomplie) }
+		const progression = { etapes: Array.from({ length: 6 }, () => accomplie), boardAffaire: null }
 		expect(resteUneEtape(progression)).toBe(false)
 	})
 
@@ -251,6 +296,7 @@ describe('les trois états d’une étape, et la décision de l’accueil', () =
 		// Sans cet état, un rendu où `etapes` serait vide passerait pour « tout accompli » et
 		// l'accueil afficherait « aucun board » à qui en a (docs/SPEC-onboarding.md §4.2).
 		expect(PROGRESSION_INITIALE.etapes).toHaveLength(6)
+		expect(PROGRESSION_INITIALE.boardAffaire).toBeNull()
 		expect(mesureEnCours(PROGRESSION_INITIALE)).toBe(true)
 		expect(resteUneEtape(PROGRESSION_INITIALE)).toBe(true)
 	})
@@ -263,7 +309,7 @@ describe('les trois états d’une étape, et la décision de l’accueil', () =
 			accomplie,
 			aFaire,
 		]
-		expect(mesureEnCours({ etapes: rendus })).toBe(false)
+		expect(mesureEnCours({ etapes: rendus, boardAffaire: null })).toBe(false)
 	})
 })
 
@@ -361,3 +407,46 @@ describe('le workflow de départ — docs/SPEC-workflow-engine.md §7 quater, SP
 	})
 })
 
+describe('la destination de l’étape « affaire » — CRM-095, docs/SPEC-onboarding.md §10.7', () => {
+	it('lit UNE ligne : le premier channel vivant, dont le track est vivant, trié par track puis par channel', async () => {
+		const { client, lectures } = espion(TOUTES_VIDES)
+		await mesurerDemarrage(client)
+		expect(lectures).toEqual([
+			{
+				table: 'channels',
+				colonnes: COLONNES_BOARD_AFFAIRE,
+				nuls: [
+					['archived_at', null],
+					['deleted_at', null],
+					['tracks.archived_at', null],
+					['tracks.deleted_at', null],
+				],
+				// La position d'un channel est numérotée PAR TRACK : le track d'abord, sans quoi les tracks
+				// s'entrelacent (docs/DESIGN_SYSTEM.md §5.48 bis).
+				tris: ['tracks(position)', 'tracks(name)', 'position', 'name'],
+				limite: 1,
+			},
+		])
+		// `!inner` : un channel dont le track n'est pas lisible n'est pas une destination. Et le tri sur le
+		// track EXIGE ses colonnes dans l'embarqué : sans elles, PostgREST rend `400` (mesuré, pile réelle).
+		expect(COLONNES_BOARD_AFFAIRE).toBe('slug, tracks!inner(slug, position, name)')
+	})
+
+	it('rend l’adresse du board de ce channel', async () => {
+		const { client } = espion(TOUTES_VIDES, {
+			data: [{ slug: 'premier-channel', tracks: { slug: 'premier-track' } }],
+			error: null,
+			status: 200,
+		})
+		expect((await mesurerDemarrage(client)).boardAffaire).toBe('/tracks/premier-track/premier-channel')
+	})
+
+	it('sans channel, ou quand la lecture échoue, aucune destination : l’étape garde son lien d’avant', async () => {
+		expect((await mesurerDemarrage(espion(TOUTES_VIDES).client)).boardAffaire).toBeNull()
+		const refus = espion(TOUTES_VIDES, { data: null, error: { message: 'panne' }, status: 500 })
+		const progression = await mesurerDemarrage(refus.client)
+		expect(progression.boardAffaire).toBeNull()
+		// L'échec de la destination n'est pas celui d'une étape : les six mesures restent lues.
+		expect(progression.etapes.every((etat) => etat.statut === 'pret')).toBe(true)
+	})
+})

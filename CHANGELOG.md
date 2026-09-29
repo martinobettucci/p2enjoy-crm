@@ -15,12 +15,28 @@ d'exécuter le code attendu.
 
 ### `CRM-095` — Créer une affaire depuis le board
 
-*Décision 609. Migration **81** à appliquer en production (`docs/PROD_MIGRATIONS.md` §2.8).*
+*Décisions 609, 611 et 612. Migration **81** à appliquer en production (`docs/PROD_MIGRATIONS.md` §2.8).*
 
 - **Le geste serveur de création d'une affaire** : fonction `public.creer_affaire` (migration `0081`),
   avec le titre seul ; l'affaire naît à l'**étape initiale** du workflow de son channel — règle que rien
   ne tenait jusqu'ici. La base refuse un channel archivé ou à la corbeille, un workflow sans étape
-  initiale, un titre blanc, et quiconque ne peut pas écrire le channel (T1). L'écran vient avec T2.
+  initiale, un titre blanc, et quiconque ne peut pas écrire le channel (T1).
+- **« Nouvelle affaire »** en tête de la barre du tableau d'un channel et de la barre de filtres de sa
+  vue liste ; la colonne vide de l'étape initiale porte **« Créer une affaire »**. Un formulaire dans la
+  page, le titre seul ; la fiche s'ouvre sur l'affaire créée. Au clavier : `Entrée` crée, `Échap` referme.
+  Les refus s'écrivent sous le champ sans effacer la saisie, et celui d'un workflow sans étape initiale
+  mène à l'éditeur de workflows (T2).
+- **Le guide de démarrage mène au board du premier channel** — « Ouvrir le board et créer l'affaire » —
+  dès qu'un channel existe, là où il menait à l'arborescence, d'où rien ne menait à un board (T3,
+  INC-256).
+- **Les états vides disent où se fait le geste** : un channel sans affaire désigne « Nouvelle affaire » ;
+  un track sans channel désigne « Nouveau channel » et mène à l'arborescence ; un workflow sans étape mène
+  à l'éditeur ; une affaire dans un espace sans contact mène au carnet. Ils disaient « par l'API » ou
+  « non livré » (T2 bis et T2 ter, INC-258 et INC-259).
+- **La saisie du motif d'un déplacement dit qu'il est conservé** dans l'historique de l'affaire, ce que
+  le serveur fait ; elle disait le contraire (INC-259).
+- **La recherche de l'en-tête se referme quand on la quitte au clavier** (`Tab`, `Maj+Tab`), au lieu de
+  rester ouverte par-dessus les onglets (INC-260).
 
 ### Correctif du 2026-09-29 — INC-255 (décision 609)
 

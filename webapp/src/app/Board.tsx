@@ -16,6 +16,10 @@
 //       §16.13.5 (ce que le board annonce)
 // @spec docs/DESIGN_SYSTEM.md §5.3 quinquies (la barre de bascule et la pastille compacte),
 //       §5.3 sexies (le menu des actions et le sommeil qui s'y loge)
+// @spec CRM-095 (docs/BACKLOG.md) — tranche T2 : « Nouvelle affaire » en tête de la barre, le formulaire
+//       sous elle, et l'action de la colonne initiale vide (docs/SPEC-cards.md §18.3 ;
+//       docs/DESIGN_SYSTEM.md §5.50, §5.2) ; tranche T2 ter : la saisie du motif dit qu'il est conservé
+//       (INC-259, décision 612 ; docs/SPEC-workflow-engine.md §7.8 révisé)
 //
 // Ce composant **rend** ; il ne compose pas. Les colonnes, l'ordre, les cumuls, l'ancienneté et
 // la classification des refus vivent dans `webapp/src/lib/board.ts`, où ils sont vérifiables sans
@@ -61,6 +65,13 @@ import {
 	type TransitionBoard,
 } from '../lib/board'
 import type { ClientCrm } from '../lib/supabase'
+import {
+	ActionColonneInitiale,
+	CommandeNouvelleAffaire,
+	FormulaireNouvelleAffaire,
+	useCreationAffaire,
+	type CreationAffaire,
+} from './NouvelleAffaire'
 
 /**
  * Liseré supérieur de 3 px à la couleur du nœud (docs/DESIGN_SYSTEM.md §5.1).
@@ -132,6 +143,8 @@ export type ProprietesBoard = {
 	readonly onCards: (cards: readonly CardBoard[]) => void
 	readonly libellesChamps: ReadonlyMap<string, string>
 	readonly client: ClientCrm | null
+	/** Le channel du board : celui où naît une affaire créée ici (`CRM-095`, docs/SPEC-cards.md §18.2). */
+	readonly idChannel: string
 	readonly slugTrack: string
 	readonly slugChannel: string
 	/** Le mode courant de la bascule du sommeil (§16.12.4), lu de l'adresse par l'appelant. */
@@ -152,11 +165,13 @@ export function Board({
 	onCards,
 	libellesChamps,
 	client,
+	idChannel,
 	slugTrack,
 	slugChannel,
 	modeSommeil,
 	onModeSommeil,
 }: ProprietesBoard) {
+	const creation = useCreationAffaire()
 	const [idGlissee, setIdGlissee] = useState<string | null>(null)
 	const [cibleSurvolee, setCibleSurvolee] = useState<string | null>(null)
 	const [enCours, setEnCours] = useState<string | null>(null)
@@ -295,18 +310,32 @@ export function Board({
 	return (
 		<div className="flex flex-col gap-3 min-h-0">
 			<LiveRegion libelle={t('live.board.aria')} message={annonce} />
-			{/* LA PREMIÈRE BARRE DU BOARD, et elle ne porte que ce contrôle (§5.3 quinquies). Comme la
-			    barre de filtres de la vue liste, elle reste rendue **y compris sur un board vide** :
-			    elle est la cause possible de ce vide, et la masquer priverait l'utilisateur du seul
-			    geste qui l'en sort. */}
-			<div
-				data-testid="barre-sommeil-board"
-				role="group"
-				aria-label={t('sommeil.barre.aria')}
-				className="flex flex-wrap items-center gap-3"
-			>
-				<BasculeSommeil mode={modeSommeil} onMode={onModeSommeil} />
+			{/* LA BARRE DU BOARD — deux contrôles depuis `CRM-095` (§5.50) : « Nouvelle affaire » EN TÊTE,
+			    créer précédant filtrer, puis la bascule du sommeil (§5.3 quinquies). Elle reste rendue
+			    **y compris sur un board vide** : la bascule est la cause possible de ce vide, et la
+			    commande le geste qui le comble. La bascule garde son propre groupe étiqueté : la commande
+			    n'est pas un réglage d'affichage, et l'étiquette du groupe la décrirait mal. */}
+			<div data-testid="barre-board" className="flex flex-wrap items-center gap-3">
+				<CommandeNouvelleAffaire creation={creation} />
+				<div
+					data-testid="barre-sommeil-board"
+					role="group"
+					aria-label={t('sommeil.barre.aria')}
+					className="flex flex-wrap items-center gap-3"
+				>
+					<BasculeSommeil mode={modeSommeil} onMode={onModeSommeil} />
+				</div>
 			</div>
+			{/* Le formulaire s'ouvre SOUS la barre, sur toute la largeur utile (§5.50). */}
+			{!creation.ouvert ? null : (
+				<FormulaireNouvelleAffaire
+					creation={creation}
+					client={client}
+					idChannel={idChannel}
+					slugTrack={slugTrack}
+					slugChannel={slugChannel}
+				/>
+			)}
 			{refus === null ? null : (
 				<BandeauRefus
 					refus={refus.refus}
@@ -347,6 +376,7 @@ export function Board({
 							slugTrack={slugTrack}
 							slugChannel={slugChannel}
 							cardsParId={cardsParId}
+							creation={creation}
 							onSurvol={setCibleSurvolee}
 							onGlisser={glisser}
 							onDeposer={deposer}
@@ -380,6 +410,7 @@ function Colonne({
 	slugTrack,
 	slugChannel,
 	cardsParId,
+	creation,
 	onSurvol,
 	onGlisser,
 	onDeposer,
@@ -394,6 +425,7 @@ function Colonne({
 	readonly slugTrack: string
 	readonly slugChannel: string
 	readonly cardsParId: ReadonlyMap<string, CardBoard>
+	readonly creation: CreationAffaire
 	readonly onSurvol: (idEtape: string | null) => void
 	readonly onGlisser: (idCard: string | null) => void
 	readonly onDeposer: (colonne: ColonneBoard) => void
@@ -459,9 +491,15 @@ function Colonne({
 			</div>
 
 			{colonne.cartes.length === 0 ? (
-				<p data-testid="colonne-vide" className="text-sm text-text-3 px-3 py-4">
-					{t('board.column.empty')}
-				</p>
+				<div className="flex flex-col gap-3 px-3 py-4">
+					<p data-testid="colonne-vide" className="text-sm text-text-3">
+						{t('board.column.empty')}
+					</p>
+					{/* L'ACTION VIT DANS LA SEULE COLONNE DE L'ÉTAPE INITIALE (§5.2) : une affaire naît là et
+					    nulle part ailleurs (docs/SPEC-cards.md §18.2), et les autres colonnes vides gardent
+					    leur seul message — y offrir le geste ferait croire qu'il y dépose l'affaire. */}
+					{!colonne.etape.initiale ? null : <ActionColonneInitiale creation={creation} />}
+				</div>
 			) : (
 				<ol className="flex flex-col gap-3 min-w-0">
 					{colonne.cartes.map((carte) => (
@@ -778,9 +816,10 @@ function MenuCarte({
 /**
  * Saisie du motif exigé par une transition (§7.8).
  *
- * Elle **dit** que le motif n'est pas conservé : `move_card` le contrôle et rien ne l'écrit,
- * `card_comments` étant `CRM-043` (INC-048). Laisser croire à un enregistrement serait la valeur
- * par défaut trompeuse que `CLAUDE.md` §18 proscrit.
+ * Elle **dit** ce que la base fait du motif — RÉVISÉ le 2026-09-29 (INC-259, décision 612) : depuis la
+ * clôture d'INC-048, `move_card` l'écrit dans `card_comments`, et la saisie dit qu'il rejoint
+ * l'historique de l'affaire. Elle disait jusque-là qu'il n'était pas conservé, ce qui était devenu faux.
+ * Dire autre chose que ce que la base fait serait la valeur trompeuse que `CLAUDE.md` §18 proscrit.
  */
 function SaisieMotif({
 	transition,
@@ -815,7 +854,9 @@ function SaisieMotif({
 				onChange={(evenement) => setMotif(evenement.target.value)}
 				className="border border-border rounded-sm p-3 text-base"
 			/>
-			<p className="text-sm text-text-3">{t('board.comment.notstored')}</p>
+			<p data-testid="motif-conserve" className="text-sm text-text-3">
+				{t('board.comment.stored')}
+			</p>
 			<div className="flex gap-2">
 				<Button variante="primaire" type="submit" disabled={vide} data-testid="valider-motif">
 					{t('board.comment.submit')}

@@ -927,7 +927,10 @@ ASSERTIONS_ATTENDUES=3275
 # porte **2** scénarios — le commercial crée et relit l'affaire à l'étape initiale ; la lectrice refusée
 # `403` sur un channel qu'elle lit, l'anonyme `401`. 1085 + 2 = 1087, valeur COMPTÉE — « Total: 1087 tests
 # in 69 files ».
-SCENARIOS_API=1087
+# **1088 depuis `CRM-095` tranche T2, 2026-09-29** : `board.spec.ts` gagne un scénario B1 — l'étape initiale est
+# lue par `COLONNES_ETAPE`, une seule, Prospection. 1087 + 1 = 1088, valeur COMPTÉE — « Total: 1088 tests in
+# 69 files ».
+SCENARIOS_API=1088
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -1319,7 +1322,14 @@ SCENARIOS_API=1087
 # porte le parcours d'un administrateur qui part de rien, à la souris et au clavier seuls — structure, puis
 # objectifs : lien d'un bloc posé, titre, flèche et direction, relus après rechargement. 765 + 1 = 766,
 # valeur COMPTÉE — « Total: 766 tests in 61 files ».
-SCENARIOS_UI=766
+# **778 depuis `CRM-095` tranches T2 à T3, 2026-09-29** (décisions 609, 611, 612) : `nouvelle-affaire.spec.ts`,
+# fichier NEUF, porte **7** scénarios — la souris depuis la colonne initiale vide, le clavier seul depuis la vue
+# liste, le refus de la lectrice, les quatre paliers ; `premier-lancement.spec.ts` passe de 1 à **4** — le
+# track sans channel (INC-258), le guide jusqu'à la première affaire au clavier, le workflow sans étape
+# (INC-258) ; `recherche.spec.ts` gagne **2** scénarios — `Tab` et `Maj+Tab` referment la palette, l'appui de
+# la souris garde le focus au champ (INC-260). 766 + 7 + 3 + 2 = 778, valeur COMPTÉE — « Total: 778 tests in
+# 62 files ».
+SCENARIOS_UI=778
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

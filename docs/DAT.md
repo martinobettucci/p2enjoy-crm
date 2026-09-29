@@ -184,6 +184,16 @@ Découpage prévu : `src/lib` (client Supabase, types générés, helpers), `src
   `aria-sort`, filtres par étape et par recherche plein texte, pagination, et la bascule
   board ↔ liste. Aucune règle n'y vit, et **aucun chemin d'écriture** n'y est ouvert : la liste
   lit (`CRM-042`) ;
+- `src/lib/creer-affaire.ts` et `src/app/NouvelleAffaire.tsx` (`CRM-095`, `docs/SPEC-cards.md` §18) —
+  le **seul chemin de création d'une affaire**. L'écran appelle `public.creer_affaire` (migration 81,
+  `SECURITY INVOKER`) avec le channel et le titre, et la base choisit l'étape initiale et applique
+  `cards_insertion` ; l'écran ne calcule aucun droit et traduit quatre refus. Le même module sert les
+  trois points d'entrée — la barre du board, la barre de filtres de la vue liste, la colonne initiale
+  vide — : la vue liste **reçoit** la commande et le formulaire de sa zone (`RouteTrack.tsx`) et reste
+  sans chemin d'écriture propre. Le guide lit la destination de son étape « affaire », le premier
+  channel vivant (`lireBoardAffaire`, `src/lib/demarrage.ts`) ; **contrainte de PostgREST mesurée** : un
+  tri sur une colonne d'une ressource embarquée exige que cette colonne soit sélectionnée, sans quoi
+  la requête rend `400` ;
 - `src/app/ContexteEspace.tsx`, `src/app/GuideFlottant.tsx`, et le signal `p2enjoy:workflow-de-depart`
   de `src/lib/demarrage.ts` (`CRM-094`, `docs/SPEC-onboarding.md` §10) — la coquille lit **une fois**
   l'espace courant et le rôle que la base y rend (`mon_role_espace`), et les passe par un contexte au

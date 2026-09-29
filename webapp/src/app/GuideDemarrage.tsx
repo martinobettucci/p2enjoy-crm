@@ -6,6 +6,9 @@
 // @spec CRM-094 (docs/BACKLOG.md) tranche T2 — docs/SPEC-onboarding.md §10.1 (six étapes), §10.3 (le
 //       geste « Créer le workflow de départ », son bouton tenu jusqu'à la re-mesure, le focus rendu au
 //       lien de l'étape) ; docs/DESIGN_SYSTEM.md §5.49 ; docs/JOURNAL.md décisions 606 et 607
+// @spec CRM-095 (docs/BACKLOG.md) tranche T3 — docs/SPEC-onboarding.md §10.7, docs/SPEC-cards.md §18.4 :
+//       l'étape « affaire » mène au board du premier channel, où vit « Nouvelle affaire » ; sans channel,
+//       à l'arborescence, comme avant (INC-256, décision 609)
 //
 // L'écran LIT et RENVOIE : chaque étape pointe vers l'écran réellement livré qui l'accomplit
 // (docs/SPEC-onboarding.md §1.2). Une seule exception depuis `CRM-094`, et elle est nommée : l'étape
@@ -119,6 +122,18 @@ export const ETAPES_DEMARRAGE: readonly DescriptionEtape[] = [
 ]
 
 /**
+ * La description d'une étape, telle que la MESURE la complète (`CRM-095`, docs/SPEC-onboarding.md §10.7).
+ *
+ * Une seule étape change avec la mesure : « affaire » mène au board du premier channel quand la base en
+ * rend un — c'est là que vit « Nouvelle affaire » —, et à l'arborescence sinon, avec son libellé d'avant.
+ * La table `ETAPES_DEMARRAGE` reste la source des cinq autres, sans exception.
+ */
+export function descriptionMesuree(description: DescriptionEtape, boardAffaire: string | null): DescriptionEtape {
+	if (description.cle !== 'affaire' || boardAffaire === null) return description
+	return { ...description, destination: boardAffaire, cleAction: 'onboarding.step.affaire.action.board' }
+}
+
+/**
  * Ce que le geste du §10.3 exige : le client et l'espace courant. Absent — `null` —, le geste n'est
  * pas rendu : c'est le cas de tout rôle autre qu'`admin`, et de toute preuve qui monte l'écran seul.
  */
@@ -202,7 +217,7 @@ export function ListeEtapesDemarrage({
 				{ETAPES_DEMARRAGE.map((description, rang) => (
 					<LigneEtape
 						key={description.cle}
-						description={description}
+						description={descriptionMesuree(description, progression.boardAffaire)}
 						etat={progression.etapes[rang] ?? { statut: 'chargement' }}
 						onReprise={recharger}
 						geste={description.cle === 'workflow' ? geste : null}

@@ -64,10 +64,27 @@ const NEUF: Readonly<Record<string, ReponseCompte>> = {
 	mail_inbound_accounts: ok(0),
 }
 
-function client(reponses: Readonly<Record<string, ReponseCompte>>): ClientCrm {
+/**
+ * `destination` : les lignes que rend la lecture de la destination de l'étape « affaire » (`CRM-095`),
+ * la seule requête de la mesure qui ne compte pas — sans options de comptage.
+ */
+function client(
+	reponses: Readonly<Record<string, ReponseCompte>>,
+	destination: readonly unknown[] = [],
+): ClientCrm {
 	return {
 		from: (table: string) => ({
-			select: () => {
+			select: (_colonnes: string, options?: unknown) => {
+				if (options === undefined) {
+					const lignes = {
+						is: () => lignes,
+						order: () => lignes,
+						limit: () => lignes,
+						then: (resoudre: (valeur: unknown) => unknown) =>
+							Promise.resolve({ data: destination, error: null, status: 200 }).then(resoudre),
+					}
+					return lignes
+				}
 				const reponse = reponses[table]
 				if (reponse === undefined) throw new Error(`table non attendue : ${table}`)
 				const chaine = {
@@ -295,20 +312,39 @@ describe('aucune mesure sans session — docs/SPEC-onboarding.md §4.4', () => {
 	 * l'absence d'affichage. Un écran qui n'afficherait rien tout en interrogeant la base laisserait
 	 * le défaut intact — c'est précisément lui qui salissait la console de l'accueil.
 	 */
-	function clientEspion(): { readonly client: ClientCrm; appels: () => number } {
+	/**
+	 * Compte les six COMPTAGES à part de la lecture de la destination de l'étape « affaire » (`CRM-095`,
+	 * §10.7) — la seule requête de la mesure sans options de comptage : la garde de session vaut pour
+	 * les deux, et chacune se compte exactement.
+	 */
+	function clientEspion(): { readonly client: ClientCrm; appels: () => number; lectures: () => number } {
 		let appels = 0
+		let lectures = 0
 		const espion = {
-			from: () => {
-				appels += 1
-				const chaine = {
-					is: () => chaine,
-					then: (resoudre: (valeur: ReponseCompte) => unknown) =>
-						Promise.resolve(ok(0)).then(resoudre),
-				}
-				return { select: () => chaine }
-			},
+			from: () => ({
+				select: (_colonnes: string, options?: unknown) => {
+					if (options === undefined) {
+						lectures += 1
+						const lignes = {
+							is: () => lignes,
+							order: () => lignes,
+							limit: () => lignes,
+							then: (resoudre: (valeur: unknown) => unknown) =>
+								Promise.resolve({ data: [], error: null, status: 200 }).then(resoudre),
+						}
+						return lignes
+					}
+					appels += 1
+					const chaine = {
+						is: () => chaine,
+						then: (resoudre: (valeur: ReponseCompte) => unknown) =>
+							Promise.resolve(ok(0)).then(resoudre),
+					}
+					return chaine
+				},
+			}),
 		} as unknown as ClientCrm
-		return { client: espion, appels: () => appels }
+		return { client: espion, appels: () => appels, lectures: () => lectures }
 	}
 
 	it('l’accueil rend l’état vide EXISTANT et n’interroge pas la base', async () => {
@@ -324,6 +360,7 @@ describe('aucune mesure sans session — docs/SPEC-onboarding.md §4.4', () => {
 		// qui n'aurait de sens que si le guide avait été masqué (§4.2, troisième ligne).
 		expect(screen.queryByTestId('rouvrir-guide')).toBeNull()
 		expect(espion.appels(), 'aucune des six mesures n’est émise sans session').toBe(0)
+		expect(espion.lectures(), 'ni la destination de l’étape « affaire » (CRM-095)').toBe(0)
 	})
 
 	it('l’adresse du guide le rend QUAND MÊME, mais sans poser aucune question', async () => {
@@ -339,6 +376,7 @@ describe('aucune mesure sans session — docs/SPEC-onboarding.md §4.4', () => {
 		// Aucun chiffre n'est écrit : « 0 étape sur 6 » serait une affirmation non mesurée.
 		expect(screen.getByTestId('progression-demarrage').textContent).not.toContain('sur 6')
 		expect(espion.appels(), 'aucune des six mesures n’est émise sans session').toBe(0)
+		expect(espion.lectures(), 'ni la destination de l’étape « affaire » (CRM-095)').toBe(0)
 	})
 
 	it('la session ouverte rétablit les six mesures, et rien d’autre ne change', async () => {
@@ -351,6 +389,7 @@ describe('aucune mesure sans session — docs/SPEC-onboarding.md §4.4', () => {
 			expect(screen.getByTestId('progression-demarrage').textContent).toBe('0 étape(s) sur 6'),
 		)
 		expect(espion.appels(), 'les six tables sont interrogées, une fois chacune').toBe(6)
+		expect(espion.lectures(), 'et la destination de l’étape « affaire » est lue une fois (CRM-095)').toBe(1)
 	})
 })
 
@@ -493,3 +532,27 @@ describe('le workflow de départ, en un geste — docs/SPEC-onboarding.md §10.3
 	})
 })
 
+// @verifies CRM-095 (docs/BACKLOG.md) tranche T3 — docs/SPEC-onboarding.md §10.7, docs/SPEC-cards.md §18.4
+describe('l’étape « affaire » mène au board du premier channel — CRM-095, §10.7', () => {
+	it('un channel lisible : le lien ouvre son board, et le dit', async () => {
+		monter(
+			<GuideDemarrage
+				sessionOuverte
+				client={client(SEED_ADMIN, [{ slug: 'prospection', tracks: { slug: 'conseil-ia' } }])}
+			/>,
+		)
+		const lien = await screen.findByTestId('lien-affaire')
+		await waitFor(() => expect(lien.getAttribute('href')).toBe('/tracks/conseil-ia/prospection'))
+		expect(lien.textContent).toBe('Ouvrir le board et créer l’affaire')
+	})
+
+	it('aucun channel : le lien mène à l’arborescence, avec son libellé d’avant', async () => {
+		monter(<GuideDemarrage sessionOuverte client={client(NEUF)} />)
+		await waitFor(() =>
+			expect(screen.getByTestId('progression-demarrage').textContent).toBe('1 étape(s) sur 6'),
+		)
+		const lien = screen.getByTestId('lien-affaire')
+		expect(lien.getAttribute('href')).toBe('/reglages/arborescence')
+		expect(lien.textContent).toBe('Choisir un channel où créer l’affaire')
+	})
+})

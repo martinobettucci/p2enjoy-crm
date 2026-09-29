@@ -30367,6 +30367,32 @@ dans le panneau ne retire pas le focus du champ), `docs/DESIGN_SYSTEM.md` §5.21
 ligne avant son « » ». Les textes nouveaux de l'unité emploient des espaces insécables autour de
 l'étiquette (`docs/DESIGN_SYSTEM.md` §5.51) ; les 156 guillemets antérieurs ne sont pas repris.
 
+**`CRM-095` T2 à T3, le 2026-09-29 — ce que la pile réelle et les captures ont appris.**
+- *Un défaut que seule la pile réelle voyait.* La destination de l'étape « affaire » du guide trie les
+  channels sur leur track embarqué (`order=tracks(position)`). Les tests unitaires, qui éprouvent la
+  requête émise, étaient verts ; `e2e/ui/nouvelle-affaire.spec.ts` a relevé un `400` dans la console à
+  chaque arrivée sur l'accueil : PostgREST ne trie sur une colonne embarquée que si elle est
+  sélectionnée — « column channels_tracks_1.position does not exist ». Corrigé en sélectionnant
+  `tracks!inner(slug, position, name)` ; la contrainte est écrite dans `docs/DAT.md`. Sans la garde
+  « aucune erreur dans la console » de chaque scénario, l'étape serait retombée en silence sur
+  l'arborescence.
+- *Trois défauts trouvés en regardant les captures* (`CLAUDE.md` §16) : la palette de recherche restée
+  ouverte après un `Tab` (INC-260, décision 612) ; « Nouvelle affaire » revenu à la ligne avant son « » »
+  à 390 px (espaces insécables, `docs/DESIGN_SYSTEM.md` §5.51) ; et deux textes faux sur la fiche et au
+  déplacement (INC-259). Un quatrième était un défaut de PREUVE : redimensionner une page déjà rendue à
+  390 px laissait le tiroir de navigation ouvert sur la capture — chaque palier est désormais rendu à sa
+  taille.
+- *Le guide flottant ne vit pas sur l'accueil* (`GuideFlottant.tsx` : `/` et `/demarrage` rendent le guide
+  dans la page) : le parcours suit donc le lien du guide de l'accueil, le chemin réel d'un administrateur
+  qui vient de se connecter.
+- *Mutations vues rouges* : huit sur le formulaire (focus différé, `Échap` consommé, titre blanc, vol non
+  interruptible, focus rendu au champ, lien du seul refus « étape initiale », adresse de la fiche, action
+  de colonne pendant la saisie) ; trois sur le board (action hors de la colonne initiale, ordre de la
+  barre, channel transmis) ; deux sur le guide (destination ignorée, tri sans le track) ; en E2E, la
+  destination du guide ignorée, la sortie de focus de la palette retirée, et la garde de l'appui souris
+  retirée — cette dernière faisant aussi rougir la preuve existante du clic sur une organisation, ce qui
+  confirme sa raison d'être.
+
 ## décision 613 — INC-261 : le scénario « track non consenti » attend ce que son titre promet
 
 *2026-09-29, pendant la campagne de `CRM-095` ; arbitrage du responsable.*

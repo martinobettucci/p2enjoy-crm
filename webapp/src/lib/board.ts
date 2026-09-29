@@ -10,6 +10,8 @@
 //       le compteur et le cumul deviennent), §16.13.3 (ce que la carte devient après le geste)
 // @spec docs/DESIGN_SYSTEM.md §5.1 (carte de card), §5.2 (colonne de board)
 // @spec docs/SPEC-webapp.md §6.3 (ce que la coquille lit), §6.4 (contrat asynchrone)
+// @spec CRM-095 (docs/BACKLOG.md) — tranche T2 : l'étape INITIALE résolue avec chaque colonne
+//       (docs/SPEC-cards.md §18.3, docs/DESIGN_SYSTEM.md §5.2)
 //
 // Ce module ne rend rien : il **compose**, et il appelle. La séparation est ce qui rend les
 // règles du §7.3 vérifiables sans navigateur — l'ordre des colonnes, le départage à position
@@ -57,7 +59,7 @@ export function couleurNoeud(valeur: string | null | undefined): CouleurNoeud {
  */
 export type EtapeLue = Pick<
 	Database['public']['Tables']['workflow_steps']['Row'],
-	'id' | 'position' | 'label_override' | 'stale_after_days'
+	'id' | 'position' | 'is_initial' | 'label_override' | 'stale_after_days'
 > & {
 	readonly workflow_nodes_catalog: {
 		readonly label: string
@@ -76,6 +78,11 @@ export type EtapeBoard = {
 	readonly kind: string
 	/** Seuil de relance en jours, `null` lorsque ni l'étape ni son nœud n'en posent (§7.4). */
 	readonly seuilJours: number | null
+	/**
+	 * L'étape par laquelle une affaire naît (`CRM-095`, docs/SPEC-cards.md §18.2) : sa colonne, vide,
+	 * porte l'action de création (docs/DESIGN_SYSTEM.md §5.2). Lue, jamais déduite de la position.
+	 */
+	readonly initiale: boolean
 }
 
 export type CardBoard = Pick<
@@ -197,6 +204,7 @@ export function resoudreEtape(lue: EtapeLue): EtapeBoard {
 		couleur: couleurNoeud(noeud?.color),
 		kind: noeud?.kind ?? 'open',
 		seuilJours: seuilEffectif(lue.stale_after_days, noeud?.default_stale_after_days),
+		initiale: lue.is_initial,
 	}
 }
 

@@ -33,7 +33,7 @@
 
 | Chapitre | Contenu | Unité | État |
 |---|---|---|---|
-| 4 | Créer une card et renseigner sa fiche | `CRM-040`, `CRM-037` | **Partiellement livré ; la fiche a son écran, et ses réponses s'y saisissent** — voir les chapitres 4 et 4.7. L'affaire existe côté serveur avec son titre, son responsable, son montant, sa devise, sa probabilité, sa prochaine action, son archivage et sa corbeille, et **ses réponses au formulaire** depuis `CRM-036` (chapitre 24). Combien l'espace de démonstration en porte : **annexe A**. Ce qui manque est l'écran de **création** et la modification des champs d'**en-tête** — titre, responsable, montant, prochaine action ; les **réponses au formulaire**, elles, se saisissent depuis la fiche depuis le 2026-08-16, et les questions de type **contact** et **membre** se répondent dans une liste de NOMS depuis la sous-tranche 4d de `CRM-060` |
+| 4 | Créer une card et renseigner sa fiche | `CRM-040`, `CRM-037`, `CRM-095` | **Livré, avec ses écrans** — voir les chapitres 4, 4.7 et 4.8. Une affaire **se crée** depuis le tableau ou la vue liste de son channel, avec son seul titre : le bouton **Nouvelle affaire** l'y fait naître à l'étape initiale, et sa fiche s'ouvre (`CRM-095`). Sa fiche en **modifie les champs d'en-tête** — titre, responsable, montant, prochaine action — et en saisit **les réponses au formulaire** (`CRM-036`, chapitre 24) ; les questions de type **contact** et **membre** se répondent dans une liste de NOMS depuis la sous-tranche 4d de `CRM-060`. Combien l'espace de démonstration en porte : **annexe A**. *Cette ligne disait que l'écran de création et l'édition de l'en-tête manquaient : les deux sont livrés.* |
 | 5 | Faire avancer une card dans son workflow | `CRM-034`, `CRM-041` | **Livré, avec son écran** — voir les chapitres 4.3 et 4.8. Une affaire ne change d'étape que par un déplacement **déclaré** dans son workflow, et le produit refuse toute écriture directe de l'étape, y compris par une administratrice. **Les six vérifications sont en place** : une affaire ne peut pas entrer dans une étape sans que les questions obligatoires de cette étape aient une réponse. Le tableau kanban, son glisser-déposer et son menu de déplacements sont utilisables après connexion |
 | 6 | Comprendre pourquoi une transition est refusée | `CRM-034`, `CRM-037`, `CRM-041` | **Livré** : les **six** motifs de refus existent, sont nommés (chapitre 4.3) et sont désormais **affichés** par le tableau (chapitre 4.8), y compris celui qui liste les questions restées sans réponse — nommées par leur libellé |
 | 7 | Commenter et suivre l'historique d'une card | `CRM-043`, `CRM-044` | **Livré, avec son écran** — la **discussion** et l'**historique** d'une affaire tiennent dans un seul fil filtrable (chapitre 4.10). Écrire un commentaire exige le droit d'écriture sur le channel ; **corriger est réservé à l'auteur**, et **supprimer lui est ouvert ainsi qu'aux administrateurs du workspace**, avec trace nominative du retrait. Les deux gestes de l'auteur sont offerts par l'écran, la suppression après confirmation et elle est définitive ; **le retrait par un administrateur a son bouton depuis le 2026-08-14**, unique — *Supprimer*, jamais *Modifier* —, et le fil distingue un retrait par la modération d'une suppression par l'auteur. L'historique est écrit par le serveur seul et ne peut être ni fabriqué, ni corrigé, ni effacé |
@@ -185,9 +185,9 @@ d'exploitation : aucun écran du CRM ne la porte avant `CRM-070`.
 
 ## 1 bis. Le guide de démarrage : par où commencer
 
-*Livré par `CRM-079`, révisé par `CRM-094` (six étapes, le workflow de départ, le guide flottant).
-Décrit l'application réellement exécutée ; captures dans `docs/captures/CRM-079/` et
-`docs/captures/CRM-094/`.*
+*Livré par `CRM-079`, révisé par `CRM-094` (six étapes, le workflow de départ, le guide flottant) et
+par `CRM-095` (l'étape « affaire » mène au board du premier channel). Décrit l'application réellement
+exécutée ; captures dans `docs/captures/CRM-079/`, `docs/captures/CRM-094/` et `docs/captures/CRM-095/`.*
 
 À la première connexion, l'accueil ne montre aucun board — il n'y en a pas encore. Il montre à la
 place le **Guide de démarrage**, une liste de **six étapes** qui mènent chacune vers l'écran qui
@@ -201,7 +201,7 @@ Les six étapes, dans l'ordre :
 | Créer un premier track | Un dossier de premier niveau existe | Réglages ▸ Arborescence |
 | Préparer un premier workflow | Les affaires ont des étapes à suivre | Réglages ▸ Workflows — ou, pour un administrateur, le bouton **Créer le workflow de départ** du guide (§1 bis.4) |
 | Ouvrir un channel dans ce track | Un onglet de travail existe sous ce track | Réglages ▸ Arborescence |
-| Créer une première affaire | Un board a quelque chose à montrer | Réglages ▸ Arborescence, puis le channel choisi |
+| Créer une première affaire | Un board a quelque chose à montrer | Le board du premier channel : dès qu'un channel existe, le lien **Ouvrir le board et créer l'affaire** y mène, et le bouton **Nouvelle affaire** crée l'affaire (chapitre 4.8). Sans channel, le lien mène à l'arborescence |
 | Raccorder une boîte de réception | Le courrier entrant se classe dans les affaires | Réglages ▸ État de la messagerie |
 
 **Le workflow vient avant le channel, et ce n'est pas un détail d'ordre** : un channel suit
@@ -673,8 +673,9 @@ pilule colorée, précédée de son icône.
 appliquée par le serveur, et non par l'affichage : elle tient même si l'on s'adresse directement à
 l'API. La suppression définitive d'un track n'est **jamais** proposée — l'archivage en tient lieu.
 
-**Aucun écran ne permet encore de les gérer.** La gestion des tracks passe aujourd'hui par l'API,
-ce qui est une opération d'exploitation, pas un parcours produit.
+**Ils se gèrent dans Réglages ▸ Arborescence** (chapitre 5) : créer, renommer, réordonner, archiver
+un track ou un channel. *Cette phrase disait que les tracks ne se géraient que par l'API ; l'écran
+d'administration de l'arborescence le fait depuis `CRM-075`.*
 
 ### 3.2 quater Les accès par track et par channel
 
@@ -730,8 +731,13 @@ page.
   seule.
 - Sur un écran étroit, la barre **défile horizontalement** plutôt que de tronquer les libellés. Une
   ombre au bord indique qu'il reste des onglets à voir de ce côté.
-- Un track **sans channel** affiche « Aucun channel dans ce track » plutôt qu'une barre vide sans
-  explication.
+- Un track **sans channel** affiche « Aucun channel dans ce track », dit que le channel se crée avec
+  « Nouveau channel » dans l'administration de l'arborescence, et propose le lien **Ouvrir
+  l'arborescence**. Le lien est offert à tous : c'est l'écran d'arrivée qui dit ce que votre compte
+  peut y faire.
+- Un channel dont le workflow **n'a aucune étape** n'a pas de tableau : l'écran le dit (« Ce workflow
+  ne déclare aucune étape ») et propose le lien **Ouvrir l'éditeur de workflows**, où les étapes
+  s'ajoutent (chapitre 5 bis).
 
 Ouvrir un onglet change l'adresse de la page : elle se partage et se met en favori. Le contenu d'un
 channel se lit désormais de **deux façons**, et une bascule en haut de la zone principale passe de
@@ -1282,8 +1288,8 @@ Deux cas sont dits en toutes lettres plutôt que laissés à deviner :
 
 - **toutes les personnes du carnet sont déjà rattachées** : le bloc l'écrit, et n'ouvre pas une
   liste vide ;
-- **le carnet de l'espace est vide** : le bloc l'écrit également. Aucun écran ne permet encore de
-  créer un contact — c'est une limite connue, pas un défaut d'affichage.
+- **le carnet de l'espace est vide** : le bloc l'écrit, dit que le contact se crée dans le carnet avec
+  « Nouveau contact » (section 3 *ter*), et propose le lien **Ouvrir le carnet**.
 
 **Détacher.** Chaque ligne porte un bouton **« Détacher »**. Il demande une **confirmation qui nomme
 la personne** : le rattachement et le rôle saisi sont perdus, la personne restant au carnet et
@@ -1373,6 +1379,29 @@ son cumul de montants portent sur les cartes **affichées** : ils changent donc 
 Si toutes les affaires d'un channel dorment, le tableau ne prétend pas qu'il est vide : il annonce
 « Toutes les affaires de ce channel sont en sommeil » et propose le geste qui les révèle.
 
+**Créer une affaire.** *Livré par `CRM-095`.* Le bouton **Nouvelle affaire**, en tête de la barre
+au-dessus des colonnes, ouvre un formulaire **dans la page**, sous la barre — pas une fenêtre
+par-dessus : le tableau reste visible. Un seul champ, le **titre** ; tout le reste — montant,
+responsable, échéance, contacts — se complète ensuite sur la fiche.
+
+- **« Créer » reste grisé tant que le titre est vide** — des espaces seuls ne comptent pas.
+- **L'affaire entre toujours par l'étape initiale** du workflow du channel, quelle que soit la façon
+  dont vous avez ouvert le formulaire. C'est le serveur qui la choisit, pas l'écran.
+- **Une fois créée, sa fiche s'ouvre** : c'est là que l'affaire se complète.
+- **La colonne de l'étape initiale**, quand elle est vide, porte le même geste : **Créer une affaire**.
+  Les autres colonnes vides n'en portent pas — une affaire n'y naît pas.
+- **Au clavier** : le bouton se rejoint par `Tab`, `Entrée` ouvre le formulaire et y place le
+  curseur, `Entrée` crée ; **`Échap`** — ou **Annuler** — referme sans rien créer, et le curseur
+  revient au bouton. Pendant l'envoi, le bouton dit « Création… », et ni `Échap` ni Annuler
+  n'interrompent l'envoi.
+- **Quand le serveur refuse**, la raison s'écrit sous le champ, et ce que vous avez tapé reste en
+  place : channel archivé ou mis à la corbeille ; workflow sans étape initiale — avec le lien **Ouvrir
+  l'éditeur de workflows**, où l'étape initiale se désigne ; droit d'écriture insuffisant sur ce
+  channel. Le bouton est montré à tous les profils : un compte en lecture seule le voit, et le refus
+  le lui dit.
+- **Un channel sans aucune affaire** l'annonce au-dessus du tableau, avec le geste à faire :
+  « Créez la première avec « Nouvelle affaire », au-dessus des colonnes ».
+
 **Faire avancer une affaire : deux gestes, une seule règle.**
 
 - **À la souris**, en faisant glisser la carte vers une colonne. Seules les colonnes vers lesquelles
@@ -1388,9 +1417,9 @@ jamais une action que le serveur refuserait, et il ne se substitue jamais à lui
 
 **Quand un motif est exigé.** Certains déplacements — « Marquer perdu », par exemple — exigent une
 raison. L'écran la demande **avant** d'envoyer quoi que ce soit, et l'affaire ne bouge pas tant que
-vous ne l'avez pas donnée. **Ce motif n'est pas encore conservé** : il valide le déplacement, puis
-il est perdu, faute d'historique des affaires. L'écran vous le dit plutôt que de vous laisser croire
-le contraire.
+vous ne l'avez pas donnée. **Ce motif est conservé** : il rejoint l'historique de l'affaire, comme un
+commentaire à votre nom (chapitre 4.10), et l'écran de saisie le dit. *Cette phrase disait qu'il était
+perdu ; il est enregistré depuis que l'historique des affaires existe.*
 
 **Quand le serveur refuse.** L'affaire **retourne exactement à sa place**, et la raison s'affiche :
 déplacement non déclaré, droit d'écriture insuffisant, affaire devenue inaccessible, ou **liste des
@@ -1412,6 +1441,10 @@ sienne au chemin du channel (`…/liste`).
 **À quoi elle sert.** Le tableau répond à « où en est chaque affaire ? ». La liste répond à
 « laquelle, parmi toutes, dois-je ouvrir ? ». Elle montre les mêmes affaires — celles qui ne sont
 ni archivées ni en corbeille — rangées par leurs propres colonnes plutôt que par le workflow.
+
+**Créer une affaire** depuis la liste : le bouton **Nouvelle affaire** vient en tête de la barre des
+filtres, et ouvre le même formulaire que sur le tableau (chapitre 4.8) — même titre seul, même étape
+initiale, même fiche qui s'ouvre.
 
 **Ce que montre une ligne.** Le titre de l'affaire, qui est un **lien** vers sa fiche ; son étape,
 en pastille de couleur ; son montant ; sa prochaine action ; et son échéance. Une ligne tient sur
@@ -1754,9 +1787,6 @@ opération d'exploitation et non un parcours produit.
 - **Le choix du nombre de lignes par page** : la liste en affiche vingt-cinq, et cela ne se règle pas.
 - **La recherche sur tout l'espace de travail** : la recherche de la vue liste est bornée au channel
   ouvert.
-- **La création d'une affaire, et la modification de ses champs d'en-tête** : la fiche **montre**
-  désormais le titre, le responsable, le montant et la prochaine action (chapitre 4.7), mais aucun
-  écran ne permet encore de les saisir ni de les corriger.
 - **Le réordonnancement d'une affaire dans sa colonne** : le déplacement change d'étape, pas de rang.
 - **Le rangement d'une affaire dans un autre dossier depuis l'écran** : la règle existe et le
   serveur l'applique (chapitre 4.11), mais aucun bouton ne le propose.
@@ -2288,7 +2318,8 @@ trois champs :
 **Le workflow naît vide.** Il n'a aucune étape, et il n'est utilisable par aucun channel tant que
 vous ne lui en avez pas donné au moins une, désignée comme initiale (chapitre 5 bis.2). L'écran le
 dit dès la création : « Ce workflow n'a aucune étape. » Un workflow sans étape initiale est un
-brouillon parfaitement licite, pas une erreur.
+brouillon parfaitement licite, pas une erreur. Un channel qui le suit n'a pas de tableau : son onglet
+le dit, et propose le lien **Ouvrir l'éditeur de workflows** (chapitre 3.2 *ter*).
 
 Le workflow créé devient aussitôt le workflow **choisi**, prêt à être composé.
 
@@ -3779,6 +3810,7 @@ La main ne quitte pas le clavier :
 | **`↑`** | monte d'un résultat ; du premier, va au dernier |
 | **`Entrée`** | ouvre le résultat en surbrillance |
 | **`Échap`** | referme la recherche |
+| **`Tab`**, **`Maj+Tab`** | quittent la recherche, qui se referme ; le curseur va où la touche l'envoie |
 
 Un clic sur une ligne fait la même chose que `Entrée`.
 

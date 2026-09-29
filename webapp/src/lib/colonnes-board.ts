@@ -2,6 +2,8 @@
 // @spec CRM-022 (docs/BACKLOG.md) — responsable embarqué, sans requête par card
 // @spec docs/SPEC-workflow-engine.md §7.2 (ce que le board lit, et en combien de requêtes)
 // @spec docs/SPEC-cards.md §2.6 (ordre dans une colonne) ; docs/SPEC-types.md §4
+// @spec CRM-095 (docs/BACKLOG.md) — tranche T2 : l'étape initiale lue avec les colonnes
+//       (docs/SPEC-cards.md §18.3, docs/DESIGN_SYSTEM.md §5.2)
 //
 // CE MODULE N'IMPORTE RIEN, ET C'EST TOUT SON OBJET.
 //
@@ -23,9 +25,13 @@
  * La jointure est demandée à PostgREST plutôt que recomposée : le libellé, la couleur et le seuil
  * par défaut vivent dans le catalogue, et les rapporter séparément obligerait à une seconde
  * requête et à un appariement que la base fait mieux (§7.2).
+ *
+ * `is_initial` a rejoint la liste avec `CRM-095` tranche T2 (docs/SPEC-cards.md §18.3,
+ * docs/DESIGN_SYSTEM.md §5.2) : la colonne de l'étape initiale, vide, porte l'action de création — une
+ * affaire naît là et nulle part ailleurs. Le drapeau est lu, jamais déduit de la position.
  */
 export const COLONNES_ETAPE =
-	'id, position, label_override, stale_after_days, workflow_nodes_catalog(label, color, kind, default_stale_after_days)'
+	'id, position, is_initial, label_override, stale_after_days, workflow_nodes_catalog(label, color, kind, default_stale_after_days)'
 
 /** Transitions du workflow : l'index des gestes atteignables (§7.5). */
 export const COLONNES_TRANSITION = 'id, from_step_id, to_step_id, label, require_comment'
