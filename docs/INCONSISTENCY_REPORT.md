@@ -6821,3 +6821,26 @@ l'est.
 mesure n'est pas corrigée à ce stade, et INC-257 **reste ouverte**. Conséquence connue : B5 rougira de
 nouveau 24 heures après chaque reconstruction de la base. Suivi : `docs/BACKLOG.md`, « Arbitrage du
 2026-09-29 ».
+
+### INC-258 — deux états vides disent encore « par l'API » alors que l'écran qui fait le geste est livré
+
+*Relevée le 2026-09-29 en préparant `CRM-095` T2, à la lecture de `webapp/src/i18n/fr.ts`.* Sur le chemin
+même du premier lancement, deux textes décrivent un produit disparu :
+
+- `route.track.nochannel.body` — un track sans channel : « Les channels d'un track s'administrent par
+  l'API : aucun écran de création n'est encore livré. » Faux depuis `CRM-075` : « Nouveau channel » vit
+  dans l'administration de l'arborescence (`/reglages/arborescence`), et c'est précisément l'écran que
+  rencontre un administrateur qui vient de créer son premier track ;
+- `route.channel.nostep.body` — un workflow sans étape : « Les étapes d'un workflow s'administrent par
+  l'API. » Faux depuis `CRM-076` : l'éditeur de workflows (`/reglages/workflows`) ajoute des étapes.
+
+La règle du `docs/DESIGN_SYSTEM.md` §5.29 bis — un texte qui tait un recours présent dans le produit
+enseigne un contournement qui n'existe plus — est enfreinte. *Hors du périmètre de `CRM-095`* : les deux
+textes de même nature que cette unité rend faux — `route.channel.empty.body` et `liste.empty.body`,
+« les affaires s'y créent par l'API » — sont révisés par sa tranche T2.
+
+**ARBITRÉE le 2026-09-29 — décision 611** : corrigée **dans `CRM-095`**, même livraison que la création
+d'affaire. Les deux textes nomment le vrai geste et portent un lien vers l'écran qui le fait —
+l'arborescence, l'éditeur de workflows — ; le parcours `e2e/ui/premier-lancement.spec.ts` les vérifie à
+l'écran. Spécification : `docs/SPEC-cards.md` §18.6, `docs/DESIGN_SYSTEM.md` §5.51. Suivi :
+`docs/BACKLOG.md`, `CRM-095` T2 bis.

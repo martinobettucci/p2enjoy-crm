@@ -30322,3 +30322,23 @@ développement — migrations 1 à 81 rejouées, seed réappliqué — ; la mesu
 
 **Conséquence connue.** B5 rougira de nouveau 24 heures après chaque reconstruction ; une campagne qui
 l'atteint après ce délai doit être précédée d'un `./resetMe.sh`.
+
+## décision 611 — INC-258 : les états vides qui renvoyaient à l'API sont corrigés dans `CRM-095`
+
+*2026-09-29, en préparant `CRM-095` T2 ; arbitrage du responsable.*
+
+**Problème.** En préparant l'écran de création, quatre états vides de `webapp/src/i18n/fr.ts` décrivent un
+produit disparu : deux disent que les affaires « s'y créent par l'API » — ceux que `CRM-095` rend faux —,
+et deux autres, sur le chemin même du premier lancement, que les channels « s'administrent par l'API »
+(faux depuis `CRM-075`) et que les étapes d'un workflow aussi (faux depuis `CRM-076`) — INC-258.
+
+**Options soumises.** Corriger les deux derniers dans `CRM-095`, avec un lien vers l'écran qui fait le
+geste, vérifiés par le parcours du premier lancement — recommandée ; ou les laisser à une unité ultérieure.
+
+**Décision du responsable : les corriger dans `CRM-095`.** Écrit avant le code : `docs/SPEC-cards.md`
+§18.4 bis (les quatre textes et leurs liens), `docs/DESIGN_SYSTEM.md` §5.51 (un état vide nomme l'écran qui
+le comble ; le lien est rendu à tous les rôles — écart motivé au §5.33), `docs/BACKLOG.md` T2 bis.
+
+**Conséquence.** Le parcours `premier-lancement.spec.ts` ouvre le premier track avant son premier channel,
+et pose un workflow sans étape pour éprouver le second état — deux écrans qu'un administrateur rencontre
+réellement en démarrant.

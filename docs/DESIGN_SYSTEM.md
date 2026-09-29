@@ -4911,3 +4911,21 @@ entrant dans le premier champ et rendu à la commande qui l'a ouvert, alerte de 
 - **Rendu à tous les rôles** (§5.13, §5.16) : la base refuse, l'écran traduit.
 - **Aucune couleur, aucun jeton nouveau** ; une icône déjà employée, `Plus` (§5.13).
 
+### 5.51 Un état vide nomme l'écran qui le comble — INC-258
+
+*Écrit le 2026-09-29, avant le code (décision 611).* Le §5.8 veut qu'un état vide porte « message et
+action ». Quatre états vides renvoyaient à « l'API » là où le produit porte l'écran qui fait le geste
+(`docs/SPEC-cards.md` §18.4 bis). La règle, applicable à tout état vide :
+
+- **Le texte nomme le geste par son étiquette exacte** — « Nouvelle affaire », « Nouveau channel » —, la
+  règle générale du §5.29 bis étendue d'un refus à un vide.
+- **Quand le geste vit sur l'écran même, aucun lien n'est ajouté** : le board et la vue liste portent
+  « Nouvelle affaire » au-dessus des colonnes ou du tableau (§5.50) ; le répéter dans le vide ferait deux
+  commandes pour un geste.
+- **Quand il vit ailleurs, l'état vide porte un LIEN** vers l'écran qui le fait — « Ouvrir
+  l'arborescence », « Ouvrir l'éditeur de workflows » —, dans la forme du lien de retour de l'état
+  « introuvable » (§5.5, primaire). Un lien et non un bouton : il change d'adresse (§12.1).
+- **Le lien est rendu à tous les rôles.** C'est l'écart assumé avec le §5.33, qui n'offre aucune action
+  parce qu'y renvoyer **conditionnellement au rôle** ferait calculer un droit à l'écran : ici rien n'est
+  conditionnel, le lien mène à un écran, et la base refuse les gestes que l'appelant ne peut pas faire.
+- **Aucune couleur, aucun jeton, aucune icône nouvelle.**

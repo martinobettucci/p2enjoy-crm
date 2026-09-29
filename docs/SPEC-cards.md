@@ -4425,6 +4425,23 @@ track par position, puis premier channel — avec l'action « Ouvrir le board et
 channel, à l'arborescence, comme avant. L'impasse relevée (INC-256) tenait à deux manques : aucun lien de
 l'arborescence vers un board, et aucun bouton sur le board.
 
+### 18.4 bis Les états vides qui renvoyaient à l'API (INC-258, décision 611)
+
+*Écrit le 2026-09-29, avant le code, sur l'arbitrage du responsable : « Oui, dans `CRM-095` ».* Quatre
+états vides décrivaient un produit disparu. Chacun nomme désormais le geste par son **étiquette exacte**
+(`docs/DESIGN_SYSTEM.md` §5.29 bis) :
+
+| État vide | Texte révisé | Lien |
+|---|---|---|
+| Board d'un channel sans affaire (`route.channel.empty.body`) | l'affaire se crée avec « Nouvelle affaire », au-dessus des colonnes | aucun : le bouton est à l'écran (§18.3) |
+| Vue liste sans affaire (`liste.empty.body`) | l'affaire se crée avec « Nouvelle affaire », au-dessus du tableau | aucun, même motif |
+| Track sans channel (`route.track.nochannel.body`) | un channel se crée avec « Nouveau channel », dans l'administration de l'arborescence | « Ouvrir l'arborescence » → `/reglages/arborescence` |
+| Workflow sans étape (`route.channel.nostep.body`) | les étapes s'ajoutent dans l'éditeur de workflows | « Ouvrir l'éditeur de workflows » → `/reglages/workflows` |
+
+Les deux liens sont **rendus à tous les rôles** : ils mènent à un écran, pas à un geste, et c'est la base
+qui refuse ce que l'appelant ne peut pas écrire (§18.3, `CLAUDE.md` §10). Aucun rôle n'est calculé pour
+décider de les montrer.
+
 ### 18.5 Preuves
 
 | Niveau | Preuve |
@@ -4433,3 +4450,4 @@ l'arborescence vers un board, et aucun bouton sur le board.
 | API | jetons réels : le commercial crée et relit l'affaire à l'étape initiale ; la lectrice `403` ; l'anonyme `401` |
 | Unitaires | les issues de la fonction d'écran ; le formulaire — focus, « Créer » éteint sur un titre blanc, `Échap`, refus qui gardent la saisie, succès qui ouvre la fiche ; le bouton du board, de la vue liste, et l'action de la seule colonne initiale vide |
 | E2E | `premier-lancement.spec.ts` : depuis le guide, le board, « Nouvelle affaire », le titre, la fiche qui s'ouvre, le guide à 5/6 — à la souris et au clavier seul ; la lectrice refusée ; captures aux quatre paliers |
+| E2E (§18.4 bis) | `premier-lancement.spec.ts` : le premier track ouvert avant son premier channel écrit « Nouveau channel » et mène à l'arborescence ; un workflow créé sans étape, puis un channel posé dessus, écrit l'éditeur et y mène — à la souris et au clavier |

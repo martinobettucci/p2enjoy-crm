@@ -14748,6 +14748,10 @@ que le guide et le board le promettaient (INC-256). Spécifié avant le code : `
       reçoit la 81 avec T4.
 - [ ] **T2** — l'écran : « Nouvelle affaire » sur le board, la vue liste et la colonne vide de l'étape
       initiale ; le formulaire, ses refus, l'ouverture de la fiche ; preuves unitaires et E2E.
+- [ ] **T2 bis** — INC-258 (décision 611) : les états vides « aucun channel dans ce track » et « aucune
+      étape » nomment le geste et mènent à l'arborescence ou à l'éditeur de workflows, pour tous les
+      rôles (`docs/SPEC-cards.md` §18.4 bis, `docs/DESIGN_SYSTEM.md` §5.51) ; preuves unitaires et
+      E2E dans `e2e/ui/premier-lancement.spec.ts`.
 - [ ] **T3** — le guide mène au board du premier channel ; le parcours complet
       `e2e/ui/premier-lancement.spec.ts` jusqu'à l'affaire, à la souris et au clavier seul ;
       `docs/manual.md` ; captures aux quatre paliers.
