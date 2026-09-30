@@ -1212,5 +1212,5 @@ publique sert le module d'objectifs de ce build (`200`). La baseline reste **81*
   départ « Cycle commercial » (le geste de la migration 80) créé le 2026-09-28 à 02:52 sur une base qui n'en
   avait aucun ; **huit affaires** créées du 2026-09-29 16:12 au 2026-09-30 17:37, toutes entrées par l'étape
   initiale de leur workflow — deux par l'administrateur de l'espace, six par un second profil **sans ligne
-  d'appartenance** à l'espace. La règle du domaine (décision 597), qui fait administrateur par le jeton, est
-  le seul chemin connu qui le permette : **hypothèse non vérifiée**, à confirmer par le responsable.
+  d'appartenance** à l'espace — **confirmé par le responsable le 2026-10-01** : les deux profils sont des
+  administrateurs du SSO, que la règle du domaine (décision 597) fait administrateurs par leur jeton.

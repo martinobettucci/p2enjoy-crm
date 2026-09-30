@@ -14789,8 +14789,8 @@ que le guide et le board le promettaient (INC-256). Spécifié avant le code : `
       26 contrôles sans anomalie, ligne 81 relue en base et refus anonyme `401` / `42501`
       (`docs/PROD_MIGRATIONS.md` §8). **Constaté le 2026-10-01**, en lecture seule : huit affaires créées
       du 2026-09-29 16:12 au 2026-09-30 17:37, **toutes entrées par l'étape initiale** de leur workflow — deux
-      par l'administrateur de l'espace, six par un second profil sans ligne d'appartenance (hypothèse de la
-      règle du domaine, décision 597, à confirmer par le responsable).
+      par l'administrateur de l'espace, six par un second profil sans ligne d'appartenance — deux administrateurs du SSO,
+      confirmé par le responsable le 2026-10-01 (règle du domaine, décision 597).
 
 ### CRM-096 — Le registre des migrations `[x]`
 *Créée le 2026-09-30 — décision 616, arbitrage du responsable (INC-264). Le runner rejoue les 81 fichiers à

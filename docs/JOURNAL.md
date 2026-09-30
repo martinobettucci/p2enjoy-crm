@@ -30626,3 +30626,6 @@ l'espace, six d'un second profil **sans ligne d'appartenance** à l'espace ; la 
 (décision 597) est le seul chemin connu qui le permette — hypothèse, non vérifiée, soumise au responsable.
 Les deux unités passent à `[x]` ; le `CHANGELOG` publie `CRM-094`, INC-254, INC-255, `CRM-095` et `CRM-096`.
 INC-262, livrée le 2026-09-30, reste « non publiée » jusqu'au constat du responsable sur son canevas.
+*Confirmé par le responsable le 2026-10-01* : les deux profils créateurs d'affaires sont des administrateurs
+du SSO (« ce sont 2 admins du SSO ») ; la règle du domaine (décision 597) les fait administrateurs par leur
+jeton, sans ligne d'appartenance. Rien d'anormal.
