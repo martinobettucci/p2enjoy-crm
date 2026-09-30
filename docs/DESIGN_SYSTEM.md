@@ -2007,7 +2007,15 @@ spécifié là-bas ; les règles ci-dessous ne disent que de quoi ils ont l'air.
   geste clavier que le §5.5 de la spécification demande.
 
 - **L'état vide du tableau porte la commande de pose**, et le canevas est rendu dès qu'une pose est
-  armée — la règle du §5.13 pour l'état vide d'une surface qui agit. Un état vide qui remplacerait
+  armée — la règle du §5.13 pour l'état vide d'une surface qui agit.
+
+- **POSER SANS CHERCHER — INC-262, décision 614, écrit le 2026-09-30 avant le code** (`docs/SPEC-goals.md`
+  §5.5 ter). Le repère part de la première **place libre visible** — jamais d'un point fixe qui recouvrait
+  un bloc et faisait défiler le canevas — et suit la souris ; toute la partie visible du canevas reçoit le
+  clic. Le repère est peint **au-dessus** des blocs. Le bloc posé est aussitôt **désigné** : sa fiche
+  s'ouvre, le focus entre dans son titre, sélectionné. Le bloc dont la fiche est ouverte, et celui qu'on
+  déplace, passent **au premier plan** (`z-index`, l'ordre du document — donc de tabulation — restant
+  celui de la lecture). Pendant la pose, un clic sur un bloc n'a qu'un effet : poser. Un état vide qui remplacerait
   la surface n'aurait aucun endroit où recevoir le clic.
 
 - **La consigne clavier est visuellement masquée, jamais retirée** (§12.3), et **citée par chaque

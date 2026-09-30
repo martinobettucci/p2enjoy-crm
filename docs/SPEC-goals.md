@@ -178,7 +178,7 @@ refuse un lien dont les deux blocs n'appartiennent pas à ce tableau. Deux raiso
 | Geste | Règle |
 |---|---|
 | Créer un tableau, le renommer, le réordonner, l'archiver | §4 |
-| Poser un bloc sur le canevas | position issue du geste, jamais d'un placement automatique |
+| Poser un bloc sur le canevas | position issue du geste, jamais d'un placement automatique — seul le **point de départ du repère** est choisi par l'écran, sur une place libre visible (§5.5 ter, INC-262, décision 614) ; le bloc posé est aussitôt **désigné** : sa fiche s'ouvre, son titre prêt à être saisi |
 | Déplacer, redimensionner un bloc | persiste `pos_x`, `pos_y`, `width`, `height` |
 | Saisir le titre, le corps, la couleur | — |
 | Régler le remplissage | curseur **et** champ numérique ; les deux écrivent la même valeur |
@@ -310,6 +310,26 @@ employée pour l'obtenir (`CLAUDE.md` §18).
 Chaque bloc porte un `aria-label` complet — titre, remplissage, channel lié —, et une **liste
 textuelle équivalente** du diagramme est rendue pour les lecteurs d'écran : « A → B », « B ↔ C ».
 Un diagramme qui n'existe que visuellement n'est pas accessible.
+
+### 5.5 ter Poser un bloc sans chercher où il est — INC-262, décision 614
+
+*Écrit le 2026-09-30, avant le code, sur l'arbitrage du responsable (« l'ergonomie est à chier » : la fiche
+restait sur le bloc précédent, le bloc neuf apparaissait vide, le repère partait d'un point fixe et le bloc
+pouvait passer derrière un autre). Les quatre corrections retenues :*
+
+1. **Le repère part d'une PLACE LIBRE VISIBLE.** Armer la pose ne fait plus défiler le canevas : le repère
+   apparaît dans la partie visible, à la première position — en ordre de lecture, par pas de 24 px — où un
+   bloc neuf ne touche aucun bloc rendu, avec 16 px d'écart. Quand la partie visible n'en a aucune, il se
+   place sous le dernier bloc, et la vue le rejoint. **Ce n'est qu'un point de départ** : la position posée
+   reste celle du geste — le clic, ou le repère déplacé au clavier et validé par `Entrée`. Pendant la pose,
+   **le repère suit la souris** sur le canevas, et toute la partie visible du canevas reçoit le clic, y
+   compris sous le dernier bloc.
+2. **Le bloc posé est désigné.** Sa fiche s'ouvre — elle quitte le bloc qui l'occupait —, le focus entre
+   dans son titre, et le titre par défaut est SÉLECTIONNÉ : la frappe le remplace, `Entrée` l'enregistre.
+3. **Le bloc qu'on travaille passe au premier plan.** Le bloc dont la fiche est ouverte, et celui qu'on
+   déplace ou redimensionne, sont peints devant les autres ; l'ordre de TABULATION ne change pas (§5.5).
+4. **Un clic, un seul effet.** Pendant la pose, un clic sur un bloc existant pose le nouveau bloc au point
+   du clic, et n'ouvre pas en plus la fiche du bloc cliqué.
 
 ### 5.5 bis Les gestes d'ADMINISTRATION d'un tableau au clavier — tranche 2 g
 

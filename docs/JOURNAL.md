@@ -30408,3 +30408,25 @@ version anonyme du scénario ; elle passait sur une base que cinq jours de campa
 **Décision du responsable : corriger le test.** Il attend la fiche et la barre d'onglets vide ; le reste
 est inchangé. Conséquence : deux scénarios au moins (INC-257, INC-261) dépendaient de l'âge ou de
 l'histoire de la base de développement — une campagne sur base neuve est le seul état déterministe.
+
+## décision 614 — INC-262 : poser un bloc d'objectif sans chercher où il est
+
+*2026-09-30 ; relevée et arbitrée par le responsable.*
+
+**Problème.** « À la création d'un bloc, le formulaire en bas modifie encore le dernier bloc sélectionné. Le
+bloc apparaît vide à la création, il faut le sélectionner pour commencer à l'éditer, et lors de la sélection
+il saute à des coordonnées fixes qui peuvent être derrière un autre bloc. »
+
+**Reproduction** (développement, tableau du seed, script jetable non versionné). Fiche ouverte sur
+« Doubler le pipeline commercial », pose d'un bloc par clic : la fiche reste sur l'ancien bloc. Armer la
+pose dépose le repère en `(24, 24)`, par-dessus ce même bloc, et lui donne le focus. L'empilement suit
+`ordreTabulation` : un bloc en `(24, 24)` est peint sous le bloc en `(40, 40)`. Pendant la pose, un clic sur
+un bloc ouvre sa fiche ET pose un bloc neuf. Sélectionner le bloc posé par clic ne le déplace pas : le
+« saut » est celui du repère, à la sélection de la commande.
+
+**Options soumises**, cumulables : fiche sur le bloc posé ; bloc actif au premier plan ; repère sur une place
+libre visible — ce qui assouplit, pour le seul point de départ du repère, la règle « jamais de placement
+automatique » (§3) ; un clic, un seul effet. **Décision du responsable : les quatre.**
+
+**Écrit avant le code** : `docs/SPEC-goals.md` §3 et §5.5 ter, `docs/DESIGN_SYSTEM.md` §5.29,
+`docs/BACKLOG.md`, rapport d'incohérences.

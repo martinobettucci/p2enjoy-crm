@@ -6891,3 +6891,27 @@ aucune lecture de channels, la barre vide — ne dépend pas de la fiche.
 **ARBITRÉE le 2026-09-29 — décision 613 : corriger le test.** Le scénario attend la fiche rendue et la barre
 d'onglets vide au lieu d'un état vide absent ; ses trois autres vérifications sont inchangées. INC-065 —
 la route d'une card ne confronte pas les slugs de l'adresse — reste ouverte, ce correctif n'y touche pas.
+
+### INC-262 — poser un bloc d'objectif : la fiche reste sur l'ancien bloc, le repère part d'un point fixe, le nouveau bloc peut passer derrière un autre
+
+*Relevée par le responsable le 2026-09-30 (« à la création d'un bloc, le formulaire en bas modifie encore le
+dernier bloc sélectionné ; le bloc apparaît vide, il faut le sélectionner pour l'éditer ; il saute à des
+coordonnées fixes qui peuvent être derrière un autre bloc »), reproduite en développement le même jour sur
+le tableau du seed. Unité concernée : `CRM-083`.* Quatre écarts, mesurés :
+
+1. **la pose ne désigne pas le bloc posé** : `poserA` ajoute le bloc sans ouvrir sa fiche — une fiche ouverte
+   reste sur le bloc précédent (mesuré : « Doubler le pipeline commercial » après la pose), et le bloc neuf,
+   titré « Nouvel objectif », n'est éditable qu'après l'avoir sélectionné ;
+2. **le repère de pose part d'un point FIXE**, `(24, 24)`, et prend le focus : il recouvre le premier bloc du
+   seed, et le canevas défile jusqu'à lui ; `Entrée` y pose le bloc ;
+3. **l'empilement suit l'ordre de lecture** (`ordreTabulation` : `pos_y`, puis `pos_x`) : un bloc posé en
+   `(24, 24)` est peint AVANT le bloc en `(40, 40)`, donc DERRIÈRE lui ;
+4. **pendant la pose, un clic sur un bloc existant fait deux choses** : il ouvre la fiche de ce bloc
+   (relâchement sans déplacement) ET pose un bloc neuf au point du clic (le `click` remonte à la surface).
+
+Le point 2 touche une règle écrite — `docs/SPEC-goals.md` §3 : « position issue du geste, jamais d'un
+placement automatique » ; `docs/DESIGN_SYSTEM.md` §5.29.
+
+**ARBITRÉE le 2026-09-30 — décision 614 : les quatre corrections**, livrées ensemble. Spécification :
+`docs/SPEC-goals.md` §3 et §5.5 ter, `docs/DESIGN_SYSTEM.md` §5.29. Suivi : `docs/BACKLOG.md`, « Correctif
+arbitré le 2026-09-30 ».

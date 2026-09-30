@@ -14803,3 +14803,11 @@ que le guide et le board le promettaient (INC-256). Spécifié avant le code : `
       demandé par son slug, filtré sur `archived_at`, aucune lecture de channels — sont inchangées.
       Mesuré le 2026-09-29 : rouge sur `HEAD` sur la base reconstruite, vert après correction. INC-065
       reste ouverte.
+
+## Correctif arbitré le 2026-09-30 — INC-262 (décision 614)
+
+- [ ] **INC-262 — poser un bloc sans chercher où il est** (`CRM-083`). Le repère de pose part d'une place
+      libre visible et suit la souris ; le bloc posé est désigné — fiche ouverte, titre sélectionné — ; le
+      bloc travaillé passe au premier plan ; pendant la pose, un clic n'a qu'un effet
+      (`docs/SPEC-goals.md` §5.5 ter, `docs/DESIGN_SYSTEM.md` §5.29). Preuves unitaires qui échouent avant
+      correction, E2E à la souris et au clavier, captures observées.
