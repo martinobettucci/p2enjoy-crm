@@ -6955,3 +6955,8 @@ promet — zéro commentaire est une réponse, jamais une erreur : il garde la r
 ordre, le `200` et le `[]`, et vérifie que le fil est rendu sans état d'erreur, sans exiger un fil vide que
 les événements de l'affaire ne permettent pas. Son commentaire cesse d'attribuer le `[]` à un refus de la
 RLS. Suivi : `docs/BACKLOG.md`, « Correctif arbitré le 2026-09-30 — INC-263 ».
+
+**CORRIGÉE le 2026-09-30.** Le scénario attend le fil rendu — sa liste, ou son état vide —, puis aucun état
+d'erreur et aucun commentaire ; sa requête, son filtre, son ordre, le `200` et le `[]` sont inchangés.
+Rouge sur `HEAD` avant correction ; vert après ; rouge de nouveau quand le fil rend son état d'erreur pour
+une affaire sans commentaire (mutation de `PanneauTimeline.tsx`, restaurée).

@@ -7,6 +7,9 @@
 //           §5.8 (états), §7 (paliers), §8 (accessibilité) ; CLAUDE.md §16 (vérification visuelle)
 // @verifies CRM-092 (docs/BACKLOG.md) tranche T9 — docs/SPEC-session-sso.md §8.7 : ces scénarios se
 //           connectent, aucune page n'étant rendue sans session (docs/JOURNAL.md décision 601)
+// @verifies INC-263 (docs/BACKLOG.md, « Correctif arbitré le 2026-09-30 ») — docs/SPEC-cards.md §13.10 :
+//           zéro commentaire est un fil rendu sans état d'erreur, que l'affaire ait ou non des
+//           événements (docs/JOURNAL.md décision 615)
 //
 // Ces scénarios s'exécutent contre le **build de production** servi par `vite preview`, et contre
 // la vraie API. Rien n'est simulé, sauf là où c'est explicitement dit — et alors c'est le
@@ -224,11 +227,16 @@ test.describe('le panneau interroge réellement `card_comments`', () => {
 		// L'ordre est TOTAL, terminé par `id` : c'est la leçon de la sonde `sonde_l2` de `CRM-042`.
 		expect(url.searchParams.get('order'), 'l’ordre est total (§13.10)').toBe('created_at.asc,id.asc')
 
-		// Le refus de la RLS est ZÉRO LIGNE, jamais une erreur — et l'écran affiche donc son état
-		// vide, non son état d'erreur.
+		// Aucun commentaire est ZÉRO LIGNE, jamais une erreur — et le fil est donc RENDU, sans état
+		// d'erreur. Il n'est pas vide pour autant : la lectrice lit l'affaire `…0c6`, dont le seed
+		// écrit les événements, immuables (INC-263, décision 615). Le fil rendu est attendu d'abord —
+		// sa liste, ou son état vide —, sans quoi l'absence d'erreur se lirait pendant le chargement,
+		// où le fil ne rend rien.
 		expect(reponse.status()).toBe(200)
 		expect(await reponse.json()).toEqual([])
-		await expect(fil(page).getByTestId('etat-vide')).toBeVisible()
+		await expect(fil(page).getByRole('list').or(fil(page).getByTestId('etat-vide')).first()).toBeVisible()
+		await expect(fil(page).getByTestId('etat-erreur')).toHaveCount(0)
+		await expect(fil(page).getByTestId('commentaire')).toHaveCount(0)
 	})
 })
 

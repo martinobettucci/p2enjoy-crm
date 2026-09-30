@@ -14820,8 +14820,11 @@ que le guide et le board le promettaient (INC-256). Spécifié avant le code : `
 
 ## Correctif arbitré le 2026-09-30 — INC-263 (décision 615)
 
-- [ ] **INC-263 — « la card servie » attend un fil vide qu'une base neuve ne produit pas** (`CRM-043` ;
+- [x] **INC-263 — « la card servie » attend un fil vide qu'une base neuve ne produit pas** (`CRM-043` ;
       `e2e/ui/commentaires.spec.ts`). Arbitrage du responsable : corriger le test. Il garde la requête du fil
       — filtre, ordre, `200`, `[]` — et vérifie que le fil est rendu sans état d'erreur, au lieu d'exiger
       un état vide que les événements de l'affaire ne permettent pas. Rouge sur `HEAD` sur la base
       reconstruite le 2026-09-30.
+      *Vérifié le 2026-09-30* : `commentaires.spec.ts` 14 sur 14 ; rouge quand le fil rend son état
+      d'erreur pour une affaire sans commentaire. Campagne `verify-webapp.sh` sur la base reconstruite :
+      **44 contrôles, aucune anomalie** — 3403 tests unitaires, 782 scénarios E2E.

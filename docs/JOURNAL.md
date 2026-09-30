@@ -30489,3 +30489,11 @@ INC-263 ouverte. **Décision du responsable : corriger le test.**
 
 **Conséquence.** Troisième scénario, après INC-257 et INC-261, qui dépendait de l'histoire de la base de
 développement plutôt que du seed : la campagne sur base neuve reste l'état de référence.
+
+**Corrigé le 2026-09-30.** Le scénario attend le fil rendu — liste ou état vide ; pendant le chargement, le fil
+ne rend rien, et une absence d'erreur lue à ce moment ne prouverait rien —, puis ni état d'erreur ni
+commentaire. *Vérifications* : rouge sur `HEAD` sur la base reconstruite ; `commentaires.spec.ts` 14 sur 14
+après correction ; une mutation qui rend l'état d'erreur pour une affaire sans commentaire le fait rougir.
+Campagne `verify-webapp.sh` sur la base reconstruite, INC-262 et INC-263 compris : **44 contrôles, aucune
+anomalie** — 3403 tests unitaires, 782 scénarios E2E ; les captures, inchangées hors horodatage, sont rendues
+à leur version committée.
