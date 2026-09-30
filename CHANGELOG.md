@@ -13,14 +13,21 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-096` — Le registre des migrations (en cours)
+### `CRM-096` — Le registre des migrations
 
-*Décision 616 (INC-264). Migration **82** à appliquer en production avec la tranche T4, dans une fenêtre
+*Décision 616 (INC-264). Migration **82** à appliquer en production par la tranche T4, dans une fenêtre
 avec instantané (`docs/PROD_MIGRATIONS.md` §3).*
 
 - **La table du registre**, `app.migrations_appliquees` (migration `0082`) : une ligne par migration
-  appliquée, avec l'empreinte SHA-256 de son fichier. Aucun rôle de l'API n'y accède. Le runner qui
-  l'alimente, et qui cessera de rejouer tout le répertoire, suit (T2).
+  appliquée, avec l'empreinte SHA-256 de son fichier. Aucun rôle de l'API n'y accède.
+- **Le runner n'applique plus que les migrations qui manquent** à la base, chacune inscrite dans la
+  transaction de son application. Il **refuse**, avant d'appliquer quoi que ce soit, une migration déjà
+  appliquée puis modifiée, une migration inscrite absente du dépôt, et une migration insérée avant la
+  dernière appliquée. Une base sans registre est adoptée : tout est rejoué une dernière fois, puis inscrit.
+  Il rejouait jusqu'ici les 81 fichiers à chaque fenêtre, production comprise.
+- **Pour les développeurs** : une migration appliquée ne se corrige plus en place — sa correction est une
+  migration nouvelle ; `./resetMe.sh` reconstruit la base locale pendant la mise au point. Les harnais qui
+  restaurent la base par le runner vident d'abord le registre de développement.
 
 ### Correctif du 2026-09-30 — INC-262 (décision 614)
 

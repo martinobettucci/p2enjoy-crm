@@ -571,6 +571,9 @@ Trois questions ont dû être tranchées avant d'écrire la première ligne de S
 
 ### Décision 20 — Pas de registre de migrations, donc des migrations idempotentes
 
+*Remplacée le 2026-09-30 par la décision 616 (`CRM-096`, INC-264) : le runner tient un registre. L'entrée
+ci-dessous est conservée telle qu'elle a été écrite.*
+
 Le conteneur `migrations-runner` livré par `CRM-001` ne tient **aucune** table de suivi : il
 rejoue l'intégralité de `supabase/migrations/*.sql` à chaque démarrage de la pile. Ce
 comportement n'avait pas d'incidence tant qu'aucune migration n'existait ; il en a une dès la
@@ -30557,3 +30560,54 @@ n'aurait inscrit en `adoption` que le premier fichier et en `application` des fi
 dossier » (`e2e/mail/dossiers.spec.ts`), compteur `renamed` à 0 au lieu de 1. **Non reproduit** : rejoué
 seul trois fois, son fichier deux sur deux, le projet `mail` entier **42 sur 42**. Sa cause n'est pas
 établie ; le registre, qu'aucun service de messagerie ne lit, n'y a pas de chemin.
+
+**`CRM-096` T2, le 2026-09-30.** Le runner (`apply-migrations.sh`) lit le registre, refuse avant tout un
+fichier inscrit modifié ou absent et un fichier non inscrit antérieur au dernier inscrit, applique le delta
+en inscrivant chaque fichier dans la transaction de son application (deux `--file` sous
+`--single-transaction`), et adopte une base au registre absent ou vide. Il contraint aussi le nom de chaque
+fichier à `NNNN_nom.sql` avant tout usage : c'est ce nom qui entre au registre. Chaque lecture du registre
+est capturée par une affectation, jamais dans une condition, pour qu'une panne de la base arrête le passage
+au lieu de passer pour un registre vide. *Preuves* : `scripts/verify-registre-migrations.sh`, harnais NEUF,
+sur un PostgreSQL 17 jetable et le vrai runner exécuté dans l'image de la pile — **16 contrôles, aucune
+anomalie** : base neuve, second passage qui ne rejoue rien (une fixture compte ses applications), fichier
+non idempotent appliqué une fois, les trois refus, migration en échec ni appliquée ni inscrite, nom hors
+forme, base peuplée puis registre vide adoptés ; cinq dégradations du runner — empreinte, ordre, saut des
+inscrits, transaction, inscription de l'adoption — font chacune tomber leur preuve.
+
+*Faute trouvée en révisant `scripts/verify-scripts.sh`* : ses fixtures s'appelaient `0001.sql`, forme que le
+runner refuse désormais d'emblée. Trois preuves rougissaient, et celle de l'échec en cours de répertoire
+passait **à vide** — le runner refusait avant d'avoir rien lancé. Noms mis à la forme, appels comptés sur
+les seules applications de fichiers, et la preuve d'échec exige désormais que la `0002` ait été réellement
+tentée. `verify-scripts.sh` : **114 vérifications, aucune anomalie**.
+
+**`CRM-096` T3, le 2026-09-30.** Sur la pile de développement : le premier `./runDev.sh` adopte la base
+(registre vide depuis T1) — **82 fichiers** inscrits en mode `adoption`, empreintes égales à celles du dépôt
+(`sha256sum -c`) — ; le second rend « registre de 82 fichier(s) ; 0 à appliquer ». `./resetMe.sh` : base
+neuve adoptée de même, seed appliqué derrière.
+
+*Conséquence que la spécification n'avait pas vue* : seize harnais restaurent la base de développement,
+après leurs dégradations volontaires, en relançant le runner complet (`docs/SPEC-test-harness.md` §3.5,
+INC-200). Sous le registre, ce passage n'applique **rien**. **Mesuré** : une politique de `tracks` ouverte à
+tout membre, puis le runner relancé — « 0 fichier(s) appliqué(s) avec succès », et la politique reste
+ouverte, sans un mot. *Options* : un interrupteur « rejeu complet » dans le runner, qu'une variable de
+production pourrait un jour activer — écarté ; ou vider explicitement le registre de la base de
+développement avant chaque restauration — retenu : `rejeu_complet_au_prochain_passage`
+(`scripts/lib/registre.sh`), qui refuse d'agir hors du profil `dev`, appelée par les seize harnais. Avec
+elle, la même politique est restaurée (82 fichiers rejoués et réinscrits) ; un fichier d'environnement de
+profil `prod` est refusé et le registre laissé intact. `verify-migrations.sh` est révisé dans le même sens :
+son contrôle « le runner rejoue tout le répertoire » était devenu faux ; il vide le registre, prouve
+l'adoption du répertoire entier sur base peuplée, puis qu'un second passage n'applique rien — **32
+contrôles, aucune anomalie**.
+*Les seize harnais qui restaurent par le runner*, rejoués l'un après l'autre avec la fonction : quinze sans
+anomalie — `channels` 34, `droits-fins` 46, `change-channel-workflow` 23, `transition-required-fields` 25,
+`move-card` 59, `copie-workflow` 36, `cards` 49, `relances` 93, `session-sso` 66, `identites` 23,
+`move-card-to-channel` 49, `authz` 37, `colonnes-protegees` 50, `commentaires` 79, `migrations` 32 — et le
+registre à 82 lignes à la fin. `verify-tracks.sh` a rendu une anomalie : un scénario de `e2e/api/session.spec.ts`
+(« la session serveur : empreinte de la poignée seule… »), dans sa section d'API, qui précède ses
+dégradations — donc sans lien avec la restauration. **Non reproduit** : le fichier rejoué trois fois, 72 sur
+72 ; `verify-tracks.sh` rejoué en entier, **46 contrôles, aucune anomalie**, ses six dégradations restaurées
+par le nouveau chemin. Sa cause n'est pas établie.
+*Campagnes de T3*, sur base reconstruite (`./resetMe.sh` — adoption, 82 fichiers) : `verify-harness.sh`
+**32 contrôles, aucune anomalie** — SQL 76 fichiers / 3297 assertions, API 1090, interface 782, messagerie
+42, unitaires 3403 — ; `verify-webapp.sh` **44 contrôles, aucune anomalie**. Captures inchangées hors
+horodatage, rendues à leur version committée.

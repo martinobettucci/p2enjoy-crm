@@ -47,6 +47,8 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+# shellcheck source=scripts/lib/registre.sh
+source scripts/lib/registre.sh
 
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
@@ -207,6 +209,7 @@ restaurer() {
 	# `scripts/verify-preuves-refus.sh` est devenue rouge sans aucun rapport avec les pièces
 	# jointes. Le diagnostic est sans ambiguïté : les conteneurs recréés nus ne citent qu'UN fichier
 	# dans `com.docker.compose.project.config_files`.
+	rejeu_complet_au_prochain_passage || true
 	docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml up --force-recreate migrations-runner >/dev/null 2>&1 || true
 	psql_db -c "update public.cards set description = null, next_action = 'Relancer la DSI après la démo'
 	             where id = '$CARD_C1';" >/dev/null 2>&1 || true

@@ -194,6 +194,14 @@ répertoire, avec une commande synchrone qui attend son code de sortie. Une list
 laisser les suites suivantes mesurer un état intermédiaire. Une restauration réussie est suivie
 de la suite globale concernée ; le code zéro du runner seul ne suffit pas.
 
+**Révisé par `CRM-096` T3, 2026-09-30 (décision 616).** Le runner tient désormais un registre
+(`docs/DAT.md` §3.2 bis) et n'applique que les fichiers qui n'y sont pas : relancé tel quel, il
+n'appliquerait **rien**, et la base resterait dégradée derrière un « 0 fichier(s) appliqué(s) avec
+succès » — mesuré sur une politique de `tracks` volontairement ouverte. Toute restauration appelle
+donc d'abord `rejeu_complet_au_prochain_passage` (`scripts/lib/registre.sh`), qui vide le registre de la
+base de développement : le passage suivant est une **adoption**, qui rejoue tout le répertoire puis le
+réinscrit. La fonction refuse d'agir si le fichier d'environnement ne porte pas le profil `dev`.
+
 La restauration du schéma ne remplace pas le **ménage des données d'essai**. Un harnais qui crée
 des lignes réservées les retire avant toute suite globale et constate leur absence ; son
 `trap EXIT` n'est qu'une sécurité d'interruption. SQL, API ou UI exécutés pendant que le jeu

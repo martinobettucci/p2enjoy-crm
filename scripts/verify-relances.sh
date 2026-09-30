@@ -22,6 +22,8 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+# shellcheck source=scripts/lib/registre.sh
+source scripts/lib/registre.sh
 
 DB_CONTAINER=p2enjoy-db
 MIGRATION=supabase/migrations/0053_cards_figees.sql
@@ -618,6 +620,7 @@ echo "7 ter. Le répertoire de migrations se rejoue sur une base qui porte « st
 # COMPLAISANT — il l'a été, et c'est la dégradation volontaire de la migration 44 qui l'a montré.
 # Le verdict est donc lu sur l'ÉTAT du conteneur, seul endroit où le `psql` du runner l'écrit.
 rejouer_repertoire() {
+	rejeu_complet_au_prochain_passage || return 1
 	docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
 		up --force-recreate migrations-runner >"$TRAVAIL/runner.log" 2>&1
 	[ "$(docker inspect p2enjoy-migrations --format '{{.State.ExitCode}}')" = '0' ]

@@ -45,6 +45,8 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+# shellcheck source=scripts/lib/registre.sh
+source scripts/lib/registre.sh
 
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
@@ -497,7 +499,7 @@ fi
 	# `scripts/verify-preuves-refus.sh` est devenue rouge sans aucun rapport avec les pièces
 	# jointes. Le diagnostic est sans ambiguïté : les conteneurs recréés nus ne citent qu'UN fichier
 	# dans `com.docker.compose.project.config_files`.
-if docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml up --force-recreate migrations-runner >"$TRAVAIL/rejeu_complet.log" 2>&1 &&
+if rejeu_complet_au_prochain_passage && docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml up --force-recreate migrations-runner >"$TRAVAIL/rejeu_complet.log" 2>&1 &&
 	! grep -q "ERROR" "$TRAVAIL/rejeu_complet.log"; then
 	ok "le répertoire entier se rejoue sur une base peuplée (INC-144)"
 else

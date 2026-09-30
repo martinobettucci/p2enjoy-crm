@@ -66,6 +66,8 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+# shellcheck source=scripts/lib/registre.sh
+source scripts/lib/registre.sh
 
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
@@ -122,6 +124,7 @@ psql_admin() { docker exec -i "$DB_CONTAINER" psql -U supabase_admin -d postgres
 # `ouvrir_session_sso` côte à côte et rendait ses appels ambigus. Le runner rejoue tout, dans l'ordre,
 # chaque migration sous son rôle déclaré — `0074` comprise, élevée.
 appliquer_migrations_dev() {
+	rejeu_complet_au_prochain_passage || return 1
 	docker compose --env-file "$ENV_FILE" -f docker-compose.yml -f docker-compose.dev.yml \
 		run --rm migrations-runner >"$WORK/runner.log" 2>&1
 }

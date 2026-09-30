@@ -49,6 +49,8 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+# shellcheck source=scripts/lib/registre.sh
+source scripts/lib/registre.sh
 
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
@@ -82,6 +84,7 @@ RUNNER_LOG="$TRAVAIL/migrations-runner.log"
 
 # Rejoue le véritable runner complet et attend sa terminaison.
 rejouer_migrations() {
+	rejeu_complet_au_prochain_passage || return 1
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml \
 		run --rm migrations-runner >"$RUNNER_LOG" 2>&1
 }

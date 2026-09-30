@@ -21,9 +21,10 @@ Documents liés : `docs/DAT.md`, `docs/SPEC-permissions-rls.md`, `docs/SPEC-work
 - **Les migrations sont idempotentes.** Le conteneur `migrations-runner` rejoue tout le répertoire
   à chaque démarrage de la pile et ne tient aucun registre : une migration doit pouvoir être
   appliquée plusieurs fois sans erreur ni effet de bord (`docs/DAT.md` §3.2, `docs/JOURNAL.md`
-  décision 20). **Révisé par `CRM-096`, à sa livraison** (décision 616, `docs/DAT.md` §3.2 bis) : le
-  runner tient le registre `app.migrations_appliquees` et n'applique plus que les fichiers qui n'y sont
-  pas ; une migration appliquée n'est plus jamais modifiée. L'idempotence reste exigée.
+  décision 20). **Révisé par `CRM-096`** (décision 616, `docs/DAT.md` §3.2 bis) : le runner tient le
+  registre `app.migrations_appliquees` et n'applique plus que les fichiers qui n'y sont pas ; une
+  migration appliquée n'est plus jamais modifiée — sa correction est une migration nouvelle.
+  L'idempotence reste exigée : l'adoption et les restaurations des harnais rejouent tout.
 - **RLS est activée dans la migration qui crée la table**, sans attendre ses politiques. Une table
   livrée avant ses politiques ne retourne donc aucune ligne et refuse toute écriture, plutôt que
   d'être ouverte à quiconque détient la clé anonyme, qui est publique par construction.
@@ -1220,7 +1221,7 @@ figée : une notification masquée ne peut plus être marquée lue (§44.1).
 l'historique natifs restent dans le schéma `cron`. Aucun des rôles `anon`, `authenticated` ou
 `service_role` n'a de privilège sur ces objets (`docs/SPEC-scheduler.md`).
 
-### `app.migrations_appliquees` — `CRM-096`, migration `0082` (spécifiée le 2026-09-30, à livrer)
+### `app.migrations_appliquees` — `CRM-096`, migration `0082`
 
 Le registre des migrations du `migrations-runner` (`docs/DAT.md` §3.2 bis, décision 616). Une ligne par
 fichier de `supabase/migrations/` appliqué à la base.

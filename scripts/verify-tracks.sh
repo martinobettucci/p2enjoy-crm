@@ -37,6 +37,8 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+# shellcheck source=scripts/lib/registre.sh
+source scripts/lib/registre.sh
 
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
@@ -73,6 +75,7 @@ MIGRATION_DROITS_FINS=supabase/migrations/0010_droits_fins.sql
 # l'appel porte `--env-file` et les DEUX fichiers de composition (`docs/CloudWorker.md` §2.2 bis,
 # décisions 471 et 497) : un appel nu recréerait `storage` et `db` sans les surcharges `dev`.
 restaurer_etat_courant() {
+	rejeu_complet_au_prochain_passage || return 1
 	docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
 		up --force-recreate migrations-runner
 }
@@ -260,7 +263,7 @@ fi
 
 # Le `migrations-runner` rejoue **tout** le répertoire à chaque démarrage : c'est lui, et non
 # `psql`, qui décide si la pile démarre.
-if docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
+if rejeu_complet_au_prochain_passage && docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
 		run --rm migrations-runner >/dev/null 2>&1; then
 	ok "le migrations-runner rejoue le répertoire complet et se termine en 0"
 else

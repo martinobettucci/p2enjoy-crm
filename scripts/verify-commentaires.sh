@@ -57,6 +57,8 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+# shellcheck source=scripts/lib/registre.sh
+source scripts/lib/registre.sh
 
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
@@ -593,7 +595,7 @@ degrader_et_verifier \
 # défaut.
 titre "6. Restauration"
 
-if docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
+if rejeu_complet_au_prochain_passage && docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
 	run --rm migrations-runner >"$TRAVAIL/rejeu.log" 2>&1; then
 	ok "le runner rejoue tout le répertoire, dans l'ordre livré — 0015, 0021, 0035, 0063 et 0077 compris"
 else

@@ -49,6 +49,8 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+# shellcheck source=scripts/lib/registre.sh
+source scripts/lib/registre.sh
 
 # shellcheck source=scripts/lib/sso.sh
 source scripts/lib/sso.sh
@@ -250,7 +252,7 @@ fi
 # `docker compose run --rm` est **synchrone** et rend le code de sortie du rejeu qu'il vient de
 # lancer. C'est déjà le procédé de `scripts/verify-tracks.sh` : ce n'est pas une invention, c'est
 # l'alignement du plus ancien des deux sur le plus sûr.
-if docker compose -f docker-compose.yml -f docker-compose.dev.yml \
+if rejeu_complet_au_prochain_passage && docker compose -f docker-compose.yml -f docker-compose.dev.yml \
 	run --rm migrations-runner >/tmp/p2enjoy-authz-runner.log 2>&1
 then
 	ok "le migrations-runner rejoue le répertoire complet et se termine avec le code 0"

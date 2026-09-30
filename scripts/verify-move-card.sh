@@ -59,6 +59,8 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+# shellcheck source=scripts/lib/registre.sh
+source scripts/lib/registre.sh
 
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
@@ -80,6 +82,7 @@ MIGRATION_FILE=supabase/migrations/0012_move_card.sql
 # est rejouée SEULE — c'est ce qui prouve qu'elle se réapplique —, puis le runner rejoue tout le
 # répertoire dans l'ordre livré et rend son code de sortie.
 restaurer_etat_courant() {
+	rejeu_complet_au_prochain_passage || return 1
 	docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
 		run --rm migrations-runner >/tmp/p2enjoy-move-card-runner.log 2>&1
 }

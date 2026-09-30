@@ -842,8 +842,9 @@ fi
 
 RUNNER_FIXTURE="$WORK/migrations-runner"
 mkdir -p "$RUNNER_FIXTURE/bin" "$RUNNER_FIXTURE/migrations"
-printf '%s\n' '-- migration ordinaire' > "$RUNNER_FIXTURE/migrations/0001.sql"
-printf '%s\n' '-- @migration-role: supabase_admin' > "$RUNNER_FIXTURE/migrations/0002.sql"
+# Les noms suivent la forme `NNNN_nom.sql` que le runner exige depuis `CRM-096` T2 (décision 616).
+printf '%s\n' '-- migration ordinaire' > "$RUNNER_FIXTURE/migrations/0001_ordinaire.sql"
+printf '%s\n' '-- @migration-role: supabase_admin' > "$RUNNER_FIXTURE/migrations/0002_admin.sql"
 printf '%s\n' '#!/bin/sh' \
 	'printf "%s|%s\\n" "$PGUSER" "$*" >> "$MIGRATION_ROLE_LOG"' \
 	> "$RUNNER_FIXTURE/bin/psql"
@@ -856,20 +857,22 @@ if PATH="$RUNNER_FIXTURE/bin:$PATH" MIGRATIONS_DIR="$RUNNER_FIXTURE/migrations" 
 else
 	runner_fixture_ok=false
 fi
-# Depuis `CRM-087`, le runner ajoute un TROISIÈME appel `psql` — le `notify pgrst` de fin — qui
-# emprunte le rôle par défaut `postgres` et ne comporte pas `--single-transaction --file`. Le
-# séquencement doit donc être `postgres|supabase_admin|postgres`, et l'assertion sur le nombre
-# de fichiers migrés (2) est inchangée.
+# Depuis `CRM-087`, le runner ajoute un appel `psql` — le `notify pgrst` de fin — et, depuis `CRM-096`
+# T2, les lectures du registre ; tous empruntent le rôle par défaut `postgres` et aucun ne comporte
+# `--single-transaction --file`. Le contrôle porte donc sur les SEULES applications de fichiers —
+# `postgres` puis `supabase_admin`, deux en tout — et exige qu'aucun autre appel ne prenne
+# `supabase_admin`. (Le faux `psql` ne rend rien : le runner y voit un registre absent, donc une
+# adoption, et applique tout le répertoire comme avant `CRM-096`.)
 if [ "$runner_fixture_ok" = true ] \
-	&& [ "$(cut -d '|' -f 1 "$RUNNER_FIXTURE/roles.log" 2>/dev/null | paste -sd '|' -)" = \
-	'postgres|supabase_admin|postgres' ] \
-	&& [ "$(grep -c -- '--single-transaction --file' "$RUNNER_FIXTURE/roles.log" 2>/dev/null)" = 2 ]; then
+	&& [ "$(grep -- '--single-transaction --file' "$RUNNER_FIXTURE/roles.log" 2>/dev/null | cut -d '|' -f 1 | paste -sd '|' -)" = \
+	'postgres|supabase_admin' ] \
+	&& ! grep -v -- '--single-transaction --file' "$RUNNER_FIXTURE/roles.log" 2>/dev/null | grep -q '^supabase_admin|'; then
 	ok "le runner garde postgres par défaut et ne prend supabase_admin que pour le fichier marqué"
 else
 	fail "le runner ne respecte pas les deux rôles de la fixture"
 fi
 
-printf '%s\n' '-- @migration-role: root' > "$RUNNER_FIXTURE/migrations/0003.sql"
+printf '%s\n' '-- @migration-role: root' > "$RUNNER_FIXTURE/migrations/0003_root.sql"
 if PATH="$RUNNER_FIXTURE/bin:$PATH" MIGRATIONS_DIR="$RUNNER_FIXTURE/migrations" \
 	APPLY_MIGRATIONS=true PGDATABASE=fixture PGHOST=fixture PGPORT=5432 PGUSER=postgres \
 	MIGRATION_ROLE_LOG="$RUNNER_FIXTURE/roles-invalid.log" \
@@ -891,8 +894,8 @@ fi
 
 RELOAD_FIXTURE="$WORK/runner-reload"
 mkdir -p "$RELOAD_FIXTURE/bin" "$RELOAD_FIXTURE/migrations"
-printf '%s\n' '-- migration 0001' > "$RELOAD_FIXTURE/migrations/0001.sql"
-printf '%s\n' '-- migration 0002' > "$RELOAD_FIXTURE/migrations/0002.sql"
+printf '%s\n' '-- migration 0001' > "$RELOAD_FIXTURE/migrations/0001_premiere.sql"
+printf '%s\n' '-- migration 0002' > "$RELOAD_FIXTURE/migrations/0002_seconde.sql"
 # Mock psql : consigne l'appel, et rend succès sauf si RUNNER_FAIL_ON désigne un fichier.
 printf '%s\n' '#!/bin/sh' \
 	'for arg in "$@"; do' \
@@ -926,11 +929,13 @@ else
 	reload_ok=false
 fi
 
-# Attendu : trois lignes de journal — deux --file (0001 puis 0002) et une --command finale.
+# Attendu : deux applications de fichiers (0001 puis 0002) et UN SEUL `notify`, en dernier. Les
+# lectures du registre (`CRM-096` T2) sont des `--command` sans `--file`, et ne sont pas comptées.
 last_line=$(tail -n 1 "$RELOAD_FIXTURE/calls.log" 2>/dev/null || true)
 if [ "$reload_ok" = true ] \
 	&& grep -q "command:notify pgrst, 'reload schema';" "$RELOAD_FIXTURE/calls.log" \
-	&& [ "$(wc -l < "$RELOAD_FIXTURE/calls.log")" = 3 ] \
+	&& [ "$(grep -c '|file:.' "$RELOAD_FIXTURE/calls.log")" = 2 ] \
+	&& [ "$(grep -c 'command:notify pgrst' "$RELOAD_FIXTURE/calls.log")" = 1 ] \
 	&& printf '%s\n' "$last_line" | grep -q "command:notify pgrst" \
 	&& grep -q "fichier(s) appliqué(s) avec succès" "$RELOAD_FIXTURE/runner.log"; then
 	ok "le runner émet notify pgrst, 'reload schema' après un passage réussi, une seule fois"
@@ -946,20 +951,24 @@ fi
 
 FAIL_FIXTURE="$WORK/runner-fail"
 mkdir -p "$FAIL_FIXTURE/bin" "$FAIL_FIXTURE/migrations"
-printf '%s\n' '-- migration 0001' > "$FAIL_FIXTURE/migrations/0001.sql"
-printf '%s\n' '-- migration 0002 KO' > "$FAIL_FIXTURE/migrations/0002.sql"
-printf '%s\n' '-- migration 0003' > "$FAIL_FIXTURE/migrations/0003.sql"
+printf '%s\n' '-- migration 0001' > "$FAIL_FIXTURE/migrations/0001_premiere.sql"
+printf '%s\n' '-- migration 0002 KO' > "$FAIL_FIXTURE/migrations/0002_echec.sql"
+printf '%s\n' '-- migration 0003' > "$FAIL_FIXTURE/migrations/0003_troisieme.sql"
 cp "$RELOAD_FIXTURE/bin/psql" "$FAIL_FIXTURE/bin/psql"
 
 if PATH="$FAIL_FIXTURE/bin:$PATH" MIGRATIONS_DIR="$FAIL_FIXTURE/migrations" \
 	APPLY_MIGRATIONS=true PGDATABASE=fixture PGHOST=fixture PGPORT=5432 PGUSER=postgres \
-	RUNNER_FAIL_ON=0002.sql \
+	RUNNER_FAIL_ON=0002_echec.sql \
 	MIGRATION_CALL_LOG="$FAIL_FIXTURE/calls.log" \
 	"$MIGRATION_RUNNER" >"$FAIL_FIXTURE/runner.log" 2>&1; then
 	fail "le runner ignore l'échec de la migration 0002 et rend un succès"
 else
-	# Aucun succès annoncé, aucun notify émis, la migration 0003 non lancée.
-	if ! grep -q "fichier(s) appliqué(s) avec succès" "$FAIL_FIXTURE/runner.log" \
+	# Aucun succès annoncé, aucun notify émis, la migration 0003 non lancée — ET la 0002 réellement
+	# tentée : un runner qui refuserait avant tout (un nom de fixture hors forme, par exemple) passerait
+	# sinon cette preuve sans l'avoir exercée. Mesuré le 2026-09-30 : c'est ce qui arrivait aux anciens
+	# noms `0001.sql`.
+	if grep -q "file:.*0002_echec.sql" "$FAIL_FIXTURE/calls.log" 2>/dev/null \
+		&& ! grep -q "fichier(s) appliqué(s) avec succès" "$FAIL_FIXTURE/runner.log" \
 		&& ! grep -q "notify pgrst" "$FAIL_FIXTURE/calls.log" \
 		&& ! grep -q "file:.*0003" "$FAIL_FIXTURE/calls.log"; then
 		ok "le runner s'arrête sur la première erreur, sans notify et sans annoncer de succès"

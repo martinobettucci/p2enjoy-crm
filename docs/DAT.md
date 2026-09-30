@@ -287,12 +287,12 @@ passage réussi** — la propriété cesse alors de dépendre de ce que chaque m
 `scripts/verify-scripts.sh` éprouve ce comportement, et prouve qu'un échec en cours de répertoire
 n'émet aucune notification et n'annonce aucun succès.
 
-**Toute migration du dépôt est idempotente.** Le conteneur ne tient aucun registre des migrations
-déjà appliquées : il rejoue l'intégralité du répertoire à chaque démarrage de la pile. Une
-migration qui échouerait au second passage bloquerait `rest`, qui attend sa terminaison réussie.
-Ce choix — pas de table de suivi, mais des migrations rejouables — est motivé dans
-`docs/JOURNAL.md`, décision 20 ; il est vérifié par `scripts/verify-migrations.sh`, qui réapplique
-la migration sur une base déjà migrée et compare la structure obtenue.
+**Le runner tient un registre des migrations appliquées** depuis `CRM-096` (§3.2 bis, décision 616,
+qui remplace la décision 20) : il n'applique que les fichiers absents du registre, et adopte une base
+qui n'en a pas en rejouant tout le répertoire. **Toute migration du dépôt reste idempotente** : l'adoption
+et les harnais qui restaurent par le runner (`docs/SPEC-test-harness.md` §3.5) rejouent encore le
+répertoire entier. Une migration qui échouerait au rejeu bloquerait l'adoption, et `rest` avec elle ;
+`scripts/verify-migrations.sh` le vérifie.
 
 **Une table naît en refus.** Toute table métier créée par une migration active RLS dans la même
 migration. Tant que ses politiques ne sont pas livrées, elle ne retourne aucune ligne et refuse
@@ -301,10 +301,10 @@ privilèges par défaut de l'image : `SELECT` est accordé à `anon` et `authent
 refus de lecture se manifeste par zéro ligne et non par une erreur de privilège
 (`docs/SPEC-permissions-rls.md` §7).
 
-#### 3.2 bis Le registre des migrations — `CRM-096`, décision 616 (spécifié le 2026-09-30, à livrer)
+#### 3.2 bis Le registre des migrations — `CRM-096`, décision 616
 
-*Remplace la décision 20 à sa livraison. Jusque-là, le paragraphe « Toute migration du dépôt est
-idempotente » ci-dessus décrit le comportement réel.* Motif : INC-264 — la production rejoue les 81
+*Spécifié le 2026-09-30, livré le même jour en développement (T1 à T3) ; en production à la fenêtre de la
+tranche T4 — une livraison sans `--migrate` dépose le runner dans la cellule sans l'exécuter.* Motif : INC-264 — la production rejoue les 81
 fichiers à chaque fenêtre, et huit incidents consignés viennent de ce rejeu.
 
 **La table.** `app.migrations_appliquees` (`docs/SCHEMA.md` §8), créée par la migration `0082` :
@@ -338,8 +338,11 @@ d'après n'applique plus que les fichiers absents du registre.
 correction est une migration nouvelle. En développement, modifier un fichier déjà appliqué à la base
 locale — pendant la mise au point d'une migration, par exemple — est refusé comme en production ; le
 refus nomme `./resetMe.sh`, qui reconstruit la base. **L'idempotence reste exigée** et vérifiée par
-`scripts/verify-migrations.sh` : l'adoption rejoue tout une dernière fois, et les harnais rejouent des
-migrations isolées hors du runner.
+`scripts/verify-migrations.sh` : l'adoption rejoue tout, et les harnais rejouent des migrations isolées
+hors du runner. **Les harnais qui restaurent la base par le runner** vident d'abord le registre de la base
+de développement (`rejeu_complet_au_prochain_passage`, `scripts/lib/registre.sh`, gardé par le profil
+`dev`) : sans cela, le runner n'appliquerait rien et la base resterait dégradée (`docs/SPEC-test-harness.md`
+§3.5).
 
 ### 3.3 `mail-sync` — service Python
 

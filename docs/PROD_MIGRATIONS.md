@@ -272,18 +272,26 @@ par la tranche T4, dans une fenêtre avec instantané. Baseline de production : 
 (`CRM-095`, décision 609), appliquée le 2026-09-29 (§2.8, §8) ; la 80 (`CRM-094`) l'avait été le
 2026-09-28 (§2.7), les six migrations de `CRM-092` (74 à 79) le 2026-09-24 par la reprise (§2.5).
 
-**`CRM-096`, le registre des migrations** (décision 616, `docs/DAT.md` §3.2 bis) : la `0082` est écrite
-(T1) ; le runner qui l'alimente ne l'est pas encore (T2). Sa livraison demandera une fenêtre de maintenance
-avec instantané : ce passage d'**adoption** rejoue une dernière fois tout le répertoire avant d'inscrire les
-82 fichiers. Les fenêtres suivantes n'appliqueront plus que les fichiers absents du registre.
+**`CRM-096`, le registre des migrations** (décision 616, `docs/DAT.md` §3.2 bis) : la `0082` et le runner
+qui l'alimente sont écrits et prouvés en développement (T1 à T3). Leur livraison (T4) est une fenêtre de
+maintenance avec instantané : ce passage d'**adoption** rejoue une dernière fois tout le répertoire, puis
+inscrit les 82 fichiers. Les fenêtres suivantes n'appliqueront plus que les fichiers absents du registre
+(§3.1).
 
 ### 3.1 Procédure nominale — la fenêtre de maintenance (`CRM-087`, livrée)
 
-Le `migrations-runner` rejoue **l'intégralité** de `supabase/migrations/*.sql` en ordre
-lexicographique, une transaction par fichier, en s'arrêtant à la première erreur, et **ne tient
-aucun registre** de ce qui a déjà été appliqué (`docs/JOURNAL.md`, décision 20). La production
-n'applique donc pas un delta : elle **rejoue tout**, ce que l'idempotence de chaque migration rend
-possible. Il n'y a rien à choisir, rien à extraire d'un tableau, rien à ordonner à la main.
+**Depuis `CRM-096` (décision 616), le `migrations-runner` tient un registre**, `app.migrations_appliquees`
+(`docs/DAT.md` §3.2 bis). Il applique en ordre lexicographique les **seuls fichiers absents** du registre,
+chacun dans une transaction avec son inscription, en s'arrêtant à la première erreur. Avant d'appliquer
+quoi que ce soit, il **refuse** — code non nul, rien d'appliqué — un fichier inscrit modifié ou absent, et
+un fichier non inscrit qui précède le dernier inscrit : la base porte alors autre chose que ce que le dépôt
+livré décrit, et la fenêtre s'arrête là (§6). Une base **sans registre ou au registre vide** est adoptée :
+tout le répertoire est rejoué, comme avant `CRM-096`, puis inscrit d'un seul geste — c'est le cas de la
+**première fenêtre qui livre `CRM-096`** (T4). Il n'y a rien à choisir, rien à extraire d'un tableau, rien
+à ordonner à la main.
+
+*Une livraison sans `--migrate` dépose le nouveau runner dans la cellule sans l'exécuter : hors fenêtre,
+`APPLY_MIGRATIONS=false` l'arrête avant toute lecture de la base. Rien ne change donc avant la fenêtre.*
 
 La contrepartie est que la migration est une **fenêtre de maintenance**, dans cet ordre :
 

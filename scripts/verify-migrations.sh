@@ -10,6 +10,8 @@
 # @verifies docs/SCHEMA.md §1 (identité et cloisonnement)
 # @verifies docs/SPEC-permissions-rls.md §4 (politiques), §7 (preuves de refus n° 3 et 11)
 # @verifies docs/PROD_MIGRATIONS.md §3 (migrations en attente)
+# @verifies CRM-096 (docs/BACKLOG.md) — tranche T3 : l'adoption du répertoire entier sur une base peuplée,
+#           puis un passage qui n'applique rien (docs/DAT.md §3.2 bis ; docs/JOURNAL.md décision 616)
 # @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §6, §13 — tranche T4 : le profil naît de
 #           la vraie connexion LeLabs ; plus aucun compte GoTrue ; tranche T6 (§7.5, décision 589) :
 #           le trigger GoTrue retiré, et la mutation qui le visait retournée
@@ -37,6 +39,8 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+# shellcheck source=scripts/lib/registre.sh
+source scripts/lib/registre.sh
 
 # shellcheck source=scripts/lib/sso.sh
 source scripts/lib/sso.sh
@@ -125,8 +129,9 @@ else
 fi
 
 # --- 2. Rejouabilité de la migration -----------------------------------------------------------
-# Le `migrations-runner` livré par `CRM-001` rejoue tout le répertoire à chaque démarrage : une
-# migration non rejouable bloquerait PostgREST, qui attend sa terminaison réussie.
+# Le `migrations-runner` rejouait tout le répertoire à chaque démarrage (`CRM-001`) ; depuis `CRM-096` il
+# n'applique plus que les fichiers absents de son registre, mais l'ADOPTION d'une base rejoue encore tout
+# le répertoire : une migration non rejouable la bloquerait, et PostgREST avec elle.
 
 echo
 echo "2. Rejouabilité de la migration"
@@ -170,13 +175,33 @@ fi
 # entre 0001 et 0021, `authenticated` retrouvait temporairement UPDATE sur tout `profiles`, et le
 # harnais a réellement modifié `locale` en HTTP 204. `run --rm` attend l'exécution qu'il lance et
 # relaie son propre code ; aucune mesure ne commence sur une base intermédiaire.
+#
+# RÉVISÉ PAR `CRM-096` T3 (décision 616). Un passage ordinaire n'applique plus que les fichiers absents du
+# registre : relancé tel quel, le runner ne prouverait plus que le RÉPERTOIRE ENTIER se rejoue, ce dont
+# l'adoption dépend. Le registre de la base de développement est donc vidé d'abord : le passage suivant
+# est une ADOPTION sur base peuplée — le cas exact de la première fenêtre de production après `CRM-096` —,
+# qui doit rejouer tout le répertoire, se terminer en 0 et réinscrire chaque fichier. Un second passage,
+# lui, ne doit rien appliquer.
+nombre_migrations=$(find supabase/migrations -maxdepth 1 -name '*.sql' | wc -l | tr -d ' ')
+rejeu_complet_au_prochain_passage
 if docker compose -f docker-compose.yml -f docker-compose.dev.yml \
-	run --rm migrations-runner >/tmp/p2enjoy-runner.log 2>&1
+	run --rm migrations-runner >/tmp/p2enjoy-runner.log 2>&1 \
+	&& grep -q "adoption" /tmp/p2enjoy-runner.log \
+	&& [ "$(psql_db -c "select count(*) from app.migrations_appliquees where mode = 'adoption'")" = "$nombre_migrations" ]
 then
-	ok "le migrations-runner rejoue tout le répertoire et se termine avec le code 0"
+	ok "adoption sur base peuplée : le runner rejoue les $nombre_migrations fichiers, se termine en 0 et les inscrit"
 else
-	fail "migrations-runner s'est terminé avec un code non nul"
+	fail "l'adoption du répertoire entier échoue, ou n'inscrit pas chaque fichier"
 	tail -10 /tmp/p2enjoy-runner.log | sed 's/^/        /'
+fi
+if docker compose -f docker-compose.yml -f docker-compose.dev.yml \
+	run --rm migrations-runner >/tmp/p2enjoy-runner-2.log 2>&1 \
+	&& grep -q "; 0 à appliquer" /tmp/p2enjoy-runner-2.log
+then
+	ok "le passage suivant n'applique rien : le registre porte les $nombre_migrations fichiers"
+else
+	fail "le passage suivant applique encore quelque chose, ou échoue"
+	tail -10 /tmp/p2enjoy-runner-2.log | sed 's/^/        /'
 fi
 
 # --- 3. Le profil par le véritable chemin applicatif — révisé par `CRM-092` T4 -------------------

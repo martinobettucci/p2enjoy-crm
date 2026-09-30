@@ -14808,19 +14808,29 @@ sont celles des fichiers du dépôt.
       anomalie. Compteurs : 76 fichiers SQL, 3297 assertions, 1090 scénarios d'API.
       `verify-harness.sh` : SQL, API, interface (782) et unitaires verts ; un rouge de messagerie non
       reproduit en cinq rejeux, consigné au journal.
-- [ ] **T2** — le runner (`supabase/docker/migrations-runner/apply-migrations.sh`) : contrôle des fichiers
+- [x] **T2** — le runner (`supabase/docker/migrations-runner/apply-migrations.sh`) : contrôle des fichiers
       inscrits, contrôle de l'ordre, application du delta avec inscription transactionnelle, adoption.
-      Preuves sur une base jetable, par migrations de fixture, dans le harnais du runner
-      (`scripts/verify-scripts.sh`) : base neuve ; second passage qui n'applique rien — une fixture NON
+      Preuves sur une base jetable, par migrations de fixture, dans un harnais dédié
+      (`scripts/verify-registre-migrations.sh` ; `scripts/verify-scripts.sh` garde les preuves par faux
+      `psql` des rôles, du `notify` et de l'arrêt au premier échec) : base neuve ; second passage qui n'applique rien — une fixture NON
       idempotente le prouve ; fichier nouveau seul appliqué ; fichier inscrit modifié, fichier inscrit
       absent, fichier inséré dans le passé : trois refus sans application ni `notify` ; migration en échec
       ni appliquée ni inscrite ; adoption d'une base peuplée sans registre. Chaque garde vue rouge sous
       mutation.
-- [ ] **T3** — de bout en bout sur la pile de développement : `./resetMe.sh` puis registre de 82 lignes aux
+      Mesuré le 2026-09-30 : `verify-registre-migrations.sh` **16 contrôles, aucune anomalie**, cinq
+      dégradations du runner vues rouges ; `verify-scripts.sh` **114**, sans anomalie, après révision de
+      trois preuves dont une passait à vide (journal).
+- [x] **T3** — de bout en bout sur la pile de développement : `./resetMe.sh` puis registre de 82 lignes aux
       empreintes du dépôt ; `./runDev.sh` relancé n'applique rien ; campagnes `verify-harness.sh` et
       `verify-webapp.sh`. Documentation : `docs/DAT.md` §3.2 et §9, `docs/SCHEMA.md` (conventions),
       `docs/PROD_MIGRATIONS.md` §3.1 et §3.2, `README.md`, `CHANGELOG.md` ; la décision 20 marquée
       remplacée.
+      Mesuré le 2026-09-30 : `./runDev.sh` adopte la base (82 fichiers, empreintes du dépôt), le suivant
+      n'applique rien ; `./resetMe.sh` adopte une base neuve. Seize harnais qui restaurent par le runner
+      reçoivent `rejeu_complet_au_prochain_passage` (`scripts/lib/registre.sh`), sans quoi leur
+      restauration n'appliquait rien — mesuré — ; tous verts. Sur base reconstruite : `verify-harness.sh`
+      **32 contrôles, aucune anomalie** (SQL 76 / 3297, API 1090, interface 782, messagerie 42),
+      `verify-webapp.sh` **44, aucune anomalie**.
 - [ ] **T4** — production : fenêtre de maintenance avec instantané de VM confirmé par le responsable ;
       l'adoption rejoue une dernière fois les 82 fichiers et les inscrit ; constat en lecture seule du
       registre — 82 lignes, empreintes égales à celles du dépôt livré — ; `verifier.sh`.

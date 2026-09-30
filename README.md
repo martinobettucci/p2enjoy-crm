@@ -194,6 +194,7 @@ la question d'une façade `npm` par-dessus `runDev.sh` et consorts reste ouverte
 | `scripts/verify-scripts.sh` | Rejoue les preuves des scripts : contrat `.env.example`, amorçage, gardes de profil | **disponible** |
 | `scripts/verify-crochets-git.sh` | Rejoue les preuves des crochets Git : commit et push refusés hors de `main` et en `HEAD` détaché, référence distante contrôlée, identité du responsable toujours exigée | **disponible** |
 | `scripts/verify-migrations.sh` | Rejoue les preuves des migrations : suite pgTAP, idempotence, refus par défaut mesuré hors interface | **disponible** |
+| `scripts/verify-registre-migrations.sh` | Éprouve le registre des migrations du runner sur un PostgreSQL jetable : adoption, delta, refus d'un fichier modifié, absent ou inséré dans le passé, migration en échec ni appliquée ni inscrite, chaque garde vue rouge sous dégradation (`CRM-096`) | **disponible** |
 | `scripts/verify-vault.sh` | Rejoue les preuves du chiffrement des secrets : extensions de l'image, chiffrement effectif, cloisonnement par rôle, cycle de vie de la clé racine | **disponible** |
 | `scripts/verify-authz.sh` | Rejoue les preuves des fonctions d'autorisation : suite pgTAP, idempotence, comportement sous PostgREST avec des jetons réels | **disponible** |
 | `supabase/seed/apply-seed.sh` | Applique le seed socle **et le jeu de démonstration** sur la pile de développement | **disponible** |
@@ -247,7 +248,10 @@ L'arrêt propre passe par `./runDev.sh --stop` et `./runProd.sh --stop`.
 la pile, `npm run db:migrate` et `npm run db:seed` ont été annoncés par des versions antérieures de
 ce document : **ils n'existent pas et n'existeront pas**. Deux façades pour un même geste font
 diverger la documentation de l'une des deux. Les migrations sont appliquées par le
-`migrations-runner` au démarrage de la pile, et le seed par `supabase/seed/apply-seed.sh`.
+`migrations-runner` au démarrage de la pile — seules celles qui manquent à son registre, depuis
+`CRM-096` (`docs/DAT.md` §3.2 bis) —, et le seed par `supabase/seed/apply-seed.sh`. Une migration déjà
+appliquée ne se modifie plus : le runner la refuse ; sa correction est une migration nouvelle, et
+`./resetMe.sh` reconstruit la base locale pendant la mise au point d'une migration.
 
 Les commandes `docker compose` sous-jacentes restent utilisables directement :
 
@@ -714,7 +718,7 @@ Livré à ce jour :
 ├── supabase/
 │   ├── docker/                 Configuration Kong et scripts d'initialisation de la base
 │   ├── functions/              Routeur Deno et fonctions edge, montés en lecture seule
-│   ├── migrations/             SQL versionné, rejoué en ordre par `migrations-runner`
+│   ├── migrations/             SQL versionné, appliqué en ordre par `migrations-runner`, qui en tient le registre
 │   ├── seed/                   Seed socle, appliqué par les API réelles (CRM-005)
 │   └── tests/                  Suites pgTAP, une par migration
 ├── stalwart/                   Serveur mail de développement (CRM-050)
@@ -806,7 +810,9 @@ Documentation de référence :
   décrite au §3.1 de `docs/PROD_MIGRATIONS.md` : le geste surcharge `APPLY_MIGRATIONS` pour la
   seule invocation, exige la confirmation que l'instantané de VM est pris (« oui » demandé au
   terminal, `--instantane-verifie` hors terminal), force la recréation du `migrations-runner`, et
-  le runner émet `notify pgrst, 'reload schema'` une seule fois en fin de passage réussi. Le
+  le runner émet `notify pgrst, 'reload schema'` une seule fois en fin de passage réussi. Depuis
+  `CRM-096`, il n'applique que les migrations absentes de son registre et refuse une base dont le
+  registre ne correspond plus aux fichiers livrés. Le
   retour arrière est la **restauration de l'instantané de VM**, qui détruit tout ce qui a été
   écrit depuis. La fenêtre est donc à ouvrir avec l'accès utilisateur fermé, et la restauration
   éprouvée reste à couvrir par `CRM-080`.

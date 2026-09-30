@@ -14,6 +14,8 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+# shellcheck source=scripts/lib/registre.sh
+source scripts/lib/registre.sh
 
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
@@ -52,6 +54,7 @@ appliquer_migration() {
 restaurer() {
 	set +e
 	appliquer_migration >/dev/null 2>&1
+	rejeu_complet_au_prochain_passage
 	docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
 		up --force-recreate migrations-runner >/dev/null 2>&1
 	set -e

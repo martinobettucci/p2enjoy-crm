@@ -12,6 +12,8 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+# shellcheck source=scripts/lib/registre.sh
+source scripts/lib/registre.sh
 
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
@@ -79,6 +81,7 @@ appliquer_migration() {
 # les DEUX fichiers de composition (`docs/CloudWorker.md` §2.2 bis, décisions 471 et 497) : un appel
 # nu recréerait `storage` et `db` sans les surcharges `dev`.
 restaurer_etat_courant() {
+	rejeu_complet_au_prochain_passage || return 1
 	docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
 		up --force-recreate migrations-runner
 }
