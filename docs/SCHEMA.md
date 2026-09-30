@@ -21,7 +21,9 @@ Documents liés : `docs/DAT.md`, `docs/SPEC-permissions-rls.md`, `docs/SPEC-work
 - **Les migrations sont idempotentes.** Le conteneur `migrations-runner` rejoue tout le répertoire
   à chaque démarrage de la pile et ne tient aucun registre : une migration doit pouvoir être
   appliquée plusieurs fois sans erreur ni effet de bord (`docs/DAT.md` §3.2, `docs/JOURNAL.md`
-  décision 20).
+  décision 20). **Révisé par `CRM-096`, à sa livraison** (décision 616, `docs/DAT.md` §3.2 bis) : le
+  runner tient le registre `app.migrations_appliquees` et n'applique plus que les fichiers qui n'y sont
+  pas ; une migration appliquée n'est plus jamais modifiée. L'idempotence reste exigée.
 - **RLS est activée dans la migration qui crée la table**, sans attendre ses politiques. Une table
   livrée avant ses politiques ne retourne donc aucune ligne et refuse toute écriture, plutôt que
   d'être ouverte à quiconque détient la clé anonyme, qui est publique par construction.
@@ -1217,6 +1219,23 @@ figée : une notification masquée ne peut plus être marquée lue (§44.1).
 `p2enjoy-scheduler-heartbeat` de sa cadence d'amorçage à sa cadence horaire. Le catalogue et
 l'historique natifs restent dans le schéma `cron`. Aucun des rôles `anon`, `authenticated` ou
 `service_role` n'a de privilège sur ces objets (`docs/SPEC-scheduler.md`).
+
+### `app.migrations_appliquees` — `CRM-096`, migration `0082` (spécifiée le 2026-09-30, à livrer)
+
+Le registre des migrations du `migrations-runner` (`docs/DAT.md` §3.2 bis, décision 616). Une ligne par
+fichier de `supabase/migrations/` appliqué à la base.
+
+| Colonne | Type | Contrainte |
+|---|---|---|
+| `fichier` | `text` | clé primaire ; `CHECK` sur la forme `^[0-9]{4}_[a-z0-9_]+\.sql$` — le nom seul, sans chemin |
+| `empreinte` | `text` | `NOT NULL` ; `CHECK` sur `^[0-9a-f]{64}$` — SHA-256 du contenu du fichier, en hexadécimal |
+| `mode` | `text` | `NOT NULL` ; `CHECK` sur `('application', 'adoption')` — appliqué sous le registre, ou rejoué avant qu'il existe puis inscrit |
+| `inscrite_le` | `timestamptz` | `NOT NULL`, défaut `now()` |
+
+**Aucun rôle de l'API n'y accède** : RLS activée sans politique, et aucun privilège pour `anon`,
+`authenticated` ni `service_role` ; le schéma `app` n'est pas exposé par PostgREST. Seul le rôle du
+runner y écrit. Pas de `workspace_id` : la table décrit la base, pas un espace de travail. La migration
+est idempotente (`create table if not exists`), comme toutes celles du dépôt.
 
 ---
 

@@ -6960,3 +6960,30 @@ RLS. Suivi : `docs/BACKLOG.md`, « Correctif arbitré le 2026-09-30 — INC-263 
 d'erreur et aucun commentaire ; sa requête, son filtre, son ordre, le `200` et le `[]` sont inchangés.
 Rouge sur `HEAD` avant correction ; vert après ; rouge de nouveau quand le fil rend son état d'erreur pour
 une affaire sans commentaire (mutation de `PanneauTimeline.tsx`, restaurée).
+
+### INC-264 — aucun registre des migrations : la production rejoue les 81 fichiers à chaque fenêtre, contre les prémisses de la décision 20
+
+*Relevée par le responsable le 2026-09-30 (« ne pas tenir de registre des migrations me paraît plutôt
+stupide »), comportement inchangé.* Le `migrations-runner` (`supabase/docker/migrations-runner/
+apply-migrations.sh`) ne tient aucune table de suivi : il rejoue l'intégralité de
+`supabase/migrations/*.sql` à chaque passage. Ce choix est la décision 20 (`docs/JOURNAL.md`), reprise par
+`docs/DAT.md` (« Toute migration du dépôt est idempotente »).
+
+**Les deux prémisses de la décision 20 sont tombées** :
+
+1. « la production n'utilise pas ce chemin » — faux depuis `CRM-087` : `./runProd.sh --spark --migrate`
+   rejoue **tout** le répertoire sur la base de production peuplée (`docs/PROD_MIGRATIONS.md` §3, « elle
+   n'applique donc pas un delta : elle rejoue tout ») ; la fenêtre du 2026-09-29 a rejoué 81 fichiers pour en
+   appliquer un ;
+2. « la première migration qui devra transformer des lignes existantes remettra ce choix en question » —
+   c'est arrivé : des migrations réduisent des contraintes ou suppriment des colonnes (`0054`, `0063`).
+
+**Ce que le rejeu intégral a déjà coûté**, consigné : INC-035, INC-055, INC-195, INC-198, INC-199, INC-210,
+INC-239, INC-240 — chacune une migration qui, rejouée hors de son contexte d'origine, laissait une base dans
+un état que le dépôt ne décrit pas, ou arrêtait le passage. Le rejeu ne détecte pas non plus une migration
+modifiée après son application, ni ne dit quelle migration une base porte : la présence de la 81 en
+production a dû être prouvée le 2026-09-30 par la lecture d'un objet qu'elle crée.
+
+**ARBITRÉE le 2026-09-30 — décision 616 : un registre avec empreinte**, unité `CRM-096`. Spécification :
+`docs/DAT.md` §3.2 bis, `docs/SCHEMA.md` §8 (`app.migrations_appliquees`). Suivi : `docs/BACKLOG.md`,
+`CRM-096`, tranches T1 à T4.

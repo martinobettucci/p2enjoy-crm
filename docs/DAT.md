@@ -301,6 +301,45 @@ privilèges par défaut de l'image : `SELECT` est accordé à `anon` et `authent
 refus de lecture se manifeste par zéro ligne et non par une erreur de privilège
 (`docs/SPEC-permissions-rls.md` §7).
 
+#### 3.2 bis Le registre des migrations — `CRM-096`, décision 616 (spécifié le 2026-09-30, à livrer)
+
+*Remplace la décision 20 à sa livraison. Jusque-là, le paragraphe « Toute migration du dépôt est
+idempotente » ci-dessus décrit le comportement réel.* Motif : INC-264 — la production rejoue les 81
+fichiers à chaque fenêtre, et huit incidents consignés viennent de ce rejeu.
+
+**La table.** `app.migrations_appliquees` (`docs/SCHEMA.md` §8), créée par la migration `0082` :
+une ligne par fichier appliqué — son nom, l'**empreinte SHA-256** de son contenu, la date, et le mode
+d'inscription (`application` ou `adoption`). Aucun rôle de l'API n'y accède ; le schéma `app` n'est pas
+exposé par PostgREST.
+
+**Le passage du runner**, dans cet ordre, avant d'appliquer quoi que ce soit :
+
+1. **Contrôle des fichiers inscrits.** Chaque ligne du registre doit désigner un fichier présent, de
+   même empreinte. Un fichier inscrit **modifié** ou **absent** arrête le passage : code non nul, le
+   fichier et le motif nommés, rien d'appliqué, aucun `notify`. Une base porte ce que ses fichiers
+   disaient au moment de leur application ; les réécrire après coup la ferait diverger du dépôt
+   sans que rien ne le dise.
+2. **Contrôle de l'ordre.** Un fichier non inscrit dont le nom précède celui du dernier fichier inscrit
+   arrête le passage de la même façon : une migration insérée dans le passé s'appliquerait après
+   celles qu'elle devait précéder.
+3. **Application du delta.** Chaque fichier non inscrit est appliqué, en ordre lexicographique, dans
+   **une seule transaction avec son inscription** (mode `application`) : il est appliqué et inscrit,
+   ou ni l'un ni l'autre. Le premier échec arrête le passage.
+4. **Rechargement du cache** de PostgREST, une fois, après un passage réussi — inchangé (`CRM-087`).
+
+**L'adoption.** Tant que la table n'existe pas — une base antérieure à `CRM-096`, ou une base neuve —,
+le runner rejoue les fichiers comme aujourd'hui, ce que l'idempotence de chacun rend sûr. Dès que la
+`0082` a créé la table, il y inscrit en mode `adoption` les fichiers déjà rejoués pendant ce passage,
+puis continue en mode `application`. Un échec avant la fin n'inscrit rien : le passage suivant
+recommence l'adoption.
+
+**Ce qui change pour qui écrit une migration.** Une migration appliquée n'est plus jamais modifiée : sa
+correction est une migration nouvelle. En développement, modifier un fichier déjà appliqué à la base
+locale — pendant la mise au point d'une migration, par exemple — est refusé comme en production ; le
+refus nomme `./resetMe.sh`, qui reconstruit la base. **L'idempotence reste exigée** et vérifiée par
+`scripts/verify-migrations.sh` : l'adoption rejoue tout une dernière fois, et les harnais rejouent des
+migrations isolées hors du runner.
+
 ### 3.3 `mail-sync` — service Python
 
 Seul composant autorisé à parler IMAP et SMTP. Quatre responsabilités :

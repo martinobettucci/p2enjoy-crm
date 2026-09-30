@@ -30497,3 +30497,38 @@ après correction ; une mutation qui rend l'état d'erreur pour une affaire sans
 Campagne `verify-webapp.sh` sur la base reconstruite, INC-262 et INC-263 compris : **44 contrôles, aucune
 anomalie** — 3403 tests unitaires, 782 scénarios E2E ; les captures, inchangées hors horodatage, sont rendues
 à leur version committée.
+
+## décision 616 — INC-264 : un registre des migrations, avec empreinte (`CRM-096`)
+
+*2026-09-30 ; relevée et arbitrée par le responsable (« ne pas tenir de registre des migrations me paraît
+plutôt stupide »).*
+
+**Problème.** Le `migrations-runner` rejoue tout `supabase/migrations/` à chaque passage (décision 20). La
+décision reposait sur deux prémisses : « la production n'utilise pas ce chemin », fausse depuis `CRM-087` —
+la fenêtre du 2026-09-29 a rejoué 81 fichiers sur la base de production peuplée pour en appliquer un — ; et
+« la première migration qui devra transformer des lignes existantes remettra ce choix en question », ce qui
+est arrivé (`0054`, `0063`). Huit incidents consignés viennent du rejeu intégral (INC-035, INC-055,
+INC-195, INC-198, INC-199, INC-210, INC-239, INC-240). Sans registre, rien ne dit quelle migration porte une
+base : la présence de la 81 en production a dû être prouvée par la lecture d'un objet qu'elle crée.
+
+**Options soumises.** Un registre avec empreinte SHA-256, qui refuse un fichier appliqué puis modifié —
+recommandée ; un registre sans empreinte ; garder le rejeu intégral et réécrire la décision 20. **Décision du
+responsable : le registre avec empreinte.**
+
+**Choix de conception**, arrêtés en l'écrivant (`docs/DAT.md` §3.2 bis, `docs/SCHEMA.md` §8) :
+
+- la table `app.migrations_appliquees` naît d'une migration versionnée, la `0082`, et non du runner : tout
+  changement de schéma est une migration (`CLAUDE.md` §24) ;
+- l'**adoption** d'une base sans registre est un dernier rejeu complet — le chemin d'aujourd'hui, sûr par
+  l'idempotence vérifiée —, suivi de l'inscription des fichiers rejoués ; aucune inscription « sur parole »
+  d'un fichier qui n'aurait pas été rejoué ;
+- trois refus avant toute application : fichier inscrit modifié, fichier inscrit absent, fichier non inscrit
+  antérieur au dernier inscrit ;
+- l'idempotence reste exigée : l'adoption et les harnais rejouent encore des migrations.
+
+**Conséquences.** Une migration appliquée n'est plus jamais corrigée en place : la pratique des corrections
+d'INC-239 et d'INC-240, qui modifiaient des fichiers anciens, devient une migration nouvelle. En
+développement, modifier une migration déjà appliquée à la base locale impose `./resetMe.sh`. La décision 20
+est **remplacée** à la livraison de `CRM-096`. Découpage en quatre tranches, persisté dans `docs/BACKLOG.md` :
+T1 la migration, T2 le runner, T3 la pile de développement et la documentation, T4 la production par une
+fenêtre avec instantané.

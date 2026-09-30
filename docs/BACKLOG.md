@@ -14786,6 +14786,39 @@ que le guide et le board le promettaient (INC-256). Spécifié avant le code : `
       (`docs/PROD_MIGRATIONS.md` §8). **Reste** : le constat — la première affaire créée par le
       responsable.
 
+### CRM-096 — Le registre des migrations `[ ]`
+*Créée le 2026-09-30 — décision 616, arbitrage du responsable (INC-264). Le runner rejoue les 81 fichiers à
+chaque fenêtre, production comprise, faute de registre ; les deux prémisses de la décision 20 sont
+tombées. Spécifié avant le code : `docs/DAT.md` §3.2 bis, `docs/SCHEMA.md` §8
+(`app.migrations_appliquees`), `docs/JOURNAL.md` décision 616.*
+
+**DoD** : le runner n'applique que les fichiers absents du registre, chacun dans une seule transaction avec
+son inscription ; il refuse, avant toute application, un fichier inscrit modifié ou absent et un fichier non
+inscrit qui précède le dernier inscrit ; une base sans registre est adoptée par un dernier rejeu complet ;
+aucun rôle de l'API n'atteint le registre ; la production porte un registre de 82 lignes dont les empreintes
+sont celles des fichiers du dépôt.
+
+- [ ] **T1** — migration `0082_registre_migrations.sql` : la table, RLS sans politique, aucun privilège
+      pour `anon`, `authenticated` ni `service_role`. Preuves : suite pgTAP (forme, contraintes, privilèges),
+      refus d'API aux jetons réels (la table n'est atteignable ni par PostgREST ni en SQL sous
+      `authenticated`), idempotence par `scripts/verify-migrations.sh`.
+- [ ] **T2** — le runner (`supabase/docker/migrations-runner/apply-migrations.sh`) : contrôle des fichiers
+      inscrits, contrôle de l'ordre, application du delta avec inscription transactionnelle, adoption.
+      Preuves sur une base jetable, par migrations de fixture, dans le harnais du runner
+      (`scripts/verify-scripts.sh`) : base neuve ; second passage qui n'applique rien — une fixture NON
+      idempotente le prouve ; fichier nouveau seul appliqué ; fichier inscrit modifié, fichier inscrit
+      absent, fichier inséré dans le passé : trois refus sans application ni `notify` ; migration en échec
+      ni appliquée ni inscrite ; adoption d'une base peuplée sans registre. Chaque garde vue rouge sous
+      mutation.
+- [ ] **T3** — de bout en bout sur la pile de développement : `./resetMe.sh` puis registre de 82 lignes aux
+      empreintes du dépôt ; `./runDev.sh` relancé n'applique rien ; campagnes `verify-harness.sh` et
+      `verify-webapp.sh`. Documentation : `docs/DAT.md` §3.2 et §9, `docs/SCHEMA.md` (conventions),
+      `docs/PROD_MIGRATIONS.md` §3.1 et §3.2, `README.md`, `CHANGELOG.md` ; la décision 20 marquée
+      remplacée.
+- [ ] **T4** — production : fenêtre de maintenance avec instantané de VM confirmé par le responsable ;
+      l'adoption rejoue une dernière fois les 82 fichiers et les inscrit ; constat en lecture seule du
+      registre — 82 lignes, empreintes égales à celles du dépôt livré — ; `verifier.sh`.
+
 ## Arbitrage du 2026-09-29 — INC-257 (décision 610)
 
 - [ ] **INC-257 — la preuve B5 « aucune card archivée n'est vieillie par le seed » mesure le temps

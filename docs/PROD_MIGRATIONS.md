@@ -271,6 +271,11 @@ affaires créées restent, ce sont des données.
 (`CRM-095`, décision 609), appliquée le 2026-09-29 (§2.8, §8) ; la 80 (`CRM-094`) l'avait été le
 2026-09-28 (§2.7), les six migrations de `CRM-092` (74 à 79) le 2026-09-24 par la reprise (§2.5).
 
+**Annoncée, non encore écrite : `CRM-096`, le registre des migrations** (décision 616, `docs/DAT.md`
+§3.2 bis). Sa livraison demandera une fenêtre de maintenance avec instantané : la migration `0082` crée
+`app.migrations_appliquees`, et ce passage d'**adoption** rejoue une dernière fois tout le répertoire avant
+d'inscrire les 82 fichiers. Les fenêtres suivantes n'appliqueront plus que les fichiers absents du registre.
+
 ### 3.1 Procédure nominale — la fenêtre de maintenance (`CRM-087`, livrée)
 
 Le `migrations-runner` rejoue **l'intégralité** de `supabase/migrations/*.sql` en ordre
