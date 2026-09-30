@@ -33,10 +33,10 @@ source d'identité.
 | Élément | État |
 |---|---|
 | Environnement de production | Cellule Spark `crm` (`docs/SPEC-deploiement-spark.md`), assemblage à trois fichiers : neuf services sains et deux conteneurs à usage unique (runner, bucket) ; GoTrue retiré le 2026-09-24 |
-| Schéma appliqué | Les **81 migrations** du dépôt : 1 à 73 par `--migrate --premier-deploiement` sur une base mesurée vierge (2026-09-23), 74 à 79 par la reprise `CRM-092` (2026-09-24), 80 par `CRM-094` (2026-09-28), 81 par `CRM-095` (2026-09-29) |
-| Dernière migration appliquée | `0081_creer_affaire.sql` — relue en base le 2026-09-29 : `anon` sans `EXECUTE`, `authenticated` avec, `SECURITY INVOKER`, `search_path` vide ; l'appel anonyme par la route publique rend `401` / `42501` |
-| Version déployée | La révision inscrite dans `/srv/crm/REVISION` — celle que `scripts/spark/verifier.sh` compare au `HEAD` du poste ; **`09d3abcc`** le 2026-09-30 (INC-262 et INC-263, après `CRM-095` et INC-258 à INC-261 — `796aa3c1`, migration 81 — puis `CRM-094`, INC-254 et INC-255) |
-| Données | Un espace, « P2Enjoy CRM » (`crm`), réamorcé par la reprise `CRM-092` ; un profil, celui du responsable, administrateur depuis sa première connexion LeLabs ; aucune autre donnée, aucun seed. La ligne `auth.users` de l'ancien compte invité reste, inerte |
+| Schéma appliqué | Les **82 migrations** du dépôt : 1 à 73 par `--migrate --premier-deploiement` sur une base mesurée vierge (2026-09-23), 74 à 79 par la reprise `CRM-092` (2026-09-24), 80 par `CRM-094` (2026-09-28), 81 par `CRM-095` (2026-09-29), 82 par `CRM-096` (2026-10-01). **Le registre `app.migrations_appliquees` le dit** depuis le 2026-10-01 : 82 lignes inscrites en `adoption`, empreintes égales à celles du dépôt livré |
+| Dernière migration appliquée | `0082_registre_migrations.sql` — relue en base le 2026-10-01 : le registre existe, 82 lignes ; par la route publique et la clé anonyme, `PGRST205` sur le schéma exposé et `PGRST106` sur le schéma `app` — introuvable par l'API |
+| Version déployée | La révision inscrite dans `/srv/crm/REVISION` — celle que `scripts/spark/verifier.sh` compare au `HEAD` du poste ; **`2ff0c703`** le 2026-10-01 (`CRM-096`, migration 82 ; après INC-262 et INC-263 — `09d3abcc` —, `CRM-095` et INC-258 à INC-261 — `796aa3c1`, migration 81 —, `CRM-094`, INC-254 et INC-255) |
+| Données | Un espace, « P2Enjoy CRM » (`crm`), réamorcé par la reprise `CRM-092`, et les données qu'y écrit le responsable — relevé du 2026-10-01, en lecture seule : 2 profils, 2 workflows dont celui de départ, 8 affaires ; aucun seed. La ligne `auth.users` de l'ancien compte invité reste, inerte |
 | Route publique | `crm.lelabs.tech 8080 tls`, active : `https://crm.lelabs.tech`, certificat Let's Encrypt présenté par la Forge (décision 576) |
 | Client OIDC `lelabs-crm` | Déclaré et créé au realm le 2026-09-23 à 16:08:44 (`docs/SSO-client-lelabs-crm.md`), **supprimé du realm avant le déploiement de `CRM-092`** : sonde `400` « Client non trouvé » le 2026-09-24 à 18 h, retrait confirmé par l'instantané de reprise du dépôt du SSO (décision 598). Sans effet sur le service : aucune connexion n'avait encore été faite, elle attend `CRM-092` (§3) |
 | Client OIDC `lelabs-crm-serveur` | **Déclaré et créé** : sonde `302` vers `https://crm.lelabs.tech/auth/retour`, PKCE exigé, le 2026-09-24 (décision 598). Son secret est **saisi** dans la cellule (relu le 2026-09-24, présence seule, décision 599) ; `SSO_OIDC_CLIENT_ID` y vaut encore `lelabs-crm` (§2.5, étapes 2 et 3) |
@@ -230,7 +230,7 @@ connexion tombe. Aucune migration.
 **Retour arrière** : avant l'étape 6, relivrer la révision précédente suffit — l'ancien nom est encore
 là. Après, recopier la valeur sous l'ancien nom avant de relivrer.
 
-### 2.7 `CRM-094` — le workflow de départ et le guide flottant (EXÉCUTÉE le 2026-09-28, sauf le geste 4 du responsable)
+### 2.7 `CRM-094` — le workflow de départ et le guide flottant (EXÉCUTÉE le 2026-09-28 ; geste 4 constaté le 2026-10-01)
 
 `docs/SPEC-onboarding.md` §10, `docs/SPEC-workflow-engine.md` §7 quater ; décisions 606 et 607. Une
 migration, pure addition d'une fonction ; aucune variable, aucun service nouveau. La webapp des tranches
@@ -247,7 +247,7 @@ signal entre écrans vit dans le navigateur, il n'ajoute rien à la cellule.
 **Retour arrière** : la 80 se retire par sa ligne du §3.2 ; les workflows posés restent, ce sont des
 données.
 
-### 2.8 `CRM-095` — créer une affaire depuis le board (EXÉCUTÉE le 2026-09-29, sauf le geste 4 du responsable)
+### 2.8 `CRM-095` — créer une affaire depuis le board (EXÉCUTÉE le 2026-09-29 ; geste 4 constaté le 2026-10-01)
 
 `docs/SPEC-cards.md` §18, `docs/SPEC-onboarding.md` §10.7 ; décision 609. Une migration, pure addition
 d'une fonction ; aucune variable, aucun service nouveau. La webapp de l'unité — le bouton « Nouvelle
@@ -267,16 +267,15 @@ affaires créées restent, ce sont des données.
 
 ## 3. Migrations en attente
 
-**En attente : la migration 82** (`CRM-096`, décision 616), avec le runner qui la lit — à livrer ensemble
-par la tranche T4, dans une fenêtre avec instantané. Baseline de production : la migration **81**
-(`CRM-095`, décision 609), appliquée le 2026-09-29 (§2.8, §8) ; la 80 (`CRM-094`) l'avait été le
-2026-09-28 (§2.7), les six migrations de `CRM-092` (74 à 79) le 2026-09-24 par la reprise (§2.5).
+**Aucune migration en attente depuis le 2026-10-01.** Baseline de production : la migration **82**
+(`CRM-096`, décision 616), appliquée le 2026-10-01 par une fenêtre avec instantané (§8) ; la 81 (`CRM-095`)
+l'avait été le 2026-09-29 (§2.8), la 80 (`CRM-094`) le 2026-09-28 (§2.7), les six migrations de `CRM-092`
+(74 à 79) le 2026-09-24 par la reprise (§2.5). **Le registre de production fait désormais foi** : la
+prochaine fenêtre n'appliquera que les fichiers qui n'y sont pas.
 
-**`CRM-096`, le registre des migrations** (décision 616, `docs/DAT.md` §3.2 bis) : la `0082` et le runner
-qui l'alimente sont écrits et prouvés en développement (T1 à T3). Leur livraison (T4) est une fenêtre de
-maintenance avec instantané : ce passage d'**adoption** rejoue une dernière fois tout le répertoire, puis
-inscrit les 82 fichiers. Les fenêtres suivantes n'appliqueront plus que les fichiers absents du registre
-(§3.1).
+**`CRM-096`, le registre des migrations** (décision 616, `docs/DAT.md` §3.2 bis) : livré le 2026-10-01.
+Sa fenêtre était une **adoption** — tout le répertoire rejoué une dernière fois, puis les 82 fichiers
+inscrits. Les fenêtres suivantes n'appliquent plus que les fichiers absents du registre (§3.1).
 
 ### 3.1 Procédure nominale — la fenêtre de maintenance (`CRM-087`, livrée)
 
@@ -1197,3 +1196,21 @@ Webapp seule : aucune migration, aucune variable, aucun service nouveau ; INC-26
 test. `scripts/spark/livrer.sh` par les IP, révision **`09d3abcc`**, image Realtime identique,
 `./runProd.sh --spark` enchaîné par le script ; `verifier.sh` : **26 contrôles, aucune anomalie**. La route
 publique sert le module d'objectifs de ce build (`200`). La baseline reste **81**.
+
+### `CRM-096` — le registre des migrations, 2026-10-01 (décision 616)
+
+- **Geste 1** : instantané de VM pris par le responsable avant la fenêtre (confirmé le 2026-10-01).
+- **Geste 2** : `scripts/spark/livrer.sh -- --migrate --instantane-verifie` par les IP : révision
+  **`2ff0c703`**, image Realtime identique, « Migrations appliquées avec succès ». Journal du runner dans la
+  cellule : « registre absent ou vide — adoption : rejeu complet de 82 fichier(s) », puis « 82 fichier(s)
+  inscrit(s) au registre en mode adoption ». Puis `./runProd.sh --spark` dans la cellule.
+- **Geste 3** : `verifier.sh` — **26 contrôles, aucune anomalie**. Registre relu en lecture seule : **82
+  lignes**, toutes en `adoption`, et leurs empreintes vérifiées par `sha256sum -c` contre les fichiers du dépôt
+  livré — **conformes** ; par la route publique et la clé anonyme, `PGRST205` sur le schéma exposé et
+  `PGRST106` sur le schéma `app`.
+- **Constats des gestes 4 de `CRM-094` et `CRM-095`**, relus en lecture seule le même jour : le workflow de
+  départ « Cycle commercial » (le geste de la migration 80) créé le 2026-09-28 à 02:52 sur une base qui n'en
+  avait aucun ; **huit affaires** créées du 2026-09-29 16:12 au 2026-09-30 17:37, toutes entrées par l'étape
+  initiale de leur workflow — deux par l'administrateur de l'espace, six par un second profil **sans ligne
+  d'appartenance** à l'espace. La règle du domaine (décision 597), qui fait administrateur par le jeton, est
+  le seul chemin connu qui le permette : **hypothèse non vérifiée**, à confirmer par le responsable.

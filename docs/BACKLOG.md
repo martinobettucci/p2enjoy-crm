@@ -14676,7 +14676,7 @@ que le refus serveur reste la seule règle (`CLAUDE.md` §10).*
       selon `mon_role_espace`, états, preuves.
 - [ ] Mise en œuvre, preuves unitaires et E2E par rôle, captures, manuel, redéploiement.
 
-### CRM-094 — Démarrer un espace neuf : le workflow de départ et le guide flottant `[~]`
+### CRM-094 — Démarrer un espace neuf : le workflow de départ et le guide flottant `[x]`
 *Créée le 2026-09-28 — décision 606, arbitrages du responsable. Relevé en production : dans un espace
 neuf, impossible de créer un channel — aucun workflow ni aucun nœud de catalogue n'existe, et le guide
 n'en disait rien ; et le guide « se perd » dès qu'on suit l'un de ses liens. Spécifié avant le code :
@@ -14702,8 +14702,12 @@ et §5.49.*
       — 3 342 tests unitaires, **765** scénarios d'interface ; captures `docs/captures/CRM-094/` observées
       aux quatre paliers. Laissé ouvert et consigné : INC-254 (barre latérale périmée après la création
       d'un track), antérieur à l'unité.
-- [ ] **T4** — livraison en production (migration 80) et constat : l'administrateur crée son workflow
+- [x] **T4** — livraison en production (migration 80) et constat : l'administrateur crée son workflow
       de départ puis son premier channel depuis le guide.
+      **Constaté le 2026-10-01**, en lecture seule (`docs/PROD_MIGRATIONS.md` §8) : le workflow de départ
+      « Cycle commercial » — celui que pose `creer_workflow_de_depart` — créé le 2026-09-28 à 02:52 sur une
+      base qui n'en avait aucun, et les channels créés depuis. Le chemin suivi, le guide ou non, ne se lit
+      pas en base : seul l'effet est constaté.
 
 
 ## Correctif arbitré le 2026-09-28 — décision 608
@@ -14731,7 +14735,7 @@ et §5.49.*
       mutation ; campagne `verify-webapp.sh` **44 contrôles sans anomalie**, 3 355 tests unitaires,
       **766** scénarios d'interface ; captures `docs/captures/CRM-094/premier-lancement-*` observées.
 
-### CRM-095 — Créer une affaire depuis le board `[~]`
+### CRM-095 — Créer une affaire depuis le board `[x]`
 *Créée le 2026-09-28 — décision 609, arbitrages du responsable. Aucune surface ne créait d'affaire, alors
 que le guide et le board le promettaient (INC-256). Spécifié avant le code : `docs/SPEC-cards.md` §18,
 `docs/SPEC-onboarding.md` §10.7, `docs/DESIGN_SYSTEM.md` §5.2 et §5.50.*
@@ -14780,13 +14784,15 @@ que le guide et le board le promettaient (INC-256). Spécifié avant le code : `
       `verify-harness.sh` **32 contrôles sans anomalie** : pgTAP 75 / 3275, **1088** scénarios d'API,
       **778** d'interface, 42 de messagerie, **3 394** tests unitaires ; 57 captures renouvelées, dont
       le board et la vue liste, qui portent désormais la commande.
-- [~] **T4** — livraison en production (migration 81) et constat : le responsable crée sa première affaire.
+- [x] **T4** — livraison en production (migration 81) et constat : le responsable crée sa première affaire.
       **Livré le 2026-09-29** : révision `796aa3c1`, migration 81 appliquée après instantané, `verifier.sh`
       26 contrôles sans anomalie, ligne 81 relue en base et refus anonyme `401` / `42501`
-      (`docs/PROD_MIGRATIONS.md` §8). **Reste** : le constat — la première affaire créée par le
-      responsable.
+      (`docs/PROD_MIGRATIONS.md` §8). **Constaté le 2026-10-01**, en lecture seule : huit affaires créées
+      du 2026-09-29 16:12 au 2026-09-30 17:37, **toutes entrées par l'étape initiale** de leur workflow — deux
+      par l'administrateur de l'espace, six par un second profil sans ligne d'appartenance (hypothèse de la
+      règle du domaine, décision 597, à confirmer par le responsable).
 
-### CRM-096 — Le registre des migrations `[ ]`
+### CRM-096 — Le registre des migrations `[x]`
 *Créée le 2026-09-30 — décision 616, arbitrage du responsable (INC-264). Le runner rejoue les 81 fichiers à
 chaque fenêtre, production comprise, faute de registre ; les deux prémisses de la décision 20 sont
 tombées. Spécifié avant le code : `docs/DAT.md` §3.2 bis, `docs/SCHEMA.md` §8
@@ -14831,9 +14837,13 @@ sont celles des fichiers du dépôt.
       restauration n'appliquait rien — mesuré — ; tous verts. Sur base reconstruite : `verify-harness.sh`
       **32 contrôles, aucune anomalie** (SQL 76 / 3297, API 1090, interface 782, messagerie 42),
       `verify-webapp.sh` **44, aucune anomalie**.
-- [ ] **T4** — production : fenêtre de maintenance avec instantané de VM confirmé par le responsable ;
+- [x] **T4** — production : fenêtre de maintenance avec instantané de VM confirmé par le responsable ;
       l'adoption rejoue une dernière fois les 82 fichiers et les inscrit ; constat en lecture seule du
       registre — 82 lignes, empreintes égales à celles du dépôt livré — ; `verifier.sh`.
+      **Fait le 2026-10-01** : instantané confirmé, `livrer.sh -- --migrate --instantane-verifie`, révision
+      `2ff0c703` ; le runner de la cellule a adopté la base (« 82 fichier(s) inscrit(s) au registre en mode
+      adoption ») ; `verifier.sh` 26 contrôles sans anomalie ; registre relu — 82 lignes en `adoption`,
+      `sha256sum -c` conforme au dépôt livré — ; API publique : `PGRST205` et `PGRST106`.
 
 ## Arbitrage du 2026-09-29 — INC-257 (décision 610)
 

@@ -6987,3 +6987,9 @@ production a dû être prouvée le 2026-09-30 par la lecture d'un objet qu'elle 
 **ARBITRÉE le 2026-09-30 — décision 616 : un registre avec empreinte**, unité `CRM-096`. Spécification :
 `docs/DAT.md` §3.2 bis, `docs/SCHEMA.md` §8 (`app.migrations_appliquees`). Suivi : `docs/BACKLOG.md`,
 `CRM-096`, tranches T1 à T4.
+
+**CORRIGÉE le 2026-10-01** (`CRM-096`, T1 à T4). Le runner tient le registre `app.migrations_appliquees` et
+n'applique plus que les fichiers qui n'y sont pas ; il refuse un fichier inscrit modifié ou absent et un
+fichier inséré dans le passé. La production a été adoptée par une fenêtre avec instantané : 82 fichiers
+inscrits, empreintes conformes au dépôt livré. Conséquence trouvée en chemin et traitée : seize harnais qui
+restauraient la base par le runner vident d'abord le registre de développement (`scripts/lib/registre.sh`).

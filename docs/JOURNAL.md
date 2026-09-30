@@ -30611,3 +30611,18 @@ par le nouveau chemin. Sa cause n'est pas établie.
 **32 contrôles, aucune anomalie** — SQL 76 fichiers / 3297 assertions, API 1090, interface 782, messagerie
 42, unitaires 3403 — ; `verify-webapp.sh` **44 contrôles, aucune anomalie**. Captures inchangées hors
 horodatage, rendues à leur version committée.
+
+**`CRM-096` T4, le 2026-10-01 — en production.** Instantané de VM confirmé par le responsable ;
+`livrer.sh -- --migrate --instantane-verifie` par les IP, révision `2ff0c703`. Le runner de la cellule, sans
+registre, a adopté la base : rejeu complet de 82 fichiers, puis 82 inscriptions en mode `adoption`.
+`./runProd.sh --spark`, puis `verifier.sh` : 26 contrôles, aucune anomalie. Registre relu en lecture seule :
+82 lignes, empreintes conformes aux fichiers du dépôt livré (`sha256sum -c`) ; par la route publique et la
+clé anonyme, `PGRST205` puis `PGRST106`. La prochaine fenêtre n'appliquera que les fichiers absents.
+
+*Constats de `CRM-094` T4 et `CRM-095` T4*, relus en lecture seule le même jour : le workflow de départ
+« Cycle commercial » posé le 2026-09-28 à 02:52 ; huit affaires créées du 2026-09-29 16:12 au 2026-09-30
+17:37, toutes entrées par l'étape initiale. **Observation** : deux affaires viennent de l'administrateur de
+l'espace, six d'un second profil **sans ligne d'appartenance** à l'espace ; la règle du domaine
+(décision 597) est le seul chemin connu qui le permette — hypothèse, non vérifiée, soumise au responsable.
+Les deux unités passent à `[x]` ; le `CHANGELOG` publie `CRM-094`, INC-254, INC-255, `CRM-095` et `CRM-096`.
+INC-262, livrée le 2026-09-30, reste « non publiée » jusqu'au constat du responsable sur son canevas.

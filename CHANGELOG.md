@@ -13,10 +13,37 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-096` — Le registre des migrations
+### Correctif du 2026-09-30 — INC-262 (décision 614)
 
-*Décision 616 (INC-264). Migration **82** à appliquer en production par la tranche T4, dans une fenêtre
-avec instantané (`docs/PROD_MIGRATIONS.md` §3).*
+*Livré en production le 2026-09-30 (`09d3abcc`, webapp seule) ; publié quand le responsable aura constaté
+la pose d'un bloc sur son canevas.*
+
+- **Poser un bloc d'objectif ne demande plus de le chercher.** « Poser un bloc » place le repère sur la
+  première place libre de la partie visible du canevas, sans le faire défiler ; le repère suit la souris,
+  et toute la partie visible reçoit le clic. Il partait d'un point fixe, par-dessus le premier bloc.
+- **Le bloc posé est aussitôt désigné** : sa fiche s'ouvre à la place de celle du bloc précédent, le focus
+  entre dans son titre, sélectionné — la frappe le remplace, `Entrée` l'enregistre.
+- **Le bloc qu'on travaille passe devant les autres** : celui dont la fiche est ouverte, et celui qu'on
+  déplace ou redimensionne. L'ordre de tabulation reste celui de la lecture.
+- **Pendant la pose, un clic sur un bloc existant pose seulement** ; il ouvrait en plus la fiche du bloc
+  cliqué.
+
+## [Publié]
+
+### Déployé en production, 2026-10-01
+
+Cellule Spark `crm`. Livraisons successives : `CRM-094` et INC-254 le 2026-09-28 (`99c12a26`, migration 80),
+INC-255 et `CRM-095` le 2026-09-29 (`4a6ff092`, puis `796aa3c1`, migration 81), et `CRM-096` le 2026-10-01
+(`2ff0c703`, migration 82, fenêtre avec instantané). **Vérifié** : `verifier.sh` 26 contrôles sans anomalie
+après chaque livraison ; le registre de production relu — 82 fichiers inscrits en adoption, empreintes égales
+à celles du dépôt livré, table introuvable par l'API publique ; les gestes du responsable constatés en base,
+en lecture seule — le workflow de départ « Cycle commercial » posé le 2026-09-28, et huit affaires créées
+depuis l'écran du 2026-09-29 au 2026-09-30, toutes entrées par l'étape initiale de leur workflow.
+
+#### `CRM-096` — Le registre des migrations
+
+*Décision 616 (INC-264). Migration **82** appliquée le 2026-10-01 par une fenêtre avec instantané ; le
+registre de production porte les 82 fichiers aux empreintes du dépôt livré.*
 
 - **La table du registre**, `app.migrations_appliquees` (migration `0082`) : une ligne par migration
   appliquée, avec l'empreinte SHA-256 de son fichier. Aucun rôle de l'API n'y accède.
@@ -29,21 +56,9 @@ avec instantané (`docs/PROD_MIGRATIONS.md` §3).*
   migration nouvelle ; `./resetMe.sh` reconstruit la base locale pendant la mise au point. Les harnais qui
   restaurent la base par le runner vident d'abord le registre de développement.
 
-### Correctif du 2026-09-30 — INC-262 (décision 614)
+#### `CRM-095` — Créer une affaire depuis le board
 
-- **Poser un bloc d'objectif ne demande plus de le chercher.** « Poser un bloc » place le repère sur la
-  première place libre de la partie visible du canevas, sans le faire défiler ; le repère suit la souris,
-  et toute la partie visible reçoit le clic. Il partait d'un point fixe, par-dessus le premier bloc.
-- **Le bloc posé est aussitôt désigné** : sa fiche s'ouvre à la place de celle du bloc précédent, le focus
-  entre dans son titre, sélectionné — la frappe le remplace, `Entrée` l'enregistre.
-- **Le bloc qu'on travaille passe devant les autres** : celui dont la fiche est ouverte, et celui qu'on
-  déplace ou redimensionne. L'ordre de tabulation reste celui de la lecture.
-- **Pendant la pose, un clic sur un bloc existant pose seulement** ; il ouvrait en plus la fiche du bloc
-  cliqué.
-
-### `CRM-095` — Créer une affaire depuis le board
-
-*Décisions 609, 611 et 612. Migration **81** à appliquer en production (`docs/PROD_MIGRATIONS.md` §2.8).*
+*Décisions 609, 611 et 612. Migration **81** appliquée le 2026-09-29 (`docs/PROD_MIGRATIONS.md` §2.8).*
 
 - **Le geste serveur de création d'une affaire** : fonction `public.creer_affaire` (migration `0081`),
   avec le titre seul ; l'affaire naît à l'**étape initiale** du workflow de son channel — règle que rien
@@ -66,14 +81,14 @@ avec instantané (`docs/PROD_MIGRATIONS.md` §3).*
 - **La recherche de l'en-tête se referme quand on la quitte au clavier** (`Tab`, `Maj+Tab`), au lieu de
   rester ouverte par-dessus les onglets (INC-260).
 
-### Correctif du 2026-09-29 — INC-255 (décision 609)
+#### Correctif du 2026-09-29 — INC-255 (décision 609)
 
 - **Le canevas d'objectifs montre aussitôt ce qu'on écrit sur un bloc qu'on vient de poser** : le channel
   visé reste choisi et sa pilule paraît sur le bloc, un titre écrit le renomme ; de même, la direction
   corrigée d'une flèche qu'on vient de tracer. Tout était enregistré, mais ne s'affichait qu'après
   rechargement — « la sélection ne persiste pas ».
 
-### Correctif arbitré le 2026-09-28 — INC-254 (décision 608)
+#### Correctif arbitré le 2026-09-28 — INC-254 (décision 608)
 
 - **La barre latérale suit l'administration de l'arborescence** : un track créé, renommé, recoloré,
   réordonné, archivé, désarchivé ou mis à la corbeille — ou restauré depuis la corbeille — y paraît, y
@@ -81,9 +96,9 @@ avec instantané (`docs/PROD_MIGRATIONS.md` §3).*
   track tant qu'on restait dans les réglages. La mise à jour garde l'ancienne liste affichée : aucun
   clignotement.
 
-### `CRM-094` — Démarrer un espace neuf : le workflow de départ et le guide flottant
+#### `CRM-094` — Démarrer un espace neuf : le workflow de départ et le guide flottant
 
-*Décisions 606 et 607. Migration **80** à appliquer en production (`docs/PROD_MIGRATIONS.md` §2.7).*
+*Décisions 606 et 607. Migration **80** appliquée le 2026-09-28 (`docs/PROD_MIGRATIONS.md` §2.7).*
 
 - **Un espace neuf peut enfin recevoir son premier channel.** Il n'avait ni workflow ni nœud de
   catalogue — le workflow par défaut ne venait que du jeu de démonstration —, et un channel exige un
@@ -102,8 +117,6 @@ avec instantané (`docs/PROD_MIGRATIONS.md` §3).*
   la session seulement (T3).
 - **L'écran ouvert sous le panneau se met à jour** quand le workflow de départ est posé : éditeur de
   workflows, catalogue de nœuds, formulaire de channel ouvert — dont la saisie est conservée (T2).
-
-## [Publié]
 
 ### Déployé en production, 2026-09-27
 
