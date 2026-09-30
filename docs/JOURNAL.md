@@ -30470,3 +30470,22 @@ date, sont rendues à leur version committée. `pose-repere-1440` montrait « An
 fondu, texte pâle sur fond bleu : la capture tombait plus tôt depuis que le repère ne fait plus défiler le
 canevas. Le scénario attend désormais la fin des animations de la commande, comme `guide-flottant.spec.ts`
 pour son panneau ; la capture refaite est observée.
+
+## décision 615 — INC-263 : « la card servie » ne peut pas attendre un fil vide
+
+*2026-09-30, pendant la campagne d'INC-262 ; arbitrage du responsable.*
+
+**Problème.** Sur la base reconstruite, `e2e/ui/commentaires.spec.ts` « la card servie, la requête du fil part
+vers la VRAIE API, filtrée et ordonnée » attend `etat-vide` dans le fil ; il rougit, y compris sur `HEAD`.
+
+**Observations.** `card_comments` rend bien `200 []` à la lectrice. Mais elle lit l'affaire `…0c6` (déjà
+constaté par INC-261), et le fil rend les événements que le seed y écrit — création, deux champs renseignés —,
+immuables. Le fil n'est donc jamais vide sur une base neuve. Le scénario passait sur une base vieillie, où
+la lectrice ne lisait sans doute plus ce channel ; non mesurable, la base n'existant plus.
+
+**Options soumises.** Corriger le test : il vérifie que zéro commentaire n'est pas une erreur, sans exiger un
+fil vide — recommandée ; substituer aussi `card_events` par une réponse vide ; livrer INC-262 et laisser
+INC-263 ouverte. **Décision du responsable : corriger le test.**
+
+**Conséquence.** Troisième scénario, après INC-257 et INC-261, qui dépendait de l'histoire de la base de
+développement plutôt que du seed : la campagne sur base neuve reste l'état de référence.

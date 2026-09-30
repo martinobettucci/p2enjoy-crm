@@ -6925,3 +6925,33 @@ retirant seule : six preuves unitaires (`Objectifs.test.tsx` — fiche non dési
 aucun premier plan, deux effets par clic, repère au point fixe, repère immobile sous la souris) et les
 scénarios `e2e/ui/objectifs.spec.ts` « poser un bloc sans chercher où il est » — sans `z-index`, le
 chevauchement ; au point fixe, la souris et le clavier.
+
+### INC-263 — « la card servie » attend un fil vide qu'une base neuve ne produit pas
+
+*Relevée le 2026-09-30 pendant la campagne d'INC-262, comportement inchangé.* Sur la base reconstruite
+(`./resetMe.sh`, décision 610), `e2e/ui/commentaires.spec.ts` « la card servie, la requête du fil part vers la
+VRAIE API, filtrée et ordonnée » rougit sur sa dernière attente : `etat-vide` absent du fil. **Mesuré** : il
+rougit aussi sur `HEAD`, les fichiers d'INC-262 remis à leur version committée.
+
+**Ce qui est mesuré.** La réponse de `card_comments` est bien `200 []`, et l'ordre et le filtre attendus sont
+tenus. Mais la lectrice lit l'affaire `…0c6` (track `formation`, sans droit fin qui la lui ferme — déjà
+constaté par INC-261), et le fil rend ses événements, que le scénario ne substitue pas : « Affaire créée »
+et deux « Champ renseigné », écrits par le seed ; les événements sont immuables. Le fil n'est donc pas vide,
+et l'état vide n'est pas rendu. Le commentaire du scénario prête le `[]` à un refus de la RLS ; sur une base
+neuve, c'est seulement l'absence de commentaire.
+
+**Pourquoi il passait.** Il était vert le matin même, sur la base reconstruite le 2026-09-29 puis vieillie
+par un jour de campagnes. Les événements ne pouvant être effacés, la lectrice ne lisait sans doute plus
+le channel de `…0c6` sur cette base ; ce n'est **pas mesuré**, cette base n'existant plus.
+
+**Même campagne, rouges non reproduits** : `connexion.spec.ts` « l'exploitante du realm… » (l'opacité des
+gestes de modération après survol, 5 sur 5 verts ensuite), `commentaires-gestes.spec.ts` « Camille corrige
+son commentaire… » et `mentions-composeur.spec.ts` « le sélecteur n'exige rien… » (un `502` de la pile),
+tous deux verts rejoués seuls. Les trois rouges d'âge du seed (`affaires-figees`, `anciennete-board`,
+`ma-journee`) ont disparu avec la reconstruction, comme la décision 610 le prévoit.
+
+**ARBITRÉE le 2026-09-30 — décision 615 : corriger le test.** Le scénario prouve ce que son commentaire
+promet — zéro commentaire est une réponse, jamais une erreur : il garde la requête observée, son filtre, son
+ordre, le `200` et le `[]`, et vérifie que le fil est rendu sans état d'erreur, sans exiger un fil vide que
+les événements de l'affaire ne permettent pas. Son commentaire cesse d'attribuer le `[]` à un refus de la
+RLS. Suivi : `docs/BACKLOG.md`, « Correctif arbitré le 2026-09-30 — INC-263 ».

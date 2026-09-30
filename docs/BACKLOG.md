@@ -14817,3 +14817,11 @@ que le guide et le board le promettaient (INC-256). Spécifié avant le code : `
       `verify-objectifs-canevas.sh` : 55 contrôles, aucune anomalie. `SCENARIOS_UI` : 782, compté.
       Campagne `verify-webapp.sh` : seul rouge persistant, INC-263, étrangère et rouge sur `HEAD`
       (`docs/JOURNAL.md`, décision 614). Le manuel n'a pas de chapitre des objectifs (INC-214).
+
+## Correctif arbitré le 2026-09-30 — INC-263 (décision 615)
+
+- [ ] **INC-263 — « la card servie » attend un fil vide qu'une base neuve ne produit pas** (`CRM-043` ;
+      `e2e/ui/commentaires.spec.ts`). Arbitrage du responsable : corriger le test. Il garde la requête du fil
+      — filtre, ordre, `200`, `[]` — et vérifie que le fil est rendu sans état d'erreur, au lieu d'exiger
+      un état vide que les événements de l'affaire ne permettent pas. Rouge sur `HEAD` sur la base
+      reconstruite le 2026-09-30.
