@@ -14798,10 +14798,16 @@ inscrit qui précède le dernier inscrit ; une base sans registre est adoptée p
 aucun rôle de l'API n'atteint le registre ; la production porte un registre de 82 lignes dont les empreintes
 sont celles des fichiers du dépôt.
 
-- [ ] **T1** — migration `0082_registre_migrations.sql` : la table, RLS sans politique, aucun privilège
+- [x] **T1** — migration `0082_registre_migrations.sql` : la table, RLS sans politique, aucun privilège
       pour `anon`, `authenticated` ni `service_role`. Preuves : suite pgTAP (forme, contraintes, privilèges),
       refus d'API aux jetons réels (la table n'est atteignable ni par PostgREST ni en SQL sous
       `authenticated`), idempotence par `scripts/verify-migrations.sh`.
+      Mesuré le 2026-09-30 : pgTAP `0076` **22** assertions, six dégradations vues rouges ; API
+      `registre-migrations.spec.ts` **2** scénarios (`404` `PGRST205`, `406` `PGRST106`), rouge sous une
+      vue d'exposition ; `0082` rejouée deux fois à structure identique ; `verify-migrations.sh` 31 sans
+      anomalie. Compteurs : 76 fichiers SQL, 3297 assertions, 1090 scénarios d'API.
+      `verify-harness.sh` : SQL, API, interface (782) et unitaires verts ; un rouge de messagerie non
+      reproduit en cinq rejeux, consigné au journal.
 - [ ] **T2** — le runner (`supabase/docker/migrations-runner/apply-migrations.sh`) : contrôle des fichiers
       inscrits, contrôle de l'ordre, application du delta avec inscription transactionnelle, adoption.
       Preuves sur une base jetable, par migrations de fixture, dans le harnais du runner

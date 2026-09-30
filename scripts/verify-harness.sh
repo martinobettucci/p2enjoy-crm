@@ -565,7 +565,9 @@ PORT_RAPPORT=9323
 # fichier ajouté. 73 + 1 = 74, valeur COMPTÉE — « 74 fichiers ».
 # **75 depuis `CRM-095` tranche T1, 2026-09-29** (décision 609) : `0075_creer_affaire.test.sql`, seul
 # fichier ajouté. 74 + 1 = 75, valeur COMPTÉE — « 75 fichiers ».
-FICHIERS_SQL_ATTENDUS=75
+# **76 depuis `CRM-096` tranche T1, 2026-09-30** (décision 616) : `0076_registre_migrations.test.sql`, seul
+# fichier ajouté. 75 + 1 = 76, valeur COMPTÉE — « 76 fichiers ».
+FICHIERS_SQL_ATTENDUS=76
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -611,7 +613,8 @@ FICHIERS_SQL_ATTENDUS=75
 # `0070` et `0072` sont révisées à nombre constant (signatures à `p_admin_lelabs`). COMPTÉE.
 # **3253 depuis `CRM-094` tranche T1** : `0074` apporte **28** assertions — 3225 + 28 = 3253. COMPTÉE.
 # **3275 depuis `CRM-095` tranche T1** : `0075` apporte **22** assertions — 3253 + 22 = 3275. COMPTÉE.
-ASSERTIONS_ATTENDUES=3275
+# **3297 depuis `CRM-096` tranche T1** : `0076` apporte **22** assertions — 3275 + 22 = 3297. COMPTÉE.
+ASSERTIONS_ATTENDUES=3297
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -930,7 +933,11 @@ ASSERTIONS_ATTENDUES=3275
 # **1088 depuis `CRM-095` tranche T2, 2026-09-29** : `board.spec.ts` gagne un scénario B1 — l'étape initiale est
 # lue par `COLONNES_ETAPE`, une seule, Prospection. 1087 + 1 = 1088, valeur COMPTÉE — « Total: 1088 tests in
 # 69 files ».
-SCENARIOS_API=1088
+# **1090 depuis `CRM-096` tranche T1, 2026-09-30** (décision 616) : `registre-migrations.spec.ts`, fichier
+# NEUF, porte **2** scénarios — le registre introuvable par le schéma exposé (`404`), et le schéma `app`
+# refusé en lecture comme en écriture (`406`), pour l'anonyme, l'administratrice et la clé de service.
+# 1088 + 2 = 1090, valeur COMPTÉE — « Total: 1090 tests in 70 files ».
+SCENARIOS_API=1090
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la

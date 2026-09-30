@@ -13,6 +13,15 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-096` — Le registre des migrations (en cours)
+
+*Décision 616 (INC-264). Migration **82** à appliquer en production avec la tranche T4, dans une fenêtre
+avec instantané (`docs/PROD_MIGRATIONS.md` §3).*
+
+- **La table du registre**, `app.migrations_appliquees` (migration `0082`) : une ligne par migration
+  appliquée, avec l'empreinte SHA-256 de son fichier. Aucun rôle de l'API n'y accède. Le runner qui
+  l'alimente, et qui cessera de rejouer tout le répertoire, suit (T2).
+
 ### Correctif du 2026-09-30 — INC-262 (décision 614)
 
 - **Poser un bloc d'objectif ne demande plus de le chercher.** « Poser un bloc » place le repère sur la

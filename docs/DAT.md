@@ -327,11 +327,12 @@ exposé par PostgREST.
    ou ni l'un ni l'autre. Le premier échec arrête le passage.
 4. **Rechargement du cache** de PostgREST, une fois, après un passage réussi — inchangé (`CRM-087`).
 
-**L'adoption.** Tant que la table n'existe pas — une base antérieure à `CRM-096`, ou une base neuve —,
-le runner rejoue les fichiers comme aujourd'hui, ce que l'idempotence de chacun rend sûr. Dès que la
-`0082` a créé la table, il y inscrit en mode `adoption` les fichiers déjà rejoués pendant ce passage,
-puis continue en mode `application`. Un échec avant la fin n'inscrit rien : le passage suivant
-recommence l'adoption.
+**L'adoption.** Tant que la table n'existe pas, ou qu'elle est **vide** — une base antérieure à
+`CRM-096`, une base neuve, ou une base qui a reçu la `0082` avant le runner qui la lit —, le passage est
+une adoption : le runner rejoue **tout** le répertoire comme avant `CRM-096`, ce que l'idempotence de chaque
+fichier rend sûr, puis, le rejeu réussi, inscrit **d'un seul geste**, en mode `adoption`, tous les fichiers
+rejoués. Un échec pendant le rejeu n'inscrit rien : le passage suivant recommence l'adoption. Le passage
+d'après n'applique plus que les fichiers absents du registre.
 
 **Ce qui change pour qui écrit une migration.** Une migration appliquée n'est plus jamais modifiée : sa
 correction est une migration nouvelle. En développement, modifier un fichier déjà appliqué à la base

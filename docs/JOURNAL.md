@@ -30532,3 +30532,28 @@ développement, modifier une migration déjà appliquée à la base locale impos
 est **remplacée** à la livraison de `CRM-096`. Découpage en quatre tranches, persisté dans `docs/BACKLOG.md` :
 T1 la migration, T2 le runner, T3 la pile de développement et la documentation, T4 la production par une
 fenêtre avec instantané.
+
+**`CRM-096` T1, le 2026-09-30.** Migration `0082_registre_migrations.sql` appliquée en développement par le
+runner (82 fichiers, code 0). *Preuves* : pgTAP `0076`, **22** assertions, vertes du premier coup — ce qui
+ne prouve rien seul ; six dégradations de la table, posées en base puis retirées, les font rougir chacune là
+où elles le doivent : `SELECT`/`INSERT` accordés à `authenticated` (11, 19), RLS désactivée (9), nom de
+fichier libre (14), empreinte insensible à la casse (15, 22), mode libre (17, 22), `service_role` qui lit et
+efface (12, 21, 22) ; contraintes, RLS et privilèges relus identiques après restauration. API
+`registre-migrations.spec.ts`, **2** scénarios, mesurés avant d'être écrits : par le schéma exposé, `404`
+`PGRST205` ; le schéma `app` demandé, `406` `PGRST106`, en lecture comme en écriture, pour l'anonyme,
+l'administratrice et la clé de service ; une vue `public.migrations_appliquees` posée pour l'occasion fait
+rendre `200` et rougir la preuve. Idempotence : la `0082` rejouée deux fois, code 0 et structure identique ;
+`verify-migrations.sh` **31 contrôles, aucune anomalie**. Types inchangés — le schéma `app` n'est pas généré.
+
+*Précision de la spécification, écrite avant T2* : une base qui porte la `0082` sans le runner qui la lit —
+une fenêtre `--migrate` ouverte entre T1 et T4 — aurait un registre **vide** ; le runner l'aurait pris pour un
+registre en service et inscrit tout en mode `application`, alors que ces fichiers auraient été rejoués. Un
+registre vide déclenche donc aussi l'adoption (`docs/DAT.md` §3.2 bis). Et l'adoption rejoue TOUT le
+répertoire, puis inscrit tous les fichiers rejoués, d'un seul geste, à la fin du rejeu réussi : la première
+rédaction basculait en mode `application` dès que la table existait, ce qui, sur un registre vide,
+n'aurait inscrit en `adoption` que le premier fichier et en `application` des fichiers seulement rejoués.
+*Harnais complet*, compteurs révisés : SQL **76 fichiers, 3297 assertions**, API **1090** verts, interface
+**782** verts, unitaires **3403** ; une anomalie, un scénario de messagerie — « renommer un TRACK renomme son
+dossier » (`e2e/mail/dossiers.spec.ts`), compteur `renamed` à 0 au lieu de 1. **Non reproduit** : rejoué
+seul trois fois, son fichier deux sur deux, le projet `mail` entier **42 sur 42**. Sa cause n'est pas
+établie ; le registre, qu'aucun service de messagerie ne lit, n'y a pas de chemin.
