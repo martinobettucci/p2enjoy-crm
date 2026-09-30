@@ -24,6 +24,9 @@
 // AUCUNE RÉPONSE N'EST SUBSTITUÉE et aucune fonction interne n'est appelée : ce que la preuve
 // mesure est ce que le backend a consenti.
 
+// @verifies INC-262, décision 614 — poser un bloc sans chercher où il est : repère parti d'une place
+//           libre visible et qui suit la souris, bloc posé désigné, premier plan, un clic un seul effet
+//           (docs/SPEC-goals.md §5.5 ter ; docs/DESIGN_SYSTEM.md §5.29)
 import {
 	autoriserErreursConsole,
 	connecterAvecLeLabs,
@@ -75,6 +78,19 @@ async function ouvrirLeTableau(page: Page): Promise<void> {
 	await expect(page.getByTestId('tableau-objectifs').first()).toBeVisible()
 	await page.getByRole('link', { name: new RegExp(TABLEAU) }).click()
 	await expect(page.getByRole('heading', { name: TABLEAU })).toBeVisible()
+}
+
+/**
+ * Capture une fois terminé le fondu de la commande de pose, qui passe de primaire à secondaire en
+ * s'armant. MESURÉ le 2026-09-30 (INC-262) : le repère ne faisant plus défiler le canevas, la capture
+ * tombait pendant le fondu — « Annuler la pose » en texte pâle sur fond bleu, un état que l'écran ne
+ * tient jamais. On attend les animations réellement en cours, jamais une durée.
+ */
+async function capturerCommandeAuRepos(page: Page, nom: string): Promise<void> {
+	await page.getByTestId('poser-bloc').evaluate((noeud) =>
+		Promise.all(noeud.getAnimations({ subtree: true }).map((animation) => animation.finished)).then(() => undefined),
+	)
+	await capturer(page, nom, UNITE)
 }
 
 /** La position gauche d'un bloc, en unités de canevas — c'est `pos_x`, lu au style rendu. */
@@ -287,7 +303,7 @@ test.describe('canevas d’objectifs — CRM-083', () => {
 		// La position est ÉCRITE dans le nom accessible : un repère muet ne dirait pas où il est.
 		expect(arrivee).not.toBe(depart)
 
-		await capturer(page, 'pose-repere-1440', UNITE)
+		await capturerCommandeAuRepos(page, 'pose-repere-1440')
 		await page.keyboard.press('Enter')
 
 		await expect(page.getByTestId('mention-ecriture')).toHaveText('Enregistré')
@@ -1858,5 +1874,160 @@ test.describe('canevas d’objectifs — l’état de LECTURE SEULE, CRM-083 tra
 			expect(mesures.defile).toBe(0)
 			await capturer(page, `lecture-seule-${palier.nom}`, UNITE)
 		}
+	})
+})
+
+test.describe('poser un bloc sans chercher où il est — INC-262 (SPEC-goals §5.5 ter)', () => {
+	const TITRE_SOURIS = 'Signer trois partenariats'
+	const TITRE_CLAVIER = 'Former deux formateurs'
+
+	async function retirerLesBlocsPoses(): Promise<void> {
+		const tableau = await identifiantDuTableau()
+		for (const titre of ['Nouvel objectif', TITRE_SOURIS, TITRE_CLAVIER]) {
+			await fetch(`${URL_API}/rest/v1/goal_blocks?board_id=eq.${tableau}&title=eq.${encodeURIComponent(titre)}`, {
+				method: 'DELETE',
+				headers: enTetesService(),
+			})
+		}
+	}
+
+	type Cadre = { x: number; y: number; width: number; height: number }
+	const chevauche = (a: Cadre, b: Cadre) =>
+		a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height
+
+	/** Aucun des blocs rendus, hormis `sauf`, ne touche le cadre donné. */
+	async function aucunBlocNeTouche(page: Page, cadre: Cadre, sauf?: string): Promise<void> {
+		for (const bloc of await page.getByTestId('bloc-objectif').all()) {
+			if (sauf !== undefined && (await bloc.textContent())?.includes(sauf)) continue
+			const autre = await bloc.boundingBox()
+			if (autre === null) continue
+			expect(chevauche(cadre, autre), `le cadre touche « ${await bloc.getAttribute('aria-label')} »`).toBe(false)
+		}
+	}
+
+	test.afterEach(async () => {
+		await retirerLesBlocsPoses()
+	})
+
+	test('à la souris : la fiche quitte l’ancien bloc, le repère part d’une place libre et suit le pointeur, le titre se tape aussitôt', async ({
+		page,
+	}) => {
+		// UNE FENÊTRE HAUTE, ET C'EST MESURÉ : à 900 px, les six blocs du seed remplissent la partie visible
+		// du canevas (998 × 502), si bien que le repère part sous le dernier bloc et que la vue le rejoint —
+		// le repli écrit au §5.5 ter, couvert par `objectifs-ecriture.test.ts`. À 1 200 px, une place libre
+		// est visible : c'est le cas où armer la pose ne doit plus rien faire défiler.
+		await page.setViewportSize({ width: 1440, height: 1200 })
+		await connecter(page, ADMIN)
+		await ouvrirLeTableau(page)
+		const blocs = page.getByTestId('bloc-objectif')
+		await blocs.filter({ hasText: BLOC_LIBRE }).first().click()
+		await expect(page.getByTestId('champ-titre')).toHaveValue(BLOC_LIBRE)
+
+		const canevas = page.getByTestId('canevas-objectifs')
+		const defilement = () => canevas.evaluate((element) => [element.scrollLeft, element.scrollTop])
+		const avant = await defilement()
+		await page.getByTestId('poser-bloc').click()
+		const repere = page.getByTestId('repere-pose')
+		await expect(repere).toBeVisible()
+		// LE « SAUT » RELEVÉ : le repère partait de (24, 24), sur le premier bloc, et le canevas défilait.
+		expect(await defilement()).toEqual(avant)
+		const cadreRepere = await repere.boundingBox()
+		if (cadreRepere === null) throw new Error('repère non rendu')
+		await aucunBlocNeTouche(page, cadreRepere)
+		await capturer(page, 'pose-place-libre-1440', UNITE)
+
+		// Le repère SUIT le pointeur, et le clic pose exactement là.
+		const surface = await page.getByTestId('canevas-surface').boundingBox()
+		if (surface === null) throw new Error('surface non rendue')
+		await page.mouse.move(surface.x + 700, surface.y + 430)
+		await expect(repere).toHaveAttribute('style', /left: 700px; top: 430px/)
+		await page.mouse.down()
+		await page.mouse.up()
+		await expect(page.getByTestId('mention-ecriture')).toHaveText('Enregistré')
+
+		// LE BLOC POSÉ EST DÉSIGNÉ : sa fiche, son titre sélectionné — la frappe le remplace.
+		const champ = page.getByTestId('champ-titre')
+		await expect(champ).toBeFocused()
+		await expect(champ).toHaveValue('Nouvel objectif')
+		await page.keyboard.type(TITRE_SOURIS)
+		await page.keyboard.press('Enter')
+		await expect(page.getByTestId('etat-titre')).toHaveText('Enregistré')
+		const pose = blocs.filter({ hasText: TITRE_SOURIS })
+		await expect(pose).toHaveCount(1)
+		await expect(pose).toHaveAttribute('data-edite', 'oui')
+		expect([await positionGauche(pose), await mesure(pose, 'top')]).toEqual([700, 430])
+		await capturer(page, 'pose-fiche-designee-1440', UNITE)
+	})
+
+	test('au clavier seul : « Poser un bloc », Entrée pose sur une place libre, le titre se tape, Entrée l’enregistre', async ({
+		page,
+	}) => {
+		await connecter(page, ADMIN)
+		await ouvrirLeTableau(page)
+		for (let pas = 0; pas < 80; pas += 1) {
+			await page.keyboard.press('Tab')
+			if ((await page.evaluate(() => document.activeElement?.getAttribute('data-testid'))) === 'poser-bloc') break
+		}
+		await expect(page.getByTestId('poser-bloc')).toBeFocused()
+		await page.keyboard.press('Enter')
+		await expect(page.getByTestId('repere-pose')).toBeFocused()
+		await page.keyboard.press('Enter')
+
+		const champ = page.getByTestId('champ-titre')
+		await expect(champ).toBeFocused()
+		await expect(champ).toHaveValue('Nouvel objectif')
+		await page.keyboard.type(TITRE_CLAVIER)
+		await page.keyboard.press('Enter')
+		await expect(page.getByTestId('etat-titre')).toHaveText('Enregistré')
+
+		// Posé à la place libre : il ne touche aucun autre bloc.
+		const pose = page.getByTestId('bloc-objectif').filter({ hasText: TITRE_CLAVIER })
+		const cadre = await pose.boundingBox()
+		if (cadre === null) throw new Error('bloc posé non rendu')
+		await aucunBlocNeTouche(page, cadre, TITRE_CLAVIER)
+	})
+
+	test('pendant la pose, un clic SUR un bloc n’a qu’un effet : poser — la fiche du bloc cliqué ne s’ouvre pas', async ({
+		page,
+	}) => {
+		await connecter(page, ADMIN)
+		await ouvrirLeTableau(page)
+		const lie = page.getByTestId('bloc-objectif').filter({ hasText: BLOC_LIE }).first()
+		const cadre = await lie.boundingBox()
+		if (cadre === null) throw new Error('bloc lié non rendu')
+		await page.getByTestId('poser-bloc').click()
+		await page.mouse.click(cadre.x + cadre.width / 2, cadre.y + 20)
+		await expect(page.getByTestId('mention-ecriture')).toHaveText('Enregistré')
+		// La fiche est celle du bloc posé ; celle du bloc cliqué ne s'est pas ouverte en plus.
+		await expect(page.getByTestId('champ-titre')).toHaveValue('Nouvel objectif')
+		await expect(page.getByTestId('fiche-bloc')).toHaveCount(1)
+	})
+
+	test('un bloc posé AU-DESSUS À GAUCHE d’un autre, qui le chevauche, passe DEVANT lui — plus jamais derrière', async ({
+		page,
+	}) => {
+		await connecter(page, ADMIN)
+		await ouvrirLeTableau(page)
+		// Le bloc du milieu de la seconde rangée occupe 360..620 × 240..380 (seed). Un bloc posé en
+		// (330, 200) — l'espace libre entre deux rangées — le chevauche, et PRÉCÈDE dans l'ordre de lecture :
+		// sans premier plan, il était peint derrière lui.
+		await page.getByTestId('poser-bloc').click()
+		const surface = await page.getByTestId('canevas-surface').boundingBox()
+		if (surface === null) throw new Error('surface non rendue')
+		await page.mouse.click(surface.x + 330, surface.y + 200)
+		await expect(page.getByTestId('mention-ecriture')).toHaveText('Enregistré')
+		const pose = page.getByTestId('bloc-objectif').filter({ hasText: 'Nouvel objectif' })
+		expect([await positionGauche(pose), await mesure(pose, 'top')]).toEqual([330, 200])
+
+		// La fiche a pris le focus plus bas : le point est relu après avoir ramené le bloc en vue.
+		await pose.scrollIntoViewIfNeeded()
+		const cadre = await page.getByTestId('canevas-surface').boundingBox()
+		if (cadre === null) throw new Error('surface non rendue')
+		const auPoint = await page.evaluate(
+			({ x, y }) => document.elementFromPoint(x, y)?.closest('[data-testid="bloc-objectif"]')?.textContent ?? '',
+			{ x: cadre.x + 420, y: cadre.y + 290 },
+		)
+		expect(auPoint).toContain('Nouvel objectif')
+		await capturer(page, 'pose-chevauchement-premier-plan-1440', UNITE)
 	})
 })

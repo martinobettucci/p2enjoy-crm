@@ -30430,3 +30430,43 @@ automatique » (§3) ; un clic, un seul effet. **Décision du responsable : les 
 
 **Écrit avant le code** : `docs/SPEC-goals.md` §3 et §5.5 ter, `docs/DESIGN_SYSTEM.md` §5.29,
 `docs/BACKLOG.md`, rapport d'incohérences.
+
+**Livré le 2026-09-30.** *Solution* : `premierePlaceLibre` (`webapp/src/lib/objectifs-ecriture.ts`) parcourt
+la partie VISIBLE du canevas — `scrollLeft`, `scrollTop`, largeur et hauteur du cadre divisées par le zoom —
+en ordre de lecture, par pas de 24 px, et rend la première position où un bloc neuf de 220 × 120 ne touche
+aucun bloc rendu à 16 px près ; sans place libre, elle rend la position sous le dernier bloc. Pendant la
+pose, la surface s'étend à toute la partie visible et au repère, et le repère suit `pointermove`. `poserA`
+désigne le bloc posé (`setEdite`) et demande la sélection de son titre, que la fiche applique à son
+montage. Premier plan : `z-20` au bloc déplacé ou redimensionné, `z-10` au bloc dont la fiche est ouverte,
+`z-30` au repère — l'ordre du document, donc de tabulation, reste celui de `ordreTabulation`. Pendant la
+pose, l'appui sur un bloc n'arme aucun geste : le clic remonte seul à la surface, qui pose.
+
+*Observation* : à 1440 × 900, le seed remplit déjà la partie visible — six blocs sur deux rangées et le
+bas du cadre —, et le repère tombe dans le repli, sous le dernier bloc, ce qui fait défiler la vue. Le
+scénario à la souris mesure donc à 1440 × 1200, où une place libre existe ; le scénario au clavier et le
+chevauchement gardent 1440 × 900.
+
+*Preuves.* Unitaires : quatre cas de `premierePlaceLibre` (place libre voisine d'un bloc, tableau vide,
+vue défilée, vue pleine et sans vue) et cinq rendus réels dans `Objectifs.test.tsx`. Six mutations de
+l'écran rougissent chacune leur preuve — fiche non désignée (2 rouges), titre non sélectionné, aucun
+premier plan, deux effets par clic, repère au point fixe, repère immobile sous la souris. E2E
+(`e2e/ui/objectifs.spec.ts`, 4 scénarios) : à la souris, au clavier seul, le clic sur un bloc pendant la
+pose, le chevauchement lu par `elementFromPoint` ; sans `z-index`, le chevauchement rougit ; au point fixe,
+la souris et le clavier rougissent. Captures observées : `pose-place-libre-1440`,
+`pose-fiche-designee-1440`, `pose-chevauchement-premier-plan-1440`. `verify-objectifs-canevas.sh` :
+55 contrôles, aucune anomalie ; `SCENARIOS_UI` 778 → 782, compté. Le manuel ne porte toujours aucun
+chapitre sur les objectifs (INC-214, ouverte) : rien à y corriger ici.
+
+*Campagnes.* `verify-webapp.sh`, deux passages. Le premier, sur la base du 2026-09-29, rend quatre rouges
+étrangers au canevas : trois d'âge du seed, appliqué la veille (`affaires-figees` « 35j » devenu
+« 36j », `anciennete-board` « 30 » devenu « 31 », `ma-journee` deux sections au lieu de trois), et le
+survol de `connexion.spec.ts`. Base reconstruite (`./resetMe.sh`, conséquence écrite de la décision 610), les
+quatre fichiers passent, 40 sur 40, et le survol 5 sur 5. Le second passage, sur la base neuve, rend 779
+verts et trois rouges. Deux ne se reproduisent pas rejoués seuls (`commentaires-gestes`, et un `502` de la
+pile dans `mentions-composeur`). Le troisième, « la card servie » de `commentaires.spec.ts`, rougit aussi sur
+`HEAD` : INC-263, soumise au responsable. *Captures* : le tri garde les trois de la pose (`pose-repere`,
+`bloc-pose`, `bloc-pose-souris`) et les trois neuves ; les autres, qui ne changeaient que par l'heure et la
+date, sont rendues à leur version committée. `pose-repere-1440` montrait « Annuler la pose » en plein
+fondu, texte pâle sur fond bleu : la capture tombait plus tôt depuis que le repère ne fait plus défiler le
+canevas. Le scénario attend désormais la fin des animations de la commande, comme `guide-flottant.spec.ts`
+pour son panneau ; la capture refaite est observée.

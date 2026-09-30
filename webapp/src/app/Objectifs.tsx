@@ -38,6 +38,10 @@
 // @spec docs/BACKLOG.md « Correctif du 2026-09-28 », INC-255 ; docs/JOURNAL.md décision 609 — les lignes
 //       rendues après une écriture s'appliquent aussi aux blocs posés et aux flèches tracées pendant la
 //       visite (docs/DESIGN_SYSTEM.md §5.28, §5.29)
+// @spec docs/BACKLOG.md « Correctif arbitré le 2026-09-30 », INC-262 ; docs/JOURNAL.md décision 614 —
+//       poser un bloc sans chercher où il est : repère parti d'une place libre visible et qui suit la
+//       souris, bloc posé désigné, bloc travaillé au premier plan, un clic un seul effet
+//       (docs/SPEC-goals.md §5.5 ter ; docs/DESIGN_SYSTEM.md §5.29)
 //
 // CE QUE CES TRANCHES LIVRENT, ET CE QU'ELLES NE LIVRENT PAS — nommé ici plutôt que découvert à
 // l'usage (`CLAUDE.md` §25) :
@@ -155,10 +159,13 @@ import {
 	PAS_CLAVIER_FIN,
 	TAILLE_BLOC_MINIMALE,
 	TAILLE_BLOC_NEUF,
+	ECART_PLACE_LIBRE,
 	bornerCoordonnee,
 	bornerDimension,
 	bornerRemplissage,
+	premierePlaceLibre,
 	type ChannelLiable,
+	type RectangleCanevas,
 	type ContenuBloc,
 	type RefusBloc,
 	type RefusFleche,
@@ -1087,6 +1094,14 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 	const [ebauche, setEbauche] = useState<{ readonly id: string; readonly geometrie: Geometrie } | null>(null)
 	const [message, setMessage] = useState<MessageEcriture | null>(null)
 	const [pose, setPose] = useState<{ readonly x: number; readonly y: number } | null>(null)
+	// LA PARTIE VISIBLE DU CANEVAS AU MOMENT OÙ LA POSE EST ARMÉE (INC-262, §5.5 ter) : le repère y part
+	// d'une place libre, et la surface la couvre tout entière pour que le clic y soit reçu partout —
+	// sous le dernier bloc compris, là où la surface s'arrêtait jusqu'ici.
+	const [vuePose, setVuePose] = useState<RectangleCanevas | null>(null)
+	// LE BLOC TOUT JUSTE POSÉ, dont la fiche s'ouvre titre SÉLECTIONNÉ : la frappe remplace « Nouvel
+	// objectif » (INC-262). Tout autre bloc désigné ensuite ouvre sa fiche comme avant.
+	const [titreASelectionner, setTitreASelectionner] = useState<string | null>(null)
+	const conteneurCanevas = useRef<HTMLDivElement | null>(null)
 	// LES FLÈCHES ONT LEURS DEUX ÉTATS LOCAUX, pour la même raison que les blocs : `flechesEcrites`
 	// porte les lignes que le serveur a rendues après une correction de direction, `flechesTracees`
 	// celles créées pendant cette session d'écran. Le tracé EN COURS, lui, n'est pas une donnée —
@@ -1292,6 +1307,11 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 				return
 			}
 			setAjoutes((precedents) => [...precedents, resultat.bloc])
+			// LE BLOC POSÉ EST DÉSIGNÉ (INC-262, §5.5 ter) : sa fiche s'ouvre — elle quitte le bloc qui
+			// l'occupait, qu'elle continuait d'éditer —, titre sélectionné, prêt à être saisi.
+			setEdite(resultat.bloc.id)
+			setTitreASelectionner(resultat.bloc.id)
+			setVuePose(null)
 			setMessage({ ton: 'succes', texte: t('goals.write.saved') })
 		},
 		[client, idTableau],
@@ -1431,6 +1451,7 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 					setTrace({ idSource: idBloc, direction: 'forward' })
 					return
 				}
+				setTitreASelectionner(null)
 				setEdite(idBloc)
 				return
 			}
@@ -1492,6 +1513,48 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 	// envoyés puis traduits, ce qui est la règle générale du `docs/DESIGN_SYSTEM.md`.
 	const lectureSeule = !ecritureConsentie(contenu.tableau)
 
+	// ARMER LA POSE NE FAIT PLUS SAUTER LA VUE (INC-262, §5.5 ter) : le repère part de la première place
+	// libre de la partie VISIBLE du canevas, lue sur son conteneur à cet instant — jamais d'un point fixe
+	// qui recouvrait un bloc et faisait défiler le canevas jusqu'à lui. Sans canevas rendu — l'état vide
+	// porte la commande —, aucune partie visible n'est connue : le repère part de l'origine.
+	const armerPose = () => {
+		setTrace(null)
+		const conteneur = conteneurCanevas.current
+		const vue =
+			conteneur === null
+				? null
+				: {
+						x: conteneur.scrollLeft / zoom,
+						y: conteneur.scrollTop / zoom,
+						largeur: conteneur.clientWidth / zoom,
+						hauteur: conteneur.clientHeight / zoom,
+					}
+		setVuePose(vue)
+		setPose(premierePlaceLibre(blocsRendus, vue))
+	}
+	const desarmerPose = () => {
+		setPose(null)
+		setVuePose(null)
+	}
+
+	// PENDANT LA POSE, LA SURFACE COUVRE LA PARTIE VISIBLE ET LE REPÈRE : le clic doit être reçu partout
+	// où l'on voit le canevas, et le repère — qui suit la souris — ne doit jamais sortir de la surface.
+	const etendueRendue =
+		pose === null
+			? etendue
+			: {
+					largeur: Math.max(
+						etendue.largeur,
+						pose.x + TAILLE_BLOC_NEUF.largeur + ECART_PLACE_LIBRE,
+						vuePose === null ? 0 : vuePose.x + vuePose.largeur,
+					),
+					hauteur: Math.max(
+						etendue.hauteur,
+						pose.y + TAILLE_BLOC_NEUF.hauteur + ECART_PLACE_LIBRE,
+						vuePose === null ? 0 : vuePose.y + vuePose.hauteur,
+					),
+				}
+
 	// LE CANEVAS EST RENDU DÈS QU'UNE POSE EST ARMÉE, MÊME SUR UN TABLEAU VIDE : c'est la surface
 	// sur laquelle le geste se fait, et l'état vide qui la remplacerait n'aurait aucun endroit où
 	// recevoir le clic. L'état vide porte donc le geste qui le comble
@@ -1527,10 +1590,7 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 					<CommandePose
 						armee={pose !== null}
 						lectureSeule={lectureSeule}
-						onBasculer={() => {
-							setTrace(null)
-							setPose(pose === null ? { x: PAS_CLAVIER * 3, y: PAS_CLAVIER * 3 } : null)
-						}}
+						onBasculer={() => (pose === null ? armerPose() : desarmerPose())}
 					/>
 					{/* LA COMMANDE DE TRACÉ N'EST RENDUE QU'À PARTIR DE DEUX BLOCS, et ce n'est pas une
 					    extinction selon le rôle (`docs/DESIGN_SYSTEM.md` §5.26) : une flèche relie
@@ -1542,7 +1602,7 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 							armee={trace !== null}
 							lectureSeule={lectureSeule}
 							onBasculer={() => {
-								setPose(null)
+								desarmerPose()
 								setTrace(trace === null ? { idSource: null, direction: 'forward' } : null)
 							}}
 						/>
@@ -1634,6 +1694,7 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 				   ci-dessus. `tabIndex` sur le conteneur est ce qui rend le défilement clavier
 				   possible : sans lui, une région défilante ne reçoit jamais le focus. */
 				<div
+					ref={conteneurCanevas}
 					data-testid="canevas-objectifs"
 					tabIndex={0}
 					role="group"
@@ -1644,10 +1705,24 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 						data-testid="canevas-surface"
 						className="relative origin-top-left"
 						style={{
-							width: `${etendue.largeur}px`,
-							height: `${etendue.hauteur}px`,
+							width: `${etendueRendue.largeur}px`,
+							height: `${etendueRendue.hauteur}px`,
 							transform: `scale(${zoom})`,
 						}}
+						/* LE REPÈRE SUIT LA SOURIS PENDANT LA POSE (INC-262, §5.5 ter) : on voit où le bloc sera
+						   posé avant de cliquer, et le clic pose exactement là. Le clavier le déplace toujours
+						   aux flèches, depuis la position où la souris l'a laissé. */
+						onPointerMove={
+							pose === null
+								? undefined
+								: (evenement) => {
+										const cadre = evenement.currentTarget.getBoundingClientRect()
+										setPose({
+											x: bornerCoordonnee((evenement.clientX - cadre.left) / zoom),
+											y: bornerCoordonnee((evenement.clientY - cadre.top) / zoom),
+										})
+									}
+						}
 						/* LA POSITION VIENT DU GESTE (§3) : le point du clic devient le coin haut
 						   gauche du bloc, sans placement automatique, sans recherche de place libre
 						   et sans alignement sur une grille. */
@@ -1663,13 +1738,15 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 									}
 						}
 					>
-						<TraitsDuDiagramme fleches={fleches} etendue={etendue} />
+						<TraitsDuDiagramme fleches={fleches} etendue={etendueRendue} />
 						{blocsRendus.map((bloc) => (
 							<BlocCanevas
 								key={bloc.id}
 								bloc={bloc}
 								zoom={zoom}
 								edite={bloc.id === edite}
+								enGeste={ebauche !== null && ebauche.id === bloc.id}
+								poseArmee={pose !== null}
 								lectureSeule={lectureSeule}
 								traceArmee={trace !== null}
 								departDuTrace={trace?.idSource === bloc.id}
@@ -1684,7 +1761,7 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 								position={pose}
 								onDeplacer={setPose}
 								onValider={() => void poserA(pose)}
-								onAnnuler={() => setPose(null)}
+								onAnnuler={desarmerPose}
 							/>
 						)}
 					</div>
@@ -1697,7 +1774,7 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 						<CommandePose
 							armee={false}
 							lectureSeule={lectureSeule}
-							onBasculer={() => setPose({ x: PAS_CLAVIER * 3, y: PAS_CLAVIER * 3 })}
+							onBasculer={armerPose}
 						/>
 					}
 				/>
@@ -1713,6 +1790,7 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 				<FicheEditionBloc
 					key={blocEdite.id}
 					bloc={blocEdite}
+					selectionnerTitre={titreASelectionner === blocEdite.id}
 					lectureSeule={lectureSeule}
 					etatChannels={etatChannels}
 					flechesDuBloc={flechesDuBlocEdite}
@@ -1722,6 +1800,7 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 					onLier={(idChannel) => enregistrerLien(blocEdite.id, idChannel)}
 					onFermer={() => {
 						setEdite(null)
+						setTitreASelectionner(null)
 						// Le focus REVIENT au bloc, faute de quoi la fermeture le renverrait au début
 						// du document et le clavier perdrait sa place sur le canevas (§5.13).
 						const cible = document.querySelector<HTMLElement>(`[data-bloc="${blocEdite.id}"]`)
@@ -1846,7 +1925,13 @@ function RepereDePose({
 	// que les flèches ne pilotent qu'après un `Tab` supplémentaire ne serait pas le geste clavier
 	// que le §5.5 demande.
 	useEffect(() => {
-		repere.current?.focus()
+		const element = repere.current
+		if (element === null) return
+		// LE FOCUS NE FAIT PAS DÉFILER LE CANEVAS (INC-262, §5.5 ter) : le repère part d'une place libre
+		// VISIBLE. Quand aucune ne l'était, il part sous le dernier bloc, et la vue le rejoint — au plus
+		// près, sans recentrer.
+		element.focus({ preventScroll: true })
+		if (typeof element.scrollIntoView === 'function') element.scrollIntoView({ block: 'nearest', inline: 'nearest' })
 	}, [])
 
 	return (
@@ -1856,7 +1941,8 @@ function RepereDePose({
 			tabIndex={0}
 			role="application"
 			aria-label={t('goals.place.marker', { x: String(position.x), y: String(position.y) })}
-			className="absolute rounded-lg border-2 border-brand bg-brand-soft focus-visible:outline-2 focus-visible:outline-brand"
+			// Au-dessus des blocs, bloc désigné compris : le repère montre où le bloc neuf sera posé.
+			className="absolute z-30 rounded-lg border-2 border-brand bg-brand-soft focus-visible:outline-2 focus-visible:outline-brand"
 			style={{
 				left: `${position.x}px`,
 				top: `${position.y}px`,
@@ -1964,6 +2050,7 @@ const CLASSES_CONTROLE = [
  */
 function FicheEditionBloc({
 	bloc,
+	selectionnerTitre = false,
 	lectureSeule,
 	etatChannels,
 	flechesDuBloc,
@@ -1974,6 +2061,8 @@ function FicheEditionBloc({
 	onFermer,
 }: {
 	readonly bloc: BlocObjectif
+	/** Le bloc vient d'être posé : son titre par défaut est SÉLECTIONNÉ, la frappe le remplace (INC-262). */
+	readonly selectionnerTitre?: boolean
 	readonly lectureSeule: boolean
 	readonly etatChannels: EtatAsync<readonly ChannelLiable[]>
 	readonly flechesDuBloc: number
@@ -2012,6 +2101,10 @@ function FicheEditionBloc({
 	// et le geste du §5.5 ne serait tenu qu'en apparence.
 	useEffect(() => {
 		champTitre.current?.focus()
+		// Le bloc TOUT JUSTE POSÉ porte le titre par défaut : sélectionné, il est remplacé par la première
+		// frappe — le bloc ne reste plus « vide » en attendant qu'on le sélectionne (INC-262, §5.5 ter).
+		// Le montage seul décide : la fiche est remontée par sa clé à chaque changement de bloc.
+		if (selectionnerTitre) champTitre.current?.select()
 	}, [])
 
 	useEffect(() => {
@@ -2690,10 +2783,16 @@ function BlocCanevas({
 	onFin,
 	onActiver,
 	onAnnulerTrace,
+	enGeste = false,
+	poseArmee = false,
 }: {
 	readonly bloc: BlocObjectif
 	readonly zoom: number
 	readonly edite: boolean
+	/** Le bloc est en cours de déplacement ou de redimensionnement : il passe devant tout (INC-262). */
+	readonly enGeste?: boolean
+	/** Une pose est armée : le clic sur ce bloc POSE, il ne le désigne pas (INC-262, un clic un effet). */
+	readonly poseArmee?: boolean
 	readonly lectureSeule: boolean
 	readonly traceArmee: boolean
 	readonly departDuTrace: boolean
@@ -2747,6 +2846,10 @@ function BlocCanevas({
 
 	const armer = (mode: ModeGeste) => (evenement: EvenementPointeur<HTMLElement>) => {
 		if (evenement.button !== 0) return
+		// PENDANT UNE POSE, LE BLOC NE PREND PAS LE GESTE (INC-262, §5.5 ter) : l'appui remonte à la surface,
+		// dont le clic pose le bloc neuf. Armé ici, le relâchement aurait AUSSI ouvert la fiche du bloc
+		// cliqué — deux effets pour un clic.
+		if (poseArmee) return
 		// EN LECTURE SEULE, LE GLISSEMENT N'EST PAS ARMÉ (§5.7.4, ligne b). Le laisser courir
 		// donnerait à voir un bloc qui suit le doigt puis REVIENT à sa place au relâchement — un
 		// mouvement qui promet une écriture que la base refusera.
@@ -2819,6 +2922,10 @@ function BlocCanevas({
 				'focus-visible:outline-2 focus-visible:outline-brand',
 				edite ? 'border-brand ring-2 ring-brand-soft' : 'border-border',
 				departDuTrace ? 'ring-2 ring-accent' : '',
+				// LE BLOC TRAVAILLÉ PASSE AU PREMIER PLAN (INC-262, §5.5 ter) : l'empilement suivait l'ordre de
+				// lecture, et un bloc posé ou déplacé en haut à gauche d'un autre passait DERRIÈRE lui.
+				// L'ordre du document — donc de tabulation (§5.5) — ne change pas.
+				enGeste ? 'z-20' : edite ? 'z-10' : '',
 			].join(' ')}
 			style={{
 				left: `${bloc.pos_x}px`,

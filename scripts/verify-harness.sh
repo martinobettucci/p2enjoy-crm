@@ -1329,7 +1329,11 @@ SCENARIOS_API=1088
 # (INC-258) ; `recherche.spec.ts` gagne **2** scénarios — `Tab` et `Maj+Tab` referment la palette, l'appui de
 # la souris garde le focus au champ (INC-260). 766 + 7 + 3 + 2 = 778, valeur COMPTÉE — « Total: 778 tests in
 # 62 files ».
-SCENARIOS_UI=778
+# **782 depuis le correctif INC-262, 2026-09-30** (décision 614) : `objectifs.spec.ts` gagne **4** scénarios
+# — la pose à la souris depuis une place libre qui désigne le bloc posé, la pose au clavier seul, le clic
+# sur un bloc pendant la pose qui n'a qu'un effet, le bloc posé qui chevauche passe devant. 778 + 4 = 782,
+# valeur COMPTÉE — « Total: 782 tests in 62 files ».
+SCENARIOS_UI=782
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

@@ -2131,3 +2131,113 @@ describe('INC-255 — un bloc POSÉ pendant la visite rend ce qu’on y écrit (
 	})
 })
 
+// @verifies INC-262, décision 614 — poser un bloc sans chercher où il est (docs/SPEC-goals.md §5.5 ter ;
+//           docs/DESIGN_SYSTEM.md §5.29)
+describe('INC-262 — poser un bloc sans chercher où il est (§5.5 ter)', () => {
+	const NEUF = { ...BLOC_LIBRE, id: 'neuf', title: 'Nouvel objectif', pos_x: 24, pos_y: 216, width: 220, height: 120 }
+
+	/** jsdom n'implémente pas la capture du pointeur : le geste de glissement l'emploie. */
+	function stuberCapture(): () => void {
+		const prototype = HTMLElement.prototype as unknown as Record<string, unknown>
+		const avant = {
+			set: prototype.setPointerCapture,
+			has: prototype.hasPointerCapture,
+			release: prototype.releasePointerCapture,
+		}
+		prototype.setPointerCapture = () => {}
+		prototype.hasPointerCapture = () => false
+		prototype.releasePointerCapture = () => {}
+		return () => {
+			prototype.setPointerCapture = avant.set
+			prototype.hasPointerCapture = avant.has
+			prototype.releasePointerCapture = avant.release
+		}
+	}
+
+	const bloc = (titre: string) => {
+		const trouve = screen.getAllByTestId('bloc-objectif').find((element) => element.textContent?.includes(titre))
+		if (trouve === undefined) throw new Error(`bloc « ${titre} » absent`)
+		return trouve
+	}
+
+	it('le repère ne part pas d’un point qui recouvre un bloc (le « saut » relevé)', async () => {
+		const { client } = clientEcrivant(LECTURES_UN_BLOC, ok([NEUF]))
+		rendreCanevas(client)
+		await screen.findByTestId('canevas-surface')
+		fireEvent.click(screen.getAllByTestId('poser-bloc')[0] as HTMLElement)
+		const repere = screen.getByTestId('repere-pose')
+		const x = Number.parseFloat(repere.style.left)
+		const y = Number.parseFloat(repere.style.top)
+		// Le bloc du seed occupe 40..300 × 40..180 : le repère (220 × 120) ne le touche pas.
+		const touche = x < 300 && x + 220 > 40 && y < 180 && y + 120 > 40
+		expect(touche, `repère en (${x}, ${y})`).toBe(false)
+	})
+
+	it('pendant la pose, le repère SUIT la souris sur le canevas', async () => {
+		const { client } = clientEcrivant(LECTURES_UN_BLOC, ok([NEUF]))
+		rendreCanevas(client)
+		const surface = await screen.findByTestId('canevas-surface')
+		fireEvent.click(screen.getAllByTestId('poser-bloc')[0] as HTMLElement)
+		fireEvent.pointerMove(surface, { clientX: 512, clientY: 344 })
+		const repere = screen.getByTestId('repere-pose')
+		expect([repere.style.left, repere.style.top]).toEqual(['512px', '344px'])
+	})
+
+	it('la pose DÉSIGNE le bloc posé : la fiche quitte l’ancien bloc, et le titre neuf est sélectionné', async () => {
+		const { client } = clientEcrivant(LECTURES_UN_BLOC, ok([NEUF]))
+		rendreCanevas(client)
+		await screen.findByTestId('canevas-surface')
+		// Une fiche est ouverte sur le bloc lu au chargement — c'est l'état relevé par le responsable.
+		fireEvent.keyDown(bloc('Doubler le pipeline commercial'), { key: 'Enter' })
+		expect(((await screen.findByTestId('champ-titre')) as HTMLInputElement).value).toBe(BLOC_LIBRE.title)
+
+		fireEvent.click(screen.getAllByTestId('poser-bloc')[0] as HTMLElement)
+		await act(async () => {
+			fireEvent.keyDown(screen.getByTestId('repere-pose'), { key: 'Enter' })
+		})
+		const titre = (await screen.findByTestId('champ-titre')) as HTMLInputElement
+		await waitFor(() => expect(titre.value).toBe('Nouvel objectif'))
+		expect(document.activeElement).toBe(screen.getByTestId('champ-titre'))
+		const champ = screen.getByTestId('champ-titre') as HTMLInputElement
+		expect([champ.selectionStart, champ.selectionEnd]).toEqual([0, 'Nouvel objectif'.length])
+		expect(bloc('Nouvel objectif').getAttribute('data-edite')).toBe('oui')
+	})
+
+	it('le bloc dont la fiche est ouverte passe au premier plan, sans changer l’ordre de tabulation', async () => {
+		const { client } = clientEcrivant(
+			{ goal_boards: ok(TABLEAU), goal_blocks: ok([BLOC_LIBRE, BLOC_LIE]), goal_links: ok([]) },
+			ok([]),
+		)
+		rendreCanevas(client)
+		await screen.findByTestId('canevas-surface')
+		const ordre = () => screen.getAllByTestId('bloc-objectif').map((element) => element.getAttribute('data-bloc'))
+		const avant = ordre()
+		fireEvent.keyDown(bloc('Doubler le pipeline commercial'), { key: 'Enter' })
+		await screen.findByTestId('fiche-bloc')
+		expect(bloc('Doubler le pipeline commercial').className).toMatch(/\bz-10\b/)
+		expect(bloc('Livrer la refonte du site vitrine').className).not.toMatch(/\bz-\d/)
+		expect(ordre()).toEqual(avant)
+	})
+
+	it('pendant la pose, un clic sur un bloc n’a qu’un effet : poser — la fiche de ce bloc ne s’ouvre pas', async () => {
+		const restaurer = stuberCapture()
+		try {
+			const { client, ecritures } = clientEcrivant(LECTURES_UN_BLOC, ok([NEUF]))
+			rendreCanevas(client)
+			await screen.findByTestId('canevas-surface')
+			fireEvent.click(screen.getAllByTestId('poser-bloc')[0] as HTMLElement)
+			const cible = bloc('Doubler le pipeline commercial')
+			fireEvent.pointerDown(cible, { button: 0, clientX: 100, clientY: 100 })
+			fireEvent.pointerUp(cible, { button: 0, clientX: 100, clientY: 100 })
+			// Le relâchement sans déplacement ne désigne pas le bloc cliqué : aucune fiche ne s'ouvre sur lui.
+			expect(screen.queryByTestId('fiche-bloc')).toBeNull()
+			await act(async () => {
+				fireEvent.click(cible, { clientX: 100, clientY: 100 })
+			})
+			expect(ecritures.filter((ecriture) => ecriture.operation === 'insert')).toHaveLength(1)
+			await waitFor(() => expect((screen.getByTestId('champ-titre') as HTMLInputElement).value).toBe('Nouvel objectif'))
+		} finally {
+			restaurer()
+		}
+	})
+})

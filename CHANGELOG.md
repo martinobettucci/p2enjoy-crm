@@ -13,6 +13,18 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Correctif du 2026-09-30 — INC-262 (décision 614)
+
+- **Poser un bloc d'objectif ne demande plus de le chercher.** « Poser un bloc » place le repère sur la
+  première place libre de la partie visible du canevas, sans le faire défiler ; le repère suit la souris,
+  et toute la partie visible reçoit le clic. Il partait d'un point fixe, par-dessus le premier bloc.
+- **Le bloc posé est aussitôt désigné** : sa fiche s'ouvre à la place de celle du bloc précédent, le focus
+  entre dans son titre, sélectionné — la frappe le remplace, `Entrée` l'enregistre.
+- **Le bloc qu'on travaille passe devant les autres** : celui dont la fiche est ouverte, et celui qu'on
+  déplace ou redimensionne. L'ordre de tabulation reste celui de la lecture.
+- **Pendant la pose, un clic sur un bloc existant pose seulement** ; il ouvrait en plus la fiche du bloc
+  cliqué.
+
 ### `CRM-095` — Créer une affaire depuis le board
 
 *Décisions 609, 611 et 612. Migration **81** à appliquer en production (`docs/PROD_MIGRATIONS.md` §2.8).*

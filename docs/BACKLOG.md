@@ -14806,8 +14806,14 @@ que le guide et le board le promettaient (INC-256). Spécifié avant le code : `
 
 ## Correctif arbitré le 2026-09-30 — INC-262 (décision 614)
 
-- [ ] **INC-262 — poser un bloc sans chercher où il est** (`CRM-083`). Le repère de pose part d'une place
+- [x] **INC-262 — poser un bloc sans chercher où il est** (`CRM-083`). Le repère de pose part d'une place
       libre visible et suit la souris ; le bloc posé est désigné — fiche ouverte, titre sélectionné — ; le
       bloc travaillé passe au premier plan ; pendant la pose, un clic n'a qu'un effet
       (`docs/SPEC-goals.md` §5.5 ter, `docs/DESIGN_SYSTEM.md` §5.29). Preuves unitaires qui échouent avant
       correction, E2E à la souris et au clavier, captures observées.
+      *Vérifié le 2026-09-30* : `premierePlaceLibre`, 4 cas ; `Objectifs.test.tsx`, 5 rendus réels ; six
+      mutations de l'écran rougissent chacune leur preuve. `e2e/ui/objectifs.spec.ts`, 4 scénarios, rouges
+      sans `z-index` et au point fixe ; les 53 du fichier et `premier-lancement.spec.ts` verts.
+      `verify-objectifs-canevas.sh` : 55 contrôles, aucune anomalie. `SCENARIOS_UI` : 782, compté.
+      Campagne `verify-webapp.sh` : seul rouge persistant, INC-263, étrangère et rouge sur `HEAD`
+      (`docs/JOURNAL.md`, décision 614). Le manuel n'a pas de chapitre des objectifs (INC-214).

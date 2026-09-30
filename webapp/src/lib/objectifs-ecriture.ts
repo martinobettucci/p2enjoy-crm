@@ -26,6 +26,8 @@
 // @spec docs/SPEC-permissions-rls.md §7 (un refus de lecture est zéro ligne, pas une erreur)
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone)
 // @spec docs/DESIGN_SYSTEM.md §5.29 (canevas d'objectifs)
+// @spec INC-262, décision 614 — le point de départ du repère de pose, une place libre visible
+//       (docs/SPEC-goals.md §5.5 ter)
 //
 // CE MODULE N'ANTICIPE AUCUN DROIT. Il envoie, puis TRADUIT ce qu'il reçoit (`CLAUDE.md` §10) : la
 // règle réelle vit dans les politiques `goal_blocks_*` de la migration `0049`, jamais ici.
@@ -88,6 +90,65 @@ export const PAS_CLAVIER_FIN = 1
  */
 export function bornerCoordonnee(valeur: number): number {
 	return Math.max(0, Math.round(valeur))
+}
+
+/** Un rectangle du canevas, en unités de canevas — la partie visible, par exemple. */
+export type RectangleCanevas = {
+	readonly x: number
+	readonly y: number
+	readonly largeur: number
+	readonly hauteur: number
+}
+
+/** Le pas de la recherche d'une place libre : trois pas de clavier, la grille du point de départ. */
+export const PAS_PLACE_LIBRE = PAS_CLAVIER * 3
+
+/** L'écart gardé entre le point de départ du repère et tout bloc rendu : deux pas de clavier. */
+export const ECART_PLACE_LIBRE = PAS_CLAVIER * 2
+
+/**
+ * Le POINT DE DÉPART du repère de pose — INC-262, décision 614 (docs/SPEC-goals.md §5.5 ter).
+ *
+ * La première position, en ordre de lecture et au pas de `PAS_PLACE_LIBRE`, où un bloc neuf tient
+ * dans la partie VISIBLE du canevas sans toucher aucun bloc rendu, à `ECART_PLACE_LIBRE` près. Le
+ * repère partait d'un point fixe, `(24, 24)` : il recouvrait le premier bloc du tableau et faisait
+ * défiler le canevas jusqu'à lui.
+ *
+ * CE N'EST PAS UN PLACEMENT AUTOMATIQUE AU SENS DU §3 : la position POSÉE reste celle du geste — le
+ * clic, ou le repère déplacé au clavier et validé. Seul le point d'où le geste part est choisi ici.
+ *
+ * Quand la partie visible n'a aucune place libre, ou n'est pas connue — le canevas n'est pas encore
+ * rendu —, le repère part sous le dernier bloc : jamais sur un bloc.
+ */
+export function premierePlaceLibre(
+	blocs: readonly { readonly pos_x: number; readonly pos_y: number; readonly width: number; readonly height: number }[],
+	vue: RectangleCanevas | null,
+): { readonly x: number; readonly y: number } {
+	const largeur = TAILLE_BLOC_NEUF.largeur
+	const hauteur = TAILLE_BLOC_NEUF.hauteur
+	const aligner = (valeur: number) => Math.ceil(valeur / PAS_PLACE_LIBRE) * PAS_PLACE_LIBRE
+	const libre = (x: number, y: number) =>
+		blocs.every(
+			(bloc) =>
+				x + largeur + ECART_PLACE_LIBRE <= bloc.pos_x ||
+				bloc.pos_x + bloc.width + ECART_PLACE_LIBRE <= x ||
+				y + hauteur + ECART_PLACE_LIBRE <= bloc.pos_y ||
+				bloc.pos_y + bloc.height + ECART_PLACE_LIBRE <= y,
+		)
+	const x0 = aligner((vue?.x ?? 0) + PAS_PLACE_LIBRE)
+	if (vue !== null) {
+		const y0 = aligner(vue.y + PAS_PLACE_LIBRE)
+		for (let y = y0; y + hauteur <= vue.y + vue.hauteur; y += PAS_PLACE_LIBRE) {
+			for (let x = x0; x + largeur <= vue.x + vue.largeur; x += PAS_PLACE_LIBRE) {
+				if (libre(x, y)) return { x: bornerCoordonnee(x), y: bornerCoordonnee(y) }
+			}
+		}
+	}
+	const bas = blocs.reduce((plus, bloc) => Math.max(plus, bloc.pos_y + bloc.height), 0)
+	return {
+		x: bornerCoordonnee(x0),
+		y: bornerCoordonnee(blocs.length === 0 ? aligner((vue?.y ?? 0) + PAS_PLACE_LIBRE) : aligner(bas + PAS_PLACE_LIBRE)),
+	}
 }
 
 /** Borne une dimension au minimum du geste, en unités entières. */

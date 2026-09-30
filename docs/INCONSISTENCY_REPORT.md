@@ -5032,6 +5032,10 @@ manuel plutôt que de le laisser invisible.
 ligne au sommaire et son état réel, et la correction du renvoi du chapitre 29, qui promet
 « objectifs » sous une unité qui ne les livre pas.
 
+**Constat complémentaire du 2026-09-30** (INC-262, comportement inchangé) : toujours aucun chapitre, et le
+chapitre 5 *decies*.3 renvoie les objectifs au « §3 *ter* », qui est le carnet de contacts. Le renvoi est à
+corriger avec le chapitre qui manque.
+
 ### INC-215 — `signature_html` est une colonne morte, et son nom annonce un type que le produit n'expédie pas
 
 **Ouverte le 2026-08-25 par `CRM-063` tranche 1, comportement inchangé** — constat **étranger à la
@@ -6915,3 +6919,9 @@ placement automatique » ; `docs/DESIGN_SYSTEM.md` §5.29.
 **ARBITRÉE le 2026-09-30 — décision 614 : les quatre corrections**, livrées ensemble. Spécification :
 `docs/SPEC-goals.md` §3 et §5.5 ter, `docs/DESIGN_SYSTEM.md` §5.29. Suivi : `docs/BACKLOG.md`, « Correctif
 arbitré le 2026-09-30 ».
+
+**CORRIGÉE le 2026-09-30.** Les quatre corrections sont livrées ensemble. Chacune a été vue rouge en la
+retirant seule : six preuves unitaires (`Objectifs.test.tsx` — fiche non désignée, titre non sélectionné,
+aucun premier plan, deux effets par clic, repère au point fixe, repère immobile sous la souris) et les
+scénarios `e2e/ui/objectifs.spec.ts` « poser un bloc sans chercher où il est » — sans `z-index`, le
+chevauchement ; au point fixe, la souris et le clavier.

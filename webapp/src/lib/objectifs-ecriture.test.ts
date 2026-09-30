@@ -17,6 +17,8 @@
 // @verifies docs/SPEC-permissions-rls.md §7 (un refus filtré par `using` est zéro ligne, pas une
 //           erreur)
 // @verifies docs/DESIGN_SYSTEM.md §5.29 (gestes de géométrie du canevas)
+// @verifies INC-262, décision 614 — le repère de pose part d'une place libre visible (docs/SPEC-goals.md
+//           §5.5 ter ; docs/DESIGN_SYSTEM.md §5.29)
 //
 // CE FICHIER ÉPROUVE LA REQUÊTE RÉELLEMENT ÉMISE, et pas seulement la valeur rendue. Deux
 // exigences de la spécification ne vivent que dans la requête, et aucune assertion de valeur ne
@@ -44,6 +46,7 @@ import {
 	TAILLE_BLOC_NEUF,
 	blocDepuisLigne,
 	bornerCoordonnee,
+	premierePlaceLibre,
 	bornerDimension,
 	bornerRemplissage,
 	changerDirectionFleche,
@@ -1217,5 +1220,33 @@ describe('classerRefusTableau', () => {
 		expect(classerRefusTableau(400, CODE_INTERDIT, 'rls').nature).toBe('interdit')
 		expect(classerRefusTableau(403, undefined, 'forbidden').nature).toBe('interdit')
 		expect(classerRefusTableau(500, undefined, 'boom').nature).toBe('indisponible')
+	})
+})
+
+describe('premierePlaceLibre — le point de départ du repère, INC-262 (SPEC-goals §5.5 ter)', () => {
+	const BLOC = { pos_x: 40, pos_y: 40, width: 260, height: 140 }
+	const VUE = { x: 0, y: 0, largeur: 1100, hauteur: 560 }
+
+	it('part de la première place, en ordre de lecture, où un bloc neuf ne touche aucun bloc — 16 px d’écart', () => {
+		// À la hauteur 24, le bloc neuf (220 × 120) recouvre verticalement le bloc 40..180 : il lui faut
+		// x ≥ 40 + 260 + 16 = 316, soit 336 au pas de 24.
+		expect(premierePlaceLibre([BLOC], VUE)).toEqual({ x: 336, y: 24 })
+	})
+
+	it('sur un canevas vide, le repère part du coin de la partie visible', () => {
+		expect(premierePlaceLibre([], VUE)).toEqual({ x: 24, y: 24 })
+		// La partie visible est celle que le canevas a défilée : le repère ne fait pas revenir la vue.
+		expect(premierePlaceLibre([], { x: 500, y: 300, largeur: 800, hauteur: 400 })).toEqual({ x: 528, y: 336 })
+	})
+
+	it('quand la partie visible n’a aucune place libre, le repère se place sous le dernier bloc', () => {
+		const plein = { pos_x: 0, pos_y: 0, width: 1100, height: 560 }
+		// Sous le bord le plus bas (560), au pas de 24 : 560 + 24 = 584, soit 600.
+		expect(premierePlaceLibre([plein, BLOC], VUE)).toEqual({ x: 24, y: 600 })
+	})
+
+	it('sans partie visible connue, le repère se place sous le dernier bloc — jamais sur lui', () => {
+		expect(premierePlaceLibre([BLOC], null)).toEqual({ x: 24, y: 216 })
+		expect(premierePlaceLibre([], null)).toEqual({ x: 24, y: 24 })
 	})
 })

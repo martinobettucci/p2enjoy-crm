@@ -2015,7 +2015,10 @@ spécifié là-bas ; les règles ci-dessous ne disent que de quoi ils ont l'air.
   clic. Le repère est peint **au-dessus** des blocs. Le bloc posé est aussitôt **désigné** : sa fiche
   s'ouvre, le focus entre dans son titre, sélectionné. Le bloc dont la fiche est ouverte, et celui qu'on
   déplace, passent **au premier plan** (`z-index`, l'ordre du document — donc de tabulation — restant
-  celui de la lecture). Pendant la pose, un clic sur un bloc n'a qu'un effet : poser. Un état vide qui remplacerait
+  celui de la lecture). Les trois plans — `z-10` pour le bloc dont la fiche est ouverte, `z-20` pour
+  celui qu'on déplace, `z-30` pour le repère — restent **enfermés dans la surface** : sa `transform`
+  (le zoom) ouvre un contexte d'empilement, et ils ne passent jamais devant le guide flottant (`z-20`) ni
+  le voile de la navigation mobile (`z-30`). Pendant la pose, un clic sur un bloc n'a qu'un effet : poser. Un état vide qui remplacerait
   la surface n'aurait aucun endroit où recevoir le clic.
 
 - **La consigne clavier est visuellement masquée, jamais retirée** (§12.3), et **citée par chaque
