@@ -520,6 +520,18 @@ mot de passe du rôle `pgbouncer` et les variables `POOLER_*` et `VAULT_ENC_KEY`
 client SQL éphémère apparaîtrait — runtime edge attaquant la base directement, accès SQL externe
 en production — le pooler revient avec l'unité qui le réclame.
 
+### 3.7 bis Assistant IA — fonction `ia` et serveur LLM (`CRM-097`, spécifié le 2026-10-02, à livrer)
+
+`docs/SPEC-ia.md`, décision 617. Une fonction edge `ia`, la seule à connaître `OLLAMA_API_KEY`, appelle le
+serveur Ollama de LeLabs (`OLLAMA_HOST`, modèle `OLLAMA_MODEL`) côté serveur — jamais depuis le navigateur.
+Elle authentifie l'appelant par son jeton de session et écrit les suggestions **avec ce jeton** : la RLS des
+tables `suggestions_ia` et `suggestions_ia_revisions` réserve l'assistant aux administrateurs. **Rien n'est
+écrit dans la configuration avant l'acceptation**, geste SQL qui revalide la proposition comme un geste
+manuel et, pour un workflow existant, reprend l'algorithme de restauration de `CRM-078` (point de retour,
+remappage des affaires sans destination devinée). Sans clé ou sans serveur, l'assistant se déclare
+indisponible et tous les gestes manuels restent entiers. Les tests remplacent le serveur par un simulateur
+local du contrat Ollama ; le serveur réel n'est appelé qu'en développement et en production.
+
 ### 3.8 Contraintes d'exécution de l'hôte
 
 Realtime élève son nombre de descripteurs de fichiers au démarrage. Le besoin est
@@ -1150,4 +1162,5 @@ livraison contre une cellule simulée, avec leurs dégradations.
 | `@supabase/supabase-js` | Accès aux données | Typé par le schéma généré ; réessaie **trois fois** une lecture en échec (1 s, 2 s, 4 s) — mesuré |
 | IMAPClient 3.1.0 | Connexions UID/IDLE et manipulation future des dossiers (`CRM-052`/`CRM-054`) | BSD-3-Clause, maintenu, Python 3.13 ; choisi par `CRM-051` mais installé seulement avec son premier consommateur ; contexte TLS vérificateur explicite |
 | ClamAV | Analyse antivirale | Base de signatures à rafraîchir |
+| Serveur Ollama de LeLabs (`gemma4:e2b`) | Génération des suggestions de l'assistant IA (`CRM-097`) | Service externe opéré par LeLabs ; clé liée à une plage d'adresses ; borne de 120 s, aucune nouvelle tentative automatique, mode dégradé ; simulateur local pour les tests (`docs/SPEC-ia.md`) |
 | Caddy | TLS et service des fichiers statiques | Production uniquement |

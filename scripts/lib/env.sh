@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # @spec CRM-002 (docs/BACKLOG.md) — socle commun des scripts de lancement et d'environnement
 # @spec CRM-015 (docs/BACKLOG.md) — validation du CA facultatif avant Docker
+# @spec CRM-097 (docs/BACKLOG.md) — variables `OLLAMA_*` reprises du gabarit dans un `.env` antérieur
+#       (docs/SPEC-ia.md §3 ; docs/JOURNAL.md décision 617)
 # @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §10 — secret du client confidentiel du
 #       realm de développement, tiré à l'amorçage et complété sur un `.env` antérieur (décision 586)
 # @spec docs/JOURNAL.md décision 16 (amorçage automatique des secrets, gardes de profil)
@@ -250,6 +252,9 @@ OIDC_CLIENT_SECRET:copie:SSO_OIDC_CLIENT_SECRET:32
 SSO_DEV_PORT:gabarit
 SSO_DEV_ADMIN_PASSWORD:alea:20
 SPARK_HTTP_PORT:gabarit
+OLLAMA_HOST:gabarit
+OLLAMA_MODEL:gabarit
+OLLAMA_CONTEXT_LENGTH:gabarit
 "
 
 # Complète un `.env` amorcé **avant** l'unité qui a introduit une variable. Sans cela, toute unité

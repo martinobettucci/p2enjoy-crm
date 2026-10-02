@@ -1721,6 +1721,46 @@ le prévisionnel vaut 297 565,00 EUR contre 333 715,00.
 naître toute fonction neuve de `public` avec `anon=X`, et `revoke … from public` ne lui retire rien.
 Mesuré : `401` et `42501`, « permission denied for function entonnoir_conversion ».
 
+## 9 ter. Assistant IA — `CRM-097`, migration `0083` (spécifié le 2026-10-02, à livrer par T1)
+
+`docs/SPEC-ia.md` §5, décision 617. Rien de ce que propose l'IA n'entre dans la configuration avant
+l'acceptation ; ces deux tables portent la suggestion et son historique de revue.
+
+### `suggestions_ia`
+
+| Colonne | Type | Contraintes |
+|---|---|---|
+| `id` | `uuid` | PK, `gen_random_uuid()` |
+| `workspace_id` | `uuid` | non nul, FK `workspaces` |
+| `workflow_id` | `uuid` | nullable : nul pour un workflow à créer ; sinon FK composite `(workflow_id, workspace_id) → workflows` |
+| `portee` | `text` | non nul, `CHECK` : `workflow`, `etapes`, `transitions`, `champs` |
+| `statut` | `text` | non nul, défaut `en_revue`, `CHECK` : `en_revue`, `acceptee`, `abandonnee` |
+| `empreinte_initiale` | `text` | nullable ; pour un workflow existant, l'empreinte de composition lue à la création (refus d'acceptation si elle a changé) |
+| `generation_depuis` | `timestamptz` | nullable ; non nul pendant une génération — une seule en vol par suggestion |
+| `version_retour_id` | `uuid` | nullable ; la version publiée en point de retour à l'acceptation d'une modification |
+| `workflow_cree_id` | `uuid` | nullable ; le workflow créé à l'acceptation d'une création |
+| `created_by`, `decided_by` | `uuid` | `created_by` non nul ; `decided_by` à la décision ; FK `profiles` |
+| `created_at`, `decided_at` | `timestamptz` | `created_at` `now()` ; `decided_at` à la décision |
+
+### `suggestions_ia_revisions`
+
+| Colonne | Type | Contraintes |
+|---|---|---|
+| `id` | `uuid` | PK |
+| `suggestion_id` | `uuid` | non nul, FK `suggestions_ia`, `ON DELETE CASCADE` |
+| `workspace_id` | `uuid` | non nul, dénormalisé pour la RLS |
+| `numero` | `integer` | non nul, unique par suggestion, croissant |
+| `origine` | `text` | non nul, `CHECK` : `ia`, `correction` |
+| `consigne` | `text` | nullable ; la demande initiale ou la consigne de revue |
+| `proposition` | `jsonb` | non nul ; la proposition de composition, `version: 1` (`docs/SPEC-ia.md` §6) |
+| `modele`, `jetons_entree`, `jetons_sortie`, `duree_ms` | `text`, `integer` | nuls pour une correction ; renseignés pour une révision de l'IA |
+| `created_by` | `uuid` | non nul, FK `profiles` |
+| `created_at` | `timestamptz` | `now()` |
+
+**RLS** : lecture et écriture par les **administrateurs** de l'espace ; aucune politique de suppression.
+Une suggestion acceptée ou abandonnée n'accepte plus de révision (garde par trigger). Aucune donnée
+personnelle par conception : une proposition est une structure de configuration.
+
 ## 10. Index principaux
 
 | Table | Index |

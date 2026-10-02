@@ -6993,3 +6993,15 @@ n'applique plus que les fichiers qui n'y sont pas ; il refuse un fichier inscrit
 fichier inséré dans le passé. La production a été adoptée par une fenêtre avec instantané : 82 fichiers
 inscrits, empreintes conformes au dépôt livré. Conséquence trouvée en chemin et traitée : seize harnais qui
 restauraient la base par le runner vident d'abord le registre de développement (`scripts/lib/registre.sh`).
+
+### INC-265 — `verify-scripts.sh` compare le gabarit et Compose par `comm` sur des listes que `comm` dit mal triées
+
+*Relevée le 2026-10-02 pendant la spécification de `CRM-097`, comportement inchangé.* La section 1 de
+`scripts/verify-scripts.sh` trie les variables par `sort -u`, puis les compare par `comm -23` et `comm -13`.
+Sous la locale du poste (`en_US.UTF-8`), `comm` écrit « file 1 is not in sorted order », « file 2 is not in
+sorted order » et « input is not in sorted order ». **Mesuré** : les mêmes avertissements avec le gabarit de
+`HEAD`, avant toute modification de `CRM-097` — le défaut est antérieur. Le harnais rend pourtant ses
+verdicts : 114 vérifications, aucune anomalie. Mais `comm` sur une entrée qu'il juge mal triée peut manquer
+une différence ; le contrôle « variable orpheline » ou « variable non documentée » pourrait alors se taire à
+tort. Correction probable : `LC_ALL=C` sur le tri et la comparaison. **Non corrigé** : étranger à `CRM-097` ;
+soumis au responsable.

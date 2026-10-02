@@ -14845,6 +14845,33 @@ sont celles des fichiers du dépôt.
       adoption ») ; `verifier.sh` 26 contrôles sans anomalie ; registre relu — 82 lignes en `adoption`,
       `sha256sum -c` conforme au dépôt livré — ; API publique : `PGRST205` et `PGRST106`.
 
+### CRM-097 — L'assistant IA de configuration : workflows, champs, transitions `[ ]`
+*Créée le 2026-10-02 — décision 617, demande et arbitrages du responsable. Tout ce que crée l'IA est d'abord
+suggéré, puis rectifié et revu, ou accepté. Spécifié avant le code : `docs/SPEC-ia.md`, `docs/SCHEMA.md`
+§9 ter, `docs/DAT.md` §3.7 bis.*
+
+**DoD** : un administrateur obtient une suggestion de workflow, d'étapes, de transitions ou de champs, la
+corrige à la main et/ou par consigne, la fait revoir par l'IA autant qu'il veut, puis l'accepte — appliquée en
+une transaction et revalidée par la base — ou l'abandonne sans que rien ne soit écrit ; un retrait d'étape
+occupée passe par un remappage revu ; aucun non-administrateur n'atteint l'assistant (refus prouvés hors
+interface) ; sans clé, l'assistant est indisponible et rien d'autre n'est empêché ; aucune campagne n'appelle
+le serveur réel.
+
+- [ ] **T1** — le socle : variables (`OLLAMA_HOST`, `OLLAMA_MODEL`, `OLLAMA_CONTEXT_LENGTH`,
+      `OLLAMA_API_KEY`) consommées par la fonction `ia` ; état de l'assistant, appel au modèle à sortie
+      structurée, borne de 120 s, une génération en vol, mode dégradé ; migration `0083` (`suggestions_ia`,
+      `suggestions_ia_revisions`, RLS administrateurs) ; simulateur local du contrat Ollama. Preuves :
+      pgTAP, API aux jetons réels (refus de la lectrice et du commercial), unitaires de la fonction.
+- [ ] **T2** — créer un workflow avec l'IA : « Créer avec l'IA » près de « Nouveau workflow », demande,
+      suggestion, aperçu éditable, consigne, revue, accepter (création atomique revalidée), abandonner ;
+      format de proposition `version: 1` fixé ; `docs/DESIGN_SYSTEM.md` avant l'écran ; unitaires, API, E2E
+      à la souris et au clavier, captures observées.
+- [ ] **T3** — suggérer dans un workflow ouvert — étapes, transitions, champs —, et accepter par
+      l'algorithme de restauration de `CRM-078` : point de retour, remappage des affaires d'une étape
+      retirée revu avant acceptation, refus si le workflow a changé ; unitaires, API, E2E.
+- [ ] **T4** — production : variables proposées dans la cellule, clé saisie en console, plage d'adresses de
+      la cellule autorisée par le serveur LLM, migration `0083` en fenêtre avec instantané, constat.
+
 ## Arbitrage du 2026-09-29 — INC-257 (décision 610)
 
 - [ ] **INC-257 — la preuve B5 « aucune card archivée n'est vieillie par le seed » mesure le temps

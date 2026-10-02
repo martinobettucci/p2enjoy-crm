@@ -98,6 +98,10 @@ positionner `P2ENJOY_ENV_PROFILE=prod`.
 | `MAIL_MAX_ATTACHMENT_MB` | Borne d'ingestion des pièces jointes | Oui |
 | `MAIL_SYNC_INTERNAL_TOKEN` | Jeton dédié à l'API interne de `mail-sync`, aléatoire, 32 caractères ou plus ; distinct de toute clé Supabase | Oui |
 | `MAIL_SYNC_LOG_LEVEL` | Niveau JSONL de `mail-sync` parmi `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL` ; `INFO` recommandé | Non |
+| `OLLAMA_HOST` | Serveur Ollama de LeLabs, `https://hôte:port` (`CRM-097`, à livrer) | Non — sans elle, l'assistant IA est indisponible |
+| `OLLAMA_MODEL` | Modèle de génération, `gemma4:e2b` | Non — défaut `gemma4:e2b` |
+| `OLLAMA_CONTEXT_LENGTH` | Fenêtre de contexte demandée au modèle, en jetons | Non — défaut `36864` |
+| `OLLAMA_API_KEY` | **Secret** : clé du serveur Ollama, saisie en console du Spark ; la plage d'adresses de la cellule doit être autorisée côté serveur LLM | Non — vide, l'assistant IA est indisponible |
 | ~~`DISABLE_SIGNUP`~~, ~~`PASSWORD_MIN_LENGTH`~~, ~~`ADDITIONAL_REDIRECT_URLS`~~ | **Retirées par `CRM-092` T6** (décision 589) : réglages de GoTrue. Le CRM ne connaît plus ni inscription ni mot de passe | — |
 | `APP_DOMAIN` | Domaine servi par Caddy | Oui |
 | `CADDY_ACME_EMAIL` | Adresse de contact pour l'émission des certificats | Oui |
@@ -276,6 +280,10 @@ prochaine fenêtre n'appliquera que les fichiers qui n'y sont pas.
 **`CRM-096`, le registre des migrations** (décision 616, `docs/DAT.md` §3.2 bis) : livré le 2026-10-01.
 Sa fenêtre était une **adoption** — tout le répertoire rejoué une dernière fois, puis les 82 fichiers
 inscrits. Les fenêtres suivantes n'appliquent plus que les fichiers absents du registre (§3.1).
+
+**Annoncée, non encore écrite : la migration 83** (`CRM-097`, l'assistant IA, décision 617) — les tables
+`suggestions_ia` et `suggestions_ia_revisions` (`docs/SCHEMA.md` §9 ter). Sa livraison (T4) demandera aussi
+les quatre variables `OLLAMA_*` dans la cellule et l'autorisation de sa plage d'adresses par le serveur LLM.
 
 ### 3.1 Procédure nominale — la fenêtre de maintenance (`CRM-087`, livrée)
 

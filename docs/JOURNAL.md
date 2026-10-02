@@ -30629,3 +30629,40 @@ INC-262, livrée le 2026-09-30, reste « non publiée » jusqu'au constat du res
 *Confirmé par le responsable le 2026-10-01* : les deux profils créateurs d'affaires sont des administrateurs
 du SSO (« ce sont 2 admins du SSO ») ; la règle du domaine (décision 597) les fait administrateurs par leur
 jeton, sans ligne d'appartenance. Rien d'anormal.
+
+## décision 617 — `CRM-097` : un assistant IA qui suggère des workflows, des champs et des transitions
+
+*2026-10-02 ; demande et arbitrages du responsable.*
+
+**Demande.** « On va ajouter des fonctionnalités IA à cette application : la première, la création et
+l'édition de workflows, l'ajout de champs personnalisés et les transitions. Tout ce qui est créé par IA est
+d'abord SUGGÉRÉ, puis soit on rectifie et on review again, soit on accepte. » Le responsable fournit le
+serveur Ollama de LeLabs et ses variables de développement (`OLLAMA_HOST`, `OLLAMA_API_KEY`,
+`OLLAMA_CONTEXT_LENGTH`), écrites dans le `.env` local — la clé n'entre jamais au dépôt ; `.env.example` la
+documente vide.
+
+**Mesures avant toute décision**, le 2026-10-02 : la clé est d'abord refusée, « origine non autorisée pour
+cette clé » (`403`) — elle est liée à une plage d'adresses ; le responsable autorise `192.168.0.0/24`.
+Le serveur sert `gemma4:e2b` (5,1 milliards de paramètres, `Q4_K_M`) et `all-minilm` (plongements). Une
+demande de workflow à sortie structurée par schéma JSON rend en **32,5 s** un JSON conforme et un workflow
+cohérent, mais des clés hors de la forme du produit et un « perdu » atteignable d'une seule étape : la sortie
+du modèle ne peut pas être crue telle quelle. L'existant offre le geste d'application : le document de
+composition et la restauration de `CRM-078`, qui appliquent une composition entière en une transaction
+avec point de retour et remappage affaire par affaire.
+
+**Options soumises et décisions du responsable** (`docs/SPEC-ia.md` §1) : la rectification se fait par
+correction manuelle et/ou consigne, l'IA revoyant la version corrigée — retenue, recommandée ; les
+suggestions vivent en base avec leur historique — retenue, recommandée ; l'édition d'un workflow occupé va
+**jusqu'au retrait d'étapes occupées, avec remappage revu avant acceptation** — retenue, au-delà de la
+recommandation qui s'arrêtait aux retraits d'éléments inoccupés ; l'assistant apparaît à côté de chaque
+geste — retenue, recommandée.
+
+**Choix de conception arrêtés en écrivant la spécification** : appel au modèle par une fonction edge `ia`,
+seule détentrice de la clé, qui écrit avec le jeton de l'appelant ; acceptation par un geste SQL qui revalide
+tout et reprend l'algorithme de restauration de `CRM-078` ; rien dans la configuration avant « Accepter » ;
+mode dégradé sans clé ; simulateur local du contrat Ollama pour les tests, le serveur réel jamais appelé par
+une campagne ; aucune donnée personnelle envoyée au modèle ; `OLLAMA_MODEL` ajoutée, défaut `gemma4:e2b`.
+
+**Écrit avant le code** : `docs/SPEC-ia.md`, `docs/SCHEMA.md` §9 ter, `docs/DAT.md` §3.7 bis et §15,
+`docs/BACKLOG.md` (`CRM-097`, quatre tranches), `README.md` §9, `docs/PROD_MIGRATIONS.md` §2.3 et §3,
+`.env.example` §13.
