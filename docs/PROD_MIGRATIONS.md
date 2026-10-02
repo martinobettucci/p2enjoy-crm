@@ -802,6 +802,14 @@ attendue à ce stade : `select count(*) from pg_policies where schemaname = 'pub
 | `realtime` dans la cellule | À chaque montée de version de Realtime : reconstruire l'image dérivée, que `scripts/spark/livrer.sh` recharge (décision 571) |
 | ~~`auth`~~, ~~`auth-templates`~~ | **Retirés de la pile par `CRM-092` T6** (décision 589). À la reprise : les arrêter et les supprimer explicitement (`docker rm -f p2enjoy-auth p2enjoy-auth-templates`) — `./runProd.sh` ne retire aucun orphelin —, après l'application de la migration 77 ; `scripts/spark/verifier.sh` contrôle qu'aucun ne subsiste. Caddy répond lui-même 404 sur `/auth/v1/*` |
 
+**Opération en attente du prochain déploiement de production — reconstruire `mail-sync` pour qu'un compte
+ne soit plus relevé deux fois à la fois (INC-266, décision 619).** La veille et la route `/poll` relevaient le même
+compte en même temps ; après un renommage de track, la seconde retentait le renommage déjà fait et journalisait à
+tort `folder_rename_refused` — le dossier était bien renommé. Un verrou par compte les sérialise. **Aucune migration, aucune variable** ; la livraison reconstruit l'image comme pour
+tout changement du service (`docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+mail-sync`, ou `scripts/spark/livrer.sh` dans la cellule). Vérification : `docker logs` du service ne porte aucun
+`folder_rename_refused` après un renommage de track.
+
 **Opération en attente du prochain déploiement de production — redéployer `mail-sync` pour que le
 courrier reçu se groupe en fils (`CRM-081` tranche 2 f).** Le service persiste désormais la chaîne
 `References` d'un message entrant dans `mail_messages.references_ids`, ce qu'il omettait depuis

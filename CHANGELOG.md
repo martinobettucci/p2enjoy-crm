@@ -44,6 +44,15 @@ d'exécuter le code attendu.
   avait décidé une suggestion, ne pouvaient plus être supprimés — le gel des suggestions décidées refusait
   l'effacement du lien.
 
+### Correctif du 2026-10-03 — INC-266 (décision 619)
+
+*À livrer avec la prochaine reconstruction de `mail-sync` (`docs/PROD_MIGRATIONS.md` §4).*
+
+- **Une boîte de réception n'est plus relevée deux fois à la fois.** La relève de fond et une relève demandée
+  pouvaient traiter la même boîte en même temps : après le renommage d'un track, la seconde retentait le renommage
+  déjà fait et écrivait à tort un refus (`folder_rename_refused`) dans le journal du service — le dossier, lui, était
+  bien renommé. Les relèves d'une même boîte se suivent désormais.
+
 ### Correctif du 2026-09-30 — INC-262 (décision 614)
 
 *Livré en production le 2026-09-30 (`09d3abcc`, webapp seule) ; publié quand le responsable aura constaté
