@@ -887,6 +887,13 @@ seed n'écrit pas un message : il en **fait arriver** un.
 échoue au lieu de passer en silence. Un seed qui saute discrètement une démonstration ment sur
 l'état du produit.
 
+**L'ordre du fil est un contrat — INC-267, corrigée le 2026-10-03 (décision 619).** La réponse « Re: Demande de
+devis — refonte » est reçue APRÈS son original : c'est elle qu'ouvre le fil. Envoyés dans une même session SMTP, les
+deux messages étaient remis dans un ordre que le serveur ne garantit pas — mesuré le 2026-10-02, la réponse reçue
+90 ms avant l'original. Le seed envoie donc **deux lots** : l'original seul, relevé en base, puis le reste. L'ordre est
+**vérifié à chaque passage** ; une base en désordre arrête le seed, qui ne la répare pas en place — la boîte garde son
+ordre de remise — et désigne `./resetMe.sh`.
+
 ## 8. Ce que ce seed ne livre pas, et pourquoi
 
 - **Aucun second workspace, aucun compte extérieur.** `CRM-005` dit « un workspace ». Les preuves

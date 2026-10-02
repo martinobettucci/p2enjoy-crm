@@ -7032,7 +7032,8 @@ cause du renommage d'un dossier absent (ordre entre création et renommage).
 
 ### INC-267 — le « message le plus récent » d'un fil du seed dépend d'une course de remise
 
-> **Arbitrage du responsable, 2026-10-03 (décision 619) : corriger maintenant, dans son propre commit.**
+> **CORRIGÉE le 2026-10-03 (décision 619).** Le seed envoie l'original seul, attend qu'il soit relevé en base, puis
+> sa réponse ; l'ordre est vérifié à chaque passage (`docs/SPEC-seed.md` §2.19).
 
 *Relevée le 2026-10-02 pendant les campagnes de `CRM-097` T1, comportement inchangé.* Deux scénarios de
 `e2e/ui/groupement-fils.spec.ts` (`CRM-081` tranche 2 f) attendent que le fil « Demande de devis — refonte »

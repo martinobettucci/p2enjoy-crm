@@ -2706,7 +2706,13 @@ if [ "$(messages_seedes)" != 4 ]; then
 	# extérieur : le domaine `.test` n'est pas routable et aucun tiers n'existe sur cette pile.
 	# La divergence promise par l'identité sortante du §2.18 est de ce fait inapplicable ici :
 	# INC-087.
+	# DEUX LOTS, ET L'ORDRE DE RÉCEPTION EST ALORS UN FAIT, NON UNE CHANCE — INC-267, décision 619. Envoyés dans
+	# la même session, l'original et sa réponse étaient remis dans un ordre que le serveur ne garantit pas, et la
+	# réponse a été reçue AVANT l'original. Le premier lot ne porte que l'original ; le second ne part qu'une fois
+	# l'original relevé en base. Le contrôle d'ordre, plus bas, le vérifie à chaque passage.
+	envoyer_lot() {
 	envoi=$(docker compose exec -T \
+		-e LOT="$1" \
 		-e DEST_CARD="$adresse_card@$INBOUND_DOMAIN" \
 		-e DEST_SYSTEME="systeme@$INBOUND_DOMAIN" \
 		-e MDP="$MAILBOX_PASSWORD" \
@@ -2758,34 +2764,68 @@ suggere = composer("Point d’avancement — migration ERP", os.environ["DEST_SY
                    "\n\nBien cordialement,\nLéo Marchand",
                    expediteur=os.environ["CORRESPONDANT"])
 
+# Le premier lot : l original seul. Le second : tout le reste, dont sa réponse.
+lot = messages[:1] if os.environ["LOT"] == "premier" else messages[1:]
 session = smtplib.SMTP("stalwart", 587, timeout=60)
 session.ehlo()
 session.login("bizdev@p2enjoy.test", os.environ["MDP"])
-for message in messages:
+for message in lot:
     session.send_message(message)
 session.quit()
 
-session_correspondant = smtplib.SMTP("stalwart", 587, timeout=60)
-session_correspondant.ehlo()
-session_correspondant.login(os.environ["CORRESPONDANT"], os.environ["MDP"])
-session_correspondant.send_message(suggere)
-session_correspondant.quit()
+if os.environ["LOT"] != "premier":
+    session_correspondant = smtplib.SMTP("stalwart", 587, timeout=60)
+    session_correspondant.ehlo()
+    session_correspondant.login(os.environ["CORRESPONDANT"], os.environ["MDP"])
+    session_correspondant.send_message(suggere)
+    session_correspondant.quit()
 print("envoyes")
-' 2>&1) || die "l envoi des messages de démonstration a échoué : « $envoi »"
-	[ "${envoi##*$'\n'}" = "envoyes" ] || die "l envoi des messages de démonstration n a rien
+' 2>&1) || die "l envoi des messages de démonstration ($1) a échoué : « $envoi »"
+	[ "${envoi##*$'\n'}" = "envoyes" ] || die "l envoi des messages de démonstration ($1) n a rien
         confirmé : « $envoi »"
+	}
 
-	# La remise n'est pas instantanée : le serveur accepte, puis dépose. Cinq tentatives espacées
-	# valent mieux qu'un délai fixe, qui serait soit trop court, soit du temps perdu.
-	for _tentative in 1 2 3 4 5; do
-		relever_boite >/dev/null
-		[ "$(messages_seedes)" = 4 ] && break
-		sleep 3
-	done
+	# La remise n'est pas instantanée : le serveur accepte, puis dépose. Des tentatives espacées valent mieux
+	# qu'un délai fixe, qui serait soit trop court, soit du temps perdu. `$1` : le nombre de messages attendus.
+	relever_jusqua() {
+		for _tentative in 1 2 3 4 5 6 7 8; do
+			relever_boite >/dev/null
+			[ "$(messages_seedes)" -ge "$1" ] && return 0
+			sleep 3
+		done
+		return 0
+	}
+
+	original_present=$(curl -s "$API/rest/v1/mail_messages?select=id&rfc822_message_id=eq.%3C$MSGID_CLASSE%3E" \
+		-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
+	if [ "$original_present" = 0 ]; then
+		envoyer_lot premier
+		relever_jusqua 1
+		original_present=$(curl -s "$API/rest/v1/mail_messages?select=id&rfc822_message_id=eq.%3C$MSGID_CLASSE%3E" \
+			-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
+		[ "$original_present" = 1 ] || die "l original du fil de démonstration n est pas arrivé en base : sa
+        réponse ne part pas avant lui (INC-267)."
+	fi
+	envoyer_lot suite
+	relever_jusqua 4
 fi
 
 [ "$(messages_seedes)" = 4 ] || die "les quatre messages de démonstration ne sont pas arrivés en base
         après relève : l inbox globale serait vide, et le §2.19 ne serait pas tenu."
+
+# L'ORDRE DU FIL EST UN CONTRAT, ET IL EST VÉRIFIÉ À CHAQUE PASSAGE — INC-267, décision 619. La réponse doit être
+# reçue APRÈS l'original : c'est elle qu'ouvre le fil, « son message le plus récent » (docs/SPEC-cards.md §16.14).
+# MESURÉ le 2026-10-02 : envoyés dans la même session SMTP, la réponse avait été reçue 90 ms AVANT l'original.
+ordre_fil=$(curl -s "$API/rest/v1/mail_messages?select=rfc822_message_id,received_at&rfc822_message_id=in.(%3C$MSGID_CLASSE%3E,%3C$MSGID_REPONSE%3E)" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+	| jq -r --arg o "<$MSGID_CLASSE>" --arg r "<$MSGID_REPONSE>" \
+		'(map(select(.rfc822_message_id == $o))[0].received_at) as $ro
+		 | (map(select(.rfc822_message_id == $r))[0].received_at) as $rr
+		 | if ($ro != null and $rr != null and $ro < $rr) then "ordonne" else "desordre \($ro) \($rr)" end')
+[ "$ordre_fil" = ordonne ] || die "le fil de démonstration est en désordre : la réponse n'est pas reçue après
+        l'original ($ordre_fil). Le seed ne le répare pas en place — la boîte garde son ordre de remise :
+        ./resetMe.sh le reconstruit dans l'ordre (INC-267)."
+info "Fil de démonstration : l'original reçu avant sa réponse — INC-267"
 
 etat_courrier=$(curl -s "$API/rest/v1/mail_messages?select=rfc822_message_id,classification,card_id&rfc822_message_id=in.(%3C$MSGID_CLASSE%3E,%3C$MSGID_NON_CLASSE%3E)" \
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY")

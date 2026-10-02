@@ -14916,8 +14916,12 @@ chacune dans son propre commit, avant `CRM-097` T3 ; la livraison en production 
 - [ ] **INC-266 — le renommage IMAP d'un dossier de track est refusé par intermittence, et S3 lit tout le journal
       du conteneur.** Trouver la cause du renommage d'un dossier absent et la corriger ; borner la lecture de S3 au
       passage en cours.
-- [ ] **INC-267 — le message le plus récent d'un fil du seed dépend d'une course de remise.** Le seed rend l'ordre
+- [x] **INC-267 — le message le plus récent d'un fil du seed dépend d'une course de remise.** Le seed rend l'ordre
       déterministe ; `groupement-fils.spec.ts` vert sur base reseedée, rejoué plusieurs fois.
+      *Vérifié le 2026-10-03* : le contrôle d'ordre ajouté au seed rougit sur la base de la veille (réponse reçue
+      90 ms avant l'original) ; deux lots d'envoi, l'original relevé avant sa réponse. `./resetMe.sh --yes` : l'original
+      reçu une seconde avant sa réponse ; second passage convergent ; `groupement-fils.spec.ts` 18 sur 18 (six
+      scénarios, trois fois) ; messagerie **42**.
 - [ ] **INC-268 — un espace de travail qui porte un workflow ne se supprime pas.** Migration ; preuve pgTAP qui
       supprime un espace complet (workflows, étapes, catalogue, affaires) et rougit avant correction.
 - [~] **INC-269 — le parcours clavier de « Ma journée » focalise une ligne avant la nouvelle lecture.** La preuve

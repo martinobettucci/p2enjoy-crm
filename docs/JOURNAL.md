@@ -30854,3 +30854,10 @@ verte), le processeur ralenti six fois laisse le scénario vert (8 sur 8), le fi
 les passages suivants : leçon pour la suite, une trace d'échec de campagne se copie avant tout nouveau passage. La
 preuve attend l'annonce de la portée nouvelle et atteint l'affaire par `Tab` (10 sur 10) ; l'entrée reste ouverte
 jusqu'à une campagne complète verte.
+
+**INC-267 corrigée, le 2026-10-03 (décision 619).** Le contrôle d'abord : le seed vérifie que la réponse du fil de
+démonstration est reçue après son original — rouge sur la base de la veille (« desordre », 90 ms d'écart inversé).
+Puis la cause : l'original et sa réponse partaient dans une même session SMTP, remis dans un ordre que Stalwart ne
+garantit pas. Le seed envoie désormais l'original seul, le relève en base, puis le reste. Base reconstruite
+(`./resetMe.sh --yes`) : l'original reçu une seconde avant sa réponse, contrôle vert, second passage convergent ;
+`groupement-fils.spec.ts` 18 sur 18 ; messagerie 42.
