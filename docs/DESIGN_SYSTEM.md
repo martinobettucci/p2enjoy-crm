@@ -4957,3 +4957,134 @@ action ». Quatre états vides renvoyaient à « l'API » là où le produit por
   (`CLAUDE.md` §16, 2026-09-29) : écrit avec des espaces ordinaires, le texte revenait à la ligne entre
   l'étiquette et son « » », qui ouvrait seul la ligne suivante. Les 156 guillemets des textes antérieurs
   portent des espaces ordinaires ; ils ne sont pas repris ici.
+
+### 5.52 Assistant IA — créer un workflow par suggestion, `CRM-097` T2
+
+*Écrit le 2026-10-02, avant le code (décision 618).* Ce que le panneau lit, envoie et refuse est spécifié par
+`docs/SPEC-ia.md` §12 ; ces règles ne disent que de quoi il a l'air. Tout ce que le §5.15 pose pour l'éditeur de
+workflows vaut ici sans être répété — listes et non diagramme, « Vers <étape> » écrit en toutes lettres, clés en
+`code` sur `--color-hover`, choix édités dans un `fieldset`, formulaires et confirmations **dans le flux, aucune
+modale**, alerte de refus dans le bloc concerné.
+
+- **« Créer avec l'IA » est un bouton SECONDAIRE, icône `Sparkles`, posé juste après « Nouveau workflow ».**
+  Au-dessus de la liste, les deux gestes sont secondaires et se suivent ; dans l'état vide, « Nouveau
+  workflow » reste le primaire et « Créer avec l'IA » le suit en secondaire — le geste manuel est celui qui
+  marche toujours, y compris sans assistant (§5.4 ter, même raisonnement inversé : ici l'IA n'a encore rien
+  proposé). `Sparkles` est l'icône de **ce que le produit propose ou établit lui-même** (§5.4 ter, §5.11) : la
+  suggestion de l'IA en est un cas, aucune icône nouvelle n'est déclarée (§9).
+
+- **Le mot « suggestion » est écrit partout où l'IA a produit quelque chose, et le panneau dit que rien n'est
+  encore créé.** Une pilule neutre `--color-hover` / `--color-text-2` sous le titre : « Suggestion — rien n'est
+  créé avant « Accepter » ». C'est le principe du §2 de la spécification rendu visible : un aperçu de workflow
+  ressemble à un workflow, et sans ce mot on croirait la configuration déjà changée.
+
+- **Les suggestions en revue sont listées SOUS la liste des workflows**, dans la même colonne de navigation,
+  sous un titre `h3` « Suggestions de l'IA en revue » ; elles ne sont **pas mêlées** aux workflows — elles n'en
+  sont pas encore. Chaque ligne est un bouton de la forme de celles des workflows (§5.15) : icône `Sparkles`,
+  l'**extrait de la demande** sur deux lignes au plus — c'est un échantillon, l'ellipse du §5.46 s'y applique —,
+  et la date de création en **donnée technique** (§2). `aria-current` porte la suggestion ouverte. **Aucune
+  suggestion : aucun titre** — la section n'est pas rendue (§5.36) ; et un non-administrateur, à qui la base
+  n'en rend aucune, ne voit donc rien qui trahisse leur existence (§5.37).
+
+- **LE PANNEAU OCCUPE LA COLONNE DE DROITE, à la place du workflow choisi** — ou se rend sous l'état vide quand
+  l'espace n'a aucun workflow, comme le formulaire de création. Surface `--color-surface`, `--radius-lg`,
+  bordure `--color-border`, rembourrage 16 px. Titre `h2` « Suggestion de l'IA », `Sparkles` l'accompagnant
+  sans le remplacer. Ce n'est pas la carte discrète du §5.4 ter : celle-ci porte un indice d'une ligne, le
+  panneau porte un workflow entier à relire.
+
+- **La demande est citée telle quelle, retours à la ligne préservés** (`white-space: pre-wrap`), en
+  `--color-text-2` : c'est la donnée d'où tout part, et la relire explique la proposition (§5.39 pour un texte
+  rendu sans reflux).
+
+- **DEMANDER : un `textarea` libellé, son aide, et le rappel des données personnelles.** Le rappel est une phrase
+  d'aide permanente, `--text-sm` `--color-text-3`, reliée au champ par `aria-describedby` — jamais une alerte :
+  ce n'est pas une erreur, c'est une règle d'usage (`docs/SPEC-ia.md` §3). « Générer la suggestion » est
+  primaire et **désactivé tant que la demande est blanche** — un champ requis, non un droit (§5.50).
+
+- **L'ÉTAT DE L'ASSISTANT SE DIT, IL N'ÉTEINT RIEN.** Indisponible, une mention `role="status"` en
+  `--color-accent-soft` / `--color-accent-on-soft`, icône `TriangleAlert`, dit pourquoi — clé absente, serveur
+  injoignable, clé refusée, modèle absent — et que les gestes manuels restent entiers. La commande de génération
+  reste active : la base et la fonction refusent, l'écran traduit (§5.42, même règle).
+
+- **GÉNÉRER EST UNE OPÉRATION LONGUE, ET ELLE S'AFFICHE COMME TELLE** (§6). Une région `role="status"` dit
+  « L'assistant prépare une proposition — environ une demi-minute » ; le **temps écoulé** est écrit à côté, en
+  donnée technique, et **hors de la région vivante** — annoncé chaque seconde, il couvrirait tout le reste. Une
+  barre indéterminée `aria-hidden`, hauteur 4 px, `--color-brand` sur `--color-hover`, glisse en 1,5 s ; sous
+  `prefers-reduced-motion` elle est fixe, et le temps écoulé porte seul la progression. Aucune commande de la
+  suggestion n'est offerte pendant ce temps : il n'y a rien à relire.
+
+- **LES DÉFAUTS VIENNENT EN TÊTE DE L'APERÇU, en accent et non en danger.** Un bloc `--color-accent-soft` /
+  `--color-accent-on-soft`, icône `TriangleAlert` — la forme de l'alerte « aucune étape initiale » de l'éditeur
+  (§5.15) —, titré par leur **compte en toutes lettres et par clé** (« 2 défauts empêchent l'acceptation »,
+  §10), puis leur liste, une phrase par défaut. Un défaut n'est pas une panne : c'est un travail de relecture,
+  et la teinte de danger est réservée à ce qui échoue ou détruit (§1). **Aucun défaut : aucun bloc** (§5.39).
+
+- **L'APERÇU SUIT L'ORDRE DE L'ÉDITEUR** — nom, étapes, transitions, champs, visibilités, exigences —, chaque
+  section titrée `h3`, une liste par section. Une étape dit d'où vient son nœud par un **mot**, pilule neutre
+  « Nouveau nœud » ou « Du catalogue » (§1). L'étape initiale porte la pilule « Initiale » `--color-brand-soft`
+  / `--color-brand`. Une section vide porte une phrase — « Aucune exigence proposée » —, jamais un vide (§5.15).
+
+- **CE QUI SE CORRIGE EST UN CHAMP ; ce qui ne se corrige pas est un TEXTE**, jamais un champ désactivé (§5.15) :
+  la clé d'un nœud ou d'un champ, le libellé d'un nœud du catalogue. Les champs suivent le §5.7 — 40 px,
+  libellé visible ou `sr-only` quand la ligne le nomme déjà, focus `--color-brand`. L'étape initiale se choisit
+  par un groupe de **boutons radio** — un seul choix possible, et le contrôle natif le dit.
+
+- **CHAQUE RETRAIT EST UN BOUTON DISCRET COMPACT `Trash2` DONT LE NOM ACCESSIBLE NOMME L'OBJET**, sans
+  confirmation : rien n'est encore créé, et « Rétablir » ramène la révision entière — c'est l'écart motivé du
+  §5.41 pour un geste qui ne détruit rien. **Ce qu'un retrait emporte est annoncé** dans la région vivante de
+  l'écran — « Étape retirée, avec 2 transitions et 1 règle » —, parce que la cascade fait disparaître des
+  lignes ailleurs que là où l'on regarde.
+
+- **« Ajouter une transition » est un formulaire replié sous les transitions** : deux `select` — départ,
+  arrivée —, un libellé, la case du motif ; le patron du §5.15 pour la déclaration d'une transition. Les
+  `select` ouvrent sur une option vide (§5.41).
+
+- **LA BARRE DE GESTES FERME LE PANNEAU, ET L'ORDRE EST CELUI DE L'ENGAGEMENT.** « Accepter et créer le
+  workflow » (primaire), « Enregistrer la correction » (secondaire), « Rétablir » (discret), puis
+  « Abandonner la suggestion » (discret, en dernier — §5.40, le geste qui clôt vient après ceux qui
+  réparent). Au-dessus de la barre, le bloc de **consigne** : un `textarea` « Consigne pour l'IA » et « Revoir
+  avec l'IA » (secondaire, désactivé tant que la consigne est blanche).
+  - « Enregistrer la correction » et « Rétablir » sont **désactivés tant que rien n'est modifié** — un état de
+    la saisie, jamais un droit (§5.50). Une mention `--text-sm` `--color-text-3` dit « Modifications non
+    enregistrées » dès qu'il y en a : l'aperçu ne ressemble plus à la révision, et l'écran le dit.
+  - « Accepter » est désactivé **seulement** quand la révision porte des défauts **et** que rien n'est modifié ;
+    sa raison est écrite dessous et reliée par `aria-describedby` — « Corrigez les défauts, à la main ou par une
+    revue, avant d'accepter ». Modifiée, la proposition n'a pas encore de défauts connus : la commande reste
+    offerte, et l'enregistrement qu'elle déclenche les rend.
+  - Pendant un geste, sa commande dit son attente (« Acceptation… », « Enregistrement… ») et toutes les
+    commandes du panneau sont désactivées : deux gestes simultanés sur une même suggestion ne diraient pas
+    lequel l'a emporté.
+
+- **« Abandonner » ouvre une confirmation dans le flux**, sous la barre, qui nomme la demande et dit la
+  conséquence — la suggestion reste dans l'historique et ne pourra plus être revue ni acceptée ; son bouton est
+  `danger` (§5.13, §6). La commande reste montée et désactivée pendant la question : le focus y revient sans
+  attente (§5.27).
+
+- **LES REFUS SE LISENT DANS LE PANNEAU, PRÈS DE LA CAUSE** : sous la barre de gestes pour accepter, corriger et
+  abandonner ; sous la consigne pour une revue ; sous le champ de demande pour une génération. `role="alert"`,
+  `--color-danger-soft` / `--color-danger-on-soft`. Un échec de génération porte « Réessayer », qui relance la
+  même génération (§5.8, action de reprise).
+
+- **L'HISTORIQUE EST UN `details` REPLIÉ**, « Historique — 3 révisions », sous la barre. Une ligne par révision,
+  la plus récente en haut (§5.43, une boîte qu'on relit en commençant par ce qui vient d'arriver) : numéro et
+  date en donnée technique, origine en **mot** — « Proposée par l'IA », « Corrigée à la main » —, la consigne
+  citée, le nombre de défauts par clé. Lecture seule : relire une ancienne révision n'est pas un geste de T2.
+
+- **LE FOCUS.** Ouvrir la demande le place dans son champ ; ouvrir une suggestion existante le place sur le titre
+  du panneau (`tabIndex=-1`). Annuler une demande le rend à « Créer avec l'IA », différé d'un tour de rendu si la
+  commande a été démontée (§5.25). Après une génération, le focus va au titre de l'aperçu ; après
+  l'acceptation, au workflow créé dans la liste ; après l'abandon, à « Créer avec l'IA ». Le focus ne reste
+  jamais sur un élément qui disparaît (§5.13, §5.29).
+
+- **LES ISSUES S'ANNONCENT DANS LA RÉGION VIVANTE DE L'ÉCRAN** : suggestion prête et son nombre de défauts,
+  correction enregistrée, révision de l'IA reçue, workflow créé — nommé —, suggestion abandonnée.
+
+- **SOUS LE PALIER `lg`, la navigation passe au-dessus du panneau** (règle de l'éditeur, §5.15) ; sous `md`, les
+  lignes d'édition se replient et les commandes de ligne passent à la ligne suivante, cibles conservées à
+  `--size-target`. `md` et jamais `sm` (§11, §5.20). **La page ne défile jamais horizontalement** (§7), mesuré
+  aux quatre paliers.
+
+- **Aucune couleur, aucun jeton, aucune icône nouvelle** : le panneau emprunte au §5.15 ses listes et ses
+  formulaires, au §5.4 ter son icône, au §5.43 l'ordre de son historique, au §5.6 ses pilules, au §5.7 ses
+  champs, au §5.5 ses variantes, au §5.27 sa confirmation et au §6 l'affichage d'une opération longue. **Seule
+  forme nouvelle : la barre indéterminée**, faite des jetons existants.

@@ -541,6 +541,14 @@ clé de service, le jeton interne (300 s au plus) pouvant expirer en route. **Le
 `docker-compose.dev.yml` seul) n'est visé que si `IA_SIMULATEUR_HOST` est posée — en développement — et que la
 requête porte l'en-tête `x-ia-simulateur`.
 
+**T2 — l'acceptation et le juge unique** (`docs/SPEC-ia.md` §12, décision 618). Les défauts d'une proposition
+sont calculés **par la base**, une seule fois, pour toute révision — du modèle comme de l'administrateur — et
+de nouveau à l'acceptation : trois copies des mêmes règles, dans la fonction, l'écran et la base, auraient
+divergé. La fonction `ia` ne fait plus que vérifier la forme de la sortie du modèle et normaliser ses clés.
+L'acceptation est un geste SQL `security definer`, `public.accepter_suggestion_ia`, qui crée tout le workflow
+en une transaction. L'écran lit le flux de génération par `fetch` avec le jeton de session ; corrections et
+abandon passent par PostgREST, sous la RLS.
+
 ### 3.8 Contraintes d'exécution de l'hôte
 
 Realtime élève son nombre de descripteurs de fichiers au démarrage. Le besoin est

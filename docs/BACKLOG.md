@@ -14873,6 +14873,14 @@ le serveur réel.
       suggestion, aperçu éditable, consigne, revue, accepter (création atomique revalidée), abandonner ;
       `docs/DESIGN_SYSTEM.md` avant l'écran ; unitaires, API, E2E
       à la souris et au clavier, captures observées.
+      *Spécifiée le 2026-10-02 avant le code* (`docs/SPEC-ia.md` §12, `docs/DESIGN_SYSTEM.md` §5.52, décision
+      618). Découpage, dans cet ordre :
+      - [ ] **T2.a** — migration `0084` : défauts calculés par la base pour toute révision, correction refusée
+            pendant une génération, `accepter_suggestion_ia` ; pgTAP ;
+      - [ ] **T2.b** — fonction `ia` : forme et clés seulement, défauts relus en base, issue `sans_suite`, revue
+            sans consigne d'une suggestion sans révision, défauts transmis à la revue ; unitaires, API ;
+      - [ ] **T2.c** — écran : module de la webapp, panneau, entrées dans l'éditeur, traductions ; unitaires ;
+      - [ ] **T2.d** — E2E souris et clavier, captures observées, seed, manuel, harnais et campagnes.
 - [ ] **T3** — suggérer dans un workflow ouvert — étapes, transitions, champs —, et accepter par
       l'algorithme de restauration de `CRM-078` : point de retour, remappage des affaires d'une étape
       retirée revu avant acceptation, refus si le workflow a changé ; unitaires, API, E2E.

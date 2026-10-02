@@ -30716,3 +30716,45 @@ compteur (« 1097 au lieu de 1098 ») : il n'est plus énuméré sans `IA_SERVEU
 recréation de `mail-sync` — S3 lisait un avertissement d'un passage antérieur (INC-266) ; unitaires **3463** ;
 typage ; interface en trois tranches, **780 sur 782** — les deux rouges de `groupement-fils.spec.ts` viennent
 d'une course de remise du seed du courrier, mesurée (la réponse reçue 90 ms avant l'original), INC-267.
+
+## décision 618 — `CRM-097` T2 : la base, seule juge des défauts ; accepter par un geste SQL
+
+*2026-10-02 ; choix de conception arrêtés en écrivant le contrat de T2, avant son code (`docs/SPEC-ia.md` §12,
+`docs/DESIGN_SYSTEM.md` §5.52).*
+
+**Problème.** T2 ajoute deux chemins qui ne passent pas par la fonction `ia` : la correction manuelle, écrite par
+PostgREST, et l'acceptation, qui doit revalider. Le §6.1 de T1 laissait le contrôle à la fonction ; il aurait
+fallu le recopier dans l'écran — pour dire les défauts d'une correction — et dans la base — pour refuser une
+acceptation. Trois copies des mêmes vingt-neuf règles, en deux langages.
+
+**Observations.** Le trigger de création d'une révision voit passer toutes les révisions, des deux origines ; la
+base connaît le catalogue au moment exact où elle écrit ; `unaccent` est installé (migration 68) ; `postgres`,
+propriétaire des fonctions, porte `BYPASSRLS` ; le trigger de T1 refuse `acceptee` à `authenticated`.
+
+**Décisions.**
+
+1. **Le contrôle passe en base, une fois** : `app.defauts_proposition_ia`, appelée par le trigger pour toute
+   révision et de nouveau par l'acceptation. Le client ne fournit plus `defauts` (privilège retiré). La fonction
+   `ia` ne garde que la forme et la normalisation des clés, et relit le nombre de défauts écrit. Un défaut est
+   `{code, chemin, valeurs}` : l'écran compose sa phrase par une clé de traduction. Coût assumé : les tests
+   unitaires des défauts de T1 deviennent des preuves pgTAP.
+2. **Accepter est `security definer`** : un geste `invoker` ne pourrait jamais conclure, l'état `acceptee` étant
+   refusé à `authenticated` — et T3, qui déplacera des affaires, le sera de toute façon. Les sept vérifications
+   sont écrites à la main ; « introuvable » et « non administré » sont indiscernables.
+3. **La clé d'un choix est dérivée de son libellé** à l'acceptation : le format `version: 1`, fixé par T1, ne
+   porte que des libellés. Une clé vide ou en double est un défaut (`choix_invalide`), jamais une correction
+   silencieuse.
+4. **Une correction est refusée pendant une génération** : la révision du modèle, calculée sur la version
+   précédente, la recouvrirait aussitôt.
+5. **Abandonner pendant une génération est permis**, et la génération qui s'achève n'écrit rien : troisième issue
+   du flux, `sans_suite`.
+6. **La reprise d'une première génération échouée** passe par la route de revue, sans consigne quand aucune
+   révision n'existe — plutôt qu'une consigne fabriquée par l'écran et envoyée au modèle.
+7. **L'aperçu corrige sans réécrire la structure** : noms, libellés, natures, probabilités, étape initiale, types,
+   choix, devises, aides, visibilités, retraits en cascade, et l'ajout d'une transition. Ajouter une étape, un
+   champ, une règle ou une exigence se demande par consigne ou se fait dans l'éditeur après création : l'aperçu
+   n'est pas un second éditeur.
+8. **Pas de scrutation** : une suggestion ouverte pendant la génération d'un autre offre « Relire ».
+
+**Conséquences.** Migration `0084` ; la fonction `ia` est révisée (§12.6) et doit être déployée avec elle (T4) ;
+le seed créera une suggestion en revue par la vraie fonction et le simulateur.

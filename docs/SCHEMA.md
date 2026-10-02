@@ -1755,7 +1755,7 @@ l'acceptation ; ces deux tables portent la suggestion et son historique de revue
 | `origine` | `text` | non nul, `CHECK` : `ia`, `correction` |
 | `consigne` | `text` | nullable ; la demande initiale ou la consigne de revue |
 | `proposition` | `jsonb` | non nul ; la proposition de composition, `version: 1` (`docs/SPEC-ia.md` §6) |
-| `defauts` | `jsonb` | non nul, défaut `[]`, **tableau** : les défauts que la fonction a constatés sur la proposition (`docs/SPEC-ia.md` §6.1) ; une proposition qui en porte ne peut pas être acceptée en l'état |
+| `defauts` | `jsonb` | non nul, défaut `[]`, **tableau** de `{code, chemin, valeurs}` : les défauts de la proposition, **écrits par la base** à la création de toute révision depuis la migration 84 (`docs/SPEC-ia.md` §12.1) — un client ne les fournit pas ; une proposition qui en porte ne peut pas être acceptée en l'état |
 | `modele`, `jetons_entree`, `jetons_sortie`, `duree_ms` | `text`, `integer` | nuls pour une correction ; renseignés pour une révision de l'IA |
 | `created_by` | `uuid` | non nul, FK `profiles` |
 | `created_at` | `timestamptz` | `now()` |
@@ -1768,6 +1768,21 @@ geste d'acceptation (`T2`) ; ajouter une révision d'origine `correction` — un
 n'est écrite que par la fonction, avec la clé de service. Les révisions sont **immuables en modification** ;
 aucun client ne les supprime, mais la cascade d'une suggestion ou d'un espace les emporte. Aucune donnée
 personnelle par conception : une proposition est une structure de configuration.
+
+### Migration `0084` — l'acceptation et le contrôle en base (`CRM-097` T2, écrite le 2026-10-02 avant le code)
+
+`docs/SPEC-ia.md` §12, décision 618. Aucune table ne naît ; trois objets changent ou s'ajoutent :
+
+- **`app.defauts_proposition_ia(p_workspace uuid, p_proposition jsonb) returns jsonb`** — `stable`,
+  `security invoker` : les défauts d'une proposition `version: 1`, lus contre le catalogue de nœuds de
+  l'espace ; lève `22023` « proposition mal formée » sur une forme invalide (§12.1 de la spécification).
+- **`app.suggestions_ia_revisions_avant_creation`** révisé : il écrit `defauts` par la fonction ci-dessus pour
+  toute révision, et refuse une `correction` pendant une génération en vol (`P0001`). Le privilège `insert`
+  de la colonne `defauts` est **retiré** à `authenticated`.
+- **`public.accepter_suggestion_ia(p_suggestion uuid) returns uuid`** — `security definer`, `search_path`
+  vide, vérifications écrites à la main (§12.3 de la spécification) ; crée le workflow, ses nœuds de
+  catalogue, étapes, transitions, champs, règles et exigences, puis passe la suggestion `acceptee` avec
+  `workflow_cree_id`. Exécutable par `authenticated` seulement.
 
 ## 10. Index principaux
 

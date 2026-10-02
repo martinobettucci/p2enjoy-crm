@@ -143,6 +143,10 @@ fixé par la tranche T1 (§11.5), versionné (`version: 1`).
   proposition qui échoue à ces contrôles est conservée **avec la liste de ses défauts**, pour que
   l'administrateur la corrige ou la fasse revoir ; elle ne peut pas être acceptée en l'état.
 
+> **Révisé par T2, le 2026-10-02 (§12.1).** Ce contrôle est passé **en base** : la fonction ne vérifie plus que
+> la forme et normalise les clés, et les défauts de toute révision sont écrits par le trigger de création.
+> Le paragraphe ci-dessus décrit la règle, plus son lieu.
+
 ## 7. L'écran
 
 - « **Créer avec l'IA** » à côté de « Nouveau workflow » ; « **Suggérer** » dans les vues étapes,
@@ -224,6 +228,8 @@ suffit pas à écrire le résultat d'une génération de deux minutes. Le contra
 Toute autre méthode : `405`. Aucune réponse ne reflète la clé, l'adresse du serveur ni un message brut du
 modèle.
 
+> **Révisé par T2 (§12.6)** : troisième issue `sans_suite` ; revue sans consigne d'une suggestion sans révision.
+
 ### 11.4 Ce qui change dans les tables (`docs/SCHEMA.md` §9 ter)
 
 - `suggestions_ia.derniere_erreur` (`text`, nullable, `CHECK` : `delai_depasse`, `serveur_injoignable`,
@@ -254,3 +260,206 @@ Scénarios : `valide` (un workflow conforme), `incoherente` (conforme au schéma
 et une transition vers une étape absente), `invalide` (JSON hors schéma), `cle_refusee` (`403` « origine non
 autorisée pour cette clé »). Le dépassement de la borne de 120 s est prouvé par les tests unitaires, avec une
 borne injectée : aucune preuve n'attend deux minutes.
+
+## 12. Tranche T2 — créer un workflow avec l'IA (écrit le 2026-10-02, avant son code)
+
+T2 livre le premier parcours entier : demander, relire, corriger, faire revoir, accepter ou abandonner, pour un
+**workflow nouveau** (`portee = workflow`, sans `workflow_id`). Les règles visuelles sont au
+`docs/DESIGN_SYSTEM.md` §5.52 ; la décision est la 618 de `docs/JOURNAL.md`.
+
+### 12.1 La base, seule juge des défauts — révision du §6.1
+
+Le §6.1 confiait le contrôle à la fonction. T2 ajoute deux chemins qui ne passent pas par elle — la correction
+manuelle, écrite par PostgREST, et l'acceptation, qui doit revalider —, et trois copies des mêmes règles, en
+TypeScript dans la fonction, dans l'écran et en SQL, divergeraient au premier changement. **Le contrôle passe
+donc en base, une fois** :
+
+- `app.defauts_proposition_ia(p_workspace uuid, p_proposition jsonb) returns jsonb` rend la liste des défauts
+  d'une proposition, lue contre le catalogue de nœuds de l'espace ;
+- le trigger de création d'une révision l'appelle pour **toute** révision, d'origine `ia` comme `correction`,
+  et écrit son résultat dans `defauts`. Un client ne fournit plus `defauts` : le privilège de colonne lui est
+  retiré ;
+- l'acceptation l'appelle de nouveau, au moment d'écrire — le catalogue a pu changer depuis la révision.
+
+**La fonction `ia` ne fait plus que deux choses de la sortie du modèle** : rejeter ce qui n'a pas la forme d'une
+proposition (`reponse_invalide`), et normaliser les clés (§6). Elle lit en retour les défauts que la base a
+écrits, et c'est leur nombre que porte la dernière ligne du flux.
+
+**La forme**, contrôlée par le trigger avant les défauts — une révision mal formée est **refusée** (`22023`,
+« proposition mal formée »), jamais conservée : `version` vaut `1` ; `workflow` est un objet dont `nom` est un
+texte ; `noeuds`, `etapes`, `transitions`, `champs`, `regles`, `exigences` sont des tableaux d'objets, deux
+cents éléments au plus en tout ; les clés, libellés, `nature`, `type` et `visibilite` sont des textes ;
+`initiale` et `commentaire_requis` des booléens ; `probabilite` un nombre ou `null` ; `choix` `null` ou un
+tableau de textes ; `devise` et `aide` `null` ou un texte.
+
+**Un défaut** est un objet `{code, chemin, valeurs}` : `chemin` désigne l'élément (`etapes[2]`,
+`champs[0].choix`) ; `valeurs` porte ce que la phrase nomme — l'écran compose la phrase par une clé de
+traduction (`docs/DESIGN_SYSTEM.md` §10), jamais par le texte de la base. Les codes, dans l'ordre où la base
+les rend :
+
+| Code | `valeurs` | Ce qui est relevé |
+|---|---|---|
+| `nom_absent` | — | le nom du workflow est blanc |
+| `cle_invalide` | `cle` | une clé de nœud ou de champ hors de la forme `^[a-z0-9]+(-[a-z0-9]+)*$` |
+| `noeud_en_double` | `cle` | deux nœuds proposés portent la même clé |
+| `noeud_deja_au_catalogue` | `cle` | un nœud proposé porte la clé d'un nœud vivant du catalogue : l'étape doit le viser sans le redéclarer |
+| `noeud_archive` | `cle` | une clé, proposée ou visée, est celle d'un nœud **archivé** du catalogue — le réactiver sans le dire changerait l'objet que l'administrateur a retiré (règle de `creer_workflow_de_depart`) |
+| `libelle_absent` | `cle` | un nœud ou un champ sans libellé |
+| `nature_invalide` | `cle`, `nature` | une nature hors `open`, `won`, `lost` |
+| `probabilite_invalide` | `cle` | une probabilité absente ou hors de 0 à 100 |
+| `noeud_inutilise` | `cle` | un nœud proposé qu'aucune étape ne vise — l'accepter l'ajouterait au catalogue pour rien |
+| `aucune_etape` | — | aucune étape |
+| `etape_en_double` | `cle` | deux étapes visent le même nœud |
+| `noeud_inconnu` | `cle` | une étape vise un nœud ni proposé ni au catalogue |
+| `etape_initiale` | `nombre` | il n'y a pas exactement une étape initiale |
+| `transition_etape_absente` | `de`, `vers` | une transition touche une étape absente |
+| `transition_boucle` | `cle` | une transition mène d'une étape à elle-même |
+| `transition_en_double` | `de`, `vers` | deux transitions relient les mêmes étapes dans le même sens |
+| `transition_sans_libelle` | `de`, `vers` | une transition sans libellé |
+| `champ_en_double` | `cle` | deux champs portent la même clé |
+| `type_inconnu` | `cle`, `type` | un type hors des quinze de `form_fields` |
+| `choix_requis` | `cle` | une liste (`select`, `multiselect`) sans choix |
+| `choix_invalide` | `cle`, `choix` | un choix dont la clé dérivée (§12.3) est vide ou déjà prise dans le même champ |
+| `devise_requise` | `cle` | un champ `money` sans devise de trois lettres capitales |
+| `regle_champ_absent` | `cle` | une règle vise un champ absent |
+| `regle_etape_absente` | `cle` | une règle vise une étape absente |
+| `regle_en_double` | `champ`, `etape` | deux règles pour le même couple champ × étape |
+| `visibilite_invalide` | `visibilite` | une visibilité hors `hidden`, `visible`, `required` |
+| `exigence_transition_absente` | `de`, `vers` | une exigence vise une transition absente |
+| `exigence_champ_absent` | `cle` | une exigence vise un champ absent |
+| `exigence_en_double` | `de`, `vers`, `champ` | deux exigences identiques |
+
+`choix` et `devise` ne sont lus que pour les types qui les emploient ; les textes sont pris sans leurs espaces
+de bord, et une `aide` blanche vaut l'absence d'aide. Ce sont les seules mises en forme, et elles sont écrites
+ici pour ne pas être silencieuses.
+
+### 12.2 Corriger — une révision `correction`, par PostgREST
+
+`POST /rest/v1/suggestions_ia_revisions` avec `{suggestion_id, origine: 'correction', proposition}` — la
+proposition **entière**, telle que l'administrateur l'a laissée — et `Prefer: return=representation` : la
+réponse `201` porte la révision écrite, ses défauts calculés par la base et son numéro. Refus : `42501` pour un
+non-administrateur (RLS) ; `P0001` « suggestion figée » ; `P0001` « génération en cours » — **nouveau** : une
+correction écrite pendant une génération serait aussitôt recouverte par la révision du modèle, calculée sur la
+version précédente, et l'administrateur croirait sa correction prise en compte ; `22023` pour une forme invalide.
+
+### 12.3 Accepter — `public.accepter_suggestion_ia(p_suggestion uuid) returns uuid`
+
+**`SECURITY DEFINER`**, comme la restauration de `CRM-078` (§4) et pour le même motif, ici réduit : l'état
+`acceptee` est refusé à `authenticated` par le trigger de T1, si bien qu'un geste `SECURITY INVOKER` ne pourrait
+jamais conclure. Les vérifications sont écrites à la main, dans cet ordre, et chacune rend un refus nommé :
+
+| Ordre | Contrôle | Refus |
+|---|---|---|
+| 1 | appelant authentifié | `42501` « authentification requise » |
+| 2 | la suggestion existe **et** l'appelant administre son espace — indiscernables, pour qu'un non-administrateur n'apprenne pas qu'elle existe | `P0002` « suggestion introuvable » |
+| 3 | statut `en_revue` (suggestion verrouillée `for update`) | `P0001` « suggestion figée » |
+| 4 | portée `workflow` sans cible — T3 livrera les autres | `P0001` « portée non livrée » |
+| 5 | aucune génération en vol (verrou de moins de 180 s, §11.4) | `P0001` « génération en cours » |
+| 6 | une révision existe | `P0001` « aucune révision » |
+| 7 | la dernière révision, **recontrôlée maintenant**, ne porte aucun défaut | `P0001` « proposition non conforme », `detail` : le nombre de défauts |
+
+**Les effets, en une transaction**, tous dans l'espace de la suggestion :
+
+1. le workflow : `name` = le nom proposé, portée `global`, `is_default` vrai si l'espace n'a encore aucun
+   workflow par défaut, archivé compris (règle de `creer_workflow_de_depart`) ;
+2. un nœud de catalogue par nœud proposé — clé, libellé, `kind` = la nature, `default_probability` = la
+   probabilité, `color` dérivée de la nature : `brand` pour `open`, `success` pour `won`, `danger` pour
+   `lost` ;
+3. les étapes, dans l'ordre de la proposition (`position` 1, 2, …), l'initiale désignée ;
+4. les transitions, leur libellé et leur motif exigé ;
+5. les champs, dans l'ordre de la proposition : `options` = `{"choices": [{key, label}, …]}` pour une liste —
+   la **clé d'un choix est dérivée de son libellé** par la forme du produit (accents retirés par `unaccent`,
+   minuscules, tout autre caractère en tiret), le format `version: 1` ne portant que des libellés —,
+   `{"currency": devise}` pour `money`, `{}` sinon ; `help_text` = l'aide ;
+6. les règles de visibilité, puis les exigences de transition ;
+7. la suggestion passe `acceptee`, `workflow_cree_id` = le workflow créé ; `decided_by` et `decided_at` sont
+   posés par le trigger.
+
+Rendu : l'identifiant du workflow créé. Les contraintes des tables restent en vigueur sous `SECURITY DEFINER` :
+une violation que le contrôle n'aurait pas prévue annule tout, et rien n'est écrit. Privilège : `authenticated`
+seulement.
+
+### 12.4 Abandonner — par PostgREST
+
+`PATCH /rest/v1/suggestions_ia?id=eq.<id>` `{statut: 'abandonnee'}`, `Prefer: return=representation`. Zéro
+ligne rendue est l'issue « sans effet » — suggestion illisible ou non administrée — et l'écran la dit. `P0001`
+« suggestion figée » si elle est déjà décidée. Abandonner **pendant** une génération est permis — c'est le
+moyen de se défaire d'une génération qu'on ne veut plus — : le trigger lève le verrou, et la génération qui
+s'achève ensuite n'écrit rien (§12.6).
+
+### 12.5 L'écran — le parcours (sa forme : `docs/DESIGN_SYSTEM.md` §5.52)
+
+- **Entrées.** « Créer avec l'IA » à côté de « Nouveau workflow », au-dessus de la liste et dans l'état vide ;
+  rendue à tous les rôles (§4, décision 509) — la base refuse. **Les suggestions en revue** de l'espace sont
+  lues avec la liste des workflows (`suggestions_ia?statut=eq.en_revue&portee=eq.workflow`, plus récentes
+  d'abord) et listées sous elle ; la RLS n'en rend aucune à un non-administrateur, et l'écran ne rend alors
+  rien — il ne nomme pas ce qu'il ne montre pas.
+- **Le panneau** vit dans la colonne de droite, à la place du workflow choisi, ou sous l'état vide.
+- **Demander.** Un champ « Décrivez le workflow » (4 000 caractères au plus), le rappel de ne pas y coller de
+  donnée personnelle (§3), « Générer la suggestion ». L'état de l'assistant (`GET /ia/etat`) est lu à
+  l'ouverture ; indisponible, l'écran le dit avec sa raison, et la commande reste offerte.
+- **Générer.** Le flux est lu ligne à ligne (`fetch`, jeton de session et clé anonyme) : la première ligne
+  donne la suggestion, que la liste relit aussitôt ; la dernière donne l'issue, après quoi la suggestion et ses
+  révisions sont relues. L'attente est dite, avec le temps écoulé.
+- **Relire.** La dernière révision est rendue en aperçu : nom, étapes (nœud proposé ou du catalogue), sorties
+  de chaque étape, champs, visibilités, exigences ; ses défauts, traduits, au-dessus ; l'historique des
+  révisions, replié.
+- **Corriger à la main**, dans l'aperçu, ce qui se corrige sans réécrire la structure : le nom ; pour un nœud
+  proposé, son libellé, sa nature et sa probabilité ; l'étape initiale ; retirer une étape ; « utiliser le
+  nœud du catalogue » quand un nœud proposé y existe déjà ; le libellé et le motif d'une transition, en
+  retirer une, en **ajouter** une entre deux étapes ; le libellé, le type, les choix, la devise et l'aide d'un
+  champ, en retirer un ; la visibilité d'une règle, en retirer une ; retirer une exigence. **Ajouter une étape,
+  un champ, une règle ou une exigence** se demande par une consigne, ou se fait dans l'éditeur une fois le
+  workflow créé. **Un retrait emporte ce qui en dépend**, comme la base l'emporterait : une étape, ses
+  transitions, leurs exigences, ses règles et son nœud proposé ; un champ, ses règles et ses exigences ; une
+  transition, ses exigences. « Enregistrer la correction » écrit la révision (§12.2) ; « Rétablir » revient à
+  la dernière révision.
+- **Faire revoir.** Une consigne et « Revoir avec l'IA » : une correction non enregistrée est d'abord
+  enregistrée — l'IA revoit ce que l'administrateur voit (§2) —, puis la revue part.
+- **Accepter.** « Accepter et créer le workflow » : une correction non enregistrée est d'abord enregistrée ;
+  si elle porte des défauts, l'acceptation n'est pas demandée et les défauts sont rendus. Au succès, la liste
+  des workflows est relue, le workflow créé devient le workflow choisi, et la suggestion quitte la liste.
+- **Abandonner**, après une confirmation dans le flux. Au succès, le panneau se ferme et la liste est relue.
+- **Une suggestion ouverte pendant une génération** — par un autre administrateur, ou après un rechargement —
+  dit qu'une génération est en cours et offre « Relire » ; aucune scrutation automatique.
+
+### 12.6 Ce que T2 change à la fonction `ia` (révision du §11.3)
+
+- La dernière ligne du flux porte le nombre de défauts **écrits par la base** ; une révision que la base n'a
+  pas écrite — suggestion abandonnée pendant la génération — rend `{"issue": "sans_suite"}`, troisième issue.
+- `POST /ia/suggestions/:id/revue` accepte un corps **sans consigne** quand la suggestion n'a encore aucune
+  révision : c'est la reprise d'une première génération échouée, qui rejoue la demande. Avec une révision, la
+  consigne reste exigée (`400`).
+- Une revue transmet au modèle, avec la dernière révision, **les défauts que la base y a relevés**.
+
+### 12.7 Les refus traduits par l'écran
+
+| Geste | Issue | Ce que l'écran dit |
+|---|---|---|
+| générer, revoir | `400` | la demande ou la consigne est vide ou trop longue |
+| générer, revoir | `403` | réservé aux administrateurs de l'espace |
+| générer, revoir | `503` | l'assistant est indisponible, avec sa raison |
+| revoir | `404` / `409` | suggestion introuvable / figée / génération en cours |
+| issue `echec` | `delai_depasse`, `serveur_injoignable`, `cle_refusee`, `reponse_invalide` | quatre phrases ; « Réessayer » relance la même génération |
+| issue `sans_suite` | — | la suggestion a été décidée entre-temps ; l'écran la relit |
+| corriger | `42501`, `P0001`, `22023` | réservé ; figée ou génération en cours ; correction mal formée |
+| accepter | `P0002`, `P0001` (×5), `42501` | les refus du §12.3, un par un |
+| abandonner | zéro ligne, `P0001` | sans effet ; figée |
+| réseau | — | l'assistant ne répond pas |
+
+### 12.8 Preuves et données de démonstration
+
+- **pgTAP** : chaque code de défaut ; le trigger qui écrit les défauts quel que soit ce que le client envoie, et
+  refuse une forme invalide ; la correction refusée pendant une génération ; l'acceptation — chaque objet créé
+  avec ses attributs, le défaut posé ou non, les clés de choix dérivées — ; ses sept refus, dont le commercial
+  et la lectrice (`P0002`) ; l'atomicité.
+- **API** aux jetons réels : correction et défauts calculés par la base ; acceptation par la RPC, workflow
+  relu ; refus du commercial et de la lectrice ; proposition incohérente refusée ; abandon, puis acceptation
+  refusée ; revue sans consigne d'une suggestion sans révision.
+- **Unitaires** : la lecture du flux, la traduction des défauts et des refus, les corrections et leurs retraits
+  en cascade, le panneau.
+- **E2E** à la souris et au clavier, contre le simulateur (l'en-tête est ajouté aux requêtes de la fonction par
+  la preuve) : demander, relire, corriger, enregistrer, revoir, accepter — le workflow choisi dans la liste — ;
+  abandonner ; le refus du commercial ; captures observées aux quatre paliers.
+- **Seed** : une suggestion **en revue**, créée par l'administratrice au travers de la vraie fonction et du
+  simulateur — le seul chemin réel en développement (`CLAUDE.md` §8) —, pour que l'écran ne s'ouvre pas vide.
