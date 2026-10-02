@@ -14898,6 +14898,16 @@ le serveur réel.
 - [ ] **T3** — suggérer dans un workflow ouvert — étapes, transitions, champs —, et accepter par
       l'algorithme de restauration de `CRM-078` : point de retour, remappage des affaires d'une étape
       retirée revu avant acceptation, refus si le workflow a changé ; unitaires, API, E2E.
+      *Spécifiée le 2026-10-03 avant le code* (`docs/SPEC-ia.md` §13, `docs/DESIGN_SYSTEM.md` §5.53, décision
+      620). Découpage, dans cet ordre :
+      - [ ] **T3.a** — migration : `app.appliquer_composition` extrait de la restauration (qui l'appelle),
+            `proposition_du_workflow`, `occupation_du_workflow`, les cinq codes, l'acceptation d'une
+            modification ; pgTAP, suites de `CRM-078` inchangées ;
+      - [ ] **T3.b** — fonction `ia` : les trois portées, la composition vivante et l'occupation au modèle ;
+            unitaires, API ;
+      - [ ] **T3.c** — écran : « Suggérer » dans les trois blocs, différentiel, affaires des étapes retirées ;
+            unitaires ;
+      - [ ] **T3.d** — E2E souris et clavier, captures observées, manuel, harnais et campagnes.
 - [ ] **T4** — production : variables proposées dans la cellule, clé saisie en console, plage d'adresses de
       la cellule autorisée par le serveur LLM, migration `0083` en fenêtre avec instantané, constat.
 

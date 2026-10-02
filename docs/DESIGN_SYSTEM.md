@@ -5094,3 +5094,34 @@ modale**, alerte de refus dans le bloc concerné.
   formulaires, au §5.4 ter son icône, au §5.43 l'ordre de son historique, au §5.6 ses pilules, au §5.7 ses
   champs, au §5.5 ses variantes, au §5.27 sa confirmation et au §6 l'affichage d'une opération longue. **Seule
   forme nouvelle : la barre indéterminée**, faite des jetons existants.
+
+### 5.53 Assistant IA — faire évoluer un workflow existant, `CRM-097` T3
+
+*Écrit le 2026-10-03, avant le code (décision 620).* `docs/SPEC-ia.md` §13 dit ce que le panneau lit, envoie et
+refuse. **Tout ce que le §5.52 pose vaut ici sans être répété** — panneau, attente, défauts, aperçu modifiable, barre
+de gestes, confirmation d'abandon, historique, focus et annonces. Seuls les écarts sont écrits.
+
+- **« Suggérer » vit EN TÊTE de chacun des trois blocs** — étapes, transitions, champs —, bouton discret compact,
+  icône `Sparkles`, nom accessible complet : « Suggérer des étapes pour « Cycle… » ». C'est l'arbitrage « à côté de
+  chaque geste » (décision 617) : la commande est là où l'on regarde ce qu'elle ferait évoluer. Rendue à tous les
+  rôles (§5.13) ; la base refuse.
+- **Le panneau s'ouvre DANS la colonne du workflow, au-dessus du bloc des étapes**, et non à la place du workflow :
+  l'administrateur doit voir ce qu'il fait évoluer pendant qu'il le décrit. Le titre nomme la portée et le workflow
+  — « Faire évoluer les étapes de « Cycle… » » —, données en clair (§10).
+- **Les suggestions en revue d'un workflow sont listées au même endroit**, au-dessus des étapes, sous un `h3`
+  « Suggestions de l'IA pour ce workflow » — la forme de la liste du §5.52. Aucune : aucun titre.
+- **LE DIFFÉRENTIEL VIENT EN TÊTE DE L'APERÇU, après les défauts.** Une section par collection — étapes,
+  transitions, champs, visibilités, exigences —, chaque ligne marquée d'un **mot** et d'une pilule : « Ajouté »
+  `--color-success-soft`, « Retiré » `--color-danger-soft`, « Modifié » `--color-hover`, avec leurs icônes `Plus`,
+  `Minus`, `Pencil` — la comparaison de versions du §5.15, réemployée sans copie. Une collection sans changement
+  se tait ; **aucun changement du tout** se dit en une phrase. Le champ retiré est dit « Retiré — archivé » : rien ne
+  s'efface (§5.15, champ archivé).
+- **LES AFFAIRES DES ÉTAPES RETIRÉES ONT LEUR PROPRE BLOC, juste après le différentiel**, titré « Où vont les
+  affaires des étapes retirées ». Une ligne par étape retirée qui en porte : son nom, le **nombre d'affaires en toutes
+  lettres et par clé** — « 3 affaires » —, et un `select` « Destination » ouvert sur l'option vide « Aucune
+  destination » (§5.15 : « aucune destination n'est devinée »). Une étape retirée vide ne paraît pas. Tant qu'une
+  ligne est sans destination, le défaut `remappage_requis` le dit en tête et « Accepter » reste retenu.
+- **La confirmation d'acceptation n'existe pas, et c'est un écart motivé au §6** : le geste publie d'abord un point
+  de retour, qu'une restauration rend en un geste (§5.15, versions). L'annonce de succès **nomme** ce point de retour
+  — « Point de retour : version 4 » —, pour qu'on sache où revenir.
+- **Aucune couleur, aucun jeton, aucune icône nouvelle** : `Minus` sert déjà la comparaison de versions (§5.15).

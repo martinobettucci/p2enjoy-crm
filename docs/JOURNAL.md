@@ -30884,3 +30884,32 @@ est annulée, si bien que le contrôle ajourné ne tombait jamais ; `SET CONSTRA
 maintenant. Le déclencheur retiré, la suppression rougit. `0008` constatait encore le défaut d'INC-039 et écrivait son
 contournement : révisée ; `0049` épinglait `RESTRICT` : révisée. Les spécifications gardent leurs « `on delete restrict` »
 historiques, avec une note datée et l'entrée « Migration `0085` » de `docs/SCHEMA.md`. SQL 79 / 3413, API 1103.
+
+## décision 620 — `CRM-097` T3 : la cible entière, identifiée par clés ; la restauration de `CRM-078` comme seul cœur
+
+*2026-10-03 ; choix de conception arrêtés en écrivant le contrat de T3, avant son code (`docs/SPEC-ia.md` §13,
+`docs/DESIGN_SYSTEM.md` §5.53).*
+
+**Problème.** Faire évoluer un workflow vivant, qui porte des affaires, à partir d'une suggestion du modèle — sans
+jamais montrer d'identifiant au modèle, sans deviner où vont les affaires, avec un retour arrière.
+
+**Observations.** `restore_workflow_version` applique un DOCUMENT de composition (identifiants compris) et des
+`step_overrides` : son cœur ne dépend de la version que pour lire ce document. Les clés identifient déjà chaque objet
+dans un workflow — un nœud par workflow, une clé de champ unique par workflow, un couple d'étapes par transition.
+
+**Décisions.**
+
+1. **La proposition d'une modification est la composition CIBLE entière**, au format de T1 : l'identité d'un objet
+   est sa clé ; conservé, nouveau ou retiré se déduisent de la composition vivante. Une seule clé facultative
+   s'ajoute, `remappages`, en clés — la forme de `step_overrides`.
+2. **Un seul algorithme d'application** : le cœur de la restauration est extrait en `app.appliquer_composition`, que
+   la restauration et l'acceptation appellent ; ses suites existantes prouvent qu'elle n'a pas bougé.
+3. **Le point de retour** est publié par la règle de la restauration ; la suggestion le garde (`version_retour_id`).
+4. **L'empreinte relevée à la création de la suggestion** refuse une acceptation sur un workflow qui a bougé
+   (`PT409`).
+5. **Le modèle reçoit le nombre d'affaires par étape, rien d'autre des affaires** — le §3 le permettait déjà.
+6. **Aucune confirmation d'acceptation**, écart motivé au §6 : le point de retour se restaure en un geste, et
+   l'annonce le nomme.
+
+**Conséquences.** Une migration (`0086`) ; la fonction `ia` accepte les trois portées ; l'écran gagne « Suggérer »,
+le différentiel et le bloc des affaires des étapes retirées.

@@ -470,3 +470,120 @@ s'achève ensuite n'écrit rien (§12.6).
   abandonner ; le refus du commercial ; captures observées aux quatre paliers.
 - **Seed** : une suggestion **en revue**, créée par l'administratrice au travers de la vraie fonction et du
   simulateur — le seul chemin réel en développement (`CLAUDE.md` §8) —, pour que l'écran ne s'ouvre pas vide.
+
+## 13. Tranche T3 — suggérer dans un workflow ouvert (écrit le 2026-10-03, avant son code)
+
+T3 livre le second parcours : un administrateur, depuis un workflow **existant** — qui porte peut-être des affaires
+—, demande à l'IA de faire évoluer ses **étapes**, ses **transitions** ou ses **champs** ; il relit ce qui serait
+**ajouté, modifié, retiré**, décide où vont les affaires d'une étape retirée, puis accepte ou abandonne. Arbitrage
+du responsable (décision 617) : « Tout, avec remappage ». Les règles visuelles sont au `docs/DESIGN_SYSTEM.md` §5.53 ;
+la décision est la 620 de `docs/JOURNAL.md`.
+
+### 13.1 La proposition d'une modification : le format `version: 1`, la composition CIBLE entière
+
+Une suggestion sur un workflow existant porte, comme une création, la **composition cible entière** au format du
+§6.1 — et non une liste de différences : l'IA reçoit la composition vivante et rend celle qu'elle propose, que
+l'administrateur relit et corrige avec l'aperçu de T2. **L'identité d'un objet est sa clé**, et aucun identifiant
+n'atteint le modèle :
+
+| Objet | Clé d'identité dans le workflow | Conservé | Nouveau | Retiré |
+|---|---|---|---|---|
+| étape | la clé de son nœud (unique par workflow) | la clé est une étape vivante | sinon | étape vivante absente |
+| transition | le couple `de` → `vers` | le couple existe | sinon | couple vivant absent |
+| champ | sa clé (unique par workflow) | la clé est un champ vivant **non archivé** | sinon | champ actif absent → **archivé**, jamais supprimé (§7 ter.13.4 du moteur) |
+| règle | le couple champ × étape | le couple existe | sinon | couple vivant absent |
+| exigence | transition × champ | existe | sinon | absente |
+
+**Une seule clé s'ajoute au format, facultative** : `remappages`, tableau de `{ "de": clé d'étape retirée,
+"vers": clé d'étape de la cible }` — où vont les affaires d'une étape retirée qui en porte. C'est la forme de
+`step_overrides` (`CRM-078`, §7 ter.12.3), dite en clés. Une création n'en porte pas ; la forme l'admet vide.
+
+**Ce que la cible ne change pas d'un objet conservé, elle le garde** : la surcharge de libellé, de probabilité et le
+seuil d'ancienneté d'une étape, le libellé d'un nœud du catalogue, les champs déjà archivés. La position d'une étape
+et d'un champ suit l'ordre de la proposition.
+
+### 13.2 La composition vivante, rendue au format de la proposition
+
+`public.proposition_du_workflow(p_workflow uuid) returns jsonb` — `stable`, `security invoker` : la composition
+vivante au format du §6.1 — nom, étapes (par clé de nœud) dans l'ordre, transitions, champs actifs, règles,
+exigences ; `noeuds` vide, puisque tout nœud d'une étape vivante est au catalogue. Elle sert trois fois : la fonction
+`ia` l'envoie au modèle, l'écran en tire le différentiel, et l'acceptation compare la cible à elle.
+
+`public.occupation_du_workflow(p_workflow uuid) returns jsonb` — `stable`, `security invoker` : `{clé d'étape :
+nombre d'affaires}`, archivées et en corbeille comprises (règle du §7 ter.12.5 du moteur). Exhaustive pour un
+administrateur (règle 2 de `app.resolve_access`) ; partielle pour un autre membre, qui ne peut de toute façon pas
+accepter. **Le modèle reçoit ces nombres — et seulement eux** (§3) : il peut ainsi proposer les remappages.
+
+### 13.3 Les défauts d'une modification (révision du §12.1)
+
+`app.defauts_proposition_ia` reçoit le workflow ciblé (`null` pour une création). Les vingt-neuf codes du §12.1
+valent tels quels, et cinq s'ajoutent, dans cet ordre, après les exigences :
+
+| Code | `valeurs` | Ce qui est relevé |
+|---|---|---|
+| `type_non_modifiable` | `cle`, `type` | un champ conservé change de type — le type d'un champ existant ne se modifie pas (§5.15 de la charte) |
+| `remappage_requis` | `cle`, `affaires` | une étape retirée porte des affaires et aucun remappage ne la couvre — **aucune destination n'est devinée** |
+| `remappage_origine_inconnue` | `cle` | un remappage part d'une étape qui n'est pas retirée |
+| `remappage_cible_absente` | `de`, `vers` | un remappage vise une étape absente de la cible |
+| `remappage_en_double` | `cle` | deux remappages partent de la même étape |
+
+Pour une modification, les étapes, champs et nœuds **vivants** sont connus de la base : `noeud_inconnu` et
+`noeud_deja_au_catalogue` se jugent contre le catalogue comme pour une création.
+
+### 13.4 Accepter une modification — l'algorithme de restauration de `CRM-078`
+
+`public.accepter_suggestion_ia` accepte désormais les quatre portées. Pour une suggestion sur un workflow existant,
+après les vérifications 1 à 3 et 5 à 7 du §12.3 (la 4 tombe), trois refus s'ajoutent, dans cet ordre :
+
+| Ordre | Contrôle | Refus |
+|---|---|---|
+| 4 bis | le workflow ciblé est vivant (non archivé) | `P0001` « workflow archive » |
+| 4 ter | son empreinte de composition est celle relevée à la création de la suggestion (`empreinte_initiale`) | `PT409` « workflow modifie » — la base a bougé depuis : une revue est nécessaire |
+
+Les effets, en une transaction :
+
+1. **le point de retour** : la composition vivante est publiée en version (`publish_workflow_version`), sauf si la
+   dernière version la photographie déjà — la règle exacte de la restauration (§7 ter.13.5 du moteur) ;
+2. les nœuds proposés entrent au catalogue (comme une création) ;
+3. **la cible est traduite en document de composition** (§7 ter.2 du moteur) — un objet conservé garde son
+   identifiant, un objet nouveau en reçoit un —, et les remappages en `step_overrides` ;
+4. **ce document est appliqué par le cœur de la restauration** : affaires déplacées, étapes, transitions, champs
+   (archivés et non supprimés), règles, exigences — `app.appliquer_composition`, extrait de
+   `restore_workflow_version`, qui l'appelle désormais lui aussi ; **un seul algorithme pour les deux gestes** ;
+5. la suggestion passe `acceptee`, avec `version_retour_id` — le point de retour, qu'une restauration rend ensuite
+   comme toute version.
+
+Rendu : l'identifiant du workflow. Une violation que le contrôle n'aurait pas prévue annule tout.
+
+### 13.5 La fonction `ia` (révision du §11.3)
+
+`POST /ia/suggestions` accepte `portee` ∈ `etapes`, `transitions`, `champs` avec un `workflow_id` ; la portée sans
+cible reste `400`. La génération envoie au modèle, en plus des règles : la composition vivante (§13.2), l'occupation
+par étape, et la portée — « ne fais évoluer que les étapes », etc. — ; le modèle rend la cible entière. La portée
+**oriente** le modèle ; elle ne restreint pas ce que l'administrateur peut corriger, et le différentiel montre tout
+ce qui change.
+
+### 13.6 L'écran — le parcours
+
+- **Entrée** : « Suggérer » (`Sparkles`), en tête des blocs étapes, transitions et champs du workflow ouvert ; elle
+  ouvre le panneau de T2 en mode demande, la portée nommée — « Faire évoluer les étapes de « Cycle… » ».
+- **Les suggestions en revue d'un workflow** sont listées dans sa colonne, au-dessus des étapes ; celles de création
+  restent sous la liste des workflows.
+- **Relire** : en tête, le **différentiel** — ajouté, modifié, retiré, par collection, en mots (§5.15 de la charte,
+  comparaison de versions) ; puis l'aperçu modifiable de T2, sur la cible.
+- **Les affaires des étapes retirées** : pour chaque étape retirée qui en porte, leur nombre et un `select` de
+  destination parmi les étapes de la cible, ouvert sur « Aucune destination » — jamais présélectionné. Choisir
+  écrit le remappage dans le brouillon ; « Enregistrer la correction » le persiste.
+- **Accepter** : comme T2 — une correction non enregistrée l'est d'abord. Au succès, l'éditeur relit le workflow, le
+  panneau se ferme, et l'annonce nomme le point de retour.
+
+### 13.7 Preuves
+
+- **pgTAP** : la proposition vivante ; l'occupation ; les cinq codes ; l'acceptation — chaque collection ajoutée,
+  modifiée, retirée ; un champ archivé et non supprimé ; les affaires déplacées ; le point de retour publié une fois ;
+  `PT409` si le workflow a bougé ; `restore_workflow_version` **inchangée** — ses suites existantes restent vertes.
+- **API** : une modification du workflow du seed acceptée par la RPC, relue, puis **annulée par la restauration du
+  point de retour** ; le refus du commercial ; le `PT409`.
+- **Unitaires** : le différentiel, le remappage dans le brouillon, le panneau en mode modification.
+- **E2E** : « Suggérer » depuis les étapes, le différentiel, une étape occupée retirée et remappée, acceptée, le
+  graphe relu ; au clavier ; les quatre paliers ; captures observées.
