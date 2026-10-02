@@ -115,7 +115,33 @@ Une révision porte une **proposition de composition** : la même structure que 
 objet conservé porte son identifiant, un objet nouveau n'en porte pas, un objet absent est retiré ; un
 retrait d'étape occupée porte sa destination de remappage. Les clés sont **normalisées par le produit**
 à la forme `^[a-z0-9]+(-[a-z0-9]+)*$`, jamais reprises telles que le modèle les écrit. Le format exact est
-fixé par la tranche T2, versionné (`version: 1`).
+fixé par la tranche T1 (§11.5), versionné (`version: 1`).
+
+### 6.1 Le format `version: 1` — un workflow complet (fixé par T1)
+
+```
+{
+  "version": 1,
+  "workflow":    { "nom": texte },
+  "noeuds":      [ { "cle", "libelle", "nature": "open" | "won" | "lost", "probabilite": 0–100 } ],
+  "etapes":      [ { "noeud": cle, "initiale": booléen } ],
+  "transitions": [ { "de": cle, "vers": cle, "libelle": texte, "commentaire_requis": booléen } ],
+  "champs":      [ { "cle", "libelle", "type", "choix": [texte] | null, "devise": "EUR" | null, "aide": texte | null } ],
+  "regles":      [ { "champ": cle, "etape": cle, "visibilite": "hidden" | "visible" | "required" } ],
+  "exigences":   [ { "de": cle, "vers": cle, "champ": cle } ]
+}
+```
+
+- **Une étape est désignée par la clé de son nœud** : un nœud n'apparaît qu'une fois par workflow
+  (`docs/SCHEMA.md`, unicité `(workflow_id, node_id)`). `noeuds` porte les nœuds que la proposition
+  **ajouterait au catalogue** ; une étape peut aussi viser un nœud déjà au catalogue, par sa clé.
+- `type` est l'un des quinze types de `form_fields` ; `choix` est exigé et non vide pour `select` et
+  `multiselect` ; `devise` est exigée pour `money`.
+- **La fonction contrôle et dit**, sans corriger en silence : une seule étape initiale ; des transitions
+  entre étapes existantes, sans boucle sur soi ; des clés normalisées (`^[a-z0-9]+(-[a-z0-9]+)*$`) et
+  uniques ; des règles et des exigences qui visent des champs et des étapes de la proposition. Une
+  proposition qui échoue à ces contrôles est conservée **avec la liste de ses défauts**, pour que
+  l'administrateur la corrige ou la fasse revoir ; elle ne peut pas être acceptée en l'état.
 
 ## 7. L'écran
 
@@ -149,3 +175,59 @@ il n'entre dans aucune campagne par défaut.
 
 Aucune IA sur les affaires, les contacts ou les messages ; aucune écriture autonome du modèle ; aucun
 entraînement ni ajustement du modèle ; le modèle de plongements `all-minilm` n'est pas utilisé.
+
+## 11. Tranche T1 — le contrat du socle (écrit le 2026-10-02, avant son code)
+
+### 11.1 Une génération est asynchrone — mesuré, et pourquoi
+
+Une génération dure **32,5 s** mesurées, et jusqu'à la borne de 120 s. Or la route Kong des fonctions
+(`functions-v1`, `supabase/docker/volumes/api/kong.yml`) ne fixe aucun délai : celui de Kong, **60 s**,
+s'applique ; et les workers de l'edge-runtime sont bornés à **10 s** par `main` (`workerTimeoutMs`). Une
+requête qui attendrait le modèle échouerait donc. La requête **lance** la génération et rend `202` aussitôt ;
+la génération se poursuit dans le worker (`EdgeRuntime.waitUntil`), et l'écran suit la suggestion en base.
+`main` donne au seul worker `ia` une borne de **150 s** (`DELAI_PROPRE`), comme il ne lui remet que ses
+propres variables (`ENVIRONNEMENT_PROPRE` : les quatre `OLLAMA_*`).
+
+### 11.2 Qui écrit quoi
+
+Le jeton interne vit **au plus 300 s** (`DUREE_MAX_JETON_INTERNE`), et peut arriver presque expiré : il ne
+suffit pas à écrire le résultat d'une génération de deux minutes. Le contrat est donc :
+
+1. **L'autorisation est décidée à la requête, par la base, avec le jeton de l'appelant** : créer la
+   suggestion et sa demande, ou poser le verrou de génération (`generation_depuis`) sur une suggestion
+   existante, passe par la RLS des administrateurs. Un refus ici rend `403` et **aucun appel au modèle n'a
+   lieu**.
+2. **La fin de la génération s'écrit avec la clé de service**, bornée à la suggestion que l'étape 1 a
+   autorisée : la révision de l'IA, ou l'échec (`derniere_erreur`), puis la levée du verrou. La clé de
+   service ne choisit ni la suggestion ni l'auteur : elle recopie ce que l'étape 1 a établi.
+
+### 11.3 Les routes de la fonction `ia`
+
+| Route | Effet | Réponses |
+|---|---|---|
+| `GET /ia/etat` | Disponibilité de l'assistant : clé présente et serveur joignable (`/api/tags`, borne 5 s), modèle servi | `200` `{disponible, raison?, modele}` — `raison` parmi `cle_absente`, `serveur_injoignable`, `cle_refusee`, `modele_absent` |
+| `POST /ia/suggestions` | Crée une suggestion (`portee`, `workflow_id?`, `demande`) et lance sa première génération | `202` `{suggestion_id}` ; `400` demande vide ou trop longue (4 000 caractères) ; `403` non-administrateur ; `503` assistant indisponible |
+| `POST /ia/suggestions/:id/revue` | Lance une nouvelle génération sur la dernière révision, avec une consigne | `202` ; `404` suggestion introuvable ou illisible ; `409` génération déjà en vol, ou suggestion figée ; `403` ; `503` |
+
+Toute autre méthode : `405`. Aucune réponse ne reflète la clé, l'adresse du serveur ni un message brut du
+modèle.
+
+### 11.4 Ce qui change dans les tables (`docs/SCHEMA.md` §9 ter)
+
+- `suggestions_ia.derniere_erreur` (`text`, nullable, `CHECK` : `delai_depasse`, `serveur_injoignable`,
+  `cle_refusee`, `reponse_invalide`) : le dernier échec de génération, effacé par la génération suivante.
+- **Le verrou** : `generation_depuis` est posé par l'appelant (RLS), levé par la fin de génération. Un verrou
+  de plus de **180 s** est périmé — la fonction a disparu — et une nouvelle génération peut le reprendre.
+
+### 11.5 La proposition `version: 1` est fixée dès T1
+
+Une génération a besoin du schéma de sa sortie : le format de la proposition (§6) est donc fixé par T1, et
+non par T2. T1 livre la génération d'un **workflow complet** (`portee = workflow`) ; T2 en livre l'écran et
+l'acceptation.
+
+### 11.6 Le simulateur
+
+Un service de développement, `ollama-simule`, répond à `/api/tags` et `/api/chat` selon le contrat mesuré au
+§3 — sortie structurée, compteurs de jetons —, avec des scénarios déterministes choisis par la demande
+(réponse valide, réponse invalide, attente au-delà de la borne, `403` d'origine). Le harnais de l'unité
+recrée `functions` pointé sur lui le temps de ses preuves, puis le rend à `OLLAMA_HOST`.

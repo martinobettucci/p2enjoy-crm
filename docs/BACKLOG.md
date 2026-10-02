@@ -14860,11 +14860,12 @@ le serveur réel.
 - [ ] **T1** — le socle : variables (`OLLAMA_HOST`, `OLLAMA_MODEL`, `OLLAMA_CONTEXT_LENGTH`,
       `OLLAMA_API_KEY`) consommées par la fonction `ia` ; état de l'assistant, appel au modèle à sortie
       structurée, borne de 120 s, une génération en vol, mode dégradé ; migration `0083` (`suggestions_ia`,
-      `suggestions_ia_revisions`, RLS administrateurs) ; simulateur local du contrat Ollama. Preuves :
+      `suggestions_ia_revisions`, RLS administrateurs) ; simulateur local du contrat Ollama ; génération
+      asynchrone d'un workflow complet au format de proposition `version: 1` (`docs/SPEC-ia.md` §11). Preuves :
       pgTAP, API aux jetons réels (refus de la lectrice et du commercial), unitaires de la fonction.
 - [ ] **T2** — créer un workflow avec l'IA : « Créer avec l'IA » près de « Nouveau workflow », demande,
       suggestion, aperçu éditable, consigne, revue, accepter (création atomique revalidée), abandonner ;
-      format de proposition `version: 1` fixé ; `docs/DESIGN_SYSTEM.md` avant l'écran ; unitaires, API, E2E
+      `docs/DESIGN_SYSTEM.md` avant l'écran ; unitaires, API, E2E
       à la souris et au clavier, captures observées.
 - [ ] **T3** — suggérer dans un workflow ouvert — étapes, transitions, champs —, et accepter par
       l'algorithme de restauration de `CRM-078` : point de retour, remappage des affaires d'une étape

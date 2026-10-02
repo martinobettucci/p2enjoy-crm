@@ -1737,6 +1737,7 @@ l'acceptation ; ces deux tables portent la suggestion et son historique de revue
 | `statut` | `text` | non nul, défaut `en_revue`, `CHECK` : `en_revue`, `acceptee`, `abandonnee` |
 | `empreinte_initiale` | `text` | nullable ; pour un workflow existant, l'empreinte de composition lue à la création (refus d'acceptation si elle a changé) |
 | `generation_depuis` | `timestamptz` | nullable ; non nul pendant une génération — une seule en vol par suggestion |
+| `derniere_erreur` | `text` | nullable, `CHECK` : `delai_depasse`, `serveur_injoignable`, `cle_refusee`, `reponse_invalide` ; le dernier échec de génération (`docs/SPEC-ia.md` §11.4) |
 | `version_retour_id` | `uuid` | nullable ; la version publiée en point de retour à l'acceptation d'une modification |
 | `workflow_cree_id` | `uuid` | nullable ; le workflow créé à l'acceptation d'une création |
 | `created_by`, `decided_by` | `uuid` | `created_by` non nul ; `decided_by` à la décision ; FK `profiles` |
