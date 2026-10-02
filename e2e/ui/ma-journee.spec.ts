@@ -1,3 +1,5 @@
+// @verifies INC-269 (docs/INCONSISTENCY_REPORT.md, décision 619) — le parcours clavier atteint l'affaire par Tab,
+//           après l'annonce de la portée nouvelle
 // @verifies CRM-061 (docs/BACKLOG.md) — tranche 1 : l'écran « Ma journée », sur session réelle
 // @verifies docs/SPEC-cards.md §17.2 (l'adresse porte la portée), §17.5 (les trois sections),
 //           §17.6 (ce que chaque ligne rend), §17.8 (états), §17.9 (accessibilité et clavier),
@@ -235,13 +237,28 @@ test.describe('« Ma journée » (docs/SPEC-cards.md §17)', () => {
 
 		// Le titre d'une affaire est atteignable et s'active de même : le titre EST le libellé du
 		// lien, sans `aria-label` qui le remplacerait (§17.9).
+		//
+		// AU CLAVIER, ET APRÈS LE SIGNAL DE LA NOUVELLE LISTE — INC-269, décision 619. La première
+		// rédaction posait le focus par programme sur un lien localisé dès le changement d'adresse ; en
+		// campagne complète, une fois sur 793, le lien était trouvé puis « inactive ». La cause n'a pas
+		// été reproduite (lecture retardée, processeur ralenti six fois, le fichier rejoué cinq fois :
+		// tout vert). Ce qui est retiré, ce sont les deux appuis fragiles : la preuve attend que la
+		// région live annonce la portée nouvelle — le signal que CETTE liste est rendue —, puis atteint
+		// le lien par `Tab`, comme une personne au clavier, au lieu d'un `focus()` qui n'en est pas un.
+		const toutes = await totalAnnonce(page, 'Tout l’espace de travail')
+		await expect(page.getByTestId('ligne-journee')).toHaveCount(toutes)
 		const lien = page
 			.getByTestId('ligne-journee')
 			.filter({ hasText: EN_RETARD })
 			.first()
 			.getByTestId('lien-affaire-journee')
-		await lien.focus()
-		await expect(lien).toBeFocused()
+		await expect(lien).toBeVisible()
+		let atteint = false
+		for (let pas = 0; pas < 40 && !atteint; pas += 1) {
+			await page.keyboard.press('Tab')
+			atteint = await lien.evaluate((element) => element === document.activeElement)
+		}
+		expect(atteint, `« ${EN_RETARD} » est atteint au clavier par Tab depuis la bascule`).toBe(true)
 		await page.keyboard.press('Enter')
 		await expect(page).toHaveURL(/\/cards\//)
 	})

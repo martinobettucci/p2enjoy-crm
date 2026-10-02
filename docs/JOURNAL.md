@@ -30846,3 +30846,11 @@ journée » une fois, vert trois fois sur trois rejoué seul : INC-269, consign�
 collation tient pour proches. Un contrôle relève d'abord les avertissements de `comm` (rouge : trois avertissements),
 puis tri et comparaison passent sous `LC_ALL=C` (vert, 115 vérifications). Contre-épreuves sur des noms placés là où
 les collations divergent : l'orpheline et la non documentée rougissent chacune leur contrôle.
+
+**INC-269 consolidée, en observation, le 2026-10-03 (décision 619).** L'hypothèse de l'entrée — un `focus()` posé sur
+la liste de l'ancienne portée — est réfutée : `focus()` attend la liste nouvelle (une lecture retardée de 1,5 s reste
+verte), le processeur ralenti six fois laisse le scénario vert (8 sur 8), le fichier rejoué cinq fois aussi (65 sur
+65), et la prolongation de session rend le même objet d'état, sans relecture. La trace de l'échec avait été écrasée par
+les passages suivants : leçon pour la suite, une trace d'échec de campagne se copie avant tout nouveau passage. La
+preuve attend l'annonce de la portée nouvelle et atteint l'affaire par `Tab` (10 sur 10) ; l'entrée reste ouverte
+jusqu'à une campagne complète verte.

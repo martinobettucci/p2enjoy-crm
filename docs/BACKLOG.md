@@ -14920,8 +14920,12 @@ chacune dans son propre commit, avant `CRM-097` T3 ; la livraison en production 
       déterministe ; `groupement-fils.spec.ts` vert sur base reseedée, rejoué plusieurs fois.
 - [ ] **INC-268 — un espace de travail qui porte un workflow ne se supprime pas.** Migration ; preuve pgTAP qui
       supprime un espace complet (workflows, étapes, catalogue, affaires) et rougit avant correction.
-- [ ] **INC-269 — le parcours clavier de « Ma journée » focalise une ligne avant la nouvelle lecture.** La preuve
+- [~] **INC-269 — le parcours clavier de « Ma journée » focalise une ligne avant la nouvelle lecture.** La preuve
       attend la lecture de la portée nouvelle ; verte rejouée plusieurs fois.
+      *2026-10-03, en observation* : l'hypothèse de l'énoncé est RÉFUTÉE — lecture retardée de 1,5 s, processeur
+      ralenti six fois (8 sur 8), le fichier rejoué cinq fois (65 sur 65) : tout vert, la cause d'origine n'est
+      pas reproduite. La preuve attend désormais l'annonce de la portée nouvelle et atteint l'affaire par `Tab`
+      au lieu d'un `focus()` par programme (10 sur 10). Close après une campagne d'interface complète verte.
 
 ## Arbitrage du 2026-09-29 — INC-257 (décision 610)
 

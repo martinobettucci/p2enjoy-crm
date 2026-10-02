@@ -7068,6 +7068,12 @@ workflows avant le catalogue.
 ### INC-269 — le parcours clavier de « Ma journée » focalise une ligne avant que la nouvelle portée soit lue
 
 > **Arbitrage du responsable, 2026-10-03 (décision 619) : corriger maintenant, dans son propre commit.**
+> **2026-10-03 — consolidée, EN OBSERVATION.** L'hypothèse ci-dessous est réfutée par la mesure : la lecture de la
+> nouvelle portée retardée de 1,5 s, le processeur ralenti six fois, le fichier rejoué cinq fois — tout vert ; `focus()`
+> attend la liste nouvelle, et la session prolongée ne relit pas l'écran (même objet d'état). La cause d'origine n'est
+> pas reproduite, et cette entrée ne la prétend pas trouvée. La preuve est rendue indépendante des deux appuis
+> fragiles — elle attend l'annonce de la portée nouvelle, puis atteint l'affaire par `Tab` — et l'entrée sera close
+> après une campagne d'interface complète verte.
 
 *Relevée le 2026-10-03 pendant la campagne d'interface de `CRM-097` T2, comportement inchangé.* Le scénario « le parcours
 CLAVIER atteint l'entrée, l'écran, la bascule et une affaire » (`e2e/ui/ma-journee.spec.ts`) a rougi une fois : le
