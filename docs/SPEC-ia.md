@@ -225,9 +225,20 @@ Une génération a besoin du schéma de sa sortie : le format de la proposition 
 non par T2. T1 livre la génération d'un **workflow complet** (`portee = workflow`) ; T2 en livre l'écran et
 l'acceptation.
 
-### 11.6 Le simulateur
+### 11.6 Le simulateur — une instrumentation de développement, absente de la production
 
-Un service de développement, `ollama-simule`, répond à `/api/tags` et `/api/chat` selon le contrat mesuré au
-§3 — sortie structurée, compteurs de jetons —, avec des scénarios déterministes choisis par la demande
-(réponse valide, réponse invalide, attente au-delà de la borne, `403` d'origine). Le harnais de l'unité
-recrée `functions` pointé sur lui le temps de ses preuves, puis le rend à `OLLAMA_HOST`.
+`ollama-simule` est un service du **seul** `docker-compose.dev.yml` : un serveur Python de la bibliothèque
+standard, sur l'image déjà employée par `mail-sync`, qui répond à `/api/tags` et `/api/chat` selon le
+contrat mesuré au §3 — sortie structurée, compteurs de jetons, `401` sans clé.
+
+**Comment une preuve l'atteint sans priver le développement du vrai serveur.** La fonction `ia` ne vise le
+simulateur que si deux conditions sont réunies : la variable `IA_SIMULATEUR_HOST` lui est remise — **seul
+`docker-compose.dev.yml` la pose** — **et** la requête porte l'en-tête `x-ia-simulateur`, dont la valeur
+choisit le scénario. En production la variable n'existe pas : l'en-tête est ignoré, ce qu'un test unitaire
+prouve. La pile de développement sert donc le vrai serveur à l'usage, et chaque preuve le simulateur, sans
+recréer `functions` (`CLAUDE.md` §15 : instrumentation de test non disponible en production).
+
+Scénarios : `valide` (un workflow conforme), `incoherente` (conforme au schéma, mais deux étapes initiales
+et une transition vers une étape absente), `invalide` (JSON hors schéma), `cle_refusee` (`403` « origine non
+autorisée pour cette clé »). Le dépassement de la borne de 120 s est prouvé par les tests unitaires, avec une
+borne injectée : aucune preuve n'attend deux minutes.
