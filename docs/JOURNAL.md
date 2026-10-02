@@ -30828,3 +30828,15 @@ Manuel : chapitre 5 bis.0 bis, `verify-manual.sh` 150 contrôles sans anomalie.
 **3540** ; typage ; contrôle des classes : 375, aucune manquante ; `verify-manual.sh` 150 ; interface en trois
 tranches, **790 sur 793** — `groupement-fils.spec.ts` deux fois (INC-267, connue) et le parcours clavier de « Ma
 journée » une fois, vert trois fois sur trois rejoué seul : INC-269, consignée, étrangère.
+
+## décision 619 — arbitrage : INC-265 à INC-269 corrigées maintenant ; `CRM-097` livré après T3
+
+*2026-10-03 ; réponses du responsable aux deux questions posées à la fin de `CRM-097` T2.*
+
+- **Déploiement** : « Continuer T3, déployer après ». La tranche T4 livrera T2 et T3 ensemble — migrations 83, 84
+  et celles de T3, variables `OLLAMA_*`, autorisation de la plage d'adresses de la cellule par le serveur LLM.
+- **Incohérences** : les cinq relevées pendant `CRM-097` sont corrigées maintenant, chacune dans son propre commit,
+  avant T3 — INC-265 (tri de `verify-scripts.sh`), INC-266 (renommage IMAP et lecture de S3), INC-267 (ordre du
+  seed du courrier), INC-268 (suppression d'un espace qui porte un workflow), INC-269 (parcours clavier de « Ma
+  journée »). Ordre retenu : de la plus petite à la seule qui touche le schéma. Chaque correction suit le §18 de
+  `CLAUDE.md` : reproduire, une preuve qui rougit avant, la correction, la preuve verte, les preuves voisines.

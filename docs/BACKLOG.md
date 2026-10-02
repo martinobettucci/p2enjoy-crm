@@ -14901,6 +14901,24 @@ le serveur réel.
 - [ ] **T4** — production : variables proposées dans la cellule, clé saisie en console, plage d'adresses de
       la cellule autorisée par le serveur LLM, migration `0083` en fenêtre avec instantané, constat.
 
+## Arbitrage du 2026-10-03 — INC-265 à INC-269 (décision 619)
+
+*Arbitrage du responsable : les cinq incohérences relevées pendant `CRM-097` T1 et T2 sont corrigées maintenant,
+chacune dans son propre commit, avant `CRM-097` T3 ; la livraison en production de `CRM-097` attend T3.*
+
+- [ ] **INC-265 — `verify-scripts.sh` compare par `comm` des listes que `comm` dit mal triées.** Tri et comparaison
+      sous une même collation (`LC_ALL=C`) ; le contrôle doit rougir sur une variable orpheline et une variable non
+      documentée glissées dans une copie, et ne plus écrire d'avertissement de tri.
+- [ ] **INC-266 — le renommage IMAP d'un dossier de track est refusé par intermittence, et S3 lit tout le journal
+      du conteneur.** Trouver la cause du renommage d'un dossier absent et la corriger ; borner la lecture de S3 au
+      passage en cours.
+- [ ] **INC-267 — le message le plus récent d'un fil du seed dépend d'une course de remise.** Le seed rend l'ordre
+      déterministe ; `groupement-fils.spec.ts` vert sur base reseedée, rejoué plusieurs fois.
+- [ ] **INC-268 — un espace de travail qui porte un workflow ne se supprime pas.** Migration ; preuve pgTAP qui
+      supprime un espace complet (workflows, étapes, catalogue, affaires) et rougit avant correction.
+- [ ] **INC-269 — le parcours clavier de « Ma journée » focalise une ligne avant la nouvelle lecture.** La preuve
+      attend la lecture de la portée nouvelle ; verte rejouée plusieurs fois.
+
 ## Arbitrage du 2026-09-29 — INC-257 (décision 610)
 
 - [ ] **INC-257 — la preuve B5 « aucune card archivée n'est vieillie par le seed » mesure le temps

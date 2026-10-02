@@ -6996,6 +6996,8 @@ restauraient la base par le runner vident d'abord le registre de développement 
 
 ### INC-265 — `verify-scripts.sh` compare le gabarit et Compose par `comm` sur des listes que `comm` dit mal triées
 
+> **Arbitrage du responsable, 2026-10-03 (décision 619) : corriger maintenant, dans son propre commit.**
+
 *Relevée le 2026-10-02 pendant la spécification de `CRM-097`, comportement inchangé.* La section 1 de
 `scripts/verify-scripts.sh` trie les variables par `sort -u`, puis les compare par `comm -23` et `comm -13`.
 Sous la locale du poste (`en_US.UTF-8`), `comm` écrit « file 1 is not in sorted order », « file 2 is not in
@@ -7007,6 +7009,8 @@ tort. Correction probable : `LC_ALL=C` sur le tri et la comparaison. **Non corri
 soumis au responsable.
 
 ### INC-266 — le renommage du dossier IMAP d'un track est refusé par intermittence, et S3 en reste rouge jusqu'à la recréation de `mail-sync`
+
+> **Arbitrage du responsable, 2026-10-03 (décision 619) : corriger maintenant, dans son propre commit.**
 
 *Relevée le 2026-10-02 pendant les campagnes de `CRM-097` T1, comportement inchangé.* Deux constats liés :
 
@@ -7026,6 +7030,8 @@ cause du renommage d'un dossier absent (ordre entre création et renommage).
 
 ### INC-267 — le « message le plus récent » d'un fil du seed dépend d'une course de remise
 
+> **Arbitrage du responsable, 2026-10-03 (décision 619) : corriger maintenant, dans son propre commit.**
+
 *Relevée le 2026-10-02 pendant les campagnes de `CRM-097` T1, comportement inchangé.* Deux scénarios de
 `e2e/ui/groupement-fils.spec.ts` (`CRM-081` tranche 2 f) attendent que le fil « Demande de devis — refonte »
 s'ouvre sur sa RÉPONSE, « Re: Demande de devis — refonte ». **Mesuré** sur la base reseedée ce jour : la réponse
@@ -7042,6 +7048,8 @@ l'original avant d'envoyer sa réponse —, faute de quoi le contrat « des donn
 
 ### INC-268 — un espace de travail qui porte un workflow ne peut pas être supprimé
 
+> **Arbitrage du responsable, 2026-10-03 (décision 619) : corriger maintenant, dans son propre commit.**
+
 *Relevée le 2026-10-02 pendant `CRM-097` T2.a, comportement inchangé.* En écrivant une preuve de suppression en
 cascade, la suppression d'un espace qui porte un workflow est refusée : `23503`, « update or delete on table
 `workflow_nodes_catalog` violates foreign key constraint `workflow_steps_node_id_workspace_id_fkey` ». La
@@ -7056,6 +7064,8 @@ clé des étapes vers le catalogue quand c'est l'espace qui disparaît (une clé
 workflows avant le catalogue.
 
 ### INC-269 — le parcours clavier de « Ma journée » focalise une ligne avant que la nouvelle portée soit lue
+
+> **Arbitrage du responsable, 2026-10-03 (décision 619) : corriger maintenant, dans son propre commit.**
 
 *Relevée le 2026-10-03 pendant la campagne d'interface de `CRM-097` T2, comportement inchangé.* Le scénario « le parcours
 CLAVIER atteint l'entrée, l'écran, la bascule et une affaire » (`e2e/ui/ma-journee.spec.ts`) a rougi une fois : le
