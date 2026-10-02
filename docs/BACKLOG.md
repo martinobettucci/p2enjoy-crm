@@ -14913,9 +14913,15 @@ chacune dans son propre commit, avant `CRM-097` T3 ; la livraison en production 
       (« file 1 is not in sorted order ») ; vert après, 115 vérifications sans anomalie. Contre-épreuves, fichiers
       rétablis : une orpheline `APPLY_ORPHELINE_INC265` et une non documentée `APP_NON_DOCUMENTEE_INC265` —
       noms placés là où les deux collations divergent — rougissent chacune leur contrôle.
-- [ ] **INC-266 — le renommage IMAP d'un dossier de track est refusé par intermittence, et S3 lit tout le journal
+- [x] **INC-266 — le renommage IMAP d'un dossier de track est refusé par intermittence, et S3 lit tout le journal
       du conteneur.** Trouver la cause du renommage d'un dossier absent et la corriger ; borner la lecture de S3 au
       passage en cours.
+      *Vérifié le 2026-10-03* : cause trouvée — la veille et la route `/poll` relevaient le même compte en même
+      temps, sans verrou. `tests/test_ingestion_concurrence.py` rejoue le chevauchement sans temporisation : rouge
+      avant (`folder_rename_refused`), vert après le verrou par compte ; `pytest mail-sync/tests` **246**. S3 borné au
+      passage (`E2E_DEBUT_CAMPAGNE`) : un avertissement d'un passage antérieur, écrit dans le journal, rougit l'ancienne
+      S3 et laisse la nouvelle verte. Image `mail-sync` reconstruite ; trois campagnes de messagerie, **42** chacune,
+      aucun avertissement ni refus dans le journal du conteneur.
 - [x] **INC-267 — le message le plus récent d'un fil du seed dépend d'une course de remise.** Le seed rend l'ordre
       déterministe ; `groupement-fils.spec.ts` vert sur base reseedée, rejoué plusieurs fois.
       *Vérifié le 2026-10-03* : le contrôle d'ordre ajouté au seed rougit sur la base de la veille (réponse reçue

@@ -29,6 +29,12 @@ import { RACINE, cleAnonyme, lireEnv, urlApi } from './env'
 // webServer et chaque worker. Cette suppression reste locale au processus du harnais.
 delete process.env['NO_COLOR']
 
+// LE DÉBUT DE LA CAMPAGNE, FIXÉ UNE FOIS — INC-266, décision 619. La configuration est évaluée par le processus
+// principal, puis par chaque worker, qui hérite de son environnement : `??=` garde la valeur du principal. Les
+// preuves qui lisent un journal de service (S3, `e2e/mail/mail-sync.spec.ts`) le bornent à ce passage, au lieu de
+// relire chaque avertissement d'un passage antérieur.
+process.env['E2E_DEBUT_CAMPAGNE'] ??= new Date().toISOString()
+
 const PORT = Number(process.env['WEBAPP_PREVIEW_PORT'] ?? 4173)
 const URL_BASE = `http://127.0.0.1:${PORT}`
 

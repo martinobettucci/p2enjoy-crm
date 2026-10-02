@@ -644,6 +644,12 @@ La preuve de reprise écrit un UUID par l'API interne, relève `boot_count` et `
 `docker compose stop mail-sync` puis `docker compose start mail-sync`, attend la santé, et exige
 le même UUID, un compteur incrémenté d'une unité et un nouvel identifiant de démarrage.
 
+**Une seule relève à la fois par compte — INC-266, ajouté le 2026-10-03 (décision 619).** La veille de fond et la
+route interne `/poll` relèvent par le même `relever_compte`, dans le même processus : sans verrou, deux relèves du
+même compte lisaient la même divergence de dossier (§4.5), et la seconde renommait un dossier déjà renommé —
+`folder_rename_refused`, « NONEXISTENT ». Un verrou PAR COMPTE les sérialise ; deux boîtes différentes ne s'attendent
+pas. Il vit dans le processus, seul exemplaire du service ; un second exemplaire demanderait un verrou en base.
+
 ### 12.5 Journaux et refus
 
 Chaque ligne de journal est un objet JSON autonome en UTC, avec au minimum `timestamp`, `level`,

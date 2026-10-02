@@ -30861,3 +30861,14 @@ Puis la cause : l'original et sa réponse partaient dans une même session SMTP,
 garantit pas. Le seed envoie désormais l'original seul, le relève en base, puis le reste. Base reconstruite
 (`./resetMe.sh --yes`) : l'original reçu une seconde avant sa réponse, contrôle vert, second passage convergent ;
 `groupement-fils.spec.ts` 18 sur 18 ; messagerie 42.
+
+**INC-266 corrigée, le 2026-10-03 (décision 619).** La cause du renommage refusé est trouvée en lisant le service : la
+veille (fil de fond) et la route interne `/poll` appellent `relever_compte` dans le même processus, sans verrou ; deux
+relèves du même compte lisent la même divergence, et la seconde renomme un dossier que la première vient de déplacer.
+Un test rejoue le chevauchement sans temporisation — le serveur factice tient la réponse du premier renommage, la
+seconde relève part pendant ce temps — : rouge avant (`folder_rename_refused`), vert avec un verrou PAR compte.
+L'hôte n'a pas `python3-venv` : la suite `pytest` est jouée dans un conteneur jetable de l'image Python de la pile
+(246 verts). S3, de son côté, borne sa lecture au passage (`E2E_DEBUT_CAMPAGNE`, fixé par la configuration
+Playwright) : un avertissement écrit dans le journal comme le ferait un passage antérieur rougit l'ancienne S3 et
+laisse la nouvelle verte ; les secrets restent cherchés dans tout le journal. Image `mail-sync` reconstruite, trois
+campagnes de messagerie à 42, aucun avertissement dans le journal du conteneur.

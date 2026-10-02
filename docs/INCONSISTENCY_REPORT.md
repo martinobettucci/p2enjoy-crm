@@ -7012,7 +7012,10 @@ soumis au responsable.
 
 ### INC-266 — le renommage du dossier IMAP d'un track est refusé par intermittence, et S3 en reste rouge jusqu'à la recréation de `mail-sync`
 
-> **Arbitrage du responsable, 2026-10-03 (décision 619) : corriger maintenant, dans son propre commit.**
+> **CORRIGÉE le 2026-10-03 (décision 619).** Cause : la veille et la route `/poll` de `mail-sync` relevaient le même
+> compte en même temps ; la seconde renommait un dossier déjà renommé. Un verrou par compte les sérialise
+> (`docs/SPEC-mail-subsystem.md` §12.4). S3 mesure le silence depuis le début de la campagne, et les secrets sur le
+> journal entier.
 
 *Relevée le 2026-10-02 pendant les campagnes de `CRM-097` T1, comportement inchangé.* Deux constats liés :
 

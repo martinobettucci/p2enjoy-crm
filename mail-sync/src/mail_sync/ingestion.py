@@ -4,6 +4,7 @@
 #       §15.1 (IDLE annoncé APRÈS authentification), §15.4 (dossiers surveillés),
 #       §15.5 (ordre dépôt → analyse, chemin sans nom de fichier)
 # @spec docs/JOURNAL.md décision 320
+# @spec INC-266 (docs/INCONSISTENCY_REPORT.md, décision 619) — deux relèves d'un même compte ne se chevauchent pas
 #
 # CE MODULE ORCHESTRE, IL NE DÉCIDE PAS. L'analyse MIME vit dans `mime_analyse`, l'antivirus dans
 # `antivirus`, l'accès à la base dans `postgrest` : ce fichier enchaîne, et c'est tout. La
@@ -21,6 +22,7 @@ from __future__ import annotations
 from datetime import date
 
 import ssl
+import threading
 from dataclasses import dataclass
 
 from imapclient import IMAPClient
@@ -213,7 +215,30 @@ def reprendre_rangements_manques(
     return reprises
 
 
-def relever_compte(
+# UNE SEULE RELÈVE À LA FOIS PAR COMPTE — INC-266, décision 619. La veille (un fil de fond) et la route interne
+# `/poll` appellent toutes deux `relever_compte`, dans le même processus. Sans verrou, deux relèves du même compte
+# lisaient la même divergence de dossier : la première renommait, la seconde renommait un dossier qui n'existait
+# plus, et écrivait `folder_rename_refused` — mesuré pendant une campagne `e2e:mail`, rejoué par
+# `tests/test_ingestion_concurrence.py`. Le verrou est PAR COMPTE : deux boîtes différentes ne s'attendent pas.
+# Il vit dans le processus, qui est le seul : `mail-sync` ne tourne qu'en un exemplaire (docs/SPEC-mail-subsystem.md
+# §12) ; un second exemplaire demanderait un verrou en base.
+_VERROUS_PAR_COMPTE: dict[str, threading.Lock] = {}
+_VERROU_DES_VERROUS = threading.Lock()
+
+
+def _verrou_du_compte(account_id: str) -> threading.Lock:
+    with _VERROU_DES_VERROUS:
+        return _VERROUS_PAR_COMPTE.setdefault(account_id, threading.Lock())
+
+
+def relever_compte(*, compte, **arguments) -> ResultatReleve:  # type: ignore[no-untyped-def]
+    """Relève un compte une fois, après la relève en cours du même compte s'il y en a une (INC-266)."""
+
+    with _verrou_du_compte(compte.account_id):
+        return _relever_compte(compte=compte, **arguments)
+
+
+def _relever_compte(
     *,
     journal=lambda _evenement, **_details: None,  # type: ignore[no-untyped-def]
     client_base: PostgrestClient,

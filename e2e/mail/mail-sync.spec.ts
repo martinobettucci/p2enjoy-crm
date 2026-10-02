@@ -1,4 +1,5 @@
 // @verifies CRM-051 (docs/BACKLOG.md) — socle du service `mail-sync`
+// @verifies INC-266 (docs/INCONSISTENCY_REPORT.md, décision 619) — S3 mesure le silence sur le passage en cours
 // @verifies docs/SPEC-mail-subsystem.md §12.1 (aucun port publié), §12.3 (santé et API interne),
 //           §12.4 (état durable et reprise), §12.5 (journaux), §12.6 (preuves exigées)
 // @verifies docs/JOURNAL.md décision 310 (état de reprise prouvable), décision 313 (aucun
@@ -33,8 +34,11 @@ function docker(...arguments_: string[]): string {
  * `logging.StreamHandler` écrit sur la sortie d'erreur : lire la seule sortie standard rendrait
  * une chaîne vide, et un contrôle qui ne lit rien ne prouve rien.
  */
-function journauxConteneur(): string {
-	const execution = spawnSync('docker', ['logs', CONTENEUR], { encoding: 'utf8', timeout: 120_000 })
+function journauxConteneur(depuis?: string): string {
+	const execution = spawnSync('docker', ['logs', ...(depuis === undefined ? [] : ['--since', depuis]), CONTENEUR], {
+		encoding: 'utf8',
+		timeout: 120_000,
+	})
 	return `${execution.stdout}${execution.stderr}`.trim()
 }
 
@@ -218,7 +222,15 @@ test.describe('S2 — arrêt et redémarrage sans perte d’état', () => {
 
 test.describe('S3 — la console opérationnelle reste silencieuse', () => {
 	test('chaque ligne est un JSON borné, sans secret ni avertissement', () => {
-		const journaux = journauxConteneur()
+		// LE SILENCE SE MESURE SUR CE PASSAGE — INC-266, décision 619. La lecture entière du journal rendait S3 rouge
+		// pour toujours après UN avertissement d'un passage antérieur, même après `docker restart`, qui garde le
+		// journal : seule la recréation du conteneur le rendait vert. La forme, le niveau et l'absence de secret
+		// sont contrôlés depuis le début de la campagne (`E2E_DEBUT_CAMPAGNE`, `e2e/playwright.config.ts`) ;
+		// l'absence de secret l'est AUSSI sur le journal entier — une fuite ancienne reste une fuite.
+		const depuis = process.env['E2E_DEBUT_CAMPAGNE']
+		expect(depuis, 'le début de campagne est fixé par la configuration').toBeTruthy()
+		const toutLeJournal = journauxConteneur()
+		const journaux = journauxConteneur(depuis)
 		const lignes = journaux.split('\n').filter((ligne) => ligne.trim().length > 0)
 
 		expect(lignes.length).toBeGreaterThan(0)
@@ -231,8 +243,9 @@ test.describe('S3 — la console opérationnelle reste silencieuse', () => {
 			expect(['DEBUG', 'INFO']).toContain(objet['level'])
 		}
 
-		expect(journaux).not.toContain(JETON)
-		expect(journaux.toLowerCase()).not.toContain('authorization')
-		expect(lignes.map((ligne) => JSON.parse(ligne)['event'])).toContain('service_started')
+		expect(toutLeJournal).not.toContain(JETON)
+		expect(toutLeJournal.toLowerCase()).not.toContain('authorization')
+		// Le service a démarré dans la vie de ce conteneur : la preuve lit bien SON journal.
+		expect(toutLeJournal).toContain('"service_started"')
 	})
 })
