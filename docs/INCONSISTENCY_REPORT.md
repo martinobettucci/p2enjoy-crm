@@ -7005,3 +7005,37 @@ verdicts : 114 vérifications, aucune anomalie. Mais `comm` sur une entrée qu'i
 une différence ; le contrôle « variable orpheline » ou « variable non documentée » pourrait alors se taire à
 tort. Correction probable : `LC_ALL=C` sur le tri et la comparaison. **Non corrigé** : étranger à `CRM-097` ;
 soumis au responsable.
+
+### INC-266 — le renommage du dossier IMAP d'un track est refusé par intermittence, et S3 en reste rouge jusqu'à la recréation de `mail-sync`
+
+*Relevée le 2026-10-02 pendant les campagnes de `CRM-097` T1, comportement inchangé.* Deux constats liés :
+
+1. **Le renommage refusé est intermittent.** Pendant une campagne `e2e:mail`, `mail-sync` a écrit une fois
+   `folder_rename_refused`, précédé d'un avertissement de décodage de `[NONEXISTENT] Mailbox 'CRM/Conseil & IA
+   (renommé …)' not found` : le dossier visé par le renommage n'existait pas, ou plus. **Mesuré** : un
+   avertissement au deuxième passage, aucun au troisième ni au quatrième. Le 2026-10-01, la même zone avait déjà
+   rougi une fois sous une autre forme — « renommer un TRACK », compteur `renamed` à 0 —, non reproduite.
+2. **S3 lit tout le journal du conteneur.** « La console opérationnelle reste silencieuse »
+   (`e2e/mail/mail-sync.spec.ts`) lit `docker logs` sans borne : un seul avertissement d'un passage antérieur
+   le rend rouge dans tous les passages suivants, même après un `docker restart`, qui garde le journal. Seule
+   la recréation du conteneur le rend vert (42 sur 42, aucun avertissement, mesuré).
+
+**Étranger à `CRM-097`** : ni `mail-sync`, ni Stalwart, ni les tracks ne sont touchés par l'unité. **Non
+corrigé** ; soumis au responsable. Pistes à arbitrer : borner la lecture de S3 au passage en cours ; trouver la
+cause du renommage d'un dossier absent (ordre entre création et renommage).
+
+### INC-267 — le « message le plus récent » d'un fil du seed dépend d'une course de remise
+
+*Relevée le 2026-10-02 pendant les campagnes de `CRM-097` T1, comportement inchangé.* Deux scénarios de
+`e2e/ui/groupement-fils.spec.ts` (`CRM-081` tranche 2 f) attendent que le fil « Demande de devis — refonte »
+s'ouvre sur sa RÉPONSE, « Re: Demande de devis — refonte ». **Mesuré** sur la base reseedée ce jour : la réponse
+porte `received_at = 11:22:20.446`, l'original `11:22:20.535` — la réponse a été reçue **90 ms AVANT**
+l'original, et le fil s'ouvre donc sur l'original. Le seed (`supabase/seed/apply-seed.sh`, envoi des messages
+de démonstration) envoie bien l'original puis la réponse dans la même session SMTP, mais `received_at` est la
+date d'ingestion, et Stalwart ne garantit pas l'ordre de remise de deux messages envoyés à quelques
+millisecondes. Les campagnes précédentes passaient par un ordre de remise favorable.
+
+**Étranger à `CRM-097`** : ni le seed du courrier ni l'Inbox ne sont touchés par l'unité. **Non corrigé** ;
+soumis au responsable. Le seed doit rendre l'ordre déterministe — par exemple en attendant l'ingestion de
+l'original avant d'envoyer sa réponse —, faute de quoi le contrat « des données reproductibles »
+(`CLAUDE.md` §8) n'est pas tenu.

@@ -119,6 +119,9 @@ export default defineConfig({
 		{
 			name: 'api',
 			testDir: join(import.meta.dirname, 'api'),
+			// Le contrôle du serveur LLM RÉEL n'appartient à aucune campagne (`CRM-097`, docs/SPEC-ia.md §8) : il
+			// n'est même pas énuméré sans `IA_SERVEUR_REEL=1`, sans quoi le harnais compterait un scénario ignoré.
+			testIgnore: process.env['IA_SERVEUR_REEL'] === '1' ? [] : ['**/ia-reel.spec.ts'],
 			// Aucun navigateur : ce projet n'emploie que le contexte de requête de Playwright.
 			use: { baseURL: URL_API },
 		},

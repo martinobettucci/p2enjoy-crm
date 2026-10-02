@@ -13,6 +13,21 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-097` — L'assistant IA de configuration (en cours : T1, le socle)
+
+*Décision 617. Migration **83** à appliquer en production avec la tranche T4 ; variables `OLLAMA_*` à poser
+dans la cellule (`docs/PROD_MIGRATIONS.md` §2.3, §3).*
+
+- **Les suggestions de l'IA et leur historique**, en base (migration `0083`) : réservés aux administrateurs ;
+  une suggestion se corrige, se fait revoir, s'abandonne ; rien n'entre dans la configuration avant son
+  acceptation, qui viendra avec T2.
+- **Le service de l'assistant** (fonction `ia`) appelle le serveur Ollama de LeLabs côté serveur — la clé ne
+  quitte jamais la pile — et contrôle chaque proposition du modèle : forme, clés normalisées, une seule étape
+  initiale, transitions et règles cohérentes ; les défauts sont conservés et nommés, jamais corrigés en
+  silence. Sans clé, l'assistant se déclare indisponible et rien d'autre n'est empêché.
+- **Pour les développeurs** : un simulateur Ollama local (`ollama-simule`) sert les preuves ; le vrai serveur
+  n'est appelé par aucune campagne. `IA_SERVEUR_REEL=1` active un contrôle facultatif contre lui.
+
 ### Correctif du 2026-09-30 — INC-262 (décision 614)
 
 *Livré en production le 2026-09-30 (`09d3abcc`, webapp seule) ; publié quand le responsable aura constaté

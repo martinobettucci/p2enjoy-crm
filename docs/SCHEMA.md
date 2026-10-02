@@ -1721,7 +1721,7 @@ le prévisionnel vaut 297 565,00 EUR contre 333 715,00.
 naître toute fonction neuve de `public` avec `anon=X`, et `revoke … from public` ne lui retire rien.
 Mesuré : `401` et `42501`, « permission denied for function entonnoir_conversion ».
 
-## 9 ter. Assistant IA — `CRM-097`, migration `0083` (spécifié le 2026-10-02, à livrer par T1)
+## 9 ter. Assistant IA — `CRM-097`, migration `0083` (livrée en développement par T1, 2026-10-02)
 
 `docs/SPEC-ia.md` §5, décision 617. Rien de ce que propose l'IA n'entre dans la configuration avant
 l'acceptation ; ces deux tables portent la suggestion et son historique de revue.
@@ -1734,6 +1734,7 @@ l'acceptation ; ces deux tables portent la suggestion et son historique de revue
 | `workspace_id` | `uuid` | non nul, FK `workspaces` |
 | `workflow_id` | `uuid` | nullable : nul pour un workflow à créer ; sinon FK composite `(workflow_id, workspace_id) → workflows` |
 | `portee` | `text` | non nul, `CHECK` : `workflow`, `etapes`, `transitions`, `champs` |
+| `demande` | `text` | non nul, non blanc, 4 000 caractères au plus : le besoin décrit par l'administrateur, conservé dès la requête (la génération est asynchrone) |
 | `statut` | `text` | non nul, défaut `en_revue`, `CHECK` : `en_revue`, `acceptee`, `abandonnee` |
 | `empreinte_initiale` | `text` | nullable ; pour un workflow existant, l'empreinte de composition lue à la création (refus d'acceptation si elle a changé) |
 | `generation_depuis` | `timestamptz` | nullable ; non nul pendant une génération — une seule en vol par suggestion |
@@ -1754,12 +1755,18 @@ l'acceptation ; ces deux tables portent la suggestion et son historique de revue
 | `origine` | `text` | non nul, `CHECK` : `ia`, `correction` |
 | `consigne` | `text` | nullable ; la demande initiale ou la consigne de revue |
 | `proposition` | `jsonb` | non nul ; la proposition de composition, `version: 1` (`docs/SPEC-ia.md` §6) |
+| `defauts` | `jsonb` | non nul, défaut `[]`, **tableau** : les défauts que la fonction a constatés sur la proposition (`docs/SPEC-ia.md` §6.1) ; une proposition qui en porte ne peut pas être acceptée en l'état |
 | `modele`, `jetons_entree`, `jetons_sortie`, `duree_ms` | `text`, `integer` | nuls pour une correction ; renseignés pour une révision de l'IA |
 | `created_by` | `uuid` | non nul, FK `profiles` |
 | `created_at` | `timestamptz` | `now()` |
 
 **RLS** : lecture et écriture par les **administrateurs** de l'espace ; aucune politique de suppression.
-Une suggestion acceptée ou abandonnée n'accepte plus de révision (garde par trigger). Aucune donnée
+Une suggestion acceptée ou abandonnée est figée et n'accepte plus de révision (gardes par trigger).
+**Ce qu'un client peut écrire, et rien de plus** : créer une suggestion (son empreinte initiale est calculée
+par la base, jamais reçue) ; poser le verrou de génération et abandonner — l'acceptation est réservée au
+geste d'acceptation (`T2`) ; ajouter une révision d'origine `correction` — une révision d'origine `ia`
+n'est écrite que par la fonction, avec la clé de service. Les révisions sont **immuables en modification** ;
+aucun client ne les supprime, mais la cascade d'une suggestion ou d'un espace les emporte. Aucune donnée
 personnelle par conception : une proposition est une structure de configuration.
 
 ## 10. Index principaux

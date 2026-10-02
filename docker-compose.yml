@@ -264,6 +264,13 @@ services:
       SSO_OIDC_ISSUER: ${SSO_OIDC_ISSUER}
       SSO_OIDC_CLIENT_ID: ${SSO_OIDC_CLIENT_ID}
       OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET}
+      # @spec CRM-097 (docs/BACKLOG.md), docs/SPEC-ia.md §3 — le serveur LLM de l'assistant. Facultatives :
+      # sans clé, l'assistant se déclare indisponible et rien d'autre n'est empêché. Le service principal ne
+      # les remet QU'AU worker `ia` (`main/environnement.ts`).
+      OLLAMA_HOST: ${OLLAMA_HOST:-}
+      OLLAMA_API_KEY: ${OLLAMA_API_KEY:-}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-gemma4:e2b}
+      OLLAMA_CONTEXT_LENGTH: ${OLLAMA_CONTEXT_LENGTH:-36864}
 
   # --- Passerelle ----------------------------------------------------------------------------
   # Kong expose REST, Storage, Realtime et les fonctions edge sur un port unique

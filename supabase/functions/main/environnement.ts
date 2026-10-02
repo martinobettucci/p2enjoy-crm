@@ -3,6 +3,8 @@
 //       la clé de signature n'atteint que l'échangeur de session
 // @spec docs/SPEC-edge-functions.md §2 (variables du runtime), §5 (sécurité)
 // @spec docs/JOURNAL.md décision 584 (révision de la règle « JWT_SECRET n'est pas propagé »)
+// @spec CRM-097 (docs/BACKLOG.md) — tranche T1 : la fonction `ia` reçoit les variables `OLLAMA_*` et le
+//       simulateur de développement, elle seule, et une borne de 150 s (docs/SPEC-ia.md §11.1, §11.6)
 //
 // Module pur. Le conteneur `functions` reçoit `JWT_SECRET` depuis `CRM-092`, parce que l'échangeur
 // doit signer le jeton interne que PostgREST, Realtime et Storage acceptent. Le service principal ne
@@ -17,6 +19,24 @@ export const ENVIRONNEMENT_COMMUN = ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPAB
 /** Ce qu'une fonction nommée reçoit EN PLUS, et elle seule. */
 export const ENVIRONNEMENT_PROPRE: Readonly<Record<string, readonly string[]>> = {
 	session: ['JWT_SECRET', 'SSO_OIDC_ISSUER', 'SSO_OIDC_CLIENT_ID', 'OIDC_CLIENT_SECRET'],
+	// `CRM-097` : la clé du serveur LLM n'atteint que l'assistant ; `IA_SIMULATEUR_HOST` n'existe qu'en
+	// développement (docs/SPEC-ia.md §11.6).
+	ia: ['OLLAMA_HOST', 'OLLAMA_API_KEY', 'OLLAMA_MODEL', 'OLLAMA_CONTEXT_LENGTH', 'IA_SIMULATEUR_HOST'],
+}
+
+/** La borne commune d'un worker : une fonction courte. */
+export const DELAI_COMMUN_MS = 10_000
+
+/**
+ * Ce qu'une fonction nommée reçoit comme borne, si elle diffère. `ia` poursuit une génération de 120 s
+ * au plus en tâche de fond : sa borne la couvre, avec la marge de ses écritures (docs/SPEC-ia.md §11.1).
+ */
+export const DELAI_PROPRE: Readonly<Record<string, number>> = {
+	ia: 150_000,
+}
+
+export function delaiDe(fonction: string): number {
+	return Object.hasOwn(DELAI_PROPRE, fonction) ? DELAI_PROPRE[fonction] ?? DELAI_COMMUN_MS : DELAI_COMMUN_MS
 }
 
 export function environnementDe(fonction: string, lire: (nom: string) => string | undefined): [string, string][] {

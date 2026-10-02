@@ -30666,3 +30666,53 @@ une campagne ; aucune donnée personnelle envoyée au modèle ; `OLLAMA_MODEL` a
 **Écrit avant le code** : `docs/SPEC-ia.md`, `docs/SCHEMA.md` §9 ter, `docs/DAT.md` §3.7 bis et §15,
 `docs/BACKLOG.md` (`CRM-097`, quatre tranches), `README.md` §9, `docs/PROD_MIGRATIONS.md` §2.3 et §3,
 `.env.example` §13.
+
+**`CRM-097` T1, le 2026-10-02 — le socle.** Migration `0083` appliquée en développement par le runner — le
+premier passage DELTA sous le registre : « 1 fichier(s) appliqué(s) », inscrit en mode `application`.
+*Preuves et défauts trouvés en route* :
+
+- pgTAP `0077`, **30** assertions. Sept dégradations de la table rougissent chacune leur preuve — création
+  ouverte aux membres (10, 13), révision `ia` écrite par le client (17), acceptation par mise à jour (23),
+  décision non figée (25 à 27), empreinte non calculée (5), empreinte écrite par le client (2, 6), espace de
+  révision non recopié (la suite s'interrompt à 16 sur 28, ce que `run-sql-tests.sh` rougit). **Deux
+  défauts de la migration, trouvés par ces mesures** : elle n'était pas idempotente — au second passage, le
+  retrait de la clé `(id, workspace_id)` butait sur la clé étrangère des révisions, et une adoption se serait
+  arrêtée sur elle — ; et son trigger d'immuabilité refusait aussi `DELETE`, ce qui bloquait la cascade d'une
+  suggestion (et d'un espace) : la clé de service ne pouvait plus retirer une sonde. Corrigés en place — la
+  migration n'était appliquée qu'en développement —, puis prouvés par une adoption complète (83 fichiers) et
+  deux assertions de plus (29, 30).
+- Fonction `ia` : **57** tests unitaires (configuration, client Ollama, contrôle de la proposition sur la
+  sortie MESURÉE du modèle, gestionnaire) ; six mutations vues — simulateur honoré en production, demande
+  journalisée, modèle appelé avant la base, revue sur la proposition initiale, étape initiale non
+  contrôlée, borne ignorée. `main` : la clé et la borne de 150 s ne vont qu'à `ia` (11 tests, la liste
+  NOMMÉE des environnements propres révisée sans être relâchée). Un défaut de portabilité trouvé par le
+  test de la borne : l'expiration se reconnaissait par `instanceof DOMException`, faux sous jsdom ; elle se
+  reconnaît désormais à son nom.
+- **La tâche de fond retournée par la mesure** : le runtime tourne en `--policy oneshot` (décision 286) ; une
+  génération confiée à `EdgeRuntime.waitUntil` après la réponse `202` n'a jamais atteint le simulateur, et le
+  verrou est resté posé. La génération vit donc dans sa requête, par un flux NDJSON qui bat toutes les 15 s
+  (`docs/SPEC-ia.md` §11.1, `docs/SPEC-edge-functions.md` §2). `oneshot` n'est pas rouvert.
+- API `ia.spec.ts`, **7** scénarios aux jetons réels, tous contre le simulateur : état ; révision du modèle
+  en base, clés normalisées, aucun workflow écrit ; défauts conservés ; échecs nommés ; commercial et lectrice
+  refusés `403` par la base, sans création ; correction puis revue (numéros 1, 2, 3 ; usurpation `ia`
+  refusée `403`) ; verrou (`409`), abandon figé (`409`), acceptation par mise à jour refusée (`403`) ; la
+  lectrice ne lit rien. **Contrôle facultatif contre le serveur réel** (`IA_SERVEUR_REEL=1`) : `gemma4:e2b`
+  a rendu une révision conforme en **57 s**, par le flux, au travers de Kong — le battement a tenu la
+  connexion.
+- `verify-scripts.sh` : 114 vérifications, aucune anomalie ; compteurs du harnais : 77 fichiers SQL, 3327
+  assertions, 1098 scénarios d'API.
+
+*Constat d'environnement, sans rapport avec l'unité* : un autre projet du poste tient les ports 8080 et 8081
+— `ROUNDCUBE_PORT`, `SPARK_HTTP_PORT` et `STALWART_ADMIN_PORT` déplacés à 8180 et 8181 dans le `.env` local —,
+et l'hôte n'a plus d'instance inotify libre (158 ouvertes pour une limite de 128) : le serveur Vite de
+développement s'arrête en `EMFILE`. Les campagnes, qui servent leur propre build, n'en dépendent pas ; relever
+`fs.inotify.max_user_instances` est une décision du responsable.
+*Campagnes de T1*, sur base reconstruite et seedée (`./resetMe.sh` s'arrête sur le conteneur `webapp` faute
+d'instance inotify ; le seed a été appliqué par `supabase/seed/apply-seed.sh`) : le harnais complet dépasse
+désormais la durée d'une tâche de fond, ses étapes sont donc rejouées une à une. SQL **77 / 3327** — la suite
+`0016` comptait 125 politiques et en trouvait 130 : révisée à 130, les cinq de l'assistant, motif écrit
+(décision 51) ; API **1097** — le contrôle du serveur réel, d'abord énuméré puis ignoré, faisait rougir le
+compteur (« 1097 au lieu de 1098 ») : il n'est plus énuméré sans `IA_SERVEUR_REEL=1` ; messagerie **42** après
+recréation de `mail-sync` — S3 lisait un avertissement d'un passage antérieur (INC-266) ; unitaires **3463** ;
+typage ; interface en trois tranches, **780 sur 782** — les deux rouges de `groupement-fils.spec.ts` viennent
+d'une course de remise du seed du courrier, mesurée (la réponse reçue 90 ms avant l'original), INC-267.

@@ -1,5 +1,6 @@
 -- @verifies CRM-014 (docs/BACKLOG.md) — harnais des douze preuves de refus d'autorisation
 -- @verifies CRM-022 (docs/BACKLOG.md) — preuve n° 10 et sept politiques d'identité
+-- @verifies CRM-097 (docs/BACKLOG.md) — tranche T1 : les cinq politiques de l'assistant IA comptées (130)
 -- @verifies docs/SPEC-permissions-rls.md §7 (les douze preuves), §7.2 (contrat mesuré),
 --           §7.3 (ce qui n'est pas satisfaisable, et comment l'absence est figée),
 --           §7.4 (non-complaisance)
@@ -210,8 +211,13 @@ select is(pg_temp.politiques('card_sequence_enrollments'),
 
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	125,
-	'CENT VINGT-CINQ politiques dans `public`, et pas une de plus — 122 avant `CRM-092` tranche 1, '
+	130,
+	'CENT TRENTE politiques dans `public`, et pas une de plus — 125 avant `CRM-097` tranche 1, plus les CINQ '
+	'de l''assistant IA (docs/SCHEMA.md §9 ter) : lecture, création et mise à jour de `suggestions_ia`, lecture '
+	'et création de `suggestions_ia_revisions`, TOUTES réservées aux administrateurs de l''espace. AUCUNE '
+	'SUPPRESSION, et c''est un refus double : ni politique ni privilège — abandonner est un statut, et une '
+	'révision n''est emportée que par la cascade. Une révision ne se MODIFIE pas non plus : un trigger la rend '
+	'immuable, et aucun privilège `UPDATE` ne l''ouvre. Avant elles : 125, soit 122 avant `CRM-092` tranche 1, '
 	'plus les TROIS de `workspace_invitations` : lecture, inscription et retrait d''une attente par '
 	'un administrateur de l''espace (docs/SPEC-session-sso.md §7.2). ELLES SONT TROIS, ET NON QUATRE : '
 	'une attente ne se modifie pas, elle se retire et se réinscrit. Avant elles : 122, soit 121 avant `CRM-064` '

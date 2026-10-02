@@ -46,7 +46,7 @@ la définition différente et recrée Kong pendant le `./runDev.sh` normal, sans
 | Point d'entrée | `start --policy oneshot --main-service /home/deno/functions/main` |
 | Sources | `./supabase/functions:/home/deno/functions:ro` |
 | Redémarrage | `unless-stopped` dans le commun, `always` en production |
-| Limite d'un worker | 128 Mio et 10 secondes de temps mur |
+| Limite d'un worker | 128 Mio et 10 secondes de temps mur ; **150 secondes pour `ia`** seule (`CRM-097`, `DELAI_PROPRE`) |
 
 La politique `oneshot` est une exigence observée, pas un réglage décoratif. Avec la politique par
 défaut `per_worker`, l'appel réel réussit mais le runtime 1.74.2 écrit ensuite
@@ -70,6 +70,15 @@ autre fonction, présente ou future, ne reçoit que les trois variables ci-dessu
 aucun jeton. La règle d'origine — « le secret de signature n'est pas propagé » — défendait cette
 propriété-là ; elle est tenue à l'échelle du worker plutôt qu'à celle du conteneur, prouvée par
 `environnement.test.ts` et par une mutation de `scripts/verify-session-sso.sh`.
+
+**Révisé par `CRM-097` T1 (décision 617).** Le conteneur reçoit aussi `OLLAMA_HOST`, `OLLAMA_API_KEY`,
+`OLLAMA_MODEL` et `OLLAMA_CONTEXT_LENGTH`, que `main` ne remet qu'au **seul** worker `ia`, avec
+`IA_SIMULATEUR_HOST` que seul `docker-compose.dev.yml` pose (`docs/SPEC-ia.md` §11.6). `ia` reçoit aussi sa
+propre borne, 150 s : une génération du modèle dure jusqu'à 120 s. **Ce que `oneshot` impose, mesuré le
+2026-10-02** : le worker est retiré dès sa réponse rendue, et une tâche confiée à `EdgeRuntime.waitUntil`
+après cette réponse n'émet jamais son appel. Une fonction longue doit donc vivre **dans sa requête** —
+`ia` répond par un flux NDJSON qui bat toutes les 15 s, sous le délai de lecture de Kong
+(`docs/SPEC-ia.md` §11.1). La politique `oneshot` n'est pas rouverte : ses motifs (décision 286) tiennent.
 
 ## 3. Arborescence et traçabilité
 

@@ -178,15 +178,27 @@ entraînement ni ajustement du modèle ; le modèle de plongements `all-minilm` 
 
 ## 11. Tranche T1 — le contrat du socle (écrit le 2026-10-02, avant son code)
 
-### 11.1 Une génération est asynchrone — mesuré, et pourquoi
+### 11.1 Une génération vit dans sa requête, et la tient ouverte — mesuré, et pourquoi
 
-Une génération dure **32,5 s** mesurées, et jusqu'à la borne de 120 s. Or la route Kong des fonctions
-(`functions-v1`, `supabase/docker/volumes/api/kong.yml`) ne fixe aucun délai : celui de Kong, **60 s**,
-s'applique ; et les workers de l'edge-runtime sont bornés à **10 s** par `main` (`workerTimeoutMs`). Une
-requête qui attendrait le modèle échouerait donc. La requête **lance** la génération et rend `202` aussitôt ;
-la génération se poursuit dans le worker (`EdgeRuntime.waitUntil`), et l'écran suit la suggestion en base.
-`main` donne au seul worker `ia` une borne de **150 s** (`DELAI_PROPRE`), comme il ne lui remet que ses
-propres variables (`ENVIRONNEMENT_PROPRE` : les quatre `OLLAMA_*`).
+Une génération dure **32,5 s** mesurées, et jusqu'à la borne de 120 s. Trois mesures fixent la forme :
+
+- la route Kong des fonctions (`functions-v1`, `supabase/docker/volumes/api/kong.yml`) ne fixe aucun délai :
+  celui de Kong, **60 s entre deux lectures**, s'applique ;
+- les workers sont bornés à **10 s** par `main` (`workerTimeoutMs`) ;
+- **le runtime tourne en `--policy oneshot`** (`docs/SPEC-edge-functions.md` §2) : le worker est retiré dès
+  sa réponse rendue. **Mesuré le 2026-10-02** : une génération confiée à `EdgeRuntime.waitUntil` après une
+  réponse `202` n'atteint jamais le serveur — le simulateur n'a reçu aucun `/api/chat`, et le verrou est resté
+  posé. La première rédaction de ce paragraphe, qui retenait cette tâche de fond, est donc **retournée par la
+  mesure**.
+
+La génération vit donc **dans sa requête**, dont la réponse est un **flux** NDJSON (`application/x-ndjson`,
+statut `202`) : la première ligne rend aussitôt `{"suggestion_id": …}`, puis une ligne `{"attente": true}`
+toutes les **15 s** tient la connexion au-dessous du délai de lecture de Kong, et la dernière ligne porte
+l'issue — `{"issue": "revision", "defauts": n}` ou `{"issue": "echec", "echec": code}`. L'issue s'écrit
+**aussi en base** : le flux n'en est que le porteur, et l'écran peut relire la suggestion. Une connexion
+coupée en route interrompt la génération : le verrou devient périmé après 180 s (§11.4) et l'administrateur
+relance. `main` donne au seul worker `ia` une borne de **150 s** (`DELAI_PROPRE`), comme il ne lui remet
+que ses propres variables (`ENVIRONNEMENT_PROPRE` : les quatre `OLLAMA_*` et le simulateur).
 
 ### 11.2 Qui écrit quoi
 
@@ -206,8 +218,8 @@ suffit pas à écrire le résultat d'une génération de deux minutes. Le contra
 | Route | Effet | Réponses |
 |---|---|---|
 | `GET /ia/etat` | Disponibilité de l'assistant : clé présente et serveur joignable (`/api/tags`, borne 5 s), modèle servi | `200` `{disponible, raison?, modele}` — `raison` parmi `cle_absente`, `serveur_injoignable`, `cle_refusee`, `modele_absent` |
-| `POST /ia/suggestions` | Crée une suggestion (`portee`, `workflow_id?`, `demande`) et lance sa première génération | `202` `{suggestion_id}` ; `400` demande vide ou trop longue (4 000 caractères) ; `403` non-administrateur ; `503` assistant indisponible |
-| `POST /ia/suggestions/:id/revue` | Lance une nouvelle génération sur la dernière révision, avec une consigne | `202` ; `404` suggestion introuvable ou illisible ; `409` génération déjà en vol, ou suggestion figée ; `403` ; `503` |
+| `POST /ia/suggestions` | Crée une suggestion (`portee`, `workflow_id?`, `demande`) et mène sa première génération | `202`, flux NDJSON (§11.1) ; `400` demande vide ou trop longue (4 000 caractères) ; `403` non-administrateur ; `503` assistant indisponible |
+| `POST /ia/suggestions/:id/revue` | Mène une nouvelle génération sur la dernière révision, avec une consigne | `202`, flux NDJSON ; `404` suggestion introuvable ou illisible ; `409` génération déjà en vol, ou suggestion figée ; `403` ; `503` |
 
 Toute autre méthode : `405`. Aucune réponse ne reflète la clé, l'adresse du serveur ni un message brut du
 modèle.

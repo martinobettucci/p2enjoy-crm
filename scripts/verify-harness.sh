@@ -567,7 +567,9 @@ PORT_RAPPORT=9323
 # fichier ajouté. 74 + 1 = 75, valeur COMPTÉE — « 75 fichiers ».
 # **76 depuis `CRM-096` tranche T1, 2026-09-30** (décision 616) : `0076_registre_migrations.test.sql`, seul
 # fichier ajouté. 75 + 1 = 76, valeur COMPTÉE — « 76 fichiers ».
-FICHIERS_SQL_ATTENDUS=76
+# **77 depuis `CRM-097` tranche T1, 2026-10-02** (décision 617) : `0077_suggestions_ia.test.sql`, seul fichier
+# ajouté. 76 + 1 = 77, valeur COMPTÉE — « 77 fichiers ».
+FICHIERS_SQL_ATTENDUS=77
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -614,7 +616,8 @@ FICHIERS_SQL_ATTENDUS=76
 # **3253 depuis `CRM-094` tranche T1** : `0074` apporte **28** assertions — 3225 + 28 = 3253. COMPTÉE.
 # **3275 depuis `CRM-095` tranche T1** : `0075` apporte **22** assertions — 3253 + 22 = 3275. COMPTÉE.
 # **3297 depuis `CRM-096` tranche T1** : `0076` apporte **22** assertions — 3275 + 22 = 3297. COMPTÉE.
-ASSERTIONS_ATTENDUES=3297
+# **3327 depuis `CRM-097` tranche T1** : `0077` apporte **30** assertions — 3297 + 30 = 3327. COMPTÉE.
+ASSERTIONS_ATTENDUES=3327
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -937,7 +940,13 @@ ASSERTIONS_ATTENDUES=3297
 # NEUF, porte **2** scénarios — le registre introuvable par le schéma exposé (`404`), et le schéma `app`
 # refusé en lecture comme en écriture (`406`), pour l'anonyme, l'administratrice et la clé de service.
 # 1088 + 2 = 1090, valeur COMPTÉE — « Total: 1090 tests in 70 files ».
-SCENARIOS_API=1090
+# **1097 depuis `CRM-097` tranche T1, 2026-10-02** (décision 617) : `ia.spec.ts`, fichier NEUF, porte **7**
+# scénarios — tous contre le simulateur, par l'en-tête `x-ia-simulateur`. Le contrôle facultatif contre le
+# serveur réel, `ia-reel.spec.ts`, n'est PAS énuméré sans `IA_SERVEUR_REEL=1` (`testIgnore` du projet) : la
+# première rédaction le comptait, et le harnais rougissait sur « 1097 scénarios au lieu de 1098 » — un
+# scénario ignoré n'est pas vert (docs/SPEC-ia.md §8). 1090 + 7 = 1097, valeur COMPTÉE — « Total: 1097 tests
+# in 71 files ».
+SCENARIOS_API=1097
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la

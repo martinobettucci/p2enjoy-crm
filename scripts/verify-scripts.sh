@@ -98,10 +98,6 @@ BACKUP_OFFSITE_DIR          lue par scripts/backup-supervision.sh depuis CRM-080
 BACKUP_DRILL_STAMP_FILE     lue par scripts/backup-supervision.sh depuis CRM-080 tranche 3, jamais par un service ; elle est écrite par le déclencheur de l'exercice, jamais par un script du dépôt
 BACKUP_DRILL_MAX_AGE_DAYS   lue par scripts/backup-supervision.sh depuis CRM-080 tranche 3, jamais par un service
 API_EXTERNAL_URL            lue par scripts/spark/livrer.sh pour le build de la webapp ; plus par aucun service depuis le retrait de GoTrue (CRM-092 T6, décision 589)
-OLLAMA_HOST                 consommée par la fonction ia à partir de CRM-097 T1 (docs/SPEC-ia.md §3, décision 617)
-OLLAMA_MODEL                consommée par la fonction ia à partir de CRM-097 T1 (docs/SPEC-ia.md §3, décision 617)
-OLLAMA_CONTEXT_LENGTH       consommée par la fonction ia à partir de CRM-097 T1 (docs/SPEC-ia.md §3, décision 617)
-OLLAMA_API_KEY              consommée par la fonction ia à partir de CRM-097 T1 (docs/SPEC-ia.md §3, décision 617)
 "
 
 # --- 1. Le gabarit est le contrat exact de l'assemblage ----------------------------------------

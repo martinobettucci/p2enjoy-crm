@@ -520,7 +520,7 @@ mot de passe du rôle `pgbouncer` et les variables `POOLER_*` et `VAULT_ENC_KEY`
 client SQL éphémère apparaîtrait — runtime edge attaquant la base directement, accès SQL externe
 en production — le pooler revient avec l'unité qui le réclame.
 
-### 3.7 bis Assistant IA — fonction `ia` et serveur LLM (`CRM-097`, spécifié le 2026-10-02, à livrer)
+### 3.7 bis Assistant IA — fonction `ia` et serveur LLM (`CRM-097` ; socle livré en développement par T1)
 
 `docs/SPEC-ia.md`, décision 617. Une fonction edge `ia`, la seule à connaître `OLLAMA_API_KEY`, appelle le
 serveur Ollama de LeLabs (`OLLAMA_HOST`, modèle `OLLAMA_MODEL`) côté serveur — jamais depuis le navigateur.
@@ -531,6 +531,15 @@ manuel et, pour un workflow existant, reprend l'algorithme de restauration de `C
 remappage des affaires sans destination devinée). Sans clé ou sans serveur, l'assistant se déclare
 indisponible et tous les gestes manuels restent entiers. Les tests remplacent le serveur par un simulateur
 local du contrat Ollama ; le serveur réel n'est appelé qu'en développement et en production.
+
+**Une génération vit dans sa requête** (T1, `docs/SPEC-ia.md` §11.1) : le runtime en `--policy oneshot` retire
+le worker dès sa réponse, ce qui interdit une tâche de fond (mesuré). La réponse est donc un flux NDJSON —
+l'identifiant de la suggestion aussitôt, un battement toutes les 15 s sous le délai de lecture de Kong,
+l'issue en dernier — et l'issue s'écrit aussi en base. **La base décide avant le modèle** : la suggestion, ou
+le verrou d'une revue, est écrite avec le jeton de l'appelant ; seule la fin de la génération s'écrit avec la
+clé de service, le jeton interne (300 s au plus) pouvant expirer en route. **Le simulateur** (`ollama-simule`,
+`docker-compose.dev.yml` seul) n'est visé que si `IA_SIMULATEUR_HOST` est posée — en développement — et que la
+requête porte l'en-tête `x-ia-simulateur`.
 
 ### 3.8 Contraintes d'exécution de l'hôte
 

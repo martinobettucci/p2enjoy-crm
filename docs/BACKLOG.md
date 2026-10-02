@@ -14857,12 +14857,18 @@ occupée passe par un remappage revu ; aucun non-administrateur n'atteint l'assi
 interface) ; sans clé, l'assistant est indisponible et rien d'autre n'est empêché ; aucune campagne n'appelle
 le serveur réel.
 
-- [ ] **T1** — le socle : variables (`OLLAMA_HOST`, `OLLAMA_MODEL`, `OLLAMA_CONTEXT_LENGTH`,
+- [x] **T1** — le socle : variables (`OLLAMA_HOST`, `OLLAMA_MODEL`, `OLLAMA_CONTEXT_LENGTH`,
       `OLLAMA_API_KEY`) consommées par la fonction `ia` ; état de l'assistant, appel au modèle à sortie
       structurée, borne de 120 s, une génération en vol, mode dégradé ; migration `0083` (`suggestions_ia`,
       `suggestions_ia_revisions`, RLS administrateurs) ; simulateur local du contrat Ollama ; génération
       asynchrone d'un workflow complet au format de proposition `version: 1` (`docs/SPEC-ia.md` §11). Preuves :
       pgTAP, API aux jetons réels (refus de la lectrice et du commercial), unitaires de la fonction.
+      Mesuré le 2026-10-02 : pgTAP `0077` **30** assertions, sept dégradations vues ; fonction `ia` **57**
+      unitaires, six mutations vues ; API `ia.spec.ts` **7** scénarios contre le simulateur ; contrôle
+      facultatif contre `gemma4:e2b` réel, révision conforme en 57 s par le flux. Sur base reconstruite :
+      SQL 77 / 3327, API **1097**, messagerie **42**, unitaires **3463**, typage, interface **780 sur 782** —
+      les deux rouges sont INC-267 (course de remise du seed du courrier, antérieure et étrangère) ; INC-266
+      (renommage IMAP intermittent) consignée. La génération vit dans sa requête (`oneshot`, mesuré).
 - [ ] **T2** — créer un workflow avec l'IA : « Créer avec l'IA » près de « Nouveau workflow », demande,
       suggestion, aperçu éditable, consigne, revue, accepter (création atomique revalidée), abandonner ;
       `docs/DESIGN_SYSTEM.md` avant l'écran ; unitaires, API, E2E

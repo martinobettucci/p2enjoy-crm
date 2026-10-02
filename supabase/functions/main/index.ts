@@ -2,7 +2,7 @@
 // @spec docs/SPEC-edge-functions.md §2 (bornes), §4 (dispatch), §4.1 (santé), §5 (sécurité)
 // @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §5.5 — environnement par fonction
 
-import { environnementDe } from './environnement.ts'
+import { delaiDe, environnementDe } from './environnement.ts'
 import { resolveFunctionRoute, safeRequestId } from './router.ts'
 
 type Worker = { fetch(request: Request): Promise<Response> }
@@ -75,7 +75,7 @@ Deno.serve(async (request: Request) => {
 		const worker = await EdgeRuntime.userWorkers.create({
 			servicePath,
 			memoryLimitMb: 128,
-			workerTimeoutMs: 10_000,
+			workerTimeoutMs: delaiDe(route.functionName),
 			noModuleCache: false,
 			importMapPath: null,
 			envVars: workerEnvironment(route.functionName),

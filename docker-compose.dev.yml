@@ -3,6 +3,8 @@
 # @spec CRM-091 (docs/BACKLOG.md), docs/SPEC-auth.md §10.9 — Keycloak de développement, realm `lelabs`
 # @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §2, §10 — tranche T6 : ni GoTrue ni Inbucket ;
 #       le Keycloak de développement est la seule identité (docs/JOURNAL.md décision 589)
+# @spec CRM-097 (docs/BACKLOG.md), docs/SPEC-ia.md §11.6 — le simulateur Ollama, instrumentation du seul
+#       développement, et `IA_SIMULATEUR_HOST`, que la production ne pose jamais
 # @spec docs/DAT.md §3.6 (composants de développement uniquement), §9 (déploiement)
 # @spec README.md §6 (lancement en développement)
 #
@@ -373,6 +375,32 @@ services:
       start_period: 120s
     volumes:
       - clamav-data:/var/lib/clamav
+
+  # Le simulateur du serveur Ollama (docs/SPEC-ia.md §11.6). Les preuves de l'assistant le visent par
+  # l'en-tête `x-ia-simulateur` ; le développement garde le vrai serveur (`OLLAMA_HOST`). Aucun port publié :
+  # seul `functions` le joint, par le réseau de la pile. Image déjà employée par `mail-sync`.
+  ollama-simule:
+    container_name: p2enjoy-ollama-simule
+    image: python:3.13.13-slim-bookworm
+    restart: unless-stopped
+    command: ["python", "-u", "/simulateur/serveur.py"]
+    volumes:
+      - ./supabase/docker/ollama-simule:/simulateur:ro,z
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:11434/sante', timeout=2)"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  # `IA_SIMULATEUR_HOST` n'existe QUE dans cet overlay : en production, la fonction `ia` ignore l'en-tête
+  # du simulateur (docs/SPEC-ia.md §11.6).
+  functions:
+    environment:
+      IA_SIMULATEUR_HOST: http://ollama-simule:11434
+    depends_on:
+      ollama-simule:
+        condition: service_healthy
 
 secrets:
   # `/dev/null` est une source vide acceptée par Compose et BuildKit. Le `Dockerfile` teste la
