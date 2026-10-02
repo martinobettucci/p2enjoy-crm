@@ -34,6 +34,12 @@ d'exécuter le code attendu.
   main : vingt-neuf règles, écrites une fois ; une correction est refusée pendant une génération.
 - **T2 — une génération échouée se reprend** sans réécrire de consigne ; une suggestion abandonnée pendant une
   génération n'en reçoit pas le résultat.
+- **T2 — « Créer avec l'IA » dans l'éditeur de workflows** : décrire le workflow voulu, attendre la suggestion —
+  l'écran dit l'attente —, la relire avec ses défauts, la corriger à la main (noms, natures, probabilités, étape
+  initiale, transitions, champs, visibilités, exigences ; un retrait emporte ce qui en dépend), la faire revoir
+  par une consigne, puis l'accepter — le workflow créé devient le workflow choisi — ou l'abandonner. Les
+  suggestions en revue sont listées sous les workflows, conservées et partagées entre administrateurs ; les
+  autres membres reçoivent le refus du serveur. Le jeu de démonstration en porte une.
 - **Corrigé avant toute livraison** : un workflow créé par une acceptation, ou le profil d'un administrateur qui
   avait décidé une suggestion, ne pouvaient plus être supprimés — le gel des suggestions décidées refusait
   l'effacement du lien.

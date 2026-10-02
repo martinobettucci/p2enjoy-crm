@@ -1,6 +1,7 @@
 // @spec CRM-007 (docs/BACKLOG.md) — client Supabase de la webapp
 // @spec CRM-009 (docs/BACKLOG.md) — stockage d'onglet et repli mémoire
 // @spec CRM-092 (docs/BACKLOG.md) — le client reçoit le jeton interne de l'échangeur, sans module `auth`
+// @spec CRM-097 (docs/BACKLOG.md) tranche T2.c — l'adresse de l'API exposée au flux de l'assistant (docs/SPEC-ia.md §12.5)
 // @spec docs/SPEC-session-sso.md §8.3 (jeton en mémoire seulement), §8.4 (K6 `accessToken`, K18)
 // @spec docs/SPEC-webapp.md §6.1 (client), §11 (stockage côté client)
 // @spec docs/SPEC-auth.md §9.2 (sessionStorage et repli mémoire) ; docs/SPEC-auth.md §10.5
@@ -138,3 +139,9 @@ export const clientCrm: ClientCrm | null = configuration === null ? null : creer
 
 /** La clé anonyme, que Kong exige aussi de l'échangeur de session (docs/SPEC-session-sso.md §5.1). */
 export const cleAnonymeCrm: string | null = configuration?.cleAnonyme ?? null
+
+/**
+ * L'adresse de l'API, pour les appels qui ne passent pas par `supabase-js` : le flux de génération de
+ * l'assistant IA se lit ligne à ligne (`CRM-097` T2, docs/SPEC-ia.md §12.5), ce que le client ne sait pas faire.
+ */
+export const urlApiCrm: string | null = configuration?.url ?? null

@@ -14869,7 +14869,7 @@ le serveur réel.
       SQL 77 / 3327, API **1097**, messagerie **42**, unitaires **3463**, typage, interface **780 sur 782** —
       les deux rouges sont INC-267 (course de remise du seed du courrier, antérieure et étrangère) ; INC-266
       (renommage IMAP intermittent) consignée. La génération vit dans sa requête (`oneshot`, mesuré).
-- [ ] **T2** — créer un workflow avec l'IA : « Créer avec l'IA » près de « Nouveau workflow », demande,
+- [x] **T2** — créer un workflow avec l'IA : « Créer avec l'IA » près de « Nouveau workflow », demande,
       suggestion, aperçu éditable, consigne, revue, accepter (création atomique revalidée), abandonner ;
       `docs/DESIGN_SYSTEM.md` avant l'écran ; unitaires, API, E2E
       à la souris et au clavier, captures observées.
@@ -14886,8 +14886,15 @@ le serveur réel.
             sans consigne d'une suggestion sans révision, défauts transmis à la revue ; unitaires, API ;
             *Vérifié le 2026-10-02* : **57** unitaires, trois mutations vues ; API `ia-acceptation.spec.ts`
             **6** scénarios aux jetons réels et `ia.spec.ts` **7**, inchangés, verts.
-      - [ ] **T2.c** — écran : module de la webapp, panneau, entrées dans l'éditeur, traductions ; unitaires ;
-      - [ ] **T2.d** — E2E souris et clavier, captures observées, seed, manuel, harnais et campagnes.
+      - [x] **T2.c** — écran : module de la webapp, panneau, entrées dans l'éditeur, traductions ; unitaires ;
+            *Vérifié le 2026-10-03* : `brouillon-ia` 9, `assistant-ia` 33, panneau 22, éditeur 130 (dont 4) ; trois
+            mutations vues ; 375 classes citées, aucune manquante ; aucune clé morte.
+      - [x] **T2.d** — E2E souris et clavier, captures observées, seed, manuel, harnais et campagnes.
+            *Vérifié le 2026-10-03* : `assistant-ia.spec.ts` **11** scénarios, captures observées aux quatre paliers
+            (`docs/captures/CRM-097/`) ; seed 8 octodecies convergent ; manuel 5 bis.0 bis, `verify-manual.sh` 150.
+            Campagnes : SQL **78 / 3401**, API **1103**, unitaires **3540**, typage, interface **790 sur 793** — les
+            trois rouges sont étrangers : INC-267 (deux, course du seed du courrier) et INC-269 (une, « Ma journée »,
+            verte trois fois sur trois rejouée seule). T2 n'est pas en production : T4.
 - [ ] **T3** — suggérer dans un workflow ouvert — étapes, transitions, champs —, et accepter par
       l'algorithme de restauration de `CRM-078` : point de retour, remappage des affaires d'une étape
       retirée revu avant acceptation, refus si le workflow a changé ; unitaires, API, E2E.

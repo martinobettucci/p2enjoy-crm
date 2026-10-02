@@ -16,6 +16,8 @@
 # @spec CRM-060 (docs/BACKLOG.md) — contacts et organisations, tranche 1 (docs/SPEC-contacts.md §5)
 # @spec CRM-063 (docs/BACKLOG.md) — tranche 4a : la séquence de relance de démonstration et ses
 #       trois paliers (docs/SPEC-modeles-emails.md §11.9)
+# @spec CRM-097 (docs/BACKLOG.md) — tranche T2.d : une suggestion de l'assistant IA en revue, par la vraie fonction
+#       et le simulateur (docs/SPEC-ia.md §11.6, §12.8)
 # @spec docs/SPEC-seed.md §2 (contrat), §2.9 (copie), §3 (mécanismes mesurés), §4 (identifiants),
 #       §5 (gardes)
 # @spec docs/SPEC-tracks.md §8 (seed des tracks) ; docs/SPEC-channels.md §8 (seed des channels)
@@ -4102,6 +4104,40 @@ inscriptions_actives=$(curl -s "$API/rest/v1/card_sequence_enrollments?select=id
 info "Aucune inscription de séquence armée : le jeu de démonstration MONTRE une cadence, il ne
       l'EXPÉDIE pas — CRM-063, docs/SPEC-modeles-emails.md §12.12"
 
+# --- 8 octodecies. Une suggestion de l'assistant IA, en revue — CRM-097 T2, docs/SPEC-ia.md §12.8 ------
+#
+# PAR LE VRAI CHEMIN, ET LE SEUL QUI SOIT DÉTERMINISTE (`CLAUDE.md` §8) : l'administratrice demande à la fonction
+# `ia`, qui écrit la suggestion avec son jeton et la révision du modèle avec la clé de service ; les défauts sont
+# calculés par la base. Le modèle est le SIMULATEUR — l'en-tête `x-ia-simulateur` n'est honoré qu'en développement,
+# où `IA_SIMULATEUR_HOST` est posée. Le seed le VÉRIFIE avant d'écrire : le scénario `cle_refusee` ne se lit que
+# par le simulateur ; sans lui, l'en-tête serait ignoré et le seed appellerait le vrai serveur, lent et non
+# déterministe — il s'arrête plutôt.
+#
+# CONVERGENT : une suggestion EN REVUE portant cette demande existe déjà, rien n'est écrit. Une suggestion acceptée
+# ou abandonnée à la main ne compte pas — l'écran doit s'ouvrir avec une suggestion à relire.
+echo
+say "8 octodecies. Suggestion de l'assistant IA"
+
+DEMANDE_IA_SEED="Un cycle pour une agence web : prise de contact, maquette et devis, puis gagné ou perdu. Un budget en euros, exigé pour signer, et le type de site."
+demande_ia_uri=$(jq -rn --arg d "$DEMANDE_IA_SEED" '$d | @uri')
+code=$(api GET "/rest/v1/suggestions_ia?select=id&workspace_id=eq.$WS_ID&statut=eq.en_revue&demande=eq.$demande_ia_uri")
+attendu "$code" "lecture de la suggestion de démonstration" 200
+if [ "$(jq -r 'length' "$CORPS")" != "0" ]; then
+	info "Suggestion de l'IA en revue : déjà présente — rien à écrire"
+else
+	etat_simule=$(curl -s "$API/functions/v1/ia/etat" -H "apikey: $ANON_KEY" -H 'x-ia-simulateur: cle_refusee' | jq -r '.raison // empty')
+	[ "$etat_simule" = "cle_refusee" ] || die "le simulateur de l'assistant IA ne répond pas (raison lue : « $etat_simule ») :
+        sans lui, la suggestion de démonstration appellerait le vrai serveur — docs/SPEC-ia.md §11.6."
+	flux_ia=$(curl -s -N -X POST "$API/functions/v1/ia/suggestions" \
+		-H "apikey: $ANON_KEY" -H "Authorization: Bearer $JETON_ADMIN" \
+		-H 'Content-Type: application/json' -H 'x-ia-simulateur: valide' \
+		-d "$(jq -n --arg w "$WS_ID" --arg d "$DEMANDE_IA_SEED" '{workspace_id: $w, portee: "workflow", demande: $d}')")
+	issue_ia=$(printf '%s\n' "$flux_ia" | tail -n 1)
+	[ "$(printf '%s' "$issue_ia" | jq -r '.issue // empty')" = "revision" ] || die "la suggestion de démonstration n'a pas reçu de
+        révision : $(printf '%s' "$flux_ia" | head -c 300)"
+	info "Suggestion de l'IA créée par la vraie fonction et le simulateur — $(printf '%s' "$issue_ia" | jq -r '.defauts') défaut(s)"
+fi
+
 # --- 9. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
 # Rappel volontaire, affiché à chaque exécution, et **mis à jour par `CRM-020`** : peupler la base
 # ne la rend pas lisible pour autant. L'état réel est désormais mixte, et le dire faux dans un sens
@@ -4137,6 +4173,7 @@ info "Commentaires : ${#COMMENTAIRES[@]} sur 3 cards, dont un modifié et un sup
 info "Comptes entrants IMAP : ${#COMPTES_ENTRANTS[@]}, dont la boîte système ; Farida n'en a pas — docs/SPEC-seed.md §2.17"
 info "Identités sortantes SMTP : ${#IDENTITES_SORTANTES[@]} — entrant et sortant divergent pour Driss — docs/SPEC-seed.md §2.18"
 info "Organisations : ${#ORGANIZATIONS_SEED[@]}, contacts : ${#CONTACTS_SEED[@]}, rattachements : ${#CARD_CONTACTS_SEED[@]} — CRM-060, docs/SPEC-contacts.md §5"
+info "Suggestion de l'assistant IA : 1, en revue, créée par la vraie fonction et le simulateur — CRM-097, docs/SPEC-ia.md §12.8"
 echo
 info "profiles, workspaces et workspace_members sont lisibles par les trois membres du seed :"
 info "le profil propre est modifiable, et seul l'admin gère les memberships (CRM-022)."

@@ -4,6 +4,8 @@
   @spec docs/SPEC-webapp.md §4 (jetons), §9 (accessibilité)
   @spec CRM-094 (docs/BACKLOG.md) tranche T3 — l'apparition du panneau du guide flottant
         (docs/DESIGN_SYSTEM.md §5.49, docs/SPEC-onboarding.md §10.2)
+  @spec CRM-097 (docs/BACKLOG.md) tranche T2.c — la barre indéterminée d'une génération (docs/DESIGN_SYSTEM.md
+        §5.52, §6)
 
   Ce fichier ne contient **aucune valeur hexadécimale** : il ne fait que consommer les jetons
   de `tokens.css`.
@@ -23,6 +25,20 @@
 	to {
 		opacity: 1;
 		transform: translateY(0);
+	}
+}
+
+/* docs/DESIGN_SYSTEM.md §5.52 — `CRM-097` T2 : la barre indéterminée d'une génération de l'assistant IA. Un tiers de
+   la piste glisse d'un bord à l'autre en 1,5 s ; la classe qui l'emploie ne s'applique qu'en `motion-safe`, et
+   sous `prefers-reduced-motion` la barre reste fixe : le temps écoulé porte seul la progression. */
+@keyframes glissement-attente {
+	/* Le segment part à moitié visible : hors de la piste au départ, il laissait un instant une barre vide
+	   (vu sur la capture `ia-attente-xl-1440.jpg`, 2026-10-03). */
+	from {
+		transform: translateX(-60%);
+	}
+	to {
+		transform: translateX(260%);
 	}
 }
 

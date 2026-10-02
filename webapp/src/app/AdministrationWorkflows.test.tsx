@@ -247,6 +247,8 @@ type Options = {
 	/** Le workspace courant et les tracks affectables — `CRM-031`, §3 bis.3, lecture 4. */
 	readonly workspaces?: unknown[]
 	readonly tracks?: unknown[]
+	/** Les suggestions de l'IA en revue — `CRM-097` T2. */
+	readonly suggestionsIa?: unknown[]
 	readonly erreurTracks?: { message: string; status: number }
 	readonly erreurWorkflows?: { message: string; status: number }
 	readonly erreurTransitions?: { message: string; status: number }
@@ -347,6 +349,9 @@ function clientFactice(options: Options = {}): {
 				// attend un workspace et des tracks.
 				if (table === 'workspaces') return lecture(options.workspaces ?? WORKSPACES)
 				if (table === 'tracks') return lecture(options.tracks ?? TRACKS, options.erreurTracks)
+				// Les suggestions de l'IA (`CRM-097` T2) sont routées pour la même raison : sans cette branche,
+				// la liste « en revue » recevait des nœuds du catalogue — un double qui ment sur la forme.
+				if (table === 'suggestions_ia') return lecture(options.suggestionsIa ?? [])
 				return lecture(options.catalogue ?? CATALOGUE)
 			},
 			insert: (charge: Record<string, unknown>) => ecriture(table, 'insert', charge),
@@ -2206,5 +2211,68 @@ describe('le signal du workflow de départ (CRM-094, docs/SPEC-onboarding.md §1
 		await attendreEcran()
 		expect(screen.queryByTestId('etat-vide')).toBeNull()
 		expect(factice.lectures.filter((table) => table === 'workflows').length).toBe(lecturesAvant + 1)
+	})
+})
+
+// ---------------------------------------------------------------------------------------------
+// L'assistant IA dans l'éditeur — CRM-097 T2
+// ---------------------------------------------------------------------------------------------
+// @verifies CRM-097 (docs/BACKLOG.md) tranche T2.c — docs/SPEC-ia.md §12.5 (les deux entrées, la liste des
+//           suggestions en revue, le panneau à la place du workflow choisi) ; docs/DESIGN_SYSTEM.md §5.52 (« Créer
+//           avec l'IA » secondaire juste après « Nouveau workflow », aucun titre sans suggestion, focus rendu)
+
+const SUGGESTION_EN_REVUE = {
+	id: '0c970000-0000-4000-8000-0000000000a1',
+	demande: 'Un cycle pour les missions de formation',
+	created_at: '2026-10-02T11:50:00Z',
+	generation_depuis: null,
+	derniere_erreur: null,
+}
+
+describe('l’assistant IA dans l’éditeur (CRM-097 T2)', () => {
+	it('« Créer avec l’IA » suit « Nouveau workflow » au-dessus de la liste ; sans suggestion, aucun titre', async () => {
+		monter()
+		await attendreEcran()
+		const navigation = screen.getByRole('navigation', { name: 'Choisir un workflow' })
+		const boutons = within(navigation).getAllByRole('button').map((b) => b.textContent)
+		expect(boutons.slice(0, 2)).toEqual(['Nouveau workflow', 'Créer avec l’IA'])
+		expect(screen.queryByText('Suggestions de l’IA en revue')).toBeNull()
+	})
+
+	it('l’état vide porte les DEUX gestes, le manuel en primaire', async () => {
+		render(
+			<MemoryRouter>
+				<AdministrationWorkflows client={clientFactice({ workflows: [] }).client} />
+			</MemoryRouter>,
+		)
+		const vide = await screen.findByTestId('etat-vide')
+		expect(within(vide).getByRole('button', { name: 'Nouveau workflow' })).toBeTruthy()
+		expect(within(vide).getByRole('button', { name: 'Créer avec l’IA' })).toBeTruthy()
+	})
+
+	it('les suggestions en revue sont listées sous les workflows ; en ouvrir une la rend courante, et le workflow ne l’est plus', async () => {
+		monter({ suggestionsIa: [SUGGESTION_EN_REVUE] })
+		await attendreEcran()
+		const liste = await screen.findByTestId('ia-suggestions-en-revue')
+		expect(within(liste).getByText('Suggestions de l’IA en revue')).toBeTruthy()
+		const ligne = within(liste).getByRole('button', { name: /Un cycle pour les missions de formation/ })
+		await userEvent.click(ligne)
+		expect(ligne.getAttribute('aria-current')).toBe('true')
+		expect(screen.getByRole('button', { name: /Pipeline standard/ }).getAttribute('aria-current')).toBeNull()
+		expect(await screen.findByTestId('ia-panneau')).toBeTruthy()
+	})
+
+	it('« Créer avec l’IA » ouvre la demande à la place du workflow ; Annuler rend le focus à la commande', async () => {
+		monter()
+		await attendreEcran()
+		const commande = screen.getByRole('button', { name: 'Créer avec l’IA' })
+		await userEvent.click(commande)
+		expect(commande.getAttribute('aria-expanded')).toBe('true')
+		expect(await screen.findByLabelText('Décrivez le workflow')).toBeTruthy()
+		expect(screen.queryAllByTestId('ligne-etape')).toHaveLength(0)
+		await userEvent.click(screen.getByRole('button', { name: 'Annuler' }))
+		await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Créer avec l’IA' })))
+		expect(screen.getByRole('button', { name: 'Créer avec l’IA' }).getAttribute('aria-expanded')).toBe('false')
+		expect((await screen.findAllByTestId('ligne-etape')).length).toBeGreaterThan(0)
 	})
 })

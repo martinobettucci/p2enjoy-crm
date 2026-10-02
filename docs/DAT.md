@@ -1095,6 +1095,10 @@ l'écran range « Ma journée » selon le jour du navigateur ; le jour UTC de la
 section « Aujourd'hui » vide deux heures par nuit. `scripts/lib/fuseau.sh` porte la détection du
 fuseau, partagée par le seed et `scripts/verify-ma-journee.sh`.
 
+**La suggestion de l'assistant IA** (`CRM-097` T2, `docs/SPEC-seed.md` §16) suit la même règle : elle est demandée
+par l'administratrice à la vraie fonction `ia`, et le modèle est le simulateur — le seed vérifie qu'il répond avant
+d'écrire, faute de quoi il appellerait le vrai serveur.
+
 ## 12. Choix techniques et compromis
 
 | Choix | Motif | Compromis assumé |

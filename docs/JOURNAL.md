@@ -30791,3 +30791,40 @@ qui prouve aussi son idempotence derrière `0083`.
   suivant : intermittence d'attente, étrangère à l'unité ; typage — le témoin des types générés voyait
   `suggestions_ia`, `suggestions_ia_revisions` et `accepter_suggestion_ia`, que T1 n'avait pas régénérés :
   types régénérés, témoin révisé à cinquante-huit fonctions ; `verify-scripts.sh` 114, aucune anomalie.
+
+**`CRM-097` T2.c et T2.d, le 2026-10-03 — l'écran « Créer avec l'IA ».** La webapp lit le flux de génération par
+`fetch` (adresse de l'API, clé anonyme, jeton de session — le client `supabase-js` ne sait pas lire un flux ligne à
+ligne) ; corrections, acceptation et abandon passent par PostgREST et la RPC. Le panneau prend la place du workflow
+choisi ; les suggestions en revue sont listées sous les workflows. *Défauts trouvés en route, chacun corrigé avant
+livraison* :
+
+- **Le focus rendu à une commande désactivée se perd.** La commande d'abandon est désactivée pendant sa
+  confirmation ; l'annulation lui rendait le focus dans le même tour, quand elle l'était encore — le focus tombait
+  sur `body`. Trouvé par la preuve unitaire ; le retour est différé d'un rendu, et la phrase du §5.52 qui
+  promettait « sans attente » est corrigée.
+- **Des radios qui mentent.** Avec deux étapes initiales, le navigateur ne cochait que la dernière rendue :
+  l'aperçu affirmait un choix unique que la donnée n'a pas. Aucun radio n'est coché tant qu'il n'y a pas
+  exactement une étape initiale ; la pilule « Initiale » annoncée par le §5.52 est retirée — elle aurait dit deux
+  fois la même chose.
+- **Un repli irrégulier, vu sur les captures à 390 et 1152 px** — la leçon du §5.37, rejouée : le bouton de retrait
+  seul sur sa ligne pour une étape, à côté du nom pour la suivante. Les lignes d'étape, de transition et de champ
+  se rendent en deux lignes régulières, puis l'identité et les réglages d'un nœud en deux groupes qui se replient
+  entiers.
+- **Deux classes hors de l'échelle close** (`basis-48`, `w-24`) n'auraient pas été engendrées ; remplacées par des
+  valeurs arbitraires avant le premier build, et le contrôle des classes le confirme (375 citées, aucune manquante).
+- **La barre indéterminée partait hors de sa piste** : la capture de l'attente montrait une barre vide.
+- **Des clés de traduction composées** échappaient au contrôle des clés mortes : 58 clés « mortes » au premier
+  passage. Elles sont écrites en toutes lettres dans des tables, convention de l'éditeur.
+- **Le double de l'éditeur rendait des nœuds du catalogue comme suggestions** (`suggestions_ia` retombait sur la
+  branche par défaut) : la table est routée, comme `workflow_versions` avant elle.
+
+*Preuves* : unitaires — `brouillon-ia` 9, `assistant-ia` 33, panneau 22, éditeur 130 (dont 4 nouveaux) ; trois
+mutations de l'écran vues. E2E `assistant-ia.spec.ts` **11** scénarios sur la pile réelle, simulateur par en-tête,
+la génération RETENUE par la preuve le temps d'observer l'attente — aucune temporisation. Captures observées,
+`docs/captures/CRM-097/`, dont le haut et le bas du panneau aux quatre paliers. Seed : section 8 octodecies, la
+suggestion créée par la vraie fonction après preuve que le simulateur répond ; second passage : « déjà présente ».
+Manuel : chapitre 5 bis.0 bis, `verify-manual.sh` 150 contrôles sans anomalie.
+*Campagnes de T2.c et T2.d*, étape par étape : SQL **78 / 3401** ; API **1103** (rejouée après le seed) ; unitaires
+**3540** ; typage ; contrôle des classes : 375, aucune manquante ; `verify-manual.sh` 150 ; interface en trois
+tranches, **790 sur 793** — `groupement-fils.spec.ts` deux fois (INC-267, connue) et le parcours clavier de « Ma
+journée » une fois, vert trois fois sur trois rejoué seul : INC-269, consignée, étrangère.

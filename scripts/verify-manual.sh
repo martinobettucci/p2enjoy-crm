@@ -5,6 +5,7 @@
 #           §7.2 (preuve documentaire et sa contre-épreuve)
 # @verifies docs/manual.md (annexe A, règles de rédaction) ; docs/BACKLOG.md (unités citées)
 # @verifies CLAUDE.md §7 (documentation utilisateur, aucun secret)
+# @verifies CRM-097 (docs/BACKLOG.md) tranche T2.d — les libellés du parcours de l'assistant IA (docs/SPEC-ia.md §12.5)
 #
 # Vérifie que `docs/manual.md` décrit le produit **réellement exécuté**, hors interface, contre la
 # base réelle et contre les fichiers du dépôt.
@@ -132,6 +133,15 @@ LIBELLES_PARCOURS=(
 	"Aucun élément pour ces filtres"
 	"Aucun événement pour le moment"
 	"Commentaire supprimé"
+	# CRM-097 T2 — l'assistant IA (chapitre 5 bis.0 bis)
+	"Créer avec l’IA"
+	"Décrivez le workflow"
+	"Générer la suggestion"
+	"Revoir avec l’IA"
+	"Enregistrer la correction"
+	"Accepter et créer le workflow"
+	"Abandonner la suggestion"
+	"Suggestions de l’IA en revue"
 )
 
 # ---------------------------------------------------------------------------------------------

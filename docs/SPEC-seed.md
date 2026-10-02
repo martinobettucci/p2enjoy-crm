@@ -2075,3 +2075,33 @@ son état déclaré y compris pour effacer. Le compte de ce qu'elle efface est *
 - `scripts/verify-analytique.sh`, contrôle **8** : les valeurs lues **en base** et non dans le seed,
   leur encadrement, la dégradation de la **donnée** — la surcharge retirée, la suite pgTAP doit
   rougir —, la restauration constatée, et la déclaration des deux surcharges dans le script.
+
+## 16. Une suggestion de l'assistant IA, en revue — `CRM-097` tranche T2
+
+*Écrit le 2026-10-03 avec la section qui la pose (décision 618, `docs/SPEC-ia.md` §12.8).* Sans elle, l'éditeur de
+workflows s'ouvrirait sans suggestion à relire, et la liste « Suggestions de l'IA en revue » (`docs/DESIGN_SYSTEM.md`
+§5.52) ne serait jamais montrée par le jeu de démonstration.
+
+### 16.1 Ce que le jeu porte
+
+Une suggestion de **création de workflow**, statut `en_revue`, demandée par l'administratrice : « Un cycle pour une
+agence web : prise de contact, maquette et devis, puis gagné ou perdu. Un budget en euros, exigé pour signer, et le
+type de site. » Sa révision 1, d'origine `ia`, est la proposition `valide` du simulateur — quatre nœuds proposés,
+quatre étapes, quatre transitions, deux champs, une règle, une exigence —, **sans défaut**. Section du script :
+**8 octodecies**.
+
+### 16.2 Le vrai chemin, et pourquoi le simulateur
+
+La suggestion n'est **jamais** écrite en SQL : une révision « du modèle » insérée à la main serait une trace fabriquée
+d'un processus réel (`CLAUDE.md` §8). L'administratrice appelle la fonction `ia` avec son **jeton réel** ; la fonction
+écrit la suggestion sous la RLS, la révision avec la clé de service, et la base en calcule les défauts. Le modèle est
+le simulateur (`docs/SPEC-ia.md` §11.6) : le seul déterministe, et le seul qu'un seed puisse appeler. **Le seed le
+vérifie avant d'écrire** — le scénario `cle_refusee` ne se lit que par le simulateur ; hors développement, l'en-tête
+serait ignoré et le vrai serveur appelé, et le seed s'arrête plutôt.
+
+### 16.3 Convergence
+
+Une suggestion **en revue** portant cette demande existe déjà : rien n'est écrit (mesuré au second passage, « déjà
+présente »). Une suggestion acceptée ou abandonnée à la main ne compte pas : le passage suivant en recrée une en revue.
+Les preuves de l'API et de l'interface créent leurs **propres** suggestions, préfixées, et ne décident jamais celle du
+seed.

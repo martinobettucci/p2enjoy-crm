@@ -5021,8 +5021,12 @@ modale**, alerte de refus dans le bloc concerné.
 
 - **L'APERÇU SUIT L'ORDRE DE L'ÉDITEUR** — nom, étapes, transitions, champs, visibilités, exigences —, chaque
   section titrée `h3`, une liste par section. Une étape dit d'où vient son nœud par un **mot**, pilule neutre
-  « Nouveau nœud » ou « Du catalogue » (§1). L'étape initiale porte la pilule « Initiale » `--color-brand-soft`
-  / `--color-brand`. Une section vide porte une phrase — « Aucune exigence proposée » —, jamais un vide (§5.15).
+  « Nouveau nœud » ou « Du catalogue » (§1). **L'étape initiale se lit et se choisit dans le groupe de radios
+  « Initiale »** ; quand la proposition en porte plusieurs — un défaut —, **aucun radio n'est coché** : le
+  navigateur ne cocherait que le dernier rendu, et l'aperçu affirmerait un choix unique que la donnée n'a pas. Le
+  bloc des défauts dit ce qui manque. *Révisé le 2026-10-03 avant livraison* : ce point annonçait une pilule
+  « Initiale » en plus du radio, qui aurait dit deux fois la même chose. Une section vide porte une phrase —
+  « Aucune exigence proposée » —, jamais un vide (§5.15).
 
 - **CE QUI SE CORRIGE EST UN CHAMP ; ce qui ne se corrige pas est un TEXTE**, jamais un champ désactivé (§5.15) :
   la clé d'un nœud ou d'un champ, le libellé d'un nœud du catalogue. Les champs suivent le §5.7 — 40 px,
@@ -5057,8 +5061,10 @@ modale**, alerte de refus dans le bloc concerné.
 
 - **« Abandonner » ouvre une confirmation dans le flux**, sous la barre, qui nomme la demande et dit la
   conséquence — la suggestion reste dans l'historique et ne pourra plus être revue ni acceptée ; son bouton est
-  `danger` (§5.13, §6). La commande reste montée et désactivée pendant la question : le focus y revient sans
-  attente (§5.27).
+  `danger` (§5.13, §6). La commande reste montée et désactivée pendant la question ; **le focus lui est rendu au
+  rendu suivant, une fois réactivée** — un élément désactivé ne prend pas le focus. *Corrigé le 2026-10-03 avant
+  livraison* : ce point écrivait « sans attente (§5.27) », et la preuve unitaire a montré le focus perdu sur
+  `body`.
 
 - **LES REFUS SE LISENT DANS LE PANNEAU, PRÈS DE LA CAUSE** : sous la barre de gestes pour accepter, corriger et
   abandonner ; sous la consigne pour une revue ; sous le champ de demande pour une génération. `role="alert"`,

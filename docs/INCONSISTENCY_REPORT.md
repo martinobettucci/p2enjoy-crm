@@ -7054,3 +7054,16 @@ fermeture d'un client) échouerait. **Non corrigé** ; soumis au responsable. Pi
 clé des étapes vers le catalogue quand c'est l'espace qui disparaît (une clé composite qui inclut
 `workspace_id` ne le permet pas sans revoir sa forme), ou une purge d'espace explicite qui retire les
 workflows avant le catalogue.
+
+### INC-269 — le parcours clavier de « Ma journée » focalise une ligne avant que la nouvelle portée soit lue
+
+*Relevée le 2026-10-03 pendant la campagne d'interface de `CRM-097` T2, comportement inchangé.* Le scénario « le parcours
+CLAVIER atteint l'entrée, l'écran, la bascule et une affaire » (`e2e/ui/ma-journee.spec.ts`) a rougi une fois : le
+lien de l'affaire en retard était trouvé, focalisé, puis « inactive ». **Mesuré** : vert trois fois sur trois rejoué
+seul. Hypothèse : après « Tout l'espace », le test focalise la ligne de l'ancienne lecture ; la lecture de la nouvelle
+portée remplace les lignes (règle d'INC-189 : des données d'une autre portée se rendent comme un chargement), et le
+focus part avec l'élément démonté.
+
+**Étranger à `CRM-097`** : « Ma journée » n'est pas touchée par l'unité. **Non corrigé** ; soumis au responsable. Piste :
+attendre, avant de focaliser, que la région vivante annonce la portée nouvelle — la donnée qui dit que la lecture est
+arrivée.

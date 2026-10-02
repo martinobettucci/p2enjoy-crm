@@ -569,6 +569,8 @@ PORT_RAPPORT=9323
 # fichier ajouté. 75 + 1 = 76, valeur COMPTÉE — « 76 fichiers ».
 # **77 depuis `CRM-097` tranche T1, 2026-10-02** (décision 617) : `0077_suggestions_ia.test.sql`, seul fichier
 # ajouté. 76 + 1 = 77, valeur COMPTÉE — « 77 fichiers ».
+# **78 depuis `CRM-097` tranche T2, 2026-10-02** (décision 618) : `0078_accepter_suggestion_ia.test.sql`, seul
+# fichier ajouté. 77 + 1 = 78, valeur COMPTÉE — « 78 fichiers ».
 FICHIERS_SQL_ATTENDUS=78
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
@@ -617,6 +619,8 @@ FICHIERS_SQL_ATTENDUS=78
 # **3275 depuis `CRM-095` tranche T1** : `0075` apporte **22** assertions — 3253 + 22 = 3275. COMPTÉE.
 # **3297 depuis `CRM-096` tranche T1** : `0076` apporte **22** assertions — 3275 + 22 = 3297. COMPTÉE.
 # **3327 depuis `CRM-097` tranche T1** : `0077` apporte **30** assertions — 3297 + 30 = 3327. COMPTÉE.
+# **3401 depuis `CRM-097` tranche T2** : `0078` apporte **74** assertions — 3327 + 74 = 3401 ; `0077` est révisée
+# à nombre constant (18 et 19, décision 618). COMPTÉE — « 78 fichiers, 3401 assertions ».
 ASSERTIONS_ATTENDUES=3401
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
@@ -946,6 +950,9 @@ ASSERTIONS_ATTENDUES=3401
 # première rédaction le comptait, et le harnais rougissait sur « 1097 scénarios au lieu de 1098 » — un
 # scénario ignoré n'est pas vert (docs/SPEC-ia.md §8). 1090 + 7 = 1097, valeur COMPTÉE — « Total: 1097 tests
 # in 71 files ».
+# **1103 depuis `CRM-097` tranche T2, 2026-10-02** (décision 618) : `ia-acceptation.spec.ts`, fichier NEUF, porte
+# **6** scénarios — corriger, accepter, refus du commercial et de la lectrice, proposition incohérente, abandon,
+# reprise sans consigne. 1097 + 6 = 1103, valeur COMPTÉE — « 1103 passed ».
 SCENARIOS_API=1103
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
@@ -1349,7 +1356,11 @@ SCENARIOS_API=1103
 # — la pose à la souris depuis une place libre qui désigne le bloc posé, la pose au clavier seul, le clic
 # sur un bloc pendant la pose qui n'a qu'un effet, le bloc posé qui chevauche passe devant. 778 + 4 = 782,
 # valeur COMPTÉE — « Total: 782 tests in 62 files ».
-SCENARIOS_UI=782
+# **793 depuis `CRM-097` tranche T2, 2026-10-03** (décision 618) : `e2e/ui/assistant-ia.spec.ts`, fichier NEUF,
+# porte **11** scénarios — la souris de la demande à l'acceptation, le clavier seul, la proposition incohérente
+# corrigée à la main, la revue par consigne, l'abandon, la reprise d'un échec, le refus du commercial, les quatre
+# paliers. 782 + 11 = 793, valeur COMPTÉE — « Total: 793 tests in 63 files ».
+SCENARIOS_UI=793
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

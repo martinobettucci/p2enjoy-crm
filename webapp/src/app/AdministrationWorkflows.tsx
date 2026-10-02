@@ -34,6 +34,10 @@
 // @spec CRM-094 (docs/BACKLOG.md) tranche T2 — docs/SPEC-onboarding.md §10.5 : un catalogue vide le dit,
 //       et mène au catalogue de nœuds ; §10.3 : l'écran se relit quand le workflow de départ est posé
 //       depuis le guide flottant (docs/JOURNAL.md décisions 606 et 607)
+// @spec CRM-097 (docs/BACKLOG.md) tranche T2.c — l'assistant IA dans l'éditeur : docs/SPEC-ia.md §12.5 (« Créer
+//       avec l'IA » à côté de « Nouveau workflow », au-dessus de la liste et dans l'état vide ; les suggestions en
+//       revue lues avec les workflows et listées sous eux ; le panneau à la place du workflow choisi ; le workflow
+//       accepté devient le workflow choisi) ; docs/DESIGN_SYSTEM.md §5.52 ; docs/JOURNAL.md décision 618
 //
 // AUCUN DROIT N'EST CALCULÉ ICI — la règle de `CRM-075`, reprise mot pour mot. Les commandes sont
 // rendues pour tout le monde ; l'écriture part, et le refus du backend est traduit. Une commande
@@ -58,12 +62,14 @@ import {
 	MessageSquare,
 	Pencil,
 	Plus,
+	Sparkles,
 	Trash2,
 	TriangleAlert,
 } from 'lucide-react'
 import { BlocVersionsWorkflow } from './BlocVersionsWorkflow'
 import { CHEMIN_ADMIN_CATALOGUE } from './chemins'
 import { ListeCollections } from './CollectionsComparees'
+import { PanneauSuggestionIa, type OuverturePanneauIa } from './PanneauSuggestionIa'
 import { Button } from '../components/ui/Button'
 import { LiveRegion } from '../components/ui/LiveRegion'
 import { SkeletonListe } from '../components/ui/Skeleton'
@@ -172,6 +178,14 @@ import {
 	type TransitionAdministrable,
 	type WorkflowAdministrable,
 } from '../lib/administration-workflows'
+import {
+	accesAssistantCrm,
+	formaterHorodatage,
+	generationEnVol,
+	lireSuggestionsEnRevue,
+	type AccesAssistant,
+	type SuggestionEnRevue,
+} from '../lib/assistant-ia'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { lireWorkspaces } from '../lib/workspaces'
 
@@ -2364,10 +2378,13 @@ function CommandeComparaison({
 export type ProprietesAdministrationWorkflows = {
 	/** Injectable pour les preuves ; en production, le client réel du module `supabase`. */
 	readonly client?: ClientCrm | null
+	/** L'accès à la fonction `ia` (`CRM-097` T2), injectable pour les preuves. */
+	readonly acces?: AccesAssistant | null
 }
 
 export function AdministrationWorkflows({
 	client = clientCrm,
+	acces = accesAssistantCrm,
 }: ProprietesAdministrationWorkflows = {}) {
 	const [workflows, setWorkflows] = useState<EtatAsync<readonly WorkflowAdministrable[]>>(enChargement)
 	const [idChoisi, setIdChoisi] = useState<string | null>(null)
@@ -2431,6 +2448,19 @@ export function AdministrationWorkflows({
 	const [idWorkspace, setIdWorkspace] = useState<string | null>(null)
 	const [refusCreation, setRefusCreation] = useState<string | null>(null)
 	const [creationEnCours, setCreationEnCours] = useState(false)
+	/**
+	 * L'assistant IA — `CRM-097` T2, docs/SPEC-ia.md §12.5. Les suggestions en revue sont lues AVEC les workflows,
+	 * et relues par `tentativeIa` quand une suggestion naît, est acceptée ou abandonnée. Le panneau, ouvert, prend
+	 * la place du workflow choisi ; la RLS ne rend aucune suggestion à un non-administrateur, et l'écran ne rend
+	 * alors aucune liste — il ne nomme pas ce qu'il ne montre pas (docs/DESIGN_SYSTEM.md §5.52).
+	 */
+	const [suggestionsIa, setSuggestionsIa] = useState<EtatAsync<readonly SuggestionEnRevue[]>>(enChargement)
+	const [tentativeIa, setTentativeIa] = useState(0)
+	const [panneauIa, setPanneauIa] = useState<OuverturePanneauIa | null>(null)
+	const commandeIa = useRef<HTMLButtonElement | null>(null)
+	/** Le focus à poser après un rendu : sur « Créer avec l'IA », ou sur le workflow que l'acceptation a créé. */
+	const [focusIa, setFocusIa] = useState<{ readonly cible: 'commande' } | { readonly cible: 'workflow'; readonly id: string } | null>(null)
+	const relireSuggestionsIa = useCallback(() => setTentativeIa((n) => n + 1), [])
 
 	// Une réponse arrivée après le démontage ne doit pas écrire dans un composant démonté, ni une
 	// réponse périmée écraser une réponse plus récente — le patron de `CRM-075`.
@@ -2470,6 +2500,34 @@ export function AdministrationWorkflows({
 		}
 	}, [client, tentative])
 
+	// Les suggestions de l'IA en revue — `CRM-097` T2. Lues avec les workflows (même `tentative`), et relues seules
+	// par `tentativeIa`.
+	useEffect(() => {
+		if (client === null) return
+		let vivant = true
+		void lireSuggestionsEnRevue(client).then((lues) => {
+			if (vivant) setSuggestionsIa(lues)
+		})
+		return () => {
+			vivant = false
+		}
+	}, [client, tentative, tentativeIa])
+
+	// Le focus différé d'un rendu (§5.25, §5.52) : la commande ou le workflow visé n'existent qu'après le rendu qui
+	// suit la fermeture du panneau. Aucune temporisation.
+	useEffect(() => {
+		if (focusIa === null) return
+		if (focusIa.cible === 'commande') {
+			commandeIa.current?.focus()
+			setFocusIa(null)
+			return
+		}
+		const cible = document.querySelector<HTMLButtonElement>(`[data-workflow-id="${focusIa.id}"]`)
+		if (cible === null) return
+		cible.focus()
+		setFocusIa(null)
+	}, [focusIa, workflows])
+
 	// Les tracks ne sont lus qu'à l'ouverture du formulaire (§3 bis.3, lecture 4) : une liste que
 	// personne ne consulte n'a pas à voyager, exactement comme le catalogue de la lecture 3.
 	useEffect(() => {
@@ -2487,11 +2545,117 @@ export function AdministrationWorkflows({
 	}, [client, creationOuverte])
 
 	/** Ouvre le formulaire en repartant d'un refus effacé : un refus survivant à la fermeture
-	 *  s'afficherait sur une saisie neuve qui ne l'a pas causé. */
+	 *  s'afficherait sur une saisie neuve qui ne l'a pas causé. Une demande à l'IA en cours de rédaction se
+	 *  referme : deux créations ouvertes ne diraient pas laquelle on remplit. */
 	const ouvrirLaCreation = useCallback(() => {
 		setRefusCreation(null)
 		setCreationOuverte(true)
+		setPanneauIa((ouvert) => (ouvert?.type === 'demande' ? null : ouvert))
 	}, [])
+
+	/** « Créer avec l'IA » — `CRM-097` T2 : la demande s'ouvre, et le formulaire manuel se referme. */
+	const ouvrirLaDemandeIa = useCallback(() => {
+		setRefusCreation(null)
+		setCreationOuverte(false)
+		setPanneauIa({ type: 'demande' })
+	}, [])
+
+	const fermerLePanneauIa = useCallback(() => {
+		setPanneauIa(null)
+		setFocusIa({ cible: 'commande' })
+	}, [])
+
+	/** L'acceptation a créé un workflow : la liste est relue, il devient le workflow choisi, le focus le rejoint. */
+	const apresAcceptationIa = useCallback(
+		async (idWorkflow: string, nom: string) => {
+			if (client === null) return
+			setPanneauIa(null)
+			const lus = await lireWorkflowsAdministrables(client, false)
+			setWorkflows(lus)
+			setIdChoisi(idWorkflow)
+			relireSuggestionsIa()
+			setAnnonce(t('ia.annonce.acceptee', { nom }))
+			setFocusIa({ cible: 'workflow', id: idWorkflow })
+		},
+		[client, relireSuggestionsIa],
+	)
+
+	/** Le panneau de l'IA, au même endroit qu'il soit ouvert sur une demande ou sur une suggestion. */
+	const panneau =
+		panneauIa === null || client === null ? null : (
+			<PanneauSuggestionIa
+				client={client}
+				acces={acces}
+				idWorkspace={idWorkspace}
+				ouverture={panneauIa}
+				onSuggestionCreee={() => relireSuggestionsIa()}
+				onSuggestionPrete={(id, message) => {
+					setPanneauIa({ type: 'suggestion', id })
+					relireSuggestionsIa()
+					setAnnonce(message)
+				}}
+				onAcceptee={(idWorkflow, nom) => void apresAcceptationIa(idWorkflow, nom)}
+				onAbandonnee={() => {
+					relireSuggestionsIa()
+					fermerLePanneauIa()
+				}}
+				onFermer={fermerLePanneauIa}
+				annoncer={setAnnonce}
+			/>
+		)
+
+	/** « Créer avec l'IA » : secondaire, `Sparkles`, et il porte l'état de la demande qu'il ouvre (§5.52). */
+	const commandeCreerAvecIa = (
+		<Button
+			ref={commandeIa}
+			variante="secondaire"
+			aria-expanded={panneauIa?.type === 'demande'}
+			onClick={() => ouvrirLaDemandeIa()}
+		>
+			<Sparkles aria-hidden="true" size={16} strokeWidth={2} />
+			{t('ia.action.creer')}
+		</Button>
+	)
+
+	/** Les suggestions en revue, sous la liste des workflows ; aucune, aucun titre (§5.52). */
+	const listeSuggestionsIa =
+		suggestionsIa.statut !== 'pret' || suggestionsIa.donnees.length === 0 ? null : (
+			<div className="flex flex-col gap-2" data-testid="ia-suggestions-en-revue">
+				<h3 className="text-sm font-medium text-text-2">{t('ia.liste.titre')}</h3>
+				<ul className="flex flex-col rounded-lg border border-border bg-surface">
+					{suggestionsIa.donnees.map((suggestion) => {
+						const ouverte = panneauIa?.type === 'suggestion' && panneauIa.id === suggestion.id
+						const date = formaterHorodatage(suggestion.created_at)
+						return (
+							<li key={suggestion.id}>
+								<button
+									type="button"
+									onClick={() => {
+										setCreationOuverte(false)
+										setPanneauIa({ type: 'suggestion', id: suggestion.id })
+									}}
+									aria-current={ouverte ? 'true' : undefined}
+									className={[
+										'flex w-full flex-col gap-1 rounded-lg px-4 py-3 text-left min-h-[var(--size-target)]',
+										ouverte ? 'bg-brand-soft' : 'hover:bg-hover',
+									].join(' ')}
+								>
+									<span className="flex items-start gap-2">
+										<Sparkles aria-hidden="true" size={16} strokeWidth={2} className="mt-[3px] shrink-0 text-brand" />
+										<span className="line-clamp-2">{suggestion.demande}</span>
+									</span>
+									<span className="flex flex-wrap gap-2 text-sm text-text-2">
+										{date === null ? null : <code>{t('ia.liste.creee', { date })}</code>}
+										{generationEnVol(suggestion, Date.now()) ? <span>{t('ia.liste.en_cours')}</span> : null}
+										{suggestion.derniere_erreur === null ? null : <span>{t('ia.liste.echec')}</span>}
+									</span>
+								</button>
+							</li>
+						)
+					})}
+				</ul>
+			</div>
+		)
 
 	const fermerLaCreation = useCallback(() => {
 		setRefusCreation(null)
@@ -2975,12 +3139,15 @@ export function AdministrationWorkflows({
 						titre={t('admin.workflows.empty.title')}
 						corps={t('admin.workflows.empty.body')}
 						action={
-							creationOuverte ? undefined : (
-								<Button variante="primaire" onClick={() => ouvrirLaCreation()}>
-									<Plus aria-hidden="true" size={16} strokeWidth={2} />
-									{t('admin.workflows.create.action')}
-								</Button>
-							)
+							<span className="flex flex-wrap gap-2">
+								{creationOuverte ? null : (
+									<Button variante="primaire" onClick={() => ouvrirLaCreation()}>
+										<Plus aria-hidden="true" size={16} strokeWidth={2} />
+										{t('admin.workflows.create.action')}
+									</Button>
+								)}
+								{commandeCreerAvecIa}
+							</span>
 						}
 					/>
 					{creationOuverte ? (
@@ -2992,6 +3159,8 @@ export function AdministrationWorkflows({
 							onAnnuler={() => fermerLaCreation()}
 						/>
 					) : null}
+					{panneau}
+					{listeSuggestionsIa}
 				</div>
 			) : null}
 
@@ -3017,16 +3186,21 @@ export function AdministrationWorkflows({
 								{t('admin.workflows.create.action')}
 							</Button>
 						)}
+						{commandeCreerAvecIa}
 						<ul className="flex flex-col rounded-lg border border-border bg-surface">
 							{workflows.donnees.map((workflow) => (
 								<li key={workflow.id}>
 									<button
 										type="button"
-										onClick={() => setIdChoisi(workflow.id)}
-										aria-current={workflow.id === idChoisi ? 'true' : undefined}
+										data-workflow-id={workflow.id}
+										onClick={() => {
+											setIdChoisi(workflow.id)
+											setPanneauIa(null)
+										}}
+										aria-current={workflow.id === idChoisi && panneauIa === null ? 'true' : undefined}
 										className={[
 											'flex w-full flex-col gap-1 px-4 py-3 min-h-[var(--size-target)] text-left rounded-lg',
-											workflow.id === idChoisi ? 'bg-brand-soft' : 'hover:bg-hover',
+											workflow.id === idChoisi && panneauIa === null ? 'bg-brand-soft' : 'hover:bg-hover',
 										].join(' ')}
 									>
 										<span className="font-medium">{workflow.name}</span>
@@ -3042,10 +3216,13 @@ export function AdministrationWorkflows({
 								</li>
 							))}
 						</ul>
+						{listeSuggestionsIa}
 					</nav>
 
 					<div className="flex min-w-0 flex-1 flex-col gap-3">
-						{choisi === null ? (
+						{panneau !== null ? (
+							panneau
+						) : choisi === null ? (
 							<EtatVide
 								titre={t('admin.workflows.choose.title')}
 								corps={t('admin.workflows.choose.body')}

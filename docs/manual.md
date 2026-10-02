@@ -65,6 +65,7 @@
 | 19 | Le catalogue de nœuds | `CRM-030` | **Livré et vérifié** — voir le chapitre 5 *quater*. Les états par lesquels une affaire passe ont désormais leur écran, « Réglages ▸ Catalogue de nœuds » : un administrateur y crée un nœud, en modifie le libellé, le type, la couleur et les valeurs par défaut, l'archive et le rétablit. La **clé ne se modifie pas** — les statistiques s'appuient sur elle —, et un nœud sur lequel des affaires se trouvent encore **ne s'archive pas** : le produit dit combien il en porte. Deux flèches par ligne **réordonnent** le catalogue, d'un cran à la fois |
 | 20 | Construire un workflow et ses transitions | `CRM-031` | **Partiellement livré, sans écran.** Le workflow existe côté serveur — l'espace de travail est livré avec le sien, « Cycle commercial standard », ses étapes et les déplacements qu'il autorise (annexe A), et chacun de ses channels suit un workflow. L'**éditeur** est livré : un administrateur **crée** un workflow depuis « Réglages ▸ Workflows » — nom, portée globale ou propre à un track —, puis en compose les étapes et les transitions (chapitres 5 bis.0 à 5 bis.3). Un espace **neuf**, lui, n'a aucun workflow : depuis `CRM-094`, le guide de démarrage y pose le workflow de départ en un geste (chapitre 1 bis.4). Le workflow naît vide et reste un brouillon tant qu'il n'a pas d'étape initiale. Ce qui reste hors interface est la **copie** vers un track et la désignation du workflow **par défaut** |
 | 20 bis | Garder une photographie d'un workflow, la comparer et y revenir | `CRM-078` | **Livré.** Un workflow change : ses étapes, ses déplacements, ses questions et leurs règles sont modifiables à tout moment, et rien ne disait jusqu'ici sous quelle forme une affaire avait circulé. Un administrateur peut désormais **publier une version** : le produit fige une photographie datée, numérotée et signée de la composition entière du workflow, que plus personne ne peut réécrire — pas même le produit lui-même. Publier une version **ne change rien** au fonctionnement : les affaires continuent de circuler sur le workflow vivant, une version est un témoin et non une cible. Republier sans avoir rien modifié est refusé, pour que deux versions ne soient jamais indiscernables. Le produit sait aussi **comparer deux versions** — quelles étapes, quels déplacements, quelles questions et quelles règles ont été ajoutés, retirés ou modifiés, et pour chaque modification ce qui a changé et de quoi vers quoi. Et, avant de revenir à une version, il sait dire **affaire par affaire où elle atterrit** : celles dont l'étape existe toujours ne bougent pas, et celles dont l'étape a été créée depuis restent **sans destination** tant qu'un administrateur n'a pas dit où les envoyer. Le produit ne devine jamais à sa place, même lorsqu'une étape disparue est sur le point d'être rétablie : il la nomme, il ne la choisit pas. Les affaires archivées et celles en corbeille sont comptées comme les autres. Le produit sait désormais **appliquer** ce plan en une seule transaction, et **revenir en arrière** : la composition d'avant est publiée comme point de retour avant toute écriture. Et les quatre gestes ont leur **écran**, au bas de l'éditeur de workflows : voir le chapitre 5 bis.6 |
+| 20 ter | Créer un workflow avec l'assistant IA | `CRM-097` | **Livré en développement, en production avec la tranche T4** — voir le chapitre 5 bis.0 bis. Un administrateur décrit le workflow voulu ; l'IA rend une **suggestion**, qu'il relit, corrige à la main ou fait revoir avec une consigne, puis accepte — le workflow est alors créé en une fois — ou abandonne sans que rien n'ait été écrit. Les suggestions en revue sont conservées et partagées entre administrateurs. Modifier un workflow existant avec l'IA viendra ensuite |
 | 21 | Copier un workflow dans un track et le modifier | `CRM-032`, `CRM-018` | **Partiellement livré, sans écran.** La copie existe côté serveur : un administrateur duplique un workflow global vers un track, avec ses étapes, transitions, champs, règles et exigences remappés, et la copie se souvient de son origine. L'espace de travail est livré avec un exemple, « Cycle commercial — Conseil IA » sur le track « Conseil & IA ». Une empreinte de composition permet au produit de signaler toute divergence, suppression comprise. Ce qui manque est l'écran : aucun bouton ne permet encore de copier, et la mention de divergence n'est affichée nulle part |
 | 22 | Choisir le workflow d'un channel | `CRM-033`, `CRM-019` | **Livré côté serveur, sans écran.** Un channel suit désormais **obligatoirement** un workflow, et pas n'importe lequel : le workflow général de l'espace de travail, ou celui de son propre track. Toute affectation directe incohérente est refusée. Même lorsque le channel contient des affaires, une administratrice peut changer son workflow par l'API en donnant le mapping exhaustif de toutes les étapes occupées ; aucune affaire n'est laissée à moitié remappée et toute perte de réponse doit être acceptée explicitement. L'espace de travail livré le montre : tous ses channels suivent « Cycle commercial standard », sauf « Prospection » qui suit la copie réservée à son track (annexe A). Ce qui manque est l'écran : aucun sélecteur ne permet encore ce geste |
 | 23 | Composer le formulaire d'un workflow | `CRM-035`, `CRM-018`, `CRM-076` | **Partiellement livré dans l'écran** — voir le chapitre 5 bis.4. Un workflow porte son propre formulaire : budget estimé, origine du contact, date de signature prévue, motif de la perte, décideur identifié et lien vers la proposition, ainsi qu'un champ retiré dont les réponses restent consultables (volumes en annexe A). Un champ non déclaré à une étape y reste simplement visible : on ne déclare que les exceptions. Lorsqu'un workflow est copié vers un track, son formulaire, ses règles et ses exigences sont remappés avec lui ; il est utilisable immédiatement sans partager les identifiants de la source. L'obligation est appliquée : voir le chapitre 24. Depuis `CRM-076`, un administrateur **déclare, modifie, réordonne, archive et restaure** les questions depuis « Réglages ▸ Workflows ». Ce qui manque est la **grille champ × étape** : régler la visibilité d'une question sur une étape reste un geste d'API |
@@ -2331,6 +2332,68 @@ un réglage refusé neuf fois sur dix. Rendre un workflow par défaut reste un g
 et porte le même bouton. Un workflow composé ainsi part d'un catalogue de nœuds **vide** dans un
 espace neuf : le plus court est souvent le workflow de départ du guide (§1 bis.4), que vous
 recomposez ensuite ici.
+
+### 5 bis.0 bis Créer un workflow avec l'IA
+
+*Livré en développement par `CRM-097` (tranche T2) ; en production avec la tranche T4. Captures dans
+`docs/captures/CRM-097/`.*
+
+L'assistant IA **propose** un workflow à partir d'une description écrite en français ; **il ne crée
+rien**. Ce qu'il rend est une **suggestion** : vous la relisez, la corrigez, la faites revoir autant de
+fois que nécessaire, puis vous l'acceptez — et c'est seulement alors que le workflow existe — ou vous
+l'abandonnez, sans que rien n'ait été écrit. Le panneau le rappelle en permanence : « Suggestion — rien
+n'est créé avant « Accepter » ».
+
+**Où.** Le bouton **« Créer avec l’IA »**, juste après « Nouveau workflow », au-dessus de la liste de
+gauche — et dans l'écran vide d'un espace qui n'a encore aucun workflow.
+
+**Qui.** L'assistant est réservé aux **administrateurs** de l'espace de travail. Le bouton est montré à
+tout le monde ; un autre membre qui l'utilise reçoit le refus du serveur : « L’assistant est réservé aux
+administrateurs de l’espace de travail. »
+
+**1. Demander.** Écrivez dans **« Décrivez le workflow »** ce dont vous avez besoin : les étapes, les
+issues — gagné, perdu —, les informations à saisir sur une affaire. Le texte part vers le serveur d'IA
+de LeLabs : **n'y collez aucune donnée personnelle** — ni nom de client, ni adresse, ni contenu de
+message. Puis **« Générer la suggestion »**. La réponse prend environ une demi-minute ; le panneau le
+dit, avec le temps écoulé. Si l'assistant est indisponible, le panneau le dit et vous pouvez toujours
+créer le workflow à la main.
+
+**2. Relire.** La suggestion s'affiche à la place du workflow choisi, dans l'ordre de l'éditeur : le
+nom, les étapes — chacune dit si son nœud est **nouveau** ou vient **du catalogue** —, les transitions
+au départ de chaque étape, les champs, leur visibilité par étape et les champs exigés pour franchir une
+transition. Si la proposition a des **défauts** — deux étapes initiales, une transition vers une étape
+qui n'existe pas, une liste sans choix… —, ils sont listés en tête, et la suggestion **ne peut pas être
+acceptée** tant qu'ils demeurent.
+
+**3. Corriger à la main.** Dans l'aperçu, vous pouvez renommer le workflow ; changer le libellé, la
+nature et la probabilité d'un nœud nouveau ; choisir l'étape initiale ; retirer une étape, une
+transition, un champ, une règle ou une exigence ; ajouter une transition ; changer le type, les choix,
+la devise ou l'aide d'un champ. Un retrait emporte ce qui en dépend — retirer une étape retire aussi
+ses transitions et les règles qui la visent — et l'écran annonce ce qui a été emporté. Vos modifications
+restent locales jusqu'à **« Enregistrer la correction »** ; « Rétablir » les annule. Ajouter une étape
+ou un champ se demande à l'IA, ou se fait ici même une fois le workflow créé.
+
+**4. Faire revoir.** Écrivez une consigne — « ajoute une étape de relance », « rends perdu possible
+depuis chaque étape » — puis **« Revoir avec l’IA »**. L'IA reprend la proposition **telle qu'elle est
+affichée**, vos corrections comprises, avec les défauts relevés, et rend une nouvelle version.
+L'historique, en bas du panneau, garde chaque version : proposée par l'IA ou corrigée à la main, avec
+sa consigne.
+
+**5. Accepter ou abandonner.** **« Accepter et créer le workflow »** crée en une seule fois le workflow,
+ses nouveaux nœuds de catalogue, ses étapes, transitions, champs, règles et exigences. Le serveur
+revérifie tout à ce moment : si le catalogue a changé entre-temps, il refuse et dit combien de défauts
+la proposition porte. Le workflow créé devient le workflow choisi, prêt à être affecté à un channel ;
+il n'est pas le workflow par défaut si l'espace en a déjà un. **« Abandonner la suggestion »**, après
+confirmation, la retire de la liste ; rien n'a été créé.
+
+**Les suggestions en revue** sont listées sous les workflows, dans « Suggestions de l’IA en revue » :
+elles survivent au rechargement de la page, et les autres administrateurs les voient et peuvent les
+reprendre. Une suggestion dont la génération a échoué le dit, avec la raison, et « Réessayer » relance
+la même demande.
+
+**Ce que l'assistant ne fait pas encore.** Il ne modifie pas un workflow existant : proposer des étapes,
+des transitions ou des champs pour un workflow déjà en usage viendra avec la tranche suivante. Il ne
+touche ni aux affaires, ni aux contacts, ni aux messages.
 
 ### 5 bis.1 Choisir un workflow
 
