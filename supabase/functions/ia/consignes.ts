@@ -1,12 +1,14 @@
-// @spec CRM-097 (docs/BACKLOG.md) — tranche T1 : ce qui est envoyé au modèle, et rien d'autre
+// @spec CRM-097 (docs/BACKLOG.md) — tranche T1 : ce qui est envoyé au modèle, et rien d'autre ; tranche T2.b : les
+//       défauts relevés par la base accompagnent une revue (docs/SPEC-ia.md §12.6, décision 618)
 // @spec docs/SPEC-ia.md §2 (rectifier : la dernière révision et la consigne), §3 (« ce qui est envoyé au
 //       modèle » : jamais une affaire, un contact, un message ni une donnée personnelle), §6.1 (le format) ;
 //       docs/JOURNAL.md décision 617
 //
-// Module pur. Les règles écrites ici guident le modèle ; elles ne garantissent rien : c'est
-// `controlerProposition`, puis l'acceptation en base, qui jugent (docs/SPEC-ia.md §2).
+// Module pur. Les règles écrites ici guident le modèle ; elles ne garantissent rien : c'est la base, à
+// l'écriture de chaque révision puis à l'acceptation, qui juge (docs/SPEC-ia.md §2, §12.1).
 
 import type { Message } from './ollama.ts'
+import type { Defaut } from './proposition.ts'
 
 export type NoeudDuCatalogue = { readonly cle: string; readonly libelle: string; readonly nature: string }
 
@@ -43,12 +45,15 @@ export function messagesDeCreation(demande: string, catalogue: readonly NoeudDuC
 }
 
 /**
- * Une revue : la DERNIÈRE révision — corrigée à la main ou non — et la consigne. Le modèle reprend la
- * proposition telle que l'administrateur l'a laissée, pas sa propre version précédente.
+ * Une revue : la DERNIÈRE révision — corrigée à la main ou non —, les défauts que la base y a relevés, et la
+ * consigne. Le modèle reprend la proposition telle que l'administrateur l'a laissée, pas sa propre version
+ * précédente. Les défauts sont transmis tels que la base les écrit — un code et ses valeurs —, sans phrase :
+ * le modèle n'a pas à lire l'interface.
  */
 export function messagesDeRevue(
 	demande: string,
 	derniere: unknown,
+	defauts: readonly Defaut[],
 	consigne: string,
 	catalogue: readonly NoeudDuCatalogue[],
 ): Message[] {
@@ -60,6 +65,9 @@ export function messagesDeRevue(
 			content: [
 				'Voici la proposition actuelle, telle que l’administrateur l’a relue et éventuellement corrigée :',
 				JSON.stringify(derniere),
+				...(defauts.length === 0
+					? []
+					: ['Le produit y a relevé ces défauts (code et valeurs) ; corrige-les :', JSON.stringify(defauts.map(({ code, valeurs }) => ({ code, valeurs })))]),
 				'Reprends-la en appliquant cette consigne, et rends la proposition complète :',
 				consigne,
 			].join('\n'),

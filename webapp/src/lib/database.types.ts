@@ -2079,6 +2079,197 @@ export type Database = {
           },
         ]
       }
+      suggestions_ia: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          decided_at: string | null
+          decided_by: string | null
+          demande: string
+          derniere_erreur: string | null
+          empreinte_initiale: string | null
+          generation_depuis: string | null
+          id: string
+          portee: string
+          statut: string
+          version_retour_id: string | null
+          workflow_cree_id: string | null
+          workflow_id: string | null
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          demande: string
+          derniere_erreur?: string | null
+          empreinte_initiale?: string | null
+          generation_depuis?: string | null
+          id?: string
+          portee: string
+          statut?: string
+          version_retour_id?: string | null
+          workflow_cree_id?: string | null
+          workflow_id?: string | null
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          demande?: string
+          derniere_erreur?: string | null
+          empreinte_initiale?: string | null
+          generation_depuis?: string | null
+          id?: string
+          portee?: string
+          statut?: string
+          version_retour_id?: string | null
+          workflow_cree_id?: string | null
+          workflow_id?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suggestions_ia_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suggestions_ia_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suggestions_ia_version_retour_id_fkey"
+            columns: ["version_retour_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suggestions_ia_workflow_cree_id_fkey"
+            columns: ["workflow_cree_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_derivations"
+            referencedColumns: ["source_workflow_id"]
+          },
+          {
+            foreignKeyName: "suggestions_ia_workflow_cree_id_fkey"
+            columns: ["workflow_cree_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_derivations"
+            referencedColumns: ["workflow_id"]
+          },
+          {
+            foreignKeyName: "suggestions_ia_workflow_cree_id_fkey"
+            columns: ["workflow_cree_id"]
+            isOneToOne: false
+            referencedRelation: "workflows"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suggestions_ia_workflow_id_workspace_id_fkey"
+            columns: ["workflow_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_derivations"
+            referencedColumns: ["source_workflow_id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "suggestions_ia_workflow_id_workspace_id_fkey"
+            columns: ["workflow_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_derivations"
+            referencedColumns: ["workflow_id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "suggestions_ia_workflow_id_workspace_id_fkey"
+            columns: ["workflow_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workflows"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "suggestions_ia_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suggestions_ia_revisions: {
+        Row: {
+          consigne: string | null
+          created_at: string
+          created_by: string | null
+          defauts: Json
+          duree_ms: number | null
+          id: string
+          jetons_entree: number | null
+          jetons_sortie: number | null
+          modele: string | null
+          numero: number
+          origine: string
+          proposition: Json
+          suggestion_id: string
+          workspace_id: string
+        }
+        Insert: {
+          consigne?: string | null
+          created_at?: string
+          created_by?: string | null
+          defauts?: Json
+          duree_ms?: number | null
+          id?: string
+          jetons_entree?: number | null
+          jetons_sortie?: number | null
+          modele?: string | null
+          numero: number
+          origine: string
+          proposition: Json
+          suggestion_id: string
+          workspace_id: string
+        }
+        Update: {
+          consigne?: string | null
+          created_at?: string
+          created_by?: string | null
+          defauts?: Json
+          duree_ms?: number | null
+          id?: string
+          jetons_entree?: number | null
+          jetons_sortie?: number | null
+          modele?: string | null
+          numero?: number
+          origine?: string
+          proposition?: Json
+          suggestion_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suggestions_ia_revisions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suggestions_ia_revisions_suggestion_fkey"
+            columns: ["suggestion_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "suggestions_ia"
+            referencedColumns: ["id", "workspace_id"]
+          },
+        ]
+      }
       track_members: {
         Row: {
           access: string
@@ -2698,6 +2889,10 @@ export type Database = {
       }
     }
     Functions: {
+      accepter_suggestion_ia: {
+        Args: { p_suggestion: string }
+        Returns: string
+      }
       armer_sequence_relance: {
         Args: {
           p_card_id: string

@@ -1,6 +1,8 @@
 // @spec CRM-097 (docs/BACKLOG.md) — tranche T1 : les dépendances réelles de la fonction `ia`
 // @spec docs/SPEC-ia.md §11.2 (le jeton de l'appelant pour décider, la clé de service pour écrire la fin
 //       d'une génération sur la suggestion autorisée), §11.4 (verrou, échec) ; docs/JOURNAL.md décision 617
+// @spec CRM-097 tranche T2.b — docs/SPEC-ia.md §12.1 (la révision écrite rend les défauts que la BASE a
+//       calculés), §12.6 (la dernière révision relue avec ses défauts) ; décision 618
 //
 // Tout passe par PostgREST, comme un client : aucune connexion directe à PostgreSQL. Avec le jeton de
 // l'appelant, c'est la RLS qui répond ; la clé de service ne sert qu'à écrire l'issue d'une génération
@@ -8,6 +10,7 @@
 
 import { lireConfiguration } from './configuration.ts'
 import type { DependancesIa, ResultatCreation, Suggestion } from './handler.ts'
+import type { Defaut } from './proposition.ts'
 import { generer, lireEtat } from './ollama.ts'
 
 type Fetch = (url: string, init?: RequestInit) => Promise<Response>
@@ -91,13 +94,13 @@ export function creerDependances(
 			return suggestion ?? null
 		},
 
-		async lireDerniereProposition(jeton, id) {
+		async lireDerniereRevision(jeton, id) {
 			const reponse = await requete(
-				rest(`suggestions_ia_revisions?suggestion_id=eq.${id}&select=proposition&order=numero.desc&limit=1`),
+				rest(`suggestions_ia_revisions?suggestion_id=eq.${id}&select=proposition,defauts&order=numero.desc&limit=1`),
 				{ headers: commeAppelant(jeton), signal: signal() },
 			)
-			const [revision] = await lignes<{ proposition: unknown }>(reponse)
-			return revision?.proposition ?? null
+			const [revision] = await lignes<{ proposition: unknown; defauts: Defaut[] }>(reponse)
+			return revision === undefined ? null : { proposition: revision.proposition, defauts: Array.isArray(revision.defauts) ? revision.defauts : [] }
 		},
 
 		async lireCatalogue(jeton, workspaceId) {
@@ -113,12 +116,14 @@ export function creerDependances(
 		},
 
 		async ecrireRevision(revision) {
-			const ecrite = await requete(rest('suggestions_ia_revisions'), {
+			// Les défauts ne sont pas envoyés : la base les calcule, et la révision écrite les rend.
+			const ecrite = await requete(rest('suggestions_ia_revisions?select=defauts'), {
 				method: 'POST',
-				headers: commeService({ prefer: 'return=minimal' }),
+				headers: commeService({ prefer: 'return=representation', accept: 'application/json' }),
 				body: JSON.stringify({ ...revision, origine: 'ia' }),
 				signal: signal(),
 			})
+			const [ligne] = await lignes<{ defauts: unknown }>(ecrite)
 			// Le verrou est levé et l'échec précédent effacé, que la révision ait pu s'écrire ou non : une
 			// suggestion abandonnée entre-temps refuse la révision (`suggestion figee`), et c'est voulu.
 			await requete(rest(`suggestions_ia?id=eq.${revision.suggestion_id}&statut=eq.en_revue`), {
@@ -127,7 +132,7 @@ export function creerDependances(
 				body: JSON.stringify({ generation_depuis: null, derniere_erreur: null }),
 				signal: signal(),
 			})
-			return ecrite.ok
+			return ligne === undefined ? { ecrite: false } : { ecrite: true, defauts: Array.isArray(ligne.defauts) ? ligne.defauts.length : 0 }
 		},
 
 		async ecrireEchec(id, echec) {

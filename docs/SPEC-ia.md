@@ -351,7 +351,7 @@ jamais conclure. Les vérifications sont écrites à la main, dans cet ordre, et
 | Ordre | Contrôle | Refus |
 |---|---|---|
 | 1 | appelant authentifié | `42501` « authentification requise » |
-| 2 | la suggestion existe **et** l'appelant administre son espace — indiscernables, pour qu'un non-administrateur n'apprenne pas qu'elle existe | `P0002` « suggestion introuvable » |
+| 2 | la suggestion existe **et** l'appelant administre son espace — indiscernables, pour qu'un non-administrateur n'apprenne pas qu'elle existe | `PT404` « suggestion introuvable » — HTTP 404 ; `P0002`, d'abord écrit, est rendu **500** par PostgREST (mesuré le 2026-10-02), convention `PT<statut>` de `0042` |
 | 3 | statut `en_revue` (suggestion verrouillée `for update`) | `P0001` « suggestion figée » |
 | 4 | portée `workflow` sans cible — T3 livrera les autres | `P0001` « portée non livrée » |
 | 5 | aucune génération en vol (verrou de moins de 180 s, §11.4) | `P0001` « génération en cours » |
@@ -378,6 +378,13 @@ jamais conclure. Les vérifications sont écrites à la main, dans cet ordre, et
 Rendu : l'identifiant du workflow créé. Les contraintes des tables restent en vigueur sous `SECURITY DEFINER` :
 une violation que le contrôle n'aurait pas prévue annule tout, et rien n'est écrit. Privilège : `authenticated`
 seulement.
+
+**Le gel d'une suggestion décidée laisse passer l'effacement d'un lien** — défaut de `0083` trouvé par T2 le
+2026-10-02 (décision 618). Les clés `on delete set null` vers le workflow créé, la version de retour, l'auteur et
+le décideur mettent à jour une suggestion décidée — et l'auteur d'une révision immuable — quand ce qu'elles
+désignent disparaît ; le gel les refusait, si bien qu'un workflow créé par une acceptation ou un profil ne se
+supprimaient plus. `0084` révise les deux triggers : seul passe un changement qui ne fait **qu'effacer** un de
+ces liens ; poser un lien ou toucher toute autre colonne reste refusé.
 
 ### 12.4 Abandonner — par PostgREST
 
@@ -443,7 +450,7 @@ s'achève ensuite n'écrit rien (§12.6).
 | issue `echec` | `delai_depasse`, `serveur_injoignable`, `cle_refusee`, `reponse_invalide` | quatre phrases ; « Réessayer » relance la même génération |
 | issue `sans_suite` | — | la suggestion a été décidée entre-temps ; l'écran la relit |
 | corriger | `42501`, `P0001`, `22023` | réservé ; figée ou génération en cours ; correction mal formée |
-| accepter | `P0002`, `P0001` (×5), `42501` | les refus du §12.3, un par un |
+| accepter | `PT404`, `P0001` (×5), `42501` | les refus du §12.3, un par un |
 | abandonner | zéro ligne, `P0001` | sans effet ; figée |
 | réseau | — | l'assistant ne répond pas |
 
@@ -452,7 +459,7 @@ s'achève ensuite n'écrit rien (§12.6).
 - **pgTAP** : chaque code de défaut ; le trigger qui écrit les défauts quel que soit ce que le client envoie, et
   refuse une forme invalide ; la correction refusée pendant une génération ; l'acceptation — chaque objet créé
   avec ses attributs, le défaut posé ou non, les clés de choix dérivées — ; ses sept refus, dont le commercial
-  et la lectrice (`P0002`) ; l'atomicité.
+  et la lectrice (`PT404`) ; l'atomicité.
 - **API** aux jetons réels : correction et défauts calculés par la base ; acceptation par la RPC, workflow
   relu ; refus du commercial et de la lectrice ; proposition incohérente refusée ; abandon, puis acceptation
   refusée ; revue sans consigne d'une suggestion sans révision.

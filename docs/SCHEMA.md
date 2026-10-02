@@ -1782,7 +1782,12 @@ personnelle par conception : une proposition est une structure de configuration.
 - **`public.accepter_suggestion_ia(p_suggestion uuid) returns uuid`** — `security definer`, `search_path`
   vide, vérifications écrites à la main (§12.3 de la spécification) ; crée le workflow, ses nœuds de
   catalogue, étapes, transitions, champs, règles et exigences, puis passe la suggestion `acceptee` avec
-  `workflow_cree_id`. Exécutable par `authenticated` seulement.
+  `workflow_cree_id`. Exécutable par `authenticated` seulement. « Introuvable » se lève en `PT404` — PostgREST
+  rend HTTP 500 pour `P0002`.
+- **Les deux triggers de gel** (`app.suggestions_ia_avant_maj`, `app.suggestions_ia_revisions_refuser_mutation`)
+  laissent passer l'**effacement** des liens `on delete set null` — workflow créé, version de retour, auteur,
+  décideur — et rien d'autre : sans cela, un workflow créé par une acceptation ou un profil ne se supprimaient
+  plus (défaut de `0083`, décision 618).
 
 ## 10. Index principaux
 

@@ -5,6 +5,8 @@
 //           (docs/SPEC-workflow-engine.md §7 quater)
 // @verifies CRM-095 (docs/BACKLOG.md) tranche T1 — `creer_affaire` au témoin des fonctions
 //           (docs/SPEC-cards.md §18.2)
+// @verifies CRM-097 (docs/BACKLOG.md) tranches T1 et T2 — `suggestions_ia`, `suggestions_ia_revisions` et
+//           `accepter_suggestion_ia` aux témoins (docs/SPEC-ia.md §5, §12.3 ; décisions 617 et 618)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §7.2 — `workspace_invitations` et
 //           `ouvrir_session_sso` dans le contrat de types (tranche T1) ; §5.6 — `sessions_sso` et
 //           ses quatre fonctions de service (tranche T3 bis, témoin rattrapé en T4)
@@ -214,6 +216,13 @@ type _tables = Expect<
     // exactement son rôle. Le type n'ouvre rien : la table n'accorde AUCUN privilège à `anon` ni
     // à `authenticated`, seule la clé de service de l'échangeur la lit (docs/SPEC-session-sso.md §5.6).
     | 'sessions_sso'
+    // `0083` de `CRM-097` TRANCHE T1 ajoute `suggestions_ia` et `suggestions_ia_revisions` — l'assistant IA,
+    // ses suggestions et leur historique (docs/SPEC-ia.md §5, décision 617). Le témoin ne les voit qu'à la
+    // régénération de T2, la première tranche dont la webapp les lit. CE QUI ÉCHAPPE AU GÉNÉRATEUR : `defauts`
+    // est écrit par la base pour toute révision (décision 618) et `Insert` l'expose pourtant ; le privilège de
+    // colonne le refuse au client, et le type n'en dit rien.
+    | 'suggestions_ia'
+    | 'suggestions_ia_revisions'
     | 'track_members'
     | 'tracks'
     | 'workflow_nodes_catalog'
@@ -938,9 +947,13 @@ type _vueDerivationColonnes = Expect<
 // l'étape INITIALE du workflow de son channel, avec le seul titre (docs/SPEC-cards.md §18.2, décision
 // 609). SECURITY INVOKER : le type ne dit rien du refus de la lectrice, que `cards_insertion` rend en
 // `42501`. Cinquante-six devient CINQUANTE-SEPT.
-type _lesCinquanteSeptFonctions = Expect<
+// `0084` de `CRM-097` TRANCHE T2 ajoute `accepter_suggestion_ia` — le geste qui crée le workflow entier d'une
+// suggestion acceptée (docs/SPEC-ia.md §12.3, décision 618). SECURITY DEFINER : ses sept refus, dont
+// « introuvable » en `PT404`, ne se lisent pas dans le type. Cinquante-sept devient CINQUANTE-HUIT.
+type _lesCinquanteHuitFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
+    | 'accepter_suggestion_ia'
     | 'entonnoir_conversion'
     | 'ecriture_permise'
     | 'unclassify_message'
@@ -1203,7 +1216,7 @@ export type AssertionsDuContratDeTypes = [
   _relationsWorkspaceMembers,
   _laSeuleVue,
   _vueDerivationColonnes,
-  _lesCinquanteSeptFonctions,
+  _lesCinquanteHuitFonctions,
   _signatureReelSaisissable,
   _retourReelSaisissable,
   _ecriturePermisePrendUneLigneDeTableau,

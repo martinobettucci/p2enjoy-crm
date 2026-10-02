@@ -1,12 +1,13 @@
-// @spec CRM-097 (docs/BACKLOG.md) — tranche T1 : la proposition `version: 1` et son contrôle
+// @spec CRM-097 (docs/BACKLOG.md) — tranche T1 : la proposition `version: 1` ; tranche T2.b : sa mise en forme seule
 // @spec docs/SPEC-ia.md §2 (la sortie du modèle n'est jamais crue), §6 (clés normalisées par le produit),
-//       §6.1 (le format, et « la fonction contrôle et dit, sans corriger en silence »), §11.5 ;
-//       docs/SCHEMA.md §3 et §4 (types de champ, unicité d'un nœud par workflow) ; décision 617
+//       §6.1 (le format), §11.5 ; §12.1 (la base, seule juge des défauts — la fonction ne vérifie plus que la
+//       forme) ; docs/SCHEMA.md §3 et §4 (types de champ) ; docs/JOURNAL.md décisions 617 et 618
 //
 // Module pur. Deux issues seulement : une sortie qui n'a pas la FORME d'une proposition est une
-// `reponse_invalide` (la génération échoue) ; une proposition de bonne forme est conservée AVEC la liste
-// de ses défauts, que l'administrateur corrige ou fait revoir. La seule transformation est celle que la
-// spécification nomme : la normalisation des clés, appliquée à toutes leurs références à la fois.
+// `reponse_invalide` (la génération échoue) ; une proposition de bonne forme est rendue, ses clés normalisées
+// — la seule transformation que la spécification nomme, appliquée à toutes leurs références à la fois. Son
+// SENS est jugé par la base, une fois, pour toute révision (`app.defauts_proposition_ia`, décision 618) : la
+// forme rendue ici est celle que le trigger de la base accepte.
 
 export const TYPES_DE_CHAMP = [
 	'text', 'textarea', 'number', 'money', 'date', 'datetime', 'select', 'multiselect',
@@ -18,7 +19,7 @@ export const VISIBILITES = ['hidden', 'visible', 'required'] as const
 /** Au-delà, la sortie n'est plus un workflow mais une dérive du modèle. */
 export const ELEMENTS_MAX = 200
 
-export type Noeud = { cle: string; libelle: string; nature: string; probabilite: number }
+export type Noeud = { cle: string; libelle: string; nature: string; probabilite: number | null }
 export type Etape = { noeud: string; initiale: boolean }
 export type Transition = { de: string; vers: string; libelle: string; commentaire_requis: boolean }
 export type Champ = { cle: string; libelle: string; type: string; choix: string[] | null; devise: string | null; aide: string | null }
@@ -36,13 +37,12 @@ export type Proposition = {
 	exigences: Exigence[]
 }
 
-export type Defaut = { readonly code: string; readonly chemin: string; readonly message: string }
+/** Un défaut tel que la base l'écrit (docs/SPEC-ia.md §12.1) ; la fonction ne le calcule plus, elle le relit. */
+export type Defaut = { readonly code: string; readonly chemin: string; readonly valeurs: Record<string, unknown> }
 
-export type Controle =
-	| { readonly ok: true; readonly proposition: Proposition; readonly defauts: Defaut[] }
-	| { readonly ok: false }
+export type MiseEnForme = { readonly ok: true; readonly proposition: Proposition } | { readonly ok: false }
 
-/** Le schéma passé en `format` à Ollama : la FORME, que le modèle respecte ; le sens est contrôlé ici. */
+/** Le schéma passé en `format` à Ollama : la FORME, que le modèle respecte ; le sens est jugé par la base. */
 export const SCHEMA_WORKFLOW = {
 	type: 'object',
 	required: ['workflow', 'noeuds', 'etapes', 'transitions', 'champs', 'regles', 'exigences'],
@@ -137,12 +137,10 @@ const estObjet = (v: unknown): v is Record<string, unknown> => typeof v === 'obj
 const texte = (v: unknown) => (typeof v === 'string' ? v.trim() : '')
 
 /**
- * Contrôle une sortie du modèle contre le format `version: 1`.
- *
- * `catalogue` : les clés des nœuds déjà au catalogue de l'espace, qu'une étape peut viser sans les
- * redéclarer.
+ * Met une sortie du modèle à la forme `version: 1`, ou la refuse. Aucun défaut n'est calculé ici : la base
+ * les écrit à la création de la révision (docs/SPEC-ia.md §12.1).
  */
-export function controlerProposition(sortie: unknown, catalogue: readonly string[]): Controle {
+export function mettreEnForme(sortie: unknown): MiseEnForme {
 	if (!estObjet(sortie)) return { ok: false }
 	const listes = ['noeuds', 'etapes', 'transitions', 'champs', 'regles', 'exigences'] as const
 	if (!estObjet(sortie.workflow) || listes.some((l) => !Array.isArray(sortie[l]))) return { ok: false }
@@ -151,105 +149,43 @@ export function controlerProposition(sortie: unknown, catalogue: readonly string
 	const brut = (l: (typeof listes)[number]) => (sortie[l] as unknown[]).filter(estObjet)
 	if (listes.some((l) => brut(l).length !== (sortie[l] as unknown[]).length)) return { ok: false }
 
-	const defauts: Defaut[] = []
-	const dire = (code: string, chemin: string, message: string) => defauts.push({ code, chemin, message })
-	const cle = (valeur: unknown, chemin: string) => {
-		const normalisee = normaliserCle(texte(valeur))
-		if (normalisee === '') dire('cle_vide', chemin, 'Une clé est vide une fois normalisée.')
-		return normalisee
-	}
+	const cle = (valeur: unknown) => normaliserCle(texte(valeur))
 
 	const proposition: Proposition = {
 		version: 1,
 		workflow: { nom: texte(sortie.workflow.nom) },
-		noeuds: brut('noeuds').map((n, i) => ({
-			cle: cle(n.cle, `noeuds[${i}].cle`),
+		noeuds: brut('noeuds').map((n) => ({
+			cle: cle(n.cle),
 			libelle: texte(n.libelle),
 			nature: texte(n.nature),
-			probabilite: typeof n.probabilite === 'number' ? n.probabilite : Number.NaN,
+			probabilite: typeof n.probabilite === 'number' && Number.isFinite(n.probabilite) ? n.probabilite : null,
 		})),
-		etapes: brut('etapes').map((e, i) => ({ noeud: cle(e.noeud, `etapes[${i}].noeud`), initiale: e.initiale === true })),
-		transitions: brut('transitions').map((t, i) => ({
-			de: cle(t.de, `transitions[${i}].de`),
-			vers: cle(t.vers, `transitions[${i}].vers`),
+		etapes: brut('etapes').map((e) => ({ noeud: cle(e.noeud), initiale: e.initiale === true })),
+		transitions: brut('transitions').map((t) => ({
+			de: cle(t.de),
+			vers: cle(t.vers),
 			libelle: texte(t.libelle),
 			commentaire_requis: t.commentaire_requis === true,
 		})),
-		champs: brut('champs').map((c, i) => ({
-			cle: cle(c.cle, `champs[${i}].cle`),
+		champs: brut('champs').map((c) => ({
+			cle: cle(c.cle),
 			libelle: texte(c.libelle),
 			type: texte(c.type),
 			choix: Array.isArray(c.choix) ? c.choix.map(texte).filter((x) => x !== '') : null,
 			devise: typeof c.devise === 'string' && c.devise.trim() !== '' ? c.devise.trim().toUpperCase() : null,
 			aide: typeof c.aide === 'string' && c.aide.trim() !== '' ? c.aide.trim() : null,
 		})),
-		regles: brut('regles').map((r, i) => ({
-			champ: cle(r.champ, `regles[${i}].champ`),
-			etape: cle(r.etape, `regles[${i}].etape`),
+		regles: brut('regles').map((r) => ({
+			champ: cle(r.champ),
+			etape: cle(r.etape),
 			visibilite: texte(r.visibilite),
 		})),
-		exigences: brut('exigences').map((x, i) => ({
-			de: cle(x.de, `exigences[${i}].de`),
-			vers: cle(x.vers, `exigences[${i}].vers`),
-			champ: cle(x.champ, `exigences[${i}].champ`),
+		exigences: brut('exigences').map((x) => ({
+			de: cle(x.de),
+			vers: cle(x.vers),
+			champ: cle(x.champ),
 		})),
 	}
 
-	if (proposition.workflow.nom === '') dire('nom_absent', 'workflow.nom', 'Le workflow n’a pas de nom.')
-
-	// Les nœuds que la proposition ajouterait au catalogue.
-	const noeudsProposes = new Set<string>()
-	proposition.noeuds.forEach((n, i) => {
-		if (noeudsProposes.has(n.cle)) dire('noeud_en_double', `noeuds[${i}]`, `Le nœud « ${n.cle} » est déclaré deux fois.`)
-		if (catalogue.includes(n.cle)) dire('noeud_deja_au_catalogue', `noeuds[${i}]`, `Le nœud « ${n.cle} » existe déjà au catalogue : une étape le vise sans le redéclarer.`)
-		if (n.libelle === '') dire('libelle_absent', `noeuds[${i}].libelle`, `Le nœud « ${n.cle} » n’a pas de libellé.`)
-		if (!(NATURES as readonly string[]).includes(n.nature)) dire('nature_invalide', `noeuds[${i}].nature`, `La nature du nœud « ${n.cle} » n’est ni open, ni won, ni lost.`)
-		if (!(n.probabilite >= 0 && n.probabilite <= 100)) dire('probabilite_invalide', `noeuds[${i}].probabilite`, `La probabilité du nœud « ${n.cle} » n’est pas entre 0 et 100.`)
-		noeudsProposes.add(n.cle)
-	})
-
-	// Les étapes : chacune vise un nœud connu, une seule fois ; exactement une est initiale.
-	const etapes = new Set<string>()
-	if (proposition.etapes.length === 0) dire('aucune_etape', 'etapes', 'Le workflow n’a aucune étape.')
-	proposition.etapes.forEach((e, i) => {
-		if (etapes.has(e.noeud)) dire('etape_en_double', `etapes[${i}]`, `Le nœud « ${e.noeud} » porte deux étapes.`)
-		if (!noeudsProposes.has(e.noeud) && !catalogue.includes(e.noeud)) dire('noeud_inconnu', `etapes[${i}].noeud`, `L’étape vise le nœud « ${e.noeud} », ni proposé ni au catalogue.`)
-		etapes.add(e.noeud)
-	})
-	const initiales = proposition.etapes.filter((e) => e.initiale).length
-	if (proposition.etapes.length > 0 && initiales !== 1) dire('etape_initiale', 'etapes', `Il faut exactement une étape initiale ; la proposition en a ${initiales}.`)
-
-	// Les transitions : entre deux étapes de la proposition, distinctes, une fois chacune.
-	const aretes = new Set<string>()
-	proposition.transitions.forEach((t, i) => {
-		if (!etapes.has(t.de) || !etapes.has(t.vers)) dire('transition_etape_absente', `transitions[${i}]`, `La transition « ${t.de} » → « ${t.vers} » vise une étape absente.`)
-		if (t.de === t.vers) dire('transition_boucle', `transitions[${i}]`, `La transition « ${t.de} » mène à elle-même.`)
-		if (aretes.has(`${t.de}>${t.vers}`)) dire('transition_en_double', `transitions[${i}]`, `La transition « ${t.de} » → « ${t.vers} » est déclarée deux fois.`)
-		if (t.libelle === '') dire('transition_sans_libelle', `transitions[${i}].libelle`, `La transition « ${t.de} » → « ${t.vers} » n’a pas de libellé.`)
-		aretes.add(`${t.de}>${t.vers}`)
-	})
-
-	// Les champs : un type connu, ses options exigées.
-	const champs = new Set<string>()
-	proposition.champs.forEach((c, i) => {
-		if (champs.has(c.cle)) dire('champ_en_double', `champs[${i}]`, `Le champ « ${c.cle} » est déclaré deux fois.`)
-		if (c.libelle === '') dire('libelle_absent', `champs[${i}].libelle`, `Le champ « ${c.cle} » n’a pas de libellé.`)
-		if (!(TYPES_DE_CHAMP as readonly string[]).includes(c.type)) dire('type_inconnu', `champs[${i}].type`, `Le type « ${c.type} » du champ « ${c.cle} » n’existe pas.`)
-		if ((c.type === 'select' || c.type === 'multiselect') && (c.choix === null || c.choix.length === 0)) dire('choix_requis', `champs[${i}].choix`, `Le champ « ${c.cle} » est une liste sans choix.`)
-		if (c.type === 'money' && (c.devise === null || !/^[A-Z]{3}$/.test(c.devise))) dire('devise_requise', `champs[${i}].devise`, `Le champ monétaire « ${c.cle} » n’a pas de devise à trois lettres.`)
-		champs.add(c.cle)
-	})
-
-	proposition.regles.forEach((r, i) => {
-		if (!champs.has(r.champ)) dire('regle_champ_absent', `regles[${i}].champ`, `La règle vise le champ absent « ${r.champ} ».`)
-		if (!etapes.has(r.etape)) dire('regle_etape_absente', `regles[${i}].etape`, `La règle vise l’étape absente « ${r.etape} ».`)
-		if (!(VISIBILITES as readonly string[]).includes(r.visibilite)) dire('visibilite_invalide', `regles[${i}].visibilite`, `La visibilité « ${r.visibilite} » n’existe pas.`)
-	})
-
-	proposition.exigences.forEach((x, i) => {
-		if (!aretes.has(`${x.de}>${x.vers}`)) dire('exigence_transition_absente', `exigences[${i}]`, `L’exigence vise la transition absente « ${x.de} » → « ${x.vers} ».`)
-		if (!champs.has(x.champ)) dire('exigence_champ_absent', `exigences[${i}].champ`, `L’exigence vise le champ absent « ${x.champ} ».`)
-	})
-
-	return { ok: true, proposition, defauts }
+	return { ok: true, proposition }
 }

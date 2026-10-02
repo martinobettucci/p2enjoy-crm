@@ -14875,10 +14875,17 @@ le serveur réel.
       à la souris et au clavier, captures observées.
       *Spécifiée le 2026-10-02 avant le code* (`docs/SPEC-ia.md` §12, `docs/DESIGN_SYSTEM.md` §5.52, décision
       618). Découpage, dans cet ordre :
-      - [ ] **T2.a** — migration `0084` : défauts calculés par la base pour toute révision, correction refusée
+      - [x] **T2.a** — migration `0084` : défauts calculés par la base pour toute révision, correction refusée
             pendant une génération, `accepter_suggestion_ia` ; pgTAP ;
-      - [ ] **T2.b** — fonction `ia` : forme et clés seulement, défauts relus en base, issue `sans_suite`, revue
+            *Vérifié le 2026-10-02* : pgTAP `0078` **74** assertions — les vingt-neuf codes, la forme, le
+            trigger, les sept refus, les effets, l'atomicité ; `0077` révisée (18, 19), 30 ; onze mutations
+            vues. Défaut de `0083` trouvé et corrigé : le gel refusait l'effacement des liens `on delete set
+            null` (69 à 74, rouges avant correction). « Introuvable » en `PT404` (PostgREST rend 500 pour
+            `P0002`, mesuré). Adoption complète rejouée : 84 fichiers. SQL **78 / 3401**. INC-268 consignée.
+      - [x] **T2.b** — fonction `ia` : forme et clés seulement, défauts relus en base, issue `sans_suite`, revue
             sans consigne d'une suggestion sans révision, défauts transmis à la revue ; unitaires, API ;
+            *Vérifié le 2026-10-02* : **57** unitaires, trois mutations vues ; API `ia-acceptation.spec.ts`
+            **6** scénarios aux jetons réels et `ia.spec.ts` **7**, inchangés, verts.
       - [ ] **T2.c** — écran : module de la webapp, panneau, entrées dans l'éditeur, traductions ; unitaires ;
       - [ ] **T2.d** — E2E souris et clavier, captures observées, seed, manuel, harnais et campagnes.
 - [ ] **T3** — suggérer dans un workflow ouvert — étapes, transitions, champs —, et accepter par

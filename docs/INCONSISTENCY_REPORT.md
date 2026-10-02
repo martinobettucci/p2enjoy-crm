@@ -7039,3 +7039,18 @@ millisecondes. Les campagnes précédentes passaient par un ordre de remise favo
 soumis au responsable. Le seed doit rendre l'ordre déterministe — par exemple en attendant l'ingestion de
 l'original avant d'envoyer sa réponse —, faute de quoi le contrat « des données reproductibles »
 (`CLAUDE.md` §8) n'est pas tenu.
+
+### INC-268 — un espace de travail qui porte un workflow ne peut pas être supprimé
+
+*Relevée le 2026-10-02 pendant `CRM-097` T2.a, comportement inchangé.* En écrivant une preuve de suppression en
+cascade, la suppression d'un espace qui porte un workflow est refusée : `23503`, « update or delete on table
+`workflow_nodes_catalog` violates foreign key constraint `workflow_steps_node_id_workspace_id_fkey` ». La
+cascade de `workspaces` atteint le catalogue de nœuds alors que les étapes qui le visent, protégées par
+`ON DELETE RESTRICT`, n'ont pas encore été retirées. **Mesuré** sur l'espace du seed, dans une transaction
+annulée : même refus, sans aucune suggestion de l'assistant. Le défaut est donc antérieur à `CRM-097`.
+
+**Étranger à `CRM-097`** ; aucun écran ne supprime un espace aujourd'hui, mais une purge d'espace (RGPD,
+fermeture d'un client) échouerait. **Non corrigé** ; soumis au responsable. Pistes : `ON DELETE CASCADE` sur la
+clé des étapes vers le catalogue quand c'est l'espace qui disparaît (une clé composite qui inclut
+`workspace_id` ne le permet pas sans revoir sa forme), ou une purge d'espace explicite qui retire les
+workflows avant le catalogue.

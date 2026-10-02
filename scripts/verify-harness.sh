@@ -569,7 +569,7 @@ PORT_RAPPORT=9323
 # fichier ajouté. 75 + 1 = 76, valeur COMPTÉE — « 76 fichiers ».
 # **77 depuis `CRM-097` tranche T1, 2026-10-02** (décision 617) : `0077_suggestions_ia.test.sql`, seul fichier
 # ajouté. 76 + 1 = 77, valeur COMPTÉE — « 77 fichiers ».
-FICHIERS_SQL_ATTENDUS=77
+FICHIERS_SQL_ATTENDUS=78
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -617,7 +617,7 @@ FICHIERS_SQL_ATTENDUS=77
 # **3275 depuis `CRM-095` tranche T1** : `0075` apporte **22** assertions — 3253 + 22 = 3275. COMPTÉE.
 # **3297 depuis `CRM-096` tranche T1** : `0076` apporte **22** assertions — 3275 + 22 = 3297. COMPTÉE.
 # **3327 depuis `CRM-097` tranche T1** : `0077` apporte **30** assertions — 3297 + 30 = 3327. COMPTÉE.
-ASSERTIONS_ATTENDUES=3327
+ASSERTIONS_ATTENDUES=3401
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -946,7 +946,7 @@ ASSERTIONS_ATTENDUES=3327
 # première rédaction le comptait, et le harnais rougissait sur « 1097 scénarios au lieu de 1098 » — un
 # scénario ignoré n'est pas vert (docs/SPEC-ia.md §8). 1090 + 7 = 1097, valeur COMPTÉE — « Total: 1097 tests
 # in 71 files ».
-SCENARIOS_API=1097
+SCENARIOS_API=1103
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la

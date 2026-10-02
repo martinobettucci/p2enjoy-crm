@@ -2,6 +2,9 @@
 -- @verifies docs/SPEC-ia.md §2 (rien dans la configuration avant « Accepter »), §5, §11.2 (qui écrit quoi),
 --           §11.4 (le verrou) ; docs/SCHEMA.md §9 ter ; docs/JOURNAL.md décision 617
 -- @verifies CLAUDE.md §10 (le refus vient de la base, avec les rôles réels)
+-- @verifies CRM-097 tranche T2.a — docs/SPEC-ia.md §12.1 et §12.2 : depuis la migration `0084`, une révision a la
+--           FORME d'une proposition, le client ne fournit plus ses défauts, et une correction attend la fin d'une
+--           génération. Les assertions 18 et 19 sont révisées en ce sens, motif écrit sur chacune.
 --
 -- Ce que ce fichier tient le plus fort : seuls les ADMINISTRATEURS de l'espace atteignent l'assistant,
 -- un client ne peut faire passer sa correction pour une suggestion du modèle, ni accepter par une simple
@@ -38,6 +41,12 @@ language sql stable as $$ select valeur from ids where ids.nom = $1 $$;
 
 create temporary table mesures (cle text primary key, valeur text) on commit drop;
 grant all on mesures to authenticated;
+
+-- La plus petite proposition de bonne forme (docs/SPEC-ia.md §12.1) : depuis `0084`, une révision qui n'a pas la
+-- forme d'une proposition est refusée.
+create or replace function pg_temp.minimale() returns jsonb language sql immutable as $$
+	select '{"version": 1, "workflow": {"nom": "x"}, "noeuds": [], "etapes": [], "transitions": [], "champs": [], "regles": [], "exigences": []}'::jsonb
+$$;
 
 insert into public.workspaces (id, name, slug) values
 	(pg_temp.id('W'), 'Espace 0077', 'espace-0077'),
@@ -87,8 +96,8 @@ select ok(
 -- comme la fonction `ia` le relit.
 select pg_temp.endosser(pg_temp.id('ADM'));
 with cree as (
-	insert into public.suggestions_ia (workspace_id, portee, demande, generation_depuis)
-	values (pg_temp.id('W'), 'workflow', 'Un cycle de vente pour une agence web', now())
+	insert into public.suggestions_ia (workspace_id, portee, demande)
+	values (pg_temp.id('W'), 'workflow', 'Un cycle de vente pour une agence web')
 	returning id)
 insert into mesures select 'S1', id::text from cree;
 with cree as (
@@ -171,30 +180,33 @@ reset role;
 
 select pg_temp.endosser(pg_temp.id('ADM'));
 insert into public.suggestions_ia_revisions (suggestion_id, origine, consigne, proposition)
-values (pg_temp.id('S1'), 'correction', 'renommé', '{"version": 1}');
+values (pg_temp.id('S1'), 'correction', 'renommé', pg_temp.minimale());
 select throws_ok(
 	$$insert into public.suggestions_ia_revisions (suggestion_id, origine, proposition)
 	  values (pg_temp.id('S1'), 'ia', '{"version": 1}')$$,
 	'42501', null,
 	'17 — le client ne fait pas passer sa révision pour une suggestion du modèle');
+-- 18 et 19, RÉVISÉES par T2 (décision 618) : elles prouvaient que la contrainte de table refuse des défauts qui ne
+-- sont pas un tableau et une proposition sans version. Depuis `0084`, le client ne fournit plus de défauts du
+-- tout (privilège retiré), et le trigger refuse la forme avant la contrainte (22023). Les contraintes restent.
 select throws_ok(
 	$$insert into public.suggestions_ia_revisions (suggestion_id, origine, proposition, defauts)
-	  values (pg_temp.id('S1'), 'correction', '{"version": 1}', '{}')$$,
-	'23514', null,
-	'18 — les défauts sont un tableau');
+	  values (pg_temp.id('S1'), 'correction', pg_temp.minimale(), '{}')$$,
+	'42501', null,
+	'18 — le client ne fournit pas les défauts : la base les écrit');
 select throws_ok(
 	$$insert into public.suggestions_ia_revisions (suggestion_id, origine, proposition)
 	  values (pg_temp.id('S1'), 'correction', '{"etapes": []}')$$,
-	'23514', null,
+	'22023', null,
 	'19 — une proposition sans version est refusée');
 reset role;
 
 set local role service_role;
 insert into public.suggestions_ia_revisions
 	(suggestion_id, workspace_id, origine, consigne, proposition, modele, jetons_entree, jetons_sortie, duree_ms, created_by)
-values (pg_temp.id('S1'), pg_temp.id('W2'), 'ia', 'Un cycle de vente', '{"version": 1}', 'gemma4:e2b', 537, 668, 32500, pg_temp.id('ADM'));
+values (pg_temp.id('S1'), pg_temp.id('W2'), 'ia', 'Un cycle de vente', pg_temp.minimale(), 'gemma4:e2b', 537, 668, 32500, pg_temp.id('ADM'));
 select throws_ok(
-	$$insert into public.suggestions_ia_revisions (suggestion_id, origine, proposition) values (pg_temp.id('S1'), 'ia', '{"version": 1}')$$,
+	$$insert into public.suggestions_ia_revisions (suggestion_id, origine, proposition) values (pg_temp.id('S1'), 'ia', pg_temp.minimale())$$,
 	'23514', null,
 	'20 — une révision du modèle porte ses mesures');
 select throws_ok(
@@ -214,6 +226,8 @@ select is(
 -- =============================================================================================
 
 select pg_temp.endosser(pg_temp.id('ADM'));
+-- Une génération en vol, comme la poserait la fonction : l'abandon doit la lever (24).
+update public.suggestions_ia set generation_depuis = now() where id = pg_temp.id('S1');
 select throws_ok(
 	$$update public.suggestions_ia set statut = 'acceptee' where id = pg_temp.id('S2')$$,
 	'42501', null,

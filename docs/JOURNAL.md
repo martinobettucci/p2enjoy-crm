@@ -30758,3 +30758,36 @@ propriétaire des fonctions, porte `BYPASSRLS` ; le trigger de T1 refuse `accept
 
 **Conséquences.** Migration `0084` ; la fonction `ia` est révisée (§12.6) et doit être déployée avec elle (T4) ;
 le seed créera une suggestion en revue par la vraie fonction et le simulateur.
+
+**`CRM-097` T2.a et T2.b, le 2026-10-02 — la base juge, le geste accepte.** Migration `0084` appliquée par le
+runner en passage DELTA, puis — modifiée par les défauts ci-dessous — par une adoption complète (84 fichiers),
+qui prouve aussi son idempotence derrière `0083`.
+
+- pgTAP `0078`, **74** assertions : chacun des vingt-neuf codes sur une proposition minimale changée d'un trait,
+  leurs valeurs et leur ordre ; cinq formes refusées en `22023` ; le trigger qui recalcule les défauts même
+  fournis par la clé de service ; la correction refusée pendant une génération, admise sous un verrou périmé ;
+  les sept refus de l'acceptation, dont le commercial, la lectrice et l'administratrice d'un autre espace ; les
+  sept effets relus ; le recontrôle (un nœud entré au catalogue depuis la révision) ; l'**atomicité**, par un
+  trigger d'échec posé dans la transaction annulée sur la dernière écriture du geste. Onze mutations vues.
+  `0077` révisée : 18 et 19 prouvaient des contraintes que le trigger précède désormais.
+- **Défaut de `0083`, trouvé par le retrait des sondes de l'API** : supprimer le workflow créé par une
+  acceptation rendait `400` — la clé `workflow_cree_id … on delete set null` MET À JOUR la suggestion acceptée,
+  et le gel le refusait ; de même l'auteur d'une révision immuable à la suppression d'un profil. Rejoué en pgTAP
+  avant correction (69, 70, 73, 74 rouges), corrigé dans `0084` : seul passe l'effacement d'un de ces liens.
+- **`P0002` rend HTTP 500** par PostgREST (mesuré par l'API au jeton du commercial) : un refus lu comme une panne.
+  « Introuvable » se lève en `PT404`, convention `PT<statut>` de `0042`.
+- **INC-268**, étrangère : un espace qui porte un workflow ne se supprime pas (étapes → catalogue en
+  `RESTRICT`), mesuré sur l'espace du seed sans aucune suggestion.
+- Fonction `ia` : **57** unitaires (la mise en forme seule ; les défauts du flux sont ceux de la base ;
+  `sans_suite` ; reprise sans consigne ; défauts transmis à la revue), trois mutations vues. API aux jetons
+  réels : `ia-acceptation.spec.ts` **6** scénarios — correction et défauts de la base, privilège `defauts`
+  refusé (403), forme refusée (400) ; acceptation relue objet par objet ; commercial et lectrice 404 ;
+  incohérente refusée « 2 défauts » ; abandon sans effet par le commercial, puis figée ; reprise sans
+  consigne — et `ia.spec.ts` **7**, inchangés.
+- *Campagnes de T2.a et T2.b*, étape par étape (le harnais complet lance la campagne d'interface, plus longue
+  qu'une tâche de fond — mesuré en T1, oublié ici et arrêté ; les captures qu'il avait réécrites sont
+  restaurées) : SQL **78 / 3401** ; API **1103** ; unitaires **3463** — un premier passage a vu
+  `InboxSuggestion.test.tsx` (cas c) rouge sous charge, vert seul trois fois puis dans le passage complet
+  suivant : intermittence d'attente, étrangère à l'unité ; typage — le témoin des types générés voyait
+  `suggestions_ia`, `suggestions_ia_revisions` et `accepter_suggestion_ia`, que T1 n'avait pas régénérés :
+  types régénérés, témoin révisé à cinquante-huit fonctions ; `verify-scripts.sh` 114, aucune anomalie.

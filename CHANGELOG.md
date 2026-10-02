@@ -13,20 +13,30 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-097` — L'assistant IA de configuration (en cours : T1, le socle)
+### `CRM-097` — L'assistant IA de configuration (en cours : T1, le socle ; T2, créer un workflow)
 
-*Décision 617. Migration **83** à appliquer en production avec la tranche T4 ; variables `OLLAMA_*` à poser
-dans la cellule (`docs/PROD_MIGRATIONS.md` §2.3, §3).*
+*Décisions 617 et 618. Migrations **83** et **84** à appliquer en production avec la tranche T4 ; variables
+`OLLAMA_*` à poser dans la cellule (`docs/PROD_MIGRATIONS.md` §2.3, §3).*
 
 - **Les suggestions de l'IA et leur historique**, en base (migration `0083`) : réservés aux administrateurs ;
   une suggestion se corrige, se fait revoir, s'abandonne ; rien n'entre dans la configuration avant son
   acceptation, qui viendra avec T2.
 - **Le service de l'assistant** (fonction `ia`) appelle le serveur Ollama de LeLabs côté serveur — la clé ne
-  quitte jamais la pile — et contrôle chaque proposition du modèle : forme, clés normalisées, une seule étape
-  initiale, transitions et règles cohérentes ; les défauts sont conservés et nommés, jamais corrigés en
-  silence. Sans clé, l'assistant se déclare indisponible et rien d'autre n'est empêché.
+  quitte jamais la pile — et met chaque proposition du modèle en forme, clés normalisées ; ses défauts — une
+  seule étape initiale, transitions et règles cohérentes — sont relevés par la base, conservés et nommés,
+  jamais corrigés en silence. Sans clé, l'assistant se déclare indisponible et rien d'autre n'est empêché.
 - **Pour les développeurs** : un simulateur Ollama local (`ollama-simule`) sert les preuves ; le vrai serveur
   n'est appelé par aucune campagne. `IA_SERVEUR_REEL=1` active un contrôle facultatif contre lui.
+- **T2 — accepter une suggestion crée le workflow entier** (migration `0084`) : en un seul geste revalidé par la
+  base, le workflow, ses nouveaux nœuds de catalogue, ses étapes, transitions, champs — clés de choix dérivées
+  des libellés —, règles de visibilité et exigences. Une proposition qui porte des défauts n'est pas acceptée.
+- **T2 — la base juge seule les défauts d'une proposition**, qu'elle vienne du modèle ou d'une correction à la
+  main : vingt-neuf règles, écrites une fois ; une correction est refusée pendant une génération.
+- **T2 — une génération échouée se reprend** sans réécrire de consigne ; une suggestion abandonnée pendant une
+  génération n'en reçoit pas le résultat.
+- **Corrigé avant toute livraison** : un workflow créé par une acceptation, ou le profil d'un administrateur qui
+  avait décidé une suggestion, ne pouvaient plus être supprimés — le gel des suggestions décidées refusait
+  l'effacement du lien.
 
 ### Correctif du 2026-09-30 — INC-262 (décision 614)
 

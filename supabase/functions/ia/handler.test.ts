@@ -3,12 +3,16 @@
 //           première ligne aussitôt, battement, issue), §11.2 (la base autorise AVANT tout appel au
 //           modèle), §11.3 (routes et réponses), §11.4 (verrou, échec nommé) ; CLAUDE.md §20 (journaux
 //           sans contenu ni secret)
+// @verifies CRM-097 tranche T2.b — docs/SPEC-ia.md §12.1 (la fonction n'envoie aucun défaut : elle relit ceux que la
+//           base a écrits), §12.6 (issue `sans_suite` ; revue sans consigne d'une suggestion sans révision ; les
+//           défauts de la base transmis à la revue) ; décision 618
 
 import { describe, expect, it } from 'vitest'
 import { lireConfiguration } from './configuration.ts'
 import type { DependancesIa, RevisionDuModele, Suggestion } from './handler.ts'
 import { traiterIa } from './handler.ts'
 import type { Generation, Message } from './ollama.ts'
+import type { Defaut } from './proposition.ts'
 
 const ESPACE = '0c970000-0000-4000-8000-0000000000e1'
 const ID = '0c970000-0000-4000-8000-0000000000a1'
@@ -41,7 +45,9 @@ function banc(options: {
 	creation?: 'ok' | 403 | 400
 	verrou?: Suggestion | null
 	lue?: Suggestion | null
-	derniere?: unknown
+	derniere?: { proposition: unknown; defauts: Defaut[] }
+	/** Ce que la base rend à l'écriture d'une révision : le nombre de défauts qu'ELLE a calculés, ou un refus. */
+	ecriture?: { ecrite: true; defauts: number } | { ecrite: false }
 	generation?: Generation
 	/** Retient la génération jusqu'à `liberer()` : le flux devient observable en route. */
 	retenir?: boolean
@@ -62,9 +68,9 @@ function banc(options: {
 		},
 		verrouiller: async () => (options.verrou === undefined ? SUGGESTION : options.verrou),
 		lireSuggestion: async () => options.lue ?? null,
-		lireDerniereProposition: async () => options.derniere ?? null,
+		lireDerniereRevision: async () => options.derniere ?? null,
 		lireCatalogue: async () => [{ cle: 'relance', libelle: 'Relance', nature: 'open' }],
-		ecrireRevision: async (r) => (b.revisions.push(r), true),
+		ecrireRevision: async (r) => (b.revisions.push(r), options.ecriture ?? { ecrite: true, defauts: 0 }),
 		ecrireEchec: async (_id, e) => void b.echecs.push(e),
 		lireEtat: async (cible, modele) => (cible === null ? { disponible: false, raison: 'cle_absente', modele } : { disponible: true, modele }),
 		async generer(_cible, messages) {
@@ -126,10 +132,12 @@ describe('POST /ia/suggestions — le flux', () => {
 		expect(JSON.parse(reste.trim())).toEqual({ issue: 'revision', defauts: 0 })
 		expect(b.revisions).toHaveLength(1)
 		expect(b.revisions[0]).toMatchObject({
-			suggestion_id: ID, consigne: DEMANDE, defauts: [], modele: 'gemma4:e2b',
+			suggestion_id: ID, consigne: DEMANDE, modele: 'gemma4:e2b',
 			jetons_entree: 537, jetons_sortie: 668, duree_ms: 32_500, created_by: ADM,
 		})
 		expect(b.revisions[0]?.proposition.version).toBe(1)
+		// La fonction n'envoie AUCUN défaut : la base les calcule (docs/SPEC-ia.md §12.1).
+		expect(b.revisions[0]).not.toHaveProperty('defauts')
 	})
 
 	it('un battement `{"attente": true}` tient la connexion tant que la génération dure', async () => {
@@ -189,16 +197,23 @@ describe('POST /ia/suggestions — le flux', () => {
 		expect(b.revisions).toHaveLength(0)
 	})
 
-	it('une proposition incohérente est conservée AVEC ses défauts, pour la revue', async () => {
+	it('une proposition incohérente est conservée telle quelle, et le flux porte le nombre de défauts que la BASE a écrits', async () => {
 		const b = banc({
 			generation: {
 				ok: true,
 				contenu: { ...VALIDE, etapes: [{ noeud: 'contact', initiale: false }] },
 				jetonsEntree: 1, jetonsSortie: 1, dureeMs: 1,
 			},
+			ecriture: { ecrite: true, defauts: 1 },
 		})
 		expect((await lignes(await creer(b))).at(-1)).toEqual({ issue: 'revision', defauts: 1 })
-		expect(b.revisions[0]?.defauts.map((d) => d.code)).toEqual(['etape_initiale'])
+		expect(b.revisions[0]?.proposition.etapes).toEqual([{ noeud: 'contact', initiale: false }])
+	})
+
+	it('une révision que la base refuse — suggestion abandonnée pendant la génération — rend `sans_suite`', async () => {
+		const b = banc({ ecriture: { ecrite: false } })
+		expect((await lignes(await creer(b))).at(-1)).toEqual({ issue: 'sans_suite' })
+		expect(b.journal.some((l) => l.includes('generation_sans_suite'))).toBe(true)
 	})
 
 	it('AUCUN journal ni aucune ligne du flux ne porte la demande, la consigne ou la clé', async () => {
@@ -213,16 +228,34 @@ describe('POST /ia/suggestions — le flux', () => {
 })
 
 describe('POST /ia/suggestions/:id/revue', () => {
-	it('202 ; le modèle reçoit la DERNIÈRE révision — corrigée à la main — et la consigne', async () => {
+	it('202 ; le modèle reçoit la DERNIÈRE révision — corrigée à la main —, les défauts de la base, et la consigne', async () => {
 		const corrigee = { ...VALIDE, workflow: { nom: 'Refonte corrigée à la main' } }
-		const b = banc({ derniere: corrigee })
+		const b = banc({ derniere: { proposition: corrigee, defauts: [{ code: 'noeud_inutilise', chemin: 'noeuds[1]', valeurs: { cle: 'oublie' } }] } })
 		const reponse = await revoir(b)
 		expect(reponse.status).toBe(202)
 		expect((await lignes(reponse)).at(-1)).toEqual({ issue: 'revision', defauts: 0 })
 		const envoye = JSON.stringify(b.appelsModele[0])
 		expect(envoye).toContain('Refonte corrigée à la main')
 		expect(envoye).toContain('Ajoute une étape de relance')
+		expect(envoye).toContain('noeud_inutilise')
+		expect(envoye).toContain('oublie')
 		expect(b.revisions[0]?.consigne).toBe('Ajoute une étape de relance')
+	})
+
+	it('sans consigne, une suggestion SANS révision rejoue sa demande — la reprise d’une première génération échouée', async () => {
+		const b = banc()
+		const reponse = await appel(b, 'POST', `ia/suggestions/${ID}/revue`, {})
+		expect(reponse.status).toBe(202)
+		expect((await lignes(reponse)).at(-1)).toEqual({ issue: 'revision', defauts: 0 })
+		expect(JSON.stringify(b.appelsModele[0])).toContain(DEMANDE)
+		expect(b.revisions[0]?.consigne).toBe(DEMANDE)
+	})
+
+	it('sans consigne, une suggestion qui a déjà une révision est refusée (400), sans appel au modèle', async () => {
+		const b = banc({ derniere: { proposition: VALIDE, defauts: [] } })
+		const reponse = await appel(b, 'POST', `ia/suggestions/${ID}/revue`, {})
+		expect([reponse.status, await reponse.json()]).toEqual([400, { erreur: 'consigne_invalide' }])
+		expect(b.appelsModele).toHaveLength(0)
 	})
 
 	it('verrou refusé : 404 si la suggestion est illisible, 409 si elle est figée, 409 si une génération est en vol', async () => {
