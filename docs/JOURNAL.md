@@ -30840,3 +30840,9 @@ journée » une fois, vert trois fois sur trois rejoué seul : INC-269, consign�
   seed du courrier), INC-268 (suppression d'un espace qui porte un workflow), INC-269 (parcours clavier de « Ma
   journée »). Ordre retenu : de la plus petite à la seule qui touche le schéma. Chaque correction suit le §18 de
   `CLAUDE.md` : reproduire, une preuve qui rougit avant, la correction, la preuve verte, les preuves voisines.
+
+**INC-265 corrigée, le 2026-10-03 (décision 619).** Reproduite : les deux listes du gabarit passent `sort -c`, et
+`comm` les dit pourtant en désordre — sous `en_US.UTF-8`, les deux outils ne départagent pas pareil deux noms que la
+collation tient pour proches. Un contrôle relève d'abord les avertissements de `comm` (rouge : trois avertissements),
+puis tri et comparaison passent sous `LC_ALL=C` (vert, 115 vérifications). Contre-épreuves sur des noms placés là où
+les collations divergent : l'orpheline et la non documentée rougissent chacune leur contrôle.

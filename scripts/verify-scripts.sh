@@ -3,6 +3,8 @@
 # @verifies CRM-015 (docs/BACKLOG.md) — secret BuildKit npm_ca facultatif et sans fuite
 # @verifies CRM-017 (docs/BACKLOG.md) — rôle propriétaire explicite des migrations d'extension
 # @verifies CRM-090 (docs/BACKLOG.md) — le gabarit couvre aussi l'overlay de la cellule Spark
+# @verifies INC-265 (docs/INCONSISTENCY_REPORT.md, décision 619) — tri et comparaison du gabarit dans une même
+#           collation : un avertissement de `comm` est une anomalie, plus une ligne qui défile
 # @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §10, §11 — tranche T4 : le rappel des
 #           identifiants lit le mot de passe du realm de développement, seul que la pile connaisse ;
 #           tranche T6 (décision 589) : plus d'Inbucket ni de variable de GoTrue exigée
@@ -106,18 +108,30 @@ echo "1. .env.example contre les fichiers Compose"
 
 # `docker-compose.spark.yml` (CRM-090) appartient au contrat au même titre que les trois autres :
 # `SPARK_HTTP_PORT` n'est consommée que par lui.
+# TRI ET COMPARAISON DANS LA MÊME COLLATION, ET C'EST LA COLLATION C (INC-265, décision 619). Sous
+# `en_US.UTF-8`, `sort` et `comm` ne départagent pas pareil deux noms que la collation tient pour proches
+# (`APP_DOMAIN` et `APPLY_MIGRATIONS`, au tiret bas près) : `comm` jugeait triées par `sort` des listes qu'il
+# disait en désordre, et pouvait alors taire une variable manquante ou orpheline. MESURÉ le 2026-10-03.
 compose_vars=$(grep -ohE '\$\{[A-Z0-9_]+' docker-compose.yml docker-compose.dev.yml \
-	docker-compose.prod.yml docker-compose.spark.yml | sed 's/^\${//' | sort -u)
-example_vars=$(env_names "$ENV_EXAMPLE" | sort -u)
+	docker-compose.prod.yml docker-compose.spark.yml | sed 's/^\${//' | LC_ALL=C sort -u)
+example_vars=$(env_names "$ENV_EXAMPLE" | LC_ALL=C sort -u)
 
-missing=$(comm -23 <(printf '%s\n' "$compose_vars") <(printf '%s\n' "$example_vars"))
+# INC-265 (décision 619) : `comm` qui juge ses listes mal triées peut taire une différence. Ce qu'il écrit sur
+# la sortie d'erreur est RELEVÉ, jamais laissé défiler : un avertissement de tri est une anomalie.
+avertissements_comm="$WORK/avertissements-comm.txt"
+missing=$(LC_ALL=C comm -23 <(printf '%s\n' "$compose_vars") <(printf '%s\n' "$example_vars") 2>>"$avertissements_comm")
 if [ -z "$missing" ]; then
 	ok "toutes les variables des fichiers Compose sont documentées ($(printf '%s\n' "$compose_vars" | wc -l))"
 else
 	fail "variables consommées par Compose et absentes du gabarit : $(echo "$missing" | tr '\n' ' ')"
 fi
 
-orphans=$(comm -13 <(printf '%s\n' "$compose_vars") <(printf '%s\n' "$example_vars"))
+orphans=$(LC_ALL=C comm -13 <(printf '%s\n' "$compose_vars") <(printf '%s\n' "$example_vars") 2>>"$avertissements_comm")
+if [ -s "$avertissements_comm" ]; then
+	fail "comm a jugé ses listes mal triées : $(sort -u "$avertissements_comm" | tr '\n' ' ')"
+else
+	ok "les listes comparées sont triées dans la collation de la comparaison"
+fi
 unexpected=""
 for name in $orphans; do
 	echo "$ALLOWED_ORPHANS" | grep -q "^$name " || unexpected="$unexpected $name"

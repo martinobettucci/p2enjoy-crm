@@ -14906,9 +14906,13 @@ le serveur réel.
 *Arbitrage du responsable : les cinq incohérences relevées pendant `CRM-097` T1 et T2 sont corrigées maintenant,
 chacune dans son propre commit, avant `CRM-097` T3 ; la livraison en production de `CRM-097` attend T3.*
 
-- [ ] **INC-265 — `verify-scripts.sh` compare par `comm` des listes que `comm` dit mal triées.** Tri et comparaison
+- [x] **INC-265 — `verify-scripts.sh` compare par `comm` des listes que `comm` dit mal triées.** Tri et comparaison
       sous une même collation (`LC_ALL=C`) ; le contrôle doit rougir sur une variable orpheline et une variable non
       documentée glissées dans une copie, et ne plus écrire d'avertissement de tri.
+      *Vérifié le 2026-10-03* : un contrôle relève désormais tout avertissement de `comm` — rouge avant correction
+      (« file 1 is not in sorted order ») ; vert après, 115 vérifications sans anomalie. Contre-épreuves, fichiers
+      rétablis : une orpheline `APPLY_ORPHELINE_INC265` et une non documentée `APP_NON_DOCUMENTEE_INC265` —
+      noms placés là où les deux collations divergent — rougissent chacune leur contrôle.
 - [ ] **INC-266 — le renommage IMAP d'un dossier de track est refusé par intermittence, et S3 lit tout le journal
       du conteneur.** Trouver la cause du renommage d'un dossier absent et la corriger ; borner la lecture de S3 au
       passage en cours.

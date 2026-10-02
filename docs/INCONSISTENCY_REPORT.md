@@ -6996,7 +6996,9 @@ restauraient la base par le runner vident d'abord le registre de développement 
 
 ### INC-265 — `verify-scripts.sh` compare le gabarit et Compose par `comm` sur des listes que `comm` dit mal triées
 
-> **Arbitrage du responsable, 2026-10-03 (décision 619) : corriger maintenant, dans son propre commit.**
+> **CORRIGÉE le 2026-10-03 (décision 619).** Tri et comparaison sous `LC_ALL=C` ; un avertissement de `comm` est
+> désormais une anomalie du harnais. Cause MESURÉE : sous `en_US.UTF-8`, `sort -c` accepte la liste que `comm`
+> refuse — les deux outils ne départagent pas pareil `APP_DOMAIN` et `APPLY_MIGRATIONS`.
 
 *Relevée le 2026-10-02 pendant la spécification de `CRM-097`, comportement inchangé.* La section 1 de
 `scripts/verify-scripts.sh` trie les variables par `sort -u`, puis les compare par `comm -23` et `comm -13`.
