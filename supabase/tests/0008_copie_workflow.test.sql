@@ -1,3 +1,4 @@
+-- @verifies INC-268 (docs/INCONSISTENCY_REPORT.md, décision 619) — la suppression d'un workspace passe (fin d'INC-039)
 -- @verifies CRM-032 (docs/BACKLOG.md) — copie d'un workflow vers un track, lignage, divergence
 -- @verifies docs/SPEC-workflow-engine.md §4.2 (signature), §4.3 (vérifications), §4.5 (ce qui est
 --           copié), §4.6 (vue de divergence), §4.7 (privilèges), §4.8 (formulaire copié)
@@ -23,7 +24,7 @@
 --   5. le **signal de divergence** : faux tant que rien ne bouge, vrai après une modification de la
 --      source ;
 --   6. les reprises de `CRM-018` : formulaire et exigences remappés, empreinte exacte ; ainsi que
---      l'écart encore ouvert d'INC-039 sur la suppression d'un workspace.
+--      la suppression d'un workspace, écart d'INC-039 FERMÉ par INC-268 (migration `0085`, décision 619).
 --
 -- Exécution : `npm run test:sql`, `scripts/verify-copie-workflow.sh`, ou directement
 --   docker exec -i p2enjoy-db psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
@@ -707,22 +708,18 @@ select is(
 	9,
 	'INC-037 : sa copie porte les neuf champs remappés par le produit');
 
--- INC-039 : la suppression d'un workspace est refusée dès qu'un workflow instancie ses nœuds. Ce
--- n'est le défaut d'aucune des deux clés étrangères, correctes isolément ; c'est leur interaction,
--- que personne n'avait mesurée. L'assertion la provoque et la constate.
-select throws_ok(
-	$$delete from public.workspaces where id = 'c0b10000-0000-4000-8000-000000000001'$$,
-	'23503', null,
-	'INC-039 : supprimer un workspace échoue tant qu''un de ses workflows porte des étapes — le '
-	'`on delete restrict` de `workflow_steps.node_id` bloque la cascade selon l''ordre où '
-	'PostgreSQL la propage');
-
--- Et l'ordre qui fonctionne, pour que le contournement soit écrit et non deviné.
-delete from public.workflow_steps where workspace_id = 'c0b10000-0000-4000-8000-000000000001';
+-- INC-039 : la suppression d'un workspace était refusée dès qu'un workflow instanciait ses nœuds — le
+-- `on delete restrict` de `workflow_steps.node_id` bloquait la cascade selon l'ordre où PostgreSQL la propage.
+-- RÉVISÉES LE 2026-10-03 PAR INC-268 (migration `0085`, décision 619) : ces deux assertions CONSTATAIENT le défaut et
+-- écrivaient son contournement (retirer les étapes d'abord). Le défaut est corrigé — les clés sont ajournables, et
+-- la suppression d'un espace les ajourne à la validation (`0079_suppression_espace.test.sql`) — : la première
+-- constate désormais que la suppression PASSE, la seconde qu'à la validation rien ne reste orphelin.
 select lives_ok(
 	$$delete from public.workspaces where id = 'c0b10000-0000-4000-8000-000000000001'$$,
-	'INC-039 : les étapes retirées d''abord, la suppression passe — c''est l''ordre que tout '
-	'nettoyage doit suivre');
+	'INC-039, fermée par INC-268 : un workspace dont un workflow porte des étapes se supprime');
+select lives_ok(
+	$$set constraints all immediate$$,
+	'INC-268 : à la validation, aucune clé ajournée ne trouve d''orphelin');
 
 select * from finish();
 rollback;

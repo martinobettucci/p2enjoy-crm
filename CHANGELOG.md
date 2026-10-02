@@ -44,6 +44,15 @@ d'exécuter le code attendu.
   avait décidé une suggestion, ne pouvaient plus être supprimés — le gel des suggestions décidées refusait
   l'effacement du lien.
 
+### Correctif du 2026-10-03 — INC-268 (décision 619)
+
+*Migration **85**, à appliquer dans la prochaine fenêtre (`docs/PROD_MIGRATIONS.md` §3).*
+
+- **Un espace de travail se supprime en entier**, workflows, catalogue, affaires, coûts et séquences compris : la
+  suppression échouait dès qu'un workflow portait des étapes (déjà constaté par INC-039, puis contourné). Supprimer
+  directement un objet encore employé — un nœud qu'une étape vise, un budget qui porte des dépenses, un modèle
+  qu'emploie une séquence… — reste refusé, comme avant.
+
 ### Correctif du 2026-10-03 — INC-266 (décision 619)
 
 *À livrer avec la prochaine reconstruction de `mail-sync` (`docs/PROD_MIGRATIONS.md` §4).*

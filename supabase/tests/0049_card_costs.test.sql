@@ -1,3 +1,4 @@
+-- @verifies INC-268 (docs/INCONSISTENCY_REPORT.md, décision 619) — assertions 8 et 9 révisées : NO ACTION ajournable
 -- @verifies CRM-085 (docs/BACKLOG.md) — lignes de coût d'une affaire : modèle
 -- @verifies docs/SPEC-costs.md §1 (le cas qui a motivé la demande), §2.3 (card_costs),
 --           §3.1 (double condition de lecture), §3.2 (écriture), §4.4 (le réel inconnu)
@@ -166,24 +167,27 @@ select is(
 	1,
 	'CRM-085 : la RLS est activée sur card_costs — sans elle tout porteur de jeton lirait tout');
 
--- LES DEUX `on delete restrict`, MESURÉS DANS LE CATALOGUE. `r` est le code de `RESTRICT` ; `a`
--- serait `NO ACTION`, qui diffère en ce qu'il est ajournable, et `c` la cascade — celle-là même
--- qui détruirait la dépense constatée avec l'enveloppe.
+-- LES DEUX PROTECTIONS DU BUDGET ET DE L'OCCURRENCE, MESURÉES DANS LE CATALOGUE. RÉVISÉES LE 2026-10-03 PAR INC-268
+-- (migration `0085`, décision 619) : elles étaient `RESTRICT` (`r`), qui se contrôle au fil d'une cascade et
+-- bloquait la suppression d'un espace entier. Elles sont `NO ACTION` (`a`), ajournables mais contrôlées
+-- IMMÉDIATEMENT par défaut : une suppression DIRECTE d'un budget ou d'une occurrence qui portent des dépenses reste
+-- refusée en 23503 (`0079_suppression_espace.test.sql`, 4 et 5) ; seule la suppression d'un espace ajourne le
+-- contrôle à la validation. `c` serait la cascade — celle-là même qui détruirait la dépense constatée.
 select is(
-	(select confdeltype from pg_constraint
+	(select confdeltype::text || ':' || condeferrable::text || ':' || condeferred::text from pg_constraint
 	  where conrelid = 'public.card_costs'::regclass
 	    and confrelid = 'public.budgets'::regclass),
-	'r'::"char",
-	'CRM-085 : card_costs.budget_id est ON DELETE RESTRICT — un budget qui porte des dépenses est '
-	'indestructible (docs/SPEC-costs.md §3.2)');
+	'a:true:false',
+	'CRM-085, révisée par INC-268 : card_costs.budget_id refuse la suppression d''un budget qui porte des dépenses '
+	'(docs/SPEC-costs.md §3.2), contrôlée immédiatement');
 
 select is(
-	(select confdeltype from pg_constraint
+	(select confdeltype::text || ':' || condeferrable::text || ':' || condeferred::text from pg_constraint
 	  where conrelid = 'public.card_costs'::regclass
 	    and confrelid = 'public.budget_occurrences'::regclass),
-	'r'::"char",
-	'CRM-085 : card_costs.occurrence_id est ON DELETE RESTRICT — une occurrence détruite sous ses '
-	'lignes rendrait l''invariant faux sans aucune ligne interdite');
+	'a:true:false',
+	'CRM-085, révisée par INC-268 : card_costs.occurrence_id refuse la suppression d''une occurrence sous ses '
+	'lignes, contrôlée immédiatement');
 
 select is(
 	(select confdeltype from pg_constraint

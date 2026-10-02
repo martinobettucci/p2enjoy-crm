@@ -30872,3 +30872,15 @@ L'hôte n'a pas `python3-venv` : la suite `pytest` est jouée dans un conteneur 
 Playwright) : un avertissement écrit dans le journal comme le ferait un passage antérieur rougit l'ancienne S3 et
 laisse la nouvelle verte ; les secrets restent cherchés dans tout le journal. Image `mail-sync` reconstruite, trois
 campagnes de messagerie à 42, aucun avertissement dans le journal du conteneur.
+
+**INC-268 corrigée, le 2026-10-03 (décision 619) — et c'était INC-039.** La preuve d'abord : supprimer l'espace du seed
+dans une transaction annulée, une inscription de séquence ajoutée pour exercer les huit clés `RESTRICT` du schéma — rouge
+(23503 au catalogue). **Première correction réfutée par la mesure** : `NO ACTION` seul, contrôlé « en fin d'ordre », ne
+suffit pas — chaque branche d'une cascade est son propre ordre interne, et la branche « catalogue » se termine avant que
+la branche « workflows » n'ait retiré les étapes. Correction retenue : les huit clés `NO ACTION DEFERRABLE INITIALLY
+IMMEDIATE` — une suppression directe reste refusée à la fin de l'ordre — et un déclencheur `BEFORE DELETE` sur
+`workspaces` qui les ajourne à la validation. **Un défaut de ma propre preuve, trouvé en la relisant** : la transaction
+est annulée, si bien que le contrôle ajourné ne tombait jamais ; `SET CONSTRAINTS ALL IMMEDIATE` le déclenche
+maintenant. Le déclencheur retiré, la suppression rougit. `0008` constatait encore le défaut d'INC-039 et écrivait son
+contournement : révisée ; `0049` épinglait `RESTRICT` : révisée. Les spécifications gardent leurs « `on delete restrict` »
+historiques, avec une note datée et l'entrée « Migration `0085` » de `docs/SCHEMA.md`. SQL 79 / 3413, API 1103.

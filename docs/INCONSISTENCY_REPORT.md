@@ -7054,7 +7054,10 @@ l'original avant d'envoyer sa réponse —, faute de quoi le contrat « des donn
 
 ### INC-268 — un espace de travail qui porte un workflow ne peut pas être supprimé
 
-> **Arbitrage du responsable, 2026-10-03 (décision 619) : corriger maintenant, dans son propre commit.**
+> **CORRIGÉE le 2026-10-03 (décision 619), et c'était INC-039 retrouvée** — constatée en août, contournée (retirer les
+> étapes d'abord), jamais corrigée. Migration `0085` : huit clés `NO ACTION DEFERRABLE INITIALLY IMMEDIATE`, et un
+> déclencheur `BEFORE DELETE` sur `workspaces` qui ajourne leur contrôle à la validation. `NO ACTION` seul ne suffisait
+> pas — mesuré. Une suppression directe reste refusée en `23503`.
 
 *Relevée le 2026-10-02 pendant `CRM-097` T2.a, comportement inchangé.* En écrivant une preuve de suppression en
 cascade, la suppression d'un espace qui porte un workflow est refusée : `23503`, « update or delete on table

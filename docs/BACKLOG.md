@@ -14928,8 +14928,14 @@ chacune dans son propre commit, avant `CRM-097` T3 ; la livraison en production 
       90 ms avant l'original) ; deux lots d'envoi, l'original relevé avant sa réponse. `./resetMe.sh --yes` : l'original
       reçu une seconde avant sa réponse ; second passage convergent ; `groupement-fils.spec.ts` 18 sur 18 (six
       scénarios, trois fois) ; messagerie **42**.
-- [ ] **INC-268 — un espace de travail qui porte un workflow ne se supprime pas.** Migration ; preuve pgTAP qui
+- [x] **INC-268 — un espace de travail qui porte un workflow ne se supprime pas.** Migration ; preuve pgTAP qui
       supprime un espace complet (workflows, étapes, catalogue, affaires) et rougit avant correction.
+      *Vérifié le 2026-10-03* : `0079_suppression_espace.test.sql` **12** assertions, sur l'espace du seed et une
+      inscription de séquence — rouge avant (23503 au catalogue). Première correction, `NO ACTION` seul : RÉFUTÉE par
+      la mesure (chaque branche de cascade est son propre ordre). Migration `0085` : huit clés `NO ACTION
+      DEFERRABLE INITIALLY IMMEDIATE` et un déclencheur sur `workspaces` qui les ajourne ; les six protections d'une
+      suppression directe tiennent ; le déclencheur retiré, la suppression rougit. `0008` (fin d'INC-039) et `0049`
+      révisées à nombre constant. SQL **79 / 3413**, API **1103**.
 - [~] **INC-269 — le parcours clavier de « Ma journée » focalise une ligne avant la nouvelle lecture.** La preuve
       attend la lecture de la portée nouvelle ; verte rejouée plusieurs fois.
       *2026-10-03, en observation* : l'hypothèse de l'énoncé est RÉFUTÉE — lecture retardée de 1,5 s, processeur

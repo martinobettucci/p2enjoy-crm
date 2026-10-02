@@ -1,5 +1,10 @@
 # Budgets et coûts
 
+> **Révision du 2026-10-03 — INC-268, migration `0085` (décision 619).** Les clés que ce document dit « `on delete
+> restrict` » sont désormais `on delete no action`, ajournables mais contrôlées immédiatement : une suppression
+> directe de l'objet visé reste refusée en `23503` (PostgREST : `409`), et seule la suppression d'un espace entier
+> ajourne le contrôle à sa validation (`docs/SCHEMA.md`, « Migration `0085` »).
+
 Spécification écrite **avant tout code**, sur décision du responsable du 2026-08-19
 (`docs/JOURNAL.md`, décision 432). Unités porteuses : `CRM-084` (budgets et occurrences),
 `CRM-085` (lignes de coût d'une affaire), `CRM-086` (écrans de coûts).

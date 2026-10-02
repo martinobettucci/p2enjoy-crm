@@ -906,8 +906,8 @@ qu'une réponse arrive » —, et la mesure du §12.1 n'a fait que confirmer ce 
 |---|---|---|
 | `id`, `workspace_id` | `uuid` | |
 | `card_id` | `uuid` | FK composite `(card_id, workspace_id)` → `cards` **`on delete cascade`** |
-| `sequence_id` | `uuid` | FK composite → `mail_sequences` **`on delete restrict`** |
-| `identity_id` | `uuid` | FK → `mail_outbound_identities` **`on delete restrict`** — la séquence n'en porte aucune (§11.2), l'armement la choisit |
+| `sequence_id` | `uuid` | FK composite → `mail_sequences` **`on delete no action`**, ajournable — `restrict` jusqu'à la migration 85 (INC-268) |
+| `identity_id` | `uuid` | FK → `mail_outbound_identities` **`on delete no action`**, ajournable (INC-268) — la séquence n'en porte aucune (§11.2), l'armement la choisit |
 | `armed_by` | `uuid` | FK `profiles` `on delete set null`. **Trace, jamais un droit** |
 | `armed_at` | `timestamptz` | ancre du **premier palier** ET borne de la détection de réponse |
 | `last_position`, `last_sent_at` | `integer`, `timestamptz` | dernier palier expédié et son instant. **Nuls ensemble ou renseignés ensemble** (`card_sequence_enrollments_progression_coherente`) : une position sans son instant ne saurait pas quand le palier suivant est dû |
@@ -1054,7 +1054,7 @@ unique seul. `mail_templates` a reçu le même index par la migration 59, pour l
 | `sequence_id` | `uuid` | FK `mail_sequences` `ON DELETE CASCADE` — un palier n'a aucune existence hors de sa séquence |
 | `position` | `integer` | non nulle, 1 à 50 ; **unique par séquence**, contrainte `DEFERRABLE INITIALLY IMMEDIATE` |
 | `delai_jours` | `integer` | non nul, 1 à 365 — **jours depuis le palier PRÉCÉDENT**, le premier depuis l'armement (§11.4) |
-| `template_id` | `uuid` | FK `mail_templates` **`ON DELETE RESTRICT`**, annoncée par le §2.2 quatre tranches avant d'être posée. **Non unique** : un même modèle sert plusieurs paliers |
+| `template_id` | `uuid` | FK `mail_templates` **`ON DELETE NO ACTION`**, ajournable depuis la migration 85 (INC-268) — `RESTRICT` auparavant —, annoncée par le §2.2 quatre tranches avant d'être posée. **Non unique** : un même modèle sert plusieurs paliers |
 | `created_at`, `updated_at` | `timestamptz` | `updated_at` par `app.set_updated_at()` |
 
 **Deux clés étrangères COMPOSITES** interdisent en base la divergence de workspace — vers la
@@ -1376,8 +1376,8 @@ automatique**, jamais — `SPEC-costs` §2.2.
 | Colonne | Type | Règle |
 |---|---|---|
 | `card_id` | `uuid` | non nul, `on delete cascade` |
-| `budget_id` | `uuid` | non nul, `on delete restrict` — un budget ne se supprime pas, il se clôture |
-| `occurrence_id` | `uuid` | **nul si le budget n'est pas récurrent, non nul s'il l'est** — trigger ; `on delete restrict` |
+| `budget_id` | `uuid` | non nul, `on delete no action`, ajournable (INC-268 ; `restrict` auparavant) — un budget ne se supprime pas, il se clôture |
+| `occurrence_id` | `uuid` | **nul si le budget n'est pas récurrent, non nul s'il l'est** — trigger ; `on delete no action`, ajournable (INC-268) |
 | `label` | `text` | non vide |
 | `estimated_cost` | `numeric(14,2)` | **non nul** |
 | `actual_cost` | `numeric(14,2)` | **nullable — nul n'est pas zéro** |
@@ -1788,6 +1788,17 @@ personnelle par conception : une proposition est une structure de configuration.
   laissent passer l'**effacement** des liens `on delete set null` — workflow créé, version de retour, auteur,
   décideur — et rien d'autre : sans cela, un workflow créé par une acceptation ou un profil ne se supprimaient
   plus (défaut de `0083`, décision 618).
+
+### Migration `0085` — supprimer un espace entier (INC-268, décision 619, écrite le 2026-10-03)
+
+Huit clés étrangères étaient `ON DELETE RESTRICT` : `workflow_steps → workflow_nodes_catalog`, `channels → workflows`,
+`card_costs → budgets` et `→ budget_occurrences`, `mail_sequence_steps → mail_templates` (deux clés),
+`card_sequence_enrollments → mail_sequences` et `→ mail_outbound_identities`. Contrôlé au fil de la cascade, `RESTRICT`
+bloquait la suppression d'un espace qui porte un workflow. Elles sont désormais **`ON DELETE NO ACTION DEFERRABLE
+INITIALLY IMMEDIATE`** : une suppression **directe** de l'objet visé reste refusée en `23503`, à la fin de l'ordre ; un
+déclencheur `BEFORE DELETE` sur `workspaces` (`app.workspaces_avant_suppression`) ajourne leur contrôle à la validation
+de la seule transaction qui supprime un espace, quand la cascade a tout emporté. Les mentions « `on delete restrict` »
+des spécifications antérieures gardent leur sens — le refus d'une suppression directe — et s'entendent ainsi.
 
 ## 10. Index principaux
 

@@ -1,5 +1,10 @@
 # Spécification — modèles d'emails, signatures, séquences de relance
 
+> **Révision du 2026-10-03 — INC-268, migration `0085` (décision 619).** Les clés que ce document dit « `on delete
+> restrict` » sont désormais `on delete no action`, ajournables mais contrôlées immédiatement : une suppression
+> directe de l'objet visé reste refusée en `23503` (PostgREST : `409`), et seule la suppression d'un espace entier
+> ajourne le contrôle à sa validation (`docs/SCHEMA.md`, « Migration `0085` »).
+
 Contrat exécutable de `CRM-063` (`docs/BACKLOG.md`, chunk 5).
 
 - Unité de backlog : `CRM-063`.
