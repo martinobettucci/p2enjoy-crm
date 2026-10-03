@@ -5125,3 +5125,18 @@ de gestes, confirmation d'abandon, historique, focus et annonces. Seuls les éca
   de retour, qu'une restauration rend en un geste (§5.15, versions). L'annonce de succès **nomme** ce point de retour
   — « Point de retour : version 4 » —, pour qu'on sache où revenir.
 - **Aucune couleur, aucun jeton, aucune icône nouvelle** : `Minus` sert déjà la comparaison de versions (§5.15).
+- **Précisions écrites le 2026-10-03, avant le code de T3.c :**
+  - **Le nom du workflow** paraît dans le différentiel, en tête, quand la cible le change — « Modifié », « avant →
+    après » : l'acceptation renomme (`docs/SPEC-ia.md` §13.1), et un renommage tu serait un effet caché.
+  - **Un attribut modifié se nomme par un MOT traduit** — « Libellé », « Étape initiale », « Motif exigé »,
+    « Visibilité », « Rang », « Choix », « Devise », « Aide » —, avec ses deux valeurs, la forme « avant → après »
+    du §5.15 ; un booléen s'écrit « oui » / « non ». Une étape n'est « Modifiée » de rang que si son rang PARMI LES
+    ÉTAPES CONSERVÉES change : une étape insérée ne fait pas paraître déplacées toutes celles qui la suivent.
+  - **« Accepter et faire évoluer le workflow »** remplace « Accepter et créer le workflow » pour une modification :
+    le libellé nomme ce que le geste fait (§5.52, l'ordre de la barre est inchangé).
+  - **Le type d'un champ CONSERVÉ se rend en texte**, jamais en liste : il ne se modifie pas (`type_non_modifiable`),
+    et ce qui ne se corrige pas est un texte (§5.15, §5.52). Un champ ajouté garde sa liste.
+  - **Un libellé de transition vide porte l'indication « Libellé de l'étape d'arrivée »** en texte d'exemple : pour
+    une modification, c'est ce que le vide veut dire (`docs/SPEC-ia.md` §13.1), comme l'écrit déjà l'éditeur (§5.15).
+  - **Après l'acceptation**, le panneau se ferme, le graphe et le bloc des versions sont relus, et le focus revient
+    à la commande « Suggérer » qui a ouvert le panneau ; l'annonce nomme le point de retour.
