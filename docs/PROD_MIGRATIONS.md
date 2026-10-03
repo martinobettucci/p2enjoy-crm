@@ -33,9 +33,10 @@ source d'identité.
 | Élément | État |
 |---|---|
 | Environnement de production | Cellule Spark `crm` (`docs/SPEC-deploiement-spark.md`), assemblage à trois fichiers : neuf services sains et deux conteneurs à usage unique (runner, bucket) ; GoTrue retiré le 2026-09-24 |
-| Schéma appliqué | Les **82 migrations** du dépôt : 1 à 73 par `--migrate --premier-deploiement` sur une base mesurée vierge (2026-09-23), 74 à 79 par la reprise `CRM-092` (2026-09-24), 80 par `CRM-094` (2026-09-28), 81 par `CRM-095` (2026-09-29), 82 par `CRM-096` (2026-10-01). **Le registre `app.migrations_appliquees` le dit** depuis le 2026-10-01 : 82 lignes inscrites en `adoption`, empreintes égales à celles du dépôt livré |
-| Dernière migration appliquée | `0082_registre_migrations.sql` — relue en base le 2026-10-01 : le registre existe, 82 lignes ; par la route publique et la clé anonyme, `PGRST205` sur le schéma exposé et `PGRST106` sur le schéma `app` — introuvable par l'API |
-| Version déployée | La révision inscrite dans `/srv/crm/REVISION` — celle que `scripts/spark/verifier.sh` compare au `HEAD` du poste ; **`2ff0c703`** le 2026-10-01 (`CRM-096`, migration 82 ; après INC-262 et INC-263 — `09d3abcc` —, `CRM-095` et INC-258 à INC-261 — `796aa3c1`, migration 81 —, `CRM-094`, INC-254 et INC-255) |
+| Schéma appliqué | Les **86 migrations** du dépôt : 1 à 73 par `--migrate --premier-deploiement` sur une base mesurée vierge (2026-09-23), 74 à 79 par la reprise `CRM-092` (2026-09-24), 80 par `CRM-094` (2026-09-28), 81 par `CRM-095` (2026-09-29), 82 par `CRM-096` (2026-10-01), 83 à 86 par `CRM-097` T4 (2026-10-03). **Le registre `app.migrations_appliquees` le dit** : 86 lignes — les 82 premières en `adoption`, les 83 à 86 en `application` —, empreintes égales à celles du dépôt livré |
+| Dernière migration appliquée | `0086_suggestions_ia_modification.sql` — relue en base le 2026-10-03, en lecture seule : 86 lignes au registre, les quatre fonctions de `CRM-097` présentes, la clé `workflow_steps_workflow_id_node_id_key` ajournable (INC-270) |
+| Version déployée | La révision inscrite dans `/srv/crm/REVISION` — celle que `scripts/spark/verifier.sh` compare au `HEAD` du poste ; **`38237656`** le 2026-10-03 (`CRM-097` T1 à T3, INC-266, INC-268, INC-270, migrations 83 à 86 ; après `2ff0c703` — `CRM-096`, migration 82 —, INC-262 et INC-263 — `09d3abcc` —, `CRM-095` et INC-258 à INC-261 — `796aa3c1`, migration 81 —, `CRM-094`, INC-254 et INC-255) |
+| Assistant IA | Variables `OLLAMA_HOST`, `OLLAMA_CONTEXT_LENGTH` et secret `OLLAMA_API_KEY` **présents** dans la cellule et remis à `functions` (relevé du 2026-10-03, présence seule) ; `OLLAMA_MODEL` absent, d'où le défaut `gemma4:e2b` de Compose. Le serveur LLM **refuse** la clé : HTTP 403 « origine non autorisée pour cette clé » — la plage d'adresses de la cellule reste à autoriser par LeLabs (§2.9, geste 6) |
 | Données | Un espace, « P2Enjoy CRM » (`crm`), réamorcé par la reprise `CRM-092`, et les données qu'y écrit le responsable — relevé du 2026-10-01, en lecture seule : 2 profils, 2 workflows dont celui de départ, 8 affaires ; aucun seed. La ligne `auth.users` de l'ancien compte invité reste, inerte |
 | Route publique | `crm.lelabs.tech 8080 tls`, active : `https://crm.lelabs.tech`, certificat Let's Encrypt présenté par la Forge (décision 576) |
 | Client OIDC `lelabs-crm` | Déclaré et créé au realm le 2026-09-23 à 16:08:44 (`docs/SSO-client-lelabs-crm.md`), **supprimé du realm avant le déploiement de `CRM-092`** : sonde `400` « Client non trouvé » le 2026-09-24 à 18 h, retrait confirmé par l'instantané de reprise du dépôt du SSO (décision 598). Sans effet sur le service : aucune connexion n'avait encore été faite, elle attend `CRM-092` (§3) |
@@ -269,7 +270,7 @@ fonction absente.
 **Retour arrière** : la 81 se retire par sa ligne du §3.2, avec la révision précédente de la webapp ; les
 affaires créées restent, ce sont des données.
 
-### 2.9 `CRM-097` — l'assistant IA, avec INC-266, INC-268 et INC-270 (EN ATTENTE)
+### 2.9 `CRM-097` — l'assistant IA, avec INC-266, INC-268 et INC-270 (EXÉCUTÉE le 2026-10-03 jusqu'au geste 4 ; gestes 6 et 7 en attente)
 
 `docs/SPEC-ia.md` §11 à §13, `docs/SPEC-deploiement-spark.md` §4.3 et §4.4 ; décisions 617 à 620. Quatre
 migrations — **83 à 86**, appliquées d'une traite par le registre (§3.1) —, la fonction `ia`, la webapp de T2 et T3,
@@ -287,42 +288,29 @@ par le `proposer.sh` livré.
 | 6 | Importer les trois variables, **saisir `OLLAMA_API_KEY`**, et faire autoriser la plage d'adresses de la cellule par le serveur LLM de LeLabs | propriétaire de la cellule | console du Spark ; LeLabs |
 | 7 | Recréer `functions` avec la clé, puis constater `GET /functions/v1/ia/etat` → `disponible` | cellule, puis poste en lecture seule | `./runProd.sh --spark` (Compose recrée ce dont l'environnement change) |
 
+**État au 2026-10-03.** Gestes 1 à 4 exécutés (§8). **Geste 5 sans objet** : la cellule portait déjà `OLLAMA_HOST`,
+`OLLAMA_CONTEXT_LENGTH` et une clé `OLLAMA_API_KEY` non vide — relevé de présence seule ; `OLLAMA_MODEL`, absent, prend
+le défaut `gemma4:e2b` de Compose, la valeur attendue. **Geste 6 en attente** : le serveur LLM répond **403 « origine
+non autorisée pour cette clé »** à une sonde faite depuis la cellule, la clé jamais affichée — c'est la plage d'adresses
+de la cellule que LeLabs doit autoriser. **Geste 7** suivra : aucune recréation n'est nécessaire, la clé étant déjà
+remise au conteneur ; il reste à constater `disponible`, puis une génération par le responsable.
+
 **Retour arrière** : par l'instantané si la fenêtre échoue (§6) ; après la fenêtre, chaque migration se retire par sa
 ligne du §3.2, dans l'ordre inverse — la 86 d'abord. Les workflows créés ou modifiés par des acceptations restent :
 ce sont des configurations, et chaque modification a son point de retour.
 
 ## 3. Migrations en attente
 
-**Aucune migration en attente depuis le 2026-10-01.** Baseline de production : la migration **82**
-(`CRM-096`, décision 616), appliquée le 2026-10-01 par une fenêtre avec instantané (§8) ; la 81 (`CRM-095`)
-l'avait été le 2026-09-29 (§2.8), la 80 (`CRM-094`) le 2026-09-28 (§2.7), les six migrations de `CRM-092`
-(74 à 79) le 2026-09-24 par la reprise (§2.5). **Le registre de production fait désormais foi** : la
-prochaine fenêtre n'appliquera que les fichiers qui n'y sont pas.
+**Aucune migration en attente depuis le 2026-10-03.** Baseline de production : la migration **86**
+(`CRM-097` T3, décision 620), appliquée avec les 83 à 85 le 2026-10-03 par une fenêtre avec instantané (§2.9, §8) ;
+la 82 (`CRM-096`) l'avait été le 2026-10-01, la 81 (`CRM-095`) le 2026-09-29 (§2.8), la 80 (`CRM-094`) le 2026-09-28
+(§2.7), les six migrations de `CRM-092` (74 à 79) le 2026-09-24 par la reprise (§2.5). **Le registre de production
+fait foi** : la prochaine fenêtre n'appliquera que les fichiers qui n'y sont pas.
 
 **`CRM-096`, le registre des migrations** (décision 616, `docs/DAT.md` §3.2 bis) : livré le 2026-10-01.
 Sa fenêtre était une **adoption** — tout le répertoire rejoué une dernière fois, puis les 82 fichiers
-inscrits. Les fenêtres suivantes n'appliquent plus que les fichiers absents du registre (§3.1).
-
-**En attente : la migration 83** (`CRM-097`, l'assistant IA, décision 617) — les tables `suggestions_ia` et
-`suggestions_ia_revisions` (`docs/SCHEMA.md` §9 ter), écrite et prouvée en développement par T1. Sa livraison
-(T4) demandera aussi les quatre variables `OLLAMA_*` dans la cellule, transmises au service `functions`
-(sans elles, l'assistant se déclare indisponible et rien d'autre ne change), et l'autorisation de la plage
-d'adresses de la cellule par le serveur LLM. `IA_SIMULATEUR_HOST` n'existe pas en production.
-
-**En attente : la migration 85** (INC-268, décision 619) — un espace de travail entier se supprime : huit clés
-étrangères ajournables et un déclencheur sur `workspaces` (`docs/SCHEMA.md`, « Migration `0085` »). Indépendante de 83
-et 84 ; elle sera livrée dans la même fenêtre.
-
-**En attente : la migration 84** (`CRM-097` T2, décision 618) — le contrôle des propositions en base et le geste
-`public.accepter_suggestion_ia` (`docs/SCHEMA.md` §9 ter). Elle suit la 83 dans la même fenêtre, et la
-fonction `ia` révisée par T2 doit être déployée avec elle : l'ancienne écrirait encore `defauts`, colonne
-qu'elle ne peut plus fournir que par la clé de service, dont la valeur serait de toute façon recalculée.
-
-**En attente : la migration 86** (`CRM-097` T3, décision 620) — suggérer dans un workflow existant : le cœur de la
-restauration partagé avec l'acceptation, la composition vivante et l'occupation, les cinq codes d'une modification
-(`docs/SCHEMA.md`, « Migration `0086` »). Elle suit la 84 dans la même fenêtre ; la fonction `ia` révisée par T3 et
-la webapp de T3 se déploient avec elle. **Elle corrige aussi INC-270**, un défaut de la restauration EN PRODUCTION :
-remapper des affaires vers une étape que la restauration rétablit échoue aujourd'hui en `409`.
+inscrits. Les fenêtres suivantes n'appliquent plus que les fichiers absents du registre (§3.1) — mesuré le
+2026-10-03 : « 4 fichier(s) appliqué(s) avec succès », les 83 à 86 et elles seules.
 
 ### 3.1 Procédure nominale — la fenêtre de maintenance (`CRM-087`, livrée)
 
@@ -836,34 +824,10 @@ attendue à ce stade : `select count(*) from pg_policies where schemaname = 'pub
 | `realtime` dans la cellule | À chaque montée de version de Realtime : reconstruire l'image dérivée, que `scripts/spark/livrer.sh` recharge (décision 571) |
 | ~~`auth`~~, ~~`auth-templates`~~ | **Retirés de la pile par `CRM-092` T6** (décision 589). À la reprise : les arrêter et les supprimer explicitement (`docker rm -f p2enjoy-auth p2enjoy-auth-templates`) — `./runProd.sh` ne retire aucun orphelin —, après l'application de la migration 77 ; `scripts/spark/verifier.sh` contrôle qu'aucun ne subsiste. Caddy répond lui-même 404 sur `/auth/v1/*` |
 
-**Opération en attente du prochain déploiement de production — reconstruire `mail-sync` pour qu'un compte
-ne soit plus relevé deux fois à la fois (INC-266, décision 619).** La veille et la route `/poll` relevaient le même
-compte en même temps ; après un renommage de track, la seconde retentait le renommage déjà fait et journalisait à
-tort `folder_rename_refused` — le dossier était bien renommé. Un verrou par compte les sérialise. **Aucune migration, aucune variable** ; la livraison reconstruit l'image comme pour
-tout changement du service (`docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
-mail-sync`, ou `scripts/spark/livrer.sh` dans la cellule). Vérification : `docker logs` du service ne porte aucun
-`folder_rename_refused` après un renommage de track.
-
-**Opération en attente du prochain déploiement de production — redéployer `mail-sync` pour que le
-courrier reçu se groupe en fils (`CRM-081` tranche 2 f).** Le service persiste désormais la chaîne
-`References` d'un message entrant dans `mail_messages.references_ids`, ce qu'il omettait depuis
-`CRM-058` : la colonne retombait sur son `default '{}'`, et tout message reçu était sa propre racine
-au sens de `app.cle_fil` — aucun fil ne pouvait donc se former à partir de courrier entrant.
-
-- **Aucune migration, aucune variable d'environnement nouvelle** : la colonne existe depuis la
-  migration 30, et l'écriture emprunte le chemin déjà autorisé à la clé de service.
-- **Commande** : `docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
-  mail-sync`.
-- **Aucune reprise rétroactive n'est prévue, et c'est une décision** (`docs/SPEC-cards.md`
-  §16.16.2) : les messages ingérés avant ce déploiement gardent `references_ids` = `[]` et restent
-  chacun sur leur propre ligne dans l'inbox. Les relire supposerait de redemander leurs en-têtes à
-  l'IMAP, que rien ne conserve en base.
-- **Vérification après déploiement** : faire arriver un message portant un en-tête `References`,
-  puis contrôler que sa ligne le porte —
-  `select references_ids from public.mail_messages order by received_at desc limit 1;` — et que
-  l'inbox rend une seule ligne portant son compte pour la conversation.
-- **Retour arrière** : redéployer l'image précédente. Les lignes déjà écrites avec leur chaîne la
-  conservent ; elles ne gênent rien, la colonne existant depuis la migration 30.
+**Fait le 2026-10-03 — `mail-sync` reconstruit dans la cellule** (§2.9, geste 3) : son image datait du premier
+déploiement (2026-09-23), `up -d` ne reconstruisant jamais une image présente. Elle porte le verrou par compte d'INC-266
+(constaté dans le conteneur) et l'écriture de `references_ids` de `CRM-081` tranche 2 f, que l'image du 2026-09-23
+portait déjà. **Toute modification de `mail-sync` se livre donc par une reconstruction explicite**, la commande du geste 3.
 
 **Opération en attente du prochain déploiement de production — activer les fonctions edge.** Tirer
 `public.ecr.aws/supabase/edge-runtime:v1.74.2`, déployer le répertoire
@@ -1273,3 +1237,21 @@ publique sert le module d'objectifs de ce build (`200`). La baseline reste **81*
   initiale de leur workflow — deux par l'administrateur de l'espace, six par un second profil **sans ligne
   d'appartenance** à l'espace — **confirmé par le responsable le 2026-10-01** : les deux profils sont des
   administrateurs du SSO, que la règle du domaine (décision 597) fait administrateurs par leur jeton.
+
+### `CRM-097` T4 — l'assistant IA, INC-266, INC-268 et INC-270, 2026-10-03 (décisions 617 à 620)
+
+- **Geste 1** : instantané de VM pris et vérifié par le responsable, confirmé le 2026-10-03 avant la fenêtre.
+- **Geste 2** : `scripts/spark/livrer.sh -- --migrate --instantane-verifie` par les IP : révision **`38237656`**, image
+  Realtime identique, « Migrations appliquées avec succès ». Journal du runner : application de `0083` à `0086`, « 4
+  fichier(s) appliqué(s) avec succès », cache de PostgREST rechargé. Puis `./runProd.sh --spark` dans la cellule : onze
+  conteneurs sains ou terminés en 0.
+- **Geste 3** : `mail-sync` reconstruit (`up -d --build --no-deps --wait mail-sync`) — image du 2026-09-23 remplacée,
+  service sain, `_verrou_du_compte` présent dans le module d'ingestion.
+- **Geste 4** : `verifier.sh` — **26 contrôles, aucune anomalie**. Registre relu en lecture seule : **86 lignes** ; les
+  empreintes de `0083` à `0086` égales à celles du dépôt (`sha256sum`), en mode `application` ; les fonctions
+  `proposition_du_workflow`, `occupation_du_workflow`, `appliquer_composition` et `accepter_suggestion_ia` présentes ;
+  `workflow_steps_workflow_id_node_id_key` ajournable.
+- **Gestes 5 et 6** : la cellule portait déjà les variables et la clé (présence seule). `GET /functions/v1/ia/etat`,
+  par la route publique avec la clé anonyme : `{"disponible":false,"raison":"cle_refusee","modele":"gemma4:e2b"}` ; une
+  sonde de `/api/tags` depuis la cellule rend **403 « origine non autorisée pour cette clé »** — la plage d'adresses de la
+  cellule reste à autoriser par LeLabs. **En attente du responsable.**

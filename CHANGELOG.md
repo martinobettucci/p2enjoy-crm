@@ -15,8 +15,10 @@ d'exécuter le code attendu.
 
 ### `CRM-097` — L'assistant IA de configuration (en cours : T1, le socle ; T2, créer un workflow ; T3, faire évoluer un workflow)
 
-*Décisions 617, 618 et 620. Migrations **83**, **84** et **86** à appliquer en production avec la tranche T4 ; variables
-`OLLAMA_*` à poser dans la cellule (`docs/PROD_MIGRATIONS.md` §2.3, §3).*
+*Décisions 617, 618 et 620. **Livré en production le 2026-10-03** (`38237656`, migrations 83 à 86 appliquées par une
+fenêtre avec instantané, fonction `ia` et webapp) ; **publié quand l'assistant répondra en production** : le serveur
+LLM de LeLabs refuse encore la plage d'adresses de la cellule (« origine non autorisée pour cette clé », mesuré), puis
+une génération sera constatée par le responsable (`docs/PROD_MIGRATIONS.md` §2.9, gestes 6 et 7).*
 
 - **Les suggestions de l'IA et leur historique**, en base (migration `0083`) : réservés aux administrateurs ;
   une suggestion se corrige, se fait revoir, s'abandonne ; rien n'entre dans la configuration avant son
@@ -58,33 +60,6 @@ d'exécuter le code attendu.
   devinée. Après l'acceptation, le workflow et ses versions sont relus et l'annonce nomme le point de retour.
   Le jeu de démonstration porte une suggestion de ce genre sur le workflow par défaut, à relire.
 
-### Correctif du 2026-10-03 — INC-270 (décision 620)
-
-*Migration **86**, à appliquer dans la prochaine fenêtre (`docs/PROD_MIGRATIONS.md` §3).*
-
-- **Restaurer une version peut renvoyer des affaires vers une étape que la restauration rétablit.** Choisir, pour
-  les affaires d'une étape retirée, une étape que la version fait revenir — l'écran de restauration le propose —
-  échouait avec un refus du serveur ; seules les étapes encore présentes pouvaient être choisies. C'est aussi ce qui
-  permet d'annuler l'acceptation d'une suggestion de l'IA qui a retiré une étape occupée.
-
-### Correctif du 2026-10-03 — INC-268 (décision 619)
-
-*Migration **85**, à appliquer dans la prochaine fenêtre (`docs/PROD_MIGRATIONS.md` §3).*
-
-- **Un espace de travail se supprime en entier**, workflows, catalogue, affaires, coûts et séquences compris : la
-  suppression échouait dès qu'un workflow portait des étapes (déjà constaté par INC-039, puis contourné). Supprimer
-  directement un objet encore employé — un nœud qu'une étape vise, un budget qui porte des dépenses, un modèle
-  qu'emploie une séquence… — reste refusé, comme avant.
-
-### Correctif du 2026-10-03 — INC-266 (décision 619)
-
-*À livrer avec la prochaine reconstruction de `mail-sync` (`docs/PROD_MIGRATIONS.md` §4).*
-
-- **Une boîte de réception n'est plus relevée deux fois à la fois.** La relève de fond et une relève demandée
-  pouvaient traiter la même boîte en même temps : après le renommage d'un track, la seconde retentait le renommage
-  déjà fait et écrivait à tort un refus (`folder_rename_refused`) dans le journal du service — le dossier, lui, était
-  bien renommé. Les relèves d'une même boîte se suivent désormais.
-
 ### Correctif du 2026-09-30 — INC-262 (décision 614)
 
 *Livré en production le 2026-09-30 (`09d3abcc`, webapp seule) ; publié quand le responsable aura constaté
@@ -101,6 +76,43 @@ la pose d'un bloc sur son canevas.*
   cliqué.
 
 ## [Publié]
+
+### Déployé en production, 2026-10-03
+
+Cellule Spark `crm`, révision `38237656`, fenêtre de migration après l'instantané de VM confirmé par le responsable :
+le registre applique les seules migrations **83 à 86** — « 4 fichier(s) appliqué(s) avec succès » —, puis
+`./runProd.sh --spark` et la reconstruction explicite de `mail-sync`. **Vérifié** : `verifier.sh` 26 contrôles sans
+anomalie ; registre relu en lecture seule — **86** lignes, les empreintes des 83 à 86 égales à celles du dépôt livré ;
+les fonctions de `CRM-097` présentes, la clé `workflow_steps_workflow_id_node_id_key` ajournable (INC-270) ; l'image de
+`mail-sync` porte le verrou par compte (INC-266). La fonction `ia` répond par la route publique ; l'assistant lui-même
+n'est pas encore publié (section « Non publié »).
+
+#### Correctif du 2026-10-03 — INC-270 (décision 620)
+
+*Migration **86**, appliquée le 2026-10-03 avec celles de `CRM-097`.*
+
+- **Restaurer une version peut renvoyer des affaires vers une étape que la restauration rétablit.** Choisir, pour
+  les affaires d'une étape retirée, une étape que la version fait revenir — l'écran de restauration le propose —
+  échouait avec un refus du serveur ; seules les étapes encore présentes pouvaient être choisies. C'est aussi ce qui
+  permet d'annuler l'acceptation d'une suggestion de l'IA qui a retiré une étape occupée.
+
+#### Correctif du 2026-10-03 — INC-268 (décision 619)
+
+*Migration **85**, appliquée le 2026-10-03.*
+
+- **Un espace de travail se supprime en entier**, workflows, catalogue, affaires, coûts et séquences compris : la
+  suppression échouait dès qu'un workflow portait des étapes (déjà constaté par INC-039, puis contourné). Supprimer
+  directement un objet encore employé — un nœud qu'une étape vise, un budget qui porte des dépenses, un modèle
+  qu'emploie une séquence… — reste refusé, comme avant.
+
+#### Correctif du 2026-10-03 — INC-266 (décision 619)
+
+*`mail-sync` reconstruit dans la cellule le 2026-10-03 : son image datait du 2026-09-23.*
+
+- **Une boîte de réception n'est plus relevée deux fois à la fois.** La relève de fond et une relève demandée
+  pouvaient traiter la même boîte en même temps : après le renommage d'un track, la seconde retentait le renommage
+  déjà fait et écrivait à tort un refus (`folder_rename_refused`) dans le journal du service — le dossier, lui, était
+  bien renommé. Les relèves d'une même boîte se suivent désormais.
 
 ### Déployé en production, 2026-10-01
 

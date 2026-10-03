@@ -14934,6 +14934,10 @@ le serveur réel.
       la cellule autorisée par le serveur LLM, migrations `0083` à `0086` en fenêtre avec instantané, constat.
       Procédure : `docs/PROD_MIGRATIONS.md` §2.9 (sept gestes) ; `proposer.sh --assistant-ia` livré pour le geste 5,
       *vérifié le 2026-10-03* par `verify-spark.sh` (98 vérifications, sept nouvelles).
+      *Livré le 2026-10-03* (`38237656`) : instantané confirmé, migrations 83 à 86 appliquées par le registre,
+      `mail-sync` reconstruit, `verifier.sh` 26 sans anomalie, registre de 86 lignes aux empreintes du dépôt. **Reste
+      `[ ]`** : le serveur LLM refuse la plage d'adresses de la cellule (403 « origine non autorisée pour cette clé ») ;
+      à autoriser par LeLabs, puis constater `disponible` et une génération réelle.
 
 ## Arbitrage du 2026-10-03 — INC-265 à INC-269 (décision 619)
 

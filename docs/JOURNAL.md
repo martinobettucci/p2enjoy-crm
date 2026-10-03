@@ -31036,3 +31036,12 @@ sans autre changement ; et `up -d` ne reconstruit pas une image déjà présente
 (INC-266) est donc un geste explicite de la procédure (`docs/PROD_MIGRATIONS.md` §2.9, geste 3). L'ordre des gestes
 met la livraison avant la proposition des variables : la cellule n'a pas encore le `proposer.sh` qui les connaît, et
 l'assistant sans clé se déclare indisponible sans rien empêcher d'autre.
+
+**`CRM-097` T4, livraison du 2026-10-03.** Instantané confirmé par le responsable, fenêtre ouverte : le registre a
+appliqué les seules migrations 83 à 86, `mail-sync` a été reconstruit — son image datait du premier déploiement, ce qui
+prouve qu'aucune livraison ne l'avait reconstruit depuis —, `verifier.sh` rend 26 contrôles sans anomalie, et le
+registre relu porte 86 lignes aux empreintes du dépôt. *Constat inattendu* : l'assistant répond « clé refusée » et non
+« clé absente » — la cellule portait déjà les variables et la clé. Une sonde depuis la cellule, la clé passée par
+l'entrée standard et jamais affichée, rend **403 « origine non autorisée pour cette clé »** : c'est la plage d'adresses
+de la cellule que LeLabs doit autoriser. Le geste 5 (proposer) devient sans objet ; `CRM-097` reste non publié jusqu'à
+ce que l'assistant réponde et qu'une génération soit constatée. INC-266, INC-268 et INC-270 passent en « Publié ».
