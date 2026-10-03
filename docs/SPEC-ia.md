@@ -575,6 +575,31 @@ par étape, et la portée — « ne fais évoluer que les étapes », etc. — ;
 **oriente** le modèle ; elle ne restreint pas ce que l'administrateur peut corriger, et le différentiel montre tout
 ce qui change.
 
+**Le contrat précis de T3.b** (écrit le 2026-10-03, avant son code) :
+
+- **Portée et cible** : `portee: "workflow"` sans `workflow_id` crée ; `etapes`, `transitions` ou `champs` avec un
+  `workflow_id` (UUID) modifient. Toute autre combinaison — portée inconnue, portée ciblée sans cible, `workflow`
+  avec une cible — rend `400` `demande_invalide` ; le code `portee_non_livree` de T1 disparaît.
+- **Ordre des lectures, toutes avec le jeton de l'appelant** : la composition vivante
+  (`rpc/proposition_du_workflow`) est lue AVANT la création ; `null` — workflow inexistant ou illisible — rend `404`
+  `workflow_introuvable`, sans suggestion créée. Puis la création, que la base refuse à un non-administrateur
+  (`403`). Puis l'occupation (`rpc/occupation_du_workflow`) et le catalogue.
+- **Ce que le modèle reçoit pour une modification** : les règles de T1, des règles de modification — rendre la
+  cible ENTIÈRE, garder la clé de ce qui est conservé, ne jamais changer le type d'un champ conservé, remapper
+  chaque étape retirée qui porte des affaires ou laisser `remappages` vide —, le catalogue, la composition vivante
+  et l'occupation en JSON, une phrase de portée, puis la demande. **Une revue d'une modification** reçoit le même
+  contexte, relu au moment de la revue, avant la dernière révision, ses défauts et la consigne.
+- **Le schéma d'une modification** est celui de T1 augmenté de `remappages`, **exigé** (un tableau, vide au
+  besoin) : un petit modèle omet plus volontiers une clé facultative.
+- **Mise en forme** : `remappages`, s'il est un tableau, est gardé, ses clés normalisées comme toutes les autres ;
+  absent, il reste absent ; d'une autre forme, la sortie est une `reponse_invalide`.
+- **Le simulateur** gagne le scénario `modification` (développement seul) : il relit la composition vivante dans
+  les messages, retire la DEUXIÈME étape et tout ce qui la vise, ajoute l'étape « qualification-ia » (nouveau nœud
+  « Qualification », ouverte, 30 %) après l'étape initiale, reliée à l'initiale et à l'étape qui suivait la
+  retirée, et rend `remappages` vide : sur le seed, la relance porte des affaires, et `remappage_requis` attend le
+  choix de l'administrateur.
+- **Journal** : `generation_lancee` porte aussi la `portee` — jamais la demande ni la composition.
+
 ### 13.6 L'écran — le parcours
 
 - **Entrée** : « Suggérer » (`Sparkles`), en tête des blocs étapes, transitions et champs du workflow ouvert ; elle
