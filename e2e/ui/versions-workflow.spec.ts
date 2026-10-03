@@ -56,7 +56,7 @@ test.describe('la liste des versions (§7 ter.14.3)', () => {
 		await connecter(page, ADMIN)
 		await ouvrirEditeur(page)
 		// Le second workflow du seed est la copie dérivée (§4.10) : elle n'a jamais été publiée.
-		await page.getByRole('button', { name: /Cycle commercial — Conseil IA/ }).click()
+		await page.getByRole('button', { name: /^Cycle commercial — Conseil IA/ }).click()
 
 		await expect(page.getByTestId('versions-vide')).toBeVisible()
 		await expect(page.getByTestId('tableau-versions')).toHaveCount(0)

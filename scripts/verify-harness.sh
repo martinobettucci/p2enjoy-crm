@@ -1376,7 +1376,11 @@ SCENARIOS_API=1108
 # porte **11** scénarios — la souris de la demande à l'acceptation, le clavier seul, la proposition incohérente
 # corrigée à la main, la revue par consigne, l'abandon, la reprise d'un échec, le refus du commercial, les quatre
 # paliers. 782 + 11 = 793, valeur COMPTÉE — « Total: 793 tests in 63 files ».
-SCENARIOS_UI=793
+# **801 depuis `CRM-097` tranche T3.d, 2026-10-03** (décision 620) : `e2e/ui/assistant-ia-modification.spec.ts`,
+# fichier NEUF, porte **8** scénarios — la souris de « Suggérer » à l'acceptation et au point de retour annoncé, le
+# clavier seul, le refus « workflow modifié », le refus du commercial, la suggestion de modification du seed aux
+# quatre paliers. 793 + 8 = 801, valeur COMPTÉE — « Total: 801 tests in 64 files ».
+SCENARIOS_UI=801
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

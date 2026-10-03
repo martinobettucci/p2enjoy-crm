@@ -798,11 +798,12 @@ Documentation de référence :
 
 ## 11. Limites connues
 
-- **L'assistant IA ne fait encore que CRÉER un workflow** (`CRM-097` T2, `docs/SPEC-ia.md` §12) : il suggère, on
-  corrige ou fait revoir, puis on accepte ou abandonne. Suggérer dans un workflow existant — étapes, transitions,
-  champs, avec le remappage des affaires — est la tranche T3 ; la production attend la tranche T4 (migrations
-  83 et 84, variables `OLLAMA_*`). Une génération dure environ une demi-minute et se tient dans sa requête : un
-  onglet fermé en route l'interrompt, et la suggestion se reprend par « Réessayer ».
+- **L'assistant IA crée un workflow, ou fait évoluer un workflow existant** (`CRM-097` T2 et T3, `docs/SPEC-ia.md`
+  §12 et §13) : il suggère, on corrige ou fait revoir, puis on accepte ou abandonne. La production attend la
+  tranche T4 (migrations 83 à 86, variables `OLLAMA_*`). Une génération dure environ une demi-minute et se tient
+  dans sa requête : un onglet fermé en route l'interrompt, et la suggestion se reprend par « Réessayer ». Une
+  suggestion de modification ne s'accepte plus si le workflow a changé depuis sa création : on en demande une
+  nouvelle.
 
 - **La cellule Spark `crm` est une production à 2 Gio de mémoire et 10 Gio de disque, et elle a
   deux manques assumés** (`CRM-090`, `docs/SPEC-deploiement-spark.md`). **ClamAV n'y est pas

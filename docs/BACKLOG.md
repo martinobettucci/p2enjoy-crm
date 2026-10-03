@@ -14895,7 +14895,7 @@ le serveur réel.
             Campagnes : SQL **78 / 3401**, API **1103**, unitaires **3540**, typage, interface **790 sur 793** — les
             trois rouges sont étrangers : INC-267 (deux, course du seed du courrier) et INC-269 (une, « Ma journée »,
             verte trois fois sur trois rejouée seule). T2 n'est pas en production : T4.
-- [ ] **T3** — suggérer dans un workflow ouvert — étapes, transitions, champs —, et accepter par
+- [x] **T3** — suggérer dans un workflow ouvert — étapes, transitions, champs —, et accepter par
       l'algorithme de restauration de `CRM-078` : point de retour, remappage des affaires d'une étape
       retirée revu avant acceptation, refus si le workflow a changé ; unitaires, API, E2E.
       *Spécifiée le 2026-10-03 avant le code* (`docs/SPEC-ia.md` §13, `docs/DESIGN_SYSTEM.md` §5.53, décision
@@ -14923,7 +14923,13 @@ le serveur réel.
             *Vérifié le 2026-10-03* : `differentiel-ia` 10, `brouillon-ia` 12, `assistant-ia` 41, panneau 30, éditeur
             134 ; huit mutations tuées ; unitaires **3604** ; typage, build, 375 classes citées et aucune manquante.
             Les preuves E2E et les captures suivent avec T3.d.
-      - [ ] **T3.d** — E2E souris et clavier, captures observées, manuel, harnais et campagnes.
+      - [x] **T3.d** — E2E souris et clavier, captures observées, manuel, harnais et campagnes.
+            *Vérifié le 2026-10-03* : `assistant-ia-modification.spec.ts` **8** scénarios — souris, clavier seul,
+            `409`, refus du commercial, quatre paliers —, captures observées (`docs/captures/CRM-097/ia-modification-*`) ;
+            seed 8 novodecies convergent, `verify-seed-demo` 69 ; manuel 5 bis.0 ter, `verify-manual` 157. Campagnes :
+            SQL **81 / 3457**, API **1108**, unitaires **3604**, typage, interface **801 sur 801**, courrier **42**
+            (au rejeu ; le premier passage rend l'intermittent connu INC-205, 41 sur 42, trace conservée). Les
+            captures de l'éditeur des autres unités sont renouvelées : son apparence a changé (« Étapes », « Suggérer »).
 - [ ] **T4** — production : variables proposées dans la cellule, clé saisie en console, plage d'adresses de
       la cellule autorisée par le serveur LLM, migration `0083` en fenêtre avec instantané, constat.
 
@@ -14962,12 +14968,14 @@ chacune dans son propre commit, avant `CRM-097` T3 ; la livraison en production 
       DEFERRABLE INITIALLY IMMEDIATE` et un déclencheur sur `workspaces` qui les ajourne ; les six protections d'une
       suppression directe tiennent ; le déclencheur retiré, la suppression rougit. `0008` (fin d'INC-039) et `0049`
       révisées à nombre constant. SQL **79 / 3413**, API **1103**.
-- [~] **INC-269 — le parcours clavier de « Ma journée » focalise une ligne avant la nouvelle lecture.** La preuve
+- [x] **INC-269 — le parcours clavier de « Ma journée » focalise une ligne avant la nouvelle lecture.** La preuve
       attend la lecture de la portée nouvelle ; verte rejouée plusieurs fois.
       *2026-10-03, en observation* : l'hypothèse de l'énoncé est RÉFUTÉE — lecture retardée de 1,5 s, processeur
       ralenti six fois (8 sur 8), le fichier rejoué cinq fois (65 sur 65) : tout vert, la cause d'origine n'est
       pas reproduite. La preuve attend désormais l'annonce de la portée nouvelle et atteint l'affaire par `Tab`
       au lieu d'un `focus()` par programme (10 sur 10). Close après une campagne d'interface complète verte.
+      *Close le 2026-10-03* : la campagne d'interface complète de `CRM-097` T3.d est verte, **801 sur 801**, en
+      trois parties (313, 231, 257), « Ma journée » comprise.
 
 ## Arbitrage du 2026-09-29 — INC-257 (décision 610)
 

@@ -357,7 +357,7 @@ jamais conclure. Les vérifications sont écrites à la main, dans cet ordre, et
 | 1 | appelant authentifié | `42501` « authentification requise » |
 | 2 | la suggestion existe **et** l'appelant administre son espace — indiscernables, pour qu'un non-administrateur n'apprenne pas qu'elle existe | `PT404` « suggestion introuvable » — HTTP 404 ; `P0002`, d'abord écrit, est rendu **500** par PostgREST (mesuré le 2026-10-02), convention `PT<statut>` de `0042` |
 | 3 | statut `en_revue` (suggestion verrouillée `for update`) | `P0001` « suggestion figée » |
-| 4 | portée `workflow` sans cible — T3 livrera les autres | `P0001` « portée non livrée » |
+| 4 | portée `workflow` sans cible — T3 livrera les autres | `P0001` « portée non livrée » — **retiré par T3** (migration `0086`, §13.4) |
 | 5 | aucune génération en vol (verrou de moins de 180 s, §11.4) | `P0001` « génération en cours » |
 | 6 | une révision existe | `P0001` « aucune révision » |
 | 7 | la dernière révision, **recontrôlée maintenant**, ne porte aucun défaut | `P0001` « proposition non conforme », `detail` : le nombre de défauts |

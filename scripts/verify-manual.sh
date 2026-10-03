@@ -6,6 +6,7 @@
 # @verifies docs/manual.md (annexe A, règles de rédaction) ; docs/BACKLOG.md (unités citées)
 # @verifies CLAUDE.md §7 (documentation utilisateur, aucun secret)
 # @verifies CRM-097 (docs/BACKLOG.md) tranche T2.d — les libellés du parcours de l'assistant IA (docs/SPEC-ia.md §12.5)
+# @verifies CRM-097 tranche T3.d — les libellés du parcours « Suggérer » (docs/SPEC-ia.md §13.6, chapitre 5 bis.0 ter)
 #
 # Vérifie que `docs/manual.md` décrit le produit **réellement exécuté**, hors interface, contre la
 # base réelle et contre les fichiers du dépôt.
@@ -142,6 +143,14 @@ LIBELLES_PARCOURS=(
 	"Accepter et créer le workflow"
 	"Abandonner la suggestion"
 	"Suggestions de l’IA en revue"
+	# CRM-097 T3 — faire évoluer un workflow (chapitre 5 bis.0 ter)
+	"Suggérer"
+	"Décrivez ce qui doit changer"
+	"Ce qui change"
+	"Où vont les affaires des étapes retirées"
+	"Aucune destination"
+	"Accepter et faire évoluer le workflow"
+	"Suggestions de l’IA pour ce workflow"
 )
 
 # ---------------------------------------------------------------------------------------------

@@ -7074,6 +7074,10 @@ workflows avant le catalogue.
 
 ### INC-269 — le parcours clavier de « Ma journée » focalise une ligne avant que la nouvelle portée soit lue
 
+> **CLOSE le 2026-10-03.** La condition posée ci-dessous est remplie : la campagne d'interface complète de `CRM-097`
+> T3.d est verte, 801 scénarios sur 801, « Ma journée » comprise. La cause d'origine n'a jamais été reproduite ; la
+> preuve, rendue indépendante de ses deux appuis fragiles, n'a plus rougi.
+
 > **Arbitrage du responsable, 2026-10-03 (décision 619) : corriger maintenant, dans son propre commit.**
 > **2026-10-03 — consolidée, EN OBSERVATION.** L'hypothèse ci-dessous est réfutée par la mesure : la lecture de la
 > nouvelle portée retardée de 1,5 s, le processeur ralenti six fois, le fichier rejoué cinq fois — tout vert ; `focus()`

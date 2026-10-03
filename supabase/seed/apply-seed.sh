@@ -18,6 +18,8 @@
 #       trois paliers (docs/SPEC-modeles-emails.md §11.9)
 # @spec CRM-097 (docs/BACKLOG.md) — tranche T2.d : une suggestion de l'assistant IA en revue, par la vraie fonction
 #       et le simulateur (docs/SPEC-ia.md §11.6, §12.8)
+# @spec CRM-097 tranche T3.d — une suggestion qui fait évoluer le workflow par défaut, en revue, avec son défaut
+#       `remappage_requis` (docs/SPEC-seed.md §16 bis, docs/SPEC-ia.md §13.5) ; décision 620
 # @spec docs/SPEC-seed.md §2 (contrat), §2.9 (copie), §3 (mécanismes mesurés), §4 (identifiants),
 #       §5 (gardes)
 # @spec docs/SPEC-tracks.md §8 (seed des tracks) ; docs/SPEC-channels.md §8 (seed des channels)
@@ -4178,6 +4180,43 @@ else
 	info "Suggestion de l'IA créée par la vraie fonction et le simulateur — $(printf '%s' "$issue_ia" | jq -r '.defauts') défaut(s)"
 fi
 
+# --- 8 novodecies. Une suggestion qui fait évoluer le workflow par défaut — CRM-097 T3, docs/SPEC-seed.md §16 bis ---
+#
+# Le chemin de 8 octodecies, la portée `etapes` et le workflow par défaut en plus : le scénario `modification` du
+# simulateur relit la composition vivante que la fonction lui envoie, retire la relance et ajoute « qualification-ia ».
+# La relance portant des affaires, la base relève `remappage_requis` — le défaut qui rend visible le bloc « Où vont
+# les affaires des étapes retirées ». JAMAIS ACCEPTÉE PAR UNE PREUVE : elle retirerait la relance du workflow que
+# toutes les autres lisent. CONVERGENT sur la demande et le workflow, comme 8 octodecies.
+echo
+say "8 novodecies. Suggestion qui fait évoluer le workflow par défaut"
+
+DEMANDE_IA_MODIF="Remplacer la relance par une qualification des besoins, sans perdre les affaires en cours."
+demande_modif_uri=$(jq -rn --arg d "$DEMANDE_IA_MODIF" '$d | @uri')
+code=$(api GET "/rest/v1/suggestions_ia?select=id&workspace_id=eq.$WS_ID&workflow_id=eq.$WF_ID&statut=eq.en_revue&demande=eq.$demande_modif_uri")
+attendu "$code" "lecture de la suggestion de modification de démonstration" 200
+if [ "$(jq -r 'length' "$CORPS")" != "0" ]; then
+	info "Suggestion de modification en revue : déjà présente — rien à écrire"
+else
+	etat_simule=$(curl -s "$API/functions/v1/ia/etat" -H "apikey: $ANON_KEY" -H 'x-ia-simulateur: cle_refusee' | jq -r '.raison // empty')
+	[ "$etat_simule" = "cle_refusee" ] || die "le simulateur de l'assistant IA ne répond pas (raison lue : « $etat_simule ») —
+        docs/SPEC-ia.md §11.6."
+	flux_modif=$(curl -s -N -X POST "$API/functions/v1/ia/suggestions" \
+		-H "apikey: $ANON_KEY" -H "Authorization: Bearer $JETON_ADMIN" \
+		-H 'Content-Type: application/json' -H 'x-ia-simulateur: modification' \
+		-d "$(jq -n --arg w "$WS_ID" --arg wf "$WF_ID" --arg d "$DEMANDE_IA_MODIF" \
+			'{workspace_id: $w, portee: "etapes", workflow_id: $wf, demande: $d}')")
+	issue_modif=$(printf '%s\n' "$flux_modif" | tail -n 1)
+	[ "$(printf '%s' "$issue_modif" | jq -r '.issue // empty')" = "revision" ] || die "la suggestion de modification de
+        démonstration n'a pas reçu de révision : $(printf '%s' "$flux_modif" | head -c 300)"
+	# Le défaut attendu, relu : sans lui, le bloc des affaires ne serait pas montré, et le jeu mentirait sur §16 bis.
+	id_modif=$(printf '%s\n' "$flux_modif" | head -n 1 | jq -r '.suggestion_id')
+	code=$(api GET "/rest/v1/suggestions_ia_revisions?select=defauts&suggestion_id=eq.$id_modif&order=numero.desc&limit=1")
+	attendu "$code" "lecture de la révision de modification" 200
+	[ "$(jq -r '[.[0].defauts[] | select(.code == "remappage_requis")] | length' "$CORPS")" = "1" ] || die "la suggestion de
+        modification ne porte pas le défaut remappage_requis attendu : $(head -c 300 "$CORPS")"
+	info "Suggestion de modification créée par la vraie fonction et le simulateur — $(printf '%s' "$issue_modif" | jq -r '.defauts') défaut(s)"
+fi
+
 # --- 9. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
 # Rappel volontaire, affiché à chaque exécution, et **mis à jour par `CRM-020`** : peupler la base
 # ne la rend pas lisible pour autant. L'état réel est désormais mixte, et le dire faux dans un sens
@@ -4214,6 +4253,7 @@ info "Comptes entrants IMAP : ${#COMPTES_ENTRANTS[@]}, dont la boîte système ;
 info "Identités sortantes SMTP : ${#IDENTITES_SORTANTES[@]} — entrant et sortant divergent pour Driss — docs/SPEC-seed.md §2.18"
 info "Organisations : ${#ORGANIZATIONS_SEED[@]}, contacts : ${#CONTACTS_SEED[@]}, rattachements : ${#CARD_CONTACTS_SEED[@]} — CRM-060, docs/SPEC-contacts.md §5"
 info "Suggestion de l'assistant IA : 1, en revue, créée par la vraie fonction et le simulateur — CRM-097, docs/SPEC-ia.md §12.8"
+info "Suggestion de modification du workflow par défaut : 1, en revue, avec son défaut remappage_requis — CRM-097, docs/SPEC-seed.md §16 bis"
 echo
 info "profiles, workspaces et workspace_members sont lisibles par les trois membres du seed :"
 info "le profil propre est modifiable, et seul l'admin gère les memberships (CRM-022)."

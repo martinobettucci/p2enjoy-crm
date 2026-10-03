@@ -31007,3 +31007,23 @@ mutations tuées ; total **3604** ; typage vert ; build ; 375 classes citées, a
 cinq défauts d'une modification n'avaient pas de phrase : `remappage_requis` se serait affiché « Défaut
 « remappage_requis » », le repli des codes inconnus. Les cinq phrases sont ajoutées — sans accord de nombre à écrire :
 « l'étape retirée « relance » en porte 9 » —, et la preuve unitaire des phrases compte désormais trente-quatre codes.
+
+**`CRM-097` T3.d, le 2026-10-03 — les preuves de bout en bout.** Spécification du seed écrite et committée avant le
+code (`docs/SPEC-seed.md` §16 bis). *Ce que l'exécution a appris* :
+
+- **Le seed porte une suggestion de modification** du workflow par défaut, créée par la vraie fonction et le
+  scénario `modification` ; le seed relit le défaut `remappage_requis` qui la rend démonstrative. Aucune preuve ne
+  l'accepte : les scénarios qui acceptent travaillent sur des workflows jetables.
+- **Un `PT409` porte son message comme texte d'état HTTP** — « 409 (workflow modifie) » —, mesuré par le contrôle
+  des erreurs de console : la preuve autorise cette ligne exacte, et non la ligne « Conflict » d'une violation de clé.
+- **Les noms accessibles des « Suggérer » contiennent le nom du workflow** : cinq sélecteurs d'autres preuves —
+  `/Cycle commercial standard/`, `new RegExp(nom)` — désignaient soudain plusieurs boutons. Ils sont ancrés sur le
+  début du nom, ce que désignait l'intention ; aucune assertion n'est affaiblie.
+- **Les captures de l'éditeur des autres unités** (`CRM-031`, `032`, `076`, `078`, `094`) sont renouvelées : le titre
+  « Étapes » et les commandes « Suggérer » changent l'apparence qu'elles documentent (`CLAUDE.md` §7). Celles des écrans
+  que T3 ne touche pas sont restaurées.
+
+*Vérifié* : E2E `assistant-ia-modification.spec.ts` 8 ; campagnes SQL 81 / 3457, API 1108, unitaires 3604, interface
+**801 sur 801** — première campagne complète verte depuis INC-269, qui est close —, courrier 42 au rejeu (41 au premier
+passage : INC-205, la relève passe avant la remise, trace conservée). `verify-seed-demo` 69, `verify-manual` 157,
+`verify-functions` 14.

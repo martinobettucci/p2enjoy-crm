@@ -121,7 +121,7 @@ async function ouvrirEditeur(page: Page): Promise<void> {
 	await expect(page).toHaveURL(/\/reglages\/workflows$/)
 	await expect(page.getByRole('heading', { name: 'Éditeur de workflows' })).toBeVisible()
 	// Le défaut est choisi d'office, ses sept étapes seedées sont rendues dans l'ordre du graphe.
-	await expect(page.getByRole('button', { name: /Cycle commercial standard/ })).toHaveAttribute(
+	await expect(page.getByRole('button', { name: /^Cycle commercial standard/ })).toHaveAttribute(
 		'aria-current',
 		'true',
 	)
@@ -1763,7 +1763,7 @@ test.describe('CRM-031 — créer un workflow depuis l’éditeur (§3 bis)', ()
 
 			// Effet 1 et 2 du §3 bis.6 : la liste est relue, et le workflow créé devient le choisi.
 			await expect(formulaire).toBeHidden()
-			await expect(page.getByRole('button', { name: new RegExp(NOM_CREE) })).toHaveAttribute(
+			await expect(page.getByRole('button', { name: new RegExp(`^${NOM_CREE}`) })).toHaveAttribute(
 				'aria-current',
 				'true',
 			)
@@ -1882,8 +1882,8 @@ const CHEMIN_DERIVATIONS = `${URL_API}/rest/v1/workflow_derivations`
 
 /** Choisit un workflow dans la liste de gauche et attend que son graphe soit rendu. */
 async function choisirWorkflow(page: Page, nom: string): Promise<void> {
-	await page.getByRole('button', { name: new RegExp(nom) }).click()
-	await expect(page.getByRole('button', { name: new RegExp(nom) })).toHaveAttribute(
+	await page.getByRole('button', { name: new RegExp(`^${nom}`) }).click()
+	await expect(page.getByRole('button', { name: new RegExp(`^${nom}`) })).toHaveAttribute(
 		'aria-current',
 		'true',
 	)

@@ -1112,7 +1112,10 @@ fuseau, partagée par le seed et `scripts/verify-ma-journee.sh`.
 
 **La suggestion de l'assistant IA** (`CRM-097` T2, `docs/SPEC-seed.md` §16) suit la même règle : elle est demandée
 par l'administratrice à la vraie fonction `ia`, et le modèle est le simulateur — le seed vérifie qu'il répond avant
-d'écrire, faute de quoi il appellerait le vrai serveur.
+d'écrire, faute de quoi il appellerait le vrai serveur. **Depuis T3** (`docs/SPEC-seed.md` §16 bis), une seconde
+suggestion, de portée « étapes », fait évoluer le workflow par défaut par le scénario `modification` du simulateur ;
+elle porte le défaut `remappage_requis` qui rend visible le choix de destination des affaires, et aucune preuve ne
+l'accepte.
 
 ## 12. Choix techniques et compromis
 
