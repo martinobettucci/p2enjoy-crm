@@ -30913,3 +30913,30 @@ dans un workflow — un nœud par workflow, une clé de champ unique par workflo
 
 **Conséquences.** Une migration (`0086`) ; la fonction `ia` accepte les trois portées ; l'écran gagne « Suggérer »,
 le différentiel et le bloc des affaires des étapes retirées.
+
+**`CRM-097` T3.a, le 2026-10-03 — la migration `0086`.** Le cœur de la restauration a été déplacé tel quel dans
+`app.appliquer_composition` ; `restore_workflow_version` l'appelle, et ses suites (`0037`, `0039`, `0040`, API
+`restauration-version-workflow.spec.ts`) passent sans retouche. *Ce que l'écriture a trouvé, et tranché* :
+
+- **Une affaire remappée vers une étape NOUVELLE.** Le cœur déplace les affaires (écriture 2 du §7 ter.13.7 du
+  moteur) avant de créer les étapes (écriture 5) : une restauration ne remappe que vers des étapes de la version,
+  qui existent déjà. L'acceptation pose donc d'abord les étapes nouvelles, jamais initiales, et le cœur les trouve
+  existantes. Prouvé par la suite `0080` : les affaires de la relance retirée vont vers « qualification-ia », ajoutée.
+- **Le point de retour existe souvent déjà.** Sur le seed, la dernière version publiée photographie la composition
+  vivante : elle EST le point de retour, rien n'est republié — la règle de la restauration. La première rédaction du
+  test attendait une version de plus : c'est l'attente qui était fausse (§13.4 précisé).
+- **Le libellé vide d'une transition.** Une transition vivante sans libellé propre se rend `""` ; pour une
+  modification, ce n'est pas un défaut mais l'absence de libellé propre (§13.1 précisé). Pour une création, le défaut
+  demeure.
+- **Un paramètre inutile, trouvé par une mutation.** `app.document_cible_ia` recevait la table clé → identifiant des
+  nœuds tout juste créés ; la mutation qui la vidait a SURVÉCU : la clé d'un nœud est unique dans l'espace, la lecture
+  au catalogue suffit. Le paramètre est retiré.
+- **Un alias SQL qui masquait une variable** (`c`, déclarée `record`) : le compte des affaires d'une étape retirée
+  échouait ; l'alias est renommé.
+
+*Vérifié* : pgTAP `0080` **27** assertions — composition vivante, occupation, lecture refusée à une personne
+étrangère à l'espace, les cinq codes, le libellé vide, l'acceptation (refus du commercial en `PT404`, étape retirée
+et remappée vers une étape nouvelle, champ ajouté, champ retiré ARCHIVÉ, transitions de la cible, workflow relu
+conforme), la restauration du point de retour, `PT409`, un point de retour publié, le renommage, le workflow archivé ;
+**treize mutations, treize tuées**. Registre rejoué (86 fichiers). SQL **80 / 3440** ; API de la restauration et de
+l'IA vertes (27) ; types régénérés (deux fonctions), témoin révisé, typage vert.

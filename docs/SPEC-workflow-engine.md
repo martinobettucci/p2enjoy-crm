@@ -4852,6 +4852,12 @@ Chaque étape de cet ordre est imposée par une contrainte **mesurée**, non par
 | 8 | règles de visibilité : supprimer, créer, mettre à jour | elles lient un champ **et** une étape, donc après les deux |
 | 9 | champs requis : supprimer, créer | ils lient une arête et un champ, donc après les deux |
 
+**Depuis `CRM-097` T3 (migration `0086`, décision 620), les écritures 2 à 9 vivent dans `app.appliquer_composition`**,
+que `restore_workflow_version` et `public.accepter_suggestion_ia` appellent toutes deux : un seul algorithme pour la
+restauration et l'acceptation d'une suggestion de l'IA (`docs/SPEC-ia.md` §13.4). Le corps a été déplacé tel quel ;
+la restauration garde ses vérifications, son plan rejoué et son point de retour, et ses suites pgTAP (`0037`, `0039`,
+`0040`) et API sont restées vertes sans retouche.
+
 **Aucune ligne n'est détruite puis recréée à l'identique.** Vider une collection pour la réécrire
 serait plus court à écrire et faux à l'usage : les identifiants survivraient peut-être, mais les
 `created_at` seraient réécrits, les cascades emporteraient des lignes filles que la restauration

@@ -950,10 +950,17 @@ type _vueDerivationColonnes = Expect<
 // `0084` de `CRM-097` TRANCHE T2 ajoute `accepter_suggestion_ia` — le geste qui crée le workflow entier d'une
 // suggestion acceptée (docs/SPEC-ia.md §12.3, décision 618). SECURITY DEFINER : ses sept refus, dont
 // « introuvable » en `PT404`, ne se lisent pas dans le type. Cinquante-sept devient CINQUANTE-HUIT.
-type _lesCinquanteHuitFonctions = Expect<
+// `0086` de `CRM-097` TRANCHE T3 ajoute `proposition_du_workflow` et `occupation_du_workflow` — la composition
+// vivante d'un workflow au format d'une proposition, et le nombre d'affaires de chacune de ses étapes, que l'écran
+// et la fonction `ia` lisent avant de suggérer une modification (docs/SPEC-ia.md §13.2, décision 620). SECURITY
+// INVOKER : un workflow invisible à l'appelant rend `null` et une occupation `{}`, ce que le type ne dit pas.
+// Cinquante-huit devient SOIXANTE.
+type _lesSoixanteFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
     | 'accepter_suggestion_ia'
+    | 'proposition_du_workflow'
+    | 'occupation_du_workflow'
     | 'entonnoir_conversion'
     | 'ecriture_permise'
     | 'unclassify_message'
@@ -1216,7 +1223,7 @@ export type AssertionsDuContratDeTypes = [
   _relationsWorkspaceMembers,
   _laSeuleVue,
   _vueDerivationColonnes,
-  _lesCinquanteHuitFonctions,
+  _lesSoixanteFonctions,
   _signatureReelSaisissable,
   _retourReelSaisissable,
   _ecriturePermisePrendUneLigneDeTableau,

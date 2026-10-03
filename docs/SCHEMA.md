@@ -1800,6 +1800,31 @@ déclencheur `BEFORE DELETE` sur `workspaces` (`app.workspaces_avant_suppression
 de la seule transaction qui supprime un espace, quand la cascade a tout emporté. Les mentions « `on delete restrict` »
 des spécifications antérieures gardent leur sens — le refus d'une suppression directe — et s'entendent ainsi.
 
+### Migration `0086` — suggérer dans un workflow existant (`CRM-097` T3, décision 620, écrite le 2026-10-03)
+
+`docs/SPEC-ia.md` §13. Aucune table, aucune colonne, aucune donnée ne change ; des fonctions s'ajoutent ou changent :
+
+- **`app.proposition_ia_bien_formee`** admet la clé facultative `remappages`, tableau de `{de, vers}`.
+- **`app.defauts_proposition_ia(p_workspace uuid, p_proposition jsonb, p_workflow uuid default null)`** remplace la
+  version à deux arguments de `0084` (retirée) : le workflow ciblé, `null` pour une création, ajoute les cinq codes
+  d'une modification (`type_non_modifiable`, `remappage_requis`, `remappage_origine_inconnue`,
+  `remappage_cible_absente`, `remappage_en_double`) ; pour une modification, un libellé de transition vide n'est
+  plus un défaut (`transition_sans_libelle`) mais l'absence de libellé propre. Le trigger des révisions lui passe le
+  `workflow_id` de la suggestion.
+- **`app.appliquer_composition(p_workflow_id, p_workspace_id, p_doc, p_overrides) returns jsonb`** — le cœur de la
+  restauration (`0042`, écritures 2 à 9 du §7 ter.13.7 du moteur), déplacé tel quel ; il rend les compteurs.
+  **`public.restore_workflow_version`** est redéfinie pour l'appeler, sans autre changement.
+- **`public.proposition_du_workflow(uuid)`** et **`public.occupation_du_workflow(uuid)`** — `stable`, `security
+  invoker`, exécutables par `authenticated` et `service_role` : la composition vivante au format d'une proposition
+  (`null` si le workflow n'est pas lisible) et `{clé d'étape : nombre d'affaires}`, archivées et en corbeille
+  comprises.
+- **`app.document_cible_ia(p_workflow uuid, p_proposition jsonb)`** — la cible traduite en document de composition :
+  un objet conservé garde son identifiant, un objet nouveau en reçoit un.
+- **`public.accepter_suggestion_ia`** accepte une modification : refus « workflow archive » (`P0001`) et « workflow
+  modifie » (`PT409`) ; point de retour publié sauf si la dernière version photographie déjà la composition
+  vivante ; nœuds proposés au catalogue ; étapes nouvelles posées ; cœur appliqué ; renommage ;
+  `version_retour_id` renseigné.
+
 ## 10. Index principaux
 
 | Table | Index |

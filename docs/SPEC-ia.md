@@ -502,6 +502,14 @@ n'atteint le modèle :
 seuil d'ancienneté d'une étape, le libellé d'un nœud du catalogue, les champs déjà archivés. La position d'une étape
 et d'un champ suit l'ordre de la proposition.
 
+**Le libellé d'une transition, dans une modification** (précisé le 2026-10-03, à l'écriture de T3.a). Une transition
+vivante peut n'avoir aucun libellé propre — l'éditeur affiche alors celui de son étape d'arrivée. La composition
+vivante la rend avec `"libelle": ""`, et, pour une modification, **un libellé vide vaut l'absence de libellé propre** :
+il n'est pas un défaut, et l'acceptation pose un libellé `null`. Pour une création, `transition_sans_libelle` reste
+un défaut (§12.1) : un workflow neuf n'a pas d'éditeur pour le compléter.
+
+**Le nom du workflow** suit la cible : s'il diffère du nom vivant, l'acceptation renomme le workflow.
+
 ### 13.2 La composition vivante, rendue au format de la proposition
 
 `public.proposition_du_workflow(p_workflow uuid) returns jsonb` — `stable`, `security invoker` : la composition
@@ -543,13 +551,17 @@ après les vérifications 1 à 3 et 5 à 7 du §12.3 (la 4 tombe), trois refus s
 Les effets, en une transaction :
 
 1. **le point de retour** : la composition vivante est publiée en version (`publish_workflow_version`), sauf si la
-   dernière version la photographie déjà — la règle exacte de la restauration (§7 ter.13.5 du moteur) ;
+   dernière version la photographie déjà — son empreinte est l'`empreinte_initiale` — : cette version **est** alors
+   le point de retour, rien n'est republié. C'est la règle exacte de la restauration (§7 ter.13.5 du moteur) ;
 2. les nœuds proposés entrent au catalogue (comme une création) ;
-3. **la cible est traduite en document de composition** (§7 ter.2 du moteur) — un objet conservé garde son
-   identifiant, un objet nouveau en reçoit un —, et les remappages en `step_overrides` ;
+3. **la cible est traduite en document de composition** (§7 ter.2 du moteur) par `app.document_cible_ia` — un objet
+   conservé garde son identifiant, un objet nouveau en reçoit un ; une étape nouvelle lit son nœud au catalogue par
+   sa clé, unique dans l'espace —, et les remappages en `step_overrides`. Les étapes nouvelles sont posées avant
+   l'application, jamais initiales : une affaire peut être remappée vers l'une d'elles ;
 4. **ce document est appliqué par le cœur de la restauration** : affaires déplacées, étapes, transitions, champs
    (archivés et non supprimés), règles, exigences — `app.appliquer_composition`, extrait de
    `restore_workflow_version`, qui l'appelle désormais lui aussi ; **un seul algorithme pour les deux gestes** ;
+4 bis. le workflow est renommé si la cible porte un autre nom ;
 5. la suggestion passe `acceptee`, avec `version_retour_id` — le point de retour, qu'une restauration rend ensuite
    comme toute version.
 

@@ -573,7 +573,9 @@ PORT_RAPPORT=9323
 # fichier ajouté. 77 + 1 = 78, valeur COMPTÉE — « 78 fichiers ».
 # **79 depuis INC-268, 2026-10-03** (décision 619) : `0079_suppression_espace.test.sql`, seul fichier ajouté.
 # 78 + 1 = 79, valeur COMPTÉE — « 79 fichiers ».
-FICHIERS_SQL_ATTENDUS=79
+# **80 depuis `CRM-097` tranche T3.a, 2026-10-03** (décision 620) : `0080_suggestions_ia_modification.test.sql`, seul
+# fichier ajouté. 79 + 1 = 80, valeur COMPTÉE — « 80 fichiers ».
+FICHIERS_SQL_ATTENDUS=80
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -625,7 +627,9 @@ FICHIERS_SQL_ATTENDUS=79
 # à nombre constant (18 et 19, décision 618). COMPTÉE — « 78 fichiers, 3401 assertions ».
 # **3413 depuis INC-268** : `0079` apporte **12** assertions — 3401 + 12 = 3413 ; `0008` (68, 69) et `0049` (8, 9)
 # sont révisées à nombre constant (décision 619). COMPTÉE — « 79 fichiers, 3413 assertions ».
-ASSERTIONS_ATTENDUES=3413
+# **3440 depuis `CRM-097` tranche T3.a** : `0080` apporte **27** assertions — 3413 + 27 = 3440 ; aucune autre suite
+# n'est révisée — celles de la restauration (`0037`, `0039`, `0040`) passent sans retouche (décision 620). COMPTÉE.
+ASSERTIONS_ATTENDUES=3440
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS

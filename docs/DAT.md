@@ -549,6 +549,16 @@ L'acceptation est un geste SQL `security definer`, `public.accepter_suggestion_i
 en une transaction. L'écran lit le flux de génération par `fetch` avec le jeton de session ; corrections et
 abandon passent par PostgREST, sous la RLS.
 
+**T3 — faire évoluer un workflow existant** (`docs/SPEC-ia.md` §13, décision 620). Une suggestion sur un workflow
+ouvert porte la composition **cible entière**, ses objets identifiés par leurs clés, et des remappages facultatifs.
+`public.proposition_du_workflow` et `public.occupation_du_workflow` (`security invoker`) rendent la composition
+vivante et le nombre d'affaires par étape. L'acceptation n'a pas d'algorithme propre : elle publie le point de
+retour, traduit la cible en document de composition (`app.document_cible_ia`) et l'applique par
+**`app.appliquer_composition`, le cœur extrait de `restore_workflow_version`** (migration `0086`) — restaurer et
+accepter une modification sont un seul code. Compromis : le cœur ne connaît que le document de composition ; c'est
+à l'acceptation de poser d'abord les étapes nouvelles, pour qu'une affaire puisse y être remappée. Un workflow modifié
+depuis la création de la suggestion est refusé en `PT409` : l'administrateur relit avant d'accepter.
+
 ### 3.8 Contraintes d'exécution de l'hôte
 
 Realtime élève son nombre de descripteurs de fichiers au démarrage. Le besoin est

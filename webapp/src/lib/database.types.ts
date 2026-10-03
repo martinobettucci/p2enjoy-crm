@@ -3235,6 +3235,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      occupation_du_workflow: { Args: { p_workflow: string }; Returns: Json }
       ouvrir_session_serveur: {
         Args: {
           p_admin_lelabs?: boolean
@@ -3275,6 +3276,7 @@ export type Database = {
           sur_place: number
         }[]
       }
+      proposition_du_workflow: { Args: { p_workflow: string }; Returns: Json }
       publish_workflow_version: {
         Args: { note?: string; target_workflow_id: string }
         Returns: {

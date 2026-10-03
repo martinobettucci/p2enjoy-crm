@@ -14900,9 +14900,13 @@ le serveur réel.
       retirée revu avant acceptation, refus si le workflow a changé ; unitaires, API, E2E.
       *Spécifiée le 2026-10-03 avant le code* (`docs/SPEC-ia.md` §13, `docs/DESIGN_SYSTEM.md` §5.53, décision
       620). Découpage, dans cet ordre :
-      - [ ] **T3.a** — migration : `app.appliquer_composition` extrait de la restauration (qui l'appelle),
+      - [x] **T3.a** — migration : `app.appliquer_composition` extrait de la restauration (qui l'appelle),
             `proposition_du_workflow`, `occupation_du_workflow`, les cinq codes, l'acceptation d'une
             modification ; pgTAP, suites de `CRM-078` inchangées ;
+            *Vérifié le 2026-10-03* : pgTAP `0080` **27** assertions, treize mutations tuées ; suites de la
+            restauration et API `restauration-version-workflow` / IA vertes sans retouche ; registre rejoué (86) ;
+            SQL **80 / 3440** ; types régénérés, typage vert. Les preuves API et E2E de la modification suivent
+            avec T3.b et T3.d.
       - [ ] **T3.b** — fonction `ia` : les trois portées, la composition vivante et l'occupation au modèle ;
             unitaires, API ;
       - [ ] **T3.c** — écran : « Suggérer » dans les trois blocs, différentiel, affaires des étapes retirées ;
