@@ -156,6 +156,7 @@ le reste : une variable qui deviendrait consommée ferait rougir la preuve.
 | `ANON_KEY` | jeton `anon` signé par `JWT_SECRET` | dérivée ; **publique par construction**, elle entre dans le bundle |
 | `SSO_OIDC_ISSUER` | `https://oauth.lelabs.tech/realms/lelabs` | `docs/SSO.md` |
 | `SSO_OIDC_CLIENT_ID` | l'identifiant **réellement créé** par le realm pour le client **confidentiel** — `lelabs-crm-serveur` déclaré | réponse à la déclaration, `docs/SPEC-session-sso.md` §12 |
+| `OLLAMA_HOST`, `OLLAMA_MODEL`, `OLLAMA_CONTEXT_LENGTH` | l'URL `https://` du serveur Ollama de LeLabs ; `gemma4:e2b` ; `36864` | `--assistant-ia` (`CRM-097` T4, `docs/SPEC-ia.md` §3) ; facultatives — sans elles, l'assistant se déclare indisponible |
 
 Les variables `SMTP_HOST`, `SMTP_PORT` et `SMTP_ADMIN_EMAIL` — relais des courriels transactionnels de
 GoTrue — sont **retirées** par `CRM-092` T6 avec lui, ainsi que les options `--smtp-*` de
@@ -168,6 +169,7 @@ GoTrue — sont **retirées** par `CRM-092` T6 avec lui, ainsi que les options `
 | `POSTGRES_PASSWORD`, `JWT_SECRET`, `SECRET_KEY_BASE`, `REALTIME_DB_ENC_KEY`, `MAIL_SYNC_INTERNAL_TOKEN`, `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD`, `S3_PROTOCOL_ACCESS_KEY_ID`, `S3_PROTOCOL_ACCESS_KEY_SECRET` | **tirés dans la cellule** par `scripts/spark/proposer.sh`, aux longueurs de `env_bootstrap_dev` |
 | `SERVICE_ROLE_KEY` | dérivé de `JWT_SECRET` par le même script |
 | `OIDC_CLIENT_SECRET` | **demandé vide** (`CRM-092`, décision 586) : LeLabs l'émet et l'affiche une seule fois à l'administrateur du realm, qui le saisit lui-même. Remis au seul worker `session`. `SMTP_USER` et `SMTP_PASS` sont retirés avec GoTrue |
+| `OLLAMA_API_KEY` | **demandé vide** par `--assistant-ia` (`CRM-097` T4) : la clé est liée par le serveur LLM à une plage d'adresses ; le propriétaire la saisit en console, et fait autoriser la plage de la cellule par LeLabs. Remise au seul worker `ia` |
 
 ### 4.4 Proposer, sans jamais appliquer
 
@@ -195,6 +197,14 @@ propositions **sous** le bloc posé par le plan de contrôle dans `/etc/spark/en
   noms. Il nomme les variables retirées de la pile (GoTrue, `SMTP_*`) que la cellule porte encore,
   inertes : un import ne retire jamais rien. Avec `--route-seule`, c'est la seule proposition possible
   quand des secrets sont en service.
+- `--assistant-ia --ollama-host https://…` (`CRM-097` T4, écrit le 2026-10-03 avant son code) propose l'assistant
+  IA à une cellule **en service**, sans tirer aucun secret : `OLLAMA_HOST`, `OLLAMA_MODEL` (`gemma4:e2b`) et
+  `OLLAMA_CONTEXT_LENGTH` (`36864`) si la cellule ne les porte pas à la valeur attendue, et `OLLAMA_API_KEY` en demande
+  vide si elle manque ou est vide — une clé posée n'est jamais redemandée ni lue. `--ollama-host` est exigé et doit
+  être une URL `https://` : une valeur qu'on ne peut pas deviner ne se propose pas vide. L'option exclut
+  `--route-seule` et `--demandes-seules`, garde les mêmes refus sur une proposition pendante, et n'affiche que des
+  noms. La proposition complète d'une cellule vierge ne porte pas l'assistant : il est facultatif, et l'URL du
+  serveur n'y est pas connue.
 
 ## 5. Livrer
 
