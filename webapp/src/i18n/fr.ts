@@ -3306,6 +3306,12 @@ export const fr = {
 	'ia.defaut.exigence_transition_absente': 'Une exigence vise la transition absente « {de} » vers « {vers} ».',
 	'ia.defaut.exigence_champ_absent': 'Une exigence vise le champ absent « {cle} ».',
 	'ia.defaut.exigence_en_double': 'L’exigence du champ « {champ} » sur « {de} » vers « {vers} » est déclarée deux fois.',
+	// `CRM-097` T3 — les cinq défauts d'une modification (docs/SPEC-ia.md §13.3).
+	'ia.defaut.type_non_modifiable': 'Le type du champ « {cle} » ne se modifie pas : il reste celui du champ existant.',
+	'ia.defaut.remappage_requis': 'Affaires sans destination : l’étape retirée « {cle} » en porte {affaires}.',
+	'ia.defaut.remappage_origine_inconnue': 'Un remappage part de « {cle} », qui n’est pas une étape retirée.',
+	'ia.defaut.remappage_cible_absente': 'Les affaires de « {de} » vont vers « {vers} », absente du workflow proposé.',
+	'ia.defaut.remappage_en_double': 'Deux remappages partent de « {cle} ».',
 	'ia.defaut.inconnu': 'Défaut « {code} ».',
 	'ia.apercu.nom': 'Nom du workflow',
 	'ia.apercu.etapes': 'Étapes',

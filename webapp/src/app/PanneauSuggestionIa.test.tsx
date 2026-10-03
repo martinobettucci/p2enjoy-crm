@@ -161,10 +161,13 @@ describe('les phrases des défauts (docs/SPEC-ia.md §12.1)', () => {
 		regle_etape_absente: { cle: 'a' }, regle_en_double: { champ: 'f', etape: 'a' }, visibilite_invalide: { visibilite: 'x' },
 		exigence_transition_absente: { de: 'a', vers: 'b' }, exigence_champ_absent: { cle: 'f' },
 		exigence_en_double: { de: 'a', vers: 'b', champ: 'f' },
+		// `CRM-097` T3 — les cinq codes d'une modification (docs/SPEC-ia.md §13.3).
+		type_non_modifiable: { cle: 'f', type: 'number' }, remappage_requis: { cle: 'relance', affaires: 9 },
+		remappage_origine_inconnue: { cle: 'a' }, remappage_cible_absente: { de: 'a', vers: 'b' }, remappage_en_double: { cle: 'a' },
 	}
 
-	it('les vingt-neuf codes ont chacun leur phrase, sans marqueur laissé à l’écran', () => {
-		expect(Object.keys(CODES)).toHaveLength(29)
+	it('les trente-quatre codes — vingt-neuf d’une création, cinq d’une modification — ont chacun leur phrase', () => {
+		expect(Object.keys(CODES)).toHaveLength(34)
 		for (const [code, valeurs] of Object.entries(CODES)) {
 			const phrase = phraseDefaut({ code, chemin: 'x', valeurs })
 			expect(phrase, code).not.toMatch(/[{}]/)
@@ -172,6 +175,9 @@ describe('les phrases des défauts (docs/SPEC-ia.md §12.1)', () => {
 		}
 		expect(phraseDefaut({ code: 'etape_initiale', chemin: 'etapes', valeurs: { nombre: 2 } })).toBe(
 			'Il faut exactement une étape initiale ; la proposition en a 2.',
+		)
+		expect(phraseDefaut({ code: 'remappage_requis', chemin: 'remappages', valeurs: { cle: 'relance', affaires: 9 } })).toBe(
+			'Affaires sans destination : l’étape retirée «\u00a0relance\u00a0» en porte 9.',
 		)
 	})
 

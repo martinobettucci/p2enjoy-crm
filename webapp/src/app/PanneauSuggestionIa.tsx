@@ -92,6 +92,12 @@ const CLES_DEFAUT: Readonly<Record<string, CleTraduction>> = {
 	exigence_transition_absente: 'ia.defaut.exigence_transition_absente',
 	exigence_champ_absent: 'ia.defaut.exigence_champ_absent',
 	exigence_en_double: 'ia.defaut.exigence_en_double',
+	// `CRM-097` T3 — les cinq codes d'une modification (docs/SPEC-ia.md §13.3).
+	type_non_modifiable: 'ia.defaut.type_non_modifiable',
+	remappage_requis: 'ia.defaut.remappage_requis',
+	remappage_origine_inconnue: 'ia.defaut.remappage_origine_inconnue',
+	remappage_cible_absente: 'ia.defaut.remappage_cible_absente',
+	remappage_en_double: 'ia.defaut.remappage_en_double',
 }
 
 /** La phrase d'un défaut : sa clé de traduction et les valeurs que la base a écrites (docs/SPEC-ia.md §12.1). */

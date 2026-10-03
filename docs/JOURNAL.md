@@ -31002,3 +31002,8 @@ committées avant le code. *Choix faits en écrivant, et ce que la relecture a t
 
 *Vérifié* : unitaires — `differentiel-ia` 10, `brouillon-ia` 12, `assistant-ia` 41, panneau 30, éditeur 134 ; huit
 mutations tuées ; total **3604** ; typage vert ; build ; 375 classes citées, aucune manquante.
+
+**`CRM-097` T3.c, complément du 2026-10-03.** En préparant les preuves E2E, la relecture du panneau a montré que les
+cinq défauts d'une modification n'avaient pas de phrase : `remappage_requis` se serait affiché « Défaut
+« remappage_requis » », le repli des codes inconnus. Les cinq phrases sont ajoutées — sans accord de nombre à écrire :
+« l'étape retirée « relance » en porte 9 » —, et la preuve unitaire des phrases compte désormais trente-quatre codes.
