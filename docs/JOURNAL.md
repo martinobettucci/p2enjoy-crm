@@ -31045,3 +31045,19 @@ registre relu porte 86 lignes aux empreintes du dépôt. *Constat inattendu* : l
 l'entrée standard et jamais affichée, rend **403 « origine non autorisée pour cette clé »** : c'est la plage d'adresses
 de la cellule que LeLabs doit autoriser. Le geste 5 (proposer) devient sans objet ; `CRM-097` reste non publié jusqu'à
 ce que l'assistant réponde et qu'une génération soit constatée. INC-266, INC-268 et INC-270 passent en « Publié ».
+
+**`CRM-097` T4, diagnostic du refus du serveur LLM, le 2026-10-03.** Le responsable rapporte que LeLabs autorise
+`crm.lelabs.tech` et que la cellule « ne se manifeste pas avec son nom de domaine ». *Mesures, depuis la cellule, en
+lecture seule sur `/api/tags`, la clé jamais affichée, aucune adresse affichée* :
+
+- sans en-tête, puis avec `Origin: https://crm.lelabs.tech`, `Referer`, les deux ensemble, `Origin: crm.lelabs.tech`,
+  `X-Forwarded-Host` : **403 « origine non autorisée pour cette clé » dans tous les cas** — le serveur ne juge pas
+  l'origine sur un en-tête que le client déclare ;
+- l'adresse publique de sortie de la cellule **est** l'unique adresse vers laquelle `crm.lelabs.tech` résout ;
+- le nom inverse (PTR) de cette adresse n'est **pas** `crm.lelabs.tech` : c'est un nom de l'hébergeur.
+
+*Conclusion* : au niveau réseau, la cellule sort déjà « de » `crm.lelabs.tech`. Une liste d'autorisation qui juge par
+le nom inverse de l'adresse source refuse donc la cellule quoi qu'elle envoie ; rien, côté CRM, ne peut changer ce
+nom. T1 avait mesuré la même logique d'adresse en développement (le responsable avait autorisé `192.168.0.0/24`).
+*Recommandation* : que LeLabs autorise l'**adresse** vers laquelle `crm.lelabs.tech` résout, plutôt que le nom — ou
+que sa liste résolve le nom au moment du contrôle. Aucun changement de code n'est fait : aucun n'aurait d'effet mesuré.

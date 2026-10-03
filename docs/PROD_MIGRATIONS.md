@@ -291,8 +291,11 @@ par le `proposer.sh` livré.
 **État au 2026-10-03.** Gestes 1 à 4 exécutés (§8). **Geste 5 sans objet** : la cellule portait déjà `OLLAMA_HOST`,
 `OLLAMA_CONTEXT_LENGTH` et une clé `OLLAMA_API_KEY` non vide — relevé de présence seule ; `OLLAMA_MODEL`, absent, prend
 le défaut `gemma4:e2b` de Compose, la valeur attendue. **Geste 6 en attente** : le serveur LLM répond **403 « origine
-non autorisée pour cette clé »** à une sonde faite depuis la cellule, la clé jamais affichée — c'est la plage d'adresses
-de la cellule que LeLabs doit autoriser. **Geste 7** suivra : aucune recréation n'est nécessaire, la clé étant déjà
+non autorisée pour cette clé »** à une sonde faite depuis la cellule, la clé jamais affichée. LeLabs autorise le **nom**
+`crm.lelabs.tech` ; mesuré le 2026-10-03 : l'adresse de sortie de la cellule est bien celle vers laquelle ce nom résout,
+mais son nom inverse est celui de l'hébergeur, et aucun en-tête (`Origin`, `Referer`, `X-Forwarded-Host`) ne change la
+réponse. LeLabs doit donc autoriser l'**adresse** vers laquelle `crm.lelabs.tech` résout (`dig +short crm.lelabs.tech`),
+ou résoudre le nom au moment du contrôle (`docs/JOURNAL.md`, diagnostic du 2026-10-03). **Geste 7** suivra : aucune recréation n'est nécessaire, la clé étant déjà
 remise au conteneur ; il reste à constater `disponible`, puis une génération par le responsable.
 
 **Retour arrière** : par l'instantané si la fenêtre échoue (§6) ; après la fenêtre, chaque migration se retire par sa
