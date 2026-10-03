@@ -121,12 +121,14 @@ fi
 
 # Bornés aux fichiers de CRM-016 et au service principal : les tests de l'échangeur (`session/`)
 # sont comptés par `scripts/verify-session-sso.sh`. 6 d'origine, plus les 5 de l'environnement par
-# fonction (CRM-092) = 11, valeur COMPTÉE.
+# fonction (CRM-092) = 11 ; **14 depuis `CRM-097` T1** (décision 617), qui a ajouté à l'environnement par
+# fonction les trois preuves de la fonction `ia` — ses variables `OLLAMA_*`, sa clé confinée, sa borne de
+# 150 s — sans réviser ce compteur : dérive relevée le 2026-10-03 par T3.b, valeur COMPTÉE.
 if npm run --silent test:unit -- ../supabase/functions/main ../supabase/functions/example >"$WORK/unit.log" 2>&1 \
-	&& grep -qE 'Tests +11 passed' "$WORK/unit.log"; then
-	ok "11 tests unitaires du routeur, de l'environnement par fonction et du handler d'exemple"
+	&& grep -qE 'Tests +14 passed' "$WORK/unit.log"; then
+	ok "14 tests unitaires du routeur, de l'environnement par fonction et du handler d'exemple"
 else
-	fail "tests unitaires edge en échec ou compte différent de 11"
+	fail "tests unitaires edge en échec ou compte différent de 14"
 	sed 's/^/        /' "$WORK/unit.log" | tail -n 20
 fi
 
