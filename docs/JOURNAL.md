@@ -31027,3 +31027,12 @@ code (`docs/SPEC-seed.md` §16 bis). *Ce que l'exécution a appris* :
 **801 sur 801** — première campagne complète verte depuis INC-269, qui est close —, courrier 42 au rejeu (41 au premier
 passage : INC-205, la relève passe avant la remise, trace conservée). `verify-seed-demo` 69, `verify-manual` 157,
 `verify-functions` 14.
+
+**`CRM-097` T4, préparation du 2026-10-03.** `proposer.sh --assistant-ia --ollama-host https://…` (spécifié et committé
+avant le code) propose à une cellule en service les trois variables publiques de l'assistant et demande la clé vide,
+sans rien tirer ni afficher de valeur ; sept preuves dans `verify-spark.sh`. *Deux constats en lisant la livraison* :
+la fusion des fichiers injectés transmet tout nom à la pile, si bien que les `OLLAMA_*` posés atteindront `functions`
+sans autre changement ; et `up -d` ne reconstruit pas une image déjà présente — la reconstruction de `mail-sync`
+(INC-266) est donc un geste explicite de la procédure (`docs/PROD_MIGRATIONS.md` §2.9, geste 3). L'ordre des gestes
+met la livraison avant la proposition des variables : la cellule n'a pas encore le `proposer.sh` qui les connaît, et
+l'assistant sans clé se déclare indisponible sans rien empêcher d'autre.

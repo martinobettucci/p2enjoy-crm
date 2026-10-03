@@ -269,6 +269,28 @@ fonction absente.
 **Retour arrière** : la 81 se retire par sa ligne du §3.2, avec la révision précédente de la webapp ; les
 affaires créées restent, ce sont des données.
 
+### 2.9 `CRM-097` — l'assistant IA, avec INC-266, INC-268 et INC-270 (EN ATTENTE)
+
+`docs/SPEC-ia.md` §11 à §13, `docs/SPEC-deploiement-spark.md` §4.3 et §4.4 ; décisions 617 à 620. Quatre
+migrations — **83 à 86**, appliquées d'une traite par le registre (§3.1) —, la fonction `ia`, la webapp de T2 et T3,
+et la reconstruction de `mail-sync` (INC-266). Les variables `OLLAMA_*` sont **facultatives** : sans elles,
+l'assistant se déclare indisponible et rien d'autre ne change. Elles sont donc proposées **après** la livraison,
+par le `proposer.sh` livré.
+
+| # | Geste | Qui | Commande ou lieu |
+|---|---|---|---|
+| 1 | Instantané de VM, avant la fenêtre de migration (§3.1) | propriétaire de la cellule | console de l'hébergeur |
+| 2 | Livrer et migrer — les 83 à 86 sont en attente | poste, par les IP | `scripts/spark/livrer.sh -- --migrate --instantane-verifie`, **puis** `./runProd.sh --spark` dans la cellule (§2.5, étape 6) |
+| 3 | Reconstruire `mail-sync` (INC-266) : `up -d` ne reconstruit pas une image présente | cellule | `bash -c 'source scripts/lib/env.sh; ENV_FILE=$(spark_env_merge); docker compose --env-file "$ENV_FILE" "${SPARK_COMPOSE[@]}" up -d --build --no-deps mail-sync'` depuis `/srv/crm` |
+| 4 | Vérifier, puis les contrôles des lignes 83 à 86 du §3.2 ; l'assistant répond « indisponible : cle_absente » | poste, lecture seule | `scripts/spark/verifier.sh` ; registre relu : 86 lignes |
+| 5 | Proposer l'assistant IA | cellule | `scripts/spark/proposer.sh --assistant-ia --ollama-host https://…` — l'URL du serveur Ollama de LeLabs ; aucune valeur affichée |
+| 6 | Importer les trois variables, **saisir `OLLAMA_API_KEY`**, et faire autoriser la plage d'adresses de la cellule par le serveur LLM de LeLabs | propriétaire de la cellule | console du Spark ; LeLabs |
+| 7 | Recréer `functions` avec la clé, puis constater `GET /functions/v1/ia/etat` → `disponible` | cellule, puis poste en lecture seule | `./runProd.sh --spark` (Compose recrée ce dont l'environnement change) |
+
+**Retour arrière** : par l'instantané si la fenêtre échoue (§6) ; après la fenêtre, chaque migration se retire par sa
+ligne du §3.2, dans l'ordre inverse — la 86 d'abord. Les workflows créés ou modifiés par des acceptations restent :
+ce sont des configurations, et chaque modification a son point de retour.
+
 ## 3. Migrations en attente
 
 **Aucune migration en attente depuis le 2026-10-01.** Baseline de production : la migration **82**

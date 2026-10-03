@@ -7,6 +7,8 @@
 # @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §2, §12 (point 2) — tranche T6 : plus de
 #       SMTP ni de GoTrue ; `--demandes-seules` repose les demandes à une cellule en service
 #       (docs/JOURNAL.md décisions 589 et 590)
+# @spec CRM-097 (docs/BACKLOG.md) tranche T4 — docs/SPEC-deploiement-spark.md §4.3 et §4.4 (`--assistant-ia` :
+#       les variables OLLAMA_* proposées, la clé demandée vide, rien de tiré) ; docs/SPEC-ia.md §3 ; décision 620
 #
 # S'exécute DANS la cellule, sous le compte `spark-docker`, depuis le dépôt livré (/srv/crm).
 #
@@ -25,6 +27,7 @@
 #   scripts/spark/proposer.sh [--domaine crm.lelabs.tech] [--port 8080] [--client-sso lelabs-crm-serveur]
 #   scripts/spark/proposer.sh --route-seule [--domaine crm.lelabs.tech] [--port 8080]
 #   scripts/spark/proposer.sh --demandes-seules [--client-sso lelabs-crm-serveur]
+#   scripts/spark/proposer.sh --assistant-ia --ollama-host https://hôte:port
 #   scripts/spark/proposer.sh --help
 #
 # La route se propose en `tls` : c'est ce que la FORGE expose au public, et non ce que la pile sert.
@@ -41,6 +44,12 @@
 # jamais redemandé. Des fichiers réels, il ne lit que la PRÉSENCE d'un nom, jamais une valeur secrète.
 # Il nomme les variables retirées de la pile par `CRM-092` que la cellule porte encore : un import
 # ne retire jamais rien, elles restent inertes, et le propriétaire les retire à la console s'il veut.
+#
+# `--assistant-ia` (`CRM-097` T4) propose l'assistant IA à une cellule EN SERVICE, sans rien tirer :
+# `OLLAMA_HOST` (exigé par `--ollama-host`, une URL https), `OLLAMA_MODEL` et `OLLAMA_CONTEXT_LENGTH` s'ils ne
+# sont pas à la valeur attendue, et `OLLAMA_API_KEY` en demande vide si elle manque ou est vide — une clé posée
+# n'est ni lue ni redemandée. Le propriétaire saisit la clé en console et fait autoriser la plage d'adresses de
+# la cellule par le serveur LLM.
 #
 # Plus aucune option SMTP depuis `CRM-092` T6 : les courriels transactionnels étaient ceux de GoTrue,
 # retiré de la pile (décision 589).
@@ -62,6 +71,10 @@ CLIENT_SSO=lelabs-crm-serveur
 EMETTEUR_SSO=https://oauth.lelabs.tech/realms/lelabs
 ROUTE_SEULE=0
 DEMANDES_SEULES=0
+ASSISTANT_IA=0
+OLLAMA_HOTE=""
+OLLAMA_MODELE=gemma4:e2b
+OLLAMA_CONTEXTE=36864
 
 usage() { print_header_help "${BASH_SOURCE[0]}"; }
 
@@ -72,6 +85,8 @@ while [ $# -gt 0 ]; do
 		--client-sso) CLIENT_SSO=${2:?--client-sso exige une valeur}; shift ;;
 		--route-seule) ROUTE_SEULE=1 ;;
 		--demandes-seules) DEMANDES_SEULES=1 ;;
+		--assistant-ia) ASSISTANT_IA=1 ;;
+		--ollama-host) OLLAMA_HOTE=${2:?--ollama-host exige une valeur}; shift ;;
 		--help|-h)    usage; exit 0 ;;
 		*)            die "option inconnue « $1 ». Voir scripts/spark/proposer.sh --help." ;;
 	esac
@@ -89,6 +104,17 @@ case "$CLIENT_SSO" in
 	*[!A-Za-z0-9_.-]* | "") die "identifiant de client « $CLIENT_SSO » hors forme." ;;
 esac
 [ "$ROUTE_SEULE" = 0 ] || [ "$DEMANDES_SEULES" = 0 ] || die "--route-seule et --demandes-seules s'excluent."
+if [ "$ASSISTANT_IA" = 1 ]; then
+	[ "$ROUTE_SEULE" = 0 ] && [ "$DEMANDES_SEULES" = 0 ] || die "--assistant-ia exclut --route-seule et --demandes-seules."
+	# Une valeur qu'on ne peut pas deviner ne se propose pas vide : l'URL du serveur est exigée, et en https.
+	case "$OLLAMA_HOTE" in
+		https://?*) case "$OLLAMA_HOTE" in *[[:space:]\'\"]*) die "--ollama-host : l'URL ne porte ni espace ni guillemet." ;; esac ;;
+		"") die "--assistant-ia exige --ollama-host https://hôte:port — l'URL du serveur Ollama de LeLabs." ;;
+		*) die "--ollama-host : une URL https:// est attendue." ;;
+	esac
+else
+	[ -z "$OLLAMA_HOTE" ] || die "--ollama-host n'a de sens qu'avec --assistant-ia."
+fi
 
 PROPOSITION_ENV="${SPARK_ENV_PROPOSAL:-${SPARK_ENV_FILE}.?}"
 PROPOSITION_SECRETS="${SPARK_SECRETS_PROPOSAL:-${SPARK_SECRETS_FILE}.?}"
@@ -97,7 +123,7 @@ MARQUE="# --- fin du bloc posé par sparkd, écrivez ci-dessous ---"
 
 # --- Gardes --------------------------------------------------------------------------------------
 
-if [ "$ROUTE_SEULE" = 0 ] && [ "$DEMANDES_SEULES" = 0 ] && [ -f "$SPARK_SECRETS_FILE" ] \
+if [ "$ROUTE_SEULE" = 0 ] && [ "$DEMANDES_SEULES" = 0 ] && [ "$ASSISTANT_IA" = 0 ] && [ -f "$SPARK_SECRETS_FILE" ] \
 	&& grep -q '^JWT_SECRET=' "$SPARK_SECRETS_FILE"; then
 	die "$SPARK_SECRETS_FILE porte déjà JWT_SECRET : des secrets sont en service.
         Proposer d'autres secrets invaliderait les jetons émis et le mot de passe de la base.
@@ -113,6 +139,7 @@ proposition_pendante() {
 FICHIERS=("$PROPOSITION_ENV" "$PROPOSITION_SECRETS" "$PROPOSITION_ROUTES")
 [ "$ROUTE_SEULE" = 0 ] || FICHIERS=("$PROPOSITION_ROUTES")
 [ "$DEMANDES_SEULES" = 0 ] || FICHIERS=("$PROPOSITION_ENV" "$PROPOSITION_SECRETS")
+[ "$ASSISTANT_IA" = 0 ] || FICHIERS=("$PROPOSITION_ENV" "$PROPOSITION_SECRETS")
 for fichier in "${FICHIERS[@]}"; do
 	[ -e "$fichier" ] || die "$fichier absent : ce script s'exécute dans la cellule, où le plan de contrôle le pose."
 	[ -w "$fichier" ] || die "$fichier non inscriptible par le compte $(id -un)."
@@ -192,6 +219,44 @@ if [ "$DEMANDES_SEULES" = 1 ]; then
 		info "Le propriétaire du Spark les relit et les importe depuis la console ; le secret, l'administrateur du realm le saisit."
 	fi
 	[ -z "$inertes" ] || info "Retirées de la pile par CRM-092, encore présentes et inertes :$inertes — à retirer à la console si souhaité."
+	exit 0
+fi
+
+# --- L'assistant IA, pour une cellule en service (CRM-097 T4) ----------------------------------
+#
+# Même discipline que les demandes seules : la valeur d'une variable PUBLIQUE est comparée à l'attendue ; de la
+# clé, seule la PRÉSENCE non vide est constatée, jamais la valeur, qui n'entre dans aucune variable du shell.
+
+if [ "$ASSISTANT_IA" = 1 ]; then
+	proposees=""
+	valeur_publique() { [ -f "$SPARK_ENV_FILE" ] && env_get "$SPARK_ENV_FILE" "$1"; }
+	{
+		for paire in "OLLAMA_HOST|$OLLAMA_HOTE|Serveur Ollama de LeLabs, appelé par la seule fonction ia (CRM-097)." \
+			"OLLAMA_MODEL|$OLLAMA_MODELE|Modèle de génération de l'assistant IA (docs/SPEC-ia.md §3)." \
+			"OLLAMA_CONTEXT_LENGTH|$OLLAMA_CONTEXTE|Fenêtre de contexte demandée au modèle, en jetons."; do
+			nom=${paire%%|*}; reste=${paire#*|}; attendu=${reste%%|*}; etiquette=${reste#*|}
+			if [ "$(valeur_publique "$nom")" != "$attendu" ]; then
+				printf '\n'; ligne "$nom" "$etiquette" "$attendu"
+				proposees="$proposees $nom"
+			fi
+		done
+	} >> "$PROPOSITION_ENV"
+	if ! { [ -f "$SPARK_SECRETS_FILE" ] \
+		&& grep -qE "^OLLAMA_API_KEY=(\"[^\"]|'[^']|[^\"'])" "$SPARK_SECRETS_FILE"; }; then
+		{
+			printf '\n'
+			ligne OLLAMA_API_KEY "Clé du serveur Ollama, liée à la plage d'adresses de la cellule : le propriétaire la saisit." ""
+		} >> "$PROPOSITION_SECRETS"
+		proposees="$proposees OLLAMA_API_KEY"
+	fi
+	if [ -z "$proposees" ]; then
+		say "Rien à proposer — la cellule porte déjà l'assistant IA et sa clé"
+	else
+		say "Assistant IA proposé — rien n'est appliqué"
+		info "Proposées :$proposees"
+		info "Variables : $PROPOSITION_ENV · Secrets : $PROPOSITION_SECRETS"
+		info "Le propriétaire les importe depuis la console, saisit la clé, et fait autoriser la plage d'adresses de la cellule par le serveur LLM."
+	fi
 	exit 0
 fi
 

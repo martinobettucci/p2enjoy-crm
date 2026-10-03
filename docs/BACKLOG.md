@@ -14931,7 +14931,9 @@ le serveur réel.
             (au rejeu ; le premier passage rend l'intermittent connu INC-205, 41 sur 42, trace conservée). Les
             captures de l'éditeur des autres unités sont renouvelées : son apparence a changé (« Étapes », « Suggérer »).
 - [ ] **T4** — production : variables proposées dans la cellule, clé saisie en console, plage d'adresses de
-      la cellule autorisée par le serveur LLM, migration `0083` en fenêtre avec instantané, constat.
+      la cellule autorisée par le serveur LLM, migrations `0083` à `0086` en fenêtre avec instantané, constat.
+      Procédure : `docs/PROD_MIGRATIONS.md` §2.9 (sept gestes) ; `proposer.sh --assistant-ia` livré pour le geste 5,
+      *vérifié le 2026-10-03* par `verify-spark.sh` (98 vérifications, sept nouvelles).
 
 ## Arbitrage du 2026-10-03 — INC-265 à INC-269 (décision 619)
 

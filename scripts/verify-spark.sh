@@ -3,6 +3,7 @@
 #           propositions et livraison
 # @verifies docs/SPEC-deploiement-spark.md §3 (assemblage), §4.1 (fusion), §4.2 (variables sans
 #           objet), §4.4 (proposer), §5.1 (livrer), §5.2 (premier déploiement), §9 (preuves)
+# @verifies CRM-097 (docs/BACKLOG.md) tranche T4 — docs/SPEC-deploiement-spark.md §4.3 et §4.4 (`--assistant-ia`)
 # @verifies docs/JOURNAL.md décisions 567, 570, 571, 575 et 577 (image Realtime dérivée)
 # @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §2, §12 — tranche T6 : ni GoTrue ni SMTP dans
 #           les propositions ; `--demandes-seules` pour une cellule en service (décisions 589 et 590) ;
@@ -562,6 +563,67 @@ if out=$(proposer "$P" --demandes-seules); then
 else
 	fail "--demandes-seules refusé, secret \"\" : $(printf '%s' "$out" | head -n 1)"
 fi
+
+# `--assistant-ia` (`CRM-097` T4) : une cellule EN SERVICE, sans l'assistant. Rien n'est tiré ; les trois
+# variables publiques proposées à la valeur attendue, la clé en demande vide, aucun fichier réel touché.
+HOTE_LLM=https://llm.exemple.tld:21434
+cellule_vierge "$P"
+fichiers_conformes "$P"
+reels_avant=$(sha256sum "$P/env" "$P/secrets")
+if out=$(proposer "$P" --assistant-ia --ollama-host "$HOTE_LLM"); then
+	props_env=$(sed -n "/^$MARQUE\$/,\$p" "$P/env.?" | grep -E '^[A-Z0-9_]+=' | tr '\n' ';')
+	props_secrets=$(sed -n "/^$MARQUE\$/,\$p" "$P/secrets.?" | grep -E '^[A-Z0-9_]+=' | tr '\n' ';')
+	[ "$props_env" = "OLLAMA_HOST=$HOTE_LLM;OLLAMA_MODEL=gemma4:e2b;OLLAMA_CONTEXT_LENGTH=36864;" ] \
+		&& [ "$props_secrets" = "OLLAMA_API_KEY=;" ] \
+		&& ok "--assistant-ia, cellule en service : les trois variables et la demande de la clé, rien d'autre" \
+		|| fail "--assistant-ia : variables « $props_env » secrets « $props_secrets »"
+	[ -z "$(grep -vE '^#|^$' "$P/routes.?")" ] && [ "$(sha256sum "$P/env" "$P/secrets")" = "$reels_avant" ] \
+		&& ok "--assistant-ia : ni route proposée, ni fichier réel touché" || fail "--assistant-ia : route ou fichiers réels modifiés"
+	case "$out" in *"$(env_get "$P/secrets" JWT_SECRET)"*) fail "--assistant-ia affiche une valeur secrète" ;;
+		*OLLAMA_API_KEY*) ok "--assistant-ia nomme ce qu'il propose, sans aucune valeur secrète" ;;
+		*) fail "--assistant-ia ne nomme pas ses propositions : $(printf '%s' "$out" | tail -n 2 | tr '\n' ' ')" ;; esac
+	avant=$(empreintes "$P")
+	if proposer "$P" --assistant-ia --ollama-host "$HOTE_LLM" >/dev/null; then fail "--assistant-ia : proposition pendante écrasée"
+	else [ "$(empreintes "$P")" = "$avant" ] && ok "--assistant-ia : proposition pendante, refus, fichiers inchangés" || fail "--assistant-ia : refus, mais fichiers modifiés"; fi
+else
+	fail "--assistant-ia refusé sur une cellule en service : $(printf '%s' "$out" | head -n 1)"
+fi
+# L'assistant déjà posé, au format réel de la cellule (valeurs entre guillemets) : rien n'est proposé, la clé
+# posée n'est ni lue ni redemandée ; réduite à `""`, elle est vide, et demandée.
+cellule_vierge "$P"
+fichiers_conformes "$P"
+printf 'OLLAMA_HOST="%s"\nOLLAMA_MODEL="gemma4:e2b"\nOLLAMA_CONTEXT_LENGTH="36864"\n' "$HOTE_LLM" >> "$P/env"
+printf 'OLLAMA_API_KEY="cle-ollama-temoin"\n' >> "$P/secrets"
+avant=$(empreintes "$P")
+if out=$(proposer "$P" --assistant-ia --ollama-host "$HOTE_LLM"); then
+	case "$out" in *"Rien à proposer"*) [ "$(empreintes "$P")" = "$avant" ] \
+		&& ok "--assistant-ia, cellule à jour : rien à proposer, la clé posée n'est pas redemandée" \
+		|| fail "--assistant-ia, cellule à jour : fichiers modifiés" ;;
+		*) fail "--assistant-ia, cellule à jour : $(printf '%s' "$out" | head -n 1)" ;; esac
+	case "$out" in *temoin*) fail "--assistant-ia affiche la clé posée" ;; esac
+else
+	fail "--assistant-ia refusé sur une cellule à jour : $(printf '%s' "$out" | head -n 1)"
+fi
+sed -i 's/^OLLAMA_API_KEY=.*/OLLAMA_API_KEY=""/' "$P/secrets"
+if out=$(proposer "$P" --assistant-ia --ollama-host "$HOTE_LLM"); then
+	props_secrets=$(sed -n "/^$MARQUE\$/,\$p" "$P/secrets.?" | grep -E '^[A-Z0-9_]+=' | tr '\n' ';')
+	[ "$props_secrets" = "OLLAMA_API_KEY=;" ] && ok "--assistant-ia : une clé réduite à \"\" est vide, et elle est demandée" \
+		|| fail "--assistant-ia : clé \"\" tenue pour posée — secrets « $props_secrets »"
+else
+	fail "--assistant-ia refusé, clé \"\" : $(printf '%s' "$out" | head -n 1)"
+fi
+# Ce qu'on ne peut pas deviner ne se propose pas vide, et les modes s'excluent.
+cellule_vierge "$P"
+fichiers_conformes "$P"
+avant=$(empreintes "$P")
+refus_ia=""
+proposer "$P" --assistant-ia >/dev/null && refus_ia="$refus_ia sans-hôte"
+proposer "$P" --assistant-ia --ollama-host http://llm.exemple.tld:21434 >/dev/null && refus_ia="$refus_ia http"
+proposer "$P" --ollama-host "$HOTE_LLM" >/dev/null && refus_ia="$refus_ia hôte-seul"
+proposer "$P" --assistant-ia --demandes-seules --ollama-host "$HOTE_LLM" >/dev/null && refus_ia="$refus_ia avec-demandes"
+[ -z "$refus_ia" ] && [ "$(empreintes "$P")" = "$avant" ] \
+	&& ok "--assistant-ia refuse un hôte absent ou en http, un hôte sans l'option, et --demandes-seules à la fois" \
+	|| fail "--assistant-ia accepte :$refus_ia"
 
 # --- 6. livrer.sh contre une cellule simulée --------------------------------------------------------
 
