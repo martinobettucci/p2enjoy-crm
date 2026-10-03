@@ -2,6 +2,8 @@
 // @spec docs/SPEC-ia.md §6.1 (le format `version: 1`), §12.5 (« Corriger à la main » : ce qui se corrige dans
 //       l'aperçu, et « un retrait emporte ce qui en dépend, comme la base l'emporterait ») ; docs/JOURNAL.md
 //       décision 618 (point 7 : l'aperçu n'est pas un second éditeur)
+// @spec CRM-097 tranche T3.c — docs/SPEC-ia.md §13.1 (`remappages` : où vont les affaires d'une étape retirée, en
+//       clés), §13.6 (choisir une destination écrit le remappage dans le brouillon) ; décision 620
 //
 // Module pur : chaque geste rend une NOUVELLE proposition, jamais une mutation, et les retraits disent ce qu'ils
 // ont emporté — l'écran l'annonce (docs/DESIGN_SYSTEM.md §5.52). Rien n'est jugé ici : une correction peut
@@ -22,6 +24,8 @@ export type ChampIa = {
 }
 export type RegleIa = { readonly champ: string; readonly etape: string; readonly visibilite: string }
 export type ExigenceIa = { readonly de: string; readonly vers: string; readonly champ: string }
+/** Où vont les affaires d'une étape retirée — une modification seulement (docs/SPEC-ia.md §13.1). */
+export type RemappageIa = { readonly de: string; readonly vers: string }
 
 export type PropositionIa = {
 	readonly version: 1
@@ -32,6 +36,8 @@ export type PropositionIa = {
 	readonly champs: readonly ChampIa[]
 	readonly regles: readonly RegleIa[]
 	readonly exigences: readonly ExigenceIa[]
+	/** Facultative : absente d'une création, elle le reste. */
+	readonly remappages?: readonly RemappageIa[]
 }
 
 /** Ce qu'un retrait a emporté avec lui, pour l'annonce. */
@@ -57,6 +63,7 @@ export function normaliser(p: PropositionIa): PropositionIa {
 		champs: p.champs.map((c) => ({ cle: c.cle, libelle: c.libelle, type: c.type, choix: c.choix, devise: c.devise, aide: c.aide })),
 		regles: p.regles.map((r) => ({ champ: r.champ, etape: r.etape, visibilite: r.visibilite })),
 		exigences: p.exigences.map((x) => ({ de: x.de, vers: x.vers, champ: x.champ })),
+		...(p.remappages === undefined ? {} : { remappages: p.remappages.map((r) => ({ de: r.de, vers: r.vers })) }),
 	}
 }
 
@@ -84,7 +91,10 @@ export function utiliserNoeudDuCatalogue(p: PropositionIa, cle: string): Proposi
 	return { ...p, noeuds: p.noeuds.filter((n) => n.cle !== cle) }
 }
 
-/** Retire une étape, ses transitions entrantes et sortantes, leurs exigences, ses règles et son nœud proposé. */
+/**
+ * Retire une étape, ses transitions entrantes et sortantes, leurs exigences, ses règles et son nœud proposé — et
+ * les remappages qui la visaient : une destination absente n'en est plus une.
+ */
 export function retirerEtape(p: PropositionIa, cle: string): Retrait {
 	const touchees = (t: { de: string; vers: string }) => t.de === cle || t.vers === cle
 	const transitions = p.transitions.filter((t) => !touchees(t))
@@ -98,6 +108,7 @@ export function retirerEtape(p: PropositionIa, cle: string): Retrait {
 			transitions,
 			regles,
 			exigences,
+			...(p.remappages === undefined ? {} : { remappages: p.remappages.filter((r) => r.vers !== cle) }),
 		},
 		emportes: {
 			transitions: p.transitions.length - transitions.length,
@@ -164,4 +175,13 @@ export function retirerExigence(p: PropositionIa, rang: number): PropositionIa {
  */
 export function modifierChoix(p: PropositionIa, rang: number, choix: readonly string[]): PropositionIa {
 	return modifierChamp(p, rang, { choix })
+}
+
+/**
+ * La destination des affaires d'une étape retirée (docs/SPEC-ia.md §13.6) : `null` retire le remappage — « Aucune
+ * destination », jamais devinée. Un seul remappage par étape d'origine.
+ */
+export function definirRemappage(p: PropositionIa, de: string, vers: string | null): PropositionIa {
+	const autres = (p.remappages ?? []).filter((r) => r.de !== de)
+	return { ...p, remappages: vers === null ? autres : [...autres, { de, vers }] }
 }

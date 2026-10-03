@@ -5134,9 +5134,19 @@ de gestes, confirmation d'abandon, historique, focus et annonces. Seuls les éca
     ÉTAPES CONSERVÉES change : une étape insérée ne fait pas paraître déplacées toutes celles qui la suivent.
   - **« Accepter et faire évoluer le workflow »** remplace « Accepter et créer le workflow » pour une modification :
     le libellé nomme ce que le geste fait (§5.52, l'ordre de la barre est inchangé).
-  - **Le type d'un champ CONSERVÉ se rend en texte**, jamais en liste : il ne se modifie pas (`type_non_modifiable`),
-    et ce qui ne se corrige pas est un texte (§5.15, §5.52). Un champ ajouté garde sa liste.
+  - **Le type d'un champ CONSERVÉ se rend en texte** — « Type : Montant » — tant qu'il est celui du champ vivant : il
+    ne se modifie pas (`type_non_modifiable`), et ce qui ne se corrige pas est un texte (§5.15, §5.52). *Précisé à
+    l'écriture du code* : si la proposition l'a changé, la liste revient, seul moyen de le rétablir — le défaut le dit
+    en tête. Un champ ajouté garde sa liste.
   - **Un libellé de transition vide porte l'indication « Libellé de l'étape d'arrivée »** en texte d'exemple : pour
     une modification, c'est ce que le vide veut dire (`docs/SPEC-ia.md` §13.1), comme l'écrit déjà l'éditeur (§5.15).
   - **Après l'acceptation**, le panneau se ferme, le graphe et le bloc des versions sont relus, et le focus revient
     à la commande « Suggérer » qui a ouvert le panneau ; l'annonce nomme le point de retour.
+  - **Le bloc des étapes gagne son titre `h3` « Étapes »** (*écrit à l'écriture du code*) : les blocs transitions et
+    champs en portaient un, celui des étapes non, et « Suggérer » n'avait pas de tête où se poser. Le titre et la
+    commande partagent une ligne qui se replie ; la commande garde sa cible `--size-target`.
+  - **La ligne d'un champ retiré porte « Retiré — archivé »** dans la pilule de retrait : la ligne de comparaison du
+    §5.15 accepte un mot de genre fourni par l'appelant, sans autre changement de forme.
+  - **Le refus « workflow modifié » dit qu'il n'y a qu'un recours** : la suggestion ne s'accepte plus — une revue ne
+    rafraîchit pas l'empreinte relevée à sa création (`docs/SPEC-ia.md` §13.4) —, on l'abandonne et on en demande une
+    nouvelle sur le workflow tel qu'il est.

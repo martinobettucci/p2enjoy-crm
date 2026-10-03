@@ -30981,3 +30981,24 @@ code (`docs/SPEC-ia.md` §13.5). *Choix faits en écrivant* :
 
 *Vérifié* : unitaires de la fonction **83**, quatorze mutations tuées ; API `ia-modification.spec.ts` **5**, `ia.spec.ts`
 et `ia-acceptation.spec.ts` verts ; API **1108** déclarés. La preuve d'API a trouvé INC-270, corrigée à part.
+
+**`CRM-097` T3.c, le 2026-10-03 — l'écran « Suggérer ».** Précisions écrites dans `docs/DESIGN_SYSTEM.md` §5.53 et
+committées avant le code. *Choix faits en écrivant, et ce que la relecture a trouvé* :
+
+- **Le différentiel est calculé à l'écran**, par un module pur (`lib/differentiel-ia.ts`), contre la composition
+  vivante lue par la RPC : la base dit ce qui est conforme, l'écran dit ce qui change — deux questions distinctes.
+  Le rang d'une étape se compare parmi les étapes conservées (une insertion ne déplace pas les suivantes).
+- **Les lignes réemploient la comparaison de versions** (`LigneElement`, §5.15) ; seule extension, un mot de genre
+  fourni par l'appelant pour « Retiré — archivé ».
+- **Le type d'un champ conservé est un texte tant qu'il est le bon** ; s'il a été changé par le modèle, la liste
+  revient — sans elle, le défaut `type_non_modifiable` serait sans correction à la main.
+- **Un `409` est sans recours** : la relecture de la base a montré que l'empreinte initiale n'est jamais rafraîchie ;
+  la phrase « une revue est nécessaire » du §13.4 était fausse. Le comportement strict est gardé — il est le « refus si
+  le workflow a changé » du découpage — et la spécification comme l'écran disent le seul recours : abandonner, puis
+  demander une nouvelle suggestion.
+- **`portee non livree` est retiré de l'écran** : la migration `0086` ne le lève plus ; garder sa traduction aurait
+  laissé une clé que rien ne peut afficher.
+- **Le bloc des étapes gagne un titre `h3`** pour porter « Suggérer » comme les deux autres blocs.
+
+*Vérifié* : unitaires — `differentiel-ia` 10, `brouillon-ia` 12, `assistant-ia` 41, panneau 30, éditeur 134 ; huit
+mutations tuées ; total **3604** ; typage vert ; build ; 375 classes citées, aucune manquante.

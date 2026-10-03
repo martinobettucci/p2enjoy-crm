@@ -550,7 +550,7 @@ après les vérifications 1 à 3 et 5 à 7 du §12.3 (la 4 tombe), trois refus s
 | Ordre | Contrôle | Refus |
 |---|---|---|
 | 4 bis | le workflow ciblé est vivant (non archivé) | `P0001` « workflow archive » |
-| 4 ter | son empreinte de composition est celle relevée à la création de la suggestion (`empreinte_initiale`) | `PT409` « workflow modifie » — la base a bougé depuis : une revue est nécessaire |
+| 4 ter | son empreinte de composition est celle relevée à la création de la suggestion (`empreinte_initiale`) | `PT409` « workflow modifie » — la base a bougé depuis : la suggestion ne s'accepte plus |
 
 Les effets, en une transaction :
 
@@ -571,6 +571,12 @@ Les effets, en une transaction :
    comme toute version.
 
 Rendu : l'identifiant du workflow. Une violation que le contrôle n'aurait pas prévue annule tout.
+
+**Après un `PT409`, la suggestion ne s'accepte plus** (précisé le 2026-10-03, à l'écriture de T3.c) : l'empreinte est
+relevée à la CRÉATION, et ni une revue ni une correction ne la rafraîchissent — la version d'avant de ce tableau disait
+« une revue est nécessaire », ce que la base n'a jamais fait. C'est le « refus si le workflow a changé » du découpage
+(`docs/BACKLOG.md`, T3) : l'administrateur abandonne la suggestion et en demande une nouvelle, qui partira du workflow
+tel qu'il est. L'écran le dit en toutes lettres (`docs/DESIGN_SYSTEM.md` §5.53).
 
 ### 13.5 La fonction `ia` (révision du §11.3)
 

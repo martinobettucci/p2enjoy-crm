@@ -14918,8 +14918,11 @@ le serveur réel.
             simulateur : scénario `modification` ; API `ia-modification.spec.ts` **5** scénarios sur un workflow
             jetable — dont l'acceptation puis la restauration du point de retour, qui a révélé INC-270 —, une
             mutation de la fonction vue par l'API ; `ia.spec.ts` et `ia-acceptation.spec.ts` verts ; API **1108**.
-      - [ ] **T3.c** — écran : « Suggérer » dans les trois blocs, différentiel, affaires des étapes retirées ;
+      - [x] **T3.c** — écran : « Suggérer » dans les trois blocs, différentiel, affaires des étapes retirées ;
             unitaires ;
+            *Vérifié le 2026-10-03* : `differentiel-ia` 10, `brouillon-ia` 12, `assistant-ia` 41, panneau 30, éditeur
+            134 ; huit mutations tuées ; unitaires **3604** ; typage, build, 375 classes citées et aucune manquante.
+            Les preuves E2E et les captures suivent avec T3.d.
       - [ ] **T3.d** — E2E souris et clavier, captures observées, manuel, harnais et campagnes.
 - [ ] **T4** — production : variables proposées dans la cellule, clé saisie en console, plage d'adresses de
       la cellule autorisée par le serveur LLM, migration `0083` en fenêtre avec instantané, constat.

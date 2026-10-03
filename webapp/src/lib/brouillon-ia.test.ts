@@ -2,10 +2,13 @@
 // @verifies docs/SPEC-ia.md §12.5 (ce qui se corrige dans l'aperçu ; « un retrait emporte ce qui en dépend, comme la
 //           base l'emporterait » ; l'ajout d'une transition) ; docs/DESIGN_SYSTEM.md §5.52 (ce qu'un retrait
 //           emporte est annoncé : les comptes viennent d'ici)
+// @verifies CRM-097 tranche T3.c — docs/SPEC-ia.md §13.1 (`remappages`, facultative), §13.6 (choisir une destination
+//           écrit le remappage ; « Aucune destination » le retire) ; décision 620
 
 import { describe, expect, it } from 'vitest'
 import {
 	ajouterTransition,
+	definirRemappage,
 	designerInitiale,
 	memesPropositions,
 	modifierChamp,
@@ -108,5 +111,29 @@ describe('comparer et envoyer', () => {
 	it('la forme canonique ne porte que les clés du format `version: 1`', () => {
 		const bruitee = { ...VALIDE, workflow: { nom: 'x', autre: 1 } } as unknown as PropositionIa
 		expect(Object.keys(normaliser(bruitee).workflow)).toEqual(['nom'])
+	})
+})
+
+describe('T3.c — les remappages d’une modification', () => {
+	it('choisir une destination l’écrit ; en choisir une autre la REMPLACE ; « Aucune destination » la retire', () => {
+		const une = definirRemappage(VALIDE, 'relance', 'maquette')
+		expect(une.remappages).toEqual([{ de: 'relance', vers: 'maquette' }])
+		expect(definirRemappage(une, 'relance', 'gagne-web').remappages).toEqual([{ de: 'relance', vers: 'gagne-web' }])
+		expect(definirRemappage(une, 'relance', null).remappages).toEqual([])
+		expect(definirRemappage(definirRemappage(une, 'signature', 'maquette'), 'relance', null).remappages).toEqual([
+			{ de: 'signature', vers: 'maquette' },
+		])
+	})
+
+	it('retirer une étape retire les remappages qui la visaient — une destination absente n’en est plus une', () => {
+		const remappee = definirRemappage(definirRemappage(VALIDE, 'relance', 'maquette'), 'signature', 'gagne-web')
+		expect(retirerEtape(remappee, 'maquette').proposition.remappages).toEqual([{ de: 'signature', vers: 'gagne-web' }])
+		expect(retirerEtape(VALIDE, 'maquette').proposition).not.toHaveProperty('remappages')
+	})
+
+	it('la forme canonique garde les remappages ; absents, ils restent absents — une création n’en porte pas', () => {
+		expect(normaliser(definirRemappage(VALIDE, 'relance', 'maquette')).remappages).toEqual([{ de: 'relance', vers: 'maquette' }])
+		expect(normaliser(VALIDE)).not.toHaveProperty('remappages')
+		expect(memesPropositions(VALIDE, definirRemappage(VALIDE, 'relance', 'maquette'))).toBe(false)
 	})
 })

@@ -5,6 +5,8 @@
 // @spec docs/SPEC-workflow-engine.md §4 quater.4 (les collections rendues, une collection vide
 //       nommée), §4 quater.5 (comment un élément est nommé, et les quatre replis),
 //       §7 ter.14.6 (nommer un élément sans l'inventer, d'où ces replis viennent)
+// @spec CRM-097 tranche T3.c — docs/DESIGN_SYSTEM.md §5.53 (le différentiel d'une suggestion réemploie ces lignes
+//       sans copie ; un champ retiré se dit « Retiré — archivé ») ; décision 620
 // @spec docs/DESIGN_SYSTEM.md §5.15 (un ajout, un retrait et une modification se distinguent par un
 //       mot et jamais par une seule teinte ; un attribut modifié s'écrit « avant → après » ; une
 //       collection vide est nommée), §1 (la couleur ne porte jamais seule le sens),
@@ -62,7 +64,11 @@ export function NomCompare({ nom }: { readonly nom: NomElement }) {
 	)
 }
 
-export function LigneElement({ element }: { readonly element: ElementCompare }) {
+/**
+ * Une ligne de comparaison. `libelleGenre` remplace le mot du genre quand l'appelant en sait plus — le champ retiré
+ * d'une suggestion de l'IA est « Retiré — archivé » (docs/DESIGN_SYSTEM.md §5.53) ; la pilule et l'icône restent.
+ */
+export function LigneElement({ element, libelleGenre }: { readonly element: ElementCompare; readonly libelleGenre?: string }) {
 	const Icone = ICONES_GENRE[element.genre]
 	return (
 		<li className="flex flex-col gap-1 py-1">
@@ -74,7 +80,7 @@ export function LigneElement({ element }: { readonly element: ElementCompare }) 
 					].join(' ')}
 				>
 					<Icone aria-hidden="true" size={14} strokeWidth={2} />
-					{t(CLES_GENRE[element.genre])}
+					{libelleGenre ?? t(CLES_GENRE[element.genre])}
 				</span>
 				<NomCompare nom={element.nom} />
 			</span>

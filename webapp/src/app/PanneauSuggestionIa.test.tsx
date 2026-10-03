@@ -4,6 +4,11 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.52 (principe écrit, état de l'assistant qui n'éteint rien, opération longue,
 //           défauts en tête, « Accepter » retenu par des défauts non modifiés, retraits annoncés, confirmation
 //           d'abandon dans le flux et focus, refus près de la cause), §10 (aucun marqueur `{…}` laissé à l'écran)
+// @verifies CRM-097 tranche T3.c — docs/SPEC-ia.md §13.6 (le panneau titré par la portée ; la demande ciblée ; le
+//           différentiel ; les affaires des étapes retirées, « Aucune destination » jamais présélectionnée ; accepter
+//           enregistre d'abord le remappage, puis annonce le point de retour), §13.4 (`PT409`) ; docs/DESIGN_SYSTEM.md
+//           §5.53 (précisions : libellé d'acceptation, type d'un champ conservé en texte, indication du libellé vide) ;
+//           décision 620
 
 import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -42,8 +47,12 @@ const PROPOSITION: PropositionIa = {
 	exigences: [{ de: 'maquette', vers: 'gagne-web', champ: 'budget' }],
 }
 
+// La forme réelle d'une ligne lue (`COLONNES_SUGGESTION`) : une création n'a ni workflow visé ni point de retour.
 const SUGGESTION = {
 	id: ID,
+	portee: 'workflow',
+	workflow_id: null as string | null,
+	version_retour_id: null as string | null,
 	demande: 'Un cycle pour une agence web :\nprise de contact, maquette, signature.',
 	statut: 'en_revue',
 	created_at: '2026-10-02T11:50:00Z',
@@ -59,6 +68,9 @@ const revision = (numero: number, defauts: DefautIa[] = [], proposition = PROPOS
 
 type Options = {
 	suggestion?: typeof SUGGESTION | null
+	/** Le workflow vivant d'une modification : ce que rendent `proposition_du_workflow` et `occupation_du_workflow`. */
+	vivant?: { composition: PropositionIa; occupation: Record<string, number> }
+	version?: number | null
 	revisions?: ReturnType<typeof revision>[]
 	correction?: { data: unknown; error: unknown }
 	acceptation?: { data: unknown; error: unknown }
@@ -81,6 +93,7 @@ function clientFactice(options: Options = {}) {
 				if (table === 'suggestions_ia') return chaine(ok(options.suggestion === undefined ? SUGGESTION : options.suggestion))
 				if (table === 'suggestions_ia_revisions') return chaine(ok(options.revisions ?? [revision(1)]))
 				if (table === 'workflow_nodes_catalog') return chaine(ok([{ id: 'n-1', key: 'relance', label: 'Relance', kind: 'open' }]))
+				if (table === 'workflow_versions') return chaine(ok(options.version === null ? null : { version_number: options.version ?? 4 }))
 				throw new Error(`lecture inattendue : ${table}`)
 			},
 			insert: (charge: unknown) => {
@@ -93,6 +106,9 @@ function clientFactice(options: Options = {}) {
 			},
 		}),
 		rpc: (nom: string, params: unknown) => {
+			// Les deux lectures du workflow vivant ne sont pas des écritures : elles ne sont pas retenues.
+			if (nom === 'proposition_du_workflow') return Promise.resolve(ok(options.vivant?.composition ?? null))
+			if (nom === 'occupation_du_workflow') return Promise.resolve(ok(options.vivant?.occupation ?? {}))
 			ecritures.push({ table: nom, verbe: 'rpc', charge: params })
 			return Promise.resolve(options.acceptation ?? { data: WF, error: null })
 		},
@@ -293,7 +309,7 @@ describe('Accepter, faire revoir, abandonner', () => {
 		const { client, ecritures } = clientFactice()
 		const rappels = rendre({ client, ouverture: { type: 'suggestion', id: ID } })
 		await userEvent.click(await screen.findByRole('button', { name: 'Accepter et créer le workflow' }))
-		await waitFor(() => expect(rappels.onAcceptee).toHaveBeenCalledWith(WF, 'Cycle d’une agence web'))
+		await waitFor(() => expect(rappels.onAcceptee).toHaveBeenCalledWith(WF, 'Cycle d’une agence web', null))
 		expect(ecritures).toEqual([{ table: 'accepter_suggestion_ia', verbe: 'rpc', charge: { p_suggestion: ID } }])
 	})
 
@@ -389,5 +405,150 @@ describe('Les états sans révision, et la génération d’un autre', () => {
 		expect(within(historique).getByText('Historique — 2 révisions')).toBeTruthy()
 		expect(within(historique).getByText('Corrigée à la main')).toBeTruthy()
 		expect(within(historique).getByText('Proposée par l’IA')).toBeTruthy()
+	})
+})
+
+// ---------------------------------------------------------------------------------------------
+// T3.c — faire évoluer un workflow existant
+// ---------------------------------------------------------------------------------------------
+
+/** Le workflow vivant : la relance porte 9 affaires ; une transition sans libellé propre. */
+const VIVANTE: PropositionIa = {
+	version: 1,
+	workflow: { nom: 'Pipeline' },
+	noeuds: [],
+	etapes: [
+		{ noeud: 'prospection', initiale: true },
+		{ noeud: 'relance', initiale: false },
+		{ noeud: 'negociation', initiale: false },
+	],
+	transitions: [
+		{ de: 'prospection', vers: 'relance', libelle: '', commentaire_requis: false },
+		{ de: 'relance', vers: 'negociation', libelle: 'Relancer', commentaire_requis: false },
+	],
+	champs: [{ cle: 'budget', libelle: 'Budget', type: 'money', choix: null, devise: 'EUR', aide: null }],
+	regles: [],
+	exigences: [],
+}
+
+/** La cible du scénario `modification` du simulateur : la relance retirée, la qualification ajoutée, aucun remappage. */
+const CIBLE: PropositionIa = {
+	...VIVANTE,
+	noeuds: [{ cle: 'qualification-ia', libelle: 'Qualification', nature: 'open', probabilite: 30 }],
+	etapes: [
+		{ noeud: 'prospection', initiale: true },
+		{ noeud: 'qualification-ia', initiale: false },
+		{ noeud: 'negociation', initiale: false },
+	],
+	transitions: [
+		{ de: 'prospection', vers: 'qualification-ia', libelle: 'Qualifier', commentaire_requis: false },
+		{ de: 'qualification-ia', vers: 'negociation', libelle: '', commentaire_requis: false },
+	],
+	remappages: [],
+}
+
+const MODIFICATION = { ...SUGGESTION, portee: 'etapes', workflow_id: WF, demande: 'Remplace la relance par une qualification' }
+const REMAPPAGE_REQUIS: DefautIa = { code: 'remappage_requis', chemin: 'remappages', valeurs: { cle: 'relance', affaires: 9 } }
+
+function rendreModification(options: Options = {}) {
+	const fabrique = clientFactice({
+		suggestion: MODIFICATION,
+		revisions: [revision(1, [REMAPPAGE_REQUIS], CIBLE)],
+		vivant: { composition: VIVANTE, occupation: { prospection: 11, relance: 9, negociation: 8 } },
+		...options,
+	})
+	const rappels = rendre({
+		client: fabrique.client,
+		ouverture: { type: 'suggestion', id: ID, portee: 'etapes' },
+		workflow: { id: WF, nom: 'Pipeline' },
+	})
+	return { ...fabrique, rappels }
+}
+
+describe('T3.c — la demande ciblée', () => {
+	it('le titre nomme la portée et le workflow ; la demande part avec la portée et la cible', async () => {
+		const { client } = clientFactice()
+		const { acces, appels } = accesFactice({ generation: () => flux([{ suggestion_id: ID }, { issue: 'revision', defauts: 1 }]) })
+		const rappels = rendre({ client, acces, ouverture: { type: 'demande', portee: 'transitions' }, workflow: { id: WF, nom: 'Pipeline' } })
+		expect(screen.getByRole('heading', { level: 2 }).textContent).toBe('Faire évoluer les transitions de «\u00a0Pipeline\u00a0»')
+		expect(screen.getByTestId('ia-panneau').textContent).toContain('Suggestion — rien ne change avant «\u00a0Accepter\u00a0»')
+		await userEvent.type(screen.getByLabelText('Décrivez ce qui doit changer'), 'Ajoute une sortie perdu')
+		await userEvent.click(screen.getByRole('button', { name: /Générer la suggestion/ }))
+		await waitFor(() => expect(rappels.onSuggestionPrete).toHaveBeenCalled())
+		expect(appels.find((a) => a.url.endsWith('/suggestions'))?.corps).toEqual({
+			workspace_id: 'ws-1', portee: 'transitions', workflow_id: WF, demande: 'Ajoute une sortie perdu',
+		})
+	})
+})
+
+describe('T3.c — relire une modification', () => {
+	it('le différentiel : la qualification ajoutée, la relance retirée, la transition sans libellé dite', async () => {
+		rendreModification()
+		const differentiel = await screen.findByTestId('ia-differentiel')
+		const etapes = within(differentiel).getByTestId('ia-differentiel-etapes')
+		expect(etapes.textContent).toContain('Ajouté')
+		expect(etapes.textContent).toContain('Qualification')
+		expect(etapes.textContent).toContain('Retiré')
+		expect(etapes.textContent).toContain('Relance')
+		const transitions = within(differentiel).getByTestId('ia-differentiel-transitions')
+		// « prospection » n'est pas au catalogue de ce banc : la clé la nomme, jamais un vide.
+		expect(transitions.textContent).toContain('prospection vers Qualification')
+	})
+
+	it('aucun changement se dit en une phrase', async () => {
+		rendreModification({ revisions: [revision(1, [], { ...VIVANTE, remappages: [] })] })
+		expect((await screen.findByTestId('ia-differentiel')).textContent).toContain('La suggestion ne change rien au workflow.')
+	})
+
+	it('les affaires de la relance : leur nombre, et « Aucune destination » — jamais présélectionnée', async () => {
+		rendreModification()
+		const bloc = await screen.findByTestId('ia-remappages')
+		expect(within(bloc).getByText('Où vont les affaires des étapes retirées')).toBeTruthy()
+		expect(within(bloc).getByText('9 affaires')).toBeTruthy()
+		const choix = within(bloc).getByLabelText('Destination des affaires de Relance') as HTMLSelectElement
+		expect(choix.value).toBe('')
+		expect(choix.selectedOptions[0]?.textContent).toBe('Aucune destination')
+		expect([...choix.options].map((o) => o.value)).toEqual(['', 'prospection', 'qualification-ia', 'negociation'])
+	})
+
+	it('choisir la destination écrit le remappage ; accepter l’enregistre D’ABORD, puis annonce le point de retour', async () => {
+		const corrigee = { ...CIBLE, remappages: [{ de: 'relance', vers: 'qualification-ia' }] }
+		const { ecritures, rappels } = rendreModification({
+			suggestion: { ...MODIFICATION, version_retour_id: 'v-4' },
+			correction: { data: revision(2, [], corrigee), error: null },
+			version: 4,
+		})
+		await userEvent.selectOptions(await screen.findByLabelText('Destination des affaires de Relance'), 'qualification-ia')
+		expect(screen.getByTestId('ia-modifie')).toBeTruthy()
+		await userEvent.click(screen.getByRole('button', { name: 'Accepter et faire évoluer le workflow' }))
+		await waitFor(() => expect(rappels.onAcceptee).toHaveBeenCalledWith(WF, 'Pipeline', 4))
+		expect(ecritures.map((e) => [e.table, e.verbe])).toEqual([
+			['suggestions_ia_revisions', 'insert'],
+			['accepter_suggestion_ia', 'rpc'],
+		])
+		expect((ecritures[0]?.charge as { proposition: PropositionIa }).proposition.remappages).toEqual([{ de: 'relance', vers: 'qualification-ia' }])
+	})
+
+	it('le workflow a changé depuis la suggestion : le refus le dit, et dit quoi faire', async () => {
+		rendreModification({
+			revisions: [revision(1, [], { ...CIBLE, remappages: [{ de: 'relance', vers: 'qualification-ia' }] })],
+			acceptation: { data: null, error: { code: 'PT409', message: 'workflow modifie' } },
+		})
+		await userEvent.click(await screen.findByRole('button', { name: 'Accepter et faire évoluer le workflow' }))
+		expect((await screen.findByTestId('ia-refus-barre')).textContent).toContain('Le workflow a changé depuis cette suggestion')
+	})
+
+	it('le type d’un champ conservé est un texte ; un libellé de transition vide porte son indication', async () => {
+		rendreModification()
+		expect((await screen.findByTestId('ia-type-fixe')).textContent).toBe('Type : Montant')
+		expect(screen.queryByLabelText('Type de Budget')).toBeNull()
+		const libelle = screen.getByLabelText('Libellé de la transition de Qualification vers negociation') as HTMLInputElement
+		expect(libelle.placeholder).toBe('Libellé de l’étape d’arrivée')
+	})
+
+	it('le workflow vivant illisible se dit ; la suggestion reste relisible', async () => {
+		rendreModification({ vivant: undefined })
+		expect(await screen.findByText('Le workflow que cette suggestion fait évoluer n’est plus lisible.')).toBeTruthy()
+		expect(screen.getByTestId('ia-apercu')).toBeTruthy()
 	})
 })

@@ -6,6 +6,9 @@
 //       l'assistant qui n'éteint rien, opération longue, défauts en accent, barre de gestes et ordre d'engagement,
 //       confirmation d'abandon dans le flux, refus près de la cause, historique replié, focus, annonces),
 //       §5.8 (états), §6 (opération longue), §8 (accessibilité), §10 (aucun texte en dur)
+// @spec CRM-097 tranche T3.c — docs/SPEC-ia.md §13.6 (le panneau dans la colonne du workflow, titré par la portée ;
+//       le différentiel ; les affaires des étapes retirées ; accepter, puis l'annonce du point de retour), §13.4
+//       (« workflow modifie », « workflow archive ») ; docs/DESIGN_SYSTEM.md §5.53 ; décision 620
 //
 // AUCUN DROIT N'EST CALCULÉ ICI (CLAUDE.md §10) : chaque commande est rendue, la base et la fonction `ia`
 // refusent, et le panneau traduit. Les seules commandes désactivées le sont par l'état de la saisie — rien de
@@ -14,6 +17,7 @@
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { Sparkles, TriangleAlert } from 'lucide-react'
 import { ApercuPropositionIa } from './ApercuPropositionIa'
+import { DifferentielIa, RemappagesIa, type Nommage } from './ModificationIa'
 import { Button } from '../components/ui/Button'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { EtatErreur, EtatVide } from '../components/ui/States'
@@ -29,9 +33,13 @@ import {
 	generationEnVol,
 	genererSuggestion,
 	lireEtatAssistant,
+	lireNumeroVersion,
 	lireSuggestion,
+	lireWorkflowVivant,
 	revoirSuggestion,
 	type AccesAssistant,
+	type PorteeModification,
+	type WorkflowVivant,
 	type DefautIa,
 	type EchecGeneration,
 	type EtatAssistant,
@@ -44,7 +52,8 @@ import {
 	type RevisionIa,
 	type SuggestionLue,
 } from '../lib/assistant-ia'
-import { memesPropositions, type PropositionIa } from '../lib/brouillon-ia'
+import { definirRemappage, memesPropositions, noeudPropose, type PropositionIa } from '../lib/brouillon-ia'
+import { differentiel, etapesRetireesOccupees } from '../lib/differentiel-ia'
 import type { ClientCrm } from '../lib/supabase'
 
 // ---------------------------------------------------------------------------------------------
@@ -125,6 +134,7 @@ export const RAISONS: Readonly<Record<RaisonIndisponible, CleTraduction>> = {
 	modele_absent: 'ia.etat.raison.modele_absent',
 }
 const REFUS_GENERATION: Readonly<Record<Exclude<RefusGeneration, 'indisponible'>, CleTraduction>> = {
+	workflow_introuvable: 'ia.refus.workflow_introuvable',
 	demande_invalide: 'ia.refus.demande_invalide',
 	consigne_invalide: 'ia.refus.consigne_invalide',
 	session: 'ia.refus.session',
@@ -144,10 +154,11 @@ const REFUS_CORRECTION: Readonly<Record<RefusCorrection, CleTraduction>> = {
 	panne: 'ia.refus.panne',
 }
 const REFUS_ACCEPTATION: Readonly<Record<Exclude<RefusAcceptation, 'non_conforme'>, CleTraduction>> = {
+	workflow_modifie: 'ia.refus.workflow_modifie',
+	workflow_archive: 'ia.refus.workflow_archive',
 	session: 'ia.refus.session',
 	introuvable: 'ia.refus.introuvable',
 	figee: 'ia.refus.figee',
-	portee: 'ia.refus.portee',
 	en_cours: 'ia.refus.en_cours',
 	aucune_revision: 'ia.refus.aucune_revision',
 	panne: 'ia.refus.panne',
@@ -226,18 +237,30 @@ function Attente({ nature, debut, maintenant }: { readonly nature: 'creation' | 
 // Le panneau
 // ---------------------------------------------------------------------------------------------
 
-export type OuverturePanneauIa = { readonly type: 'demande' } | { readonly type: 'suggestion'; readonly id: string }
+/** La portée nomme une modification (`CRM-097` T3) ; sans elle, l'ouverture est celle d'une création. */
+export type OuverturePanneauIa =
+	| { readonly type: 'demande'; readonly portee?: PorteeModification }
+	| { readonly type: 'suggestion'; readonly id: string; readonly portee?: PorteeModification }
+
+const TITRES_MODIFICATION: Readonly<Record<PorteeModification, CleTraduction>> = {
+	etapes: 'ia.modification.titre.etapes',
+	transitions: 'ia.modification.titre.transitions',
+	champs: 'ia.modification.titre.champs',
+}
 
 export type ProprietesPanneauIa = {
 	readonly client: ClientCrm
 	readonly acces: AccesAssistant | null
 	readonly idWorkspace: string | null
 	readonly ouverture: OuverturePanneauIa
+	/** Le workflow que le panneau fait évoluer, quand il vit dans sa colonne (§5.53) ; absent pour une création. */
+	readonly workflow?: { readonly id: string; readonly nom: string }
 	/** La première ligne du flux est arrivée : la suggestion existe, la liste peut la montrer. */
 	readonly onSuggestionCreee: (id: string) => void
 	/** La première génération est finie, quelle que soit son issue : la suggestion s'ouvre. */
 	readonly onSuggestionPrete: (id: string, annonce: string) => void
-	readonly onAcceptee: (idWorkflow: string, nom: string) => void
+	/** `version` : le numéro du point de retour d'une modification, s'il a pu être lu ; `null` pour une création. */
+	readonly onAcceptee: (idWorkflow: string, nom: string, version: number | null) => void
 	readonly onAbandonnee: () => void
 	readonly onFermer: () => void
 	readonly annoncer: (message: string) => void
@@ -248,9 +271,16 @@ export type ProprietesPanneauIa = {
 const horloge = () => Date.now()
 
 export function PanneauSuggestionIa(proprietes: ProprietesPanneauIa) {
-	const { ouverture } = proprietes
+	const { ouverture, workflow } = proprietes
 	const idTitre = useId()
 	const titre = useRef<HTMLHeadingElement | null>(null)
+	const portee = ouverture.portee
+	const texteTitre =
+		portee !== undefined && workflow !== undefined
+			? t(TITRES_MODIFICATION[portee], { workflow: workflow.nom })
+			: ouverture.type === 'demande'
+				? t('ia.demande.titre')
+				: t('ia.panneau.titre')
 	return (
 		<section
 			aria-labelledby={idTitre}
@@ -260,9 +290,11 @@ export function PanneauSuggestionIa(proprietes: ProprietesPanneauIa) {
 			<div className="flex flex-col gap-2">
 				<h2 id={idTitre} ref={titre} tabIndex={-1} className="flex items-center gap-2">
 					<Sparkles aria-hidden="true" size={20} strokeWidth={2} className="shrink-0 text-brand" />
-					<span>{ouverture.type === 'demande' ? t('ia.demande.titre') : t('ia.panneau.titre')}</span>
+					<span>{texteTitre}</span>
 				</h2>
-				<p className="self-start rounded-full bg-hover px-2 text-xs text-text-2">{t('ia.panneau.principe')}</p>
+				<p className="self-start rounded-full bg-hover px-2 text-xs text-text-2">
+					{workflow === undefined ? t('ia.panneau.principe') : t('ia.modification.principe')}
+				</p>
 			</div>
 			{ouverture.type === 'demande' ? (
 				<VueDemande {...proprietes} />
@@ -277,7 +309,21 @@ export function PanneauSuggestionIa(proprietes: ProprietesPanneauIa) {
 // Demander
 // ---------------------------------------------------------------------------------------------
 
-function VueDemande({ acces, idWorkspace, onSuggestionCreee, onSuggestionPrete, onFermer, maintenant = horloge }: ProprietesPanneauIa) {
+function VueDemande({
+	acces,
+	idWorkspace,
+	ouverture,
+	workflow,
+	onSuggestionCreee,
+	onSuggestionPrete,
+	onFermer,
+	maintenant = horloge,
+}: ProprietesPanneauIa) {
+	// Une demande ouverte depuis un bloc du workflow fait évoluer ce workflow (docs/SPEC-ia.md §13.5).
+	const cible =
+		ouverture.type === 'demande' && ouverture.portee !== undefined && workflow !== undefined
+			? { portee: ouverture.portee, idWorkflow: workflow.id }
+			: null
 	const prefixe = useId()
 	const champ = useRef<HTMLTextAreaElement | null>(null)
 	const [demande, setDemande] = useState('')
@@ -311,7 +357,7 @@ function VueDemande({ acces, idWorkspace, onSuggestionCreee, onSuggestionPrete, 
 		}
 		setRefus(null)
 		setDebut(maintenant())
-		const resultat: ResultatGeneration = await genererSuggestion(acces, idWorkspace, demande, onSuggestionCreee)
+		const resultat: ResultatGeneration = await genererSuggestion(acces, idWorkspace, demande, onSuggestionCreee, cible)
 		setDebut(null)
 		if (resultat.statut === 'refus') {
 			setRefus(texteRefusGeneration(resultat.refus, resultat.raison))
@@ -344,7 +390,7 @@ function VueDemande({ acces, idWorkspace, onSuggestionCreee, onSuggestionPrete, 
 			) : null}
 			<div className="flex flex-col gap-1">
 				<label htmlFor={`${prefixe}-demande`} className="text-sm text-text-2">
-					{t('ia.demande.champ')}
+					{cible === null ? t('ia.demande.champ') : t('ia.modification.champ')}
 				</label>
 				<textarea
 					id={`${prefixe}-demande`}
@@ -360,7 +406,7 @@ function VueDemande({ acces, idWorkspace, onSuggestionCreee, onSuggestionPrete, 
 					className="rounded-sm border border-border bg-surface px-3 py-2"
 				/>
 				<span id={`${prefixe}-aide`} className="text-sm text-text-3">
-					{t('ia.demande.aide')}
+					{cible === null ? t('ia.demande.aide') : t('ia.modification.aide')}
 				</span>
 				<span id={`${prefixe}-donnees`} className="text-sm text-text-3">
 					{t('ia.demande.donnees')}
@@ -433,6 +479,21 @@ function VueSuggestion({
 	}, [client, id, tentative])
 
 	const derniere: RevisionIa | null = lue.statut === 'pret' && lue.donnees !== null ? (lue.donnees.revisions[0] ?? null) : null
+
+	// Une MODIFICATION (docs/SPEC-ia.md §13.6) : le workflow vivant et son occupation, relus avec la suggestion. Une
+	// relecture garde l'état lu le temps qu'elle aboutisse — le différentiel ne clignote pas à chaque geste (§5.29).
+	const idWorkflowVise = lue.statut === 'pret' && lue.donnees !== null ? lue.donnees.suggestion.workflow_id : null
+	const [vivant, setVivant] = useState<EtatAsync<WorkflowVivant | null>>(enChargement)
+	useEffect(() => {
+		if (idWorkflowVise === null) return
+		let actif = true
+		void lireWorkflowVivant(client, idWorkflowVise).then((lu) => {
+			if (actif) setVivant(lu)
+		})
+		return () => {
+			actif = false
+		}
+	}, [client, idWorkflowVise, tentative])
 
 	// Le brouillon repart de la dernière révision dès qu'elle change — jamais d'une autre.
 	useEffect(() => {
@@ -520,13 +581,21 @@ function VueSuggestion({
 		setGeste('accepter')
 		setRefus(null)
 		const resultat = await accepterSuggestion(client, id)
-		setGeste(null)
 		if (!resultat.ok) {
+			setGeste(null)
 			setRefus({ lieu: 'barre', message: texteRefusAcceptation(resultat.refus, resultat.defauts) })
 			relire()
 			return
 		}
-		onAcceptee(resultat.idWorkflow, proposition.workflow.nom.trim())
+		// Une modification a publié — ou désigné — son point de retour : l'annonce le nomme (§5.53).
+		let version: number | null = null
+		if (suggestion.workflow_id !== null) {
+			const relue = await lireSuggestion(client, id)
+			const idVersion = relue.statut === 'pret' ? (relue.donnees?.suggestion.version_retour_id ?? null) : null
+			version = idVersion === null ? null : await lireNumeroVersion(client, idVersion)
+		}
+		setGeste(null)
+		onAcceptee(resultat.idWorkflow, proposition.workflow.nom.trim(), version)
 	}
 
 	const abandonner = async () => {
@@ -546,6 +615,13 @@ function VueSuggestion({
 	}
 
 	const refusDe = (lieu: Lieu): ReactNode => (refus?.lieu === lieu ? <AlerteIa message={refus.message} testId={`ia-refus-${lieu}`} /> : null)
+	const modification = suggestion.workflow_id !== null
+	const vivante = modification && vivant.statut === 'pret' && vivant.donnees !== null ? vivant.donnees : null
+	const noms: Nommage = {
+		etape: (cle) => (proposition === null ? undefined : noeudPropose(proposition, cle)?.libelle) || catalogue.get(cle) || cle,
+		champ: (cle) =>
+			proposition?.champs.find((c) => c.cle === cle)?.libelle || vivante?.composition.champs.find((c) => c.cle === cle)?.libelle || cle,
+	}
 	const enVolAilleurs = generation === null && suggestion.statut === 'en_revue' && generationEnVol(suggestion, maintenant())
 	const depuis = suggestion.generation_depuis === null ? null : formaterHorodatage(suggestion.generation_depuis, 'heure')
 
@@ -616,10 +692,41 @@ function VueSuggestion({
 						</section>
 					) : null}
 
+					{modification ? (
+						vivant.statut === 'chargement' ? (
+							<SkeletonListe lignes={3} libelle={t('ia.vivant.chargement')} />
+						) : vivant.statut === 'erreur' ? (
+							<div className="flex flex-wrap items-center gap-2">
+								<p role="status" className="text-sm">
+									{t('ia.vivant.erreur')}
+								</p>
+								<Button variante="secondaire" taille="compacte" onClick={relire}>
+									{t('ia.action.relire')}
+								</Button>
+							</div>
+						) : vivante === null ? (
+							<p role="status" className="text-sm">
+								{t('ia.vivant.introuvable')}
+							</p>
+						) : (
+							<>
+								<DifferentielIa changements={differentiel(vivante.composition, proposition)} noms={noms} />
+								<RemappagesIa
+									lignes={etapesRetireesOccupees(vivante.composition, proposition, vivante.occupation)}
+									destinations={proposition.etapes.map((e) => e.noeud)}
+									noms={noms}
+									desactive={occupe || suggestion.statut !== 'en_revue'}
+									onChoisir={(de, vers) => setBrouillon({ revision: derniere.id, proposition: definirRemappage(proposition, de, vers) })}
+								/>
+							</>
+						)
+					) : null}
+
 					<ApercuPropositionIa
 						proposition={proposition}
 						catalogue={catalogue}
 						desactive={occupe || suggestion.statut !== 'en_revue'}
+						vivante={vivante?.composition ?? null}
 						onChange={(nouvelle, annonce) => {
 							setBrouillon({ revision: derniere.id, proposition: nouvelle })
 							if (annonce !== undefined) annoncer(annonce)
@@ -673,7 +780,11 @@ function VueSuggestion({
 										aria-describedby={bloquee ? `${prefixe}-bloquee` : undefined}
 										onClick={() => void accepter()}
 									>
-										{geste === 'accepter' ? t('ia.action.accepter.encours') : t('ia.action.accepter')}
+										{geste === 'accepter'
+											? t('ia.action.accepter.encours')
+											: modification
+												? t('ia.action.accepter.modification')
+												: t('ia.action.accepter')}
 									</Button>
 									<Button variante="secondaire" disabled={occupe || !modifie} onClick={() => void enregistrer()}>
 										{geste === 'enregistrer' ? t('ia.action.enregistrer.encours') : t('ia.action.enregistrer')}

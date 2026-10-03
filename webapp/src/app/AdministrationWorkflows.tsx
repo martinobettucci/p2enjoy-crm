@@ -38,6 +38,10 @@
 //       avec l'IA » à côté de « Nouveau workflow », au-dessus de la liste et dans l'état vide ; les suggestions en
 //       revue lues avec les workflows et listées sous eux ; le panneau à la place du workflow choisi ; le workflow
 //       accepté devient le workflow choisi) ; docs/DESIGN_SYSTEM.md §5.52 ; docs/JOURNAL.md décision 618
+// @spec CRM-097 tranche T3.c — faire évoluer le workflow choisi : docs/SPEC-ia.md §13.6 (« Suggérer » en tête des blocs
+//       étapes, transitions et champs ; le panneau et les suggestions du workflow dans sa colonne, au-dessus des
+//       étapes ; après l'acceptation, le graphe et les versions relus, le point de retour annoncé) ;
+//       docs/DESIGN_SYSTEM.md §5.53 ; docs/JOURNAL.md décision 620
 //
 // AUCUN DROIT N'EST CALCULÉ ICI — la règle de `CRM-075`, reprise mot pour mot. Les commandes sont
 // rendues pour tout le monde ; l'écriture part, et le refus du backend est traduit. Une commande
@@ -180,10 +184,13 @@ import {
 } from '../lib/administration-workflows'
 import {
 	accesAssistantCrm,
+	estPorteeModification,
 	formaterHorodatage,
 	generationEnVol,
+	lireSuggestionsDuWorkflow,
 	lireSuggestionsEnRevue,
 	type AccesAssistant,
+	type PorteeModification,
 	type SuggestionEnRevue,
 } from '../lib/assistant-ia'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
@@ -192,6 +199,13 @@ import { lireWorkspaces } from '../lib/workspaces'
 // ---------------------------------------------------------------------------------------------
 // Refus et ouvertures
 // ---------------------------------------------------------------------------------------------
+
+/** Le nom accessible de « Suggérer », par portée — clés écrites en toutes lettres (`i18n.test.ts`). */
+const NOMS_SUGGERER: Readonly<Record<PorteeModification, CleTraduction>> = {
+	etapes: 'ia.suggerer.etapes',
+	transitions: 'ia.suggerer.transitions',
+	champs: 'ia.suggerer.champs',
+}
 
 /** Traduit un refus, ou l'absence d'effet, en un texte destiné à l'utilisateur. */
 function texteRefus(refus: RefusEtape): string {
@@ -2461,6 +2475,17 @@ export function AdministrationWorkflows({
 	/** Le focus à poser après un rendu : sur « Créer avec l'IA », ou sur le workflow que l'acceptation a créé. */
 	const [focusIa, setFocusIa] = useState<{ readonly cible: 'commande' } | { readonly cible: 'workflow'; readonly id: string } | null>(null)
 	const relireSuggestionsIa = useCallback(() => setTentativeIa((n) => n + 1), [])
+	/**
+	 * `CRM-097` T3 — faire évoluer le workflow CHOISI (docs/SPEC-ia.md §13.6). Le panneau vit DANS sa colonne, au-dessus
+	 * des étapes, et ne le remplace pas : on voit ce qu'on fait évoluer pendant qu'on le décrit (§5.53). Ses
+	 * suggestions en revue sont lues avec lui. Après une acceptation, le bloc des versions est remonté (`cleVersions`)
+	 * pour montrer le point de retour.
+	 */
+	const [panneauModification, setPanneauModification] = useState<OuverturePanneauIa | null>(null)
+	const [suggestionsDuWorkflow, setSuggestionsDuWorkflow] = useState<EtatAsync<readonly SuggestionEnRevue[]>>(enChargement)
+	const commandesSuggerer = useRef<Partial<Record<PorteeModification, HTMLButtonElement | null>>>({})
+	const [focusSuggerer, setFocusSuggerer] = useState<PorteeModification | null>(null)
+	const [cleVersions, setCleVersions] = useState(0)
 
 	// Une réponse arrivée après le démontage ne doit pas écrire dans un composant démonté, ni une
 	// réponse périmée écraser une réponse plus récente — le patron de `CRM-075`.
@@ -2513,6 +2538,28 @@ export function AdministrationWorkflows({
 		}
 	}, [client, tentative, tentativeIa])
 
+	// Les suggestions qui font évoluer le workflow choisi — `CRM-097` T3 : relues avec lui, et par `tentativeIa`.
+	useEffect(() => {
+		if (client === null || idChoisi === null) return
+		let vivant = true
+		void lireSuggestionsDuWorkflow(client, idChoisi).then((lues) => {
+			if (vivant) setSuggestionsDuWorkflow(lues)
+		})
+		return () => {
+			vivant = false
+		}
+	}, [client, idChoisi, tentative, tentativeIa])
+
+	// Le panneau fermé rend le focus à la commande « Suggérer » qui l'a ouvert (§5.53) — différé d'un rendu, et
+	// attendu tant que le graphe relu ne l'a pas remontée. Aucune temporisation.
+	useEffect(() => {
+		if (focusSuggerer === null) return
+		const cible = commandesSuggerer.current[focusSuggerer]
+		if (cible === null || cible === undefined) return
+		cible.focus()
+		setFocusSuggerer(null)
+	}, [focusSuggerer, etapes, transitions, champs])
+
 	// Le focus différé d'un rendu (§5.25, §5.52) : la commande ou le workflow visé n'existent qu'après le rendu qui
 	// suit la fermeture du panneau. Aucune temporisation.
 	useEffect(() => {
@@ -2557,7 +2604,19 @@ export function AdministrationWorkflows({
 	const ouvrirLaDemandeIa = useCallback(() => {
 		setRefusCreation(null)
 		setCreationOuverte(false)
+		setPanneauModification(null)
 		setPanneauIa({ type: 'demande' })
+	}, [])
+
+	/** « Suggérer » — `CRM-097` T3 : la demande s'ouvre dans la colonne du workflow, la portée nommée. */
+	const ouvrirLaSuggestionModification = useCallback((portee: PorteeModification) => {
+		setPanneauIa(null)
+		setPanneauModification({ type: 'demande', portee })
+	}, [])
+
+	const fermerLePanneauModification = useCallback((portee: PorteeModification) => {
+		setPanneauModification(null)
+		setFocusSuggerer(portee)
 	}, [])
 
 	const fermerLePanneauIa = useCallback(() => {
@@ -2634,6 +2693,66 @@ export function AdministrationWorkflows({
 										setCreationOuverte(false)
 										setPanneauIa({ type: 'suggestion', id: suggestion.id })
 									}}
+									aria-current={ouverte ? 'true' : undefined}
+									className={[
+										'flex w-full flex-col gap-1 rounded-lg px-4 py-3 text-left min-h-[var(--size-target)]',
+										ouverte ? 'bg-brand-soft' : 'hover:bg-hover',
+									].join(' ')}
+								>
+									<span className="flex items-start gap-2">
+										<Sparkles aria-hidden="true" size={16} strokeWidth={2} className="mt-[3px] shrink-0 text-brand" />
+										<span className="line-clamp-2">{suggestion.demande}</span>
+									</span>
+									<span className="flex flex-wrap gap-2 text-sm text-text-2">
+										{date === null ? null : <code>{t('ia.liste.creee', { date })}</code>}
+										{generationEnVol(suggestion, Date.now()) ? <span>{t('ia.liste.en_cours')}</span> : null}
+										{suggestion.derniere_erreur === null ? null : <span>{t('ia.liste.echec')}</span>}
+									</span>
+								</button>
+							</li>
+						)
+					})}
+				</ul>
+			</div>
+		)
+
+	/** « Suggérer », en tête d'un bloc du workflow choisi (§5.53) : discret compact, `Sparkles`, nom complet. */
+	const commandeSuggerer = (portee: PorteeModification, nomWorkflow: string) => (
+		<Button
+			ref={(element: HTMLButtonElement | null) => {
+				commandesSuggerer.current[portee] = element
+			}}
+			variante="discret"
+			taille="compacte"
+			aria-label={t(NOMS_SUGGERER[portee], { workflow: nomWorkflow })}
+			aria-expanded={panneauModification?.type === 'demande' && panneauModification.portee === portee}
+			onClick={() => ouvrirLaSuggestionModification(portee)}
+		>
+			<Sparkles aria-hidden="true" size={16} strokeWidth={2} />
+			{t('ia.action.suggerer')}
+		</Button>
+	)
+
+	/** Les suggestions en revue du workflow choisi, dans sa colonne ; aucune, aucun titre (§5.53). */
+	const listeSuggestionsDuWorkflow = (idWorkflow: string) =>
+		suggestionsDuWorkflow.statut !== 'pret' || suggestionsDuWorkflow.donnees.length === 0 || idWorkflow !== idChoisi ? null : (
+			<div className="flex flex-col gap-2" data-testid="ia-suggestions-du-workflow">
+				<h3 className="text-sm font-medium text-text-2">{t('ia.liste.workflow.titre')}</h3>
+				<ul className="flex flex-col rounded-lg border border-border bg-surface">
+					{suggestionsDuWorkflow.donnees.map((suggestion) => {
+						const ouverte = panneauModification?.type === 'suggestion' && panneauModification.id === suggestion.id
+						const date = formaterHorodatage(suggestion.created_at)
+						return (
+							<li key={suggestion.id}>
+								<button
+									type="button"
+									onClick={() =>
+										setPanneauModification({
+											type: 'suggestion',
+											id: suggestion.id,
+											...(estPorteeModification(suggestion.portee) ? { portee: suggestion.portee } : {}),
+										})
+									}
 									aria-current={ouverte ? 'true' : undefined}
 									className={[
 										'flex w-full flex-col gap-1 rounded-lg px-4 py-3 text-left min-h-[var(--size-target)]',
@@ -2745,6 +2864,28 @@ export function AdministrationWorkflows({
 			setRefusComparaison(null)
 		},
 		[client],
+	)
+
+	/**
+	 * Une modification acceptée (docs/SPEC-ia.md §13.6) : le panneau se ferme, le graphe, la liste — le nom a pu
+	 * changer — et les versions sont relus, l'annonce nomme le point de retour, le focus revient à « Suggérer ».
+	 */
+	const apresModificationIa = useCallback(
+		async (idWorkflow: string, nom: string, version: number | null, portee: PorteeModification) => {
+			if (client === null) return
+			setPanneauModification(null)
+			await rechargerGraphe(idWorkflow)
+			setWorkflows(await lireWorkflowsAdministrables(client, false))
+			setCleVersions((n) => n + 1)
+			relireSuggestionsIa()
+			setAnnonce(
+				version === null
+					? t('ia.annonce.modifiee.sans_version', { nom })
+					: t('ia.annonce.modifiee', { nom, version: String(version) }),
+			)
+			setFocusSuggerer(portee)
+		},
+		[client, rechargerGraphe, relireSuggestionsIa],
 	)
 
 	useEffect(() => {
@@ -3196,6 +3337,7 @@ export function AdministrationWorkflows({
 										onClick={() => {
 											setIdChoisi(workflow.id)
 											setPanneauIa(null)
+											setPanneauModification(null)
 										}}
 										aria-current={workflow.id === idChoisi && panneauIa === null ? 'true' : undefined}
 										className={[
@@ -3252,6 +3394,37 @@ export function AdministrationWorkflows({
 										/>
 									}
 								/>
+								{/* `CRM-097` T3 — les suggestions de ce workflow et le panneau, AU-DESSUS des étapes (§5.53). */}
+								{listeSuggestionsDuWorkflow(choisi.id)}
+								{panneauModification === null ? null : (
+									<PanneauSuggestionIa
+										key={panneauModification.type === 'suggestion' ? panneauModification.id : 'demande'}
+										client={client}
+										acces={acces}
+										idWorkspace={idWorkspace}
+										ouverture={panneauModification}
+										workflow={{ id: choisi.id, nom: choisi.name }}
+										onSuggestionCreee={() => relireSuggestionsIa()}
+										onSuggestionPrete={(id, message) => {
+											setPanneauModification((ouvert) => ({ type: 'suggestion', id, ...(ouvert?.portee === undefined ? {} : { portee: ouvert.portee }) }))
+											relireSuggestionsIa()
+											setAnnonce(message)
+										}}
+										onAcceptee={(idWorkflow, nom, version) =>
+											void apresModificationIa(idWorkflow, nom, version, panneauModification.portee ?? 'etapes')
+										}
+										onAbandonnee={() => {
+											relireSuggestionsIa()
+											fermerLePanneauModification(panneauModification.portee ?? 'etapes')
+										}}
+										onFermer={() => fermerLePanneauModification(panneauModification.portee ?? 'etapes')}
+										annoncer={setAnnonce}
+									/>
+								)}
+								<div className="flex flex-wrap items-center justify-between gap-2">
+									<h3 className="font-medium">{t('admin.workflows.steps.title')}</h3>
+									{commandeSuggerer('etapes', choisi.name)}
+								</div>
 								{etapes.statut === 'chargement' ? (
 									<SkeletonListe lignes={5} libelle={t('state.loading.aria')} />
 								) : null}
@@ -3407,7 +3580,10 @@ export function AdministrationWorkflows({
 											className="flex flex-col gap-3"
 										>
 											<div className="flex flex-col gap-1">
-												<h3 className="font-medium">{t('admin.workflows.transitions.title')}</h3>
+												<div className="flex flex-wrap items-center justify-between gap-2">
+													<h3 className="font-medium">{t('admin.workflows.transitions.title')}</h3>
+													{commandeSuggerer('transitions', choisi.name)}
+												</div>
 												<p className="text-sm text-text-2">{t('admin.workflows.transitions.intro')}</p>
 											</div>
 											{transitions.statut === 'chargement' ? (
@@ -3576,7 +3752,10 @@ export function AdministrationWorkflows({
 											className="flex flex-col gap-3"
 										>
 											<div className="flex flex-col gap-1">
-												<h3 className="font-medium">{t('admin.workflows.fields.title')}</h3>
+												<div className="flex flex-wrap items-center justify-between gap-2">
+													<h3 className="font-medium">{t('admin.workflows.fields.title')}</h3>
+													{commandeSuggerer('champs', choisi.name)}
+												</div>
 												<p className="text-sm text-text-2">{t('admin.workflows.fields.intro')}</p>
 											</div>
 											{champs.statut === 'chargement' ? (
@@ -4095,6 +4274,7 @@ export function AdministrationWorkflows({
 								    geste que la base tranche, et le masquer ferait croire que le
 								    versionnement n'existe pas pour ce workflow. */}
 								<BlocVersionsWorkflow
+									key={`${choisi.id}#${cleVersions}`}
 									client={client}
 									idWorkflow={choisi.id}
 									nomWorkflow={choisi.name}

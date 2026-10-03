@@ -2,6 +2,9 @@
 // @verifies docs/SPEC-ia.md §11.1 (le flux : identifiant aussitôt, battement ignoré, issue en dernier ; flux coupé),
 //           §12.6 (revue sans consigne : un corps SANS consigne), §12.2, §12.3, §12.4, §12.7 (chaque refus classé)
 // @verifies docs/SPEC-webapp.md §6.4 (une panne n'est jamais un succès)
+// @verifies CRM-097 tranche T3.c — docs/SPEC-ia.md §13.5 (portée et cible envoyées ; `workflow_introuvable`), §13.2 (la
+//           composition vivante et l'occupation), §13.4 (`PT409` « workflow modifie », « workflow archive », le point
+//           de retour), §13.6 (les suggestions d'un workflow) ; décision 620
 
 import { describe, expect, it } from 'vitest'
 import {
@@ -13,6 +16,9 @@ import {
 	genererSuggestion,
 	lireEtatAssistant,
 	lireFlux,
+	lireNumeroVersion,
+	lireSuggestionsDuWorkflow,
+	lireWorkflowVivant,
 	revoirSuggestion,
 	type AccesAssistant,
 } from './assistant-ia'
@@ -173,7 +179,7 @@ describe('corriger, accepter, abandonner', () => {
 		[{ code: '42501', message: 'authentification requise' }, { refus: 'session' }],
 		[{ code: 'PT404', message: 'suggestion introuvable' }, { refus: 'introuvable' }],
 		[{ code: 'P0001', message: 'suggestion figee' }, { refus: 'figee' }],
-		[{ code: 'P0001', message: 'portee non livree' }, { refus: 'portee' }],
+		[{ code: 'P0001', message: 'portee non livree' }, { refus: 'panne' }],
 		[{ code: 'P0001', message: 'generation en cours' }, { refus: 'en_cours' }],
 		[{ code: 'P0001', message: 'aucune revision' }, { refus: 'aucune_revision' }],
 		[{ code: 'P0001', message: 'proposition non conforme', details: '2 defaut(s)' }, { refus: 'non_conforme', defauts: 2 }],
@@ -202,5 +208,82 @@ describe('petites règles', () => {
 	it('un horodatage illisible rend `null`, jamais « Invalid Date »', () => {
 		expect(formaterHorodatage('pas une date')).toBeNull()
 		expect(formaterHorodatage('2026-10-02T12:05:00Z', 'heure')).toMatch(/\d{2}:\d{2}/)
+	})
+})
+
+describe('T3.c — faire évoluer un workflow existant', () => {
+	it('une demande ciblée envoie sa portée et le workflow', async () => {
+		const { acces: a, appels } = acces(flux([`{"suggestion_id":"${ID}"}\n`, '{"issue":"revision","defauts":1}\n']))
+		await genererSuggestion(a, 'ws-1', 'Ajoute une qualification', () => {}, { portee: 'etapes', idWorkflow: WF })
+		expect(JSON.parse(String(appels[0]?.init?.body))).toEqual({
+			workspace_id: 'ws-1', portee: 'etapes', workflow_id: WF, demande: 'Ajoute une qualification',
+		})
+	})
+
+	it('404 `workflow_introuvable` est distinct d’une suggestion introuvable', async () => {
+		const { acces: a } = acces(new Response('{"erreur":"workflow_introuvable"}', { status: 404 }))
+		expect(await genererSuggestion(a, 'ws-1', 'x', () => {}, { portee: 'champs', idWorkflow: WF })).toEqual({
+			statut: 'refus', refus: 'workflow_introuvable',
+		})
+		const { acces: b } = acces(new Response('{"erreur":"suggestion_introuvable"}', { status: 404 }))
+		expect(await revoirSuggestion(b, ID, 'x')).toEqual({ statut: 'refus', refus: 'introuvable' })
+	})
+
+	it.each([
+		[{ code: 'PT409', message: 'workflow modifie' }, 'workflow_modifie'],
+		[{ code: 'P0001', message: 'workflow archive' }, 'workflow_archive'],
+	])('acceptation d’une modification refusée %j : %s', async (error, refus) => {
+		expect(await accepterSuggestion(client({ data: null, error }).client, ID)).toEqual({ ok: false, refus })
+	})
+
+	/** Un client dont `rpc` et les lectures rendent ce qu'on leur donne, par nom. */
+	function clientLectures(reponses: Record<string, { data: unknown; error: { message: string } | null; status?: number }>) {
+		const filtres: unknown[][] = []
+		const chaine = (nom: string) => {
+			const c: Record<string, unknown> = {}
+			for (const m of ['select', 'eq', 'is', 'order', 'maybeSingle']) c[m] = (...args: unknown[]) => (filtres.push([m, ...args]), c)
+			c['then'] = (resoudre: (v: unknown) => unknown) => Promise.resolve(reponses[nom]).then(resoudre)
+			return c
+		}
+		return {
+			filtres,
+			client: { from: (table: string) => chaine(table), rpc: (nom: string) => Promise.resolve(reponses[nom]) } as unknown as ClientCrm,
+		}
+	}
+
+	it('le workflow vivant : sa composition et son occupation ; une occupation non numérique est écartée', async () => {
+		const { client: c } = clientLectures({
+			proposition_du_workflow: { data: { ...PROPOSITION, workflow: { nom: 'Pipeline' } }, error: null },
+			occupation_du_workflow: { data: { relance: 9, perdu: 'x' }, error: null },
+		})
+		expect(await lireWorkflowVivant(c, WF)).toEqual({
+			statut: 'pret',
+			donnees: { composition: { ...PROPOSITION, workflow: { nom: 'Pipeline' } }, occupation: { relance: 9 } },
+		})
+	})
+
+	it('un workflow illisible rend `null` ; une erreur reste une erreur, jamais un vide', async () => {
+		const illisible = clientLectures({
+			proposition_du_workflow: { data: null, error: null },
+			occupation_du_workflow: { data: {}, error: null },
+		})
+		expect(await lireWorkflowVivant(illisible.client, WF)).toEqual({ statut: 'pret', donnees: null })
+		const panne = clientLectures({
+			proposition_du_workflow: { data: null, error: { message: 'boom' }, status: 500 },
+			occupation_du_workflow: { data: {}, error: null },
+		})
+		expect((await lireWorkflowVivant(panne.client, WF)).statut).toBe('erreur')
+	})
+
+	it('les suggestions d’un workflow : en revue, de CE workflow', async () => {
+		const { client: c, filtres } = clientLectures({ suggestions_ia: { data: [], error: null } })
+		expect(await lireSuggestionsDuWorkflow(c, WF)).toEqual({ statut: 'pret', donnees: [] })
+		expect(filtres).toContainEqual(['eq', 'statut', 'en_revue'])
+		expect(filtres).toContainEqual(['eq', 'workflow_id', WF])
+	})
+
+	it('le numéro du point de retour ; illisible, `null`', async () => {
+		expect(await lireNumeroVersion(clientLectures({ workflow_versions: { data: { version_number: 4 }, error: null } }).client, 'v')).toBe(4)
+		expect(await lireNumeroVersion(clientLectures({ workflow_versions: { data: null, error: null } }).client, 'v')).toBeNull()
 	})
 })

@@ -247,8 +247,10 @@ type Options = {
 	/** Le workspace courant et les tracks affectables — `CRM-031`, §3 bis.3, lecture 4. */
 	readonly workspaces?: unknown[]
 	readonly tracks?: unknown[]
-	/** Les suggestions de l'IA en revue — `CRM-097` T2. */
+	/** Les suggestions de l'IA en revue — `CRM-097` T2 : celles qui créent un workflow. */
 	readonly suggestionsIa?: unknown[]
+	/** `CRM-097` T3 : les suggestions en revue qui font évoluer le workflow choisi (filtre `workflow_id`). */
+	readonly suggestionsDuWorkflow?: unknown[]
 	readonly erreurTracks?: { message: string; status: number }
 	readonly erreurWorkflows?: { message: string; status: number }
 	readonly erreurTransitions?: { message: string; status: number }
@@ -296,6 +298,27 @@ function clientFactice(options: Options = {}): {
 		const chaine: Record<string, unknown> = {}
 		for (const methode of ['is', 'eq', 'order']) chaine[methode] = () => chaine
 		chaine['then'] = (resoudre: (valeur: unknown) => unknown) => Promise.resolve(resultat).then(resoudre)
+		return chaine
+	}
+
+	// Le panneau, ouvert sur une suggestion, la relit par son identifiant (`maybeSingle`) : ce banc ne la sert pas,
+	// et le panneau dit alors « Suggestion introuvable » — l'éditeur, seul, est éprouvé ici.
+	const lectureSuggestions = () => {
+		let duWorkflow = false
+		let unique = false
+		const chaine: Record<string, unknown> = {}
+		for (const methode of ['is', 'order']) chaine[methode] = () => chaine
+		chaine['maybeSingle'] = () => ((unique = true), chaine)
+		chaine['eq'] = (colonne: string) => {
+			if (colonne === 'workflow_id') duWorkflow = true
+			return chaine
+		}
+		chaine['then'] = (resoudre: (valeur: unknown) => unknown) =>
+			Promise.resolve({
+				data: unique ? null : duWorkflow ? (options.suggestionsDuWorkflow ?? []) : (options.suggestionsIa ?? []),
+				error: null,
+				status: 200,
+			}).then(resoudre)
 		return chaine
 	}
 
@@ -350,8 +373,10 @@ function clientFactice(options: Options = {}): {
 				if (table === 'workspaces') return lecture(options.workspaces ?? WORKSPACES)
 				if (table === 'tracks') return lecture(options.tracks ?? TRACKS, options.erreurTracks)
 				// Les suggestions de l'IA (`CRM-097` T2) sont routées pour la même raison : sans cette branche,
-				// la liste « en revue » recevait des nœuds du catalogue — un double qui ment sur la forme.
-				if (table === 'suggestions_ia') return lecture(options.suggestionsIa ?? [])
+				// la liste « en revue » recevait des nœuds du catalogue — un double qui ment sur la forme. T3 :
+				// le filtre `workflow_id` distingue les suggestions d'un workflow de celles qui en créent un.
+				if (table === 'suggestions_ia') return lectureSuggestions()
+				if (table === 'suggestions_ia_revisions') return lecture([])
 				return lecture(options.catalogue ?? CATALOGUE)
 			},
 			insert: (charge: Record<string, unknown>) => ecriture(table, 'insert', charge),
@@ -433,7 +458,7 @@ describe('les lectures (§7 bis.3)', () => {
 		await attendreEcran()
 		expect(lectures).toContain('workflows')
 		expect(lectures).toContain('workflow_steps')
-		const choisi = screen.getByRole('button', { name: /Pipeline standard/ })
+		const choisi = screen.getByRole('button', { name: /^Pipeline standard/ })
 		expect(choisi.getAttribute('aria-current')).toBe('true')
 	})
 
@@ -2258,7 +2283,7 @@ describe('l’assistant IA dans l’éditeur (CRM-097 T2)', () => {
 		const ligne = within(liste).getByRole('button', { name: /Un cycle pour les missions de formation/ })
 		await userEvent.click(ligne)
 		expect(ligne.getAttribute('aria-current')).toBe('true')
-		expect(screen.getByRole('button', { name: /Pipeline standard/ }).getAttribute('aria-current')).toBeNull()
+		expect(screen.getByRole('button', { name: /^Pipeline standard/ }).getAttribute('aria-current')).toBeNull()
 		expect(await screen.findByTestId('ia-panneau')).toBeTruthy()
 	})
 
@@ -2274,5 +2299,76 @@ describe('l’assistant IA dans l’éditeur (CRM-097 T2)', () => {
 		await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Créer avec l’IA' })))
 		expect(screen.getByRole('button', { name: 'Créer avec l’IA' }).getAttribute('aria-expanded')).toBe('false')
 		expect((await screen.findAllByTestId('ligne-etape')).length).toBeGreaterThan(0)
+	})
+})
+
+// ---------------------------------------------------------------------------------------------
+// Faire évoluer le workflow choisi — CRM-097 T3
+// ---------------------------------------------------------------------------------------------
+// @verifies CRM-097 (docs/BACKLOG.md) tranche T3.c — docs/SPEC-ia.md §13.6 (« Suggérer » en tête des trois blocs ; le
+//           panneau et les suggestions du workflow dans sa colonne, au-dessus des étapes) ; docs/DESIGN_SYSTEM.md §5.53
+//           (nom accessible complet, le workflow reste visible, focus rendu à la commande)
+
+const SUGGESTION_DU_WORKFLOW = {
+	id: '0c970000-0000-4000-8000-0000000000a2',
+	portee: 'etapes',
+	demande: 'Remplace la relance par une qualification',
+	created_at: '2026-10-03T09:00:00Z',
+	generation_depuis: null,
+	derniere_erreur: null,
+}
+
+describe('faire évoluer le workflow choisi (CRM-097 T3)', () => {
+	it('« Suggérer » vit en tête des blocs étapes, transitions et champs, son nom nomme le workflow', async () => {
+		monter()
+		await attendreEcran()
+		for (const bloc of ['étapes', 'transitions', 'champs']) {
+			const commande = screen.getByRole('button', { name: `Suggérer des ${bloc} pour «\u00a0Pipeline standard\u00a0»` })
+			expect(commande.textContent).toBe('Suggérer')
+			expect(commande.getAttribute('aria-expanded')).toBe('false')
+		}
+		expect(screen.getByRole('heading', { level: 3, name: 'Étapes' })).toBeTruthy()
+	})
+
+	it('la demande s’ouvre DANS la colonne, au-dessus des étapes, qui restent visibles ; Annuler rend le focus à « Suggérer »', async () => {
+		monter()
+		await attendreEcran()
+		const nom = 'Suggérer des transitions pour «\u00a0Pipeline standard\u00a0»'
+		await userEvent.click(screen.getByRole('button', { name: nom }))
+		const panneau = await screen.findByTestId('ia-panneau')
+		expect(within(panneau).getByRole('heading', { level: 2 }).textContent).toBe(
+			'Faire évoluer les transitions de «\u00a0Pipeline standard\u00a0»',
+		)
+		expect(screen.getByRole('button', { name: nom }).getAttribute('aria-expanded')).toBe('true')
+		expect(screen.getAllByTestId('ligne-etape').length).toBeGreaterThan(0)
+		// Le panneau précède la liste des étapes dans le document (§5.53).
+		expect(panneau.compareDocumentPosition(screen.getByTestId('liste-etapes')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+		await userEvent.click(within(panneau).getByRole('button', { name: 'Annuler' }))
+		await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('button', { name: nom })))
+		expect(screen.queryByTestId('ia-panneau')).toBeNull()
+	})
+
+	it('les suggestions du workflow sont listées dans sa colonne — pas sous la liste des workflows', async () => {
+		monter({ suggestionsDuWorkflow: [SUGGESTION_DU_WORKFLOW] })
+		await attendreEcran()
+		const liste = await screen.findByTestId('ia-suggestions-du-workflow')
+		expect(within(liste).getByText('Suggestions de l’IA pour ce workflow')).toBeTruthy()
+		expect(screen.queryByTestId('ia-suggestions-en-revue')).toBeNull()
+		const ligne = within(liste).getByRole('button', { name: /Remplace la relance par une qualification/ })
+		await userEvent.click(ligne)
+		expect(ligne.getAttribute('aria-current')).toBe('true')
+		expect(await screen.findByTestId('ia-panneau')).toBeTruthy()
+		expect(screen.getAllByTestId('ligne-etape').length).toBeGreaterThan(0)
+	})
+
+	it('changer de workflow referme le panneau du précédent', async () => {
+		monter()
+		await attendreEcran()
+		await userEvent.click(screen.getByRole('button', { name: 'Suggérer des champs pour «\u00a0Pipeline standard\u00a0»' }))
+		expect(await screen.findByTestId('ia-panneau')).toBeTruthy()
+		const autre = screen.getAllByRole('button').find((b) => b.getAttribute('data-workflow-id') !== null && b.getAttribute('aria-current') !== 'true')
+		if (autre === undefined) throw new Error('le banc n’a qu’un workflow')
+		await userEvent.click(autre)
+		await waitFor(() => expect(screen.queryByTestId('ia-panneau')).toBeNull())
 	})
 })

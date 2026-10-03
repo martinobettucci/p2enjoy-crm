@@ -43,8 +43,8 @@ d'exécuter le code attendu.
 - **Corrigé avant toute livraison** : un workflow créé par une acceptation, ou le profil d'un administrateur qui
   avait décidé une suggestion, ne pouvaient plus être supprimés — le gel des suggestions décidées refusait
   l'effacement du lien.
-- **T3, en cours — accepter une suggestion sur un workflow existant le fait évoluer** (migration `0086` et
-  l'assistant ; l'écran suit) : étapes, transitions et champs ajoutés, modifiés ou
+- **T3, en cours — accepter une suggestion sur un workflow existant le fait évoluer** (migration `0086`,
+  l'assistant et l'écran) : étapes, transitions et champs ajoutés, modifiés ou
   retirés ; les affaires d'une étape retirée vont à la destination choisie, jamais devinée ; un champ retiré est
   archivé, jamais supprimé ; la version d'avant est gardée comme point de retour, qui se restaure. Une suggestion
   sur un workflow modifié entre-temps est refusée : il faut la relire. La restauration d'une version et
@@ -52,6 +52,10 @@ d'exécuter le code attendu.
 - **T3 — l'assistant fait évoluer les étapes, les transitions ou les champs d'un workflow** : il reçoit le workflow
   tel qu'il est et le nombre d'affaires de chaque étape — rien d'autre des affaires —, et rend le workflow cible
   entier, en proposant au besoin où vont les affaires d'une étape retirée.
+- **T3 — « Suggérer » dans l'éditeur de workflows**, en tête des étapes, des transitions et des champs : la demande
+  s'ouvre dans la colonne du workflow, qui reste visible ; la relecture montre ce qui serait ajouté, modifié ou
+  retiré, et, pour chaque étape retirée qui porte des affaires, leur nombre et le choix de leur destination — jamais
+  devinée. Après l'acceptation, le workflow et ses versions sont relus et l'annonce nomme le point de retour.
 
 ### Correctif du 2026-10-03 — INC-270 (décision 620)
 

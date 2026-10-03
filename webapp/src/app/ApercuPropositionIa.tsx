@@ -5,6 +5,9 @@
 //       ce qui ne se corrige pas un texte, retraits sans confirmation et annoncés, l'étape initiale en radio),
 //       §5.15 (listes et non diagramme, « Vers <étape> », clés en `code`, choix dans un `fieldset`), §5.7 (champs),
 //       §8 (chaque contrôle nommé), §9 (icônes Lucide), §10 (aucun texte en dur)
+// @spec CRM-097 tranche T3.c — docs/DESIGN_SYSTEM.md §5.53 (précisions : le type d'un champ CONSERVÉ se rend en texte
+//       tant qu'il est celui du champ vivant ; un libellé de transition vide porte « Libellé de l'étape d'arrivée ») ;
+//       docs/SPEC-ia.md §13.1 ; décision 620
 //
 // Composant contrôlé : il ne garde que l'état d'ouverture du formulaire d'ajout. Chaque geste rend la proposition
 // modifiée — et, pour un retrait, l'annonce de ce qu'il a emporté — au panneau, qui tient le brouillon.
@@ -71,6 +74,10 @@ const libelleDe = (libelles: Readonly<Record<string, CleTraduction>>, valeur: st
 	return cle === undefined ? valeur : t(cle)
 }
 
+/** Le libellé d'un type de champ, d'une visibilité — partagés avec le différentiel (§5.53). */
+export const libelleType = (type: string): string => libelleDe(LIBELLES_TYPE, type)
+export const libelleVisibilite = (visibilite: string): string => libelleDe(LIBELLES_VISIBILITE, visibilite)
+
 const CHAMP = 'min-h-[var(--size-target)] rounded-sm border border-border bg-surface px-3'
 const LISTE = 'flex flex-col divide-y divide-border rounded-lg border border-border'
 const LIGNE = 'flex flex-wrap items-center gap-2 px-3 py-2'
@@ -84,9 +91,11 @@ type ProprietesApercu = {
 	readonly catalogue: ReadonlyMap<string, string>
 	readonly desactive: boolean
 	readonly onChange: (proposition: PropositionIa, annonce?: string) => void
+	/** La composition vivante, pour une suggestion qui fait évoluer un workflow existant (§5.53) ; absente sinon. */
+	readonly vivante?: PropositionIa | null
 }
 
-export function ApercuPropositionIa({ proposition: p, catalogue, desactive, onChange }: ProprietesApercu) {
+export function ApercuPropositionIa({ proposition: p, catalogue, desactive, onChange, vivante = null }: ProprietesApercu) {
 	const prefixe = useId()
 	const [ajoutOuvert, setAjoutOuvert] = useState(false)
 	// Fermé, le formulaire d'ajout rend le focus à la commande qui l'a ouvert — différé d'un rendu, la commande
@@ -291,6 +300,9 @@ export function ApercuPropositionIa({ proposition: p, catalogue, desactive, onCh
 														<input
 															aria-label={t('ia.apercu.libelle.transition', { de: nomEtape(x.de), vers: nomEtape(x.vers) })}
 															value={x.libelle}
+															// Pour une modification, un libellé vide est l'absence de libellé propre (§13.1) : l'indication dit
+															// ce que la transition affichera.
+															placeholder={vivante === null ? undefined : t('ia.apercu.libelle.arrivee')}
 															disabled={desactive}
 															onChange={(e) => onChange(modifierTransition(p, rang, { libelle: e.target.value }))}
 															className={`${CHAMP} min-w-0 flex-1 basis-[12rem]`}
@@ -344,6 +356,9 @@ export function ApercuPropositionIa({ proposition: p, catalogue, desactive, onCh
 						{p.champs.map((champ, rang) => {
 							const nom = champ.libelle || champ.cle
 							const aChoix = champ.type === 'select' || champ.type === 'multiselect'
+							// Un champ CONSERVÉ garde son type (`type_non_modifiable`) : un texte, tant qu'il est celui du champ
+							// vivant — sinon la liste, seul moyen de le rétablir (§5.53).
+							const typeFixe = vivante?.champs.find((v) => v.cle === champ.cle)?.type === champ.type
 							return (
 								<li key={`${champ.cle}#${rang}`} className="flex flex-col gap-2 px-3 py-2" data-testid="ia-champ">
 									<div className="flex items-center gap-2">
@@ -372,20 +387,26 @@ export function ApercuPropositionIa({ proposition: p, catalogue, desactive, onCh
 									</div>
 									<div className="flex flex-wrap items-center gap-2">
 										<code className={CLE}>{champ.cle}</code>
-										<select
-											aria-label={t('ia.apercu.type', { champ: nom })}
-											value={champ.type}
-											disabled={desactive}
-											onChange={(e) => onChange(modifierChamp(p, rang, { type: e.target.value }))}
-											className={CHAMP}
-										>
-											{TYPES.includes(champ.type) ? null : <option value={champ.type}>{champ.type}</option>}
-											{TYPES.map((type) => (
-												<option key={type} value={type}>
-													{libelleDe(LIBELLES_TYPE, type)}
-												</option>
-											))}
-										</select>
+										{typeFixe ? (
+											<span className="text-sm text-text-2" data-testid="ia-type-fixe">
+												{t('ia.apercu.type.fixe', { type: libelleDe(LIBELLES_TYPE, champ.type) })}
+											</span>
+										) : (
+											<select
+												aria-label={t('ia.apercu.type', { champ: nom })}
+												value={champ.type}
+												disabled={desactive}
+												onChange={(e) => onChange(modifierChamp(p, rang, { type: e.target.value }))}
+												className={CHAMP}
+											>
+												{TYPES.includes(champ.type) ? null : <option value={champ.type}>{champ.type}</option>}
+												{TYPES.map((type) => (
+													<option key={type} value={type}>
+														{libelleDe(LIBELLES_TYPE, type)}
+													</option>
+												))}
+											</select>
+										)}
 									</div>
 									{aChoix ? (
 										<fieldset className="flex flex-col gap-2">

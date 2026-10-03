@@ -2,6 +2,10 @@
 // @spec docs/SPEC-ia.md §11.1 (le flux NDJSON : l'identifiant d'abord, un battement, l'issue en dernier), §11.3 et
 //       §12.6 (les routes de la fonction `ia` et leurs réponses), §12.2 (corriger par PostgREST), §12.3 (accepter
 //       par la RPC et ses refus), §12.4 (abandonner), §12.5 (l'écran), §12.7 (les refus traduits)
+// @spec CRM-097 tranche T3.c — docs/SPEC-ia.md §13.2 (la composition vivante et l'occupation, lues sous la RLS),
+//       §13.4 (accepter une modification : le point de retour ; « workflow modifie » en `PT409`, « workflow archive »),
+//       §13.5 (portée et cible envoyées à la fonction ; `workflow_introuvable`), §13.6 (les suggestions d'un
+//       workflow) ; décision 620
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone : une panne n'est jamais un succès) ; CLAUDE.md §10
 //
 // Ce module ne rend rien : il appelle et CLASSE. Les refus sont classés ici, à un seul endroit, et l'écran les
@@ -23,8 +27,15 @@ export type DefautIa = { readonly code: string; readonly chemin: string; readonl
 
 export type EchecGeneration = 'delai_depasse' | 'serveur_injoignable' | 'cle_refusee' | 'reponse_invalide'
 
+/** Les portées d'une modification ; `workflow` est celle d'une création (docs/SPEC-ia.md §13.5). */
+export type PorteeModification = 'etapes' | 'transitions' | 'champs'
+export const PORTEES_MODIFICATION: readonly PorteeModification[] = ['etapes', 'transitions', 'champs']
+export const estPorteeModification = (valeur: unknown): valeur is PorteeModification =>
+	(PORTEES_MODIFICATION as readonly unknown[]).includes(valeur)
+
 export type SuggestionEnRevue = {
 	readonly id: string
+	readonly portee: string
 	readonly demande: string
 	readonly created_at: string
 	readonly generation_depuis: string | null
@@ -33,7 +44,10 @@ export type SuggestionEnRevue = {
 
 export type SuggestionIa = SuggestionEnRevue & {
 	readonly statut: 'en_revue' | 'acceptee' | 'abandonnee'
+	/** Le workflow qu'elle fait évoluer ; `null` pour une création. */
+	readonly workflow_id: string | null
 	readonly workflow_cree_id: string | null
+	readonly version_retour_id: string | null
 }
 
 export type RevisionIa = {
@@ -50,7 +64,9 @@ export type RevisionIa = {
 /** Une suggestion et ses révisions, la plus récente d'abord. */
 export type SuggestionLue = { readonly suggestion: SuggestionIa; readonly revisions: readonly RevisionIa[] }
 
-export const COLONNES_SUGGESTION = 'id, demande, statut, created_at, generation_depuis, derniere_erreur, workflow_cree_id'
+export const COLONNES_SUGGESTION =
+	'id, portee, demande, statut, created_at, generation_depuis, derniere_erreur, workflow_id, workflow_cree_id, version_retour_id'
+const COLONNES_EN_REVUE = 'id, portee, demande, created_at, generation_depuis, derniere_erreur'
 export const COLONNES_REVISION = 'id, numero, origine, consigne, proposition, defauts, modele, created_at'
 
 /** Un verrou de génération plus ancien est périmé : la fonction qui l'avait posé a disparu (§11.4). */
@@ -72,14 +88,69 @@ export async function lireSuggestionsEnRevue(client: ClientCrm): Promise<EtatAsy
 	try {
 		const reponse = await client
 			.from('suggestions_ia')
-			.select('id, demande, created_at, generation_depuis, derniere_erreur')
+			.select(COLONNES_EN_REVUE)
 			.eq('statut', 'en_revue')
-			.eq('portee', 'workflow')
+			.is('workflow_id', null)
 			.order('created_at', { ascending: false })
 		if (reponse.error !== null) return enErreur(classerErreur(reponse.status, reponse.error.message))
 		return pret(reponse.data as readonly SuggestionEnRevue[])
 	} catch (cause) {
 		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
+}
+
+/** Les suggestions en revue QUI FONT ÉVOLUER ce workflow, les plus récentes d'abord (§13.6). */
+export async function lireSuggestionsDuWorkflow(
+	client: ClientCrm,
+	idWorkflow: string,
+): Promise<EtatAsync<readonly SuggestionEnRevue[]>> {
+	try {
+		const reponse = await client
+			.from('suggestions_ia')
+			.select(COLONNES_EN_REVUE)
+			.eq('statut', 'en_revue')
+			.eq('workflow_id', idWorkflow)
+			.order('created_at', { ascending: false })
+		if (reponse.error !== null) return enErreur(classerErreur(reponse.status, reponse.error.message))
+		return pret(reponse.data as readonly SuggestionEnRevue[])
+	} catch (cause) {
+		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
+}
+
+/** Le workflow qu'une suggestion fait évoluer, tel que la base le rend (§13.2). */
+export type WorkflowVivant = { readonly composition: PropositionIa; readonly occupation: Readonly<Record<string, number>> }
+
+/**
+ * La composition vivante et l'occupation (`proposition_du_workflow`, `occupation_du_workflow`, SECURITY INVOKER).
+ * `null` : le workflow n'est pas lisible.
+ */
+export async function lireWorkflowVivant(client: ClientCrm, idWorkflow: string): Promise<EtatAsync<WorkflowVivant | null>> {
+	try {
+		const [composition, occupation] = await Promise.all([
+			client.rpc('proposition_du_workflow', { p_workflow: idWorkflow }),
+			client.rpc('occupation_du_workflow', { p_workflow: idWorkflow }),
+		])
+		if (composition.error !== null) return enErreur(classerErreur(composition.status, composition.error.message))
+		if (occupation.error !== null) return enErreur(classerErreur(occupation.status, occupation.error.message))
+		if (composition.data === null || typeof composition.data !== 'object' || Array.isArray(composition.data)) return pret(null)
+		const nombres =
+			occupation.data !== null && typeof occupation.data === 'object' && !Array.isArray(occupation.data)
+				? Object.fromEntries(Object.entries(occupation.data).filter((e): e is [string, number] => typeof e[1] === 'number'))
+				: {}
+		return pret({ composition: composition.data as unknown as PropositionIa, occupation: nombres })
+	} catch (cause) {
+		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
+}
+
+/** Le numéro de la version publiée en point de retour (§13.4) ; `null` s'il n'est pas lisible. */
+export async function lireNumeroVersion(client: ClientCrm, idVersion: string): Promise<number | null> {
+	try {
+		const reponse = await client.from('workflow_versions').select('version_number').eq('id', idVersion).maybeSingle()
+		return reponse.error === null && reponse.data !== null ? reponse.data.version_number : null
+	} catch {
+		return null
 	}
 }
 
@@ -149,6 +220,7 @@ export type IssueFlux =
 	| { readonly issue: 'sans_suite' }
 
 export type RefusGeneration =
+	| 'workflow_introuvable'
 	| 'demande_invalide'
 	| 'consigne_invalide'
 	| 'session'
@@ -230,7 +302,7 @@ async function refusDe(reponse: Response): Promise<{ refus: RefusGeneration; rai
 		case 403:
 			return { refus: 'refuse' }
 		case 404:
-			return { refus: 'introuvable' }
+			return { refus: corps.erreur === 'workflow_introuvable' ? 'workflow_introuvable' : 'introuvable' }
 		case 409:
 			return { refus: corps.erreur === 'suggestion_figee' ? 'figee' : 'en_cours' }
 		case 503:
@@ -259,14 +331,25 @@ async function generer(
 	return suggestionId === null ? { statut: 'refus', refus: 'inconnu' } : { statut: 'fini', suggestionId, issue: lu.issue }
 }
 
-/** Crée une suggestion de workflow et mène sa première génération (`POST /ia/suggestions`). */
+/** Le workflow qu'une suggestion fait évoluer, et ce qu'elle en fait évoluer (docs/SPEC-ia.md §13.5). */
+export type CibleModification = { readonly portee: PorteeModification; readonly idWorkflow: string }
+
+/**
+ * Crée une suggestion et mène sa première génération (`POST /ia/suggestions`) : un workflow neuf, ou — avec une
+ * cible — l'évolution d'un workflow existant.
+ */
 export function genererSuggestion(
 	acces: AccesAssistant,
 	idWorkspace: string,
 	demande: string,
 	surIdentifiant: (id: string) => void,
+	cible: CibleModification | null = null,
 ): Promise<ResultatGeneration> {
-	return generer(acces, 'suggestions', { workspace_id: idWorkspace, portee: 'workflow', demande }, surIdentifiant, null)
+	const corps =
+		cible === null
+			? { workspace_id: idWorkspace, portee: 'workflow', demande }
+			: { workspace_id: idWorkspace, portee: cible.portee, workflow_id: cible.idWorkflow, demande }
+	return generer(acces, 'suggestions', corps, surIdentifiant, null)
 }
 
 /**
@@ -311,10 +394,11 @@ export async function enregistrerCorrection(client: ClientCrm, id: string, propo
 }
 
 export type RefusAcceptation =
+	| 'workflow_modifie'
+	| 'workflow_archive'
 	| 'session'
 	| 'introuvable'
 	| 'figee'
-	| 'portee'
 	| 'en_cours'
 	| 'aucune_revision'
 	| 'non_conforme'
@@ -326,13 +410,16 @@ export type ResultatAcceptation =
 const FORME_IDENTIFIANT = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const REFUS_ACCEPTATION: Readonly<Record<string, RefusAcceptation>> = {
 	'suggestion figee': 'figee',
-	'portee non livree': 'portee',
 	'generation en cours': 'en_cours',
 	'aucune revision': 'aucune_revision',
 	'proposition non conforme': 'non_conforme',
+	'workflow archive': 'workflow_archive',
 }
 
-/** Accepte une suggestion (`public.accepter_suggestion_ia`, §12.3) : rend le workflow créé. */
+/**
+ * Accepte une suggestion (`public.accepter_suggestion_ia`, §12.3, §13.4) : rend le workflow créé — ou, pour une
+ * modification, le workflow modifié. `PT409` : le workflow a bougé depuis la suggestion, une revue est nécessaire.
+ */
 export async function accepterSuggestion(client: ClientCrm, id: string): Promise<ResultatAcceptation> {
 	try {
 		const reponse = await client.rpc('accepter_suggestion_ia', { p_suggestion: id })
@@ -344,6 +431,7 @@ export async function accepterSuggestion(client: ClientCrm, id: string): Promise
 		const { code, message, details } = reponse.error
 		if (code === '42501') return { ok: false, refus: 'session' }
 		if (code === 'PT404') return { ok: false, refus: 'introuvable' }
+		if (code === 'PT409') return { ok: false, refus: 'workflow_modifie' }
 		const refus = code === 'P0001' ? REFUS_ACCEPTATION[message] : undefined
 		if (refus === 'non_conforme') {
 			const nombre = Number.parseInt(details ?? '', 10)
