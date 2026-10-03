@@ -2112,3 +2112,21 @@ Une suggestion **en revue** portant cette demande existe déjà : rien n'est éc
 présente »). Une suggestion acceptée ou abandonnée à la main ne compte pas : le passage suivant en recrée une en revue.
 Les preuves de l'API et de l'interface créent leurs **propres** suggestions, préfixées, et ne décident jamais celle du
 seed.
+
+### 16 bis. Une suggestion qui fait évoluer le workflow par défaut, en revue — `CRM-097` tranche T3
+
+*Écrit le 2026-10-03, avant la section qui la pose (décision 620, `docs/SPEC-ia.md` §13).* Sans elle, la liste
+« Suggestions de l'IA pour ce workflow », le différentiel et le bloc « Où vont les affaires des étapes retirées »
+(`docs/DESIGN_SYSTEM.md` §5.53) ne seraient jamais montrés par le jeu de démonstration.
+
+- **Ce que le jeu porte** : une suggestion de portée `etapes` sur le workflow par défaut, statut `en_revue`, demandée
+  par l'administratrice : « Remplacer la relance par une qualification des besoins, sans perdre les affaires en
+  cours. » Sa révision 1, d'origine `ia`, est la cible du scénario `modification` du simulateur : la deuxième étape —
+  la relance — retirée avec ce qui la vise, l'étape « qualification-ia » ajoutée, `remappages` vide. La relance
+  portant des affaires, la base relève **un** défaut, `remappage_requis` : c'est ce qui rend le bloc des affaires visible.
+  Section du script : **8 novodecies**.
+- **Le vrai chemin** : celui du §16.2, la portée et le workflow en plus, avec la même vérification du simulateur.
+- **Convergence** : celle du §16.3, sur la demande et le workflow. **Elle n'est jamais acceptée par une preuve** : une
+  acceptation retirerait la relance du workflow par défaut et déplacerait ses affaires, que toutes les autres preuves
+  lisent. Les preuves de T3 travaillent sur des workflows jetables.
+
