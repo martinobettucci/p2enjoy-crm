@@ -1,6 +1,7 @@
 // @verifies CRM-097 (docs/BACKLOG.md) — tranche T1 : la configuration de l'assistant et sa cible
 // @verifies docs/SPEC-ia.md §3 (variables et défauts), §4 (mode dégradé), §11.6 (le simulateur n'est visé
 //           qu'en développement, et l'en-tête est ignoré en production)
+// @verifies CRM-097 tranche T3.b — docs/SPEC-ia.md §13.5 (le scénario `modification` du simulateur) ; décision 620
 
 import { describe, expect, it } from 'vitest'
 import { CONTEXTE_PAR_DEFAUT, MODELE_PAR_DEFAUT, cibleDe, lireConfiguration } from './configuration.ts'
@@ -54,6 +55,11 @@ describe('cibleDe', () => {
 			cle: 'simule-incoherente',
 			simulee: true,
 		})
+	})
+
+	it('le scénario `modification` de T3.b (docs/SPEC-ia.md §13.5) vise lui aussi le simulateur', () => {
+		const dev = lireConfiguration(env({ OLLAMA_HOST: 'https://h', OLLAMA_API_KEY: 'sk-x', IA_SIMULATEUR_HOST: 'http://s' }))
+		expect(cibleDe(dev, avecScenario('modification'))).toEqual({ hote: 'http://s', cle: 'simule-modification', simulee: true })
 	})
 
 	it('un scénario inconnu n’ouvre pas le simulateur, même en développement', () => {

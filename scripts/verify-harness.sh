@@ -965,7 +965,11 @@ ASSERTIONS_ATTENDUES=3457
 # **1103 depuis `CRM-097` tranche T2, 2026-10-02** (décision 618) : `ia-acceptation.spec.ts`, fichier NEUF, porte
 # **6** scénarios — corriger, accepter, refus du commercial et de la lectrice, proposition incohérente, abandon,
 # reprise sans consigne. 1097 + 6 = 1103, valeur COMPTÉE — « 1103 passed ».
-SCENARIOS_API=1103
+# **1108 depuis `CRM-097` tranche T3.b, 2026-10-03** (décision 620) : `ia-modification.spec.ts`, fichier NEUF, porte
+# **5** scénarios — suggérer, remapper, accepter puis restaurer le point de retour (INC-270 trouvée là) ; la revue
+# d'une modification ; `409` « workflow modifie » ; refus du commercial et de la lectrice ; `404` et `400`. Tous sur
+# un workflow jetable, jamais sur celui du seed. 1103 + 5 = 1108, valeur COMPTÉE — « Total: 1108 tests in 73 files ».
+SCENARIOS_API=1108
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la

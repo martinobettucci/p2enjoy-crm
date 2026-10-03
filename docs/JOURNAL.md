@@ -30961,3 +30961,23 @@ supposait qu'une restauration ne remappe que vers des étapes déjà vivantes ; 
 *Vérifié* : `0081` **17** assertions, rouge avant le correctif (1, 3, 4…), verte après ; cinq mutations, cinq tuées —
 dont l'oubli du retour à l'immédiat, d'abord masqué par l'ordre des assertions (corrigé) ; `0037`, `0039`, `0040`,
 `0080` inchangées et vertes.
+
+**`CRM-097` T3.b, le 2026-10-03 — la fonction `ia` fait évoluer un workflow.** Contrat écrit et committé avant le
+code (`docs/SPEC-ia.md` §13.5). *Choix faits en écrivant* :
+
+- **La composition est lue AVANT la création**, avec le jeton de l'appelant : un workflow illisible rend `404` sans
+  ouvrir de suggestion ; un membre qui le lit mais n'administre pas reçoit le `403` de la base à la création, et
+  l'occupation n'est alors pas même lue.
+- **Une revue relit le workflow vivant** au lieu de réutiliser celui de la création : le modèle travaille sur l'état
+  que l'acceptation comparera. Illisible alors que la suggestion vient d'être verrouillée, il a été supprimé — la
+  suggestion avec lui, par cascade : `404` `suggestion_introuvable`, sans verrou orphelin.
+- **Pas de portée par défaut** : une suggestion `workflow` qui porte une cible (la base l'admet, un client peut
+  l'écrire hors de la fonction) envoie le contexte sans phrase de portée. Une première rédaction retombait sur
+  `etapes` — une valeur par défaut trompeuse, retirée avant le premier test.
+- **`remappages` est exigé par le schéma d'une modification**, pas par celui d'une création.
+- **Le simulateur dérive sa cible des messages** : il relit la composition vivante sous le repère que la fonction
+  pose, ce qui prouve, à l'API, que le contexte part bien au modèle — une mutation qui ne l'envoie plus fait rougir
+  trois scénarios sur cinq.
+
+*Vérifié* : unitaires de la fonction **83**, quatorze mutations tuées ; API `ia-modification.spec.ts` **5**, `ia.spec.ts`
+et `ia-acceptation.spec.ts` verts ; API **1108** déclarés. La preuve d'API a trouvé INC-270, corrigée à part.

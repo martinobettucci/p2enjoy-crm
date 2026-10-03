@@ -6,6 +6,9 @@
 // @spec CRM-097 tranche T2.b — docs/SPEC-ia.md §12.1 (les défauts relus en base, jamais calculés ici), §12.6
 //       (issue `sans_suite` ; revue sans consigne d'une suggestion sans révision ; défauts transmis à la revue) ;
 //       docs/JOURNAL.md décision 618
+// @spec CRM-097 tranche T3.b — docs/SPEC-ia.md §13.5 (les trois portées d'une modification, la composition
+//       vivante relue avec le jeton de l'appelant AVANT la création, l'occupation et la portée au modèle, le
+//       schéma d'une modification) ; docs/JOURNAL.md décision 620
 // @spec CLAUDE.md §10 (le refus d'un non-administrateur vient de la base), §20 (journaux sans contenu)
 //
 // Gestionnaire pur : la base, le modèle, l'horloge et le battement sont injectés. La base autorise
@@ -13,9 +16,16 @@
 // de la réponse, et son issue s'écrit avec la clé de service, bornée à la suggestion autorisée.
 
 import { cibleDe, type Cible, type ConfigurationIa } from './configuration.ts'
-import { messagesDeCreation, messagesDeRevue, type NoeudDuCatalogue } from './consignes.ts'
+import {
+	messagesDePremiereGeneration,
+	messagesDeRevue,
+	PORTEES_DE_MODIFICATION,
+	type ContexteDeModification,
+	type NoeudDuCatalogue,
+	type PorteeDeModification,
+} from './consignes.ts'
 import type { EchecGeneration, Etat, Generation, Message } from './ollama.ts'
-import { mettreEnForme, SCHEMA_WORKFLOW, type Defaut, type Proposition } from './proposition.ts'
+import { mettreEnForme, SCHEMA_MODIFICATION, SCHEMA_WORKFLOW, type Defaut, type Proposition } from './proposition.ts'
 
 export const LONGUEUR_MAX = 4_000
 /** Un verrou plus ancien est périmé : la fonction qui l'avait posé a disparu (docs/SPEC-ia.md §11.4). */
@@ -24,6 +34,9 @@ export const VERROU_PERIME_MS = 180_000
 export type Suggestion = {
 	readonly id: string
 	readonly workspace_id: string
+	/** Le workflow qu'elle fait évoluer ; `null` pour une création. */
+	readonly workflow_id: string | null
+	readonly portee: string
 	readonly statut: string
 	readonly demande: string
 	readonly generation_depuis: string | null
@@ -48,12 +61,19 @@ export type RevisionDuModele = {
 export type DependancesIa = {
 	readonly configuration: ConfigurationIa
 	/** Avec le jeton de l'appelant : la RLS décide. */
-	creerSuggestion(jeton: string, champs: { workspace_id: string; portee: string; demande: string }): Promise<ResultatCreation>
+	creerSuggestion(
+		jeton: string,
+		champs: { workspace_id: string; portee: string; demande: string; workflow_id?: string },
+	): Promise<ResultatCreation>
 	verrouiller(jeton: string, id: string, avantLe: string): Promise<Suggestion | null>
 	lireSuggestion(jeton: string, id: string): Promise<Suggestion | null>
 	/** La dernière révision lisible, et les défauts que la base y a écrits. */
 	lireDerniereRevision(jeton: string, id: string): Promise<{ readonly proposition: unknown; readonly defauts: Defaut[] } | null>
 	lireCatalogue(jeton: string, workspaceId: string): Promise<NoeudDuCatalogue[]>
+	/** Avec le jeton de l'appelant : la composition vivante au format d'une proposition, `null` si illisible. */
+	lireComposition(jeton: string, workflowId: string): Promise<unknown | null>
+	/** Avec le jeton de l'appelant : le nombre d'affaires par clé d'étape. */
+	lireOccupation(jeton: string, workflowId: string): Promise<Record<string, number>>
 	/**
 	 * Avec la clé de service, sur la suggestion déjà autorisée. Rend le nombre de défauts que la BASE a écrits
 	 * (docs/SPEC-ia.md §12.1), ou `ecrite: false` si elle a refusé la révision — suggestion décidée entre-temps.
@@ -109,7 +129,7 @@ async function generation(
 	consigne: string,
 	messages: readonly Message[],
 ): Promise<Issue> {
-	const issue = await d.generer(cible, messages, SCHEMA_WORKFLOW)
+	const issue = await d.generer(cible, messages, suggestion.workflow_id === null ? SCHEMA_WORKFLOW : SCHEMA_MODIFICATION)
 	if (!issue.ok) {
 		await d.ecrireEchec(suggestion.id, issue.echec)
 		d.journaliser({ evenement: 'generation_echouee', code: issue.echec, simulee: cible.simulee })
@@ -195,6 +215,23 @@ async function mener(
 	)
 }
 
+const estPorteeDeModification = (valeur: unknown): valeur is PorteeDeModification =>
+	(PORTEES_DE_MODIFICATION as readonly unknown[]).includes(valeur)
+
+/** Le contexte d'une modification : la composition déjà lue, l'occupation, la portée de la suggestion. */
+async function contexteDe(
+	d: DependancesIa,
+	jeton: string,
+	suggestion: Suggestion,
+	composition: unknown,
+): Promise<ContexteDeModification> {
+	return {
+		portee: suggestion.portee,
+		composition,
+		occupation: await d.lireOccupation(jeton, suggestion.workflow_id as string),
+	}
+}
+
 export async function traiterIa(requete: Request, d: DependancesIa): Promise<Response> {
 	const chemin = new URL(requete.url).pathname.split('/').filter(Boolean)
 	// Le routeur principal transmet `/ia/…` : le premier segment est le nom de la fonction.
@@ -215,15 +252,30 @@ export async function traiterIa(requete: Request, d: DependancesIa): Promise<Res
 		const demande = texteBorne(corps?.demande)
 		const espace = typeof corps?.workspace_id === 'string' && UUID.test(corps.workspace_id) ? corps.workspace_id : null
 		if (demande === null || espace === null) return repondre(400, { erreur: 'demande_invalide' })
-		// T1 livre la génération d'un workflow complet ; les portées ciblées viennent avec T3.
-		if (corps?.portee !== 'workflow') return repondre(400, { erreur: 'portee_non_livree' })
+		// Créer : la portée `workflow`, sans cible. Modifier : une des trois portées, avec un workflow (§13.5).
+		const portee = corps?.portee
+		const workflowId = typeof corps?.workflow_id === 'string' && UUID.test(corps.workflow_id) ? corps.workflow_id : null
+		const creer = portee === 'workflow' && (corps?.workflow_id === undefined || corps.workflow_id === null)
+		const modifier = estPorteeDeModification(portee) && workflowId !== null
+		if (!creer && !modifier) return repondre(400, { erreur: 'demande_invalide' })
 		if (cible === null) return repondre(503, { erreur: 'assistant_indisponible', raison: 'cle_absente' })
-		const creation = await d.creerSuggestion(jeton, { workspace_id: espace, portee: 'workflow', demande })
+		// La composition vivante est lue AVANT la création : un workflow illisible n'ouvre aucune suggestion.
+		const composition = modifier ? await d.lireComposition(jeton, workflowId) : null
+		if (modifier && composition === null) return repondre(404, { erreur: 'workflow_introuvable' })
+		const creation = await d.creerSuggestion(jeton, {
+			workspace_id: espace,
+			portee: portee as string,
+			demande,
+			...(modifier ? { workflow_id: workflowId } : {}),
+		})
 		if (!creation.ok) {
 			return creation.statut === 403 ? repondre(403, { erreur: 'refuse' }) : repondre(400, { erreur: 'demande_invalide' })
 		}
-		d.journaliser({ evenement: 'generation_lancee', route: 'suggestions', simulee: cible.simulee })
-		return await mener(d, jeton, cible, creation.suggestion, demande, (catalogue) => messagesDeCreation(demande, catalogue))
+		const contexte = modifier ? await contexteDe(d, jeton, creation.suggestion, composition) : null
+		d.journaliser({ evenement: 'generation_lancee', route: 'suggestions', portee, simulee: cible.simulee })
+		return await mener(d, jeton, cible, creation.suggestion, demande, (catalogue) =>
+			messagesDePremiereGeneration(demande, catalogue, contexte),
+		)
 	}
 
 	if (route === 'suggestions' && id !== undefined && action === 'revue' && chemin.length === 4) {
@@ -252,11 +304,23 @@ export async function traiterIa(requete: Request, d: DependancesIa): Promise<Res
 			return repondre(409, { erreur: 'generation_en_cours' })
 		}
 		const derniere = await d.lireDerniereRevision(jeton, id)
-		d.journaliser({ evenement: 'generation_lancee', route: 'revue', simulee: cible.simulee })
+		// Une modification : le workflow vivant est RELU au moment de la revue. Illisible alors que la suggestion
+		// vient d'être verrouillée par un administrateur, il a été supprimé — et la suggestion avec lui (cascade).
+		let contexte: ContexteDeModification | null = null
+		if (verrouillee.workflow_id !== null) {
+			const composition = await d.lireComposition(jeton, verrouillee.workflow_id)
+			if (composition === null) return repondre(404, { erreur: 'suggestion_introuvable' })
+			contexte = await contexteDe(d, jeton, verrouillee, composition)
+		}
+		d.journaliser({ evenement: 'generation_lancee', route: 'revue', portee: verrouillee.portee, simulee: cible.simulee })
 		return await mener(d, jeton, cible, verrouillee, consigne ?? verrouillee.demande, (catalogue) =>
 			derniere === null
-				? messagesDeCreation(consigne === null ? verrouillee.demande : `${verrouillee.demande}\n\n${consigne}`, catalogue)
-				: messagesDeRevue(verrouillee.demande, derniere.proposition, derniere.defauts, consigne ?? '', catalogue),
+				? messagesDePremiereGeneration(
+						consigne === null ? verrouillee.demande : `${verrouillee.demande}\n\n${consigne}`,
+						catalogue,
+						contexte,
+					)
+				: messagesDeRevue(verrouillee.demande, derniere.proposition, derniere.defauts, consigne ?? '', catalogue, contexte),
 		)
 	}
 

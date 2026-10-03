@@ -14912,8 +14912,12 @@ le serveur réel.
             le cœur pose les étapes rétablies avant les affaires, l'unicité d'un nœud par workflow ajournable ;
             *Vérifié le 2026-10-03* : pgTAP `0081` **17** assertions, rouge avant correctif, verte après ; cinq
             mutations tuées ; suites de la restauration et `0080` vertes ; SQL **81 / 3457**.
-      - [ ] **T3.b** — fonction `ia` : les trois portées, la composition vivante et l'occupation au modèle ;
+      - [x] **T3.b** — fonction `ia` : les trois portées, la composition vivante et l'occupation au modèle ;
             unitaires, API ;
+            *Vérifié le 2026-10-03* : unitaires de la fonction **83** (26 de plus), quatorze mutations tuées ;
+            simulateur : scénario `modification` ; API `ia-modification.spec.ts` **5** scénarios sur un workflow
+            jetable — dont l'acceptation puis la restauration du point de retour, qui a révélé INC-270 —, une
+            mutation de la fonction vue par l'API ; `ia.spec.ts` et `ia-acceptation.spec.ts` verts ; API **1108**.
       - [ ] **T3.c** — écran : « Suggérer » dans les trois blocs, différentiel, affaires des étapes retirées ;
             unitaires ;
       - [ ] **T3.d** — E2E souris et clavier, captures observées, manuel, harnais et campagnes.

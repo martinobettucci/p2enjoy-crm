@@ -1,6 +1,7 @@
 // @spec CRM-097 (docs/BACKLOG.md) — tranche T1 : la configuration de l'assistant IA et sa cible
 // @spec docs/SPEC-ia.md §3 (les quatre variables `OLLAMA_*`), §4 (mode dégradé), §11.6 (le simulateur,
-//       instrumentation du seul développement) ; docs/JOURNAL.md décision 617
+//       instrumentation du seul développement) ; docs/JOURNAL.md décision 617 ; tranche T3.b : le scénario
+//       `modification` (docs/SPEC-ia.md §13.5, décision 620)
 //
 // Module pur. La clé n'est lue qu'ici et ne ressort que dans l'en-tête `Authorization` de l'appel au
 // serveur : aucune réponse ni aucun journal ne la porte.
@@ -13,7 +14,8 @@ export const CONTEXTE_PAR_DEFAUT = 36_864
 
 /** L'en-tête qui choisit un scénario du simulateur — honoré en développement SEULEMENT. */
 export const EN_TETE_SIMULATEUR = 'x-ia-simulateur'
-export const SCENARIOS_SIMULATEUR = ['valide', 'incoherente', 'invalide', 'cle_refusee'] as const
+/** `modification` (`CRM-097` T3.b, docs/SPEC-ia.md §13.5) : une cible dérivée du workflow vivant envoyé au modèle. */
+export const SCENARIOS_SIMULATEUR = ['valide', 'incoherente', 'invalide', 'cle_refusee', 'modification'] as const
 
 export type ConfigurationIa = {
 	readonly hote: string | null

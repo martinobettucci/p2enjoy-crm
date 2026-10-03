@@ -559,7 +559,10 @@ accepter une modification sont un seul code. Le cœur pose les étapes qu'il cr�
 peuvent donc les viser — y compris l'étape qu'une restauration rétablit (INC-270) ; compromis : l'unicité d'un nœud
 par workflow est ajournable, et le cœur seul l'ajourne, le temps qu'une étape rétablie côtoie l'étape retirée qui lui
 cède son nœud. Un workflow modifié
-depuis la création de la suggestion est refusé en `PT409` : l'administrateur relit avant d'accepter.
+depuis la création de la suggestion est refusé en `PT409` : l'administrateur relit avant d'accepter. La fonction `ia`
+lit la composition vivante et l'occupation **avec le jeton de l'appelant**, avant de créer la suggestion : un workflow
+illisible n'en ouvre aucune, et le modèle ne reçoit que la configuration et des nombres d'affaires (`docs/SPEC-ia.md`
+§13.5).
 
 ### 3.8 Contraintes d'exécution de l'hôte
 

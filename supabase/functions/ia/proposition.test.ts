@@ -1,13 +1,15 @@
 // @verifies CRM-097 (docs/BACKLOG.md) — tranche T1 : la proposition `version: 1` ; tranche T2.b : sa mise en forme
 // @verifies docs/SPEC-ia.md §2 (la sortie du modèle n'est jamais crue), §6 (clés normalisées par le produit),
 //           §6.1 (le format), §12.1 (la fonction ne juge plus le sens : la base le fait, décision 618)
+// @verifies CRM-097 tranche T3.b — docs/SPEC-ia.md §13.1 (`remappages`, facultative), §13.5 (le schéma d'une
+//           modification l'exige ; sa mise en forme) ; décision 620
 //
 // Les défauts — le SENS d'une proposition — sont prouvés en base, code par code, par
 // `supabase/tests/0078_accepter_suggestion_ia.test.sql`. Ce fichier prouve ce qui reste à la fonction : refuser
 // ce qui n'a pas la forme, normaliser les clés partout à la fois, et ne rien corriger d'autre.
 
 import { describe, expect, it } from 'vitest'
-import { ELEMENTS_MAX, mettreEnForme, normaliserCle } from './proposition.ts'
+import { ELEMENTS_MAX, mettreEnForme, normaliserCle, SCHEMA_MODIFICATION, SCHEMA_WORKFLOW } from './proposition.ts'
 
 /** La forme de la sortie MESURÉE de `gemma4:e2b` le 2026-10-02 (docs/SPEC-ia.md §3), clés comprises. */
 const SORTIE_MESUREE = {
@@ -104,5 +106,38 @@ describe('mettreEnForme — les clés, et rien d’autre', () => {
 		expect(forme.proposition.etapes.filter((e) => e.initiale)).toHaveLength(2)
 		expect(forme.proposition.transitions).toHaveLength(4)
 		expect(forme.proposition.transitions[3]).toMatchObject({ de: 'f-gagne', vers: 'relance' })
+	})
+})
+
+describe('T3.b — `remappages` et le schéma d’une modification', () => {
+	it('présente : gardée, ses clés normalisées comme toutes les autres', () => {
+		const forme = mettreEnForme({ ...copie(), remappages: [{ de: 'Relance', vers: 'C_Maquette_Proposition' }] })
+		if (!forme.ok) throw new Error('forme refusée')
+		expect(forme.proposition.remappages).toEqual([{ de: 'relance', vers: 'c-maquette-proposition' }])
+	})
+
+	it('vide : gardée vide — « aucun remappage » ; absente : reste ABSENTE, une création n’en porte pas', () => {
+		const vide = mettreEnForme({ ...copie(), remappages: [] })
+		if (!vide.ok) throw new Error('forme refusée')
+		expect(vide.proposition.remappages).toEqual([])
+		const absente = mettreEnForme(copie())
+		if (!absente.ok) throw new Error('forme refusée')
+		expect(absente.proposition).not.toHaveProperty('remappages')
+	})
+
+	it.each([
+		['un objet', { de: 'relance', vers: 'negociation' }],
+		['un texte', 'relance → negociation'],
+		['un élément qui n’est pas un objet', ['relance']],
+		['null', null],
+	])('d’une autre forme (%s) : réponse invalide', (_nom, remappages) => {
+		expect(mettreEnForme({ ...copie(), remappages }).ok).toBe(false)
+	})
+
+	it('le schéma d’une modification EXIGE `remappages` et garde tout celui d’une création ; celui-ci ne la connaît pas', () => {
+		expect(SCHEMA_MODIFICATION.required).toEqual([...SCHEMA_WORKFLOW.required, 'remappages'])
+		expect(SCHEMA_MODIFICATION.properties.remappages.items.required).toEqual(['de', 'vers'])
+		expect(SCHEMA_MODIFICATION.properties.etapes).toBe(SCHEMA_WORKFLOW.properties.etapes)
+		expect(SCHEMA_WORKFLOW.properties).not.toHaveProperty('remappages')
 	})
 })

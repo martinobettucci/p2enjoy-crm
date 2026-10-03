@@ -1,6 +1,8 @@
 # @spec CRM-097 (docs/BACKLOG.md) — tranche T1 : le simulateur du serveur Ollama, pour les preuves
 # @spec docs/SPEC-ia.md §8 (les preuves n'appellent jamais le serveur réel), §11.6 (instrumentation du seul
 #       développement ; scénarios), §3 (le contrat MESURÉ que le simulateur reproduit)
+# @spec CRM-097 tranche T3.b — docs/SPEC-ia.md §13.5 (le scénario `modification`, dérivé du workflow vivant que la
+#       fonction envoie) ; docs/JOURNAL.md décision 620
 #
 # Bibliothèque standard seule. Le scénario voyage comme clé — `Bearer simule-<scénario>` —, là où le serveur
 # réel attend la sienne : la fonction `ia` n'a qu'un chemin d'appel, et ce sont les preuves qui choisissent.
@@ -51,6 +53,39 @@ CONTENUS = {
     "invalide": "Voici votre workflow : une prise de contact, puis un devis.",
 }
 
+# Le repère que la fonction pose devant le workflow vivant (`supabase/functions/ia/consignes.ts`).
+REPERE_VIVANT = "Le workflow actuel (JSON) :"
+QUALIFICATION = "qualification-ia"
+
+
+def modification(messages):
+    """La cible d'une modification : le workflow vivant SANS sa deuxième étape ni rien qui la vise, avec l'étape
+    « qualification-ia » après l'initiale, reliée à l'initiale et à l'étape qui suivait la retirée. `remappages`
+    reste vide : la destination des affaires de l'étape retirée revient à l'administrateur."""
+    vivant = None
+    for message in messages:
+        lignes = str(message.get("content", "")).split("\n")
+        if REPERE_VIVANT in lignes:
+            vivant = json.loads(lignes[lignes.index(REPERE_VIVANT) + 1])
+    if not isinstance(vivant, dict) or len(vivant.get("etapes", [])) < 3:
+        return "Je ne vois aucun workflow à faire évoluer."
+    etapes = vivant["etapes"]
+    retiree, suivante = etapes[1]["noeud"], etapes[2]["noeud"]
+    initiale = next((e["noeud"] for e in etapes if e["initiale"]), etapes[0]["noeud"])
+    cible = dict(vivant)
+    cible["noeuds"] = [{"cle": QUALIFICATION, "libelle": "Qualification", "nature": "open", "probabilite": 30}]
+    restantes = [e for e in etapes if e["noeud"] != retiree]
+    rang = next(i for i, e in enumerate(restantes) if e["noeud"] == initiale) + 1
+    cible["etapes"] = restantes[:rang] + [{"noeud": QUALIFICATION, "initiale": False}] + restantes[rang:]
+    cible["transitions"] = [t for t in vivant["transitions"] if retiree not in (t["de"], t["vers"])] + [
+        {"de": initiale, "vers": QUALIFICATION, "libelle": "Qualifier", "commentaire_requis": False},
+        {"de": QUALIFICATION, "vers": suivante, "libelle": "Engager", "commentaire_requis": False},
+    ]
+    cible["regles"] = [r for r in vivant["regles"] if r["etape"] != retiree]
+    cible["exigences"] = [x for x in vivant["exigences"] if retiree not in (x["de"], x["vers"])]
+    cible["remappages"] = []
+    return json.dumps(cible, ensure_ascii=False)
+
 
 class Simulateur(BaseHTTPRequestHandler):
     def _repondre(self, statut, corps):
@@ -69,7 +104,7 @@ class Simulateur(BaseHTTPRequestHandler):
             return None
         cle = autorisation[7:].strip()
         scenario = cle[len("simule-"):] if cle.startswith("simule-") else ""
-        if scenario == "cle_refusee" or scenario not in CONTENUS:
+        if scenario == "cle_refusee" or (scenario not in CONTENUS and scenario != "modification"):
             self._repondre(403, {"error": "origine non autorisée pour cette clé"})
             return None
         return scenario
@@ -99,7 +134,10 @@ class Simulateur(BaseHTTPRequestHandler):
             return
         self._repondre(200, {
             "model": corps.get("model", MODELE),
-            "message": {"role": "assistant", "content": CONTENUS[scenario]},
+            "message": {
+                "role": "assistant",
+                "content": modification(corps.get("messages", [])) if scenario == "modification" else CONTENUS[scenario],
+            },
             "done": True,
             "prompt_eval_count": 537,
             "eval_count": 668,

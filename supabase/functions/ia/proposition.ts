@@ -1,4 +1,5 @@
-// @spec CRM-097 (docs/BACKLOG.md) — tranche T1 : la proposition `version: 1` ; tranche T2.b : sa mise en forme seule
+// @spec CRM-097 (docs/BACKLOG.md) — tranche T1 : la proposition `version: 1` ; tranche T2.b : sa mise en forme seule ;
+//       tranche T3.b : `remappages` et le schéma d'une modification (docs/SPEC-ia.md §13.1, §13.5 ; décision 620)
 // @spec docs/SPEC-ia.md §2 (la sortie du modèle n'est jamais crue), §6 (clés normalisées par le produit),
 //       §6.1 (le format), §11.5 ; §12.1 (la base, seule juge des défauts — la fonction ne vérifie plus que la
 //       forme) ; docs/SCHEMA.md §3 et §4 (types de champ) ; docs/JOURNAL.md décisions 617 et 618
@@ -25,6 +26,8 @@ export type Transition = { de: string; vers: string; libelle: string; commentair
 export type Champ = { cle: string; libelle: string; type: string; choix: string[] | null; devise: string | null; aide: string | null }
 export type Regle = { champ: string; etape: string; visibilite: string }
 export type Exigence = { de: string; vers: string; champ: string }
+/** Où vont les affaires d'une étape retirée (docs/SPEC-ia.md §13.1) — la forme de `step_overrides`, en clés. */
+export type Remappage = { de: string; vers: string }
 
 export type Proposition = {
 	version: 1
@@ -35,6 +38,8 @@ export type Proposition = {
 	champs: Champ[]
 	regles: Regle[]
 	exigences: Exigence[]
+	/** Facultative : une modification seulement. */
+	remappages?: Remappage[]
 }
 
 /** Un défaut tel que la base l'écrit (docs/SPEC-ia.md §12.1) ; la fonction ne le calcule plus, elle le relit. */
@@ -121,6 +126,26 @@ export const SCHEMA_WORKFLOW = {
 } as const
 
 /**
+ * Le schéma d'une MODIFICATION (docs/SPEC-ia.md §13.5) : celui d'une création, et `remappages` EXIGÉ — un petit
+ * modèle omet plus volontiers une clé facultative ; un tableau vide dit « aucun remappage ».
+ */
+export const SCHEMA_MODIFICATION = {
+	...SCHEMA_WORKFLOW,
+	required: [...SCHEMA_WORKFLOW.required, 'remappages'],
+	properties: {
+		...SCHEMA_WORKFLOW.properties,
+		remappages: {
+			type: 'array',
+			items: {
+				type: 'object',
+				required: ['de', 'vers'],
+				properties: { de: { type: 'string' }, vers: { type: 'string' } },
+			},
+		},
+	},
+} as const
+
+/**
  * La forme de clé du produit, `^[a-z0-9]+(-[a-z0-9]+)*$` : minuscules, accents retirés, tout autre
  * caractère devient un tiret. « D_Présentation_Négociation » devient `d-presentation-negociation`.
  */
@@ -148,6 +173,9 @@ export function mettreEnForme(sortie: unknown): MiseEnForme {
 	if (total > ELEMENTS_MAX) return { ok: false }
 	const brut = (l: (typeof listes)[number]) => (sortie[l] as unknown[]).filter(estObjet)
 	if (listes.some((l) => brut(l).length !== (sortie[l] as unknown[]).length)) return { ok: false }
+	// `remappages` : absente, elle le reste ; présente, un tableau d'objets — sinon la sortie n'a pas la forme.
+	const remappages = sortie.remappages
+	if (remappages !== undefined && (!Array.isArray(remappages) || !remappages.every(estObjet))) return { ok: false }
 
 	const cle = (valeur: unknown) => normaliserCle(texte(valeur))
 
@@ -185,6 +213,9 @@ export function mettreEnForme(sortie: unknown): MiseEnForme {
 			vers: cle(x.vers),
 			champ: cle(x.champ),
 		})),
+		...(remappages === undefined
+			? {}
+			: { remappages: (remappages as Record<string, unknown>[]).map((r) => ({ de: cle(r.de), vers: cle(r.vers) })) }),
 	}
 
 	return { ok: true, proposition }

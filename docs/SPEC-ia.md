@@ -229,6 +229,9 @@ Toute autre méthode : `405`. Aucune réponse ne reflète la clé, l'adresse du 
 modèle.
 
 > **Révisé par T2 (§12.6)** : troisième issue `sans_suite` ; revue sans consigne d'une suggestion sans révision.
+> **Révisé par T3.b (§13.5)** : `POST /ia/suggestions` accepte les portées `etapes`, `transitions`, `champs` avec un
+> `workflow_id`, et rend `404` `workflow_introuvable` quand la composition de ce workflow est illisible ; toute
+> combinaison de portée et de cible non prévue rend `400` `demande_invalide`.
 
 ### 11.4 Ce qui change dans les tables (`docs/SCHEMA.md` §9 ter)
 
@@ -258,7 +261,8 @@ recréer `functions` (`CLAUDE.md` §15 : instrumentation de test non disponible 
 
 Scénarios : `valide` (un workflow conforme), `incoherente` (conforme au schéma, mais deux étapes initiales
 et une transition vers une étape absente), `invalide` (JSON hors schéma), `cle_refusee` (`403` « origine non
-autorisée pour cette clé »). Le dépassement de la borne de 120 s est prouvé par les tests unitaires, avec une
+autorisée pour cette clé ») ; `modification` depuis T3.b (§13.5) — une cible dérivée du workflow vivant que la
+fonction envoie. Le dépassement de la borne de 120 s est prouvé par les tests unitaires, avec une
 borne injectée : aucune preuve n'attend deux minutes.
 
 ## 12. Tranche T2 — créer un workflow avec l'IA (écrit le 2026-10-02, avant son code)

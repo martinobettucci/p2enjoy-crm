@@ -3,6 +3,8 @@
 //       d'une génération sur la suggestion autorisée), §11.4 (verrou, échec) ; docs/JOURNAL.md décision 617
 // @spec CRM-097 tranche T2.b — docs/SPEC-ia.md §12.1 (la révision écrite rend les défauts que la BASE a
 //       calculés), §12.6 (la dernière révision relue avec ses défauts) ; décision 618
+// @spec CRM-097 tranche T3.b — docs/SPEC-ia.md §13.2 et §13.5 (la composition vivante et l'occupation, lues par les
+//       deux RPC `security invoker` avec le jeton de l'appelant) ; décision 620
 //
 // Tout passe par PostgREST, comme un client : aucune connexion directe à PostgreSQL. Avec le jeton de
 // l'appelant, c'est la RLS qui répond ; la clé de service ne sert qu'à écrire l'issue d'une génération
@@ -18,7 +20,7 @@ type LireEnv = (nom: string) => string | undefined
 
 /** Un appel à la base ne retient jamais l'appelant plus de 10 s. */
 export const DELAI_BASE_MS = 10_000
-const COLONNES = 'id,workspace_id,statut,demande,generation_depuis,created_by'
+const COLONNES = 'id,workspace_id,workflow_id,portee,statut,demande,generation_depuis,created_by'
 
 /** Le battement du flux : bien au-dessous des 60 s de lecture de Kong (docs/SPEC-ia.md §11.1). */
 export const BATTEMENT_MS = 15_000
@@ -113,6 +115,33 @@ export function creerDependances(
 				libelle: n.label,
 				nature: n.kind,
 			}))
+		},
+
+		async lireComposition(jeton, workflowId) {
+			const reponse = await requete(rest('rpc/proposition_du_workflow'), {
+				method: 'POST',
+				headers: commeAppelant(jeton),
+				body: JSON.stringify({ p_workflow: workflowId }),
+				signal: signal(),
+			})
+			if (!reponse.ok) return null
+			const composition: unknown = await reponse.json()
+			return typeof composition === 'object' && composition !== null && !Array.isArray(composition) ? composition : null
+		},
+
+		async lireOccupation(jeton, workflowId) {
+			const reponse = await requete(rest('rpc/occupation_du_workflow'), {
+				method: 'POST',
+				headers: commeAppelant(jeton),
+				body: JSON.stringify({ p_workflow: workflowId }),
+				signal: signal(),
+			})
+			if (!reponse.ok) return {}
+			const occupation: unknown = await reponse.json()
+			if (typeof occupation !== 'object' || occupation === null || Array.isArray(occupation)) return {}
+			return Object.fromEntries(
+				Object.entries(occupation as Record<string, unknown>).filter((e): e is [string, number] => typeof e[1] === 'number'),
+			)
 		},
 
 		async ecrireRevision(revision) {

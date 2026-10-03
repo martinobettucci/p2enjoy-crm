@@ -6,21 +6,39 @@
 // @verifies CRM-097 tranche T2.b — docs/SPEC-ia.md §12.1 (la fonction n'envoie aucun défaut : elle relit ceux que la
 //           base a écrits), §12.6 (issue `sans_suite` ; revue sans consigne d'une suggestion sans révision ; les
 //           défauts de la base transmis à la revue) ; décision 618
+// @verifies CRM-097 tranche T3.b — docs/SPEC-ia.md §13.5 (portées et cible ; composition vivante lue AVANT la création,
+//           avec le jeton de l'appelant ; occupation et portée au modèle, relues à la revue ; schéma d'une
+//           modification ; journal sans contenu) ; décision 620
 
 import { describe, expect, it } from 'vitest'
 import { lireConfiguration } from './configuration.ts'
 import type { DependancesIa, RevisionDuModele, Suggestion } from './handler.ts'
 import { traiterIa } from './handler.ts'
 import type { Generation, Message } from './ollama.ts'
-import type { Defaut } from './proposition.ts'
+import { SCHEMA_MODIFICATION, SCHEMA_WORKFLOW, type Defaut } from './proposition.ts'
 
 const ESPACE = '0c970000-0000-4000-8000-0000000000e1'
 const ID = '0c970000-0000-4000-8000-0000000000a1'
 const ADM = '0c970000-0000-4000-8000-000000000011'
+const WF = '0c970000-0000-4000-8000-0000000000f1'
 const DEMANDE = 'Un cycle de vente pour une agence web — confidentiel'
 
 const SUGGESTION: Suggestion = {
-	id: ID, workspace_id: ESPACE, statut: 'en_revue', demande: DEMANDE, generation_depuis: null, created_by: ADM,
+	id: ID, workspace_id: ESPACE, workflow_id: null, portee: 'workflow', statut: 'en_revue', demande: DEMANDE,
+	generation_depuis: null, created_by: ADM,
+}
+const MODIFICATION: Suggestion = { ...SUGGESTION, workflow_id: WF, portee: 'etapes' }
+
+/** La composition vivante telle que la base la rend (docs/SPEC-ia.md §13.2) ; son champ porte un libellé témoin. */
+const VIVANTE = {
+	version: 1,
+	workflow: { nom: 'Pipeline' },
+	noeuds: [],
+	etapes: [{ noeud: 'prospection', initiale: true }, { noeud: 'relance', initiale: false }],
+	transitions: [{ de: 'prospection', vers: 'relance', libelle: '', commentaire_requis: false }],
+	champs: [{ cle: 'budget', libelle: 'Budget témoin', type: 'money', choix: null, devise: 'EUR', aide: null }],
+	regles: [],
+	exigences: [],
 }
 
 const VALIDE = {
@@ -36,7 +54,11 @@ type Banc = {
 	echecs: string[]
 	journal: string[]
 	appelsModele: Message[][]
+	schemas: unknown[]
 	creations: number
+	champsCreation: Record<string, unknown>[]
+	/** L'ordre des lectures et écritures de la base, pour prouver ce qui précède quoi. */
+	ordre: string[]
 	liberer: () => void
 }
 
@@ -52,29 +74,42 @@ function banc(options: {
 	/** Retient la génération jusqu'à `liberer()` : le flux devient observable en route. */
 	retenir?: boolean
 	battementMs?: number
+	/** Ce que rend `proposition_du_workflow` ; `null` : workflow illisible. */
+	composition?: unknown | null
+	creee?: Suggestion
 } = {}): Banc {
 	let liberer = () => {}
 	const retenue = new Promise<void>((resoudre) => (liberer = resoudre))
-	const b: Banc = { d: undefined as never, revisions: [], echecs: [], journal: [], appelsModele: [], creations: 0, liberer: () => liberer() }
+	const b: Banc = {
+		d: undefined as never, revisions: [], echecs: [], journal: [], appelsModele: [], schemas: [], creations: 0,
+		champsCreation: [], ordre: [], liberer: () => liberer(),
+	}
 	const configuration = lireConfiguration((nom) =>
 		({ OLLAMA_HOST: 'https://llm.example.test', OLLAMA_API_KEY: options.cle === undefined ? 'sk-secret-du-serveur' : options.cle ?? undefined })[nom] ?? undefined,
 	)
 	b.d = {
 		configuration,
-		async creerSuggestion() {
+		async creerSuggestion(_jeton, champs) {
 			b.creations++
+			b.champsCreation.push(champs)
+			b.ordre.push('creation')
 			const c = options.creation ?? 'ok'
-			return c === 'ok' ? { ok: true, suggestion: SUGGESTION } : { ok: false, statut: c }
+			return c === 'ok' ? { ok: true, suggestion: options.creee ?? SUGGESTION } : { ok: false, statut: c }
 		},
 		verrouiller: async () => (options.verrou === undefined ? SUGGESTION : options.verrou),
 		lireSuggestion: async () => options.lue ?? null,
 		lireDerniereRevision: async () => options.derniere ?? null,
 		lireCatalogue: async () => [{ cle: 'relance', libelle: 'Relance', nature: 'open' }],
+		lireComposition: async (jeton, workflowId) => (
+			b.ordre.push(`composition:${workflowId}:${jeton}`), options.composition === undefined ? VIVANTE : options.composition
+		),
+		lireOccupation: async (jeton, workflowId) => (b.ordre.push(`occupation:${workflowId}:${jeton}`), { prospection: 11, relance: 9 }),
 		ecrireRevision: async (r) => (b.revisions.push(r), options.ecriture ?? { ecrite: true, defauts: 0 }),
 		ecrireEchec: async (_id, e) => void b.echecs.push(e),
 		lireEtat: async (cible, modele) => (cible === null ? { disponible: false, raison: 'cle_absente', modele } : { disponible: true, modele }),
-		async generer(_cible, messages) {
+		async generer(_cible, messages, schema) {
 			b.appelsModele.push([...messages])
+			b.schemas.push(schema)
 			if (options.retenir) await retenue
 			return options.generation ?? { ok: true, contenu: VALIDE, jetonsEntree: 537, jetonsSortie: 668, dureeMs: 32_500 }
 		},
@@ -178,11 +213,26 @@ describe('POST /ia/suggestions — le flux', () => {
 		['demande vide', { workspace_id: ESPACE, portee: 'workflow', demande: '  ' }, undefined, 400],
 		['demande de plus de 4 000 caractères', { workspace_id: ESPACE, portee: 'workflow', demande: 'a'.repeat(4001) }, undefined, 400],
 		['espace qui n’est pas un identifiant', { workspace_id: 'mon-espace', portee: 'workflow', demande: 'x' }, undefined, 400],
-		['portée ciblée, livrée par T3', { workspace_id: ESPACE, portee: 'etapes', demande: 'x' }, undefined, 400],
+		['portée inconnue', { workspace_id: ESPACE, portee: 'tout', demande: 'x' }, undefined, 400],
+		['portée ciblée SANS workflow', { workspace_id: ESPACE, portee: 'etapes', demande: 'x' }, undefined, 400],
+		['portée ciblée, workflow qui n’est pas un identifiant', { workspace_id: ESPACE, portee: 'champs', workflow_id: 'pipeline', demande: 'x' }, undefined, 400],
+		['portée `workflow` AVEC un workflow', { workspace_id: ESPACE, portee: 'workflow', workflow_id: WF, demande: 'x' }, undefined, 400],
 	] as const)('%s : %s', async (_nom, corps, jeton, statut) => {
 		const b = banc()
-		expect((await creer(b, corps ?? { workspace_id: ESPACE, portee: 'workflow', demande: 'x' }, jeton)).status).toBe(statut)
+		const reponse = await creer(b, corps ?? { workspace_id: ESPACE, portee: 'workflow', demande: 'x' }, jeton)
+		expect(reponse.status).toBe(statut)
+		if (statut === 400) expect(await reponse.json()).toEqual({ erreur: 'demande_invalide' })
 		expect(b.creations).toBe(0)
+		expect(b.ordre).toEqual([])
+	})
+
+	it('une CRÉATION : le schéma sans `remappages`, aucun workflow vivant lu ni envoyé', async () => {
+		const b = banc()
+		await lignes(await creer(b))
+		expect(b.schemas).toEqual([SCHEMA_WORKFLOW])
+		expect(b.ordre).toEqual(['creation'])
+		expect(JSON.stringify(b.appelsModele[0])).not.toContain('Le workflow actuel')
+		expect(b.champsCreation[0]).toEqual({ workspace_id: ESPACE, portee: 'workflow', demande: DEMANDE })
 	})
 
 	it.each([
@@ -271,5 +321,111 @@ describe('POST /ia/suggestions/:id/revue', () => {
 		expect((await appel(b, 'POST', 'ia/suggestions/pas-un-uuid/revue', { consigne: 'x' })).status).toBe(404)
 		expect((await revoir(b, '')).status).toBe(400)
 		expect(b.appelsModele).toHaveLength(0)
+	})
+})
+
+describe('T3.b — faire évoluer un workflow existant (docs/SPEC-ia.md §13.5)', () => {
+	const modifier = (b: Banc, portee = 'etapes', jeton?: string | null) =>
+		creer(b, { workspace_id: ESPACE, portee, workflow_id: WF, demande: DEMANDE }, jeton)
+
+	it.each(['etapes', 'transitions', 'champs'])('portée « %s » avec un workflow : 202, la suggestion naît sur ce workflow', async (portee) => {
+		const b = banc({ creee: { ...MODIFICATION, portee } })
+		const reponse = await modifier(b, portee)
+		expect(reponse.status).toBe(202)
+		expect((await lignes(reponse)).at(-1)).toEqual({ issue: 'revision', defauts: 0 })
+		expect(b.champsCreation[0]).toEqual({ workspace_id: ESPACE, portee, demande: DEMANDE, workflow_id: WF })
+		expect(b.schemas).toEqual([SCHEMA_MODIFICATION])
+	})
+
+	it('la composition est lue AVANT la création, puis l’occupation — toutes deux avec le jeton de l’appelant', async () => {
+		const b = banc({ creee: MODIFICATION })
+		await lignes(await modifier(b))
+		expect(b.ordre).toEqual([`composition:${WF}:jeton-de-l-appelant`, 'creation', `occupation:${WF}:jeton-de-l-appelant`])
+	})
+
+	it('le modèle reçoit les règles de modification, le workflow vivant, l’occupation, la portée — puis la demande', async () => {
+		const b = banc({ creee: MODIFICATION })
+		await lignes(await modifier(b))
+		const [systeme, contexte, demande] = b.appelsModele[0] ?? []
+		expect(systeme?.content).toContain('Tu fais évoluer un workflow EXISTANT')
+		expect(systeme?.content).toContain('relance — Relance (open)')
+		expect(contexte?.content).toContain(JSON.stringify(VIVANTE))
+		expect(contexte?.content).toContain('{"prospection":11,"relance":9}')
+		expect(contexte?.content).toContain('Ne fais évoluer que les étapes')
+		expect(demande).toEqual({ role: 'user', content: DEMANDE })
+	})
+
+	it.each([
+		['transitions', 'Ne fais évoluer que les transitions'],
+		['champs', 'Ne fais évoluer que les champs'],
+	])('la portée « %s » oriente le modèle par sa phrase', async (portee, phrase) => {
+		const b = banc({ creee: { ...MODIFICATION, portee } })
+		await lignes(await modifier(b, portee))
+		expect(b.appelsModele[0]?.[1]?.content).toContain(phrase)
+	})
+
+	it('un workflow ILLISIBLE : 404 workflow_introuvable, aucune suggestion créée, le modèle jamais appelé', async () => {
+		const b = banc({ composition: null })
+		const reponse = await modifier(b)
+		expect([reponse.status, await reponse.json()]).toEqual([404, { erreur: 'workflow_introuvable' }])
+		expect(b.creations).toBe(0)
+		expect(b.appelsModele).toHaveLength(0)
+	})
+
+	it('le REFUS DE LA BASE (non-administrateur) rend 403 : ni occupation lue, ni modèle appelé', async () => {
+		const b = banc({ creation: 403 })
+		expect((await modifier(b)).status).toBe(403)
+		expect(b.ordre).toEqual([`composition:${WF}:jeton-de-l-appelant`, 'creation'])
+		expect(b.appelsModele).toHaveLength(0)
+	})
+
+	it('sans clé : 503 AVANT toute lecture de la base', async () => {
+		const b = banc({ cle: null })
+		expect((await modifier(b)).status).toBe(503)
+		expect(b.ordre).toEqual([])
+	})
+
+	it('une REVUE d’une modification relit le workflow vivant et l’envoie avant la dernière révision', async () => {
+		const corrigee = { ...VIVANTE, remappages: [{ de: 'relance', vers: 'prospection' }] }
+		const b = banc({ verrou: MODIFICATION, derniere: { proposition: corrigee, defauts: [] } })
+		await lignes(await revoir(b, 'Garde la relance'))
+		expect(b.ordre).toEqual([`composition:${WF}:jeton-de-l-appelant`, `occupation:${WF}:jeton-de-l-appelant`])
+		const messages = b.appelsModele[0] ?? []
+		expect(messages.map((m) => m.role)).toEqual(['system', 'user', 'user', 'user'])
+		expect(messages[1]?.content).toContain('Le workflow actuel (JSON) :')
+		expect(messages[3]?.content).toContain('"remappages":[{"de":"relance","vers":"prospection"}]')
+		expect(messages[3]?.content).toContain('Garde la relance')
+		expect(b.schemas).toEqual([SCHEMA_MODIFICATION])
+	})
+
+	it('la reprise sans consigne d’une modification sans révision rejoue la demande, avec le workflow vivant', async () => {
+		const b = banc({ verrou: MODIFICATION })
+		await lignes(await appel(b, 'POST', `ia/suggestions/${ID}/revue`, {}))
+		expect(b.appelsModele[0]?.[1]?.content).toContain('Le workflow actuel (JSON) :')
+		expect(b.appelsModele[0]?.[2]).toEqual({ role: 'user', content: DEMANDE })
+	})
+
+	it('une revue dont le workflow est devenu illisible — supprimé, la suggestion avec lui — rend 404', async () => {
+		const b = banc({ verrou: MODIFICATION, composition: null })
+		const reponse = await revoir(b)
+		expect([reponse.status, await reponse.json()]).toEqual([404, { erreur: 'suggestion_introuvable' }])
+		expect(b.appelsModele).toHaveLength(0)
+	})
+
+	it('une suggestion `workflow` AVEC une cible (écrite hors de la fonction) : le contexte part, sans phrase de portée', async () => {
+		const b = banc({ verrou: { ...MODIFICATION, portee: 'workflow' }, derniere: { proposition: VIVANTE, defauts: [] } })
+		await lignes(await revoir(b))
+		const contexte = b.appelsModele[0]?.[1]?.content ?? ''
+		expect(contexte).toContain('Le workflow actuel (JSON) :')
+		expect(contexte).not.toContain('Ne fais évoluer que')
+	})
+
+	it('le journal porte la portée, jamais la composition ni la demande', async () => {
+		const b = banc({ creee: MODIFICATION })
+		await lignes(await modifier(b))
+		const journal = b.journal.join('\n')
+		expect(journal).toContain('"portee":"etapes"')
+		expect(journal).not.toContain('Budget témoin')
+		expect(journal).not.toContain('confidentiel')
 	})
 })
