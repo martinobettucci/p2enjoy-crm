@@ -354,7 +354,9 @@ Instanciation d'un nœud du catalogue dans un workflow.
 | `stale_after_days` | `integer` | surcharge du seuil de relance |
 | `is_initial` | `boolean` | exactement une étape initiale par workflow |
 
-Unique : `(workflow_id, node_id)` — un nœud n'apparaît qu'une fois par workflow.
+Unique : `(workflow_id, node_id)` — un nœud n'apparaît qu'une fois par workflow. Contrainte `DEFERRABLE INITIALLY
+IMMEDIATE` depuis la migration `0086` (INC-270) : contrôlée immédiatement, sauf pendant le cœur de la restauration,
+qui l'ajourne le temps de poser une étape rétablie à côté de l'étape retirée qui lui cède son nœud.
 
 Précisions apportées par `CRM-031`, après mesure :
 
@@ -1812,8 +1814,11 @@ des spécifications antérieures gardent leur sens — le refus d'une suppressio
   plus un défaut (`transition_sans_libelle`) mais l'absence de libellé propre. Le trigger des révisions lui passe le
   `workflow_id` de la suggestion.
 - **`app.appliquer_composition(p_workflow_id, p_workspace_id, p_doc, p_overrides) returns jsonb`** — le cœur de la
-  restauration (`0042`, écritures 2 à 9 du §7 ter.13.7 du moteur), déplacé tel quel ; il rend les compteurs.
-  **`public.restore_workflow_version`** est redéfinie pour l'appeler, sans autre changement.
+  restauration (`0042`, écritures 2 à 10 du §7 ter.13.7 du moteur) ; il rend les compteurs.
+  **`public.restore_workflow_version`** est redéfinie pour l'appeler, sans autre changement. **Un seul changement
+  au cœur, INC-270** : les étapes rétablies sont posées AVANT le déplacement des affaires, qui peuvent donc les
+  viser ; `workflow_steps_workflow_id_node_id_key` devient ajournable pour cela, et le cœur la revérifie dès les
+  étapes retirées supprimées.
 - **`public.proposition_du_workflow(uuid)`** et **`public.occupation_du_workflow(uuid)`** — `stable`, `security
   invoker`, exécutables par `authenticated` et `service_role` : la composition vivante au format d'une proposition
   (`null` si le workflow n'est pas lisible) et `{clé d'étape : nombre d'affaires}`, archivées et en corbeille

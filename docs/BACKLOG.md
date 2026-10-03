@@ -14907,6 +14907,11 @@ le serveur réel.
             restauration et API `restauration-version-workflow` / IA vertes sans retouche ; registre rejoué (86) ;
             SQL **80 / 3440** ; types régénérés, typage vert. Les preuves API et E2E de la modification suivent
             avec T3.b et T3.d.
+      - [x] **INC-270** — restaurer une version refusait de remapper des affaires vers une étape qu'elle
+            rétablit (défaut de `CRM-078`, trouvé par la preuve d'API de T3.b ; `docs/INCONSISTENCY_REPORT.md`) :
+            le cœur pose les étapes rétablies avant les affaires, l'unicité d'un nœud par workflow ajournable ;
+            *Vérifié le 2026-10-03* : pgTAP `0081` **17** assertions, rouge avant correctif, verte après ; cinq
+            mutations tuées ; suites de la restauration et `0080` vertes ; SQL **81 / 3457**.
       - [ ] **T3.b** — fonction `ia` : les trois portées, la composition vivante et l'occupation au modèle ;
             unitaires, API ;
       - [ ] **T3.c** — écran : « Suggérer » dans les trois blocs, différentiel, affaires des étapes retirées ;

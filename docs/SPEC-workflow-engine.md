@@ -4843,20 +4843,26 @@ Chaque étape de cet ordre est imposée par une contrainte **mesurée**, non par
 | # | Écriture | Ce qui l'impose |
 |---|---|---|
 | 1 | publier le point de retour | il doit photographier la structure **d'avant** (§7 ter.13.5) |
-| 2 | déplacer les affaires des étapes retirées vers leur cible | MESURÉ : `cards_current_step_id_workflow_id_fkey` est `NO ACTION` — supprimer une étape qui porte encore une affaire échoue en `23503`. C'est ce fait, et lui seul, qui rend le plan obligatoire |
-| 3 | `is_initial` remis à faux sur toutes les étapes vivantes | MESURÉ : `workflow_steps_workflow_initial_uk`, index unique **partiel** sur `(workflow_id) where is_initial`. Rétablir l'étape initiale de la version avant d'avoir défait l'actuelle échoue en `23505` |
-| 4 | supprimer les étapes retirées | leur suppression emporte en cascade leurs arêtes et leurs règles, ce qui allège les étapes 6 et 7 |
-| 5 | créer les étapes rétablies, puis mettre à jour les étapes conservées | `workflow_steps_workflow_id_node_id_key` : un nœud n'apparaît qu'une fois par workflow. Une étape rétablie peut réclamer le nœud d'une étape retirée — d'où la suppression **avant** la création |
-| 6 | arêtes : supprimer, créer, mettre à jour | leurs deux extrémités doivent exister, donc après les étapes |
-| 7 | champs : désarchiver, recréer, mettre à jour, **archiver** les surnuméraires | jamais de suppression (§7 ter.13.4) |
-| 8 | règles de visibilité : supprimer, créer, mettre à jour | elles lient un champ **et** une étape, donc après les deux |
-| 9 | champs requis : supprimer, créer | ils lient une arête et un champ, donc après les deux |
+| 2 | créer les étapes rétablies, **jamais initiales**, l'unicité d'un nœud **ajournée** | une affaire peut viser une étape rétablie (§7 ter.12.2) : elle doit exister avant le déplacement (INC-270, MESURÉ : `23503` sinon). Une étape rétablie peut réclamer le nœud d'une étape retirée qui porte encore ses affaires : `workflow_steps_workflow_id_node_id_key`, ajournable depuis `0086`, est ajournée le temps de leur coexistence. Jamais initiale : voir 4 |
+| 3 | déplacer les affaires des étapes retirées vers leur cible | MESURÉ : `cards_current_step_id_workflow_id_fkey` est `NO ACTION` — supprimer une étape qui porte encore une affaire échoue en `23503`. C'est ce fait, et lui seul, qui rend le plan obligatoire |
+| 4 | `is_initial` remis à faux sur toutes les étapes vivantes | MESURÉ : `workflow_steps_workflow_initial_uk`, index unique **partiel** sur `(workflow_id) where is_initial`. Rétablir l'étape initiale de la version avant d'avoir défait l'actuelle échoue en `23505` |
+| 5 | supprimer les étapes retirées, puis **revérifier** l'unicité d'un nœud | leur suppression emporte en cascade leurs arêtes et leurs règles, ce qui allège les écritures 7 et 9 ; l'unicité redevient immédiate et se vérifie là — la transaction appelante n'hérite d'aucun ajournement |
+| 6 | l'étape initiale rétablie le redevient, puis les étapes conservées sont mises à jour | une étape rétablie se compte **créée** : réglée d'abord, la mise à jour ne lui trouve plus aucun écart |
+| 7 | arêtes : supprimer, créer, mettre à jour | leurs deux extrémités doivent exister, donc après les étapes |
+| 8 | champs : désarchiver, recréer, mettre à jour, **archiver** les surnuméraires | jamais de suppression (§7 ter.13.4) |
+| 9 | règles de visibilité : supprimer, créer, mettre à jour | elles lient un champ **et** une étape, donc après les deux |
+| 10 | champs requis : supprimer, créer | ils lient une arête et un champ, donc après les deux |
 
-**Depuis `CRM-097` T3 (migration `0086`, décision 620), les écritures 2 à 9 vivent dans `app.appliquer_composition`**,
+> **Révisé le 2026-10-03 (INC-270, `CRM-097` T3, migration `0086`).** L'ordre de `0042` créait les étapes rétablies
+> APRÈS le déplacement des affaires : une affaire ne pouvait viser qu'une étape déjà vivante, et le choix d'une étape
+> rétablie, que le §7 ter.12.2 autorise et que l'écran propose, échouait en `23503`. Aucune preuve ne l'exerçait.
+
+**Depuis `CRM-097` T3 (migration `0086`, décision 620), les écritures 2 à 10 vivent dans `app.appliquer_composition`**,
 que `restore_workflow_version` et `public.accepter_suggestion_ia` appellent toutes deux : un seul algorithme pour la
-restauration et l'acceptation d'une suggestion de l'IA (`docs/SPEC-ia.md` §13.4). Le corps a été déplacé tel quel ;
-la restauration garde ses vérifications, son plan rejoué et son point de retour, et ses suites pgTAP (`0037`, `0039`,
-`0040`) et API sont restées vertes sans retouche.
+restauration et l'acceptation d'une suggestion de l'IA (`docs/SPEC-ia.md` §13.4). Le corps a été déplacé tel quel,
+puis corrigé d'INC-270 (l'ordre ci-dessus) ; la restauration garde ses vérifications, son plan rejoué et son point de
+retour, et ses suites pgTAP (`0037`, `0039`, `0040`) et API sont restées vertes sans retouche. INC-270 est prouvée
+par `supabase/tests/0081_restauration_etape_retablie.test.sql`.
 
 **Aucune ligne n'est détruite puis recréée à l'identique.** Vider une collection pour la réécrire
 serait plus court à écrire et faux à l'usage : les identifiants survivraient peut-être, mais les

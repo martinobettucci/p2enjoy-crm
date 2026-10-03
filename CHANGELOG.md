@@ -50,6 +50,15 @@ d'exécuter le code attendu.
   sur un workflow modifié entre-temps est refusée : il faut la relire. La restauration d'une version et
   l'acceptation partagent désormais le même code.
 
+### Correctif du 2026-10-03 — INC-270 (décision 620)
+
+*Migration **86**, à appliquer dans la prochaine fenêtre (`docs/PROD_MIGRATIONS.md` §3).*
+
+- **Restaurer une version peut renvoyer des affaires vers une étape que la restauration rétablit.** Choisir, pour
+  les affaires d'une étape retirée, une étape que la version fait revenir — l'écran de restauration le propose —
+  échouait avec un refus du serveur ; seules les étapes encore présentes pouvaient être choisies. C'est aussi ce qui
+  permet d'annuler l'acceptation d'une suggestion de l'IA qui a retiré une étape occupée.
+
 ### Correctif du 2026-10-03 — INC-268 (décision 619)
 
 *Migration **85**, à appliquer dans la prochaine fenêtre (`docs/PROD_MIGRATIONS.md` §3).*

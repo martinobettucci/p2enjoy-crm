@@ -556,8 +556,9 @@ Les effets, en une transaction :
 2. les nœuds proposés entrent au catalogue (comme une création) ;
 3. **la cible est traduite en document de composition** (§7 ter.2 du moteur) par `app.document_cible_ia` — un objet
    conservé garde son identifiant, un objet nouveau en reçoit un ; une étape nouvelle lit son nœud au catalogue par
-   sa clé, unique dans l'espace —, et les remappages en `step_overrides`. Les étapes nouvelles sont posées avant
-   l'application, jamais initiales : une affaire peut être remappée vers l'une d'elles ;
+   sa clé, unique dans l'espace —, et les remappages en `step_overrides`. Une affaire peut être remappée vers une
+   étape nouvelle : le cœur pose les étapes qu'il crée avant de déplacer les affaires (INC-270, §7 ter.13.7 du
+   moteur) ;
 4. **ce document est appliqué par le cœur de la restauration** : affaires déplacées, étapes, transitions, champs
    (archivés et non supprimés), règles, exigences — `app.appliquer_composition`, extrait de
    `restore_workflow_version`, qui l'appelle désormais lui aussi ; **un seul algorithme pour les deux gestes** ;

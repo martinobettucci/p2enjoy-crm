@@ -11,8 +11,10 @@
 -- 2. `app.defauts_proposition_ia` reçoit le workflow ciblé et relève cinq codes de plus pour une modification ; le
 --    trigger des révisions le lui passe.
 -- 3. LE CŒUR DE LA RESTAURATION est extrait de `public.restore_workflow_version` (migration 42) en
---    `app.appliquer_composition`, mot pour mot ; la restauration l'appelle. Un seul algorithme applique un document
---    de composition, que ce document vienne d'une version ou d'une suggestion — les suites de `CRM-078` le prouvent.
+--    `app.appliquer_composition` ; la restauration l'appelle. Un seul algorithme applique un document de
+--    composition, que ce document vienne d'une version ou d'une suggestion — les suites de `CRM-078` le prouvent.
+--    UN SEUL CHANGEMENT AU CŒUR, INC-270 : les étapes rétablies sont posées AVANT le déplacement des affaires, qui
+--    peuvent donc les viser ; l'unicité d'un nœud par workflow devient ajournable pour cela (section 3).
 -- 4. `public.proposition_du_workflow` et `public.occupation_du_workflow`, lectures sous la RLS.
 -- 5. `app.document_cible_ia`, la cible traduite en document de composition.
 -- 6. `public.accepter_suggestion_ia` accepte une modification.
@@ -392,6 +394,16 @@ revoke all on function app.suggestions_ia_revisions_avant_creation() from public
 -- ---------------------------------------------------------------------------------------------
 -- 3. Le cœur de la restauration, extrait — et la restauration qui l'appelle
 -- ---------------------------------------------------------------------------------------------
+-- INC-270 (docs/INCONSISTENCY_REPORT.md), MESURÉ le 2026-10-03 : une affaire remappée vers une étape que la
+-- restauration RÉTABLIT échouait en `23503` — le §7 ter.12.2 du moteur autorise pourtant ce choix. Une étape rétablie
+-- peut réclamer le nœud d'une étape retirée qui porte encore les affaires : les deux doivent coexister le temps du
+-- déplacement. L'unicité `(workflow_id, node_id)` devient AJOURNABLE, contrôlée immédiatement par défaut ; seul le
+-- cœur l'ajourne, et la revérifie dès les étapes retirées supprimées. Aucune clé étrangère ne la vise (mesuré).
+alter table public.workflow_steps
+	drop constraint if exists workflow_steps_workflow_id_node_id_key,
+	add constraint workflow_steps_workflow_id_node_id_key
+		unique (workflow_id, node_id) deferrable initially immediate;
+
 -- SECURITY INVOKER : appelé par deux gestes `security definer`, il s'exécute sous leur propriétaire. Aucun client ne
 -- l'appelle : le privilège est retiré à tous (section 5).
 create or replace function app.appliquer_composition(
@@ -423,9 +435,43 @@ declare
 	n_rg_maj   bigint := 0;
 	n_rq_new   bigint := 0;
 	n_rq_del   bigint := 0;
+	retablies  uuid[];
 begin
 	-- ---------------------------------------------------------------------------------------
-	-- ÉCRITURE 2 — LES AFFAIRES, avant toute suppression d'étape.
+	-- ÉCRITURE 2 — LES ÉTAPES RÉTABLIES, AVANT LES AFFAIRES (INC-270), avec l'identifiant d'origine que
+	-- le document conserve : une affaire peut viser l'une d'elles. Jamais initiales ici —
+	-- `workflow_steps_workflow_initial_uk` refuserait une seconde initiale ; l'écriture 6 règle
+	-- l'initiale. L'unicité d'un nœud est ajournée : une étape rétablie peut réclamer le nœud d'une
+	-- étape retirée qui porte encore ses affaires.
+	-- ---------------------------------------------------------------------------------------
+	set constraints public.workflow_steps_workflow_id_node_id_key deferred;
+
+	with posees as (
+		insert into public.workflow_steps (
+			id, workflow_id, workspace_id, node_id, position,
+			label_override, probability_override, stale_after_days, is_initial
+		)
+		select (e.value ->> 'id')::uuid,
+		       p_workflow_id,
+		       p_workspace_id,
+		       (e.value ->> 'node_id')::uuid,
+		       (e.value ->> 'position')::numeric,
+		       e.value ->> 'label_override',
+		       (e.value ->> 'probability_override')::numeric,
+		       (e.value ->> 'stale_after_days')::integer,
+		       false
+		  from pg_catalog.jsonb_array_elements(coalesce(p_doc -> 'steps', '[]'::jsonb)) as e(value)
+		 where not exists (
+			select 1 from public.workflow_steps s where s.id = (e.value ->> 'id')::uuid
+		 )
+		returning id
+	)
+	select coalesce(pg_catalog.array_agg(posees.id), '{}') into retablies from posees;
+
+	n_step_new := pg_catalog.cardinality(retablies);
+
+	-- ---------------------------------------------------------------------------------------
+	-- ÉCRITURE 3 — LES AFFAIRES, avant toute suppression d'étape.
 	--
 	-- MESURÉ : `cards_current_step_id_workflow_id_fkey` est en `NO ACTION`. Supprimer une étape
 	-- qui porte encore une affaire échoue en `23503`. C'est ce fait, et lui seul, qui rend le plan
@@ -454,7 +500,7 @@ begin
 	get diagnostics n_cards = row_count;
 
 	-- ---------------------------------------------------------------------------------------
-	-- ÉCRITURE 3 — L'ÉTAPE INITIALE EST D'ABORD DÉMISE.
+	-- ÉCRITURE 4 — L'ÉTAPE INITIALE EST D'ABORD DÉMISE.
 	--
 	-- MESURÉ : `workflow_steps_workflow_initial_uk` est un index unique PARTIEL sur
 	-- `(workflow_id) where is_initial`. Rétablir l'étape initiale de la version avant d'avoir
@@ -472,8 +518,8 @@ begin
 	 );
 
 	-- ---------------------------------------------------------------------------------------
-	-- ÉCRITURE 4 — LES ÉTAPES RETIRÉES, dont les affaires sont parties. Leur suppression emporte
-	-- en cascade leurs arêtes et leurs règles, ce qui allège les écritures 6 et 8.
+	-- ÉCRITURE 5 — LES ÉTAPES RETIRÉES, dont les affaires sont parties. Leur suppression emporte
+	-- en cascade leurs arêtes et leurs règles, ce qui allège les écritures 7 et 9.
 	-- ---------------------------------------------------------------------------------------
 	delete from public.workflow_steps s
 	 where s.workflow_id = p_workflow_id
@@ -485,33 +531,23 @@ begin
 
 	get diagnostics n_step_del = row_count;
 
+	-- Les étapes retirées sont parties : un nœud n'apparaît plus qu'une fois par workflow, et c'est
+	-- vérifié MAINTENANT — la transaction appelante n'hérite d'aucune unicité ajournée.
+	set constraints public.workflow_steps_workflow_id_node_id_key immediate;
+
 	-- ---------------------------------------------------------------------------------------
-	-- ÉCRITURE 5 — LES ÉTAPES RÉTABLIES, avec leur identifiant d'origine que le document conserve.
-	-- Après la suppression : `workflow_steps_workflow_id_node_id_key` veut qu'un nœud n'apparaisse
-	-- qu'une fois par workflow, et une étape rétablie peut réclamer le nœud d'une étape retirée.
+	-- ÉCRITURE 6 — LES ÉTAPES CONSERVÉES reprennent leurs colonnes photographiées ; l'étape
+	-- initiale rétablie le redevient. `is distinct from` : ce qui ne doit rien faire ne subit rien,
+	-- et `updated_at` n'est pas réécrit sans motif. L'étape initiale rétablie est réglée D'ABORD :
+	-- une étape rétablie se compte créée, et la mise à jour ne lui trouve plus aucun écart.
 	-- ---------------------------------------------------------------------------------------
-	insert into public.workflow_steps (
-		id, workflow_id, workspace_id, node_id, position,
-		label_override, probability_override, stale_after_days, is_initial
-	)
-	select (e.value ->> 'id')::uuid,
-	       p_workflow_id,
-	       p_workspace_id,
-	       (e.value ->> 'node_id')::uuid,
-	       (e.value ->> 'position')::numeric,
-	       e.value ->> 'label_override',
-	       (e.value ->> 'probability_override')::numeric,
-	       (e.value ->> 'stale_after_days')::integer,
-	       (e.value ->> 'is_initial')::boolean
+	update public.workflow_steps s
+	   set is_initial = true
 	  from pg_catalog.jsonb_array_elements(coalesce(p_doc -> 'steps', '[]'::jsonb)) as e(value)
-	 where not exists (
-		select 1 from public.workflow_steps s where s.id = (e.value ->> 'id')::uuid
-	 );
+	 where s.id = (e.value ->> 'id')::uuid
+	   and s.id = any (retablies)
+	   and (e.value ->> 'is_initial')::boolean;
 
-	get diagnostics n_step_new = row_count;
-
-	-- Les étapes conservées reprennent leurs colonnes photographiées. `is distinct from` : ce qui
-	-- ne doit rien faire ne subit rien, et `updated_at` n'est pas réécrit sans motif.
 	update public.workflow_steps s
 	   set position             = (e.value ->> 'position')::numeric,
 	       label_override       = e.value ->> 'label_override',
@@ -530,7 +566,7 @@ begin
 	get diagnostics n_step_maj = row_count;
 
 	-- ---------------------------------------------------------------------------------------
-	-- ÉCRITURE 6 — LES ARÊTES. Leurs deux extrémités doivent exister, donc après les étapes. Une
+	-- ÉCRITURE 7 — LES ARÊTES. Leurs deux extrémités doivent exister, donc après les étapes. Une
 	-- arête ne porte AUCUNE donnée utilisateur : la supprimer ne détruit que de la structure.
 	-- ---------------------------------------------------------------------------------------
 	delete from public.workflow_transitions t
@@ -575,7 +611,7 @@ begin
 	get diagnostics n_tr_maj = row_count;
 
 	-- ---------------------------------------------------------------------------------------
-	-- ÉCRITURE 7 — LES CHAMPS, ET AUCUN N'EST SUPPRIMÉ.
+	-- ÉCRITURE 8 — LES CHAMPS, ET AUCUN N'EST SUPPRIMÉ.
 	--
 	-- `card_field_values` porte les SAISIES des utilisateurs, et le document canonique n'en
 	-- conserve aucune. MESURÉ, et c'est ce qui retire toute discussion : `public.form_fields` ne
@@ -651,7 +687,7 @@ begin
 	get diagnostics n_ch_arc = row_count;
 
 	-- ---------------------------------------------------------------------------------------
-	-- ÉCRITURE 8 — LES RÈGLES DE VISIBILITÉ. Elles lient un champ ET une étape, donc après les
+	-- ÉCRITURE 9 — LES RÈGLES DE VISIBILITÉ. Elles lient un champ ET une étape, donc après les
 	-- deux. Une partie a déjà disparu par la cascade des étapes supprimées ; le reste est traité
 	-- ici, et le résultat ne dépend pas de savoir laquelle.
 	-- ---------------------------------------------------------------------------------------
@@ -691,7 +727,7 @@ begin
 	get diagnostics n_rg_maj = row_count;
 
 	-- ---------------------------------------------------------------------------------------
-	-- ÉCRITURE 9 — LES CHAMPS REQUIS PAR TRANSITION. Ils lient une arête et un champ, donc après
+	-- ÉCRITURE 10 — LES CHAMPS REQUIS PAR TRANSITION. Ils lient une arête et un champ, donc après
 	-- les deux. Table de liaison pure : elle n'a rien à mettre à jour, seulement à créer ou à
 	-- supprimer.
 	-- ---------------------------------------------------------------------------------------
@@ -914,7 +950,7 @@ begin
 	end if;
 
 	-- ---------------------------------------------------------------------------------------
-	-- ÉCRITURES 2 À 7 — le CŒUR de la restauration, extrait le 2026-10-03 en `app.appliquer_composition` par
+	-- ÉCRITURES 2 À 10 — le CŒUR de la restauration, extrait le 2026-10-03 en `app.appliquer_composition` par
 	-- `CRM-097` T3 (décision 620) : la restauration et l'acceptation d'une suggestion de l'IA appliquent un
 	-- document de composition par le MÊME code. Le texte est celui de la migration 42, déplacé sans changement ;
 	-- les suites de `CRM-078` le prouvent.
@@ -1306,15 +1342,8 @@ begin
 		  into remappages
 		  from jsonb_array_elements(coalesce(proposition -> 'remappages', '[]'::jsonb)) r;
 
-		-- Une affaire peut aller vers une étape que la suggestion AJOUTE : le cœur déplace les affaires avant
-		-- d'insérer les étapes. Les étapes nouvelles sont donc posées d'abord, jamais initiales — le cœur règle
-		-- ensuite l'étape initiale, et trouve ces étapes existantes.
-		insert into public.workflow_steps (id, workflow_id, workspace_id, node_id, position, is_initial)
-		select (x ->> 'id')::uuid, le_vivant.id, espace, (x ->> 'node_id')::uuid, (x ->> 'position')::numeric, false
-		  from jsonb_array_elements(doc -> 'steps') x
-		 where not exists (select 1 from public.workflow_steps s where s.id = (x ->> 'id')::uuid);
-
-		-- Effet 4 — le cœur de la restauration applique le document.
+		-- Effet 4 — le cœur de la restauration applique le document. Une affaire peut aller vers une étape que la
+		-- suggestion AJOUTE : le cœur pose les étapes nouvelles avant de déplacer les affaires (INC-270).
 		perform app.appliquer_composition(le_vivant.id, espace, doc, remappages);
 		if btrim(proposition -> 'workflow' ->> 'nom') <> le_vivant.name then
 			update public.workflows set name = btrim(proposition -> 'workflow' ->> 'nom') where id = le_vivant.id;

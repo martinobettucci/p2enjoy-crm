@@ -555,8 +555,10 @@ ouvert porte la composition **cible entière**, ses objets identifiés par leurs
 vivante et le nombre d'affaires par étape. L'acceptation n'a pas d'algorithme propre : elle publie le point de
 retour, traduit la cible en document de composition (`app.document_cible_ia`) et l'applique par
 **`app.appliquer_composition`, le cœur extrait de `restore_workflow_version`** (migration `0086`) — restaurer et
-accepter une modification sont un seul code. Compromis : le cœur ne connaît que le document de composition ; c'est
-à l'acceptation de poser d'abord les étapes nouvelles, pour qu'une affaire puisse y être remappée. Un workflow modifié
+accepter une modification sont un seul code. Le cœur pose les étapes qu'il crée AVANT de déplacer les affaires, qui
+peuvent donc les viser — y compris l'étape qu'une restauration rétablit (INC-270) ; compromis : l'unicité d'un nœud
+par workflow est ajournable, et le cœur seul l'ajourne, le temps qu'une étape rétablie côtoie l'étape retirée qui lui
+cède son nœud. Un workflow modifié
 depuis la création de la suggestion est refusé en `PT409` : l'administrateur relit avant d'accepter.
 
 ### 3.8 Contraintes d'exécution de l'hôte

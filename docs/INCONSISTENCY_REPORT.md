@@ -7092,3 +7092,25 @@ focus part avec l'élément démonté.
 **Étranger à `CRM-097`** : « Ma journée » n'est pas touchée par l'unité. **Non corrigé** ; soumis au responsable. Piste :
 attendre, avant de focaliser, que la région vivante annonce la portée nouvelle — la donnée qui dit que la lecture est
 arrivée.
+
+### INC-270 — restaurer une version refuse de remapper des affaires vers une étape qu'elle rétablit
+
+> **CORRIGÉE le 2026-10-03, dans `CRM-097` T3 (décision 620), avant la livraison de la migration `0086`.** Le cœur de
+> la restauration pose désormais les étapes rétablies AVANT de déplacer les affaires ; l'unicité d'un nœud par
+> workflow (`workflow_steps_workflow_id_node_id_key`) devient ajournable, ajournée par le seul cœur et revérifiée
+> dès les étapes retirées supprimées. Prouvé par `supabase/tests/0081_restauration_etape_retablie.test.sql`.
+
+*Relevée le 2026-10-03 pendant `CRM-097` T3.b.* La preuve d'API de T3 accepte une suggestion qui retire l'étape
+« négociation » — son affaire part vers l'étape ajoutée —, puis restaure le point de retour en renvoyant l'affaire vers
+la négociation, que la restauration RÉTABLIT : refus `409`, `23503`, « Key (current_step_id, workflow_id)=(…) is not
+present in table "workflow_steps" ». **Mesuré.** Le §7 ter.12.2 du moteur autorise pourtant ce choix (« Elle est
+**nommée** dans le plan, pour qu'un humain puisse la choisir »), et l'écran de restauration le propose : l'écriture 2
+(déplacer les affaires) précède l'écriture 5 (créer les étapes rétablies), si bien qu'une affaire ne peut viser
+qu'une étape déjà vivante. Le défaut est celui de `CRM-078`, en production depuis la migration `0042` ; aucune preuve
+ne remappait vers une étape rétablie.
+
+**Dans le périmètre de `CRM-097`** : T3 promet que le point de retour d'une acceptation se restaure en un geste
+(`docs/SPEC-ia.md` §13.4, `docs/DESIGN_SYSTEM.md` §5.53) — et son cas premier, une étape retirée qui portait des
+affaires, est exactement celui qui échoue. L'ordre de `0042` avait une raison, mesurée : une étape rétablie peut
+réclamer le NŒUD d'une étape retirée, et l'unicité `(workflow_id, node_id)` interdisait leur coexistence. Le correctif
+garde cette garantie — revérifiée au milieu du cœur, avant toute autre écriture — au lieu de l'abandonner.

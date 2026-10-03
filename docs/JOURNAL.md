@@ -30940,3 +30940,24 @@ et remappée vers une étape nouvelle, champ ajouté, champ retiré ARCHIVÉ, tr
 conforme), la restauration du point de retour, `PT409`, un point de retour publié, le renommage, le workflow archivé ;
 **treize mutations, treize tuées**. Registre rejoué (86 fichiers). SQL **80 / 3440** ; API de la restauration et de
 l'IA vertes (27) ; types régénérés (deux fonctions), témoin révisé, typage vert.
+
+**INC-270, le 2026-10-03 — restaurer vers une étape rétablie.** La preuve d'API de `CRM-097` T3.b accepte une
+suggestion qui retire l'étape « négociation » — son affaire part vers l'étape ajoutée —, puis restaure le point de
+retour en renvoyant l'affaire vers la négociation : `409`, `23503`. *Le constat de T3.a ci-dessus était faux* : il
+supposait qu'une restauration ne remappe que vers des étapes déjà vivantes ; le §7 ter.12.2 du moteur autorise une
+étape RÉTABLIE, et l'écran de restauration la propose. Défaut de `CRM-078`, en production depuis `0042`.
+
+- *Hypothèse écartée* : créer les étapes rétablies avant le déplacement, sans plus. L'ordre de `0042` avait une raison
+  mesurée — une étape rétablie peut réclamer le NŒUD d'une étape retirée qui porte encore ses affaires, et l'unicité
+  `(workflow_id, node_id)` interdit leur coexistence. Le cas W2 de la preuve l'exerce.
+- *Décision* : l'unicité devient `DEFERRABLE INITIALLY IMMEDIATE` (aucune clé étrangère ne la vise, aucun
+  `ON CONFLICT` ne s'y adosse — vérifiés) ; le cœur l'ajourne, pose les étapes rétablies non initiales, déplace les
+  affaires, démet l'initiale, supprime les retirées, puis la REND IMMÉDIATE — vérifiée là, la transaction appelante
+  n'hérite d'aucun ajournement ; l'initiale rétablie est réglée avant la mise à jour des conservées, pour rester
+  comptée « créée ». L'acceptation d'une suggestion n'a plus à poser elle-même ses étapes nouvelles.
+- *Corrigée dans `CRM-097`* : la promesse de T3 — le point de retour d'une acceptation se restaure en un geste — en
+  dépendait, pour son cas premier.
+
+*Vérifié* : `0081` **17** assertions, rouge avant le correctif (1, 3, 4…), verte après ; cinq mutations, cinq tuées —
+dont l'oubli du retour à l'immédiat, d'abord masqué par l'ordre des assertions (corrigé) ; `0037`, `0039`, `0040`,
+`0080` inchangées et vertes.
