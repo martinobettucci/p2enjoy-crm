@@ -973,7 +973,12 @@ ASSERTIONS_ATTENDUES=3523
 # **5** scénarios — suggérer, remapper, accepter puis restaurer le point de retour (INC-270 trouvée là) ; la revue
 # d'une modification ; `409` « workflow modifie » ; refus du commercial et de la lectrice ; `404` et `400`. Tous sur
 # un workflow jetable, jamais sur celui du seed. 1103 + 5 = 1108, valeur COMPTÉE — « Total: 1108 tests in 73 files ».
-SCENARIOS_API=1108
+# **1118 depuis `CRM-098` tranche T4, 2026-10-11** (décision 621) : `saisie-temps.spec.ts`, fichier NEUF, porte **10**
+# scénarios — l'auteur imposé par le jeton, les refus pour autrui, de la lectrice hors de ce qu'elle lit, de
+# l'administrateur sur une cible que le membre ne lit pas, la lecture croisée, le privilège de colonne, le plafond
+# sous deux écritures CONCURRENTES (deux contextes : un seul sérialisait, et la mutation sans verrou survivait),
+# l'anonyme, les versions de coût. 1108 + 10 = 1118, valeur COMPTÉE — « Total: 1118 tests in 74 files ».
+SCENARIOS_API=1118
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -1384,7 +1389,12 @@ SCENARIOS_API=1108
 # fichier NEUF, porte **8** scénarios — la souris de « Suggérer » à l'acceptation et au point de retour annoncé, le
 # clavier seul, le refus « workflow modifié », le refus du commercial, la suggestion de modification du seed aux
 # quatre paliers. 793 + 8 = 801, valeur COMPTÉE — « Total: 801 tests in 64 files ».
-SCENARIOS_UI=801
+# **818 depuis `CRM-098` tranche T4, 2026-10-11** (décision 621) : trois fichiers NEUFS — `nouveau-channel.spec.ts`
+# de `CRM-100` (décision 623), **5** scénarios, livré sans réviser ce compteur ; `saisie-temps.spec.ts`, **7** —
+# souris, clavier seul, journée en heures, ajout d'une affaire, « Saisir pour », navigation, quatre paliers ;
+# `cout-personnel.spec.ts`, **5** — rapport d'un membre, « Toute l'équipe », série « Personnel » et fiche,
+# réglages du coût, refus d'un membre. 801 + 5 + 7 + 5 = 818, valeur COMPTÉE — « Total: 818 tests in 67 files ».
+SCENARIOS_UI=818
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

@@ -97,6 +97,14 @@ insert into public.profiles (id, full_name) values
 	('a0870000-0000-4000-8000-000000000010', 'Personne hors espace 0082'),
 	('a0870000-0000-4000-8000-000000000011', 'Administrateur du domaine 0082');
 
+-- LE JEU DE DÉMONSTRATION PORTE DU TEMPS ET DES VERSIONS (docs/SPEC-seed.md §17). Ils sont retirés ici, déclencheurs
+-- suspendus — une version en vigueur ne se retire pas autrement —, et rendus par le `rollback` : les comptes et les
+-- montants de la suite restent ceux qu'elle pose.
+set local session_replication_role = replica;
+delete from public.saisies_temps   where workspace_id = '5eed0000-0000-4000-8000-000000000001';
+delete from public.couts_personnel where workspace_id = '5eed0000-0000-4000-8000-000000000001';
+set local session_replication_role = origin;
+
 -- =============================================================================================
 -- 1. La forme
 -- =============================================================================================

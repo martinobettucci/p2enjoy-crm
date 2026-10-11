@@ -31,6 +31,7 @@
 //   2. **le budget CLÔTURÉ n'y figure pas.** « Salon du web 2025 » est clos et porte 350 estimé /
 //      375 réel. Sa présence ferait passer le total du track de 1000/880 à 1350/1255 : l'absence
 //      se mesure donc sur le total, et pas seulement sur l'absence d'une ligne.
+// @verifies CRM-098 (docs/BACKLOG.md) — S2 révisé : la série « Personnel » a son propre tableau (docs/SPEC-temps.md §7.5)
 
 import { autoriserErreursConsole, connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { PALIERS, capturer } from './captures'
@@ -106,7 +107,9 @@ test.describe('CRM-086 — écran de coûts du track (docs/SPEC-costs.md §4.2)'
 
 		// Le graphique n'est pas exposé : c'est le tableau qui est la version accessible, et les
 		// exposer tous les deux ferait énoncer deux fois la même série.
-		await expect(page.getByRole('table')).toHaveCount(1)
+		// RÉVISÉ PAR `CRM-098` : la série « Personnel » porte son propre tableau, sous l'histogramme et hors de lui
+		// (docs/SPEC-temps.md §7.5). Le compte porte donc sur les tableaux de l'HISTOGRAMME, nommés par leur légende.
+		await expect(page.getByRole('table', { name: /Équivalent textuel de l’histogramme/ })).toHaveCount(1)
 		await expect(page.locator('[aria-hidden="true"]').first()).toBeAttached()
 	})
 

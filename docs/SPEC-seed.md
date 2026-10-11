@@ -2130,3 +2130,35 @@ seed.
   acceptation retirerait la relance du workflow par défaut et déplacerait ses affaires, que toutes les autres preuves
   lisent. Les preuves de T3 travaillent sur des workflows jetables.
 
+## 17. Le temps et le coût du personnel — `CRM-098` tranche T4
+
+*Écrit le 2026-10-11 avec la section `8 vicies` de `supabase/seed/apply-seed.sh` ; contrat : `docs/SPEC-temps.md` §8.*
+
+### 17.1 Ce que le jeu porte
+
+| Personne | Coût par quart | Temps |
+|---|---|---|
+| Camille (administratrice) | 140,00 EUR depuis J−120 | les lundis et jeudis des quatre dernières semaines, une journée pleine sur le track « Studio web » |
+| Driss (business developer) | 120,00 EUR depuis J−120 ; **135,00 EUR programmée à J+30** | chaque jour ouvré des quatre dernières semaines : 2 quarts sur l'affaire « Refonte intranet Ville de Lyon », 1 sur le channel « Maintenance », 1 sur le track « Conseil & IA » ; **le mercredi d'il y a deux semaines en heures**, sur cinq cibles (4 × 1 h 30 et 1 h) |
+| Farida (lectrice) | **aucun** — son temps est « non valorisé » | chaque jour ouvré des deux dernières semaines : 2 quarts sur le channel « Prospection » (rouvert à elle), 1 sur l'affaire « Assistant IA support — Nordis » |
+
+Seuls les jours **antérieurs** au jour d'exécution reçoivent du temps : la semaine en cours reste saisissable à la
+démonstration. Chaque journée fait exactement 7 heures.
+
+### 17.2 Le vrai chemin
+
+Les versions sont créées par la route REST **avec le jeton réel de l'administratrice** ; le temps de chacun **avec son
+propre jeton** — la RLS, le plafond, la cible lisible et l'auteur retenu sont ceux de l'application. Des jetons frais
+sont obtenus pour la section : le jeton interne vit 300 s.
+
+### 17.3 Convergence
+
+Une version n'est créée que pour qui n'a pas déjà la sienne (en vigueur, ou programmée). Le temps n'est saisi que si
+l'espace n'en porte aucun : un rejeu un autre jour ne double rien et ne déplace rien.
+
+### 17.4 Ce que les preuves en attendent
+
+Les preuves de `CRM-098` travaillent **hors de toute fenêtre du seed** — semaines de juin et juillet 2025, versions et
+temps en 2099 — : une version en vigueur ne se retire jamais, et le jeu ne doit pas croiser leurs données. La suite
+pgTAP `0082` retire le temps et les versions du seed au début de sa transaction, déclencheurs suspendus, et les rend au
+`rollback`.

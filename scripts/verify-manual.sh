@@ -7,6 +7,8 @@
 # @verifies CLAUDE.md §7 (documentation utilisateur, aucun secret)
 # @verifies CRM-097 (docs/BACKLOG.md) tranche T2.d — les libellés du parcours de l'assistant IA (docs/SPEC-ia.md §12.5)
 # @verifies CRM-097 tranche T3.d — les libellés du parcours « Suggérer » (docs/SPEC-ia.md §13.6, chapitre 5 bis.0 ter)
+# @verifies CRM-098 (docs/BACKLOG.md) tranche T4 — les libellés de la saisie de temps et du coût du personnel, et les
+#           versions de coût de l'annexe A (docs/SPEC-temps.md §7, chapitre 5 undecies)
 #
 # Vérifie que `docs/manual.md` décrit le produit **réellement exécuté**, hors interface, contre la
 # base réelle et contre les fichiers du dépôt.
@@ -106,6 +108,9 @@ GRANDEURS=(
 	"Commentaires|select count(*) from card_comments"
 	"Commentaires supprimés|select count(*) from card_comments where deleted_at is not null"
 	"Comptes de démonstration|select count(*) from workspace_members"
+	# CRM-098 — trois versions, dont une programmée (docs/SPEC-seed.md §17). Le temps saisi n'y figure pas : il suit le
+	# calendrier du jour où le seed est appliqué, comme les événements d'historique.
+	"Versions de coût du personnel|select count(*) from couts_personnel"
 )
 
 # Unités du chunk 3 qui ont livré du comportement visible ou opposable, et que le manuel doit donc
@@ -151,6 +156,23 @@ LIBELLES_PARCOURS=(
 	"Aucune destination"
 	"Accepter et faire évoluer le workflow"
 	"Suggestions de l’IA pour ce workflow"
+	# CRM-098 — la saisie de temps et le coût du personnel (chapitre 5 undecies)
+	"Ajouter une affaire"
+	"Cette valeur dépasserait la journée de 7 heures."
+	"Semaine précédente"
+	"Semaine suivante"
+	"Cette semaine"
+	"En heures"
+	"Saisir pour"
+	"Rapport mensuel"
+	"non valorisé"
+	"Toute l’équipe"
+	"Coût du personnel"
+	"Nouvelle version"
+	"Historique"
+	"Temps passé"
+	"Votre temps"
+	"Le temps de toute l’équipe"
 )
 
 # ---------------------------------------------------------------------------------------------

@@ -1,6 +1,7 @@
 // @verifies CRM-007 (docs/BACKLOG.md) — Definition of Done du squelette de la webapp
 // @verifies docs/DESIGN_SYSTEM.md §4 (coquille), §5.8 (états), §7 (paliers), §8 (clavier)
 // @verifies docs/SPEC-webapp.md §7 (états), §8 (responsive), §9 (accessibilité), §11 (stockage)
+// @verifies CRM-098 (docs/BACKLOG.md) — l'entrée « Temps » dans l'ordre clavier de la navigation (docs/SPEC-temps.md §7.1)
 // @verifies CRM-092 (docs/BACKLOG.md) tranche T9 — docs/SPEC-session-sso.md §8.7 : ces scénarios se
 //           connectent, aucune page n'étant rendue sans session (docs/JOURNAL.md décision 601)
 //
@@ -298,6 +299,8 @@ test.describe('navigation au clavier (docs/DESIGN_SYSTEM.md §8)', () => {
 			'Objectifs',
 			'Coûts',
 			'Pilotage',
+			// `CRM-098` : « Temps » suit « Pilotage » (docs/DESIGN_SYSTEM.md §5.54) — preuve révisée avec l'ordre réel.
+			'Temps',
 			'Ma journée',
 			'Affaires figées',
 			'Réglages',

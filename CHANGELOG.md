@@ -13,7 +13,7 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-098` — La saisie de temps et le coût du personnel (en cours : T1, la base ; T2, la saisie ; T3, le rapport et le coût)
+### `CRM-098` — La saisie de temps et le coût du personnel (T1 à T4 livrés en développement ; production : T5)
 
 *Décision 621. Non livré en production.*
 
@@ -35,6 +35,8 @@ d'exécuter le code attendu.
 - **Le coût du personnel à côté des coûts** : sous l'histogramme de l'écran de coûts d'un track, le temps et le coût du
   mois par channel ; dans la fiche d'une affaire, le temps passé et son coût. Un membre n'y lit que son propre temps,
   et l'écran le dit.
+- **Démonstration et documentation** : le jeu de démonstration porte trois versions de coût — dont une augmentation
+  programmée — et quatre semaines de temps, dont une journée en heures ; le manuel gagne son chapitre 5 undecies.
 
 ### `CRM-100` — Créer un channel depuis le track, et un workflow depuis le formulaire du channel
 

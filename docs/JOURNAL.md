@@ -31138,6 +31138,14 @@ par les specs de coûts sont gardées (barre, bloc « Temps passé », série «
 changement visible (47 pixels de bruit d'encodage) sont restaurées. Les autres captures du produit seront renouvelées
 par la campagne complète de T4.
 
+**`CRM-098` T4, le 2026-10-11** — preuves d'API, seed, manuel, campagnes. **Deux leçons de preuve.** (1) Une preuve de
+concurrence menée depuis UN contexte Playwright n'est pas concurrente : il réutilise sa connexion et sérialise les
+requêtes ; la mutation qui retire le verrou consultatif survivait. Deux contextes, et la mutation rougit. (2) Une
+version de coût en vigueur ne se retire jamais, même par la clé de service : les preuves posent leurs versions en 2099,
+et le seed, qui pose du temps sur les quatre dernières semaines, ne croise plus les semaines de preuve (2025). **Une
+incohérence étrangère relevée** : INC-271, la veille de `mail-sync` qui court contre deux scénarios mail et fait parler
+S3 ; trois campagnes de messagerie rouges, la quatrième verte, sans qu'une ligne du sous-système ne bouge.
+
 ## décision 622 — `CRM-099` : plusieurs coûts réels par ligne de coût, jusqu'à ce qu'on la solde
 
 *2026-10-11 ; remarque du responsable pendant la rédaction de `CRM-098`, arbitrages rendus par lui le même jour, avant

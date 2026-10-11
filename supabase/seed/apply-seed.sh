@@ -20,6 +20,8 @@
 #       et le simulateur (docs/SPEC-ia.md §11.6, §12.8)
 # @spec CRM-097 tranche T3.d — une suggestion qui fait évoluer le workflow par défaut, en revue, avec son défaut
 #       `remappage_requis` (docs/SPEC-seed.md §16 bis, docs/SPEC-ia.md §13.5) ; décision 620
+# @spec CRM-098 (docs/BACKLOG.md) — tranche T4 : le temps et le coût du personnel de démonstration, par la vraie API
+#       sous le jeton de chaque profil (docs/SPEC-seed.md §17, docs/SPEC-temps.md §8) ; décision 621
 # @spec docs/SPEC-seed.md §2 (contrat), §2.9 (copie), §3 (mécanismes mesurés), §4 (identifiants),
 #       §5 (gardes)
 # @spec docs/SPEC-tracks.md §8 (seed des tracks) ; docs/SPEC-channels.md §8 (seed des channels)
@@ -4217,6 +4219,109 @@ else
 	info "Suggestion de modification créée par la vraie fonction et le simulateur — $(printf '%s' "$issue_modif" | jq -r '.defauts') défaut(s)"
 fi
 
+# --- 8 vicies. Temps et coût du personnel — CRM-098, docs/SPEC-seed.md §17 ------------------------------------------
+#
+# Les versions de coût sont créées par l'ADMINISTRATRICE, avec son jeton réel ; le temps de chacun par CHAQUE PROFIL,
+# avec le sien — la route, la RLS, le plafond et l'auteur sont ceux de l'application (CLAUDE.md §8). Les dates suivent
+# le calendrier : les quatre dernières semaines, jours ouvrés avant aujourd'hui. Trois états de coût : Camille et Driss
+# ont une version en vigueur, Driss une augmentation PROGRAMMÉE dans trente jours, Farida aucune — son temps est
+# « non valorisé ». Une journée de Driss est saisie en heures, sur cinq cibles. CONVERGENT : rien n'est réécrit si
+# l'espace porte déjà du temps ; une version n'est créée que pour qui n'en a aucune.
+echo
+say "8 vicies. Temps et coût du personnel"
+
+api_jeton() { # $1 = jeton, $2 = méthode, $3 = chemin, puis les options de curl
+	local jeton=$1 method=$2 chemin=$3
+	shift 3
+	curl -s -o "$CORPS" -w '%{http_code}' -X "$method" "$API$chemin" \
+		-H "apikey: $ANON_KEY" -H "Authorization: Bearer $jeton" \
+		-H 'Content-Type: application/json' "$@"
+}
+
+# Des jetons FRAIS : le jeton interne vit 300 s, et ceux des sections précédentes peuvent avoir expiré.
+JETON_ADMIN_TEMPS=$(sso_jeton_interne "$API" "$ANON_KEY" 'admin@p2enjoy.test' || true)
+JETON_BIZDEV_TEMPS=$(sso_jeton_interne "$API" "$ANON_KEY" 'bizdev@p2enjoy.test' || true)
+JETON_VIEWER_TEMPS=$(sso_jeton_interne "$API" "$ANON_KEY" 'viewer@p2enjoy.test' || true)
+[ -n "$JETON_ADMIN_TEMPS" ] && [ -n "$JETON_BIZDEV_TEMPS" ] && [ -n "$JETON_VIEWER_TEMPS" ] || die "connexion d'un compte
+        seedé impossible : le temps de démonstration ne peut pas être saisi par la véritable route."
+CAMILLE_ID=5eed0000-0000-4000-8000-000000000011
+DRISS_ID=5eed0000-0000-4000-8000-000000000012
+FARIDA_ID=5eed0000-0000-4000-8000-000000000013
+AUJOURDHUI=$(date +%F)
+EFFET_INITIAL=$(date -d "$AUJOURDHUI -120 days" +%F)
+EFFET_PROGRAMME=$(date -d "$AUJOURDHUI +30 days" +%F)
+
+for version in "$CAMILLE_ID|140.00|$EFFET_INITIAL" "$DRISS_ID|120.00|$EFFET_INITIAL" "$DRISS_ID|135.00|$EFFET_PROGRAMME"; do
+	IFS='|' read -r personne cout effet <<<"$version"
+	code=$(api GET "/rest/v1/couts_personnel?select=id&workspace_id=eq.$WS_ID&profile_id=eq.$personne&date_effet=eq.$effet")
+	attendu "$code" "lecture d'une version de coût" 200
+	[ "$(jq -r 'length' "$CORPS")" = "0" ] || continue
+	# Une seule version initiale par personne : un rejeu un autre jour ne doit pas en créer une seconde.
+	if [ "$effet" = "$EFFET_INITIAL" ]; then
+		code=$(api GET "/rest/v1/couts_personnel?select=id&workspace_id=eq.$WS_ID&profile_id=eq.$personne&date_effet=lte.$AUJOURDHUI")
+		attendu "$code" "lecture des versions en vigueur" 200
+		[ "$(jq -r 'length' "$CORPS")" = "0" ] || continue
+	else
+		code=$(api GET "/rest/v1/couts_personnel?select=id&workspace_id=eq.$WS_ID&profile_id=eq.$personne&date_effet=gt.$AUJOURDHUI")
+		attendu "$code" "lecture des versions programmées" 200
+		[ "$(jq -r 'length' "$CORPS")" = "0" ] || continue
+	fi
+	code=$(api_jeton "$JETON_ADMIN_TEMPS" POST /rest/v1/couts_personnel \
+		-d "$(jq -nc --arg w "$WS_ID" --arg p "$personne" --arg d "$effet" --argjson c "$cout" \
+			'{workspace_id: $w, profile_id: $p, date_effet: $d, cout_quart: $c}')")
+	attendu "$code" "version de coût de démonstration" 201
+done
+
+code=$(api GET "/rest/v1/saisies_temps?select=id&workspace_id=eq.$WS_ID&limit=1")
+attendu "$code" "lecture du temps de démonstration" 200
+if [ "$(jq -r 'length' "$CORPS")" != "0" ]; then
+	info "Temps de démonstration : déjà présent — rien à écrire"
+else
+	lundi=$(date -d "$AUJOURDHUI -$(( $(date -d "$AUJOURDHUI" +%u) - 1 )) days" +%F)
+	cible() { # $1 = jour, $2 = minutes, $3 = genre (track|channel|card), $4 = identifiant
+		jq -nc --arg w "$WS_ID" --arg j "$1" --argjson m "$2" --arg g "$3" --arg i "$4" \
+			'{workspace_id: $w, jour: $j, minutes: $m, track_id: (if $g == "track" then $i else null end),
+			  channel_id: (if $g == "channel" then $i else null end), card_id: (if $g == "card" then $i else null end)}'
+	}
+	DRISS_LIGNES=() FARIDA_LIGNES=() CAMILLE_LIGNES=()
+	JOUR_EN_HEURES=$(date -d "$lundi -12 days" +%F) # le mercredi d'il y a deux semaines
+	for semaine in 0 1 2 3; do
+		for decalage in 0 1 2 3 4; do
+			jour=$(date -d "$lundi -$(( semaine * 7 )) days +$decalage days" +%F)
+			[[ "$jour" < "$AUJOURDHUI" ]] || continue
+			if [ "$jour" = "$JOUR_EN_HEURES" ]; then
+				# Plus de quatre cibles dans la journée : la case « En heures » (décision 621, point 9).
+				DRISS_LIGNES+=("$(cible "$jour" 90 card 5eed0000-0000-4000-8000-0000000000c4)"
+					"$(cible "$jour" 90 channel 5eed0000-0000-4000-8000-000000000034)"
+					"$(cible "$jour" 90 channel 5eed0000-0000-4000-8000-000000000035)"
+					"$(cible "$jour" 90 track 5eed0000-0000-4000-8000-000000000021)"
+					"$(cible "$jour" 60 track 5eed0000-0000-4000-8000-000000000022)")
+			else
+				DRISS_LIGNES+=("$(cible "$jour" 210 card 5eed0000-0000-4000-8000-0000000000c4)"
+					"$(cible "$jour" 105 channel 5eed0000-0000-4000-8000-000000000035)"
+					"$(cible "$jour" 105 track 5eed0000-0000-4000-8000-000000000021)")
+			fi
+			if [ "$semaine" -le 1 ]; then
+				FARIDA_LIGNES+=("$(cible "$jour" 210 channel 5eed0000-0000-4000-8000-000000000031)"
+					"$(cible "$jour" 105 card 5eed0000-0000-4000-8000-0000000000cb)")
+			fi
+			if [ "$decalage" = "0" ] || [ "$decalage" = "3" ]; then
+				CAMILLE_LIGNES+=("$(cible "$jour" 420 track 5eed0000-0000-4000-8000-000000000022)")
+			fi
+		done
+	done
+	for lot in "$JETON_BIZDEV_TEMPS|$DRISS_ID|DRISS_LIGNES" "$JETON_VIEWER_TEMPS|$FARIDA_ID|FARIDA_LIGNES" "$JETON_ADMIN_TEMPS|$CAMILLE_ID|CAMILLE_LIGNES"; do
+		IFS='|' read -r jeton personne tableau <<<"$lot"
+		declare -n lignes="$tableau"
+		[ "${#lignes[@]}" -gt 0 ] || continue
+		corps=$(printf '%s\n' "${lignes[@]}" | jq -sc --arg p "$personne" 'map(. + {profile_id: $p})')
+		code=$(api_jeton "$jeton" POST /rest/v1/saisies_temps -d "$corps")
+		attendu "$code" "temps de démonstration de $personne" 201
+		unset -n lignes
+	done
+	info "Temps de démonstration : ${#DRISS_LIGNES[@]} saisies de Driss (dont une journée en heures), ${#FARIDA_LIGNES[@]} de Farida, ${#CAMILLE_LIGNES[@]} de Camille"
+fi
+
 # --- 9. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
 # Rappel volontaire, affiché à chaque exécution, et **mis à jour par `CRM-020`** : peupler la base
 # ne la rend pas lisible pour autant. L'état réel est désormais mixte, et le dire faux dans un sens
@@ -4254,6 +4359,7 @@ info "Identités sortantes SMTP : ${#IDENTITES_SORTANTES[@]} — entrant et sort
 info "Organisations : ${#ORGANIZATIONS_SEED[@]}, contacts : ${#CONTACTS_SEED[@]}, rattachements : ${#CARD_CONTACTS_SEED[@]} — CRM-060, docs/SPEC-contacts.md §5"
 info "Suggestion de l'assistant IA : 1, en revue, créée par la vraie fonction et le simulateur — CRM-097, docs/SPEC-ia.md §12.8"
 info "Suggestion de modification du workflow par défaut : 1, en revue, avec son défaut remappage_requis — CRM-097, docs/SPEC-seed.md §16 bis"
+info "Temps et coût du personnel : trois versions de coût, dont une programmée ; quatre semaines de temps — CRM-098, docs/SPEC-seed.md §17"
 echo
 info "profiles, workspaces et workspace_members sont lisibles par les trois membres du seed :"
 info "le profil propre est modifiable, et seul l'admin gère les memberships (CRM-022)."

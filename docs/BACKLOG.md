@@ -14980,8 +14980,20 @@ track, channel et affaire, avec un rapport mensuel. Spécifié avant le code : `
       version programmée créée, relue en base, retirée après confirmation, refus des réglages à un membre. Une retouche
       tirée des captures : colonnes fixes du rapport, qui dansaient d'une section à l'autre. Les campagnes complètes
       viennent avec T4.
-- [ ] **T4** — preuves d'API aux jetons réels (refus, plafond concurrent), E2E à la souris et au clavier, captures aux
+- [x] **T4** — preuves d'API aux jetons réels (refus, plafond concurrent), E2E à la souris et au clavier, captures aux
       quatre paliers observées, seed (`docs/SPEC-seed.md`), manuel, campagnes.
+      *Vérifié le 2026-10-11* : `e2e/api/saisie-temps.spec.ts` **10** scénarios — refus pour autrui, de la lectrice hors
+      de ce qu'elle lit, de l'administrateur sur une cible que le membre ne lit pas, lecture croisée, privilège de
+      colonne, anonyme, versions ; **le plafond sous deux écritures concurrentes**, rouge sans le verrou consultatif
+      (la première rédaction partageait une connexion et la mutation survivait : deux contextes désormais). Seed
+      `8 vicies` (`docs/SPEC-seed.md` §17) par la vraie API sous le jeton de chaque profil, convergent (second passage :
+      rien d'écrit) ; dates des preuves déplacées hors de toute fenêtre du seed (2025, 2099). Manuel, chapitre
+      5 undecies ; `verify-manual.sh` **178** contrôles. **Campagnes** : pgTAP 82 / 3 523 ; unitaires 3 788 ; API
+      **1 118** ; interface **818** — deux preuves révisées avec l'ordre réel (l'entrée « Temps » de la navigation au
+      clavier ; le second tableau de l'écran de coûts du track) puis rejouées vertes ; messagerie **42**, au quatrième
+      passage — les trois premiers rouges sur S3, l'avertissement de la veille de `mail-sync` qui court contre deux
+      scénarios mail (INC-271, ouverte, étrangère à l'unité). 499 captures renouvelées (la barre latérale porte
+      « Temps » ; la fiche d'affaire, « Temps passé »), 36 réécritures sans changement visible restaurées.
 - [ ] **T5** — livraison en production (migration 87, instantané confirmé) et constat.
 
 ### CRM-099 — Plusieurs coûts réels par ligne de coût, jusqu'à ce qu'on la solde `[ ]`

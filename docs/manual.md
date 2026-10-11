@@ -85,6 +85,7 @@
 | 28 | Analytique de conversion par channel et par track | `CRM-066` | À livrer |
 | 29 | Prévisionnel pondéré et objectifs | `CRM-066` | À livrer |
 | 30 | Cards figées et relances automatiques | `CRM-062` | À livrer |
+| 31 | Saisir son temps et piloter le coût du personnel | `CRM-098` | **Livré en développement** — voir le chapitre 5 undecies. Chacun saisit, semaine par semaine, le temps passé sur les tracks, les channels et les affaires, au quart de journée ou en heures ; chaque personne a un coût par quart, versionné ; le rapport mensuel et les écrans de coûts montrent ce que le personnel a coûté |
 
 ---
 
@@ -3427,6 +3428,75 @@ encore été arbitrée, et l'inventer ici produirait une comparaison que personn
 - **Le taux ne traverse pas les devises par accident** : il compte des **affaires**, pas de l'argent,
   et c'est la seule grandeur de cet écran qui le fasse légitimement.
 
+## 5 undecies. Le temps passé et le coût du personnel
+
+*Livré par `CRM-098` ; captures : `docs/captures/CRM-098/`.*
+
+L'écran **« Temps »**, dans la barre latérale, a deux onglets : **« Saisie »**, où chacun note le temps qu'il a passé,
+et **« Rapport mensuel »**, où ce temps est valorisé par le coût du personnel.
+
+### 5 undecies.1 Saisir sa semaine
+
+La matrice montre une semaine, du lundi au dimanche. Ses lignes sont les tracks que vous lisez, chacun suivi de ses
+channels, et sous eux les affaires qui portent déjà du temps — celles de la semaine affichée et de la précédente sont
+reprises d'office. Pour une autre affaire, tapez son titre dans **« Ajouter une affaire »** et choisissez-la : sa ligne
+paraît sous son channel.
+
+Chaque cellule se saisit au **quart de journée** : une journée compte **7 heures**, un quart vaut donc 1 h 45, et une
+cellule va de 0 à 4. La valeur **s'enregistre seule** quand vous quittez la cellule ou appuyez sur `Entrée` — qui
+descend à la ligne suivante ; les flèches vont de cellule en cellule, `Échap` rétablit la valeur enregistrée. Une
+cellule vide vaut zéro, et vider une cellule retire ce temps.
+
+Le pied de la matrice dit, jour par jour, où vous en êtes — « 3 / 4 quarts » ; une journée pleine est surlignée. **Une
+journée ne dépasse jamais 7 heures** : une valeur qui la dépasserait est refusée, avec le message « Cette valeur
+dépasserait la journée de 7 heures. »
+
+« Semaine précédente », « Semaine suivante » et « Cette semaine » changent de semaine ; l'adresse de l'écran garde la
+semaine affichée.
+
+### 5 undecies.2 Saisir une journée en heures
+
+Plus de quatre affaires dans la journée : cochez **« En heures »** sous le jour. Ses cellules se saisissent alors en
+heures, au quart d'heure — « 1,5 » pour une heure et demie, « 0,25 » pour un quart d'heure —, toujours dans la limite de
+7 heures. Tant qu'une valeur de ce jour ne tombe pas sur un quart, la case reste cochée, et l'écran le dit.
+
+### 5 undecies.3 Saisir pour quelqu'un d'autre
+
+Un administrateur dispose de **« Saisir pour »** : il choisit une personne, et un bandeau rappelle « Vous saisissez le
+temps de… ». Le produit garde la trace de qui a saisi. Un membre ne saisit que son propre temps, et seulement sur ce
+qu'il peut lire.
+
+### 5 undecies.4 Le rapport mensuel
+
+Choisissez un mois : le rapport liste chaque track, channel et affaire où du temps a été passé, avec ce temps et son
+coût. Le coût est celui de la personne **le jour où le temps a été passé** : une augmentation ne change pas le coût des
+semaines d'avant. Les montants restent séparés par devise. Le temps d'une personne qui n'a pas encore de coût est
+compté, et dit **« non valorisé »** — jamais zéro.
+
+Un membre ne voit que **son** temps et **son** coût. Un administrateur choisit une personne, ou **« Toute l’équipe »**,
+qui rend une section par personne.
+
+### 5 undecies.5 Régler le coût du personnel
+
+Dans **Réglages ▸ « Coût du personnel »**, réservé aux administrateurs, chaque personne a sa carte : son coût en
+vigueur, sa prochaine version s'il y en a une. **« Nouvelle version »** fixe un coût par quart, une devise et une date
+d'effet : augmenter quelqu'un, c'est créer une version, qui vaut à partir de sa date. Une version ne se modifie jamais ;
+une date d'effet n'est jamais passée, sauf pour la toute première version d'une personne, qui peut valoriser du temps
+déjà saisi. **« Historique »** liste les versions ; une version **programmée** peut encore être retirée, une version
+en vigueur jamais.
+
+### 5 undecies.6 Le coût du personnel à côté des coûts
+
+Sur l'écran de coûts d'un track (chapitre 5 quinquies), sous l'histogramme, **« Coût du personnel »** donne le temps et
+son coût du mois choisi, channel par channel. Dans la fiche d'une affaire, **« Temps passé »** donne le temps passé
+depuis le premier jour et son coût. Ces chiffres ne se mêlent ni aux budgets ni aux lignes de coût. Ils disent leur
+portée : « Votre temps » pour un membre, « Le temps de toute l’équipe » pour un administrateur.
+
+### 5 undecies.7 Ce qui n'est pas offert
+
+Aucune validation ni clôture d'un mois, aucun calendrier de congés ou de jours fériés, aucune facturation au temps
+passé, aucune conversion de devise, aucun export.
+
 ## 6. Consulter l'état de la messagerie
 
 *Livré par `CRM-059` ; les règles d'accès sont celles de `CRM-052` (comptes entrants) et de
@@ -4034,6 +4104,7 @@ ne bougent qu'avec le produit.
 | Commentaires | 5 |
 | Commentaires supprimés | 1 |
 | Comptes de démonstration | 3 |
+| Versions de coût du personnel | 3 |
 
 **Une grandeur manque, et son absence est un fait.** Le nombre d'**événements d'historique** ne
 figure pas dans cette table : il ne peut que croître, et il croît dès que quiconque — une personne

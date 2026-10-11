@@ -7118,3 +7118,32 @@ ne remappait vers une étape rétablie.
 affaires, est exactement celui qui échoue. L'ordre de `0042` avait une raison, mesurée : une étape rétablie peut
 réclamer le NŒUD d'une étape retirée, et l'unicité `(workflow_id, node_id)` interdisait leur coexistence. Le correctif
 garde cette garantie — revérifiée au milieu du cœur, avant toute autre écriture — au lieu de l'abandonner.
+
+### INC-271 — la veille de `mail-sync` court contre le bloc final de « renommer un TRACK », et S3 entend son avertissement
+
+> **OUVERTE le 2026-10-11, relevée pendant la campagne de `CRM-098` T4.** Étrangère à `CRM-098` : aucun fichier du
+> sous-système mail ni du test n'a bougé. Comportement laissé inchangé ; correction à arbitrer (`CLAUDE.md` §5).
+
+*Mesuré le 2026-10-11, deux campagnes `e2e:mail` enchaînées* : « 1 failed, 41 passed » toutes deux, sur
+`e2e/mail/mail-sync.spec.ts` §224 (S3 — « chaque ligne est un JSON borné, sans secret ni avertissement »), qui lit deux
+lignes `WARNING` émises pendant la campagne : `folder_rename_refused`, précédée de « [NONEXISTENT] Mailbox 'CRM/Studio
+web (renommé …)' not found ». **Le mécanisme, relu dans le journal** : `e2e/mail/dossiers.spec.ts` §276 renomme un
+track, puis, dans son `finally`, le renomme EN RETOUR, supprime l'arborescence IMAP `CRM` et seulement ensuite les
+correspondances `mail_folder_map`. La boucle de veille (`mail-sync/src/mail_sync/veille.py`, `MAIL_SYNC_POLL_INTERVAL`,
+60 s en développement) qui tombe entre ces gestes voit un track renommé dont la correspondance pointe un dossier déjà
+supprimé, tente le `RENAME`, et journalise le refus en `WARNING` (`veille_tour_termine` suit). Deux campagnes de même
+durée lancées l'une après l'autre tombent au même instant du cycle — d'où un échec qui paraît reproductible. Même famille
+qu'INC-205 : un scénario mail qui partage un état serveur avec la veille de fond.
+
+**Issues possibles, à arbitrer** : (1) le `finally` supprime les correspondances AVANT de renommer le track en retour,
+ce qui ôte à la veille toute raison de renommer ; (2) suspendre la veille pendant la campagne (`MAIL_SYNC_POLL_INTERVAL=0`
+pour le projet `mail`) — mais `backfill.spec.ts` et `infrastructure.spec.ts` comptent sur elle ; (3) rétrograder
+`folder_rename_refused` d'un dossier ABSENT en `INFO` — rejeté d'avance : un refus de renommage en production mérite
+d'être vu. L'issue (1) est la plus étroite.
+
+*Troisième campagne, le même jour* : « 1 failed, 41 passed », S3 encore, sur un AUTRE avertissement —
+`veille_compte_echoue`, émis par la veille qui relevait le compte système pendant qu'un scénario de
+`e2e/mail/comptes-entrants*` le soumettait à son essai de connexion. La famille est donc plus large que le seul
+renommage : **tout scénario qui touche un compte ou un dossier pendant un tour de veille** peut faire parler la veille,
+et S3, qui exige le silence de toute la campagne, en paie le prix. L'issue (2) — une veille suspendue pour le projet
+`mail`, ses deux scénarios qui la requièrent la relançant explicitement — est alors la seule qui ferme la famille entière.
