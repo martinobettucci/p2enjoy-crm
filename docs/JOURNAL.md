@@ -31096,5 +31096,16 @@ coût saisies à la main sur des affaires — estimé et réel. Rien ne porte de
 8. **Le coût du personnel paraît à côté des coûts existants** : une série « Personnel » distincte sur l'écran de coûts
    du track et dans la fiche d'une affaire, sans se mêler aux budgets ni aux lignes de coût saisies à la main.
 
+**Deux précisions du responsable, le même jour** :
+
+9. « On doit aussi permettre, avec une case à cocher sur la ligne de la journée, de saisir en heures — cas rare, mais il
+   arrive de travailler sur plus de 4 affaires dans la journée. »
+10. « Une journée est de 7 heures. »
+
+*Conséquences tirées, à la rédaction* : un quart vaut **1 h 45** (105 minutes) ; le plafond du point 4 devient **7 heures
+par personne et par date**, quel que soit le mode ; le temps est conservé en **minutes**, seule unité commune aux deux
+modes, et valorisé au prorata du coût par quart (coût d'une minute = coût du quart ÷ 105). La saisie en heures se fait
+au quart d'heure.
+
 **Suite** : la spécification `docs/SPEC-temps.md`, la charte (`docs/DESIGN_SYSTEM.md` §5.54) et le découpage au backlog,
 committés avant le code.
