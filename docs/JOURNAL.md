@@ -31085,5 +31085,16 @@ coût saisies à la main sur des affaires — estimé et réel. Rien ne porte de
    recommandation (administrateurs seuls). Règle appliquée en base.
 4. **Plafond : 4 quarts au plus par personne et par date**, toutes lignes confondues — retenu, recommandé ; refus en base.
 
-**Suite** : seconde série d'arbitrages (forme de la matrice, lignes affichées, saisie pour autrui, lien avec les
-budgets, rapport mensuel), puis la spécification `docs/SPEC-temps.md` et le découpage au backlog, committés avant le code.
+**Seconde série, rendue le même jour — les quatre recommandations retenues** :
+
+5. **La matrice montre une semaine** : lignes = cibles, colonnes = lundi → dimanche, une cellule vaut 0 à 4 quarts ; le
+   rapport mensuel est une vue séparée.
+6. **Les lignes : l'arborescence lisible, et les affaires à la demande** — les tracks et channels lisibles sont toujours
+   proposés, une affaire s'ajoute par recherche, une ligne qui portait du temps la semaine précédente est reprise.
+7. **Pour autrui : les administrateurs**, qui peuvent saisir ou corriger le temps d'une autre personne ; la saisie
+   garde la trace de son auteur. Chacun saisit le sien.
+8. **Le coût du personnel paraît à côté des coûts existants** : une série « Personnel » distincte sur l'écran de coûts
+   du track et dans la fiche d'une affaire, sans se mêler aux budgets ni aux lignes de coût saisies à la main.
+
+**Suite** : la spécification `docs/SPEC-temps.md`, la charte (`docs/DESIGN_SYSTEM.md` §5.54) et le découpage au backlog,
+committés avant le code.
