@@ -14941,6 +14941,24 @@ le serveur réel.
       *2026-10-11* : LeLabs a autorisé la cellule ; l'état public rend `disponible` (`gemma4:e2b`). Reste la
       première génération réelle, faite et constatée par le responsable, avant `[x]` et la publication.
 
+### CRM-098 — La saisie de temps et le coût du personnel `[ ]`
+*Créée le 2026-10-11 — décision 621, arbitrages du responsable. Les participants saisissent, dans une matrice de la
+semaine, le temps passé sur les tracks, channels et affaires — au quart de journée, ou en heures par une case à cocher
+sur la journée — ; chaque membre a un coût par quart versionné par date d'effet ; le coût du personnel se pilote par
+track, channel et affaire, avec un rapport mensuel. Spécifié avant le code : `docs/SPEC-temps.md`,
+`docs/DESIGN_SYSTEM.md` §5.54, `docs/SCHEMA.md` §9 quater (migration `0087`).*
+
+- [ ] **T1** — migration `0087_saisie_temps.sql` : `couts_personnel`, `saisies_temps`, la RLS, le plafond de 420 minutes
+      sérialisé, la non-rétroactivité, `public.temps_valorise` ; sa suite pgTAP (`docs/SPEC-temps.md` §11) ; types
+      régénérés ; `docs/PROD_MIGRATIONS.md`.
+- [ ] **T2** — l'écran « Temps », onglet « Saisie » : la matrice de la semaine, la case « En heures », la navigation,
+      l'ajout d'une affaire, « Saisir pour » ; preuves unitaires.
+- [ ] **T3** — Réglages « Coût du personnel », le rapport mensuel, la série « Personnel » de l'écran de coûts du track et
+      de la fiche d'une affaire ; preuves unitaires.
+- [ ] **T4** — preuves d'API aux jetons réels (refus, plafond concurrent), E2E à la souris et au clavier, captures aux
+      quatre paliers observées, seed (`docs/SPEC-seed.md`), manuel, campagnes.
+- [ ] **T5** — livraison en production (migration 87, instantané confirmé) et constat.
+
 ## Arbitrage du 2026-10-03 — INC-265 à INC-269 (décision 619)
 
 *Arbitrage du responsable : les cinq incohérences relevées pendant `CRM-097` T1 et T2 sont corrigées maintenant,

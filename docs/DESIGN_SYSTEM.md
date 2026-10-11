@@ -5150,3 +5150,63 @@ de gestes, confirmation d'abandon, historique, focus et annonces. Seuls les éca
   - **Le refus « workflow modifié » dit qu'il n'y a qu'un recours** : la suggestion ne s'accepte plus — une revue ne
     rafraîchit pas l'empreinte relevée à sa création (`docs/SPEC-ia.md` §13.4) —, on l'abandonne et on en demande une
     nouvelle sur le workflow tel qu'il est.
+
+### 5.54 Saisie de temps et coût du personnel — `CRM-098`
+
+Spécifiée avant code, `docs/SPEC-temps.md` §7 (décision 621).
+
+**Entrée de navigation.** « Temps », icône Lucide `Timer` — aucune autre surface ne l'emploie —, placée après « Coûts »
+dans la barre latérale. Deux onglets du style de la fiche d'affaire : « Saisie » et « Rapport mensuel ».
+
+**La matrice de la semaine** réemploie le tableau de données du §5.9 : en-tête collant, lignes de 44 px, première colonne
+collante à gauche (la cible), montants et durées alignés à droite, chiffres tabulaires (`tabular-nums`).
+
+- **Lignes.** Un track en 15 px `font-medium` ; ses channels en retrait d'un pas (`pl-4`), 14 px ; une affaire en retrait
+  de deux pas (`pl-8`), 14 px, suivie de son titre lien vers sa fiche. Une ligne d'affaire reprise de la semaine
+  précédente ne se distingue pas d'une autre : c'est une commodité, pas un état.
+- **En-tête d'un jour.** Le jour abrégé et la date (« lun. 12 »), le jour courant souligné de `--color-brand` (2 px sous
+  le libellé, jamais un fond) ; dessous, la case **« En heures »** — `checkbox` native, cible de 44 px, nom accessible
+  « Saisir le {jour long} en heures ». Une case qui ne peut pas se décocher (`docs/SPEC-temps.md` §6.3) reste active et,
+  au geste, dit pourquoi sous l'en-tête (`role="status"`) : « Des saisies de ce jour ne tombent pas sur un quart ».
+- **Cellule.** Un champ numérique de 4 rem, centré, `inputmode="decimal"`. **En quarts** : entier de 0 à 4 ; **en
+  heures** : de 0 à 7 au pas de 0,25, affiché « 1 h 30 » hors du focus. Vide vaut zéro et s'affiche vide, jamais `0`
+  — une matrice pleine de zéros se lit comme une matrice remplie. La cellule s'enregistre seule (§5.7 ter) : les
+  mentions vivent dans une info-bulle d'état attachée à la cellule et dans une région `aria-live="polite"` unique de la
+  matrice, jamais en tête d'écran. Un refus de plafond rend la cellule en `--color-danger` (bordure 2 px) avec le motif.
+- **Clavier.** Flèches haut/bas/gauche/droite déplacent le focus de cellule en cellule quand le champ est vide ou sa
+  valeur entièrement sélectionnée ; `Entrée` enregistre et descend d'une ligne ; `Échap` rétablit la valeur enregistrée.
+- **Pied.** Une ligne de total par jour : « 3 / 4 quarts » ou « 6 h 30 / 7 h », en `--color-text-2` ; une journée pleine
+  passe en `--color-success-on-soft` sur `--color-success-soft` (pastille moulée sur la valeur, règle du §5.31). La
+  colonne de droite totalise chaque ligne, en jours et heures (« 1 j 3 h 30 »).
+- **Navigation.** Au-dessus de la matrice : « Semaine précédente » (`ChevronLeft`), le libellé de la semaine
+  (« Semaine du 12 au 18 octobre 2026 »), « Semaine suivante » (`ChevronRight`), « Cette semaine ». « Ajouter une
+  affaire » (`Plus`) ouvre une combobox de recherche (motif ARIA combobox du §5.21).
+- **« Saisir pour ».** Pour un administrateur seulement, un `select` en tête, sur lui-même par défaut ; quand une autre
+  personne est choisie, un bandeau neutre `--color-brand-soft` le rappelle au-dessus de la matrice : « Vous saisissez le
+  temps de {nom} ».
+
+**Le rapport mensuel** réemploie le tableau du §5.9 : une ligne par cible en arborescence (mêmes retraits), colonnes
+« Temps » (« 2 j 3 h 30 ») et « Coût » par devise, une ligne de total en `font-medium` séparée d'un filet `--color-border`.
+Une saisie non valorisée porte la pilule neutre « non valorisé » (§5.6) à la place du montant — jamais « 0 € ». Le
+sélecteur de mois est un `input type="month"`. Pour un administrateur, un `select` « Personne » propose chacun et
+« Toute l'équipe » ; « Toute l'équipe » rend une section par personne, titre `h3`.
+
+**Réglages ▸ « Coût du personnel ».** Une carte par membre : nom, coût en vigueur (« 120,00 € par quart »), la prochaine
+version programmée en `--color-text-2` (« 135,00 € à partir du 1er janvier 2027 »), le bouton « Nouvelle version »
+(`Plus`), l'historique dépliable (`History`). Une version programmée porte un bouton icône `Trash2`, confirmation du
+§5.13 ; une version en vigueur n'en porte aucun. Le formulaire : coût par quart, devise, date d'effet (`min` = aujourd'hui,
+sauf pour une première version).
+
+**Série « Personnel ».** Sur l'écran de coûts du track, un bloc titré « Coût du personnel », sous l'histogramme, jamais
+dedans : un tableau par channel, temps et montant. Dans la fiche d'une affaire, un bloc « Temps passé » après « Coûts ».
+**La portée est écrite** au-dessus du chiffre, en 13 px `--color-text-2` : « Votre temps » pour un membre, « Le temps de
+toute l'équipe » pour un administrateur (`docs/SPEC-temps.md` §7.5) — un total qui ne dit pas ce qu'il compte se lit
+comme celui de l'équipe.
+
+**États.** Chargement : squelette du tableau (§5.9). Aucune cible lisible : « Aucun track à afficher » et le lien vers
+l'arborescence pour un administrateur (§5.51). Mois sans saisie : « Aucun temps saisi en {mois} ». Personne sans version
+de coût : « Aucun coût défini » dans Réglages, « non valorisé » dans le rapport. Lecture seule n'existe pas pour soi —
+chacun saisit son temps (`docs/SPEC-temps.md` §5.2).
+
+**Paliers.** Sous 768 px, la matrice garde sa première colonne collante et défile horizontalement dans son conteneur
+(`overflow-x-auto`, jamais la page) ; les onglets et la navigation de semaine passent sur deux lignes.

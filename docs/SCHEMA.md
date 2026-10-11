@@ -1830,6 +1830,31 @@ des spécifications antérieures gardent leur sens — le refus d'une suppressio
   vivante ; nœuds proposés au catalogue ; étapes nouvelles posées ; cœur appliqué ; renommage ;
   `version_retour_id` renseigné.
 
+## 9 quater. Temps et coût du personnel — `CRM-098` (écrit le 2026-10-11, avant le code)
+
+### Migration `0087` — la saisie de temps (`CRM-098` T1, décision 621)
+
+`docs/SPEC-temps.md` §3 à §6.
+
+- **`public.couts_personnel`** — `id uuid` ; `workspace_id` (cascade) ; `profile_id` → `profiles` ; `date_effet date` ;
+  `cout_quart numeric(10,2) >= 0` ; `devise text default 'EUR'` `^[A-Z]{3}$` ; `created_by`, `created_at`. Unique
+  `(workspace_id, profile_id, date_effet)`. Déclencheurs : aucune mise à jour (immuable) ; à l'insertion, la personne
+  est membre de l'espace et `date_effet >= current_date` sauf pour la première version de la personne dans l'espace ;
+  suppression permise seulement si `date_effet > current_date`. RLS : lecture `profile_id = auth.uid()` ou
+  `app.is_workspace_admin(workspace_id)` ; insertion et suppression `app.is_workspace_admin(workspace_id)`.
+- **`public.saisies_temps`** — `id uuid` ; `workspace_id` (cascade) ; `profile_id` → `profiles` (**restrict**) ; `jour
+  date` ; `minutes integer`, `> 0`, `<= 420`, `% 15 = 0` ; `track_id`, `channel_id`, `card_id` (cascade, clés composées
+  avec `workspace_id` comme les autres objets de l'espace), `num_nonnulls(track_id, channel_id, card_id) = 1` ;
+  `created_by`, `updated_by`, `created_at`, `updated_at`. Trois index uniques partiels `(profile_id, jour, <cible>)`.
+  Déclencheurs : seule `minutes` se met à jour ; `updated_by` posé ; **plafond** — verrou consultatif de transaction
+  sur `(profile_id, jour)` puis somme `<= 420`, refus `P0001` « plafond journalier ». RLS : lecture `profile_id =
+  auth.uid()` ou administrateur ; écriture si (`profile_id = auth.uid()` et membre de l'espace) ou administrateur,
+  **et** la cible lisible par `profile_id` (`app.can_read_track`/`channel`/`card` et leurs variantes `_pour`).
+- **`public.temps_valorise(p_debut date, p_fin date, p_profile uuid default null, p_track uuid default null,
+  p_card uuid default null)`** — `stable`, `security invoker` : une ligne par personne × cible, chemin complet
+  (track, channel, affaire), `minutes`, `montant` (`round(minutes * cout_quart / 105, 2)`, version de `date_effet` la
+  plus récente `<= jour`, `null` sans version lisible), `devise`.
+
 ## 10. Index principaux
 
 | Table | Index |
