@@ -33,9 +33,9 @@ source d'identité.
 | Élément | État |
 |---|---|
 | Environnement de production | Cellule Spark `crm` (`docs/SPEC-deploiement-spark.md`), assemblage à trois fichiers : neuf services sains et deux conteneurs à usage unique (runner, bucket) ; GoTrue retiré le 2026-09-24 |
-| Schéma appliqué | Les **86 migrations** du dépôt : 1 à 73 par `--migrate --premier-deploiement` sur une base mesurée vierge (2026-09-23), 74 à 79 par la reprise `CRM-092` (2026-09-24), 80 par `CRM-094` (2026-09-28), 81 par `CRM-095` (2026-09-29), 82 par `CRM-096` (2026-10-01), 83 à 86 par `CRM-097` T4 (2026-10-03). **Le registre `app.migrations_appliquees` le dit** : 86 lignes — les 82 premières en `adoption`, les 83 à 86 en `application` —, empreintes égales à celles du dépôt livré |
-| Dernière migration appliquée | `0086_suggestions_ia_modification.sql` — relue en base le 2026-10-03, en lecture seule : 86 lignes au registre, les quatre fonctions de `CRM-097` présentes, la clé `workflow_steps_workflow_id_node_id_key` ajournable (INC-270) |
-| Version déployée | La révision inscrite dans `/srv/crm/REVISION` — celle que `scripts/spark/verifier.sh` compare au `HEAD` du poste ; **`38237656`** le 2026-10-03 (`CRM-097` T1 à T3, INC-266, INC-268, INC-270, migrations 83 à 86 ; après `2ff0c703` — `CRM-096`, migration 82 —, INC-262 et INC-263 — `09d3abcc` —, `CRM-095` et INC-258 à INC-261 — `796aa3c1`, migration 81 —, `CRM-094`, INC-254 et INC-255) |
+| Schéma appliqué | Les **87 migrations** du dépôt : 1 à 73 par `--migrate --premier-deploiement` sur une base mesurée vierge (2026-09-23), 74 à 79 par la reprise `CRM-092` (2026-09-24), 80 par `CRM-094` (2026-09-28), 81 par `CRM-095` (2026-09-29), 82 par `CRM-096` (2026-10-01), 83 à 86 par `CRM-097` T4 (2026-10-03), 87 par `CRM-098` T5 (2026-10-11). **Le registre `app.migrations_appliquees` le dit** : 87 lignes — les 82 premières en `adoption`, les 83 à 87 en `application` —, empreintes égales à celles du dépôt livré |
+| Dernière migration appliquée | `0087_saisie_temps.sql` — relue en base le 2026-10-11, en lecture seule : 87 lignes au registre, empreinte de la 87 égale à celle du dépôt, `saisies_temps` et `couts_personnel` vides, leurs sept politiques présentes ; refus anonyme `401` par la route publique |
+| Version déployée | La révision inscrite dans `/srv/crm/REVISION` — celle que `scripts/spark/verifier.sh` compare au `HEAD` du poste ; **`521b3f5d`** le 2026-10-11 (`CRM-098` T1 à T4, migration 87, et la webapp de `CRM-100` ; après `38237656` — `CRM-097` T1 à T3, INC-266, INC-268, INC-270, migrations 83 à 86 —, après `2ff0c703` — `CRM-096`, migration 82 —, INC-262 et INC-263 — `09d3abcc` —, `CRM-095` et INC-258 à INC-261 — `796aa3c1`, migration 81 —, `CRM-094`, INC-254 et INC-255) |
 | Assistant IA | Variables `OLLAMA_HOST`, `OLLAMA_CONTEXT_LENGTH` et secret `OLLAMA_API_KEY` **présents** dans la cellule et remis à `functions` (relevé du 2026-10-03, présence seule) ; `OLLAMA_MODEL` absent, d'où le défaut `gemma4:e2b` de Compose. Refusée le 2026-10-03 (403), la cellule est **autorisée par LeLabs** : `GET /functions/v1/ia/etat` rend `{"disponible":true,"modele":"gemma4:e2b"}` le 2026-10-11 (§2.9, geste 7) |
 | Données | Un espace, « P2Enjoy CRM » (`crm`), réamorcé par la reprise `CRM-092`, et les données qu'y écrit le responsable — relevé du 2026-10-01, en lecture seule : 2 profils, 2 workflows dont celui de départ, 8 affaires ; aucun seed. La ligne `auth.users` de l'ancien compte invité reste, inerte |
 | Route publique | `crm.lelabs.tech 8080 tls`, active : `https://crm.lelabs.tech`, certificat Let's Encrypt présenté par la Forge (décision 576) |
@@ -302,7 +302,7 @@ remise au conteneur ; il reste à constater `disponible`, puis une génération 
 ligne du §3.2, dans l'ordre inverse — la 86 d'abord. Les workflows créés ou modifiés par des acceptations restent :
 ce sont des configurations, et chaque modification a son point de retour.
 
-### 2.10 `CRM-100` — « Nouveau channel » depuis le track, et l'aller-retour vers l'éditeur de workflows (À EXÉCUTER)
+### 2.10 `CRM-100` — « Nouveau channel » depuis le track, et l'aller-retour vers l'éditeur de workflows (GESTES 1 ET 2 EXÉCUTÉS le 2026-10-11 par la livraison du §2.11 ; geste 3 à constater par le responsable)
 
 `docs/SPEC-administration-arborescence.md` §13, `docs/DESIGN_SYSTEM.md` §5.55 ; décision 623. **Webapp seule** : aucune
 migration, aucune variable, aucun service nouveau, aucun droit changé — la création d'un channel et celle d'un workflow
@@ -318,7 +318,7 @@ sont les écritures existantes, sous les mêmes politiques. La lecture du track 
 **Retour arrière** : la révision précédente de la webapp. Les channels et workflows créés entre-temps restent : ce sont
 des données ordinaires, créées par les écritures existantes.
 
-### 2.11 `CRM-098` — la saisie de temps et le coût du personnel (À EXÉCUTER)
+### 2.11 `CRM-098` — la saisie de temps et le coût du personnel (GESTES 1 À 3 EXÉCUTÉS le 2026-10-11 ; geste 4 à constater par le responsable)
 
 `docs/SPEC-temps.md`, `docs/DESIGN_SYSTEM.md` §5.54 ; décision 621. **Une migration, la 87**, et la webapp (l'écran
 « Temps », Réglages ▸ « Coût du personnel », la série « Personnel »). Aucune variable, aucun service, aucune fonction
@@ -336,15 +336,9 @@ précédente ignore les deux tables : revenir à elle seule ne casse rien.
 
 ## 3. Migrations en attente
 
-**Une migration en attente depuis le 2026-10-11 : la 87** (`0087_saisie_temps.sql`, `CRM-098`, décision 621) —
-deux tables neuves, `couts_personnel` et `saisies_temps`, leurs sept politiques et `public.temps_valorise`. Aucune table
-existante n'est modifiée, aucune donnée n'est reprise, aucune variable ni service nouveau. Elle est appliquée par la
-fenêtre du §2.11, avec instantané confirmé ; sa ligne au §3.2 dit son retrait. Retour arrière : `drop function public.temps_valorise(date, date, uuid,
-uuid, uuid)`, puis `drop table public.saisies_temps, public.couts_personnel` et les fonctions `app.couts_personnel_*`,
-`app.saisies_temps_*`, `app.saisie_temps_permise` — rien d'antérieur n'en dépend ; les temps et coûts saisis entre-temps
-seraient perdus, l'instantané les garde.
-
-Baseline de production : la migration **86**
+**Aucune migration en attente depuis le 2026-10-11.** Baseline de production : la migration **87**
+(`CRM-098`, décision 621), appliquée le 2026-10-11 par une fenêtre avec instantané (§2.11, §8) — son retrait est sa
+ligne du §3.2 ; avant elle, la **86**
 (`CRM-097` T3, décision 620), appliquée avec les 83 à 85 le 2026-10-03 par une fenêtre avec instantané (§2.9, §8) ;
 la 82 (`CRM-096`) l'avait été le 2026-10-01, la 81 (`CRM-095`) le 2026-09-29 (§2.8), la 80 (`CRM-094`) le 2026-09-28
 (§2.7), les six migrations de `CRM-092` (74 à 79) le 2026-09-24 par la reprise (§2.5). **Le registre de production
@@ -1303,3 +1297,16 @@ publique sert le module d'objectifs de ce build (`200`). La baseline reste **81*
   `GET /functions/v1/ia/etat`, par la route publique avec la clé anonyme, rend `{"disponible":true,"modele":"gemma4:e2b"}`.
   Aucune génération n'est lancée par l'agent en production (aucune donnée de preuve n'y est écrite) : la première
   génération réelle, par le responsable, reste à constater avant de publier `CRM-097`.
+
+### `CRM-098` T5 — la saisie de temps et le coût du personnel, avec la webapp de `CRM-100`, 2026-10-11 (décisions 621 et 623)
+
+- **Geste 1** : instantané de VM pris par le responsable, confirmé le 2026-10-11 avant la fenêtre.
+- **Geste 2** : `scripts/spark/livrer.sh -- --migrate --instantane-verifie` par les IP : révision **`521b3f5d`**, image
+  Realtime identique, « Migrations appliquées avec succès — cache de schéma rechargé par le runner ». Puis
+  `./runProd.sh --spark` dans la cellule : tous les conteneurs sains ou terminés en 0.
+- **Geste 3** : `verifier.sh` — **26 contrôles, aucune anomalie**. Registre relu en lecture seule : **87 lignes**, la
+  dernière `0087_saisie_temps.sql`, son empreinte égale à celle du dépôt (`sha256sum`) ; `saisies_temps` et
+  `couts_personnel` présentes et vides, sept politiques ; `GET /rest/v1/saisies_temps` sans session par la route
+  publique : **`401`** ; `/temps` servie (`200`). Aucune donnée de preuve n'est écrite en production.
+- **Geste 4, à constater par le responsable** : une première version de coût dans Réglages ▸ « Coût du personnel », une
+  journée saisie dans « Temps », relue dans le « Rapport mensuel ». Le geste 3 de `CRM-100` (§2.10) aussi.

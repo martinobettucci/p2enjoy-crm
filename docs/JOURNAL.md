@@ -31146,6 +31146,11 @@ et le seed, qui pose du temps sur les quatre dernières semaines, ne croise plus
 incohérence étrangère relevée** : INC-271, la veille de `mail-sync` qui court contre deux scénarios mail et fait parler
 S3 ; trois campagnes de messagerie rouges, la quatrième verte, sans qu'une ligne du sous-système ne bouge.
 
+**`CRM-098` T5, livrée en production le 2026-10-11** sur l'instruction du responsable (« quand tout est bon, deploy
+dans le spark ») et après la confirmation de l'instantané : révision `521b3f5d`, migration 87, webapp de `CRM-098` et
+de `CRM-100`. Vérifié en lecture seule (`docs/PROD_MIGRATIONS.md` §8). Reste le constat fonctionnel du responsable ;
+`CRM-099` (décision 622) vient ensuite.
+
 ## décision 622 — `CRM-099` : plusieurs coûts réels par ligne de coût, jusqu'à ce qu'on la solde
 
 *2026-10-11 ; remarque du responsable pendant la rédaction de `CRM-098`, arbitrages rendus par lui le même jour, avant

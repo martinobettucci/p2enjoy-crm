@@ -13,9 +13,11 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-098` — La saisie de temps et le coût du personnel (T1 à T4 livrés en développement ; production : T5)
+### `CRM-098` — La saisie de temps et le coût du personnel
 
-*Décision 621. Non livré en production.*
+*Décision 621. **Livré en production le 2026-10-11** (`521b3f5d`, migration 87 appliquée par une fenêtre avec instantané) ;
+**publié après le constat du responsable** — une version de coût, une journée saisie, le rapport relu
+(`docs/PROD_MIGRATIONS.md` §2.11).*
 
 - **Le temps passé et le coût du personnel, en base** (migration `0087`) : chaque membre saisit, en minutes, le temps
   passé par jour sur un track, un channel ou une affaire — un quart de journée vaut 1 h 45, une journée 7 heures, au plus
@@ -40,7 +42,8 @@ d'exécuter le code attendu.
 
 ### `CRM-100` — Créer un channel depuis le track, et un workflow depuis le formulaire du channel
 
-*Décision 623. Webapp seule : aucune migration, aucune variable, aucun droit changé (`docs/PROD_MIGRATIONS.md` §2.10).*
+*Décision 623. Webapp seule : aucune migration, aucune variable, aucun droit changé (`docs/PROD_MIGRATIONS.md` §2.10).
+**Livré en production le 2026-10-11** avec `CRM-098` (`521b3f5d`) ; publié après le constat du responsable (geste 3).*
 
 - **« Nouveau channel » dans la barre d'onglets d'un track**, après les channels et avant « Coûts » : le formulaire
   s'ouvre en haut de la page, sans passer par les réglages ; **Créer** ouvre le tableau du nouveau channel, dont

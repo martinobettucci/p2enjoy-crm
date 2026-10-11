@@ -14994,7 +14994,11 @@ track, channel et affaire, avec un rapport mensuel. Spécifié avant le code : `
       passage — les trois premiers rouges sur S3, l'avertissement de la veille de `mail-sync` qui court contre deux
       scénarios mail (INC-271, ouverte, étrangère à l'unité). 499 captures renouvelées (la barre latérale porte
       « Temps » ; la fiche d'affaire, « Temps passé »), 36 réécritures sans changement visible restaurées.
-- [ ] **T5** — livraison en production (migration 87, instantané confirmé) et constat.
+- [~] **T5** — livraison en production (migration 87, instantané confirmé) et constat.
+      *Livré le 2026-10-11* : révision `521b3f5d`, migration 87 appliquée après instantané confirmé, `verifier.sh` 26
+      contrôles sans anomalie, registre à 87 lignes relu (empreinte égale au dépôt), refus anonyme `401`
+      (`docs/PROD_MIGRATIONS.md` §2.11, §8). **Reste le constat du responsable** : une version de coût, une journée
+      saisie, le rapport relu.
 
 ### CRM-099 — Plusieurs coûts réels par ligne de coût, jusqu'à ce qu'on la solde `[ ]`
 *Créée le 2026-10-11 — décision 622, arbitrages du responsable. Une ligne de coût n'acceptait qu'un réel et quittait
