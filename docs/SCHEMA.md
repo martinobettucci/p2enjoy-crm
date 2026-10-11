@@ -1830,7 +1830,7 @@ des spécifications antérieures gardent leur sens — le refus d'une suppressio
   vivante ; nœuds proposés au catalogue ; étapes nouvelles posées ; cœur appliqué ; renommage ;
   `version_retour_id` renseigné.
 
-## 9 quater. Temps et coût du personnel — `CRM-098` (écrit le 2026-10-11, avant le code)
+## 9 quater. Temps et coût du personnel — `CRM-098`, et réels multiples — `CRM-099` (écrits le 2026-10-11, avant le code)
 
 ### Migration `0087` — la saisie de temps (`CRM-098` T1, décision 621)
 
@@ -1854,6 +1854,23 @@ des spécifications antérieures gardent leur sens — le refus d'une suppressio
   p_card uuid default null)`** — `stable`, `security invoker` : une ligne par personne × cible, chemin complet
   (track, channel, affaire), `minutes`, `montant` (`round(minutes * cout_quart / 105, 2)`, version de `date_effet` la
   plus récente `<= jour`, `null` sans version lisible), `devise`.
+
+### Migration `0088` — plusieurs réels par ligne de coût (`CRM-099`, décision 622)
+
+`docs/SPEC-costs.md` §2.3 bis.
+
+- **`public.card_cost_actuals`** — `id uuid` ; `card_cost_id` → `card_costs` (cascade) ; `amount numeric(14,2)` non nul ;
+  `spent_on date default current_date` ; `label text` nul ou non vide ; `created_by` (set null), `created_at`,
+  `updated_at`. RLS : lecture par la ligne parente ; écriture `app.can_write_card` de l'affaire de la ligne. Refus en
+  base sur une ligne soldée ; `card_cost_id` immuable.
+- **`card_costs.settled_at timestamptz`, `settled_by uuid`** (set null).
+- **`card_costs.actual_cost` dérivé** : recalculé par déclencheur (somme des réels ; `0` si soldée sans réel ; nul
+  sinon) ; un `PATCH` qui le change est refusé.
+- **Reprise** : un réel par ligne dont `actual_cost` est renseigné (`spent_on = updated_at::date`, sans libellé,
+  `created_by` de la ligne) ; aucune ligne soldée.
+- **L'onglet « À saisir »** filtre `settled_at is null` au lieu de `actual_cost is null` ; l'index partiel de `0051`
+  (`where actual_cost is null`) est remplacé par son équivalent sur `settled_at is null`. `public.reel_saisissable`
+  (migration 52), qui ne rend qu'un droit d'écriture, ne change pas.
 
 ## 10. Index principaux
 

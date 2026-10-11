@@ -31109,3 +31109,39 @@ au quart d'heure.
 
 **Suite** : la spécification `docs/SPEC-temps.md`, la charte (`docs/DESIGN_SYSTEM.md` §5.54) et le découpage au backlog,
 committés avant le code.
+
+## décision 622 — `CRM-099` : plusieurs coûts réels par ligne de coût, jusqu'à ce qu'on la solde
+
+*2026-10-11 ; remarque du responsable pendant la rédaction de `CRM-098`, arbitrages rendus par lui le même jour, avant
+toute spécification et tout code.*
+
+**La remarque, mot pour mot** : « la saisie des coûts sur un budget aujourd'hui ne permet qu'une seule saisie… c'est pas
+bon, on doit pouvoir saisir plusieurs coûts (distincts) jusqu'à ce que l'on déclare (avec une case à cocher) que le
+budget est fermé, et là il ne faut plus le lister (là je te parle pas du personnel). »
+
+**Ce que l'existant porte, et qui donne raison à la remarque** : une ligne de coût (`card_costs`) a **un seul**
+`actual_cost` (`docs/SPEC-costs.md` §2.3) ; l'onglet « À saisir » liste les lignes dont il est nul, et la ligne en sort
+dès la première valeur saisie (§4.8). Deux factures pour une même dépense ne se saisissent donc qu'en les additionnant
+de tête.
+
+**Arbitrages rendus (options présentées, recommandation en premier)** :
+
+1. **La case ferme la LIGNE DE COÛT** — retenu, recommandé. Une ligne reçoit plusieurs réels ; son réel est leur somme ;
+   elle reste dans « À saisir » jusqu'à ce qu'on coche « Soldé ». La clôture d'un budget de track reste ce qu'elle est
+   — l'issue « le budget entier » revenait sur la décision 544, qui laisse dans l'onglet les lignes des budgets clos.
+2. **Un réel porte un montant, une date et un libellé facultatif** — retenu, recommandé : un montant obligatoire, la date
+   du jour par défaut, un libellé (« Facture n° 42 »).
+3. **Les lignes qui ont déjà un réel : un réel, ENCORE OUVERTES** — retenu, contre la recommandation (« déjà soldées »).
+   Le réel actuel devient le premier réel de la ligne, et la ligne revient dans « À saisir » jusqu'à ce qu'on la solde.
+4. **Une ligne soldée sans aucun réel vaut 0** — retenu, recommandé : « finalement rien dépensé », l'équivalent du
+   « 0 » saisi aujourd'hui.
+
+*Conséquences tirées, à la rédaction* (`docs/SPEC-costs.md` §2.3 bis) : `actual_cost` reste la colonne que tous les
+écrans lisent, mais elle devient **dérivée** — somme des réels s'il y en a, `0` si la ligne est soldée sans réel, nulle
+sinon — et n'est plus écrite par le client. « Nul n'est pas zéro » tient toujours, et l'histogramme ne change pas de
+lecture. L'onglet « À saisir » liste les lignes **non soldées**. Une ligne soldée est figée — ni réel ajouté, modifié ou
+retiré — jusqu'à ce qu'on la décoche. Point 3 appliqué à la lettre, y compris aux lignes dont le réel saisi était `0` :
+elles reçoivent un réel de 0 et reviennent dans l'onglet ; c'est signalé au responsable, qui peut le contester.
+
+**Suite** : la révision de `docs/SPEC-costs.md` (§2.3 bis), de la charte (`docs/DESIGN_SYSTEM.md` §5.31 bis), du schéma
+(migration `0088`, après `0087` de `CRM-098`) et l'unité `CRM-099` au backlog, committées avant le code.

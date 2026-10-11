@@ -14959,6 +14959,21 @@ track, channel et affaire, avec un rapport mensuel. Spécifié avant le code : `
       quatre paliers observées, seed (`docs/SPEC-seed.md`), manuel, campagnes.
 - [ ] **T5** — livraison en production (migration 87, instantané confirmé) et constat.
 
+### CRM-099 — Plusieurs coûts réels par ligne de coût, jusqu'à ce qu'on la solde `[ ]`
+*Créée le 2026-10-11 — décision 622, arbitrages du responsable. Une ligne de coût n'acceptait qu'un réel et quittait
+l'onglet « À saisir » dès qu'il était saisi. Elle reçoit désormais plusieurs réels — montant, date, libellé facultatif —
+jusqu'à ce qu'on coche « Soldé » ; `actual_cost` devient leur somme, tenue par la base ; les réels déjà saisis
+deviennent un premier réel, lignes rouvertes. Spécifié avant le code : `docs/SPEC-costs.md` §2.3 bis,
+`docs/DESIGN_SYSTEM.md` §5.31 bis, `docs/SCHEMA.md` §9 quater (migration `0088`).*
+
+- [ ] **T1** — migration `0088_reels_multiples.sql` : `card_cost_actuals`, `settled_at` / `settled_by`, `actual_cost`
+      dérivé et protégé, la reprise des réels existants, l'index de l'onglet ; pgTAP (somme, zéro soldé, nul ouvert,
+      ligne soldée figée, budget clos qui accepte encore des réels, droits) ; types régénérés.
+- [ ] **T2** — l'onglet « À saisir » (un réel de plus, détails, « Soldé ») et la fiche d'une affaire (réels dépliables) ;
+      le détail d'un budget ; preuves unitaires et d'API aux jetons réels ; E2E souris et clavier ; captures observées ;
+      seed ; manuel ; campagnes.
+- [ ] **T3** — livraison en production (migration 88, instantané confirmé) et constat.
+
 ## Arbitrage du 2026-10-03 — INC-265 à INC-269 (décision 619)
 
 *Arbitrage du responsable : les cinq incohérences relevées pendant `CRM-097` T1 et T2 sont corrigées maintenant,

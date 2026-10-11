@@ -1,5 +1,9 @@
 # Budgets et coûts
 
+> **Révision du 2026-10-11 — `CRM-099`, décision 622 (migration `0088`, à écrire).** Une ligne de coût reçoit plusieurs
+> réels jusqu'à ce qu'on la solde ; `actual_cost` devient leur somme, tenue par la base ; l'onglet « À saisir » liste les
+> lignes non soldées. Le §2.3 bis fait foi là où les §2.3, §4.6 et §4.8 parlent d'« un » réel saisi.
+
 > **Révision du 2026-10-03 — INC-268, migration `0085` (décision 619).** Les clés que ce document dit « `on delete
 > restrict` » sont désormais `on delete no action`, ajournables mais contrôlées immédiatement : une suppression
 > directe de l'objet visé reste refusée en `23503` (PostgREST : `409`), et seule la suppression d'un espace entier
@@ -181,6 +185,73 @@ rattachement — `budget_id`, `occurrence_id` —, jamais la mise à jour d'`act
 **La devise d'une ligne est celle de son budget**, jamais celle de la card. Une ligne ne porte donc
 pas de colonne `currency` : la porter permettrait d'additionner des devises différentes dans un
 même total, ce qu'aucun écran ne saurait rendre honnêtement.
+
+### 2.3 bis Plusieurs réels par ligne, et la ligne soldée — `CRM-099`, décision 622, écrit le 2026-10-11 avant le code
+
+**Ce qui change.** Une ligne de coût ne reçoit plus **un** réel mais **autant qu'il en faut** — une facture, puis une
+autre —, jusqu'à ce qu'on la déclare **soldée** d'une case à cocher. Les choix que la décision 622 ne tranche pas et que
+ce paragraphe arrête sont marqués **[choix de rédaction]**.
+
+#### `card_cost_actuals` — les réels d'une ligne
+
+| Attribut | Règle |
+|---|---|
+| `card_cost_id` | non nul, `on delete cascade` — la ligne de coût |
+| `amount` | `numeric(14,2)`, **non nul**, sans contrainte de signe — un avoir est un réel négatif légitime (§2.1), et `0` est admis |
+| `spent_on` | `date`, non nulle, **la date du jour par défaut** — la date de la dépense, non celle de la saisie |
+| `label` | `text`, **facultatif** ; s'il est renseigné, non vide après suppression des espaces — « Facture n° 42 » |
+| `created_by`, `created_at`, `updated_at` | posés par la base |
+
+Un réel se modifie (montant, date, libellé) et se retire ; il ne change jamais de ligne [choix de rédaction : déplacer
+un réel, c'est le retirer et le saisir ailleurs].
+
+#### `card_costs.settled_at`, `settled_by` — la ligne soldée
+
+`settled_at timestamptz` nul tant que la ligne est ouverte ; `settled_by` le profil qui l'a soldée (`on delete set
+null`). Cocher « Soldé » pose les deux ; décocher les remet à nul.
+
+**Une ligne soldée est figée** [choix de rédaction] : aucun réel ne s'y ajoute, ne s'y modifie ni ne s'en retire tant
+qu'elle l'est — refus en base. La rouvrir est un geste explicite : décocher. C'est ce que dit la demande — « jusqu'à ce
+que l'on déclare que c'est fermé ».
+
+#### `actual_cost` devient dérivé
+
+| État de la ligne | `actual_cost` |
+|---|---|
+| au moins un réel | **la somme des réels** — soldée ou non |
+| soldée, aucun réel | **`0`** — « finalement rien dépensé » (décision 622, point 4) |
+| ouverte, aucun réel | **nul** — le réel est inconnu |
+
+La colonne est **tenue par la base** (déclencheurs sur les réels et sur `settled_at`) et **n'est plus écrite par le
+client** : un `PATCH` qui la change est refusé. Tous les écrans qui la lisent — histogrammes, totaux, mention du §4.4 —
+gardent donc leur lecture, et la règle « nul n'est pas zéro » tient sans changement. Une ligne ouverte qui porte déjà un
+réel **compte** dans la barre du réel pour ce qui est connu : une dépense en cours a dépensé quelque chose.
+
+#### Écrire et lire
+
+- **Lecture** des réels : celle de leur ligne (§3.1) — RLS par jointure, sans règle nouvelle.
+- **Écriture** des réels, soldé et ré-ouverture : `app.can_write_card` sur l'affaire de la ligne (§3.2).
+- **La clôture d'un budget ne ferme pas ses lignes** : sur une ligne d'un budget ou d'une occurrence clos, on ajoute
+  encore des réels et on solde — c'est la frontière du §2.3, « on clôt une campagne **puis** les factures arrivent ».
+
+#### Les données existantes (décision 622, point 3)
+
+Chaque ligne dont `actual_cost` est renseigné reçoit **un réel** de ce montant, daté du jour de la dernière
+modification de la ligne (`updated_at`), sans libellé, créé au nom de l'auteur de la ligne ; **elle reste ouverte**, et
+revient donc dans l'onglet « À saisir » jusqu'à ce qu'on la solde. Cela vaut aussi pour un réel saisi à `0`.
+
+#### Ce qui change aux écrans
+
+- **Onglet « À saisir » (§4.8)** : il liste les lignes **non soldées** — et non plus celles dont `actual_cost` est nul.
+  Chaque ligne montre le réel déjà saisi, porte la saisie d'**un réel de plus** (montant ; date et libellé à la demande)
+  et la case **« Soldé »**. Le badge compte les lignes non soldées. Les règles du §4.8 tiennent : la ligne reste en place
+  jusqu'au prochain chargement, `Entrée` mène à la ligne suivante, une ligne non écrivable est en lecture seule.
+- **Fiche d'une affaire (§4.6)** : chaque ligne déplie la liste de ses réels — date, libellé, montant — avec l'ajout, la
+  modification, le retrait et la case « Soldé ».
+- **Détail d'un budget (§4.3)** : la colonne « réel » dit en plus si la ligne est soldée.
+- **Mention du §4.4** : inchangée — elle compte les lignes sans aucun réel et non soldées, celles dont le réel est inconnu.
+
+Charte : `docs/DESIGN_SYSTEM.md` §5.31 bis. Schéma : `docs/SCHEMA.md`, « Migration `0088` ».
 
 ## 3. Autorisations
 

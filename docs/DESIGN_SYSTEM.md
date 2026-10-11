@@ -2583,6 +2583,27 @@ quatre corrigent ce que la rédaction d'avant-code supposait.
   visait est tenu : on ne traverse pas six colonnes par ligne, et c'est `Entrée` qui porte la
   série, en menant d'un champ « Réel » au suivant sans passer par rien d'autre.
 
+### 5.31 bis Plusieurs réels par ligne, et la case « Soldé » — `CRM-099`
+
+Spécifiée avant code, `docs/SPEC-costs.md` §2.3 bis (décision 622). Elle complète le §5.31 sans en retirer de règle.
+
+**Dans la table « À saisir ».** La colonne « Réel » devient deux éléments : le **réel déjà saisi** — la somme, alignée
+à droite, `--color-text-2`, vide si aucun réel —, puis le **champ d'un réel de plus**, qui garde toutes les règles du
+§5.31 : il s'enregistre seul, `Entrée` ajoute le réel daté du jour et mène au champ de la ligne suivante, `Échap` annule.
+La **date** et le **libellé** se règlent à la demande, par un bouton icône `Pencil` (« Détails du réel ») qui ouvre deux
+champs sous la ligne ; sans eux, la saisie en série reste un seul champ par ligne. Une dernière colonne porte la case
+**« Soldé »** — une `checkbox` native, cible de 44 px, nom accessible « Soldé : {nature} de {affaire} ». La cocher ne
+retire pas la ligne à chaud (§5.31) : elle passe sur le fond `--color-success-soft` qui s'estompe et porte « Soldé ».
+
+**Dans la fiche d'une affaire.** Chaque ligne de coût porte un bouton de dépli (`ChevronRight` / `ChevronDown`,
+`aria-expanded`) qui montre ses réels : une liste — date, libellé ou « Sans libellé » en `--color-text-2`, montant
+aligné à droite —, chacun modifiable (`Pencil`) et retirable (`Trash2`, confirmation du §5.13), puis la saisie d'un réel
+et la case « Soldé ». Le total de la ligne reste celui du §4.6.
+
+**Une ligne soldée** porte la pilule neutre **« Soldé »** (§5.6) — jamais `--color-success` plein : soldée n'est pas une
+réussite, c'est un état. Ses gestes d'ajout, de modification et de retrait sont **désactivés et lisibles**, avec le
+motif « Ligne soldée — décochez « Soldé » pour la modifier » (§8) ; la case reste active pour qui peut écrire.
+
 ### 5.32 Écran de détail d'un budget — `CRM-086`
 
 Spécifié avant code, `docs/SPEC-costs.md` §4.3. Livré le 2026-08-20. L'écran réemploie
