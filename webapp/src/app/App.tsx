@@ -13,6 +13,7 @@
 // @spec CRM-086 (docs/BACKLOG.md) — route de l'écran de coûts d'un track (docs/SPEC-costs.md §4.0)
 // @spec docs/SPEC-webapp.md §5.2 (routes), §6.2 (session), §12.3 (chargement différé)
 // @spec docs/SPEC-auth.md §9.1 ; docs/JOURNAL.md décision 248
+// @spec CRM-098 (docs/BACKLOG.md) — route de Réglages ▸ « Coût du personnel » (docs/SPEC-temps.md §7.4)
 //
 // Le routage est déclaré à partir de la table de `routes.tsx` : ajouter une route ne demande
 // pas de toucher à ce fichier, et le titre affiché par l'en-tête ne peut pas diverger de la
@@ -34,6 +35,7 @@ import {
 	CHEMIN_ADMIN_WORKFLOWS,
 	CHEMIN_CARD,
 	CHEMIN_CORBEILLE,
+	CHEMIN_ADMIN_COUT_PERSONNEL,
 	CHEMIN_REGLAGES_NOTIFICATIONS,
 	CHEMIN_COUTS_BUDGET,
 	CHEMIN_COUTS_TRACK,
@@ -52,6 +54,7 @@ import {
 	CLE_TITRE_ADMIN_CATALOGUE,
 	CLE_TITRE_ADMIN_WORKFLOWS,
 	CLE_TITRE_CORBEILLE,
+	CLE_TITRE_COUT_PERSONNEL,
 	CLE_TITRE_REGLAGES_NOTIFICATIONS,
 	CLE_TITRE_DEMARRAGE,
 	CLE_TITRE_COMPTES_MAIL,
@@ -129,6 +132,10 @@ const ReglagesSequencesRelance = lazy(async () => ({
 }))
 /** La corbeille de `CRM-077`, chargée à la demande pour la même raison que les trois autres. */
 const Corbeille = lazy(async () => ({ default: (await import('./Corbeille')).Corbeille }))
+// `CRM-098` — Réglages ▸ « Coût du personnel », chargé à la demande comme la corbeille.
+const ReglagesCoutPersonnel = lazy(async () => ({
+	default: (await import('./ReglagesCoutPersonnel')).ReglagesCoutPersonnel,
+}))
 const ReglagesNotifications = lazy(async () => ({
 	default: (await import('./ReglagesNotifications')).ReglagesNotifications,
 }))
@@ -418,6 +425,16 @@ function RoutesPages() {
 				{/* La corbeille — `CRM-077`. Même position que les trois autres surfaces
 				    d'administration : hors de la barre latérale, atteinte depuis l'index des
 				    réglages (docs/SPEC-corbeille.md §4.1). */}
+				{/* Le coût du personnel — `CRM-098`, docs/SPEC-temps.md §7.4 : hors de la barre latérale, atteint depuis
+				    l'index des réglages. */}
+				<Route
+					path={CHEMIN_ADMIN_COUT_PERSONNEL}
+					element={
+						<AppShell cleTitreRoute={CLE_TITRE_COUT_PERSONNEL}>
+							<ReglagesCoutPersonnel />
+						</AppShell>
+					}
+				/>
 				<Route
 					path={CHEMIN_CORBEILLE}
 					element={

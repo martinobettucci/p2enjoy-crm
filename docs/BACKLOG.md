@@ -14970,8 +14970,16 @@ track, channel et affaire, avec un rapport mensuel. Spécifié avant le code : `
       seconde insertion (`409`, ou `400` du plafond). Captures `docs/captures/CRM-098/temps-*` observées ; trois
       retouches tirées des captures (retraits hors échelle, motif de la case déplacé au-dessus de la matrice, première
       colonne réduite sous `md`). `classes-css` : aucune classe manquante. Les campagnes complètes viennent avec T4.
-- [ ] **T3** — Réglages « Coût du personnel », le rapport mensuel, la série « Personnel » de l'écran de coûts du track et
+- [x] **T3** — Réglages « Coût du personnel », le rapport mensuel, la série « Personnel » de l'écran de coûts du track et
       de la fiche d'une affaire ; preuves unitaires.
+      *Vérifié le 2026-10-11* : `rapport-temps.test` **7**, `cout-personnel.test` **6**, `RapportTemps.test` **8** — cinq
+      mutations (« non valorisé » tu, portée unique, version du jour exclue, retrait sans effet compté comme réussi,
+      montant nul changé en zéro), chacune rouge. E2E `e2e/ui/cout-personnel.spec.ts` **5** scénarios verts : rapport
+      d'un membre valorisé à la main (120 × 60 / 105 = 68,57 ; total 428,57 EUR), « Toute l'équipe » et « non
+      valorisé » pour une personne sans version, série « Personnel » du track par channel et temps passé de l'affaire,
+      version programmée créée, relue en base, retirée après confirmation, refus des réglages à un membre. Une retouche
+      tirée des captures : colonnes fixes du rapport, qui dansaient d'une section à l'autre. Les campagnes complètes
+      viennent avec T4.
 - [ ] **T4** — preuves d'API aux jetons réels (refus, plafond concurrent), E2E à la souris et au clavier, captures aux
       quatre paliers observées, seed (`docs/SPEC-seed.md`), manuel, campagnes.
 - [ ] **T5** — livraison en production (migration 87, instantané confirmé) et constat.

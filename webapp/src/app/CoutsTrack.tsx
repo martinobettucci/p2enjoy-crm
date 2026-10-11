@@ -24,6 +24,7 @@
 // UN SLUG REFUSÉ ET UN SLUG INEXISTANT PRODUISENT LE MÊME ÉCRAN, comme dans `RouteTrack` : les
 // distinguer renseignerait un appelant sans droit sur l'existence d'un track
 // (`docs/SPEC-permissions-rls.md` §7).
+// @spec CRM-098 (docs/BACKLOG.md) — tranche T3 : le coût du personnel sous l'histogramme (docs/SPEC-temps.md §7.5)
 
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
@@ -39,6 +40,7 @@ import { AppShell } from './AppShell'
 import { cheminCoutsBudget } from './chemins'
 import { ZoneCoutsAOnglets } from './CoutsASaisir'
 import { HistogrammeCouts, type GroupeHistogramme } from './HistogrammeCouts'
+import { SeriePersonnelTrack } from './SeriePersonnel'
 
 /** Classes du lien de retour, identiques à celles de `RouteTrack` (docs/DESIGN_SYSTEM.md §5.5). */
 const CLASSES_RETOUR = [
@@ -147,11 +149,17 @@ export function ContenuCoutsTrack({
 			client={client}
 			portee={{ genre: 'track', idTrack }}
 			ensemble={
-				<VueEnsembleTrack
-					etat={etat}
-					onReprise={() => setTentative((precedente) => precedente + 1)}
-					{...(slugTrack === undefined ? {} : { slugTrack })}
-				/>
+				// LE COÛT DU PERSONNEL VIENT SOUS L'HISTOGRAMME, JAMAIS DEDANS — `CRM-098`, docs/SPEC-temps.md §7.5
+				// (décision 621, point 8) : sa lecture est indépendante des budgets, et un track sans budget a quand même
+				// du temps passé. Il ne se mêle ni aux barres ni aux mentions du §4.4.
+				<div className="flex flex-col gap-8">
+					<VueEnsembleTrack
+						etat={etat}
+						onReprise={() => setTentative((precedente) => precedente + 1)}
+						{...(slugTrack === undefined ? {} : { slugTrack })}
+					/>
+					{client === null ? null : <SeriePersonnelTrack client={client} idTrack={idTrack} />}
+				</div>
 			}
 		/>
 	)

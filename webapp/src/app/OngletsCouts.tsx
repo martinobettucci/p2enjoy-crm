@@ -48,8 +48,11 @@ export function lireOngletCouts(valeur: string | null): OngletCouts {
 	return valeur === VALEUR_URL_ONGLET_SAISIR ? 'saisir' : 'ensemble'
 }
 
-/** Classes communes aux deux entrées — celles des onglets de channel (`TabBar`, §12.1). */
-const CLASSES_ONGLET = [
+/**
+ * Classes communes aux deux entrées — celles des onglets de channel (`TabBar`, §12.1). Exportées pour les onglets de
+ * l'écran « Temps » (`CRM-098`), qui sont de la même famille : deux barres d'onglets ne se ressemblent pas à moitié.
+ */
+export const CLASSES_ONGLET = [
 	'inline-flex items-center gap-2 px-3 whitespace-nowrap',
 	// Cible interactive ≥ 40 px (§8).
 	'min-h-[var(--size-target)]',
@@ -60,8 +63,8 @@ const CLASSES_ONGLET = [
 	'transition-colors duration-[var(--transition-duration-fast)]',
 ].join(' ')
 
-const CLASSES_ACTIF = 'border-brand text-brand font-medium'
-const CLASSES_INACTIF = 'border-transparent text-text-2 hover:bg-hover'
+export const CLASSES_ACTIF = 'border-brand text-brand font-medium'
+export const CLASSES_INACTIF = 'border-transparent text-text-2 hover:bg-hover'
 
 export type ProprietesOngletsCouts = {
 	readonly onglet: OngletCouts

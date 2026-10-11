@@ -5218,18 +5218,25 @@ collante à gauche (la cible), montants et durées alignés à droite, chiffres 
 
 **Le rapport mensuel** réemploie le tableau du §5.9 : une ligne par cible en arborescence (mêmes retraits), colonnes
 « Temps » (« 2 j 3 h 30 ») et « Coût » par devise, une ligne de total en `font-medium` séparée d'un filet `--color-border`.
+**Les colonnes sont fixes** (`table-fixed`, « Temps » 14 caractères, « Coût » 28) : les sections de « Toute l'équipe »
+s'alignent d'un tableau à l'autre — chaque tableau calculait ses largeurs, et les colonnes dansaient (capture du
+2026-10-11). Une part non valorisée à côté d'un montant se dit « dont 1 h non valorisé ».
 Une saisie non valorisée porte la pilule neutre « non valorisé » (§5.6) à la place du montant — jamais « 0 € ». Le
 sélecteur de mois est un `input type="month"`. Pour un administrateur, un `select` « Personne » propose chacun et
 « Toute l'équipe » ; « Toute l'équipe » rend une section par personne, titre `h3`.
 
-**Réglages ▸ « Coût du personnel ».** Une carte par membre : nom, coût en vigueur (« 120,00 € par quart »), la prochaine
+**Réglages ▸ « Coût du personnel »** (`/reglages/cout-personnel`, entrée de l'index des réglages avant la corbeille ;
+un membre y lit « Réservé aux administrateurs »). Une carte par personne — membre de l'espace, ou personne y ayant déjà
+saisi du temps : nom, coût en vigueur (« 120,00 € par quart »), la prochaine
 version programmée en `--color-text-2` (« 135,00 € à partir du 1er janvier 2027 »), le bouton « Nouvelle version »
 (`Plus`), l'historique dépliable (`History`). Une version programmée porte un bouton icône `Trash2`, confirmation du
-§5.13 ; une version en vigueur n'en porte aucun. Le formulaire : coût par quart, devise, date d'effet (`min` = aujourd'hui,
-sauf pour une première version).
+§5.13, en encart sous la carte, focus sur l'action destructive ; une version en vigueur n'en porte aucun et se dit « En
+vigueur » ou « Remplacée ». Le formulaire, en ligne dans la carte : coût par quart, devise, date d'effet (`min` =
+aujourd'hui, sauf pour une première version), et une phrase sous les champs qui dit la règle de la date.
 
 **Série « Personnel ».** Sur l'écran de coûts du track, un bloc titré « Coût du personnel », sous l'histogramme, jamais
-dedans : un tableau par channel, temps et montant. Dans la fiche d'une affaire, un bloc « Temps passé » après « Coûts ».
+dedans : un tableau par channel, temps et montant. Dans la fiche d'une affaire, un bloc « Temps passé » après « Coûts », en carte bordée comme la relance qui le suit :
+le temps depuis le premier jour et son coût.
 **La portée est écrite** au-dessus du chiffre, en 13 px `--color-text-2` : « Votre temps » pour un membre, « Le temps de
 toute l'équipe » pour un administrateur (`docs/SPEC-temps.md` §7.5) — un total qui ne dit pas ce qu'il compte se lit
 comme celui de l'équipe.

@@ -11,7 +11,8 @@
 // l'importer depuis `routes.tsx` aurait créé un cycle `routes → GuideDemarrage → routes`, que
 // `CLAUDE.md` §3 interdit. Les constantes descendent donc dans un module sans rendu, dont
 // `routes.tsx` les RÉEXPORTE : aucun appelant existant n'est modifié.
-// @spec CRM-098 (docs/BACKLOG.md) — adresse de l'écran « Temps » (docs/SPEC-temps.md §7.1)
+// @spec CRM-098 (docs/BACKLOG.md) — adresses de l'écran « Temps » et du coût du personnel (docs/SPEC-temps.md §7.1,
+//       §7.4)
 
 /** Adresse de l'inbox globale — `CRM-057`. */
 export const CHEMIN_INBOX = '/inbox' as const
@@ -277,3 +278,6 @@ export const CHEMIN_PILOTAGE = '/pilotage' as const
  * (`?semaine=AAAA-MM-JJ`, le lundi) ; son absence vaut la semaine du jour.
  */
 export const CHEMIN_TEMPS = '/temps' as const
+
+/** Réglages ▸ « Coût du personnel » — `CRM-098`, `docs/SPEC-temps.md` §7.4. Réservé aux administrateurs. */
+export const CHEMIN_ADMIN_COUT_PERSONNEL = '/reglages/cout-personnel' as const

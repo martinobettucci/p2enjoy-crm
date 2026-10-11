@@ -31128,6 +31128,16 @@ leur mutation. Trois retouches tirées des captures, portées au §5.54 de la ch
 close (aucun retrait rendu), le motif de la case « En heures » qui déformait la colonne de son jour, la première
 colonne trop large sous `md`. L'entrée de navigation suit « Pilotage », et non « Coûts », que le §5.48 veut voisins.
 
+**`CRM-098` T3, livrée en développement le 2026-10-11** — le rapport mensuel, Réglages ▸ « Coût du personnel » et la
+série « Personnel ». Tout lit `public.temps_valorise` : la valorisation n'a qu'une écriture, en base ; l'interface
+regroupe et additionne par devise sans jamais changer un `null` en zéro. **Contrainte de preuve** : une version de coût
+en vigueur ne se retire jamais, même par la clé de service ; les E2E posent donc leurs versions dans le futur (2027) et
+leur temps en mars 2027, et retirent tout. Une retouche tirée des captures : colonnes fixes du rapport. **Captures des
+autres unités** : l'entrée « Temps » de la barre latérale change toute capture où la barre paraît ; celles réécrites
+par les specs de coûts sont gardées (barre, bloc « Temps passé », série « Personnel »), les trois réécritures sans
+changement visible (47 pixels de bruit d'encodage) sont restaurées. Les autres captures du produit seront renouvelées
+par la campagne complète de T4.
+
 ## décision 622 — `CRM-099` : plusieurs coûts réels par ligne de coût, jusqu'à ce qu'on la solde
 
 *2026-10-11 ; remarque du responsable pendant la rédaction de `CRM-098`, arbitrages rendus par lui le même jour, avant

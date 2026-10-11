@@ -212,6 +212,11 @@ Découpage prévu : `src/lib` (client Supabase, types générés, helpers), `src
   aucune règle — le plafond, la cible lisible et qui saisit pour qui sont tenus par la migration `0087`. **La semaine
   affichée est un paramètre d'adresse** (`semaine`, le lundi) ; la personne pour qui un administrateur saisit ne l'est
   pas : elle revient à soi au rechargement, pour qu'aucune adresse partagée ne fasse saisir au nom d'un autre ;
+- `src/app/RapportTemps.tsx`, `src/app/ReglagesCoutPersonnel.tsx`, `src/app/SeriePersonnel.tsx`,
+  `src/lib/rapport-temps.ts` et `src/lib/cout-personnel.ts` (`CRM-098` T3, `docs/SPEC-temps.md` §7.3 à §7.5) — le rapport
+  mensuel, les versions de coût et la série « Personnel » (écran de coûts du track, fiche d'une affaire). Tous lisent
+  `public.temps_valorise` : **la valorisation n'a qu'une écriture, en base**, et l'interface ne calcule aucun montant —
+  elle regroupe, nomme et additionne par devise ce que la fonction rend, sans jamais changer un `null` en zéro ;
 - `src/app/ContexteEspace.tsx`, `src/app/GuideFlottant.tsx`, et le signal `p2enjoy:workflow-de-depart`
   de `src/lib/demarrage.ts` (`CRM-094`, `docs/SPEC-onboarding.md` §10) — la coquille lit **une fois**
   l'espace courant et le rôle que la base y rend (`mon_role_espace`), et les passe par un contexte au

@@ -152,11 +152,14 @@ lui-même par défaut.
 
 ### 7.3 Le rapport mensuel
 
-Un sélecteur de mois. Pour un membre : **son** mois — une ligne par cible (track › channel › affaire), le temps en jours
+Un sélecteur de mois (`?mois=AAAA-MM`, le mois du jour par défaut). Pour un membre : **son** mois — une ligne par cible (track › channel › affaire), le temps en jours
 et en heures, le montant par devise, et les totaux. Pour un administrateur : en plus, une personne ou **« Toute
 l'équipe »**, avec un tableau par personne. Une saisie non valorisée est comptée en temps et dite « non valorisée ».
 
 ### 7.4 Réglages ▸ « Coût du personnel » — administrateurs
+
+Adresse : `/reglages/cout-personnel`, atteinte depuis l'index des réglages. Les personnes listées sont les membres de
+l'espace et celles qui y ont déjà saisi du temps (un administrateur du domaine, §3.1).
 
 La liste des membres, avec le coût en vigueur et la prochaine version programmée ; l'ajout d'une version (coût par
 quart, devise, date d'effet — aujourd'hui au plus tôt, toute date pour une première version) ; l'historique des versions

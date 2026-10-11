@@ -61,6 +61,7 @@ import {
 	cheminOrganisation,
 	CHEMIN_REGLAGES_NOTIFICATIONS,
 	CHEMIN_TEMPS,
+	CHEMIN_ADMIN_COUT_PERSONNEL,
 } from './chemins'
 
 export {
@@ -93,6 +94,7 @@ export {
 	cheminOrganisation,
 	CHEMIN_REGLAGES_NOTIFICATIONS,
 	CHEMIN_TEMPS,
+	CHEMIN_ADMIN_COUT_PERSONNEL,
 }
 
 /**
@@ -205,6 +207,8 @@ export const CLE_TITRE_SEQUENCES_MAIL: CleTraduction = 'admin.sequences.title'
  * n'a plus de place dans les listes où il vivait.
  */
 export const CLE_TITRE_CORBEILLE: CleTraduction = 'admin.trash.title'
+
+export const CLE_TITRE_COUT_PERSONNEL: CleTraduction = 'staffCost.title'
 
 /** `CRM-064` tranche 4 — `docs/DESIGN_SYSTEM.md` §5.45. */
 export const CLE_TITRE_REGLAGES_NOTIFICATIONS: CleTraduction = 'settings.notifications.title'
@@ -434,6 +438,17 @@ export function IndexReglages() {
 					>
 						<span className="font-medium">{t('admin.settings.index.mail')}</span>
 						<span className="text-sm text-text-2">{t('admin.settings.index.mail.body')}</span>
+					</Link>
+				</li>
+				{/* Le coût du personnel — `CRM-098`, docs/SPEC-temps.md §7.4. AVANT la corbeille : c'est un réglage de
+				    l'espace, la corbeille un recours. */}
+				<li>
+					<Link
+						to={CHEMIN_ADMIN_COUT_PERSONNEL}
+						className="flex flex-col gap-1 px-4 py-3 min-h-[var(--size-target)] hover:bg-hover rounded-lg"
+					>
+						<span className="font-medium">{t('admin.settings.index.staffCost')}</span>
+						<span className="text-sm text-text-2">{t('admin.settings.index.staffCost.body')}</span>
 					</Link>
 				</li>
 				<li>

@@ -62,6 +62,7 @@
 //
 // Rien ne confronte le couple `(slugTrack, slugChannel)` de l'adresse à la card qu'elle désigne —
 // **INC-065**, comportement inchangé, arbitrage demandé.
+// @spec CRM-098 (docs/BACKLOG.md) — tranche T3 : le bloc « Temps passé » de la fiche (docs/SPEC-temps.md §7.5)
 
 import { Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -78,6 +79,7 @@ import { useAuthentification } from './Authentification'
 import { AppShell } from './AppShell'
 import { BlocContactsCard } from './BlocContactsCard'
 import { BlocCoutsCard } from './BlocCoutsCard'
+import { BlocTempsCard } from './SeriePersonnel'
 import { BlocSequenceCard } from './BlocSequenceCard'
 import { EnTeteCard } from './EnTeteCard'
 import { FormulaireCard } from './FormulaireCard'
@@ -273,6 +275,9 @@ function ContenuCard({
 					idCard={etat.donnees.card.id}
 					titreCard={etat.donnees.card.title}
 				/>
+				{/* LE TEMPS PASSÉ — `CRM-098` tranche T3, docs/SPEC-temps.md §7.5 : APRÈS les coûts et à côté d'eux, jamais
+				    mêlé à leurs lignes (décision 621, point 8). Sa portée est écrite : un membre n'y lit que son temps. */}
+				<BlocTempsCard client={clientCrm} idCard={etat.donnees.card.id} />
 				{/* ARMER UNE RELANCE — CRM-063 sous-tranche 4c, docs/SPEC-modeles-emails.md §13.8.
 				    Le bloc vit ENTRE les coûts et le bloc de corbeille, pour la raison qui a déjà placé
 				    les contacts et les coûts là : la colonne DROITE raconte et n'accueille aucun geste,
