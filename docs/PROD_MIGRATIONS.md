@@ -36,7 +36,7 @@ source d'identité.
 | Schéma appliqué | Les **86 migrations** du dépôt : 1 à 73 par `--migrate --premier-deploiement` sur une base mesurée vierge (2026-09-23), 74 à 79 par la reprise `CRM-092` (2026-09-24), 80 par `CRM-094` (2026-09-28), 81 par `CRM-095` (2026-09-29), 82 par `CRM-096` (2026-10-01), 83 à 86 par `CRM-097` T4 (2026-10-03). **Le registre `app.migrations_appliquees` le dit** : 86 lignes — les 82 premières en `adoption`, les 83 à 86 en `application` —, empreintes égales à celles du dépôt livré |
 | Dernière migration appliquée | `0086_suggestions_ia_modification.sql` — relue en base le 2026-10-03, en lecture seule : 86 lignes au registre, les quatre fonctions de `CRM-097` présentes, la clé `workflow_steps_workflow_id_node_id_key` ajournable (INC-270) |
 | Version déployée | La révision inscrite dans `/srv/crm/REVISION` — celle que `scripts/spark/verifier.sh` compare au `HEAD` du poste ; **`38237656`** le 2026-10-03 (`CRM-097` T1 à T3, INC-266, INC-268, INC-270, migrations 83 à 86 ; après `2ff0c703` — `CRM-096`, migration 82 —, INC-262 et INC-263 — `09d3abcc` —, `CRM-095` et INC-258 à INC-261 — `796aa3c1`, migration 81 —, `CRM-094`, INC-254 et INC-255) |
-| Assistant IA | Variables `OLLAMA_HOST`, `OLLAMA_CONTEXT_LENGTH` et secret `OLLAMA_API_KEY` **présents** dans la cellule et remis à `functions` (relevé du 2026-10-03, présence seule) ; `OLLAMA_MODEL` absent, d'où le défaut `gemma4:e2b` de Compose. Le serveur LLM **refuse** la clé : HTTP 403 « origine non autorisée pour cette clé » — la plage d'adresses de la cellule reste à autoriser par LeLabs (§2.9, geste 6) |
+| Assistant IA | Variables `OLLAMA_HOST`, `OLLAMA_CONTEXT_LENGTH` et secret `OLLAMA_API_KEY` **présents** dans la cellule et remis à `functions` (relevé du 2026-10-03, présence seule) ; `OLLAMA_MODEL` absent, d'où le défaut `gemma4:e2b` de Compose. Refusée le 2026-10-03 (403), la cellule est **autorisée par LeLabs** : `GET /functions/v1/ia/etat` rend `{"disponible":true,"modele":"gemma4:e2b"}` le 2026-10-11 (§2.9, geste 7) |
 | Données | Un espace, « P2Enjoy CRM » (`crm`), réamorcé par la reprise `CRM-092`, et les données qu'y écrit le responsable — relevé du 2026-10-01, en lecture seule : 2 profils, 2 workflows dont celui de départ, 8 affaires ; aucun seed. La ligne `auth.users` de l'ancien compte invité reste, inerte |
 | Route publique | `crm.lelabs.tech 8080 tls`, active : `https://crm.lelabs.tech`, certificat Let's Encrypt présenté par la Forge (décision 576) |
 | Client OIDC `lelabs-crm` | Déclaré et créé au realm le 2026-09-23 à 16:08:44 (`docs/SSO-client-lelabs-crm.md`), **supprimé du realm avant le déploiement de `CRM-092`** : sonde `400` « Client non trouvé » le 2026-09-24 à 18 h, retrait confirmé par l'instantané de reprise du dépôt du SSO (décision 598). Sans effet sur le service : aucune connexion n'avait encore été faite, elle attend `CRM-092` (§3) |
@@ -270,7 +270,7 @@ fonction absente.
 **Retour arrière** : la 81 se retire par sa ligne du §3.2, avec la révision précédente de la webapp ; les
 affaires créées restent, ce sont des données.
 
-### 2.9 `CRM-097` — l'assistant IA, avec INC-266, INC-268 et INC-270 (EXÉCUTÉE le 2026-10-03 jusqu'au geste 4 ; gestes 6 et 7 en attente)
+### 2.9 `CRM-097` — l'assistant IA, avec INC-266, INC-268 et INC-270 (EXÉCUTÉE ; geste 7 constaté le 2026-10-11, génération réelle à constater par le responsable)
 
 `docs/SPEC-ia.md` §11 à §13, `docs/SPEC-deploiement-spark.md` §4.3 et §4.4 ; décisions 617 à 620. Quatre
 migrations — **83 à 86**, appliquées d'une traite par le registre (§3.1) —, la fonction `ia`, la webapp de T2 et T3,
@@ -1258,3 +1258,7 @@ publique sert le module d'objectifs de ce build (`200`). La baseline reste **81*
   par la route publique avec la clé anonyme : `{"disponible":false,"raison":"cle_refusee","modele":"gemma4:e2b"}` ; une
   sonde de `/api/tags` depuis la cellule rend **403 « origine non autorisée pour cette clé »** — la plage d'adresses de la
   cellule reste à autoriser par LeLabs. **En attente du responsable.**
+- **Geste 6 fait par le responsable, geste 7 constaté le 2026-10-11** : LeLabs a autorisé la cellule ;
+  `GET /functions/v1/ia/etat`, par la route publique avec la clé anonyme, rend `{"disponible":true,"modele":"gemma4:e2b"}`.
+  Aucune génération n'est lancée par l'agent en production (aucune donnée de preuve n'y est écrite) : la première
+  génération réelle, par le responsable, reste à constater avant de publier `CRM-097`.

@@ -14938,6 +14938,8 @@ le serveur réel.
       `mail-sync` reconstruit, `verifier.sh` 26 sans anomalie, registre de 86 lignes aux empreintes du dépôt. **Reste
       `[ ]`** : le serveur LLM refuse la plage d'adresses de la cellule (403 « origine non autorisée pour cette clé ») ;
       à autoriser par LeLabs, puis constater `disponible` et une génération réelle.
+      *2026-10-11* : LeLabs a autorisé la cellule ; l'état public rend `disponible` (`gemma4:e2b`). Reste la
+      première génération réelle, faite et constatée par le responsable, avant `[x]` et la publication.
 
 ## Arbitrage du 2026-10-03 — INC-265 à INC-269 (décision 619)
 

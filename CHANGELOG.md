@@ -17,8 +17,8 @@ d'exécuter le code attendu.
 
 *Décisions 617, 618 et 620. **Livré en production le 2026-10-03** (`38237656`, migrations 83 à 86 appliquées par une
 fenêtre avec instantané, fonction `ia` et webapp) ; **publié quand l'assistant répondra en production** : le serveur
-LLM de LeLabs refuse encore la plage d'adresses de la cellule (« origine non autorisée pour cette clé », mesuré), puis
-une génération sera constatée par le responsable (`docs/PROD_MIGRATIONS.md` §2.9, gestes 6 et 7).*
+LLM de LeLabs, qui refusait la cellule le 2026-10-03, l'autorise depuis — l'assistant répond « disponible » le
+2026-10-11 — ; reste une première génération réelle, constatée par le responsable (`docs/PROD_MIGRATIONS.md` §2.9).*
 
 - **Les suggestions de l'IA et leur historique**, en base (migration `0083`) : réservés aux administrateurs ;
   une suggestion se corrige, se fait revoir, s'abandonne ; rien n'entre dans la configuration avant son
