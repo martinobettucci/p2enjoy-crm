@@ -31145,3 +31145,55 @@ elles reçoivent un réel de 0 et reviennent dans l'onglet ; c'est signalé au r
 
 **Suite** : la révision de `docs/SPEC-costs.md` (§2.3 bis), de la charte (`docs/DESIGN_SYSTEM.md` §5.31 bis), du schéma
 (migration `0088`, après `0087` de `CRM-098`) et l'unité `CRM-099` au backlog, committées avant le code.
+
+## décision 623 — `CRM-100` : créer un channel depuis le track, et l'aller-retour vers l'éditeur de workflows
+
+*2026-10-11 ; demande du responsable et arbitrages rendus par lui, avant toute spécification et tout code.*
+
+**La demande, mot pour mot** : « il n'y a pas d'option pour créer un channel directement depuis la vue track (il faut
+repasser par les réglages) ce qui n'est pas très convenient. Il n'y a pas de bouton pour ajouter un workflow nouveau lors
+de la création d'un channel, il faut l'avoir créé au préalable avant de créer un channel qui aurait besoin d'un nouveau
+workflow : il serait préférable d'avoir un bouton qui ouvre la vue de création des workflows au lieu de devoir repasser
+par les réglages. »
+
+**Ce que l'existant porte** : « Nouveau channel » ne vit que dans l'arborescence (`/reglages/arborescence`,
+`docs/SPEC-administration-arborescence.md` §7) ; la vue d'un track ne le propose que dans l'état vide « aucun channel »,
+par un LIEN vers l'arborescence (INC-258, `docs/DESIGN_SYSTEM.md` §5.51). Le formulaire de channel ne mène à l'éditeur de
+workflows que lorsque AUCUN workflow n'est affectable (`CRM-094`, `docs/SPEC-onboarding.md` §10.5), et ce lien perd la
+saisie. Deux contraintes cadrent les options : la charte n'a **aucune modale** (§5.13 — tout formulaire vit dans le flux),
+et un workflow créé **naît vide**, sans étape (`docs/SPEC-workflow-engine.md` §3 bis.1) : un channel n'a de board qu'une
+fois son workflow composé.
+
+**Arbitrages rendus (options présentées, recommandation en premier)** :
+
+1. **« Nouveau channel » dans la vue du track : formulaire sur place** — retenu, recommandé. Une commande en fin de barre
+   d'onglets ouvre, sous la barre, le formulaire du channel — le MÊME composant que l'arborescence, partagé et non
+   recopié ; après la création, la vue bascule sur le board du nouveau channel, dont l'onglet paraît. *Écartée : un lien
+   vers l'arborescence, track déplié et formulaire ouvert — moins de code, mais on quitte toujours le track.*
+2. **« Nouveau workflow » dans le formulaire du channel : l'aller-retour vers l'éditeur** — retenu, recommandé. La commande
+   ouvre l'éditeur de workflows avec le formulaire de création déjà ouvert, portée pré-réglée sur le track du channel ; on
+   crée, on compose les étapes, puis un lien « Revenir au nouveau channel » ramène au formulaire du channel — nom, slug et
+   description conservés, portés par l'adresse, et le workflow créé présélectionné. *Écartées : une création en ligne
+   (mini-formulaire, workflow créé vide, board sans colonne jusqu'à l'éditeur) ; l'éditeur dans un nouvel onglet du
+   navigateur, le formulaire relisant ses workflows au retour sur l'onglet.*
+
+**Conséquences tirées, à la rédaction** (`docs/SPEC-administration-arborescence.md` §13, `docs/DESIGN_SYSTEM.md` §5.55) :
+
+- l'état du formulaire et le brouillon voyagent dans l'ADRESSE, pas dans un stockage du navigateur (`CLAUDE.md` §11) : un
+  aller-retour, un rechargement ou un lien copié les conservent, et rien ne persiste hors de l'historique ;
+- le retour depuis l'éditeur ramène à l'ÉCRAN D'ORIGINE — la vue du track ou l'arborescence —, puisque le formulaire
+  partagé vit aux deux endroits ; l'adresse de retour est validée par liste blanche (aucune redirection ouverte) ;
+- un workflow créé par « Créer avec l'IA » pendant l'aller-retour compte comme créé : l'acceptation crée un workflow et le
+  choisit (`docs/SPEC-ia.md` §12.5) ;
+- aucune règle d'accès nouvelle, aucune migration : la base refuse déjà la création d'un channel et d'un workflow à qui
+  n'est pas administrateur ; la commande est rendue à tous les rôles, comme toutes les commandes d'administration
+  (§10 de la spécification de l'arborescence) — la question générale relève de `CRM-093`, non arbitrée ;
+- la vue du track lit désormais le `workspace_id` de son track (une colonne de plus à une lecture existante) : la création
+  d'un channel et la liste des workflows affectables en ont besoin ;
+- l'état vide « aucun channel » cesse de renvoyer à l'arborescence : le geste vit désormais sur l'écran même, et la règle
+  du §5.51 veut alors que le texte NOMME la commande sans ajouter de lien ;
+- hors périmètre, nommé : « Nouveau workflow » dans le formulaire de MODIFICATION d'un channel — changer le workflow d'un
+  channel qui porte des affaires relève de `docs/SPEC-change-channel-workflow.md`, pas d'un raccourci d'ergonomie.
+
+**Suite** : la spécification (`docs/SPEC-administration-arborescence.md` §13), la charte (`docs/DESIGN_SYSTEM.md` §5.55),
+le renvoi depuis `docs/SPEC-workflow-engine.md` §3 bis.2 et l'unité `CRM-100` au backlog, committés avant le code.

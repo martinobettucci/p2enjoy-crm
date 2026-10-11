@@ -1,6 +1,6 @@
 # Spécification — Administration des tracks et des channels
 
-Unité de backlog : `CRM-075` (voir `docs/BACKLOG.md`).
+Unité de backlog : `CRM-075` (voir `docs/BACKLOG.md`) ; le §13 relève de `CRM-100` (décision 623).
 Documents liés : `docs/SPEC-tracks.md` (le modèle et le contrat d'API des tracks),
 `docs/SPEC-channels.md` (idem pour les channels), `docs/SPEC-workflow-engine.md` §4.12 (contrainte
 d'affectation d'un workflow), `docs/SPEC-permissions-rls.md` §4 (politiques), `docs/SPEC-webapp.md`
@@ -410,3 +410,180 @@ les preuves échouent, puis restaure et constate le retour au vert.
 préfixés qui n'entrent en collision avec aucun slug seedé, et les archive en épilogue — la
 suppression n'existant pas. Un scénario qui laisserait derrière lui un track de plus ferait dériver
 les captures et les comptages des autres unités.
+
+---
+
+## 13. Créer un channel depuis le track, et l'aller-retour vers l'éditeur de workflows — `CRM-100`
+
+*Écrit le 2026-10-11, avant le code — décision 623 (`docs/JOURNAL.md`), arbitrages du responsable. Charte :
+`docs/DESIGN_SYSTEM.md` §5.55.*
+
+### 13.1 Objet, et ce que ce chapitre ne livre pas
+
+Deux raccourcis d'ergonomie, **sans aucune règle nouvelle** — la contrainte du §1 vaut ici mot pour mot :
+
+1. **« Nouveau channel » dans la vue d'un track** (`/tracks/:slugTrack…`) : le formulaire du §7 s'ouvre sous la barre
+   d'onglets, sans passer par les réglages ;
+2. **« Nouveau workflow » dans le formulaire de CRÉATION d'un channel**, aux deux endroits où il vit : un aller-retour vers
+   l'éditeur de workflows (`docs/SPEC-workflow-engine.md` §3 bis), qui rend la saisie intacte et présélectionne le
+   workflow créé.
+
+| Hors périmètre | Pourquoi |
+|---|---|
+| « Nouveau workflow » dans le formulaire de **modification** d'un channel | Changer le workflow d'un channel qui porte des affaires relève de `docs/SPEC-change-channel-workflow.md`, pas d'un raccourci |
+| Toute migration, toute politique, toute fonction | Les écritures sont celles du §7 et du §3 bis de `docs/SPEC-workflow-engine.md`, déjà prouvées |
+| Masquer les commandes selon le rôle | §10 ; la question générale appartient à `CRM-093`, non arbitrée |
+| Une modale | `docs/DESIGN_SYSTEM.md` §5.13 : aucune ; le formulaire vit dans le flux |
+| Une création de workflow « en ligne » dans le formulaire du channel | Écartée par la décision 623 : un workflow naît vide, et le composer exige l'éditeur |
+
+### 13.2 Le formulaire partagé
+
+Le formulaire du §7 quitte `AdministrationArborescence.tsx` pour un module propre, `webapp/src/app/FormulaireChannel.tsx`,
+qu'importent les deux écrans. Il n'est **pas recopié** : deux copies divergeraient au premier refus traduit d'un côté
+seulement. Ce qu'il demande, sa validation de forme (§8), ses refus (§9) et l'absence de défaut présélectionné (§7.2) sont
+inchangés.
+
+Il reçoit deux propriétés nouvelles, **toutes deux réservées à la création** :
+
+- **`cheminNouveauWorkflow(saisie)`** — l'adresse de l'aller-retour, calculée par l'écran hôte à partir de la saisie
+  COURANTE (§13.4). Fournie, elle rend le lien « Nouveau workflow » sous le sélecteur, **quel que soit l'état de la liste**
+  — chargement, erreur, vide ou non —, et l'état vide « aucun workflow n'est affectable » de `CRM-094` mène à la même
+  adresse au lieu de l'éditeur nu. Absente — en modification —, rien ne change ;
+- **`idWorkflowAttendu`** — le workflow créé pendant l'aller-retour (§13.6). S'il figure dans la liste lue, il est la
+  valeur initiale du sélecteur ; s'il n'y figure pas — créé propre à UN AUTRE track —, le sélecteur reste sur « Choisir »
+  et une ligne le dit sous lui : « Le workflow créé n'est pas affectable à ce track. » Le taire laisserait croire que
+  l'aller-retour a échoué.
+
+### 13.3 « Nouveau channel » dans la vue d'un track
+
+**Où.** Une commande de la barre d'onglets, **après les onglets des channels et avant les entrées transverses** (« Coûts »,
+`docs/DESIGN_SYSTEM.md` §4). Elle est rendue aussi quand le track n'a aucun channel — à côté de « Aucun channel », qui
+reste vrai.
+
+**Un lien, et non un bouton.** Le formulaire ouvert est un état de l'ADRESSE : `?nouveau-channel=1`, ajouté aux
+paramètres présents (ceux de la vue liste sont conservés). C'est ce qui permet au retour de l'éditeur (§13.6) de rouvrir le
+formulaire, et à un rechargement de ne pas le perdre. La règle de la charte (§12.1, §5.51) veut qu'un geste qui change
+l'adresse soit un lien.
+
+**Ce que l'écran fait à l'ouverture.** Le formulaire paraît en tête de la zone principale, au-dessus du board, de la vue
+liste ou de l'état vide, qui restent rendus dessous — sauf l'état vide « aucun channel », que le formulaire remplace. La
+liste des workflows affectables est lue À L'OUVERTURE (lecture du §7.2, inchangée), avec le `workspace_id` du track : la
+lecture du track par la route (`COLONNES_TRACK_OUVERT`, `webapp/src/lib/channels.ts`) porte désormais cette colonne, la
+seule ajoutée par ce chapitre.
+
+**Ce que l'écran envoie.** L'écriture `creerChannel` du §7, inchangée : `workspace_id` et `track_id` du track de la route,
+jamais saisis (§7.3).
+
+**Après un succès.** Les paramètres du formulaire quittent l'adresse, la vue s'ouvre sur le **board du nouveau channel**
+(`/tracks/<track>/<slug créé>`), les channels du track sont **relus** — l'onglet paraît sans rechargement, sans squelette
+—, l'annonce « Channel « … » créé » est faite dans la région vivante, et le focus se pose sur l'onglet du nouveau
+channel, une fois celui-ci rendu.
+
+**Après un refus.** Le refus s'écrit dans le formulaire (§9), la saisie conservée.
+
+**Annuler, ou `Échap` depuis un champ**, retire les paramètres du formulaire de l'adresse et rend le focus à la commande
+« Nouveau channel » — différé d'un rendu, sans temporisation.
+
+**L'état vide « aucun channel »** cesse de porter le lien vers l'arborescence : le geste vit désormais sur l'écran même, et
+le §5.51 de la charte veut alors que le texte NOMME la commande — « Nouveau channel » — sans ajouter de second accès.
+
+### 13.4 L'aller-retour : l'adresse de départ
+
+« Nouveau workflow » mène à :
+
+```
+/reglages/workflows?creer=1&track=<id du track>&retour=<adresse d'origine, encodée>
+```
+
+L'**adresse d'origine** est celle de l'écran hôte, formulaire ouvert, **brouillon compris** :
+
+| Écran hôte | Adresse d'origine |
+|---|---|
+| Vue d'un track | l'adresse courante (chemin et paramètres conservés), `nouveau-channel=1` |
+| Arborescence | `/reglages/arborescence?nouveau-channel=<id du track>` |
+
+et, dans les deux cas, le brouillon : `nc-nom`, `nc-slug`, `nc-description` — un paramètre vide n'est pas écrit. Le
+préfixe `nc-` évite toute collision avec les paramètres de la vue liste. Le slug n'est porté que s'il a été **saisi** :
+un slug proposé à partir du nom se recalcule au retour.
+
+**Pourquoi l'adresse, et pas un stockage du navigateur** : rien n'est conservé hors de l'historique de l'onglet
+(`CLAUDE.md` §11) ; le retour, le bouton « Précédent » et un rechargement produisent le même formulaire.
+
+### 13.5 Dans l'éditeur de workflows
+
+- **`creer=1`** ouvre le formulaire de création au montage ; **`track=<id>`** y pré-règle la portée « Propre à un track »
+  et ce track — modifiables : la portée « Global » reste un choix légitime. Une fois lus, ces deux paramètres **quittent
+  l'adresse** (remplacement, sans entrée d'historique) : un rechargement ne rouvre pas une création déjà faite ou
+  abandonnée.
+- **Un workflow créé** — par le formulaire, ou par l'acceptation d'une suggestion de l'IA (`docs/SPEC-ia.md` §12.5), qui
+  crée et choisit un workflow — **inscrit `workflow-cree=<id>` dans l'adresse** (remplacement). Un rechargement en pleine
+  composition ne le perd pas. Un second workflow créé remplace le premier : c'est le dernier créé qui revient.
+- **`retour`** est lu à chaque rendu. S'il est **valide** (§13.7), un bandeau en tête de l'écran le rappelle — « Vous créez
+  un channel » — avec le lien **« Revenir au nouveau channel »**. Après une création, le bandeau nomme le workflow qui
+  sera présélectionné. `retour` reste dans l'adresse tant qu'on compose : choisir un autre workflow, ajouter des étapes,
+  des transitions ou des champs ne le fait pas disparaître.
+- Le lien de retour mène à l'adresse d'origine, augmentée de **`nc-workflow=<workflow-cree>`** lorsqu'un workflow a été
+  créé. Sans création, il ramène au formulaire tel qu'il a été quitté.
+
+L'éditeur ne contrôle pas que le workflow créé ait des étapes : un workflow vide est un brouillon légitime
+(`docs/SPEC-workflow-engine.md` §3.5), et le board du channel le dira par son état vide, qui mène à l'éditeur (§5.51).
+
+### 13.6 Au retour
+
+- **Vue d'un track** : `nouveau-channel=1` ouvre le formulaire, prérempli de `nc-nom`, `nc-slug`, `nc-description`, et
+  `nc-workflow` devient `idWorkflowAttendu` (§13.2).
+- **Arborescence** : `nouveau-channel=<id du track>` — une fois les tracks lus — déplie ce track s'il ne l'est pas et ouvre
+  sa création de channel, préremplie de la même façon. Si le track n'est pas dans la liste lue — archivé et masqué, retiré,
+  ou illisible —, les paramètres quittent l'adresse et rien ne s'ouvre : il n'y a pas de formulaire à rouvrir sur un track
+  que l'écran ne montre pas.
+- Dans les deux écrans, **les paramètres du formulaire quittent l'adresse quand il se referme** — succès, « Annuler » ou
+  `Échap`.
+
+### 13.7 Validation de l'adresse de retour
+
+`retour` vient de l'adresse, donc de n'importe qui : un lien forgé ne doit pas faire de l'éditeur une **redirection
+ouverte**. Il n'est retenu que s'il est, une fois décodé :
+
+- un chemin **relatif à l'origine** — commence par un seul `/`, sans `//`, sans `\`, sans schéma ;
+- vers l'un des **deux écrans hôtes** : `/tracks/<slug>`, `/tracks/<slug>/<slug>` ou `/tracks/<slug>/<slug>/liste`, ou
+  `/reglages/arborescence` ;
+- portant le paramètre `nouveau-channel`.
+
+Sinon le bandeau n'est pas rendu, et l'éditeur se comporte comme sans aller-retour. La validation est une fonction pure
+de `webapp/src/lib/nouveau-channel.ts`, prouvée par ses tests unitaires — dont les formes d'attaque : adresse absolue,
+`//hôte`, `/\hôte`, `javascript:`, chemin hors liste.
+
+### 13.8 États, rôles et refus
+
+- Les quatre états du formulaire sont ceux du §7 : chargement de la liste des workflows, erreur de lecture, liste vide,
+  liste prête.
+- **Rendu à tous les rôles** (§10) : la commande, le formulaire et le lien « Nouveau workflow » le sont ; la base refuse la
+  création d'un channel (`42501`) et celle d'un workflow (`docs/SPEC-workflow-engine.md` §3 bis.5) à qui n'est pas
+  administrateur, et l'écran traduit. Le refus est déjà prouvé hors interface par `e2e/api/administration-arborescence.spec.ts`
+  et par les preuves d'API de `CRM-031` ; la preuve E2E de ce chapitre montre qu'il est TRADUIT dans la vue du track.
+- Un workflow non affectable au retour : §13.2.
+
+### 13.9 Limites connues
+
+1. Le brouillon voyage en clair dans l'adresse — nom, slug, description d'un channel, rien de plus. Il entre dans
+   l'historique du navigateur comme toute adresse du produit ; aucune donnée personnelle n'y est attendue.
+2. Un aller-retour abandonné — l'éditeur quitté par un autre chemin — laisse le workflow créé, vide ou non : c'est un objet
+   d'administration ordinaire, visible dans l'éditeur.
+3. Un workflow créé propre à un autre track n'est pas affectable ; l'écran le dit (§13.2) sans proposer de le copier.
+
+### 13.10 Preuves attendues
+
+| Preuve | Support |
+|---|---|
+| Composition des adresses, lecture du brouillon, validation du retour (formes d'attaque comprises) | `webapp/src/lib/nouveau-channel.test.ts` |
+| Le formulaire partagé : lien « Nouveau workflow » et son adresse, présélection, workflow non affectable, modification sans lien | `webapp/src/app/FormulaireChannel.test.tsx` |
+| La commande de la barre d'onglets, avec et sans channel, son adresse | `webapp/src/app/TabBar.test.tsx` |
+| La vue du track : ouverture par l'adresse, envoi, succès vers le board, annulation, `Échap`, état vide sans lien | `webapp/src/app/RouteTrack.test.tsx` |
+| L'éditeur : `creer=1` et `track`, bandeau, `workflow-cree` après création et après acceptation IA, lien de retour | `webapp/src/app/AdministrationWorkflows.test.tsx` |
+| L'arborescence : réouverture préremplie par l'adresse, track absent | `webapp/src/app/AdministrationArborescence.test.tsx` |
+| La lecture du track porte `workspace_id` | `webapp/src/lib/channels.test.ts` |
+| Parcours réels : créer un channel depuis le track à la souris ; l'aller-retour complet au clavier seul (workflow créé, une étape ajoutée, retour, channel créé, board à une colonne) ; l'aller-retour depuis l'arborescence ; le refus traduit pour un non-administrateur ; captures aux quatre paliers | `e2e/ui/nouveau-channel.spec.ts`, captures `docs/captures/CRM-100/` |
+
+Le scénario E2E rend le seed à son état : ses channels et workflows portent un préfixe propre, et sont retirés après chaque
+scénario par la clé de service — le patron de `e2e/ui/nouvelle-affaire.spec.ts` —, retrait CONSTATÉ par une relecture.
+Chaque effet d'écran est confirmé en base par une lecture de service.

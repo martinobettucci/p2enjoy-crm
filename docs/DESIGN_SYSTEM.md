@@ -5231,3 +5231,40 @@ chacun saisit son temps (`docs/SPEC-temps.md` §5.2).
 
 **Paliers.** Sous 768 px, la matrice garde sa première colonne collante et défile horizontalement dans son conteneur
 (`overflow-x-auto`, jamais la page) ; les onglets et la navigation de semaine passent sur deux lignes.
+
+### 5.55 « Nouveau channel » dans la barre d'onglets, et l'aller-retour vers l'éditeur de workflows — `CRM-100`
+
+*Écrit le 2026-10-11, avant le code (décision 623).* Ce que les gestes envoient, l'adresse qui les porte et sa validation
+sont spécifiés par `docs/SPEC-administration-arborescence.md` §13 ; ces règles ne disent que de quoi ils ont l'air. Tout ce
+que le §5.13 et le §5.50 posent vaut ici sans être répété : formulaire **dans le flux** — aucune modale —, focus entrant
+dans le premier champ et rendu à la commande qui l'a ouvert, alerte de refus dans le formulaire, rendu à tous les rôles.
+
+- **La commande de la barre d'onglets est un LIEN** (elle change l'adresse, §12.1), icône Lucide `Plus` à 16 px
+  `aria-hidden` suivie du libellé « Nouveau channel » — jamais l'icône seule (§9). Elle vit **après les onglets des
+  channels, avant le filet des entrées transverses** (§4) : elle agit sur la liste des channels, dont elle est la fin, et
+  non sur le track entier. Elle n'est pas un onglet : **aucune bordure basse, jamais `aria-current`**, texte
+  `--color-text-2`, survol `--color-hover`, `--radius-sm`, hauteur `--size-target`. Rendue aussi quand le track n'a aucun
+  channel, à côté de « Aucun channel ».
+- **La commande et le formulaire s'excluent** (§5.50) : pendant la saisie, la commande quitte la barre ; le focus lui
+  revient à la fermeture, différé d'un rendu.
+- **Le formulaire s'ouvre en tête de la zone principale**, sous la barre, `--color-surface`, `--radius-lg`, bordure
+  `--color-border` : c'est le formulaire de channel du §5.13, le même composant. Le board ou la vue liste restent rendus
+  dessous ; l'état vide « aucun channel » est remplacé par lui.
+- **Après la création**, la vue s'ouvre sur le board du nouveau channel, son onglet actif et focalisé ; l'annonce est faite
+  dans la région vivante.
+- **L'état vide « aucun channel »** n'a plus de lien : son texte nomme « Nouveau channel » et la barre d'onglets, où vit le
+  geste (§5.51, deuxième règle).
+- **« Nouveau workflow » dans le formulaire de création d'un channel** est un **lien discret** placé sous le sélecteur de
+  workflow : icône `Plus` 16 px `aria-hidden`, libellé « Nouveau workflow », `--color-brand`, `font-medium`, souligné — la
+  forme du lien de l'état vide « aucun workflow » qu'il rejoint. Il est rendu dans les quatre états de la liste. Le
+  formulaire de **modification** ne le porte pas.
+- **Un workflow revenu de l'éditeur mais non affectable** se dit sous le sélecteur, `--text-sm`, `--color-text-2` : une
+  information, pas une erreur — rien n'a été refusé.
+- **Le bandeau de retour de l'éditeur** est une carte pleine largeur en tête de l'écran, au-dessus des colonnes :
+  `--color-surface`, bordure `--color-border`, `--radius-lg`, rembourrage `--space-3`. À gauche, une phrase — « Vous créez
+  un channel » puis, après une création, « Le workflow « … » sera présélectionné au retour » ; à droite, le lien
+  **« Revenir au nouveau channel »**, forme primaire du lien de l'état « introuvable » (§5.5), icône `ArrowLeft` 16 px
+  `aria-hidden` avant le libellé. Sous 768 px, le lien passe sous la phrase, pleine largeur. Le bandeau n'est pas une
+  alerte : aucun `role="alert"`, aucune couleur d'état.
+- **Aucune couleur, aucun jeton nouveau** ; une seule icône nouvelle dans ces écrans, `ArrowLeft`, déjà employée par le
+  canevas d'objectifs (§5.29).

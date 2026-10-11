@@ -910,6 +910,12 @@ seconde position n'est pas une redondance : c'est le seul cas où le geste est i
 « Aucun workflow dans cet espace de travail » et n'offre aucune issue. Un écran d'administration
 dont l'état vide est un cul-de-sac est un défaut, pas une sobriété.
 
+**Depuis `CRM-100` (décision 623), le formulaire s'ouvre aussi par l'adresse** : le lien « Nouveau
+workflow » du formulaire de création d'un channel mène à `/reglages/workflows?creer=1&track=<id>&retour=…`,
+qui ouvre la création au montage, portée pré-réglée sur ce track ; un bandeau ramène ensuite au channel
+en cours de création, le workflow créé présélectionné. Le geste et ses refus sont ceux de ce chapitre,
+inchangés ; l'aller-retour est spécifié par `docs/SPEC-administration-arborescence.md` §13.4 à §13.7.
+
 ### 3 bis.3 Ce que le formulaire demande, et dans quel ordre
 
 | Champ | Contrôle | Obligatoire | Motif |

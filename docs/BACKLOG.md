@@ -14974,6 +14974,23 @@ deviennent un premier réel, lignes rouvertes. Spécifié avant le code : `docs/
       seed ; manuel ; campagnes.
 - [ ] **T3** — livraison en production (migration 88, instantané confirmé) et constat.
 
+### CRM-100 — Créer un channel depuis le track, et un workflow depuis le formulaire du channel `[ ]`
+*Créée le 2026-10-11 — décision 623, arbitrages du responsable. Créer un channel obligeait à repasser par les réglages,
+et un channel qui avait besoin d'un nouveau workflow obligeait à le créer d'abord, ailleurs. « Nouveau channel » vient
+dans la barre d'onglets du track, formulaire sur place ; « Nouveau workflow » dans le formulaire de création du channel
+fait l'aller-retour vers l'éditeur, saisie conservée et workflow créé présélectionné. Aucune migration, aucune règle
+d'accès nouvelle. Spécifié avant le code : `docs/SPEC-administration-arborescence.md` §13,
+`docs/SPEC-workflow-engine.md` §3 bis.2, `docs/DESIGN_SYSTEM.md` §5.55.*
+
+- [ ] **T1** — le formulaire de channel partagé (`FormulaireChannel.tsx`) ; les adresses et la validation du retour
+      (`lib/nouveau-channel.ts`) ; « Nouveau channel » dans la barre d'onglets et le formulaire dans la vue du track
+      (`workspace_id` lu avec le track) ; « Nouveau workflow », l'ouverture par l'adresse et le bandeau de retour dans
+      l'éditeur ; la réouverture préremplie dans l'arborescence ; preuves unitaires, mutations vues rouges.
+- [ ] **T2** — E2E `e2e/ui/nouveau-channel.spec.ts` sur la pile réelle (souris, clavier seul, aller-retour depuis le
+      track et depuis l'arborescence, refus traduit pour un non-administrateur, effets confirmés en base) ; captures
+      `docs/captures/CRM-100/` observées aux quatre paliers ; `docs/manual.md` ; campagnes.
+- [ ] **T3** — livraison de la webapp en production et constat.
+
 ## Arbitrage du 2026-10-03 — INC-265 à INC-269 (décision 619)
 
 *Arbitrage du responsable : les cinq incohérences relevées pendant `CRM-097` T1 et T2 sont corrigées maintenant,
