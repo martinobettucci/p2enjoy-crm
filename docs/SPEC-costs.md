@@ -223,7 +223,9 @@ que l'on déclare que c'est fermé ».
 | ouverte, aucun réel | **nul** — le réel est inconnu |
 
 La colonne est **tenue par la base** (déclencheurs sur les réels et sur `settled_at`) et **n'est plus écrite par le
-client** : un `PATCH` qui la change est refusé. Tous les écrans qui la lisent — histogrammes, totaux, mention du §4.4 —
+client** : un `PATCH` qui la change est refusé, comme une insertion qui en fournit une. *Précision de T1* : à
+l'insertion, seul un réel **fourni** est refusé — un upsert propose d'abord une ligne au réel nul alors que les réels
+de la ligne existante sont déjà là (mesuré au rejeu du seed). Tous les écrans qui la lisent — histogrammes, totaux, mention du §4.4 —
 gardent donc leur lecture, et la règle « nul n'est pas zéro » tient sans changement. Une ligne ouverte qui porte déjà un
 réel **compte** dans la barre du réel pour ce qui est connu : une dépense en cours a dépensé quelque chose.
 
@@ -247,7 +249,7 @@ revient donc dans l'onglet « À saisir » jusqu'à ce qu'on la solde. Cela vaut
   et la case **« Soldé »**. Le badge compte les lignes non soldées. Les règles du §4.8 tiennent : la ligne reste en place
   jusqu'au prochain chargement, `Entrée` mène à la ligne suivante, une ligne non écrivable est en lecture seule.
 - **Fiche d'une affaire (§4.6)** : chaque ligne déplie la liste de ses réels — date, libellé, montant — avec l'ajout, la
-  modification, le retrait et la case « Soldé ».
+  modification, le retrait et la case « Soldé », sous la table. Le formulaire d'une ligne ne porte plus de réel.
 - **Détail d'un budget (§4.3)** : la colonne « réel » dit en plus si la ligne est soldée.
 - **Mention du §4.4** : inchangée — elle compte les lignes sans aucun réel et non soldées, celles dont le réel est inconnu.
 

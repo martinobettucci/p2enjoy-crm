@@ -514,6 +514,7 @@ const ligneBudget = (
 	estimated_cost,
 	actual_cost,
 	created_at: '2026-08-01T10:00:00Z',
+	settled_at: null,
 	cards: null,
 	profiles: null,
 	...reste,

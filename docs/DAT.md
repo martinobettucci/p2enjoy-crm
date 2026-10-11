@@ -217,6 +217,10 @@ Découpage prévu : `src/lib` (client Supabase, types générés, helpers), `src
   mensuel, les versions de coût et la série « Personnel » (écran de coûts du track, fiche d'une affaire). Tous lisent
   `public.temps_valorise` : **la valorisation n'a qu'une écriture, en base**, et l'interface ne calcule aucun montant —
   elle regroupe, nomme et additionne par devise ce que la fonction rend, sans jamais changer un `null` en zéro ;
+- `src/app/ReelsLigne.tsx` et `src/lib/reels-ligne.ts` (`CRM-099`, `docs/SPEC-costs.md` §2.3 bis) — les réels d'une
+  ligne de coût et la case « Soldé », dans la fiche d'une affaire ; l'onglet « À saisir » (`CoutsASaisir.tsx`,
+  `couts-a-saisir.ts`) ajoute un réel et solde. **Le réel d'une ligne n'a qu'une écriture, en base** : la somme des
+  réels, tenue par déclencheur ; l'interface affiche ce que la base relit, jamais une addition faite de son côté ;
 - `src/app/ContexteEspace.tsx`, `src/app/GuideFlottant.tsx`, et le signal `p2enjoy:workflow-de-depart`
   de `src/lib/demarrage.ts` (`CRM-094`, `docs/SPEC-onboarding.md` §10) — la coquille lit **une fois**
   l'espace courant et le rôle que la base y rend (`mon_role_espace`), et les passe par un contexte au

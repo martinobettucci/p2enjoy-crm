@@ -1,4 +1,5 @@
 // @verifies CRM-086 (docs/BACKLOG.md) — écrans de coûts, TRANCHE 4 : le montage de l'écran du §4.3
+// @verifies CRM-099 (docs/BACKLOG.md) — la pilule « Soldé » du détail d'un budget (docs/SPEC-costs.md §4.3, §2.3 bis)
 // @verifies docs/SPEC-costs.md §4.3 (une paire de barres par occurrence ; un budget non récurrent
 //           en rend une seule ; la liste des lignes — affaire, libellé, estimé, réel, auteur —
 //           filtrable par occurrence, et l'accès à l'affaire), §4.4 (la mention des réels
@@ -91,6 +92,7 @@ const ligne = (id: string, reste: Record<string, unknown> = {}) => ({
 	estimated_cost: 1000,
 	actual_cost: 880,
 	created_at: '2026-08-01T10:00:00Z',
+	settled_at: null,
 	cards: null,
 	profiles: null,
 	...reste,
@@ -226,6 +228,23 @@ describe('ContenuCoutsBudget — le contenu du §4.3', () => {
 		expect(within(tableau).getByRole('columnheader', { name: 'Occurrence' })).toBeTruthy()
 		// Le dépassement de « Février » est dit en TEXTE, pas seulement par la couleur de la barre.
 		expect(within(tableau).getByText('dépassement')).toBeTruthy()
+	})
+
+	it('dit d’une ligne SOLDÉE qu’elle l’est, et seulement d’elle (CRM-099, §4.3)', async () => {
+		monter({
+			idBudget: ID_BUDGET,
+			client: clientQuiRend([
+				ok([budget()]),
+				ok([]),
+				ok([
+					ligne('l1', { estimated_cost: 1000, actual_cost: 0, settled_at: '2026-10-01T10:00:00Z' }),
+					ligne('l2', { estimated_cost: 200, actual_cost: 150 }),
+				]),
+			]),
+		})
+		const pilules = await screen.findAllByTestId('couts-budget-soldee')
+		expect(pilules).toHaveLength(1)
+		expect(pilules[0]?.textContent).toBe('Soldé')
 	})
 
 	it('rend la mention du §4.4 dès qu’un réel manque, avec le compte exact', async () => {

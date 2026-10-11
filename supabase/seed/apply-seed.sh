@@ -20,6 +20,8 @@
 #       et le simulateur (docs/SPEC-ia.md §11.6, §12.8)
 # @spec CRM-097 tranche T3.d — une suggestion qui fait évoluer le workflow par défaut, en revue, avec son défaut
 #       `remappage_requis` (docs/SPEC-seed.md §16 bis, docs/SPEC-ia.md §13.5) ; décision 620
+# @spec CRM-099 (docs/BACKLOG.md) — tranche T2 : les réels des lignes de coût et une ligne soldée (docs/SPEC-seed.md
+#       §18, docs/SPEC-costs.md §2.3 bis)
 # @spec CRM-098 (docs/BACKLOG.md) — tranche T4 : le temps et le coût du personnel de démonstration, par la vraie API
 #       sous le jeton de chaque profil (docs/SPEC-seed.md §17, docs/SPEC-temps.md §8) ; décision 621
 # @spec docs/SPEC-seed.md §2 (contrat), §2.9 (copie), §3 (mécanismes mesurés), §4 (identifiants),
@@ -3713,20 +3715,24 @@ done
 ANTIDATAGE_JOURS=120
 COUT_ANTIDATE='5eed0000-0000-4000-8000-0000000000e4'
 
-# id | card | budget | occurrence | libellé | estimé | réel
+# id | card | budget | occurrence | libellé | estimé | réels (séparés par des espaces) | soldée
+#
+# DEPUIS `CRM-099` (docs/SPEC-costs.md §2.3 bis), UNE LIGNE PORTE SES RÉELS, et le réel de la ligne est leur somme,
+# tenue par la base. « Achat d'espace » reçoit DEUX réels puis est SOLDÉE — elle quitte l'onglet « À saisir » ;
+# « Production » reçoit le sien du business developer APRÈS la clôture de son budget (plus bas) et reste OUVERTE.
 COUTS_SEED=(
-	"5eed0000-0000-4000-8000-0000000000e1|5eed0000-0000-4000-8000-0000000000c4|5eed0000-0000-4000-8000-0000000000c2|5eed0000-0000-4000-8000-0000000000d2|Publicité|100.00|"
-	"5eed0000-0000-4000-8000-0000000000e2|5eed0000-0000-4000-8000-0000000000c4|5eed0000-0000-4000-8000-0000000000c3||Production|350.00|375.00"
-	"5eed0000-0000-4000-8000-0000000000e3|5eed0000-0000-4000-8000-0000000000cc|5eed0000-0000-4000-8000-0000000000c2|5eed0000-0000-4000-8000-0000000000d1|Achat d'espace|900.00|880.00"
-	"5eed0000-0000-4000-8000-0000000000e4|5eed0000-0000-4000-8000-0000000000c7|5eed0000-0000-4000-8000-0000000000c1||Prospection terrain|800.00|"
-	"5eed0000-0000-4000-8000-0000000000e5|5eed0000-0000-4000-8000-0000000000cc|5eed0000-0000-4000-8000-0000000000c3||Impression plaquettes|1200.00|"
+	"5eed0000-0000-4000-8000-0000000000e1|5eed0000-0000-4000-8000-0000000000c4|5eed0000-0000-4000-8000-0000000000c2|5eed0000-0000-4000-8000-0000000000d2|Publicité|100.00||"
+	"5eed0000-0000-4000-8000-0000000000e2|5eed0000-0000-4000-8000-0000000000c4|5eed0000-0000-4000-8000-0000000000c3||Production|350.00||"
+	"5eed0000-0000-4000-8000-0000000000e3|5eed0000-0000-4000-8000-0000000000cc|5eed0000-0000-4000-8000-0000000000c2|5eed0000-0000-4000-8000-0000000000d1|Achat d'espace|900.00|500.00 380.00|oui"
+	"5eed0000-0000-4000-8000-0000000000e4|5eed0000-0000-4000-8000-0000000000c7|5eed0000-0000-4000-8000-0000000000c1||Prospection terrain|800.00||"
+	"5eed0000-0000-4000-8000-0000000000e5|5eed0000-0000-4000-8000-0000000000cc|5eed0000-0000-4000-8000-0000000000c3||Impression plaquettes|1200.00||"
 )
 
 echo
 say "8 quindecies. Lignes de coût de démonstration"
 
 for ligne in "${COUTS_SEED[@]}"; do
-	IFS='|' read -r id card budget occurrence libelle estime reel <<< "$ligne"
+	IFS='|' read -r id card budget occurrence libelle estime reels soldee <<< "$ligne"
 
 	# `null` EXPLICITE ET NON CHAÎNE VIDE pour le réel inconnu : `actual_cost` nul n'est pas zéro
 	# (§2.3), et une coercition qui écrirait `0` détruirait la seule distinction que cette
@@ -3744,12 +3750,11 @@ for ligne in "${COUTS_SEED[@]}"; do
 	charge=$(jq -nc --arg id "$id" --arg card "$card" --arg budget "$budget" \
 	                --arg occurrence "$occurrence" --arg l "$libelle" \
 	                --argjson estime "$estime" \
-	                --argjson reel "${reel:-null}" \
 	                --arg naissance "$naissance" \
 	                --arg auteur '5eed0000-0000-4000-8000-000000000011' \
 	     '{id: $id, card_id: $card, budget_id: $budget,
 	       occurrence_id: (if $occurrence == "" then null else $occurrence end),
-	       label: $l, estimated_cost: $estime, actual_cost: $reel, created_by: $auteur}
+	       label: $l, estimated_cost: $estime, created_by: $auteur}
 	      + (if $naissance == "" then {} else {created_at: $naissance} end)')
 
 	code=$(api POST /rest/v1/card_costs \
@@ -3757,11 +3762,33 @@ for ligne in "${COUTS_SEED[@]}"; do
 		-d "$charge")
 	attendu "$code" "création de la ligne de coût « $libelle »" 200 201
 
-	printf '  %-22s estimé %8s   réel %s\n' "${libelle:0:22}" "$estime" "${reel:-— non saisi}"
+	# LES RÉELS, PAR LA TABLE QUI LES PORTE (CRM-099). CONVERGENT : une ligne qui en a déjà, ou qui est soldée, n'en
+	# reçoit pas d'autres — un rejeu doublerait sinon la dépense. Puis « Soldé », par le vrai geste de la ligne.
+	code=$(api GET "/rest/v1/card_cost_actuals?select=id&card_cost_id=eq.$id")
+	attendu "$code" "lecture des réels de « $libelle »" 200
+	poses='déjà présents, non réécrits'
+	[ "$(jq -r 'length' "$CORPS")" = "0" ] && poses='— aucun'
+	if [ "$(jq -r 'length' "$CORPS")" = "0" ] && [ -n "$reels" ]; then
+		poses="$reels"
+		for montant in $reels; do
+			code=$(api POST /rest/v1/card_cost_actuals \
+				-d "$(jq -nc --arg ligne "$id" --argjson m "$montant" --arg auteur '5eed0000-0000-4000-8000-000000000011' \
+					'{card_cost_id: $ligne, amount: $m, created_by: $auteur}')")
+			attendu "$code" "réel de « $libelle »" 201
+		done
+	fi
+	if [ "$soldee" = "oui" ]; then
+		code=$(api PATCH "/rest/v1/card_costs?id=eq.$id&settled_at=is.null" \
+			-d "$(jq -nc --arg maintenant "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" '{settled_at: $maintenant}')")
+		attendu "$code" "soldé de « $libelle »" 200 204
+	fi
+
+	printf '  %-22s estimé %8s   réels %s%s\n' "${libelle:0:22}" "$estime" "$poses" "${soldee:+ — soldée}"
 done
 
 info "Lignes de coût : ${#COUTS_SEED[@]} dont 3 sans réel, 2 sur un budget récurrent, 1 sans réel sur
-      un budget clôturé — docs/SPEC-costs.md §2.3 et §4.8
+      un budget clôturé ; « Achat d'espace » porte DEUX réels et est SOLDÉE — docs/SPEC-costs.md §2.3,
+      §2.3 bis et §4.8
       « Prospection terrain » naît à J-${ANTIDATAGE_JOURS} sur un budget de seuil 30 : c'est la
       SEULE ligne en retard du jeu, et la seule qui allume la variante de danger du §5.31"
 
@@ -3869,15 +3896,21 @@ refus_clos=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API/rest/v1/card_c
         c'est un 403, c'est la politique qui a parlé et le trigger a cessé de garder les écrivains
         qui traversent la RLS."
 
-# ET LE RÉEL RESTE SAISISSABLE SUR CE MÊME BUDGET CLOS — c'est la frontière EXACTE du §2.3, et les
+# ET UN RÉEL SE SAISIT ENCORE SUR CE MÊME BUDGET CLOS — c'est la frontière EXACTE du §2.3, et les
 # deux résultats doivent différer. Le business developer écrit l'affaire ; il saisit donc la
-# facture qui arrive après la clôture, sans rouvrir l'enveloppe.
-maj_clos=$(curl -s -o /dev/null -w '%{http_code}' -X PATCH \
-	"$API/rest/v1/card_costs?id=eq.5eed0000-0000-4000-8000-0000000000e2" \
-	-H "apikey: $ANON_KEY" -H "Authorization: Bearer $JETON_BIZDEV" \
-	-H 'Content-Type: application/json' -H 'Prefer: return=representation' \
-	-d "$(jq -nc '{actual_cost: 375.00}')")
-[ "$maj_clos" = '200' ] || die "le coût RÉEL d'une ligne rattachée à un budget clôturé doit rester
+# facture qui arrive après la clôture, sans rouvrir l'enveloppe. Depuis `CRM-099`, la facture est un
+# RÉEL de la ligne (§2.3 bis), posé une fois : un rejeu qui la retrouverait n'en ajoute pas une seconde.
+code=$(api GET "/rest/v1/card_cost_actuals?select=id&card_cost_id=eq.5eed0000-0000-4000-8000-0000000000e2")
+attendu "$code" "lecture des réels de « Production »" 200
+if [ "$(jq -r 'length' "$CORPS")" = "0" ]; then
+	maj_clos=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API/rest/v1/card_cost_actuals" \
+		-H "apikey: $ANON_KEY" -H "Authorization: Bearer $JETON_BIZDEV" \
+		-H 'Content-Type: application/json' -H 'Prefer: return=representation' \
+		-d "$(jq -nc '{card_cost_id: "5eed0000-0000-4000-8000-0000000000e2", amount: 375.00, label: "Facture imprimeur"}')")
+else
+	maj_clos='201'
+fi
+[ "$maj_clos" = '201' ] || die "le coût RÉEL d'une ligne rattachée à un budget clôturé doit rester
         saisissable (docs/SPEC-costs.md §2.3, « on clôt une campagne puis les factures arrivent »),
         mais l'API a rendu « $maj_clos ». Si le refus est symétrique de celui de l'insertion, la
         frontière du §2.3 n'est plus tenue et il faudrait rouvrir un budget pour saisir une
@@ -3885,7 +3918,8 @@ maj_clos=$(curl -s -o /dev/null -w '%{http_code}' -X PATCH \
 
 # LA POPULATION DE L'ONGLET « À SAISIR » DU §4.8, ET LE DROIT D'ÉCRITURE QUE LA BASE EN REND.
 # Ajouté le 2026-08-20 par `CRM-086` tranche 6a. Le contrôle vérifie la lecture EXACTE que l'onglet
-# émet — `actual_cost is null` plus la colonne calculée `reel_saisissable` de la migration 52 — avec
+# émet — `settled_at is null` depuis `CRM-099` (`actual_cost is null` avant lui), plus la colonne calculée
+# `reel_saisissable` de la migration 52 — avec
 # les jetons réels des deux profils, et il porte sur les deux propriétés qu'aucun modèle ne donne :
 #
 #   1. LA LIGNE D'UN BUDGET CLÔTURÉ EST BIEN LÀ. C'est ce que la Definition of Done de `CRM-086`
@@ -3900,18 +3934,19 @@ maj_clos=$(curl -s -o /dev/null -w '%{http_code}' -X PATCH \
 A_SAISIR_SELECT='id,created_at,reel_saisissable,budgets!inner(name,closed_at,stale_after_days)'
 
 a_saisir_bizdev=$(curl -s -G "$API/rest/v1/card_costs" \
-	--data-urlencode "select=$A_SAISIR_SELECT" --data-urlencode 'actual_cost=is.null' \
+	--data-urlencode "select=$A_SAISIR_SELECT" --data-urlencode 'settled_at=is.null' \
 	-H "apikey: $ANON_KEY" -H "Authorization: Bearer $JETON_BIZDEV")
 
 nb_bizdev=$(printf '%s' "$a_saisir_bizdev" | jq -r 'length')
-[ "${nb_bizdev:-0}" -eq 3 ] || die "l'onglet « À saisir » doit rendre TROIS lignes au business
-        developer — « Publicité », « Prospection terrain » et « Impression plaquettes », cette
-        dernière sur le budget CLÔTURÉ « Salon du web 2025 » (docs/SPEC-costs.md §4.8) —, mais l'API
+[ "${nb_bizdev:-0}" -eq 4 ] || die "l'onglet « À saisir » doit rendre QUATRE lignes NON SOLDÉES au
+        business developer — « Publicité », « Production » (un réel saisi, ligne ouverte), « Prospection
+        terrain » et « Impression plaquettes », les deux du milieu-fin sur le budget CLÔTURÉ « Salon du web
+        2025 » ; « Achat d'espace », soldée, n'y est plus (docs/SPEC-costs.md §4.8, §2.3 bis) —, mais l'API
         lui en rend « ${nb_bizdev:-0} »."
 
 clos_present=$(printf '%s' "$a_saisir_bizdev" \
 	| jq -r '[.[] | select(.budgets.closed_at != null)] | length')
-[ "${clos_present:-0}" -eq 1 ] || die "l'onglet « À saisir » doit lister la ligne d'un budget
+[ "${clos_present:-0}" -eq 2 ] || die "l'onglet « À saisir » doit lister la ligne d'un budget
         CLÔTURÉ : « c'est précisément après la clôture que les factures arrivent, et les exclure
         viderait l'onglet de son usage » (docs/SPEC-costs.md §4.8). Il en liste « ${clos_present:-0} »."
 
@@ -3923,7 +3958,7 @@ non_saisissables=$(printf '%s' "$a_saisir_bizdev" \
         elles."
 
 a_saisir_viewer=$(curl -s -G "$API/rest/v1/card_costs" \
-	--data-urlencode "select=$A_SAISIR_SELECT" --data-urlencode 'actual_cost=is.null' \
+	--data-urlencode "select=$A_SAISIR_SELECT" --data-urlencode 'settled_at=is.null' \
 	-H "apikey: $ANON_KEY" -H "Authorization: Bearer $JETON_VIEWER")
 
 saisissables_viewer=$(printf '%s' "$a_saisir_viewer" \
@@ -3955,7 +3990,7 @@ etats_seuil=$(printf '%s' "$a_saisir_bizdev" | jq -r '
 	  | if .seuil == null then "sans-seuil"
 	    elif .jours > .seuil then "en-retard"
 	    else "dans-les-temps" end ]
-	| sort | join(",")')
+	| unique | join(",")')
 [ "$etats_seuil" = 'dans-les-temps,en-retard,sans-seuil' ] || die "le jeu de démonstration doit
         porter les TROIS états du seuil d'ancienneté — une ligne en retard, une dans les temps, une
         sur un budget sans seuil (docs/SPEC-costs.md §2.1 bis). Sans les trois, « aucun seuil » et
@@ -3963,8 +3998,8 @@ etats_seuil=$(printf '%s' "$a_saisir_bizdev" | jq -r '
         passerait inaperçue. L'API rend « ${etats_seuil:-aucun} »."
 
 info "Vérifié avec les jetons réels : 0 ligne pour la lectrice sur une affaire qu'elle LIT,
-      400/23514 à l'insertion sur un budget clos, 200 à la saisie du réel sur ce même budget,
-      3 lignes en attente pour le bizdev dont 1 sur un budget clos, « reel_saisissable » vrai
+      400/23514 à l'insertion sur un budget clos, 201 à la saisie d'un réel sur ce même budget,
+      4 lignes non soldées pour le bizdev dont 2 sur un budget clos, « reel_saisissable » vrai
       pour lui et faux pour la lectrice, et les TROIS états du seuil d'ancienneté présents"
 
 info "Budgets : ${#BUDGETS_SEED[@]} dont 1 récurrent à ${#OCCURRENCES_SEED[@]} occurrences, 1 clôturé,

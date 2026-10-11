@@ -23,6 +23,7 @@
 // slug d'un track au budget d'un autre rendrait donc le bon budget sous le mauvais en-tête, sans
 // jamais divulguer quoi que ce soit : c'est exactement le compromis déjà pris et consigné par
 // `RouteCard` (INC-065), et le corriger ici seulement laisserait le défaut entier ailleurs.
+// @spec CRM-099 (docs/BACKLOG.md) — tranche T2 : la pilule « Soldé » dans le détail d'un budget (docs/SPEC-costs.md §4.3)
 
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router'
@@ -501,6 +502,16 @@ function LigneCoutBudget({
 			</td>
 			<td className="py-2 px-4 text-right font-mono tabular-nums">
 				{ligne.actual_cost === null ? null : formaterMontant(ligne.actual_cost, devise)}
+				{/* `CRM-099` (docs/SPEC-costs.md §4.3, §2.3 bis) : la colonne dit en plus si la ligne est soldée — pilule
+				    neutre, la même que dans la fiche d'une affaire (docs/DESIGN_SYSTEM.md §5.31 bis). */}
+				{ligne.settled_at !== null ? (
+					<span
+						data-testid="couts-budget-soldee"
+						className="ml-2 rounded-sm bg-bg px-2 py-[2px] font-sans text-sm text-text-2"
+					>
+						{t('costs.actuals.settled.pill')}
+					</span>
+				) : null}
 			</td>
 			<td className="py-2 pl-4 max-w-[20ch] truncate">
 				{ligne.profiles === null ? (

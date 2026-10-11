@@ -31285,3 +31285,14 @@ de cette fenêtre ne sont pas probants. Les neuf fichiers en échec, rejoués su
 tous deux dans `e2e/ui/droits-fins.spec.ts` et causés par cette unité — « rien de plus » comptait deux liens dans la
 barre d'onglets, qui en porte désormais trois. Assertions révisées comme `CRM-086` l'avait fait, sans rien desserrer :
 le total passe à trois et chaque lien est nommé ; **8/8** au rejeu.
+
+**`CRM-099` T1 et T2, en développement le 2026-10-11** (décision 622). La migration `0088` rend `actual_cost`
+dérivé : la colonne que tous les écrans lisent reste la même, et la règle « nul n'est pas zéro » tient sans changement.
+**Trois constats en cours de route.** (1) Le rejeu du seed a trouvé qu'un upsert (`ON CONFLICT DO UPDATE`) passe
+d'abord par le déclencheur d'INSERTION avec un réel nul, alors que les réels de la ligne existent déjà : le contrôle
+d'écriture directe ne juge plus, à l'insertion, qu'un réel FOURNI ; preuve 17 bis, rouge sous l'ancienne condition.
+(2) Ajouter un réel n'est pas idempotent : dans l'onglet « À saisir », `Entrée` puis la sortie du champ en auraient
+ajouté deux — la valeur saisie vit dans une référence vidée avant l'envoi (la leçon de la matrice du temps, `CRM-098`).
+(3) Une case « Soldé » contrôlée par l'état serveur ne bougeait qu'au retour de la requête : elle bascule au clic et
+revient en arrière sur un refus. Le panneau des réels vit SOUS la table de la fiche, comme ses formulaires — règle
+écrite dans `BlocCoutsCard` —, et non dans une ligne étendue.

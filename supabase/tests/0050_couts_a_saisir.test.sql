@@ -8,6 +8,8 @@
 -- @verifies docs/SPEC-permissions-rls.md §2.1 (un viewer n'écrit rien), §3.7 (`app.can_write_card`)
 -- @verifies docs/PROD_MIGRATIONS.md §3 (migration 52 : `prosecdef` doit être FAUX)
 -- @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface)
+-- @verifies CRM-099 (docs/BACKLOG.md) — révisée : l'onglet liste les lignes NON SOLDÉES, et son geste d'écriture
+--           de la ligne est « Soldé » (docs/SPEC-costs.md §2.3 bis)
 --
 -- CE QUE CETTE SUITE PROUVE, ET CE QU'ELLE NE REPROUVE PAS.
 --
@@ -48,7 +50,7 @@
 --    sur une ligne masquée en révélerait l'existence.
 --
 -- 5. QUE L'ONGLET LISTE BIEN LES BUDGETS CLÔTURÉS, mesuré sur la lecture exacte qu'il émet —
---    `actual_cost is null` sans aucun filtre de clôture. C'est la règle que la Definition of Done
+--    `settled_at is null` (CRM-099) sans aucun filtre de clôture. C'est la règle que la Definition of Done
 --    demande de rendre observable, et le seed pose désormais la ligne qui l'exerce.
 --
 -- La suite pose ses propres fixtures et fait `rollback` : le seed est rendu intact.
@@ -134,27 +136,31 @@ values
 	 '5eed0000-0000-4000-8000-000000000011');
 
 insert into public.card_costs (id, card_id, budget_id, occurrence_id, label,
-                               estimated_cost, actual_cost, created_by)
+                               estimated_cost, created_by)
 values
 	-- La ligne CENTRALE : sans réel, sur un budget ouvert, sur une card que Farida LIT et que
 	-- Driss ÉCRIT. C'est elle que les trois identités interrogent.
 	('c0050000-0000-4000-8000-0000000000f1', '5eed0000-0000-4000-8000-0000000000c4',
-	 'c0050000-0000-4000-8000-000000000001', null, 'Sans réel 0050', 400.00, null,
+	 'c0050000-0000-4000-8000-000000000001', null, 'Sans réel 0050', 400.00,
 	 '5eed0000-0000-4000-8000-000000000011'),
 	-- Sans réel, sur le budget qui sera clôturé : la ligne que l'onglet doit continuer de lister.
 	('c0050000-0000-4000-8000-0000000000f2', '5eed0000-0000-4000-8000-0000000000c4',
-	 'c0050000-0000-4000-8000-000000000002', null, 'Sans réel sur budget clos 0050', 500.00, null,
+	 'c0050000-0000-4000-8000-000000000002', null, 'Sans réel sur budget clos 0050', 500.00,
 	 '5eed0000-0000-4000-8000-000000000011'),
-	-- AVEC réel, sur le budget ouvert : la contre-épreuve du filtre de l'onglet. Sans elle, une
-	-- lecture qui aurait perdu son `actual_cost is null` resterait verte.
+	-- SOLDÉE (son réel posé plus bas), sur le budget ouvert : la contre-épreuve du filtre de l'onglet, `settled_at is
+	-- null` depuis CRM-099. Sans elle, une lecture qui aurait perdu ce filtre resterait verte.
 	('c0050000-0000-4000-8000-0000000000f3', '5eed0000-0000-4000-8000-0000000000c4',
-	 'c0050000-0000-4000-8000-000000000001', null, 'Avec réel 0050', 600.00, 590.00,
+	 'c0050000-0000-4000-8000-000000000001', null, 'Soldée 0050', 600.00,
 	 '5eed0000-0000-4000-8000-000000000011'),
 	-- Sans réel, sur le budget d'un track FERMÉ à Farida, portée par une card qu'elle LIT : la
 	-- ligne de la non-divulgation (§3.1).
 	('c0050000-0000-4000-8000-0000000000f4', '5eed0000-0000-4000-8000-0000000000c7',
-	 'c0050000-0000-4000-8000-000000000003', null, 'Sans réel hors portée 0050', 700.00, null,
+	 'c0050000-0000-4000-8000-000000000003', null, 'Sans réel hors portée 0050', 700.00,
 	 '5eed0000-0000-4000-8000-000000000011');
+
+-- La ligne soldée reçoit son réel, puis le soldé — l'ordre du produit (CRM-099, docs/SPEC-costs.md §2.3 bis).
+insert into public.card_cost_actuals (card_cost_id, amount) values ('c0050000-0000-4000-8000-0000000000f3', 590.00);
+update public.card_costs set settled_at = now() where id = 'c0050000-0000-4000-8000-0000000000f3';
 
 -- La clôture vient APRÈS les lignes, comme dans le seed et dans la suite 0049.
 update public.budgets set closed_at = '2026-06-30T17:00:00Z'
@@ -236,7 +242,7 @@ select is(
 
 select is(
 	pg_temp.lignes_touchees(
-		'update public.card_costs set actual_cost = 123.00 '
+		'update public.card_costs set settled_at = now() '
 		'where id = ''c0050000-0000-4000-8000-0000000000f1'''),
 	0::bigint,
 	'CRM-086 : là où la colonne calculée dit FAUX, l''écriture touche ZÉRO ligne — le signal et la '
@@ -247,16 +253,17 @@ select pg_temp.endosser('5eed0000-0000-4000-8000-000000000012');
 
 select is(
 	pg_temp.lignes_touchees(
-		'update public.card_costs set actual_cost = 123.00 '
+		'update public.card_costs set settled_at = now() '
 		'where id = ''c0050000-0000-4000-8000-0000000000f1'''),
 	1::bigint,
 	'CRM-086 : et là où elle dit VRAI, l''écriture touche UNE ligne — les deux mécanismes '
 	'concordent dans les deux sens, ce qu''une seule des deux mesures ne dirait pas');
 
 select is(
-	(select actual_cost from public.card_costs where id = 'c0050000-0000-4000-8000-0000000000f1'),
-	123.00,
-	'CRM-086 : et la valeur saisie est bien celle qui est enregistrée');
+	(select settled_by from public.card_costs where id = 'c0050000-0000-4000-8000-0000000000f1'),
+	'5eed0000-0000-4000-8000-000000000012'::uuid,
+	'CRM-086, révisée par CRM-099 : et le geste est enregistré, à son nom — depuis CRM-099, le réel ne s''écrit plus '
+	'sur la ligne ; le geste d''écriture de la ligne que l''onglet offre est « Soldé » (docs/SPEC-costs.md §2.3 bis)');
 
 -- ---------------------------------------------------------------------------------------------
 -- 4. Elle ne divulgue rien — la double condition du §3.1 reste entière
@@ -283,10 +290,10 @@ select is(
 -- 5. Ce que l'onglet liste : les budgets clôturés COMPRIS, et les réels saisis EXCLUS
 -- ---------------------------------------------------------------------------------------------
 -- La lecture exacte que `lireLignesASaisir` émet, jouée ici sous une identité réelle : le filtre
--- `actual_cost is null`, et AUCUN filtre de clôture.
+-- `settled_at is null` (CRM-099 ; `actual_cost is null` avant lui), et AUCUN filtre de clôture.
 --
 -- LA LIGNE CENTRALE EST REMISE EN ATTENTE AVANT CETTE SECTION, et c'est écrit plutôt que subi : la
--- section 3 vient d'y SAISIR un réel — c'est même ce qu'elle prouve —, si bien qu'elle a quitté la
+-- section 3 vient de la SOLDER — c'est même ce qu'elle prouve —, si bien qu'elle a quitté la
 -- population de l'onglet. La restaurer est la seule façon de mesurer ici les DEUX lignes que la
 -- section attend ; l'alternative, une quatrième fixture jamais écrite, aurait fait diverger la ligne
 -- que les identités interrogent de celle que l'onglet liste, et cette section ne dirait plus rien de
@@ -295,7 +302,7 @@ select is(
 
 select pg_temp.redevenir_proprietaire();
 
-update public.card_costs set actual_cost = null
+update public.card_costs set settled_at = null
  where id = 'c0050000-0000-4000-8000-0000000000f1';
 
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000012');
@@ -303,7 +310,7 @@ select pg_temp.endosser('5eed0000-0000-4000-8000-000000000012');
 select is(
 	(select count(*)::int from public.card_costs c
 	  join public.budgets b on b.id = c.budget_id
-	  where c.actual_cost is null and c.id::text like 'c0050000%'
+	  where c.settled_at is null and c.id::text like 'c0050000%'
 	    and b.track_id = '5eed0000-0000-4000-8000-000000000022'),
 	2,
 	'CRM-086 : l''onglet liste DEUX lignes de cette suite sur « Studio web » — celle du budget '
@@ -313,7 +320,7 @@ select is(
 select is(
 	(select count(*)::int from public.card_costs c
 	  join public.budgets b on b.id = c.budget_id
-	  where c.actual_cost is null and c.id::text like 'c0050000%'
+	  where c.settled_at is null and c.id::text like 'c0050000%'
 	    and b.closed_at is not null),
 	1,
 	'CRM-086 : et l''une des deux porte bien un budget clos — sans cette mesure, la précédente '
@@ -321,10 +328,10 @@ select is(
 
 select is(
 	(select count(*)::int from public.card_costs c
-	  where c.actual_cost is not null and c.id::text like 'c0050000%'),
+	  where c.settled_at is not null and c.id::text like 'c0050000%'),
 	1,
-	'CRM-086 : la ligne dont le réel EST saisi existe et n''entre dans aucun des comptes ci-dessus '
-	'— contre-épreuve du filtre « actual_cost is null », sans laquelle une lecture qui l''aurait '
+	'CRM-086, révisée par CRM-099 : la ligne SOLDÉE existe et n''entre dans aucun des comptes ci-dessus '
+	'— contre-épreuve du filtre « settled_at is null », sans laquelle une lecture qui l''aurait '
 	'perdu resterait verte');
 
 select pg_temp.redevenir_proprietaire();

@@ -1,4 +1,5 @@
 // @verifies CRM-084 (docs/BACKLOG.md) — budgets, occurrences et clôture, hors interface
+// @verifies CRM-099 (docs/BACKLOG.md) — révisée : l'onglet lit les lignes non soldées (docs/SPEC-costs.md §2.3 bis)
 // @verifies docs/SPEC-costs.md §2.1 (budgets), §2.1 bis (le seuil d'ancienneté, arbitrage
 //           d'INC-183), §2.2 (occurrences, aucune génération), §3.1 (lecture par le track),
 //           §3.2 (écriture réservée à l'administrateur), §4.1 (l'administration masque les
@@ -460,11 +461,11 @@ test.describe('CRM-084 — budgets : le contrat d’API, hors interface', () => 
 	}) => {
 		// C'est la lecture que `couts-a-saisir.ts` émet, et la raison pour laquelle la variante de
 		// danger ne coûte aucune requête supplémentaire (§4.8.1, révision du 2026-08-29). Le jeton
-		// est celui du business developer : il écrit les trois lignes en attente, donc il les lit
-		// toutes, ce que la lectrice ne fait pas.
+		// est celui du business developer : il écrit les quatre lignes non soldées, donc il les lit
+		// toutes, ce que la lectrice ne fait pas. Depuis `CRM-099`, l'onglet filtre `settled_at` (§2.3 bis).
 		const reponse = await request.get(
 			`/rest/v1/card_costs?select=label,created_at,budgets!inner(name,stale_after_days)` +
-				`&actual_cost=is.null&order=created_at.asc`,
+				`&settled_at=is.null&order=created_at.asc`,
 			{ headers: enTetesAuthentifies(jetonBizdev) },
 		)
 		expect(reponse.status()).toBe(200)
@@ -474,7 +475,9 @@ test.describe('CRM-084 — budgets : le contrat d’API, hors interface', () => 
 			created_at: string
 			budgets: { name: string; stale_after_days: number | null }
 		}[]
-		expect(lignes).toHaveLength(3)
+		// « Publicité », « Production » (un réel saisi, ligne ouverte), « Prospection terrain », « Impression
+		// plaquettes » ; « Achat d'espace », soldée, n'y est plus (docs/SPEC-seed.md §18).
+		expect(lignes).toHaveLength(4)
 
 		// LA LIGNE EN RETARD EST MESURÉE, JAMAIS SUPPOSÉE. Le seed l'antidate de 120 jours sur un
 		// budget de seuil 30 (`docs/SPEC-seed.md` §12.1 bis) ; l'assertion recalcule l'ancienneté
@@ -491,7 +494,7 @@ test.describe('CRM-084 — budgets : le contrat d’API, hors interface', () => 
 		// indistinguables et une régression qui les confondrait passerait inaperçue.
 		expect(
 			lignes.filter((ligne) => ligne.budgets.stale_after_days === null),
-		).toHaveLength(1)
+		).toHaveLength(2)
 	})
 
 	test('un seuil de ZÉRO jour est refusé par la base, et le code est 23514', async ({

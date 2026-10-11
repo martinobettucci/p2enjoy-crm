@@ -2162,3 +2162,21 @@ Les preuves de `CRM-098` travaillent **hors de toute fenêtre du seed** — sema
 temps en 2099 — : une version en vigueur ne se retire jamais, et le jeu ne doit pas croiser leurs données. La suite
 pgTAP `0082` retire le temps et les versions du seed au début de sa transaction, déclencheurs suspendus, et les rend au
 `rollback`.
+
+## 18. Plusieurs réels par ligne de coût — `CRM-099` tranche T2
+
+*Écrit le 2026-10-11 avec la révision de la section `8 quindecies` de `supabase/seed/apply-seed.sh` ; contrat :
+`docs/SPEC-costs.md` §2.3 bis.*
+
+Les lignes de coût du jeu sont créées sans réel ; leurs réels passent par `card_cost_actuals`. Trois états sont portés :
+
+| Ligne | Réels | État |
+|---|---|---|
+| « Achat d'espace » | 500,00 puis 380,00 | **soldée** — elle quitte l'onglet « À saisir » ; son réel, 880,00, garde l'histogramme de « Publicité 2026 » inchangé |
+| « Production » | 375,00, saisi par le **commercial**, avec son jeton, **après** la clôture de « Salon du web 2025 » | **ouverte** — elle reste dans l'onglet, « Déjà saisi » 375 |
+| « Publicité », « Prospection terrain », « Impression plaquettes » | aucun | ouvertes, réel inconnu |
+
+L'onglet « À saisir » rend donc quatre lignes au commercial, dont deux sur le budget clôturé ; le seed le vérifie avec
+les jetons réels. **Convergence** : une ligne qui porte déjà des réels n'en reçoit pas d'autres, et le soldé n'est posé
+que sur une ligne ouverte. Une base antérieure à `0088` garde le réel repris par la migration — un seul réel de 880
+pour « Achat d'espace » — : seule une base recréée porte les deux réels.

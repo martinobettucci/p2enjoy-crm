@@ -264,6 +264,54 @@ export type Database = {
           },
         ]
       }
+      card_cost_actuals: {
+        Row: {
+          amount: number
+          card_cost_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          label: string | null
+          spent_on: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          card_cost_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string | null
+          spent_on?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          card_cost_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string | null
+          spent_on?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_cost_actuals_card_cost_id_fkey"
+            columns: ["card_cost_id"]
+            isOneToOne: false
+            referencedRelation: "card_costs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_cost_actuals_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       card_costs: {
         Row: {
           actual_cost: number | null
@@ -275,6 +323,8 @@ export type Database = {
           id: string
           label: string
           occurrence_id: string | null
+          settled_at: string | null
+          settled_by: string | null
           updated_at: string
         }
         Insert: {
@@ -287,6 +337,8 @@ export type Database = {
           id?: string
           label: string
           occurrence_id?: string | null
+          settled_at?: string | null
+          settled_by?: string | null
           updated_at?: string
         }
         Update: {
@@ -299,6 +351,8 @@ export type Database = {
           id?: string
           label?: string
           occurrence_id?: string | null
+          settled_at?: string | null
+          settled_by?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -328,6 +382,13 @@ export type Database = {
             columns: ["occurrence_id"]
             isOneToOne: false
             referencedRelation: "budget_occurrences"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_costs_settled_by_fkey"
+            columns: ["settled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

@@ -1,4 +1,6 @@
 // @verifies CRM-085 (docs/BACKLOG.md) — lignes de coût d'une affaire, hors interface
+// @verifies CRM-099 (docs/BACKLOG.md) — révisée : la facture d'un budget clos est un réel de la ligne
+//           (docs/SPEC-costs.md §2.3 bis)
 // @verifies docs/SPEC-costs.md §1 (le cas qui a motivé la demande), §2.3 (card_costs),
 //           §3.1 (double condition de lecture), §3.2 (écriture), §4.4 (le réel inconnu),
 //           §4.6 (section de la fiche), §4.8 (à saisir)
@@ -355,13 +357,13 @@ test.describe('CRM-085 — lignes de coût : le contrat d’API, hors interface'
 		expect(publicite?.actual_cost).toBeNull()
 	})
 
-	test('l’index des lignes SANS réel les rend toutes, du plus ancien au plus récent (§4.8)', async ({
+	test('les lignes NON SOLDÉES (CRM-099) se lisent toutes, du plus ancien au plus récent (§4.8)', async ({
 		request,
 	}) => {
 		// C'est la requête que l'onglet « À saisir » de `CRM-086` posera. Elle est éprouvée ici
 		// pour que le contrat de tri et de filtre existe avant l'écran, et non l'inverse.
 		const reponse = await request.get(
-			`${COUTS}?actual_cost=is.null&select=id,label,created_at&order=created_at.asc`,
+			`${COUTS}?settled_at=is.null&select=id,label,created_at&order=created_at.asc`,
 			{ headers: enTetesAuthentifies(jetonAdmin) },
 		)
 		expect(reponse.status()).toBe(200)
@@ -503,20 +505,25 @@ test.describe('CRM-085 — lignes de coût : le contrat d’API, hors interface'
 		expect(String(corps.message)).toContain('clôturé')
 	})
 
-	test('LA FRONTIÈRE : le coût RÉEL reste saisissable sur ce même budget clôturé', async ({
+	test('LA FRONTIÈRE : un coût RÉEL se saisit encore sur ce même budget clôturé', async ({
 		request,
 	}) => {
 		// « On clôt une campagne PUIS les factures arrivent » (§2.3). Ce succès et le refus
 		// ci-dessus définissent ENSEMBLE la frontière ; l'un sans l'autre décrirait soit un produit
 		// qui gèle tout après la clôture, soit un produit qui ne clôt rien.
-		const reponse = await request.patch(`${COUTS}?id=eq.${LIGNE_SUR_BUDGET_CLOS}`, {
+		// RÉVISÉ PAR `CRM-099` (docs/SPEC-costs.md §2.3 bis) : la facture est un RÉEL de la ligne, et le réel de la
+		// ligne est la somme que la base tient — il ne s'écrit plus directement.
+		const reponse = await request.post(`${URL_API}/rest/v1/card_cost_actuals`, {
 			headers: { ...enTetesAuthentifies(jetonBizdev), Prefer: 'return=representation' },
-			data: { actual_cost: 480 },
+			data: { card_cost_id: LIGNE_SUR_BUDGET_CLOS, amount: 480 },
 		})
-		expect(reponse.status()).toBe(200)
-		const [miseAJour] = (await reponse.json()) as LigneDeCout[]
-		if (!miseAJour) throw new Error('la mise à jour n’a touché aucune ligne')
-		expect(Number(miseAJour.actual_cost)).toBe(480)
+		expect(reponse.status(), await reponse.text()).toBe(201)
+		const relue = await request.get(`${COUTS}?id=eq.${LIGNE_SUR_BUDGET_CLOS}&select=actual_cost`, {
+			headers: enTetesAuthentifies(jetonBizdev),
+		})
+		const [ligne] = (await relue.json()) as LigneDeCout[]
+		if (!ligne) throw new Error('la ligne n’est plus lisible')
+		expect(Number(ligne.actual_cost)).toBe(480)
 	})
 
 	test('mais le DÉPLACEMENT de cette ligne reste refusé, et c’est le trigger qui le dit', async ({

@@ -1,4 +1,6 @@
 -- @verifies INC-268 (docs/INCONSISTENCY_REPORT.md, décision 619) — assertions 8 et 9 révisées : NO ACTION ajournable
+-- @verifies CRM-099 (docs/BACKLOG.md) — révisée : le réel s'écrit par ses réels (`card_cost_actuals`), jamais
+--           directement (docs/SPEC-costs.md §2.3 bis)
 -- @verifies CRM-085 (docs/BACKLOG.md) — lignes de coût d'une affaire : modèle
 -- @verifies docs/SPEC-costs.md §1 (le cas qui a motivé la demande), §2.3 (card_costs),
 --           §3.1 (double condition de lecture), §3.2 (écriture), §4.4 (le réel inconnu)
@@ -197,8 +199,9 @@ select is(
 	'CRM-085 : card_costs.card_id est ON DELETE CASCADE — les lignes n''ont aucun sens sans leur '
 	'affaire');
 
-select has_index('public', 'card_costs', 'card_costs_sans_reel_idx',
-	'CRM-085 : l''index PARTIEL des lignes sans réel existe — il sert l''onglet « À saisir » (§4.8)');
+select has_index('public', 'card_costs', 'card_costs_non_soldees_idx',
+	'CRM-085, révisée par CRM-099 : l''index PARTIEL des lignes NON SOLDÉES existe — il sert l''onglet « À saisir », '
+	'qui liste désormais ces lignes (§4.8, §2.3 bis)');
 
 -- =============================================================================================
 -- 2. Contraintes de valeur, chacune contre son succès
@@ -223,9 +226,11 @@ select lives_ok(
 -- LE CAS DU RESPONSABLE, MOT POUR MOT (§1) : deux lignes de nature différente sur la MÊME affaire,
 -- l'une sans réel. Une affectation unique par affaire ne le rendrait pas.
 select lives_ok(
-	$$insert into public.card_costs (id, card_id, budget_id, label, estimated_cost, actual_cost)
+	$$insert into public.card_costs (id, card_id, budget_id, label, estimated_cost)
 	  values ('c0000000-0000-4000-8000-0000000000f2', '5eed0000-0000-4000-8000-0000000000c4',
-	          'c0000000-0000-4000-8000-000000000001', 'Production', 350.00, 375.00)$$,
+	          'c0000000-0000-4000-8000-000000000001', 'Production', 350.00);
+	  insert into public.card_cost_actuals (card_cost_id, amount)
+	  values ('c0000000-0000-4000-8000-0000000000f2', 375.00)$$,
 	'CRM-085 : la même affaire porte une SECONDE ligne, d''une autre nature — c''est le cas qui a '
 	'motivé la demande (docs/SPEC-costs.md §1)');
 
@@ -240,9 +245,11 @@ select lives_ok(
 -- AUCUNE CONTRAINTE DE SIGNE (§2.3) : un avoir, une remise ou un remboursement sont des coûts
 -- négatifs légitimes. Cette absence ne se prouve QUE par un succès.
 select lives_ok(
-	$$insert into public.card_costs (id, card_id, budget_id, label, estimated_cost, actual_cost)
+	$$insert into public.card_costs (id, card_id, budget_id, label, estimated_cost)
 	  values ('c0000000-0000-4000-8000-0000000000f4', '5eed0000-0000-4000-8000-0000000000c4',
-	          'c0000000-0000-4000-8000-000000000001', 'Avoir fournisseur', -120.00, -120.00)$$,
+	          'c0000000-0000-4000-8000-000000000001', 'Avoir fournisseur', -120.00);
+	  insert into public.card_cost_actuals (card_cost_id, amount)
+	  values ('c0000000-0000-4000-8000-0000000000f4', -120.00)$$,
 	'CRM-085 : un coût NÉGATIF est accepté — un avoir ou un remboursement sont légitimes, même '
 	'doctrine que cards.amount (§2.3)');
 
@@ -347,8 +354,8 @@ select throws_ok(
 -- LES DEUX SUCCÈS QUI DÉFINISSENT LA FRONTIÈRE, ET SANS LESQUELS CETTE SUITE SERAIT VERTE SUR UN
 -- PRODUIT QUI GÈLE TOUT APRÈS LA CLÔTURE.
 select lives_ok(
-	$$update public.card_costs set actual_cost = 480.00
-	   where id = 'c0000000-0000-4000-8000-0000000000f6'$$,
+	$$insert into public.card_cost_actuals (card_cost_id, amount)
+	  values ('c0000000-0000-4000-8000-0000000000f6', 480.00)$$,
 	'CRM-085 : le coût RÉEL reste saisissable sur un budget clôturé — on clôt une campagne PUIS '
 	'les factures arrivent (docs/SPEC-costs.md §2.3)');
 
@@ -529,7 +536,7 @@ select throws_ok(
 
 select is(
 	pg_temp.lignes_touchees(
-		$$update public.card_costs set actual_cost = 1.00
+		$$update public.card_costs set label = 'Modifiée par la lectrice'
 		   where id = 'c0000000-0000-4000-8000-0000000000f1'$$),
 	0::bigint,
 	'CRM-085 : et elle n''en modifie aucune — le refus d''un `using` ne lève rien, il touche zéro '
@@ -561,21 +568,21 @@ select is(
 
 select is(
 	pg_temp.lignes_touchees(
-		$$update public.card_costs set actual_cost = 44.00
-		   where id = 'c0000000-0000-4000-8000-0000000000f9'$$),
+		$$insert into public.card_cost_actuals (card_cost_id, amount)
+		  values ('c0000000-0000-4000-8000-0000000000f9', 44.00)$$),
 	1::bigint,
-	'CRM-085 : il saisit le réel de sa ligne');
+	'CRM-085, révisée par CRM-099 : il saisit un réel de sa ligne (docs/SPEC-costs.md §2.3 bis)');
 
 -- LA FRONTIÈRE DE LA CLÔTURE, MESURÉE UNE SECONDE FOIS AU NIVEAU DES POLITIQUES. Le §4 l'a
 -- mesurée au niveau du trigger, en propriétaire ; ici c'est la RLS qui parle, et les deux
 -- mécanismes peuvent régresser l'un sans l'autre.
 select is(
 	pg_temp.lignes_touchees(
-		$$update public.card_costs set actual_cost = 500.00
+		$$update public.card_costs set settled_at = now()
 		   where id = 'c0000000-0000-4000-8000-0000000000f6'$$),
 	1::bigint,
-	'CRM-085 : la politique de mise à jour n''exige PAS le budget ouvert — sans quoi il faudrait '
-	'rouvrir une enveloppe pour saisir une facture (§2.3)');
+	'CRM-085, révisée par CRM-099 : la politique de mise à jour n''exige PAS le budget ouvert — la ligne d''un '
+	'budget clos se solde, sans rouvrir l''enveloppe (§2.3, §2.3 bis)');
 
 select is(
 	pg_temp.lignes_touchees(

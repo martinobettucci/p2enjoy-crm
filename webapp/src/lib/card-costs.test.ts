@@ -201,6 +201,7 @@ function ligne(surcharge: Partial<LigneCout> = {}): LigneCout {
 		label: 'Publicité',
 		estimated_cost: 100,
 		actual_cost: null,
+		settled_at: null,
 		budgets: { id: 'b1', name: 'Publicité 2026', currency: 'EUR', is_recurrent: false, closed_at: null },
 		budget_occurrences: null,
 		...surcharge,
@@ -561,7 +562,6 @@ describe('creerLigneCout', () => {
 			idOccurrence: 'o1',
 			libelle: 'Publicité',
 			estime: 100,
-			reel: null,
 		})
 		expect(appel.table).toBe('card_costs')
 		expect(appel.verbe).toBe('insert')
@@ -571,36 +571,21 @@ describe('creerLigneCout', () => {
 			occurrence_id: 'o1',
 			label: 'Publicité',
 			estimated_cost: 100,
-			actual_cost: null,
 		})
 		// `created_by` est une TRACE posée par la base, jamais un droit : l'envoyer laisserait croire
 		// que l'auteur se choisit.
 		expect(appel.charge).not.toHaveProperty('created_by')
 	})
 
-	it('envoie `null` et JAMAIS `0` pour un réel inconnu (§2.3)', async () => {
+	it('n’envoie JAMAIS `actual_cost` : le réel est la somme des réels, tenue par la base (CRM-099, §2.3 bis)', async () => {
 		const { client, appel } = espionEcriture(applique)
 		await creerLigneCout(client, 'card-1', {
 			idBudget: 'b1',
 			idOccurrence: null,
 			libelle: 'Production',
 			estime: 350,
-			reel: null,
 		})
-		expect(appel.charge?.actual_cost).toBeNull()
-		expect(appel.charge?.actual_cost).not.toBe(0)
-	})
-
-	it('envoie `0` quand l’utilisateur a saisi zéro — c’est une valeur, pas un vide', async () => {
-		const { client, appel } = espionEcriture(applique)
-		await creerLigneCout(client, 'card-1', {
-			idBudget: 'b1',
-			idOccurrence: null,
-			libelle: 'Production',
-			estime: 350,
-			reel: 0,
-		})
-		expect(appel.charge?.actual_cost).toBe(0)
+		expect(appel.charge).not.toHaveProperty('actual_cost')
 	})
 
 	it('demande `select` pour distinguer « zéro ligne touchée » d’un succès', async () => {
@@ -610,7 +595,6 @@ describe('creerLigneCout', () => {
 			idOccurrence: null,
 			libelle: 'x',
 			estime: 1,
-			reel: null,
 		})
 		expect(appel.colonnesRendues).toBe('id')
 	})
@@ -626,7 +610,6 @@ describe('creerLigneCout', () => {
 			idOccurrence: null,
 			libelle: 'x',
 			estime: 1,
-			reel: null,
 		})
 		expect(resultat).toMatchObject({ statut: 'refus', refus: { nature: 'occurrence-exigee' } })
 	})
@@ -640,11 +623,11 @@ describe('modifierLigneCout', () => {
 			idOccurrence: null,
 			libelle: 'Production',
 			estime: 350,
-			reel: 375,
 		})
 		expect(appel.verbe).toBe('update')
 		expect(appel.filtres).toEqual([['id', 'l1']])
-		expect(appel.charge).toMatchObject({ budget_id: 'b1', actual_cost: 375 })
+		expect(appel.charge).toMatchObject({ budget_id: 'b1', estimated_cost: 350 })
+		expect(appel.charge).not.toHaveProperty('actual_cost')
 	})
 
 	it('rend « sans-effet » quand la politique filtre par son `USING`', async () => {
@@ -656,7 +639,6 @@ describe('modifierLigneCout', () => {
 			idOccurrence: null,
 			libelle: 'x',
 			estime: 1,
-			reel: null,
 		})
 		expect(resultat).toEqual({ statut: 'sans-effet' })
 	})

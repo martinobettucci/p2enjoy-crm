@@ -3103,7 +3103,8 @@ en attente de **tous les tracks que vous lisez**, et non celles d'un seul. Tout 
 
 ## 5 octies. L'onglet « À saisir » : renseigner les coûts réels à la suite
 
-*Livré par `CRM-086` tranche 6. Captures dans `docs/captures/CRM-086/couts-a-saisir-*.jpg`.*
+*Livré par `CRM-086` tranche 6 ; plusieurs réels par ligne et la case « Soldé » par `CRM-099`. Captures dans
+`docs/captures/CRM-086/couts-a-saisir-*.jpg` et `docs/captures/CRM-099/`.*
 
 **Où.** Sur l'écran de coûts d'un track (§5 quinquies) ou sur celui de l'espace de travail
 (§5 septies), l'onglet **« À saisir »**, à droite de « Vue d'ensemble ». L'adresse gagne
@@ -3115,11 +3116,13 @@ les saisir. Il fallait ouvrir une affaire après l'autre. Cet onglet est la surf
 série** : une ligne par coût en attente, un champ par ligne, et le clavier pour aller de l'une à
 l'autre.
 
-**Ce que la table liste.** Toutes les lignes de coût sans coût réel que vous avez le droit de
+**Ce que la table liste.** Toutes les lignes de coût **non soldées** que vous avez le droit de
 **lire**, dans la portée de l'écran, **de la plus ancienne à la plus récente** — celle qui attend
-depuis le plus longtemps est celle qu'on oublie. Chaque ligne porte son **ancienneté**, son
-**budget**, son **occurrence** le cas échéant, son **affaire** (le titre est un lien vers la fiche),
-la **nature** de la dépense et son **coût estimé**.
+depuis le plus longtemps est celle qu'on oublie. Une ligne reçoit autant de coûts réels qu'il en
+faut — une facture, puis une autre — et reste dans la table tant qu'on ne l'a pas **soldée**. Chaque
+ligne porte son **ancienneté**, son **budget**, son **occurrence** le cas échéant, son **affaire** (le
+titre est un lien vers la fiche), la **nature** de la dépense, son **coût estimé**, et ce qui est
+**« Déjà saisi »** — la somme de ses réels.
 
 **Les budgets clôturés y figurent, et c'est voulu :** c'est précisément après la clôture que les
 factures arrivent. La ligne d'un budget clos porte une pastille **« clôturé »** — une indication
@@ -3128,17 +3131,22 @@ de **changer le rattachement** d'une ligne.
 
 ### 5 octies.1 Saisir, au clavier
 
-- **Tapez le montant dans le champ « Réel », puis `Entrée`.** La valeur est enregistrée
-  immédiatement — il n'y a **aucun bouton d'enregistrement** — et le curseur passe au champ de la
-  **ligne suivante**. C'est cela, saisir à la suite.
+- **Tapez le montant dans le champ « Un réel de plus », puis `Entrée`.** Le réel s'ajoute à la
+  ligne immédiatement — il n'y a **aucun bouton d'enregistrement** —, « Déjà saisi » montre la
+  nouvelle somme, le champ se vide pour le réel suivant, et le curseur passe au champ de la **ligne
+  suivante**. C'est cela, saisir à la suite.
+- **La date et le libellé** (« Facture n° 42 ») se règlent à la demande, par le crayon à côté du
+  champ ; sans eux, le réel est daté du jour et sans libellé.
+- **Cochez « Soldé »** quand toutes les factures d'une ligne sont arrivées : elle quitte la table au
+  prochain chargement. Soldée sans aucun réel, elle vaut **zéro** — « finalement rien dépensé ».
 - **`Échap`** annule la saisie en cours et laisse la ligne intacte : rien n'est envoyé.
 - **La ligne enregistrée ne disparaît pas sous vos doigts.** Elle reste à sa place, sur un fond
   vert, marquée « Enregistré », **jusqu'au prochain chargement de l'onglet**. La retirer aussitôt
   ferait remonter les lignes suivantes pendant que vous tapez, et vous feriez écrire une valeur dans
   la mauvaise ligne.
-- **Zéro est une valeur, pas un vide.** Saisir `0` signifie « finalement rien dépensé » et retire la
-  ligne de l'attente ; **laisser le champ vide la laisse en attente**. La phrase est écrite sous la
-  table, avec la consigne clavier.
+- **Un champ laissé vide n'envoie rien.** Un `0` saisi est un réel comme un autre ; c'est « Soldé »
+  qui fait sortir une ligne de l'attente. La règle est écrite sous la table, avec la consigne
+  clavier.
 
 ### 5 octies.2 Ce que vous ne pouvez pas modifier reste visible
 
@@ -3159,7 +3167,7 @@ ouvrent l'écriture channel par channel, et un rôle ne dirait pas la vérité.
 | Ce que vous lisez sous le champ | Ce que cela veut dire |
 |---|---|
 | « Enregistrement… » | L'envoi est en cours |
-| « Enregistré » | La base a retenu la valeur — celle qui s'affiche est **celle qu'elle a retenue**, arrondie au centime |
+| « Enregistré » | La base a retenu le réel — « Déjà saisi » montre **la somme qu'elle tient** |
 | « Ce montant n'est pas un nombre. » | La saisie n'a pas été envoyée, et elle reste à l'écran pour être corrigée |
 | « Aucune ligne n'a été enregistrée. […] rechargez l'onglet. » | Ni un succès ni une erreur : vos droits ont pu changer depuis l'ouverture de l'écran. Rien n'a été écrit |
 | « Vous ne pouvez pas modifier cette affaire. » | La base a refusé l'écriture |
@@ -3167,8 +3175,8 @@ ouvrent l'écriture channel par channel, et un rôle ne dirait pas la vérité.
 
 ### 5 octies.4 Le compteur de l'onglet
 
-Le badge porte le nombre de lignes **que la table liste** — celles que vous lisez, budgets clôturés
-compris, y compris celles que vous ne pouvez pas modifier.
+Le badge porte le nombre de lignes **que la table liste** — les lignes non soldées que vous lisez,
+budgets clôturés compris, y compris celles que vous ne pouvez pas modifier.
 
 **Il peut différer du nombre écrit sous le graphique** de la vue d'ensemble (« n ligne(s) sans coût
 réel saisi »), et ce n'est pas une erreur : le graphique **exclut les budgets clôturés** et compte
@@ -3182,10 +3190,10 @@ chose.
 > devises confondues ; les mentions sous les histogrammes ne comptent que les budgets qu'ils
 > montrent. »
 
-Un exemple, sur le jeu de démonstration : le track « Studio web » porte **deux** lignes en attente —
-l'une sur un budget ouvert, l'autre sur le budget clôturé « Salon du web 2025 ». Le badge affiche
-donc **2**, et la mention sous le graphique **1**. Au niveau de l'espace de travail, avec deux
-devises à l'écran, le badge affiche **3** quand les mentions totalisent **2**.
+Un exemple, sur le jeu de démonstration : le track « Studio web » porte des lignes non soldées sur
+un budget ouvert et sur le budget clôturé « Salon du web 2025 », dont une qui a déjà reçu un réel ; le
+badge les compte toutes, quand la mention sous le graphique ne compte que la ligne sans réel du
+budget ouvert. Les valeurs exactes du jeu sont dans l'annexe A.
 
 C'est la même règle que celle du cumul du workspace (§5 septies.3) : quand deux nombres d'un même
 écran ne comptent pas la même chose, l'écran écrit lequel compte quoi.
@@ -3194,11 +3202,27 @@ C'est la même règle que celle du cumul du workspace (§5 septies.3) : quand de
 
 - **Il ne crée aucune ligne de coût** : une dépense se crée depuis la fiche de son affaire, section
   « Coûts ».
-- **Il ne modifie que le coût réel** — ni la nature, ni le budget, ni l'occurrence, ni le coût
-  estimé.
-- **Il n'efface pas un coût réel déjà saisi** : une ligne quitte la table dès qu'elle en porte un,
-  et se corrige depuis la fiche de son affaire.
+- **Il ajoute des réels et solde des lignes** — il ne modifie ni la nature, ni le budget, ni
+  l'occurrence, ni le coût estimé.
+- **Il ne corrige ni ne retire un réel déjà saisi** : cela se fait depuis la fiche de son affaire
+  (§5 octies.6).
 - **Aucun import de fichier, aucun rapprochement automatique avec une facture.**
+
+### 5 octies.6 Les réels d'une ligne, dans la fiche d'une affaire
+
+Dans la section « Coûts » d'une fiche, la colonne « Réel » d'une ligne est la **somme de ses réels**,
+et le formulaire d'une ligne ne porte plus de réel : il en règle la nature, le budget, l'occurrence
+et le coût estimé. La flèche au début des actions de la ligne **déplie ses réels**, sous la table :
+
+- la liste des réels — date, libellé ou « Sans libellé », montant —, chacun **modifiable** (crayon)
+  et **retirable** (corbeille, après confirmation) ;
+- la saisie d'un réel de plus : montant, date (celle du jour par défaut), libellé facultatif, puis
+  « Ajouter le réel » ;
+- la case **« Soldé »**. Une ligne soldée porte la pastille « Soldé » ; ses réels ne se modifient
+  plus, et l'écran le dit : « Ligne soldée — décochez « Soldé » pour la modifier. » Décocher la
+  rouvre.
+
+Un budget clôturé n'empêche rien de tout cela : on clôt une campagne, puis les factures arrivent.
 
 ## 5 nonies. L'entonnoir de conversion : où se tiennent vos affaires
 

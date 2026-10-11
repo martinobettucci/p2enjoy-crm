@@ -2,6 +2,8 @@
 -- @verifies CRM-022 (docs/BACKLOG.md) — preuve n° 10 et sept politiques d'identité
 -- @verifies CRM-097 (docs/BACKLOG.md) — tranche T1 : les cinq politiques de l'assistant IA comptées (130)
 -- @verifies CRM-098 (docs/BACKLOG.md) — tranche T1 : les sept politiques de la saisie de temps comptées (137) ;
+-- @verifies CRM-099 (docs/BACKLOG.md) — tranche T1 : les quatre politiques des réels d'une ligne de coût (141) ;
+--           docs/SPEC-costs.md §2.3 bis
 --           docs/SPEC-temps.md §5
 -- @verifies docs/SPEC-permissions-rls.md §7 (les douze preuves), §7.2 (contrat mesuré),
 --           §7.3 (ce qui n'est pas satisfaisable, et comment l'absence est figée),
@@ -213,8 +215,11 @@ select is(pg_temp.politiques('card_sequence_enrollments'),
 
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	137,
-	'CENT TRENTE-SEPT politiques dans `public`, et pas une de plus — 130 avant `CRM-098` tranche 1, plus les SEPT de '
+	141,
+	'CENT QUARANTE ET UNE politiques dans `public`, et pas une de plus — 137 avant `CRM-099` tranche 1, plus les QUATRE '
+	'de `card_cost_actuals` (docs/SPEC-costs.md §2.3 bis) : lecture, création, mise à jour et retrait des réels d''une '
+	'ligne de coût, chacune déléguée à la ligne — la lire, ou pouvoir la mettre à jour —, sans exiger le budget ouvert : '
+	'une facture arrive après la clôture. Avant elles : 137, soit 130 avant `CRM-098` tranche 1, plus les SEPT de '
 	'la saisie de temps (docs/SPEC-temps.md §5) : lecture, création et retrait de `couts_personnel` — AUCUNE MISE À '
 	'JOUR, et c''est un refus double : ni politique ni privilège, et un trigger rend la version immuable —, puis '
 	'lecture, création, mise à jour et retrait de `saisies_temps`, la mise à jour bornée à `minutes` par le PRIVILÈGE '

@@ -2587,22 +2587,30 @@ quatre corrigent ce que la rédaction d'avant-code supposait.
 
 Spécifiée avant code, `docs/SPEC-costs.md` §2.3 bis (décision 622). Elle complète le §5.31 sans en retirer de règle.
 
-**Dans la table « À saisir ».** La colonne « Réel » devient deux éléments : le **réel déjà saisi** — la somme, alignée
-à droite, `--color-text-2`, vide si aucun réel —, puis le **champ d'un réel de plus**, qui garde toutes les règles du
+**Dans la table « À saisir ».** La colonne « Réel » devient trois colonnes : **« Déjà saisi »** — la somme, alignée à
+droite, `--color-text-2`, au format des montants de la table (à l'euro), vide si aucun réel —, **« Un réel de plus »**
+— le champ —, et **« Soldé »**. Le champ qui garde toutes les règles du
 §5.31 : il s'enregistre seul, `Entrée` ajoute le réel daté du jour et mène au champ de la ligne suivante, `Échap` annule.
 La **date** et le **libellé** se règlent à la demande, par un bouton icône `Pencil` (« Détails du réel ») qui ouvre deux
 champs sous la ligne ; sans eux, la saisie en série reste un seul champ par ligne. Une dernière colonne porte la case
 **« Soldé »** — une `checkbox` native, cible de 44 px, nom accessible « Soldé : {nature} de {affaire} ». La cocher ne
 retire pas la ligne à chaud (§5.31) : elle passe sur le fond `--color-success-soft` qui s'estompe et porte « Soldé ».
 
-**Dans la fiche d'une affaire.** Chaque ligne de coût porte un bouton de dépli (`ChevronRight` / `ChevronDown`,
-`aria-expanded`) qui montre ses réels : une liste — date, libellé ou « Sans libellé » en `--color-text-2`, montant
+**Dans la fiche d'une affaire.** Chaque ligne de coût porte, en tête de ses actions, un bouton de dépli
+(`ChevronRight` / `ChevronDown`, `aria-expanded`) qui montre ses réels **SOUS la table**, comme les formulaires de la
+section — un `td` étendu sur six colonnes casserait l'alignement que le §5.9 tient (règle déjà écrite dans
+`BlocCoutsCard`). Le panneau montre une liste — date, libellé ou « Sans libellé » en `--color-text-2`, montant
 aligné à droite —, chacun modifiable (`Pencil`) et retirable (`Trash2`, confirmation du §5.13), puis la saisie d'un réel
 et la case « Soldé ». Le total de la ligne reste celui du §4.6.
 
 **Une ligne soldée** porte la pilule neutre **« Soldé »** (§5.6) — jamais `--color-success` plein : soldée n'est pas une
 réussite, c'est un état. Ses gestes d'ajout, de modification et de retrait sont **désactivés et lisibles**, avec le
 motif « Ligne soldée — décochez « Soldé » pour la modifier » (§8) ; la case reste active pour qui peut écrire.
+
+**La case « Soldé » bascule au clic**, sans attendre la réponse, et revient en arrière si la base refuse : une case
+qui ne change pas sous le doigt se lit comme cassée (constaté par l'E2E : la case contrôlée par l'état serveur ne
+bougeait qu'au retour de la requête). Le formulaire d'une ligne ne porte plus de champ « réel » : le réel est la
+somme de ses réels.
 
 ### 5.32 Écran de détail d'un budget — `CRM-086`
 

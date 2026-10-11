@@ -33,9 +33,13 @@
 // badge, et la phrase n'aurait rien à expliquer. Elle n'est pas conditionnée à une divergence
 // observée : la mesurer obligerait cette zone à recompter la population de l'histogramme, c'est-à-
 // dire à tenir une seconde source pour un nombre que la vue d'ensemble possède déjà.
+// @spec CRM-099 (docs/BACKLOG.md) — tranche T2 : un réel de plus par ligne, le réel déjà saisi, les détails à la
+//       demande, la case « Soldé » (docs/SPEC-costs.md §2.3 bis, docs/DESIGN_SYSTEM.md §5.31 bis)
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { Pencil } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router'
+import { Button } from '../components/ui/Button'
 import { EtatErreur, EtatRefus, EtatVide } from '../components/ui/States'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t } from '../i18n'
@@ -54,6 +58,7 @@ import {
 	type RefusSaisie,
 } from '../lib/couts-a-saisir'
 import { adresseAffaireLigne } from '../lib/couts-ecrans'
+import { solderLigne } from '../lib/reels-ligne'
 import type { ClientCrm } from '../lib/supabase'
 import { formaterMontant } from './HistogrammeCouts'
 import { lireOngletCouts, OngletsCouts } from './OngletsCouts'
@@ -247,8 +252,14 @@ export function TableASaisir({
 							<th scope="col" className="py-2 px-4 font-medium text-right">
 								{t('costs.chart.legend.planned')}
 							</th>
-							<th scope="col" className="py-2 pl-4 font-medium text-right">
+							<th scope="col" className="py-2 px-4 font-medium text-right">
+								{t('costs.pending.column.already')}
+							</th>
+							<th scope="col" className="py-2 px-4 font-medium text-right">
 								{t('costs.pending.column.actual')}
+							</th>
+							<th scope="col" className="py-2 pl-4 font-medium text-center">
+								{t('costs.pending.column.settled')}
 							</th>
 						</tr>
 					</thead>
@@ -310,9 +321,15 @@ type EtatSaisie =
  *    le focus du clavier, ce qui interromprait précisément la série que `Entrée` vient de lancer.
  *    Il l'est en revanche lorsque la BASE refuse l'écriture (§4.8), avec son motif sous le champ.
  *
- * 6. **Deux envois de la même valeur ne partent pas deux fois.** `Entrée` est suivi d'un `blur`
- *    quand le focus s'en va : sans cette garde, chaque ligne serait écrite deux fois. La garde
- *    porte sur la valeur ENVOYÉE, jamais sur un minuteur (`CLAUDE.md` §18).
+ * 6. **Un réel ne part pas deux fois.** `Entrée` est suivi d'un `blur` quand le focus s'en va, et
+ *    depuis `CRM-099` chaque envoi AJOUTE un réel : sans garde, chaque ligne en recevrait deux. La
+ *    valeur saisie vit dans une référence, vidée AVANT l'envoi — le `blur` qui suit lit un champ vide
+ *    et n'envoie rien —, jamais sur un minuteur (`CLAUDE.md` §18).
+ *
+ * 7. **`CRM-099` — le réel déjà saisi, les détails, la case « Soldé »** (docs/SPEC-costs.md §2.3 bis,
+ *    docs/DESIGN_SYSTEM.md §5.31 bis) : la somme retenue par la base s'affiche à gauche du champ ; la
+ *    date et le libellé du réel suivant se règlent à la demande ; « Soldé » ferme la ligne, qui reste
+ *    en place jusqu'au prochain chargement de l'onglet.
  */
 function LigneSaisie({
 	ligne,
@@ -329,7 +346,15 @@ function LigneSaisie({
 }) {
 	const [valeur, setValeur] = useState('')
 	const [etat, setEtat] = useState<EtatSaisie>({ statut: 'repos' })
-	const envoyee = useRef<string | null>(null)
+	// La valeur COURANTE, lue par `soumettre` : la fermeture d'un rendu passé verrait l'ancienne (règle 6).
+	const valeurCourante = useRef('')
+	const [deja, setDeja] = useState<number | null>(ligne.actual_cost)
+	const [details, setDetails] = useState<{ ouverts: boolean; date: string; libelle: string }>({ ouverts: false, date: '', libelle: '' })
+	const [soldee, setSoldee] = useState(false)
+	const changerValeur = (texte: string) => {
+		valeurCourante.current = texte
+		setValeur(texte)
+	}
 
 	const saisissable = estSaisissable(ligne)
 	// LES DEUX ÉTATS SONT CALCULÉS HORS DU `className`, et ce n'est pas un goût de style : le
@@ -359,32 +384,30 @@ function LigneSaisie({
 	const identifiantMention = `couts-saisir-${ligne.id}-mention`
 
 	const soumettre = () => {
-		if (!saisissable || client === null) return
-		const montant = lireMontant(valeur)
-		// Un champ vidé ne remet aucune ligne en attente et n'envoie rien : `enregistrerReel` ne prend
-		// pas de `null`, et un geste qui EFFACERAIT un réel n'est spécifié nulle part (§4.8).
+		if (!saisissable || client === null || soldee) return
+		const texte = valeurCourante.current
+		const montant = lireMontant(texte)
 		if (montant.statut === 'absent') return
 		if (montant.statut === 'invalide') {
 			setEtat({ statut: 'invalide' })
 			return
 		}
-		if (envoyee.current === valeur && etat.statut !== 'message') return
-		envoyee.current = valeur
+		// Vidée AVANT l'envoi : le `blur` qui suit `Entrée` ne renverra rien (règle 6).
+		changerValeur('')
 		setEtat({ statut: 'envoi' })
 		void (async () => {
-			const resultat = await enregistrerReel(client, ligne.id, montant.montant)
+			const resultat = await enregistrerReel(client, ligne.id, montant.montant, {
+				date: details.date === '' ? null : details.date,
+				libelle: details.libelle === '' ? null : details.libelle,
+			})
 			if (resultat.statut === 'applique') {
-				// La valeur RETENUE par la base remplace celle qui a été tapée : `numeric(14,2)` arrondit,
-				// et afficher la saisie ferait croire enregistré autre chose que ce qui l'est (§4.8.1).
-				const retenue = String(resultat.reel)
-				envoyee.current = retenue
-				setValeur(retenue)
+				setDeja(resultat.reel)
+				setDetails({ ouverts: false, date: '', libelle: '' })
 				setEtat({ statut: 'enregistre' })
 				return
 			}
-			// Un refus et un « sans effet » n'effacent pas la saisie (§5.7 ter), et rouvrent l'envoi :
-			// la garde de double envoi ne doit pas empêcher de RÉESSAYER la même valeur.
-			envoyee.current = null
+			// Le refus rend la saisie à son auteur : rien n'a été ajouté.
+			changerValeur(texte)
 			setEtat({
 				statut: 'message',
 				texte:
@@ -392,6 +415,23 @@ function LigneSaisie({
 						? t('costs.pending.refus.sans-effet')
 						: texteRefusSaisie(resultat.refus),
 			})
+		})()
+	}
+
+	const basculerSolde = (coche: boolean) => {
+		if (!saisissable || client === null) return
+		// La case bascule au clic ; elle revient en arrière si la base refuse (même règle que la fiche, §5.31 bis).
+		setSoldee(coche)
+		setEtat({ statut: 'envoi' })
+		void (async () => {
+			const issue = await solderLigne(client, ligne.id, coche)
+			if (issue.ok) {
+				setDeja(issue.reel)
+				setEtat({ statut: 'enregistre' })
+				return
+			}
+			setSoldee(!coche)
+			setEtat({ statut: 'message', texte: t(issue.motif === 'droit' ? 'costs.pending.refus.sans-effet' : 'costs.actuals.refused.unknown') })
 		})()
 	}
 
@@ -406,7 +446,7 @@ function LigneSaisie({
 				// « reste affichée, marquée enregistré, jusqu'au prochain chargement de l'onglet » : une
 				// marque qui s'effacerait d'elle-même laisserait la table indistinguable de son état
 				// d'avant, et un minuteur serait la temporisation arbitraire que `CLAUDE.md` §18 proscrit.
-				enregistre ? 'bg-success-soft' : 'hover:bg-hover',
+				enregistre || soldee ? 'bg-success-soft' : 'hover:bg-hover',
 			].join(' ')}
 		>
 			{/* L'ancienneté est en 13 px `--color-text-2`, et passe en `--color-danger-on-soft` sur
@@ -488,7 +528,12 @@ function LigneSaisie({
 			<td className="py-2 px-4 text-right font-mono tabular-nums whitespace-nowrap">
 				{formaterMontant(ligne.estimated_cost, devise)}
 			</td>
-			<td className="py-2 pl-4 text-right">
+			{/* `CRM-099` : le réel DÉJÀ saisi — la somme retenue par la base ; vide tant qu'aucun réel ne l'est (§2.3 bis). */}
+			<td className="py-2 px-4 text-right font-mono tabular-nums whitespace-nowrap text-text-2" data-testid="couts-a-saisir-deja">
+				{deja === null ? null : formaterMontant(deja, devise)}
+			</td>
+			<td className="py-2 px-4 text-right">
+				<span className="inline-flex items-center gap-1">
 				<input
 					ref={onEnregistrerChamp}
 					data-testid="couts-a-saisir-champ"
@@ -499,10 +544,10 @@ function LigneSaisie({
 					aria-label={t('costs.pending.field.aria', { nom: ligne.label })}
 					aria-describedby={etat.statut === 'repos' && saisissable ? undefined : identifiantMention}
 					aria-invalid={etat.statut === 'invalide' ? true : undefined}
-					disabled={!saisissable}
+					disabled={!saisissable || soldee}
 					value={valeur}
 					onChange={(evenement) => {
-						setValeur(evenement.target.value)
+						changerValeur(evenement.target.value)
 						// La mention d'invalidité tombe dès que la saisie change : elle décrit la valeur
 						// précédente, et la laisser ferait lire un refus sur ce qui vient d'être corrigé.
 						if (etat.statut === 'invalide') setEtat({ statut: 'repos' })
@@ -519,7 +564,7 @@ function LigneSaisie({
 						}
 						if (evenement.key === 'Escape') {
 							evenement.preventDefault()
-							setValeur(envoyee.current ?? '')
+							changerValeur('')
 							if (etat.statut === 'invalide') setEtat({ statut: 'repos' })
 						}
 					}}
@@ -530,7 +575,54 @@ function LigneSaisie({
 						'bg-surface text-ink disabled:bg-hover disabled:text-text-2',
 					].join(' ')}
 				/>
+				<Button
+					variante="discret"
+					taille="compacte"
+					disabled={!saisissable || soldee}
+					aria-expanded={details.ouverts}
+					aria-label={t('costs.pending.details.aria', { nom: ligne.label })}
+					onClick={() => setDetails((d) => ({ ...d, ouverts: !d.ouverts }))}
+				>
+					<Pencil aria-hidden="true" size={16} />
+				</Button>
+				</span>
+				{details.ouverts ? (
+					<span className="mt-1 flex flex-col items-end gap-1" data-testid="couts-a-saisir-details">
+						<label className="inline-flex items-center gap-2 text-[13px] text-text-2">
+							{t('costs.actuals.form.date')}
+							<input
+								type="date"
+								value={details.date}
+								onChange={(e) => setDetails((d) => ({ ...d, date: e.target.value }))}
+								className="min-h-[var(--size-target)] rounded-sm border border-border bg-surface px-2 text-ink"
+							/>
+						</label>
+						<label className="inline-flex items-center gap-2 text-[13px] text-text-2">
+							{t('costs.actuals.form.label')}
+							<input
+								value={details.libelle}
+								placeholder={t('costs.actuals.form.label.placeholder')}
+								onChange={(e) => setDetails((d) => ({ ...d, libelle: e.target.value }))}
+								className="min-h-[var(--size-target)] w-[20ch] rounded-sm border border-border bg-surface px-2 text-ink"
+							/>
+						</label>
+					</span>
+				) : null}
 				<Mention etat={etat} saisissable={saisissable} identifiant={identifiantMention} />
+			</td>
+			<td className="py-2 pl-4 text-center">
+				<label className="inline-flex min-h-[var(--size-target)] items-center justify-center">
+					<input
+						type="checkbox"
+						checked={soldee}
+						disabled={!saisissable}
+						onChange={(e) => basculerSolde(e.target.checked)}
+						aria-label={t('costs.pending.settle.aria', { nom: ligne.label, affaire: titreAffaire ?? '' })}
+						data-testid="couts-a-saisir-solde"
+						className="size-6 accent-[var(--color-brand)]"
+					/>
+				</label>
+				{soldee ? <span className="block text-[13px] text-text-2">{t('costs.actuals.settled.pill')}</span> : null}
 			</td>
 		</tr>
 	)

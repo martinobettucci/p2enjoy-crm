@@ -579,7 +579,9 @@ PORT_RAPPORT=9323
 # 80 + 1 = 81, valeur COMPTÉE — « 81 fichiers ».
 # **82 depuis `CRM-098` T1, 2026-10-11** (décision 621) : `0082_saisie_temps.test.sql`, seul fichier ajouté.
 # 81 + 1 = 82, valeur COMPTÉE — « 82 fichiers ».
-FICHIERS_SQL_ATTENDUS=82
+# **83 depuis `CRM-099` T1, 2026-10-11** (décision 622) : `0083_reels_multiples.test.sql`, seul fichier ajouté.
+# 82 + 1 = 83, valeur COMPTÉE — « 83 fichiers ».
+FICHIERS_SQL_ATTENDUS=83
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -637,7 +639,10 @@ FICHIERS_SQL_ATTENDUS=82
 # COMPTÉE — « 81 fichiers, 3457 assertions ».
 # **3523 depuis `CRM-098` T1** : `0082` apporte **66** assertions — 3457 + 66 = 3523 ; `0016` est révisée sans
 # changer son plan (le compte des politiques passe de 130 à 137). COMPTÉE — « 82 fichiers, 3523 assertions ».
-ASSERTIONS_ATTENDUES=3523
+# **3558 depuis `CRM-099` T1** : `0083` apporte **35** assertions — 3523 + 35 = 3558 ; `0049` et `0050` sont révisées
+# sans changer leur plan (le réel s'écrit par ses réels, l'onglet lit les lignes non soldées), `0016` aussi (141
+# politiques). COMPTÉE — « 83 fichiers, 3558 assertions ».
+ASSERTIONS_ATTENDUES=3558
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -978,7 +983,11 @@ ASSERTIONS_ATTENDUES=3523
 # l'administrateur sur une cible que le membre ne lit pas, la lecture croisée, le privilège de colonne, le plafond
 # sous deux écritures CONCURRENTES (deux contextes : un seul sérialisait, et la mutation sans verrou survivait),
 # l'anonyme, les versions de coût. 1108 + 10 = 1118, valeur COMPTÉE — « Total: 1118 tests in 74 files ».
-SCENARIOS_API=1118
+# **1122 depuis `CRM-099` tranche T2, 2026-10-11** (décision 622) : `reels-ligne.spec.ts`, fichier NEUF, porte **4**
+# scénarios — l'écriture directe du réel refusée, la somme des réels, le soldé figé puis rouvert avec l'auteur du jeton,
+# la lectrice ; `card-costs.spec.ts` et `budgets.spec.ts` révisés sans changer leur nombre. 1118 + 4 = 1122, valeur
+# COMPTÉE — « Total: 1122 tests in 75 files ».
+SCENARIOS_API=1122
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la

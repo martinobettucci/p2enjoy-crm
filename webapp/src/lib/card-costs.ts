@@ -18,6 +18,8 @@
 // et le seed le pose. Le filtre par track est donc une aide à la saisie, jamais une règle
 // d'autorisation : rien ici ne prétend le contraire, et aucune preuve de ce module ne le présente
 // comme un refus du backend.
+// @spec CRM-099 (docs/BACKLOG.md) — tranche T2 : le réel quitte la saisie d'une ligne ; `settled_at` est lu
+//       (docs/SPEC-costs.md §2.3 bis)
 
 import { classerErreur, enErreur, pret, type EtatAsync } from './async'
 import type { Database } from './database.types'
@@ -61,7 +63,7 @@ export type OccurrenceDeLaLigne = Pick<
  */
 export type LigneCout = Pick<
 	Database['public']['Tables']['card_costs']['Row'],
-	'id' | 'card_id' | 'budget_id' | 'occurrence_id' | 'label' | 'estimated_cost' | 'actual_cost'
+	'id' | 'card_id' | 'budget_id' | 'occurrence_id' | 'label' | 'estimated_cost' | 'actual_cost' | 'settled_at'
 > & {
 	readonly budgets: BudgetDeLaLigne | null
 	readonly budget_occurrences: OccurrenceDeLaLigne | null
@@ -74,7 +76,7 @@ export type LigneCout = Pick<
  * réponse — c'est la limite déjà mesurée et consignée sur `COLONNES_CARD_FORMULAIRE`.
  */
 export const COLONNES_LIGNE_COUT =
-	'id, card_id, budget_id, occurrence_id, label, estimated_cost, actual_cost, budgets(id, name, currency, is_recurrent, closed_at), budget_occurrences(id, label, closed_at)'
+	'id, card_id, budget_id, occurrence_id, label, estimated_cost, actual_cost, settled_at, budgets(id, name, currency, is_recurrent, closed_at), budget_occurrences(id, label, closed_at)'
 
 /**
  * Les lignes de coût d'une affaire, dans l'ordre de leur apparition.
@@ -474,8 +476,8 @@ export type SaisieLigneCout = {
 	readonly idOccurrence: string | null
 	readonly libelle: string
 	readonly estime: number
-	/** `null` — le réel n'est pas encore connu — n'est PAS zéro (§2.3). */
-	readonly reel: number | null
+	// LE RÉEL N'EN FAIT PLUS PARTIE — `CRM-099`, docs/SPEC-costs.md §2.3 bis : il est la somme des réels de la ligne,
+	// tenue par la base, et s'écrit par `lib/reels-ligne.ts`. L'envoyer ici serait refusé (« reel derive »).
 }
 
 /**
@@ -499,7 +501,6 @@ export async function creerLigneCout(
 				occurrence_id: saisie.idOccurrence,
 				label: saisie.libelle,
 				estimated_cost: saisie.estime,
-				actual_cost: saisie.reel,
 			})
 			.select('id'),
 	)
@@ -528,7 +529,6 @@ export async function modifierLigneCout(
 				occurrence_id: saisie.idOccurrence,
 				label: saisie.libelle,
 				estimated_cost: saisie.estime,
-				actual_cost: saisie.reel,
 			})
 			.eq('id', id)
 			.select('id'),

@@ -22,9 +22,11 @@
 // La commande est donc rendue DÉSACTIVÉE avec son motif, jamais masquée (§5.13), et sa modification
 // reste ouverte parce que le §2.3 la veut ouverte : « on clôt une campagne PUIS les factures
 // arrivent ».
+// @spec CRM-099 (docs/BACKLOG.md) — tranche T2 : le réel quitte le formulaire d'une ligne ; ses réels se déplient sous
+//       la table, et une ligne soldée porte sa pilule (docs/SPEC-costs.md §2.3 bis, docs/DESIGN_SYSTEM.md §5.31 bis)
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
-import { Pencil, Plus, Trash2, TriangleAlert } from 'lucide-react'
+import { ChevronDown, ChevronRight, Pencil, Plus, Trash2, TriangleAlert } from 'lucide-react'
 import { Button } from '../components/ui/Button'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t } from '../i18n'
@@ -45,6 +47,7 @@ import {
 	type ResultatCout,
 } from '../lib/card-costs'
 import type { ClientCrm } from '../lib/supabase'
+import { ReelsLigne } from './ReelsLigne'
 
 const CLASSES_ENTETE = 'bg-bg text-sm text-text-2 font-medium h-[var(--size-target)] px-3 text-left'
 const CLASSES_CELLULE = 'h-[var(--size-target)] px-3'
@@ -155,7 +158,6 @@ export type SaisieCout = {
 	readonly libelle: string
 	/** Saisies BRUTES : des champs texte, lus par `lireMontant`. */
 	readonly estime: string
-	readonly reel: string
 }
 
 /**
@@ -202,14 +204,12 @@ function FormulaireCout({
 	const budget = budgets.find((candidat) => candidat.id === saisie.idBudget) ?? null
 	const occurrenceExigee = budget?.is_recurrent === true
 	const estime = lireMontant(saisie.estime)
-	const reel = lireMontant(saisie.reel)
 	const complet =
 		libelleCoutConforme(saisie.libelle) &&
 		budget !== null &&
 		// L'estimé est OBLIGATOIRE (§2.3) : `absent` n'est pas une issue acceptable pour ce champ-là,
 		// à la différence du réel.
 		estime.statut === 'lu' &&
-		reel.statut !== 'invalide' &&
 		(!occurrenceExigee || saisie.idOccurrence !== '')
 
 	return (
@@ -333,37 +333,6 @@ function FormulaireCout({
 				) : null}
 			</div>
 
-			<div className="flex flex-col gap-1">
-				<label htmlFor={`${prefixe}-reel`} className="text-sm text-text-2">
-					{t('card.costs.form.actual')}
-				</label>
-				<input
-					id={`${prefixe}-reel`}
-					data-testid="cout-champ-reel"
-					value={saisie.reel}
-					inputMode="decimal"
-					aria-describedby={
-						reel.statut === 'invalide' ? `${prefixe}-reel-erreur` : `${prefixe}-reel-aide`
-					}
-					aria-invalid={reel.statut === 'invalide' ? true : undefined}
-					onChange={(evenement) =>
-						setSaisie((precedente) => ({ ...precedente, reel: evenement.target.value }))
-					}
-					className={CLASSES_CHAMP}
-				/>
-				{/* LA DISTINCTION EST ÉCRITE, PAS SUPPOSÉE COMPRISE (§2.3, §4.8) : un champ vide laisse
-				    le réel inconnu, un `0` saisi dit « rien dépensé ». C'est la seule façon dont
-				    l'utilisateur peut savoir que les deux ne sont pas la même chose. */}
-				<span id={`${prefixe}-reel-aide`} className="text-sm text-text-3">
-					{t('card.costs.form.actual.help')}
-				</span>
-				{reel.statut === 'invalide' ? (
-					<span id={`${prefixe}-reel-erreur`} role="alert" className="text-sm text-danger-on-soft">
-						{t('card.costs.form.amount.invalid')}
-					</span>
-				) : null}
-			</div>
-
 			{refus === null ? null : <AlerteRefus message={refus} />}
 			<div className="flex gap-2">
 				<Button type="submit" variante="primaire" disabled={!complet || enCours}>
@@ -468,6 +437,8 @@ type OuvertureCout =
 	| { readonly type: 'creation' }
 	| { readonly type: 'edition'; readonly id: string }
 	| { readonly type: 'suppression'; readonly id: string }
+	// `CRM-099` : les réels d'une ligne, dépliés SOUS la table comme les formulaires (docs/DESIGN_SYSTEM.md §5.31 bis).
+	| { readonly type: 'reels'; readonly id: string }
 
 const AUCUNE: OuvertureCout = { type: 'aucune' }
 
@@ -711,9 +682,40 @@ export function BlocCoutsCard({
 											) : (
 												rendreMontant(ligne.actual_cost)
 											)}
+											{/* `CRM-099` : une ligne soldée le dit par un MOT, pilule neutre — soldée n'est pas une réussite,
+											    c'est un état (docs/DESIGN_SYSTEM.md §5.31 bis). */}
+											{ligne.settled_at !== null ? (
+												<span
+													data-testid="cout-pilule-soldee"
+													className="ml-2 rounded-sm bg-bg px-2 py-[2px] text-sm text-text-2"
+												>
+													{t('costs.actuals.settled.pill')}
+												</span>
+											) : null}
 										</td>
 										<td className={CLASSES_CELLULE}>
 											<span className="flex items-center gap-1">
+												<Button
+													taille="compacte"
+													variante="discret"
+													aria-expanded={ouverture.type === 'reels' && ouverture.id === ligne.id}
+													onClick={() => {
+														setRefus(null)
+														setOuverture(
+															ouverture.type === 'reels' && ouverture.id === ligne.id
+																? AUCUNE
+																: { type: 'reels', id: ligne.id },
+														)
+													}}
+													aria-label={t('costs.actuals.toggle', { nom: ligne.label })}
+													data-testid="cout-reels-bascule"
+												>
+													{ouverture.type === 'reels' && ouverture.id === ligne.id ? (
+														<ChevronDown aria-hidden="true" size={16} strokeWidth={2} />
+													) : (
+														<ChevronRight aria-hidden="true" size={16} strokeWidth={2} />
+													)}
+												</Button>
 												<Button
 													taille="compacte"
 													variante="discret"
@@ -771,7 +773,6 @@ export function BlocCoutsCard({
 									idOccurrence: ligne.occurrence_id ?? '',
 									libelle: ligne.label,
 									estime: String(ligne.estimated_cost),
-									reel: ligne.actual_cost === null ? '' : String(ligne.actual_cost),
 								}}
 								refus={refus}
 								enCours={enCours}
@@ -781,8 +782,7 @@ export function BlocCoutsCard({
 								}}
 								onValider={(saisie) => {
 									const estime = lireMontant(saisie.estime)
-									const reel = lireMontant(saisie.reel)
-									if (estime.statut !== 'lu' || reel.statut === 'invalide') return
+									if (estime.statut !== 'lu') return
 									void executer(
 										() =>
 											modifierLigneCout(client, ligne.id, {
@@ -790,10 +790,29 @@ export function BlocCoutsCard({
 												idOccurrence: saisie.idOccurrence === '' ? null : saisie.idOccurrence,
 												libelle: saisie.libelle,
 												estime: estime.montant,
-												reel: reel.statut === 'absent' ? null : reel.montant,
 											}),
 										t('live.card.cost.updated'),
 									)
+								}}
+							/>
+						))
+				: null}
+
+			{ouverture.type === 'reels' && lignes.statut === 'pret'
+				? lignes.donnees
+						.filter((ligne) => ligne.id === ouverture.id)
+						.map((ligne) => (
+							<ReelsLigne
+								key={ligne.id}
+								client={client}
+								idLigne={ligne.id}
+								nature={ligne.label}
+								devise={ligne.budgets?.currency ?? ''}
+								soldee={ligne.settled_at !== null}
+								onChange={(message) => {
+									// La ligne est relue : son réel a été recalculé par la base. Le panneau reste ouvert.
+									setAnnonce(message)
+									setTentative((precedente) => precedente + 1)
 								}}
 							/>
 						))
@@ -827,7 +846,7 @@ export function BlocCoutsCard({
 					titre={t('card.costs.form.create')}
 					creation
 					budgets={listeBudgets}
-					initial={{ idBudget: '', idOccurrence: '', libelle: '', estime: '', reel: '' }}
+					initial={{ idBudget: '', idOccurrence: '', libelle: '', estime: '' }}
 					refus={refus}
 					enCours={enCours}
 					onAnnuler={() => {
@@ -836,8 +855,7 @@ export function BlocCoutsCard({
 					}}
 					onValider={(saisie) => {
 						const estime = lireMontant(saisie.estime)
-						const reel = lireMontant(saisie.reel)
-						if (estime.statut !== 'lu' || reel.statut === 'invalide') return
+						if (estime.statut !== 'lu') return
 						void executer(
 							() =>
 								creerLigneCout(client, idCard, {
@@ -845,7 +863,6 @@ export function BlocCoutsCard({
 									idOccurrence: saisie.idOccurrence === '' ? null : saisie.idOccurrence,
 									libelle: saisie.libelle,
 									estime: estime.montant,
-									reel: reel.statut === 'absent' ? null : reel.montant,
 								}),
 							t('live.card.cost.created'),
 						)

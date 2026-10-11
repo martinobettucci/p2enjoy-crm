@@ -9,6 +9,7 @@
 # @verifies CRM-097 tranche T3.d — les libellés du parcours « Suggérer » (docs/SPEC-ia.md §13.6, chapitre 5 bis.0 ter)
 # @verifies CRM-098 (docs/BACKLOG.md) tranche T4 — les libellés de la saisie de temps et du coût du personnel, et les
 #           versions de coût de l'annexe A (docs/SPEC-temps.md §7, chapitre 5 undecies)
+# @verifies CRM-099 (docs/BACKLOG.md) — les libellés des réels d'une ligne de coût (chapitre 5 octies)
 #
 # Vérifie que `docs/manual.md` décrit le produit **réellement exécuté**, hors interface, contre la
 # base réelle et contre les fichiers du dépôt.
@@ -173,6 +174,12 @@ LIBELLES_PARCOURS=(
 	"Temps passé"
 	"Votre temps"
 	"Le temps de toute l’équipe"
+	# CRM-099 — plusieurs réels par ligne de coût (chapitre 5 octies)
+	"Un réel de plus"
+	"Déjà saisi"
+	"Ajouter le réel"
+	"Sans libellé"
+	"Soldé"
 )
 
 # ---------------------------------------------------------------------------------------------

@@ -1618,11 +1618,6 @@ export const fr = {
 		'Ce budget est récurrent : la dépense se rattache à l’une de ses occurrences ouvertes.',
 	'card.costs.form.estimated': 'Coût estimé',
 	'card.costs.form.estimated.help': 'Obligatoire. Un montant négatif est accepté — avoir, remise.',
-	'card.costs.form.actual': 'Coût réel (facultatif)',
-	// La distinction du §2.3 est ÉCRITE, pas supposée comprise : c'est le seul endroit où
-	// l'utilisateur peut apprendre que vide et zéro ne sont pas la même chose.
-	'card.costs.form.actual.help':
-		'Laissez vide tant que le réel n’est pas connu. Saisir 0 signifie « rien dépensé », ce qui n’est pas la même chose.',
 	'card.costs.form.amount.invalid': 'Ce montant n’est pas un nombre.',
 	'card.costs.delete.confirm': 'Supprimer la dépense « {nom} » ?',
 	'card.costs.delete.body':
@@ -2898,7 +2893,7 @@ export const fr = {
 	'costs.pending.column.occurrence': 'Occurrence',
 	'costs.pending.column.card': 'Affaire',
 	'costs.pending.column.label': 'Nature',
-	'costs.pending.column.actual': 'Réel',
+	'costs.pending.column.actual': 'Un réel de plus',
 	// L'ancienneté est « formulée en durée » (§5.31), et se compose par une CLÉ : « 12 jours » ne se
 	// construit pas en collant un nombre à un mot (§10).
 	'costs.pending.age.days': '{n} jour(s)',
@@ -2924,13 +2919,14 @@ export const fr = {
 	'costs.pending.readonly.all':
 		'Aucune de ces lignes ne peut être modifiée avec vos droits : ce tableau est en lecture seule.',
 	'costs.pending.readonly.line': 'Vous ne pouvez pas modifier cette affaire.',
-	// « Zéro est une valeur, pas un vide » (§4.8), écrite SOUS le tableau et non supposée comprise.
+	// RÉVISÉE PAR `CRM-099` (docs/SPEC-costs.md §2.3 bis) : une ligne ne sort plus de l'attente par un réel saisi,
+	// fût-il zéro, mais par la case « Soldé » ; soldée sans réel, elle vaut zéro. La règle reste ÉCRITE sous le tableau.
 	'costs.pending.zero.notice':
-		'Saisir 0 signifie « finalement rien dépensé » et retire la ligne de l’attente ; laisser le champ vide la laisse en attente.',
+		'Chaque montant saisi s’ajoute aux réels de la ligne. Cochez « Soldé » quand toutes les factures sont arrivées : la ligne quitte l’attente ; soldée sans réel, elle vaut zéro.',
 	// La consigne clavier est la raison d'être de cet écran (§5.31) : elle est ÉCRITE, jamais
 	// devinée. Un geste qui n'existe qu'au clavier doit être annoncé (§5.29).
 	'costs.pending.keyboard.notice':
-		'Entrée enregistre la ligne et place le curseur sur la suivante ; Échap annule la saisie en cours.',
+		'Entrée ajoute le réel et place le curseur sur la ligne suivante ; Échap annule la saisie en cours.',
 	// Le nom accessible du champ NOMME sa ligne : « Réel » répété sur douze lignes ne dirait pas
 	// laquelle on saisit (§5.29, commandes répétées d'une liste).
 	'costs.pending.field.aria': 'Coût réel de la ligne {nom}',
@@ -3574,6 +3570,44 @@ export const fr = {
 	'personnel.card.title': 'Temps passé',
 	'personnel.card.empty': 'Aucun temps saisi sur cette affaire.',
 	'personnel.error': 'Le temps passé n’a pas pu être lu.',
+	// `CRM-099` T2 — plusieurs réels par ligne de coût, et la case « Soldé » (docs/SPEC-costs.md §2.3 bis).
+	'costs.pending.column.already': 'Déjà saisi',
+	'costs.pending.column.settled': 'Soldé',
+	'costs.pending.details.aria': 'Date et libellé du prochain réel de « {nom} »',
+	'costs.pending.settle.aria': 'Soldé : {nom} de {affaire}',
+	'costs.actuals.title': 'Réels de « {nature} »',
+	'costs.actuals.toggle': 'Réels de « {nom} »',
+	'costs.actuals.amount': '{montant} {devise}',
+	'costs.actuals.add': 'Ajouter le réel',
+	'costs.actuals.save': 'Enregistrer le réel',
+	'costs.actuals.cancel': 'Annuler',
+	'costs.actuals.added': 'Réel ajouté à « {nature} ».',
+	'costs.actuals.updated': 'Réel de « {nature} » corrigé.',
+	'costs.actuals.deleted': 'Réel de « {nature} » retiré.',
+	'costs.actuals.edit.aria': 'Modifier le réel du {date}',
+	'costs.actuals.delete.aria': 'Retirer le réel du {date}',
+	'costs.actuals.delete.confirm': 'Retirer le réel de {montant} du {date} ?',
+	'costs.actuals.delete.action': 'Retirer le réel',
+	'costs.actuals.error': 'Les réels de cette ligne n’ont pas pu être lus.',
+	'costs.actuals.form.amount': 'Montant',
+	'costs.actuals.form.date': 'Date',
+	'costs.actuals.form.label': 'Libellé',
+	'costs.actuals.form.label.placeholder': 'Facture n° 42',
+	'costs.actuals.nolabel': 'Sans libellé',
+	'costs.actuals.none': 'Aucun réel saisi : le réel de la ligne est encore inconnu.',
+	'costs.actuals.none.settled': 'Aucun réel saisi : soldée ainsi, la ligne vaut zéro.',
+	'costs.actuals.settle': 'Soldé',
+	'costs.actuals.settle.aria': 'Soldé : {nature}',
+	'costs.actuals.settled.pill': 'Soldé',
+	'costs.actuals.settled.done': '« {nature} » est soldée.',
+	'costs.actuals.settled.undone': '« {nature} » est rouverte.',
+	'costs.actuals.settled.reason': 'Ligne soldée — décochez « Soldé » pour la modifier.',
+	'costs.actuals.refused.settled': 'Cette ligne est soldée : décochez « Soldé » pour y ajouter, modifier ou retirer un réel.',
+	'costs.actuals.refused.shape': 'Ce réel n’a pas été accepté : vérifiez le montant, la date et le libellé.',
+	'costs.actuals.refused.scale': 'Ce montant est trop grand.',
+	'costs.actuals.refused.forbidden': 'Vous ne pouvez pas modifier les coûts de cette affaire.',
+	'costs.actuals.refused.network': 'Le serveur ne répond pas : rien n’a été enregistré.',
+	'costs.actuals.refused.unknown': 'L’opération n’a pas abouti.',
 } as const
 
 export type CleTraduction = keyof typeof fr

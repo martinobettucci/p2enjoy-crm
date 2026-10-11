@@ -1858,7 +1858,7 @@ des spécifications antérieures gardent leur sens — le refus d'une suppressio
   (track, channel, affaire), `minutes`, `montant` (`round(minutes * cout_quart / 105, 2)`, version de `date_effet` la
   plus récente `<= jour`, `null` sans version lisible), `devise`.
 
-### Migration `0088` — plusieurs réels par ligne de coût (`CRM-099`, décision 622)
+### Migration `0088` — plusieurs réels par ligne de coût (`CRM-099`, décision 622 ; livrée en développement le 2026-10-11)
 
 `docs/SPEC-costs.md` §2.3 bis.
 
@@ -1868,7 +1868,9 @@ des spécifications antérieures gardent leur sens — le refus d'une suppressio
   base sur une ligne soldée ; `card_cost_id` immuable.
 - **`card_costs.settled_at timestamptz`, `settled_by uuid`** (set null).
 - **`card_costs.actual_cost` dérivé** : recalculé par déclencheur (somme des réels ; `0` si soldée sans réel ; nul
-  sinon) ; un `PATCH` qui le change est refusé.
+  sinon) ; un `PATCH` qui le change, ou une insertion qui en fournit un, est refusé (`23514` « reel derive ») — un
+  upsert, dont la ligne proposée a un réel nul, passe. `settled_at` est posé par la base à l'instant du geste,
+  `settled_by` à l'auteur du jeton.
 - **Reprise** : un réel par ligne dont `actual_cost` est renseigné (`spent_on = updated_at::date`, sans libellé,
   `created_by` de la ligne) ; aucune ligne soldée.
 - **L'onglet « À saisir »** filtre `settled_at is null` au lieu de `actual_cost is null` ; l'index partiel de `0051`

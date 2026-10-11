@@ -1,4 +1,6 @@
 // @verifies CRM-085 (docs/BACKLOG.md) — lignes de coût d'une affaire, TRANCHE 2 : parcours
+// @verifies CRM-099 (docs/BACKLOG.md) — révisée : les réels d'une ligne se déplient sous la table, « Soldé »
+//           (docs/SPEC-costs.md §2.3 bis, docs/DESIGN_SYSTEM.md §5.31 bis)
 //           d'interface de la section « Coûts » de la fiche d'affaire
 // @verifies docs/SPEC-costs.md §2.3 (« nul n'est pas zéro », la devise vient du budget, un budget
 //           clôturé n'accepte aucune ligne neuve mais son réel reste saisissable), §3.1 (la double
@@ -311,9 +313,10 @@ test.describe('ajouter, modifier, supprimer une dépense (docs/SPEC-costs.md §4
 		await expect(section.getByTestId('couts-sans-reel')).toContainText('2 ligne(s) sans coût réel')
 	})
 
-	test('saisir 0 comme réel retire la ligne de l’attente — zéro est une valeur', async ({ page }) => {
-		// « Zéro est une valeur, pas un vide » (§4.8) : saisir 0 dit « finalement rien dépensé »,
-		// laisser vide dit « on ne sait pas encore ». La distinction se voit ici sur le compte.
+	test('soldée sans réel, une ligne vaut zéro et quitte l’attente (CRM-099)', async ({ page }) => {
+		// RÉVISÉ PAR `CRM-099` (docs/SPEC-costs.md §2.3 bis) : le réel ne se saisit plus dans le formulaire de la ligne.
+		// « Finalement rien dépensé » se dit en SOLDANT une ligne sans réel — elle vaut alors zéro, et la distinction du
+		// §4.4 se voit toujours sur le compte des lignes sans réel.
 		await connecter(page)
 		const section = await ouvrirSectionCouts(page)
 		await section.getByRole('button', { name: 'Ajouter une dépense' }).click()
@@ -322,16 +325,21 @@ test.describe('ajouter, modifier, supprimer une dépense (docs/SPEC-costs.md §4
 		await formulaire.getByTestId('cout-selecteur-budget').selectOption({ label: `${BUDGET_RECURRENT} (EUR)` })
 		await formulaire.getByTestId('cout-selecteur-occurrence').selectOption({ label: OCCURRENCE_OUVERTE })
 		await formulaire.getByLabel('Coût estimé').fill('80')
-		await formulaire.getByTestId('cout-champ-reel').fill('0')
 		await formulaire.getByRole('button', { name: 'Ajouter' }).click()
 
 		const ajoutee = section.getByRole('row', { name: new RegExp(`${PREFIXE} zero`) })
+		await expect(ajoutee.getByTestId('cout-cellule-reel')).toContainText('—')
+		await ajoutee.getByTestId('cout-reels-bascule').click()
+		const reels = section.getByTestId('reels-ligne')
+		await reels.getByTestId('reels-solde').check()
 		await expect(ajoutee.getByTestId('cout-cellule-reel')).toContainText('0.00')
-		// Le compte des lignes en attente n'a PAS bougé : la ligne à zéro est saisie.
+		await expect(ajoutee.getByTestId('cout-pilule-soldee')).toHaveText('Soldé')
+		await expect(reels.getByTestId('reels-motif-solde')).toBeVisible()
+		// Le compte des lignes en attente n'a PAS bougé : la ligne soldée vaut zéro, son réel est connu.
 		await expect(section.getByTestId('couts-sans-reel')).toContainText('1 ligne(s) sans coût réel')
 	})
 
-	test('une dépense est modifiée, et son réel saisi après coup', async ({ page }) => {
+	test('une dépense reçoit ses réels après coup, et le réel de la ligne est leur somme (CRM-099)', async ({ page }) => {
 		await connecter(page)
 		const section = await ouvrirSectionCouts(page)
 		await section.getByRole('button', { name: 'Ajouter une dépense' }).click()
@@ -341,18 +349,28 @@ test.describe('ajouter, modifier, supprimer une dépense (docs/SPEC-costs.md §4
 		await formulaire.getByTestId('cout-selecteur-occurrence').selectOption({ label: OCCURRENCE_OUVERTE })
 		await formulaire.getByLabel('Coût estimé').fill('60')
 		await formulaire.getByRole('button', { name: 'Ajouter' }).click()
-		await expect(section.getByRole('row', { name: new RegExp(`${PREFIXE} modif`) })).toBeVisible()
+		const ligne = section.getByRole('row', { name: new RegExp(`${PREFIXE} modif`) })
+		await expect(ligne).toBeVisible()
 
+		// Le formulaire de la ligne ne porte plus de réel : il modifie la nature, le rattachement et l'estimé.
 		await section.getByRole('button', { name: `Modifier la dépense ${PREFIXE} modif` }).click()
 		formulaire = section.getByTestId('formulaire-cout')
-		// Le formulaire s'ouvre SUR la valeur existante : il modifie, il ne recommence pas.
 		await expect(formulaire.getByLabel('Coût estimé')).toHaveValue('60')
-		await formulaire.getByTestId('cout-champ-reel').fill('58.50')
-		await formulaire.getByRole('button', { name: 'Enregistrer' }).click()
+		await expect(formulaire.getByTestId('cout-champ-reel')).toHaveCount(0)
+		await formulaire.getByRole('button', { name: 'Annuler' }).click()
 
-		const modifiee = section.getByRole('row', { name: new RegExp(`${PREFIXE} modif`) })
-		await expect(modifiee.getByTestId('cout-cellule-reel')).toContainText('58.50')
-		// La ligne a quitté l'attente, et la mention le dit.
+		await ligne.getByTestId('cout-reels-bascule').click()
+		const reels = section.getByTestId('reels-ligne')
+		await reels.getByLabel('Montant').fill('58.50')
+		await reels.getByLabel('Libellé').fill('Facture 1')
+		await reels.getByRole('button', { name: 'Ajouter le réel' }).click()
+		await expect(reels.getByTestId('reel')).toHaveCount(1)
+		await reels.getByLabel('Montant').fill('10')
+		await reels.getByRole('button', { name: 'Ajouter le réel' }).click()
+		await expect(reels.getByTestId('reel')).toHaveCount(2)
+		await expect(ligne.getByTestId('cout-cellule-reel')).toContainText('68.50')
+		await capturer(page, 'couts-reels-ligne-1440', 'CRM-099')
+		// La ligne a quitté les lignes sans réel, et la mention le dit.
 		await expect(section.getByTestId('couts-sans-reel')).toContainText('1 ligne(s) sans coût réel')
 	})
 
@@ -427,37 +445,37 @@ test.describe('une ligne rattachée à un budget clôturé (docs/SPEC-costs.md �
 		await expect(commande).toHaveAttribute('title', /clôturés/)
 	})
 
-	test('sa MODIFICATION reste ouverte : on clôt une campagne PUIS les factures arrivent', async ({
+	test('ses RÉELS restent ouverts : on clôt une campagne PUIS les factures arrivent', async ({
 		page,
 	}) => {
-		// C'est la frontière que le §2.3 tranche, et elle ne se devine pas : `actual_cost` et `label`
-		// oui, `budget_id` et `occurrence_id` non. Interdire la saisie du réel obligerait à rouvrir
-		// le budget, ou à renoncer à la seule donnée qui rend la comparaison honnête.
+		// C'est la frontière que le §2.3 tranche, et elle ne se devine pas : le réel et le libellé oui, `budget_id` et
+		// `occurrence_id` non. RÉVISÉ PAR `CRM-099` : la facture arrivée après la clôture est un RÉEL de plus (§2.3 bis).
 		await connecter(page)
 		const section = await ouvrirSectionCouts(page)
 		await section.getByRole('button', { name: 'Modifier la dépense Production' }).click()
 		const formulaire = section.getByTestId('formulaire-cout')
 		await expect(formulaire).toBeVisible()
-
 		// LE BUDGET CLÔTURÉ EST PRÉSENT DANS LE SÉLECTEUR — sans lui, celui-ci retomberait sur
 		// « aucun budget » et le formulaire refuserait de partir, rendant la ligne inmodifiable.
 		const options = await formulaire.getByTestId('cout-selecteur-budget').locator('option').allTextContents()
 		expect(options.join('\n')).toContain(BUDGET_CLOTURE)
+		await formulaire.getByRole('button', { name: 'Annuler' }).click()
 
-		await formulaire.getByTestId('cout-champ-reel').fill('380')
-		await formulaire.getByRole('button', { name: 'Enregistrer' }).click()
-		await expect(formulaire).toBeHidden()
 		const production = section.getByRole('row', { name: /Production/ })
+		await production.getByTestId('cout-reels-bascule').click()
+		const reels = section.getByTestId('reels-ligne')
+		await reels.getByLabel('Montant').fill('5')
+		await reels.getByLabel('Libellé').fill('Complément 099')
+		await reels.getByRole('button', { name: 'Ajouter le réel' }).click()
 		await expect(production.getByTestId('cout-cellule-reel')).toContainText('380.00')
 
-		// LE SEED EST RENDU INTACT : la valeur d'origine est remise par le même geste d'écran.
-		await section.getByRole('button', { name: 'Modifier la dépense Production' }).click()
-		const retour = section.getByTestId('formulaire-cout')
-		await retour.getByTestId('cout-champ-reel').fill('375')
-		await retour.getByRole('button', { name: 'Enregistrer' }).click()
-		await expect(section.getByRole('row', { name: /Production/ }).getByTestId('cout-cellule-reel')).toContainText(
-			'375.00',
-		)
+		// LE SEED EST RENDU INTACT, par le même geste d'écran : le réel ajouté est retiré, après confirmation.
+		const ajoute = reels.getByTestId('reel').filter({ hasText: 'Complément 099' })
+		await ajoute.getByRole('button', { name: /^Retirer le réel du / }).click()
+		await expect(reels.getByTestId('reels-confirmation')).toBeVisible()
+		await expect(reels.getByRole('button', { name: 'Retirer le réel', exact: true })).toBeFocused()
+		await reels.getByRole('button', { name: 'Retirer le réel', exact: true }).click()
+		await expect(production.getByTestId('cout-cellule-reel')).toContainText('375.00')
 	})
 })
 

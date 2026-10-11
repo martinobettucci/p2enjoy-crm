@@ -32,6 +32,8 @@
 // `enregistrerReel` prend un `number` et non un `number | null` : il n'existe aucun geste de cet
 // onglet qui REMETTE une ligne en attente, et accepter `null` en ouvrirait un que personne n'a
 // spécifié.
+// @spec CRM-099 (docs/BACKLOG.md) — tranche T2 : l'onglet liste les lignes non soldées ; saisir ajoute un réel, la
+//       base tient la somme (docs/SPEC-costs.md §2.3 bis, docs/DESIGN_SYSTEM.md §5.31 bis)
 
 import { classerErreur, enErreur, pret, type EtatAsync } from './async'
 import type { Database } from './database.types'
@@ -103,7 +105,7 @@ export type AffaireDeLaLigne = {
  */
 export type LigneASaisir = Pick<
 	Database['public']['Tables']['card_costs']['Row'],
-	'id' | 'label' | 'estimated_cost' | 'created_at'
+	'id' | 'label' | 'estimated_cost' | 'created_at' | 'actual_cost'
 > & {
 	readonly reel_saisissable: boolean | null
 	readonly budgets: BudgetDeLaLigne | null
@@ -133,7 +135,7 @@ export type LigneASaisir = Pick<
  * par le workspace, seule dont la présence est structurellement garantie sur toute card.
  */
 export const COLONNES_LIGNE_A_SAISIR =
-	'id, label, estimated_cost, created_at, reel_saisissable, budgets!inner(id, name, currency, is_recurrent, closed_at, stale_after_days), budget_occurrences(id, label, closed_at), cards!inner(id, title, archived_at, channels!cards_channel_id_workspace_id_fkey(slug, tracks(id, slug, name)))'
+	'id, label, estimated_cost, created_at, actual_cost, reel_saisissable, budgets!inner(id, name, currency, is_recurrent, closed_at, stale_after_days), budget_occurrences(id, label, closed_at), cards!inner(id, title, archived_at, channels!cards_channel_id_workspace_id_fkey(slug, tracks(id, slug, name)))'
 
 /**
  * La portée d'un onglet « À saisir ».
@@ -187,7 +189,9 @@ export async function lireLignesASaisir(
 		const base = client
 			.from('card_costs')
 			.select(COLONNES_LIGNE_A_SAISIR)
-			.is('actual_cost', null)
+			// `CRM-099` (docs/SPEC-costs.md §2.3 bis) : l'onglet liste les lignes NON SOLDÉES, qu'un réel y soit déjà
+			// saisi ou non — une ligne reçoit des réels jusqu'à ce qu'on la solde.
+			.is('settled_at', null)
 		const filtree =
 			portee.genre === 'track' ? base.eq('budgets.track_id', portee.idTrack) : base
 		const reponse = await filtree.order('created_at').order('label')
@@ -394,58 +398,45 @@ export type ResultatSaisie =
 	| { readonly statut: 'refus'; readonly refus: RefusSaisie }
 
 /**
- * Enregistre le coût réel d'une ligne — le seul geste d'écriture de l'onglet.
+ * Ajoute un réel à la ligne — le geste de saisie de l'onglet depuis `CRM-099` (docs/SPEC-costs.md §2.3 bis).
  *
- * **ELLE N'ENVOIE QUE `actual_cost`, ET C'EST LA RÈGLE DU §4.8.1.** `modifierLigneCout` de
- * `card-costs.ts` renvoie les cinq attributs de la ligne ; sur un budget clos, cet envoi traverse
- * aujourd'hui — le trigger ne s'oppose qu'au CHANGEMENT de rattachement, `new.budget_id is distinct
- * from old.budget_id` — mais il fait dépendre la saisie d'un rattachement que cet onglet n'a aucune
- * raison de connaître, et une évolution du trigger le casserait sans que rien ne l'annonce.
- *
- * **`select('actual_cost')` ACCOMPAGNE L'ÉCRITURE, ET C'EST CE QUI REND LES TROIS ISSUES
- * DISTINGUABLES.** Sans lui, PostgREST ne rend aucun corps et « zéro ligne touchée » serait
- * indistinguable d'un succès — la même raison qui fait accompagner chaque écriture de `card-costs.ts`
- * d'un `select`. Il rend en outre la valeur RETENUE par la base, que le §4.8 demande d'afficher.
- *
- * Aucune contrainte de signe, aucune borne (§2.1, `CLAUDE.md` §10) : un avoir est un coût négatif
- * légitime, et une valeur qui déborde `numeric(14,2)` est refusée par la BASE, jamais par une garde
- * d'interface qui poserait une règle que personne n'a prise.
+ * Deux requêtes, et c'est voulu : l'insertion du réel, puis la relecture du réel de la LIGNE, que la base vient de
+ * recalculer — l'écran affiche la somme retenue par la base, jamais une addition faite de son côté. Le refus d'une
+ * ligne soldée (« ligne soldee ») est traduit comme une forme refusée.
  */
 export async function enregistrerReel(
 	client: ClientCrm,
 	id: string,
 	reel: number,
+	details: { readonly date: string | null; readonly libelle: string | null } = { date: null, libelle: null },
 ): Promise<ResultatSaisie> {
 	try {
-		const reponse = await client
-			.from('card_costs')
-			.update({ actual_cost: reel })
-			.eq('id', id)
-			.select('actual_cost')
-		if (reponse.error !== null) {
-			return {
-				statut: 'refus',
-				refus: classerRefusSaisie(reponse.status, reponse.error.code, reponse.error.message),
-			}
+		const ajout = await client
+			.from('card_cost_actuals')
+			.insert({
+				card_cost_id: id,
+				amount: reel,
+				label: details.libelle === null || details.libelle.trim() === '' ? null : details.libelle.trim(),
+				...(details.date === null || details.date === '' ? {} : { spent_on: details.date }),
+			})
+			.select('id')
+		if (ajout.error !== null) {
+			return { statut: 'refus', refus: classerRefusSaisie(ajout.status, ajout.error.code, ajout.error.message) }
 		}
-		const premiere = reponse.data?.[0]
-		if (premiere === undefined) return { statut: 'sans-effet' }
-		// La valeur rendue est reprise TELLE QUELLE, sans repli sur celle qui a été envoyée : c'est
-		// l'arrondi de `numeric(14,2)` que l'écran doit afficher. Un `?? reel` masquerait une réponse
-		// malformée derrière la saisie de l'utilisateur, et ferait croire enregistré ce qui ne l'est
-		// peut-être pas — la valeur par défaut trompeuse de `CLAUDE.md` §18. Une réponse sans montant
-		// lisible est donc traitée comme « sans effet » : dire moins que mentir.
-		const enregistre = premiere.actual_cost
-		if (typeof enregistre !== 'number') return { statut: 'sans-effet' }
-		return { statut: 'applique', reel: enregistre }
+		if ((ajout.data?.length ?? 0) === 0) return { statut: 'sans-effet' }
+		const relue = await client.from('card_costs').select('actual_cost').eq('id', id)
+		if (relue.error !== null) {
+			return { statut: 'refus', refus: classerRefusSaisie(relue.status, relue.error.code, relue.error.message) }
+		}
+		// La valeur rendue est reprise TELLE QUELLE : c'est la somme que la base retient. Une réponse sans montant
+		// lisible est « sans effet » — dire moins que mentir (CLAUDE.md §18).
+		const somme = relue.data?.[0]?.actual_cost
+		if (typeof somme !== 'number') return { statut: 'sans-effet' }
+		return { statut: 'applique', reel: somme }
 	} catch (cause) {
 		return {
 			statut: 'refus',
-			refus: classerRefusSaisie(
-				undefined,
-				undefined,
-				cause instanceof Error ? cause.message : String(cause),
-			),
+			refus: classerRefusSaisie(undefined, undefined, cause instanceof Error ? cause.message : String(cause)),
 		}
 	}
 }

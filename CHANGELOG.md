@@ -13,6 +13,20 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-099` — Plusieurs coûts réels par ligne de coût, jusqu'à « Soldé »
+
+*Décision 622. Non livré en production.*
+
+- **Une ligne de coût reçoit plusieurs réels** — une facture, puis une autre —, chacun avec son montant, sa date et un
+  libellé facultatif ; le réel de la ligne est leur somme, tenue par la base. Dans la fiche d'une affaire, les réels
+  d'une ligne se déplient, se corrigent et se retirent ; le formulaire d'une ligne ne porte plus de réel.
+- **La case « Soldé »** ferme une ligne quand toutes ses factures sont arrivées : elle quitte l'onglet « À saisir » ;
+  soldée sans réel, elle vaut zéro. Une ligne soldée ne se modifie plus tant qu'on ne la décoche pas.
+- **L'onglet « À saisir »** liste les lignes non soldées, montre ce qui est déjà saisi et ajoute un réel de plus au
+  clavier ; le détail d'un budget dit quelles lignes sont soldées.
+- **À la livraison**, chaque réel déjà saisi devient le premier réel de sa ligne, et ces lignes reviennent dans « À
+  saisir » jusqu'à ce qu'on les solde.
+
 ### `CRM-098` — La saisie de temps et le coût du personnel
 
 *Décision 621. **Livré en production le 2026-10-11** (`521b3f5d`, migration 87 appliquée par une fenêtre avec instantané) ;

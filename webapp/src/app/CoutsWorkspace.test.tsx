@@ -60,7 +60,7 @@ function clientQuiRend(
 			let attente = false
 			const rendre = () => chaine
 			chaine.is = (colonne: string, valeur: unknown) => {
-				if (colonne === 'actual_cost' && valeur === null) attente = true
+				if (colonne === 'settled_at' && valeur === null) attente = true
 				return chaine
 			}
 			chaine.eq = rendre

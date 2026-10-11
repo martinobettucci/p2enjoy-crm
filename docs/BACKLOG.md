@@ -15007,12 +15007,27 @@ jusqu'à ce qu'on coche « Soldé » ; `actual_cost` devient leur somme, tenue p
 deviennent un premier réel, lignes rouvertes. Spécifié avant le code : `docs/SPEC-costs.md` §2.3 bis,
 `docs/DESIGN_SYSTEM.md` §5.31 bis, `docs/SCHEMA.md` §9 quater (migration `0088`).*
 
-- [ ] **T1** — migration `0088_reels_multiples.sql` : `card_cost_actuals`, `settled_at` / `settled_by`, `actual_cost`
+- [x] **T1** — migration `0088_reels_multiples.sql` : `card_cost_actuals`, `settled_at` / `settled_by`, `actual_cost`
       dérivé et protégé, la reprise des réels existants, l'index de l'onglet ; pgTAP (somme, zéro soldé, nul ouvert,
       ligne soldée figée, budget clos qui accepte encore des réels, droits) ; types régénérés.
-- [ ] **T2** — l'onglet « À saisir » (un réel de plus, détails, « Soldé ») et la fiche d'une affaire (réels dépliables) ;
+      *Vérifié le 2026-10-11* : `0083_reels_multiples.test.sql` **35** assertions — forme, reprise, réel dérivé sur ses
+      trois états et refusé en écriture directe, upsert permis, ligne soldée figée puis rouverte, auteur du soldé, budget
+      clos, droits de la lectrice, cascade ; **neuf mutations** de la migration, chacune rouge. `0049` et `0050`
+      révisées (le réel s'écrit par ses réels ; l'onglet lit les lignes non soldées), `0016` à 141 politiques. Campagne
+      pgTAP : 83 fichiers, 3 558 assertions. Types régénérés, témoin `card_cost_actuals`. **Un défaut trouvé par le rejeu du seed et
+      corrigé avant tout commit** : l'upsert d'une ligne existante était refusé (« reel derive »).
+- [x] **T2** — l'onglet « À saisir » (un réel de plus, détails, « Soldé ») et la fiche d'une affaire (réels dépliables) ;
       le détail d'un budget ; preuves unitaires et d'API aux jetons réels ; E2E souris et clavier ; captures observées ;
       seed ; manuel ; campagnes.
+      *Implémenté le 2026-10-11* : `reels-ligne.test` **8**, `ReelsLigne.test` **5**, `CoutsASaisir.test` révisé (**26**,
+      dont « Soldé » et la somme relue), `couts-a-saisir.test` et `card-costs.test` révisés, `CoutsBudget.test` +1 ;
+      API `reels-ligne.spec.ts` **4** (écriture directe refusée, somme, soldé figé et rouvert, lectrice), `card-costs` et
+      `budgets` révisés ; E2E `couts-a-saisir.spec.ts` (S3 au clavier : un réel de plus, « Soldé », rechargement) et
+      `card-costs.spec.ts` (réels dépliés, soldée à zéro, budget clos) révisés et verts ; seed §18 ; manuel 5 octies.6 ;
+      captures observées — deux retouches : la clé du titre du panneau (« {nom} » affiché), la case « Soldé » rendue
+      optimiste. **Campagnes, le 2026-10-11** : pgTAP 83 / 3 558 ; unitaires **3 807** — la mutation qui ne vide plus le
+      champ avant l'envoi fait rougir quatre preuves ; API **1 122** ; interface **818** ; messagerie **42**. 84 captures
+      renouvelées (le dépli des réels dans la fiche), 160 réécritures sans changement visible restaurées.
 - [ ] **T3** — livraison en production (migration 88, instantané confirmé) et constat.
 
 ### CRM-100 — Créer un channel depuis le track, et un workflow depuis le formulaire du channel `[~]`

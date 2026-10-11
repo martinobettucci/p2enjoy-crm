@@ -12,6 +12,8 @@
 //           ses quatre fonctions de service (tranche T3 bis, témoin rattrapé en T4)
 // @verifies CRM-098 (docs/BACKLOG.md) tranche T1 — `couts_personnel`, `saisies_temps` et `temps_valorise` aux
 //           témoins (docs/SPEC-temps.md §3, §6.2 ; décision 621)
+// @verifies CRM-099 (docs/BACKLOG.md) tranche T1 — `card_cost_actuals` au témoin des tables (docs/SPEC-costs.md
+//           §2.3 bis ; décision 622)
 //
 // Test **unitaire** du contrat de types. Il ne s'exécute pas : il se compile. Chaque assertion
 // ci-dessous est une contrainte que `tsc --noEmit` vérifie, et qui fait échouer la compilation
@@ -130,6 +132,10 @@ type _tables = Expect<
     // régénère quand même — la règle formulée plus bas, appliquée.
     | 'card_comment_mentions'
     | 'card_comments'
+    // `0088` de `CRM-099` TRANCHE T1 ajoute `card_cost_actuals` — les réels d'une ligne de coût, dont la base tient la
+    // somme dans `card_costs.actual_cost` (docs/SPEC-costs.md §2.3 bis, décision 622). CE QUI ÉCHAPPE AU GÉNÉRATEUR :
+    // `card_costs.Update` expose toujours `actual_cost`, qu'un déclencheur refuse d'écrire (« reel derive »).
+    | 'card_cost_actuals'
     | 'card_contacts'
     | 'card_events'
     | 'card_costs'

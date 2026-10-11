@@ -21,6 +21,7 @@
 // réel ». Une coercition ici transformerait un retard de saisie en économie, ce qui est nommé
 // « la principale façon dont un tel écran ment ». C'est la même règle que `calculerTotaux` de
 // `card-costs.ts` applique déjà sur la fiche d'affaire, et les deux doivent rendre le même nombre.
+// @spec CRM-099 (docs/BACKLOG.md) — tranche T2 : le détail d'un budget lit `settled_at` (docs/SPEC-costs.md §2.3 bis)
 
 import { classerErreur, enErreur, pret, type EtatAsync } from './async'
 import type { Database } from './database.types'
@@ -354,7 +355,7 @@ export type AffaireDeLaLigne = {
  */
 export type LigneBudget = Pick<
 	Database['public']['Tables']['card_costs']['Row'],
-	'id' | 'occurrence_id' | 'label' | 'estimated_cost' | 'actual_cost' | 'created_at'
+	'id' | 'occurrence_id' | 'label' | 'estimated_cost' | 'actual_cost' | 'created_at' | 'settled_at'
 > & {
 	readonly cards: AffaireDeLaLigne | null
 	readonly profiles: { readonly id: string; readonly full_name: string } | null
@@ -383,7 +384,7 @@ export type DetailBudget = {
  * l'ajout d'une seconde clé demain ne casse pas cette lecture en silence.
  */
 export const COLONNES_LIGNE_BUDGET =
-	'id, occurrence_id, label, estimated_cost, actual_cost, created_at, cards(id, title, archived_at, channels!cards_channel_id_workspace_id_fkey(slug, tracks(slug))), profiles!card_costs_created_by_fkey(id, full_name)'
+	'id, occurrence_id, label, estimated_cost, actual_cost, created_at, settled_at, cards(id, title, archived_at, channels!cards_channel_id_workspace_id_fkey(slug, tracks(slug))), profiles!card_costs_created_by_fkey(id, full_name)'
 
 /**
  * Le budget désigné par `idBudget`, ses occurrences et ses lignes — ou `null` s'il n'est pas

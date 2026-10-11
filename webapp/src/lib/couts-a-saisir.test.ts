@@ -1,4 +1,6 @@
 // @verifies CRM-086 (docs/BACKLOG.md) — écrans de coûts, TRANCHE 6a : le socle de données de
+// @verifies CRM-099 (docs/BACKLOG.md) — révisée : l'onglet liste les lignes non soldées ; saisir ajoute un réel
+//           (docs/SPEC-costs.md §2.3 bis)
 //           l'onglet « À saisir »
 // @verifies docs/SPEC-costs.md §4.8 (ce que l'onglet liste — budgets et occurrences clôturés
 //           COMPRIS —, l'ordre du plus ancien au plus récent, la pilule « clôturé », ce que
@@ -47,7 +49,7 @@ type Reponse = {
 type Appel = {
 	table?: string
 	colonnes?: string
-	action?: 'select' | 'update'
+	action?: 'select' | 'update' | 'insert'
 	charge?: unknown
 	filtres: [string, unknown][]
 	tris: string[]
@@ -98,6 +100,11 @@ function espion(reponses: readonly Reponse[]): { client: ClientCrm; appels: Appe
 					appel.charge = charge
 					return chaine
 				},
+				insert: (charge: unknown) => {
+					appel.action = 'insert'
+					appel.charge = charge
+					return chaine
+				},
 			}
 		},
 	} as unknown as ClientCrm
@@ -110,6 +117,7 @@ const ligne = (reste: Partial<LigneASaisir> = {}): LigneASaisir => ({
 	label: 'Publicité',
 	estimated_cost: 100,
 	created_at: '2026-08-01T10:00:00Z',
+	actual_cost: null,
 	reel_saisissable: true,
 	budgets: {
 		id: 'b1',
@@ -133,14 +141,14 @@ const ligne = (reste: Partial<LigneASaisir> = {}): LigneASaisir => ({
 })
 
 describe('lireLignesASaisir — la requête émise', () => {
-	it('filtre `actual_cost is null` côté serveur et n’ajoute AUCUN filtre de clôture', async () => {
+	it('filtre `settled_at is null` (CRM-099) côté serveur et n’ajoute AUCUN filtre de clôture', async () => {
 		const { client, appels } = espion([{ data: [], error: null, status: 200 }])
 
 		await lireLignesASaisir(client, { genre: 'workspace' })
 
 		expect(appels).toHaveLength(1)
 		expect(appels[0]?.table).toBe('card_costs')
-		expect(appels[0]?.filtres).toContainEqual(['is:actual_cost', null])
+		expect(appels[0]?.filtres).toContainEqual(['is:settled_at', null])
 		// LA PREUVE CENTRALE DE CE FICHIER, et elle porte sur une ABSENCE. Le §4.8 liste « y compris
 		// celles des budgets et occurrences clôturés : c'est précisément après la clôture que les
 		// factures arrivent, et les exclure viderait l'onglet de son usage ». Un `closed_at is null`
@@ -200,7 +208,7 @@ describe('lireLignesASaisir — la requête émise', () => {
 		// Y ajouter un `in` sur les tracks lisibles referait le travail de la base en moins bien : la
 		// liste serait mesurée à un instant, la RLS à un autre, et l'écart se lirait comme une ligne
 		// manquante (§4.8.1).
-		expect(appels[0]?.filtres).toEqual([['is:actual_cost', null]])
+		expect(appels[0]?.filtres).toEqual([['is:settled_at', null]])
 	})
 })
 
@@ -460,76 +468,59 @@ describe('classerRefusSaisie — le code PostgreSQL d’abord, le statut ensuite
 	})
 })
 
-describe('enregistrerReel — ce que la saisie envoie, et les trois issues', () => {
-	it('n’envoie QUE `actual_cost`, et accompagne l’écriture d’un `select`', async () => {
-		const { client, appels } = espion([{ data: [{ actual_cost: 376 }], error: null, status: 200 }])
+describe('enregistrerReel — un réel de plus (CRM-099, §2.3 bis), et les trois issues', () => {
+	const insere = { data: [{ id: 'r1' }], error: null, status: 201 }
+
+	it('INSÈRE un réel sur la ligne, puis relit le réel de la ligne — jamais d’écriture de `actual_cost`', async () => {
+		const { client, appels } = espion([insere, { data: [{ actual_cost: 376 }], error: null, status: 200 }])
 
 		await enregistrerReel(client, 'l1', 376)
 
-		expect(appels[0]?.action).toBe('update')
-		// LA PREUVE DU §4.8.1. `modifierLigneCout` renvoie les cinq attributs ; ici le rattachement
-		// n'est PAS envoyé, ce qui met la saisie hors d'atteinte du trigger de rattachement — et hors
-		// d'atteinte de son évolution future.
-		expect(appels[0]?.charge).toEqual({ actual_cost: 376 })
-		expect(appels[0]?.filtres).toContainEqual(['eq:id', 'l1'])
-		// Sans le `select`, PostgREST ne rend aucun corps et « zéro ligne touchée » serait
-		// indistinguable d'un succès.
-		expect(appels[0]?.colonnes).toBe('actual_cost')
+		expect(appels[0]?.table).toBe('card_cost_actuals')
+		expect(appels[0]?.action).toBe('insert')
+		expect(appels[0]?.charge).toEqual({ card_cost_id: 'l1', amount: 376, label: null })
+		// Sans le `select`, PostgREST ne rend aucun corps et « zéro ligne touchée » serait indistinguable d'un succès.
+		expect(appels[0]?.colonnes).toBe('id')
+		expect(appels[1]?.table).toBe('card_costs')
+		expect(appels[1]?.colonnes).toBe('actual_cost')
+		expect(appels.some((a) => a.action === 'update')).toBe(false)
 	})
 
-	it('rend la valeur RETENUE par la base, jamais celle qui a été tapée', async () => {
-		// `numeric(14,2)` arrondit : c'est la valeur enregistrée que le §4.8 demande d'afficher sur la
-		// ligne marquée « enregistré ».
-		const { client } = espion([{ data: [{ actual_cost: 376.13 }], error: null, status: 200 }])
+	it('porte la date et le libellé quand on les a réglés', async () => {
+		const { client, appels } = espion([insere, { data: [{ actual_cost: 40 }], error: null, status: 200 }])
 
-		const resultat = await enregistrerReel(client, 'l1', 376.129)
+		await enregistrerReel(client, 'l1', 40, { date: '2026-10-01', libelle: '  Facture n° 42 ' })
 
-		expect(resultat).toEqual({ statut: 'applique', reel: 376.13 })
+		expect(appels[0]?.charge).toEqual({ card_cost_id: 'l1', amount: 40, label: 'Facture n° 42', spent_on: '2026-10-01' })
 	})
 
-	it('accepte ZÉRO, qui est une valeur et retire la ligne de l’attente', async () => {
-		const { client, appels } = espion([{ data: [{ actual_cost: 0 }], error: null, status: 200 }])
+	it('rend la SOMME retenue par la base, jamais le montant tapé', async () => {
+		const { client } = espion([insere, { data: [{ actual_cost: 476.13 }], error: null, status: 200 }])
 
-		const resultat = await enregistrerReel(client, 'l1', 0)
-
-		// « Zéro est une valeur, pas un vide » (§4.8). Une garde `if (!reel)` aurait ici refusé la
-		// seule saisie qui dit « finalement rien dépensé ».
-		expect(appels[0]?.charge).toEqual({ actual_cost: 0 })
-		expect(resultat).toEqual({ statut: 'applique', reel: 0 })
+		expect(await enregistrerReel(client, 'l1', 100)).toEqual({ statut: 'applique', reel: 476.13 })
 	})
 
-	it('accepte un montant NÉGATIF : un avoir est un coût légitime', async () => {
-		const { client, appels } = espion([{ data: [{ actual_cost: -50 }], error: null, status: 200 }])
+	it('accepte zéro et un avoir négatif : aucune contrainte de signe (§2.1)', async () => {
+		const { client, appels } = espion([insere, { data: [{ actual_cost: -50 }], error: null, status: 200 }])
 
-		const resultat = await enregistrerReel(client, 'l1', -50)
-
-		// §2.1 : aucune contrainte de signe. Une garde d'interface poserait une règle de produit que
-		// personne n'a prise (`CLAUDE.md` §10).
-		expect(appels[0]?.charge).toEqual({ actual_cost: -50 })
-		expect(resultat).toEqual({ statut: 'applique', reel: -50 })
+		expect(await enregistrerReel(client, 'l1', -50)).toEqual({ statut: 'applique', reel: -50 })
+		expect(appels[0]?.charge).toMatchObject({ amount: -50 })
 	})
 
-	it('rend `sans-effet` sur `200` et ZÉRO ligne, jamais un succès', async () => {
-		const { client } = espion([{ data: [], error: null, status: 200 }])
+	it('rend `sans-effet` quand l’insertion ne rend aucune ligne, jamais un succès', async () => {
+		const { client } = espion([{ data: [], error: null, status: 201 }])
 
-		// C'est ce que rend la clause `USING` de `card_costs_modification` lorsque le droit d'écriture
-		// est retombé depuis le chargement. Annoncer « Enregistré » serait la simulation de succès que
-		// `CLAUDE.md` §18 interdit.
 		expect(await enregistrerReel(client, 'l1', 10)).toEqual({ statut: 'sans-effet' })
 	})
 
-	it('rend `sans-effet` — jamais un succès replié sur la saisie — si la réponse n’a pas de montant', async () => {
-		const { client } = espion([{ data: [{ actual_cost: null }], error: null, status: 200 }])
+	it('rend `sans-effet` si la relecture n’a pas de montant — dire moins que mentir', async () => {
+		const { client } = espion([insere, { data: [{ actual_cost: null }], error: null, status: 200 }])
 
-		// Un `?? reel` masquerait une réponse malformée derrière la saisie de l'utilisateur et ferait
-		// croire enregistré ce qui ne l'est peut-être pas. Dire moins que mentir.
 		expect(await enregistrerReel(client, 'l1', 10)).toEqual({ statut: 'sans-effet' })
 	})
 
-	it('classe un refus, et ne lève jamais', async () => {
-		const { client } = espion([
-			{ data: null, error: { message: 'permission denied', code: '42501' }, status: 403 },
-		])
+	it('classe un refus — droit, ou ligne soldée —, et ne lève jamais', async () => {
+		const { client } = espion([{ data: null, error: { message: 'permission denied', code: '42501' }, status: 403 }])
 
 		const resultat = await enregistrerReel(client, 'l1', 10)
 

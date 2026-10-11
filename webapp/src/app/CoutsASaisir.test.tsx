@@ -1,4 +1,6 @@
 // @verifies CRM-086 (docs/BACKLOG.md) — écrans de coûts, TRANCHE 6b : la SURFACE de l'onglet
+// @verifies CRM-099 (docs/BACKLOG.md) — révisée : un réel de plus par ligne, la somme retenue, la case « Soldé »
+//           (docs/SPEC-costs.md §2.3 bis, docs/DESIGN_SYSTEM.md §5.31 bis)
 //           « À saisir », et les preuves que la Definition of Done réclame nommément
 // @verifies docs/SPEC-costs.md §4.8 (le badge, la saisie en série, la ligne enregistrée qui reste
 //           en place, zéro qui n'est pas un vide, une ligne de budget clôturé présente ET
@@ -39,42 +41,65 @@ type Reponse = {
 type Envoi = { readonly id: string; readonly valeurs: Record<string, unknown> }
 
 /**
- * Client factice : une lecture, et autant d'écritures qu'on en demande.
+ * Client factice : la lecture des lignes, et les gestes d'écriture que l'onglet émet depuis `CRM-099` — l'ajout d'un
+ * réel (`card_cost_actuals`), la relecture de la somme de la ligne, et « Soldé ».
  *
- * Il ENREGISTRE les envois, parce que c'est le contrat que cette surface doit tenir — le §4.8.1
- * exige que la saisie n'envoie qu'`actual_cost`, et une preuve qui ne regarderait que l'écran
- * laisserait passer un envoi qui emporte le rattachement.
+ * Il ENREGISTRE les envois, parce que c'est le contrat que cette surface doit tenir : un réel AJOUTÉ, jamais
+ * `actual_cost` écrit directement — la base le refuserait (« reel derive », docs/SPEC-costs.md §2.3 bis). La somme
+ * relue est tenue ici comme la base la tient ; `reponsesEcriture` remplace, dans l'ordre, la réponse d'une insertion.
  */
 function clientFactice(
 	lignes: readonly unknown[],
 	reponsesEcriture: readonly Reponse[] = [],
+	sommesRelues: Readonly<Record<string, number>> = {},
 ): { client: ClientCrm; envois: Envoi[] } {
 	const envois: Envoi[] = []
 	let rangEcriture = 0
+	const sommes = new Map<string, number>()
 	const client = {
-		from: () => ({
-			select: () => {
+		from: (table: string) => ({
+			select: (colonnes?: string) => {
 				const chaine: Record<string, unknown> = {}
+				let id: string | null = null
 				const rendre = () => chaine
 				chaine.is = rendre
-				chaine.eq = rendre
 				chaine.order = rendre
-				chaine.then = (resoudre: (valeur: Reponse) => unknown) =>
-					Promise.resolve({ data: [...lignes], error: null, status: 200 }).then(resoudre)
+				chaine.eq = (_colonne: string, valeur: string) => {
+					id = valeur
+					return chaine
+				}
+				chaine.then = (resoudre: (valeur: Reponse) => unknown) => {
+					if (table === 'card_costs' && colonnes === 'actual_cost' && id !== null) {
+						const somme = sommesRelues[id] ?? sommes.get(id) ?? null
+						return Promise.resolve({ data: [{ actual_cost: somme }], error: null, status: 200 }).then(resoudre)
+					}
+					return Promise.resolve({ data: [...lignes], error: null, status: 200 }).then(resoudre)
+				}
 				return chaine
+			},
+			insert: (valeurs: Record<string, unknown>) => {
+				const id = String(valeurs.card_cost_id)
+				envois.push({ id, valeurs })
+				return {
+					select: () => {
+						const reponse = reponsesEcriture[rangEcriture++] ?? { data: [{ id: 'r' }], error: null, status: 201 }
+						if (reponse.error === null && (reponse.data?.length ?? 0) > 0) {
+							sommes.set(id, (sommes.get(id) ?? 0) + Number(valeurs.amount))
+						}
+						return Promise.resolve(reponse)
+					},
+				}
 			},
 			update: (valeurs: Record<string, unknown>) => ({
 				eq: (_colonne: string, id: string) => {
 					envois.push({ id, valeurs })
 					return {
 						select: () =>
-							Promise.resolve(
-								reponsesEcriture[rangEcriture++] ?? {
-									data: [{ actual_cost: valeurs.actual_cost }],
-									error: null,
-									status: 200,
-								},
-							),
+							Promise.resolve({
+								data: [{ actual_cost: sommes.get(id) ?? (valeurs.settled_at === null ? null : 0) }],
+								error: null,
+								status: 200,
+							}),
 					}
 				},
 			}),
@@ -337,7 +362,8 @@ describe('La table de saisie en série (§4.8, §5.31)', () => {
 		const { client } = clientFactice([ligneEnAttente('l1', 'Publicité')])
 		monter(client)
 		await screen.findAllByTestId('couts-a-saisir-ligne')
-		expect(screen.getByText(fr['costs.pending.zero.notice'])).toBeTruthy()
+		// Testing Library normalise les espaces de la page (insécables comprises), pas la chaîne cherchée.
+		expect(screen.getByText(fr['costs.pending.zero.notice'].replace(/\s+/g, ' '))).toBeTruthy()
 		expect(screen.getByText(fr['costs.pending.keyboard.notice'])).toBeTruthy()
 	})
 })
@@ -358,9 +384,8 @@ describe('La saisie, au clavier et pour elle-même (§4.8, §4.8.1, §5.7 ter)',
 		// une série qui attendrait l'aller-retour à chaque ligne ne serait pas une série.
 		expect(document.activeElement).toBe(second)
 		await waitFor(() => expect(envois).toHaveLength(1))
-		// L'ENVOI NE PORTE QU'`actual_cost` (§4.8.1) : aucun rattachement ne change, et une évolution
-		// du trigger ne doit pas casser une saisie qui n'a aucune raison de le connaître.
-		expect(envois[0]).toEqual({ id: 'l1', valeurs: { actual_cost: 376 } })
+		// L'ENVOI AJOUTE UN RÉEL (CRM-099, §2.3 bis) : jamais `actual_cost` écrit, aucun rattachement touché.
+		expect(envois[0]).toEqual({ id: 'l1', valeurs: { card_cost_id: 'l1', amount: 376, label: null } })
 	})
 
 	it('laisse la LIGNE ENREGISTRÉE en place, marquée, et ne la retire jamais à chaud', async () => {
@@ -380,7 +405,7 @@ describe('La saisie, au clavier et pour elle-même (§4.8, §4.8.1, §5.7 ter)',
 		expect(screen.getAllByTestId('couts-a-saisir-ligne')[0]?.className).toContain('bg-success-soft')
 	})
 
-	it('envoie ZÉRO, et n’envoie RIEN sur un champ laissé vide', async () => {
+	it('envoie ZÉRO comme un réel, et n’envoie RIEN sur un champ laissé vide', async () => {
 		const { client, envois } = clientFactice([
 			ligneEnAttente('l1', 'Publicité'),
 			ligneEnAttente('l2', 'Production'),
@@ -390,15 +415,15 @@ describe('La saisie, au clavier et pour elle-même (§4.8, §4.8.1, §5.7 ter)',
 		await screen.findAllByTestId('couts-a-saisir-ligne')
 		champs()[0]?.focus()
 		await clavier.keyboard('0{Enter}')
-		// « Zéro est une valeur, pas un vide » (§4.8) : `0` signifie « finalement rien dépensé ».
-		await waitFor(() => expect(envois).toEqual([{ id: 'l1', valeurs: { actual_cost: 0 } }]))
+		// « Zéro est une valeur, pas un vide » (§4.8) : un réel de zéro s'ajoute comme un autre (CRM-099).
+		await waitFor(() => expect(envois).toEqual([{ id: 'l1', valeurs: { card_cost_id: 'l1', amount: 0, label: null } }]))
 		// Le champ suivant, laissé vide, n'envoie rien : la ligne reste en attente.
 		await clavier.keyboard('{Enter}')
 		await clavier.tab()
 		expect(envois).toHaveLength(1)
 	})
 
-	it('n’envoie pas DEUX FOIS la même valeur, `Entrée` étant suivi d’un `blur`', async () => {
+	it('n’ajoute pas DEUX FOIS le même réel, `Entrée` étant suivi d’un `blur` (CRM-099 : chaque envoi AJOUTE)', async () => {
 		const { client, envois } = clientFactice([ligneEnAttente('l1', 'Publicité')])
 		const clavier = userEvent.setup()
 		monter(client)
@@ -438,7 +463,7 @@ describe('La saisie, au clavier et pour elle-même (§4.8, §4.8.1, §5.7 ter)',
 	it('DIT l’issue « sans effet » — ni un succès, ni une erreur (§4.8.1)', async () => {
 		const { client } = clientFactice(
 			[ligneEnAttente('l1', 'Publicité')],
-			[{ data: [], error: null, status: 200 }],
+			[{ data: [], error: null, status: 201 }],
 		)
 		const clavier = userEvent.setup()
 		monter(client)
@@ -469,20 +494,35 @@ describe('La saisie, au clavier et pour elle-même (§4.8, §4.8.1, §5.7 ter)',
 		expect(message.getAttribute('role')).toBe('alert')
 	})
 
-	it('affiche la valeur RETENUE par la base, et non celle qui a été tapée', async () => {
-		// `numeric(14,2)` arrondit : afficher la saisie ferait croire enregistré autre chose que ce
-		// qui l'est (§4.8.1).
-		const { client } = clientFactice(
-			[ligneEnAttente('l1', 'Publicité')],
-			[{ data: [{ actual_cost: 12.35 }], error: null, status: 200 }],
-		)
+	it('affiche la SOMME retenue par la base dans « Déjà saisi », et vide le champ pour le réel suivant', async () => {
+		// La base arrondit et additionne (`numeric(14,2)`, CRM-099) : afficher la saisie ferait croire enregistré autre
+		// chose que ce qui l'est (§4.8.1).
+		const { client } = clientFactice([ligneEnAttente('l1', 'Publicité')], [], { l1: 112.35 })
 		const clavier = userEvent.setup()
 		monter(client)
 		await screen.findAllByTestId('couts-a-saisir-ligne')
 		champs()[0]?.focus()
 		await clavier.keyboard('12.348{Enter}')
 		await screen.findByTestId('couts-a-saisir-enregistre')
-		expect(champs()[0]?.value).toBe('12.35')
+		// Le format des montants de cette table, celui de l'estimé voisin (`formaterMontant`, à l'euro).
+		expect(screen.getByTestId('couts-a-saisir-deja').textContent).toMatch(/^112\s€$/)
+		expect(champs()[0]?.value).toBe('')
+	})
+
+	it('« Soldé » envoie le drapeau de la ligne, et la ligne reste en place, marquée', async () => {
+		const { client, envois } = clientFactice([ligneEnAttente('l1', 'Publicité'), ligneEnAttente('l2', 'Production')])
+		const clavier = userEvent.setup()
+		monter(client)
+		await screen.findAllByTestId('couts-a-saisir-ligne')
+		const [caseSolde] = screen.getAllByTestId('couts-a-saisir-solde') as HTMLInputElement[]
+		await clavier.click(caseSolde!)
+		await waitFor(() => expect(envois).toHaveLength(1))
+		expect(envois[0]?.id).toBe('l1')
+		expect(Object.keys(envois[0]?.valeurs ?? {})).toEqual(['settled_at'])
+		await waitFor(() => expect(caseSolde!.checked).toBe(true))
+		expect(screen.getAllByTestId('couts-a-saisir-ligne')).toHaveLength(2)
+		// Soldée, la ligne ne reçoit plus de réel : son champ est éteint jusqu'au prochain chargement.
+		expect(champs()[0]?.disabled).toBe(true)
 	})
 
 	it('n’écrit RIEN depuis une ligne non écrivable, et le champ refuse la saisie', async () => {

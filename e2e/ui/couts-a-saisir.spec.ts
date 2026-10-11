@@ -1,4 +1,6 @@
 // @verifies CRM-086 (docs/BACKLOG.md) — écrans de coûts, TRANCHE 6b : le parcours d'interface de
+// @verifies CRM-099 (docs/BACKLOG.md) — révisée : un réel de plus par ligne, « Soldé », les lignes non soldées
+//           (docs/SPEC-costs.md §2.3 bis, docs/DESIGN_SYSTEM.md §5.31 bis)
 //           l'onglet « À saisir », et les preuves que la Definition of Done réclame nommément
 // @verifies docs/SPEC-costs.md §4.0 (l'onglet vit dans la chaîne de requête, `?onglet=saisir`),
 //           §4.8 (ce que l'onglet liste — budgets clôturés COMPRIS —, la saisie en série, la ligne
@@ -77,23 +79,36 @@ async function connecter(page: Page, email = ADMIN): Promise<void> {
 	await connecterAvecLeLabs(page, email)
 }
 
+/** « Production » — un réel saisi par le commercial après la clôture, ligne ouverte (`docs/SPEC-seed.md` §18). */
+const ID_LIGNE_PRODUCTION = '5eed0000-0000-4000-8000-0000000000e2'
+const LIGNE_PRODUCTION = 'Production'
+
 /**
- * Remet la ligne écrite dans l'état du seed — `actual_cost` à `NULL`.
+ * Remet les lignes écrites dans l'état du seed — RÉVISÉ PAR `CRM-099` (docs/SPEC-costs.md §2.3 bis) : le réel ne
+ * s'écrit plus sur la ligne. Les réels AJOUTÉS depuis le début du scénario sont retirés, et « Soldé » est décoché.
  *
  * PAR LA CLÉ DE SERVICE, comme la purge de `card-costs.spec.ts`, et le statut est CONTRÔLÉ : une
  * restauration complaisante laisserait le dépôt dans un état que la preuve suivante lirait comme
  * une régression, ce que la décision 473 a déjà payé une fois.
  */
+let debutScenario = new Date().toISOString()
 async function restaurer(request: APIRequestContext): Promise<void> {
-	const reponse = await request.patch(
-		`${URL_API}/rest/v1/card_costs?id=eq.${ID_LIGNE_BUDGET_CLOS}`,
-		{ headers: { ...enTetesService(), 'Content-Type': 'application/json' }, data: { actual_cost: null } },
+	const lignes = `${ID_LIGNE_BUDGET_CLOS},${ID_LIGNE_PRODUCTION}`
+	const decoche = await request.patch(`${URL_API}/rest/v1/card_costs?id=in.(${lignes})`, {
+		headers: { ...enTetesService(), 'Content-Type': 'application/json' },
+		data: { settled_at: null },
+	})
+	expect(decoche.status(), 'la ligne seedée doit être rouverte').toBeLessThan(300)
+	const retrait = await request.delete(
+		`${URL_API}/rest/v1/card_cost_actuals?card_cost_id=in.(${lignes})&created_at=gte.${encodeURIComponent(debutScenario)}`,
+		{ headers: enTetesService() },
 	)
-	expect(reponse.status(), 'la restauration de la ligne seedée doit aboutir').toBeLessThan(300)
+	expect(retrait.status(), 'les réels du scénario doivent être retirés').toBeLessThan(300)
 }
 
 test.beforeEach(async ({ request }) => {
 	await restaurer(request)
+	debutScenario = new Date().toISOString()
 })
 
 test.afterEach(async ({ request }) => {
@@ -104,7 +119,7 @@ test.afterEach(async ({ request }) => {
 const ligneDe = (page: Page, nature: string) =>
 	page.getByTestId('couts-a-saisir-ligne').filter({ hasText: nature })
 
-/** Le champ « Réel » de cette ligne — la seule cible de saisie de la table (§5.31). */
+/** Le champ « Un réel de plus » de cette ligne — la cible de saisie en série de la table (§5.31, §5.31 bis). */
 const champDe = (page: Page, nature: string) =>
 	ligneDe(page, nature).getByTestId('couts-a-saisir-champ')
 
@@ -126,29 +141,30 @@ test.describe('CRM-086 — onglet « À saisir » (docs/SPEC-costs.md §4.8)', (
 		)
 		// Le badge est lu SUR LES DEUX onglets : c'est lui qui donne la raison d'ouvrir le second.
 		const onglet = page.getByTestId('onglet-couts-saisir')
-		await expect(onglet.getByTestId('onglet-couts-badge')).toHaveText('3')
+		await expect(onglet.getByTestId('onglet-couts-badge')).toHaveText('4')
 
 		await onglet.click()
 		// L'onglet est atteignable, donc partageable et rechargeable : il vit dans la chaîne de
 		// requête, jamais dans un état local (§4.0).
 		await expect(page).toHaveURL(/\?onglet=saisir$/)
-		await expect(page.getByTestId('couts-a-saisir-ligne')).toHaveCount(3)
+		await expect(page.getByTestId('couts-a-saisir-ligne')).toHaveCount(4)
 		// LE BADGE ET LE TABLEAU NE PEUVENT PAS RÉPONDRE À DEUX SOURCES (§4.8.2) : le nombre annoncé
 		// est celui des lignes rendues juste en dessous.
-		await expect(onglet.getByTestId('onglet-couts-badge')).toHaveText('3')
+		await expect(onglet.getByTestId('onglet-couts-badge')).toHaveText('4')
 
 		// Rechargée directement, l'adresse ouvre le même onglet : c'est ce que « vivre dans l'adresse »
 		// veut dire, et un état local ne le donnerait pas.
 		await page.goto(CUMUL_A_SAISIR)
-		await expect(page.getByTestId('couts-a-saisir-ligne')).toHaveCount(3)
+		await expect(page.getByTestId('couts-a-saisir-ligne')).toHaveCount(4)
 	})
 
 	test('S2 — la PORTÉE d’un track ne rend que ses budgets, clôturés compris', async ({ page }) => {
 		await connecter(page)
 		await page.goto(TRACK_A_SAISIR)
 
-		// « Studio web » porte deux budgets — l'un ouvert, l'autre CLÔTURÉ — et donc deux lignes.
-		await expect(page.getByTestId('couts-a-saisir-ligne')).toHaveCount(2)
+		// « Studio web » porte deux budgets — l'un ouvert, l'autre CLÔTURÉ — et trois lignes non soldées depuis
+		// `CRM-099` : « Production », dont un réel est saisi, reste en attente tant qu'elle n'est pas soldée.
+		await expect(page.getByTestId('couts-a-saisir-ligne')).toHaveCount(3)
 		await expect(ligneDe(page, LIGNE_OUVERTE)).toHaveCount(1)
 		await expect(ligneDe(page, LIGNE_BUDGET_CLOS)).toHaveCount(1)
 		// La ligne de l'autre track n'y est pas : la portée est celle de l'écran (§4.8).
@@ -170,45 +186,51 @@ test.describe('CRM-086 — onglet « À saisir » (docs/SPEC-costs.md §4.8)', (
 		await expect(ligneDe(page, LIGNE_AUTRE_TRACK)).toHaveCount(1)
 	})
 
-	test('S3 — AU CLAVIER SEUL : `Entrée` enregistre, porte le focus sur la ligne suivante, et la ligne reste en place', async ({
+	test('S3 — AU CLAVIER SEUL : `Entrée` ajoute un réel et passe à la ligne suivante ; « Soldé » ferme la ligne au rechargement', async ({
 		page,
 	}) => {
 		await connecter(page)
 		await page.goto(TRACK_A_SAISIR)
-		await expect(page.getByTestId('couts-a-saisir-ligne')).toHaveCount(2)
+		await expect(page.getByTestId('couts-a-saisir-ligne')).toHaveCount(3)
 
-		// L'ordre est celui du §4.8 — du plus ancien au plus récent —, donc « Publicité » d'abord et
-		// « Impression plaquettes » ensuite. Le focus part du premier champ, atteint au clavier.
-		const premier = champDe(page, LIGNE_OUVERTE)
-		const second = champDe(page, LIGNE_BUDGET_CLOS)
-		await premier.focus()
-		// ZÉRO EST UNE VALEUR, PAS UN VIDE (§4.8) : il est saisi sur la ligne du budget clôturé, la
-		// seule que l'épilogue restaure. Le premier champ est laissé VIDE et ne doit rien envoyer.
+		// L'ordre est celui du §4.8 — du plus ancien au plus récent : « Publicité », « Production »,
+		// « Impression plaquettes ». Le premier champ est laissé VIDE et ne doit rien envoyer.
+		await champDe(page, LIGNE_OUVERTE).focus()
 		await page.keyboard.press('Enter')
 		// LA MESURE QUE LA DoD RÉCLAME : le focus passe au champ de la LIGNE SUIVANTE.
-		await expect(second).toBeFocused()
+		await expect(champDe(page, LIGNE_PRODUCTION)).toBeFocused()
 
-		await page.keyboard.type('0')
+		// UN RÉEL DE PLUS (CRM-099, §2.3 bis) : la facture de 40 s'ajoute aux 375 déjà saisis. Le champ se vide pour le
+		// réel suivant, et « Déjà saisi » rend la SOMME retenue par la base.
+		await page.keyboard.type('40')
 		await page.keyboard.press('Enter')
-		// La ligne enregistrée RESTE EN PLACE, marquée : la retirer à chaud ferait remonter les
-		// suivantes sous les doigts de celui qui saisit (§4.8).
-		await expect(ligneDe(page, LIGNE_BUDGET_CLOS).getByTestId('couts-a-saisir-enregistre')).toBeVisible()
-		await expect(page.getByTestId('couts-a-saisir-ligne')).toHaveCount(2)
-		// La marque est OBSERVÉE, pas seulement assertée (`CLAUDE.md` §16) : c'est la capture qui dit
-		// si le fond de succès et la mention se lisent, et si la ligne a gardé sa place.
+		await expect(ligneDe(page, LIGNE_PRODUCTION).getByTestId('couts-a-saisir-enregistre')).toBeVisible()
+		await expect(ligneDe(page, LIGNE_PRODUCTION).getByTestId('couts-a-saisir-deja')).toHaveText(/^415\s€$/)
+		await expect(champDe(page, LIGNE_PRODUCTION)).toHaveValue('')
+		await expect(champDe(page, LIGNE_BUDGET_CLOS)).toBeFocused()
+
+		// « SOLDÉ » sur la ligne du budget clos, sans réel : elle vaudra zéro, « finalement rien dépensé ». La ligne
+		// RESTE EN PLACE, marquée : la retirer à chaud ferait remonter les suivantes sous les doigts (§4.8).
+		await page.keyboard.press('Tab')
+		await page.keyboard.press('Tab')
+		await expect(ligneDe(page, LIGNE_BUDGET_CLOS).getByTestId('couts-a-saisir-solde')).toBeFocused()
+		await page.keyboard.press('Space')
+		await expect(ligneDe(page, LIGNE_BUDGET_CLOS).getByTestId('couts-a-saisir-solde')).toBeChecked()
+		await expect(champDe(page, LIGNE_BUDGET_CLOS)).toBeDisabled()
+		await expect(page.getByTestId('couts-a-saisir-ligne')).toHaveCount(3)
+		// La marque est OBSERVÉE, pas seulement assertée (`CLAUDE.md` §16).
 		await capturer(page, 'couts-a-saisir-enregistre-1440', UNITE)
 
-		// AU RECHARGEMENT, ET ALORS SEULEMENT, la ligne quitte l'attente : c'est la preuve que
-		// l'écriture a réellement abouti côté base, et que `0` vaut « rien dépensé » et non « vide ».
+		// AU RECHARGEMENT, ET ALORS SEULEMENT, la ligne soldée quitte l'attente ; « Production », qui a reçu un réel
+		// mais n'est pas soldée, y reste — c'est la règle de CRM-099.
 		await page.goto(TRACK_A_SAISIR)
-		await expect(page.getByTestId('couts-a-saisir-ligne')).toHaveCount(1)
+		await expect(page.getByTestId('couts-a-saisir-ligne')).toHaveCount(2)
 		await expect(ligneDe(page, LIGNE_BUDGET_CLOS)).toHaveCount(0)
-		// Le champ laissé VIDE n'a rien envoyé : sa ligne est toujours en attente.
+		await expect(ligneDe(page, LIGNE_PRODUCTION).getByTestId('couts-a-saisir-deja')).toHaveText(/^415\s€$/)
 		await expect(ligneDe(page, LIGNE_OUVERTE)).toHaveCount(1)
-		// Et le badge suit le tableau, sans qu'aucun compte ne soit recalculé ailleurs.
 		await expect(
 			page.getByTestId('onglet-couts-saisir').getByTestId('onglet-couts-badge'),
-		).toHaveText('1')
+		).toHaveText('2')
 	})
 
 	test('S4 — LA LECTRICE : ses lignes sont rendues, en LECTURE SEULE, jamais masquées', async ({
@@ -217,10 +239,10 @@ test.describe('CRM-086 — onglet « À saisir » (docs/SPEC-costs.md §4.8)', (
 		await connecter(page, VIEWER)
 		await page.goto(CUMUL_A_SAISIR)
 
-		// Elle lit DEUX des trois lignes ; la troisième vit sur un track qu'elle ne lit pas, et la
+		// Elle lit TROIS des quatre lignes ; la quatrième vit sur un track qu'elle ne lit pas, et la
 		// double condition du §3.1 l'écarte — l'écran ne le dit pas, et c'est voulu : nommer ce qu'on
 		// ne montre pas divulguerait par la bande ce que la RLS ferme.
-		await expect(page.getByTestId('couts-a-saisir-ligne')).toHaveCount(2)
+		await expect(page.getByTestId('couts-a-saisir-ligne')).toHaveCount(3)
 		await expect(ligneDe(page, LIGNE_AUTRE_TRACK)).toHaveCount(0)
 
 		// L'ÉTAT « aucune ligne écrivable, mais des lignes lisibles » du §4.8 : le tableau est rendu
@@ -233,10 +255,10 @@ test.describe('CRM-086 — onglet « À saisir » (docs/SPEC-costs.md §4.8)', (
 			ligneDe(page, LIGNE_OUVERTE).getByText('Vous ne pouvez pas modifier cette affaire.'),
 		).toBeVisible()
 		// Le badge compte AUSSI les lignes qu'elle ne peut pas écrire : les exclure écrirait « 0 » à
-		// quelqu'un qui a deux lignes sous les yeux (§4.8.2).
+		// quelqu'un qui a trois lignes sous les yeux (§4.8.2).
 		await expect(
 			page.getByTestId('onglet-couts-saisir').getByTestId('onglet-couts-badge'),
-		).toHaveText('2')
+		).toHaveText('3')
 		// L'écran de la lectrice est OBSERVÉ : un champ désactivé doit rester LISIBLE (§8), et c'est
 		// une capture qui le dit, jamais une assertion.
 		await capturer(page, 'couts-a-saisir-lecture-seule-1440', UNITE)
@@ -257,16 +279,16 @@ test.describe('CRM-086 — onglet « À saisir » (docs/SPEC-costs.md §4.8)', (
 		// La mention du §4.4 est rendue SOUS l'histogramme, qui exclut les budgets clôturés (§4.2) :
 		// elle ne compte donc que « Publicité », sur `Publicité 2026`.
 		await expect(page.getByText(/^1 ligne\(s\) sans coût réel saisi/)).toBeVisible()
-		// Le badge compte ce que le tableau de l'onglet LISTE, budget clos compris : deux lignes.
+		// Le badge compte ce que le tableau de l'onglet LISTE, budget clos compris : trois lignes non soldées.
 		const badge = page.getByTestId('onglet-couts-saisir').getByTestId('onglet-couts-badge')
-		await expect(badge).toHaveText('2')
+		await expect(badge).toHaveText('3')
 		// L'ÉCART EST NOMMÉ À L'ÉCRAN, et c'est ce que l'arbitrage ajoute : sans cette phrase, deux
 		// nombres légitimement différents se lisent comme une erreur de calcul.
 		await expect(page.getByTestId('couts-portee-compteur')).toBeVisible()
 		// Le nom accessible du badge nomme sa population, et pas seulement le fait de compter.
 		await expect(badge).toHaveAttribute(
 			'aria-label',
-			'2 ligne(s) en attente de leur coût réel, budgets clôturés compris, toutes devises confondues',
+			'3 ligne(s) en attente de leur coût réel, budgets clôturés compris, toutes devises confondues',
 		)
 		// L'écran est OBSERVÉ (`CLAUDE.md` §16) : c'est la capture qui dit si les deux nombres et la
 		// phrase qui les sépare se lisent ensemble, sans se contredire à l'œil.
@@ -290,7 +312,7 @@ test.describe('CRM-086 — onglet « À saisir » (docs/SPEC-costs.md §4.8)', (
 
 		// LE BADGE EST BIEN LE COMPTE DES LIGNES RENDUES — l'exigence qui REMPLACE l'égalité retirée.
 		await page.goto(TRACK_A_SAISIR)
-		await expect(page.getByTestId('couts-a-saisir-ligne')).toHaveCount(2)
+		await expect(page.getByTestId('couts-a-saisir-ligne')).toHaveCount(3)
 		// Et la phrase de portée n'est PAS rendue ici : le tableau visible EST la population du
 		// badge, elle n'aurait rien à expliquer.
 		await expect(page.getByTestId('couts-portee-compteur')).toHaveCount(0)
@@ -305,7 +327,7 @@ test.describe('CRM-086 — onglet « À saisir » (docs/SPEC-costs.md §4.8)', (
 		// 120 jours (`docs/SPEC-seed.md` §12.1 et §12.1 bis).
 		await connecter(page)
 		await page.goto(CUMUL_A_SAISIR)
-		await expect(page.getByTestId('couts-a-saisir-ligne')).toHaveCount(3)
+		await expect(page.getByTestId('couts-a-saisir-ligne')).toHaveCount(4)
 
 		// 1. EN RETARD — 120 jours sur un seuil de 30. C'est le seul cas où la teinte s'allume.
 		await expect(ancienneteDe(page, LIGNE_AUTRE_TRACK)).toHaveAttribute('data-retard', 'oui')
@@ -359,7 +381,7 @@ test.describe('CRM-086 — onglet « À saisir » (docs/SPEC-costs.md §4.8)', (
 		await capturer(page, 'anciennete-seuil-1440', 'CRM-084')
 		await page.setViewportSize({ width: 390, height: 844 })
 		await page.goto(CUMUL_A_SAISIR)
-		await expect(page.getByTestId('couts-a-saisir-ligne')).toHaveCount(3)
+		await expect(page.getByTestId('couts-a-saisir-ligne')).toHaveCount(4)
 		await capturer(page, 'anciennete-seuil-sm-390', 'CRM-084')
 
 		autoriserErreursConsole(page, [])
@@ -372,7 +394,7 @@ test.describe('CRM-086 — onglet « À saisir » (docs/SPEC-costs.md §4.8)', (
 		for (const palier of PALIERS) {
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
 			await page.goto(CUMUL_A_SAISIR)
-			await expect(page.getByTestId('couts-a-saisir-ligne')).toHaveCount(3)
+			await expect(page.getByTestId('couts-a-saisir-ligne')).toHaveCount(4)
 			// « La page ne défile jamais horizontalement » (§7) : la table déborde dans SON conteneur,
 			// que `contain: paint` empêche de propager sa largeur intrinsèque jusqu'à la racine.
 			const debordement = await page.evaluate(

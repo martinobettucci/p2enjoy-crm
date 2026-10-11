@@ -49,7 +49,7 @@ function clientQuiRend(
 	 * zone lit AUSSI les lignes en attente, pour le badge du §4.8 — et l'effet d'un enfant s'exécute
 	 * AVANT celui de son parent, si bien que cette lecture consommerait le premier rang de la
 	 * séquence et décalerait toutes les réponses de l'histogramme. La requête est reconnaissable à
-	 * son seul filtre `actual_cost is null`, qu'aucune autre lecture de cet écran ne pose.
+	 * son seul filtre `settled_at is null` (`CRM-099` ; `actual_cost is null` avant lui), qu'aucune autre lecture de cet écran ne pose.
 	 */
 	enAttente: Reponse = { data: [], error: null, status: 200 },
 ): ClientCrm {
@@ -60,7 +60,7 @@ function clientQuiRend(
 			let attente = false
 			const rendre = () => chaine
 			chaine.is = (colonne: string, valeur: unknown) => {
-				if (colonne === 'actual_cost' && valeur === null) attente = true
+				if (colonne === 'settled_at' && valeur === null) attente = true
 				return chaine
 			}
 			chaine.eq = rendre
