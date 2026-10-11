@@ -31296,3 +31296,8 @@ ajouté deux — la valeur saisie vit dans une référence vidée avant l'envoi 
 (3) Une case « Soldé » contrôlée par l'état serveur ne bougeait qu'au retour de la requête : elle bascule au clic et
 revient en arrière sur un refus. Le panneau des réels vit SOUS la table de la fiche, comme ses formulaires — règle
 écrite dans `BlocCoutsCard` —, et non dans une ligne étendue.
+
+**`CRM-099` T3, livrée en production le 2026-10-11** après la confirmation de l'instantané : révision `7d819786`,
+migration 88. Relevé en lecture seule avant et après la fenêtre : les deux lignes au réel connu portent chacune un réel
+repris égal à leur réel d'avant, et sont rouvertes (`docs/PROD_MIGRATIONS.md` §8). Reste le constat fonctionnel du
+responsable.

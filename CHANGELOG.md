@@ -15,7 +15,8 @@ d'exécuter le code attendu.
 
 ### `CRM-099` — Plusieurs coûts réels par ligne de coût, jusqu'à « Soldé »
 
-*Décision 622. Non livré en production.*
+*Décision 622. **Livré en production le 2026-10-11** (`7d819786`, migration 88 appliquée par une fenêtre avec instantané ;
+les deux réels de production repris à l'identique) ; publié après le constat du responsable (`docs/PROD_MIGRATIONS.md` §2.12).*
 
 - **Une ligne de coût reçoit plusieurs réels** — une facture, puis une autre —, chacun avec son montant, sa date et un
   libellé facultatif ; le réel de la ligne est leur somme, tenue par la base. Dans la fiche d'une affaire, les réels

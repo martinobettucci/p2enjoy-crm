@@ -15028,7 +15028,10 @@ deviennent un premier réel, lignes rouvertes. Spécifié avant le code : `docs/
       optimiste. **Campagnes, le 2026-10-11** : pgTAP 83 / 3 558 ; unitaires **3 807** — la mutation qui ne vide plus le
       champ avant l'envoi fait rougir quatre preuves ; API **1 122** ; interface **818** ; messagerie **42**. 84 captures
       renouvelées (le dépli des réels dans la fiche), 160 réécritures sans changement visible restaurées.
-- [ ] **T3** — livraison en production (migration 88, instantané confirmé) et constat.
+- [~] **T3** — livraison en production (migration 88, instantané confirmé) et constat.
+      *Livré le 2026-10-11* : révision `7d819786`, migration 88 après instantané confirmé ; `verifier.sh` 26 contrôles sans
+      anomalie ; registre à 88 lignes ; les deux réels de production repris à l'identique, lignes rouvertes
+      (`docs/PROD_MIGRATIONS.md` §2.12, §8). **Reste le constat du responsable.**
 
 ### CRM-100 — Créer un channel depuis le track, et un workflow depuis le formulaire du channel `[~]`
 *Créée le 2026-10-11 — décision 623, arbitrages du responsable. Créer un channel obligeait à repasser par les réglages,

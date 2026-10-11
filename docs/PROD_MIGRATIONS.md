@@ -33,9 +33,9 @@ source d'identité.
 | Élément | État |
 |---|---|
 | Environnement de production | Cellule Spark `crm` (`docs/SPEC-deploiement-spark.md`), assemblage à trois fichiers : neuf services sains et deux conteneurs à usage unique (runner, bucket) ; GoTrue retiré le 2026-09-24 |
-| Schéma appliqué | Les **87 migrations** du dépôt : 1 à 73 par `--migrate --premier-deploiement` sur une base mesurée vierge (2026-09-23), 74 à 79 par la reprise `CRM-092` (2026-09-24), 80 par `CRM-094` (2026-09-28), 81 par `CRM-095` (2026-09-29), 82 par `CRM-096` (2026-10-01), 83 à 86 par `CRM-097` T4 (2026-10-03), 87 par `CRM-098` T5 (2026-10-11). **Le registre `app.migrations_appliquees` le dit** : 87 lignes — les 82 premières en `adoption`, les 83 à 87 en `application` —, empreintes égales à celles du dépôt livré |
-| Dernière migration appliquée | `0087_saisie_temps.sql` — relue en base le 2026-10-11, en lecture seule : 87 lignes au registre, empreinte de la 87 égale à celle du dépôt, `saisies_temps` et `couts_personnel` vides, leurs sept politiques présentes ; refus anonyme `401` par la route publique |
-| Version déployée | La révision inscrite dans `/srv/crm/REVISION` — celle que `scripts/spark/verifier.sh` compare au `HEAD` du poste ; **`521b3f5d`** le 2026-10-11 (`CRM-098` T1 à T4, migration 87, et la webapp de `CRM-100` ; après `38237656` — `CRM-097` T1 à T3, INC-266, INC-268, INC-270, migrations 83 à 86 —, après `2ff0c703` — `CRM-096`, migration 82 —, INC-262 et INC-263 — `09d3abcc` —, `CRM-095` et INC-258 à INC-261 — `796aa3c1`, migration 81 —, `CRM-094`, INC-254 et INC-255) |
+| Schéma appliqué | Les **88 migrations** du dépôt : 1 à 73 par `--migrate --premier-deploiement` sur une base mesurée vierge (2026-09-23), 74 à 79 par la reprise `CRM-092` (2026-09-24), 80 par `CRM-094` (2026-09-28), 81 par `CRM-095` (2026-09-29), 82 par `CRM-096` (2026-10-01), 83 à 86 par `CRM-097` T4 (2026-10-03), 87 par `CRM-098` T5 et 88 par `CRM-099` T3 (2026-10-11). **Le registre `app.migrations_appliquees` le dit** : 88 lignes — les 82 premières en `adoption`, les 83 à 88 en `application` —, empreintes égales à celles du dépôt livré |
+| Dernière migration appliquée | `0088_reels_multiples.sql` — relue en base le 2026-10-11, en lecture seule : 88 lignes au registre, empreinte de la 88 égale à celle du dépôt ; les deux lignes de coût au réel connu portent chacune UN réel repris, égal au réel d'avant la fenêtre (210,00 et 200,00), et restent ouvertes ; refus sans session `401` par la route publique |
+| Version déployée | La révision inscrite dans `/srv/crm/REVISION` — celle que `scripts/spark/verifier.sh` compare au `HEAD` du poste ; **`7d819786`** le 2026-10-11 (`CRM-099` T1 et T2, migration 88 ; après `521b3f5d` — `CRM-098` T1 à T4, migration 87, et la webapp de `CRM-100` —, après `38237656` — `CRM-097` T1 à T3, INC-266, INC-268, INC-270, migrations 83 à 86 —, après `2ff0c703` — `CRM-096`, migration 82 —, INC-262 et INC-263 — `09d3abcc` —, `CRM-095` et INC-258 à INC-261 — `796aa3c1`, migration 81 —, `CRM-094`, INC-254 et INC-255) |
 | Assistant IA | Variables `OLLAMA_HOST`, `OLLAMA_CONTEXT_LENGTH` et secret `OLLAMA_API_KEY` **présents** dans la cellule et remis à `functions` (relevé du 2026-10-03, présence seule) ; `OLLAMA_MODEL` absent, d'où le défaut `gemma4:e2b` de Compose. Refusée le 2026-10-03 (403), la cellule est **autorisée par LeLabs** : `GET /functions/v1/ia/etat` rend `{"disponible":true,"modele":"gemma4:e2b"}` le 2026-10-11 (§2.9, geste 7) |
 | Données | Un espace, « P2Enjoy CRM » (`crm`), réamorcé par la reprise `CRM-092`, et les données qu'y écrit le responsable — relevé du 2026-10-01, en lecture seule : 2 profils, 2 workflows dont celui de départ, 8 affaires ; aucun seed. La ligne `auth.users` de l'ancien compte invité reste, inerte |
 | Route publique | `crm.lelabs.tech 8080 tls`, active : `https://crm.lelabs.tech`, certificat Let's Encrypt présenté par la Forge (décision 576) |
@@ -334,7 +334,7 @@ Edge nouvelle. La livraison emporte aussi la webapp de `CRM-100` (§2.10), déj�
 **Retour arrière** : par l'instantané si la fenêtre échoue (§6) ; après la fenêtre, par la ligne 87 du §3.2. La webapp
 précédente ignore les deux tables : revenir à elle seule ne casse rien.
 
-### 2.12 `CRM-099` — plusieurs coûts réels par ligne de coût, jusqu'à « Soldé » (À EXÉCUTER)
+### 2.12 `CRM-099` — plusieurs coûts réels par ligne de coût, jusqu'à « Soldé » (GESTES 1 À 4 EXÉCUTÉS le 2026-10-11 ; geste 5 à constater par le responsable)
 
 `docs/SPEC-costs.md` §2.3 bis, `docs/DESIGN_SYSTEM.md` §5.31 bis ; décision 622. **Une migration, la 88**, qui
 **reprend des données**, et la webapp (onglet « À saisir », fiche d'une affaire, détail d'un budget). Aucune variable,
@@ -358,10 +358,8 @@ la webapp précédente — jamais la webapp seule.
 
 ## 3. Migrations en attente
 
-**Une migration en attente : la 88** (`0088_reels_multiples.sql`, `CRM-099`, décision 622) — elle **reprend des
-données** (les réels connus deviennent un premier réel, lignes rouvertes) et la webapp qui l'accompagne n'écrit plus
-`actual_cost` : la migration et la webapp se livrent ensemble, par la fenêtre du §2.12, avec instantané. Baseline de
-production : la migration **87**
+**Aucune migration en attente depuis le 2026-10-11.** Baseline de production : la migration **88**
+(`CRM-099`, décision 622), appliquée le 2026-10-11 par une fenêtre avec instantané (§2.12, §8) ; avant elle, la **87**
 (`CRM-098`, décision 621), appliquée le 2026-10-11 par une fenêtre avec instantané (§2.11, §8) — son retrait est sa
 ligne du §3.2 ; avant elle, la **86**
 (`CRM-097` T3, décision 620), appliquée avec les 83 à 85 le 2026-10-03 par une fenêtre avec instantané (§2.9, §8) ;
@@ -1336,3 +1334,17 @@ publique sert le module d'objectifs de ce build (`200`). La baseline reste **81*
   publique : **`401`** ; `/temps` servie (`200`). Aucune donnée de preuve n'est écrite en production.
 - **Geste 4, à constater par le responsable** : une première version de coût dans Réglages ▸ « Coût du personnel », une
   journée saisie dans « Temps », relue dans le « Rapport mensuel ». Le geste 3 de `CRM-100` (§2.10) aussi.
+
+### `CRM-099` T3 — plusieurs coûts réels par ligne de coût, 2026-10-11 (décision 622)
+
+- **Geste 1** : instantané de VM pris par le responsable, confirmé le 2026-10-11 avant la fenêtre.
+- **Geste 2** : relevé en lecture seule avant la fenêtre — 3 lignes de coût, dont **2** au réel connu (aucune à zéro) ;
+  registre à 87 lignes.
+- **Geste 3** : `scripts/spark/livrer.sh -- --migrate --instantane-verifie` par les IP : révision **`7d819786`**,
+  « Migrations appliquées avec succès » ; puis `./runProd.sh --spark` dans la cellule, conteneurs sains.
+- **Geste 4** : `verifier.sh` — **26 contrôles, aucune anomalie**. Registre : **88 lignes**, la 88 à l'empreinte du
+  dépôt. Les deux lignes au réel connu portent chacune **un réel repris égal au réel d'avant** (210,00 et 200,00), et
+  sont **ouvertes** — elles figurent désormais dans l'onglet « À saisir », comme la décision 622 le veut. Sans session,
+  `card_cost_actuals` répond `401`. Aucune donnée de preuve écrite en production.
+- **Geste 5, à constater par le responsable** : ajouter un réel à une ligne depuis la fiche d'une affaire, puis solder
+  une ligne dans l'onglet « À saisir ».
