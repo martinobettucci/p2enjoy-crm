@@ -5266,5 +5266,13 @@ dans le premier champ et rendu à la commande qui l'a ouvert, alerte de refus da
   **« Revenir au nouveau channel »**, forme primaire du lien de l'état « introuvable » (§5.5), icône `ArrowLeft` 16 px
   `aria-hidden` avant le libellé. Sous 768 px, le lien passe sous la phrase, pleine largeur. Le bandeau n'est pas une
   alerte : aucun `role="alert"`, aucune couleur d'état.
+- **Une erreur de lecture de la liste des workflows est écrite** sous le libellé « Workflow », `role="alert"`,
+  `--text-sm`, `--color-danger-on-soft` — *ajouté à la mise en œuvre* : le formulaire de l'arborescence ne rendait
+  alors rien, un blanc que le §5.8 proscrit, et le lien « Nouveau workflow » rendu dans cet état devait être lisible
+  comme une issue.
+- **Un formulaire prend le focus à son OUVERTURE, jamais à un remontage** — *précision du §5.13, ajoutée à la mise en
+  œuvre, défaut trouvé par l'E2E du guide flottant* : un formulaire déplacé d'une zone à l'autre par une relecture
+  (l'état vide de l'éditeur, puis sa colonne de gauche) ne doit ni reprendre le focus à l'élément qui l'a, ni perdre
+  sa saisie.
 - **Aucune couleur, aucun jeton nouveau** ; une seule icône nouvelle dans ces écrans, `ArrowLeft`, déjà employée par le
   canevas d'objectifs (§5.29).

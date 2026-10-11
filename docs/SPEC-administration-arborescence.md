@@ -525,6 +525,11 @@ un slug proposé à partir du nom se recalcule au retour.
 - Le lien de retour mène à l'adresse d'origine, augmentée de **`nc-workflow=<workflow-cree>`** lorsqu'un workflow a été
   créé. Sans création, il ramène au formulaire tel qu'il a été quitté.
 
+**Le formulaire de création ne prend le focus qu'à son OUVERTURE**, et repart de la saisie courante s'il est remonté.
+*Ajouté le 2026-10-11, défaut trouvé par l'E2E du guide flottant* : ouvert par `creer=1` sur un éditeur vide, le
+formulaire était remonté quand le guide posait le workflow de départ — la liste relue le fait passer de l'état vide à
+la colonne de gauche — et reprenait le focus que le guide venait de poser sur son lien, la saisie perdue.
+
 L'éditeur ne contrôle pas que le workflow créé ait des étapes : un workflow vide est un brouillon légitime
 (`docs/SPEC-workflow-engine.md` §3.5), et le board du channel le dira par son état vide, qui mène à l'éditeur (§5.51).
 
@@ -578,8 +583,9 @@ de `webapp/src/lib/nouveau-channel.ts`, prouvée par ses tests unitaires — don
 | Composition des adresses, lecture du brouillon, validation du retour (formes d'attaque comprises) | `webapp/src/lib/nouveau-channel.test.ts` |
 | Le formulaire partagé : lien « Nouveau workflow » et son adresse, présélection, workflow non affectable, modification sans lien | `webapp/src/app/FormulaireChannel.test.tsx` |
 | La commande de la barre d'onglets, avec et sans channel, son adresse | `webapp/src/app/TabBar.test.tsx` |
-| La vue du track : ouverture par l'adresse, envoi, succès vers le board, annulation, `Échap`, état vide sans lien | `webapp/src/app/RouteTrack.test.tsx` |
-| L'éditeur : `creer=1` et `track`, bandeau, `workflow-cree` après création et après acceptation IA, lien de retour | `webapp/src/app/AdministrationWorkflows.test.tsx` |
+| La zone « Nouveau channel » de la vue du track : lecture des workflows du track, envoi, refus, annulation, `Échap`, adresse d'origine, retour prérempli | `webapp/src/app/NouveauChannelTrack.test.tsx` |
+| La route elle-même — le board du channel créé, l'onglet focalisé, l'état vide sans lien | `e2e/ui/nouveau-channel.spec.ts` et `e2e/ui/premier-lancement.spec.ts` : la coquille entière ne se monte pas sans la pile |
+| L'éditeur : `creer=1` et `track`, bandeau, `workflow-cree` après création et après acceptation IA, lien de retour, focus non repris au remontage | `webapp/src/app/AdministrationWorkflows.nouveau-channel.test.tsx` |
 | L'arborescence : réouverture préremplie par l'adresse, track absent | `webapp/src/app/AdministrationArborescence.test.tsx` |
 | La lecture du track porte `workspace_id` | `webapp/src/lib/channels.test.ts` |
 | Parcours réels : créer un channel depuis le track à la souris ; l'aller-retour complet au clavier seul (workflow créé, une étape ajoutée, retour, channel créé, board à une colonne) ; l'aller-retour depuis l'arborescence ; le refus traduit pour un non-administrateur ; captures aux quatre paliers | `e2e/ui/nouveau-channel.spec.ts`, captures `docs/captures/CRM-100/` |

@@ -24,6 +24,23 @@ d'exécuter le code attendu.
   son temps et son coût, les administrateurs ceux de tous, et un administrateur peut saisir pour un membre. Aucun écran
   encore (T2, T3).
 
+### `CRM-100` — Créer un channel depuis le track, et un workflow depuis le formulaire du channel
+
+*Décision 623. Webapp seule : aucune migration, aucune variable, aucun droit changé (`docs/PROD_MIGRATIONS.md` §2.10).*
+
+- **« Nouveau channel » dans la barre d'onglets d'un track**, après les channels et avant « Coûts » : le formulaire
+  s'ouvre en haut de la page, sans passer par les réglages ; **Créer** ouvre le tableau du nouveau channel, dont
+  l'onglet paraît aussitôt ; **Annuler** ou **Échap** referment sans rien créer. Un track sans channel le dit et
+  nomme cette commande (l'état vide ne renvoie plus à l'arborescence).
+- **« Nouveau workflow » dans le formulaire de création d'un channel** — dans la vue du track comme dans
+  l'arborescence : l'éditeur de workflows s'ouvre création ouverte, portée réglée sur le track ; un bandeau ramène
+  ensuite au formulaire du channel, nom, identifiant et description conservés, le workflow créé — à la main ou par
+  « Créer avec l'IA » — déjà choisi. Un workflow créé propre à un autre track est signalé comme non affectable.
+- Le formulaire de channel est désormais un composant partagé entre l'arborescence et la vue du track ; une erreur de
+  lecture de la liste des workflows y est dite, au lieu d'un blanc.
+- **Corrigé avant toute livraison** : dans l'éditeur, le formulaire de création ne reprend plus le focus — ni ne perd
+  la saisie — quand une relecture de la liste le remonte, par exemple après le workflow de départ posé depuis le guide.
+
 ### `CRM-097` — L'assistant IA de configuration (en cours : T1, le socle ; T2, créer un workflow ; T3, faire évoluer un workflow)
 
 *Décisions 617, 618 et 620. **Livré en production le 2026-10-03** (`38237656`, migrations 83 à 86 appliquées par une

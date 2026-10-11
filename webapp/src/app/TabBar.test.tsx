@@ -3,6 +3,10 @@
 // @verifies docs/SPEC-channels.md §5 (ce que la barre lit), §5.3 (patron ARIA), §4 (archivage)
 // @verifies docs/DESIGN_SYSTEM.md §4 (onglets), §5.8 (états), §8 (clavier, cibles), §12.1 (écart)
 // @verifies docs/SPEC-webapp.md §7 (états systématiques), §10 (aucun texte en dur)
+// @verifies CRM-100 (docs/BACKLOG.md) tranche T1 — la commande « Nouveau channel » :
+//           docs/SPEC-administration-arborescence.md §13.3 (un lien qui ouvre le formulaire par l'adresse, la vue
+//           liste conservée, la racine du track hors d'une vue de track, absente pendant la saisie) ;
+//           docs/DESIGN_SYSTEM.md §5.55 (après les channels, avant le filet ; ni bordure basse ni `aria-current`)
 //
 // Ces tests montent la **vraie** barre d'onglets et isolent ses états par leurs rôles accessibles.
 // Le parcours connecté réel atteint la même barre dans `e2e/ui/authentification.spec.ts`.
@@ -168,5 +172,63 @@ describe('barre d’onglets — onglets réels', () => {
 		const couts = screen.getByTestId('onglet-couts-track')
 		expect(couts.textContent).toBe(fr['tabs.track.costs'])
 		expect(couts.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true')
+	})
+})
+
+describe('barre d’onglets — « Nouveau channel » (CRM-100, §13.3)', () => {
+	const commande = () => screen.queryByTestId('commande-nouveau-channel')
+
+	it('est un LIEN qui ouvre le formulaire par l’adresse, libellé écrit à côté de son icône', () => {
+		monter(pret(CHANNELS), { adresse: '/tracks/conseil-ia/prospection' })
+		const lien = commande()
+		expect(lien?.tagName).toBe('A')
+		expect(lien?.getAttribute('href')).toBe('/tracks/conseil-ia/prospection?nouveau-channel=1')
+		expect(lien?.textContent).toBe(fr['tabs.newChannel'])
+		expect(lien?.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true')
+	})
+
+	it('vient APRÈS les onglets des channels et AVANT les entrées transverses du track', () => {
+		monter(pret(CHANNELS))
+		const barre = screen.getByTestId('barre-onglets')
+		const ordre = Array.from(barre.querySelectorAll('[data-testid]'))
+			.map((element) => element.getAttribute('data-testid'))
+			.filter((id) => id === 'onglet-channel' || id === 'commande-nouveau-channel' || id === 'onglet-couts-track')
+		expect(ordre).toEqual(['onglet-channel', 'onglet-channel', 'commande-nouveau-channel', 'onglet-couts-track'])
+	})
+
+	it('n’est pas un onglet : ni `aria-current`, ni hors de toute `nav` des channels', () => {
+		monter(pret(CHANNELS), { adresse: '/tracks/conseil-ia?nouveau-channel=0' })
+		expect(commande()?.getAttribute('aria-current')).toBeNull()
+		expect(commande()?.closest('nav')).toBeNull()
+	})
+
+	it('est rendue aussi quand le track n’a aucun channel, à côté de « Aucun channel »', () => {
+		monter(pret([]))
+		expect(screen.getByTestId('onglets-vides')).toBeTruthy()
+		expect(commande()?.getAttribute('href')).toBe('/tracks/conseil-ia?nouveau-channel=1')
+	})
+
+	it('garde les paramètres de la vue liste', () => {
+		monter(pret(CHANNELS), { adresse: '/tracks/conseil-ia/prospection/liste?page=2' })
+		expect(commande()?.getAttribute('href')).toBe('/tracks/conseil-ia/prospection/liste?page=2&nouveau-channel=1')
+	})
+
+	it('mène à la racine du track depuis l’écran des coûts, qui ne rend pas le formulaire', () => {
+		monter(pret(CHANNELS), { adresse: '/tracks/conseil-ia/couts' })
+		expect(commande()?.getAttribute('href')).toBe('/tracks/conseil-ia?nouveau-channel=1')
+	})
+
+	it('quitte la barre pendant la saisie (§5.50 : la commande et le formulaire s’excluent)', () => {
+		monter(pret(CHANNELS), { adresse: '/tracks/conseil-ia/prospection?nouveau-channel=1' })
+		expect(commande()).toBeNull()
+	})
+
+	it('n’existe pas hors d’une route de track', () => {
+		render(
+			<MemoryRouter initialEntries={['/inbox']}>
+				<TabBar />
+			</MemoryRouter>,
+		)
+		expect(commande()).toBeNull()
 	})
 })

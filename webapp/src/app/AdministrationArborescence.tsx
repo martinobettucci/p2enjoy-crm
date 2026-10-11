@@ -15,6 +15,9 @@
 //       formulaire de channel mène à l'éditeur de workflows ; §10.3 : un formulaire de channel OUVERT relit
 //       ses workflows quand le workflow de départ est posé depuis le guide flottant (docs/JOURNAL.md
 //       décisions 606 et 607)
+// @spec CRM-100 (docs/BACKLOG.md) tranche T1 — docs/SPEC-administration-arborescence.md §13.2 (le formulaire de
+//       channel quitte ce fichier pour `FormulaireChannel.tsx`, partagé avec la vue d'un track), §13.4 (« Nouveau
+//       workflow » ramène ici), §13.6 (la réouverture préremplie par l'adresse, et ses paramètres retirés à la fermeture)
 // @spec INC-254, décision 608 — docs/SPEC-webapp.md §6.3 bis : toute écriture de track aboutie émet
 //       `p2enjoy:tracks-modifies`, que la coquille écoute pour relire sa barre latérale
 //
@@ -28,7 +31,7 @@
 // au lieu d'écrire une valeur sans effet.
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
-import { Link } from 'react-router'
+import { useSearchParams } from 'react-router'
 import {
 	Archive,
 	ArchiveRestore,
@@ -37,7 +40,6 @@ import {
 	Pencil,
 	Plus,
 	Trash2,
-	TriangleAlert,
 	ArrowDown,
 	ArrowUp,
 } from 'lucide-react'
@@ -70,7 +72,6 @@ import {
 	slugConforme,
 	type ChannelAdministrable,
 	type Ordonnable,
-	type RefusEcriture,
 	type ResultatEcriture,
 	type Sens,
 	type TrackAdministrable,
@@ -82,11 +83,20 @@ import {
 	type CibleEnumeration,
 } from '../lib/corbeille'
 import { BlocBudgetsTrack } from './BlocBudgetsTrack'
-import { CHEMIN_ADMIN_WORKFLOWS } from './chemins'
+import { AlerteRefus, ChampTexte, texteRefus } from './ElementsFormulaireAdmin'
+import { FormulaireChannel, type SaisieChannel } from './FormulaireChannel'
 import { classesPilule, iconeTrack, NOMS_ICONES } from './presentation-tracks'
 import { texteLigneEnumeration, type EtatEnumeration } from './presentation-corbeille'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { lireWorkspaces } from '../lib/workspaces'
+import {
+	PARAM_NOUVEAU_CHANNEL,
+	cheminEditeurNouveauWorkflow,
+	lireBrouillon,
+	origineDepuisArborescence,
+	sansNouveauChannel,
+	type BrouillonChannel,
+} from '../lib/nouveau-channel'
 
 const COULEURS: readonly string[] = ['brand', 'success', 'accent', 'danger', 'neutral']
 
@@ -123,99 +133,6 @@ const AUCUNE: Ouverture = { type: 'aucune' }
  * courante reprend sa place.
  */
 type ActionEcriture = () => Promise<ResultatEcriture>
-
-/** Traduit un refus, ou l'absence d'effet, en un texte destiné à l'utilisateur (§9). */
-function texteRefus(refus: RefusEcriture): string {
-	switch (refus.nature) {
-		case 'forbidden':
-			return t('admin.refus.forbidden')
-		case 'slug-pris':
-			return t('admin.refus.slug-pris')
-		case 'workflow-hors-track':
-			return t('admin.refus.workflow-hors-track')
-		case 'forme-refusee':
-			return t('admin.refus.forme-refusee')
-		case 'reference-absente':
-			return t('admin.refus.reference-absente')
-		case 'network':
-			return t('admin.refus.network')
-		case 'unknown':
-			return t('admin.refus.unknown')
-	}
-}
-
-/**
- * Alerte de refus, placée **dans** le formulaire concerné et non en tête d'écran, pour que le refus
- * soit lu près du champ qui l'a causé (docs/DESIGN_SYSTEM.md §5.13).
- */
-function AlerteRefus({ message }: { readonly message: string }) {
-	return (
-		<p
-			role="alert"
-			data-testid="admin-refus"
-			className="flex items-start gap-2 rounded-sm bg-danger-soft text-danger-on-soft px-3 py-2 text-sm"
-		>
-			<TriangleAlert aria-hidden="true" size={16} strokeWidth={2} className="shrink-0 mt-[2px]" />
-			<span>{message}</span>
-		</p>
-	)
-}
-
-type ProprietesChamp = {
-	readonly id: string
-	readonly libelle: string
-	readonly valeur: string
-	readonly onChange: (valeur: string) => void
-	readonly aide?: string
-	readonly erreur?: string
-	readonly refInterne?: React.Ref<HTMLInputElement>
-	readonly desactive?: boolean
-}
-
-/** Champ texte du §5.7 : libellé au-dessus, aide et erreur associées par `aria-describedby`. */
-function ChampTexte({
-	id,
-	libelle,
-	valeur,
-	onChange,
-	aide,
-	erreur,
-	refInterne,
-	desactive = false,
-}: ProprietesChamp) {
-	const idAide = `${id}-aide`
-	const idErreur = `${id}-erreur`
-	const decrit = [aide === undefined ? null : idAide, erreur === undefined ? null : idErreur]
-		.filter((valeur): valeur is string => valeur !== null)
-		.join(' ')
-	return (
-		<div className="flex flex-col gap-1">
-			<label htmlFor={id} className="text-sm text-text-2">
-				{libelle}
-			</label>
-			<input
-				id={id}
-				ref={refInterne}
-				value={valeur}
-				disabled={desactive}
-				onChange={(evenement) => onChange(evenement.target.value)}
-				aria-describedby={decrit === '' ? undefined : decrit}
-				aria-invalid={erreur === undefined ? undefined : true}
-				className="min-h-[var(--size-target)] rounded-sm border border-border bg-surface px-3 disabled:opacity-70"
-			/>
-			{aide === undefined ? null : (
-				<span id={idAide} className="text-sm text-text-3">
-					{aide}
-				</span>
-			)}
-			{erreur === undefined ? null : (
-				<span id={idErreur} role="alert" className="text-sm text-danger-on-soft">
-					{erreur}
-				</span>
-			)}
-		</div>
-	)
-}
 
 // ---------------------------------------------------------------------------------------------
 // Formulaire d'un track
@@ -338,151 +255,6 @@ function FormulaireTrack({
 						</option>
 					))}
 				</select>
-			</div>
-			<ChampTexte
-				id={`${prefixe}-description`}
-				libelle={t('admin.form.description')}
-				valeur={saisie.description}
-				onChange={(description) => setSaisie((precedente) => ({ ...precedente, description }))}
-			/>
-			{refus === null ? null : <AlerteRefus message={refus} />}
-			<div className="flex gap-2">
-				<Button type="submit" variante="primaire" disabled={!complet || enCours}>
-					{slugModifiable ? t('admin.action.create') : t('admin.action.save')}
-				</Button>
-				<Button variante="secondaire" onClick={onAnnuler}>
-					{t('admin.action.cancel')}
-				</Button>
-			</div>
-		</form>
-	)
-}
-
-// ---------------------------------------------------------------------------------------------
-// Formulaire d'un channel
-// ---------------------------------------------------------------------------------------------
-
-type SaisieChannel = {
-	readonly nom: string
-	readonly slug: string
-	readonly description: string
-	readonly idWorkflow: string
-}
-
-type ProprietesFormulaireChannel = {
-	readonly titre: string
-	readonly initial: SaisieChannel
-	readonly slugModifiable: boolean
-	readonly workflows: EtatAsync<readonly WorkflowAffectable[]>
-	readonly refus: string | null
-	readonly enCours: boolean
-	readonly onValider: (saisie: SaisieChannel) => void
-	readonly onAnnuler: () => void
-}
-
-function FormulaireChannel({
-	titre,
-	initial,
-	slugModifiable,
-	workflows,
-	refus,
-	enCours,
-	onValider,
-	onAnnuler,
-}: ProprietesFormulaireChannel) {
-	const prefixe = useId()
-	const [saisie, setSaisie] = useState(initial)
-	const [slugTouche, setSlugTouche] = useState(false)
-	const premier = useRef<HTMLInputElement>(null)
-
-	useEffect(() => {
-		premier.current?.focus()
-	}, [])
-
-	const slugMalforme = saisie.slug !== '' && !slugConforme(saisie.slug)
-	// Un workflow est OBLIGATOIRE (docs/SPEC-workflow-engine.md §4.12.5). Le bouton reste désactivé
-	// tant qu'aucun n'est choisi : ce n'est pas un droit calculé, c'est un champ requis dont
-	// l'absence est refusée par la contrainte `NOT NULL`.
-	const complet =
-		nomConforme(saisie.nom) && saisie.slug !== '' && !slugMalforme && saisie.idWorkflow !== ''
-
-	const aucunWorkflow = workflows.statut === 'pret' && workflows.donnees.length === 0
-
-	return (
-		<form
-			data-testid="formulaire-channel"
-			aria-label={titre}
-			className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-4"
-			onSubmit={(evenement) => {
-				evenement.preventDefault()
-				if (complet && !enCours) onValider(saisie)
-			}}
-		>
-			<h3 className="text-h3">{titre}</h3>
-			<ChampTexte
-				id={`${prefixe}-nom`}
-				libelle={t('admin.form.name')}
-				valeur={saisie.nom}
-				refInterne={premier}
-				onChange={(nom) =>
-					setSaisie((precedente) => ({
-						...precedente,
-						nom,
-						slug: slugModifiable && !slugTouche ? proposerSlug(nom) : precedente.slug,
-					}))
-				}
-			/>
-			<ChampTexte
-				id={`${prefixe}-slug`}
-				libelle={t('admin.form.slug')}
-				valeur={saisie.slug}
-				desactive={!slugModifiable}
-				aide={slugModifiable ? t('admin.form.slug.help') : t('admin.form.slug.locked')}
-				{...(slugMalforme ? { erreur: t('admin.form.slug.invalid') } : {})}
-				onChange={(slug) => {
-					setSlugTouche(true)
-					setSaisie((precedente) => ({ ...precedente, slug }))
-				}}
-			/>
-			<div className="flex flex-col gap-1">
-				<label htmlFor={`${prefixe}-workflow`} className="text-sm text-text-2">
-					{t('admin.form.workflow')}
-				</label>
-				{workflows.statut === 'chargement' ? (
-					<span className="text-sm text-text-3">{t('admin.form.workflow.loading')}</span>
-				) : null}
-				{aucunWorkflow ? (
-					// État vide, et non un contrôle d'accès : il n'y a rien à choisir.
-					<p data-testid="admin-sans-workflow" className="flex flex-col gap-1 text-sm text-text-3">
-						<span>{t('admin.form.workflow.none')}</span>
-						{/* `CRM-094` (docs/SPEC-onboarding.md §10.5) : la phrase dit de créer un workflow ;
-						    le chemin y mène. */}
-						<Link to={CHEMIN_ADMIN_WORKFLOWS} className="self-start font-medium text-brand underline">
-							{t('admin.form.workflow.none.action')}
-						</Link>
-					</p>
-				) : null}
-				{workflows.statut === 'pret' && workflows.donnees.length > 0 ? (
-					<select
-						id={`${prefixe}-workflow`}
-						value={saisie.idWorkflow}
-						onChange={(evenement) =>
-							setSaisie((precedente) => ({ ...precedente, idWorkflow: evenement.target.value }))
-						}
-						className="min-h-[var(--size-target)] rounded-sm border border-border bg-surface px-3"
-					>
-						{/* Aucun défaut n'est présélectionné : « le défaut silencieux transformerait une
-						    omission du client en un choix qu'il n'a pas fait » (§4.12.5). */}
-						<option value="">{t('admin.form.workflow.choose')}</option>
-						{workflows.donnees.map((workflow) => (
-							<option key={workflow.id} value={workflow.id}>
-								{workflow.is_default
-									? t('admin.form.workflow.default', { nom: workflow.name })
-									: workflow.name}
-							</option>
-						))}
-					</select>
-				) : null}
 			</div>
 			<ChampTexte
 				id={`${prefixe}-description`}
@@ -1004,6 +776,43 @@ export function AdministrationArborescence({ client = clientCrm }: ProprietesAdm
 	}, [client, ouverture, tracks])
 	useApresWorkflowDeDepart(relireWorkflowsDuFormulaire)
 
+	/**
+	 * `CRM-100` (docs/SPEC-administration-arborescence.md §13.6) — le retour de l'éditeur de workflows.
+	 * `nouveau-channel=<id du track>` déplie ce track et rouvre sa création de channel, préremplie du brouillon que
+	 * l'adresse porte. Lu UNE fois, quand les tracks sont lus : le track doit être dans la liste. Absent — archivé et
+	 * masqué, retiré, illisible —, les paramètres quittent l'adresse et rien ne s'ouvre.
+	 *
+	 * `brouillonOuvert` est un ÉTAT et non une référence : il change dans le même rendu que `ouverture`, de sorte que
+	 * l'effet qui retire les paramètres à la fermeture ne voie jamais le formulaire « fermé » avant qu'il soit ouvert.
+	 */
+	const [parametres, setParametres] = useSearchParams()
+	const brouillonLu = useRef(false)
+	const [brouillon, setBrouillon] = useState<BrouillonChannel | null>(null)
+	const [brouillonOuvert, setBrouillonOuvert] = useState(false)
+	useEffect(() => {
+		if (brouillonLu.current || tracks.statut !== 'pret') return
+		const idTrack = parametres.get(PARAM_NOUVEAU_CHANNEL)
+		if (idTrack === null || idTrack === '') return
+		brouillonLu.current = true
+		const track = tracks.donnees.find((candidat) => candidat.id === idTrack)
+		if (track === undefined) {
+			setParametres((courants) => sansNouveauChannel(courants), { replace: true })
+			return
+		}
+		setBrouillon(lireBrouillon(parametres))
+		setBrouillonOuvert(true)
+		if (!deplies.includes(track.id)) basculerDepli(track.id)
+		ouvrirCreationChannel(track)
+	}, [tracks, parametres, setParametres, deplies, basculerDepli, ouvrirCreationChannel])
+
+	// Le formulaire refermé — création aboutie, « Annuler », autre geste ouvert — emporte ses paramètres (§13.6).
+	useEffect(() => {
+		if (!brouillonOuvert || ouverture.type === 'creation-channel') return
+		setBrouillonOuvert(false)
+		setBrouillon(null)
+		setParametres((courants) => sansNouveauChannel(courants), { replace: true })
+	}, [brouillonOuvert, ouverture, setParametres])
+
 	if (client === null || (tracks.statut === 'pret' && idWorkspace === null)) {
 		return (
 			<EtatVide titre={t('admin.tree.noWorkspace.title')} corps={t('admin.tree.noWorkspace.body')} />
@@ -1270,6 +1079,7 @@ export function AdministrationArborescence({ client = clientCrm }: ProprietesAdm
 										refus={refus}
 										enCours={enCours}
 										workflows={workflows}
+										brouillon={brouillon}
 										onCreer={() => ouvrirCreationChannel(track)}
 										onAnnuler={() => {
 											setRefus(null)
@@ -1392,6 +1202,8 @@ type ProprietesListeChannels = {
 	readonly refus: string | null
 	readonly enCours: boolean
 	readonly workflows: EtatAsync<readonly WorkflowAffectable[]>
+	/** `CRM-100`, §13.6 : le brouillon revenu de l'éditeur de workflows, s'il y en a un. */
+	readonly brouillon: BrouillonChannel | null
 	readonly onCreer: () => void
 	readonly onAnnuler: () => void
 	readonly onValiderCreation: (saisie: SaisieChannel) => void
@@ -1413,6 +1225,7 @@ function ListeChannels({
 	refus,
 	enCours,
 	workflows,
+	brouillon,
 	onCreer,
 	onAnnuler,
 	onValiderCreation,
@@ -1518,13 +1331,24 @@ function ListeChannels({
 			{ouverture.type === 'creation-channel' && ouverture.idTrack === track.id ? (
 				<FormulaireChannel
 					titre={t('admin.form.channel.create')}
-					initial={{ nom: '', slug: '', description: '', idWorkflow: '' }}
+					initial={{
+						nom: brouillon?.nom ?? '',
+						// Un slug absent du brouillon n'a pas été saisi : il se repropose depuis le nom (§13.4).
+						slug: brouillon === null ? '' : brouillon.slug === '' ? proposerSlug(brouillon.nom) : brouillon.slug,
+						description: brouillon?.description ?? '',
+						idWorkflow: '',
+					}}
 					slugModifiable
 					workflows={workflows}
 					refus={refus}
 					enCours={enCours}
 					onAnnuler={onAnnuler}
 					onValider={onValiderCreation}
+					idWorkflowAttendu={brouillon?.idWorkflow ?? null}
+					// `CRM-100`, §13.4 : l'aller-retour vers l'éditeur ramène ici, ce track déplié.
+					cheminNouveauWorkflow={(saisie) =>
+						cheminEditeurNouveauWorkflow(track.id, origineDepuisArborescence(track.id, saisie))
+					}
 				/>
 			) : (
 				<Button taille="compacte" variante="secondaire" onClick={onCreer}>

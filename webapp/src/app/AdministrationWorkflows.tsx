@@ -42,6 +42,11 @@
 //       étapes, transitions et champs ; le panneau et les suggestions du workflow dans sa colonne, au-dessus des
 //       étapes ; après l'acceptation, le graphe et les versions relus, le point de retour annoncé) ;
 //       docs/DESIGN_SYSTEM.md §5.53 ; docs/JOURNAL.md décision 620
+// @spec CRM-100 (docs/BACKLOG.md) tranche T1 — l'aller-retour depuis le formulaire de création d'un channel :
+//       docs/SPEC-administration-arborescence.md §13.5 (`creer=1` et `track` ouvrent la création au montage puis
+//       quittent l'adresse ; un workflow créé — formulaire ou acceptation de l'IA — inscrit `workflow-cree` ; le
+//       bandeau et son lien de retour tant que `retour` est valide), §13.7 (la validation du retour) ;
+//       docs/SPEC-workflow-engine.md §3 bis.2 ; docs/DESIGN_SYSTEM.md §5.55 ; docs/JOURNAL.md décision 623
 //
 // AUCUN DROIT N'EST CALCULÉ ICI — la règle de `CRM-075`, reprise mot pour mot. Les commandes sont
 // rendues pour tout le monde ; l'écriture part, et le refus du backend est traduit. Une commande
@@ -53,11 +58,12 @@
 // d'offrir un choix dont on sait qu'il sera refusé — une aide d'interface, pas une garde.
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import {
 	Archive,
 	ArchiveRestore,
 	ArrowDown,
+	ArrowLeft,
 	ArrowRight,
 	ArrowUp,
 	Flag,
@@ -83,6 +89,15 @@ import type { CleTraduction } from '../i18n/fr'
 import type { EtatAsync } from '../lib/async'
 import { enChargement } from '../lib/async'
 import { useApresWorkflowDeDepart } from '../lib/demarrage'
+import {
+	PARAM_CREER,
+	PARAM_RETOUR,
+	PARAM_TRACK,
+	PARAM_WORKFLOW_CREE,
+	cheminRetour,
+	lireDemandeCreation,
+	lireRetour,
+} from '../lib/nouveau-channel'
 import {
 	calculerDeplacement,
 	deplacementPossible,
@@ -499,6 +514,18 @@ type SaisieCreation = {
 const CREATION_VIERGE: SaisieCreation = { nom: '', portee: 'global', idTrack: null }
 
 type ProprietesFormulaireCreation = {
+	/** `CRM-100` (§13.5) : la portée et le track pré-réglés par l'adresse ; vierge sinon. */
+	readonly initial: SaisieCreation
+	/**
+	 * `CRM-100` — le focus n'entre dans le premier champ qu'à l'OUVERTURE du formulaire, jamais à un remontage.
+	 * DÉFAUT TROUVÉ PAR LA PREUVE E2E (`e2e/ui/guide-flottant.spec.ts`) : ouvert par `creer=1` sur un éditeur vide,
+	 * le formulaire était REMONTÉ quand le guide flottant posait le workflow de départ — la liste relue le fait passer
+	 * de l'état vide à la colonne de gauche — et reprenait le focus au guide, qui venait de le poser sur son lien.
+	 */
+	readonly prendreLeFocus: boolean
+	readonly onFocusPris: () => void
+	/** La saisie courante, gardée par l'écran : un remontage repart d'elle, et non d'un formulaire vierge. */
+	readonly onSaisie: (saisie: SaisieCreation) => void
 	readonly tracks: EtatAsync<readonly TrackAffectable[]>
 	readonly refus: string | null
 	readonly enCours: boolean
@@ -519,6 +546,10 @@ type ProprietesFormulaireCreation = {
  * pas un contrat.
  */
 function FormulaireCreationWorkflow({
+	initial,
+	prendreLeFocus,
+	onFocusPris,
+	onSaisie,
 	tracks,
 	refus,
 	enCours,
@@ -526,14 +557,22 @@ function FormulaireCreationWorkflow({
 	onAnnuler,
 }: ProprietesFormulaireCreation) {
 	const prefixe = useId()
-	const [saisie, setSaisie] = useState<SaisieCreation>(CREATION_VIERGE)
+	const [saisie, setSaisie] = useState<SaisieCreation>(initial)
 	const premier = useRef<HTMLInputElement | null>(null)
 
 	// Le focus entre dans le premier champ à l'ouverture (docs/DESIGN_SYSTEM.md §5.13) : un
-	// formulaire qui s'ouvre sans prendre le focus oblige à le chercher au clavier.
+	// formulaire qui s'ouvre sans prendre le focus oblige à le chercher au clavier. À l'ouverture
+	// SEULEMENT — `CRM-100`, voir `prendreLeFocus`.
+	const focusAPrendre = useRef(prendreLeFocus)
 	useEffect(() => {
+		if (!focusAPrendre.current) return
 		premier.current?.focus()
-	}, [])
+		onFocusPris()
+	}, [onFocusPris])
+
+	useEffect(() => {
+		onSaisie(saisie)
+	}, [saisie, onSaisie])
 
 	const conforme = creationWorkflowConforme({
 		idWorkspace: 'forme-seule',
@@ -2396,6 +2435,50 @@ export type ProprietesAdministrationWorkflows = {
 	readonly acces?: AccesAssistant | null
 }
 
+/**
+ * Le bandeau de retour — `CRM-100`, docs/SPEC-administration-arborescence.md §13.5, docs/DESIGN_SYSTEM.md §5.55.
+ *
+ * Une carte, pas une alerte : aucun `role="alert"`, aucune couleur d'état — rien n'a échoué, on rappelle d'où l'on
+ * vient. Le lien est un LIEN (il change d'adresse, §12.1), dans la forme primaire du lien de l'état « introuvable ».
+ */
+function BandeauRetourChannel({
+	retour,
+	idWorkflowCree,
+	nomWorkflowCree,
+}: {
+	readonly retour: string
+	readonly idWorkflowCree: string | null
+	readonly nomWorkflowCree: string | null
+}) {
+	return (
+		<div
+			data-testid="bandeau-retour-channel"
+			aria-label={t('admin.workflows.retour.aria')}
+			role="region"
+			className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-3 md:flex-row md:items-center md:justify-between"
+		>
+			<p className="text-sm text-text-2">
+				{nomWorkflowCree === null
+					? t('admin.workflows.retour.body')
+					: t('admin.workflows.retour.body.created', { nom: nomWorkflowCree })}
+			</p>
+			<Link
+				to={cheminRetour(retour, idWorkflowCree)}
+				data-testid="lien-retour-channel"
+				className={[
+					'inline-flex items-center justify-center gap-2 shrink-0',
+					'min-h-[var(--size-target)] px-4 rounded-sm',
+					'bg-brand text-white font-medium',
+					'transition-colors duration-[var(--transition-duration-fast)] hover:bg-brand-hover',
+				].join(' ')}
+			>
+				<ArrowLeft aria-hidden="true" size={16} strokeWidth={2} className="shrink-0" />
+				{t('admin.workflows.retour.action')}
+			</Link>
+		</div>
+	)
+}
+
 export function AdministrationWorkflows({
 	client = clientCrm,
 	acces = accesAssistantCrm,
@@ -2462,6 +2545,39 @@ export function AdministrationWorkflows({
 	const [idWorkspace, setIdWorkspace] = useState<string | null>(null)
 	const [refusCreation, setRefusCreation] = useState<string | null>(null)
 	const [creationEnCours, setCreationEnCours] = useState(false)
+	/**
+	 * `CRM-100` — la saisie de la création et le focus à prendre, gardés HORS du formulaire : une relecture de la
+	 * liste le remonte ailleurs (l'état vide, puis la colonne de gauche), et il doit repartir de la saisie courante
+	 * sans reprendre le focus. Une référence et non un état : la garder ne doit pas rendre l'écran à chaque frappe.
+	 */
+	const saisieCreation = useRef<SaisieCreation>(CREATION_VIERGE)
+	const garderSaisieCreation = useCallback((saisie: SaisieCreation) => {
+		saisieCreation.current = saisie
+	}, [])
+	const [focusCreation, setFocusCreation] = useState(false)
+	const focusCreationPris = useCallback(() => setFocusCreation(false), [])
+	/**
+	 * L'aller-retour depuis le formulaire de création d'un channel — `CRM-100`, §13.5. `retour` est relu à chaque
+	 * rendu et VALIDÉ (§13.7) : invalide, l'écran se comporte comme sans aller-retour. `workflow-cree` est dans
+	 * l'adresse, et non dans un état : un rechargement en pleine composition ne le perd pas.
+	 */
+	const [parametres, setParametres] = useSearchParams()
+	const retour = lireRetour(parametres.get(PARAM_RETOUR))
+	const idWorkflowCree = parametres.get(PARAM_WORKFLOW_CREE)
+	const consignerWorkflowCree = useCallback(
+		(id: string) => {
+			setParametres(
+				(courants) => {
+					if (lireRetour(courants.get(PARAM_RETOUR)) === null) return courants
+					const suivants = new URLSearchParams(courants)
+					suivants.set(PARAM_WORKFLOW_CREE, id)
+					return suivants
+				},
+				{ replace: true },
+			)
+		},
+		[setParametres],
+	)
 	/**
 	 * L'assistant IA — `CRM-097` T2, docs/SPEC-ia.md §12.5. Les suggestions en revue sont lues AVEC les workflows,
 	 * et relues par `tentativeIa` quand une suggestion naît, est acceptée ou abandonnée. Le panneau, ouvert, prend
@@ -2594,11 +2710,34 @@ export function AdministrationWorkflows({
 	/** Ouvre le formulaire en repartant d'un refus effacé : un refus survivant à la fermeture
 	 *  s'afficherait sur une saisie neuve qui ne l'a pas causé. Une demande à l'IA en cours de rédaction se
 	 *  referme : deux créations ouvertes ne diraient pas laquelle on remplit. */
-	const ouvrirLaCreation = useCallback(() => {
+	const ouvrirLaCreation = useCallback((initiale: SaisieCreation = CREATION_VIERGE) => {
 		setRefusCreation(null)
+		saisieCreation.current = initiale
+		setFocusCreation(true)
 		setCreationOuverte(true)
 		setPanneauIa((ouvert) => (ouvert?.type === 'demande' ? null : ouvert))
 	}, [])
+
+	// `CRM-100` (§13.5) : `creer=1` ouvre la création au montage, `track` y pré-règle la portée et le track. Lus, les
+	// deux paramètres QUITTENT l'adresse : un rechargement ne rouvre pas une création déjà faite ou abandonnée.
+	useEffect(() => {
+		if (!parametres.has(PARAM_CREER) && !parametres.has(PARAM_TRACK)) return
+		const demande = lireDemandeCreation(parametres)
+		if (demande.ouvrir) {
+			ouvrirLaCreation(
+				demande.idTrack === null ? CREATION_VIERGE : { nom: '', portee: 'track', idTrack: demande.idTrack },
+			)
+		}
+		setParametres(
+			(courants) => {
+				const suivants = new URLSearchParams(courants)
+				suivants.delete(PARAM_CREER)
+				suivants.delete(PARAM_TRACK)
+				return suivants
+			},
+			{ replace: true },
+		)
+	}, [parametres, setParametres, ouvrirLaCreation])
 
 	/** « Créer avec l'IA » — `CRM-097` T2 : la demande s'ouvre, et le formulaire manuel se referme. */
 	const ouvrirLaDemandeIa = useCallback(() => {
@@ -2635,8 +2774,10 @@ export function AdministrationWorkflows({
 			relireSuggestionsIa()
 			setAnnonce(t('ia.annonce.acceptee', { nom }))
 			setFocusIa({ cible: 'workflow', id: idWorkflow })
+			// `CRM-100` (§13.5) : l'acceptation crée un workflow et le choisit — il compte comme créé pour le retour.
+			consignerWorkflowCree(idWorkflow)
 		},
-		[client, relireSuggestionsIa],
+		[client, relireSuggestionsIa, consignerWorkflowCree],
 	)
 
 	/** Le panneau de l'IA, au même endroit qu'il soit ouvert sur une demande ou sur une suggestion. */
@@ -2815,8 +2956,9 @@ export function AdministrationWorkflows({
 			setIdChoisi(resultat.id)
 			setCreationOuverte(false)
 			setAnnonce(t('admin.workflows.create.done', { nom: saisie.nom.trim() }))
+			consignerWorkflowCree(resultat.id)
 		},
-		[client, idWorkspace],
+		[client, idWorkspace, consignerWorkflowCree],
 	)
 
 	/**
@@ -3258,6 +3400,18 @@ export function AdministrationWorkflows({
 		<section aria-label={t('admin.workflows.aria')} className="flex flex-col gap-4">
 			<LiveRegion libelle={t('live.admin.aria')} message={annonce} />
 
+			{retour === null ? null : (
+				<BandeauRetourChannel
+					retour={retour}
+					idWorkflowCree={idWorkflowCree}
+					nomWorkflowCree={
+						workflows.statut === 'pret'
+							? (workflows.donnees.find((workflow) => workflow.id === idWorkflowCree)?.name ?? null)
+							: null
+					}
+				/>
+			)}
+
 			{workflows.statut === 'chargement' ? (
 				<SkeletonListe lignes={4} libelle={t('state.loading.aria')} />
 			) : null}
@@ -3293,6 +3447,10 @@ export function AdministrationWorkflows({
 					/>
 					{creationOuverte ? (
 						<FormulaireCreationWorkflow
+							initial={saisieCreation.current}
+							prendreLeFocus={focusCreation}
+							onFocusPris={focusCreationPris}
+							onSaisie={garderSaisieCreation}
 							tracks={tracks}
 							refus={refusCreation}
 							enCours={creationEnCours}
@@ -3315,6 +3473,10 @@ export function AdministrationWorkflows({
 						    crée (docs/DESIGN_SYSTEM.md §5.15), et dans le flux du document. */}
 						{creationOuverte ? (
 							<FormulaireCreationWorkflow
+								initial={saisieCreation.current}
+								prendreLeFocus={focusCreation}
+								onFocusPris={focusCreationPris}
+								onSaisie={garderSaisieCreation}
 								tracks={tracks}
 								refus={refusCreation}
 								enCours={creationEnCours}

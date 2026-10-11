@@ -27,6 +27,9 @@
 // @verifies CRM-094 (docs/BACKLOG.md) tranche T2 — docs/SPEC-onboarding.md §10.5 : un catalogue vide le
 //           dit, et mène au catalogue ; §10.3 : l'écran se relit au signal du workflow de départ
 //           (docs/JOURNAL.md décisions 606 et 607)
+// @verifies CRM-100 (docs/BACKLOG.md) tranche T1 — l'écran se monte dans un routeur : il lit son adresse
+//           (docs/SPEC-administration-arborescence.md §13.5) ; l'aller-retour lui-même est éprouvé par
+//           `AdministrationWorkflows.nouveau-channel.test.tsx`
 //
 // Ces preuves montent le **vrai** écran avec un client factice qui enregistre les requêtes émises,
 // le patron d'`AdministrationArborescence.test.tsx`. Le parcours connecté complet relève du projet
@@ -409,9 +412,17 @@ function clientFactice(options: Options = {}): {
 	return { client, ecritures, lectures, previsualisations }
 }
 
-function monter(options: Options = {}) {
+/**
+ * Monte l'écran DANS un routeur : depuis `CRM-100` (§13.5), l'éditeur lit son adresse — `creer`, `track`, `retour`,
+ * `workflow-cree`. `adresse` est l'entrée initiale de l'historique.
+ */
+function monter(options: Options = {}, adresse = '/reglages/workflows') {
 	const factice = clientFactice(options)
-	render(<AdministrationWorkflows client={factice.client} />)
+	render(
+		<MemoryRouter initialEntries={[adresse]}>
+			<AdministrationWorkflows client={factice.client} />
+		</MemoryRouter>,
+	)
 	return factice
 }
 

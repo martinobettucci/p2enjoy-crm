@@ -1,6 +1,8 @@
 // @verifies CRM-021 (docs/BACKLOG.md) — lecture des channels et résolution d'un track par slug
 // @verifies docs/SPEC-channels.md §5 (requête émise), §5.1 (route d'un track), §4 (archivage)
 // @verifies docs/SPEC-webapp.md §6.4 (contrat asynchrone), §7 (états systématiques)
+// @verifies CRM-100 (docs/BACKLOG.md) tranche T1 — docs/SPEC-administration-arborescence.md §13.3 (le track ouvert
+//           porte son `workspace_id`)
 //
 // Ce fichier éprouve **la requête réellement émise** autant que la valeur rendue. Motif : trois
 // exigences de `docs/SPEC-channels.md` §5 sont portées par la requête elle-même — le filtre sur
@@ -67,7 +69,7 @@ function clientEspion(reponse: Reponse): { client: ClientCrm; appel: Appel } {
 	return { client, appel }
 }
 
-const TRACK: TrackOuvert = { id: 't-1', name: 'Conseil & IA', slug: 'conseil-ia' }
+const TRACK: TrackOuvert = { id: 't-1', name: 'Conseil & IA', slug: 'conseil-ia', workspace_id: 'ws-1' }
 const CHANNEL: Channel = {
 	id: 'c-1',
 	name: 'Prospection',
@@ -83,6 +85,9 @@ describe('lireTrackParSlug', () => {
 
 		expect(appel.table).toBe('tracks')
 		expect(appel.colonnes).toBe(COLONNES_TRACK_OUVERT)
+		// @verifies CRM-100 — docs/SPEC-administration-arborescence.md §13.3 : la colonne écrite en toutes lettres,
+		// pour que son retrait se voie ici et non au premier « Nouveau channel » refusé.
+		expect(COLONNES_TRACK_OUVERT).toBe('id, name, slug, workspace_id')
 		expect(appel.egalites).toEqual([['slug', 'conseil-ia']])
 		// Sans ce filtre, l'archivage ne serait qu'un masquage de la barre latérale, contournable
 		// en saisissant l'adresse (docs/SPEC-tracks.md §4).

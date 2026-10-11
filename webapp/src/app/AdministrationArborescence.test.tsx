@@ -14,6 +14,10 @@
 // @verifies CRM-094 (docs/BACKLOG.md) tranche T2 — docs/SPEC-onboarding.md §10.5 (sans workflow
 //           affectable, le formulaire mène à l'éditeur), §10.3 (un formulaire ouvert relit ses workflows
 //           au signal du workflow de départ, saisie conservée) ; docs/JOURNAL.md décisions 606 et 607
+// @verifies CRM-100 (docs/BACKLOG.md) tranche T1 — docs/SPEC-administration-arborescence.md §13.2 (le lien
+//           « Nouveau workflow » et son adresse, la saisie portée ; l'état vide « aucun workflow » mène à
+//           l'aller-retour ; le workflow attendu présélectionné ou dit non affectable), §13.4, §13.6 (la réouverture
+//           préremplie par l'adresse, le track absent, les paramètres retirés à la fermeture) ; docs/DESIGN_SYSTEM.md §5.55
 // @verifies INC-254, décision 608 — docs/SPEC-webapp.md §6.3 bis : toute écriture de TRACK aboutie émet
 //           `p2enjoy:tracks-modifies` ; ni un refus, ni un « sans effet », ni une écriture de channel
 //
@@ -25,7 +29,7 @@
 import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { MemoryRouter } from 'react-router'
+import { MemoryRouter, useLocation } from 'react-router'
 import { AdministrationArborescence } from './AdministrationArborescence'
 import { EVENEMENT_WORKFLOW_DEPART } from '../lib/demarrage'
 import { EVENEMENT_TRACKS_MODIFIES } from '../lib/tracks'
@@ -178,15 +182,25 @@ function clientFactice(options: Options = {}): { client: ClientCrm; ecritures: E
 	return { client, ecritures }
 }
 
-function monter(options: Options = {}) {
+/** Rend l'adresse courante lisible par les preuves : `CRM-100` écrit et retire des paramètres (§13.6). */
+function SondeAdresse() {
+	const { pathname, search } = useLocation()
+	return <output data-testid="sonde-adresse">{`${pathname}${search}`}</output>
+}
+
+function monter(options: Options = {}, adresse = '/reglages/arborescence') {
 	const { client, ecritures } = clientFactice(options)
 	render(
-		<MemoryRouter>
+		<MemoryRouter initialEntries={[adresse]}>
 			<AdministrationArborescence client={client} />
+			<SondeAdresse />
 		</MemoryRouter>,
 	)
 	return { ecritures }
 }
+
+/** Les paramètres d'une adresse, en objet. */
+const parametresDe = (adresse: string) => Object.fromEntries(new URLSearchParams(adresse.slice(adresse.indexOf('?') + 1)))
 
 const attendreTracks = async () => {
 	await screen.findByText('Conseil & IA')
@@ -621,11 +635,128 @@ describe('les channels (§3.2, §7)', () => {
 		await utilisateur.click(screen.getByRole('button', { name: 'Nouveau channel' }))
 		expect(await screen.findByTestId('admin-sans-workflow')).toBeTruthy()
 		expect(screen.queryByLabelText('Workflow')).toBeNull()
-		// `CRM-094` (docs/SPEC-onboarding.md §10.5) : la phrase dit de créer un workflow ; le chemin
-		// y mène, au lieu de laisser chercher l'éditeur dans l'index des réglages.
-		expect(
-			within(screen.getByTestId('admin-sans-workflow')).getByRole('link', { name: 'Ouvrir l’éditeur de workflows' }).getAttribute('href'),
-		).toBe('/reglages/workflows')
+		// `CRM-094` (docs/SPEC-onboarding.md §10.5) : la phrase dit de créer un workflow ; le chemin y mène.
+		// RÉVISÉ par `CRM-100` (§13.2) : en création, par l'ALLER-RETOUR, qui rend la saisie — « Nouveau workflow »,
+		// sous la phrase ; l'éditeur nu n'est plus proposé, deux liens diraient la même chose.
+		expect(within(screen.getByTestId('admin-sans-workflow')).queryByRole('link')).toBeNull()
+		const lien = within(screen.getByTestId('formulaire-channel')).getByRole('link', { name: 'Nouveau workflow' })
+		const adresse = lien.getAttribute('href') ?? ''
+		expect(adresse.startsWith('/reglages/workflows?')).toBe(true)
+		expect(parametresDe(adresse)).toEqual({
+			creer: '1',
+			track: 't-1',
+			retour: '/reglages/arborescence?nouveau-channel=t-1',
+		})
+	})
+
+	// ---------------------------------------------------------------------------------------------
+	// `CRM-100` — l'aller-retour vers l'éditeur de workflows (§13.2, §13.4, §13.6)
+	// ---------------------------------------------------------------------------------------------
+
+	it('« Nouveau workflow » porte la saisie COURANTE, le slug seulement s’il a été saisi (§13.4)', async () => {
+		const utilisateur = userEvent.setup()
+		monter()
+		await attendreTracks()
+		await utilisateur.click(screen.getByRole('button', { name: 'Déplier Conseil & IA' }))
+		await screen.findByText('Prospection')
+		await utilisateur.click(screen.getByRole('button', { name: 'Nouveau channel' }))
+		const formulaire = await screen.findByTestId('formulaire-channel')
+		await within(formulaire).findByLabelText('Workflow')
+		await utilisateur.type(within(formulaire).getByLabelText('Nom'), 'Partenariats & co')
+		await utilisateur.type(within(formulaire).getByLabelText('Description'), 'Accords')
+
+		const retourDe = () => {
+			const adresse = within(formulaire).getByRole('link', { name: 'Nouveau workflow' }).getAttribute('href') ?? ''
+			return parametresDe(parametresDe(adresse)['retour'] ?? '')
+		}
+		// Le slug PROPOSÉ n'est pas porté : il se recalcule au retour.
+		expect(retourDe()).toEqual({ 'nouveau-channel': 't-1', 'nc-nom': 'Partenariats & co', 'nc-description': 'Accords' })
+
+		const slug = within(formulaire).getByLabelText('Slug')
+		await utilisateur.clear(slug)
+		await utilisateur.type(slug, 'accords')
+		expect(retourDe()['nc-slug']).toBe('accords')
+	})
+
+	it('le formulaire de MODIFICATION ne porte pas « Nouveau workflow » (§13.1)', async () => {
+		const utilisateur = userEvent.setup()
+		monter()
+		await attendreTracks()
+		await utilisateur.click(screen.getByRole('button', { name: 'Déplier Conseil & IA' }))
+		await screen.findByText('Prospection')
+		await utilisateur.click(screen.getByRole('button', { name: 'Modifier Prospection' }))
+		const formulaire = await screen.findByTestId('formulaire-channel')
+		await within(formulaire).findByLabelText('Workflow')
+		expect(within(formulaire).queryByRole('link', { name: 'Nouveau workflow' })).toBeNull()
+	})
+
+	it('au retour, l’adresse déplie le track et rouvre sa création, préremplie, le workflow créé choisi (§13.6)', async () => {
+		monter({}, '/reglages/arborescence?nouveau-channel=t-1&nc-nom=Partenariats&nc-description=Accords&nc-workflow=wf-2')
+		const formulaire = await screen.findByTestId('formulaire-channel')
+		expect(screen.getByRole('button', { name: 'Replier Conseil & IA' })).toBeTruthy()
+		expect((within(formulaire).getByLabelText('Nom') as HTMLInputElement).value).toBe('Partenariats')
+		// Le slug n'était pas dans le brouillon : il est REPROPOSÉ depuis le nom.
+		expect((within(formulaire).getByLabelText('Slug') as HTMLInputElement).value).toBe('partenariats')
+		expect((within(formulaire).getByLabelText('Description') as HTMLInputElement).value).toBe('Accords')
+		await waitFor(() => expect((within(formulaire).getByLabelText('Workflow') as HTMLSelectElement).value).toBe('wf-2'))
+		expect(screen.queryByTestId('admin-workflow-non-affectable')).toBeNull()
+		// L'adresse garde le formulaire tant qu'il est ouvert : un rechargement le rendrait tel quel.
+		expect(screen.getByTestId('sonde-adresse').textContent).toContain('nouveau-channel=t-1')
+	})
+
+	it('un slug SAISI revient tel quel, et la proposition ne l’écrase plus (§13.4)', async () => {
+		const utilisateur = userEvent.setup()
+		monter({}, '/reglages/arborescence?nouveau-channel=t-1&nc-nom=Partenariats&nc-slug=accords')
+		const formulaire = await screen.findByTestId('formulaire-channel')
+		const nom = within(formulaire).getByLabelText('Nom')
+		await utilisateur.type(nom, ' nord')
+		expect((within(formulaire).getByLabelText('Slug') as HTMLInputElement).value).toBe('accords')
+	})
+
+	it('un workflow revenu mais NON affectable est dit, le sélecteur reste sur « Choisir » (§13.2)', async () => {
+		monter({}, '/reglages/arborescence?nouveau-channel=t-1&nc-nom=Partenariats&nc-workflow=wf-autre-track')
+		const formulaire = await screen.findByTestId('formulaire-channel')
+		expect(await within(formulaire).findByTestId('admin-workflow-non-affectable')).toBeTruthy()
+		expect((within(formulaire).getByLabelText('Workflow') as HTMLSelectElement).value).toBe('')
+		expect(within(formulaire).queryByRole('alert')).toBeNull()
+	})
+
+	it('un track absent de la liste : rien ne s’ouvre, et les paramètres quittent l’adresse (§13.6)', async () => {
+		monter({}, '/reglages/arborescence?nouveau-channel=t-inconnu&nc-nom=Partenariats')
+		await attendreTracks()
+		await waitFor(() => expect(screen.getByTestId('sonde-adresse').textContent).toBe('/reglages/arborescence'))
+		expect(screen.queryByTestId('formulaire-channel')).toBeNull()
+	})
+
+	it('« Annuler » referme le formulaire revenu ET retire ses paramètres de l’adresse (§13.6)', async () => {
+		const utilisateur = userEvent.setup()
+		monter({}, '/reglages/arborescence?nouveau-channel=t-1&nc-nom=Partenariats')
+		const formulaire = await screen.findByTestId('formulaire-channel')
+		await utilisateur.click(within(formulaire).getByRole('button', { name: 'Annuler' }))
+		await waitFor(() => expect(screen.getByTestId('sonde-adresse').textContent).toBe('/reglages/arborescence'))
+		expect(screen.queryByTestId('formulaire-channel')).toBeNull()
+	})
+
+	it('la création aboutie retire aussi les paramètres, et envoie le brouillon complété (§13.6)', async () => {
+		const utilisateur = userEvent.setup()
+		const { ecritures } = monter({}, '/reglages/arborescence?nouveau-channel=t-1&nc-nom=Partenariats&nc-workflow=wf-1')
+		const formulaire = await screen.findByTestId('formulaire-channel')
+		await waitFor(() => expect((within(formulaire).getByLabelText('Workflow') as HTMLSelectElement).value).toBe('wf-1'))
+		await utilisateur.click(within(formulaire).getByRole('button', { name: 'Créer' }))
+		await waitFor(() => expect(screen.getByTestId('sonde-adresse').textContent).toBe('/reglages/arborescence'))
+		expect(ecritures).toContainEqual({
+			table: 'channels',
+			verbe: 'insert',
+			charge: {
+				workspace_id: 'ws-1',
+				track_id: 't-1',
+				workflow_id: 'wf-1',
+				name: 'Partenariats',
+				slug: 'partenariats',
+				description: null,
+				position: null,
+			},
+		})
 	})
 
 	it('formulaire OUVERT, il relit ses workflows quand le workflow de départ est posé — et garde la saisie (§10.3)', async () => {

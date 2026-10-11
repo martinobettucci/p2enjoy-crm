@@ -842,9 +842,10 @@ export const fr = {
 	'route.track.nochannel.title': 'Aucun channel dans ce track',
 	// RÉVISÉ le 2026-09-29 (INC-258, décision 611, docs/SPEC-cards.md §18.4 bis) : ce texte disait
 	// « par l'API » alors que « Nouveau channel » vit dans l'arborescence depuis CRM-075.
+	// RÉVISÉ le 2026-10-11 (CRM-100, décision 623, docs/DESIGN_SYSTEM.md §5.51 et §5.55) : « Nouveau channel » vit
+	// désormais dans la barre d'onglets de ce track ; le geste étant sur l'écran même, l'état vide le nomme sans lien.
 	'route.track.nochannel.body':
-		"Un channel se crée avec « Nouveau channel », dans l'administration de l'arborescence.",
-	'route.track.nochannel.action': "Ouvrir l'arborescence",
+		"Un channel se crée avec « Nouveau channel », dans la barre d'onglets ci-dessus.",
 	'route.track.pickchannel.title': 'Choisissez un channel',
 	'route.track.pickchannel.body': 'Les onglets ci-dessus ouvrent les channels de ce track.',
 	'route.channel.empty.title': 'Aucune card dans ce channel',
@@ -1399,6 +1400,11 @@ export const fr = {
 		"Aucun workflow n'est affectable à ce track. Un channel doit en suivre un ; créez d'abord un workflow global ou propre à ce track.",
 	'admin.form.workflow.none.action': 'Ouvrir l’éditeur de workflows',
 	'admin.form.workflow.loading': 'Chargement des workflows…',
+	// CRM-100 (docs/SPEC-administration-arborescence.md §13.2, docs/DESIGN_SYSTEM.md §5.55).
+	'admin.form.workflow.new': 'Nouveau workflow',
+	'admin.form.workflow.notAssignable':
+		'Le workflow créé n’est pas affectable à ce track : il est propre à un autre track.',
+	'admin.form.workflow.error': 'Les workflows n’ont pas pu être chargés.',
 
 	// Confirmation d'archivage (docs/DESIGN_SYSTEM.md §6).
 	'admin.archive.confirm.track': 'Archiver le track « {nom} » ?',
@@ -1706,6 +1712,11 @@ export const fr = {
 	'admin.workflows.create.empty':
 		"Il naîtra sans étape : ajoutez-les ensuite depuis cet écran, et désignez celle par laquelle une affaire commence.",
 	'admin.workflows.create.done': 'Le workflow « {nom} » est créé. Il n’a encore aucune étape.',
+	// CRM-100 (docs/SPEC-administration-arborescence.md §13.5, docs/DESIGN_SYSTEM.md §5.55) : le bandeau de retour.
+	'admin.workflows.retour.aria': 'Création d’un channel en cours',
+	'admin.workflows.retour.body': 'Vous créez un channel. Créez puis composez son workflow, et revenez-y.',
+	'admin.workflows.retour.body.created': 'Le workflow « {nom} » sera présélectionné au retour.',
+	'admin.workflows.retour.action': 'Revenir au nouveau channel',
 	'admin.workflows.refus.creation.forbidden':
 		"Vous n'avez pas le droit de créer un workflow dans cet espace de travail.",
 	'admin.workflows.refus.creation.forme-refusee':
@@ -2646,6 +2657,9 @@ export const fr = {
 	// channels, qui sont des données de longueur libre.
 	'tabs.track.costs': 'Coûts',
 	'tabs.track.aria': 'Vues du track',
+	// CRM-100 (docs/SPEC-administration-arborescence.md §13.3, docs/DESIGN_SYSTEM.md §5.55).
+	'tabs.newChannel': 'Nouveau channel',
+	'live.track.channel.created': 'Channel « {nom} » créé.',
 	// L'en-tête de la première colonne du tableau équivalent (§5.30) : sur cet écran, une paire de
 	// barres désigne un budget.
 	'costs.track.column': 'Budget',

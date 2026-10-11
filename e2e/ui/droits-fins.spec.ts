@@ -5,6 +5,8 @@
 // @verifies docs/DESIGN_SYSTEM.md §7 (paliers), §8 (clavier) ; CLAUDE.md §16 (vérification visuelle)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
+// @verifies CRM-100 (docs/BACKLOG.md) tranche T2 — la barre d'onglets porte la commande « Nouveau channel »,
+//           comptée et nommée (docs/DESIGN_SYSTEM.md §5.55)
 //
 // CE QUE CES SCÉNARIOS PROUVENT.
 //
@@ -107,9 +109,13 @@ test('…et son ouverture n’expose que l’onglet consenti, à la souris', asy
 
 	// « Et rien de plus » : la barre entière ne porte que cet onglet et l'entrée transverse du
 	// track. Un troisième lien serait une régression, et cette assertion la verrait.
+	// RÉVISÉ PAR `CRM-100`, NON AFFAIBLI : la barre porte depuis la commande « Nouveau channel »
+	// (docs/DESIGN_SYSTEM.md §5.55), qui n'est pas un onglet. Le total passe à trois, et chacun des
+	// trois est NOMMÉ — un quatrième lien reste une régression que ce compte verrait.
 	const tousLesLiens = page.getByTestId('barre-onglets').getByRole('link')
-	await expect(tousLesLiens).toHaveCount(2)
+	await expect(tousLesLiens).toHaveCount(3)
 	await expect(page.getByTestId('onglet-couts-track')).toHaveCount(1)
+	await expect(page.getByTestId('commande-nouveau-channel')).toHaveCount(1)
 
 	// Les deux autres channels du track restent fermés : l'élargissement de la politique de
 	// `tracks` ne déteint pas sur celle des `channels` (§3.3 bis, deuxième tiret). Un track
@@ -157,7 +163,10 @@ test('l’adresse directe du track rend la même chose que le clic, et rien de p
 	const onglets = page.getByTestId('onglet-channel')
 	await expect(onglets).toHaveCount(1)
 	await expect(onglets.first()).toHaveText(CONSENTI)
-	await expect(page.getByTestId('barre-onglets').getByRole('link')).toHaveCount(2)
+	// `CRM-100` : l'onglet, la commande « Nouveau channel » et « Coûts » — chacun nommé.
+	await expect(page.getByTestId('barre-onglets').getByRole('link')).toHaveCount(3)
+	await expect(page.getByTestId('commande-nouveau-channel')).toHaveCount(1)
+	await expect(page.getByTestId('onglet-couts-track')).toHaveCount(1)
 	await expect(page.getByTestId('onglet-couts-track')).toHaveCount(1)
 
 	// L'adresse d'un channel FERMÉ du même track, elle, reste refusée : atteindre le track ne

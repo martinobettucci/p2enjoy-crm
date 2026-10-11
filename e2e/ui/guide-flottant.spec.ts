@@ -4,6 +4,8 @@
 //           et l'écran ouvert qui se relit), §10.4 (stockage de session), §10.5 (le formulaire de channel
 //           sans workflow mène à l'éditeur), §10.6 (preuves E2E et visuelles)
 // @verifies docs/SPEC-workflow-engine.md §7 quater (le workflow de départ, relu en base)
+// @verifies CRM-100 (docs/BACKLOG.md) tranche T2 — le formulaire de channel sans workflow mène à l'éditeur par
+//           l'aller-retour (docs/SPEC-administration-arborescence.md §13.2, §13.5)
 // @verifies docs/DESIGN_SYSTEM.md §5.49 (pastille, panneau, réserve, focus, cadre aux paliers), §7
 // @verifies docs/JOURNAL.md décisions 606 et 607 ; CLAUDE.md §10 (le rôle décide d'un affichage),
 //           §11 (rien hors de la session), §16 (vérification visuelle)
@@ -187,8 +189,13 @@ test.describe('CRM-094 — le guide flottant, dans un espace neuf', () => {
 
 		// 6. Le formulaire mène à l'éditeur, et le panneau suit OUVERT — un lien suivi ne le referme pas.
 		//    Re-mesuré au changement de page, sans rechargement : le track compte (§10.2).
-		await sansWorkflow.getByRole('link', { name: 'Ouvrir l’éditeur de workflows' }).click()
-		await expect(page).toHaveURL(/\/reglages\/workflows$/)
+		//    RÉVISÉ par `CRM-100` (§13.2) : en création, le lien est « Nouveau workflow », l'aller-retour qui rend la
+		//    saisie ; l'éditeur s'ouvre création ouverte, et garde le retour dans son adresse.
+		await expect(sansWorkflow.getByRole('link')).toHaveCount(0)
+		await page.getByTestId('formulaire-channel').getByRole('link', { name: 'Nouveau workflow' }).click()
+		await expect(page).toHaveURL(/\/reglages\/workflows\?retour=/)
+		await expect(page.getByTestId('workflows-formulaire-creation')).toBeVisible()
+		await expect(page.getByTestId('bandeau-retour-channel')).toBeVisible()
 		await expect(page.getByText('Aucun workflow dans cet espace de travail')).toBeVisible()
 		await expect(panneau(page)).toBeVisible()
 		await expect(panneau(page).getByTestId('progression-demarrage')).toHaveText('2 étape(s) sur 6')

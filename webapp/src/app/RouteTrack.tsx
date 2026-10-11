@@ -10,6 +10,11 @@
 //       dans sa zone (docs/SPEC-cards.md §18.3, docs/DESIGN_SYSTEM.md §5.50) ; tranche T2 bis : les
 //       états vides « aucun channel » et « aucune étape » mènent à l'écran qui les comble (INC-258,
 //       décision 611 ; docs/SPEC-cards.md §18.4 bis, docs/DESIGN_SYSTEM.md §5.51)
+// @spec CRM-100 (docs/BACKLOG.md) tranche T1 — « Nouveau channel » dans la vue du track : le formulaire ouvert par
+//       `nouveau-channel=1`, en tête de la zone principale ; après la création, le board du nouveau channel, les
+//       channels relus, l'annonce et le focus sur son onglet ; refermé, le focus rendu à la commande ; l'état vide
+//       « aucun channel » sans lien (docs/SPEC-administration-arborescence.md §13.3, §13.6 ; docs/DESIGN_SYSTEM.md
+//       §5.51, §5.55 ; docs/JOURNAL.md décision 623)
 //
 // La destination que `CRM-020` avait annoncée sans pouvoir la livrer : « un track s'ouvre sur ses
 // channels, livrés par `CRM-021` » (docs/DESIGN_SYSTEM.md §12.4).
@@ -30,14 +35,15 @@
 // distinguer renseignerait un appelant sans droit sur l'existence d'un track
 // (docs/SPEC-permissions-rls.md §7).
 
-import { useEffect, useState, type ReactNode } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
 import { EtatErreur, EtatRefus, EtatVide } from '../components/ui/States'
 import { LiveRegion } from '../components/ui/LiveRegion'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t, type CleTraduction } from '../i18n'
 import { composerBoard, useContenuBoard, type CardBoard, type EtapeBoard } from '../lib/board'
-import { projeterChannels, useContenuTrack, type Channel } from '../lib/channels'
+import { projeterChannels, useContenuTrack, type Channel, type TrackOuvert } from '../lib/channels'
+import { PARAM_NOUVEAU_CHANNEL, VALEUR_NOUVEAU_CHANNEL_TRACK } from '../lib/nouveau-channel'
 import {
 	CLE_URL_SOMMEIL,
 	MODE_SOMMEIL_PAR_DEFAUT,
@@ -55,8 +61,9 @@ import {
 import { clientCrm } from '../lib/supabase'
 import { AppShell } from './AppShell'
 import { Board } from './Board'
-import { CHEMIN_ADMIN_ARBORESCENCE, CHEMIN_ADMIN_WORKFLOWS } from './chemins'
+import { CHEMIN_ADMIN_WORKFLOWS } from './chemins'
 import { BasculeVue, ListeCards } from './ListeCards'
+import { ZoneNouveauChannel } from './NouveauChannelTrack'
 import { CommandeNouvelleAffaire, FormulaireNouvelleAffaire, useCreationAffaire } from './NouvelleAffaire'
 
 /** Les deux lectures d'un même channel. Le board est la vue par défaut (docs/SPEC-cards.md §12.2). */
@@ -95,6 +102,39 @@ export function RouteTrack({ vue = 'board' }: { readonly vue?: VueChannel } = {}
 	// (docs/SPEC-channels.md §5, décision 169).
 	const channelOuvert = channels.find((channel) => channel.slug === slugChannel)
 
+	// `CRM-100` (§13.3) — ce qui survit au formulaire « Nouveau channel » : l'annonce, et le focus à poser APRÈS le
+	// rendu qui le referme. La commande de la barre d'onglets ne reparaît qu'une fois les paramètres retirés, l'onglet
+	// du channel créé qu'une fois les channels relus : le focus attend l'un ou l'autre, sans temporisation.
+	const navigate = useNavigate()
+	const { key: cleAdresse } = useLocation()
+	const [annonce, setAnnonce] = useState('')
+	const [focusApres, setFocusApres] = useState<
+		{ readonly cible: 'commande' } | { readonly cible: 'onglet'; readonly slug: string } | null
+	>(null)
+	useEffect(() => {
+		if (focusApres === null) return
+		const selecteur =
+			focusApres.cible === 'commande'
+				? '[data-testid="commande-nouveau-channel"]'
+				: `[data-testid="onglet-channel"][data-slug="${focusApres.slug}"]`
+		const cible = document.querySelector<HTMLElement>(selecteur)
+		if (cible === null) return
+		cible.focus()
+		setFocusApres(null)
+	}, [focusApres, etat, cleAdresse])
+
+	const apresCreation = useCallback(
+		(slug: string, nom: string) => {
+			if (slugTrack === undefined) return
+			navigate(`/tracks/${slugTrack}/${slug}`)
+			recharger()
+			setAnnonce(t('live.track.channel.created', { nom }))
+			setFocusApres({ cible: 'onglet', slug })
+		},
+		[navigate, recharger, slugTrack],
+	)
+	const apresFermeture = useCallback(() => setFocusApres({ cible: 'commande' }), [])
+
 	return (
 		<AppShell
 			cleTitreRoute={CLE_TITRE_TRACK}
@@ -103,9 +143,12 @@ export function RouteTrack({ vue = 'board' }: { readonly vue?: VueChannel } = {}
 			onRechargerChannels={recharger}
 			{...(slugTrack === undefined ? {} : { slugTrack })}
 		>
+			<LiveRegion libelle={t('live.admin.aria')} message={annonce} />
 			<ContenuTrack
 				chargement={etat.statut === 'chargement'}
-				trackTrouve={track !== null}
+				track={track}
+				onChannelCree={apresCreation}
+				onFormulaireFerme={apresFermeture}
 				nombreChannels={channels.length}
 				vue={vue}
 				channelDemande={slugChannel}
@@ -118,7 +161,9 @@ export function RouteTrack({ vue = 'board' }: { readonly vue?: VueChannel } = {}
 
 function ContenuTrack({
 	chargement,
-	trackTrouve,
+	track,
+	onChannelCree,
+	onFormulaireFerme,
 	nombreChannels,
 	channelDemande,
 	vue,
@@ -126,7 +171,9 @@ function ContenuTrack({
 	slugTrack,
 }: {
 	readonly chargement: boolean
-	readonly trackTrouve: boolean
+	readonly track: TrackOuvert | null
+	readonly onChannelCree: (slug: string, nom: string) => void
+	readonly onFormulaireFerme: () => void
 	readonly nombreChannels: number
 	readonly channelDemande: string | undefined
 	readonly vue: VueChannel
@@ -143,7 +190,7 @@ function ContenuTrack({
 	// latérale et barre d'onglets.
 	if (chargement) return null
 
-	if (!trackTrouve) {
+	if (track === null) {
 		return (
 			<EtatVide
 				titre={t('route.track.notfound.title')}
@@ -157,26 +204,31 @@ function ContenuTrack({
 		)
 	}
 
+	// `CRM-100` (§13.3) : le formulaire « Nouveau channel » est un état de l'ADRESSE. Il vient en tête de la zone
+	// principale, au-dessus de ce que la vue rend d'ordinaire.
+	const nouveauChannel =
+		// Sans client configuré, la route n'a de toute façon rien lu : `track` est alors nul et l'on n'arrive pas ici.
+		parametresVue.get(PARAM_NOUVEAU_CHANNEL) === VALEUR_NOUVEAU_CHANNEL_TRACK && clientCrm !== null ? (
+			<ZoneNouveauChannel client={clientCrm} track={track} onCree={onChannelCree} onFerme={onFormulaireFerme} />
+		) : null
+
 	if (nombreChannels === 0) {
-		// UN ÉTAT VIDE NOMME L'ÉCRAN QUI LE COMBLE (INC-258, docs/DESIGN_SYSTEM.md §5.51) : « Nouveau
-		// channel » vit dans l'arborescence, et le lien y mène — pour tous les rôles, la base refusant le
-		// geste à qui ne peut pas le faire.
+		// UN ÉTAT VIDE NOMME LE GESTE QUI LE COMBLE (INC-258, docs/DESIGN_SYSTEM.md §5.51). Depuis `CRM-100`, « Nouveau
+		// channel » vit dans la barre d'onglets de ce track : le geste étant sur l'écran même, le texte le nomme et
+		// aucun lien n'est ajouté (§5.51, deuxième règle). Le formulaire ouvert remplace l'état vide (§5.55).
 		return (
-			<EtatVide
-				titre={t('route.track.nochannel.title')}
-				corps={t('route.track.nochannel.body')}
-				action={
-					<Link to={CHEMIN_ADMIN_ARBORESCENCE} data-testid="lien-arborescence-vide" className={CLASSES_RETOUR}>
-						{t('route.track.nochannel.action')}
-					</Link>
-				}
-			/>
+			nouveauChannel ?? (
+				<EtatVide titre={t('route.track.nochannel.title')} corps={t('route.track.nochannel.body')} />
+			)
 		)
 	}
 
 	if (channelDemande === undefined) {
 		return (
-			<EtatVide titre={t('route.track.pickchannel.title')} corps={t('route.track.pickchannel.body')} />
+			<>
+				{nouveauChannel}
+				<EtatVide titre={t('route.track.pickchannel.title')} corps={t('route.track.pickchannel.body')} />
+			</>
 		)
 	}
 
@@ -185,7 +237,10 @@ function ContenuTrack({
 	// l'existence d'un channel refusé (docs/SPEC-permissions-rls.md §7).
 	if (channelOuvert === undefined || slugTrack === undefined) {
 		return (
-			<EtatVide titre={t('route.track.pickchannel.title')} corps={t('route.track.pickchannel.body')} />
+			<>
+				{nouveauChannel}
+				<EtatVide titre={t('route.track.pickchannel.title')} corps={t('route.track.pickchannel.body')} />
+			</>
 		)
 	}
 
@@ -195,6 +250,7 @@ function ContenuTrack({
 	// (docs/DESIGN_SYSTEM.md §5.8, docs/SPEC-cards.md §12.8).
 	return (
 		<div className="flex flex-col min-w-0">
+			{nouveauChannel}
 			<div className="px-4 pt-4">
 				{/* Le mode du sommeil est lu ICI, au-dessus des deux zones, parce que c'est ici que la
 				    bascule de vue le transporte (§16.12.4). Chaque zone le relit de l'adresse pour son

@@ -4,6 +4,8 @@
 //       §3.3 (l'enfant d'un parent en corbeille est inaccessible sans être horodaté), §4
 // @spec docs/SPEC-webapp.md §6.3 (ce que la coquille lit), §6.4 (contrat asynchrone)
 // @spec docs/SPEC-permissions-rls.md §4 (lecture par les membres du workspace)
+// @spec CRM-100 (docs/BACKLOG.md) tranche T1 — docs/SPEC-administration-arborescence.md §13.3 : le track ouvert
+//       porte son `workspace_id`
 //
 // `public.channels` porte, depuis `CRM-021`, une politique de lecture réservée aux membres du
 // workspace. Sans session les deux requêtes rendent `200` et `[]` ; avec la session restaurée par
@@ -39,15 +41,21 @@ export type Channel = Pick<
 	'id' | 'name' | 'slug' | 'position' | 'workflow_id'
 >
 
-/** Le track porteur de la route, tel que l'écran a besoin de le connaître. */
+/**
+ * Le track porteur de la route, tel que l'écran a besoin de le connaître.
+ *
+ * `workspace_id` depuis `CRM-100` (docs/SPEC-administration-arborescence.md §13.3) : « Nouveau channel » vit dans la
+ * vue du track, et la création d'un channel comme la liste des workflows affectables en ont besoin (§7.2, §7.3). Une
+ * colonne de plus à une lecture déjà émise, plutôt qu'une seconde lecture du même track.
+ */
 export type TrackOuvert = Pick<
 	Database['public']['Tables']['tracks']['Row'],
-	'id' | 'name' | 'slug'
+	'id' | 'name' | 'slug' | 'workspace_id'
 >
 
 /** Colonnes réellement demandées. Exportées pour que les tests unitaires vérifient la requête. */
 export const COLONNES_CHANNEL = 'id, name, slug, position, workflow_id'
-export const COLONNES_TRACK_OUVERT = 'id, name, slug'
+export const COLONNES_TRACK_OUVERT = 'id, name, slug, workspace_id'
 
 /**
  * Ce que la route d'un track a chargé : le track lui-même, ou son absence, et ses channels.

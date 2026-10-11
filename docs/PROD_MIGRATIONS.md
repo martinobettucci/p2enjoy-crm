@@ -302,6 +302,22 @@ remise au conteneur ; il reste à constater `disponible`, puis une génération 
 ligne du §3.2, dans l'ordre inverse — la 86 d'abord. Les workflows créés ou modifiés par des acceptations restent :
 ce sont des configurations, et chaque modification a son point de retour.
 
+### 2.10 `CRM-100` — « Nouveau channel » depuis le track, et l'aller-retour vers l'éditeur de workflows (À EXÉCUTER)
+
+`docs/SPEC-administration-arborescence.md` §13, `docs/DESIGN_SYSTEM.md` §5.55 ; décision 623. **Webapp seule** : aucune
+migration, aucune variable, aucun service nouveau, aucun droit changé — la création d'un channel et celle d'un workflow
+sont les écritures existantes, sous les mêmes politiques. La lecture du track par sa route demande une colonne de plus,
+`workspace_id`, déjà lisible par tout membre. La baseline de migrations ne bouge pas.
+
+| # | Geste | Qui | Commande ou lieu |
+|---|---|---|---|
+| 1 | Livrer la webapp — aucune migration en attente pour cette unité | poste, par les IP | `scripts/spark/livrer.sh` (sans `--migrate`), `./runProd.sh --spark` enchaîné par le script |
+| 2 | Vérifier | poste, lecture seule | `scripts/spark/verifier.sh` |
+| 3 | Ouvrir un track : « Nouveau channel » paraît dans la barre d'onglets ; ouvrir le formulaire, cliquer « Nouveau workflow », constater l'éditeur création ouverte et le bandeau « Revenir au nouveau channel », puis revenir — le formulaire est rempli. **Annuler** : aucun channel ni workflow n'est créé pour la preuve | le responsable | l'application |
+
+**Retour arrière** : la révision précédente de la webapp. Les channels et workflows créés entre-temps restent : ce sont
+des données ordinaires, créées par les écritures existantes.
+
 ## 3. Migrations en attente
 
 **Une migration en attente depuis le 2026-10-11 : la 87** (`0087_saisie_temps.sql`, `CRM-098` T1, décision 621) —

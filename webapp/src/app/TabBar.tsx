@@ -32,13 +32,27 @@
 //   * elle est rendue MÊME quand le track n'a aucun channel. L'état vide de la barre disait
 //     jusqu'ici tout ce qu'elle avait à dire ; ce n'est plus vrai — un track sans channel a
 //     parfaitement des budgets, et le §4.7 traite cet écran-là comme les autres.
+//
+// @spec CRM-100 (docs/BACKLOG.md) tranche T1 — la commande « Nouveau channel » (docs/SPEC-administration-arborescence.md
+//       §13.3 ; docs/DESIGN_SYSTEM.md §5.55 ; docs/JOURNAL.md décision 623)
+//
+// LA BARRE PORTE UNE COMMANDE, ET CE N'EST PAS UN ONGLET. Elle vient après les channels, dont elle est la fin, et
+// avant le filet des entrées transverses, qui portent sur le track entier. C'est un LIEN — elle ouvre le formulaire en
+// écrivant `nouveau-channel=1` dans l'adresse —, mais elle n'a ni bordure basse ni `aria-current` : rien ne la lit
+// comme la page courante. Pendant la saisie, elle quitte la barre (§5.50 : la commande et le formulaire s'excluent).
 
-import { NavLink } from 'react-router'
-import { ChartColumn } from 'lucide-react'
+import { Link, NavLink, useLocation } from 'react-router'
+import { ChartColumn, Plus } from 'lucide-react'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t } from '../i18n'
 import type { EtatAsync } from '../lib/async'
 import type { Channel } from '../lib/channels'
+import {
+	PARAM_NOUVEAU_CHANNEL,
+	VALEUR_NOUVEAU_CHANNEL_TRACK,
+	cheminOuvertureNouveauChannel,
+	estVueTrack,
+} from '../lib/nouveau-channel'
 import { cheminCoutsTrack } from './chemins'
 
 export type ProprietesTabBar = {
@@ -104,6 +118,7 @@ function Contenu({ etat, slugTrack }: ProprietesTabBar) {
 					</span>
 					<span className="sr-only">{t('tabs.empty.hint')}</span>
 				</div>
+				<CommandeNouveauChannel slugTrack={slugTrack} />
 				<EntreesTransversesTrack slugTrack={slugTrack} />
 			</>
 		)
@@ -152,8 +167,38 @@ function Contenu({ etat, slugTrack }: ProprietesTabBar) {
 				))}
 			</ul>
 			</nav>
+			<CommandeNouveauChannel slugTrack={slugTrack} />
 			<EntreesTransversesTrack slugTrack={slugTrack} />
 		</>
+	)
+}
+
+/**
+ * « Nouveau channel » — `CRM-100`, docs/SPEC-administration-arborescence.md §13.3, docs/DESIGN_SYSTEM.md §5.55.
+ *
+ * Rendue à tous les rôles : la base refuse la création à qui n'est pas administrateur, et le formulaire traduit le
+ * refus (§10 de la même spécification). Absente pendant la saisie, c'est-à-dire quand une vue de track porte le
+ * formulaire ouvert ; sur l'écran des coûts ou la fiche d'une affaire, elle mène à la racine du track.
+ */
+function CommandeNouveauChannel({ slugTrack }: { readonly slugTrack: string }) {
+	const { pathname, search } = useLocation()
+	const formulaireOuvert =
+		estVueTrack(pathname) &&
+		new URLSearchParams(search).get(PARAM_NOUVEAU_CHANNEL) === VALEUR_NOUVEAU_CHANNEL_TRACK
+	if (formulaireOuvert) return null
+	return (
+		<Link
+			to={cheminOuvertureNouveauChannel(pathname, search, slugTrack)}
+			data-testid="commande-nouveau-channel"
+			className={[
+				'shrink-0 inline-flex items-center gap-2 px-3 whitespace-nowrap rounded-sm',
+				'min-h-[var(--size-target)] text-text-2 hover:bg-hover',
+				'transition-colors duration-[var(--transition-duration-fast)]',
+			].join(' ')}
+		>
+			<Plus aria-hidden="true" size={16} strokeWidth={2} className="shrink-0" />
+			{t('tabs.newChannel')}
+		</Link>
 	)
 }
 

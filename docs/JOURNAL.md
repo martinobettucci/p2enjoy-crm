@@ -31206,3 +31206,50 @@ fois son workflow composé.
 
 **Suite** : la spécification (`docs/SPEC-administration-arborescence.md` §13), la charte (`docs/DESIGN_SYSTEM.md` §5.55),
 le renvoi depuis `docs/SPEC-workflow-engine.md` §3 bis.2 et l'unité `CRM-100` au backlog, committés avant le code.
+
+### décision 623, suite — `CRM-100` T1 et T2 mis en œuvre : ce que l'exécution a appris
+
+*2026-10-11, même session.*
+
+**Livré** : `src/lib/nouveau-channel.ts` (adresses, brouillon, validation du retour) ; le formulaire de channel extrait de
+l'arborescence dans `FormulaireChannel.tsx` (et ses éléments dans `ElementsFormulaireAdmin.tsx`), avec « Nouveau
+workflow » et le workflow attendu ; la commande de la barre d'onglets ; la zone `NouveauChannelTrack.tsx` de la vue du
+track ; l'ouverture par l'adresse, le bandeau et `workflow-cree` dans l'éditeur ; la réouverture préremplie dans
+l'arborescence ; `workspace_id` lu avec le track.
+
+**Trois faits, trouvés en exécutant.**
+
+1. **Un défaut réel, trouvé par l'E2E du guide flottant, pas à la lecture.** Ouvert par `creer=1` sur un éditeur VIDE, le
+   formulaire de création était REMONTÉ quand le guide posait le workflow de départ — la liste relue le fait passer de
+   l'état vide à la colonne de gauche — et son effet de montage reprenait le focus que le guide venait de poser sur son
+   lien ; la saisie repartait de zéro. Le défaut existait en germe (création ouverte à la main, puis le guide), `creer=1`
+   le rendait ordinaire. Correction : le focus n'est pris qu'à l'OUVERTURE (`prendreLeFocus`, consommé une fois), et la
+   saisie est gardée par l'écran dans une référence, d'où repart un remontage. Preuve unitaire écrite, vue rouge sous
+   les deux mutations (garde du focus retirée ; saisie non conservée), puis l'E2E du guide au vert.
+2. **Deux mutations ont d'abord survécu.** (a) Retirer la garde `//` de `lireRetour` ne rougit rien : la liste blanche
+   des chemins écarte déjà `//hôte`. La garde est conservée en défense en profondeur et le dit en commentaire.
+   (b) « Le workflow attendu est appliqué une fois » passait sans sa référence : la preuve relisait la liste sans repasser
+   par le chargement, ce que la relecture réelle fait. Preuve renforcée, vue rouge sous la mutation.
+3. **La route elle-même n'a pas de preuve unitaire.** Monter `RouteTrack` exige toute la coquille (en-tête, barre
+   latérale, notifications). La zone est éprouvée seule (`NouveauChannelTrack.test.tsx`), et la route — board du
+   channel créé, onglet focalisé, état vide sans lien — par `e2e/ui/nouveau-channel.spec.ts` et
+   `e2e/ui/premier-lancement.spec.ts`. Le tableau des preuves du §13.10 est révisé en ce sens.
+
+**Révisés, parce qu'ils suivaient l'ancien chemin** : `e2e/ui/premier-lancement.spec.ts` (le premier channel naît
+désormais depuis la barre d'onglets du track ; l'état vide n'a plus de lien) et `e2e/ui/guide-flottant.spec.ts` (le lien
+« Nouveau workflow » de l'aller-retour remplace « Ouvrir l'éditeur de workflows » dans un formulaire de création) ; un
+test unitaire de l'arborescence, pour la même raison.
+
+**Hors de cette unité, constaté** : avant 16:45, le scénario INC-230 de `e2e/ui/liste-cards.spec.ts` rendait `400`
+« text search configuration "francais_sans_accent" does not exist » ; le `.env` de ce poste porte toujours
+`PGRST_DB_EXTRA_SEARCH_PATH=public,extensions` quand `.env.example` exige `public,extensions,app` — la dérive locale déjà
+consignée (décision 582). Après la réinitialisation de la base par la session `CRM-098` (`./resetMe.sh`, 16:45–16:50),
+le même scénario passe, `.env` inchangé : l'échec tenait à l'état de la pile, non au code. Le `.env` n'est pas réécrit
+par cette session.
+
+**Campagne `e2e:ui` complète (806 scénarios), 2026-10-11** : 770 réussis, 33 échecs, 3 non exécutés. La base a été
+recréée SOUS la campagne par une autre session (fenêtre 16:45–16:50, message reçu de la session `CRM-098`) : les échecs
+de cette fenêtre ne sont pas probants. Les neuf fichiers en échec, rejoués sur la base stable : **153 réussis, 2 échecs**,
+tous deux dans `e2e/ui/droits-fins.spec.ts` et causés par cette unité — « rien de plus » comptait deux liens dans la
+barre d'onglets, qui en porte désormais trois. Assertions révisées comme `CRM-086` l'avait fait, sans rien desserrer :
+le total passe à trois et chaque lien est nommé ; **8/8** au rejeu.

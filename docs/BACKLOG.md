@@ -14982,7 +14982,7 @@ deviennent un premier réel, lignes rouvertes. Spécifié avant le code : `docs/
       seed ; manuel ; campagnes.
 - [ ] **T3** — livraison en production (migration 88, instantané confirmé) et constat.
 
-### CRM-100 — Créer un channel depuis le track, et un workflow depuis le formulaire du channel `[ ]`
+### CRM-100 — Créer un channel depuis le track, et un workflow depuis le formulaire du channel `[~]`
 *Créée le 2026-10-11 — décision 623, arbitrages du responsable. Créer un channel obligeait à repasser par les réglages,
 et un channel qui avait besoin d'un nouveau workflow obligeait à le créer d'abord, ailleurs. « Nouveau channel » vient
 dans la barre d'onglets du track, formulaire sur place ; « Nouveau workflow » dans le formulaire de création du channel
@@ -14990,13 +14990,25 @@ fait l'aller-retour vers l'éditeur, saisie conservée et workflow créé prés�
 d'accès nouvelle. Spécifié avant le code : `docs/SPEC-administration-arborescence.md` §13,
 `docs/SPEC-workflow-engine.md` §3 bis.2, `docs/DESIGN_SYSTEM.md` §5.55.*
 
-- [ ] **T1** — le formulaire de channel partagé (`FormulaireChannel.tsx`) ; les adresses et la validation du retour
+- [x] **T1** — le formulaire de channel partagé (`FormulaireChannel.tsx`) ; les adresses et la validation du retour
       (`lib/nouveau-channel.ts`) ; « Nouveau channel » dans la barre d'onglets et le formulaire dans la vue du track
       (`workspace_id` lu avec le track) ; « Nouveau workflow », l'ouverture par l'adresse et le bandeau de retour dans
-      l'éditeur ; la réouverture préremplie dans l'arborescence ; preuves unitaires, mutations vues rouges.
-- [ ] **T2** — E2E `e2e/ui/nouveau-channel.spec.ts` sur la pile réelle (souris, clavier seul, aller-retour depuis le
+      l'éditeur ; la réouverture préremplie dans l'arborescence ; preuves unitaires, mutations vues rouges. Mesuré le
+      2026-10-11 : `nouveau-channel.test` **38**, `FormulaireChannel.test` **14**, `NouveauChannelTrack.test` **8**,
+      `AdministrationWorkflows.nouveau-channel.test` **12**, `TabBar.test` +8, `AdministrationArborescence.test` +8 (un
+      révisé), `channels.test` une assertion ; sept mutations vues rouges, une garde redondante documentée (décision 623, suite) ;
+      suite unitaire **117 fichiers, 3 703 tests**, `typecheck` et `build` verts. Un défaut trouvé par l'E2E du guide
+      — le formulaire de création de l'éditeur reprenait le focus et perdait sa saisie à un remontage — corrigé, preuve
+      vue rouge.
+- [x] **T2** — E2E `e2e/ui/nouveau-channel.spec.ts` sur la pile réelle (souris, clavier seul, aller-retour depuis le
       track et depuis l'arborescence, refus traduit pour un non-administrateur, effets confirmés en base) ; captures
-      `docs/captures/CRM-100/` observées aux quatre paliers ; `docs/manual.md` ; campagnes.
+      `docs/captures/CRM-100/` observées aux quatre paliers ; `docs/manual.md` ; campagnes. Mesuré le 2026-10-11 :
+      `nouveau-channel.spec.ts` **5/5** ; `premier-lancement` et `guide-flottant` révisés, **14/14** avec lui ;
+      `droits-fins` révisé (la barre porte trois liens, chacun nommé), **8/8** ; `verify-manual` **159** contrôles ;
+      campagne `e2e:ui` complète 770 / 806, la base ayant été recréée sous elle par une autre session — les neuf
+      fichiers en échec rejoués : 153 verts et les deux de `droits-fins`, causés par l'unité et révisés. Aucun scénario
+      d'API : aucune écriture ni politique nouvelle, les refus restent prouvés par `e2e/api/administration-arborescence.spec.ts`.
+      Seed inchangé : le track « Formation » et ses workflows suffisent à la démonstration.
 - [ ] **T3** — livraison de la webapp en production et constat.
 
 ## Arbitrage du 2026-10-03 — INC-265 à INC-269 (décision 619)

@@ -1,4 +1,8 @@
 // @verifies CRM-094 (docs/BACKLOG.md) — le premier lancement complet, à la souris et au clavier seuls
+// @verifies CRM-100 (docs/BACKLOG.md) tranche T2 — le premier channel naît DEPUIS LA VUE DU TRACK : l'état vide
+//           nomme « Nouveau channel » de la barre d'onglets, sans lien ; la commande ouvre le formulaire sur place,
+//           et la création ouvre le board du channel (docs/SPEC-administration-arborescence.md §13.3 ;
+//           docs/DESIGN_SYSTEM.md §5.51, §5.55). RÉVISÉ : ce scénario suivait jusque-là le lien vers l'arborescence.
 // @verifies INC-255, décision 609 — ce qu'on écrit sur un bloc posé ou une flèche tracée pendant la visite
 //           s'affiche aussitôt : lien, titre, direction (docs/DESIGN_SYSTEM.md §5.28, §5.29)
 // @verifies CRM-095 (docs/BACKLOG.md) — tranche T3 : le guide mène au board du premier channel, où
@@ -114,19 +118,26 @@ async function creerLePremierTrack(page: Page): Promise<void> {
 }
 
 /** Le workflow de départ depuis la pastille du guide, puis le premier channel — par l'écran. */
+/**
+ * Le workflow de départ, posé depuis le guide flottant, puis le premier channel — DEPUIS LA VUE DU TRACK (`CRM-100`,
+ * §13.3) : la commande de la barre d'onglets ouvre le formulaire sur place, et la création ouvre le board du channel.
+ */
 async function poserWorkflowEtPremierChannel(page: Page): Promise<void> {
 	await page.getByTestId('pastille-guide-flottant').click()
 	await page.getByTestId('panneau-guide-flottant').getByTestId('creer-workflow-depart').click()
 	await expect(page.getByTestId('panneau-guide-flottant').getByTestId('etape-workflow')).toContainText('Fait')
 	await page.getByTestId('panneau-guide-flottant').getByTestId('reduire-guide-flottant').click()
 
-	await page.getByRole('button', { name: `Déplier ${TRACK.nom}` }).click()
-	await page.getByRole('button', { name: 'Nouveau channel' }).click()
+	await page.getByTestId('barre-onglets').getByTestId('commande-nouveau-channel').click()
+	await expect(page).toHaveURL(`/tracks/${TRACK.slug}?nouveau-channel=1`)
 	const formChannel = page.getByTestId('formulaire-channel')
+	await expect(formChannel.getByLabel('Nom')).toBeFocused()
 	await formChannel.getByLabel('Nom').fill(CHANNEL.nom)
 	await formChannel.getByLabel('Workflow').selectOption({ label: 'Cycle commercial (par défaut)' })
 	await formChannel.getByRole('button', { name: 'Créer' }).click()
+	await expect(page).toHaveURL(`/tracks/${TRACK.slug}/${CHANNEL.slug}`)
 	await expect(formChannel).toBeHidden()
+	await expect(page.getByTestId('onglet-channel').filter({ hasText: CHANNEL.nom })).toBeFocused()
 }
 
 test.describe.configure({ mode: 'serial' })
@@ -141,7 +152,7 @@ test.describe('le premier lancement complet, à la souris et au clavier', () => 
 		await demonter(request, compte)
 	})
 
-	test('le premier track, ouvert avant son premier channel, dit où le créer et y mène (INC-258)', async ({
+	test('le premier track, ouvert avant son premier channel, dit où le créer, et le crée sur place (INC-258, CRM-100)', async ({
 		page,
 	}) => {
 		test.setTimeout(120_000)
@@ -155,12 +166,13 @@ test.describe('le premier lancement complet, à la souris et au clavier', () => 
 		const vide = page.getByTestId('etat-vide')
 		await expect(vide).toContainText('Aucun channel dans ce track')
 		await expect(vide).toContainText(
-			"Un channel se crée avec « Nouveau channel », dans l'administration de l'arborescence.",
+			"Un channel se crée avec « Nouveau channel », dans la barre d'onglets ci-dessus.",
 		)
 		await expect(vide).not.toContainText("par l'API")
+		// `CRM-100` : le geste vit sur l'écran même — l'état vide le nomme, sans lien (§5.51, deuxième règle).
+		await expect(vide.getByRole('link')).toHaveCount(0)
+		await expect(page.getByTestId('barre-onglets').getByTestId('commande-nouveau-channel')).toBeVisible()
 		await capturer(page, 'premier-lancement-track-sans-channel-xl-1440', UNITE_AFFAIRE)
-		await vide.getByRole('link', { name: "Ouvrir l'arborescence" }).click()
-		await expect(page).toHaveURL('/reglages/arborescence')
 
 		await poserWorkflowEtPremierChannel(page)
 	})

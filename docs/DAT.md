@@ -194,6 +194,18 @@ Découpage prévu : `src/lib` (client Supabase, types générés, helpers), `src
   channel vivant (`lireBoardAffaire`, `src/lib/demarrage.ts`) ; **contrainte de PostgREST mesurée** : un
   tri sur une colonne d'une ressource embarquée exige que cette colonne soit sélectionnée, sans quoi
   la requête rend `400` ;
+- `src/app/FormulaireChannel.tsx`, `src/app/NouveauChannelTrack.tsx` et `src/lib/nouveau-channel.ts` (`CRM-100`,
+  `docs/SPEC-administration-arborescence.md` §13) — « Nouveau channel » dans la barre d'onglets d'un track, et
+  l'aller-retour vers l'éditeur de workflows. Le formulaire de channel est **un seul composant**, importé par
+  l'arborescence et par la vue du track ; ses éléments (champ, alerte, traduction des refus) vivent dans
+  `src/app/ElementsFormulaireAdmin.tsx`. **Le formulaire ouvert et son brouillon sont des paramètres d'adresse**
+  (`nouveau-channel`, `nc-*` ; `creer`, `track`, `retour`, `workflow-cree` côté éditeur), composés et lus par le seul
+  module `nouveau-channel.ts` : l'aller-retour, un rechargement et le bouton « Précédent » les conservent, et rien
+  n'est écrit dans un stockage du navigateur (`CLAUDE.md` §11). L'adresse de retour est **validée par liste
+  blanche** — chemin relatif, l'un des deux écrans hôtes, formulaire ouvert — : l'éditeur n'est pas une redirection
+  ouverte. Aucune écriture nouvelle : `creerChannel` et `creerWorkflow` sous les politiques existantes.
+  **Compromis** : le brouillon (nom, identifiant, description d'un channel) entre dans l'historique du navigateur
+  comme toute adresse ;
 - `src/app/ContexteEspace.tsx`, `src/app/GuideFlottant.tsx`, et le signal `p2enjoy:workflow-de-depart`
   de `src/lib/demarrage.ts` (`CRM-094`, `docs/SPEC-onboarding.md` §10) — la coquille lit **une fois**
   l'espace courant et le rôle que la base y rend (`mon_role_espace`), et les passe par un contexte au

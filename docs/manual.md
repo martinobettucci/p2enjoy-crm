@@ -202,14 +202,14 @@ Les six étapes, dans l'ordre :
 | Rejoindre un espace de travail | Votre compte appartient à un espace | Aucun écran : elle est accomplie par votre connexion |
 | Créer un premier track | Un dossier de premier niveau existe | Réglages ▸ Arborescence |
 | Préparer un premier workflow | Les affaires ont des étapes à suivre | Réglages ▸ Workflows — ou, pour un administrateur, le bouton **Créer le workflow de départ** du guide (§1 bis.4) |
-| Ouvrir un channel dans ce track | Un onglet de travail existe sous ce track | Réglages ▸ Arborescence |
+| Ouvrir un channel dans ce track | Un onglet de travail existe sous ce track | **Nouveau channel**, dans la barre d'onglets du track (chapitre 3.2 *ter*), ou Réglages ▸ Arborescence |
 | Créer une première affaire | Un board a quelque chose à montrer | Le board du premier channel : dès qu'un channel existe, le lien **Ouvrir le board et créer l'affaire** y mène, et le bouton **Nouvelle affaire** crée l'affaire (chapitre 4.8). Sans channel, le lien mène à l'arborescence |
 | Raccorder une boîte de réception | Le courrier entrant se classe dans les affaires | Réglages ▸ État de la messagerie |
 
 **Le workflow vient avant le channel, et ce n'est pas un détail d'ordre** : un channel suit
 toujours un workflow, et un espace neuf n'en a **aucun**. Tant qu'il n'y en a pas, le formulaire
 « Nouveau channel » le dit — « Aucun workflow n'est affectable à ce track » — et propose le lien
-**Ouvrir l'éditeur de workflows**.
+**Nouveau workflow**, qui ouvre l'éditeur et vous ramène ensuite au channel en cours (chapitre 5.2).
 
 ### 1 bis.1 L'état d'une étape est mesuré, jamais mémorisé
 
@@ -733,10 +733,17 @@ page.
   seule.
 - Sur un écran étroit, la barre **défile horizontalement** plutôt que de tronquer les libellés. Une
   ombre au bord indique qu'il reste des onglets à voir de ce côté.
-- Un track **sans channel** affiche « Aucun channel dans ce track », dit que le channel se crée avec
-  « Nouveau channel » dans l'administration de l'arborescence, et propose le lien **Ouvrir
-  l'arborescence**. Le lien est offert à tous : c'est l'écran d'arrivée qui dit ce que votre compte
-  peut y faire.
+- **Nouveau channel**, après les onglets et avant « Coûts », crée un channel **sans quitter le
+  track** (*livré par `CRM-100` ; captures dans `docs/captures/CRM-100/`*). Le formulaire s'ouvre en
+  haut de la page — nom, identifiant d'adresse proposé depuis le nom, workflow, description —, le
+  tableau restant visible dessous. **Créer** ouvre aussitôt le tableau du nouveau channel, dont
+  l'onglet paraît dans la barre ; **Annuler** ou la touche **Échap** referment le formulaire sans rien
+  créer. Le formulaire ouvert fait partie de l'adresse de la page : un rechargement le conserve. La
+  commande est offerte à tous ; seul un administrateur de l'espace de travail peut créer un channel,
+  et le serveur refuse aux autres comptes avec un message écrit dans le formulaire, votre saisie
+  conservée.
+- Un track **sans channel** affiche « Aucun channel dans ce track », et dit que le channel se crée
+  avec « Nouveau channel », dans la barre d'onglets juste au-dessus.
 - Un channel dont le workflow **n'a aucune étape** n'a pas de tableau : l'écran le dit (« Ce workflow
   ne déclare aucune étape ») et propose le lien **Ouvrir l'éditeur de workflows**, où les étapes
   s'ajoutent (chapitre 5 bis).
@@ -2199,9 +2206,23 @@ Les mêmes six gestes s'appliquent, avec deux différences :
   choisit pas à votre place. Tant qu'aucun workflow n'est choisi, « Créer » reste indisponible.
 
 Si aucun workflow n'est affectable à ce track, l'écran vous le dit au lieu d'afficher un formulaire
-que le serveur refuserait, et propose le lien **Ouvrir l'éditeur de workflows**. C'est le cas d'un
-espace neuf : le guide de démarrage pose alors le workflow de départ en un geste (§1 bis.4), et un
-formulaire resté ouvert le propose aussitôt.
+que le serveur refuserait. C'est le cas d'un espace neuf : le guide de démarrage pose alors le
+workflow de départ en un geste (§1 bis.4), et un formulaire resté ouvert le propose aussitôt.
+
+**Le channel a besoin d'un workflow qui n'existe pas encore ?** Le lien **Nouveau workflow**, sous la
+liste des workflows, ouvre l'éditeur de workflows avec son formulaire de création déjà ouvert, la
+portée réglée sur ce track — vous pouvez choisir « Global ». Créez le workflow, ajoutez-lui ses
+étapes, puis cliquez **Revenir au nouveau channel**, dans le bandeau en haut de l'éditeur : le
+formulaire du channel se rouvre là où vous l'aviez laissé — dans la vue du track ou dans
+l'arborescence —, avec le nom, l'identifiant et la description déjà saisis, et le workflow créé déjà
+choisi. *Livré par `CRM-100`.*
+
+- Le lien n'existe que dans le formulaire de **création** ; changer le workflow d'un channel existant
+  reste un geste de modification.
+- Un workflow créé **propre à un autre track** ne peut pas être choisi pour ce channel : le formulaire
+  le dit sous la liste, et attend votre choix.
+- Rien n'est créé tant que vous n'avez pas cliqué **Créer** dans le formulaire du channel : quitter
+  l'éditeur par un autre chemin laisse le workflow créé, mais aucun channel.
 
 ### 5.3 Quand un déplacement est indisponible sans être en bout de liste
 
@@ -2328,6 +2349,12 @@ Le workflow créé devient aussitôt le workflow **choisi**, prêt à être comp
 **Ce que le formulaire ne propose pas, et pourquoi.** Aucune case « par défaut » : un espace de
 travail n'a qu'un seul workflow par défaut, et le proposer à chaque création reviendrait à offrir
 un réglage refusé neuf fois sur dix. Rendre un workflow par défaut reste un geste d'API.
+
+**Arrivé depuis le formulaire d'un channel** (lien **Nouveau workflow**, chapitre 5.2), l'éditeur
+s'ouvre formulaire de création ouvert, portée réglée sur le track du channel, et un bandeau rappelle
+« Vous créez un channel ». Une fois le workflow créé — par ce formulaire ou par **Créer avec l'IA** —,
+le bandeau le nomme : c'est lui qui sera choisi au retour. Composez-le, puis **Revenir au nouveau
+channel**.
 
 **Si l'espace de travail est vide**, l'écran affiche « Aucun workflow dans cet espace de travail »
 et porte le même bouton. Un workflow composé ainsi part d'un catalogue de nœuds **vide** dans un
