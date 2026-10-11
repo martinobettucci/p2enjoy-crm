@@ -30,7 +30,8 @@ une saisie de 105 minutes ; une heure, de 60. Rien ne distingue en base une sais
 heures : l'écran déduit le mode d'une journée de ses valeurs (§6.3).
 
 **Plafond : 420 minutes par personne et par date**, toutes cibles confondues, quel que soit le mode (décision 621, points
-4 et 10). Refusé en base.
+4 et 10). Refusé en base. **Il se compte par espace** [précision de T1] : un refus calculé sur un autre espace
+trahirait à un administrateur ce qui s'y trouve, et le produit n'a qu'un espace en pratique.
 
 ## 3. Objets
 
@@ -39,7 +40,7 @@ heures : l'écran déduit le mode d'une journée de ses valeurs (§6.3).
 | Attribut | Règle |
 |---|---|
 | `workspace_id` | non nul, `on delete cascade` |
-| `profile_id` | non nul — la personne ; membre de l'espace à la création |
+| `profile_id` | non nul — la personne ; **membre de l'espace, ou y ayant déjà saisi du temps**, à la création (un administrateur du domaine, `docs/SPEC-session-sso.md` §6.1 bis, n'a pas de ligne d'appartenance) ; tenue par `NO ACTION` |
 | `date_effet` | `date`, non nulle |
 | `cout_quart` | `numeric(10,2)`, non nul, **≥ 0** — le coût d'un quart (105 minutes) |
 | `devise` | `text`, défaut `'EUR'`, `^[A-Z]{3}$` — la convention de `budgets.currency` |
@@ -58,7 +59,7 @@ heures : l'écran déduit le mode d'une journée de ses valeurs (§6.3).
 | Attribut | Règle |
 |---|---|
 | `workspace_id` | non nul, `on delete cascade` |
-| `profile_id` | non nul — la personne dont c'est le temps ; **`on delete restrict`** [choix de rédaction] : une personne qui a du temps saisi ne se supprime pas, on retire son appartenance |
+| `profile_id` | non nul — la personne dont c'est le temps ; **`NO ACTION`** [choix de rédaction] : une personne qui a du temps saisi ne se supprime pas, on retire son appartenance (aucune clé `RESTRICT` depuis INC-268 ; la suppression d'un espace entier emporte ses saisies) |
 | `jour` | `date`, non nulle — le jour travaillé |
 | `minutes` | `integer`, **> 0**, **≤ 420**, **multiple de 15** |
 | `track_id`, `channel_id`, `card_id` | **exactement une** des trois est renseignée (décision 621, point 1) ; la cible appartient au même espace ; `on delete cascade` |

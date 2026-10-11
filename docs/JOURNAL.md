@@ -31110,6 +31110,15 @@ au quart d'heure.
 **Suite** : la spécification `docs/SPEC-temps.md`, la charte (`docs/DESIGN_SYSTEM.md` §5.54) et le découpage au backlog,
 committés avant le code.
 
+**`CRM-098` T1, livrée en développement le 2026-10-11** — migration `0087`, suite `0082` (66 assertions, douze mutations
+rouges), campagne pgTAP 82 / 3 523. Deux précisions arrêtées en écrivant la base, portées dans `docs/SPEC-temps.md` :
+le **plafond se compte par espace** — un refus calculé sur un espace que l'administrateur ne voit pas trahirait ce qui s'y
+trouve — ; une personne **reçoit un coût si elle est membre de l'espace ou y a déjà saisi du temps**, car un
+administrateur du domaine (`0079`) n'a pas de ligne d'appartenance. Incident de travail : la base de développement a été
+réinitialisée (`./resetMe.sh`) pendant la campagne d'interface d'une session parallèle (`CRM-100`) ; la session a été
+prévenue, ses échecs dans la fenêtre 16:45–16:50 sont à rejouer. Leçon : vérifier qu'aucune campagne ne tourne
+(`ps`, sessions sœurs) avant toute réinitialisation.
+
 ## décision 622 — `CRM-099` : plusieurs coûts réels par ligne de coût, jusqu'à ce qu'on la solde
 
 *2026-10-11 ; remarque du responsable pendant la rédaction de `CRM-098`, arbitrages rendus par lui le même jour, avant

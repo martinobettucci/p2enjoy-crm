@@ -1,6 +1,8 @@
 -- @verifies CRM-014 (docs/BACKLOG.md) — harnais des douze preuves de refus d'autorisation
 -- @verifies CRM-022 (docs/BACKLOG.md) — preuve n° 10 et sept politiques d'identité
 -- @verifies CRM-097 (docs/BACKLOG.md) — tranche T1 : les cinq politiques de l'assistant IA comptées (130)
+-- @verifies CRM-098 (docs/BACKLOG.md) — tranche T1 : les sept politiques de la saisie de temps comptées (137) ;
+--           docs/SPEC-temps.md §5
 -- @verifies docs/SPEC-permissions-rls.md §7 (les douze preuves), §7.2 (contrat mesuré),
 --           §7.3 (ce qui n'est pas satisfaisable, et comment l'absence est figée),
 --           §7.4 (non-complaisance)
@@ -211,8 +213,12 @@ select is(pg_temp.politiques('card_sequence_enrollments'),
 
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	130,
-	'CENT TRENTE politiques dans `public`, et pas une de plus — 125 avant `CRM-097` tranche 1, plus les CINQ '
+	137,
+	'CENT TRENTE-SEPT politiques dans `public`, et pas une de plus — 130 avant `CRM-098` tranche 1, plus les SEPT de '
+	'la saisie de temps (docs/SPEC-temps.md §5) : lecture, création et retrait de `couts_personnel` — AUCUNE MISE À '
+	'JOUR, et c''est un refus double : ni politique ni privilège, et un trigger rend la version immuable —, puis '
+	'lecture, création, mise à jour et retrait de `saisies_temps`, la mise à jour bornée à `minutes` par le PRIVILÈGE '
+	'de colonne. Avant elles : 130, soit 125 avant `CRM-097` tranche 1, plus les CINQ '
 	'de l''assistant IA (docs/SCHEMA.md §9 ter) : lecture, création et mise à jour de `suggestions_ia`, lecture '
 	'et création de `suggestions_ia_revisions`, TOUTES réservées aux administrateurs de l''espace. AUCUNE '
 	'SUPPRESSION, et c''est un refus double : ni politique ni privilège — abandonner est un statut, et une '

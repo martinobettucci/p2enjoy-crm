@@ -304,7 +304,15 @@ ce sont des configurations, et chaque modification a son point de retour.
 
 ## 3. Migrations en attente
 
-**Aucune migration en attente depuis le 2026-10-03.** Baseline de production : la migration **86**
+**Une migration en attente depuis le 2026-10-11 : la 87** (`0087_saisie_temps.sql`, `CRM-098` T1, décision 621) —
+deux tables neuves, `couts_personnel` et `saisies_temps`, leurs sept politiques et `public.temps_valorise`. Aucune table
+existante n'est modifiée, aucune donnée n'est reprise, aucune variable ni service nouveau. Elle sera appliquée par la
+fenêtre de `CRM-098` T5, avec instantané confirmé. Retour arrière : `drop function public.temps_valorise(date, date, uuid,
+uuid, uuid)`, puis `drop table public.saisies_temps, public.couts_personnel` et les fonctions `app.couts_personnel_*`,
+`app.saisies_temps_*`, `app.saisie_temps_permise` — rien d'antérieur n'en dépend ; les temps et coûts saisis entre-temps
+seraient perdus, l'instantané les garde.
+
+Baseline de production : la migration **86**
 (`CRM-097` T3, décision 620), appliquée avec les 83 à 85 le 2026-10-03 par une fenêtre avec instantané (§2.9, §8) ;
 la 82 (`CRM-096`) l'avait été le 2026-10-01, la 81 (`CRM-095`) le 2026-09-29 (§2.8), la 80 (`CRM-094`) le 2026-09-28
 (§2.7), les six migrations de `CRM-092` (74 à 79) le 2026-09-24 par la reprise (§2.5). **Le registre de production

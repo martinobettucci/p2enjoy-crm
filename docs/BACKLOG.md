@@ -14948,9 +14948,17 @@ sur la journée — ; chaque membre a un coût par quart versionné par date d'e
 track, channel et affaire, avec un rapport mensuel. Spécifié avant le code : `docs/SPEC-temps.md`,
 `docs/DESIGN_SYSTEM.md` §5.54, `docs/SCHEMA.md` §9 quater (migration `0087`).*
 
-- [ ] **T1** — migration `0087_saisie_temps.sql` : `couts_personnel`, `saisies_temps`, la RLS, le plafond de 420 minutes
+- [x] **T1** — migration `0087_saisie_temps.sql` : `couts_personnel`, `saisies_temps`, la RLS, le plafond de 420 minutes
       sérialisé, la non-rétroactivité, `public.temps_valorise` ; sa suite pgTAP (`docs/SPEC-temps.md` §11) ; types
       régénérés ; `docs/PROD_MIGRATIONS.md`.
+      *Vérifié le 2026-10-11, en développement* : `0082_saisie_temps.test.sql` **66** assertions — forme, contraintes,
+      plafond par espace, versions, valorisation calculée à la main (120 × 60 / 105 = 68,57), refus et succès avec les
+      trois profils du seed et un administrateur du domaine, suppression d'un espace entier ; **douze mutations** de la
+      migration, chacune rouge. `0016` révisée (politiques 130 → 137). Campagne pgTAP sur base reconstruite : **82
+      fichiers, 3 523 assertions**, aucune anomalie. Types régénérés, témoins (`couts_personnel`, `saisies_temps`,
+      `temps_valorise`, soixante et une fonctions) verts et rouges sous mutation ; `types:check` à jour. Précisions de
+      T1 consignées dans la spécification : plafond compté par espace, personne éligible à un coût si elle est membre
+      ou a déjà du temps saisi. Le refus concurrent du plafond et les refus par la route REST sont prouvés en T4.
 - [ ] **T2** — l'écran « Temps », onglet « Saisie » : la matrice de la semaine, la case « En heures », la navigation,
       l'ajout d'une affaire, « Saisir pour » ; preuves unitaires.
 - [ ] **T3** — Réglages « Coût du personnel », le rapport mensuel, la série « Personnel » de l'écran de coûts du track et

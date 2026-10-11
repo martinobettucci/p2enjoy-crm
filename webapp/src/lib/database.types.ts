@@ -855,6 +855,61 @@ export type Database = {
           },
         ]
       }
+      couts_personnel: {
+        Row: {
+          cout_quart: number
+          created_at: string
+          created_by: string | null
+          date_effet: string
+          devise: string
+          id: string
+          profile_id: string
+          workspace_id: string
+        }
+        Insert: {
+          cout_quart: number
+          created_at?: string
+          created_by?: string | null
+          date_effet: string
+          devise?: string
+          id?: string
+          profile_id: string
+          workspace_id: string
+        }
+        Update: {
+          cout_quart?: number
+          created_at?: string
+          created_by?: string | null
+          date_effet?: string
+          devise?: string
+          id?: string
+          profile_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "couts_personnel_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "couts_personnel_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "couts_personnel_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       form_field_rules: {
         Row: {
           created_at: string
@@ -2040,6 +2095,101 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      saisies_temps: {
+        Row: {
+          card_id: string | null
+          channel_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          jour: string
+          minutes: number
+          profile_id: string
+          track_id: string | null
+          updated_at: string
+          updated_by: string | null
+          workspace_id: string
+        }
+        Insert: {
+          card_id?: string | null
+          channel_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          jour: string
+          minutes: number
+          profile_id: string
+          track_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          workspace_id: string
+        }
+        Update: {
+          card_id?: string | null
+          channel_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          jour?: string
+          minutes?: number
+          profile_id?: string
+          track_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saisies_temps_card_fkey"
+            columns: ["card_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "saisies_temps_channel_fkey"
+            columns: ["channel_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "saisies_temps_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saisies_temps_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saisies_temps_track_fkey"
+            columns: ["track_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "tracks"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "saisies_temps_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saisies_temps_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sessions_sso: {
         Row: {
@@ -3443,6 +3593,24 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      temps_valorise: {
+        Args: {
+          p_card?: string
+          p_debut: string
+          p_fin: string
+          p_profile?: string
+          p_track?: string
+        }
+        Returns: {
+          card_id: string
+          channel_id: string
+          devise: string
+          minutes: number
+          montant: number
+          profile_id: string
+          track_id: string
+        }[]
       }
       unclassify_message: { Args: { p_message_id: string }; Returns: string }
       upsert_mail_inbound_account: {

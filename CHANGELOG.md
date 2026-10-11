@@ -13,6 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-098` — La saisie de temps et le coût du personnel (en cours : T1, la base)
+
+*Décision 621. Non livré en production.*
+
+- **Le temps passé et le coût du personnel, en base** (migration `0087`) : chaque membre saisit, en minutes, le temps
+  passé par jour sur un track, un channel ou une affaire — un quart de journée vaut 1 h 45, une journée 7 heures, au plus
+  par personne et par jour ; chaque personne a un coût par quart, versionné par date d'effet, qui ne se modifie pas et
+  ne prend pas effet dans le passé ; le temps est valorisé par la version en vigueur le jour travaillé. Chacun ne lit que
+  son temps et son coût, les administrateurs ceux de tous, et un administrateur peut saisir pour un membre. Aucun écran
+  encore (T2, T3).
+
 ### `CRM-097` — L'assistant IA de configuration (en cours : T1, le socle ; T2, créer un workflow ; T3, faire évoluer un workflow)
 
 *Décisions 617, 618 et 620. **Livré en production le 2026-10-03** (`38237656`, migrations 83 à 86 appliquées par une

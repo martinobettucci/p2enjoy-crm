@@ -10,6 +10,8 @@
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §7.2 — `workspace_invitations` et
 //           `ouvrir_session_sso` dans le contrat de types (tranche T1) ; §5.6 — `sessions_sso` et
 //           ses quatre fonctions de service (tranche T3 bis, témoin rattrapé en T4)
+// @verifies CRM-098 (docs/BACKLOG.md) tranche T1 — `couts_personnel`, `saisies_temps` et `temps_valorise` aux
+//           témoins (docs/SPEC-temps.md §3, §6.2 ; décision 621)
 //
 // Test **unitaire** du contrat de types. Il ne s'exécute pas : il se compile. Chaque assertion
 // ci-dessous est une contrainte que `tsc --noEmit` vérifie, et qui fait échouer la compilation
@@ -216,6 +218,12 @@ type _tables = Expect<
     // exactement son rôle. Le type n'ouvre rien : la table n'accorde AUCUN privilège à `anon` ni
     // à `authenticated`, seule la clé de service de l'échangeur la lit (docs/SPEC-session-sso.md §5.6).
     | 'sessions_sso'
+    // `0087` de `CRM-098` TRANCHE T1 ajoute `couts_personnel` et `saisies_temps` — le coût d'un quart versionné par
+    // date d'effet, et le temps passé en minutes (docs/SPEC-temps.md §3, décision 621). CE QUI ÉCHAPPE AU
+    // GÉNÉRATEUR : `Update` expose toutes les colonnes de `saisies_temps`, quand le privilège de colonne n'ouvre que
+    // `minutes` ; et `couts_personnel` n'accorde aucune mise à jour, ce que son type `Update` ne dit pas non plus.
+    | 'couts_personnel'
+    | 'saisies_temps'
     // `0083` de `CRM-097` TRANCHE T1 ajoute `suggestions_ia` et `suggestions_ia_revisions` — l'assistant IA,
     // ses suggestions et leur historique (docs/SPEC-ia.md §5, décision 617). Le témoin ne les voit qu'à la
     // régénération de T2, la première tranche dont la webapp les lit. CE QUI ÉCHAPPE AU GÉNÉRATEUR : `defauts`
@@ -955,9 +963,13 @@ type _vueDerivationColonnes = Expect<
 // et la fonction `ia` lisent avant de suggérer une modification (docs/SPEC-ia.md §13.2, décision 620). SECURITY
 // INVOKER : un workflow invisible à l'appelant rend `null` et une occupation `{}`, ce que le type ne dit pas.
 // Cinquante-huit devient SOIXANTE.
-type _lesSoixanteFonctions = Expect<
+// `0087` de `CRM-098` TRANCHE T1 ajoute `temps_valorise` — le temps et son coût sur une période, par personne × cible
+// × devise (docs/SPEC-temps.md §6.2, décision 621). SECURITY INVOKER : un montant que l'appelant ne lit pas est `null`,
+// comme celui d'une saisie sans version, ce que le type ne distingue pas. Soixante devient SOIXANTE ET UNE.
+type _lesSoixanteEtUneFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
+    | 'temps_valorise'
     | 'accepter_suggestion_ia'
     | 'proposition_du_workflow'
     | 'occupation_du_workflow'
@@ -1223,7 +1235,7 @@ export type AssertionsDuContratDeTypes = [
   _relationsWorkspaceMembers,
   _laSeuleVue,
   _vueDerivationColonnes,
-  _lesSoixanteFonctions,
+  _lesSoixanteEtUneFonctions,
   _signatureReelSaisissable,
   _retourReelSaisissable,
   _ecriturePermisePrendUneLigneDeTableau,
