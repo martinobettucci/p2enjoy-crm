@@ -31061,3 +31061,29 @@ le nom inverse de l'adresse source refuse donc la cellule quoi qu'elle envoie ; 
 nom. T1 avait mesuré la même logique d'adresse en développement (le responsable avait autorisé `192.168.0.0/24`).
 *Recommandation* : que LeLabs autorise l'**adresse** vers laquelle `crm.lelabs.tech` résout, plutôt que le nom — ou
 que sa liste résolve le nom au moment du contrôle. Aucun changement de code n'est fait : aucun n'aurait d'effet mesuré.
+
+## décision 621 — `CRM-098` : la saisie de temps et le coût du personnel — premiers arbitrages
+
+*2026-10-11 ; demande du responsable et arbitrages rendus par lui, avant toute spécification et tout code.*
+
+**La demande, mot pour mot** : « un nouveau volet : la saisie de temps ! Je veux que les participants puissent voir les
+tracks, les channels, les affaires dans une matrice et saisir au quart de journée qu'ils ont passé. Chaque user se voit
+attribué un budget coût par quart de journée (versionné, donc si on augmente quelqu'un alors on fait une nouvelle
+version qui change le coût des prochaines saisies). En gros, je veux piloter le coût du personnel sur un track, channel,
+affaire, et dans la saisie des affectations je veux une view de rapport mensuel. »
+
+**Ce que l'existant porte** : le module de coûts (`docs/SPEC-costs.md`) compare des budgets de track à des lignes de
+coût saisies à la main sur des affaires — estimé et réel. Rien ne porte de temps, ni de coût de personne.
+
+**Arbitrages rendus (options présentées, recommandation en premier)** :
+
+1. **Cibles de saisie : track, channel ou affaire** — retenu, recommandé. Le temps passé sur un channel ou un track sans
+   affaire précise se saisit ; les rapports cumulent affaire → channel → track.
+2. **Une version du coût d'une personne vaut à partir d'une date d'effet** — retenu, recommandé : un quart travaillé le
+   jour J est valorisé par la version en vigueur à J ; une saisie tardive pour un jour ancien garde l'ancien coût.
+3. **Les montants : chacun voit aussi son propre coût**, les administrateurs voient tout — retenu, au-delà de la
+   recommandation (administrateurs seuls). Règle appliquée en base.
+4. **Plafond : 4 quarts au plus par personne et par date**, toutes lignes confondues — retenu, recommandé ; refus en base.
+
+**Suite** : seconde série d'arbitrages (forme de la matrice, lignes affichées, saisie pour autrui, lien avec les
+budgets, rapport mensuel), puis la spécification `docs/SPEC-temps.md` et le découpage au backlog, committés avant le code.
