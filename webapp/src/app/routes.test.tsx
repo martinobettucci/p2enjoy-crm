@@ -1,6 +1,7 @@
 // @verifies CRM-007 (docs/BACKLOG.md) — routes de premier niveau et leurs états
 // @verifies CRM-075 (docs/BACKLOG.md) — index des réglages, et adresse de l'administration
 // @verifies CRM-059 (docs/BACKLOG.md) — adresse de l'écran d'état de la messagerie
+// @verifies CRM-098 (docs/BACKLOG.md) — la route « Temps » (docs/SPEC-temps.md §7.1)
 // @verifies docs/SPEC-webapp.md §5.2 (routes) ; docs/DESIGN_SYSTEM.md §5.8 (aucune page blanche)
 // @verifies docs/DESIGN_SYSTEM.md §10 (libellés issus du dictionnaire)
 // @verifies docs/BACKLOG.md « Correctifs arbitrés », INC-189 b ; docs/JOURNAL.md décision 594 — le
@@ -19,6 +20,7 @@ import {
 	CHEMIN_COUTS_WORKSPACE,
 	CHEMIN_AFFAIRES_FIGEES,
 	CHEMIN_PILOTAGE,
+	CHEMIN_TEMPS,
 	CHEMIN_MA_JOURNEE,
 	CHEMIN_OBJECTIFS,
 	CHEMIN_DEMARRAGE,
@@ -43,6 +45,7 @@ describe('table des routes', () => {
 	beforeAll(async () => {
 		await Promise.all([
 			import('./RouteInbox'),
+			import('./Temps'),
 			import('./Carnet'),
 			import('./MaJournee'),
 			import('./AffairesFigees'),
@@ -121,6 +124,7 @@ describe('table des routes', () => {
 			route.chemin !== CHEMIN_MA_JOURNEE &&
 			route.chemin !== CHEMIN_AFFAIRES_FIGEES &&
 			route.chemin !== CHEMIN_PILOTAGE &&
+			route.chemin !== CHEMIN_TEMPS &&
 			route.chemin !== '/reglages' &&
 			route.chemin !== '/',
 	)
@@ -281,6 +285,21 @@ describe('table des routes', () => {
 		expect(screen.getByLabelText(fr['state.loading.aria'])).toBeTruthy()
 		expect(await screen.findByTestId('etat-vide')).toBeTruthy()
 		expect(screen.getByRole('heading').textContent).toBe(fr['pilotage.noworkspace.title'])
+	})
+
+	it('la route /temps rend son écran, chargé à la demande derrière un repli — CRM-098', async () => {
+		// Créée avec son écran (`docs/SPEC-temps.md` §7.1), comme `/pilotage` : elle rejoint d'emblée les routes chargées
+		// à la demande. Montée SANS session ni espace, elle rend l'état vide qui le dit, jamais une page blanche ; la
+		// matrice elle-même est éprouvée par `SaisieTemps.test.tsx`.
+		const route = ROUTES.find((candidate) => candidate.chemin === CHEMIN_TEMPS)
+		expect(route).toBeDefined()
+		render(
+			<MemoryRouter>
+				<Suspense fallback={<ChargementRoute />}>{route!.rendu()}</Suspense>
+			</MemoryRouter>,
+		)
+		expect(await screen.findByTestId('etat-vide')).toBeTruthy()
+		expect(screen.getByRole('heading').textContent).toBe(fr['time.noworkspace.title'])
 	})
 
 	it('la route /contacts rend son écran, chargé à la demande derrière un repli — CRM-060', async () => {

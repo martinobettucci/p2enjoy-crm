@@ -14959,8 +14959,17 @@ track, channel et affaire, avec un rapport mensuel. Spécifié avant le code : `
       `temps_valorise`, soixante et une fonctions) verts et rouges sous mutation ; `types:check` à jour. Précisions de
       T1 consignées dans la spécification : plafond compté par espace, personne éligible à un coût si elle est membre
       ou a déjà du temps saisi. Le refus concurrent du plafond et les refus par la route REST sont prouvés en T4.
-- [ ] **T2** — l'écran « Temps », onglet « Saisie » : la matrice de la semaine, la case « En heures », la navigation,
+- [x] **T2** — l'écran « Temps », onglet « Saisie » : la matrice de la semaine, la case « En heures », la navigation,
       l'ajout d'une affaire, « Saisir pour » ; preuves unitaires.
+      *Vérifié le 2026-10-11* : `temps.test` **21**, `saisie-temps.test` **13**, `SaisieTemps.test` **9** — quatre
+      mutations du composant (double envoi, valeur retenue, plafond annoncé, case verrouillée), chacune rouge —,
+      `routes.test` +1 (`/temps` sans session). E2E `e2e/ui/saisie-temps.spec.ts` **7** scénarios verts : souris,
+      clavier seul (Entrée, flèches, Échap), journée en heures sur cinq cibles, ajout d'une affaire et sa reprise au
+      rechargement, « Saisir pour » avec l'auteur relu en base, navigation dans l'adresse, quatre paliers sans
+      défilement de page. **Un défaut trouvé par l'E2E et corrigé** : `Entrée` puis la sortie du champ envoyaient une
+      seconde insertion (`409`, ou `400` du plafond). Captures `docs/captures/CRM-098/temps-*` observées ; trois
+      retouches tirées des captures (retraits hors échelle, motif de la case déplacé au-dessus de la matrice, première
+      colonne réduite sous `md`). `classes-css` : aucune classe manquante. Les campagnes complètes viennent avec T4.
 - [ ] **T3** — Réglages « Coût du personnel », le rapport mensuel, la série « Personnel » de l'écran de coûts du track et
       de la fiche d'une affaire ; preuves unitaires.
 - [ ] **T4** — preuves d'API aux jetons réels (refus, plafond concurrent), E2E à la souris et au clavier, captures aux

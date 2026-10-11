@@ -145,7 +145,9 @@ lui-même par défaut.
 - **Cellule** : en quarts, une valeur de 0 à 4 ; en heures, de 0 à 7 au quart d'heure. Elle **s'enregistre seule** dès
   que la valeur est arrêtée (le mode des champs du §5.7 ter de la charte).
 - **Pied** : le total de chaque jour, et ce qu'il reste avant la journée pleine — « 3 quarts sur 4 », « 6 h 30 sur 7 h ».
-- **Navigation** : semaine précédente, semaine suivante, « Cette semaine ».
+- **Navigation** : semaine précédente, semaine suivante, « Cette semaine ». La semaine affichée vit dans l'adresse
+  (`/temps?semaine=AAAA-MM-JJ`, le lundi) ; son absence vaut la semaine du jour. La personne choisie dans « Saisir
+  pour » n'y vit pas : elle revient à soi au rechargement.
 - **Ajouter une affaire** : une recherche par titre, qui ajoute sa ligne sous son channel.
 
 ### 7.3 Le rapport mensuel

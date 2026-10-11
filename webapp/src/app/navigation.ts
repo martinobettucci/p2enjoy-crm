@@ -13,6 +13,7 @@
 // Les entrées transverses sont **des données**, pas du balisage : la barre latérale les
 // parcourt, elle ne les code pas en dur. C'est la même règle que docs/DESIGN_SYSTEM.md
 // applique aux sections administrables, appliquée ici à la navigation.
+// @spec CRM-098 (docs/BACKLOG.md) — l'entrée « Temps » (docs/SPEC-temps.md §7.1, docs/DESIGN_SYSTEM.md §5.54)
 
 import type { LucideIcon } from 'lucide-react'
 import {
@@ -21,13 +22,14 @@ import {
 	Contact,
 	Goal,
 	Hourglass,
+	Timer,
 	Gauge,
 	Inbox,
 	LayoutGrid,
 	Settings,
 } from 'lucide-react'
 import type { CleTraduction } from '../i18n'
-import { CHEMIN_AFFAIRES_FIGEES, CHEMIN_MA_JOURNEE, CHEMIN_PILOTAGE } from './chemins'
+import { CHEMIN_AFFAIRES_FIGEES, CHEMIN_MA_JOURNEE, CHEMIN_PILOTAGE, CHEMIN_TEMPS } from './chemins'
 
 export type EntreeNavigation = {
 	readonly chemin: string
@@ -60,6 +62,11 @@ export const ENTREES_TRANSVERSES: readonly EntreeNavigation[] = [
 	// L'icône est `Gauge` : elle dit l'INSTRUMENT QUI MESURE, là où `ChartColumn` dit la comparaison
 	// de deux séries et `Goal` le but atteint. Aucune autre entrée ne la porte (§9).
 	{ chemin: CHEMIN_PILOTAGE, cleLibelle: 'nav.item.pilotage', icone: Gauge },
+	// APRÈS « Pilotage », et non entre « Coûts » et lui, que le §5.48 veut voisins : « Temps » est la saisie qui
+	// nourrit le coût du personnel (`docs/SPEC-temps.md` §7.1, `docs/DESIGN_SYSTEM.md` §5.54). L'icône est `Timer` :
+	// le temps MESURÉ, là où `Hourglass` dit le temps qui s'écoule sans que rien n'avance ; aucune autre entrée ne la
+	// porte (§9).
+	{ chemin: CHEMIN_TEMPS, cleLibelle: 'nav.item.time', icone: Timer },
 	{ chemin: CHEMIN_MA_JOURNEE, cleLibelle: 'nav.item.today', icone: CalendarCheck },
 	// IMMÉDIATEMENT APRÈS « Ma journée », ET CE N'EST PAS UNE COMMODITÉ (`docs/SPEC-relances.md`
 	// §10.4). Les deux écrans répondent à la même question — « qu'est-ce qui me réclame ? » — et se

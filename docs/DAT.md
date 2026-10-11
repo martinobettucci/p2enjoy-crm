@@ -206,6 +206,12 @@ Découpage prévu : `src/lib` (client Supabase, types générés, helpers), `src
   ouverte. Aucune écriture nouvelle : `creerChannel` et `creerWorkflow` sous les politiques existantes.
   **Compromis** : le brouillon (nom, identifiant, description d'un channel) entre dans l'historique du navigateur
   comme toute adresse ;
+- `src/app/Temps.tsx`, `src/app/SaisieTemps.tsx`, `src/lib/temps.ts` et `src/lib/saisie-temps.ts` (`CRM-098`,
+  `docs/SPEC-temps.md` §7) — l'écran « Temps » et sa matrice de la semaine. `temps.ts` est pur (unités, semaine du
+  lundi, mode d'une journée, lignes de la matrice) ; `saisie-temps.ts` lit et écrit `saisies_temps` sans rejouer
+  aucune règle — le plafond, la cible lisible et qui saisit pour qui sont tenus par la migration `0087`. **La semaine
+  affichée est un paramètre d'adresse** (`semaine`, le lundi) ; la personne pour qui un administrateur saisit ne l'est
+  pas : elle revient à soi au rechargement, pour qu'aucune adresse partagée ne fasse saisir au nom d'un autre ;
 - `src/app/ContexteEspace.tsx`, `src/app/GuideFlottant.tsx`, et le signal `p2enjoy:workflow-de-depart`
   de `src/lib/demarrage.ts` (`CRM-094`, `docs/SPEC-onboarding.md` §10) — la coquille lit **une fois**
   l'espace courant et le rôle que la base y rend (`mon_role_espace`), et les passe par un contexte au

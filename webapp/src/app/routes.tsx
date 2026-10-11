@@ -6,6 +6,7 @@
 // @spec CRM-077 (docs/BACKLOG.md) — adresse de la corbeille (docs/SPEC-corbeille.md §4.1)
 // @spec CRM-060 (docs/BACKLOG.md) — route du carnet de contacts (docs/SPEC-contacts.md §10.2)
 // @spec CRM-086 (docs/BACKLOG.md) — adresse de l'écran de coûts d'un track (docs/SPEC-costs.md §4.0)
+// @spec CRM-098 (docs/BACKLOG.md) — route de l'écran « Temps » (docs/SPEC-temps.md §7.1)
 // @spec docs/SPEC-webapp.md §5.2 (routes) ; docs/DESIGN_SYSTEM.md §5.8 (états)
 // @spec docs/SPEC-administration-arborescence.md §3.1 (deux adresses, et non une)
 // @spec docs/SPEC-mail-subsystem.md §20.11.1 (adresse dédiée, hors de ROUTES)
@@ -59,6 +60,7 @@ import {
 	CHEMIN_ORGANISATION,
 	cheminOrganisation,
 	CHEMIN_REGLAGES_NOTIFICATIONS,
+	CHEMIN_TEMPS,
 } from './chemins'
 
 export {
@@ -90,6 +92,7 @@ export {
 	CHEMIN_ORGANISATION,
 	cheminOrganisation,
 	CHEMIN_REGLAGES_NOTIFICATIONS,
+	CHEMIN_TEMPS,
 }
 
 /**
@@ -154,6 +157,9 @@ const CoutsWorkspace = lazy(async () => ({
  * C'est précisément le critère qui range cette adresse ici (§8).
  */
 const Pilotage = lazy(async () => ({ default: (await import('./Pilotage')).Pilotage }))
+
+// `CRM-098` — l'écran « Temps », chargé à la demande comme « Pilotage » : il n'est pas sur le chemin du premier rendu.
+const Temps = lazy(async () => ({ default: (await import('./Temps')).Temps }))
 
 /**
  * Titre de la route d'administration — `CRM-075`.
@@ -276,6 +282,11 @@ export const ROUTES: readonly DescriptionRoute[] = [
 		chemin: CHEMIN_PILOTAGE,
 		cleTitre: 'route.pilotage.title',
 		rendu: () => <Pilotage />,
+	},
+	{
+		chemin: CHEMIN_TEMPS,
+		cleTitre: 'route.time.title',
+		rendu: () => <Temps />,
 	},
 	{
 		// Ma journée — `CRM-061`, `docs/SPEC-cards.md` §17. L'adresse rendait un état vide

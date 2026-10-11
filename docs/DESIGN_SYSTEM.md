@@ -5176,29 +5176,39 @@ de gestes, confirmation d'abandon, historique, focus et annonces. Seuls les éca
 
 Spécifiée avant code, `docs/SPEC-temps.md` §7 (décision 621).
 
-**Entrée de navigation.** « Temps », icône Lucide `Timer` — aucune autre surface ne l'emploie —, placée après « Coûts »
-dans la barre latérale. Deux onglets du style de la fiche d'affaire : « Saisie » et « Rapport mensuel ».
+**Entrée de navigation.** « Temps », icône Lucide `Timer` — aucune autre surface ne l'emploie —, placée après « Pilotage »
+dans la barre latérale (et non entre « Coûts » et « Pilotage », que le §5.48 veut voisins ; corrigé à la livraison de T2). Deux onglets du style de la fiche d'affaire : « Saisie » et « Rapport mensuel ».
 
 **La matrice de la semaine** réemploie le tableau de données du §5.9 : en-tête collant, lignes de 44 px, première colonne
 collante à gauche (la cible), montants et durées alignés à droite, chiffres tabulaires (`tabular-nums`).
 
-- **Lignes.** Un track en 15 px `font-medium` ; ses channels en retrait d'un pas (`pl-4`), 14 px ; une affaire en retrait
-  de deux pas (`pl-8`), 14 px, suivie de son titre lien vers sa fiche. Une ligne d'affaire reprise de la semaine
+- **Lignes.** Un track en 15 px `font-medium`, à 12 px du bord ; ses channels à 24 px (`pl-6`), 14 px ; une affaire à
+  36 px (`pl-[36px]`, valeur arbitraire assumée : l'échelle close n'a pas de 36 px, leçon d'INC-231), 14 px. La
+  première colonne mesure 28 caractères à partir du palier `md`, 16 sous lui, où les libellés passent à la ligne. Une ligne d'affaire reprise de la semaine
   précédente ne se distingue pas d'une autre : c'est une commodité, pas un état.
 - **En-tête d'un jour.** Le jour abrégé et la date (« lun. 12 »), le jour courant souligné de `--color-brand` (2 px sous
   le libellé, jamais un fond) ; dessous, la case **« En heures »** — `checkbox` native, cible de 44 px, nom accessible
-  « Saisir le {jour long} en heures ». Une case qui ne peut pas se décocher (`docs/SPEC-temps.md` §6.3) reste active et,
-  au geste, dit pourquoi sous l'en-tête (`role="status"`) : « Des saisies de ce jour ne tombent pas sur un quart ».
-- **Cellule.** Un champ numérique de 4 rem, centré, `inputmode="decimal"`. **En quarts** : entier de 0 à 4 ; **en
+  « Saisir le {jour long} en heures », 24 px et l'accent `--color-brand` comme toute case (§5.7 bis), libellé sans
+  retour à la ligne. Une case qui ne peut pas se décocher (`docs/SPEC-temps.md` §6.3) reste cochée et, au geste, dit
+  pourquoi **au-dessus de la matrice** (`role="status"`, `--color-danger`) : « Le {jour} reste en heures : des saisies de
+  ce jour ne tombent pas sur un quart. » Posé d'abord sous l'en-tête, le motif élargissait la colonne de son jour et
+  déformait la grille (constaté sur la capture le 2026-10-11).
+- **Cellule.** Un champ de 4 rem (`w-[4rem]`), centré, `inputmode="decimal"`, de la hauteur d'une cible. **En quarts** : entier de 0 à 4 ; **en
   heures** : de 0 à 7 au pas de 0,25, affiché « 1 h 30 » hors du focus. Vide vaut zéro et s'affiche vide, jamais `0`
   — une matrice pleine de zéros se lit comme une matrice remplie. La cellule s'enregistre seule (§5.7 ter) : les
   mentions vivent dans une info-bulle d'état attachée à la cellule et dans une région `aria-live="polite"` unique de la
-  matrice, jamais en tête d'écran. Un refus de plafond rend la cellule en `--color-danger` (bordure 2 px) avec le motif.
+  matrice, jamais en tête d'écran. Un refus de plafond rend la cellule en `--color-danger` (bordure 2 px) avec le motif
+  sous elle, relié par `aria-describedby`. **Une valeur qui dépasserait la journée est annoncée avant tout envoi** — la
+  base reste seule juge et refuse de toute façon. Une cellule enregistrée garde une bordure `--color-success` jusqu'au
+  prochain geste. **Une seule écriture par cellule vole à la fois**, et la cellule sait dès la réponse ce que la base a
+  retenu : `Entrée` enregistre puis déplace le focus, et la sortie du champ qui s'ensuit ne doit pas réécrire (défaut
+  trouvé par l'E2E le 2026-10-11 : seconde insertion refusée en `409` ou `400`).
 - **Clavier.** Flèches haut/bas/gauche/droite déplacent le focus de cellule en cellule quand le champ est vide ou sa
   valeur entièrement sélectionnée ; `Entrée` enregistre et descend d'une ligne ; `Échap` rétablit la valeur enregistrée.
 - **Pied.** Une ligne de total par jour : « 3 / 4 quarts » ou « 6 h 30 / 7 h », en `--color-text-2` ; une journée pleine
   passe en `--color-success-on-soft` sur `--color-success-soft` (pastille moulée sur la valeur, règle du §5.31). La
-  colonne de droite totalise chaque ligne, en jours et heures (« 1 j 3 h 30 »).
+  colonne de droite totalise chaque ligne, en jours et heures (« 1 j 3 h 30 ») ; un total nul reste vide, comme une
+  cellule vide. Aucun total ne passe à la ligne (`whitespace-nowrap`).
 - **Navigation.** Au-dessus de la matrice : « Semaine précédente » (`ChevronLeft`), le libellé de la semaine
   (« Semaine du 12 au 18 octobre 2026 »), « Semaine suivante » (`ChevronRight`), « Cette semaine ». « Ajouter une
   affaire » (`Plus`) ouvre une combobox de recherche (motif ARIA combobox du §5.21).

@@ -31119,6 +31119,15 @@ réinitialisée (`./resetMe.sh`) pendant la campagne d'interface d'une session p
 prévenue, ses échecs dans la fenêtre 16:45–16:50 sont à rejouer. Leçon : vérifier qu'aucune campagne ne tourne
 (`ps`, sessions sœurs) avant toute réinitialisation.
 
+**`CRM-098` T2, livrée en développement le 2026-10-11** — l'écran « Temps » et sa matrice. **Un défaut trouvé par
+l'E2E** : `Entrée` enregistre puis déplace le focus ; la sortie du champ qui s'ensuit relançait l'enregistrement AVANT
+que la matrice ne soit rendue avec la ligne neuve, et envoyait donc une seconde insertion — refusée en `409` par
+l'unicité, ou en `400` par le plafond qui comptait la valeur deux fois. Correction à la cause : la cellule retient dès la
+réponse ce que la base a gardé, et une seule écriture par cellule vole à la fois ; deux preuves unitaires, rouges sous
+leur mutation. Trois retouches tirées des captures, portées au §5.54 de la charte : `pl-7` et `pl-11` hors de l'échelle
+close (aucun retrait rendu), le motif de la case « En heures » qui déformait la colonne de son jour, la première
+colonne trop large sous `md`. L'entrée de navigation suit « Pilotage », et non « Coûts », que le §5.48 veut voisins.
+
 ## décision 622 — `CRM-099` : plusieurs coûts réels par ligne de coût, jusqu'à ce qu'on la solde
 
 *2026-10-11 ; remarque du responsable pendant la rédaction de `CRM-098`, arbitrages rendus par lui le même jour, avant
