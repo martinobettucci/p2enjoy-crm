@@ -31301,3 +31301,18 @@ revient en arrière sur un refus. Le panneau des réels vit SOUS la table de la 
 migration 88. Relevé en lecture seule avant et après la fenêtre : les deux lignes au réel connu portent chacune un réel
 repris égal à leur réel d'avant, et sont rouvertes (`docs/PROD_MIGRATIONS.md` §8). Reste le constat fonctionnel du
 responsable.
+
+## décision 624 — INC-271 : les tests mail ne doivent pas entrer en collision avec la veille
+
+*2026-10-12 ; arbitrage du responsable, rendu sur le compte rendu de `CRM-099`.*
+
+**L'arbitrage, mot pour mot** : « les tests ne doivent pas entrer en collision mais être idempotents tout en vérifiant
+l'exactitude de la fonctionnalité testée. »
+
+**Ce que cela exclut** : rétrograder `folder_rename_refused` ou `veille_compte_echoue` (on masquerait un signal de
+production), suspendre la veille pendant la campagne (on cesserait d'éprouver le produit tel qu'il tourne), rejouer
+une campagne jusqu'au vert (c'est ce qui a été fait trois fois le 2026-10-11, et c'est exactement ce que l'arbitrage
+refuse). **Ce que cela demande** : chaque scénario qui partage un compte ou un dossier avec la veille de fond en est
+rendu indépendant — par ses propres objets, ou par un contrat jugé sur l'état final plutôt que sur le compte des
+gestes qu'une relève a faits —, et rejouable sans rien laisser derrière lui. Les deux collisions mesurées le
+2026-10-11 (INC-271) sont traitées d'abord ; une recherche des autres scénarios du même motif suit.

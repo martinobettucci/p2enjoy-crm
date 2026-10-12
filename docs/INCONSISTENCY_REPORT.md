@@ -7121,8 +7121,13 @@ garde cette garantie — revérifiée au milieu du cœur, avant toute autre écr
 
 ### INC-271 — la veille de `mail-sync` court contre le bloc final de « renommer un TRACK », et S3 entend son avertissement
 
-> **OUVERTE le 2026-10-11, relevée pendant la campagne de `CRM-098` T4.** Étrangère à `CRM-098` : aucun fichier du
-> sous-système mail ni du test n'a bougé. Comportement laissé inchangé ; correction à arbitrer (`CLAUDE.md` §5).
+> **ARBITRÉE le 2026-10-12 par le responsable (décision 624)** : « les tests ne doivent pas entrer en collision mais être
+> idempotents tout en vérifiant l'exactitude de la fonctionnalité testée. » Aucune issue rétrogradant un avertissement
+> ni suspendant la veille n'est retenue : chaque scénario mail qui partage un état avec la veille est rendu
+> indépendant d'elle, et prouve son contrat sur l'état final, quel que soit celui — la veille ou lui — qui a fait le
+> travail. Correction en cours, `docs/BACKLOG.md` « Correctif arbitré le 2026-10-12 — INC-271 ».
+>
+> *Ouverte le 2026-10-11, relevée pendant la campagne de `CRM-098` T4 ; étrangère à `CRM-098`.*
 
 *Mesuré le 2026-10-11, deux campagnes `e2e:mail` enchaînées* : « 1 failed, 41 passed » toutes deux, sur
 `e2e/mail/mail-sync.spec.ts` §224 (S3 — « chaque ligne est un JSON borné, sans secret ni avertissement »), qui lit deux

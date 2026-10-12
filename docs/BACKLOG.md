@@ -15148,3 +15148,12 @@ chacune dans son propre commit, avant `CRM-097` T3 ; la livraison en production 
       *Vérifié le 2026-09-30* : `commentaires.spec.ts` 14 sur 14 ; rouge quand le fil rend son état
       d'erreur pour une affaire sans commentaire. Campagne `verify-webapp.sh` sur la base reconstruite :
       **44 contrôles, aucune anomalie** — 3403 tests unitaires, 782 scénarios E2E.
+
+## Correctif arbitré le 2026-10-12 — INC-271 (décision 624)
+
+- [ ] **INC-271 — les scénarios mail ne doivent plus entrer en collision avec la veille de `mail-sync`.** Chaque scénario
+      qui partage un compte entrant ou un dossier IMAP avec la veille en devient indépendant, reste idempotent, et prouve
+      son contrat sur l'état final. Les deux collisions mesurées : le renommage d'un track (`e2e/mail/dossiers.spec.ts`
+      §276, `folder_rename_refused`) et l'essai d'un compte faux pendant qu'il est relevé (`veille_compte_echoue`). Preuve :
+      chaque correction est éprouvée en provoquant la collision à coup sûr (veille accélérée sur un passage dédié), puis
+      la campagne `e2e:mail` est rejouée plusieurs fois de suite, verte à chaque passage, sans rejeu de complaisance.
