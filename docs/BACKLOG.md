@@ -15157,3 +15157,8 @@ chacune dans son propre commit, avant `CRM-097` T3 ; la livraison en production 
       §276, `folder_rename_refused`) et l'essai d'un compte faux pendant qu'il est relevé (`veille_compte_echoue`). Preuve :
       chaque correction est éprouvée en provoquant la collision à coup sûr (veille accélérée sur un passage dédié), puis
       la campagne `e2e:mail` est rejouée plusieurs fois de suite, verte à chaque passage, sans rejeu de complaisance.
+      **Complété le 2026-10-12 (décision 624, suite)** : la veille accélérée (5 s) a révélé deux sites de plus —
+      `ingestion.spec.ts` (compteurs de SA relève, rendus sur l'état) et `backfill.spec.ts` (§20.6 bis.4, une propriété
+      de la transition premier contact → second contact, qui ne se juge pas sur l'état final). Arbitrage : la preuve du
+      backfill s'exécute sur un exemplaire jetable de `mail-sync`, même image et même environnement, veille désactivée
+      (`MAIL_SYNC_POLL_INTERVAL=0`), le service partagé arrêté proprement puis redémarré sain dans le `finally`.

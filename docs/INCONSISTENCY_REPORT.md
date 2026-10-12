@@ -7126,6 +7126,9 @@ garde cette garantie — revérifiée au milieu du cœur, avant toute autre écr
 > ni suspendant la veille n'est retenue : chaque scénario mail qui partage un état avec la veille est rendu
 > indépendant d'elle, et prouve son contrat sur l'état final, quel que soit celui — la veille ou lui — qui a fait le
 > travail. Correction en cours, `docs/BACKLOG.md` « Correctif arbitré le 2026-10-12 — INC-271 ».
+> **Complément arbitré le même jour (décision 624, suite)** : la preuve du premier contact du backfill (§20.6 bis.4),
+> qui observe une transition et non un état final, s'exécute sur un exemplaire jetable du service, veille désactivée,
+> le service partagé arrêté puis redémarré dans le `finally`.
 >
 > *Ouverte le 2026-10-11, relevée pendant la campagne de `CRM-098` T4 ; étrangère à `CRM-098`.*
 

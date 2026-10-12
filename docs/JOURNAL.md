@@ -31316,3 +31316,42 @@ refuse). **Ce que cela demande** : chaque scénario qui partage un compte ou un 
 rendu indépendant — par ses propres objets, ou par un contrat jugé sur l'état final plutôt que sur le compte des
 gestes qu'une relève a faits —, et rejouable sans rien laisser derrière lui. Les deux collisions mesurées le
 2026-10-11 (INC-271) sont traitées d'abord ; une recherche des autres scénarios du même motif suit.
+
+### décision 624, suite — la preuve du premier contact s'exécute sur un exemplaire jetable, veille désactivée
+
+*2026-10-12 ; arbitrage du responsable, rendu sur question.*
+
+**Le constat qui l'a demandé.** Les corrections d'INC-271 ont été éprouvées en provoquant la collision à coup sûr : le
+service `mail-sync` de développement recréé avec `MAIL_SYNC_POLL_INTERVAL=5` (le minimum que `normaliser_intervalle`
+accepte), par un fichier Compose de surcharge hors dépôt. Les anciennes spécifications y rougissent (« 1 failed, 41
+passed », `dossiers.spec.ts`, le compte des dossiers classés que la veille avait déjà classés) ; les nouvelles passent
+deux campagnes sur trois. La troisième rougit sur deux autres sites du même motif, que la veille à 60 s ne touchait que
+rarement : `ingestion.spec.ts` comptait encore `messages_new` et `attachments_infected` dans la réponse de SA relève, et
+`backfill.spec.ts` (§20.6 bis.4) observe l'état ENTRE le premier et le second contact d'une boîte — or la veille, qui
+relève tout compte doté d'un secret (`ordonner_comptes`, sans exclusion possible), a fait les deux contacts avant la
+relève de la preuve, qui a donc vu l'historique déjà descendu.
+
+**Pourquoi le backfill ne se juge pas sur l'état final.** Ingestion et classement se jugent sur l'état : qui que ce soit
+qui ait ingéré, le message, ses pièces et sa card sont en base, et le verrou par compte (INC-266) garantit qu'au retour de
+la relève de la preuve rien n'est en vol. Le premier contact, lui, est une propriété d'une TRANSITION — ce que la
+première relève d'un état vierge descend — et l'état final, après deux contacts, est le même que le produit soit juste
+ou fautif. Il faut donc que la preuve soit la seule à relever cette boîte pendant sa section critique.
+
+**Issues présentées** : (1) un exemplaire jetable du service, veille désactivée, le temps de cette seule preuve ;
+(2) une fenêtre synchronisée sur la fin d'un tour de veille — déterministe seulement si l'intervalle laisse une fenêtre ;
+(3) un crochet produit écartant un compte de la veille — migration, spécification et livraison pour un besoin de test.
+
+**L'arbitrage** : l'issue (1), « Conteneur jetable ». **Ce qu'elle fait** : le temps de la seule preuve du backfill, le
+service `mail-sync` de développement est arrêté proprement (`docker stop` : `PiloteVeille.arreter` interrompt l'attente
+de la veille, aucun tour n'est laissé en vol), un exemplaire jetable de LA MÊME image, avec LE MÊME environnement et
+`MAIL_SYNC_POLL_INTERVAL=0` (§20.10.5, « aucune veille », journalisé `veille_desactivee`), est démarré sur le même
+réseau sous l'alias `mail-sync` et sert les relèves de la preuve ; dans le `finally`, l'exemplaire est retiré et le
+service redémarré, attendu sain. **Ce qu'elle ne fait pas** : elle ne suspend pas la veille pour la campagne — ce que
+la décision 624 exclut — mais pour la seule section où une relève tierce rendrait la preuve fausse ; elle ne touche
+aucun code produit. **Conséquence assumée** : pendant cette minute, la veille de développement est absente pour les
+autres utilisateurs du poste ; le projet `mail` étant sériel, aucun autre scénario mail ne court en même temps.
+
+**Preuve attendue** : la collision provoquée (veille à 5 s) ne rougit plus aucune des trois specs ; la campagne
+`e2e:mail` est rejouée plusieurs fois de suite sous veille accélérée puis à l'intervalle nominal, verte à chaque passage,
+sans rejeu de complaisance ; S3 (silence mesuré sur son propre passage, tour de veille compris) reste verte.
+
