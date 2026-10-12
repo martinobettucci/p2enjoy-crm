@@ -3,6 +3,8 @@
 // @verifies docs/JOURNAL.md décisions 235 et 245 (configuration locale déterministe)
 // @verifies INC-272 (docs/INCONSISTENCY_REPORT.md ; docs/JOURNAL.md décision 625) — la limite d'envoi par expéditeur,
 //           relevée pour le seul développement, écrite par l'API puis relue
+// @verifies INC-273 (docs/INCONSISTENCY_REPORT.md ; docs/JOURNAL.md décision 626) — le sous-réseau de la pile exempté
+//           du bannissement, lu à l'exécution, écrit et relu par l'API ; aucune adresse dans le dépôt
 //
 // CE TEST N'EST PAS UN TEST DE FAÇADE, et son objet est nommé : deux de ses invariants ont été
 // payés par une panne réelle.
@@ -143,6 +145,33 @@ describe('configuration de Stalwart — limite d’envoi de développement (INC-
 	it('ne touche ni à la limite par adresse IP, ni à l’activation du limiteur', () => {
 		expect(PROVISION).not.toMatch(/queue\.limiter\.inbound\.ip\./)
 		expect(PROVISION).not.toMatch(/"queue\.limiter\.inbound\.sender\.enable"/)
+	})
+})
+
+describe('configuration de Stalwart — le réseau de la pile n’est jamais banni (INC-273)', () => {
+	it('lit le sous-réseau à l’exécution, par la route de lien, et refuse une valeur illisible', () => {
+		expect(PROVISION).toContain("sous_reseau=$(ip -4 route show scope link | awk 'NR == 1 { print $1 }')")
+		expect(PROVISION).toMatch(/\*\.\*\/\*\) : ;;\n\t\*\) echec "sous-réseau de la pile illisible/)
+	})
+
+	it('l’exempte par l’API et efface les bannissements posés, avant le rechargement', () => {
+		const exemption = PROVISION.indexOf('["server.allowed-ip.%s",""]')
+		expect(exemption).toBeGreaterThan(-1)
+		expect(PROVISION).toContain('{"type":"clear","prefix":"server.blocked-ip."}')
+		expect(exemption).toBeLessThan(PROVISION.indexOf('reponse=$(appel GET /api/reload)'))
+	})
+
+	it('relit l’exemption et l’absence de bannissement, et échoue sinon', () => {
+		expect(PROVISION).toContain("appel GET '/api/settings/list?prefix=server.allowed-ip'")
+		expect(PROVISION).toContain('echec "server.allowed-ip ne porte pas le sous-réseau de la pile après écriture"')
+		expect(PROVISION).toContain(`*'"total":0'*) : ;;`)
+		expect(PROVISION).toContain('echec "des bannissements subsistent après effacement"')
+	})
+
+	it('n’écrit aucune adresse IP dans le dépôt, ni ne touche au seuil de bannissement', () => {
+		expect(PROVISION).not.toMatch(/\b\d{1,3}(\.\d{1,3}){3}\b/)
+		expect(CONFIG).not.toMatch(/\b\d{1,3}(\.\d{1,3}){3}\/\d+/)
+		expect(PROVISION).not.toContain('server.auto-ban')
 	})
 })
 

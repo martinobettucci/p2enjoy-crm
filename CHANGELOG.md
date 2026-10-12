@@ -13,6 +13,14 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Correctif du 2026-10-12 — INC-273 (décision 626)
+
+*Développement seulement : aucun code produit, aucune migration, rien à livrer.*
+
+- **Le serveur de messagerie de développement ne bannit plus les services de la pile** : les preuves qui essaient
+  volontairement un mot de passe faux ne coupent plus `mail-sync` ni Roundcube du serveur ; le bannissement reste actif
+  pour toute autre origine.
+
 ### Correctif du 2026-10-12 — INC-272 (décision 625)
 
 *Développement seulement : aucun code produit, aucune migration, rien à livrer.*

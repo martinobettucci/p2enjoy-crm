@@ -31459,3 +31459,31 @@ pour toute autre origine. Écart propre au développement, porté par `docs/SPEC
 Preuves : test unitaire du provisionnement ; preuve E2E qu'un service de la pile reste joignable après plus d'échecs
 d'authentification que le seuil ; puis la série de campagnes `e2e:mail` verte qui clôt aussi INC-272.
 
+### décision 626, mise en œuvre — l'exemption lue à l'exécution, prouvée par le bannissement qu'elle évite
+
+*2026-10-12.*
+
+**Le seuil, lu et non supposé** : les chaînes du binaire `/usr/local/bin/stalwart` v0.13.4 portent les valeurs par
+défaut `server.auto-ban.auth.rate = 100/1d`, `abuse = 35/1d`, `loiter = 150/1d`, `scan = 30/1d`, et la clé
+`server.allowed-ip`. Le journal du serveur nommait les bannis (`security.authentication-ban`) ; le réseau Compose
+nommait leurs conteneurs : `mail-sync` et `roundcube`. Lever les bannissements ne suffisait pas — rebannis dans la
+campagne suivante, le compteur du jour étant déjà dépassé.
+
+**Le mécanisme** : `stalwart/provision.sh` lit la route de lien du réseau qu'il partage avec Stalwart
+(`ip -4 route show scope link`), refuse une valeur illisible, écrit `server.allowed-ip.<sous-réseau>` et efface
+`server.blocked-ip.` dans la même requête de réglages, avant le rechargement, puis relit l'exemption et l'absence de
+bannissement. Le journal du provisionnement n'imprime pas le sous-réseau.
+
+**Vérifications.** `stalwart/config.test.ts` 31/31 ; mutation tuée. M1 bis (`e2e/mail/infrastructure.spec.ts`) : 101
+échecs IMAP depuis l'hôte, puis une session valide, et `server.blocked-ip` vide — vert. Mutation : l'exemption retirée du
+serveur, M1 bis rougit dès la première tentative (le compteur du jour de l'adresse dépassant déjà le seuil, elle est
+bannie et la connexion coupée) ; le provisionnement rétablit tout. Deux campagnes `e2e:mail` consécutives : 44/44, état
+de référence rendu, et dans le journal de Stalwart ni `smtp.rate-limit-exceeded`, ni `security.authentication-ban`, ni
+`security.ip-blocked` — ce qui clôt aussi INC-272.
+
+**Ce qui n'a pas été rejoué** : le harnais complet (`scripts/verify-harness.sh`) n'a pas été relancé après ces
+changements — à la demande du responsable, qui avait besoin de mémoire. Son dernier passage, avant INC-273, rendait
+trois échecs étrangers à ces correctifs : « Ma journée » (vert après réapplication du seed) et B5 (INC-257, déjà
+consignée), qui supposent un seed appliqué le jour même. Les captures régénérées par les campagnes ne différaient que par
+la card choisie après réapplication du seed ; elles sont restaurées.
+

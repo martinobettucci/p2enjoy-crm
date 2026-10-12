@@ -15172,7 +15172,7 @@ chacune dans son propre commit, avant `CRM-097` T3 ; la livraison en production 
 
 ## Correctif arbitré le 2026-10-12 — INC-272 (décision 625)
 
-- [~] **INC-272 — relever la limite d'envoi par expéditeur de Stalwart pour le seul développement.** La limite par défaut
+- [x] **INC-272 — relever la limite d'envoi par expéditeur de Stalwart pour le seul développement.** La limite par défaut
       (25 envois par expéditeur et par heure) borne la preuve à trois campagnes `e2e:mail` par heure. Clé relevée dans la
       documentation de Stalwart, valeur couvrant une journée de campagnes, écart documenté (`docs/DAT.md`, commentaire de
       `stalwart/config.toml`), staging et production inchangés. Preuve : une série de campagnes `e2e:mail` consécutives
@@ -15181,12 +15181,18 @@ chacune dans son propre commit, avant `CRM-097` T3 ; la livraison en production 
       27/27, mutation tuée ; M2 bis vert seul, et rouge (`452`) quand la limite du serveur est remise à `25/1h`. Les
       campagnes complètes tombent en cascade pour une autre cause — le bannissement automatique de `mail-sync` et de
       `roundcube` par Stalwart (INC-273) — : la série verte reste à faire après INC-273.
+      **Vérifié le 2026-10-12, après INC-273** : deux campagnes `e2e:mail` consécutives, 44/44, état de référence rendu,
+      aucun `smtp.rate-limit-exceeded`.
 
 ## Correctif arbitré le 2026-10-12 — INC-273 (décision 626)
 
-- [ ] **INC-273 — le réseau de la pile de développement n'est jamais banni par Stalwart.** `stalwart/provision.sh` lit le
+- [x] **INC-273 — le réseau de la pile de développement n'est jamais banni par Stalwart.** `stalwart/provision.sh` lit le
       sous-réseau Compose à l'exécution, l'écrit sous `server.allowed-ip` par l'API, le relit, efface les bannissements
       posés ; aucune adresse dans le dépôt ; le bannissement reste actif pour toute autre origine. Preuves : test
       unitaire du provisionnement ; E2E — un service de la pile reste joignable après une série d'échecs
       d'authentification ; série de campagnes `e2e:mail` consécutives verte (clôt aussi INC-272).
+      **Vérifié le 2026-10-12** : `stalwart/config.test.ts` 31/31, mutation (effacement des bannissements retiré) tuée ;
+      provisionnement rejoué sur la pile, exemption et absence de bannissement relues ; M1 bis vert (101 échecs, session
+      valide, aucune adresse bannie), rouge quand l'exemption est retirée du serveur ; deux campagnes `e2e:mail`
+      consécutives 44/44, sans `security.authentication-ban` ni `security.ip-blocked`.
 

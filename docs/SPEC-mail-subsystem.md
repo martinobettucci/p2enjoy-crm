@@ -315,6 +315,14 @@ d'effet qu'en développement : ce serveur n'existe nulle part ailleurs (§2.1). 
 (écriture et relecture par l'API) et `e2e/mail/infrastructure.spec.ts` M2 bis (l'ancienne limite plus un, toutes les
 soumissions acceptées vers un même destinataire).
 
+**Écart volontaire — le réseau de la pile n'est jamais banni (INC-273, décision 626).** Stalwart bannit une adresse
+au-delà de `server.auto-ban.auth.rate` échecs d'authentification (`100/1d`, valeur par défaut lue dans le binaire
+v0.13.4) ; les preuves « mot de passe faux » passent volontairement par `mail-sync` et `roundcube`, qu'il finissait par
+bannir. `stalwart-init` lit à l'exécution le sous-réseau du réseau Compose qu'il partage avec Stalwart, le déclare
+`server.allowed-ip` par l'API, efface les bannissements posés, puis relit les deux ; aucune adresse n'est écrite dans le
+dépôt, et le bannissement reste actif pour toute autre origine. Preuves : `stalwart/config.test.ts` et
+`e2e/mail/infrastructure.spec.ts` M1 bis (101 échecs, puis une session valide, aucune adresse bannie).
+
 **Mesuré — les listeners doivent lier `0.0.0.0`, jamais `[::]`.** La configuration générée par
 `--init` lie `[::]`. Sur un hôte dont le conteneur n'a pas d'IPv6, le serveur **s'arrête sans
 écrire une seule ligne**, ni sur la sortie standard ni dans un fichier : `docker logs` rend le

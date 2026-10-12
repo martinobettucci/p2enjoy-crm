@@ -19,6 +19,9 @@
 # @spec INC-272 (docs/INCONSISTENCY_REPORT.md ; docs/BACKLOG.md « Correctif arbitré le 2026-10-12 — INC-272 ») —
 #       la limite d'envoi par expéditeur relevée pour le seul développement, docs/JOURNAL.md décision 625,
 #       docs/SPEC-mail-subsystem.md §11.3
+# @spec INC-273 (docs/INCONSISTENCY_REPORT.md ; docs/BACKLOG.md « Correctif arbitré le 2026-10-12 — INC-273 ») —
+#       le sous-réseau de la pile de développement n'est jamais banni, docs/JOURNAL.md décision 626,
+#       docs/SPEC-mail-subsystem.md §11.3
 #
 # @spec CRM-060 (docs/BACKLOG.md) — sous-tranche 2 bis : la boîte du correspondant de démonstration,
 #       docs/SPEC-mail-subsystem.md §11.4, docs/SPEC-contacts.md §8.8.8
@@ -97,6 +100,24 @@ case "$reponse" in
 	*) echec "réglages IMAP/SMTP et ressource webadmin : réponse inattendue — $reponse" ;;
 esac
 
+# LE SOUS-RÉSEAU DE LA PILE N'EST JAMAIS BANNI — INC-273, décision 626, ÉCART VOLONTAIRE PROPRE AU DÉVELOPPEMENT.
+# Stalwart bannit une adresse après des échecs d'authentification. Les preuves « mot de passe faux » passent VOLONTAIREMENT
+# par `mail-sync` et `roundcube` : ce sont eux qu'il bannissait (mesuré), et tous les scénarios qui relèvent, envoient ou
+# ouvrent une session tombaient ensuite en cascade. Le sous-réseau est LU ICI, à l'exécution — la route de lien du réseau
+# Compose que ce conteneur partage avec Stalwart —, jamais écrit dans le dépôt. Il est déclaré `server.allowed-ip`, et les
+# bannissements déjà posés sont effacés ; le bannissement reste actif pour toute autre origine.
+sous_reseau=$(ip -4 route show scope link | awk 'NR == 1 { print $1 }')
+case "$sous_reseau" in
+	*.*/*) : ;;
+	*) echec "sous-réseau de la pile illisible depuis stalwart-init — « $sous_reseau »" ;;
+esac
+exemption=$(printf '[{"type":"insert","prefix":null,"values":[["server.allowed-ip.%s",""]],"assert_empty":false},{"type":"clear","prefix":"server.blocked-ip."}]' "$sous_reseau")
+reponse=$(appel POST /api/settings "$exemption")
+case "$reponse" in
+	*'"data"'*) dire "sous-réseau de la pile — exempté du bannissement, bannissements posés effacés" ;;
+	*) echec "exemption du sous-réseau de la pile : réponse inattendue — $reponse" ;;
+esac
+
 reponse=$(appel GET /api/reload)
 case "$reponse" in
 	*'"data"'*) dire "configuration Stalwart — rechargée" ;;
@@ -146,7 +167,17 @@ case "$limite_lue" in
 	*'"rate":"1000/1h"'*) : ;;
 	*) echec "queue.limiter.inbound.sender.rate non relu après écriture — $limite_lue" ;;
 esac
-dire "réglages IMAP/SMTP, ressource webadmin et limite d'envoi de développement — relus"
+exemption_lue=$(appel GET '/api/settings/list?prefix=server.allowed-ip')
+case "$exemption_lue" in
+	*"\"$sous_reseau\":"*) : ;;
+	*) echec "server.allowed-ip ne porte pas le sous-réseau de la pile après écriture" ;;
+esac
+bannis_lus=$(appel GET '/api/settings/list?prefix=server.blocked-ip')
+case "$bannis_lus" in
+	*'"total":0'*) : ;;
+	*) echec "des bannissements subsistent après effacement" ;;
+esac
+dire "réglages IMAP/SMTP, ressource webadmin, limite d'envoi et exemption de la pile — relus"
 
 # --- 3. Domaines --------------------------------------------------------------------------------
 

@@ -1,4 +1,6 @@
 // @verifies CRM-050 (docs/BACKLOG.md) — infrastructure mail de développement
+// @verifies INC-273 (docs/INCONSISTENCY_REPORT.md, décision 626) — M1 bis : le réseau de la pile n'est jamais banni
+//           (docs/SPEC-mail-subsystem.md §11.3)
 // @verifies INC-272 (docs/INCONSISTENCY_REPORT.md, décision 625) — M2 bis : la limite d'envoi de développement couvre
 //           une série de campagnes (docs/SPEC-mail-subsystem.md §11.3)
 // @verifies INC-271 (docs/INCONSISTENCY_REPORT.md, décision 624) — M2 rend la boîte système et la base dans l'état
@@ -193,6 +195,40 @@ test.describe('M2 bis — la limite d’envoi de développement couvre une séri
 		} finally {
 			await rendreLesBoites(request, { boites: [boite], motif: jeton, avant: dossiersAvant, debut })
 		}
+	})
+})
+
+// INC-273, DÉCISION 626 — LE RÉSEAU DE LA PILE N'EST JAMAIS BANNI. Stalwart bannit une adresse au-delà de
+// `server.auto-ban.auth.rate` échecs d'authentification — `100/1d`, valeur par défaut lue dans le binaire v0.13.4 —, et
+// bannissait ainsi `mail-sync` et `roundcube`, par lesquels passent les preuves « mot de passe faux ». Le provisionnement
+// déclare le sous-réseau de la pile `server.allowed-ip`. La preuve dépasse RÉELLEMENT le seuil depuis l'hôte, dont les
+// connexions arrivent par la passerelle de ce sous-réseau : 101 échecs, puis une session valide qui doit s'ouvrir, et
+// aucune adresse bannie. Sans l'exemption, la 101e tentative bannit l'adresse et la session valide est refusée.
+const SEUIL_DE_BANNISSEMENT_PAR_DEFAUT = 100
+
+test.describe('M1 bis — le réseau de la pile n’est jamais banni par Stalwart (INC-273)', () => {
+	test('au-delà du seuil d’échecs, une session valide s’ouvre encore, et aucune adresse n’est bannie', async ({
+		request,
+	}) => {
+		test.setTimeout(240_000)
+		for (let rang = 1; rang <= SEUIL_DE_BANNISSEMENT_PAR_DEFAUT + 1; rang += 1) {
+			const refus = await sessionImap(HOTE, PORT_IMAP, BOITES_PERSONNELLES[1]!, `faux-${rang}`, [])
+			expect(refus, `échec d'authentification ${rang}`).toMatch(/^a1 NO/m)
+		}
+
+		const valide = await sessionImap(HOTE, PORT_IMAP, BOITES_PERSONNELLES[1]!, MDP, ['SELECT INBOX'])
+		expect(valide).toContain('a1 OK')
+		expect(valide).toContain('a2 OK')
+
+		const bannis = await request.get(`http://${HOTE}:${PORT_GESTION}/api/settings/list?prefix=server.blocked-ip`, {
+			headers: {
+				Authorization: `Basic ${Buffer.from(
+					`${lireEnv('STALWART_ADMIN_USER')}:${lireEnv('STALWART_ADMIN_PASSWORD')}`,
+				).toString('base64')}`,
+			},
+		})
+		expect(bannis.status()).toBe(200)
+		expect(((await bannis.json()) as { data: { total: number } }).data.total, 'aucune adresse bannie').toBe(0)
 	})
 })
 

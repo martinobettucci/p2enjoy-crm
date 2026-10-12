@@ -7173,8 +7173,9 @@ et S3, qui exige le silence de toute la campagne, en paie le prix. L'issue (2) �
 >
 > **MISE EN ŒUVRE le 2026-10-12** (`docs/JOURNAL.md` décision 625, mise en œuvre) : `stalwart/provision.sh` écrit et
 > relit `queue.limiter.inbound.sender.rate = "1000/1h"` ; M2 bis (`e2e/mail/infrastructure.spec.ts`) prouve que
-> l'ancienne limite plus un passe, et rougit quand la limite du serveur est remise à `25/1h`. **La preuve sur campagnes
-> complètes attend INC-273** : le bannissement automatique de Stalwart fait tomber les campagnes en cascade.
+> l'ancienne limite plus un passe, et rougit quand la limite du serveur est remise à `25/1h`.
+> **RÉSOLUE le 2026-10-12**, avec INC-273 : deux campagnes `e2e:mail` consécutives, 44/44, sans aucun
+> `smtp.rate-limit-exceeded` dans le journal de Stalwart.
 >
 > *Ouverte le 2026-10-12, relevée pendant la preuve d'INC-271.*
 
@@ -7200,6 +7201,10 @@ dépasse l'arbitrage d'INC-271. **Issues possibles** : (1) régler la limite d'e
 > le sous-réseau Docker de la pile de développement comme jamais bannissable (`server.allowed-ip`), lu à l'exécution,
 > écrit et relu par l'API ; le bannissement reste actif pour toute autre origine. `docs/BACKLOG.md` « Correctif arbitré
 > le 2026-10-12 — INC-273 ».
+>
+> **RÉSOLUE le 2026-10-12** (`docs/JOURNAL.md` décision 626, mise en œuvre) : exemption écrite et relue par
+> `stalwart/provision.sh` ; M1 bis vert, et rouge sans l'exemption ; deux campagnes `e2e:mail` consécutives, 44/44, sans
+> aucun `security.authentication-ban` ni `security.ip-blocked`.
 >
 > *Ouverte le 2026-10-12, relevée pendant la preuve d'INC-272.*
 

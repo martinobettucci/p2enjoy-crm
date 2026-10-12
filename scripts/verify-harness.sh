@@ -1439,7 +1439,9 @@ SCENARIOS_UI=818
 # l'ancienne limite d'envoi plus un, toutes les soumissions acceptées vers un même destinataire. INC-271 (décision 624)
 # n'a ajouté ni retiré aucun scénario : `e2e/mail/menage.ts` est un module, pas un fichier de scénario. 42 + 1 = **43**,
 # COMPTÉ par `--list` (43 tests dans 11 fichiers), puis confronté au nombre de verts.
-SCENARIOS_MAIL=43
+# **44 depuis INC-273, 2026-10-12** (décision 626) : `e2e/mail/infrastructure.spec.ts` gagne **1** scénario — M1 bis, le
+# réseau de la pile reste joignable au-delà du seuil de bannissement. 43 + 1 = **44**, vert sur deux campagnes consécutives.
+SCENARIOS_MAIL=44
 
 failures=0
 checks=0

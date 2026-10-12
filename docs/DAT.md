@@ -506,7 +506,9 @@ se fait par `/api/*`. Les réglages IMAP/SMTP modifiables sont écrits dans le m
 configuration par `stalwart-init`, puis rechargés par l'API ; le fichier local ne porte que les
 clés d'infrastructure. Parmi eux, un écart volontaire propre au développement : la limite d'envoi par expéditeur
 (`queue.limiter.inbound.sender.rate`) est portée de `25/1h` à `1000/1h`, pour que plusieurs campagnes `e2e:mail` par
-heure ne soient pas refusées en `452` (INC-272, décision 625 ; `docs/SPEC-mail-subsystem.md` §11.3). `postgres-meta` conserve son healthcheck d'image, complété dans l'overlay
+heure ne soient pas refusées en `452` (INC-272, décision 625 ; `docs/SPEC-mail-subsystem.md` §11.3). Second écart, même
+mécanisme : le sous-réseau Docker de la pile, lu à l'exécution, est déclaré `server.allowed-ip` — `mail-sync` et
+`roundcube`, par qui passent les preuves « mot de passe faux », ne sont jamais bannis (INC-273, décision 626). `postgres-meta` conserve son healthcheck d'image, complété dans l'overlay
 par une période de démarrage : `docker compose up --wait` ne doit pas confondre initialisation et
 indisponibilité.
 
@@ -1198,7 +1200,7 @@ désigne `P2ENJOY_ENV_FILE`.
 | `supabase/seed/apply-seed.sh` | Applique le seed socle par les API réelles ; convergent, ne détruit rien | Environnement complet ; profil `dev` ; pile démarrée |
 | `scripts/generate-types.sh` | Régénère `webapp/src/lib/database.types.ts` depuis la base migrée, ou le compare sans écrire (`--check`) | Environnement complet ; profil `dev` ; conteneur `meta` en marche |
 | `scripts/run-sql-tests.sh` | Exécute les suites pgTAP de `supabase/tests/` et **calcule** le verdict TAP, que `psql` ne rend pas | Conteneur `db` en marche ; n'écrit rien en base |
-| `stalwart/provision.sh` | Pose les réglages IMAP/SMTP modifiables et la limite d'envoi de développement (INC-272), recharge Stalwart, puis crée les domaines et les trois boîtes par l'API de gestion ; convergent, ne détruit aucun message | Exécuté par le service jetable `stalwart-init` ; API de gestion joignable |
+| `stalwart/provision.sh` | Pose les réglages IMAP/SMTP modifiables la limite d'envoi de développement (INC-272) et l'exemption de bannissement du réseau de la pile (INC-273), recharge Stalwart, puis crée les domaines et les trois boîtes par l'API de gestion ; convergent, ne détruit aucun message | Exécuté par le service jetable `stalwart-init` ; API de gestion joignable |
 
 L'arrêt propre passe par `./runDev.sh --stop` et `./runProd.sh --stop`, qui conservent les
 volumes. Seul `resetMe.sh` détruit des données, et uniquement en profil `dev`.
