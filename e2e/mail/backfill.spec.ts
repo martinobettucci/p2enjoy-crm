@@ -23,8 +23,16 @@
 // `viderLaBoite`) — mesuré nécessaire après qu'un reliquat d'un autre scénario a une première
 // fois faussé le premier contact. `backfill_months` est restauré à sa valeur du seed dans le
 // `finally`.
+//
+// @verifies INC-271 (docs/INCONSISTENCY_REPORT.md ; docs/JOURNAL.md décision 624, suite) — LA SECTION CRITIQUE EST
+//           EXCLUSIVE. Forcer l'état ne suffit pas : la veille relève ce compte en continu, et peut faire le premier
+//           ET le second contact avant la relève de cette preuve — mesuré sous une veille accélérée à 5 s. Le premier
+//           contact est une propriété d'une TRANSITION, que l'état final ne distingue pas. Le temps de la preuve, le
+//           service partagé est donc arrêté proprement et un exemplaire jetable de LA MÊME image, avec LE MÊME
+//           environnement et la veille désactivée (`MAIL_SYNC_POLL_INTERVAL=0`, §20.10.5), sert les relèves sous
+//           l'alias réseau `mail-sync` ; le `finally` le retire et redémarre le service, attendu sain.
 
-import { execFileSync } from 'node:child_process'
+import { execFileSync, spawnSync } from 'node:child_process'
 import { expect, test } from '@playwright/test'
 import { lireEnv, urlApi } from '../env'
 import { CLE_ANONYME, enTetesService, jetonDe } from '../api/jetons'
@@ -64,6 +72,74 @@ function python(source: string, variables: Record<string, string> = {}): string 
 	for (const [nom, valeur] of Object.entries(variables)) arguments_.push('-e', `${nom}=${valeur}`)
 	arguments_.push(IMAGE, 'python', '-c', source)
 	return docker(...arguments_)
+}
+
+const EXEMPLAIRE = 'p2enjoy-mail-sync-jetable'
+
+type Configuration = { Image: string; Env: string[] }
+
+/** Attend une condition relue, jamais une durée supposée ; échoue en nommant ce qu'elle attendait. */
+function attendre(quoi: string, condition: () => boolean, delaiMs = 90_000): void {
+	const limite = Date.now() + delaiMs
+	while (Date.now() < limite) {
+		if (condition()) return
+		execFileSync('sleep', ['1'])
+	}
+	throw new Error(`délai dépassé en attendant : ${quoi}`)
+}
+
+/**
+ * Remplace, le temps de la section critique, le service partagé par un exemplaire SANS VEILLE — voir l'en-tête.
+ *
+ * L'environnement est relu sur le service lui-même (`docker inspect`), jamais recopié du dépôt, et transmis par NOM
+ * (`-e NOM`, valeur héritée de l'environnement du processus `docker`) : aucun secret ne paraît dans une ligne de
+ * commande ni dans un fichier. Seul `MAIL_SYNC_POLL_INTERVAL` est surchargé. Le volume d'état est celui du service
+ * (`--volumes-from`), arrêté : aucun écrivain concurrent.
+ */
+function remplacerParUnExemplaireSansVeille(): void {
+	const configuration = JSON.parse(docker('inspect', CONTENEUR, '--format', '{{json .Config}}')) as Configuration
+	const environnement: Record<string, string> = {}
+	for (const entree of configuration.Env) {
+		const egal = entree.indexOf('=')
+		environnement[entree.slice(0, egal)] = entree.slice(egal + 1)
+	}
+	environnement['MAIL_SYNC_POLL_INTERVAL'] = '0'
+	const reseauDuService = reseau()
+
+	docker('stop', CONTENEUR)
+	const arguments_ = ['run', '-d', '--rm', '--name', EXEMPLAIRE, '--network', reseauDuService, '--network-alias', 'mail-sync', '--volumes-from', CONTENEUR]
+	for (const nom of Object.keys(environnement)) arguments_.push('-e', nom)
+	arguments_.push(configuration.Image)
+	execFileSync('docker', arguments_, {
+		encoding: 'utf8',
+		timeout: 120_000,
+		env: { ...process.env, ...environnement },
+	})
+	attendre('l’exemplaire jetable prêt, veille désactivée', () => {
+		const journal = spawnSync('docker', ['logs', EXEMPLAIRE], { encoding: 'utf8' })
+		return `${journal.stdout}${journal.stderr}`.includes('"veille_desactivee"') && pret(EXEMPLAIRE)
+	})
+}
+
+/** Le service répond-il sur sa route de disponibilité ? Relu de l'intérieur du conteneur. */
+function pret(conteneur: string): boolean {
+	return (
+		spawnSync(
+			'docker',
+			['exec', conteneur, 'python', '-c', "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health/ready', timeout=2)"],
+			{ encoding: 'utf8', timeout: 30_000 },
+		).status === 0
+	)
+}
+
+/** Retire l'exemplaire et rend le service partagé, sain — appelé dans le `finally`, quoi qu'il soit arrivé. */
+function rendreLeService(): void {
+	spawnSync('docker', ['rm', '-f', EXEMPLAIRE], { encoding: 'utf8', timeout: 60_000 })
+	docker('start', CONTENEUR)
+	attendre('le service partagé redémarré et sain', () => {
+		const sante = spawnSync('docker', ['inspect', CONTENEUR, '--format', '{{.State.Health.Status}}'], { encoding: 'utf8' })
+		return sante.stdout.trim() === 'healthy'
+	}, 180_000)
 }
 
 type Historique = { id: string; sujet: string; joursAnciennete: number }
@@ -280,6 +356,9 @@ test.describe('backfill par lots — le jour d’abord, l’historique déposé 
 		const backfillMonthsInitial = compte.backfill_months
 
 		try {
+			// LA SECTION CRITIQUE EST EXCLUSIVE — INC-271, décision 624 (suite) : voir l'en-tête. Dans le `try` : un
+			// remplacement interrompu à mi-chemin rend quand même le service.
+			remplacerParUnExemplaireSansVeille()
 			// L'ÉTAT DE DÉPART EST FORCÉ VIERGE, BOÎTE COMPRISE : voir le motif porté par
 			// `forcerEtatVierge` et par `viderLaBoite`.
 			await forcerEtatVierge(request, compte)
@@ -325,13 +404,18 @@ test.describe('backfill par lots — le jour d’abord, l’historique déposé 
 			const troisieme = relever(compte.id)
 			expect(troisieme['messages_new']).toBe(0)
 		} finally {
-			viderLaBoite()
-			await request.delete(
-				`${URL_API}/rest/v1/mail_messages?rfc822_message_id=in.(${encoderIds(tousLesIds)})`,
-				{ headers: enTetesService() },
-			)
-			await ecrireBackfillMonths(request, jetonAdmin, compte, backfillMonthsInitial)
-			await forcerEtatVierge(request, compte)
+			try {
+				viderLaBoite()
+				await request.delete(
+					`${URL_API}/rest/v1/mail_messages?rfc822_message_id=in.(${encoderIds(tousLesIds)})`,
+					{ headers: enTetesService() },
+				)
+				await ecrireBackfillMonths(request, jetonAdmin, compte, backfillMonthsInitial)
+				await forcerEtatVierge(request, compte)
+			} finally {
+				// L'état est rendu AVANT le service : la veille qui reprend trouve une boîte vide et un état vierge.
+				rendreLeService()
+			}
 		}
 	})
 })

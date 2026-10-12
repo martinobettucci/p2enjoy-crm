@@ -1,5 +1,7 @@
 // @verifies CRM-051 (docs/BACKLOG.md) — socle du service `mail-sync`
 // @verifies INC-266 (docs/INCONSISTENCY_REPORT.md, décision 619) — S3 mesure le silence sur le passage en cours
+// @verifies INC-271 (docs/INCONSISTENCY_REPORT.md, décision 624) — S3 mesure le silence sur SON passage, tour de veille
+//           compris, sans entendre les avertissements légitimes que d'autres scénarios provoquent exprès
 // @verifies docs/SPEC-mail-subsystem.md §12.1 (aucun port publié), §12.3 (santé et API interne),
 //           §12.4 (état durable et reprise), §12.5 (journaux), §12.6 (preuves exigées)
 // @verifies docs/JOURNAL.md décision 310 (état de reprise prouvable), décision 313 (aucun
@@ -221,28 +223,38 @@ test.describe('S2 — arrêt et redémarrage sans perte d’état', () => {
 })
 
 test.describe('S3 — la console opérationnelle reste silencieuse', () => {
-	test('chaque ligne est un JSON borné, sans secret ni avertissement', () => {
-		// LE SILENCE SE MESURE SUR CE PASSAGE — INC-266, décision 619. La lecture entière du journal rendait S3 rouge
-		// pour toujours après UN avertissement d'un passage antérieur, même après `docker restart`, qui garde le
-		// journal : seule la recréation du conteneur le rendait vert. La forme, le niveau et l'absence de secret
-		// sont contrôlés depuis le début de la campagne (`E2E_DEBUT_CAMPAGNE`, `e2e/playwright.config.ts`) ;
-		// l'absence de secret l'est AUSSI sur le journal entier — une fuite ancienne reste une fuite.
-		const depuis = process.env['E2E_DEBUT_CAMPAGNE']
-		expect(depuis, 'le début de campagne est fixé par la configuration').toBeTruthy()
-		const toutLeJournal = journauxConteneur()
-		const journaux = journauxConteneur(depuis)
-		const lignes = journaux.split('\n').filter((ligne) => ligne.trim().length > 0)
+	test('chaque ligne est un JSON borné, sans secret ni avertissement', async () => {
+		// LE SILENCE SE MESURE SUR LE PASSAGE DE CETTE PREUVE, ET IL COMPREND UN TOUR DE VEILLE — INC-271, décision 624.
+		// Il se mesurait depuis le début de la campagne (INC-266, décision 619) : la preuve entendait alors les
+		// avertissements LÉGITIMES que d'autres scénarios provoquent exprès — un compte jetable au mot de passe faux, que
+		// la veille relève et dit en échec —, et rougissait selon l'instant où la veille passait, sans défaut du produit.
+		// Elle juge désormais ce qui est SON objet : le service en régime nominal, sur un passage qu'elle ouvre elle-même
+		// et qui contient au moins un tour complet de la veille de fond (`veille_tour_termine`). Tout scénario rend son
+		// état en `finally` : un état laissé faussé ferait parler la veille ICI, et la preuve le dirait.
+		// L'absence de secret, elle, reste contrôlée sur le journal ENTIER — une fuite ancienne reste une fuite.
+		const debut = new Date().toISOString()
+		const limite = Date.now() + 180_000
+		let journaux = ''
+		while (Date.now() < limite) {
+			journaux = journauxConteneur(debut)
+			if (journaux.includes('"veille_tour_termine"')) break
+			execFileSync('sleep', ['2'])
+		}
+		expect(journaux, 'un tour complet de la veille de fond doit tomber dans le passage mesuré').toContain(
+			'"veille_tour_termine"',
+		)
 
-		expect(lignes.length).toBeGreaterThan(0)
+		const lignes = journaux.split('\n').filter((ligne) => ligne.trim().length > 0)
 		for (const ligne of lignes) {
 			const objet = JSON.parse(ligne) as Record<string, unknown>
 			expect(Object.keys(objet)).toEqual(
 				expect.arrayContaining(['timestamp', 'level', 'service', 'event']),
 			)
 			expect(objet['service']).toBe('mail-sync')
-			expect(['DEBUG', 'INFO']).toContain(objet['level'])
+			expect(['DEBUG', 'INFO'], ligne).toContain(objet['level'])
 		}
 
+		const toutLeJournal = journauxConteneur()
 		expect(toutLeJournal).not.toContain(JETON)
 		expect(toutLeJournal.toLowerCase()).not.toContain('authorization')
 		// Le service a démarré dans la vie de ce conteneur : la preuve lit bien SON journal.

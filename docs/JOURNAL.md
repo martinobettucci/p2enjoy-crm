@@ -31355,6 +31355,52 @@ autres utilisateurs du poste ; le projet `mail` étant sériel, aucun autre scé
 `e2e:mail` est rejouée plusieurs fois de suite sous veille accélérée puis à l'intervalle nominal, verte à chaque passage,
 sans rejeu de complaisance ; S3 (silence mesuré sur son propre passage, tour de veille compris) reste verte.
 
+### décision 624, mise en œuvre — ce que la collision provoquée a appris
+
+*2026-10-12.*
+
+**La méthode.** Chaque correction est éprouvée en PROVOQUANT la collision : le service `mail-sync` de développement
+recréé avec `MAIL_SYNC_POLL_INTERVAL=5` par une surcharge Compose tenue hors dépôt, puis rendu à son environnement
+d'origine (contrôlé : aucune variable d'intervalle dans le conteneur). Après chaque campagne, un contrôle relit les
+dossiers des trois boîtes du seed, les correspondances `mail_folder_map` et le nombre de lignes `mail_messages` et de
+comptes : la référence est « aucun dossier `CRM`, 0 correspondance, 4 messages, 3 comptes ».
+
+**Ce que la veille accélérée a trouvé, au-delà des deux collisions mesurées le 2026-10-11** :
+
+- des contrats jugés sur les COMPTEURS de la relève de la preuve — dossiers rangés et renommés, messages ingérés et
+  classés, pièces infectées : la veille les avait devancés. Ils sont jugés sur l'état (`cardDuMessage`, message, pièces,
+  occurrences après rejeu) ;
+- la transition du premier contact du backfill, que l'état final ne distingue pas : exemplaire jetable (décision 624,
+  suite) — l'environnement relu sur le service par `docker inspect` et transmis par NOM (`-e NOM`), aucun secret dans
+  une ligne de commande ; le service partagé arrêté, puis redémarré et attendu sain dans le `finally` ;
+- des RELIQUATS qui dépendaient de l'instant : la veille range une copie du message d'une card sous `CRM/…` dans la
+  boîte qui le reçoit — celle de Driss pour l'aller-retour et la résilience, la boîte système pour le classement
+  automatique —, et ces scénarios ne purgeaient qu'`INBOX`. La capture validée de `CRM-056` en portait un
+  (`CRM/Conseil & IA/Grands comptes/Refonte du si…`). Une relève de veille partie avant la purge réinsérait aussi une
+  ligne après le ménage (une ligne « AllerRetour… » relevée en base après une campagne).
+
+**La forme retenue pour le ménage** (`e2e/mail/menage.ts`, partagé par l'envoi, la résilience, l'ingestion et
+l'infrastructure ; le même ordre dans `dossiers` et `roundcube-dossiers`) : instantané des dossiers AVANT ; puis le
+message retiré de TOUS les dossiers ; une BARRIÈRE — une relève de chaque compte par `/poll`, que le verrou par compte
+d'INC-266 fait attendre la fin d'une relève de veille en vol, et qui ne trouve plus rien ; les lignes ; les
+correspondances nées depuis le début du scénario ; les dossiers nés, les plus profonds d'abord ; enfin l'état rendu est
+EXIGÉ — dossiers identiques, aucun message du scénario dans aucun dossier, aucune ligne. Une boucle « rejouer le ménage
+jusqu'à stabilité » a été écrite puis abandonnée au profit de la barrière : elle masquait la course au lieu de la fermer.
+
+**S3** mesure le silence sur SON passage, qui doit contenir un `veille_tour_termine` (attente sur condition, bornée à
+180 s) ; l'absence de secret reste contrôlée sur le journal entier. La variable `E2E_DEBUT_CAMPAGNE` (décision 619),
+sans lecteur, est retirée de `e2e/playwright.config.ts`. Les scénarios qui faussent un compte (mot de passe faux,
+`starttls`, `ssl` sur 993) travaillent sur un compte jetable — la boîte personnelle de Farida, absente du seed —, créé
+par le vrai chemin d'écriture et retiré dans le `finally`.
+
+**Vérifications.** Anciennes spécifications sous veille à 5 s : « 1 failed, 41 passed ». Nouvelles : 42/42 à chaque
+campagne consécutive — trois séries, la dernière après les derniers changements (une à 5 s, deux nominales) —, l'état de
+référence rendu après chacune. Mutations : laisser le compte faussé rougit S3 (`veille_compte_echoue`) ; retirer la
+purge du ménage rougit son contrôle final (« un message du scénario survit dans bizdev / INBOX »). Une série a rougi par
+la limite d'envoi de Stalwart (INC-272) : refus `452`, aucune collision, état intact — elle n'est pas comptée. Les
+reliquats laissés par les mutations et par les campagnes antérieures ont été retirés de la base et des boîtes de
+développement.
+
 ## décision 625 — INC-272 : la limite d'envoi de Stalwart est relevée pour le seul développement
 
 *2026-10-12 ; arbitrage du responsable, rendu sur question.*

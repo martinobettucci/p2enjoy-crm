@@ -1,4 +1,6 @@
 // @verifies CRM-056 (docs/BACKLOG.md) — arborescence IMAP, vérifiée PAR UN CLIENT IMAP
+// @verifies INC-271 (docs/INCONSISTENCY_REPORT.md, décision 624) — aucune collision avec la veille : le contrat est
+//           jugé sur l'état final, et le nettoyage ne laisse aucune correspondance vers un dossier supprimé
 // @verifies docs/SPEC-mail-subsystem.md §4.5 (dossiers imbriqués, renommage, copie et non
 //           déplacement), §17.1 (le RENAME emporte les enfants), §17.2
 // @verifies docs/JOURNAL.md décisions 323, 324 et 325
@@ -176,7 +178,56 @@ except urllib.error.HTTPError as e:
 	return JSON.parse(brut) as Record<string, number>
 }
 
-function nettoyer(identifiant: string, prefixes: string[]): void {
+/**
+ * Le message de la preuve, tel que la base le porte : la card à laquelle il est rangé.
+ *
+ * LE CONTRAT EST JUGÉ SUR L'ÉTAT, JAMAIS SUR LE COMPTE D'UNE RELÈVE — INC-271, décision 624. La veille de fond relève la
+ * même boîte toutes les minutes : elle peut ranger le message AVANT la relève que la preuve déclenche, qui rend alors
+ * `filed: 0` pour un produit correct. Ce qui compte est que le message soit rangé, et dans la bonne card.
+ */
+async function cardDuMessage(
+	request: import('@playwright/test').APIRequestContext,
+	identifiant: string,
+): Promise<string | null> {
+	const reponse = await request.get(
+		`${URL_API}/rest/v1/mail_messages?rfc822_message_id=eq.${encodeURIComponent(`<${identifiant}@p2enjoy.test>`)}&select=card_id`,
+		{ headers: enTetesService() },
+	)
+	const [message] = (await reponse.json()) as { card_id: string | null }[]
+	return message?.card_id ?? null
+}
+
+/**
+ * Le nettoyage, DANS CET ORDRE — INC-271, décision 624. La boîte d'abord : sans le message sur le serveur, aucune relève
+ * ne peut le réingérer. Puis le message en base : sans lui, aucun rangement ne reste à reprendre. Puis les
+ * correspondances : sans elles, aucune divergence ne reste à renommer. Les dossiers IMAP en dernier. Dans l'ordre que
+ * le scénario suivait, un tour de veille tombé entre la purge des dossiers et la suppression des correspondances voyait
+ * une correspondance vers un dossier disparu, et journalisait `folder_rename_refused` (mesuré le 2026-10-11).
+ * `avantDossiers` s'exécute après les correspondances et avant les dossiers : le renommage en retour d'un track y prend
+ * place, quand plus aucune correspondance ne peut en faire une divergence.
+ * Entre la purge et la base, une BARRIÈRE : une relève du compte par `/poll`, que le verrou par compte (INC-266) fait
+ * attendre la fin d'une relève de veille déjà en vol — partie avant la purge, elle réinsérait sinon une ligne ou une
+ * correspondance après le ménage (mesuré sur `envoi.spec.ts` le 2026-10-12). Elle-même ne trouve plus rien.
+ */
+async function nettoyerDansLOrdre(
+	request: import('@playwright/test').APIRequestContext,
+	compte: string,
+	identifiant: string,
+	avantDossiers: () => Promise<void> = async () => undefined,
+): Promise<void> {
+	purgerLaBoite(identifiant)
+	relever(compte)
+	await request.delete(
+		`${URL_API}/rest/v1/mail_messages?rfc822_message_id=eq.${encodeURIComponent(`<${identifiant}@p2enjoy.test>`)}`,
+		{ headers: enTetesService() },
+	)
+	await request.delete(`${URL_API}/rest/v1/mail_folder_map?actual_path=like.CRM*`, { headers: enTetesService() })
+	await avantDossiers()
+	supprimerLesDossiers(['CRM'])
+}
+
+/** Retire le message de la preuve de la boîte (INBOX, Junk Mail) — premier temps du nettoyage (INC-271). */
+function purgerLaBoite(identifiant: string): void {
 	python(
 		`
 import os, imaplib
@@ -191,6 +242,20 @@ for dossier in ('INBOX', 'Junk Mail'):
         if os.environ['ID'].encode() in brut[0][1]:
             c.uid('store', uid, '+FLAGS', '(\\\\Deleted)')
     c.expunge()
+c.logout()
+`,
+		{ ID: identifiant },
+	)
+}
+
+/** Supprime les dossiers IMAP sous ces préfixes, les plus profonds d'abord — dernier temps du nettoyage (INC-271). */
+function supprimerLesDossiers(prefixes: string[]): void {
+	python(
+		`
+import os, imaplib
+
+c = imaplib.IMAP4('stalwart', 143)
+c.login('systeme@crm.p2enjoy.test', 'SeedDev2026Local')
 typ, dossiers = c.list()
 noms = []
 for d in dossiers:
@@ -204,7 +269,7 @@ for nom in sorted(noms, key=len, reverse=True):
         pass
 c.logout()
 `,
-		{ ID: identifiant, PREFIXES: prefixes.join('|') },
+		{ PREFIXES: prefixes.join('|') },
 	)
 }
 
@@ -237,8 +302,9 @@ test.describe('dossiers IMAP — l’arborescence vue par un client', () => {
 
 		try {
 			envoyer(identifiant, `${carte!.email_local_part}@crm.p2enjoy.test`)
-			const releve = relever(compte!.id)
-			expect(releve['filed'], JSON.stringify(releve)).toBeGreaterThanOrEqual(1)
+			relever(compte!.id)
+			// Rangé dans SA card — par cette relève ou par la veille qui l'a précédée (INC-271).
+			expect(await cardDuMessage(request, identifiant)).toBe(carte!.id)
 
 			// L'ARBORESCENCE EST LUE PAR UN CLIENT IMAP TIERS, niveau par niveau.
 			const arbre = arborescence()
@@ -262,14 +328,7 @@ test.describe('dossiers IMAP — l’arborescence vue par un client', () => {
 			expect(types).toContain('channel')
 			expect(types).toContain('card')
 		} finally {
-			nettoyer(identifiant, ['CRM'])
-			await request.delete(
-				`${URL_API}/rest/v1/mail_messages?rfc822_message_id=eq.${encodeURIComponent(`<${identifiant}@p2enjoy.test>`)}`,
-				{ headers: enTetesService() },
-			)
-			await request.delete(`${URL_API}/rest/v1/mail_folder_map?actual_path=like.CRM*`, {
-				headers: enTetesService(),
-			})
+			await nettoyerDansLOrdre(request, compte!.id, identifiant)
 		}
 	})
 
@@ -307,7 +366,8 @@ test.describe('dossiers IMAP — l’arborescence vue par un client', () => {
 
 		try {
 			envoyer(identifiant, `${carte!.email_local_part}@crm.p2enjoy.test`)
-			expect(relever(compte!.id)['filed']).toBeGreaterThanOrEqual(1)
+			relever(compte!.id)
+			expect(await cardDuMessage(request, identifiant)).toBe(carte!.id)
 
 			await request.patch(`${URL_API}/rest/v1/tracks?id=eq.${canal!.track_id}`, {
 				headers: enTetesService(),
@@ -315,8 +375,10 @@ test.describe('dossiers IMAP — l’arborescence vue par un client', () => {
 			})
 
 			const apres = relever(compte!.id)
-			// UN SEUL RENOMMAGE SUFFIT : le `RENAME` d'un parent emporte ses enfants (§17.1).
-			expect(apres['renamed'], JSON.stringify(apres)).toBe(1)
+			// UN SEUL RENOMMAGE SUFFIT : le `RENAME` d'un parent emporte ses enfants (§17.1). Cette relève en fait un, ou
+			// aucun si la veille l'a précédée (INC-271) — jamais deux : l'arborescence et les trois correspondances,
+			// relues ci-dessous, disent que le parent a bien emporté ses enfants.
+			expect(apres['renamed'], JSON.stringify(apres)).toBeLessThanOrEqual(1)
 
 			const arbre = arborescence()
 			expect(arbre.some((n) => n.includes('(renommé'))).toBe(true)
@@ -337,17 +399,13 @@ test.describe('dossiers IMAP — l’arborescence vue par un client', () => {
 			// Et une seconde relève ne renomme plus rien : la divergence est résolue.
 			expect(relever(compte!.id)['renamed']).toBe(0)
 		} finally {
-			await request.patch(`${URL_API}/rest/v1/tracks?id=eq.${canal!.track_id}`, {
-				headers: enTetesService(),
-				data: { name: nomOrigine },
-			})
-			nettoyer(identifiant, ['CRM'])
-			await request.delete(
-				`${URL_API}/rest/v1/mail_messages?rfc822_message_id=eq.${encodeURIComponent(`<${identifiant}@p2enjoy.test>`)}`,
-				{ headers: enTetesService() },
-			)
-			await request.delete(`${URL_API}/rest/v1/mail_folder_map?actual_path=like.CRM*`, {
-				headers: enTetesService(),
+			// Le track est renommé en retour APRÈS la suppression des correspondances : il n'y a alors plus aucune
+			// divergence qu'un tour de veille pourrait vouloir résoudre (INC-271).
+			await nettoyerDansLOrdre(request, compte!.id, identifiant, async () => {
+				await request.patch(`${URL_API}/rest/v1/tracks?id=eq.${canal!.track_id}`, {
+					headers: enTetesService(),
+					data: { name: nomOrigine },
+				})
 			})
 		}
 	})

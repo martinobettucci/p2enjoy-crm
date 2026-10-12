@@ -673,6 +673,18 @@ checkpoint, arrêt et redémarrage — ne produit aucune ligne de niveau `WARNIN
 - la construction de l'image et son exécution comme utilisateur non privilégié sont contrôlées ;
 - la santé et l'API sont appelées par le réseau interne, sans publier le port ;
 - la séquence d'arrêt/redémarrage du §12.4 prouve la conservation réelle de l'état ;
+- **les preuves `e2e/mail` n'entrent pas en collision avec la veille de fond — INC-271, décision 624.** La veille
+  relève en continu tout compte doté d'un secret (§20.10) ; une preuve qui partage une boîte avec elle obéit à trois
+  règles. (1) Son contrat se juge sur l'ÉTAT — message en base, card, pièces, dossier —, jamais sur les compteurs de
+  SA relève, que la veille peut avoir devancée. (2) Elle rend chaque boîte dans l'état trouvé : instantané des dossiers
+  avant, puis, dans cet ordre, le message retiré de TOUS les dossiers, une relève-barrière par `/poll` (le verrou par
+  compte du §12.4 lui fait attendre une relève de veille en vol), ses lignes, les correspondances nées, les dossiers
+  nés ; l'état rendu est ensuite exigé (`e2e/mail/menage.ts`). (3) Une preuve qui observe une TRANSITION — le premier
+  contact du backfill (§20.6 bis.4) — s'exécute sur un exemplaire jetable du service, même image et même
+  environnement, veille désactivée (`MAIL_SYNC_POLL_INTERVAL=0`), le service partagé arrêté le temps de la preuve :
+  un seul exemplaire à la fois, le verrou en processus reste suffisant. La console opérationnelle (S3) mesure le
+  silence sur son propre passage, qui contient un tour de veille complet ; un état laissé faussé par une autre preuve
+  y fait parler la veille et la rougit ;
 - les journaux nominaux sont relus et doivent être du JSON valide sans secret, avertissement ni
   erreur.
 

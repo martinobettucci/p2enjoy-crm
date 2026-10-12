@@ -1,4 +1,6 @@
 // @verifies CRM-056 (docs/BACKLOG.md) — observation VISUELLE de l'arborescence dans Roundcube
+// @verifies INC-271 (docs/INCONSISTENCY_REPORT.md, décision 624) — nettoyage dans l'ordre qui ne laisse aucune
+//           correspondance vers un dossier supprimé
 // @verifies docs/SPEC-mail-subsystem.md §4.5 (dossiers imbriqués), §11.5 (Roundcube est le seul
 //           moyen de vérification visuelle de la messagerie tant que CRM-057 n'existe pas)
 // @verifies CLAUDE.md §16 (vérification visuelle) ; docs/JOURNAL.md décision 323
@@ -178,6 +180,9 @@ with urllib.request.urlopen(requete, timeout=180) as r:
 				timeout: 60_000,
 			})
 		} finally {
+			// DANS CET ORDRE — INC-271, décision 624 : la boîte d'abord (aucune relève ne peut plus réingérer le message),
+			// puis une barrière, puis le message en base, puis les correspondances, puis les dossiers IMAP. Un tour de veille entre la purge
+			// des dossiers et la suppression des correspondances verrait une correspondance vers un dossier disparu.
 			python(
 				`
 import os, imaplib
@@ -192,6 +197,37 @@ for dossier in ('INBOX', 'Junk Mail'):
         if os.environ['ID'].encode() in brut[0][1]:
             c.uid('store', uid, '+FLAGS', '(\\\\Deleted)')
     c.expunge()
+c.logout()
+`,
+				{ ID: identifiant },
+			)
+			// LA BARRIÈRE : une relève par `/poll` attend, sous le verrou du compte (INC-266), la fin d'une relève de veille
+			// déjà en vol, qui réinsérerait sinon le message ou sa correspondance après le ménage. Elle ne trouve plus rien.
+			python(
+				`
+import os, urllib.request
+requete = urllib.request.Request(
+    "http://mail-sync:8080/internal/v1/inbound-accounts/" + os.environ["COMPTE"] + "/poll",
+    data=b"", method="POST")
+requete.add_header("Authorization", "Bearer " + os.environ["JETON"])
+with urllib.request.urlopen(requete, timeout=180) as r:
+    print(r.status)
+`,
+				{ COMPTE: compte!.id, JETON },
+			)
+			await request.delete(
+				`${URL_API}/rest/v1/mail_messages?rfc822_message_id=eq.${encodeURIComponent(`<${identifiant}@p2enjoy.test>`)}`,
+				{ headers: enTetesService() },
+			)
+			await request.delete(`${URL_API}/rest/v1/mail_folder_map?actual_path=like.CRM*`, {
+				headers: enTetesService(),
+			})
+			python(
+				`
+import imaplib
+
+c = imaplib.IMAP4('stalwart', 143)
+c.login('systeme@crm.p2enjoy.test', 'SeedDev2026Local')
 typ, dossiers = c.list()
 noms = [d.decode('utf-8').rsplit(' "/" ', 1)[-1].strip('"') for d in dossiers]
 for nom in sorted((n for n in noms if n.startswith('CRM')), key=len, reverse=True):
@@ -201,15 +237,8 @@ for nom in sorted((n for n in noms if n.startswith('CRM')), key=len, reverse=Tru
         pass
 c.logout()
 `,
-				{ ID: identifiant },
+				{},
 			)
-			await request.delete(
-				`${URL_API}/rest/v1/mail_messages?rfc822_message_id=eq.${encodeURIComponent(`<${identifiant}@p2enjoy.test>`)}`,
-				{ headers: enTetesService() },
-			)
-			await request.delete(`${URL_API}/rest/v1/mail_folder_map?actual_path=like.CRM*`, {
-				headers: enTetesService(),
-			})
 		}
 	})
 })

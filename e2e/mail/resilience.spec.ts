@@ -1,6 +1,8 @@
 // @verifies CRM-059 (docs/BACKLOG.md) — « coupure SMTP simulée sans perte de message »
 // @verifies docs/SPEC-mail-subsystem.md §20.3 (une panne se rejoue), §20.4 (l'envoi orphelin),
 //           §7 (la file ne perd pas) ; docs/JOURNAL.md décision 331
+// @verifies INC-271 (docs/INCONSISTENCY_REPORT.md, décision 624) — la boîte destinataire est rendue dans l'état trouvé,
+//           copie rangée par la veille et dossiers nés compris
 //
 // LA COUPURE EST RÉELLE, PAS SIMULÉE PAR UNE SUBSTITUTION : l'identité est momentanément pointée
 // vers un port fermé, et le worker se heurte à un vrai refus de connexion. Ce que le scénario
@@ -13,7 +15,7 @@ import { execFileSync } from 'node:child_process'
 import { expect, test } from '@playwright/test'
 import { lireEnv, urlApi } from '../env'
 import { enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
-import { retirerDeLaBoite } from './protocoles'
+import { instantaneDesBoites, rendreLesBoites, type Boite } from './menage'
 
 const CONTENEUR = 'p2enjoy-mail-sync'
 const IMAGE = 'python:3.13.13-slim-bookworm'
@@ -25,9 +27,9 @@ const CARD = '5eed0000-0000-4000-8000-0000000000c1'
 // C'est ce qui fait de ces deux scénarios les auteurs de la fuite d'INC-091 tant qu'ils ne
 // purgent que la table (décision 362) : la veille de `CRM-059` relève ce compte en continu.
 const DESTINATAIRE = 'bizdev@p2enjoy.test'
-const HOTE = lireEnv('DEV_BIND_ADDRESS')
-const PORT_IMAP = Number(lireEnv('STALWART_IMAP_PORT'))
 const MDP = lireEnv('STALWART_MAILBOX_PASSWORD')
+/** La boîte destinataire, que la veille relève et où elle RANGE une copie sous `CRM/…` (INC-271). */
+const BOITES: readonly Boite[] = [{ adresse: DESTINATAIRE, motDePasse: MDP }]
 /** Port fermé sur l'hôte `stalwart` : la connexion est refusée immédiatement, sans attente. */
 const PORT_FERME = 1
 
@@ -84,6 +86,8 @@ test.describe('résilience de l’envoi — une coupure ne perd rien', () => {
 	}) => {
 		const objet = `Coupure ${Date.now()}`
 		let file: string | undefined
+		const debut = new Date().toISOString()
+		const dossiersAvant = await instantaneDesBoites(BOITES)
 		let identite: string | undefined
 		let portOrigine: number | undefined
 
@@ -184,24 +188,23 @@ test.describe('résilience de l’envoi — une coupure ne perd rien', () => {
 					data: { smtp_port: portOrigine },
 				})
 			}
-			// LA BOÎTE D'ABORD, LA TABLE ENSUITE — INC-091, décision 362. Le `DELETE` ci-dessous
-			// rend `204` en n'effaçant rien tant que le compte n'a pas été relevé ; c'est le
-			// message laissé dans la boîte RÉELLE que la veille remonterait au tour suivant.
-			await retirerDeLaBoite(HOTE, PORT_IMAP, DESTINATAIRE, MDP, objet)
-			await request.delete(`${URL_API}/rest/v1/mail_messages?subject=like.*${objet}*`, {
-				headers: enTetesService(),
-			})
 			if (file !== undefined) {
 				await request.delete(`${URL_API}/rest/v1/mail_outbox?id=eq.${file}`, {
 					headers: enTetesService(),
 				})
 			}
+			// LA BOÎTE D'ABORD, LA TABLE ENSUITE — INC-091, décision 362 : c'est le message laissé dans la boîte RÉELLE
+			// que la veille remonterait au tour suivant. ET LES DOSSIERS OÙ LA VEILLE L'A RANGÉ — INC-271, décision 624 :
+			// `rendreLesBoites` (e2e/mail/menage.ts) rend la boîte dans l'état trouvé, barrière comprise.
+			await rendreLesBoites(request, { boites: BOITES, motif: objet, avant: dossiersAvant, debut })
 		}
 	})
 
 	test('un envoi abandonné par un worker mort est REPRIS, non perdu', async ({ request }) => {
 		const objet = `Orphelin ${Date.now()}`
 		let file: string | undefined
+		const debut = new Date().toISOString()
+		const dossiersAvant = await instantaneDesBoites(BOITES)
 
 		try {
 			const identites = await request.get(
@@ -252,17 +255,15 @@ test.describe('résilience de l’envoi — une coupure ne perd rien', () => {
 			const [reprise] = (await apres.json()) as { status: string }[]
 			expect(reprise?.status).toBe('sent')
 		} finally {
-			// LA BOÎTE D'ABORD, LA TABLE ENSUITE — INC-091, décision 362. Ce scénario-ci envoie
-			// pour de bon : le message EST remis, et il resterait donc en boîte indéfiniment.
-			await retirerDeLaBoite(HOTE, PORT_IMAP, DESTINATAIRE, MDP, objet)
-			await request.delete(`${URL_API}/rest/v1/mail_messages?subject=like.*${objet}*`, {
-				headers: enTetesService(),
-			})
 			if (file !== undefined) {
 				await request.delete(`${URL_API}/rest/v1/mail_outbox?id=eq.${file}`, {
 					headers: enTetesService(),
 				})
 			}
+			// LA BOÎTE D'ABORD, LA TABLE ENSUITE — INC-091, décision 362. Ce scénario-ci envoie
+			// pour de bon : le message EST remis, et il resterait donc en boîte indéfiniment — copie rangée
+			// par la veille comprise (INC-271, décision 624).
+			await rendreLesBoites(request, { boites: BOITES, motif: objet, avant: dossiersAvant, debut })
 		}
 	})
 })

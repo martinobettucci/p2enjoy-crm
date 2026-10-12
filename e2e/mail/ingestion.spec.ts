@@ -1,4 +1,6 @@
 // @verifies CRM-054 (docs/BACKLOG.md) — ingestion d'un email RÉELLEMENT envoyé
+// @verifies INC-271 (docs/INCONSISTENCY_REPORT.md, décision 624) — l'ingestion et le classement sont jugés sur l'état,
+//           quel que soit celui qui les a faits, la veille ou la relève de la preuve
 // @verifies docs/SPEC-mail-subsystem.md §4.2 (dédoublonnage et occurrences), §4.3 (les statuts
 //           antivirus), §15.4 (le chemin authentifié), §15.5 (dépôt puis analyse, nom assaini)
 // @verifies docs/JOURNAL.md décision 320 ; CLAUDE.md §8 (aucune trace fabriquée)
@@ -14,11 +16,14 @@ import { execFileSync } from 'node:child_process'
 import { expect, test } from '@playwright/test'
 import { lireEnv, urlApi } from '../env'
 import { enTetesService } from '../api/jetons'
+import { instantaneDesBoites, rendreLesBoites, type Boite } from './menage'
 
 const CONTENEUR = 'p2enjoy-mail-sync'
 const IMAGE = 'python:3.13.13-slim-bookworm'
 const JETON = lireEnv('MAIL_SYNC_INTERNAL_TOKEN')
 const URL_API = urlApi()
+/** La boîte système, que la veille relève et où elle range la copie classée (INC-271). */
+const BOITE_SYSTEME: Boite = { adresse: 'systeme@crm.p2enjoy.test', motDePasse: lireEnv('STALWART_MAILBOX_PASSWORD') }
 const EICAR = String.raw`X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*`
 
 function docker(...arguments_: string[]): string {
@@ -155,9 +160,11 @@ test.describe('ingestion — un email réellement envoyé, relevé et analysé',
 		try {
 			envoyer(identifiant, true)
 
-			const premiere = relever(compte!.id)
-			expect(premiere['messages_new'], JSON.stringify(premiere)).toBeGreaterThanOrEqual(1)
-			expect(premiere['attachments_infected']).toBe(1)
+			// L'INGESTION EST JUGÉE SUR L'ÉTAT — INC-271, décision 624 : la veille relève la même boîte en fond et peut
+			// ingérer le message AVANT cette relève, qui rend alors 0 nouveau message pour un produit correct. Le verrou
+			// par compte (INC-266) sérialise les deux relèves : au retour de celle-ci, le message est en base, quel que
+			// soit celui qui l'a ingéré — et c'est ce que les assertions ci-dessous jugent, pièce infectée comprise.
+			relever(compte!.id)
 
 			const messages = await request.get(
 				`${URL_API}/rest/v1/mail_messages?rfc822_message_id=eq.${encodeURIComponent(`<${identifiant}@p2enjoy.test>`)}&select=id,subject,from_address,classification`,
@@ -210,6 +217,11 @@ test.describe('ingestion — un email réellement envoyé, relevé et analysé',
 			const seconde = relever(compte!.id)
 			expect(seconde['messages_new']).toBe(0)
 			expect(seconde['occurrences']).toBe(0)
+			const apresRejeu = await request.get(
+				`${URL_API}/rest/v1/mail_message_occurrences?message_id=eq.${message?.id}&select=uid`,
+				{ headers: enTetesService() },
+			)
+			expect((await apresRejeu.json()) as unknown[], 'le rejeu ne duplique aucune occurrence').toHaveLength(1)
 		} finally {
 			retirerDeLaBoite(identifiant)
 			await request.delete(
@@ -225,6 +237,8 @@ test.describe('ingestion — un email réellement envoyé, relevé et analysé',
 	}) => {
 		test.setTimeout(300_000)
 		const identifiant = `auto-${Date.now()}`
+		const debut = new Date().toISOString()
+		const dossiersAvant = await instantaneDesBoites([BOITE_SYSTEME])
 
 		const cartes = await request.get(
 			`${URL_API}/rest/v1/cards?archived_at=is.null&deleted_at=is.null&select=id,title,email_local_part&limit=1`,
@@ -246,8 +260,11 @@ test.describe('ingestion — un email réellement envoyé, relevé et analysé',
 		try {
 			envoyerA(identifiant, `${carte!.email_local_part}@crm.p2enjoy.test`)
 
-			const releve = relever(compte!.id)
-			expect(releve['messages_classified'], JSON.stringify(releve)).toBeGreaterThanOrEqual(1)
+			// LE CONTRAT EST JUGÉ SUR L'ÉTAT — INC-271, décision 624 (et la famille d'INC-205) : la veille relève la même
+			// boîte toutes les minutes et peut classer le message AVANT cette relève, qui rend alors 0 classement pour un
+			// produit correct. Ce qui est prouvé ci-dessous — classé `auto`, dans SA card, sans auteur, tracé — ne
+			// dépend pas de celui qui l'a fait.
+			relever(compte!.id)
 
 			const messages = await request.get(
 				`${URL_API}/rest/v1/mail_messages?rfc822_message_id=eq.${encodeURIComponent(`<${identifiant}@p2enjoy.test>`)}&select=id,classification,card_id,classified_by`,
@@ -272,11 +289,10 @@ test.describe('ingestion — un email réellement envoyé, relevé et analysé',
 			const traces = (await evenements.json()) as { payload: { rule: string } }[]
 			expect(traces.some((t) => t.payload.rule === 'auto')).toBe(true)
 		} finally {
-			retirerDeLaBoite(identifiant)
-			await request.delete(
-				`${URL_API}/rest/v1/mail_messages?rfc822_message_id=eq.${encodeURIComponent(`<${identifiant}@p2enjoy.test>`)}`,
-				{ headers: enTetesService() },
-			)
+			// LA COPIE RANGÉE SOUS `CRM/…` ET SES DOSSIERS PARTENT AVEC LE MESSAGE — INC-271, décision 624 : ne purger
+			// qu'`INBOX` laissait la copie classée dans le dossier de la card jusqu'à ce qu'un autre scénario efface
+			// l'arborescence (vu dans la capture de `roundcube-dossiers.spec.ts` le 2026-10-12).
+			await rendreLesBoites(request, { boites: [BOITE_SYSTEME], motif: identifiant, avant: dossiersAvant, debut })
 			// L'événement de timeline reste : `card_events` n'accorde aucune écriture, à personne
 			// (`CRM-044`), et l'historique d'une card ne se corrige pas. Prétendre l'effacer
 			// aurait produit un refus silencieux.

@@ -1,4 +1,6 @@
 // @verifies CRM-052 (docs/BACKLOG.md) — test de connexion RÉEL d'un compte entrant
+// @verifies INC-271 (docs/INCONSISTENCY_REPORT.md, décision 624) — les comptes faussés sont des comptes JETABLES, propres
+//           au scénario : aucun compte du seed, que la veille relève, n'est plus jamais faussé
 // @verifies docs/SPEC-mail-subsystem.md §13.5 (le test de connexion), §13.6 (ce que le
 //           développement peut prouver, et ce qu'il ne peut pas), §13.7 (last_error est un code)
 // @verifies docs/JOURNAL.md décision 316 ; CLAUDE.md §8 (aucune trace fabriquée)
@@ -113,31 +115,48 @@ async function lireCompte(
 	return lignes[0] as CompteEnBase
 }
 
-/** Réécrit un compte par le VRAI chemin d'écriture — celui du seed, jamais un `PATCH` direct. */
-async function ecrire(
+/**
+ * UN COMPTE JETABLE, PROPRE AU SCÉNARIO — INC-271, décision 624. Les scénarios qui faussent un compte (mot de passe faux,
+ * `starttls`, `ssl` sur 993) le faisaient sur les comptes du SEED, que la veille relève toutes les minutes et que
+ * d'autres scénarios lisent : un tour de veille tombé dans la fenêtre échouait et journalisait `veille_compte_echoue`.
+ * Ils travaillent désormais sur LEUR compte : la boîte personnelle de Farida, que le seed ne crée pas
+ * (`docs/SPEC-seed.md` §2.17), créée par le VRAI chemin d'écriture et retirée après. Rejouable : le secret Vault, nommé
+ * par espace et propriétaire, est réécrit au passage suivant.
+ */
+const PROPRIETAIRE_JETABLE = '5eed0000-0000-4000-8000-000000000013'
+const LIBELLE_JETABLE = 'Sonde e2e — compte faussé'
+
+async function creerCompteJetable(
 	request: import('@playwright/test').APIRequestContext,
 	jetonAdmin: string,
-	compte: CompteEnBase,
-	changements: { securite?: string; motDePasse?: string | null },
-): Promise<void> {
+	reglages: { readonly port: number; readonly securite: string; readonly motDePasse: string },
+): Promise<string> {
+	await retirerCompteJetable(request)
 	const reponse = await request.post(`${URL_API}/rest/v1/rpc/upsert_mail_inbound_account`, {
-		headers: {
-			apikey: CLE_ANONYME,
-			Authorization: `Bearer ${jetonAdmin}`,
-			'Content-Type': 'application/json',
-		},
+		headers: { apikey: CLE_ANONYME, Authorization: `Bearer ${jetonAdmin}`, 'Content-Type': 'application/json' },
 		data: {
 			p_workspace_id: WORKSPACE,
-			p_label: compte.label,
+			p_label: LIBELLE_JETABLE,
 			p_imap_host: 'stalwart',
-			p_imap_port: 143,
-			p_imap_security: changements.securite ?? compte.imap_security,
-			p_imap_username: compte.imap_username,
-			p_password: changements.motDePasse === undefined ? null : changements.motDePasse,
-			p_owner_id: compte.owner_id,
+			p_imap_port: reglages.port,
+			p_imap_security: reglages.securite,
+			// Une vraie boîte du serveur de développement : seul le réglage faussé distingue l'échec d'un succès.
+			p_imap_username: 'bizdev@p2enjoy.test',
+			p_password: reglages.motDePasse,
+			p_owner_id: PROPRIETAIRE_JETABLE,
 		},
 	})
 	expect(reponse.status(), await reponse.text()).toBe(200)
+	return (await reponse.json()) as string
+}
+
+/** Retire le compte jetable — ses correspondances et occurrences partent avec lui (clés en cascade). */
+async function retirerCompteJetable(request: import('@playwright/test').APIRequestContext): Promise<void> {
+	const reponse = await request.delete(
+		`${URL_API}/rest/v1/mail_inbound_accounts?workspace_id=eq.${WORKSPACE}&owner_id=eq.${PROPRIETAIRE_JETABLE}`,
+		{ headers: enTetesService() },
+	)
+	expect(reponse.status()).toBeLessThan(300)
 }
 
 /** `CRM-092` T4 : le jeton interne de l'administratrice, par la vraie connexion LeLabs. */
@@ -173,12 +192,10 @@ test.describe('comptes entrants — la connexion est RÉELLEMENT ouverte', () =>
 		request,
 	}) => {
 		const jeton = await jetonAdministratrice(request)
-		const compte = await lireCompte(request, `owner_id=eq.5eed0000-0000-4000-8000-000000000012`)
-
 		try {
-			await ecrire(request, jeton, compte, { motDePasse: 'ce-mot-de-passe-est-faux' })
+			const id = await creerCompteJetable(request, jeton, { port: 143, securite: 'none', motDePasse: 'ce-mot-de-passe-est-faux' })
 
-			const reponse = testerCompte(compte.id)
+			const reponse = testerCompte(id)
 			expect(reponse.code, reponse.corps).toBe(200)
 			const verdict = JSON.parse(reponse.corps) as { status: string; error: string }
 			expect(verdict.status).toBe('error')
@@ -187,11 +204,11 @@ test.describe('comptes entrants — la connexion est RÉELLEMENT ouverte', () =>
 			// Authentication failed » — ne franchit jamais la frontière.
 			expect(reponse.corps).not.toContain('AUTHENTICATIONFAILED')
 
-			const apres = await lireCompte(request, `id=eq.${compte.id}`)
+			const apres = await lireCompte(request, `id=eq.${id}`)
 			expect(apres.status).toBe('error')
 			expect(apres.last_error).toBe('auth_failed')
 		} finally {
-			await ecrire(request, jeton, compte, { motDePasse: MOT_DE_PASSE_SEED })
+			await retirerCompteJetable(request)
 		}
 	})
 
@@ -202,21 +219,19 @@ test.describe('comptes entrants — la connexion est RÉELLEMENT ouverte', () =>
 		request,
 	}) => {
 		const jeton = await jetonAdministratrice(request)
-		const compte = await lireCompte(request, `owner_id=eq.5eed0000-0000-4000-8000-000000000011`)
-
 		try {
-			await ecrire(request, jeton, compte, { securite: 'starttls' })
+			const id = await creerCompteJetable(request, jeton, { port: 143, securite: 'starttls', motDePasse: MOT_DE_PASSE_SEED })
 
-			const reponse = testerCompte(compte.id)
+			const reponse = testerCompte(id)
 			expect(reponse.code, reponse.corps).toBe(200)
 			const verdict = JSON.parse(reponse.corps) as { status: string; error: string }
 			expect(verdict.status).toBe('error')
 			expect(verdict.error).toBe('tls_failed')
 
-			const apres = await lireCompte(request, `id=eq.${compte.id}`)
+			const apres = await lireCompte(request, `id=eq.${id}`)
 			expect(apres.last_error).toBe('tls_failed')
 		} finally {
-			await ecrire(request, jeton, compte, { securite: 'none' })
+			await retirerCompteJetable(request)
 		}
 	})
 
@@ -227,36 +242,14 @@ test.describe('comptes entrants — la connexion est RÉELLEMENT ouverte', () =>
 		request,
 	}) => {
 		const jeton = await jetonAdministratrice(request)
-		const compte = await lireCompte(request, `owner_id=eq.5eed0000-0000-4000-8000-000000000011`)
-
 		try {
-			const ecriture = await request.post(`${URL_API}/rest/v1/rpc/upsert_mail_inbound_account`, {
-				headers: {
-					apikey: CLE_ANONYME,
-					Authorization: `Bearer ${jeton}`,
-					'Content-Type': 'application/json',
-				},
-				data: {
-					p_workspace_id: WORKSPACE,
-					p_label: compte.label,
-					p_imap_host: 'stalwart',
-					p_imap_port: 993,
-					p_imap_security: 'ssl',
-					p_imap_username: compte.imap_username,
-					p_password: null,
-					p_owner_id: compte.owner_id,
-				},
-			})
-			expect(ecriture.status()).toBe(200)
+			const id = await creerCompteJetable(request, jeton, { port: 993, securite: 'ssl', motDePasse: MOT_DE_PASSE_SEED })
 
-			const reponse = testerCompte(compte.id)
+			const reponse = testerCompte(id)
 			const verdict = JSON.parse(reponse.corps) as { error: string }
 			expect(verdict.error).toBe('connection_refused')
 		} finally {
-			await ecrire(request, jeton, compte, { securite: 'none' })
-			// Le port est rendu lui aussi : `ecrire` ne le change pas, il est écrit en dur à 143.
-			const rendu = await lireCompte(request, `id=eq.${compte.id}`)
-			expect(rendu.imap_security).toBe('none')
+			await retirerCompteJetable(request)
 		}
 	})
 

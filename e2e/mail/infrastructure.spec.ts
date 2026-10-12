@@ -1,4 +1,6 @@
 // @verifies CRM-050 (docs/BACKLOG.md) — infrastructure mail de développement
+// @verifies INC-271 (docs/INCONSISTENCY_REPORT.md, décision 624) — M2 rend la boîte système et la base dans l'état
+//           trouvé, barrière comprise contre une relève de veille en vol
 // @verifies docs/SPEC-mail-subsystem.md §11.4 (domaines et boîtes), §11.6 (ClamAV),
 //           §11.8 (ports), §11.9 (preuves exigées)
 // @verifies docs/JOURNAL.md décision 235 (le rôle `user`), décision 237 (les deux domaines),
@@ -12,13 +14,12 @@
 // connecter, déposer et relire, sur le serveur que `./runDev.sh` démarre.
 
 import { expect, test } from '@playwright/test'
-import { lireEnv, urlApi } from '../env'
-import { enTetesService } from '../api/jetons'
+import { lireEnv } from '../env'
+import { instantaneDesBoites, rendreLesBoites } from './menage'
 import {
 	EICAR,
 	authentifierSmtp,
 	clamd,
-	retirerDeLaBoite,
 	sessionImap,
 	soumettreSmtp,
 } from './protocoles'
@@ -80,6 +81,8 @@ test.describe('M2 — le catch-all reçoit une adresse de card jamais déclarée
 		const destinataire = `${jeton}@${DOMAINE_CARDS}`
 		const messageId = `<${jeton}@preuves.p2enjoy.test>`
 		const sujet = `Preuve CRM-050 ${jeton}`
+		const debut = new Date().toISOString()
+		const dossiersAvant = await instantaneDesBoites([{ adresse: BOITE_SYSTEME, motDePasse: MDP }])
 
 		try {
 			const smtp = await soumettreSmtp(HOTE, PORT_SOUMISSION, {
@@ -128,14 +131,11 @@ test.describe('M2 — le catch-all reçoit une adresse de card jamais déclarée
 			// LA BOÎTE SYSTÈME EST SEEDÉE ET RELEVÉE EN CONTINU — INC-091, décision 362. Ce
 			// scénario ne nettoyait ni la boîte ni la base : chaque exécution y laissait un
 			// « Preuve CRM-050 … » que la veille de `CRM-059` remonte en non classé permanent.
-			await retirerDeLaBoite(HOTE, PORT_IMAP, BOITE_SYSTEME, MDP, sujet)
-
-			// LA BOÎTE NE SUFFIT PAS : entre la remise et la purge, la veille a pu relever le
-			// compte et créer la ligne. La retirer aussi, faute de quoi l'assertion 9 de
-			// `0029_inbox_globale.test.sql` la compterait — c'est elle qui mesure la fuite.
-			await request.delete(`${urlApi()}/rest/v1/mail_messages?subject=like.*${jeton}*`, {
-				headers: enTetesService(),
-			})
+			// LA BOÎTE ET LA BASE, DANS L'ORDRE ET AVEC UNE BARRIÈRE — INC-271, décision 624 : une relève de veille
+			// partie avant la purge pouvait encore créer la ligne après sa suppression, et l'assertion 9 de
+			// `0029_inbox_globale.test.sql`, qui mesure la fuite, l'aurait comptée. `rendreLesBoites` (e2e/mail/menage.ts)
+			// purge, attend toute relève en vol, retire la ligne, puis EXIGE l'état trouvé.
+			await rendreLesBoites(request, { boites: [{ adresse: BOITE_SYSTEME, motDePasse: MDP }], motif: jeton, avant: dossiersAvant, debut })
 		}
 	})
 

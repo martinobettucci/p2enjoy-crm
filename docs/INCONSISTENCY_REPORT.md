@@ -7130,6 +7130,14 @@ garde cette garantie — revérifiée au milieu du cœur, avant toute autre écr
 > qui observe une transition et non un état final, s'exécute sur un exemplaire jetable du service, veille désactivée,
 > le service partagé arrêté puis redémarré dans le `finally`.
 >
+> **RÉSOLUE le 2026-10-12** (`docs/JOURNAL.md` décision 624, mise en œuvre). Neuf fichiers de `e2e/mail/` rendus
+> indépendants de la veille — contrats jugés sur l'état, comptes et boîtes rendus dans l'état trouvé par un ménage
+> commun avec barrière (`e2e/mail/menage.ts`), backfill sur un exemplaire jetable, S3 mesurée sur son propre passage.
+> Preuve : la collision provoquée par une veille à 5 s rougit les anciennes spécifications (« 1 failed ») ; les
+> nouvelles passent toutes les campagnes consécutives (42/42), sous veille à 5 s comme à l'intervalle nominal, et
+> chacune rend l'état de référence (aucun dossier né, aucune correspondance, quatre messages, trois comptes). Une série
+> a été interrompue par la limite d'envoi de Stalwart — INC-272, sans rapport avec la collision.
+>
 > *Ouverte le 2026-10-11, relevée pendant la campagne de `CRM-098` T4 ; étrangère à `CRM-098`.*
 
 *Mesuré le 2026-10-11, deux campagnes `e2e:mail` enchaînées* : « 1 failed, 41 passed » toutes deux, sur

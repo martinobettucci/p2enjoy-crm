@@ -13,6 +13,15 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Correctif du 2026-10-12 — INC-271 (décision 624)
+
+*Preuves seulement : aucun code produit, aucune migration, rien à livrer.*
+
+- **Les preuves de messagerie n'entrent plus en collision avec la veille de fond** : elles jugent leur contrat sur
+  l'état, rendent chaque boîte et la base dans l'état trouvé (copies rangées et dossiers nés compris), et la preuve du
+  premier contact du backfill s'exécute sur un exemplaire du service sans veille. Rejouées sous une veille accélérée à
+  5 s comme à l'intervalle nominal, elles restent vertes et ne laissent rien derrière elles.
+
 ### `CRM-099` — Plusieurs coûts réels par ligne de coût, jusqu'à « Soldé »
 
 *Décision 622. **Livré en production le 2026-10-11** (`7d819786`, migration 88 appliquée par une fenêtre avec instantané ;

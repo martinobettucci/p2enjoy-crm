@@ -2,6 +2,8 @@
 // @verifies docs/SPEC-mail-subsystem.md §5 (envoi), §19.1 (ce que le serveur ne fait pas),
 //           §19.5 (ce que le worker compose), §19.7 (preuves exigées)
 // @verifies docs/JOURNAL.md décision 330 ; CLAUDE.md §8 (aucune trace fabriquée)
+// @verifies INC-271 (docs/INCONSISTENCY_REPORT.md, décision 624) — le scénario rend les deux boîtes dans l'état où il
+//           les a trouvées, copie rangée par la veille et dossiers nés comprise
 //
 // CE QUE CE FICHIER PROUVE, ET QU'AUCUN AUTRE NE PEUT PROUVER : le tour complet. Le produit met un
 // message en file par sa VRAIE garde, son worker le SOUMET réellement en SMTP authentifié, le
@@ -15,6 +17,7 @@ import { execFileSync } from 'node:child_process'
 import { expect, test } from '@playwright/test'
 import { lireEnv, urlApi } from '../env'
 import { enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
+import { instantaneDesBoites, rendreLesBoites, type Boite } from './menage'
 
 const CONTENEUR = 'p2enjoy-mail-sync'
 const IMAGE = 'python:3.13.13-slim-bookworm'
@@ -145,29 +148,11 @@ s.quit()
 	)
 }
 
-function retirerDeLaBoite(boite: string, motif: string): void {
-	python(
-		`
-import os, imaplib
-
-c = imaplib.IMAP4("stalwart", 143)
-c.login(os.environ["BOITE"], "SeedDev2026Local")
-for dossier in ("INBOX", "Junk Mail"):
-    try:
-        c.select('"%s"' % dossier)
-    except Exception:
-        continue
-    typ, ids = c.uid("search", None, "ALL")
-    for uid in (ids[0] or b"").split():
-        typ, brut = c.uid("fetch", uid, "(BODY.PEEK[HEADER.FIELDS (SUBJECT)])")
-        if os.environ["MOTIF"].encode() in brut[0][1]:
-            c.uid("store", uid, "+FLAGS", "(\\\\Deleted)")
-    c.expunge()
-c.logout()
-`,
-		{ BOITE: boite, MOTIF: motif },
-	)
-}
+/** Les deux boîtes que l'aller-retour touche, et que son ménage rend intactes (INC-271). */
+const BOITES: readonly Boite[] = [
+	{ adresse: DESTINATAIRE, motDePasse: lireEnv('STALWART_MAILBOX_PASSWORD') },
+	{ adresse: 'systeme@crm.p2enjoy.test', motDePasse: lireEnv('STALWART_MAILBOX_PASSWORD') },
+]
 
 test.describe('envoi sortant — l’aller-retour complet', () => {
 	test('le produit envoie, le destinataire reçoit, répond, et la réponse revient dans la card', async ({
@@ -175,6 +160,8 @@ test.describe('envoi sortant — l’aller-retour complet', () => {
 	}) => {
 		const marqueur = `AllerRetour${Date.now()}`
 		let file: string | undefined
+		const debut = new Date().toISOString()
+		const dossiersAvant = await instantaneDesBoites(BOITES)
 
 		try {
 			// 1. MISE EN FILE PAR LA VRAIE GARDE, AVEC UNE VRAIE SESSION. La clé de service ne
@@ -275,18 +262,15 @@ test.describe('envoi sortant — l’aller-retour complet', () => {
 			expect(reponse!.classification).toBe('auto')
 		} finally {
 			// LE SEED EST RENDU INTACT : les messages du scénario sont retirés de la base et des
-			// deux boîtes. L'événement de timeline, lui, ne peut pas l'être — `card_events`
-			// n'accorde d'écriture à personne (`CRM-044`), et l'historique ne se corrige pas.
-			await request.delete(`${URL_API}/rest/v1/mail_messages?subject=like.*${marqueur}*`, {
-				headers: enTetesService(),
-			})
+			// deux boîtes, DOSSIERS RANGÉS COMPRIS (INC-271). L'événement de timeline, lui, ne peut pas
+			// l'être — `card_events` n'accorde d'écriture à personne (`CRM-044`), et l'historique ne se
+			// corrige pas.
 			if (file !== undefined) {
 				await request.delete(`${URL_API}/rest/v1/mail_outbox?id=eq.${file}`, {
 					headers: enTetesService(),
 				})
 			}
-			retirerDeLaBoite(DESTINATAIRE, marqueur)
-			retirerDeLaBoite('systeme@crm.p2enjoy.test', marqueur)
+			await rendreLesBoites(request, { boites: BOITES, motif: marqueur, avant: dossiersAvant, debut })
 		}
 	})
 })

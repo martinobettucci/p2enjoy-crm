@@ -15151,7 +15151,7 @@ chacune dans son propre commit, avant `CRM-097` T3 ; la livraison en production 
 
 ## Correctif arbitré le 2026-10-12 — INC-271 (décision 624)
 
-- [ ] **INC-271 — les scénarios mail ne doivent plus entrer en collision avec la veille de `mail-sync`.** Chaque scénario
+- [x] **INC-271 — les scénarios mail ne doivent plus entrer en collision avec la veille de `mail-sync`.** Chaque scénario
       qui partage un compte entrant ou un dossier IMAP avec la veille en devient indépendant, reste idempotent, et prouve
       son contrat sur l'état final. Les deux collisions mesurées : le renommage d'un track (`e2e/mail/dossiers.spec.ts`
       §276, `folder_rename_refused`) et l'essai d'un compte faux pendant qu'il est relevé (`veille_compte_echoue`). Preuve :
@@ -15162,6 +15162,13 @@ chacune dans son propre commit, avant `CRM-097` T3 ; la livraison en production 
       de la transition premier contact → second contact, qui ne se juge pas sur l'état final). Arbitrage : la preuve du
       backfill s'exécute sur un exemplaire jetable de `mail-sync`, même image et même environnement, veille désactivée
       (`MAIL_SYNC_POLL_INTERVAL=0`), le service partagé arrêté proprement puis redémarré sain dans le `finally`.
+      **Vérifié le 2026-10-12** : collision provoquée (veille à 5 s par une surcharge Compose hors dépôt) — anciennes
+      spécifications « 1 failed, 41 passed » ; nouvelles : 42/42 sur chaque campagne consécutive (sept sous veille à 5 s,
+      six à l'intervalle nominal, en trois séries, la dernière après les derniers changements : une à 5 s, deux
+      nominales), état de référence rendu après chacune (contrôle des dossiers des trois boîtes, des correspondances et
+      des lignes). Mutations tuées : un scénario qui laisse son compte faussé rougit S3 (`veille_compte_echoue`) ; un
+      ménage sans purge rougit son propre contrôle (« un message du scénario survit »). Une série interrompue par la
+      limite d'envoi de Stalwart (INC-272, refus `452`, sans collision ; état intact) n'est pas comptée.
 
 ## Correctif arbitré le 2026-10-12 — INC-272 (décision 625)
 
