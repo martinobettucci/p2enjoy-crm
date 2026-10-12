@@ -15162,3 +15162,12 @@ chacune dans son propre commit, avant `CRM-097` T3 ; la livraison en production 
       de la transition premier contact → second contact, qui ne se juge pas sur l'état final). Arbitrage : la preuve du
       backfill s'exécute sur un exemplaire jetable de `mail-sync`, même image et même environnement, veille désactivée
       (`MAIL_SYNC_POLL_INTERVAL=0`), le service partagé arrêté proprement puis redémarré sain dans le `finally`.
+
+## Correctif arbitré le 2026-10-12 — INC-272 (décision 625)
+
+- [ ] **INC-272 — relever la limite d'envoi par expéditeur de Stalwart pour le seul développement.** La limite par défaut
+      (25 envois par expéditeur et par heure) borne la preuve à trois campagnes `e2e:mail` par heure. Clé relevée dans la
+      documentation de Stalwart, valeur couvrant une journée de campagnes, écart documenté (`docs/DAT.md`, commentaire de
+      `stalwart/config.toml`), staging et production inchangés. Preuve : une série de campagnes `e2e:mail` consécutives
+      au-delà de l'ancienne limite, verte, et le journal de Stalwart sans `smtp.rate-limit-exceeded`.
+

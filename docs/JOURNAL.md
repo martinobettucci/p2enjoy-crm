@@ -31355,3 +31355,21 @@ autres utilisateurs du poste ; le projet `mail` étant sériel, aucun autre scé
 `e2e:mail` est rejouée plusieurs fois de suite sous veille accélérée puis à l'intervalle nominal, verte à chaque passage,
 sans rejeu de complaisance ; S3 (silence mesuré sur son propre passage, tour de veille compris) reste verte.
 
+## décision 625 — INC-272 : la limite d'envoi de Stalwart est relevée pour le seul développement
+
+*2026-10-12 ; arbitrage du responsable, rendu sur question.*
+
+**Le constat** (détail : `docs/INCONSISTENCY_REPORT.md` INC-272) : Stalwart limite chaque expéditeur à vingt-cinq
+envois par heure (`smtp.rate-limit-exceeded`, `limit = [25, 3600000ms]`, valeur par défaut du serveur, non réglée par
+`stalwart/config.toml`). Une campagne `e2e:mail` en soumet environ sept au nom d'`admin@p2enjoy.test` : la preuve
+d'INC-271, qui exige plusieurs campagnes consécutives, a été interrompue à la onzième par des refus `452 4.4.5` — trois,
+puis quatre, puis sept scénarios rouges, sans défaut, l'état rendu intact à chaque fois.
+
+**Issues présentées** : (1) relever la limite dans la configuration du seul développement, écart documenté ; (2) la
+garder, et ne pas rejouer plus de trois campagnes par heure ; (3) la garder, et faire échouer tôt une campagne que le
+quota restant ne couvre pas. **L'arbitrage** : l'issue (1). **Ce qu'elle implique** : la clé exacte est relevée dans la
+documentation de Stalwart avant d'être écrite, la valeur choisie couvre une journée de campagnes, l'écart est porté par
+`docs/DAT.md` et le commentaire de la configuration ; staging et production gardent le comportement du serveur. Le
+correctif suit la clôture d'INC-271, dans son propre commit, avec sa preuve : une série de campagnes au-delà de
+l'ancienne limite, verte.
+

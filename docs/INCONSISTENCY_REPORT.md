@@ -7155,3 +7155,28 @@ d'être vu. L'issue (1) est la plus étroite.
 renommage : **tout scénario qui touche un compte ou un dossier pendant un tour de veille** peut faire parler la veille,
 et S3, qui exige le silence de toute la campagne, en paie le prix. L'issue (2) — une veille suspendue pour le projet
 `mail`, ses deux scénarios qui la requièrent la relançant explicitement — est alors la seule qui ferme la famille entière.
+
+### INC-272 — la limite d'envoi par expéditeur de Stalwart borne le nombre de campagnes `e2e:mail` par heure
+
+> **ARBITRÉE le 2026-10-12 par le responsable (décision 625)** : issue (1), « Relever la limite en dev » — la limite
+> d'envoi par expéditeur est relevée dans la configuration de Stalwart du SEUL développement, écart volontaire
+> documenté ; staging et production ne sont pas concernés. Correctif séparé, après la clôture d'INC-271,
+> `docs/BACKLOG.md` « Correctif arbitré le 2026-10-12 — INC-272 ».
+>
+> *Ouverte le 2026-10-12, relevée pendant la preuve d'INC-271.*
+
+*Mesuré le 2026-10-12* : après une dizaine de campagnes `e2e:mail` en trois heures, la onzième rend « 3 failed », puis
+« 4 », puis « 7 » ; chaque échec est un refus de soumission SMTP — `452 4.4.5 Rate limit exceeded, try again later.` —
+que le journal de Stalwart nomme `smtp.rate-limit-exceeded`, `id = "sender"`, `limit = [25, 3600000ms]` : vingt-cinq
+envois par expéditeur et par heure, la valeur par défaut du serveur, que `stalwart/config.toml` ne règle pas. Une
+campagne soumet environ sept messages au nom d'`admin@p2enjoy.test` (97 en trois heures, relevés dans le même
+journal) : au-delà de trois campagnes par heure, les envois sont refusés et les scénarios qui envoient rougissent, sans
+défaut du produit ni des preuves. Les campagnes en échec ont toutes rendu les boîtes et la base dans l'état de
+référence (aucun dossier né, aucune correspondance, quatre messages, trois comptes).
+
+**Pourquoi ce n'est pas tranché ici** : relever la limite dans la configuration de développement change
+l'infrastructure de démonstration — le serveur cesse alors de ressembler à un serveur réel sur ce point —, ce qui
+dépasse l'arbitrage d'INC-271. **Issues possibles** : (1) régler la limite d'envoi par expéditeur dans
+`stalwart/config.toml` (clé exacte à vérifier dans la documentation de Stalwart) pour le seul développement, à une valeur qui couvre une journée de campagnes, documentée comme
+écart ; (2) laisser la limite et documenter qu'on ne rejoue pas plus de trois campagnes `e2e:mail` par heure ;
+(3) faire échouer une campagne dès son début, avec un message explicite, quand le quota restant ne la couvre pas.
