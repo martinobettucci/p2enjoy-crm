@@ -15182,3 +15182,11 @@ chacune dans son propre commit, avant `CRM-097` T3 ; la livraison en production 
       campagnes complètes tombent en cascade pour une autre cause — le bannissement automatique de `mail-sync` et de
       `roundcube` par Stalwart (INC-273) — : la série verte reste à faire après INC-273.
 
+## Correctif arbitré le 2026-10-12 — INC-273 (décision 626)
+
+- [ ] **INC-273 — le réseau de la pile de développement n'est jamais banni par Stalwart.** `stalwart/provision.sh` lit le
+      sous-réseau Compose à l'exécution, l'écrit sous `server.allowed-ip` par l'API, le relit, efface les bannissements
+      posés ; aucune adresse dans le dépôt ; le bannissement reste actif pour toute autre origine. Preuves : test
+      unitaire du provisionnement ; E2E — un service de la pile reste joignable après une série d'échecs
+      d'authentification ; série de campagnes `e2e:mail` consécutives verte (clôt aussi INC-272).
+

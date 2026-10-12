@@ -31440,3 +31440,22 @@ rester sous la limite par IP : vert, boîte et base rendues dans l'état de réf
 limite du serveur remise à `25/1h` par l'API, M2 bis rougit sur `452 4.4.5 Rate limit exceeded` à la 26e soumission ;
 le provisionnement rétablit `1000/1h`.
 
+## décision 626 — INC-273 : le réseau de la pile de développement n'est jamais banni par Stalwart
+
+*2026-10-12 ; arbitrage du responsable, rendu sur question.*
+
+**Le constat** (détail : `docs/INCONSISTENCY_REPORT.md` INC-273) : le bannissement automatique de Stalwart sur échecs
+d'authentification bannit `mail-sync` et `roundcube`, par lesquels passent les preuves « mot de passe faux » voulues ;
+les campagnes `e2e:mail` tombent ensuite en cascade, et lever les bannissements ne suffit pas.
+
+**Issues présentées** : (1) exempter le sous-réseau Docker de la pile de développement (`server.allowed-ip`) ;
+(2) relever le seuil de bannissement en développement — le compteur journalier pourrait encore être atteint ; (3) ne
+rien changer et lever les bannissements à la main. **L'arbitrage** : l'issue (1).
+
+**Ce qu'elle implique** : `stalwart/provision.sh` lit, à l'exécution, le sous-réseau du réseau Compose qu'il partage
+avec Stalwart (`ip -4 route`, route de lien), l'écrit sous `server.allowed-ip` par l'API, le relit, et efface les
+bannissements déjà posés (`server.blocked-ip`) ; aucune adresse n'est écrite dans le dépôt. Le bannissement reste actif
+pour toute autre origine. Écart propre au développement, porté par `docs/SPEC-mail-subsystem.md` §11.3 et `docs/DAT.md`.
+Preuves : test unitaire du provisionnement ; preuve E2E qu'un service de la pile reste joignable après plus d'échecs
+d'authentification que le seuil ; puis la série de campagnes `e2e:mail` verte qui clôt aussi INC-272.
+

@@ -7193,3 +7193,25 @@ dépasse l'arbitrage d'INC-271. **Issues possibles** : (1) régler la limite d'e
 `stalwart/config.toml` (clé exacte à vérifier dans la documentation de Stalwart) pour le seul développement, à une valeur qui couvre une journée de campagnes, documentée comme
 écart ; (2) laisser la limite et documenter qu'on ne rejoue pas plus de trois campagnes `e2e:mail` par heure ;
 (3) faire échouer une campagne dès son début, avec un message explicite, quand le quota restant ne la couvre pas.
+
+### INC-273 — Stalwart bannit `mail-sync` et `roundcube` après les échecs d'authentification que les preuves provoquent exprès
+
+> **ARBITRÉE le 2026-10-12 par le responsable (décision 626)** : « Exempter le réseau dev » — le provisionnement déclare
+> le sous-réseau Docker de la pile de développement comme jamais bannissable (`server.allowed-ip`), lu à l'exécution,
+> écrit et relu par l'API ; le bannissement reste actif pour toute autre origine. `docs/BACKLOG.md` « Correctif arbitré
+> le 2026-10-12 — INC-273 ».
+>
+> *Ouverte le 2026-10-12, relevée pendant la preuve d'INC-272.*
+
+*Mesuré le 2026-10-12* : après une journée de campagnes `e2e:mail` répétées, le harnais rend « 11 failed » sur le projet
+`mail`, puis deux campagnes rendent « 16 failed » et « 21 failed ». Le journal de Stalwart porte
+`security.authentication-ban` (« Banned due to authentication errors », compte `bizdev@p2enjoy.test`) puis des dizaines de
+`security.ip-blocked` ; `server.blocked-ip` contient deux adresses, relues sur le réseau Compose : celles de
+**`p2enjoy-mail-sync`** et de **`p2enjoy-roundcube`**. Les preuves « mot de passe faux » (comptes entrants, identités
+sortantes, M5 de Roundcube) passent VOLONTAIREMENT par ces services, qui accumulent les échecs ; une fois bannis, ils ne
+joignent plus le serveur, et tous les scénarios qui relèvent, envoient ou ouvrent une session tombent en cascade. Lever
+les bannissements (`server.blocked-ip`, effacé par l'API) ne remet pas le compteur d'échecs à zéro : les deux services
+sont rebannis dans la campagne suivante. Une adresse bannie peut aussi être réattribuée à un autre conteneur — un
+conteneur jetable de preuve en portait une —, d'où des échecs qui paraissent aléatoires. Même famille qu'INC-272 : un
+garde-fou par défaut du serveur que les preuves rencontrent par construction.
+
