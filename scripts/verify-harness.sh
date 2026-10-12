@@ -1435,7 +1435,11 @@ SCENARIOS_UI=818
 # CONFIRMÉ le 2026-08-18 par listage direct, Docker absent : `--list` rend 42 tests dans 11
 # fichiers. Il rendait « 0 test dans 0 fichier » quelques heures plus tôt — neuf specs appelaient
 # `docker` à l'import et faisaient échouer la collecte du projet entier (INC-151, corrigée).
-SCENARIOS_MAIL=42
+# **43 depuis INC-272, 2026-10-12** (décision 625) : `e2e/mail/infrastructure.spec.ts` gagne **1** scénario — M2 bis,
+# l'ancienne limite d'envoi plus un, toutes les soumissions acceptées vers un même destinataire. INC-271 (décision 624)
+# n'a ajouté ni retiré aucun scénario : `e2e/mail/menage.ts` est un module, pas un fichier de scénario. 42 + 1 = **43**,
+# COMPTÉ par `--list` (43 tests dans 11 fichiers), puis confronté au nombre de verts.
+SCENARIOS_MAIL=43
 
 failures=0
 checks=0

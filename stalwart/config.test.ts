@@ -1,6 +1,8 @@
 // @verifies CRM-050 (docs/BACKLOG.md) — invariants de la configuration du serveur de messagerie
 // @verifies docs/SPEC-mail-subsystem.md §11.3 (configuration), §11.9 (le test unitaire de l'unité)
 // @verifies docs/JOURNAL.md décisions 235 et 245 (configuration locale déterministe)
+// @verifies INC-272 (docs/INCONSISTENCY_REPORT.md ; docs/JOURNAL.md décision 625) — la limite d'envoi par expéditeur,
+//           relevée pour le seul développement, écrite par l'API puis relue
 //
 // CE TEST N'EST PAS UN TEST DE FAÇADE, et son objet est nommé : deux de ses invariants ont été
 // payés par une panne réelle.
@@ -122,6 +124,25 @@ describe('configuration de Stalwart — authentification', () => {
 		expect(PROVISION).toContain('"assert_empty":false')
 		expect(PROVISION).not.toContain('"assertEmpty"')
 		expect(PROVISION).toContain('/api/reload')
+	})
+})
+
+describe('configuration de Stalwart — limite d’envoi de développement (INC-272)', () => {
+	it('relève la limite par expéditeur par l’API, jamais dans le fichier local', () => {
+		expect(PROVISION).toContain('["queue.limiter.inbound.sender.rate","1000/1h"]')
+		expect(CONFIG).not.toMatch(/^queue\.limiter/m)
+		expect(CONFIG).not.toContain('[queue.limiter')
+	})
+
+	it('relit la valeur écrite, et échoue si elle n’y est pas', () => {
+		expect(PROVISION).toContain("appel GET '/api/settings/list?prefix=queue.limiter.inbound.sender'")
+		expect(PROVISION).toContain(`*'"rate":"1000/1h"'*) : ;;`)
+		expect(PROVISION).toMatch(/echec "queue\.limiter\.inbound\.sender\.rate non relu/)
+	})
+
+	it('ne touche ni à la limite par adresse IP, ni à l’activation du limiteur', () => {
+		expect(PROVISION).not.toMatch(/queue\.limiter\.inbound\.ip\./)
+		expect(PROVISION).not.toMatch(/"queue\.limiter\.inbound\.sender\.enable"/)
 	})
 })
 

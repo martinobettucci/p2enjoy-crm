@@ -31419,3 +31419,24 @@ documentation de Stalwart avant d'être écrite, la valeur choisie couvre une jo
 correctif suit la clôture d'INC-271, dans son propre commit, avec sa preuve : une série de campagnes au-delà de
 l'ancienne limite, verte.
 
+### décision 625, mise en œuvre — la limite relevée par le provisionnement, prouvée par le refus qu'elle ôte
+
+*2026-10-12.*
+
+**La clé, relue sur le serveur et non déduite** : `GET /api/settings/list?prefix=queue.limiter` rend
+`inbound.sender.rate = "25/1h"`, `inbound.sender.key = [sender_domain, rcpt]`, `inbound.ip.rate = "5/1s"`. La limite
+porte donc sur le couple (domaine expéditeur, destinataire) : les scénarios qui visent la même adresse de card étaient
+les premiers refusés, ce que les échecs du 2026-10-12 montraient.
+
+**Le mécanisme** : `stalwart/provision.sh` (service `stalwart-init`) ajoute `queue.limiter.inbound.sender.rate =
+"1000/1h"` aux réglages qu'il écrit déjà par l'API, puis le RELIT et échoue s'il ne le retrouve pas ; rejoué, il
+converge. Ni la limite par IP, ni l'activation du limiteur ne sont touchées. Le fichier `stalwart/config.toml` reste
+sans clé modifiable.
+
+**Vérifications.** `stalwart/config.test.ts` : 27/27 ; mutation (`25/1h` dans le provisionnement) tuée. Provisionnement
+rejoué sur la pile de développement : « limite d'envoi de développement — relus ». `e2e/mail/infrastructure.spec.ts`
+M2 bis soumet RÉELLEMENT 26 messages (l'ancienne limite plus un) à une adresse de card neuve, espacés de 250 ms pour
+rester sous la limite par IP : vert, boîte et base rendues dans l'état de référence. Mutation de bout en bout : la
+limite du serveur remise à `25/1h` par l'API, M2 bis rougit sur `452 4.4.5 Rate limit exceeded` à la 26e soumission ;
+le provisionnement rétablit `1000/1h`.
+

@@ -1,4 +1,6 @@
 // @verifies CRM-050 (docs/BACKLOG.md) — infrastructure mail de développement
+// @verifies INC-272 (docs/INCONSISTENCY_REPORT.md, décision 625) — M2 bis : la limite d'envoi de développement couvre
+//           une série de campagnes (docs/SPEC-mail-subsystem.md §11.3)
 // @verifies INC-271 (docs/INCONSISTENCY_REPORT.md, décision 624) — M2 rend la boîte système et la base dans l'état
 //           trouvé, barrière comprise contre une relève de veille en vol
 // @verifies docs/SPEC-mail-subsystem.md §11.4 (domaines et boîtes), §11.6 (ClamAV),
@@ -149,6 +151,48 @@ test.describe('M2 — le catch-all reçoit une adresse de card jamais déclarée
 		)
 		expect(transcription).toMatch(/^535 /m)
 		expect(transcription).not.toMatch(/^235 /m)
+	})
+})
+
+// INC-272, DÉCISION 625 — LA LIMITE D'ENVOI DE DÉVELOPPEMENT EST RELEVÉE, ET C'EST UN COMPORTEMENT DU SERVEUR, PAS UNE
+// LIGNE DE SCRIPT. Stalwart v0.13.4 limite par défaut un couple (domaine expéditeur, destinataire) à 25 envois par
+// heure ; `stalwart/provision.sh` porte cette limite à 1000 pour le seul développement. La preuve soumet RÉELLEMENT
+// l'ancienne limite plus un — 26 messages — au même destinataire : sous l'ancienne valeur, la 26e soumission est
+// refusée en `452 4.4.5 Rate limit exceeded` (mesuré le 2026-10-12), et la transcription le dit. Le destinataire est
+// une adresse de card jamais déclarée, neuve à chaque passage, que le catch-all de la boîte système reçoit : elle ne
+// partage son quota avec aucune autre preuve. Les soumissions sont espacées de 250 ms : la limite PAR ADRESSE IP du
+// serveur (`5/1s`, relue par l'API, inchangée) est un autre contrôle, que cette preuve ne doit pas mesurer.
+const ANCIENNE_LIMITE_PAR_DESTINATAIRE = 25
+const ESPACEMENT_SOUS_LA_LIMITE_IP_MS = 250
+
+test.describe('M2 bis — la limite d’envoi de développement couvre une série de campagnes (INC-272)', () => {
+	test('l’ancienne limite plus un : toutes les soumissions vers un même destinataire sont acceptées', async ({
+		request,
+	}) => {
+		test.setTimeout(240_000)
+		const jeton = `c-${Math.random().toString(36).slice(2, 10)}`
+		const destinataire = `${jeton}@${DOMAINE_CARDS}`
+		const boite = { adresse: BOITE_SYSTEME, motDePasse: MDP }
+		const debut = new Date().toISOString()
+		const dossiersAvant = await instantaneDesBoites([boite])
+
+		try {
+			for (let rang = 1; rang <= ANCIENNE_LIMITE_PAR_DESTINATAIRE + 1; rang += 1) {
+				const transcription = await soumettreSmtp(HOTE, PORT_SOUMISSION, {
+					identifiant: BOITES_PERSONNELLES[0]!,
+					motDePasse: MDP,
+					expediteur: BOITES_PERSONNELLES[0]!,
+					destinataire,
+					sujet: `Limite INC-272 ${jeton} ${rang}`,
+					messageId: `<${jeton}-${rang}@preuves.p2enjoy.test>`,
+					corps: 'Preuve de la limite d’envoi de développement.',
+				})
+				expect(transcription, `soumission ${rang}`).toMatch(/^250 .*queued/im)
+				await new Promise((fin) => setTimeout(fin, ESPACEMENT_SOUS_LA_LIMITE_IP_MS))
+			}
+		} finally {
+			await rendreLesBoites(request, { boites: [boite], motif: jeton, avant: dossiersAvant, debut })
+		}
 	})
 })
 

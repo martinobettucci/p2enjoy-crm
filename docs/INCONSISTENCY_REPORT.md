@@ -7171,6 +7171,11 @@ et S3, qui exige le silence de toute la campagne, en paie le prix. L'issue (2) �
 > documenté ; staging et production ne sont pas concernés. Correctif séparé, après la clôture d'INC-271,
 > `docs/BACKLOG.md` « Correctif arbitré le 2026-10-12 — INC-272 ».
 >
+> **MISE EN ŒUVRE le 2026-10-12** (`docs/JOURNAL.md` décision 625, mise en œuvre) : `stalwart/provision.sh` écrit et
+> relit `queue.limiter.inbound.sender.rate = "1000/1h"` ; M2 bis (`e2e/mail/infrastructure.spec.ts`) prouve que
+> l'ancienne limite plus un passe, et rougit quand la limite du serveur est remise à `25/1h`. **La preuve sur campagnes
+> complètes attend INC-273** : le bannissement automatique de Stalwart fait tomber les campagnes en cascade.
+>
 > *Ouverte le 2026-10-12, relevée pendant la preuve d'INC-271.*
 
 *Mesuré le 2026-10-12* : après une dizaine de campagnes `e2e:mail` en trois heures, la onzième rend « 3 failed », puis

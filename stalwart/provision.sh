@@ -16,6 +16,10 @@
 # une valeur modifiée à la main. Il ne détruit jamais un message : une boîte existante est mise à
 # jour, jamais recréée.
 #
+# @spec INC-272 (docs/INCONSISTENCY_REPORT.md ; docs/BACKLOG.md « Correctif arbitré le 2026-10-12 — INC-272 ») —
+#       la limite d'envoi par expéditeur relevée pour le seul développement, docs/JOURNAL.md décision 625,
+#       docs/SPEC-mail-subsystem.md §11.3
+#
 # @spec CRM-060 (docs/BACKLOG.md) — sous-tranche 2 bis : la boîte du correspondant de démonstration,
 #       docs/SPEC-mail-subsystem.md §11.4, docs/SPEC-contacts.md §8.8.8
 #
@@ -77,10 +81,19 @@ dire "API de gestion joignable après $essai tentative(s) : $API"
 # mécanisme d'administration de ce magasin ; l'insertion avec écrasement rend l'opération
 # convergente, puis le rechargement rend l'effet observable avant le premier client IMAP/SMTP.
 
-reglages='[{"type":"insert","prefix":null,"values":[["session.auth.mechanisms","[plain, login]"],["imap.auth.allow-plain-text","true"],["auth.dkim.sign","false"],["auth.arc.seal","false"],["webadmin.resource","file:///opt/stalwart/etc/webadmin-disabled.zip"]],"assert_empty":false}]'
+#
+# LA LIMITE D'ENVOI PAR EXPÉDITEUR EST RELEVÉE — INC-272, décision 625, ÉCART VOLONTAIRE PROPRE AU DÉVELOPPEMENT.
+# Stalwart v0.13.4 limite par défaut `queue.limiter.inbound.sender` à `25/1h`, la clé étant le couple
+# (domaine expéditeur, destinataire) — relu sur le serveur par `/api/settings/list?prefix=queue.limiter`, pas déduit
+# d'une documentation. Une campagne `e2e:mail` adresse plusieurs messages au même destinataire : au-delà de trois
+# campagnes par heure, la soumission était refusée en `452 4.4.5 Rate limit exceeded`, et des preuves rougissaient
+# sans défaut. `1000/1h` couvre une journée de campagnes. La limite par adresse IP (`5/1s`) et l'activation du
+# limiteur restent celles du serveur. Ce serveur n'existe qu'en développement : la production relève et expédie par
+# les serveurs des utilisateurs (docs/SPEC-mail-subsystem.md §2.1).
+reglages='[{"type":"insert","prefix":null,"values":[["session.auth.mechanisms","[plain, login]"],["imap.auth.allow-plain-text","true"],["auth.dkim.sign","false"],["auth.arc.seal","false"],["webadmin.resource","file:///opt/stalwart/etc/webadmin-disabled.zip"],["queue.limiter.inbound.sender.rate","1000/1h"]],"assert_empty":false}]'
 reponse=$(appel POST /api/settings "$reglages")
 case "$reponse" in
-	*'"data"'*) dire "réglages IMAP/SMTP et ressource webadmin — écrits dans le magasin de configuration" ;;
+	*'"data"'*) dire "réglages IMAP/SMTP, ressource webadmin et limite d'envoi — écrits dans le magasin de configuration" ;;
 	*) echec "réglages IMAP/SMTP et ressource webadmin : réponse inattendue — $reponse" ;;
 esac
 
@@ -128,7 +141,12 @@ case "$webadmin_lu" in
 	*'"resource":"file:///opt/stalwart/etc/webadmin-disabled.zip"'*) : ;;
 	*) echec "webadmin.resource non relu après écriture — $webadmin_lu" ;;
 esac
-dire "réglages IMAP/SMTP et ressource webadmin — relus"
+limite_lue=$(appel GET '/api/settings/list?prefix=queue.limiter.inbound.sender')
+case "$limite_lue" in
+	*'"rate":"1000/1h"'*) : ;;
+	*) echec "queue.limiter.inbound.sender.rate non relu après écriture — $limite_lue" ;;
+esac
+dire "réglages IMAP/SMTP, ressource webadmin et limite d'envoi de développement — relus"
 
 # --- 3. Domaines --------------------------------------------------------------------------------
 

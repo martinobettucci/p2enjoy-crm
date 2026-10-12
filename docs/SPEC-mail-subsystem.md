@@ -305,6 +305,16 @@ environnement reproductible, et il est écarté en fournissant la configuration.
 Les valeurs sensibles n'y figurent pas en clair : la configuration lit l'environnement par la
 macro `%{env:VARIABLE}%`.
 
+**Écart volontaire — la limite d'envoi par expéditeur est relevée pour le développement (INC-272, décision 625).**
+Stalwart v0.13.4 limite par défaut `queue.limiter.inbound.sender` à `25/1h`, sur le couple (domaine expéditeur,
+destinataire) — relu sur le serveur, non déduit d'une documentation. Une campagne `e2e:mail` adresse plusieurs messages
+au même destinataire : au-delà de trois campagnes par heure, les soumissions étaient refusées en
+`452 4.4.5 Rate limit exceeded`. `stalwart-init` écrit `1000/1h` par l'API de réglages, comme les réglages IMAP/SMTP,
+puis le relit ; la limite par adresse IP (`5/1s`) et l'activation du limiteur restent celles du serveur. L'écart n'a
+d'effet qu'en développement : ce serveur n'existe nulle part ailleurs (§2.1). Preuves : `stalwart/config.test.ts`
+(écriture et relecture par l'API) et `e2e/mail/infrastructure.spec.ts` M2 bis (l'ancienne limite plus un, toutes les
+soumissions acceptées vers un même destinataire).
+
 **Mesuré — les listeners doivent lier `0.0.0.0`, jamais `[::]`.** La configuration générée par
 `--init` lie `[::]`. Sur un hôte dont le conteneur n'a pas d'IPv6, le serveur **s'arrête sans
 écrire une seule ligne**, ni sur la sortie standard ni dans un fichier : `docker logs` rend le

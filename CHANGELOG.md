@@ -13,6 +13,13 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Correctif du 2026-10-12 — INC-272 (décision 625)
+
+*Développement seulement : aucun code produit, aucune migration, rien à livrer.*
+
+- **Le serveur de messagerie de développement accepte plusieurs campagnes de preuves par heure** : sa limite d'envoi
+  par expéditeur et par destinataire passe de 25 à 1000 messages par heure, posée et relue par le provisionnement.
+
 ### Correctif du 2026-10-12 — INC-271 (décision 624)
 
 *Preuves seulement : aucun code produit, aucune migration, rien à livrer.*

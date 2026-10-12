@@ -15172,9 +15172,13 @@ chacune dans son propre commit, avant `CRM-097` T3 ; la livraison en production 
 
 ## Correctif arbitré le 2026-10-12 — INC-272 (décision 625)
 
-- [ ] **INC-272 — relever la limite d'envoi par expéditeur de Stalwart pour le seul développement.** La limite par défaut
+- [~] **INC-272 — relever la limite d'envoi par expéditeur de Stalwart pour le seul développement.** La limite par défaut
       (25 envois par expéditeur et par heure) borne la preuve à trois campagnes `e2e:mail` par heure. Clé relevée dans la
       documentation de Stalwart, valeur couvrant une journée de campagnes, écart documenté (`docs/DAT.md`, commentaire de
       `stalwart/config.toml`), staging et production inchangés. Preuve : une série de campagnes `e2e:mail` consécutives
       au-delà de l'ancienne limite, verte, et le journal de Stalwart sans `smtp.rate-limit-exceeded`.
+      **État au 2026-10-12** : provisionnement écrit et relu sur la pile de développement ; `stalwart/config.test.ts`
+      27/27, mutation tuée ; M2 bis vert seul, et rouge (`452`) quand la limite du serveur est remise à `25/1h`. Les
+      campagnes complètes tombent en cascade pour une autre cause — le bannissement automatique de `mail-sync` et de
+      `roundcube` par Stalwart (INC-273) — : la série verte reste à faire après INC-273.
 
