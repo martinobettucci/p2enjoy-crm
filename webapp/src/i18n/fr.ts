@@ -618,6 +618,8 @@ export const fr = {
 	// --- Gestes offerts selon les droits — CRM-093, docs/SPEC-droits-interface.md §3, DESIGN_SYSTEM §5.59 -----------
 	// Chaque motif dit d'abord ce que l'écran permet — consulter —, puis ce qu'il refuse, et à qui le geste revient. Il
 	// ne promet aucune démarche : qui accorde un droit dépend de l'espace, et l'écran l'ignore (§5.29 ter).
+	'rights.readonly.administration':
+		'Vous consultez cet écran. Ses modifications sont réservées aux administrateurs de l’espace : les commandes restent visibles mais sont inactives.',
 	'rights.readonly.edition':
 		'Vous consultez cet écran. Ses modifications sont réservées aux administrateurs et aux business developers de l’espace : les commandes restent visibles mais sont inactives.',
 	'goals.readonly.notice':

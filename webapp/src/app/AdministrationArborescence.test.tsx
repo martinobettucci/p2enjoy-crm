@@ -1,3 +1,5 @@
+// @verifies CRM-093 (docs/BACKLOG.md) tranche T3 — l'administration refusée par la base : commandes éteintes avec leur
+//           motif, dépliage offert (docs/SPEC-droits-interface.md §3 ; docs/DESIGN_SYSTEM.md §5.59)
 // @verifies CRM-075 (docs/BACKLOG.md) — écran d'administration des tracks et des channels
 // @verifies CRM-077 (docs/BACKLOG.md) — corbeille, septième tranche : le GESTE de mise à la
 //           corbeille d'un track et d'un channel, et sa confirmation portant l'énumération
@@ -31,6 +33,8 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter, useLocation } from 'react-router'
 import { AdministrationArborescence } from './AdministrationArborescence'
+import { FournisseurEspace } from './ContexteEspace'
+import { fr } from '../i18n/fr'
 import { EVENEMENT_WORKFLOW_DEPART } from '../lib/demarrage'
 import { EVENEMENT_TRACKS_MODIFIES } from '../lib/tracks'
 import type { ClientCrm } from '../lib/supabase'
@@ -1060,3 +1064,42 @@ describe('le signal des tracks modifiés (INC-254, docs/SPEC-webapp.md §6.3 bis
 	})
 })
 
+
+// --- CRM-093 — l'administration refusée par la base (docs/SPEC-droits-interface.md §3, §4 ; DESIGN_SYSTEM §5.59) -------
+
+describe('arborescence — l’administration refusée par la base (CRM-093)', () => {
+	function monterRefusee() {
+		const { client, ecritures } = clientFactice()
+		render(
+			<MemoryRouter initialEntries={['/reglages/arborescence']}>
+				<FournisseurEspace
+					valeur={{ idWorkspace: 'w', estAdmin: false, capacites: { administration: 'refusee', edition: 'permise' } }}
+				>
+					<AdministrationArborescence client={client} />
+				</FournisseurEspace>
+			</MemoryRouter>,
+		)
+		return { ecritures }
+	}
+
+	it('les commandes d’écriture sont montées, désactivées, et citent un motif unique ; déplier reste offert', async () => {
+		monterRefusee()
+		await attendreTracks()
+		const motif = screen.getByTestId('motif-lecture-seule')
+		expect(motif.textContent).toBe(fr['rights.readonly.administration'])
+		const ecriture = [
+			screen.getByRole('button', { name: fr['admin.action.newTrack'] }),
+			screen.getByRole('button', { name: 'Modifier Conseil & IA' }),
+			screen.getByRole('button', { name: 'Archiver Conseil & IA' }),
+			screen.getByRole('button', { name: 'Monter Conseil & IA' }),
+		] as HTMLButtonElement[]
+		for (const commande of ecriture) {
+			expect(commande.disabled, commande.getAttribute('aria-label') ?? commande.textContent ?? '').toBe(true)
+			expect(commande.getAttribute('aria-describedby')).toBe(motif.id)
+		}
+		const deplier = screen.getAllByRole('button', { expanded: false })[0] as HTMLButtonElement
+		expect(deplier.disabled).toBe(false)
+		await userEvent.click(deplier)
+		expect(deplier.getAttribute('aria-expanded')).toBe('true')
+	})
+})

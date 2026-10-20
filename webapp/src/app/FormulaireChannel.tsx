@@ -1,3 +1,5 @@
+// @spec CRM-093 (docs/BACKLOG.md) tranche T3 — la validation lit le refus du bloc qui l'accueille (docs/DESIGN_SYSTEM.md
+//       §5.59) : atteint par son adresse sans le droit d'administrer, le formulaire ne s'envoie pas
 // @spec CRM-075 (docs/BACKLOG.md) — le formulaire d'un channel : créer et modifier
 // @spec docs/SPEC-administration-arborescence.md §7 (les channels), §7.2 (un workflow obligatoire, aucun défaut
 //       présélectionné, la liste vide dite), §8 (validation de forme), §9 (les refus)
@@ -14,6 +16,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { Plus } from 'lucide-react'
+import { useRefus } from '../components/ui/RefusCommandes'
 import { Button } from '../components/ui/Button'
 import { t } from '../i18n'
 import type { EtatAsync } from '../lib/async'
@@ -68,6 +71,7 @@ export function FormulaireChannel({
 	cheminNouveauWorkflow,
 	idWorkflowAttendu = null,
 }: ProprietesFormulaireChannel) {
+	const droit = useRefus()
 	const prefixe = useId()
 	const [saisie, setSaisie] = useState(initial)
 	// Un slug revenu de l'aller-retour a été SAISI (§13.4) : la proposition depuis le nom ne doit pas l'écraser. Un
@@ -221,7 +225,7 @@ export function FormulaireChannel({
 			/>
 			{refus === null ? null : <AlerteRefus message={refus} />}
 			<div className="flex gap-2">
-				<Button type="submit" variante="primaire" disabled={!complet || enCours}>
+				<Button type="submit" variante="primaire" {...droit} disabled={droit.disabled === true || !complet || enCours}>
 					{slugModifiable ? t('admin.action.create') : t('admin.action.save')}
 				</Button>
 				<Button variante="secondaire" onClick={onAnnuler}>

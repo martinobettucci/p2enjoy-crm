@@ -1,3 +1,6 @@
+// @spec CRM-093 (docs/BACKLOG.md) tranche T3 — les commandes d'écriture désactivées avec leur motif quand la base refuse
+//       l'administration de l'espace ; déplier et consulter restent offerts (docs/SPEC-droits-interface.md §2.2, §3, §5 ;
+//       docs/DESIGN_SYSTEM.md §5.59)
 // @spec CRM-075 (docs/BACKLOG.md) — écran d'administration des tracks et des channels
 // @spec CRM-084 (docs/BACKLOG.md) — budgets, tranche 2 : la table des budgets d'un track vit sous sa
 //       ligne dépliée, `docs/SPEC-costs.md` §4.1 (« Administration des budgets — dans le track.
@@ -97,6 +100,13 @@ import {
 	sansNouveauChannel,
 	type BrouillonChannel,
 } from '../lib/nouveau-channel'
+import { useContexteEspace } from './ContexteEspace'
+import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
+import { FournisseurRefus, useRefus } from '../components/ui/RefusCommandes'
+import { motifVisible, proprietesCommande } from '../lib/capacites'
+
+/** Le motif de l'écran, cité par ses commandes d'écriture quand la base refuse l'administration (CRM-093). */
+const ID_MOTIF_ARBORESCENCE = 'arborescence-lecture-seule'
 
 const COULEURS: readonly string[] = ['brand', 'success', 'accent', 'danger', 'neutral']
 
@@ -166,6 +176,7 @@ function FormulaireTrack({
 	onValider,
 	onAnnuler,
 }: ProprietesFormulaireTrack) {
+	const droit = useRefus()
 	const prefixe = useId()
 	const [saisie, setSaisie] = useState(initial)
 	// La proposition de slug cesse dès que l'utilisateur a touché le champ, sans quoi elle
@@ -264,7 +275,7 @@ function FormulaireTrack({
 			/>
 			{refus === null ? null : <AlerteRefus message={refus} />}
 			<div className="flex gap-2">
-				<Button type="submit" variante="primaire" disabled={!complet || enCours}>
+				<Button type="submit" variante="primaire" {...droit} disabled={droit.disabled === true || !complet || enCours}>
 					{slugModifiable ? t('admin.action.create') : t('admin.action.save')}
 				</Button>
 				<Button variante="secondaire" onClick={onAnnuler}>
@@ -451,6 +462,7 @@ function CommandesLigne({
 	onArchiver,
 	onCorbeille,
 }: ProprietesCommandes) {
+	const droit = useRefus()
 	/**
 	 * La mise à la corbeille, offerte sur TOUTE ligne — archivée comprise.
 	 *
@@ -464,6 +476,7 @@ function CommandesLigne({
 		<Button
 			taille="compacte"
 			variante="discret"
+			{...droit}
 			onClick={onCorbeille}
 			aria-label={t('admin.action.trash', { nom })}
 		>
@@ -477,6 +490,7 @@ function CommandesLigne({
 				<Button
 					taille="compacte"
 					variante="discret"
+					{...droit}
 					onClick={onArchiver}
 					aria-label={t('admin.action.unarchive', { nom })}
 				>
@@ -509,7 +523,8 @@ function CommandesLigne({
 			<Button
 				taille="compacte"
 				variante="discret"
-				disabled={peutMonter.statut !== 'calcule'}
+				{...droit}
+				disabled={droit.disabled === true || peutMonter.statut !== 'calcule'}
 				onClick={() => onDeplacer('monter')}
 				aria-label={t('admin.action.up', { nom })}
 				title={explication(peutMonter, t('admin.move.disabled.top'))}
@@ -519,7 +534,8 @@ function CommandesLigne({
 			<Button
 				taille="compacte"
 				variante="discret"
-				disabled={peutDescendre.statut !== 'calcule'}
+				{...droit}
+				disabled={droit.disabled === true || peutDescendre.statut !== 'calcule'}
 				onClick={() => onDeplacer('descendre')}
 				aria-label={t('admin.action.down', { nom })}
 				title={explication(peutDescendre, t('admin.move.disabled.bottom'))}
@@ -529,6 +545,7 @@ function CommandesLigne({
 			<Button
 				taille="compacte"
 				variante="discret"
+				{...droit}
 				onClick={onModifier}
 				aria-label={t('admin.action.rename', { nom })}
 			>
@@ -537,6 +554,7 @@ function CommandesLigne({
 			<Button
 				taille="compacte"
 				variante="discret"
+				{...droit}
 				onClick={onArchiver}
 				aria-label={t('admin.action.archive', { nom })}
 			>
@@ -562,6 +580,8 @@ export type ProprietesAdministration = {
 }
 
 export function AdministrationArborescence({ client = clientCrm }: ProprietesAdministration = {}) {
+	const { capacites } = useContexteEspace()
+	const droitAdministration = proprietesCommande(capacites.administration, ID_MOTIF_ARBORESCENCE)
 	const [inclureArchives, setInclureArchives] = useState(false)
 	const [idWorkspace, setIdWorkspace] = useState<string | null>(null)
 	const [tracks, setTracks] = useState<EtatAsync<readonly TrackAdministrable[]>>(enChargement)
@@ -837,12 +857,17 @@ export function AdministrationArborescence({ client = clientCrm }: ProprietesAdm
 	const liste = tracks.donnees
 
 	return (
+		<FournisseurRefus valeur={droitAdministration}>
 		<section aria-label={t('admin.tree.aria')} className="flex flex-col gap-4">
 			<LiveRegion message={annonce} libelle={t('live.admin.aria')} />
+			{motifVisible(capacites.administration) ? (
+				<MotifLectureSeule id={ID_MOTIF_ARBORESCENCE}>{t('rights.readonly.administration')}</MotifLectureSeule>
+			) : null}
 
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				<Button
 					variante="primaire"
+					{...droitAdministration}
 					onClick={() => {
 						setRefus(null)
 						setOuverture({ type: 'creation-track' })
@@ -1188,6 +1213,7 @@ export function AdministrationArborescence({ client = clientCrm }: ProprietesAdm
 				</div>
 			)}
 		</section>
+		</FournisseurRefus>
 	)
 }
 
@@ -1238,6 +1264,7 @@ function ListeChannels({
 	onCorbeille,
 	onConfirmerCorbeille,
 }: ProprietesListeChannels) {
+	const droit = useRefus()
 	if (etat.statut === 'chargement') {
 		return (
 			<div className="pl-12 pr-3 pb-3">
@@ -1351,7 +1378,7 @@ function ListeChannels({
 					}
 				/>
 			) : (
-				<Button taille="compacte" variante="secondaire" onClick={onCreer}>
+				<Button taille="compacte" variante="secondaire" {...droit} onClick={onCreer}>
 					<Plus aria-hidden="true" size={16} strokeWidth={2} />
 					{t('admin.action.newChannel')}
 				</Button>
