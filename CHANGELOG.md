@@ -13,9 +13,9 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-101` T1 — la plateforme et son superadministrateur, en base (décision 627)
+### `CRM-101` T1 et T2 — la plateforme et son superadministrateur, en base et par la connexion (décision 627)
 
-*Migration `0089`, prouvée en développement ; aucun écran encore. Livraison avec la tranche T5.*
+*Migration `0089` et fonction `session`, prouvées en développement ; aucun écran encore. Livraison avec la tranche T5.*
 
 - **Un superadministrateur de la plateforme** : le porteur du rôle `admin` LeLabs, ou un drapeau en base, amorcé une
   seule fois à la première connexion d'une adresse listée dans `CRM_SUPERADMINS_INITIAUX`.
@@ -26,6 +26,9 @@ d'exécuter le code attendu.
   - accorder et retirer le drapeau (le dernier ne se retire pas) ;
   - lire le journal de chaque geste.
 - **Un superadministrateur en base est admis sans appartenance** : il peut créer le premier espace.
+- **T2 — l'amorçage passe par la vraie connexion** : la fonction de session reçoit `CRM_SUPERADMINS_INITIAUX`
+  (facultative) et la transmet ; en développement, le compte de démonstration « Sabine Plateforme » est amorcé à sa
+  première connexion.
 
 ### Correctif du 2026-10-12 — INC-273 (décision 626)
 

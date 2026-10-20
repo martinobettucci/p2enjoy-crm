@@ -395,9 +395,13 @@ services:
 
   # `IA_SIMULATEUR_HOST` n'existe QUE dans cet overlay : en production, la fonction `ia` ignore l'en-tête
   # du simulateur (docs/SPEC-ia.md §11.6).
+  #
+  # @spec CRM-101 (docs/BACKLOG.md), docs/SPEC-plateforme.md §8 — en développement, la liste d'amorçage vaut par
+  # défaut le compte de démonstration « Sabine Plateforme » du realm local ; un `.env` qui la renseigne l'emporte.
   functions:
     environment:
       IA_SIMULATEUR_HOST: http://ollama-simule:11434
+      CRM_SUPERADMINS_INITIAUX: ${CRM_SUPERADMINS_INITIAUX:-plateforme@${MAIL_DEV_PERSONAL_DOMAIN}}
     depends_on:
       ollama-simule:
         condition: service_healthy

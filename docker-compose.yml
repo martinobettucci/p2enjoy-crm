@@ -264,6 +264,9 @@ services:
       SSO_OIDC_ISSUER: ${SSO_OIDC_ISSUER}
       SSO_OIDC_CLIENT_ID: ${SSO_OIDC_CLIENT_ID}
       OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET}
+      # @spec CRM-101 (docs/BACKLOG.md), docs/SPEC-plateforme.md §3 — la liste de l'amorçage unique du
+      # superadministrateur. Facultative : vide, rien n'est amorcé. Remise au SEUL worker `session`.
+      CRM_SUPERADMINS_INITIAUX: ${CRM_SUPERADMINS_INITIAUX:-}
       # @spec CRM-097 (docs/BACKLOG.md), docs/SPEC-ia.md §3 — le serveur LLM de l'assistant. Facultatives :
       # sans clé, l'assistant se déclare indisponible et rien d'autre n'est empêché. Le service principal ne
       # les remet QU'AU worker `ia` (`main/environnement.ts`).

@@ -208,6 +208,26 @@
           "temporary": false
         }
       ]
+    },
+    {
+      "id": "5eed0000-0000-4000-8000-000000000018",
+      "username": "plateforme@${SSO_DEV_DOMAINE}",
+      "email": "plateforme@${SSO_DEV_DOMAINE}",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Sabine",
+      "lastName": "Plateforme",
+      "realmRoles": [
+        "default-roles-lelabs",
+        "verified"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "SeedDev2026Local",
+          "temporary": false
+        }
+      ]
     }
   ]
 }

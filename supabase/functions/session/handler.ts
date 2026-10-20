@@ -8,6 +8,8 @@
 // @spec CLAUDE.md §10 (la règle d'accès est appliquée côté serveur), §20 (journal sans secret)
 // @spec CRM-092 (docs/BACKLOG.md) — tranche T8 ; docs/SPEC-session-sso.md §5.4 (revendication
 //       `lelabs_admin`), §6.1 bis ; docs/JOURNAL.md décision 597 — règle du domaine sur `admin`
+// @spec CRM-101 (docs/BACKLOG.md) — tranche T2 ; docs/SPEC-plateforme.md §3 (amorçage unique), §4 (admission
+//       révisée) ; docs/JOURNAL.md décision 627 — la liste d'amorçage transmise à l'ouverture et à la prolongation
 //
 // Module pur : toute entrée-sortie passe par `DependancesSession`, ce qui rend chaque refus prouvable
 // sans réseau. Le navigateur ne reçoit AUCUN jeton LeLabs : il remet un code et son vérificateur,
@@ -29,6 +31,8 @@ export type ConfigurationSession = {
 	readonly clientSecret: string
 	/** Clé de signature du jeton interne (`JWT_SECRET`), dont dérive aussi la clé de chiffrement. */
 	readonly secretJwt: string
+	/** Adresses de l'amorçage unique (`CRM_SUPERADMINS_INITIAUX`), normalisées ; vide, rien n'est amorcé. */
+	readonly superadminsInitiaux: readonly string[]
 }
 
 export type ReponseFormulaire = { readonly statut: number; readonly corps: unknown }
@@ -260,6 +264,7 @@ async function ouvrir(requete: Request, d: DependancesSession, c: ConfigurationS
 				p_email: identite.adresse,
 				p_nom: identite.nom,
 				p_admin_lelabs: identite.adminLelabs,
+				p_superadmins_initiaux: c.superadminsInitiaux,
 				p_empreinte: await empreinteDe(poignee),
 				p_rafraichissement: await chiffrer(jetons.rafraichissement, cle),
 				p_expire_le: jetons.expireLe,
@@ -356,6 +361,7 @@ async function prolonger(requete: Request, d: DependancesSession, c: Configurati
 				p_email: identite.adresse,
 				p_nom: identite.nom,
 				p_admin_lelabs: identite.adminLelabs,
+				p_superadmins_initiaux: c.superadminsInitiaux,
 				p_rafraichissement: await chiffrer(jetons.rafraichissement, cle),
 				p_expire_le: jetons.expireLe,
 			},

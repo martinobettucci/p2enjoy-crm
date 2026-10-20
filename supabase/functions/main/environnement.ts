@@ -5,6 +5,8 @@
 // @spec docs/JOURNAL.md décision 584 (révision de la règle « JWT_SECRET n'est pas propagé »)
 // @spec CRM-097 (docs/BACKLOG.md) — tranche T1 : la fonction `ia` reçoit les variables `OLLAMA_*` et le
 //       simulateur de développement, elle seule, et une borne de 150 s (docs/SPEC-ia.md §11.1, §11.6)
+// @spec CRM-101 (docs/BACKLOG.md) — tranche T2 : `session` reçoit aussi `CRM_SUPERADMINS_INITIAUX`, la liste de
+//       l'amorçage unique (docs/SPEC-plateforme.md §3, décision 627)
 //
 // Module pur. Le conteneur `functions` reçoit `JWT_SECRET` depuis `CRM-092`, parce que l'échangeur
 // doit signer le jeton interne que PostgREST, Realtime et Storage acceptent. Le service principal ne
@@ -18,7 +20,9 @@ export const ENVIRONNEMENT_COMMUN = ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPAB
 
 /** Ce qu'une fonction nommée reçoit EN PLUS, et elle seule. */
 export const ENVIRONNEMENT_PROPRE: Readonly<Record<string, readonly string[]>> = {
-	session: ['JWT_SECRET', 'SSO_OIDC_ISSUER', 'SSO_OIDC_CLIENT_ID', 'OIDC_CLIENT_SECRET'],
+	// `CRM-101` : la liste d'amorçage du superadministrateur, qu'applique la seule fonction de session serveur
+	// (docs/SPEC-plateforme.md §3). Elle n'est pas un secret, mais aucune autre fonction n'en a l'emploi.
+	session: ['JWT_SECRET', 'SSO_OIDC_ISSUER', 'SSO_OIDC_CLIENT_ID', 'OIDC_CLIENT_SECRET', 'CRM_SUPERADMINS_INITIAUX'],
 	// `CRM-097` : la clé du serveur LLM n'atteint que l'assistant ; `IA_SIMULATEUR_HOST` n'existe qu'en
 	// développement (docs/SPEC-ia.md §11.6).
 	ia: ['OLLAMA_HOST', 'OLLAMA_API_KEY', 'OLLAMA_MODEL', 'OLLAMA_CONTEXT_LENGTH', 'IA_SIMULATEUR_HOST'],

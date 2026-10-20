@@ -48,6 +48,7 @@ d'adresse exigée. La version de l'image est celle du SSO réel, `26.7.3`.
 | `admin@` | `5eed…0011` | oui | oui | `admin` | le parcours nominal |
 | `bizdev@` | `5eed…0012` | oui | oui | `business_developer` | un membre ordinaire |
 | `viewer@` | `5eed…0013` | oui | oui | `viewer` | la lectrice ; **n'est plus** `admin` du realm depuis la décision 597, qui ferait d'elle une administratrice |
+| `plateforme@` | `5eed…0018` | oui | oui | non | le superadministrateur de la plateforme : amorcé à sa première connexion par `CRM_SUPERADMINS_INITIAUX`, dont c'est l'adresse par défaut en développement ; admis sans appartenance (`docs/SPEC-plateforme.md` §3, §4 ; `CRM-101`) |
 | `exploitante@` | `5eed…0017` | oui | oui, et `admin` du realm | non | la règle du domaine : admise sans attente, administratrice de tout espace, sans aucune appartenance (§6.1 bis) |
 | `inconnu@` | `5eed…0014` | oui | oui | non | l'attente « aucun espace ne vous attend » |
 | `attendu@` | `5eed…0015` | oui | **non** | `viewer` | l'attente « compte LeLabs pas encore vérifié » |

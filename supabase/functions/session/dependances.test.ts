@@ -1,9 +1,11 @@
 // @verifies CRM-092 (docs/BACKLOG.md) — entrées-sorties réelles de l'échangeur de session
 // @verifies docs/SPEC-session-sso.md §5.2 (point de jeton), §5.7 (échéance, 3 s par appel, environnement),
 //           §7.4 (fonctions de session appelées par PostgREST)
+// @verifies CRM-101 (docs/BACKLOG.md) — tranche T2 : la liste `CRM_SUPERADMINS_INITIAUX` lue et normalisée
+//           (docs/SPEC-plateforme.md §3)
 
 import { describe, expect, it } from 'vitest'
-import { DELAI_APPEL_MS, creerDependances, delaiAppel, lireConfiguration } from './dependances.ts'
+import { DELAI_APPEL_MS, creerDependances, delaiAppel, lireConfiguration, listeSuperadminsInitiaux } from './dependances.ts'
 
 const ENV: Record<string, string> = {
 	SSO_OIDC_ISSUER: 'http://sso.localhost:18480/realms/lelabs/',
@@ -33,11 +35,34 @@ describe('lireConfiguration', () => {
 			clientId: 'lelabs-crm-serveur',
 			clientSecret: 'secret-du-client',
 			secretJwt: 'secret',
+			superadminsInitiaux: [],
 		})
+	})
+
+	it('lit la liste d’amorçage avec la configuration', () => {
+		expect(lireConfiguration(lire({ ...ENV, CRM_SUPERADMINS_INITIAUX: 'plateforme@p2enjoy.test' }))?.superadminsInitiaux)
+			.toEqual(['plateforme@p2enjoy.test'])
 	})
 
 	it.each(['SSO_OIDC_ISSUER', 'SSO_OIDC_CLIENT_ID', 'OIDC_CLIENT_SECRET', 'JWT_SECRET'])('rend null sans %s', (nom) => {
 		expect(lireConfiguration(lire({ ...ENV, [nom]: '' }))).toBeNull()
+	})
+})
+
+describe('listeSuperadminsInitiaux', () => {
+	it('normalise : espaces de bord, minuscules, doublons retirés, ordre conservé', () => {
+		expect(listeSuperadminsInitiaux(' Sabine@Exemple.TEST , autre@exemple.test,sabine@exemple.test ')).toEqual([
+			'sabine@exemple.test',
+			'autre@exemple.test',
+		])
+	})
+
+	it('écarte une entrée mal formée sans lever : l’amorçage est facultatif', () => {
+		expect(listeSuperadminsInitiaux('pas-une-adresse, a@b@c, deux mots@x.test, ,ok@exemple.test')).toEqual(['ok@exemple.test'])
+	})
+
+	it.each([undefined, '', ' , ,'])('rend une liste vide pour %j, qui n’amorce rien', (valeur) => {
+		expect(listeSuperadminsInitiaux(valeur)).toEqual([])
 	})
 })
 

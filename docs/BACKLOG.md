@@ -15086,8 +15086,18 @@ LeLabs — gère la plateforme depuis `/plateforme`. Spécifié avant le code : 
       régénérés, témoin révisé (deux tables, soixante-seize fonctions), `typecheck` et `types:check` verts.
       `e2e/api/session.spec.ts` **24/24** avec la fonction `session` inchangée : l'ancienne arité se résout sur la
       nouvelle signature, sans amorçage.
-- [ ] **T2** — la fonction `session` : `CRM_SUPERADMINS_INITIAUX` remise au seul worker `session` et transmise ;
+- [x] **T2** — la fonction `session` : `CRM_SUPERADMINS_INITIAUX` remise au seul worker `session` et transmise ;
       amorçage et admission exercés par une vraie connexion ; preuves unitaires et d'API aux jetons réels.
+      *Vérifié le 2026-10-20, en développement* : `main/environnement.ts` remet la liste au seul worker `session` ;
+      `listeSuperadminsInitiaux` la normalise (casse, espaces, doublons, entrées mal formées écartées) ; le handler la
+      transmet aux deux fonctions de session serveur. Unitaires : fonctions edge **232** — deux mutations
+      (transmission retirée, variable retirée de l'environnement) chacune rouge. Compte de développement « Sabine
+      Plateforme » (`plateforme@`, `5eed…0018`) ajouté au realm ; défaut de développement posé par l'overlay ;
+      `CRM_SUPERADMINS_INITIAUX` documentée vide dans `.env.example`. API `e2e/api/plateforme.spec.ts` **2/2** par une
+      vraie connexion PKCE : adresse non listée sans effet, Sabine amorcée et admise sans appartenance, garde ouverte,
+      aucune donnée métier lue, retrait qui ferme la session à la prolongation ; **rouge** sous `functions` recréé avec
+      une liste vide, vert une fois rétabli. Voisins rejoués : `session.spec.ts` **24/24**, `verify-scripts.sh` **115**,
+      unitaires **3 822**, `typecheck`.
 - [ ] **T3** — l'écran `/plateforme` (Espaces et fiche d'un espace, Superadministrateurs, Journal) ;
       `docs/DESIGN_SYSTEM.md` écrit **après lecture intégrale** ; preuves unitaires.
 - [ ] **T4** — seed (`docs/SPEC-seed.md`, compte Keycloak « Sabine Plateforme »), API, E2E à la souris et au clavier,

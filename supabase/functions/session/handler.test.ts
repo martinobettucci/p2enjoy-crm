@@ -6,6 +6,8 @@
 //           en suspens se dit `attente_administrateur`, à l'ouverture comme à la prolongation
 // @verifies CRM-092 (docs/BACKLOG.md) — tranche T8 ; docs/SPEC-session-sso.md §5.4, §6.1 bis ; docs/JOURNAL.md
 //           décision 597 — revendication `lelabs_admin` et drapeau `p_admin_lelabs`, à l'ouverture et à la prolongation
+// @verifies CRM-101 (docs/BACKLOG.md) — tranche T2 : la liste d'amorçage transmise aux deux fonctions de session serveur
+//           (docs/SPEC-plateforme.md §3, §4 ; décision 627)
 //
 // Un faux LeLabs sert la découverte, le point de jeton et les clés ; une fausse base reproduit les
 // quatre fonctions de session de `0076_sessions_serveur.sql`. Chacun enregistre ce qu'il reçoit, ce qui
@@ -74,6 +76,7 @@ type Monde = {
 	panneBase?: boolean
 	decouverte?: unknown
 	sessions?: Map<string, Session>
+	superadminsInitiaux?: readonly string[]
 }
 
 function monde(m: Monde = {}) {
@@ -84,7 +87,13 @@ function monde(m: Monde = {}) {
 	const sessions = m.sessions ?? new Map<string, Session>()
 
 	const d: DependancesSession = {
-		configuration: { emetteur: EMETTEUR, clientId: CLIENT, clientSecret: SECRET_CLIENT, secretJwt: SECRET_JWT },
+		configuration: {
+			emetteur: EMETTEUR,
+			clientId: CLIENT,
+			clientSecret: SECRET_CLIENT,
+			secretJwt: SECRET_JWT,
+			superadminsInitiaux: m.superadminsInitiaux ?? [],
+		},
 		lireJson: async (url, echeance) => {
 			echeances.push(echeance)
 			if (url === `${EMETTEUR}/.well-known/openid-configuration`) {
@@ -232,6 +241,19 @@ describe('ouvrir — succès (§5.2)', () => {
 		const corps = await json(await traiterSession(requete('ouvrir', { corps: CORPS_OUVERTURE }), ordinaire.d))
 		expect('lelabs_admin' in charge(corps.jeton as string)).toBe(false)
 		expect(ordinaire.appelsBase.find((a) => a.fonction === 'ouvrir_session_serveur')?.args.p_admin_lelabs).toBe(false)
+	})
+
+	// `CRM-101` T2 (docs/SPEC-plateforme.md §3) : la liste part TELLE QUE LUE, et la base décide. L'échangeur ne
+	// compare aucune adresse lui-même : l'amorçage n'a qu'une écriture, `app.amorcer_superadmin`.
+	it('transmet la liste d’amorçage à l’ouverture, vide quand la variable est absente', async () => {
+		const avec = monde({ superadminsInitiaux: ['plateforme@p2enjoy.test'] })
+		await traiterSession(requete('ouvrir', { corps: CORPS_OUVERTURE }), avec.d)
+		expect(avec.appelsBase.find((a) => a.fonction === 'ouvrir_session_serveur')?.args.p_superadmins_initiaux)
+			.toEqual(['plateforme@p2enjoy.test'])
+
+		const sans = monde()
+		await traiterSession(requete('ouvrir', { corps: CORPS_OUVERTURE }), sans.d)
+		expect(sans.appelsBase.find((a) => a.fonction === 'ouvrir_session_serveur')?.args.p_superadmins_initiaux).toEqual([])
 	})
 
 	it('ne dépasse jamais l’échéance du jeton d’accès LeLabs', async () => {
@@ -417,6 +439,14 @@ describe('prolonger (§5.3)', () => {
 		const corpsSans = await json(await traiterSession(requete('prolonger', { cookie: COOKIE }), sans.d))
 		expect('lelabs_admin' in charge(corpsSans.jeton as string)).toBe(false)
 		expect(sans.appelsBase.find((a) => a.fonction === 'renouveler_session_serveur')?.args.p_admin_lelabs).toBe(false)
+	})
+
+	it('transmet aussi la liste d’amorçage à chaque prolongation (docs/SPEC-plateforme.md §3)', async () => {
+		const sessions = await sessionOuverte()
+		const m = monde({ sessions, superadminsInitiaux: ['plateforme@p2enjoy.test'] })
+		await traiterSession(requete('prolonger', { cookie: COOKIE }), m.d)
+		expect(m.appelsBase.find((a) => a.fonction === 'renouveler_session_serveur')?.args.p_superadmins_initiaux)
+			.toEqual(['plateforme@p2enjoy.test'])
 	})
 
 	it('rend 403 attente_espace quand l’appartenance a été retirée, et la session est supprimée', async () => {

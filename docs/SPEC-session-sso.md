@@ -250,7 +250,10 @@ Un `401 jeton_refuse` ne distingue pas ses causes : les distinguer n'aiderait qu
 
 - **Variables remises au seul worker `session`** (`main/environnement.ts`) : `JWT_SECRET`,
   `SSO_OIDC_ISSUER`, `SSO_OIDC_CLIENT_ID`, **`OIDC_CLIENT_SECRET`**, en plus du commun. Une autre
-  fonction ne peut ni frapper un jeton, ni parler à LeLabs au nom du CRM.
+  fonction ne peut ni frapper un jeton, ni parler à LeLabs au nom du CRM. Depuis `CRM-101` T2,
+  `CRM_SUPERADMINS_INITIAUX` aussi : la liste de l'amorçage unique du superadministrateur, normalisée
+  puis transmise telle quelle à `ouvrir_session_serveur` et `renouveler_session_serveur`, qui décident
+  (`docs/SPEC-plateforme.md` §3).
 - **Chiffrement au repos du jeton de rafraîchissement** : AES-GCM 256, vecteur de 12 octets tiré à
   chaque écriture, clé dérivée de `JWT_SECRET` par HKDF-SHA-256 (sel fixe, information
   `p2enjoy-crm/sessions-sso/v1`). Une sauvegarde de base seule ne livre aucun jeton utilisable. La clé

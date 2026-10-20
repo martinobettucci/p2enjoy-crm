@@ -3,6 +3,7 @@
 //       environnement), §7.4 (fonctions de session appelées par PostgREST)
 // @spec docs/SPEC-edge-functions.md §2 (runtime : 10 s de temps mur par worker)
 // @spec CLAUDE.md §19 (timeout et gestion d'erreur de tout service externe), §20 (aucun secret journalisé)
+// @spec CRM-101 (docs/BACKLOG.md) — tranche T2 : la liste `CRM_SUPERADMINS_INITIAUX` (docs/SPEC-plateforme.md §3)
 //
 // Module pur : `fetch`, l'horloge et l'environnement sont injectés, de sorte que la forme exacte des
 // appels — adresse, en-têtes, corps, délai — se prouve sans réseau. Chaque appel prend AU PLUS 3 s
@@ -16,6 +17,19 @@ export const DELAI_APPEL_MS = 3_000
 type Fetch = (url: string, init?: RequestInit) => Promise<Response>
 type LireEnv = (nom: string) => string | undefined
 
+/**
+ * La liste d'amorçage du superadministrateur (docs/SPEC-plateforme.md §3) : adresses séparées par des virgules,
+ * espaces de bord ignorés, en minuscules, sans doublon. Une entrée mal formée est écartée sans erreur — l'amorçage est
+ * facultatif — et une variable absente ou vide rend une liste vide, qui n'amorce rien.
+ */
+export function listeSuperadminsInitiaux(valeur: string | undefined): string[] {
+	const adresses = (valeur ?? '')
+		.split(',')
+		.map((entree) => entree.trim().toLowerCase())
+		.filter((entree) => /^[^@\s]+@[^@\s]+$/.test(entree))
+	return [...new Set(adresses)]
+}
+
 /** Rend `null` si une variable manque : l'échangeur répond alors `service_indisponible`, sans rien tenter. */
 export function lireConfiguration(lire: LireEnv): ConfigurationSession | null {
 	const emetteur = lire('SSO_OIDC_ISSUER')?.trim().replace(/\/+$/, '')
@@ -23,7 +37,13 @@ export function lireConfiguration(lire: LireEnv): ConfigurationSession | null {
 	const clientSecret = lire('OIDC_CLIENT_SECRET')
 	const secretJwt = lire('JWT_SECRET')
 	if (!emetteur || !clientId || !clientSecret || !secretJwt) return null
-	return { emetteur, clientId, clientSecret, secretJwt }
+	return {
+		emetteur,
+		clientId,
+		clientSecret,
+		secretJwt,
+		superadminsInitiaux: listeSuperadminsInitiaux(lire('CRM_SUPERADMINS_INITIAUX')),
+	}
 }
 
 /** Délai d'un appel : 3 s au plus, et jamais au-delà de l'échéance du geste. */

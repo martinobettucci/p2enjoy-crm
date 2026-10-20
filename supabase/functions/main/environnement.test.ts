@@ -3,6 +3,8 @@
 // @verifies docs/JOURNAL.md décisions 584 et 586 (le secret du client confidentiel)
 // @verifies CRM-097 (docs/BACKLOG.md) — tranche T1 : la clé du serveur LLM n'atteint que `ia`, et sa borne
 //           de 150 s ne s'étend à aucune autre fonction (docs/SPEC-ia.md §11.1, §11.6)
+// @verifies CRM-101 (docs/BACKLOG.md) — tranche T2 : la liste d'amorçage n'atteint que `session`
+//           (docs/SPEC-plateforme.md §3)
 
 import { describe, expect, it } from 'vitest'
 import { DELAI_COMMUN_MS, ENVIRONNEMENT_COMMUN, ENVIRONNEMENT_PROPRE, delaiDe, environnementDe } from './environnement.ts'
@@ -21,6 +23,7 @@ const CONTENEUR: Record<string, string> = {
 	OLLAMA_MODEL: 'gemma4:e2b',
 	OLLAMA_CONTEXT_LENGTH: '36864',
 	IA_SIMULATEUR_HOST: 'http://ollama-simule:11434',
+	CRM_SUPERADMINS_INITIAUX: 'plateforme@p2enjoy.test',
 }
 const lire = (nom: string) => CONTENEUR[nom]
 const noms = (valeurs: [string, string][]) => valeurs.map(([nom]) => nom).sort()
@@ -28,7 +31,7 @@ const noms = (valeurs: [string, string][]) => valeurs.map(([nom]) => nom).sort()
 describe('environnementDe', () => {
 	it('remet à `session` le commun, la clé de signature, la configuration SSO et le secret du client', () => {
 		expect(noms(environnementDe('session', lire))).toEqual(
-			['JWT_SECRET', 'OIDC_CLIENT_SECRET', 'SSO_OIDC_CLIENT_ID', 'SSO_OIDC_ISSUER', 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_URL'],
+			['CRM_SUPERADMINS_INITIAUX', 'JWT_SECRET', 'OIDC_CLIENT_SECRET', 'SSO_OIDC_CLIENT_ID', 'SSO_OIDC_ISSUER', 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_URL'],
 		)
 	})
 
@@ -38,6 +41,7 @@ describe('environnementDe', () => {
 			expect(recu, fonction).toEqual([...ENVIRONNEMENT_COMMUN].sort())
 			expect(recu, fonction).not.toContain('JWT_SECRET')
 			expect(recu, fonction).not.toContain('OIDC_CLIENT_SECRET')
+			expect(recu, fonction).not.toContain('CRM_SUPERADMINS_INITIAUX')
 		}
 	})
 
